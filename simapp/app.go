@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/CosmWasm/wasmd/x/wasm"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
@@ -186,6 +188,7 @@ var (
 		lockup.AppModuleBasic{},
 		incentivization.AppModuleBasic{},
 		vpool.AppModuleBasic{},
+		wasm.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -208,6 +211,7 @@ var (
 		oracletypes.ModuleName:                nil,
 		stablecointypes.StableEFModuleAccount: {authtypes.Burner},
 		common.TreasuryPoolModuleAccount:      {},
+		wasm.ModuleName:                       {},
 	}
 )
 
@@ -284,6 +288,10 @@ type NibiruTestApp struct {
 	IncentivizationKeeper incentivizationkeeper.Keeper
 	VpoolKeeper           vpoolkeeper.Keeper
 
+	// WASM keepers
+	wasmKeeper       wasm.Keeper
+	scopedWasmKeeper capabilitykeeper.ScopedKeeper
+
 	// the module manager
 	mm *module.Manager
 
@@ -305,10 +313,16 @@ func init() {
 
 // NewNibiruTestApp returns a reference to an initialized NibiruTestApp.
 func NewNibiruTestApp(
-	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool,
-	skipUpgradeHeights map[int64]bool, homePath string, invCheckPeriod uint,
+	logger log.Logger,
+	db dbm.DB,
+	traceStore io.Writer,
+	loadLatest bool,
+	skipUpgradeHeights map[int64]bool,
+	homePath string,
+	invCheckPeriod uint,
 	encodingConfig simappparams.EncodingConfig,
-	appOpts servertypes.AppOptions, baseAppOptions ...func(*baseapp.BaseApp),
+	appOpts servertypes.AppOptions,
+	baseAppOptions ...func(*baseapp.BaseApp),
 ) *NibiruTestApp {
 	appCodec := encodingConfig.Marshaler
 	legacyAmino := encodingConfig.Amino
@@ -346,6 +360,7 @@ func NewNibiruTestApp(
 		perptypes.StoreKey,
 		incentivizationtypes.StoreKey,
 		vpooltypes.StoreKey,
+		wasm.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	// NOTE: The testingkey is just mounted for testing purposes. Actual applications should
@@ -491,6 +506,38 @@ func NewNibiruTestApp(
 		app.ScopedIBCKeeper,
 	)
 
+	scopedWasmKeeper := app.CapabilityKeeper.ScopeToModule(wasm.ModuleName)
+
+	wasmDir := filepath.Join(homePath, "data")
+	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
+	if err != nil {
+		panic("error while reading wasm config: " + err.Error())
+	}
+
+	// The last arguments can contain custom message handlers, and custom query handlers,
+	// if we want to allow any custom callbacks
+	supportedFeatures := "iterator,staking,stargate"
+	var wasmOpts []wasm.Option
+	app.wasmKeeper = wasm.NewKeeper(
+		appCodec,
+		keys[wasm.StoreKey],
+		app.GetSubspace(wasm.ModuleName),
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.StakingKeeper,
+		app.DistrKeeper,
+		app.IBCKeeper.ChannelKeeper,
+		&app.IBCKeeper.PortKeeper,
+		scopedWasmKeeper,
+		app.TransferKeeper,
+		app.MsgServiceRouter(),
+		app.GRPCQueryRouter(),
+		wasmDir,
+		wasmConfig,
+		supportedFeatures,
+		wasmOpts...,
+	)
+
 	// register the proposal types
 
 	govRouter := govtypes.NewRouter()
@@ -529,7 +576,9 @@ func NewNibiruTestApp(
 	/* Add an ibc-transfer module route, then set it and seal it. */
 	ibcRouter.AddRoute(
 		/* module    */ ibctransfertypes.ModuleName,
-		/* ibcModule */ transferIBCModule)
+		/* ibcModule */ transferIBCModule).
+		AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.wasmKeeper, app.IBCKeeper.ChannelKeeper))
+
 	/* SetRouter finalizes all routes by sealing the router.
 	   No more routes can be added. */
 	app.IBCKeeper.SetRouter(ibcRouter)
@@ -605,6 +654,7 @@ func NewNibiruTestApp(
 		evidence.NewAppModule(app.EvidenceKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
 		transferModule,
+		wasm.NewAppModule(appCodec, &app.wasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -642,6 +692,7 @@ func NewNibiruTestApp(
 		// ibc modules
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
+		wasm.ModuleName,
 	)
 	app.mm.SetOrderEndBlockers(
 		crisistypes.ModuleName,
@@ -673,6 +724,7 @@ func NewNibiruTestApp(
 		// ibc
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
+		wasm.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -710,6 +762,7 @@ func NewNibiruTestApp(
 		// ibc
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
+		wasm.ModuleName,
 	)
 
 	// Uncomment if you want to set a custom migration order here.
@@ -774,8 +827,10 @@ func NewNibiruTestApp(
 			SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
 			SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
 		},
-		PricefeedKeeper: app.PricefeedKeeper,
-		IBCKeeper:       app.IBCKeeper,
+		PricefeedKeeper:   app.PricefeedKeeper,
+		IBCKeeper:         app.IBCKeeper,
+		TxCounterStoreKey: keys[wasm.StoreKey],
+		WasmConfig:        wasmConfig,
 	})
 
 	if err != nil {
@@ -806,6 +861,8 @@ func NewNibiruTestApp(
 		*/
 		app.CapabilityKeeper.Seal()
 	}
+
+	app.scopedWasmKeeper = scopedWasmKeeper
 
 	return app
 }
@@ -1016,6 +1073,7 @@ func initParamsKeeper(
 	// ibc params keepers
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
+	paramsKeeper.Subspace(wasm.ModuleName)
 
 	return paramsKeeper
 }

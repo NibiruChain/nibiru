@@ -8,6 +8,9 @@ import (
 	"os"
 	"path/filepath"
 
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
@@ -98,6 +101,8 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
 
+	"github.com/CosmWasm/wasmd/x/wasm"
+
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/epochs"
 	epochskeeper "github.com/NibiruChain/nibiru/x/epochs/keeper"
@@ -167,6 +172,7 @@ var (
 		perp.AppModuleBasic{},
 		vpool.AppModuleBasic{},
 		util.AppModule{},
+		wasm.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -184,6 +190,7 @@ var (
 		perptypes.FeePoolModuleAccount:   {},
 		epochstypes.ModuleName:           {},
 		common.TreasuryPoolModuleAccount: {},
+		wasm.ModuleName:                  {},
 	}
 )
 
@@ -255,6 +262,10 @@ type NibiruApp struct {
 	pricefeedKeeper pricefeedkeeper.Keeper
 	vpoolKeeper     vpoolkeeper.Keeper
 
+	// WASM keepers
+	wasmKeeper       wasm.Keeper
+	scopedWasmKeeper capabilitykeeper.ScopedKeeper
+
 	// the module manager
 	mm *module.Manager
 
@@ -274,12 +285,28 @@ func init() {
 	DefaultNodeHome = filepath.Join(userHomeDir, ".nibid")
 }
 
+// GetWasmOpts build wasm options
+func GetWasmOpts(appOpts servertypes.AppOptions) []wasm.Option {
+	var wasmOpts []wasm.Option
+	if cast.ToBool(appOpts.Get("telemetry.enabled")) {
+		wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
+	}
+
+	return wasmOpts
+}
+
 // NewNibiruApp returns a reference to an initialized NibiruApp.
 func NewNibiruApp(
-	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool,
-	skipUpgradeHeights map[int64]bool, homePath string, invCheckPeriod uint,
+	logger log.Logger,
+	db dbm.DB,
+	traceStore io.Writer,
+	loadLatest bool,
+	skipUpgradeHeights map[int64]bool,
+	homePath string,
+	invCheckPeriod uint,
 	encodingConfig simappparams.EncodingConfig,
-	appOpts servertypes.AppOptions, baseAppOptions ...func(*baseapp.BaseApp),
+	appOpts servertypes.AppOptions,
+	baseAppOptions ...func(*baseapp.BaseApp),
 ) *NibiruApp {
 	appCodec := encodingConfig.Marshaler
 	legacyAmino := encodingConfig.Amino
@@ -313,6 +340,7 @@ func NewNibiruApp(
 		epochstypes.StoreKey,
 		perptypes.StoreKey,
 		vpooltypes.StoreKey,
+		wasm.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 
@@ -431,6 +459,37 @@ func NewNibiruApp(
 		app.scopedIBCKeeper,
 	)
 
+	scopedWasmKeeper := app.capabilityKeeper.ScopeToModule(wasm.ModuleName)
+
+	wasmDir := filepath.Join(homePath, "data")
+	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
+	if err != nil {
+		panic("error while reading wasm config: " + err.Error())
+	}
+
+	// The last arguments can contain custom message handlers, and custom query handlers,
+	// if we want to allow any custom callbacks
+	supportedFeatures := "iterator,staking,stargate"
+	app.wasmKeeper = wasm.NewKeeper(
+		appCodec,
+		keys[wasm.StoreKey],
+		app.GetSubspace(wasm.ModuleName),
+		app.accountKeeper,
+		app.bankKeeper,
+		app.stakingKeeper,
+		app.distrKeeper,
+		app.ibcKeeper.ChannelKeeper,
+		&app.ibcKeeper.PortKeeper,
+		scopedWasmKeeper,
+		app.transferKeeper,
+		app.MsgServiceRouter(),
+		app.GRPCQueryRouter(),
+		wasmDir,
+		wasmConfig,
+		supportedFeatures,
+		GetWasmOpts(appOpts)...,
+	)
+
 	// register the proposal types
 
 	govRouter := govtypes.NewRouter()
@@ -467,9 +526,12 @@ func NewNibiruApp(
 	/* Create IBC module and a static IBC router */
 	ibcRouter := porttypes.NewRouter()
 	/* Add an ibc-transfer module route, then set it and seal it. */
-	ibcRouter.AddRoute(
-		/* module    */ ibctransfertypes.ModuleName,
-		/* ibcModule */ transferIBCModule)
+	ibcRouter.
+		AddRoute(
+			/* module    */ ibctransfertypes.ModuleName,
+			/* ibcModule */ transferIBCModule).
+		AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.wasmKeeper, app.ibcKeeper.ChannelKeeper))
+
 	/* SetRouter finalizes all routes by sealing the router.
 	   No more routes can be added. */
 	app.ibcKeeper.SetRouter(ibcRouter)
@@ -533,6 +595,8 @@ func NewNibiruApp(
 		evidence.NewAppModule(app.evidenceKeeper),
 		ibc.NewAppModule(app.ibcKeeper),
 		transferModule,
+
+		wasm.NewAppModule(appCodec, &app.wasmKeeper, app.stakingKeeper, app.accountKeeper, app.bankKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -566,6 +630,7 @@ func NewNibiruApp(
 		// ibc modules
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
+		wasm.ModuleName,
 	)
 	app.mm.SetOrderEndBlockers(
 		crisistypes.ModuleName,
@@ -593,6 +658,7 @@ func NewNibiruApp(
 		// ibc
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
+		wasm.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -626,6 +692,7 @@ func NewNibiruApp(
 		// ibc
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
+		wasm.ModuleName,
 	)
 
 	// Uncomment if you want to set a custom migration order here.
@@ -688,8 +755,10 @@ func NewNibiruApp(
 			SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
 			SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
 		},
-		PricefeedKeeper: app.pricefeedKeeper,
-		IBCKeeper:       app.ibcKeeper,
+		PricefeedKeeper:   app.pricefeedKeeper,
+		IBCKeeper:         app.ibcKeeper,
+		TxCounterStoreKey: keys[wasm.StoreKey],
+		WasmConfig:        wasmConfig,
 	})
 
 	if err != nil {
@@ -720,6 +789,8 @@ func NewNibiruApp(
 		*/
 		app.capabilityKeeper.Seal()
 	}
+
+	app.scopedWasmKeeper = scopedWasmKeeper
 
 	return app
 }
@@ -897,15 +968,6 @@ func RegisterSwaggerAPI(ctx client.Context, rtr *mux.Router) {
 	rtr.PathPrefix("/swagger/").Handler(http.StripPrefix("/swagger/", staticServer))
 }
 
-// GetMaccPerms returns a copy of the module account permissions
-func GetMaccPerms() map[string][]string {
-	dupMaccPerms := make(map[string][]string)
-	for k, v := range maccPerms {
-		dupMaccPerms[k] = v
-	}
-	return dupMaccPerms
-}
-
 // initParamsKeeper init params vpoolkeeper and its subspaces
 func initParamsKeeper(
 	appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key,
@@ -927,6 +989,8 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	paramsKeeper.Subspace(perptypes.ModuleName)
+
+	paramsKeeper.Subspace(wasm.ModuleName)
 
 	return paramsKeeper
 }
