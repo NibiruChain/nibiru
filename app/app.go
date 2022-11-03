@@ -541,11 +541,6 @@ func NewNibiruApp(
 		app.accountKeeper, app.bankKeeper, &app.stakingKeeper, govRouter,
 	)
 
-	//enabledProposals := GetEnabledProposals()
-	//if len(enabledProposals) != 0 {
-	//	govRouter.AddRoute(wasm.RouterKey, wasm.NewWasmProposalHandler(app.wasmKeeper, enabledProposals))
-	//}
-
 	// -------------------------- Module Options --------------------------
 
 	/****  Module Options ****/
