@@ -250,7 +250,7 @@ func (pool *Pool) updatePoolAssetBalances(tokens sdk.Coins) (err error) {
 // It is only designed to be called at the pool's creation.
 // If the same denom's PoolAsset exists, will return error.
 // The list of PoolAssets must be sorted. This is done to enable fast searching for a PoolAsset by denomination.
-func (p *Pool) setInitialPoolAssets(poolAssets []PoolAsset) (err error) {
+func (pool *Pool) setInitialPoolAssets(poolAssets []PoolAsset) (err error) {
 	exists := make(map[string]bool)
 
 	newTotalWeight := sdk.ZeroInt()
@@ -272,10 +272,10 @@ func (p *Pool) setInitialPoolAssets(poolAssets []PoolAsset) (err error) {
 		newTotalWeight = newTotalWeight.Add(asset.Weight)
 	}
 
-	p.PoolAssets = scaledPoolAssets
-	sortPoolAssetsByDenom(p.PoolAssets)
+	pool.PoolAssets = scaledPoolAssets
+	sortPoolAssetsByDenom(pool.PoolAssets)
 
-	p.TotalWeight = newTotalWeight
+	pool.TotalWeight = newTotalWeight
 
 	return nil
 }
