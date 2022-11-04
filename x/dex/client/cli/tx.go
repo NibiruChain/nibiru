@@ -293,8 +293,10 @@ Where pool.json contains:
 				/*sender=*/ clientCtx.GetFromAddress().String(),
 				poolAssets,
 				&types.PoolParams{
-					SwapFee: sdk.MustNewDecFromStr(pool.SwapFee),
-					ExitFee: sdk.MustNewDecFromStr(pool.ExitFee),
+					SwapFee:  sdk.MustNewDecFromStr(pool.SwapFee),
+					ExitFee:  sdk.MustNewDecFromStr(pool.ExitFee),
+					A:        sdk.ZeroDec(),
+					PoolType: "balancer",
 				},
 			)
 
