@@ -42,8 +42,10 @@ func TestQueryPoolHappyPath(t *testing.T) {
 				Id:      1,
 				Address: testutil.AccAddress().String(),
 				PoolParams: types.PoolParams{
-					SwapFee: sdk.MustNewDecFromStr("0.03"),
-					ExitFee: sdk.MustNewDecFromStr("0.03"),
+					SwapFee:  sdk.MustNewDecFromStr("0.03"),
+					ExitFee:  sdk.MustNewDecFromStr("0.03"),
+					A:        sdk.ZeroDec(),
+					PoolType: "balancer",
 				},
 				PoolAssets: []types.PoolAsset{
 					{
@@ -334,8 +336,10 @@ func TestQueryPoolParams(t *testing.T) {
 				Id:      1,
 				Address: testutil.AccAddress().String(),
 				PoolParams: types.PoolParams{
-					SwapFee: sdk.MustNewDecFromStr("0.03"),
-					ExitFee: sdk.MustNewDecFromStr("0.03"),
+					SwapFee:  sdk.MustNewDecFromStr("0.03"),
+					ExitFee:  sdk.MustNewDecFromStr("0.03"),
+					A:        sdk.ZeroDec(),
+					PoolType: "balancer",
 				},
 				PoolAssets: []types.PoolAsset{
 					{
@@ -351,8 +355,10 @@ func TestQueryPoolParams(t *testing.T) {
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 200),
 			},
 			expectedPoolParams: types.PoolParams{
-				SwapFee: sdk.MustNewDecFromStr("0.03"),
-				ExitFee: sdk.MustNewDecFromStr("0.03"),
+				SwapFee:  sdk.MustNewDecFromStr("0.03"),
+				ExitFee:  sdk.MustNewDecFromStr("0.03"),
+				A:        sdk.ZeroDec(),
+				PoolType: "balancer",
 			},
 		},
 	}

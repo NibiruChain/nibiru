@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -62,6 +63,11 @@ func NewPool(
 	poolParams PoolParams,
 	poolAssets []PoolAsset,
 ) (pool Pool, err error) {
+	err = poolParams.validatePoolParams()
+	if err != nil {
+		return Pool{}, err
+	}
+
 	pool = Pool{
 		Id:          poolId,
 		Address:     poolAccountAddr.String(),
@@ -77,6 +83,28 @@ func NewPool(
 	}
 
 	return pool, nil
+}
+
+/*
+Validaet the logic of creation of the pool, and wether all parameters are set for balancer or stableswap pool
+*/
+func (poolParams PoolParams) validatePoolParams() (err error) {
+	if (poolParams.PoolType != common.StableswapPool) && (poolParams.PoolType != common.BalancerPool) {
+		return ErrInvalidPoolType
+	}
+
+	if poolParams.PoolType == common.StableswapPool {
+		if poolParams.A.IsNil() {
+			return ErrAmplificationMissing
+		}
+
+		fmt.Println(poolParams.A)
+
+		if poolParams.A.LT(sdk.OneDec()) {
+			return ErrAmplificationTooLow
+		}
+	}
+	return
 }
 
 /*

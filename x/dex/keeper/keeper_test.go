@@ -50,8 +50,10 @@ func TestSetAndFetchPool(t *testing.T) {
 	pool := types.Pool{
 		Id: 150,
 		PoolParams: types.PoolParams{
-			SwapFee: sdk.NewDecWithPrec(3, 2),
-			ExitFee: sdk.NewDecWithPrec(3, 2),
+			SwapFee:  sdk.NewDecWithPrec(3, 2),
+			ExitFee:  sdk.NewDecWithPrec(3, 2),
+			A:        sdk.ZeroDec(),
+			PoolType: "balancer",
 		},
 		PoolAssets: []types.PoolAsset{
 			{
@@ -157,8 +159,10 @@ func TestFetchPoolFromPair(t *testing.T) {
 			app.DexKeeper.SetPool(ctx, types.Pool{
 				Id: 1,
 				PoolParams: types.PoolParams{
-					SwapFee: sdk.NewDecWithPrec(3, 2),
-					ExitFee: sdk.NewDecWithPrec(3, 2),
+					SwapFee:  sdk.NewDecWithPrec(3, 2),
+					ExitFee:  sdk.NewDecWithPrec(3, 2),
+					A:        sdk.ZeroDec(),
+					PoolType: "balancer",
 				},
 				PoolAssets: []types.PoolAsset{
 					{
@@ -178,8 +182,10 @@ func TestFetchPoolFromPair(t *testing.T) {
 			app.DexKeeper.SetPool(ctx, types.Pool{
 				Id: 2,
 				PoolParams: types.PoolParams{
-					SwapFee: sdk.NewDecWithPrec(3, 2),
-					ExitFee: sdk.NewDecWithPrec(3, 2),
+					SwapFee:  sdk.NewDecWithPrec(3, 2),
+					ExitFee:  sdk.NewDecWithPrec(3, 2),
+					A:        sdk.ZeroDec(),
+					PoolType: "balancer",
 				},
 				PoolAssets: []types.PoolAsset{
 					{
@@ -236,8 +242,10 @@ func TestNewPool(t *testing.T) {
 		userAddr,
 		// poolParams
 		types.PoolParams{
-			SwapFee: sdk.NewDecWithPrec(3, 2),
-			ExitFee: sdk.NewDecWithPrec(3, 2),
+			SwapFee:  sdk.NewDecWithPrec(3, 2),
+			ExitFee:  sdk.NewDecWithPrec(3, 2),
+			A:        sdk.ZeroDec(),
+			PoolType: "balancer",
 		},
 		// poolAssets
 		[]types.PoolAsset{
@@ -258,8 +266,10 @@ func TestNewPool(t *testing.T) {
 		Id:      1,
 		Address: retrievedPool.Address, // address is random so can't test, just reuse value
 		PoolParams: types.PoolParams{
-			SwapFee: sdk.NewDecWithPrec(3, 2),
-			ExitFee: sdk.NewDecWithPrec(3, 2),
+			SwapFee:  sdk.NewDecWithPrec(3, 2),
+			ExitFee:  sdk.NewDecWithPrec(3, 2),
+			A:        sdk.ZeroDec(),
+			PoolType: "balancer",
 		},
 		PoolAssets: []types.PoolAsset{
 			{
@@ -299,8 +309,10 @@ func TestNewPoolNotEnoughFunds(t *testing.T) {
 		userAddr,
 		// poolParams
 		types.PoolParams{
-			SwapFee: sdk.NewDecWithPrec(3, 2),
-			ExitFee: sdk.NewDecWithPrec(3, 2),
+			SwapFee:  sdk.NewDecWithPrec(3, 2),
+			ExitFee:  sdk.NewDecWithPrec(3, 2),
+			A:        sdk.ZeroDec(),
+			PoolType: "balancer",
 		},
 		// poolAssets
 		[]types.PoolAsset{
@@ -322,8 +334,10 @@ func TestNewPoolTooLittleAssets(t *testing.T) {
 	require.NoError(t, err)
 
 	poolParams := types.PoolParams{
-		SwapFee: sdk.NewDecWithPrec(3, 2),
-		ExitFee: sdk.NewDecWithPrec(3, 2),
+		SwapFee:  sdk.NewDecWithPrec(3, 2),
+		ExitFee:  sdk.NewDecWithPrec(3, 2),
+		A:        sdk.ZeroDec(),
+		PoolType: "balancer",
 	}
 	poolAssets := []types.PoolAsset{
 		{
@@ -342,8 +356,10 @@ func TestKeeperNewPoolNotWhitelistedAssets(t *testing.T) {
 	require.NoError(t, err)
 
 	poolParams := types.PoolParams{
-		SwapFee: sdk.NewDecWithPrec(3, 2),
-		ExitFee: sdk.NewDecWithPrec(3, 2),
+		SwapFee:  sdk.NewDecWithPrec(3, 2),
+		ExitFee:  sdk.NewDecWithPrec(3, 2),
+		A:        sdk.ZeroDec(),
+		PoolType: "balancer",
 	}
 
 	poolAssets := []types.PoolAsset{
@@ -366,8 +382,10 @@ func TestNewPoolTooManyAssets(t *testing.T) {
 	require.NoError(t, err)
 
 	poolParams := types.PoolParams{
-		SwapFee: sdk.NewDecWithPrec(3, 2),
-		ExitFee: sdk.NewDecWithPrec(3, 2),
+		SwapFee:  sdk.NewDecWithPrec(3, 2),
+		ExitFee:  sdk.NewDecWithPrec(3, 2),
+		A:        sdk.ZeroDec(),
+		PoolType: "balancer",
 	}
 	poolAssets := []types.PoolAsset{
 		{
