@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/dex/math"
 )
 
@@ -77,6 +78,53 @@ ret:
   - err: error if any
 */
 func (pool Pool) CalcInAmtGivenOut(tokenOut sdk.Coin, tokenInDenom string) (
+	tokenIn sdk.Coin, err error,
+) {
+	if pool.PoolParams.PoolType == common.BalancerPool {
+		return pool.CalcInAmtGivenOutBalancer(tokenOut, tokenInDenom)
+	} else if pool.PoolParams.PoolType == common.StableswapPool {
+		return pool.CalcInAmtGivenOutStableswap(tokenOut, tokenInDenom)
+	}
+	return sdk.Coin{}, ErrInvalidPoolType
+}
+
+func (pool Pool) CalcInAmtGivenOutStableswap(tokenOut sdk.Coin, tokenInDenom string) (
+	tokenIn sdk.Coin, err error,
+) {
+	// assert i != j       # dev: same coin
+	// assert j >= 0       # dev: j below zero
+	// assert j < N_COINS  # dev: j above N_COINS
+
+	// # should be unreachable, but good for safety
+	// assert i >= 0
+	// assert i < N_COINS
+
+	if tokenOut.Denom == tokenInDenom {
+		err = ErrTokenNotAllowed
+		return
+	}
+
+	// A := pool.PoolParams.A
+	// D := pool.getD()
+
+	return sdk.Coin{}, ErrNotImplemented
+}
+
+/*
+Calculates the amount of tokenIn required to obtain tokenOut coins from a swap,
+accounting for additional fees.
+Only supports single asset swaps.
+This function is the inverse of CalcOutAmtGivenIn.
+
+args:
+  - tokenOut: the amount of tokens to swap
+  - tokenInDenom: the target token denom
+
+ret:
+  - tokenIn: the tokens received from the swap
+  - err: error if any
+*/
+func (pool Pool) CalcInAmtGivenOutBalancer(tokenOut sdk.Coin, tokenInDenom string) (
 	tokenIn sdk.Coin, err error,
 ) {
 	_, poolAssetOut, err := pool.getPoolAssetAndIndex(tokenOut.Denom)

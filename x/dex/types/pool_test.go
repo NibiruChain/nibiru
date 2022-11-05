@@ -65,8 +65,9 @@ func TestGetAddress(t *testing.T) {
 func TestNewPool(t *testing.T) {
 	poolAccountAddr := testutil.AccAddress()
 	poolParams := PoolParams{
-		SwapFee: sdk.NewDecWithPrec(3, 2),
-		ExitFee: sdk.NewDecWithPrec(3, 2),
+		PoolType: "balancer",
+		SwapFee:  sdk.NewDecWithPrec(3, 2),
+		ExitFee:  sdk.NewDecWithPrec(3, 2),
 	}
 	poolAssets := []PoolAsset{
 		{
@@ -242,7 +243,7 @@ func TestJoinPoolAllTokens(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
 				TotalWeight: sdk.NewInt(2 << 30),
-				PoolParams:  PoolParams{SwapFee: sdk.ZeroDec()},
+				PoolParams:  PoolParams{PoolType: "balancer", SwapFee: sdk.ZeroDec()},
 			},
 			tokensIn: sdk.NewCoins(
 				sdk.NewInt64Coin("aaa", 10),
@@ -263,7 +264,7 @@ func TestJoinPoolAllTokens(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 110),
 				TotalWeight: sdk.NewInt(2 << 30),
-				PoolParams:  PoolParams{SwapFee: sdk.ZeroDec()},
+				PoolParams:  PoolParams{PoolType: "balancer", SwapFee: sdk.ZeroDec()},
 			},
 		},
 		{
@@ -281,7 +282,7 @@ func TestJoinPoolAllTokens(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
 				TotalWeight: sdk.NewInt(2 << 30),
-				PoolParams:  PoolParams{SwapFee: sdk.ZeroDec()},
+				PoolParams:  PoolParams{PoolType: "balancer", SwapFee: sdk.ZeroDec()},
 			},
 			tokensIn: sdk.NewCoins(
 				sdk.NewInt64Coin("aaa", 10),
@@ -304,7 +305,7 @@ func TestJoinPoolAllTokens(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 106),
 				TotalWeight: sdk.NewInt(2 << 30),
-				PoolParams:  PoolParams{SwapFee: sdk.ZeroDec()},
+				PoolParams:  PoolParams{PoolType: "balancer", SwapFee: sdk.ZeroDec()},
 			},
 		},
 		{
@@ -322,7 +323,7 @@ func TestJoinPoolAllTokens(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1_000_000),
 				TotalWeight: sdk.NewInt(2 << 30),
-				PoolParams:  PoolParams{SwapFee: sdk.ZeroDec()},
+				PoolParams:  PoolParams{PoolType: "balancer", SwapFee: sdk.ZeroDec()},
 			},
 			tokensIn: sdk.NewCoins(
 				sdk.NewInt64Coin("aaa", 4859), // 0.138885 % of pool
@@ -345,7 +346,7 @@ func TestJoinPoolAllTokens(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1_001_172),
 				TotalWeight: sdk.NewInt(2 << 30),
-				PoolParams:  PoolParams{SwapFee: sdk.ZeroDec()},
+				PoolParams:  PoolParams{PoolType: "balancer", SwapFee: sdk.ZeroDec()},
 			},
 		},
 	} {
@@ -414,7 +415,8 @@ func TestExitPoolHappyPath(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
 				PoolParams: PoolParams{
-					ExitFee: sdk.ZeroDec(),
+					PoolType: "balancer",
+					ExitFee:  sdk.ZeroDec(),
 				},
 			},
 			exitingShares:           sdk.NewInt64Coin("nibiru/pool/1", 100),
@@ -438,7 +440,8 @@ func TestExitPoolHappyPath(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
 				PoolParams: PoolParams{
-					ExitFee: sdk.MustNewDecFromStr("0.5"),
+					PoolType: "balancer",
+					ExitFee:  sdk.MustNewDecFromStr("0.5"),
 				},
 			},
 			exitingShares:           sdk.NewInt64Coin("nibiru/pool/1", 100),
@@ -465,7 +468,8 @@ func TestExitPoolHappyPath(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
 				PoolParams: PoolParams{
-					ExitFee: sdk.ZeroDec(),
+					PoolType: "balancer",
+					ExitFee:  sdk.ZeroDec(),
 				},
 			},
 			exitingShares:           sdk.NewInt64Coin("nibiru/pool/1", 50),
@@ -492,7 +496,8 @@ func TestExitPoolHappyPath(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
 				PoolParams: PoolParams{
-					ExitFee: sdk.MustNewDecFromStr("0.5"),
+					PoolType: "balancer",
+					ExitFee:  sdk.MustNewDecFromStr("0.5"),
 				},
 			},
 			exitingShares:           sdk.NewInt64Coin("nibiru/pool/1", 50),
@@ -519,7 +524,8 @@ func TestExitPoolHappyPath(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 2_347_652),
 				PoolParams: PoolParams{
-					ExitFee: sdk.MustNewDecFromStr("0.003"),
+					PoolType: "balancer",
+					ExitFee:  sdk.MustNewDecFromStr("0.003"),
 				},
 			},
 			exitingShares:           sdk.NewInt64Coin("nibiru/pool/1", 74_747),
@@ -555,8 +561,9 @@ func MockPool(assets []PoolAsset) Pool {
 	return Pool{
 		Id: 1,
 		PoolParams: PoolParams{
-			SwapFee: sdk.SmallestDec(),
-			ExitFee: sdk.SmallestDec(),
+			PoolType: "balancer",
+			SwapFee:  sdk.SmallestDec(),
+			ExitFee:  sdk.SmallestDec(),
 		},
 		PoolAssets:  assets,
 		TotalShares: sdk.NewInt64Coin(GetPoolShareBaseDenom(1), 100),
@@ -648,4 +655,86 @@ func TestPoolParamsValidation(t *testing.T) {
 			require.ErrorIs(t, tc.expectedErr, err)
 		})
 	}
+}
+
+func TestGetD(t *testing.T) {
+	for _, tc := range []struct {
+		name                   string
+		poolAssets             []PoolAsset
+		amplificationParameter sdk.Dec
+		expectedErr            error
+		expectedD              int64
+	}{
+		{
+			name: "Compute D - 3 assets - tested against Curve contracts code..",
+			poolAssets: []PoolAsset{
+				{
+					Token: sdk.NewInt64Coin("aaa", 200),
+				},
+				{
+					Token: sdk.NewInt64Coin("bbb", 100),
+				},
+				{
+					Token: sdk.NewInt64Coin("ccc", 100),
+				},
+			},
+			amplificationParameter: sdk.MustNewDecFromStr("1"),
+			expectedErr:            nil,
+			expectedD:              389,
+		},
+		{
+			name: "Compute D - 2 assets - tested against Curve contracts code..",
+			poolAssets: []PoolAsset{
+				{
+					Token: sdk.NewInt64Coin("aaa", 200),
+				},
+				{
+					Token: sdk.NewInt64Coin("bbb", 100),
+				},
+			},
+			amplificationParameter: sdk.MustNewDecFromStr("1"),
+			expectedErr:            nil,
+			expectedD:              291,
+		},
+		{
+			name: "Compute D - 2 assets, A big - tested against Curve contracts code..",
+			poolAssets: []PoolAsset{
+				{
+					Token: sdk.NewInt64Coin("aaa", 200),
+				},
+				{
+					Token: sdk.NewInt64Coin("bbb", 100),
+				},
+			},
+			amplificationParameter: sdk.MustNewDecFromStr("4000"),
+			expectedErr:            nil,
+			expectedD:              299,
+		},
+		{
+			name: "Compute D - 2 assets, A big, high values - tested against Curve contracts code..",
+			poolAssets: []PoolAsset{
+				{
+					Token: sdk.NewInt64Coin("aaa", 200_000_000),
+				},
+				{
+					Token: sdk.NewInt64Coin("bbb", 100_000_000),
+				},
+			},
+			amplificationParameter: sdk.MustNewDecFromStr("4000"),
+			expectedErr:            nil,
+			expectedD:              299995313,
+		},
+	} {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			pool := Pool{
+				PoolAssets: tc.poolAssets,
+				PoolParams: PoolParams{A: tc.amplificationParameter},
+			}
+
+			D := pool.getD()
+			require.EqualValues(t, tc.expectedD, D.Int64())
+		})
+	}
+
 }

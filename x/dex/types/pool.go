@@ -2,7 +2,7 @@ package types
 
 import (
 	"errors"
-	"fmt"
+	fmt "fmt"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -97,8 +97,6 @@ func (poolParams PoolParams) validatePoolParams() (err error) {
 		if poolParams.A.IsNil() {
 			return ErrAmplificationMissing
 		}
-
-		fmt.Println(poolParams.A)
 
 		if poolParams.A.LT(sdk.OneDec()) {
 			return ErrAmplificationTooLow
@@ -306,4 +304,49 @@ func (pool *Pool) setInitialPoolAssets(poolAssets []PoolAsset) (err error) {
 	pool.TotalWeight = newTotalWeight
 
 	return nil
+}
+
+// For a stableswap pool, compute the D invariant value  in non-overflowing integer operations iteratively
+// A * sum(x_i) * n**n + D = A * D * n**n + D**(n+1) / (n**n * prod(x_i))
+// Converging solution:
+// D[j+1] = (A * n**n * sum(x_i) - D[j]**(n+1) / (n**n prod(x_i))) / (A * n**n - 1)
+func (pool Pool) getD() sdk.Int {
+
+	_xp := pool.PoolAssets
+	N_COINS := sdk.NewInt(int64(len(_xp)))
+
+	S := sdk.ZeroInt()
+	Dprev := sdk.ZeroInt()
+
+	for _, token := range _xp {
+		S = S.Add(token.Token.Amount)
+	}
+
+	D := S
+	Ann := pool.PoolParams.A.TruncateInt().Mul(N_COINS)
+
+	for i := 0; i < 255; i++ {
+		D_P := D
+
+		for _, token := range _xp {
+			D_P = D_P.Mul(D).Quo(token.Token.Amount.Mul(N_COINS)) // If division by 0, this will be borked: only withdrawal will work. And that is good
+		}
+		Dprev = D
+
+		D_nom := Ann.Mul(S).Add(D_P.Mul(N_COINS)).Mul(D)
+		D_denom := Ann.Sub(sdk.OneInt()).Mul(D).Add(N_COINS.Add(sdk.OneInt()).Mul(D_P))
+
+		D = D_nom.Quo(D_denom)
+
+		if D.Sub(Dprev).Abs().LTE(sdk.OneInt()) {
+			return D
+		}
+
+	}
+
+	// # convergence typically occurs in 4 rounds or less, this should be unreachable!
+	// # if it does happen the pool is borked and LPs can withdraw via `remove_liquidity`
+	// panic
+	panic(nil)
+
 }
