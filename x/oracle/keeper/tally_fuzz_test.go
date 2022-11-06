@@ -121,7 +121,7 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 	voteTargets := map[string]struct{}{}
 	f.Fuzz(&voteTargets)
 
-	for k, _ := range voteTargets {
+	for k := range voteTargets {
 		input.OracleKeeper.Pairs.Insert(input.Ctx, k)
 	}
 

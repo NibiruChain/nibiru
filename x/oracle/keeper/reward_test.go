@@ -1,10 +1,10 @@
 package keeper_test
 
 import (
-	"github.com/cosmos/cosmos-sdk/x/staking"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"

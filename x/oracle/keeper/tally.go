@@ -1,8 +1,9 @@
 package keeper
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"sort"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
@@ -25,7 +26,6 @@ func Tally(ballot types.ExchangeRateBallot, rewardBand sdk.Dec, validatorPerform
 		if (vote.ExchangeRate.GTE(weightedMedian.Sub(rewardSpread)) &&
 			vote.ExchangeRate.LTE(weightedMedian.Add(rewardSpread))) ||
 			!vote.ExchangeRate.IsPositive() {
-
 			voterAddr := vote.Voter.String()
 
 			validatorPerformance := validatorPerformanceMap[voterAddr]
