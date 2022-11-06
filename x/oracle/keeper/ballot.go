@@ -68,16 +68,14 @@ func (k Keeper) clearBallots(ctx sdk.Context, votePeriod uint64) {
 
 // applyWhitelist updates the whitelist by detecting possible changes between
 // the current vote targets and the current updated whitelist.
-func (k Keeper) applyWhitelist(ctx sdk.Context, whitelist []string, voteTargets map[string]struct{}) {
-	// check is there any update in whitelist params
+func (k Keeper) applyWhitelist(ctx sdk.Context, whitelist []string, whitelistedPairsMap map[string]struct{}) {
 	updateRequired := false
-	// fast path
-	if len(voteTargets) != len(whitelist) {
+
+	if len(whitelistedPairsMap) != len(whitelist) {
 		updateRequired = true
-		// slow path, we need to check differences
 	} else {
 		for _, pair := range whitelist {
-			_, exists := voteTargets[pair]
+			_, exists := whitelistedPairsMap[pair]
 			if !exists {
 				updateRequired = true
 				break
