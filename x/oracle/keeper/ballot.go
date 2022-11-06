@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"sort"
-
 	"github.com/NibiruChain/nibiru/collections"
 
 	"github.com/NibiruChain/nibiru/x/oracle/types"
@@ -42,12 +40,6 @@ func (k Keeper) mapBallotByPair(
 				)
 			}
 		}
-	}
-
-	// sort created ballot
-	for pair, ballot := range ballots {
-		sort.Sort(ballot)
-		ballots[pair] = ballot
 	}
 
 	return

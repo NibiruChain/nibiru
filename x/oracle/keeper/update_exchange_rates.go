@@ -48,10 +48,8 @@ func (k Keeper) countVotesAndUpdateExchangeRates(
 	params := k.GetParams(ctx)
 
 	for pair, ballot := range pairBallotMap {
-		// Get weighted median of cross exchange rates
 		exchangeRate := Tally(ballot, params.RewardBand, validatorPerformanceMap)
 
-		// Set the exchange rate, emit ABCI event
 		k.ExchangeRates.Insert(ctx, pair, exchangeRate)
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(types.EventTypeExchangeRateUpdate,

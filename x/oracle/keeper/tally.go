@@ -26,12 +26,12 @@ func Tally(ballot types.ExchangeRateBallot, rewardBand sdk.Dec, validatorPerform
 			vote.ExchangeRate.LTE(weightedMedian.Add(rewardSpread))) ||
 			!vote.ExchangeRate.IsPositive() {
 
-			key := vote.Voter.String()
-			// TODO: WTF is this? Mutating a map in Tally without no reason?
-			claim := validatorPerformanceMap[key]
-			claim.Weight += vote.Power
-			claim.WinCount++
-			validatorPerformanceMap[key] = claim
+			voterAddr := vote.Voter.String()
+
+			validatorPerformance := validatorPerformanceMap[voterAddr]
+			validatorPerformance.Weight += vote.Power
+			validatorPerformance.WinCount++
+			validatorPerformanceMap[voterAddr] = validatorPerformance
 		}
 	}
 
@@ -45,11 +45,11 @@ func ballotIsPassingThreshold(ballot types.ExchangeRateBallot, thresholdVotes sd
 }
 
 // RemoveInvalidBallots removes the ballots which have not reached the vote threshold
-// or which are not part of the vote targets anymore: example when params change during a vote period
+// or which are not part of the whitelisted pairs anymore: example when params change during a vote period
 // but some votes were already made.
 func (k Keeper) RemoveInvalidBallots(
 	ctx sdk.Context,
-	voteMap map[string]types.ExchangeRateBallot,
+	pairBallotMap map[string]types.ExchangeRateBallot,
 ) (map[string]types.ExchangeRateBallot, map[string]struct{}) {
 	whitelistedPairsMap := k.getWhitelistedPairsMap(ctx)
 
@@ -57,11 +57,11 @@ func (k Keeper) RemoveInvalidBallots(
 	voteThreshold := k.VoteThreshold(ctx)
 	thresholdVotes := voteThreshold.MulInt64(totalBondedPower).RoundInt()
 
-	for pair, ballot := range voteMap {
+	for pair, ballot := range pairBallotMap {
 		// If pair is not whitelisted, or the ballot for it has failed, then skip
-		// and remove it from voteMap for iteration efficiency
+		// and remove it from pairBallotMap for iteration efficiency
 		if _, exists := whitelistedPairsMap[pair]; !exists {
-			delete(voteMap, pair)
+			delete(pairBallotMap, pair)
 			continue
 		}
 
@@ -69,10 +69,10 @@ func (k Keeper) RemoveInvalidBallots(
 		// to prevent slashing validators who did valid vote.
 		if !ballotIsPassingThreshold(ballot, thresholdVotes) {
 			delete(whitelistedPairsMap, pair)
-			delete(voteMap, pair)
+			delete(pairBallotMap, pair)
 			continue
 		}
 	}
 
-	return voteMap, whitelistedPairsMap
+	return pairBallotMap, whitelistedPairsMap
 }
