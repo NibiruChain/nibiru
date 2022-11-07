@@ -2,6 +2,7 @@ syntax = "proto3";
 package nibiru.oracle.v1beta1;
 
 import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/oracle/types";
 
@@ -9,14 +10,20 @@ option go_package = "github.com/NibiruChain/nibiru/x/oracle/types";
 service Msg {
   // AggregateExchangeRatePrevote defines a method for submitting
   // aggregate exchange rate prevote
-  rpc AggregateExchangeRatePrevote(MsgAggregateExchangeRatePrevote) returns (MsgAggregateExchangeRatePrevoteResponse);
+  rpc AggregateExchangeRatePrevote(MsgAggregateExchangeRatePrevote) returns (MsgAggregateExchangeRatePrevoteResponse) {
+    option (google.api.http).post = "/nibiru/oracle/prevote";
+  }
 
   // AggregateExchangeRateVote defines a method for submitting
   // aggregate exchange rate vote
-  rpc AggregateExchangeRateVote(MsgAggregateExchangeRateVote) returns (MsgAggregateExchangeRateVoteResponse);
+  rpc AggregateExchangeRateVote(MsgAggregateExchangeRateVote) returns (MsgAggregateExchangeRateVoteResponse) {
+    option (google.api.http).post = "/nibiru/oracle/vote";
+  }
 
   // DelegateFeedConsent defines a method for setting the feeder delegation
-  rpc DelegateFeedConsent(MsgDelegateFeedConsent) returns (MsgDelegateFeedConsentResponse);
+  rpc DelegateFeedConsent(MsgDelegateFeedConsent) returns (MsgDelegateFeedConsentResponse) {
+    option (google.api.http).post = "/nibiru/oracle/feeder-delegate";
+  }
 }
 
 // MsgAggregateExchangeRatePrevote represents a message to submit
