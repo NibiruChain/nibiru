@@ -48,13 +48,18 @@ func (pool Pool) CalcOutAmtGivenIn(tokenIn sdk.Coin, tokenOutDenom string, noFee
 
 	// deduct swapfee on the in asset
 	// delta balanceOut is positive(tokens inside the pool decreases)
-	tokenAmountOut := math.SolveConstantProductInvariant(
-		/*xPrior=*/ poolTokenInBalance,
-		/*xAfter=*/ poolTokenInBalancePostSwap,
-		/*xWeight=*/ poolAssetIn.Weight.ToDec(),
-		/*yPrior=*/ poolAssetOut.Token.Amount.ToDec(),
-		/*yWeight=*/ poolAssetOut.Weight.ToDec(),
-	).TruncateInt()
+	var tokenAmountOut sdk.Int
+	if pool.PoolParams.PoolType == common.StableswapPool {
+		tokenAmountOut, err = pool.SolveStableswapInvariant(poolAssetIn.Token, tokenOutDenom)
+	} else if pool.PoolParams.PoolType == common.BalancerPool {
+		tokenAmountOut = math.SolveConstantProductInvariant(
+			/*xPrior=*/ poolTokenInBalance,
+			/*xAfter=*/ poolTokenInBalancePostSwap,
+			/*xWeight=*/ poolAssetIn.Weight.ToDec(),
+			/*yPrior=*/ poolAssetOut.Token.Amount.ToDec(),
+			/*yWeight=*/ poolAssetOut.Weight.ToDec(),
+		).TruncateInt()
+	}
 
 	if tokenAmountOut.IsZero() {
 		return tokenOut, fmt.Errorf("tokenIn (%s) must be higher to perform a swap", tokenIn.Denom)
@@ -88,25 +93,13 @@ func (pool Pool) CalcInAmtGivenOut(tokenOut sdk.Coin, tokenInDenom string) (
 	return sdk.Coin{}, ErrInvalidPoolType
 }
 
+/*
+Calculates the amount of tokenIn required to obtain tokenOut coins from a swap,
+accounting for additional fees. This is not implemented yet in curve and in Nibiru.
+*/
 func (pool Pool) CalcInAmtGivenOutStableswap(tokenOut sdk.Coin, tokenInDenom string) (
 	tokenIn sdk.Coin, err error,
 ) {
-	// assert i != j       # dev: same coin
-	// assert j >= 0       # dev: j below zero
-	// assert j < N_COINS  # dev: j above N_COINS
-
-	// # should be unreachable, but good for safety
-	// assert i >= 0
-	// assert i < N_COINS
-
-	if tokenOut.Denom == tokenInDenom {
-		err = ErrTokenNotAllowed
-		return
-	}
-
-	// A := pool.PoolParams.A
-	// D := pool.getD()
-
 	return sdk.Coin{}, ErrNotImplemented
 }
 

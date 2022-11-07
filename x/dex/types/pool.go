@@ -312,33 +312,33 @@ func (pool *Pool) setInitialPoolAssets(poolAssets []PoolAsset) (err error) {
 // D[j+1] = (A * n**n * sum(x_i) - D[j]**(n+1) / (n**n prod(x_i))) / (A * n**n - 1)
 func (pool Pool) getD() sdk.Int {
 
-	_xp := pool.PoolAssets
-	N_COINS := sdk.NewInt(int64(len(_xp)))
+	poolAssets := pool.PoolAssets
+	nCoins := sdk.NewInt(int64(len(poolAssets)))
 
-	S := sdk.ZeroInt()
-	Dprev := sdk.ZeroInt()
+	totalSupply := sdk.ZeroInt()
+	previousD := sdk.ZeroInt()
 
-	for _, token := range _xp {
-		S = S.Add(token.Token.Amount)
+	for _, token := range poolAssets {
+		totalSupply = totalSupply.Add(token.Token.Amount)
 	}
 
-	D := S
-	Ann := pool.PoolParams.A.TruncateInt().Mul(N_COINS)
+	D := totalSupply
+	Ann := pool.PoolParams.A.TruncateInt().Mul(nCoins)
 
 	for i := 0; i < 255; i++ {
 		D_P := D
 
-		for _, token := range _xp {
-			D_P = D_P.Mul(D).Quo(token.Token.Amount.Mul(N_COINS)) // If division by 0, this will be borked: only withdrawal will work. And that is good
+		for _, token := range poolAssets {
+			D_P = D_P.Mul(D).Quo(token.Token.Amount.Mul(nCoins)) // If division by 0, this will be borked: only withdrawal will work. And that is good
 		}
-		Dprev = D
+		previousD = D
 
-		D_nom := Ann.Mul(S).Add(D_P.Mul(N_COINS)).Mul(D)
-		D_denom := Ann.Sub(sdk.OneInt()).Mul(D).Add(N_COINS.Add(sdk.OneInt()).Mul(D_P))
+		D_nom := Ann.Mul(totalSupply).Add(D_P.Mul(nCoins)).Mul(D)
+		D_denom := Ann.Sub(sdk.OneInt()).Mul(D).Add(nCoins.Add(sdk.OneInt()).Mul(D_P))
 
 		D = D_nom.Quo(D_denom)
 
-		if D.Sub(Dprev).Abs().LTE(sdk.OneInt()) {
+		if D.Sub(previousD).Abs().LTE(sdk.OneInt()) {
 			return D
 		}
 
@@ -347,6 +347,69 @@ func (pool Pool) getD() sdk.Int {
 	// # convergence typically occurs in 4 rounds or less, this should be unreachable!
 	// # if it does happen the pool is borked and LPs can withdraw via `remove_liquidity`
 	// panic
+	panic(nil)
+
+}
+
+// Calculate Token out if one swap token in (no fees computed there)
+// Done by solving quadratic equation iteratively.
+// x_1**2 + x1 * (sum' - (A*n**n - 1) * D / (A * n**n)) = D ** (n+1)/(n ** (2 * n) * prod' * A)
+// x_1**2 + b*x_1 = c
+
+// x_1 = (x_1**2 + c) / (2*x_1 + b)
+func (pool Pool) SolveStableswapInvariant(tokenIn sdk.Coin, tokenOutDenom string) (sdk.Int, error) {
+	D := pool.getD()
+	_xp := pool.PoolAssets
+	nCoins := sdk.NewInt(int64(len(_xp)))
+
+	assetInIndex, _, err := pool.getPoolAssetAndIndex(tokenIn.Denom)
+	if err != nil {
+		return sdk.NewInt(0), err
+	}
+
+	assetOutIndex, _, err := pool.getPoolAssetAndIndex(tokenOutDenom)
+	if err != nil {
+		return sdk.NewInt(0), err
+	}
+
+	var _x sdk.Int
+	c := sdk.ZeroInt()
+	S := sdk.ZeroInt()
+	Ann := pool.PoolParams.A.TruncateInt().Mul(nCoins)
+
+	for i := 0; i < int(nCoins.Int64()); i++ {
+		if i == assetInIndex {
+			_x = tokenIn.Amount
+		} else if i != assetOutIndex {
+			_x = _xp[assetInIndex].Token.Amount
+		} else {
+			continue
+		}
+		S = S.Add(_x)
+		c = c.Mul(D).Quo(_x.Mul(nCoins))
+	}
+
+	c = c.Mul(D).Quo(Ann.Mul(nCoins))
+	b := S.Add(D.Quo(Ann))
+	y := D
+	y_prev := sdk.ZeroInt()
+
+	fmt.Println("D", D)
+	fmt.Println("Ann", Ann)
+	fmt.Println("c", c)
+	fmt.Println("b", b)
+	fmt.Println("y", y)
+
+	for i := 0; i < 255; i++ {
+		y_prev = y
+		y = y.Mul(y).Add(c).Quo(sdk.NewInt(2).Mul(y).Add(b).Sub(D))
+
+		if y.Sub(y_prev).Abs().LTE(sdk.OneInt()) {
+			return y, nil
+		}
+
+	}
+
 	panic(nil)
 
 }
