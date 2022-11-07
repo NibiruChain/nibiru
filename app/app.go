@@ -8,6 +8,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/NibiruChain/nibiru/x/oracle"
+	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
+	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
+
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -167,6 +171,7 @@ var (
 		ibc.AppModuleBasic{},
 		ibctransfer.AppModuleBasic{},
 		// native x/
+		oracle.AppModuleBasic{},
 		pricefeed.AppModuleBasic{},
 		epochs.AppModuleBasic{},
 		perp.AppModuleBasic{},
@@ -188,6 +193,7 @@ var (
 		perptypes.VaultModuleAccount:     {},
 		perptypes.PerpEFModuleAccount:    {},
 		perptypes.FeePoolModuleAccount:   {},
+		oracletypes.ModuleName:           {},
 		epochstypes.ModuleName:           {},
 		common.TreasuryPoolModuleAccount: {},
 		wasm.ModuleName:                  {},
@@ -257,6 +263,7 @@ type NibiruApp struct {
 	// ---------------
 	// Nibiru keepers
 	// ---------------
+	oracleKeeper    oraclekeeper.Keeper
 	epochsKeeper    epochskeeper.Keeper
 	perpKeeper      perpkeeper.Keeper
 	pricefeedKeeper pricefeedkeeper.Keeper
@@ -336,6 +343,7 @@ func NewNibiruApp(
 		ibchost.StoreKey,
 		ibctransfertypes.StoreKey,
 		// nibiru x/ keys
+		oracletypes.StoreKey,
 		pricefeedtypes.StoreKey,
 		epochstypes.StoreKey,
 		perptypes.StoreKey,
@@ -422,6 +430,11 @@ func NewNibiruApp(
 	app.authzKeeper = authzkeeper.NewKeeper(keys[authzkeeper.StoreKey], appCodec, app.BaseApp.MsgServiceRouter())
 
 	// ---------------------------------- Nibiru Chain x/ keepers
+
+	app.oracleKeeper = oraclekeeper.NewKeeper(
+		appCodec, keys[oracletypes.StoreKey], app.GetSubspace(oracletypes.ModuleName),
+		app.accountKeeper, app.bankKeeper, app.distrKeeper, &app.stakingKeeper, distrtypes.ModuleName,
+	)
 
 	app.pricefeedKeeper = pricefeedkeeper.NewKeeper(
 		appCodec, keys[pricefeedtypes.StoreKey], memKeys[pricefeedtypes.MemStoreKey],
@@ -550,6 +563,8 @@ func NewNibiruApp(
 	var skipGenesisInvariants = cast.ToBool(
 		appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
+	oracleModule := oracle.NewAppModule(appCodec, app.oracleKeeper, app.accountKeeper, app.bankKeeper)
+
 	pricefeedModule := pricefeed.NewAppModule(
 		appCodec, app.pricefeedKeeper, app.accountKeeper, app.bankKeeper)
 	epochsModule := epochs.NewAppModule(appCodec, app.epochsKeeper)
@@ -585,6 +600,7 @@ func NewNibiruApp(
 		authzmodule.NewAppModule(appCodec, app.authzKeeper, app.accountKeeper, app.bankKeeper, app.interfaceRegistry),
 
 		// native x/
+		oracleModule,
 		pricefeedModule,
 		epochsModule,
 		vpoolModule,
@@ -622,6 +638,7 @@ func NewNibiruApp(
 		vestingtypes.ModuleName,
 		stakingtypes.ModuleName,
 		// native x/
+		oracletypes.ModuleName, // does nothing
 		pricefeedtypes.ModuleName,
 		epochstypes.ModuleName,
 		vpooltypes.ModuleName,
@@ -635,6 +652,7 @@ func NewNibiruApp(
 	app.mm.SetOrderEndBlockers(
 		crisistypes.ModuleName,
 		govtypes.ModuleName,
+		oracletypes.ModuleName,
 		stakingtypes.ModuleName,
 		capabilitytypes.ModuleName,
 		authtypes.ModuleName,
@@ -684,6 +702,7 @@ func NewNibiruApp(
 		upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
 		// native x/
+		oracletypes.ModuleName,
 		pricefeedtypes.ModuleName,
 		epochstypes.ModuleName,
 		vpooltypes.ModuleName,
@@ -985,6 +1004,7 @@ func initParamsKeeper(
 	// Native module params keepers
 	paramsKeeper.Subspace(pricefeedtypes.ModuleName)
 	paramsKeeper.Subspace(epochstypes.ModuleName)
+	paramsKeeper.Subspace(oracletypes.ModuleName)
 	// ibc params keepers
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
