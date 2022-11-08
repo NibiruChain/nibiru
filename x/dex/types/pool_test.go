@@ -739,45 +739,45 @@ func TestGetD(t *testing.T) {
 
 }
 
-func TestSolveStableswapInvariant(t *testing.T) {
-	for _, tc := range []struct {
-		name                   string
-		poolAssets             []PoolAsset
-		amplificationParameter sdk.Dec
-		tokenIn                sdk.Coin
-		tokenOutDenom          string
-		expectedErr            error
-		expectedY              int64
-	}{
-		{
-			name: "Compute stableswap - 2 assets - tested against Curve contracts code..",
-			poolAssets: []PoolAsset{
-				{
-					Token: sdk.NewInt64Coin("aaa", 200_000_000),
-				},
-				{
-					Token: sdk.NewInt64Coin("bbb", 100_000_000),
-				},
-			},
-			amplificationParameter: sdk.MustNewDecFromStr("4000"),
-			tokenIn:                sdk.NewCoin("aaa", sdk.NewInt(100)),
-			tokenOutDenom:          "bbb",
-			expectedErr:            nil,
-			expectedY:              3058517699,
-		},
-	} {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			pool := Pool{
-				PoolAssets: tc.poolAssets,
-				PoolParams: PoolParams{A: tc.amplificationParameter},
-			}
+// func TestSolveStableswapInvariant(t *testing.T) {
+// 	for _, tc := range []struct {
+// 		name                   string
+// 		poolAssets             []PoolAsset
+// 		amplificationParameter sdk.Dec
+// 		tokenIn                sdk.Coin
+// 		tokenOutDenom          string
+// 		expectedErr            error
+// 		expectedY              int64
+// 	}{
+// 		{
+// 			name: "Compute stableswap - 2 assets - tested against Curve contracts code..",
+// 			poolAssets: []PoolAsset{
+// 				{
+// 					Token: sdk.NewInt64Coin("aaa", 200_000_000),
+// 				},
+// 				{
+// 					Token: sdk.NewInt64Coin("bbb", 100_000_000),
+// 				},
+// 			},
+// 			amplificationParameter: sdk.MustNewDecFromStr("4000"),
+// 			tokenIn:                sdk.NewCoin("aaa", sdk.NewInt(100)),
+// 			tokenOutDenom:          "bbb",
+// 			expectedErr:            nil,
+// 			expectedY:              3058517699,
+// 		},
+// 	} {
+// 		tc := tc
+// 		t.Run(tc.name, func(t *testing.T) {
+// 			pool := Pool{
+// 				PoolAssets: tc.poolAssets,
+// 				PoolParams: PoolParams{A: tc.amplificationParameter},
+// 			}
 
-			y, err := pool.SolveStableswapInvariant(tc.tokenIn, tc.tokenOutDenom)
-			require.NoError(t, err)
+// 			y, err := pool.SolveStableswapInvariant(tc.tokenIn, tc.tokenOutDenom)
+// 			require.NoError(t, err)
 
-			require.EqualValues(t, tc.expectedY, y.Int64())
-		})
-	}
+// 			require.EqualValues(t, tc.expectedY, y.Int64())
+// 		})
+// 	}
 
-}
+// }

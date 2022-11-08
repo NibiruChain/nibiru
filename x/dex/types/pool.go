@@ -4,6 +4,8 @@ import (
 	"errors"
 	fmt "fmt"
 
+	"github.com/holiman/uint256"
+
 	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -313,35 +315,77 @@ func (pool *Pool) setInitialPoolAssets(poolAssets []PoolAsset) (err error) {
 func (pool Pool) getD() sdk.Int {
 
 	poolAssets := pool.PoolAssets
-	nCoins := sdk.NewInt(int64(len(poolAssets)))
+	nCoins := uint256.NewInt().SetUint64(uint64(len(poolAssets)))
 
-	totalSupply := sdk.ZeroInt()
-	previousD := sdk.ZeroInt()
+	S := uint256.NewInt()
+	Ann := uint256.NewInt()
+	previousD := uint256.NewInt()
+	A_Precision := common.APrecision
 
+	Amp := uint256.NewInt().SetUint64(uint64(pool.PoolParams.A.TruncateInt64()))
+	Amp.Mul(Amp, A_Precision)
+
+	var poolAssetsTokens []*uint256.Int
 	for _, token := range poolAssets {
-		totalSupply = totalSupply.Add(token.Token.Amount)
+		amount := uint256.NewInt().SetUint64(token.Token.Amount.Uint64())
+		poolAssetsTokens = append(poolAssetsTokens, amount)
+		S.Add(S, amount)
 	}
 
-	D := totalSupply
-	Ann := pool.PoolParams.A.TruncateInt().Mul(nCoins)
+	D := uint256.NewInt().Set(S)
+	Ann.Mul(Amp, nCoins)
 
 	for i := 0; i < 255; i++ {
-		D_P := D
 
-		for _, token := range poolAssets {
-			D_P = D_P.Mul(D).Quo(token.Token.Amount.Mul(nCoins)) // If division by 0, this will be borked: only withdrawal will work. And that is good
-		}
-		previousD = D
+		D_P := uint256.NewInt().Set(D)
+		for _, token := range poolAssetsTokens {
 
-		D_nom := Ann.Mul(totalSupply).Add(D_P.Mul(nCoins)).Mul(D)
-		D_denom := Ann.Sub(sdk.OneInt()).Mul(D).Add(nCoins.Add(sdk.OneInt()).Mul(D_P))
+			D_P.Div(
+				uint256.NewInt().Mul(D_P, D),
+				uint256.NewInt().Mul(token, nCoins),
+			)
 
-		D = D_nom.Quo(D_denom)
-
-		if D.Sub(previousD).Abs().LTE(sdk.OneInt()) {
-			return D
 		}
 
+		previousD = uint256.NewInt().Set(D)
+
+		// D = (Ann * S / A_PRECISION + D_P * N_COINS) * D / ((Ann - A_PRECISION) * D / A_PRECISION + (N_COINS + 1) * D_P)
+
+		num := (uint256.NewInt().Mul(
+			uint256.NewInt().Add(
+				uint256.NewInt().Div(
+					uint256.NewInt().Mul(Ann, S),
+					A_Precision,
+				),
+				uint256.NewInt().Mul(D_P, nCoins),
+			),
+			D,
+		))
+		denom := uint256.NewInt().Add(
+			uint256.NewInt().Div(
+				uint256.NewInt().Mul(
+					uint256.NewInt().Sub(Ann, A_Precision),
+					D,
+				),
+				A_Precision,
+			),
+			uint256.NewInt().Mul(
+				uint256.NewInt().Add(
+					nCoins,
+					uint256.NewInt().SetOne(),
+				),
+				D_P,
+			),
+		)
+
+		// D = (Ann * S / A_PRECISION + D_P * N_COINS) * D / ((Ann - A_PRECISION) * D / A_PRECISION + (N_COINS + 1) * D_P)
+		absDifference := uint256.NewInt()
+		D.Div(num, denom)
+
+		absDifference.Abs(uint256.NewInt().Sub(D, previousD))
+		if absDifference.Lt(uint256.NewInt().SetUint64(2)) {
+			return sdk.NewIntFromUint64(D.Uint64())
+		}
 	}
 
 	// # convergence typically occurs in 4 rounds or less, this should be unreachable!

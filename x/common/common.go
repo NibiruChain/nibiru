@@ -3,9 +3,11 @@ package common
 import (
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"strings"
 
 	"github.com/NibiruChain/nibiru/collections"
+	"github.com/holiman/uint256"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -34,6 +36,7 @@ var (
 	Pair_ETH_NUSD  = AssetPair{Token0: DenomETH, Token1: DenomNUSD}
 
 	ErrInvalidTokenPair = sdkerrors.Register(ModuleName, 1, "invalid token pair")
+	APrecision          = uint256.NewInt().SetUint64(100)
 )
 
 //-----------------------------------------------------------------------------
@@ -178,4 +181,17 @@ func (pairs AssetPairs) MarshalJSON() ([]byte, error) {
 		return json.Marshal(assetPairsJSON(AssetPairs{}))
 	}
 	return json.Marshal(assetPairsJSON(pairs))
+}
+
+// MustIntToUint256 converts an int64 to a uint256 pointer
+func MustIntToUint256(i int64) *uint256.Int {
+	value, isOverflow := uint256.FromBig(big.NewInt(i))
+	if isOverflow {
+		panic("overflow in int conversion")
+	}
+	return value
+}
+
+func MustUint256ToInt64(i *uint256.Int) int64 {
+	return i.ToBig().Int64()
 }
