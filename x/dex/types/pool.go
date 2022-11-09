@@ -312,18 +312,20 @@ func (pool *Pool) setInitialPoolAssets(poolAssets []PoolAsset) (err error) {
 // A * sum(x_i) * n**n + D = A * D * n**n + D**(n+1) / (n**n * prod(x_i))
 // Converging solution:
 // D[j+1] = (A * n**n * sum(x_i) - D[j]**(n+1) / (n**n prod(x_i))) / (A * n**n - 1)
-func (pool Pool) getD() sdk.Int {
+func (pool Pool) getD() *uint256.Int {
 
 	poolAssets := pool.PoolAssets
 	nCoins := uint256.NewInt().SetUint64(uint64(len(poolAssets)))
 
 	S := uint256.NewInt()
-	Ann := uint256.NewInt()
 	previousD := uint256.NewInt()
 	A_Precision := common.APrecision
 
 	Amp := uint256.NewInt().SetUint64(uint64(pool.PoolParams.A.TruncateInt64()))
 	Amp.Mul(Amp, A_Precision)
+
+	Ann := uint256.NewInt()
+	Ann.Mul(Amp, nCoins)
 
 	var poolAssetsTokens []*uint256.Int
 	for _, token := range poolAssets {
@@ -333,7 +335,6 @@ func (pool Pool) getD() sdk.Int {
 	}
 
 	D := uint256.NewInt().Set(S)
-	Ann.Mul(Amp, nCoins)
 
 	for i := 0; i < 255; i++ {
 
@@ -350,7 +351,7 @@ func (pool Pool) getD() sdk.Int {
 		previousD = uint256.NewInt().Set(D)
 
 		// D = (Ann * S / A_PRECISION + D_P * N_COINS) * D / ((Ann - A_PRECISION) * D / A_PRECISION + (N_COINS + 1) * D_P)
-
+		// tmp := uint256.NewInt()
 		num := (uint256.NewInt().Mul(
 			uint256.NewInt().Add(
 				uint256.NewInt().Div(
@@ -384,7 +385,7 @@ func (pool Pool) getD() sdk.Int {
 
 		absDifference.Abs(uint256.NewInt().Sub(D, previousD))
 		if absDifference.Lt(uint256.NewInt().SetUint64(2)) {
-			return sdk.NewIntFromUint64(D.Uint64())
+			return D
 		}
 	}
 
@@ -395,61 +396,108 @@ func (pool Pool) getD() sdk.Int {
 
 }
 
+// getA returns the amplification factor of the pool with the specified precision (constant)
+func (pool Pool) getA() (Amp *uint256.Int) {
+	Amp = uint256.NewInt().SetUint64(uint64(pool.PoolParams.A.TruncateInt64()))
+	Amp.Mul(Amp, common.APrecision)
+	return
+}
+
+// Search for the i and j indices for a swap like x[j] if one makes x[i] = x
+func (pool Pool) getIJforSwap(denomIn, denomOut string) (i int, j int, err error) {
+	i, _, err = pool.getPoolAssetAndIndex(denomIn)
+	if err != nil {
+		return
+	}
+
+	j, _, err = pool.getPoolAssetAndIndex(denomOut)
+	if err != nil {
+		return
+	}
+
+	return i, j, nil
+}
+
+func MustSdkIntToUint256(num sdk.Int) *uint256.Int {
+	return uint256.NewInt().SetUint64(uint64(num.Int64()))
+}
+
 // Calculate Token out if one swap token in (no fees computed there)
 // Done by solving quadratic equation iteratively.
 // x_1**2 + x1 * (sum' - (A*n**n - 1) * D / (A * n**n)) = D ** (n+1)/(n ** (2 * n) * prod' * A)
 // x_1**2 + b*x_1 = c
-
 // x_1 = (x_1**2 + c) / (2*x_1 + b)
-func (pool Pool) SolveStableswapInvariant(tokenIn sdk.Coin, tokenOutDenom string) (sdk.Int, error) {
+func (pool Pool) SolveStableswapInvariant(tokenIn sdk.Coin, tokenOutDenom string) (yAmount sdk.Int, err error) {
+
+	A := pool.getA()
 	D := pool.getD()
-	_xp := pool.PoolAssets
-	nCoins := sdk.NewInt(int64(len(_xp)))
 
-	assetInIndex, _, err := pool.getPoolAssetAndIndex(tokenIn.Denom)
+	Ann := uint256.NewInt()
+	nCoins := uint256.NewInt().SetUint64(uint64(len(pool.PoolAssets)))
+	Ann.Mul(A, nCoins)
+
+	c := uint256.NewInt()
+	S := uint256.NewInt()
+	_x := uint256.NewInt()
+	// y_prev := uint256.NewInt()
+
+	i, j, err := pool.getIJforSwap(tokenIn.Denom, tokenOutDenom)
 	if err != nil {
-		return sdk.NewInt(0), err
+		return
 	}
 
-	assetOutIndex, _, err := pool.getPoolAssetAndIndex(tokenOutDenom)
-	if err != nil {
-		return sdk.NewInt(0), err
-	}
-
-	var _x sdk.Int
-	c := sdk.ZeroInt()
-	S := sdk.ZeroInt()
-	Ann := pool.PoolParams.A.TruncateInt().Mul(nCoins)
-
-	for i := 0; i < int(nCoins.Int64()); i++ {
-		if i == assetInIndex {
-			_x = tokenIn.Amount
-		} else if i != assetOutIndex {
-			_x = _xp[assetInIndex].Token.Amount
+	for _i := 0; _i < len(pool.PoolAssets); _i++ {
+		if _i == i {
+			_x = MustSdkIntToUint256(tokenIn.Amount)
+		} else if _i != j {
+			_x = MustSdkIntToUint256(pool.PoolAssets[_i].Token.Amount)
 		} else {
 			continue
 		}
-		S = S.Add(_x)
-		c = c.Mul(D).Quo(_x.Mul(nCoins))
+
+		S.Add(S, _x)
+		c.Div(
+			uint256.NewInt().Mul(c, D),
+			uint256.NewInt().Mul(_x, nCoins),
+		)
 	}
 
-	c = c.Mul(D).Quo(Ann.Mul(nCoins))
-	b := S.Add(D.Quo(Ann))
-	y := D
-	y_prev := sdk.ZeroInt()
+	// c = c * D * A_PRECISION / (Ann * N_COINS)
+	c.Div(
+		uint256.NewInt().Mul(c, uint256.NewInt().Mul(D, common.APrecision)),
+		uint256.NewInt().Mul(Ann, nCoins),
+	)
 
-	fmt.Println("D", D)
-	fmt.Println("Ann", Ann)
-	fmt.Println("c", c)
-	fmt.Println("b", b)
-	fmt.Println("y", y)
+	b := uint256.NewInt().Add(
+		S,
+		uint256.NewInt().Div(
+			uint256.NewInt().Mul(D, common.APrecision),
+			Ann,
+		),
+	)
 
-	for i := 0; i < 255; i++ {
-		y_prev = y
-		y = y.Mul(y).Add(c).Quo(sdk.NewInt(2).Mul(y).Add(b).Sub(D))
+	y := uint256.NewInt().Set(D)
 
-		if y.Sub(y_prev).Abs().LTE(sdk.OneInt()) {
-			return y, nil
+	for _i := 0; _i < 255; _i++ {
+		y_prev := uint256.NewInt().Set(y)
+
+		uint256.NewInt().Div(
+			uint256.NewInt().Add(uint256.NewInt().Mul(y, y), c),
+			uint256.NewInt().Sub(
+				uint256.NewInt().Add(
+					uint256.NewInt().Mul(uint256.NewInt().SetUint64(2),
+						y,
+					),
+					b,
+				),
+				D,
+			),
+		)
+
+		absDifference := uint256.NewInt()
+		absDifference.Abs(uint256.NewInt().Sub(y, y_prev))
+		if absDifference.Lt(uint256.NewInt().SetUint64(2)) {
+			return sdk.NewIntFromUint64(y.Uint64()), nil
 		}
 
 	}

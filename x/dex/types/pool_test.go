@@ -663,7 +663,7 @@ func TestGetD(t *testing.T) {
 		poolAssets             []PoolAsset
 		amplificationParameter sdk.Dec
 		expectedErr            error
-		expectedD              int64
+		expectedD              uint64
 	}{
 		{
 			name: "Compute D - 3 assets - tested against Curve contracts code..",
@@ -733,7 +733,7 @@ func TestGetD(t *testing.T) {
 			}
 
 			D := pool.getD()
-			require.EqualValues(t, tc.expectedD, D.Int64())
+			require.EqualValues(t, tc.expectedD, D.Uint64())
 		})
 	}
 
