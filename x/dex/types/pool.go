@@ -439,7 +439,6 @@ func (pool Pool) SolveStableswapInvariant(tokenIn sdk.Coin, tokenOutDenom string
 	c := uint256.NewInt()
 	S := uint256.NewInt()
 	_x := uint256.NewInt()
-	// y_prev := uint256.NewInt()
 
 	i, j, err := pool.getIJforSwap(tokenIn.Denom, tokenOutDenom)
 	if err != nil {
@@ -477,11 +476,12 @@ func (pool Pool) SolveStableswapInvariant(tokenIn sdk.Coin, tokenOutDenom string
 	)
 
 	y := uint256.NewInt().Set(D)
+	y_prev := uint256.NewInt()
 
 	for _i := 0; _i < 255; _i++ {
-		y_prev := uint256.NewInt().Set(y)
+		y_prev.Set(y)
 
-		uint256.NewInt().Div(
+		y.Div(
 			uint256.NewInt().Add(uint256.NewInt().Mul(y, y), c),
 			uint256.NewInt().Sub(
 				uint256.NewInt().Add(
