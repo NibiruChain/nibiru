@@ -139,6 +139,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#997](https://github.com/NibiruChain/nibiru/pull/997) - feat: emit `ReserveSnapshotSavedEvent` in vpool EndBlocker
 * [#1011](https://github.com/NibiruChain/nibiru/pull/1011) - feat(perp): add DonateToEF cli command
 * [#1044](https://github.com/NibiruChain/nibiru/pull/1044) - feat(wasm): cosmwasm module integration
+* [#1059](https://github.com/NibiruChain/nibiru/pull/1059) - feat(perp): Added query all-positions
 
 ### Fixes
 * [#1023](https://github.com/NibiruChain/nibiru/pull/1023) - collections: golang compiler bug
