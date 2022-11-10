@@ -3,7 +3,7 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/NibiruChain/nibiru/collections"
+	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/testutil"
 

@@ -12,8 +12,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/NibiruChain/collections"
+
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/collections"
 	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/client/cli"

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/collections"
+	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/testutil"
 

@@ -3,9 +3,9 @@ package keeper
 import (
 	"time"
 
-	"github.com/NibiruChain/nibiru/collections"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/vpool/types"

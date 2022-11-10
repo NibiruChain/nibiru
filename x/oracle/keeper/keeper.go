@@ -3,15 +3,14 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/collections"
-
-	"github.com/tendermint/tendermint/libs/log"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/tendermint/tendermint/libs/log"
+
+	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )

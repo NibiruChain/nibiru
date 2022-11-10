@@ -4,15 +4,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/collections"
-
+	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
-	testutil "github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"github.com/NibiruChain/nibiru/x/vpool"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/collections"
+	"github.com/NibiruChain/collections"
 
 	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
 

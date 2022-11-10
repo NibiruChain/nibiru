@@ -3,9 +3,9 @@ package keeper
 import (
 	"testing"
 
-	"github.com/NibiruChain/nibiru/collections"
-
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/collections"
 )
 
 func TestKeeper_GetVoteTargets(t *testing.T) {
