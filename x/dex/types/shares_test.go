@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
@@ -291,7 +292,7 @@ func TestSwapForSwapAndJoin(t *testing.T) {
 			pool := Pool{
 				Id:          1,
 				Address:     "some_address",
-				PoolParams:  PoolParams{SwapFee: sdk.ZeroDec()},
+				PoolParams:  PoolParams{SwapFee: sdk.ZeroDec(), PoolType: common.BalancerPool},
 				PoolAssets:  tc.poolAssets,
 				TotalWeight: sdk.NewInt(2 << 30),
 				TotalShares: sdk.NewCoin("nibiru/pool/1", sdk.NewIntWithDecimal(100, 18)),
