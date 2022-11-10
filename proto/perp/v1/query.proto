@@ -23,7 +23,12 @@ service Query {
   rpc QueryPositions(QueryPositionsRequest)
       returns (QueryPositionsResponse) {
     option (google.api.http).get = "/nibiru/perp/positions";
-  }  
+  }
+
+  rpc QueryAllPositions(QueryAllPositionsRequest)
+      returns (QueryAllPositionsResponse) {
+    option (google.api.http).get = "/nibiru/perp/all_positions";
+  }
 
   rpc FundingRates(QueryFundingRatesRequest)
       returns (QueryFundingRatesResponse) {
@@ -48,6 +53,14 @@ message QueryPositionsRequest {
 }
 
 message QueryPositionsResponse {
+  repeated QueryPositionResponse positions = 1;
+}
+
+// ---------------------------------------- All Positions
+message QueryAllPositionsRequest {
+}
+
+message QueryAllPositionsResponse {
   repeated QueryPositionResponse positions = 1;
 }
 

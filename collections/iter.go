@@ -150,6 +150,16 @@ func iteratorFromRange[K, V any](s sdk.KVStore, r Ranger[K], kc KeyEncoder[K], v
 	}
 }
 
+// iteratorFromRange generates an Iterator instance, with the proper prefixing.
+func iteratorFromPrefix[K, V any](s sdk.KVStore, prefix []byte, kc KeyEncoder[K], vc ValueEncoder[V]) Iterator[K, V] {
+	return Iterator[K, V]{
+		kc:          kc,
+		vc:          vc,
+		iter:        sdk.KVStorePrefixIterator(s, prefix),
+		prefixBytes: prefix,
+	}
+}
+
 // Iterator defines a generic wrapper around an sdk.Iterator.
 // This iterator provides automatic key and value encoding,
 // it assumes all the keys and values contained within the sdk.Iterator

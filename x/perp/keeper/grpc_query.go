@@ -51,6 +51,30 @@ func (q queryServer) QueryPositions(
 	}, nil
 }
 
+func (q queryServer) QueryAllPositions(
+	goCtx context.Context, req *types.QueryAllPositionsRequest,
+) (*types.QueryAllPositionsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	var positions []*types.QueryPositionResponse
+	var iter = q.k.Positions.IterateAll(ctx)
+
+	for _, pos := range iter.Values() {
+		println(pos.TraderAddress)
+		position, err := q.position(ctx, pos.Pair, sdk.MustAccAddressFromBech32(pos.TraderAddress))
+		if err == nil {
+			positions = append(positions, position)
+		}
+	}
+
+	return &types.QueryAllPositionsResponse{
+		Positions: positions,
+	}, nil
+}
+
 func (q queryServer) QueryPosition(
 	goCtx context.Context, req *types.QueryPositionRequest,
 ) (*types.QueryPositionResponse, error) {

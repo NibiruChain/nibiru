@@ -28,6 +28,7 @@ func GetQueryCmd() *cobra.Command {
 		CmdQueryParams(),
 		CmdQueryPosition(),
 		CmdQueryPositions(),
+		CmdQueryAllPositions(),
 		CmdQueryFundingRates(),
 	}
 	for _, cmd := range cmds {
@@ -131,6 +132,35 @@ func CmdQueryPositions() *cobra.Command {
 				cmd.Context(), &types.QueryPositionsRequest{
 					Trader: trader.String(),
 				},
+			)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdQueryAllPositions() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "all-positions",
+		Short: "return all open positions of all traders",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.QueryAllPositions(
+				cmd.Context(), &types.QueryAllPositionsRequest{},
 			)
 			if err != nil {
 				return err
