@@ -59,15 +59,16 @@ func (q queryServer) QueryAllPositions(
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	var positions []*types.QueryPositionResponse
-	var iter = q.k.Positions.IterateAll(ctx)
 
-	for _, pos := range iter.Values() {
-		println(pos.TraderAddress)
-		position, err := q.position(ctx, pos.Pair, sdk.MustAccAddressFromBech32(pos.TraderAddress))
-		if err == nil {
-			positions = append(positions, position)
+	iter := q.k.Positions.Iterate(ctx, collections.PairRange[common.AssetPair, sdk.AccAddress]{})
+	defer iter.Close()
+	var positions []*types.QueryPositionResponse
+	for ; iter.Valid(); iter.Next() {
+		pos, err := q.position(ctx, iter.Key().K1(), iter.Key().K2())
+		if err != nil {
+			return nil, err
 		}
+		positions = append(positions, pos)
 	}
 
 	return &types.QueryAllPositionsResponse{
