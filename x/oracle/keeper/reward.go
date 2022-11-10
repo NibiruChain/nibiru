@@ -9,7 +9,6 @@ import (
 )
 
 func (k Keeper) AllocatePairRewards(ctx sdk.Context, funderModule string, pair string, totalCoins sdk.Coins, votePeriods uint64) error {
-	// check if pair exists
 	if !k.Pairs.Has(ctx, pair) {
 		return types.ErrUnknownPair.Wrap(pair)
 	}
@@ -31,35 +30,21 @@ func (k Keeper) AllocatePairRewards(ctx sdk.Context, funderModule string, pair s
 	return k.bankKeeper.SendCoinsFromModuleToModule(ctx, funderModule, types.ModuleName, totalCoins)
 }
 
-// RewardBallotWinners implements at the end of every VotePeriod,
+// rewardBallotWinners implements at the end of every VotePeriod,
 // give out a portion of spread fees collected in the oracle reward pool
 // to the oracle voters that voted faithfully.
-func (k Keeper) RewardBallotWinners(
+func (k Keeper) rewardBallotWinners(
 	ctx sdk.Context,
-	voteTargets map[string]struct{},
-	ballotWinners map[string]types.ValidatorPerformance,
+	whitelistedPairs map[string]struct{},
+	validatorPerformanceMap map[string]types.ValidatorPerformance,
 ) {
-	rewardPair := make([]string, len(voteTargets))
-
-	i := 0
-	for pair := range voteTargets {
-		rewardPair[i] = pair
-		i++
-	}
-
-	// Sum weight of the claims
-	ballotPowerSum := int64(0)
-	for _, winner := range ballotWinners {
-		ballotPowerSum += winner.Weight
-	}
-
-	// Exit if the ballot is empty
-	if ballotPowerSum == 0 {
+	validatorsWeightSum := types.GetValidatorWeightSum(validatorPerformanceMap)
+	if validatorsWeightSum == 0 {
 		return
 	}
 
 	var periodRewards sdk.DecCoins
-	for _, pair := range rewardPair {
+	for pair := range whitelistedPairs {
 		rewardsForPair := k.AccrueVotePeriodPairRewards(ctx, pair)
 
 		// return if there's no rewards to give out
@@ -72,11 +57,11 @@ func (k Keeper) RewardBallotWinners(
 
 	// Dole out rewards
 	var distributedReward sdk.Coins
-	for _, winner := range ballotWinners {
+	for _, winner := range validatorPerformanceMap {
 		receiverVal := k.StakingKeeper.Validator(ctx, winner.ValAddress)
 
 		// Reflects contribution
-		rewardCoins, _ := periodRewards.MulDec(sdk.NewDec(winner.Weight).QuoInt64(ballotPowerSum)).TruncateDecimal()
+		rewardCoins, _ := periodRewards.MulDec(sdk.NewDec(winner.Weight).QuoInt64(validatorsWeightSum)).TruncateDecimal()
 
 		// In case absence of the validator, we just skip distribution
 		if receiverVal != nil && !rewardCoins.IsZero() {

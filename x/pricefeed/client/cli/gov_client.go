@@ -2,7 +2,7 @@ package cli
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -55,7 +55,7 @@ func CmdAddOracleProposal() *cobra.Command {
 			from := clientCtx.GetFromAddress()
 
 			proposal := &types.AddOracleProposal{}
-			contents, err := ioutil.ReadFile(args[0])
+			contents, err := os.ReadFile(args[0])
 			if err != nil {
 				return err
 			}

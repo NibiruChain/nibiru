@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -11,6 +12,34 @@ import (
 	"github.com/NibiruChain/nibiru/x/oracle/keeper"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
+
+var (
+	stakingAmt = sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction)
+
+	randomExchangeRate = sdk.NewDec(1700)
+)
+
+func setup(t *testing.T) (keeper.TestInput, types.MsgServer) {
+	input := keeper.CreateTestInput(t)
+	params := input.OracleKeeper.GetParams(input.Ctx)
+	params.VotePeriod = 1
+	params.SlashWindow = 100
+	input.OracleKeeper.SetParams(input.Ctx, params)
+	h := keeper.NewMsgServerImpl(input.OracleKeeper)
+
+	sh := staking.NewHandler(input.StakingKeeper)
+
+	// Validator created
+	_, err := sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[0], keeper.ValPubKeys[0], stakingAmt))
+	require.NoError(t, err)
+	_, err = sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[1], keeper.ValPubKeys[1], stakingAmt))
+	require.NoError(t, err)
+	_, err = sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[2], keeper.ValPubKeys[2], stakingAmt))
+	require.NoError(t, err)
+	staking.EndBlocker(input.Ctx, input.StakingKeeper)
+
+	return input, h
+}
 
 func TestKeeper_RewardsDistributionMultiVotePeriods(t *testing.T) {
 	// this simulates allocating rewards for the pair gov stable

@@ -3,7 +3,7 @@ package cli_test
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strconv"
 	"testing"
 	"time"
@@ -491,7 +491,7 @@ func (s IntegrationTestSuite) TestX_AddOracleProposalAndVote() {
 		Pairs:       []string{"ohm:usd", "btc:usd"},
 	}
 	proposalFile := sdktestutil.WriteToNewTempFile(s.T(), string(clientCtx.Codec.MustMarshalJSON(proposal)))
-	contents, err := ioutil.ReadFile(proposalFile.Name())
+	contents, err := os.ReadFile(proposalFile.Name())
 	s.Require().NoError(err)
 
 	// ----------------------------------------------------------------------

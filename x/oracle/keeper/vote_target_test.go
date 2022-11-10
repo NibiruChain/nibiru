@@ -20,7 +20,7 @@ func TestKeeper_GetVoteTargets(t *testing.T) {
 		input.OracleKeeper.Pairs.Insert(input.Ctx, target)
 	}
 
-	targets := input.OracleKeeper.GetVoteTargets(input.Ctx)
+	targets := input.OracleKeeper.GetWhitelistedPairs(input.Ctx)
 	require.Equal(t, expectedTargets, targets)
 }
 
@@ -34,6 +34,6 @@ func TestKeeper_IsVoteTarget(t *testing.T) {
 	validTargets := []string{"bar", "foo", "whoowhoo"}
 	for _, target := range validTargets {
 		input.OracleKeeper.Pairs.Insert(input.Ctx, target)
-		require.True(t, input.OracleKeeper.IsVoteTarget(input.Ctx, target))
+		require.True(t, input.OracleKeeper.IsWhitelistedPair(input.Ctx, target))
 	}
 }

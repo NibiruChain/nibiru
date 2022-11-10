@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"sort"
-
 	"github.com/NibiruChain/nibiru/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -10,55 +8,48 @@ import (
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
+// UpdateExchangeRates updates the ExchangeRates, this is supposed to be executed on EndBlock.
 func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 	k.Logger(ctx).Info("processing validator price votes")
+	k.resetExchangeRates(ctx)
+
+	validatorPerformanceMap := k.newValidatorPerformanceMap(ctx)
+	pairBallotMap, whitelistedPairsMap := k.getPairBallotMapAndWhitelistedPairsMap(ctx, validatorPerformanceMap)
+
+	k.countVotesAndUpdateExchangeRates(ctx, pairBallotMap, validatorPerformanceMap)
+	k.registerMissedVotes(ctx, whitelistedPairsMap, validatorPerformanceMap)
+
+	k.rewardBallotWinners(ctx, whitelistedPairsMap, validatorPerformanceMap)
+
 	params := k.GetParams(ctx)
-	// Build claim map over all validators in active set
-	validatorPerformanceMap := make(map[string]types.ValidatorPerformance)
+	k.clearBallots(ctx, params.VotePeriod)
+	k.applyWhitelist(ctx, params.Whitelist, whitelistedPairsMap)
+}
 
-	maxValidators := k.StakingKeeper.MaxValidators(ctx)
-	iterator := k.StakingKeeper.ValidatorsPowerStoreIterator(ctx)
-	defer iterator.Close()
-
-	powerReduction := k.StakingKeeper.PowerReduction(ctx)
-
-	i := 0
-	for ; iterator.Valid() && i < int(maxValidators); iterator.Next() {
-		validator := k.StakingKeeper.Validator(ctx, iterator.Value())
-
-		// Exclude not bonded validator
-		if validator.IsBonded() {
-			valAddr := validator.GetOperator()
-			validatorPerformanceMap[valAddr.String()] = types.NewValidatorPerformance(validator.GetConsensusPower(powerReduction), 0, 0, valAddr)
-			i++
+// registerMissedVotes it parses all validators performance and increases the missed vote of those that did not vote.
+func (k Keeper) registerMissedVotes(ctx sdk.Context, whitelistedPairsMap map[string]struct{}, validatorPerformanceMap map[string]types.ValidatorPerformance) {
+	whitelistedPairsLen := len(whitelistedPairsMap)
+	for _, validatorPerformance := range validatorPerformanceMap {
+		if int(validatorPerformance.WinCount) == whitelistedPairsLen {
+			continue
 		}
-	}
 
-	pairsMap := make(map[string]struct{})
-	for _, p := range k.Pairs.Iterate(ctx, collections.Range[string]{}).Keys() {
-		pairsMap[p] = struct{}{}
+		k.MissCounters.Insert(ctx, validatorPerformance.ValAddress, k.MissCounters.GetOr(ctx, validatorPerformance.ValAddress, 0)+1)
+		k.Logger(ctx).Info("vote miss", "validator", validatorPerformance.ValAddress.String())
 	}
+}
 
-	for _, key := range k.ExchangeRates.Iterate(ctx, collections.Range[string]{}).Keys() {
-		err := k.ExchangeRates.Delete(ctx, key)
-		if err != nil {
-			panic(err)
-		}
-	}
-	// Organize votes to ballot by pair
-	// NOTE: **Filter out inactive or jailed validators**
-	// NOTE: **Make abstain votes to have zero vote power**
-	pairBallotMap := k.OrganizeBallotByPair(ctx, validatorPerformanceMap)
-	// remove ballots which are not passing
-	RemoveInvalidBallots(ctx, k, pairsMap, pairBallotMap)
-	// Iterate through ballots and update exchange rates; drop if not enough votes have been achieved.
+// countVotesAndUpdateExchangeRates processes the votes and updates the ExchangeRates based on the results.
+func (k Keeper) countVotesAndUpdateExchangeRates(
+	ctx sdk.Context,
+	pairBallotMap map[string]types.ExchangeRateBallot,
+	validatorPerformanceMap map[string]types.ValidatorPerformance,
+) {
+	params := k.GetParams(ctx)
+
 	for pair, ballot := range pairBallotMap {
-		sort.Sort(ballot)
+		exchangeRate := Tally(ballot, params.RewardBand, validatorPerformanceMap)
 
-		// Get weighted median of cross exchange rates
-		exchangeRate := Tally(ctx, ballot, params.RewardBand, validatorPerformanceMap)
-
-		// Set the exchange rate, emit ABCI event
 		k.ExchangeRates.Insert(ctx, pair, exchangeRate)
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(types.EventTypeExchangeRateUpdate,
@@ -67,27 +58,65 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 			),
 		)
 	}
+}
 
-	//---------------------------
-	// Do miss counting & slashing
-	voteTargetsLen := len(pairsMap)
-	for _, claim := range validatorPerformanceMap {
-		// Skip abstain & valid voters
-		if int(claim.WinCount) == voteTargetsLen {
+// getPairBallotMapAndWhitelistedPairsMap returns a map of pairs and ballots excluding invalid Ballots
+// and a map with all whitelisted pairs.
+func (k Keeper) getPairBallotMapAndWhitelistedPairsMap(
+	ctx sdk.Context,
+	validatorPerformanceMap map[string]types.ValidatorPerformance,
+) (map[string]types.ExchangeRateBallot, map[string]struct{}) {
+	pairBallotMap := k.mapBallotByPair(ctx, validatorPerformanceMap)
+
+	return k.RemoveInvalidBallots(ctx, pairBallotMap)
+}
+
+// getWhitelistedPairsMap returns a map containing all the pairs as the key.
+func (k Keeper) getWhitelistedPairsMap(ctx sdk.Context) map[string]struct{} {
+	pairsMap := make(map[string]struct{})
+	for _, p := range k.GetWhitelistedPairs(ctx) {
+		pairsMap[p] = struct{}{}
+	}
+
+	return pairsMap
+}
+
+// resetExchangeRates removes all exchange rates from the state
+func (k Keeper) resetExchangeRates(ctx sdk.Context) {
+	for _, key := range k.ExchangeRates.Iterate(ctx, collections.Range[string]{}).Keys() {
+		err := k.ExchangeRates.Delete(ctx, key)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+// newValidatorPerformanceMap creates a new map of validators and their performance, excluding validators that are
+// not bonded.
+func (k Keeper) newValidatorPerformanceMap(ctx sdk.Context) map[string]types.ValidatorPerformance {
+	validatorPerformanceMap := make(map[string]types.ValidatorPerformance)
+
+	maxValidators := k.StakingKeeper.MaxValidators(ctx)
+	powerReduction := k.StakingKeeper.PowerReduction(ctx)
+
+	iterator := k.StakingKeeper.ValidatorsPowerStoreIterator(ctx)
+	defer iterator.Close()
+
+	i := 0
+	for ; iterator.Valid() && i < int(maxValidators); iterator.Next() {
+		validator := k.StakingKeeper.Validator(ctx, iterator.Value())
+
+		// exclude not bonded
+		if !validator.IsBonded() {
 			continue
 		}
 
-		// Increase miss counter
-		k.MissCounters.Insert(ctx, claim.ValAddress, k.MissCounters.GetOr(ctx, claim.ValAddress, 0)+1)
-		k.Logger(ctx).Info("vote miss", "validator", claim.ValAddress.String())
+		valAddr := validator.GetOperator()
+		validatorPerformanceMap[valAddr.String()] = types.NewValidatorPerformance(
+			validator.GetConsensusPower(powerReduction), valAddr,
+		)
+		i++
 	}
 
-	// Distribute rewards to ballot winners
-	k.RewardBallotWinners(ctx, pairsMap, validatorPerformanceMap)
-
-	// Clear the ballot
-	k.ClearBallots(ctx, params.VotePeriod)
-
-	// Update vote targets
-	k.ApplyWhitelist(ctx, params.Whitelist, pairsMap)
+	return validatorPerformanceMap
 }

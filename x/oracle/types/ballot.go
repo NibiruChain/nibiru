@@ -93,7 +93,6 @@ func (pb ExchangeRateBallot) WeightedMedian() sdk.Dec {
 }
 
 // WeightedMedianWithAssertion returns the median weighted by the power of the ExchangeRateVote.
-// CONTRACT: ballot must be sorted
 func (pb ExchangeRateBallot) WeightedMedianWithAssertion() sdk.Dec {
 	if !sort.IsSorted(pb) {
 		panic("ballot must be sorted")
@@ -166,11 +165,21 @@ type ValidatorPerformance struct {
 }
 
 // NewValidatorPerformance generates a ValidatorPerformance instance.
-func NewValidatorPerformance(power, weight, winCount int64, recipient sdk.ValAddress) ValidatorPerformance {
+func NewValidatorPerformance(power int64, recipient sdk.ValAddress) ValidatorPerformance {
 	return ValidatorPerformance{
 		Power:      power,
-		Weight:     weight,
-		WinCount:   winCount,
+		Weight:     0,
+		WinCount:   0,
 		ValAddress: recipient,
 	}
+}
+
+// GetValidatorWeightSum returns the sum of the weight of all the validators included in the map
+func GetValidatorWeightSum(validatorList map[string]ValidatorPerformance) int64 {
+	ballotPowerSum := int64(0)
+	for _, winner := range validatorList {
+		ballotPowerSum += winner.Weight
+	}
+
+	return ballotPowerSum
 }

@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1024](https://github.com/NibiruChain/nibiru/pull/1024) - refactor(oracle): remove Pair and PairList
 * [#1034](https://github.com/NibiruChain/nibiru/pull/1034) - refactor(proto): use proto-typed events x/dex
 * [#1035](https://github.com/NibiruChain/nibiru/pull/1035) - refactor(proto): use proto-typed events for epochs
+* [#1014](https://github.com/NibiruChain/nibiru/pull/1014) - refactor(oracle): full refactor of EndBlock UpdateExchangeRates() long function
 * [#1054](https://github.com/NibiruChain/nibiru/pull/1054) - chore(deps): Bump github.com/cosmos/ibc-go/v3 from 3.3.0 to 3.4.0
 * [#1043](https://github.com/NibiruChain/nibiru/pull/1043) - chore(deps): Bump github.com/spf13/cobra from 1.6.0 to 1.6.1
 * [#1056](https://github.com/NibiruChain/nibiru/pull/1056) - chore(deps): Bump github.com/prometheus/client_golang from 1.13.0 to 1.13.1

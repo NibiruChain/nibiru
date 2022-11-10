@@ -2,7 +2,7 @@ package types
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/NibiruChain/nibiru/x/testutil"
@@ -40,7 +40,7 @@ func TestMarshalAddOracleProposal(t *testing.T) {
 	proposalJSON := sdktestutil.WriteToNewTempFile(
 		t, proposalJSONString,
 	)
-	contents, err := ioutil.ReadFile(proposalJSON.Name())
+	contents, err := os.ReadFile(proposalJSON.Name())
 	assert.NoError(t, err)
 
 	t.Log("Unmarshal json bytes into proposal object; check validity")

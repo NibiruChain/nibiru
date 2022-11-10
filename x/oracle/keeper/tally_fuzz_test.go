@@ -1,49 +1,15 @@
-package keeper_test
+package keeper
 
 import (
-	"sort"
 	"testing"
-
-	"github.com/cosmos/cosmos-sdk/x/staking"
-
-	"github.com/NibiruChain/nibiru/x/oracle/keeper"
-
-	fuzz "github.com/google/gofuzz"
-	"github.com/stretchr/testify/require"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	fuzz "github.com/google/gofuzz"
+	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
-
-var (
-	stakingAmt = sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction)
-
-	randomExchangeRate = sdk.NewDec(1700)
-)
-
-func setup(t *testing.T) (keeper.TestInput, types.MsgServer) {
-	input := keeper.CreateTestInput(t)
-	params := input.OracleKeeper.GetParams(input.Ctx)
-	params.VotePeriod = 1
-	params.SlashWindow = 100
-	input.OracleKeeper.SetParams(input.Ctx, params)
-	h := keeper.NewMsgServerImpl(input.OracleKeeper)
-
-	sh := staking.NewHandler(input.StakingKeeper)
-
-	// Validator created
-	_, err := sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[0], keeper.ValPubKeys[0], stakingAmt))
-	require.NoError(t, err)
-	_, err = sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[1], keeper.ValPubKeys[1], stakingAmt))
-	require.NoError(t, err)
-	_, err = sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[2], keeper.ValPubKeys[2], stakingAmt))
-	require.NoError(t, err)
-	staking.EndBlocker(input.Ctx, input.StakingKeeper)
-
-	return input, h
-}
 
 func TestFuzz_Tally(t *testing.T) {
 	validators := map[string]int64{}
@@ -63,7 +29,7 @@ func TestFuzz_Tally(t *testing.T) {
 			for validator, power := range validators {
 				addr, err := sdk.ValAddressFromBech32(validator)
 				require.NoError(t, err)
-				(*e)[validator] = types.NewValidatorPerformance(power, 0, 0, addr)
+				(*e)[validator] = types.NewValidatorPerformance(power, addr)
 			}
 		},
 		func(e *types.ExchangeRateBallot, c fuzz.Continue) {
@@ -77,16 +43,12 @@ func TestFuzz_Tally(t *testing.T) {
 				ballot = append(ballot, types.NewBallotVoteForTally(rate, c.RandString(), addr, power))
 			}
 
-			sort.Sort(ballot)
-
 			*e = ballot
 		},
 	)
 
 	// set random pairs and validators
 	f.Fuzz(&validators)
-
-	input, _ := setup(t)
 
 	claimMap := map[string]types.ValidatorPerformance{}
 	f.Fuzz(&claimMap)
@@ -98,7 +60,7 @@ func TestFuzz_Tally(t *testing.T) {
 	f.Fuzz(&rewardBand)
 
 	require.NotPanics(t, func() {
-		keeper.Tally(input.Ctx, ballot, rewardBand, claimMap)
+		Tally(ballot, rewardBand, claimMap)
 	})
 }
 
@@ -146,7 +108,6 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 					ballot = append(ballot, types.NewBallotVoteForTally(rate, pair, addr, power))
 				}
 
-				sort.Sort(ballot)
 				(*e)[pair] = ballot
 			}
 		},
@@ -160,10 +121,14 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 	voteTargets := map[string]struct{}{}
 	f.Fuzz(&voteTargets)
 
+	for k := range voteTargets {
+		input.OracleKeeper.Pairs.Insert(input.Ctx, k)
+	}
+
 	voteMap := map[string]types.ExchangeRateBallot{}
 	f.Fuzz(&voteMap)
 
 	require.NotPanics(t, func() {
-		keeper.RemoveInvalidBallots(input.Ctx, input.OracleKeeper, voteTargets, voteMap)
+		input.OracleKeeper.RemoveInvalidBallots(input.Ctx, voteMap)
 	})
 }
