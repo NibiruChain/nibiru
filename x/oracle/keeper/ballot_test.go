@@ -4,16 +4,14 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/collections"
-
-	"github.com/NibiruChain/nibiru/x/common"
-
-	"github.com/stretchr/testify/require"
-
-	"github.com/NibiruChain/nibiru/x/oracle/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/collections"
+
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
 func TestOrganizeAggregate(t *testing.T) {
