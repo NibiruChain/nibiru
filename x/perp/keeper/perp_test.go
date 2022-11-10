@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/collections"
+	"github.com/NibiruChain/collections"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"

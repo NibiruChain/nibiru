@@ -1,11 +1,11 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/nibiru/collections"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/oracle/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // mapBallotByPair collects all oracle votes for the period, categorized by the votes' pair parameter
