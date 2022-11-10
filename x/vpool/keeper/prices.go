@@ -3,7 +3,7 @@ package keeper
 import (
 	"time"
 
-	"github.com/NibiruChain/nibiru/collections"
+	"github.com/NibiruChain/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
