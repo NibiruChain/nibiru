@@ -77,7 +77,7 @@ func (q querier) Actives(c context.Context, _ *types.QueryActivesRequest) (*type
 // VoteTargets queries the voting target list on current vote period
 func (q querier) VoteTargets(c context.Context, _ *types.QueryVoteTargetsRequest) (*types.QueryVoteTargetsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	return &types.QueryVoteTargetsResponse{VoteTargets: q.GetVoteTargets(ctx)}, nil
+	return &types.QueryVoteTargetsResponse{VoteTargets: q.GetWhitelistedPairs(ctx)}, nil
 }
 
 // FeederDelegation queries the account address that the validator operator delegated oracle vote rights to

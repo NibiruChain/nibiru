@@ -3,7 +3,7 @@ package cli_test
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strconv"
 	"testing"
 	"time"
@@ -88,7 +88,7 @@ func (s *IntegrationTestSuite) TestGovAddVpool() {
 		MaxLeverage:            sdk.MustNewDecFromStr("15"),
 	}
 	proposalFile := sdktestutil.WriteToNewTempFile(s.T(), string(val.ClientCtx.Codec.MustMarshalJSON(proposal)))
-	contents, err := ioutil.ReadFile(proposalFile.Name())
+	contents, err := os.ReadFile(proposalFile.Name())
 	s.Require().NoError(err)
 
 	s.T().Log("Unmarshal json bytes into proposal object; check validity")
