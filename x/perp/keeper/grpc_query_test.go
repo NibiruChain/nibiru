@@ -59,7 +59,6 @@ func TestQueryAllPositions(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Log(pos.String())
-
 }
 
 func TestQueryPosition(t *testing.T) {

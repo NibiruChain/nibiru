@@ -66,10 +66,6 @@ func (m Map[K, V]) Iterate(ctx sdk.Context, rng Ranger[K]) Iterator[K, V] {
 	return iteratorFromRange[K, V](m.getStore(ctx), rng, m.kc, m.vc)
 }
 
-func (m Map[K, V]) IterateAll(ctx sdk.Context) Iterator[K, V] {
-	return iteratorFromPrefix[K, V](ctx.KVStore(m.sk), m.prefix, m.kc, m.vc)
-}
-
 func (m Map[K, V]) getStore(ctx sdk.Context) sdk.KVStore {
 	return prefix.NewStore(ctx.KVStore(m.sk), m.prefix)
 }
