@@ -398,8 +398,8 @@ func (pool Pool) getD() *uint256.Int {
 
 // getA returns the amplification factor of the pool with the specified precision (constant)
 func (pool Pool) getA() (Amp *uint256.Int) {
-	Amp = uint256.NewInt().SetUint64(uint64(pool.PoolParams.A.TruncateInt64()))
-	Amp.Mul(Amp, common.APrecision)
+	Amp = uint256.NewInt().SetUint64(uint64(pool.PoolParams.A.TruncateInt().Int64()))
+	// Amp.Mul(Amp, common.APrecision)
 	return
 }
 
@@ -436,7 +436,7 @@ func (pool Pool) SolveStableswapInvariant(tokenIn sdk.Coin, tokenOutDenom string
 	nCoins := uint256.NewInt().SetUint64(uint64(len(pool.PoolAssets)))
 	Ann.Mul(A, nCoins)
 
-	c := uint256.NewInt()
+	c := uint256.NewInt().Set(D)
 	S := uint256.NewInt()
 	_x := uint256.NewInt()
 
@@ -446,8 +446,12 @@ func (pool Pool) SolveStableswapInvariant(tokenIn sdk.Coin, tokenOutDenom string
 	}
 
 	for _i := 0; _i < len(pool.PoolAssets); _i++ {
+
 		if _i == i {
-			_x = MustSdkIntToUint256(tokenIn.Amount)
+			_x = uint256.NewInt().Add(
+				MustSdkIntToUint256(pool.PoolAssets[_i].Token.Amount),
+				MustSdkIntToUint256(tokenIn.Amount),
+			)
 		} else if _i != j {
 			_x = MustSdkIntToUint256(pool.PoolAssets[_i].Token.Amount)
 		} else {
@@ -502,6 +506,7 @@ func (pool Pool) SolveStableswapInvariant(tokenIn sdk.Coin, tokenOutDenom string
 
 	}
 
+	// Should converge in a couple of round unless pool is borked
 	panic(nil)
 
 }

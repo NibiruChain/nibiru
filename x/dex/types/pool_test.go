@@ -1,6 +1,12 @@
 package types
 
 import (
+	"encoding/csv"
+	"encoding/json"
+	fmt "fmt"
+	"log"
+	"os"
+	"strconv"
 	"testing"
 
 	"github.com/NibiruChain/nibiru/x/testutil"
@@ -739,45 +745,104 @@ func TestGetD(t *testing.T) {
 
 }
 
-// func TestSolveStableswapInvariant(t *testing.T) {
-// 	for _, tc := range []struct {
-// 		name                   string
-// 		poolAssets             []PoolAsset
-// 		amplificationParameter sdk.Dec
-// 		tokenIn                sdk.Coin
-// 		tokenOutDenom          string
-// 		expectedErr            error
-// 		expectedY              int64
-// 	}{
-// 		{
-// 			name: "Compute stableswap - 2 assets - tested against Curve contracts code..",
-// 			poolAssets: []PoolAsset{
-// 				{
-// 					Token: sdk.NewInt64Coin("aaa", 200_000_000),
-// 				},
-// 				{
-// 					Token: sdk.NewInt64Coin("bbb", 100_000_000),
-// 				},
-// 			},
-// 			amplificationParameter: sdk.MustNewDecFromStr("4000"),
-// 			tokenIn:                sdk.NewCoin("aaa", sdk.NewInt(100)),
-// 			tokenOutDenom:          "bbb",
-// 			expectedErr:            nil,
-// 			expectedY:              3058517699,
-// 		},
-// 	} {
-// 		tc := tc
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			pool := Pool{
-// 				PoolAssets: tc.poolAssets,
-// 				PoolParams: PoolParams{A: tc.amplificationParameter},
-// 			}
+func main() {
+	str := "[2,15,23]"
+	var ints []int
+	err := json.Unmarshal([]byte(str), &ints)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("%v", ints)
+}
 
-// 			y, err := pool.SolveStableswapInvariant(tc.tokenIn, tc.tokenOutDenom)
-// 			require.NoError(t, err)
+type TestCase struct {
+	balance       []uint64
+	amplification sdk.Int
+	send          int
+	receive       int
+	dx            sdk.Int
+	expectedDy    sdk.Int
+}
 
-// 			require.EqualValues(t, tc.expectedY, y.Int64())
-// 		})
-// 	}
+func createTestCases(data [][]string) (testCases []TestCase) {
 
-// }
+	for i, line := range data {
+		if i > 0 { // omit header line
+			var rec TestCase
+
+			err := json.Unmarshal([]byte(line[0]), &rec.balance)
+			if err != nil {
+				panic(err)
+			}
+
+			amplification, err := strconv.ParseInt(line[1], 10, 64)
+			if err != nil {
+				panic(err)
+			}
+
+			rec.amplification = sdk.NewInt(amplification)
+
+			rec.send, _ = strconv.Atoi(line[2])
+			rec.receive, _ = strconv.Atoi(line[3])
+
+			dx, err := strconv.ParseInt(line[4], 10, 64)
+			if err != nil {
+				panic(err)
+			}
+
+			expectedDy, err := strconv.ParseInt(line[5], 10, 64)
+			if err != nil {
+				panic(err)
+			}
+
+			rec.dx = sdk.NewInt(dx)
+			rec.expectedDy = sdk.NewInt(expectedDy)
+
+			testCases = append(testCases, rec)
+		}
+	}
+	return
+}
+
+func TestSolveStableswapInvariant(t *testing.T) {
+
+	t.Run("Test csv file", func(t *testing.T) {
+		f, err := os.Open("misc/stabletests.csv")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer f.Close()
+
+		// read csv values using csv.Reader
+		csvReader := csv.NewReader(f)
+		data, err := csvReader.ReadAll()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		testCases := createTestCases(data)
+
+		for _, tc := range testCases {
+			tc := tc
+
+			var poolAssets []PoolAsset
+
+			for i, balance := range tc.balance {
+				poolAssets = append(poolAssets, PoolAsset{Token: sdk.NewCoin("token"+strconv.Itoa(i), sdk.NewIntFromUint64(balance))})
+			}
+
+			pool := Pool{
+				PoolAssets: poolAssets,
+				PoolParams: PoolParams{A: tc.amplification.ToDec()},
+			}
+
+			dy, err := pool.SolveStableswapInvariant(
+				/* tokenIn = */ sdk.NewCoin("token"+strconv.Itoa(tc.send), tc.dx),
+				/* tokenOutDenom = */ "token"+strconv.Itoa(tc.receive),
+			)
+
+			require.NoError(t, err)
+			require.InDelta(t, tc.expectedDy.Int64(), dy.Int64(), 1)
+		}
+	})
+}
