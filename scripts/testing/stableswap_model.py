@@ -1,12 +1,13 @@
 from collections import deque
 from itertools import permutations
 import os
+
+import csv
 import random
-import pandas as pd
 
 DECIMALS = 6
 
-N_TESTS = 1
+N_TESTS = 200
 
 # From https://github.com/curvefi/curve-contract/blob/master/tests/simulation.py
 class Curve:
@@ -24,7 +25,7 @@ class Curve:
         """
         self.A = A  # actually A * n ** (n - 1) because it's an invariant
         self.n = n
-        self.fee = 10**7
+        self.fee = 0  # 10**7
         if p:
             self.p = p
         else:
@@ -173,54 +174,57 @@ class Curve:
 def generate_test_cases(n: int):
     """
     Create n test cases and store them in x/dex/types/misc/stable-swap-math.csv
-    For all test cases, all of the permutations of token in/ token out are created with random dx.
 
     Args:
         n (int): The number of test to create
     """
 
-    test_cases = pd.DataFrame(
-        columns=[
-            "balances",
-            "amplification",
-            "send",
-            "recv",
-            "dx",
-            "dy_2",
-        ],
-    )
+    test_cases = []
 
     for _ in range(n):
         n_coins = random.randint(2, 5)
         exchange_pairs = deque(permutations(range(n_coins), 2))
+
         # 10% chance of being 1
         amplification = random.randint(1, 4_000_000) if random.random() < 0.9 else 1
 
-        for exchange_pair in exchange_pairs:
-            balances = [random.randint(1, 10e16) for i in range(n_coins)]
+        exchange_pair = random.choice(exchange_pairs)
+        balances = [random.randint(1, 10e16) for i in range(n_coins)]
+        balances_save = balances.copy()
 
-            curve_model = Curve(amplification, balances, n_coins)
+        curve_model = Curve(amplification, balances, n_coins)
 
-            send, recv = exchange_pair
+        send, recv = exchange_pair
 
-            dx = random.randint(1, balances[recv])
-            dy_2 = curve_model.dy(send, recv, dx)
+        dx = random.randint(1, balances[recv])
+        dy = curve_model.exchange(send, recv, dx)
 
-            test_cases.loc[len(test_cases)] = [
-                balances,
+        test_cases.append(
+            [
+                balances_save,
                 amplification,
                 send,
                 recv,
                 dx,
-                dy_2,
+                dy,
             ]
+        )
 
-    test_cases.to_csv(
-        os.path.join(
-            os.path.dirname(__file__), "../../x/dex/types/misc/stabletests.csv"
-        ),
-        index=False,
+    # Cols:
+    #     balances
+    #     amplification
+    #     send
+    #     recv
+    #     dx
+    #     dy
+
+    file_path = os.path.join(
+        os.path.dirname(__file__), "../../x/dex/types/misc/stabletests.csv"
     )
+
+    with open(file_path, "w") as f:
+        writer = csv.writer(f)
+        writer.writerows(test_cases)
 
 
 if __name__ == "__main__":

@@ -459,6 +459,7 @@ func (pool Pool) SolveStableswapInvariant(tokenIn sdk.Coin, tokenOutDenom string
 		}
 
 		S.Add(S, _x)
+
 		c.Div(
 			uint256.NewInt().Mul(c, D),
 			uint256.NewInt().Mul(_x, nCoins),

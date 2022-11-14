@@ -822,7 +822,8 @@ func TestSolveStableswapInvariant(t *testing.T) {
 
 		testCases := createTestCases(data)
 
-		for _, tc := range testCases {
+		for i, tc := range testCases {
+			fmt.Println("Running test", i)
 			tc := tc
 
 			var poolAssets []PoolAsset
@@ -835,14 +836,19 @@ func TestSolveStableswapInvariant(t *testing.T) {
 				PoolAssets: poolAssets,
 				PoolParams: PoolParams{A: tc.amplification.ToDec()},
 			}
+			denomIn := "token" + strconv.Itoa(tc.send)
+			denomOut := "token" + strconv.Itoa(tc.receive)
 
 			dy, err := pool.SolveStableswapInvariant(
-				/* tokenIn = */ sdk.NewCoin("token"+strconv.Itoa(tc.send), tc.dx),
-				/* tokenOutDenom = */ "token"+strconv.Itoa(tc.receive),
+				/* tokenIn = */ sdk.NewCoin(denomIn, tc.dx),
+				/* tokenOutDenom = */ denomOut,
 			)
 
+			_, poolAssetOut, err := pool.getPoolAssetAndIndex(denomOut)
 			require.NoError(t, err)
-			require.InDelta(t, tc.expectedDy.Int64(), dy.Int64(), 1)
+
+			require.NoError(t, err)
+			require.InDelta(t, tc.expectedDy.Int64(), poolAssetOut.Token.Amount.Sub(dy).Int64(), 1)
 		}
 	})
 }
