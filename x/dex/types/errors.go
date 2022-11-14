@@ -17,6 +17,7 @@ var (
 	ErrInvalidPoolType      = sdkerrors.Register(ModuleName, 15, "pool_type needs to be either `balancer` or `stableswap`")
 	ErrAmplificationMissing = sdkerrors.Register(ModuleName, 16, "amplification parameter is missing")
 	ErrAmplificationTooLow  = sdkerrors.Register(ModuleName, 17, "amplification parameter a needs to be greater than 1")
+	ErrInitialDeposit       = sdkerrors.Register(ModuleName, 19, "initial deposit requires all coins deposited")
 
 	// create-pool tx cli errors
 	ErrMissingPoolFileFlag   = sdkerrors.Register(ModuleName, 6, "must pass in a pool json using the --pool-file flag")

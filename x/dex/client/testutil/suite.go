@@ -92,7 +92,7 @@ func (s *IntegrationTestSuite) TestCreatePoolCmd_Errors() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			out, err := ExecMsgCreatePool(s.T(), val.ClientCtx, val.Address, tc.tokenWeights, tc.initialDeposit, "0.003", "0.003")
+			out, err := ExecMsgCreatePool(s.T(), val.ClientCtx, val.Address, tc.tokenWeights, tc.initialDeposit, "0.003", "0.003", "0", "0")
 			if tc.expectedErr != nil {
 				s.Require().ErrorIs(err, tc.expectedErr)
 			} else {
@@ -126,7 +126,7 @@ func (s *IntegrationTestSuite) TestCreatePoolCmd() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			out, err := ExecMsgCreatePool(s.T(), val.ClientCtx, val.Address, tc.tokenWeights, tc.initialDeposit, "0.003", "0.003")
+			out, err := ExecMsgCreatePool(s.T(), val.ClientCtx, val.Address, tc.tokenWeights, tc.initialDeposit, "0.003", "0.003", "0", "0")
 			s.Require().NoError(err, out.String())
 
 			resp := &sdk.TxResponse{}
@@ -157,6 +157,8 @@ func (s *IntegrationTestSuite) TestNewJoinPoolCmd() {
 		/*tokenWeights=*/ fmt.Sprintf("100%s,100%s", "coin-2", "coin-3"),
 		/*swapFee=*/ "0.01",
 		/*exitFee=*/ "0.01",
+		/*poolType=*/ "0",
+		/*amplification=*/ "0",
 	)
 	s.Require().NoError(err)
 
@@ -222,6 +224,8 @@ func (s *IntegrationTestSuite) TestNewExitPoolCmd() {
 		/*tokenWeights=*/ fmt.Sprintf("100%s,100%s", "coin-3", "coin-4"),
 		/*swapFee=*/ "0.01",
 		/*exitFee=*/ "0.01",
+		/*poolType=*/ "0",
+		/*amplification=*/ "0",
 	)
 	s.Require().NoError(err)
 
@@ -369,6 +373,8 @@ func (s *IntegrationTestSuite) TestSwapAssets() {
 		/*tokenWeights=*/ fmt.Sprintf("100%s,100%s", "coin-4", "coin-5"),
 		/*swapFee=*/ "0.01",
 		/*exitFee=*/ "0.01",
+		/*poolType=*/ "0",
+		/*amplification=*/ "0",
 	)
 	s.Require().NoError(err)
 

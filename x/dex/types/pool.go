@@ -100,7 +100,7 @@ func (poolParams PoolParams) validatePoolParams() (err error) {
 			return ErrAmplificationMissing
 		}
 
-		if poolParams.A.LT(sdk.OneDec()) {
+		if !poolParams.A.IsPositive() {
 			return ErrAmplificationTooLow
 		}
 	}
@@ -126,7 +126,11 @@ func (pool *Pool) AddTokensToPool(tokensIn sdk.Coins) (
 	}
 
 	// Calculate max amount of tokensIn we can deposit into pool (no swap)
-	numShares, remCoins, err = pool.numSharesOutFromTokensIn(tokensIn)
+	if pool.PoolParams.PoolType == common.StableswapPool {
+
+	} else {
+		numShares, remCoins, err = pool.numSharesOutFromTokensIn(tokensIn)
+	}
 	if err != nil {
 		return sdk.ZeroInt(), sdk.Coins{}, err
 	}
@@ -312,16 +316,15 @@ func (pool *Pool) setInitialPoolAssets(poolAssets []PoolAsset) (err error) {
 // A * sum(x_i) * n**n + D = A * D * n**n + D**(n+1) / (n**n * prod(x_i))
 // Converging solution:
 // D[j+1] = (A * n**n * sum(x_i) - D[j]**(n+1) / (n**n prod(x_i))) / (A * n**n - 1)
-func (pool Pool) getD() *uint256.Int {
+func (pool Pool) getD(poolAssets []PoolAsset) *uint256.Int {
 
-	poolAssets := pool.PoolAssets
 	nCoins := uint256.NewInt().SetUint64(uint64(len(poolAssets)))
 
 	S := uint256.NewInt()
 	previousD := uint256.NewInt()
 	A_Precision := common.APrecision
 
-	Amp := uint256.NewInt().SetUint64(uint64(pool.PoolParams.A.TruncateInt64()))
+	Amp := uint256.NewInt().SetUint64(uint64(pool.PoolParams.A.Int64()))
 	Amp.Mul(Amp, A_Precision)
 
 	Ann := uint256.NewInt()
@@ -398,8 +401,7 @@ func (pool Pool) getD() *uint256.Int {
 
 // getA returns the amplification factor of the pool with the specified precision (constant)
 func (pool Pool) getA() (Amp *uint256.Int) {
-	Amp = uint256.NewInt().SetUint64(uint64(pool.PoolParams.A.TruncateInt().Int64()))
-	// Amp.Mul(Amp, common.APrecision)
+	Amp = uint256.NewInt().SetUint64(uint64(pool.PoolParams.A.Int64()))
 	return
 }
 
@@ -430,7 +432,7 @@ func MustSdkIntToUint256(num sdk.Int) *uint256.Int {
 func (pool Pool) SolveStableswapInvariant(tokenIn sdk.Coin, tokenOutDenom string) (yAmount sdk.Int, err error) {
 
 	A := pool.getA()
-	D := pool.getD()
+	D := pool.getD(pool.PoolAssets)
 
 	Ann := uint256.NewInt()
 	nCoins := uint256.NewInt().SetUint64(uint64(len(pool.PoolAssets)))

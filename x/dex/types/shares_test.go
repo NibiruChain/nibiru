@@ -605,3 +605,48 @@ func TestUpdateLiquidityInvalidInput(t *testing.T) {
 		})
 	}
 }
+
+func TestNumSharesOutStablswap(t *testing.T) {
+	for _, tc := range []struct {
+		name              string
+		poolAssets        []PoolAsset
+		existingShares    int64
+		tokensIn          sdk.Coins
+		expectedNumShares sdk.Int
+		expectedRemCoins  sdk.Coins
+	}{
+		{
+			name: "all coins deposited",
+			poolAssets: []PoolAsset{
+				{
+					Token: sdk.NewInt64Coin("aaa", 100),
+				},
+				{
+					Token: sdk.NewInt64Coin("bbb", 100),
+				},
+			},
+			existingShares: 100,
+			tokensIn: sdk.NewCoins(
+				sdk.NewInt64Coin("aaa", 100),
+				sdk.NewInt64Coin("bbb", 100),
+			),
+			expectedNumShares: sdk.NewInt(100),
+			expectedRemCoins:  sdk.NewCoins(),
+		},
+	} {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			pool := Pool{
+				Id:          1,
+				Address:     "some_address",
+				PoolParams:  PoolParams{A: sdk.NewInt(30)},
+				PoolAssets:  tc.poolAssets,
+				TotalWeight: sdk.OneInt(),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", tc.existingShares),
+			}
+			_, err := pool.numSharesOutFromTokensInStableSwap(tc.tokensIn)
+			require.NoError(t, err)
+			// panic(nil)
+		})
+	}
+}

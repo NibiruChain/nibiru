@@ -32,19 +32,19 @@ func TestCreatePool(t *testing.T) {
 		{
 			name:        "invalid creator addr",
 			creatorAddr: []byte{},
-			poolParams:  types.PoolParams{PoolType: "balancer"},
+			poolParams:  types.PoolParams{PoolType: common.BalancerPool},
 			poolAssets:  []types.PoolAsset{},
 			expectedErr: fmt.Errorf("empty address string is not allowed"),
 		},
 		{
 			name:        "not enough assets",
-			poolParams:  types.PoolParams{PoolType: "balancer"},
+			poolParams:  types.PoolParams{PoolType: common.BalancerPool},
 			poolAssets:  []types.PoolAsset{},
 			expectedErr: types.ErrTooFewPoolAssets,
 		},
 		{
 			name:       "too many assets",
-			poolParams: types.PoolParams{PoolType: "balancer"},
+			poolParams: types.PoolParams{PoolType: common.BalancerPool},
 			poolAssets: []types.PoolAsset{
 				{
 					Token:  sdk.NewInt64Coin("aaa", 1),
@@ -63,7 +63,7 @@ func TestCreatePool(t *testing.T) {
 		},
 		{
 			name:       "asset not whitelisted 1",
-			poolParams: types.PoolParams{PoolType: "balancer"},
+			poolParams: types.PoolParams{PoolType: common.BalancerPool},
 			poolAssets: []types.PoolAsset{
 				{
 					Token:  sdk.NewInt64Coin(common.DenomUSDC, 1),
@@ -78,7 +78,7 @@ func TestCreatePool(t *testing.T) {
 		},
 		{
 			name:       "asset not whitelisted 2",
-			poolParams: types.PoolParams{PoolType: "balancer"},
+			poolParams: types.PoolParams{PoolType: common.BalancerPool},
 			poolAssets: []types.PoolAsset{
 				{
 					Token:  sdk.NewInt64Coin("aaa", 1),
@@ -93,7 +93,7 @@ func TestCreatePool(t *testing.T) {
 		},
 		{
 			name:       "insufficient pool creation fee",
-			poolParams: types.PoolParams{PoolType: "balancer"},
+			poolParams: types.PoolParams{PoolType: common.BalancerPool},
 			poolAssets: []types.PoolAsset{
 				{
 					Token:  sdk.NewInt64Coin(common.DenomUSDC, 1),
@@ -113,7 +113,7 @@ func TestCreatePool(t *testing.T) {
 		},
 		{
 			name:       "insufficient initial deposit",
-			poolParams: types.PoolParams{PoolType: "balancer"},
+			poolParams: types.PoolParams{PoolType: common.BalancerPool},
 			poolAssets: []types.PoolAsset{
 				{
 					Token:  sdk.NewInt64Coin(common.DenomNIBI, 1),
@@ -131,7 +131,7 @@ func TestCreatePool(t *testing.T) {
 		},
 		{
 			name:       "successful pool creation",
-			poolParams: types.PoolParams{PoolType: "balancer"},
+			poolParams: types.PoolParams{PoolType: common.BalancerPool},
 			poolAssets: []types.PoolAsset{
 				{
 					Token:  sdk.NewInt64Coin(common.DenomNUSD, 1),

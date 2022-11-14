@@ -3,6 +3,7 @@ package mock
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	common "github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/dex/types"
 )
 
@@ -20,8 +21,8 @@ func DexPool(poolId uint64, assets sdk.Coins, shares int64) types.Pool {
 		PoolParams: types.PoolParams{
 			SwapFee:  sdk.SmallestDec(),
 			ExitFee:  sdk.SmallestDec(),
-			A:        sdk.ZeroDec(),
-			PoolType: "balancer",
+			PoolType: common.BalancerPool,
+			A:        sdk.ZeroInt(),
 		},
 		PoolAssets:  poolAssets,
 		TotalShares: sdk.NewInt64Coin(types.GetPoolShareBaseDenom(poolId), shares),

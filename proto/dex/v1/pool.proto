@@ -27,15 +27,15 @@ message PoolParams {
   // are closer together may be best with a higher value.
   // This is only used if the pool_type is set to `stableswap``
   string A = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.moretags) = "yaml:\"amplification\"",
     (gogoproto.nullable) = false
   ];
 
-  // pool_type can either be `balancer` or `stableswap`
+  // pool_type can either be 0 for `balancer` or 1 for `stableswap`
   // - `balancer`: Balancer are pools defined by the equation xy=k, extended by the weighs introduced by Balancer.
   // - `stableswap`: Stableswap pools are defined by a combination of constant-product and constant-sum pool
-  string pool_type = 4 [(gogoproto.moretags) = "yaml:\"pool_type\""];
+  uint64 pool_type = 4 [(gogoproto.moretags) = "yaml:\"pool_type\""];
 }
 
 // Which assets the pool contains.

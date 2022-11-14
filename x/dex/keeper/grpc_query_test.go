@@ -44,8 +44,8 @@ func TestQueryPoolHappyPath(t *testing.T) {
 				PoolParams: types.PoolParams{
 					SwapFee:  sdk.MustNewDecFromStr("0.03"),
 					ExitFee:  sdk.MustNewDecFromStr("0.03"),
-					A:        sdk.ZeroDec(),
-					PoolType: "balancer",
+					PoolType: common.BalancerPool,
+					A:        sdk.ZeroInt(),
 				},
 				PoolAssets: []types.PoolAsset{
 					{
@@ -338,8 +338,8 @@ func TestQueryPoolParams(t *testing.T) {
 				PoolParams: types.PoolParams{
 					SwapFee:  sdk.MustNewDecFromStr("0.03"),
 					ExitFee:  sdk.MustNewDecFromStr("0.03"),
-					A:        sdk.ZeroDec(),
-					PoolType: "balancer",
+					PoolType: common.BalancerPool,
+					A:        sdk.ZeroInt(),
 				},
 				PoolAssets: []types.PoolAsset{
 					{
@@ -357,8 +357,8 @@ func TestQueryPoolParams(t *testing.T) {
 			expectedPoolParams: types.PoolParams{
 				SwapFee:  sdk.MustNewDecFromStr("0.03"),
 				ExitFee:  sdk.MustNewDecFromStr("0.03"),
-				A:        sdk.ZeroDec(),
-				PoolType: "balancer",
+				PoolType: common.BalancerPool,
+				A:        sdk.ZeroInt(),
 			},
 		},
 	}

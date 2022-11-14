@@ -185,7 +185,7 @@ def generate_test_cases(n: int):
         n_coins = random.randint(2, 5)
         exchange_pairs = deque(permutations(range(n_coins), 2))
 
-        # 10% chance of being 1
+        # 10% chance of being 1 (constant product if A=1)
         amplification = random.randint(1, 4_000_000) if random.random() < 0.9 else 1
 
         exchange_pair = random.choice(exchange_pairs)
@@ -209,14 +209,6 @@ def generate_test_cases(n: int):
                 dy,
             ]
         )
-
-    # Cols:
-    #     balances
-    #     amplification
-    #     send
-    #     recv
-    #     dx
-    #     dy
 
     file_path = os.path.join(
         os.path.dirname(__file__), "../../x/dex/types/misc/stabletests.csv"
