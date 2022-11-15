@@ -328,7 +328,6 @@ func (pool Pool) getD(poolAssets []PoolAsset) *uint256.Int {
 	nCoins := uint256.NewInt().SetUint64(uint64(len(poolAssets)))
 
 	S := uint256.NewInt()
-	previousD := uint256.NewInt()
 	A_Precision := common.APrecision
 
 	Amp := uint256.NewInt().SetUint64(uint64(pool.PoolParams.A.Int64()))
@@ -358,7 +357,7 @@ func (pool Pool) getD(poolAssets []PoolAsset) *uint256.Int {
 
 		}
 
-		previousD = uint256.NewInt().Set(D)
+		previousD := uint256.NewInt().Set(D)
 
 		// D = (Ann * S / A_PRECISION + D_P * N_COINS) * D / ((Ann - A_PRECISION) * D / A_PRECISION + (N_COINS + 1) * D_P)
 		num := uint256.NewInt().Mul(
