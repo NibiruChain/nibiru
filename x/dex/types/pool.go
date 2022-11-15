@@ -127,7 +127,7 @@ func (pool *Pool) AddTokensToPool(tokensIn sdk.Coins) (
 
 	// Calculate max amount of tokensIn we can deposit into pool (no swap)
 	if pool.PoolParams.PoolType == common.StableswapPool {
-
+		numShares, err = pool.numSharesOutFromTokensInStableSwap(tokensIn)
 	} else {
 		numShares, remCoins, err = pool.numSharesOutFromTokensIn(tokensIn)
 	}
@@ -145,6 +145,8 @@ func (pool *Pool) AddTokensToPool(tokensIn sdk.Coins) (
 /*
 Adds tokens to a pool optimizing the amount of shares (swap + join) and updates the pool balances (i.e. liquidity).
 We compute the swap and then join the pool.
+
+This function is only necessary for balancer pool. Stableswap pool already takes all the deposit from the user.
 
 args:
   - tokensIn: the tokens to add to the pool
@@ -354,8 +356,7 @@ func (pool Pool) getD(poolAssets []PoolAsset) *uint256.Int {
 		previousD = uint256.NewInt().Set(D)
 
 		// D = (Ann * S / A_PRECISION + D_P * N_COINS) * D / ((Ann - A_PRECISION) * D / A_PRECISION + (N_COINS + 1) * D_P)
-		// tmp := uint256.NewInt()
-		num := (uint256.NewInt().Mul(
+		num := uint256.NewInt().Mul(
 			uint256.NewInt().Add(
 				uint256.NewInt().Div(
 					uint256.NewInt().Mul(Ann, S),
@@ -364,7 +365,7 @@ func (pool Pool) getD(poolAssets []PoolAsset) *uint256.Int {
 				uint256.NewInt().Mul(D_P, nCoins),
 			),
 			D,
-		))
+		)
 		denom := uint256.NewInt().Add(
 			uint256.NewInt().Div(
 				uint256.NewInt().Mul(

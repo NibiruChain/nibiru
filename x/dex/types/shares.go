@@ -2,7 +2,6 @@ package types
 
 import (
 	"errors"
-	fmt "fmt"
 	math "math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -146,6 +145,9 @@ For a stableswap pool, takes the amount of tokens desired to add to the pool,
 and calculates the number of pool shares and remaining coins after theoretically
 adding the tokensIn to the pool. All tokens are used in this function.
 
+The delta in number of share follows the evolution of the constant of the pool. E.g. if someone bring tokens
+to increase the value D of the pool by 10%, he will receive 10% of the existing token share.
+
 Note that this function is pure/read-only. It only calculates the theoretical amoount
 and doesn't modify the actual state.
 
@@ -189,22 +191,19 @@ func (pool Pool) numSharesOutFromTokensInStableSwap(tokensIn sdk.Coins) (
 	}
 
 	D1 := sdk.NewInt(int64(pool.getD(newPoolAssets).Uint64()))
-	fmt.Println(D0, D1)
-
 	if D1.LT(D0) {
 		// Should not happen
 		panic(err)
 	}
 
 	// Calculate, how much pool tokens to mint
-	var mintAmount sdk.Int
 	if tokenSupply.IsZero() {
-		mintAmount = D1 // Take the dust if there was any
+		numShares = D1 // Take the dust if there was any
 	} else {
-		mintAmount = tokenSupply.Mul(D1.Sub(D0)).Quo(D0)
+		numShares = tokenSupply.Mul(D1.Sub(D0)).Quo(D0)
 	}
 
-	return mintAmount, nil
+	return
 }
 
 /*
