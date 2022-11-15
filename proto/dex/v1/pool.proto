@@ -25,7 +25,7 @@ message PoolParams {
   // Amplification Parameter (A): [4,000 to 4,000,000,000] Larger value of A make the curve better resemble a straight 
   // line in the center (when pool is near balance).  Highly volatile assets should use a lower value, while assets that 
   // are closer together may be best with a higher value.
-  // This is only used if the pool_type is set to `stableswap``
+  // This is only used if the pool_type is set to 1 (stableswap)
   string A = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.moretags) = "yaml:\"amplification\"",
