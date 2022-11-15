@@ -3,7 +3,6 @@ package types
 import (
 	"encoding/csv"
 	"encoding/json"
-	fmt "fmt"
 	"log"
 	"os"
 	"strconv"
@@ -814,16 +813,6 @@ func TestGetD(t *testing.T) {
 		})
 	}
 
-}
-
-func main() {
-	str := "[2,15,23]"
-	var ints []int
-	err := json.Unmarshal([]byte(str), &ints)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("%v", ints)
 }
 
 type TestCaseDy struct {
