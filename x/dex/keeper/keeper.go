@@ -12,6 +12,7 @@ import (
 	gogotypes "github.com/gogo/protobuf/types"
 	"github.com/tendermint/tendermint/libs/log"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/dex/types"
 )
 
@@ -447,7 +448,7 @@ func (k Keeper) JoinPool(
 	poolAddr := pool.GetAddress()
 
 	var numShares sdk.Int
-	if !shouldSwap {
+	if !shouldSwap || pool.PoolParams.PoolType == common.StableswapPool {
 		numShares, remCoins, err = pool.AddTokensToPool(tokensIn)
 	} else {
 		numShares, remCoins, err = pool.AddAllTokensToPool(tokensIn)

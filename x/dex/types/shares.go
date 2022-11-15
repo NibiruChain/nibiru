@@ -222,6 +222,7 @@ ret:
 func (pool Pool) TokensOutFromPoolSharesIn(numSharesIn sdk.Int) (
 	tokensOut sdk.Coins, err error,
 ) {
+
 	if numSharesIn.IsZero() {
 		return nil, errors.New("num shares in must be greater than zero")
 	}

@@ -159,6 +159,11 @@ ret:
 func (pool *Pool) AddAllTokensToPool(tokensIn sdk.Coins) (
 	numShares sdk.Int, remCoins sdk.Coins, err error,
 ) {
+	if pool.PoolParams.PoolType == common.StableswapPool {
+		err = ErrInvalidPoolType
+		return
+	}
+
 	swapToken, err := pool.SwapForSwapAndJoin(tokensIn)
 	if err != nil {
 		return
