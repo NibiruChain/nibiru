@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	common "github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
