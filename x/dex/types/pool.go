@@ -324,7 +324,6 @@ func (pool *Pool) setInitialPoolAssets(poolAssets []PoolAsset) (err error) {
 // Converging solution:
 // D[j+1] = (A * n**n * sum(x_i) - D[j]**(n+1) / (n**n prod(x_i))) / (A * n**n - 1)
 func (pool Pool) getD(poolAssets []PoolAsset) *uint256.Int {
-
 	nCoins := uint256.NewInt().SetUint64(uint64(len(poolAssets)))
 
 	S := uint256.NewInt()
@@ -346,17 +345,13 @@ func (pool Pool) getD(poolAssets []PoolAsset) *uint256.Int {
 	D := uint256.NewInt().Set(S)
 
 	for i := 0; i < 255; i++ {
-
 		D_P := uint256.NewInt().Set(D)
 		for _, token := range poolAssetsTokens {
-
 			D_P.Div(
 				uint256.NewInt().Mul(D_P, D),
 				uint256.NewInt().Mul(token, nCoins),
 			)
-
 		}
-
 		previousD := uint256.NewInt().Set(D)
 
 		// D = (Ann * S / A_PRECISION + D_P * N_COINS) * D / ((Ann - A_PRECISION) * D / A_PRECISION + (N_COINS + 1) * D_P)
@@ -401,7 +396,6 @@ func (pool Pool) getD(poolAssets []PoolAsset) *uint256.Int {
 	// # if it does happen the pool is borked and LPs can withdraw via `remove_liquidity`
 	// panic
 	panic(nil)
-
 }
 
 // getA returns the amplification factor of the pool with the specified precision (constant)
@@ -435,7 +429,6 @@ func MustSdkIntToUint256(num sdk.Int) *uint256.Int {
 // x_1**2 + b*x_1 = c
 // x_1 = (x_1**2 + c) / (2*x_1 + b)
 func (pool Pool) SolveStableswapInvariant(tokenIn sdk.Coin, tokenOutDenom string) (yAmount sdk.Int, err error) {
-
 	A := pool.getA()
 	D := pool.getD(pool.PoolAssets)
 
