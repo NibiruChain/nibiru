@@ -4,13 +4,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/NibiruChain/nibiru/collections"
+	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/common"
-
-	"github.com/NibiruChain/nibiru/x/vpool/types"
-
 	"github.com/NibiruChain/nibiru/x/vpool/keeper"
+	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 // EndBlocker Called every block to store a snapshot of the vpool.

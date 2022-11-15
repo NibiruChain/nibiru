@@ -3,7 +3,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 
@@ -256,7 +256,7 @@ Where pool.json contains:
 				return types.ErrMissingPoolFileFlag
 			}
 
-			contents, err := ioutil.ReadFile(poolFile)
+			contents, err := os.ReadFile(poolFile)
 			if err != nil {
 				return err
 			}

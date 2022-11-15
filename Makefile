@@ -171,7 +171,7 @@ test-create-test-cases:
 ###############################################################################
 
 lint:
-	docker run -v $(CURDIR):/code --rm -w /code golangci/golangci-lint:v1.47.3-alpine golangci-lint run
+	docker run -v $(CURDIR):/code --rm -w /code golangci/golangci-lint:v1.49-alpine golangci-lint run
 
 .PHONY: \
 test-sim-nondeterminism \
