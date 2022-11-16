@@ -61,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1056](https://github.com/NibiruChain/nibiru/pull/1056) - chore(deps): Bump github.com/prometheus/client_golang from 1.13.0 to 1.13.1
 * [#1055](https://github.com/NibiruChain/nibiru/pull/1055) - chore(deps): Bump github.com/spf13/viper from 1.13.0 to 1.14.0
 * [#1061](https://github.com/NibiruChain/nibiru/pull/1061) - feat(cmd): hard-code block time parameters in the Tendermint config
+* [#1064](https://github.com/NibiruChain/nibiru/pull/1064) - test(wasm): add test for cosmwasm
 
 ## v0.15.0
 
