@@ -61,6 +61,31 @@ func TestQueryPoolHappyPath(t *testing.T) {
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 200),
 			},
 		},
+		{
+			name: "correct fetch pool",
+			existingPool: types.Pool{
+				Id:      1,
+				Address: testutil.AccAddress().String(),
+				PoolParams: types.PoolParams{
+					SwapFee:  sdk.MustNewDecFromStr("0.03"),
+					ExitFee:  sdk.MustNewDecFromStr("0.03"),
+					PoolType: common.StableswapPool,
+					A:        sdk.OneInt(),
+				},
+				PoolAssets: []types.PoolAsset{
+					{
+						Token:  sdk.NewInt64Coin("bar", 100),
+						Weight: sdk.OneInt(),
+					},
+					{
+						Token:  sdk.NewInt64Coin("bar", 100),
+						Weight: sdk.OneInt(),
+					},
+				},
+				TotalWeight: sdk.NewInt(2),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 200),
+			},
+		},
 	}
 
 	for _, tc := range tests {
@@ -359,6 +384,37 @@ func TestQueryPoolParams(t *testing.T) {
 				ExitFee:  sdk.MustNewDecFromStr("0.03"),
 				PoolType: common.BalancerPool,
 				A:        sdk.ZeroInt(),
+			},
+		},
+		{
+			name: "successful fetch pool params",
+			existingPool: types.Pool{
+				Id:      1,
+				Address: testutil.AccAddress().String(),
+				PoolParams: types.PoolParams{
+					SwapFee:  sdk.MustNewDecFromStr("0.03"),
+					ExitFee:  sdk.MustNewDecFromStr("0.03"),
+					PoolType: common.StableswapPool,
+					A:        sdk.OneInt(),
+				},
+				PoolAssets: []types.PoolAsset{
+					{
+						Token:  sdk.NewInt64Coin("bar", 100),
+						Weight: sdk.OneInt(),
+					},
+					{
+						Token:  sdk.NewInt64Coin("bar", 100),
+						Weight: sdk.OneInt(),
+					},
+				},
+				TotalWeight: sdk.NewInt(2),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 200),
+			},
+			expectedPoolParams: types.PoolParams{
+				SwapFee:  sdk.MustNewDecFromStr("0.03"),
+				ExitFee:  sdk.MustNewDecFromStr("0.03"),
+				PoolType: common.StableswapPool,
+				A:        sdk.OneInt(),
 			},
 		},
 	}
