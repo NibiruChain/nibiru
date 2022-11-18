@@ -51,6 +51,9 @@ func (pool Pool) CalcOutAmtGivenIn(tokenIn sdk.Coin, tokenOutDenom string, noFee
 	var tokenAmountOut sdk.Int
 	if pool.PoolParams.PoolType == common.StableswapPool {
 		tokenAmountOut, err = pool.SolveStableswapInvariant(poolAssetIn.Token, tokenOutDenom)
+		if err != nil {
+			return
+		}
 	} else if pool.PoolParams.PoolType == common.BalancerPool {
 		tokenAmountOut = math.SolveConstantProductInvariant(
 			/*xPrior=*/ poolTokenInBalance,

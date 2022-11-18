@@ -913,6 +913,7 @@ func TestSolveStableswapInvariant(t *testing.T) {
 				/* tokenIn = */ sdk.NewCoin(denomIn, tc.dx),
 				/* tokenOutDenom = */ denomOut,
 			)
+			require.NoError(t, err)
 
 			_, poolAssetOut, err := pool.getPoolAssetAndIndex(denomOut)
 			require.NoError(t, err)
