@@ -168,6 +168,7 @@ func TestJoinPoolHappyPath(t *testing.T) {
 				sdk.NewInt64Coin("bbb", 20),
 			),
 			expectedNumShares: sdk.NewInt(10),
+			expectedRemCoins:  sdk.NewCoins(),
 			expectedPool: Pool{
 				PoolAssets: []PoolAsset{
 					{
@@ -269,6 +270,7 @@ func TestJoinPoolHappyPath(t *testing.T) {
 				sdk.NewInt64Coin("aaa", 4859), // 0.138885 % of pool
 				sdk.NewInt64Coin("bbb", 1345), // 0.09580147 % of pool
 			),
+			expectedRemCoins:  sdk.NewCoins(),
 			expectedNumShares: sdk.NewInt(1264),
 			expectedPool: Pool{
 				PoolAssets: []PoolAsset{
