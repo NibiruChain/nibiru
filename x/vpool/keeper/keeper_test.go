@@ -613,7 +613,12 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 			vpoolKeeper.Pools.Insert(ctx, tc.pool.Pair, tc.pool)
 
 			for _, snapshot := range tc.existingSnapshots {
-				vpoolKeeper.ReserveSnapshots.Insert(ctx, collections.Join[common.AssetPair, time.Time](snapshot.Pair, time.UnixMilli(snapshot.TimestampMs)), snapshot)
+				vpoolKeeper.ReserveSnapshots.Insert(
+					ctx,
+					collections.Join[common.AssetPair, time.Time](
+						snapshot.Pair,
+						time.UnixMilli(snapshot.TimestampMs)),
+					snapshot)
 			}
 
 			t.Log("check fluctuation limit")
