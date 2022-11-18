@@ -226,3 +226,16 @@ func (p VPool) IsOverSpreadLimit(indexPrice sdk.Dec) bool {
 	return p.GetMarkPrice().Sub(indexPrice).
 		Quo(indexPrice).Abs().GTE(p.MaxOracleSpreadRatio)
 }
+
+func (vpool VPool) ToSnapshot(ctx sdk.Context) ReserveSnapshot {
+	snapshot := NewReserveSnapshot(
+		vpool.Pair,
+		vpool.BaseAssetReserve,
+		vpool.QuoteAssetReserve,
+		ctx.BlockTime(),
+	)
+	if err := snapshot.Validate(); err != nil {
+		panic(err)
+	}
+	return snapshot
+}

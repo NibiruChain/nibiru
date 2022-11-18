@@ -36,8 +36,15 @@ func (s ReserveSnapshot) Validate() error {
 		return fmt.Errorf("quote asset reserve from snapshot cannot be negative: %d", s.QuoteAssetReserve)
 	}
 
-	if s.TimestampMs < 0 {
-		return fmt.Errorf("timestamp from snapshot cannot be negative: %d", s.TimestampMs)
+	// -62135596800000 in Unix milliseconds is equivalent to "0001-01-01 00:00:00 +0000 UTC".
+	// This is the earliest possible value for a ctx.blockTime().UnixMilli()
+	const earliestMs int64 = -62135596800000
+	if s.TimestampMs < earliestMs {
+		snapshotTime := time.Unix(s.TimestampMs/1e3, s.TimestampMs%1e3).UTC()
+		earliestTime := time.Unix(earliestMs/1e3, earliestMs%1e3).UTC()
+		return fmt.Errorf("snapshot time (%s, milli=%v) should not be before "+
+			"earliest possible UTC time (%s, milli=%v): ",
+			snapshotTime, s.TimestampMs, earliestTime, earliestMs)
 	}
 
 	return nil
