@@ -4,9 +4,10 @@ import (
 	"errors"
 	"testing"
 
-	common "github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	common "github.com/NibiruChain/nibiru/x/common"
 )
 
 func TestMaximalSharesFromExactRatioJoin(t *testing.T) {

@@ -812,7 +812,6 @@ func TestGetD(t *testing.T) {
 			require.EqualValues(t, tc.expectedD, D.Uint64())
 		})
 	}
-
 }
 
 type TestCaseDy struct {
@@ -829,12 +828,12 @@ createTestCases reads the data from the csv file generated with the python curve
 object.
 
 Columns schema of the file:
-	- balances: the balance of the pool
-	- amplification: the amplification parameter for the pool
-	- send: the id of the token sent to the pool for the swap
-	- recv: the id of the token expected out of the pool
-	- dx: the number of token sent for the swap
-	- dy: the expected number of token from the curve python model.
+  - balances: the balance of the pool
+  - amplification: the amplification parameter for the pool
+  - send: the id of the token sent to the pool for the swap
+  - recv: the id of the token expected out of the pool
+  - dx: the number of token sent for the swap
+  - dy: the expected number of token from the curve python model.
 */
 func createTestCases(data [][]string) (testCases []TestCaseDy) {
 	for i, line := range data {

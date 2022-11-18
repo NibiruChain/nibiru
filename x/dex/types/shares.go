@@ -162,7 +162,6 @@ ret:
 func (pool Pool) numSharesOutFromTokensInStableSwap(tokensIn sdk.Coins) (
 	numShares sdk.Int, err error,
 ) {
-
 	tokenSupply := pool.TotalShares.Amount
 	D0 := sdk.ZeroInt()
 
@@ -173,7 +172,6 @@ func (pool Pool) numSharesOutFromTokensInStableSwap(tokensIn sdk.Coins) (
 	var newPoolAssets []PoolAsset
 
 	for assetIndex, poolAsset := range pool.PoolAssets {
-
 		inAmount := tokensIn.AmountOf(poolAsset.Token.Denom)
 
 		if tokenSupply.IsZero() && inAmount.IsZero() {
@@ -222,7 +220,6 @@ ret:
 func (pool Pool) TokensOutFromPoolSharesIn(numSharesIn sdk.Int) (
 	tokensOut sdk.Coins, err error,
 ) {
-
 	if numSharesIn.IsZero() {
 		return nil, errors.New("num shares in must be greater than zero")
 	}

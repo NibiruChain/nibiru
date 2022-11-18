@@ -6,8 +6,9 @@ import (
 
 	"github.com/holiman/uint256"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 /*
@@ -447,7 +448,6 @@ func (pool Pool) SolveStableswapInvariant(tokenIn sdk.Coin, tokenOutDenom string
 	}
 
 	for _i := 0; _i < len(pool.PoolAssets); _i++ {
-
 		if _i == i {
 			_x = uint256.NewInt().Add(
 				MustSdkIntToUint256(pool.PoolAssets[_i].Token.Amount),
@@ -505,10 +505,8 @@ func (pool Pool) SolveStableswapInvariant(tokenIn sdk.Coin, tokenOutDenom string
 		if absDifference.Lt(uint256.NewInt().SetUint64(2)) {
 			return sdk.NewIntFromUint64(y.Uint64()), nil
 		}
-
 	}
 
 	// Should converge in a couple of round unless pool is borked
 	panic(nil)
-
 }
