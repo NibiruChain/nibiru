@@ -10,8 +10,7 @@ import (
 // DefaultGenesis returns the default Capability genesis state
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
-		Vpools:    []VPool{},
-		Snapshots: []ReserveSnapshot{},
+		Vpools: []VPool{},
 	}
 }
 
@@ -29,12 +28,6 @@ func (gs GenesisState) Validate() error {
 			return fmt.Errorf("duplicate vpool: %s", pair)
 		}
 		vpools[pair] = struct{}{}
-	}
-
-	for _, snapshot := range gs.Snapshots {
-		if err := snapshot.Validate(); err != nil {
-			return err
-		}
 	}
 
 	return nil

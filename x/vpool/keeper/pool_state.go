@@ -23,7 +23,7 @@ func (k Keeper) CreatePool(
 	maintenanceMarginRatio sdk.Dec,
 	maxLeverage sdk.Dec,
 ) {
-	k.Pools.Insert(ctx, pair, types.VPool{
+	vpool := types.VPool{
 		Pair:                   pair,
 		BaseAssetReserve:       baseAssetReserve,
 		QuoteAssetReserve:      quoteAssetReserve,
@@ -32,17 +32,13 @@ func (k Keeper) CreatePool(
 		MaxOracleSpreadRatio:   maxOracleSpreadRatio,
 		MaintenanceMarginRatio: maintenanceMarginRatio,
 		MaxLeverage:            maxLeverage,
-	})
+	}
+	k.Pools.Insert(ctx, pair, vpool)
 
 	k.ReserveSnapshots.Insert(
 		ctx,
 		collections.Join(pair, ctx.BlockTime()),
-		types.NewReserveSnapshot(
-			pair,
-			baseAssetReserve,
-			quoteAssetReserve,
-			ctx.BlockTime(),
-		),
+		vpool.ToSnapshot(ctx),
 	)
 }
 
