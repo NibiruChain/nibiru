@@ -31,5 +31,6 @@ message CreatePoolProposal {
 message EditPoolConfigProposal {
   string title = 1;
   string description = 2;
-  VpoolConfig config = 3;
+  string pair = 3;
+  VpoolConfig config = 4;
 }
