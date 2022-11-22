@@ -129,7 +129,6 @@ func (vpool *Vpool) ValidateReserves() error {
 }
 
 func (cfg *VpoolConfig) Validate() error {
-
 	// trade limit ratio always between 0 and 1
 	if cfg.TradeLimitRatio.LT(sdk.ZeroDec()) || cfg.TradeLimitRatio.GT(sdk.OneDec()) {
 		return fmt.Errorf("trade limit ratio must be 0 <= ratio <= 1")
