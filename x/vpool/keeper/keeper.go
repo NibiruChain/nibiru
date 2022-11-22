@@ -117,7 +117,7 @@ func (k Keeper) SwapBaseForQuote(
 		pool.IncreaseQuoteAssetReserve(quoteAmt)
 	}
 
-	if err = k.updatePool(ctx, pool, skipFluctuationLimitCheck); err != nil {
+	if err = k.UpdatePool(ctx, pool, skipFluctuationLimitCheck); err != nil {
 		return sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
@@ -210,7 +210,7 @@ func (k Keeper) SwapQuoteForBase(
 		pool.DecreaseQuoteAssetReserve(quoteAmt)
 	}
 
-	if err = k.updatePool(ctx, pool, skipFluctuationLimitCheck); err != nil {
+	if err = k.UpdatePool(ctx, pool, skipFluctuationLimitCheck); err != nil {
 		return sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 

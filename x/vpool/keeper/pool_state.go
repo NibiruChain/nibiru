@@ -45,7 +45,7 @@ args:
 ret:
   - err: error
 */
-func (k Keeper) updatePool(
+func (k Keeper) UpdatePool(
 	ctx sdk.Context,
 	updatedPool types.Vpool,
 	skipFluctuationCheck bool,

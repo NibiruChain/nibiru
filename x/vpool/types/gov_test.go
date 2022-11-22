@@ -8,7 +8,7 @@ import (
 
 func TestCreatePoolProposal_ValidateBasic(t *testing.T) {
 	type test struct {
-		m         *CreatePoolProposal
+		proposal  *CreatePoolProposal
 		expectErr bool
 	}
 
@@ -20,7 +20,7 @@ func TestCreatePoolProposal_ValidateBasic(t *testing.T) {
 		}, true},
 
 		"success": {
-			m: &CreatePoolProposal{
+			proposal: &CreatePoolProposal{
 				Title:             "add proposal",
 				Description:       "some weird description",
 				Pair:              "valid:pair",
@@ -41,7 +41,7 @@ func TestCreatePoolProposal_ValidateBasic(t *testing.T) {
 	for name, tc := range cases {
 		tc := tc
 		t.Run(name, func(t *testing.T) {
-			err := tc.m.ValidateBasic()
+			err := tc.proposal.ValidateBasic()
 			if err == nil && tc.expectErr {
 				t.Fatal("error expected")
 			} else if err != nil && !tc.expectErr {

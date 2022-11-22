@@ -548,7 +548,7 @@ func NewNibiruTestApp(
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper)).
 		AddRoute(pricefeedtypes.RouterKey, pricefeed.NewPricefeedProposalHandler(app.PricefeedKeeper)).
-		AddRoute(vpooltypes.RouterKey, vpool.NewCreatePoolProposalHandler(app.VpoolKeeper))
+		AddRoute(vpooltypes.RouterKey, vpool.NewGovProposalHandler(app.VpoolKeeper))
 
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec,
