@@ -21,16 +21,18 @@ func TestCreatePoolProposal_ValidateBasic(t *testing.T) {
 
 		"success": {
 			m: &CreatePoolProposal{
-				Title:                  "add proposal",
-				Description:            "some weird description",
-				Pair:                   "valid:pair",
-				TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
-				QuoteAssetReserve:      sdk.NewDec(1_000_000),
-				BaseAssetReserve:       sdk.NewDec(1_000_000),
-				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
-				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.10"),
-				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+				Title:             "add proposal",
+				Description:       "some weird description",
+				Pair:              "valid:pair",
+				QuoteAssetReserve: sdk.NewDec(1_000_000),
+				BaseAssetReserve:  sdk.NewDec(1_000_000),
+				Config: VpoolConfig{
+					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+					MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.10"),
+					TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
+				},
 			},
 			expectErr: false,
 		},

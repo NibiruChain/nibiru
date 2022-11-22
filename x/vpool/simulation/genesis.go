@@ -21,16 +21,18 @@ func RandomizedGenState(simState *module.SimulationState) {
 	maintenanceMarginRatio := sdk.MaxDec(smallDec, simtypes.RandomDecAmount(simState.Rand, sdk.OneDec().Quo(maxLeverage)))
 
 	vpoolGenesis := types.GenesisState{
-		Vpools: []types.VPool{
+		Vpools: []types.Vpool{
 			{
-				Pair:                   common.Pair_BTC_NUSD,
-				QuoteAssetReserve:      sdk.NewDec(10e12).Add(simtypes.RandomDecAmount(simState.Rand, sdk.NewDec(10e12))),
-				BaseAssetReserve:       sdk.NewDec(10e12).Add(simtypes.RandomDecAmount(simState.Rand, sdk.NewDec(10e12))),
-				TradeLimitRatio:        sdk.MaxDec(smallDec, simtypes.RandomDecAmount(simState.Rand, sdk.MustNewDecFromStr("5"))),
-				FluctuationLimitRatio:  sdk.MaxDec(smallDec, simtypes.RandomDecAmount(simState.Rand, sdk.MustNewDecFromStr("5"))),
-				MaxOracleSpreadRatio:   sdk.MaxDec(smallDec, simtypes.RandomDecAmount(simState.Rand, sdk.MustNewDecFromStr("5"))),
-				MaintenanceMarginRatio: maintenanceMarginRatio,
-				MaxLeverage:            maxLeverage,
+				Pair:              common.Pair_BTC_NUSD,
+				QuoteAssetReserve: sdk.NewDec(10e12).Add(simtypes.RandomDecAmount(simState.Rand, sdk.NewDec(10e12))),
+				BaseAssetReserve:  sdk.NewDec(10e12).Add(simtypes.RandomDecAmount(simState.Rand, sdk.NewDec(10e12))),
+				Config: types.VpoolConfig{
+					FluctuationLimitRatio:  sdk.MaxDec(smallDec, simtypes.RandomDecAmount(simState.Rand, sdk.MustNewDecFromStr("5"))),
+					MaintenanceMarginRatio: maintenanceMarginRatio,
+					MaxLeverage:            maxLeverage,
+					MaxOracleSpreadRatio:   sdk.MaxDec(smallDec, simtypes.RandomDecAmount(simState.Rand, sdk.MustNewDecFromStr("5"))),
+					TradeLimitRatio:        sdk.MaxDec(smallDec, simtypes.RandomDecAmount(simState.Rand, sdk.MustNewDecFromStr("5"))),
+				},
 			},
 		},
 	}

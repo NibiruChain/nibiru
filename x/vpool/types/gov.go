@@ -34,15 +34,11 @@ func (m *CreatePoolProposal) ValidateBasic() error {
 	if err != nil {
 		return err
 	}
-	pool := &VPool{
-		Pair:                   assetPair,
-		BaseAssetReserve:       m.BaseAssetReserve,
-		QuoteAssetReserve:      m.QuoteAssetReserve,
-		TradeLimitRatio:        m.TradeLimitRatio,
-		FluctuationLimitRatio:  m.FluctuationLimitRatio,
-		MaxOracleSpreadRatio:   m.MaxOracleSpreadRatio,
-		MaintenanceMarginRatio: m.MaintenanceMarginRatio,
-		MaxLeverage:            m.MaxLeverage,
+	pool := &Vpool{
+		Pair:              assetPair,
+		BaseAssetReserve:  m.BaseAssetReserve,
+		QuoteAssetReserve: m.QuoteAssetReserve,
+		Config:            m.Config,
 	}
 
 	return pool.Validate()

@@ -35,13 +35,9 @@ func NewCreatePoolProposalHandler(k keeper.Keeper) govtypes.Handler {
 			k.CreatePool(
 				ctx,
 				pair,
-				m.TradeLimitRatio,
 				m.QuoteAssetReserve,
 				m.BaseAssetReserve,
-				m.FluctuationLimitRatio,
-				m.MaxOracleSpreadRatio,
-				m.MaintenanceMarginRatio,
-				m.MaxLeverage,
+				m.Config,
 			)
 			return nil
 		default:

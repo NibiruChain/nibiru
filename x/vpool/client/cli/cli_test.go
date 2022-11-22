@@ -43,16 +43,18 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	encodingConfig := simapp.MakeTestEncodingConfig()
 	genesisState := simapp.NewTestGenesisStateFromDefault()
 	vpoolGenesis := vpooltypes.DefaultGenesis()
-	vpoolGenesis.Vpools = []vpooltypes.VPool{
+	vpoolGenesis.Vpools = []vpooltypes.Vpool{
 		{
-			Pair:                   common.Pair_ETH_NUSD,
-			BaseAssetReserve:       sdk.NewDec(10_000_000),
-			QuoteAssetReserve:      sdk.NewDec(60_000_000_000),
-			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
-			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
-			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.2"),
-			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-			MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			Pair:              common.Pair_ETH_NUSD,
+			BaseAssetReserve:  sdk.NewDec(10_000_000),
+			QuoteAssetReserve: sdk.NewDec(60_000_000_000),
+			Config: vpooltypes.VpoolConfig{
+				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
+				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
+				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.2"),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			},
 		},
 	}
 	genesisState[vpooltypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(vpoolGenesis)
@@ -76,16 +78,18 @@ func (s *IntegrationTestSuite) TestGovAddVpool() {
 	s.T().Log("load example proposal json as bytes")
 	// ----------------------------------------------------------------------
 	proposal := &vpooltypes.CreatePoolProposal{
-		Title:                  "Create ETH:USD pool",
-		Description:            "Creates an ETH:USD pool",
-		Pair:                   "ETH:USD",
-		TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
-		QuoteAssetReserve:      sdk.NewDec(1_000_000),
-		BaseAssetReserve:       sdk.NewDec(1_000_000),
-		FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.05"),
-		MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.05"),
-		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-		MaxLeverage:            sdk.MustNewDecFromStr("15"),
+		Title:             "Create ETH:USD pool",
+		Description:       "Creates an ETH:USD pool",
+		Pair:              "ETH:USD",
+		QuoteAssetReserve: sdk.NewDec(1_000_000),
+		BaseAssetReserve:  sdk.NewDec(1_000_000),
+		Config: vpooltypes.VpoolConfig{
+			TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
+			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.05"),
+			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.05"),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
+		},
 	}
 	proposalFile := sdktestutil.WriteToNewTempFile(s.T(), string(val.ClientCtx.Codec.MustMarshalJSON(proposal)))
 	contents, err := os.ReadFile(proposalFile.Name())
@@ -200,15 +204,11 @@ e.g. $ nibid tx gov vote 1 yes`)
 	found := false
 	for _, pool := range vpoolsQueryResp.Pools {
 		if pool.Pair.String() == proposal.Pair {
-			s.EqualValues(vpooltypes.VPool{
-				Pair:                   common.MustNewAssetPair(proposal.Pair),
-				BaseAssetReserve:       proposal.BaseAssetReserve,
-				QuoteAssetReserve:      proposal.QuoteAssetReserve,
-				TradeLimitRatio:        proposal.TradeLimitRatio,
-				FluctuationLimitRatio:  proposal.FluctuationLimitRatio,
-				MaxOracleSpreadRatio:   proposal.MaxOracleSpreadRatio,
-				MaintenanceMarginRatio: proposal.MaintenanceMarginRatio,
-				MaxLeverage:            proposal.MaxLeverage,
+			s.EqualValues(vpooltypes.Vpool{
+				Pair:              common.MustNewAssetPair(proposal.Pair),
+				BaseAssetReserve:  proposal.BaseAssetReserve,
+				QuoteAssetReserve: proposal.QuoteAssetReserve,
+				Config:            proposal.Config,
 			}, pool)
 			found = true
 		}

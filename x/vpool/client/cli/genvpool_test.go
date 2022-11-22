@@ -129,7 +129,7 @@ func TestAddGenesisVpoolCmd(t *testing.T) {
 			ctx = context.WithValue(ctx, client.ClientContextKey, &clientCtx)
 			ctx = context.WithValue(ctx, server.ServerContextKey, serverCtx)
 
-			cmd := cli.AddVPoolGenesisCmd("home")
+			cmd := cli.AddVpoolGenesisCmd("home")
 			cmd.SetArgs([]string{
 				tc.pairName,
 				tc.baseAsset,

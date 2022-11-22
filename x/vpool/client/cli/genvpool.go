@@ -27,8 +27,8 @@ var (
 	ParamMaxLeverage            = "max-leverage"
 )
 
-// AddVPoolGenesisCmd returns add-vpool-genesis
-func AddVPoolGenesisCmd(defaultNodeHome string) *cobra.Command {
+// AddVpoolGenesisCmd returns add-vpool-genesis
+func AddVpoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: fmt.Sprintf("add-genesis-vpool [%s] [%s] [%s] [%s] [%s] [%s] [%s] [%s]",
 			ParamPair,
@@ -87,54 +87,56 @@ func AddVPoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 	return cmd
 }
 
-func parseVpoolParams(args []string) (types.VPool, error) {
+func parseVpoolParams(args []string) (types.Vpool, error) {
 	vPair, err := common.NewAssetPair(args[0])
 	if err != nil {
-		return types.VPool{}, err
+		return types.Vpool{}, err
 	}
 
 	baseAsset, err := sdk.NewDecFromStr(args[1])
 	if err != nil {
-		return types.VPool{}, err
+		return types.Vpool{}, err
 	}
 	quoteAsset, err := sdk.NewDecFromStr(args[2])
 	if err != nil {
-		return types.VPool{}, err
+		return types.Vpool{}, err
 	}
 	tradeLimit, err := sdk.NewDecFromStr(args[3])
 	if err != nil {
-		return types.VPool{}, err
+		return types.Vpool{}, err
 	}
 
 	fluctuationLimitRatio, err := sdk.NewDecFromStr(args[4])
 	if err != nil {
-		return types.VPool{}, err
+		return types.Vpool{}, err
 	}
 
 	maxOracleSpread, err := sdk.NewDecFromStr(args[5])
 	if err != nil {
-		return types.VPool{}, err
+		return types.Vpool{}, err
 	}
 
 	maintenanceMarginRatio, err := sdk.NewDecFromStr(args[6])
 	if err != nil {
-		return types.VPool{}, err
+		return types.Vpool{}, err
 	}
 
 	maxLeverage, err := sdk.NewDecFromStr(args[7])
 	if err != nil {
-		return types.VPool{}, err
+		return types.Vpool{}, err
 	}
 
-	vPool := types.VPool{
-		Pair:                   vPair,
-		TradeLimitRatio:        tradeLimit,
-		QuoteAssetReserve:      quoteAsset,
-		BaseAssetReserve:       baseAsset,
-		FluctuationLimitRatio:  fluctuationLimitRatio,
-		MaxOracleSpreadRatio:   maxOracleSpread,
-		MaintenanceMarginRatio: maintenanceMarginRatio,
-		MaxLeverage:            maxLeverage,
+	vPool := types.Vpool{
+		Pair:              vPair,
+		QuoteAssetReserve: quoteAsset,
+		BaseAssetReserve:  baseAsset,
+		Config: types.VpoolConfig{
+			TradeLimitRatio:        tradeLimit,
+			FluctuationLimitRatio:  fluctuationLimitRatio,
+			MaxOracleSpreadRatio:   maxOracleSpread,
+			MaintenanceMarginRatio: maintenanceMarginRatio,
+			MaxLeverage:            maxLeverage,
+		},
 	}
 
 	return vPool, vPool.Validate()
