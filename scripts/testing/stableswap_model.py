@@ -113,7 +113,7 @@ class Curve:
         x_1**2 + x1 * (sum' - (A*n**n - 1) * D / (A * n**n)) = D ** (n+1)/(n ** (2 * n) * prod' * A)
         x_1**2 + b*x_1 = c
 
-        x_1 = (x_1**2 + c) / (2*x_1 + b)
+        x_1 = (x_1**2 + c) / (2*x_1 + b - D)
         """
         xx = self.xp()
         xx = [xx[k] for k in range(self.n) if k != i]

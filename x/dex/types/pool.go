@@ -426,7 +426,7 @@ func MustSdkIntToUint256(num sdk.Int) *uint256.Int {
 // Done by solving quadratic equation iteratively.
 // x_1**2 + x1 * (sum' - (A*n**n - 1) * D / (A * n**n)) = D ** (n+1)/(n ** (2 * n) * prod' * A)
 // x_1**2 + b*x_1 = c
-// x_1 = (x_1**2 + c) / (2*x_1 + b)
+// x_1 = (x_1**2 + c) / (2*x_1 + b - D)
 func (pool Pool) SolveStableswapInvariant(tokenIn sdk.Coin, tokenOutDenom string) (yAmount sdk.Int, err error) {
 	A := pool.getA()
 	D := pool.getD(pool.PoolAssets)
