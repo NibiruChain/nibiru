@@ -16,8 +16,8 @@ func NewKeeper(pool types.Pool) Keeper {
 	}
 }
 
-func (k Keeper) GetFromPair(ctx sdk.Context, denomA string, denomB string) (poolId uint64, err error) {
-	return 1, nil
+func (k Keeper) FetchPoolFromPair(ctx sdk.Context, denomA string, denomB string) (pool types.Pool, err error) {
+	return k.pool, nil
 }
 
 func (k Keeper) FetchPool(ctx sdk.Context, poolId uint64) (pool types.Pool, err error) {
