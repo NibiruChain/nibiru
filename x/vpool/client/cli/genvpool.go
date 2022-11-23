@@ -3,6 +3,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -16,30 +17,15 @@ import (
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-var (
-	ParamPair                   = "pair"
-	ParamBaseAssetReserve       = "base-asset-reserve"
-	ParamQuoteAssetReserve      = "quote-asset-reserve"
-	ParamTradeLimitRatio        = "trade-limit-ratio"
-	ParamFluctuationLimitRatio  = "fluctuation-limit-ratio"
-	ParamMaxOracleSpreadRatio   = "maxOracle-spread-ratio"
-	ParamMaintenanceMarginRatio = "maintenance-margin-ratio"
-	ParamMaxLeverage            = "max-leverage"
-)
-
 // AddVpoolGenesisCmd returns add-vpool-genesis
 func AddVpoolGenesisCmd(defaultNodeHome string) *cobra.Command {
+	usageExampleTail := strings.Join([]string{
+		"pair", "base-asset-reserve", "quote-asset-reserve", "trade-limit-ratio",
+		"fluctuation-limit-ratio", "max-oracle-spread-ratio", "maintenance-margin-ratio",
+		"max-leverage",
+	}, "] [")
 	cmd := &cobra.Command{
-		Use: fmt.Sprintf("add-genesis-vpool [%s] [%s] [%s] [%s] [%s] [%s] [%s] [%s]",
-			ParamPair,
-			ParamBaseAssetReserve,
-			ParamQuoteAssetReserve,
-			ParamTradeLimitRatio,
-			ParamFluctuationLimitRatio,
-			ParamMaxOracleSpreadRatio,
-			ParamMaintenanceMarginRatio,
-			ParamMaxLeverage,
-		),
+		Use:   fmt.Sprintf("add-genesis-vpool [%s]", usageExampleTail),
 		Short: "Add vPools to genesis.json",
 		Long:  `Add vPools to genesis.json.`,
 		Args:  cobra.ExactArgs(8),

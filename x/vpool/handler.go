@@ -24,7 +24,7 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 	}
 }
 
-func NewGovProposalHandler(k keeper.Keeper) govtypes.Handler {
+func NewVpoolProposalHandler(k keeper.Keeper) govtypes.Handler {
 	return func(ctx sdk.Context, content govtypes.Content) error {
 		switch proposal := content.(type) {
 		case *types.CreatePoolProposal:
