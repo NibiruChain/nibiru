@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/testutil"
 )
 
 func TestPoolHasEnoughQuoteReserve(t *testing.T) {
@@ -28,7 +29,7 @@ func TestPoolHasEnoughQuoteReserve(t *testing.T) {
 		},
 	}
 
-	// less that max ratio
+	// less than max ratio
 	require.True(t, pool.HasEnoughQuoteReserve(sdk.NewDec(8_000_000)))
 
 	// equal to ratio limit
@@ -648,6 +649,78 @@ func TestVpool_IsOverFluctuationLimit(t *testing.T) {
 				time.Now(),
 			)
 			assert.EqualValues(t, tc.isOverLimit, tc.pool.IsOverFluctuationLimitInRelationWithSnapshot(snapshot))
+		})
+	}
+}
+
+func TestVpool_ToSnapshot(t *testing.T) {
+	tests := []struct {
+		name       string
+		vpool      Vpool
+		expectFail bool
+	}{
+		{
+			name: "happy path",
+			vpool: Vpool{
+				Pair:              common.Pair_BTC_NUSD,
+				BaseAssetReserve:  sdk.NewDec(10),
+				QuoteAssetReserve: sdk.NewDec(10_000),
+			},
+			expectFail: false,
+		},
+		{
+			name: "err invalid base",
+			vpool: Vpool{
+				Pair:              common.Pair_BTC_NUSD,
+				BaseAssetReserve:  sdk.Dec{},
+				QuoteAssetReserve: sdk.NewDec(500),
+			},
+			expectFail: true,
+		},
+		{
+			name: "err invalid quote",
+			vpool: Vpool{
+				Pair:              common.Pair_BTC_NUSD,
+				BaseAssetReserve:  sdk.NewDec(500),
+				QuoteAssetReserve: sdk.Dec{},
+			},
+			expectFail: true,
+		},
+		{
+			name: "err negative quote",
+			vpool: Vpool{
+				Pair:              common.Pair_BTC_NUSD,
+				BaseAssetReserve:  sdk.NewDec(500),
+				QuoteAssetReserve: sdk.NewDec(-500),
+			},
+			expectFail: true,
+		},
+		{
+			name: "err negative base",
+			vpool: Vpool{
+				Pair:              common.Pair_BTC_NUSD,
+				BaseAssetReserve:  sdk.NewDec(-500),
+				QuoteAssetReserve: sdk.NewDec(500),
+			},
+			expectFail: true,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := testutil.BlankContext(StoreKey)
+			if tc.expectFail {
+				require.Panics(t, func() {
+					_ = tc.vpool.ToSnapshot(ctx)
+				})
+			} else {
+				snapshot := tc.vpool.ToSnapshot(ctx)
+				assert.EqualValues(t, tc.vpool.Pair, snapshot.Pair)
+				assert.EqualValues(t, tc.vpool.BaseAssetReserve, snapshot.BaseAssetReserve)
+				assert.EqualValues(t, tc.vpool.QuoteAssetReserve, snapshot.QuoteAssetReserve)
+				assert.EqualValues(t, ctx.BlockTime().UnixMilli(), snapshot.TimestampMs)
+			}
 		})
 	}
 }
