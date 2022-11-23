@@ -925,15 +925,15 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			),
 			tokenIn:          sdk.NewInt64Coin("unibi", 100),
 			tokenOutDenom:    common.DenomNUSD,
-			expectedTokenOut: sdk.NewInt64Coin(common.DenomNUSD, 36),
+			expectedTokenOut: sdk.NewInt64Coin(common.DenomNUSD, 30),
 			expectedUserFinalFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.DenomNUSD, 36),
+				sdk.NewInt64Coin(common.DenomNUSD, 30),
 			),
 			expectedFinalPool: mock.DexStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 200),
-					sdk.NewInt64Coin(common.DenomNUSD, 64),
+					sdk.NewInt64Coin(common.DenomNUSD, 70),
 				),
 				/*shares=*/ 100,
 			),

@@ -60,13 +60,15 @@ class Curve:
         A * sum(x_i) * n**n + D = A * D * n**n + D**(n+1) / (n**n * prod(x_i))
 
         Converging solution:
-        D[j+1] = (A * n**n * sum(x_i) - D[j]**(n+1) / (n**n prod(x_i))) / (A * n**n - 1)
+        $D_{j+1} = D_j \frac{An^n \sum x_i + nD_P}{(n+1)D_P+D_j(An^n-1)}$
+
+        with $D_p = \frac{D_j^{n+1}}{n^n \prod x_i}$
         """
         Dprev = 0
         xp = self.xp()
         S = sum(xp)
         D = S
-        Ann = self.A * self.n
+        Ann = self.A * self.n * self.n
         while abs(D - Dprev) > 1:
             D_P = D
             for x in xp:
@@ -90,7 +92,7 @@ class Curve:
         xx = self.xp()
         xx[i] = x  # x is quantity of underlying asset brought to 1e18 precision
         xx = [xx[k] for k in range(self.n) if k != j]
-        Ann = self.A * self.n
+        Ann = self.A * self.n * self.n
         c = D
         for y in xx:
             c = c * D // (y * self.n)
@@ -199,7 +201,7 @@ def generate_test_cases(n: int):
         exchange_pairs = deque(permutations(range(n_coins), 2))
 
         # 10% chance of being 1 (constant product if A=1)
-        amplification = random.randint(1, 4_000_000) if random.random() < 0.9 else 1
+        amplification = random.randint(1, 4_000) if random.random() < 0.9 else 1
 
         exchange_pair = random.choice(exchange_pairs)
         balances = [random.randint(1, 10e16) for i in range(n_coins)]

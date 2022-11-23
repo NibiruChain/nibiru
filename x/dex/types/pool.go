@@ -336,6 +336,7 @@ func (pool Pool) getD(poolAssets []PoolAsset) *uint256.Int {
 
 	Ann := uint256.NewInt()
 	Ann.Mul(Amp, nCoins)
+	Ann.Mul(Ann, nCoins)
 
 	var poolAssetsTokens []*uint256.Int
 	for _, token := range poolAssets {
@@ -356,31 +357,25 @@ func (pool Pool) getD(poolAssets []PoolAsset) *uint256.Int {
 		}
 		previousD := uint256.NewInt().Set(D)
 
-		// D = (Ann * S / A_PRECISION + D_P * N_COINS) * D / ((Ann - A_PRECISION) * D / A_PRECISION + (N_COINS + 1) * D_P)
+		// D = (Ann * S + D_P * N_COINS) * D / ((Ann - 1) * D + (N_COINS + 1) * D_P)
 		num := uint256.NewInt().Mul(
 			uint256.NewInt().Add(
-				uint256.NewInt().Div(
-					uint256.NewInt().Mul(Ann, S),
-					A_Precision,
-				),
+				uint256.NewInt().Mul(Ann, S),
 				uint256.NewInt().Mul(D_P, nCoins),
 			),
 			D,
 		)
 		denom := uint256.NewInt().Add(
-			uint256.NewInt().Div(
-				uint256.NewInt().Mul(
-					uint256.NewInt().Sub(Ann, A_Precision),
-					D,
-				),
-				A_Precision,
-			),
 			uint256.NewInt().Mul(
 				uint256.NewInt().Add(
 					nCoins,
 					uint256.NewInt().SetOne(),
 				),
 				D_P,
+			),
+			uint256.NewInt().Mul(
+				uint256.NewInt().Sub(Ann, uint256.NewInt().SetOne()),
+				D,
 			),
 		)
 
@@ -437,6 +432,7 @@ func (pool Pool) SolveStableswapInvariant(tokenIn sdk.Coin, tokenOutDenom string
 	Ann := uint256.NewInt()
 	nCoins := uint256.NewInt().SetUint64(uint64(len(pool.PoolAssets)))
 	Ann.Mul(A, nCoins)
+	Ann.Mul(Ann, nCoins)
 
 	c := uint256.NewInt().Set(D)
 	S := uint256.NewInt()

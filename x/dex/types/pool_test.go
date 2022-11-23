@@ -758,7 +758,7 @@ func TestGetD(t *testing.T) {
 			},
 			amplificationParameter: sdk.NewInt(1),
 			expectedErr:            nil,
-			expectedD:              389,
+			expectedD:              394,
 		},
 		{
 			name: "Compute D - 2 assets - tested against Curve contracts code..",
@@ -772,7 +772,7 @@ func TestGetD(t *testing.T) {
 			},
 			amplificationParameter: sdk.NewInt(1),
 			expectedErr:            nil,
-			expectedD:              291,
+			expectedD:              294,
 		},
 		{
 			name: "Compute D - 2 assets, A big - tested against Curve contracts code..",
@@ -800,7 +800,7 @@ func TestGetD(t *testing.T) {
 			},
 			amplificationParameter: sdk.NewInt(4000),
 			expectedErr:            nil,
-			expectedD:              299995313,
+			expectedD:              299997656,
 		},
 	} {
 		tc := tc
