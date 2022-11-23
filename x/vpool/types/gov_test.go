@@ -5,11 +5,12 @@ import (
 	"os"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simappparams "github.com/cosmos/ibc-go/v3/testing/simapp/params"
 	"github.com/gogo/protobuf/jsonpb"
+
+	"github.com/NibiruChain/nibiru/x/common"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

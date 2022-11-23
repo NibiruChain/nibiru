@@ -39,7 +39,6 @@ func (k Keeper) EditPoolConfig(
 	pair common.AssetPair,
 	config types.VpoolConfig,
 ) error {
-
 	// Grab current pool from state
 	vpool, err := k.Pools.Get(ctx, pair)
 	if err != nil {

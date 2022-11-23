@@ -43,7 +43,6 @@ func TestCreatePool(t *testing.T) {
 }
 
 func TestEditPoolConfig(t *testing.T) {
-
 	pair := common.Pair_BTC_NUSD
 	vpoolStart := types.Vpool{
 		Pair:              pair,
