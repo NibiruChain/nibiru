@@ -164,14 +164,10 @@ func (vpool *Vpool) Validate() error {
 		return fmt.Errorf("invalid asset pair: %w", err)
 	}
 
-	// quote asset reserve always > 0
-	if !vpool.QuoteAssetReserve.IsPositive() {
-		return fmt.Errorf("quote asset reserve must be > 0")
-	}
-
 	// base asset reserve always > 0
-	if !vpool.BaseAssetReserve.IsPositive() {
-		return fmt.Errorf("base asset reserve must be > 0")
+	// quote asset reserve always > 0
+	if err := vpool.ValidateReserves(); err != nil {
+		return err
 	}
 
 	if err := vpool.Config.Validate(); err != nil {

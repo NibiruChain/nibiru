@@ -28,6 +28,11 @@ func (s ReserveSnapshot) Validate() error {
 		return err
 	}
 
+	if (s.BaseAssetReserve.String() == "<nil>") || (s.QuoteAssetReserve.String() == "<nil>") {
+		// prevents panics from usage of 'new(Dec)' or 'sdk.Dec{}'
+		return fmt.Errorf("nil dec value in snapshot. snapshot: %v", s.String())
+	}
+
 	if s.BaseAssetReserve.IsNegative() {
 		return fmt.Errorf("base asset reserve from snapshot cannot be negative: %d", s.BaseAssetReserve)
 	}
