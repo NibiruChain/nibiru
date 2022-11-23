@@ -8,14 +8,14 @@ import (
 
 // HasEnoughQuoteReserve returns true if there is enough quote reserve based on
 // quoteReserve * tradeLimitRatio
-func (p *VPool) HasEnoughQuoteReserve(quoteAmount sdk.Dec) bool {
-	return p.QuoteAssetReserve.Mul(p.TradeLimitRatio).GTE(quoteAmount)
+func (vpool *Vpool) HasEnoughQuoteReserve(quoteAmount sdk.Dec) bool {
+	return vpool.QuoteAssetReserve.Mul(vpool.Config.TradeLimitRatio).GTE(quoteAmount)
 }
 
 // HasEnoughBaseReserve returns true if there is enough base reserve based on
 // baseReserve * tradeLimitRatio
-func (p *VPool) HasEnoughBaseReserve(baseAmount sdk.Dec) bool {
-	return p.BaseAssetReserve.Mul(p.TradeLimitRatio).GTE(baseAmount)
+func (vpool *Vpool) HasEnoughBaseReserve(baseAmount sdk.Dec) bool {
+	return vpool.BaseAssetReserve.Mul(vpool.Config.TradeLimitRatio).GTE(baseAmount)
 }
 
 /*
@@ -31,7 +31,7 @@ ret:
     always an absolute value
   - err: error
 */
-func (p *VPool) GetBaseAmountByQuoteAmount(
+func (vpool *Vpool) GetBaseAmountByQuoteAmount(
 	dir Direction,
 	quoteAmount sdk.Dec,
 ) (baseAmount sdk.Dec, err error) {
@@ -39,13 +39,13 @@ func (p *VPool) GetBaseAmountByQuoteAmount(
 		return sdk.ZeroDec(), nil
 	}
 
-	invariant := p.QuoteAssetReserve.Mul(p.BaseAssetReserve) // x * y = k
+	invariant := vpool.QuoteAssetReserve.Mul(vpool.BaseAssetReserve) // x * y = k
 
 	var quoteAssetsAfter sdk.Dec
 	if dir == Direction_ADD_TO_POOL {
-		quoteAssetsAfter = p.QuoteAssetReserve.Add(quoteAmount)
+		quoteAssetsAfter = vpool.QuoteAssetReserve.Add(quoteAmount)
 	} else {
-		quoteAssetsAfter = p.QuoteAssetReserve.Sub(quoteAmount)
+		quoteAssetsAfter = vpool.QuoteAssetReserve.Sub(quoteAmount)
 	}
 
 	if quoteAssetsAfter.LTE(sdk.ZeroDec()) {
@@ -53,7 +53,7 @@ func (p *VPool) GetBaseAmountByQuoteAmount(
 	}
 
 	baseAssetsAfter := invariant.Quo(quoteAssetsAfter)
-	baseAmount = baseAssetsAfter.Sub(p.BaseAssetReserve).Abs()
+	baseAmount = baseAssetsAfter.Sub(vpool.BaseAssetReserve).Abs()
 
 	return baseAmount, nil
 }
@@ -71,20 +71,20 @@ ret:
     always an absolute value
   - err: error
 */
-func (p *VPool) GetQuoteAmountByBaseAmount(
+func (vpool *Vpool) GetQuoteAmountByBaseAmount(
 	dir Direction, baseAmount sdk.Dec,
 ) (quoteAmount sdk.Dec, err error) {
 	if baseAmount.IsZero() {
 		return sdk.ZeroDec(), nil
 	}
 
-	invariant := p.QuoteAssetReserve.Mul(p.BaseAssetReserve) // x * y = k
+	invariant := vpool.QuoteAssetReserve.Mul(vpool.BaseAssetReserve) // x * y = k
 
 	var baseAssetsAfter sdk.Dec
 	if dir == Direction_ADD_TO_POOL {
-		baseAssetsAfter = p.BaseAssetReserve.Add(baseAmount)
+		baseAssetsAfter = vpool.BaseAssetReserve.Add(baseAmount)
 	} else {
-		baseAssetsAfter = p.BaseAssetReserve.Sub(baseAmount)
+		baseAssetsAfter = vpool.BaseAssetReserve.Sub(baseAmount)
 	}
 
 	if baseAssetsAfter.LTE(sdk.ZeroDec()) {
@@ -95,92 +95,96 @@ func (p *VPool) GetQuoteAmountByBaseAmount(
 	}
 
 	quoteAssetsAfter := invariant.Quo(baseAssetsAfter)
-	quoteAmount = quoteAssetsAfter.Sub(p.QuoteAssetReserve).Abs()
+	quoteAmount = quoteAssetsAfter.Sub(vpool.QuoteAssetReserve).Abs()
 
 	return quoteAmount, nil
 }
 
 // IncreaseBaseAssetReserve increases the quote reserve by amount
-func (p *VPool) IncreaseBaseAssetReserve(amount sdk.Dec) {
-	p.BaseAssetReserve = p.BaseAssetReserve.Add(amount)
+func (vpool *Vpool) IncreaseBaseAssetReserve(amount sdk.Dec) {
+	vpool.BaseAssetReserve = vpool.BaseAssetReserve.Add(amount)
 }
 
 // DecreaseBaseAssetReserve descreases the quote asset reserve by amount
-func (p *VPool) DecreaseBaseAssetReserve(amount sdk.Dec) {
-	p.BaseAssetReserve = p.BaseAssetReserve.Sub(amount)
+func (vpool *Vpool) DecreaseBaseAssetReserve(amount sdk.Dec) {
+	vpool.BaseAssetReserve = vpool.BaseAssetReserve.Sub(amount)
 }
 
-func (p *VPool) IncreaseQuoteAssetReserve(amount sdk.Dec) {
-	p.QuoteAssetReserve = p.QuoteAssetReserve.Add(amount)
+func (vpool *Vpool) IncreaseQuoteAssetReserve(amount sdk.Dec) {
+	vpool.QuoteAssetReserve = vpool.QuoteAssetReserve.Add(amount)
 }
 
 // DecreaseQuoteAssetReserve decreases the base reserve by amount
-func (p *VPool) DecreaseQuoteAssetReserve(amount sdk.Dec) {
-	p.QuoteAssetReserve = p.QuoteAssetReserve.Sub(amount)
+func (vpool *Vpool) DecreaseQuoteAssetReserve(amount sdk.Dec) {
+	vpool.QuoteAssetReserve = vpool.QuoteAssetReserve.Sub(amount)
 }
 
 // ValidateReserves checks that reserves are positive.
-func (p *VPool) ValidateReserves() error {
-	if !p.QuoteAssetReserve.IsPositive() || !p.BaseAssetReserve.IsPositive() {
-		return ErrNonPositiveReserves.Wrap("pool: " + p.String())
+func (vpool *Vpool) ValidateReserves() error {
+	if !vpool.QuoteAssetReserve.IsPositive() || !vpool.BaseAssetReserve.IsPositive() {
+		return ErrNonPositiveReserves.Wrap("pool: " + vpool.String())
 	} else {
 		return nil
 	}
 }
 
-func (m *VPool) Validate() error {
-	if err := m.Pair.Validate(); err != nil {
-		return fmt.Errorf("invalid asset pair: %w", err)
-	}
-
+func (cfg *VpoolConfig) Validate() error {
 	// trade limit ratio always between 0 and 1
-	if m.TradeLimitRatio.LT(sdk.ZeroDec()) || m.TradeLimitRatio.GT(sdk.OneDec()) {
+	if cfg.TradeLimitRatio.LT(sdk.ZeroDec()) || cfg.TradeLimitRatio.GT(sdk.OneDec()) {
 		return fmt.Errorf("trade limit ratio must be 0 <= ratio <= 1")
 	}
 
-	// quote asset reserve always > 0
-	if !m.QuoteAssetReserve.IsPositive() {
-		return fmt.Errorf("quote asset reserve must be > 0")
-	}
-
-	// base asset reserve always > 0
-	if !m.BaseAssetReserve.IsPositive() {
-		return fmt.Errorf("base asset reserve must be > 0")
-	}
-
 	// fluctuation limit ratio between 0 and 1
-	if m.FluctuationLimitRatio.LT(sdk.ZeroDec()) || m.FluctuationLimitRatio.GT(sdk.OneDec()) {
+	if cfg.FluctuationLimitRatio.LT(sdk.ZeroDec()) || cfg.FluctuationLimitRatio.GT(sdk.OneDec()) {
 		return fmt.Errorf("fluctuation limit ratio must be 0 <= ratio <= 1")
 	}
 
 	// max oracle spread ratio between 0 and 1
-	if m.MaxOracleSpreadRatio.LT(sdk.ZeroDec()) || m.MaxOracleSpreadRatio.GT(sdk.OneDec()) {
+	if cfg.MaxOracleSpreadRatio.LT(sdk.ZeroDec()) || cfg.MaxOracleSpreadRatio.GT(sdk.OneDec()) {
 		return fmt.Errorf("max oracle spread ratio must be 0 <= ratio <= 1")
 	}
 
-	if m.MaintenanceMarginRatio.LT(sdk.ZeroDec()) || m.MaintenanceMarginRatio.GT(sdk.OneDec()) {
+	if cfg.MaintenanceMarginRatio.LT(sdk.ZeroDec()) || cfg.MaintenanceMarginRatio.GT(sdk.OneDec()) {
 		return fmt.Errorf("maintenance margin ratio ratio must be 0 <= ratio <= 1")
 	}
 
-	if m.MaxLeverage.LTE(sdk.ZeroDec()) {
-		return fmt.Errorf("Max leverage must be > 0")
+	if cfg.MaxLeverage.LTE(sdk.ZeroDec()) {
+		return fmt.Errorf("max leverage must be > 0")
 	}
 
-	if sdk.OneDec().Quo(m.MaxLeverage).LT(m.MaintenanceMarginRatio) {
+	if sdk.OneDec().Quo(cfg.MaxLeverage).LT(cfg.MaintenanceMarginRatio) {
 		return fmt.Errorf("margin ratio opened with max leverage position will be lower than Maintenance margin ratio")
 	}
 
 	return nil
 }
 
+func (vpool *Vpool) Validate() error {
+	if err := vpool.Pair.Validate(); err != nil {
+		return fmt.Errorf("invalid asset pair: %w", err)
+	}
+
+	// base asset reserve always > 0
+	// quote asset reserve always > 0
+	if err := vpool.ValidateReserves(); err != nil {
+		return err
+	}
+
+	if err := vpool.Config.Validate(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // GetMarkPrice returns the price of the asset.
-func (p VPool) GetMarkPrice() sdk.Dec {
-	if p.BaseAssetReserve.IsNil() || p.BaseAssetReserve.IsZero() ||
-		p.QuoteAssetReserve.IsNil() || p.QuoteAssetReserve.IsZero() {
+func (vpool Vpool) GetMarkPrice() sdk.Dec {
+	if vpool.BaseAssetReserve.IsNil() || vpool.BaseAssetReserve.IsZero() ||
+		vpool.QuoteAssetReserve.IsNil() || vpool.QuoteAssetReserve.IsZero() {
 		return sdk.ZeroDec()
 	}
 
-	return p.QuoteAssetReserve.Quo(p.BaseAssetReserve)
+	return vpool.QuoteAssetReserve.Quo(vpool.BaseAssetReserve)
 }
 
 /*
@@ -195,14 +199,16 @@ args:
 ret:
   - bool: true if the fluctuation limit is violated. false otherwise
 */
-func (p VPool) IsOverFluctuationLimitInRelationWithSnapshot(snapshot ReserveSnapshot) bool {
-	if p.FluctuationLimitRatio.IsZero() {
+func (vpool Vpool) IsOverFluctuationLimitInRelationWithSnapshot(snapshot ReserveSnapshot) bool {
+	if vpool.Config.FluctuationLimitRatio.IsZero() {
 		return false
 	}
 
-	markPrice := p.GetMarkPrice()
-	snapshotUpperLimit := snapshot.GetUpperMarkPriceFluctuationLimit(p.FluctuationLimitRatio)
-	snapshotLowerLimit := snapshot.GetLowerMarkPriceFluctuationLimit(p.FluctuationLimitRatio)
+	markPrice := vpool.GetMarkPrice()
+	snapshotUpperLimit := snapshot.GetUpperMarkPriceFluctuationLimit(
+		vpool.Config.FluctuationLimitRatio)
+	snapshotLowerLimit := snapshot.GetLowerMarkPriceFluctuationLimit(
+		vpool.Config.FluctuationLimitRatio)
 
 	if markPrice.GT(snapshotUpperLimit) || markPrice.LT(snapshotLowerLimit) {
 		return true
@@ -222,12 +228,12 @@ args:
 ret:
   - bool: whether or not the price has deviated from the oracle price beyond a spread ratio
 */
-func (p VPool) IsOverSpreadLimit(indexPrice sdk.Dec) bool {
-	return p.GetMarkPrice().Sub(indexPrice).
-		Quo(indexPrice).Abs().GTE(p.MaxOracleSpreadRatio)
+func (vpool Vpool) IsOverSpreadLimit(indexPrice sdk.Dec) bool {
+	return vpool.GetMarkPrice().Sub(indexPrice).
+		Quo(indexPrice).Abs().GTE(vpool.Config.MaxOracleSpreadRatio)
 }
 
-func (vpool VPool) ToSnapshot(ctx sdk.Context) ReserveSnapshot {
+func (vpool Vpool) ToSnapshot(ctx sdk.Context) ReserveSnapshot {
 	snapshot := NewReserveSnapshot(
 		vpool.Pair,
 		vpool.BaseAssetReserve,
