@@ -73,29 +73,5 @@ func handleProposalEditPoolConfig(
 		return err
 	}
 
-	// Grab current pool from state
-	vpool, err := k.Pools.Get(ctx, pair)
-	if err != nil {
-		return err
-	}
-
-	newVpool := types.Vpool{
-		Pair:              vpool.Pair,
-		BaseAssetReserve:  vpool.BaseAssetReserve,
-		QuoteAssetReserve: vpool.QuoteAssetReserve,
-		Config:            proposal.Config, // main change is here
-	}
-	if err := newVpool.Validate(); err != nil {
-		return err
-	}
-
-	err = k.UpdatePool(
-		ctx,
-		newVpool,
-		/*skipFluctuationLimitCheck*/ true)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return k.EditPoolConfig(ctx, pair, proposal.Config)
 }
