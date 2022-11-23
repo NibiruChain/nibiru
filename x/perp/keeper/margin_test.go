@@ -7,6 +7,7 @@ import (
 	"github.com/NibiruChain/collections"
 
 	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
+	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 
 	simapp2 "github.com/NibiruChain/nibiru/simapp"
 
@@ -67,13 +68,15 @@ func TestAddMarginSuccess(t *testing.T) {
 			vpoolKeeper.CreatePool(
 				ctx,
 				common.Pair_BTC_NUSD,
-				/* tradeLimitRatio */ sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
-				sdk.NewDec(10_000_000),                             // 10 tokens
-				sdk.NewDec(5_000_000),                              // 5 tokens
-				/* fluctuationLimitRatio */ sdk.MustNewDecFromStr("0.1"), // 0.1 ratio
-				/* maxOracleSpreadRatio */ sdk.OneDec(), // 100%
-				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
-				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+				sdk.NewDec(10_000_000), // 10 tokens
+				sdk.NewDec(5_000_000),  // 5 tokens
+				vpooltypes.VpoolConfig{
+					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
+					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"), // 0.1 ratio
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+				},
 			)
 			require.True(t, vpoolKeeper.ExistsPool(ctx, common.Pair_BTC_NUSD))
 
@@ -137,13 +140,15 @@ func TestRemoveMargin(t *testing.T) {
 				vpoolKeeper.CreatePool(
 					ctx,
 					pair,
-					sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
 					/* y */ sdk.NewDec(1_000_000), //
 					/* x */ sdk.NewDec(1_000_000), //
-					/* fluctuationLimit */ sdk.MustNewDecFromStr("1.0"), // 100%
-					/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("1.0"), // 100%
-					/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
-					/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+					vpooltypes.VpoolConfig{
+						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
+						FluctuationLimitRatio:  sdk.OneDec(),
+						MaxOracleSpreadRatio:   sdk.OneDec(),
+						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+						MaxLeverage:            sdk.MustNewDecFromStr("15"),
+					},
 				)
 
 				removeAmt := sdk.NewInt(5)
@@ -169,13 +174,15 @@ func TestRemoveMargin(t *testing.T) {
 				vpoolKeeper.CreatePool(
 					ctx,
 					pair,
-					/* tradeLimitRatio */ sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
 					/* y */ quoteReserves,
 					/* x */ baseReserves,
-					/* fluctuationLimit */ sdk.MustNewDecFromStr("1.0"), // 0.9 ratio
-					/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("0.4"), // 0.9 ratio
-					/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
-					/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+					vpooltypes.VpoolConfig{
+						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
+						FluctuationLimitRatio:  sdk.OneDec(),
+						MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.4"),
+						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+						MaxLeverage:            sdk.MustNewDecFromStr("15"),
+					},
 				)
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 

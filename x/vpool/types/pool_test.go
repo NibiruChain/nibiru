@@ -10,23 +10,26 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/testutil"
 )
 
 func TestPoolHasEnoughQuoteReserve(t *testing.T) {
 	pair := common.MustNewAssetPair("BTC:NUSD")
 
-	pool := &VPool{
-		Pair:                   pair,
-		TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"), // 0.9
-		QuoteAssetReserve:      sdk.NewDec(10_000_000),
-		BaseAssetReserve:       sdk.NewDec(10_000_000),
-		FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
-		MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
-		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-		MaxLeverage:            sdk.NewDec(15),
+	pool := &Vpool{
+		Pair:              pair,
+		QuoteAssetReserve: sdk.NewDec(10_000_000),
+		BaseAssetReserve:  sdk.NewDec(10_000_000),
+		Config: VpoolConfig{
+			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
+			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.NewDec(15),
+			TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"), // 0.9
+		},
 	}
 
-	// less that max ratio
+	// less than max ratio
 	require.True(t, pool.HasEnoughQuoteReserve(sdk.NewDec(8_000_000)))
 
 	// equal to ratio limit
@@ -39,19 +42,21 @@ func TestPoolHasEnoughQuoteReserve(t *testing.T) {
 func TestSetMarginRatioAndLeverage(t *testing.T) {
 	pair := common.MustNewAssetPair("BTC:NUSD")
 
-	pool := &VPool{
-		Pair:                   pair,
-		TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"), // 0.9
-		QuoteAssetReserve:      sdk.NewDec(10_000_000),
-		BaseAssetReserve:       sdk.NewDec(10_000_000),
-		FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
-		MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
-		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.42"),
-		MaxLeverage:            sdk.NewDec(15),
+	pool := &Vpool{
+		Pair:              pair,
+		QuoteAssetReserve: sdk.NewDec(10_000_000),
+		BaseAssetReserve:  sdk.NewDec(10_000_000),
+		Config: VpoolConfig{
+			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.42"),
+			MaxLeverage:            sdk.NewDec(15),
+			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
+			TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"), // 0.9
+		},
 	}
 
-	require.Equal(t, sdk.MustNewDecFromStr("0.42"), pool.MaintenanceMarginRatio)
-	require.Equal(t, sdk.MustNewDecFromStr("15"), pool.MaxLeverage)
+	require.Equal(t, sdk.MustNewDecFromStr("0.42"), pool.Config.MaintenanceMarginRatio)
+	require.Equal(t, sdk.MustNewDecFromStr("15"), pool.Config.MaxLeverage)
 }
 
 func TestGetBaseAmountByQuoteAmount(t *testing.T) {
@@ -103,15 +108,17 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			pool := &VPool{
-				Pair:                   pair,
-				TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"), // 0.9
-				QuoteAssetReserve:      tc.quoteAssetReserve,
-				BaseAssetReserve:       tc.baseAssetReserve,
-				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
-				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
-				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-				MaxLeverage:            sdk.NewDec(15),
+			pool := &Vpool{
+				Pair:              pair,
+				QuoteAssetReserve: tc.quoteAssetReserve,
+				BaseAssetReserve:  tc.baseAssetReserve,
+				Config: VpoolConfig{
+					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.NewDec(15),
+					MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
+					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"), // 0.9
+				},
 			}
 
 			amount, err := pool.GetBaseAmountByQuoteAmount(tc.direction, tc.quoteAmount)
@@ -177,15 +184,17 @@ func TestGetQuoteAmountByBaseAmount(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			pool := &VPool{
-				Pair:                   pair,
-				TradeLimitRatio:        sdk.OneDec(),
-				QuoteAssetReserve:      tc.quoteAssetReserve,
-				BaseAssetReserve:       tc.baseAssetReserve,
-				FluctuationLimitRatio:  sdk.OneDec(),
-				MaxOracleSpreadRatio:   sdk.OneDec(),
-				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-				MaxLeverage:            sdk.NewDec(15),
+			pool := &Vpool{
+				Pair:              pair,
+				QuoteAssetReserve: tc.quoteAssetReserve,
+				BaseAssetReserve:  tc.baseAssetReserve,
+				Config: VpoolConfig{
+					FluctuationLimitRatio:  sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.NewDec(15),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					TradeLimitRatio:        sdk.OneDec(),
+				},
 			}
 
 			amount, err := pool.GetQuoteAmountByBaseAmount(tc.direction, tc.baseAmount)
@@ -205,15 +214,17 @@ func TestGetQuoteAmountByBaseAmount(t *testing.T) {
 func TestIncreaseDecreaseReserves(t *testing.T) {
 	pair := common.MustNewAssetPair("ATOM:NUSD")
 
-	pool := &VPool{
-		Pair:                   pair,
-		TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"), // 0.9
-		QuoteAssetReserve:      sdk.NewDec(1_000_000),
-		BaseAssetReserve:       sdk.NewDec(1_000_000),
-		FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
-		MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
-		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-		MaxLeverage:            sdk.NewDec(15),
+	pool := &Vpool{
+		Pair:              pair,
+		QuoteAssetReserve: sdk.NewDec(1_000_000),
+		BaseAssetReserve:  sdk.NewDec(1_000_000),
+		Config: VpoolConfig{
+			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.NewDec(15),
+			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
+			TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"), // 0.9
+		},
 	}
 
 	t.Log("decrease quote asset reserve")
@@ -235,163 +246,231 @@ func TestIncreaseDecreaseReserves(t *testing.T) {
 
 func TestPool_Validate(t *testing.T) {
 	type test struct {
-		m         *VPool
+		m         *Vpool
 		expectErr bool
 	}
 
 	cases := map[string]test{
 		"invalid pair": {
-			m: &VPool{
-				Pair: common.AssetPair{},
+			m: &Vpool{
+				Pair:              common.AssetPair{},
+				BaseAssetReserve:  sdk.OneDec(),
+				QuoteAssetReserve: sdk.OneDec(),
+				Config: VpoolConfig{
+					TradeLimitRatio:        sdk.NewDec(-1),
+					FluctuationLimitRatio:  sdk.OneDec(),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.OneDec(),
+					MaxLeverage:            sdk.OneDec(),
+				},
 			},
 			expectErr: true,
 		},
 
 		"invalid trade limit ratio < 0": {
-			m: &VPool{
-				Pair:            common.MustNewAssetPair("btc:usd"),
-				TradeLimitRatio: sdk.NewDec(-1),
+			m: &Vpool{
+				Pair:              common.MustNewAssetPair("btc:usd"),
+				BaseAssetReserve:  sdk.OneDec(),
+				QuoteAssetReserve: sdk.OneDec(),
+				Config: VpoolConfig{
+					TradeLimitRatio:        sdk.NewDec(-1),
+					FluctuationLimitRatio:  sdk.OneDec(),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.OneDec(),
+					MaxLeverage:            sdk.OneDec(),
+				},
 			},
 			expectErr: true,
 		},
 
 		"invalid trade limit ratio > 1": {
-			m: &VPool{
-				Pair:            common.MustNewAssetPair("btc:usd"),
-				TradeLimitRatio: sdk.NewDec(2),
+			m: &Vpool{
+				Pair:              common.MustNewAssetPair("btc:usd"),
+				BaseAssetReserve:  sdk.OneDec(),
+				QuoteAssetReserve: sdk.OneDec(),
+				Config: VpoolConfig{
+					TradeLimitRatio:        sdk.NewDec(2),
+					FluctuationLimitRatio:  sdk.OneDec(),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.OneDec(),
+					MaxLeverage:            sdk.OneDec(),
+				},
 			},
 			expectErr: true,
 		},
 
 		"quote asset reserve 0": {
-			m: &VPool{
+			m: &Vpool{
 				Pair:              common.MustNewAssetPair("btc:usd"),
-				TradeLimitRatio:   sdk.MustNewDecFromStr("0.10"),
+				BaseAssetReserve:  sdk.NewDec(999),
 				QuoteAssetReserve: sdk.ZeroDec(),
+				Config: VpoolConfig{
+					TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
+					FluctuationLimitRatio:  sdk.OneDec(),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.OneDec(),
+					MaxLeverage:            sdk.OneDec(),
+				},
 			},
 			expectErr: true,
 		},
 
 		"base asset reserve 0": {
-			m: &VPool{
+			m: &Vpool{
 				Pair:              common.MustNewAssetPair("btc:usd"),
-				TradeLimitRatio:   sdk.MustNewDecFromStr("0.10"),
 				QuoteAssetReserve: sdk.NewDec(1_000_000),
 				BaseAssetReserve:  sdk.ZeroDec(),
+				Config: VpoolConfig{
+					TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
+					FluctuationLimitRatio:  sdk.OneDec(),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.OneDec(),
+					MaxLeverage:            sdk.OneDec(),
+				},
 			},
 			expectErr: true,
 		},
 
 		"fluctuation < 0": {
-			m: &VPool{
-				Pair:                  common.MustNewAssetPair("btc:usd"),
-				TradeLimitRatio:       sdk.MustNewDecFromStr("0.10"),
-				QuoteAssetReserve:     sdk.NewDec(1_000_000),
-				BaseAssetReserve:      sdk.NewDec(1_000_000),
-				FluctuationLimitRatio: sdk.NewDec(-1),
+			m: &Vpool{
+				Pair:              common.MustNewAssetPair("btc:usd"),
+				QuoteAssetReserve: sdk.NewDec(1_000_000),
+				BaseAssetReserve:  sdk.NewDec(1_000_000),
+				Config: VpoolConfig{
+					TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
+					FluctuationLimitRatio:  sdk.NewDec(-1),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.OneDec(),
+					MaxLeverage:            sdk.OneDec(),
+				},
 			},
 			expectErr: true,
 		},
 
 		"fluctuation > 1": {
-			m: &VPool{
-				Pair:                  common.MustNewAssetPair("btc:usd"),
-				TradeLimitRatio:       sdk.MustNewDecFromStr("0.10"),
-				QuoteAssetReserve:     sdk.NewDec(1_000_000),
-				BaseAssetReserve:      sdk.NewDec(1_000_000),
-				FluctuationLimitRatio: sdk.NewDec(2),
+			m: &Vpool{
+				Pair:              common.MustNewAssetPair("btc:usd"),
+				QuoteAssetReserve: sdk.NewDec(1_000_000),
+				BaseAssetReserve:  sdk.NewDec(1_000_000),
+				Config: VpoolConfig{
+					TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
+					FluctuationLimitRatio:  sdk.NewDec(2),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.OneDec(),
+					MaxLeverage:            sdk.OneDec(),
+				},
 			},
 			expectErr: true,
 		},
 
 		"max oracle spread ratio < 0": {
-			m: &VPool{
-				Pair:                  common.MustNewAssetPair("btc:usd"),
-				TradeLimitRatio:       sdk.MustNewDecFromStr("0.10"),
-				QuoteAssetReserve:     sdk.NewDec(1_000_000),
-				BaseAssetReserve:      sdk.NewDec(1_000_000),
-				FluctuationLimitRatio: sdk.MustNewDecFromStr("0.10"),
-				MaxOracleSpreadRatio:  sdk.NewDec(-1),
+			m: &Vpool{
+				Pair:              common.MustNewAssetPair("btc:usd"),
+				QuoteAssetReserve: sdk.NewDec(1_000_000),
+				BaseAssetReserve:  sdk.NewDec(1_000_000),
+				Config: VpoolConfig{
+					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
+					MaintenanceMarginRatio: sdk.OneDec(),
+					MaxLeverage:            sdk.OneDec(),
+					MaxOracleSpreadRatio:   sdk.NewDec(-1),
+					TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
+				},
 			},
 			expectErr: true,
 		},
 
 		"max oracle spread ratio > 1": {
-			m: &VPool{
-				Pair:                  common.MustNewAssetPair("btc:usd"),
-				TradeLimitRatio:       sdk.MustNewDecFromStr("0.10"),
-				QuoteAssetReserve:     sdk.NewDec(1_000_000),
-				BaseAssetReserve:      sdk.NewDec(1_000_000),
-				FluctuationLimitRatio: sdk.MustNewDecFromStr("0.10"),
-				MaxOracleSpreadRatio:  sdk.NewDec(2),
+			m: &Vpool{
+				Pair:              common.MustNewAssetPair("btc:usd"),
+				QuoteAssetReserve: sdk.NewDec(1_000_000),
+				BaseAssetReserve:  sdk.NewDec(1_000_000),
+				Config: VpoolConfig{
+					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
+					MaintenanceMarginRatio: sdk.OneDec(),
+					MaxLeverage:            sdk.OneDec(),
+					MaxOracleSpreadRatio:   sdk.NewDec(2),
+					TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
+				},
 			},
 			expectErr: true,
 		},
 
 		"maintenance ratio < 0": {
-			m: &VPool{
-				Pair:                   common.MustNewAssetPair("btc:usd"),
-				TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
-				QuoteAssetReserve:      sdk.NewDec(1_000_000),
-				BaseAssetReserve:       sdk.NewDec(1_000_000),
-				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
-				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.10"),
-				MaintenanceMarginRatio: sdk.NewDec(-1),
+			m: &Vpool{
+				Pair: common.MustNewAssetPair("btc:usd"),
+				Config: VpoolConfig{
+					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
+					MaintenanceMarginRatio: sdk.NewDec(-1),
+					MaxLeverage:            sdk.OneDec(),
+					MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.10"),
+					TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
+				},
+				QuoteAssetReserve: sdk.NewDec(1_000_000),
+				BaseAssetReserve:  sdk.NewDec(1_000_000),
 			},
 			expectErr: true,
 		},
 
 		"maintenance ratio > 1": {
-			m: &VPool{
-				Pair:                   common.MustNewAssetPair("btc:usd"),
-				TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
-				QuoteAssetReserve:      sdk.NewDec(1_000_000),
-				BaseAssetReserve:       sdk.NewDec(1_000_000),
-				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
-				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.10"),
-				MaintenanceMarginRatio: sdk.NewDec(2),
+			m: &Vpool{
+				Pair:              common.MustNewAssetPair("btc:usd"),
+				QuoteAssetReserve: sdk.NewDec(1_000_000),
+				BaseAssetReserve:  sdk.NewDec(1_000_000),
+				Config: VpoolConfig{
+					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
+					MaintenanceMarginRatio: sdk.NewDec(2),
+					MaxLeverage:            sdk.OneDec(),
+					MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.10"),
+					TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
+				},
 			},
 			expectErr: true,
 		},
 
 		"max leverage < 0": {
-			m: &VPool{
-				Pair:                   common.MustNewAssetPair("btc:usd"),
-				TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
-				QuoteAssetReserve:      sdk.NewDec(1_000_000),
-				BaseAssetReserve:       sdk.NewDec(1_000_000),
-				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
-				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.10"),
-				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.10"),
-				MaxLeverage:            sdk.MustNewDecFromStr("-0.10"),
+			m: &Vpool{
+				Pair:              common.MustNewAssetPair("btc:usd"),
+				QuoteAssetReserve: sdk.NewDec(1_000_000),
+				BaseAssetReserve:  sdk.NewDec(1_000_000),
+				Config: VpoolConfig{
+					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.10"),
+					MaxLeverage:            sdk.MustNewDecFromStr("-0.10"),
+					MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.10"),
+					TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
+				},
 			},
 			expectErr: true,
 		},
 
 		"max leverage too high for maintenance margin ratio": {
-			m: &VPool{
-				Pair:                   common.MustNewAssetPair("btc:usd"),
-				TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
-				QuoteAssetReserve:      sdk.NewDec(1_000_000),
-				BaseAssetReserve:       sdk.NewDec(1_000_000),
-				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
-				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.10"),
-				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.10"), // Equivalent to 10 leverage
-				MaxLeverage:            sdk.MustNewDecFromStr("11"),
+			m: &Vpool{
+				Pair:              common.MustNewAssetPair("btc:usd"),
+				QuoteAssetReserve: sdk.NewDec(1_000_000),
+				BaseAssetReserve:  sdk.NewDec(1_000_000),
+				Config: VpoolConfig{
+					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.10"), // Equivalent to 10 leverage
+					MaxLeverage:            sdk.MustNewDecFromStr("11"),
+					MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.10"),
+					TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
+				},
 			},
 			expectErr: true,
 		},
 
 		"success": {
-			m: &VPool{
-				Pair:                   common.MustNewAssetPair("btc:usd"),
-				TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
-				QuoteAssetReserve:      sdk.NewDec(1_000_000),
-				BaseAssetReserve:       sdk.NewDec(1_000_000),
-				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
-				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.10"),
-				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			m: &Vpool{
+				Pair:              common.MustNewAssetPair("btc:usd"),
+				QuoteAssetReserve: sdk.NewDec(1_000_000),
+				BaseAssetReserve:  sdk.NewDec(1_000_000),
+				Config: VpoolConfig{
+					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+					MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.10"),
+					TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
+				},
 			},
 			expectErr: false,
 		},
@@ -410,15 +489,15 @@ func TestPool_Validate(t *testing.T) {
 	}
 }
 
-func TestVPool_GetMarkPrice(t *testing.T) {
+func TestVpool_GetMarkPrice(t *testing.T) {
 	tests := []struct {
 		name          string
-		pool          VPool
+		pool          Vpool
 		expectedValue sdk.Dec
 	}{
 		{
 			"happy path",
-			VPool{
+			Vpool{
 				Pair:              common.Pair_BTC_NUSD,
 				BaseAssetReserve:  sdk.MustNewDecFromStr("10"),
 				QuoteAssetReserve: sdk.MustNewDecFromStr("10000"),
@@ -427,7 +506,7 @@ func TestVPool_GetMarkPrice(t *testing.T) {
 		},
 		{
 			"nil base",
-			VPool{
+			Vpool{
 				Pair:              common.Pair_BTC_NUSD,
 				BaseAssetReserve:  sdk.Dec{},
 				QuoteAssetReserve: sdk.MustNewDecFromStr("10000"),
@@ -436,7 +515,7 @@ func TestVPool_GetMarkPrice(t *testing.T) {
 		},
 		{
 			"zero base",
-			VPool{
+			Vpool{
 				Pair:              common.Pair_BTC_NUSD,
 				BaseAssetReserve:  sdk.ZeroDec(),
 				QuoteAssetReserve: sdk.MustNewDecFromStr("10000"),
@@ -445,7 +524,7 @@ func TestVPool_GetMarkPrice(t *testing.T) {
 		},
 		{
 			"nil quote",
-			VPool{
+			Vpool{
 				Pair:              common.Pair_BTC_NUSD,
 				BaseAssetReserve:  sdk.MustNewDecFromStr("10"),
 				QuoteAssetReserve: sdk.Dec{},
@@ -454,7 +533,7 @@ func TestVPool_GetMarkPrice(t *testing.T) {
 		},
 		{
 			"zero quote",
-			VPool{
+			Vpool{
 				Pair:              common.Pair_BTC_NUSD,
 				BaseAssetReserve:  sdk.MustNewDecFromStr("10"),
 				QuoteAssetReserve: sdk.ZeroDec(),
@@ -471,80 +550,90 @@ func TestVPool_GetMarkPrice(t *testing.T) {
 	}
 }
 
-func TestVPool_IsOverFluctuationLimit(t *testing.T) {
+func TestVpool_IsOverFluctuationLimit(t *testing.T) {
 	tests := []struct {
 		name string
-		pool VPool
+		pool Vpool
 
 		isOverLimit bool
 	}{
 		{
 			name: "zero fluctuation limit ratio",
-			pool: VPool{
-				Pair:                   common.Pair_BTC_NUSD,
-				QuoteAssetReserve:      sdk.OneDec(),
-				BaseAssetReserve:       sdk.OneDec(),
-				FluctuationLimitRatio:  sdk.ZeroDec(),
-				TradeLimitRatio:        sdk.OneDec(),
-				MaxOracleSpreadRatio:   sdk.OneDec(),
-				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			pool: Vpool{
+				Pair:              common.Pair_BTC_NUSD,
+				QuoteAssetReserve: sdk.OneDec(),
+				BaseAssetReserve:  sdk.OneDec(),
+				Config: VpoolConfig{
+					FluctuationLimitRatio:  sdk.ZeroDec(),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					TradeLimitRatio:        sdk.OneDec(),
+				},
 			},
 			isOverLimit: false,
 		},
 		{
 			name: "lower limit of fluctuation limit",
-			pool: VPool{
-				Pair:                   common.Pair_BTC_NUSD,
-				QuoteAssetReserve:      sdk.NewDec(999),
-				BaseAssetReserve:       sdk.OneDec(),
-				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
-				TradeLimitRatio:        sdk.OneDec(),
-				MaxOracleSpreadRatio:   sdk.OneDec(),
-				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			pool: Vpool{
+				Pair:              common.Pair_BTC_NUSD,
+				QuoteAssetReserve: sdk.NewDec(999),
+				BaseAssetReserve:  sdk.OneDec(),
+				Config: VpoolConfig{
+					FluctuationLimitRatio:  sdk.ZeroDec(),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					TradeLimitRatio:        sdk.OneDec(),
+				},
 			},
 			isOverLimit: false,
 		},
 		{
 			name: "upper limit of fluctuation limit",
-			pool: VPool{
-				Pair:                   common.Pair_BTC_NUSD,
-				QuoteAssetReserve:      sdk.NewDec(1001),
-				BaseAssetReserve:       sdk.OneDec(),
-				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
-				TradeLimitRatio:        sdk.OneDec(),
-				MaxOracleSpreadRatio:   sdk.OneDec(),
-				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			pool: Vpool{
+				Pair:              common.Pair_BTC_NUSD,
+				QuoteAssetReserve: sdk.NewDec(1001),
+				BaseAssetReserve:  sdk.OneDec(),
+				Config: VpoolConfig{
+					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					TradeLimitRatio:        sdk.OneDec(),
+				},
 			},
 			isOverLimit: false,
 		},
 		{
 			name: "under fluctuation limit",
-			pool: VPool{
-				Pair:                   common.Pair_BTC_NUSD,
-				QuoteAssetReserve:      sdk.NewDec(998),
-				BaseAssetReserve:       sdk.OneDec(),
-				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
-				TradeLimitRatio:        sdk.OneDec(),
-				MaxOracleSpreadRatio:   sdk.OneDec(),
-				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			pool: Vpool{
+				Pair:              common.Pair_BTC_NUSD,
+				QuoteAssetReserve: sdk.NewDec(998),
+				BaseAssetReserve:  sdk.OneDec(),
+				Config: VpoolConfig{
+					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					TradeLimitRatio:        sdk.OneDec(),
+				},
 			},
 			isOverLimit: true,
 		},
 		{
 			name: "over fluctuation limit",
-			pool: VPool{
-				Pair:                   common.Pair_BTC_NUSD,
-				QuoteAssetReserve:      sdk.NewDec(1002),
-				BaseAssetReserve:       sdk.OneDec(),
-				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
-				TradeLimitRatio:        sdk.OneDec(),
-				MaxOracleSpreadRatio:   sdk.OneDec(),
-				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			pool: Vpool{
+				Pair:              common.Pair_BTC_NUSD,
+				QuoteAssetReserve: sdk.NewDec(1002),
+				BaseAssetReserve:  sdk.OneDec(),
+				Config: VpoolConfig{
+					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					TradeLimitRatio:        sdk.OneDec(),
+				},
 			},
 			isOverLimit: true,
 		},
@@ -560,6 +649,78 @@ func TestVPool_IsOverFluctuationLimit(t *testing.T) {
 				time.Now(),
 			)
 			assert.EqualValues(t, tc.isOverLimit, tc.pool.IsOverFluctuationLimitInRelationWithSnapshot(snapshot))
+		})
+	}
+}
+
+func TestVpool_ToSnapshot(t *testing.T) {
+	tests := []struct {
+		name       string
+		vpool      Vpool
+		expectFail bool
+	}{
+		{
+			name: "happy path",
+			vpool: Vpool{
+				Pair:              common.Pair_BTC_NUSD,
+				BaseAssetReserve:  sdk.NewDec(10),
+				QuoteAssetReserve: sdk.NewDec(10_000),
+			},
+			expectFail: false,
+		},
+		{
+			name: "err invalid base",
+			vpool: Vpool{
+				Pair:              common.Pair_BTC_NUSD,
+				BaseAssetReserve:  sdk.Dec{},
+				QuoteAssetReserve: sdk.NewDec(500),
+			},
+			expectFail: true,
+		},
+		{
+			name: "err invalid quote",
+			vpool: Vpool{
+				Pair:              common.Pair_BTC_NUSD,
+				BaseAssetReserve:  sdk.NewDec(500),
+				QuoteAssetReserve: sdk.Dec{},
+			},
+			expectFail: true,
+		},
+		{
+			name: "err negative quote",
+			vpool: Vpool{
+				Pair:              common.Pair_BTC_NUSD,
+				BaseAssetReserve:  sdk.NewDec(500),
+				QuoteAssetReserve: sdk.NewDec(-500),
+			},
+			expectFail: true,
+		},
+		{
+			name: "err negative base",
+			vpool: Vpool{
+				Pair:              common.Pair_BTC_NUSD,
+				BaseAssetReserve:  sdk.NewDec(-500),
+				QuoteAssetReserve: sdk.NewDec(500),
+			},
+			expectFail: true,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := testutil.BlankContext(StoreKey)
+			if tc.expectFail {
+				require.Panics(t, func() {
+					_ = tc.vpool.ToSnapshot(ctx)
+				})
+			} else {
+				snapshot := tc.vpool.ToSnapshot(ctx)
+				assert.EqualValues(t, tc.vpool.Pair, snapshot.Pair)
+				assert.EqualValues(t, tc.vpool.BaseAssetReserve, snapshot.BaseAssetReserve)
+				assert.EqualValues(t, tc.vpool.QuoteAssetReserve, snapshot.QuoteAssetReserve)
+				assert.EqualValues(t, ctx.BlockTime().UnixMilli(), snapshot.TimestampMs)
+			}
 		})
 	}
 }

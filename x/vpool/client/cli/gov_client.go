@@ -19,18 +19,24 @@ import (
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-var (
-	CreatePoolProposalHandler = govclient.NewProposalHandler(
-		/* govclient.CLIHandlerFn */ CmdCreatePoolProposal,
+func NewProposalHandler(cliHandler govclient.CLIHandlerFn) govclient.ProposalHandler {
+	return govclient.NewProposalHandler(
+		/* govclient.CLIHandlerFn */ cliHandler,
 		/* govclient.RESTHandlerFn */ func(context client.Context) govclientrest.ProposalRESTHandler {
 			return govclientrest.ProposalRESTHandler{
-				SubRoute: "create_pool",
+				SubRoute: "deprecated",
 				Handler: func(writer http.ResponseWriter, request *http.Request) {
+					// The govclient.RESTHandlerFn is entirely removed in sdk v0.46
 					_, _ = writer.Write([]byte("deprecated"))
 					writer.WriteHeader(http.StatusMethodNotAllowed)
 				},
 			}
 		})
+}
+
+var (
+	CreatePoolProposalHandler     = NewProposalHandler(CmdCreatePoolProposal)
+	EditPoolConfigProposalHandler = NewProposalHandler(CmdEditPoolConfigProposal)
 )
 
 // CmdCreatePoolProposal implements the client command to submit a governance
@@ -65,6 +71,86 @@ func CmdCreatePoolProposal() *cobra.Command {
 			from := clientCtx.GetFromAddress()
 
 			proposal := &types.CreatePoolProposal{}
+			contents, err := os.ReadFile(args[0])
+			if err != nil {
+				return err
+			}
+
+			// marshals the contents into the proto.Message to which 'proposal' points.
+			if err = clientCtx.Codec.UnmarshalJSON(contents, proposal); err != nil {
+				return err
+			}
+
+			depositStr, err := cmd.Flags().GetString(govcli.FlagDeposit)
+			if err != nil {
+				return err
+			}
+			deposit, err := sdk.ParseCoinsNormalized(depositStr)
+			if err != nil {
+				return err
+			}
+
+			msg, err := govtypes.NewMsgSubmitProposal(proposal, deposit, from)
+			if err != nil {
+				return err
+			}
+			if err = msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	cmd.Flags().String(
+		/*name=*/ govcli.FlagDeposit,
+		/*defaultValue=*/ "",
+		/*usage=*/ "governance deposit for proposal")
+	if err := cmd.MarkFlagRequired(govcli.FlagDeposit); err != nil {
+		panic(err)
+	}
+
+	return cmd
+}
+
+// CmdEditPoolConfigProposal implements the client command to submit a governance
+// proposal to whitelist an oracle for specified asset pairs.
+func CmdEditPoolConfigProposal() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "edit-pool-cfg [proposal-json] --deposit=[deposit]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Submit a proposal to edit the vpool config",
+		Example: strings.TrimSpace(fmt.Sprintf(`
+			Example: 
+			$ %s tx gov submit-proposal edit-pool-cfg <path/to/proposal.json> --deposit="1000unibi" --from=<key_or_address> 
+			`, version.AppName)),
+		Long: strings.TrimSpace(
+			`Submits a proposal to edit a vpool's config, it's parameters that 
+			aren't based on the reserves (e.g. max leverage, maintenance margin ratio).
+
+			A proposal.json for 'EditPoolConfigProposal' contains:
+			{
+			  "title": "Edit vpool config for NIBI:NUSD",
+			  "description": "I want to take 100x leverage on my NIBI",
+			  "pair": "unibi:unusd",
+			  "config": {
+				"max_leverage": "100",
+				"trade_limit_ratio": "0.1",
+				"fluctuation_limit_ratio": "0.1",
+				"max_oracle_spread_ratio": "0.1",
+				"maintenance_margin_ratio": "0.01"
+			  }
+			}
+			`),
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			from := clientCtx.GetFromAddress()
+
+			proposal := &types.EditPoolConfigProposal{}
 			contents, err := os.ReadFile(args[0])
 			if err != nil {
 				return err

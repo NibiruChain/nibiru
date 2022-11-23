@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/NibiruChain/nibiru/x/testutil"
+	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 
 	"github.com/NibiruChain/nibiru/simapp"
 
@@ -143,13 +144,15 @@ func TestQueryPosition(t *testing.T) {
 			vpoolKeeper.CreatePool(
 				ctx,
 				common.Pair_BTC_NUSD,
-				/* tradeLimitRatio */ sdk.OneDec(),
 				/* quoteReserve */ tc.quoteAssetReserve,
 				/* baseReserve */ tc.baseAssetReserve,
-				/* fluctuationLimitRatio */ sdk.OneDec(),
-				/* maxOracleSpreadRatio */ sdk.OneDec(),
-				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
-				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+				vpooltypes.VpoolConfig{
+					TradeLimitRatio:        sdk.OneDec(),
+					FluctuationLimitRatio:  sdk.OneDec(),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+				},
 			)
 			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
@@ -231,13 +234,15 @@ func TestQueryPositions(t *testing.T) {
 			vpoolKeeper.CreatePool(
 				ctx,
 				common.Pair_BTC_NUSD,
-				/* tradeLimitRatio */ sdk.OneDec(),
 				/* quoteReserve */ sdk.MustNewDecFromStr("100000"),
 				/* baseReserve */ sdk.MustNewDecFromStr("100000"),
-				/* fluctuationLimitRatio */ sdk.OneDec(),
-				/* maxOracleSpreadRatio */ sdk.OneDec(),
-				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
-				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+				vpooltypes.VpoolConfig{
+					TradeLimitRatio:        sdk.OneDec(),
+					FluctuationLimitRatio:  sdk.OneDec(),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+				},
 			)
 			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 				Pair: common.Pair_BTC_NUSD,
@@ -248,13 +253,15 @@ func TestQueryPositions(t *testing.T) {
 			vpoolKeeper.CreatePool(
 				ctx,
 				common.Pair_ETH_NUSD,
-				/* tradeLimitRatio */ sdk.OneDec(),
 				/* quoteReserve */ sdk.MustNewDecFromStr("100000"),
 				/* baseReserve */ sdk.MustNewDecFromStr("100000"),
-				/* fluctuationLimitRatio */ sdk.OneDec(),
-				/* maxOracleSpreadRatio */ sdk.OneDec(),
-				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
-				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+				vpooltypes.VpoolConfig{
+					TradeLimitRatio:        sdk.OneDec(),
+					FluctuationLimitRatio:  sdk.OneDec(),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+				},
 			)
 			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 				Pair: common.Pair_ETH_NUSD,
@@ -265,13 +272,15 @@ func TestQueryPositions(t *testing.T) {
 			vpoolKeeper.CreatePool(
 				ctx,
 				common.Pair_NIBI_NUSD,
-				/* tradeLimitRatio */ sdk.OneDec(),
 				/* quoteReserve */ sdk.MustNewDecFromStr("100000"),
 				/* baseReserve */ sdk.MustNewDecFromStr("100000"),
-				/* fluctuationLimitRatio */ sdk.OneDec(),
-				/* maxOracleSpreadRatio */ sdk.OneDec(),
-				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
-				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+				vpooltypes.VpoolConfig{
+					TradeLimitRatio:        sdk.OneDec(),
+					FluctuationLimitRatio:  sdk.OneDec(),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+				},
 			)
 			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 				Pair: common.Pair_NIBI_NUSD,

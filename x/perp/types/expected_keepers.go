@@ -103,7 +103,7 @@ type VpoolKeeper interface {
 		lookbackInterval time.Duration,
 	) (quoteAssetAmount sdk.Dec, err error)
 
-	GetAllPools(ctx sdk.Context) []vpooltypes.VPool
+	GetAllPools(ctx sdk.Context) []vpooltypes.Vpool
 
 	IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) bool
 	GetMaintenanceMarginRatio(ctx sdk.Context, pair common.AssetPair) sdk.Dec

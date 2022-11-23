@@ -73,26 +73,30 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	// setup vpool
 	vpoolGenesis := vpooltypes.DefaultGenesis()
-	vpoolGenesis.Vpools = []vpooltypes.VPool{
+	vpoolGenesis.Vpools = []vpooltypes.Vpool{
 		{
-			Pair:                   common.Pair_BTC_NUSD,
-			BaseAssetReserve:       sdk.NewDec(10_000_000),
-			QuoteAssetReserve:      sdk.NewDec(60_000_000_000),
-			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
-			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
-			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.2"),
-			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-			MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			Pair:              common.Pair_BTC_NUSD,
+			BaseAssetReserve:  sdk.NewDec(10_000_000),
+			QuoteAssetReserve: sdk.NewDec(60_000_000_000),
+			Config: vpooltypes.VpoolConfig{
+				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
+				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
+				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.2"),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			},
 		},
 		{
-			Pair:                   common.Pair_ETH_NUSD,
-			BaseAssetReserve:       sdk.NewDec(10_000_000),
-			QuoteAssetReserve:      sdk.NewDec(60_000_000_000),
-			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
-			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
-			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.2"),
-			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-			MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			Pair:              common.Pair_ETH_NUSD,
+			BaseAssetReserve:  sdk.NewDec(10_000_000),
+			QuoteAssetReserve: sdk.NewDec(60_000_000_000),
+			Config: vpooltypes.VpoolConfig{
+				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
+				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
+				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.2"),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			},
 		},
 	}
 	genesisState[vpooltypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(vpoolGenesis)

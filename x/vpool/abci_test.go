@@ -32,13 +32,16 @@ func TestSnapshotUpdates(t *testing.T) {
 	vpoolKeeper.CreatePool(
 		ctx,
 		common.Pair_BTC_NUSD,
-		sdk.OneDec(),
+		// sdk.OneDec(),
 		sdk.NewDec(10),
 		sdk.NewDec(10),
-		sdk.NewDec(3),
-		sdk.OneDec(),
-		sdk.OneDec(),
-		sdk.NewDec(10),
+		types.VpoolConfig{
+			TradeLimitRatio:        sdk.NewDec(10),
+			FluctuationLimitRatio:  sdk.NewDec(3),
+			MaxOracleSpreadRatio:   sdk.OneDec(),
+			MaintenanceMarginRatio: sdk.OneDec(),
+			MaxLeverage:            sdk.NewDec(10),
+		},
 	)
 	expectedSnapshot := types.NewReserveSnapshot(
 		common.Pair_BTC_NUSD,
