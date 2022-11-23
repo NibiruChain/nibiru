@@ -18,6 +18,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
+	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 func TestMsgServerAddMargin(t *testing.T) {
@@ -78,13 +79,15 @@ func TestMsgServerAddMargin(t *testing.T) {
 			app.VpoolKeeper.CreatePool(
 				ctx,
 				common.Pair_BTC_NUSD,
-				/* tradeLimitRatio */ sdk.OneDec(),
 				/* quoteReserve */ sdk.NewDec(1_000_000),
 				/* baseReserve */ sdk.NewDec(1_000_000),
-				/* fluctuationLimitRatio */ sdk.OneDec(),
-				/* maxOracleSpreadRatio */ sdk.OneDec(),
-				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
-				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+				vpooltypes.VpoolConfig{
+					TradeLimitRatio:        sdk.OneDec(),
+					FluctuationLimitRatio:  sdk.OneDec(),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+				},
 			)
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                       common.Pair_BTC_NUSD,
@@ -197,13 +200,15 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			app.VpoolKeeper.CreatePool(
 				ctx,
 				common.Pair_BTC_NUSD,
-				/* tradeLimitRatio */ sdk.OneDec(),
 				/* quoteReserve */ sdk.NewDec(1_000_000),
 				/* baseReserve */ sdk.NewDec(1_000_000),
-				/* fluctuationLimitRatio */ sdk.OneDec(),
-				/* maxOracleSpreadRatio */ sdk.OneDec(),
-				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
-				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+				vpooltypes.VpoolConfig{
+					TradeLimitRatio:        sdk.OneDec(),
+					FluctuationLimitRatio:  sdk.OneDec(),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+				},
 			)
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                       common.Pair_BTC_NUSD,
@@ -284,13 +289,15 @@ func TestMsgServerOpenPosition(t *testing.T) {
 			app.VpoolKeeper.CreatePool(
 				/* ctx */ ctx,
 				/* pair */ common.Pair_BTC_NUSD,
-				/* tradeLimitRatio */ sdk.OneDec(),
 				/* quoteAssetReserve */ sdk.NewDec(1_000_000),
 				/* baseAssetReserve */ sdk.NewDec(1_000_000),
-				/* fluctuationLimitRatio */ sdk.OneDec(),
-				/* maxOracleSpreadRatio */ sdk.OneDec(),
-				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
-				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+				vpooltypes.VpoolConfig{
+					TradeLimitRatio:        sdk.OneDec(),
+					FluctuationLimitRatio:  sdk.OneDec(),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+				},
 			)
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                       common.Pair_BTC_NUSD,
@@ -369,13 +376,15 @@ func TestMsgServerClosePosition(t *testing.T) {
 			app.VpoolKeeper.CreatePool(
 				ctx,
 				common.Pair_BTC_NUSD,
-				/* tradeLimitRatio */ sdk.OneDec(),
 				/* quoteAssetReserve */ sdk.NewDec(1_000_000),
 				/* baseAssetReserve */ sdk.NewDec(1_000_000),
-				/* fluctuationLimitRatio */ sdk.OneDec(),
-				/* maxOracleSpreadRatio */ sdk.OneDec(),
-				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
-				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+				vpooltypes.VpoolConfig{
+					TradeLimitRatio:        sdk.OneDec(),
+					FluctuationLimitRatio:  sdk.OneDec(),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+				},
 			)
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                       common.Pair_BTC_NUSD,
@@ -446,13 +455,15 @@ func TestMsgServerLiquidate(t *testing.T) {
 			app.VpoolKeeper.CreatePool(
 				/* ctx */ ctx,
 				/* pair */ common.Pair_BTC_NUSD,
-				/* tradeLimitRatio */ sdk.OneDec(),
 				/* quoteAssetReserve */ sdk.NewDec(1_000_000),
 				/* baseAssetReserve */ sdk.NewDec(1_000_000),
-				/* fluctuationLimitRatio */ sdk.OneDec(),
-				/* maxOracleSpreadRatio */ sdk.OneDec(),
-				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
-				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+				vpooltypes.VpoolConfig{
+					TradeLimitRatio:        sdk.OneDec(),
+					FluctuationLimitRatio:  sdk.OneDec(),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+				},
 			)
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                       common.Pair_BTC_NUSD,
@@ -521,13 +532,15 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	app.VpoolKeeper.CreatePool(
 		/* ctx */ ctx,
 		/* pair */ pair,
-		/* tradeLimitRatio */ sdk.OneDec(),
 		/* quoteAssetReserve */ sdk.NewDec(1_000_000),
 		/* baseAssetReserve */ sdk.NewDec(1_000_000),
-		/* fluctuationLimitRatio */ sdk.OneDec(),
-		/* maxOracleSpreadRatio */ sdk.OneDec(),
-		/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
-		/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+		vpooltypes.VpoolConfig{
+			TradeLimitRatio:        sdk.OneDec(),
+			FluctuationLimitRatio:  sdk.OneDec(),
+			MaxOracleSpreadRatio:   sdk.OneDec(),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
+		},
 	)
 	setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 		Pair:                       pair,

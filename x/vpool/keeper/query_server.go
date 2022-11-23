@@ -59,7 +59,7 @@ func (q queryServer) AllPools(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	var pools []types.VPool
+	var pools []types.Vpool
 	var pricesForPools []types.PoolPrices
 	for _, pool := range q.k.Pools.Iterate(ctx, collections.Range[common.AssetPair]{}).Values() {
 		poolPrices, err := q.k.GetPoolPrices(ctx, pool)

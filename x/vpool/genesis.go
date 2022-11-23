@@ -17,13 +17,9 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 		k.CreatePool(
 			ctx,
 			vp.Pair,
-			vp.TradeLimitRatio,
 			vp.QuoteAssetReserve,
 			vp.BaseAssetReserve,
-			vp.FluctuationLimitRatio,
-			vp.MaxOracleSpreadRatio,
-			vp.MaintenanceMarginRatio,
-			vp.MaxLeverage,
+			vp.Config,
 		)
 	}
 }
