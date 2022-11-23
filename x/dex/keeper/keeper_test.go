@@ -404,6 +404,50 @@ func TestNewPoolTooManyAssets(t *testing.T) {
 	require.Equal(t, uint64(0), poolId)
 }
 
+func TestNewPoolDups(t *testing.T) {
+	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+	userAddr, err := sdk.AccAddressFromBech32(testutil.AccAddress().String())
+	require.NoError(t, err)
+
+	poolCreationFeeCoin := sdk.NewCoins(sdk.NewInt64Coin(common.DenomNIBI, 1))
+	err = simapp.FundAccount(app.BankKeeper, ctx, userAddr, sdk.NewCoins(
+		sdk.NewCoin(common.DenomNIBI, sdk.NewInt(1000)),
+		sdk.NewCoin("bar", sdk.NewInt(1000)),
+		sdk.NewCoin("foo", sdk.NewInt(1000)),
+	))
+	require.NoError(t, err)
+	app.DexKeeper.SetParams(ctx, types.NewParams(
+		/*startingPoolNumber=*/ 1,
+		/*poolCreationFee=*/ poolCreationFeeCoin,
+		/*whitelistedAssets*/ []string{
+			"bar",
+			"foo",
+		},
+	))
+
+	poolParams := types.PoolParams{
+		SwapFee: sdk.NewDecWithPrec(3, 2),
+		ExitFee: sdk.NewDecWithPrec(3, 2),
+	}
+	poolAssets := []types.PoolAsset{
+		{
+			Token:  sdk.NewCoin("bar", sdk.NewInt(10)),
+			Weight: sdk.NewInt(1),
+		},
+		{
+			Token:  sdk.NewCoin("foo", sdk.NewInt(10)),
+			Weight: sdk.NewInt(1),
+		},
+	}
+
+	poolId, err := app.DexKeeper.NewPool(ctx, userAddr, poolParams, poolAssets)
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), poolId)
+
+	_, err = app.DexKeeper.NewPool(ctx, userAddr, poolParams, poolAssets)
+	require.ErrorIs(t, err, types.ErrPoolWithSameAssetsExists)
+}
+
 func TestJoinPool(t *testing.T) {
 	const shareDenom = "nibiru/pool/1"
 

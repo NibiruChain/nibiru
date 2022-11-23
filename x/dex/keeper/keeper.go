@@ -328,6 +328,11 @@ func (k Keeper) NewPool(
 		return uint64(0), types.ErrTokenNotAllowed
 	}
 
+	_, err = k.FetchPoolFromPair(ctx, poolAssets[0].Token.Denom, poolAssets[1].Token.Denom)
+	if err == nil {
+		return uint64(0), types.ErrPoolWithSameAssetsExists
+	}
+
 	// send pool creation fee to community pool
 	params := k.GetParams(ctx)
 	err = k.distrKeeper.FundCommunityPool(ctx, params.PoolCreationFee, sender)
@@ -571,9 +576,4 @@ func (k Keeper) ExitPool(
 	}
 
 	return tokensOut, nil
-}
-
-// TODO implement
-func (k Keeper) GetFromPair(ctx sdk.Context, denomA string, denomB string) (poolId uint64, err error) {
-	return 0, nil
 }
