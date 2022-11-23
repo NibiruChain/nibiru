@@ -28,6 +28,11 @@ func (s ReserveSnapshot) Validate() error {
 		return err
 	}
 
+	if (s.BaseAssetReserve.String() == "<nil>") || (s.QuoteAssetReserve.String() == "<nil>") {
+		// prevents panics from usage of 'new(Dec)' or 'sdk.Dec{}'
+		return fmt.Errorf("nil dec value in snapshot. snapshot: %v", s.String())
+	}
+
 	if s.BaseAssetReserve.IsNegative() {
 		return fmt.Errorf("base asset reserve from snapshot cannot be negative: %d", s.BaseAssetReserve)
 	}
@@ -61,7 +66,7 @@ func (s ReserveSnapshot) GetLowerMarkPriceFluctuationLimit(fluctuationLimitRatio
 }
 
 // getMarkPrice returns the price of the mark price at the moment of the snapshot.
-// It is the equivalent of getMarkPrice from VPool
+// It is the equivalent of getMarkPrice from Vpool
 func (s ReserveSnapshot) getMarkPrice() sdk.Dec {
 	if s.BaseAssetReserve.IsNil() || s.BaseAssetReserve.IsZero() ||
 		s.QuoteAssetReserve.IsNil() || s.QuoteAssetReserve.IsZero() {

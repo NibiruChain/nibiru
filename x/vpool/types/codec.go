@@ -17,6 +17,7 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 	)
 
 	registry.RegisterImplementations((*govtypes.Content)(nil), &CreatePoolProposal{})
+	registry.RegisterImplementations((*govtypes.Content)(nil), &EditPoolConfigProposal{})
 
 	// msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }

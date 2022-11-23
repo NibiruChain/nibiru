@@ -48,13 +48,15 @@ func TestGetMarkPrice(t *testing.T) {
 			vpoolKeeper.CreatePool(
 				ctx,
 				tc.pair,
-				/*tradeLimitRatio=*/ sdk.OneDec(),
 				tc.quoteAssetReserve,
 				tc.baseAssetReserve,
-				/*fluctuationLimitratio=*/ sdk.OneDec(),
-				sdk.OneDec(),
-				sdk.MustNewDecFromStr("0.0625"),
-				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+				types.VpoolConfig{
+					FluctuationLimitRatio:  sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					TradeLimitRatio:        sdk.OneDec(),
+				},
 			)
 
 			price, err := vpoolKeeper.GetMarkPrice(ctx, tc.pair)
@@ -122,13 +124,15 @@ func TestGetBaseAssetPrice(t *testing.T) {
 			vpoolKeeper.CreatePool(
 				ctx,
 				tc.pair,
-				/*tradeLimitRatio=*/ sdk.OneDec(),
 				tc.quoteAssetReserve,
 				tc.baseAssetReserve,
-				/*fluctuationLimitRatio=*/ sdk.OneDec(),
-				sdk.OneDec(),
-				sdk.MustNewDecFromStr("0.0625"),
-				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+				types.VpoolConfig{
+					FluctuationLimitRatio:  sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					TradeLimitRatio:        sdk.OneDec(),
+				},
 			)
 
 			quoteAmount, err := vpoolKeeper.GetBaseAssetPrice(ctx, tc.pair, tc.direction, tc.baseAmount)
@@ -203,13 +207,15 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 			vpoolKeeper.CreatePool(
 				ctx,
 				tc.pair,
-				/*tradeLimitRatio=*/ sdk.OneDec(),
 				tc.quoteAssetReserve,
 				tc.baseAssetReserve,
-				/*fluctuationLimitRatio=*/ sdk.OneDec(),
-				sdk.OneDec(),
-				sdk.MustNewDecFromStr("0.0625"),
-				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+				types.VpoolConfig{
+					FluctuationLimitRatio:  sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					TradeLimitRatio:        sdk.OneDec(),
+				},
 			)
 
 			baseAmount, err := vpoolKeeper.GetQuoteAssetPrice(ctx, tc.pair, tc.direction, tc.quoteAmount)
@@ -515,26 +521,30 @@ func TestCalcTwap(t *testing.T) {
 			vpoolKeeper.CreatePool(
 				ctx,
 				tc.pair,
-				sdk.ZeroDec(),
-				sdk.ZeroDec(),
-				sdk.ZeroDec(),
-				sdk.ZeroDec(),
-				sdk.OneDec(),
-				sdk.OneDec(),
-				/* maxLeverage */ sdk.NewDec(15),
+				/*quoteAssetReserve=*/ sdk.ZeroDec(),
+				/*baseAssetReserve=*/ sdk.ZeroDec(),
+				types.VpoolConfig{
+					FluctuationLimitRatio:  sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					TradeLimitRatio:        sdk.ZeroDec(),
+				},
 			)
 
 			t.Log("throw in another market pair to ensure key iteration doesn't overlap")
 			vpoolKeeper.CreatePool(
 				ctx,
 				tc.pair,
-				sdk.ZeroDec(),
-				sdk.NewDec(100),
-				sdk.OneDec(),
-				sdk.ZeroDec(),
-				sdk.OneDec(),
-				sdk.OneDec(),
-				/* maxLeverage */ sdk.NewDec(15),
+				/*quoteAssetReserve=*/ sdk.NewDec(100),
+				/*baseAssetReserve=*/ sdk.OneDec(),
+				types.VpoolConfig{
+					FluctuationLimitRatio:  sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.OneDec(),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					TradeLimitRatio:        sdk.ZeroDec(),
+				},
 			)
 
 			for _, snapshot := range tc.reserveSnapshots {

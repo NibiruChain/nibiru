@@ -262,13 +262,15 @@ func TestOpenPositionSuccess(t *testing.T) {
 			nibiruApp.VpoolKeeper.CreatePool(
 				ctx,
 				common.Pair_BTC_NUSD,
-				/* tradeLimitRatio */ sdk.OneDec(),
 				/* quoteReserve */ sdk.NewDec(1_000_000_000_000),
 				/* baseReserve */ sdk.NewDec(1_000_000_000_000),
-				/* fluctuationLimit */ sdk.MustNewDecFromStr("0.1"),
-				/* maxOracleSpreadRatio */ sdk.OneDec(),
-				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
-				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+				vpooltypes.VpoolConfig{
+					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+					MaxOracleSpreadRatio:   sdk.OneDec(), // 100%,
+					TradeLimitRatio:        sdk.OneDec(),
+				},
 			)
 			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                       common.Pair_BTC_NUSD,
@@ -496,13 +498,17 @@ func TestOpenPositionError(t *testing.T) {
 			nibiruApp.VpoolKeeper.CreatePool(
 				ctx,
 				common.Pair_BTC_NUSD,
-				/* tradeLimitRatio */ tc.poolTradeLimitRatio,
-				/* quoteReserve */ sdk.NewDec(1_000_000_000_000),
+				/* tradeLimitRatio */
+				/* quoteReserve */
+				sdk.NewDec(1_000_000_000_000),
 				/* baseReserve */ sdk.NewDec(1_000_000_000_000),
-				/* fluctuationLimit */ sdk.MustNewDecFromStr("0.1"),
-				/* maxOracleSpreadRatio */ sdk.OneDec(),
-				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
-				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+				vpooltypes.VpoolConfig{
+					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+					MaxOracleSpreadRatio:   sdk.OneDec(), // 100%,
+					TradeLimitRatio:        tc.poolTradeLimitRatio,
+				},
 			)
 			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                       common.Pair_BTC_NUSD,
@@ -563,13 +569,15 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 				vpoolKeeper.CreatePool(
 					ctx,
 					pair,
-					sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
-					sdk.NewDec(10_000_000),       //
-					sdk.NewDec(5_000_000),        // 5 tokens
-					sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
-					sdk.MustNewDecFromStr("0.1"),
-					/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
-					/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+					sdk.NewDec(10_000_000), //
+					sdk.NewDec(5_000_000),  // 5 tokens
+					vpooltypes.VpoolConfig{
+						FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
+						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+						MaxLeverage:            sdk.MustNewDecFromStr("15"),
+						MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"), // 100%,
+						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
+					},
 				)
 				nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, pair, true)
 

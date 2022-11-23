@@ -30,7 +30,7 @@ enum TwapCalcOption {
 
 // A virtual pool used only for price discovery of perpetual futures contracts.
 // No real liquidity exists in this pool.
-message VPool {
+message Vpool {
   // always BASE:QUOTE, e.g. BTC:NUSD or ETH:NUSD
   common.AssetPair pair = 1 [
     (gogoproto.nullable) = false
@@ -48,32 +48,38 @@ message VPool {
     (gogoproto.nullable) = false
   ];
 
+  VpoolConfig config = 4 [
+    (gogoproto.nullable) = false
+  ];
+}
+
+message VpoolConfig {
   // ratio applied to reserves in order not to over trade
-  string trade_limit_ratio = 4 [
+  string trade_limit_ratio = 1 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
   // percentage that a single open or close position can alter the reserve amounts
-  string fluctuation_limit_ratio = 5 [
+  string fluctuation_limit_ratio = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
   // max_oracle_spread_ratio
-  string max_oracle_spread_ratio = 6 [
+  string max_oracle_spread_ratio = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
   // maintenance_margin_ratio
-  string maintenance_margin_ratio = 7 [
+  string maintenance_margin_ratio = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
   // max_leverage
-  string max_leverage = 8 [
+  string max_leverage = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];

@@ -14,6 +14,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
+	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 func TestKeeperClosePosition(t *testing.T) {
@@ -29,13 +30,15 @@ func TestKeeperClosePosition(t *testing.T) {
 		vpoolKeeper.CreatePool(
 			ctx,
 			pair,
-			/*tradeLimitRatio*/ sdk.MustNewDecFromStr("0.9"),
 			/*quoteAssetReserve*/ sdk.NewDec(10_000_000),
 			/*baseAssetReserve*/ sdk.NewDec(5_000_000),
-			/*fluctuationLimitRatio*/ sdk.MustNewDecFromStr("0.1"),
-			/*maxOracleSpreadRatio*/ sdk.MustNewDecFromStr("0.1"),
-			/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
-			/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+			vpooltypes.VpoolConfig{
+				TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
+				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
+				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			},
 		)
 		require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 		nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, pair, true)

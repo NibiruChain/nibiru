@@ -173,13 +173,15 @@ func TestSwapQuoteForBase(t *testing.T) {
 			vpoolKeeper.CreatePool(
 				ctx,
 				common.Pair_BTC_NUSD,
-				/* tradeLimitRatio */ sdk.MustNewDecFromStr("0.9"),
 				/* quoteAssetReserve */ sdk.NewDec(10_000_000), // 10 tokens
 				/* baseAssetReserve */ sdk.NewDec(5_000_000), // 5 tokens
-				/* fluctuationLimitRatio */ sdk.MustNewDecFromStr("0.1"),
-				/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("0.1"),
-				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
-				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+				types.VpoolConfig{
+					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
+					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
+					MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+				},
 			)
 
 			baseAmt, err := vpoolKeeper.SwapQuoteForBase(
@@ -364,13 +366,15 @@ func TestSwapBaseForQuote(t *testing.T) {
 			vpoolKeeper.CreatePool(
 				ctx,
 				common.Pair_BTC_NUSD,
-				/* tradeLimitRatio */ sdk.MustNewDecFromStr("0.9"),
 				/* quoteAssetReserve */ sdk.NewDec(10_000_000), // 10 tokens
 				/* baseAssetReserve */ sdk.NewDec(5_000_000), // 5 tokens
-				/* fluctuationLimitRatio */ sdk.MustNewDecFromStr("0.1"),
-				/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("0.1"),
-				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
-				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+				types.VpoolConfig{
+					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
+					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
+					MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+				},
 			)
 
 			quoteAssetAmount, err := vpoolKeeper.SwapBaseForQuote(
@@ -407,71 +411,81 @@ func TestGetVpools(t *testing.T) {
 	vpoolKeeper.CreatePool(
 		ctx,
 		common.Pair_BTC_NUSD,
-		sdk.OneDec(),
 		sdk.NewDec(10_000_000),
 		sdk.NewDec(5_000_000),
-		sdk.OneDec(),
-		sdk.OneDec(),
-		sdk.MustNewDecFromStr("0.0625"),
-		sdk.MustNewDecFromStr("15"),
+		types.VpoolConfig{
+			TradeLimitRatio:        sdk.OneDec(),
+			FluctuationLimitRatio:  sdk.OneDec(),
+			MaxOracleSpreadRatio:   sdk.OneDec(),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
+		},
 	)
 	vpoolKeeper.CreatePool(
 		ctx,
 		common.Pair_ETH_NUSD,
-		sdk.OneDec(),
 		sdk.NewDec(5_000_000),
 		sdk.NewDec(10_000_000),
-		sdk.OneDec(),
-		sdk.OneDec(),
-		sdk.MustNewDecFromStr("0.0625"),
-		sdk.MustNewDecFromStr("15"),
+		types.VpoolConfig{
+			TradeLimitRatio:        sdk.OneDec(),
+			FluctuationLimitRatio:  sdk.OneDec(),
+			MaxOracleSpreadRatio:   sdk.OneDec(),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
+		},
 	)
 
 	pools := vpoolKeeper.Pools.Iterate(ctx, collections.Range[common.AssetPair]{}).Values()
 
 	require.EqualValues(t, 2, len(pools))
 
-	require.EqualValues(t, pools[0], types.VPool{
-		Pair:                   common.Pair_BTC_NUSD,
-		BaseAssetReserve:       sdk.NewDec(5_000_000),
-		QuoteAssetReserve:      sdk.NewDec(10_000_000),
-		TradeLimitRatio:        sdk.OneDec(),
-		FluctuationLimitRatio:  sdk.OneDec(),
-		MaxOracleSpreadRatio:   sdk.OneDec(),
-		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-		MaxLeverage:            sdk.MustNewDecFromStr("15"),
+	require.EqualValues(t, pools[0], types.Vpool{
+		Pair:              common.Pair_BTC_NUSD,
+		BaseAssetReserve:  sdk.NewDec(5_000_000),
+		QuoteAssetReserve: sdk.NewDec(10_000_000),
+		Config: types.VpoolConfig{
+			TradeLimitRatio:        sdk.OneDec(),
+			FluctuationLimitRatio:  sdk.OneDec(),
+			MaxOracleSpreadRatio:   sdk.OneDec(),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
+		},
 	})
-	require.EqualValues(t, pools[1], types.VPool{
-		Pair:                   common.Pair_ETH_NUSD,
-		BaseAssetReserve:       sdk.NewDec(10_000_000),
-		QuoteAssetReserve:      sdk.NewDec(5_000_000),
-		TradeLimitRatio:        sdk.OneDec(),
-		FluctuationLimitRatio:  sdk.OneDec(),
-		MaxOracleSpreadRatio:   sdk.OneDec(),
-		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-		MaxLeverage:            sdk.MustNewDecFromStr("15"),
+	require.EqualValues(t, pools[1], types.Vpool{
+		Pair:              common.Pair_ETH_NUSD,
+		BaseAssetReserve:  sdk.NewDec(10_000_000),
+		QuoteAssetReserve: sdk.NewDec(5_000_000),
+		Config: types.VpoolConfig{
+			TradeLimitRatio:        sdk.OneDec(),
+			FluctuationLimitRatio:  sdk.OneDec(),
+			MaxOracleSpreadRatio:   sdk.OneDec(),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
+		},
 	})
 }
 
 func TestCheckFluctuationLimitRatio(t *testing.T) {
 	tests := []struct {
 		name              string
-		pool              types.VPool
+		pool              types.Vpool
 		existingSnapshots []types.ReserveSnapshot
 
 		expectedErr error
 	}{
 		{
 			name: "uses latest snapshot - does not result in error",
-			pool: types.VPool{
-				Pair:                   common.Pair_BTC_NUSD,
-				QuoteAssetReserve:      sdk.NewDec(1002),
-				BaseAssetReserve:       sdk.OneDec(),
-				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
-				TradeLimitRatio:        sdk.OneDec(),
-				MaxOracleSpreadRatio:   sdk.OneDec(),
-				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			pool: types.Vpool{
+				Pair:              common.Pair_BTC_NUSD,
+				QuoteAssetReserve: sdk.NewDec(1002),
+				BaseAssetReserve:  sdk.OneDec(),
+				Config: types.VpoolConfig{
+					TradeLimitRatio:        sdk.OneDec(),
+					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+				},
 			},
 			existingSnapshots: []types.ReserveSnapshot{
 				{
@@ -491,15 +505,17 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 		},
 		{
 			name: "uses previous snapshot - results in error",
-			pool: types.VPool{
-				Pair:                   common.Pair_BTC_NUSD,
-				QuoteAssetReserve:      sdk.NewDec(1002),
-				BaseAssetReserve:       sdk.OneDec(),
-				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
-				TradeLimitRatio:        sdk.OneDec(),
-				MaxOracleSpreadRatio:   sdk.OneDec(),
-				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			pool: types.Vpool{
+				Pair:              common.Pair_BTC_NUSD,
+				QuoteAssetReserve: sdk.NewDec(1002),
+				BaseAssetReserve:  sdk.OneDec(),
+				Config: types.VpoolConfig{
+					TradeLimitRatio:        sdk.OneDec(),
+					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+				},
 			},
 			existingSnapshots: []types.ReserveSnapshot{
 				{
@@ -513,15 +529,17 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 		},
 		{
 			name: "only one snapshot - no error",
-			pool: types.VPool{
-				Pair:                   common.Pair_BTC_NUSD,
-				QuoteAssetReserve:      sdk.NewDec(1000),
-				BaseAssetReserve:       sdk.OneDec(),
-				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
-				TradeLimitRatio:        sdk.OneDec(),
-				MaxOracleSpreadRatio:   sdk.OneDec(),
-				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			pool: types.Vpool{
+				Pair:              common.Pair_BTC_NUSD,
+				QuoteAssetReserve: sdk.NewDec(1000),
+				BaseAssetReserve:  sdk.OneDec(),
+				Config: types.VpoolConfig{
+					TradeLimitRatio:        sdk.OneDec(),
+					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+				},
 			},
 			existingSnapshots: []types.ReserveSnapshot{
 				{
@@ -535,15 +553,17 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 		},
 		{
 			name: "zero fluctuation limit - no error",
-			pool: types.VPool{
-				Pair:                   common.Pair_BTC_NUSD,
-				QuoteAssetReserve:      sdk.NewDec(2000),
-				BaseAssetReserve:       sdk.OneDec(),
-				FluctuationLimitRatio:  sdk.ZeroDec(),
-				TradeLimitRatio:        sdk.OneDec(),
-				MaxOracleSpreadRatio:   sdk.OneDec(),
-				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			pool: types.Vpool{
+				Pair:              common.Pair_BTC_NUSD,
+				QuoteAssetReserve: sdk.NewDec(2000),
+				BaseAssetReserve:  sdk.OneDec(),
+				Config: types.VpoolConfig{
+					TradeLimitRatio:        sdk.OneDec(),
+					FluctuationLimitRatio:  sdk.ZeroDec(),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+				},
 			},
 			existingSnapshots: []types.ReserveSnapshot{
 				{
@@ -563,15 +583,17 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 		},
 		{
 			name: "multiple pools - no overlap",
-			pool: types.VPool{
-				Pair:                   common.Pair_BTC_NUSD,
-				QuoteAssetReserve:      sdk.NewDec(1000),
-				BaseAssetReserve:       sdk.OneDec(),
-				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
-				TradeLimitRatio:        sdk.OneDec(),
-				MaxOracleSpreadRatio:   sdk.OneDec(),
-				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			pool: types.Vpool{
+				Pair:              common.Pair_BTC_NUSD,
+				QuoteAssetReserve: sdk.NewDec(1000),
+				BaseAssetReserve:  sdk.OneDec(),
+				Config: types.VpoolConfig{
+					TradeLimitRatio:        sdk.OneDec(),
+					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+				},
 			},
 			existingSnapshots: []types.ReserveSnapshot{
 				{
@@ -637,35 +659,39 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 func TestGetMaintenanceMarginRatio(t *testing.T) {
 	tests := []struct {
 		name string
-		pool types.VPool
+		pool types.Vpool
 
 		expectedMaintenanceMarginRatio sdk.Dec
 	}{
 		{
 			name: "zero fluctuation limit ratio",
-			pool: types.VPool{
-				Pair:                   common.Pair_BTC_NUSD,
-				QuoteAssetReserve:      sdk.OneDec(),
-				BaseAssetReserve:       sdk.OneDec(),
-				FluctuationLimitRatio:  sdk.ZeroDec(),
-				TradeLimitRatio:        sdk.OneDec(),
-				MaxOracleSpreadRatio:   sdk.OneDec(),
-				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.42"),
-				MaxLeverage:            sdk.OneDec(),
+			pool: types.Vpool{
+				Pair:              common.Pair_BTC_NUSD,
+				QuoteAssetReserve: sdk.OneDec(),
+				BaseAssetReserve:  sdk.OneDec(),
+				Config: types.VpoolConfig{
+					TradeLimitRatio:        sdk.OneDec(),
+					FluctuationLimitRatio:  sdk.ZeroDec(),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.42"),
+					MaxLeverage:            sdk.OneDec(),
+				},
 			},
 			expectedMaintenanceMarginRatio: sdk.MustNewDecFromStr("0.42"),
 		},
 		{
 			name: "zero fluctuation limit ratio",
-			pool: types.VPool{
-				Pair:                   common.Pair_BTC_NUSD,
-				QuoteAssetReserve:      sdk.OneDec(),
-				BaseAssetReserve:       sdk.OneDec(),
-				FluctuationLimitRatio:  sdk.ZeroDec(),
-				TradeLimitRatio:        sdk.OneDec(),
-				MaxOracleSpreadRatio:   sdk.OneDec(),
-				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.4242"),
-				MaxLeverage:            sdk.OneDec(),
+			pool: types.Vpool{
+				Pair:              common.Pair_BTC_NUSD,
+				QuoteAssetReserve: sdk.OneDec(),
+				BaseAssetReserve:  sdk.OneDec(),
+				Config: types.VpoolConfig{
+					TradeLimitRatio:        sdk.OneDec(),
+					FluctuationLimitRatio:  sdk.ZeroDec(),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.4242"),
+					MaxLeverage:            sdk.OneDec(),
+				},
 			},
 			expectedMaintenanceMarginRatio: sdk.MustNewDecFromStr("0.4242"),
 		},
@@ -687,21 +713,23 @@ func TestGetMaintenanceMarginRatio(t *testing.T) {
 func TestGetMaxLeverage(t *testing.T) {
 	tests := []struct {
 		name string
-		pool types.VPool
+		pool types.Vpool
 
 		expectedMaxLeverage sdk.Dec
 	}{
 		{
 			name: "zero fluctuation limit ratio",
-			pool: types.VPool{
-				Pair:                   common.Pair_BTC_NUSD,
-				QuoteAssetReserve:      sdk.OneDec(),
-				BaseAssetReserve:       sdk.OneDec(),
-				FluctuationLimitRatio:  sdk.ZeroDec(),
-				TradeLimitRatio:        sdk.OneDec(),
-				MaxOracleSpreadRatio:   sdk.OneDec(),
-				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.42"),
-				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			pool: types.Vpool{
+				Pair:              common.Pair_BTC_NUSD,
+				QuoteAssetReserve: sdk.OneDec(),
+				BaseAssetReserve:  sdk.OneDec(),
+				Config: types.VpoolConfig{
+					FluctuationLimitRatio:  sdk.ZeroDec(),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.42"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					TradeLimitRatio:        sdk.OneDec(),
+				},
 			},
 			expectedMaxLeverage: sdk.MustNewDecFromStr("15"),
 		},

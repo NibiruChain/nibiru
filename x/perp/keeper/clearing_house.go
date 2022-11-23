@@ -93,7 +93,7 @@ func (k Keeper) OpenPosition(
 
 // checkOpenPositionRequirements checks the minimum requirements to open a position.
 //
-// - Checks that the VPool exists.
+// - Checks that the Vpool exists.
 // - Checks that quote asset is not zero.
 // - Checks that leverage is not zero.
 // - Checks that leverage is below requirement.

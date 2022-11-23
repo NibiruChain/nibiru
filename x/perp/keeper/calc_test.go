@@ -14,6 +14,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
+	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
@@ -47,13 +48,15 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				vpoolKeeper.CreatePool(
 					ctx,
 					pair,
-					sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
 					/* y */ sdk.NewDec(1_000_000), //
 					/* x */ sdk.NewDec(1_000_000), //
-					/* fluctuationLimit */ sdk.MustNewDecFromStr("1.0"), // 100%
-					/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("1.0"), // 100%
-					/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
-					/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+					vpooltypes.VpoolConfig{
+						FluctuationLimitRatio:  sdk.MustNewDecFromStr("1.0"),
+						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+						MaxLeverage:            sdk.MustNewDecFromStr("15"),
+						MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("1.0"), // 100%,
+						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
+					},
 				)
 				fundingRates := []sdk.Dec{sdk.ZeroDec()} // fPayment -> 0
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
@@ -99,13 +102,15 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				vpoolKeeper.CreatePool(
 					ctx,
 					pair,
-					sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
 					/* y */ sdk.NewDec(1_000_000), //
 					/* x */ sdk.NewDec(1_000_000), //
-					/* fluctuationLimit */ sdk.MustNewDecFromStr("1.0"), // 100%
-					/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("1.0"), // 100%
-					/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
-					/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+					vpooltypes.VpoolConfig{
+						FluctuationLimitRatio:  sdk.MustNewDecFromStr("1.0"),
+						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+						MaxLeverage:            sdk.MustNewDecFromStr("15"),
+						MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("1.0"), // 100%,
+						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
+					},
 				)
 				fundingRates := []sdk.Dec{
 					sdk.MustNewDecFromStr("0.25"),

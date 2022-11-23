@@ -151,6 +151,7 @@ var (
 			upgradeclient.CancelProposalHandler,
 			pricefeedcli.AddOracleProposalHandler,
 			vpoolcli.CreatePoolProposalHandler,
+			vpoolcli.EditPoolConfigProposalHandler,
 			// pricefeedcli.RemoveOracleProposalHandler, // TODO
 			ibcclientclient.UpdateClientProposalHandler,
 			ibcclientclient.UpgradeProposalHandler,
@@ -500,7 +501,7 @@ func NewNibiruApp(
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.upgradeKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.ibcKeeper.ClientKeeper)).
 		AddRoute(pricefeedtypes.RouterKey, pricefeed.NewPricefeedProposalHandler(app.pricefeedKeeper)).
-		AddRoute(vpooltypes.RouterKey, vpool.NewCreatePoolProposalHandler(app.vpoolKeeper))
+		AddRoute(vpooltypes.RouterKey, vpool.NewVpoolProposalHandler(app.vpoolKeeper))
 
 	app.transferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec,

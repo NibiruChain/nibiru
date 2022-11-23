@@ -7,43 +7,69 @@ import (
 )
 
 const (
-	ProposalTypeCreatePool = "CreatePool"
+	ProposalTypeCreatePool     = "CreatePool"
+	ProposalTypeEditPoolConfig = "EditPoolConfig"
 )
 
 var _ govtypes.Content = &CreatePoolProposal{}
+var _ govtypes.Content = &EditPoolConfigProposal{}
 
 func init() {
 	govtypes.RegisterProposalType(ProposalTypeCreatePool)
 	govtypes.RegisterProposalTypeCodec(&CreatePoolProposal{}, "nibiru/CreatePoolProposal")
+	govtypes.RegisterProposalType(ProposalTypeEditPoolConfig)
+	govtypes.RegisterProposalTypeCodec(&EditPoolConfigProposal{}, "nibiru/EditPoolConfigProposal")
 }
 
-func (m *CreatePoolProposal) ProposalRoute() string {
+// CreatePoolProposal
+
+func (proposal *CreatePoolProposal) ProposalRoute() string {
 	return RouterKey
 }
 
-func (m *CreatePoolProposal) ProposalType() string {
+func (proposal *CreatePoolProposal) ProposalType() string {
 	return ProposalTypeCreatePool
 }
 
-func (m *CreatePoolProposal) ValidateBasic() error {
-	if err := govtypes.ValidateAbstract(m); err != nil {
+func (proposal *CreatePoolProposal) ValidateBasic() error {
+	if err := govtypes.ValidateAbstract(proposal); err != nil {
 		return err
 	}
 
-	assetPair, err := common.NewAssetPair(m.Pair)
+	assetPair, err := common.NewAssetPair(proposal.Pair)
 	if err != nil {
 		return err
 	}
-	pool := &VPool{
-		Pair:                   assetPair,
-		BaseAssetReserve:       m.BaseAssetReserve,
-		QuoteAssetReserve:      m.QuoteAssetReserve,
-		TradeLimitRatio:        m.TradeLimitRatio,
-		FluctuationLimitRatio:  m.FluctuationLimitRatio,
-		MaxOracleSpreadRatio:   m.MaxOracleSpreadRatio,
-		MaintenanceMarginRatio: m.MaintenanceMarginRatio,
-		MaxLeverage:            m.MaxLeverage,
+	pool := &Vpool{
+		Pair:              assetPair,
+		BaseAssetReserve:  proposal.BaseAssetReserve,
+		QuoteAssetReserve: proposal.QuoteAssetReserve,
+		Config:            proposal.Config,
 	}
 
 	return pool.Validate()
+}
+
+// EditPoolConfigProposal
+
+func (proposal *EditPoolConfigProposal) ProposalRoute() string {
+	return RouterKey
+}
+
+func (proposal *EditPoolConfigProposal) ProposalType() string {
+	return ProposalTypeEditPoolConfig
+}
+
+func (proposal *EditPoolConfigProposal) ValidateBasic() error {
+	if err := govtypes.ValidateAbstract(proposal); err != nil {
+		return err
+	}
+
+	_, err := common.NewAssetPair(proposal.Pair)
+	if err != nil {
+		return err
+	}
+
+	config := proposal.Config
+	return config.Validate()
 }

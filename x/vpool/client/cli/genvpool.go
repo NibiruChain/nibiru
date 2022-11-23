@@ -3,6 +3,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -16,30 +17,15 @@ import (
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-var (
-	ParamPair                   = "pair"
-	ParamBaseAssetReserve       = "base-asset-reserve"
-	ParamQuoteAssetReserve      = "quote-asset-reserve"
-	ParamTradeLimitRatio        = "trade-limit-ratio"
-	ParamFluctuationLimitRatio  = "fluctuation-limit-ratio"
-	ParamMaxOracleSpreadRatio   = "maxOracle-spread-ratio"
-	ParamMaintenanceMarginRatio = "maintenance-margin-ratio"
-	ParamMaxLeverage            = "max-leverage"
-)
-
-// AddVPoolGenesisCmd returns add-vpool-genesis
-func AddVPoolGenesisCmd(defaultNodeHome string) *cobra.Command {
+// AddVpoolGenesisCmd returns add-vpool-genesis
+func AddVpoolGenesisCmd(defaultNodeHome string) *cobra.Command {
+	usageExampleTail := strings.Join([]string{
+		"pair", "base-asset-reserve", "quote-asset-reserve", "trade-limit-ratio",
+		"fluctuation-limit-ratio", "max-oracle-spread-ratio", "maintenance-margin-ratio",
+		"max-leverage",
+	}, "] [")
 	cmd := &cobra.Command{
-		Use: fmt.Sprintf("add-genesis-vpool [%s] [%s] [%s] [%s] [%s] [%s] [%s] [%s]",
-			ParamPair,
-			ParamBaseAssetReserve,
-			ParamQuoteAssetReserve,
-			ParamTradeLimitRatio,
-			ParamFluctuationLimitRatio,
-			ParamMaxOracleSpreadRatio,
-			ParamMaintenanceMarginRatio,
-			ParamMaxLeverage,
-		),
+		Use:   fmt.Sprintf("add-genesis-vpool [%s]", usageExampleTail),
 		Short: "Add vPools to genesis.json",
 		Long:  `Add vPools to genesis.json.`,
 		Args:  cobra.ExactArgs(8),
@@ -87,54 +73,56 @@ func AddVPoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 	return cmd
 }
 
-func parseVpoolParams(args []string) (types.VPool, error) {
+func parseVpoolParams(args []string) (types.Vpool, error) {
 	vPair, err := common.NewAssetPair(args[0])
 	if err != nil {
-		return types.VPool{}, err
+		return types.Vpool{}, err
 	}
 
 	baseAsset, err := sdk.NewDecFromStr(args[1])
 	if err != nil {
-		return types.VPool{}, err
+		return types.Vpool{}, err
 	}
 	quoteAsset, err := sdk.NewDecFromStr(args[2])
 	if err != nil {
-		return types.VPool{}, err
+		return types.Vpool{}, err
 	}
 	tradeLimit, err := sdk.NewDecFromStr(args[3])
 	if err != nil {
-		return types.VPool{}, err
+		return types.Vpool{}, err
 	}
 
 	fluctuationLimitRatio, err := sdk.NewDecFromStr(args[4])
 	if err != nil {
-		return types.VPool{}, err
+		return types.Vpool{}, err
 	}
 
 	maxOracleSpread, err := sdk.NewDecFromStr(args[5])
 	if err != nil {
-		return types.VPool{}, err
+		return types.Vpool{}, err
 	}
 
 	maintenanceMarginRatio, err := sdk.NewDecFromStr(args[6])
 	if err != nil {
-		return types.VPool{}, err
+		return types.Vpool{}, err
 	}
 
 	maxLeverage, err := sdk.NewDecFromStr(args[7])
 	if err != nil {
-		return types.VPool{}, err
+		return types.Vpool{}, err
 	}
 
-	vPool := types.VPool{
-		Pair:                   vPair,
-		TradeLimitRatio:        tradeLimit,
-		QuoteAssetReserve:      quoteAsset,
-		BaseAssetReserve:       baseAsset,
-		FluctuationLimitRatio:  fluctuationLimitRatio,
-		MaxOracleSpreadRatio:   maxOracleSpread,
-		MaintenanceMarginRatio: maintenanceMarginRatio,
-		MaxLeverage:            maxLeverage,
+	vPool := types.Vpool{
+		Pair:              vPair,
+		QuoteAssetReserve: quoteAsset,
+		BaseAssetReserve:  baseAsset,
+		Config: types.VpoolConfig{
+			TradeLimitRatio:        tradeLimit,
+			FluctuationLimitRatio:  fluctuationLimitRatio,
+			MaxOracleSpreadRatio:   maxOracleSpread,
+			MaintenanceMarginRatio: maintenanceMarginRatio,
+			MaxLeverage:            maxLeverage,
+		},
 	}
 
 	return vPool, vPool.Validate()

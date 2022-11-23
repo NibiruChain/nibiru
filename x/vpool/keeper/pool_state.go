@@ -15,23 +15,15 @@ import (
 func (k Keeper) CreatePool(
 	ctx sdk.Context,
 	pair common.AssetPair,
-	tradeLimitRatio sdk.Dec, // integer with 6 decimals, 1_000_000 means 1.0
 	quoteAssetReserve sdk.Dec,
 	baseAssetReserve sdk.Dec,
-	fluctuationLimitRatio sdk.Dec,
-	maxOracleSpreadRatio sdk.Dec,
-	maintenanceMarginRatio sdk.Dec,
-	maxLeverage sdk.Dec,
+	config types.VpoolConfig,
 ) {
-	vpool := types.VPool{
-		Pair:                   pair,
-		BaseAssetReserve:       baseAssetReserve,
-		QuoteAssetReserve:      quoteAssetReserve,
-		TradeLimitRatio:        tradeLimitRatio,
-		FluctuationLimitRatio:  fluctuationLimitRatio,
-		MaxOracleSpreadRatio:   maxOracleSpreadRatio,
-		MaintenanceMarginRatio: maintenanceMarginRatio,
-		MaxLeverage:            maxLeverage,
+	vpool := types.Vpool{
+		Pair:              pair,
+		BaseAssetReserve:  baseAssetReserve,
+		QuoteAssetReserve: quoteAssetReserve,
+		Config:            config,
 	}
 	k.Pools.Insert(ctx, pair, vpool)
 
@@ -40,6 +32,37 @@ func (k Keeper) CreatePool(
 		collections.Join(pair, ctx.BlockTime()),
 		vpool.ToSnapshot(ctx),
 	)
+}
+
+func (k Keeper) EditPoolConfig(
+	ctx sdk.Context,
+	pair common.AssetPair,
+	config types.VpoolConfig,
+) error {
+	// Grab current pool from state
+	vpool, err := k.Pools.Get(ctx, pair)
+	if err != nil {
+		return err
+	}
+
+	newVpool := types.Vpool{
+		Pair:              vpool.Pair,
+		BaseAssetReserve:  vpool.BaseAssetReserve,
+		QuoteAssetReserve: vpool.QuoteAssetReserve,
+		Config:            config, // main change is here
+	}
+	if err := newVpool.Validate(); err != nil {
+		return err
+	}
+
+	err = k.updatePool(
+		ctx,
+		newVpool,
+		/*skipFluctuationLimitCheck*/ true)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 /*
@@ -55,7 +78,7 @@ ret:
 */
 func (k Keeper) updatePool(
 	ctx sdk.Context,
-	updatedPool types.VPool,
+	updatedPool types.Vpool,
 	skipFluctuationCheck bool,
 ) (err error) {
 	if !skipFluctuationCheck {
@@ -79,7 +102,7 @@ func (k Keeper) ExistsPool(ctx sdk.Context, pair common.AssetPair) bool {
 // An error is returned if the pool does not exist.
 // No error is returned if the prices don't exist, however.
 func (k Keeper) GetPoolPrices(
-	ctx sdk.Context, pool types.VPool,
+	ctx sdk.Context, pool types.Vpool,
 ) (types.PoolPrices, error) {
 	if err := pool.Pair.Validate(); err != nil {
 		return types.PoolPrices{}, err

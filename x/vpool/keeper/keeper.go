@@ -23,7 +23,7 @@ func NewKeeper(
 		codec:           codec,
 		storeKey:        storeKey,
 		pricefeedKeeper: pricefeedKeeper,
-		Pools:           collections.NewMap(storeKey, 0, common.AssetPairKeyEncoder, collections.ProtoValueEncoder[types.VPool](codec)),
+		Pools:           collections.NewMap(storeKey, 0, common.AssetPairKeyEncoder, collections.ProtoValueEncoder[types.Vpool](codec)),
 		ReserveSnapshots: collections.NewMap(
 			storeKey, 1,
 			collections.PairKeyEncoder(common.AssetPairKeyEncoder, collections.TimeKeyEncoder),
@@ -37,7 +37,7 @@ type Keeper struct {
 	storeKey        sdk.StoreKey
 	pricefeedKeeper types.PricefeedKeeper
 
-	Pools            collections.Map[common.AssetPair, types.VPool]
+	Pools            collections.Map[common.AssetPair, types.Vpool]
 	ReserveSnapshots collections.Map[collections.Pair[common.AssetPair, time.Time], types.ReserveSnapshot]
 }
 
@@ -264,8 +264,8 @@ args:
 ret:
   - err: error if any
 */
-func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool types.VPool) error {
-	if pool.FluctuationLimitRatio.IsZero() {
+func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool types.Vpool) error {
+	if pool.Config.FluctuationLimitRatio.IsZero() {
 		// early return to avoid expensive state operations
 		return nil
 	}
@@ -324,7 +324,7 @@ func (k Keeper) GetMaintenanceMarginRatio(ctx sdk.Context, pair common.AssetPair
 		panic(err)
 	}
 
-	return pool.MaintenanceMarginRatio
+	return pool.Config.MaintenanceMarginRatio
 }
 
 /*
@@ -343,7 +343,7 @@ func (k Keeper) GetMaxLeverage(ctx sdk.Context, pair common.AssetPair) sdk.Dec {
 		panic(err)
 	}
 
-	return pool.MaxLeverage
+	return pool.Config.MaxLeverage
 }
 
 /*
@@ -353,8 +353,8 @@ args:
   - ctx: the cosmos-sdk context
 
 ret:
-  - []types.VPool: All defined vpool
+  - []types.Vpool: All defined vpool
 */
-func (k Keeper) GetAllPools(ctx sdk.Context) []types.VPool {
+func (k Keeper) GetAllPools(ctx sdk.Context) []types.Vpool {
 	return k.Pools.Iterate(ctx, collections.Range[common.AssetPair]{}).Values()
 }

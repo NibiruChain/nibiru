@@ -24,30 +24,54 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 	}
 }
 
-func NewCreatePoolProposalHandler(k keeper.Keeper) govtypes.Handler {
+func NewVpoolProposalHandler(k keeper.Keeper) govtypes.Handler {
 	return func(ctx sdk.Context, content govtypes.Content) error {
-		switch m := content.(type) {
+		switch proposal := content.(type) {
 		case *types.CreatePoolProposal:
-			if err := m.ValidateBasic(); err != nil {
-				return err
-			}
-			pair := common.MustNewAssetPair(m.Pair)
-			k.CreatePool(
-				ctx,
-				pair,
-				m.TradeLimitRatio,
-				m.QuoteAssetReserve,
-				m.BaseAssetReserve,
-				m.FluctuationLimitRatio,
-				m.MaxOracleSpreadRatio,
-				m.MaintenanceMarginRatio,
-				m.MaxLeverage,
-			)
-			return nil
+			return handleProposalCreatePool(ctx, k, proposal)
+		case *types.EditPoolConfigProposal:
+			return handleProposalEditPoolConfig(ctx, k, proposal)
 		default:
 			return sdkerrors.Wrapf(
 				sdkerrors.ErrUnknownRequest,
-				"unrecognized %s proposal content type: %T", types.ModuleName, m)
+				"unrecognized %s proposal content type: %T", types.ModuleName, proposal)
 		}
 	}
+}
+
+func handleProposalCreatePool(
+	ctx sdk.Context, k keeper.Keeper, proposal *types.CreatePoolProposal,
+) error {
+	if err := proposal.ValidateBasic(); err != nil {
+		return err
+	}
+
+	pair, err := common.NewAssetPair(proposal.Pair)
+	if err != nil {
+		return err
+	}
+
+	k.CreatePool(
+		ctx,
+		pair,
+		proposal.QuoteAssetReserve,
+		proposal.BaseAssetReserve,
+		proposal.Config,
+	)
+	return nil
+}
+
+func handleProposalEditPoolConfig(
+	ctx sdk.Context, k keeper.Keeper, proposal *types.EditPoolConfigProposal,
+) error {
+	if err := proposal.ValidateBasic(); err != nil {
+		return err
+	}
+
+	pair, err := common.NewAssetPair(proposal.Pair)
+	if err != nil {
+		return err
+	}
+
+	return k.EditPoolConfig(ctx, pair, proposal.Config)
 }

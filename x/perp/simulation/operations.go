@@ -57,7 +57,7 @@ func SimulateMsgOpenPosition(ak types.AccountKeeper, bk types.BankKeeper, k keep
 		maxQuote := getMaxQuoteForPool(pool)
 		quoteAmt, _ := simtypes.RandPositiveInt(r, sdk.MinInt(sdk.Int(maxQuote), spendableCoins.AmountOf(common.DenomNUSD)))
 
-		leverage := simtypes.RandomDecAmount(r, pool.MaxLeverage.Sub(sdk.OneDec())).Add(sdk.OneDec()) // between [1, MaxLeverage]
+		leverage := simtypes.RandomDecAmount(r, pool.Config.MaxLeverage.Sub(sdk.OneDec())).Add(sdk.OneDec()) // between [1, MaxLeverage]
 		openNotional := leverage.MulInt(quoteAmt)
 		feesAmt := openNotional.Mul(sdk.MustNewDecFromStr("0.002")).Ceil().TruncateInt()
 		spentCoins := sdk.NewCoins(sdk.NewCoin(common.DenomNUSD, quoteAmt.Add(feesAmt)))
@@ -123,11 +123,11 @@ Trade limit ratio:
 
 		with tl the trade limit ratio.
 */
-func getMaxQuoteForPool(pool pooltypes.VPool) sdk.Dec {
-	ratioFloat := math.Sqrt(pool.FluctuationLimitRatio.Add(sdk.OneDec()).MustFloat64())
+func getMaxQuoteForPool(pool pooltypes.Vpool) sdk.Dec {
+	ratioFloat := math.Sqrt(pool.Config.FluctuationLimitRatio.Add(sdk.OneDec()).MustFloat64())
 	maxQuoteFluctationLimit := sdk.MustNewDecFromStr(fmt.Sprintf("%f", ratioFloat)).Mul(pool.QuoteAssetReserve)
 
-	maxQuoteTradeLimit := pool.QuoteAssetReserve.Mul(pool.TradeLimitRatio)
+	maxQuoteTradeLimit := pool.QuoteAssetReserve.Mul(pool.Config.TradeLimitRatio)
 
 	return sdk.MinDec(maxQuoteTradeLimit, maxQuoteFluctationLimit)
 }

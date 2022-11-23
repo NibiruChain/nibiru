@@ -308,10 +308,10 @@ func (mr *MockVpoolKeeperMockRecorder) ExistsPool(arg0, arg1 interface{}) *gomoc
 }
 
 // GetAllPools mocks base method.
-func (m *MockVpoolKeeper) GetAllPools(arg0 types2.Context) []types1.VPool {
+func (m *MockVpoolKeeper) GetAllPools(arg0 types2.Context) []types1.Vpool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllPools", arg0)
-	ret0, _ := ret[0].([]types1.VPool)
+	ret0, _ := ret[0].([]types1.Vpool)
 	return ret0
 }
 

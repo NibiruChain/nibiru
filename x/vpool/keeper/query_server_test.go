@@ -23,15 +23,17 @@ func TestQueryReserveAssets(t *testing.T) {
 	queryServer := NewQuerier(vpoolKeeper)
 
 	t.Log("initialize vpool")
-	pool := types.VPool{
-		Pair:                   common.Pair_BTC_NUSD,
-		TradeLimitRatio:        sdk.ZeroDec(),
-		QuoteAssetReserve:      sdk.NewDec(1_000_000),
-		BaseAssetReserve:       sdk.NewDec(1000),
-		FluctuationLimitRatio:  sdk.ZeroDec(),
-		MaxOracleSpreadRatio:   sdk.ZeroDec(),
-		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-		MaxLeverage:            sdk.MustNewDecFromStr("15"),
+	pool := types.Vpool{
+		Pair:              common.Pair_BTC_NUSD,
+		QuoteAssetReserve: sdk.NewDec(1_000_000),
+		BaseAssetReserve:  sdk.NewDec(1000),
+		Config: types.VpoolConfig{
+			FluctuationLimitRatio:  sdk.ZeroDec(),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			MaxOracleSpreadRatio:   sdk.ZeroDec(),
+			TradeLimitRatio:        sdk.ZeroDec(),
+		},
 	}
 	vpoolKeeper.Pools.Insert(ctx, pool.Pair, pool)
 
@@ -57,18 +59,20 @@ func TestQueryAllPools(t *testing.T) {
 
 	t.Log("initialize vpool")
 	pair := common.Pair_BTC_NUSD
-	pool := &types.VPool{
-		Pair:                   pair,
-		TradeLimitRatio:        sdk.ZeroDec(),
-		QuoteAssetReserve:      sdk.NewDec(1_000_000),
-		BaseAssetReserve:       sdk.NewDec(1000),
-		FluctuationLimitRatio:  sdk.ZeroDec(),
-		MaxOracleSpreadRatio:   sdk.ZeroDec(),
-		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-		MaxLeverage:            sdk.MustNewDecFromStr("15"),
+	pool := &types.Vpool{
+		Pair:              pair,
+		QuoteAssetReserve: sdk.NewDec(1_000_000),
+		BaseAssetReserve:  sdk.NewDec(1000),
+		Config: types.VpoolConfig{
+			FluctuationLimitRatio:  sdk.ZeroDec(),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			MaxOracleSpreadRatio:   sdk.ZeroDec(),
+			TradeLimitRatio:        sdk.ZeroDec(),
+		},
 	}
 	vpoolKeeper.CreatePool(
-		ctx, pair, pool.TradeLimitRatio, pool.QuoteAssetReserve, pool.BaseAssetReserve, pool.FluctuationLimitRatio, pool.MaxOracleSpreadRatio, pool.MaintenanceMarginRatio, pool.MaxLeverage)
+		ctx, pair, pool.QuoteAssetReserve, pool.BaseAssetReserve, pool.Config)
 
 	t.Log("query reserve assets and prices for the pair")
 	ctx = ctx.WithBlockHeight(2).WithBlockTime(time.Now().Add(5 * time.Second))
