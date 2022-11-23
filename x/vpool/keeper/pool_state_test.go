@@ -42,6 +42,99 @@ func TestCreatePool(t *testing.T) {
 	require.False(t, notExist)
 }
 
+func TestEditPoolConfig(t *testing.T) {
+
+	pair := common.Pair_BTC_NUSD
+	vpoolStart := types.Vpool{
+		Pair:              pair,
+		QuoteAssetReserve: sdk.NewDec(10_000_000),
+		BaseAssetReserve:  sdk.NewDec(5_000_000),
+		Config: types.VpoolConfig{
+			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
+			TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
+		},
+	}
+
+	setupTest := func() (Keeper, sdk.Context) {
+		vpoolKeeper, _, ctx := getKeeper(t)
+		vpoolKeeper.CreatePool(
+			ctx,
+			common.Pair_BTC_NUSD,
+			vpoolStart.QuoteAssetReserve,
+			vpoolStart.BaseAssetReserve,
+			vpoolStart.Config,
+		)
+		exists := vpoolKeeper.ExistsPool(ctx, common.Pair_BTC_NUSD)
+		require.True(t, exists)
+		return vpoolKeeper, ctx
+	}
+
+	testCases := []struct {
+		name        string
+		newConfig   types.VpoolConfig
+		shouldErr   bool
+		shouldPanic bool
+	}{
+		{
+			name:      "happy no change to config",
+			newConfig: vpoolStart.Config,
+			shouldErr: false,
+		},
+		{
+			name:      "happy valid with expected config change",
+			newConfig: vpoolStart.Config,
+			shouldErr: false,
+		},
+		{
+			name:        "err invalid config nil",
+			newConfig:   types.VpoolConfig{},
+			shouldPanic: true,
+		},
+		{
+			name: "err invalid config max leverage too high",
+			newConfig: types.VpoolConfig{
+				// max leverage set too high on purpose
+				MaxLeverage:            sdk.MustNewDecFromStr("9001"),
+				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
+				TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
+			},
+			shouldErr: true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			vpoolKeeper, ctx := setupTest()
+			if tc.shouldErr {
+				err := vpoolKeeper.EditPoolConfig(ctx, pair, tc.newConfig)
+				// We expect the initial config if the change fails
+				assert.Error(t, err)
+				vpool, err := vpoolKeeper.Pools.Get(ctx, pair)
+				assert.NoError(t, err)
+				assert.EqualValues(t, vpoolStart.Config, vpool.Config)
+			} else if tc.shouldPanic {
+				require.Panics(t, func() {
+					err := vpoolKeeper.EditPoolConfig(ctx, pair, tc.newConfig)
+					require.Error(t, err)
+				})
+			} else {
+				err := vpoolKeeper.EditPoolConfig(ctx, pair, tc.newConfig)
+				// We expect the new config if the change succeeds
+				require.NoError(t, err)
+				vpool, err := vpoolKeeper.Pools.Get(ctx, pair)
+				assert.NoError(t, err)
+				assert.EqualValues(t, tc.newConfig, vpool.Config)
+			}
+		})
+	}
+}
+
 func TestGetPoolPrices_SetupErrors(t *testing.T) {
 	testCases := []struct {
 		name string

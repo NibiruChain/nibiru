@@ -34,6 +34,38 @@ func (k Keeper) CreatePool(
 	)
 }
 
+func (k Keeper) EditPoolConfig(
+	ctx sdk.Context,
+	pair common.AssetPair,
+	config types.VpoolConfig,
+) error {
+
+	// Grab current pool from state
+	vpool, err := k.Pools.Get(ctx, pair)
+	if err != nil {
+		return err
+	}
+
+	newVpool := types.Vpool{
+		Pair:              vpool.Pair,
+		BaseAssetReserve:  vpool.BaseAssetReserve,
+		QuoteAssetReserve: vpool.QuoteAssetReserve,
+		Config:            config, // main change is here
+	}
+	if err := newVpool.Validate(); err != nil {
+		return err
+	}
+
+	err = k.updatePool(
+		ctx,
+		newVpool,
+		/*skipFluctuationLimitCheck*/ true)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 /*
 Saves an updated pool to state and snapshots it.
 
@@ -45,7 +77,7 @@ args:
 ret:
   - err: error
 */
-func (k Keeper) UpdatePool(
+func (k Keeper) updatePool(
 	ctx sdk.Context,
 	updatedPool types.Vpool,
 	skipFluctuationCheck bool,
