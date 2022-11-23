@@ -68,7 +68,7 @@ class Curve:
         xp = self.xp()
         S = sum(xp)
         D = S
-        Ann = self.A * self.n * self.n
+        Ann = self.A * self.n**self.n
         while abs(D - Dprev) > 1:
             D_P = D
             for x in xp:
@@ -92,7 +92,7 @@ class Curve:
         xx = self.xp()
         xx[i] = x  # x is quantity of underlying asset brought to 1e18 precision
         xx = [xx[k] for k in range(self.n) if k != j]
-        Ann = self.A * self.n * self.n
+        Ann = self.A * self.n**self.n
         c = D
         for y in xx:
             c = c * D // (y * self.n)
@@ -118,7 +118,7 @@ class Curve:
         xx = self.xp()
         xx = [xx[k] for k in range(self.n) if k != i]
         S = sum(xx)
-        Ann = self.A * self.n
+        Ann = self.A * self.n**self.n
         c = _D
         for y in xx:
             c = c * _D // (y * self.n)

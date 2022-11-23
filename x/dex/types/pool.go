@@ -3,6 +3,7 @@ package types
 import (
 	"errors"
 	fmt "fmt"
+	math "math"
 
 	"github.com/holiman/uint256"
 
@@ -335,8 +336,9 @@ func (pool Pool) getD(poolAssets []PoolAsset) *uint256.Int {
 	Amp.Mul(Amp, A_Precision)
 
 	Ann := uint256.NewInt()
-	Ann.Mul(Amp, nCoins)
-	Ann.Mul(Ann, nCoins)
+
+	nCoinsFloat := float64(len(poolAssets))
+	Ann.Mul(Amp, uint256.NewInt().SetUint64(uint64(math.Pow(nCoinsFloat, nCoinsFloat))))
 
 	var poolAssetsTokens []*uint256.Int
 	for _, token := range poolAssets {
@@ -431,8 +433,9 @@ func (pool Pool) SolveStableswapInvariant(tokenIn sdk.Coin, tokenOutDenom string
 
 	Ann := uint256.NewInt()
 	nCoins := uint256.NewInt().SetUint64(uint64(len(pool.PoolAssets)))
-	Ann.Mul(A, nCoins)
-	Ann.Mul(Ann, nCoins)
+
+	nCoinsFloat := float64(len(pool.PoolAssets))
+	Ann.Mul(A, uint256.NewInt().SetUint64(uint64(math.Pow(nCoinsFloat, nCoinsFloat))))
 
 	c := uint256.NewInt().Set(D)
 	S := uint256.NewInt()

@@ -758,7 +758,7 @@ func TestGetD(t *testing.T) {
 			},
 			amplificationParameter: sdk.NewInt(1),
 			expectedErr:            nil,
-			expectedD:              394,
+			expectedD:              397,
 		},
 		{
 			name: "Compute D - 2 assets - tested against Curve contracts code..",
