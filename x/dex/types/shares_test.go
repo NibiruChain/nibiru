@@ -672,41 +672,6 @@ func TestNumSharesOutStablswap(t *testing.T) {
 			),
 			expectedNumShares: sdk.NewInt(37),
 		},
-		{
-			name: "first deposit - missing tokens",
-			poolAssets: []PoolAsset{
-				{
-					Token: sdk.NewInt64Coin("aaa", 0),
-				},
-				{
-					Token: sdk.NewInt64Coin("bbb", 0),
-				},
-			},
-			A:              sdk.NewInt(2000),
-			existingShares: 0,
-			tokensIn: sdk.NewCoins(
-				sdk.NewInt64Coin("bbb", 100),
-			),
-			expectedError: ErrInitialDeposit,
-		},
-		{
-			name: "first deposit - all tokens",
-			poolAssets: []PoolAsset{
-				{
-					Token: sdk.NewInt64Coin("aaa", 0),
-				},
-				{
-					Token: sdk.NewInt64Coin("bbb", 0),
-				},
-			},
-			A:              sdk.NewInt(2000),
-			existingShares: 0,
-			tokensIn: sdk.NewCoins(
-				sdk.NewInt64Coin("aaa", 10),
-				sdk.NewInt64Coin("bbb", 100),
-			),
-			expectedNumShares: sdk.NewInt(109),
-		},
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {

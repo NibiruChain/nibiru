@@ -163,21 +163,13 @@ func (pool Pool) numSharesOutFromTokensInStableSwap(tokensIn sdk.Coins) (
 	numShares sdk.Int, err error,
 ) {
 	tokenSupply := pool.TotalShares.Amount
-	D0 := sdk.ZeroInt()
 
-	if !tokenSupply.IsZero() {
-		D0 = sdk.NewInt(int64(pool.getD(pool.PoolAssets).Uint64()))
-	}
+	D0 := sdk.NewInt(int64(pool.getD(pool.PoolAssets).Uint64()))
 
 	var newPoolAssets []PoolAsset
 
 	for assetIndex, poolAsset := range pool.PoolAssets {
 		inAmount := tokensIn.AmountOf(poolAsset.Token.Denom)
-
-		if tokenSupply.IsZero() && inAmount.IsZero() {
-			err = ErrInitialDeposit
-			return
-		}
 
 		if !inAmount.IsZero() {
 			newAmount := pool.PoolAssets[assetIndex].Token.Amount.Add(inAmount)
@@ -191,15 +183,11 @@ func (pool Pool) numSharesOutFromTokensInStableSwap(tokensIn sdk.Coins) (
 	D1 := sdk.NewInt(int64(pool.getD(newPoolAssets).Uint64()))
 	if D1.LT(D0) {
 		// Should not happen
-		panic(err)
+		panic(nil)
 	}
 
 	// Calculate, how much pool tokens to mint
-	if tokenSupply.IsZero() {
-		numShares = D1 // Take the dust if there was any
-	} else {
-		numShares = tokenSupply.Mul(D1.Sub(D0)).Quo(D0)
-	}
+	numShares = tokenSupply.Mul(D1.Sub(D0)).Quo(D0)
 
 	return
 }
