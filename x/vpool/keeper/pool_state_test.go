@@ -298,3 +298,140 @@ func TestGetPoolPrices(t *testing.T) {
 		})
 	}
 }
+
+func TestEditSwapInvariant(t *testing.T) {
+	pair := common.Pair_NIBI_NUSD
+	vpoolStart := types.Vpool{
+		Pair:              pair,
+		QuoteAssetReserve: sdk.NewDec(10_000_000),
+		BaseAssetReserve:  sdk.NewDec(5_000_000),
+		Config: types.VpoolConfig{
+			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
+			TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
+		},
+	}
+
+	setupTest := func() (Keeper, sdk.Context) {
+		vpoolKeeper, _, ctx := getKeeper(t)
+		vpoolKeeper.CreatePool(
+			ctx,
+			pair,
+			vpoolStart.QuoteAssetReserve,
+			vpoolStart.BaseAssetReserve,
+			vpoolStart.Config,
+		)
+		exists := vpoolKeeper.ExistsPool(ctx, pair)
+		require.True(t, exists)
+		return vpoolKeeper, ctx
+	}
+
+	type Reserves struct {
+		Base  sdk.Dec
+		Quote sdk.Dec
+	}
+
+	testCases := []struct {
+		name                    string
+		swapInvariantMultiplier sdk.Dec
+		newReserves             Reserves
+		shouldErr               bool
+		shouldPanic             bool
+	}{
+		{
+			name:                    "happy reserves increase 2x",
+			swapInvariantMultiplier: sdk.NewDec(4),
+			newReserves: Reserves{
+				Base:  vpoolStart.BaseAssetReserve.MulInt64(2),
+				Quote: vpoolStart.QuoteAssetReserve.MulInt64(2)},
+			shouldErr: false,
+		},
+		{
+			name:                    "happy no change",
+			swapInvariantMultiplier: sdk.NewDec(1),
+			newReserves: Reserves{
+				Base:  vpoolStart.BaseAssetReserve,
+				Quote: vpoolStart.QuoteAssetReserve},
+			shouldErr: false,
+		},
+		{
+			name:                    "happy reserves increase 500x",
+			swapInvariantMultiplier: sdk.NewDec(250_000), // 500**2
+			newReserves: Reserves{
+				Base:  vpoolStart.BaseAssetReserve.MulInt64(500),
+				Quote: vpoolStart.QuoteAssetReserve.MulInt64(500)},
+			shouldErr: false,
+		},
+		{
+			name:                    "happy reserves shrink 2x",
+			swapInvariantMultiplier: sdk.MustNewDecFromStr("0.25"), // (1/2)**2
+			newReserves: Reserves{
+				Base:  vpoolStart.BaseAssetReserve.QuoInt64(2),
+				Quote: vpoolStart.QuoteAssetReserve.QuoInt64(2)},
+			shouldErr: false,
+		},
+		{
+			name:                    "happy reserves shrink 100x",
+			swapInvariantMultiplier: sdk.MustNewDecFromStr("0.0001"), // (1/100)**2
+			newReserves: Reserves{
+				Base:  vpoolStart.BaseAssetReserve.QuoInt64(100),
+				Quote: vpoolStart.QuoteAssetReserve.QuoInt64(100)},
+			shouldErr: false,
+		},
+		{
+			name:                    "err invalid multiplier",
+			swapInvariantMultiplier: sdk.Dec{},
+			shouldErr:               true,
+		},
+		{
+			name:                    "err invariant zero causes zero reserves",
+			swapInvariantMultiplier: sdk.NewDec(0),
+			shouldErr:               true,
+		},
+		{
+			name:                    "err invariant negative",
+			swapInvariantMultiplier: sdk.NewDec(-10),
+			shouldErr:               true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			vpoolKeeper, ctx := setupTest()
+			if tc.shouldErr {
+				err := vpoolKeeper.EditSwapInvariant(ctx,
+					types.EditSwapInvariantsProposal_SwapInvariantMultiple{
+						Pair: pair.String(), Multiplier: tc.swapInvariantMultiplier,
+					})
+				// We expect the initial config if the change fails
+				assert.Error(t, err)
+				vpool, err := vpoolKeeper.Pools.Get(ctx, pair)
+				assert.NoError(t, err)
+				assert.EqualValues(t, vpoolStart.BaseAssetReserve, vpool.BaseAssetReserve)
+				assert.EqualValues(t, vpoolStart.QuoteAssetReserve, vpool.QuoteAssetReserve)
+			} else if tc.shouldPanic {
+				require.Panics(t, func() {
+					err := vpoolKeeper.EditSwapInvariant(ctx,
+						types.EditSwapInvariantsProposal_SwapInvariantMultiple{
+							Pair: pair.String(), Multiplier: tc.swapInvariantMultiplier,
+						})
+					require.Error(t, err)
+				})
+			} else {
+				err := vpoolKeeper.EditSwapInvariant(ctx,
+					types.EditSwapInvariantsProposal_SwapInvariantMultiple{
+						Pair: pair.String(), Multiplier: tc.swapInvariantMultiplier,
+					})
+				// We expect the new config if the change succeeds
+				require.NoError(t, err)
+				vpool, err := vpoolKeeper.Pools.Get(ctx, pair)
+				assert.NoError(t, err)
+				assert.EqualValues(t, tc.newReserves.Base, vpool.BaseAssetReserve)
+				assert.EqualValues(t, tc.newReserves.Quote, vpool.QuoteAssetReserve)
+			}
+		})
+	}
+}
