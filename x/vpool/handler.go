@@ -31,6 +31,8 @@ func NewVpoolProposalHandler(k keeper.Keeper) govtypes.Handler {
 			return handleProposalCreatePool(ctx, k, proposal)
 		case *types.EditPoolConfigProposal:
 			return handleProposalEditPoolConfig(ctx, k, proposal)
+		case *types.EditSwapInvariantsProposal:
+			return handleProposalEditSwapInvariants(ctx, k, proposal)
 		default:
 			return sdkerrors.Wrapf(
 				sdkerrors.ErrUnknownRequest,
@@ -74,4 +76,19 @@ func handleProposalEditPoolConfig(
 	}
 
 	return k.EditPoolConfig(ctx, pair, proposal.Config)
+}
+
+func handleProposalEditSwapInvariants(
+	ctx sdk.Context, k keeper.Keeper, proposal *types.EditSwapInvariantsProposal,
+) error {
+	if err := proposal.ValidateBasic(); err != nil {
+		return err
+	}
+	for _, swapInvariantMap := range proposal.SwapInvariantMaps {
+		err := k.EditSwapInvariant(ctx, swapInvariantMap)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
