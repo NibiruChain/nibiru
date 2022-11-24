@@ -605,7 +605,7 @@ func TestUpdateLiquidityInvalidInput(t *testing.T) {
 	}
 }
 
-func TestNumSharesOutStablswap(t *testing.T) {
+func TestNumSharesOutStableswap(t *testing.T) {
 	for _, tc := range []struct {
 		name              string
 		poolAssets        []PoolAsset
