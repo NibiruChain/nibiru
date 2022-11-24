@@ -634,24 +634,6 @@ func TestNumSharesOutStablswap(t *testing.T) {
 			expectedNumShares: sdk.NewInt(50),
 		},
 		{
-			name: "all coins deposited - constant product",
-			poolAssets: []PoolAsset{
-				{
-					Token: sdk.NewInt64Coin("aaa", 100),
-				},
-				{
-					Token: sdk.NewInt64Coin("bbb", 100),
-				},
-			},
-			A:              sdk.NewInt(1),
-			existingShares: 50,
-			tokensIn: sdk.NewCoins(
-				sdk.NewInt64Coin("aaa", 100),
-				sdk.NewInt64Coin("bbb", 50),
-			),
-			expectedNumShares: sdk.NewInt(37),
-		},
-		{
 			name: "all coins deposited - 3pool",
 			poolAssets: []PoolAsset{
 				{

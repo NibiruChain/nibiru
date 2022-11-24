@@ -165,7 +165,7 @@ func (pool Pool) numSharesOutFromTokensInStableSwap(tokensIn sdk.Coins) (
 	tokenSupply := pool.TotalShares.Amount
 	D0 := sdk.ZeroInt()
 
-	if tokenSupply.IsPositive() {
+	if !tokenSupply.IsZero() {
 		D0 = sdk.NewInt(int64(pool.getD(pool.PoolAssets).Uint64()))
 	}
 
@@ -179,7 +179,7 @@ func (pool Pool) numSharesOutFromTokensInStableSwap(tokensIn sdk.Coins) (
 			return
 		}
 
-		if inAmount.IsPositive() {
+		if !inAmount.IsZero() {
 			newAmount := pool.PoolAssets[assetIndex].Token.Amount.Add(inAmount)
 
 			newPoolAssets = append(newPoolAssets, PoolAsset{Token: sdk.NewCoin(poolAsset.Token.Denom, newAmount)})

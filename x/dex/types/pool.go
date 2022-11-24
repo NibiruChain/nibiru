@@ -67,10 +67,6 @@ func NewPool(
 	poolParams PoolParams,
 	poolAssets []PoolAsset,
 ) (pool Pool, err error) {
-	err = poolParams.validatePoolParams()
-	if err != nil {
-		return Pool{}, err
-	}
 
 	pool = Pool{
 		Id:          poolId,
@@ -87,26 +83,6 @@ func NewPool(
 	}
 
 	return pool, nil
-}
-
-/*
-Validaet the logic of creation of the pool, and wether all parameters are set for balancer or stableswap pool
-*/
-func (poolParams PoolParams) validatePoolParams() (err error) {
-	if (poolParams.PoolType != PoolType_STABLESWAP) && (poolParams.PoolType != PoolType_BALANCER) {
-		return ErrInvalidPoolType
-	}
-
-	if poolParams.PoolType == PoolType_STABLESWAP {
-		if poolParams.A.IsNil() {
-			return ErrAmplificationMissing
-		}
-
-		if !poolParams.A.IsPositive() {
-			return ErrAmplificationTooLow
-		}
-	}
-	return
 }
 
 /*
@@ -386,7 +362,7 @@ func (pool Pool) getD(poolAssets []PoolAsset) *uint256.Int {
 		D.Div(num, denom)
 
 		absDifference.Abs(uint256.NewInt().Sub(D, previousD))
-		if absDifference.Lt(uint256.NewInt().SetUint64(2)) {
+		if absDifference.Lt(uint256.NewInt().SetUint64(1)) {
 			return D
 		}
 	}
@@ -397,7 +373,7 @@ func (pool Pool) getD(poolAssets []PoolAsset) *uint256.Int {
 	panic(nil)
 }
 
-// getA returns the amplification factor of the pool with the specified precision (constant)
+// getA returns the amplification factor of the pool
 func (pool Pool) getA() (Amp *uint256.Int) {
 	Amp = uint256.NewInt().SetUint64(uint64(pool.PoolParams.A.Int64()))
 	return
@@ -501,7 +477,7 @@ func (pool Pool) SolveStableswapInvariant(tokenIn sdk.Coin, tokenOutDenom string
 
 		absDifference := uint256.NewInt()
 		absDifference.Abs(uint256.NewInt().Sub(y, y_prev))
-		if absDifference.Lt(uint256.NewInt().SetUint64(2)) {
+		if absDifference.Lt(uint256.NewInt().SetUint64(1)) {
 			return sdk.NewIntFromUint64(y.Uint64()), nil
 		}
 	}

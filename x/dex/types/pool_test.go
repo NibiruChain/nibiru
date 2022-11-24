@@ -688,52 +688,6 @@ func TestUpdatePoolAssetTokens(t *testing.T) {
 	}
 }
 
-func TestPoolParamsValidation(t *testing.T) {
-	for _, tc := range []struct {
-		name        string
-		poolParams  PoolParams
-		expectedErr error
-	}{
-		{
-			name: "create a balancer pool, no need for other parameters",
-			poolParams: PoolParams{
-				PoolType: PoolType_BALANCER,
-			},
-			expectedErr: nil,
-		},
-		{
-			name: "create a stableswap pool, need for amplification parameter",
-			poolParams: PoolParams{
-				PoolType: PoolType_STABLESWAP,
-			},
-			expectedErr: ErrAmplificationMissing,
-		},
-		{
-			name: "create a stableswap pool, amplification parameter below 1",
-			poolParams: PoolParams{
-				PoolType: PoolType_STABLESWAP,
-				A:        sdk.NewInt(0),
-			},
-			expectedErr: ErrAmplificationTooLow,
-		},
-		{
-			name: "create a stableswap pool, happy path",
-			poolParams: PoolParams{
-				PoolType: PoolType_STABLESWAP,
-				A:        sdk.NewInt(42),
-			},
-			expectedErr: nil,
-		},
-	} {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			err := tc.poolParams.validatePoolParams()
-
-			require.ErrorIs(t, tc.expectedErr, err)
-		})
-	}
-}
-
 func TestGetD(t *testing.T) {
 	for _, tc := range []struct {
 		name                   string
