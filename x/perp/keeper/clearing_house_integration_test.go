@@ -7,6 +7,7 @@ import (
 	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/testutil"
+	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -39,6 +40,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 		expectedUnrealizedPnl    sdk.Dec
 		expectedRealizedPnl      sdk.Dec
 		expectedMarginToVault    sdk.Dec
+		expectedMarkPrice        sdk.Dec
 	}{
 		{
 			name:                     "new long position",
@@ -55,6 +57,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			expectedUnrealizedPnl:    sdk.ZeroDec(),
 			expectedRealizedPnl:      sdk.ZeroDec(),
 			expectedMarginToVault:    sdk.NewDec(1000),
+			expectedMarkPrice:        sdk.MustNewDecFromStr("1.0000000200000001"),
 		},
 		{
 			name:        "existing long position, go more long",
@@ -78,6 +81,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			expectedUnrealizedPnl:    sdk.MustNewDecFromStr("0.000099999999"),
 			expectedRealizedPnl:      sdk.ZeroDec(),
 			expectedMarginToVault:    sdk.NewDec(1000),
+			expectedMarkPrice:        sdk.MustNewDecFromStr("1.0000000200000001"),
 		},
 		{
 			name:        "existing long position, decrease a bit",
@@ -101,6 +105,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			expectedUnrealizedPnl:    sdk.MustNewDecFromStr("-0.00004999999925"),
 			expectedRealizedPnl:      sdk.MustNewDecFromStr("-0.00004999999975"),
 			expectedMarginToVault:    sdk.ZeroDec(),
+			expectedMarkPrice:        sdk.MustNewDecFromStr("0.999999990000000025"),
 		},
 		{
 			name:        "existing long position, decrease a lot",
@@ -124,6 +129,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			expectedUnrealizedPnl:    sdk.ZeroDec(),
 			expectedRealizedPnl:      sdk.MustNewDecFromStr("-0.000099999999"),
 			expectedMarginToVault:    sdk.MustNewDecFromStr("1000.0001099999989"),
+			expectedMarkPrice:        sdk.MustNewDecFromStr("0.9999999400000009"),
 		},
 		{
 			name:                     "new long position just under fluctuation limit",
@@ -140,6 +146,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			expectedUnrealizedPnl:    sdk.ZeroDec(),
 			expectedRealizedPnl:      sdk.ZeroDec(),
 			expectedMarginToVault:    sdk.NewDec(47_619_047_619),
+			expectedMarkPrice:        sdk.MustNewDecFromStr("1.09750566893414059"),
 		},
 		{
 			name:                     "new short position",
@@ -156,6 +163,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			expectedUnrealizedPnl:    sdk.ZeroDec(),
 			expectedRealizedPnl:      sdk.ZeroDec(),
 			expectedMarginToVault:    sdk.NewDec(1000),
+			expectedMarkPrice:        sdk.MustNewDecFromStr("0.9999999800000001"),
 		},
 		{
 			name:        "existing short position, go more short",
@@ -179,6 +187,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			expectedUnrealizedPnl:    sdk.MustNewDecFromStr("0.000100000001"),
 			expectedRealizedPnl:      sdk.ZeroDec(),
 			expectedMarginToVault:    sdk.NewDec(1000),
+			expectedMarkPrice:        sdk.MustNewDecFromStr("0.9999999800000001"),
 		},
 		{
 			name:        "existing short position, decrease a bit",
@@ -202,6 +211,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			expectedUnrealizedPnl:    sdk.MustNewDecFromStr("-0.00005000000075"),
 			expectedRealizedPnl:      sdk.MustNewDecFromStr("-0.00005000000025"),
 			expectedMarginToVault:    sdk.ZeroDec(),
+			expectedMarkPrice:        sdk.MustNewDecFromStr("1.000000010000000025"),
 		},
 		{
 			name:        "existing short position, decrease a lot",
@@ -225,6 +235,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			expectedUnrealizedPnl:    sdk.ZeroDec(),
 			expectedRealizedPnl:      sdk.MustNewDecFromStr("-0.000100000001"),
 			expectedMarginToVault:    sdk.MustNewDecFromStr("1000.0000900000009"),
+			expectedMarkPrice:        sdk.MustNewDecFromStr("1.0000000600000009"),
 		},
 		{
 			name:                     "new short position just under fluctuation limit",
@@ -241,6 +252,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			expectedUnrealizedPnl:    sdk.ZeroDec(),
 			expectedRealizedPnl:      sdk.ZeroDec(),
 			expectedMarginToVault:    sdk.NewDec(47_619_047_619),
+			expectedMarkPrice:        sdk.MustNewDecFromStr("0.90702947845814059"),
 		},
 	}
 
@@ -318,6 +330,29 @@ func TestOpenPositionSuccess(t *testing.T) {
 			assert.EqualValues(t, tc.expectedSize, position.Size_, "position size")
 			assert.EqualValues(t, ctx.BlockHeight(), position.BlockNumber)
 			assert.EqualValues(t, sdk.ZeroDec(), position.LatestCumulativePremiumFraction)
+
+			exchangedNotional := tc.leverage.MulInt(tc.margin)
+			feePoolFee := nibiruApp.PerpKeeper.GetParams(ctx).FeePoolFeeRatio.Mul(exchangedNotional).RoundInt()
+			ecosystemFundFee := nibiruApp.PerpKeeper.GetParams(ctx).EcosystemFundFeeRatio.Mul(exchangedNotional).RoundInt()
+
+			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionChangedEvent{
+				Pair:               common.Pair_BTC_NUSD.String(),
+				TraderAddress:      traderAddr.String(),
+				Margin:             sdk.NewCoin(common.DenomNUSD, tc.expectedMargin.RoundInt()),
+				PositionNotional:   tc.expectedPositionNotional,
+				ExchangedNotional:  exchangedNotional,
+				ExchangedSize:      exchangedSize,
+				PositionSize:       tc.expectedSize,
+				RealizedPnl:        tc.expectedRealizedPnl,
+				UnrealizedPnlAfter: tc.expectedUnrealizedPnl,
+				BadDebt:            sdk.NewCoin(common.DenomNUSD, sdk.ZeroInt()),
+				LiquidationPenalty: sdk.ZeroDec(),
+				MarkPrice:          tc.expectedMarkPrice,
+				FundingPayment:     sdk.ZeroDec(),
+				TransactionFee:     sdk.NewCoin(common.DenomNUSD, feePoolFee.Add(ecosystemFundFee)),
+				BlockHeight:        ctx.BlockHeight(),
+				BlockTimeMs:        ctx.BlockTime().UnixMilli(),
+			})
 		})
 	}
 }

@@ -1924,20 +1924,12 @@ func TestClosePosition(t *testing.T) {
 			assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LatestCumulativePremiumFraction)
 			assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 
-			var direction int64
-			if tc.initialPosition.Size_.IsPositive() {
-				direction = 1
-			} else if tc.initialPosition.Size_.IsNegative() {
-				direction = -1
-			}
-			var expectedExchangedNotional sdk.Dec = tc.initialPosition.OpenNotional.
-				Add(tc.expectedRealizedPnl.MulInt64(direction))
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionChangedEvent{
 				Pair:               tc.initialPosition.Pair.String(),
 				TraderAddress:      tc.initialPosition.TraderAddress,
 				Margin:             sdk.NewInt64Coin(tc.initialPosition.Pair.QuoteDenom(), 0),
 				PositionNotional:   sdk.ZeroDec(),
-				ExchangedNotional:  expectedExchangedNotional,
+				ExchangedNotional:  tc.newPositionNotional,
 				ExchangedSize:      tc.initialPosition.Size_.Neg(),
 				PositionSize:       sdk.ZeroDec(),
 				RealizedPnl:        tc.expectedRealizedPnl,
