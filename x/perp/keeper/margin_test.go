@@ -231,21 +231,22 @@ func TestRemoveMargin(t *testing.T) {
 				t.Log("Verify correct events emitted for 'RemoveMargin'")
 				testutilevents.RequireContainsTypedEvent(t, ctx,
 					&types.PositionChangedEvent{
-						Pair:                  pair.String(),
-						TraderAddress:         traderAddr.String(),
-						Margin:                sdk.NewInt64Coin(pair.QuoteDenom(), 54),
-						PositionNotional:      sdk.NewDec(300),
-						ExchangedPositionSize: sdk.ZeroDec(),                                 // always zero when removing margin
-						TransactionFee:        sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when removing margin
-						PositionSize:          sdk.MustNewDecFromStr("299.910026991902429271"),
-						RealizedPnl:           sdk.ZeroDec(), // always zero when removing margin
-						UnrealizedPnlAfter:    sdk.ZeroDec(),
-						BadDebt:               sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
-						FundingPayment:        sdk.ZeroDec(),
-						MarkPrice:             sdk.MustNewDecFromStr("1.00060009"),
-						BlockHeight:           ctx.BlockHeight(),
-						BlockTimeMs:           ctx.BlockTime().UnixMilli(),
-						LiquidationPenalty:    sdk.ZeroDec(),
+						Pair:               pair.String(),
+						TraderAddress:      traderAddr.String(),
+						Margin:             sdk.NewInt64Coin(pair.QuoteDenom(), 54),
+						PositionNotional:   sdk.NewDec(300),
+						ExchangedNotional:  sdk.ZeroDec(),                                 // always zero when removing margin
+						ExchangedSize:      sdk.ZeroDec(),                                 // always zero when removing margin
+						TransactionFee:     sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when removing margin
+						PositionSize:       sdk.MustNewDecFromStr("299.910026991902429271"),
+						RealizedPnl:        sdk.ZeroDec(), // always zero when removing margin
+						UnrealizedPnlAfter: sdk.ZeroDec(),
+						BadDebt:            sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
+						FundingPayment:     sdk.ZeroDec(),
+						MarkPrice:          sdk.MustNewDecFromStr("1.00060009"),
+						BlockHeight:        ctx.BlockHeight(),
+						BlockTimeMs:        ctx.BlockTime().UnixMilli(),
+						LiquidationPenalty: sdk.ZeroDec(),
 					},
 				)
 			},

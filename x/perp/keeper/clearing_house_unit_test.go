@@ -1924,22 +1924,31 @@ func TestClosePosition(t *testing.T) {
 			assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LatestCumulativePremiumFraction)
 			assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 
+			var direction int64
+			if tc.initialPosition.Size_.IsPositive() {
+				direction = 1
+			} else if tc.initialPosition.Size_.IsNegative() {
+				direction = -1
+			}
+			var expectedExchangedNotional sdk.Dec = tc.initialPosition.OpenNotional.
+				Add(tc.expectedRealizedPnl.MulInt64(direction))
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionChangedEvent{
-				Pair:                  tc.initialPosition.Pair.String(),
-				TraderAddress:         tc.initialPosition.TraderAddress,
-				Margin:                sdk.NewInt64Coin(tc.initialPosition.Pair.QuoteDenom(), 0),
-				PositionNotional:      sdk.ZeroDec(),
-				ExchangedPositionSize: tc.initialPosition.Size_.Neg(),
-				PositionSize:          sdk.ZeroDec(),
-				RealizedPnl:           tc.expectedRealizedPnl,
-				UnrealizedPnlAfter:    sdk.ZeroDec(),
-				BadDebt:               sdk.NewCoin(common.Pair_BTC_NUSD.QuoteDenom(), sdk.ZeroInt()),
-				LiquidationPenalty:    sdk.ZeroDec(),
-				MarkPrice:             tc.newPositionNotional.Quo(tc.initialPosition.Size_.Abs()),
-				FundingPayment:        sdk.MustNewDecFromStr("0.02").Mul(tc.initialPosition.Size_),
-				TransactionFee:        sdk.NewInt64Coin(tc.initialPosition.Pair.QuoteDenom(), 0),
-				BlockHeight:           ctx.BlockHeight(),
-				BlockTimeMs:           ctx.BlockTime().UnixMilli(),
+				Pair:               tc.initialPosition.Pair.String(),
+				TraderAddress:      tc.initialPosition.TraderAddress,
+				Margin:             sdk.NewInt64Coin(tc.initialPosition.Pair.QuoteDenom(), 0),
+				PositionNotional:   sdk.ZeroDec(),
+				ExchangedNotional:  expectedExchangedNotional,
+				ExchangedSize:      tc.initialPosition.Size_.Neg(),
+				PositionSize:       sdk.ZeroDec(),
+				RealizedPnl:        tc.expectedRealizedPnl,
+				UnrealizedPnlAfter: sdk.ZeroDec(),
+				BadDebt:            sdk.NewCoin(common.Pair_BTC_NUSD.QuoteDenom(), sdk.ZeroInt()),
+				LiquidationPenalty: sdk.ZeroDec(),
+				MarkPrice:          tc.newPositionNotional.Quo(tc.initialPosition.Size_.Abs()),
+				FundingPayment:     sdk.MustNewDecFromStr("0.02").Mul(tc.initialPosition.Size_),
+				TransactionFee:     sdk.NewInt64Coin(tc.initialPosition.Pair.QuoteDenom(), 0),
+				BlockHeight:        ctx.BlockHeight(),
+				BlockTimeMs:        ctx.BlockTime().UnixMilli(),
 			})
 		})
 	}
