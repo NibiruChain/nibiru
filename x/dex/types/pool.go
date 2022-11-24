@@ -67,7 +67,6 @@ func NewPool(
 	poolParams PoolParams,
 	poolAssets []PoolAsset,
 ) (pool Pool, err error) {
-
 	pool = Pool{
 		Id:          poolId,
 		Address:     poolAccountAddr.String(),
