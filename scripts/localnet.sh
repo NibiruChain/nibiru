@@ -186,9 +186,9 @@ add_genesis_vpools_with_coingecko_prices() {
 
   local M=1000000
 
-  local num_users=12000
+  local num_users=24000
   local faucet_nusd_amt=100 
-  local quote_amt=$(($num_users / 2 * $faucet_nusd_amt * $M)) 
+  local quote_amt=$(($num_users * $faucet_nusd_amt * $M)) 
 
   price_btc=$(cat tmp_vpool_prices.json | jq -r '.bitcoin.usd')
   price_btc=${price_btc%.*}
