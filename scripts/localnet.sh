@@ -50,7 +50,7 @@ MNEMONIC="guard cream sadness conduct invite crumble clock pudding hole grit lia
 GENESIS_COINS="1000000000unibi,10000000000000unusd"
 CHAIN_DIR="$HOME/.nibid"
 
-SEDOPTION=
+SEDOPTION=""
 if [[ "$OSTYPE" == "darwin"* ]]; then
   SEDOPTION="''"
 fi
@@ -177,13 +177,54 @@ add_genesis_param() {
 
 echo_info "Configuring genesis params"
 
-# x/vpool
-# nibid add-genesis-vpool [pair] [base-asset-reserve] [quote-asset-reserve] [trade-limit-ratio] [fluctuation-limit-ratio] [maxOracle-spread-ratio] [maintenance-margin-ratio] [max-leverage]
-# BTC:NUSD
-nibid add-genesis-vpool ubtc:unusd 50000000000 1000000000000000 0.1 0.1 0.1 0.0625 12
+add_genesis_vpools_with_coingecko_prices() {
+  local temp_json_fname="tmp_vpool_prices.json"
+  curl -X 'GET' \
+    'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum&vs_currencies=usd' \
+    -H 'accept: application/json' \
+    > $temp_json_fname
 
-# ETH:NUSD
-nibid add-genesis-vpool ueth:unusd 666666000000 1000000000000000 0.1 0.1 0.1 0.0625 10
+  local M=1000000
+
+  local num_users=24000
+  local faucet_nusd_amt=100 
+  local quote_amt=$(($num_users * $faucet_nusd_amt * $M)) 
+
+  price_btc=$(cat tmp_vpool_prices.json | jq -r '.bitcoin.usd')
+  price_btc=${price_btc%.*}
+  base_amt_btc=$(($quote_amt / $price_btc))
+
+  price_eth=$(cat tmp_vpool_prices.json | jq -r '.ethereum.usd')
+  price_eth=${price_eth%.*}
+  base_amt_eth=$(($quote_amt / $price_eth))
+
+  nibid add-genesis-vpool ubtc:unusd $base_amt_btc $quote_amt 0.1 0.1 0.1 0.0625 12
+  nibid add-genesis-vpool ueth:unusd $base_amt_eth $quote_amt 0.1 0.1 0.1 0.04 20
+
+  echo 'tmp_vpool_prices: ' 
+  cat $temp_json_fname | jq .
+  rm -f $temp_json_fname
+}
+
+add_genesis_vpools_default() {
+  # nibid add-genesis-vpool [pair] [base-asset-reserve] [quote-asset-reserve] [trade-limit-ratio] [fluctuation-limit-ratio] [maxOracle-spread-ratio] [maintenance-margin-ratio] [max-leverage]
+  local KILO="000"
+  local MEGA="000000"
+  local quote_amt=10$KILO$MEGA
+  local base_amt_btc=$(($quote_amt / 16500))
+  local base_amt_eth=$(($quote_amt / 1200))
+  nibid add-genesis-vpool ubtc:unusd $base_amt_btc $quote_amt  0.1 0.1 0.1 0.0625 12
+  nibid add-genesis-vpool ueth:unusd $base_amt_eth $quote_amt 0.1 0.1 0.1 0.0625 10
+}
+
+# x/vpool
+if add_genesis_vpools_with_coingecko_prices; then 
+  echo_success "set vpools with coingecko prices"
+elif add_genesis_vpools_default; then 
+  echo_success "set vpools with defaults" 
+else 
+  echo_error "failed to set genesis vpools"
+fi
 
 # x/perp
 add_genesis_param '.app_state.perp.params.stopped = false'

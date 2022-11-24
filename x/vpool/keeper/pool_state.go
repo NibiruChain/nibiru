@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+	"math"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -50,6 +52,58 @@ func (k Keeper) EditPoolConfig(
 		BaseAssetReserve:  vpool.BaseAssetReserve,
 		QuoteAssetReserve: vpool.QuoteAssetReserve,
 		Config:            config, // main change is here
+	}
+	if err := newVpool.Validate(); err != nil {
+		return err
+	}
+
+	err = k.updatePool(
+		ctx,
+		newVpool,
+		/*skipFluctuationLimitCheck*/ true)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (k Keeper) EditSwapInvariant(
+	ctx sdk.Context,
+	swapInvariantMap types.EditSwapInvariantsProposal_SwapInvariantMultiple,
+) error {
+	if err := swapInvariantMap.Validate(); err != nil {
+		return err
+	}
+
+	// Grab current pool from state
+	vpool, err := k.Pools.Get(ctx, common.MustNewAssetPair(swapInvariantMap.Pair))
+	if err != nil {
+		return err
+	}
+
+	// price = y / x
+	// k = x * y
+	// newK = (cx) * (cy) = c^2 xy = c^2 k
+	// newPrice = (c y) / (c x) = y / x = price
+	swapInvariant := vpool.BaseAssetReserve.Mul(vpool.QuoteAssetReserve)
+	newSwapInvariant := swapInvariant.Mul(swapInvariantMap.Multiplier)
+
+	// Change the swap invariant while holding price constant.
+	// Multiplying by the same factor to both of the reserves won't affect price.
+	cSquared := newSwapInvariant.Quo(swapInvariant).MustFloat64()
+	cAsFloat := math.Sqrt(cSquared)
+	c, err := sdk.NewDecFromStr(fmt.Sprintf("%f", cAsFloat))
+	if err != nil {
+		return err
+	}
+	newBaseAmount := c.Mul(vpool.BaseAssetReserve)
+	newQuoteAmount := c.Mul(vpool.QuoteAssetReserve)
+
+	newVpool := types.Vpool{
+		Pair:              vpool.Pair,
+		BaseAssetReserve:  newBaseAmount,
+		QuoteAssetReserve: newQuoteAmount,
+		Config:            vpool.Config,
 	}
 	if err := newVpool.Validate(); err != nil {
 		return err
