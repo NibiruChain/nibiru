@@ -44,7 +44,7 @@ func TestQueryPoolHappyPath(t *testing.T) {
 				PoolParams: types.PoolParams{
 					SwapFee:  sdk.MustNewDecFromStr("0.03"),
 					ExitFee:  sdk.MustNewDecFromStr("0.03"),
-					PoolType: common.BalancerPool,
+					PoolType: types.PoolType_BALANCER,
 					A:        sdk.ZeroInt(),
 				},
 				PoolAssets: []types.PoolAsset{
@@ -69,7 +69,7 @@ func TestQueryPoolHappyPath(t *testing.T) {
 				PoolParams: types.PoolParams{
 					SwapFee:  sdk.MustNewDecFromStr("0.03"),
 					ExitFee:  sdk.MustNewDecFromStr("0.03"),
-					PoolType: common.StableswapPool,
+					PoolType: types.PoolType_STABLESWAP,
 					A:        sdk.OneInt(),
 				},
 				PoolAssets: []types.PoolAsset{
@@ -363,7 +363,7 @@ func TestQueryPoolParams(t *testing.T) {
 				PoolParams: types.PoolParams{
 					SwapFee:  sdk.MustNewDecFromStr("0.03"),
 					ExitFee:  sdk.MustNewDecFromStr("0.03"),
-					PoolType: common.BalancerPool,
+					PoolType: types.PoolType_BALANCER,
 					A:        sdk.ZeroInt(),
 				},
 				PoolAssets: []types.PoolAsset{
@@ -382,7 +382,7 @@ func TestQueryPoolParams(t *testing.T) {
 			expectedPoolParams: types.PoolParams{
 				SwapFee:  sdk.MustNewDecFromStr("0.03"),
 				ExitFee:  sdk.MustNewDecFromStr("0.03"),
-				PoolType: common.BalancerPool,
+				PoolType: types.PoolType_BALANCER,
 				A:        sdk.ZeroInt(),
 			},
 		},
@@ -394,7 +394,7 @@ func TestQueryPoolParams(t *testing.T) {
 				PoolParams: types.PoolParams{
 					SwapFee:  sdk.MustNewDecFromStr("0.03"),
 					ExitFee:  sdk.MustNewDecFromStr("0.03"),
-					PoolType: common.StableswapPool,
+					PoolType: types.PoolType_STABLESWAP,
 					A:        sdk.OneInt(),
 				},
 				PoolAssets: []types.PoolAsset{
@@ -413,7 +413,7 @@ func TestQueryPoolParams(t *testing.T) {
 			expectedPoolParams: types.PoolParams{
 				SwapFee:  sdk.MustNewDecFromStr("0.03"),
 				ExitFee:  sdk.MustNewDecFromStr("0.03"),
-				PoolType: common.StableswapPool,
+				PoolType: types.PoolType_STABLESWAP,
 				A:        sdk.OneInt(),
 			},
 		},

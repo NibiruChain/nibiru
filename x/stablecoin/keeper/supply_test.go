@@ -40,7 +40,7 @@ func TestKeeper_GetGovMarketCap(t *testing.T) {
 	poolParams := dextypes.PoolParams{
 		SwapFee:  sdk.NewDecWithPrec(3, 2),
 		ExitFee:  sdk.NewDecWithPrec(3, 2),
-		PoolType: common.BalancerPool,
+		PoolType: dextypes.PoolType_BALANCER,
 	}
 	poolAssets := []dextypes.PoolAsset{
 		{
@@ -77,7 +77,7 @@ func TestKeeper_GetLiquidityRatio_AndBands(t *testing.T) {
 	poolParams := dextypes.PoolParams{
 		SwapFee:  sdk.NewDecWithPrec(3, 2),
 		ExitFee:  sdk.NewDecWithPrec(3, 2),
-		PoolType: common.BalancerPool,
+		PoolType: dextypes.PoolType_BALANCER,
 	}
 	poolAssets := []dextypes.PoolAsset{
 		{

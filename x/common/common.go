@@ -23,9 +23,7 @@ const (
 
 	TreasuryPoolModuleAccount = "treasury_pool"
 
-	PairSeparator  = ":"
-	BalancerPool   = 0 //common.BalancerPool
-	StableswapPool = 1 //"stableswap"
+	PairSeparator = ":"
 )
 
 var (

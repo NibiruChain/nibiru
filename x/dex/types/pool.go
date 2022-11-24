@@ -93,11 +93,11 @@ func NewPool(
 Validaet the logic of creation of the pool, and wether all parameters are set for balancer or stableswap pool
 */
 func (poolParams PoolParams) validatePoolParams() (err error) {
-	if (poolParams.PoolType != common.StableswapPool) && (poolParams.PoolType != common.BalancerPool) {
+	if (poolParams.PoolType != PoolType_STABLESWAP) && (poolParams.PoolType != PoolType_BALANCER) {
 		return ErrInvalidPoolType
 	}
 
-	if poolParams.PoolType == common.StableswapPool {
+	if poolParams.PoolType == PoolType_STABLESWAP {
 		if poolParams.A.IsNil() {
 			return ErrAmplificationMissing
 		}
@@ -128,7 +128,7 @@ func (pool *Pool) AddTokensToPool(tokensIn sdk.Coins) (
 	}
 
 	// Calculate max amount of tokensIn we can deposit into pool (no swap)
-	if pool.PoolParams.PoolType == common.StableswapPool {
+	if pool.PoolParams.PoolType == PoolType_STABLESWAP {
 		numShares, err = pool.numSharesOutFromTokensInStableSwap(tokensIn)
 		remCoins = sdk.Coins{}
 	} else {
@@ -162,7 +162,7 @@ ret:
 func (pool *Pool) AddAllTokensToPool(tokensIn sdk.Coins) (
 	numShares sdk.Int, remCoins sdk.Coins, err error,
 ) {
-	if pool.PoolParams.PoolType == common.StableswapPool {
+	if pool.PoolParams.PoolType == PoolType_STABLESWAP {
 		err = ErrInvalidPoolType
 		return
 	}

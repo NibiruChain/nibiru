@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -14,7 +13,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/dex/types"
 )
 
@@ -234,7 +232,7 @@ Where pool.json contains:
 	"initial-deposit": "100unusd,100uusdc",
 	"swap-fee": "0.01",
 	"exit-fee": "0.01",
-	"pool-type": "1", // 0: balancer pool, 1: stableswap pool
+	"pool-type": "balancer", // 'balancer' or 'stableswap'
 	"amplification": "10" // Amplification parameter for the stableswap pool
 }
 `,
@@ -293,14 +291,17 @@ Where pool.json contains:
 				}
 			}
 
-			poolType, err := strconv.Atoi(pool.PoolType)
-			if err != nil {
-				return err
+			var poolType types.PoolType
+			if pool.PoolType == "balancer" {
+				poolType = types.PoolType_BALANCER
+			} else if pool.PoolType == "stableswap" {
+				poolType = types.PoolType_STABLESWAP
+			} else {
+				return types.ErrInvalidCreatePoolArgs
 			}
 
 			amplification := sdk.ZeroInt()
-
-			if poolType == common.StableswapPool {
+			if poolType == types.PoolType_STABLESWAP {
 				var ok bool
 				amplification, ok = sdk.NewIntFromString(pool.Amplification)
 				if !ok { // overflow
@@ -314,7 +315,7 @@ Where pool.json contains:
 				&types.PoolParams{
 					SwapFee:  sdk.MustNewDecFromStr(pool.SwapFee),
 					ExitFee:  sdk.MustNewDecFromStr(pool.ExitFee),
-					PoolType: uint64(poolType),
+					PoolType: poolType,
 					A:        amplification,
 				},
 			)

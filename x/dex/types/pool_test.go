@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/testutil"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -71,7 +70,7 @@ func TestGetAddress(t *testing.T) {
 func TestNewPool(t *testing.T) {
 	poolAccountAddr := testutil.AccAddress()
 	poolParams := PoolParams{
-		PoolType: common.BalancerPool,
+		PoolType: PoolType_BALANCER,
 		SwapFee:  sdk.NewDecWithPrec(3, 2),
 		ExitFee:  sdk.NewDecWithPrec(3, 2),
 	}
@@ -128,7 +127,7 @@ func TestJoinPoolHappyPath(t *testing.T) {
 					},
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
-				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: common.BalancerPool},
+				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: PoolType_BALANCER},
 			},
 			tokensIn: sdk.NewCoins(
 				sdk.NewInt64Coin("aaa", 10),
@@ -146,7 +145,7 @@ func TestJoinPoolHappyPath(t *testing.T) {
 					},
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 110),
-				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: common.BalancerPool},
+				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: PoolType_BALANCER},
 			},
 		},
 		{
@@ -161,7 +160,7 @@ func TestJoinPoolHappyPath(t *testing.T) {
 					},
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
-				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: common.StableswapPool},
+				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: PoolType_STABLESWAP},
 			},
 			tokensIn: sdk.NewCoins(
 				sdk.NewInt64Coin("aaa", 10),
@@ -179,7 +178,7 @@ func TestJoinPoolHappyPath(t *testing.T) {
 					},
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 110),
-				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: common.StableswapPool},
+				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: PoolType_STABLESWAP},
 			},
 		},
 		{
@@ -194,7 +193,7 @@ func TestJoinPoolHappyPath(t *testing.T) {
 					},
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
-				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: common.BalancerPool},
+				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: PoolType_BALANCER},
 			},
 			tokensIn: sdk.NewCoins(
 				sdk.NewInt64Coin("aaa", 10),
@@ -214,7 +213,7 @@ func TestJoinPoolHappyPath(t *testing.T) {
 					},
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 105),
-				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: common.BalancerPool},
+				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: PoolType_BALANCER},
 			},
 		},
 		{
@@ -229,7 +228,7 @@ func TestJoinPoolHappyPath(t *testing.T) {
 					},
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1_000_000),
-				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: common.BalancerPool},
+				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: PoolType_BALANCER},
 			},
 			tokensIn: sdk.NewCoins(
 				sdk.NewInt64Coin("aaa", 4859), // 0.138885 % of pool
@@ -249,7 +248,7 @@ func TestJoinPoolHappyPath(t *testing.T) {
 					},
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1_000_958),
-				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: common.BalancerPool},
+				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: PoolType_BALANCER},
 			},
 		},
 		{
@@ -264,7 +263,7 @@ func TestJoinPoolHappyPath(t *testing.T) {
 					},
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1_000_000),
-				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: common.StableswapPool},
+				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: PoolType_STABLESWAP},
 			},
 			tokensIn: sdk.NewCoins(
 				sdk.NewInt64Coin("aaa", 4859), // 0.138885 % of pool
@@ -282,7 +281,7 @@ func TestJoinPoolHappyPath(t *testing.T) {
 					},
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1_001_264),
-				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: common.StableswapPool},
+				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: PoolType_STABLESWAP},
 			},
 		},
 	} {
@@ -321,7 +320,7 @@ func TestJoinPoolAllTokens(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
 				TotalWeight: sdk.NewInt(2 << 30),
-				PoolParams:  PoolParams{PoolType: common.BalancerPool, SwapFee: sdk.ZeroDec()},
+				PoolParams:  PoolParams{PoolType: PoolType_BALANCER, SwapFee: sdk.ZeroDec()},
 			},
 			tokensIn: sdk.NewCoins(
 				sdk.NewInt64Coin("aaa", 10),
@@ -342,7 +341,7 @@ func TestJoinPoolAllTokens(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 110),
 				TotalWeight: sdk.NewInt(2 << 30),
-				PoolParams:  PoolParams{PoolType: common.BalancerPool, SwapFee: sdk.ZeroDec()},
+				PoolParams:  PoolParams{PoolType: PoolType_BALANCER, SwapFee: sdk.ZeroDec()},
 			},
 		},
 		{
@@ -360,7 +359,7 @@ func TestJoinPoolAllTokens(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
 				TotalWeight: sdk.NewInt(2 << 30),
-				PoolParams:  PoolParams{PoolType: common.BalancerPool, SwapFee: sdk.ZeroDec()},
+				PoolParams:  PoolParams{PoolType: PoolType_BALANCER, SwapFee: sdk.ZeroDec()},
 			},
 			tokensIn: sdk.NewCoins(
 				sdk.NewInt64Coin("aaa", 10),
@@ -383,7 +382,7 @@ func TestJoinPoolAllTokens(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 106),
 				TotalWeight: sdk.NewInt(2 << 30),
-				PoolParams:  PoolParams{PoolType: common.BalancerPool, SwapFee: sdk.ZeroDec()},
+				PoolParams:  PoolParams{PoolType: PoolType_BALANCER, SwapFee: sdk.ZeroDec()},
 			},
 		},
 		{
@@ -401,7 +400,7 @@ func TestJoinPoolAllTokens(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1_000_000),
 				TotalWeight: sdk.NewInt(2 << 30),
-				PoolParams:  PoolParams{PoolType: common.BalancerPool, SwapFee: sdk.ZeroDec()},
+				PoolParams:  PoolParams{PoolType: PoolType_BALANCER, SwapFee: sdk.ZeroDec()},
 			},
 			tokensIn: sdk.NewCoins(
 				sdk.NewInt64Coin("aaa", 4859), // 0.138885 % of pool
@@ -424,7 +423,7 @@ func TestJoinPoolAllTokens(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1_001_172),
 				TotalWeight: sdk.NewInt(2 << 30),
-				PoolParams:  PoolParams{PoolType: common.BalancerPool, SwapFee: sdk.ZeroDec()},
+				PoolParams:  PoolParams{PoolType: PoolType_BALANCER, SwapFee: sdk.ZeroDec()},
 			},
 		},
 	} {
@@ -493,7 +492,7 @@ func TestExitPoolHappyPath(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
 				PoolParams: PoolParams{
-					PoolType: common.BalancerPool,
+					PoolType: PoolType_BALANCER,
 					ExitFee:  sdk.ZeroDec(),
 				},
 			},
@@ -518,7 +517,7 @@ func TestExitPoolHappyPath(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
 				PoolParams: PoolParams{
-					PoolType: common.BalancerPool,
+					PoolType: PoolType_BALANCER,
 					ExitFee:  sdk.MustNewDecFromStr("0.5"),
 				},
 			},
@@ -546,7 +545,7 @@ func TestExitPoolHappyPath(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
 				PoolParams: PoolParams{
-					PoolType: common.BalancerPool,
+					PoolType: PoolType_BALANCER,
 					ExitFee:  sdk.ZeroDec(),
 				},
 			},
@@ -574,7 +573,7 @@ func TestExitPoolHappyPath(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
 				PoolParams: PoolParams{
-					PoolType: common.BalancerPool,
+					PoolType: PoolType_BALANCER,
 					ExitFee:  sdk.MustNewDecFromStr("0.5"),
 				},
 			},
@@ -602,7 +601,7 @@ func TestExitPoolHappyPath(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 2_347_652),
 				PoolParams: PoolParams{
-					PoolType: common.BalancerPool,
+					PoolType: PoolType_BALANCER,
 					ExitFee:  sdk.MustNewDecFromStr("0.003"),
 				},
 			},
@@ -639,7 +638,7 @@ func MockPool(assets []PoolAsset) Pool {
 	return Pool{
 		Id: 1,
 		PoolParams: PoolParams{
-			PoolType: common.BalancerPool,
+			PoolType: PoolType_BALANCER,
 			SwapFee:  sdk.SmallestDec(),
 			ExitFee:  sdk.SmallestDec(),
 		},
@@ -698,21 +697,21 @@ func TestPoolParamsValidation(t *testing.T) {
 		{
 			name: "create a balancer pool, no need for other parameters",
 			poolParams: PoolParams{
-				PoolType: common.BalancerPool,
+				PoolType: PoolType_BALANCER,
 			},
 			expectedErr: nil,
 		},
 		{
 			name: "create a stableswap pool, need for amplification parameter",
 			poolParams: PoolParams{
-				PoolType: common.StableswapPool,
+				PoolType: PoolType_STABLESWAP,
 			},
 			expectedErr: ErrAmplificationMissing,
 		},
 		{
 			name: "create a stableswap pool, amplification parameter below 1",
 			poolParams: PoolParams{
-				PoolType: common.StableswapPool,
+				PoolType: PoolType_STABLESWAP,
 				A:        sdk.NewInt(0),
 			},
 			expectedErr: ErrAmplificationTooLow,
@@ -720,7 +719,7 @@ func TestPoolParamsValidation(t *testing.T) {
 		{
 			name: "create a stableswap pool, happy path",
 			poolParams: PoolParams{
-				PoolType: common.StableswapPool,
+				PoolType: PoolType_STABLESWAP,
 				A:        sdk.NewInt(42),
 			},
 			expectedErr: nil,

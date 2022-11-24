@@ -92,7 +92,7 @@ func (s *IntegrationTestSuite) TestCreatePoolCmd_Errors() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			out, err := ExecMsgCreatePool(s.T(), val.ClientCtx, val.Address, tc.tokenWeights, tc.initialDeposit, "0.003", "0.003", "0", "0")
+			out, err := ExecMsgCreatePool(s.T(), val.ClientCtx, val.Address, tc.tokenWeights, tc.initialDeposit, "0.003", "0.003", "balancer", "0")
 			if tc.expectedErr != nil {
 				s.Require().ErrorIs(err, tc.expectedErr)
 			} else {
@@ -134,7 +134,7 @@ func (s *IntegrationTestSuite) TestCreatePoolStableSwapCmd_Errors() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			out, err := ExecMsgCreatePool(s.T(), val.ClientCtx, val.Address, tc.tokenWeights, tc.initialDeposit, "0.003", "0.003", "1", tc.amplification)
+			out, err := ExecMsgCreatePool(s.T(), val.ClientCtx, val.Address, tc.tokenWeights, tc.initialDeposit, "0.003", "0.003", "stableswap", tc.amplification)
 			if tc.expectedErr != nil {
 				s.Require().ErrorIs(err, tc.expectedErr)
 			} else {
@@ -163,14 +163,14 @@ func (s *IntegrationTestSuite) TestCreatePoolCmd() {
 			name:           "happy path",
 			tokenWeights:   "1unibi,1uusdc",
 			initialDeposit: "100unibi,100uusdc",
-			poolType:       "0",
+			poolType:       "balancer",
 			amplification:  "0",
 		},
 		{
 			name:           "happy path - stable",
 			tokenWeights:   "1unibi,1uusdc",
 			initialDeposit: "100unibi,100uusdc",
-			poolType:       "1",
+			poolType:       "stableswap",
 			amplification:  "4",
 		},
 	}
@@ -210,7 +210,7 @@ func (s *IntegrationTestSuite) TestNewJoinPoolCmd() {
 		/*tokenWeights=*/ fmt.Sprintf("100%s,100%s", "coin-2", "coin-3"),
 		/*swapFee=*/ "0.01",
 		/*exitFee=*/ "0.01",
-		/*poolType=*/ "0",
+		/*poolType=*/ "balancer",
 		/*amplification=*/ "0",
 	)
 	s.Require().NoError(err)
@@ -276,7 +276,7 @@ func (s *IntegrationTestSuite) TestNewJoinStablePoolCmd() {
 		/*tokenWeights=*/ fmt.Sprintf("100%s,100%s", "coin-2", "coin-3"),
 		/*swapFee=*/ "0.01",
 		/*exitFee=*/ "0.01",
-		/*poolType=*/ "1",
+		/*poolType=*/ "stableswap",
 		/*amplification=*/ "10",
 	)
 	s.Require().NoError(err)
@@ -343,7 +343,7 @@ func (s *IntegrationTestSuite) TestNewExitPoolCmd() {
 		/*tokenWeights=*/ fmt.Sprintf("100%s,100%s", "coin-3", "coin-4"),
 		/*swapFee=*/ "0.01",
 		/*exitFee=*/ "0.01",
-		/*poolType=*/ "0",
+		/*poolType=*/ "balancer",
 		/*amplification=*/ "0",
 	)
 	s.Require().NoError(err)
@@ -457,7 +457,7 @@ func (s *IntegrationTestSuite) TestNewExitStablePoolCmd() {
 		/*tokenWeights=*/ fmt.Sprintf("100%s,100%s", "coin-3", "coin-4"),
 		/*swapFee=*/ "0.01",
 		/*exitFee=*/ "0.01",
-		/*poolType=*/ "1",
+		/*poolType=*/ "stableswap",
 		/*amplification=*/ "4242",
 	)
 	s.Require().NoError(err)
@@ -606,7 +606,7 @@ func (s *IntegrationTestSuite) TestSwapAssets() {
 		/*tokenWeights=*/ fmt.Sprintf("100%s,100%s", "coin-4", "coin-5"),
 		/*swapFee=*/ "0.01",
 		/*exitFee=*/ "0.01",
-		/*poolType=*/ "0",
+		/*poolType=*/ "balancer",
 		/*amplification=*/ "0",
 	)
 	s.Require().NoError(err)
@@ -713,7 +713,7 @@ func (s *IntegrationTestSuite) TestSwapStableAssets() {
 		/*tokenWeights=*/ fmt.Sprintf("100%s,100%s", "coin-4", "coin-5"),
 		/*swapFee=*/ "0.01",
 		/*exitFee=*/ "0.01",
-		/*poolType=*/ "1",
+		/*poolType=*/ "stableswap",
 		/*amplification=*/ "42",
 	)
 	s.Require().NoError(err)

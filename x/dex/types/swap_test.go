@@ -5,8 +5,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-
-	common "github.com/NibiruChain/nibiru/x/common"
 )
 
 func TestCalcOutAmtGivenIn(t *testing.T) {
@@ -22,7 +20,7 @@ func TestCalcOutAmtGivenIn(t *testing.T) {
 			name: "simple swap",
 			pool: Pool{
 				PoolParams: PoolParams{
-					PoolType: common.BalancerPool,
+					PoolType: PoolType_BALANCER,
 					SwapFee:  sdk.MustNewDecFromStr("0.0003"),
 				},
 				PoolAssets: []PoolAsset{
@@ -45,7 +43,7 @@ func TestCalcOutAmtGivenIn(t *testing.T) {
 			name: "big simple numbers",
 			pool: Pool{
 				PoolParams: PoolParams{
-					PoolType: common.BalancerPool,
+					PoolType: PoolType_BALANCER,
 					SwapFee:  sdk.MustNewDecFromStr("0.0003"),
 				},
 				PoolAssets: []PoolAsset{
@@ -68,7 +66,7 @@ func TestCalcOutAmtGivenIn(t *testing.T) {
 			name: "big simple numbers, huge swap fee",
 			pool: Pool{
 				PoolParams: PoolParams{
-					PoolType: common.BalancerPool,
+					PoolType: PoolType_BALANCER,
 					SwapFee:  sdk.MustNewDecFromStr("0.5"),
 				},
 				PoolAssets: []PoolAsset{
@@ -91,7 +89,7 @@ func TestCalcOutAmtGivenIn(t *testing.T) {
 			name: "real numbers",
 			pool: Pool{
 				PoolParams: PoolParams{
-					PoolType: common.BalancerPool,
+					PoolType: PoolType_BALANCER,
 					SwapFee:  sdk.MustNewDecFromStr("0.0003"),
 				},
 				PoolAssets: []PoolAsset{
@@ -115,7 +113,7 @@ func TestCalcOutAmtGivenIn(t *testing.T) {
 			name: "swap with very low output token amount",
 			pool: Pool{
 				PoolParams: PoolParams{
-					PoolType: common.BalancerPool,
+					PoolType: PoolType_BALANCER,
 					SwapFee:  sdk.MustNewDecFromStr("0.0003"),
 				},
 				PoolAssets: []PoolAsset{
@@ -160,7 +158,7 @@ func TestCalcInAmtGivenOut(t *testing.T) {
 			name: "simple swap",
 			pool: Pool{
 				PoolParams: PoolParams{
-					PoolType: common.BalancerPool,
+					PoolType: PoolType_BALANCER,
 					SwapFee:  sdk.MustNewDecFromStr("0.0003"),
 				},
 				PoolAssets: []PoolAsset{
@@ -183,7 +181,7 @@ func TestCalcInAmtGivenOut(t *testing.T) {
 			name: "big simple numbers",
 			pool: Pool{
 				PoolParams: PoolParams{
-					PoolType: common.BalancerPool,
+					PoolType: PoolType_BALANCER,
 					SwapFee:  sdk.MustNewDecFromStr("0.0003"),
 				},
 				PoolAssets: []PoolAsset{
@@ -206,7 +204,7 @@ func TestCalcInAmtGivenOut(t *testing.T) {
 			name: "big simple numbers, huge swap fee",
 			pool: Pool{
 				PoolParams: PoolParams{
-					PoolType: common.BalancerPool,
+					PoolType: PoolType_BALANCER,
 					SwapFee:  sdk.MustNewDecFromStr("0.5"),
 				},
 				PoolAssets: []PoolAsset{
@@ -229,7 +227,7 @@ func TestCalcInAmtGivenOut(t *testing.T) {
 			name: "real numbers",
 			pool: Pool{
 				PoolParams: PoolParams{
-					PoolType: common.BalancerPool,
+					PoolType: PoolType_BALANCER,
 					SwapFee:  sdk.MustNewDecFromStr("0.0003"),
 				},
 				PoolAssets: []PoolAsset{

@@ -6,8 +6,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-
-	common "github.com/NibiruChain/nibiru/x/common"
 )
 
 func TestMaximalSharesFromExactRatioJoin(t *testing.T) {
@@ -293,7 +291,7 @@ func TestSwapForSwapAndJoin(t *testing.T) {
 			pool := Pool{
 				Id:          1,
 				Address:     "some_address",
-				PoolParams:  PoolParams{SwapFee: sdk.ZeroDec(), PoolType: common.BalancerPool},
+				PoolParams:  PoolParams{SwapFee: sdk.ZeroDec(), PoolType: PoolType_BALANCER},
 				PoolAssets:  tc.poolAssets,
 				TotalWeight: sdk.NewInt(2 << 30),
 				TotalShares: sdk.NewCoin("nibiru/pool/1", sdk.NewIntWithDecimal(100, 18)),

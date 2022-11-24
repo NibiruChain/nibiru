@@ -296,7 +296,7 @@ func genBalancerPoolParams(r *rand.Rand, blockTime time.Time, assets []types.Poo
 		// SwapFee:                  swapFee,
 		SwapFee:  sdk.ZeroDec(),
 		ExitFee:  exitFee,
-		PoolType: common.BalancerPool,
+		PoolType: types.PoolType_BALANCER,
 	}
 }
 

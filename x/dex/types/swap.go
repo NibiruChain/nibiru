@@ -5,7 +5,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/dex/math"
 )
 
@@ -49,12 +48,12 @@ func (pool Pool) CalcOutAmtGivenIn(tokenIn sdk.Coin, tokenOutDenom string, noFee
 	// deduct swapfee on the in asset
 	// delta balanceOut is positive(tokens inside the pool decreases)
 	var tokenAmountOut sdk.Int
-	if pool.PoolParams.PoolType == common.StableswapPool {
+	if pool.PoolParams.PoolType == PoolType_STABLESWAP {
 		tokenAmountOut, err = pool.SolveStableswapInvariant(poolAssetIn.Token, tokenOutDenom)
 		if err != nil {
 			return
 		}
-	} else if pool.PoolParams.PoolType == common.BalancerPool {
+	} else if pool.PoolParams.PoolType == PoolType_BALANCER {
 		tokenAmountOut = math.SolveConstantProductInvariant(
 			/*xPrior=*/ poolTokenInBalance,
 			/*xAfter=*/ poolTokenInBalancePostSwap,
@@ -88,9 +87,9 @@ ret:
 func (pool Pool) CalcInAmtGivenOut(tokenOut sdk.Coin, tokenInDenom string) (
 	tokenIn sdk.Coin, err error,
 ) {
-	if pool.PoolParams.PoolType == common.BalancerPool {
+	if pool.PoolParams.PoolType == PoolType_BALANCER {
 		return pool.CalcInAmtGivenOutBalancer(tokenOut, tokenInDenom)
-	} else if pool.PoolParams.PoolType == common.StableswapPool {
+	} else if pool.PoolParams.PoolType == PoolType_STABLESWAP {
 		return pool.CalcInAmtGivenOutStableswap(tokenOut, tokenInDenom)
 	}
 	return sdk.Coin{}, ErrInvalidPoolType

@@ -3,7 +3,6 @@ package types
 import (
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/testutil"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -89,7 +88,7 @@ func TestCalSpotPrice(t *testing.T) {
 			poolParams := PoolParams{
 				SwapFee:  sdk.NewDecWithPrec(3, 2),
 				ExitFee:  sdk.NewDecWithPrec(3, 2),
-				PoolType: common.BalancerPool,
+				PoolType: PoolType_BALANCER,
 			}
 
 			pool, err := NewPool(1, poolAccountAddr, poolParams, tc.poolAssets)
