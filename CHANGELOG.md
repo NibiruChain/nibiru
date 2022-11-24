@@ -65,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1068](https://github.com/NibiruChain/nibiru/pull/1068) - refactor(vpool)!: Remove ReserveSnapshot from the vpool genesis state since reserves are taken automatically on vpool initialization.
 * [#1064](https://github.com/NibiruChain/nibiru/pull/1064) - test(wasm): add test for cosmwasm
 * [#1075](https://github.com/NibiruChain/nibiru/pull/1075) - feat(dex): remove possibility to create multiple pools with the same assets
+* [#1080](https://github.com/NibiruChain/nibiru/pull/1080) - feat(perp): Add exchanged notional to the position changed event #1080
 
 ## v0.15.0
 
