@@ -17,26 +17,30 @@ import (
 )
 
 func TestGenesis(t *testing.T) {
-	vpools := []types.VPool{
+	vpools := []types.Vpool{
 		{
-			Pair:                   common.MustNewAssetPair("BTC:NUSD"),
-			BaseAssetReserve:       sdk.NewDec(1_000_000),      // 1
-			QuoteAssetReserve:      sdk.NewDec(30_000_000_000), // 30,000
-			TradeLimitRatio:        sdk.MustNewDecFromStr("0.88"),
-			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.20"),
-			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.20"),
-			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-			MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			Pair:              common.MustNewAssetPair("BTC:NUSD"),
+			BaseAssetReserve:  sdk.NewDec(1_000_000),      // 1
+			QuoteAssetReserve: sdk.NewDec(30_000_000_000), // 30,000
+			Config: types.VpoolConfig{
+				TradeLimitRatio:        sdk.MustNewDecFromStr("0.88"),
+				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.20"),
+				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.20"),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			},
 		},
 		{
-			Pair:                   common.MustNewAssetPair("ETH:NUSD"),
-			BaseAssetReserve:       sdk.NewDec(2_000_000),      // 2
-			QuoteAssetReserve:      sdk.NewDec(60_000_000_000), // 60,000
-			TradeLimitRatio:        sdk.MustNewDecFromStr("0.77"),
-			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
-			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.30"),
-			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-			MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			Pair:              common.MustNewAssetPair("ETH:NUSD"),
+			BaseAssetReserve:  sdk.NewDec(2_000_000),      // 2
+			QuoteAssetReserve: sdk.NewDec(60_000_000_000), // 60,000
+			Config: types.VpoolConfig{
+				TradeLimitRatio:        sdk.MustNewDecFromStr("0.77"),
+				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
+				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.30"),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			},
 		},
 	}
 

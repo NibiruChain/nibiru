@@ -5,7 +5,12 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/tendermint/tendermint/libs/log"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+	tmdb "github.com/tendermint/tm-db"
 )
 
 // AccAddress Returns a sample account address (sdk.AccAddress)
@@ -31,4 +36,13 @@ func PrivKeyAddressPairs(n int) (keys []cryptotypes.PrivKey, addrs []sdk.AccAddr
 		addrs[i] = sdk.AccAddress(keys[i].PubKey().Address())
 	}
 	return
+}
+
+func BlankContext(storeKeyName string) sdk.Context {
+	storeKey := sdk.NewKVStoreKey(storeKeyName)
+	db := tmdb.NewMemDB()
+	stateStore := store.NewCommitMultiStore(db)
+	stateStore.MountStoreWithDB(storeKey, sdk.StoreTypeIAVL, db)
+	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())
+	return ctx
 }

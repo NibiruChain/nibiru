@@ -20,13 +20,16 @@ func TestCreatePool(t *testing.T) {
 	vpoolKeeper.CreatePool(
 		ctx,
 		common.Pair_BTC_NUSD,
-		sdk.MustNewDecFromStr("0.9"), // 0.9 ratio
-		sdk.NewDec(10_000_000),       // 10 tokens
-		sdk.NewDec(5_000_000),        // 5 tokens
-		sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
-		sdk.MustNewDecFromStr("0.1"), // 0.9 ratio
-		sdk.MustNewDecFromStr("0.0625"),
-		sdk.MustNewDecFromStr("15"),
+
+		sdk.NewDec(10_000_000), // 10 tokens
+		sdk.NewDec(5_000_000),  // 5 tokens
+		types.VpoolConfig{
+			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
+			TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
+		},
 	)
 
 	exists := vpoolKeeper.ExistsPool(ctx, common.Pair_BTC_NUSD)
@@ -39,6 +42,98 @@ func TestCreatePool(t *testing.T) {
 	require.False(t, notExist)
 }
 
+func TestEditPoolConfig(t *testing.T) {
+	pair := common.Pair_BTC_NUSD
+	vpoolStart := types.Vpool{
+		Pair:              pair,
+		QuoteAssetReserve: sdk.NewDec(10_000_000),
+		BaseAssetReserve:  sdk.NewDec(5_000_000),
+		Config: types.VpoolConfig{
+			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
+			TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
+		},
+	}
+
+	setupTest := func() (Keeper, sdk.Context) {
+		vpoolKeeper, _, ctx := getKeeper(t)
+		vpoolKeeper.CreatePool(
+			ctx,
+			common.Pair_BTC_NUSD,
+			vpoolStart.QuoteAssetReserve,
+			vpoolStart.BaseAssetReserve,
+			vpoolStart.Config,
+		)
+		exists := vpoolKeeper.ExistsPool(ctx, common.Pair_BTC_NUSD)
+		require.True(t, exists)
+		return vpoolKeeper, ctx
+	}
+
+	testCases := []struct {
+		name        string
+		newConfig   types.VpoolConfig
+		shouldErr   bool
+		shouldPanic bool
+	}{
+		{
+			name:      "happy no change to config",
+			newConfig: vpoolStart.Config,
+			shouldErr: false,
+		},
+		{
+			name:      "happy valid with expected config change",
+			newConfig: vpoolStart.Config,
+			shouldErr: false,
+		},
+		{
+			name:        "err invalid config nil",
+			newConfig:   types.VpoolConfig{},
+			shouldPanic: true,
+		},
+		{
+			name: "err invalid config max leverage too high",
+			newConfig: types.VpoolConfig{
+				// max leverage set too high on purpose
+				MaxLeverage:            sdk.MustNewDecFromStr("9001"),
+				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
+				TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
+			},
+			shouldErr: true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			vpoolKeeper, ctx := setupTest()
+			if tc.shouldErr {
+				err := vpoolKeeper.EditPoolConfig(ctx, pair, tc.newConfig)
+				// We expect the initial config if the change fails
+				assert.Error(t, err)
+				vpool, err := vpoolKeeper.Pools.Get(ctx, pair)
+				assert.NoError(t, err)
+				assert.EqualValues(t, vpoolStart.Config, vpool.Config)
+			} else if tc.shouldPanic {
+				require.Panics(t, func() {
+					err := vpoolKeeper.EditPoolConfig(ctx, pair, tc.newConfig)
+					require.Error(t, err)
+				})
+			} else {
+				err := vpoolKeeper.EditPoolConfig(ctx, pair, tc.newConfig)
+				// We expect the new config if the change succeeds
+				require.NoError(t, err)
+				vpool, err := vpoolKeeper.Pools.Get(ctx, pair)
+				assert.NoError(t, err)
+				assert.EqualValues(t, tc.newConfig, vpool.Config)
+			}
+		})
+	}
+}
+
 func TestGetPoolPrices_SetupErrors(t *testing.T) {
 	testCases := []struct {
 		name string
@@ -47,7 +142,7 @@ func TestGetPoolPrices_SetupErrors(t *testing.T) {
 		{
 			name: "invalid pair ID on pool",
 			test: func(t *testing.T) {
-				vpoolWithInvalidPair := types.VPool{
+				vpoolWithInvalidPair := types.Vpool{
 					Pair: common.AssetPair{Token0: "o:o", Token1: "unibi"}}
 				vpoolKeeper, _, ctx := getKeeper(t)
 				_, err := vpoolKeeper.GetPoolPrices(ctx, vpoolWithInvalidPair)
@@ -57,7 +152,7 @@ func TestGetPoolPrices_SetupErrors(t *testing.T) {
 		{
 			name: "attempt to use vpool that hasn't been added",
 			test: func(t *testing.T) {
-				vpool := types.VPool{Pair: common.MustNewAssetPair("uatom:unibi")}
+				vpool := types.Vpool{Pair: common.MustNewAssetPair("uatom:unibi")}
 				vpoolKeeper, _, ctx := getKeeper(t)
 				_, err := vpoolKeeper.GetPoolPrices(ctx, vpool)
 				require.ErrorContains(t, err, types.ErrPairNotSupported.Error())
@@ -66,7 +161,7 @@ func TestGetPoolPrices_SetupErrors(t *testing.T) {
 		{
 			name: "vpool with reserves that don't make sense",
 			test: func(t *testing.T) {
-				vpool := types.VPool{
+				vpool := types.Vpool{
 					Pair:              common.MustNewAssetPair("uatom:unibi"),
 					BaseAssetReserve:  sdk.NewDec(999),
 					QuoteAssetReserve: sdk.NewDec(-400),
@@ -88,7 +183,7 @@ func TestGetPoolPrices_SetupErrors(t *testing.T) {
 func TestGetPoolPrices(t *testing.T) {
 	testCases := []struct {
 		name               string      // test case name
-		vpool              types.VPool // vpool passed to GetPoolPrices
+		vpool              types.Vpool // vpool passed to GetPoolPrices
 		shouldCreateVpool  bool        // whether to write 'vpool' into the kv store
 		mockIndexPrice     sdk.Dec     // indexPriceVal returned by the x/pricefeed keepr
 		pricefeedKeeperErr error
@@ -97,14 +192,17 @@ func TestGetPoolPrices(t *testing.T) {
 	}{
 		{
 			name: "happy path - vpool + pricefeed active",
-			vpool: types.VPool{
-				Pair:                   common.Pair_ETH_NUSD,
-				QuoteAssetReserve:      sdk.NewDec(3_000_000), // 3e6
-				BaseAssetReserve:       sdk.NewDec(1_000),     // 1e3
-				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
-				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.30"),
-				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			vpool: types.Vpool{
+				Pair:              common.Pair_ETH_NUSD,
+				QuoteAssetReserve: sdk.NewDec(3_000_000), // 3e6
+				BaseAssetReserve:  sdk.NewDec(1_000),     // 1e3
+				Config: types.VpoolConfig{
+					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+					MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.30"),
+					TradeLimitRatio:        sdk.OneDec(),
+				},
 			},
 			shouldCreateVpool: true,
 			mockIndexPrice:    sdk.NewDec(99),
@@ -119,14 +217,17 @@ func TestGetPoolPrices(t *testing.T) {
 		},
 		{
 			name: "happy path - vpool active, but no index price",
-			vpool: types.VPool{
-				Pair:                   common.Pair_ETH_NUSD,
-				QuoteAssetReserve:      sdk.NewDec(3_000_000), // 3e6
-				BaseAssetReserve:       sdk.NewDec(1_000),     // 1e3
-				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
-				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.30"),
-				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			vpool: types.Vpool{
+				Pair:              common.Pair_ETH_NUSD,
+				QuoteAssetReserve: sdk.NewDec(3_000_000), // 3e6
+				BaseAssetReserve:  sdk.NewDec(1_000),     // 1e3
+				Config: types.VpoolConfig{
+					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+					MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.30"),
+					TradeLimitRatio:        sdk.OneDec(),
+				},
 			},
 			shouldCreateVpool:  true,
 			mockIndexPrice:     sdk.OneDec().Neg(),
@@ -142,14 +243,17 @@ func TestGetPoolPrices(t *testing.T) {
 		},
 		{
 			name: "vpool doesn't exist",
-			vpool: types.VPool{
-				Pair:                   common.Pair_ETH_NUSD,
-				QuoteAssetReserve:      sdk.NewDec(3_000_000), // 3e6
-				BaseAssetReserve:       sdk.NewDec(1_000),     // 1e3
-				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
-				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.30"),
-				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			vpool: types.Vpool{
+				Pair:              common.Pair_ETH_NUSD,
+				QuoteAssetReserve: sdk.NewDec(3_000_000), // 3e6
+				BaseAssetReserve:  sdk.NewDec(1_000),     // 1e3
+				Config: types.VpoolConfig{
+					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+					MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.30"),
+					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
+				},
 			},
 			shouldCreateVpool: false,
 			err:               types.ErrPairNotSupported,
@@ -166,13 +270,9 @@ func TestGetPoolPrices(t *testing.T) {
 				vpoolKeeper.CreatePool(
 					ctx,
 					tc.vpool.Pair,
-					tc.vpool.TradeLimitRatio,
 					tc.vpool.QuoteAssetReserve,
 					tc.vpool.BaseAssetReserve,
-					tc.vpool.FluctuationLimitRatio,
-					tc.vpool.MaxOracleSpreadRatio,
-					tc.vpool.MaintenanceMarginRatio,
-					tc.vpool.MaxLeverage,
+					tc.vpool.Config,
 				)
 			}
 

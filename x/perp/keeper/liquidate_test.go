@@ -7,6 +7,7 @@ import (
 	"github.com/NibiruChain/collections"
 
 	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
+	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
 
@@ -89,13 +90,15 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			vpoolKeeper.CreatePool(
 				ctx,
 				tokenPair,
-				/* tradeLimitRatio */ sdk.MustNewDecFromStr("0.9"),
 				/* quoteAssetReserves */ sdk.NewDec(10_000_000),
 				/* baseAssetReserves */ sdk.NewDec(5_000_000),
-				/* fluctuationLimitRatio */ sdk.MustNewDecFromStr("1"),
-				/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("0.1"),
-				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
-				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+				vpooltypes.VpoolConfig{
+					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
+					FluctuationLimitRatio:  sdk.OneDec(),
+					MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+				},
 			)
 			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
 			nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, tokenPair, true)
@@ -264,13 +267,15 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			vpoolKeeper.CreatePool(
 				ctx,
 				tokenPair,
-				/* tradeLimitRatio */ sdk.MustNewDecFromStr("0.9"),
 				/* quoteAssetReserves */ sdk.NewDec(10_000_000_000_000_000),
 				/* baseAssetReserves */ sdk.NewDec(5_000_000_000_000_000),
-				/* fluctuationLimitRatio */ sdk.MustNewDecFromStr("1"),
-				/* maxOracleSpreadRatio */ sdk.MustNewDecFromStr("0.1"),
-				/* maintenanceMarginRatio */ sdk.MustNewDecFromStr("0.0625"),
-				/* maxLeverage */ sdk.MustNewDecFromStr("15"),
+				vpooltypes.VpoolConfig{
+					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
+					FluctuationLimitRatio:  sdk.OneDec(),
+					MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+				},
 			)
 			nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, tokenPair, true)
 			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))

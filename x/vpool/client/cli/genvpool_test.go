@@ -26,8 +26,8 @@ func TestAddGenesisVpoolCmd(t *testing.T) {
 	tests := []struct {
 		name          string
 		pairName      string
-		baseAsset     string
-		quoteAsset    string
+		baseAmt       string
+		quoteAmt      string
 		tradeLimit    string
 		flucLimit     string
 		maxOracle     string
@@ -38,8 +38,8 @@ func TestAddGenesisVpoolCmd(t *testing.T) {
 		{
 			name:          "pair name empty",
 			pairName:      "",
-			baseAsset:     "1",
-			quoteAsset:    "1",
+			baseAmt:       "1",
+			quoteAmt:      "1",
 			tradeLimit:    "1",
 			flucLimit:     "1",
 			maxOracle:     "1",
@@ -50,8 +50,8 @@ func TestAddGenesisVpoolCmd(t *testing.T) {
 		{
 			name:          "invalid pair name",
 			pairName:      "token0:token1:token2",
-			baseAsset:     "1",
-			quoteAsset:    "1",
+			baseAmt:       "1",
+			quoteAmt:      "1",
 			tradeLimit:    "1",
 			flucLimit:     "1",
 			maxOracle:     "1",
@@ -62,8 +62,8 @@ func TestAddGenesisVpoolCmd(t *testing.T) {
 		{
 			name:          "invalid trade limit input",
 			pairName:      "token0:token1",
-			baseAsset:     "1",
-			quoteAsset:    "1",
+			baseAmt:       "1",
+			quoteAmt:      "1",
 			tradeLimit:    "test",
 			flucLimit:     "1",
 			maxOracle:     "1",
@@ -74,8 +74,8 @@ func TestAddGenesisVpoolCmd(t *testing.T) {
 		{
 			name:          "empty base asset input",
 			pairName:      "token0:token1",
-			baseAsset:     "",
-			quoteAsset:    "1",
+			baseAmt:       "",
+			quoteAmt:      "1",
 			tradeLimit:    "1",
 			flucLimit:     "1",
 			maxOracle:     "1",
@@ -86,8 +86,8 @@ func TestAddGenesisVpoolCmd(t *testing.T) {
 		{
 			name:          "max leverage cannot be zero",
 			pairName:      "token0:token1",
-			baseAsset:     "100",
-			quoteAsset:    "100",
+			baseAmt:       "100",
+			quoteAmt:      "100",
 			tradeLimit:    "0.1",
 			flucLimit:     "0.1",
 			maxOracle:     "0.1",
@@ -98,8 +98,8 @@ func TestAddGenesisVpoolCmd(t *testing.T) {
 		{
 			name:          "valid vpool pair",
 			pairName:      "token0:token1",
-			baseAsset:     "100",
-			quoteAsset:    "100",
+			baseAmt:       "100",
+			quoteAmt:      "100",
 			tradeLimit:    "0.1",
 			flucLimit:     "0.1",
 			maxOracle:     "0.1",
@@ -129,11 +129,11 @@ func TestAddGenesisVpoolCmd(t *testing.T) {
 			ctx = context.WithValue(ctx, client.ClientContextKey, &clientCtx)
 			ctx = context.WithValue(ctx, server.ServerContextKey, serverCtx)
 
-			cmd := cli.AddVPoolGenesisCmd("home")
+			cmd := cli.AddVpoolGenesisCmd("home")
 			cmd.SetArgs([]string{
 				tc.pairName,
-				tc.baseAsset,
-				tc.quoteAsset,
+				tc.baseAmt,
+				tc.quoteAmt,
 				tc.tradeLimit,
 				tc.flucLimit,
 				tc.maxOracle,
