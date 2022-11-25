@@ -4,16 +4,14 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/collections"
-
-	"github.com/NibiruChain/nibiru/x/common"
-
-	"github.com/stretchr/testify/require"
-
-	"github.com/NibiruChain/nibiru/x/oracle/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/collections"
+
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
 func TestOrganizeAggregate(t *testing.T) {
@@ -59,7 +57,7 @@ func TestOrganizeAggregate(t *testing.T) {
 	}
 
 	// organize votes by pair
-	ballotMap := input.OracleKeeper.OrganizeBallotByPair(input.Ctx, map[string]types.ValidatorPerformance{
+	ballotMap := input.OracleKeeper.mapBallotByPair(input.Ctx, map[string]types.ValidatorPerformance{
 		ValAddrs[0].String(): {
 			Power:      power,
 			WinCount:   0,
@@ -129,7 +127,7 @@ func TestClearBallots(t *testing.T) {
 			}, ValAddrs[i]))
 	}
 
-	input.OracleKeeper.ClearBallots(input.Ctx, 5)
+	input.OracleKeeper.clearBallots(input.Ctx, 5)
 
 	prevoteCounter := len(input.OracleKeeper.Prevotes.Iterate(input.Ctx, collections.Range[sdk.ValAddress]{}).Keys())
 	voteCounter := len(input.OracleKeeper.Votes.Iterate(input.Ctx, collections.Range[sdk.ValAddress]{}).Keys())
@@ -137,7 +135,7 @@ func TestClearBallots(t *testing.T) {
 	require.Equal(t, prevoteCounter, 3)
 	require.Equal(t, voteCounter, 0)
 
-	input.OracleKeeper.ClearBallots(input.Ctx.WithBlockHeight(input.Ctx.BlockHeight()+6), 5)
+	input.OracleKeeper.clearBallots(input.Ctx.WithBlockHeight(input.Ctx.BlockHeight()+6), 5)
 	prevoteCounter = len(input.OracleKeeper.Prevotes.Iterate(input.Ctx, collections.Range[sdk.ValAddress]{}).Keys())
 	require.Equal(t, prevoteCounter, 0)
 }
@@ -163,7 +161,7 @@ func TestApplyWhitelist(t *testing.T) {
 		"btc:usd":  {},
 	}
 	// no updates case
-	input.OracleKeeper.ApplyWhitelist(input.Ctx, whitelist, voteTargets)
+	input.OracleKeeper.applyWhitelist(input.Ctx, whitelist, voteTargets)
 
 	var gotPairs []string
 	gotPairs = append(gotPairs, input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys()...)
@@ -175,7 +173,7 @@ func TestApplyWhitelist(t *testing.T) {
 
 	// len update (fast path)
 	whitelist = append(whitelist, "nibi:eth")
-	input.OracleKeeper.ApplyWhitelist(input.Ctx, whitelist, voteTargets)
+	input.OracleKeeper.applyWhitelist(input.Ctx, whitelist, voteTargets)
 
 	gotPairs = []string{}
 	gotPairs = append(gotPairs, input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys()...)
@@ -188,7 +186,7 @@ func TestApplyWhitelist(t *testing.T) {
 	// diff update (slow path)
 	voteTargets["nibi:eth"] = struct{}{} // add previous pair
 	whitelist[0] = "nibi:usdt"           // update first pair
-	input.OracleKeeper.ApplyWhitelist(input.Ctx, whitelist, voteTargets)
+	input.OracleKeeper.applyWhitelist(input.Ctx, whitelist, voteTargets)
 
 	gotPairs = []string{}
 	gotPairs = append(gotPairs, input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys()...)

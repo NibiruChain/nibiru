@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/collections"
+	"github.com/NibiruChain/collections"
 
 	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
 
@@ -1925,21 +1925,22 @@ func TestClosePosition(t *testing.T) {
 			assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionChangedEvent{
-				Pair:                  tc.initialPosition.Pair.String(),
-				TraderAddress:         tc.initialPosition.TraderAddress,
-				Margin:                sdk.NewInt64Coin(tc.initialPosition.Pair.QuoteDenom(), 0),
-				PositionNotional:      sdk.ZeroDec(),
-				ExchangedPositionSize: tc.initialPosition.Size_.Neg(),
-				PositionSize:          sdk.ZeroDec(),
-				RealizedPnl:           tc.expectedRealizedPnl,
-				UnrealizedPnlAfter:    sdk.ZeroDec(),
-				BadDebt:               sdk.NewCoin(common.Pair_BTC_NUSD.QuoteDenom(), sdk.ZeroInt()),
-				LiquidationPenalty:    sdk.ZeroDec(),
-				MarkPrice:             tc.newPositionNotional.Quo(tc.initialPosition.Size_.Abs()),
-				FundingPayment:        sdk.MustNewDecFromStr("0.02").Mul(tc.initialPosition.Size_),
-				TransactionFee:        sdk.NewInt64Coin(tc.initialPosition.Pair.QuoteDenom(), 0),
-				BlockHeight:           ctx.BlockHeight(),
-				BlockTimeMs:           ctx.BlockTime().UnixMilli(),
+				Pair:               tc.initialPosition.Pair.String(),
+				TraderAddress:      tc.initialPosition.TraderAddress,
+				Margin:             sdk.NewInt64Coin(tc.initialPosition.Pair.QuoteDenom(), 0),
+				PositionNotional:   sdk.ZeroDec(),
+				ExchangedNotional:  tc.newPositionNotional,
+				ExchangedSize:      tc.initialPosition.Size_.Neg(),
+				PositionSize:       sdk.ZeroDec(),
+				RealizedPnl:        tc.expectedRealizedPnl,
+				UnrealizedPnlAfter: sdk.ZeroDec(),
+				BadDebt:            sdk.NewCoin(common.Pair_BTC_NUSD.QuoteDenom(), sdk.ZeroInt()),
+				LiquidationPenalty: sdk.ZeroDec(),
+				MarkPrice:          tc.newPositionNotional.Quo(tc.initialPosition.Size_.Abs()),
+				FundingPayment:     sdk.MustNewDecFromStr("0.02").Mul(tc.initialPosition.Size_),
+				TransactionFee:     sdk.NewInt64Coin(tc.initialPosition.Pair.QuoteDenom(), 0),
+				BlockHeight:        ctx.BlockHeight(),
+				BlockTimeMs:        ctx.BlockTime().UnixMilli(),
 			})
 		})
 	}

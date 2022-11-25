@@ -52,28 +52,32 @@ func getPriceWithSnapshot(
 		return snapshot.QuoteAssetReserve.Quo(snapshot.BaseAssetReserve), nil
 
 	case types.TwapCalcOption_QUOTE_ASSET_SWAP:
-		pool := &types.VPool{
-			Pair:                   snapshotPriceOpts.pair,
-			TradeLimitRatio:        sdk.ZeroDec(), // unused
-			QuoteAssetReserve:      snapshot.QuoteAssetReserve,
-			BaseAssetReserve:       snapshot.BaseAssetReserve,
-			FluctuationLimitRatio:  sdk.ZeroDec(), // unused
-			MaxOracleSpreadRatio:   sdk.ZeroDec(), // unused
-			MaintenanceMarginRatio: sdk.ZeroDec(), // unused
-			MaxLeverage:            sdk.ZeroDec(), // unused
+		pool := &types.Vpool{
+			Pair:              snapshotPriceOpts.pair,
+			QuoteAssetReserve: snapshot.QuoteAssetReserve,
+			BaseAssetReserve:  snapshot.BaseAssetReserve,
+			Config: types.VpoolConfig{
+				FluctuationLimitRatio:  sdk.ZeroDec(), // unused
+				MaintenanceMarginRatio: sdk.ZeroDec(), // unused
+				MaxLeverage:            sdk.ZeroDec(), // unused
+				MaxOracleSpreadRatio:   sdk.ZeroDec(), // unused
+				TradeLimitRatio:        sdk.ZeroDec(), // unused
+			},
 		}
 		return pool.GetBaseAmountByQuoteAmount(snapshotPriceOpts.direction, snapshotPriceOpts.assetAmount)
 
 	case types.TwapCalcOption_BASE_ASSET_SWAP:
-		pool := &types.VPool{
-			Pair:                   snapshotPriceOpts.pair,
-			TradeLimitRatio:        sdk.ZeroDec(), // unused
-			QuoteAssetReserve:      snapshot.QuoteAssetReserve,
-			BaseAssetReserve:       snapshot.BaseAssetReserve,
-			FluctuationLimitRatio:  sdk.ZeroDec(), // unused
-			MaxOracleSpreadRatio:   sdk.ZeroDec(), // unused
-			MaintenanceMarginRatio: sdk.ZeroDec(), // unused
-			MaxLeverage:            sdk.ZeroDec(), // unused
+		pool := &types.Vpool{
+			Pair:              snapshotPriceOpts.pair,
+			QuoteAssetReserve: snapshot.QuoteAssetReserve,
+			BaseAssetReserve:  snapshot.BaseAssetReserve,
+			Config: types.VpoolConfig{
+				FluctuationLimitRatio:  sdk.ZeroDec(), // unused
+				MaintenanceMarginRatio: sdk.ZeroDec(), // unused
+				MaxLeverage:            sdk.ZeroDec(), // unused
+				MaxOracleSpreadRatio:   sdk.ZeroDec(), // unused
+				TradeLimitRatio:        sdk.ZeroDec(), // unused
+			},
 		}
 		return pool.GetQuoteAmountByBaseAmount(snapshotPriceOpts.direction, snapshotPriceOpts.assetAmount)
 	}

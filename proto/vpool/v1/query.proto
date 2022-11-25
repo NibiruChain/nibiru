@@ -52,7 +52,7 @@ message QueryReserveAssetsResponse {
 message QueryAllPoolsRequest { }
 
 message QueryAllPoolsResponse {
-  repeated VPool pools = 1 [
+  repeated Vpool pools = 1 [
     (gogoproto.nullable) = false
   ];
   repeated PoolPrices prices = 2 [

@@ -57,12 +57,13 @@ func TestSnapshotValidate(t *testing.T) {
 			shouldErr: true,
 		},
 		{
-			name: "timestamp negative",
+			name: "timestamp lower than smallest UTC ('0001-01-01 00:00:00 +0000 UTC')",
+			// see time.UnixMilli(-62135596800000).UTC())
 			snapshot: ReserveSnapshot{
 				Pair:              common.Pair_ETH_NUSD,
 				BaseAssetReserve:  sdk.ZeroDec(),
 				QuoteAssetReserve: sdk.ZeroDec(),
-				TimestampMs:       -1,
+				TimestampMs:       -62135596800000 - 1,
 			},
 			shouldErr: true,
 		},

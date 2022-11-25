@@ -4,15 +4,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/collections"
-
+	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
-	testutil "github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/testutil"
 	"github.com/NibiruChain/nibiru/x/vpool"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -33,13 +32,16 @@ func TestSnapshotUpdates(t *testing.T) {
 	vpoolKeeper.CreatePool(
 		ctx,
 		common.Pair_BTC_NUSD,
-		sdk.OneDec(),
+		// sdk.OneDec(),
 		sdk.NewDec(10),
 		sdk.NewDec(10),
-		sdk.NewDec(3),
-		sdk.OneDec(),
-		sdk.OneDec(),
-		sdk.NewDec(10),
+		types.VpoolConfig{
+			TradeLimitRatio:        sdk.NewDec(10),
+			FluctuationLimitRatio:  sdk.NewDec(3),
+			MaxOracleSpreadRatio:   sdk.OneDec(),
+			MaintenanceMarginRatio: sdk.OneDec(),
+			MaxLeverage:            sdk.NewDec(10),
+		},
 	)
 	expectedSnapshot := types.NewReserveSnapshot(
 		common.Pair_BTC_NUSD,

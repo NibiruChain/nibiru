@@ -3,9 +3,9 @@ package oracle
 import (
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/collections"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/oracle/keeper"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
