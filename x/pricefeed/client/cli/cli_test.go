@@ -1,7 +1,6 @@
 package cli_test
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strconv"
@@ -16,7 +15,6 @@ import (
 	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govcli "github.com/cosmos/cosmos-sdk/x/gov/client/cli"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
@@ -515,84 +513,7 @@ func (s IntegrationTestSuite) TestX_AddOracleProposalAndVote() {
 	s.Require().NoError(err)
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
-	// ----------------------------------------------------------------------
-	s.T().Log(`Check that proposal was correctly submitted with gov client
-	$ nibid query gov proposal 1`)
-	// ----------------------------------------------------------------------
-	// the proposal tx won't be included until next block
-	s.NoError(s.network.WaitForNextBlock())
-
-	govQueryClient := govtypes.NewQueryClient(clientCtx)
-	proposalsQueryResponse, err := govQueryClient.Proposals(
-		context.Background(), &govtypes.QueryProposalsRequest{
-			Depositor: val.Address.String(),
-		},
-	)
-	s.Require().NoError(err)
-	s.NotEmpty(proposalsQueryResponse.Proposals)
-	s.Equalf(
-		govtypes.StatusDepositPeriod,
-		proposalsQueryResponse.Proposals[0].Status,
-		"proposal should be in deposit period as it hasn't passed min deposit")
-	s.EqualValues(
-		sdk.NewCoins(sdk.NewInt64Coin("unibi", 1_000)),
-		proposalsQueryResponse.Proposals[0].TotalDeposit,
-	)
-
-	// ----------------------------------------------------------------------
-	s.T().Log(`Move proposal to vote status by meeting min deposit
-	$ nibid tx gov deposit [proposal-id] [deposit] [flags]`)
-	// ----------------------------------------------------------------------
-	govDepositParams, err := govQueryClient.Params(
-		context.Background(),
-		&govtypes.QueryParamsRequest{
-			ParamsType: govtypes.ParamDeposit,
-		},
-	)
-	s.Require().NoError(err)
-
-	args = []string{
-		/*proposal-id=*/ strconv.Itoa(int(proposalsQueryResponse.Proposals[0].ProposalId)),
-		/*deposit=*/ govDepositParams.DepositParams.MinDeposit.String(),
-	}
-	txResp, err = testutilcli.ExecTx(s.network, govcli.NewCmdDeposit(), val.Address, args)
-	s.Require().NoError(err)
-	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
-
-	s.NoError(s.network.WaitForNextBlock())
-
-	proposalsQueryResponse, err = govQueryClient.Proposals(
-		context.Background(), &govtypes.QueryProposalsRequest{
-			Depositor: val.Address.String(),
-		},
-	)
-	s.Require().NoError(err)
-	s.Equalf(
-		govtypes.StatusVotingPeriod,
-		proposalsQueryResponse.Proposals[0].Status,
-		"proposal should be in voting period since min deposit has been met",
-	)
-
-	// ----------------------------------------------------------------------
-	s.T().Log(`Vote on the proposal.
-	$ nibid tx gov vote [proposal-id] [option] [flags]
-	For example, $ nibid tx gov vote 1 yes`)
-	// ----------------------------------------------------------------------
-	args = []string{
-		/*proposal-id=*/ strconv.Itoa(int(proposalsQueryResponse.Proposals[0].ProposalId)),
-		/*option=*/ "yes",
-	}
-
-	txResp, err = testutilcli.ExecTx(s.network, govcli.NewCmdVote(), val.Address, args)
-	s.Require().NoError(err)
-	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
-
-	s.Require().Eventuallyf(func() bool {
-		proposalsQueryResponse, err = govQueryClient.Proposals(
-			context.Background(), &govtypes.QueryProposalsRequest{})
-		s.Require().NoError(err)
-		return proposalsQueryResponse.Proposals[0].Status == govtypes.StatusPassed
-	}, 20*time.Second, 2*time.Second, "proposal should pass after voting period")
+	testutilcli.PassGovProposal(s.Suite, s.network)
 
 	// ----------------------------------------------------------------------
 	s.T().Log("verify that the new proposed pairs have been added to the params")

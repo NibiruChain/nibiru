@@ -41,6 +41,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [v0.16.0](https://github.com/NibiruChain/nibiru/releases/tag/v0.16.0) - 2022-11-23
+
+
 ### Features
 
 * [#1032](https://github.com/NibiruChain/nibiru/pull/1032) - feeder: add price provide API and bitfinex price source
