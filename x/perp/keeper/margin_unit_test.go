@@ -378,7 +378,6 @@ func TestRemoveMargin(t *testing.T) {
 						MarkPrice:          sdk.OneDec(),
 						BlockHeight:        ctx.BlockHeight(),
 						BlockTimeMs:        ctx.BlockTime().UnixMilli(),
-						LiquidationPenalty: sdk.ZeroDec(),
 					},
 				)
 
@@ -555,7 +554,6 @@ func TestAddMargin(t *testing.T) {
 						MarkPrice:          sdk.OneDec(),
 						BlockHeight:        ctx.BlockHeight(),
 						BlockTimeMs:        ctx.BlockTime().UnixMilli(),
-						LiquidationPenalty: sdk.ZeroDec(),
 					},
 				)
 			},
@@ -626,7 +624,6 @@ func TestAddMargin(t *testing.T) {
 						MarkPrice:          sdk.OneDec(),
 						BlockHeight:        ctx.BlockHeight(),
 						BlockTimeMs:        ctx.BlockTime().UnixMilli(),
-						LiquidationPenalty: sdk.ZeroDec(),
 					},
 				)
 			},

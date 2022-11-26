@@ -198,7 +198,6 @@ func (k Keeper) afterPositionUpdate(
 		RealizedPnl:        positionResp.RealizedPnl,
 		UnrealizedPnlAfter: positionResp.UnrealizedPnlAfter,
 		BadDebt:            sdk.NewCoin(pair.QuoteDenom(), positionResp.BadDebt.RoundInt()),
-		LiquidationPenalty: sdk.ZeroDec(),
 		MarkPrice:          markPrice,
 		FundingPayment:     positionResp.FundingPayment,
 		BlockHeight:        ctx.BlockHeight(),

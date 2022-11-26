@@ -81,7 +81,6 @@ func (k Keeper) AddMargin(
 			MarkPrice:          markPrice,
 			BlockHeight:        ctx.BlockHeight(),
 			BlockTimeMs:        ctx.BlockTime().UnixMilli(),
-			LiquidationPenalty: sdk.ZeroDec(),
 		},
 	); err != nil {
 		return nil, err
@@ -178,7 +177,6 @@ func (k Keeper) RemoveMargin(
 			MarkPrice:          markPrice,
 			BlockHeight:        ctx.BlockHeight(),
 			BlockTimeMs:        ctx.BlockTime().UnixMilli(),
-			LiquidationPenalty: sdk.ZeroDec(),
 		},
 	); err != nil {
 		return sdk.Coin{}, sdk.Dec{}, types.Position{}, err

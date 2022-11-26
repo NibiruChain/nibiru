@@ -346,7 +346,6 @@ func TestOpenPositionSuccess(t *testing.T) {
 				RealizedPnl:        tc.expectedRealizedPnl,
 				UnrealizedPnlAfter: tc.expectedUnrealizedPnl,
 				BadDebt:            sdk.NewCoin(common.DenomNUSD, sdk.ZeroInt()),
-				LiquidationPenalty: sdk.ZeroDec(),
 				MarkPrice:          tc.expectedMarkPrice,
 				FundingPayment:     sdk.ZeroDec(),
 				TransactionFee:     sdk.NewCoin(common.DenomNUSD, feePoolFee.Add(ecosystemFundFee)),
