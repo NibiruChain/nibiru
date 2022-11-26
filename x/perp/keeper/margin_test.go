@@ -246,7 +246,6 @@ func TestRemoveMargin(t *testing.T) {
 						MarkPrice:          sdk.MustNewDecFromStr("1.00060009"),
 						BlockHeight:        ctx.BlockHeight(),
 						BlockTimeMs:        ctx.BlockTime().UnixMilli(),
-						LiquidationPenalty: sdk.ZeroDec(),
 					},
 				)
 			},
