@@ -78,15 +78,9 @@ message PositionChangedEvent {
     // Bad debt is negative net margin past the liquidation point of a position.
     cosmos.base.v1beta1.Coin bad_debt = 11 [(gogoproto.nullable) = false];
   
-    // amt of margin (y) lost due to liquidation
-    string liquidation_penalty = 12 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-      (gogoproto.nullable) = false
-    ];
-
     // Mark price, synonymous with mark price in this context, is the quotient of
     // the quote reserves and base reserves 
-    string mark_price = 13 [
+    string mark_price = 12 [
       (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
       (gogoproto.nullable) = false
     ];
@@ -97,16 +91,16 @@ message PositionChangedEvent {
     Funding payments act to converge the mark price (vPrice) and index price 
     (average price on major exchanges).
       */
-    string funding_payment = 14 [
+    string funding_payment = 13 [
       (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
       (gogoproto.nullable) = false
     ];
 
     // The block number at which this position was changed.
-    int64 block_height = 15;
+    int64 block_height = 14;
 
     // The block time in unix milliseconds at which this position was changed.
-    int64 block_time_ms = 16;
+    int64 block_time_ms = 15;
 }
 
 // Emitted when a position is liquidated.
