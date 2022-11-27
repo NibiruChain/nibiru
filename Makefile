@@ -165,6 +165,22 @@ test-sim-benchmark-invariants:
 ###############################################################################
 ###                            Lint                                         ###
 ###############################################################################
+release:
+	docker build -t go-builder -f Dockerfile-build .
+	docker run --rm -v "$(CURDIR)":/code -w /code go-builder make build-linux-docker
+
+build-docker: go.sum $(BUILDDIR)/
+	go build -mod=readonly $(BUILD_FLAGS) $(BUILD_ARGS) ./cmd/nibid/main.go
+	tar -czvf build/$(TARNAME).tar.gz build/nibid
+	rm build/nibid
+
+build-linux-docker:
+	TARNAME="nibiru_linux_amd64" BUILD_ARGS="-o $(BUILDDIR)/nibid" CGO_ENABLED=1 CC=x86_64-linux-gnu-gcc LEDGER_ENABLED=false GOOS=linux GOARCH=amd64 $(MAKE) build-docker
+	TARNAME="nibiru_linux_arm64" BUILD_ARGS="-o $(BUILDDIR)/nibid" CGO_ENABLED=1 LEDGER_ENABLED=false GOOS=linux GOARCH=arm64 $(MAKE) build-docker
+
+###############################################################################
+###                            Lint                                         ###
+###############################################################################
 
 lint:
 	docker run -v $(CURDIR):/code --rm -w /code golangci/golangci-lint:v1.49-alpine golangci-lint run
