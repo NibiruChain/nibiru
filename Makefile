@@ -77,7 +77,7 @@ $(BUILDDIR)/:
 
 # build for linux architecture
 build-linux: go.sum
-	LEDGER_ENABLED=false GOOS=linux GOARCH=amd64 $(MAKE) build
+	CGO_ENABLED=1 LEDGER_ENABLED=false GOOS=linux GOARCH=amd64 $(MAKE) build
 
 go.sum: go.mod
 	@echo "--> Ensure dependencies have not been modified"
