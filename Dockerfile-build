@@ -1,0 +1,8 @@
+FROM golang:1.19
+
+WORKDIR /build
+
+RUN dpkg --add-architecture amd64 \
+    && apt update \
+    && apt-get install -y --no-install-recommends gcc-x86-64-linux-gnu libc6-dev-amd64-cross
+
