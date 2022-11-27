@@ -1,6 +1,11 @@
 package types
 
 import (
+	"encoding/csv"
+	"encoding/json"
+	"log"
+	"os"
+	"strconv"
 	"testing"
 
 	"github.com/NibiruChain/nibiru/x/testutil"
@@ -65,8 +70,9 @@ func TestGetAddress(t *testing.T) {
 func TestNewPool(t *testing.T) {
 	poolAccountAddr := testutil.AccAddress()
 	poolParams := PoolParams{
-		SwapFee: sdk.NewDecWithPrec(3, 2),
-		ExitFee: sdk.NewDecWithPrec(3, 2),
+		PoolType: PoolType_BALANCER,
+		SwapFee:  sdk.NewDecWithPrec(3, 2),
+		ExitFee:  sdk.NewDecWithPrec(3, 2),
 	}
 	poolAssets := []PoolAsset{
 		{
@@ -121,6 +127,7 @@ func TestJoinPoolHappyPath(t *testing.T) {
 					},
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
+				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: PoolType_BALANCER},
 			},
 			tokensIn: sdk.NewCoins(
 				sdk.NewInt64Coin("aaa", 10),
@@ -138,6 +145,40 @@ func TestJoinPoolHappyPath(t *testing.T) {
 					},
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 110),
+				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: PoolType_BALANCER},
+			},
+		},
+		{
+			name: "all coins deposited - stableswap",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("aaa", 100),
+					},
+					{
+						Token: sdk.NewInt64Coin("bbb", 200),
+					},
+				},
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
+				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: PoolType_STABLESWAP},
+			},
+			tokensIn: sdk.NewCoins(
+				sdk.NewInt64Coin("aaa", 10),
+				sdk.NewInt64Coin("bbb", 20),
+			),
+			expectedNumShares: sdk.NewInt(10),
+			expectedRemCoins:  sdk.NewCoins(),
+			expectedPool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("aaa", 110),
+					},
+					{
+						Token: sdk.NewInt64Coin("bbb", 220),
+					},
+				},
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 110),
+				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: PoolType_STABLESWAP},
 			},
 		},
 		{
@@ -152,6 +193,7 @@ func TestJoinPoolHappyPath(t *testing.T) {
 					},
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
+				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: PoolType_BALANCER},
 			},
 			tokensIn: sdk.NewCoins(
 				sdk.NewInt64Coin("aaa", 10),
@@ -171,6 +213,7 @@ func TestJoinPoolHappyPath(t *testing.T) {
 					},
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 105),
+				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: PoolType_BALANCER},
 			},
 		},
 		{
@@ -185,6 +228,7 @@ func TestJoinPoolHappyPath(t *testing.T) {
 					},
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1_000_000),
+				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: PoolType_BALANCER},
 			},
 			tokensIn: sdk.NewCoins(
 				sdk.NewInt64Coin("aaa", 4859), // 0.138885 % of pool
@@ -204,6 +248,40 @@ func TestJoinPoolHappyPath(t *testing.T) {
 					},
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1_000_958),
+				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: PoolType_BALANCER},
+			},
+		},
+		{
+			name: "difficult numbers ~ stableswap",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("aaa", 3_498_579),
+					},
+					{
+						Token: sdk.NewInt64Coin("bbb", 1_403_945),
+					},
+				},
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1_000_000),
+				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: PoolType_STABLESWAP},
+			},
+			tokensIn: sdk.NewCoins(
+				sdk.NewInt64Coin("aaa", 4859), // 0.138885 % of pool
+				sdk.NewInt64Coin("bbb", 1345), // 0.09580147 % of pool
+			),
+			expectedRemCoins:  sdk.NewCoins(),
+			expectedNumShares: sdk.NewInt(1264),
+			expectedPool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("aaa", 3_503_438),
+					},
+					{
+						Token: sdk.NewInt64Coin("bbb", 1_405_290),
+					},
+				},
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1_001_264),
+				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: PoolType_STABLESWAP},
 			},
 		},
 	} {
@@ -242,7 +320,7 @@ func TestJoinPoolAllTokens(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
 				TotalWeight: sdk.NewInt(2 << 30),
-				PoolParams:  PoolParams{SwapFee: sdk.ZeroDec()},
+				PoolParams:  PoolParams{PoolType: PoolType_BALANCER, SwapFee: sdk.ZeroDec()},
 			},
 			tokensIn: sdk.NewCoins(
 				sdk.NewInt64Coin("aaa", 10),
@@ -263,7 +341,7 @@ func TestJoinPoolAllTokens(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 110),
 				TotalWeight: sdk.NewInt(2 << 30),
-				PoolParams:  PoolParams{SwapFee: sdk.ZeroDec()},
+				PoolParams:  PoolParams{PoolType: PoolType_BALANCER, SwapFee: sdk.ZeroDec()},
 			},
 		},
 		{
@@ -281,7 +359,7 @@ func TestJoinPoolAllTokens(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
 				TotalWeight: sdk.NewInt(2 << 30),
-				PoolParams:  PoolParams{SwapFee: sdk.ZeroDec()},
+				PoolParams:  PoolParams{PoolType: PoolType_BALANCER, SwapFee: sdk.ZeroDec()},
 			},
 			tokensIn: sdk.NewCoins(
 				sdk.NewInt64Coin("aaa", 10),
@@ -304,7 +382,7 @@ func TestJoinPoolAllTokens(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 106),
 				TotalWeight: sdk.NewInt(2 << 30),
-				PoolParams:  PoolParams{SwapFee: sdk.ZeroDec()},
+				PoolParams:  PoolParams{PoolType: PoolType_BALANCER, SwapFee: sdk.ZeroDec()},
 			},
 		},
 		{
@@ -322,7 +400,7 @@ func TestJoinPoolAllTokens(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1_000_000),
 				TotalWeight: sdk.NewInt(2 << 30),
-				PoolParams:  PoolParams{SwapFee: sdk.ZeroDec()},
+				PoolParams:  PoolParams{PoolType: PoolType_BALANCER, SwapFee: sdk.ZeroDec()},
 			},
 			tokensIn: sdk.NewCoins(
 				sdk.NewInt64Coin("aaa", 4859), // 0.138885 % of pool
@@ -345,7 +423,7 @@ func TestJoinPoolAllTokens(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1_001_172),
 				TotalWeight: sdk.NewInt(2 << 30),
-				PoolParams:  PoolParams{SwapFee: sdk.ZeroDec()},
+				PoolParams:  PoolParams{PoolType: PoolType_BALANCER, SwapFee: sdk.ZeroDec()},
 			},
 		},
 	} {
@@ -414,7 +492,8 @@ func TestExitPoolHappyPath(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
 				PoolParams: PoolParams{
-					ExitFee: sdk.ZeroDec(),
+					PoolType: PoolType_BALANCER,
+					ExitFee:  sdk.ZeroDec(),
 				},
 			},
 			exitingShares:           sdk.NewInt64Coin("nibiru/pool/1", 100),
@@ -438,7 +517,8 @@ func TestExitPoolHappyPath(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
 				PoolParams: PoolParams{
-					ExitFee: sdk.MustNewDecFromStr("0.5"),
+					PoolType: PoolType_BALANCER,
+					ExitFee:  sdk.MustNewDecFromStr("0.5"),
 				},
 			},
 			exitingShares:           sdk.NewInt64Coin("nibiru/pool/1", 100),
@@ -465,7 +545,8 @@ func TestExitPoolHappyPath(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
 				PoolParams: PoolParams{
-					ExitFee: sdk.ZeroDec(),
+					PoolType: PoolType_BALANCER,
+					ExitFee:  sdk.ZeroDec(),
 				},
 			},
 			exitingShares:           sdk.NewInt64Coin("nibiru/pool/1", 50),
@@ -492,7 +573,8 @@ func TestExitPoolHappyPath(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
 				PoolParams: PoolParams{
-					ExitFee: sdk.MustNewDecFromStr("0.5"),
+					PoolType: PoolType_BALANCER,
+					ExitFee:  sdk.MustNewDecFromStr("0.5"),
 				},
 			},
 			exitingShares:           sdk.NewInt64Coin("nibiru/pool/1", 50),
@@ -519,7 +601,8 @@ func TestExitPoolHappyPath(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 2_347_652),
 				PoolParams: PoolParams{
-					ExitFee: sdk.MustNewDecFromStr("0.003"),
+					PoolType: PoolType_BALANCER,
+					ExitFee:  sdk.MustNewDecFromStr("0.003"),
 				},
 			},
 			exitingShares:           sdk.NewInt64Coin("nibiru/pool/1", 74_747),
@@ -555,8 +638,9 @@ func MockPool(assets []PoolAsset) Pool {
 	return Pool{
 		Id: 1,
 		PoolParams: PoolParams{
-			SwapFee: sdk.SmallestDec(),
-			ExitFee: sdk.SmallestDec(),
+			PoolType: PoolType_BALANCER,
+			SwapFee:  sdk.SmallestDec(),
+			ExitFee:  sdk.SmallestDec(),
 		},
 		PoolAssets:  assets,
 		TotalShares: sdk.NewInt64Coin(GetPoolShareBaseDenom(1), 100),
@@ -602,4 +686,193 @@ func TestUpdatePoolAssetTokens(t *testing.T) {
 			require.Equal(t, tc.expectedPoolAssets, pool.PoolAssets)
 		})
 	}
+}
+
+func TestGetD(t *testing.T) {
+	for _, tc := range []struct {
+		name                   string
+		poolAssets             []PoolAsset
+		amplificationParameter sdk.Int
+		expectedErr            error
+		expectedD              uint64
+	}{
+		{
+			name: "Compute D - 3 assets - tested against Curve contracts code..",
+			poolAssets: []PoolAsset{
+				{
+					Token: sdk.NewInt64Coin("aaa", 200),
+				},
+				{
+					Token: sdk.NewInt64Coin("bbb", 100),
+				},
+				{
+					Token: sdk.NewInt64Coin("ccc", 100),
+				},
+			},
+			amplificationParameter: sdk.NewInt(1),
+			expectedErr:            nil,
+			expectedD:              397,
+		},
+		{
+			name: "Compute D - 2 assets - tested against Curve contracts code..",
+			poolAssets: []PoolAsset{
+				{
+					Token: sdk.NewInt64Coin("aaa", 200),
+				},
+				{
+					Token: sdk.NewInt64Coin("bbb", 100),
+				},
+			},
+			amplificationParameter: sdk.NewInt(1),
+			expectedErr:            nil,
+			expectedD:              294,
+		},
+		{
+			name: "Compute D - 2 assets, A big - tested against Curve contracts code..",
+			poolAssets: []PoolAsset{
+				{
+					Token: sdk.NewInt64Coin("aaa", 200),
+				},
+				{
+					Token: sdk.NewInt64Coin("bbb", 100),
+				},
+			},
+			amplificationParameter: sdk.NewInt(4000),
+			expectedErr:            nil,
+			expectedD:              299,
+		},
+		{
+			name: "Compute D - 2 assets, A big, high values - tested against Curve contracts code..",
+			poolAssets: []PoolAsset{
+				{
+					Token: sdk.NewInt64Coin("aaa", 200_000_000),
+				},
+				{
+					Token: sdk.NewInt64Coin("bbb", 100_000_000),
+				},
+			},
+			amplificationParameter: sdk.NewInt(4000),
+			expectedErr:            nil,
+			expectedD:              299997656,
+		},
+	} {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			pool := Pool{
+				PoolAssets: tc.poolAssets,
+				PoolParams: PoolParams{A: tc.amplificationParameter},
+			}
+
+			D := pool.getD(pool.PoolAssets)
+			require.EqualValues(t, tc.expectedD, D.Uint64())
+		})
+	}
+}
+
+type TestCaseDy struct {
+	balance       []uint64
+	amplification sdk.Int
+	send          int
+	receive       int
+	dx            sdk.Int
+	expectedDy    sdk.Int
+}
+
+/*
+createTestCases reads the data from the csv file generated with the python curve model and load them into a TestCaseDy
+object.
+
+Columns schema of the file:
+  - balances: the balance of the pool
+  - amplification: the amplification parameter for the pool
+  - send: the id of the token sent to the pool for the swap
+  - recv: the id of the token expected out of the pool
+  - dx: the number of token sent for the swap
+  - dy: the expected number of token from the curve python model.
+*/
+func createTestCases(data [][]string) (testCases []TestCaseDy) {
+	for i, line := range data {
+		if i > 0 { // omit header line
+			var rec TestCaseDy
+
+			err := json.Unmarshal([]byte(line[0]), &rec.balance)
+			if err != nil {
+				panic(err)
+			}
+
+			amplification, err := strconv.ParseInt(line[1], 10, 64)
+			if err != nil {
+				panic(err)
+			}
+
+			rec.amplification = sdk.NewInt(amplification)
+
+			rec.send, _ = strconv.Atoi(line[2])
+			rec.receive, _ = strconv.Atoi(line[3])
+
+			dx, err := strconv.ParseInt(line[4], 10, 64)
+			if err != nil {
+				panic(err)
+			}
+
+			expectedDy, err := strconv.ParseInt(line[5], 10, 64)
+			if err != nil {
+				panic(err)
+			}
+
+			rec.dx = sdk.NewInt(dx)
+			rec.expectedDy = sdk.NewInt(expectedDy)
+
+			testCases = append(testCases, rec)
+		}
+	}
+	return
+}
+
+func TestSolveStableswapInvariant(t *testing.T) {
+	t.Run("Test csv file", func(t *testing.T) {
+		f, err := os.Open("misc/stabletests.csv")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer f.Close()
+
+		// read csv values using csv.Reader
+		csvReader := csv.NewReader(f)
+		data, err := csvReader.ReadAll()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		testCases := createTestCases(data)
+
+		for _, tc := range testCases {
+			tc := tc
+
+			var poolAssets []PoolAsset
+
+			for i, balance := range tc.balance {
+				poolAssets = append(poolAssets, PoolAsset{Token: sdk.NewCoin("token"+strconv.Itoa(i), sdk.NewIntFromUint64(balance))})
+			}
+
+			pool := Pool{
+				PoolAssets: poolAssets,
+				PoolParams: PoolParams{A: tc.amplification},
+			}
+			denomIn := "token" + strconv.Itoa(tc.send)
+			denomOut := "token" + strconv.Itoa(tc.receive)
+
+			dy, err := pool.SolveStableswapInvariant(
+				/* tokenIn = */ sdk.NewCoin(denomIn, tc.dx),
+				/* tokenOutDenom = */ denomOut,
+			)
+			require.NoError(t, err)
+
+			_, poolAssetOut, err := pool.getPoolAssetAndIndex(denomOut)
+			require.NoError(t, err)
+
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedDy, poolAssetOut.Token.Amount.Sub(dy))
+		}
+	})
 }

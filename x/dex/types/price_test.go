@@ -86,8 +86,9 @@ func TestCalSpotPrice(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			poolAccountAddr := testutil.AccAddress()
 			poolParams := PoolParams{
-				SwapFee: sdk.NewDecWithPrec(3, 2),
-				ExitFee: sdk.NewDecWithPrec(3, 2),
+				SwapFee:  sdk.NewDecWithPrec(3, 2),
+				ExitFee:  sdk.NewDecWithPrec(3, 2),
+				PoolType: PoolType_BALANCER,
 			}
 
 			pool, err := NewPool(1, poolAccountAddr, poolParams, tc.poolAssets)

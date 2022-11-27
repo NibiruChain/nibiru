@@ -35,6 +35,8 @@ func ExecMsgCreatePool(
 	initialDeposit string,
 	swapFee string,
 	exitFee string,
+	poolType string,
+	amplification string,
 	extraArgs ...string,
 ) (testutil.BufferWriter, error) {
 	args := []string{}
@@ -45,13 +47,17 @@ func ExecMsgCreatePool(
 		  "weights": "%s",
 		  "initial-deposit": "%s",
 		  "swap-fee": "%s",
-		  "exit-fee": "%s"
+		  "exit-fee": "%s",
+		  "pool-type": "%s",
+		  "amplification": "%s"
 		}
 		`,
 			tokenWeights,
 			initialDeposit,
 			swapFee,
 			exitFee,
+			poolType,
+			amplification,
 		),
 	)
 

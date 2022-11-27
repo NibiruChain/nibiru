@@ -2,9 +2,14 @@ package types
 
 import (
 	"errors"
-	"fmt"
+	fmt "fmt"
+	math "math"
+
+	"github.com/holiman/uint256"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 /*
@@ -98,7 +103,12 @@ func (pool *Pool) AddTokensToPool(tokensIn sdk.Coins) (
 	}
 
 	// Calculate max amount of tokensIn we can deposit into pool (no swap)
-	numShares, remCoins, err = pool.numSharesOutFromTokensIn(tokensIn)
+	if pool.PoolParams.PoolType == PoolType_STABLESWAP {
+		numShares, err = pool.numSharesOutFromTokensInStableSwap(tokensIn)
+		remCoins = sdk.Coins{}
+	} else {
+		numShares, remCoins, err = pool.numSharesOutFromTokensIn(tokensIn)
+	}
 	if err != nil {
 		return sdk.ZeroInt(), sdk.Coins{}, err
 	}
@@ -114,6 +124,8 @@ func (pool *Pool) AddTokensToPool(tokensIn sdk.Coins) (
 Adds tokens to a pool optimizing the amount of shares (swap + join) and updates the pool balances (i.e. liquidity).
 We compute the swap and then join the pool.
 
+This function is only necessary for balancer pool. Stableswap pool already takes all the deposit from the user.
+
 args:
   - tokensIn: the tokens to add to the pool
 
@@ -125,6 +137,11 @@ ret:
 func (pool *Pool) AddAllTokensToPool(tokensIn sdk.Coins) (
 	numShares sdk.Int, remCoins sdk.Coins, err error,
 ) {
+	if pool.PoolParams.PoolType == PoolType_STABLESWAP {
+		err = ErrInvalidPoolType
+		return
+	}
+
 	swapToken, err := pool.SwapForSwapAndJoin(tokensIn)
 	if err != nil {
 		return
@@ -250,7 +267,7 @@ func (pool *Pool) updatePoolAssetBalances(tokens sdk.Coins) (err error) {
 // It is only designed to be called at the pool's creation.
 // If the same denom's PoolAsset exists, will return error.
 // The list of PoolAssets must be sorted. This is done to enable fast searching for a PoolAsset by denomination.
-func (p *Pool) setInitialPoolAssets(poolAssets []PoolAsset) (err error) {
+func (pool *Pool) setInitialPoolAssets(poolAssets []PoolAsset) (err error) {
 	exists := make(map[string]bool)
 
 	newTotalWeight := sdk.ZeroInt()
@@ -272,10 +289,198 @@ func (p *Pool) setInitialPoolAssets(poolAssets []PoolAsset) (err error) {
 		newTotalWeight = newTotalWeight.Add(asset.Weight)
 	}
 
-	p.PoolAssets = scaledPoolAssets
-	sortPoolAssetsByDenom(p.PoolAssets)
+	pool.PoolAssets = scaledPoolAssets
+	sortPoolAssetsByDenom(pool.PoolAssets)
 
-	p.TotalWeight = newTotalWeight
+	pool.TotalWeight = newTotalWeight
 
 	return nil
+}
+
+// For a stableswap pool, compute the D invariant value  in non-overflowing integer operations iteratively
+// A * sum(x_i) * n**n + D = A * D * n**n + D**(n+1) / (n**n * prod(x_i))
+// Converging solution:
+// D[j+1] = (A * n**n * sum(x_i) - D[j]**(n+1) / (n**n prod(x_i))) / (A * n**n - 1)
+func (pool Pool) getD(poolAssets []PoolAsset) *uint256.Int {
+	nCoins := uint256.NewInt().SetUint64(uint64(len(poolAssets)))
+
+	S := uint256.NewInt()
+	A_Precision := common.APrecision
+
+	Amp := uint256.NewInt().SetUint64(uint64(pool.PoolParams.A.Int64()))
+	Amp.Mul(Amp, A_Precision)
+
+	Ann := uint256.NewInt()
+
+	nCoinsFloat := float64(len(poolAssets))
+	Ann.Mul(Amp, uint256.NewInt().SetUint64(uint64(math.Pow(nCoinsFloat, nCoinsFloat))))
+
+	var poolAssetsTokens []*uint256.Int
+	for _, token := range poolAssets {
+		amount := uint256.NewInt().SetUint64(token.Token.Amount.Uint64())
+		poolAssetsTokens = append(poolAssetsTokens, amount)
+		S.Add(S, amount)
+	}
+
+	D := uint256.NewInt().Set(S)
+
+	for i := 0; i < 255; i++ {
+		D_P := uint256.NewInt().Set(D)
+		for _, token := range poolAssetsTokens {
+			D_P.Div(
+				uint256.NewInt().Mul(D_P, D),
+				uint256.NewInt().Mul(token, nCoins),
+			)
+		}
+		previousD := uint256.NewInt().Set(D)
+
+		// D = (Ann * S + D_P * N_COINS) * D / ((Ann - 1) * D + (N_COINS + 1) * D_P)
+		num := uint256.NewInt().Mul(
+			uint256.NewInt().Add(
+				uint256.NewInt().Mul(Ann, S),
+				uint256.NewInt().Mul(D_P, nCoins),
+			),
+			D,
+		)
+		denom := uint256.NewInt().Add(
+			uint256.NewInt().Mul(
+				uint256.NewInt().Add(
+					nCoins,
+					uint256.NewInt().SetOne(),
+				),
+				D_P,
+			),
+			uint256.NewInt().Mul(
+				uint256.NewInt().Sub(Ann, uint256.NewInt().SetOne()),
+				D,
+			),
+		)
+
+		// D = (Ann * S / A_PRECISION + D_P * N_COINS) * D / ((Ann - A_PRECISION) * D / A_PRECISION + (N_COINS + 1) * D_P)
+		absDifference := uint256.NewInt()
+		D.Div(num, denom)
+
+		absDifference.Abs(uint256.NewInt().Sub(D, previousD))
+		if absDifference.Lt(uint256.NewInt().SetUint64(1)) {
+			return D
+		}
+	}
+
+	// # convergence typically occurs in 4 rounds or less, this should be unreachable!
+	// # if it does happen the pool is borked and LPs can withdraw via `remove_liquidity`
+	// panic
+	panic(nil)
+}
+
+// getA returns the amplification factor of the pool
+func (pool Pool) getA() (Amp *uint256.Int) {
+	Amp = uint256.NewInt().SetUint64(uint64(pool.PoolParams.A.Int64()))
+	return
+}
+
+// Search for the i and j indices for a swap like x[j] if one makes x[i] = x
+func (pool Pool) getIJforSwap(denomIn, denomOut string) (i int, j int, err error) {
+	i, _, err = pool.getPoolAssetAndIndex(denomIn)
+	if err != nil {
+		return
+	}
+
+	j, _, err = pool.getPoolAssetAndIndex(denomOut)
+	if err != nil {
+		return
+	}
+
+	return i, j, nil
+}
+
+func MustSdkIntToUint256(num sdk.Int) *uint256.Int {
+	return uint256.NewInt().SetUint64(uint64(num.Int64()))
+}
+
+// Calculate Token out if one swap token in (no fees computed there)
+// Done by solving quadratic equation iteratively.
+// x_1**2 + x1 * (sum' - (A*n**n - 1) * D / (A * n**n)) = D ** (n+1)/(n ** (2 * n) * prod' * A)
+// x_1**2 + b*x_1 = c
+// x_1 = (x_1**2 + c) / (2*x_1 + b - D)
+func (pool Pool) SolveStableswapInvariant(tokenIn sdk.Coin, tokenOutDenom string) (yAmount sdk.Int, err error) {
+	A := pool.getA()
+	D := pool.getD(pool.PoolAssets)
+
+	Ann := uint256.NewInt()
+	nCoins := uint256.NewInt().SetUint64(uint64(len(pool.PoolAssets)))
+
+	nCoinsFloat := float64(len(pool.PoolAssets))
+	Ann.Mul(A, uint256.NewInt().SetUint64(uint64(math.Pow(nCoinsFloat, nCoinsFloat))))
+
+	c := uint256.NewInt().Set(D)
+	S := uint256.NewInt()
+	var _x *uint256.Int
+
+	i, j, err := pool.getIJforSwap(tokenIn.Denom, tokenOutDenom)
+	if err != nil {
+		return
+	}
+
+	for _i := 0; _i < len(pool.PoolAssets); _i++ {
+		if _i == i {
+			_x = uint256.NewInt().Add(
+				MustSdkIntToUint256(pool.PoolAssets[_i].Token.Amount),
+				MustSdkIntToUint256(tokenIn.Amount),
+			)
+		} else if _i != j {
+			_x = MustSdkIntToUint256(pool.PoolAssets[_i].Token.Amount)
+		} else {
+			continue
+		}
+
+		S.Add(S, _x)
+
+		c.Div(
+			uint256.NewInt().Mul(c, D),
+			uint256.NewInt().Mul(_x, nCoins),
+		)
+	}
+
+	// c = c * D * A_PRECISION / (Ann * N_COINS)
+	c.Div(
+		uint256.NewInt().Mul(c, uint256.NewInt().Mul(D, common.APrecision)),
+		uint256.NewInt().Mul(Ann, nCoins),
+	)
+
+	b := uint256.NewInt().Add(
+		S,
+		uint256.NewInt().Div(
+			uint256.NewInt().Mul(D, common.APrecision),
+			Ann,
+		),
+	)
+
+	y := uint256.NewInt().Set(D)
+	y_prev := uint256.NewInt()
+
+	for _i := 0; _i < 255; _i++ {
+		y_prev.Set(y)
+
+		y.Div(
+			uint256.NewInt().Add(uint256.NewInt().Mul(y, y), c),
+			uint256.NewInt().Sub(
+				uint256.NewInt().Add(
+					uint256.NewInt().Mul(uint256.NewInt().SetUint64(2),
+						y,
+					),
+					b,
+				),
+				D,
+			),
+		)
+
+		absDifference := uint256.NewInt()
+		absDifference.Abs(uint256.NewInt().Sub(y, y_prev))
+		if absDifference.Lt(uint256.NewInt().SetUint64(1)) {
+			return sdk.NewIntFromUint64(y.Uint64()), nil
+		}
+	}
+
+	// Should converge in a couple of round unless pool is borked
+	panic(nil)
 }

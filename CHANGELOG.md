@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * [#1032](https://github.com/NibiruChain/nibiru/pull/1032) - feeder: add price provide API and bitfinex price source
 * [#1038](https://github.com/NibiruChain/nibiru/pull/1038) - feat(dex): add single asset join
+* [#1050](https://github.com/NibiruChain/nibiru/pull/1050) - feat(dex): add stableswap pools
 * [#1058](https://github.com/NibiruChain/nibiru/pull/1058) - feature: use collections external lib
 * [#1074](https://github.com/NibiruChain/nibiru/pull/1074) - feat(vpool): Add gov proposal for editing the vpool config without changing the reserves.
 * [#1082](https://github.com/NibiruChain/nibiru/pull/1082) - feat(vpool): Add gov proposal for editing the sswap invariant of a vpool..

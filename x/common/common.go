@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/NibiruChain/collections"
+	"github.com/holiman/uint256"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -32,6 +33,7 @@ var (
 	Pair_ETH_NUSD  = AssetPair{Token0: DenomETH, Token1: DenomNUSD}
 
 	ErrInvalidTokenPair = sdkerrors.Register(ModuleName, 1, "invalid token pair")
+	APrecision          = uint256.NewInt().SetUint64(1)
 )
 
 //-----------------------------------------------------------------------------
