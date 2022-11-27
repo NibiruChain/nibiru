@@ -32,6 +32,8 @@ type createPoolInputs struct {
 	InitialDeposit string `json:"initial-deposit"`
 	SwapFee        string `json:"swap-fee"`
 	ExitFee        string `json:"exit-fee"`
+	PoolType       string `json:"pool-type"`
+	Amplification  string `json:"amplification"`
 }
 
 func FlagSetCreatePool() *flag.FlagSet {

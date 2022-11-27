@@ -291,7 +291,7 @@ func TestSwapForSwapAndJoin(t *testing.T) {
 			pool := Pool{
 				Id:          1,
 				Address:     "some_address",
-				PoolParams:  PoolParams{SwapFee: sdk.ZeroDec()},
+				PoolParams:  PoolParams{SwapFee: sdk.ZeroDec(), PoolType: PoolType_BALANCER},
 				PoolAssets:  tc.poolAssets,
 				TotalWeight: sdk.NewInt(2 << 30),
 				TotalShares: sdk.NewCoin("nibiru/pool/1", sdk.NewIntWithDecimal(100, 18)),
@@ -601,6 +601,95 @@ func TestUpdateLiquidityInvalidInput(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			err := tc.pool.incrementBalances(tc.numShares, tc.newLiquidity)
 			require.Error(t, err)
+		})
+	}
+}
+
+func TestNumSharesOutStableswap(t *testing.T) {
+	for _, tc := range []struct {
+		name              string
+		poolAssets        []PoolAsset
+		existingShares    int64
+		tokensIn          sdk.Coins
+		expectedNumShares sdk.Int
+		A                 sdk.Int
+		expectedError     error
+	}{
+		{
+			name: "all coins deposited",
+			poolAssets: []PoolAsset{
+				{
+					Token: sdk.NewInt64Coin("aaa", 100),
+				},
+				{
+					Token: sdk.NewInt64Coin("bbb", 100),
+				},
+			},
+			A:              sdk.NewInt(2000),
+			existingShares: 50,
+			tokensIn: sdk.NewCoins(
+				sdk.NewInt64Coin("aaa", 100),
+				sdk.NewInt64Coin("bbb", 100),
+			),
+			expectedNumShares: sdk.NewInt(50),
+		},
+		{
+			name: "all coins deposited - 3pool",
+			poolAssets: []PoolAsset{
+				{
+					Token: sdk.NewInt64Coin("aaa", 100),
+				},
+				{
+					Token: sdk.NewInt64Coin("bbb", 100),
+				},
+				{
+					Token: sdk.NewInt64Coin("ccc", 100),
+				},
+			},
+			A:              sdk.NewInt(2000),
+			existingShares: 50,
+			tokensIn: sdk.NewCoins(
+				sdk.NewInt64Coin("aaa", 100),
+				sdk.NewInt64Coin("bbb", 100),
+			),
+			expectedNumShares: sdk.NewInt(33),
+		},
+		{
+			name: "all coins deposited - imbalance",
+			poolAssets: []PoolAsset{
+				{
+					Token: sdk.NewInt64Coin("aaa", 100),
+				},
+				{
+					Token: sdk.NewInt64Coin("bbb", 100),
+				},
+			},
+			A:              sdk.NewInt(2000),
+			existingShares: 50,
+			tokensIn: sdk.NewCoins(
+				sdk.NewInt64Coin("aaa", 50),
+				sdk.NewInt64Coin("bbb", 100),
+			),
+			expectedNumShares: sdk.NewInt(37),
+		},
+	} {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			pool := Pool{
+				Id:          1,
+				Address:     "some_address",
+				PoolParams:  PoolParams{A: tc.A},
+				PoolAssets:  tc.poolAssets,
+				TotalWeight: sdk.OneInt(),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", tc.existingShares),
+			}
+			numShares, err := pool.numSharesOutFromTokensInStableSwap(tc.tokensIn)
+			if tc.expectedError != nil {
+				require.ErrorIs(t, err, tc.expectedError)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tc.expectedNumShares, numShares)
+			}
 		})
 	}
 }

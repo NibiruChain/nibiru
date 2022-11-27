@@ -7,7 +7,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/simapp"
 
-	sdktypes "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -21,15 +21,15 @@ func TestKeeper_GetStableMarketCap(t *testing.T) {
 	k := nibiruApp.StablecoinKeeper
 
 	// We set some supply
-	err := k.BankKeeper.MintCoins(ctx, types.ModuleName, sdktypes.NewCoins(
-		sdktypes.NewInt64Coin(common.DenomNUSD, 1_000_000),
+	err := k.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(
+		sdk.NewInt64Coin(common.DenomNUSD, 1_000_000),
 	))
 	require.NoError(t, err)
 
 	// We set some supply
 	marketCap := k.GetStableMarketCap(ctx)
 
-	require.Equal(t, sdktypes.NewInt(1_000_000), marketCap)
+	require.Equal(t, sdk.NewInt(1_000_000), marketCap)
 }
 
 func TestKeeper_GetGovMarketCap(t *testing.T) {
@@ -38,17 +38,18 @@ func TestKeeper_GetGovMarketCap(t *testing.T) {
 
 	poolAccountAddr := testutil.AccAddress()
 	poolParams := dextypes.PoolParams{
-		SwapFee: sdktypes.NewDecWithPrec(3, 2),
-		ExitFee: sdktypes.NewDecWithPrec(3, 2),
+		SwapFee:  sdk.NewDecWithPrec(3, 2),
+		ExitFee:  sdk.NewDecWithPrec(3, 2),
+		PoolType: dextypes.PoolType_BALANCER,
 	}
 	poolAssets := []dextypes.PoolAsset{
 		{
-			Token:  sdktypes.NewInt64Coin(common.DenomNIBI, 2_000_000),
-			Weight: sdktypes.NewInt(100),
+			Token:  sdk.NewInt64Coin(common.DenomNIBI, 2_000_000),
+			Weight: sdk.NewInt(100),
 		},
 		{
-			Token:  sdktypes.NewInt64Coin(common.DenomNUSD, 1_000_000),
-			Weight: sdktypes.NewInt(100),
+			Token:  sdk.NewInt64Coin(common.DenomNUSD, 1_000_000),
+			Weight: sdk.NewInt(100),
 		},
 	}
 
@@ -57,15 +58,15 @@ func TestKeeper_GetGovMarketCap(t *testing.T) {
 	keeper.DexKeeper = mock.NewKeeper(pool)
 
 	// We set some supply
-	err = keeper.BankKeeper.MintCoins(ctx, types.ModuleName, sdktypes.NewCoins(
-		sdktypes.NewInt64Coin(common.DenomNIBI, 1_000_000),
+	err = keeper.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(
+		sdk.NewInt64Coin(common.DenomNIBI, 1_000_000),
 	))
 	require.NoError(t, err)
 
 	marketCap, err := keeper.GetGovMarketCap(ctx)
 	require.NoError(t, err)
 
-	require.Equal(t, sdktypes.NewInt(2_000_000), marketCap) // 1 * 10^6 * 2 (price of gov token)
+	require.Equal(t, sdk.NewInt(2_000_000), marketCap) // 1 * 10^6 * 2 (price of gov token)
 }
 
 func TestKeeper_GetLiquidityRatio_AndBands(t *testing.T) {
@@ -74,17 +75,18 @@ func TestKeeper_GetLiquidityRatio_AndBands(t *testing.T) {
 
 	poolAccountAddr := testutil.AccAddress()
 	poolParams := dextypes.PoolParams{
-		SwapFee: sdktypes.NewDecWithPrec(3, 2),
-		ExitFee: sdktypes.NewDecWithPrec(3, 2),
+		SwapFee:  sdk.NewDecWithPrec(3, 2),
+		ExitFee:  sdk.NewDecWithPrec(3, 2),
+		PoolType: dextypes.PoolType_BALANCER,
 	}
 	poolAssets := []dextypes.PoolAsset{
 		{
-			Token:  sdktypes.NewInt64Coin(common.DenomNIBI, 2_000_000),
-			Weight: sdktypes.NewInt(100),
+			Token:  sdk.NewInt64Coin(common.DenomNIBI, 2_000_000),
+			Weight: sdk.NewInt(100),
 		},
 		{
-			Token:  sdktypes.NewInt64Coin(common.DenomNUSD, 1_000_000),
-			Weight: sdktypes.NewInt(100),
+			Token:  sdk.NewInt64Coin(common.DenomNUSD, 1_000_000),
+			Weight: sdk.NewInt(100),
 		},
 	}
 
@@ -93,24 +95,24 @@ func TestKeeper_GetLiquidityRatio_AndBands(t *testing.T) {
 	keeper.DexKeeper = mock.NewKeeper(pool)
 
 	// We set some supply
-	err = keeper.BankKeeper.MintCoins(ctx, types.ModuleName, sdktypes.NewCoins(
-		sdktypes.NewInt64Coin(common.DenomNIBI, 1_000_000),
+	err = keeper.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(
+		sdk.NewInt64Coin(common.DenomNIBI, 1_000_000),
 	))
 	require.NoError(t, err)
 
-	err = keeper.BankKeeper.MintCoins(ctx, types.ModuleName, sdktypes.NewCoins(
-		sdktypes.NewInt64Coin(common.DenomNUSD, 1_000_000),
+	err = keeper.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(
+		sdk.NewInt64Coin(common.DenomNUSD, 1_000_000),
 	))
 	require.NoError(t, err)
 
 	liquidityRatio, err := keeper.GetLiquidityRatio(ctx)
 	require.NoError(t, err)
 
-	require.Equal(t, sdktypes.MustNewDecFromStr("2"), liquidityRatio) // 2 * 1 * 10^6 / Stable 1 * 10^6
+	require.Equal(t, sdk.MustNewDecFromStr("2"), liquidityRatio) // 2 * 1 * 10^6 / Stable 1 * 10^6
 
 	lowBand, upBand, err := keeper.GetLiquidityRatioBands(ctx)
 	require.NoError(t, err)
 
-	require.Equal(t, sdktypes.MustNewDecFromStr("1.998"), lowBand)
-	require.Equal(t, sdktypes.MustNewDecFromStr("2.002"), upBand)
+	require.Equal(t, sdk.MustNewDecFromStr("1.998"), lowBand)
+	require.Equal(t, sdk.MustNewDecFromStr("2.002"), upBand)
 }
