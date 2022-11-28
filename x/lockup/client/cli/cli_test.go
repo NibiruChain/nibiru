@@ -6,6 +6,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/simapp"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/lockup/types"
 
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -38,9 +39,9 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	app.SetPrefixes(app.AccountAddressPrefix)
 	s.cfg = testutilcli.BuildNetworkConfig(simapp.NewTestGenesisStateFromDefault())
 	s.cfg.StartingTokens = sdk.NewCoins(
-		sdk.NewInt64Coin("ATOM", 1_000_000),
-		sdk.NewInt64Coin("OSMO", 1_000_000),
-		sdk.NewInt64Coin("unibi", 1_000_000_000))
+		sdk.NewInt64Coin("ATOM", 1*common.Precision),
+		sdk.NewInt64Coin("OSMO", 1*common.Precision),
+		sdk.NewInt64Coin("unibi", 1_000*common.Precision))
 
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
 	_, err := s.network.WaitForHeight(1)
@@ -60,7 +61,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			sdk.NewCoins(
 				sdk.NewInt64Coin("ATOM", 20000),
 				sdk.NewInt64Coin("OSMO", 20000),
-				sdk.NewInt64Coin("unibi", 1_000_000),
+				sdk.NewInt64Coin("unibi", 1*common.Precision),
 			),
 			val,
 			s.cfg.BondDenom,

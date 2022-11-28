@@ -133,7 +133,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 		},
 		{
 			name:                     "new long position just under fluctuation limit",
-			traderFunds:              sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 1_000_000_000_000)),
+			traderFunds:              sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 1*common.Precision*common.Precision)),
 			initialPosition:          nil,
 			side:                     types.Side_BUY,
 			margin:                   sdk.NewInt(47_619_047_619),
@@ -239,7 +239,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 		},
 		{
 			name:                     "new short position just under fluctuation limit",
-			traderFunds:              sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 1_000_000_000_000)),
+			traderFunds:              sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 1*common.Precision*common.Precision)),
 			initialPosition:          nil,
 			side:                     types.Side_SELL,
 			margin:                   sdk.NewInt(47_619_047_619),
@@ -274,8 +274,8 @@ func TestOpenPositionSuccess(t *testing.T) {
 			nibiruApp.VpoolKeeper.CreatePool(
 				ctx,
 				common.Pair_BTC_NUSD,
-				/* quoteReserve */ sdk.NewDec(1_000_000_000_000),
-				/* baseReserve */ sdk.NewDec(1_000_000_000_000),
+				/* quoteReserve */ sdk.NewDec(1*common.Precision*common.Precision),
+				/* baseReserve */ sdk.NewDec(1*common.Precision*common.Precision),
 				vpooltypes.VpoolConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -471,44 +471,44 @@ func TestOpenPositionError(t *testing.T) {
 		},
 		{
 			name:                "new long position over fluctuation limit",
-			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 1_000_000_000_000)),
+			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 1*common.Precision*common.Precision)),
 			poolTradeLimitRatio: sdk.OneDec(),
 			initialPosition:     nil,
 			side:                types.Side_BUY,
-			margin:              sdk.NewInt(100_000_000_000),
+			margin:              sdk.NewInt(100_000 * common.Precision),
 			leverage:            sdk.OneDec(),
 			baseLimit:           sdk.ZeroDec(),
 			expectedErr:         vpooltypes.ErrOverFluctuationLimit,
 		},
 		{
 			name:                "new short position over fluctuation limit",
-			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 1_000_000_000_000)),
+			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 1*common.Precision*common.Precision)),
 			poolTradeLimitRatio: sdk.OneDec(),
 			initialPosition:     nil,
 			side:                types.Side_SELL,
-			margin:              sdk.NewInt(100_000_000_000),
+			margin:              sdk.NewInt(100_000 * common.Precision),
 			leverage:            sdk.OneDec(),
 			baseLimit:           sdk.ZeroDec(),
 			expectedErr:         vpooltypes.ErrOverFluctuationLimit,
 		},
 		{
 			name:                "new long position over trade limit",
-			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 10_000_000_000)),
+			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 10_000*common.Precision)),
 			poolTradeLimitRatio: sdk.MustNewDecFromStr("0.01"),
 			initialPosition:     nil,
 			side:                types.Side_BUY,
-			margin:              sdk.NewInt(100_000_000_000),
+			margin:              sdk.NewInt(100_000 * common.Precision),
 			leverage:            sdk.OneDec(),
 			baseLimit:           sdk.ZeroDec(),
 			expectedErr:         vpooltypes.ErrOverTradingLimit,
 		},
 		{
 			name:                "new short position over trade limit",
-			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 10_000_000_000)),
+			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 10_000*common.Precision)),
 			poolTradeLimitRatio: sdk.MustNewDecFromStr("0.01"),
 			initialPosition:     nil,
 			side:                types.Side_SELL,
-			margin:              sdk.NewInt(100_000_000_000),
+			margin:              sdk.NewInt(100_000 * common.Precision),
 			leverage:            sdk.OneDec(),
 			baseLimit:           sdk.ZeroDec(),
 			expectedErr:         vpooltypes.ErrOverTradingLimit,
@@ -534,8 +534,8 @@ func TestOpenPositionError(t *testing.T) {
 				common.Pair_BTC_NUSD,
 				/* tradeLimitRatio */
 				/* quoteReserve */
-				sdk.NewDec(1_000_000_000_000),
-				/* baseReserve */ sdk.NewDec(1_000_000_000_000),
+				sdk.NewDec(1*common.Precision*common.Precision),
+				/* baseReserve */ sdk.NewDec(1*common.Precision*common.Precision),
 				vpooltypes.VpoolConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -603,8 +603,8 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 				vpoolKeeper.CreatePool(
 					ctx,
 					pair,
-					sdk.NewDec(10_000_000), //
-					sdk.NewDec(5_000_000),  // 5 tokens
+					sdk.NewDec(10*common.Precision), //
+					sdk.NewDec(5*common.Precision),  // 5 tokens
 					vpooltypes.VpoolConfig{
 						FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),

@@ -38,8 +38,8 @@ func TestCreatePoolProposal_ValidateBasic(t *testing.T) {
 				Title:             "add proposal",
 				Description:       "some weird description",
 				Pair:              "valid:pair",
-				QuoteAssetReserve: sdk.NewDec(1_000_000),
-				BaseAssetReserve:  sdk.NewDec(1_000_000),
+				QuoteAssetReserve: sdk.NewDec(1 * common.Precision),
+				BaseAssetReserve:  sdk.NewDec(1 * common.Precision),
 				Config: VpoolConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
