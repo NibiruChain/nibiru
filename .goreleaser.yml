@@ -8,7 +8,6 @@ builds:
       - amd64
     env:
       - CGO_ENABLED=1
-      - CC=aarch64-linux-gnu-gcc
     flags:
       - -mod=readonly
     ldflags:
