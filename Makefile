@@ -166,7 +166,7 @@ test-sim-benchmark-invariants:
 ###                            Lint                                         ###
 ###############################################################################
 release:
-	docker run --rm -v "$(CURDIR)":/code -w /code goreleaser/goreleaser-cross --skip-publish
+	docker run --rm -v "$(CURDIR)":/code -w /code goreleaser/goreleaser-cross --skip-publish --rm-dist
 
 build-docker: go.sum $(BUILDDIR)/
 	go build -mod=readonly $(BUILD_FLAGS) $(BUILD_ARGS) ./cmd/nibid/main.go
