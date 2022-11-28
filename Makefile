@@ -166,8 +166,7 @@ test-sim-benchmark-invariants:
 ###                            Lint                                         ###
 ###############################################################################
 release:
-	docker build -t go-builder -f Dockerfile-build .
-	docker run --rm -v "$(CURDIR)":/code -w /code go-builder make build-linux-docker
+	docker run --rm -v "$(CURDIR)":/code -w /code goreleaser/goreleaser-cross --skip-publish
 
 build-docker: go.sum $(BUILDDIR)/
 	go build -mod=readonly $(BUILD_FLAGS) $(BUILD_ARGS) ./cmd/nibid/main.go
@@ -175,8 +174,8 @@ build-docker: go.sum $(BUILDDIR)/
 	rm build/nibid
 
 build-linux-docker:
-	TARNAME="nibiru_linux_amd64" BUILD_ARGS="-o $(BUILDDIR)/nibid" CGO_ENABLED=1 CC=x86_64-linux-gnu-gcc LEDGER_ENABLED=false GOOS=linux GOARCH=amd64 $(MAKE) build-docker
-	TARNAME="nibiru_linux_arm64" BUILD_ARGS="-o $(BUILDDIR)/nibid" CGO_ENABLED=1 LEDGER_ENABLED=false GOOS=linux GOARCH=arm64 $(MAKE) build-docker
+	BUILD_TAGS=muslc LINK_STATICALLY=true  TARNAME="nibiru_linux_amd64" CC=aarch64-linux-gnu-gcc BUILD_ARGS="-o $(BUILDDIR)/nibid -tags=muslc" CGO_ENABLED=1 LEDGER_ENABLED=false GOOS=linux GOARCH=amd64 $(MAKE) build-docker
+	# TARNAME="nibiru_linux_arm64" BUILD_ARGS="-o $(BUILDDIR)/nibid -tags=muslc" CGO_ENABLED=1 LEDGER_ENABLED=false GOOS=linux GOARCH=arm64 $(MAKE) build-docker
 
 ###############################################################################
 ###                            Lint                                         ###
