@@ -73,6 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1080](https://github.com/NibiruChain/nibiru/pull/1080) - feat(perp): Add exchanged notional to the position changed event #1080
 * [#1082](https://github.com/NibiruChain/nibiru/pull/1082) - feat(localnet.sh): Set genesis prices based on real BTC and ETH prices
 * [#1086](https://github.com/NibiruChain/nibiru/pull/1086) - refactor(perp)!: Removed unused field, `LiquidationPenalty`, from `PositionChangedEvent`
+* [#1091](https://github.com/NibiruChain/nibiru/pull/1091) - refactor: Use common.Precision instead of 1_000_000 in the codebase
 
 ## v0.15.0
 
