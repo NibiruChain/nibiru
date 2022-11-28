@@ -66,21 +66,22 @@ func (k Keeper) AddMargin(
 
 	if err = ctx.EventManager().EmitTypedEvent(
 		&types.PositionChangedEvent{
-			Pair:                  pair.String(),
-			TraderAddress:         traderAddr.String(),
-			Margin:                sdk.NewCoin(pair.QuoteDenom(), position.Margin.RoundInt()),
-			PositionNotional:      positionNotional,
-			ExchangedPositionSize: sdk.ZeroDec(),                                 // always zero when adding margin
-			TransactionFee:        sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
-			PositionSize:          position.Size_,
-			RealizedPnl:           sdk.ZeroDec(), // always zero when adding margin
-			UnrealizedPnlAfter:    unrealizedPnl,
-			BadDebt:               sdk.NewCoin(pair.QuoteDenom(), remainingMargin.BadDebt.RoundInt()), // always zero when adding margin
-			FundingPayment:        remainingMargin.FundingPayment,
-			MarkPrice:             markPrice,
-			BlockHeight:           ctx.BlockHeight(),
-			BlockTimeMs:           ctx.BlockTime().UnixMilli(),
-			LiquidationPenalty:    sdk.ZeroDec(),
+			Pair:               pair.String(),
+			TraderAddress:      traderAddr.String(),
+			Margin:             sdk.NewCoin(pair.QuoteDenom(), position.Margin.RoundInt()),
+			PositionNotional:   positionNotional,
+			ExchangedNotional:  sdk.ZeroDec(),                                 // always zero when adding margin
+			ExchangedSize:      sdk.ZeroDec(),                                 // always zero when adding margin
+			TransactionFee:     sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
+			PositionSize:       position.Size_,
+			RealizedPnl:        sdk.ZeroDec(), // always zero when adding margin
+			UnrealizedPnlAfter: unrealizedPnl,
+			BadDebt:            sdk.NewCoin(pair.QuoteDenom(), remainingMargin.BadDebt.RoundInt()), // always zero when adding margin
+			FundingPayment:     remainingMargin.FundingPayment,
+			MarkPrice:          markPrice,
+			BlockHeight:        ctx.BlockHeight(),
+			BlockTimeMs:        ctx.BlockTime().UnixMilli(),
+			LiquidationPenalty: sdk.ZeroDec(),
 		},
 	); err != nil {
 		return nil, err
@@ -162,21 +163,22 @@ func (k Keeper) RemoveMargin(
 
 	if err = ctx.EventManager().EmitTypedEvent(
 		&types.PositionChangedEvent{
-			Pair:                  pair.String(),
-			TraderAddress:         traderAddr.String(),
-			Margin:                sdk.NewCoin(pair.QuoteDenom(), position.Margin.RoundInt()),
-			PositionNotional:      positionNotional,
-			ExchangedPositionSize: sdk.ZeroDec(),                                 // always zero when removing margin
-			TransactionFee:        sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when removing margin
-			PositionSize:          position.Size_,
-			RealizedPnl:           sdk.ZeroDec(), // always zero when removing margin
-			UnrealizedPnlAfter:    unrealizedPnl,
-			BadDebt:               sdk.NewCoin(pair.QuoteDenom(), remainingMargin.BadDebt.RoundInt()), // always zero when removing margin
-			FundingPayment:        remainingMargin.FundingPayment,
-			MarkPrice:             markPrice,
-			BlockHeight:           ctx.BlockHeight(),
-			BlockTimeMs:           ctx.BlockTime().UnixMilli(),
-			LiquidationPenalty:    sdk.ZeroDec(),
+			Pair:               pair.String(),
+			TraderAddress:      traderAddr.String(),
+			Margin:             sdk.NewCoin(pair.QuoteDenom(), position.Margin.RoundInt()),
+			PositionNotional:   positionNotional,
+			ExchangedNotional:  sdk.ZeroDec(),                                 // always zero when removing margin
+			ExchangedSize:      sdk.ZeroDec(),                                 // always zero when removing margin
+			TransactionFee:     sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when removing margin
+			PositionSize:       position.Size_,
+			RealizedPnl:        sdk.ZeroDec(), // always zero when removing margin
+			UnrealizedPnlAfter: unrealizedPnl,
+			BadDebt:            sdk.NewCoin(pair.QuoteDenom(), remainingMargin.BadDebt.RoundInt()), // always zero when removing margin
+			FundingPayment:     remainingMargin.FundingPayment,
+			MarkPrice:          markPrice,
+			BlockHeight:        ctx.BlockHeight(),
+			BlockTimeMs:        ctx.BlockTime().UnixMilli(),
+			LiquidationPenalty: sdk.ZeroDec(),
 		},
 	); err != nil {
 		return sdk.Coin{}, sdk.Dec{}, types.Position{}, err
