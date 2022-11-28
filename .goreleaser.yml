@@ -1,6 +1,6 @@
 builds:
   - id: darwin-amd64
-    main: ./
+    main: ./cmd/nibid
     binary: golang-cross
     goos:
       - darwin
