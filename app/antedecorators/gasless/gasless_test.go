@@ -10,7 +10,6 @@ import (
 	gaslessante "github.com/NibiruChain/nibiru/app/antedecorators/gasless"
 	types2 "github.com/NibiruChain/nibiru/app/antedecorators/types"
 	"github.com/NibiruChain/nibiru/simapp"
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
 )
@@ -114,7 +113,7 @@ func TestGaslessDecorator_Whitelisted(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := simapp.NewTestNibiruAppAndContext(true)
-			ctx = ctx.WithGasMeter(sdk.NewGasMeter(uint64(10 * common.Precision)))
+			ctx = ctx.WithGasMeter(sdk.NewGasMeter(10000000))
 
 			if tc.isWhitelisted {
 				// If we whitelist, the gas meter changes.
