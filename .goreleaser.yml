@@ -9,7 +9,7 @@ builds:
       - linux
     goarch:
       - amd64
-    env
+    env:
       - CGO_ENABLED=1
     flags:
       - -mod=readonly
