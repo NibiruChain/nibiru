@@ -20,8 +20,8 @@ func TestGenesis(t *testing.T) {
 	vpools := []types.Vpool{
 		{
 			Pair:              common.MustNewAssetPair("BTC:NUSD"),
-			BaseAssetReserve:  sdk.NewDec(1_000_000),      // 1
-			QuoteAssetReserve: sdk.NewDec(30_000_000_000), // 30,000
+			BaseAssetReserve:  sdk.NewDec(1 * common.Precision),      // 1
+			QuoteAssetReserve: sdk.NewDec(30_000 * common.Precision), // 30,000
 			Config: types.VpoolConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.88"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.20"),
@@ -32,8 +32,8 @@ func TestGenesis(t *testing.T) {
 		},
 		{
 			Pair:              common.MustNewAssetPair("ETH:NUSD"),
-			BaseAssetReserve:  sdk.NewDec(2_000_000),      // 2
-			QuoteAssetReserve: sdk.NewDec(60_000_000_000), // 60,000
+			BaseAssetReserve:  sdk.NewDec(2 * common.Precision),      // 2
+			QuoteAssetReserve: sdk.NewDec(60_000 * common.Precision), // 60,000
 			Config: types.VpoolConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.77"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),

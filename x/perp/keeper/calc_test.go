@@ -48,8 +48,8 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				vpoolKeeper.CreatePool(
 					ctx,
 					pair,
-					/* y */ sdk.NewDec(1_000_000), //
-					/* x */ sdk.NewDec(1_000_000), //
+					/* y */ sdk.NewDec(1*common.Precision), //
+					/* x */ sdk.NewDec(1*common.Precision), //
 					vpooltypes.VpoolConfig{
 						FluctuationLimitRatio:  sdk.MustNewDecFromStr("1.0"),
 						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -102,8 +102,8 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				vpoolKeeper.CreatePool(
 					ctx,
 					pair,
-					/* y */ sdk.NewDec(1_000_000), //
-					/* x */ sdk.NewDec(1_000_000), //
+					/* y */ sdk.NewDec(1*common.Precision), //
+					/* x */ sdk.NewDec(1*common.Precision), //
 					vpooltypes.VpoolConfig{
 						FluctuationLimitRatio:  sdk.MustNewDecFromStr("1.0"),
 						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
