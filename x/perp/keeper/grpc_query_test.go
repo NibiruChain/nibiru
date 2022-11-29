@@ -110,7 +110,7 @@ func TestQueryPosition(t *testing.T) {
 				BlockNumber:                     1,
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
-			quoteAssetReserve: sdk.NewDec(1_000_000),
+			quoteAssetReserve: sdk.NewDec(1 * common.Precision),
 			baseAssetReserve:  sdk.NewDec(500_000),
 
 			expectedPositionNotional: sdk.MustNewDecFromStr("19.999600007999840003"),
@@ -127,8 +127,8 @@ func TestQueryPosition(t *testing.T) {
 				BlockNumber:                     1,
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
-			quoteAssetReserve: sdk.NewDec(1_000_000),
-			baseAssetReserve:  sdk.NewDec(1_000_000),
+			quoteAssetReserve: sdk.NewDec(1 * common.Precision),
+			baseAssetReserve:  sdk.NewDec(1 * common.Precision),
 
 			expectedPositionNotional: sdk.MustNewDecFromStr("9.99990000099999"),
 			expectedUnrealizedPnl:    sdk.MustNewDecFromStr("-0.00009999900001"),
@@ -145,7 +145,7 @@ func TestQueryPosition(t *testing.T) {
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
 			quoteAssetReserve: sdk.NewDec(500_000),
-			baseAssetReserve:  sdk.NewDec(1_000_000),
+			baseAssetReserve:  sdk.NewDec(1 * common.Precision),
 
 			expectedPositionNotional: sdk.MustNewDecFromStr("4.999950000499995"),
 			expectedUnrealizedPnl:    sdk.MustNewDecFromStr("-5.000049999500005"),

@@ -83,7 +83,7 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			accFunds: accFundsAmt,
 			msgMint: types.MsgMintStable{
 				Creator: testutil.AccAddress().String(),
-				Stable:  sdk.NewCoin(common.DenomNUSD, sdk.NewInt(1_000_000)),
+				Stable:  sdk.NewCoin(common.DenomNUSD, sdk.NewInt(1*common.Precision)),
 			},
 			govPrice:               sdk.MustNewDecFromStr("10"),
 			collPrice:              sdk.MustNewDecFromStr("1"),
@@ -95,10 +95,10 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			accFunds: accFundsAmt,
 			msgMint: types.MsgMintStable{
 				Creator: testutil.AccAddress().String(),
-				Stable:  sdk.NewCoin(common.DenomNUSD, sdk.NewInt(1_000_000)),
+				Stable:  sdk.NewCoin(common.DenomNUSD, sdk.NewInt(1*common.Precision)),
 			},
 			msgResponse: types.MsgMintStableResponse{
-				Stable:    sdk.NewCoin(common.DenomNUSD, sdk.NewInt(1_000_000)),
+				Stable:    sdk.NewCoin(common.DenomNUSD, sdk.NewInt(1*common.Precision)),
 				UsedCoins: sdk.NewCoins(accFundsCollAmount, accFundsGovAmount),
 				FeesPayed: sdk.NewCoins(neededCollFees, neededGovFees),
 			},
@@ -106,7 +106,7 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			collPrice:  sdk.MustNewDecFromStr("1"),
 			supplyNIBI: sdk.NewCoin(common.DenomNIBI, sdk.NewInt(10)),
 			// 10_000 - 20 (neededAmt - fees) - 10 (0.5 of fees from EFund are burned)
-			supplyNUSD:             sdk.NewCoin(common.DenomNUSD, sdk.NewInt(1_000_000)),
+			supplyNUSD:             sdk.NewCoin(common.DenomNUSD, sdk.NewInt(1*common.Precision)),
 			err:                    nil,
 			isCollateralRatioValid: true,
 		},
@@ -437,10 +437,10 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.MustNewDecFromStr("1"),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.DenomNUSD, 1000000000),
+				sdk.NewInt64Coin(common.DenomNUSD, 1000*common.Precision),
 			),
 			moduleFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.DenomUSDC, 100000000),
+				sdk.NewInt64Coin(common.DenomUSDC, 100*common.Precision),
 			),
 			msgBurn: types.MsgBurnStable{
 				Creator: testutil.AccAddress().String(),
@@ -557,14 +557,14 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.MustNewDecFromStr("1"),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.DenomNUSD, 1_000_000_000),
+				sdk.NewInt64Coin(common.DenomNUSD, 1_000*common.Precision),
 			),
 			moduleFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.DenomUSDC, 100_000_000),
+				sdk.NewInt64Coin(common.DenomUSDC, 100*common.Precision),
 			),
 			msgBurn: types.MsgBurnStable{
 				Creator: testutil.AccAddress().String(),
-				Stable:  sdk.NewInt64Coin(common.DenomNUSD, 10_000_000),
+				Stable:  sdk.NewInt64Coin(common.DenomNUSD, 10*common.Precision),
 			},
 			ecosystemFund:          sdk.NewCoins(sdk.NewInt64Coin(common.DenomUSDC, 9000)),
 			treasuryFund:           sdk.NewCoins(sdk.NewInt64Coin(common.DenomUSDC, 9000), sdk.NewInt64Coin(common.DenomNIBI, 100)),
@@ -577,25 +577,25 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.MustNewDecFromStr("1"),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.DenomNUSD, 1_000_000_000),
+				sdk.NewInt64Coin(common.DenomNUSD, 1_000*common.Precision),
 			),
 			moduleFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.DenomUSDC, 100_000_000),
+				sdk.NewInt64Coin(common.DenomUSDC, 100*common.Precision),
 			),
 			msgBurn: types.MsgBurnStable{
 				Creator: testutil.AccAddress().String(),
-				Stable:  sdk.NewInt64Coin(common.DenomNUSD, 10_000_000),
+				Stable:  sdk.NewInt64Coin(common.DenomNUSD, 10*common.Precision),
 			},
 			msgResponse: types.MsgBurnStableResponse{
-				Gov:        sdk.NewInt64Coin(common.DenomNIBI, 100_000-200),      // amount - fees 0,02%
-				Collateral: sdk.NewInt64Coin(common.DenomUSDC, 9_000_000-18_000), // amount - fees 0,02%
+				Gov:        sdk.NewInt64Coin(common.DenomNIBI, 100_000-200),               // amount - fees 0,02%
+				Collateral: sdk.NewInt64Coin(common.DenomUSDC, 9*common.Precision-18_000), // amount - fees 0,02%
 				FeesPayed: sdk.NewCoins(
 					sdk.NewInt64Coin(common.DenomNIBI, 200),
 					sdk.NewInt64Coin(common.DenomUSDC, 18_000),
 				),
 			},
 			supplyNIBI:             sdk.NewCoin(common.DenomNIBI, sdk.NewInt(100_000-100)), // nibiru minus 0.5 of fees burned (the part that goes to EF)
-			supplyNUSD:             sdk.NewCoin(common.DenomNUSD, sdk.NewInt(1_000_000_000-10_000_000)),
+			supplyNUSD:             sdk.NewCoin(common.DenomNUSD, sdk.NewInt(1_000*common.Precision-10*common.Precision)),
 			ecosystemFund:          sdk.NewCoins(sdk.NewInt64Coin(common.DenomUSDC, 9000)),
 			treasuryFund:           sdk.NewCoins(sdk.NewInt64Coin(common.DenomUSDC, 9000), sdk.NewInt64Coin(common.DenomNIBI, 100)),
 			expectedPass:           true,
