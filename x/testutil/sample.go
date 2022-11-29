@@ -47,12 +47,22 @@ func BlankContext(storeKeyName string) sdk.Context {
 	return ctx
 }
 
-const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+type TypeLatin struct {
+	Letters    string
+	CapLetters string
+	Numbers    string
+}
+
+var Latin = TypeLatin{
+	Letters:    "abcdefghijklmnopqrstuvwxyz",
+	CapLetters: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+	Numbers:    "0123456789",
+}
 
 func RandStringBytes(n int) string {
 	b := make([]byte, n)
 	for i := range b {
-		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+		b[i] = Latin.Letters[rand.Intn(len(Latin.Letters))]
 	}
 	return string(b)
 }
