@@ -6,7 +6,7 @@ Python3 int type have no limit in term of size, which means that we can make arb
 The curve class comes directly from the curve codebase, and is being used to create the tests, stored in `x/dex/types/misc/stabletests.csv`;.
 
 Theses test are then used to compare the value of python model's DY against the one obtained with our go code. 
-These are created for pools with random amount of assets (from 2 to 5), random amplification parameter (from 1 to 4_000_000) and for random coins of the pool.
+These are created for pools with random amount of assets (from 2 to 5), random amplification parameter (from 1 to 4* common.Precision) and for random coins of the pool.
 
 By computing this, we ensure the validity of our SolveConstantProductInvariant function.
 """

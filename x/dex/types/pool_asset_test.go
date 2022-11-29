@@ -5,6 +5,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 func TestPoolAssetValidateError(t *testing.T) {
@@ -82,7 +84,7 @@ func TestSubtractPoolAssetBalance(t *testing.T) {
 			pool: Pool{
 				PoolAssets: []PoolAsset{
 					{
-						Token: sdk.NewInt64Coin("aaa", 1_000_000),
+						Token: sdk.NewInt64Coin("aaa", 1*common.Precision),
 					},
 				},
 			},
@@ -95,12 +97,12 @@ func TestSubtractPoolAssetBalance(t *testing.T) {
 			pool: Pool{
 				PoolAssets: []PoolAsset{
 					{
-						Token: sdk.NewInt64Coin("aaa", 1_000_000),
+						Token: sdk.NewInt64Coin("aaa", 1*common.Precision),
 					},
 				},
 			},
 			tokenDenom:    "aaa",
-			subAmt:        sdk.NewInt(1_000_000),
+			subAmt:        sdk.NewInt(1 * common.Precision),
 			expectedCoins: nil,
 		},
 	} {
