@@ -330,7 +330,7 @@ func genPoolAssets(
 // fundAccountWithTokens fund the account with some gov, coll and stable denom.
 // When simulation for stablecoin is done, we should consider only funding with stable.
 func fundAccountWithTokens(ctx sdk.Context, address sdk.AccAddress, bk types.BankKeeper) {
-	million := 1_000_000
+	million := 1 * common.Precision
 	newTokens := sdk.NewCoins(
 		sdk.NewCoin(common.DenomNIBI, sdk.NewInt(int64(10*million))),
 		sdk.NewCoin(common.DenomUSDC, sdk.NewInt(int64(10*million))),
