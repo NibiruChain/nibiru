@@ -118,7 +118,7 @@ func (n *Network) SendTx(addr sdk.AccAddress, msgs ...sdk.Msg) (*sdk.TxResponse,
 	txBuilder := cfg.TxConfig.NewTxBuilder()
 	require.NoError(n.T, txBuilder.SetMsgs(msgs...))
 	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(cfg.BondDenom, sdk.NewInt(1))))
-	txBuilder.SetGasLimit(1000000)
+	txBuilder.SetGasLimit(uint64(1 * common.Precision))
 
 	acc, err := cfg.AccountRetriever.GetAccount(n.Validators[0].ClientCtx, addr)
 	require.NoError(n.T, err)

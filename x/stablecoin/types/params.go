@@ -5,6 +5,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -26,7 +28,7 @@ func NewParams(
 	priceUpperBound sdk.Dec,
 	isCollateralRatioValid bool,
 ) Params {
-	million := sdk.NewDec(1_000_000)
+	million := sdk.NewDec(1 * common.Precision)
 	collRatioInt := collRatio.Mul(million).RoundInt().Int64()
 	feeRationInt := feeRatio.Mul(million).RoundInt().Int64()
 	efFeeRatioInt := efFeeRatio.Mul(million).RoundInt().Int64()
@@ -174,7 +176,7 @@ func validateCollRatio(i interface{}) error {
 		return err
 	}
 
-	if collRatio > 1_000_000 {
+	if collRatio > 1*common.Precision {
 		return fmt.Errorf("collateral ratio is above max value(1e6): %d", collRatio)
 	} else if collRatio < 0 {
 		return fmt.Errorf("collateral Ratio is negative: %d", collRatio)
@@ -197,7 +199,7 @@ func validateBonusRateRecoll(i interface{}) error {
 		return err
 	}
 
-	if bonusRateRecoll > 1_000_000 {
+	if bonusRateRecoll > 1*common.Precision {
 		return fmt.Errorf("collateral Ratio is above max value(1e6): %d", bonusRateRecoll)
 	} else if bonusRateRecoll < 0 {
 		return fmt.Errorf("collateral Ratio is negative: %d", bonusRateRecoll)
@@ -212,7 +214,7 @@ func validateFeeRatio(i interface{}) error {
 		return err
 	}
 
-	if feeRatio > 1_000_000 {
+	if feeRatio > 1*common.Precision {
 		return fmt.Errorf("fee ratio is above max value(1e6): %d", feeRatio)
 	} else if feeRatio < 0 {
 		return fmt.Errorf("fee ratio is negative: %d", feeRatio)
@@ -227,7 +229,7 @@ func validateEfFeeRatio(i interface{}) error {
 		return err
 	}
 
-	if efFeeRatio > 1_000_000 {
+	if efFeeRatio > 1*common.Precision {
 		return fmt.Errorf("stable EF fee ratio is above max value(1e6): %d", efFeeRatio)
 	} else if efFeeRatio < 0 {
 		return fmt.Errorf("stable EF fee ratio is negative: %d", efFeeRatio)
@@ -250,7 +252,7 @@ func validateAdjustmentStep(i interface{}) error {
 		return err
 	}
 
-	if adjustmentStep > 1_000_000 {
+	if adjustmentStep > 1*common.Precision {
 		return fmt.Errorf("AdjustmentStep is above max value(1e6): %d", adjustmentStep)
 	} else if adjustmentStep < 0 {
 		return fmt.Errorf("AdjustmentStep is negative: %d", adjustmentStep)
@@ -265,7 +267,7 @@ func validatePriceLowerBound(i interface{}) error {
 		return err
 	}
 
-	if priceLowerBound > 1_000_000 {
+	if priceLowerBound > 1*common.Precision {
 		return fmt.Errorf("PriceLowerBound is above max value(1e6): %d", priceLowerBound)
 	} else if priceLowerBound < 0 {
 		return fmt.Errorf("PriceLowerBound is negative: %d", priceLowerBound)
@@ -280,7 +282,7 @@ func validatePriceUpperBound(i interface{}) error {
 		return err
 	}
 
-	if priceUpperBound > 2_000_000 {
+	if priceUpperBound > 2*common.Precision {
 		return fmt.Errorf("PriceUpperBound is above max value(1e6): %d", priceUpperBound)
 	} else if priceUpperBound < 0 {
 		return fmt.Errorf("PriceUpperBound is negative: %d", priceUpperBound)

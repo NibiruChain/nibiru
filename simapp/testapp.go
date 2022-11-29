@@ -119,7 +119,7 @@ func NewTestGenesisState(codec codec.Codec, inGenState GenesisState,
 	var govGenState govtypes.GenesisState
 	codec.MustUnmarshalJSON(testGenState[govtypes.ModuleName], &govGenState)
 	govGenState.VotingParams.VotingPeriod = time.Second * 20
-	govGenState.DepositParams.MinDeposit = sdk.NewCoins(sdk.NewInt64Coin(common.DenomNIBI, 1_000_000)) // min deposit of 1 NIBI
+	govGenState.DepositParams.MinDeposit = sdk.NewCoins(sdk.NewInt64Coin(common.DenomNIBI, 1*common.Precision)) // min deposit of 1 NIBI
 	testGenState[govtypes.ModuleName] = codec.MustMarshalJSON(&govGenState)
 
 	// pricefeed genesis state

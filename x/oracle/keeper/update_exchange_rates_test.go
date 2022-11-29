@@ -251,7 +251,7 @@ func TestOracleRewardDistribution(t *testing.T) {
 	// Account 2, btcstable
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.Pair_BTC_NUSD.String(), ExchangeRate: randomExchangeRate}}, 1)
 
-	rewardAllocation := sdk.NewCoins(sdk.NewCoin("reward", sdk.NewInt(1_000_000)))
+	rewardAllocation := sdk.NewCoins(sdk.NewCoin("reward", sdk.NewInt(1*common.Precision)))
 	keeper.AllocateRewards(t, input, common.Pair_BTC_NUSD.String(), rewardAllocation, 1)
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
@@ -363,15 +363,15 @@ func TestOracleExchangeRate(t *testing.T) {
 	// Account 3, govstable, btcstable
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: govStableExchangeRate}, {Pair: common.Pair_BTC_NUSD.String(), ExchangeRate: randomExchangeRate}}, 2)
 
-	ethStableRewards := sdk.NewInt64Coin("ETHSTABLE", 1_000_000)
-	govStableRewards := sdk.NewInt64Coin("GOVSTABLE", 1_000_000)
+	ethStableRewards := sdk.NewInt64Coin("ETHSTABLE", 1*common.Precision)
+	govStableRewards := sdk.NewInt64Coin("GOVSTABLE", 1*common.Precision)
 
 	keeper.AllocateRewards(t, input, common.Pair_ETH_NUSD.String(), sdk.NewCoins(ethStableRewards), 1)
 	keeper.AllocateRewards(t, input, common.Pair_NIBI_NUSD.String(), sdk.NewCoins(govStableRewards), 1)
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	// total reward pool for the current vote period is 1_000_000ETHSTABLE, 1_000_000GOVSTABLE
+	// total reward pool for the current vote period is 1* common.PrecisionETHSTABLE, 1* common.PrecisionGOVSTABLE
 	// val 1,2 won on 2 pairs
 	// val 3 won on 1 pair
 	// so total votes are 2 * 2 + 1 = 5
@@ -441,8 +441,8 @@ func TestOracleExchangeRateVal5(t *testing.T) {
 	// Account 5, govstable, ethstable
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: govStableRate2}, {Pair: common.Pair_ETH_NUSD.String(), ExchangeRate: ethStableRate2}}, 4)
 
-	ethStableRewards := sdk.NewInt64Coin("ETHSTABLE", 1_000_000)
-	govStableRewards := sdk.NewInt64Coin("GOVSTABLE", 1_000_000)
+	ethStableRewards := sdk.NewInt64Coin("ETHSTABLE", 1*common.Precision)
+	govStableRewards := sdk.NewInt64Coin("GOVSTABLE", 1*common.Precision)
 
 	keeper.AllocateRewards(t, input, common.Pair_ETH_NUSD.String(), sdk.NewCoins(ethStableRewards), 1)
 	keeper.AllocateRewards(t, input, common.Pair_NIBI_NUSD.String(), sdk.NewCoins(govStableRewards), 1)

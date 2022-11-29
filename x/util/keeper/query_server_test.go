@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/simapp"
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/util/keeper"
 	"github.com/NibiruChain/nibiru/x/util/types"
 )
@@ -28,7 +29,7 @@ func TestQueryServer_ModuleAccounts(t *testing.T) {
 	err = app.BankKeeper.MintCoins(
 		ctx,
 		someModuleAccount,
-		sdktypes.NewCoins(sdktypes.NewInt64Coin("uniques", 1_000_000)),
+		sdktypes.NewCoins(sdktypes.NewInt64Coin("uniques", 1*common.Precision)),
 	)
 	require.NoError(t, err)
 
@@ -36,5 +37,5 @@ func TestQueryServer_ModuleAccounts(t *testing.T) {
 	accounts, err = qServer.ModuleAccounts(goCtx, &types.QueryModuleAccountsRequest{})
 	require.NoError(t, err)
 	require.Len(t, accounts.Accounts, len(types.ModuleAccounts))
-	require.Equal(t, accounts.Accounts[0].Balance, sdktypes.NewCoins(sdktypes.NewInt64Coin("uniques", 1_000_000)))
+	require.Equal(t, accounts.Accounts[0].Balance, sdktypes.NewCoins(sdktypes.NewInt64Coin("uniques", 1*common.Precision)))
 }

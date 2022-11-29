@@ -21,8 +21,8 @@ func TestCreatePool(t *testing.T) {
 		ctx,
 		common.Pair_BTC_NUSD,
 
-		sdk.NewDec(10_000_000), // 10 tokens
-		sdk.NewDec(5_000_000),  // 5 tokens
+		sdk.NewDec(10*common.Precision), // 10 tokens
+		sdk.NewDec(5*common.Precision),  // 5 tokens
 		types.VpoolConfig{
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -46,8 +46,8 @@ func TestEditPoolConfig(t *testing.T) {
 	pair := common.Pair_BTC_NUSD
 	vpoolStart := types.Vpool{
 		Pair:              pair,
-		QuoteAssetReserve: sdk.NewDec(10_000_000),
-		BaseAssetReserve:  sdk.NewDec(5_000_000),
+		QuoteAssetReserve: sdk.NewDec(10 * common.Precision),
+		BaseAssetReserve:  sdk.NewDec(5 * common.Precision),
 		Config: types.VpoolConfig{
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -194,8 +194,8 @@ func TestGetPoolPrices(t *testing.T) {
 			name: "happy path - vpool + pricefeed active",
 			vpool: types.Vpool{
 				Pair:              common.Pair_ETH_NUSD,
-				QuoteAssetReserve: sdk.NewDec(3_000_000), // 3e6
-				BaseAssetReserve:  sdk.NewDec(1_000),     // 1e3
+				QuoteAssetReserve: sdk.NewDec(3 * common.Precision), // 3e6
+				BaseAssetReserve:  sdk.NewDec(1_000),                // 1e3
 				Config: types.VpoolConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -211,7 +211,7 @@ func TestGetPoolPrices(t *testing.T) {
 				MarkPrice:     sdk.NewDec(3_000),
 				TwapMark:      sdk.NewDec(3_000).String(),
 				IndexPrice:    sdk.NewDec(99).String(),
-				SwapInvariant: sdk.NewInt(3_000_000_000), // 1e3 * 3e6 = 3e9
+				SwapInvariant: sdk.NewInt(3_000 * common.Precision), // 1e3 * 3e6 = 3e9
 				BlockNumber:   2,
 			},
 		},
@@ -219,8 +219,8 @@ func TestGetPoolPrices(t *testing.T) {
 			name: "happy path - vpool active, but no index price",
 			vpool: types.Vpool{
 				Pair:              common.Pair_ETH_NUSD,
-				QuoteAssetReserve: sdk.NewDec(3_000_000), // 3e6
-				BaseAssetReserve:  sdk.NewDec(1_000),     // 1e3
+				QuoteAssetReserve: sdk.NewDec(3 * common.Precision), // 3e6
+				BaseAssetReserve:  sdk.NewDec(1_000),                // 1e3
 				Config: types.VpoolConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -237,7 +237,7 @@ func TestGetPoolPrices(t *testing.T) {
 				MarkPrice:     sdk.NewDec(3_000),
 				TwapMark:      sdk.NewDec(3_000).String(),
 				IndexPrice:    sdk.OneDec().Neg().String(),
-				SwapInvariant: sdk.NewInt(3_000_000_000), // 1e3 * 3e6 = 3e9
+				SwapInvariant: sdk.NewInt(3_000 * common.Precision), // 1e3 * 3e6 = 3e9
 				BlockNumber:   2,
 			},
 		},
@@ -245,8 +245,8 @@ func TestGetPoolPrices(t *testing.T) {
 			name: "vpool doesn't exist",
 			vpool: types.Vpool{
 				Pair:              common.Pair_ETH_NUSD,
-				QuoteAssetReserve: sdk.NewDec(3_000_000), // 3e6
-				BaseAssetReserve:  sdk.NewDec(1_000),     // 1e3
+				QuoteAssetReserve: sdk.NewDec(3 * common.Precision), // 3e6
+				BaseAssetReserve:  sdk.NewDec(1_000),                // 1e3
 				Config: types.VpoolConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -303,8 +303,8 @@ func TestEditSwapInvariant(t *testing.T) {
 	pair := common.Pair_NIBI_NUSD
 	vpoolStart := types.Vpool{
 		Pair:              pair,
-		QuoteAssetReserve: sdk.NewDec(10_000_000),
-		BaseAssetReserve:  sdk.NewDec(5_000_000),
+		QuoteAssetReserve: sdk.NewDec(10 * common.Precision),
+		BaseAssetReserve:  sdk.NewDec(5 * common.Precision),
 		Config: types.VpoolConfig{
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),

@@ -76,8 +76,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	vpoolGenesis.Vpools = []vpooltypes.Vpool{
 		{
 			Pair:              common.Pair_BTC_NUSD,
-			BaseAssetReserve:  sdk.NewDec(10_000_000),
-			QuoteAssetReserve: sdk.NewDec(60_000_000_000),
+			BaseAssetReserve:  sdk.NewDec(10 * common.Precision),
+			QuoteAssetReserve: sdk.NewDec(60_000 * common.Precision),
 			Config: vpooltypes.VpoolConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
@@ -88,8 +88,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		},
 		{
 			Pair:              common.Pair_ETH_NUSD,
-			BaseAssetReserve:  sdk.NewDec(10_000_000),
-			QuoteAssetReserve: sdk.NewDec(60_000_000_000),
+			BaseAssetReserve:  sdk.NewDec(10 * common.Precision),
+			QuoteAssetReserve: sdk.NewDec(60_000 * common.Precision),
 			Config: vpooltypes.VpoolConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
@@ -142,9 +142,9 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.NoError(
 		testutilcli.FillWalletFromValidator(user1,
 			sdk.NewCoins(
-				sdk.NewInt64Coin(common.DenomNIBI, 10_000_000),
-				sdk.NewInt64Coin(common.DenomUSDC, 10_000_000),
-				sdk.NewInt64Coin(common.DenomNUSD, 50_000_000),
+				sdk.NewInt64Coin(common.DenomNIBI, 10*common.Precision),
+				sdk.NewInt64Coin(common.DenomUSDC, 10*common.Precision),
+				sdk.NewInt64Coin(common.DenomNUSD, 50*common.Precision),
 			),
 			val,
 			common.DenomNIBI,
@@ -168,7 +168,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			sdk.NewCoins(
 				sdk.NewInt64Coin(common.DenomNIBI, 1000),
 				sdk.NewInt64Coin(common.DenomUSDC, 1000),
-				sdk.NewInt64Coin(common.DenomNUSD, 49_000_000),
+				sdk.NewInt64Coin(common.DenomNUSD, 49*common.Precision),
 			),
 			val,
 			common.DenomNIBI,
@@ -209,8 +209,8 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, common.Pair_BTC_NUSD)
 	s.T().Logf("reserve assets: %+v", reserveAssets)
 	s.NoError(err)
-	s.EqualValues(sdk.NewDec(10_000_000), reserveAssets.BaseAssetReserve)
-	s.EqualValues(sdk.NewDec(60_000_000_000), reserveAssets.QuoteAssetReserve)
+	s.EqualValues(sdk.NewDec(10*common.Precision), reserveAssets.BaseAssetReserve)
+	s.EqualValues(sdk.NewDec(60_000*common.Precision), reserveAssets.QuoteAssetReserve)
 
 	s.T().Log("A. check trader has no existing positions")
 	_, err = testutilcli.QueryPosition(val.ClientCtx, common.Pair_BTC_NUSD, user)
@@ -232,7 +232,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.T().Logf("reserve assets: %+v", reserveAssets)
 	s.NoError(err)
 	s.EqualValues(sdk.MustNewDecFromStr("9999833.336111064815586407"), reserveAssets.BaseAssetReserve)
-	s.EqualValues(sdk.NewDec(60_001_000_000), reserveAssets.QuoteAssetReserve)
+	s.EqualValues(sdk.NewDec(60_001*common.Precision), reserveAssets.QuoteAssetReserve)
 
 	s.T().Log("B. check trader position")
 	queryResp, err := testutilcli.QueryPosition(val.ClientCtx, common.Pair_BTC_NUSD, user)
@@ -241,8 +241,8 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
 	s.EqualValues(common.Pair_BTC_NUSD, queryResp.Position.Pair)
 	s.EqualValues(sdk.MustNewDecFromStr("166.663888935184413593"), queryResp.Position.Size_)
-	s.EqualValues(sdk.NewDec(1_000_000), queryResp.Position.Margin)
-	s.EqualValues(sdk.NewDec(1_000_000), queryResp.Position.OpenNotional)
+	s.EqualValues(sdk.NewDec(1*common.Precision), queryResp.Position.Margin)
+	s.EqualValues(sdk.NewDec(1*common.Precision), queryResp.Position.OpenNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("999999.999999999999999359"), queryResp.PositionNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000000641"), queryResp.UnrealizedPnl)
 	s.EqualValues(sdk.NewDec(1), queryResp.MarginRatioMark)
@@ -266,8 +266,8 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
 	s.EqualValues(common.Pair_BTC_NUSD, queryResp.Position.Pair)
 	s.EqualValues(sdk.MustNewDecFromStr("499.975001249937503125"), queryResp.Position.Size_)
-	s.EqualValues(sdk.NewDec(2_000_000), queryResp.Position.Margin)
-	s.EqualValues(sdk.NewDec(3_000_000), queryResp.Position.OpenNotional)
+	s.EqualValues(sdk.NewDec(2*common.Precision), queryResp.Position.Margin)
+	s.EqualValues(sdk.NewDec(3*common.Precision), queryResp.Position.OpenNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("3000000.000000000000000938"), queryResp.PositionNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("0.000000000000000938"), queryResp.UnrealizedPnl)
 	s.EqualValues(sdk.MustNewDecFromStr("0.666666666666666667"), queryResp.MarginRatioMark)
@@ -297,7 +297,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
 	s.EqualValues(common.Pair_BTC_NUSD, queryResp.Position.Pair)
 	s.EqualValues(sdk.MustNewDecFromStr("499.958336249784737846"), queryResp.Position.Size_)
-	s.EqualValues(sdk.NewDec(2_000_000), queryResp.Position.Margin)
+	s.EqualValues(sdk.NewDec(2*common.Precision), queryResp.Position.Margin)
 	s.EqualValues(sdk.NewDec(2_999_900), queryResp.Position.OpenNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("2999899.999999999999999506"), queryResp.PositionNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000000494"), queryResp.UnrealizedPnl)

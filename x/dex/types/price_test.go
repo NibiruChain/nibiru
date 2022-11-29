@@ -3,6 +3,7 @@ package types
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/testutil"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -19,11 +20,11 @@ func TestCalSpotPrice(t *testing.T) {
 			"equal weight: 2 tokens",
 			[]PoolAsset{
 				{
-					Token:  sdk.NewInt64Coin("foo", 2_000_000),
+					Token:  sdk.NewInt64Coin("foo", 2*common.Precision),
 					Weight: sdk.NewInt(100),
 				},
 				{
-					Token:  sdk.NewInt64Coin("bar", 1_000_000),
+					Token:  sdk.NewInt64Coin("bar", 1*common.Precision),
 					Weight: sdk.NewInt(100),
 				},
 			},
@@ -33,11 +34,11 @@ func TestCalSpotPrice(t *testing.T) {
 			"different weight: 2 tokens",
 			[]PoolAsset{
 				{
-					Token:  sdk.NewInt64Coin("foo", 2_000_000),
+					Token:  sdk.NewInt64Coin("foo", 2*common.Precision),
 					Weight: sdk.NewInt(80),
 				},
 				{
-					Token:  sdk.NewInt64Coin("bar", 1_000_000),
+					Token:  sdk.NewInt64Coin("bar", 1*common.Precision),
 					Weight: sdk.NewInt(20),
 				},
 			},
@@ -47,15 +48,15 @@ func TestCalSpotPrice(t *testing.T) {
 			"equal weight: 3 tokens",
 			[]PoolAsset{
 				{
-					Token:  sdk.NewInt64Coin("foo", 2_000_000),
+					Token:  sdk.NewInt64Coin("foo", 2*common.Precision),
 					Weight: sdk.NewInt(100),
 				},
 				{
-					Token:  sdk.NewInt64Coin("goo", 1_000_000),
+					Token:  sdk.NewInt64Coin("goo", 1*common.Precision),
 					Weight: sdk.NewInt(100),
 				},
 				{
-					Token:  sdk.NewInt64Coin("bar", 1_000_000),
+					Token:  sdk.NewInt64Coin("bar", 1*common.Precision),
 					Weight: sdk.NewInt(100),
 				},
 			},
@@ -65,15 +66,15 @@ func TestCalSpotPrice(t *testing.T) {
 			"different weight: 3 tokens",
 			[]PoolAsset{
 				{
-					Token:  sdk.NewInt64Coin("foo", 2_000_000),
+					Token:  sdk.NewInt64Coin("foo", 2*common.Precision),
 					Weight: sdk.NewInt(60),
 				},
 				{
-					Token:  sdk.NewInt64Coin("bar", 1_000_000),
+					Token:  sdk.NewInt64Coin("bar", 1*common.Precision),
 					Weight: sdk.NewInt(20),
 				},
 				{
-					Token:  sdk.NewInt64Coin("foobar", 1_000_000),
+					Token:  sdk.NewInt64Coin("foobar", 1*common.Precision),
 					Weight: sdk.NewInt(20),
 				},
 			},

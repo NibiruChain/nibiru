@@ -49,8 +49,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	vpoolGenesis.Vpools = []vpooltypes.Vpool{
 		{
 			Pair:              common.Pair_ETH_NUSD,
-			BaseAssetReserve:  sdk.NewDec(10_000_000),
-			QuoteAssetReserve: sdk.NewDec(60_000_000_000),
+			BaseAssetReserve:  sdk.NewDec(10 * common.Precision),
+			QuoteAssetReserve: sdk.NewDec(60_000 * common.Precision),
 			Config: vpooltypes.VpoolConfig{
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),

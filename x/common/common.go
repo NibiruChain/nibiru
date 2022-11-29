@@ -34,6 +34,9 @@ var (
 
 	ErrInvalidTokenPair = sdkerrors.Register(ModuleName, 1, "invalid token pair")
 	APrecision          = uint256.NewInt().SetUint64(1)
+
+	// Precision for int representation in sdk.Int objects
+	Precision = int64(1_000_000)
 )
 
 //-----------------------------------------------------------------------------

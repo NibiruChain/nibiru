@@ -5,6 +5,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 func TestCalcOutAmtGivenIn(t *testing.T) {
@@ -48,11 +50,11 @@ func TestCalcOutAmtGivenIn(t *testing.T) {
 				},
 				PoolAssets: []PoolAsset{
 					{
-						Token:  sdk.NewInt64Coin("aaa", 100_000_000),
+						Token:  sdk.NewInt64Coin("aaa", 100*common.Precision),
 						Weight: sdk.OneInt(),
 					},
 					{
-						Token:  sdk.NewInt64Coin("bbb", 100_000_000),
+						Token:  sdk.NewInt64Coin("bbb", 100*common.Precision),
 						Weight: sdk.OneInt(),
 					},
 				},
@@ -71,11 +73,11 @@ func TestCalcOutAmtGivenIn(t *testing.T) {
 				},
 				PoolAssets: []PoolAsset{
 					{
-						Token:  sdk.NewInt64Coin("aaa", 1_000_000),
+						Token:  sdk.NewInt64Coin("aaa", 1*common.Precision),
 						Weight: sdk.OneInt(),
 					},
 					{
-						Token:  sdk.NewInt64Coin("bbb", 1_000_000),
+						Token:  sdk.NewInt64Coin("bbb", 1*common.Precision),
 						Weight: sdk.OneInt(),
 					},
 				},
@@ -186,11 +188,11 @@ func TestCalcInAmtGivenOut(t *testing.T) {
 				},
 				PoolAssets: []PoolAsset{
 					{
-						Token:  sdk.NewInt64Coin("aaa", 100_000_000),
+						Token:  sdk.NewInt64Coin("aaa", 100*common.Precision),
 						Weight: sdk.OneInt(),
 					},
 					{
-						Token:  sdk.NewInt64Coin("bbb", 100_000_000),
+						Token:  sdk.NewInt64Coin("bbb", 100*common.Precision),
 						Weight: sdk.OneInt(),
 					},
 				},
@@ -209,11 +211,11 @@ func TestCalcInAmtGivenOut(t *testing.T) {
 				},
 				PoolAssets: []PoolAsset{
 					{
-						Token:  sdk.NewInt64Coin("aaa", 1_000_000),
+						Token:  sdk.NewInt64Coin("aaa", 1*common.Precision),
 						Weight: sdk.OneInt(),
 					},
 					{
-						Token:  sdk.NewInt64Coin("bbb", 1_000_000),
+						Token:  sdk.NewInt64Coin("bbb", 1*common.Precision),
 						Weight: sdk.OneInt(),
 					},
 				},
