@@ -19,5 +19,5 @@ builds:
       - -linkmode=external
       - -extldflags '-Wl,-z,muldefs -static'
     tags:
-      #- muslc
+      - netgo
 
