@@ -5,7 +5,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/testutil"
 
-	"github.com/NibiruChain/nibiru/simapp"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 
 	"github.com/stretchr/testify/require"
 
@@ -18,7 +18,7 @@ func TestGenesis(t *testing.T) {
 		Params: types.DefaultParams(),
 	}
 
-	app, ctx := simapp.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewTestNibiruAppAndContext(true)
 	dex.InitGenesis(ctx, app.DexKeeper, genesisState)
 	got := dex.ExportGenesis(ctx, app.DexKeeper)
 	require.NotNil(t, got)
