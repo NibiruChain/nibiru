@@ -1,3 +1,6 @@
+before:
+  hooks:
+    - wget https://github.com/CosmWasm/wasmvm/releases/download/v1.1.1/libwasmvm_muslc.x86_64.a -O /lib/libwasmvm_muslc.a
 builds:
   - id: linux-amd64
     main: ./cmd/nibid
@@ -10,7 +13,14 @@ builds:
       - CGO_ENABLED=1
     flags:
       - -mod=readonly
-    ldflags:
-      - -s -w -X main.commit={{.Commit}} -X main.date={{ .CommitDate }} -X github.com/cosmos/cosmos-sdk/version.Name=nibiru -X github.com/cosmos/cosmos-sdk/version.AppName=nibid -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }} -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }} -X github.com/tendermint/tendermint/version.TMCoreSemVer={{ .Env.TM_VERSION }}
+      - muslc
+    ldflags: |
+      -X main.commit={{.Commit}} 
+      -X main.date={{ .CommitDate }} 
+      -X github.com/cosmos/cosmos-sdk/version.Name=nibiru 
+      -X github.com/cosmos/cosmos-sdk/version.AppName=nibid 
+      -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }} 
+      -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }} 
+      -X github.com/tendermint/tendermint/version.TMCoreSemVer={{ .Env.TM_VERSION }}
 
 
