@@ -43,7 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Bug Fixes
 
-* [#1098](https://github.com/NibiruChain/nibiru/pull/1098) - fix(oracle): fix flaky oracle test
+* [#1100](https://github.com/NibiruChain/nibiru/pull/1100) - fix(oracle): fix flaky oracle test
 
 ## [v0.16.0](https://github.com/NibiruChain/nibiru/releases/tag/v0.16.0) - 2022-11-23
 
