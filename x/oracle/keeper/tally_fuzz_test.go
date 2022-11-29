@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/oracle/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
 )
 
 func TestFuzz_Tally(t *testing.T) {
@@ -73,7 +72,7 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 			numPairs := c.Intn(100) + 5
 
 			for i := 0; i < numPairs; i++ {
-				*e = append(*e, testutil.RandStringBytes(5))
+				*e = append(*e, c.RandString())
 			}
 		},
 		func(e *sdk.Dec, c fuzz.Continue) {

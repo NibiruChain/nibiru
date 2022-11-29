@@ -9,7 +9,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 )
 
@@ -45,7 +44,7 @@ func TestNewParams_Errors(t *testing.T) {
 			),
 			fmt.Errorf(
 				"collateral ratio is above max value(1e6): %s",
-				sdk.MustNewDecFromStr("2").Mul(sdk.NewDec(1*common.Precision)).TruncateInt()),
+				sdk.MustNewDecFromStr("2").Mul(sdk.NewDec(1_000_000)).TruncateInt()),
 		},
 		{
 			"fee ratio bigger than 1",
@@ -62,7 +61,7 @@ func TestNewParams_Errors(t *testing.T) {
 			),
 			fmt.Errorf(
 				"fee ratio is above max value(1e6): %s",
-				sdk.MustNewDecFromStr("2").Mul(sdk.NewDec(1*common.Precision)).TruncateInt()),
+				sdk.MustNewDecFromStr("2").Mul(sdk.NewDec(1_000_000)).TruncateInt()),
 		},
 		{
 			"stable EF fee ratio bigger than 1",
@@ -79,7 +78,7 @@ func TestNewParams_Errors(t *testing.T) {
 			),
 			fmt.Errorf(
 				"stable EF fee ratio is above max value(1e6): %s",
-				sdk.MustNewDecFromStr("2").Mul(sdk.NewDec(1*common.Precision)).TruncateInt()),
+				sdk.MustNewDecFromStr("2").Mul(sdk.NewDec(1_000_000)).TruncateInt()),
 		},
 	}
 

@@ -25,7 +25,7 @@ func TestQueryReserveAssets(t *testing.T) {
 	t.Log("initialize vpool")
 	pool := types.Vpool{
 		Pair:              common.Pair_BTC_NUSD,
-		QuoteAssetReserve: sdk.NewDec(1 * common.Precision),
+		QuoteAssetReserve: sdk.NewDec(1_000_000),
 		BaseAssetReserve:  sdk.NewDec(1000),
 		Config: types.VpoolConfig{
 			FluctuationLimitRatio:  sdk.ZeroDec(),
@@ -61,7 +61,7 @@ func TestQueryAllPools(t *testing.T) {
 	pair := common.Pair_BTC_NUSD
 	pool := &types.Vpool{
 		Pair:              pair,
-		QuoteAssetReserve: sdk.NewDec(1 * common.Precision),
+		QuoteAssetReserve: sdk.NewDec(1_000_000),
 		BaseAssetReserve:  sdk.NewDec(1000),
 		Config: types.VpoolConfig{
 			FluctuationLimitRatio:  sdk.ZeroDec(),
@@ -92,7 +92,7 @@ func TestQueryAllPools(t *testing.T) {
 		MarkPrice:     markPriceWanted,
 		IndexPrice:    indexPrice.String(),
 		TwapMark:      markPriceWanted.String(),
-		SwapInvariant: sdk.NewInt(1_000 * common.Precision),
+		SwapInvariant: sdk.NewInt(1_000_000_000), // 1e6 * 1e3
 		BlockNumber:   2,
 	}
 	require.NoError(t, err)
