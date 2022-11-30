@@ -149,7 +149,7 @@ func CmdQueryPositions() *cobra.Command {
 func CmdQueryCumulativePremiumFraction() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "funding-rates [token-pair]",
-		Short: "the cumulative funding payment for a market",
+		Short: "the cumulative funding premium fraction for a market",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
