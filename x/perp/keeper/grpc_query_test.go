@@ -260,15 +260,15 @@ func TestQueryPositions(t *testing.T) {
 	}
 }
 
-func TestQueryFundingRates(t *testing.T) {
+func TestQueryCumulativePremiumFraction(t *testing.T) {
 	tests := []struct {
 		name                string
 		initialPairMetadata *types.PairMetadata
 
-		query *types.QueryFundingRatesRequest
+		query *types.QueryCumulativePremiumFractionRequest
 
-		expectErr            bool
-		expectedFundingRates []sdk.Dec
+		expectErr                         bool
+		expectedCumulativePremiumFraction sdk.Dec
 	}{
 		{
 			name: "empty string pair",
@@ -276,7 +276,7 @@ func TestQueryFundingRates(t *testing.T) {
 				Pair:                            common.Pair_BTC_NUSD,
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
-			query: &types.QueryFundingRatesRequest{
+			query: &types.QueryCumulativePremiumFractionRequest{
 				Pair: "",
 			},
 			expectErr: true,
@@ -287,7 +287,7 @@ func TestQueryFundingRates(t *testing.T) {
 				Pair:                            common.Pair_BTC_NUSD,
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
-			query: &types.QueryFundingRatesRequest{
+			query: &types.QueryCumulativePremiumFractionRequest{
 				Pair: "foo:bar",
 			},
 			expectErr: true,
@@ -298,13 +298,11 @@ func TestQueryFundingRates(t *testing.T) {
 				Pair:                            common.Pair_BTC_NUSD,
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
-			query: &types.QueryFundingRatesRequest{
+			query: &types.QueryCumulativePremiumFractionRequest{
 				Pair: common.Pair_BTC_NUSD.String(),
 			},
-			expectErr: false,
-			expectedFundingRates: []sdk.Dec{
-				sdk.ZeroDec(),
-			},
+			expectErr:                         false,
+			expectedCumulativePremiumFraction: sdk.ZeroDec(),
 		},
 		{
 			name: "truncates to 48 funding payments",
@@ -312,13 +310,11 @@ func TestQueryFundingRates(t *testing.T) {
 				Pair:                            common.Pair_BTC_NUSD,
 				LatestCumulativePremiumFraction: sdk.OneDec(),
 			},
-			query: &types.QueryFundingRatesRequest{
+			query: &types.QueryCumulativePremiumFractionRequest{
 				Pair: common.Pair_BTC_NUSD.String(),
 			},
-			expectErr: false,
-			expectedFundingRates: []sdk.Dec{
-				sdk.OneDec(),
-			},
+			expectErr:                         false,
+			expectedCumulativePremiumFraction: sdk.OneDec(),
 		},
 	}
 
@@ -333,7 +329,7 @@ func TestQueryFundingRates(t *testing.T) {
 			setPairMetadata(nibiruApp.PerpKeeper, ctx, *tc.initialPairMetadata)
 
 			t.Log("query funding payments")
-			resp, err := queryServer.FundingRates(sdk.WrapSDKContext(ctx), tc.query)
+			resp, err := queryServer.CumulativePremiumFraction(sdk.WrapSDKContext(ctx), tc.query)
 
 			if tc.expectErr {
 				require.Error(t, err)
@@ -341,7 +337,7 @@ func TestQueryFundingRates(t *testing.T) {
 				require.NoError(t, err)
 
 				t.Log("assert response")
-				assert.EqualValues(t, tc.expectedFundingRates, resp.CumulativeFundingRates)
+				assert.EqualValues(t, tc.expectedCumulativePremiumFraction, resp.CumulativePremiumFraction)
 			}
 		})
 	}

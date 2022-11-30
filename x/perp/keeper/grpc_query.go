@@ -116,9 +116,10 @@ func (q queryServer) Params(
 	return &types.QueryParamsResponse{Params: q.k.GetParams(ctx)}, nil
 }
 
-func (q queryServer) FundingRates(
-	goCtx context.Context, req *types.QueryFundingRatesRequest,
-) (*types.QueryFundingRatesResponse, error) {
+func (q queryServer) CumulativePremiumFraction(
+	goCtx context.Context,
+	req *types.QueryCumulativePremiumFractionRequest,
+) (*types.QueryCumulativePremiumFractionResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -134,7 +135,7 @@ func (q queryServer) FundingRates(
 		return nil, status.Errorf(codes.NotFound, "could not find pair: %s", req.Pair)
 	}
 
-	return &types.QueryFundingRatesResponse{
-		CumulativeFundingRates: []sdk.Dec{pairMetadata.LatestCumulativePremiumFraction},
+	return &types.QueryCumulativePremiumFractionResponse{
+		CumulativePremiumFraction: pairMetadata.LatestCumulativePremiumFraction,
 	}, nil
 }

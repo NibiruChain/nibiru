@@ -28,7 +28,7 @@ func GetQueryCmd() *cobra.Command {
 		CmdQueryParams(),
 		CmdQueryPosition(),
 		CmdQueryPositions(),
-		CmdQueryFundingRates(),
+		CmdQueryCumulativePremiumFraction(),
 	}
 	for _, cmd := range cmds {
 		perpQueryCmd.AddCommand(cmd)
@@ -146,10 +146,10 @@ func CmdQueryPositions() *cobra.Command {
 }
 
 // sample token-pair: btc:nusd
-func CmdQueryFundingRates() *cobra.Command {
+func CmdQueryCumulativePremiumFraction() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "funding-rates [token-pair]",
-		Short: "the cumulative funding payments for a market, up to 48 most recent payments",
+		Short: "the cumulative funding payment for a market",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -159,9 +159,9 @@ func CmdQueryFundingRates() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			res, err := queryClient.FundingRates(
+			res, err := queryClient.CumulativePremiumFraction(
 				cmd.Context(),
-				&types.QueryFundingRatesRequest{
+				&types.QueryCumulativePremiumFractionRequest{
 					Pair: args[0],
 				},
 			)
