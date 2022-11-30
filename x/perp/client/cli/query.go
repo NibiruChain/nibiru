@@ -29,6 +29,7 @@ func GetQueryCmd() *cobra.Command {
 		CmdQueryPosition(),
 		CmdQueryPositions(),
 		CmdQueryFundingRates(),
+		CmdQueryMetrics(),
 	}
 	for _, cmd := range cmds {
 		perpQueryCmd.AddCommand(cmd)
@@ -163,6 +164,42 @@ func CmdQueryFundingRates() *cobra.Command {
 				cmd.Context(),
 				&types.QueryFundingRatesRequest{
 					Pair: args[0],
+				},
+			)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// sample token-pair: btc:nusd
+func CmdQueryMetrics() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "metrics [token-pair]",
+		Short: "list of perp metrics",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			tokenPair, err := common.NewAssetPair(args[0])
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.Metrics(
+				cmd.Context(),
+				&types.QueryMetricsRequest{
+					Pair: tokenPair.String(),
 				},
 			)
 			if err != nil {

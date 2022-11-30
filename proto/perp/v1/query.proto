@@ -29,6 +29,11 @@ service Query {
       returns (QueryFundingRatesResponse) {
     option (google.api.http).get = "/nibiru/perp/funding_rates";
   }
+
+  rpc Metrics(QueryMetricsRequest)
+      returns (QueryMetricsResponse) {
+    option (google.api.http).get = "/nibiru/perp/metrics";
+  }
 }
 
 // ---------------------------------------- Params
@@ -112,6 +117,20 @@ message QueryFundingRatesResponse {
   // last
   repeated string cumulative_funding_rates = 1 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// ---------------------------------------- Metrics
+
+message QueryMetricsRequest {
+  // the pair to query for
+  string pair = 1;
+}
+
+message QueryMetricsResponse {
+  // list of perp metrics
+  Metrics metrics = 1 [
     (gogoproto.nullable) = false
   ];
 }
