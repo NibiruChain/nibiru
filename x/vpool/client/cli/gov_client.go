@@ -35,8 +35,9 @@ func NewProposalHandler(cliHandler govclient.CLIHandlerFn) govclient.ProposalHan
 }
 
 var (
-	CreatePoolProposalHandler     = NewProposalHandler(CmdCreatePoolProposal)
-	EditPoolConfigProposalHandler = NewProposalHandler(CmdEditPoolConfigProposal)
+	CreatePoolProposalHandler         = NewProposalHandler(CmdCreatePoolProposal)
+	EditPoolConfigProposalHandler     = NewProposalHandler(CmdEditPoolConfigProposal)
+	EditSwapInvariantsProposalHandler = NewProposalHandler(CmdEditSwapInvariantsProposal)
 )
 
 // CmdCreatePoolProposal implements the client command to submit a governance
@@ -151,6 +152,82 @@ func CmdEditPoolConfigProposal() *cobra.Command {
 			from := clientCtx.GetFromAddress()
 
 			proposal := &types.EditPoolConfigProposal{}
+			contents, err := os.ReadFile(args[0])
+			if err != nil {
+				return err
+			}
+
+			// marshals the contents into the proto.Message to which 'proposal' points.
+			if err = clientCtx.Codec.UnmarshalJSON(contents, proposal); err != nil {
+				return err
+			}
+
+			depositStr, err := cmd.Flags().GetString(govcli.FlagDeposit)
+			if err != nil {
+				return err
+			}
+			deposit, err := sdk.ParseCoinsNormalized(depositStr)
+			if err != nil {
+				return err
+			}
+
+			msg, err := govtypes.NewMsgSubmitProposal(proposal, deposit, from)
+			if err != nil {
+				return err
+			}
+			if err = msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	cmd.Flags().String(
+		/*name=*/ govcli.FlagDeposit,
+		/*defaultValue=*/ "",
+		/*usage=*/ "governance deposit for proposal")
+	if err := cmd.MarkFlagRequired(govcli.FlagDeposit); err != nil {
+		panic(err)
+	}
+
+	return cmd
+}
+
+// CmdEditSwapInvariantsProposal implements the client command to submit a governance
+// proposal to whitelist an oracle for specified asset pairs.
+func CmdEditSwapInvariantsProposal() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "edit-invariant [proposal-json] --deposit=[deposit]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Submit a proposal to edit the vpool config",
+		Example: strings.TrimSpace(fmt.Sprintf(`
+			Example: 
+			$ %s tx gov submit-proposal edit-invariant <path/to/proposal.json> --deposit="1000unibi" --from=<key_or_address> 
+			`, version.AppName)),
+		Long: strings.TrimSpace(
+			`Submits a proposal to edit the swap invariant of one or more vpools.
+
+			A proposal.json for 'EditSwapInvariantsProposal' contains:
+			{
+		      "title": "NIP-4: Change the swap invariant for ATOM, OSMO, and BTC.",
+			  "description": "increase swap invariant for many virtual pools",
+			  "swap_invariant_maps": [
+			    {"pair": "uatom:unusd", "multiplier": "2"},
+			    {"pair": "uosmo:unusd", "multiplier": "5"},
+			    {"pair": "ubtc:unusd", "multiplier": "100"}
+			  ]
+			}
+			`),
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			from := clientCtx.GetFromAddress()
+
+			proposal := &types.EditSwapInvariantsProposal{}
 			contents, err := os.ReadFile(args[0])
 			if err != nil {
 				return err

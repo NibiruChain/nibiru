@@ -187,21 +187,22 @@ func (k Keeper) afterPositionUpdate(
 	}
 
 	return ctx.EventManager().EmitTypedEvent(&types.PositionChangedEvent{
-		TraderAddress:         traderAddr.String(),
-		Pair:                  pair.String(),
-		Margin:                sdk.NewCoin(pair.QuoteDenom(), positionResp.Position.Margin.RoundInt()),
-		PositionNotional:      positionNotional,
-		ExchangedPositionSize: positionResp.ExchangedPositionSize,
-		TransactionFee:        sdk.NewCoin(pair.QuoteDenom(), transferredFee),
-		PositionSize:          positionResp.Position.Size_,
-		RealizedPnl:           positionResp.RealizedPnl,
-		UnrealizedPnlAfter:    positionResp.UnrealizedPnlAfter,
-		BadDebt:               sdk.NewCoin(pair.QuoteDenom(), positionResp.BadDebt.RoundInt()),
-		LiquidationPenalty:    sdk.ZeroDec(),
-		MarkPrice:             markPrice,
-		FundingPayment:        positionResp.FundingPayment,
-		BlockHeight:           ctx.BlockHeight(),
-		BlockTimeMs:           ctx.BlockTime().UnixMilli(),
+		TraderAddress:      traderAddr.String(),
+		Pair:               pair.String(),
+		Margin:             sdk.NewCoin(pair.QuoteDenom(), positionResp.Position.Margin.RoundInt()),
+		PositionNotional:   positionNotional,
+		ExchangedNotional:  positionResp.ExchangedNotionalValue,
+		ExchangedSize:      positionResp.ExchangedPositionSize,
+		TransactionFee:     sdk.NewCoin(pair.QuoteDenom(), transferredFee),
+		PositionSize:       positionResp.Position.Size_,
+		RealizedPnl:        positionResp.RealizedPnl,
+		UnrealizedPnlAfter: positionResp.UnrealizedPnlAfter,
+		BadDebt:            sdk.NewCoin(pair.QuoteDenom(), positionResp.BadDebt.RoundInt()),
+		LiquidationPenalty: sdk.ZeroDec(),
+		MarkPrice:          markPrice,
+		FundingPayment:     positionResp.FundingPayment,
+		BlockHeight:        ctx.BlockHeight(),
+		BlockTimeMs:        ctx.BlockTime().UnixMilli(),
 	})
 }
 
