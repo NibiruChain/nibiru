@@ -69,6 +69,11 @@ func SimulateMsgCreatePool(ak types.AccountKeeper, bk types.BankKeeper, k keeper
 			PoolParams: &poolParams,
 			PoolAssets: poolAssets,
 		}
+		_, err := k.FetchPoolFromPair(ctx, poolAssets[0].Token.Denom, poolAssets[1].Token.Denom)
+		if err == nil {
+			// types.ErrPoolWithSameAssetsExists
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "pool already exists for these tokens"), nil, nil
+		}
 
 		return simulation.GenAndDeliverTxWithRandFees(
 			simulation.OperationInput{
