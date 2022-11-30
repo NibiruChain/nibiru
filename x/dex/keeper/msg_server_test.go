@@ -6,7 +6,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/testutil"
 
-	simapp2 "github.com/NibiruChain/nibiru/simapp"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -274,7 +274,7 @@ func TestCreatePool(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewTestNibiruAppAndContext(true)
 			msgServer := keeper.NewMsgServerImpl(app.DexKeeper)
 
 			if tc.creatorAddr == nil {
@@ -511,7 +511,7 @@ func TestMsgServerJoinPool(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 			poolAddr := testutil.AccAddress()
 			tc.initialPool.Address = poolAddr.String()
@@ -713,7 +713,7 @@ func TestMsgServerExitPool(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 			poolAddr := testutil.AccAddress()
 			tc.initialPool.Address = poolAddr.String()
@@ -1056,7 +1056,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewTestNibiruAppAndContext(true)
 			msgServer := keeper.NewMsgServerImpl(app.DexKeeper)
 
 			// fund pool account
