@@ -97,8 +97,6 @@ func (k Keeper) Liquidate(
 		liquidationResponse.FeeToPerpEcosystemFund,
 	)
 
-	k.UpdateMetrics(ctx, pair)
-
 	return feeToLiquidator, feeToFund, nil
 }
 

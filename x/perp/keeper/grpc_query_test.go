@@ -447,58 +447,32 @@ func TestQueryFundingRates(t *testing.T) {
 
 func TestQueryMetrics(t *testing.T) {
 	tests := []struct {
-		name      string
-		Positions []*types.Position
-		NetSize   sdk.Dec
+		name             string
+		BaseAssetAmounts []sdk.Dec
+		NetSize          sdk.Dec
 	}{
 		{
-			name:      "no Positions",
-			Positions: []*types.Position{},
-			NetSize:   sdk.ZeroDec(),
+			name:             "zero net_size",
+			BaseAssetAmounts: []sdk.Dec{},
+			NetSize:          sdk.ZeroDec(),
 		},
 		{
-			name: "single position",
-			Positions: []*types.Position{
-				{
-					Pair:                            common.Pair_BTC_NUSD,
-					Size_:                           sdk.NewDec(10),
-					OpenNotional:                    sdk.NewDec(10),
-					Margin:                          sdk.NewDec(10),
-					BlockNumber:                     1,
-					LatestCumulativePremiumFraction: sdk.ZeroDec(),
-				},
+			name: "positice net_size",
+			BaseAssetAmounts: []sdk.Dec{
+				sdk.NewDec(10),
+				sdk.NewDec(20),
+				sdk.NewDec(30),
 			},
-			NetSize: sdk.NewDec(10),
+			NetSize: sdk.NewDec(60),
 		},
 		{
-			name: "multiple Positions",
-			Positions: []*types.Position{
-				{
-					Pair:                            common.Pair_BTC_NUSD,
-					Size_:                           sdk.NewDec(10),
-					OpenNotional:                    sdk.NewDec(10),
-					Margin:                          sdk.NewDec(10),
-					BlockNumber:                     1,
-					LatestCumulativePremiumFraction: sdk.ZeroDec(),
-				},
-				{
-					Pair:                            common.Pair_BTC_NUSD,
-					Size_:                           sdk.NewDec(20),
-					OpenNotional:                    sdk.NewDec(20),
-					Margin:                          sdk.NewDec(20),
-					BlockNumber:                     1,
-					LatestCumulativePremiumFraction: sdk.ZeroDec(),
-				},
-				{
-					Pair:                            common.Pair_ETH_NUSD,
-					Size_:                           sdk.NewDec(10),
-					OpenNotional:                    sdk.NewDec(10),
-					Margin:                          sdk.NewDec(10),
-					BlockNumber:                     1,
-					LatestCumulativePremiumFraction: sdk.ZeroDec(),
-				},
+			name: "negative net_size",
+			BaseAssetAmounts: []sdk.Dec{
+				sdk.NewDec(10),
+				sdk.NewDec(-50),
+				sdk.NewDec(30),
 			},
-			NetSize: sdk.NewDec(30),
+			NetSize: sdk.NewDec(-10),
 		},
 	}
 
@@ -511,17 +485,12 @@ func TestQueryMetrics(t *testing.T) {
 				/* baseReserve */ sdk.NewDec(100_000),
 			)
 
-			t.Log("initialize position")
-			for _, position := range tc.Positions {
-				currentPosition := position
-				currentPosition.TraderAddress = testutil.AccAddress().String()
-				setPosition(*perpKeeper, ctx, *currentPosition)
+			t.Log("call OnSwapEnd hook")
+			for _, baseAssetAmount := range tc.BaseAssetAmounts {
+				perpKeeper.OnSwapEnd(ctx, common.Pair_BTC_NUSD, sdk.ZeroDec(), baseAssetAmount)
 			}
-			perpKeeper.UpdateMetrics(ctx, common.Pair_BTC_NUSD)
-			perpKeeper.UpdateMetrics(ctx, common.Pair_ETH_NUSD)
 
-			t.Log("query position")
-			ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second))
+			t.Log("query metrics")
 			resp, err := queryServer.Metrics(
 				sdk.WrapSDKContext(ctx),
 				&types.QueryMetricsRequest{
