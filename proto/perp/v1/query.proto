@@ -25,7 +25,7 @@ service Query {
     option (google.api.http).get = "/nibiru/perp/positions";
   }  
 
-  // Queries the latest cumulative premium fraction
+  // Queries the latest cumulative premium fraction and the estimated next cumulative premium fraction.
   rpc CumulativePremiumFraction(QueryCumulativePremiumFractionRequest)
       returns (QueryCumulativePremiumFractionResponse) {
     option (google.api.http).get = "/nibiru/perp/cumulative_premium_fraction";
@@ -111,6 +111,11 @@ message QueryCumulativePremiumFractionRequest {
 message QueryCumulativePremiumFractionResponse {
   // The latest cumulative premium fraction.
   string cumulative_premium_fraction = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  string estimated_next_cumulative_premium_fraction = 2[
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
