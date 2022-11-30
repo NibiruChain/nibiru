@@ -186,8 +186,6 @@ func (k Keeper) afterPositionUpdate(
 		positionNotional = positionResp.Position.OpenNotional.Sub(positionResp.UnrealizedPnlAfter)
 	}
 
-	k.UpdateMetrics(ctx, pair)
-
 	return ctx.EventManager().EmitTypedEvent(&types.PositionChangedEvent{
 		TraderAddress:      traderAddr.String(),
 		Pair:               pair.String(),
@@ -205,22 +203,6 @@ func (k Keeper) afterPositionUpdate(
 		BlockHeight:        ctx.BlockHeight(),
 		BlockTimeMs:        ctx.BlockTime().UnixMilli(),
 	})
-}
-
-// UpdateMetrics recalculates perp metrics for a particular pair.
-func (k Keeper) UpdateMetrics(ctx sdk.Context, pair common.AssetPair) {
-	pairString := pair.String()
-	var netSize = sdk.NewDec(0)
-
-	iter := k.Positions.Iterate(ctx, collections.PairRange[common.AssetPair, sdk.AccAddress]{})
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		if pair == iter.Key().K1() {
-			netSize = netSize.Add(iter.Value().Size_)
-		}
-	}
-	k.Metrics.Insert(ctx, pairString, types.Metrics{Pair: pairString, NetSize: netSize})
 }
 
 /*
