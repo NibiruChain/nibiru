@@ -285,8 +285,8 @@ func TestOpenPositionSuccess(t *testing.T) {
 				},
 			)
 			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-				Pair:                       common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
 			t.Log("initialize trader funds")
@@ -545,8 +545,8 @@ func TestOpenPositionError(t *testing.T) {
 				},
 			)
 			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-				Pair:                       common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
 			t.Log("initialize trader funds")

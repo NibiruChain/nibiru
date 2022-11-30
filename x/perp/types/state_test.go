@@ -107,8 +107,8 @@ func TestPairMetadata_Validate(t *testing.T) {
 	cases := map[string]test{
 		"success": {
 			p: &PairMetadata{
-				Pair:                       common.MustNewAssetPair("pair1:pair2"),
-				CumulativePremiumFractions: []sdk.Dec{sdk.MustNewDecFromStr("0.1")},
+				Pair:                            common.MustNewAssetPair("pair1:pair2"),
+				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.1"),
 			},
 		},
 
@@ -119,8 +119,8 @@ func TestPairMetadata_Validate(t *testing.T) {
 
 		"invalid cumulative funding rate": {
 			p: &PairMetadata{
-				Pair:                       common.MustNewAssetPair("pair1:pair2"),
-				CumulativePremiumFractions: []sdk.Dec{{}},
+				Pair:                            common.MustNewAssetPair("pair1:pair2"),
+				LatestCumulativePremiumFraction: sdk.Dec{},
 			},
 			wantErr: true,
 		},

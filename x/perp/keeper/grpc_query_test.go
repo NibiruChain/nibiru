@@ -20,7 +20,7 @@ import (
 
 func initAppVpools(
 	t *testing.T, quoteAssetReserve sdk.Dec, baseAssetReserve sdk.Dec,
-) (sdk.Context, *keeper.Keeper, types.QueryServer) {
+) (sdk.Context, *simapp.NibiruTestApp, types.QueryServer) {
 	t.Log("initialize app and keeper")
 	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
 	perpKeeper := &nibiruApp.PerpKeeper
@@ -42,10 +42,8 @@ func initAppVpools(
 		},
 	)
 	setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-		Pair: common.Pair_BTC_NUSD,
-		CumulativePremiumFractions: []sdk.Dec{
-			sdk.ZeroDec(),
-		},
+		Pair:                            common.Pair_BTC_NUSD,
+		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 	})
 	vpoolKeeper.CreatePool(
 		ctx,
@@ -61,10 +59,8 @@ func initAppVpools(
 		},
 	)
 	setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-		Pair: common.Pair_ETH_NUSD,
-		CumulativePremiumFractions: []sdk.Dec{
-			sdk.ZeroDec(),
-		},
+		Pair:                            common.Pair_ETH_NUSD,
+		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 	})
 	vpoolKeeper.CreatePool(
 		ctx,
@@ -80,12 +76,10 @@ func initAppVpools(
 		},
 	)
 	setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-		Pair: common.Pair_NIBI_NUSD,
-		CumulativePremiumFractions: []sdk.Dec{
-			sdk.ZeroDec(),
-		},
+		Pair:                            common.Pair_NIBI_NUSD,
+		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 	})
-	return ctx, perpKeeper, queryServer
+	return ctx, nibiruApp, queryServer
 }
 
 func TestQueryPosition(t *testing.T) {
@@ -161,10 +155,10 @@ func TestQueryPosition(t *testing.T) {
 			tc.initialPosition.TraderAddress = traderAddr.String()
 
 			t.Log("initialize app and keeper")
-			ctx, perpKeeper, queryServer := initAppVpools(t, tc.quoteAssetReserve, tc.baseAssetReserve)
+			ctx, app, queryServer := initAppVpools(t, tc.quoteAssetReserve, tc.baseAssetReserve)
 
 			t.Log("initialize position")
-			setPosition(*perpKeeper, ctx, *tc.initialPosition)
+			setPosition(app.PerpKeeper, ctx, *tc.initialPosition)
 
 			t.Log("query position")
 			ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second))
@@ -226,7 +220,7 @@ func TestQueryPositions(t *testing.T) {
 			tc.Positions[0].TraderAddress = traderAddr.String()
 			tc.Positions[0].TraderAddress = traderAddr.String()
 
-			ctx, perpKeeper, queryServer := initAppVpools(
+			ctx, app, queryServer := initAppVpools(
 				t,
 				/* quoteReserve */ sdk.NewDec(100_000),
 				/* baseReserve */ sdk.NewDec(100_000),
@@ -236,7 +230,7 @@ func TestQueryPositions(t *testing.T) {
 			for _, position := range tc.Positions {
 				currentPosition := position
 				currentPosition.TraderAddress = traderAddr.String()
-				setPosition(*perpKeeper, ctx, *currentPosition)
+				setPosition(app.PerpKeeper, ctx, *currentPosition)
 			}
 
 			t.Log("query position")
@@ -255,25 +249,24 @@ func TestQueryPositions(t *testing.T) {
 	}
 }
 
-func TestQueryFundingRates(t *testing.T) {
+func TestQueryCumulativePremiumFraction(t *testing.T) {
 	tests := []struct {
 		name                string
 		initialPairMetadata *types.PairMetadata
 
-		query *types.QueryFundingRatesRequest
+		query *types.QueryCumulativePremiumFractionRequest
 
 		expectErr            bool
-		expectedFundingRates []sdk.Dec
+		expectedLatestCPF    sdk.Dec
+		expectedEstimatedCPF sdk.Dec
 	}{
 		{
 			name: "empty string pair",
 			initialPairMetadata: &types.PairMetadata{
-				Pair: common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{
-					sdk.ZeroDec(),
-				},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
-			query: &types.QueryFundingRatesRequest{
+			query: &types.QueryCumulativePremiumFractionRequest{
 				Pair: "",
 			},
 			expectErr: true,
@@ -281,12 +274,10 @@ func TestQueryFundingRates(t *testing.T) {
 		{
 			name: "pair metadata not found",
 			initialPairMetadata: &types.PairMetadata{
-				Pair: common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{
-					sdk.ZeroDec(),
-				},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
-			query: &types.QueryFundingRatesRequest{
+			query: &types.QueryCumulativePremiumFractionRequest{
 				Pair: "foo:bar",
 			},
 			expectErr: true,
@@ -294,129 +285,15 @@ func TestQueryFundingRates(t *testing.T) {
 		{
 			name: "returns single funding payment",
 			initialPairMetadata: &types.PairMetadata{
-				Pair: common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{
-					sdk.ZeroDec(),
-				},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
-			query: &types.QueryFundingRatesRequest{
+			query: &types.QueryCumulativePremiumFractionRequest{
 				Pair: common.Pair_BTC_NUSD.String(),
 			},
-			expectErr: false,
-			expectedFundingRates: []sdk.Dec{
-				sdk.ZeroDec(),
-			},
-		},
-		{
-			name: "truncates to 48 funding payments",
-			initialPairMetadata: &types.PairMetadata{
-				Pair: common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{
-					sdk.ZeroDec(),
-					sdk.NewDec(1),
-					sdk.NewDec(2),
-					sdk.NewDec(3),
-					sdk.NewDec(4),
-					sdk.NewDec(5),
-					sdk.NewDec(6),
-					sdk.NewDec(7),
-					sdk.NewDec(8),
-					sdk.NewDec(9),
-					sdk.NewDec(10),
-					sdk.NewDec(11),
-					sdk.NewDec(12),
-					sdk.NewDec(13),
-					sdk.NewDec(14),
-					sdk.NewDec(15),
-					sdk.NewDec(16),
-					sdk.NewDec(17),
-					sdk.NewDec(18),
-					sdk.NewDec(19),
-					sdk.NewDec(20),
-					sdk.NewDec(21),
-					sdk.NewDec(22),
-					sdk.NewDec(23),
-					sdk.NewDec(24),
-					sdk.NewDec(25),
-					sdk.NewDec(26),
-					sdk.NewDec(27),
-					sdk.NewDec(28),
-					sdk.NewDec(29),
-					sdk.NewDec(30),
-					sdk.NewDec(31),
-					sdk.NewDec(32),
-					sdk.NewDec(33),
-					sdk.NewDec(34),
-					sdk.NewDec(35),
-					sdk.NewDec(36),
-					sdk.NewDec(37),
-					sdk.NewDec(38),
-					sdk.NewDec(39),
-					sdk.NewDec(40),
-					sdk.NewDec(41),
-					sdk.NewDec(42),
-					sdk.NewDec(43),
-					sdk.NewDec(44),
-					sdk.NewDec(45),
-					sdk.NewDec(46),
-					sdk.NewDec(47),
-					sdk.NewDec(48),
-				},
-			},
-			query: &types.QueryFundingRatesRequest{
-				Pair: common.Pair_BTC_NUSD.String(),
-			},
-			expectErr: false,
-			expectedFundingRates: []sdk.Dec{
-				sdk.NewDec(1),
-				sdk.NewDec(2),
-				sdk.NewDec(3),
-				sdk.NewDec(4),
-				sdk.NewDec(5),
-				sdk.NewDec(6),
-				sdk.NewDec(7),
-				sdk.NewDec(8),
-				sdk.NewDec(9),
-				sdk.NewDec(10),
-				sdk.NewDec(11),
-				sdk.NewDec(12),
-				sdk.NewDec(13),
-				sdk.NewDec(14),
-				sdk.NewDec(15),
-				sdk.NewDec(16),
-				sdk.NewDec(17),
-				sdk.NewDec(18),
-				sdk.NewDec(19),
-				sdk.NewDec(20),
-				sdk.NewDec(21),
-				sdk.NewDec(22),
-				sdk.NewDec(23),
-				sdk.NewDec(24),
-				sdk.NewDec(25),
-				sdk.NewDec(26),
-				sdk.NewDec(27),
-				sdk.NewDec(28),
-				sdk.NewDec(29),
-				sdk.NewDec(30),
-				sdk.NewDec(31),
-				sdk.NewDec(32),
-				sdk.NewDec(33),
-				sdk.NewDec(34),
-				sdk.NewDec(35),
-				sdk.NewDec(36),
-				sdk.NewDec(37),
-				sdk.NewDec(38),
-				sdk.NewDec(39),
-				sdk.NewDec(40),
-				sdk.NewDec(41),
-				sdk.NewDec(42),
-				sdk.NewDec(43),
-				sdk.NewDec(44),
-				sdk.NewDec(45),
-				sdk.NewDec(46),
-				sdk.NewDec(47),
-				sdk.NewDec(48),
-			},
+			expectErr:            false,
+			expectedLatestCPF:    sdk.ZeroDec(),
+			expectedEstimatedCPF: sdk.NewDec(10), // (481 - 1) / 48
 		},
 	}
 
@@ -424,22 +301,26 @@ func TestQueryFundingRates(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Log("initialize app and keeper")
-			nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
-			queryServer := keeper.NewQuerier(nibiruApp.PerpKeeper)
+			ctx, app, queryServer := initAppVpools(t, sdk.NewDec(481_000), sdk.NewDec(1_000))
 
-			t.Log("initialize pair metadata")
-			setPairMetadata(nibiruApp.PerpKeeper, ctx, *tc.initialPairMetadata)
+			t.Log("set index price")
+			oracle := testutil.AccAddress()
+			app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
+			require.NoError(t, app.PricefeedKeeper.PostRawPrice(ctx, oracle, common.Pair_BTC_NUSD.String(), sdk.OneDec(), time.Now().Add(time.Hour)))
+			require.NoError(t, app.PricefeedKeeper.GatherRawPrices(ctx, common.DenomBTC, common.DenomNUSD))
 
-			t.Log("query funding payments")
-			resp, err := queryServer.FundingRates(sdk.WrapSDKContext(ctx), tc.query)
+			t.Log("advance block time to realize index price")
+			ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second))
+
+			t.Log("query cumulative premium fraction")
+			resp, err := queryServer.CumulativePremiumFraction(sdk.WrapSDKContext(ctx), tc.query)
 
 			if tc.expectErr {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
-
-				t.Log("assert response")
-				assert.EqualValues(t, tc.expectedFundingRates, resp.CumulativeFundingRates)
+				assert.EqualValues(t, tc.expectedLatestCPF, resp.CumulativePremiumFraction)
+				assert.EqualValues(t, tc.expectedEstimatedCPF, resp.EstimatedNextCumulativePremiumFraction)
 			}
 		})
 	}
@@ -479,7 +360,7 @@ func TestQueryMetrics(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			ctx, perpKeeper, queryServer := initAppVpools(
+			ctx, app, queryServer := initAppVpools(
 				t,
 				/* quoteReserve */ sdk.NewDec(100_000),
 				/* baseReserve */ sdk.NewDec(100_000),
@@ -487,7 +368,7 @@ func TestQueryMetrics(t *testing.T) {
 
 			t.Log("call OnSwapEnd hook")
 			for _, baseAssetAmount := range tc.BaseAssetAmounts {
-				perpKeeper.OnSwapEnd(ctx, common.Pair_BTC_NUSD, sdk.ZeroDec(), baseAssetAmount)
+				app.PerpKeeper.OnSwapEnd(ctx, common.Pair_BTC_NUSD, sdk.ZeroDec(), baseAssetAmount)
 			}
 
 			t.Log("query metrics")

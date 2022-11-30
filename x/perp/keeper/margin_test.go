@@ -82,10 +82,8 @@ func TestAddMarginSuccess(t *testing.T) {
 
 			t.Log("set pair metadata")
 			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-				Pair: common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{
-					tc.latestCumulativePremiumFraction,
-				},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: tc.latestCumulativePremiumFraction,
 			},
 			)
 
@@ -190,8 +188,8 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
 				setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-					Pair:                       pair,
-					CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+					Pair:                            pair,
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				})
 
 				t.Log("increment block height and time for twap calculation")

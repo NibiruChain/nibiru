@@ -212,11 +212,8 @@ func TestIncreasePosition(t *testing.T) {
 				t.Log("set up pair metadata and last cumulative funding rate")
 				setPairMetadata(perpKeeper, ctx,
 					types.PairMetadata{
-						Pair: common.Pair_BTC_NUSD,
-						CumulativePremiumFractions: []sdk.Dec{
-							sdk.ZeroDec(),
-							sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
-						},
+						Pair:                            common.Pair_BTC_NUSD,
+						LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 					},
 				)
 			},
@@ -288,11 +285,8 @@ func TestIncreasePosition(t *testing.T) {
 
 				t.Log("set up pair metadata and last cumulative funding rate")
 				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-					Pair: common.Pair_BTC_NUSD,
-					CumulativePremiumFractions: []sdk.Dec{
-						sdk.ZeroDec(),
-						sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
-					},
+					Pair:                            common.Pair_BTC_NUSD,
+					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 				})
 			},
 			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error) {
@@ -366,11 +360,8 @@ func TestIncreasePosition(t *testing.T) {
 
 				t.Log("set up pair metadata and last cumulative funding rate")
 				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-					Pair: common.Pair_BTC_NUSD,
-					CumulativePremiumFractions: []sdk.Dec{
-						sdk.ZeroDec(),
-						sdk.MustNewDecFromStr("0.2"), // 0.2 NUSD / BTC
-					},
+					Pair:                            common.Pair_BTC_NUSD,
+					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.2"),
 				})
 			},
 			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error) {
@@ -442,11 +433,8 @@ func TestIncreasePosition(t *testing.T) {
 
 				t.Log("set up pair metadata and last cumulative funding rate")
 				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-					Pair: common.Pair_BTC_NUSD,
-					CumulativePremiumFractions: []sdk.Dec{
-						sdk.ZeroDec(),
-						sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
-					},
+					Pair:                            common.Pair_BTC_NUSD,
+					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 				})
 			},
 			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error) {
@@ -518,11 +506,8 @@ func TestIncreasePosition(t *testing.T) {
 
 				t.Log("set up pair metadata and last cumulative funding rate")
 				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-					Pair: common.Pair_BTC_NUSD,
-					CumulativePremiumFractions: []sdk.Dec{
-						sdk.ZeroDec(),
-						sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
-					},
+					Pair:                            common.Pair_BTC_NUSD,
+					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 				})
 			},
 			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error) {
@@ -597,11 +582,8 @@ func TestIncreasePosition(t *testing.T) {
 
 				t.Log("set up pair metadata and last cumulative funding rate")
 				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-					Pair: common.Pair_BTC_NUSD,
-					CumulativePremiumFractions: []sdk.Dec{
-						sdk.ZeroDec(),
-						sdk.MustNewDecFromStr("-0.3"), // - 0.3 NUSD / BTC
-					},
+					Pair:                            common.Pair_BTC_NUSD,
+					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("-0.3"),
 				})
 			},
 			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error) {
@@ -682,11 +664,8 @@ func TestClosePositionEntirely(t *testing.T) {
 				BlockNumber:                     0,
 			},
 			pairMetadata: types.PairMetadata{
-				Pair: common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{
-					sdk.ZeroDec(),
-					sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
-				},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 			},
 			direction:              vpooltypes.Direction_ADD_TO_POOL,
 			newPositionNotional:    sdk.NewDec(200),
@@ -712,11 +691,8 @@ func TestClosePositionEntirely(t *testing.T) {
 				BlockNumber:                     0,
 			},
 			pairMetadata: types.PairMetadata{
-				Pair: common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{
-					sdk.ZeroDec(),
-					sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
-				},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 			},
 			direction:              vpooltypes.Direction_ADD_TO_POOL,
 			newPositionNotional:    sdk.NewDec(100),
@@ -742,11 +718,8 @@ func TestClosePositionEntirely(t *testing.T) {
 				BlockNumber:                     0,
 			},
 			pairMetadata: types.PairMetadata{
-				Pair: common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{
-					sdk.ZeroDec(),
-					sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
-				},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 			},
 			direction:              vpooltypes.Direction_ADD_TO_POOL,
 			newPositionNotional:    sdk.NewDec(100),
@@ -774,11 +747,8 @@ func TestClosePositionEntirely(t *testing.T) {
 				BlockNumber:                     0,
 			},
 			pairMetadata: types.PairMetadata{
-				Pair: common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{
-					sdk.ZeroDec(),
-					sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
-				},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 			},
 			direction:              vpooltypes.Direction_REMOVE_FROM_POOL,
 			newPositionNotional:    sdk.NewDec(100),
@@ -804,11 +774,8 @@ func TestClosePositionEntirely(t *testing.T) {
 				BlockNumber:                     0,
 			},
 			pairMetadata: types.PairMetadata{
-				Pair: common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{
-					sdk.ZeroDec(),
-					sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
-				},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 			},
 			direction:              vpooltypes.Direction_REMOVE_FROM_POOL,
 			newPositionNotional:    sdk.NewDec(105),
@@ -834,11 +801,8 @@ func TestClosePositionEntirely(t *testing.T) {
 				BlockNumber:                     0,
 			},
 			pairMetadata: types.PairMetadata{
-				Pair: common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{
-					sdk.ZeroDec(),
-					sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
-				},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 			},
 			direction:              vpooltypes.Direction_REMOVE_FROM_POOL,
 			newPositionNotional:    sdk.NewDec(150),
@@ -905,7 +869,7 @@ func TestClosePositionEntirely(t *testing.T) {
 			assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Margin)       // always zero
 			assert.EqualValues(t, sdk.ZeroDec(), resp.Position.OpenNotional) // always zero
 			assert.EqualValues(t,
-				tc.pairMetadata.CumulativePremiumFractions[len(tc.pairMetadata.CumulativePremiumFractions)-1],
+				tc.pairMetadata.LatestCumulativePremiumFraction,
 				resp.Position.LatestCumulativePremiumFraction,
 			)
 			assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
@@ -1176,11 +1140,8 @@ func TestDecreasePosition(t *testing.T) {
 
 			t.Log("set up pair metadata and last cumulative funding rate")
 			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-				Pair: common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{
-					sdk.ZeroDec(),
-					sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
-				},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 			})
 
 			t.Log("decrease position")
@@ -1590,10 +1551,8 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 
 			t.Log("set up pair metadata and last cumulative funding rate")
 			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-				Pair: common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{
-					sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
-				},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 			})
 
 			t.Log("close position and open reverse")
@@ -1893,10 +1852,8 @@ func TestClosePosition(t *testing.T) {
 
 			t.Log("set up pair metadata and last cumulative funding rate")
 			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-				Pair: common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{
-					sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
-				},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 			})
 
 			t.Log("close position")
@@ -2031,10 +1988,8 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 
 			t.Log("set up pair metadata and last cumulative funding rate")
 			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-				Pair: common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{
-					sdk.MustNewDecFromStr("0.02"), // 0.02 NUSD / BTC
-				},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 			})
 
 			t.Log("close position")
