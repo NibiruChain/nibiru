@@ -111,10 +111,8 @@ func TestQueryPosition(t *testing.T) {
 				},
 			)
 			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-				Pair: common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{
-					sdk.ZeroDec(),
-				},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
 			t.Log("initialize position")
@@ -201,10 +199,8 @@ func TestQueryPositions(t *testing.T) {
 				},
 			)
 			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-				Pair: common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{
-					sdk.ZeroDec(),
-				},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 			vpoolKeeper.CreatePool(
 				ctx,
@@ -220,10 +216,8 @@ func TestQueryPositions(t *testing.T) {
 				},
 			)
 			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-				Pair: common.Pair_ETH_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{
-					sdk.ZeroDec(),
-				},
+				Pair:                            common.Pair_ETH_NUSD,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 			vpoolKeeper.CreatePool(
 				ctx,
@@ -239,10 +233,8 @@ func TestQueryPositions(t *testing.T) {
 				},
 			)
 			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-				Pair: common.Pair_NIBI_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{
-					sdk.ZeroDec(),
-				},
+				Pair:                            common.Pair_NIBI_NUSD,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
 			t.Log("initialize position")
@@ -281,10 +273,8 @@ func TestQueryFundingRates(t *testing.T) {
 		{
 			name: "empty string pair",
 			initialPairMetadata: &types.PairMetadata{
-				Pair: common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{
-					sdk.ZeroDec(),
-				},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
 			query: &types.QueryFundingRatesRequest{
 				Pair: "",
@@ -294,10 +284,8 @@ func TestQueryFundingRates(t *testing.T) {
 		{
 			name: "pair metadata not found",
 			initialPairMetadata: &types.PairMetadata{
-				Pair: common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{
-					sdk.ZeroDec(),
-				},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
 			query: &types.QueryFundingRatesRequest{
 				Pair: "foo:bar",
@@ -307,10 +295,8 @@ func TestQueryFundingRates(t *testing.T) {
 		{
 			name: "returns single funding payment",
 			initialPairMetadata: &types.PairMetadata{
-				Pair: common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{
-					sdk.ZeroDec(),
-				},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
 			query: &types.QueryFundingRatesRequest{
 				Pair: common.Pair_BTC_NUSD.String(),
@@ -323,112 +309,15 @@ func TestQueryFundingRates(t *testing.T) {
 		{
 			name: "truncates to 48 funding payments",
 			initialPairMetadata: &types.PairMetadata{
-				Pair: common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{
-					sdk.ZeroDec(),
-					sdk.NewDec(1),
-					sdk.NewDec(2),
-					sdk.NewDec(3),
-					sdk.NewDec(4),
-					sdk.NewDec(5),
-					sdk.NewDec(6),
-					sdk.NewDec(7),
-					sdk.NewDec(8),
-					sdk.NewDec(9),
-					sdk.NewDec(10),
-					sdk.NewDec(11),
-					sdk.NewDec(12),
-					sdk.NewDec(13),
-					sdk.NewDec(14),
-					sdk.NewDec(15),
-					sdk.NewDec(16),
-					sdk.NewDec(17),
-					sdk.NewDec(18),
-					sdk.NewDec(19),
-					sdk.NewDec(20),
-					sdk.NewDec(21),
-					sdk.NewDec(22),
-					sdk.NewDec(23),
-					sdk.NewDec(24),
-					sdk.NewDec(25),
-					sdk.NewDec(26),
-					sdk.NewDec(27),
-					sdk.NewDec(28),
-					sdk.NewDec(29),
-					sdk.NewDec(30),
-					sdk.NewDec(31),
-					sdk.NewDec(32),
-					sdk.NewDec(33),
-					sdk.NewDec(34),
-					sdk.NewDec(35),
-					sdk.NewDec(36),
-					sdk.NewDec(37),
-					sdk.NewDec(38),
-					sdk.NewDec(39),
-					sdk.NewDec(40),
-					sdk.NewDec(41),
-					sdk.NewDec(42),
-					sdk.NewDec(43),
-					sdk.NewDec(44),
-					sdk.NewDec(45),
-					sdk.NewDec(46),
-					sdk.NewDec(47),
-					sdk.NewDec(48),
-				},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.OneDec(),
 			},
 			query: &types.QueryFundingRatesRequest{
 				Pair: common.Pair_BTC_NUSD.String(),
 			},
 			expectErr: false,
 			expectedFundingRates: []sdk.Dec{
-				sdk.NewDec(1),
-				sdk.NewDec(2),
-				sdk.NewDec(3),
-				sdk.NewDec(4),
-				sdk.NewDec(5),
-				sdk.NewDec(6),
-				sdk.NewDec(7),
-				sdk.NewDec(8),
-				sdk.NewDec(9),
-				sdk.NewDec(10),
-				sdk.NewDec(11),
-				sdk.NewDec(12),
-				sdk.NewDec(13),
-				sdk.NewDec(14),
-				sdk.NewDec(15),
-				sdk.NewDec(16),
-				sdk.NewDec(17),
-				sdk.NewDec(18),
-				sdk.NewDec(19),
-				sdk.NewDec(20),
-				sdk.NewDec(21),
-				sdk.NewDec(22),
-				sdk.NewDec(23),
-				sdk.NewDec(24),
-				sdk.NewDec(25),
-				sdk.NewDec(26),
-				sdk.NewDec(27),
-				sdk.NewDec(28),
-				sdk.NewDec(29),
-				sdk.NewDec(30),
-				sdk.NewDec(31),
-				sdk.NewDec(32),
-				sdk.NewDec(33),
-				sdk.NewDec(34),
-				sdk.NewDec(35),
-				sdk.NewDec(36),
-				sdk.NewDec(37),
-				sdk.NewDec(38),
-				sdk.NewDec(39),
-				sdk.NewDec(40),
-				sdk.NewDec(41),
-				sdk.NewDec(42),
-				sdk.NewDec(43),
-				sdk.NewDec(44),
-				sdk.NewDec(45),
-				sdk.NewDec(46),
-				sdk.NewDec(47),
-				sdk.NewDec(48),
+				sdk.OneDec(),
 			},
 		},
 	}

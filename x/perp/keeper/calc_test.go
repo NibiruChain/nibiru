@@ -58,13 +58,12 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					},
 				)
-				fundingRates := []sdk.Dec{sdk.ZeroDec()} // fPayment -> 0
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
 				setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-					Pair:                       pair,
-					CumulativePremiumFractions: fundingRates,
+					Pair:                            pair,
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				})
 
 				pos := &types.Position{
@@ -72,7 +71,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 					Pair:                            pair,
 					Margin:                          sdk.NewDec(100),
 					Size_:                           sdk.NewDec(200),
-					LatestCumulativePremiumFraction: fundingRates[0],
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				}
 
 				marginDelta := sdk.NewDec(-300)
@@ -112,17 +111,12 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					},
 				)
-				fundingRates := []sdk.Dec{
-					sdk.MustNewDecFromStr("0.25"),
-					sdk.MustNewDecFromStr("0.5"),
-					sdk.MustNewDecFromStr("0.75"),
-				}
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
 				setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-					Pair:                       pair,
-					CumulativePremiumFractions: fundingRates,
+					Pair:                            pair,
+					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.75"),
 				})
 
 				pos := &types.Position{
@@ -130,7 +124,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 					Pair:                            pair,
 					Margin:                          sdk.NewDec(100),
 					Size_:                           sdk.NewDec(200),
-					LatestCumulativePremiumFraction: fundingRates[1],
+					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.5"),
 				}
 
 				marginDelta := sdk.NewDec(0)

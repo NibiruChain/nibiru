@@ -129,5 +129,5 @@ func (k Keeper) getLatestCumulativePremiumFraction(
 		return sdk.Dec{}, err
 	}
 	// this should never fail
-	return pairMetadata.CumulativePremiumFractions[len(pairMetadata.CumulativePremiumFractions)-1], nil
+	return pairMetadata.LatestCumulativePremiumFraction, nil
 }

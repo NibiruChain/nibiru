@@ -134,18 +134,7 @@ func (q queryServer) FundingRates(
 		return nil, status.Errorf(codes.NotFound, "could not find pair: %s", req.Pair)
 	}
 
-	var fundingRates []sdk.Dec
-
-	// truncate to most recent 48 funding payments
-	// given 30 minute funding rate calculations, this should give the last 24 hours of funding payments
-	numFundingRates := len(pairMetadata.CumulativePremiumFractions)
-	if numFundingRates >= 48 {
-		fundingRates = pairMetadata.CumulativePremiumFractions[numFundingRates-48 : numFundingRates]
-	} else {
-		fundingRates = pairMetadata.CumulativePremiumFractions
-	}
-
 	return &types.QueryFundingRatesResponse{
-		CumulativeFundingRates: fundingRates,
+		CumulativeFundingRates: []sdk.Dec{pairMetadata.LatestCumulativePremiumFraction},
 	}, nil
 }

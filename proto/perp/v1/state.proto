@@ -125,11 +125,11 @@ message Position {
 message PairMetadata {
   common.AssetPair pair = 1 [ (gogoproto.nullable) = false ];
 
-  // The historical list of cumulative premium fractions for a given pair.
-  // Calculated once per epoch.
+  // Latest cumulative premium fraction for a given pair.
+  // Calculated once per funding rate interval.
   // A premium fraction is the difference between mark and index, divided by the number of payments per day.
   // (mark - index) / # payments in a day
-  repeated string cumulative_premium_fractions = 2 [
+  string latest_cumulative_premium_fraction = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];

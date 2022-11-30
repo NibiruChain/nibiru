@@ -105,18 +105,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	perpGenesis := perptypes.DefaultGenesis()
 	perpGenesis.PairMetadata = []perptypes.PairMetadata{
 		{
-			Pair: common.Pair_BTC_NUSD,
-			CumulativePremiumFractions: []sdk.Dec{
-				sdk.ZeroDec(),
-				sdk.OneDec(),
-				sdk.NewDec(2),
-			},
+			Pair:                            common.Pair_BTC_NUSD,
+			LatestCumulativePremiumFraction: sdk.NewDec(2),
 		},
 		{
-			Pair: common.Pair_ETH_NUSD,
-			CumulativePremiumFractions: []sdk.Dec{
-				sdk.ZeroDec(),
-			},
+			Pair:                            common.Pair_ETH_NUSD,
+			LatestCumulativePremiumFraction: sdk.ZeroDec(),
 		},
 	}
 	perpGenesis.Params.WhitelistedLiquidators = []string{"nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m"} // address associated with mnemonic below
@@ -366,7 +360,7 @@ func (s *IntegrationTestSuite) TestQueryCumulativePremiumFractions() {
 	s.T().Log("get cumulative funding payments")
 	queryResp, err := testutilcli.QueryFundingRates(val.ClientCtx, common.Pair_BTC_NUSD)
 	s.NoError(err)
-	s.EqualValues([]sdk.Dec{sdk.ZeroDec(), sdk.OneDec(), sdk.NewDec(2)}, queryResp.CumulativeFundingRates)
+	s.EqualValues([]sdk.Dec{sdk.NewDec(2)}, queryResp.CumulativeFundingRates)
 }
 
 func (s *IntegrationTestSuite) TestRemoveMargin() {

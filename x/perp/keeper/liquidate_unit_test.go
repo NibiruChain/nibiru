@@ -103,10 +103,8 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 
 			t.Log("set pair metadata")
 			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-				Pair: common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{
-					sdk.ZeroDec(),
-				},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
 			t.Log("mock vpool keeper")
@@ -277,10 +275,8 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 
 			t.Log("set pair metadata")
 			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-				Pair: common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{
-					sdk.ZeroDec(),
-				},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
 			t.Log("mock vpool keeper")
@@ -447,10 +443,8 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 
 			t.Log("set pair metadata")
 			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-				Pair: common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{
-					sdk.ZeroDec(),
-				},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
 			t.Log("mock vpool keeper")
@@ -925,10 +919,8 @@ func TestKeeper_ExecuteFullLiquidation(t *testing.T) {
 			newParams.LiquidationFeeRatio = tc.liquidationFee
 			perpKeeper.SetParams(ctx, newParams)
 			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-				Pair: common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{
-					sdk.ZeroDec(), // zero funding payment for this test case
-				},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
 			t.Log("mock vpool")
@@ -1218,10 +1210,8 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 			newParams.PartialLiquidationRatio = tc.partialLiquidationRatio
 			perpKeeper.SetParams(ctx, newParams)
 			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-				Pair: common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{
-					sdk.ZeroDec(), // zero funding payment for this test case
-				},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
 			t.Log("mock vpool")
