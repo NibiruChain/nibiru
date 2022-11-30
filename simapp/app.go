@@ -1074,6 +1074,7 @@ func initParamsKeeper(
 	// ibc params keepers
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
+	// wasm params keepers
 	paramsKeeper.Subspace(wasm.ModuleName)
 
 	return paramsKeeper

@@ -35,8 +35,8 @@ func TestIntegrationTestSuite(t *testing.T) {
 var START_VPOOLS = map[common.AssetPair]vpooltypes.Vpool{
 	common.Pair_ETH_NUSD: {
 		Pair:              common.Pair_ETH_NUSD,
-		BaseAssetReserve:  sdk.NewDec(10_000_000),
-		QuoteAssetReserve: sdk.NewDec(60_000_000_000),
+		BaseAssetReserve:  sdk.NewDec(10 * common.Precision),
+		QuoteAssetReserve: sdk.NewDec(60_000 * common.Precision),
 		Config: vpooltypes.VpoolConfig{
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
@@ -48,7 +48,7 @@ var START_VPOOLS = map[common.AssetPair]vpooltypes.Vpool{
 	common.Pair_NIBI_NUSD: {
 		Pair:              common.Pair_NIBI_NUSD,
 		BaseAssetReserve:  sdk.NewDec(500_000),
-		QuoteAssetReserve: sdk.NewDec(5_000_000),
+		QuoteAssetReserve: sdk.NewDec(5 * common.Precision),
 		Config: vpooltypes.VpoolConfig{
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
@@ -98,8 +98,8 @@ func (s *IntegrationTestSuite) TestCmdCreatePoolProposal() {
 		Title:             "Create ETH:USD pool",
 		Description:       "Creates an ETH:USD pool",
 		Pair:              "ETH:USD",
-		QuoteAssetReserve: sdk.NewDec(1_000_000),
-		BaseAssetReserve:  sdk.NewDec(1_000_000),
+		QuoteAssetReserve: sdk.NewDec(1 * common.Precision),
+		BaseAssetReserve:  sdk.NewDec(1 * common.Precision),
 		Config: vpooltypes.VpoolConfig{
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.05"),
