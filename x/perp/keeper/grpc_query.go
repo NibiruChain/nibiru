@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"time"
 
 	"github.com/NibiruChain/collections"
 
@@ -135,8 +136,33 @@ func (q queryServer) CumulativePremiumFraction(
 		return nil, status.Errorf(codes.NotFound, "could not find pair: %s", req.Pair)
 	}
 
+	if !q.k.VpoolKeeper.ExistsPool(ctx, pairMetadata.Pair) {
+		return nil, status.Errorf(codes.NotFound, "could not find pair: %s", req.Pair)
+	}
+
+	indexTWAP, err := q.k.PricefeedKeeper.GetCurrentTWAP(ctx, pairMetadata.Pair.Token0, pairMetadata.Pair.Token1)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "failed to fetch twap index price for pair: %s", req.Pair)
+	}
+	if indexTWAP.IsZero() {
+		return nil, status.Errorf(codes.FailedPrecondition, "twap index price for pair: %s is zero", req.Pair)
+	}
+
+	markTwap, err := q.k.VpoolKeeper.GetMarkPriceTWAP(ctx, pairMetadata.Pair, q.k.GetParams(ctx).TwapLookbackWindow)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "failed to fetch twap mark price for pair: %s", req.Pair)
+	}
+	if markTwap.IsZero() {
+		return nil, status.Errorf(codes.FailedPrecondition, "twap mark price for pair: %s is zero", req.Pair)
+	}
+
+	epochInfo := q.k.EpochKeeper.GetEpochInfo(ctx, q.k.GetParams(ctx).FundingRateInterval)
+	intervalsPerDay := (24 * time.Hour) / epochInfo.Duration
+	premiumFraction := markTwap.Sub(indexTWAP).QuoInt64(int64(intervalsPerDay))
+
 	return &types.QueryCumulativePremiumFractionResponse{
-		CumulativePremiumFraction: pairMetadata.LatestCumulativePremiumFraction,
+		CumulativePremiumFraction:              pairMetadata.LatestCumulativePremiumFraction,
+		EstimatedNextCumulativePremiumFraction: pairMetadata.LatestCumulativePremiumFraction.Add(premiumFraction),
 	}, nil
 }
 
