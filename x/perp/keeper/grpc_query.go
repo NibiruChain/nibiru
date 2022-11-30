@@ -149,3 +149,22 @@ func (q queryServer) FundingRates(
 		CumulativeFundingRates: fundingRates,
 	}, nil
 }
+
+func (q queryServer) Metrics(
+	goCtx context.Context, req *types.QueryMetricsRequest,
+) (*types.QueryMetricsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	tokenPair, err := common.NewAssetPair(req.Pair)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid pair: %s", req.Pair)
+	}
+	if !q.k.VpoolKeeper.ExistsPool(ctx, tokenPair) {
+		return nil, status.Errorf(codes.InvalidArgument, "pool not found: %s", req.Pair)
+	}
+	metrics := q.k.Metrics.GetOr(ctx, req.Pair, types.Metrics{Pair: req.Pair, NetSize: sdk.NewDec(0)})
+	return &types.QueryMetricsResponse{Metrics: metrics}, nil
+}
