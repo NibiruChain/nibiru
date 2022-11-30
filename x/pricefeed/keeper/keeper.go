@@ -301,6 +301,7 @@ func (k Keeper) GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string,
 			StartInclusive(ctx.BlockTime().Add(-1*k.GetParams(ctx).TwapLookbackWindow)). // start from earliest timestamp which is current time - twap lockback window
 			EndExclusive(ctx.BlockTime()),                                               // end at current time - exclusive
 	).Values()
+
 	if len(snapshots) == 0 {
 		// if there are no snapshots, return -1 for the price
 		return sdk.OneDec().Neg(), types.ErrNoValidTWAP

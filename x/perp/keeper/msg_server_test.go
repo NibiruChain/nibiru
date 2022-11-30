@@ -90,8 +90,8 @@ func TestMsgServerAddMargin(t *testing.T) {
 				},
 			)
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
-				Pair:                       common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
 			t.Log("fund trader")
@@ -211,8 +211,8 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 				},
 			)
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
-				Pair:                       common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
 			t.Log("fund vault")
@@ -300,8 +300,8 @@ func TestMsgServerOpenPosition(t *testing.T) {
 				},
 			)
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
-				Pair:                       common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
 			traderAddr, err := sdk.AccAddressFromBech32(tc.sender)
@@ -387,8 +387,8 @@ func TestMsgServerClosePosition(t *testing.T) {
 				},
 			)
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
-				Pair:                       common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
 			t.Log("create position")
@@ -466,8 +466,8 @@ func TestMsgServerLiquidate(t *testing.T) {
 				},
 			)
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
-				Pair:                       common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
 
@@ -543,8 +543,8 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 		},
 	)
 	setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
-		Pair:                       pair,
-		CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+		Pair:                            pair,
+		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 	})
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
 
