@@ -165,6 +165,21 @@ test-sim-benchmark-invariants:
 ###############################################################################
 ###                            Lint                                         ###
 ###############################################################################
+release:
+	docker run --rm -v "$(CURDIR)":/code -w /code goreleaser/goreleaser-cross --skip-publish --rm-dist
+
+build-docker: go.sum $(BUILDDIR)/
+	go build -mod=readonly $(BUILD_FLAGS) $(BUILD_ARGS) ./cmd/nibid/main.go
+	tar -czvf build/$(TARNAME).tar.gz build/nibid
+	rm build/nibid
+
+build-linux-docker:
+	BUILD_TAGS=muslc LINK_STATICALLY=true  TARNAME="nibiru_linux_amd64" CC=aarch64-linux-gnu-gcc BUILD_ARGS="-o $(BUILDDIR)/nibid -tags=muslc" CGO_ENABLED=1 LEDGER_ENABLED=false GOOS=linux GOARCH=amd64 $(MAKE) build-docker
+	# TARNAME="nibiru_linux_arm64" BUILD_ARGS="-o $(BUILDDIR)/nibid -tags=muslc" CGO_ENABLED=1 LEDGER_ENABLED=false GOOS=linux GOARCH=arm64 $(MAKE) build-docker
+
+###############################################################################
+###                            Lint                                         ###
+###############################################################################
 
 lint:
 	docker run -v $(CURDIR):/code --rm -w /code golangci/golangci-lint:v1.49-alpine golangci-lint run
