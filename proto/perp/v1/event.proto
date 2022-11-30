@@ -19,59 +19,74 @@ message PositionChangedEvent {
     // owner of the position.
     string trader_address = 2;
   
-    // amount of margin backing the position.
-    cosmos.base.v1beta1.Coin margin = 3[
+    // Amount of collateral (quote units) backing the position after the change.
+    cosmos.base.v1beta1.Coin margin = 3 [
       (gogoproto.moretags) = "yaml:\"margin\"",
       (gogoproto.nullable) = false
     ];
   
-    // margin * leverage * vPrice. 'notional' is the virtual size times the virtual price on 'vpool'.
+    // Position notional (quote units) after the change. In general, 
+    // 'notional = baseAmount * priceQuotePerBase', where size is the baseAmount.
     string position_notional = 4 [
       (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
       (gogoproto.nullable) = false];
   
-    // magnitude of the change to vsize. The vsize is the amount of base assets for the position, margin * leverage * priceBasePerQuote.
-    string exchanged_position_size = 5 [
+    // Exchanged size is the magnitude of the change to position size (base units). 
+    // The size is a signed quantity expressing how much exposure a position has in 
+    // base units of the pair. 
+    string exchanged_size = 5 [
       (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-      (gogoproto.nullable) = false];
+      (gogoproto.nullable) = false
+    ];
 
-    // transaction fee paid
-    cosmos.base.v1beta1.Coin transaction_fee = 6[
+    /**
+     * Exchanged notional is the value of the exchanged size in quote units.
+     * exchangedNotional = posBefore.OpenNotional + (direction * realizedPnl), 
+     * where 'posBefore' is the position before the change, and 
+     * direction is 1 if posBefore.Size > 0 or -1 if posBefore.Size < 0, 
+     */
+    string exchanged_notional = 6 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false
+    ];
+
+    // Transaction fee paid. A "taker" fee.
+    cosmos.base.v1beta1.Coin transaction_fee = 7 [
       (gogoproto.moretags) = "yaml:\"transaction_fee\"",
       (gogoproto.nullable) = false
     ];
   
-    // position virtual size after the change
-    string position_size = 7 [
+    // Position size after the change.
+    string position_size = 8 [
       (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
       (gogoproto.nullable) = false
     ];
   
     // realize profits and losses after the change
-    string realized_pnl = 8 [
+    string realized_pnl = 9 [
       (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
       (gogoproto.nullable) = false
     ];
   
     // unrealized profits and losses after the change
-    string unrealized_pnl_after = 9 [
+    string unrealized_pnl_after = 10 [
       (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
       (gogoproto.nullable) = false
     ];
   
     // Amount of bad debt cleared by the PerpEF during the change. 
     // Bad debt is negative net margin past the liquidation point of a position.
-    cosmos.base.v1beta1.Coin bad_debt = 10 [(gogoproto.nullable) = false];
+    cosmos.base.v1beta1.Coin bad_debt = 11 [(gogoproto.nullable) = false];
   
     // amt of margin (y) lost due to liquidation
-    string liquidation_penalty = 11 [
+    string liquidation_penalty = 12 [
       (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
       (gogoproto.nullable) = false
     ];
 
     // Mark price, synonymous with mark price in this context, is the quotient of
     // the quote reserves and base reserves 
-    string mark_price = 12 [
+    string mark_price = 13 [
       (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
       (gogoproto.nullable) = false
     ];
@@ -82,16 +97,16 @@ message PositionChangedEvent {
     Funding payments act to converge the mark price (vPrice) and index price 
     (average price on major exchanges).
       */
-    string funding_payment = 13 [
+    string funding_payment = 14 [
       (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
       (gogoproto.nullable) = false
     ];
 
     // The block number at which this position was changed.
-    int64 block_height = 14;
+    int64 block_height = 15;
 
     // The block time in unix milliseconds at which this position was changed.
-    int64 block_time_ms = 15;
+    int64 block_time_ms = 16;
 }
 
 // Emitted when a position is liquidated.

@@ -193,3 +193,55 @@ func TestMarshalProposalEditPoolConfig(t *testing.T) {
 	assert.NoErrorf(t, err, "DEBUG proposalJSONString: #%v", proposalJSONString)
 	require.NoError(t, newProposal.ValidateBasic(), newProposal.String())
 }
+
+// --------------------------------------------------------
+// EditSwapInvariantsProposal
+// --------------------------------------------------------
+
+func TestMarshalProposalEditSwapInvariants(t *testing.T) {
+	t.Log("load example json as bytes")
+	proposal := EditSwapInvariantsProposal{
+		Title:       "NIP-4: Change the swap invariant for ATOM, OSMO, and BTC.",
+		Description: "increase swap invariant for many virtual pools",
+		SwapInvariantMaps: []EditSwapInvariantsProposal_SwapInvariantMultiple{
+			{Pair: "uatom:unusd", Multiplier: sdk.NewDec(2)},
+			{Pair: "uosmo:unusd", Multiplier: sdk.NewDec(3)},
+			{Pair: "ubtc:unusd", Multiplier: sdk.NewDec(99)},
+		},
+	}
+	require.NoError(t, proposal.ValidateBasic())
+
+	// proposalJSONString showcases a valid example for the proposal.json file.
+	maps := proposal.SwapInvariantMaps
+	proposalJSONString := fmt.Sprintf(`
+	{
+	  "title": "%v",
+	  "description": "%v",
+	  "swap_invariant_maps": [
+		%s,
+		%s,
+		%s
+	  ]
+	}
+	`, proposal.Title, proposal.Description, maps[0].String(), maps[1].String(), maps[2].String(),
+	)
+
+	tempProposal := EditSwapInvariantsProposal{}
+	err := jsonpb.UnmarshalString(proposalJSONString, &tempProposal)
+	require.NoErrorf(t, err, "DEBUG tempProposal: %v \nproposalJSONString: %v",
+		tempProposal, proposalJSONString)
+
+	proposalJSON := sdktestutil.WriteToNewTempFile(
+		t, proposalJSONString,
+	)
+	contents, err := os.ReadFile(proposalJSON.Name())
+	assert.NoError(t, err)
+
+	t.Log("Unmarshal json bytes into proposal object")
+	encodingConfig := simappparams.MakeTestEncodingConfig()
+
+	newProposal := EditSwapInvariantsProposal{}
+	err = encodingConfig.Marshaler.UnmarshalJSON(contents, &newProposal)
+	assert.NoErrorf(t, err, "DEBUG proposalJSONString: #%v", proposalJSONString)
+	require.NoError(t, newProposal.ValidateBasic(), newProposal.String())
+}
