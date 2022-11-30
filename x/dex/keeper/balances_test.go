@@ -5,7 +5,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/testutil"
 
-	simapp2 "github.com/NibiruChain/nibiru/simapp"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -54,7 +54,7 @@ func TestCheckBalances(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 			// fund user account
 			sender := testutil.AccAddress()
