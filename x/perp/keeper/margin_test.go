@@ -68,8 +68,8 @@ func TestAddMarginSuccess(t *testing.T) {
 			vpoolKeeper.CreatePool(
 				ctx,
 				common.Pair_BTC_NUSD,
-				sdk.NewDec(10_000_000), // 10 tokens
-				sdk.NewDec(5_000_000),  // 5 tokens
+				sdk.NewDec(10*common.Precision), // 10 tokens
+				sdk.NewDec(5*common.Precision),  // 5 tokens
 				vpooltypes.VpoolConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"), // 0.1 ratio
@@ -82,10 +82,8 @@ func TestAddMarginSuccess(t *testing.T) {
 
 			t.Log("set pair metadata")
 			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-				Pair: common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{
-					tc.latestCumulativePremiumFraction,
-				},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: tc.latestCumulativePremiumFraction,
 			},
 			)
 
@@ -140,8 +138,8 @@ func TestRemoveMargin(t *testing.T) {
 				vpoolKeeper.CreatePool(
 					ctx,
 					pair,
-					/* y */ sdk.NewDec(1_000_000), //
-					/* x */ sdk.NewDec(1_000_000), //
+					/* y */ sdk.NewDec(1*common.Precision), //
+					/* x */ sdk.NewDec(1*common.Precision), //
 					vpooltypes.VpoolConfig{
 						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 						FluctuationLimitRatio:  sdk.OneDec(),
@@ -169,8 +167,8 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("Set vpool defined by pair on VpoolKeeper")
 				vpoolKeeper := &nibiruApp.VpoolKeeper
-				quoteReserves := sdk.NewDec(1_000_000)
-				baseReserves := sdk.NewDec(1_000_000)
+				quoteReserves := sdk.NewDec(1 * common.Precision)
+				baseReserves := sdk.NewDec(1 * common.Precision)
 				vpoolKeeper.CreatePool(
 					ctx,
 					pair,
@@ -190,8 +188,8 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
 				setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-					Pair:                       pair,
-					CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+					Pair:                            pair,
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				})
 
 				t.Log("increment block height and time for twap calculation")
@@ -246,7 +244,6 @@ func TestRemoveMargin(t *testing.T) {
 						MarkPrice:          sdk.MustNewDecFromStr("1.00060009"),
 						BlockHeight:        ctx.BlockHeight(),
 						BlockTimeMs:        ctx.BlockTime().UnixMilli(),
-						LiquidationPenalty: sdk.ZeroDec(),
 					},
 				)
 			},

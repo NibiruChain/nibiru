@@ -64,9 +64,9 @@ func TestTWAPriceUpdates(t *testing.T) {
 		New price should be.
 
 		deltaT1: 10minutes / 600_000
-		deltaT2: 5000hours / 18_000_000_000
+		deltaT2: 5000hours / 18_000 * common.Precision
 
-		(0.8 * 600_000 + 0.9 * 18_000_000_000) / 18_000_600_000 = 0.899996666777774074
+		(0.8 * 600_000 + 0.9 * 18_000 * common.Precision) / 18_000_600_000 = 0.899996666777774074
 	*/
 
 	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(10 * time.Minute))
@@ -89,7 +89,7 @@ func TestTWAPriceUpdates(t *testing.T) {
 		deltaT2: 5000h + 10min / 18_000_600_000
 		deltaT3: 5000h + 10min / 18_000_600_000
 
-		(0.82 * 600_000 + 0.8 * 18_000_600_000 + 0.9 * 18_000_000_000) / 36_001_200_000 = 0.849998666711109629
+		(0.82 * 600_000 + 0.8 * 18_000_600_000 + 0.9 * 18_000 * common.Precision) / 36_001_200_000 = 0.849998666711109629
 	*/
 	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(10 * time.Minute))
 	price, err = nibiruApp.PricefeedKeeper.GetCurrentTWAP(
@@ -108,7 +108,7 @@ func TestTWAPriceUpdates(t *testing.T) {
 		deltaT3: 5000h + 10min/ 18_000_600_000
 		deltaT4: 5000h + 10min/ 18_000_600_000
 
-		(0.83 * 600_000 + 0.82 * 18_000_600_000 + 0.8 * 18_000_600_000 + 0.9 * 18_000_000_000) / 54_001_800_000 = 0.839999222248147283
+		(0.83 * 600_000 + 0.82 * 18_000_600_000 + 0.8 * 18_000_600_000 + 0.9 * 18_000 * common.Precision) / 54_001_800_000 = 0.839999222248147283
 	*/
 	setPrice("0.83")
 	runBlock(time.Hour * 5000)
@@ -129,7 +129,7 @@ func TestTWAPriceUpdates(t *testing.T) {
 		deltaT2: 5000h + 10min / 18_000_600_000
 		deltaT4: 2000h - 20min / 7_198_800_000
 
-		(0.83 * 600_000 + 0.82 * 18_000_600_000 + 0.8 * 7_198_800_000) / 25_200_000_000 = 0.839999222248147283
+		(0.83 * 600_000 + 0.82 * 18_000_600_000 + 0.8 * 7_198_800_000) / 25_200* common.Precision = 0.839999222248147283
 	*/
 	setLookbackWindow(ctx, nibiruApp.PricefeedKeeper, 7_000*time.Hour)
 	price, err = nibiruApp.PricefeedKeeper.GetCurrentTWAP(

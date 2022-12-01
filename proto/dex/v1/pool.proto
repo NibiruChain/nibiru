@@ -21,6 +21,25 @@ message PoolParams {
     (gogoproto.moretags) = "yaml:\"exit_fee\"",
     (gogoproto.nullable) = false
   ];
+
+  // Amplification Parameter (A): Larger value of A make the curve better resemble a straight 
+  // line in the center (when pool is near balance).  Highly volatile assets should use a lower value, while assets that 
+  // are closer together may be best with a higher value.
+  // This is only used if the pool_type is set to 1 (stableswap)
+  string A = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.moretags) = "yaml:\"amplification\"",
+    (gogoproto.nullable) = false
+  ];
+
+  PoolType pool_type = 4 [(gogoproto.moretags) = "yaml:\"pool_type\""];
+}
+
+// - `balancer`: Balancer are pools defined by the equation xy=k, extended by the weighs introduced by Balancer.
+// - `stableswap`: Stableswap pools are defined by a combination of constant-product and constant-sum pool
+enum PoolType {
+  BALANCER = 0;
+  STABLESWAP = 1;
 }
 
 // Which assets the pool contains.

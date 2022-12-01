@@ -162,6 +162,10 @@ test-sim-benchmark-invariants:
 	-Enabled=true -NumBlocks=1000 -BlockSize=200 \
 	-Period=1 -Commit=true -Seed=57 -v -timeout 24h
 
+# Require Python3
+test-create-test-cases:
+	@python scripts/testing/stableswap_model.py
+
 ###############################################################################
 ###                            Lint                                         ###
 ###############################################################################

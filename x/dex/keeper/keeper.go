@@ -452,7 +452,7 @@ func (k Keeper) JoinPool(
 	poolAddr := pool.GetAddress()
 
 	var numShares sdk.Int
-	if !shouldSwap {
+	if !shouldSwap || pool.PoolParams.PoolType == types.PoolType_STABLESWAP {
 		numShares, remCoins, err = pool.AddTokensToPool(tokensIn)
 	} else {
 		numShares, remCoins, err = pool.AddAllTokensToPool(tokensIn)

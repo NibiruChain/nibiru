@@ -25,9 +25,15 @@ service Query {
     option (google.api.http).get = "/nibiru/perp/positions";
   }  
 
-  rpc FundingRates(QueryFundingRatesRequest)
-      returns (QueryFundingRatesResponse) {
-    option (google.api.http).get = "/nibiru/perp/funding_rates";
+  // Queries the latest cumulative premium fraction and the estimated next cumulative premium fraction.
+  rpc CumulativePremiumFraction(QueryCumulativePremiumFractionRequest)
+      returns (QueryCumulativePremiumFractionResponse) {
+    option (google.api.http).get = "/nibiru/perp/cumulative_premium_fraction";
+  }
+
+  rpc Metrics(QueryMetricsRequest)
+      returns (QueryMetricsResponse) {
+    option (google.api.http).get = "/nibiru/perp/metrics";
   }
 }
 
@@ -102,16 +108,34 @@ message QueryPositionResponse {
 
 // ---------------------------------------- FundingPayments
 
-message QueryFundingRatesRequest {
+message QueryCumulativePremiumFractionRequest {
   // the pair to query for
   string pair = 1;
 }
 
-message QueryFundingRatesResponse {
-  // a historical list of cumulative funding rates, with the most recent one
-  // last
-  repeated string cumulative_funding_rates = 1 [
+message QueryCumulativePremiumFractionResponse {
+  // The latest cumulative premium fraction.
+  string cumulative_premium_fraction = 1 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  string estimated_next_cumulative_premium_fraction = 2[
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// ---------------------------------------- Metrics
+
+message QueryMetricsRequest {
+  // the pair to query for
+  string pair = 1;
+}
+
+message QueryMetricsResponse {
+  // list of perp metrics
+  Metrics metrics = 1 [
     (gogoproto.nullable) = false
   ];
 }

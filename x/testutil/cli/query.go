@@ -99,9 +99,9 @@ func QueryPosition(ctx client.Context, pair common.AssetPair, trader sdk.AccAddr
 	return &queryResp, nil
 }
 
-func QueryFundingRates(clientCtx client.Context, pair common.AssetPair) (*perptypes.QueryFundingRatesResponse, error) {
-	var queryResp perptypes.QueryFundingRatesResponse
-	if err := ExecQuery(clientCtx, perpcli.CmdQueryFundingRates(), []string{pair.String()}, &queryResp); err != nil {
+func QueryCumulativePremiumFraction(clientCtx client.Context, pair common.AssetPair) (*perptypes.QueryCumulativePremiumFractionResponse, error) {
+	var queryResp perptypes.QueryCumulativePremiumFractionResponse
+	if err := ExecQuery(clientCtx, perpcli.CmdQueryCumulativePremiumFraction(), []string{pair.String()}, &queryResp); err != nil {
 		return nil, err
 	}
 	return &queryResp, nil

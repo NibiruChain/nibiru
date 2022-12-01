@@ -231,7 +231,9 @@ Where pool.json contains:
 	"weights": "1unusd,1uusdc",
 	"initial-deposit": "100unusd,100uusdc",
 	"swap-fee": "0.01",
-	"exit-fee": "0.01"
+	"exit-fee": "0.01",
+	"pool-type": "balancer", // 'balancer' or 'stableswap'
+	"amplification": "10" // Amplification parameter for the stableswap pool
 }
 `,
 				version.AppName,
@@ -289,12 +291,32 @@ Where pool.json contains:
 				}
 			}
 
+			var poolType types.PoolType
+			if pool.PoolType == "balancer" {
+				poolType = types.PoolType_BALANCER
+			} else if pool.PoolType == "stableswap" {
+				poolType = types.PoolType_STABLESWAP
+			} else {
+				return types.ErrInvalidCreatePoolArgs
+			}
+
+			amplification := sdk.ZeroInt()
+			if poolType == types.PoolType_STABLESWAP {
+				var ok bool
+				amplification, ok = sdk.NewIntFromString(pool.Amplification)
+				if !ok { // overflow
+					panic("invalid amplification parameter")
+				}
+			}
+
 			msg := types.NewMsgCreatePool(
 				/*sender=*/ clientCtx.GetFromAddress().String(),
 				poolAssets,
 				&types.PoolParams{
-					SwapFee: sdk.MustNewDecFromStr(pool.SwapFee),
-					ExitFee: sdk.MustNewDecFromStr(pool.ExitFee),
+					SwapFee:  sdk.MustNewDecFromStr(pool.SwapFee),
+					ExitFee:  sdk.MustNewDecFromStr(pool.ExitFee),
+					PoolType: poolType,
+					A:        amplification,
 				},
 			)
 

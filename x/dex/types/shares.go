@@ -141,6 +141,58 @@ func (pool Pool) numSharesOutFromTokensIn(tokensIn sdk.Coins) (
 }
 
 /*
+For a stableswap pool, takes the amount of tokens desired to add to the pool,
+and calculates the number of pool shares and remaining coins after theoretically
+adding the tokensIn to the pool. All tokens are used in this function.
+
+The delta in number of share follows the evolution of the constant of the pool. E.g. if someone bring tokens
+to increase the value D of the pool by 10%, he will receive 10% of the existing token share.
+
+Note that this function is pure/read-only. It only calculates the theoretical amoount
+and doesn't modify the actual state.
+
+args:
+  - tokensIn: a slice of coins to add to the pool
+
+ret:
+  - numShares: the number of LP shares representing the maximal number of tokens added to the pool
+  - remCoins: the remaining number of coins after adding the tokens
+  - err: error if any
+*/
+func (pool Pool) numSharesOutFromTokensInStableSwap(tokensIn sdk.Coins) (
+	numShares sdk.Int, err error,
+) {
+	tokenSupply := pool.TotalShares.Amount
+
+	D0 := sdk.NewInt(int64(pool.getD(pool.PoolAssets).Uint64()))
+
+	var newPoolAssets []PoolAsset
+
+	for assetIndex, poolAsset := range pool.PoolAssets {
+		inAmount := tokensIn.AmountOf(poolAsset.Token.Denom)
+
+		if !inAmount.IsZero() {
+			newAmount := pool.PoolAssets[assetIndex].Token.Amount.Add(inAmount)
+
+			newPoolAssets = append(newPoolAssets, PoolAsset{Token: sdk.NewCoin(poolAsset.Token.Denom, newAmount)})
+		} else {
+			newPoolAssets = append(newPoolAssets, poolAsset)
+		}
+	}
+
+	D1 := sdk.NewInt(int64(pool.getD(newPoolAssets).Uint64()))
+	if D1.LT(D0) {
+		// Should not happen
+		panic(nil)
+	}
+
+	// Calculate, how much pool tokens to mint
+	numShares = tokenSupply.Mul(D1.Sub(D0)).Quo(D0)
+
+	return
+}
+
+/*
 Calculates the number of tokens to remove from liquidity given LP shares returned to the pool.
 
 Note that this function is pure/read-only. It only calculates the theoretical amoount

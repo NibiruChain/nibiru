@@ -52,6 +52,7 @@ func WithKeyringBackend(keyringBackend string) ExecTxOption {
 
 type execTxOptions struct {
 	fees             sdk.Coins
+	gas              int64
 	skipConfirmation bool
 	broadcastMode    string
 	canFail          bool
@@ -67,6 +68,7 @@ func ExecTx(network *Network, cmd *cobra.Command, txSender sdk.AccAddress, args 
 
 	options := execTxOptions{
 		fees:             sdk.NewCoins(sdk.NewCoin(common.DenomNIBI, sdk.NewInt(10))),
+		gas:              2000000,
 		skipConfirmation: true,
 		broadcastMode:    flags.BroadcastBlock,
 		canFail:          false,
@@ -79,6 +81,7 @@ func ExecTx(network *Network, cmd *cobra.Command, txSender sdk.AccAddress, args 
 
 	args = append(args, fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, options.broadcastMode))
 	args = append(args, fmt.Sprintf("--%s=%s", flags.FlagFees, options.fees))
+	args = append(args, fmt.Sprintf("--%s=%d", flags.FlagGas, options.gas))
 	args = append(args, fmt.Sprintf("--%s=%s", flags.FlagKeyringBackend, options.keyringBackend))
 	switch options.skipConfirmation {
 	case true:
@@ -118,7 +121,7 @@ func (n *Network) SendTx(addr sdk.AccAddress, msgs ...sdk.Msg) (*sdk.TxResponse,
 	txBuilder := cfg.TxConfig.NewTxBuilder()
 	require.NoError(n.T, txBuilder.SetMsgs(msgs...))
 	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(cfg.BondDenom, sdk.NewInt(1))))
-	txBuilder.SetGasLimit(1000000)
+	txBuilder.SetGasLimit(uint64(1 * common.Precision))
 
 	acc, err := cfg.AccountRetriever.GetAccount(n.Validators[0].ClientCtx, addr)
 	require.NoError(n.T, err)

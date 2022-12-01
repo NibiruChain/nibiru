@@ -4,13 +4,13 @@ import sdk "github.com/cosmos/cosmos-sdk/types"
 
 // CalcSpotPrice calculates the spot price based on weight.
 // spotPrice = (BalanceIn / WeightIn) / (BalanceOut / WeightOut)
-func (p Pool) CalcSpotPrice(tokenIn, tokenOut string) (sdk.Dec, error) {
-	_, poolAssetIn, err := p.getPoolAssetAndIndex(tokenIn)
+func (pool Pool) CalcSpotPrice(tokenIn, tokenOut string) (sdk.Dec, error) {
+	_, poolAssetIn, err := pool.getPoolAssetAndIndex(tokenIn)
 	if err != nil {
 		return sdk.Dec{}, err
 	}
 
-	_, poolAssetOut, err := p.getPoolAssetAndIndex(tokenOut)
+	_, poolAssetOut, err := pool.getPoolAssetAndIndex(tokenOut)
 	if err != nil {
 		return sdk.Dec{}, err
 	}

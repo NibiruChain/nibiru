@@ -30,7 +30,7 @@ func NewParams(startingPoolNumber uint64, poolCreationFee sdk.Coins, whitelisted
 func DefaultParams() Params {
 	return Params{
 		StartingPoolNumber: 1,
-		PoolCreationFee:    sdk.NewCoins(sdk.NewInt64Coin(common.DenomNIBI, 1000_000_000)), // 1000 NIBI
+		PoolCreationFee:    sdk.NewCoins(sdk.NewInt64Coin(common.DenomNIBI, 1000*common.Precision)), // 1000 NIBI
 		WhitelistedAsset: []string{
 			common.DenomNIBI,
 			common.DenomUSDC,

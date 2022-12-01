@@ -53,7 +53,7 @@ func TestKeeper_RewardsDistributionMultiVotePeriods(t *testing.T) {
 	params := input.OracleKeeper.GetParams(input.Ctx)
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
-	rewards := sdk.NewInt64Coin("reward", 1_000_000)
+	rewards := sdk.NewInt64Coin("reward", 1*common.Precision)
 	valPeriodicRewards := sdk.NewDecCoinsFromCoins(rewards).
 		QuoDec(sdk.NewDec(int64(periods))).
 		QuoDec(sdk.NewDec(int64(validators)))

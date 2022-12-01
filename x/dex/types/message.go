@@ -200,5 +200,19 @@ func (msg *MsgCreatePool) ValidateBasic() error {
 		return ErrInvalidExitFee.Wrapf("invalid exit fee: %s", msg.PoolParams.ExitFee)
 	}
 
+	if (msg.PoolParams.PoolType != PoolType_STABLESWAP) && (msg.PoolParams.PoolType != PoolType_BALANCER) {
+		return ErrInvalidPoolType
+	}
+
+	if msg.PoolParams.PoolType == PoolType_STABLESWAP {
+		if msg.PoolParams.A.IsNil() {
+			return ErrAmplificationMissing
+		}
+
+		if !msg.PoolParams.A.IsPositive() {
+			return ErrAmplificationTooLow
+		}
+	}
+
 	return nil
 }
