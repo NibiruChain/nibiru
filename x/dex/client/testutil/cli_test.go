@@ -7,9 +7,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
-	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestIntegrationTestSuite(t *testing.T) {
@@ -25,14 +24,14 @@ func TestIntegrationTestSuite(t *testing.T) {
 	}
 
 	app.SetPrefixes(app.AccountAddressPrefix)
-	genesisState := simapp.NewTestGenesisStateFromDefault()
+	genesisState := testapp.NewTestGenesisStateFromDefault()
 
 	genesisState = WhitelistGenesisAssets(
 		genesisState,
 		coinsFromGenesis,
 	)
 
-	cfg := testutilcli.BuildNetworkConfig(genesisState)
+	cfg := testapp.BuildNetworkConfig(genesisState)
 	cfg.StartingTokens = sdk.NewCoins(
 		sdk.NewInt64Coin(common.DenomNIBI, 2e12), // for pool creation fee and more for tx fees
 	)

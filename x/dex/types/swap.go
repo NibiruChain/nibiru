@@ -47,13 +47,21 @@ func (pool Pool) CalcOutAmtGivenIn(tokenIn sdk.Coin, tokenOutDenom string, noFee
 
 	// deduct swapfee on the in asset
 	// delta balanceOut is positive(tokens inside the pool decreases)
-	tokenAmountOut := math.SolveConstantProductInvariant(
-		/*xPrior=*/ poolTokenInBalance,
-		/*xAfter=*/ poolTokenInBalancePostSwap,
-		/*xWeight=*/ poolAssetIn.Weight.ToDec(),
-		/*yPrior=*/ poolAssetOut.Token.Amount.ToDec(),
-		/*yWeight=*/ poolAssetOut.Weight.ToDec(),
-	).TruncateInt()
+	var tokenAmountOut sdk.Int
+	if pool.PoolParams.PoolType == PoolType_STABLESWAP {
+		tokenAmountOut, err = pool.SolveStableswapInvariant(poolAssetIn.Token, tokenOutDenom)
+		if err != nil {
+			return
+		}
+	} else if pool.PoolParams.PoolType == PoolType_BALANCER {
+		tokenAmountOut = math.SolveConstantProductInvariant(
+			/*xPrior=*/ poolTokenInBalance,
+			/*xAfter=*/ poolTokenInBalancePostSwap,
+			/*xWeight=*/ poolAssetIn.Weight.ToDec(),
+			/*yPrior=*/ poolAssetOut.Token.Amount.ToDec(),
+			/*yWeight=*/ poolAssetOut.Weight.ToDec(),
+		).TruncateInt()
+	}
 
 	if tokenAmountOut.IsZero() {
 		return tokenOut, fmt.Errorf("tokenIn (%s) must be higher to perform a swap", tokenIn.Denom)
@@ -77,6 +85,41 @@ ret:
   - err: error if any
 */
 func (pool Pool) CalcInAmtGivenOut(tokenOut sdk.Coin, tokenInDenom string) (
+	tokenIn sdk.Coin, err error,
+) {
+	if pool.PoolParams.PoolType == PoolType_BALANCER {
+		return pool.CalcInAmtGivenOutBalancer(tokenOut, tokenInDenom)
+	} else if pool.PoolParams.PoolType == PoolType_STABLESWAP {
+		return pool.CalcInAmtGivenOutStableswap(tokenOut, tokenInDenom)
+	}
+	return sdk.Coin{}, ErrInvalidPoolType
+}
+
+/*
+Calculates the amount of tokenIn required to obtain tokenOut coins from a swap,
+accounting for additional fees. This is not implemented yet in curve and in Nibiru.
+*/
+func (pool Pool) CalcInAmtGivenOutStableswap(tokenOut sdk.Coin, tokenInDenom string) (
+	tokenIn sdk.Coin, err error,
+) {
+	return sdk.Coin{}, ErrNotImplemented
+}
+
+/*
+Calculates the amount of tokenIn required to obtain tokenOut coins from a swap,
+accounting for additional fees.
+Only supports single asset swaps.
+This function is the inverse of CalcOutAmtGivenIn.
+
+args:
+  - tokenOut: the amount of tokens to swap
+  - tokenInDenom: the target token denom
+
+ret:
+  - tokenIn: the tokens received from the swap
+  - err: error if any
+*/
+func (pool Pool) CalcInAmtGivenOutBalancer(tokenOut sdk.Coin, tokenInDenom string) (
 	tokenIn sdk.Coin, err error,
 ) {
 	_, poolAssetOut, err := pool.getPoolAssetAndIndex(tokenOut.Denom)

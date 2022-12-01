@@ -475,7 +475,7 @@ func (s IntegrationTestSuite) TestX_AddOracleProposalAndVote() {
 	clientCtx := val.ClientCtx.WithOutputFormat("json")
 
 	s.T().Log("Fill oracle wallet to pay gas on post price")
-	gasTokens := sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 100_000_000))
+	gasTokens := sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 100*common.Precision))
 	oracle := testutilcli.NewAccount(s.network, "delphi-oracle")
 	s.NoError(testutilcli.FillWalletFromValidator(oracle, gasTokens, val, s.cfg.BondDenom))
 

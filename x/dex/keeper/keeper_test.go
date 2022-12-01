@@ -5,7 +5,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/testutil"
 
-	simapp2 "github.com/NibiruChain/nibiru/simapp"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,7 +18,7 @@ import (
 )
 
 func TestGetAndSetNextPoolNumber(t *testing.T) {
-	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 	// Write to store
 	app.DexKeeper.SetNextPoolNumber(ctx, 150)
@@ -30,7 +30,7 @@ func TestGetAndSetNextPoolNumber(t *testing.T) {
 }
 
 func TestGetNextPoolNumberAndIncrement(t *testing.T) {
-	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 	// Write a pool number
 	app.DexKeeper.SetNextPoolNumber(ctx, 200)
@@ -45,13 +45,15 @@ func TestGetNextPoolNumberAndIncrement(t *testing.T) {
 }
 
 func TestSetAndFetchPool(t *testing.T) {
-	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 	pool := types.Pool{
 		Id: 150,
 		PoolParams: types.PoolParams{
-			SwapFee: sdk.NewDecWithPrec(3, 2),
-			ExitFee: sdk.NewDecWithPrec(3, 2),
+			SwapFee:  sdk.NewDecWithPrec(3, 2),
+			ExitFee:  sdk.NewDecWithPrec(3, 2),
+			PoolType: types.PoolType_BALANCER,
+			A:        sdk.ZeroInt(),
 		},
 		PoolAssets: []types.PoolAsset{
 			{
@@ -152,13 +154,15 @@ func TestFetchPoolFromPair(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 			app.DexKeeper.SetPool(ctx, types.Pool{
 				Id: 1,
 				PoolParams: types.PoolParams{
-					SwapFee: sdk.NewDecWithPrec(3, 2),
-					ExitFee: sdk.NewDecWithPrec(3, 2),
+					SwapFee:  sdk.NewDecWithPrec(3, 2),
+					ExitFee:  sdk.NewDecWithPrec(3, 2),
+					PoolType: types.PoolType_BALANCER,
+					A:        sdk.ZeroInt(),
 				},
 				PoolAssets: []types.PoolAsset{
 					{
@@ -178,8 +182,10 @@ func TestFetchPoolFromPair(t *testing.T) {
 			app.DexKeeper.SetPool(ctx, types.Pool{
 				Id: 2,
 				PoolParams: types.PoolParams{
-					SwapFee: sdk.NewDecWithPrec(3, 2),
-					ExitFee: sdk.NewDecWithPrec(3, 2),
+					SwapFee:  sdk.NewDecWithPrec(3, 2),
+					ExitFee:  sdk.NewDecWithPrec(3, 2),
+					PoolType: types.PoolType_BALANCER,
+					A:        sdk.ZeroInt(),
 				},
 				PoolAssets: []types.PoolAsset{
 					{
@@ -210,9 +216,9 @@ func TestFetchPoolFromPair(t *testing.T) {
 }
 
 func TestNewPool(t *testing.T) {
-	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
-	poolCreationFeeCoin := sdk.NewInt64Coin(common.DenomNIBI, 1000_000_000)
+	poolCreationFeeCoin := sdk.NewInt64Coin(common.DenomNIBI, 1000*common.Precision)
 	app.DexKeeper.SetParams(ctx, types.NewParams(
 		/*startingPoolNumber=*/ 1,
 		/*poolCreationFee=*/ sdk.NewCoins(poolCreationFeeCoin),
@@ -236,8 +242,10 @@ func TestNewPool(t *testing.T) {
 		userAddr,
 		// poolParams
 		types.PoolParams{
-			SwapFee: sdk.NewDecWithPrec(3, 2),
-			ExitFee: sdk.NewDecWithPrec(3, 2),
+			SwapFee:  sdk.NewDecWithPrec(3, 2),
+			ExitFee:  sdk.NewDecWithPrec(3, 2),
+			PoolType: types.PoolType_BALANCER,
+			A:        sdk.ZeroInt(),
 		},
 		// poolAssets
 		[]types.PoolAsset{
@@ -258,8 +266,10 @@ func TestNewPool(t *testing.T) {
 		Id:      1,
 		Address: retrievedPool.Address, // address is random so can't test, just reuse value
 		PoolParams: types.PoolParams{
-			SwapFee: sdk.NewDecWithPrec(3, 2),
-			ExitFee: sdk.NewDecWithPrec(3, 2),
+			SwapFee:  sdk.NewDecWithPrec(3, 2),
+			ExitFee:  sdk.NewDecWithPrec(3, 2),
+			PoolType: types.PoolType_BALANCER,
+			A:        sdk.ZeroInt(),
 		},
 		PoolAssets: []types.PoolAsset{
 			{
@@ -277,11 +287,11 @@ func TestNewPool(t *testing.T) {
 }
 
 func TestNewPoolNotEnoughFunds(t *testing.T) {
-	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 	app.DexKeeper.SetParams(ctx, types.NewParams(
 		/*startingPoolNumber=*/ 1,
-		/*poolCreationFee=*/ sdk.NewCoins(sdk.NewInt64Coin(common.DenomNIBI, 1000_000_000)),
+		/*poolCreationFee=*/ sdk.NewCoins(sdk.NewInt64Coin(common.DenomNIBI, 1000*common.Precision)),
 		/*whitelistedAssets*/ []string{},
 	))
 
@@ -290,7 +300,7 @@ func TestNewPoolNotEnoughFunds(t *testing.T) {
 	err := simapp.FundAccount(app.BankKeeper, ctx, userAddr, sdk.NewCoins(
 		sdk.NewCoin("uatom", sdk.NewInt(1000)),
 		sdk.NewCoin("uosmo", sdk.NewInt(1000)),
-		sdk.NewCoin("unibi", sdk.NewInt(999_000_000)),
+		sdk.NewCoin("unibi", sdk.NewInt(999*common.Precision)),
 	))
 	require.NoError(t, err)
 
@@ -299,8 +309,9 @@ func TestNewPoolNotEnoughFunds(t *testing.T) {
 		userAddr,
 		// poolParams
 		types.PoolParams{
-			SwapFee: sdk.NewDecWithPrec(3, 2),
-			ExitFee: sdk.NewDecWithPrec(3, 2),
+			SwapFee:  sdk.NewDecWithPrec(3, 2),
+			ExitFee:  sdk.NewDecWithPrec(3, 2),
+			PoolType: types.PoolType_BALANCER,
 		},
 		// poolAssets
 		[]types.PoolAsset{
@@ -317,13 +328,14 @@ func TestNewPoolNotEnoughFunds(t *testing.T) {
 }
 
 func TestNewPoolTooLittleAssets(t *testing.T) {
-	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewTestNibiruAppAndContext(true)
 	userAddr, err := sdk.AccAddressFromBech32(testutil.AccAddress().String())
 	require.NoError(t, err)
 
 	poolParams := types.PoolParams{
-		SwapFee: sdk.NewDecWithPrec(3, 2),
-		ExitFee: sdk.NewDecWithPrec(3, 2),
+		SwapFee:  sdk.NewDecWithPrec(3, 2),
+		ExitFee:  sdk.NewDecWithPrec(3, 2),
+		PoolType: types.PoolType_BALANCER,
 	}
 	poolAssets := []types.PoolAsset{
 		{
@@ -337,13 +349,14 @@ func TestNewPoolTooLittleAssets(t *testing.T) {
 }
 
 func TestKeeperNewPoolNotWhitelistedAssets(t *testing.T) {
-	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewTestNibiruAppAndContext(true)
 	userAddr, err := sdk.AccAddressFromBech32(testutil.AccAddress().String())
 	require.NoError(t, err)
 
 	poolParams := types.PoolParams{
-		SwapFee: sdk.NewDecWithPrec(3, 2),
-		ExitFee: sdk.NewDecWithPrec(3, 2),
+		SwapFee:  sdk.NewDecWithPrec(3, 2),
+		ExitFee:  sdk.NewDecWithPrec(3, 2),
+		PoolType: types.PoolType_BALANCER,
 	}
 
 	poolAssets := []types.PoolAsset{
@@ -361,13 +374,14 @@ func TestKeeperNewPoolNotWhitelistedAssets(t *testing.T) {
 }
 
 func TestNewPoolTooManyAssets(t *testing.T) {
-	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewTestNibiruAppAndContext(true)
 	userAddr, err := sdk.AccAddressFromBech32(testutil.AccAddress().String())
 	require.NoError(t, err)
 
 	poolParams := types.PoolParams{
-		SwapFee: sdk.NewDecWithPrec(3, 2),
-		ExitFee: sdk.NewDecWithPrec(3, 2),
+		SwapFee:  sdk.NewDecWithPrec(3, 2),
+		ExitFee:  sdk.NewDecWithPrec(3, 2),
+		PoolType: types.PoolType_BALANCER,
 	}
 	poolAssets := []types.PoolAsset{
 		{
@@ -405,7 +419,7 @@ func TestNewPoolTooManyAssets(t *testing.T) {
 }
 
 func TestNewPoolDups(t *testing.T) {
-	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewTestNibiruAppAndContext(true)
 	userAddr, err := sdk.AccAddressFromBech32(testutil.AccAddress().String())
 	require.NoError(t, err)
 
@@ -560,7 +574,7 @@ func TestJoinPool(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 			poolAddr := testutil.AccAddress()
 			tc.initialPool.Address = poolAddr.String()
@@ -689,7 +703,7 @@ func TestJoinPoolAllAssets(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 			poolAddr := testutil.AccAddress()
 			tc.initialPool.Address = poolAddr.String()
@@ -801,7 +815,7 @@ func TestExitPool(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 			poolAddr := testutil.AccAddress()
 			tc.initialPool.Address = poolAddr.String()

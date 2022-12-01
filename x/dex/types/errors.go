@@ -14,7 +14,11 @@ var (
 	ErrInvalidExitFee           = sdkerrors.Register(ModuleName, 4, "invalid pool exit fee, must be between [0, 1]")
 	ErrInvalidTokenWeight       = sdkerrors.Register(ModuleName, 5, "token weight must be greater than zero")
 	ErrTokenNotAllowed          = sdkerrors.Register(ModuleName, 8, "token not allowed")
-	ErrPoolWithSameAssetsExists = sdkerrors.Register(ModuleName, 15, "a pool with the same denoms already exists")
+	ErrInvalidPoolType          = sdkerrors.Register(ModuleName, 15, "pool_type needs to be either `balancer` or `stableswap`")
+	ErrAmplificationMissing     = sdkerrors.Register(ModuleName, 16, "amplification parameter is missing")
+	ErrAmplificationTooLow      = sdkerrors.Register(ModuleName, 17, "amplification parameter a needs to be greater than 1")
+	ErrInitialDeposit           = sdkerrors.Register(ModuleName, 19, "initial deposit requires all coins deposited")
+	ErrPoolWithSameAssetsExists = sdkerrors.Register(ModuleName, 20, "a pool with the same denoms already exists")
 
 	// create-pool tx cli errors
 	ErrMissingPoolFileFlag   = sdkerrors.Register(ModuleName, 6, "must pass in a pool json using the --pool-file flag")
@@ -29,4 +33,6 @@ var (
 	ErrPoolNotFound       = sdkerrors.Register(ModuleName, 12, "pool not found")
 	ErrTokenDenomNotFound = sdkerrors.Register(ModuleName, 13, "token denom not found in pool")
 	ErrSameTokenDenom     = sdkerrors.Register(ModuleName, 14, "cannot use same token denom to swap in and out")
+
+	ErrNotImplemented = sdkerrors.Register(ModuleName, 18, "not implemented")
 )

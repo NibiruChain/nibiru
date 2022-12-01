@@ -5,7 +5,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/testutil"
 
-	simapp2 "github.com/NibiruChain/nibiru/simapp"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -19,7 +19,7 @@ import (
 )
 
 func TestParamsQuery(t *testing.T) {
-	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 	params := types.DefaultParams()
 	app.DexKeeper.SetParams(ctx, params)
@@ -42,8 +42,35 @@ func TestQueryPoolHappyPath(t *testing.T) {
 				Id:      1,
 				Address: testutil.AccAddress().String(),
 				PoolParams: types.PoolParams{
-					SwapFee: sdk.MustNewDecFromStr("0.03"),
-					ExitFee: sdk.MustNewDecFromStr("0.03"),
+					SwapFee:  sdk.MustNewDecFromStr("0.03"),
+					ExitFee:  sdk.MustNewDecFromStr("0.03"),
+					PoolType: types.PoolType_BALANCER,
+					A:        sdk.ZeroInt(),
+				},
+				PoolAssets: []types.PoolAsset{
+					{
+						Token:  sdk.NewInt64Coin("bar", 100),
+						Weight: sdk.OneInt(),
+					},
+					{
+						Token:  sdk.NewInt64Coin("bar", 100),
+						Weight: sdk.OneInt(),
+					},
+				},
+				TotalWeight: sdk.NewInt(2),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 200),
+			},
+		},
+		{
+			name: "correct fetch pool",
+			existingPool: types.Pool{
+				Id:      1,
+				Address: testutil.AccAddress().String(),
+				PoolParams: types.PoolParams{
+					SwapFee:  sdk.MustNewDecFromStr("0.03"),
+					ExitFee:  sdk.MustNewDecFromStr("0.03"),
+					PoolType: types.PoolType_STABLESWAP,
+					A:        sdk.OneInt(),
 				},
 				PoolAssets: []types.PoolAsset{
 					{
@@ -64,7 +91,7 @@ func TestQueryPoolHappyPath(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewTestNibiruAppAndContext(true)
 			app.DexKeeper.SetPool(ctx, tc.existingPool)
 
 			queryServer := keeper.NewQuerier(app.DexKeeper)
@@ -90,7 +117,7 @@ func TestQueryPoolFail(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewTestNibiruAppAndContext(true)
 			queryServer := keeper.NewQuerier(app.DexKeeper)
 			resp, err := queryServer.Pool(sdk.WrapSDKContext(ctx), nil)
 			require.Error(t, err)
@@ -207,7 +234,7 @@ func TestQueryPools(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewTestNibiruAppAndContext(true)
 			for _, existingPool := range tc.existingPools {
 				app.DexKeeper.SetPool(ctx, existingPool)
 			}
@@ -286,7 +313,7 @@ func TestQueryNumPools(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewTestNibiruAppAndContext(true)
 			sender := testutil.AccAddress()
 			// need funds to create pools
 			require.NoError(t, simapp.FundAccount(
@@ -334,8 +361,10 @@ func TestQueryPoolParams(t *testing.T) {
 				Id:      1,
 				Address: testutil.AccAddress().String(),
 				PoolParams: types.PoolParams{
-					SwapFee: sdk.MustNewDecFromStr("0.03"),
-					ExitFee: sdk.MustNewDecFromStr("0.03"),
+					SwapFee:  sdk.MustNewDecFromStr("0.03"),
+					ExitFee:  sdk.MustNewDecFromStr("0.03"),
+					PoolType: types.PoolType_BALANCER,
+					A:        sdk.ZeroInt(),
 				},
 				PoolAssets: []types.PoolAsset{
 					{
@@ -351,8 +380,41 @@ func TestQueryPoolParams(t *testing.T) {
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 200),
 			},
 			expectedPoolParams: types.PoolParams{
-				SwapFee: sdk.MustNewDecFromStr("0.03"),
-				ExitFee: sdk.MustNewDecFromStr("0.03"),
+				SwapFee:  sdk.MustNewDecFromStr("0.03"),
+				ExitFee:  sdk.MustNewDecFromStr("0.03"),
+				PoolType: types.PoolType_BALANCER,
+				A:        sdk.ZeroInt(),
+			},
+		},
+		{
+			name: "successful fetch pool params",
+			existingPool: types.Pool{
+				Id:      1,
+				Address: testutil.AccAddress().String(),
+				PoolParams: types.PoolParams{
+					SwapFee:  sdk.MustNewDecFromStr("0.03"),
+					ExitFee:  sdk.MustNewDecFromStr("0.03"),
+					PoolType: types.PoolType_STABLESWAP,
+					A:        sdk.OneInt(),
+				},
+				PoolAssets: []types.PoolAsset{
+					{
+						Token:  sdk.NewInt64Coin("bar", 100),
+						Weight: sdk.OneInt(),
+					},
+					{
+						Token:  sdk.NewInt64Coin("bar", 100),
+						Weight: sdk.OneInt(),
+					},
+				},
+				TotalWeight: sdk.NewInt(2),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 200),
+			},
+			expectedPoolParams: types.PoolParams{
+				SwapFee:  sdk.MustNewDecFromStr("0.03"),
+				ExitFee:  sdk.MustNewDecFromStr("0.03"),
+				PoolType: types.PoolType_STABLESWAP,
+				A:        sdk.OneInt(),
 			},
 		},
 	}
@@ -360,7 +422,7 @@ func TestQueryPoolParams(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewTestNibiruAppAndContext(true)
 			app.DexKeeper.SetPool(ctx, tc.existingPool)
 
 			queryServer := keeper.NewQuerier(app.DexKeeper)
@@ -397,7 +459,7 @@ func TestQueryTotalShares(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 			app.DexKeeper.SetPool(ctx, tc.existingPool)
 
@@ -470,7 +532,7 @@ func TestQuerySpotPrice(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 			app.DexKeeper.SetPool(ctx, tc.existingPool)
 
@@ -532,7 +594,7 @@ func TestQueryEstimateSwapExactAmountIn(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewTestNibiruAppAndContext(true)
 			app.DexKeeper.SetPool(ctx, tc.existingPool)
 			queryServer := keeper.NewQuerier(app.DexKeeper)
 
@@ -594,7 +656,7 @@ func TestQueryEstimateSwapExactAmountOut(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewTestNibiruAppAndContext(true)
 			app.DexKeeper.SetPool(ctx, tc.existingPool)
 			queryServer := keeper.NewQuerier(app.DexKeeper)
 
@@ -662,7 +724,7 @@ func TestQueryEstimateJoinExactAmountIn(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewTestNibiruAppAndContext(true)
 			app.DexKeeper.SetPool(ctx, tc.existingPool)
 			queryServer := keeper.NewQuerier(app.DexKeeper)
 
@@ -727,7 +789,7 @@ func TestQueryEstimateExitExactAmountIn(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewTestNibiruAppAndContext(true)
 			app.DexKeeper.SetPool(ctx, tc.existingPool)
 			queryServer := keeper.NewQuerier(app.DexKeeper)
 
