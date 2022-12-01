@@ -158,6 +158,7 @@ func TestSwapQuoteAssetForBase(t *testing.T) {
 				sdk.NewDec(10),
 				sdk.NewDec(1),
 				false,
+				true,
 			)
 
 			require.NoError(t, err)

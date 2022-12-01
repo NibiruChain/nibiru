@@ -235,9 +235,9 @@ add_genesis_param '.app_state.perp.params.partial_liquidation_ratio = "0.25"'
 add_genesis_param '.app_state.perp.params.funding_rate_interval = "30 min"'
 add_genesis_param '.app_state.perp.params.twap_lookback_window = "900s"'
 add_genesis_param '.app_state.perp.pair_metadata[0].pair = {token0:"ubtc",token1:"unusd"}'
-add_genesis_param '.app_state.perp.pair_metadata[0].cumulative_premium_fractions = ["0"]'
+add_genesis_param '.app_state.perp.pair_metadata[0].latest_cumulative_premium_fraction = "0"'
 add_genesis_param '.app_state.perp.pair_metadata[1].pair = {token0:"ueth",token1:"unusd"}'
-add_genesis_param '.app_state.perp.pair_metadata[1].cumulative_premium_fractions = ["0"]'
+add_genesis_param '.app_state.perp.pair_metadata[1].latest_cumulative_premium_fraction = "0"'
 
 # x/pricefeed
 nibid add-genesis-oracle nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl

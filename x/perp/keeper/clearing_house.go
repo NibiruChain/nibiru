@@ -249,6 +249,7 @@ func (k Keeper) increasePosition(
 		increasedNotional,
 		baseAmtLimit,
 		/* skipFluctuationLimitCheck */ false,
+		/* increasePosition */ true,
 	)
 	if err != nil {
 		return nil, err
@@ -394,6 +395,7 @@ func (k Keeper) decreasePosition(
 		decreasedNotional,
 		baseAmtLimit,
 		skipFluctuationLimitCheck,
+		/* increasePosition */ false,
 	)
 	if err != nil {
 		return nil, err
@@ -766,6 +768,7 @@ func (k Keeper) swapQuoteForBase(
 	quoteAssetAmount sdk.Dec,
 	baseAssetLimit sdk.Dec,
 	skipFluctuationLimitCheck bool,
+	increasePosition bool,
 ) (baseAssetAmount sdk.Dec, err error) {
 	var quoteAssetDirection vpooltypes.Direction
 	if side == types.Side_BUY {
@@ -783,7 +786,7 @@ func (k Keeper) swapQuoteForBase(
 	if side == types.Side_SELL {
 		baseAssetAmount = baseAssetAmount.Neg()
 	}
-	k.OnSwapEnd(ctx, pair, quoteAssetAmount, baseAssetAmount)
+	k.OnSwapEnd(ctx, pair, quoteAssetAmount, baseAssetAmount, increasePosition)
 	return baseAssetAmount, nil
 }
 
@@ -824,7 +827,10 @@ func (k Keeper) swapBaseForQuote(
 	if err != nil {
 		return sdk.Dec{}, err
 	}
-	k.OnSwapEnd(ctx, pair, quoteAssetAmount, baseAssetAmount)
+	if side == types.Side_SELL {
+		baseAssetAmount = baseAssetAmount.Neg()
+	}
+	k.OnSwapEnd(ctx, pair, quoteAssetAmount, baseAssetAmount, false)
 	return quoteAssetAmount, err
 }
 
@@ -834,10 +840,20 @@ func (k Keeper) OnSwapEnd(
 	pair common.AssetPair,
 	quoteAssetAmount sdk.Dec,
 	baseAssetAmount sdk.Dec,
+	increasePosition bool, // true if swap leads to increase total notional volume
 ) {
 	// Update Metrics
 	pairString := pair.String()
-	metrics := k.Metrics.GetOr(ctx, pairString, types.Metrics{Pair: pairString, NetSize: sdk.ZeroDec()})
+	metrics := k.Metrics.GetOr(ctx, pairString, types.Metrics{
+		Pair:    pairString,
+		NetSize: sdk.ZeroDec(),
+		Volume:  sdk.ZeroDec(),
+	})
 	metrics.NetSize = metrics.NetSize.Add(baseAssetAmount)
+	if increasePosition {
+		metrics.Volume = metrics.Volume.Add(quoteAssetAmount.Abs())
+	} else {
+		metrics.Volume = metrics.Volume.Sub(quoteAssetAmount.Abs())
+	}
 	k.Metrics.Insert(ctx, pairString, metrics)
 }
