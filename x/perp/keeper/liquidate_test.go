@@ -115,8 +115,8 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				15*time.Minute,
 			))
 			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-				Pair:                       tokenPair,
-				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
+				Pair:                            tokenPair,
+				LatestCumulativePremiumFraction: sdk.OneDec(),
 			})
 
 			t.Log("Fund trader account with sufficient quote")
@@ -295,8 +295,8 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			))
 
 			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-				Pair:                       tokenPair,
-				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
+				Pair:                            tokenPair,
+				LatestCumulativePremiumFraction: sdk.OneDec(),
 			})
 
 			t.Log("Fund trader account with sufficient quote")
