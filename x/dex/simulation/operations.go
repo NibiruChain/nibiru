@@ -1,6 +1,7 @@
 package simulation
 
 import (
+	"fmt"
 	"math/rand"
 	"strings"
 	"time"
@@ -67,6 +68,11 @@ func SimulateMsgCreatePool(ak types.AccountKeeper, bk types.BankKeeper, k keeper
 			Creator:    simAccount.Address.String(),
 			PoolParams: &poolParams,
 			PoolAssets: poolAssets,
+		}
+		_, err := k.FetchPoolFromPair(ctx, poolAssets[0].Token.Denom, poolAssets[1].Token.Denom)
+		if err == nil {
+			// types.ErrPoolWithSameAssetsExists
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "pool already exists for these tokens"), nil, nil
 		}
 
 		return simulation.GenAndDeliverTxWithRandFees(
@@ -284,19 +290,33 @@ func PoolAssetsCoins(assets []types.PoolAsset) sdk.Coins {
 }
 
 // genBalancerPoolParams creates random parameters for the swap and exit fee of the pool
+// The pool has 50% chance of being a stableswap pool.
 func genBalancerPoolParams(r *rand.Rand, blockTime time.Time, assets []types.PoolAsset) types.PoolParams {
 	// swapFeeInt := int64(r.Intn(1e5))
 	// swapFee := sdk.NewDecWithPrec(swapFeeInt, 6)
 
 	exitFeeInt := int64(r.Intn(1e5))
 	exitFee := sdk.NewDecWithPrec(exitFeeInt, 6)
+	isBalancer := r.Intn(2)
 
-	// TODO: Randomly generate LBP params
+	var poolType types.PoolType
+	if isBalancer == 0 {
+		poolType = types.PoolType_BALANCER
+	} else {
+		poolType = types.PoolType_STABLESWAP
+	}
+
+	A := sdk.NewInt(int64(r.Intn(4_000) + 1))
+
+	// Create swap fee between 0% and 5%
+	swapFeeFloat := r.Float64() * .05
+	swapFee := sdk.MustNewDecFromStr(fmt.Sprintf("%.5f", swapFeeFloat))
+
 	return types.PoolParams{
-		// SwapFee:                  swapFee,
-		SwapFee:  sdk.ZeroDec(),
+		SwapFee:  swapFee,
 		ExitFee:  exitFee,
-		PoolType: types.PoolType_BALANCER,
+		PoolType: poolType,
+		A:        A,
 	}
 }
 
@@ -315,6 +335,8 @@ func genPoolAssets(
 		if _, ok := whitelistedAssets[denom]; ok {
 			amt, _ := simtypes.RandPositiveInt(r, coins[denomIndex].Amount.QuoRaw(10))
 			reserveAmt := sdk.NewCoin(denom, amt)
+
+			// Weight is useless for stableswap pools.
 			weight := sdk.NewInt(r.Int63n(9) + 1)
 			assets = append(assets, types.PoolAsset{Token: reserveAmt, Weight: weight})
 

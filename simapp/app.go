@@ -803,6 +803,7 @@ func NewNibiruTestApp(
 		epochsModule,
 		perpModule,
 		vpoolModule,
+		dexModule,
 		// ibc
 		capability.NewAppModule(appCodec, *app.CapabilityKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),

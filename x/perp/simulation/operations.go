@@ -187,7 +187,11 @@ func SimulateMsgAddMargin(ak types.AccountKeeper, bk types.BankKeeper, k keeper.
 
 		spendableCoins := bk.SpendableCoins(ctx, simAccount.Address)
 
+		if spendableCoins.AmountOf(common.DenomNUSD).IsZero() {
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "no nusd left"), nil, nil
+		}
 		quoteAmt, _ := simtypes.RandPositiveInt(r, spendableCoins.AmountOf(common.DenomNUSD))
+
 		spentCoin := sdk.NewCoin(common.DenomNUSD, quoteAmt)
 
 		msg = &types.MsgAddMargin{
