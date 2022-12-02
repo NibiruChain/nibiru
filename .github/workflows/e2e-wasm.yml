@@ -16,6 +16,6 @@ jobs:
 
       - name: download release
         run: |
-          curl -L -o release.tar.gz ${{ steps.latest_release.outputs.download_url }}
+          curl -L -o release.tar.gz ${{ steps.latest_release.outputs.release }}
           tar -xzf release.tar.gz
           rm release.tar.gz
