@@ -15,4 +15,4 @@ jobs:
           repository: ${{ github.repository }}
 
       - name: Ls release
-        run: echo ${{ steps.latest_release.outputs }}
+        run: echo ${{ steps.latest_release.outputs.release }}
