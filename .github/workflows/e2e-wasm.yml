@@ -21,4 +21,6 @@ jobs:
           fileName: "*linux_amd64.tar.gz"
 
       - name: unpack release
-        run: tar -xzf *linux_amd64.tar.gz
+        run: |
+          tar -xzf *linux_amd64.tar.gz
+          ls -al
