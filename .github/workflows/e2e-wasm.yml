@@ -8,14 +8,12 @@ jobs:
   get-release:
     runs-on: ubuntu-latest
     steps:
-      - name: Get Latest Release
+      - name: Download release
         id: latest_release
         uses: pozetroninc/github-action-get-latest-release@v0.6.0
         with:
           repository: ${{ github.repository }}
 
       - name: download release
-        run: |
-          wget https://github.com/NibiruChain/nibiru/releases/download/v0.16.0-beta1/nibiru_${{ steps.latest_release.outputs.release }}_linux_amd64.tar.gz
-          tar -xzf release.tar.gz
-          rm release.tar.gz
+        uses: robinraju/release-downloader@v1.6
+        tag: ${{ steps.latest_release.outputs.release }}
