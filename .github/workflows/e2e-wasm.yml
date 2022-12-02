@@ -28,6 +28,6 @@ jobs:
           tar -xzf *linux_amd64.tar.gz
           ./nibid
 
-      - name: touch base with ls
+      - name: launch localnet
         run: |
-          ls -la
+          sh ./scripts/e2e/localnet.sh
