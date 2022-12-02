@@ -9,9 +9,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Get Latest Release
+        id: latest_release
         uses: pozetroninc/github-action-get-latest-release@v0.6.0
         with:
           repository: ${{ github.repository }}
 
       - name: Ls release
-        run: echo ${{ steps.get-latest-release.outputs.release }}
+        run: echo ${{ steps.latest_release.outputs }}
