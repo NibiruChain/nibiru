@@ -824,6 +824,9 @@ func (k Keeper) swapBaseForQuote(
 	if err != nil {
 		return sdk.Dec{}, err
 	}
+	if side == types.Side_SELL {
+		baseAssetAmount = baseAssetAmount.Neg()
+	}
 	k.OnSwapEnd(ctx, pair, quoteAssetAmount, baseAssetAmount)
 	return quoteAssetAmount, err
 }
@@ -837,7 +840,14 @@ func (k Keeper) OnSwapEnd(
 ) {
 	// Update Metrics
 	pairString := pair.String()
-	metrics := k.Metrics.GetOr(ctx, pairString, types.Metrics{Pair: pairString, NetSize: sdk.ZeroDec()})
+	metrics := k.Metrics.GetOr(ctx, pairString, types.Metrics{
+		Pair:        pairString,
+		NetSize:     sdk.ZeroDec(),
+		VolumeQuote: sdk.ZeroDec(),
+		VolumeBase:  sdk.ZeroDec(),
+	})
 	metrics.NetSize = metrics.NetSize.Add(baseAssetAmount)
+	metrics.VolumeBase = metrics.VolumeBase.Add(baseAssetAmount.Abs())
+	metrics.VolumeQuote = metrics.VolumeQuote.Add(quoteAssetAmount.Abs())
 	k.Metrics.Insert(ctx, pairString, metrics)
 }

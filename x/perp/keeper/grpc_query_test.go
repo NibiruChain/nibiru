@@ -328,32 +328,156 @@ func TestQueryCumulativePremiumFraction(t *testing.T) {
 
 func TestQueryMetrics(t *testing.T) {
 	tests := []struct {
-		name             string
-		BaseAssetAmounts []sdk.Dec
-		NetSize          sdk.Dec
+		name        string
+		Positions   []*types.Position
+		NetSize     sdk.Dec
+		VolumeBase  sdk.Dec
+		VolumeQuote sdk.Dec
 	}{
 		{
-			name:             "zero net_size",
-			BaseAssetAmounts: []sdk.Dec{},
-			NetSize:          sdk.ZeroDec(),
+			name:        "no positions",
+			Positions:   []*types.Position{},
+			NetSize:     sdk.ZeroDec(),
+			VolumeBase:  sdk.ZeroDec(),
+			VolumeQuote: sdk.ZeroDec(),
 		},
 		{
-			name: "positice net_size",
-			BaseAssetAmounts: []sdk.Dec{
-				sdk.NewDec(10),
-				sdk.NewDec(20),
-				sdk.NewDec(30),
+			name: "two longs",
+			Positions: []*types.Position{
+				{
+					Pair:                            common.Pair_BTC_NUSD,
+					TraderAddress:                   "WHALE",
+					Size_:                           sdk.NewDec(10),
+					OpenNotional:                    sdk.NewDec(100),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				},
+				{
+					TraderAddress:                   "SHRIMP",
+					Pair:                            common.Pair_BTC_NUSD,
+					Size_:                           sdk.NewDec(10),
+					OpenNotional:                    sdk.NewDec(100),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				},
 			},
-			NetSize: sdk.NewDec(60),
+			NetSize:     sdk.NewDec(20),
+			VolumeBase:  sdk.NewDec(20),
+			VolumeQuote: sdk.NewDec(200),
 		},
 		{
-			name: "negative net_size",
-			BaseAssetAmounts: []sdk.Dec{
-				sdk.NewDec(10),
-				sdk.NewDec(-50),
-				sdk.NewDec(30),
+			name: "two shorts",
+			Positions: []*types.Position{
+				{
+					Pair:                            common.Pair_BTC_NUSD,
+					TraderAddress:                   "WHALE",
+					Size_:                           sdk.NewDec(-10),
+					OpenNotional:                    sdk.NewDec(100),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				},
+				{
+					TraderAddress:                   "SHRIMP",
+					Pair:                            common.Pair_BTC_NUSD,
+					Size_:                           sdk.NewDec(-10),
+					OpenNotional:                    sdk.NewDec(100),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				},
 			},
-			NetSize: sdk.NewDec(-10),
+			NetSize:     sdk.NewDec(-20),
+			VolumeBase:  sdk.NewDec(20),
+			VolumeQuote: sdk.NewDec(200),
+		},
+		{
+			name: "one long, one short",
+			Positions: []*types.Position{
+				{
+					Pair:                            common.Pair_BTC_NUSD,
+					TraderAddress:                   "WHALE",
+					Size_:                           sdk.NewDec(10),
+					OpenNotional:                    sdk.NewDec(100),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				},
+				{
+					TraderAddress:                   "SHRIMP",
+					Pair:                            common.Pair_BTC_NUSD,
+					Size_:                           sdk.NewDec(-10),
+					OpenNotional:                    sdk.NewDec(100),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				},
+			},
+			NetSize:     sdk.NewDec(0),
+			VolumeBase:  sdk.NewDec(20),
+			VolumeQuote: sdk.NewDec(200),
+		},
+		{
+			name: "decrease position",
+			Positions: []*types.Position{
+				{
+					Pair:                            common.Pair_BTC_NUSD,
+					TraderAddress:                   "WHALE",
+					Size_:                           sdk.NewDec(10),
+					OpenNotional:                    sdk.NewDec(100),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				},
+				{
+					Pair:                            common.Pair_BTC_NUSD,
+					TraderAddress:                   "WHALE",
+					Size_:                           sdk.NewDec(-10),
+					OpenNotional:                    sdk.NewDec(100),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				},
+			},
+			NetSize:     sdk.NewDec(0),
+			VolumeBase:  sdk.NewDec(20),
+			VolumeQuote: sdk.NewDec(200),
+		},
+		{
+			name: "swap positions",
+			Positions: []*types.Position{
+				{
+					Pair:                            common.Pair_BTC_NUSD,
+					TraderAddress:                   "WHALE",
+					Size_:                           sdk.NewDec(10),
+					OpenNotional:                    sdk.NewDec(100),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				},
+				{
+					Pair:                            common.Pair_BTC_NUSD,
+					TraderAddress:                   "SHRIMP",
+					Size_:                           sdk.NewDec(-10),
+					OpenNotional:                    sdk.NewDec(100),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				},
+				{
+					Pair:                            common.Pair_BTC_NUSD,
+					TraderAddress:                   "WHALE",
+					Size_:                           sdk.NewDec(-10),
+					OpenNotional:                    sdk.NewDec(100),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				},
+				{
+					Pair:                            common.Pair_BTC_NUSD,
+					TraderAddress:                   "WHALE",
+					Size_:                           sdk.NewDec(-20),
+					OpenNotional:                    sdk.NewDec(200),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				},
+				{
+					Pair:                            common.Pair_BTC_NUSD,
+					TraderAddress:                   "SHRIMP",
+					Size_:                           sdk.NewDec(20),
+					OpenNotional:                    sdk.NewDec(200),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				},
+				{
+					Pair:                            common.Pair_BTC_NUSD,
+					TraderAddress:                   "SHRIMP",
+					Size_:                           sdk.NewDec(20),
+					OpenNotional:                    sdk.NewDec(200),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				},
+			},
+			NetSize:     sdk.NewDec(10),
+			VolumeBase:  sdk.NewDec(90),
+			VolumeQuote: sdk.NewDec(900),
 		},
 	}
 
@@ -365,10 +489,15 @@ func TestQueryMetrics(t *testing.T) {
 				/* quoteReserve */ sdk.NewDec(100_000),
 				/* baseReserve */ sdk.NewDec(100_000),
 			)
-
 			t.Log("call OnSwapEnd hook")
-			for _, baseAssetAmount := range tc.BaseAssetAmounts {
-				app.PerpKeeper.OnSwapEnd(ctx, common.Pair_BTC_NUSD, sdk.ZeroDec(), baseAssetAmount)
+			for _, position := range tc.Positions {
+				// Detect position decrease
+				app.PerpKeeper.OnSwapEnd(
+					ctx,
+					common.Pair_BTC_NUSD,
+					position.OpenNotional,
+					position.Size_,
+				)
 			}
 
 			t.Log("query metrics")
@@ -382,6 +511,8 @@ func TestQueryMetrics(t *testing.T) {
 
 			t.Log("assert response")
 			assert.Equal(t, tc.NetSize, resp.Metrics.NetSize)
+			assert.Equal(t, tc.VolumeQuote, resp.Metrics.VolumeQuote)
+			assert.Equal(t, tc.VolumeBase, resp.Metrics.VolumeBase)
 		})
 	}
 }
