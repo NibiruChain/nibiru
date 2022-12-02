@@ -11,5 +11,4 @@ jobs:
      - name: Get Latest Release
        uses: pozetroninc/github-action-get-latest-release@v0.6.0
        with:
-         owner: 'NibiruChain'
-         repo: 'nibiru'
+         repository: ${{ github.repository }}
