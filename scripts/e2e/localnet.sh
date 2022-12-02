@@ -190,10 +190,10 @@ add_genesis_vpools_with_coingecko_prices() {
   price_eth=${price_eth%.*}
   base_amt_eth=$(($quote_amt / $price_eth))
 
-  nibid add-genesis-vpool ubtc:unusd $base_amt_btc $quote_amt 0.1 0.1 0.1 0.0625 12
-  nibid add-genesis-vpool ueth:unusd $base_amt_eth $quote_amt 0.1 0.1 0.1 0.04 20
+  $BINARY add-genesis-vpool ubtc:unusd $base_amt_btc $quote_amt 0.1 0.1 0.1 0.0625 12
+  $BINARY add-genesis-vpool ueth:unusd $base_amt_eth $quote_amt 0.1 0.1 0.1 0.04 20
 
-  echo 'tmp_vpool_prices: ' 
+  echo 'tmp_vpool_prices: '
   cat $temp_json_fname | jq .
   rm -f $temp_json_fname
 }
@@ -205,16 +205,16 @@ add_genesis_vpools_default() {
   local quote_amt=10$KILO$MEGA
   local base_amt_btc=$(($quote_amt / 16500))
   local base_amt_eth=$(($quote_amt / 1200))
-  nibid add-genesis-vpool ubtc:unusd $base_amt_btc $quote_amt  0.1 0.1 0.1 0.0625 12
-  nibid add-genesis-vpool ueth:unusd $base_amt_eth $quote_amt 0.1 0.1 0.1 0.0625 10
+  $BINARY add-genesis-vpool ubtc:unusd $base_amt_btc $quote_amt  0.1 0.1 0.1 0.0625 12
+  $BINARY add-genesis-vpool ueth:unusd $base_amt_eth $quote_amt 0.1 0.1 0.1 0.0625 10
 }
 
 # x/vpool
-if add_genesis_vpools_with_coingecko_prices; then 
+if add_genesis_vpools_with_coingecko_prices; then
   echo_success "set vpools with coingecko prices"
-elif add_genesis_vpools_default; then 
-  echo_success "set vpools with defaults" 
-else 
+elif add_genesis_vpools_default; then
+  echo_success "set vpools with defaults"
+else
   echo_error "failed to set genesis vpools"
 fi
 
@@ -232,7 +232,7 @@ add_genesis_param '.app_state.perp.pair_metadata[1].pair = {token0:"ueth",token1
 add_genesis_param '.app_state.perp.pair_metadata[1].latest_cumulative_premium_fraction = "0"'
 
 # x/pricefeed
-nibid add-genesis-oracle nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl
+$BINARY add-genesis-oracle nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl
 
 cat $HOME/.nibid/config/genesis.json | jq '.app_state.pricefeed.params.twap_lookback_window = "900s"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
 
