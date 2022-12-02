@@ -251,15 +251,21 @@ message MetricsEvent {
     (gogoproto.nullable) = false
   ];
 
-  // Total notional of all active positions for the pair.
-  string volume = 3 [
+  // Total notional volume for the pair.
+  string volumeQuote = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // Total size volume for the pair.
+  string volumeBase = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
   // The block number at which metrics were generated.
-  int64 block_height = 4;
+  int64 block_height = 5;
 
   // The block time in unix milliseconds at which metrics were generated.
-  int64 block_time_ms = 5;
+  int64 block_time_ms = 6;
 }

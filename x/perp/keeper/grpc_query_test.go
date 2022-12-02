@@ -328,19 +328,21 @@ func TestQueryCumulativePremiumFraction(t *testing.T) {
 
 func TestQueryMetrics(t *testing.T) {
 	tests := []struct {
-		name      string
-		Positions []*types.Position
-		NetSize   sdk.Dec
-		Volume    sdk.Dec
+		name        string
+		Positions   []*types.Position
+		NetSize     sdk.Dec
+		VolumeBase  sdk.Dec
+		VolumeQuote sdk.Dec
 	}{
 		{
-			name:      "no positions, zero net_size, zero volume",
-			Positions: []*types.Position{},
-			NetSize:   sdk.ZeroDec(),
-			Volume:    sdk.ZeroDec(),
+			name:        "no positions",
+			Positions:   []*types.Position{},
+			NetSize:     sdk.ZeroDec(),
+			VolumeBase:  sdk.ZeroDec(),
+			VolumeQuote: sdk.ZeroDec(),
 		},
 		{
-			name: "two longs, positive net_size, positive volume",
+			name: "two longs",
 			Positions: []*types.Position{
 				{
 					Pair:                            common.Pair_BTC_NUSD,
@@ -357,11 +359,12 @@ func TestQueryMetrics(t *testing.T) {
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				},
 			},
-			NetSize: sdk.NewDec(20),
-			Volume:  sdk.NewDec(200),
+			NetSize:     sdk.NewDec(20),
+			VolumeBase:  sdk.NewDec(20),
+			VolumeQuote: sdk.NewDec(200),
 		},
 		{
-			name: "two shorts, negative net_size, positive volume",
+			name: "two shorts",
 			Positions: []*types.Position{
 				{
 					Pair:                            common.Pair_BTC_NUSD,
@@ -378,11 +381,12 @@ func TestQueryMetrics(t *testing.T) {
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				},
 			},
-			NetSize: sdk.NewDec(-20),
-			Volume:  sdk.NewDec(200),
+			NetSize:     sdk.NewDec(-20),
+			VolumeBase:  sdk.NewDec(20),
+			VolumeQuote: sdk.NewDec(200),
 		},
 		{
-			name: "one long, one short, zero net_size, positive volume",
+			name: "one long, one short",
 			Positions: []*types.Position{
 				{
 					Pair:                            common.Pair_BTC_NUSD,
@@ -399,11 +403,12 @@ func TestQueryMetrics(t *testing.T) {
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				},
 			},
-			NetSize: sdk.NewDec(0),
-			Volume:  sdk.NewDec(200),
+			NetSize:     sdk.NewDec(0),
+			VolumeBase:  sdk.NewDec(20),
+			VolumeQuote: sdk.NewDec(200),
 		},
 		{
-			name: "decrease position, zero net_size, zero volume",
+			name: "decrease position",
 			Positions: []*types.Position{
 				{
 					Pair:                            common.Pair_BTC_NUSD,
@@ -420,11 +425,12 @@ func TestQueryMetrics(t *testing.T) {
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				},
 			},
-			NetSize: sdk.NewDec(0),
-			Volume:  sdk.NewDec(0),
+			NetSize:     sdk.NewDec(0),
+			VolumeBase:  sdk.NewDec(20),
+			VolumeQuote: sdk.NewDec(200),
 		},
 		{
-			name: "swap positions, negative net_size, positive volume",
+			name: "swap positions",
 			Positions: []*types.Position{
 				{
 					Pair:                            common.Pair_BTC_NUSD,
@@ -457,20 +463,21 @@ func TestQueryMetrics(t *testing.T) {
 				{
 					Pair:                            common.Pair_BTC_NUSD,
 					TraderAddress:                   "SHRIMP",
-					Size_:                           sdk.NewDec(10),
+					Size_:                           sdk.NewDec(20),
 					OpenNotional:                    sdk.NewDec(200),
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				},
 				{
 					Pair:                            common.Pair_BTC_NUSD,
 					TraderAddress:                   "SHRIMP",
-					Size_:                           sdk.NewDec(10),
+					Size_:                           sdk.NewDec(20),
 					OpenNotional:                    sdk.NewDec(200),
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				},
 			},
-			NetSize: sdk.NewDec(-10),
-			Volume:  sdk.NewDec(300),
+			NetSize:     sdk.NewDec(10),
+			VolumeBase:  sdk.NewDec(90),
+			VolumeQuote: sdk.NewDec(900),
 		},
 	}
 
@@ -482,30 +489,14 @@ func TestQueryMetrics(t *testing.T) {
 				/* quoteReserve */ sdk.NewDec(100_000),
 				/* baseReserve */ sdk.NewDec(100_000),
 			)
-			whaleSize := sdk.ZeroDec()
-			shrimpSize := sdk.ZeroDec()
-
 			t.Log("call OnSwapEnd hook")
 			for _, position := range tc.Positions {
 				// Detect position decrease
-				increasePosition := true
-				if position.TraderAddress == "WHALE" {
-					if !whaleSize.IsZero() && position.Size_.Mul(whaleSize).IsNegative() {
-						increasePosition = false
-					}
-					whaleSize = whaleSize.Add(position.Size_)
-				} else if position.TraderAddress == "SHRIMP" {
-					if !shrimpSize.IsZero() && position.Size_.Mul(shrimpSize).IsNegative() {
-						increasePosition = false
-					}
-					shrimpSize = shrimpSize.Add(position.Size_)
-				}
 				app.PerpKeeper.OnSwapEnd(
 					ctx,
 					common.Pair_BTC_NUSD,
 					position.OpenNotional,
 					position.Size_,
-					increasePosition,
 				)
 			}
 
@@ -520,7 +511,8 @@ func TestQueryMetrics(t *testing.T) {
 
 			t.Log("assert response")
 			assert.Equal(t, tc.NetSize, resp.Metrics.NetSize)
-			assert.Equal(t, tc.Volume, resp.Metrics.Volume)
+			assert.Equal(t, tc.VolumeQuote, resp.Metrics.VolumeQuote)
+			assert.Equal(t, tc.VolumeBase, resp.Metrics.VolumeBase)
 		})
 	}
 }
