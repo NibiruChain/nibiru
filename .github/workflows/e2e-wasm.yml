@@ -14,5 +14,5 @@ jobs:
         with:
           repository: ${{ github.repository }}
 
-      - name: Ls release
-        run: echo ${{ steps.latest_release.outputs.release }}
+      - name: download release
+        run: wget https://github.com/NibiruChain/nibiru/releases/download/${{ steps.latest_release.outputs.release_url }}/nibiru_${{ steps.latest_release.outputs.release_url }}_linux_amd64.tar.gz
