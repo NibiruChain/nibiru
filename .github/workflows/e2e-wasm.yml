@@ -14,4 +14,4 @@ jobs:
           repository: ${{ github.repository }}
 
       - name: Ls release
-        run: ls -la ${{ github.workspace }}
+        run: echo ${{ steps.get-latest-release.outputs.release }}
