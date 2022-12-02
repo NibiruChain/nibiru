@@ -16,4 +16,5 @@ jobs:
 
       - name: download release
         uses: robinraju/release-downloader@v1.6
-        tag: ${{ steps.latest_release.outputs.release }}
+        with:
+          tag: ${{ steps.latest_release.outputs.release }}
