@@ -27,3 +27,7 @@ jobs:
         run: |
           tar -xzf *linux_amd64.tar.gz
           ./nibid
+
+      - name: touch base with ls
+        run: |
+          ls -la
