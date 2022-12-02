@@ -18,3 +18,4 @@ jobs:
         uses: robinraju/release-downloader@v1.6
         with:
           tag: ${{ steps.latest_release.outputs.release }}
+          fileName: "*linux_amd64.tar.gz"
