@@ -26,7 +26,7 @@ jobs:
           ./nibid
 
   run-network:
-    depends-on: get-release
+    needs: get-release
     steps:
       - name: Run network
         run: |
