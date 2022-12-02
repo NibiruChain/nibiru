@@ -16,6 +16,6 @@ jobs:
 
       - name: download release
         run: |
-          curl -L -o release.tar.gz ${{ steps.latest_release.outputs.release }}
+          curl -L -o release.tar.gz https://github.com/NibiruChain/nibiru/releases/download/v0.16.0-beta1/nibiru_${{ steps.latest_release.outputs.release }}_linux_amd64.tar.gz
           tar -xzf release.tar.gz
           rm release.tar.gz
