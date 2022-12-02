@@ -8,6 +8,9 @@ jobs:
   get-release:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - name: Download release
         id: latest_release
         uses: pozetroninc/github-action-get-latest-release@v0.6.0
@@ -24,11 +27,3 @@ jobs:
         run: |
           tar -xzf *linux_amd64.tar.gz
           ./nibid
-
-  run-network:
-    runs-on: ubuntu-latest
-    needs: get-release
-    steps:
-      - name: Run network
-        run: |
-          ./nibid start
