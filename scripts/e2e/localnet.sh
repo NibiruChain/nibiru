@@ -33,14 +33,6 @@ echo_success () {
   echo "${reset}"
 }
 
-echo_info "Building from source..."
-if make install; then
-  echo_success "Successfully built binary"
-else
-  echo_error "Could not build binary. Failed to make install."
-  exit 1
-fi
-
 # Set localnet settings
 BINARY="./nibid"
 CHAIN_ID="nibiru-localnet-0"
