@@ -5,10 +5,13 @@ on:
   pull_request:
 
 jobs:
-  build:
-   runs-on: ubuntu-latest
-   steps:
-     - name: Get Latest Release
-       uses: pozetroninc/github-action-get-latest-release@v0.6.0
-       with:
-         repository: ${{ github.repository }}
+  get-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Latest Release
+        uses: pozetroninc/github-action-get-latest-release@v0.6.0
+        with:
+          repository: ${{ github.repository }}
+
+      - name: Ls release
+        run: ls -la ${{ github.workspace }}
