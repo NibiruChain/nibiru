@@ -24,3 +24,10 @@ jobs:
         run: |
           tar -xzf *linux_amd64.tar.gz
           ./nibid
+
+  run-network:
+    depends-on: get-release
+    steps:
+      - name: Run network
+        run: |
+          ./nibid start
