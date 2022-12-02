@@ -19,3 +19,6 @@ jobs:
         with:
           tag: ${{ steps.latest_release.outputs.release }}
           fileName: "*linux_amd64.tar.gz"
+
+      - name: unpack release
+        run: tar -xzf *release.tar.gz
