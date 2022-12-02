@@ -9,7 +9,7 @@ jobs:
    runs-on: ubuntu-latest
    steps:
      - name: Get Latest Release
-       uses: pozetroninc/github-action-get-latest-release@latest
+       uses: pozetroninc/github-action-get-latest-release@v0.6.0
        with:
          owner: 'NibiruChain'
          repo: 'nibiru'
