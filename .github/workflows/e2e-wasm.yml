@@ -23,4 +23,4 @@ jobs:
       - name: unpack release
         run: |
           tar -xzf *linux_amd64.tar.gz
-          ./nibid version
+          ./nibid
