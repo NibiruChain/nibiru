@@ -65,7 +65,7 @@ func (k Keeper) GetBaseAssetPrice(
 		return sdk.ZeroDec(), err
 	}
 
-	return pool.GetQuoteAmountByBaseAmount(dir, baseAssetAmount)
+	return pool.GetQuoteAmountByBaseAmount(baseAssetAmount.MulInt64(dir.ToMultiplier()))
 }
 
 /*

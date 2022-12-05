@@ -84,42 +84,24 @@ func (k Keeper) SwapBaseForQuote(
 		return sdk.Dec{}, types.ErrPairNotSupported
 	}
 
-	if !pool.HasEnoughBaseReserve(baseAmt) {
-		return sdk.Dec{}, types.ErrOverTradingLimit
-	}
-
-	quoteAmtAbs, err = pool.GetQuoteAmountByBaseAmount(dir, baseAmt)
+	baseAmtAbs := baseAmt.Abs()
+	quoteAmtAbs, err = pool.GetQuoteAmountByBaseAmount(baseAmtAbs.MulInt64(dir.ToMultiplier()))
 	if err != nil {
 		return sdk.Dec{}, err
 	}
 
-	if !pool.HasEnoughQuoteReserve(quoteAmtAbs) {
-		// in reality, this if statement should never run because a perturbation in quote reserve assets
-		// greater than trading limit ratio would have happened when checking for a perturbation in
-		// base assets, due to x*y=k
-		//
-		// e.g. a 10% change in quote asset reserves would have triggered a >10% change in
-		// base asset reserves
-		return sdk.Dec{}, types.ErrOverTradingLimit.Wrapf(
-			"quote amount %s is over trading limit", quoteAmtAbs)
-	}
-
-	err = checkIfLimitIsViolated(quoteLimit, quoteAmtAbs, dir)
-	if err != nil {
+	if err := pool.HasEnoughReservesForTrade(quoteAmtAbs, baseAmtAbs); err != nil {
 		return sdk.Dec{}, err
 	}
 
-	var quoteAmt sdk.Dec
-	switch dir {
-	case types.Direction_ADD_TO_POOL:
-		quoteAmt = quoteAmtAbs.Neg()
-		baseAmt = baseAmt.Abs()
-	case types.Direction_REMOVE_FROM_POOL:
-		quoteAmt = quoteAmtAbs
-		baseAmt = baseAmt.Neg()
+	if err := checkIfLimitIsViolated(quoteLimit, quoteAmtAbs, dir); err != nil {
+		return sdk.Dec{}, err
 	}
 
-	pool, err = k.executeSwap(ctx, pool, quoteAmt, baseAmt, skipFluctuationLimitCheck)
+	quoteDelta := quoteAmtAbs.Neg().MulInt64(dir.ToMultiplier())
+	baseAmt = baseAmtAbs.MulInt64(dir.ToMultiplier())
+
+	pool, err = k.executeSwap(ctx, pool, quoteDelta, baseAmt, skipFluctuationLimitCheck)
 	if err != nil {
 		return sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
@@ -158,18 +140,6 @@ func (k Keeper) executeSwap(
 
 	newVpool = vpool
 	return newVpool, err
-}
-
-func (k Keeper) onSwapStart(
-	ctx sdk.Context, pair common.AssetPair,
-) (vpool types.Vpool, err error) {
-
-	vpool, err = k.Pools.Get(ctx, pair)
-	if err != nil {
-		return vpool, types.ErrPairNotSupported
-	}
-
-	return
 }
 
 /*
@@ -212,44 +182,25 @@ func (k Keeper) SwapQuoteForBase(
 	}
 
 	// check trade limit ratio on quote in either direction
-	if !pool.HasEnoughQuoteReserve(quoteAmt) {
-		return sdk.Dec{}, types.ErrOverTradingLimit.Wrapf(
-			"quote amount %s is over trading limit", quoteAmt)
-	}
-
 	quoteAmtAbs := quoteAmt.Abs()
-	baseAmtAbs, err = pool.GetBaseAmountByQuoteAmount(quoteAmtAbs.MulInt64(dir.ToMultiplier()))
+	baseAmtAbs, err = pool.GetBaseAmountByQuoteAmount(
+		quoteAmtAbs.MulInt64(dir.ToMultiplier()))
 	if err != nil {
 		return sdk.Dec{}, err
 	}
 
-	if !pool.HasEnoughBaseReserve(baseAmtAbs) {
-		// in reality, this if statement should never run because a perturbation in base reserve assets
-		// greater than trading limit ratio would have happened when checking for a perturbation in
-		// quote assets, due to x*y=k
-		//
-		// e.g. a 10% change in base asset reserves would have triggered a >10% change in
-		// quote asset reserves
-		return sdk.Dec{}, types.ErrOverTradingLimit.Wrapf(
-			"base amount %s is over trading limit", baseAmtAbs)
-	}
-
-	err = checkIfLimitIsViolated(baseLimit, baseAmtAbs, dir)
-	if err != nil {
+	if err := pool.HasEnoughReservesForTrade(quoteAmtAbs, baseAmtAbs); err != nil {
 		return sdk.Dec{}, err
 	}
 
-	var baseAmt sdk.Dec
-	switch dir {
-	case types.Direction_ADD_TO_POOL:
-		quoteAmt = quoteAmtAbs
-		baseAmt = baseAmtAbs.Neg()
-	case types.Direction_REMOVE_FROM_POOL:
-		quoteAmt = quoteAmtAbs.Neg()
-		baseAmt = baseAmtAbs
+	if err := checkIfLimitIsViolated(baseLimit, baseAmtAbs, dir); err != nil {
+		return sdk.Dec{}, err
 	}
 
-	pool, err = k.executeSwap(ctx, pool, quoteAmt, baseAmt, skipFluctuationLimitCheck)
+	quoteAmt = quoteAmtAbs.MulInt64(dir.ToMultiplier())
+	baseDelta := baseAmtAbs.Neg().MulInt64(dir.ToMultiplier())
+
+	pool, err = k.executeSwap(ctx, pool, quoteAmt, baseDelta, skipFluctuationLimitCheck)
 	if err != nil {
 		return sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}

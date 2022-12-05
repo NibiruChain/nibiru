@@ -66,8 +66,7 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 		name               string
 		baseAssetReserve   sdk.Dec
 		quoteAssetReserve  sdk.Dec
-		quoteAmount        sdk.Dec
-		direction          Direction
+		quoteIn            sdk.Dec
 		expectedBaseAmount sdk.Dec
 		expectedErr        error
 	}{
@@ -75,41 +74,45 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 			name:               "quote amount zero",
 			baseAssetReserve:   sdk.NewDec(1000),
 			quoteAssetReserve:  sdk.NewDec(1000),
-			quoteAmount:        sdk.ZeroDec(),
-			direction:          Direction_ADD_TO_POOL,
+			quoteIn:            sdk.ZeroDec(),
 			expectedBaseAmount: sdk.ZeroDec(),
 		},
 		{
-			name:               "simple add quote to pool",
-			baseAssetReserve:   sdk.NewDec(1000),
-			quoteAssetReserve:  sdk.NewDec(1000),
-			quoteAmount:        sdk.NewDec(500),
-			direction:          Direction_ADD_TO_POOL,
+			name:              "simple add quote to pool",
+			baseAssetReserve:  sdk.NewDec(1000),
+			quoteAssetReserve: sdk.NewDec(1000), // swapInvariant = 1000 * 1000
+			quoteIn:           sdk.NewDec(500),  // quoteReserves = 1000 + 500
+			// swapInvariant / quoteReserves - baseReserves = 333.33
 			expectedBaseAmount: sdk.MustNewDecFromStr("333.333333333333333333"),
 		},
 		{
-			name:               "simple remove quote from pool",
-			baseAssetReserve:   sdk.NewDec(1000),
-			quoteAssetReserve:  sdk.NewDec(1000),
-			quoteAmount:        sdk.NewDec(500),
-			direction:          Direction_REMOVE_FROM_POOL,
+			name:              "simple remove quote from pool",
+			baseAssetReserve:  sdk.NewDec(1000),
+			quoteAssetReserve: sdk.NewDec(1000), // swapInvariant = 1000 * 1000
+			quoteIn:           sdk.NewDec(-500), // quoteReserves = 1000 - 500
+			// swapInvariant / quoteReserves - baseReserves = 1000
 			expectedBaseAmount: sdk.NewDec(1000),
 		},
 		{
 			name:              "too much quote removed results in error",
 			baseAssetReserve:  sdk.NewDec(1000),
-			quoteAssetReserve: sdk.NewDec(1000),
-			quoteAmount:       sdk.NewDec(1000),
-			direction:         Direction_REMOVE_FROM_POOL,
+			quoteAssetReserve: sdk.NewDec(1000),  // swapInvariant = 1000 * 1000
+			quoteIn:           sdk.NewDec(-1000), // quoteReserves = 1000 - 1000
 			expectedErr:       ErrQuoteReserveAtZero,
 		},
 		{
-			name:              "too much quote removed results in error",
+			name:              "attempt to remove more than the quote reserves",
 			baseAssetReserve:  sdk.NewDec(1000),
 			quoteAssetReserve: sdk.NewDec(1000),
-			quoteAmount:       sdk.NewDec(1000),
-			direction:         Direction_REMOVE_FROM_POOL,
+			quoteIn:           sdk.NewDec(-9999),
 			expectedErr:       ErrQuoteReserveAtZero,
+		},
+		{
+			name:               "add large amount to the quote reserves",
+			baseAssetReserve:   sdk.NewDec(1000),
+			quoteAssetReserve:  sdk.NewDec(1000),        // swapInvariant = 1000 * 1000
+			quoteIn:            sdk.NewDec(999_555_999), // quoteReserves = 1000 + 999_555_999
+			expectedBaseAmount: sdk.MustNewDecFromStr("999.998999556802663137"),
 		},
 	}
 
@@ -129,7 +132,7 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 				},
 			}
 
-			amount, err := pool.GetBaseAmountByQuoteAmount(tc.quoteAmount.MulInt64(tc.direction.ToMultiplier()))
+			amount, err := pool.GetBaseAmountByQuoteAmount(tc.quoteIn)
 			if tc.expectedErr != nil {
 				require.ErrorIs(t, err, tc.expectedErr,
 					"expected error: %w, got: %w", tc.expectedErr, err)
@@ -150,8 +153,7 @@ func TestGetQuoteAmountByBaseAmount(t *testing.T) {
 		name                string
 		baseAssetReserve    sdk.Dec
 		quoteAssetReserve   sdk.Dec
-		baseAmount          sdk.Dec
-		direction           Direction
+		baseIn              sdk.Dec
 		expectedQuoteAmount sdk.Dec
 		expectedErr         error
 	}{
@@ -159,32 +161,28 @@ func TestGetQuoteAmountByBaseAmount(t *testing.T) {
 			name:                "base amount zero",
 			baseAssetReserve:    sdk.NewDec(1000),
 			quoteAssetReserve:   sdk.NewDec(1000),
-			baseAmount:          sdk.ZeroDec(),
-			direction:           Direction_ADD_TO_POOL,
+			baseIn:              sdk.ZeroDec(),
 			expectedQuoteAmount: sdk.ZeroDec(),
 		},
 		{
 			name:                "simple add base to pool",
 			baseAssetReserve:    sdk.NewDec(1000),
 			quoteAssetReserve:   sdk.NewDec(1000),
-			baseAmount:          sdk.NewDec(500),
-			direction:           Direction_ADD_TO_POOL,
+			baseIn:              sdk.NewDec(500),
 			expectedQuoteAmount: sdk.MustNewDecFromStr("333.333333333333333333"),
 		},
 		{
 			name:                "simple remove base from pool",
 			baseAssetReserve:    sdk.NewDec(1000),
 			quoteAssetReserve:   sdk.NewDec(1000),
-			baseAmount:          sdk.NewDec(500),
-			direction:           Direction_REMOVE_FROM_POOL,
+			baseIn:              sdk.NewDec(-500),
 			expectedQuoteAmount: sdk.NewDec(1000),
 		},
 		{
 			name:              "too much base removed results in error",
 			baseAssetReserve:  sdk.NewDec(1000),
 			quoteAssetReserve: sdk.NewDec(1000),
-			baseAmount:        sdk.NewDec(1000),
-			direction:         Direction_REMOVE_FROM_POOL,
+			baseIn:            sdk.NewDec(-1000),
 			expectedErr:       ErrBaseReserveAtZero,
 		},
 	}
@@ -205,7 +203,7 @@ func TestGetQuoteAmountByBaseAmount(t *testing.T) {
 				},
 			}
 
-			amount, err := pool.GetQuoteAmountByBaseAmount(tc.direction, tc.baseAmount)
+			amount, err := pool.GetQuoteAmountByBaseAmount(tc.baseIn)
 			if tc.expectedErr != nil {
 				require.ErrorIs(t, err, tc.expectedErr,
 					"expected error: %w, got: %w", tc.expectedErr, err)
