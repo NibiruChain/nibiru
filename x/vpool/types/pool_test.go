@@ -103,6 +103,14 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 			direction:         Direction_REMOVE_FROM_POOL,
 			expectedErr:       ErrQuoteReserveAtZero,
 		},
+		{
+			name:              "too much quote removed results in error",
+			baseAssetReserve:  sdk.NewDec(1000),
+			quoteAssetReserve: sdk.NewDec(1000),
+			quoteAmount:       sdk.NewDec(1000),
+			direction:         Direction_REMOVE_FROM_POOL,
+			expectedErr:       ErrQuoteReserveAtZero,
+		},
 	}
 
 	for _, tc := range tests {
@@ -121,7 +129,7 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 				},
 			}
 
-			amount, err := pool.GetBaseAmountByQuoteAmount(tc.direction, tc.quoteAmount)
+			amount, err := pool.GetBaseAmountByQuoteAmount(tc.quoteAmount.MulInt64(tc.direction.ToMultiplier()))
 			if tc.expectedErr != nil {
 				require.ErrorIs(t, err, tc.expectedErr,
 					"expected error: %w, got: %w", tc.expectedErr, err)
@@ -228,19 +236,19 @@ func TestIncreaseDecreaseReserves(t *testing.T) {
 	}
 
 	t.Log("decrease quote asset reserve")
-	pool.DecreaseQuoteAssetReserve(sdk.NewDec(100))
+	pool.AddToQuoteAssetReserve(sdk.NewDec(-100))
 	require.Equal(t, sdk.NewDec(999_900), pool.QuoteAssetReserve)
 
 	t.Log("increase quote asset reserve")
-	pool.IncreaseQuoteAssetReserve(sdk.NewDec(100))
+	pool.AddToQuoteAssetReserve(sdk.NewDec(100))
 	require.Equal(t, sdk.NewDec(1*common.Precision), pool.QuoteAssetReserve)
 
 	t.Log("decrease base asset reserve")
-	pool.DecreaseBaseAssetReserve(sdk.NewDec(100))
+	pool.AddToBaseAssetReserve(sdk.NewDec(-100))
 	require.Equal(t, sdk.NewDec(999_900), pool.BaseAssetReserve)
 
 	t.Log("increase base asset reserve")
-	pool.IncreaseBaseAssetReserve(sdk.NewDec(100))
+	pool.AddToBaseAssetReserve(sdk.NewDec(100))
 	require.Equal(t, sdk.NewDec(1*common.Precision), pool.BaseAssetReserve)
 }
 
