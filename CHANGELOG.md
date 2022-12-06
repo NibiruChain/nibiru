@@ -39,18 +39,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## Unreleased 
 
-### State Machine Breaking
+* ...
 
-* [#1102](https://github.com/NibiruChain/nibiru/pull/1102) - refactor(perp)!: replace CumulativePremiumFractions array with single value
-
-### Bug Fixes
-
-* [#1100](https://github.com/NibiruChain/nibiru/pull/1100) - fix(oracle): fix flaky oracle test
-* [#1110](https://github.com/NibiruChain/nibiru/pull/1110) - fix(dex): fix dex issue on unsorted join pool
-
-## [v0.16.0](https://github.com/NibiruChain/nibiru/releases/tag/v0.16.0) - 2022-11-23
+## [v0.16.0](https://github.com/NibiruChain/nibiru/releases/tag/v0.16.0) - Unreleased
 
 ### Features
 
@@ -63,6 +56,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1092](https://github.com/NibiruChain/nibiru/pull/1092) - refactor(dex)!: revive dex module using intermediate test app
 * [#1097](https://github.com/NibiruChain/nibiru/pull/1097) - feat(perp): Track and expose the net size of a pair with a query
 * [#1105](https://github.com/NibiruChain/nibiru/pull/1105) - feat(perp): Add (notional) volume to metrics state
+
+### State Machine Breaking
+
+* [#1102](https://github.com/NibiruChain/nibiru/pull/1102) - refactor(perp)!: replace CumulativePremiumFractions array with single value
 
 ### Improvements
 
@@ -87,6 +84,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1086](https://github.com/NibiruChain/nibiru/pull/1086) - refactor(perp)!: Removed unused field, `LiquidationPenalty`, from `PositionChangedEvent`
 * [#1093](https://github.com/NibiruChain/nibiru/pull/1093) - simulation(dex): add simulation tests for stableswap pools
 * [#1091](https://github.com/NibiruChain/nibiru/pull/1091) - refactor: Use common.Precision instead of 1_000_000 in the codebase
+* [#1109](https://github.com/NibiruChain/nibiru/pull/1109) - refactor(vpool)!: Condense swap SwapXForY and SwapYForX events into SwapOnVpoolEvent 
+
+### Bug Fixes
+
+* [#1100](https://github.com/NibiruChain/nibiru/pull/1100) - fix(oracle): fix flaky oracle test
+* [#1110](https://github.com/NibiruChain/nibiru/pull/1110) - fix(dex): fix dex issue on unsorted join pool
 
 ## v0.15.0
 
