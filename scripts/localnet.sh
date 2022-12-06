@@ -48,8 +48,10 @@ CHAIN_ID="nibiru-localnet-0"
 RPC_PORT="26657"
 GRPC_PORT="9090"
 MNEMONIC="guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host"
-GENESIS_COINS="10000000000000unibi,10000000000000unusd,10000000000000uusdc"
+GENESIS_COINS="10000000000000unibi,10000000000000unusd,10000000000000uusdt"
 CHAIN_DIR="$HOME/.nibid"
+echo "CHAIN_DIR: $CHAIN_DIR"
+echo "CHAIN_ID: $CHAIN_ID"
 
 SEDOPTION=""
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -239,13 +241,13 @@ add_genesis_param '.app_state.perp.pair_metadata[1].pair = {token0:"ueth",token1
 add_genesis_param '.app_state.perp.pair_metadata[1].latest_cumulative_premium_fraction = "0"'
 
 # x/pricefeed
+add_genesis_param '.app_state.pricefeed.params.pairs[0] = {token0:"ubtc",token1:"unusd"}'
+add_genesis_param '.app_state.pricefeed.params.pairs[0] = {token0:"ueth",token1:"unusd"}'
+add_genesis_param '.app_state.pricefeed.params.pairs[0] = {token0:"ueth",token1:"unusd"}'
+add_genesis_param '.app_state.pricefeed.params.twap_lookback_window = "900s"'
 nibid add-genesis-oracle nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl
 nibid add-genesis-oracle nibi1lptpc0e3upq2n7e4zmqtr0yxyrldp6jzz8z8xm
 nibid add-genesis-oracle nibi15cdcxznuwpuk5hw7t678wpyesy78kwy00qcesa
-add_genesis_param '.app_state.pricefeed.params.pairs[0] = {token0:"ubtc",token1:"unusd"}'
-add_genesis_param '.app_state.pricefeed.params.pairs[0] = {token0:"ueth",token1:"unusd"}'
-
-cat $HOME/.nibid/config/genesis.json | jq '.app_state.pricefeed.params.twap_lookback_window = "900s"' >$HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
 
 # Start the network
 echo_info "Starting $CHAIN_ID in $CHAIN_DIR..."
