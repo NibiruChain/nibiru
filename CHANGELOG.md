@@ -45,7 +45,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.16.0](https://github.com/NibiruChain/nibiru/releases/tag/v0.16.0) - Unreleased
 
-
 ### Features
 
 * [#1032](https://github.com/NibiruChain/nibiru/pull/1032) - feeder: add price provide API and bitfinex price source
@@ -89,6 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Bug Fixes
 
 * [#1100](https://github.com/NibiruChain/nibiru/pull/1100) - fix(oracle): fix flaky oracle test
+* [#1110](https://github.com/NibiruChain/nibiru/pull/1110) - fix(dex): fix dex issue on unsorted join pool
 
 ## v0.15.0
 
