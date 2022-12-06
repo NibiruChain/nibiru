@@ -199,8 +199,8 @@ add_genesis_vpools_with_coingecko_prices() {
   price_eth=${price_eth%.*}
   base_amt_eth=$(($quote_amt / $price_eth))
 
-  nibid add-genesis-vpool ubtc:unusd $base_amt_btc $quote_amt 0.1 0.1 0.1 0.0625 12
-  nibid add-genesis-vpool ueth:unusd $base_amt_eth $quote_amt 0.1 0.1 0.1 0.04 20
+  nibid add-genesis-vpool --pair=ubtc:unusd --base-amt=$base_amt_btc --quote-amt=$quote_amt --max-leverage=12
+  nibid add-genesis-vpool --pair=ueth:unusd --base-amt=$base_amt_eth --quote-amt=$quote_amt --max-leverage=20 --mmr=0.04 
 
   echo 'tmp_vpool_prices: '
   cat $temp_json_fname | jq .
@@ -214,8 +214,8 @@ add_genesis_vpools_default() {
   local quote_amt=10$KILO$MEGA
   local base_amt_btc=$(($quote_amt / 16500))
   local base_amt_eth=$(($quote_amt / 1200))
-  nibid add-genesis-vpool ubtc:unusd $base_amt_btc $quote_amt 0.1 0.1 0.1 0.0625 12
-  nibid add-genesis-vpool ueth:unusd $base_amt_eth $quote_amt 0.1 0.1 0.1 0.0625 10
+  nibid add-genesis-vpool --pair=ubtc:unusd --base-amt=$base_amt_btc --quote-amt=$quote_amt --max-leverage=12
+  nibid add-genesis-vpool --pair=ueth:unusd --base-amt=$base_amt_eth --quote-amt=$quote_amt --max-leverage=20 --mmr=0.04 
 }
 
 # x/vpool
