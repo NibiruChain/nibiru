@@ -60,7 +60,7 @@ args:
   - skipFluctuationLimitCheck: whether or not to skip the fluctuation limit check
 
 ret:
-  - quoteAmt: the amount of quote asset swapped
+  - quoteAmtAbs: the absolute value of the amount swapped in quote assets
   - err: error
 */
 func (k Keeper) SwapBaseForQuote(
