@@ -38,11 +38,11 @@ var flagsAddVpoolGenesis = map[string]struct {
 	FlagPair:                   {"pair", "", "trading pair identifier of the form 'base:quote'. E.g., ueth:unusd"},
 	FlagBaseAmt:                {"base-amt", "", "amount of base asset reserves"},
 	FlagQuoteAmt:               {"quote-amt", "", "amount of quote asset reserves"},
-	FlagTradeLim:               {"trade-lim", "0.1", "amount of quote asset reserves"},
-	FlagFluctLim:               {"fluct-lim", "0.1", "amount of quote asset reserves"},
-	FlagMaintenenceMarginRatio: {"mmr", "0.0625", "amount of quote asset reserves"},
-	FlagMaxLeverage:            {"max-leverage", "10", "amount of quote asset reserves"},
-	FlagMaxOracleSpreadRatio:   {"max-oracle-spread-ratio", "0.1", "amount of quote asset reserves"},
+	FlagTradeLim:               {"trade-lim", "0.1", "percentage applied to reserves in order not to over trade"},
+	FlagFluctLim:               {"fluct-lim", "0.1", "percentage that a single open or close position can alter the reserves"},
+	FlagMaintenenceMarginRatio: {"mmr", "0.0625", "maintenance margin ratio"},
+	FlagMaxLeverage:            {"max-leverage", "10", "maximum leverage for opening a position"},
+	FlagMaxOracleSpreadRatio:   {"max-oracle-spread-ratio", "0.1", "max oracle spread ratio"},
 }
 
 // AddVpoolGenesisCmd returns add-vpool-genesis
