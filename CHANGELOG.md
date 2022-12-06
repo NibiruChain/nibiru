@@ -66,6 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Improvements
 
+* [#1111](https://github.com/NibiruChain/nibiru/pull/1111) - feat(vpool)!: Use flags and certain default values instead of unnamed args for add-genesis-vpool to improve ease of use
 * [#1046](https://github.com/NibiruChain/nibiru/pull/1046) - remove: feeder. The price feeder was moved to an external repo.
 * [#1015](https://github.com/NibiruChain/nibiru/pull/1015) - feat(dex): throw error when swap output amount is less than 1
 * [#1018](https://github.com/NibiruChain/nibiru/pull/1018) - chore(dex): refactor to match best practice
