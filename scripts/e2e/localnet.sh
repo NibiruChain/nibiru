@@ -238,4 +238,5 @@ cat $HOME/.nibid/config/genesis.json | jq '.app_state.pricefeed.params.twap_look
 
 # Start the network
 echo_info "Starting $CHAIN_ID in $CHAIN_DIR..."
-$BINARY start
+
+$BINARY start &
