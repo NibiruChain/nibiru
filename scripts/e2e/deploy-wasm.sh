@@ -1,7 +1,7 @@
 BINARY="./nibid"
 DENOM="unibi"
 CHAIN_ID="nibiru-localnet-0"
-TXFLAG="--gas-prices 0.1$DENOM --gas auto --gas-adjustment 1.3 -y -b block --chain-id $CHAIN_ID --node $RPC"
+TXFLAG="--gas-prices 0.1$DENOM --gas auto --gas-adjustment 1.3 -y -b block --chain-id $CHAIN_ID"
 DEFAULT_DEV_ADDRESS="juno16g2rahf5846rxzp3fwlswy08fz8ccuwk03k57y"
 
 # validator addr
