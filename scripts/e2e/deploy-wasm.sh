@@ -18,7 +18,7 @@ echo "$BALANCE_1"
 echo "Address to deploy contracts: $DEFAULT_DEV_ADDRESS"
 echo "TX Flags: $TXFLAG"
 
-CONTRACT_CODE=$($BINARY tx wasm store "./scripts/e2e/contracts/whoami.wasm" --from validator $TXFLAG --output json | jq -r '.logs[0].events[-1].attributes[-1].value')
+CONTRACT_CODE=$($BINARY tx wasm store "./scripts/e2e/contracts/cw_nameservice.wasm" --from validator $TXFLAG --output json | jq -r '.logs[0].events[-1].attributes[-1].value')
 echo "Stored: $CONTRACT_CODE"
 
 BALANCE_2=$($BINARY q bank balances $VALIDATOR_ADDR)
