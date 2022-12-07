@@ -59,6 +59,16 @@ func SimulateMsgOpenPosition(ak types.AccountKeeper, bk types.BankKeeper, k keep
 
 		leverage := simtypes.RandomDecAmount(r, pool.Config.MaxLeverage.Sub(sdk.OneDec())).Add(sdk.OneDec()) // between [1, MaxLeverage]
 		openNotional := leverage.MulInt(quoteAmt)
+		quoteDelta := openNotional
+		baseDelta, _ := pool.GetBaseAmountByQuoteAmount(quoteDelta.Abs().MulInt64(pooltypes.Direction_ADD_TO_POOL.ToMultiplier()))
+
+		currentPrice := pool.GetMarkPrice()
+		newPrice := pool.QuoteAssetReserve.Add(quoteDelta).Quo(pool.BaseAssetReserve.Sub(baseDelta))
+
+		fluctuationLimitRatio := pool.Config.FluctuationLimitRatio
+		snapshotUpperLimit := currentPrice.Mul(sdk.OneDec().Add(fluctuationLimitRatio))
+		snapshotLowerLimit := currentPrice.Mul(sdk.OneDec().Sub(fluctuationLimitRatio))
+
 		feesAmt := openNotional.Mul(sdk.MustNewDecFromStr("0.002")).Ceil().TruncateInt()
 		spentCoins := sdk.NewCoins(sdk.NewCoin(common.DenomNUSD, quoteAmt.Add(feesAmt)))
 
@@ -69,6 +79,20 @@ func SimulateMsgOpenPosition(ak types.AccountKeeper, bk types.BankKeeper, k keep
 			QuoteAssetAmount:     quoteAmt,
 			Leverage:             leverage,
 			BaseAssetAmountLimit: sdk.ZeroInt(),
+		}
+
+		fmt.Println("EXPECTED")
+		fmt.Println("\t\t snapshot.QuoteAssetReserve", pool.QuoteAssetReserve)
+		fmt.Println("\t\t snapshot.BaseAssetReserve", pool.BaseAssetReserve)
+		fmt.Println("\t\t pool.QuoteAssetReserve.Add(quoteDelta)", pool.QuoteAssetReserve.Add(quoteDelta))
+		fmt.Println("\t\t pool.BaseAssetReserve.Sub(baseDelta)", pool.BaseAssetReserve.Sub(baseDelta))
+		fmt.Println("\t\t currentPrice", currentPrice)
+		fmt.Println("\t\t newPrice", newPrice)
+		fmt.Println("\t\t snapshotUpperLimit", snapshotUpperLimit)
+		fmt.Println("\t\t snapshotLowerLimit", snapshotLowerLimit)
+
+		if newPrice.GT(snapshotUpperLimit) || newPrice.LT(snapshotLowerLimit) {
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "over fluctuation limit"), nil, nil
 		}
 
 		opMsg, futureOps, err := simulation.GenAndDeliverTxWithRandFees(
