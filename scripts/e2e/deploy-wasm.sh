@@ -24,3 +24,24 @@ echo "Stored: $CONTRACT_CODE"
 BALANCE_2=$($BINARY q bank balances $VALIDATOR_ADDR)
 echo "Post-store balance:"
 echo "$BALANCE_2"
+
+INIT='{"purchase_price":{"amount":"100","denom":"unibi"},"transfer_price":{"amount":"999","denom":"unibi"}}'
+$BINARY tx wasm instantiate $CONTRACT_CODE "$INIT" --from validator $TXFLAG --label "awesome name service" --no-admin
+
+CONTRACT_ADDRESS=$($BINARY query wasm list-contract-by-code $CONTRACT_CODE --output json | jq -r '.contracts[-1]')
+echo "Contract Address: $CONTRACT_ADDRESS"
+
+$BINARY query wasm contract $CONTRACT_ADDRESS
+
+# purchase a domain name
+$BINARY tx wasm execute $CONTRACT_ADDRESS '{"register":{"name":"uniques-domain"}}' --amount 100$DENOM --from validator $TXFLAG -y
+
+# query registered name
+NAME_QUERY='{"resolve_record": {"name": "uniques-domain"}}'
+DOMAIN_OWNER=$($BINARY query wasm contract-state smart $CONTRACT_ADDRESS "$NAME_QUERY" --output json | jq -r '.data.address')
+echo "Owner: $DOMAIN_OWNER"
+
+if [ $DOMAIN_OWNER != $VALIDATOR_ADDR ]; then
+  echo "Domain owner is not the validator address"
+  exit 1
+fi
