@@ -1,3 +1,6 @@
 BINARY="./nibid"
 
-$BINARY query wasm list-code
+# validator addr
+VALIDATOR_ADDR=$($BINARY keys show validator --address)
+echo "Validator address:"
+echo "$VALIDATOR_ADDR"
