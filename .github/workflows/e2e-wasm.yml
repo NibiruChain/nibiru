@@ -1,8 +1,15 @@
 ---
-name: CosmWasm deployment contract CI
+name: CosmWasm e2e contract tests
 
 on:
+  # On normal PRs or when workflow goreleaser finishes, as it gets the last release tag.
   pull_request:
+    paths: ["**.go", "**.proto", "go.mod", "go.sum"]
+  workflow_run:
+    workflows: ["goreleaser"]
+    types:
+      - completed
+
 
 jobs:
   get-release:
