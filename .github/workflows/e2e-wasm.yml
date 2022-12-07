@@ -26,7 +26,6 @@ jobs:
       - name: unpack release
         run: |
           tar -xzf *linux_amd64.tar.gz
-          ./nibid
 
       - name: launch localnet
         run: |
