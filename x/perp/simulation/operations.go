@@ -59,15 +59,16 @@ func SimulateMsgOpenPosition(ak types.AccountKeeper, bk types.BankKeeper, k keep
 
 		leverage := simtypes.RandomDecAmount(r, pool.Config.MaxLeverage.Sub(sdk.OneDec())).Add(sdk.OneDec()) // between [1, MaxLeverage]
 		openNotional := leverage.MulInt(quoteAmt)
-		quoteDelta := openNotional
-		baseDelta, _ := pool.GetBaseAmountByQuoteAmount(quoteDelta.Abs().MulInt64(pooltypes.Direction_ADD_TO_POOL.ToMultiplier()))
 
-		currentPrice := pool.GetMarkPrice()
-		newPrice := pool.QuoteAssetReserve.Add(quoteDelta).Quo(pool.BaseAssetReserve.Sub(baseDelta))
-
-		fluctuationLimitRatio := pool.Config.FluctuationLimitRatio
-		snapshotUpperLimit := currentPrice.Mul(sdk.OneDec().Add(fluctuationLimitRatio))
-		snapshotLowerLimit := currentPrice.Mul(sdk.OneDec().Sub(fluctuationLimitRatio))
+		var side types.Side
+		var direction pooltypes.Direction
+		if r.Float32() < .5 {
+			side = types.Side_BUY
+			direction = pooltypes.Direction_ADD_TO_POOL
+		} else {
+			side = types.Side_SELL
+			direction = pooltypes.Direction_REMOVE_FROM_POOL
+		}
 
 		feesAmt := openNotional.Mul(sdk.MustNewDecFromStr("0.002")).Ceil().TruncateInt()
 		spentCoins := sdk.NewCoins(sdk.NewCoin(common.DenomNUSD, quoteAmt.Add(feesAmt)))
@@ -75,23 +76,14 @@ func SimulateMsgOpenPosition(ak types.AccountKeeper, bk types.BankKeeper, k keep
 		msg := &types.MsgOpenPosition{
 			Sender:               simAccount.Address.String(),
 			TokenPair:            common.Pair_BTC_NUSD.String(),
-			Side:                 types.Side_BUY,
+			Side:                 side,
 			QuoteAssetAmount:     quoteAmt,
 			Leverage:             leverage,
 			BaseAssetAmountLimit: sdk.ZeroInt(),
 		}
 
-		fmt.Println("EXPECTED")
-		fmt.Println("\t\t snapshot.QuoteAssetReserve", pool.QuoteAssetReserve)
-		fmt.Println("\t\t snapshot.BaseAssetReserve", pool.BaseAssetReserve)
-		fmt.Println("\t\t pool.QuoteAssetReserve.Add(quoteDelta)", pool.QuoteAssetReserve.Add(quoteDelta))
-		fmt.Println("\t\t pool.BaseAssetReserve.Sub(baseDelta)", pool.BaseAssetReserve.Sub(baseDelta))
-		fmt.Println("\t\t currentPrice", currentPrice)
-		fmt.Println("\t\t newPrice", newPrice)
-		fmt.Println("\t\t snapshotUpperLimit", snapshotUpperLimit)
-		fmt.Println("\t\t snapshotLowerLimit", snapshotLowerLimit)
-
-		if newPrice.GT(snapshotUpperLimit) || newPrice.LT(snapshotLowerLimit) {
+		isOverFluctation := checkIsOverFluctation(ctx, k, pool, openNotional, direction)
+		if isOverFluctation {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "over fluctuation limit"), nil, nil
 		}
 
@@ -118,6 +110,22 @@ func SimulateMsgOpenPosition(ak types.AccountKeeper, bk types.BankKeeper, k keep
 
 		return opMsg, futureOps, err
 	}
+}
+
+// Ensure wether the position we open won't trigger the fluctuation limit.
+func checkIsOverFluctation(
+	ctx sdk.Context, k keeper.Keeper, pool pooltypes.Vpool, openNotional sdk.Dec, direction pooltypes.Direction) bool {
+	quoteDelta := openNotional
+	baseDelta, _ := pool.GetBaseAmountByQuoteAmount(quoteDelta.Abs().MulInt64(direction.ToMultiplier()))
+	snapshot, _ := k.VpoolKeeper.GetLastSnapshot(ctx, pool)
+	currentPrice := snapshot.QuoteAssetReserve.Quo(snapshot.BaseAssetReserve)
+	newPrice := pool.QuoteAssetReserve.Add(quoteDelta).Quo(pool.BaseAssetReserve.Sub(baseDelta))
+
+	fluctuationLimitRatio := pool.Config.FluctuationLimitRatio
+	snapshotUpperLimit := currentPrice.Mul(sdk.OneDec().Add(fluctuationLimitRatio))
+	snapshotLowerLimit := currentPrice.Mul(sdk.OneDec().Sub(fluctuationLimitRatio))
+	isOverFluctation := newPrice.GT(snapshotUpperLimit) || newPrice.LT(snapshotLowerLimit)
+	return isOverFluctation
 }
 
 /*

@@ -41,7 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased 
 
-* ...
+### Bug Fixes
+* [#1113](https://github.com/NibiruChain/nibiru/pull/1113) - fix: fix quick simulation issue
 
 ## [v0.16.0](https://github.com/NibiruChain/nibiru/releases/tag/v0.16.0) - Unreleased
 
