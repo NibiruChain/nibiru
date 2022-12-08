@@ -667,6 +667,37 @@ func TestJoinPoolAllAssets(t *testing.T) {
 				/*shares=*/ 150),
 		},
 		{
+			name: "join with some assets, pool empty in one side, none remaining",
+			joinerInitialFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("bar", 100),
+				sdk.NewInt64Coin("foo", 100),
+			),
+			initialPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("bar", 100),
+					sdk.NewInt64Coin("foo", 1),
+				),
+				/*shares=*/ 100),
+			tokensIn: sdk.NewCoins(
+				sdk.NewInt64Coin("foo", 100),
+			),
+			expectedNumSharesOut: sdk.NewInt64Coin(shareDenom, 900),
+			expectedRemCoins:     sdk.NewCoins(sdk.NewInt64Coin("foo", 1)),
+			expectedJoinerFinalFunds: sdk.NewCoins(
+				sdk.NewInt64Coin(shareDenom, 50),
+				sdk.NewInt64Coin("bar", 0),
+				sdk.NewInt64Coin("foo", 0),
+			),
+			expectedFinalPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("bar", 100),
+					sdk.NewInt64Coin("foo", 100),
+				),
+				/*shares=*/ 1000),
+		},
+		{
 			name: "join with some assets, but swap done",
 			joinerInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("bar", 100),
