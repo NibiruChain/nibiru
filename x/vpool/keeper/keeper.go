@@ -249,17 +249,32 @@ func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool types.Vpool) er
 		return nil
 	}
 
-	it := k.ReserveSnapshots.Iterate(ctx, collections.PairRange[common.AssetPair, time.Time]{}.Prefix(pool.Pair).Descending())
-	defer it.Close()
-	if !it.Valid() {
-		return fmt.Errorf("error getting last snapshot number for pair %s", pool.Pair)
+	latestSnapshot, err := k.GetLastSnapshot(ctx, pool)
+	if err != nil {
+		return err
 	}
-	latestSnapshot := it.Value()
 	if pool.IsOverFluctuationLimitInRelationWithSnapshot(latestSnapshot) {
 		return types.ErrOverFluctuationLimit
 	}
 
 	return nil
+}
+
+/*
+GetLastSnapshot retrieve the last snapshot for a particular vpool
+
+args:
+  - ctx: the cosmos-sdk context
+  - pool: the vpool to check
+*/
+func (k Keeper) GetLastSnapshot(ctx sdk.Context, pool types.Vpool) (types.ReserveSnapshot, error) {
+	it := k.ReserveSnapshots.Iterate(ctx, collections.PairRange[common.AssetPair, time.Time]{}.Prefix(pool.Pair).Descending())
+	defer it.Close()
+	if !it.Valid() {
+		return types.ReserveSnapshot{}, fmt.Errorf("error getting last snapshot number for pair %s", pool.Pair)
+	}
+	latestSnapshot := it.Value()
+	return latestSnapshot, nil
 }
 
 /*
