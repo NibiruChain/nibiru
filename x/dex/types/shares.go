@@ -4,9 +4,10 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/holiman/uint256"
+
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 /*
