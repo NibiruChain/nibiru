@@ -6,6 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	fuzz "github.com/google/gofuzz"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/oracle/types"
@@ -122,8 +123,10 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 	voteTargets := map[string]struct{}{}
 	f.Fuzz(&voteTargets)
 
-	for k := range voteTargets {
-		input.OracleKeeper.Pairs.Insert(input.Ctx, k)
+	for key := range voteTargets {
+		assert.NotPanics(t, func() {
+			input.OracleKeeper.Pairs.Insert(input.Ctx, key)
+		}, "attempted to insert key: %s", key)
 	}
 
 	voteMap := map[string]types.ExchangeRateBallot{}
@@ -131,5 +134,5 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 
 	require.NotPanics(t, func() {
 		input.OracleKeeper.RemoveInvalidBallots(input.Ctx, voteMap)
-	})
+	}, "voteMap: %v", voteMap)
 }

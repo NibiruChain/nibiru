@@ -351,6 +351,21 @@ func (mr *MockVpoolKeeperMockRecorder) GetBaseAssetTWAP(arg0, arg1, arg2, arg3, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBaseAssetTWAP", reflect.TypeOf((*MockVpoolKeeper)(nil).GetBaseAssetTWAP), arg0, arg1, arg2, arg3, arg4)
 }
 
+// GetLastSnapshot mocks base method.
+func (m *MockVpoolKeeper) GetLastSnapshot(arg0 types2.Context, arg1 types1.Vpool) (types1.ReserveSnapshot, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetLastSnapshot", arg0, arg1)
+	ret0, _ := ret[0].(types1.ReserveSnapshot)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetLastSnapshot indicates an expected call of GetLastSnapshot.
+func (mr *MockVpoolKeeperMockRecorder) GetLastSnapshot(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLastSnapshot", reflect.TypeOf((*MockVpoolKeeper)(nil).GetLastSnapshot), arg0, arg1)
+}
+
 // GetMaintenanceMarginRatio mocks base method.
 func (m *MockVpoolKeeper) GetMaintenanceMarginRatio(arg0 types2.Context, arg1 common.AssetPair) types2.Dec {
 	m.ctrl.T.Helper()

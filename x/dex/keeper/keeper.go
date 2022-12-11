@@ -445,7 +445,7 @@ func (k Keeper) JoinPool(
 ) (pool types.Pool, numSharesOut sdk.Coin, remCoins sdk.Coins, err error) {
 	pool, _ = k.FetchPool(ctx, poolId)
 
-	if len(tokensIn) != len(pool.PoolAssets) {
+	if len(tokensIn) != len(pool.PoolAssets) && !shouldSwap {
 		return pool, numSharesOut, remCoins, errors.New("too few assets to join this pool")
 	}
 
