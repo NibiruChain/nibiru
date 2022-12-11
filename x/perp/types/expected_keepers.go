@@ -110,6 +110,7 @@ type VpoolKeeper interface {
 	GetMaxLeverage(ctx sdk.Context, pair common.AssetPair) sdk.Dec
 	ExistsPool(ctx sdk.Context, pair common.AssetPair) bool
 	GetSettlementPrice(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error)
+	GetLastSnapshot(ctx sdk.Context, pool vpooltypes.Vpool) (vpooltypes.ReserveSnapshot, error)
 }
 
 type EpochKeeper interface {

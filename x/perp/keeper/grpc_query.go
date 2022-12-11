@@ -181,6 +181,11 @@ func (q queryServer) Metrics(
 	if !q.k.VpoolKeeper.ExistsPool(ctx, tokenPair) {
 		return nil, status.Errorf(codes.InvalidArgument, "pool not found: %s", req.Pair)
 	}
-	metrics := q.k.Metrics.GetOr(ctx, req.Pair, types.Metrics{Pair: req.Pair, NetSize: sdk.NewDec(0)})
+	metrics := q.k.Metrics.GetOr(ctx, req.Pair, types.Metrics{
+		Pair:        req.Pair,
+		NetSize:     sdk.NewDec(0),
+		VolumeQuote: sdk.NewDec(0),
+		VolumeBase:  sdk.NewDec(0),
+	})
 	return &types.QueryMetricsResponse{Metrics: metrics}, nil
 }

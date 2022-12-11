@@ -2,77 +2,67 @@ syntax = "proto3";
 
 package nibiru.vpool.v1;
 
-import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/vpool/types";
 
 message ReserveSnapshotSavedEvent {
-    string pair  = 1;
+  string pair = 1;
+  string quote_reserve = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
-    string quote_reserve = 2 [
-        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-        (gogoproto.nullable) = false
-    ];
+  string base_reserve = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
-    string base_reserve = 3 [
-        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-        (gogoproto.nullable) = false
-    ];
+  // MarkPrice at the end of the block. 
+  // (instantaneous) markPrice := quoteReserve / baseReserve 
+  string mark_price = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
-    // MarkPrice at the end of the block. 
-    // (instantaneous) markPrice := quoteReserve / baseReserve 
-    string mark_price = 4 [
-        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-        (gogoproto.nullable) = false
-    ];
-
-    int64 block_height = 5;
+  int64 block_height = 5;
      
-    google.protobuf.Timestamp block_timestamp = 6 [
+  google.protobuf.Timestamp block_timestamp = 6 [
       (gogoproto.stdtime) = true,
       (gogoproto.nullable) = false
     ];
 }
 
-message SwapQuoteForBaseEvent {
-    string pair  = 1;
+// A swap on the vpool represented by 'pair'. 
+// Amounts are negative or positive base on the perspective of the pool, i.e.
+// a negative quote means the trader has gained quote and the vpool lost quote. 
+message SwapOnVpoolEvent {
+  string pair  = 1;
 
-    string quote_amount = 2 [
+  // delta in the quote reserves of the vpool
+  string quote_amount = 2 [
         (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
         (gogoproto.nullable) = false
     ];
 
-    string base_amount = 3 [
-        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-        (gogoproto.nullable) = false
-    ];
-}
-
-message SwapBaseForQuoteEvent {
-    string pair  = 1;
-
-    string quote_amount = 2 [
-        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-        (gogoproto.nullable) = false
-    ];
-
-    string base_amount = 3 [
+  // delta in the base reserves of the vpool
+  string base_amount = 3 [
         (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
         (gogoproto.nullable) = false
     ];
 }
 
 message MarkPriceChangedEvent {
-    string pair = 1;
-    string price = 2 [
+  string pair = 1;
+  string price = 2 [
         (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
         (gogoproto.nullable) = false
     ];
 
-    google.protobuf.Timestamp block_timestamp = 3 [
+  google.protobuf.Timestamp block_timestamp = 3 [
       (gogoproto.stdtime) = true,
       (gogoproto.nullable) = false
     ];
