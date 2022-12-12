@@ -316,6 +316,7 @@ func TestCreateExitJoinPool(t *testing.T) {
 		poolAssets         []types.PoolAsset
 		senderInitialFunds sdk.Coins
 		expectedErr        error
+		useAllCoins        bool
 	}{
 		{
 			name:       "happy path",
@@ -336,6 +337,7 @@ func TestCreateExitJoinPool(t *testing.T) {
 				sdk.NewInt64Coin(common.DenomUSDC, 1_000),
 			),
 			expectedErr: nil,
+			useAllCoins: true,
 		},
 		{
 			name:       "happy path - stableswap",
@@ -356,6 +358,49 @@ func TestCreateExitJoinPool(t *testing.T) {
 				sdk.NewInt64Coin(common.DenomUSDC, 1_000),
 			),
 			expectedErr: nil,
+			useAllCoins: true,
+		},
+		{
+			name:       "happy path - no use all coins",
+			poolParams: types.PoolParams{PoolType: types.PoolType_BALANCER, A: sdk.OneInt()},
+			poolAssets: []types.PoolAsset{
+				{
+					Token:  sdk.NewInt64Coin(common.DenomNUSD, 1_000),
+					Weight: sdk.OneInt(),
+				},
+				{
+					Token:  sdk.NewInt64Coin(common.DenomUSDC, 1_000),
+					Weight: sdk.OneInt(),
+				},
+			},
+			senderInitialFunds: sdk.NewCoins(
+				sdk.NewInt64Coin(common.DenomNIBI, 1e9),
+				sdk.NewInt64Coin(common.DenomNUSD, 1_000),
+				sdk.NewInt64Coin(common.DenomUSDC, 1_000),
+			),
+			expectedErr: nil,
+			useAllCoins: false,
+		},
+		{
+			name:       "happy path - stableswap - no use all coins",
+			poolParams: types.PoolParams{PoolType: types.PoolType_STABLESWAP, A: sdk.OneInt()},
+			poolAssets: []types.PoolAsset{
+				{
+					Token:  sdk.NewInt64Coin(common.DenomNUSD, 1_000),
+					Weight: sdk.OneInt(),
+				},
+				{
+					Token:  sdk.NewInt64Coin(common.DenomUSDC, 1_000),
+					Weight: sdk.OneInt(),
+				},
+			},
+			senderInitialFunds: sdk.NewCoins(
+				sdk.NewInt64Coin(common.DenomNIBI, 1e9),
+				sdk.NewInt64Coin(common.DenomNUSD, 1_000),
+				sdk.NewInt64Coin(common.DenomUSDC, 1_000),
+			),
+			expectedErr: nil,
+			useAllCoins: false,
 		},
 	}
 
@@ -385,10 +430,11 @@ func TestCreateExitJoinPool(t *testing.T) {
 				PoolId:  1,
 			})
 
+			poolShares := app.BankKeeper.GetBalance(ctx, tc.creatorAddr, "nibiru/pool/1")
 			msgExitPool := types.MsgExitPool{
 				Sender:     tc.creatorAddr.String(),
 				PoolId:     1,
-				PoolShares: app.BankKeeper.GetBalance(ctx, tc.creatorAddr, "nibiru/pool/1"),
+				PoolShares: poolShares,
 			}
 			_, err = msgServer.ExitPool(sdk.WrapSDKContext(ctx), &msgExitPool)
 			require.NoError(t, err)
@@ -402,15 +448,15 @@ func TestCreateExitJoinPool(t *testing.T) {
 			msgJoinPool := types.MsgJoinPool{
 				Sender:      tc.creatorAddr.String(),
 				PoolId:      1,
-				TokensIn:    tc.senderInitialFunds,
-				UseAllCoins: true,
+				TokensIn:    tc.senderInitialFunds.Sub(sdk.NewCoins(sdk.NewInt64Coin(common.DenomNIBI, 1e9))),
+				UseAllCoins: tc.useAllCoins,
 			}
 			_, err = msgServer.JoinPool(sdk.WrapSDKContext(ctx), &msgJoinPool)
 			require.NoError(t, err)
 
 			require.Equal(
 				t,
-				sdk.NewCoins(),
+				sdk.NewCoins(poolShares),
 				app.BankKeeper.GetAllBalances(ctx, tc.creatorAddr),
 			)
 		})
