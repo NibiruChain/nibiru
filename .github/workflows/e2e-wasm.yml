@@ -9,7 +9,7 @@ on:
     workflows: ["goreleaser"]
     types:
       - completed
-
+  workflow_dispatch:
 
 jobs:
   get-release:
