@@ -2,7 +2,10 @@ package types
 
 import (
 	"errors"
+	fmt "fmt"
+	math "math"
 	"math/big"
+	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/holiman/uint256"
@@ -90,6 +93,23 @@ func (pool Pool) numSharesOutFromTokensIn(tokensIn sdk.Coins) (
 	maxShareRatio := sdk.ZeroDec()
 
 	poolLiquidity := pool.PoolBalances()
+	if len(tokensIn) == 1 {
+		// From balancer whitepaper, for 2 assets with the same weight, the shares issued are:
+		// P_{supply} * (sqrt(1+((1-f/2) * x_{in})/X)-1)
+
+		one := sdk.OneDec()
+
+		joinShare := tokensIn[0].Amount.ToDec().Mul(one.Sub(pool.PoolParams.SwapFee.Quo(one.Add(one)))).QuoInt(
+			poolLiquidity.AmountOfNoDenomValidation(tokensIn[0].Denom),
+		).Add(one)
+
+		floatNum, _ := strconv.ParseFloat(joinShare.String(), 64)
+		floatNum = math.Sqrt(floatNum)
+		joinShareSqrt, _ := sdk.NewDecFromStr(fmt.Sprintf("%f", floatNum))
+
+		numShares = joinShareSqrt.Sub(one).MulInt(pool.TotalShares.Amount).TruncateInt()
+		return
+	}
 
 	for i, coin := range tokensIn {
 		shareRatio := coin.Amount.ToDec().QuoInt(

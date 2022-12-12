@@ -98,10 +98,6 @@ ret:
 func (pool *Pool) AddTokensToPool(tokensIn sdk.Coins) (
 	numShares sdk.Int, remCoins sdk.Coins, err error,
 ) {
-	if tokensIn.Len() != len(pool.PoolAssets) {
-		return sdk.ZeroInt(), sdk.Coins{}, errors.New("wrong number of assets to deposit into the pool")
-	}
-
 	// Calculate max amount of tokensIn we can deposit into pool (no swap)
 	if pool.PoolParams.PoolType == PoolType_STABLESWAP {
 		numShares, err = pool.numSharesOutFromTokensInStableSwap(tokensIn)
@@ -155,54 +151,14 @@ func (pool *Pool) AddAllTokensToPool(tokensIn sdk.Coins) (
 		return
 	}
 
-	swapToken, err := pool.SwapForSwapAndJoin(remCoins[0])
-	if err != nil {
-		return
-	}
-	if swapToken.Amount.LT(sdk.OneInt()) {
-		return pool.AddTokensToPool(tokensIn)
-	}
-
-	index, _, err := pool.getPoolAssetAndIndex(swapToken.Denom)
-
+	numShares2nd, _, err := pool.AddTokensToPool(remCoins)
 	if err != nil {
 		return
 	}
 
-	otherDenom := pool.PoolAssets[1-index].Token.Denom
-	tokenOut, err := pool.CalcOutAmtGivenIn(
-		/*tokenIn=*/ swapToken,
-		/*tokenOutDenom=*/ otherDenom,
-		/*noFee=*/ true,
-	)
-
-	if err != nil {
-		return
-	}
-
-	err = pool.ApplySwap(swapToken, tokenOut)
-
-	if err != nil {
-		return
-	}
-
-	tokensIn = sdk.Coins{
-		{
-			Denom:  swapToken.Denom,
-			Amount: remCoins[0].Amount.Sub(swapToken.Amount),
-		},
-		{
-			Denom:  otherDenom,
-			Amount: tokenOut.Amount,
-		},
-	}.Sort()
-
-	numShares2nd, remCoins2nd, err := pool.AddTokensToPool(tokensIn)
-	if err != nil {
-		return
-	}
-
-	return numShares2nd.Add(numShares), remCoins2nd, err
+	numShares = numShares2nd.Add(numShares)
+	remCoins = sdk.NewCoins()
+	return
 }
 
 /*

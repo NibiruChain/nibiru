@@ -1,7 +1,6 @@
 package types
 
 import (
-	fmt "fmt"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -193,7 +192,6 @@ func TestSwapForSwapAndJoin(t *testing.T) {
 				TotalShares: sdk.NewCoin("nibiru/pool/1", sdk.NewIntWithDecimal(100, 18)),
 			}
 			swapCoin, err := pool.SwapForSwapAndJoin(tc.tokenIn)
-			fmt.Println(swapCoin.Amount)
 			if tc.err == nil {
 				require.NoError(t, err)
 				require.EqualValues(t, tc.expectedX0Denom, swapCoin.Denom)
