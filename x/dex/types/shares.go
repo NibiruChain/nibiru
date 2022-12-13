@@ -39,7 +39,7 @@ func (pool Pool) numSharesOutFromTokensIn(tokensIn sdk.Coins) (
 
 		one := sdk.OneDec()
 
-		joinShare := tokensIn[0].Amount.ToDec().Mul(one.Sub(pool.PoolParams.SwapFee.Quo(one.Add(one)))).QuoInt(
+		joinShare := tokensIn[0].Amount.ToDec().Mul(one.Sub(pool.PoolParams.SwapFee.Quo(sdk.NewDec(2)))).QuoInt(
 			poolLiquidity.AmountOfNoDenomValidation(tokensIn[0].Denom),
 		).Add(one)
 
