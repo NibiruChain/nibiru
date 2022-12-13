@@ -404,17 +404,17 @@ func TestJoinPoolAllTokens(t *testing.T) {
 				PoolParams:  PoolParams{PoolType: PoolType_BALANCER, SwapFee: sdk.ZeroDec()},
 			},
 			tokensIn: sdk.NewCoins(
-				sdk.NewInt64Coin("aaa", 4859), // 0.138885 % of pool
-				sdk.NewInt64Coin("bbb", 1345), // 0.09580147 % of pool
+				sdk.NewInt64Coin("aaa", 4_859), // 0.138885 % of pool
+				sdk.NewInt64Coin("bbb", 1_345), // 0.09580147 % of pool
 			),
-			expectedNumShares: sdk.NewInt(1172),
+			expectedNumShares: sdk.NewInt(1173),
 			expectedRemCoins: sdk.NewCoins(
-				sdk.NewInt64Coin("aaa", 3),
+				sdk.NewInt64Coin("aaa", 1),
 			),
 			expectedPool: Pool{
 				PoolAssets: []PoolAsset{
 					{
-						Token:  sdk.NewInt64Coin("aaa", 3_503_435),
+						Token:  sdk.NewInt64Coin("aaa", 3_503_437),
 						Weight: sdk.NewInt(1 << 30),
 					},
 					{
@@ -422,7 +422,47 @@ func TestJoinPoolAllTokens(t *testing.T) {
 						Weight: sdk.NewInt(1 << 30),
 					},
 				},
-				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1_001_172),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1_001_173),
+				TotalWeight: sdk.NewInt(2 << 30),
+				PoolParams:  PoolParams{PoolType: PoolType_BALANCER, SwapFee: sdk.ZeroDec()},
+			},
+		},
+		{
+			name: "difficult numbers - single asset join",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token:  sdk.NewInt64Coin("aaa", 3_498_579),
+						Weight: sdk.NewInt(1 << 30),
+					},
+					{
+						Token:  sdk.NewInt64Coin("bbb", 1_403_945),
+						Weight: sdk.NewInt(1 << 30),
+					},
+				},
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1*common.Precision),
+				TotalWeight: sdk.NewInt(2 << 30),
+				PoolParams:  PoolParams{PoolType: PoolType_BALANCER, SwapFee: sdk.ZeroDec()},
+			},
+			tokensIn: sdk.NewCoins(
+				sdk.NewInt64Coin("aaa", 4_859), // 0.138885 % of pool
+			),
+			expectedNumShares: sdk.NewInt(693),
+			expectedRemCoins: sdk.NewCoins(
+				sdk.NewInt64Coin("aaa", 2),
+			),
+			expectedPool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token:  sdk.NewInt64Coin("aaa", 3_503_436),
+						Weight: sdk.NewInt(1 << 30),
+					},
+					{
+						Token:  sdk.NewInt64Coin("bbb", 1_403_945),
+						Weight: sdk.NewInt(1 << 30),
+					},
+				},
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1_000_693),
 				TotalWeight: sdk.NewInt(2 << 30),
 				PoolParams:  PoolParams{PoolType: PoolType_BALANCER, SwapFee: sdk.ZeroDec()},
 			},
@@ -435,38 +475,6 @@ func TestJoinPoolAllTokens(t *testing.T) {
 			require.Equal(t, tc.expectedNumShares, numShares)
 			require.Equal(t, tc.expectedRemCoins, remCoins)
 			require.Equal(t, tc.expectedPool, tc.pool)
-		})
-	}
-}
-
-func TestJoinPoolInvalidInput(t *testing.T) {
-	for _, tc := range []struct {
-		name     string
-		pool     Pool
-		tokensIn sdk.Coins
-	}{
-		{
-			name: "not enough tokens",
-			pool: Pool{
-				PoolAssets: []PoolAsset{
-					{
-						Token: sdk.NewInt64Coin("aaa", 100),
-					},
-					{
-						Token: sdk.NewInt64Coin("bbb", 200),
-					},
-				},
-				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
-			},
-			tokensIn: sdk.NewCoins(
-				sdk.NewInt64Coin("aaa", 10),
-			),
-		},
-	} {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			_, _, err := tc.pool.AddTokensToPool(tc.tokensIn)
-			require.Error(t, err)
 		})
 	}
 }

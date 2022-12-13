@@ -37,6 +37,8 @@ var (
 
 	// Precision for int representation in sdk.Int objects
 	Precision = int64(1_000_000)
+
+	BigIntPrecision = 18
 )
 
 //-----------------------------------------------------------------------------

@@ -1,7 +1,6 @@
 package types
 
 import (
-	"errors"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -133,157 +132,53 @@ func TestMaximalSharesFromExactRatioJoin(t *testing.T) {
 	}
 }
 
+// See https://www.notion.so/nibiru/Single-Asset-Join-Math-2075178cb9684062b9b65ad23ff14417
 func TestSwapForSwapAndJoin(t *testing.T) {
 	for _, tc := range []struct {
 		name             string
 		poolAssets       []PoolAsset
 		existingShares   int64
-		tokensIn         sdk.Coins
+		tokenIn          sdk.Coin
+		swapFee          sdk.Dec
 		expectedX0Denom  string
 		expectedX0Amount int64
 		err              error
 	}{
 		{
-			name: "tokens bbb need to be swapped, but no swap necessary",
+			name: "single asset join",
 			poolAssets: []PoolAsset{
 				{
-					Token:  sdk.NewInt64Coin("aaa", 1000),
+					Token:  sdk.NewInt64Coin("atom", 3_256_428),
 					Weight: sdk.NewInt(1 << 30),
 				},
 				{
-					Token:  sdk.NewInt64Coin("bbb", 1000),
+					Token:  sdk.NewInt64Coin("osmo", 31_278_086),
 					Weight: sdk.NewInt(1 << 30),
 				},
 			},
-			existingShares: 100,
-			tokensIn: sdk.NewCoins(
-				sdk.NewInt64Coin("aaa", 100),
-				sdk.NewInt64Coin("bbb", 101),
-			),
-			expectedX0Denom:  "bbb",
-			expectedX0Amount: 0,
+			existingShares:   100,
+			tokenIn:          sdk.NewInt64Coin("atom", 1_000_000),
+			swapFee:          sdk.ZeroDec(),
+			expectedX0Denom:  "atom",
+			expectedX0Amount: 466_574,
 		},
 		{
-			name: "tokens aaa need to be swapped, but no swap necessary",
+			name: "single asset join, with fees",
 			poolAssets: []PoolAsset{
 				{
-					Token:  sdk.NewInt64Coin("aaa", 1000),
+					Token:  sdk.NewInt64Coin("atom", 3_256_428),
 					Weight: sdk.NewInt(1 << 30),
 				},
 				{
-					Token:  sdk.NewInt64Coin("bbb", 1000),
+					Token:  sdk.NewInt64Coin("osmo", 31_278_086),
 					Weight: sdk.NewInt(1 << 30),
 				},
 			},
-			existingShares: 100,
-			tokensIn: sdk.NewCoins(
-				sdk.NewInt64Coin("aaa", 101),
-				sdk.NewInt64Coin("bbb", 100),
-			),
-			expectedX0Denom:  "aaa",
-			expectedX0Amount: 0,
-		},
-		{
-			name: "tokens aaa need to be swapped",
-			poolAssets: []PoolAsset{
-				{
-					Token:  sdk.NewInt64Coin("aaa", 1000),
-					Weight: sdk.NewInt(1 << 30),
-				},
-				{
-					Token:  sdk.NewInt64Coin("bbb", 1000),
-					Weight: sdk.NewInt(1 << 30),
-				},
-			},
-			existingShares: 100,
-			tokensIn: sdk.NewCoins(
-				sdk.NewInt64Coin("aaa", 101),
-				sdk.NewInt64Coin("bbb", 43),
-			),
-			expectedX0Denom:  "aaa",
-			expectedX0Amount: 27,
-		},
-		{
-			name: "tokens bbb need to be swapped",
-			poolAssets: []PoolAsset{
-				{
-					Token:  sdk.NewInt64Coin("aaa", 1000),
-					Weight: sdk.NewInt(1 << 30),
-				},
-				{
-					Token:  sdk.NewInt64Coin("bbb", 1000),
-					Weight: sdk.NewInt(1 << 30),
-				},
-			},
-			existingShares: 100,
-			tokensIn: sdk.NewCoins(
-				sdk.NewInt64Coin("aaa", 43),
-				sdk.NewInt64Coin("bbb", 101),
-			),
-			expectedX0Denom:  "bbb",
-			expectedX0Amount: 27,
-		},
-		{
-			name: "single asset join, aaa",
-			poolAssets: []PoolAsset{
-				{
-					Token:  sdk.NewInt64Coin("aaa", 230),
-					Weight: sdk.NewInt(1 << 30),
-				},
-				{
-					Token:  sdk.NewInt64Coin("bbb", 1000),
-					Weight: sdk.NewInt(1 << 30),
-				},
-			},
-			existingShares: 100,
-			tokensIn: sdk.NewCoins(
-				sdk.NewInt64Coin("aaa", 928),
-			),
-			expectedX0Denom:  "aaa",
-			expectedX0Amount: 286,
-		},
-		{
-			name: "single asset join, bbb",
-			poolAssets: []PoolAsset{
-				{
-					Token:  sdk.NewInt64Coin("aaa", 230),
-					Weight: sdk.NewInt(1 << 30),
-				},
-				{
-					Token:  sdk.NewInt64Coin("bbb", 1000),
-					Weight: sdk.NewInt(1 << 30),
-				},
-			},
-			existingShares: 100,
-			tokensIn: sdk.NewCoins(
-				sdk.NewInt64Coin("bbb", 928),
-			),
-			expectedX0Denom:  "bbb",
-			expectedX0Amount: 388,
-		},
-
-		{
-			name: "3 asset pool, raise issue",
-			poolAssets: []PoolAsset{
-				{
-					Token:  sdk.NewInt64Coin("aaa", 1000),
-					Weight: sdk.NewInt(1 << 30),
-				},
-				{
-					Token:  sdk.NewInt64Coin("bbb", 1000),
-					Weight: sdk.NewInt(1 << 30),
-				},
-				{
-					Token:  sdk.NewInt64Coin("ccc", 1000),
-					Weight: sdk.NewInt(1 << 30),
-				},
-			},
-			existingShares: 100,
-			tokensIn: sdk.NewCoins(
-				sdk.NewInt64Coin("aaa", 43),
-				sdk.NewInt64Coin("bbb", 101),
-			),
-			err: errors.New("swap and add tokens to pool only available for 2 assets pool"),
+			existingShares:   100,
+			tokenIn:          sdk.NewInt64Coin("atom", 1_000_000),
+			swapFee:          sdk.MustNewDecFromStr("0.0020"),
+			expectedX0Denom:  "atom",
+			expectedX0Amount: 467_042,
 		},
 	} {
 		tc := tc
@@ -291,12 +186,13 @@ func TestSwapForSwapAndJoin(t *testing.T) {
 			pool := Pool{
 				Id:          1,
 				Address:     "some_address",
-				PoolParams:  PoolParams{SwapFee: sdk.ZeroDec(), PoolType: PoolType_BALANCER},
+				PoolParams:  PoolParams{SwapFee: tc.swapFee, PoolType: PoolType_BALANCER},
 				PoolAssets:  tc.poolAssets,
 				TotalWeight: sdk.NewInt(2 << 30),
 				TotalShares: sdk.NewCoin("nibiru/pool/1", sdk.NewIntWithDecimal(100, 18)),
 			}
-			swapCoin, err := pool.SwapForSwapAndJoin(tc.tokensIn)
+			swapCoin, err := pool.SwapForSwapAndJoin(tc.tokenIn)
+
 			if tc.err == nil {
 				require.NoError(t, err)
 				require.EqualValues(t, tc.expectedX0Denom, swapCoin.Denom)
@@ -317,24 +213,18 @@ func TestSwapForSwapAndJoin(t *testing.T) {
 					tokensIn := sdk.Coins{
 						{
 							Denom:  swapCoin.Denom,
-							Amount: tc.tokensIn.AmountOfNoDenomValidation(swapCoin.Denom).Sub(swapCoin.Amount),
+							Amount: tc.tokenIn.Amount.Sub(swapCoin.Amount),
 						},
 						{
 							Denom:  otherDenom,
-							Amount: tc.tokensIn.AmountOfNoDenomValidation(otherDenom).Add(tokenOut.Amount),
+							Amount: tokenOut.Amount,
 						},
 					}
 
 					_, remCoins, err := pool.numSharesOutFromTokensIn(tokensIn)
 					require.NoError(t, err)
 
-					// Because of rounding errors, we might receive remcoins up to ~ly/lx
-					_, assetX, _ := pool.getPoolAssetAndIndex(swapCoin.Denom)
-					_, assetY, _ := pool.getPoolAssetAndIndex(otherDenom)
-
-					maxError := assetX.Token.Amount.ToDec().Quo(assetY.Token.Amount.ToDec())
-
-					require.LessOrEqual(t, remCoins.AmountOf(swapCoin.Denom).Int64(), maxError.TruncateInt64())
+					require.LessOrEqual(t, remCoins.AmountOf(swapCoin.Denom).Int64(), int64(2))
 				}
 			} else {
 				require.Error(t, err)
