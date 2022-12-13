@@ -122,8 +122,7 @@ func (pool *Pool) AddTokensToPool(tokensIn sdk.Coins) (
 
 /*
 Adds tokens to a pool optimizing the amount of shares (swap + join) and updates the pool balances (i.e. liquidity).
-We join with tokens first, and then realize a single asset join by computing the optimal swap amount and then joining
-the pool with the assets.
+We maximally join with both tokens first, and then perform a single asset join with the remaining assets.
 
 This function is only necessary for balancer pool. Stableswap pool already takes all the deposit from the user.
 
@@ -154,54 +153,14 @@ func (pool *Pool) AddAllTokensToPool(tokensIn sdk.Coins) (
 		return
 	}
 
-	swapToken, err := pool.SwapForSwapAndJoin(remCoins[0])
-	if err != nil {
-		return
-	}
-	if swapToken.Amount.LT(sdk.OneInt()) {
-		return pool.AddTokensToPool(tokensIn)
-	}
-
-	index, _, err := pool.getPoolAssetAndIndex(swapToken.Denom)
-
+	numShares2nd, _, err := pool.AddTokensToPool(remCoins)
 	if err != nil {
 		return
 	}
 
-	otherDenom := pool.PoolAssets[1-index].Token.Denom
-	tokenOut, err := pool.CalcOutAmtGivenIn(
-		/*tokenIn=*/ swapToken,
-		/*tokenOutDenom=*/ otherDenom,
-		/*noFee=*/ true,
-	)
-
-	if err != nil {
-		return
-	}
-
-	err = pool.ApplySwap(swapToken, tokenOut)
-
-	if err != nil {
-		return
-	}
-
-	tokensIn = sdk.Coins{
-		{
-			Denom:  swapToken.Denom,
-			Amount: remCoins[0].Amount.Sub(swapToken.Amount),
-		},
-		{
-			Denom:  otherDenom,
-			Amount: tokenOut.Amount,
-		},
-	}.Sort()
-
-	numShares2nd, remCoins2nd, err := pool.AddTokensToPool(tokensIn)
-	if err != nil {
-		return
-	}
-
-	return numShares2nd.Add(numShares), remCoins2nd, err
+	numShares = numShares2nd.Add(numShares)
+	remCoins = sdk.NewCoins()
+	return
 }
 
 /*

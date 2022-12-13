@@ -669,7 +669,6 @@ func TestJoinPoolAllAssets(t *testing.T) {
 		{
 			name: "join with some assets, pool empty in one side, none remaining",
 			joinerInitialFunds: sdk.NewCoins(
-				sdk.NewInt64Coin("bar", 100),
 				sdk.NewInt64Coin("foo", 100),
 			),
 			initialPool: mock.DexPool(
@@ -682,10 +681,10 @@ func TestJoinPoolAllAssets(t *testing.T) {
 			tokensIn: sdk.NewCoins(
 				sdk.NewInt64Coin("foo", 100),
 			),
-			expectedNumSharesOut: sdk.NewInt64Coin(shareDenom, 900),
-			expectedRemCoins:     sdk.NewCoins(sdk.NewInt64Coin("foo", 1)),
+			expectedNumSharesOut: sdk.NewInt64Coin(shareDenom, 904),
+			expectedRemCoins:     sdk.NewCoins(),
 			expectedJoinerFinalFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(shareDenom, 50),
+				sdk.NewInt64Coin(shareDenom, 904),
 				sdk.NewInt64Coin("bar", 0),
 				sdk.NewInt64Coin("foo", 0),
 			),
@@ -693,9 +692,9 @@ func TestJoinPoolAllAssets(t *testing.T) {
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 100),
-					sdk.NewInt64Coin("foo", 100),
+					sdk.NewInt64Coin("foo", 101),
 				),
-				/*shares=*/ 1000),
+				/*shares=*/ 1004),
 		},
 		{
 			name: "join with some assets, but swap done",
@@ -714,12 +713,12 @@ func TestJoinPoolAllAssets(t *testing.T) {
 				sdk.NewInt64Coin("bar", 50),
 				sdk.NewInt64Coin("foo", 75),
 			),
-			expectedNumSharesOut: sdk.NewInt64Coin(shareDenom, 61),
+			expectedNumSharesOut: sdk.NewInt64Coin(shareDenom, 62),
 			expectedRemCoins:     sdk.NewCoins(),
 			expectedJoinerFinalFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(shareDenom, 50),
-				sdk.NewInt64Coin("bar", 35),
-				sdk.NewInt64Coin("foo", 35),
+				sdk.NewInt64Coin(shareDenom, 62),
+				sdk.NewInt64Coin("bar", 50),
+				sdk.NewInt64Coin("foo", 25),
 			),
 			expectedFinalPool: mock.DexPool(
 				/*poolId=*/ 1,
@@ -727,7 +726,7 @@ func TestJoinPoolAllAssets(t *testing.T) {
 					sdk.NewInt64Coin("bar", 150),
 					sdk.NewInt64Coin("foo", 175),
 				),
-				/*shares=*/ 161),
+				/*shares=*/ 162),
 		},
 	}
 
@@ -749,6 +748,7 @@ func TestJoinPoolAllAssets(t *testing.T) {
 			require.Equal(t, tc.expectedFinalPool, pool)
 			require.Equal(t, tc.expectedNumSharesOut, numSharesOut)
 			require.Equal(t, tc.expectedRemCoins, remCoins)
+			require.Equal(t, tc.expectedJoinerFinalFunds, app.BankKeeper.GetAllBalances(ctx, joinerAddr))
 		})
 	}
 }
