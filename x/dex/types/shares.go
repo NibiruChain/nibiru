@@ -2,69 +2,9 @@ package types
 
 import (
 	"errors"
-	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/holiman/uint256"
-
-	"github.com/NibiruChain/nibiru/x/common"
 )
-
-/*
-For a single asset join, compute the number of token that need to be swapped for an optimal swap and join.
-See https://www.notion.so/nibiru/Single-Asset-Join-Math-2075178cb9684062b9b65ad23ff14417
-
-args:
-  - tokenIn: the token to add to the pool
-
-ret:
-  - out: the tokens to swap before joining the pool
-  - err: error if any
-*/
-func (pool *Pool) SwapForSwapAndJoin(tokenIn sdk.Coin) (
-	out sdk.Coin, err error,
-) {
-	PRECISION := int64(1_000_000)
-
-	mu := sdk.OneDec().Quo(sdk.OneDec().Sub(pool.PoolParams.SwapFee))
-	sigma := (sdk.OneDec().Add(mu))
-
-	mu = mu.MulInt64(PRECISION).MulInt64(PRECISION)
-	sigma = sigma.MulInt64(PRECISION)
-
-	lx := pool.PoolBalances().AmountOfNoDenomValidation(tokenIn.Denom).ToDec()
-
-	lxsigmauint256 := uint256.NewInt()
-	lxsigmauint256.SetFromBig(lx.Mul(sigma).BigInt())
-
-	lxmuuint256 := uint256.NewInt()
-	lxmuuint256.SetFromBig(lx.Mul(mu).BigInt())
-
-	xinuint256 := uint256.NewInt()
-	xinuint256.SetFromBig(tokenIn.Amount.ToDec().BigInt())
-
-	squarable := uint256.NewInt().Add(
-		uint256.NewInt().Mul(
-			lxsigmauint256,
-			lxsigmauint256,
-		),
-		uint256.NewInt().Mul(
-			uint256.NewInt().SetUint64(4),
-			uint256.NewInt().Mul(
-				lxmuuint256,
-				xinuint256,
-			),
-		),
-	)
-
-	BigInt := &big.Int{}
-	sqrt := BigInt.Quo(BigInt.Sqrt(squarable.ToBig()), big.NewInt(PRECISION))
-
-	sqrtFactor := sdk.NewDecFromBigIntWithPrec(sqrt, int64(common.BigIntPrecision))
-
-	amount := (sigma.Mul(lx).MulInt(sdk.NewInt(-1)).QuoInt64(PRECISION).Add(sqrtFactor)).Quo(sdk.MustNewDecFromStr("2"))
-	return sdk.NewCoin(tokenIn.Denom, amount.TruncateInt()), err
-}
 
 /*
 Takes a pool and the amount of tokens desired to add to the pool,
@@ -90,6 +30,24 @@ func (pool Pool) numSharesOutFromTokensIn(tokensIn sdk.Coins) (
 	maxShareRatio := sdk.ZeroDec()
 
 	poolLiquidity := pool.PoolBalances()
+	if len(tokensIn) == 1 {
+		// From balancer whitepaper, for 2 assets with the same weight, the shares issued are:
+		// P_{supply} * (sqrt(1+((1-f/2) * x_{in})/X)-1)
+
+		one := sdk.OneDec()
+
+		joinShare := tokensIn[0].Amount.ToDec().Mul(one.Sub(pool.PoolParams.SwapFee.Quo(sdk.NewDec(2)))).QuoInt(
+			poolLiquidity.AmountOfNoDenomValidation(tokensIn[0].Denom),
+		).Add(one)
+
+		joinShare, err = joinShare.ApproxSqrt()
+		if err != nil {
+			return
+		}
+
+		numShares = joinShare.Sub(one).MulInt(pool.TotalShares.Amount).TruncateInt()
+		return
+	}
 
 	for i, coin := range tokensIn {
 		shareRatio := coin.Amount.ToDec().QuoInt(
