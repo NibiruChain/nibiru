@@ -2,9 +2,6 @@ package types
 
 import (
 	"errors"
-	fmt "fmt"
-	math "math"
-	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -43,11 +40,12 @@ func (pool Pool) numSharesOutFromTokensIn(tokensIn sdk.Coins) (
 			poolLiquidity.AmountOfNoDenomValidation(tokensIn[0].Denom),
 		).Add(one)
 
-		floatNum, _ := strconv.ParseFloat(joinShare.String(), 64)
-		floatNum = math.Sqrt(floatNum)
-		joinShareSqrt, _ := sdk.NewDecFromStr(fmt.Sprintf("%f", floatNum))
+		joinShare, err = joinShare.ApproxSqrt()
+		if err != nil {
+			return
+		}
 
-		numShares = joinShareSqrt.Sub(one).MulInt(pool.TotalShares.Amount).TruncateInt()
+		numShares = joinShare.Sub(one).MulInt(pool.TotalShares.Amount).TruncateInt()
 		return
 	}
 
