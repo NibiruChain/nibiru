@@ -479,38 +479,6 @@ func TestJoinPoolAllTokens(t *testing.T) {
 	}
 }
 
-func TestJoinPoolInvalidInput(t *testing.T) {
-	for _, tc := range []struct {
-		name     string
-		pool     Pool
-		tokensIn sdk.Coins
-	}{
-		{
-			name: "not enough tokens",
-			pool: Pool{
-				PoolAssets: []PoolAsset{
-					{
-						Token: sdk.NewInt64Coin("aaa", 100),
-					},
-					{
-						Token: sdk.NewInt64Coin("bbb", 200),
-					},
-				},
-				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
-			},
-			tokensIn: sdk.NewCoins(
-				sdk.NewInt64Coin("aaa", 10),
-			),
-		},
-	} {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			_, _, err := tc.pool.AddTokensToPool(tc.tokensIn)
-			require.Error(t, err)
-		})
-	}
-}
-
 func TestExitPoolHappyPath(t *testing.T) {
 	for _, tc := range []struct {
 		name                    string
