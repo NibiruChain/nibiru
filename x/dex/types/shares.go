@@ -2,74 +2,68 @@ package types
 
 import (
 	"errors"
-	math "math"
+	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/holiman/uint256"
+
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 /*
-For 2 asset pools, swap first to maximize the amount of tokens deposited in the pool.
-A user can deposit either one or 2 tokens, and we will swap first the biggest individual share and then join the pool.
+For a single asset join, compute the number of token that need to be swapped for an optimal swap and join.
+See https://www.notion.so/nibiru/Single-Asset-Join-Math-2075178cb9684062b9b65ad23ff14417
 
 args:
-  - tokensIn: the tokens to add to the pool
+  - tokenIn: the token to add to the pool
 
 ret:
   - out: the tokens to swap before joining the pool
-  - remCoins: the number of coins remaining after the deposit
   - err: error if any
 */
-func (pool *Pool) SwapForSwapAndJoin(tokensIn sdk.Coins) (
+func (pool *Pool) SwapForSwapAndJoin(tokenIn sdk.Coin) (
 	out sdk.Coin, err error,
 ) {
-	if len(pool.PoolAssets) != 2 {
-		err = errors.New("swap and add tokens to pool only available for 2 assets pool")
-		return
-	}
+	PRECISION := int64(1_000_000)
 
-	var xAmt sdk.Int
-	var yAmt sdk.Int
-	var xDenom string
+	mu := sdk.OneDec().Quo(sdk.OneDec().Sub(pool.PoolParams.SwapFee))
+	sigma := (sdk.OneDec().Add(mu))
 
-	// check who's x and y (x/)
-	if len(tokensIn) == 1 {
-		xAmt = tokensIn[0].Amount
-		xDenom = tokensIn[0].Denom
+	mu = mu.MulInt64(PRECISION).MulInt64(PRECISION)
+	sigma = sigma.MulInt64(PRECISION)
 
-		yAmt = sdk.ZeroInt()
-	} else {
-		// 2 assets
-		poolLiquidity := pool.PoolBalances()
+	lx := pool.PoolBalances().AmountOfNoDenomValidation(tokenIn.Denom).ToDec()
 
-		sharePctX := tokensIn[0].Amount.ToDec().Quo(poolLiquidity.AmountOfNoDenomValidation(tokensIn[0].Denom).ToDec())
-		sharePctY := tokensIn[1].Amount.ToDec().Quo(poolLiquidity.AmountOfNoDenomValidation(tokensIn[1].Denom).ToDec())
+	lxsigmauint256 := uint256.NewInt()
+	lxsigmauint256.SetFromBig(lx.Mul(sigma).BigInt())
 
-		if sharePctX.GTE(sharePctY) {
-			xAmt = tokensIn[0].Amount
-			yAmt = tokensIn[1].Amount
+	lxmuuint256 := uint256.NewInt()
+	lxmuuint256.SetFromBig(lx.Mul(mu).BigInt())
 
-			xDenom = tokensIn[0].Denom
-		} else {
-			xAmt = tokensIn[1].Amount
-			yAmt = tokensIn[0].Amount
+	xinuint256 := uint256.NewInt()
+	xinuint256.SetFromBig(tokenIn.Amount.ToDec().BigInt())
 
-			xDenom = tokensIn[1].Denom
-		}
-	}
+	squarable := uint256.NewInt().Add(
+		uint256.NewInt().Mul(
+			lxsigmauint256,
+			lxsigmauint256,
+		),
+		uint256.NewInt().Mul(
+			uint256.NewInt().SetUint64(4),
+			uint256.NewInt().Mul(
+				lxmuuint256,
+				xinuint256,
+			),
+		),
+	)
 
-	xIndex, xPoolAsset, err := pool.getPoolAssetAndIndex(xDenom)
-	liquidityX := xPoolAsset.Token.Amount
-	liquidityY := pool.PoolAssets[1-xIndex].Token.Amount
+	BigInt := &big.Int{}
+	sqrt := BigInt.Quo(BigInt.Sqrt(squarable.ToBig()), big.NewInt(PRECISION))
 
-	// x'=\sqrt{\frac{xk+kl_x}{y+l_y}}-l_x;\:x'=-\sqrt{\frac{xk+kl_x}{y+l_y}}-l_x
-	invariant := liquidityX.Mul(liquidityY)
+	sqrtFactor := sdk.NewDecFromBigIntWithPrec(sqrt, int64(common.BigIntPrecision))
 
-	xSwap := sdk.NewInt(
-		int64(math.Sqrt(
-			(xAmt.Mul(invariant).Add(invariant.Mul(liquidityX))).ToDec().Quo(
-				yAmt.Add(liquidityY).ToDec()).MustFloat64()))).Sub(liquidityX)
-
-	return sdk.NewCoin(pool.PoolAssets[xIndex].Token.Denom, xSwap), err
+	amount := (sigma.Mul(lx).MulInt(sdk.NewInt(-1)).QuoInt64(PRECISION).Add(sqrtFactor)).Quo(sdk.MustNewDecFromStr("2"))
+	return sdk.NewCoin(tokenIn.Denom, amount.TruncateInt()), err
 }
 
 /*

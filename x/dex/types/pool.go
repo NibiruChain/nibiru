@@ -98,12 +98,11 @@ ret:
 func (pool *Pool) AddTokensToPool(tokensIn sdk.Coins) (
 	numShares sdk.Int, remCoins sdk.Coins, err error,
 ) {
-	if tokensIn.Len() != len(pool.PoolAssets) {
-		return sdk.ZeroInt(), sdk.Coins{}, errors.New("wrong number of assets to deposit into the pool")
-	}
-
-	// Calculate max amount of tokensIn we can deposit into pool (no swap)
-	if pool.PoolParams.PoolType == PoolType_STABLESWAP {
+	if pool.TotalShares.Amount.IsZero() {
+		// Mint the initial 100.000000000000000000 pool share tokens to the sender
+		numShares = InitPoolSharesSupply
+		remCoins = sdk.Coins{}
+	} else if pool.PoolParams.PoolType == PoolType_STABLESWAP {
 		numShares, err = pool.numSharesOutFromTokensInStableSwap(tokensIn)
 		remCoins = sdk.Coins{}
 	} else {
@@ -123,7 +122,8 @@ func (pool *Pool) AddTokensToPool(tokensIn sdk.Coins) (
 
 /*
 Adds tokens to a pool optimizing the amount of shares (swap + join) and updates the pool balances (i.e. liquidity).
-We compute the swap and then join the pool.
+We join with tokens first, and then realize a single asset join by computing the optimal swap amount and then joining
+the pool with the assets.
 
 This function is only necessary for balancer pool. Stableswap pool already takes all the deposit from the user.
 
@@ -143,7 +143,18 @@ func (pool *Pool) AddAllTokensToPool(tokensIn sdk.Coins) (
 		return
 	}
 
-	swapToken, err := pool.SwapForSwapAndJoin(tokensIn)
+	remCoins = tokensIn
+	if tokensIn.Len() > 1 {
+		numShares, remCoins, err = pool.AddTokensToPool(tokensIn)
+	} else {
+		numShares = sdk.ZeroInt()
+	}
+
+	if remCoins.Empty() {
+		return
+	}
+
+	swapToken, err := pool.SwapForSwapAndJoin(remCoins[0])
 	if err != nil {
 		return
 	}
@@ -177,14 +188,20 @@ func (pool *Pool) AddAllTokensToPool(tokensIn sdk.Coins) (
 	tokensIn = sdk.Coins{
 		{
 			Denom:  swapToken.Denom,
-			Amount: tokensIn.AmountOfNoDenomValidation(swapToken.Denom).Sub(swapToken.Amount),
+			Amount: remCoins[0].Amount.Sub(swapToken.Amount),
 		},
 		{
 			Denom:  otherDenom,
-			Amount: tokensIn.AmountOfNoDenomValidation(otherDenom).Add(tokenOut.Amount),
+			Amount: tokenOut.Amount,
 		},
 	}.Sort()
-	return pool.AddTokensToPool(tokensIn)
+
+	numShares2nd, remCoins2nd, err := pool.AddTokensToPool(tokensIn)
+	if err != nil {
+		return
+	}
+
+	return numShares2nd.Add(numShares), remCoins2nd, err
 }
 
 /*
