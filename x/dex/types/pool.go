@@ -119,8 +119,7 @@ func (pool *Pool) AddTokensToPool(tokensIn sdk.Coins) (
 
 /*
 Adds tokens to a pool optimizing the amount of shares (swap + join) and updates the pool balances (i.e. liquidity).
-We join with tokens first, and then realize a single asset join by computing the optimal swap amount and then joining
-the pool with the assets.
+We maximally join with both tokens first, and then perform a single asset join with the remaining assets.
 
 This function is only necessary for balancer pool. Stableswap pool already takes all the deposit from the user.
 
