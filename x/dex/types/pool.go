@@ -98,8 +98,11 @@ ret:
 func (pool *Pool) AddTokensToPool(tokensIn sdk.Coins) (
 	numShares sdk.Int, remCoins sdk.Coins, err error,
 ) {
-	// Calculate max amount of tokensIn we can deposit into pool (no swap)
-	if pool.PoolParams.PoolType == PoolType_STABLESWAP {
+	if pool.TotalShares.Amount.IsZero() {
+		// Mint the initial 100.000000000000000000 pool share tokens to the sender
+		numShares = InitPoolSharesSupply
+		remCoins = sdk.Coins{}
+	} else if pool.PoolParams.PoolType == PoolType_STABLESWAP {
 		numShares, err = pool.numSharesOutFromTokensInStableSwap(tokensIn)
 		remCoins = sdk.Coins{}
 	} else {
