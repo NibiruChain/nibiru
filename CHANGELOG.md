@@ -26,8 +26,7 @@ Types of changes (Stanzas):
 "Improvements" for changes in existing functionality.
 "Deprecated" for soon-to-be removed features.
 "Bug Fixes" for any bug fixes.
-"Client Breaking" for breaking CLI commands and REST routes used by end-users.
-"API Breaking" for breaking exported APIs used by developers building on SDK.
+"API Breaking" for breaking CLI commands and REST routes used by end-users.
 "State Machine Breaking" for any changes that result in a different AppState given same genesisState and txList.
 Ref: https://keepachangelog.com/en/1.0.0/
 -->
@@ -39,17 +38,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased 
+## [v0.16.2](https://github.com/NibiruChain/nibiru/releases/tag/v0.16.2) - Dec 13, 2022
 
 ### Features
+
 * [#1115](https://github.com/NibiruChain/nibiru/pull/1115) - feat: improve single asset join calculation
 
 ### Bug Fixes
+
 * [#1113](https://github.com/NibiruChain/nibiru/pull/1113) - fix: fix quick simulation issue
 * [#1114](https://github.com/NibiruChain/nibiru/pull/1114) - fix(dex): fix single asset join
 * [#1116](https://github.com/NibiruChain/nibiru/pull/1116) - fix(dex): unfroze pool when LP share supply of 0
 
-## [v0.16.0](https://github.com/NibiruChain/nibiru/releases/tag/v0.16.0) - Unreleased
+## [v0.16.0](https://github.com/NibiruChain/nibiru/releases/tag/v0.16.0) -
 
 ### Features
 
@@ -93,7 +94,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1086](https://github.com/NibiruChain/nibiru/pull/1086) - refactor(perp)!: Removed unused field, `LiquidationPenalty`, from `PositionChangedEvent`
 * [#1093](https://github.com/NibiruChain/nibiru/pull/1093) - simulation(dex): add simulation tests for stableswap pools
 * [#1091](https://github.com/NibiruChain/nibiru/pull/1091) - refactor: Use common.Precision instead of 1_000_000 in the codebase
-* [#1109](https://github.com/NibiruChain/nibiru/pull/1109) - refactor(vpool)!: Condense swap SwapXForY and SwapYForX events into SwapOnVpoolEvent 
+* [#1109](https://github.com/NibiruChain/nibiru/pull/1109) - refactor(vpool)!: Condense swap SwapXForY and SwapYForX events into SwapOnVpoolEvent
 
 ### Bug Fixes
 
