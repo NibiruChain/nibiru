@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
@@ -51,6 +52,40 @@ func (q querier) ExchangeRate(c context.Context, req *types.QueryExchangeRateReq
 	}
 
 	return &types.QueryExchangeRateResponse{ExchangeRate: exchangeRate}, nil
+}
+
+/*
+Gets the time-weighted average price from [ ctx.BlockTime() - interval, ctx.BlockTime() )
+Note the open-ended right bracket.
+
+If there's only one snapshot, then this function returns the price from that single snapshot.
+
+Returns -1 if there's no price.
+*/
+func (q querier) ExchangeRateTwap(c context.Context, req *types.QueryExchangeRateRequest) (response *types.QueryExchangeRateResponse, err error) {
+
+	if _, err = q.ExchangeRate(c, req); err != nil {
+		return
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+
+	snapshots := q.Keeper.PriceSnapshots.Iterate(
+		ctx,
+		collections.PairRange[string, time.Time]{}.
+			Prefix(req.Pair).StartInclusive(ctx.BlockTime().Add(-1*q.Keeper.GetParams(ctx).TwapLookbackWindow)).EndExclusive(ctx.BlockTime()),
+	).Values()
+
+	if len(snapshots) == 0 {
+		// if there are no snapshots, return -1 for the price
+		return &types.QueryExchangeRateResponse{ExchangeRate: sdk.OneDec().Neg()}, types.ErrNoValidTWAP
+	}
+
+	twap, err := q.Keeper.CalcTwap(ctx, snapshots)
+	if err != nil {
+		return &types.QueryExchangeRateResponse{}, err
+	}
+	return &types.QueryExchangeRateResponse{ExchangeRate: twap}, nil
 }
 
 // ExchangeRates queries exchange rates of all pairs

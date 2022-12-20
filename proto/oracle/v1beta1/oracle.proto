@@ -2,6 +2,7 @@ syntax = "proto3";
 package nibiru.oracle.v1beta1;
 
 import "gogoproto/gogo.proto";
+import "google/protobuf/duration.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/oracle/types";
@@ -36,6 +37,14 @@ message Params {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
+
+  // amount of time to look back for TWAP calculations
+  google.protobuf.Duration twap_lookback_window = 8 [
+    (gogoproto.nullable) = false,
+    (gogoproto.stdduration) = true,
+    (gogoproto.jsontag) = "twap_lookback_window,omitempty",
+    (gogoproto.moretags) = "yaml:\"twap_lookback_window\""
+  ];  
 }
 
 // struct for aggregate prevoting on the ExchangeRateVote.

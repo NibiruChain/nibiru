@@ -82,6 +82,28 @@ func TestQueryExchangeRates(t *testing.T) {
 	}, res.ExchangeRates)
 }
 
+func TestQueryExchangeRateTwap(t *testing.T) {
+	input := CreateTestInput(t)
+	ctx := sdk.WrapSDKContext(input.Ctx)
+	querier := NewQuerier(input.OracleKeeper)
+
+	rate := sdk.NewDec(1700)
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, common.Pair_BTC_NUSD.String(), rate)
+	input.OracleKeeper.PriceSnapshots.Insert(input.Ctx, collections.Join(common.Pair_BTC_NUSD.String(), input.Ctx.BlockTime()), types.PriceSnapshot{
+		Pair:        common.Pair_BTC_NUSD.String(),
+		Price:       rate,
+		TimestampMs: input.Ctx.BlockTime().UnixMilli(),
+	})
+
+	res, err := querier.ExchangeRateTwap(ctx, &types.QueryExchangeRateRequest{Pair: common.Pair_ETH_NUSD.String()})
+	require.Error(t, err)
+
+	res, err = querier.ExchangeRateTwap(ctx, &types.QueryExchangeRateRequest{Pair: common.Pair_BTC_NUSD.String()})
+	require.NoError(t, err)
+
+	require.Equal(t, sdk.MustNewDecFromStr("12.1"), res.ExchangeRate)
+}
+
 func TestQueryActives(t *testing.T) {
 	input := CreateTestInput(t)
 	ctx := sdk.WrapSDKContext(input.Ctx)
