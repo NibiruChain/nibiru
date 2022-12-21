@@ -50,12 +50,7 @@ func (k Keeper) countVotesAndUpdateExchangeRates(
 	for pair, ballot := range pairBallotMap {
 		exchangeRate := Tally(ballot, params.RewardBand, validatorPerformanceMap)
 
-		k.ExchangeRates.Insert(ctx, pair, exchangeRate)
-		k.PriceSnapshots.Insert(ctx, collections.Join(pair, ctx.BlockTime()), types.PriceSnapshot{
-			Pair:        pair,
-			Price:       exchangeRate,
-			TimestampMs: ctx.BlockTime().UnixMilli(),
-		})
+		k.SetPrice(ctx, pair, exchangeRate)
 
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(types.EventTypeExchangeRateUpdate,

@@ -601,7 +601,6 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					},
 				)
-				nibiruApp.OracleKeeper.ActivePairsStore().Set(ctx, pair, true)
 
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 

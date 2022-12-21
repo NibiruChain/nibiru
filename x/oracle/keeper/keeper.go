@@ -161,3 +161,13 @@ func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair string) (price sdk.Dec
 	price, err = k.CalcTwap(ctx, snapshots)
 	return
 }
+
+// SetPrice sets the price for a pair as well as the price snapshot.
+func (k Keeper) SetPrice(ctx sdk.Context, pair string, price sdk.Dec) {
+	k.ExchangeRates.Insert(ctx, pair, price)
+	k.PriceSnapshots.Insert(ctx, collections.Join(pair, ctx.BlockTime()), types.PriceSnapshot{
+		Pair:        pair,
+		Price:       price,
+		TimestampMs: ctx.BlockTime().UnixMilli(),
+	})
+}

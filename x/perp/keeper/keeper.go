@@ -41,7 +41,7 @@ func NewKeeper(
 
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
-	priceKeeper types.OracleKeeper,
+	oracleKeeper types.OracleKeeper,
 	vpoolKeeper types.VpoolKeeper,
 	epochKeeper types.EpochKeeper,
 ) Keeper {
@@ -61,7 +61,7 @@ func NewKeeper(
 		ParamSubspace: paramSubspace,
 		BankKeeper:    bankKeeper,
 		AccountKeeper: accountKeeper,
-		OracleKeeper:  priceKeeper,
+		OracleKeeper:  oracleKeeper,
 		VpoolKeeper:   vpoolKeeper,
 		EpochKeeper:   epochKeeper,
 		Positions: collections.NewMap(

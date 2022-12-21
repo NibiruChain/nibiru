@@ -41,7 +41,6 @@ func TestKeeperClosePosition(t *testing.T) {
 			},
 		)
 		require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
-		nibiruApp.OracleKeeper.ActivePairsStore().Set(ctx, pair, true)
 
 		t.Log("Set vpool defined by pair on PerpKeeper")
 		setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{

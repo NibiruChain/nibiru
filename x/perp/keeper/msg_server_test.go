@@ -474,11 +474,8 @@ func TestMsgServerLiquidate(t *testing.T) {
 			pair, err := common.NewAssetPair(tc.pair)
 			traderAddr, err2 := sdk.AccAddressFromBech32(tc.trader)
 			if err == nil && err2 == nil {
-				t.Log("set pricefeed oracle price")
-				oracle := testutil.AccAddress()
-				app.OracleKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
-				require.NoError(t, app.OracleKeeper.PostRawPrice(ctx, oracle, pair.String(), sdk.OneDec(), time.Now().Add(time.Hour)))
-				require.NoError(t, app.OracleKeeper.GatherRawPrices(ctx, pair.BaseDenom(), pair.QuoteDenom()))
+				t.Log("set oracle price")
+				app.OracleKeeper.SetPrice(ctx, common.Pair_BTC_NUSD.String(), sdk.OneDec())
 
 				t.Log("create position")
 				setPosition(app.PerpKeeper, ctx, types.Position{
@@ -548,12 +545,8 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	})
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
 
-	t.Log("set pricefeed oracle price")
-	oracle := testutil.AccAddress()
-	app.OracleKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
-	err := app.OracleKeeper.PostRawPrice(ctx, oracle, pair.String(), sdk.OneDec(), time.Now().Add(time.Hour))
-	require.NoError(t, err)
-	require.NoError(t, app.OracleKeeper.GatherRawPrices(ctx, pair.BaseDenom(), pair.QuoteDenom()))
+	t.Log("set oracle price")
+	app.OracleKeeper.SetPrice(ctx, common.Pair_BTC_NUSD.String(), sdk.OneDec())
 
 	t.Log("create positions")
 	atRiskPosition1 := types.Position{

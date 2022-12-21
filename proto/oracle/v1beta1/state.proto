@@ -8,7 +8,7 @@ import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/oracle/types";
 
-// a snapshot of the pricefeed oracle's median price at a given point in time
+// a snapshot of the prices at a given point in time
 message PriceSnapshot {
   string pair = 1;
   string price = 2 [

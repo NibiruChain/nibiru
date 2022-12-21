@@ -304,13 +304,7 @@ func TestQueryCumulativePremiumFraction(t *testing.T) {
 			ctx, app, queryServer := initAppVpools(t, sdk.NewDec(481_000), sdk.NewDec(1_000))
 
 			t.Log("set index price")
-			oracle := testutil.AccAddress()
-			app.OracleKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
-			require.NoError(t, app.OracleKeeper.PostRawPrice(ctx, oracle, common.Pair_BTC_NUSD.String(), sdk.OneDec(), time.Now().Add(time.Hour)))
-			require.NoError(t, app.OracleKeeper.GatherRawPrices(ctx, common.DenomBTC, common.DenomNUSD))
-
-			t.Log("advance block time to realize index price")
-			ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second))
+			app.OracleKeeper.SetPrice(ctx, common.Pair_BTC_NUSD.String(), sdk.OneDec())
 
 			t.Log("query cumulative premium fraction")
 			resp, err := queryServer.CumulativePremiumFraction(sdk.WrapSDKContext(ctx), tc.query)
