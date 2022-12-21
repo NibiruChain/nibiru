@@ -166,8 +166,6 @@ func TestSwapQuoteForBase(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			pfKeeper := mock.NewMockOracleKeeper(gomock.NewController(t))
-			pfKeeper.EXPECT().IsActivePair(gomock.Any(), gomock.Any()).Return(true).AnyTimes()
-
 			vpoolKeeper, ctx := VpoolKeeper(t, pfKeeper)
 
 			vpoolKeeper.CreatePool(
@@ -359,7 +357,6 @@ func TestSwapBaseForQuote(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			pfKeeper := mock.NewMockOracleKeeper(gomock.NewController(t))
-			pfKeeper.EXPECT().IsActivePair(gomock.Any(), gomock.Any()).Return(true).AnyTimes()
 
 			vpoolKeeper, ctx := VpoolKeeper(t, pfKeeper)
 

@@ -19,7 +19,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 		k.SetParams(ctx, params)
 	}
 
-	_, err := k.OracleKeeper.GetCurrentTWAP(ctx, common.DenomNUSD, common.DenomUSDC)
+	_, err := k.OracleKeeper.GetExchangeRateTwap(ctx, common.Pair_USDC_NUSD.String())
 	if err != nil {
 		params := k.GetParams(ctx)
 		params.IsCollateralRatioValid = false

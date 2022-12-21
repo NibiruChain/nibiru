@@ -75,7 +75,7 @@ func (k Keeper) SwapBaseForQuote(
 		return sdk.ZeroDec(), nil
 	}
 
-	if !k.oracleKeeper.IsActivePair(ctx, pair.String()) {
+	if _, err = k.oracleKeeper.GetExchangeRate(ctx, pair.String()); err != nil {
 		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair.String())
 	}
 
@@ -172,7 +172,7 @@ func (k Keeper) SwapQuoteForBase(
 		return sdk.ZeroDec(), nil
 	}
 
-	if !k.oracleKeeper.IsActivePair(ctx, pair.String()) {
+	if _, err = k.oracleKeeper.GetExchangeRate(ctx, pair.String()); err != nil {
 		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair.String())
 	}
 

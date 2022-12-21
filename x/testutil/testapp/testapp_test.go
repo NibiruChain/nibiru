@@ -12,7 +12,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
-	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
+	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
 type TestappSuite struct {
@@ -26,15 +26,15 @@ type TestappSuite struct {
 func (s *TestappSuite) SetupSuite() {
 	app.SetPrefixes(app.AccountAddressPrefix)
 	s.genOracle = sdk.MustAccAddressFromBech32(simapp.GenOracleAddress)
-	s.pairs = pricefeedtypes.DefaultPairs
-	s.twapLookbackWindow = pricefeedtypes.DefaultLookbackWindow
+	s.pairs = oracletypes.DefaultPairs
+	s.twapLookbackWindow = oracletypes.DefaultLookbackWindow
 }
 
 // TestPricefeedGenesis verifies that the expected pricefeed state for integration tests
 func (s *TestappSuite) TestPricefeedGenesis() {
 	genPf := simapp.PricefeedGenesis()
-	s.Assert().EqualValues(pricefeedtypes.NewParams(s.pairs, s.twapLookbackWindow), genPf.Params)
-	s.Assert().EqualValues(pricefeedtypes.NewParams(s.pairs, s.twapLookbackWindow), genPf.Params)
+	s.Assert().EqualValues(oracletypes.NewParams(s.pairs, s.twapLookbackWindow), genPf.Params)
+	s.Assert().EqualValues(oracletypes.NewParams(s.pairs, s.twapLookbackWindow), genPf.Params)
 	s.Assert().EqualValues(s.pairs[0].String(), genPf.PostedPrices[0].PairID)
 	s.Assert().EqualValues(s.pairs[1].String(), genPf.PostedPrices[1].PairID)
 	expectedGenesisOracles := []string{s.genOracle.String()}
@@ -50,21 +50,21 @@ func (s *TestappSuite) TestNewTestGenesisState() {
 	defaultGenState := app.NewDefaultGenesisState(codec)
 	testGenState := simapp.NewTestGenesisStateFromDefault()
 
-	var testGenPfState pricefeedtypes.GenesisState
-	testGenPfStateJSON := testGenState[pricefeedtypes.ModuleName]
+	var testGenPfState oracletypes.GenesisState
+	testGenPfStateJSON := testGenState[oracletypes.ModuleName]
 	codec.MustUnmarshalJSON(testGenPfStateJSON, &testGenPfState)
 	bzTest := codec.MustMarshalJSON(&testGenPfState)
 
-	var defaultGenPfState pricefeedtypes.GenesisState
-	defaultGenPfStateJSON := defaultGenState[pricefeedtypes.ModuleName]
+	var defaultGenPfState oracletypes.GenesisState
+	defaultGenPfStateJSON := defaultGenState[oracletypes.ModuleName]
 	codec.MustUnmarshalJSON(defaultGenPfStateJSON, &defaultGenPfState)
 	bzDefault := codec.MustMarshalJSON(&defaultGenPfState)
 
 	s.Assert().NotEqualValues(bzTest, bzDefault)
 	s.Assert().NotEqualValues(testGenPfState, defaultGenPfState)
 
-	s.Assert().EqualValues(pricefeedtypes.NewParams(s.pairs, s.twapLookbackWindow), testGenPfState.Params)
-	s.Assert().EqualValues(pricefeedtypes.NewParams(s.pairs, s.twapLookbackWindow), testGenPfState.Params)
+	s.Assert().EqualValues(oracletypes.NewParams(s.pairs, s.twapLookbackWindow), testGenPfState.Params)
+	s.Assert().EqualValues(oracletypes.NewParams(s.pairs, s.twapLookbackWindow), testGenPfState.Params)
 	s.Assert().EqualValues(s.pairs[0].String(), testGenPfState.PostedPrices[0].PairID)
 	s.Assert().EqualValues(s.pairs[1].String(), testGenPfState.PostedPrices[1].PairID)
 	expectedGenesisOracles := []string{s.genOracle.String()}

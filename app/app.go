@@ -110,6 +110,9 @@ import (
 	"github.com/NibiruChain/nibiru/x/epochs"
 	epochskeeper "github.com/NibiruChain/nibiru/x/epochs/keeper"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
+	oracle "github.com/NibiruChain/nibiru/x/oracle"
+	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
+	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/NibiruChain/nibiru/x/perp"
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
@@ -260,6 +263,7 @@ type NibiruApp struct {
 	perpKeeper   perpkeeper.Keeper
 	vpoolKeeper  vpoolkeeper.Keeper
 	DexKeeper    dexkeeper.Keeper
+	oracleKeeper oraclekeeper.Keeper
 
 	// WASM keepers
 	wasmKeeper       wasm.Keeper
@@ -336,6 +340,7 @@ func NewNibiruApp(
 		ibctransfertypes.StoreKey,
 		// nibiru x/ keys
 		dextypes.StoreKey,
+		oracletypes.StoreKey,
 		epochstypes.StoreKey,
 		perptypes.StoreKey,
 		vpooltypes.StoreKey,
@@ -424,6 +429,10 @@ func NewNibiruApp(
 	app.DexKeeper = dexkeeper.NewKeeper(
 		appCodec, keys[dextypes.StoreKey], app.GetSubspace(dextypes.ModuleName),
 		app.accountKeeper, app.BankKeeper, app.distrKeeper)
+
+	app.oracleKeeper = oraclekeeper.NewKeeper(appCodec, keys[oracletypes.StoreKey], app.GetSubspace(oracletypes.ModuleName),
+		app.accountKeeper, app.BankKeeper, app.distrKeeper, app.stakingKeeper, "distrModule",
+	)
 
 	app.vpoolKeeper = vpoolkeeper.NewKeeper(
 		appCodec,
@@ -548,6 +557,7 @@ func NewNibiruApp(
 
 	dexModule := dex.NewAppModule(
 		appCodec, app.DexKeeper, app.accountKeeper, app.BankKeeper)
+	oracleModule := oracle.NewAppModule(appCodec, app.oracleKeeper, app.accountKeeper, app.BankKeeper)
 	epochsModule := epochs.NewAppModule(appCodec, app.epochsKeeper)
 	perpModule := perp.NewAppModule(
 		appCodec, app.perpKeeper, app.accountKeeper, app.BankKeeper,
@@ -582,6 +592,7 @@ func NewNibiruApp(
 
 		// native x/
 		dexModule,
+		oracleModule,
 		epochsModule,
 		vpoolModule,
 		perpModule,
