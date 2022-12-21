@@ -120,8 +120,7 @@ func (k Keeper) ValidateFeeder(ctx sdk.Context, feederAddr sdk.AccAddress, valid
 }
 
 /*
-calcTwap walks through a slice of PriceSnapshots and tallies up the prices weighted by the amount of time they were active for.
-
+CalcTwap walks through a slice of PriceSnapshots and tallies up the prices weighted by the amount of time they were active for.
 Callers of this function should already check if the snapshot slice is empty. Passing an empty snapshot slice will result in a panic.
 */
 func (k Keeper) CalcTwap(ctx sdk.Context, snapshots []types.PriceSnapshot) (price sdk.Dec, err error) {
@@ -140,4 +139,25 @@ func (k Keeper) CalcTwap(ctx sdk.Context, snapshots []types.PriceSnapshot) (pric
 		cumulativePrice = cumulativePrice.Add(price)
 	}
 	return cumulativePrice.QuoInt64(cumulativeTime), nil
+}
+
+func (k Keeper) GetExchangeRate(ctx sdk.Context, pair string) (price sdk.Dec, err error) {
+	price, err = k.ExchangeRates.Get(ctx, pair)
+	return
+}
+
+func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair string) (price sdk.Dec, err error) {
+	snapshots := k.PriceSnapshots.Iterate(
+		ctx,
+		collections.PairRange[string, time.Time]{}.
+			Prefix(pair).StartInclusive(ctx.BlockTime().Add(-1*k.GetParams(ctx).TwapLookbackWindow)).EndExclusive(ctx.BlockTime()),
+	).Values()
+
+	if len(snapshots) == 0 {
+		// if there are no snapshots, return -1 for the price
+		return sdk.OneDec().Neg(), types.ErrNoValidTWAP
+	}
+
+	price, err = k.CalcTwap(ctx, snapshots)
+	return
 }

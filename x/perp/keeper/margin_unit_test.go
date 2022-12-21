@@ -18,7 +18,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -195,7 +194,7 @@ func TestRemoveMargin(t *testing.T) {
 				}
 
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
-				mocks.mockPricefeedKeeper.EXPECT().IsActivePair(gomock.Any(), gomock.Any()).Return(true).AnyTimes()
+				mocks.mockOracleKeeper.EXPECT().IsActivePair(gomock.Any(), gomock.Any()).Return(true).AnyTimes()
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
 				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
@@ -743,16 +742,12 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				Margin:        sdk.NewDec(1),
 			},
 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
-				mocks.mockPricefeedKeeper.EXPECT().
-					GetCurrentPrice(
+				mocks.mockOracleKeeper.EXPECT().
+					GetExchangeRate(
 						ctx,
-						common.Pair_BTC_NUSD.Token0,
-						common.Pair_BTC_NUSD.Token1,
+						common.Pair_BTC_NUSD.String(),
 					).
-					Return(pricefeedtypes.CurrentPrice{
-						PairID: common.Pair_BTC_NUSD.String(),
-						Price:  sdk.NewDec(2),
-					}, nil)
+					Return(sdk.NewDec(2), nil)
 			},
 			pnlCalcOption:              types.PnLCalcOption_ORACLE,
 			expectedPositionalNotional: sdk.NewDec(20),
@@ -768,16 +763,12 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				Margin:        sdk.NewDec(1),
 			},
 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
-				mocks.mockPricefeedKeeper.EXPECT().
-					GetCurrentPrice(
+				mocks.mockOracleKeeper.EXPECT().
+					GetExchangeRate(
 						ctx,
-						common.Pair_BTC_NUSD.Token0,
-						common.Pair_BTC_NUSD.Token1,
+						common.Pair_BTC_NUSD.String(),
 					).
-					Return(pricefeedtypes.CurrentPrice{
-						PairID: common.Pair_BTC_NUSD.String(),
-						Price:  sdk.MustNewDecFromStr("0.5"),
-					}, nil)
+					Return(sdk.MustNewDecFromStr("0.5"), nil)
 			},
 			pnlCalcOption:              types.PnLCalcOption_ORACLE,
 			expectedPositionalNotional: sdk.NewDec(5),
@@ -887,16 +878,12 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				Margin:        sdk.NewDec(1),
 			},
 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
-				mocks.mockPricefeedKeeper.EXPECT().
-					GetCurrentPrice(
+				mocks.mockOracleKeeper.EXPECT().
+					GetExchangeRate(
 						ctx,
-						common.Pair_BTC_NUSD.Token0,
-						common.Pair_BTC_NUSD.Token1,
+						common.Pair_BTC_NUSD.String(),
 					).
-					Return(pricefeedtypes.CurrentPrice{
-						PairID: common.Pair_BTC_NUSD.String(),
-						Price:  sdk.MustNewDecFromStr("0.5"),
-					}, nil)
+					Return(sdk.MustNewDecFromStr("0.5"), nil)
 			},
 			pnlCalcOption:              types.PnLCalcOption_ORACLE,
 			expectedPositionalNotional: sdk.NewDec(5),
@@ -912,16 +899,12 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				Margin:        sdk.NewDec(1),
 			},
 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
-				mocks.mockPricefeedKeeper.EXPECT().
-					GetCurrentPrice(
+				mocks.mockOracleKeeper.EXPECT().
+					GetExchangeRate(
 						ctx,
-						common.Pair_BTC_NUSD.Token0,
-						common.Pair_BTC_NUSD.Token1,
+						common.Pair_BTC_NUSD.String(),
 					).
-					Return(pricefeedtypes.CurrentPrice{
-						PairID: common.Pair_BTC_NUSD.String(),
-						Price:  sdk.NewDec(2),
-					}, nil)
+					Return(sdk.NewDec(2), nil)
 			},
 			pnlCalcOption:              types.PnLCalcOption_ORACLE,
 			expectedPositionalNotional: sdk.NewDec(20),

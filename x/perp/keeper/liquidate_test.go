@@ -101,7 +101,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				},
 			)
 			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
-			nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, tokenPair, true)
+			nibiruApp.OracleKeeper.ActivePairsStore().Set(ctx, tokenPair, true)
 
 			t.Log("set perpkeeper params")
 			params := types.DefaultParams()
@@ -277,7 +277,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
 			)
-			nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, tokenPair, true)
+			nibiruApp.OracleKeeper.ActivePairsStore().Set(ctx, tokenPair, true)
 			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
 
 			t.Log("Set vpool defined by pair on PerpKeeper")

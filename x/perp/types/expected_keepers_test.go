@@ -25,9 +25,9 @@ func TestExpectedKeepers(t *testing.T) {
 		appKeeper      interface{}
 	}{
 		{
-			name:           "PricefeedKeeper from x/pricefeed",
-			expectedKeeper: (*types.PricefeedKeeper)(nil),
-			appKeeper:      nibiruApp.PricefeedKeeper,
+			name:           "OracleKeeper from x/pricefeed",
+			expectedKeeper: (*types.OracleKeeper)(nil),
+			appKeeper:      nibiruApp.OracleKeeper,
 		},
 		{
 			name:           "bankKeeper from the cosmos-sdk",

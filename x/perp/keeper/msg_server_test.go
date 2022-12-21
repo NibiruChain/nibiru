@@ -476,9 +476,9 @@ func TestMsgServerLiquidate(t *testing.T) {
 			if err == nil && err2 == nil {
 				t.Log("set pricefeed oracle price")
 				oracle := testutil.AccAddress()
-				app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
-				require.NoError(t, app.PricefeedKeeper.PostRawPrice(ctx, oracle, pair.String(), sdk.OneDec(), time.Now().Add(time.Hour)))
-				require.NoError(t, app.PricefeedKeeper.GatherRawPrices(ctx, pair.BaseDenom(), pair.QuoteDenom()))
+				app.OracleKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
+				require.NoError(t, app.OracleKeeper.PostRawPrice(ctx, oracle, pair.String(), sdk.OneDec(), time.Now().Add(time.Hour)))
+				require.NoError(t, app.OracleKeeper.GatherRawPrices(ctx, pair.BaseDenom(), pair.QuoteDenom()))
 
 				t.Log("create position")
 				setPosition(app.PerpKeeper, ctx, types.Position{
@@ -550,10 +550,10 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 
 	t.Log("set pricefeed oracle price")
 	oracle := testutil.AccAddress()
-	app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
-	err := app.PricefeedKeeper.PostRawPrice(ctx, oracle, pair.String(), sdk.OneDec(), time.Now().Add(time.Hour))
+	app.OracleKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
+	err := app.OracleKeeper.PostRawPrice(ctx, oracle, pair.String(), sdk.OneDec(), time.Now().Add(time.Hour))
 	require.NoError(t, err)
-	require.NoError(t, app.PricefeedKeeper.GatherRawPrices(ctx, pair.BaseDenom(), pair.QuoteDenom()))
+	require.NoError(t, app.OracleKeeper.GatherRawPrices(ctx, pair.BaseDenom(), pair.QuoteDenom()))
 
 	t.Log("create positions")
 	atRiskPosition1 := types.Position{

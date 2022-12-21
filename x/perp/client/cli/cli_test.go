@@ -3,7 +3,6 @@ package cli_test
 import (
 	"fmt"
 	"testing"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
@@ -19,7 +18,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/client/cli"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
-	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -30,29 +28,6 @@ type IntegrationTestSuite struct {
 	cfg     testutilcli.Config
 	network *testutilcli.Network
 	users   []sdk.AccAddress
-}
-
-// NewPricefeedGen returns an x/pricefeed GenesisState to specify the module parameters.
-func NewPricefeedGen() *pftypes.GenesisState {
-	pairs := common.AssetPairs{common.Pair_BTC_NUSD, common.Pair_ETH_NUSD}
-	pfGenesis := simapp.PricefeedGenesis()
-	pfGenesis.Params.Pairs = append(pfGenesis.Params.Pairs, pairs...)
-	pfGenesis.PostedPrices = append(pfGenesis.PostedPrices, []pftypes.PostedPrice{
-		{
-			PairID: common.Pair_BTC_NUSD.String(),
-			Oracle: simapp.GenOracleAddress,
-			Price:  sdk.OneDec(),
-			Expiry: time.Now().Add(1 * time.Hour),
-		},
-		{
-			PairID: common.Pair_ETH_NUSD.String(),
-			Oracle: simapp.GenOracleAddress,
-			Price:  sdk.OneDec(),
-			Expiry: time.Now().Add(1 * time.Hour),
-		},
-	}...)
-
-	return &pfGenesis
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
@@ -115,9 +90,6 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	}
 	perpGenesis.Params.WhitelistedLiquidators = []string{"nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m"} // address associated with mnemonic below
 	genesisState[perptypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(perpGenesis)
-
-	// set up pricefeed
-	genesisState[pftypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(NewPricefeedGen())
 
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
 	s.cfg.Mnemonics = []string{"satisfy december text daring wheat vanish save viable holiday rural vessel shuffle dice skate promote fade badge federal sail during lend fever balance give"}
