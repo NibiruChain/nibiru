@@ -86,7 +86,7 @@ func (k *Keeper) EvaluateCollRatio(ctx sdk.Context) (err error) {
 	upperBound := params.GetPriceUpperBoundAsDec()
 
 	// stablePrice is how much UDSC does it take to buy one NUSD
-	stablePrice, err := k.PricefeedKeeper.GetCurrentTWAP(
+	stablePrice, err := k.OracleKeeper.GetCurrentTWAP(
 		ctx, common.DenomNUSD, common.DenomUSDC)
 	if err != nil {
 		return err
@@ -120,7 +120,7 @@ func (k *Keeper) StableRequiredForTargetCollRatio(
 
 	for _, collDenom := range collDenoms {
 		amtColl := moduleCoins.AmountOf(collDenom)
-		priceColl, err := k.PricefeedKeeper.GetCurrentPrice(
+		priceColl, err := k.OracleKeeper.GetCurrentPrice(
 			ctx, collDenom, common.DenomNUSD)
 		if err != nil {
 			return sdk.ZeroDec(), err
@@ -138,7 +138,7 @@ func (k *Keeper) RecollateralizeCollAmtForTargetCollRatio(
 	ctx sdk.Context,
 ) (neededCollAmount sdk.Int, err error) {
 	neededUSDForRecoll, _ := k.StableRequiredForTargetCollRatio(ctx)
-	priceCollStable, err := k.PricefeedKeeper.GetCurrentPrice(
+	priceCollStable, err := k.OracleKeeper.GetCurrentPrice(
 		ctx, common.DenomUSDC, common.DenomNUSD)
 	if err != nil {
 		return sdk.Int{}, err
@@ -222,7 +222,7 @@ func (k Keeper) Recollateralize(
 	}
 
 	// Compute GOV rewarded to user
-	priceCollStable, err := k.PricefeedKeeper.GetCurrentPrice(
+	priceCollStable, err := k.OracleKeeper.GetCurrentPrice(
 		ctx, common.DenomUSDC, common.DenomNUSD)
 	if err != nil {
 		return response, err
@@ -293,7 +293,7 @@ func (k *Keeper) GovAmtFromRecollateralize(
 	params := k.GetParams(ctx)
 	bonusRate := params.GetBonusRateRecollAsDec()
 
-	priceGovStable, err := k.PricefeedKeeper.GetCurrentPrice(
+	priceGovStable, err := k.OracleKeeper.GetCurrentPrice(
 		ctx, common.DenomNIBI, common.DenomNUSD)
 	if err != nil {
 		return sdk.Int{}, err
@@ -336,7 +336,7 @@ func (k *Keeper) BuybackGovAmtForTargetCollRatio(
 ) (neededGovAmt sdk.Int, err error) {
 	neededUSDForRecoll, _ := k.StableRequiredForTargetCollRatio(ctx)
 	neededUSDForBuyback := neededUSDForRecoll.Neg()
-	priceGovStable, err := k.PricefeedKeeper.GetCurrentPrice(
+	priceGovStable, err := k.OracleKeeper.GetCurrentPrice(
 		ctx, common.DenomNIBI, common.DenomNUSD)
 	if err != nil {
 		return sdk.Int{}, err
@@ -413,7 +413,7 @@ func (k Keeper) Buyback(
 	}
 
 	// Compute USD (stable) value of the GOV sent by the caller: 'inUSD'
-	priceGovStable, err := k.PricefeedKeeper.GetCurrentPrice(
+	priceGovStable, err := k.OracleKeeper.GetCurrentPrice(
 		ctx, common.DenomNIBI, common.DenomNUSD)
 	if err != nil {
 		return response, err
@@ -473,7 +473,7 @@ Returns:
 func (k *Keeper) CollAmtFromBuyback(
 	ctx sdk.Context, valUSD sdk.Dec,
 ) (collAmt sdk.Int, err error) {
-	priceCollStable, err := k.PricefeedKeeper.GetCurrentPrice(
+	priceCollStable, err := k.OracleKeeper.GetCurrentPrice(
 		ctx, common.DenomUSDC, common.DenomNUSD)
 	if err != nil {
 		return sdk.Int{}, err

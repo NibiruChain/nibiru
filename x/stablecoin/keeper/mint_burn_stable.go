@@ -92,7 +92,7 @@ func (k Keeper) MintStable(
 func (k Keeper) calcNeededGovAndFees(
 	ctx sdk.Context, stable sdk.Coin, govRatio sdk.Dec, feeRatio sdk.Dec,
 ) (sdk.Coin, sdk.Coin, error) {
-	priceGov, err := k.PricefeedKeeper.GetCurrentPrice(
+	priceGov, err := k.OracleKeeper.GetCurrentPrice(
 		ctx, common.DenomNIBI, common.DenomNUSD)
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
@@ -114,7 +114,7 @@ func (k Keeper) calcNeededCollateralAndFees(
 	collRatio sdk.Dec,
 	feeRatio sdk.Dec,
 ) (sdk.Coin, sdk.Coin, error) {
-	priceColl, err := k.PricefeedKeeper.GetCurrentPrice(
+	priceColl, err := k.OracleKeeper.GetCurrentPrice(
 		ctx, common.DenomUSDC, common.DenomNUSD)
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err

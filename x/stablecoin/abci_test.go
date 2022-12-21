@@ -4,8 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/x/testutil"
-
 	"github.com/NibiruChain/nibiru/simapp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,8 +11,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/epochs"
-	"github.com/NibiruChain/nibiru/x/pricefeed"
-	ptypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
+	otypes "github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
 type test struct {
@@ -113,22 +110,8 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 
 			ctx = ctx.WithBlockHeight(1)
 
-			oracle := testutil.AccAddress()
-			pairs := common.AssetPairs{
-				common.Pair_USDC_NUSD,
-			}
-			params := ptypes.NewParams(pairs, 2*time.Hour)
-			app.PricefeedKeeper.SetParams(ctx, params)
-			app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
+			app.OracleKeeper.SetPrice(ctx, common.Pair_BTC_NUSD.String(), sdk.OneDec())
 
-			require.NoError(t, app.PricefeedKeeper.PostRawPrice(
-				ctx,
-				oracle,
-				pairs[0].String(),
-				/* price */ tc.price,
-				/* expiry */ ctx.BlockTime().UTC().Add(time.Hour*1)))
-
-			require.NoError(t, app.PricefeedKeeper.GatherRawPrices(ctx, pairs[0].Token0, pairs[0].Token1))
 			require.NoError(t, app.StablecoinKeeper.SetCollRatio(ctx, tc.InCollRatio))
 
 			tc.fn()
@@ -144,28 +127,20 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 
 	runBlock := func(duration time.Duration) {
 		ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(ctx.BlockTime().Add(duration))
-		pricefeed.BeginBlocker(ctx, app.PricefeedKeeper)
 		epochs.BeginBlocker(ctx, app.EpochsKeeper)
 	}
 
 	// start at t=1sec with blockheight 1
 	ctx = ctx.WithBlockHeight(1).WithBlockTime(time.Now())
-	pricefeed.BeginBlocker(ctx, app.PricefeedKeeper)
 	epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
-	oracle := testutil.AccAddress()
 	pairs := common.AssetPairs{
 		common.Pair_USDC_NUSD,
 	}
 	twapLookbackWindow := 1 * time.Hour
-	params := ptypes.NewParams(pairs, twapLookbackWindow)
-	app.PricefeedKeeper.SetParams(ctx, params)
-	app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
+	app.OracleKeeper.SetParams(ctx, otypes.Params{TwapLookbackWindow: twapLookbackWindow})
+	app.OracleKeeper.SetPrice(ctx, pairs[0].String(), sdk.MustNewDecFromStr("0.9"))
 
-	// Sim set price set the price for one hour
-	require.NoError(t, app.PricefeedKeeper.PostRawPrice(
-		ctx, oracle, pairs[0].String(), sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().Add(time.Hour)))
-	require.NoError(t, app.PricefeedKeeper.GatherRawPrices(ctx, pairs[0].Token0, pairs[0].Token1))
 	require.NoError(t, app.StablecoinKeeper.SetCollRatio(ctx, sdk.MustNewDecFromStr("0.8")))
 
 	// Mint block #2
@@ -177,9 +152,7 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	require.False(t, app.StablecoinKeeper.GetParams(ctx).IsCollateralRatioValid)
 
 	// Post price, collateral should be valid again
-	require.NoError(t, app.PricefeedKeeper.PostRawPrice(
-		ctx, oracle, pairs[0].String(), sdk.MustNewDecFromStr("0.9"), ctx.BlockTime().Add(time.Hour)))
-	require.NoError(t, app.PricefeedKeeper.GatherRawPrices(ctx, pairs[0].Token0, pairs[0].Token1))
+	app.OracleKeeper.SetPrice(ctx, pairs[0].String(), sdk.MustNewDecFromStr("0.9"))
 
 	// Mint block #4, median price and TWAP are computed again at the end of a new block
 	runBlock(15 * time.Minute) // Collateral ratio is set to valid at the next epoch
