@@ -13,8 +13,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	perpcli "github.com/NibiruChain/nibiru/x/perp/client/cli"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
-	pricefeedcli "github.com/NibiruChain/nibiru/x/pricefeed/client/cli"
-	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	vpoolcli "github.com/NibiruChain/nibiru/x/vpool/client/cli"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -104,22 +102,5 @@ func QueryCumulativePremiumFraction(clientCtx client.Context, pair common.AssetP
 	if err := ExecQuery(clientCtx, perpcli.CmdQueryCumulativePremiumFraction(), []string{pair.String()}, &queryResp); err != nil {
 		return nil, err
 	}
-	return &queryResp, nil
-}
-
-func QueryPrice(clientCtx client.Context, pairID string) (*pricefeedtypes.QueryPriceResponse, error) {
-	var queryResp pricefeedtypes.QueryPriceResponse
-	if err := ExecQuery(clientCtx, pricefeedcli.CmdQueryPrice(), []string{pairID}, &queryResp); err != nil {
-		return nil, err
-	}
-	return &queryResp, nil
-}
-
-func QueryRawPrice(clientCtx client.Context, pairID string) (*pricefeedtypes.QueryRawPricesResponse, error) {
-	var queryResp pricefeedtypes.QueryRawPricesResponse
-	if err := ExecQuery(clientCtx, pricefeedcli.CmdQueryRawPrices(), []string{pairID}, &queryResp); err != nil {
-		return nil, err
-	}
-
 	return &queryResp, nil
 }
