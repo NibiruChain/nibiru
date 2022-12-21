@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Features
 * [#1115](https://github.com/NibiruChain/nibiru/pull/1115) - feat: improve single asset join calculation
 * [#1117](https://github.com/NibiruChain/nibiru/pull/1117) - feat: wire multi-liquidate transaction
+* [#1120](https://github.com/NibiruChain/nibiru/pull/1120) - feat: replace pricefeed with oracle
 
 ### Bug Fixes
 * [#1113](https://github.com/NibiruChain/nibiru/pull/1113) - fix: fix quick simulation issue
