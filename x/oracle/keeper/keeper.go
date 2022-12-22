@@ -124,6 +124,9 @@ CalcTwap walks through a slice of PriceSnapshots and tallies up the prices weigh
 Callers of this function should already check if the snapshot slice is empty. Passing an empty snapshot slice will result in a panic.
 */
 func (k Keeper) CalcTwap(ctx sdk.Context, snapshots []types.PriceSnapshot) (price sdk.Dec, err error) {
+	if len(snapshots) == 1 {
+		return snapshots[0].Price, nil
+	}
 	cumulativeTime := ctx.BlockTime().UnixMilli() - snapshots[0].TimestampMs
 	cumulativePrice := sdk.ZeroDec()
 
@@ -150,7 +153,7 @@ func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair string) (price sdk.Dec
 	snapshots := k.PriceSnapshots.Iterate(
 		ctx,
 		collections.PairRange[string, time.Time]{}.
-			Prefix(pair).StartInclusive(ctx.BlockTime().Add(-1*k.GetParams(ctx).TwapLookbackWindow)).EndExclusive(ctx.BlockTime()),
+			Prefix(pair).StartExclusive(ctx.BlockTime().Add(-1*k.GetParams(ctx).TwapLookbackWindow)).EndInclusive(ctx.BlockTime()),
 	).Values()
 
 	if len(snapshots) == 0 {
@@ -165,7 +168,9 @@ func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair string) (price sdk.Dec
 // SetPrice sets the price for a pair as well as the price snapshot.
 func (k Keeper) SetPrice(ctx sdk.Context, pair string, price sdk.Dec) {
 	k.ExchangeRates.Insert(ctx, pair, price)
-	k.PriceSnapshots.Insert(ctx, collections.Join(pair, ctx.BlockTime()), types.PriceSnapshot{
+
+	key := collections.Join(pair, ctx.BlockTime())
+	k.PriceSnapshots.Insert(ctx, key, types.PriceSnapshot{
 		Pair:        pair,
 		Price:       price,
 		TimestampMs: ctx.BlockTime().UnixMilli(),

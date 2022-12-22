@@ -95,8 +95,7 @@ func TestQueryExchangeRateTwap(t *testing.T) {
 
 	res, err = querier.ExchangeRateTwap(ctx, &types.QueryExchangeRateRequest{Pair: common.Pair_BTC_NUSD.String()})
 	require.NoError(t, err)
-
-	require.Equal(t, sdk.MustNewDecFromStr("12.1"), res.ExchangeRate)
+	require.Equal(t, sdk.MustNewDecFromStr("1700"), res.ExchangeRate)
 }
 
 func TestQueryActives(t *testing.T) {
