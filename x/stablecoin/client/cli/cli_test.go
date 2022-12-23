@@ -17,6 +17,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
+	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/NibiruChain/nibiru/x/stablecoin/client/cli"
 	stabletypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
@@ -50,6 +51,14 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	stableGen.Params.IsCollateralRatioValid = true
 	stableGen.ModuleAccountBalance = sdk.NewCoin(common.DenomUSDC, sdk.NewInt(10000*common.Precision))
 	genesisState[stabletypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(stableGen)
+
+	oracleGenesis := oracletypes.DefaultGenesisState()
+	oracleGenesis.ExchangeRates = []oracletypes.ExchangeRateTuple{
+		{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: sdk.NewDec(10)},
+		{Pair: common.Pair_USDC_NUSD.String(), ExchangeRate: sdk.NewDec(1)},
+	}
+
+	genesisState[oracletypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(oracleGenesis)
 
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
 
@@ -187,18 +196,18 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 			respType:         &sdk.TxResponse{},
 			expectedCode:     0,
 		},
-		// {
-		// 	name: "Burn at 90% collRatio",
-		// 	args: append([]string{
-		// 		"100000000unusd",
-		// 		fmt.Sprintf("--%s=%s", flags.FlagFrom, "burn")}, commonArgs...),
-		// 	expectedStable: sdk.NewInt(0),
-		// 	expectedColl:   sdk.NewInt(90* common.Precision),
-		// 	expectedGov:    sdk.NewInt(1* common.Precision),
-		// 	expectErr:      false,
-		// 	respType:       &sdk.TxResponse{},
-		// 	expectedCode:   0,
-		// },
+		{
+			name: "Burn at 90% collRatio",
+			args: append([]string{
+				"100000000unusd",
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, "burn")}, commonArgs...),
+			expectedStable: sdk.NewInt(0),
+			expectedColl:   sdk.NewInt(90 * common.Precision),
+			expectedGov:    sdk.NewInt(1 * common.Precision),
+			expectErr:      false,
+			respType:       &sdk.TxResponse{},
+			expectedCode:   0,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -220,6 +229,7 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 
 				txResp := tc.respType.(*sdk.TxResponse)
 				err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
+				fmt.Println(txResp)
 				s.NoError(err)
 				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
 

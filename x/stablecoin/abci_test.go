@@ -1,7 +1,6 @@
 package stablecoin_test
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -120,10 +119,8 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 			price = tc.price
 
 			require.NoError(t, app.StablecoinKeeper.SetCollRatio(ctx, tc.InCollRatio))
-			fmt.Println("coll ratio before", app.StablecoinKeeper.GetCollRatio(ctx))
 
 			tc.fn()
-			fmt.Println("coll ratio after", app.StablecoinKeeper.GetCollRatio(ctx))
 
 			currCollRatio := app.StablecoinKeeper.GetCollRatio(ctx)
 			require.Equal(t, tc.ExpectedCollRatio, currCollRatio)

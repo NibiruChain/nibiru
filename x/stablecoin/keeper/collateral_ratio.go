@@ -87,7 +87,6 @@ func (k *Keeper) EvaluateCollRatio(ctx sdk.Context) (err error) {
 
 	stablePrice, err := k.OracleKeeper.GetExchangeRateTwap(
 		ctx, common.Pair_USDC_NUSD.String())
-	fmt.Println("stablePrice", stablePrice)
 	if err != nil {
 		return err
 	}

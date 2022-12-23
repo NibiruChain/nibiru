@@ -79,7 +79,7 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
 		StakingKeeper:     stakingKeeper,
 		distrName:         distrName,
 		ExchangeRates:     collections.NewMap(storeKey, 1, collections.StringKeyEncoder, collections.DecValueEncoder),
-		PriceSnapshots:    collections.NewMap(storeKey, 7, collections.PairKeyEncoder(collections.StringKeyEncoder, collections.TimeKeyEncoder), collections.ProtoValueEncoder[types.PriceSnapshot](cdc)),
+		PriceSnapshots:    collections.NewMap(storeKey, 10, collections.PairKeyEncoder(collections.StringKeyEncoder, collections.TimeKeyEncoder), collections.ProtoValueEncoder[types.PriceSnapshot](cdc)),
 		FeederDelegations: collections.NewMap(storeKey, 2, collections.ValAddressKeyEncoder, collections.AccAddressValueEncoder),
 		MissCounters:      collections.NewMap(storeKey, 3, collections.ValAddressKeyEncoder, collections.Uint64ValueEncoder),
 		Prevotes:          collections.NewMap(storeKey, 4, collections.ValAddressKeyEncoder, collections.ProtoValueEncoder[types.AggregateExchangeRatePrevote](cdc)),
@@ -145,6 +145,7 @@ func (k Keeper) CalcTwap(ctx sdk.Context, snapshots []types.PriceSnapshot) (pric
 }
 
 func (k Keeper) GetExchangeRate(ctx sdk.Context, pair string) (price sdk.Dec, err error) {
+	fmt.Println("Received request")
 	fmt.Println(k.ExchangeRates.Get(ctx, pair))
 	return k.ExchangeRates.Get(ctx, pair)
 }
@@ -166,8 +167,10 @@ func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair string) (price sdk.Dec
 
 // SetPrice sets the price for a pair as well as the price snapshot.
 func (k Keeper) SetPrice(ctx sdk.Context, pair string, price sdk.Dec) {
-	fmt.Println("Setting for", pair)
-	fmt.Println("\t Price: ", price)
+
+	fmt.Println("----")
+	fmt.Println("Setting price for pair:", pair)
+	fmt.Println("Setting price for price:", price)
 	k.ExchangeRates.Insert(ctx, pair, price)
 
 	key := collections.Join(pair, ctx.BlockTime())
@@ -176,4 +179,7 @@ func (k Keeper) SetPrice(ctx sdk.Context, pair string, price sdk.Dec) {
 		Price:       price,
 		TimestampMs: ctx.BlockTime().UnixMilli(),
 	})
+
+	price, _ = k.GetExchangeRate(ctx, pair)
+	fmt.Println("Set price: ", price)
 }
