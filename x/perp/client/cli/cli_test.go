@@ -16,6 +16,7 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
+	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/NibiruChain/nibiru/x/perp/client/cli"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
@@ -90,6 +91,13 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	}
 	perpGenesis.Params.WhitelistedLiquidators = []string{"nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m"} // address associated with mnemonic below
 	genesisState[perptypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(perpGenesis)
+
+	oracleGenesis := oracletypes.DefaultGenesisState()
+	oracleGenesis.ExchangeRates = []oracletypes.ExchangeRateTuple{
+		{Pair: common.Pair_BTC_NUSD.String(), ExchangeRate: sdk.NewDec(20_000)},
+	}
+
+	genesisState[oracletypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(oracleGenesis)
 
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
 	s.cfg.Mnemonics = []string{"satisfy december text daring wheat vanish save viable holiday rural vessel shuffle dice skate promote fade badge federal sail during lend fever balance give"}

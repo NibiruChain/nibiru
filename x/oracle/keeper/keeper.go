@@ -145,8 +145,8 @@ func (k Keeper) CalcTwap(ctx sdk.Context, snapshots []types.PriceSnapshot) (pric
 }
 
 func (k Keeper) GetExchangeRate(ctx sdk.Context, pair string) (price sdk.Dec, err error) {
-	price, err = k.ExchangeRates.Get(ctx, pair)
-	return
+	fmt.Println(k.ExchangeRates.Get(ctx, pair))
+	return k.ExchangeRates.Get(ctx, pair)
 }
 
 func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair string) (price sdk.Dec, err error) {
@@ -161,12 +161,13 @@ func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair string) (price sdk.Dec
 		return sdk.OneDec().Neg(), types.ErrNoValidTWAP
 	}
 
-	price, err = k.CalcTwap(ctx, snapshots)
-	return
+	return k.CalcTwap(ctx, snapshots)
 }
 
 // SetPrice sets the price for a pair as well as the price snapshot.
 func (k Keeper) SetPrice(ctx sdk.Context, pair string, price sdk.Dec) {
+	fmt.Println("Setting for", pair)
+	fmt.Println("\t Price: ", price)
 	k.ExchangeRates.Insert(ctx, pair, price)
 
 	key := collections.Join(pair, ctx.BlockTime())

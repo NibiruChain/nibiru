@@ -168,6 +168,8 @@ func TestSwapQuoteForBase(t *testing.T) {
 			pfKeeper := mock.NewMockOracleKeeper(gomock.NewController(t))
 			vpoolKeeper, ctx := VpoolKeeper(t, pfKeeper)
 
+			pfKeeper.EXPECT().GetExchangeRate(gomock.Any(), gomock.Any()).Return(sdk.NewDec(1), nil).AnyTimes()
+
 			vpoolKeeper.CreatePool(
 				ctx,
 				common.Pair_BTC_NUSD,
@@ -359,6 +361,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 			pfKeeper := mock.NewMockOracleKeeper(gomock.NewController(t))
 
 			vpoolKeeper, ctx := VpoolKeeper(t, pfKeeper)
+			pfKeeper.EXPECT().GetExchangeRate(gomock.Any(), gomock.Any()).Return(sdk.NewDec(1), nil).AnyTimes()
 
 			vpoolKeeper.CreatePool(
 				ctx,

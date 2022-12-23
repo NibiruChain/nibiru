@@ -203,7 +203,7 @@ var (
 		perptypes.FeePoolModuleAccount:        {},
 		epochstypes.ModuleName:                {},
 		lockuptypes.ModuleName:                {authtypes.Minter, authtypes.Burner},
-		oracletypes.ModuleName:                nil,
+		oracletypes.ModuleName:                {},
 		stablecointypes.StableEFModuleAccount: {authtypes.Burner},
 		common.TreasuryPoolModuleAccount:      {},
 		wasm.ModuleName:                       {},
@@ -452,13 +452,13 @@ func NewNibiruTestApp(
 	app.StablecoinKeeper = stablecoinkeeper.NewKeeper(
 		appCodec, keys[stablecointypes.StoreKey], memKeys[stablecointypes.MemStoreKey],
 		app.GetSubspace(stablecointypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, nil, app.DexKeeper,
+		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.DexKeeper,
 	)
 
 	app.VpoolKeeper = vpoolkeeper.NewKeeper(
 		appCodec,
 		keys[vpooltypes.StoreKey],
-		nil,
+		app.OracleKeeper,
 	)
 
 	app.EpochsKeeper = epochskeeper.NewKeeper(
@@ -468,7 +468,7 @@ func NewNibiruTestApp(
 	app.PerpKeeper = perpkeeper.NewKeeper(
 		appCodec, keys[perptypes.StoreKey],
 		app.GetSubspace(perptypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, nil, app.VpoolKeeper, app.EpochsKeeper,
+		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.VpoolKeeper, app.EpochsKeeper,
 	)
 
 	app.EpochsKeeper.SetHooks(

@@ -76,6 +76,7 @@ func (k Keeper) SwapBaseForQuote(
 	}
 
 	if _, err = k.oracleKeeper.GetExchangeRate(ctx, pair.String()); err != nil {
+		fmt.Println(err)
 		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair.String())
 	}
 

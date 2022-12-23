@@ -169,6 +169,7 @@ var (
 		ibctransfer.AppModuleBasic{},
 		// native x/
 		dex.AppModuleBasic{},
+		oracle.AppModuleBasic{},
 		epochs.AppModuleBasic{},
 		perp.AppModuleBasic{},
 		vpool.AppModuleBasic{},
@@ -185,6 +186,7 @@ var (
 		stakingtypes.NotBondedPoolName:   {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:              {authtypes.Burner},
 		dextypes.ModuleName:              {authtypes.Minter, authtypes.Burner},
+		oracletypes.ModuleName:           {},
 		ibctransfertypes.ModuleName:      {authtypes.Minter, authtypes.Burner},
 		perptypes.ModuleName:             {authtypes.Minter, authtypes.Burner},
 		perptypes.VaultModuleAccount:     {},
@@ -437,7 +439,7 @@ func NewNibiruApp(
 	app.vpoolKeeper = vpoolkeeper.NewKeeper(
 		appCodec,
 		keys[vpooltypes.StoreKey],
-		nil,
+		app.oracleKeeper,
 	)
 
 	app.epochsKeeper = epochskeeper.NewKeeper(
@@ -447,7 +449,7 @@ func NewNibiruApp(
 	app.perpKeeper = perpkeeper.NewKeeper(
 		appCodec, keys[perptypes.StoreKey],
 		app.GetSubspace(perptypes.ModuleName),
-		app.accountKeeper, app.BankKeeper, nil, app.vpoolKeeper, app.epochsKeeper,
+		app.accountKeeper, app.BankKeeper, app.oracleKeeper, app.vpoolKeeper, app.epochsKeeper,
 	)
 
 	app.epochsKeeper.SetHooks(
@@ -630,6 +632,7 @@ func NewNibiruApp(
 		stakingtypes.ModuleName,
 		// native x/
 		dextypes.ModuleName,
+		oracletypes.ModuleName,
 		epochstypes.ModuleName,
 		vpooltypes.ModuleName,
 		perptypes.ModuleName,
@@ -659,6 +662,7 @@ func NewNibiruApp(
 		// native x/
 		epochstypes.ModuleName,
 		dextypes.ModuleName,
+		oracletypes.ModuleName,
 		vpooltypes.ModuleName,
 		perptypes.ModuleName,
 		utiltypes.ModuleName,
@@ -693,6 +697,7 @@ func NewNibiruApp(
 		// native x/
 		epochstypes.ModuleName,
 		dextypes.ModuleName,
+		oracletypes.ModuleName,
 		vpooltypes.ModuleName,
 		perptypes.ModuleName,
 		utiltypes.ModuleName,
@@ -989,6 +994,7 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(crisistypes.ModuleName)
 	// Native params keepers
 	paramsKeeper.Subspace(dextypes.ModuleName)
+	paramsKeeper.Subspace(oracletypes.ModuleName)
 	paramsKeeper.Subspace(epochstypes.ModuleName)
 	paramsKeeper.Subspace(perptypes.ModuleName)
 	// ibc params keepers

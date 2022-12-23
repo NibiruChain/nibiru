@@ -110,7 +110,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 
 			ctx = ctx.WithBlockHeight(1)
 
-			app.OracleKeeper.SetPrice(ctx, common.Pair_BTC_NUSD.String(), sdk.OneDec())
+			app.OracleKeeper.SetPrice(ctx, common.Pair_USDC_NUSD.String(), tc.price)
 
 			require.NoError(t, app.StablecoinKeeper.SetCollRatio(ctx, tc.InCollRatio))
 

@@ -241,6 +241,18 @@ func (mr *MockOracleKeeperMockRecorder) GetExchangeRateTwap(arg0, arg1 interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetExchangeRateTwap", reflect.TypeOf((*MockOracleKeeper)(nil).GetExchangeRateTwap), arg0, arg1)
 }
 
+// SetPrice mocks base method.
+func (m *MockOracleKeeper) SetPrice(arg0 types1.Context, arg1 string, arg2 types1.Dec) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetPrice", arg0, arg1, arg2)
+}
+
+// SetPrice indicates an expected call of SetPrice.
+func (mr *MockOracleKeeperMockRecorder) SetPrice(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetPrice", reflect.TypeOf((*MockOracleKeeper)(nil).SetPrice), arg0, arg1, arg2)
+}
+
 // MockVpoolKeeper is a mock of VpoolKeeper interface.
 type MockVpoolKeeper struct {
 	ctrl     *gomock.Controller

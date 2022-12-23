@@ -102,6 +102,8 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			)
 			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
 
+			nibiruApp.OracleKeeper.SetPrice(ctx, tokenPair.String(), sdk.NewDec(2))
+
 			t.Log("set perpkeeper params")
 			params := types.DefaultParams()
 			perpKeeper.SetParams(ctx, types.NewParams(
