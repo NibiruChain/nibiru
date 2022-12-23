@@ -1,6 +1,7 @@
 package stablecoin_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -25,6 +26,7 @@ type test struct {
 func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 	var app *simapp.NibiruTestApp
 	var ctx sdk.Context
+	var price sdk.Dec
 
 	tests := []test{
 		{
@@ -37,6 +39,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(time.Second * 60 * 16))
+				app.OracleKeeper.SetPrice(ctx, common.Pair_USDC_NUSD.String(), price)
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 			},
 		},
@@ -50,6 +53,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(time.Second * 60 * 16))
+				app.OracleKeeper.SetPrice(ctx, common.Pair_USDC_NUSD.String(), price)
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 			},
 		},
@@ -79,9 +83,11 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(time.Second + time.Minute*15))
+				app.OracleKeeper.SetPrice(ctx, common.Pair_USDC_NUSD.String(), price)
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(time.Second + time.Minute*30))
+				app.OracleKeeper.SetPrice(ctx, common.Pair_USDC_NUSD.String(), price)
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 			},
 		},
@@ -95,9 +101,11 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(time.Second + time.Minute*14))
+				app.OracleKeeper.SetPrice(ctx, common.Pair_USDC_NUSD.String(), price)
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(time.Second + time.Minute*16))
+				app.OracleKeeper.SetPrice(ctx, common.Pair_USDC_NUSD.String(), price)
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 			},
 		},
@@ -109,12 +117,13 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 			app, ctx = simapp.NewTestNibiruAppAndContext(true)
 
 			ctx = ctx.WithBlockHeight(1)
-
-			app.OracleKeeper.SetPrice(ctx, common.Pair_USDC_NUSD.String(), tc.price)
+			price = tc.price
 
 			require.NoError(t, app.StablecoinKeeper.SetCollRatio(ctx, tc.InCollRatio))
+			fmt.Println("coll ratio before", app.StablecoinKeeper.GetCollRatio(ctx))
 
 			tc.fn()
+			fmt.Println("coll ratio after", app.StablecoinKeeper.GetCollRatio(ctx))
 
 			currCollRatio := app.StablecoinKeeper.GetCollRatio(ctx)
 			require.Equal(t, tc.ExpectedCollRatio, currCollRatio)
@@ -137,8 +146,9 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	pairs := common.AssetPairs{
 		common.Pair_USDC_NUSD,
 	}
-	twapLookbackWindow := 1 * time.Hour
-	app.OracleKeeper.SetParams(ctx, otypes.Params{TwapLookbackWindow: twapLookbackWindow})
+	params := otypes.DefaultParams()
+	params.TwapLookbackWindow = 1 * time.Hour
+	app.OracleKeeper.SetParams(ctx, params)
 	app.OracleKeeper.SetPrice(ctx, pairs[0].String(), sdk.MustNewDecFromStr("0.9"))
 
 	require.NoError(t, app.StablecoinKeeper.SetCollRatio(ctx, sdk.MustNewDecFromStr("0.8")))

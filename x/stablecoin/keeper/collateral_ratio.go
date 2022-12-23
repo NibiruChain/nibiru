@@ -85,16 +85,16 @@ func (k *Keeper) EvaluateCollRatio(ctx sdk.Context) (err error) {
 	lowerBound := params.GetPriceLowerBoundAsDec()
 	upperBound := params.GetPriceUpperBoundAsDec()
 
-	// stablePrice is how much UDSC does it take to buy one NUSD
 	stablePrice, err := k.OracleKeeper.GetExchangeRateTwap(
 		ctx, common.Pair_USDC_NUSD.String())
+	fmt.Println("stablePrice", stablePrice)
 	if err != nil {
 		return err
 	}
 
-	if stablePrice.GTE(upperBound) {
+	if stablePrice.LTE(lowerBound) {
 		err = k.updateCollRatio(ctx, true)
-	} else if stablePrice.LTE(lowerBound) {
+	} else if stablePrice.GTE(upperBound) {
 		err = k.updateCollRatio(ctx, false)
 	}
 	if err != nil {

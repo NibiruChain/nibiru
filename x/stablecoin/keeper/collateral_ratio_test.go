@@ -81,13 +81,8 @@ func TestSetCollRatioUpdate(t *testing.T) {
 			stablecoinKeeper := &nibiruApp.StablecoinKeeper
 			oracleKeeper := &nibiruApp.OracleKeeper
 
-			pair := common.AssetPair{
-				Token0: common.DenomUSDC,
-				Token1: common.DenomNUSD,
-			}
-
-			oracleKeeper.SetPrice(ctx, pair.String(), tc.price)
-
+			oracleKeeper.SetPrice(ctx, common.Pair_USDC_NUSD.String(), tc.price)
+			stablecoinKeeper.SetCollRatio(ctx, tc.inCollRatio)
 			err := stablecoinKeeper.EvaluateCollRatio(ctx)
 			if tc.expectedPass {
 				require.NoError(
@@ -693,7 +688,7 @@ func TestRecollateralize(t *testing.T) {
 			},
 
 			expectedPass: false,
-			err:          fmt.Errorf("prices are expired"),
+			err:          fmt.Errorf("collections: not found"),
 		},
 	}
 
@@ -781,7 +776,7 @@ func TestRecollateralize_Short(t *testing.T) {
 					Coll:    sdk.NewInt64Coin(common.DenomUSDC, 100),
 				}
 				_, err := nibiruApp.StablecoinKeeper.Recollateralize(goCtx, msg)
-				require.ErrorContains(t, err, "input prices are expired")
+				require.ErrorContains(t, err, "collections: not found")
 			},
 		},
 	}
