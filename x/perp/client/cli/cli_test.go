@@ -92,7 +92,6 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	oracleGenesis.ExchangeRates = []oracletypes.ExchangeRateTuple{
 		{Pair: common.Pair_BTC_NUSD.String(), ExchangeRate: sdk.NewDec(20_000)},
 	}
-
 	genesisState[oracletypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(oracleGenesis)
 
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
@@ -174,6 +173,10 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	val := s.network.Validators[0]
 	user := s.users[0]
+
+	exchangeRate, err := testutilcli.QueryOracleExchangeRate(val.ClientCtx, common.Pair_BTC_NUSD.String())
+	s.T().Logf("0. current exchange rate is: %+v", exchangeRate)
+	s.NoError(err)
 
 	s.T().Log("A. check vpool balances")
 	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, common.Pair_BTC_NUSD)

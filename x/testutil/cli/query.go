@@ -11,6 +11,8 @@ import (
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	oraclecli "github.com/NibiruChain/nibiru/x/oracle/client/cli"
+	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	perpcli "github.com/NibiruChain/nibiru/x/perp/client/cli"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 	vpoolcli "github.com/NibiruChain/nibiru/x/vpool/client/cli"
@@ -76,6 +78,14 @@ func QueryVpoolReserveAssets(clientCtx client.Context, pair common.AssetPair,
 ) (*vpooltypes.QueryReserveAssetsResponse, error) {
 	var queryResp vpooltypes.QueryReserveAssetsResponse
 	if err := ExecQuery(clientCtx, vpoolcli.CmdGetVpoolReserveAssets(), []string{pair.String()}, &queryResp); err != nil {
+		return nil, err
+	}
+	return &queryResp, nil
+}
+
+func QueryOracleExchangeRate(clientCtx client.Context, pair string) (*oracletypes.QueryExchangeRateResponse, error) {
+	var queryResp oracletypes.QueryExchangeRateResponse
+	if err := ExecQuery(clientCtx, oraclecli.GetCmdQueryExchangeRates(), []string{pair}, &queryResp); err != nil {
 		return nil, err
 	}
 	return &queryResp, nil
