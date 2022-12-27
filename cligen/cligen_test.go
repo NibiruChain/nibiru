@@ -6,6 +6,12 @@ import (
 )
 
 func TestCliGen(t *testing.T) {
-	cligen := NewCliGen().
-		ForMessage(&types.MsgPostPrice{}).WithParams()
+	NewCliGen().
+		ForMessage(&types.MsgPostPrice{}).
+		WithParams(Params{
+			{Name: "token0"},
+			{Name: "token1"},
+			{Name: "price"},
+			{Name: "expiry"},
+		}).Generate()
 }

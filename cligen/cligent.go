@@ -5,13 +5,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type Param struct {
-	Name string
-	Type string
-}
-
-type Params []Param
-
 type CliGen struct {
 	m      sdk.Msg
 	params Params
