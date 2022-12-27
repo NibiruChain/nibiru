@@ -65,6 +65,7 @@ func CmdPostPrice() *cobra.Command {
 				price,
 				tmtime.Canonical(time.Unix(expiryInt, 0)),
 			)
+
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
