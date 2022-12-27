@@ -1,6 +1,9 @@
 package cligen
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/spf13/cobra"
+)
 
 type Param struct {
 	Name string
@@ -28,4 +31,8 @@ func (c CliGen) WithParams(params Params) CliGen {
 	c.params = params
 
 	return c
+}
+
+func (c CliGen) Generate() cobra.Command {
+	return cobra.Command{}
 }
