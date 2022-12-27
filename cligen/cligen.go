@@ -31,6 +31,7 @@ func (c CliGen) WithParams(params Params) CliGen {
 	return c
 }
 
+// Generate generates a cobra command based on the given message and params.
 func (c CliGen) Generate() *cobra.Command {
 	cmd := &cobra.Command{}
 
@@ -59,8 +60,11 @@ func (c CliGen) buildMsg() sdk.Msg {
 	return c.m
 }
 
+// genUse generates the cobra command's Use field.
+//
+// - It uses as command name the message's type name.
+// - It adds only the mandatory params to the command's Use field name.
 func (c CliGen) genUse() string {
-
 	nameMsg := reflect.ValueOf(c.m).Elem().Type().Name()
 	nameWithoutPrefixAndLowCase := strings.ToLower(strings.TrimPrefix(nameMsg, "Msg"))
 
