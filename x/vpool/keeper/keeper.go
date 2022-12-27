@@ -75,12 +75,9 @@ func (k Keeper) SwapBaseForQuote(
 		return sdk.ZeroDec(), nil
 	}
 
-	fmt.Println("hi")
 	if _, err = k.oracleKeeper.GetExchangeRate(ctx, pair.String()); err != nil {
-		fmt.Println("ERRRRRR", err)
 		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair.String())
 	}
-	fmt.Println("hihihi")
 
 	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
@@ -175,12 +172,9 @@ func (k Keeper) SwapQuoteForBase(
 		return sdk.ZeroDec(), nil
 	}
 
-	fmt.Println("hi")
 	if _, err = k.oracleKeeper.GetExchangeRate(ctx, pair.String()); err != nil {
-		fmt.Println("ERRRRRR", err)
 		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair.String())
 	}
-	fmt.Println("hihihi")
 
 	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {

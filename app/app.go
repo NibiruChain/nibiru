@@ -352,6 +352,7 @@ func NewNibiruApp(
 
 	memKeys := sdk.NewMemoryStoreKeys(
 		capabilitytypes.MemStoreKey,
+		oracletypes.StoreKey,
 	)
 
 	app := &NibiruApp{

@@ -82,8 +82,9 @@ func TestSetCollRatioUpdate(t *testing.T) {
 			oracleKeeper := &nibiruApp.OracleKeeper
 
 			oracleKeeper.SetPrice(ctx, common.Pair_USDC_NUSD.String(), tc.price)
-			stablecoinKeeper.SetCollRatio(ctx, tc.inCollRatio)
-			err := stablecoinKeeper.EvaluateCollRatio(ctx)
+			err := stablecoinKeeper.SetCollRatio(ctx, tc.inCollRatio)
+			require.NoError(t, err)
+			err = stablecoinKeeper.EvaluateCollRatio(ctx)
 			if tc.expectedPass {
 				require.NoError(
 					t, err, "Error setting the CollRatio: %d", tc.inCollRatio)

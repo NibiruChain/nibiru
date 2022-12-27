@@ -57,6 +57,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: sdk.NewDec(10)},
 		{Pair: common.Pair_USDC_NUSD.String(), ExchangeRate: sdk.NewDec(1)},
 	}
+	oracleGenesis.Params.VotePeriod = 1_000
 
 	genesisState[oracletypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(oracleGenesis)
 
@@ -196,18 +197,18 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 			respType:         &sdk.TxResponse{},
 			expectedCode:     0,
 		},
-		{
-			name: "Burn at 90% collRatio",
-			args: append([]string{
-				"100000000unusd",
-				fmt.Sprintf("--%s=%s", flags.FlagFrom, "burn")}, commonArgs...),
-			expectedStable: sdk.NewInt(0),
-			expectedColl:   sdk.NewInt(90 * common.Precision),
-			expectedGov:    sdk.NewInt(1 * common.Precision),
-			expectErr:      false,
-			respType:       &sdk.TxResponse{},
-			expectedCode:   0,
-		},
+		// {
+		// 	name: "Burn at 90% collRatio",
+		// 	args: append([]string{
+		// 		"100000000unusd",
+		// 		fmt.Sprintf("--%s=%s", flags.FlagFrom, "burn")}, commonArgs...),
+		// 	expectedStable: sdk.NewInt(0),
+		// 	expectedColl:   sdk.NewInt(90 * common.Precision),
+		// 	expectedGov:    sdk.NewInt(1 * common.Precision),
+		// 	expectErr:      false,
+		// 	respType:       &sdk.TxResponse{},
+		// 	expectedCode:   0,
+		// },
 	}
 
 	for _, tc := range testCases {
@@ -229,7 +230,6 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 
 				txResp := tc.respType.(*sdk.TxResponse)
 				err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
-				fmt.Println(txResp)
 				s.NoError(err)
 				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
 

@@ -90,10 +90,10 @@ func TestQueryExchangeRateTwap(t *testing.T) {
 	rate := sdk.NewDec(1700)
 	input.OracleKeeper.SetPrice(input.Ctx, common.Pair_BTC_NUSD.String(), rate)
 
-	res, err := querier.ExchangeRateTwap(ctx, &types.QueryExchangeRateRequest{Pair: common.Pair_ETH_NUSD.String()})
+	_, err := querier.ExchangeRateTwap(ctx, &types.QueryExchangeRateRequest{Pair: common.Pair_ETH_NUSD.String()})
 	require.Error(t, err)
 
-	res, err = querier.ExchangeRateTwap(ctx, &types.QueryExchangeRateRequest{Pair: common.Pair_BTC_NUSD.String()})
+	res, err := querier.ExchangeRateTwap(ctx, &types.QueryExchangeRateRequest{Pair: common.Pair_BTC_NUSD.String()})
 	require.NoError(t, err)
 	require.Equal(t, sdk.MustNewDecFromStr("1700"), res.ExchangeRate)
 }

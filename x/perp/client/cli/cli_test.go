@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 	"google.golang.org/grpc/codes"
@@ -89,12 +90,17 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	genesisState[perptypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(perpGenesis)
 
 	oracleGenesis := oracletypes.DefaultGenesisState()
+	oracleGenesis.Params.Whitelist = []string{
+		common.Pair_BTC_NUSD.String(),
+	}
+	oracleGenesis.Params.VotePeriod = 1_000
 	oracleGenesis.ExchangeRates = []oracletypes.ExchangeRateTuple{
 		{Pair: common.Pair_BTC_NUSD.String(), ExchangeRate: sdk.NewDec(20_000)},
 	}
 	genesisState[oracletypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(oracleGenesis)
 
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
+	s.cfg.NumValidators = 1
 	s.cfg.Mnemonics = []string{"satisfy december text daring wheat vanish save viable holiday rural vessel shuffle dice skate promote fade badge federal sail during lend fever balance give"}
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
 	s.NoError(s.network.WaitForNextBlock())
@@ -107,6 +113,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.users = []sdk.AccAddress{user1, user2, user3, user4, user5}
 
 	val := s.network.Validators[0]
+	_, err := s.network.WaitForHeight(2)
+	require.NoError(s.T(), err)
 
 	s.NoError(
 		testutilcli.FillWalletFromValidator(user1,

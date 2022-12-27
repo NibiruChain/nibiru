@@ -62,7 +62,6 @@ If there's only one snapshot, then this function returns the price from that sin
 Returns -1 if there's no price.
 */
 func (q querier) ExchangeRateTwap(c context.Context, req *types.QueryExchangeRateRequest) (response *types.QueryExchangeRateResponse, err error) {
-
 	if _, err = q.ExchangeRate(c, req); err != nil {
 		return
 	}

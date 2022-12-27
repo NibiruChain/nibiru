@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
@@ -18,7 +17,6 @@ type TestappSuite struct {
 	suite.Suite
 
 	genOracle          sdk.AccAddress
-	pairs              common.AssetPairs
 	twapLookbackWindow time.Duration
 }
 
