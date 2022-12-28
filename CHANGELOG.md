@@ -38,7 +38,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v0.16.2](https://github.com/NibiruChain/nibiru/releases/tag/v0.16.2) - Dec 13, 2022
+## Unreleased
+
+* ...
+
+## [v0.16.3](https://github.com/NibiruChain/nibiru/releases/tag/v0.16.3)
 
 ### Features
 
@@ -50,8 +54,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1113](https://github.com/NibiruChain/nibiru/pull/1113) - fix: fix quick simulation issue
 * [#1114](https://github.com/NibiruChain/nibiru/pull/1114) - fix(dex): fix single asset join
 * [#1116](https://github.com/NibiruChain/nibiru/pull/1116) - fix(dex): unfroze pool when LP share supply of 0
+* [#1124](https://github.com/NibiruChain/nibiru/pull/1124) - fix(dex): fix unexpected panic in stableswap calcs
 
-## [v0.16.0](https://github.com/NibiruChain/nibiru/releases/tag/v0.16.0) -
+## [v0.16.2](https://github.com/NibiruChain/nibiru/releases/tag/v0.16.2) - Dec 13, 2022
 
 ### Features
 
