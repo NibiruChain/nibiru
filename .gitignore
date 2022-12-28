@@ -12,3 +12,4 @@ build
 *_old
 mockdata/
 docs
+dist
