@@ -278,7 +278,7 @@ func (pool *Pool) setInitialPoolAssets(poolAssets []PoolAsset) (err error) {
 // A * sum(x_i) * n**n + D = A * D * n**n + D**(n+1) / (n**n * prod(x_i))
 // Converging solution:
 // D[j+1] = (A * n**n * sum(x_i) - D[j]**(n+1) / (n**n prod(x_i))) / (A * n**n - 1)
-func (pool Pool) getD(poolAssets []PoolAsset) *uint256.Int {
+func (pool Pool) getD(poolAssets []PoolAsset) (*uint256.Int, error) {
 	nCoins := uint256.NewInt().SetUint64(uint64(len(poolAssets)))
 
 	S := uint256.NewInt()
@@ -338,15 +338,14 @@ func (pool Pool) getD(poolAssets []PoolAsset) *uint256.Int {
 		D.Div(num, denom)
 
 		absDifference.Abs(uint256.NewInt().Sub(D, previousD))
-		if absDifference.Lt(uint256.NewInt().SetUint64(1)) {
-			return D
+		if absDifference.Lt(uint256.NewInt().SetUint64(2)) { // absDifference LTE 1 -> absDifference LT 2
+			return D, nil
 		}
 	}
 
-	// # convergence typically occurs in 4 rounds or less, this should be unreachable!
-	// # if it does happen the pool is borked and LPs can withdraw via `remove_liquidity`
-	// panic
-	panic(nil)
+	// convergence typically occurs in 4 rounds or less, this should be unreachable!
+	// if it does happen the pool is borked and LPs can withdraw via `remove_liquidity`
+	return uint256.NewInt(), ErrBorkedPool
 }
 
 // getA returns the amplification factor of the pool
@@ -381,7 +380,10 @@ func MustSdkIntToUint256(num sdk.Int) *uint256.Int {
 // x_1 = (x_1**2 + c) / (2*x_1 + b - D)
 func (pool Pool) SolveStableswapInvariant(tokenIn sdk.Coin, tokenOutDenom string) (yAmount sdk.Int, err error) {
 	A := pool.getA()
-	D := pool.getD(pool.PoolAssets)
+	D, err := pool.getD(pool.PoolAssets)
+	if err != nil {
+		return
+	}
 
 	Ann := uint256.NewInt()
 	nCoins := uint256.NewInt().SetUint64(uint64(len(pool.PoolAssets)))
@@ -453,11 +455,17 @@ func (pool Pool) SolveStableswapInvariant(tokenIn sdk.Coin, tokenOutDenom string
 
 		absDifference := uint256.NewInt()
 		absDifference.Abs(uint256.NewInt().Sub(y, y_prev))
-		if absDifference.Lt(uint256.NewInt().SetUint64(1)) {
+		if absDifference.Lt(uint256.NewInt().SetUint64(2)) { // LTE 1
 			return sdk.NewIntFromUint64(y.Uint64()), nil
 		}
 	}
 
+	errvals := fmt.Sprintf(
+		"y=%v\ny_prev=%v\nb=%v\nD=%v\nc=%v\nS=%v\n",
+		y, y_prev, b, D, c, S,
+	)
+
 	// Should converge in a couple of round unless pool is borked
-	panic(nil)
+	err = fmt.Errorf("%w: unable to compute the SolveStableswapInvariant for values %s", ErrBorkedPool, errvals)
+	return
 }
