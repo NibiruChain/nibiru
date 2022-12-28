@@ -8,17 +8,19 @@ import (
 
 // x/dex module sentinel errors
 var (
-	ErrTooFewPoolAssets         = sdkerrors.Register(ModuleName, 1, "pool should have at least 2 assets, as they must be swapping between at least two assets")
-	ErrTooManyPoolAssets        = sdkerrors.Register(ModuleName, 2, "pool has too many assets (currently capped at 2 assets per pool)")
-	ErrInvalidSwapFee           = sdkerrors.Register(ModuleName, 3, "invalid pool swap fee, must be between [0, 1]")
-	ErrInvalidExitFee           = sdkerrors.Register(ModuleName, 4, "invalid pool exit fee, must be between [0, 1]")
-	ErrInvalidTokenWeight       = sdkerrors.Register(ModuleName, 5, "token weight must be greater than zero")
-	ErrTokenNotAllowed          = sdkerrors.Register(ModuleName, 8, "token not allowed")
-	ErrInvalidPoolType          = sdkerrors.Register(ModuleName, 15, "pool_type needs to be either `balancer` or `stableswap`")
-	ErrAmplificationMissing     = sdkerrors.Register(ModuleName, 16, "amplification parameter is missing")
-	ErrAmplificationTooLow      = sdkerrors.Register(ModuleName, 17, "amplification parameter a needs to be greater than 1")
-	ErrInitialDeposit           = sdkerrors.Register(ModuleName, 19, "initial deposit requires all coins deposited")
-	ErrPoolWithSameAssetsExists = sdkerrors.Register(ModuleName, 20, "a pool with the same denoms already exists")
+	ErrTooFewPoolAssets           = sdkerrors.Register(ModuleName, 1, "pool should have at least 2 assets, as they must be swapping between at least two assets")
+	ErrTooManyPoolAssets          = sdkerrors.Register(ModuleName, 2, "pool has too many assets (currently capped at 2 assets per pool)")
+	ErrInvalidSwapFee             = sdkerrors.Register(ModuleName, 3, "invalid pool swap fee, must be between [0, 1]")
+	ErrInvalidExitFee             = sdkerrors.Register(ModuleName, 4, "invalid pool exit fee, must be between [0, 1]")
+	ErrInvalidTokenWeight         = sdkerrors.Register(ModuleName, 5, "token weight must be greater than zero")
+	ErrTokenNotAllowed            = sdkerrors.Register(ModuleName, 8, "token not allowed")
+	ErrInvalidPoolType            = sdkerrors.Register(ModuleName, 15, "pool_type needs to be either `balancer` or `stableswap`")
+	ErrAmplificationMissing       = sdkerrors.Register(ModuleName, 16, "amplification parameter is missing")
+	ErrAmplificationTooLow        = sdkerrors.Register(ModuleName, 17, "amplification parameter a needs to be greater than 1")
+	ErrInitialDeposit             = sdkerrors.Register(ModuleName, 19, "initial deposit requires all coins deposited")
+	ErrPoolWithSameAssetsExists   = sdkerrors.Register(ModuleName, 20, "a pool with the same denoms already exists")
+	ErrBorkedPool                 = sdkerrors.Register(ModuleName, 21, "the pool is borked")
+	ErrInvariantLowerAfterJoining = sdkerrors.Register(ModuleName, 22, "the invariant was unexpectedly lower after joining")
 
 	// create-pool tx cli errors
 	ErrMissingPoolFileFlag   = sdkerrors.Register(ModuleName, 6, "must pass in a pool json using the --pool-file flag")

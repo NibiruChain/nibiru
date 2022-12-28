@@ -766,7 +766,8 @@ func TestGetD(t *testing.T) {
 				PoolParams: PoolParams{A: tc.amplificationParameter},
 			}
 
-			D := pool.getD(pool.PoolAssets)
+			D, err := pool.getD(pool.PoolAssets)
+			require.NoError(t, err)
 			require.EqualValues(t, tc.expectedD, D.Uint64())
 		})
 	}

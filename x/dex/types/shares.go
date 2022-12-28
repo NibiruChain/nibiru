@@ -116,7 +116,11 @@ func (pool Pool) numSharesOutFromTokensInStableSwap(tokensIn sdk.Coins) (
 ) {
 	tokenSupply := pool.TotalShares.Amount
 
-	D0 := sdk.NewInt(int64(pool.getD(pool.PoolAssets).Uint64()))
+	D, err := pool.getD(pool.PoolAssets)
+	if err != nil {
+		return
+	}
+	D0 := sdk.NewInt(int64(D.Uint64()))
 
 	var newPoolAssets []PoolAsset
 
@@ -132,10 +136,15 @@ func (pool Pool) numSharesOutFromTokensInStableSwap(tokensIn sdk.Coins) (
 		}
 	}
 
-	D1 := sdk.NewInt(int64(pool.getD(newPoolAssets).Uint64()))
+	newD, err := pool.getD(newPoolAssets)
+	if err != nil {
+		return
+	}
+	D1 := sdk.NewInt(int64(newD.Uint64()))
 	if D1.LT(D0) {
 		// Should not happen
-		panic(nil)
+		err = ErrInvariantLowerAfterJoining
+		return
 	}
 
 	// Calculate, how much pool tokens to mint

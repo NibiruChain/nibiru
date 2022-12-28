@@ -396,7 +396,7 @@ func (k Keeper) NewPool(
 		PoolId:  poolId,
 	})
 	if err != nil {
-		panic(err)
+		return
 	}
 
 	return poolId, nil
@@ -497,7 +497,7 @@ func (k Keeper) JoinPool(
 		RemCoins:      remCoins,
 	})
 	if err != nil {
-		panic(err)
+		return
 	}
 
 	return pool, poolSharesOut, remCoins, nil
