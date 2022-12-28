@@ -77,7 +77,7 @@ $(BUILDDIR)/:
 
 # build for linux architecture
 build-linux: go.sum
-	LEDGER_ENABLED=false GOOS=linux GOARCH=amd64 $(MAKE) build
+	CGO_ENABLED=1 LEDGER_ENABLED=false GOOS=linux GOARCH=amd64 $(MAKE) build
 
 go.sum: go.mod
 	@echo "--> Ensure dependencies have not been modified"
@@ -165,6 +165,21 @@ test-sim-benchmark-invariants:
 # Require Python3
 test-create-test-cases:
 	@python scripts/testing/stableswap_model.py
+
+###############################################################################
+###                            Lint                                         ###
+###############################################################################
+release:
+	docker run --rm -v "$(CURDIR)":/code -w /code goreleaser/goreleaser-cross --skip-publish --rm-dist
+
+build-docker: go.sum $(BUILDDIR)/
+	go build -mod=readonly $(BUILD_FLAGS) $(BUILD_ARGS) ./cmd/nibid/main.go
+	tar -czvf build/$(TARNAME).tar.gz build/nibid
+	rm build/nibid
+
+build-linux-docker:
+	BUILD_TAGS=muslc LINK_STATICALLY=true  TARNAME="nibiru_linux_amd64" CC=aarch64-linux-gnu-gcc BUILD_ARGS="-o $(BUILDDIR)/nibid -tags=muslc" CGO_ENABLED=1 LEDGER_ENABLED=false GOOS=linux GOARCH=amd64 $(MAKE) build-docker
+	# TARNAME="nibiru_linux_arm64" BUILD_ARGS="-o $(BUILDDIR)/nibid -tags=muslc" CGO_ENABLED=1 LEDGER_ENABLED=false GOOS=linux GOARCH=arm64 $(MAKE) build-docker
 
 ###############################################################################
 ###                            Lint                                         ###
