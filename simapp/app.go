@@ -780,6 +780,7 @@ func NewNibiruTestApp(
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		// native x/
 		epochsModule,
+		oracleModule,
 		perpModule,
 		vpoolModule,
 		dexModule,
