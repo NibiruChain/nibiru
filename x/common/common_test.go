@@ -128,7 +128,6 @@ func TestAssetPair_Marshaling(t *testing.T) {
 }
 
 func TestCombineErrors(t *testing.T) {
-
 	newErrors := func(strs ...string) []error {
 		var errs []error
 		for _, s := range strs {
