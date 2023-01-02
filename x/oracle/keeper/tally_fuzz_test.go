@@ -128,7 +128,7 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 	voteTargets := map[string]struct{}{}
 	f.Fuzz(&voteTargets)
 	for key := range voteTargets {
-		if len(key) < 2 {
+		if len(key) == 1 {
 			panicAssertFn = assert.Panics
 		} else {
 			panicAssertFn = assert.NotPanics
@@ -143,7 +143,7 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 	f.Fuzz(&voteMap)
 	panicAssertFn = assert.NotPanics
 	for k := range voteTargets {
-		if len(k) < 2 {
+		if len(k) == 1 {
 			panicAssertFn = assert.Panics
 		}
 	}
