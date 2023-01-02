@@ -107,7 +107,6 @@ func SimulateMsgOpenPosition(ak types.AccountKeeper, bk types.BankKeeper, k keep
 			fmt.Println(spendableCoins)
 			fmt.Println(quoteAmt)
 		}
-
 		return opMsg, futureOps, common.CombineErrors(err, errFundAccount)
 	}
 }

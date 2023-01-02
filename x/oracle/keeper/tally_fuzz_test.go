@@ -69,36 +69,19 @@ func TestFuzz_Tally(t *testing.T) {
 }
 
 func TestOraclePairsInsert(t *testing.T) {
-	testCases := []struct {
-		key   string
-		err   bool
-		panic bool
-	}{
-		{key: "", panic: false},
-		{key: "1", panic: false},
-		{key: "22", panic: false},
-		{key: "2xxxx12312u30912u01u2309u21093u", panic: false},
-	}
+	testCases := []string{"", "1", "22", "2xxxx12312u30912u01u2309u21093u"}
 
 	for _, testCase := range testCases {
 		tc := testCase
-		t.Run(fmt.Sprintf("key: %s", tc.key), func(t *testing.T) {
+		t.Run(fmt.Sprintf("key: %s", tc), func(t *testing.T) {
 			testSetup, _ := setup(t)
 			ctx := testSetup.Ctx
 			oracleKeeper := testSetup.OracleKeeper
 
-			switch {
-			// case tc.err:
-			// TODO Include the error case when collections no longer panics
-			case tc.panic:
-				assert.Panics(t, func() {
-					oracleKeeper.Pairs.Insert(ctx, tc.key)
-				}, "key: %s", tc.key)
-			default:
-				assert.NotPanics(t, func() {
-					oracleKeeper.Pairs.Insert(ctx, tc.key)
-				}, "key: %s", tc.key)
-			}
+			assert.NotPanics(t, func() {
+				oracleKeeper.Pairs.Insert(ctx, tc)
+			}, "key: %s", tc)
+			assert.True(t, oracleKeeper.Pairs.Has(ctx, tc))
 		})
 	}
 }
@@ -109,7 +92,6 @@ func TestRemoveInvalidBallots(t *testing.T) {
 	testCases := []struct {
 		name    string
 		voteMap VoteMap
-		panic   bool
 	}{
 		{
 			name: "empty key, empty ballot", voteMap: VoteMap{
@@ -169,10 +151,6 @@ func TestRemoveInvalidBallots(t *testing.T) {
 			switch {
 			// case tc.err:
 			// TODO Include the error case when collections no longer panics
-			case tc.panic:
-				assert.Panics(t, func() {
-					_, _ = oracleKeeper.RemoveInvalidBallots(ctx, tc.voteMap)
-				}, "voteMap: %v", tc.voteMap)
 			default:
 				assert.NotPanics(t, func() {
 					_, _ = oracleKeeper.RemoveInvalidBallots(ctx, tc.voteMap)
