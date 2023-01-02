@@ -3,9 +3,12 @@ package keeper
 // Everything to do with total liquidity in the dex and liquidity of specific coin denoms.
 
 import (
+	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/dex/types"
 )
 
@@ -21,18 +24,20 @@ ret:
 
 	amount: the amount of liquidity for the provided coin. Returns 0 if not found.
 */
-func (k Keeper) GetDenomLiquidity(ctx sdk.Context, denom string) (amount sdk.Int) {
+func (k Keeper) GetDenomLiquidity(ctx sdk.Context, denom string) (amount sdk.Int, err error) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetDenomLiquidityPrefix(denom))
 	if bz == nil {
-		return sdk.NewInt(0)
+		return sdk.NewInt(0), nil
 	}
 
 	if err := amount.Unmarshal(bz); err != nil {
-		panic(err)
+		return amount, common.CombineErrors(
+			fmt.Errorf("failed to GetDenomLiquidty for denom %s", denom),
+			err)
 	}
 
-	return amount
+	return amount, nil
 }
 
 /*
@@ -44,13 +49,14 @@ args:
 	denom: the coin denom
 	amount: the amount of liquidity for the coin
 */
-func (k Keeper) SetDenomLiquidity(ctx sdk.Context, denom string, amount sdk.Int) {
+func (k Keeper) SetDenomLiquidity(ctx sdk.Context, denom string, amount sdk.Int) error {
 	store := ctx.KVStore(k.storeKey)
 	bz, err := amount.Marshal()
 	if err != nil {
-		panic(err)
+		return err
 	}
 	store.Set(types.GetDenomLiquidityPrefix(denom), bz)
+	return nil
 }
 
 /*
@@ -73,8 +79,12 @@ func (k Keeper) GetTotalLiquidity(ctx sdk.Context) (coins sdk.Coins) {
 
 	for ; iterator.Valid(); iterator.Next() {
 		denom := string(iterator.Key())
-		amount := k.GetDenomLiquidity(ctx, denom)
-		coins = coins.Add(sdk.NewCoin(denom, amount))
+		amount, err := k.GetDenomLiquidity(ctx, denom)
+		if err != nil {
+			ctx.Logger().Error(err.Error())
+		} else {
+			coins = coins.Add(sdk.NewCoin(denom, amount))
+		}
 	}
 
 	return coins
@@ -88,10 +98,13 @@ args:
 	ctx: the cosmos-sdk context
 	coins: the array of liquidities to update with
 */
-func (k Keeper) SetTotalLiquidity(ctx sdk.Context, coins sdk.Coins) {
+func (k Keeper) SetTotalLiquidity(ctx sdk.Context, coins sdk.Coins) error {
 	for _, coin := range coins {
-		k.SetDenomLiquidity(ctx, coin.Denom, coin.Amount)
+		if err := k.SetDenomLiquidity(ctx, coin.Denom, coin.Amount); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 /*
@@ -102,12 +115,18 @@ args:
 	ctx: the cosmos-sdk context
 	coins: the coins added to the dex
 */
-func (k Keeper) RecordTotalLiquidityIncrease(ctx sdk.Context, coins sdk.Coins) {
+func (k Keeper) RecordTotalLiquidityIncrease(ctx sdk.Context, coins sdk.Coins) error {
 	for _, coin := range coins {
-		amount := k.GetDenomLiquidity(ctx, coin.Denom)
+		amount, err := k.GetDenomLiquidity(ctx, coin.Denom)
+		if err != nil {
+			return err
+		}
 		amount = amount.Add(coin.Amount)
-		k.SetDenomLiquidity(ctx, coin.Denom, amount)
+		if err := k.SetDenomLiquidity(ctx, coin.Denom, amount); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 /*
@@ -118,10 +137,16 @@ args:
 	ctx: the cosmos-sdk context
 	coins: the coins removed from the dex
 */
-func (k Keeper) RecordTotalLiquidityDecrease(ctx sdk.Context, coins sdk.Coins) {
+func (k Keeper) RecordTotalLiquidityDecrease(ctx sdk.Context, coins sdk.Coins) error {
 	for _, coin := range coins {
-		amount := k.GetDenomLiquidity(ctx, coin.Denom)
+		amount, err := k.GetDenomLiquidity(ctx, coin.Denom)
+		if err != nil {
+			return err
+		}
 		amount = amount.Sub(coin.Amount)
-		k.SetDenomLiquidity(ctx, coin.Denom, amount)
+		if err := k.SetDenomLiquidity(ctx, coin.Denom, amount); err != nil {
+			return err
+		}
 	}
+	return nil
 }

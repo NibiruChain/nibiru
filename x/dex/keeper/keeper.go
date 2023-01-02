@@ -389,7 +389,9 @@ func (k Keeper) NewPool(
 	})
 
 	k.SetPool(ctx, pool)
-	k.RecordTotalLiquidityIncrease(ctx, coins)
+	if err = k.RecordTotalLiquidityIncrease(ctx, coins); err != nil {
+		return poolId, err
+	}
 
 	err = ctx.EventManager().EmitTypedEvent(&types.EventPoolCreated{
 		Creator: sender.String(),
@@ -485,7 +487,9 @@ func (k Keeper) JoinPool(
 
 	// record changes to store
 	k.SetPool(ctx, pool)
-	k.RecordTotalLiquidityIncrease(ctx, tokensConsumed)
+	if err = k.RecordTotalLiquidityIncrease(ctx, tokensConsumed); err != nil {
+		return pool, numSharesOut, remCoins, err
+	}
 
 	poolSharesOut := sdk.NewCoin(pool.TotalShares.Denom, numShares)
 
@@ -563,7 +567,9 @@ func (k Keeper) ExitPool(
 
 	// record state changes
 	k.SetPool(ctx, pool)
-	k.RecordTotalLiquidityDecrease(ctx, tokensOut)
+	if err = k.RecordTotalLiquidityDecrease(ctx, tokensOut); err != nil {
+		return sdk.Coins{}, err
+	}
 
 	err = ctx.EventManager().EmitTypedEvent(&types.EventPoolExited{
 		Address:      sender.String(),
@@ -572,7 +578,7 @@ func (k Keeper) ExitPool(
 		TokensOut:    tokensOut,
 	})
 	if err != nil {
-		panic(err)
+		return sdk.Coins{}, err
 	}
 
 	return tokensOut, nil

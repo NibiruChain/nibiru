@@ -97,7 +97,7 @@ func (k queryServer) PoolNumber(goCtx context.Context, req *types.QueryPoolNumbe
 
 	bz := ctx.KVStore(k.storeKey).Get(types.KeyNextGlobalPoolNumber)
 	if bz == nil {
-		panic(fmt.Errorf("pool number has not been initialized -- Should have been done in InitGenesis"))
+		return nil, fmt.Errorf("pool number has not been initialized -- Should have been done in InitGenesis")
 	} else {
 		val := gogotypes.UInt64Value{}
 		k.cdc.MustUnmarshal(bz, &val)

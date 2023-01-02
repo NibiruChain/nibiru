@@ -25,6 +25,8 @@ var (
 	// create-pool tx cli errors
 	ErrMissingPoolFileFlag   = sdkerrors.Register(ModuleName, 6, "must pass in a pool json using the --pool-file flag")
 	ErrInvalidCreatePoolArgs = sdkerrors.Register(ModuleName, 7, "deposit tokens and token weights should have same length and denom order")
+	ErrAmplificationIntable  = sdkerrors.Register(ModuleName, 23,
+		"amplification string failed to parse as int256")
 
 	// Invalid MsgSwapAsset
 	ErrInvalidPoolId        = sdkerrors.Register(ModuleName, 9, "invalid pool id")
