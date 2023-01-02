@@ -54,7 +54,7 @@ func (k Keeper) SettlePosition(
 		toTransfer := sdk.NewCoin(currentPosition.Pair.QuoteDenom(), settledValueInt)
 		transferredCoins = sdk.NewCoins(toTransfer)
 		if err != nil {
-			panic(err) // NOTE(mercilex): must never happen
+			return sdk.Coins{}, err
 		}
 		err = k.BankKeeper.SendCoinsFromModuleToAccount( // NOTE(mercilex): withdraw is not applied here
 			ctx,
@@ -63,7 +63,7 @@ func (k Keeper) SettlePosition(
 			transferredCoins,
 		)
 		if err != nil {
-			panic(err) // NOTE(mercilex): must never happen
+			return sdk.Coins{}, err
 		}
 	}
 
