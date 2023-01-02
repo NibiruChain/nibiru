@@ -20,7 +20,6 @@ func newErrors(strs ...string) []error {
 }
 
 func TestCombineErrors(t *testing.T) {
-
 	testCases := []struct {
 		name   string
 		errs   []error
@@ -52,7 +51,6 @@ func TestCombineErrors(t *testing.T) {
 }
 
 func TestCombineErrorsGeneric(t *testing.T) {
-
 	testCases := []struct {
 		name string
 		in   any
