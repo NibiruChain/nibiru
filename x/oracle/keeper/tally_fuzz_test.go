@@ -239,7 +239,7 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 	// test OracleKeeper.Pairs.Insert
 	voteTargets := map[string]struct{}{}
 	f.Fuzz(&voteTargets)
-	var whitelistedPairs common.StringSet
+	whitelistedPairs := make(common.StringSet)
 	for key := range voteTargets {
 		assert.NotPanics(t, func() {
 			input.OracleKeeper.Pairs.Insert(input.Ctx, key)
