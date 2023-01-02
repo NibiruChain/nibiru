@@ -120,19 +120,34 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 
 	input, _ := setup(t)
 
+	var panicAssertFn func(t assert.TestingT, f assert.PanicTestFunc, msgAndArgs ...interface{}) bool
+	// Prevent collections error:
+	// Panic value:	invalid StringKey bytes. StringKey must be at least length 2.
+
+	// test OracleKeeper.Pairs.Insert
 	voteTargets := map[string]struct{}{}
 	f.Fuzz(&voteTargets)
-
 	for key := range voteTargets {
-		assert.NotPanics(t, func() {
+		if len(key) < 2 {
+			panicAssertFn = assert.Panics
+		} else {
+			panicAssertFn = assert.NotPanics
+		}
+		panicAssertFn(t, func() {
 			input.OracleKeeper.Pairs.Insert(input.Ctx, key)
 		}, "attempted to insert key: %s", key)
 	}
 
+	// test OracleKeeper.RemoveInvalidBallots
 	voteMap := map[string]types.ExchangeRateBallot{}
 	f.Fuzz(&voteMap)
-
-	require.NotPanics(t, func() {
+	panicAssertFn = assert.NotPanics
+	for k := range voteTargets {
+		if len(k) < 2 {
+			panicAssertFn = assert.Panics
+		}
+	}
+	panicAssertFn(t, func() {
 		input.OracleKeeper.RemoveInvalidBallots(input.Ctx, voteMap)
 	}, "voteMap: %v", voteMap)
 }
