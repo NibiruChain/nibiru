@@ -17,13 +17,13 @@ import (
 func NewKeeper(
 	codec codec.BinaryCodec,
 	storeKey sdk.StoreKey,
-	pricefeedKeeper types.PricefeedKeeper,
+	oracleKeeper types.OracleKeeper,
 ) Keeper {
 	return Keeper{
-		codec:           codec,
-		storeKey:        storeKey,
-		pricefeedKeeper: pricefeedKeeper,
-		Pools:           collections.NewMap(storeKey, 0, common.AssetPairKeyEncoder, collections.ProtoValueEncoder[types.Vpool](codec)),
+		codec:        codec,
+		storeKey:     storeKey,
+		oracleKeeper: oracleKeeper,
+		Pools:        collections.NewMap(storeKey, 0, common.AssetPairKeyEncoder, collections.ProtoValueEncoder[types.Vpool](codec)),
 		ReserveSnapshots: collections.NewMap(
 			storeKey, 1,
 			collections.PairKeyEncoder(common.AssetPairKeyEncoder, collections.TimeKeyEncoder),
@@ -33,9 +33,9 @@ func NewKeeper(
 }
 
 type Keeper struct {
-	codec           codec.BinaryCodec
-	storeKey        sdk.StoreKey
-	pricefeedKeeper types.PricefeedKeeper
+	codec        codec.BinaryCodec
+	storeKey     sdk.StoreKey
+	oracleKeeper types.OracleKeeper
 
 	Pools            collections.Map[common.AssetPair, types.Vpool]
 	ReserveSnapshots collections.Map[collections.Pair[common.AssetPair, time.Time], types.ReserveSnapshot]
@@ -75,7 +75,7 @@ func (k Keeper) SwapBaseForQuote(
 		return sdk.ZeroDec(), nil
 	}
 
-	if !k.pricefeedKeeper.IsActivePair(ctx, pair.String()) {
+	if _, err = k.oracleKeeper.GetExchangeRate(ctx, pair.String()); err != nil {
 		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair.String())
 	}
 
@@ -172,7 +172,7 @@ func (k Keeper) SwapQuoteForBase(
 		return sdk.ZeroDec(), nil
 	}
 
-	if !k.pricefeedKeeper.IsActivePair(ctx, pair.String()) {
+	if _, err = k.oracleKeeper.GetExchangeRate(ctx, pair.String()); err != nil {
 		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair.String())
 	}
 
@@ -294,12 +294,12 @@ func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) bool {
 		panic(err)
 	}
 
-	indexPrice, err := k.pricefeedKeeper.GetCurrentPrice(ctx, pair.BaseDenom(), pair.QuoteDenom())
+	indexPrice, err := k.oracleKeeper.GetExchangeRate(ctx, pair.String())
 	if err != nil {
 		panic(err)
 	}
 
-	return pool.IsOverSpreadLimit(indexPrice.Price)
+	return pool.IsOverSpreadLimit(indexPrice)
 }
 
 /*

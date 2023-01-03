@@ -7,7 +7,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/stablecoin/keeper"
 )
 
-// EndBlocker updates the current pricefeed
+// EndBlocker updates the current oracle
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	if !k.GetParams(ctx).IsCollateralRatioValid {
 		// Try to re-start the collateral ratio updates
@@ -19,7 +19,8 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 		k.SetParams(ctx, params)
 	}
 
-	_, err := k.PricefeedKeeper.GetCurrentTWAP(ctx, common.DenomNUSD, common.DenomUSDC)
+	_, err := k.OracleKeeper.GetExchangeRateTwap(ctx, common.Pair_USDC_NUSD.String())
+
 	if err != nil {
 		params := k.GetParams(ctx)
 		params.IsCollateralRatioValid = false

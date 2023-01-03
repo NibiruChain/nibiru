@@ -5,7 +5,6 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	dextypes "github.com/NibiruChain/nibiru/x/dex/types"
-	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 )
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)
@@ -34,15 +33,9 @@ type BankKeeper interface {
 	GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
 }
 
-type PricefeedKeeper interface {
-	GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string) (sdk.Dec, error)
-	GetCurrentPrice(ctx sdk.Context, token0 string, token1 string,
-	) (pftypes.CurrentPrice, error)
-	GetCurrentPrices(ctx sdk.Context) pftypes.CurrentPrices
-	IsWhitelistedOracle(ctx sdk.Context, pairID string, address sdk.AccAddress,
-	) bool
-	GetOraclesForPair(ctx sdk.Context, pairID string) (oracles []sdk.AccAddress)
-	GatherRawPrices(ctx sdk.Context, token0 string, token1 string) error
+type OracleKeeper interface {
+	GetExchangeRate(ctx sdk.Context, pair string) (sdk.Dec, error)
+	GetExchangeRateTwap(ctx sdk.Context, pair string) (sdk.Dec, error)
 }
 
 type DexKeeper interface {

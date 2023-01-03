@@ -1,0 +1,20 @@
+syntax = "proto3";
+package nibiru.oracle.v1beta1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "oracle/v1beta1/oracle.proto";
+import "cosmos/base/v1beta1/coin.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/x/oracle/types";
+
+// a snapshot of the prices at a given point in time
+message PriceSnapshot {
+  string pair = 1;
+  string price = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false];
+
+  // milliseconds since unix epoch
+  int64 timestamp_ms = 3;
+}

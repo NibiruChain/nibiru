@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	time "time"
 
 	"gopkg.in/yaml.v2"
 
@@ -13,13 +14,14 @@ import (
 
 // Parameter keys
 var (
-	KeyVotePeriod        = []byte("VotePeriod")
-	KeyVoteThreshold     = []byte("VoteThreshold")
-	KeyRewardBand        = []byte("RewardBand")
-	KeyWhitelist         = []byte("Whitelist")
-	KeySlashFraction     = []byte("SlashFraction")
-	KeySlashWindow       = []byte("SlashWindow")
-	KeyMinValidPerWindow = []byte("MinValidPerWindow")
+	KeyVotePeriod         = []byte("VotePeriod")
+	KeyVoteThreshold      = []byte("VoteThreshold")
+	KeyRewardBand         = []byte("RewardBand")
+	KeyWhitelist          = []byte("Whitelist")
+	KeySlashFraction      = []byte("SlashFraction")
+	KeySlashWindow        = []byte("SlashWindow")
+	KeyMinValidPerWindow  = []byte("MinValidPerWindow")
+	KeyTwapLookbackWindow = []byte("TwapLookbackWindow")
 )
 
 // Default parameter values
@@ -41,8 +43,9 @@ var (
 		common.Pair_ETH_NUSD.String(),
 		common.Pair_NIBI_NUSD.String(),
 	}
-	DefaultSlashFraction     = sdk.NewDecWithPrec(1, 4) // 0.01%
-	DefaultMinValidPerWindow = sdk.NewDecWithPrec(5, 2) // 5%
+	DefaultSlashFraction      = sdk.NewDecWithPrec(1, 4)        // 0.01%
+	DefaultMinValidPerWindow  = sdk.NewDecWithPrec(5, 2)        // 5%
+	DefaultTwapLookbackWindow = time.Duration(15 * time.Minute) // 15 minutes
 )
 
 var _ paramstypes.ParamSet = &Params{}
@@ -50,13 +53,14 @@ var _ paramstypes.ParamSet = &Params{}
 // DefaultParams creates default oracle module parameters
 func DefaultParams() Params {
 	return Params{
-		VotePeriod:        DefaultVotePeriod,
-		VoteThreshold:     DefaultVoteThreshold,
-		RewardBand:        DefaultRewardBand,
-		Whitelist:         DefaultWhitelist,
-		SlashFraction:     DefaultSlashFraction,
-		SlashWindow:       DefaultSlashWindow,
-		MinValidPerWindow: DefaultMinValidPerWindow,
+		VotePeriod:         DefaultVotePeriod,
+		VoteThreshold:      DefaultVoteThreshold,
+		RewardBand:         DefaultRewardBand,
+		Whitelist:          DefaultWhitelist,
+		SlashFraction:      DefaultSlashFraction,
+		SlashWindow:        DefaultSlashWindow,
+		MinValidPerWindow:  DefaultMinValidPerWindow,
+		TwapLookbackWindow: DefaultTwapLookbackWindow,
 	}
 }
 
@@ -76,6 +80,7 @@ func (p *Params) ParamSetPairs() paramstypes.ParamSetPairs {
 		paramstypes.NewParamSetPair(KeySlashFraction, &p.SlashFraction, validateSlashFraction),
 		paramstypes.NewParamSetPair(KeySlashWindow, &p.SlashWindow, validateSlashWindow),
 		paramstypes.NewParamSetPair(KeyMinValidPerWindow, &p.MinValidPerWindow, validateMinValidPerWindow),
+		paramstypes.NewParamSetPair(KeyTwapLookbackWindow, &p.TwapLookbackWindow, validateTwapLookbackWindow),
 	}
 }
 
@@ -224,5 +229,16 @@ func validateMinValidPerWindow(i interface{}) error {
 		return fmt.Errorf("min valid per window is too large: %s", v)
 	}
 
+	return nil
+}
+
+func validateTwapLookbackWindow(i interface{}) error {
+	v, ok := i.(time.Duration)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+	if v < 0 {
+		return fmt.Errorf("look back twap duration should be positive: %s", v)
+	}
 	return nil
 }

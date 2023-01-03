@@ -3,7 +3,6 @@ package app_test
 import (
 	"encoding/json"
 	"testing"
-	"time"
 
 	"github.com/NibiruChain/nibiru/x/testutil"
 
@@ -19,8 +18,6 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/simapp"
-	"github.com/NibiruChain/nibiru/x/common"
-	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 )
 
 // init changes the value of 'DefaultTestingAppInit' to use custom initialization.
@@ -38,30 +35,7 @@ func SetupNibiruTestingApp() (
 	defaultGenesis map[string]json.RawMessage,
 ) {
 	// create testing app
-	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
-
-	// Whitelist a pair and oracle
-	pair, err := common.NewAssetPair("uatom:unibi")
-	if err != nil {
-		return nil, defaultGenesis
-	}
-	oracle := testutil.AccAddress()
-	nibiruApp.PricefeedKeeper.SetParams(ctx, pricefeedtypes.Params{
-		Pairs: common.AssetPairs{pair},
-	})
-	nibiruApp.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
-
-	if err := nibiruApp.PricefeedKeeper.PostRawPrice(
-		ctx, oracle, pair.String(), sdk.OneDec(),
-		ctx.BlockTime().Add(time.Hour),
-	); err != nil {
-		return nil, defaultGenesis
-	}
-
-	err = nibiruApp.PricefeedKeeper.GatherRawPrices(ctx, pair.Token0, pair.Token1)
-	if err != nil {
-		return nil, defaultGenesis
-	}
+	nibiruApp, _ := simapp.NewTestNibiruAppAndContext(true)
 
 	// Create genesis state
 	encCdc := simapp.MakeTestEncodingConfig()

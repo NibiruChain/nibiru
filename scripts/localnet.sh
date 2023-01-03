@@ -200,7 +200,7 @@ add_genesis_vpools_with_coingecko_prices() {
   base_amt_eth=$(($quote_amt / $price_eth))
 
   nibid add-genesis-vpool --pair=ubtc:unusd --base-amt=$base_amt_btc --quote-amt=$quote_amt --max-leverage=12
-  nibid add-genesis-vpool --pair=ueth:unusd --base-amt=$base_amt_eth --quote-amt=$quote_amt --max-leverage=20 --mmr=0.04 
+  nibid add-genesis-vpool --pair=ueth:unusd --base-amt=$base_amt_eth --quote-amt=$quote_amt --max-leverage=20 --mmr=0.04
 
   echo 'tmp_vpool_prices: '
   cat $temp_json_fname | jq .
@@ -215,7 +215,7 @@ add_genesis_vpools_default() {
   local base_amt_btc=$(($quote_amt / 16500))
   local base_amt_eth=$(($quote_amt / 1200))
   nibid add-genesis-vpool --pair=ubtc:unusd --base-amt=$base_amt_btc --quote-amt=$quote_amt --max-leverage=12
-  nibid add-genesis-vpool --pair=ueth:unusd --base-amt=$base_amt_eth --quote-amt=$quote_amt --max-leverage=20 --mmr=0.04 
+  nibid add-genesis-vpool --pair=ueth:unusd --base-amt=$base_amt_eth --quote-amt=$quote_amt --max-leverage=20 --mmr=0.04
 }
 
 # x/vpool
@@ -240,14 +240,7 @@ add_genesis_param '.app_state.perp.pair_metadata[0].latest_cumulative_premium_fr
 add_genesis_param '.app_state.perp.pair_metadata[1].pair = {token0:"ueth",token1:"unusd"}'
 add_genesis_param '.app_state.perp.pair_metadata[1].latest_cumulative_premium_fraction = "0"'
 
-# x/pricefeed
-add_genesis_param '.app_state.pricefeed.params.pairs[0] = {token0:"ubtc",token1:"unusd"}'
-add_genesis_param '.app_state.pricefeed.params.pairs[0] = {token0:"ueth",token1:"unusd"}'
-add_genesis_param '.app_state.pricefeed.params.pairs[0] = {token0:"ueth",token1:"unusd"}'
-add_genesis_param '.app_state.pricefeed.params.twap_lookback_window = "900s"'
-nibid add-genesis-oracle nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl
-nibid add-genesis-oracle nibi1lptpc0e3upq2n7e4zmqtr0yxyrldp6jzz8z8xm
-nibid add-genesis-oracle nibi15cdcxznuwpuk5hw7t678wpyesy78kwy00qcesa
+add_genesis_param '.app_state.oracle.params.twap_lookback_window = "900s"'
 
 # Start the network
 echo_info "Starting $CHAIN_ID in $CHAIN_DIR..."

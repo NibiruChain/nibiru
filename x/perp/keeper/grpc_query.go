@@ -140,7 +140,7 @@ func (q queryServer) CumulativePremiumFraction(
 		return nil, status.Errorf(codes.NotFound, "could not find pair: %s", req.Pair)
 	}
 
-	indexTWAP, err := q.k.PricefeedKeeper.GetCurrentTWAP(ctx, pairMetadata.Pair.Token0, pairMetadata.Pair.Token1)
+	indexTWAP, err := q.k.OracleKeeper.GetExchangeRateTwap(ctx, pairMetadata.Pair.String())
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "failed to fetch twap index price for pair: %s", req.Pair)
 	}

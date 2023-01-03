@@ -123,6 +123,11 @@ func SimulateMsgSwap(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keepe
 			TokenIn:       tokenIn,
 			TokenOutDenom: denomOut,
 		}
+		pool, _ := k.FetchPool(ctx, poolId)
+		_, err := pool.CalcOutAmtGivenIn(tokenIn, denomOut, false)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "pool imbalanced and not enough swap amount"), nil, nil
+		}
 
 		return simulation.GenAndDeliverTxWithRandFees(
 			simulation.OperationInput{

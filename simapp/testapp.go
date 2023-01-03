@@ -16,7 +16,6 @@ import (
 	tmdb "github.com/tendermint/tm-db"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 )
 
 // NewTestNibiruApp creates an application instance ('app.NibiruApp') with an in-memory
@@ -36,6 +35,10 @@ func NewTestNibiruApp(shouldUseDefaultGenesis bool) *NibiruTestApp {
 func NewTestNibiruAppAndContext(shouldUseDefaultGenesis bool) (*NibiruTestApp, sdk.Context) {
 	newNibiruApp := NewTestNibiruApp(shouldUseDefaultGenesis)
 	ctx := newNibiruApp.NewContext(false, tmproto.Header{})
+
+	newNibiruApp.OracleKeeper.SetPrice(ctx, common.Pair_BTC_NUSD.String(), sdk.NewDec(20000))
+	// newNibiruApp.OracleKeeper.SetPrice(ctx, common.Pair_NIBI_NUSD.String(), sdk.NewDec(10))
+	newNibiruApp.OracleKeeper.SetPrice(ctx, "xxx:yyy", sdk.NewDec(20000))
 
 	return newNibiruApp, ctx
 }
@@ -122,44 +125,5 @@ func NewTestGenesisState(codec codec.Codec, inGenState GenesisState,
 	govGenState.DepositParams.MinDeposit = sdk.NewCoins(sdk.NewInt64Coin(common.DenomNIBI, 1*common.Precision)) // min deposit of 1 NIBI
 	testGenState[govtypes.ModuleName] = codec.MustMarshalJSON(&govGenState)
 
-	// pricefeed genesis state
-	pfGenState := PricefeedGenesis()
-	testGenState[pricefeedtypes.ModuleName] = codec.MustMarshalJSON(&pfGenState)
-
 	return testGenState
-}
-
-// ----------------------------------------------------------------------------
-// Module types.GenesisState functions
-
-/*
-	PricefeedGenesis returns an x/pricefeed GenesisState with additional
-
-configuration for convenience during integration tests.
-*/
-func PricefeedGenesis() pricefeedtypes.GenesisState {
-	oracle := sdk.MustAccAddressFromBech32(GenOracleAddress)
-	oracleStrings := []string{oracle.String()}
-
-	var gen pricefeedtypes.GenesisState
-	pairs := pricefeedtypes.DefaultPairs
-	gen.Params.Pairs = pairs
-	gen.Params.TwapLookbackWindow = 15 * time.Minute
-	gen.PostedPrices = []pricefeedtypes.PostedPrice{
-		{
-			PairID: pairs[0].String(), // PairGovStable
-			Oracle: oracle.String(),
-			Price:  sdk.NewDec(10),
-			Expiry: time.Now().Add(1 * time.Hour),
-		},
-		{
-			PairID: pairs[1].String(), // PairCollStable
-			Oracle: oracle.String(),
-			Price:  sdk.OneDec(),
-			Expiry: time.Now().Add(1 * time.Hour),
-		},
-	}
-	gen.GenesisOracles = oracleStrings
-
-	return gen
 }

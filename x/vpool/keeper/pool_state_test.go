@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -186,7 +185,7 @@ func TestGetPoolPrices(t *testing.T) {
 		vpool              types.Vpool // vpool passed to GetPoolPrices
 		shouldCreateVpool  bool        // whether to write 'vpool' into the kv store
 		mockIndexPrice     sdk.Dec     // indexPriceVal returned by the x/pricefeed keepr
-		pricefeedKeeperErr error
+		oracleKeeperErr    error
 		err                error            // An error raised from calling Keeper.GetPoolPrices
 		expectedPoolPrices types.PoolPrices // expected output from callign GetPoolPrices
 	}{
@@ -229,9 +228,9 @@ func TestGetPoolPrices(t *testing.T) {
 					TradeLimitRatio:        sdk.OneDec(),
 				},
 			},
-			shouldCreateVpool:  true,
-			mockIndexPrice:     sdk.OneDec().Neg(),
-			pricefeedKeeperErr: fmt.Errorf("No index price"),
+			shouldCreateVpool: true,
+			mockIndexPrice:    sdk.OneDec().Neg(),
+			oracleKeeperErr:   fmt.Errorf("No index price"),
 			expectedPoolPrices: types.PoolPrices{
 				Pair:          common.Pair_ETH_NUSD.String(),
 				MarkPrice:     sdk.NewDec(3_000),
@@ -278,13 +277,10 @@ func TestGetPoolPrices(t *testing.T) {
 
 			ctx = ctx.WithBlockHeight(2).WithBlockTime(time.Now().Add(5 * time.Second))
 
-			t.Log("mock pricefeedKeeper index price")
-			mocks.mockPricefeedKeeper.EXPECT().
-				GetCurrentPrice(ctx, tc.vpool.Pair.BaseDenom(), tc.vpool.Pair.QuoteDenom()).
-				Return(pftypes.CurrentPrice{
-					PairID: tc.vpool.Pair.String(),
-					Price:  tc.mockIndexPrice,
-				}, tc.pricefeedKeeperErr).
+			t.Log("mock oracleKeeper index price")
+			mocks.mockOracleKeeper.EXPECT().
+				GetExchangeRate(ctx, tc.vpool.Pair.String()).
+				Return(tc.mockIndexPrice, tc.oracleKeeperErr).
 				AnyTimes()
 
 			// logged errors would be called in GetPoolPrices

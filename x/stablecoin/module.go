@@ -107,7 +107,7 @@ type AppModule struct {
 	keeper keeper.Keeper
 	ak     types.AccountKeeper
 	bk     types.BankKeeper
-	pk     types.PricefeedKeeper
+	pk     types.OracleKeeper
 }
 
 func NewAppModule(
@@ -115,7 +115,7 @@ func NewAppModule(
 	keeper keeper.Keeper,
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
-	pk types.PricefeedKeeper,
+	pk types.OracleKeeper,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(cdc),
