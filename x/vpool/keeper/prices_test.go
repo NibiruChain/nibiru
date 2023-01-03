@@ -43,7 +43,7 @@ func TestGetMarkPrice(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			vpoolKeeper, ctx := VpoolKeeper(t,
-				mock.NewMockPricefeedKeeper(gomock.NewController(t)))
+				mock.NewMockOracleKeeper(gomock.NewController(t)))
 
 			vpoolKeeper.CreatePool(
 				ctx,
@@ -119,7 +119,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			vpoolKeeper, ctx := VpoolKeeper(t,
-				mock.NewMockPricefeedKeeper(gomock.NewController(t)))
+				mock.NewMockOracleKeeper(gomock.NewController(t)))
 
 			vpoolKeeper.CreatePool(
 				ctx,
@@ -202,7 +202,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			vpoolKeeper, ctx := VpoolKeeper(t,
-				mock.NewMockPricefeedKeeper(gomock.NewController(t)))
+				mock.NewMockOracleKeeper(gomock.NewController(t)))
 
 			vpoolKeeper.CreatePool(
 				ctx,
@@ -514,7 +514,7 @@ func TestCalcTwap(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			vpoolKeeper, ctx := VpoolKeeper(t,
-				mock.NewMockPricefeedKeeper(gomock.NewController(t)))
+				mock.NewMockOracleKeeper(gomock.NewController(t)))
 			ctx = ctx.WithBlockTime(time.UnixMilli(0))
 
 			t.Log("Create an empty pool for the first block")

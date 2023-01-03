@@ -29,7 +29,7 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 	}
 
 	for _, ex := range data.ExchangeRates {
-		keeper.ExchangeRates.Insert(ctx, ex.Pair, ex.ExchangeRate)
+		keeper.SetPrice(ctx, ex.Pair, ex.ExchangeRate)
 	}
 
 	for _, mc := range data.MissCounters {

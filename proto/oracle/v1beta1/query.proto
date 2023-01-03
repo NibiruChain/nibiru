@@ -15,6 +15,11 @@ service Query {
     option (google.api.http).get = "/nibiru/oracle/v1beta1/pairs/{pair}/exchange_rate";
   }
 
+  // ExchangeRateTwap returns exchange rate of a pair
+  rpc ExchangeRateTwap(QueryExchangeRateRequest) returns (QueryExchangeRateResponse) {
+    option (google.api.http).get = "/nibiru/oracle/v1beta1/pairs/{pair}/exchange_rate";
+  }
+
   // ExchangeRates returns exchange rates of all pairs
   rpc ExchangeRates(QueryExchangeRatesRequest) returns (QueryExchangeRatesResponse) {
     option (google.api.http).get = "/nibiru/oracle/v1beta1/pairs/exchange_rates";

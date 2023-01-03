@@ -3,7 +3,6 @@ package cli_test
 import (
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/NibiruChain/nibiru/simapp"
 
@@ -18,7 +17,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
-	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
+	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/NibiruChain/nibiru/x/stablecoin/client/cli"
 	stabletypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
@@ -29,32 +28,6 @@ type IntegrationTestSuite struct {
 
 	cfg     testutilcli.Config
 	network *testutilcli.Network
-}
-
-// NewPricefeedGen returns an x/pricefeed GenesisState to specify the module parameters.
-func NewPricefeedGen() *pftypes.GenesisState {
-	pairs := common.AssetPairs{
-		common.Pair_NIBI_NUSD, common.Pair_USDC_NUSD,
-	}
-
-	defaultGenesis := simapp.PricefeedGenesis()
-	defaultGenesis.Params.Pairs = append(defaultGenesis.Params.Pairs, pairs...)
-	defaultGenesis.PostedPrices = append(defaultGenesis.PostedPrices, []pftypes.PostedPrice{
-		{
-			PairID: common.Pair_NIBI_NUSD.String(),
-			Oracle: simapp.GenOracleAddress,
-			Price:  sdk.NewDec(10),
-			Expiry: time.Now().Add(1 * time.Hour),
-		},
-		{
-			PairID: common.Pair_USDC_NUSD.String(),
-			Oracle: simapp.GenOracleAddress,
-			Price:  sdk.OneDec(),
-			Expiry: time.Now().Add(1 * time.Hour),
-		},
-	}...)
-
-	return &defaultGenesis
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
@@ -79,7 +52,14 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	stableGen.ModuleAccountBalance = sdk.NewCoin(common.DenomUSDC, sdk.NewInt(10000*common.Precision))
 	genesisState[stabletypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(stableGen)
 
-	genesisState[pftypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(NewPricefeedGen())
+	oracleGenesis := oracletypes.DefaultGenesisState()
+	oracleGenesis.ExchangeRates = []oracletypes.ExchangeRateTuple{
+		{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: sdk.NewDec(10)},
+		{Pair: common.Pair_USDC_NUSD.String(), ExchangeRate: sdk.NewDec(1)},
+	}
+	oracleGenesis.Params.VotePeriod = 1_000
+
+	genesisState[oracletypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(oracleGenesis)
 
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
 
@@ -223,8 +203,8 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 		// 		"100000000unusd",
 		// 		fmt.Sprintf("--%s=%s", flags.FlagFrom, "burn")}, commonArgs...),
 		// 	expectedStable: sdk.NewInt(0),
-		// 	expectedColl:   sdk.NewInt(90* common.Precision),
-		// 	expectedGov:    sdk.NewInt(1* common.Precision),
+		// 	expectedColl:   sdk.NewInt(90 * common.Precision),
+		// 	expectedGov:    sdk.NewInt(1 * common.Precision),
 		// 	expectErr:      false,
 		// 	respType:       &sdk.TxResponse{},
 		// 	expectedCode:   0,

@@ -7,10 +7,7 @@ import (
 	ibcante "github.com/cosmos/ibc-go/v3/modules/core/ante"
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 
-	gaslessante "github.com/NibiruChain/nibiru/app/antedecorators/gasless"
-
 	feeante "github.com/NibiruChain/nibiru/app/antedecorators/fee"
-	pricefeedkeeper "github.com/NibiruChain/nibiru/x/pricefeed/keeper"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -19,8 +16,6 @@ import (
 type AnteHandlerOptions struct {
 	ante.HandlerOptions
 	IBCKeeper *ibckeeper.Keeper
-
-	PricefeedKeeper pricefeedkeeper.Keeper
 
 	TxCounterStoreKey sdk.StoreKey
 	WasmConfig        wasmTypes.WasmConfig
@@ -58,7 +53,6 @@ func NewAnteHandler(options AnteHandlerOptions) (sdk.AnteHandler, error) {
 		ante.NewTxTimeoutHeightDecorator(),
 		ante.NewValidateMemoDecorator(options.AccountKeeper),
 		ante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
-		gaslessante.NewGaslessDecorator(options.PricefeedKeeper),
 		feeante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper), // Replace fee ante from cosmos auth with a custom one.
 		// SetPubKeyDecorator must be called before all signature verification decorators
 		ante.NewSetPubKeyDecorator(options.AccountKeeper),
