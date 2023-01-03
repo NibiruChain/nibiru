@@ -10,6 +10,7 @@ import (
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/tendermint/tendermint/libs/log"
+	"github.com/tendermint/tendermint/libs/math"
 
 	"github.com/NibiruChain/collections"
 
@@ -131,6 +132,8 @@ func (k Keeper) calcTwap(ctx sdk.Context, snapshots []types.PriceSnapshot) (pric
 	firstTimeStamp := ctx.BlockTime().UnixMilli() - twapLookBack
 	cumulativePrice := sdk.ZeroDec()
 
+	firstTimeStamp = math.MaxInt64(snapshots[0].TimestampMs, firstTimeStamp)
+
 	for i, s := range snapshots {
 		var nextTimestampMs int64
 		var timestampStart int64
@@ -151,7 +154,7 @@ func (k Keeper) calcTwap(ctx sdk.Context, snapshots []types.PriceSnapshot) (pric
 		price := s.Price.MulInt64(nextTimestampMs - timestampStart)
 		cumulativePrice = cumulativePrice.Add(price)
 	}
-	return cumulativePrice.QuoInt64(twapLookBack), nil
+	return cumulativePrice.QuoInt64(ctx.BlockTime().UnixMilli() - firstTimeStamp), nil
 }
 
 func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair string) (price sdk.Dec, err error) {

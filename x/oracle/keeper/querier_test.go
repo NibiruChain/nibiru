@@ -103,7 +103,7 @@ func TestCalcTwap(t *testing.T) {
 	tests := []struct {
 		name               string
 		pair               common.AssetPair
-		reserveSnapshots   []types.PriceSnapshot
+		priceSnapshots     []types.PriceSnapshot
 		currentBlockTime   time.Time
 		currentBlockHeight int64
 		lookbackInterval   time.Duration
@@ -115,7 +115,12 @@ func TestCalcTwap(t *testing.T) {
 		{
 			name: "spot price twap calc, t=(5,35]",
 			pair: common.Pair_BTC_NUSD,
-			reserveSnapshots: []types.PriceSnapshot{
+			priceSnapshots: []types.PriceSnapshot{
+				{
+					Pair:        common.Pair_BTC_NUSD.String(),
+					Price:       sdk.MustNewDecFromStr("90000.0"),
+					TimestampMs: time.UnixMilli(1).UnixMilli(),
+				},
 				{
 					Pair:        common.Pair_BTC_NUSD.String(),
 					Price:       sdk.MustNewDecFromStr("9.0"),
@@ -135,7 +140,7 @@ func TestCalcTwap(t *testing.T) {
 			currentBlockTime:   time.UnixMilli(35),
 			currentBlockHeight: 3,
 			lookbackInterval:   30 * time.Millisecond,
-			expectedPrice:      sdk.MustNewDecFromStr("8.916666666666666666"),
+			expectedPrice:      sdk.MustNewDecFromStr("8.900000000000000000"),
 		},
 	}
 
@@ -159,7 +164,7 @@ func TestCalcTwap(t *testing.T) {
 
 			input.OracleKeeper.SetParams(ctx, newParams)
 			ctx = ctx.WithBlockTime(time.UnixMilli(0))
-			for _, reserve := range tc.reserveSnapshots {
+			for _, reserve := range tc.priceSnapshots {
 				ctx = ctx.WithBlockTime(time.UnixMilli(reserve.TimestampMs))
 				input.OracleKeeper.SetPrice(ctx, common.Pair_BTC_NUSD.String(), reserve.Price)
 			}
