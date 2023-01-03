@@ -54,7 +54,7 @@ func (q querier) ExchangeRate(c context.Context, req *types.QueryExchangeRateReq
 }
 
 /*
-Gets the time-weighted average price from [ ctx.BlockTime() - interval, ctx.BlockTime() )
+Gets the time-weighted average price from ( ctx.BlockTime() - interval, ctx.BlockTime() ]
 Note the open-ended right bracket.
 
 If there's only one snapshot, then this function returns the price from that single snapshot.
