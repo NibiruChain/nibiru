@@ -3,6 +3,7 @@ package keeper
 import (
 	"sort"
 	"testing"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -96,6 +97,82 @@ func TestQueryExchangeRateTwap(t *testing.T) {
 	res, err := querier.ExchangeRateTwap(ctx, &types.QueryExchangeRateRequest{Pair: common.Pair_BTC_NUSD.String()})
 	require.NoError(t, err)
 	require.Equal(t, sdk.MustNewDecFromStr("1700"), res.ExchangeRate)
+}
+
+func TestCalcTwap(t *testing.T) {
+	tests := []struct {
+		name               string
+		pair               common.AssetPair
+		reserveSnapshots   []types.PriceSnapshot
+		currentBlockTime   time.Time
+		currentBlockHeight int64
+		lookbackInterval   time.Duration
+		assetAmount        sdk.Dec
+		expectedPrice      sdk.Dec
+		expectedErr        error
+	}{
+		// expected price: (9.5 * (35 - 30) + 8.5 * (30 - 20) + 9.0 * (20 - 5)) / 30 = 8.916666
+		{
+			name: "spot price twap calc, t=(5,35]",
+			pair: common.Pair_BTC_NUSD,
+			reserveSnapshots: []types.PriceSnapshot{
+				{
+					Pair:        common.Pair_BTC_NUSD.String(),
+					Price:       sdk.MustNewDecFromStr("9.0"),
+					TimestampMs: time.UnixMilli(10).UnixMilli(),
+				},
+				{
+					Pair:        common.Pair_BTC_NUSD.String(),
+					Price:       sdk.MustNewDecFromStr("8.5"),
+					TimestampMs: time.UnixMilli(20).UnixMilli(),
+				},
+				{
+					Pair:        common.Pair_BTC_NUSD.String(),
+					Price:       sdk.MustNewDecFromStr("9.5"),
+					TimestampMs: time.UnixMilli(30).UnixMilli(),
+				},
+			},
+			currentBlockTime:   time.UnixMilli(35),
+			currentBlockHeight: 3,
+			lookbackInterval:   30 * time.Millisecond,
+			expectedPrice:      sdk.MustNewDecFromStr("8.916666666666666666"),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			input := CreateTestInput(t)
+			querier := NewQuerier(input.OracleKeeper)
+			ctx := input.Ctx
+
+			newParams := types.Params{
+				VotePeriod:         types.DefaultVotePeriod,
+				VoteThreshold:      types.DefaultVoteThreshold,
+				RewardBand:         types.DefaultRewardBand,
+				Whitelist:          types.DefaultWhitelist,
+				SlashFraction:      types.DefaultSlashFraction,
+				SlashWindow:        types.DefaultSlashWindow,
+				MinValidPerWindow:  types.DefaultMinValidPerWindow,
+				TwapLookbackWindow: tc.lookbackInterval,
+			}
+
+			input.OracleKeeper.SetParams(ctx, newParams)
+			ctx = ctx.WithBlockTime(time.UnixMilli(0))
+			for _, reserve := range tc.reserveSnapshots {
+				ctx = ctx.WithBlockTime(time.UnixMilli(reserve.TimestampMs))
+				input.OracleKeeper.SetPrice(ctx, common.Pair_BTC_NUSD.String(), reserve.Price)
+			}
+
+			ctx = ctx.WithBlockTime(tc.currentBlockTime).WithBlockHeight(tc.currentBlockHeight)
+
+			price, err := querier.ExchangeRateTwap(sdk.WrapSDKContext(ctx), &types.QueryExchangeRateRequest{Pair: common.Pair_BTC_NUSD.String()})
+			require.NoError(t, err)
+
+			require.EqualValuesf(t, tc.expectedPrice, price.ExchangeRate,
+				"expected %s, got %s", tc.expectedPrice.String(), price.ExchangeRate.String())
+		})
+	}
 }
 
 func TestQueryActives(t *testing.T) {

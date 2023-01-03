@@ -127,21 +127,31 @@ func (k Keeper) calcTwap(ctx sdk.Context, snapshots []types.PriceSnapshot) (pric
 	if len(snapshots) == 1 {
 		return snapshots[0].Price, nil
 	}
-	cumulativeTime := ctx.BlockTime().UnixMilli() - snapshots[0].TimestampMs
+	twapLookBack := k.GetParams(ctx).TwapLookbackWindow.Milliseconds()
+	firstTimeStamp := ctx.BlockTime().UnixMilli() - twapLookBack
 	cumulativePrice := sdk.ZeroDec()
 
 	for i, s := range snapshots {
 		var nextTimestampMs int64
+		var timestampStart int64
+
+		if i == 0 {
+			timestampStart = firstTimeStamp
+		} else {
+			timestampStart = s.TimestampMs
+		}
+
 		if i == len(snapshots)-1 {
 			// if we're at the last snapshot, then consider that price as ongoing until the current blocktime
 			nextTimestampMs = ctx.BlockTime().UnixMilli()
 		} else {
 			nextTimestampMs = snapshots[i+1].TimestampMs
 		}
-		price := s.Price.MulInt64(nextTimestampMs - s.TimestampMs)
+
+		price := s.Price.MulInt64(nextTimestampMs - timestampStart)
 		cumulativePrice = cumulativePrice.Add(price)
 	}
-	return cumulativePrice.QuoInt64(cumulativeTime), nil
+	return cumulativePrice.QuoInt64(twapLookBack), nil
 }
 
 func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair string) (price sdk.Dec, err error) {

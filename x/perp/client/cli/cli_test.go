@@ -5,6 +5,14 @@ import (
 	"testing"
 
 	"github.com/NibiruChain/collections"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+	abcitypes "github.com/tendermint/tendermint/abci/types"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
@@ -13,13 +21,6 @@ import (
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
-	abcitypes "github.com/tendermint/tendermint/abci/types"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type IntegrationTestSuite struct {
