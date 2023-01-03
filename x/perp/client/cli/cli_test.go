@@ -1,15 +1,10 @@
 package cli_test
 
 import (
+	"fmt"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
-	abcitypes "github.com/tendermint/tendermint/abci/types"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
+	"github.com/NibiruChain/collections"
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
@@ -18,6 +13,13 @@ import (
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+	abcitypes "github.com/tendermint/tendermint/abci/types"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type IntegrationTestSuite struct {
@@ -96,6 +98,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	oracleGenesis.Params.VotePeriod = 1_000
 	oracleGenesis.ExchangeRates = []oracletypes.ExchangeRateTuple{
 		{Pair: common.Pair_BTC_NUSD.String(), ExchangeRate: sdk.NewDec(20_000)},
+		{Pair: common.Pair_ETH_NUSD.String(), ExchangeRate: sdk.NewDec(2_000)},
 	}
 	genesisState[oracletypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(oracleGenesis)
 
@@ -326,181 +329,181 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(codes.InvalidArgument, status.Code())
 }
 
-// func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
-// 	val := s.network.Validators[0]
-// 	user := s.users[0]
+func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
+	val := s.network.Validators[0]
+	user := s.users[0]
 
-// 	// verify trader has no position (empty)
-// 	_, err := testutilcli.QueryPosition(val.ClientCtx, common.Pair_ETH_NUSD, user)
-// 	s.Error(err, "no position found")
+	// verify trader has no position (empty)
+	_, err := testutilcli.QueryPosition(val.ClientCtx, common.Pair_ETH_NUSD, user)
+	s.Error(err, "no position found")
 
-// 	// close position should produce error
-// 	_, err = testutilcli.ExecTx(s.network, cli.ClosePositionCmd(), user, []string{
-// 		common.Pair_ETH_NUSD.String(),
-// 	})
-// 	s.Contains(err.Error(), collections.ErrNotFound.Error())
-// }
+	// close position should produce error
+	_, err = testutilcli.ExecTx(s.network, cli.ClosePositionCmd(), user, []string{
+		common.Pair_ETH_NUSD.String(),
+	})
+	s.Contains(err.Error(), collections.ErrNotFound.Error())
+}
 
-// func (s *IntegrationTestSuite) TestQueryCumulativePremiumFractions() {
-// 	val := s.network.Validators[0]
+func (s *IntegrationTestSuite) TestQueryCumulativePremiumFractions() {
+	val := s.network.Validators[0]
 
-// 	s.T().Log("get cumulative funding payments")
-// 	queryResp, err := testutilcli.QueryCumulativePremiumFraction(val.ClientCtx, common.Pair_BTC_NUSD)
-// 	s.NoError(err)
-// 	s.EqualValues(sdk.NewDec(2), queryResp.CumulativePremiumFraction)
-// }
+	s.T().Log("get cumulative funding payments")
+	queryResp, err := testutilcli.QueryCumulativePremiumFraction(val.ClientCtx, common.Pair_BTC_NUSD)
+	s.NoError(err)
+	s.EqualValues(sdk.NewDec(2), queryResp.CumulativePremiumFraction)
+}
 
-// func (s *IntegrationTestSuite) TestRemoveMargin() {
-// 	// Open a position with first user
-// 	s.T().Log("opening a position with user 0")
-// 	txResp, err := testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[0], []string{
-// 		"buy",
-// 		common.Pair_BTC_NUSD.String(),
-// 		"10", // Leverage
-// 		"1",  // Quote asset amount
-// 		"0.0000001",
-// 	})
-// 	s.NoError(err)
-// 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
+func (s *IntegrationTestSuite) TestRemoveMargin() {
+	// Open a position with first user
+	s.T().Log("opening a position with user 0")
+	txResp, err := testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[0], []string{
+		"buy",
+		common.Pair_BTC_NUSD.String(),
+		"10", // Leverage
+		"1",  // Quote asset amount
+		"0.0000001",
+	})
+	s.NoError(err)
+	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
-// 	// Remove margin to trigger bad debt on user 0
-// 	s.T().Log("removing margin on user 0....")
-// 	_, err = testutilcli.ExecTx(s.network, cli.RemoveMarginCmd(), s.users[0], []string{
-// 		common.Pair_BTC_NUSD.String(),
-// 		fmt.Sprintf("%s%s", "100", common.DenomNUSD),
-// 	})
-// 	s.Contains(err.Error(), perptypes.ErrFailedRemoveMarginCanCauseBadDebt.Error())
-// }
+	// Remove margin to trigger bad debt on user 0
+	s.T().Log("removing margin on user 0....")
+	_, err = testutilcli.ExecTx(s.network, cli.RemoveMarginCmd(), s.users[0], []string{
+		common.Pair_BTC_NUSD.String(),
+		fmt.Sprintf("%s%s", "100", common.DenomNUSD),
+	})
+	s.Contains(err.Error(), perptypes.ErrFailedRemoveMarginCanCauseBadDebt.Error())
+}
 
-// func (s *IntegrationTestSuite) TestX_AddMargin() {
-// 	val := s.network.Validators[0]
-// 	pair := common.Pair_ETH_NUSD
+func (s *IntegrationTestSuite) TestX_AddMargin() {
+	val := s.network.Validators[0]
+	pair := common.Pair_ETH_NUSD
 
-// 	// Open a new position
-// 	s.T().Log("opening a position with user 3....")
-// 	txResp, err := testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[3], []string{
-// 		"buy",
-// 		pair.String(),
-// 		"10",    // Leverage
-// 		"10000", // Quote asset amount
-// 		"0.0000001",
-// 	})
-// 	s.NoError(err)
-// 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
+	// Open a new position
+	s.T().Log("opening a position with user 3....")
+	txResp, err := testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[3], []string{
+		"buy",
+		pair.String(),
+		"10",    // Leverage
+		"10000", // Quote asset amount
+		"0.0000001",
+	})
+	s.NoError(err)
+	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
-// 	testCases := []struct {
-// 		name           string
-// 		args           []string
-// 		expectedCode   uint32
-// 		expectedMargin sdk.Dec
-// 	}{
-// 		{
-// 			name: "PASS: add margin to correct position",
-// 			args: []string{
-// 				pair.String(),
-// 				fmt.Sprintf("%s%s", "10000", pair.Token1),
-// 			},
-// 			expectedCode:   0,
-// 			expectedMargin: sdk.NewDec(20_000),
-// 		},
-// 		{
-// 			name: "FAIL: position not found",
-// 			args: []string{
-// 				common.Pair_BTC_NUSD.String(),
-// 				fmt.Sprintf("%s%s", "10000", pair.Token1),
-// 			},
-// 			expectedCode: 1,
-// 		},
-// 	}
+	testCases := []struct {
+		name           string
+		args           []string
+		expectedCode   uint32
+		expectedMargin sdk.Dec
+	}{
+		{
+			name: "PASS: add margin to correct position",
+			args: []string{
+				pair.String(),
+				fmt.Sprintf("%s%s", "10000", pair.Token1),
+			},
+			expectedCode:   0,
+			expectedMargin: sdk.NewDec(20_000),
+		},
+		{
+			name: "FAIL: position not found",
+			args: []string{
+				common.Pair_BTC_NUSD.String(),
+				fmt.Sprintf("%s%s", "10000", pair.Token1),
+			},
+			expectedCode: 1,
+		},
+	}
 
-// 	for _, tc := range testCases {
-// 		s.T().Run(tc.name, func(t *testing.T) {
-// 			s.T().Log("adding margin on user 3....")
-// 			txResp, err = testutilcli.ExecTx(s.network, cli.AddMarginCmd(), s.users[3], tc.args, testutilcli.WithTxCanFail(true))
-// 			s.NoError(err)
-// 			s.EqualValues(tc.expectedCode, txResp.Code)
+	for _, tc := range testCases {
+		s.T().Run(tc.name, func(t *testing.T) {
+			s.T().Log("adding margin on user 3....")
+			txResp, err = testutilcli.ExecTx(s.network, cli.AddMarginCmd(), s.users[3], tc.args, testutilcli.WithTxCanFail(true))
+			s.NoError(err)
+			s.EqualValues(tc.expectedCode, txResp.Code)
 
-// 			if tc.expectedCode == 0 {
-// 				// query trader position
-// 				queryResp, err := testutilcli.QueryPosition(val.ClientCtx, pair, s.users[3])
-// 				s.NoError(err)
-// 				s.EqualValues(tc.expectedMargin, queryResp.Position.Margin)
-// 			}
-// 		})
-// 	}
-// }
+			if tc.expectedCode == 0 {
+				// query trader position
+				queryResp, err := testutilcli.QueryPosition(val.ClientCtx, pair, s.users[3])
+				s.NoError(err)
+				s.EqualValues(tc.expectedMargin, queryResp.Position.Margin)
+			}
+		})
+	}
+}
 
-// func (s *IntegrationTestSuite) TestLiquidate() {
-// 	s.T().Log("liquidate a position that does not exist")
-// 	_, err := testutilcli.ExecTx(s.network, cli.LiquidateCmd(), s.users[4], []string{
-// 		common.Pair_ETH_NUSD.String(),
-// 		s.users[1].String(),
-// 	})
-// 	s.Contains(err.Error(), collections.ErrNotFound.Error())
+func (s *IntegrationTestSuite) TestLiquidate() {
+	s.T().Log("liquidate a position that does not exist")
+	_, err := testutilcli.ExecTx(s.network, cli.LiquidateCmd(), s.users[4], []string{
+		common.Pair_ETH_NUSD.String(),
+		s.users[1].String(),
+	})
+	s.Contains(err.Error(), collections.ErrNotFound.Error())
 
-// 	s.T().Log("opening a position with user 1....")
-// 	txResp, err := testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[1], []string{
-// 		"buy",
-// 		common.Pair_ETH_NUSD.String(),
-// 		"15",    // Leverage
-// 		"90000", // Quote asset amount
-// 		"0",
-// 	})
-// 	s.NoError(err)
-// 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
+	s.T().Log("opening a position with user 1....")
+	txResp, err := testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[1], []string{
+		"buy",
+		common.Pair_ETH_NUSD.String(),
+		"15",    // Leverage
+		"90000", // Quote asset amount
+		"0",
+	})
+	s.NoError(err)
+	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
-// 	s.T().Log("liquidate a position that is above maintenance margin mario")
-// 	_, err = testutilcli.ExecTx(s.network, cli.LiquidateCmd(), s.users[4], []string{
-// 		common.Pair_ETH_NUSD.String(),
-// 		s.users[1].String(),
-// 	})
-// 	s.Contains(err.Error(), "margin is higher than required maintenance margin ratio")
+	s.T().Log("liquidate a position that is above maintenance margin mario")
+	_, err = testutilcli.ExecTx(s.network, cli.LiquidateCmd(), s.users[4], []string{
+		common.Pair_ETH_NUSD.String(),
+		s.users[1].String(),
+	})
+	s.Contains(err.Error(), "margin is higher than required maintenance margin ratio")
 
-// 	s.T().Log("opening a position with user 2...")
-// 	txResp, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[2], []string{
-// 		"sell",
-// 		common.Pair_ETH_NUSD.String(),
-// 		"15",       // Leverage
-// 		"45000000", // Quote asset amount
-// 		"0",
-// 	})
-// 	s.NoError(err)
-// 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
+	s.T().Log("opening a position with user 2...")
+	txResp, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[2], []string{
+		"sell",
+		common.Pair_ETH_NUSD.String(),
+		"15",       // Leverage
+		"45000000", // Quote asset amount
+		"0",
+	})
+	s.NoError(err)
+	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
-// 	s.T().Log("wait 10 blocks")
-// 	height, err := s.network.LatestHeight()
-// 	s.NoError(err)
-// 	_, err = s.network.WaitForHeight(height + 10)
-// 	s.NoError(err)
+	s.T().Log("wait 10 blocks")
+	height, err := s.network.LatestHeight()
+	s.NoError(err)
+	_, err = s.network.WaitForHeight(height + 10)
+	s.NoError(err)
 
-// 	s.T().Log("liquidating user 1...")
-// 	txResp, err = testutilcli.ExecTx(s.network, cli.LiquidateCmd(), s.users[4], []string{
-// 		common.Pair_ETH_NUSD.String(),
-// 		s.users[1].String(),
-// 	})
-// 	s.NoError(err)
-// 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
-// }
+	s.T().Log("liquidating user 1...")
+	txResp, err = testutilcli.ExecTx(s.network, cli.LiquidateCmd(), s.users[4], []string{
+		common.Pair_ETH_NUSD.String(),
+		s.users[1].String(),
+	})
+	s.NoError(err)
+	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
+}
 
-// func (s *IntegrationTestSuite) TestDonateToEcosystemFund() {
-// 	s.T().Logf("donate to ecosystem fund")
-// 	out, err := testutilcli.ExecTx(s.network, cli.DonateToEcosystemFundCmd(), sdk.MustAccAddressFromBech32("nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m"), []string{"100unusd"})
-// 	s.NoError(err)
-// 	s.Require().EqualValues(abcitypes.CodeTypeOK, out.Code)
+func (s *IntegrationTestSuite) TestDonateToEcosystemFund() {
+	s.T().Logf("donate to ecosystem fund")
+	out, err := testutilcli.ExecTx(s.network, cli.DonateToEcosystemFundCmd(), sdk.MustAccAddressFromBech32("nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m"), []string{"100unusd"})
+	s.NoError(err)
+	s.Require().EqualValues(abcitypes.CodeTypeOK, out.Code)
 
-// 	s.NoError(s.network.WaitForNextBlock())
+	s.NoError(s.network.WaitForNextBlock())
 
-// 	resp := new(sdk.Coin)
-// 	s.NoError(
-// 		testutilcli.ExecQuery(
-// 			s.network.Validators[0].ClientCtx,
-// 			bankcli.GetBalancesCmd(),
-// 			[]string{"nibi1trh2mamq64u4g042zfeevvjk4cukrthvppfnc7", "--denom", "unusd"}, // nibi1trh2mamq64u4g042zfeevvjk4cukrthvppfnc7 is the perp_ef module account address
-// 			resp,
-// 		),
-// 	)
-// 	s.Require().EqualValues(sdk.NewInt64Coin("unusd", 100), *resp)
-// }
+	resp := new(sdk.Coin)
+	s.NoError(
+		testutilcli.ExecQuery(
+			s.network.Validators[0].ClientCtx,
+			bankcli.GetBalancesCmd(),
+			[]string{"nibi1trh2mamq64u4g042zfeevvjk4cukrthvppfnc7", "--denom", "unusd"}, // nibi1trh2mamq64u4g042zfeevvjk4cukrthvppfnc7 is the perp_ef module account address
+			resp,
+		),
+	)
+	s.Require().EqualValues(sdk.NewInt64Coin("unusd", 100), *resp)
+}
 
 func TestIntegrationTestSuite(t *testing.T) {
 	suite.Run(t, new(IntegrationTestSuite))
