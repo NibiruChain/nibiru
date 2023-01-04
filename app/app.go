@@ -433,7 +433,7 @@ func NewNibiruApp(
 		app.accountKeeper, app.BankKeeper, app.distrKeeper)
 
 	app.oracleKeeper = oraclekeeper.NewKeeper(appCodec, keys[oracletypes.StoreKey], app.GetSubspace(oracletypes.ModuleName),
-		app.accountKeeper, app.BankKeeper, app.distrKeeper, app.stakingKeeper, "distrModule",
+		app.accountKeeper, app.BankKeeper, app.distrKeeper, app.stakingKeeper, distrtypes.ModuleName,
 	)
 
 	app.vpoolKeeper = vpoolkeeper.NewKeeper(
