@@ -19,10 +19,10 @@ type Keeper struct {
 	memKey        sdk.StoreKey
 	ParamSubspace paramtypes.Subspace
 
-	AccountKeeper   types.AccountKeeper
-	BankKeeper      types.BankKeeper
-	PricefeedKeeper types.PricefeedKeeper
-	DexKeeper       types.DexKeeper
+	AccountKeeper types.AccountKeeper
+	BankKeeper    types.BankKeeper
+	OracleKeeper  types.OracleKeeper
+	DexKeeper     types.DexKeeper
 }
 
 // NewKeeper Creates a new x/stablecoin Keeper instance.
@@ -34,7 +34,7 @@ func NewKeeper(
 
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
-	priceKeeper types.PricefeedKeeper,
+	priceKeeper types.OracleKeeper,
 	dexKeeper types.DexKeeper,
 ) Keeper {
 	// Ensure that the module account is set.
@@ -53,10 +53,10 @@ func NewKeeper(
 		memKey:        memKey,
 		ParamSubspace: paramSubspace,
 
-		AccountKeeper:   accountKeeper,
-		BankKeeper:      bankKeeper,
-		PricefeedKeeper: priceKeeper,
-		DexKeeper:       dexKeeper,
+		AccountKeeper: accountKeeper,
+		BankKeeper:    bankKeeper,
+		OracleKeeper:  priceKeeper,
+		DexKeeper:     dexKeeper,
 	}
 }
 

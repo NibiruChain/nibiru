@@ -29,11 +29,11 @@ import (
 )
 
 type mockedDependencies struct {
-	mockAccountKeeper   *mock.MockAccountKeeper
-	mockBankKeeper      *mock.MockBankKeeper
-	mockPricefeedKeeper *mock.MockPricefeedKeeper
-	mockVpoolKeeper     *mock.MockVpoolKeeper
-	mockEpochKeeper     *mock.MockEpochKeeper
+	mockAccountKeeper *mock.MockAccountKeeper
+	mockBankKeeper    *mock.MockBankKeeper
+	mockOracleKeeper  *mock.MockOracleKeeper
+	mockVpoolKeeper   *mock.MockVpoolKeeper
+	mockEpochKeeper   *mock.MockEpochKeeper
 }
 
 func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
@@ -61,7 +61,7 @@ func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
 	ctrl := gomock.NewController(t)
 	mockedAccountKeeper := mock.NewMockAccountKeeper(ctrl)
 	mockedBankKeeper := mock.NewMockBankKeeper(ctrl)
-	mockedPricefeedKeeper := mock.NewMockPricefeedKeeper(ctrl)
+	mockedOracleKeeper := mock.NewMockOracleKeeper(ctrl)
 	mockedVpoolKeeper := mock.NewMockVpoolKeeper(ctrl)
 	mockedEpochKeeper := mock.NewMockEpochKeeper(ctrl)
 
@@ -75,7 +75,7 @@ func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
 		subSpace,
 		mockedAccountKeeper,
 		mockedBankKeeper,
-		mockedPricefeedKeeper,
+		mockedOracleKeeper,
 		mockedVpoolKeeper,
 		mockedEpochKeeper,
 	)
@@ -85,11 +85,11 @@ func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
 	k.SetParams(ctx, types.DefaultParams())
 
 	return k, mockedDependencies{
-		mockAccountKeeper:   mockedAccountKeeper,
-		mockBankKeeper:      mockedBankKeeper,
-		mockPricefeedKeeper: mockedPricefeedKeeper,
-		mockVpoolKeeper:     mockedVpoolKeeper,
-		mockEpochKeeper:     mockedEpochKeeper,
+		mockAccountKeeper: mockedAccountKeeper,
+		mockBankKeeper:    mockedBankKeeper,
+		mockOracleKeeper:  mockedOracleKeeper,
+		mockVpoolKeeper:   mockedVpoolKeeper,
+		mockEpochKeeper:   mockedEpochKeeper,
 	}, ctx
 }
 

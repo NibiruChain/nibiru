@@ -165,10 +165,10 @@ func TestSwapQuoteForBase(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			pfKeeper := mock.NewMockPricefeedKeeper(gomock.NewController(t))
-			pfKeeper.EXPECT().IsActivePair(gomock.Any(), gomock.Any()).Return(true).AnyTimes()
-
+			pfKeeper := mock.NewMockOracleKeeper(gomock.NewController(t))
 			vpoolKeeper, ctx := VpoolKeeper(t, pfKeeper)
+
+			pfKeeper.EXPECT().GetExchangeRate(gomock.Any(), gomock.Any()).Return(sdk.NewDec(1), nil).AnyTimes()
 
 			vpoolKeeper.CreatePool(
 				ctx,
@@ -358,10 +358,10 @@ func TestSwapBaseForQuote(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			pfKeeper := mock.NewMockPricefeedKeeper(gomock.NewController(t))
-			pfKeeper.EXPECT().IsActivePair(gomock.Any(), gomock.Any()).Return(true).AnyTimes()
+			pfKeeper := mock.NewMockOracleKeeper(gomock.NewController(t))
 
 			vpoolKeeper, ctx := VpoolKeeper(t, pfKeeper)
+			pfKeeper.EXPECT().GetExchangeRate(gomock.Any(), gomock.Any()).Return(sdk.NewDec(1), nil).AnyTimes()
 
 			vpoolKeeper.CreatePool(
 				ctx,
@@ -405,7 +405,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 
 func TestGetVpools(t *testing.T) {
 	vpoolKeeper, ctx := VpoolKeeper(t,
-		mock.NewMockPricefeedKeeper(gomock.NewController(t)),
+		mock.NewMockOracleKeeper(gomock.NewController(t)),
 	)
 
 	vpoolKeeper.CreatePool(
@@ -629,7 +629,7 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			vpoolKeeper, ctx := VpoolKeeper(t,
-				mock.NewMockPricefeedKeeper(gomock.NewController(t)),
+				mock.NewMockOracleKeeper(gomock.NewController(t)),
 			)
 
 			vpoolKeeper.Pools.Insert(ctx, tc.pool.Pair, tc.pool)
@@ -701,7 +701,7 @@ func TestGetMaintenanceMarginRatio(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			vpoolKeeper, ctx := VpoolKeeper(t,
-				mock.NewMockPricefeedKeeper(gomock.NewController(t)),
+				mock.NewMockOracleKeeper(gomock.NewController(t)),
 			)
 			vpoolKeeper.Pools.Insert(ctx, tc.pool.Pair, tc.pool)
 
@@ -739,7 +739,7 @@ func TestGetMaxLeverage(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			vpoolKeeper, ctx := VpoolKeeper(t,
-				mock.NewMockPricefeedKeeper(gomock.NewController(t)),
+				mock.NewMockOracleKeeper(gomock.NewController(t)),
 			)
 			vpoolKeeper.Pools.Insert(ctx, tc.pool.Pair, tc.pool)
 
