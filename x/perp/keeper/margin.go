@@ -342,7 +342,8 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 		}
 		positionNotional = oraclePrice.Mul(positionSizeAbs)
 	default:
-		panic("unrecognized pnl calc option: " + pnlCalcOption.String())
+		err := fmt.Errorf("unrecognized pnl calc option: %s" + pnlCalcOption.String())
+		return sdk.ZeroDec(), sdk.ZeroDec(), err
 	}
 
 	if positionNotional.Equal(currentPosition.OpenNotional) {
@@ -430,7 +431,8 @@ func (k Keeper) GetPreferencePositionNotionalAndUnrealizedPnL(
 		positionNotional = sdk.MinDec(spotPositionNotional, twapPositionNotional)
 		unrealizedPnl = sdk.MinDec(spotPricePnl, twapPnl)
 	default:
-		panic("invalid pnl preference option " + pnLPreferenceOption.String())
+		return sdk.Dec{}, sdk.Dec{}, fmt.Errorf(
+			"invalid pnl preference option: %s", pnLPreferenceOption)
 	}
 
 	return positionNotional, unrealizedPnl, nil
