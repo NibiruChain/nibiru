@@ -47,6 +47,9 @@ func ballotIsPassingThreshold(ballot types.ExchangeRateBallot, thresholdVotes sd
 // RemoveInvalidBallots removes the ballots which have not reached the vote threshold
 // or which are not part of the whitelisted pairs anymore: example when params change during a vote period
 // but some votes were already made.
+//
+// ALERT: This function mutates pairBallotMap slice, it removes the ballot for the pair which is not passing the threshold
+// or which is not whitelisted anymore.
 func (k Keeper) RemoveInvalidBallots(
 	ctx sdk.Context,
 	pairBallotMap map[string]types.ExchangeRateBallot,
