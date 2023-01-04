@@ -431,7 +431,7 @@ func (k Keeper) decreasePosition(
 	}
 
 	if remainOpenNotional.IsNegative() {
-		panic("value of open notional < 0")
+		return nil, fmt.Errorf("value of open notional < 0")
 	}
 
 	positionResp.Position = &types.Position{
