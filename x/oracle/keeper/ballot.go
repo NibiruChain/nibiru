@@ -15,8 +15,8 @@ import (
 func (k Keeper) mapBallotByPair(
 	ctx sdk.Context,
 	validatorsPerformance map[string]types.ValidatorPerformance,
-) (ballots map[string]types.ExchangeRateBallot) {
-	ballots = map[string]types.ExchangeRateBallot{}
+) map[string]types.ExchangeRateBallot {
+	ballots := map[string]types.ExchangeRateBallot{}
 
 	for _, value := range k.Votes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {
 		voterAddr, vote := value.Key, value.Value
@@ -42,7 +42,7 @@ func (k Keeper) mapBallotByPair(
 		}
 	}
 
-	return
+	return ballots
 }
 
 // clearBallots clears all tallied prevotes and votes from the store
