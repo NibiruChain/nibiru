@@ -10,6 +10,11 @@ import (
 
 // Tally calculates the median and returns it. Sets the set of voters to be rewarded, i.e. voted within
 // a reasonable spread from the weighted median to the store
+//
+// ALERT: This function mutates validatorPerformanceMap slice based on the votes made by the validators.
+// * If the vote is correct:
+//  1. the validator performance is increases win count by 1.
+//  2. the vote power is added to the validator performance total weight.
 func Tally(ballot types.ExchangeRateBallot, rewardBand sdk.Dec, validatorPerformanceMap map[string]types.ValidatorPerformance) sdk.Dec {
 	sort.Sort(ballot)
 

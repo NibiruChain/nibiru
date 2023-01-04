@@ -40,6 +40,7 @@ func (k Keeper) registerMissedVotes(ctx sdk.Context, whitelistedPairsMap map[str
 }
 
 // countVotesAndUpdateExchangeRates processes the votes and updates the ExchangeRates based on the results.
+// ALERT: It mutates the validatorPerformanceMap based on the votes.
 func (k Keeper) countVotesAndUpdateExchangeRates(
 	ctx sdk.Context,
 	pairBallotMap map[string]types.ExchangeRateBallot,
