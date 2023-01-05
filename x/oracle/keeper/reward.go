@@ -8,6 +8,8 @@ import (
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
+// AllocatePairRewards allocates rewards for the current pair.
+// TODO: This function is still not in use.
 func (k Keeper) AllocatePairRewards(ctx sdk.Context, funderModule string, pair string, totalCoins sdk.Coins, votePeriods uint64) error {
 	if !k.Pairs.Has(ctx, pair) {
 		return types.ErrUnknownPair.Wrap(pair)
@@ -80,10 +82,9 @@ func (k Keeper) rewardBallotWinners(
 // AccrueVotePeriodPairRewards retrieves the vote period rewards for the provided pair.
 // And decreases the distribution period count of each pair reward instance.
 // If the distribution period count drops to 0: the reward instance is removed.
-// TODO(mercilex): don't like API name
 func (k Keeper) AccrueVotePeriodPairRewards(ctx sdk.Context, pair string) sdk.Coins {
 	coins := sdk.NewCoins()
-	// iterate over
+
 	for _, rewardID := range k.PairRewards.Indexes.RewardsByPair.ExactMatch(ctx, pair).PrimaryKeys() {
 		r, err := k.PairRewards.Get(ctx, rewardID)
 		if err != nil {
