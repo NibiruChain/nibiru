@@ -98,10 +98,6 @@ func TestCombineErrorsGeneric(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-<<<<<<< HEAD
-			fmt.Printf("\nDEBUG-UD TestCombinErrorsGeneric - tc.name: %v", tc.name)
-=======
->>>>>>> master
 			out, ok := common.CombineErrorsGeneric(tc.in)
 			if tc.fail {
 				assert.Falsef(t, ok, "out: %v", out)

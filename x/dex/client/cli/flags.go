@@ -3,9 +3,10 @@ package cli
 import (
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/x/dex/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	flag "github.com/spf13/pflag"
+
+	"github.com/NibiruChain/nibiru/x/dex/types"
 )
 
 const (
