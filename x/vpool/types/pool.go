@@ -126,12 +126,14 @@ func (vpool *Vpool) ValidateReserves() error {
 func (cfg *VpoolConfig) Validate() error {
 	// trade limit ratio always between 0 and 1
 	if cfg.TradeLimitRatio.LT(sdk.ZeroDec()) || cfg.TradeLimitRatio.GT(sdk.OneDec()) {
-		return fmt.Errorf("trade limit ratio must be 0 <= ratio <= 1")
+		return fmt.Errorf("trade limit ratio of must be 0 <= ratio <= 1, not %s",
+			cfg.TradeLimitRatio)
 	}
 
 	// fluctuation limit ratio between 0 and 1
 	if cfg.FluctuationLimitRatio.LT(sdk.ZeroDec()) || cfg.FluctuationLimitRatio.GT(sdk.OneDec()) {
-		return fmt.Errorf("fluctuation limit ratio must be 0 <= ratio <= 1")
+		return fmt.Errorf("fluctuation limit ratio must be 0 <= ratio <= 1, not %s",
+			cfg.FluctuationLimitRatio)
 	}
 
 	// max oracle spread ratio between 0 and 1

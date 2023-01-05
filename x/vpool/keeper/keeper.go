@@ -288,18 +288,18 @@ args:
 ret:
   - bool: whether the price has deviated from the oracle price beyond a spread ratio
 */
-func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) bool {
+func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) (bool, error) {
 	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
-		panic(err)
+		return false, err
 	}
 
 	indexPrice, err := k.oracleKeeper.GetExchangeRate(ctx, pair.String())
 	if err != nil {
-		panic(err)
+		return false, err
 	}
 
-	return pool.IsOverSpreadLimit(indexPrice)
+	return pool.IsOverSpreadLimit(indexPrice), nil
 }
 
 /*
@@ -312,13 +312,13 @@ args:
 ret:
   - sdk.Dec: The maintenance margin ratio for the pool
 */
-func (k Keeper) GetMaintenanceMarginRatio(ctx sdk.Context, pair common.AssetPair) sdk.Dec {
+func (k Keeper) GetMaintenanceMarginRatio(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error) {
 	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
-		panic(err)
+		return sdk.Dec{}, err
 	}
 
-	return pool.Config.MaintenanceMarginRatio
+	return pool.Config.MaintenanceMarginRatio, nil
 }
 
 /*

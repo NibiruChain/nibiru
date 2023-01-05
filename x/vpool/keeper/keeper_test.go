@@ -170,7 +170,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 
 			pfKeeper.EXPECT().GetExchangeRate(gomock.Any(), gomock.Any()).Return(sdk.NewDec(1), nil).AnyTimes()
 
-			vpoolKeeper.CreatePool(
+			assert.NoError(t, vpoolKeeper.CreatePool(
 				ctx,
 				common.Pair_BTC_NUSD,
 				/* quoteAssetReserve */ sdk.NewDec(10*common.Precision), // 10 tokens
@@ -182,7 +182,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-			)
+			))
 
 			baseAmt, err := vpoolKeeper.SwapQuoteForBase(
 				ctx,
@@ -363,7 +363,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 			vpoolKeeper, ctx := VpoolKeeper(t, pfKeeper)
 			pfKeeper.EXPECT().GetExchangeRate(gomock.Any(), gomock.Any()).Return(sdk.NewDec(1), nil).AnyTimes()
 
-			vpoolKeeper.CreatePool(
+			assert.NoError(t, vpoolKeeper.CreatePool(
 				ctx,
 				common.Pair_BTC_NUSD,
 				/* quoteAssetReserve */ sdk.NewDec(10*common.Precision), // 10 tokens
@@ -375,7 +375,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-			)
+			))
 
 			quoteAssetAmount, err := vpoolKeeper.SwapBaseForQuote(
 				ctx,
@@ -408,7 +408,7 @@ func TestGetVpools(t *testing.T) {
 		mock.NewMockOracleKeeper(gomock.NewController(t)),
 	)
 
-	vpoolKeeper.CreatePool(
+	assert.NoError(t, vpoolKeeper.CreatePool(
 		ctx,
 		common.Pair_BTC_NUSD,
 		sdk.NewDec(10*common.Precision),
@@ -420,8 +420,8 @@ func TestGetVpools(t *testing.T) {
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
-	)
-	vpoolKeeper.CreatePool(
+	))
+	assert.NoError(t, vpoolKeeper.CreatePool(
 		ctx,
 		common.Pair_ETH_NUSD,
 		sdk.NewDec(5*common.Precision),
@@ -433,7 +433,7 @@ func TestGetVpools(t *testing.T) {
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
-	)
+	))
 
 	pools := vpoolKeeper.Pools.Iterate(ctx, collections.Range[common.AssetPair]{}).Values()
 
@@ -704,8 +704,9 @@ func TestGetMaintenanceMarginRatio(t *testing.T) {
 				mock.NewMockOracleKeeper(gomock.NewController(t)),
 			)
 			vpoolKeeper.Pools.Insert(ctx, tc.pool.Pair, tc.pool)
-
-			assert.EqualValues(t, tc.expectedMaintenanceMarginRatio, vpoolKeeper.GetMaintenanceMarginRatio(ctx, common.Pair_BTC_NUSD))
+			mmr, err := vpoolKeeper.GetMaintenanceMarginRatio(ctx, common.Pair_BTC_NUSD)
+			assert.NoError(t, err)
+			assert.EqualValues(t, tc.expectedMaintenanceMarginRatio, mmr)
 		})
 	}
 }

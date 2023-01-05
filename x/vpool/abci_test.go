@@ -29,20 +29,19 @@ func TestSnapshotUpdates(t *testing.T) {
 
 	ctx = ctx.WithBlockTime(time.Date(2015, 10, 21, 0, 0, 0, 0, time.UTC)).WithBlockHeight(1)
 
-	vpoolKeeper.CreatePool(
+	assert.NoError(t, vpoolKeeper.CreatePool(
 		ctx,
 		common.Pair_BTC_NUSD,
-		// sdk.OneDec(),
 		sdk.NewDec(10),
 		sdk.NewDec(10),
 		types.VpoolConfig{
-			TradeLimitRatio:        sdk.NewDec(10),
-			FluctuationLimitRatio:  sdk.NewDec(3),
+			TradeLimitRatio:        sdk.MustNewDecFromStr("0.5"),
+			FluctuationLimitRatio:  sdk.OneDec(),
 			MaxOracleSpreadRatio:   sdk.OneDec(),
 			MaintenanceMarginRatio: sdk.OneDec(),
 			MaxLeverage:            sdk.NewDec(10),
 		},
-	)
+	))
 	expectedSnapshot := types.NewReserveSnapshot(
 		common.Pair_BTC_NUSD,
 		sdk.NewDec(10),
