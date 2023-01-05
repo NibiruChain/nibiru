@@ -19,7 +19,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-func VpoolKeeper(t *testing.T, pricefeedKeeper types.PricefeedKeeper) (
+func VpoolKeeper(t *testing.T, oracleKeeper types.OracleKeeper) (
 	vpoolKeeper Keeper, ctx sdk.Context,
 ) {
 	storeKey := sdk.NewKVStoreKey(types.StoreKey)
@@ -31,7 +31,7 @@ func VpoolKeeper(t *testing.T, pricefeedKeeper types.PricefeedKeeper) (
 
 	vpoolKeeper = NewKeeper(
 		codec.NewProtoCodec(codectypes.NewInterfaceRegistry()),
-		storeKey, pricefeedKeeper,
+		storeKey, oracleKeeper,
 	)
 	ctx = sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())
 
@@ -40,8 +40,8 @@ func VpoolKeeper(t *testing.T, pricefeedKeeper types.PricefeedKeeper) (
 
 // holds mocks for interfaces defined in vpool/types/expected_keepers.go
 type mockedDependencies struct {
-	mockPricefeedKeeper *mock.MockPricefeedKeeper
-	mockAccountKeeper   *mock.MockAccountKeeper
+	mockOracleKeeper  *mock.MockOracleKeeper
+	mockAccountKeeper *mock.MockAccountKeeper
 }
 
 func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
@@ -63,7 +63,7 @@ func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
 
 	ctrl := gomock.NewController(t)
 	mockedAccountKeeper := mock.NewMockAccountKeeper(ctrl)
-	mockedPricefeedKeeper := mock.NewMockPricefeedKeeper(ctrl)
+	mockedOracleKeeper := mock.NewMockOracleKeeper(ctrl)
 
 	mockedAccountKeeper.
 		EXPECT().GetModuleAddress(types.ModuleName).
@@ -72,13 +72,13 @@ func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
 	k := NewKeeper(
 		protoCodec,
 		storeKey,
-		mockedPricefeedKeeper,
+		mockedOracleKeeper,
 	)
 
 	ctx := sdk.NewContext(commitMultiStore, tmproto.Header{}, false, log.NewNopLogger())
 
 	return k, mockedDependencies{
-		mockPricefeedKeeper: mockedPricefeedKeeper,
-		mockAccountKeeper:   mockedAccountKeeper,
+		mockOracleKeeper:  mockedOracleKeeper,
+		mockAccountKeeper: mockedAccountKeeper,
 	}, ctx
 }

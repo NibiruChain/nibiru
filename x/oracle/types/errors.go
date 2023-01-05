@@ -22,4 +22,5 @@ var (
 	ErrNoAggregatePrevote    = sdkerrors.Register(ModuleName, 11, "no aggregate prevote")
 	ErrNoAggregateVote       = sdkerrors.Register(ModuleName, 12, "no aggregate vote")
 	ErrUnknownPair           = sdkerrors.Register(ModuleName, 13, "unknown pair")
+	ErrNoValidTWAP           = sdkerrors.Register(ModuleName, 14, "TWA price not found")
 )
