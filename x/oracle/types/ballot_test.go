@@ -235,7 +235,6 @@ func TestPBWeightedMedian(t *testing.T) {
 		if tc.panic {
 			require.Panics(t, func() { pb.WeightedMedianWithAssertion() })
 		} else {
-			require.Equal(t, tc.median, pb.WeightedMedian())
 			require.Equal(t, tc.median, pb.WeightedMedianWithAssertion())
 		}
 	}
