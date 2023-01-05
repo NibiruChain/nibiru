@@ -1,6 +1,10 @@
 package cli
 
 import (
+	"fmt"
+
+	"github.com/NibiruChain/nibiru/x/dex/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	flag "github.com/spf13/pflag"
 )
 
@@ -67,4 +71,13 @@ func FlagSetSwapAssets() *flag.FlagSet {
 	fs.String(FlagTokenIn, "", "The amount of tokens to swap in.")
 	fs.String(FlagTokenOutDenom, "", "The denom of the token to extract.")
 	return fs
+}
+
+func (cpi createPoolInputs) AmplificationInt() (sdk.Int, error) {
+	amplificationInt, ok := sdk.NewIntFromString(cpi.Amplification)
+	if !ok {
+		return sdk.Int{}, fmt.Errorf(
+			"%w: %v", types.ErrAmplificationIntable, cpi.Amplification)
+	}
+	return amplificationInt, nil
 }

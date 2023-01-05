@@ -169,10 +169,14 @@ func (k queryServer) PoolParams(goCtx context.Context, req *types.QueryPoolParam
 func (k queryServer) NumPools(ctx context.Context, _ *types.QueryNumPoolsRequest) (
 	*types.QueryNumPoolsResponse, error,
 ) {
+	nextPoolNumber, err := k.GetNextPoolNumber(sdk.UnwrapSDKContext(ctx))
+	if err != nil {
+		return nil, err
+	}
 	return &types.QueryNumPoolsResponse{
 		// next pool number is the id of the next pool,
 		// so we have one less than that in number of pools (id starts at 1)
-		NumPools: k.GetNextPoolNumber(sdk.UnwrapSDKContext(ctx)) - 1,
+		NumPools: nextPoolNumber - 1,
 	}, nil
 }
 
