@@ -12,9 +12,6 @@ import (
 // a reasonable spread from the weighted median to the store
 //
 // ALERT: This function mutates validatorPerformanceMap slice based on the votes made by the validators.
-// * If the vote is correct:
-//  1. the validator performance increases win count by 1.
-//  2. the vote power is added to the validator performance total weight.
 func Tally(ballot types.ExchangeRateBallot, rewardBand sdk.Dec, validatorPerformanceMap map[string]types.ValidatorPerformance) sdk.Dec {
 	sort.Sort(ballot)
 
@@ -26,6 +23,10 @@ func Tally(ballot types.ExchangeRateBallot, rewardBand sdk.Dec, validatorPerform
 // updateValidatorPerformanceByBallotVotes updates the validator performance map based on the votes made by the validators.
 //
 // ALERT: This function mutates validatorPerformanceMap slice based on the votes made by the validators.
+//
+// * If the vote is correct (meaning the vote is within the reward band):
+//  1. the validator performance increases win count by 1.
+//  2. the vote power is added to the validator performance total weight.
 func updateValidatorPerformanceByBallotVotes(ballot types.ExchangeRateBallot, rewardBand sdk.Dec, validatorPerformanceMap map[string]types.ValidatorPerformance) {
 	weightedMedian := ballot.WeightedMedianWithAssertion()
 	standardDeviation := ballot.StandardDeviation(weightedMedian)
