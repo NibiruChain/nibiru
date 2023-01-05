@@ -18,6 +18,7 @@ func (k Keeper) mapBallotByPair(
 ) map[string]types.ExchangeRateBallot {
 	ballots := map[string]types.ExchangeRateBallot{}
 
+	// For each vote
 	for _, value := range k.Votes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {
 		voterAddr, vote := value.Key, value.Value
 

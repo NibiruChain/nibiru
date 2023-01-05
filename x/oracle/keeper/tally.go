@@ -13,11 +13,20 @@ import (
 //
 // ALERT: This function mutates validatorPerformanceMap slice based on the votes made by the validators.
 // * If the vote is correct:
-//  1. the validator performance is increases win count by 1.
+//  1. the validator performance increases win count by 1.
 //  2. the vote power is added to the validator performance total weight.
 func Tally(ballot types.ExchangeRateBallot, rewardBand sdk.Dec, validatorPerformanceMap map[string]types.ValidatorPerformance) sdk.Dec {
 	sort.Sort(ballot)
 
+	updateValidatorPerformanceByBallotVotes(ballot, rewardBand, validatorPerformanceMap)
+
+	return ballot.WeightedMedianWithAssertion()
+}
+
+// updateValidatorPerformanceByBallotVotes updates the validator performance map based on the votes made by the validators.
+//
+// ALERT: This function mutates validatorPerformanceMap slice based on the votes made by the validators.
+func updateValidatorPerformanceByBallotVotes(ballot types.ExchangeRateBallot, rewardBand sdk.Dec, validatorPerformanceMap map[string]types.ValidatorPerformance) {
 	weightedMedian := ballot.WeightedMedianWithAssertion()
 	standardDeviation := ballot.StandardDeviation(weightedMedian)
 	rewardSpread := weightedMedian.Mul(rewardBand.QuoInt64(2))
@@ -26,11 +35,13 @@ func Tally(ballot types.ExchangeRateBallot, rewardBand sdk.Dec, validatorPerform
 		rewardSpread = standardDeviation
 	}
 
+	// checks every vote, if inside the voting spread or is abstain, update performance map
 	for _, vote := range ballot {
-		// Filter ballot winners & abstain voters
-		if (vote.ExchangeRate.GTE(weightedMedian.Sub(rewardSpread)) &&
-			vote.ExchangeRate.LTE(weightedMedian.Add(rewardSpread))) ||
-			!vote.ExchangeRate.IsPositive() {
+		voteInsideSpread := vote.ExchangeRate.GTE(weightedMedian.Sub(rewardSpread)) &&
+			vote.ExchangeRate.LTE(weightedMedian.Add(rewardSpread))
+		isAbstainVote := !vote.ExchangeRate.IsPositive()
+
+		if voteInsideSpread || isAbstainVote {
 			voterAddr := vote.Voter.String()
 
 			validatorPerformance := validatorPerformanceMap[voterAddr]
@@ -39,8 +50,6 @@ func Tally(ballot types.ExchangeRateBallot, rewardBand sdk.Dec, validatorPerform
 			validatorPerformanceMap[voterAddr] = validatorPerformance
 		}
 	}
-
-	return weightedMedian
 }
 
 // ballotIsPassingThreshold ballot for the asset is passing the threshold amount of voting power
