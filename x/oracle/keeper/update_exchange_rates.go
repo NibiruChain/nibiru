@@ -22,8 +22,8 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 	k.rewardBallotWinners(ctx, whitelistedPairsMap, validatorPerformanceMap)
 
 	params := k.GetParams(ctx)
-	k.clearBallots(ctx, params.VotePeriod)
-	k.applyWhitelist(ctx, params.Whitelist, whitelistedPairsMap)
+	k.clearVotesAndPreVotes(ctx, params.VotePeriod)
+	k.updateWhitelist(ctx, params.Whitelist, whitelistedPairsMap)
 }
 
 // registerMissedVotes it parses all validators performance and increases the missed vote of those that did not vote.

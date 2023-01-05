@@ -46,8 +46,8 @@ func (k Keeper) mapBallotByPair(
 	return ballots
 }
 
-// clearBallots clears all tallied prevotes and votes from the store
-func (k Keeper) clearBallots(ctx sdk.Context, votePeriod uint64) {
+// clearVotesAndPreVotes clears all tallied prevotes and votes from the store
+func (k Keeper) clearVotesAndPreVotes(ctx sdk.Context, votePeriod uint64) {
 	// Clear all aggregate prevotes
 	for _, prevote := range k.Prevotes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {
 		if ctx.BlockHeight() > int64(prevote.Value.SubmitBlock+votePeriod) {
@@ -67,9 +67,9 @@ func (k Keeper) clearBallots(ctx sdk.Context, votePeriod uint64) {
 	}
 }
 
-// applyWhitelist updates the whitelist by detecting possible changes between
+// updateWhitelist updates the whitelist by detecting possible changes between
 // the current vote targets and the current updated whitelist.
-func (k Keeper) applyWhitelist(ctx sdk.Context, whitelist []string, whitelistedPairsMap map[string]struct{}) {
+func (k Keeper) updateWhitelist(ctx sdk.Context, whitelist []string, whitelistedPairsMap map[string]struct{}) {
 	updateRequired := false
 
 	if len(whitelistedPairsMap) != len(whitelist) {

@@ -9,7 +9,7 @@ import (
 )
 
 // AllocatePairRewards allocates rewards for the current pair.
-// TODO: This function is still not in use.
+// TODO: This function is still not used.
 func (k Keeper) AllocatePairRewards(ctx sdk.Context, funderModule string, pair string, totalCoins sdk.Coins, votePeriods uint64) error {
 	if !k.Pairs.Has(ctx, pair) {
 		return types.ErrUnknownPair.Wrap(pair)
