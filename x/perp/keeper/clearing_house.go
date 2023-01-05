@@ -145,8 +145,11 @@ func (k Keeper) afterPositionUpdate(
 			return err
 		}
 
-		maintenanceMarginRatio := k.VpoolKeeper.GetMaintenanceMarginRatio(ctx, pair)
-		if err = requireMoreMarginRatio(marginRatio, maintenanceMarginRatio, true); err != nil {
+		maintenanceMarginRatio, err := k.VpoolKeeper.GetMaintenanceMarginRatio(ctx, pair)
+		if err != nil {
+			return err
+		}
+		if err = validateMarginRatio(marginRatio, maintenanceMarginRatio, true); err != nil {
 			return types.ErrMarginRatioTooLow
 		}
 	}

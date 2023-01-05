@@ -27,7 +27,7 @@ func TestKeeperClosePosition(t *testing.T) {
 
 		t.Log("Set vpool defined by pair on VpoolKeeper")
 		vpoolKeeper := &nibiruApp.VpoolKeeper
-		vpoolKeeper.CreatePool(
+		require.NoError(t, vpoolKeeper.CreatePool(
 			ctx,
 			pair,
 			/*quoteAssetReserve*/ sdk.NewDec(10*common.Precision),
@@ -39,7 +39,7 @@ func TestKeeperClosePosition(t *testing.T) {
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
-		)
+		))
 		require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 
 		t.Log("Set vpool defined by pair on PerpKeeper")
