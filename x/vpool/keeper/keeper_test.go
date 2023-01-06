@@ -669,15 +669,10 @@ func TestGetMaintenanceMarginRatio(t *testing.T) {
 				Pair:              common.Pair_BTC_NUSD,
 				QuoteAssetReserve: sdk.OneDec(),
 				BaseAssetReserve:  sdk.OneDec(),
-				Config: types.VpoolConfig{
-					TradeLimitRatio:        sdk.OneDec(),
-					FluctuationLimitRatio:  sdk.ZeroDec(),
-					MaxOracleSpreadRatio:   sdk.OneDec(),
-					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.42"),
-					MaxLeverage:            sdk.OneDec(),
-				},
+				Config: types.DefaultVpoolConfig().
+					WithMaintenanceMarginRatio(sdk.MustNewDecFromStr("0.9876")),
 			},
-			expectedMaintenanceMarginRatio: sdk.MustNewDecFromStr("0.42"),
+			expectedMaintenanceMarginRatio: sdk.MustNewDecFromStr("0.9876"),
 		},
 		{
 			name: "zero fluctuation limit ratio",
@@ -685,13 +680,8 @@ func TestGetMaintenanceMarginRatio(t *testing.T) {
 				Pair:              common.Pair_BTC_NUSD,
 				QuoteAssetReserve: sdk.OneDec(),
 				BaseAssetReserve:  sdk.OneDec(),
-				Config: types.VpoolConfig{
-					TradeLimitRatio:        sdk.OneDec(),
-					FluctuationLimitRatio:  sdk.ZeroDec(),
-					MaxOracleSpreadRatio:   sdk.OneDec(),
-					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.4242"),
-					MaxLeverage:            sdk.OneDec(),
-				},
+				Config: types.DefaultVpoolConfig().
+					WithMaintenanceMarginRatio(sdk.MustNewDecFromStr("0.4242")),
 			},
 			expectedMaintenanceMarginRatio: sdk.MustNewDecFromStr("0.4242"),
 		},

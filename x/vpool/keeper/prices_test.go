@@ -524,13 +524,7 @@ func TestCalcTwap(t *testing.T) {
 				tc.pair,
 				/*quoteAssetReserve=*/ sdk.OneDec(),
 				/*baseAssetReserve=*/ sdk.OneDec(),
-				types.VpoolConfig{
-					FluctuationLimitRatio:  sdk.OneDec(),
-					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-					MaxLeverage:            sdk.MustNewDecFromStr("15"),
-					MaxOracleSpreadRatio:   sdk.OneDec(),
-					TradeLimitRatio:        sdk.ZeroDec(),
-				},
+				types.DefaultVpoolConfig().WithMaxLeverage(sdk.NewDec(15)),
 			))
 
 			t.Log("throw in another market pair to ensure key iteration doesn't overlap")
@@ -539,13 +533,7 @@ func TestCalcTwap(t *testing.T) {
 				tc.pair,
 				/*quoteAssetReserve=*/ sdk.NewDec(100),
 				/*baseAssetReserve=*/ sdk.OneDec(),
-				types.VpoolConfig{
-					FluctuationLimitRatio:  sdk.OneDec(),
-					MaintenanceMarginRatio: sdk.OneDec(),
-					MaxLeverage:            sdk.MustNewDecFromStr("15"),
-					MaxOracleSpreadRatio:   sdk.OneDec(),
-					TradeLimitRatio:        sdk.ZeroDec(),
-				},
+				types.DefaultVpoolConfig().WithMaxLeverage(sdk.NewDec(15)),
 			))
 
 			for _, snapshot := range tc.reserveSnapshots {

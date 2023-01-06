@@ -253,3 +253,43 @@ func (dir Direction) ToMultiplier() int64 {
 	}
 	return dirMult
 }
+
+func DefaultVpoolConfig() VpoolConfig {
+	return VpoolConfig{
+		TradeLimitRatio:        sdk.MustNewDecFromStr("0.1"),
+		FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
+		MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
+		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+		MaxLeverage:            sdk.NewDec(10),
+	}
+}
+
+func (poolCfg VpoolConfig) WithTradeLimitRatio(value sdk.Dec) VpoolConfig {
+	newPoolCfg := VpoolConfig(poolCfg)
+	newPoolCfg.TradeLimitRatio = value
+	return newPoolCfg
+}
+
+func (poolCfg VpoolConfig) WithFluctuationLimitRatio(value sdk.Dec) VpoolConfig {
+	newPoolCfg := VpoolConfig(poolCfg)
+	newPoolCfg.FluctuationLimitRatio = value
+	return newPoolCfg
+}
+
+func (poolCfg VpoolConfig) WithMaxOracleSpreadRatio(value sdk.Dec) VpoolConfig {
+	newPoolCfg := VpoolConfig(poolCfg)
+	newPoolCfg.MaxOracleSpreadRatio = value
+	return newPoolCfg
+}
+
+func (poolCfg VpoolConfig) WithMaintenanceMarginRatio(value sdk.Dec) VpoolConfig {
+	newPoolCfg := VpoolConfig(poolCfg)
+	newPoolCfg.MaintenanceMarginRatio = value
+	return newPoolCfg
+}
+
+func (poolCfg VpoolConfig) WithMaxLeverage(value sdk.Dec) VpoolConfig {
+	newPoolCfg := VpoolConfig(poolCfg)
+	newPoolCfg.MaxLeverage = value
+	return newPoolCfg
+}
