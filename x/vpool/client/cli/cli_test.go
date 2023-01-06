@@ -16,6 +16,7 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
+	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/vpool/client/cli"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
@@ -75,6 +76,14 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		START_VPOOLS[common.Pair_ETH_NUSD],
 		START_VPOOLS[common.Pair_NIBI_NUSD],
 	}
+
+	oracleGenesis := oracletypes.DefaultGenesisState()
+	oracleGenesis.ExchangeRates = []oracletypes.ExchangeRateTuple{
+		{Pair: common.Pair_ETH_NUSD.String(), ExchangeRate: sdk.NewDec(1_000)},
+		{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: sdk.NewDec(10)},
+	}
+	oracleGenesis.Params.VotePeriod = 1_000
+
 	genesisState[vpooltypes.ModuleName] = encodingConfig.Marshaler.
 		MustMarshalJSON(vpoolGenesis)
 

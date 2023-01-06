@@ -41,8 +41,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 * ...
-* [#1127](https://github.com/NibiruChain/nibiru/pull/1127) - refactor(dex): remove unnecessary panics
+
+### Improvements
+
+* [#1127](https://github.com/NibiruChain/nibiru/pull/1127) - refactor(dex,): remove unnecessary panics
 * [#1126](https://github.com/NibiruChain/nibiru/pull/1126) - refactor(perp): remove unnecessary panics
+* [#1126](https://github.com/NibiruChain/nibiru/pull/1126) - test(oracle): stop the tyrannical behavior of TestFuzz_PickReferencePair 
+
+### Bug Fixes
+* [#1126](https://github.com/NibiruChain/nibiru/pull/1126) - test(oracle): stop the tyrannical behavior of TestFuzz_PickReferencePair 
+* [#1131](https://github.com/NibiruChain/nibiru/pull/1131) - fix(oracle): use correct distribution module account
 
 ## [v0.16.3](https://github.com/NibiruChain/nibiru/releases/tag/v0.16.3)
 
@@ -50,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * [#1115](https://github.com/NibiruChain/nibiru/pull/1115) - feat: improve single asset join calculation
 * [#1117](https://github.com/NibiruChain/nibiru/pull/1117) - feat: wire multi-liquidate transaction
+* [#1120](https://github.com/NibiruChain/nibiru/pull/1120) - feat: replace pricefeed with oracle
 
 ### Bug Fixes
 

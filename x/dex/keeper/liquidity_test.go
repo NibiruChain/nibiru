@@ -67,11 +67,11 @@ func TestSetTotalLiquidity(t *testing.T) {
 	app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 	// Write to store
-	app.DexKeeper.SetTotalLiquidity(ctx, sdk.NewCoins(
+	assert.NoError(t, app.DexKeeper.SetTotalLiquidity(ctx, sdk.NewCoins(
 		sdk.NewCoin("atom", sdk.NewInt(123)),
 		sdk.NewCoin("nibi", sdk.NewInt(456)),
 		sdk.NewCoin("foo", sdk.NewInt(789)),
-	))
+	)))
 
 	// Read from store
 	expectedLiqValues := map[string]sdk.Int{
@@ -86,10 +86,10 @@ func TestRecordTotalLiquidityIncrease(t *testing.T) {
 	app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 	// Write to store
-	app.DexKeeper.SetTotalLiquidity(ctx, sdk.NewCoins(
+	assert.NoError(t, app.DexKeeper.SetTotalLiquidity(ctx, sdk.NewCoins(
 		sdk.NewCoin("atom", sdk.NewInt(100)),
 		sdk.NewCoin("nibi", sdk.NewInt(200)),
-	))
+	)))
 	err := app.DexKeeper.RecordTotalLiquidityIncrease(ctx, sdk.NewCoins(
 		sdk.NewCoin("atom", sdk.NewInt(50)),
 		sdk.NewCoin("nibi", sdk.NewInt(75)),
@@ -107,10 +107,10 @@ func TestRecordTotalLiquidityDecrease(t *testing.T) {
 	app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 	// Write to store
-	app.DexKeeper.SetTotalLiquidity(ctx, sdk.NewCoins(
+	assert.NoError(t, app.DexKeeper.SetTotalLiquidity(ctx, sdk.NewCoins(
 		sdk.NewCoin("atom", sdk.NewInt(100)),
 		sdk.NewCoin("nibi", sdk.NewInt(200)),
-	))
+	)))
 	err := app.DexKeeper.RecordTotalLiquidityDecrease(ctx, sdk.NewCoins(
 		sdk.NewCoin("atom", sdk.NewInt(50)),
 		sdk.NewCoin("nibi", sdk.NewInt(75)),
