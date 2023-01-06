@@ -395,11 +395,12 @@ func (mr *MockVpoolKeeperMockRecorder) GetMarkPriceTWAP(arg0, arg1, arg2 interfa
 }
 
 // GetMaxLeverage mocks base method.
-func (m *MockVpoolKeeper) GetMaxLeverage(arg0 types1.Context, arg1 common.AssetPair) types1.Dec {
+func (m *MockVpoolKeeper) GetMaxLeverage(arg0 types1.Context, arg1 common.AssetPair) (types1.Dec, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetMaxLeverage", arg0, arg1)
 	ret0, _ := ret[0].(types1.Dec)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // GetMaxLeverage indicates an expected call of GetMaxLeverage.

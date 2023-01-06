@@ -311,6 +311,7 @@ args:
 
 ret:
   - sdk.Dec: The maintenance margin ratio for the pool
+  - error
 */
 func (k Keeper) GetMaintenanceMarginRatio(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error) {
 	pool, err := k.Pools.Get(ctx, pair)
@@ -330,14 +331,15 @@ args:
 
 ret:
   - sdk.Dec: The maintenance margin ratio for the pool
+  - error
 */
-func (k Keeper) GetMaxLeverage(ctx sdk.Context, pair common.AssetPair) sdk.Dec {
+func (k Keeper) GetMaxLeverage(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error) {
 	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
-		panic(err)
+		return sdk.Dec{}, err
 	}
 
-	return pool.Config.MaxLeverage
+	return pool.Config.MaxLeverage, nil
 }
 
 /*

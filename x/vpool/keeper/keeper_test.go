@@ -734,7 +734,9 @@ func TestGetMaxLeverage(t *testing.T) {
 			)
 			vpoolKeeper.Pools.Insert(ctx, tc.pool.Pair, tc.pool)
 
-			assert.EqualValues(t, tc.expectedMaxLeverage, vpoolKeeper.GetMaxLeverage(ctx, common.Pair_BTC_NUSD))
+			maxLeverage, err := vpoolKeeper.GetMaxLeverage(ctx, common.Pair_BTC_NUSD)
+			assert.EqualValues(t, tc.expectedMaxLeverage, maxLeverage)
+			assert.NoError(t, err)
 		})
 	}
 }
