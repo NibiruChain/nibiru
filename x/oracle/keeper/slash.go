@@ -22,8 +22,8 @@ func (k Keeper) SlashAndResetMissCounters(ctx sdk.Context) {
 	powerReduction := k.StakingKeeper.PowerReduction(ctx)
 
 	for _, mc := range k.MissCounters.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {
-		operator := mc.Key
-		missCounter := mc.Value
+		operator, missCounter := mc.Key, mc.Value
+
 		// Calculate valid vote rate; (SlashWindow - MissCounter)/SlashWindow
 		validVoteRate := sdk.NewDecFromInt(
 			sdk.NewInt(int64(votePeriodsPerWindow - missCounter))).

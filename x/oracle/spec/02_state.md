@@ -10,7 +10,7 @@ An `sdk.Dec` that stores the current exchange rate against a given pair.
 
 You can get the active list of pairs (exchange rates with votes past `VoteThreshold`) with `k.GetActivePairs()`.
 
-- ExchangeRate: `0x03<pair_Bytes> -> amino(sdk.Dec)`
+- ExchangeRate: `0x03<pair_Bytes> -> proto(sdk.Dec)`
 
 ## FeederDelegation
 

@@ -27,7 +27,7 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 }
 
 // registerMissedVotes it parses all validators performance and increases the missed vote of those that did not vote.
-// If validator performance wincount is not equal to all the whitelisted pairs, it increases the miss counter.
+// If validator performance WinCount is not equal to all the whitelisted pairs, it increases the miss counter.
 func (k Keeper) registerMissedVotes(ctx sdk.Context, whitelistedPairsMap map[string]struct{}, validatorPerformanceMap map[string]types.ValidatorPerformance) {
 	whitelistedPairsLen := len(whitelistedPairsMap)
 	for _, validatorPerformance := range validatorPerformanceMap {

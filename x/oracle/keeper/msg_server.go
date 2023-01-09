@@ -11,13 +11,13 @@ import (
 )
 
 type msgServer struct {
-	Keeper
+	k Keeper
 }
 
 // NewMsgServerImpl returns an implementation of the oracle MsgServer interface
 // for the provided Keeper.
 func NewMsgServerImpl(keeper Keeper) types.MsgServer {
-	return &msgServer{Keeper: keeper}
+	return &msgServer{k: keeper}
 }
 
 func (ms msgServer) AggregateExchangeRatePrevote(
@@ -36,7 +36,7 @@ func (ms msgServer) AggregateExchangeRatePrevote(
 		return nil, err
 	}
 
-	if err := ms.ValidateFeeder(ctx, feederAddr, valAddr); err != nil {
+	if err := ms.k.ValidateFeeder(ctx, feederAddr, valAddr); err != nil {
 		return nil, err
 	}
 
@@ -46,7 +46,7 @@ func (ms msgServer) AggregateExchangeRatePrevote(
 		return nil, sdkerrors.Wrap(types.ErrInvalidHash, err.Error())
 	}
 
-	ms.Keeper.Prevotes.Insert(ctx, valAddr, types.NewAggregateExchangeRatePrevote(voteHash, valAddr, uint64(ctx.BlockHeight())))
+	ms.k.Prevotes.Insert(ctx, valAddr, types.NewAggregateExchangeRatePrevote(voteHash, valAddr, uint64(ctx.BlockHeight())))
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -76,13 +76,13 @@ func (ms msgServer) AggregateExchangeRateVote(goCtx context.Context, msg *types.
 		return nil, err
 	}
 
-	if err := ms.ValidateFeeder(ctx, feederAddr, valAddr); err != nil {
+	if err := ms.k.ValidateFeeder(ctx, feederAddr, valAddr); err != nil {
 		return nil, err
 	}
 
-	params := ms.GetParams(ctx)
+	params := ms.k.GetParams(ctx)
 
-	aggregatePrevote, err := ms.Keeper.Prevotes.Get(ctx, valAddr)
+	aggregatePrevote, err := ms.k.Prevotes.Get(ctx, valAddr)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrNoAggregatePrevote, msg.Validator)
 	}
@@ -102,7 +102,7 @@ func (ms msgServer) AggregateExchangeRateVote(goCtx context.Context, msg *types.
 
 	// check all pairs are in the vote target
 	for _, tuple := range exchangeRateTuples {
-		if !ms.IsWhitelistedPair(ctx, tuple.Pair) {
+		if !ms.k.IsWhitelistedPair(ctx, tuple.Pair) {
 			return nil, sdkerrors.Wrap(types.ErrUnknownPair, tuple.Pair)
 		}
 	}
@@ -114,8 +114,8 @@ func (ms msgServer) AggregateExchangeRateVote(goCtx context.Context, msg *types.
 	}
 
 	// Move aggregate prevote to aggregate vote with given exchange rates
-	ms.Keeper.Votes.Insert(ctx, valAddr, types.NewAggregateExchangeRateVote(exchangeRateTuples, valAddr))
-	_ = ms.Keeper.Prevotes.Delete(ctx, valAddr)
+	ms.k.Votes.Insert(ctx, valAddr, types.NewAggregateExchangeRateVote(exchangeRateTuples, valAddr))
+	_ = ms.k.Prevotes.Delete(ctx, valAddr)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -147,13 +147,13 @@ func (ms msgServer) DelegateFeedConsent(goCtx context.Context, msg *types.MsgDel
 	}
 
 	// Check the delegator is a validator
-	val := ms.StakingKeeper.Validator(ctx, operatorAddr)
+	val := ms.k.StakingKeeper.Validator(ctx, operatorAddr)
 	if val == nil {
 		return nil, sdkerrors.Wrap(stakingtypes.ErrNoValidatorFound, msg.Operator)
 	}
 
 	// Set the delegation
-	ms.Keeper.FeederDelegations.Insert(ctx, operatorAddr, delegateAddr)
+	ms.k.FeederDelegations.Insert(ctx, operatorAddr, delegateAddr)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
