@@ -16,19 +16,19 @@ You can get the active list of pairs (exchange rates with votes past `VoteThresh
 
 An `sdk.AccAddress` (`nibi-` account) address of `operator`'s delegated price feeder.
 
-- FeederDelegation: `0x04<valAddress_Bytes> -> amino(sdk.AccAddress)`
+- FeederDelegation: `0x04<valAddress_Bytes> -> proto(sdk.AccAddress)`
 
 ## MissCounter
 
 An `int64` representing the number of `VotePeriods` that validator `operator` missed during the current `SlashWindow`.
 
-- MissCounter: `0x05<valAddress_Bytes> -> amino(int64)`
+- MissCounter: `0x05<valAddress_Bytes> -> proto(int64)`
 
 ## AggregateExchangeRatePrevote
 
 `AggregateExchangeRatePrevote` containing validator voter's aggregated prevote for all pairs for the current `VotePeriod`.
 
-- AggregateExchangeRatePrevote: `0x06<valAddress_Bytes> -> amino(AggregateExchangeRatePrevote)`
+- AggregateExchangeRatePrevote: `0x06<valAddress_Bytes> -> proto(AggregateExchangeRatePrevote)`
 
 ```go
 // AggregateVoteHash is hash value to hide vote exchange rates
@@ -46,7 +46,7 @@ type AggregateExchangeRatePrevote struct {
 
 `AggregateExchangeRateVote` containing validator voter's aggregate vote for all pairs for the current `VotePeriod`.
 
-- AggregateExchangeRateVote: `0x07<valAddress_Bytes> -> amino(AggregateExchangeRateVote)`
+- AggregateExchangeRateVote: `0x07<valAddress_Bytes> -> proto(AggregateExchangeRateVote)`
 
 ```go
 type ExchangeRateTuple struct {
