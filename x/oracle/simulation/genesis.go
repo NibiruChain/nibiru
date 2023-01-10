@@ -17,7 +17,6 @@ import (
 
 // Simulation parameter constants
 const (
-	votePeriodKey        = "vote_period"
 	voteThresholdKey     = "vote_threshold"
 	rewardBandKey        = "reward_band"
 	slashFractionKey     = "slash_fraction"

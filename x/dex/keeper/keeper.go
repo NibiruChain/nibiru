@@ -96,14 +96,14 @@ ret
 
 	uint64: a pool id number
 */
-func (k Keeper) GetNextPoolNumber(ctx sdk.Context) (poolNumber uint64) {
+func (k Keeper) GetNextPoolNumber(ctx sdk.Context) (poolNumber uint64, err error) {
 	bz := ctx.KVStore(k.storeKey).Get(types.KeyNextGlobalPoolNumber)
 	if bz == nil {
-		panic(fmt.Errorf("pool number has not been initialized -- Should have been done in InitGenesis"))
+		return poolNumber, fmt.Errorf("pool number has not been initialized -- Should have been done in InitGenesis")
 	}
 	val := gogotypes.UInt64Value{}
 	k.cdc.MustUnmarshal(bz, &val)
-	return val.GetValue()
+	return val.GetValue(), err
 }
 
 /*
@@ -118,10 +118,13 @@ ret
 
 	uint64: a pool id number
 */
-func (k Keeper) GetNextPoolNumberAndIncrement(ctx sdk.Context) uint64 {
-	poolNumber := k.GetNextPoolNumber(ctx)
+func (k Keeper) GetNextPoolNumberAndIncrement(ctx sdk.Context) (uint64, error) {
+	poolNumber, err := k.GetNextPoolNumber(ctx)
+	if err != nil {
+		return 0, err
+	}
 	k.SetNextPoolNumber(ctx, poolNumber+1)
-	return poolNumber
+	return poolNumber, err
 }
 
 /*
@@ -317,30 +320,33 @@ func (k Keeper) NewPool(
 	poolAssets []types.PoolAsset,
 ) (poolId uint64, err error) {
 	if len(poolAssets) < types.MinPoolAssets {
-		return uint64(0), types.ErrTooFewPoolAssets
+		return 0, types.ErrTooFewPoolAssets
 	}
 
 	if len(poolAssets) > types.MaxPoolAssets {
-		return uint64(0), types.ErrTooManyPoolAssets
+		return 0, types.ErrTooManyPoolAssets
 	}
 
 	if !k.areAllAssetsWhitelisted(ctx, poolAssets) {
-		return uint64(0), types.ErrTokenNotAllowed
+		return 0, types.ErrTokenNotAllowed
 	}
 
 	_, err = k.FetchPoolFromPair(ctx, poolAssets[0].Token.Denom, poolAssets[1].Token.Denom)
 	if err == nil {
-		return uint64(0), types.ErrPoolWithSameAssetsExists
+		return 0, types.ErrPoolWithSameAssetsExists
 	}
 
 	// send pool creation fee to community pool
 	params := k.GetParams(ctx)
 	err = k.distrKeeper.FundCommunityPool(ctx, params.PoolCreationFee, sender)
 	if err != nil {
-		return uint64(0), err
+		return 0, err
 	}
 
-	poolId = k.GetNextPoolNumberAndIncrement(ctx)
+	poolId, err = k.GetNextPoolNumberAndIncrement(ctx)
+	if err != nil {
+		return 0, err
+	}
 	poolName := fmt.Sprintf("nibiru-pool-%d", poolId)
 	// Create a new account for the pool to hold funds.
 	poolAccount := k.accountKeeper.NewAccount(ctx, authtypes.NewEmptyModuleAccount(poolName))
@@ -348,7 +354,7 @@ func (k Keeper) NewPool(
 
 	pool, err := types.NewPool(poolId, poolAccount.GetAddress(), poolParams, poolAssets)
 	if err != nil {
-		return uint64(0), err
+		return 0, err
 	}
 
 	// Transfer the PoolAssets tokens to the pool's module account from the user account.
@@ -359,12 +365,12 @@ func (k Keeper) NewPool(
 	coins = sdk.NewCoins(coins...)
 
 	if err = k.bankKeeper.SendCoins(ctx, sender, poolAccount.GetAddress(), coins); err != nil {
-		return uint64(0), err
+		return 0, err
 	}
 
 	// Mint the initial 100.000000000000000000 pool share tokens to the sender
 	if err = k.mintPoolShareToAccount(ctx, pool.Id, sender, types.InitPoolSharesSupply); err != nil {
-		return uint64(0), err
+		return 0, err
 	}
 
 	// Finally, add the share token's meta data to the bank keeper.
@@ -389,7 +395,9 @@ func (k Keeper) NewPool(
 	})
 
 	k.SetPool(ctx, pool)
-	k.RecordTotalLiquidityIncrease(ctx, coins)
+	if err = k.RecordTotalLiquidityIncrease(ctx, coins); err != nil {
+		return poolId, err
+	}
 
 	err = ctx.EventManager().EmitTypedEvent(&types.EventPoolCreated{
 		Creator: sender.String(),
@@ -485,7 +493,9 @@ func (k Keeper) JoinPool(
 
 	// record changes to store
 	k.SetPool(ctx, pool)
-	k.RecordTotalLiquidityIncrease(ctx, tokensConsumed)
+	if err = k.RecordTotalLiquidityIncrease(ctx, tokensConsumed); err != nil {
+		return pool, numSharesOut, remCoins, err
+	}
 
 	poolSharesOut := sdk.NewCoin(pool.TotalShares.Denom, numShares)
 
@@ -563,7 +573,9 @@ func (k Keeper) ExitPool(
 
 	// record state changes
 	k.SetPool(ctx, pool)
-	k.RecordTotalLiquidityDecrease(ctx, tokensOut)
+	if err = k.RecordTotalLiquidityDecrease(ctx, tokensOut); err != nil {
+		return sdk.Coins{}, err
+	}
 
 	err = ctx.EventManager().EmitTypedEvent(&types.EventPoolExited{
 		Address:      sender.String(),
@@ -572,7 +584,7 @@ func (k Keeper) ExitPool(
 		TokensOut:    tokensOut,
 	})
 	if err != nil {
-		panic(err)
+		return sdk.Coins{}, err
 	}
 
 	return tokensOut, nil
