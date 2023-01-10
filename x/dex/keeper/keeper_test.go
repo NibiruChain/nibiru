@@ -9,6 +9,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 
@@ -24,8 +25,8 @@ func TestGetAndSetNextPoolNumber(t *testing.T) {
 	app.DexKeeper.SetNextPoolNumber(ctx, 150)
 
 	// Read from store
-	poolNumber := app.DexKeeper.GetNextPoolNumber(ctx)
-
+	poolNumber, err := app.DexKeeper.GetNextPoolNumber(ctx)
+	assert.NoError(t, err)
 	require.EqualValues(t, poolNumber, 150)
 }
 
@@ -36,11 +37,13 @@ func TestGetNextPoolNumberAndIncrement(t *testing.T) {
 	app.DexKeeper.SetNextPoolNumber(ctx, 200)
 
 	// Get next and increment should return the current pool number
-	poolNumber := app.DexKeeper.GetNextPoolNumberAndIncrement(ctx)
+	poolNumber, err := app.DexKeeper.GetNextPoolNumberAndIncrement(ctx)
+	assert.NoError(t, err)
 	require.EqualValues(t, poolNumber, 200)
 
 	// Check that the previous call incremented the number
-	poolNumber = app.DexKeeper.GetNextPoolNumber(ctx)
+	poolNumber, err = app.DexKeeper.GetNextPoolNumber(ctx)
+	assert.NoError(t, err)
 	require.EqualValues(t, poolNumber, 201)
 }
 
@@ -71,8 +74,8 @@ func TestSetAndFetchPool(t *testing.T) {
 
 	app.DexKeeper.SetPool(ctx, pool)
 
-	retrievedPool, _ := app.DexKeeper.FetchPool(ctx, 150)
-
+	retrievedPool, err := app.DexKeeper.FetchPool(ctx, 150)
+	assert.NoError(t, err)
 	require.Equal(t, pool, retrievedPool)
 }
 
@@ -89,7 +92,7 @@ func TestFetchPoolFromPair(t *testing.T) {
 			firstToken:     "tokenA",
 			secondToken:    "tokenB",
 			expectedPass:   true,
-			expectedPoolId: uint64(1),
+			expectedPoolId: 1,
 		},
 		{
 			name:           "Correct parse pool 1 inverted",

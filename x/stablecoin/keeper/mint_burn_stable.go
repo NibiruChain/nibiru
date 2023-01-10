@@ -58,27 +58,27 @@ func (k Keeper) MintStable(
 
 	err = k.sendCoinsToModuleAccount(ctx, msgCreator, coinsNeededToMint)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	err = k.burnGovTokens(ctx, neededGov)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	err = k.splitAndSendFeesToEfAndTreasury(ctx, msgCreator, efFeeRatio, sdk.NewCoins(collFees, govFees))
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	err = k.mintStable(ctx, msg.Stable)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	err = k.sendCoinsFromModuleAccountToUser(ctx, msgCreator, sdk.NewCoins(msg.Stable))
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	return &types.MsgMintStableResponse{
@@ -352,7 +352,7 @@ func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable,
 
 	err = k.burnStableTokens(ctx, msg.Stable)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	return &types.MsgBurnStableResponse{

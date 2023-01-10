@@ -300,12 +300,11 @@ Where pool.json contains:
 				return types.ErrInvalidCreatePoolArgs
 			}
 
-			amplification := sdk.ZeroInt()
+			var amplification sdk.Int
 			if poolType == types.PoolType_STABLESWAP {
-				var ok bool
-				amplification, ok = sdk.NewIntFromString(pool.Amplification)
-				if !ok { // overflow
-					panic("invalid amplification parameter")
+				amplification, err = pool.AmplificationInt()
+				if err != nil {
+					return err
 				}
 			}
 

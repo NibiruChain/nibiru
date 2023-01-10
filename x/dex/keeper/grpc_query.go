@@ -97,7 +97,7 @@ func (k queryServer) PoolNumber(goCtx context.Context, req *types.QueryPoolNumbe
 
 	bz := ctx.KVStore(k.storeKey).Get(types.KeyNextGlobalPoolNumber)
 	if bz == nil {
-		panic(fmt.Errorf("pool number has not been initialized -- Should have been done in InitGenesis"))
+		return nil, fmt.Errorf("pool number has not been initialized -- Should have been done in InitGenesis")
 	} else {
 		val := gogotypes.UInt64Value{}
 		k.cdc.MustUnmarshal(bz, &val)
@@ -169,10 +169,14 @@ func (k queryServer) PoolParams(goCtx context.Context, req *types.QueryPoolParam
 func (k queryServer) NumPools(ctx context.Context, _ *types.QueryNumPoolsRequest) (
 	*types.QueryNumPoolsResponse, error,
 ) {
+	nextPoolNumber, err := k.GetNextPoolNumber(sdk.UnwrapSDKContext(ctx))
+	if err != nil {
+		return nil, err
+	}
 	return &types.QueryNumPoolsResponse{
 		// next pool number is the id of the next pool,
 		// so we have one less than that in number of pools (id starts at 1)
-		NumPools: k.GetNextPoolNumber(sdk.UnwrapSDKContext(ctx)) - 1,
+		NumPools: nextPoolNumber - 1,
 	}, nil
 }
 

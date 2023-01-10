@@ -215,7 +215,7 @@ This function has a 33% chance of swapping a random fraction of the balance of a
 func SimulateExitPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
-	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+	) (opMsg simtypes.OperationMsg, futureOp []simtypes.FutureOperation, err error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 		spendableCoins := bk.SpendableCoins(ctx, simAccount.Address)
 
@@ -248,11 +248,11 @@ func SimulateExitPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keep
 		// check if there are enough tokens to withdraw
 		pool, err := k.FetchPool(ctx, poolId)
 		if err != nil {
-			panic(err)
+			return opMsg, futureOp, err
 		}
 		tokensOut, err := pool.TokensOutFromPoolSharesIn(shareTokensIn.Amount)
 		if err != nil {
-			panic(err)
+			return opMsg, futureOp, err
 		}
 
 		// this is necessary, as invalid tokens will be considered as wrong inputs in simulations
