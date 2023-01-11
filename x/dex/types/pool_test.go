@@ -794,19 +794,19 @@ Columns schema of the file:
   - dx: the number of token sent for the swap
   - dy: the expected number of token from the curve python model.
 */
-func createTestCases(data [][]string) (testCases []TestCaseDy) {
+func createTestCases(data [][]string) (testCases []TestCaseDy, err error) {
 	for i, line := range data {
 		if i > 0 { // omit header line
 			var rec TestCaseDy
 
 			err := json.Unmarshal([]byte(line[0]), &rec.balance)
 			if err != nil {
-				panic(err)
+				return testCases, err
 			}
 
 			amplification, err := strconv.ParseInt(line[1], 10, 64)
 			if err != nil {
-				panic(err)
+				return testCases, err
 			}
 
 			rec.amplification = sdk.NewInt(amplification)
@@ -816,12 +816,12 @@ func createTestCases(data [][]string) (testCases []TestCaseDy) {
 
 			dx, err := strconv.ParseInt(line[4], 10, 64)
 			if err != nil {
-				panic(err)
+				return testCases, err
 			}
 
 			expectedDy, err := strconv.ParseInt(line[5], 10, 64)
 			if err != nil {
-				panic(err)
+				return testCases, err
 			}
 
 			rec.dx = sdk.NewInt(dx)
@@ -830,7 +830,7 @@ func createTestCases(data [][]string) (testCases []TestCaseDy) {
 			testCases = append(testCases, rec)
 		}
 	}
-	return
+	return testCases, nil
 }
 
 func TestSolveStableswapInvariant(t *testing.T) {
@@ -848,7 +848,10 @@ func TestSolveStableswapInvariant(t *testing.T) {
 			log.Fatal(err)
 		}
 
-		testCases := createTestCases(data)
+		testCases, err := createTestCases(data)
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		for _, tc := range testCases {
 			tc := tc
