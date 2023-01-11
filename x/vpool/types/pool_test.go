@@ -730,3 +730,53 @@ func TestVpool_ToSnapshot(t *testing.T) {
 		})
 	}
 }
+
+func TestDefaultVpoolConfig(t *testing.T) {
+	vpoolCfg := DefaultVpoolConfig()
+	err := vpoolCfg.Validate()
+	require.NoError(t, err)
+}
+
+func TestVpoolConfigWith(t *testing.T) {
+	vpoolCfg := DefaultVpoolConfig()
+
+	vpoolCfgUpdates := VpoolConfig{
+		TradeLimitRatio:        sdk.NewDec(12),
+		FluctuationLimitRatio:  sdk.NewDec(34),
+		MaxOracleSpreadRatio:   sdk.NewDec(56),
+		MaintenanceMarginRatio: sdk.NewDec(78),
+		MaxLeverage:            sdk.NewDec(910),
+	}
+
+	var newVpoolCfg VpoolConfig
+
+	testCases := testutil.FunctionTestCases{
+		{Name: "WithTradeLimitRatio", Test: func() {
+			assert.NotEqualValues(t, vpoolCfgUpdates.TradeLimitRatio, vpoolCfg.TradeLimitRatio)
+			newVpoolCfg = vpoolCfg.WithTradeLimitRatio(vpoolCfgUpdates.TradeLimitRatio)
+			assert.EqualValues(t, vpoolCfgUpdates.TradeLimitRatio, newVpoolCfg.TradeLimitRatio)
+		}},
+		{Name: "WithFluctuationLimitRatio", Test: func() {
+			assert.NotEqualValues(t, vpoolCfgUpdates.FluctuationLimitRatio, vpoolCfg.FluctuationLimitRatio)
+			newVpoolCfg = vpoolCfg.WithFluctuationLimitRatio(vpoolCfgUpdates.FluctuationLimitRatio)
+			assert.EqualValues(t, vpoolCfgUpdates.FluctuationLimitRatio, newVpoolCfg.FluctuationLimitRatio)
+		}},
+		{Name: "WithMaxOracleSpreadRatio", Test: func() {
+			assert.NotEqualValues(t, vpoolCfgUpdates.MaxOracleSpreadRatio, vpoolCfg.MaxOracleSpreadRatio)
+			newVpoolCfg = vpoolCfg.WithMaxOracleSpreadRatio(vpoolCfgUpdates.MaxOracleSpreadRatio)
+			assert.EqualValues(t, vpoolCfgUpdates.MaxOracleSpreadRatio, newVpoolCfg.MaxOracleSpreadRatio)
+		}},
+		{Name: "WithMaintenanceMarginRatio", Test: func() {
+			assert.NotEqualValues(t, vpoolCfgUpdates.MaintenanceMarginRatio, vpoolCfg.MaintenanceMarginRatio)
+			newVpoolCfg = vpoolCfg.WithMaintenanceMarginRatio(vpoolCfgUpdates.MaintenanceMarginRatio)
+			assert.EqualValues(t, vpoolCfgUpdates.MaintenanceMarginRatio, newVpoolCfg.MaintenanceMarginRatio)
+		}},
+		{Name: "WithMaxLeverage", Test: func() {
+			assert.NotEqualValues(t, vpoolCfgUpdates.MaxLeverage, vpoolCfg.MaxLeverage)
+			newVpoolCfg = vpoolCfg.WithMaxLeverage(vpoolCfgUpdates.MaxLeverage)
+			assert.EqualValues(t, vpoolCfgUpdates.MaxLeverage, newVpoolCfg.MaxLeverage)
+		}},
+	}
+
+	testutil.RunFunctionTests(t, testCases)
+}

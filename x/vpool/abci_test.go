@@ -29,24 +29,19 @@ func TestSnapshotUpdates(t *testing.T) {
 
 	ctx = ctx.WithBlockTime(time.Date(2015, 10, 21, 0, 0, 0, 0, time.UTC)).WithBlockHeight(1)
 
-	vpoolKeeper.CreatePool(
+	require.NoError(t, vpoolKeeper.CreatePool(
 		ctx,
 		common.Pair_BTC_NUSD,
-		// sdk.OneDec(),
-		sdk.NewDec(10),
-		sdk.NewDec(10),
-		types.VpoolConfig{
-			TradeLimitRatio:        sdk.NewDec(10),
-			FluctuationLimitRatio:  sdk.NewDec(3),
-			MaxOracleSpreadRatio:   sdk.OneDec(),
-			MaintenanceMarginRatio: sdk.OneDec(),
-			MaxLeverage:            sdk.NewDec(10),
-		},
-	)
+		sdk.NewDec(1_000),
+		sdk.NewDec(1_000),
+		types.DefaultVpoolConfig().
+			WithTradeLimitRatio(sdk.OneDec()).
+			WithFluctuationLimitRatio(sdk.OneDec()),
+	))
 	expectedSnapshot := types.NewReserveSnapshot(
 		common.Pair_BTC_NUSD,
-		sdk.NewDec(10),
-		sdk.NewDec(10),
+		sdk.NewDec(1_000),
+		sdk.NewDec(1_000),
 		ctx.BlockTime(),
 	)
 
@@ -57,19 +52,21 @@ func TestSnapshotUpdates(t *testing.T) {
 	assert.EqualValues(t, expectedSnapshot, snapshot)
 
 	t.Log("affect mark price")
-	_, err = vpoolKeeper.SwapQuoteForBase(
+	baseAmtAbs, err := vpoolKeeper.SwapQuoteForBase(
 		ctx,
 		common.Pair_BTC_NUSD,
 		types.Direction_ADD_TO_POOL,
-		sdk.NewDec(10),
+		sdk.NewDec(250), // ← dyAmm
 		sdk.ZeroDec(),
 		false,
 	)
+	// dxAmm := (k / (y + dyAmm)) - x = (1e6 / (1e3 + 250)) - 1e3 = -200
+	assert.EqualValues(t, sdk.NewDec(200), baseAmtAbs)
 	require.NoError(t, err)
 	expectedSnapshot = types.NewReserveSnapshot(
 		common.Pair_BTC_NUSD,
-		sdk.NewDec(5),
-		sdk.NewDec(20),
+		sdk.NewDec(800),   // ← x + dxAmm
+		sdk.NewDec(1_250), // ← y + dyAMM
 		ctx.BlockTime(),
 	)
 
@@ -77,7 +74,8 @@ func TestSnapshotUpdates(t *testing.T) {
 	ctxAtSnapshot := sdk.Context(ctx) // manually copy ctx before the time skip
 	timeSkipDuration := 5 * time.Second
 	runBlock(timeSkipDuration) // increments ctx.blockHeight and ctx.BlockTime
-	snapshot, err = vpoolKeeper.ReserveSnapshots.Get(ctx, collections.Join(common.Pair_BTC_NUSD, time.UnixMilli(expectedSnapshot.TimestampMs)))
+	snapshot, err = vpoolKeeper.ReserveSnapshots.Get(ctx,
+		collections.Join(common.Pair_BTC_NUSD, time.UnixMilli(expectedSnapshot.TimestampMs)))
 	require.NoError(t, err)
 	assert.EqualValues(t, expectedSnapshot, snapshot)
 

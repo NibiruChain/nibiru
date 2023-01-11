@@ -70,8 +70,8 @@ func TestQueryAllPools(t *testing.T) {
 			TradeLimitRatio:        sdk.ZeroDec(),
 		},
 	}
-	vpoolKeeper.CreatePool(
-		ctx, pair, pool.QuoteAssetReserve, pool.BaseAssetReserve, pool.Config)
+	assert.NoError(t, vpoolKeeper.CreatePool(
+		ctx, pair, pool.QuoteAssetReserve, pool.BaseAssetReserve, pool.Config))
 
 	t.Log("query reserve assets and prices for the pair")
 	ctx = ctx.WithBlockHeight(2).WithBlockTime(time.Now().Add(5 * time.Second))

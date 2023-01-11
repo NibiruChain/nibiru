@@ -126,12 +126,14 @@ func (vpool *Vpool) ValidateReserves() error {
 func (cfg *VpoolConfig) Validate() error {
 	// trade limit ratio always between 0 and 1
 	if cfg.TradeLimitRatio.LT(sdk.ZeroDec()) || cfg.TradeLimitRatio.GT(sdk.OneDec()) {
-		return fmt.Errorf("trade limit ratio must be 0 <= ratio <= 1")
+		return fmt.Errorf("trade limit ratio of must be 0 <= ratio <= 1, not %s",
+			cfg.TradeLimitRatio)
 	}
 
 	// fluctuation limit ratio between 0 and 1
 	if cfg.FluctuationLimitRatio.LT(sdk.ZeroDec()) || cfg.FluctuationLimitRatio.GT(sdk.OneDec()) {
-		return fmt.Errorf("fluctuation limit ratio must be 0 <= ratio <= 1")
+		return fmt.Errorf("fluctuation limit ratio must be 0 <= ratio <= 1, not %s",
+			cfg.FluctuationLimitRatio)
 	}
 
 	// max oracle spread ratio between 0 and 1
@@ -250,4 +252,44 @@ func (dir Direction) ToMultiplier() int64 {
 		dirMult = -1
 	}
 	return dirMult
+}
+
+func DefaultVpoolConfig() VpoolConfig {
+	return VpoolConfig{
+		TradeLimitRatio:        sdk.MustNewDecFromStr("0.1"),
+		FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
+		MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
+		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+		MaxLeverage:            sdk.NewDec(10),
+	}
+}
+
+func (poolCfg VpoolConfig) WithTradeLimitRatio(value sdk.Dec) VpoolConfig {
+	newPoolCfg := VpoolConfig(poolCfg)
+	newPoolCfg.TradeLimitRatio = value
+	return newPoolCfg
+}
+
+func (poolCfg VpoolConfig) WithFluctuationLimitRatio(value sdk.Dec) VpoolConfig {
+	newPoolCfg := VpoolConfig(poolCfg)
+	newPoolCfg.FluctuationLimitRatio = value
+	return newPoolCfg
+}
+
+func (poolCfg VpoolConfig) WithMaxOracleSpreadRatio(value sdk.Dec) VpoolConfig {
+	newPoolCfg := VpoolConfig(poolCfg)
+	newPoolCfg.MaxOracleSpreadRatio = value
+	return newPoolCfg
+}
+
+func (poolCfg VpoolConfig) WithMaintenanceMarginRatio(value sdk.Dec) VpoolConfig {
+	newPoolCfg := VpoolConfig(poolCfg)
+	newPoolCfg.MaintenanceMarginRatio = value
+	return newPoolCfg
+}
+
+func (poolCfg VpoolConfig) WithMaxLeverage(value sdk.Dec) VpoolConfig {
+	newPoolCfg := VpoolConfig(poolCfg)
+	newPoolCfg.MaxLeverage = value
+	return newPoolCfg
 }
