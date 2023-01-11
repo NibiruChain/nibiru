@@ -20,20 +20,28 @@ func (k Keeper) CreatePool(
 	quoteAssetReserve sdk.Dec,
 	baseAssetReserve sdk.Dec,
 	config types.VpoolConfig,
-) {
+) error {
 	vpool := types.Vpool{
 		Pair:              pair,
 		BaseAssetReserve:  baseAssetReserve,
 		QuoteAssetReserve: quoteAssetReserve,
 		Config:            config,
 	}
-	k.Pools.Insert(ctx, pair, vpool)
 
-	k.ReserveSnapshots.Insert(
-		ctx,
-		collections.Join(pair, ctx.BlockTime()),
-		vpool.ToSnapshot(ctx),
-	)
+	err := vpool.Validate()
+	if err != nil {
+		return err
+	}
+	err = common.TryCatch(func() {
+		k.Pools.Insert(ctx, pair, vpool)
+
+		k.ReserveSnapshots.Insert(
+			ctx,
+			collections.Join(pair, ctx.BlockTime()),
+			vpool.ToSnapshot(ctx),
+		)
+	})()
+	return err
 }
 
 func (k Keeper) EditPoolConfig(

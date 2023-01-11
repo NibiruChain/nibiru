@@ -265,7 +265,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			exchangedSize := tc.expectedSize
 
 			t.Log("initialize vpool")
-			nibiruApp.VpoolKeeper.CreatePool(
+			assert.NoError(t, nibiruApp.VpoolKeeper.CreatePool(
 				ctx,
 				common.Pair_BTC_NUSD,
 				/* quoteReserve */ sdk.NewDec(1*common.Precision*common.Precision),
@@ -277,7 +277,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 					MaxOracleSpreadRatio:   sdk.OneDec(), // 100%,
 					TradeLimitRatio:        sdk.OneDec(),
 				},
-			)
+			))
 			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            common.Pair_BTC_NUSD,
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -517,7 +517,7 @@ func TestOpenPositionError(t *testing.T) {
 			traderAddr := testutil.AccAddress()
 
 			t.Log("initialize vpool")
-			nibiruApp.VpoolKeeper.CreatePool(
+			assert.NoError(t, nibiruApp.VpoolKeeper.CreatePool(
 				ctx,
 				common.Pair_BTC_NUSD,
 				/* tradeLimitRatio */
@@ -531,7 +531,7 @@ func TestOpenPositionError(t *testing.T) {
 					MaxOracleSpreadRatio:   sdk.OneDec(), // 100%,
 					TradeLimitRatio:        tc.poolTradeLimitRatio,
 				},
-			)
+			))
 			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            common.Pair_BTC_NUSD,
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -588,7 +588,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 
 				t.Log("Set vpool defined by pair on VpoolKeeper")
 				vpoolKeeper := &nibiruApp.VpoolKeeper
-				vpoolKeeper.CreatePool(
+				assert.NoError(t, nibiruApp.VpoolKeeper.CreatePool(
 					ctx,
 					pair,
 					sdk.NewDec(10*common.Precision), //
@@ -600,7 +600,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 						MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"), // 100%,
 						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					},
-				)
+				))
 
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 
