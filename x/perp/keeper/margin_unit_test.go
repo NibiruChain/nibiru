@@ -12,13 +12,11 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -164,8 +162,8 @@ func TestGetMarginRatio(t *testing.T) {
 				Return(tc.newPrice, nil)
 
 			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-				Pair:                       common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.OneDec(),
 			})
 
 			marginRatio, err := perpKeeper.GetMarginRatio(
@@ -195,14 +193,11 @@ func TestRemoveMargin(t *testing.T) {
 				}
 
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
-				mocks.mockPricefeedKeeper.EXPECT().IsActivePair(gomock.Any(), gomock.Any()).Return(true).AnyTimes()
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
 				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-					Pair: pair,
-					CumulativePremiumFractions: []sdk.Dec{
-						sdk.ZeroDec(),
-						sdk.MustNewDecFromStr("0.1")},
+					Pair:                            pair,
+					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.1"),
 				})
 
 				t.Log("Set an underwater position, positive bad debt due to excessive margin request")
@@ -267,10 +262,8 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("set pair metadata")
 				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-					Pair: pair,
-					CumulativePremiumFractions: []sdk.Dec{
-						sdk.ZeroDec(),
-					},
+					Pair:                            pair,
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				})
 
 				t.Log("Set position a healthy position that has 0 unrealized funding")
@@ -329,10 +322,8 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("set pair metadata")
 				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-					Pair: pair,
-					CumulativePremiumFractions: []sdk.Dec{
-						sdk.ZeroDec(),
-					},
+					Pair:                            pair,
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				})
 
 				t.Log("Set position a healthy position that has 0 unrealized funding")
@@ -402,10 +393,8 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("set pair metadata")
 				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-					Pair: pair,
-					CumulativePremiumFractions: []sdk.Dec{
-						sdk.OneDec(),
-					},
+					Pair:                            pair,
+					LatestCumulativePremiumFraction: sdk.OneDec(),
 				})
 
 				t.Log("Set position a healthy position that has 0 unrealized funding")
@@ -460,8 +449,8 @@ func TestAddMargin(t *testing.T) {
 
 				t.Log("set pair metadata")
 				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-					Pair:                       pair,
-					CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+					Pair:                            pair,
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				})
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
 
@@ -502,8 +491,8 @@ func TestAddMargin(t *testing.T) {
 
 				t.Log("set pair metadata")
 				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-					Pair:                       pair,
-					CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+					Pair:                            pair,
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				})
 
 				t.Log("set position")
@@ -573,8 +562,8 @@ func TestAddMargin(t *testing.T) {
 
 				t.Log("set pair metadata")
 				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-					Pair:                       pair,
-					CumulativePremiumFractions: []sdk.Dec{sdk.MustNewDecFromStr("0.001")},
+					Pair:                            pair,
+					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.001"),
 				})
 
 				t.Log("set position")
@@ -751,16 +740,12 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				Margin:        sdk.NewDec(1),
 			},
 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
-				mocks.mockPricefeedKeeper.EXPECT().
-					GetCurrentPrice(
+				mocks.mockOracleKeeper.EXPECT().
+					GetExchangeRate(
 						ctx,
-						common.Pair_BTC_NUSD.Token0,
-						common.Pair_BTC_NUSD.Token1,
+						common.Pair_BTC_NUSD.String(),
 					).
-					Return(pricefeedtypes.CurrentPrice{
-						PairID: common.Pair_BTC_NUSD.String(),
-						Price:  sdk.NewDec(2),
-					}, nil)
+					Return(sdk.NewDec(2), nil)
 			},
 			pnlCalcOption:              types.PnLCalcOption_ORACLE,
 			expectedPositionalNotional: sdk.NewDec(20),
@@ -776,16 +761,12 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				Margin:        sdk.NewDec(1),
 			},
 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
-				mocks.mockPricefeedKeeper.EXPECT().
-					GetCurrentPrice(
+				mocks.mockOracleKeeper.EXPECT().
+					GetExchangeRate(
 						ctx,
-						common.Pair_BTC_NUSD.Token0,
-						common.Pair_BTC_NUSD.Token1,
+						common.Pair_BTC_NUSD.String(),
 					).
-					Return(pricefeedtypes.CurrentPrice{
-						PairID: common.Pair_BTC_NUSD.String(),
-						Price:  sdk.MustNewDecFromStr("0.5"),
-					}, nil)
+					Return(sdk.MustNewDecFromStr("0.5"), nil)
 			},
 			pnlCalcOption:              types.PnLCalcOption_ORACLE,
 			expectedPositionalNotional: sdk.NewDec(5),
@@ -895,16 +876,12 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				Margin:        sdk.NewDec(1),
 			},
 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
-				mocks.mockPricefeedKeeper.EXPECT().
-					GetCurrentPrice(
+				mocks.mockOracleKeeper.EXPECT().
+					GetExchangeRate(
 						ctx,
-						common.Pair_BTC_NUSD.Token0,
-						common.Pair_BTC_NUSD.Token1,
+						common.Pair_BTC_NUSD.String(),
 					).
-					Return(pricefeedtypes.CurrentPrice{
-						PairID: common.Pair_BTC_NUSD.String(),
-						Price:  sdk.MustNewDecFromStr("0.5"),
-					}, nil)
+					Return(sdk.MustNewDecFromStr("0.5"), nil)
 			},
 			pnlCalcOption:              types.PnLCalcOption_ORACLE,
 			expectedPositionalNotional: sdk.NewDec(5),
@@ -920,16 +897,12 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				Margin:        sdk.NewDec(1),
 			},
 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
-				mocks.mockPricefeedKeeper.EXPECT().
-					GetCurrentPrice(
+				mocks.mockOracleKeeper.EXPECT().
+					GetExchangeRate(
 						ctx,
-						common.Pair_BTC_NUSD.Token0,
-						common.Pair_BTC_NUSD.Token1,
+						common.Pair_BTC_NUSD.String(),
 					).
-					Return(pricefeedtypes.CurrentPrice{
-						PairID: common.Pair_BTC_NUSD.String(),
-						Price:  sdk.NewDec(2),
-					}, nil)
+					Return(sdk.NewDec(2), nil)
 			},
 			pnlCalcOption:              types.PnLCalcOption_ORACLE,
 			expectedPositionalNotional: sdk.NewDec(20),

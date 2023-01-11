@@ -241,3 +241,31 @@ message FundingRateChangedEvent {
     // The block time in unix milliseconds at which the funding rate was calculated.
     int64 block_time_ms = 8;
 }
+
+message MetricsEvent {
+  string pair  = 1;
+
+  // Sum of all active position sizes for the pair.
+  string net_size = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // Total notional volume for the pair.
+  string volumeQuote = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // Total size volume for the pair.
+  string volumeBase = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // The block number at which metrics were generated.
+  int64 block_height = 5;
+
+  // The block time in unix milliseconds at which metrics were generated.
+  int64 block_time_ms = 6;
+}

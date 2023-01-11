@@ -50,7 +50,8 @@ func (k Keeper) countVotesAndUpdateExchangeRates(
 	for pair, ballot := range pairBallotMap {
 		exchangeRate := Tally(ballot, params.RewardBand, validatorPerformanceMap)
 
-		k.ExchangeRates.Insert(ctx, pair, exchangeRate)
+		k.SetPrice(ctx, pair, exchangeRate)
+
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(types.EventTypeExchangeRateUpdate,
 				sdk.NewAttribute(types.AttributeKeyPair, pair),

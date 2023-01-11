@@ -41,13 +41,11 @@ func TestKeeperClosePosition(t *testing.T) {
 			},
 		)
 		require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
-		nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, pair, true)
 
 		t.Log("Set vpool defined by pair on PerpKeeper")
 		setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-			Pair: pair,
-			CumulativePremiumFractions: []sdk.Dec{
-				sdk.MustNewDecFromStr("0.2")},
+			Pair:                            pair,
+			LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.2"),
 		},
 		)
 
@@ -63,6 +61,9 @@ func TestKeeperClosePosition(t *testing.T) {
 		aliceQuote := sdk.NewInt(60)
 		aliceLeverage := sdk.NewDec(10)
 		aliceBaseLimit := sdk.NewDec(150)
+
+		nibiruApp.OracleKeeper.SetPrice(ctx, pair.String(), sdk.NewDec(20))
+
 		_, err = nibiruApp.PerpKeeper.OpenPosition(
 			ctx, pair, aliceSide, alice, aliceQuote, aliceLeverage, aliceBaseLimit)
 		require.NoError(t, err)
@@ -70,9 +71,8 @@ func TestKeeperClosePosition(t *testing.T) {
 		t.Log("open position for bob - long")
 		// force funding payments
 		setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-			Pair: pair,
-			CumulativePremiumFractions: []sdk.Dec{
-				sdk.MustNewDecFromStr("0.3")},
+			Pair:                            pair,
+			LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.3"),
 		})
 		bob := testutil.AccAddress()
 		err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, bob,

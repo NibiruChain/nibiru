@@ -1,6 +1,7 @@
 package simulation
 
 import (
+	"fmt"
 	"math/rand"
 	"strings"
 	"time"
@@ -68,6 +69,11 @@ func SimulateMsgCreatePool(ak types.AccountKeeper, bk types.BankKeeper, k keeper
 			PoolParams: &poolParams,
 			PoolAssets: poolAssets,
 		}
+		_, err := k.FetchPoolFromPair(ctx, poolAssets[0].Token.Denom, poolAssets[1].Token.Denom)
+		if err == nil {
+			// types.ErrPoolWithSameAssetsExists
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "pool already exists for these tokens"), nil, nil
+		}
 
 		return simulation.GenAndDeliverTxWithRandFees(
 			simulation.OperationInput{
@@ -116,6 +122,11 @@ func SimulateMsgSwap(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keepe
 			PoolId:        poolId,
 			TokenIn:       tokenIn,
 			TokenOutDenom: denomOut,
+		}
+		pool, _ := k.FetchPool(ctx, poolId)
+		_, err := pool.CalcOutAmtGivenIn(tokenIn, denomOut, false)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "pool imbalanced and not enough swap amount"), nil, nil
 		}
 
 		return simulation.GenAndDeliverTxWithRandFees(
@@ -204,7 +215,7 @@ This function has a 33% chance of swapping a random fraction of the balance of a
 func SimulateExitPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
-	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+	) (opMsg simtypes.OperationMsg, futureOp []simtypes.FutureOperation, err error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 		spendableCoins := bk.SpendableCoins(ctx, simAccount.Address)
 
@@ -237,11 +248,11 @@ func SimulateExitPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keep
 		// check if there are enough tokens to withdraw
 		pool, err := k.FetchPool(ctx, poolId)
 		if err != nil {
-			panic(err)
+			return opMsg, futureOp, err
 		}
 		tokensOut, err := pool.TokensOutFromPoolSharesIn(shareTokensIn.Amount)
 		if err != nil {
-			panic(err)
+			return opMsg, futureOp, err
 		}
 
 		// this is necessary, as invalid tokens will be considered as wrong inputs in simulations
@@ -284,19 +295,33 @@ func PoolAssetsCoins(assets []types.PoolAsset) sdk.Coins {
 }
 
 // genBalancerPoolParams creates random parameters for the swap and exit fee of the pool
+// The pool has 50% chance of being a stableswap pool.
 func genBalancerPoolParams(r *rand.Rand, blockTime time.Time, assets []types.PoolAsset) types.PoolParams {
 	// swapFeeInt := int64(r.Intn(1e5))
 	// swapFee := sdk.NewDecWithPrec(swapFeeInt, 6)
 
 	exitFeeInt := int64(r.Intn(1e5))
 	exitFee := sdk.NewDecWithPrec(exitFeeInt, 6)
+	isBalancer := r.Intn(2)
 
-	// TODO: Randomly generate LBP params
+	var poolType types.PoolType
+	if isBalancer == 0 {
+		poolType = types.PoolType_BALANCER
+	} else {
+		poolType = types.PoolType_STABLESWAP
+	}
+
+	A := sdk.NewInt(int64(r.Intn(4_000) + 1))
+
+	// Create swap fee between 0% and 5%
+	swapFeeFloat := r.Float64() * .05
+	swapFee := sdk.MustNewDecFromStr(fmt.Sprintf("%.5f", swapFeeFloat))
+
 	return types.PoolParams{
-		// SwapFee:                  swapFee,
-		SwapFee:  sdk.ZeroDec(),
+		SwapFee:  swapFee,
 		ExitFee:  exitFee,
-		PoolType: types.PoolType_BALANCER,
+		PoolType: poolType,
+		A:        A,
 	}
 }
 
@@ -315,6 +340,8 @@ func genPoolAssets(
 		if _, ok := whitelistedAssets[denom]; ok {
 			amt, _ := simtypes.RandPositiveInt(r, coins[denomIndex].Amount.QuoRaw(10))
 			reserveAmt := sdk.NewCoin(denom, amt)
+
+			// Weight is useless for stableswap pools.
 			weight := sdk.NewInt(r.Int63n(9) + 1)
 			assets = append(assets, types.PoolAsset{Token: reserveAmt, Weight: weight})
 

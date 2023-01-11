@@ -262,13 +262,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			t.Log("Setup Nibiru app and constants")
 			nibiruApp, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
 			traderAddr := testutil.AccAddress()
-			oracle := testutil.AccAddress()
 			exchangedSize := tc.expectedSize
-
-			t.Log("set pricefeed oracle")
-			nibiruApp.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
-			require.NoError(t, nibiruApp.PricefeedKeeper.PostRawPrice(ctx, oracle, common.Pair_BTC_NUSD.String(), sdk.OneDec(), time.Now().Add(time.Hour)))
-			require.NoError(t, nibiruApp.PricefeedKeeper.GatherRawPrices(ctx, common.DenomBTC, common.DenomNUSD))
 
 			t.Log("initialize vpool")
 			nibiruApp.VpoolKeeper.CreatePool(
@@ -285,8 +279,8 @@ func TestOpenPositionSuccess(t *testing.T) {
 				},
 			)
 			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-				Pair:                       common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
 			t.Log("initialize trader funds")
@@ -521,12 +515,6 @@ func TestOpenPositionError(t *testing.T) {
 			t.Log("Setup Nibiru app and constants")
 			nibiruApp, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
 			traderAddr := testutil.AccAddress()
-			oracle := testutil.AccAddress()
-
-			t.Log("set pricefeed oracle")
-			nibiruApp.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
-			require.NoError(t, nibiruApp.PricefeedKeeper.PostRawPrice(ctx, oracle, common.Pair_BTC_NUSD.String(), sdk.OneDec(), time.Now().Add(time.Hour)))
-			require.NoError(t, nibiruApp.PricefeedKeeper.GatherRawPrices(ctx, common.DenomBTC, common.DenomNUSD))
 
 			t.Log("initialize vpool")
 			nibiruApp.VpoolKeeper.CreatePool(
@@ -545,8 +533,8 @@ func TestOpenPositionError(t *testing.T) {
 				},
 			)
 			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-				Pair:                       common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
 			t.Log("initialize trader funds")
@@ -613,7 +601,6 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					},
 				)
-				nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, pair, true)
 
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 

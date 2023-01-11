@@ -20,15 +20,17 @@ type Keeper struct {
 	storeKey      sdk.StoreKey
 	ParamSubspace paramtypes.Subspace
 
-	BankKeeper      types.BankKeeper
-	AccountKeeper   types.AccountKeeper
-	PricefeedKeeper types.PricefeedKeeper
-	VpoolKeeper     types.VpoolKeeper
-	EpochKeeper     types.EpochKeeper
+	BankKeeper    types.BankKeeper
+	AccountKeeper types.AccountKeeper
+	OracleKeeper  types.OracleKeeper
+	VpoolKeeper   types.VpoolKeeper
+	EpochKeeper   types.EpochKeeper
 
 	Positions      collections.Map[collections.Pair[common.AssetPair, sdk.AccAddress], types.Position]
 	PairsMetadata  collections.Map[common.AssetPair, types.PairMetadata]
 	PrepaidBadDebt collections.Map[string, types.PrepaidBadDebt]
+
+	Metrics collections.Map[string, types.Metrics]
 }
 
 // NewKeeper Creates a new x/perp Keeper instance.
@@ -39,7 +41,7 @@ func NewKeeper(
 
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
-	priceKeeper types.PricefeedKeeper,
+	oracleKeeper types.OracleKeeper,
 	vpoolKeeper types.VpoolKeeper,
 	epochKeeper types.EpochKeeper,
 ) Keeper {
@@ -54,14 +56,14 @@ func NewKeeper(
 	}
 
 	return Keeper{
-		cdc:             cdc,
-		storeKey:        storeKey,
-		ParamSubspace:   paramSubspace,
-		BankKeeper:      bankKeeper,
-		AccountKeeper:   accountKeeper,
-		PricefeedKeeper: priceKeeper,
-		VpoolKeeper:     vpoolKeeper,
-		EpochKeeper:     epochKeeper,
+		cdc:           cdc,
+		storeKey:      storeKey,
+		ParamSubspace: paramSubspace,
+		BankKeeper:    bankKeeper,
+		AccountKeeper: accountKeeper,
+		OracleKeeper:  oracleKeeper,
+		VpoolKeeper:   vpoolKeeper,
+		EpochKeeper:   epochKeeper,
 		Positions: collections.NewMap(
 			storeKey, 0,
 			collections.PairKeyEncoder(common.AssetPairKeyEncoder, collections.AccAddressKeyEncoder),
@@ -69,6 +71,8 @@ func NewKeeper(
 		),
 		PairsMetadata:  collections.NewMap(storeKey, 1, common.AssetPairKeyEncoder, collections.ProtoValueEncoder[types.PairMetadata](cdc)),
 		PrepaidBadDebt: collections.NewMap(storeKey, 2, collections.StringKeyEncoder, collections.ProtoValueEncoder[types.PrepaidBadDebt](cdc)),
+
+		Metrics: collections.NewMap(storeKey, 3, collections.StringKeyEncoder, collections.ProtoValueEncoder[types.Metrics](cdc)),
 	}
 }
 

@@ -17,7 +17,6 @@ import (
 
 // Simulation parameter constants
 const (
-	votePeriodKey        = "vote_period"
 	voteThresholdKey     = "vote_threshold"
 	rewardBandKey        = "reward_band"
 	slashFractionKey     = "slash_fraction"
@@ -62,12 +61,6 @@ func GenMinValidPerWindow(r *rand.Rand) sdk.Dec {
 
 // RandomizedGenState generates a random GenesisState for oracle
 func RandomizedGenState(simState *module.SimulationState) {
-	var votePeriod uint64
-	simState.AppParams.GetOrGenerate(
-		simState.Cdc, votePeriodKey, &votePeriod, simState.Rand,
-		func(r *rand.Rand) { votePeriod = GenVotePeriod(r) },
-	)
-
 	var voteThreshold sdk.Dec
 	simState.AppParams.GetOrGenerate(
 		simState.Cdc, voteThresholdKey, &voteThreshold, simState.Rand,
@@ -100,7 +93,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 
 	oracleGenesis := types.NewGenesisState(
 		types.Params{
-			VotePeriod:    votePeriod,
+			VotePeriod:    uint64(10_000),
 			VoteThreshold: voteThreshold,
 			RewardBand:    rewardBand,
 			Whitelist: []string{
@@ -113,7 +106,9 @@ func RandomizedGenState(simState *module.SimulationState) {
 			SlashWindow:       slashWindow,
 			MinValidPerWindow: minValidPerWindow,
 		},
-		[]types.ExchangeRateTuple{},
+		[]types.ExchangeRateTuple{
+			{Pair: common.Pair_BTC_NUSD.String(), ExchangeRate: sdk.NewDec(20_000)},
+		},
 		[]types.FeederDelegation{},
 		[]types.MissCounter{},
 		[]types.AggregateExchangeRatePrevote{},
@@ -122,7 +117,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 		[]types.PairReward{},
 	)
 
-	bz, err := json.MarshalIndent(&oracleGenesis.Params, "", " ")
+	bz, err := json.MarshalIndent(&oracleGenesis, "", " ")
 	if err != nil {
 		panic(err)
 	}

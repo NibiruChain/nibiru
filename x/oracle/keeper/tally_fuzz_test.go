@@ -1,14 +1,18 @@
 package keeper
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	fuzz "github.com/google/gofuzz"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
 )
 
 func TestFuzz_Tally(t *testing.T) {
@@ -64,6 +68,98 @@ func TestFuzz_Tally(t *testing.T) {
 	})
 }
 
+func TestOraclePairsInsert(t *testing.T) {
+	testCases := []string{"", "1", "22", "2xxxx12312u30912u01u2309u21093u"}
+
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(fmt.Sprintf("key: %s", tc), func(t *testing.T) {
+			testSetup, _ := setup(t)
+			ctx := testSetup.Ctx
+			oracleKeeper := testSetup.OracleKeeper
+
+			assert.NotPanics(t, func() {
+				oracleKeeper.Pairs.Insert(ctx, tc)
+			}, "key: %s", tc)
+			assert.True(t, oracleKeeper.Pairs.Has(ctx, tc))
+		})
+	}
+}
+
+type VoteMap = map[string]types.ExchangeRateBallot
+
+func TestRemoveInvalidBallots(t *testing.T) {
+	testCases := []struct {
+		name    string
+		voteMap VoteMap
+	}{
+		{
+			name: "empty key, empty ballot", voteMap: VoteMap{
+				"": types.ExchangeRateBallot{},
+			},
+		},
+		{
+			name: "nonempty key, empty ballot", voteMap: VoteMap{
+				"xxx": types.ExchangeRateBallot{},
+			},
+		},
+		{
+			name: "nonempty keys, empty ballot", voteMap: VoteMap{
+				"xxx":    types.ExchangeRateBallot{},
+				"abc123": types.ExchangeRateBallot{},
+			},
+		},
+		{
+			name: "mixed empty keys, empty ballot", voteMap: VoteMap{
+				"xxx":    types.ExchangeRateBallot{},
+				"":       types.ExchangeRateBallot{},
+				"abc123": types.ExchangeRateBallot{},
+				"0x":     types.ExchangeRateBallot{},
+			},
+		},
+		{
+			name: "empty key, nonempty ballot, not whitelisted",
+			voteMap: VoteMap{
+				"": types.ExchangeRateBallot{
+					{Pair: "", ExchangeRate: sdk.ZeroDec(), Voter: sdk.ValAddress{}, Power: 0},
+				},
+			},
+		},
+		{
+			name: "nonempty key, nonempty ballot, whitelisted",
+			voteMap: VoteMap{
+				"x": types.ExchangeRateBallot{
+					{Pair: "x", ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
+				},
+				common.Pair_BTC_NUSD.String(): types.ExchangeRateBallot{
+					{Pair: common.Pair_BTC_NUSD.String(), ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
+				},
+				common.Pair_ETH_NUSD.String(): types.ExchangeRateBallot{
+					{Pair: common.Pair_BTC_NUSD.String(), ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
+				},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			testSetup, _ := setup(t)
+			ctx := testSetup.Ctx
+			oracleKeeper := testSetup.OracleKeeper
+
+			switch {
+			// case tc.err:
+			// TODO Include the error case when collections no longer panics
+			default:
+				assert.NotPanics(t, func() {
+					_, _ = oracleKeeper.RemoveInvalidBallots(ctx, tc.voteMap)
+				}, "voteMap: %v", tc.voteMap)
+			}
+		})
+	}
+}
+
 func TestFuzz_PickReferencePair(t *testing.T) {
 	var pairs []string
 
@@ -72,7 +168,7 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 			numPairs := c.Intn(100) + 5
 
 			for i := 0; i < numPairs; i++ {
-				*e = append(*e, c.RandString())
+				*e = append(*e, testutil.RandStringBytes(5))
 			}
 		},
 		func(e *sdk.Dec, c fuzz.Continue) {
@@ -118,17 +214,29 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 
 	input, _ := setup(t)
 
+	// test OracleKeeper.Pairs.Insert
 	voteTargets := map[string]struct{}{}
 	f.Fuzz(&voteTargets)
-
-	for k := range voteTargets {
-		input.OracleKeeper.Pairs.Insert(input.Ctx, k)
+	whitelistedPairs := make(common.StringSet)
+	for key := range voteTargets {
+		assert.NotPanics(t, func() {
+			input.OracleKeeper.Pairs.Insert(input.Ctx, key)
+		}, "attempted to insert key: %s", key)
+		whitelistedPairs.Add(key)
 	}
 
+	// test OracleKeeper.RemoveInvalidBallots
 	voteMap := map[string]types.ExchangeRateBallot{}
 	f.Fuzz(&voteMap)
 
-	require.NotPanics(t, func() {
+	// Prevent collections error that arrises from iterating over a store with blank keys
+	// > Panic value: (blank string here) invalid StringKey bytes. StringKey must be at least length 2.
+	var panicAssertFn func(t assert.TestingT, f assert.PanicTestFunc, msgAndArgs ...interface{}) bool
+	panicAssertFn = assert.NotPanics
+	if whitelistedPairs.Has("") {
+		panicAssertFn = assert.Panics
+	}
+	panicAssertFn(t, func() {
 		input.OracleKeeper.RemoveInvalidBallots(input.Ctx, voteMap)
-	})
+	}, "voteMap: %v", voteMap)
 }

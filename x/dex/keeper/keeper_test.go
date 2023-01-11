@@ -5,10 +5,11 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/testutil"
 
-	simapp2 "github.com/NibiruChain/nibiru/simapp"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 
@@ -18,34 +19,36 @@ import (
 )
 
 func TestGetAndSetNextPoolNumber(t *testing.T) {
-	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 	// Write to store
 	app.DexKeeper.SetNextPoolNumber(ctx, 150)
 
 	// Read from store
-	poolNumber := app.DexKeeper.GetNextPoolNumber(ctx)
-
+	poolNumber, err := app.DexKeeper.GetNextPoolNumber(ctx)
+	assert.NoError(t, err)
 	require.EqualValues(t, poolNumber, 150)
 }
 
 func TestGetNextPoolNumberAndIncrement(t *testing.T) {
-	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 	// Write a pool number
 	app.DexKeeper.SetNextPoolNumber(ctx, 200)
 
 	// Get next and increment should return the current pool number
-	poolNumber := app.DexKeeper.GetNextPoolNumberAndIncrement(ctx)
+	poolNumber, err := app.DexKeeper.GetNextPoolNumberAndIncrement(ctx)
+	assert.NoError(t, err)
 	require.EqualValues(t, poolNumber, 200)
 
 	// Check that the previous call incremented the number
-	poolNumber = app.DexKeeper.GetNextPoolNumber(ctx)
+	poolNumber, err = app.DexKeeper.GetNextPoolNumber(ctx)
+	assert.NoError(t, err)
 	require.EqualValues(t, poolNumber, 201)
 }
 
 func TestSetAndFetchPool(t *testing.T) {
-	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 	pool := types.Pool{
 		Id: 150,
@@ -71,8 +74,8 @@ func TestSetAndFetchPool(t *testing.T) {
 
 	app.DexKeeper.SetPool(ctx, pool)
 
-	retrievedPool, _ := app.DexKeeper.FetchPool(ctx, 150)
-
+	retrievedPool, err := app.DexKeeper.FetchPool(ctx, 150)
+	assert.NoError(t, err)
 	require.Equal(t, pool, retrievedPool)
 }
 
@@ -89,7 +92,7 @@ func TestFetchPoolFromPair(t *testing.T) {
 			firstToken:     "tokenA",
 			secondToken:    "tokenB",
 			expectedPass:   true,
-			expectedPoolId: uint64(1),
+			expectedPoolId: 1,
 		},
 		{
 			name:           "Correct parse pool 1 inverted",
@@ -154,7 +157,7 @@ func TestFetchPoolFromPair(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 			app.DexKeeper.SetPool(ctx, types.Pool{
 				Id: 1,
@@ -216,7 +219,7 @@ func TestFetchPoolFromPair(t *testing.T) {
 }
 
 func TestNewPool(t *testing.T) {
-	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 	poolCreationFeeCoin := sdk.NewInt64Coin(common.DenomNIBI, 1000*common.Precision)
 	app.DexKeeper.SetParams(ctx, types.NewParams(
@@ -287,7 +290,7 @@ func TestNewPool(t *testing.T) {
 }
 
 func TestNewPoolNotEnoughFunds(t *testing.T) {
-	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 	app.DexKeeper.SetParams(ctx, types.NewParams(
 		/*startingPoolNumber=*/ 1,
@@ -328,7 +331,7 @@ func TestNewPoolNotEnoughFunds(t *testing.T) {
 }
 
 func TestNewPoolTooLittleAssets(t *testing.T) {
-	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewTestNibiruAppAndContext(true)
 	userAddr, err := sdk.AccAddressFromBech32(testutil.AccAddress().String())
 	require.NoError(t, err)
 
@@ -349,7 +352,7 @@ func TestNewPoolTooLittleAssets(t *testing.T) {
 }
 
 func TestKeeperNewPoolNotWhitelistedAssets(t *testing.T) {
-	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewTestNibiruAppAndContext(true)
 	userAddr, err := sdk.AccAddressFromBech32(testutil.AccAddress().String())
 	require.NoError(t, err)
 
@@ -374,7 +377,7 @@ func TestKeeperNewPoolNotWhitelistedAssets(t *testing.T) {
 }
 
 func TestNewPoolTooManyAssets(t *testing.T) {
-	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewTestNibiruAppAndContext(true)
 	userAddr, err := sdk.AccAddressFromBech32(testutil.AccAddress().String())
 	require.NoError(t, err)
 
@@ -419,7 +422,7 @@ func TestNewPoolTooManyAssets(t *testing.T) {
 }
 
 func TestNewPoolDups(t *testing.T) {
-	app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewTestNibiruAppAndContext(true)
 	userAddr, err := sdk.AccAddressFromBech32(testutil.AccAddress().String())
 	require.NoError(t, err)
 
@@ -574,7 +577,7 @@ func TestJoinPool(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 			poolAddr := testutil.AccAddress()
 			tc.initialPool.Address = poolAddr.String()
@@ -667,6 +670,36 @@ func TestJoinPoolAllAssets(t *testing.T) {
 				/*shares=*/ 150),
 		},
 		{
+			name: "join with some assets, pool empty in one side, none remaining",
+			joinerInitialFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("foo", 100),
+			),
+			initialPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("bar", 100),
+					sdk.NewInt64Coin("foo", 1),
+				),
+				/*shares=*/ 100),
+			tokensIn: sdk.NewCoins(
+				sdk.NewInt64Coin("foo", 100),
+			),
+			expectedNumSharesOut: sdk.NewInt64Coin(shareDenom, 904),
+			expectedRemCoins:     sdk.NewCoins(),
+			expectedJoinerFinalFunds: sdk.NewCoins(
+				sdk.NewInt64Coin(shareDenom, 904),
+				sdk.NewInt64Coin("bar", 0),
+				sdk.NewInt64Coin("foo", 0),
+			),
+			expectedFinalPool: mock.DexPool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("bar", 100),
+					sdk.NewInt64Coin("foo", 101),
+				),
+				/*shares=*/ 1004),
+		},
+		{
 			name: "join with some assets, but swap done",
 			joinerInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("bar", 100),
@@ -683,12 +716,12 @@ func TestJoinPoolAllAssets(t *testing.T) {
 				sdk.NewInt64Coin("bar", 50),
 				sdk.NewInt64Coin("foo", 75),
 			),
-			expectedNumSharesOut: sdk.NewInt64Coin(shareDenom, 61),
+			expectedNumSharesOut: sdk.NewInt64Coin(shareDenom, 62),
 			expectedRemCoins:     sdk.NewCoins(),
 			expectedJoinerFinalFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(shareDenom, 50),
-				sdk.NewInt64Coin("bar", 35),
-				sdk.NewInt64Coin("foo", 35),
+				sdk.NewInt64Coin(shareDenom, 62),
+				sdk.NewInt64Coin("bar", 50),
+				sdk.NewInt64Coin("foo", 25),
 			),
 			expectedFinalPool: mock.DexPool(
 				/*poolId=*/ 1,
@@ -696,14 +729,14 @@ func TestJoinPoolAllAssets(t *testing.T) {
 					sdk.NewInt64Coin("bar", 150),
 					sdk.NewInt64Coin("foo", 175),
 				),
-				/*shares=*/ 161),
+				/*shares=*/ 162),
 		},
 	}
 
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 			poolAddr := testutil.AccAddress()
 			tc.initialPool.Address = poolAddr.String()
@@ -718,6 +751,7 @@ func TestJoinPoolAllAssets(t *testing.T) {
 			require.Equal(t, tc.expectedFinalPool, pool)
 			require.Equal(t, tc.expectedNumSharesOut, numSharesOut)
 			require.Equal(t, tc.expectedRemCoins, remCoins)
+			require.Equal(t, tc.expectedJoinerFinalFunds, app.BankKeeper.GetAllBalances(ctx, joinerAddr))
 		})
 	}
 }
@@ -815,7 +849,7 @@ func TestExitPool(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 			poolAddr := testutil.AccAddress()
 			tc.initialPool.Address = poolAddr.String()

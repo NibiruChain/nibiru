@@ -48,7 +48,7 @@ func SimulateMsgOpenPosition(ak types.AccountKeeper, bk types.BankKeeper, k keep
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
-		fundAccountWithTokens(ctx, simAccount.Address, bk)
+		errFundAccount := fundAccountWithTokens(ctx, simAccount.Address, bk)
 		spendableCoins := bk.SpendableCoins(ctx, simAccount.Address)
 
 		pools := k.VpoolKeeper.GetAllPools(ctx)
@@ -59,16 +59,32 @@ func SimulateMsgOpenPosition(ak types.AccountKeeper, bk types.BankKeeper, k keep
 
 		leverage := simtypes.RandomDecAmount(r, pool.Config.MaxLeverage.Sub(sdk.OneDec())).Add(sdk.OneDec()) // between [1, MaxLeverage]
 		openNotional := leverage.MulInt(quoteAmt)
+
+		var side types.Side
+		var direction pooltypes.Direction
+		if r.Float32() < .5 {
+			side = types.Side_BUY
+			direction = pooltypes.Direction_ADD_TO_POOL
+		} else {
+			side = types.Side_SELL
+			direction = pooltypes.Direction_REMOVE_FROM_POOL
+		}
+
 		feesAmt := openNotional.Mul(sdk.MustNewDecFromStr("0.002")).Ceil().TruncateInt()
 		spentCoins := sdk.NewCoins(sdk.NewCoin(common.DenomNUSD, quoteAmt.Add(feesAmt)))
 
 		msg := &types.MsgOpenPosition{
 			Sender:               simAccount.Address.String(),
 			TokenPair:            common.Pair_BTC_NUSD.String(),
-			Side:                 types.Side_BUY,
+			Side:                 side,
 			QuoteAssetAmount:     quoteAmt,
 			Leverage:             leverage,
 			BaseAssetAmountLimit: sdk.ZeroInt(),
+		}
+
+		isOverFluctation := checkIsOverFluctation(ctx, k, pool, openNotional, direction)
+		if isOverFluctation {
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "over fluctuation limit"), nil, nil
 		}
 
 		opMsg, futureOps, err := simulation.GenAndDeliverTxWithRandFees(
@@ -91,9 +107,24 @@ func SimulateMsgOpenPosition(ak types.AccountKeeper, bk types.BankKeeper, k keep
 			fmt.Println(spendableCoins)
 			fmt.Println(quoteAmt)
 		}
-
-		return opMsg, futureOps, err
+		return opMsg, futureOps, common.CombineErrors(err, errFundAccount)
 	}
+}
+
+// Ensure wether the position we open won't trigger the fluctuation limit.
+func checkIsOverFluctation(
+	ctx sdk.Context, k keeper.Keeper, pool pooltypes.Vpool, openNotional sdk.Dec, direction pooltypes.Direction) bool {
+	quoteDelta := openNotional
+	baseDelta, _ := pool.GetBaseAmountByQuoteAmount(quoteDelta.Abs().MulInt64(direction.ToMultiplier()))
+	snapshot, _ := k.VpoolKeeper.GetLastSnapshot(ctx, pool)
+	currentPrice := snapshot.QuoteAssetReserve.Quo(snapshot.BaseAssetReserve)
+	newPrice := pool.QuoteAssetReserve.Add(quoteDelta).Quo(pool.BaseAssetReserve.Sub(baseDelta))
+
+	fluctuationLimitRatio := pool.Config.FluctuationLimitRatio
+	snapshotUpperLimit := currentPrice.Mul(sdk.OneDec().Add(fluctuationLimitRatio))
+	snapshotLowerLimit := currentPrice.Mul(sdk.OneDec().Sub(fluctuationLimitRatio))
+	isOverFluctation := newPrice.GT(snapshotUpperLimit) || newPrice.LT(snapshotLowerLimit)
+	return isOverFluctation
 }
 
 /*
@@ -187,7 +218,11 @@ func SimulateMsgAddMargin(ak types.AccountKeeper, bk types.BankKeeper, k keeper.
 
 		spendableCoins := bk.SpendableCoins(ctx, simAccount.Address)
 
+		if spendableCoins.AmountOf(common.DenomNUSD).IsZero() {
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "no nusd left"), nil, nil
+		}
 		quoteAmt, _ := simtypes.RandPositiveInt(r, spendableCoins.AmountOf(common.DenomNUSD))
+
 		spentCoin := sdk.NewCoin(common.DenomNUSD, quoteAmt)
 
 		msg = &types.MsgAddMargin{
@@ -275,13 +310,13 @@ func SimulateMsgRemoveMargin(ak types.AccountKeeper, bk types.BankKeeper, k keep
 	}
 }
 
-func fundAccountWithTokens(ctx sdk.Context, receiver sdk.AccAddress, bk types.BankKeeper) {
+func fundAccountWithTokens(ctx sdk.Context, receiver sdk.AccAddress, bk types.BankKeeper) (err error) {
 	newCoins := sdk.NewCoins(
 		sdk.NewCoin(common.DenomNUSD, sdk.NewInt(1e6)),
 	)
 
 	if err := bk.MintCoins(ctx, types.ModuleName, newCoins); err != nil {
-		panic(err)
+		return err
 	}
 
 	if err := bk.SendCoinsFromModuleToAccount(
@@ -290,6 +325,8 @@ func fundAccountWithTokens(ctx sdk.Context, receiver sdk.AccAddress, bk types.Ba
 		receiver,
 		newCoins,
 	); err != nil {
-		panic(err)
+		return err
 	}
+
+	return nil
 }

@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -9,6 +10,7 @@ import (
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/tendermint/tendermint/libs/log"
+	"github.com/tendermint/tendermint/libs/math"
 
 	"github.com/NibiruChain/collections"
 
@@ -34,6 +36,10 @@ type Keeper struct {
 	MissCounters      collections.Map[sdk.ValAddress, uint64]
 	Prevotes          collections.Map[sdk.ValAddress, types.AggregateExchangeRatePrevote]
 	Votes             collections.Map[sdk.ValAddress, types.AggregateExchangeRateVote]
+
+	// PriceSnapshots maps types.PriceSnapshot to the common.AssetPair of the snapshot and the creation timestamp as keys.Uint64Key.
+	PriceSnapshots collections.Map[collections.Pair[string, time.Time], types.PriceSnapshot]
+
 	// TODO(mercilex): use asset pair
 	Pairs         collections.KeySet[string]
 	PairRewards   collections.IndexedMap[uint64, types.PairReward, PairRewardsIndexes]
@@ -74,6 +80,7 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
 		StakingKeeper:     stakingKeeper,
 		distrName:         distrName,
 		ExchangeRates:     collections.NewMap(storeKey, 1, collections.StringKeyEncoder, collections.DecValueEncoder),
+		PriceSnapshots:    collections.NewMap(storeKey, 10, collections.PairKeyEncoder(collections.StringKeyEncoder, collections.TimeKeyEncoder), collections.ProtoValueEncoder[types.PriceSnapshot](cdc)),
 		FeederDelegations: collections.NewMap(storeKey, 2, collections.ValAddressKeyEncoder, collections.AccAddressValueEncoder),
 		MissCounters:      collections.NewMap(storeKey, 3, collections.ValAddressKeyEncoder, collections.Uint64ValueEncoder),
 		Prevotes:          collections.NewMap(storeKey, 4, collections.ValAddressKeyEncoder, collections.ProtoValueEncoder[types.AggregateExchangeRatePrevote](cdc)),
@@ -111,4 +118,72 @@ func (k Keeper) ValidateFeeder(ctx sdk.Context, feederAddr sdk.AccAddress, valid
 	}
 
 	return nil
+}
+
+/*
+calcTwap walks through a slice of PriceSnapshots and tallies up the prices weighted by the amount of time they were active for.
+Callers of this function should already check if the snapshot slice is empty. Passing an empty snapshot slice will result in a panic.
+*/
+func (k Keeper) calcTwap(ctx sdk.Context, snapshots []types.PriceSnapshot) (price sdk.Dec, err error) {
+	if len(snapshots) == 1 {
+		return snapshots[0].Price, nil
+	}
+	twapLookBack := k.GetParams(ctx).TwapLookbackWindow.Milliseconds()
+	firstTimeStamp := ctx.BlockTime().UnixMilli() - twapLookBack
+	cumulativePrice := sdk.ZeroDec()
+
+	firstTimeStamp = math.MaxInt64(snapshots[0].TimestampMs, firstTimeStamp)
+
+	for i, s := range snapshots {
+		var nextTimestampMs int64
+		var timestampStart int64
+
+		if i == 0 {
+			timestampStart = firstTimeStamp
+		} else {
+			timestampStart = s.TimestampMs
+		}
+
+		if i == len(snapshots)-1 {
+			// if we're at the last snapshot, then consider that price as ongoing until the current blocktime
+			nextTimestampMs = ctx.BlockTime().UnixMilli()
+		} else {
+			nextTimestampMs = snapshots[i+1].TimestampMs
+		}
+
+		price := s.Price.MulInt64(nextTimestampMs - timestampStart)
+		cumulativePrice = cumulativePrice.Add(price)
+	}
+	return cumulativePrice.QuoInt64(ctx.BlockTime().UnixMilli() - firstTimeStamp), nil
+}
+
+func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair string) (price sdk.Dec, err error) {
+	snapshots := k.PriceSnapshots.Iterate(
+		ctx,
+		collections.PairRange[string, time.Time]{}.
+			Prefix(pair).StartExclusive(ctx.BlockTime().Add(-1*k.GetParams(ctx).TwapLookbackWindow)).EndInclusive(ctx.BlockTime()),
+	).Values()
+
+	if len(snapshots) == 0 {
+		// if there are no snapshots, return -1 for the price
+		return sdk.OneDec().Neg(), types.ErrNoValidTWAP
+	}
+
+	return k.calcTwap(ctx, snapshots)
+}
+
+func (k Keeper) GetExchangeRate(ctx sdk.Context, pair string) (price sdk.Dec, err error) {
+	return k.ExchangeRates.Get(ctx, pair)
+}
+
+// SetPrice sets the price for a pair as well as the price snapshot.
+func (k Keeper) SetPrice(ctx sdk.Context, pair string, price sdk.Dec) {
+	k.ExchangeRates.Insert(ctx, pair, price)
+
+	key := collections.Join(pair, ctx.BlockTime())
+	k.PriceSnapshots.Insert(ctx, key, types.PriceSnapshot{
+		Pair:        pair,
+		Price:       price,
+		TimestampMs: ctx.BlockTime().UnixMilli(),
+	})
 }

@@ -17,13 +17,13 @@ import (
 func NewKeeper(
 	codec codec.BinaryCodec,
 	storeKey sdk.StoreKey,
-	pricefeedKeeper types.PricefeedKeeper,
+	oracleKeeper types.OracleKeeper,
 ) Keeper {
 	return Keeper{
-		codec:           codec,
-		storeKey:        storeKey,
-		pricefeedKeeper: pricefeedKeeper,
-		Pools:           collections.NewMap(storeKey, 0, common.AssetPairKeyEncoder, collections.ProtoValueEncoder[types.Vpool](codec)),
+		codec:        codec,
+		storeKey:     storeKey,
+		oracleKeeper: oracleKeeper,
+		Pools:        collections.NewMap(storeKey, 0, common.AssetPairKeyEncoder, collections.ProtoValueEncoder[types.Vpool](codec)),
 		ReserveSnapshots: collections.NewMap(
 			storeKey, 1,
 			collections.PairKeyEncoder(common.AssetPairKeyEncoder, collections.TimeKeyEncoder),
@@ -33,9 +33,9 @@ func NewKeeper(
 }
 
 type Keeper struct {
-	codec           codec.BinaryCodec
-	storeKey        sdk.StoreKey
-	pricefeedKeeper types.PricefeedKeeper
+	codec        codec.BinaryCodec
+	storeKey     sdk.StoreKey
+	oracleKeeper types.OracleKeeper
 
 	Pools            collections.Map[common.AssetPair, types.Vpool]
 	ReserveSnapshots collections.Map[collections.Pair[common.AssetPair, time.Time], types.ReserveSnapshot]
@@ -55,12 +55,12 @@ args:
   - ctx: cosmos-sdk context
   - pair: a token pair like BTC:NUSD
   - dir: either add or remove from pool
-  - baseAssetAmount: the amount of quote asset being traded
+  - baseAmt: the amount of base asset being traded
   - quoteAmountLimit: a limiter to ensure the trader doesn't get screwed by slippage
   - skipFluctuationLimitCheck: whether or not to skip the fluctuation limit check
 
 ret:
-  - quoteAssetAmount: the amount of quote asset swapped
+  - quoteAmtAbs: the absolute value of the amount swapped in quote assets
   - err: error
 */
 func (k Keeper) SwapBaseForQuote(
@@ -70,12 +70,12 @@ func (k Keeper) SwapBaseForQuote(
 	baseAmt sdk.Dec,
 	quoteLimit sdk.Dec,
 	skipFluctuationLimitCheck bool,
-) (quoteAmt sdk.Dec, err error) {
+) (quoteAmtAbs sdk.Dec, err error) {
 	if baseAmt.IsZero() {
 		return sdk.ZeroDec(), nil
 	}
 
-	if !k.pricefeedKeeper.IsActivePair(ctx, pair.String()) {
+	if _, err = k.oracleKeeper.GetExchangeRate(ctx, pair.String()); err != nil {
 		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair.String())
 	}
 
@@ -84,56 +84,62 @@ func (k Keeper) SwapBaseForQuote(
 		return sdk.Dec{}, types.ErrPairNotSupported
 	}
 
-	if !pool.HasEnoughBaseReserve(baseAmt) {
-		return sdk.Dec{}, types.ErrOverTradingLimit
-	}
-
-	quoteAmt, err = pool.GetQuoteAmountByBaseAmount(dir, baseAmt)
+	baseAmtAbs := baseAmt.Abs()
+	quoteAmtAbs, err = pool.GetQuoteAmountByBaseAmount(baseAmtAbs.MulInt64(dir.ToMultiplier()))
 	if err != nil {
 		return sdk.Dec{}, err
 	}
 
-	if !pool.HasEnoughQuoteReserve(quoteAmt) {
-		// in reality, this if statement should never run because a perturbation in quote reserve assets
-		// greater than trading limit ratio would have happened when checking for a perturbation in
-		// base assets, due to x*y=k
-		//
-		// e.g. a 10% change in quote asset reserves would have triggered a >10% change in
-		// base asset reserves
-		return sdk.Dec{}, types.ErrOverTradingLimit.Wrapf(
-			"quote amount %s is over trading limit", quoteAmt)
-	}
-
-	err = checkIfLimitIsViolated(quoteLimit, quoteAmt, dir)
-	if err != nil {
+	if err := pool.HasEnoughReservesForTrade(quoteAmtAbs, baseAmtAbs); err != nil {
 		return sdk.Dec{}, err
 	}
 
-	if dir == types.Direction_ADD_TO_POOL {
-		pool.IncreaseBaseAssetReserve(baseAmt)
-		pool.DecreaseQuoteAssetReserve(quoteAmt)
-	} else if dir == types.Direction_REMOVE_FROM_POOL {
-		pool.DecreaseBaseAssetReserve(baseAmt)
-		pool.IncreaseQuoteAssetReserve(quoteAmt)
+	if err := checkIfLimitIsViolated(quoteLimit, quoteAmtAbs, dir); err != nil {
+		return sdk.Dec{}, err
 	}
 
-	if err = k.updatePool(ctx, pool, skipFluctuationLimitCheck); err != nil {
+	quoteDelta := quoteAmtAbs.Neg().MulInt64(dir.ToMultiplier())
+	baseAmt = baseAmtAbs.MulInt64(dir.ToMultiplier())
+
+	pool, err = k.executeSwap(ctx, pool, quoteDelta, baseAmt, skipFluctuationLimitCheck)
+	if err != nil {
 		return sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
-	if err := ctx.EventManager().EmitTypedEvent(&types.MarkPriceChangedEvent{
-		Pair:           pair.String(),
-		Price:          pool.GetMarkPrice(),
-		BlockTimestamp: ctx.BlockTime(),
-	}); err != nil {
-		return sdk.Dec{}, err
+	return quoteAmtAbs, err
+}
+
+func (k Keeper) executeSwap(
+	ctx sdk.Context, vpool types.Vpool, quoteDelta sdk.Dec, baseDelta sdk.Dec,
+	skipFluctuationLimitCheck bool,
+) (newVpool types.Vpool, err error) {
+	// -------------------- Update reserves
+	vpool.AddToBaseAssetReserve(baseDelta)
+	vpool.AddToQuoteAssetReserve(quoteDelta)
+
+	if err = k.updatePool(ctx, vpool, skipFluctuationLimitCheck); err != nil {
+		return newVpool, fmt.Errorf("error updating reserve: %w", err)
 	}
 
-	return quoteAmt, ctx.EventManager().EmitTypedEvent(&types.SwapBaseForQuoteEvent{
-		Pair:        pair.String(),
-		QuoteAmount: quoteAmt,
-		BaseAmount:  baseAmt,
-	})
+	// -------------------- Emit events
+	if err = ctx.EventManager().EmitTypedEvent(&types.MarkPriceChangedEvent{
+		Pair:           vpool.Pair.String(),
+		Price:          vpool.GetMarkPrice(),
+		BlockTimestamp: ctx.BlockTime(),
+	}); err != nil {
+		return newVpool, err
+	}
+
+	if err = ctx.EventManager().EmitTypedEvent(&types.SwapOnVpoolEvent{
+		Pair:        vpool.Pair.String(),
+		QuoteAmount: quoteDelta,
+		BaseAmount:  baseDelta,
+	}); err != nil {
+		return newVpool, err
+	}
+
+	newVpool = vpool
+	return newVpool, err
 }
 
 /*
@@ -161,12 +167,12 @@ func (k Keeper) SwapQuoteForBase(
 	quoteAmt sdk.Dec,
 	baseLimit sdk.Dec,
 	skipFluctuationLimitCheck bool,
-) (baseAmt sdk.Dec, err error) {
+) (baseAmtAbs sdk.Dec, err error) {
 	if quoteAmt.IsZero() {
 		return sdk.ZeroDec(), nil
 	}
 
-	if !k.pricefeedKeeper.IsActivePair(ctx, pair.String()) {
+	if _, err = k.oracleKeeper.GetExchangeRate(ctx, pair.String()); err != nil {
 		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair.String())
 	}
 
@@ -176,57 +182,30 @@ func (k Keeper) SwapQuoteForBase(
 	}
 
 	// check trade limit ratio on quote in either direction
-	if !pool.HasEnoughQuoteReserve(quoteAmt) {
-		return sdk.Dec{}, types.ErrOverTradingLimit.Wrapf(
-			"quote amount %s is over trading limit", quoteAmt)
-	}
-
-	baseAmt, err = pool.GetBaseAmountByQuoteAmount(dir, quoteAmt)
+	quoteAmtAbs := quoteAmt.Abs()
+	baseAmtAbs, err = pool.GetBaseAmountByQuoteAmount(
+		quoteAmtAbs.MulInt64(dir.ToMultiplier()))
 	if err != nil {
 		return sdk.Dec{}, err
 	}
 
-	if !pool.HasEnoughBaseReserve(baseAmt) {
-		// in reality, this if statement should never run because a perturbation in base reserve assets
-		// greater than trading limit ratio would have happened when checking for a perturbation in
-		// quote assets, due to x*y=k
-		//
-		// e.g. a 10% change in base asset reserves would have triggered a >10% change in
-		// quote asset reserves
-		return sdk.Dec{}, types.ErrOverTradingLimit.Wrapf(
-			"base amount %s is over trading limit", baseAmt)
-	}
-
-	err = checkIfLimitIsViolated(baseLimit, baseAmt, dir)
-	if err != nil {
+	if err := pool.HasEnoughReservesForTrade(quoteAmtAbs, baseAmtAbs); err != nil {
 		return sdk.Dec{}, err
 	}
 
-	if dir == types.Direction_ADD_TO_POOL {
-		pool.DecreaseBaseAssetReserve(baseAmt)
-		pool.IncreaseQuoteAssetReserve(quoteAmt)
-	} else if dir == types.Direction_REMOVE_FROM_POOL {
-		pool.IncreaseBaseAssetReserve(baseAmt)
-		pool.DecreaseQuoteAssetReserve(quoteAmt)
+	if err := checkIfLimitIsViolated(baseLimit, baseAmtAbs, dir); err != nil {
+		return sdk.Dec{}, err
 	}
 
-	if err = k.updatePool(ctx, pool, skipFluctuationLimitCheck); err != nil {
+	quoteAmt = quoteAmtAbs.MulInt64(dir.ToMultiplier())
+	baseDelta := baseAmtAbs.Neg().MulInt64(dir.ToMultiplier())
+
+	pool, err = k.executeSwap(ctx, pool, quoteAmt, baseDelta, skipFluctuationLimitCheck)
+	if err != nil {
 		return sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
-	if err := ctx.EventManager().EmitTypedEvent(&types.MarkPriceChangedEvent{
-		Pair:           pair.String(),
-		Price:          pool.GetMarkPrice(),
-		BlockTimestamp: ctx.BlockTime(),
-	}); err != nil {
-		return sdk.Dec{}, err
-	}
-
-	return baseAmt, ctx.EventManager().EmitTypedEvent(&types.SwapQuoteForBaseEvent{
-		Pair:        pair.String(),
-		QuoteAmount: quoteAmt,
-		BaseAmount:  baseAmt,
-	})
+	return baseAmtAbs, err
 }
 
 // checkIfLimitIsViolated checks if the limit is violated by the amount.
@@ -270,17 +249,32 @@ func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool types.Vpool) er
 		return nil
 	}
 
-	it := k.ReserveSnapshots.Iterate(ctx, collections.PairRange[common.AssetPair, time.Time]{}.Prefix(pool.Pair).Descending())
-	defer it.Close()
-	if !it.Valid() {
-		return fmt.Errorf("error getting last snapshot number for pair %s", pool.Pair)
+	latestSnapshot, err := k.GetLastSnapshot(ctx, pool)
+	if err != nil {
+		return err
 	}
-	latestSnapshot := it.Value()
 	if pool.IsOverFluctuationLimitInRelationWithSnapshot(latestSnapshot) {
 		return types.ErrOverFluctuationLimit
 	}
 
 	return nil
+}
+
+/*
+GetLastSnapshot retrieve the last snapshot for a particular vpool
+
+args:
+  - ctx: the cosmos-sdk context
+  - pool: the vpool to check
+*/
+func (k Keeper) GetLastSnapshot(ctx sdk.Context, pool types.Vpool) (types.ReserveSnapshot, error) {
+	it := k.ReserveSnapshots.Iterate(ctx, collections.PairRange[common.AssetPair, time.Time]{}.Prefix(pool.Pair).Descending())
+	defer it.Close()
+	if !it.Valid() {
+		return types.ReserveSnapshot{}, fmt.Errorf("error getting last snapshot number for pair %s", pool.Pair)
+	}
+	latestSnapshot := it.Value()
+	return latestSnapshot, nil
 }
 
 /*
@@ -300,12 +294,12 @@ func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) bool {
 		panic(err)
 	}
 
-	indexPrice, err := k.pricefeedKeeper.GetCurrentPrice(ctx, pair.BaseDenom(), pair.QuoteDenom())
+	indexPrice, err := k.oracleKeeper.GetExchangeRate(ctx, pair.String())
 	if err != nil {
 		panic(err)
 	}
 
-	return pool.IsOverSpreadLimit(indexPrice.Price)
+	return pool.IsOverSpreadLimit(indexPrice)
 }
 
 /*

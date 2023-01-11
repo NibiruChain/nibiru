@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	flag "github.com/spf13/pflag"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -17,6 +19,32 @@ import (
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
+const (
+	FlagPair                   = "pair"
+	FlagBaseAmt                = "base-amt"
+	FlagQuoteAmt               = "quote-amt"
+	FlagTradeLim               = "trade-lim"
+	FlagFluctLim               = "fluct-lim"
+	FlagMaintenenceMarginRatio = "mmr"
+	FlagMaxLeverage            = "max-leverage"
+	FlagMaxOracleSpreadRatio   = "max-oracle-spread-ratio"
+)
+
+var flagsAddVpoolGenesis = map[string]struct {
+	flagName       string
+	defaultValue   string
+	usageDocString string
+}{
+	FlagPair:                   {"pair", "", "trading pair identifier of the form 'base:quote'. E.g., ueth:unusd"},
+	FlagBaseAmt:                {"base-amt", "", "amount of base asset reserves"},
+	FlagQuoteAmt:               {"quote-amt", "", "amount of quote asset reserves"},
+	FlagTradeLim:               {"trade-lim", "0.1", "percentage applied to reserves in order not to over trade"},
+	FlagFluctLim:               {"fluct-lim", "0.1", "percentage that a single open or close position can alter the reserves"},
+	FlagMaintenenceMarginRatio: {"mmr", "0.0625", "maintenance margin ratio"},
+	FlagMaxLeverage:            {"max-leverage", "10", "maximum leverage for opening a position"},
+	FlagMaxOracleSpreadRatio:   {"max-oracle-spread-ratio", "0.1", "max oracle spread ratio"},
+}
+
 // AddVpoolGenesisCmd returns add-vpool-genesis
 func AddVpoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 	usageExampleTail := strings.Join([]string{
@@ -24,11 +52,22 @@ func AddVpoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 		"fluctuation-limit-ratio", "max-oracle-spread-ratio", "maintenance-margin-ratio",
 		"max-leverage",
 	}, "] [")
+
+	// getCmdFlagSet returns a flag set and list of required flags for the command.
+	getCmdFlagSet := func() (fs *flag.FlagSet, reqFlags []string) {
+		fs = flag.NewFlagSet("flags-add-genesis-pool", flag.ContinueOnError)
+
+		for _, flagDefinitionArgs := range flagsAddVpoolGenesis {
+			args := flagDefinitionArgs
+			fs.String(args.flagName, args.defaultValue, args.usageDocString)
+		}
+		return fs, []string{"pair", "base-amt", "quote-amt"}
+	}
 	cmd := &cobra.Command{
 		Use:   fmt.Sprintf("add-genesis-vpool [%s]", usageExampleTail),
 		Short: "Add vPools to genesis.json",
 		Long:  `Add vPools to genesis.json.`,
-		Args:  cobra.ExactArgs(8),
+		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			serverCtx := server.GetServerContextFromCmd(cmd)
@@ -42,7 +81,7 @@ func AddVpoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 				return err
 			}
 
-			vPool, err := parseVpoolParams(args)
+			vPool, err := newVpoolFromAddVpoolGenesisFlags(cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -70,50 +109,88 @@ func AddVpoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 	cmd.Flags().String(flags.FlagHome, defaultNodeHome, "The application home directory")
 	flags.AddQueryFlagsToCmd(cmd)
 
+	flagSet, reqFlags := getCmdFlagSet()
+	cmd.Flags().AddFlagSet(flagSet)
+	for _, reqFlag := range reqFlags {
+		_ = cmd.MarkFlagRequired(reqFlag)
+	}
+
 	return cmd
 }
 
-func parseVpoolParams(args []string) (types.Vpool, error) {
-	vPair, err := common.NewAssetPair(args[0])
+func newVpoolFromAddVpoolGenesisFlags(flagSet *flag.FlagSet,
+) (vpool types.Vpool, err error) {
+	var flagErrors = []error{}
+	pairStr, err := flagSet.GetString(FlagPair)
+	flagErrors = append(flagErrors, err)
+
+	baseAmtStr, err := flagSet.GetString(FlagBaseAmt)
+	flagErrors = append(flagErrors, err)
+
+	quoteAmtStr, err := flagSet.GetString(FlagQuoteAmt)
+	flagErrors = append(flagErrors, err)
+
+	tradeLimStr, err := flagSet.GetString(FlagTradeLim)
+	flagErrors = append(flagErrors, err)
+
+	fluctLimStr, err := flagSet.GetString(FlagFluctLim)
+	flagErrors = append(flagErrors, err)
+
+	mmrAsString, err := flagSet.GetString(FlagMaintenenceMarginRatio)
+	flagErrors = append(flagErrors, err)
+
+	maxLeverageStr, err := flagSet.GetString(FlagMaxLeverage)
+	flagErrors = append(flagErrors, err)
+
+	maxOracleSpreadStr, err := flagSet.GetString(FlagMaxOracleSpreadRatio)
+	flagErrors = append(flagErrors, err)
+
+	for _, err := range flagErrors { // for brevity's sake
+		if err != nil {
+			return vpool, err
+		}
+	}
+
+	pair, err := common.NewAssetPair(pairStr)
+	if err != nil {
+		return
+	}
+
+	baseAsset, err := sdk.NewDecFromStr(baseAmtStr)
+	if err != nil {
+		return
+	}
+	quoteAsset, err := sdk.NewDecFromStr(quoteAmtStr)
+	if err != nil {
+		return
+	}
+	tradeLimit, err := sdk.NewDecFromStr(tradeLimStr)
+	if err != nil {
+		return
+	}
+
+	fluctuationLimitRatio, err := sdk.NewDecFromStr(fluctLimStr)
+	if err != nil {
+		return
+	}
+
+	maxOracleSpread, err := sdk.NewDecFromStr(maxOracleSpreadStr)
+	if err != nil {
+		return
+	}
+
+	maintenanceMarginRatio, err := sdk.NewDecFromStr(mmrAsString)
+	if err != nil {
+		return
+	}
+
+	maxLeverage, err := sdk.NewDecFromStr(maxLeverageStr)
 	if err != nil {
 		return types.Vpool{}, err
 	}
 
-	baseAsset, err := sdk.NewDecFromStr(args[1])
-	if err != nil {
-		return types.Vpool{}, err
-	}
-	quoteAsset, err := sdk.NewDecFromStr(args[2])
-	if err != nil {
-		return types.Vpool{}, err
-	}
-	tradeLimit, err := sdk.NewDecFromStr(args[3])
-	if err != nil {
-		return types.Vpool{}, err
-	}
-
-	fluctuationLimitRatio, err := sdk.NewDecFromStr(args[4])
-	if err != nil {
-		return types.Vpool{}, err
-	}
-
-	maxOracleSpread, err := sdk.NewDecFromStr(args[5])
-	if err != nil {
-		return types.Vpool{}, err
-	}
-
-	maintenanceMarginRatio, err := sdk.NewDecFromStr(args[6])
-	if err != nil {
-		return types.Vpool{}, err
-	}
-
-	maxLeverage, err := sdk.NewDecFromStr(args[7])
-	if err != nil {
-		return types.Vpool{}, err
-	}
-
-	vPool := types.Vpool{
-		Pair:              vPair,
+	vpool = types.Vpool{
+		Pair:              pair,
 		QuoteAssetReserve: quoteAsset,
 		BaseAssetReserve:  baseAsset,
 		Config: types.VpoolConfig{
@@ -125,5 +202,5 @@ func parseVpoolParams(args []string) (types.Vpool, error) {
 		},
 	}
 
-	return vPool, vPool.Validate()
+	return vpool, vpool.Validate()
 }

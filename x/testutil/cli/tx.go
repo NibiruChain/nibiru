@@ -52,6 +52,7 @@ func WithKeyringBackend(keyringBackend string) ExecTxOption {
 
 type execTxOptions struct {
 	fees             sdk.Coins
+	gas              int64
 	skipConfirmation bool
 	broadcastMode    string
 	canFail          bool
@@ -67,6 +68,7 @@ func ExecTx(network *Network, cmd *cobra.Command, txSender sdk.AccAddress, args 
 
 	options := execTxOptions{
 		fees:             sdk.NewCoins(sdk.NewCoin(common.DenomNIBI, sdk.NewInt(10))),
+		gas:              2000000,
 		skipConfirmation: true,
 		broadcastMode:    flags.BroadcastBlock,
 		canFail:          false,
@@ -79,6 +81,7 @@ func ExecTx(network *Network, cmd *cobra.Command, txSender sdk.AccAddress, args 
 
 	args = append(args, fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, options.broadcastMode))
 	args = append(args, fmt.Sprintf("--%s=%s", flags.FlagFees, options.fees))
+	args = append(args, fmt.Sprintf("--%s=%d", flags.FlagGas, options.gas))
 	args = append(args, fmt.Sprintf("--%s=%s", flags.FlagKeyringBackend, options.keyringBackend))
 	switch options.skipConfirmation {
 	case true:

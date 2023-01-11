@@ -26,8 +26,7 @@ Types of changes (Stanzas):
 "Improvements" for changes in existing functionality.
 "Deprecated" for soon-to-be removed features.
 "Bug Fixes" for any bug fixes.
-"Client Breaking" for breaking CLI commands and REST routes used by end-users.
-"API Breaking" for breaking exported APIs used by developers building on SDK.
+"API Breaking" for breaking CLI commands and REST routes used by end-users.
 "State Machine Breaking" for any changes that result in a different AppState given same genesisState and txList.
 Ref: https://keepachangelog.com/en/1.0.0/
 -->
@@ -41,8 +40,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-## [v0.16.0](https://github.com/NibiruChain/nibiru/releases/tag/v0.16.0) - 2022-11-23
+### Improvements
 
+* [#1127](https://github.com/NibiruChain/nibiru/pull/1127) - refactor: remove unnecessary panics from x/dex and x/stablecoin
+* [#1126](https://github.com/NibiruChain/nibiru/pull/1126) - refactor(perp): remove unnecessary panics
+* [#1135](https://github.com/NibiruChain/nibiru/pull/1135) - fix: add genesis oracle prices to localnet
+
+### Bug Fixes
+
+* [#1126](https://github.com/NibiruChain/nibiru/pull/1126) - test(oracle): stop the tyrannical behavior of TestFuzz_PickReferencePair 
+* [#1131](https://github.com/NibiruChain/nibiru/pull/1131) - fix(oracle): use correct distribution module account
+
+## [v0.16.3](https://github.com/NibiruChain/nibiru/releases/tag/v0.16.3)
+
+### Features
+
+* [#1115](https://github.com/NibiruChain/nibiru/pull/1115) - feat: improve single asset join calculation
+* [#1117](https://github.com/NibiruChain/nibiru/pull/1117) - feat: wire multi-liquidate transaction
+* [#1120](https://github.com/NibiruChain/nibiru/pull/1120) - feat: replace pricefeed with oracle
+
+### Bug Fixes
+
+* [#1113](https://github.com/NibiruChain/nibiru/pull/1113) - fix: fix quick simulation issue
+* [#1114](https://github.com/NibiruChain/nibiru/pull/1114) - fix(dex): fix single asset join
+* [#1116](https://github.com/NibiruChain/nibiru/pull/1116) - fix(dex): unfroze pool when LP share supply of 0
+* [#1124](https://github.com/NibiruChain/nibiru/pull/1124) - fix(dex): fix unexpected panic in stableswap calcs
+
+## [v0.16.2](https://github.com/NibiruChain/nibiru/releases/tag/v0.16.2) - Dec 13, 2022
 
 ### Features
 
@@ -50,12 +74,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1038](https://github.com/NibiruChain/nibiru/pull/1038) - feat(dex): add single asset join
 * [#1050](https://github.com/NibiruChain/nibiru/pull/1050) - feat(dex): add stableswap pools
 * [#1058](https://github.com/NibiruChain/nibiru/pull/1058) - feature: use collections external lib
-* [#1074](https://github.com/NibiruChain/nibiru/pull/1074) - feat(vpool): Add gov proposal for editing the vpool config without changing the reserves.
 * [#1082](https://github.com/NibiruChain/nibiru/pull/1082) - feat(vpool): Add gov proposal for editing the sswap invariant of a vpool..
+* [#1092](https://github.com/NibiruChain/nibiru/pull/1092) - refactor(dex)!: revive dex module using intermediate test app
+* [#1097](https://github.com/NibiruChain/nibiru/pull/1097) - feat(perp): Track and expose the net size of a pair with a query
+* [#1105](https://github.com/NibiruChain/nibiru/pull/1105) - feat(perp): Add (notional) volume to metrics state
+
+### State Machine Breaking
+
+* [#1102](https://github.com/NibiruChain/nibiru/pull/1102) - refactor(perp)!: replace CumulativePremiumFractions array with single value
+
+### Breaking Changes
+
+* [#1074](https://github.com/NibiruChain/nibiru/pull/1074) - feat(vpool): Add gov proposal for editing the vpool config without changing the reserves.
 
 ### Improvements
 
-* [#1046](https://github.com/NibiruChain/nibiru/pull/1046) - remove: feeder. The price feeder was moved to an external repo. 
+* [#1111](https://github.com/NibiruChain/nibiru/pull/1111) - feat(vpool)!: Use flags and certain default values instead of unnamed args for add-genesis-vpool to improve ease of use
+* [#1046](https://github.com/NibiruChain/nibiru/pull/1046) - remove: feeder. The price feeder was moved to an external repo.
 * [#1015](https://github.com/NibiruChain/nibiru/pull/1015) - feat(dex): throw error when swap output amount is less than 1
 * [#1018](https://github.com/NibiruChain/nibiru/pull/1018) - chore(dex): refactor to match best practice
 * [#1024](https://github.com/NibiruChain/nibiru/pull/1024) - refactor(oracle): remove Pair and PairList
@@ -68,12 +103,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1055](https://github.com/NibiruChain/nibiru/pull/1055) - chore(deps): Bump github.com/spf13/viper from 1.13.0 to 1.14.0
 * [#1061](https://github.com/NibiruChain/nibiru/pull/1061) - feat(cmd): hard-code block time parameters in the Tendermint config
 * [#1068](https://github.com/NibiruChain/nibiru/pull/1068) - refactor(vpool)!: Remove ReserveSnapshot from the vpool genesis state since reserves are taken automatically on vpool initialization.
-* [#1064](https://github.com/NibiruChain/nibiru/pull/1064) - test(wasm): add test for cosmwasm
+* [#1064](https://github.com/NibiruChain/nibiru/pull/1064) - test(wasm): add test for Cosmwasm
 * [#1075](https://github.com/NibiruChain/nibiru/pull/1075) - feat(dex): remove possibility to create multiple pools with the same assets
 * [#1080](https://github.com/NibiruChain/nibiru/pull/1080) - feat(perp): Add exchanged notional to the position changed event #1080
 * [#1082](https://github.com/NibiruChain/nibiru/pull/1082) - feat(localnet.sh): Set genesis prices based on real BTC and ETH prices
 * [#1086](https://github.com/NibiruChain/nibiru/pull/1086) - refactor(perp)!: Removed unused field, `LiquidationPenalty`, from `PositionChangedEvent`
+* [#1093](https://github.com/NibiruChain/nibiru/pull/1093) - simulation(dex): add simulation tests for stableswap pools
 * [#1091](https://github.com/NibiruChain/nibiru/pull/1091) - refactor: Use common.Precision instead of 1_000_000 in the codebase
+* [#1109](https://github.com/NibiruChain/nibiru/pull/1109) - refactor(vpool)!: Condense swap SwapXForY and SwapYForX events into SwapOnVpoolEvent
+
+### Bug Fixes
+
+* [#1100](https://github.com/NibiruChain/nibiru/pull/1100) - fix(oracle): fix flaky oracle test
+* [#1110](https://github.com/NibiruChain/nibiru/pull/1110) - fix(dex): fix dex issue on unsorted join pool
+
+### CI
+
+* [#1088](https://github.com/NibiruChain/nibiru/pull/1088) - ci: build cross binaries
 
 ## v0.15.0
 
@@ -115,6 +161,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Improvements
 
+* [#1044](https://github.com/NibiruChain/nibiru/pull/1044) - feat(wasm): cosmwasm module integration
 * [#858](https://github.com/NibiruChain/nibiru/pull/858) - fix trading limit ratio check; checks in both directions on both quote and base assets
 * [#865](https://github.com/NibiruChain/nibiru/pull/865) - refactor(vpool): clean up interface for CmdGetBaseAssetPrice to use add and remove as directions
 * [#868](https://github.com/NibiruChain/nibiru/pull/868) - refactor dex integration tests to be independent between them
@@ -156,6 +203,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1044](https://github.com/NibiruChain/nibiru/pull/1044) - feat(wasm): cosmwasm module integration
 
 ### Fixes
+
 * [#1023](https://github.com/NibiruChain/nibiru/pull/1023) - collections: golang compiler bug
 * [#1017](https://github.com/NibiruChain/nibiru/pull/1017) - collections: correctly reports value type and key in case of not found errors.
 * [#857](https://github.com/NibiruChain/nibiru/pull/857) - x/perp add proper stateless genesis validation checks

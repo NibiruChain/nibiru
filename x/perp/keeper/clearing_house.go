@@ -431,7 +431,7 @@ func (k Keeper) decreasePosition(
 	}
 
 	if remainOpenNotional.IsNegative() {
-		panic("value of open notional < 0")
+		return nil, fmt.Errorf("value of open notional < 0")
 	}
 
 	positionResp.Position = &types.Position{
@@ -613,17 +613,17 @@ func (k Keeper) closePositionEntirely(
 	positionResp.FundingPayment = remaining.FundingPayment
 	positionResp.MarginToVault = remaining.Margin.Neg()
 
-	var baseAssetDirection vpooltypes.Direction
+	var sideToTake types.Side
+	// flipped since we are going against the current position
 	if currentPosition.Size_.IsPositive() {
-		baseAssetDirection = vpooltypes.Direction_ADD_TO_POOL
+		sideToTake = types.Side_SELL
 	} else {
-		baseAssetDirection = vpooltypes.Direction_REMOVE_FROM_POOL
+		sideToTake = types.Side_BUY
 	}
-
-	exchangedNotionalValue, err := k.VpoolKeeper.SwapBaseForQuote(
+	exchangedNotionalValue, err := k.swapBaseForQuote(
 		ctx,
 		currentPosition.Pair,
-		baseAssetDirection,
+		sideToTake,
 		currentPosition.Size_.Abs(),
 		quoteAssetAmountLimit,
 		skipFluctuationLimitCheck,
@@ -766,7 +766,7 @@ func (k Keeper) swapQuoteForBase(
 	quoteAssetAmount sdk.Dec,
 	baseAssetLimit sdk.Dec,
 	skipFluctuationLimitCheck bool,
-) (baseAmount sdk.Dec, err error) {
+) (baseAssetAmount sdk.Dec, err error) {
 	var quoteAssetDirection vpooltypes.Direction
 	if side == types.Side_BUY {
 		quoteAssetDirection = vpooltypes.Direction_ADD_TO_POOL
@@ -775,16 +775,79 @@ func (k Keeper) swapQuoteForBase(
 		quoteAssetDirection = vpooltypes.Direction_REMOVE_FROM_POOL
 	}
 
-	baseAmount, err = k.VpoolKeeper.SwapQuoteForBase(
+	baseAssetAmount, err = k.VpoolKeeper.SwapQuoteForBase(
 		ctx, pair, quoteAssetDirection, quoteAssetAmount, baseAssetLimit, skipFluctuationLimitCheck)
 	if err != nil {
 		return sdk.Dec{}, err
 	}
-
-	if side == types.Side_BUY {
-		return baseAmount, nil
-	} else {
-		// side == types.Side_SELL
-		return baseAmount.Neg(), nil
+	if side == types.Side_SELL {
+		baseAssetAmount = baseAssetAmount.Neg()
 	}
+	k.OnSwapEnd(ctx, pair, quoteAssetAmount, baseAssetAmount)
+	return baseAssetAmount, nil
+}
+
+/*
+Trades baseAssets in exchange for quoteAssets.
+The base asset is a crypto asset like BTC.
+The quote asset is a stablecoin like NUSD.
+
+args:
+  - ctx: cosmos-sdk context
+  - pair: a token pair like BTC:NUSD
+  - dir: either add or remove from pool
+  - baseAssetAmount: the amount of quote asset being traded
+  - quoteAmountLimit: a limiter to ensure the trader doesn't get screwed by slippage
+  - skipFluctuationLimitCheck: whether or not to skip the fluctuation limit check
+
+ret:
+  - quoteAssetAmount: the amount of quote asset swapped
+  - err: error
+*/
+func (k Keeper) swapBaseForQuote(
+	ctx sdk.Context,
+	pair common.AssetPair,
+	side types.Side,
+	baseAssetAmount sdk.Dec,
+	quoteAssetLimit sdk.Dec,
+	skipFluctuationLimitCheck bool,
+) (baseAmount sdk.Dec, err error) {
+	var baseAssetDirection vpooltypes.Direction
+	if side == types.Side_SELL {
+		baseAssetDirection = vpooltypes.Direction_ADD_TO_POOL
+	} else {
+		// side == types.Side_BUY
+		baseAssetDirection = vpooltypes.Direction_REMOVE_FROM_POOL
+	}
+	quoteAssetAmount, err := k.VpoolKeeper.SwapBaseForQuote(
+		ctx, pair, baseAssetDirection, baseAssetAmount, quoteAssetLimit, skipFluctuationLimitCheck)
+	if err != nil {
+		return sdk.Dec{}, err
+	}
+	if side == types.Side_SELL {
+		baseAssetAmount = baseAssetAmount.Neg()
+	}
+	k.OnSwapEnd(ctx, pair, quoteAssetAmount, baseAssetAmount)
+	return quoteAssetAmount, err
+}
+
+// OnSwapEnd recalculates perp metrics for a particular pair.
+func (k Keeper) OnSwapEnd(
+	ctx sdk.Context,
+	pair common.AssetPair,
+	quoteAssetAmount sdk.Dec,
+	baseAssetAmount sdk.Dec,
+) {
+	// Update Metrics
+	pairString := pair.String()
+	metrics := k.Metrics.GetOr(ctx, pairString, types.Metrics{
+		Pair:        pairString,
+		NetSize:     sdk.ZeroDec(),
+		VolumeQuote: sdk.ZeroDec(),
+		VolumeBase:  sdk.ZeroDec(),
+	})
+	metrics.NetSize = metrics.NetSize.Add(baseAssetAmount)
+	metrics.VolumeBase = metrics.VolumeBase.Add(baseAssetAmount.Abs())
+	metrics.VolumeQuote = metrics.VolumeQuote.Add(quoteAssetAmount.Abs())
+	k.Metrics.Insert(ctx, pairString, metrics)
 }

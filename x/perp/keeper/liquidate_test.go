@@ -101,7 +101,8 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				},
 			)
 			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
-			nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, tokenPair, true)
+
+			nibiruApp.OracleKeeper.SetPrice(ctx, tokenPair.String(), sdk.NewDec(2))
 
 			t.Log("set perpkeeper params")
 			params := types.DefaultParams()
@@ -115,8 +116,8 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				15*time.Minute,
 			))
 			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-				Pair:                       tokenPair,
-				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
+				Pair:                            tokenPair,
+				LatestCumulativePremiumFraction: sdk.OneDec(),
 			})
 
 			t.Log("Fund trader account with sufficient quote")
@@ -277,7 +278,6 @@ func TestExecutePartialLiquidation(t *testing.T) {
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
 			)
-			nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, tokenPair, true)
 			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
 
 			t.Log("Set vpool defined by pair on PerpKeeper")
@@ -295,8 +295,8 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			))
 
 			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-				Pair:                       tokenPair,
-				CumulativePremiumFractions: []sdk.Dec{sdk.OneDec()},
+				Pair:                            tokenPair,
+				LatestCumulativePremiumFraction: sdk.OneDec(),
 			})
 
 			t.Log("Fund trader account with sufficient quote")

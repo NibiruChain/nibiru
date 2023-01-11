@@ -194,11 +194,8 @@ func TestGetLatestCumulativePremiumFraction(t *testing.T) {
 				keeper, _, ctx := getKeeper(t)
 
 				metadata := &types.PairMetadata{
-					Pair: common.Pair_NIBI_NUSD,
-					CumulativePremiumFractions: []sdk.Dec{
-						sdk.NewDec(1),
-						sdk.NewDec(2), // returns the latest from the list
-					},
+					Pair:                            common.Pair_NIBI_NUSD,
+					LatestCumulativePremiumFraction: sdk.NewDec(2),
 				}
 				setPairMetadata(keeper, ctx, *metadata)
 

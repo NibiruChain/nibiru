@@ -9,13 +9,28 @@ import (
 // HasEnoughQuoteReserve returns true if there is enough quote reserve based on
 // quoteReserve * tradeLimitRatio
 func (vpool *Vpool) HasEnoughQuoteReserve(quoteAmount sdk.Dec) bool {
-	return vpool.QuoteAssetReserve.Mul(vpool.Config.TradeLimitRatio).GTE(quoteAmount)
+	return vpool.QuoteAssetReserve.Mul(vpool.Config.TradeLimitRatio).GTE(quoteAmount.Abs())
 }
 
 // HasEnoughBaseReserve returns true if there is enough base reserve based on
 // baseReserve * tradeLimitRatio
 func (vpool *Vpool) HasEnoughBaseReserve(baseAmount sdk.Dec) bool {
-	return vpool.BaseAssetReserve.Mul(vpool.Config.TradeLimitRatio).GTE(baseAmount)
+	return vpool.BaseAssetReserve.Mul(vpool.Config.TradeLimitRatio).GTE(baseAmount.Abs())
+}
+
+func (vpool *Vpool) HasEnoughReservesForTrade(
+	quoteAmtAbs sdk.Dec, baseAmtAbs sdk.Dec,
+) (err error) {
+	if !vpool.HasEnoughQuoteReserve(quoteAmtAbs) {
+		return ErrOverTradingLimit.Wrapf(
+			"quote amount %s is over trading limit", quoteAmtAbs)
+	}
+	if !vpool.HasEnoughBaseReserve(baseAmtAbs) {
+		return ErrOverTradingLimit.Wrapf(
+			"base amount %s is over trading limit", baseAmtAbs)
+	}
+
+	return nil
 }
 
 /*
@@ -23,39 +38,32 @@ GetBaseAmountByQuoteAmount returns the amount of base asset you will get out
 by giving a specified amount of quote asset
 
 args:
-  - dir: add to pool or remove from pool
-  - quoteAmount: the amount of quote asset to add to/remove from the pool
+  - quoteDelta: the amount of quote asset to add to/remove from the pool.
+    Adding to the quote reserves is synonymous with positive 'quoteDelta'.
 
 ret:
-  - baseAmountOut: the amount of base assets required to make this hypothetical swap
+  - baseOutAbs: the amount of base assets required to make this hypothetical swap
     always an absolute value
   - err: error
 */
 func (vpool *Vpool) GetBaseAmountByQuoteAmount(
-	dir Direction,
-	quoteAmount sdk.Dec,
-) (baseAmount sdk.Dec, err error) {
-	if quoteAmount.IsZero() {
+	quoteDelta sdk.Dec,
+) (baseOutAbs sdk.Dec, err error) {
+	if quoteDelta.IsZero() {
 		return sdk.ZeroDec(), nil
 	}
 
 	invariant := vpool.QuoteAssetReserve.Mul(vpool.BaseAssetReserve) // x * y = k
 
-	var quoteAssetsAfter sdk.Dec
-	if dir == Direction_ADD_TO_POOL {
-		quoteAssetsAfter = vpool.QuoteAssetReserve.Add(quoteAmount)
-	} else {
-		quoteAssetsAfter = vpool.QuoteAssetReserve.Sub(quoteAmount)
-	}
-
-	if quoteAssetsAfter.LTE(sdk.ZeroDec()) {
+	quoteReservesAfter := vpool.QuoteAssetReserve.Add(quoteDelta)
+	if quoteReservesAfter.LTE(sdk.ZeroDec()) {
 		return sdk.Dec{}, ErrQuoteReserveAtZero
 	}
 
-	baseAssetsAfter := invariant.Quo(quoteAssetsAfter)
-	baseAmount = baseAssetsAfter.Sub(vpool.BaseAssetReserve).Abs()
+	baseReservesAfter := invariant.Quo(quoteReservesAfter)
+	baseOutAbs = baseReservesAfter.Sub(vpool.BaseAssetReserve).Abs()
 
-	return baseAmount, nil
+	return baseOutAbs, nil
 }
 
 /*
@@ -67,56 +75,43 @@ args:
   - baseAmount: the amount of base asset to add to/remove from the pool
 
 ret:
-  - quoteAmountOut: the amount of quote assets required to make this hypothetical swap
+  - quoteOutAbs: the amount of quote assets required to make this hypothetical swap
     always an absolute value
   - err: error
 */
 func (vpool *Vpool) GetQuoteAmountByBaseAmount(
-	dir Direction, baseAmount sdk.Dec,
-) (quoteAmount sdk.Dec, err error) {
-	if baseAmount.IsZero() {
+	baseDelta sdk.Dec,
+) (quoteOutAbs sdk.Dec, err error) {
+	if baseDelta.IsZero() {
 		return sdk.ZeroDec(), nil
 	}
 
 	invariant := vpool.QuoteAssetReserve.Mul(vpool.BaseAssetReserve) // x * y = k
 
-	var baseAssetsAfter sdk.Dec
-	if dir == Direction_ADD_TO_POOL {
-		baseAssetsAfter = vpool.BaseAssetReserve.Add(baseAmount)
-	} else {
-		baseAssetsAfter = vpool.BaseAssetReserve.Sub(baseAmount)
-	}
-
-	if baseAssetsAfter.LTE(sdk.ZeroDec()) {
+	baseReservesAfter := vpool.BaseAssetReserve.Add(baseDelta)
+	if baseReservesAfter.LTE(sdk.ZeroDec()) {
 		return sdk.Dec{}, ErrBaseReserveAtZero.Wrapf(
 			"base assets below zero after trying to swap %s base assets",
-			baseAmount.String(),
+			baseDelta.String(),
 		)
 	}
 
-	quoteAssetsAfter := invariant.Quo(baseAssetsAfter)
-	quoteAmount = quoteAssetsAfter.Sub(vpool.QuoteAssetReserve).Abs()
+	quoteReservesAfter := invariant.Quo(baseReservesAfter)
+	quoteOutAbs = quoteReservesAfter.Sub(vpool.QuoteAssetReserve).Abs()
 
-	return quoteAmount, nil
+	return quoteOutAbs, nil
 }
 
-// IncreaseBaseAssetReserve increases the quote reserve by amount
-func (vpool *Vpool) IncreaseBaseAssetReserve(amount sdk.Dec) {
-	vpool.BaseAssetReserve = vpool.BaseAssetReserve.Add(amount)
-}
-
-// DecreaseBaseAssetReserve descreases the quote asset reserve by amount
-func (vpool *Vpool) DecreaseBaseAssetReserve(amount sdk.Dec) {
-	vpool.BaseAssetReserve = vpool.BaseAssetReserve.Sub(amount)
-}
-
-func (vpool *Vpool) IncreaseQuoteAssetReserve(amount sdk.Dec) {
+// AddToQuoteAssetReserve adds 'amount' to the quote asset reserves
+// The 'amount' is not assumed to be positive.
+func (vpool *Vpool) AddToQuoteAssetReserve(amount sdk.Dec) {
 	vpool.QuoteAssetReserve = vpool.QuoteAssetReserve.Add(amount)
 }
 
-// DecreaseQuoteAssetReserve decreases the base reserve by amount
-func (vpool *Vpool) DecreaseQuoteAssetReserve(amount sdk.Dec) {
-	vpool.QuoteAssetReserve = vpool.QuoteAssetReserve.Sub(amount)
+// AddToBaseAssetReserve adds 'amount' to the base asset reserves
+// The 'amount' is not assumed to be positive.
+func (vpool *Vpool) AddToBaseAssetReserve(amount sdk.Dec) {
+	vpool.BaseAssetReserve = vpool.BaseAssetReserve.Add(amount)
 }
 
 // ValidateReserves checks that reserves are positive.
@@ -244,4 +239,15 @@ func (vpool Vpool) ToSnapshot(ctx sdk.Context) ReserveSnapshot {
 		panic(err)
 	}
 	return snapshot
+}
+
+func (dir Direction) ToMultiplier() int64 {
+	var dirMult int64
+	switch dir {
+	case Direction_ADD_TO_POOL, Direction_DIRECTION_UNSPECIFIED:
+		dirMult = 1
+	case Direction_REMOVE_FROM_POOL:
+		dirMult = -1
+	}
+	return dirMult
 }

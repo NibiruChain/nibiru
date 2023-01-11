@@ -13,10 +13,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/dex/client/cli"
 	"github.com/NibiruChain/nibiru/x/dex/types"
+	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 // commonArgs is args for CLI test commands.
@@ -140,8 +140,8 @@ func ExecMsgSwapAssets(
 	return clitestutil.ExecTestCLICmd(clientCtx, cli.CmdSwapAssets(), args)
 }
 
-// WhitelistGenesisAssets given a simapp.GenesisState includes the whitelisted assets into Dex Whitelisted assets.
-func WhitelistGenesisAssets(state simapp.GenesisState, assets []string) simapp.GenesisState {
+// WhitelistGenesisAssets given a testapp.GenesisState includes the whitelisted assets into Dex Whitelisted assets.
+func WhitelistGenesisAssets(state testapp.GenesisState, assets []string) testapp.GenesisState {
 	encConfig := app.MakeTestEncodingConfig()
 
 	jsonState := state[types.ModuleName]

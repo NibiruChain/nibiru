@@ -90,8 +90,8 @@ func TestMsgServerAddMargin(t *testing.T) {
 				},
 			)
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
-				Pair:                       common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
 			t.Log("fund trader")
@@ -211,8 +211,8 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 				},
 			)
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
-				Pair:                       common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
 			t.Log("fund vault")
@@ -300,8 +300,8 @@ func TestMsgServerOpenPosition(t *testing.T) {
 				},
 			)
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
-				Pair:                       common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
 			traderAddr, err := sdk.AccAddressFromBech32(tc.sender)
@@ -387,8 +387,8 @@ func TestMsgServerClosePosition(t *testing.T) {
 				},
 			)
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
-				Pair:                       common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
 			t.Log("create position")
@@ -466,19 +466,16 @@ func TestMsgServerLiquidate(t *testing.T) {
 				},
 			)
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
-				Pair:                       common.Pair_BTC_NUSD,
-				CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+				Pair:                            common.Pair_BTC_NUSD,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
 
 			pair, err := common.NewAssetPair(tc.pair)
 			traderAddr, err2 := sdk.AccAddressFromBech32(tc.trader)
 			if err == nil && err2 == nil {
-				t.Log("set pricefeed oracle price")
-				oracle := testutil.AccAddress()
-				app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
-				require.NoError(t, app.PricefeedKeeper.PostRawPrice(ctx, oracle, pair.String(), sdk.OneDec(), time.Now().Add(time.Hour)))
-				require.NoError(t, app.PricefeedKeeper.GatherRawPrices(ctx, pair.BaseDenom(), pair.QuoteDenom()))
+				t.Log("set oracle price")
+				app.OracleKeeper.SetPrice(ctx, common.Pair_BTC_NUSD.String(), sdk.OneDec())
 
 				t.Log("create position")
 				setPosition(app.PerpKeeper, ctx, types.Position{
@@ -543,17 +540,13 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 		},
 	)
 	setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
-		Pair:                       pair,
-		CumulativePremiumFractions: []sdk.Dec{sdk.ZeroDec()},
+		Pair:                            pair,
+		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 	})
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
 
-	t.Log("set pricefeed oracle price")
-	oracle := testutil.AccAddress()
-	app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
-	err := app.PricefeedKeeper.PostRawPrice(ctx, oracle, pair.String(), sdk.OneDec(), time.Now().Add(time.Hour))
-	require.NoError(t, err)
-	require.NoError(t, app.PricefeedKeeper.GatherRawPrices(ctx, pair.BaseDenom(), pair.QuoteDenom()))
+	t.Log("set oracle price")
+	app.OracleKeeper.SetPrice(ctx, common.Pair_BTC_NUSD.String(), sdk.OneDec())
 
 	t.Log("create positions")
 	atRiskPosition1 := types.Position{

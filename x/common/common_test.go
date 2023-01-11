@@ -9,6 +9,19 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 )
 
+type FunctionTestCase struct {
+	name string
+	test func()
+}
+
+func RunFunctionTests(t *testing.T, testCases []FunctionTestCase) {
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.test()
+		})
+	}
+}
+
 func TestNewAssetPair_Constructor(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -75,10 +88,7 @@ func TestAsset_GetQuoteBaseToken(t *testing.T) {
 }
 
 func TestAssetPair_Marshaling(t *testing.T) {
-	testCases := []struct {
-		name string
-		test func()
-	}{
+	testCases := []FunctionTestCase{
 		{
 			name: "verbose equal suite",
 			test: func() {
@@ -110,10 +120,5 @@ func TestAssetPair_Marshaling(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range testCases {
-		tc := testCase
-		t.Run(tc.name, func(t *testing.T) {
-			tc.test()
-		})
-	}
+	RunFunctionTests(t, testCases)
 }

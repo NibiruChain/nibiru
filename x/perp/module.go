@@ -106,7 +106,7 @@ type AppModule struct {
 	keeper keeper.Keeper
 	ak     types.AccountKeeper
 	bk     types.BankKeeper
-	pk     types.PricefeedKeeper
+	ok     types.OracleKeeper
 }
 
 func NewAppModule(
@@ -114,14 +114,14 @@ func NewAppModule(
 	keeper keeper.Keeper,
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
-	pk types.PricefeedKeeper,
+	ok types.OracleKeeper,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(cdc),
 		keeper:         keeper,
 		ak:             ak,
 		bk:             bk,
-		pk:             pk,
+		ok:             ok,
 	}
 }
 
@@ -186,6 +186,6 @@ func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 // EndBlock executes all ABCI EndBlock logic respective to the capability module. It
 // returns no validator updates.
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
-	// EndBlocker(ctx, am.keeper)
+	EndBlocker(ctx, am.keeper)
 	return []abci.ValidatorUpdate{}
 }

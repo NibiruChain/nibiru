@@ -68,8 +68,8 @@ github.com/DataDog/zstd v1.4.1/go.mod h1:1jcaCB/ufaK+sKp1NBhlGmpz41jOoPQ35bpF36t
 github.com/DataDog/zstd v1.4.5/go.mod h1:1jcaCB/ufaK+sKp1NBhlGmpz41jOoPQ35bpF36t7BBo=
 github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible/go.mod h1:r7JcOSlj0wfOMncg0iLm8Leh48TZaKVeNIfJntJ2wa0=
 github.com/Microsoft/go-winio v0.5.2 h1:a9IhgEQBCUEk6QCdml9CiJGhAws+YwffDHEMp1VMrpA=
-github.com/NibiruChain/collections v0.1.0 h1:Y+S9IBID5g8tQonVtIhHxIFYgE4EnMs9PZh0y4AlBp0=
-github.com/NibiruChain/collections v0.1.0/go.mod h1:ejC9eAI5B6/56mKYagW5T5aIw0yh1yI0ID+/SnqbCYo=
+github.com/NibiruChain/collections v0.1.1 h1:6urGw4ephXwNKZ/cg6I5SGBBlIf9UPvRn6mFiAoX8Vk=
+github.com/NibiruChain/collections v0.1.1/go.mod h1:uWw2HTT4NxQaqC6Wmwyqbz8Fg7bGShMjZUx5unWRLNk=
 github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 h1:TngWCqHvy9oXAN6lEVMRuU21PR1EtLVZJmdB18Gu3Rw=
 github.com/OneOfOne/xxhash v1.2.2 h1:KMrpdQIwFcEqXDklaen+P1axHaj9BSKzvpUUfnHldSE=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=

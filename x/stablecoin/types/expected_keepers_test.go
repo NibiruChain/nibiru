@@ -23,9 +23,9 @@ func TestExpectedKeepers(t *testing.T) {
 	nibiruApp, _ := simapp.NewTestNibiruAppAndContext(true)
 	testCases := []TestCase{
 		{
-			name:           "PricefeedKeeper from x/pricefeed",
-			expectedKeeper: (*sctypes.PricefeedKeeper)(nil),
-			appKeeper:      nibiruApp.PricefeedKeeper,
+			name:           "OracleKeeper from x/oracle",
+			expectedKeeper: (*sctypes.OracleKeeper)(nil),
+			appKeeper:      nibiruApp.OracleKeeper,
 		},
 		{
 			name:           "bankKeeper from the cosmos-sdk",

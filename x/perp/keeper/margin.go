@@ -334,15 +334,16 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 			return sdk.ZeroDec(), sdk.ZeroDec(), err
 		}
 	case types.PnLCalcOption_ORACLE:
-		oraclePrice, err := k.PricefeedKeeper.GetCurrentPrice(
-			ctx, currentPosition.Pair.Token0, currentPosition.Pair.Token1)
+		oraclePrice, err := k.OracleKeeper.GetExchangeRate(
+			ctx, currentPosition.Pair.String())
 		if err != nil {
 			k.Logger(ctx).Error(err.Error(), "calc_option", pnlCalcOption.String())
 			return sdk.ZeroDec(), sdk.ZeroDec(), err
 		}
-		positionNotional = oraclePrice.Price.Mul(positionSizeAbs)
+		positionNotional = oraclePrice.Mul(positionSizeAbs)
 	default:
-		panic("unrecognized pnl calc option: " + pnlCalcOption.String())
+		err := fmt.Errorf("unrecognized pnl calc option: %s" + pnlCalcOption.String())
+		return sdk.ZeroDec(), sdk.ZeroDec(), err
 	}
 
 	if positionNotional.Equal(currentPosition.OpenNotional) {
@@ -430,7 +431,8 @@ func (k Keeper) GetPreferencePositionNotionalAndUnrealizedPnL(
 		positionNotional = sdk.MinDec(spotPositionNotional, twapPositionNotional)
 		unrealizedPnl = sdk.MinDec(spotPricePnl, twapPnl)
 	default:
-		panic("invalid pnl preference option " + pnLPreferenceOption.String())
+		return sdk.Dec{}, sdk.Dec{}, fmt.Errorf(
+			"invalid pnl preference option: %s", pnLPreferenceOption)
 	}
 
 	return positionNotional, unrealizedPnl, nil

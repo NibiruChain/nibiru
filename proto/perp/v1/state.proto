@@ -125,11 +125,11 @@ message Position {
 message PairMetadata {
   common.AssetPair pair = 1 [ (gogoproto.nullable) = false ];
 
-  // The historical list of cumulative premium fractions for a given pair.
-  // Calculated once per epoch.
+  // Latest cumulative premium fraction for a given pair.
+  // Calculated once per funding rate interval.
   // A premium fraction is the difference between mark and index, divided by the number of payments per day.
   // (mark - index) / # payments in a day
-  repeated string cumulative_premium_fractions = 2 [
+  string latest_cumulative_premium_fraction = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
@@ -225,4 +225,28 @@ message LiquidateResp {
 
   // Position response from the close or open reverse position
   PositionResp position_resp = 5;
+}
+
+// PoolMetrics is a structure that displays a snapshot of perp metrics for each pair.
+message Metrics {
+  // Pair identifier for the two assets. Always in format 'base:quote'
+  string pair = 1;
+
+  // Sum of all active position sizes for the pair.
+  string net_size = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // Total notional volume for the pair.
+  string volumeQuote = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // Total size volume for the pair.
+  string volumeBase = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 }

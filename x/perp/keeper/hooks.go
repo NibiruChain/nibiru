@@ -28,7 +28,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64)
 			continue
 		}
 
-		indexTWAP, err := k.PricefeedKeeper.GetCurrentTWAP(ctx, pairMetadata.Pair.Token0, pairMetadata.Pair.Token1)
+		indexTWAP, err := k.OracleKeeper.GetExchangeRateTwap(ctx, pairMetadata.Pair.String())
 		if err != nil {
 			ctx.Logger().Error("failed to fetch twap index price", "pairMetadata.Pair", pairMetadata.Pair, "error", err)
 			continue
@@ -54,12 +54,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64)
 		premiumFraction := markTwap.Sub(indexTWAP).QuoInt64(int64(intervalsPerDay))
 
 		// If there is a previous cumulative funding rate, add onto that one. Otherwise, the funding rate is the first cumulative funding rate.
-		cumulativePremiumFraction := premiumFraction
-		if len(pairMetadata.CumulativePremiumFractions) > 0 {
-			cumulativePremiumFraction = pairMetadata.CumulativePremiumFractions[len(pairMetadata.CumulativePremiumFractions)-1].Add(premiumFraction)
-		}
-
-		pairMetadata.CumulativePremiumFractions = append(pairMetadata.CumulativePremiumFractions, cumulativePremiumFraction)
+		pairMetadata.LatestCumulativePremiumFraction = pairMetadata.LatestCumulativePremiumFraction.Add(premiumFraction)
 		k.PairsMetadata.Insert(ctx, pairMetadata.Pair, pairMetadata)
 
 		if err = ctx.EventManager().EmitTypedEvent(&types.FundingRateChangedEvent{
@@ -68,7 +63,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64)
 			IndexPrice:                indexTWAP,
 			LatestFundingRate:         premiumFraction.Quo(indexTWAP),
 			LatestPremiumFraction:     premiumFraction,
-			CumulativePremiumFraction: cumulativePremiumFraction,
+			CumulativePremiumFraction: pairMetadata.LatestCumulativePremiumFraction,
 			BlockHeight:               ctx.BlockHeight(),
 			BlockTimeMs:               ctx.BlockTime().UnixMilli(),
 		}); err != nil {
