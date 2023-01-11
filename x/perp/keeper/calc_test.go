@@ -10,6 +10,7 @@ import (
 	"github.com/NibiruChain/nibiru/simapp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -45,7 +46,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 
 				t.Log("Set vpool defined by pair on VpoolKeeper")
 				vpoolKeeper := &nibiruApp.VpoolKeeper
-				vpoolKeeper.CreatePool(
+				assert.NoError(t, vpoolKeeper.CreatePool(
 					ctx,
 					pair,
 					/* y */ sdk.NewDec(1*common.Precision), //
@@ -57,7 +58,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 						MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("1.0"), // 100%,
 						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					},
-				)
+				))
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
@@ -98,7 +99,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 
 				t.Log("Set vpool defined by pair on VpoolKeeper")
 				vpoolKeeper := &nibiruApp.VpoolKeeper
-				vpoolKeeper.CreatePool(
+				assert.NoError(t, vpoolKeeper.CreatePool(
 					ctx,
 					pair,
 					/* y */ sdk.NewDec(1*common.Precision), //
@@ -110,7 +111,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 						MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("1.0"), // 100%,
 						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					},
-				)
+				))
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 
 				t.Log("Set vpool defined by pair on PerpKeeper")

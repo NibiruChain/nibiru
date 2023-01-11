@@ -87,7 +87,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 
 			t.Log("create vpool")
 			vpoolKeeper := &nibiruApp.VpoolKeeper
-			vpoolKeeper.CreatePool(
+			assert.NoError(t, vpoolKeeper.CreatePool(
 				ctx,
 				tokenPair,
 				/* quoteAssetReserves */ sdk.NewDec(10*common.Precision),
@@ -99,7 +99,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-			)
+			))
 			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
 
 			nibiruApp.OracleKeeper.SetPrice(ctx, tokenPair.String(), sdk.NewDec(2))
@@ -265,7 +265,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 
 			t.Log("Set vpool defined by pair on VpoolKeeper")
 			vpoolKeeper := &nibiruApp.VpoolKeeper
-			vpoolKeeper.CreatePool(
+			assert.NoError(t, vpoolKeeper.CreatePool(
 				ctx,
 				tokenPair,
 				/* quoteAssetReserves */ sdk.NewDec(10_000*common.Precision*common.Precision),
@@ -277,7 +277,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-			)
+			))
 			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
 
 			t.Log("Set vpool defined by pair on PerpKeeper")

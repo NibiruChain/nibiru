@@ -28,7 +28,7 @@ func initAppVpools(
 	queryServer := keeper.NewQuerier(*perpKeeper)
 
 	t.Log("initialize vpool and pair")
-	vpoolKeeper.CreatePool(
+	assert.NoError(t, vpoolKeeper.CreatePool(
 		ctx,
 		common.Pair_BTC_NUSD,
 		quoteAssetReserve,
@@ -40,12 +40,12 @@ func initAppVpools(
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
-	)
+	))
 	setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 		Pair:                            common.Pair_BTC_NUSD,
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 	})
-	vpoolKeeper.CreatePool(
+	assert.NoError(t, vpoolKeeper.CreatePool(
 		ctx,
 		common.Pair_ETH_NUSD,
 		/* quoteReserve */ sdk.MustNewDecFromStr("100000"),
@@ -57,12 +57,12 @@ func initAppVpools(
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
-	)
+	))
 	setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 		Pair:                            common.Pair_ETH_NUSD,
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 	})
-	vpoolKeeper.CreatePool(
+	assert.NoError(t, vpoolKeeper.CreatePool(
 		ctx,
 		common.Pair_NIBI_NUSD,
 		/* quoteReserve */ sdk.MustNewDecFromStr("100000"),
@@ -74,7 +74,7 @@ func initAppVpools(
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
-	)
+	))
 	setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 		Pair:                            common.Pair_NIBI_NUSD,
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),

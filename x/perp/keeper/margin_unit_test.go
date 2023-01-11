@@ -22,33 +22,33 @@ import (
 
 func TestRequireMoreMarginRatio(t *testing.T) {
 	type test struct {
-		marginRatio, baseMarginRatio sdk.Dec
-		largerThanEqualTo            bool
-		wantErr                      bool
+		marginRatio, threshold sdk.Dec
+		largerThanEqualTo      bool
+		wantErr                bool
 	}
 
 	cases := map[string]test{
 		"ok - largeThanOrEqualTo true": {
 			marginRatio:       sdk.NewDec(2),
-			baseMarginRatio:   sdk.NewDec(1),
+			threshold:         sdk.NewDec(1),
 			largerThanEqualTo: true,
 			wantErr:           false,
 		},
 		"ok - largerThanOrEqualTo false": {
 			marginRatio:       sdk.NewDec(1),
-			baseMarginRatio:   sdk.NewDec(2),
+			threshold:         sdk.NewDec(2),
 			largerThanEqualTo: false,
 			wantErr:           false,
 		},
 		"fails - largerThanEqualTo true": {
 			marginRatio:       sdk.NewDec(1),
-			baseMarginRatio:   sdk.NewDec(2),
+			threshold:         sdk.NewDec(2),
 			largerThanEqualTo: true,
 			wantErr:           true,
 		},
 		"fails - largerThanEqualTo false": {
 			marginRatio:       sdk.NewDec(2),
-			baseMarginRatio:   sdk.NewDec(1),
+			threshold:         sdk.NewDec(1),
 			largerThanEqualTo: false,
 			wantErr:           true,
 		},
@@ -57,7 +57,7 @@ func TestRequireMoreMarginRatio(t *testing.T) {
 	for name, tc := range cases {
 		tc := tc
 		t.Run(name, func(t *testing.T) {
-			err := requireMoreMarginRatio(tc.marginRatio, tc.baseMarginRatio, tc.largerThanEqualTo)
+			err := validateMarginRatio(tc.marginRatio, tc.threshold, tc.largerThanEqualTo)
 			switch {
 			case tc.wantErr:
 				if err == nil {
@@ -228,7 +228,8 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("mock vpool keeper")
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).AnyTimes().Return(true)
-				mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, pair).Return(sdk.MustNewDecFromStr("0.0625"))
+				mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, pair).
+					Return(sdk.MustNewDecFromStr("0.0625"), nil)
 				mocks.mockVpoolKeeper.EXPECT().GetMarkPrice(ctx, pair).Return(sdk.OneDec(), nil)
 				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(
 					ctx,
@@ -295,7 +296,8 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("mock vpool keeper")
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
-				mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, pair).Return(sdk.MustNewDecFromStr("0.0625"))
+				mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, pair).
+					Return(sdk.MustNewDecFromStr("0.0625"), nil)
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
 
 				mocks.mockVpoolKeeper.EXPECT().GetMarkPrice(ctx, pair).Return(sdk.OneDec(), nil)

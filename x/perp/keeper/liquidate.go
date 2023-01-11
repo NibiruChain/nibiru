@@ -32,16 +32,17 @@ func (k Keeper) Liquidate(
 	traderAddr sdk.AccAddress,
 ) (feeToLiquidator sdk.Coin, feeToFund sdk.Coin, err error) {
 	if !k.canLiquidate(ctx, liquidatorAddr) {
-		return sdk.Coin{}, sdk.Coin{}, types.ErrUnauthorized.Wrapf("not allowed to liquidate: %s", traderAddr)
+		err = types.ErrUnauthorized.Wrapf("not allowed to liquidate: %s", traderAddr)
+		return
 	}
 	err = k.requireVpool(ctx, pair)
 	if err != nil {
-		return sdk.Coin{}, sdk.Coin{}, err
+		return
 	}
 
 	position, err := k.Positions.Get(ctx, collections.Join(pair, traderAddr))
 	if err != nil {
-		return sdk.Coin{}, sdk.Coin{}, err
+		return
 	}
 
 	marginRatio, err := k.GetMarginRatio(
@@ -50,14 +51,18 @@ func (k Keeper) Liquidate(
 		types.MarginCalculationPriceOption_MAX_PNL,
 	)
 	if err != nil {
-		return sdk.Coin{}, sdk.Coin{}, err
+		return
 	}
 
-	if k.VpoolKeeper.IsOverSpreadLimit(ctx, pair) {
+	isOverSpreadLimit, err := k.VpoolKeeper.IsOverSpreadLimit(ctx, pair)
+	if err != nil {
+		return
+	}
+	if isOverSpreadLimit {
 		marginRatioBasedOnOracle, err := k.GetMarginRatio(
 			ctx, position, types.MarginCalculationPriceOption_INDEX)
 		if err != nil {
-			return sdk.Coin{}, sdk.Coin{}, err
+			return feeToLiquidator, feeToFund, err
 		}
 
 		marginRatio = sdk.MaxDec(marginRatio, marginRatioBasedOnOracle)
@@ -65,16 +70,19 @@ func (k Keeper) Liquidate(
 
 	params := k.GetParams(ctx)
 
-	maintenanceMarginRatio := k.VpoolKeeper.GetMaintenanceMarginRatio(ctx, pair)
-	err = requireMoreMarginRatio(marginRatio, maintenanceMarginRatio, false)
+	maintenanceMarginRatio, err := k.VpoolKeeper.GetMaintenanceMarginRatio(ctx, pair)
 	if err != nil {
-		return sdk.Coin{}, sdk.Coin{}, types.ErrMarginHighEnough
+		return
+	}
+	err = validateMarginRatio(marginRatio, maintenanceMarginRatio, false)
+	if err != nil {
+		return
 	}
 
 	marginRatioBasedOnSpot, err := k.GetMarginRatio(
 		ctx, position, types.MarginCalculationPriceOption_SPOT)
 	if err != nil {
-		return sdk.Coin{}, sdk.Coin{}, err
+		return
 	}
 
 	var liquidationResponse types.LiquidateResp
@@ -84,7 +92,7 @@ func (k Keeper) Liquidate(
 		liquidationResponse, err = k.ExecuteFullLiquidation(ctx, liquidatorAddr, &position)
 	}
 	if err != nil {
-		return sdk.Coin{}, sdk.Coin{}, err
+		return
 	}
 
 	feeToLiquidator = sdk.NewCoin(

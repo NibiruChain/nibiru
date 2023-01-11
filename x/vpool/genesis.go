@@ -14,13 +14,15 @@ import (
 // state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
 	for _, vp := range genState.Vpools {
-		k.CreatePool(
+		if err := k.CreatePool(
 			ctx,
 			vp.Pair,
 			vp.QuoteAssetReserve,
 			vp.BaseAssetReserve,
 			vp.Config,
-		)
+		); err != nil {
+			panic(err)
+		}
 	}
 }
 

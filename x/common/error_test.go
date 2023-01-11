@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/testutil"
 )
 
 func newErrors(strs ...string) []error {
@@ -111,10 +112,10 @@ func TestCombineErrorsGeneric(t *testing.T) {
 }
 
 func TestToError(t *testing.T) {
-	testCases := []FunctionTestCase{
+	testCases := []testutil.FunctionTestCase{
 		{
-			name: "string nonempty",
-			test: func() {
+			Name: "string nonempty",
+			Test: func() {
 				description := "an error description"
 				out, ok := common.ToError(description)
 				assert.True(t, ok)
@@ -122,8 +123,8 @@ func TestToError(t *testing.T) {
 			},
 		},
 		{
-			name: "error nonempty",
-			test: func() {
+			Name: "error nonempty",
+			Test: func() {
 				description := "an error description"
 				out, ok := common.ToError(errors.New(description))
 				assert.True(t, ok)
@@ -131,8 +132,8 @@ func TestToError(t *testing.T) {
 			},
 		},
 		{
-			name: "empty string creates blank error",
-			test: func() {
+			Name: "empty string creates blank error",
+			Test: func() {
 				description := ""
 				out, ok := common.ToError("")
 				assert.True(t, ok)
@@ -140,32 +141,32 @@ func TestToError(t *testing.T) {
 			},
 		},
 		{
-			name: "fail - bad type",
-			test: func() {
+			Name: "fail - bad type",
+			Test: func() {
 				descriptionOfBadType := int64(2200)
 				_, ok := common.ToError(descriptionOfBadType)
 				assert.False(t, ok)
 			},
 		},
 		{
-			name: "nil input returns nil",
-			test: func() {
+			Name: "nil input returns nil",
+			Test: func() {
 				err, ok := common.ToError(nil)
 				assert.True(t, ok)
 				assert.Equal(t, nil, err)
 			},
 		},
 		{
-			name: "slice of strings",
-			test: func() {
+			Name: "slice of strings",
+			Test: func() {
 				err, ok := common.ToError([]string{"abc", "123"})
 				assert.True(t, ok)
 				assert.Equal(t, errors.New("abc: 123"), err)
 			},
 		},
 		{
-			name: "slice of error",
-			test: func() {
+			Name: "slice of error",
+			Test: func() {
 				err, ok := common.ToError(newErrors("abc", "123"))
 				assert.True(t, ok)
 				assert.Equal(t, errors.New("abc: 123"), err)
@@ -173,5 +174,5 @@ func TestToError(t *testing.T) {
 		},
 	}
 
-	RunFunctionTests(t, testCases)
+	testutil.RunFunctionTests(t, testCases)
 }

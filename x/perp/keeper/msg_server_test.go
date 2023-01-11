@@ -76,7 +76,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 			traderAddr := testutil.AccAddress()
 
 			t.Log("create vpool")
-			app.VpoolKeeper.CreatePool(
+			assert.NoError(t, app.VpoolKeeper.CreatePool(
 				ctx,
 				common.Pair_BTC_NUSD,
 				/* quoteReserve */ sdk.NewDec(1*common.Precision),
@@ -88,7 +88,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-			)
+			))
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            common.Pair_BTC_NUSD,
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -197,7 +197,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			traderAddr := testutil.AccAddress()
 
 			t.Log("create vpool")
-			app.VpoolKeeper.CreatePool(
+			assert.NoError(t, app.VpoolKeeper.CreatePool(
 				ctx,
 				common.Pair_BTC_NUSD,
 				/* quoteReserve */ sdk.NewDec(1*common.Precision),
@@ -209,7 +209,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-			)
+			))
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            common.Pair_BTC_NUSD,
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -286,7 +286,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
 			t.Log("create vpool")
-			app.VpoolKeeper.CreatePool(
+			assert.NoError(t, app.VpoolKeeper.CreatePool(
 				/* ctx */ ctx,
 				/* pair */ common.Pair_BTC_NUSD,
 				/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
@@ -298,7 +298,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-			)
+			))
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            common.Pair_BTC_NUSD,
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -373,7 +373,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 
 			t.Log("create vpool")
 
-			app.VpoolKeeper.CreatePool(
+			assert.NoError(t, app.VpoolKeeper.CreatePool(
 				ctx,
 				common.Pair_BTC_NUSD,
 				/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
@@ -385,7 +385,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-			)
+			))
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            common.Pair_BTC_NUSD,
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -452,7 +452,7 @@ func TestMsgServerLiquidate(t *testing.T) {
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
 			t.Log("create vpool")
-			app.VpoolKeeper.CreatePool(
+			assert.NoError(t, app.VpoolKeeper.CreatePool(
 				/* ctx */ ctx,
 				/* pair */ common.Pair_BTC_NUSD,
 				/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
@@ -464,7 +464,7 @@ func TestMsgServerLiquidate(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-			)
+			))
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            common.Pair_BTC_NUSD,
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -526,7 +526,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	atRiskTrader2 := testutil.AccAddress()
 
 	t.Log("create vpool")
-	app.VpoolKeeper.CreatePool(
+	assert.NoError(t, app.VpoolKeeper.CreatePool(
 		/* ctx */ ctx,
 		/* pair */ pair,
 		/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
@@ -538,7 +538,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
-	)
+	))
 	setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 		Pair:                            pair,
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),

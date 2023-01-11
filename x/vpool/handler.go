@@ -53,14 +53,13 @@ func handleProposalCreatePool(
 		return err
 	}
 
-	k.CreatePool(
+	return k.CreatePool(
 		ctx,
 		pair,
 		proposal.QuoteAssetReserve,
 		proposal.BaseAssetReserve,
 		proposal.Config,
 	)
-	return nil
 }
 
 func handleProposalEditPoolConfig(
