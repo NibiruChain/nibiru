@@ -40,6 +40,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [v0.17.0](https://github.com/NibiruChain/nibiru/releases/tag/v0.16.3) - Jan 11, 2023
+
+### State Machine Breaking
+
+* [#1120](https://github.com/NibiruChain/nibiru/pull/1120) - feat: replace pricefeed with oracle
+
 ### Improvements
 
 * [#1127](https://github.com/NibiruChain/nibiru/pull/1127) - refactor: remove unnecessary panics from x/dex and x/stablecoin
@@ -56,7 +62,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * [#1115](https://github.com/NibiruChain/nibiru/pull/1115) - feat: improve single asset join calculation
 * [#1117](https://github.com/NibiruChain/nibiru/pull/1117) - feat: wire multi-liquidate transaction
-* [#1120](https://github.com/NibiruChain/nibiru/pull/1120) - feat: replace pricefeed with oracle
 
 ### Bug Fixes
 
