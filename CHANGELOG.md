@@ -40,11 +40,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+* ...
+
 ### Improvements
 
+* [#1134](https://github.com/NibiruChain/nibiru/pull/1134) - refactor: remove panics from vpool and spillovers from the perp module. It's now impossible to call functions in x/perp that would panic in vpool.
 * [#1127](https://github.com/NibiruChain/nibiru/pull/1127) - refactor: remove unnecessary panics from x/dex and x/stablecoin
 * [#1126](https://github.com/NibiruChain/nibiru/pull/1126) - refactor(perp): remove unnecessary panics
 * [#1138](https://github.com/NibiruChain/nibiru/pull/1138) - refactor: put Makefile workflows in separate directory
+* [#1126](https://github.com/NibiruChain/nibiru/pull/1126) - test(oracle): stop the tyrannical behavior of TestFuzz_PickReferencePair 
+* [#1135](https://github.com/NibiruChain/nibiru/pull/1135) - fix: add genesis oracle prices to localnet
 
 ### Bug Fixes
 

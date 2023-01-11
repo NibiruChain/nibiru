@@ -254,7 +254,7 @@ func SimulateMsgAddMargin(ak types.AccountKeeper, bk types.BankKeeper, k keeper.
 func SimulateMsgRemoveMargin(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
-	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+	) (opMsg simtypes.OperationMsg, futureOps []simtypes.FutureOperation, err error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 		trader := simAccount.Address.String()
 		pair := common.Pair_BTC_NUSD.String()
@@ -267,7 +267,11 @@ func SimulateMsgRemoveMargin(ak types.AccountKeeper, bk types.BankKeeper, k keep
 		}
 
 		//simple calculation, might still fail due to funding rate or unrealizedPnL
-		maintenanceMarginRatio := k.VpoolKeeper.GetMaintenanceMarginRatio(ctx, position.GetPair())
+		maintenanceMarginRatio, err := k.VpoolKeeper.GetMaintenanceMarginRatio(
+			ctx, position.GetPair())
+		if err != nil {
+			return
+		}
 		maintenanceMarginRequirement := position.OpenNotional.Mul(maintenanceMarginRatio)
 		maxMarginToRemove := position.Margin.Sub(maintenanceMarginRequirement).Quo(sdk.NewDec(2))
 
@@ -285,7 +289,7 @@ func SimulateMsgRemoveMargin(ak types.AccountKeeper, bk types.BankKeeper, k keep
 			Margin:    expectedCoin,
 		}
 
-		opMsg, futureOps, err := simulation.GenAndDeliverTxWithRandFees(
+		opMsg, futureOps, err = simulation.GenAndDeliverTxWithRandFees(
 			simulation.OperationInput{
 				R:               r,
 				App:             app,
@@ -302,8 +306,8 @@ func SimulateMsgRemoveMargin(ak types.AccountKeeper, bk types.BankKeeper, k keep
 			},
 		)
 		if err != nil {
-			fmt.Println(expectedCoin)
-			fmt.Println(maxMarginToRemove)
+			errDebugHelper := fmt.Errorf("expectedCoin: %s, maxMarginToRemove: %s", expectedCoin, maxMarginToRemove)
+			err = common.CombineErrors(err, errDebugHelper)
 		}
 
 		return opMsg, futureOps, err

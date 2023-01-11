@@ -16,7 +16,7 @@ import (
 func TestCreatePool(t *testing.T) {
 	vpoolKeeper, _, ctx := getKeeper(t)
 
-	vpoolKeeper.CreatePool(
+	assert.NoError(t, vpoolKeeper.CreatePool(
 		ctx,
 		common.Pair_BTC_NUSD,
 
@@ -29,7 +29,7 @@ func TestCreatePool(t *testing.T) {
 			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 		},
-	)
+	))
 
 	exists := vpoolKeeper.ExistsPool(ctx, common.Pair_BTC_NUSD)
 	require.True(t, exists)
@@ -58,13 +58,13 @@ func TestEditPoolConfig(t *testing.T) {
 
 	setupTest := func() (Keeper, sdk.Context) {
 		vpoolKeeper, _, ctx := getKeeper(t)
-		vpoolKeeper.CreatePool(
+		assert.NoError(t, vpoolKeeper.CreatePool(
 			ctx,
 			common.Pair_BTC_NUSD,
 			vpoolStart.QuoteAssetReserve,
 			vpoolStart.BaseAssetReserve,
 			vpoolStart.Config,
-		)
+		))
 		exists := vpoolKeeper.ExistsPool(ctx, common.Pair_BTC_NUSD)
 		require.True(t, exists)
 		return vpoolKeeper, ctx
@@ -266,13 +266,13 @@ func TestGetPoolPrices(t *testing.T) {
 			ctx = ctx.WithBlockHeight(1).WithBlockTime(time.Now())
 
 			if tc.shouldCreateVpool {
-				vpoolKeeper.CreatePool(
+				assert.NoError(t, vpoolKeeper.CreatePool(
 					ctx,
 					tc.vpool.Pair,
 					tc.vpool.QuoteAssetReserve,
 					tc.vpool.BaseAssetReserve,
 					tc.vpool.Config,
-				)
+				))
 			}
 
 			ctx = ctx.WithBlockHeight(2).WithBlockTime(time.Now().Add(5 * time.Second))
@@ -312,13 +312,13 @@ func TestEditSwapInvariant(t *testing.T) {
 
 	setupTest := func() (Keeper, sdk.Context) {
 		vpoolKeeper, _, ctx := getKeeper(t)
-		vpoolKeeper.CreatePool(
+		assert.NoError(t, vpoolKeeper.CreatePool(
 			ctx,
 			pair,
 			vpoolStart.QuoteAssetReserve,
 			vpoolStart.BaseAssetReserve,
 			vpoolStart.Config,
-		)
+		))
 		exists := vpoolKeeper.ExistsPool(ctx, pair)
 		require.True(t, exists)
 		return vpoolKeeper, ctx

@@ -458,7 +458,7 @@ func (s *IntegrationTestSuite) TestLiquidate() {
 		common.Pair_ETH_NUSD.String(),
 		s.users[1].String(),
 	})
-	s.Contains(err.Error(), "margin is higher than required maintenance margin ratio")
+	s.Contains(err.Error(), "margin ratio is too healthy to liquidate")
 
 	s.T().Log("opening a position with user 2...")
 	txResp, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[2], []string{
