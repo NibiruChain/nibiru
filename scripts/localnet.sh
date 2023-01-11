@@ -241,7 +241,7 @@ add_genesis_param '.app_state.perp.pair_metadata[1].pair = {token0:"ueth",token1
 add_genesis_param '.app_state.perp.pair_metadata[1].latest_cumulative_premium_fraction = "0"'
 
 add_genesis_param '.app_state.oracle.params.twap_lookback_window = "900s"'
-add_genesis_param '.app_state.oracle.params.vote_period = "200000000"' # price posted for 6yrs
+add_genesis_param '.app_state.oracle.params.vote_period = "10"'
 add_genesis_param '.app_state.oracle.exchange_rates[0].pair = "ubtc:unusd"'
 add_genesis_param '.app_state.oracle.exchange_rates[0].exchange_rate = "20000"'
 add_genesis_param '.app_state.oracle.exchange_rates[1].pair = "ueth:unusd"'
