@@ -39,9 +39,7 @@ var (
 	DefaultRewardBand    = sdk.NewDecWithPrec(2, 2)  // 2% (-1, 1)
 	DefaultWhitelist     = []string{
 		common.Pair_BTC_NUSD.String(),
-		common.Pair_USDC_NUSD.String(),
 		common.Pair_ETH_NUSD.String(),
-		common.Pair_NIBI_NUSD.String(),
 	}
 	DefaultSlashFraction      = sdk.NewDecWithPrec(1, 4)        // 0.01%
 	DefaultMinValidPerWindow  = sdk.NewDecWithPrec(5, 2)        // 5%
