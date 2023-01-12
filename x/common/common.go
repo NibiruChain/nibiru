@@ -13,9 +13,14 @@ import (
 )
 
 const (
-	DenomNIBI = "unibi"
+	// stablecoins
 	DenomUSDC = "uusdc"
 	DenomNUSD = "unusd"
+	DenomUSD  = "uusd"
+	DenomUSDT = "uusdt"
+
+	// crypto assets
+	DenomNIBI = "unibi"
 	DenomBTC  = "ubtc"
 	DenomETH  = "ueth"
 
@@ -27,6 +32,13 @@ const (
 )
 
 var (
+	// paired against USD
+	Pair_NIBI_USD = AssetPair{Token0: DenomNIBI, Token1: DenomUSD}
+	Pair_USDC_USD = AssetPair{Token0: DenomUSDC, Token1: DenomUSD}
+	Pair_BTC_USD  = AssetPair{Token0: DenomBTC, Token1: DenomUSD}
+	Pair_ETH_USD  = AssetPair{Token0: DenomETH, Token1: DenomUSD}
+
+	// paired against NUSD
 	Pair_NIBI_NUSD = AssetPair{Token0: DenomNIBI, Token1: DenomNUSD}
 	Pair_USDC_NUSD = AssetPair{Token0: DenomUSDC, Token1: DenomNUSD}
 	Pair_BTC_NUSD  = AssetPair{Token0: DenomBTC, Token1: DenomNUSD}
