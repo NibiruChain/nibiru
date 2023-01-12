@@ -127,7 +127,7 @@ func TestClearBallots(t *testing.T) {
 			}, ValAddrs[i]))
 	}
 
-	input.OracleKeeper.clearVotes(input.Ctx, 5)
+	input.OracleKeeper.clearVotesAndPreVotes(input.Ctx, 5)
 
 	prevoteCounter := len(input.OracleKeeper.Prevotes.Iterate(input.Ctx, collections.Range[sdk.ValAddress]{}).Keys())
 	voteCounter := len(input.OracleKeeper.Votes.Iterate(input.Ctx, collections.Range[sdk.ValAddress]{}).Keys())
@@ -135,7 +135,7 @@ func TestClearBallots(t *testing.T) {
 	require.Equal(t, prevoteCounter, 3)
 	require.Equal(t, voteCounter, 0)
 
-	input.OracleKeeper.clearVotes(input.Ctx.WithBlockHeight(input.Ctx.BlockHeight()+6), 5)
+	input.OracleKeeper.clearVotesAndPreVotes(input.Ctx.WithBlockHeight(input.Ctx.BlockHeight()+6), 5)
 	prevoteCounter = len(input.OracleKeeper.Prevotes.Iterate(input.Ctx, collections.Range[sdk.ValAddress]{}).Keys())
 	require.Equal(t, prevoteCounter, 0)
 }
@@ -161,7 +161,7 @@ func TestApplyWhitelist(t *testing.T) {
 		"btc:usd":  {},
 	}
 	// no updates case
-	input.OracleKeeper.applyWhitelist(input.Ctx, whitelist, voteTargets)
+	input.OracleKeeper.updateWhitelist(input.Ctx, whitelist, voteTargets)
 
 	var gotPairs []string
 	gotPairs = append(gotPairs, input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[string]{}).Keys()...)
@@ -173,7 +173,7 @@ func TestApplyWhitelist(t *testing.T) {
 
 	// len update (fast path)
 	whitelist = append(whitelist, "nibi:eth")
-	input.OracleKeeper.applyWhitelist(input.Ctx, whitelist, voteTargets)
+	input.OracleKeeper.updateWhitelist(input.Ctx, whitelist, voteTargets)
 
 	gotPairs = []string{}
 	gotPairs = append(gotPairs, input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[string]{}).Keys()...)
@@ -186,7 +186,7 @@ func TestApplyWhitelist(t *testing.T) {
 	// diff update (slow path)
 	voteTargets["nibi:eth"] = struct{}{} // add previous pair
 	whitelist[0] = "nibi:usdt"           // update first pair
-	input.OracleKeeper.applyWhitelist(input.Ctx, whitelist, voteTargets)
+	input.OracleKeeper.updateWhitelist(input.Ctx, whitelist, voteTargets)
 
 	gotPairs = []string{}
 	gotPairs = append(gotPairs, input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[string]{}).Keys()...)

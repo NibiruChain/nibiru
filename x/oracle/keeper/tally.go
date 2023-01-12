@@ -10,6 +10,8 @@ import (
 
 // Tally calculates the median and returns it. Sets the set of voters to be rewarded, i.e. voted within
 // a reasonable spread from the weighted median to the store
+//
+// ALERT: This function mutates validatorPerformanceMap slice based on the votes made by the validators.
 func Tally(ballots types.ExchangeRateBallots, rewardBand sdk.Dec, validatorPerformanceMap map[string]types.ValidatorPerformance) sdk.Dec {
 	sort.Sort(ballots)
 
@@ -23,9 +25,11 @@ func Tally(ballots types.ExchangeRateBallots, rewardBand sdk.Dec, validatorPerfo
 
 	for _, ballot := range ballots {
 		// Filter ballot winners & abstain voters
-		if (ballot.ExchangeRate.GTE(weightedMedian.Sub(rewardSpread)) &&
-			ballot.ExchangeRate.LTE(weightedMedian.Add(rewardSpread))) ||
-			!ballot.ExchangeRate.IsPositive() {
+		voteInsideSpread := ballot.ExchangeRate.GTE(weightedMedian.Sub(rewardSpread)) &&
+			ballot.ExchangeRate.LTE(weightedMedian.Add(rewardSpread))
+		isAbstainVote := !ballot.ExchangeRate.IsPositive()
+
+		if voteInsideSpread || isAbstainVote {
 			voterAddr := ballot.Voter.String()
 
 			validatorPerformance := validatorPerformanceMap[voterAddr]
@@ -47,6 +51,9 @@ func isPassingVoteThreshold(ballots types.ExchangeRateBallots, thresholdVotes sd
 // RemoveInvalidBallots removes the ballots which have not reached the vote threshold
 // or which are not part of the whitelisted pairs anymore: example when params change during a vote period
 // but some votes were already made.
+//
+// ALERT: This function mutates pairBallotMap slice, it removes the ballot for the pair which is not passing the threshold
+// or which is not whitelisted anymore.
 func (k Keeper) RemoveInvalidBallots(
 	ctx sdk.Context,
 	pairBallotsMap map[string]types.ExchangeRateBallots,
