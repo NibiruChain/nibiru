@@ -31,15 +31,15 @@ func TestOrganizeAggregate(t *testing.T) {
 	require.NoError(t, err)
 	staking.EndBlocker(ctx, input.StakingKeeper)
 
-	btcBallot := types.ExchangeRateBallot{
-		types.NewBallotVoteForTally(sdk.NewDec(17), common.Pair_BTC_NUSD.String(), ValAddrs[0], power),
-		types.NewBallotVoteForTally(sdk.NewDec(10), common.Pair_BTC_NUSD.String(), ValAddrs[1], power),
-		types.NewBallotVoteForTally(sdk.NewDec(6), common.Pair_BTC_NUSD.String(), ValAddrs[2], power),
+	btcBallot := types.ExchangeRateBallots{
+		types.NewExchangeRateBallot(sdk.NewDec(17), common.Pair_BTC_NUSD.String(), ValAddrs[0], power),
+		types.NewExchangeRateBallot(sdk.NewDec(10), common.Pair_BTC_NUSD.String(), ValAddrs[1], power),
+		types.NewExchangeRateBallot(sdk.NewDec(6), common.Pair_BTC_NUSD.String(), ValAddrs[2], power),
 	}
-	ethBallot := types.ExchangeRateBallot{
-		types.NewBallotVoteForTally(sdk.NewDec(1000), common.Pair_ETH_NUSD.String(), ValAddrs[0], power),
-		types.NewBallotVoteForTally(sdk.NewDec(1300), common.Pair_ETH_NUSD.String(), ValAddrs[1], power),
-		types.NewBallotVoteForTally(sdk.NewDec(2000), common.Pair_ETH_NUSD.String(), ValAddrs[2], power),
+	ethBallot := types.ExchangeRateBallots{
+		types.NewExchangeRateBallot(sdk.NewDec(1000), common.Pair_ETH_NUSD.String(), ValAddrs[0], power),
+		types.NewExchangeRateBallot(sdk.NewDec(1300), common.Pair_ETH_NUSD.String(), ValAddrs[1], power),
+		types.NewExchangeRateBallot(sdk.NewDec(2000), common.Pair_ETH_NUSD.String(), ValAddrs[2], power),
 	}
 
 	for i := range btcBallot {
@@ -57,7 +57,7 @@ func TestOrganizeAggregate(t *testing.T) {
 	}
 
 	// organize votes by pair
-	ballotMap := input.OracleKeeper.mapBallotByPair(input.Ctx, map[string]types.ValidatorPerformance{
+	ballotMap := input.OracleKeeper.groupBallotsByPair(input.Ctx, map[string]types.ValidatorPerformance{
 		ValAddrs[0].String(): {
 			Power:      power,
 			WinCount:   0,
@@ -102,15 +102,15 @@ func TestClearBallots(t *testing.T) {
 	require.NoError(t, err)
 	staking.EndBlocker(ctx, input.StakingKeeper)
 
-	btcBallot := types.ExchangeRateBallot{
-		types.NewBallotVoteForTally(sdk.NewDec(17), common.Pair_BTC_NUSD.String(), ValAddrs[0], power),
-		types.NewBallotVoteForTally(sdk.NewDec(10), common.Pair_BTC_NUSD.String(), ValAddrs[1], power),
-		types.NewBallotVoteForTally(sdk.NewDec(6), common.Pair_BTC_NUSD.String(), ValAddrs[2], power),
+	btcBallot := types.ExchangeRateBallots{
+		types.NewExchangeRateBallot(sdk.NewDec(17), common.Pair_BTC_NUSD.String(), ValAddrs[0], power),
+		types.NewExchangeRateBallot(sdk.NewDec(10), common.Pair_BTC_NUSD.String(), ValAddrs[1], power),
+		types.NewExchangeRateBallot(sdk.NewDec(6), common.Pair_BTC_NUSD.String(), ValAddrs[2], power),
 	}
-	ethBallot := types.ExchangeRateBallot{
-		types.NewBallotVoteForTally(sdk.NewDec(1000), common.Pair_ETH_NUSD.String(), ValAddrs[0], power),
-		types.NewBallotVoteForTally(sdk.NewDec(1300), common.Pair_ETH_NUSD.String(), ValAddrs[1], power),
-		types.NewBallotVoteForTally(sdk.NewDec(2000), common.Pair_ETH_NUSD.String(), ValAddrs[2], power),
+	ethBallot := types.ExchangeRateBallots{
+		types.NewExchangeRateBallot(sdk.NewDec(1000), common.Pair_ETH_NUSD.String(), ValAddrs[0], power),
+		types.NewExchangeRateBallot(sdk.NewDec(1300), common.Pair_ETH_NUSD.String(), ValAddrs[1], power),
+		types.NewExchangeRateBallot(sdk.NewDec(2000), common.Pair_ETH_NUSD.String(), ValAddrs[2], power),
 	}
 
 	for i := range btcBallot {
@@ -127,7 +127,7 @@ func TestClearBallots(t *testing.T) {
 			}, ValAddrs[i]))
 	}
 
-	input.OracleKeeper.clearBallots(input.Ctx, 5)
+	input.OracleKeeper.clearVotesAndPreVotes(input.Ctx, 5)
 
 	prevoteCounter := len(input.OracleKeeper.Prevotes.Iterate(input.Ctx, collections.Range[sdk.ValAddress]{}).Keys())
 	voteCounter := len(input.OracleKeeper.Votes.Iterate(input.Ctx, collections.Range[sdk.ValAddress]{}).Keys())
@@ -135,7 +135,7 @@ func TestClearBallots(t *testing.T) {
 	require.Equal(t, prevoteCounter, 3)
 	require.Equal(t, voteCounter, 0)
 
-	input.OracleKeeper.clearBallots(input.Ctx.WithBlockHeight(input.Ctx.BlockHeight()+6), 5)
+	input.OracleKeeper.clearVotesAndPreVotes(input.Ctx.WithBlockHeight(input.Ctx.BlockHeight()+6), 5)
 	prevoteCounter = len(input.OracleKeeper.Prevotes.Iterate(input.Ctx, collections.Range[sdk.ValAddress]{}).Keys())
 	require.Equal(t, prevoteCounter, 0)
 }
@@ -149,11 +149,11 @@ func TestApplyWhitelist(t *testing.T) {
 	}
 
 	// prepare test by resetting the genesis pairs
-	for _, p := range input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys() {
-		input.OracleKeeper.Pairs.Delete(input.Ctx, p)
+	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[string]{}).Keys() {
+		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 	}
 	for _, p := range whitelist {
-		input.OracleKeeper.Pairs.Insert(input.Ctx, p)
+		input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, p)
 	}
 
 	voteTargets := map[string]struct{}{
@@ -161,10 +161,10 @@ func TestApplyWhitelist(t *testing.T) {
 		"btc:usd":  {},
 	}
 	// no updates case
-	input.OracleKeeper.applyWhitelist(input.Ctx, whitelist, voteTargets)
+	input.OracleKeeper.updateWhitelist(input.Ctx, whitelist, voteTargets)
 
 	var gotPairs []string
-	gotPairs = append(gotPairs, input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys()...)
+	gotPairs = append(gotPairs, input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[string]{}).Keys()...)
 
 	sort.Slice(whitelist, func(i, j int) bool {
 		return whitelist[i] < whitelist[j]
@@ -173,10 +173,10 @@ func TestApplyWhitelist(t *testing.T) {
 
 	// len update (fast path)
 	whitelist = append(whitelist, "nibi:eth")
-	input.OracleKeeper.applyWhitelist(input.Ctx, whitelist, voteTargets)
+	input.OracleKeeper.updateWhitelist(input.Ctx, whitelist, voteTargets)
 
 	gotPairs = []string{}
-	gotPairs = append(gotPairs, input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys()...)
+	gotPairs = append(gotPairs, input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[string]{}).Keys()...)
 
 	sort.Slice(whitelist, func(i, j int) bool {
 		return whitelist[i] < whitelist[j]
@@ -186,10 +186,10 @@ func TestApplyWhitelist(t *testing.T) {
 	// diff update (slow path)
 	voteTargets["nibi:eth"] = struct{}{} // add previous pair
 	whitelist[0] = "nibi:usdt"           // update first pair
-	input.OracleKeeper.applyWhitelist(input.Ctx, whitelist, voteTargets)
+	input.OracleKeeper.updateWhitelist(input.Ctx, whitelist, voteTargets)
 
 	gotPairs = []string{}
-	gotPairs = append(gotPairs, input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys()...)
+	gotPairs = append(gotPairs, input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[string]{}).Keys()...)
 
 	sort.Slice(whitelist, func(i, j int) bool {
 		return whitelist[i] < whitelist[j]
