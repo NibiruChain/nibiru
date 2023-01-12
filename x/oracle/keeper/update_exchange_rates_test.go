@@ -135,7 +135,7 @@ func TestOracleDrop(t *testing.T) {
 func TestOracleTally(t *testing.T) {
 	input, _ := setup(t)
 
-	ballot := types.ExchangeRateBallot{}
+	ballot := types.ExchangeRateBallots{}
 	rates, valAddrs, stakingKeeper := types.GenerateRandomTestCase()
 	input.OracleKeeper.StakingKeeper = stakingKeeper
 	h := keeper.NewMsgServerImpl(input.OracleKeeper)
@@ -160,7 +160,7 @@ func TestOracleTally(t *testing.T) {
 			power = int64(0)
 		}
 
-		vote := types.NewBallotVoteForTally(
+		vote := types.NewExchangeRateBallot(
 			decExchangeRate, common.Pair_BTC_NUSD.String(), valAddrs[i], power)
 		ballot = append(ballot, vote)
 
@@ -173,10 +173,10 @@ func TestOracleTally(t *testing.T) {
 	validatorClaimMap := make(map[string]types.ValidatorPerformance)
 	for _, valAddr := range valAddrs {
 		validatorClaimMap[valAddr.String()] = types.ValidatorPerformance{
-			Power:      stakingKeeper.Validator(input.Ctx, valAddr).GetConsensusPower(sdk.DefaultPowerReduction),
-			Weight:     int64(0),
-			WinCount:   int64(0),
-			ValAddress: valAddr,
+			Power:        stakingKeeper.Validator(input.Ctx, valAddr).GetConsensusPower(sdk.DefaultPowerReduction),
+			RewardWeight: int64(0),
+			WinCount:     int64(0),
+			ValAddress:   valAddr,
 		}
 	}
 	sort.Sort(ballot)
@@ -191,10 +191,10 @@ func TestOracleTally(t *testing.T) {
 	expectedValidatorClaimMap := make(map[string]types.ValidatorPerformance)
 	for _, valAddr := range valAddrs {
 		expectedValidatorClaimMap[valAddr.String()] = types.ValidatorPerformance{
-			Power:      stakingKeeper.Validator(input.Ctx, valAddr).GetConsensusPower(sdk.DefaultPowerReduction),
-			Weight:     int64(0),
-			WinCount:   int64(0),
-			ValAddress: valAddr,
+			Power:        stakingKeeper.Validator(input.Ctx, valAddr).GetConsensusPower(sdk.DefaultPowerReduction),
+			RewardWeight: int64(0),
+			WinCount:     int64(0),
+			ValAddress:   valAddr,
 		}
 	}
 
@@ -204,7 +204,7 @@ func TestOracleTally(t *testing.T) {
 			!vote.ExchangeRate.IsPositive() {
 			key := vote.Voter.String()
 			claim := expectedValidatorClaimMap[key]
-			claim.Weight += vote.Power
+			claim.RewardWeight += vote.Power
 			claim.WinCount++
 			expectedValidatorClaimMap[key] = claim
 		}
@@ -270,10 +270,10 @@ func TestOracleRewardBand(t *testing.T) {
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
 	// clear pairs to reset vote targets
-	for _, p := range input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys() {
-		input.OracleKeeper.Pairs.Delete(input.Ctx, p)
+	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[string]{}).Keys() {
+		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 	}
-	input.OracleKeeper.Pairs.Insert(input.Ctx, common.Pair_NIBI_NUSD.String())
+	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, common.Pair_NIBI_NUSD.String())
 
 	rewardSpread := randomExchangeRate.Mul(input.OracleKeeper.RewardBand(input.Ctx).QuoInt64(2))
 
@@ -478,22 +478,23 @@ func TestOracleExchangeRateVal5(t *testing.T) {
 	require.Equalf(t, expectedRewardAmt, rewards4.Rewards, "%s <->", expectedRewardAmt, rewards4)
 }
 
-func TestVoteTargets(t *testing.T) {
+func TestWhitelistedPairs(t *testing.T) {
 	input, h := setup(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
-	params.Whitelist = []string{common.Pair_NIBI_NUSD.String(), common.Pair_BTC_NUSD.String()}
-	input.OracleKeeper.SetParams(input.Ctx, params)
 
-	for _, p := range input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys() {
-		input.OracleKeeper.Pairs.Delete(input.Ctx, p)
+	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[string]{}).Keys() {
+		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 	}
-	input.OracleKeeper.Pairs.Insert(input.Ctx, common.Pair_NIBI_NUSD.String())
+	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, common.Pair_NIBI_NUSD.String())
 
 	// govstable
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: randomExchangeRate}}, 0)
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: randomExchangeRate}}, 1)
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: randomExchangeRate}}, 2)
 
+	// set btcstable for next vote period
+	params.Whitelist = []string{common.Pair_NIBI_NUSD.String(), common.Pair_BTC_NUSD.String()}
+	input.OracleKeeper.SetParams(input.Ctx, params)
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
 
 	// no missing current
@@ -501,18 +502,17 @@ func TestVoteTargets(t *testing.T) {
 	require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[1], 0))
 	require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[2], 0))
 
-	// vote targets are {govstable, btcstable}
+	// whitelisted pairs are {govstable, btcstable}
 	require.Equal(t, []string{common.Pair_BTC_NUSD.String(), common.Pair_NIBI_NUSD.String()}, input.OracleKeeper.GetWhitelistedPairs(input.Ctx))
 
-	// delete btcstable
-	params.Whitelist = []string{common.Pair_NIBI_NUSD.String()}
-	input.OracleKeeper.SetParams(input.Ctx, params)
-
-	// govstable, missing
+	// govstable, missing btcstable
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: randomExchangeRate}}, 0)
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: randomExchangeRate}}, 1)
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: randomExchangeRate}}, 2)
 
+	// delete btcstable for next vote period
+	params.Whitelist = []string{common.Pair_NIBI_NUSD.String()}
+	input.OracleKeeper.SetParams(input.Ctx, params)
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
 
 	require.Equal(t, uint64(1), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[0], 0))
@@ -521,13 +521,7 @@ func TestVoteTargets(t *testing.T) {
 
 	// btcstable must be deleted
 	require.Equal(t, []string{common.Pair_NIBI_NUSD.String()}, input.OracleKeeper.GetWhitelistedPairs(input.Ctx))
-
-	exists := input.OracleKeeper.Pairs.Has(input.Ctx, common.Pair_BTC_NUSD.String())
-	require.False(t, exists)
-
-	// change govstable
-	params.Whitelist = []string{common.Pair_NIBI_NUSD.String()}
-	input.OracleKeeper.SetParams(input.Ctx, params)
+	require.False(t, input.OracleKeeper.WhitelistedPairs.Has(input.Ctx, common.Pair_BTC_NUSD.String()))
 
 	// govstable, no missing
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: randomExchangeRate}}, 0)
@@ -545,10 +539,10 @@ func TestAbstainWithSmallStakingPower(t *testing.T) {
 	input, h := setupWithSmallVotingPower(t)
 
 	// clear tobin tax to reset vote targets
-	for _, p := range input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys() {
-		input.OracleKeeper.Pairs.Delete(input.Ctx, p)
+	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[string]{}).Keys() {
+		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 	}
-	input.OracleKeeper.Pairs.Insert(input.Ctx, common.Pair_NIBI_NUSD.String())
+	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, common.Pair_NIBI_NUSD.String())
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: sdk.ZeroDec()}}, 0)
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
@@ -600,7 +594,7 @@ func setupVal5(t *testing.T) (keeper.TestInput, types.MsgServer) {
 		common.Pair_NIBI_NUSD.String(),
 	}
 	input.OracleKeeper.SetParams(input.Ctx, params)
-	input.OracleKeeper.Pairs.Insert(input.Ctx, common.Pair_NIBI_NUSD.String())
+	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, common.Pair_NIBI_NUSD.String())
 	h := keeper.NewMsgServerImpl(input.OracleKeeper)
 
 	sh := staking.NewHandler(input.StakingKeeper)

@@ -31,7 +31,7 @@ func setup(t *testing.T) (keeper.TestInput, types.MsgServer) {
 		common.Pair_NIBI_NUSD.String(),
 	}
 	input.OracleKeeper.SetParams(input.Ctx, params)
-	input.OracleKeeper.Pairs.Insert(input.Ctx, common.Pair_NIBI_NUSD.String())
+	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, common.Pair_NIBI_NUSD.String())
 	h := keeper.NewMsgServerImpl(input.OracleKeeper)
 
 	sh := staking.NewHandler(input.StakingKeeper)
@@ -89,7 +89,7 @@ func TestKeeper_RewardsDistributionMultiVotePeriods(t *testing.T) {
 	}
 
 	// assert there are no rewards for pair
-	require.True(t, input.OracleKeeper.AccrueVotePeriodPairRewards(input.Ctx, common.Pair_BTC_NUSD.String()).IsZero())
+	require.True(t, input.OracleKeeper.GatherRewardsForVotePeriod(input.Ctx, common.Pair_NIBI_NUSD.String()).IsZero())
 
 	// assert that there are no rewards instances
 	require.Empty(t, input.OracleKeeper.PairRewards.Indexes.RewardsByPair.ExactMatch(input.Ctx, common.Pair_BTC_NUSD.String()).PrimaryKeys())

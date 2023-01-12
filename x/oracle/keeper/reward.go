@@ -9,7 +9,7 @@ import (
 )
 
 func (k Keeper) AllocatePairRewards(ctx sdk.Context, funderModule string, pair string, totalCoins sdk.Coins, votePeriods uint64) error {
-	if !k.Pairs.Has(ctx, pair) {
+	if !k.WhitelistedPairs.Has(ctx, pair) {
 		return types.ErrUnknownPair.Wrap(pair)
 	}
 
@@ -30,77 +30,74 @@ func (k Keeper) AllocatePairRewards(ctx sdk.Context, funderModule string, pair s
 	return k.bankKeeper.SendCoinsFromModuleToModule(ctx, funderModule, types.ModuleName, totalCoins)
 }
 
-// rewardBallotWinners implements at the end of every VotePeriod,
-// give out a portion of spread fees collected in the oracle reward pool
-// to the oracle voters that voted faithfully.
+// rewardBallotWinners gives out a portion of spread fees collected in the
+// oracle reward pool to the oracle voters that voted faithfully.
 func (k Keeper) rewardBallotWinners(
 	ctx sdk.Context,
 	whitelistedPairs map[string]struct{},
 	validatorPerformanceMap map[string]types.ValidatorPerformance,
 ) {
-	validatorsWeightSum := types.GetValidatorWeightSum(validatorPerformanceMap)
-	if validatorsWeightSum == 0 {
+	totalRewardWeight := types.GetTotalRewardWeight(validatorPerformanceMap)
+	if totalRewardWeight == 0 {
 		return
 	}
 
-	var periodRewards sdk.DecCoins
+	var totalRewards sdk.DecCoins
 	for pair := range whitelistedPairs {
-		rewardsForPair := k.AccrueVotePeriodPairRewards(ctx, pair)
+		pairRewards := k.GatherRewardsForVotePeriod(ctx, pair)
 
-		// return if there's no rewards to give out
-		if rewardsForPair.IsZero() {
+		if pairRewards.IsZero() {
 			continue
 		}
 
-		periodRewards = periodRewards.Add(sdk.NewDecCoinsFromCoins(rewardsForPair...)...)
+		totalRewards = totalRewards.Add(sdk.NewDecCoinsFromCoins(pairRewards...)...)
 	}
 
 	// Dole out rewards
-	var distributedReward sdk.Coins
-	for _, winner := range validatorPerformanceMap {
-		receiverVal := k.StakingKeeper.Validator(ctx, winner.ValAddress)
+	var distributedRewards sdk.Coins
+	for _, validatorPerformance := range validatorPerformanceMap {
+		validator := k.StakingKeeper.Validator(ctx, validatorPerformance.ValAddress)
+		if validator == nil {
+			continue
+		}
 
 		// Reflects contribution
-		rewardCoins, _ := periodRewards.MulDec(sdk.NewDec(winner.Weight).QuoInt64(validatorsWeightSum)).TruncateDecimal()
-
-		// In case absence of the validator, we just skip distribution
-		if receiverVal != nil && !rewardCoins.IsZero() {
-			k.distrKeeper.AllocateTokensToValidator(ctx, receiverVal, sdk.NewDecCoinsFromCoins(rewardCoins...))
-			distributedReward = distributedReward.Add(rewardCoins...)
-		}
+		rewardPortion, _ := totalRewards.MulDec(sdk.NewDec(validatorPerformance.RewardWeight).QuoInt64(totalRewardWeight)).TruncateDecimal()
+		k.distrKeeper.AllocateTokensToValidator(ctx, validator, sdk.NewDecCoinsFromCoins(rewardPortion...))
+		distributedRewards = distributedRewards.Add(rewardPortion...)
 	}
 
 	// Move distributed reward to distribution module
-	err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, k.distrName, distributedReward)
+	err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, k.distrModuleName, distributedRewards)
 	if err != nil {
+		// TODO(k-yang): revisit panic behavior
 		panic(fmt.Sprintf("[oracle] Failed to send coins to distribution module %s", err.Error()))
 	}
 }
 
-// AccrueVotePeriodPairRewards retrieves the vote period rewards for the provided pair.
-// And decreases the distribution period count of each pair reward instance.
-// If the distribution period count drops to 0: the reward instance is removed.
-// TODO(mercilex): don't like API name
-func (k Keeper) AccrueVotePeriodPairRewards(ctx sdk.Context, pair string) sdk.Coins {
+// GatherRewardsForVotePeriod retrieves the pair rewards for the provided pair and current vote period.
+func (k Keeper) GatherRewardsForVotePeriod(ctx sdk.Context, pair string) sdk.Coins {
 	coins := sdk.NewCoins()
 	// iterate over
-	for _, rewardID := range k.PairRewards.Indexes.RewardsByPair.ExactMatch(ctx, pair).PrimaryKeys() {
-		r, err := k.PairRewards.Get(ctx, rewardID)
+	for _, rewardId := range k.PairRewards.Indexes.RewardsByPair.ExactMatch(ctx, pair).PrimaryKeys() {
+		pairReward, err := k.PairRewards.Get(ctx, rewardId)
 		if err != nil {
+			// TODO(k-yang): revisit panic behavior
 			panic(err)
 		}
-		// add coin rewards
-		coins = coins.Add(r.Coins...)
-		// update pair reward distribution count
-		// if vote period == 0, then delete
-		r.VotePeriods -= 1
-		if r.VotePeriods == 0 {
-			err := k.PairRewards.Delete(ctx, rewardID)
+		coins = coins.Add(pairReward.Coins...)
+
+		// Decrease the remaining vote periods of the PairRward.
+		pairReward.VotePeriods -= 1
+		if pairReward.VotePeriods == 0 {
+			// If the distribution period count drops to 0: the reward instance is removed.
+			err := k.PairRewards.Delete(ctx, rewardId)
 			if err != nil {
+				// TODO(k-yang): revisit panic behavior
 				panic(err)
 			}
 		} else {
-			k.PairRewards.Insert(ctx, rewardID, r)
+			k.PairRewards.Insert(ctx, rewardId, pairReward)
 		}
 	}
 
