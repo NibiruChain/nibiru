@@ -82,7 +82,7 @@ func TestKeeper_RewardsDistributionMultiVotePeriods(t *testing.T) {
 	}
 
 	// assert there are no rewards for pair
-	require.True(t, input.OracleKeeper.AccrueVotePeriodPairRewards(input.Ctx, common.Pair_NIBI_NUSD.String()).IsZero())
+	require.True(t, input.OracleKeeper.GatherRewardsForVotePeriod(input.Ctx, common.Pair_NIBI_NUSD.String()).IsZero())
 
 	// assert that there are no rewards instances
 	require.Empty(t, input.OracleKeeper.PairRewards.Indexes.RewardsByPair.ExactMatch(input.Ctx, common.Pair_NIBI_NUSD.String()).PrimaryKeys())

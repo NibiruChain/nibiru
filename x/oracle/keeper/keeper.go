@@ -28,7 +28,7 @@ type Keeper struct {
 	distrKeeper   types.DistributionKeeper
 	StakingKeeper types.StakingKeeper
 
-	distrName string
+	distrModuleName string
 
 	// TODO(mercilex): use asset pair
 	ExchangeRates     collections.Map[string, sdk.Dec]
@@ -41,9 +41,9 @@ type Keeper struct {
 	PriceSnapshots collections.Map[collections.Pair[string, time.Time], types.PriceSnapshot]
 
 	// TODO(mercilex): use asset pair
-	Pairs         collections.KeySet[string]
-	PairRewards   collections.IndexedMap[uint64, types.PairReward, PairRewardsIndexes]
-	PairRewardsID collections.Sequence
+	WhitelistedPairs collections.KeySet[string]
+	PairRewards      collections.IndexedMap[uint64, types.PairReward, PairRewardsIndexes]
+	PairRewardsID    collections.Sequence
 }
 
 type PairRewardsIndexes struct {
@@ -78,14 +78,14 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
 		bankKeeper:        bankKeeper,
 		distrKeeper:       distrKeeper,
 		StakingKeeper:     stakingKeeper,
-		distrName:         distrName,
+		distrModuleName:   distrName,
 		ExchangeRates:     collections.NewMap(storeKey, 1, collections.StringKeyEncoder, collections.DecValueEncoder),
 		PriceSnapshots:    collections.NewMap(storeKey, 10, collections.PairKeyEncoder(collections.StringKeyEncoder, collections.TimeKeyEncoder), collections.ProtoValueEncoder[types.PriceSnapshot](cdc)),
 		FeederDelegations: collections.NewMap(storeKey, 2, collections.ValAddressKeyEncoder, collections.AccAddressValueEncoder),
 		MissCounters:      collections.NewMap(storeKey, 3, collections.ValAddressKeyEncoder, collections.Uint64ValueEncoder),
 		Prevotes:          collections.NewMap(storeKey, 4, collections.ValAddressKeyEncoder, collections.ProtoValueEncoder[types.AggregateExchangeRatePrevote](cdc)),
 		Votes:             collections.NewMap(storeKey, 5, collections.ValAddressKeyEncoder, collections.ProtoValueEncoder[types.AggregateExchangeRateVote](cdc)),
-		Pairs:             collections.NewKeySet(storeKey, 6, collections.StringKeyEncoder),
+		WhitelistedPairs:  collections.NewKeySet(storeKey, 6, collections.StringKeyEncoder),
 		PairRewards: collections.NewIndexedMap(
 			storeKey, 7,
 			collections.Uint64KeyEncoder, collections.ProtoValueEncoder[types.PairReward](cdc),
