@@ -28,7 +28,7 @@ type Keeper struct {
 	distrKeeper   types.DistributionKeeper
 	StakingKeeper types.StakingKeeper
 
-	distrName string
+	distrModuleName string
 
 	// TODO(mercilex): use asset pair
 	ExchangeRates     collections.Map[string, sdk.Dec]
@@ -78,7 +78,7 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
 		bankKeeper:        bankKeeper,
 		distrKeeper:       distrKeeper,
 		StakingKeeper:     stakingKeeper,
-		distrName:         distrName,
+		distrModuleName:   distrName,
 		ExchangeRates:     collections.NewMap(storeKey, 1, collections.StringKeyEncoder, collections.DecValueEncoder),
 		PriceSnapshots:    collections.NewMap(storeKey, 10, collections.PairKeyEncoder(collections.StringKeyEncoder, collections.TimeKeyEncoder), collections.ProtoValueEncoder[types.PriceSnapshot](cdc)),
 		FeederDelegations: collections.NewMap(storeKey, 2, collections.ValAddressKeyEncoder, collections.AccAddressValueEncoder),

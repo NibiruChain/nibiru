@@ -8,32 +8,32 @@ import (
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
-// mapBallotByPair collects all oracle votes for the period, categorized by the votes' pair parameter
-// and removes any votes that are not part of the validator performance map.
+// groupBallotsByPair groups votes by pair and removes votes that are not part of
+// the validator set.
 //
 // NOTE: **Make abstain votes to have zero vote power**
-func (k Keeper) mapBallotByPair(
+func (k Keeper) groupBallotsByPair(
 	ctx sdk.Context,
 	validatorsPerformance map[string]types.ValidatorPerformance,
-) (ballots map[string]types.ExchangeRateBallot) {
-	ballots = map[string]types.ExchangeRateBallot{}
+) (pairBallotsMap map[string]types.ExchangeRateBallots) {
+	pairBallotsMap = map[string]types.ExchangeRateBallots{}
 
 	for _, value := range k.Votes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {
-		voterAddr, vote := value.Key, value.Value
+		voterAddr, aggregateVote := value.Key, value.Value
 
 		// organize ballot only for the active validators
-		if validatorPerformance, ok := validatorsPerformance[vote.Voter]; ok {
-			for _, tuple := range vote.ExchangeRateTuples {
+		if validatorPerformance, exists := validatorsPerformance[aggregateVote.Voter]; exists {
+			for _, exchangeRateTuple := range aggregateVote.ExchangeRateTuples {
 				power := validatorPerformance.Power
-				if !tuple.ExchangeRate.IsPositive() {
+				if !exchangeRateTuple.ExchangeRate.IsPositive() {
 					// Make the power of abstain vote zero
 					power = 0
 				}
 
-				ballots[tuple.Pair] = append(ballots[tuple.Pair],
-					types.NewBallotVoteForTally(
-						tuple.ExchangeRate,
-						tuple.Pair,
+				pairBallotsMap[exchangeRateTuple.Pair] = append(pairBallotsMap[exchangeRateTuple.Pair],
+					types.NewExchangeRateBallot(
+						exchangeRateTuple.ExchangeRate,
+						exchangeRateTuple.Pair,
 						voterAddr,
 						power,
 					),
@@ -45,8 +45,8 @@ func (k Keeper) mapBallotByPair(
 	return
 }
 
-// clearBallots clears all tallied prevotes and votes from the store
-func (k Keeper) clearBallots(ctx sdk.Context, votePeriod uint64) {
+// clearVotes clears all tallied prevotes and votes from the store
+func (k Keeper) clearVotes(ctx sdk.Context, votePeriod uint64) {
 	// Clear all aggregate prevotes
 	for _, prevote := range k.Prevotes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {
 		if ctx.BlockHeight() > int64(prevote.Value.SubmitBlock+votePeriod) {
@@ -68,14 +68,14 @@ func (k Keeper) clearBallots(ctx sdk.Context, votePeriod uint64) {
 
 // applyWhitelist updates the whitelist by detecting possible changes between
 // the current vote targets and the current updated whitelist.
-func (k Keeper) applyWhitelist(ctx sdk.Context, whitelist []string, whitelistedPairsMap map[string]struct{}) {
+func (k Keeper) applyWhitelist(ctx sdk.Context, paramsWhitelist []string, currentWhitelist map[string]struct{}) {
 	updateRequired := false
 
-	if len(whitelistedPairsMap) != len(whitelist) {
+	if len(currentWhitelist) != len(paramsWhitelist) {
 		updateRequired = true
 	} else {
-		for _, pair := range whitelist {
-			_, exists := whitelistedPairsMap[pair]
+		for _, pair := range paramsWhitelist {
+			_, exists := currentWhitelist[pair]
 			if !exists {
 				updateRequired = true
 				break
@@ -87,7 +87,7 @@ func (k Keeper) applyWhitelist(ctx sdk.Context, whitelist []string, whitelistedP
 		for _, p := range k.Pairs.Iterate(ctx, collections.Range[string]{}).Keys() {
 			k.Pairs.Delete(ctx, p)
 		}
-		for _, pair := range whitelist {
+		for _, pair := range paramsWhitelist {
 			k.Pairs.Insert(ctx, pair)
 		}
 	}

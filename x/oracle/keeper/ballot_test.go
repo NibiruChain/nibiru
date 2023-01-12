@@ -31,15 +31,15 @@ func TestOrganizeAggregate(t *testing.T) {
 	require.NoError(t, err)
 	staking.EndBlocker(ctx, input.StakingKeeper)
 
-	btcBallot := types.ExchangeRateBallot{
-		types.NewBallotVoteForTally(sdk.NewDec(17), common.Pair_BTC_NUSD.String(), ValAddrs[0], power),
-		types.NewBallotVoteForTally(sdk.NewDec(10), common.Pair_BTC_NUSD.String(), ValAddrs[1], power),
-		types.NewBallotVoteForTally(sdk.NewDec(6), common.Pair_BTC_NUSD.String(), ValAddrs[2], power),
+	btcBallot := types.ExchangeRateBallots{
+		types.NewExchangeRateBallot(sdk.NewDec(17), common.Pair_BTC_NUSD.String(), ValAddrs[0], power),
+		types.NewExchangeRateBallot(sdk.NewDec(10), common.Pair_BTC_NUSD.String(), ValAddrs[1], power),
+		types.NewExchangeRateBallot(sdk.NewDec(6), common.Pair_BTC_NUSD.String(), ValAddrs[2], power),
 	}
-	ethBallot := types.ExchangeRateBallot{
-		types.NewBallotVoteForTally(sdk.NewDec(1000), common.Pair_ETH_NUSD.String(), ValAddrs[0], power),
-		types.NewBallotVoteForTally(sdk.NewDec(1300), common.Pair_ETH_NUSD.String(), ValAddrs[1], power),
-		types.NewBallotVoteForTally(sdk.NewDec(2000), common.Pair_ETH_NUSD.String(), ValAddrs[2], power),
+	ethBallot := types.ExchangeRateBallots{
+		types.NewExchangeRateBallot(sdk.NewDec(1000), common.Pair_ETH_NUSD.String(), ValAddrs[0], power),
+		types.NewExchangeRateBallot(sdk.NewDec(1300), common.Pair_ETH_NUSD.String(), ValAddrs[1], power),
+		types.NewExchangeRateBallot(sdk.NewDec(2000), common.Pair_ETH_NUSD.String(), ValAddrs[2], power),
 	}
 
 	for i := range btcBallot {
@@ -57,7 +57,7 @@ func TestOrganizeAggregate(t *testing.T) {
 	}
 
 	// organize votes by pair
-	ballotMap := input.OracleKeeper.mapBallotByPair(input.Ctx, map[string]types.ValidatorPerformance{
+	ballotMap := input.OracleKeeper.groupBallotsByPair(input.Ctx, map[string]types.ValidatorPerformance{
 		ValAddrs[0].String(): {
 			Power:      power,
 			WinCount:   0,
@@ -102,15 +102,15 @@ func TestClearBallots(t *testing.T) {
 	require.NoError(t, err)
 	staking.EndBlocker(ctx, input.StakingKeeper)
 
-	btcBallot := types.ExchangeRateBallot{
-		types.NewBallotVoteForTally(sdk.NewDec(17), common.Pair_BTC_NUSD.String(), ValAddrs[0], power),
-		types.NewBallotVoteForTally(sdk.NewDec(10), common.Pair_BTC_NUSD.String(), ValAddrs[1], power),
-		types.NewBallotVoteForTally(sdk.NewDec(6), common.Pair_BTC_NUSD.String(), ValAddrs[2], power),
+	btcBallot := types.ExchangeRateBallots{
+		types.NewExchangeRateBallot(sdk.NewDec(17), common.Pair_BTC_NUSD.String(), ValAddrs[0], power),
+		types.NewExchangeRateBallot(sdk.NewDec(10), common.Pair_BTC_NUSD.String(), ValAddrs[1], power),
+		types.NewExchangeRateBallot(sdk.NewDec(6), common.Pair_BTC_NUSD.String(), ValAddrs[2], power),
 	}
-	ethBallot := types.ExchangeRateBallot{
-		types.NewBallotVoteForTally(sdk.NewDec(1000), common.Pair_ETH_NUSD.String(), ValAddrs[0], power),
-		types.NewBallotVoteForTally(sdk.NewDec(1300), common.Pair_ETH_NUSD.String(), ValAddrs[1], power),
-		types.NewBallotVoteForTally(sdk.NewDec(2000), common.Pair_ETH_NUSD.String(), ValAddrs[2], power),
+	ethBallot := types.ExchangeRateBallots{
+		types.NewExchangeRateBallot(sdk.NewDec(1000), common.Pair_ETH_NUSD.String(), ValAddrs[0], power),
+		types.NewExchangeRateBallot(sdk.NewDec(1300), common.Pair_ETH_NUSD.String(), ValAddrs[1], power),
+		types.NewExchangeRateBallot(sdk.NewDec(2000), common.Pair_ETH_NUSD.String(), ValAddrs[2], power),
 	}
 
 	for i := range btcBallot {
@@ -127,7 +127,7 @@ func TestClearBallots(t *testing.T) {
 			}, ValAddrs[i]))
 	}
 
-	input.OracleKeeper.clearBallots(input.Ctx, 5)
+	input.OracleKeeper.clearVotes(input.Ctx, 5)
 
 	prevoteCounter := len(input.OracleKeeper.Prevotes.Iterate(input.Ctx, collections.Range[sdk.ValAddress]{}).Keys())
 	voteCounter := len(input.OracleKeeper.Votes.Iterate(input.Ctx, collections.Range[sdk.ValAddress]{}).Keys())
@@ -135,7 +135,7 @@ func TestClearBallots(t *testing.T) {
 	require.Equal(t, prevoteCounter, 3)
 	require.Equal(t, voteCounter, 0)
 
-	input.OracleKeeper.clearBallots(input.Ctx.WithBlockHeight(input.Ctx.BlockHeight()+6), 5)
+	input.OracleKeeper.clearVotes(input.Ctx.WithBlockHeight(input.Ctx.BlockHeight()+6), 5)
 	prevoteCounter = len(input.OracleKeeper.Prevotes.Iterate(input.Ctx, collections.Range[sdk.ValAddress]{}).Keys())
 	require.Equal(t, prevoteCounter, 0)
 }

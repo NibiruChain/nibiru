@@ -135,7 +135,7 @@ func TestOracleDrop(t *testing.T) {
 func TestOracleTally(t *testing.T) {
 	input, _ := setup(t)
 
-	ballot := types.ExchangeRateBallot{}
+	ballot := types.ExchangeRateBallots{}
 	rates, valAddrs, stakingKeeper := types.GenerateRandomTestCase()
 	input.OracleKeeper.StakingKeeper = stakingKeeper
 	h := keeper.NewMsgServerImpl(input.OracleKeeper)
@@ -160,7 +160,7 @@ func TestOracleTally(t *testing.T) {
 			power = int64(0)
 		}
 
-		vote := types.NewBallotVoteForTally(
+		vote := types.NewExchangeRateBallot(
 			decExchangeRate, common.Pair_BTC_NUSD.String(), valAddrs[i], power)
 		ballot = append(ballot, vote)
 
@@ -173,10 +173,10 @@ func TestOracleTally(t *testing.T) {
 	validatorClaimMap := make(map[string]types.ValidatorPerformance)
 	for _, valAddr := range valAddrs {
 		validatorClaimMap[valAddr.String()] = types.ValidatorPerformance{
-			Power:      stakingKeeper.Validator(input.Ctx, valAddr).GetConsensusPower(sdk.DefaultPowerReduction),
-			Weight:     int64(0),
-			WinCount:   int64(0),
-			ValAddress: valAddr,
+			Power:        stakingKeeper.Validator(input.Ctx, valAddr).GetConsensusPower(sdk.DefaultPowerReduction),
+			RewardWeight: int64(0),
+			WinCount:     int64(0),
+			ValAddress:   valAddr,
 		}
 	}
 	sort.Sort(ballot)
@@ -191,10 +191,10 @@ func TestOracleTally(t *testing.T) {
 	expectedValidatorClaimMap := make(map[string]types.ValidatorPerformance)
 	for _, valAddr := range valAddrs {
 		expectedValidatorClaimMap[valAddr.String()] = types.ValidatorPerformance{
-			Power:      stakingKeeper.Validator(input.Ctx, valAddr).GetConsensusPower(sdk.DefaultPowerReduction),
-			Weight:     int64(0),
-			WinCount:   int64(0),
-			ValAddress: valAddr,
+			Power:        stakingKeeper.Validator(input.Ctx, valAddr).GetConsensusPower(sdk.DefaultPowerReduction),
+			RewardWeight: int64(0),
+			WinCount:     int64(0),
+			ValAddress:   valAddr,
 		}
 	}
 
@@ -204,7 +204,7 @@ func TestOracleTally(t *testing.T) {
 			!vote.ExchangeRate.IsPositive() {
 			key := vote.Voter.String()
 			claim := expectedValidatorClaimMap[key]
-			claim.Weight += vote.Power
+			claim.RewardWeight += vote.Power
 			claim.WinCount++
 			expectedValidatorClaimMap[key] = claim
 		}
