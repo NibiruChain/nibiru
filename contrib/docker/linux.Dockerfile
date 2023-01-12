@@ -1,4 +1,4 @@
-FROM golang:1.19 AS builder
+FROM golang:1.19
 
 WORKDIR /nibiru
 ARG ARCH=aarch64
@@ -10,15 +10,9 @@ RUN apt-get update && \
   apt-get install -y \
   musl-dev && \
   rm -rf /var/lib/apt/lists/*
-
 RUN wget https://github.com/CosmWasm/wasmvm/releases/download/v1.1.1/libwasmvm_muslc.${ARCH}.a -O /lib/libwasmvm_muslc.a
 
 COPY . ./
-RUN make build
 
-FROM alpine:latest
-WORKDIR /root
-RUN apk --no-cache add ca-certificates
-COPY --from=builder /nibiru/build/nibid /usr/local/bin/nibid
-ENTRYPOINT ["nibid"]
-CMD [ "start" ]
+ENTRYPOINT ["make"]
+CMD [ "build" ]
