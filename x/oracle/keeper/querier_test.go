@@ -329,13 +329,13 @@ func TestQueryVoteTargets(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	// clear pairs
-	for _, p := range input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys() {
-		input.OracleKeeper.Pairs.Delete(input.Ctx, p)
+	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[string]{}).Keys() {
+		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 	}
 
 	voteTargets := []string{"denom", "denom2", "denom3"}
 	for _, target := range voteTargets {
-		input.OracleKeeper.Pairs.Insert(input.Ctx, target)
+		input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, target)
 	}
 
 	res, err := querier.VoteTargets(ctx, &types.QueryVoteTargetsRequest{})

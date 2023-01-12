@@ -149,11 +149,11 @@ func TestApplyWhitelist(t *testing.T) {
 	}
 
 	// prepare test by resetting the genesis pairs
-	for _, p := range input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys() {
-		input.OracleKeeper.Pairs.Delete(input.Ctx, p)
+	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[string]{}).Keys() {
+		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 	}
 	for _, p := range whitelist {
-		input.OracleKeeper.Pairs.Insert(input.Ctx, p)
+		input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, p)
 	}
 
 	voteTargets := map[string]struct{}{
@@ -164,7 +164,7 @@ func TestApplyWhitelist(t *testing.T) {
 	input.OracleKeeper.applyWhitelist(input.Ctx, whitelist, voteTargets)
 
 	var gotPairs []string
-	gotPairs = append(gotPairs, input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys()...)
+	gotPairs = append(gotPairs, input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[string]{}).Keys()...)
 
 	sort.Slice(whitelist, func(i, j int) bool {
 		return whitelist[i] < whitelist[j]
@@ -176,7 +176,7 @@ func TestApplyWhitelist(t *testing.T) {
 	input.OracleKeeper.applyWhitelist(input.Ctx, whitelist, voteTargets)
 
 	gotPairs = []string{}
-	gotPairs = append(gotPairs, input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys()...)
+	gotPairs = append(gotPairs, input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[string]{}).Keys()...)
 
 	sort.Slice(whitelist, func(i, j int) bool {
 		return whitelist[i] < whitelist[j]
@@ -189,7 +189,7 @@ func TestApplyWhitelist(t *testing.T) {
 	input.OracleKeeper.applyWhitelist(input.Ctx, whitelist, voteTargets)
 
 	gotPairs = []string{}
-	gotPairs = append(gotPairs, input.OracleKeeper.Pairs.Iterate(input.Ctx, collections.Range[string]{}).Keys()...)
+	gotPairs = append(gotPairs, input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[string]{}).Keys()...)
 
 	sort.Slice(whitelist, func(i, j int) bool {
 		return whitelist[i] < whitelist[j]

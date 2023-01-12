@@ -79,9 +79,9 @@ func TestOraclePairsInsert(t *testing.T) {
 			oracleKeeper := testSetup.OracleKeeper
 
 			assert.NotPanics(t, func() {
-				oracleKeeper.Pairs.Insert(ctx, tc)
+				oracleKeeper.WhitelistedPairs.Insert(ctx, tc)
 			}, "key: %s", tc)
-			assert.True(t, oracleKeeper.Pairs.Has(ctx, tc))
+			assert.True(t, oracleKeeper.WhitelistedPairs.Has(ctx, tc))
 		})
 	}
 }
@@ -220,7 +220,7 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 	whitelistedPairs := make(common.StringSet)
 	for key := range voteTargets {
 		assert.NotPanics(t, func() {
-			input.OracleKeeper.Pairs.Insert(input.Ctx, key)
+			input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, key)
 		}, "attempted to insert key: %s", key)
 		whitelistedPairs.Add(key)
 	}

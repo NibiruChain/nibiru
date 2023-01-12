@@ -41,9 +41,9 @@ type Keeper struct {
 	PriceSnapshots collections.Map[collections.Pair[string, time.Time], types.PriceSnapshot]
 
 	// TODO(mercilex): use asset pair
-	Pairs         collections.KeySet[string]
-	PairRewards   collections.IndexedMap[uint64, types.PairReward, PairRewardsIndexes]
-	PairRewardsID collections.Sequence
+	WhitelistedPairs collections.KeySet[string]
+	PairRewards      collections.IndexedMap[uint64, types.PairReward, PairRewardsIndexes]
+	PairRewardsID    collections.Sequence
 }
 
 type PairRewardsIndexes struct {
@@ -85,7 +85,7 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
 		MissCounters:      collections.NewMap(storeKey, 3, collections.ValAddressKeyEncoder, collections.Uint64ValueEncoder),
 		Prevotes:          collections.NewMap(storeKey, 4, collections.ValAddressKeyEncoder, collections.ProtoValueEncoder[types.AggregateExchangeRatePrevote](cdc)),
 		Votes:             collections.NewMap(storeKey, 5, collections.ValAddressKeyEncoder, collections.ProtoValueEncoder[types.AggregateExchangeRateVote](cdc)),
-		Pairs:             collections.NewKeySet(storeKey, 6, collections.StringKeyEncoder),
+		WhitelistedPairs:  collections.NewKeySet(storeKey, 6, collections.StringKeyEncoder),
 		PairRewards: collections.NewIndexedMap(
 			storeKey, 7,
 			collections.Uint64KeyEncoder, collections.ProtoValueEncoder[types.PairReward](cdc),

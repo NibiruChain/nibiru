@@ -9,7 +9,7 @@ import (
 )
 
 func (k Keeper) AllocatePairRewards(ctx sdk.Context, funderModule string, pair string, totalCoins sdk.Coins, votePeriods uint64) error {
-	if !k.Pairs.Has(ctx, pair) {
+	if !k.WhitelistedPairs.Has(ctx, pair) {
 		return types.ErrUnknownPair.Wrap(pair)
 	}
 

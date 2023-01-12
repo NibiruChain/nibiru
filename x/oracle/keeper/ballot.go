@@ -84,11 +84,11 @@ func (k Keeper) applyWhitelist(ctx sdk.Context, paramsWhitelist []string, curren
 	}
 
 	if updateRequired {
-		for _, p := range k.Pairs.Iterate(ctx, collections.Range[string]{}).Keys() {
-			k.Pairs.Delete(ctx, p)
+		for _, p := range k.WhitelistedPairs.Iterate(ctx, collections.Range[string]{}).Keys() {
+			k.WhitelistedPairs.Delete(ctx, p)
 		}
 		for _, pair := range paramsWhitelist {
-			k.Pairs.Insert(ctx, pair)
+			k.WhitelistedPairs.Insert(ctx, pair)
 		}
 	}
 }
