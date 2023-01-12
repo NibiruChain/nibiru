@@ -120,15 +120,15 @@ func TestOracleThreshold(t *testing.T) {
 func TestOracleDrop(t *testing.T) {
 	input, h := setup(t)
 
-	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, common.Pair_NIBI_NUSD.String(), randomExchangeRate)
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, common.Pair_BTC_NUSD.String(), randomExchangeRate)
 
 	// Account 1, pair gov stable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: randomExchangeRate}}, 0)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: common.Pair_BTC_NUSD.String(), ExchangeRate: randomExchangeRate}}, 0)
 
 	// Immediately swap halt after an illiquid oracle vote
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
 
-	_, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx, common.Pair_NIBI_NUSD.String())
+	_, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx, common.Pair_BTC_NUSD.String())
 	require.Error(t, err)
 }
 
@@ -593,7 +593,14 @@ func setupVal5(t *testing.T) (keeper.TestInput, types.MsgServer) {
 	params := input.OracleKeeper.GetParams(input.Ctx)
 	params.VotePeriod = 1
 	params.SlashWindow = 100
+	params.Whitelist = []string{
+		common.Pair_BTC_NUSD.String(),
+		common.Pair_USDC_NUSD.String(),
+		common.Pair_ETH_NUSD.String(),
+		common.Pair_NIBI_NUSD.String(),
+	}
 	input.OracleKeeper.SetParams(input.Ctx, params)
+	input.OracleKeeper.Pairs.Insert(input.Ctx, common.Pair_NIBI_NUSD.String())
 	h := keeper.NewMsgServerImpl(input.OracleKeeper)
 
 	sh := staking.NewHandler(input.StakingKeeper)

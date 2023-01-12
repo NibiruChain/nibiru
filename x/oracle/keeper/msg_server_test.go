@@ -86,10 +86,6 @@ func TestMsgServer_AggregatePrevoteVote(t *testing.T) {
 	salt := "1"
 	exchangeRates := types.ExchangeRateTuples{
 		{
-			Pair:         common.Pair_NIBI_NUSD.String(),
-			ExchangeRate: sdk.MustNewDecFromStr("1000.23"),
-		},
-		{
 			Pair:         common.Pair_ETH_NUSD.String(),
 			ExchangeRate: sdk.MustNewDecFromStr("0.29"),
 		},
@@ -102,10 +98,6 @@ func TestMsgServer_AggregatePrevoteVote(t *testing.T) {
 
 	otherExchangeRate := types.ExchangeRateTuples{
 		{
-			Pair:         common.Pair_NIBI_NUSD.String(),
-			ExchangeRate: sdk.MustNewDecFromStr("1000.23"),
-		},
-		{
 			Pair:         common.Pair_ETH_NUSD.String(),
 			ExchangeRate: sdk.MustNewDecFromStr("0.29"),
 		},
@@ -117,10 +109,6 @@ func TestMsgServer_AggregatePrevoteVote(t *testing.T) {
 	}
 
 	unintendedExchangeRateStr := types.ExchangeRateTuples{
-		{
-			Pair:         common.Pair_NIBI_NUSD.String(),
-			ExchangeRate: sdk.MustNewDecFromStr("1000.23"),
-		},
 		{
 			Pair:         common.Pair_ETH_NUSD.String(),
 			ExchangeRate: sdk.MustNewDecFromStr("0.29"),
