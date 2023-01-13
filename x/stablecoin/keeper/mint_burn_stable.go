@@ -58,27 +58,27 @@ func (k Keeper) MintStable(
 
 	err = k.sendCoinsToModuleAccount(ctx, msgCreator, coinsNeededToMint)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	err = k.burnGovTokens(ctx, neededGov)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	err = k.splitAndSendFeesToEfAndTreasury(ctx, msgCreator, efFeeRatio, sdk.NewCoins(collFees, govFees))
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	err = k.mintStable(ctx, msg.Stable)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	err = k.sendCoinsFromModuleAccountToUser(ctx, msgCreator, sdk.NewCoins(msg.Stable))
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	return &types.MsgMintStableResponse{
@@ -92,14 +92,14 @@ func (k Keeper) MintStable(
 func (k Keeper) calcNeededGovAndFees(
 	ctx sdk.Context, stable sdk.Coin, govRatio sdk.Dec, feeRatio sdk.Dec,
 ) (sdk.Coin, sdk.Coin, error) {
-	priceGov, err := k.PricefeedKeeper.GetCurrentPrice(
-		ctx, common.DenomNIBI, common.DenomNUSD)
+	priceGov, err := k.OracleKeeper.GetExchangeRate(
+		ctx, common.Pair_NIBI_NUSD.String())
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
 
 	neededGovUSD := stable.Amount.ToDec().Mul(govRatio)
-	neededGovAmt := neededGovUSD.Quo(priceGov.Price).TruncateInt()
+	neededGovAmt := neededGovUSD.Quo(priceGov).TruncateInt()
 	neededGov := sdk.NewCoin(common.DenomNIBI, neededGovAmt)
 	govFeeAmt := neededGovAmt.ToDec().Mul(feeRatio).RoundInt()
 	govFee := sdk.NewCoin(common.DenomNIBI, govFeeAmt)
@@ -114,14 +114,14 @@ func (k Keeper) calcNeededCollateralAndFees(
 	collRatio sdk.Dec,
 	feeRatio sdk.Dec,
 ) (sdk.Coin, sdk.Coin, error) {
-	priceColl, err := k.PricefeedKeeper.GetCurrentPrice(
-		ctx, common.DenomUSDC, common.DenomNUSD)
+	priceColl, err := k.OracleKeeper.GetExchangeRate(
+		ctx, common.Pair_USDC_NUSD.String())
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
 
 	neededCollUSD := stable.Amount.ToDec().Mul(collRatio)
-	neededCollAmt := neededCollUSD.Quo(priceColl.Price).TruncateInt()
+	neededCollAmt := neededCollUSD.Quo(priceColl).TruncateInt()
 	neededColl := sdk.NewCoin(common.DenomUSDC, neededCollAmt)
 	collFeeAmt := neededCollAmt.ToDec().Mul(feeRatio).RoundInt()
 	collFee := sdk.NewCoin(common.DenomUSDC, collFeeAmt)
@@ -352,7 +352,7 @@ func (k Keeper) BurnStable(goCtx context.Context, msg *types.MsgBurnStable,
 
 	err = k.burnStableTokens(ctx, msg.Stable)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	return &types.MsgBurnStableResponse{

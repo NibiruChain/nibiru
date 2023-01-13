@@ -18,7 +18,7 @@ const (
 
 // x/perp module sentinel errors
 var (
-	ErrMarginHighEnough                  = sdkerrors.Register(ModuleName, 1, "margin is higher than required maintenance margin ratio")
+	ErrMarginRatioTooHigh                = sdkerrors.Register(ModuleName, 1, "margin ratio is too healthy to liquidate")
 	ErrPairNotFound                      = sdkerrors.Register(ModuleName, 2, "pair doesn't have live vpool")
 	ErrPositionZero                      = sdkerrors.Register(ModuleName, 3, "position is zero")
 	ErrFailedRemoveMarginCanCauseBadDebt = sdkerrors.Register(ModuleName, 4, "failed to remove margin; position would have bad debt if removed")

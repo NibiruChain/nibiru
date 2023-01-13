@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	pricefeedtypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -18,7 +17,7 @@ import (
 func TestQueryReserveAssets(t *testing.T) {
 	t.Log("initialize vpoolkeeper")
 	vpoolKeeper, ctx := VpoolKeeper(t,
-		mock.NewMockPricefeedKeeper(gomock.NewController(t)),
+		mock.NewMockOracleKeeper(gomock.NewController(t)),
 	)
 	queryServer := NewQuerier(vpoolKeeper)
 
@@ -71,15 +70,15 @@ func TestQueryAllPools(t *testing.T) {
 			TradeLimitRatio:        sdk.ZeroDec(),
 		},
 	}
-	vpoolKeeper.CreatePool(
-		ctx, pair, pool.QuoteAssetReserve, pool.BaseAssetReserve, pool.Config)
+	assert.NoError(t, vpoolKeeper.CreatePool(
+		ctx, pair, pool.QuoteAssetReserve, pool.BaseAssetReserve, pool.Config))
 
 	t.Log("query reserve assets and prices for the pair")
 	ctx = ctx.WithBlockHeight(2).WithBlockTime(time.Now().Add(5 * time.Second))
 	indexPrice := sdk.NewDec(25_000)
-	mocks.mockPricefeedKeeper.EXPECT().
-		GetCurrentPrice(ctx, pair.BaseDenom(), pair.QuoteDenom()).
-		Return(pricefeedtypes.CurrentPrice{PairID: pair.String(), Price: indexPrice}, nil)
+	mocks.mockOracleKeeper.EXPECT().
+		GetExchangeRate(ctx, pair.String()).
+		Return(indexPrice, nil)
 	resp, err := queryServer.AllPools(
 		sdk.WrapSDKContext(ctx),
 		&types.QueryAllPoolsRequest{},

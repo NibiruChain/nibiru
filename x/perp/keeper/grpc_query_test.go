@@ -28,7 +28,7 @@ func initAppVpools(
 	queryServer := keeper.NewQuerier(*perpKeeper)
 
 	t.Log("initialize vpool and pair")
-	vpoolKeeper.CreatePool(
+	assert.NoError(t, vpoolKeeper.CreatePool(
 		ctx,
 		common.Pair_BTC_NUSD,
 		quoteAssetReserve,
@@ -40,12 +40,12 @@ func initAppVpools(
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
-	)
+	))
 	setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 		Pair:                            common.Pair_BTC_NUSD,
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 	})
-	vpoolKeeper.CreatePool(
+	assert.NoError(t, vpoolKeeper.CreatePool(
 		ctx,
 		common.Pair_ETH_NUSD,
 		/* quoteReserve */ sdk.MustNewDecFromStr("100000"),
@@ -57,12 +57,12 @@ func initAppVpools(
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
-	)
+	))
 	setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 		Pair:                            common.Pair_ETH_NUSD,
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 	})
-	vpoolKeeper.CreatePool(
+	assert.NoError(t, vpoolKeeper.CreatePool(
 		ctx,
 		common.Pair_NIBI_NUSD,
 		/* quoteReserve */ sdk.MustNewDecFromStr("100000"),
@@ -74,7 +74,7 @@ func initAppVpools(
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
-	)
+	))
 	setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 		Pair:                            common.Pair_NIBI_NUSD,
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -304,13 +304,7 @@ func TestQueryCumulativePremiumFraction(t *testing.T) {
 			ctx, app, queryServer := initAppVpools(t, sdk.NewDec(481_000), sdk.NewDec(1_000))
 
 			t.Log("set index price")
-			oracle := testutil.AccAddress()
-			app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
-			require.NoError(t, app.PricefeedKeeper.PostRawPrice(ctx, oracle, common.Pair_BTC_NUSD.String(), sdk.OneDec(), time.Now().Add(time.Hour)))
-			require.NoError(t, app.PricefeedKeeper.GatherRawPrices(ctx, common.DenomBTC, common.DenomNUSD))
-
-			t.Log("advance block time to realize index price")
-			ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second))
+			app.OracleKeeper.SetPrice(ctx, common.Pair_BTC_NUSD.String(), sdk.OneDec())
 
 			t.Log("query cumulative premium fraction")
 			resp, err := queryServer.CumulativePremiumFraction(sdk.WrapSDKContext(ctx), tc.query)

@@ -45,12 +45,33 @@ func (q querier) ExchangeRate(c context.Context, req *types.QueryExchangeRateReq
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	exchangeRate, err := q.Keeper.ExchangeRates.Get(ctx, req.Pair)
+	exchangeRate, err := q.Keeper.GetExchangeRate(ctx, req.Pair)
 	if err != nil {
 		return nil, err
 	}
 
 	return &types.QueryExchangeRateResponse{ExchangeRate: exchangeRate}, nil
+}
+
+/*
+Gets the time-weighted average price from ( ctx.BlockTime() - interval, ctx.BlockTime() ]
+Note the open-ended right bracket.
+
+If there's only one snapshot, then this function returns the price from that single snapshot.
+
+Returns -1 if there's no price.
+*/
+func (q querier) ExchangeRateTwap(c context.Context, req *types.QueryExchangeRateRequest) (response *types.QueryExchangeRateResponse, err error) {
+	if _, err = q.ExchangeRate(c, req); err != nil {
+		return
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+	twap, err := q.Keeper.GetExchangeRateTwap(ctx, req.Pair)
+	if err != nil {
+		return &types.QueryExchangeRateResponse{}, err
+	}
+	return &types.QueryExchangeRateResponse{ExchangeRate: twap}, nil
 }
 
 // ExchangeRates queries exchange rates of all pairs

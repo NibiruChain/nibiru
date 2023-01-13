@@ -55,8 +55,11 @@ func TestCalcFreeCollateralErrors(t *testing.T) {
 			test: func() {
 				k, mocks, ctx := getKeeper(t)
 
-				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.Pair_BTC_NUSD).Return(true)
-				mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, common.Pair_BTC_NUSD).Return(sdk.MustNewDecFromStr("0.0625"))
+				mocks.mockVpoolKeeper.EXPECT().
+					ExistsPool(ctx, common.Pair_BTC_NUSD).Return(true)
+				mocks.mockVpoolKeeper.EXPECT().
+					GetMaintenanceMarginRatio(ctx, common.Pair_BTC_NUSD).
+					Return(sdk.MustNewDecFromStr("0.0625"), nil)
 
 				pos := types.ZeroPosition(ctx, common.Pair_BTC_NUSD, testutil.AccAddress())
 
@@ -160,7 +163,9 @@ func TestCalcFreeCollateralSuccess(t *testing.T) {
 
 			t.Log("mock vpool keeper")
 			mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.Pair_BTC_NUSD).Return(true)
-			mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, common.Pair_BTC_NUSD).Return(sdk.MustNewDecFromStr("0.0625"))
+			mocks.mockVpoolKeeper.EXPECT().
+				GetMaintenanceMarginRatio(ctx, common.Pair_BTC_NUSD).
+				Return(sdk.MustNewDecFromStr("0.0625"), nil)
 			mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(
 				ctx,
 				common.Pair_BTC_NUSD,

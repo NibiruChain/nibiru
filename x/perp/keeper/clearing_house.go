@@ -97,7 +97,12 @@ func (k Keeper) OpenPosition(
 // - Checks that quote asset is not zero.
 // - Checks that leverage is not zero.
 // - Checks that leverage is below requirement.
-func (k Keeper) checkOpenPositionRequirements(ctx sdk.Context, pair common.AssetPair, quoteAssetAmount sdk.Int, leverage sdk.Dec) error {
+func (k Keeper) checkOpenPositionRequirements(
+	ctx sdk.Context,
+	pair common.AssetPair,
+	quoteAssetAmount sdk.Int,
+	leverage sdk.Dec,
+) error {
 	if err := k.requireVpool(ctx, pair); err != nil {
 		return err
 	}
@@ -110,7 +115,11 @@ func (k Keeper) checkOpenPositionRequirements(ctx sdk.Context, pair common.Asset
 		return types.ErrLeverageIsZero
 	}
 
-	if leverage.GT(k.VpoolKeeper.GetMaxLeverage(ctx, pair)) {
+	maxLeverage, err := k.VpoolKeeper.GetMaxLeverage(ctx, pair)
+	if err != nil {
+		return err
+	}
+	if leverage.GT(maxLeverage) {
 		return types.ErrLeverageIsTooHigh
 	}
 
@@ -145,8 +154,11 @@ func (k Keeper) afterPositionUpdate(
 			return err
 		}
 
-		maintenanceMarginRatio := k.VpoolKeeper.GetMaintenanceMarginRatio(ctx, pair)
-		if err = requireMoreMarginRatio(marginRatio, maintenanceMarginRatio, true); err != nil {
+		maintenanceMarginRatio, err := k.VpoolKeeper.GetMaintenanceMarginRatio(ctx, pair)
+		if err != nil {
+			return err
+		}
+		if err = validateMarginRatio(marginRatio, maintenanceMarginRatio, true); err != nil {
 			return types.ErrMarginRatioTooLow
 		}
 	}
@@ -431,7 +443,7 @@ func (k Keeper) decreasePosition(
 	}
 
 	if remainOpenNotional.IsNegative() {
-		panic("value of open notional < 0")
+		return nil, fmt.Errorf("value of open notional < 0")
 	}
 
 	positionResp.Position = &types.Position{

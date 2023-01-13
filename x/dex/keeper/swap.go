@@ -38,8 +38,12 @@ func (k Keeper) updatePoolForSwap(
 	}
 	k.SetPool(ctx, pool)
 
-	k.RecordTotalLiquidityIncrease(ctx, sdk.Coins{tokenIn})
-	k.RecordTotalLiquidityDecrease(ctx, sdk.Coins{tokenOut})
+	if err = k.RecordTotalLiquidityIncrease(ctx, sdk.Coins{tokenIn}); err != nil {
+		return err
+	}
+	if err = k.RecordTotalLiquidityDecrease(ctx, sdk.Coins{tokenOut}); err != nil {
+		return err
+	}
 
 	return err
 }
@@ -109,7 +113,7 @@ func (k Keeper) SwapExactAmountIn(
 		TokenOut: tokenOut,
 	})
 	if err != nil {
-		panic(err)
+		return tokenOut, err
 	}
 
 	return tokenOut, nil

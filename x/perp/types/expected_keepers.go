@@ -1,6 +1,6 @@
 package types
 
-//go:generate  mockgen -destination=../../testutil/mock/perp_interfaces.go -package=mock github.com/NibiruChain/nibiru/x/perp/types AccountKeeper,BankKeeper,PricefeedKeeper,VpoolKeeper,EpochKeeper
+//go:generate  mockgen -destination=../../testutil/mock/perp_interfaces.go -package=mock github.com/NibiruChain/nibiru/x/perp/types AccountKeeper,BankKeeper,OracleKeeper,VpoolKeeper,EpochKeeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,7 +12,6 @@ import (
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -44,11 +43,10 @@ type BankKeeper interface {
 	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 }
 
-type PricefeedKeeper interface {
-	GetCurrentPrice(ctx sdk.Context, token0 string, token1 string) (pftypes.CurrentPrice, error)
-	GatherRawPrices(ctx sdk.Context, token0 string, token1 string) error
-	IsActivePair(ctx sdk.Context, pairID string) bool
-	GetCurrentTWAP(ctx sdk.Context, token0 string, token1 string) (sdk.Dec, error)
+type OracleKeeper interface {
+	GetExchangeRate(ctx sdk.Context, pair string) (sdk.Dec, error)
+	GetExchangeRateTwap(ctx sdk.Context, pair string) (sdk.Dec, error)
+	SetPrice(ctx sdk.Context, pair string, price sdk.Dec)
 }
 
 type VpoolKeeper interface {
@@ -105,11 +103,12 @@ type VpoolKeeper interface {
 
 	GetAllPools(ctx sdk.Context) []vpooltypes.Vpool
 
-	IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) bool
-	GetMaintenanceMarginRatio(ctx sdk.Context, pair common.AssetPair) sdk.Dec
-	GetMaxLeverage(ctx sdk.Context, pair common.AssetPair) sdk.Dec
+	IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) (bool, error)
+	GetMaintenanceMarginRatio(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error)
+	GetMaxLeverage(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error)
 	ExistsPool(ctx sdk.Context, pair common.AssetPair) bool
 	GetSettlementPrice(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error)
+	GetLastSnapshot(ctx sdk.Context, pool vpooltypes.Vpool) (vpooltypes.ReserveSnapshot, error)
 }
 
 type EpochKeeper interface {

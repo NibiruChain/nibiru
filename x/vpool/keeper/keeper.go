@@ -17,13 +17,13 @@ import (
 func NewKeeper(
 	codec codec.BinaryCodec,
 	storeKey sdk.StoreKey,
-	pricefeedKeeper types.PricefeedKeeper,
+	oracleKeeper types.OracleKeeper,
 ) Keeper {
 	return Keeper{
-		codec:           codec,
-		storeKey:        storeKey,
-		pricefeedKeeper: pricefeedKeeper,
-		Pools:           collections.NewMap(storeKey, 0, common.AssetPairKeyEncoder, collections.ProtoValueEncoder[types.Vpool](codec)),
+		codec:        codec,
+		storeKey:     storeKey,
+		oracleKeeper: oracleKeeper,
+		Pools:        collections.NewMap(storeKey, 0, common.AssetPairKeyEncoder, collections.ProtoValueEncoder[types.Vpool](codec)),
 		ReserveSnapshots: collections.NewMap(
 			storeKey, 1,
 			collections.PairKeyEncoder(common.AssetPairKeyEncoder, collections.TimeKeyEncoder),
@@ -33,9 +33,9 @@ func NewKeeper(
 }
 
 type Keeper struct {
-	codec           codec.BinaryCodec
-	storeKey        sdk.StoreKey
-	pricefeedKeeper types.PricefeedKeeper
+	codec        codec.BinaryCodec
+	storeKey     sdk.StoreKey
+	oracleKeeper types.OracleKeeper
 
 	Pools            collections.Map[common.AssetPair, types.Vpool]
 	ReserveSnapshots collections.Map[collections.Pair[common.AssetPair, time.Time], types.ReserveSnapshot]
@@ -75,7 +75,7 @@ func (k Keeper) SwapBaseForQuote(
 		return sdk.ZeroDec(), nil
 	}
 
-	if !k.pricefeedKeeper.IsActivePair(ctx, pair.String()) {
+	if _, err = k.oracleKeeper.GetExchangeRate(ctx, pair.String()); err != nil {
 		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair.String())
 	}
 
@@ -172,7 +172,7 @@ func (k Keeper) SwapQuoteForBase(
 		return sdk.ZeroDec(), nil
 	}
 
-	if !k.pricefeedKeeper.IsActivePair(ctx, pair.String()) {
+	if _, err = k.oracleKeeper.GetExchangeRate(ctx, pair.String()); err != nil {
 		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair.String())
 	}
 
@@ -249,17 +249,32 @@ func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, pool types.Vpool) er
 		return nil
 	}
 
-	it := k.ReserveSnapshots.Iterate(ctx, collections.PairRange[common.AssetPair, time.Time]{}.Prefix(pool.Pair).Descending())
-	defer it.Close()
-	if !it.Valid() {
-		return fmt.Errorf("error getting last snapshot number for pair %s", pool.Pair)
+	latestSnapshot, err := k.GetLastSnapshot(ctx, pool)
+	if err != nil {
+		return err
 	}
-	latestSnapshot := it.Value()
 	if pool.IsOverFluctuationLimitInRelationWithSnapshot(latestSnapshot) {
 		return types.ErrOverFluctuationLimit
 	}
 
 	return nil
+}
+
+/*
+GetLastSnapshot retrieve the last snapshot for a particular vpool
+
+args:
+  - ctx: the cosmos-sdk context
+  - pool: the vpool to check
+*/
+func (k Keeper) GetLastSnapshot(ctx sdk.Context, pool types.Vpool) (types.ReserveSnapshot, error) {
+	it := k.ReserveSnapshots.Iterate(ctx, collections.PairRange[common.AssetPair, time.Time]{}.Prefix(pool.Pair).Descending())
+	defer it.Close()
+	if !it.Valid() {
+		return types.ReserveSnapshot{}, fmt.Errorf("error getting last snapshot number for pair %s", pool.Pair)
+	}
+	latestSnapshot := it.Value()
+	return latestSnapshot, nil
 }
 
 /*
@@ -273,18 +288,18 @@ args:
 ret:
   - bool: whether the price has deviated from the oracle price beyond a spread ratio
 */
-func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) bool {
+func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) (bool, error) {
 	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
-		panic(err)
+		return false, err
 	}
 
-	indexPrice, err := k.pricefeedKeeper.GetCurrentPrice(ctx, pair.BaseDenom(), pair.QuoteDenom())
+	indexPrice, err := k.oracleKeeper.GetExchangeRate(ctx, pair.String())
 	if err != nil {
-		panic(err)
+		return false, err
 	}
 
-	return pool.IsOverSpreadLimit(indexPrice.Price)
+	return pool.IsOverSpreadLimit(indexPrice), nil
 }
 
 /*
@@ -296,14 +311,15 @@ args:
 
 ret:
   - sdk.Dec: The maintenance margin ratio for the pool
+  - error
 */
-func (k Keeper) GetMaintenanceMarginRatio(ctx sdk.Context, pair common.AssetPair) sdk.Dec {
+func (k Keeper) GetMaintenanceMarginRatio(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error) {
 	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
-		panic(err)
+		return sdk.Dec{}, err
 	}
 
-	return pool.Config.MaintenanceMarginRatio
+	return pool.Config.MaintenanceMarginRatio, nil
 }
 
 /*
@@ -315,14 +331,15 @@ args:
 
 ret:
   - sdk.Dec: The maintenance margin ratio for the pool
+  - error
 */
-func (k Keeper) GetMaxLeverage(ctx sdk.Context, pair common.AssetPair) sdk.Dec {
+func (k Keeper) GetMaxLeverage(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error) {
 	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
-		panic(err)
+		return sdk.Dec{}, err
 	}
 
-	return pool.Config.MaxLeverage
+	return pool.Config.MaxLeverage, nil
 }
 
 /*

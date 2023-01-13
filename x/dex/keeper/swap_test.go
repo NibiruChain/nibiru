@@ -34,6 +34,57 @@ func TestSwapExactAmountIn(t *testing.T) {
 		expectedFinalPool      types.Pool
 	}{
 		{
+			name: "testnet 2 BUG, should not panic",
+			userInitialFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("unibi", 236534500),
+				sdk.NewInt64Coin("unusd", 1700000000),
+				sdk.NewInt64Coin("uusdt", 701785070),
+			),
+			initialPool: types.Pool{
+				Id: 1,
+				PoolParams: types.PoolParams{
+					SwapFee:  sdk.MustNewDecFromStr("0.01"),
+					ExitFee:  sdk.MustNewDecFromStr("0.01"),
+					PoolType: types.PoolType_STABLESWAP,
+					A:        sdk.NewInt(10),
+				},
+				PoolAssets: []types.PoolAsset{
+					{Token: sdk.NewInt64Coin("unusd", 1_510_778_598),
+						Weight: sdk.NewInt(1)},
+					{Token: sdk.NewInt64Coin("uusdt", 7_712_056),
+						Weight: sdk.NewInt(1)},
+				},
+				TotalWeight: sdk.NewInt(2),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
+			},
+			tokenIn:          sdk.NewInt64Coin("unusd", 1_500_000_000),
+			tokenOutDenom:    "uusdt",
+			expectedTokenOut: sdk.NewInt64Coin("uusdt", 1_019_823),
+			expectedUserFinalFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("unibi", 236_534_500),
+				sdk.NewInt64Coin("unusd", 200_000_000),
+				sdk.NewInt64Coin("uusdt", 702_804_893),
+			),
+			expectedFinalPool: types.Pool{
+				Id: 1,
+				PoolParams: types.PoolParams{
+					SwapFee:  sdk.MustNewDecFromStr("0.01"),
+					ExitFee:  sdk.MustNewDecFromStr("0.01"),
+					PoolType: types.PoolType_STABLESWAP,
+					A:        sdk.NewInt(10),
+				},
+				PoolAssets: []types.PoolAsset{
+					{Token: sdk.NewInt64Coin("unusd", 3_010_778_598),
+						Weight: sdk.NewInt(1)},
+					{Token: sdk.NewInt64Coin("uusdt", 6_692_233),
+						Weight: sdk.NewInt(1)},
+				},
+				TotalWeight: sdk.NewInt(2),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
+			},
+			expectedError: nil,
+		},
+		{
 			name: "regular swap",
 			userInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("unibi", 100),

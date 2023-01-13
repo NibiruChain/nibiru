@@ -6,6 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/collections"
@@ -43,9 +44,9 @@ func TestGetMarkPrice(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			vpoolKeeper, ctx := VpoolKeeper(t,
-				mock.NewMockPricefeedKeeper(gomock.NewController(t)))
+				mock.NewMockOracleKeeper(gomock.NewController(t)))
 
-			vpoolKeeper.CreatePool(
+			assert.NoError(t, vpoolKeeper.CreatePool(
 				ctx,
 				tc.pair,
 				tc.quoteAssetReserve,
@@ -57,7 +58,7 @@ func TestGetMarkPrice(t *testing.T) {
 					MaxOracleSpreadRatio:   sdk.OneDec(),
 					TradeLimitRatio:        sdk.OneDec(),
 				},
-			)
+			))
 
 			price, err := vpoolKeeper.GetMarkPrice(ctx, tc.pair)
 			require.NoError(t, err)
@@ -119,9 +120,9 @@ func TestGetBaseAssetPrice(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			vpoolKeeper, ctx := VpoolKeeper(t,
-				mock.NewMockPricefeedKeeper(gomock.NewController(t)))
+				mock.NewMockOracleKeeper(gomock.NewController(t)))
 
-			vpoolKeeper.CreatePool(
+			assert.NoError(t, vpoolKeeper.CreatePool(
 				ctx,
 				tc.pair,
 				tc.quoteAssetReserve,
@@ -133,7 +134,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 					MaxOracleSpreadRatio:   sdk.OneDec(),
 					TradeLimitRatio:        sdk.OneDec(),
 				},
-			)
+			))
 
 			quoteAmount, err := vpoolKeeper.GetBaseAssetPrice(ctx, tc.pair, tc.direction, tc.baseAmount)
 			if tc.expectedErr != nil {
@@ -202,9 +203,9 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			vpoolKeeper, ctx := VpoolKeeper(t,
-				mock.NewMockPricefeedKeeper(gomock.NewController(t)))
+				mock.NewMockOracleKeeper(gomock.NewController(t)))
 
-			vpoolKeeper.CreatePool(
+			assert.NoError(t, vpoolKeeper.CreatePool(
 				ctx,
 				tc.pair,
 				tc.quoteAssetReserve,
@@ -216,7 +217,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 					MaxOracleSpreadRatio:   sdk.OneDec(),
 					TradeLimitRatio:        sdk.OneDec(),
 				},
-			)
+			))
 
 			baseAmount, err := vpoolKeeper.GetQuoteAssetPrice(ctx, tc.pair, tc.direction, tc.quoteAmount)
 			if tc.expectedErr != nil {
@@ -514,38 +515,26 @@ func TestCalcTwap(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			vpoolKeeper, ctx := VpoolKeeper(t,
-				mock.NewMockPricefeedKeeper(gomock.NewController(t)))
+				mock.NewMockOracleKeeper(gomock.NewController(t)))
 			ctx = ctx.WithBlockTime(time.UnixMilli(0))
 
 			t.Log("Create an empty pool for the first block")
-			vpoolKeeper.CreatePool(
+			assert.NoError(t, vpoolKeeper.CreatePool(
 				ctx,
 				tc.pair,
-				/*quoteAssetReserve=*/ sdk.ZeroDec(),
-				/*baseAssetReserve=*/ sdk.ZeroDec(),
-				types.VpoolConfig{
-					FluctuationLimitRatio:  sdk.OneDec(),
-					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-					MaxLeverage:            sdk.MustNewDecFromStr("15"),
-					MaxOracleSpreadRatio:   sdk.OneDec(),
-					TradeLimitRatio:        sdk.ZeroDec(),
-				},
-			)
+				/*quoteAssetReserve=*/ sdk.OneDec(),
+				/*baseAssetReserve=*/ sdk.OneDec(),
+				types.DefaultVpoolConfig().WithMaxLeverage(sdk.NewDec(15)),
+			))
 
 			t.Log("throw in another market pair to ensure key iteration doesn't overlap")
-			vpoolKeeper.CreatePool(
+			assert.NoError(t, vpoolKeeper.CreatePool(
 				ctx,
 				tc.pair,
 				/*quoteAssetReserve=*/ sdk.NewDec(100),
 				/*baseAssetReserve=*/ sdk.OneDec(),
-				types.VpoolConfig{
-					FluctuationLimitRatio:  sdk.OneDec(),
-					MaintenanceMarginRatio: sdk.OneDec(),
-					MaxLeverage:            sdk.MustNewDecFromStr("15"),
-					MaxOracleSpreadRatio:   sdk.OneDec(),
-					TradeLimitRatio:        sdk.ZeroDec(),
-				},
-			)
+				types.DefaultVpoolConfig().WithMaxLeverage(sdk.NewDec(15)),
+			))
 
 			for _, snapshot := range tc.reserveSnapshots {
 				ctx = ctx.WithBlockTime(time.UnixMilli(snapshot.TimestampMs))

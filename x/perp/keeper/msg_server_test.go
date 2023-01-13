@@ -76,7 +76,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 			traderAddr := testutil.AccAddress()
 
 			t.Log("create vpool")
-			app.VpoolKeeper.CreatePool(
+			assert.NoError(t, app.VpoolKeeper.CreatePool(
 				ctx,
 				common.Pair_BTC_NUSD,
 				/* quoteReserve */ sdk.NewDec(1*common.Precision),
@@ -88,7 +88,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-			)
+			))
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            common.Pair_BTC_NUSD,
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -197,7 +197,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			traderAddr := testutil.AccAddress()
 
 			t.Log("create vpool")
-			app.VpoolKeeper.CreatePool(
+			assert.NoError(t, app.VpoolKeeper.CreatePool(
 				ctx,
 				common.Pair_BTC_NUSD,
 				/* quoteReserve */ sdk.NewDec(1*common.Precision),
@@ -209,7 +209,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-			)
+			))
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            common.Pair_BTC_NUSD,
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -286,7 +286,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
 			t.Log("create vpool")
-			app.VpoolKeeper.CreatePool(
+			assert.NoError(t, app.VpoolKeeper.CreatePool(
 				/* ctx */ ctx,
 				/* pair */ common.Pair_BTC_NUSD,
 				/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
@@ -298,7 +298,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-			)
+			))
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            common.Pair_BTC_NUSD,
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -373,7 +373,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 
 			t.Log("create vpool")
 
-			app.VpoolKeeper.CreatePool(
+			assert.NoError(t, app.VpoolKeeper.CreatePool(
 				ctx,
 				common.Pair_BTC_NUSD,
 				/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
@@ -385,7 +385,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-			)
+			))
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            common.Pair_BTC_NUSD,
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -452,7 +452,7 @@ func TestMsgServerLiquidate(t *testing.T) {
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
 			t.Log("create vpool")
-			app.VpoolKeeper.CreatePool(
+			assert.NoError(t, app.VpoolKeeper.CreatePool(
 				/* ctx */ ctx,
 				/* pair */ common.Pair_BTC_NUSD,
 				/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
@@ -464,7 +464,7 @@ func TestMsgServerLiquidate(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-			)
+			))
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            common.Pair_BTC_NUSD,
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -474,11 +474,8 @@ func TestMsgServerLiquidate(t *testing.T) {
 			pair, err := common.NewAssetPair(tc.pair)
 			traderAddr, err2 := sdk.AccAddressFromBech32(tc.trader)
 			if err == nil && err2 == nil {
-				t.Log("set pricefeed oracle price")
-				oracle := testutil.AccAddress()
-				app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
-				require.NoError(t, app.PricefeedKeeper.PostRawPrice(ctx, oracle, pair.String(), sdk.OneDec(), time.Now().Add(time.Hour)))
-				require.NoError(t, app.PricefeedKeeper.GatherRawPrices(ctx, pair.BaseDenom(), pair.QuoteDenom()))
+				t.Log("set oracle price")
+				app.OracleKeeper.SetPrice(ctx, common.Pair_BTC_NUSD.String(), sdk.OneDec())
 
 				t.Log("create position")
 				setPosition(app.PerpKeeper, ctx, types.Position{
@@ -529,7 +526,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	atRiskTrader2 := testutil.AccAddress()
 
 	t.Log("create vpool")
-	app.VpoolKeeper.CreatePool(
+	assert.NoError(t, app.VpoolKeeper.CreatePool(
 		/* ctx */ ctx,
 		/* pair */ pair,
 		/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
@@ -541,19 +538,15 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
-	)
+	))
 	setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 		Pair:                            pair,
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 	})
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
 
-	t.Log("set pricefeed oracle price")
-	oracle := testutil.AccAddress()
-	app.PricefeedKeeper.WhitelistOracles(ctx, []sdk.AccAddress{oracle})
-	err := app.PricefeedKeeper.PostRawPrice(ctx, oracle, pair.String(), sdk.OneDec(), time.Now().Add(time.Hour))
-	require.NoError(t, err)
-	require.NoError(t, app.PricefeedKeeper.GatherRawPrices(ctx, pair.BaseDenom(), pair.QuoteDenom()))
+	t.Log("set oracle price")
+	app.OracleKeeper.SetPrice(ctx, common.Pair_BTC_NUSD.String(), sdk.OneDec())
 
 	t.Log("create positions")
 	atRiskPosition1 := types.Position{

@@ -27,7 +27,7 @@ func TestKeeperClosePosition(t *testing.T) {
 
 		t.Log("Set vpool defined by pair on VpoolKeeper")
 		vpoolKeeper := &nibiruApp.VpoolKeeper
-		vpoolKeeper.CreatePool(
+		require.NoError(t, vpoolKeeper.CreatePool(
 			ctx,
 			pair,
 			/*quoteAssetReserve*/ sdk.NewDec(10*common.Precision),
@@ -39,9 +39,8 @@ func TestKeeperClosePosition(t *testing.T) {
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
-		)
+		))
 		require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
-		nibiruApp.PricefeedKeeper.ActivePairsStore().Set(ctx, pair, true)
 
 		t.Log("Set vpool defined by pair on PerpKeeper")
 		setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
@@ -62,6 +61,9 @@ func TestKeeperClosePosition(t *testing.T) {
 		aliceQuote := sdk.NewInt(60)
 		aliceLeverage := sdk.NewDec(10)
 		aliceBaseLimit := sdk.NewDec(150)
+
+		nibiruApp.OracleKeeper.SetPrice(ctx, pair.String(), sdk.NewDec(20))
+
 		_, err = nibiruApp.PerpKeeper.OpenPosition(
 			ctx, pair, aliceSide, alice, aliceQuote, aliceLeverage, aliceBaseLimit)
 		require.NoError(t, err)

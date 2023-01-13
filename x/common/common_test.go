@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/testutil"
 )
 
 func TestNewAssetPair_Constructor(t *testing.T) {
@@ -75,13 +76,10 @@ func TestAsset_GetQuoteBaseToken(t *testing.T) {
 }
 
 func TestAssetPair_Marshaling(t *testing.T) {
-	testCases := []struct {
-		name string
-		test func()
-	}{
+	testCases := []testutil.FunctionTestCase{
 		{
-			name: "verbose equal suite",
-			test: func() {
+			Name: "verbose equal suite",
+			Test: func() {
 				pair := common.MustNewAssetPair("abc:xyz")
 				matchingOther := common.MustNewAssetPair("abc:xyz")
 				mismatchToken1 := common.MustNewAssetPair("abc:abc")
@@ -101,8 +99,8 @@ func TestAssetPair_Marshaling(t *testing.T) {
 			},
 		},
 		{
-			name: "panics suite",
-			test: func() {
+			Name: "panics suite",
+			Test: func() {
 				require.Panics(t, func() {
 					common.MustNewAssetPair("aaa:bbb:ccc")
 				})
@@ -110,10 +108,5 @@ func TestAssetPair_Marshaling(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range testCases {
-		tc := testCase
-		t.Run(tc.name, func(t *testing.T) {
-			tc.test()
-		})
-	}
+	testutil.RunFunctionTests(t, testCases)
 }

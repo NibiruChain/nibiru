@@ -3,23 +3,22 @@ package cli_test
 import (
 	"fmt"
 	"testing"
-	"time"
 
+	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/NibiruChain/collections"
-
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
+	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/NibiruChain/nibiru/x/perp/client/cli"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
-	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -30,29 +29,6 @@ type IntegrationTestSuite struct {
 	cfg     testutilcli.Config
 	network *testutilcli.Network
 	users   []sdk.AccAddress
-}
-
-// NewPricefeedGen returns an x/pricefeed GenesisState to specify the module parameters.
-func NewPricefeedGen() *pftypes.GenesisState {
-	pairs := common.AssetPairs{common.Pair_BTC_NUSD, common.Pair_ETH_NUSD}
-	pfGenesis := simapp.PricefeedGenesis()
-	pfGenesis.Params.Pairs = append(pfGenesis.Params.Pairs, pairs...)
-	pfGenesis.PostedPrices = append(pfGenesis.PostedPrices, []pftypes.PostedPrice{
-		{
-			PairID: common.Pair_BTC_NUSD.String(),
-			Oracle: simapp.GenOracleAddress,
-			Price:  sdk.OneDec(),
-			Expiry: time.Now().Add(1 * time.Hour),
-		},
-		{
-			PairID: common.Pair_ETH_NUSD.String(),
-			Oracle: simapp.GenOracleAddress,
-			Price:  sdk.OneDec(),
-			Expiry: time.Now().Add(1 * time.Hour),
-		},
-	}...)
-
-	return &pfGenesis
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
@@ -116,10 +92,19 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	perpGenesis.Params.WhitelistedLiquidators = []string{"nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m"} // address associated with mnemonic below
 	genesisState[perptypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(perpGenesis)
 
-	// set up pricefeed
-	genesisState[pftypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(NewPricefeedGen())
+	oracleGenesis := oracletypes.DefaultGenesisState()
+	oracleGenesis.Params.Whitelist = []string{
+		common.Pair_BTC_NUSD.String(),
+	}
+	oracleGenesis.Params.VotePeriod = 1_000
+	oracleGenesis.ExchangeRates = []oracletypes.ExchangeRateTuple{
+		{Pair: common.Pair_BTC_NUSD.String(), ExchangeRate: sdk.NewDec(20_000)},
+		{Pair: common.Pair_ETH_NUSD.String(), ExchangeRate: sdk.NewDec(2_000)},
+	}
+	genesisState[oracletypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(oracleGenesis)
 
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
+	s.cfg.NumValidators = 1
 	s.cfg.Mnemonics = []string{"satisfy december text daring wheat vanish save viable holiday rural vessel shuffle dice skate promote fade badge federal sail during lend fever balance give"}
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
 	s.NoError(s.network.WaitForNextBlock())
@@ -132,6 +117,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.users = []sdk.AccAddress{user1, user2, user3, user4, user5}
 
 	val := s.network.Validators[0]
+	_, err := s.network.WaitForHeight(2)
+	require.NoError(s.T(), err)
 
 	s.NoError(
 		testutilcli.FillWalletFromValidator(user1,
@@ -198,6 +185,10 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	val := s.network.Validators[0]
 	user := s.users[0]
+
+	exchangeRate, err := testutilcli.QueryOracleExchangeRate(val.ClientCtx, common.Pair_BTC_NUSD.String())
+	s.T().Logf("0. current exchange rate is: %+v", exchangeRate)
+	s.NoError(err)
 
 	s.T().Log("A. check vpool balances")
 	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, common.Pair_BTC_NUSD)
@@ -467,7 +458,7 @@ func (s *IntegrationTestSuite) TestLiquidate() {
 		common.Pair_ETH_NUSD.String(),
 		s.users[1].String(),
 	})
-	s.Contains(err.Error(), "margin is higher than required maintenance margin ratio")
+	s.Contains(err.Error(), "margin ratio is too healthy to liquidate")
 
 	s.T().Log("opening a position with user 2...")
 	txResp, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[2], []string{

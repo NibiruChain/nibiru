@@ -10,14 +10,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	pftypes "github.com/NibiruChain/nibiru/x/pricefeed/types"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 func TestCreatePool(t *testing.T) {
 	vpoolKeeper, _, ctx := getKeeper(t)
 
-	vpoolKeeper.CreatePool(
+	assert.NoError(t, vpoolKeeper.CreatePool(
 		ctx,
 		common.Pair_BTC_NUSD,
 
@@ -30,7 +29,7 @@ func TestCreatePool(t *testing.T) {
 			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 		},
-	)
+	))
 
 	exists := vpoolKeeper.ExistsPool(ctx, common.Pair_BTC_NUSD)
 	require.True(t, exists)
@@ -59,13 +58,13 @@ func TestEditPoolConfig(t *testing.T) {
 
 	setupTest := func() (Keeper, sdk.Context) {
 		vpoolKeeper, _, ctx := getKeeper(t)
-		vpoolKeeper.CreatePool(
+		assert.NoError(t, vpoolKeeper.CreatePool(
 			ctx,
 			common.Pair_BTC_NUSD,
 			vpoolStart.QuoteAssetReserve,
 			vpoolStart.BaseAssetReserve,
 			vpoolStart.Config,
-		)
+		))
 		exists := vpoolKeeper.ExistsPool(ctx, common.Pair_BTC_NUSD)
 		require.True(t, exists)
 		return vpoolKeeper, ctx
@@ -186,7 +185,7 @@ func TestGetPoolPrices(t *testing.T) {
 		vpool              types.Vpool // vpool passed to GetPoolPrices
 		shouldCreateVpool  bool        // whether to write 'vpool' into the kv store
 		mockIndexPrice     sdk.Dec     // indexPriceVal returned by the x/pricefeed keepr
-		pricefeedKeeperErr error
+		oracleKeeperErr    error
 		err                error            // An error raised from calling Keeper.GetPoolPrices
 		expectedPoolPrices types.PoolPrices // expected output from callign GetPoolPrices
 	}{
@@ -229,9 +228,9 @@ func TestGetPoolPrices(t *testing.T) {
 					TradeLimitRatio:        sdk.OneDec(),
 				},
 			},
-			shouldCreateVpool:  true,
-			mockIndexPrice:     sdk.OneDec().Neg(),
-			pricefeedKeeperErr: fmt.Errorf("No index price"),
+			shouldCreateVpool: true,
+			mockIndexPrice:    sdk.OneDec().Neg(),
+			oracleKeeperErr:   fmt.Errorf("No index price"),
 			expectedPoolPrices: types.PoolPrices{
 				Pair:          common.Pair_ETH_NUSD.String(),
 				MarkPrice:     sdk.NewDec(3_000),
@@ -267,24 +266,21 @@ func TestGetPoolPrices(t *testing.T) {
 			ctx = ctx.WithBlockHeight(1).WithBlockTime(time.Now())
 
 			if tc.shouldCreateVpool {
-				vpoolKeeper.CreatePool(
+				assert.NoError(t, vpoolKeeper.CreatePool(
 					ctx,
 					tc.vpool.Pair,
 					tc.vpool.QuoteAssetReserve,
 					tc.vpool.BaseAssetReserve,
 					tc.vpool.Config,
-				)
+				))
 			}
 
 			ctx = ctx.WithBlockHeight(2).WithBlockTime(time.Now().Add(5 * time.Second))
 
-			t.Log("mock pricefeedKeeper index price")
-			mocks.mockPricefeedKeeper.EXPECT().
-				GetCurrentPrice(ctx, tc.vpool.Pair.BaseDenom(), tc.vpool.Pair.QuoteDenom()).
-				Return(pftypes.CurrentPrice{
-					PairID: tc.vpool.Pair.String(),
-					Price:  tc.mockIndexPrice,
-				}, tc.pricefeedKeeperErr).
+			t.Log("mock oracleKeeper index price")
+			mocks.mockOracleKeeper.EXPECT().
+				GetExchangeRate(ctx, tc.vpool.Pair.String()).
+				Return(tc.mockIndexPrice, tc.oracleKeeperErr).
 				AnyTimes()
 
 			// logged errors would be called in GetPoolPrices
@@ -316,13 +312,13 @@ func TestEditSwapInvariant(t *testing.T) {
 
 	setupTest := func() (Keeper, sdk.Context) {
 		vpoolKeeper, _, ctx := getKeeper(t)
-		vpoolKeeper.CreatePool(
+		assert.NoError(t, vpoolKeeper.CreatePool(
 			ctx,
 			pair,
 			vpoolStart.QuoteAssetReserve,
 			vpoolStart.BaseAssetReserve,
 			vpoolStart.Config,
-		)
+		))
 		exists := vpoolKeeper.ExistsPool(ctx, pair)
 		require.True(t, exists)
 		return vpoolKeeper, ctx
