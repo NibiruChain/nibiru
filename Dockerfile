@@ -17,8 +17,7 @@ COPY go.* ./
 RUN go mod download
 
 COPY . ./
-# RUN --mount=type=cache,target=/root/.cache/go-build make build
-RUN make build
+RUN --mount=type=cache,target=/root/.cache/go-build make build
 
 FROM alpine:latest
 WORKDIR /root
