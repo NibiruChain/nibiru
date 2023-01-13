@@ -1,6 +1,7 @@
 package app
 
 import (
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"log"
 	"sort"
 
@@ -23,9 +24,19 @@ func (app NibiruApp) RegisterUpgradeHandlers() {
 	if !sort.StringsAreSorted(upgradesList) {
 		log.Fatal("New upgrades must be appended to 'upgradesList' in alphabetical order")
 	}
+	upgradeInfo, err := app.upgradeKeeper.ReadUpgradeInfoFromDisk()
+	if err != nil {
+		panic(err)
+	}
+
 	for _, upgradeName := range upgradesList {
 		app.upgradeKeeper.SetUpgradeHandler(upgradeName, func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 			return app.mm.RunMigrations(ctx, app.configurator, fromVM)
 		})
+
+		if upgradeName == "v0.17.0" {
+			storeUpgrades := storetypes.StoreUpgrades{Deleted: []string{"pricefeed"}}
+			app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &storeUpgrades))
+		}
 	}
 }
