@@ -39,7 +39,8 @@ func (app NibiruApp) RegisterUpgradeHandlers() {
 
 	if upgradeInfo.Name == "v0.17.0" && !app.upgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
 		storeUpgrades := storetypes.StoreUpgrades{
-			Added: []string{oracletypes.StoreKey},
+			Added:   []string{oracletypes.StoreKey},
+			Deleted: []string{"pricefeed"},
 		}
 
 		// configure store loader that checks if version == upgradeHeight and applies store upgrades
