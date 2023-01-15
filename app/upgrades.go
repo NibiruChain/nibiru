@@ -8,8 +8,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-
-	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
 // NOTE: When performing upgrades, make sure to keep / register the handlers
@@ -39,7 +37,6 @@ func (app NibiruApp) RegisterUpgradeHandlers() {
 
 	if upgradeInfo.Name == "v0.17.0" && !app.upgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
 		storeUpgrades := storetypes.StoreUpgrades{
-			Added:   []string{oracletypes.StoreKey},
 			Deleted: []string{"pricefeed"},
 		}
 
