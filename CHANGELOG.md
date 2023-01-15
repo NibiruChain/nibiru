@@ -52,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1126](https://github.com/NibiruChain/nibiru/pull/1126) - test(oracle): stop the tyrannical behavior of TestFuzz_PickReferencePair 
 * [#1135](https://github.com/NibiruChain/nibiru/pull/1135) - fix: add genesis oracle prices to localnet
 * [#1135](https://github.com/NibiruChain/nibiru/pull/1141) - refactor(oracle): rename variables for readability
+* [#1145](https://github.com/NibiruChain/nibiru/pull/1145) - chore: add USD quote asset
 
 ### Bug Fixes
 
