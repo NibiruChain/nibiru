@@ -51,7 +51,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1138](https://github.com/NibiruChain/nibiru/pull/1138) - refactor: put Makefile workflows in separate directory
 * [#1126](https://github.com/NibiruChain/nibiru/pull/1126) - test(oracle): stop the tyrannical behavior of TestFuzz_PickReferencePair 
 * [#1135](https://github.com/NibiruChain/nibiru/pull/1135) - fix: add genesis oracle prices to localnet
-* [#1135](https://github.com/NibiruChain/nibiru/pull/1141) - refactor(oracle): rename variables for readability
+* [#1141](https://github.com/NibiruChain/nibiru/pull/1141) - refactor(oracle): rename variables for readability
+* [#1146](https://github.com/NibiruChain/nibiru/pull/1146) - fix: local docker-compose network
 * [#1145](https://github.com/NibiruChain/nibiru/pull/1145) - chore: add USD quote asset
 
 ### Bug Fixes

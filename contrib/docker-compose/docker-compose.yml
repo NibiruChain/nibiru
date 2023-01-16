@@ -11,7 +11,7 @@ services:
     environment:
       - ID=0
     volumes:
-      - ./data/node0/nibid:/root/.nibid:Z
+      - ../../data/node0/nibid:/root/.nibid:Z
     networks:
       localnet:
         ipv4_address: 192.168.11.2
@@ -24,7 +24,7 @@ services:
     environment:
       - ID=1
     volumes:
-      - ./data/node1/nibid:/root/.nibid:Z
+      - ../../data/node1/nibid:/root/.nibid:Z
     networks:
       localnet:
         ipv4_address: 192.168.11.3
@@ -37,7 +37,7 @@ services:
     ports:
       - "26661-26662:26656-26657"
     volumes:
-      - ./data/node2/nibid:/root/.nibid:Z
+      - ../../data/node2/nibid:/root/.nibid:Z
     networks:
       localnet:
         ipv4_address: 192.168.11.4
@@ -50,7 +50,7 @@ services:
     ports:
       - "26663-26664:26656-26657"
     volumes:
-      - ./data/node3/nibid:/root/.nibid:Z
+      - ../../data/node3/nibid:/root/.nibid:Z
     networks:
       localnet:
         ipv4_address: 192.168.11.5
