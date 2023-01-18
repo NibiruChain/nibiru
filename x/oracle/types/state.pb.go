@@ -26,7 +26,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// a snapshot of the pricefeed oracle's median price at a given point in time
+// a snapshot of the prices at a given point in time
 type PriceSnapshot struct {
 	Pair  string                                 `protobuf:"bytes,1,opt,name=pair,proto3" json:"pair,omitempty"`
 	Price github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=price,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"price"`

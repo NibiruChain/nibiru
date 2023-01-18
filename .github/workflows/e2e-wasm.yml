@@ -1,0 +1,43 @@
+---
+name: CosmWasm e2e contract tests
+
+on:
+  # On normal PRs or when workflow goreleaser finishes, as it gets the last release tag.
+  pull_request:
+    paths: ["**.go", "**.proto", "go.mod", "go.sum"]
+  workflow_run:
+    workflows: ["goreleaser"]
+    types:
+      - completed
+  workflow_dispatch:
+
+jobs:
+  get-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Download release
+        id: latest_release
+        uses: pozetroninc/github-action-get-latest-release@v0.6.0
+        with:
+          repository: ${{ github.repository }}
+
+      - name: download release
+        uses: robinraju/release-downloader@v1.6
+        with:
+          tag: ${{ steps.latest_release.outputs.release }}
+          fileName: "*linux_amd64.tar.gz"
+
+      - name: unpack release
+        run: |
+          tar -xzf *linux_amd64.tar.gz
+
+      - name: launch localnet
+        run: |
+          sh ./scripts/e2e/localnet.sh
+
+      - name: run e2e tests
+        run: |
+          sh ./scripts/e2e/deploy-wasm.sh
