@@ -231,8 +231,6 @@ add_genesis_param '.app_state.perp.pair_metadata[0].latest_cumulative_premium_fr
 add_genesis_param '.app_state.perp.pair_metadata[1].pair = {token0:"ueth",token1:"unusd"}'
 add_genesis_param '.app_state.perp.pair_metadata[1].latest_cumulative_premium_fraction = "0"'
 
-cat $HOME/.nibid/config/genesis.json | jq '.app_state.pricefeed.params.twap_lookback_window = "900s"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
-
 # Start the network
 echo_info "Starting $CHAIN_ID in $CHAIN_DIR..."
 
