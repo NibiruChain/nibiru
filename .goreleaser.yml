@@ -21,6 +21,7 @@ builds:
       - -linkmode=external
     tags:
       - netgo
+      - ledger
       - static_wasm
     overrides:
       - goos: darwin
@@ -50,6 +51,7 @@ builds:
       - -extldflags '-Wl,-z,muldefs -static -lm'
     tags:
       - netgo
+      - ledger
       - muslc
     overrides:
       - goos: linux
