@@ -27,7 +27,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 				QuoteAssetReserve: sdk.NewDec(10e12).Add(simtypes.RandomDecAmount(simState.Rand, sdk.NewDec(10e12))),
 				BaseAssetReserve:  sdk.NewDec(10e12).Add(simtypes.RandomDecAmount(simState.Rand, sdk.NewDec(10e12))),
 				Config: types.VpoolConfig{
-					FluctuationLimitRatio:  sdk.MaxDec(smallDec, simtypes.RandomDecAmount(simState.Rand, sdk.MustNewDecFromStr("5"))),
+					FluctuationLimitRatio:  sdk.MaxDec(smallDec, simtypes.RandomDecAmount(simState.Rand, sdk.MustNewDecFromStr("1"))),
 					MaintenanceMarginRatio: maintenanceMarginRatio,
 					MaxLeverage:            maxLeverage,
 					MaxOracleSpreadRatio:   sdk.MaxDec(smallDec, simtypes.RandomDecAmount(simState.Rand, sdk.MustNewDecFromStr("5"))),
