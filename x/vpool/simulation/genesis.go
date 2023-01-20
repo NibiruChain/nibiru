@@ -30,7 +30,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 					FluctuationLimitRatio:  sdk.MaxDec(smallDec, simtypes.RandomDecAmount(simState.Rand, sdk.MustNewDecFromStr("1"))),
 					MaintenanceMarginRatio: maintenanceMarginRatio,
 					MaxLeverage:            maxLeverage,
-					MaxOracleSpreadRatio:   sdk.MaxDec(smallDec, simtypes.RandomDecAmount(simState.Rand, sdk.MustNewDecFromStr("5"))),
+					MaxOracleSpreadRatio:   sdk.MaxDec(smallDec, simtypes.RandomDecAmount(simState.Rand, sdk.MustNewDecFromStr("1"))),
 					TradeLimitRatio:        sdk.MaxDec(smallDec, simtypes.RandomDecAmount(simState.Rand, sdk.MustNewDecFromStr("1"))),
 				},
 			},
