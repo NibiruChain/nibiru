@@ -373,7 +373,26 @@ func MustSdkIntToUint256(num sdk.Int) *uint256.Int {
 	return uint256.NewInt().SetUint64(uint64(num.Int64()))
 }
 
-// Calculate Token out if one swap token in (no fees computed there)
+// Calculate the amount of token out
+func (pool Pool) Exchange(tokenIn sdk.Coin, tokenOutDenom string) (dy sdk.Int, err error) {
+	_, poolAssetIn, err := pool.getPoolAssetAndIndex(tokenIn.Denom)
+	if err != nil {
+		return
+	}
+	_, poolAssetOut, err := pool.getPoolAssetAndIndex(tokenOutDenom)
+	if err != nil {
+		return
+	}
+
+	dx := poolAssetIn.Token.Add(tokenIn)
+	yAmount, err := pool.SolveStableswapInvariant(dx, tokenOutDenom)
+
+	y := sdk.NewCoin(tokenOutDenom, yAmount)
+	dy = poolAssetOut.Token.Sub(y).Amount
+	return
+}
+
+// Calculate y if one makes x = tokenIn
 // Done by solving quadratic equation iteratively.
 // x_1**2 + x1 * (sum' - (A*n**n - 1) * D / (A * n**n)) = D ** (n+1)/(n ** (2 * n) * prod' * A)
 // x_1**2 + b*x_1 = c
@@ -402,10 +421,7 @@ func (pool Pool) SolveStableswapInvariant(tokenIn sdk.Coin, tokenOutDenom string
 
 	for _i := 0; _i < len(pool.PoolAssets); _i++ {
 		if _i == i {
-			_x = uint256.NewInt().Add(
-				MustSdkIntToUint256(pool.PoolAssets[_i].Token.Amount),
-				MustSdkIntToUint256(tokenIn.Amount),
-			)
+			_x = MustSdkIntToUint256(tokenIn.Amount)
 		} else if _i != j {
 			_x = MustSdkIntToUint256(pool.PoolAssets[_i].Token.Amount)
 		} else {

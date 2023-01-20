@@ -869,8 +869,11 @@ func TestSolveStableswapInvariant(t *testing.T) {
 			denomIn := "token" + strconv.Itoa(tc.send)
 			denomOut := "token" + strconv.Itoa(tc.receive)
 
+			_, poolAssetIn, err := pool.getPoolAssetAndIndex(denomIn)
+			require.NoError(t, err)
+
 			dy, err := pool.SolveStableswapInvariant(
-				/* tokenIn = */ sdk.NewCoin(denomIn, tc.dx),
+				/* tokenIn = */ sdk.NewCoin(denomIn, tc.dx).Add(poolAssetIn.Token),
 				/* tokenOutDenom = */ denomOut,
 			)
 			require.NoError(t, err)

@@ -59,11 +59,11 @@ func TestSwapExactAmountIn(t *testing.T) {
 			},
 			tokenIn:          sdk.NewInt64Coin("unusd", 1_500_000_000),
 			tokenOutDenom:    "uusdt",
-			expectedTokenOut: sdk.NewInt64Coin("uusdt", 1_019_823),
+			expectedTokenOut: sdk.NewInt64Coin("uusdt", 6_670_336),
 			expectedUserFinalFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("unibi", 236_534_500),
 				sdk.NewInt64Coin("unusd", 200_000_000),
-				sdk.NewInt64Coin("uusdt", 702_804_893),
+				sdk.NewInt64Coin("uusdt", 708_455_406),
 			),
 			expectedFinalPool: types.Pool{
 				Id: 1,
@@ -76,12 +76,41 @@ func TestSwapExactAmountIn(t *testing.T) {
 				PoolAssets: []types.PoolAsset{
 					{Token: sdk.NewInt64Coin("unusd", 3_010_778_598),
 						Weight: sdk.NewInt(1)},
-					{Token: sdk.NewInt64Coin("uusdt", 6_692_233),
+					{Token: sdk.NewInt64Coin("uusdt", 1_041_720),
 						Weight: sdk.NewInt(1)},
 				},
 				TotalWeight: sdk.NewInt(2),
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
 			},
+			expectedError: nil,
+		},
+		{
+			name: "regular stableswap",
+			userInitialFunds: sdk.NewCoins(
+				sdk.NewInt64Coin("uusdc", 10),
+			),
+			initialPool: mock.DexStablePool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("uusdc", 100),
+					sdk.NewInt64Coin(common.DenomNUSD, 100),
+				),
+				/*shares=*/ 100,
+			),
+			tokenIn:          sdk.NewInt64Coin("uusdc", 10),
+			tokenOutDenom:    common.DenomNUSD,
+			expectedTokenOut: sdk.NewInt64Coin(common.DenomNUSD, 10),
+			expectedUserFinalFunds: sdk.NewCoins(
+				sdk.NewInt64Coin(common.DenomNUSD, 10),
+			),
+			expectedFinalPool: mock.DexStablePool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin("uusdc", 110),
+					sdk.NewInt64Coin(common.DenomNUSD, 90),
+				),
+				/*shares=*/ 100,
+			),
 			expectedError: nil,
 		},
 		{
