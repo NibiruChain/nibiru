@@ -809,12 +809,12 @@ func TestMsgServerExitPool(t *testing.T) {
 			),
 			poolSharesIn: sdk.NewInt64Coin(shareDenom, 100),
 			expectedTokensOut: sdk.NewCoins(
-				sdk.NewInt64Coin("unibi", 99),
-				sdk.NewInt64Coin(common.DenomNUSD, 99),
+				sdk.NewInt64Coin("unibi", 100),
+				sdk.NewInt64Coin(common.DenomNUSD, 100),
 			),
 			expectedJoinerFinalFunds: sdk.NewCoins(
-				sdk.NewInt64Coin("unibi", 199),
-				sdk.NewInt64Coin(common.DenomNUSD, 199),
+				sdk.NewInt64Coin("unibi", 200),
+				sdk.NewInt64Coin(common.DenomNUSD, 200),
 			),
 			expectedFinalPool: mock.DexStablePool(
 				/*poolId=*/ 1,
@@ -846,19 +846,19 @@ func TestMsgServerExitPool(t *testing.T) {
 			),
 			poolSharesIn: sdk.NewInt64Coin(shareDenom, 50),
 			expectedTokensOut: sdk.NewCoins(
-				sdk.NewInt64Coin("unibi", 49),
-				sdk.NewInt64Coin(common.DenomNUSD, 49),
+				sdk.NewInt64Coin("unibi", 50),
+				sdk.NewInt64Coin(common.DenomNUSD, 50),
 			),
 			expectedJoinerFinalFunds: sdk.NewCoins(
-				sdk.NewInt64Coin("unibi", 149),
-				sdk.NewInt64Coin(common.DenomNUSD, 149),
+				sdk.NewInt64Coin("unibi", 150),
+				sdk.NewInt64Coin(common.DenomNUSD, 150),
 				sdk.NewInt64Coin(shareDenom, 50),
 			),
 			expectedFinalPool: mock.DexStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
-					sdk.NewInt64Coin("unibi", 51),
-					sdk.NewInt64Coin(common.DenomNUSD, 51),
+					sdk.NewInt64Coin("unibi", 50),
+					sdk.NewInt64Coin(common.DenomNUSD, 50),
 				),
 				/*shares=*/ 50,
 			),
@@ -1080,15 +1080,15 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			),
 			tokenIn:          sdk.NewInt64Coin("unibi", 100),
 			tokenOutDenom:    common.DenomNUSD,
-			expectedTokenOut: sdk.NewInt64Coin(common.DenomNUSD, 30),
+			expectedTokenOut: sdk.NewInt64Coin(common.DenomNUSD, 95),
 			expectedUserFinalFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.DenomNUSD, 30),
+				sdk.NewInt64Coin(common.DenomNUSD, 95),
 			),
 			expectedFinalPool: mock.DexStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 200),
-					sdk.NewInt64Coin(common.DenomNUSD, 70),
+					sdk.NewInt64Coin(common.DenomNUSD, 5),
 				),
 				/*shares=*/ 100,
 			),
