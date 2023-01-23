@@ -218,17 +218,13 @@ args:
 ret:
   - err: error if any
 */
-func (pool *Pool) updatePoolAssetBalances(tokens sdk.Coins) (err error) {
+func (pool *Pool) updatePoolAssetBalances(tokens ...sdk.Coin) (err error) {
 	// Ensures that there are no duplicate denoms, all denom's are valid,
 	// and amount is > 0
-	if len(tokens) != len(pool.PoolAssets) {
-		return errors.New("provided tokens do not match number of assets in pool")
-	}
-	if err = tokens.Validate(); err != nil {
-		return fmt.Errorf("provided coins are invalid, %v", err)
-	}
-
 	for _, coin := range tokens {
+		if coin.Amount.LT(sdk.ZeroInt()) {
+			return fmt.Errorf("provided coins are invalid, %v", tokens)
+		}
 		assetIndex, existingAsset, err := pool.getPoolAssetAndIndex(coin.Denom)
 		if err != nil {
 			return err
@@ -278,7 +274,7 @@ func (pool *Pool) setInitialPoolAssets(poolAssets []PoolAsset) (err error) {
 // A * sum(x_i) * n**n + D = A * D * n**n + D**(n+1) / (n**n * prod(x_i))
 // Converging solution:
 // D[j+1] = (A * n**n * sum(x_i) - D[j]**(n+1) / (n**n prod(x_i))) / (A * n**n - 1)
-func (pool Pool) getD(poolAssets []PoolAsset) (*uint256.Int, error) {
+func (pool Pool) GetD(poolAssets []PoolAsset) (*uint256.Int, error) {
 	nCoins := uint256.NewInt().SetUint64(uint64(len(poolAssets)))
 
 	S := uint256.NewInt()
@@ -386,6 +382,9 @@ func (pool Pool) Exchange(tokenIn sdk.Coin, tokenOutDenom string) (dy sdk.Int, e
 
 	dx := poolAssetIn.Token.Add(tokenIn)
 	yAmount, err := pool.SolveStableswapInvariant(dx, tokenOutDenom)
+	if err != nil {
+		return
+	}
 
 	y := sdk.NewCoin(tokenOutDenom, yAmount)
 	dy = poolAssetOut.Token.Sub(y).Amount
@@ -399,7 +398,7 @@ func (pool Pool) Exchange(tokenIn sdk.Coin, tokenOutDenom string) (dy sdk.Int, e
 // x_1 = (x_1**2 + c) / (2*x_1 + b - D)
 func (pool Pool) SolveStableswapInvariant(tokenIn sdk.Coin, tokenOutDenom string) (yAmount sdk.Int, err error) {
 	A := pool.getA()
-	D, err := pool.getD(pool.PoolAssets)
+	D, err := pool.GetD(pool.PoolAssets)
 	if err != nil {
 		return
 	}

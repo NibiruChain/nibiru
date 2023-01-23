@@ -184,8 +184,5 @@ func (pool *Pool) ApplySwap(tokenIn sdk.Coin, tokenOut sdk.Coin) (err error) {
 	poolAssetIn.Token.Amount = poolAssetIn.Token.Amount.Add(tokenIn.Amount)
 	poolAssetOut.Token.Amount = poolAssetOut.Token.Amount.Sub(tokenOut.Amount)
 
-	return pool.updatePoolAssetBalances(sdk.NewCoins(
-		poolAssetIn.Token,
-		poolAssetOut.Token,
-	))
+	return pool.updatePoolAssetBalances(poolAssetIn.Token, poolAssetOut.Token)
 }

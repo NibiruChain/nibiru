@@ -655,7 +655,7 @@ func TestUpdatePoolAssetTokens(t *testing.T) {
 	for _, tc := range []struct {
 		name               string
 		poolAssets         []PoolAsset
-		newAssets          sdk.Coins
+		newAssets          []sdk.Coin
 		expectedPoolAssets []PoolAsset
 	}{
 		{
@@ -668,10 +668,10 @@ func TestUpdatePoolAssetTokens(t *testing.T) {
 					Token: sdk.NewInt64Coin("bbb", 200),
 				},
 			},
-			newAssets: sdk.NewCoins(
+			newAssets: []sdk.Coin{
 				sdk.NewInt64Coin("aaa", 150),
 				sdk.NewInt64Coin("bbb", 125),
-			),
+			},
 			expectedPoolAssets: []PoolAsset{
 				{
 					Token: sdk.NewInt64Coin("aaa", 150),
@@ -685,7 +685,7 @@ func TestUpdatePoolAssetTokens(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			pool := MockPool(tc.poolAssets)
-			require.NoError(t, pool.updatePoolAssetBalances(tc.newAssets))
+			require.NoError(t, pool.updatePoolAssetBalances(tc.newAssets...))
 			require.Equal(t, tc.expectedPoolAssets, pool.PoolAssets)
 		})
 	}
@@ -766,7 +766,7 @@ func TestGetD(t *testing.T) {
 				PoolParams: PoolParams{A: tc.amplificationParameter},
 			}
 
-			D, err := pool.getD(pool.PoolAssets)
+			D, err := pool.GetD(pool.PoolAssets)
 			require.NoError(t, err)
 			require.EqualValues(t, tc.expectedD, D.Uint64())
 		})
