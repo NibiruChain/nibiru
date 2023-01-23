@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/NibiruChain/nibiru/x/testutil"
@@ -87,17 +88,17 @@ func TestSwapExactAmountIn(t *testing.T) {
 		{
 			name: "regular stableswap",
 			userInitialFunds: sdk.NewCoins(
-				sdk.NewInt64Coin("uusdc", 10),
+				sdk.NewInt64Coin(common.DenomUSDC, 10),
 			),
 			initialPool: mock.DexStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
-					sdk.NewInt64Coin("uusdc", 100),
+					sdk.NewInt64Coin(common.DenomUSDC, 100),
 					sdk.NewInt64Coin(common.DenomNUSD, 100),
 				),
 				/*shares=*/ 100,
 			),
-			tokenIn:          sdk.NewInt64Coin("uusdc", 10),
+			tokenIn:          sdk.NewInt64Coin(common.DenomUSDC, 10),
 			tokenOutDenom:    common.DenomNUSD,
 			expectedTokenOut: sdk.NewInt64Coin(common.DenomNUSD, 10),
 			expectedUserFinalFunds: sdk.NewCoins(
@@ -106,7 +107,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 			expectedFinalPool: mock.DexStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
-					sdk.NewInt64Coin("uusdc", 110),
+					sdk.NewInt64Coin(common.DenomUSDC, 110),
 					sdk.NewInt64Coin(common.DenomNUSD, 90),
 				),
 				/*shares=*/ 100,
@@ -287,6 +288,102 @@ func TestSwapExactAmountIn(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.Equal(t, tc.expectedTokenOut, tokenOut)
+			}
+
+			// check user's final funds
+			require.Equal(t,
+				tc.expectedUserFinalFunds,
+				app.BankKeeper.GetAllBalances(ctx, sender),
+			)
+
+			// check final pool state
+			finalPool, err := app.DexKeeper.FetchPool(ctx, tc.initialPool.Id)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedFinalPool, finalPool)
+		})
+	}
+}
+
+func TestDoubleSwapExactAmountIn(t *testing.T) {
+	tests := []struct {
+		name string
+
+		// test setup
+		userInitialFunds sdk.Coins
+		initialPool      types.Pool
+		tokenIns         []sdk.Coin
+		tokenOutDenoms   []string
+
+		// expected results
+		expectedTokenOuts      []sdk.Coin
+		expectedUserFinalFunds sdk.Coins
+		expectedFinalPool      types.Pool
+	}{
+		{
+			name: "double stableswap",
+			userInitialFunds: sdk.NewCoins(
+				sdk.NewInt64Coin(common.DenomUSDC, 10_000),
+			),
+			initialPool: mock.DexStablePool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin(common.DenomUSDC, 100_000_000),
+					sdk.NewInt64Coin(common.DenomNUSD, 100_000_000),
+				),
+				/*shares=*/ 100,
+			),
+			tokenIns:          []sdk.Coin{sdk.NewInt64Coin(common.DenomUSDC, 10_000), sdk.NewInt64Coin("unusd", 10_000)},
+			tokenOutDenoms:    []string{common.DenomNUSD, common.DenomUSDC},
+			expectedTokenOuts: []sdk.Coin{sdk.NewInt64Coin(common.DenomNUSD, 10_000), sdk.NewInt64Coin(common.DenomUSDC, 10_001)},
+			expectedUserFinalFunds: sdk.NewCoins(
+				sdk.NewInt64Coin(common.DenomUSDC, 10_001), // TODO: fix https://github.com/NibiruChain/nibiru/issues/1152
+			),
+			expectedFinalPool: mock.DexStablePool(
+				/*poolId=*/ 1,
+				/*assets=*/ sdk.NewCoins(
+					sdk.NewInt64Coin(common.DenomUSDC, 99_999_999),
+					sdk.NewInt64Coin(common.DenomNUSD, 100_000_000),
+				),
+				/*shares=*/ 100,
+			),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			app, ctx := testapp.NewTestNibiruAppAndContext(true)
+
+			// fund pool account
+			poolAddr := testutil.AccAddress()
+			tc.initialPool.Address = poolAddr.String()
+			tc.expectedFinalPool.Address = poolAddr.String()
+			require.NoError(t,
+				simapp.FundAccount(
+					app.BankKeeper,
+					ctx,
+					poolAddr,
+					tc.initialPool.PoolBalances(),
+				),
+			)
+			app.DexKeeper.SetPool(ctx, tc.initialPool)
+
+			// fund user account
+			sender := testutil.AccAddress()
+			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, sender, tc.userInitialFunds))
+
+			// swap assets
+			for i, tokenIn := range tc.tokenIns {
+				tokenOut, err := app.DexKeeper.SwapExactAmountIn(ctx, sender, tc.initialPool.Id, tokenIn, tc.tokenOutDenoms[i])
+				require.NoError(t, err)
+
+				fmt.Println("-------------", i)
+				finalPool, err := app.DexKeeper.FetchPool(ctx, tc.initialPool.Id)
+				require.NoError(t, err)
+				fmt.Println(finalPool.PoolAssets)
+
+				require.NoError(t, err)
+				require.Equal(t, tc.expectedTokenOuts[i], tokenOut)
 			}
 
 			// check user's final funds
