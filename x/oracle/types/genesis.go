@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 // NewGenesisState creates a new GenesisState object
@@ -12,7 +14,7 @@ func NewGenesisState(
 	feederDelegations []FeederDelegation, missCounters []MissCounter,
 	aggregateExchangeRatePrevotes []AggregateExchangeRatePrevote,
 	aggregateExchangeRateVotes []AggregateExchangeRateVote,
-	pairs []string,
+	pairs []common.AssetPair,
 	pairRewards []PairReward,
 ) *GenesisState {
 	return &GenesisState{
@@ -36,7 +38,7 @@ func DefaultGenesisState() *GenesisState {
 		[]MissCounter{},
 		[]AggregateExchangeRatePrevote{},
 		[]AggregateExchangeRateVote{},
-		[]string{},
+		[]common.AssetPair{},
 		[]PairReward{})
 }
 

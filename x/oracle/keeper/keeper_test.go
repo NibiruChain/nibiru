@@ -29,9 +29,9 @@ func TestParams(t *testing.T) {
 	slashFraction := sdk.NewDecWithPrec(1, 2)
 	slashWindow := uint64(1000)
 	minValidPerWindow := sdk.NewDecWithPrec(1, 4)
-	whitelist := []string{
-		common.Pair_BTC_NUSD.String(),
-		common.Pair_ETH_NUSD.String(),
+	whitelist := []common.AssetPair{
+		common.Pair_BTC_NUSD,
+		common.Pair_ETH_NUSD,
 	}
 
 	// Should really test validateParams, but skipping because obvious

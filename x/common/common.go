@@ -12,6 +12,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
+type AssetPair string
+
 const (
 	// stablecoins
 	DenomUSDC = "uusdc"
@@ -33,60 +35,64 @@ const (
 
 var (
 	// paired against USD
-	Pair_NIBI_USD = AssetPair{Token0: DenomNIBI, Token1: DenomUSD}
-	Pair_USDC_USD = AssetPair{Token0: DenomUSDC, Token1: DenomUSD}
-	Pair_BTC_USD  = AssetPair{Token0: DenomBTC, Token1: DenomUSD}
-	Pair_ETH_USD  = AssetPair{Token0: DenomETH, Token1: DenomUSD}
+	Pair_NIBI_USD = NewAssetPair(DenomNIBI, DenomUSD)
+	Pair_USDC_USD = NewAssetPair(DenomUSDC, DenomUSD)
+	Pair_BTC_USD  = NewAssetPair(DenomBTC, DenomUSD)
+	Pair_ETH_USD  = NewAssetPair(DenomETH, DenomUSD)
 
 	// paired against NUSD
-	Pair_NIBI_NUSD = AssetPair{Token0: DenomNIBI, Token1: DenomNUSD}
-	Pair_USDC_NUSD = AssetPair{Token0: DenomUSDC, Token1: DenomNUSD}
-	Pair_BTC_NUSD  = AssetPair{Token0: DenomBTC, Token1: DenomNUSD}
-	Pair_ETH_NUSD  = AssetPair{Token0: DenomETH, Token1: DenomNUSD}
+	Pair_NIBI_NUSD = NewAssetPair(DenomNIBI, DenomNUSD)
+	Pair_USDC_NUSD = NewAssetPair(DenomUSDC, DenomNUSD)
+	Pair_BTC_NUSD  = NewAssetPair(DenomBTC, DenomNUSD)
+	Pair_ETH_NUSD  = NewAssetPair(DenomETH, DenomNUSD)
 
 	ErrInvalidTokenPair = sdkerrors.Register(ModuleName, 1, "invalid token pair")
 	APrecision          = uint256.NewInt().SetUint64(1)
 
 	// Precision for int representation in sdk.Int objects
 	Precision = int64(1_000_000)
-
-	BigIntPrecision = int64(18)
 )
 
 //-----------------------------------------------------------------------------
 // AssetPair
 
+func NewAssetPair(base string, quote string) AssetPair {
+	// validate as denom
+	ap := fmt.Sprintf("%s%s%s", base, PairSeparator, quote)
+	return AssetPair(ap)
+}
+
 // NewAssetPair returns a new asset pair instance if the pair is valid.
 // The form, "token0:token1", is expected for 'pair'.
 // Use this function to return an error instead of panicking.
-func NewAssetPair(pair string) (AssetPair, error) {
+func TryNewAssetPair(pair string) (AssetPair, error) {
 	split := strings.Split(pair, PairSeparator)
 	splitLen := len(split)
 	if splitLen != 2 {
 		if splitLen == 1 {
-			return AssetPair{}, sdkerrors.Wrapf(ErrInvalidTokenPair,
+			return "", sdkerrors.Wrapf(ErrInvalidTokenPair,
 				"pair separator missing for pair name, %v", pair)
 		} else {
-			return AssetPair{}, sdkerrors.Wrapf(ErrInvalidTokenPair,
+			return "", sdkerrors.Wrapf(ErrInvalidTokenPair,
 				"pair name %v must have exactly two assets, not %v", pair, splitLen)
 		}
 	}
 
 	if split[0] == "" || split[1] == "" {
-		return AssetPair{}, sdkerrors.Wrapf(ErrInvalidTokenPair,
+		return "", sdkerrors.Wrapf(ErrInvalidTokenPair,
 			"empty token identifiers are not allowed. token0: %v, token1: %v.",
 			split[0], split[1])
 	}
 
 	// validate as denom
-	ap := AssetPair{Token0: split[0], Token1: split[1]}
-	return ap, ap.Validate()
+	assetPair := NewAssetPair(split[0], split[1])
+	return assetPair, assetPair.Validate()
 }
 
 // MustNewAssetPair returns a new asset pair. It will panic if 'pair' is invalid.
 // The form, "token0:token1", is expected for 'pair'.
 func MustNewAssetPair(pair string) AssetPair {
-	assetPair, err := NewAssetPair(pair)
+	assetPair, err := TryNewAssetPair(pair)
 	if err != nil {
 		panic(err)
 	}
@@ -99,30 +105,74 @@ String returns the string representation of the asset pair.
 Note that this differs from the output of the proto-generated 'String' method.
 */
 func (pair AssetPair) String() string {
-	return fmt.Sprintf("%s%s%s", pair.Token0, PairSeparator, pair.Token1)
+	return string(pair)
 }
 
 func (pair AssetPair) Inverse() AssetPair {
-	return AssetPair{pair.Token1, pair.Token0}
+	return NewAssetPair(pair.QuoteDenom(), pair.BaseDenom())
 }
 
 func (pair AssetPair) BaseDenom() string {
-	return pair.Token0
+	split := strings.Split(pair.String(), PairSeparator)
+	return split[0]
 }
 
 func (pair AssetPair) QuoteDenom() string {
-	return pair.Token1
+	split := strings.Split(pair.String(), PairSeparator)
+	return split[1]
 }
 
 // Validate performs a basic validation of the market params
 func (pair AssetPair) Validate() error {
-	if err := sdk.ValidateDenom(pair.Token1); err != nil {
-		return ErrInvalidTokenPair.Wrapf("invalid token1 asset: %s", err)
+	split := strings.Split(pair.String(), PairSeparator)
+	if len(split) != 2 {
+		return ErrInvalidTokenPair.Wrapf("invalid pair: %s", pair)
 	}
-	if err := sdk.ValidateDenom(pair.Token0); err != nil {
-		return ErrInvalidTokenPair.Wrapf("invalid token0 asset: %s", err)
+
+	if err := sdk.ValidateDenom(split[0]); err != nil {
+		return ErrInvalidTokenPair.Wrapf("invalid base asset: %s", err)
+	}
+	if err := sdk.ValidateDenom(split[1]); err != nil {
+		return ErrInvalidTokenPair.Wrapf("invalid quote asset: %s", err)
 	}
 	return nil
+}
+
+func (pair AssetPair) Equal(other AssetPair) bool {
+	return pair.String() == other.String()
+}
+
+var _ sdk.CustomProtobufType = (*AssetPair)(nil)
+
+func (pair AssetPair) Marshal() ([]byte, error) {
+	return []byte(pair), nil
+}
+
+func (pair *AssetPair) Unmarshal(data []byte) error {
+	*pair = AssetPair(data)
+	return nil
+}
+
+func (pair AssetPair) MarshalJSON() ([]byte, error) {
+	return json.Marshal(pair.String())
+}
+
+func (pair *AssetPair) UnmarshalJSON(data []byte) error {
+	var pairString string
+	if err := json.Unmarshal(data, &pairString); err != nil {
+		return err
+	}
+	*pair = AssetPair(pairString)
+	return nil
+}
+
+func (pair AssetPair) MarshalTo(data []byte) (n int, err error) {
+	copy(data, pair)
+	return pair.Size(), nil
+}
+
+func (pair AssetPair) Size() int {
+	return len(pair)
 }
 
 var AssetPairKeyEncoder collections.KeyEncoder[AssetPair] = assetPairKeyEncoder{}
@@ -174,14 +224,13 @@ func (pairs AssetPairs) Strings() []string {
 func (pairs AssetPairs) Validate() error {
 	seenPairs := make(map[string]bool)
 	for _, pair := range pairs {
-		pairID := pair.String()
-		if seenPairs[pairID] {
-			return fmt.Errorf("duplicate pair %s", pairID)
+		if seenPairs[pair.String()] {
+			return fmt.Errorf("duplicate pair %s", pair.String())
 		}
 		if err := pair.Validate(); err != nil {
 			return err
 		}
-		seenPairs[pairID] = true
+		seenPairs[pair.String()] = true
 	}
 	return nil
 }

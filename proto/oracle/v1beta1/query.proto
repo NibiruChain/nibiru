@@ -12,12 +12,12 @@ option go_package = "github.com/NibiruChain/nibiru/x/oracle/types";
 service Query {
   // ExchangeRate returns exchange rate of a pair
   rpc ExchangeRate(QueryExchangeRateRequest) returns (QueryExchangeRateResponse) {
-    option (google.api.http).get = "/nibiru/oracle/v1beta1/pairs/{pair}/exchange_rate";
+    option (google.api.http).get = "/nibiru/oracle/v1beta1/exchange_rate";
   }
 
-  // ExchangeRateTwap returns exchange rate of a pair
+  // ExchangeRateTwap returns twap exchange rate of a pair
   rpc ExchangeRateTwap(QueryExchangeRateRequest) returns (QueryExchangeRateResponse) {
-    option (google.api.http).get = "/nibiru/oracle/v1beta1/pairs/{pair}/exchange_rate";
+    option (google.api.http).get = "/nibiru/oracle/v1beta1/exchange_rate_twap";
   }
 
   // ExchangeRates returns exchange rates of all pairs
@@ -77,7 +77,10 @@ message QueryExchangeRateRequest {
   option (gogoproto.goproto_getters) = false;
 
   // pair defines the pair to query for.
-  string pair = 1;
+  string pair = 1 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // QueryExchangeRateResponse is response type for the
@@ -108,7 +111,10 @@ message QueryActivesRequest {}
 // Query/Actives RPC method.
 message QueryActivesResponse {
   // actives defines a list of the pair which oracle prices agreed upon.
-  repeated string actives = 1;
+  repeated string actives = 1 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // QueryVoteTargetsRequest is the request type for the Query/VoteTargets RPC method.
@@ -119,7 +125,10 @@ message QueryVoteTargetsRequest {}
 message QueryVoteTargetsResponse {
   // vote_targets defines a list of the pairs in which everyone
   // should vote in the current vote period.
-  repeated string vote_targets = 1;
+  repeated string vote_targets = 1 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // QueryFeederDelegationRequest is the request type for the Query/FeederDelegation RPC method.

@@ -50,7 +50,7 @@ func TestEndOfEpochTwapCalculation(t *testing.T) {
 			markPrice:                               sdk.NewDec(10),
 			expectedLatestCumulativePremiumFraction: sdk.ZeroDec(),
 			expectedFundingRateChangedEvent: &types.FundingRateChangedEvent{
-				Pair:                      common.Pair_BTC_NUSD.String(),
+				Pair:                      common.Pair_BTC_NUSD,
 				MarkPrice:                 sdk.NewDec(10),
 				IndexPrice:                sdk.NewDec(10),
 				LatestFundingRate:         sdk.ZeroDec(),
@@ -66,7 +66,7 @@ func TestEndOfEpochTwapCalculation(t *testing.T) {
 			indexPrice:                              sdk.NewDec(462),
 			expectedLatestCumulativePremiumFraction: sdk.MustNewDecFromStr("-9.229166666666666666"),
 			expectedFundingRateChangedEvent: &types.FundingRateChangedEvent{
-				Pair:                      common.Pair_BTC_NUSD.String(),
+				Pair:                      common.Pair_BTC_NUSD,
 				MarkPrice:                 sdk.NewDec(19),
 				IndexPrice:                sdk.NewDec(462),
 				LatestFundingRate:         sdk.MustNewDecFromStr("-0.019976551226551227"),
@@ -82,7 +82,7 @@ func TestEndOfEpochTwapCalculation(t *testing.T) {
 			indexPrice:                              sdk.NewDec(64),
 			expectedLatestCumulativePremiumFraction: sdk.MustNewDecFromStr("14.1875"),
 			expectedFundingRateChangedEvent: &types.FundingRateChangedEvent{
-				Pair:                      common.Pair_BTC_NUSD.String(),
+				Pair:                      common.Pair_BTC_NUSD,
 				MarkPrice:                 sdk.NewDec(745),
 				IndexPrice:                sdk.NewDec(64),
 				LatestFundingRate:         sdk.MustNewDecFromStr("0.2216796875"),
@@ -144,7 +144,7 @@ func setMocks(ctx sdk.Context, mocks mockedDependencies, indexPrice sdk.Dec, mar
 	).MaxTimes(1)
 
 	mocks.mockOracleKeeper.EXPECT().
-		GetExchangeRateTwap(ctx, common.Pair_BTC_NUSD.String()).Return(indexPrice, nil).MaxTimes(1)
+		GetExchangeRateTwap(ctx, common.Pair_BTC_NUSD).Return(indexPrice, nil).MaxTimes(1)
 
 	mocks.mockVpoolKeeper.EXPECT().
 		GetMarkPriceTWAP(ctx, common.Pair_BTC_NUSD, 15*time.Minute).

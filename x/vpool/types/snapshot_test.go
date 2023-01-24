@@ -29,7 +29,7 @@ func TestSnapshotValidate(t *testing.T) {
 		{
 			name: "invalid pair",
 			snapshot: ReserveSnapshot{
-				Pair:              common.AssetPair{Token0: "$invalid", Token1: "valid"},
+				Pair:              common.NewAssetPair("$invalid", "valid"),
 				BaseAssetReserve:  sdk.OneDec(),
 				QuoteAssetReserve: sdk.OneDec(),
 				TimestampMs:       time.Now().UnixMilli(),

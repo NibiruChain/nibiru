@@ -37,11 +37,11 @@ const (
 var (
 	DefaultVoteThreshold = sdk.NewDecWithPrec(50, 2) // 50%
 	DefaultRewardBand    = sdk.NewDecWithPrec(2, 2)  // 2% (-1, 1)
-	DefaultWhitelist     = []string{
-		common.Pair_BTC_NUSD.String(),
-		common.Pair_USDC_NUSD.String(),
-		common.Pair_ETH_NUSD.String(),
-		common.Pair_NIBI_NUSD.String(),
+	DefaultWhitelist     = []common.AssetPair{
+		common.Pair_BTC_NUSD,
+		common.Pair_USDC_NUSD,
+		common.Pair_ETH_NUSD,
+		common.Pair_NIBI_NUSD,
 	}
 	DefaultSlashFraction      = sdk.NewDecWithPrec(1, 4)        // 0.01%
 	DefaultMinValidPerWindow  = sdk.NewDecWithPrec(5, 2)        // 5%
@@ -116,7 +116,7 @@ func (p Params) Validate() error {
 	}
 
 	for _, pair := range p.Whitelist {
-		if _, err := common.NewAssetPair(pair); err != nil {
+		if err := pair.Validate(); err != nil {
 			return fmt.Errorf("oracle parameter Whitelist Pair invalid format: %w", err)
 		}
 	}
@@ -171,13 +171,13 @@ func validateRewardBand(i interface{}) error {
 }
 
 func validateWhitelist(i interface{}) error {
-	v, ok := i.([]string)
+	v, ok := i.([]common.AssetPair)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
 	for _, d := range v {
-		if _, err := common.NewAssetPair(d); err != nil {
+		if err := d.Validate(); err != nil {
 			return fmt.Errorf("oracle parameter Whitelist Pair invalid format: %w", err)
 		}
 	}

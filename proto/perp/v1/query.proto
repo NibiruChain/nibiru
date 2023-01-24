@@ -62,7 +62,10 @@ message QueryPositionsResponse {
 // QueryPositionRequest is the request type for the position of the x/perp
 // module account.
 message QueryPositionRequest {
-  string token_pair = 1;
+  string pair = 1 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.nullable) = false
+  ];
 
   string trader = 2;
 }
@@ -110,7 +113,10 @@ message QueryPositionResponse {
 
 message QueryCumulativePremiumFractionRequest {
   // the pair to query for
-  string pair = 1;
+  string pair = 1 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.nullable) = false
+  ];
 }
 
 message QueryCumulativePremiumFractionResponse {
@@ -130,7 +136,10 @@ message QueryCumulativePremiumFractionResponse {
 
 message QueryMetricsRequest {
   // the pair to query for
-  string pair = 1;
+  string pair = 1 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.nullable) = false
+  ];
 }
 
 message QueryMetricsResponse {

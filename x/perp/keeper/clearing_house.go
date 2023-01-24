@@ -200,7 +200,7 @@ func (k Keeper) afterPositionUpdate(
 
 	return ctx.EventManager().EmitTypedEvent(&types.PositionChangedEvent{
 		TraderAddress:      traderAddr.String(),
-		Pair:               pair.String(),
+		Pair:               pair,
 		Margin:             sdk.NewCoin(pair.QuoteDenom(), positionResp.Position.Margin.RoundInt()),
 		PositionNotional:   positionNotional,
 		ExchangedNotional:  positionResp.ExchangedNotionalValue,
@@ -851,9 +851,8 @@ func (k Keeper) OnSwapEnd(
 	baseAssetAmount sdk.Dec,
 ) {
 	// Update Metrics
-	pairString := pair.String()
-	metrics := k.Metrics.GetOr(ctx, pairString, types.Metrics{
-		Pair:        pairString,
+	metrics := k.Metrics.GetOr(ctx, pair, types.Metrics{
+		Pair:        pair,
 		NetSize:     sdk.ZeroDec(),
 		VolumeQuote: sdk.ZeroDec(),
 		VolumeBase:  sdk.ZeroDec(),
@@ -861,5 +860,5 @@ func (k Keeper) OnSwapEnd(
 	metrics.NetSize = metrics.NetSize.Add(baseAssetAmount)
 	metrics.VolumeBase = metrics.VolumeBase.Add(baseAssetAmount.Abs())
 	metrics.VolumeQuote = metrics.VolumeQuote.Add(quoteAssetAmount.Abs())
-	k.Metrics.Insert(ctx, pairString, metrics)
+	k.Metrics.Insert(ctx, pair, metrics)
 }

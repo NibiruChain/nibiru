@@ -10,8 +10,13 @@ option go_package = "github.com/NibiruChain/nibiru/x/vpool/types";
 message CreatePoolProposal {
   string title = 1;
   string description = 2;
+
   // pair represents the pair of the vpool.
-  string pair = 3;
+  string pair = 3 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.nullable) = false
+  ];
+
   // quote_asset_reserve is the amount of quote asset the pool will be initialized with.
   string quote_asset_reserve = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
@@ -31,7 +36,12 @@ message CreatePoolProposal {
 message EditPoolConfigProposal {
   string title = 1;
   string description = 2;
-  string pair = 3;
+
+  string pair = 3 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.nullable) = false
+  ];
+
   VpoolConfig config = 4 [
     (gogoproto.nullable) = false
   ];
@@ -49,7 +59,10 @@ message EditSwapInvariantsProposal {
     option (gogoproto.goproto_stringer) = false;
 
     // Pair is a string identifier for an asset pair. 
-    string pair = 3;
+    string pair = 3 [ 
+      (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+      (gogoproto.nullable) = false
+    ];
 
     // Multiplier is a number representing the desired percentage change to the 
     // swap invariant of the AMM pool underlying 'pair'

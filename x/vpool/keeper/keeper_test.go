@@ -68,7 +68,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		},
 		{
 			name:                      "pair not supported",
-			pair:                      common.AssetPair{Token0: "abc", Token1: "xyz"},
+			pair:                      "abc:xyz",
 			direction:                 types.Direction_ADD_TO_POOL,
 			quoteAmount:               sdk.NewDec(10),
 			baseLimit:                 sdk.NewDec(10),
@@ -165,10 +165,10 @@ func TestSwapQuoteForBase(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			pfKeeper := mock.NewMockOracleKeeper(gomock.NewController(t))
-			vpoolKeeper, ctx := VpoolKeeper(t, pfKeeper)
+			oracleKeeper := mock.NewMockOracleKeeper(gomock.NewController(t))
+			vpoolKeeper, ctx := VpoolKeeper(t, oracleKeeper)
 
-			pfKeeper.EXPECT().GetExchangeRate(gomock.Any(), gomock.Any()).Return(sdk.NewDec(1), nil).AnyTimes()
+			oracleKeeper.EXPECT().GetExchangeRate(gomock.Any(), gomock.Any()).Return(sdk.NewDec(1), nil).AnyTimes()
 
 			assert.NoError(t, vpoolKeeper.CreatePool(
 				ctx,
@@ -261,7 +261,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 		},
 		{
 			name:                      "pair not supported",
-			pair:                      common.AssetPair{Token0: "abc", Token1: "xyz"},
+			pair:                      "abc:xyz",
 			direction:                 types.Direction_ADD_TO_POOL,
 			baseAmt:                   sdk.NewDec(10),
 			quoteLimit:                sdk.NewDec(10),
