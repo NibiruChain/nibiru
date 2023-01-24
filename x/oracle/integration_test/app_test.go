@@ -79,7 +79,7 @@ func (s *IntegrationTestSuite) TestSuccessfulVoting() {
 
 	gotPrices := s.currentPrices()
 	require.Equal(s.T(),
-		map[string]sdk.Dec{
+		map[common.AssetPair]sdk.Dec{
 			"nibi:usdc": sdk.MustNewDecFromStr("1"),
 			"btc:usdc":  sdk.MustNewDecFromStr("100200.9"),
 		},

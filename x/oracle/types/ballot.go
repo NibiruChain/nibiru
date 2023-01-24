@@ -6,8 +6,9 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 // NOTE: we don't need to implement proto interface on this file

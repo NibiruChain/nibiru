@@ -164,11 +164,14 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 	var pairs []common.AssetPair
 
 	f := fuzz.New().NilChance(0).Funcs(
-		func(e *[]string, c fuzz.Continue) {
+		func(e *common.AssetPair, c fuzz.Continue) {
+			*e = common.NewAssetPair(testutil.RandStringBytes(5), testutil.RandStringBytes(5))
+		},
+		func(e *[]common.AssetPair, c fuzz.Continue) {
 			numPairs := c.Intn(100) + 5
 
 			for i := 0; i < numPairs; i++ {
-				*e = append(*e, testutil.RandStringBytes(5))
+				*e = append(*e, common.NewAssetPair(testutil.RandStringBytes(5), testutil.RandStringBytes(5)))
 			}
 		},
 		func(e *sdk.Dec, c fuzz.Continue) {
@@ -193,7 +196,7 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 			c.Fuzz(&validators)
 
 			for _, pair := range pairs {
-				ballot := types.ExchangeRateBallots{}
+				ballots := types.ExchangeRateBallots{}
 
 				for addr, power := range validators {
 					addr, _ := sdk.ValAddressFromBech32(addr)
@@ -201,10 +204,10 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 					var rate sdk.Dec
 					c.Fuzz(&rate)
 
-					ballot = append(ballot, types.NewExchangeRateBallot(rate, pair, addr, power))
+					ballots = append(ballots, types.NewExchangeRateBallot(rate, pair, addr, power))
 				}
 
-				(*e)[pair] = ballot
+				(*e)[pair] = ballots
 			}
 		},
 	)

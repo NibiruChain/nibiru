@@ -3,8 +3,9 @@ package types
 import (
 	"encoding/json"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/cosmos/cosmos-sdk/codec"
+
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 // NewGenesisState creates a new GenesisState object

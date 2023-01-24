@@ -171,13 +171,13 @@ func validateRewardBand(i interface{}) error {
 }
 
 func validateWhitelist(i interface{}) error {
-	v, ok := i.([]string)
+	v, ok := i.([]common.AssetPair)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
 	for _, d := range v {
-		if _, err := common.TryNewAssetPair(d); err != nil {
+		if err := d.Validate(); err != nil {
 			return fmt.Errorf("oracle parameter Whitelist Pair invalid format: %w", err)
 		}
 	}

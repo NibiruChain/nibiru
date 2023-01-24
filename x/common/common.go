@@ -124,10 +124,15 @@ func (pair AssetPair) QuoteDenom() string {
 
 // Validate performs a basic validation of the market params
 func (pair AssetPair) Validate() error {
-	if err := sdk.ValidateDenom(pair.BaseDenom()); err != nil {
+	split := strings.Split(pair.String(), PairSeparator)
+	if len(split) != 2 {
+		return ErrInvalidTokenPair.Wrapf("invalid pair: %s", pair)
+	}
+
+	if err := sdk.ValidateDenom(split[0]); err != nil {
 		return ErrInvalidTokenPair.Wrapf("invalid base asset: %s", err)
 	}
-	if err := sdk.ValidateDenom(pair.QuoteDenom()); err != nil {
+	if err := sdk.ValidateDenom(split[1]); err != nil {
 		return ErrInvalidTokenPair.Wrapf("invalid quote asset: %s", err)
 	}
 	return nil
@@ -149,7 +154,7 @@ func (pair *AssetPair) Unmarshal(data []byte) error {
 }
 
 func (pair AssetPair) MarshalJSON() ([]byte, error) {
-	return json.Marshal(pair)
+	return json.Marshal(pair.String())
 }
 
 func (pair *AssetPair) UnmarshalJSON(data []byte) error {

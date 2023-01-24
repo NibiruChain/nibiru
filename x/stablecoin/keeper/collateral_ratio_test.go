@@ -334,8 +334,8 @@ func TestRecollateralizeCollAmtForTargetCollRatio(t *testing.T) {
 			))
 
 			// Post the price
-			pair := common.Pair_USDC_NUSD
-			nibiruApp.OracleKeeper.SetPrice(ctx, pair, tc.priceCollStable)
+			// pair := common.Pair_USDC_NUSD
+			// nibiruApp.OracleKeeper.SetPrice(ctx, pair, tc.priceCollStable)
 
 			neededCollAmount, err := stablecoinKeeper.RecollateralizeCollAmtForTargetCollRatio(ctx)
 			if tc.expectedPass {

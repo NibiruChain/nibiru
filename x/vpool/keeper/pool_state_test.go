@@ -275,7 +275,7 @@ func TestGetPoolPrices(t *testing.T) {
 
 			t.Log("mock oracleKeeper index price")
 			mocks.mockOracleKeeper.EXPECT().
-				GetExchangeRate(ctx, tc.vpool.Pair.String()).
+				GetExchangeRate(ctx, tc.vpool.Pair).
 				Return(tc.mockIndexPrice, tc.oracleKeeperErr).
 				AnyTimes()
 

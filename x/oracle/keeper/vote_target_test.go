@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/collections"
+
 	"github.com/NibiruChain/nibiru/x/common"
 )
 
@@ -20,11 +21,10 @@ func TestKeeper_GetVoteTargets(t *testing.T) {
 	panicCases := []TestCase{
 		{name: "blank pair", in: []common.AssetPair{""}, panic: true},
 		{name: "blank pair and others", in: []common.AssetPair{"", "x", "abc", "defafask"}, panic: true},
+		{name: "denom len too short", in: []common.AssetPair{"x:y", "xx:yy"}, panic: true},
 	}
 	happyCases := []TestCase{
-		{name: "happy", in: []common.AssetPair{"bar", "foo", "whoowhoo"}},
-		{name: "short len 1 pair", in: []common.AssetPair{"x"}},
-		{name: "short len 2 pair", in: []common.AssetPair{"xx"}},
+		{name: "happy", in: []common.AssetPair{"foo:bar", "whoo:whoo"}},
 	}
 
 	for _, testCase := range append(panicCases, happyCases...) {
@@ -61,7 +61,7 @@ func TestKeeper_GetVoteTargets(t *testing.T) {
 		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 	}
 
-	expectedTargets := []common.AssetPair{"bar", "foo", "whoowhoo"}
+	expectedTargets := []common.AssetPair{"foo:bar", "whoo:whoo"}
 	for _, target := range expectedTargets {
 		input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, target)
 	}
