@@ -102,7 +102,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			))
 			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
 
-			nibiruApp.OracleKeeper.SetPrice(ctx, tokenPair.String(), sdk.NewDec(2))
+			nibiruApp.OracleKeeper.SetPrice(ctx, tokenPair, sdk.NewDec(2))
 
 			t.Log("set perpkeeper params")
 			params := types.DefaultParams()
@@ -168,7 +168,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			newMarkPrice, err := vpoolKeeper.GetMarkPrice(ctx, tokenPair)
 			require.NoError(t, err)
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
-				Pair:                  tokenPair.String(),
+				Pair:                  tokenPair,
 				TraderAddress:         traderAddr.String(),
 				ExchangedQuoteAmount:  liquidationResp.PositionResp.ExchangedNotionalValue,
 				ExchangedPositionSize: liquidationResp.PositionResp.ExchangedPositionSize,
@@ -360,7 +360,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			newMarkPrice, err := vpoolKeeper.GetMarkPrice(ctx, tokenPair)
 			require.NoError(t, err)
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
-				Pair:                  tokenPair.String(),
+				Pair:                  tokenPair,
 				TraderAddress:         traderAddr.String(),
 				ExchangedQuoteAmount:  liquidationResp.PositionResp.ExchangedNotionalValue,
 				ExchangedPositionSize: liquidationResp.PositionResp.ExchangedPositionSize,

@@ -6,7 +6,6 @@ import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos_proto/cosmos.proto";
 import "google/protobuf/duration.proto";
-import "common/common.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/perp/types";
 
@@ -90,13 +89,16 @@ message Position {
   string trader_address = 1;
 
   // pair identifies the pair associated with this position
-  common.AssetPair pair = 2 [ (gogoproto.nullable) = false ];
+  string pair = 2 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.nullable) = false
+  ];
 
   // Position size.
   string size = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
-  ]; // signed int
+  ];
 
   // Amount of margin remaining in the position.
   string margin = 4 [
@@ -123,7 +125,10 @@ message Position {
 }
 
 message PairMetadata {
-  common.AssetPair pair = 1 [ (gogoproto.nullable) = false ];
+  string pair = 1 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.nullable) = false
+  ];
 
   // Latest cumulative premium fraction for a given pair.
   // Calculated once per funding rate interval.
@@ -230,7 +235,10 @@ message LiquidateResp {
 // PoolMetrics is a structure that displays a snapshot of perp metrics for each pair.
 message Metrics {
   // Pair identifier for the two assets. Always in format 'base:quote'
-  string pair = 1;
+  string pair = 1 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.nullable) = false
+  ];
 
   // Sum of all active position sizes for the pair.
   string net_size = 2 [

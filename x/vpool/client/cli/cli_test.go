@@ -79,8 +79,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	oracleGenesis := oracletypes.DefaultGenesisState()
 	oracleGenesis.ExchangeRates = []oracletypes.ExchangeRateTuple{
-		{Pair: common.Pair_ETH_NUSD.String(), ExchangeRate: sdk.NewDec(1_000)},
-		{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: sdk.NewDec(10)},
+		{Pair: common.Pair_ETH_NUSD, ExchangeRate: sdk.NewDec(1_000)},
+		{Pair: common.Pair_NIBI_NUSD, ExchangeRate: sdk.NewDec(10)},
 	}
 	oracleGenesis.Params.VotePeriod = 1_000
 
@@ -151,9 +151,9 @@ func (s *IntegrationTestSuite) TestCmdCreatePoolProposal() {
 
 	found := false
 	for _, pool := range vpoolsQueryResp.Pools {
-		if pool.Pair.String() == proposal.Pair {
+		if pool.Pair.Equal(proposal.Pair) {
 			s.EqualValues(vpooltypes.Vpool{
-				Pair:              common.MustNewAssetPair(proposal.Pair),
+				Pair:              proposal.Pair,
 				BaseAssetReserve:  proposal.BaseAssetReserve,
 				QuoteAssetReserve: proposal.QuoteAssetReserve,
 				Config:            proposal.Config,
@@ -190,7 +190,7 @@ func (s *IntegrationTestSuite) TestCmdEditPoolConfigProposal() {
 	proposal := &vpooltypes.EditPoolConfigProposal{
 		Title:       "NIP-3: Edit config of the ueth:unusd vpool",
 		Description: "enables higher max leverage on ueth:unusd",
-		Pair:        startVpool.Pair.String(),
+		Pair:        startVpool.Pair,
 		Config: vpooltypes.VpoolConfig{
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
@@ -233,9 +233,9 @@ func (s *IntegrationTestSuite) TestCmdEditPoolConfigProposal() {
 
 	found := false
 	for _, vpool := range vpoolsQueryResp.Pools {
-		if vpool.Pair.String() == proposal.Pair {
+		if vpool.Pair.Equal(proposal.Pair) {
 			s.EqualValues(vpooltypes.Vpool{
-				Pair:              common.MustNewAssetPair(proposal.Pair),
+				Pair:              proposal.Pair,
 				BaseAssetReserve:  startVpool.BaseAssetReserve,
 				QuoteAssetReserve: startVpool.QuoteAssetReserve,
 				Config:            proposal.Config,
@@ -257,7 +257,7 @@ func (s *IntegrationTestSuite) TestCmdEditSwapInvariantsProposal() {
 		Title:       "NIP-4: Change the swap invariant for ATOM, OSMO, and BTC.",
 		Description: "increase swap invariant for many virtual pools",
 		SwapInvariantMaps: []vpooltypes.EditSwapInvariantsProposal_SwapInvariantMultiple{
-			{Pair: startVpool.Pair.String(), Multiplier: sdk.NewDec(100)},
+			{Pair: startVpool.Pair, Multiplier: sdk.NewDec(100)},
 		},
 	}
 	proposalFile := sdktestutil.WriteToNewTempFile(s.T(), string(val.ClientCtx.Codec.MustMarshalJSON(proposal)))
@@ -275,7 +275,7 @@ func (s *IntegrationTestSuite) TestCmdEditSwapInvariantsProposal() {
 		cli.CmdGetVpools(), nil, vpoolsQueryResp))
 	var vpoolBefore vpooltypes.Vpool
 	for _, vpool := range vpoolsQueryResp.Pools {
-		if vpool.Pair.String() == proposal.SwapInvariantMaps[0].Pair {
+		if vpool.Pair.Equal(proposal.SwapInvariantMaps[0].Pair) {
 			vpoolBefore = vpool
 			break
 		}
@@ -311,9 +311,9 @@ func (s *IntegrationTestSuite) TestCmdEditSwapInvariantsProposal() {
 			float64(10),
 			math.Sqrt(proposal.SwapInvariantMaps[0].Multiplier.MustFloat64()))
 
-		if vpool.Pair.String() == proposalPair {
+		if vpool.Pair.Equal(proposalPair) {
 			s.EqualValues(vpooltypes.Vpool{
-				Pair:              common.MustNewAssetPair(proposalPair),
+				Pair:              proposalPair,
 				BaseAssetReserve:  vpoolBefore.BaseAssetReserve.MulInt64(10), // multiplier = 100 = (c^2)
 				QuoteAssetReserve: vpoolBefore.QuoteAssetReserve.MulInt64(10),
 				Config:            vpoolBefore.Config,

@@ -5,8 +5,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
-	"github.com/NibiruChain/nibiru/x/common"
 )
 
 var _ sdk.Msg = &MsgRemoveMargin{}
@@ -26,7 +24,7 @@ func (m MsgRemoveMargin) ValidateBasic() error {
 		return err
 	}
 
-	pair, err := common.NewAssetPair(m.TokenPair)
+	err := m.Pair.Validate()
 	if err != nil {
 		return err
 	}
@@ -35,8 +33,8 @@ func (m MsgRemoveMargin) ValidateBasic() error {
 		return fmt.Errorf("margin must be positive, not: %v", m.Margin.Amount.String())
 	}
 
-	if m.Margin.Denom != pair.QuoteDenom() {
-		return fmt.Errorf("invalid margin denom, expected %s, got %s", pair.QuoteDenom(), m.Margin.Denom)
+	if m.Margin.Denom != m.Pair.QuoteDenom() {
+		return fmt.Errorf("invalid margin denom, expected %s, got %s", m.Pair.QuoteDenom(), m.Margin.Denom)
 	}
 
 	return nil
@@ -64,7 +62,7 @@ func (m MsgAddMargin) ValidateBasic() error {
 		return err
 	}
 
-	pair, err := common.NewAssetPair(m.TokenPair)
+	err := m.Pair.Validate()
 	if err != nil {
 		return err
 	}
@@ -73,8 +71,8 @@ func (m MsgAddMargin) ValidateBasic() error {
 		return fmt.Errorf("margin must be positive, not: %v", m.Margin.Amount.String())
 	}
 
-	if m.Margin.Denom != pair.QuoteDenom() {
-		return fmt.Errorf("invalid margin denom, expected %s, got %s", pair.QuoteDenom(), m.Margin.Denom)
+	if m.Margin.Denom != m.Pair.QuoteDenom() {
+		return fmt.Errorf("invalid margin denom, expected %s, got %s", m.Pair.QuoteDenom(), m.Margin.Denom)
 	}
 
 	return nil
@@ -101,7 +99,7 @@ func (m *MsgOpenPosition) ValidateBasic() error {
 	if m.Side != Side_SELL && m.Side != Side_BUY {
 		return fmt.Errorf("invalid side")
 	}
-	if _, err := common.NewAssetPair(m.TokenPair); err != nil {
+	if err := m.Pair.Validate(); err != nil {
 		return err
 	}
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
@@ -144,7 +142,7 @@ func (m MsgLiquidate) ValidateBasic() (err error) {
 	if _, err = sdk.AccAddressFromBech32(m.Trader); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid trader address (%s)", err)
 	}
-	if _, err := common.NewAssetPair(m.TokenPair); err != nil {
+	if err := m.Pair.Validate(); err != nil {
 		return err
 	}
 	return nil
@@ -174,7 +172,7 @@ func (m *MsgMultiLiquidate) ValidateBasic() error {
 			return fmt.Errorf("invalid liquidation at index %d: %w", i, err)
 		}
 
-		if _, err := common.NewAssetPair(liquidation.TokenPair); err != nil {
+		if err := liquidation.Pair.Validate(); err != nil {
 			return fmt.Errorf("invalid liquidation at index %d: %w", i, err)
 		}
 	}
@@ -200,7 +198,7 @@ func (m MsgClosePosition) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender address (%s)", err)
 	}
-	if _, err := common.NewAssetPair(m.TokenPair); err != nil {
+	if err := m.Pair.Validate(); err != nil {
 		return err
 	}
 	return nil

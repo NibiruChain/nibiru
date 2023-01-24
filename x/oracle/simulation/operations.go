@@ -30,7 +30,7 @@ const (
 )
 
 var (
-	whitelist                     = []string{common.Pair_BTC_NUSD.String(), common.Pair_ETH_NUSD.String(), common.Pair_NIBI_NUSD.String()}
+	whitelist                     = []common.AssetPair{common.Pair_BTC_NUSD, common.Pair_ETH_NUSD, common.Pair_NIBI_NUSD}
 	voteHashMap map[string]string = make(map[string]string)
 )
 
@@ -98,7 +98,7 @@ func SimulateMsgAggregateExchangeRatePrevote(ak types.AccountKeeper, bk types.Ba
 		exchangeRatesStr := ""
 		for _, pair := range whitelist {
 			price := sdk.NewDecWithPrec(int64(simtypes.RandIntBetween(r, 1, 10000)), int64(1))
-			exchangeRatesStr += price.String() + pair + ","
+			exchangeRatesStr += price.String() + pair.String() + ","
 		}
 
 		exchangeRatesStr = strings.TrimRight(exchangeRatesStr, ",")

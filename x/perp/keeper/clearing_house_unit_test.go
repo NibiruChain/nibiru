@@ -1882,7 +1882,7 @@ func TestClosePosition(t *testing.T) {
 			assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionChangedEvent{
-				Pair:               tc.initialPosition.Pair.String(),
+				Pair:               tc.initialPosition.Pair,
 				TraderAddress:      tc.initialPosition.TraderAddress,
 				Margin:             sdk.NewInt64Coin(tc.initialPosition.Pair.QuoteDenom(), 0),
 				PositionNotional:   sdk.ZeroDec(),

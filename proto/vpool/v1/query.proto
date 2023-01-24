@@ -32,7 +32,10 @@ service Query {
 
 message QueryReserveAssetsRequest {
     // always BASE:QUOTE, e.g. BTC:NUSD or ETH:NUSD
-    string pair = 1;
+    string pair = 1 [ 
+      (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+      (gogoproto.nullable) = false
+    ];
 }
 
 message QueryReserveAssetsResponse {
@@ -63,7 +66,11 @@ message QueryAllPoolsResponse {
 // ---------------------------------------- BaseAssetPrice
 
 message QueryBaseAssetPriceRequest {
-  string pair = 1;
+  string pair = 1 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.nullable) = false
+  ];
+  
   Direction direction = 2;
   // base asset is the crypto asset, e.g. BTC or ETH
   string base_asset_amount = 3 [

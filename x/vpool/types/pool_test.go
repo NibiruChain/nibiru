@@ -259,7 +259,7 @@ func TestPool_Validate(t *testing.T) {
 	cases := map[string]test{
 		"invalid pair": {
 			m: &Vpool{
-				Pair:              common.AssetPair{},
+				Pair:              "",
 				BaseAssetReserve:  sdk.OneDec(),
 				QuoteAssetReserve: sdk.OneDec(),
 				Config: VpoolConfig{

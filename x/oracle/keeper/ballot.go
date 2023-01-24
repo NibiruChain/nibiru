@@ -5,6 +5,7 @@ import (
 
 	"github.com/NibiruChain/collections"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
@@ -15,8 +16,8 @@ import (
 func (k Keeper) groupBallotsByPair(
 	ctx sdk.Context,
 	validatorsPerformance map[string]types.ValidatorPerformance,
-) (pairBallotsMap map[string]types.ExchangeRateBallots) {
-	pairBallotsMap = map[string]types.ExchangeRateBallots{}
+) (pairBallotsMap map[common.AssetPair]types.ExchangeRateBallots) {
+	pairBallotsMap = map[common.AssetPair]types.ExchangeRateBallots{}
 
 	for _, value := range k.Votes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {
 		voterAddr, aggregateVote := value.Key, value.Value
@@ -68,7 +69,7 @@ func (k Keeper) clearVotesAndPreVotes(ctx sdk.Context, votePeriod uint64) {
 
 // updateWhitelist updates the whitelist by detecting possible changes between
 // the current vote targets and the current updated whitelist.
-func (k Keeper) updateWhitelist(ctx sdk.Context, paramsWhitelist []string, currentWhitelist map[string]struct{}) {
+func (k Keeper) updateWhitelist(ctx sdk.Context, paramsWhitelist []common.AssetPair, currentWhitelist map[common.AssetPair]struct{}) {
 	updateRequired := false
 
 	if len(currentWhitelist) != len(paramsWhitelist) {
@@ -84,7 +85,7 @@ func (k Keeper) updateWhitelist(ctx sdk.Context, paramsWhitelist []string, curre
 	}
 
 	if updateRequired {
-		for _, p := range k.WhitelistedPairs.Iterate(ctx, collections.Range[string]{}).Keys() {
+		for _, p := range k.WhitelistedPairs.Iterate(ctx, collections.Range[common.AssetPair]{}).Keys() {
 			k.WhitelistedPairs.Delete(ctx, p)
 		}
 		for _, pair := range paramsWhitelist {

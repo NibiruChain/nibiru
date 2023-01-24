@@ -5,7 +5,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
@@ -25,9 +24,8 @@ func (m msgServer) RemoveMargin(ctx context.Context, msg *types.MsgRemoveMargin,
 ) (*types.MsgRemoveMarginResponse, error) {
 	// These fields should have already been validated by MsgRemoveMargin.ValidateBasic() prior to being sent to the msgServer.
 	traderAddr := sdk.MustAccAddressFromBech32(msg.Sender)
-	pair := common.MustNewAssetPair(msg.TokenPair)
 
-	marginOut, fundingPayment, position, err := m.k.RemoveMargin(sdk.UnwrapSDKContext(ctx), pair, traderAddr, msg.Margin)
+	marginOut, fundingPayment, position, err := m.k.RemoveMargin(sdk.UnwrapSDKContext(ctx), msg.Pair, traderAddr, msg.Margin)
 	if err != nil {
 		return nil, err
 	}
@@ -43,18 +41,16 @@ func (m msgServer) AddMargin(ctx context.Context, msg *types.MsgAddMargin,
 ) (*types.MsgAddMarginResponse, error) {
 	// These fields should have already been validated by MsgAddMargin.ValidateBasic() prior to being sent to the msgServer.
 	traderAddr := sdk.MustAccAddressFromBech32(msg.Sender)
-	pair := common.MustNewAssetPair(msg.TokenPair)
-	return m.k.AddMargin(sdk.UnwrapSDKContext(ctx), pair, traderAddr, msg.Margin)
+	return m.k.AddMargin(sdk.UnwrapSDKContext(ctx), msg.Pair, traderAddr, msg.Margin)
 }
 
 func (m msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPosition,
 ) (response *types.MsgOpenPositionResponse, err error) {
-	pair := common.MustNewAssetPair(req.TokenPair)
 	traderAddr := sdk.MustAccAddressFromBech32(req.Sender)
 
 	positionResp, err := m.k.OpenPosition(
 		sdk.UnwrapSDKContext(goCtx),
-		pair,
+		req.Pair,
 		req.Side,
 		traderAddr,
 		req.QuoteAssetAmount,
@@ -80,9 +76,8 @@ func (m msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPositio
 func (m msgServer) ClosePosition(goCtx context.Context, position *types.MsgClosePosition) (*types.MsgClosePositionResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	traderAddr := sdk.MustAccAddressFromBech32(position.Sender)
-	tokenPair := common.MustNewAssetPair(position.TokenPair)
 
-	resp, err := m.k.ClosePosition(ctx, tokenPair, traderAddr)
+	resp, err := m.k.ClosePosition(ctx, position.Pair, traderAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -104,9 +99,7 @@ func (m msgServer) Liquidate(goCtx context.Context, msg *types.MsgLiquidate,
 
 	traderAddr := sdk.MustAccAddressFromBech32(msg.Trader)
 
-	pair := common.MustNewAssetPair(msg.TokenPair)
-
-	feeToLiquidator, feeToFund, err := m.k.Liquidate(ctx, liquidatorAddr, pair, traderAddr)
+	feeToLiquidator, feeToFund, err := m.k.Liquidate(ctx, liquidatorAddr, msg.Pair, traderAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +114,7 @@ func (m msgServer) MultiLiquidate(goCtx context.Context, req *types.MsgMultiLiqu
 	positions := make([]MultiLiquidationRequest, len(req.Liquidations))
 	for i, pos := range req.Liquidations {
 		positions[i] = MultiLiquidationRequest{
-			pair:   common.MustNewAssetPair(pos.TokenPair),
+			pair:   pos.Pair,
 			trader: sdk.MustAccAddressFromBech32(pos.Trader),
 		}
 	}

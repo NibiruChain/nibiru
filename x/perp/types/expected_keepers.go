@@ -44,9 +44,9 @@ type BankKeeper interface {
 }
 
 type OracleKeeper interface {
-	GetExchangeRate(ctx sdk.Context, pair string) (sdk.Dec, error)
-	GetExchangeRateTwap(ctx sdk.Context, pair string) (sdk.Dec, error)
-	SetPrice(ctx sdk.Context, pair string, price sdk.Dec)
+	GetExchangeRate(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error)
+	GetExchangeRateTwap(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error)
+	SetPrice(ctx sdk.Context, pair common.AssetPair, price sdk.Dec)
 }
 
 type VpoolKeeper interface {

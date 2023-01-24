@@ -4,17 +4,14 @@ import (
 	"testing"
 
 	"github.com/NibiruChain/collections"
-
-	"github.com/NibiruChain/nibiru/x/testutil"
-
-	"github.com/NibiruChain/nibiru/simapp"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp/types"
+	"github.com/NibiruChain/nibiru/x/testutil"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 

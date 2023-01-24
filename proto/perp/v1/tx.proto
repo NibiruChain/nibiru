@@ -49,7 +49,10 @@ service Msg {
 message MsgRemoveMargin {
   string sender = 1;
 
-  string token_pair = 2;
+  string pair = 2 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.nullable) = false
+  ];
 
   cosmos.base.v1beta1.Coin margin = 3 [(gogoproto.nullable) = false];
 }
@@ -73,7 +76,10 @@ message MsgRemoveMarginResponse {
 message MsgAddMargin {
   string sender = 1;
 
-  string token_pair = 2;
+  string pair = 2 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.nullable) = false
+  ];
 
   cosmos.base.v1beta1.Coin margin = 3 [(gogoproto.nullable) = false];
 }
@@ -93,7 +99,10 @@ message MsgLiquidate {
     string sender = 1;
 
     // TokenPair is the identifier for the position's virtual pool
-    string token_pair = 2;
+    string pair = 2 [ 
+      (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+      (gogoproto.nullable) = false
+    ];
 
     // Trader is the address of the owner of the position 
     string trader = 3;
@@ -105,11 +114,16 @@ message MsgLiquidateResponse {
 }
 
 message MsgMultiLiquidate {
-  message MultiLiquidation {
-    string token_pair = 2;
-    string trader = 3;
-  }
   string sender = 1;
+
+  message MultiLiquidation {
+    string pair = 1 [ 
+      (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+      (gogoproto.nullable) = false
+    ];
+    string trader = 2;
+  }
+
   repeated MultiLiquidation liquidations = 2;
 }
 
@@ -128,7 +142,10 @@ message MsgMultiLiquidateResponse {
 message MsgOpenPosition {
   string sender = 1;
 
-  string token_pair = 2;
+  string pair = 2 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.nullable) = false
+  ];
 
   nibiru.perp.v1.Side side = 3;
 
@@ -190,7 +207,10 @@ message MsgOpenPositionResponse {
 message MsgClosePosition {
   string sender = 1;
 
-  string token_pair = 2;
+  string pair = 2 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.nullable) = false
+  ];
 }
 
 message MsgClosePositionResponse {

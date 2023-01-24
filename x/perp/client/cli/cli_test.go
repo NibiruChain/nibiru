@@ -93,13 +93,13 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	genesisState[perptypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(perpGenesis)
 
 	oracleGenesis := oracletypes.DefaultGenesisState()
-	oracleGenesis.Params.Whitelist = []string{
-		common.Pair_BTC_NUSD.String(),
+	oracleGenesis.Params.Whitelist = []common.AssetPair{
+		common.Pair_BTC_NUSD,
 	}
 	oracleGenesis.Params.VotePeriod = 1_000
 	oracleGenesis.ExchangeRates = []oracletypes.ExchangeRateTuple{
-		{Pair: common.Pair_BTC_NUSD.String(), ExchangeRate: sdk.NewDec(20_000)},
-		{Pair: common.Pair_ETH_NUSD.String(), ExchangeRate: sdk.NewDec(2_000)},
+		{Pair: common.Pair_BTC_NUSD, ExchangeRate: sdk.NewDec(20_000)},
+		{Pair: common.Pair_ETH_NUSD, ExchangeRate: sdk.NewDec(2_000)},
 	}
 	genesisState[oracletypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(oracleGenesis)
 
@@ -186,7 +186,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	val := s.network.Validators[0]
 	user := s.users[0]
 
-	exchangeRate, err := testutilcli.QueryOracleExchangeRate(val.ClientCtx, common.Pair_BTC_NUSD.String())
+	exchangeRate, err := testutilcli.QueryOracleExchangeRate(val.ClientCtx, common.Pair_BTC_NUSD)
 	s.T().Logf("0. current exchange rate is: %+v", exchangeRate)
 	s.NoError(err)
 
@@ -402,7 +402,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 			name: "PASS: add margin to correct position",
 			args: []string{
 				pair.String(),
-				fmt.Sprintf("%s%s", "10000", pair.Token1),
+				fmt.Sprintf("%s%s", "10000", pair.QuoteDenom()),
 			},
 			expectedCode:   0,
 			expectedMargin: sdk.NewDec(20_000),
@@ -411,7 +411,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 			name: "FAIL: position not found",
 			args: []string{
 				common.Pair_BTC_NUSD.String(),
-				fmt.Sprintf("%s%s", "10000", pair.Token1),
+				fmt.Sprintf("%s%s", "10000", pair.QuoteDenom()),
 			},
 			expectedCode: 1,
 		},

@@ -25,10 +25,7 @@ func TestCalcFreeCollateralErrors(t *testing.T) {
 			test: func() {
 				k, _, ctx := getKeeper(t)
 				alice := testutil.AccAddress()
-				pos := types.ZeroPosition(ctx, common.AssetPair{
-					Token0: "",
-					Token1: "",
-				}, alice)
+				pos := types.ZeroPosition(ctx, common.AssetPair("foobar"), alice)
 				_, err := k.calcFreeCollateral(ctx, pos)
 
 				require.Error(t, err)
@@ -215,10 +212,7 @@ func TestGetLatestCumulativePremiumFraction(t *testing.T) {
 			name: "uninitialized vpool has no metadata | fail",
 			test: func() {
 				perpKeeper, _, ctx := getKeeper(t)
-				vpool := common.AssetPair{
-					Token0: "xxx",
-					Token1: "yyy",
-				}
+				vpool := common.AssetPair("xxx:yyy")
 				lcpf, err := perpKeeper.getLatestCumulativePremiumFraction(
 					ctx, vpool)
 				require.Error(t, err)

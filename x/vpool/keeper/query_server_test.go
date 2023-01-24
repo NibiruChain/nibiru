@@ -40,7 +40,7 @@ func TestQueryReserveAssets(t *testing.T) {
 	resp, err := queryServer.ReserveAssets(
 		sdk.WrapSDKContext(ctx),
 		&types.QueryReserveAssetsRequest{
-			Pair: common.Pair_BTC_NUSD.String(),
+			Pair: common.Pair_BTC_NUSD,
 		},
 	)
 
@@ -77,7 +77,7 @@ func TestQueryAllPools(t *testing.T) {
 	ctx = ctx.WithBlockHeight(2).WithBlockTime(time.Now().Add(5 * time.Second))
 	indexPrice := sdk.NewDec(25_000)
 	mocks.mockOracleKeeper.EXPECT().
-		GetExchangeRate(ctx, pair.String()).
+		GetExchangeRate(ctx, pair).
 		Return(indexPrice, nil)
 	resp, err := queryServer.AllPools(
 		sdk.WrapSDKContext(ctx),
@@ -87,7 +87,7 @@ func TestQueryAllPools(t *testing.T) {
 	t.Log("check if query response is accurate")
 	markPriceWanted := sdk.NewDec(1_000) // 1e6 / 1e3
 	poolPricesWanted := types.PoolPrices{
-		Pair:          pool.Pair.String(),
+		Pair:          pool.Pair,
 		MarkPrice:     markPriceWanted,
 		IndexPrice:    indexPrice.String(),
 		TwapMark:      markPriceWanted.String(),

@@ -84,7 +84,7 @@ func (k Keeper) EditSwapInvariant(
 	}
 
 	// Grab current pool from state
-	vpool, err := k.Pools.Get(ctx, common.MustNewAssetPair(swapInvariantMap.Pair))
+	vpool, err := k.Pools.Get(ctx, swapInvariantMap.Pair)
 	if err != nil {
 		return err
 	}
@@ -178,7 +178,7 @@ func (k Keeper) GetPoolPrices(
 		return types.PoolPrices{}, err
 	}
 
-	indexPrice, err := k.oracleKeeper.GetExchangeRate(ctx, pool.Pair.String())
+	indexPrice, err := k.oracleKeeper.GetExchangeRate(ctx, pool.Pair)
 	if err != nil {
 		// fail gracefully so that vpool queries run even if the oracle price feeds stop
 		k.Logger(ctx).Error(err.Error())
@@ -198,7 +198,7 @@ func (k Keeper) GetPoolPrices(
 	}
 
 	return types.PoolPrices{
-		Pair:          pool.Pair.String(),
+		Pair:          pool.Pair,
 		MarkPrice:     pool.QuoteAssetReserve.Quo(pool.BaseAssetReserve),
 		TwapMark:      twapMark.String(),
 		IndexPrice:    indexPrice.String(),

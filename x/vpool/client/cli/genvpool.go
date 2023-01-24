@@ -151,7 +151,7 @@ func newVpoolFromAddVpoolGenesisFlags(flagSet *flag.FlagSet,
 		}
 	}
 
-	pair, err := common.NewAssetPair(pairStr)
+	pair, err := common.TryNewAssetPair(pairStr)
 	if err != nil {
 		return
 	}

@@ -28,7 +28,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64)
 			continue
 		}
 
-		indexTWAP, err := k.OracleKeeper.GetExchangeRateTwap(ctx, pairMetadata.Pair.String())
+		indexTWAP, err := k.OracleKeeper.GetExchangeRateTwap(ctx, pairMetadata.Pair)
 		if err != nil {
 			ctx.Logger().Error("failed to fetch twap index price", "pairMetadata.Pair", pairMetadata.Pair, "error", err)
 			continue
@@ -58,7 +58,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64)
 		k.PairsMetadata.Insert(ctx, pairMetadata.Pair, pairMetadata)
 
 		if err = ctx.EventManager().EmitTypedEvent(&types.FundingRateChangedEvent{
-			Pair:                      pairMetadata.Pair.String(),
+			Pair:                      pairMetadata.Pair,
 			MarkPrice:                 markTwap,
 			IndexPrice:                indexTWAP,
 			LatestFundingRate:         premiumFraction.Quo(indexTWAP),

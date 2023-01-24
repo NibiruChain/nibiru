@@ -30,7 +30,7 @@ type Keeper struct {
 	PairsMetadata  collections.Map[common.AssetPair, types.PairMetadata]
 	PrepaidBadDebt collections.Map[string, types.PrepaidBadDebt]
 
-	Metrics collections.Map[string, types.Metrics]
+	Metrics collections.Map[common.AssetPair, types.Metrics]
 }
 
 // NewKeeper Creates a new x/perp Keeper instance.
@@ -72,7 +72,7 @@ func NewKeeper(
 		PairsMetadata:  collections.NewMap(storeKey, 1, common.AssetPairKeyEncoder, collections.ProtoValueEncoder[types.PairMetadata](cdc)),
 		PrepaidBadDebt: collections.NewMap(storeKey, 2, collections.StringKeyEncoder, collections.ProtoValueEncoder[types.PrepaidBadDebt](cdc)),
 
-		Metrics: collections.NewMap(storeKey, 3, collections.StringKeyEncoder, collections.ProtoValueEncoder[types.Metrics](cdc)),
+		Metrics: collections.NewMap(storeKey, 3, common.AssetPairKeyEncoder, collections.ProtoValueEncoder[types.Metrics](cdc)),
 	}
 }
 

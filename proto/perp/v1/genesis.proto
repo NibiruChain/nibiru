@@ -5,7 +5,6 @@ package nibiru.perp.v1;
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/v1beta1/coin.proto";
-import "common/common.proto";
 import "perp/v1/state.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/perp/types";

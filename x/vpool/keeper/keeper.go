@@ -75,8 +75,8 @@ func (k Keeper) SwapBaseForQuote(
 		return sdk.ZeroDec(), nil
 	}
 
-	if _, err = k.oracleKeeper.GetExchangeRate(ctx, pair.String()); err != nil {
-		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair.String())
+	if _, err = k.oracleKeeper.GetExchangeRate(ctx, pair); err != nil {
+		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair)
 	}
 
 	pool, err := k.Pools.Get(ctx, pair)
@@ -123,7 +123,7 @@ func (k Keeper) executeSwap(
 
 	// -------------------- Emit events
 	if err = ctx.EventManager().EmitTypedEvent(&types.MarkPriceChangedEvent{
-		Pair:           vpool.Pair.String(),
+		Pair:           vpool.Pair,
 		Price:          vpool.GetMarkPrice(),
 		BlockTimestamp: ctx.BlockTime(),
 	}); err != nil {
@@ -131,7 +131,7 @@ func (k Keeper) executeSwap(
 	}
 
 	if err = ctx.EventManager().EmitTypedEvent(&types.SwapOnVpoolEvent{
-		Pair:        vpool.Pair.String(),
+		Pair:        vpool.Pair,
 		QuoteAmount: quoteDelta,
 		BaseAmount:  baseDelta,
 	}); err != nil {
@@ -172,8 +172,8 @@ func (k Keeper) SwapQuoteForBase(
 		return sdk.ZeroDec(), nil
 	}
 
-	if _, err = k.oracleKeeper.GetExchangeRate(ctx, pair.String()); err != nil {
-		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair.String())
+	if _, err = k.oracleKeeper.GetExchangeRate(ctx, pair); err != nil {
+		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair)
 	}
 
 	pool, err := k.Pools.Get(ctx, pair)
@@ -294,7 +294,7 @@ func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) (bool,
 		return false, err
 	}
 
-	indexPrice, err := k.oracleKeeper.GetExchangeRate(ctx, pair.String())
+	indexPrice, err := k.oracleKeeper.GetExchangeRate(ctx, pair)
 	if err != nil {
 		return false, err
 	}

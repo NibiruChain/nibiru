@@ -5,7 +5,6 @@ package nibiru.perp.v1;
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/v1beta1/coin.proto";
-import "common/common.proto";
 import "perp/v1/state.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/perp/types";
@@ -14,7 +13,10 @@ option go_package = "github.com/NibiruChain/nibiru/x/perp/types";
 // TODO: Is there a way to split this into different events without creating too much complexity?
 message PositionChangedEvent {
     // identifier of the corresponding virtual pool for the position
-    string pair = 1;
+    string pair = 1 [ 
+      (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+      (gogoproto.nullable) = false
+    ];
 
     // owner of the position.
     string trader_address = 2;
@@ -106,7 +108,10 @@ message PositionChangedEvent {
 // Emitted when a position is liquidated.
 message PositionLiquidatedEvent {
     // identifier of the corresponding virtual pool for the position
-    string pair = 1;
+    string pair = 1 [ 
+      (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+      (gogoproto.nullable) = false
+    ];
 
     // owner of the position.
     string trader_address = 2;
@@ -184,7 +189,10 @@ message PositionLiquidatedEvent {
 // Emitted when a position is settled.
 message PositionSettledEvent {
     // Identifier for the virtual pool of the position.
-    string pair = 1;
+    string pair = 1 [ 
+      (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+      (gogoproto.nullable) = false
+    ];
 
     // Owner of the position.
     string trader_address = 2;
@@ -201,7 +209,10 @@ message PositionSettledEvent {
 message FundingRateChangedEvent {
 
     // The pair for which the funding rate was calculated.
-    string pair = 1;
+    string pair = 1 [ 
+      (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+      (gogoproto.nullable) = false
+    ];
 
     // The mark price of the pair.
     string mark_price = 2 [
@@ -243,7 +254,10 @@ message FundingRateChangedEvent {
 }
 
 message MetricsEvent {
-  string pair  = 1;
+  string pair = 1 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.nullable) = false
+  ];
 
   // Sum of all active position sizes for the pair.
   string net_size = 2 [

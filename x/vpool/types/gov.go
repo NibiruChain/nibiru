@@ -5,8 +5,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-
-	"github.com/NibiruChain/nibiru/x/common"
 )
 
 const (
@@ -43,12 +41,13 @@ func (proposal *CreatePoolProposal) ValidateBasic() error {
 		return err
 	}
 
-	assetPair, err := common.NewAssetPair(proposal.Pair)
+	err := proposal.Pair.Validate()
 	if err != nil {
 		return err
 	}
+
 	pool := &Vpool{
-		Pair:              assetPair,
+		Pair:              proposal.Pair,
 		BaseAssetReserve:  proposal.BaseAssetReserve,
 		QuoteAssetReserve: proposal.QuoteAssetReserve,
 		Config:            proposal.Config,
@@ -72,7 +71,7 @@ func (proposal *EditPoolConfigProposal) ValidateBasic() error {
 		return err
 	}
 
-	_, err := common.NewAssetPair(proposal.Pair)
+	err := proposal.Pair.Validate()
 	if err != nil {
 		return err
 	}
@@ -107,7 +106,7 @@ func (proposal *EditSwapInvariantsProposal) ValidateBasic() error {
 
 func (kv *EditSwapInvariantsProposal_SwapInvariantMultiple) Validate() error {
 	var comboError []string
-	_, err := common.NewAssetPair(kv.Pair)
+	err := kv.Pair.Validate()
 	if err != nil {
 		comboError = append(comboError, err.Error())
 	}

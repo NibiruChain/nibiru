@@ -10,7 +10,11 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/NibiruChain/nibiru/x/vpool/types";
 
 message ReserveSnapshotSavedEvent {
-  string pair = 1;
+  string pair = 1 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.nullable) = false
+  ];
+
   string quote_reserve = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
@@ -40,7 +44,10 @@ message ReserveSnapshotSavedEvent {
 // Amounts are negative or positive base on the perspective of the pool, i.e.
 // a negative quote means the trader has gained quote and the vpool lost quote. 
 message SwapOnVpoolEvent {
-  string pair  = 1;
+  string pair = 1 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.nullable) = false
+  ];
 
   // delta in the quote reserves of the vpool
   string quote_amount = 2 [
@@ -56,7 +63,11 @@ message SwapOnVpoolEvent {
 }
 
 message MarkPriceChangedEvent {
-  string pair = 1;
+  string pair = 1 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.nullable) = false
+  ];
+  
   string price = 2 [
         (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
         (gogoproto.nullable) = false

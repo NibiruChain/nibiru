@@ -9,6 +9,7 @@ import (
 
 	"github.com/NibiruChain/collections"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
@@ -79,7 +80,7 @@ func (q querier) ExchangeRates(c context.Context, _ *types.QueryExchangeRatesReq
 	ctx := sdk.UnwrapSDKContext(c)
 
 	var exchangeRates types.ExchangeRateTuples
-	for _, er := range q.Keeper.ExchangeRates.Iterate(ctx, collections.Range[string]{}).KeyValues() {
+	for _, er := range q.Keeper.ExchangeRates.Iterate(ctx, collections.Range[common.AssetPair]{}).KeyValues() {
 		exchangeRates = append(exchangeRates, types.ExchangeRateTuple{
 			Pair:         er.Key,
 			ExchangeRate: er.Value,
@@ -91,7 +92,7 @@ func (q querier) ExchangeRates(c context.Context, _ *types.QueryExchangeRatesReq
 
 // Actives queries all pairs for which exchange rates exist
 func (q querier) Actives(c context.Context, _ *types.QueryActivesRequest) (*types.QueryActivesResponse, error) {
-	return &types.QueryActivesResponse{Actives: q.Keeper.ExchangeRates.Iterate(sdk.UnwrapSDKContext(c), collections.Range[string]{}).Keys()}, nil
+	return &types.QueryActivesResponse{Actives: q.Keeper.ExchangeRates.Iterate(sdk.UnwrapSDKContext(c), collections.Range[common.AssetPair]{}).Keys()}, nil
 }
 
 // VoteTargets queries the voting target list on current vote period

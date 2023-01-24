@@ -10,7 +10,12 @@ option go_package = "github.com/NibiruChain/nibiru/x/oracle/types";
 
 // a snapshot of the prices at a given point in time
 message PriceSnapshot {
-  string pair = 1;
+  string pair = 1 [ 
+    (gogoproto.moretags) = "yaml:\"pair\"",
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.nullable) = false
+  ];
+  
   string price = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false];

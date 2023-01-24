@@ -57,7 +57,7 @@ func OpenPositionCmd() *cobra.Command {
 				return fmt.Errorf("invalid side: %s", args[0])
 			}
 
-			assetPair, err := common.NewAssetPair(args[1])
+			assetPair, err := common.TryNewAssetPair(args[1])
 			if err != nil {
 				return err
 			}
@@ -73,7 +73,7 @@ func OpenPositionCmd() *cobra.Command {
 
 			msg := &types.MsgOpenPosition{
 				Sender:               clientCtx.GetFromAddress().String(),
-				TokenPair:            assetPair.String(),
+				Pair:                 assetPair,
 				Side:                 side,
 				QuoteAssetAmount:     amount,
 				Leverage:             leverage,
@@ -105,9 +105,14 @@ func ClosePositionCmd() *cobra.Command {
 				return err
 			}
 
+			pair, err := common.TryNewAssetPair(args[0])
+			if err != nil {
+				return err
+			}
+
 			msg := &types.MsgClosePosition{
-				Sender:    clientCtx.GetFromAddress().String(),
-				TokenPair: args[0],
+				Sender: clientCtx.GetFromAddress().String(),
+				Pair:   pair,
 			}
 			if err = msg.ValidateBasic(); err != nil {
 				return err
@@ -147,10 +152,15 @@ func RemoveMarginCmd() *cobra.Command {
 				return err
 			}
 
+			pair, err := common.TryNewAssetPair(args[0])
+			if err != nil {
+				return err
+			}
+
 			msg := &types.MsgRemoveMargin{
-				Sender:    clientCtx.GetFromAddress().String(),
-				TokenPair: args[0],
-				Margin:    marginToRemove,
+				Sender: clientCtx.GetFromAddress().String(),
+				Pair:   pair,
+				Margin: marginToRemove,
 			}
 			if err = msg.ValidateBasic(); err != nil {
 				return err
@@ -186,10 +196,15 @@ func AddMarginCmd() *cobra.Command {
 				return err
 			}
 
+			pair, err := common.TryNewAssetPair(args[0])
+			if err != nil {
+				return err
+			}
+
 			msg := &types.MsgAddMargin{
-				Sender:    clientCtx.GetFromAddress().String(),
-				TokenPair: args[0],
-				Margin:    marginToAdd,
+				Sender: clientCtx.GetFromAddress().String(),
+				Pair:   pair,
+				Margin: marginToAdd,
 			}
 			if err = msg.ValidateBasic(); err != nil {
 				return err
@@ -225,10 +240,15 @@ func LiquidateCmd() *cobra.Command {
 				return err
 			}
 
+			pair, err := common.TryNewAssetPair(args[0])
+			if err != nil {
+				return err
+			}
+
 			msg := &types.MsgLiquidate{
-				Sender:    clientCtx.GetFromAddress().String(),
-				TokenPair: args[0],
-				Trader:    traderAddr.String(),
+				Sender: clientCtx.GetFromAddress().String(),
+				Pair:   pair,
+				Trader: traderAddr.String(),
 			}
 			if err = msg.ValidateBasic(); err != nil {
 				return err

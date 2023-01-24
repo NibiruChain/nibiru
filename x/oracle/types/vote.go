@@ -48,7 +48,7 @@ func (v AggregateExchangeRateVote) String() string {
 }
 
 // NewExchangeRateTuple creates a ExchangeRateTuple instance
-func NewExchangeRateTuple(pair string, exchangeRate sdk.Dec) ExchangeRateTuple {
+func NewExchangeRateTuple(pair common.AssetPair, exchangeRate sdk.Dec) ExchangeRateTuple {
 	return ExchangeRateTuple{
 		pair,
 		exchangeRate,
@@ -63,7 +63,7 @@ func (m ExchangeRateTuple) String() string {
 
 // ToString converts the ExchangeRateTuple to the vote string.
 func (m ExchangeRateTuple) ToString() (string, error) {
-	_, err := common.NewAssetPair(m.Pair)
+	err := m.Pair.Validate()
 	if err != nil {
 		return "", err
 	}
@@ -95,7 +95,7 @@ func NewExchangeRateTupleFromString(s string) (ExchangeRateTuple, error) {
 		return ExchangeRateTuple{}, fmt.Errorf("invalid ExchangeRateTuple format")
 	}
 
-	_, err := common.NewAssetPair(split[0])
+	pair, err := common.TryNewAssetPair(split[0])
 	if err != nil {
 		return ExchangeRateTuple{}, fmt.Errorf("invalid pair definition %s: %w", split[0], err)
 	}
@@ -106,7 +106,7 @@ func NewExchangeRateTupleFromString(s string) (ExchangeRateTuple, error) {
 	}
 
 	return ExchangeRateTuple{
-		Pair:         split[0],
+		Pair:         pair,
 		ExchangeRate: dec,
 	}, nil
 }
@@ -125,7 +125,7 @@ func NewExchangeRateTuplesFromString(s string) (ExchangeRateTuples, error) {
 
 	tuples := make(ExchangeRateTuples, len(stringTuples))
 
-	duplicates := make(map[string]struct{}, len(stringTuples))
+	duplicates := make(map[common.AssetPair]struct{}, len(stringTuples))
 
 	for i, stringTuple := range stringTuples {
 		exchangeRate, err := NewExchangeRateTupleFromString(stringTuple)

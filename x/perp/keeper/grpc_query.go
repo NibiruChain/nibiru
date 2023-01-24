@@ -65,12 +65,7 @@ func (q queryServer) QueryPosition(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	pair, err := common.NewAssetPair(req.TokenPair)
-	if err != nil {
-		return nil, err
-	}
-
-	return q.position(ctx, pair, traderAddr)
+	return q.position(ctx, req.Pair, traderAddr)
 }
 
 func (q queryServer) position(ctx sdk.Context, pair common.AssetPair, trader sdk.AccAddress) (*types.QueryPositionResponse, error) {
@@ -126,12 +121,7 @@ func (q queryServer) CumulativePremiumFraction(
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	assetPair, err := common.NewAssetPair(req.Pair)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid pair: %s", req.Pair)
-	}
-
-	pairMetadata, err := q.k.PairsMetadata.Get(ctx, assetPair)
+	pairMetadata, err := q.k.PairsMetadata.Get(ctx, req.Pair)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "could not find pair: %s", req.Pair)
 	}
@@ -140,7 +130,7 @@ func (q queryServer) CumulativePremiumFraction(
 		return nil, status.Errorf(codes.NotFound, "could not find pair: %s", req.Pair)
 	}
 
-	indexTWAP, err := q.k.OracleKeeper.GetExchangeRateTwap(ctx, pairMetadata.Pair.String())
+	indexTWAP, err := q.k.OracleKeeper.GetExchangeRateTwap(ctx, pairMetadata.Pair)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "failed to fetch twap index price for pair: %s", req.Pair)
 	}
@@ -174,11 +164,7 @@ func (q queryServer) Metrics(
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	tokenPair, err := common.NewAssetPair(req.Pair)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid pair: %s", req.Pair)
-	}
-	if !q.k.VpoolKeeper.ExistsPool(ctx, tokenPair) {
+	if !q.k.VpoolKeeper.ExistsPool(ctx, req.Pair) {
 		return nil, status.Errorf(codes.InvalidArgument, "pool not found: %s", req.Pair)
 	}
 	metrics := q.k.Metrics.GetOr(ctx, req.Pair, types.Metrics{

@@ -37,7 +37,7 @@ func TestPosition_Validate(t *testing.T) {
 		"bad pair": {
 			p: &Position{
 				TraderAddress: testutil.AccAddress().String(),
-				Pair:          common.AssetPair{},
+				Pair:          "",
 			},
 			wantErr: true,
 		},

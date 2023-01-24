@@ -33,12 +33,7 @@ func (q queryServer) ReserveAssets(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	tokenPair, err := common.NewAssetPair(req.Pair)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-
-	pool, err := q.k.Pools.Get(ctx, tokenPair)
+	pool, err := q.k.Pools.Get(ctx, req.Pair)
 	if err != nil {
 		return nil, err
 	}
@@ -87,14 +82,9 @@ func (q queryServer) BaseAssetPrice(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	pair, err := common.NewAssetPair(req.Pair)
-	if err != nil {
-		return nil, err
-	}
-
 	priceInQuoteDenom, err := q.k.GetBaseAssetPrice(
 		ctx,
-		pair,
+		req.Pair,
 		req.Direction,
 		req.BaseAssetAmount,
 	)
