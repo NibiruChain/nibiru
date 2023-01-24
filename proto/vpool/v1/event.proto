@@ -10,7 +10,11 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/NibiruChain/nibiru/x/vpool/types";
 
 message ReserveSnapshotSavedEvent {
-  string pair = 1;
+  string pair = 1 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.nullable) = false
+  ];
+
   string quote_reserve = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
@@ -56,7 +60,11 @@ message SwapOnVpoolEvent {
 }
 
 message MarkPriceChangedEvent {
-  string pair = 1;
+  string pair = 1 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.nullable) = false
+  ];
+  
   string price = 2 [
         (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
         (gogoproto.nullable) = false
