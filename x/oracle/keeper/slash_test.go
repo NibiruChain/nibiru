@@ -90,9 +90,9 @@ func TestSlashAndResetMissCounters(t *testing.T) {
 func TestInvalidVotesSlashing(t *testing.T) {
 	input, h := setup(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
-	params.Whitelist = []string{common.Pair_NIBI_NUSD.String()}
+	params.Whitelist = []common.AssetPair{common.Pair_NIBI_NUSD}
 	input.OracleKeeper.SetParams(input.Ctx, params)
-	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, common.Pair_NIBI_NUSD.String())
+	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, common.Pair_NIBI_NUSD)
 
 	votePeriodsPerWindow := types.NewDec(int64(input.OracleKeeper.SlashWindow(input.Ctx))).QuoInt64(int64(input.OracleKeeper.VotePeriod(input.Ctx))).TruncateInt64()
 	slashFraction := input.OracleKeeper.SlashFraction(input.Ctx)
@@ -102,13 +102,13 @@ func TestInvalidVotesSlashing(t *testing.T) {
 		input.Ctx = input.Ctx.WithBlockHeight(input.Ctx.BlockHeight() + 1)
 
 		// Account 1, govstable
-		makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: randomExchangeRate}}, 0)
+		makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD, ExchangeRate: randomExchangeRate}}, 0)
 
 		// Account 2, govstable, miss vote
-		makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: randomExchangeRate.Add(types.NewDec(100000000000000))}}, 1)
+		makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD, ExchangeRate: randomExchangeRate.Add(types.NewDec(100000000000000))}}, 1)
 
 		// Account 3, govstable
-		makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: randomExchangeRate}}, 2)
+		makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD, ExchangeRate: randomExchangeRate}}, 2)
 
 		oracle.EndBlocker(input.Ctx, input.OracleKeeper)
 		require.Equal(t, i+1, input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[1], 0))
@@ -119,13 +119,13 @@ func TestInvalidVotesSlashing(t *testing.T) {
 
 	// one more miss vote will inccur keeper.ValAddrs[1] slashing
 	// Account 1, govstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: randomExchangeRate}}, 0)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD, ExchangeRate: randomExchangeRate}}, 0)
 
 	// Account 2, govstable, miss vote
-	makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: randomExchangeRate.Add(types.NewDec(100000000000000))}}, 1)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD, ExchangeRate: randomExchangeRate.Add(types.NewDec(100000000000000))}}, 1)
 
 	// Account 3, govstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: randomExchangeRate}}, 2)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD, ExchangeRate: randomExchangeRate}}, 2)
 
 	input.Ctx = input.Ctx.WithBlockHeight(votePeriodsPerWindow - 1)
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
@@ -144,9 +144,9 @@ func TestWhitelistSlashing(t *testing.T) {
 		input.Ctx = input.Ctx.WithBlockHeight(input.Ctx.BlockHeight() + 1)
 
 		// Account 2, govstable
-		makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: randomExchangeRate}}, 1)
+		makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD, ExchangeRate: randomExchangeRate}}, 1)
 		// Account 3, govstable
-		makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: randomExchangeRate}}, 2)
+		makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD, ExchangeRate: randomExchangeRate}}, 2)
 
 		oracle.EndBlocker(input.Ctx, input.OracleKeeper)
 		require.Equal(t, i+1, input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[0], 0))
@@ -158,9 +158,9 @@ func TestWhitelistSlashing(t *testing.T) {
 	// one more miss vote will inccur Account 1 slashing
 
 	// Account 2, govstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: randomExchangeRate}}, 1)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD, ExchangeRate: randomExchangeRate}}, 1)
 	// Account 3, govstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: randomExchangeRate}}, 2)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD, ExchangeRate: randomExchangeRate}}, 2)
 
 	input.Ctx = input.Ctx.WithBlockHeight(votePeriodsPerWindow - 1)
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
@@ -171,19 +171,19 @@ func TestWhitelistSlashing(t *testing.T) {
 func TestNotPassedBallotSlashing(t *testing.T) {
 	input, h := setup(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
-	params.Whitelist = []string{common.Pair_NIBI_NUSD.String()}
+	params.Whitelist = []common.AssetPair{common.Pair_NIBI_NUSD}
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
 	// clear tobin tax to reset vote targets
-	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[string]{}).Keys() {
+	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[common.AssetPair]{}).Keys() {
 		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 	}
-	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, common.Pair_NIBI_NUSD.String())
+	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, common.Pair_NIBI_NUSD)
 
 	input.Ctx = input.Ctx.WithBlockHeight(input.Ctx.BlockHeight() + 1)
 
 	// Account 1, govstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: randomExchangeRate}}, 0)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD, ExchangeRate: randomExchangeRate}}, 0)
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
 	require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[0], 0))
@@ -194,14 +194,14 @@ func TestNotPassedBallotSlashing(t *testing.T) {
 func TestAbstainSlashing(t *testing.T) {
 	input, h := setup(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
-	params.Whitelist = []string{common.Pair_NIBI_NUSD.String()}
+	params.Whitelist = []common.AssetPair{common.Pair_NIBI_NUSD}
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
 	// clear tobin tax to reset vote targets
-	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[string]{}).Keys() {
+	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[common.AssetPair]{}).Keys() {
 		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 	}
-	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, common.Pair_NIBI_NUSD.String())
+	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, common.Pair_NIBI_NUSD)
 
 	votePeriodsPerWindow := types.NewDec(int64(input.OracleKeeper.SlashWindow(input.Ctx))).QuoInt64(int64(input.OracleKeeper.VotePeriod(input.Ctx))).TruncateInt64()
 	minValidPerWindow := input.OracleKeeper.MinValidPerWindow(input.Ctx)
@@ -210,13 +210,13 @@ func TestAbstainSlashing(t *testing.T) {
 		input.Ctx = input.Ctx.WithBlockHeight(input.Ctx.BlockHeight() + 1)
 
 		// Account 1, govstable
-		makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: randomExchangeRate}}, 0)
+		makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD, ExchangeRate: randomExchangeRate}}, 0)
 
 		// Account 2, govstable, abstain vote
-		makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: types.ZeroDec()}}, 1)
+		makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD, ExchangeRate: types.ZeroDec()}}, 1)
 
 		// Account 3, govstable
-		makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: randomExchangeRate}}, 2)
+		makeAggregatePrevoteAndVote(t, input, h, 0, types3.ExchangeRateTuples{{Pair: common.Pair_NIBI_NUSD, ExchangeRate: randomExchangeRate}}, 2)
 
 		oracle.EndBlocker(input.Ctx, input.OracleKeeper)
 		require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[1], 0))

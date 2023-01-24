@@ -330,7 +330,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			ecosystemFundFee := nibiruApp.PerpKeeper.GetParams(ctx).EcosystemFundFeeRatio.Mul(exchangedNotional).RoundInt()
 
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionChangedEvent{
-				Pair:               common.Pair_BTC_NUSD.String(),
+				Pair:               common.Pair_BTC_NUSD,
 				TraderAddress:      traderAddr.String(),
 				Margin:             sdk.NewCoin(common.DenomNUSD, tc.expectedMargin.RoundInt()),
 				PositionNotional:   tc.expectedPositionNotional,

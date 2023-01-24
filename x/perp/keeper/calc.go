@@ -108,8 +108,7 @@ func (k Keeper) calcFreeCollateral(
 	}
 	remainingMargin := sdk.MinDec(pos.Margin, pos.Margin.Add(unrealizedPnL))
 
-	maintenanceMarginRatio, err := k.VpoolKeeper.GetMaintenanceMarginRatio(
-		ctx, pos.GetPair())
+	maintenanceMarginRatio, err := k.VpoolKeeper.GetMaintenanceMarginRatio(ctx, pos.Pair)
 	if err != nil {
 		return
 	}
@@ -128,7 +127,7 @@ func (k Keeper) getLatestCumulativePremiumFraction(
 		k.Logger(ctx).Error(
 			err.Error(),
 			"pair",
-			pair.String(),
+			pair,
 		)
 		return sdk.Dec{}, err
 	}

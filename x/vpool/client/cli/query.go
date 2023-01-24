@@ -53,7 +53,7 @@ func CmdGetVpoolReserveAssets() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			tokenPair, err := common.NewAssetPair(args[0])
+			tokenPair, err := common.TryNewAssetPair(args[0])
 			if err != nil {
 				return err
 			}
@@ -61,7 +61,7 @@ func CmdGetVpoolReserveAssets() *cobra.Command {
 			res, err := queryClient.ReserveAssets(
 				cmd.Context(),
 				&types.QueryReserveAssetsRequest{
-					Pair: tokenPair.String(),
+					Pair: tokenPair,
 				},
 			)
 			if err != nil {
@@ -118,7 +118,7 @@ func CmdGetBaseAssetPrice() *cobra.Command {
 				return err
 			}
 
-			tokenPair, err := common.NewAssetPair(args[0])
+			tokenPair, err := common.TryNewAssetPair(args[0])
 			if err != nil {
 				return err
 			}
@@ -143,7 +143,7 @@ func CmdGetBaseAssetPrice() *cobra.Command {
 			res, err := queryClient.BaseAssetPrice(
 				cmd.Context(),
 				&types.QueryBaseAssetPriceRequest{
-					Pair:            tokenPair.String(),
+					Pair:            tokenPair,
 					Direction:       direction,
 					BaseAssetAmount: baseAssetAmount,
 				},

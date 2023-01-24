@@ -83,9 +83,9 @@ func QueryVpoolReserveAssets(clientCtx client.Context, pair common.AssetPair,
 	return &queryResp, nil
 }
 
-func QueryOracleExchangeRate(clientCtx client.Context, pair string) (*oracletypes.QueryExchangeRateResponse, error) {
+func QueryOracleExchangeRate(clientCtx client.Context, pair common.AssetPair) (*oracletypes.QueryExchangeRateResponse, error) {
 	var queryResp oracletypes.QueryExchangeRateResponse
-	if err := ExecQuery(clientCtx, oraclecli.GetCmdQueryExchangeRates(), []string{pair}, &queryResp); err != nil {
+	if err := ExecQuery(clientCtx, oraclecli.GetCmdQueryExchangeRates(), []string{pair.String()}, &queryResp); err != nil {
 		return nil, err
 	}
 	return &queryResp, nil

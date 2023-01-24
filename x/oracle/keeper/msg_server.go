@@ -103,7 +103,7 @@ func (ms msgServer) AggregateExchangeRateVote(goCtx context.Context, msg *types.
 	// check all pairs are in the vote target
 	for _, tuple := range exchangeRateTuples {
 		if !ms.IsWhitelistedPair(ctx, tuple.Pair) {
-			return nil, sdkerrors.Wrap(types.ErrUnknownPair, tuple.Pair)
+			return nil, sdkerrors.Wrap(types.ErrUnknownPair, tuple.Pair.String())
 		}
 	}
 
