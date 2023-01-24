@@ -212,7 +212,7 @@ func (m *MockOracleKeeper) EXPECT() *MockOracleKeeperMockRecorder {
 }
 
 // GetExchangeRate mocks base method.
-func (m *MockOracleKeeper) GetExchangeRate(arg0 types1.Context, arg1 string) (types1.Dec, error) {
+func (m *MockOracleKeeper) GetExchangeRate(arg0 types1.Context, arg1 common.AssetPair) (types1.Dec, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetExchangeRate", arg0, arg1)
 	ret0, _ := ret[0].(types1.Dec)
@@ -227,7 +227,7 @@ func (mr *MockOracleKeeperMockRecorder) GetExchangeRate(arg0, arg1 interface{}) 
 }
 
 // GetExchangeRateTwap mocks base method.
-func (m *MockOracleKeeper) GetExchangeRateTwap(arg0 types1.Context, arg1 string) (types1.Dec, error) {
+func (m *MockOracleKeeper) GetExchangeRateTwap(arg0 types1.Context, arg1 common.AssetPair) (types1.Dec, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetExchangeRateTwap", arg0, arg1)
 	ret0, _ := ret[0].(types1.Dec)
@@ -242,7 +242,7 @@ func (mr *MockOracleKeeperMockRecorder) GetExchangeRateTwap(arg0, arg1 interface
 }
 
 // SetPrice mocks base method.
-func (m *MockOracleKeeper) SetPrice(arg0 types1.Context, arg1 string, arg2 types1.Dec) {
+func (m *MockOracleKeeper) SetPrice(arg0 types1.Context, arg1 common.AssetPair, arg2 types1.Dec) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SetPrice", arg0, arg1, arg2)
 }

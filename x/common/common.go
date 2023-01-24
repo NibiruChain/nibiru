@@ -140,7 +140,7 @@ func (pair AssetPair) Equal(other AssetPair) bool {
 var _ sdk.CustomProtobufType = (*AssetPair)(nil)
 
 func (pair AssetPair) Marshal() ([]byte, error) {
-	return []byte(pair.String()), nil
+	return []byte(pair), nil
 }
 
 func (pair *AssetPair) Unmarshal(data []byte) error {
@@ -149,7 +149,7 @@ func (pair *AssetPair) Unmarshal(data []byte) error {
 }
 
 func (pair AssetPair) MarshalJSON() ([]byte, error) {
-	return json.Marshal(pair.String())
+	return json.Marshal(pair)
 }
 
 func (pair *AssetPair) UnmarshalJSON(data []byte) error {
@@ -162,12 +162,12 @@ func (pair *AssetPair) UnmarshalJSON(data []byte) error {
 }
 
 func (pair AssetPair) MarshalTo(data []byte) (n int, err error) {
-	copy(data, pair.String())
+	copy(data, pair)
 	return pair.Size(), nil
 }
 
 func (pair AssetPair) Size() int {
-	return len(pair.String())
+	return len(pair)
 }
 
 var AssetPairKeyEncoder collections.KeyEncoder[AssetPair] = assetPairKeyEncoder{}
@@ -219,14 +219,13 @@ func (pairs AssetPairs) Strings() []string {
 func (pairs AssetPairs) Validate() error {
 	seenPairs := make(map[string]bool)
 	for _, pair := range pairs {
-		pairID := pair.String()
-		if seenPairs[pairID] {
-			return fmt.Errorf("duplicate pair %s", pairID)
+		if seenPairs[pair.String()] {
+			return fmt.Errorf("duplicate pair %s", pair.String())
 		}
 		if err := pair.Validate(); err != nil {
 			return err
 		}
-		seenPairs[pairID] = true
+		seenPairs[pair.String()] = true
 	}
 	return nil
 }

@@ -44,7 +44,7 @@ func TestFuzz_Tally(t *testing.T) {
 				var rate sdk.Dec
 				c.Fuzz(&rate)
 
-				ballot = append(ballot, types.NewExchangeRateBallot(rate, c.RandString(), addr, power))
+				ballot = append(ballot, types.NewExchangeRateBallot(rate, common.NewAssetPair(c.RandString(), c.RandString()), addr, power))
 			}
 
 			*e = ballot
@@ -69,10 +69,10 @@ func TestFuzz_Tally(t *testing.T) {
 }
 
 func TestOraclePairsInsert(t *testing.T) {
-	testCases := []string{"", "1", "22", "2xxxx12312u30912u01u2309u21093u"}
+	testCases := []common.AssetPair{"", "1", "22", "2xxxx12312u30912u01u2309u21093u"}
 
-	for _, testCase := range testCases {
-		tc := testCase
+	for _, tc := range testCases {
+		tc := tc
 		t.Run(fmt.Sprintf("key: %s", tc), func(t *testing.T) {
 			testSetup, _ := setup(t)
 			ctx := testSetup.Ctx
@@ -86,7 +86,7 @@ func TestOraclePairsInsert(t *testing.T) {
 	}
 }
 
-type VoteMap = map[string]types.ExchangeRateBallots
+type VoteMap = map[common.AssetPair]types.ExchangeRateBallots
 
 func TestRemoveInvalidBallots(t *testing.T) {
 	testCases := []struct {
@@ -131,11 +131,11 @@ func TestRemoveInvalidBallots(t *testing.T) {
 				"x": types.ExchangeRateBallots{
 					{Pair: "x", ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
 				},
-				common.Pair_BTC_NUSD.String(): types.ExchangeRateBallots{
-					{Pair: common.Pair_BTC_NUSD.String(), ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
+				common.Pair_BTC_NUSD: types.ExchangeRateBallots{
+					{Pair: common.Pair_BTC_NUSD, ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
 				},
-				common.Pair_ETH_NUSD.String(): types.ExchangeRateBallots{
-					{Pair: common.Pair_BTC_NUSD.String(), ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
+				common.Pair_ETH_NUSD: types.ExchangeRateBallots{
+					{Pair: common.Pair_BTC_NUSD, ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
 				},
 			},
 		},
@@ -161,7 +161,7 @@ func TestRemoveInvalidBallots(t *testing.T) {
 }
 
 func TestFuzz_PickReferencePair(t *testing.T) {
-	var pairs []string
+	var pairs []common.AssetPair
 
 	f := fuzz.New().NilChance(0).Funcs(
 		func(e *[]string, c fuzz.Continue) {
@@ -174,7 +174,7 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 		func(e *sdk.Dec, c fuzz.Continue) {
 			*e = sdk.NewDec(c.Int63())
 		},
-		func(e *map[string]sdk.Dec, c fuzz.Continue) {
+		func(e *map[common.AssetPair]sdk.Dec, c fuzz.Continue) {
 			for _, pair := range pairs {
 				var rate sdk.Dec
 				c.Fuzz(&rate)
@@ -188,7 +188,7 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 				(*e)[sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()).String()] = int64(c.Intn(100) + 1)
 			}
 		},
-		func(e *map[string]types.ExchangeRateBallots, c fuzz.Continue) {
+		func(e *map[common.AssetPair]types.ExchangeRateBallots, c fuzz.Continue) {
 			validators := map[string]int64{}
 			c.Fuzz(&validators)
 
@@ -215,18 +215,18 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 	input, _ := setup(t)
 
 	// test OracleKeeper.Pairs.Insert
-	voteTargets := map[string]struct{}{}
+	voteTargets := map[common.AssetPair]struct{}{}
 	f.Fuzz(&voteTargets)
 	whitelistedPairs := make(common.StringSet)
 	for key := range voteTargets {
 		assert.NotPanics(t, func() {
 			input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, key)
 		}, "attempted to insert key: %s", key)
-		whitelistedPairs.Add(key)
+		whitelistedPairs.Add(key.String())
 	}
 
 	// test OracleKeeper.RemoveInvalidBallots
-	voteMap := map[string]types.ExchangeRateBallots{}
+	voteMap := map[common.AssetPair]types.ExchangeRateBallots{}
 	f.Fuzz(&voteMap)
 
 	// Prevent collections error that arrises from iterating over a store with blank keys

@@ -7,6 +7,7 @@ import (
 
 	"github.com/NibiruChain/collections"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/oracle/keeper"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
@@ -100,7 +101,7 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 	}
 
 	exchangeRates := []types.ExchangeRateTuple{}
-	for _, er := range keeper.ExchangeRates.Iterate(ctx, collections.Range[string]{}).KeyValues() {
+	for _, er := range keeper.ExchangeRates.Iterate(ctx, collections.Range[common.AssetPair]{}).KeyValues() {
 		exchangeRates = append(exchangeRates, types.ExchangeRateTuple{Pair: er.Key, ExchangeRate: er.Value})
 	}
 
@@ -112,8 +113,8 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 		})
 	}
 
-	var pairs []string
-	pairs = append(pairs, keeper.WhitelistedPairs.Iterate(ctx, collections.Range[string]{}).Keys()...)
+	var pairs []common.AssetPair
+	pairs = append(pairs, keeper.WhitelistedPairs.Iterate(ctx, collections.Range[common.AssetPair]{}).Keys()...)
 
 	return types.NewGenesisState(params,
 		exchangeRates,

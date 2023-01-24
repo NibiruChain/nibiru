@@ -62,7 +62,10 @@ message QueryPositionsResponse {
 // QueryPositionRequest is the request type for the position of the x/perp
 // module account.
 message QueryPositionRequest {
-  string token_pair = 1;
+  string pair = 1 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.nullable) = false
+  ];
 
   string trader = 2;
 }

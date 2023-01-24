@@ -227,7 +227,7 @@ func TestRemoveMargin(t *testing.T) {
 				t.Log("Verify correct events emitted for 'RemoveMargin'")
 				testutilevents.RequireContainsTypedEvent(t, ctx,
 					&types.PositionChangedEvent{
-						Pair:               pair.String(),
+						Pair:               pair,
 						TraderAddress:      traderAddr.String(),
 						Margin:             sdk.NewInt64Coin(pair.QuoteDenom(), 54),
 						PositionNotional:   sdk.NewDec(300),

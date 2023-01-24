@@ -44,7 +44,10 @@ message ReserveSnapshotSavedEvent {
 // Amounts are negative or positive base on the perspective of the pool, i.e.
 // a negative quote means the trader has gained quote and the vpool lost quote. 
 message SwapOnVpoolEvent {
-  string pair  = 1;
+  string pair = 1 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.nullable) = false
+  ];
 
   // delta in the quote reserves of the vpool
   string quote_amount = 2 [

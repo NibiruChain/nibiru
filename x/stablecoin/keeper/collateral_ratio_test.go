@@ -81,7 +81,7 @@ func TestSetCollRatioUpdate(t *testing.T) {
 			stablecoinKeeper := &nibiruApp.StablecoinKeeper
 			oracleKeeper := &nibiruApp.OracleKeeper
 
-			oracleKeeper.SetPrice(ctx, common.Pair_USDC_NUSD.String(), tc.price)
+			oracleKeeper.SetPrice(ctx, common.Pair_USDC_NUSD, tc.price)
 			err := stablecoinKeeper.SetCollRatio(ctx, tc.inCollRatio)
 			require.NoError(t, err)
 			err = stablecoinKeeper.EvaluateCollRatio(ctx)
@@ -225,7 +225,7 @@ func TestStableRequiredForTargetCollRatio(t *testing.T) {
 				common.Pair_USDC_NUSD: tc.priceCollStable,
 			}
 			for _, pair := range tc.postedAssetPairs {
-				nibiruApp.OracleKeeper.SetPrice(ctx, pair.String(), prices[pair])
+				nibiruApp.OracleKeeper.SetPrice(ctx, pair, prices[pair])
 			}
 
 			neededUSD, err := stablecoinKeeper.StableRequiredForTargetCollRatio(ctx)
@@ -296,7 +296,7 @@ func TestRecollateralizeCollAmtForTargetCollRatio(t *testing.T) {
 
 			// Post the price
 			pair := common.Pair_USDC_NUSD
-			nibiruApp.OracleKeeper.SetPrice(ctx, pair.String(), tc.priceCollStable)
+			nibiruApp.OracleKeeper.SetPrice(ctx, pair, tc.priceCollStable)
 
 			neededCollAmount, err := stablecoinKeeper.RecollateralizeCollAmtForTargetCollRatio(ctx)
 			if tc.expectedPass {
@@ -334,10 +334,8 @@ func TestRecollateralizeCollAmtForTargetCollRatio(t *testing.T) {
 			))
 
 			// Post the price
-			pair := common.AssetPair{
-				Token0: common.DenomNUSD,
-				Token1: common.DenomUSDC}
-			nibiruApp.OracleKeeper.SetPrice(ctx, pair.String(), tc.priceCollStable)
+			pair := common.Pair_USDC_NUSD
+			nibiruApp.OracleKeeper.SetPrice(ctx, pair, tc.priceCollStable)
 
 			neededCollAmount, err := stablecoinKeeper.RecollateralizeCollAmtForTargetCollRatio(ctx)
 			if tc.expectedPass {
@@ -462,7 +460,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 				common.Pair_USDC_NUSD: tc.priceCollStable,
 			}
 			for _, pair := range tc.postedAssetPairs {
-				nibiruApp.OracleKeeper.SetPrice(ctx, pair.String(), prices[pair])
+				nibiruApp.OracleKeeper.SetPrice(ctx, pair, prices[pair])
 			}
 
 			// Post prices to each specified market with the oracle.
@@ -471,7 +469,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 				common.Pair_NIBI_NUSD: tc.priceGovStable,
 			}
 			for _, assetPair := range tc.postedAssetPairs {
-				nibiruApp.OracleKeeper.SetPrice(ctx, assetPair.String(), prices[assetPair])
+				nibiruApp.OracleKeeper.SetPrice(ctx, assetPair, prices[assetPair])
 			}
 
 			govOut, err := stablecoinKeeper.GovAmtFromFullRecollateralize(ctx)
@@ -722,7 +720,7 @@ func TestRecollateralize(t *testing.T) {
 				common.Pair_USDC_NUSD: tc.scenario.priceCollStable,
 			}
 			for _, pair := range tc.postedAssetPairs {
-				nibiruApp.OracleKeeper.SetPrice(ctx, pair.String(), prices[pair])
+				nibiruApp.OracleKeeper.SetPrice(ctx, pair, prices[pair])
 			}
 
 			// Post prices to each specified market with the oracle.
@@ -731,7 +729,7 @@ func TestRecollateralize(t *testing.T) {
 				common.Pair_NIBI_NUSD: tc.priceGovStable,
 			}
 			for _, assetPair := range tc.postedAssetPairs {
-				nibiruApp.OracleKeeper.SetPrice(ctx, assetPair.String(), prices[assetPair])
+				nibiruApp.OracleKeeper.SetPrice(ctx, assetPair, prices[assetPair])
 			}
 
 			goCtx := sdk.WrapSDKContext(ctx)
@@ -1095,12 +1093,12 @@ func TestBuyback(t *testing.T) {
 				common.Pair_USDC_NUSD: tc.scenario.priceCollStable,
 			}
 			for _, pair := range tc.postedAssetPairs {
-				nibiruApp.OracleKeeper.SetPrice(ctx, pair.String(), prices[pair])
+				nibiruApp.OracleKeeper.SetPrice(ctx, pair, prices[pair])
 			}
 
 			// Post prices to each specified market with the oracle.
 			for _, assetPair := range tc.postedAssetPairs {
-				nibiruApp.OracleKeeper.SetPrice(ctx, assetPair.String(), prices[assetPair])
+				nibiruApp.OracleKeeper.SetPrice(ctx, assetPair, prices[assetPair])
 			}
 
 			goCtx := sdk.WrapSDKContext(ctx)
@@ -1197,12 +1195,12 @@ func TestBuybackGovAmtForTargetCollRatio(t *testing.T) {
 				common.Pair_USDC_NUSD: tc.scenario.priceCollStable,
 			}
 			for _, pair := range tc.postedAssetPairs {
-				nibiruApp.OracleKeeper.SetPrice(ctx, pair.String(), prices[pair])
+				nibiruApp.OracleKeeper.SetPrice(ctx, pair, prices[pair])
 			}
 
 			// Post prices to each specified market with the oracle.
 			for _, assetPair := range tc.postedAssetPairs {
-				nibiruApp.OracleKeeper.SetPrice(ctx, assetPair.String(), prices[assetPair])
+				nibiruApp.OracleKeeper.SetPrice(ctx, assetPair, prices[assetPair])
 			}
 
 			outGovAmt, err := stablecoinKeeper.BuybackGovAmtForTargetCollRatio(ctx)

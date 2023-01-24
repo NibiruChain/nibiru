@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -14,14 +15,14 @@ import (
 
 // ExchangeRateBallot is a convenience wrapper to reduce redundant lookup cost
 type ExchangeRateBallot struct {
-	Pair         string
+	Pair         common.AssetPair
 	ExchangeRate sdk.Dec // aka price
 	Voter        sdk.ValAddress
 	Power        int64 // how much tendermint consensus power this vote should have
 }
 
 // NewExchangeRateBallot returns a new ExchangeRateBallot instance
-func NewExchangeRateBallot(rate sdk.Dec, pair string, voter sdk.ValAddress, power int64) ExchangeRateBallot {
+func NewExchangeRateBallot(rate sdk.Dec, pair common.AssetPair, voter sdk.ValAddress, power int64) ExchangeRateBallot {
 	return ExchangeRateBallot{
 		ExchangeRate: rate,
 		Pair:         pair,

@@ -56,14 +56,14 @@ func TestGenesisState_Validate(t *testing.T) {
 				Positions: []Position{
 					{
 						TraderAddress: testutil.AccAddress().String(),
-						Pair:          common.AssetPair{},
+						Pair:          "",
 					},
 				},
 			},
 			wantErr: true,
 		},
 		"bad pair metadata": {
-			g:       &GenesisState{Params: DefaultParams(), PairMetadata: []PairMetadata{{Pair: common.AssetPair{}}}},
+			g:       &GenesisState{Params: DefaultParams(), PairMetadata: []PairMetadata{{Pair: ""}}},
 			wantErr: true,
 		},
 

@@ -254,7 +254,10 @@ message FundingRateChangedEvent {
 }
 
 message MetricsEvent {
-  string pair  = 1;
+  string pair = 1 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.nullable) = false
+  ];
 
   // Sum of all active position sizes for the pair.
   string net_size = 2 [

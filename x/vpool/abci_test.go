@@ -80,7 +80,7 @@ func TestSnapshotUpdates(t *testing.T) {
 	assert.EqualValues(t, expectedSnapshot, snapshot)
 
 	testutil.RequireContainsTypedEvent(t, ctx, &types.ReserveSnapshotSavedEvent{
-		Pair:           expectedSnapshot.Pair.String(),
+		Pair:           expectedSnapshot.Pair,
 		QuoteReserve:   expectedSnapshot.QuoteAssetReserve,
 		BaseReserve:    expectedSnapshot.BaseAssetReserve,
 		MarkPrice:      snapshot.QuoteAssetReserve.Quo(snapshot.BaseAssetReserve),

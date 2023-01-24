@@ -187,10 +187,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("Build msg that specifies an impossible margin removal (too high)")
 				traderAddr := testutilevents.AccAddress()
-				pair := common.AssetPair{
-					Token0: "osmo",
-					Token1: "nusd",
-				}
+				pair := common.NewAssetPair("osmo", "nusd")
 
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
 
@@ -356,7 +353,7 @@ func TestRemoveMargin(t *testing.T) {
 				t.Log("Verify correct events emitted for 'RemoveMargin'")
 				testutilevents.RequireHasTypedEvent(t, ctx,
 					&types.PositionChangedEvent{
-						Pair:               pair.String(),
+						Pair:               pair,
 						TraderAddress:      traderAddr.String(),
 						Margin:             sdk.NewInt64Coin(pair.QuoteDenom(), 400),
 						PositionNotional:   sdk.NewDec(1000),
@@ -443,10 +440,7 @@ func TestAddMargin(t *testing.T) {
 				perpKeeper, mocks, ctx := getKeeper(t)
 
 				traderAddr := testutilevents.AccAddress()
-				pair := common.AssetPair{
-					Token0: "uosmo",
-					Token1: "unusd",
-				}
+				pair := common.NewAssetPair("uosmo", "unusd")
 				margin := sdk.NewInt64Coin(pair.QuoteDenom(), 600)
 
 				t.Log("set pair metadata")
@@ -530,7 +524,7 @@ func TestAddMargin(t *testing.T) {
 				t.Log("Verify correct events emitted")
 				testutilevents.RequireHasTypedEvent(t, ctx,
 					&types.PositionChangedEvent{
-						Pair:               pair.String(),
+						Pair:               pair,
 						TraderAddress:      traderAddr.String(),
 						Margin:             sdk.NewInt64Coin(pair.QuoteDenom(), 600),
 						PositionNotional:   sdk.NewDec(1000),
@@ -600,7 +594,7 @@ func TestAddMargin(t *testing.T) {
 				t.Log("Verify correct events emitted")
 				testutilevents.RequireHasTypedEvent(t, ctx,
 					&types.PositionChangedEvent{
-						Pair:               pair.String(),
+						Pair:               pair,
 						TraderAddress:      traderAddr.String(),
 						Margin:             sdk.NewInt64Coin(pair.QuoteDenom(), 599),
 						PositionNotional:   sdk.NewDec(1000),
@@ -745,7 +739,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockOracleKeeper.EXPECT().
 					GetExchangeRate(
 						ctx,
-						common.Pair_BTC_NUSD.String(),
+						common.Pair_BTC_NUSD,
 					).
 					Return(sdk.NewDec(2), nil)
 			},
@@ -766,7 +760,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockOracleKeeper.EXPECT().
 					GetExchangeRate(
 						ctx,
-						common.Pair_BTC_NUSD.String(),
+						common.Pair_BTC_NUSD,
 					).
 					Return(sdk.MustNewDecFromStr("0.5"), nil)
 			},
@@ -881,7 +875,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockOracleKeeper.EXPECT().
 					GetExchangeRate(
 						ctx,
-						common.Pair_BTC_NUSD.String(),
+						common.Pair_BTC_NUSD,
 					).
 					Return(sdk.MustNewDecFromStr("0.5"), nil)
 			},
@@ -902,7 +896,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockOracleKeeper.EXPECT().
 					GetExchangeRate(
 						ctx,
-						common.Pair_BTC_NUSD.String(),
+						common.Pair_BTC_NUSD,
 					).
 					Return(sdk.NewDec(2), nil)
 			},

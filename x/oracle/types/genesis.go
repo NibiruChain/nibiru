@@ -3,6 +3,7 @@ package types
 import (
 	"encoding/json"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/cosmos/cosmos-sdk/codec"
 )
 
@@ -12,7 +13,7 @@ func NewGenesisState(
 	feederDelegations []FeederDelegation, missCounters []MissCounter,
 	aggregateExchangeRatePrevotes []AggregateExchangeRatePrevote,
 	aggregateExchangeRateVotes []AggregateExchangeRateVote,
-	pairs []string,
+	pairs []common.AssetPair,
 	pairRewards []PairReward,
 ) *GenesisState {
 	return &GenesisState{
@@ -36,7 +37,7 @@ func DefaultGenesisState() *GenesisState {
 		[]MissCounter{},
 		[]AggregateExchangeRatePrevote{},
 		[]AggregateExchangeRateVote{},
-		[]string{},
+		[]common.AssetPair{},
 		[]PairReward{})
 }
 
