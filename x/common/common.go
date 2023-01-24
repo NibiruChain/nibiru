@@ -137,6 +137,39 @@ func (pair AssetPair) Equal(other AssetPair) bool {
 	return pair.String() == other.String()
 }
 
+var _ sdk.CustomProtobufType = (*AssetPair)(nil)
+
+func (pair AssetPair) Marshal() ([]byte, error) {
+	return []byte(pair.String()), nil
+}
+
+func (pair *AssetPair) Unmarshal(data []byte) error {
+	*pair = AssetPair(data)
+	return nil
+}
+
+func (pair AssetPair) MarshalJSON() ([]byte, error) {
+	return json.Marshal(pair.String())
+}
+
+func (pair *AssetPair) UnmarshalJSON(data []byte) error {
+	var pairString string
+	if err := json.Unmarshal(data, &pairString); err != nil {
+		return err
+	}
+	*pair = AssetPair(pairString)
+	return nil
+}
+
+func (pair AssetPair) MarshalTo(data []byte) (n int, err error) {
+	copy(data, pair.String())
+	return pair.Size(), nil
+}
+
+func (pair AssetPair) Size() int {
+	return len(pair.String())
+}
+
 var AssetPairKeyEncoder collections.KeyEncoder[AssetPair] = assetPairKeyEncoder{}
 
 type assetPairKeyEncoder struct{}
