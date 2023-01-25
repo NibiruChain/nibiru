@@ -108,12 +108,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/epochs"
 	epochskeeper "github.com/NibiruChain/nibiru/x/epochs/keeper"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
-	"github.com/NibiruChain/nibiru/x/incentivization"
-	incentivizationkeeper "github.com/NibiruChain/nibiru/x/incentivization/keeper"
-	incentivizationtypes "github.com/NibiruChain/nibiru/x/incentivization/types"
-	"github.com/NibiruChain/nibiru/x/lockup"
-	lockupkeeper "github.com/NibiruChain/nibiru/x/lockup/keeper"
-	lockuptypes "github.com/NibiruChain/nibiru/x/lockup/types"
 	"github.com/NibiruChain/nibiru/x/oracle"
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
@@ -180,8 +174,6 @@ var (
 		epochs.AppModuleBasic{},
 		stablecoin.AppModuleBasic{},
 		perp.AppModuleBasic{},
-		lockup.AppModuleBasic{},
-		incentivization.AppModuleBasic{},
 		vpool.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 	)
@@ -202,7 +194,6 @@ var (
 		perptypes.PerpEFModuleAccount:         {},
 		perptypes.FeePoolModuleAccount:        {},
 		epochstypes.ModuleName:                {},
-		lockuptypes.ModuleName:                {authtypes.Minter, authtypes.Burner},
 		oracletypes.ModuleName:                {},
 		stablecointypes.StableEFModuleAccount: {authtypes.Burner},
 		common.TreasuryPoolModuleAccount:      {},
@@ -273,14 +264,12 @@ type NibiruTestApp struct {
 	// ---------------
 	// Nibiru keepers
 	// ---------------
-	OracleKeeper          oraclekeeper.Keeper
-	DexKeeper             dexkeeper.Keeper
-	StablecoinKeeper      stablecoinkeeper.Keeper
-	PerpKeeper            perpkeeper.Keeper
-	EpochsKeeper          epochskeeper.Keeper
-	LockupKeeper          lockupkeeper.Keeper
-	IncentivizationKeeper incentivizationkeeper.Keeper
-	VpoolKeeper           vpoolkeeper.Keeper
+	OracleKeeper     oraclekeeper.Keeper
+	DexKeeper        dexkeeper.Keeper
+	StablecoinKeeper stablecoinkeeper.Keeper
+	PerpKeeper       perpkeeper.Keeper
+	EpochsKeeper     epochskeeper.Keeper
+	VpoolKeeper      vpoolkeeper.Keeper
 
 	// WASM keepers
 	wasmKeeper       wasm.Keeper
@@ -349,9 +338,7 @@ func NewNibiruTestApp(
 		dextypes.StoreKey,
 		stablecointypes.StoreKey,
 		epochstypes.StoreKey,
-		lockuptypes.StoreKey,
 		perptypes.StoreKey,
-		incentivizationtypes.StoreKey,
 		vpooltypes.StoreKey,
 		wasm.StoreKey,
 	)
@@ -475,14 +462,6 @@ func NewNibiruTestApp(
 		epochstypes.NewMultiEpochHooks(app.StablecoinKeeper.Hooks(), app.PerpKeeper.Hooks()),
 	)
 
-	app.LockupKeeper = lockupkeeper.NewLockupKeeper(appCodec,
-		keys[lockuptypes.StoreKey], app.AccountKeeper, app.BankKeeper,
-		app.DistrKeeper)
-
-	app.IncentivizationKeeper = incentivizationkeeper.NewKeeper(appCodec,
-		keys[incentivizationtypes.StoreKey], app.AccountKeeper, app.BankKeeper, app.DexKeeper, app.LockupKeeper,
-	)
-
 	// ---------------------------------- IBC keepers
 
 	app.IBCKeeper = ibckeeper.NewKeeper(
@@ -594,7 +573,6 @@ func NewNibiruTestApp(
 		appCodec, app.StablecoinKeeper, app.AccountKeeper, app.BankKeeper,
 		nil,
 	)
-	lockupModule := lockup.NewAppModule(appCodec, app.LockupKeeper, app.AccountKeeper, app.BankKeeper)
 	perpModule := perp.NewAppModule(
 		appCodec, app.PerpKeeper, app.AccountKeeper, app.BankKeeper,
 		nil,
@@ -602,7 +580,6 @@ func NewNibiruTestApp(
 	vpoolModule := vpool.NewAppModule(
 		appCodec, app.VpoolKeeper, nil,
 	)
-	incentivizationModule := incentivization.NewAppModule(appCodec, app.IncentivizationKeeper, app.AccountKeeper)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
@@ -629,11 +606,9 @@ func NewNibiruTestApp(
 		oracleModule,
 		dexModule,
 		stablecoinModule,
-		lockupModule,
 		epochsModule,
 		vpoolModule,
 		perpModule,
-		incentivizationModule,
 		// ibc
 		evidence.NewAppModule(app.EvidenceKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
@@ -669,8 +644,6 @@ func NewNibiruTestApp(
 		stablecointypes.ModuleName,
 		vpooltypes.ModuleName,
 		perptypes.ModuleName,
-		lockuptypes.ModuleName,
-		incentivizationtypes.ModuleName,
 		oracletypes.ModuleName,
 		// ibc modules
 		ibchost.ModuleName,
@@ -701,8 +674,6 @@ func NewNibiruTestApp(
 		stablecointypes.ModuleName,
 		vpooltypes.ModuleName,
 		perptypes.ModuleName,
-		lockuptypes.ModuleName,
-		incentivizationtypes.ModuleName,
 		// ibc
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
@@ -738,8 +709,6 @@ func NewNibiruTestApp(
 		stablecointypes.ModuleName,
 		vpooltypes.ModuleName,
 		perptypes.ModuleName,
-		lockuptypes.ModuleName,
-		incentivizationtypes.ModuleName,
 		// ibc
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
