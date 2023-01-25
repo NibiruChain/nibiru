@@ -4,7 +4,6 @@ name: CosmWasm e2e contract tests
 on:
   # On normal PRs or when workflow goreleaser finishes, as it gets the last release tag.
   pull_request:
-    paths: ["**.go", "**.proto", "go.mod", "go.sum"]
   workflow_run:
     workflows: ["goreleaser"]
     types:
@@ -36,8 +35,8 @@ jobs:
 
       - name: launch localnet
         run: |
-          sh ./scripts/e2e/localnet.sh
+          sh ./contrib/scripts/e2e/localnet.sh
 
       - name: run e2e tests
         run: |
-          sh ./scripts/e2e/deploy-wasm.sh
+          sh ./contrib/scripts/e2e/deploy-wasm.sh
