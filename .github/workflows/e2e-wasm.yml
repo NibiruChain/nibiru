@@ -4,6 +4,10 @@ name: CosmWasm e2e contract tests
 on:
   # On normal PRs or when workflow goreleaser finishes, as it gets the last release tag.
   pull_request:
+  workflow_run:
+    workflows: ["goreleaser"]
+    types:
+      - completed
   workflow_dispatch:
 
 jobs:
@@ -31,7 +35,7 @@ jobs:
 
       - name: launch localnet
         run: |
-          sh ./scripts/e2e/localnet.sh
+          sh ./contrib/scripts/localnet.sh
 
       - name: run e2e tests
         run: |
