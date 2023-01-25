@@ -23,7 +23,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 	vpoolGenesis := types.GenesisState{
 		Vpools: []types.Vpool{
 			{
-				Pair:              common.Pair_BTC_NUSD,
+				Pair:              common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
 				QuoteAssetReserve: sdk.NewDec(10e12).Add(simtypes.RandomDecAmount(simState.Rand, sdk.NewDec(10e12))),
 				BaseAssetReserve:  sdk.NewDec(10e12).Add(simtypes.RandomDecAmount(simState.Rand, sdk.NewDec(10e12))),
 				Config: types.VpoolConfig{

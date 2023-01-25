@@ -17,7 +17,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 		Params: types.DefaultParams(),
 		PairMetadata: []types.PairMetadata{
 			{
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
 		},

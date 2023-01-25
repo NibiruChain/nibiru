@@ -36,8 +36,8 @@ func NewTestNibiruAppAndContext(shouldUseDefaultGenesis bool) (*NibiruTestApp, s
 	newNibiruApp := NewTestNibiruApp(shouldUseDefaultGenesis)
 	ctx := newNibiruApp.NewContext(false, tmproto.Header{})
 
-	newNibiruApp.OracleKeeper.SetPrice(ctx, common.Pair_BTC_NUSD, sdk.NewDec(20000))
-	// newNibiruApp.OracleKeeper.SetPrice(ctx, common.Pair_NIBI_NUSD, sdk.NewDec(10))
+	newNibiruApp.OracleKeeper.SetPrice(ctx, common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD), sdk.NewDec(20000))
+	// newNibiruApp.OracleKeeper.SetPrice(ctx, common.AssetRegistry.Pair(common.DenomNIBI, common.DenomNUSD), sdk.NewDec(10))
 	newNibiruApp.OracleKeeper.SetPrice(ctx, "xxx:yyy", sdk.NewDec(20000))
 
 	return newNibiruApp, ctx

@@ -63,7 +63,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			name:        "existing long position, go more long",
 			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 1020)),
 			initialPosition: &types.Position{
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
 				Size_:                           sdk.NewDec(10_000),
 				Margin:                          sdk.NewDec(1000),
 				OpenNotional:                    sdk.NewDec(10_000),
@@ -87,7 +87,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			name:        "existing long position, decrease a bit",
 			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 10)),
 			initialPosition: &types.Position{
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
 				Size_:                           sdk.NewDec(10_000),
 				Margin:                          sdk.NewDec(1000),
 				OpenNotional:                    sdk.NewDec(10_000),
@@ -111,7 +111,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			name:        "existing long position, decrease a lot",
 			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 1060)),
 			initialPosition: &types.Position{
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
 				Size_:                           sdk.NewDec(10_000),
 				Margin:                          sdk.NewDec(1000),
 				OpenNotional:                    sdk.NewDec(10_000),
@@ -169,7 +169,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			name:        "existing short position, go more short",
 			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 1020)),
 			initialPosition: &types.Position{
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
 				Size_:                           sdk.NewDec(-10_000),
 				Margin:                          sdk.NewDec(1000),
 				OpenNotional:                    sdk.NewDec(10_000),
@@ -193,7 +193,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			name:        "existing short position, decrease a bit",
 			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 10)),
 			initialPosition: &types.Position{
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
 				Size_:                           sdk.NewDec(-10_000),
 				Margin:                          sdk.NewDec(1000),
 				OpenNotional:                    sdk.NewDec(10_000),
@@ -217,7 +217,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			name:        "existing short position, decrease a lot",
 			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 1060)),
 			initialPosition: &types.Position{
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
 				Size_:                           sdk.NewDec(-10_000),
 				Margin:                          sdk.NewDec(1000),
 				OpenNotional:                    sdk.NewDec(10_000),
@@ -267,7 +267,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			t.Log("initialize vpool")
 			assert.NoError(t, nibiruApp.VpoolKeeper.CreatePool(
 				ctx,
-				common.Pair_BTC_NUSD,
+				common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
 				/* quoteReserve */ sdk.NewDec(1*common.Precision*common.Precision),
 				/* baseReserve */ sdk.NewDec(1*common.Precision*common.Precision),
 				vpooltypes.VpoolConfig{
@@ -279,7 +279,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 				},
 			))
 			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
@@ -294,11 +294,11 @@ func TestOpenPositionSuccess(t *testing.T) {
 			}
 
 			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(ctx.BlockTime().Add(time.Second * 5))
-			resp, err := nibiruApp.PerpKeeper.OpenPosition(ctx, common.Pair_BTC_NUSD, tc.side, traderAddr, tc.margin, tc.leverage, tc.baseLimit)
+			resp, err := nibiruApp.PerpKeeper.OpenPosition(ctx, common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD), tc.side, traderAddr, tc.margin, tc.leverage, tc.baseLimit)
 			require.NoError(t, err)
 
 			t.Log("assert position response")
-			assert.EqualValues(t, common.Pair_BTC_NUSD, resp.Position.Pair)
+			assert.EqualValues(t, common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD), resp.Position.Pair)
 			assert.EqualValues(t, traderAddr.String(), resp.Position.TraderAddress)
 			assert.EqualValues(t, tc.expectedMargin, resp.Position.Margin, "margin")
 			assert.EqualValues(t, tc.expectedOpenNotional, resp.Position.OpenNotional, "open notional")
@@ -315,9 +315,9 @@ func TestOpenPositionSuccess(t *testing.T) {
 			assert.EqualValues(t, tc.expectedPositionNotional, resp.PositionNotional)
 
 			t.Log("assert position in state")
-			position, err := nibiruApp.PerpKeeper.Positions.Get(ctx, collections.Join(common.Pair_BTC_NUSD, traderAddr))
+			position, err := nibiruApp.PerpKeeper.Positions.Get(ctx, collections.Join(common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD), traderAddr))
 			require.NoError(t, err)
-			assert.EqualValues(t, common.Pair_BTC_NUSD, position.Pair)
+			assert.EqualValues(t, common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD), position.Pair)
 			assert.EqualValues(t, traderAddr.String(), position.TraderAddress)
 			assert.EqualValues(t, tc.expectedMargin, position.Margin, "margin")
 			assert.EqualValues(t, tc.expectedOpenNotional, position.OpenNotional, "open notional")
@@ -330,7 +330,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			ecosystemFundFee := nibiruApp.PerpKeeper.GetParams(ctx).EcosystemFundFeeRatio.Mul(exchangedNotional).RoundInt()
 
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionChangedEvent{
-				Pair:               common.Pair_BTC_NUSD,
+				Pair:               common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
 				TraderAddress:      traderAddr.String(),
 				Margin:             sdk.NewCoin(common.DenomNUSD, tc.expectedMargin.RoundInt()),
 				PositionNotional:   tc.expectedPositionNotional,
@@ -384,7 +384,7 @@ func TestOpenPositionError(t *testing.T) {
 			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 999)),
 			poolTradeLimitRatio: sdk.OneDec(),
 			initialPosition: &types.Position{
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
 				Size_:                           sdk.OneDec(),
 				Margin:                          sdk.NewDec(1000),
 				OpenNotional:                    sdk.NewDec(10_000),
@@ -519,7 +519,7 @@ func TestOpenPositionError(t *testing.T) {
 			t.Log("initialize vpool")
 			assert.NoError(t, nibiruApp.VpoolKeeper.CreatePool(
 				ctx,
-				common.Pair_BTC_NUSD,
+				common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
 				/* tradeLimitRatio */
 				/* quoteReserve */
 				sdk.NewDec(1*common.Precision*common.Precision),
@@ -533,7 +533,7 @@ func TestOpenPositionError(t *testing.T) {
 				},
 			))
 			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
@@ -547,7 +547,7 @@ func TestOpenPositionError(t *testing.T) {
 			}
 
 			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(ctx.BlockTime().Add(time.Second * 5))
-			resp, err := nibiruApp.PerpKeeper.OpenPosition(ctx, common.Pair_BTC_NUSD, tc.side, traderAddr, tc.margin, tc.leverage, tc.baseLimit)
+			resp, err := nibiruApp.PerpKeeper.OpenPosition(ctx, common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD), tc.side, traderAddr, tc.margin, tc.leverage, tc.baseLimit)
 			require.ErrorContains(t, err, tc.expectedErr.Error())
 			require.Nil(t, resp)
 		})

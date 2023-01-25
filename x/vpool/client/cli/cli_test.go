@@ -34,8 +34,8 @@ func TestIntegrationTestSuite(t *testing.T) {
 }
 
 var START_VPOOLS = map[common.AssetPair]vpooltypes.Vpool{
-	common.Pair_ETH_NUSD: {
-		Pair:              common.Pair_ETH_NUSD,
+	common.AssetRegistry.Pair(common.DenomETH, common.DenomNUSD): {
+		Pair:              common.AssetRegistry.Pair(common.DenomETH, common.DenomNUSD),
 		BaseAssetReserve:  sdk.NewDec(10 * common.Precision),
 		QuoteAssetReserve: sdk.NewDec(60_000 * common.Precision),
 		Config: vpooltypes.VpoolConfig{
@@ -46,8 +46,8 @@ var START_VPOOLS = map[common.AssetPair]vpooltypes.Vpool{
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
 	},
-	common.Pair_NIBI_NUSD: {
-		Pair:              common.Pair_NIBI_NUSD,
+	common.AssetRegistry.Pair(common.DenomNIBI, common.DenomNUSD): {
+		Pair:              common.AssetRegistry.Pair(common.DenomNIBI, common.DenomNUSD),
 		BaseAssetReserve:  sdk.NewDec(500_000),
 		QuoteAssetReserve: sdk.NewDec(5 * common.Precision),
 		Config: vpooltypes.VpoolConfig{
@@ -73,14 +73,14 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	genesisState := simapp.NewTestGenesisStateFromDefault()
 	vpoolGenesis := vpooltypes.DefaultGenesis()
 	vpoolGenesis.Vpools = []vpooltypes.Vpool{
-		START_VPOOLS[common.Pair_ETH_NUSD],
-		START_VPOOLS[common.Pair_NIBI_NUSD],
+		START_VPOOLS[common.AssetRegistry.Pair(common.DenomETH, common.DenomNUSD)],
+		START_VPOOLS[common.AssetRegistry.Pair(common.DenomNIBI, common.DenomNUSD)],
 	}
 
 	oracleGenesis := oracletypes.DefaultGenesisState()
 	oracleGenesis.ExchangeRates = []oracletypes.ExchangeRateTuple{
-		{Pair: common.Pair_ETH_NUSD, ExchangeRate: sdk.NewDec(1_000)},
-		{Pair: common.Pair_NIBI_NUSD, ExchangeRate: sdk.NewDec(10)},
+		{Pair: common.AssetRegistry.Pair(common.DenomETH, common.DenomNUSD), ExchangeRate: sdk.NewDec(1_000)},
+		{Pair: common.AssetRegistry.Pair(common.DenomNIBI, common.DenomNUSD), ExchangeRate: sdk.NewDec(10)},
 	}
 	oracleGenesis.Params.VotePeriod = 1_000
 
@@ -168,13 +168,13 @@ func (s *IntegrationTestSuite) TestGetPrices() {
 	val := s.network.Validators[0]
 
 	s.T().Log("check vpool balances")
-	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, common.Pair_ETH_NUSD)
+	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, common.AssetRegistry.Pair(common.DenomETH, common.DenomNUSD))
 	s.NoError(err)
 	s.EqualValues(sdk.MustNewDecFromStr("10000000"), reserveAssets.BaseAssetReserve)
 	s.EqualValues(sdk.MustNewDecFromStr("60000000000"), reserveAssets.QuoteAssetReserve)
 
 	s.T().Log("check prices")
-	priceInfo, err := testutilcli.QueryBaseAssetPrice(val.ClientCtx, common.Pair_ETH_NUSD, "add", "100")
+	priceInfo, err := testutilcli.QueryBaseAssetPrice(val.ClientCtx, common.AssetRegistry.Pair(common.DenomETH, common.DenomNUSD), "add", "100")
 	s.T().Logf("priceInfo: %+v", priceInfo)
 	s.EqualValues(sdk.MustNewDecFromStr("599994.000059999400006000"), priceInfo.PriceInQuoteDenom)
 	s.NoError(err)
@@ -186,7 +186,7 @@ func (s *IntegrationTestSuite) TestCmdEditPoolConfigProposal() {
 	// ----------------------------------------------------------------------
 	s.T().Log("load example proposal json as bytes")
 	// ----------------------------------------------------------------------
-	startVpool := START_VPOOLS[common.Pair_ETH_NUSD]
+	startVpool := START_VPOOLS[common.AssetRegistry.Pair(common.DenomETH, common.DenomNUSD)]
 	proposal := &vpooltypes.EditPoolConfigProposal{
 		Title:       "NIP-3: Edit config of the ueth:unusd vpool",
 		Description: "enables higher max leverage on ueth:unusd",
@@ -252,7 +252,7 @@ func (s *IntegrationTestSuite) TestCmdEditSwapInvariantsProposal() {
 	// ----------------------------------------------------------------------
 	s.T().Log("load example proposal json as bytes")
 	// ----------------------------------------------------------------------
-	startVpool := START_VPOOLS[common.Pair_NIBI_NUSD]
+	startVpool := START_VPOOLS[common.AssetRegistry.Pair(common.DenomNIBI, common.DenomNUSD)]
 	proposal := &vpooltypes.EditSwapInvariantsProposal{
 		Title:       "NIP-4: Change the swap invariant for ATOM, OSMO, and BTC.",
 		Description: "increase swap invariant for many virtual pools",

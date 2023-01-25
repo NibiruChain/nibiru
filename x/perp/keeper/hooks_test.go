@@ -50,7 +50,7 @@ func TestEndOfEpochTwapCalculation(t *testing.T) {
 			markPrice:                               sdk.NewDec(10),
 			expectedLatestCumulativePremiumFraction: sdk.ZeroDec(),
 			expectedFundingRateChangedEvent: &types.FundingRateChangedEvent{
-				Pair:                      common.Pair_BTC_NUSD,
+				Pair:                      common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
 				MarkPrice:                 sdk.NewDec(10),
 				IndexPrice:                sdk.NewDec(10),
 				LatestFundingRate:         sdk.ZeroDec(),
@@ -66,7 +66,7 @@ func TestEndOfEpochTwapCalculation(t *testing.T) {
 			indexPrice:                              sdk.NewDec(462),
 			expectedLatestCumulativePremiumFraction: sdk.MustNewDecFromStr("-9.229166666666666666"),
 			expectedFundingRateChangedEvent: &types.FundingRateChangedEvent{
-				Pair:                      common.Pair_BTC_NUSD,
+				Pair:                      common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
 				MarkPrice:                 sdk.NewDec(19),
 				IndexPrice:                sdk.NewDec(462),
 				LatestFundingRate:         sdk.MustNewDecFromStr("-0.019976551226551227"),
@@ -82,7 +82,7 @@ func TestEndOfEpochTwapCalculation(t *testing.T) {
 			indexPrice:                              sdk.NewDec(64),
 			expectedLatestCumulativePremiumFraction: sdk.MustNewDecFromStr("14.1875"),
 			expectedFundingRateChangedEvent: &types.FundingRateChangedEvent{
-				Pair:                      common.Pair_BTC_NUSD,
+				Pair:                      common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
 				MarkPrice:                 sdk.NewDec(745),
 				IndexPrice:                sdk.NewDec(64),
 				LatestFundingRate:         sdk.MustNewDecFromStr("0.2216796875"),
@@ -107,7 +107,7 @@ func TestEndOfEpochTwapCalculation(t *testing.T) {
 			perpKeeper.AfterEpochEnd(ctx, "30 min", 1)
 
 			t.Log("assert PairMetadataState")
-			pair, err := perpKeeper.PairsMetadata.Get(ctx, common.Pair_BTC_NUSD)
+			pair, err := perpKeeper.PairsMetadata.Get(ctx, common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD))
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedLatestCumulativePremiumFraction, pair.LatestCumulativePremiumFraction)
 
@@ -130,23 +130,23 @@ func initParams(ctx sdk.Context, k Keeper) {
 		TwapLookbackWindow:      15 * time.Minute,
 	})
 	setPairMetadata(k, ctx, types.PairMetadata{
-		Pair: common.Pair_BTC_NUSD,
+		Pair: common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
 		// start with one entry to ensure we append
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 	})
 }
 
 func setMocks(ctx sdk.Context, mocks mockedDependencies, indexPrice sdk.Dec, markPrice sdk.Dec) {
-	mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.Pair_BTC_NUSD).Return(true)
+	mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD)).Return(true)
 
 	mocks.mockEpochKeeper.EXPECT().GetEpochInfo(ctx, "30 min").Return(
 		epochtypes.EpochInfo{Duration: 30 * time.Minute},
 	).MaxTimes(1)
 
 	mocks.mockOracleKeeper.EXPECT().
-		GetExchangeRateTwap(ctx, common.Pair_BTC_NUSD).Return(indexPrice, nil).MaxTimes(1)
+		GetExchangeRateTwap(ctx, common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD)).Return(indexPrice, nil).MaxTimes(1)
 
 	mocks.mockVpoolKeeper.EXPECT().
-		GetMarkPriceTWAP(ctx, common.Pair_BTC_NUSD, 15*time.Minute).
+		GetMarkPriceTWAP(ctx, common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD), 15*time.Minute).
 		Return(markPrice, nil).MaxTimes(1)
 }

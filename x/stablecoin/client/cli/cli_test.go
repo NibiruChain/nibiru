@@ -54,8 +54,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	oracleGenesis := oracletypes.DefaultGenesisState()
 	oracleGenesis.ExchangeRates = []oracletypes.ExchangeRateTuple{
-		{Pair: common.Pair_NIBI_NUSD, ExchangeRate: sdk.NewDec(10)},
-		{Pair: common.Pair_USDC_NUSD, ExchangeRate: sdk.NewDec(1)},
+		{Pair: common.AssetRegistry.Pair(common.DenomNIBI, common.DenomNUSD), ExchangeRate: sdk.NewDec(10)},
+		{Pair: common.AssetRegistry.Pair(common.DenomUSDC, common.DenomNUSD), ExchangeRate: sdk.NewDec(1)},
 	}
 	oracleGenesis.Params.VotePeriod = 1_000
 

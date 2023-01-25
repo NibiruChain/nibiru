@@ -144,7 +144,7 @@ func TestMarshalProposalEditPoolConfig(t *testing.T) {
 	proposal := EditPoolConfigProposal{
 		Title:       "Edit vpool config for NIBI:NUSD",
 		Description: "I want to take 100x leverage on my NIBI",
-		Pair:        common.Pair_NIBI_NUSD,
+		Pair:        common.AssetRegistry.Pair(common.DenomNIBI, common.DenomNUSD),
 		Config: VpoolConfig{
 			MaxLeverage:            sdk.MustNewDecFromStr("100"),
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),

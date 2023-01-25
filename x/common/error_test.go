@@ -86,12 +86,12 @@ func TestCombineErrorsGeneric(t *testing.T) {
 		{name: "type=[]string | mixed", in: []string{"", "abc", ""}, out: errors.New(": abc: ")},
 
 		// cases: fmt.Stringer
-		{name: "type=fmt.Stringer |", in: common.Pair_USDC_NUSD, out: errors.New("uusdc:unusd")},
+		{name: "type=fmt.Stringer |", in: common.AssetRegistry.Pair(common.DenomUSDC, common.DenomNUSD), out: errors.New("uusdc:unusd")},
 
 		// cases: []fmt.Stringer
 		{
 			name: "type=[]fmt.Stringer | happy",
-			in:   []fmt.Stringer{common.Pair_BTC_NUSD, common.Pair_ETH_NUSD},
+			in:   []fmt.Stringer{common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD), common.AssetRegistry.Pair(common.DenomETH, common.DenomNUSD)},
 			out:  errors.New("ubtc:unusd: ueth:unusd")},
 		{name: "type=[]fmt.Stringer | empty", in: []fmt.Stringer{}, out: nil},
 	}

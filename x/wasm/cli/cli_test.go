@@ -48,7 +48,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	vpoolGenesis := vpooltypes.DefaultGenesis()
 	vpoolGenesis.Vpools = []vpooltypes.Vpool{
 		{
-			Pair:              common.Pair_ETH_NUSD,
+			Pair:              common.AssetRegistry.Pair(common.DenomETH, common.DenomNUSD),
 			BaseAssetReserve:  sdk.NewDec(10 * common.Precision),
 			QuoteAssetReserve: sdk.NewDec(60_000 * common.Precision),
 			Config: vpooltypes.VpoolConfig{

@@ -75,7 +75,7 @@ func SimulateMsgOpenPosition(ak types.AccountKeeper, bk types.BankKeeper, k keep
 
 		msg := &types.MsgOpenPosition{
 			Sender:               simAccount.Address.String(),
-			Pair:                 common.Pair_BTC_NUSD,
+			Pair:                 common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
 			Side:                 side,
 			QuoteAssetAmount:     quoteAmt,
 			Leverage:             leverage,
@@ -170,14 +170,14 @@ func SimulateMsgClosePosition(ak types.AccountKeeper, bk types.BankKeeper, k kee
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 		trader := simAccount.Address.String()
-		pair := common.Pair_BTC_NUSD
+		pair := common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD)
 
 		msg := &types.MsgClosePosition{
 			Sender: trader,
 			Pair:   pair,
 		}
 
-		_, err := k.Positions.Get(ctx, collections.Join(common.Pair_BTC_NUSD, simAccount.Address))
+		_, err := k.Positions.Get(ctx, collections.Join(common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD), simAccount.Address))
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "no position opened yet"), nil, nil
 		}
@@ -208,10 +208,10 @@ func SimulateMsgAddMargin(ak types.AccountKeeper, bk types.BankKeeper, k keeper.
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 		trader := simAccount.Address.String()
-		pair := common.Pair_BTC_NUSD
+		pair := common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD)
 
 		msg := &types.MsgAddMargin{}
-		_, err := k.Positions.Get(ctx, collections.Join(common.Pair_BTC_NUSD, simAccount.Address))
+		_, err := k.Positions.Get(ctx, collections.Join(common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD), simAccount.Address))
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "no position opened yet"), nil, nil
 		}
@@ -257,11 +257,11 @@ func SimulateMsgRemoveMargin(ak types.AccountKeeper, bk types.BankKeeper, k keep
 	) (opMsg simtypes.OperationMsg, futureOps []simtypes.FutureOperation, err error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 		trader := simAccount.Address.String()
-		pair := common.Pair_BTC_NUSD
+		pair := common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD)
 
 		msg := &types.MsgRemoveMargin{}
 
-		position, err := k.Positions.Get(ctx, collections.Join(common.Pair_BTC_NUSD, simAccount.Address))
+		position, err := k.Positions.Get(ctx, collections.Join(common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD), simAccount.Address))
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "no position opened yet"), nil, nil
 		}

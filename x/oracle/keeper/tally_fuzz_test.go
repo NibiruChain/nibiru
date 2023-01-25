@@ -131,11 +131,11 @@ func TestRemoveInvalidBallots(t *testing.T) {
 				"x": types.ExchangeRateBallots{
 					{Pair: "x", ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
 				},
-				common.Pair_BTC_NUSD: types.ExchangeRateBallots{
-					{Pair: common.Pair_BTC_NUSD, ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
+				common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD): types.ExchangeRateBallots{
+					{Pair: common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD), ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
 				},
-				common.Pair_ETH_NUSD: types.ExchangeRateBallots{
-					{Pair: common.Pair_BTC_NUSD, ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
+				common.AssetRegistry.Pair(common.DenomETH, common.DenomNUSD): types.ExchangeRateBallots{
+					{Pair: common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD), ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
 				},
 			},
 		},

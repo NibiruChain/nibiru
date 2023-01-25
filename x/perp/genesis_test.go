@@ -39,9 +39,9 @@ func TestGenesis(t *testing.T) {
 		// create some positions
 		for i := int64(0); i < 100; i++ {
 			addr := testutil.AccAddress()
-			app.PerpKeeper.Positions.Insert(ctx, collections.Join(common.Pair_NIBI_NUSD, addr), types.Position{
+			app.PerpKeeper.Positions.Insert(ctx, collections.Join(common.AssetRegistry.Pair(common.DenomNIBI, common.DenomNUSD), addr), types.Position{
 				TraderAddress:                   addr.String(),
-				Pair:                            common.Pair_NIBI_NUSD,
+				Pair:                            common.AssetRegistry.Pair(common.DenomNIBI, common.DenomNUSD),
 				Size_:                           sdk.NewDec(i + 1),
 				Margin:                          sdk.NewDec(i * 2),
 				OpenNotional:                    sdk.NewDec(i * 100),

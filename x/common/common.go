@@ -101,7 +101,7 @@ func (pair AssetPair) QuoteDenom() string {
 func (pair AssetPair) Validate() error {
 	split := strings.Split(pair.String(), PairSeparator)
 	if len(split) != 2 {
-		return ErrInvalidTokenPair.Wrapf("invalid pair: %s", pair)
+		return ErrInvalidTokenPair.Wrap(pair.String())
 	}
 
 	if err := sdk.ValidateDenom(split[0]); err != nil {

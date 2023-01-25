@@ -13,9 +13,13 @@ func init() {
 		DenomNIBI: {DenomUSDC, DenomNUSD, DenomUSD, DenomUSDT},
 		DenomATOM: {DenomUSDC, DenomNUSD, DenomUSD, DenomUSDT},
 		DenomOSMO: {DenomUSDC, DenomNUSD, DenomUSD, DenomUSDT},
-		DenomNUSD: {DenomUSD},
-		DenomUSDC: {DenomUSD},
-		DenomUSDT: {DenomUSD},
+		DenomAVAX: {DenomUSDC, DenomNUSD, DenomUSD, DenomUSDT},
+		DenomSOL:  {DenomUSDC, DenomNUSD, DenomUSD, DenomUSDT},
+		DenomBNB:  {DenomUSDC, DenomNUSD, DenomUSD, DenomUSDT},
+		DenomADA:  {DenomUSDC, DenomNUSD, DenomUSD, DenomUSDT},
+		DenomNUSD: {DenomUSD, DenomUSDC},
+		DenomUSDC: {DenomUSD, DenomNUSD},
+		DenomUSDT: {DenomUSD, DenomNUSD, DenomUSDC},
 	}
 }
 
