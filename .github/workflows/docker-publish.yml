@@ -1,7 +1,5 @@
 name: Publish Latest Docker Image
 
-name: ci
-
 on:
   push:
     branches:
