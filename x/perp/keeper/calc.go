@@ -90,11 +90,11 @@ func (k Keeper) calcFreeCollateral(
 	ctx sdk.Context, pos types.Position,
 ) (freeCollateral sdk.Dec, err error) {
 	if err = pos.Pair.Validate(); err != nil {
-		return sdk.Dec{}, err
+		return
 	}
 
 	if err = k.requireVpool(ctx, pos.Pair); err != nil {
-		return sdk.Dec{}, err
+		return
 	}
 
 	positionNotional, unrealizedPnL, err := k.
@@ -104,11 +104,14 @@ func (k Keeper) calcFreeCollateral(
 			types.PnLPreferenceOption_MIN,
 		)
 	if err != nil {
-		return sdk.Dec{}, err
+		return
 	}
 	remainingMargin := sdk.MinDec(pos.Margin, pos.Margin.Add(unrealizedPnL))
 
-	maintenanceMarginRatio := k.VpoolKeeper.GetMaintenanceMarginRatio(ctx, pos.GetPair())
+	maintenanceMarginRatio, err := k.VpoolKeeper.GetMaintenanceMarginRatio(ctx, pos.Pair)
+	if err != nil {
+		return
+	}
 	maintenanceMarginRequirement := positionNotional.Mul(maintenanceMarginRatio)
 
 	return remainingMargin.Sub(maintenanceMarginRequirement), nil
@@ -124,7 +127,7 @@ func (k Keeper) getLatestCumulativePremiumFraction(
 		k.Logger(ctx).Error(
 			err.Error(),
 			"pair",
-			pair.String(),
+			pair,
 		)
 		return sdk.Dec{}, err
 	}

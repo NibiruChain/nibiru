@@ -75,8 +75,8 @@ func (k Keeper) SwapBaseForQuote(
 		return sdk.ZeroDec(), nil
 	}
 
-	if _, err = k.oracleKeeper.GetExchangeRate(ctx, pair.String()); err != nil {
-		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair.String())
+	if _, err = k.oracleKeeper.GetExchangeRate(ctx, pair); err != nil {
+		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair)
 	}
 
 	pool, err := k.Pools.Get(ctx, pair)
@@ -123,7 +123,7 @@ func (k Keeper) executeSwap(
 
 	// -------------------- Emit events
 	if err = ctx.EventManager().EmitTypedEvent(&types.MarkPriceChangedEvent{
-		Pair:           vpool.Pair.String(),
+		Pair:           vpool.Pair,
 		Price:          vpool.GetMarkPrice(),
 		BlockTimestamp: ctx.BlockTime(),
 	}); err != nil {
@@ -131,7 +131,7 @@ func (k Keeper) executeSwap(
 	}
 
 	if err = ctx.EventManager().EmitTypedEvent(&types.SwapOnVpoolEvent{
-		Pair:        vpool.Pair.String(),
+		Pair:        vpool.Pair,
 		QuoteAmount: quoteDelta,
 		BaseAmount:  baseDelta,
 	}); err != nil {
@@ -172,8 +172,8 @@ func (k Keeper) SwapQuoteForBase(
 		return sdk.ZeroDec(), nil
 	}
 
-	if _, err = k.oracleKeeper.GetExchangeRate(ctx, pair.String()); err != nil {
-		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair.String())
+	if _, err = k.oracleKeeper.GetExchangeRate(ctx, pair); err != nil {
+		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair)
 	}
 
 	pool, err := k.Pools.Get(ctx, pair)
@@ -288,18 +288,18 @@ args:
 ret:
   - bool: whether the price has deviated from the oracle price beyond a spread ratio
 */
-func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) bool {
+func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) (bool, error) {
 	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
-		panic(err)
+		return false, err
 	}
 
-	indexPrice, err := k.oracleKeeper.GetExchangeRate(ctx, pair.String())
+	indexPrice, err := k.oracleKeeper.GetExchangeRate(ctx, pair)
 	if err != nil {
-		panic(err)
+		return false, err
 	}
 
-	return pool.IsOverSpreadLimit(indexPrice)
+	return pool.IsOverSpreadLimit(indexPrice), nil
 }
 
 /*
@@ -311,14 +311,15 @@ args:
 
 ret:
   - sdk.Dec: The maintenance margin ratio for the pool
+  - error
 */
-func (k Keeper) GetMaintenanceMarginRatio(ctx sdk.Context, pair common.AssetPair) sdk.Dec {
+func (k Keeper) GetMaintenanceMarginRatio(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error) {
 	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
-		panic(err)
+		return sdk.Dec{}, err
 	}
 
-	return pool.Config.MaintenanceMarginRatio
+	return pool.Config.MaintenanceMarginRatio, nil
 }
 
 /*
@@ -330,14 +331,15 @@ args:
 
 ret:
   - sdk.Dec: The maintenance margin ratio for the pool
+  - error
 */
-func (k Keeper) GetMaxLeverage(ctx sdk.Context, pair common.AssetPair) sdk.Dec {
+func (k Keeper) GetMaxLeverage(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error) {
 	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
-		panic(err)
+		return sdk.Dec{}, err
 	}
 
-	return pool.Config.MaxLeverage
+	return pool.Config.MaxLeverage, nil
 }
 
 /*

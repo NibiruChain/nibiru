@@ -44,9 +44,9 @@ type BankKeeper interface {
 }
 
 type OracleKeeper interface {
-	GetExchangeRate(ctx sdk.Context, pair string) (sdk.Dec, error)
-	GetExchangeRateTwap(ctx sdk.Context, pair string) (sdk.Dec, error)
-	SetPrice(ctx sdk.Context, pair string, price sdk.Dec)
+	GetExchangeRate(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error)
+	GetExchangeRateTwap(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error)
+	SetPrice(ctx sdk.Context, pair common.AssetPair, price sdk.Dec)
 }
 
 type VpoolKeeper interface {
@@ -103,9 +103,9 @@ type VpoolKeeper interface {
 
 	GetAllPools(ctx sdk.Context) []vpooltypes.Vpool
 
-	IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) bool
-	GetMaintenanceMarginRatio(ctx sdk.Context, pair common.AssetPair) sdk.Dec
-	GetMaxLeverage(ctx sdk.Context, pair common.AssetPair) sdk.Dec
+	IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) (bool, error)
+	GetMaintenanceMarginRatio(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error)
+	GetMaxLeverage(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error)
 	ExistsPool(ctx sdk.Context, pair common.AssetPair) bool
 	GetSettlementPrice(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error)
 	GetLastSnapshot(ctx sdk.Context, pool vpooltypes.Vpool) (vpooltypes.ReserveSnapshot, error)

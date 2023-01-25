@@ -14,6 +14,7 @@ import (
 
 	"github.com/NibiruChain/collections"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
@@ -28,27 +29,24 @@ type Keeper struct {
 	distrKeeper   types.DistributionKeeper
 	StakingKeeper types.StakingKeeper
 
-	distrName string
+	distrModuleName string
 
-	// TODO(mercilex): use asset pair
-	ExchangeRates     collections.Map[string, sdk.Dec]
+	ExchangeRates     collections.Map[common.AssetPair, sdk.Dec]
 	FeederDelegations collections.Map[sdk.ValAddress, sdk.AccAddress]
 	MissCounters      collections.Map[sdk.ValAddress, uint64]
 	Prevotes          collections.Map[sdk.ValAddress, types.AggregateExchangeRatePrevote]
 	Votes             collections.Map[sdk.ValAddress, types.AggregateExchangeRateVote]
 
 	// PriceSnapshots maps types.PriceSnapshot to the common.AssetPair of the snapshot and the creation timestamp as keys.Uint64Key.
-	PriceSnapshots collections.Map[collections.Pair[string, time.Time], types.PriceSnapshot]
-
-	// TODO(mercilex): use asset pair
-	Pairs         collections.KeySet[string]
-	PairRewards   collections.IndexedMap[uint64, types.PairReward, PairRewardsIndexes]
-	PairRewardsID collections.Sequence
+	PriceSnapshots   collections.Map[collections.Pair[common.AssetPair, time.Time], types.PriceSnapshot]
+	WhitelistedPairs collections.KeySet[common.AssetPair]
+	PairRewards      collections.IndexedMap[uint64, types.PairReward, PairRewardsIndexes]
+	PairRewardsID    collections.Sequence
 }
 
 type PairRewardsIndexes struct {
 	// RewardsByPair is the index that maps rewards associated with specific pairs.
-	RewardsByPair collections.MultiIndex[string, uint64, types.PairReward]
+	RewardsByPair collections.MultiIndex[common.AssetPair, uint64, types.PairReward]
 }
 
 func (p PairRewardsIndexes) IndexerList() []collections.Indexer[uint64, types.PairReward] {
@@ -78,19 +76,19 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
 		bankKeeper:        bankKeeper,
 		distrKeeper:       distrKeeper,
 		StakingKeeper:     stakingKeeper,
-		distrName:         distrName,
-		ExchangeRates:     collections.NewMap(storeKey, 1, collections.StringKeyEncoder, collections.DecValueEncoder),
-		PriceSnapshots:    collections.NewMap(storeKey, 10, collections.PairKeyEncoder(collections.StringKeyEncoder, collections.TimeKeyEncoder), collections.ProtoValueEncoder[types.PriceSnapshot](cdc)),
+		distrModuleName:   distrName,
+		ExchangeRates:     collections.NewMap(storeKey, 1, common.AssetPairKeyEncoder, collections.DecValueEncoder),
+		PriceSnapshots:    collections.NewMap(storeKey, 10, collections.PairKeyEncoder(common.AssetPairKeyEncoder, collections.TimeKeyEncoder), collections.ProtoValueEncoder[types.PriceSnapshot](cdc)),
 		FeederDelegations: collections.NewMap(storeKey, 2, collections.ValAddressKeyEncoder, collections.AccAddressValueEncoder),
 		MissCounters:      collections.NewMap(storeKey, 3, collections.ValAddressKeyEncoder, collections.Uint64ValueEncoder),
 		Prevotes:          collections.NewMap(storeKey, 4, collections.ValAddressKeyEncoder, collections.ProtoValueEncoder[types.AggregateExchangeRatePrevote](cdc)),
 		Votes:             collections.NewMap(storeKey, 5, collections.ValAddressKeyEncoder, collections.ProtoValueEncoder[types.AggregateExchangeRateVote](cdc)),
-		Pairs:             collections.NewKeySet(storeKey, 6, collections.StringKeyEncoder),
+		WhitelistedPairs:  collections.NewKeySet(storeKey, 6, common.AssetPairKeyEncoder),
 		PairRewards: collections.NewIndexedMap(
 			storeKey, 7,
 			collections.Uint64KeyEncoder, collections.ProtoValueEncoder[types.PairReward](cdc),
 			PairRewardsIndexes{
-				RewardsByPair: collections.NewMultiIndex(storeKey, 8, collections.StringKeyEncoder, collections.Uint64KeyEncoder, func(v types.PairReward) string {
+				RewardsByPair: collections.NewMultiIndex(storeKey, 8, common.AssetPairKeyEncoder, collections.Uint64KeyEncoder, func(v types.PairReward) common.AssetPair {
 					return v.Pair
 				}),
 			}),
@@ -157,11 +155,15 @@ func (k Keeper) calcTwap(ctx sdk.Context, snapshots []types.PriceSnapshot) (pric
 	return cumulativePrice.QuoInt64(ctx.BlockTime().UnixMilli() - firstTimeStamp), nil
 }
 
-func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair string) (price sdk.Dec, err error) {
+func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair common.AssetPair) (price sdk.Dec, err error) {
 	snapshots := k.PriceSnapshots.Iterate(
 		ctx,
-		collections.PairRange[string, time.Time]{}.
-			Prefix(pair).StartExclusive(ctx.BlockTime().Add(-1*k.GetParams(ctx).TwapLookbackWindow)).EndInclusive(ctx.BlockTime()),
+		collections.PairRange[common.AssetPair, time.Time]{}.
+			Prefix(pair).
+			StartExclusive(
+				ctx.BlockTime().Add(-1*k.GetParams(ctx).TwapLookbackWindow)).
+			EndInclusive(
+				ctx.BlockTime()),
 	).Values()
 
 	if len(snapshots) == 0 {
@@ -172,12 +174,12 @@ func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair string) (price sdk.Dec
 	return k.calcTwap(ctx, snapshots)
 }
 
-func (k Keeper) GetExchangeRate(ctx sdk.Context, pair string) (price sdk.Dec, err error) {
+func (k Keeper) GetExchangeRate(ctx sdk.Context, pair common.AssetPair) (price sdk.Dec, err error) {
 	return k.ExchangeRates.Get(ctx, pair)
 }
 
 // SetPrice sets the price for a pair as well as the price snapshot.
-func (k Keeper) SetPrice(ctx sdk.Context, pair string, price sdk.Dec) {
+func (k Keeper) SetPrice(ctx sdk.Context, pair common.AssetPair, price sdk.Dec) {
 	k.ExchangeRates.Insert(ctx, pair, price)
 
 	key := collections.Join(pair, ctx.BlockTime())

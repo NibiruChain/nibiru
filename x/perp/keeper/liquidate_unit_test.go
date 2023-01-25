@@ -108,10 +108,13 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 			})
 
 			t.Log("mock vpool keeper")
-			mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.Pair_BTC_NUSD).Return(true).Times(2)
-			mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, common.Pair_BTC_NUSD).Return(sdk.MustNewDecFromStr("0.0625"))
+			mocks.mockVpoolKeeper.EXPECT().
+				ExistsPool(ctx, common.Pair_BTC_NUSD).Return(true).Times(2)
+			mocks.mockVpoolKeeper.EXPECT().
+				GetMaintenanceMarginRatio(ctx, common.Pair_BTC_NUSD).
+				Return(sdk.MustNewDecFromStr("0.0625"), nil)
 
-			mocks.mockVpoolKeeper.EXPECT().IsOverSpreadLimit(ctx, common.Pair_BTC_NUSD).Return(false)
+			mocks.mockVpoolKeeper.EXPECT().IsOverSpreadLimit(ctx, common.Pair_BTC_NUSD).Return(false, nil)
 			markPrice := tc.newPositionNotional.Quo(tc.initialPositionSize)
 			mocks.mockVpoolKeeper.EXPECT().GetMarkPrice(ctx, common.Pair_BTC_NUSD).Return(markPrice, nil)
 
@@ -192,7 +195,7 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 			assert.EqualValues(t, ctx.BlockHeight(), newPosition.BlockNumber)
 
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
-				Pair:                  common.Pair_BTC_NUSD.String(),
+				Pair:                  common.Pair_BTC_NUSD,
 				TraderAddress:         traderAddr.String(),
 				ExchangedQuoteAmount:  tc.exchangedNotional,
 				ExchangedPositionSize: tc.exchangedSize.Neg(),
@@ -280,9 +283,12 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 			})
 
 			t.Log("mock vpool keeper")
-			mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.Pair_BTC_NUSD).Return(true).Times(2)
-			mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, common.Pair_BTC_NUSD).Return(sdk.MustNewDecFromStr("0.0625"))
-			mocks.mockVpoolKeeper.EXPECT().IsOverSpreadLimit(ctx, common.Pair_BTC_NUSD).Return(false)
+			mocks.mockVpoolKeeper.EXPECT().
+				ExistsPool(ctx, common.Pair_BTC_NUSD).Return(true).Times(2)
+			mocks.mockVpoolKeeper.EXPECT().
+				GetMaintenanceMarginRatio(ctx, common.Pair_BTC_NUSD).
+				Return(sdk.MustNewDecFromStr("0.0625"), nil)
+			mocks.mockVpoolKeeper.EXPECT().IsOverSpreadLimit(ctx, common.Pair_BTC_NUSD).Return(false, nil)
 			markPrice := tc.newPositionNotional.Quo(tc.initialPositionSize)
 			mocks.mockVpoolKeeper.EXPECT().GetMarkPrice(ctx, common.Pair_BTC_NUSD).Return(markPrice, nil)
 
@@ -351,7 +357,7 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 			assert.Empty(t, newPosition)
 
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
-				Pair:                  common.Pair_BTC_NUSD.String(),
+				Pair:                  common.Pair_BTC_NUSD,
 				TraderAddress:         traderAddr.String(),
 				ExchangedQuoteAmount:  tc.newPositionNotional,
 				ExchangedPositionSize: tc.initialPositionSize.Neg(),
@@ -448,9 +454,12 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 			})
 
 			t.Log("mock vpool keeper")
-			mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.Pair_BTC_NUSD).Return(true).Times(2)
-			mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, common.Pair_BTC_NUSD).Return(sdk.MustNewDecFromStr("0.0625"))
-			mocks.mockVpoolKeeper.EXPECT().IsOverSpreadLimit(ctx, common.Pair_BTC_NUSD).Return(false)
+			mocks.mockVpoolKeeper.EXPECT().
+				ExistsPool(ctx, common.Pair_BTC_NUSD).Return(true).Times(2)
+			mocks.mockVpoolKeeper.EXPECT().
+				GetMaintenanceMarginRatio(ctx, common.Pair_BTC_NUSD).
+				Return(sdk.MustNewDecFromStr("0.0625"), nil)
+			mocks.mockVpoolKeeper.EXPECT().IsOverSpreadLimit(ctx, common.Pair_BTC_NUSD).Return(false, nil)
 			markPrice := tc.newPositionNotional.Quo(tc.initialPositionSize)
 			mocks.mockVpoolKeeper.EXPECT().GetMarkPrice(ctx, common.Pair_BTC_NUSD).Return(markPrice, nil)
 
@@ -522,7 +531,7 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 			assert.Empty(t, newPosition)
 
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
-				Pair:                  common.Pair_BTC_NUSD.String(),
+				Pair:                  common.Pair_BTC_NUSD,
 				TraderAddress:         traderAddr.String(),
 				ExchangedQuoteAmount:  tc.newPositionNotional,
 				ExchangedPositionSize: tc.initialPositionSize.Neg(),
@@ -995,7 +1004,7 @@ func TestKeeper_ExecuteFullLiquidation(t *testing.T) {
 			assert.EqualValues(t, ctx.BlockHeight(), newPosition.BlockNumber)
 
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
-				Pair:                  common.Pair_BTC_NUSD.String(),
+				Pair:                  common.Pair_BTC_NUSD,
 				TraderAddress:         traderAddr.String(),
 				ExchangedQuoteAmount:  positionResp.ExchangedNotionalValue,
 				ExchangedPositionSize: positionResp.ExchangedPositionSize,
@@ -1309,7 +1318,7 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 			assert.EqualValues(t, tc.expectedPositionMargin, newPosition.Margin)
 
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
-				Pair:                  common.Pair_BTC_NUSD.String(),
+				Pair:                  common.Pair_BTC_NUSD,
 				TraderAddress:         traderAddr.String(),
 				ExchangedQuoteAmount:  positionResp.ExchangedNotionalValue,
 				ExchangedPositionSize: positionResp.ExchangedPositionSize,

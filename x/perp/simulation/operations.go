@@ -75,7 +75,7 @@ func SimulateMsgOpenPosition(ak types.AccountKeeper, bk types.BankKeeper, k keep
 
 		msg := &types.MsgOpenPosition{
 			Sender:               simAccount.Address.String(),
-			TokenPair:            common.Pair_BTC_NUSD.String(),
+			Pair:                 common.Pair_BTC_NUSD,
 			Side:                 side,
 			QuoteAssetAmount:     quoteAmt,
 			Leverage:             leverage,
@@ -170,11 +170,11 @@ func SimulateMsgClosePosition(ak types.AccountKeeper, bk types.BankKeeper, k kee
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 		trader := simAccount.Address.String()
-		pair := common.Pair_BTC_NUSD.String()
+		pair := common.Pair_BTC_NUSD
 
 		msg := &types.MsgClosePosition{
-			Sender:    trader,
-			TokenPair: pair,
+			Sender: trader,
+			Pair:   pair,
 		}
 
 		_, err := k.Positions.Get(ctx, collections.Join(common.Pair_BTC_NUSD, simAccount.Address))
@@ -208,7 +208,7 @@ func SimulateMsgAddMargin(ak types.AccountKeeper, bk types.BankKeeper, k keeper.
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 		trader := simAccount.Address.String()
-		pair := common.Pair_BTC_NUSD.String()
+		pair := common.Pair_BTC_NUSD
 
 		msg := &types.MsgAddMargin{}
 		_, err := k.Positions.Get(ctx, collections.Join(common.Pair_BTC_NUSD, simAccount.Address))
@@ -226,9 +226,9 @@ func SimulateMsgAddMargin(ak types.AccountKeeper, bk types.BankKeeper, k keeper.
 		spentCoin := sdk.NewCoin(common.DenomNUSD, quoteAmt)
 
 		msg = &types.MsgAddMargin{
-			Sender:    trader,
-			TokenPair: pair,
-			Margin:    spentCoin,
+			Sender: trader,
+			Pair:   pair,
+			Margin: spentCoin,
 		}
 
 		return simulation.GenAndDeliverTxWithRandFees(
@@ -254,10 +254,10 @@ func SimulateMsgAddMargin(ak types.AccountKeeper, bk types.BankKeeper, k keeper.
 func SimulateMsgRemoveMargin(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
-	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+	) (opMsg simtypes.OperationMsg, futureOps []simtypes.FutureOperation, err error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 		trader := simAccount.Address.String()
-		pair := common.Pair_BTC_NUSD.String()
+		pair := common.Pair_BTC_NUSD
 
 		msg := &types.MsgRemoveMargin{}
 
@@ -267,7 +267,10 @@ func SimulateMsgRemoveMargin(ak types.AccountKeeper, bk types.BankKeeper, k keep
 		}
 
 		//simple calculation, might still fail due to funding rate or unrealizedPnL
-		maintenanceMarginRatio := k.VpoolKeeper.GetMaintenanceMarginRatio(ctx, position.GetPair())
+		maintenanceMarginRatio, err := k.VpoolKeeper.GetMaintenanceMarginRatio(ctx, position.Pair)
+		if err != nil {
+			return
+		}
 		maintenanceMarginRequirement := position.OpenNotional.Mul(maintenanceMarginRatio)
 		maxMarginToRemove := position.Margin.Sub(maintenanceMarginRequirement).Quo(sdk.NewDec(2))
 
@@ -280,12 +283,12 @@ func SimulateMsgRemoveMargin(ak types.AccountKeeper, bk types.BankKeeper, k keep
 		expectedCoin := sdk.NewCoin(common.DenomNUSD, marginToRemove)
 
 		msg = &types.MsgRemoveMargin{
-			Sender:    trader,
-			TokenPair: pair,
-			Margin:    expectedCoin,
+			Sender: trader,
+			Pair:   pair,
+			Margin: expectedCoin,
 		}
 
-		opMsg, futureOps, err := simulation.GenAndDeliverTxWithRandFees(
+		opMsg, futureOps, err = simulation.GenAndDeliverTxWithRandFees(
 			simulation.OperationInput{
 				R:               r,
 				App:             app,
@@ -302,8 +305,8 @@ func SimulateMsgRemoveMargin(ak types.AccountKeeper, bk types.BankKeeper, k keep
 			},
 		)
 		if err != nil {
-			fmt.Println(expectedCoin)
-			fmt.Println(maxMarginToRemove)
+			errDebugHelper := fmt.Errorf("expectedCoin: %s, maxMarginToRemove: %s", expectedCoin, maxMarginToRemove)
+			err = common.CombineErrors(err, errDebugHelper)
 		}
 
 		return opMsg, futureOps, err

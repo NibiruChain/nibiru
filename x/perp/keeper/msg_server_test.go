@@ -76,7 +76,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 			traderAddr := testutil.AccAddress()
 
 			t.Log("create vpool")
-			app.VpoolKeeper.CreatePool(
+			assert.NoError(t, app.VpoolKeeper.CreatePool(
 				ctx,
 				common.Pair_BTC_NUSD,
 				/* quoteReserve */ sdk.NewDec(1*common.Precision),
@@ -88,7 +88,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-			)
+			))
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            common.Pair_BTC_NUSD,
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -104,9 +104,9 @@ func TestMsgServerAddMargin(t *testing.T) {
 			}
 
 			resp, err := msgServer.AddMargin(sdk.WrapSDKContext(ctx), &types.MsgAddMargin{
-				Sender:    traderAddr.String(),
-				TokenPair: common.Pair_BTC_NUSD.String(),
-				Margin:    tc.margin,
+				Sender: traderAddr.String(),
+				Pair:   common.Pair_BTC_NUSD,
+				Margin: tc.margin,
 			})
 
 			if tc.expectedErr != nil {
@@ -197,7 +197,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			traderAddr := testutil.AccAddress()
 
 			t.Log("create vpool")
-			app.VpoolKeeper.CreatePool(
+			assert.NoError(t, app.VpoolKeeper.CreatePool(
 				ctx,
 				common.Pair_BTC_NUSD,
 				/* quoteReserve */ sdk.NewDec(1*common.Precision),
@@ -209,7 +209,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-			)
+			))
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            common.Pair_BTC_NUSD,
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -227,9 +227,9 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second * 5)).WithBlockHeight(ctx.BlockHeight() + 1)
 
 			resp, err := msgServer.RemoveMargin(sdk.WrapSDKContext(ctx), &types.MsgRemoveMargin{
-				Sender:    traderAddr.String(),
-				TokenPair: common.Pair_BTC_NUSD.String(),
-				Margin:    tc.marginToRemove,
+				Sender: traderAddr.String(),
+				Pair:   common.Pair_BTC_NUSD,
+				Margin: tc.marginToRemove,
 			})
 
 			if tc.expectedErr != nil {
@@ -254,25 +254,23 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 
 func TestMsgServerOpenPosition(t *testing.T) {
 	tests := []struct {
-		name string
-
+		name        string
 		traderFunds sdk.Coins
-		pair        string
+		pair        common.AssetPair
 		sender      string
-
 		expectedErr error
 	}{
 		{
 			name:        "trader not enough funds",
 			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 999)),
-			pair:        common.Pair_BTC_NUSD.String(),
+			pair:        common.Pair_BTC_NUSD,
 			sender:      testutil.AccAddress().String(),
 			expectedErr: sdkerrors.ErrInsufficientFunds,
 		},
 		{
 			name:        "success",
 			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(common.DenomNUSD, 1020)),
-			pair:        common.Pair_BTC_NUSD.String(),
+			pair:        common.Pair_BTC_NUSD,
 			sender:      testutil.AccAddress().String(),
 			expectedErr: nil,
 		},
@@ -286,7 +284,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
 			t.Log("create vpool")
-			app.VpoolKeeper.CreatePool(
+			assert.NoError(t, app.VpoolKeeper.CreatePool(
 				/* ctx */ ctx,
 				/* pair */ common.Pair_BTC_NUSD,
 				/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
@@ -298,7 +296,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-			)
+			))
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            common.Pair_BTC_NUSD,
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -316,7 +314,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 
 			resp, err := msgServer.OpenPosition(sdk.WrapSDKContext(ctx), &types.MsgOpenPosition{
 				Sender:               tc.sender,
-				TokenPair:            tc.pair,
+				Pair:                 tc.pair,
 				Side:                 types.Side_BUY,
 				QuoteAssetAmount:     sdk.NewInt(1000),
 				Leverage:             sdk.NewDec(10),
@@ -373,7 +371,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 
 			t.Log("create vpool")
 
-			app.VpoolKeeper.CreatePool(
+			assert.NoError(t, app.VpoolKeeper.CreatePool(
 				ctx,
 				common.Pair_BTC_NUSD,
 				/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
@@ -385,7 +383,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-			)
+			))
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            common.Pair_BTC_NUSD,
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -404,8 +402,8 @@ func TestMsgServerClosePosition(t *testing.T) {
 			require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(tc.pair.QuoteDenom(), 1))))
 
 			resp, err := msgServer.ClosePosition(sdk.WrapSDKContext(ctx), &types.MsgClosePosition{
-				Sender:    tc.traderAddr.String(),
-				TokenPair: tc.pair.String(),
+				Sender: tc.traderAddr.String(),
+				Pair:   tc.pair,
 			})
 
 			if tc.expectedErr != nil {
@@ -428,7 +426,7 @@ func TestMsgServerLiquidate(t *testing.T) {
 	tests := []struct {
 		name string
 
-		pair       string
+		pair       common.AssetPair
 		liquidator string
 		trader     string
 
@@ -436,7 +434,7 @@ func TestMsgServerLiquidate(t *testing.T) {
 	}{
 		{
 			name:        "success",
-			pair:        common.Pair_BTC_NUSD.String(),
+			pair:        common.Pair_BTC_NUSD,
 			liquidator:  testutil.AccAddress().String(),
 			trader:      testutil.AccAddress().String(),
 			expectedErr: nil,
@@ -452,7 +450,7 @@ func TestMsgServerLiquidate(t *testing.T) {
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
 			t.Log("create vpool")
-			app.VpoolKeeper.CreatePool(
+			assert.NoError(t, app.VpoolKeeper.CreatePool(
 				/* ctx */ ctx,
 				/* pair */ common.Pair_BTC_NUSD,
 				/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
@@ -464,36 +462,35 @@ func TestMsgServerLiquidate(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-			)
+			))
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            common.Pair_BTC_NUSD,
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
 
-			pair, err := common.NewAssetPair(tc.pair)
-			traderAddr, err2 := sdk.AccAddressFromBech32(tc.trader)
-			if err == nil && err2 == nil {
+			traderAddr, err := sdk.AccAddressFromBech32(tc.trader)
+			if err == nil {
 				t.Log("set oracle price")
-				app.OracleKeeper.SetPrice(ctx, common.Pair_BTC_NUSD.String(), sdk.OneDec())
+				app.OracleKeeper.SetPrice(ctx, common.Pair_BTC_NUSD, sdk.OneDec())
 
 				t.Log("create position")
 				setPosition(app.PerpKeeper, ctx, types.Position{
 					TraderAddress:                   traderAddr.String(),
-					Pair:                            pair,
+					Pair:                            tc.pair,
 					Size_:                           sdk.OneDec(),
 					Margin:                          sdk.OneDec(),
 					OpenNotional:                    sdk.NewDec(2), // new spot price is 1, so position can be liquidated
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 					BlockNumber:                     1,
 				})
-				require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 1))))
+				require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(tc.pair.QuoteDenom(), 1))))
 			}
 
 			resp, err := msgServer.Liquidate(sdk.WrapSDKContext(ctx), &types.MsgLiquidate{
-				Sender:    tc.liquidator,
-				TokenPair: tc.pair,
-				Trader:    tc.trader,
+				Sender: tc.liquidator,
+				Pair:   tc.pair,
+				Trader: tc.trader,
 			})
 
 			if tc.expectedErr != nil {
@@ -526,7 +523,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	atRiskTrader2 := testutil.AccAddress()
 
 	t.Log("create vpool")
-	app.VpoolKeeper.CreatePool(
+	assert.NoError(t, app.VpoolKeeper.CreatePool(
 		/* ctx */ ctx,
 		/* pair */ pair,
 		/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
@@ -538,7 +535,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
-	)
+	))
 	setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 		Pair:                            pair,
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -546,7 +543,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
 
 	t.Log("set oracle price")
-	app.OracleKeeper.SetPrice(ctx, common.Pair_BTC_NUSD.String(), sdk.OneDec())
+	app.OracleKeeper.SetPrice(ctx, common.Pair_BTC_NUSD, sdk.OneDec())
 
 	t.Log("create positions")
 	atRiskPosition1 := types.Position{
@@ -586,16 +583,16 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 		Sender: liquidator.String(),
 		Liquidations: []*types.MsgMultiLiquidate_MultiLiquidation{
 			{
-				TokenPair: pair.String(),
-				Trader:    atRiskTrader1.String(),
+				Pair:   pair,
+				Trader: atRiskTrader1.String(),
 			},
 			{
-				TokenPair: pair.String(),
-				Trader:    notAtRiskTrader.String(),
+				Pair:   pair,
+				Trader: notAtRiskTrader.String(),
 			},
 			{
-				TokenPair: pair.String(),
-				Trader:    atRiskTrader2.String(),
+				Pair:   pair,
+				Trader: atRiskTrader2.String(),
 			},
 		},
 	})

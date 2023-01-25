@@ -20,20 +20,28 @@ func (k Keeper) CreatePool(
 	quoteAssetReserve sdk.Dec,
 	baseAssetReserve sdk.Dec,
 	config types.VpoolConfig,
-) {
+) error {
 	vpool := types.Vpool{
 		Pair:              pair,
 		BaseAssetReserve:  baseAssetReserve,
 		QuoteAssetReserve: quoteAssetReserve,
 		Config:            config,
 	}
-	k.Pools.Insert(ctx, pair, vpool)
 
-	k.ReserveSnapshots.Insert(
-		ctx,
-		collections.Join(pair, ctx.BlockTime()),
-		vpool.ToSnapshot(ctx),
-	)
+	err := vpool.Validate()
+	if err != nil {
+		return err
+	}
+	err = common.TryCatch(func() {
+		k.Pools.Insert(ctx, pair, vpool)
+
+		k.ReserveSnapshots.Insert(
+			ctx,
+			collections.Join(pair, ctx.BlockTime()),
+			vpool.ToSnapshot(ctx),
+		)
+	})()
+	return err
 }
 
 func (k Keeper) EditPoolConfig(
@@ -76,7 +84,7 @@ func (k Keeper) EditSwapInvariant(
 	}
 
 	// Grab current pool from state
-	vpool, err := k.Pools.Get(ctx, common.MustNewAssetPair(swapInvariantMap.Pair))
+	vpool, err := k.Pools.Get(ctx, swapInvariantMap.Pair)
 	if err != nil {
 		return err
 	}
@@ -170,7 +178,7 @@ func (k Keeper) GetPoolPrices(
 		return types.PoolPrices{}, err
 	}
 
-	indexPrice, err := k.oracleKeeper.GetExchangeRate(ctx, pool.Pair.String())
+	indexPrice, err := k.oracleKeeper.GetExchangeRate(ctx, pool.Pair)
 	if err != nil {
 		// fail gracefully so that vpool queries run even if the oracle price feeds stop
 		k.Logger(ctx).Error(err.Error())
@@ -190,7 +198,7 @@ func (k Keeper) GetPoolPrices(
 	}
 
 	return types.PoolPrices{
-		Pair:          pool.Pair.String(),
+		Pair:          pool.Pair,
 		MarkPrice:     pool.QuoteAssetReserve.Quo(pool.BaseAssetReserve),
 		TwapMark:      twapMark.String(),
 		IndexPrice:    indexPrice.String(),

@@ -212,7 +212,7 @@ func (m *MockOracleKeeper) EXPECT() *MockOracleKeeperMockRecorder {
 }
 
 // GetExchangeRate mocks base method.
-func (m *MockOracleKeeper) GetExchangeRate(arg0 types1.Context, arg1 string) (types1.Dec, error) {
+func (m *MockOracleKeeper) GetExchangeRate(arg0 types1.Context, arg1 common.AssetPair) (types1.Dec, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetExchangeRate", arg0, arg1)
 	ret0, _ := ret[0].(types1.Dec)
@@ -227,7 +227,7 @@ func (mr *MockOracleKeeperMockRecorder) GetExchangeRate(arg0, arg1 interface{}) 
 }
 
 // GetExchangeRateTwap mocks base method.
-func (m *MockOracleKeeper) GetExchangeRateTwap(arg0 types1.Context, arg1 string) (types1.Dec, error) {
+func (m *MockOracleKeeper) GetExchangeRateTwap(arg0 types1.Context, arg1 common.AssetPair) (types1.Dec, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetExchangeRateTwap", arg0, arg1)
 	ret0, _ := ret[0].(types1.Dec)
@@ -242,7 +242,7 @@ func (mr *MockOracleKeeperMockRecorder) GetExchangeRateTwap(arg0, arg1 interface
 }
 
 // SetPrice mocks base method.
-func (m *MockOracleKeeper) SetPrice(arg0 types1.Context, arg1 string, arg2 types1.Dec) {
+func (m *MockOracleKeeper) SetPrice(arg0 types1.Context, arg1 common.AssetPair, arg2 types1.Dec) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SetPrice", arg0, arg1, arg2)
 }
@@ -350,11 +350,12 @@ func (mr *MockVpoolKeeperMockRecorder) GetLastSnapshot(arg0, arg1 interface{}) *
 }
 
 // GetMaintenanceMarginRatio mocks base method.
-func (m *MockVpoolKeeper) GetMaintenanceMarginRatio(arg0 types1.Context, arg1 common.AssetPair) types1.Dec {
+func (m *MockVpoolKeeper) GetMaintenanceMarginRatio(arg0 types1.Context, arg1 common.AssetPair) (types1.Dec, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetMaintenanceMarginRatio", arg0, arg1)
 	ret0, _ := ret[0].(types1.Dec)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // GetMaintenanceMarginRatio indicates an expected call of GetMaintenanceMarginRatio.
@@ -394,11 +395,12 @@ func (mr *MockVpoolKeeperMockRecorder) GetMarkPriceTWAP(arg0, arg1, arg2 interfa
 }
 
 // GetMaxLeverage mocks base method.
-func (m *MockVpoolKeeper) GetMaxLeverage(arg0 types1.Context, arg1 common.AssetPair) types1.Dec {
+func (m *MockVpoolKeeper) GetMaxLeverage(arg0 types1.Context, arg1 common.AssetPair) (types1.Dec, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetMaxLeverage", arg0, arg1)
 	ret0, _ := ret[0].(types1.Dec)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // GetMaxLeverage indicates an expected call of GetMaxLeverage.
@@ -438,11 +440,12 @@ func (mr *MockVpoolKeeperMockRecorder) GetSettlementPrice(arg0, arg1 interface{}
 }
 
 // IsOverSpreadLimit mocks base method.
-func (m *MockVpoolKeeper) IsOverSpreadLimit(arg0 types1.Context, arg1 common.AssetPair) bool {
+func (m *MockVpoolKeeper) IsOverSpreadLimit(arg0 types1.Context, arg1 common.AssetPair) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsOverSpreadLimit", arg0, arg1)
 	ret0, _ := ret[0].(bool)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // IsOverSpreadLimit indicates an expected call of IsOverSpreadLimit.

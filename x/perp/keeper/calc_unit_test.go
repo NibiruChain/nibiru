@@ -25,10 +25,7 @@ func TestCalcFreeCollateralErrors(t *testing.T) {
 			test: func() {
 				k, _, ctx := getKeeper(t)
 				alice := testutil.AccAddress()
-				pos := types.ZeroPosition(ctx, common.AssetPair{
-					Token0: "",
-					Token1: "",
-				}, alice)
+				pos := types.ZeroPosition(ctx, common.AssetPair("foobar"), alice)
 				_, err := k.calcFreeCollateral(ctx, pos)
 
 				require.Error(t, err)
@@ -55,8 +52,11 @@ func TestCalcFreeCollateralErrors(t *testing.T) {
 			test: func() {
 				k, mocks, ctx := getKeeper(t)
 
-				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.Pair_BTC_NUSD).Return(true)
-				mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, common.Pair_BTC_NUSD).Return(sdk.MustNewDecFromStr("0.0625"))
+				mocks.mockVpoolKeeper.EXPECT().
+					ExistsPool(ctx, common.Pair_BTC_NUSD).Return(true)
+				mocks.mockVpoolKeeper.EXPECT().
+					GetMaintenanceMarginRatio(ctx, common.Pair_BTC_NUSD).
+					Return(sdk.MustNewDecFromStr("0.0625"), nil)
 
 				pos := types.ZeroPosition(ctx, common.Pair_BTC_NUSD, testutil.AccAddress())
 
@@ -160,7 +160,9 @@ func TestCalcFreeCollateralSuccess(t *testing.T) {
 
 			t.Log("mock vpool keeper")
 			mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.Pair_BTC_NUSD).Return(true)
-			mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, common.Pair_BTC_NUSD).Return(sdk.MustNewDecFromStr("0.0625"))
+			mocks.mockVpoolKeeper.EXPECT().
+				GetMaintenanceMarginRatio(ctx, common.Pair_BTC_NUSD).
+				Return(sdk.MustNewDecFromStr("0.0625"), nil)
 			mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(
 				ctx,
 				common.Pair_BTC_NUSD,
@@ -210,10 +212,7 @@ func TestGetLatestCumulativePremiumFraction(t *testing.T) {
 			name: "uninitialized vpool has no metadata | fail",
 			test: func() {
 				perpKeeper, _, ctx := getKeeper(t)
-				vpool := common.AssetPair{
-					Token0: "xxx",
-					Token1: "yyy",
-				}
+				vpool := common.AssetPair("xxx:yyy")
 				lcpf, err := perpKeeper.getLatestCumulativePremiumFraction(
 					ctx, vpool)
 				require.Error(t, err)

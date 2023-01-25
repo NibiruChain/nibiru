@@ -97,7 +97,12 @@ func (k Keeper) OpenPosition(
 // - Checks that quote asset is not zero.
 // - Checks that leverage is not zero.
 // - Checks that leverage is below requirement.
-func (k Keeper) checkOpenPositionRequirements(ctx sdk.Context, pair common.AssetPair, quoteAssetAmount sdk.Int, leverage sdk.Dec) error {
+func (k Keeper) checkOpenPositionRequirements(
+	ctx sdk.Context,
+	pair common.AssetPair,
+	quoteAssetAmount sdk.Int,
+	leverage sdk.Dec,
+) error {
 	if err := k.requireVpool(ctx, pair); err != nil {
 		return err
 	}
@@ -110,7 +115,11 @@ func (k Keeper) checkOpenPositionRequirements(ctx sdk.Context, pair common.Asset
 		return types.ErrLeverageIsZero
 	}
 
-	if leverage.GT(k.VpoolKeeper.GetMaxLeverage(ctx, pair)) {
+	maxLeverage, err := k.VpoolKeeper.GetMaxLeverage(ctx, pair)
+	if err != nil {
+		return err
+	}
+	if leverage.GT(maxLeverage) {
 		return types.ErrLeverageIsTooHigh
 	}
 
@@ -145,8 +154,11 @@ func (k Keeper) afterPositionUpdate(
 			return err
 		}
 
-		maintenanceMarginRatio := k.VpoolKeeper.GetMaintenanceMarginRatio(ctx, pair)
-		if err = requireMoreMarginRatio(marginRatio, maintenanceMarginRatio, true); err != nil {
+		maintenanceMarginRatio, err := k.VpoolKeeper.GetMaintenanceMarginRatio(ctx, pair)
+		if err != nil {
+			return err
+		}
+		if err = validateMarginRatio(marginRatio, maintenanceMarginRatio, true); err != nil {
 			return types.ErrMarginRatioTooLow
 		}
 	}
@@ -188,7 +200,7 @@ func (k Keeper) afterPositionUpdate(
 
 	return ctx.EventManager().EmitTypedEvent(&types.PositionChangedEvent{
 		TraderAddress:      traderAddr.String(),
-		Pair:               pair.String(),
+		Pair:               pair,
 		Margin:             sdk.NewCoin(pair.QuoteDenom(), positionResp.Position.Margin.RoundInt()),
 		PositionNotional:   positionNotional,
 		ExchangedNotional:  positionResp.ExchangedNotionalValue,
@@ -839,9 +851,8 @@ func (k Keeper) OnSwapEnd(
 	baseAssetAmount sdk.Dec,
 ) {
 	// Update Metrics
-	pairString := pair.String()
-	metrics := k.Metrics.GetOr(ctx, pairString, types.Metrics{
-		Pair:        pairString,
+	metrics := k.Metrics.GetOr(ctx, pair, types.Metrics{
+		Pair:        pair,
 		NetSize:     sdk.ZeroDec(),
 		VolumeQuote: sdk.ZeroDec(),
 		VolumeBase:  sdk.ZeroDec(),
@@ -849,5 +860,5 @@ func (k Keeper) OnSwapEnd(
 	metrics.NetSize = metrics.NetSize.Add(baseAssetAmount)
 	metrics.VolumeBase = metrics.VolumeBase.Add(baseAssetAmount.Abs())
 	metrics.VolumeQuote = metrics.VolumeQuote.Add(quoteAssetAmount.Abs())
-	k.Metrics.Insert(ctx, pairString, metrics)
+	k.Metrics.Insert(ctx, pair, metrics)
 }

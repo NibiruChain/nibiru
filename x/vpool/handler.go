@@ -5,8 +5,6 @@ import (
 
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	"github.com/NibiruChain/nibiru/x/common"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -48,19 +46,18 @@ func handleProposalCreatePool(
 		return err
 	}
 
-	pair, err := common.NewAssetPair(proposal.Pair)
+	err := proposal.Pair.Validate()
 	if err != nil {
 		return err
 	}
 
-	k.CreatePool(
+	return k.CreatePool(
 		ctx,
-		pair,
+		proposal.Pair,
 		proposal.QuoteAssetReserve,
 		proposal.BaseAssetReserve,
 		proposal.Config,
 	)
-	return nil
 }
 
 func handleProposalEditPoolConfig(
@@ -70,12 +67,12 @@ func handleProposalEditPoolConfig(
 		return err
 	}
 
-	pair, err := common.NewAssetPair(proposal.Pair)
+	err := proposal.Pair.Validate()
 	if err != nil {
 		return err
 	}
 
-	return k.EditPoolConfig(ctx, pair, proposal.Config)
+	return k.EditPoolConfig(ctx, proposal.Pair, proposal.Config)
 }
 
 func handleProposalEditSwapInvariants(

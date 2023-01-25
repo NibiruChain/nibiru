@@ -28,7 +28,7 @@ func initAppVpools(
 	queryServer := keeper.NewQuerier(*perpKeeper)
 
 	t.Log("initialize vpool and pair")
-	vpoolKeeper.CreatePool(
+	assert.NoError(t, vpoolKeeper.CreatePool(
 		ctx,
 		common.Pair_BTC_NUSD,
 		quoteAssetReserve,
@@ -40,12 +40,12 @@ func initAppVpools(
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
-	)
+	))
 	setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 		Pair:                            common.Pair_BTC_NUSD,
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 	})
-	vpoolKeeper.CreatePool(
+	assert.NoError(t, vpoolKeeper.CreatePool(
 		ctx,
 		common.Pair_ETH_NUSD,
 		/* quoteReserve */ sdk.MustNewDecFromStr("100000"),
@@ -57,12 +57,12 @@ func initAppVpools(
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
-	)
+	))
 	setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 		Pair:                            common.Pair_ETH_NUSD,
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 	})
-	vpoolKeeper.CreatePool(
+	assert.NoError(t, vpoolKeeper.CreatePool(
 		ctx,
 		common.Pair_NIBI_NUSD,
 		/* quoteReserve */ sdk.MustNewDecFromStr("100000"),
@@ -74,7 +74,7 @@ func initAppVpools(
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
-	)
+	))
 	setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 		Pair:                            common.Pair_NIBI_NUSD,
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -165,8 +165,8 @@ func TestQueryPosition(t *testing.T) {
 			resp, err := queryServer.QueryPosition(
 				sdk.WrapSDKContext(ctx),
 				&types.QueryPositionRequest{
-					Trader:    traderAddr.String(),
-					TokenPair: common.Pair_BTC_NUSD.String(),
+					Trader: traderAddr.String(),
+					Pair:   common.Pair_BTC_NUSD,
 				},
 			)
 			require.NoError(t, err)
@@ -289,7 +289,7 @@ func TestQueryCumulativePremiumFraction(t *testing.T) {
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
 			query: &types.QueryCumulativePremiumFractionRequest{
-				Pair: common.Pair_BTC_NUSD.String(),
+				Pair: common.Pair_BTC_NUSD,
 			},
 			expectErr:            false,
 			expectedLatestCPF:    sdk.ZeroDec(),
@@ -304,7 +304,7 @@ func TestQueryCumulativePremiumFraction(t *testing.T) {
 			ctx, app, queryServer := initAppVpools(t, sdk.NewDec(481_000), sdk.NewDec(1_000))
 
 			t.Log("set index price")
-			app.OracleKeeper.SetPrice(ctx, common.Pair_BTC_NUSD.String(), sdk.OneDec())
+			app.OracleKeeper.SetPrice(ctx, common.Pair_BTC_NUSD, sdk.OneDec())
 
 			t.Log("query cumulative premium fraction")
 			resp, err := queryServer.CumulativePremiumFraction(sdk.WrapSDKContext(ctx), tc.query)
@@ -498,7 +498,7 @@ func TestQueryMetrics(t *testing.T) {
 			resp, err := queryServer.Metrics(
 				sdk.WrapSDKContext(ctx),
 				&types.QueryMetricsRequest{
-					Pair: common.Pair_BTC_NUSD.String(),
+					Pair: common.Pair_BTC_NUSD,
 				},
 			)
 			require.NoError(t, err)

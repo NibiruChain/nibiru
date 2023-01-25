@@ -65,7 +65,7 @@ func TestAddMarginSuccess(t *testing.T) {
 
 			t.Log("create vpool")
 			vpoolKeeper := &nibiruApp.VpoolKeeper
-			vpoolKeeper.CreatePool(
+			assert.NoError(t, vpoolKeeper.CreatePool(
 				ctx,
 				common.Pair_BTC_NUSD,
 				sdk.NewDec(10*common.Precision), // 10 tokens
@@ -77,7 +77,7 @@ func TestAddMarginSuccess(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-			)
+			))
 			require.True(t, vpoolKeeper.ExistsPool(ctx, common.Pair_BTC_NUSD))
 
 			t.Log("set pair metadata")
@@ -135,7 +135,7 @@ func TestRemoveMargin(t *testing.T) {
 				t.Log("Setup vpool defined by pair")
 				vpoolKeeper := &nibiruApp.VpoolKeeper
 				perpKeeper := &nibiruApp.PerpKeeper
-				vpoolKeeper.CreatePool(
+				assert.NoError(t, vpoolKeeper.CreatePool(
 					ctx,
 					pair,
 					/* y */ sdk.NewDec(1*common.Precision), //
@@ -147,7 +147,7 @@ func TestRemoveMargin(t *testing.T) {
 						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 						MaxLeverage:            sdk.MustNewDecFromStr("15"),
 					},
-				)
+				))
 
 				removeAmt := sdk.NewInt(5)
 				_, _, _, err := perpKeeper.RemoveMargin(ctx, pair, trader, sdk.Coin{Denom: pair.QuoteDenom(), Amount: removeAmt})
@@ -169,7 +169,7 @@ func TestRemoveMargin(t *testing.T) {
 				vpoolKeeper := &nibiruApp.VpoolKeeper
 				quoteReserves := sdk.NewDec(1 * common.Precision)
 				baseReserves := sdk.NewDec(1 * common.Precision)
-				vpoolKeeper.CreatePool(
+				assert.NoError(t, vpoolKeeper.CreatePool(
 					ctx,
 					pair,
 					/* y */ quoteReserves,
@@ -181,7 +181,7 @@ func TestRemoveMargin(t *testing.T) {
 						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 						MaxLeverage:            sdk.MustNewDecFromStr("15"),
 					},
-				)
+				))
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
@@ -227,7 +227,7 @@ func TestRemoveMargin(t *testing.T) {
 				t.Log("Verify correct events emitted for 'RemoveMargin'")
 				testutilevents.RequireContainsTypedEvent(t, ctx,
 					&types.PositionChangedEvent{
-						Pair:               pair.String(),
+						Pair:               pair,
 						TraderAddress:      traderAddr.String(),
 						Margin:             sdk.NewInt64Coin(pair.QuoteDenom(), 54),
 						PositionNotional:   sdk.NewDec(300),

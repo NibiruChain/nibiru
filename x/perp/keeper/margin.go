@@ -66,7 +66,7 @@ func (k Keeper) AddMargin(
 
 	if err = ctx.EventManager().EmitTypedEvent(
 		&types.PositionChangedEvent{
-			Pair:               pair.String(),
+			Pair:               pair,
 			TraderAddress:      traderAddr.String(),
 			Margin:             sdk.NewCoin(pair.QuoteDenom(), position.Margin.RoundInt()),
 			PositionNotional:   positionNotional,
@@ -162,7 +162,7 @@ func (k Keeper) RemoveMargin(
 
 	if err = ctx.EventManager().EmitTypedEvent(
 		&types.PositionChangedEvent{
-			Pair:               pair.String(),
+			Pair:               pair,
 			TraderAddress:      traderAddr.String(),
 			Margin:             sdk.NewCoin(pair.QuoteDenom(), position.Margin.RoundInt()),
 			PositionNotional:   positionNotional,
@@ -250,26 +250,27 @@ func (k Keeper) requireVpool(ctx sdk.Context, pair common.AssetPair) (err error)
 }
 
 /*
-requireMoreMarginRatio checks if the marginRatio corresponding to the margin
-backing a position is above or below the 'baseMarginRatio'.
-If 'largerThanOrEqualTo' is true, 'marginRatio' must be >= 'baseMarginRatio'.
+validateMarginRatio checks if the marginRatio corresponding to the margin
+backing a position is above or below the 'threshold'.
+If 'largerThanOrEqualTo' is true, 'marginRatio' must be >= 'threshold'.
 
 Args:
-
-	marginRatio: Ratio of the value of the margin and corresponding position(s).
-	  marginRatio is defined as (margin + unrealizedPnL) / notional
-	baseMarginRatio: Specifies the threshold value that 'marginRatio' must meet.
-	largerThanOrEqualTo: Specifies whether 'marginRatio' should be larger or
-	  smaller than 'baseMarginRatio'.
+  - marginRatio: Ratio of the value of the margin and corresponding position(s).
+    marginRatio is defined as (margin + unrealizedPnL) / notional
+  - threshold: Specifies the threshold value that 'marginRatio' must meet.
+    largerThanOrEqualTo: Specifies whether 'marginRatio' should be larger or
+    smaller than 'threshold'.
 */
-func requireMoreMarginRatio(marginRatio, baseMarginRatio sdk.Dec, largerThanOrEqualTo bool) error {
+func validateMarginRatio(marginRatio, threshold sdk.Dec, largerThanOrEqualTo bool) error {
 	if largerThanOrEqualTo {
-		if !marginRatio.GTE(baseMarginRatio) {
-			return fmt.Errorf("margin ratio did not meet criteria")
+		if !marginRatio.GTE(threshold) {
+			return fmt.Errorf("%w: marginRatio: %s, threshold: %s",
+				types.ErrMarginRatioTooLow, marginRatio, threshold)
 		}
 	} else {
-		if !marginRatio.LT(baseMarginRatio) {
-			return fmt.Errorf("margin ratio did not meet criteria")
+		if !marginRatio.LT(threshold) {
+			return fmt.Errorf("%w: marginRatio: %s, threshold: %s",
+				types.ErrMarginRatioTooHigh, marginRatio, threshold)
 		}
 	}
 	return nil
@@ -334,8 +335,7 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 			return sdk.ZeroDec(), sdk.ZeroDec(), err
 		}
 	case types.PnLCalcOption_ORACLE:
-		oraclePrice, err := k.OracleKeeper.GetExchangeRate(
-			ctx, currentPosition.Pair.String())
+		oraclePrice, err := k.OracleKeeper.GetExchangeRate(ctx, currentPosition.Pair)
 		if err != nil {
 			k.Logger(ctx).Error(err.Error(), "calc_option", pnlCalcOption.String())
 			return sdk.ZeroDec(), sdk.ZeroDec(), err

@@ -87,7 +87,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 
 			t.Log("create vpool")
 			vpoolKeeper := &nibiruApp.VpoolKeeper
-			vpoolKeeper.CreatePool(
+			assert.NoError(t, vpoolKeeper.CreatePool(
 				ctx,
 				tokenPair,
 				/* quoteAssetReserves */ sdk.NewDec(10*common.Precision),
@@ -99,10 +99,10 @@ func TestExecuteFullLiquidation(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-			)
+			))
 			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
 
-			nibiruApp.OracleKeeper.SetPrice(ctx, tokenPair.String(), sdk.NewDec(2))
+			nibiruApp.OracleKeeper.SetPrice(ctx, tokenPair, sdk.NewDec(2))
 
 			t.Log("set perpkeeper params")
 			params := types.DefaultParams()
@@ -168,7 +168,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			newMarkPrice, err := vpoolKeeper.GetMarkPrice(ctx, tokenPair)
 			require.NoError(t, err)
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
-				Pair:                  tokenPair.String(),
+				Pair:                  tokenPair,
 				TraderAddress:         traderAddr.String(),
 				ExchangedQuoteAmount:  liquidationResp.PositionResp.ExchangedNotionalValue,
 				ExchangedPositionSize: liquidationResp.PositionResp.ExchangedPositionSize,
@@ -265,7 +265,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 
 			t.Log("Set vpool defined by pair on VpoolKeeper")
 			vpoolKeeper := &nibiruApp.VpoolKeeper
-			vpoolKeeper.CreatePool(
+			assert.NoError(t, vpoolKeeper.CreatePool(
 				ctx,
 				tokenPair,
 				/* quoteAssetReserves */ sdk.NewDec(10_000*common.Precision*common.Precision),
@@ -277,7 +277,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-			)
+			))
 			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
 
 			t.Log("Set vpool defined by pair on PerpKeeper")
@@ -360,7 +360,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			newMarkPrice, err := vpoolKeeper.GetMarkPrice(ctx, tokenPair)
 			require.NoError(t, err)
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
-				Pair:                  tokenPair.String(),
+				Pair:                  tokenPair,
 				TraderAddress:         traderAddr.String(),
 				ExchangedQuoteAmount:  liquidationResp.PositionResp.ExchangedNotionalValue,
 				ExchangedPositionSize: liquidationResp.PositionResp.ExchangedPositionSize,

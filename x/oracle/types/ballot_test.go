@@ -22,29 +22,29 @@ import (
 
 func TestToMap(t *testing.T) {
 	tests := struct {
-		votes   []types.BallotVoteForTally
+		votes   []types.ExchangeRateBallot
 		isValid []bool
 	}{
 
-		[]types.BallotVoteForTally{
+		[]types.ExchangeRateBallot{
 			{
 
 				Voter:        sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()),
-				Pair:         common.Pair_BTC_NUSD.String(),
+				Pair:         common.Pair_BTC_NUSD,
 				ExchangeRate: sdk.NewDec(1600),
 				Power:        100,
 			},
 			{
 
 				Voter:        sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()),
-				Pair:         common.Pair_BTC_NUSD.String(),
+				Pair:         common.Pair_BTC_NUSD,
 				ExchangeRate: sdk.ZeroDec(),
 				Power:        100,
 			},
 			{
 
 				Voter:        sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()),
-				Pair:         common.Pair_BTC_NUSD.String(),
+				Pair:         common.Pair_BTC_NUSD,
 				ExchangeRate: sdk.NewDec(1500),
 				Power:        100,
 			},
@@ -52,7 +52,7 @@ func TestToMap(t *testing.T) {
 		[]bool{true, false, true},
 	}
 
-	pb := types.ExchangeRateBallot(tests.votes)
+	pb := types.ExchangeRateBallots(tests.votes)
 	mapData := pb.ToMap()
 	for i, vote := range tests.votes {
 		exchangeRate, ok := mapData[string(vote.Voter)]
@@ -88,21 +88,21 @@ func TestToCrossRate(t *testing.T) {
 		},
 	}
 
-	pbBase := types.ExchangeRateBallot{}
-	pbQuote := types.ExchangeRateBallot{}
-	cb := types.ExchangeRateBallot{}
+	pbBase := types.ExchangeRateBallots{}
+	pbQuote := types.ExchangeRateBallots{}
+	cb := types.ExchangeRateBallots{}
 	for _, data := range data {
 		valAddr := sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address())
 		if !data.base.IsZero() {
-			pbBase = append(pbBase, types.NewBallotVoteForTally(data.base, common.Pair_BTC_NUSD.String(), valAddr, 100))
+			pbBase = append(pbBase, types.NewExchangeRateBallot(data.base, common.Pair_BTC_NUSD, valAddr, 100))
 		}
 
-		pbQuote = append(pbQuote, types.NewBallotVoteForTally(data.quote, common.Pair_BTC_NUSD.String(), valAddr, 100))
+		pbQuote = append(pbQuote, types.NewExchangeRateBallot(data.quote, common.Pair_BTC_NUSD, valAddr, 100))
 
 		if !data.base.IsZero() && !data.quote.IsZero() {
-			cb = append(cb, types.NewBallotVoteForTally(data.base.Quo(data.quote), common.Pair_BTC_NUSD.String(), valAddr, 100))
+			cb = append(cb, types.NewExchangeRateBallot(data.base.Quo(data.quote), common.Pair_BTC_NUSD, valAddr, 100))
 		} else {
-			cb = append(cb, types.NewBallotVoteForTally(sdk.ZeroDec(), common.Pair_BTC_NUSD.String(), valAddr, 0))
+			cb = append(cb, types.NewExchangeRateBallot(sdk.ZeroDec(), common.Pair_BTC_NUSD, valAddr, 0))
 		}
 	}
 
@@ -127,14 +127,14 @@ func TestSqrt(t *testing.T) {
 func TestPBPower(t *testing.T) {
 	ctx := sdk.NewContext(nil, tmproto.Header{}, false, nil)
 	_, valAccAddrs, sk := types.GenerateRandomTestCase()
-	pb := types.ExchangeRateBallot{}
+	pb := types.ExchangeRateBallots{}
 	ballotPower := int64(0)
 
 	for i := 0; i < len(sk.Validators()); i++ {
 		power := sk.Validator(ctx, valAccAddrs[i]).GetConsensusPower(sdk.DefaultPowerReduction)
-		vote := types.NewBallotVoteForTally(
+		vote := types.NewExchangeRateBallot(
 			sdk.ZeroDec(),
-			common.Pair_ETH_NUSD.String(),
+			common.Pair_ETH_NUSD,
 			valAccAddrs[i],
 			power,
 		)
@@ -151,9 +151,9 @@ func TestPBPower(t *testing.T) {
 	// Mix in a fake validator, the total power should not have changed.
 	pubKey := secp256k1.GenPrivKey().PubKey()
 	faceValAddr := sdk.ValAddress(pubKey.Address())
-	fakeVote := types.NewBallotVoteForTally(
+	fakeVote := types.NewExchangeRateBallot(
 		sdk.OneDec(),
-		common.Pair_ETH_NUSD.String(),
+		common.Pair_ETH_NUSD,
 		faceValAddr,
 		0,
 	)
@@ -213,7 +213,7 @@ func TestPBWeightedMedian(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		pb := types.ExchangeRateBallot{}
+		pb := types.ExchangeRateBallots{}
 		for i, input := range tc.inputs {
 			valAddr := sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address())
 
@@ -222,9 +222,9 @@ func TestPBWeightedMedian(t *testing.T) {
 				power = 0
 			}
 
-			vote := types.NewBallotVoteForTally(
+			vote := types.NewExchangeRateBallot(
 				sdk.NewDec(int64(input)),
-				common.Pair_ETH_NUSD.String(),
+				common.Pair_ETH_NUSD,
 				valAddr,
 				power,
 			)
@@ -280,7 +280,7 @@ func TestPBStandardDeviation(t *testing.T) {
 
 	base := math.Pow10(types.OracleDecPrecision)
 	for _, tc := range tests {
-		pb := types.ExchangeRateBallot{}
+		pb := types.ExchangeRateBallots{}
 		for i, input := range tc.inputs {
 			valAddr := sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address())
 
@@ -289,9 +289,9 @@ func TestPBStandardDeviation(t *testing.T) {
 				power = 0
 			}
 
-			vote := types.NewBallotVoteForTally(
+			vote := types.NewExchangeRateBallot(
 				sdk.NewDecWithPrec(int64(input*base), int64(types.OracleDecPrecision)),
-				common.Pair_ETH_NUSD.String(),
+				common.Pair_ETH_NUSD,
 				valAddr,
 				power,
 			)
@@ -308,14 +308,14 @@ func TestPBStandardDeviationOverflow(t *testing.T) {
 	exchangeRate, err := sdk.NewDecFromStr("100000000000000000000000000000000000000000000000000000000.0")
 	require.NoError(t, err)
 
-	pb := types.ExchangeRateBallot{types.NewBallotVoteForTally(
+	pb := types.ExchangeRateBallots{types.NewExchangeRateBallot(
 		sdk.ZeroDec(),
-		common.Pair_ETH_NUSD.String(),
+		common.Pair_ETH_NUSD,
 		valAddr,
 		2,
-	), types.NewBallotVoteForTally(
+	), types.NewExchangeRateBallot(
 		exchangeRate,
-		common.Pair_ETH_NUSD.String(),
+		common.Pair_ETH_NUSD,
 		valAddr,
 		1,
 	)}
@@ -329,15 +329,15 @@ func TestNewClaim(t *testing.T) {
 	winCount := int64(1)
 	addr := sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address().Bytes())
 	claim := types.ValidatorPerformance{
-		Power:      power,
-		Weight:     weight,
-		WinCount:   winCount,
-		ValAddress: addr,
+		Power:        power,
+		RewardWeight: weight,
+		WinCount:     winCount,
+		ValAddress:   addr,
 	}
 	require.Equal(t, types.ValidatorPerformance{
-		Power:      power,
-		Weight:     weight,
-		WinCount:   winCount,
-		ValAddress: addr,
+		Power:        power,
+		RewardWeight: weight,
+		WinCount:     winCount,
+		ValAddress:   addr,
 	}, claim)
 }

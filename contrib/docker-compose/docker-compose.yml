@@ -1,9 +1,9 @@
 version: '3'
 
 services:
-  nibidnode0:
-    container_name: nibidnode0
-    image: "nibiru/nibidnode"
+  node0:
+    container_name: node0
+    image: "nibiru/node"
     ports:
       - "26656-26657:26656-26657"
       - "9090:9090"
@@ -11,46 +11,46 @@ services:
     environment:
       - ID=0
     volumes:
-      - ./build:/nibid:Z
+      - ../../data/node0/nibid:/root/.nibid:Z
     networks:
       localnet:
         ipv4_address: 192.168.11.2
 
-  nibidnode1:
-    container_name: nibidnode1
-    image: "nibiru/nibidnode"
+  node1:
+    container_name: node1
+    image: "nibiru/node"
     ports:
       - "26659-26660:26656-26657"
     environment:
       - ID=1
     volumes:
-      - ./build:/nibid:Z
+      - ../../data/node1/nibid:/root/.nibid:Z
     networks:
       localnet:
         ipv4_address: 192.168.11.3
 
-  nibidnode2:
-    container_name: nibidnode2
-    image: "nibiru/nibidnode"
+  node2:
+    container_name: node2
+    image: "nibiru/node"
     environment:
       - ID=2
     ports:
       - "26661-26662:26656-26657"
     volumes:
-      - ./build:/nibid:Z
+      - ../../data/node2/nibid:/root/.nibid:Z
     networks:
       localnet:
         ipv4_address: 192.168.11.4
 
-  nibidnode3:
-    container_name: nibidnode3
-    image: "nibiru/nibidnode"
+  node3:
+    container_name: node3
+    image: "nibiru/node"
     environment:
       - ID=3
     ports:
       - "26663-26664:26656-26657"
     volumes:
-      - ./build:/nibid:Z
+      - ../../data/node3/nibid:/root/.nibid:Z
     networks:
       localnet:
         ipv4_address: 192.168.11.5
