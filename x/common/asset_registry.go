@@ -1,5 +1,7 @@
 package common
 
+import "github.com/NibiruChain/nibiru/x/common/denoms"
+
 type assetRegistry map[string][]string
 
 var AssetRegistry assetRegistry
@@ -8,18 +10,18 @@ func init() {
 	// map of base asset to supported quote assets
 	// quote assets are usually stables
 	AssetRegistry = map[string][]string{
-		DenomBTC:  {DenomUSDC, DenomNUSD, DenomUSD, DenomUSDT},
-		DenomETH:  {DenomUSDC, DenomNUSD, DenomUSD, DenomUSDT},
-		DenomNIBI: {DenomUSDC, DenomNUSD, DenomUSD, DenomUSDT},
-		DenomATOM: {DenomUSDC, DenomNUSD, DenomUSD, DenomUSDT},
-		DenomOSMO: {DenomUSDC, DenomNUSD, DenomUSD, DenomUSDT},
-		DenomAVAX: {DenomUSDC, DenomNUSD, DenomUSD, DenomUSDT},
-		DenomSOL:  {DenomUSDC, DenomNUSD, DenomUSD, DenomUSDT},
-		DenomBNB:  {DenomUSDC, DenomNUSD, DenomUSD, DenomUSDT},
-		DenomADA:  {DenomUSDC, DenomNUSD, DenomUSD, DenomUSDT},
-		DenomNUSD: {DenomUSD, DenomUSDC},
-		DenomUSDC: {DenomUSD, DenomNUSD},
-		DenomUSDT: {DenomUSD, DenomNUSD, DenomUSDC},
+		denoms.DenomBTC:  {denoms.DenomUSDC, denoms.DenomNUSD, denoms.DenomUSD, denoms.DenomUSDT},
+		denoms.DenomETH:  {denoms.DenomUSDC, denoms.DenomNUSD, denoms.DenomUSD, denoms.DenomUSDT},
+		denoms.DenomNIBI: {denoms.DenomUSDC, denoms.DenomNUSD, denoms.DenomUSD, denoms.DenomUSDT},
+		denoms.DenomATOM: {denoms.DenomUSDC, denoms.DenomNUSD, denoms.DenomUSD, denoms.DenomUSDT},
+		denoms.DenomOSMO: {denoms.DenomUSDC, denoms.DenomNUSD, denoms.DenomUSD, denoms.DenomUSDT},
+		denoms.DenomAVAX: {denoms.DenomUSDC, denoms.DenomNUSD, denoms.DenomUSD, denoms.DenomUSDT},
+		denoms.DenomSOL:  {denoms.DenomUSDC, denoms.DenomNUSD, denoms.DenomUSD, denoms.DenomUSDT},
+		denoms.DenomBNB:  {denoms.DenomUSDC, denoms.DenomNUSD, denoms.DenomUSD, denoms.DenomUSDT},
+		denoms.DenomADA:  {denoms.DenomUSDC, denoms.DenomNUSD, denoms.DenomUSD, denoms.DenomUSDT},
+		denoms.DenomNUSD: {denoms.DenomUSD, denoms.DenomUSDC},
+		denoms.DenomUSDC: {denoms.DenomUSD, denoms.DenomNUSD},
+		denoms.DenomUSDT: {denoms.DenomUSD, denoms.DenomNUSD, denoms.DenomUSDC},
 	}
 }
 

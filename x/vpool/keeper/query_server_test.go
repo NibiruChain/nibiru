@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -23,7 +24,7 @@ func TestQueryReserveAssets(t *testing.T) {
 
 	t.Log("initialize vpool")
 	pool := types.Vpool{
-		Pair:              common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+		Pair:              common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 		QuoteAssetReserve: sdk.NewDec(1 * common.Precision),
 		BaseAssetReserve:  sdk.NewDec(1000),
 		Config: types.VpoolConfig{
@@ -40,7 +41,7 @@ func TestQueryReserveAssets(t *testing.T) {
 	resp, err := queryServer.ReserveAssets(
 		sdk.WrapSDKContext(ctx),
 		&types.QueryReserveAssetsRequest{
-			Pair: common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+			Pair: common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 		},
 	)
 
@@ -57,7 +58,7 @@ func TestQueryAllPools(t *testing.T) {
 	queryServer := NewQuerier(vpoolKeeper)
 
 	t.Log("initialize vpool")
-	pair := common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD)
+	pair := common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD)
 	pool := &types.Vpool{
 		Pair:              pair,
 		QuoteAssetReserve: sdk.NewDec(1 * common.Precision),

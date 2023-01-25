@@ -12,6 +12,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 )
 
@@ -93,16 +94,16 @@ func (k Keeper) calcNeededGovAndFees(
 	ctx sdk.Context, stable sdk.Coin, govRatio sdk.Dec, feeRatio sdk.Dec,
 ) (sdk.Coin, sdk.Coin, error) {
 	priceGov, err := k.OracleKeeper.GetExchangeRate(
-		ctx, common.AssetRegistry.Pair(common.DenomNIBI, common.DenomNUSD))
+		ctx, common.AssetRegistry.Pair(denoms.DenomNIBI, denoms.DenomNUSD))
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
 
 	neededGovUSD := stable.Amount.ToDec().Mul(govRatio)
 	neededGovAmt := neededGovUSD.Quo(priceGov).TruncateInt()
-	neededGov := sdk.NewCoin(common.DenomNIBI, neededGovAmt)
+	neededGov := sdk.NewCoin(denoms.DenomNIBI, neededGovAmt)
 	govFeeAmt := neededGovAmt.ToDec().Mul(feeRatio).RoundInt()
-	govFee := sdk.NewCoin(common.DenomNIBI, govFeeAmt)
+	govFee := sdk.NewCoin(denoms.DenomNIBI, govFeeAmt)
 
 	return neededGov, govFee, nil
 }
@@ -115,16 +116,16 @@ func (k Keeper) calcNeededCollateralAndFees(
 	feeRatio sdk.Dec,
 ) (sdk.Coin, sdk.Coin, error) {
 	priceColl, err := k.OracleKeeper.GetExchangeRate(
-		ctx, common.AssetRegistry.Pair(common.DenomUSDC, common.DenomNUSD))
+		ctx, common.AssetRegistry.Pair(denoms.DenomUSDC, denoms.DenomNUSD))
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
 
 	neededCollUSD := stable.Amount.ToDec().Mul(collRatio)
 	neededCollAmt := neededCollUSD.Quo(priceColl).TruncateInt()
-	neededColl := sdk.NewCoin(common.DenomUSDC, neededCollAmt)
+	neededColl := sdk.NewCoin(denoms.DenomUSDC, neededCollAmt)
 	collFeeAmt := neededCollAmt.ToDec().Mul(feeRatio).RoundInt()
-	collFee := sdk.NewCoin(common.DenomUSDC, collFeeAmt)
+	collFee := sdk.NewCoin(denoms.DenomUSDC, collFeeAmt)
 
 	return neededColl, collFee, nil
 }
@@ -252,7 +253,7 @@ func (k Keeper) splitAndSendFeesToEfAndTreasury(
 		amountEf := c.Amount.ToDec().Mul(efFeeRatio).TruncateInt()
 		amountTreasury := c.Amount.Sub(amountEf)
 
-		if c.Denom == common.DenomNIBI {
+		if c.Denom == denoms.DenomNIBI {
 			stableCoins := sdk.NewCoins(sdk.NewCoin(c.Denom, amountEf))
 			err := k.BankKeeper.SendCoinsFromAccountToModule(
 				ctx, account, types.StableEFModuleAccount, stableCoins)

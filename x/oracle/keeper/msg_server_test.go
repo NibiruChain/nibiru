@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 
 	"github.com/stretchr/testify/require"
 
@@ -19,7 +20,7 @@ func TestMsgServer_FeederDelegation(t *testing.T) {
 
 	exchangeRates := types.ExchangeRateTuples{
 		{
-			Pair:         common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+			Pair:         common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 			ExchangeRate: randomExchangeRate,
 		},
 	}
@@ -86,43 +87,43 @@ func TestMsgServer_AggregatePrevoteVote(t *testing.T) {
 	salt := "1"
 	exchangeRates := types.ExchangeRateTuples{
 		{
-			Pair:         common.AssetRegistry.Pair(common.DenomNIBI, common.DenomNUSD),
+			Pair:         common.AssetRegistry.Pair(denoms.DenomNIBI, denoms.DenomNUSD),
 			ExchangeRate: sdk.MustNewDecFromStr("1000.23"),
 		},
 		{
-			Pair:         common.AssetRegistry.Pair(common.DenomETH, common.DenomNUSD),
+			Pair:         common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD),
 			ExchangeRate: sdk.MustNewDecFromStr("0.29"),
 		},
 
 		{
-			Pair:         common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+			Pair:         common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 			ExchangeRate: sdk.MustNewDecFromStr("0.27"),
 		},
 	}
 
 	otherExchangeRate := types.ExchangeRateTuples{
 		{
-			Pair:         common.AssetRegistry.Pair(common.DenomNIBI, common.DenomNUSD),
+			Pair:         common.AssetRegistry.Pair(denoms.DenomNIBI, denoms.DenomNUSD),
 			ExchangeRate: sdk.MustNewDecFromStr("1000.23"),
 		},
 		{
-			Pair:         common.AssetRegistry.Pair(common.DenomETH, common.DenomNUSD),
+			Pair:         common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD),
 			ExchangeRate: sdk.MustNewDecFromStr("0.29"),
 		},
 
 		{
-			Pair:         common.AssetRegistry.Pair(common.DenomETH, common.DenomNUSD),
+			Pair:         common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD),
 			ExchangeRate: sdk.MustNewDecFromStr("0.27"),
 		},
 	}
 
 	unintendedExchangeRateStr := types.ExchangeRateTuples{
 		{
-			Pair:         common.AssetRegistry.Pair(common.DenomNIBI, common.DenomNUSD),
+			Pair:         common.AssetRegistry.Pair(denoms.DenomNIBI, denoms.DenomNUSD),
 			ExchangeRate: sdk.MustNewDecFromStr("1000.23"),
 		},
 		{
-			Pair:         common.AssetRegistry.Pair(common.DenomETH, common.DenomNUSD),
+			Pair:         common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD),
 			ExchangeRate: sdk.MustNewDecFromStr("0.29"),
 		},
 		{

@@ -6,6 +6,7 @@ import (
 
 	"github.com/NibiruChain/collections"
 
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 
@@ -32,11 +33,11 @@ func TestAddMarginSuccess(t *testing.T) {
 	}{
 		{
 			name:                            "add margin",
-			marginToAdd:                     sdk.NewInt64Coin(common.DenomNUSD, 100),
+			marginToAdd:                     sdk.NewInt64Coin(denoms.DenomNUSD, 100),
 			latestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.001"),
 			initialPosition: types.Position{
 				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+				Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 				Size_:                           sdk.NewDec(1_000),
 				Margin:                          sdk.NewDec(100),
 				OpenNotional:                    sdk.NewDec(500),
@@ -67,7 +68,7 @@ func TestAddMarginSuccess(t *testing.T) {
 			vpoolKeeper := &nibiruApp.VpoolKeeper
 			assert.NoError(t, vpoolKeeper.CreatePool(
 				ctx,
-				common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+				common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 				sdk.NewDec(10*common.Precision), // 10 tokens
 				sdk.NewDec(5*common.Precision),  // 5 tokens
 				vpooltypes.VpoolConfig{
@@ -78,11 +79,11 @@ func TestAddMarginSuccess(t *testing.T) {
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
 			))
-			require.True(t, vpoolKeeper.ExistsPool(ctx, common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD)))
+			require.True(t, vpoolKeeper.ExistsPool(ctx, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD)))
 
 			t.Log("set pair metadata")
 			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-				Pair:                            common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+				Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 				LatestCumulativePremiumFraction: tc.latestCumulativePremiumFraction,
 			},
 			)
@@ -90,14 +91,14 @@ func TestAddMarginSuccess(t *testing.T) {
 			t.Log("establish initial position")
 			setPosition(nibiruApp.PerpKeeper, ctx, tc.initialPosition)
 
-			resp, err := nibiruApp.PerpKeeper.AddMargin(ctx, common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD), traderAddr, tc.marginToAdd)
+			resp, err := nibiruApp.PerpKeeper.AddMargin(ctx, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD), traderAddr, tc.marginToAdd)
 			require.NoError(t, err)
 			assert.EqualValues(t, tc.expectedFundingPayment, resp.FundingPayment)
 			assert.EqualValues(t, tc.expectedMargin, resp.Position.Margin)
 			assert.EqualValues(t, tc.initialPosition.OpenNotional, resp.Position.OpenNotional)
 			assert.EqualValues(t, tc.initialPosition.Size_, resp.Position.Size_)
 			assert.EqualValues(t, traderAddr.String(), resp.Position.TraderAddress)
-			assert.EqualValues(t, common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD), resp.Position.Pair)
+			assert.EqualValues(t, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD), resp.Position.Pair)
 			assert.EqualValues(t, tc.latestCumulativePremiumFraction, resp.Position.LatestCumulativePremiumFraction)
 			assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 		})
@@ -119,7 +120,7 @@ func TestRemoveMargin(t *testing.T) {
 				trader := testutilevents.AccAddress()
 				pair := common.MustNewAssetPair("osmo:nusd")
 
-				_, _, _, err := nibiruApp.PerpKeeper.RemoveMargin(ctx, pair, trader, sdk.Coin{Denom: common.DenomNUSD, Amount: removeAmt})
+				_, _, _, err := nibiruApp.PerpKeeper.RemoveMargin(ctx, pair, trader, sdk.Coin{Denom: denoms.DenomNUSD, Amount: removeAmt})
 				require.Error(t, err)
 				require.ErrorContains(t, err, types.ErrPairNotFound.Error())
 			},

@@ -7,6 +7,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -38,10 +39,10 @@ var (
 	DefaultVoteThreshold = sdk.NewDecWithPrec(50, 2) // 50%
 	DefaultRewardBand    = sdk.NewDecWithPrec(2, 2)  // 2% (-1, 1)
 	DefaultWhitelist     = []common.AssetPair{
-		common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
-		common.AssetRegistry.Pair(common.DenomUSDC, common.DenomNUSD),
-		common.AssetRegistry.Pair(common.DenomETH, common.DenomNUSD),
-		common.AssetRegistry.Pair(common.DenomNIBI, common.DenomNUSD),
+		common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+		common.AssetRegistry.Pair(denoms.DenomUSDC, denoms.DenomNUSD),
+		common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD),
+		common.AssetRegistry.Pair(denoms.DenomNIBI, denoms.DenomNUSD),
 	}
 	DefaultSlashFraction      = sdk.NewDecWithPrec(1, 4)        // 0.01%
 	DefaultMinValidPerWindow  = sdk.NewDecWithPrec(5, 2)        // 5%

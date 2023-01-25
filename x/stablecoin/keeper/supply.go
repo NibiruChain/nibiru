@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 )
 
 var LiquidityRatioBands = sdk.MustNewDecFromStr("0.001")
@@ -13,13 +13,13 @@ var LiquidityRatioBands = sdk.MustNewDecFromStr("0.001")
 func (k Keeper) GetSupplyNUSD(
 	ctx sdk.Context,
 ) sdk.Coin {
-	return k.BankKeeper.GetSupply(ctx, common.DenomNUSD)
+	return k.BankKeeper.GetSupply(ctx, denoms.DenomNUSD)
 }
 
 func (k Keeper) GetSupplyNIBI(
 	ctx sdk.Context,
 ) sdk.Coin {
-	return k.BankKeeper.GetSupply(ctx, common.DenomNIBI)
+	return k.BankKeeper.GetSupply(ctx, denoms.DenomNIBI)
 }
 
 func (k Keeper) GetStableMarketCap(ctx sdk.Context) sdk.Int {
@@ -27,12 +27,12 @@ func (k Keeper) GetStableMarketCap(ctx sdk.Context) sdk.Int {
 }
 
 func (k Keeper) GetGovMarketCap(ctx sdk.Context) (sdk.Int, error) {
-	pool, err := k.DexKeeper.FetchPoolFromPair(ctx, common.DenomNIBI, common.DenomNUSD)
+	pool, err := k.DexKeeper.FetchPoolFromPair(ctx, denoms.DenomNIBI, denoms.DenomNUSD)
 	if err != nil {
 		return sdk.Int{}, err
 	}
 
-	price, err := pool.CalcSpotPrice(common.DenomNIBI, common.DenomNUSD)
+	price, err := pool.CalcSpotPrice(denoms.DenomNIBI, denoms.DenomNUSD)
 	if err != nil {
 		return sdk.Int{}, err
 	}

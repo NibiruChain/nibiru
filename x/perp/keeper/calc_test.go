@@ -10,6 +10,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
@@ -28,7 +29,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				marginDelta := sdk.OneDec()
 				_, err := nibiruApp.PerpKeeper.CalcRemainMarginWithFundingPayment(
 					ctx, types.Position{
-						Pair: common.AssetRegistry.Pair(common.DenomNIBI, common.DenomNUSD),
+						Pair: common.AssetRegistry.Pair(denoms.DenomNIBI, denoms.DenomNUSD),
 					}, marginDelta)
 				require.ErrorIs(t, err, collections.ErrNotFound)
 			},

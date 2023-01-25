@@ -7,6 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 )
 
@@ -86,7 +87,7 @@ func (k *Keeper) EvaluateCollRatio(ctx sdk.Context) (err error) {
 	upperBound := params.GetPriceUpperBoundAsDec()
 
 	stablePrice, err := k.OracleKeeper.GetExchangeRateTwap(
-		ctx, common.AssetRegistry.Pair(common.DenomUSDC, common.DenomNUSD))
+		ctx, common.AssetRegistry.Pair(denoms.DenomUSDC, denoms.DenomNUSD))
 	if err != nil {
 		return err
 	}
@@ -113,14 +114,14 @@ func (k *Keeper) StableRequiredForTargetCollRatio(
 	targetCollRatio := k.GetCollRatio(ctx)
 	moduleAddr := k.AccountKeeper.GetModuleAddress(types.ModuleName)
 	moduleCoins := k.BankKeeper.SpendableCoins(ctx, moduleAddr)
-	collDenoms := []string{common.DenomUSDC}
+	collDenoms := []string{denoms.DenomUSDC}
 
 	currentTotalCollUSD := sdk.ZeroDec()
 
 	for _, collDenom := range collDenoms {
 		amtColl := moduleCoins.AmountOf(collDenom)
 		priceColl, err := k.OracleKeeper.GetExchangeRate(
-			ctx, common.AssetRegistry.Pair(common.DenomUSDC, common.DenomNUSD))
+			ctx, common.AssetRegistry.Pair(denoms.DenomUSDC, denoms.DenomNUSD))
 		if err != nil {
 			return sdk.ZeroDec(), err
 		}
@@ -138,7 +139,7 @@ func (k *Keeper) RecollateralizeCollAmtForTargetCollRatio(
 ) (neededCollAmount sdk.Int, err error) {
 	neededUSDForRecoll, _ := k.StableRequiredForTargetCollRatio(ctx)
 	priceCollStable, err := k.OracleKeeper.GetExchangeRate(
-		ctx, common.AssetRegistry.Pair(common.DenomUSDC, common.DenomNUSD))
+		ctx, common.AssetRegistry.Pair(denoms.DenomUSDC, denoms.DenomNUSD))
 	if err != nil {
 		return sdk.Int{}, err
 	}
@@ -222,7 +223,7 @@ func (k Keeper) Recollateralize(
 
 	// Compute GOV rewarded to user
 	priceCollStable, err := k.OracleKeeper.GetExchangeRate(
-		ctx, common.AssetRegistry.Pair(common.DenomUSDC, common.DenomNUSD))
+		ctx, common.AssetRegistry.Pair(denoms.DenomUSDC, denoms.DenomNUSD))
 	if err != nil {
 		return response, err
 	}
@@ -231,7 +232,7 @@ func (k Keeper) Recollateralize(
 	if err != nil {
 		return response, err
 	}
-	outGov := sdk.NewCoin(common.DenomNIBI, outGovAmount)
+	outGov := sdk.NewCoin(denoms.DenomNIBI, outGovAmount)
 
 	// Mint and send GOV reward from the module to the caller
 	err = k.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(outGov))
@@ -293,7 +294,7 @@ func (k *Keeper) GovAmtFromRecollateralize(
 	bonusRate := params.GetBonusRateRecollAsDec()
 
 	priceGovStable, err := k.OracleKeeper.GetExchangeRate(
-		ctx, common.AssetRegistry.Pair(common.DenomNIBI, common.DenomNUSD))
+		ctx, common.AssetRegistry.Pair(denoms.DenomNIBI, denoms.DenomNUSD))
 	if err != nil {
 		return sdk.Int{}, err
 	}
@@ -336,7 +337,7 @@ func (k *Keeper) BuybackGovAmtForTargetCollRatio(
 	neededUSDForRecoll, _ := k.StableRequiredForTargetCollRatio(ctx)
 	neededUSDForBuyback := neededUSDForRecoll.Neg()
 	priceGovStable, err := k.OracleKeeper.GetExchangeRate(
-		ctx, common.AssetRegistry.Pair(common.DenomNIBI, common.DenomNUSD))
+		ctx, common.AssetRegistry.Pair(denoms.DenomNIBI, denoms.DenomNUSD))
 	if err != nil {
 		return sdk.Int{}, err
 	}
@@ -413,7 +414,7 @@ func (k Keeper) Buyback(
 
 	// Compute USD (stable) value of the GOV sent by the caller: 'inUSD'
 	priceGovStable, err := k.OracleKeeper.GetExchangeRate(
-		ctx, common.AssetRegistry.Pair(common.DenomNIBI, common.DenomNUSD))
+		ctx, common.AssetRegistry.Pair(denoms.DenomNIBI, denoms.DenomNUSD))
 	if err != nil {
 		return response, err
 	}
@@ -424,7 +425,7 @@ func (k Keeper) Buyback(
 	if err != nil {
 		return response, err
 	}
-	outColl := sdk.NewCoin(common.DenomUSDC, outCollAmount)
+	outColl := sdk.NewCoin(denoms.DenomUSDC, outCollAmount)
 
 	// Send COLL from the module to the caller
 	err = k.BankKeeper.SendCoinsFromModuleToAccount(
@@ -473,7 +474,7 @@ func (k *Keeper) CollAmtFromBuyback(
 	ctx sdk.Context, valUSD sdk.Dec,
 ) (collAmt sdk.Int, err error) {
 	priceCollStable, err := k.OracleKeeper.GetExchangeRate(
-		ctx, common.AssetRegistry.Pair(common.DenomUSDC, common.DenomNUSD))
+		ctx, common.AssetRegistry.Pair(denoms.DenomUSDC, denoms.DenomNUSD))
 	if err != nil {
 		return sdk.Int{}, err
 	}

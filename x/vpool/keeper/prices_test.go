@@ -12,6 +12,7 @@ import (
 	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -26,14 +27,14 @@ func TestGetMarkPrice(t *testing.T) {
 	}{
 		{
 			name:              "correctly fetch underlying price",
-			pair:              common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+			pair:              common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 			quoteAssetReserve: sdk.NewDec(40_000),
 			baseAssetReserve:  sdk.NewDec(1),
 			expectedPrice:     sdk.NewDec(40000),
 		},
 		{
 			name:              "complex price",
-			pair:              common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+			pair:              common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 			quoteAssetReserve: sdk.NewDec(2_489_723_947),
 			baseAssetReserve:  sdk.NewDec(34_597_234),
 			expectedPrice:     sdk.MustNewDecFromStr("71.963092396345904415"),
@@ -80,7 +81,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 	}{
 		{
 			name:                "zero base asset means zero price",
-			pair:                common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+			pair:                common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 			quoteAssetReserve:   sdk.NewDec(40_000),
 			baseAssetReserve:    sdk.NewDec(10_000),
 			baseAmount:          sdk.ZeroDec(),
@@ -89,7 +90,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 		},
 		{
 			name:                "simple add base to pool",
-			pair:                common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+			pair:                common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 			baseAssetReserve:    sdk.NewDec(1000),
 			quoteAssetReserve:   sdk.NewDec(1000),
 			baseAmount:          sdk.MustNewDecFromStr("500"),
@@ -98,7 +99,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 		},
 		{
 			name:                "simple remove base from pool",
-			pair:                common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+			pair:                common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 			baseAssetReserve:    sdk.NewDec(1000),
 			quoteAssetReserve:   sdk.NewDec(1000),
 			baseAmount:          sdk.MustNewDecFromStr("500"),
@@ -107,7 +108,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 		},
 		{
 			name:              "too much base removed results in error",
-			pair:              common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+			pair:              common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 			baseAssetReserve:  sdk.NewDec(1000),
 			quoteAssetReserve: sdk.NewDec(1000),
 			baseAmount:        sdk.MustNewDecFromStr("1000"),
@@ -163,7 +164,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 	}{
 		{
 			name:               "zero base asset means zero price",
-			pair:               common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+			pair:               common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 			quoteAssetReserve:  sdk.NewDec(40_000),
 			baseAssetReserve:   sdk.NewDec(10_000),
 			quoteAmount:        sdk.ZeroDec(),
@@ -172,7 +173,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 		},
 		{
 			name:               "simple add base to pool",
-			pair:               common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+			pair:               common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 			baseAssetReserve:   sdk.NewDec(1000),
 			quoteAssetReserve:  sdk.NewDec(1000),
 			quoteAmount:        sdk.NewDec(500),
@@ -181,7 +182,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 		},
 		{
 			name:               "simple remove base from pool",
-			pair:               common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+			pair:               common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 			baseAssetReserve:   sdk.NewDec(1000),
 			quoteAssetReserve:  sdk.NewDec(1000),
 			quoteAmount:        sdk.NewDec(500),
@@ -190,7 +191,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 		},
 		{
 			name:              "too much base removed results in error",
-			pair:              common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+			pair:              common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 			baseAssetReserve:  sdk.NewDec(1000),
 			quoteAssetReserve: sdk.NewDec(1000),
 			quoteAmount:       sdk.NewDec(1000),
@@ -252,22 +253,22 @@ func TestCalcTwap(t *testing.T) {
 		// expected price: ((95/10 * (35 - 30) + 85/10 * (30 - 20) + 90/10 * (20 - 10) + 100/1 * (10 - 5)) / (5 + 10 + 10 + 5)
 		{
 			name: "spot price twap calc, t=[5,35]",
-			pair: common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+			pair: common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 			reserveSnapshots: []types.ReserveSnapshot{
 				types.NewReserveSnapshot(
-					common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+					common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 					sdk.NewDec(10),
 					sdk.NewDec(90),
 					time.UnixMilli(10),
 				),
 				types.NewReserveSnapshot(
-					common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+					common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 					sdk.NewDec(10),
 					sdk.NewDec(85),
 					time.UnixMilli(20),
 				),
 				types.NewReserveSnapshot(
-					common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+					common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 					sdk.NewDec(10),
 					sdk.NewDec(95),
 					time.UnixMilli(30),
@@ -283,22 +284,22 @@ func TestCalcTwap(t *testing.T) {
 		// expected price: (95/10 * (30 - 30) + 85/10 * (30 - 20) + 90/10 * (20 - 10)) / (10 + 10)
 		{
 			name: "spot price twap calc, t=[10,30]",
-			pair: common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+			pair: common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 			reserveSnapshots: []types.ReserveSnapshot{
 				types.NewReserveSnapshot(
-					common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+					common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 					sdk.NewDec(10),
 					sdk.NewDec(90),
 					time.UnixMilli(10),
 				),
 				types.NewReserveSnapshot(
-					common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+					common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 					sdk.NewDec(10),
 					sdk.NewDec(85),
 					time.UnixMilli(20),
 				),
 				types.NewReserveSnapshot(
-					common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+					common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 					sdk.NewDec(10),
 					sdk.NewDec(95),
 					time.UnixMilli(30),
@@ -314,22 +315,22 @@ func TestCalcTwap(t *testing.T) {
 		// expected price: (95/10 * (35 - 30) + 85/10 * (30 - 20) + 90/10 * (20 - 11)) / (5 + 10 + 9)
 		{
 			name: "spot price twap calc, t=[11,35]",
-			pair: common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+			pair: common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 			reserveSnapshots: []types.ReserveSnapshot{
 				types.NewReserveSnapshot(
-					common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+					common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 					sdk.NewDec(10),
 					sdk.NewDec(90),
 					time.UnixMilli(10),
 				),
 				types.NewReserveSnapshot(
-					common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+					common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 					sdk.NewDec(10),
 					sdk.NewDec(85),
 					time.UnixMilli(20),
 				),
 				types.NewReserveSnapshot(
-					common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+					common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 					sdk.NewDec(10),
 					sdk.NewDec(95),
 					time.UnixMilli(30),
@@ -347,7 +348,7 @@ func TestCalcTwap(t *testing.T) {
 		// expected price: 100/1
 		{
 			name:               "spot price twap calc, t=[0,0]",
-			pair:               common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+			pair:               common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 			reserveSnapshots:   []types.ReserveSnapshot{},
 			currentBlockTime:   time.UnixMilli(0),
 			currentBlockHeight: 1,
@@ -361,16 +362,16 @@ func TestCalcTwap(t *testing.T) {
 		// expected price: ((7.5 - 300/(40 + 10)) * (30 - 20) + (10 - 300/(30 + 10)) * (20 - 10)) / (10 + 10)
 		{
 			name: "quote asset swap twap calc, add to pool, t=[10,30]",
-			pair: common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+			pair: common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 			reserveSnapshots: []types.ReserveSnapshot{
 				types.NewReserveSnapshot(
-					common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+					common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 					sdk.NewDec(10),
 					sdk.NewDec(30),
 					time.UnixMilli(10),
 				),
 				types.NewReserveSnapshot(
-					common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+					common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 					sdk.MustNewDecFromStr("7.5"),
 					sdk.NewDec(40),
 					time.UnixMilli(20),
@@ -390,16 +391,16 @@ func TestCalcTwap(t *testing.T) {
 		// expected price: ((12 - 600/(50 - 10)) * (30 - 20) + (10 - 600/(60 - 10)) * (20 - 10)) / (10 + 10)
 		{
 			name: "quote asset swap twap calc, remove from pool, t=[10,30]",
-			pair: common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+			pair: common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 			reserveSnapshots: []types.ReserveSnapshot{
 				types.NewReserveSnapshot(
-					common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+					common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 					sdk.NewDec(10),
 					sdk.NewDec(60),
 					time.UnixMilli(10),
 				),
 				types.NewReserveSnapshot(
-					common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+					common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 					sdk.NewDec(12),
 					sdk.NewDec(50),
 					time.UnixMilli(20),
@@ -415,10 +416,10 @@ func TestCalcTwap(t *testing.T) {
 		},
 		{
 			name: "Error: quote asset reserve = asset amount",
-			pair: common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+			pair: common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 			reserveSnapshots: []types.ReserveSnapshot{
 				types.NewReserveSnapshot(
-					common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+					common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 					sdk.NewDec(10),
 					sdk.NewDec(20),
 					time.UnixMilli(20),
@@ -438,16 +439,16 @@ func TestCalcTwap(t *testing.T) {
 		// expected price: ((60 - 600/(10 + 10)) * (20 - 10) + (30 - 600/(20 + 10)) * (30 - 20)) / (10 + 10)
 		{
 			name: "base asset swap twap calc, add to pool, t=[10,30]",
-			pair: common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+			pair: common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 			reserveSnapshots: []types.ReserveSnapshot{
 				types.NewReserveSnapshot(
-					common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+					common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 					sdk.NewDec(10),
 					sdk.NewDec(60),
 					time.UnixMilli(10),
 				),
 				types.NewReserveSnapshot(
-					common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+					common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 					sdk.NewDec(20),
 					sdk.NewDec(30),
 					time.UnixMilli(20),
@@ -467,16 +468,16 @@ func TestCalcTwap(t *testing.T) {
 		// expected price: ((60 - 600/(10 - 2)) * (20 - 10) + (75 - 600/(8 - 2)) * (30 - 20)) / (10 + 10)
 		{
 			name: "base asset swap twap calc, remove from pool, t=[10,30]",
-			pair: common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+			pair: common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 			reserveSnapshots: []types.ReserveSnapshot{
 				types.NewReserveSnapshot(
-					common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+					common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 					sdk.NewDec(10),
 					sdk.NewDec(60),
 					time.UnixMilli(10),
 				),
 				types.NewReserveSnapshot(
-					common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+					common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 					sdk.NewDec(8),
 					sdk.NewDec(75),
 					time.UnixMilli(20),
@@ -492,10 +493,10 @@ func TestCalcTwap(t *testing.T) {
 		},
 		{
 			name: "Error: base asset reserve = asset amount",
-			pair: common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+			pair: common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 			reserveSnapshots: []types.ReserveSnapshot{
 				types.NewReserveSnapshot(
-					common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+					common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 					sdk.NewDec(10),
 					sdk.NewDec(60),
 					time.UnixMilli(20),
@@ -539,7 +540,7 @@ func TestCalcTwap(t *testing.T) {
 			for _, snapshot := range tc.reserveSnapshots {
 				ctx = ctx.WithBlockTime(time.UnixMilli(snapshot.TimestampMs))
 				snapshot := types.NewReserveSnapshot(
-					common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+					common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 					snapshot.BaseAssetReserve,
 					snapshot.QuoteAssetReserve,
 					ctx.BlockTime(),

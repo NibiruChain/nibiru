@@ -8,6 +8,7 @@ import (
 	"math/rand"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -97,17 +98,17 @@ func RandomizedGenState(simState *module.SimulationState) {
 			VoteThreshold: voteThreshold,
 			RewardBand:    rewardBand,
 			Whitelist: []common.AssetPair{
-				common.AssetRegistry.Pair(common.DenomETH, common.DenomNUSD),
-				common.AssetRegistry.Pair(common.DenomUSDC, common.DenomNUSD),
-				common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
-				common.AssetRegistry.Pair(common.DenomNIBI, common.DenomNUSD),
+				common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD),
+				common.AssetRegistry.Pair(denoms.DenomUSDC, denoms.DenomNUSD),
+				common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				common.AssetRegistry.Pair(denoms.DenomNIBI, denoms.DenomNUSD),
 			},
 			SlashFraction:     slashFraction,
 			SlashWindow:       slashWindow,
 			MinValidPerWindow: minValidPerWindow,
 		},
 		[]types.ExchangeRateTuple{
-			{Pair: common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD), ExchangeRate: sdk.NewDec(20_000)},
+			{Pair: common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD), ExchangeRate: sdk.NewDec(20_000)},
 		},
 		[]types.FeederDelegation{},
 		[]types.MissCounter{},

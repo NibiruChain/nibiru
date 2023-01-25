@@ -11,6 +11,7 @@ import (
 	"github.com/gogo/protobuf/jsonpb"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -144,7 +145,7 @@ func TestMarshalProposalEditPoolConfig(t *testing.T) {
 	proposal := EditPoolConfigProposal{
 		Title:       "Edit vpool config for NIBI:NUSD",
 		Description: "I want to take 100x leverage on my NIBI",
-		Pair:        common.AssetRegistry.Pair(common.DenomNIBI, common.DenomNUSD),
+		Pair:        common.AssetRegistry.Pair(denoms.DenomNIBI, denoms.DenomNUSD),
 		Config: VpoolConfig{
 			MaxLeverage:            sdk.MustNewDecFromStr("100"),
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),

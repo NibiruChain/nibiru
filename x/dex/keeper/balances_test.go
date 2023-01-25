@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/testutil"
 
 	"github.com/NibiruChain/nibiru/x/testutil/testapp"
@@ -11,8 +12,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
-
-	"github.com/NibiruChain/nibiru/x/common"
 )
 
 func TestCheckBalances(t *testing.T) {
@@ -30,11 +29,11 @@ func TestCheckBalances(t *testing.T) {
 			name: "has enough funds",
 			userInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("unibi", 100),
-				sdk.NewInt64Coin(common.DenomNUSD, 100),
+				sdk.NewInt64Coin(denoms.DenomNUSD, 100),
 			),
 			coinsToSpend: sdk.NewCoins(
 				sdk.NewInt64Coin("unibi", 100),
-				sdk.NewInt64Coin(common.DenomNUSD, 100),
+				sdk.NewInt64Coin(denoms.DenomNUSD, 100),
 			),
 			expectedError: nil,
 		},
@@ -45,7 +44,7 @@ func TestCheckBalances(t *testing.T) {
 			),
 			coinsToSpend: sdk.NewCoins(
 				sdk.NewInt64Coin("unibi", 100),
-				sdk.NewInt64Coin(common.DenomNUSD, 100),
+				sdk.NewInt64Coin(denoms.DenomNUSD, 100),
 			),
 			expectedError: sdkerrors.ErrInsufficientFunds,
 		},

@@ -1,4 +1,4 @@
-package common
+package denoms
 
 const ( // stablecoins
 	DenomUSDC = "uusdc"
@@ -6,8 +6,6 @@ const ( // stablecoins
 	DenomUSD  = "uusd"
 	DenomUSDT = "uusdt"
 )
-
-var allStableDenoms = []string{DenomUSDC, DenomNUSD, DenomUSD, DenomUSDT}
 
 const ( // volatile assets
 	DenomNIBI = "unibi"

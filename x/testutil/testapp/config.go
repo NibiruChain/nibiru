@@ -13,7 +13,7 @@ import (
 	tmrand "github.com/tendermint/tendermint/libs/rand"
 
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/testutil/cli"
 )
 
@@ -34,15 +34,15 @@ func BuildNetworkConfig(appGenesis GenesisState) cli.Config {
 		TimeoutCommit: time.Second / 2,
 		ChainID:       "chain-" + tmrand.NewRand().Str(6),
 		NumValidators: 1,
-		BondDenom:     common.DenomNIBI,
-		MinGasPrices:  fmt.Sprintf("0.000006%s", common.DenomNIBI),
+		BondDenom:     denoms.DenomNIBI,
+		MinGasPrices:  fmt.Sprintf("0.000006%s", denoms.DenomNIBI),
 		AccountTokens: sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
 		StakingTokens: sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),
 		BondedTokens:  sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
 		StartingTokens: sdk.NewCoins(
-			sdk.NewCoin(common.DenomNUSD, sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
-			sdk.NewCoin(common.DenomNIBI, sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction)),
-			sdk.NewCoin(common.DenomUSDC, sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
+			sdk.NewCoin(denoms.DenomNUSD, sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
+			sdk.NewCoin(denoms.DenomNIBI, sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction)),
+			sdk.NewCoin(denoms.DenomUSDC, sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
 		),
 		PruningStrategy: storetypes.PruningOptionNothing,
 		CleanupDir:      true,

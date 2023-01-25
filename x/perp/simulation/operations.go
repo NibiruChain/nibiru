@@ -13,6 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	pooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
@@ -55,7 +56,7 @@ func SimulateMsgOpenPosition(ak types.AccountKeeper, bk types.BankKeeper, k keep
 		pool := pools[rand.Intn(len(pools))]
 
 		maxQuote := getMaxQuoteForPool(pool)
-		quoteAmt, _ := simtypes.RandPositiveInt(r, sdk.MinInt(sdk.Int(maxQuote), spendableCoins.AmountOf(common.DenomNUSD)))
+		quoteAmt, _ := simtypes.RandPositiveInt(r, sdk.MinInt(sdk.Int(maxQuote), spendableCoins.AmountOf(denoms.DenomNUSD)))
 
 		leverage := simtypes.RandomDecAmount(r, pool.Config.MaxLeverage.Sub(sdk.OneDec())).Add(sdk.OneDec()) // between [1, MaxLeverage]
 		openNotional := leverage.MulInt(quoteAmt)
@@ -71,11 +72,11 @@ func SimulateMsgOpenPosition(ak types.AccountKeeper, bk types.BankKeeper, k keep
 		}
 
 		feesAmt := openNotional.Mul(sdk.MustNewDecFromStr("0.002")).Ceil().TruncateInt()
-		spentCoins := sdk.NewCoins(sdk.NewCoin(common.DenomNUSD, quoteAmt.Add(feesAmt)))
+		spentCoins := sdk.NewCoins(sdk.NewCoin(denoms.DenomNUSD, quoteAmt.Add(feesAmt)))
 
 		msg := &types.MsgOpenPosition{
 			Sender:               simAccount.Address.String(),
-			Pair:                 common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+			Pair:                 common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 			Side:                 side,
 			QuoteAssetAmount:     quoteAmt,
 			Leverage:             leverage,
@@ -170,14 +171,14 @@ func SimulateMsgClosePosition(ak types.AccountKeeper, bk types.BankKeeper, k kee
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 		trader := simAccount.Address.String()
-		pair := common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD)
+		pair := common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD)
 
 		msg := &types.MsgClosePosition{
 			Sender: trader,
 			Pair:   pair,
 		}
 
-		_, err := k.Positions.Get(ctx, collections.Join(common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD), simAccount.Address))
+		_, err := k.Positions.Get(ctx, collections.Join(common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD), simAccount.Address))
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "no position opened yet"), nil, nil
 		}
@@ -208,22 +209,22 @@ func SimulateMsgAddMargin(ak types.AccountKeeper, bk types.BankKeeper, k keeper.
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 		trader := simAccount.Address.String()
-		pair := common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD)
+		pair := common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD)
 
 		msg := &types.MsgAddMargin{}
-		_, err := k.Positions.Get(ctx, collections.Join(common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD), simAccount.Address))
+		_, err := k.Positions.Get(ctx, collections.Join(common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD), simAccount.Address))
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "no position opened yet"), nil, nil
 		}
 
 		spendableCoins := bk.SpendableCoins(ctx, simAccount.Address)
 
-		if spendableCoins.AmountOf(common.DenomNUSD).IsZero() {
+		if spendableCoins.AmountOf(denoms.DenomNUSD).IsZero() {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "no nusd left"), nil, nil
 		}
-		quoteAmt, _ := simtypes.RandPositiveInt(r, spendableCoins.AmountOf(common.DenomNUSD))
+		quoteAmt, _ := simtypes.RandPositiveInt(r, spendableCoins.AmountOf(denoms.DenomNUSD))
 
-		spentCoin := sdk.NewCoin(common.DenomNUSD, quoteAmt)
+		spentCoin := sdk.NewCoin(denoms.DenomNUSD, quoteAmt)
 
 		msg = &types.MsgAddMargin{
 			Sender: trader,
@@ -257,11 +258,11 @@ func SimulateMsgRemoveMargin(ak types.AccountKeeper, bk types.BankKeeper, k keep
 	) (opMsg simtypes.OperationMsg, futureOps []simtypes.FutureOperation, err error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 		trader := simAccount.Address.String()
-		pair := common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD)
+		pair := common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD)
 
 		msg := &types.MsgRemoveMargin{}
 
-		position, err := k.Positions.Get(ctx, collections.Join(common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD), simAccount.Address))
+		position, err := k.Positions.Get(ctx, collections.Join(common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD), simAccount.Address))
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "no position opened yet"), nil, nil
 		}
@@ -280,7 +281,7 @@ func SimulateMsgRemoveMargin(ak types.AccountKeeper, bk types.BankKeeper, k keep
 
 		marginToRemove, _ := simtypes.RandPositiveInt(r, maxMarginToRemove.TruncateInt())
 
-		expectedCoin := sdk.NewCoin(common.DenomNUSD, marginToRemove)
+		expectedCoin := sdk.NewCoin(denoms.DenomNUSD, marginToRemove)
 
 		msg = &types.MsgRemoveMargin{
 			Sender: trader,
@@ -315,7 +316,7 @@ func SimulateMsgRemoveMargin(ak types.AccountKeeper, bk types.BankKeeper, k keep
 
 func fundAccountWithTokens(ctx sdk.Context, receiver sdk.AccAddress, bk types.BankKeeper) (err error) {
 	newCoins := sdk.NewCoins(
-		sdk.NewCoin(common.DenomNUSD, sdk.NewInt(1e6)),
+		sdk.NewCoin(denoms.DenomNUSD, sdk.NewInt(1e6)),
 	)
 
 	if err := bk.MintCoins(ctx, types.ModuleName, newCoins); err != nil {

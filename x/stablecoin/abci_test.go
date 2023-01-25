@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/epochs"
 	otypes "github.com/NibiruChain/nibiru/x/oracle/types"
 )
@@ -38,7 +39,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(time.Second * 60 * 16))
-				app.OracleKeeper.SetPrice(ctx, common.AssetRegistry.Pair(common.DenomUSDC, common.DenomNUSD), price)
+				app.OracleKeeper.SetPrice(ctx, common.AssetRegistry.Pair(denoms.DenomUSDC, denoms.DenomNUSD), price)
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 			},
 		},
@@ -52,7 +53,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(time.Second * 60 * 16))
-				app.OracleKeeper.SetPrice(ctx, common.AssetRegistry.Pair(common.DenomUSDC, common.DenomNUSD), price)
+				app.OracleKeeper.SetPrice(ctx, common.AssetRegistry.Pair(denoms.DenomUSDC, denoms.DenomNUSD), price)
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 			},
 		},
@@ -82,11 +83,11 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(time.Second + time.Minute*15))
-				app.OracleKeeper.SetPrice(ctx, common.AssetRegistry.Pair(common.DenomUSDC, common.DenomNUSD), price)
+				app.OracleKeeper.SetPrice(ctx, common.AssetRegistry.Pair(denoms.DenomUSDC, denoms.DenomNUSD), price)
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(time.Second + time.Minute*30))
-				app.OracleKeeper.SetPrice(ctx, common.AssetRegistry.Pair(common.DenomUSDC, common.DenomNUSD), price)
+				app.OracleKeeper.SetPrice(ctx, common.AssetRegistry.Pair(denoms.DenomUSDC, denoms.DenomNUSD), price)
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 			},
 		},
@@ -100,11 +101,11 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(time.Second + time.Minute*14))
-				app.OracleKeeper.SetPrice(ctx, common.AssetRegistry.Pair(common.DenomUSDC, common.DenomNUSD), price)
+				app.OracleKeeper.SetPrice(ctx, common.AssetRegistry.Pair(denoms.DenomUSDC, denoms.DenomNUSD), price)
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(time.Second + time.Minute*16))
-				app.OracleKeeper.SetPrice(ctx, common.AssetRegistry.Pair(common.DenomUSDC, common.DenomNUSD), price)
+				app.OracleKeeper.SetPrice(ctx, common.AssetRegistry.Pair(denoms.DenomUSDC, denoms.DenomNUSD), price)
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 			},
 		},
@@ -141,7 +142,7 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 	pairs := common.AssetPairs{
-		common.AssetRegistry.Pair(common.DenomUSDC, common.DenomNUSD),
+		common.AssetRegistry.Pair(denoms.DenomUSDC, denoms.DenomNUSD),
 	}
 	params := otypes.DefaultParams()
 	params.TwapLookbackWindow = 1 * time.Hour

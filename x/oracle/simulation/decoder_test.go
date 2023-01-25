@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 
 	gogotypes "github.com/gogo/protobuf/types"
 	"github.com/stretchr/testify/require"
@@ -34,8 +35,8 @@ func TestDecodeDistributionStore(t *testing.T) {
 
 	aggregatePrevote := types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash([]byte("12345")), valAddr, 123)
 	aggregateVote := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{
-		{Pair: common.AssetRegistry.Pair(common.DenomNIBI, common.DenomNUSD), ExchangeRate: sdk.NewDecWithPrec(1234, 1)},
-		{Pair: common.AssetRegistry.Pair(common.DenomETH, common.DenomNUSD), ExchangeRate: sdk.NewDecWithPrec(4321, 1)},
+		{Pair: common.AssetRegistry.Pair(denoms.DenomNIBI, denoms.DenomNUSD), ExchangeRate: sdk.NewDecWithPrec(1234, 1)},
+		{Pair: common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD), ExchangeRate: sdk.NewDecWithPrec(4321, 1)},
 	}, valAddr)
 
 	pair := "btc:usd"

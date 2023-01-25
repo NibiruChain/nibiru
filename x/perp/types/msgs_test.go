@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/testutil"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -335,7 +336,7 @@ func TestMsgMultiLiquidate_ValidateBasic(t *testing.T) {
 				Sender: testutil.AccAddress().String(),
 				Liquidations: []*MsgMultiLiquidate_MultiLiquidation{
 					{
-						Pair:   common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+						Pair:   common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 						Trader: testutil.AccAddress().String(),
 					},
 				}},
@@ -346,7 +347,7 @@ func TestMsgMultiLiquidate_ValidateBasic(t *testing.T) {
 				Sender: testutil.AccAddress().String(),
 				Liquidations: []*MsgMultiLiquidate_MultiLiquidation{
 					{
-						Pair:   common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+						Pair:   common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 						Trader: testutil.AccAddress().String(),
 					},
 					{
@@ -361,11 +362,11 @@ func TestMsgMultiLiquidate_ValidateBasic(t *testing.T) {
 				Sender: testutil.AccAddress().String(),
 				Liquidations: []*MsgMultiLiquidate_MultiLiquidation{
 					{
-						Pair:   common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+						Pair:   common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 						Trader: testutil.AccAddress().String(),
 					},
 					{
-						Pair:   common.AssetRegistry.Pair(common.DenomBTC, common.DenomNUSD),
+						Pair:   common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
 						Trader: "invalid",
 					},
 				}},
