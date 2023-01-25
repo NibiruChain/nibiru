@@ -15,40 +15,15 @@ import (
 type AssetPair string
 
 const (
-	// stablecoins
-	DenomUSDC = "uusdc"
-	DenomNUSD = "unusd"
-	DenomUSD  = "uusd"
-	DenomUSDT = "uusdt"
-
-	// crypto assets
-	DenomNIBI = "unibi"
-	DenomBTC  = "ubtc"
-	DenomETH  = "ueth"
-
-	ModuleName = "common"
-
+	ModuleName                = "common"
 	TreasuryPoolModuleAccount = "treasury_pool"
-
-	PairSeparator = ":"
+	PairSeparator             = ":"
 )
 
 var (
 	// paired against USD
-	Pair_NIBI_USD = NewAssetPair(DenomNIBI, DenomUSD)
-	Pair_USDC_USD = NewAssetPair(DenomUSDC, DenomUSD)
-	Pair_BTC_USD  = NewAssetPair(DenomBTC, DenomUSD)
-	Pair_ETH_USD  = NewAssetPair(DenomETH, DenomUSD)
-
-	// paired against NUSD
-	Pair_NIBI_NUSD = NewAssetPair(DenomNIBI, DenomNUSD)
-	Pair_USDC_NUSD = NewAssetPair(DenomUSDC, DenomNUSD)
-	Pair_BTC_NUSD  = NewAssetPair(DenomBTC, DenomNUSD)
-	Pair_ETH_NUSD  = NewAssetPair(DenomETH, DenomNUSD)
-
 	ErrInvalidTokenPair = sdkerrors.Register(ModuleName, 1, "invalid token pair")
 	APrecision          = uint256.NewInt().SetUint64(1)
-
 	// Precision for int representation in sdk.Int objects
 	Precision = int64(1_000_000)
 )
