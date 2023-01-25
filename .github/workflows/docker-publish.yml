@@ -1,7 +1,5 @@
 name: Publish Latest Docker Image
 
-name: ci
-
 on:
   push:
     branches:
@@ -50,4 +48,4 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ghci.io/nibiruchain/nibiru:latest
+          tags: ghcr.io/nibiruchain/nibiru:latest
