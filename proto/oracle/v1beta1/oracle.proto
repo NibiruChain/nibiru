@@ -23,8 +23,9 @@ message Params {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
-  repeated string whitelist                  = 4 [
-    (gogoproto.moretags)     = "yaml:\"whitelist\""
+  repeated string whitelist = 4 [
+    (gogoproto.moretags)     = "yaml:\"whitelist\"",
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair"
   ];
   string slash_fraction = 5 [
     (gogoproto.moretags)   = "yaml:\"slash_fraction\"",
@@ -82,7 +83,12 @@ message ExchangeRateTuple {
   option (gogoproto.goproto_getters)  = false;
   option (gogoproto.goproto_stringer) = false;
 
-  string pair        = 1 [(gogoproto.moretags) = "yaml:\"pair\""];
+  string pair = 1 [ 
+    (gogoproto.moretags) = "yaml:\"pair\"",
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.nullable) = false
+  ];
+
   string exchange_rate = 2 [
     (gogoproto.moretags)   = "yaml:\"exchange_rate\"",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
@@ -94,7 +100,10 @@ message ExchangeRateTuple {
 // which provide prices faithfully for different pairs.
 message PairReward {
   // pair defines the pair for which we incentivize validator to provide prices for.
-  string pair = 1;
+  string pair = 1 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.nullable) = false
+  ];
   // id uniquely identifies the rewards instance of the pair
   uint64 id = 2;
   // vote_periods defines the vote periods left in which rewards will be distributed.

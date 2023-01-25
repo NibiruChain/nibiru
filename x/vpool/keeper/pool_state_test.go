@@ -34,10 +34,7 @@ func TestCreatePool(t *testing.T) {
 	exists := vpoolKeeper.ExistsPool(ctx, common.Pair_BTC_NUSD)
 	require.True(t, exists)
 
-	notExist := vpoolKeeper.ExistsPool(ctx, common.AssetPair{
-		Token0: "BTC",
-		Token1: "OTHER",
-	})
+	notExist := vpoolKeeper.ExistsPool(ctx, "BTC:OTHER")
 	require.False(t, notExist)
 }
 
@@ -141,8 +138,7 @@ func TestGetPoolPrices_SetupErrors(t *testing.T) {
 		{
 			name: "invalid pair ID on pool",
 			test: func(t *testing.T) {
-				vpoolWithInvalidPair := types.Vpool{
-					Pair: common.AssetPair{Token0: "o:o", Token1: "unibi"}}
+				vpoolWithInvalidPair := types.Vpool{Pair: "o:o:unibi"}
 				vpoolKeeper, _, ctx := getKeeper(t)
 				_, err := vpoolKeeper.GetPoolPrices(ctx, vpoolWithInvalidPair)
 				require.ErrorContains(t, err, common.ErrInvalidTokenPair.Error())
@@ -206,7 +202,7 @@ func TestGetPoolPrices(t *testing.T) {
 			shouldCreateVpool: true,
 			mockIndexPrice:    sdk.NewDec(99),
 			expectedPoolPrices: types.PoolPrices{
-				Pair:          common.Pair_ETH_NUSD.String(),
+				Pair:          common.Pair_ETH_NUSD,
 				MarkPrice:     sdk.NewDec(3_000),
 				TwapMark:      sdk.NewDec(3_000).String(),
 				IndexPrice:    sdk.NewDec(99).String(),
@@ -232,7 +228,7 @@ func TestGetPoolPrices(t *testing.T) {
 			mockIndexPrice:    sdk.OneDec().Neg(),
 			oracleKeeperErr:   fmt.Errorf("No index price"),
 			expectedPoolPrices: types.PoolPrices{
-				Pair:          common.Pair_ETH_NUSD.String(),
+				Pair:          common.Pair_ETH_NUSD,
 				MarkPrice:     sdk.NewDec(3_000),
 				TwapMark:      sdk.NewDec(3_000).String(),
 				IndexPrice:    sdk.OneDec().Neg().String(),
@@ -279,7 +275,7 @@ func TestGetPoolPrices(t *testing.T) {
 
 			t.Log("mock oracleKeeper index price")
 			mocks.mockOracleKeeper.EXPECT().
-				GetExchangeRate(ctx, tc.vpool.Pair.String()).
+				GetExchangeRate(ctx, tc.vpool.Pair).
 				Return(tc.mockIndexPrice, tc.oracleKeeperErr).
 				AnyTimes()
 
@@ -400,7 +396,7 @@ func TestEditSwapInvariant(t *testing.T) {
 			if tc.shouldErr {
 				err := vpoolKeeper.EditSwapInvariant(ctx,
 					types.EditSwapInvariantsProposal_SwapInvariantMultiple{
-						Pair: pair.String(), Multiplier: tc.swapInvariantMultiplier,
+						Pair: pair, Multiplier: tc.swapInvariantMultiplier,
 					})
 				// We expect the initial config if the change fails
 				assert.Error(t, err)
@@ -412,14 +408,14 @@ func TestEditSwapInvariant(t *testing.T) {
 				require.Panics(t, func() {
 					err := vpoolKeeper.EditSwapInvariant(ctx,
 						types.EditSwapInvariantsProposal_SwapInvariantMultiple{
-							Pair: pair.String(), Multiplier: tc.swapInvariantMultiplier,
+							Pair: pair, Multiplier: tc.swapInvariantMultiplier,
 						})
 					require.Error(t, err)
 				})
 			} else {
 				err := vpoolKeeper.EditSwapInvariant(ctx,
 					types.EditSwapInvariantsProposal_SwapInvariantMultiple{
-						Pair: pair.String(), Multiplier: tc.swapInvariantMultiplier,
+						Pair: pair, Multiplier: tc.swapInvariantMultiplier,
 					})
 				// We expect the new config if the change succeeds
 				require.NoError(t, err)

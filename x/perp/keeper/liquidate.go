@@ -191,7 +191,7 @@ func (k Keeper) ExecuteFullLiquidation(
 	}
 
 	err = ctx.EventManager().EmitTypedEvent(&types.PositionLiquidatedEvent{
-		Pair:                  position.Pair.String(),
+		Pair:                  position.Pair,
 		TraderAddress:         traderAddr.String(),
 		ExchangedQuoteAmount:  positionResp.ExchangedNotionalValue,
 		ExchangedPositionSize: positionResp.ExchangedPositionSize,
@@ -334,7 +334,7 @@ func (k Keeper) ExecutePartialLiquidation(
 	}
 
 	err = ctx.EventManager().EmitTypedEvent(&types.PositionLiquidatedEvent{
-		Pair:                  currentPosition.Pair.String(),
+		Pair:                  currentPosition.Pair,
 		TraderAddress:         traderAddr.String(),
 		ExchangedQuoteAmount:  positionResp.ExchangedNotionalValue,
 		ExchangedPositionSize: positionResp.ExchangedPositionSize,

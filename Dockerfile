@@ -13,8 +13,11 @@ RUN apt-get update && \
 
 RUN wget https://github.com/CosmWasm/wasmvm/releases/download/v1.1.1/libwasmvm_muslc.${ARCH}.a -O /lib/libwasmvm_muslc.a
 
+COPY go.* ./
+RUN go mod download
+
 COPY . ./
-RUN make build
+RUN --mount=type=cache,target=/root/.cache/go-build make build
 
 FROM alpine:latest
 WORKDIR /root

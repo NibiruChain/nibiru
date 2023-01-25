@@ -5,6 +5,7 @@ import (
 
 	"github.com/NibiruChain/collections"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
@@ -26,7 +27,7 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 }
 
 // registerMissedVotes it parses all validators performance and increases the missed vote of those that did not vote.
-func (k Keeper) registerMissedVotes(ctx sdk.Context, whitelistedPairs map[string]struct{}, validatorPerformanceMap map[string]types.ValidatorPerformance) {
+func (k Keeper) registerMissedVotes(ctx sdk.Context, whitelistedPairs map[common.AssetPair]struct{}, validatorPerformanceMap map[string]types.ValidatorPerformance) {
 	for _, validatorPerformance := range validatorPerformanceMap {
 		if int(validatorPerformance.WinCount) == len(whitelistedPairs) {
 			continue
@@ -40,7 +41,7 @@ func (k Keeper) registerMissedVotes(ctx sdk.Context, whitelistedPairs map[string
 // countVotesAndUpdateExchangeRates processes the votes and updates the ExchangeRates based on the results.
 func (k Keeper) countVotesAndUpdateExchangeRates(
 	ctx sdk.Context,
-	pairBallotsMap map[string]types.ExchangeRateBallots,
+	pairBallotsMap map[common.AssetPair]types.ExchangeRateBallots,
 	validatorPerformanceMap map[string]types.ValidatorPerformance,
 ) {
 	params := k.GetParams(ctx)
@@ -52,7 +53,7 @@ func (k Keeper) countVotesAndUpdateExchangeRates(
 
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(types.EventTypeExchangeRateUpdate,
-				sdk.NewAttribute(types.AttributeKeyPair, pair),
+				sdk.NewAttribute(types.AttributeKeyPair, pair.String()),
 				sdk.NewAttribute(types.AttributeKeyExchangeRate, exchangeRate.String()),
 			),
 		)
@@ -64,15 +65,15 @@ func (k Keeper) countVotesAndUpdateExchangeRates(
 func (k Keeper) getPairBallotsMapAndWhitelistedPairs(
 	ctx sdk.Context,
 	validatorPerformanceMap map[string]types.ValidatorPerformance,
-) (pairBallotsMap map[string]types.ExchangeRateBallots, whitelistedPairsMap map[string]struct{}) {
+) (pairBallotsMap map[common.AssetPair]types.ExchangeRateBallots, whitelistedPairsMap map[common.AssetPair]struct{}) {
 	pairBallotsMap = k.groupBallotsByPair(ctx, validatorPerformanceMap)
 
 	return k.RemoveInvalidBallots(ctx, pairBallotsMap)
 }
 
 // getWhitelistedPairs returns a map containing all the pairs as the key.
-func (k Keeper) getWhitelistedPairs(ctx sdk.Context) map[string]struct{} {
-	whitelistedPairs := make(map[string]struct{})
+func (k Keeper) getWhitelistedPairs(ctx sdk.Context) map[common.AssetPair]struct{} {
+	whitelistedPairs := make(map[common.AssetPair]struct{})
 	for _, p := range k.GetWhitelistedPairs(ctx) {
 		whitelistedPairs[p] = struct{}{}
 	}
@@ -82,7 +83,7 @@ func (k Keeper) getWhitelistedPairs(ctx sdk.Context) map[string]struct{} {
 
 // resetExchangeRates removes all exchange rates from the state
 func (k Keeper) resetExchangeRates(ctx sdk.Context) {
-	for _, key := range k.ExchangeRates.Iterate(ctx, collections.Range[string]{}).Keys() {
+	for _, key := range k.ExchangeRates.Iterate(ctx, collections.Range[common.AssetPair]{}).Keys() {
 		err := k.ExchangeRates.Delete(ctx, key)
 		if err != nil {
 			panic(err)

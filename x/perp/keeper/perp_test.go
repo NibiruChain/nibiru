@@ -62,7 +62,7 @@ func TestKeeperClosePosition(t *testing.T) {
 		aliceLeverage := sdk.NewDec(10)
 		aliceBaseLimit := sdk.NewDec(150)
 
-		nibiruApp.OracleKeeper.SetPrice(ctx, pair.String(), sdk.NewDec(20))
+		nibiruApp.OracleKeeper.SetPrice(ctx, pair, sdk.NewDec(20))
 
 		_, err = nibiruApp.PerpKeeper.OpenPosition(
 			ctx, pair, aliceSide, alice, aliceQuote, aliceLeverage, aliceBaseLimit)

@@ -96,24 +96,24 @@ func RandomizedGenState(simState *module.SimulationState) {
 			VotePeriod:    uint64(10_000),
 			VoteThreshold: voteThreshold,
 			RewardBand:    rewardBand,
-			Whitelist: []string{
-				common.Pair_ETH_NUSD.String(),
-				common.Pair_USDC_NUSD.String(),
-				common.Pair_BTC_NUSD.String(),
-				common.Pair_NIBI_NUSD.String(),
+			Whitelist: []common.AssetPair{
+				common.Pair_ETH_NUSD,
+				common.Pair_USDC_NUSD,
+				common.Pair_BTC_NUSD,
+				common.Pair_NIBI_NUSD,
 			},
 			SlashFraction:     slashFraction,
 			SlashWindow:       slashWindow,
 			MinValidPerWindow: minValidPerWindow,
 		},
 		[]types.ExchangeRateTuple{
-			{Pair: common.Pair_BTC_NUSD.String(), ExchangeRate: sdk.NewDec(20_000)},
+			{Pair: common.Pair_BTC_NUSD, ExchangeRate: sdk.NewDec(20_000)},
 		},
 		[]types.FeederDelegation{},
 		[]types.MissCounter{},
 		[]types.AggregateExchangeRatePrevote{},
 		[]types.AggregateExchangeRateVote{},
-		[]string{},
+		[]common.AssetPair{},
 		[]types.PairReward{},
 	)
 
