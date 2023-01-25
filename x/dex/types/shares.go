@@ -116,7 +116,7 @@ func (pool Pool) numSharesOutFromTokensInStableSwap(tokensIn sdk.Coins) (
 ) {
 	tokenSupply := pool.TotalShares.Amount
 
-	D, err := pool.getD(pool.PoolAssets)
+	D, err := pool.GetD(pool.PoolAssets)
 	if err != nil {
 		return
 	}
@@ -136,7 +136,7 @@ func (pool Pool) numSharesOutFromTokensInStableSwap(tokensIn sdk.Coins) (
 		}
 	}
 
-	newD, err := pool.getD(newPoolAssets)
+	newD, err := pool.GetD(newPoolAssets)
 	if err != nil {
 		return
 	}

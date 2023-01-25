@@ -49,7 +49,8 @@ func (pool Pool) CalcOutAmtGivenIn(tokenIn sdk.Coin, tokenOutDenom string, noFee
 	// delta balanceOut is positive(tokens inside the pool decreases)
 	var tokenAmountOut sdk.Int
 	if pool.PoolParams.PoolType == PoolType_STABLESWAP {
-		tokenAmountOut, err = pool.SolveStableswapInvariant(poolAssetIn.Token, tokenOutDenom)
+		tokenAmountOut, err = pool.Exchange(sdk.NewCoin(tokenIn.Denom, tokenAmountInAfterFee.TruncateInt()), tokenOutDenom)
+
 		if err != nil {
 			return
 		}
@@ -183,8 +184,5 @@ func (pool *Pool) ApplySwap(tokenIn sdk.Coin, tokenOut sdk.Coin) (err error) {
 	poolAssetIn.Token.Amount = poolAssetIn.Token.Amount.Add(tokenIn.Amount)
 	poolAssetOut.Token.Amount = poolAssetOut.Token.Amount.Sub(tokenOut.Amount)
 
-	return pool.updatePoolAssetBalances(sdk.NewCoins(
-		poolAssetIn.Token,
-		poolAssetOut.Token,
-	))
+	return pool.updatePoolAssetBalances(poolAssetIn.Token, poolAssetOut.Token)
 }

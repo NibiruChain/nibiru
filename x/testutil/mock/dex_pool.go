@@ -41,10 +41,10 @@ func DexStablePool(poolId uint64, assets sdk.Coins, shares int64) types.Pool {
 	return types.Pool{
 		Id: poolId,
 		PoolParams: types.PoolParams{
-			SwapFee:  sdk.SmallestDec(),
-			ExitFee:  sdk.SmallestDec(),
+			SwapFee:  sdk.ZeroDec(),
+			ExitFee:  sdk.ZeroDec(),
 			PoolType: types.PoolType_STABLESWAP,
-			A:        sdk.OneInt(),
+			A:        sdk.NewInt(100),
 		},
 		PoolAssets:  poolAssets,
 		TotalShares: sdk.NewInt64Coin(types.GetPoolShareBaseDenom(poolId), shares),

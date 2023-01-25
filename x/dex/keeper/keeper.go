@@ -553,7 +553,10 @@ func (k Keeper) ExitPool(
 
 	if poolSharesOut.Amount.GT(pool.TotalShares.Amount) ||
 		poolSharesOut.Amount.LTE(sdk.ZeroInt()) {
-		return sdk.Coins{}, errors.New("invalid number of pool shares")
+		return sdk.Coins{}, fmt.Errorf(
+			"invalid number of pool shares %s must be between 0 and %s",
+			poolSharesOut.Amount, pool.TotalShares.Amount,
+		)
 	}
 
 	// calculate withdrawn liquidity
