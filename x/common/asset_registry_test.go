@@ -10,7 +10,7 @@ import (
 
 func TestIsSupportedPair(t *testing.T) {
 	for base := range AssetRegistry {
-		for _, quote := range AssetRegistry[base] {
+		for quote := range AssetRegistry[base] {
 			require.Truef(t, AssetRegistry.IsSupportedPair(base, quote), "%s:%s should be supported", base, quote)
 		}
 	}
@@ -21,7 +21,7 @@ func TestIsSupportedPair(t *testing.T) {
 
 func TestPair(t *testing.T) {
 	for base := range AssetRegistry {
-		for _, quote := range AssetRegistry[base] {
+		for quote := range AssetRegistry[base] {
 			require.Equal(t, NewAssetPair(base, quote), AssetRegistry.Pair(base, quote))
 		}
 	}
@@ -51,15 +51,15 @@ func TestIsSupportedBaseDenom(t *testing.T) {
 
 func TestQuoteDenoms(t *testing.T) {
 	for base := range AssetRegistry {
-		for _, quote := range AssetRegistry[base] {
-			require.Contains(t, AssetRegistry.QuoteDenoms(), quote)
+		for quote := range AssetRegistry[base] {
+			require.True(t, AssetRegistry.QuoteDenoms().Has(quote))
 		}
 	}
 }
 
 func TestIsSupportedQuoteDenom(t *testing.T) {
 	for base := range AssetRegistry {
-		for _, quote := range AssetRegistry[base] {
+		for quote := range AssetRegistry[base] {
 			require.True(t, AssetRegistry.IsSupportedQuoteDenom(quote))
 		}
 	}
@@ -68,11 +68,11 @@ func TestIsSupportedQuoteDenom(t *testing.T) {
 }
 
 func TestIsSupportedDenom(t *testing.T) {
-	for _, base := range AssetRegistry.BaseDenoms() {
+	for base := range AssetRegistry.BaseDenoms() {
 		require.True(t, AssetRegistry.IsSupportedDenom(base))
 	}
 
-	for _, quote := range AssetRegistry.QuoteDenoms() {
+	for quote := range AssetRegistry.QuoteDenoms() {
 		require.True(t, AssetRegistry.IsSupportedDenom(quote))
 	}
 
