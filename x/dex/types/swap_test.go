@@ -306,7 +306,7 @@ func TestApplySwap(t *testing.T) {
 				},
 			},
 			tokenIn:     sdk.NewInt64Coin("aaa", 1),
-			tokenOut:    sdk.NewInt64Coin("bbb", 200),
+			tokenOut:    sdk.NewInt64Coin("bbb", 201),
 			shouldError: true,
 		},
 		{
