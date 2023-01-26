@@ -26,14 +26,14 @@ func setup(t *testing.T) (keeper.TestInput, types.MsgServer) {
 	params := input.OracleKeeper.GetParams(input.Ctx)
 	params.VotePeriod = 1
 	params.SlashWindow = 100
-	params.Whitelist = []string{
-		common.Pair_BTC_NUSD.String(),
-		common.Pair_USDC_NUSD.String(),
-		common.Pair_ETH_NUSD.String(),
-		common.Pair_NIBI_NUSD.String(),
+	params.Whitelist = []common.AssetPair{
+		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+		asset.Registry.Pair(denoms.USDC, denoms.NUSD),
+		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
+		asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 	}
 	input.OracleKeeper.SetParams(input.Ctx, params)
-	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, common.Pair_NIBI_NUSD.String())
+	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD))
 	h := keeper.NewMsgServerImpl(input.OracleKeeper)
 
 	sh := staking.NewHandler(input.StakingKeeper)
