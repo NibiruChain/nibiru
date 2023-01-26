@@ -1,27 +1,30 @@
 package common
 
-import "github.com/NibiruChain/nibiru/x/common/denoms"
+import (
+	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/common/set"
+)
 
-type assetRegistry map[string]StringSet
+type assetRegistry map[string]set.Set[string]
 
 var AssetRegistry assetRegistry
 
 func init() {
 	// map of base asset to supported quote assets
 	// quote assets are usually stables
-	AssetRegistry = map[string]StringSet{
-		denoms.DenomBTC:  NewStringSet(denoms.DenomUSDC, denoms.DenomNUSD, denoms.DenomUSD, denoms.DenomUSDT),
-		denoms.DenomETH:  NewStringSet(denoms.DenomUSDC, denoms.DenomNUSD, denoms.DenomUSD, denoms.DenomUSDT),
-		denoms.DenomNIBI: NewStringSet(denoms.DenomUSDC, denoms.DenomNUSD, denoms.DenomUSD, denoms.DenomUSDT),
-		denoms.DenomATOM: NewStringSet(denoms.DenomUSDC, denoms.DenomNUSD, denoms.DenomUSD, denoms.DenomUSDT),
-		denoms.DenomOSMO: NewStringSet(denoms.DenomUSDC, denoms.DenomNUSD, denoms.DenomUSD, denoms.DenomUSDT),
-		denoms.DenomAVAX: NewStringSet(denoms.DenomUSDC, denoms.DenomNUSD, denoms.DenomUSD, denoms.DenomUSDT),
-		denoms.DenomSOL:  NewStringSet(denoms.DenomUSDC, denoms.DenomNUSD, denoms.DenomUSD, denoms.DenomUSDT),
-		denoms.DenomBNB:  NewStringSet(denoms.DenomUSDC, denoms.DenomNUSD, denoms.DenomUSD, denoms.DenomUSDT),
-		denoms.DenomADA:  NewStringSet(denoms.DenomUSDC, denoms.DenomNUSD, denoms.DenomUSD, denoms.DenomUSDT),
-		denoms.DenomNUSD: NewStringSet(denoms.DenomUSD, denoms.DenomUSDC),
-		denoms.DenomUSDC: NewStringSet(denoms.DenomUSD, denoms.DenomNUSD),
-		denoms.DenomUSDT: NewStringSet(denoms.DenomUSD, denoms.DenomNUSD, denoms.DenomUSDC),
+	AssetRegistry = map[string]set.Set[string]{
+		denoms.DenomBTC:  set.New(denoms.DenomUSDC, denoms.DenomNUSD, denoms.DenomUSD, denoms.DenomUSDT),
+		denoms.DenomETH:  set.New(denoms.DenomUSDC, denoms.DenomNUSD, denoms.DenomUSD, denoms.DenomUSDT),
+		denoms.DenomNIBI: set.New(denoms.DenomUSDC, denoms.DenomNUSD, denoms.DenomUSD, denoms.DenomUSDT),
+		denoms.DenomATOM: set.New(denoms.DenomUSDC, denoms.DenomNUSD, denoms.DenomUSD, denoms.DenomUSDT),
+		denoms.DenomOSMO: set.New(denoms.DenomUSDC, denoms.DenomNUSD, denoms.DenomUSD, denoms.DenomUSDT),
+		denoms.DenomAVAX: set.New(denoms.DenomUSDC, denoms.DenomNUSD, denoms.DenomUSD, denoms.DenomUSDT),
+		denoms.DenomSOL:  set.New(denoms.DenomUSDC, denoms.DenomNUSD, denoms.DenomUSD, denoms.DenomUSDT),
+		denoms.DenomBNB:  set.New(denoms.DenomUSDC, denoms.DenomNUSD, denoms.DenomUSD, denoms.DenomUSDT),
+		denoms.DenomADA:  set.New(denoms.DenomUSDC, denoms.DenomNUSD, denoms.DenomUSD, denoms.DenomUSDT),
+		denoms.DenomNUSD: set.New(denoms.DenomUSD, denoms.DenomUSDC),
+		denoms.DenomUSDC: set.New(denoms.DenomUSD, denoms.DenomNUSD),
+		denoms.DenomUSDT: set.New(denoms.DenomUSD, denoms.DenomNUSD, denoms.DenomUSDC),
 	}
 }
 
@@ -36,8 +39,8 @@ func (r assetRegistry) Pair(base string, quote string) AssetPair {
 }
 
 // Returns all supported base denoms
-func (r assetRegistry) BaseDenoms() StringSet {
-	baseSet := make(StringSet)
+func (r assetRegistry) BaseDenoms() set.Set[string] {
+	baseSet := make(set.Set[string])
 	for d := range r {
 		baseSet.Add(d)
 	}
@@ -45,8 +48,8 @@ func (r assetRegistry) BaseDenoms() StringSet {
 }
 
 // Returns all supported quote denoms
-func (r assetRegistry) QuoteDenoms() StringSet {
-	quoteSet := make(StringSet)
+func (r assetRegistry) QuoteDenoms() set.Set[string] {
+	quoteSet := make(set.Set[string])
 	for base := range r {
 		for q := range r[base] {
 			quoteSet.Add(q)

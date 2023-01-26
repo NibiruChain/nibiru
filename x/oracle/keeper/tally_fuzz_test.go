@@ -12,6 +12,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/common/set"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
 )
@@ -221,7 +222,8 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 	// test OracleKeeper.Pairs.Insert
 	voteTargets := map[common.AssetPair]struct{}{}
 	f.Fuzz(&voteTargets)
-	whitelistedPairs := make(common.StringSet)
+	whitelistedPairs := make(set.Set[string])
+
 	for key := range voteTargets {
 		assert.NotPanics(t, func() {
 			input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, key)
