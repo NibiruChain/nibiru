@@ -14,6 +14,7 @@ import (
 	"github.com/tendermint/tendermint/abci/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 )
 
 type ExecTxOption func(*execTxOptions)
@@ -67,7 +68,7 @@ func ExecTx(network *Network, cmd *cobra.Command, txSender sdk.AccAddress, args 
 	args = append(args, fmt.Sprintf("--%s=%s", flags.FlagFrom, txSender))
 
 	options := execTxOptions{
-		fees:             sdk.NewCoins(sdk.NewCoin(common.DenomNIBI, sdk.NewInt(10))),
+		fees:             sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(10))),
 		gas:              2000000,
 		skipConfirmation: true,
 		broadcastMode:    flags.BroadcastBlock,
