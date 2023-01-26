@@ -38,7 +38,7 @@ func TestAddMarginSuccess(t *testing.T) {
 			latestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.001"),
 			initialPosition: types.Position{
 				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(1_000),
 				Margin:                          sdk.NewDec(100),
 				OpenNotional:                    sdk.NewDec(500),
@@ -69,7 +69,7 @@ func TestAddMarginSuccess(t *testing.T) {
 			vpoolKeeper := &nibiruApp.VpoolKeeper
 			assert.NoError(t, vpoolKeeper.CreatePool(
 				ctx,
-				asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
+				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				sdk.NewDec(10*common.Precision), // 10 tokens
 				sdk.NewDec(5*common.Precision),  // 5 tokens
 				vpooltypes.VpoolConfig{
@@ -80,11 +80,11 @@ func TestAddMarginSuccess(t *testing.T) {
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
 			))
-			require.True(t, vpoolKeeper.ExistsPool(ctx, asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD)))
+			require.True(t, vpoolKeeper.ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)))
 
 			t.Log("set pair metadata")
 			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-				Pair:                            asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: tc.latestCumulativePremiumFraction,
 			},
 			)
@@ -92,14 +92,14 @@ func TestAddMarginSuccess(t *testing.T) {
 			t.Log("establish initial position")
 			setPosition(nibiruApp.PerpKeeper, ctx, tc.initialPosition)
 
-			resp, err := nibiruApp.PerpKeeper.AddMargin(ctx, asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), traderAddr, tc.marginToAdd)
+			resp, err := nibiruApp.PerpKeeper.AddMargin(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), traderAddr, tc.marginToAdd)
 			require.NoError(t, err)
 			assert.EqualValues(t, tc.expectedFundingPayment, resp.FundingPayment)
 			assert.EqualValues(t, tc.expectedMargin, resp.Position.Margin)
 			assert.EqualValues(t, tc.initialPosition.OpenNotional, resp.Position.OpenNotional)
 			assert.EqualValues(t, tc.initialPosition.Size_, resp.Position.Size_)
 			assert.EqualValues(t, traderAddr.String(), resp.Position.TraderAddress)
-			assert.EqualValues(t, asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), resp.Position.Pair)
+			assert.EqualValues(t, asset.Registry.Pair(denoms.BTC, denoms.NUSD), resp.Position.Pair)
 			assert.EqualValues(t, tc.latestCumulativePremiumFraction, resp.Position.LatestCumulativePremiumFraction)
 			assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 		})

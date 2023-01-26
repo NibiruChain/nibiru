@@ -25,7 +25,7 @@ import (
 func TestOracleThreshold(t *testing.T) {
 	exchangeRates := types.ExchangeRateTuples{
 		{
-			Pair:         asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
+			Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			ExchangeRate: randomExchangeRate,
 		},
 	}
@@ -122,15 +122,15 @@ func TestOracleThreshold(t *testing.T) {
 func TestOracleDrop(t *testing.T) {
 	input, h := setup(t)
 
-	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), randomExchangeRate)
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD), randomExchangeRate)
 
 	// Account 1, pair gov stable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 0)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 0)
 
 	// Immediately swap halt after an illiquid oracle vote
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
 
-	_, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx, asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD))
+	_, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD))
 	require.Error(t, err)
 }
 
@@ -144,7 +144,7 @@ func TestOracleTally(t *testing.T) {
 	for i, rate := range rates {
 		decExchangeRate := sdk.NewDecWithPrec(int64(rate*math.Pow10(keeper.OracleDecPrecision)), int64(keeper.OracleDecPrecision))
 		exchangeRateStr, err := types.ExchangeRateTuples{
-			{ExchangeRate: decExchangeRate, Pair: asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD)}}.ToString()
+			{ExchangeRate: decExchangeRate, Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}}.ToString()
 		require.NoError(t, err)
 
 		salt := fmt.Sprintf("%d", i)
@@ -163,7 +163,7 @@ func TestOracleTally(t *testing.T) {
 		}
 
 		vote := types.NewExchangeRateBallot(
-			decExchangeRate, asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), valAddrs[i], power)
+			decExchangeRate, asset.Registry.Pair(denoms.BTC, denoms.NUSD), valAddrs[i], power)
 		ballot = append(ballot, vote)
 
 		// change power of every three validator
@@ -223,7 +223,7 @@ func TestOracleTallyTiming(t *testing.T) {
 
 	// all the keeper.Addrs vote for the block ... not last period block yet, so tally fails
 	for i := range keeper.Addrs[:2] {
-		makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: randomExchangeRate}}, i)
+		makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: randomExchangeRate}}, i)
 	}
 
 	params := input.OracleKeeper.GetParams(input.Ctx)
@@ -232,13 +232,13 @@ func TestOracleTallyTiming(t *testing.T) {
 	require.Equal(t, 0, int(input.Ctx.BlockHeight()))
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
-	_, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx, asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD))
+	_, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 	require.Error(t, err)
 
 	input.Ctx = input.Ctx.WithBlockHeight(int64(params.VotePeriod - 1))
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
-	_, err = input.OracleKeeper.ExchangeRates.Get(input.Ctx, asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD))
+	_, err = input.OracleKeeper.ExchangeRates.Get(input.Ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 	require.NoError(t, err)
 }
 
@@ -248,13 +248,13 @@ func TestOracleRewardDistribution(t *testing.T) {
 	input, h := setup(t)
 
 	// Account 1, btcstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 0)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 0)
 
 	// Account 2, btcstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 1)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 1)
 
 	rewardAllocation := sdk.NewCoins(sdk.NewCoin("reward", sdk.NewInt(1*common.Precision)))
-	keeper.AllocateRewards(t, input, asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), rewardAllocation, 1)
+	keeper.AllocateRewards(t, input, asset.Registry.Pair(denoms.BTC, denoms.NUSD), rewardAllocation, 1)
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
@@ -268,26 +268,26 @@ func TestOracleRewardDistribution(t *testing.T) {
 func TestOracleRewardBand(t *testing.T) {
 	input, h := setup(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
-	params.Whitelist = []common.AssetPair{asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD)}
+	params.Whitelist = []common.AssetPair{asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
 	// clear pairs to reset vote targets
 	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[common.AssetPair]{}).Keys() {
 		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 	}
-	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD))
+	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD))
 
 	rewardSpread := randomExchangeRate.Mul(input.OracleKeeper.RewardBand(input.Ctx).QuoInt64(2))
 
 	// no one will miss the vote
 	// Account 1, govstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate.Sub(rewardSpread)}}, 0)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate.Sub(rewardSpread)}}, 0)
 
 	// Account 2, govstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 1)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 1)
 
 	// Account 3, govstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate.Add(rewardSpread)}}, 2)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate.Add(rewardSpread)}}, 2)
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
 
@@ -297,13 +297,13 @@ func TestOracleRewardBand(t *testing.T) {
 
 	// Account 1 will miss the vote due to raward band condition
 	// Account 1, govstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate.Sub(rewardSpread.Add(sdk.OneDec()))}}, 0)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate.Sub(rewardSpread.Add(sdk.OneDec()))}}, 0)
 
 	// Account 2, govstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 1)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 1)
 
 	// Account 3, govstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate.Add(rewardSpread)}}, 2)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate.Add(rewardSpread)}}, 2)
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
 
@@ -357,19 +357,19 @@ func TestOracleExchangeRate(t *testing.T) {
 
 	// govstable has been chosen as referenceExchangeRate by highest voting power
 	// Account 1, ethstable, govstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.ETH, denoms.NUSD), ExchangeRate: ethStableExchangeRate}, {Pair: asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: govStableExchangeRate}}, 0)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.ETH, denoms.NUSD), ExchangeRate: ethStableExchangeRate}, {Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: govStableExchangeRate}}, 0)
 
 	// Account 2, ethstable, govstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.ETH, denoms.NUSD), ExchangeRate: ethStableExchangeRate}, {Pair: asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: govStableExchangeRate}}, 1)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.ETH, denoms.NUSD), ExchangeRate: ethStableExchangeRate}, {Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: govStableExchangeRate}}, 1)
 
 	// Account 3, govstable, btcstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: govStableExchangeRate}, {Pair: asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 2)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: govStableExchangeRate}, {Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 2)
 
 	ethStableRewards := sdk.NewInt64Coin("ETHSTABLE", 1*common.Precision)
 	govStableRewards := sdk.NewInt64Coin("GOVSTABLE", 1*common.Precision)
 
-	keeper.AllocateRewards(t, input, asset.AssetRegistry.Pair(denoms.ETH, denoms.NUSD), sdk.NewCoins(ethStableRewards), 1)
-	keeper.AllocateRewards(t, input, asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), sdk.NewCoins(govStableRewards), 1)
+	keeper.AllocateRewards(t, input, asset.Registry.Pair(denoms.ETH, denoms.NUSD), sdk.NewCoins(ethStableRewards), 1)
+	keeper.AllocateRewards(t, input, asset.Registry.Pair(denoms.NIBI, denoms.NUSD), sdk.NewCoins(govStableRewards), 1)
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
@@ -405,13 +405,13 @@ func TestOracleEnsureSorted(t *testing.T) {
 		ethStableRate3 := sdk.NewDec(int64(rand.Uint64() % 100000000))
 
 		// Account 1, ethstable, govstable
-		makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.ETH, denoms.NUSD), ExchangeRate: ethStableRate1}, {Pair: asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: govStableRate1}}, 0)
+		makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.ETH, denoms.NUSD), ExchangeRate: ethStableRate1}, {Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: govStableRate1}}, 0)
 
 		// Account 2, ethstable, govstable
-		makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.ETH, denoms.NUSD), ExchangeRate: ethStableRate2}, {Pair: asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: govStableRate2}}, 1)
+		makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.ETH, denoms.NUSD), ExchangeRate: ethStableRate2}, {Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: govStableRate2}}, 1)
 
 		// Account 3, ethstable, govstable
-		makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.ETH, denoms.NUSD), ExchangeRate: govStableRate3}, {Pair: asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: ethStableRate3}}, 2)
+		makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.ETH, denoms.NUSD), ExchangeRate: govStableRate3}, {Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: ethStableRate3}}, 2)
 
 		require.NotPanics(t, func() {
 			oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
@@ -429,31 +429,31 @@ func TestOracleExchangeRateVal5(t *testing.T) {
 
 	// govstable has been chosen as reference pair by highest voting power
 	// Account 1, govstable, ethstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: govStableRate1}, {Pair: asset.AssetRegistry.Pair(denoms.ETH, denoms.NUSD), ExchangeRate: ethStableRate1}}, 0)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: govStableRate1}, {Pair: asset.Registry.Pair(denoms.ETH, denoms.NUSD), ExchangeRate: ethStableRate1}}, 0)
 
 	// Account 2, govstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: govStableRate1}}, 1)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: govStableRate1}}, 1)
 
 	// Account 3, govstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: govStableRate1}}, 2)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: govStableRate1}}, 2)
 
 	// Account 4, govstable, ethstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: govStableRate2}, {Pair: asset.AssetRegistry.Pair(denoms.ETH, denoms.NUSD), ExchangeRate: ethStableRate2}}, 3)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: govStableRate2}, {Pair: asset.Registry.Pair(denoms.ETH, denoms.NUSD), ExchangeRate: ethStableRate2}}, 3)
 
 	// Account 5, govstable, ethstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: govStableRate2}, {Pair: asset.AssetRegistry.Pair(denoms.ETH, denoms.NUSD), ExchangeRate: ethStableRate2}}, 4)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: govStableRate2}, {Pair: asset.Registry.Pair(denoms.ETH, denoms.NUSD), ExchangeRate: ethStableRate2}}, 4)
 
 	ethStableRewards := sdk.NewInt64Coin("ETHSTABLE", 1*common.Precision)
 	govStableRewards := sdk.NewInt64Coin("GOVSTABLE", 1*common.Precision)
 
-	keeper.AllocateRewards(t, input, asset.AssetRegistry.Pair(denoms.ETH, denoms.NUSD), sdk.NewCoins(ethStableRewards), 1)
-	keeper.AllocateRewards(t, input, asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), sdk.NewCoins(govStableRewards), 1)
+	keeper.AllocateRewards(t, input, asset.Registry.Pair(denoms.ETH, denoms.NUSD), sdk.NewCoins(ethStableRewards), 1)
+	keeper.AllocateRewards(t, input, asset.Registry.Pair(denoms.NIBI, denoms.NUSD), sdk.NewCoins(govStableRewards), 1)
 
 	oracle.EndBlocker(input.Ctx.WithBlockHeight(1), input.OracleKeeper)
 
-	gotGovStableRate, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx, asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD))
+	gotGovStableRate, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD))
 	require.NoError(t, err)
-	gotEthStableRate, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx, asset.AssetRegistry.Pair(denoms.ETH, denoms.NUSD))
+	gotEthStableRate, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx, asset.Registry.Pair(denoms.ETH, denoms.NUSD))
 	require.NoError(t, err)
 
 	require.Equal(t, govStableRate1, gotGovStableRate)
@@ -487,15 +487,15 @@ func TestWhitelistedPairs(t *testing.T) {
 	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[common.AssetPair]{}).Keys() {
 		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 	}
-	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD))
+	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD))
 
 	// govstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 0)
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 1)
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 2)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 0)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 1)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 2)
 
 	// set btcstable for next vote period
-	params.Whitelist = []common.AssetPair{asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD)}
+	params.Whitelist = []common.AssetPair{asset.Registry.Pair(denoms.NIBI, denoms.NUSD), asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 	input.OracleKeeper.SetParams(input.Ctx, params)
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
 
@@ -505,15 +505,15 @@ func TestWhitelistedPairs(t *testing.T) {
 	require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[2], 0))
 
 	// whitelisted pairs are {govstable, btcstable}
-	require.Equal(t, []common.AssetPair{asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD)}, input.OracleKeeper.GetWhitelistedPairs(input.Ctx))
+	require.Equal(t, []common.AssetPair{asset.Registry.Pair(denoms.BTC, denoms.NUSD), asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}, input.OracleKeeper.GetWhitelistedPairs(input.Ctx))
 
 	// govstable, missing btcstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 0)
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 1)
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 2)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 0)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 1)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 2)
 
 	// delete btcstable for next vote period
-	params.Whitelist = []common.AssetPair{asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD)}
+	params.Whitelist = []common.AssetPair{asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}
 	input.OracleKeeper.SetParams(input.Ctx, params)
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
 
@@ -522,13 +522,13 @@ func TestWhitelistedPairs(t *testing.T) {
 	require.Equal(t, uint64(1), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[2], 0))
 
 	// btcstable must be deleted
-	require.Equal(t, []common.AssetPair{asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD)}, input.OracleKeeper.GetWhitelistedPairs(input.Ctx))
-	require.False(t, input.OracleKeeper.WhitelistedPairs.Has(input.Ctx, asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD)))
+	require.Equal(t, []common.AssetPair{asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}, input.OracleKeeper.GetWhitelistedPairs(input.Ctx))
+	require.False(t, input.OracleKeeper.WhitelistedPairs.Has(input.Ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)))
 
 	// govstable, no missing
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 0)
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 1)
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 2)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 0)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 1)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 2)
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
 
@@ -544,11 +544,11 @@ func TestAbstainWithSmallStakingPower(t *testing.T) {
 	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[common.AssetPair]{}).Keys() {
 		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 	}
-	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD))
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: sdk.ZeroDec()}}, 0)
+	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD))
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: sdk.ZeroDec()}}, 0)
 
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
-	_, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx, asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD))
+	_, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD))
 	require.Error(t, err)
 }
 

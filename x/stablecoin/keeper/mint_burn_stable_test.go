@@ -146,8 +146,8 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			)
 
 			// Post prices to each pair with the oracle.
-			nibiruApp.OracleKeeper.SetPrice(ctx, asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), tc.govPrice)
-			nibiruApp.OracleKeeper.SetPrice(ctx, asset.AssetRegistry.Pair(denoms.USDC, denoms.NUSD), tc.collPrice)
+			nibiruApp.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD), tc.govPrice)
+			nibiruApp.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.USDC, denoms.NUSD), tc.collPrice)
 
 			// Fund account
 			require.NoError(t, simapp.FundAccount(nibiruApp.BankKeeper, ctx, acc, tc.accFunds))
@@ -303,8 +303,8 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			)
 
 			t.Log("Post prices to each pair with the oracle.")
-			nibiruApp.OracleKeeper.SetPrice(ctx, asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), tc.govPrice)
-			nibiruApp.OracleKeeper.SetPrice(ctx, asset.AssetRegistry.Pair(denoms.USDC, denoms.NUSD), tc.collPrice)
+			nibiruApp.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD), tc.govPrice)
+			nibiruApp.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.USDC, denoms.NUSD), tc.collPrice)
 
 			// Fund account
 			require.NoError(t, simapp.FundAccount(nibiruApp.BankKeeper, ctx, acc, tc.accFunds))
@@ -450,8 +450,8 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			nibiruApp.StablecoinKeeper.SetParams(ctx, defaultParams)
 
 			t.Log("Post prices to each pair with the oracle.")
-			nibiruApp.OracleKeeper.SetPrice(ctx, asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), tc.govPrice)
-			nibiruApp.OracleKeeper.SetPrice(ctx, asset.AssetRegistry.Pair(denoms.USDC, denoms.NUSD), tc.collPrice)
+			nibiruApp.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD), tc.govPrice)
+			nibiruApp.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.USDC, denoms.NUSD), tc.collPrice)
 
 			// Add collaterals to the module
 			require.NoError(t, nibiruApp.BankKeeper.MintCoins(ctx, types.ModuleName, tc.moduleFunds))
@@ -571,8 +571,8 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 				),
 			)
 
-			nibiruApp.OracleKeeper.SetPrice(ctx, asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), tc.govPrice)
-			nibiruApp.OracleKeeper.SetPrice(ctx, asset.AssetRegistry.Pair(denoms.USDC, denoms.NUSD), tc.collPrice)
+			nibiruApp.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD), tc.govPrice)
+			nibiruApp.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.USDC, denoms.NUSD), tc.collPrice)
 
 			// Add collaterals to the module
 			require.NoError(t, nibiruApp.BankKeeper.MintCoins(ctx, types.ModuleName, tc.moduleFunds))

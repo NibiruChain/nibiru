@@ -21,7 +21,7 @@ func TestSnapshotValidate(t *testing.T) {
 		{
 			name: "happy path",
 			snapshot: ReserveSnapshot{
-				Pair:              asset.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
+				Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 				BaseAssetReserve:  sdk.OneDec(),
 				QuoteAssetReserve: sdk.OneDec(),
 				TimestampMs:       time.Now().UnixMilli(),
@@ -41,7 +41,7 @@ func TestSnapshotValidate(t *testing.T) {
 		{
 			name: "base asset negative",
 			snapshot: ReserveSnapshot{
-				Pair:              asset.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
+				Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 				BaseAssetReserve:  sdk.NewDec(-1),
 				QuoteAssetReserve: sdk.OneDec(),
 				TimestampMs:       time.Now().UnixMilli(),
@@ -51,7 +51,7 @@ func TestSnapshotValidate(t *testing.T) {
 		{
 			name: "quote asset negative",
 			snapshot: ReserveSnapshot{
-				Pair:              asset.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
+				Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 				BaseAssetReserve:  sdk.ZeroDec(),
 				QuoteAssetReserve: sdk.NewDec(-1),
 				TimestampMs:       time.Now().UnixMilli(),
@@ -62,7 +62,7 @@ func TestSnapshotValidate(t *testing.T) {
 			name: "timestamp lower than smallest UTC ('0001-01-01 00:00:00 +0000 UTC')",
 			// see time.UnixMilli(-62135596800000).UTC())
 			snapshot: ReserveSnapshot{
-				Pair:              asset.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
+				Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 				BaseAssetReserve:  sdk.ZeroDec(),
 				QuoteAssetReserve: sdk.ZeroDec(),
 				TimestampMs:       -62135596800000 - 1,

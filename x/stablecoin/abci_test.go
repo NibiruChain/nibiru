@@ -40,7 +40,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(time.Second * 60 * 16))
-				app.OracleKeeper.SetPrice(ctx, asset.AssetRegistry.Pair(denoms.USDC, denoms.NUSD), price)
+				app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.USDC, denoms.NUSD), price)
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 			},
 		},
@@ -54,7 +54,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(time.Second * 60 * 16))
-				app.OracleKeeper.SetPrice(ctx, asset.AssetRegistry.Pair(denoms.USDC, denoms.NUSD), price)
+				app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.USDC, denoms.NUSD), price)
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 			},
 		},
@@ -84,11 +84,11 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(time.Second + time.Minute*15))
-				app.OracleKeeper.SetPrice(ctx, asset.AssetRegistry.Pair(denoms.USDC, denoms.NUSD), price)
+				app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.USDC, denoms.NUSD), price)
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(time.Second + time.Minute*30))
-				app.OracleKeeper.SetPrice(ctx, asset.AssetRegistry.Pair(denoms.USDC, denoms.NUSD), price)
+				app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.USDC, denoms.NUSD), price)
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 			},
 		},
@@ -102,11 +102,11 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(time.Second + time.Minute*14))
-				app.OracleKeeper.SetPrice(ctx, asset.AssetRegistry.Pair(denoms.USDC, denoms.NUSD), price)
+				app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.USDC, denoms.NUSD), price)
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(time.Second + time.Minute*16))
-				app.OracleKeeper.SetPrice(ctx, asset.AssetRegistry.Pair(denoms.USDC, denoms.NUSD), price)
+				app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.USDC, denoms.NUSD), price)
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 			},
 		},
@@ -143,7 +143,7 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 	pairs := common.AssetPairs{
-		asset.AssetRegistry.Pair(denoms.USDC, denoms.NUSD),
+		asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 	}
 	params := otypes.DefaultParams()
 	params.TwapLookbackWindow = 1 * time.Hour

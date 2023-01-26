@@ -32,8 +32,8 @@ func TestParams(t *testing.T) {
 	slashWindow := uint64(1000)
 	minValidPerWindow := sdk.NewDecWithPrec(1, 4)
 	whitelist := []common.AssetPair{
-		asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
-		asset.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
+		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 	}
 
 	// Should really test validateParams, but skipping because obvious

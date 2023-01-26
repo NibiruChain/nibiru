@@ -95,7 +95,7 @@ func (k Keeper) calcNeededGovAndFees(
 	ctx sdk.Context, stable sdk.Coin, govRatio sdk.Dec, feeRatio sdk.Dec,
 ) (sdk.Coin, sdk.Coin, error) {
 	priceGov, err := k.OracleKeeper.GetExchangeRate(
-		ctx, asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD))
+		ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD))
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
@@ -117,7 +117,7 @@ func (k Keeper) calcNeededCollateralAndFees(
 	feeRatio sdk.Dec,
 ) (sdk.Coin, sdk.Coin, error) {
 	priceColl, err := k.OracleKeeper.GetExchangeRate(
-		ctx, asset.AssetRegistry.Pair(denoms.USDC, denoms.NUSD))
+		ctx, asset.Registry.Pair(denoms.USDC, denoms.NUSD))
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
 	}

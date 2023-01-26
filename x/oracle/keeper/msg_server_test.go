@@ -20,7 +20,7 @@ func TestMsgServer_FeederDelegation(t *testing.T) {
 
 	exchangeRates := types.ExchangeRateTuples{
 		{
-			Pair:         asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
+			Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			ExchangeRate: randomExchangeRate,
 		},
 	}
@@ -87,43 +87,43 @@ func TestMsgServer_AggregatePrevoteVote(t *testing.T) {
 	salt := "1"
 	exchangeRates := types.ExchangeRateTuples{
 		{
-			Pair:         asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD),
+			Pair:         asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 			ExchangeRate: sdk.MustNewDecFromStr("1000.23"),
 		},
 		{
-			Pair:         asset.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
+			Pair:         asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 			ExchangeRate: sdk.MustNewDecFromStr("0.29"),
 		},
 
 		{
-			Pair:         asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
+			Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			ExchangeRate: sdk.MustNewDecFromStr("0.27"),
 		},
 	}
 
 	otherExchangeRate := types.ExchangeRateTuples{
 		{
-			Pair:         asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD),
+			Pair:         asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 			ExchangeRate: sdk.MustNewDecFromStr("1000.23"),
 		},
 		{
-			Pair:         asset.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
+			Pair:         asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 			ExchangeRate: sdk.MustNewDecFromStr("0.29"),
 		},
 
 		{
-			Pair:         asset.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
+			Pair:         asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 			ExchangeRate: sdk.MustNewDecFromStr("0.27"),
 		},
 	}
 
 	unintendedExchangeRateStr := types.ExchangeRateTuples{
 		{
-			Pair:         asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD),
+			Pair:         asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 			ExchangeRate: sdk.MustNewDecFromStr("1000.23"),
 		},
 		{
-			Pair:         asset.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
+			Pair:         asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 			ExchangeRate: sdk.MustNewDecFromStr("0.29"),
 		},
 		{

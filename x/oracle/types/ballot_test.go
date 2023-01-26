@@ -31,21 +31,21 @@ func TestToMap(t *testing.T) {
 			{
 
 				Voter:        sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()),
-				Pair:         asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
+				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				ExchangeRate: sdk.NewDec(1600),
 				Power:        100,
 			},
 			{
 
 				Voter:        sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()),
-				Pair:         asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
+				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				ExchangeRate: sdk.ZeroDec(),
 				Power:        100,
 			},
 			{
 
 				Voter:        sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()),
-				Pair:         asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
+				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				ExchangeRate: sdk.NewDec(1500),
 				Power:        100,
 			},
@@ -95,15 +95,15 @@ func TestToCrossRate(t *testing.T) {
 	for _, data := range data {
 		valAddr := sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address())
 		if !data.base.IsZero() {
-			pbBase = append(pbBase, types.NewExchangeRateBallot(data.base, asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), valAddr, 100))
+			pbBase = append(pbBase, types.NewExchangeRateBallot(data.base, asset.Registry.Pair(denoms.BTC, denoms.NUSD), valAddr, 100))
 		}
 
-		pbQuote = append(pbQuote, types.NewExchangeRateBallot(data.quote, asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), valAddr, 100))
+		pbQuote = append(pbQuote, types.NewExchangeRateBallot(data.quote, asset.Registry.Pair(denoms.BTC, denoms.NUSD), valAddr, 100))
 
 		if !data.base.IsZero() && !data.quote.IsZero() {
-			cb = append(cb, types.NewExchangeRateBallot(data.base.Quo(data.quote), asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), valAddr, 100))
+			cb = append(cb, types.NewExchangeRateBallot(data.base.Quo(data.quote), asset.Registry.Pair(denoms.BTC, denoms.NUSD), valAddr, 100))
 		} else {
-			cb = append(cb, types.NewExchangeRateBallot(sdk.ZeroDec(), asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), valAddr, 0))
+			cb = append(cb, types.NewExchangeRateBallot(sdk.ZeroDec(), asset.Registry.Pair(denoms.BTC, denoms.NUSD), valAddr, 0))
 		}
 	}
 
@@ -135,7 +135,7 @@ func TestPBPower(t *testing.T) {
 		power := sk.Validator(ctx, valAccAddrs[i]).GetConsensusPower(sdk.DefaultPowerReduction)
 		vote := types.NewExchangeRateBallot(
 			sdk.ZeroDec(),
-			asset.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
+			asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 			valAccAddrs[i],
 			power,
 		)
@@ -154,7 +154,7 @@ func TestPBPower(t *testing.T) {
 	faceValAddr := sdk.ValAddress(pubKey.Address())
 	fakeVote := types.NewExchangeRateBallot(
 		sdk.OneDec(),
-		asset.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
+		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 		faceValAddr,
 		0,
 	)
@@ -225,7 +225,7 @@ func TestPBWeightedMedian(t *testing.T) {
 
 			vote := types.NewExchangeRateBallot(
 				sdk.NewDec(int64(input)),
-				asset.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
+				asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 				valAddr,
 				power,
 			)
@@ -292,7 +292,7 @@ func TestPBStandardDeviation(t *testing.T) {
 
 			vote := types.NewExchangeRateBallot(
 				sdk.NewDecWithPrec(int64(input*base), int64(types.OracleDecPrecision)),
-				asset.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
+				asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 				valAddr,
 				power,
 			)
@@ -311,12 +311,12 @@ func TestPBStandardDeviationOverflow(t *testing.T) {
 
 	pb := types.ExchangeRateBallots{types.NewExchangeRateBallot(
 		sdk.ZeroDec(),
-		asset.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
+		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 		valAddr,
 		2,
 	), types.NewExchangeRateBallot(
 		exchangeRate,
-		asset.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
+		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 		valAddr,
 		1,
 	)}

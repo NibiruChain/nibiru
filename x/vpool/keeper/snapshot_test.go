@@ -26,7 +26,7 @@ func TestGetSnapshotPrice(t *testing.T) {
 	}{
 		{
 			name:              "spot price calc",
-			pair:              asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
+			pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			quoteAssetReserve: sdk.NewDec(40_000),
 			baseAssetReserve:  sdk.NewDec(2),
 			twapCalcOption:    types.TwapCalcOption_SPOT,
@@ -34,7 +34,7 @@ func TestGetSnapshotPrice(t *testing.T) {
 		},
 		{
 			name:              "quote asset swap add to pool calc",
-			pair:              asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
+			pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			quoteAssetReserve: sdk.NewDec(3_000),
 			baseAssetReserve:  sdk.NewDec(1_000),
 			twapCalcOption:    types.TwapCalcOption_QUOTE_ASSET_SWAP,
@@ -44,7 +44,7 @@ func TestGetSnapshotPrice(t *testing.T) {
 		},
 		{
 			name:              "quote asset swap remove from pool calc",
-			pair:              asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
+			pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			quoteAssetReserve: sdk.NewDec(3_000),
 			baseAssetReserve:  sdk.NewDec(1_000),
 			twapCalcOption:    types.TwapCalcOption_QUOTE_ASSET_SWAP,
@@ -54,7 +54,7 @@ func TestGetSnapshotPrice(t *testing.T) {
 		},
 		{
 			name:              "base asset swap add to pool calc",
-			pair:              asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
+			pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			quoteAssetReserve: sdk.NewDec(3_000),
 			baseAssetReserve:  sdk.NewDec(1_000),
 			twapCalcOption:    types.TwapCalcOption_BASE_ASSET_SWAP,
@@ -64,7 +64,7 @@ func TestGetSnapshotPrice(t *testing.T) {
 		},
 		{
 			name:              "base asset swap remove from pool calc",
-			pair:              asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
+			pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			quoteAssetReserve: sdk.NewDec(3_000),
 			baseAssetReserve:  sdk.NewDec(1_000),
 			twapCalcOption:    types.TwapCalcOption_BASE_ASSET_SWAP,

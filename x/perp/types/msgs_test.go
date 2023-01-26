@@ -337,7 +337,7 @@ func TestMsgMultiLiquidate_ValidateBasic(t *testing.T) {
 				Sender: testutil.AccAddress().String(),
 				Liquidations: []*MsgMultiLiquidate_MultiLiquidation{
 					{
-						Pair:   asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
+						Pair:   asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 						Trader: testutil.AccAddress().String(),
 					},
 				}},
@@ -348,7 +348,7 @@ func TestMsgMultiLiquidate_ValidateBasic(t *testing.T) {
 				Sender: testutil.AccAddress().String(),
 				Liquidations: []*MsgMultiLiquidate_MultiLiquidation{
 					{
-						Pair:   asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
+						Pair:   asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 						Trader: testutil.AccAddress().String(),
 					},
 					{
@@ -363,11 +363,11 @@ func TestMsgMultiLiquidate_ValidateBasic(t *testing.T) {
 				Sender: testutil.AccAddress().String(),
 				Liquidations: []*MsgMultiLiquidate_MultiLiquidation{
 					{
-						Pair:   asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
+						Pair:   asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 						Trader: testutil.AccAddress().String(),
 					},
 					{
-						Pair:   asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
+						Pair:   asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 						Trader: "invalid",
 					},
 				}},

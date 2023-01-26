@@ -20,7 +20,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 		k.SetParams(ctx, params)
 	}
 
-	_, err := k.OracleKeeper.GetExchangeRateTwap(ctx, asset.AssetRegistry.Pair(denoms.USDC, denoms.NUSD))
+	_, err := k.OracleKeeper.GetExchangeRateTwap(ctx, asset.Registry.Pair(denoms.USDC, denoms.NUSD))
 
 	if err != nil {
 		params := k.GetParams(ctx)
