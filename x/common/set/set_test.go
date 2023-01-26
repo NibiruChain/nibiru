@@ -1,23 +1,24 @@
-package common_test
+package set
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/NibiruChain/nibiru/x/common"
 )
 
 var elementSlice = []string{"fire", "earth", "water", "air"}
 
 func TestAdd(t *testing.T) {
-	elements := common.NewStringSet(elementSlice...)
+	elements := New(elementSlice...)
+
 	assert.False(t, elements.Has("lava"))
 	assert.False(t, elements.Has("mud"))
+
 	elements.Add("lava")
 	elements.Add("mud")
 	assert.True(t, elements.Has("lava"))
 	assert.True(t, elements.Has("mud"))
+
 	assert.Equal(t, 6, elements.Len())
 
 	// Add blank string
@@ -27,15 +28,17 @@ func TestAdd(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
-	elements := common.NewStringSet(elementSlice...)
+	elements := New(elementSlice...)
 	elem := "water"
 	assert.True(t, elements.Has(elem))
+
 	elements.Remove(elem)
 	assert.False(t, elements.Has(elem))
 }
 
 func TestHas(t *testing.T) {
-	elements := common.NewStringSet(elementSlice...)
+	elements := New(elementSlice...)
+
 	assert.True(t, elements.Has("fire"))
 	assert.True(t, elements.Has("water"))
 	assert.True(t, elements.Has("air"))
@@ -46,7 +49,7 @@ func TestHas(t *testing.T) {
 }
 
 func TestLen(t *testing.T) {
-	elements := common.NewStringSet(elementSlice...)
+	elements := New(elementSlice...)
 	assert.Equal(t, elements.Len(), 4)
 
 	elements.Remove("fire")
