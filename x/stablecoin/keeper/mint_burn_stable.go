@@ -12,6 +12,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 )
@@ -94,7 +95,7 @@ func (k Keeper) calcNeededGovAndFees(
 	ctx sdk.Context, stable sdk.Coin, govRatio sdk.Dec, feeRatio sdk.Dec,
 ) (sdk.Coin, sdk.Coin, error) {
 	priceGov, err := k.OracleKeeper.GetExchangeRate(
-		ctx, common.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD))
+		ctx, asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD))
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
@@ -116,7 +117,7 @@ func (k Keeper) calcNeededCollateralAndFees(
 	feeRatio sdk.Dec,
 ) (sdk.Coin, sdk.Coin, error) {
 	priceColl, err := k.OracleKeeper.GetExchangeRate(
-		ctx, common.AssetRegistry.Pair(denoms.USDC, denoms.NUSD))
+		ctx, asset.AssetRegistry.Pair(denoms.USDC, denoms.NUSD))
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
 	}

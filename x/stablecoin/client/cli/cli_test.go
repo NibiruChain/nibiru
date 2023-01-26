@@ -17,6 +17,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/NibiruChain/nibiru/x/stablecoin/client/cli"
@@ -55,8 +56,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	oracleGenesis := oracletypes.DefaultGenesisState()
 	oracleGenesis.ExchangeRates = []oracletypes.ExchangeRateTuple{
-		{Pair: common.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: sdk.NewDec(10)},
-		{Pair: common.AssetRegistry.Pair(denoms.USDC, denoms.NUSD), ExchangeRate: sdk.NewDec(1)},
+		{Pair: asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: sdk.NewDec(10)},
+		{Pair: asset.AssetRegistry.Pair(denoms.USDC, denoms.NUSD), ExchangeRate: sdk.NewDec(1)},
 	}
 	oracleGenesis.Params.VotePeriod = 1_000
 

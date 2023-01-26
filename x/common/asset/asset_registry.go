@@ -1,6 +1,7 @@
-package common
+package asset
 
 import (
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/set"
 )
@@ -28,10 +29,10 @@ func init() {
 	}
 }
 
-func (r assetRegistry) Pair(base string, quote string) AssetPair {
+func (r assetRegistry) Pair(base string, quote string) common.AssetPair {
 	for q := range r[base] {
 		if q == quote {
-			return NewAssetPair(string(base), string(quote))
+			return common.NewAssetPair(string(base), string(quote))
 		}
 	}
 

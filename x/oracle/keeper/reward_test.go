@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/oracle"
 	"github.com/NibiruChain/nibiru/x/oracle/keeper"
@@ -58,7 +59,7 @@ func TestKeeper_RewardsDistributionMultiVotePeriods(t *testing.T) {
 	valPeriodicRewards := sdk.NewDecCoinsFromCoins(rewards).
 		QuoDec(sdk.NewDec(int64(periods))).
 		QuoDec(sdk.NewDec(int64(validators)))
-	keeper.AllocateRewards(t, input, common.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), sdk.NewCoins(rewards), periods)
+	keeper.AllocateRewards(t, input, asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), sdk.NewCoins(rewards), periods)
 
 	for i := uint64(1); i <= periods; i++ {
 		for valIndex := 0; valIndex < validators; valIndex++ {
@@ -66,7 +67,7 @@ func TestKeeper_RewardsDistributionMultiVotePeriods(t *testing.T) {
 			// passes the current context block height for pre vote
 			// then changes the height to current height + vote period for the vote
 			makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{
-				Pair:         common.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD),
+				Pair:         asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD),
 				ExchangeRate: randomExchangeRate,
 			}}, valIndex)
 		}
@@ -83,8 +84,8 @@ func TestKeeper_RewardsDistributionMultiVotePeriods(t *testing.T) {
 	}
 
 	// assert there are no rewards for pair
-	require.True(t, input.OracleKeeper.GatherRewardsForVotePeriod(input.Ctx, common.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD)).IsZero())
+	require.True(t, input.OracleKeeper.GatherRewardsForVotePeriod(input.Ctx, asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD)).IsZero())
 
 	// assert that there are no rewards instances
-	require.Empty(t, input.OracleKeeper.PairRewards.Indexes.RewardsByPair.ExactMatch(input.Ctx, common.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD)).PrimaryKeys())
+	require.Empty(t, input.OracleKeeper.PairRewards.Indexes.RewardsByPair.ExactMatch(input.Ctx, asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD)).PrimaryKeys())
 }

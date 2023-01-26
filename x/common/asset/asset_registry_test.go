@@ -1,10 +1,11 @@
-package common
+package asset
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 )
 
@@ -22,18 +23,18 @@ func TestIsSupportedPair(t *testing.T) {
 func TestPair(t *testing.T) {
 	for base := range AssetRegistry {
 		for quote := range AssetRegistry[base] {
-			require.Equal(t, NewAssetPair(base, quote), AssetRegistry.Pair(base, quote))
+			require.Equal(t, common.NewAssetPair(base, quote), AssetRegistry.Pair(base, quote))
 		}
 	}
 
 	t.Log("test an unsupported pair")
-	require.Equal(t, AssetPair(""), AssetRegistry.Pair(denoms.ATOM, denoms.OSMO))
+	require.Equal(t, common.AssetPair(""), AssetRegistry.Pair(denoms.ATOM, denoms.OSMO))
 
 	t.Log("test an unsupported base asset")
-	require.Equal(t, AssetPair(""), AssetRegistry.Pair("unsuported_denom", denoms.USDC))
+	require.Equal(t, common.AssetPair(""), AssetRegistry.Pair("unsuported_denom", denoms.USDC))
 
 	t.Log("test an unsupported quote asset")
-	require.Equal(t, AssetPair(""), AssetRegistry.Pair(denoms.ATOM, "unsupported_denom"))
+	require.Equal(t, common.AssetPair(""), AssetRegistry.Pair(denoms.ATOM, "unsupported_denom"))
 }
 
 func TestBaseDenoms(t *testing.T) {

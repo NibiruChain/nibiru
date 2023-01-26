@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/testutil"
 
@@ -336,7 +337,7 @@ func TestMsgMultiLiquidate_ValidateBasic(t *testing.T) {
 				Sender: testutil.AccAddress().String(),
 				Liquidations: []*MsgMultiLiquidate_MultiLiquidation{
 					{
-						Pair:   common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
+						Pair:   asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 						Trader: testutil.AccAddress().String(),
 					},
 				}},
@@ -347,7 +348,7 @@ func TestMsgMultiLiquidate_ValidateBasic(t *testing.T) {
 				Sender: testutil.AccAddress().String(),
 				Liquidations: []*MsgMultiLiquidate_MultiLiquidation{
 					{
-						Pair:   common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
+						Pair:   asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 						Trader: testutil.AccAddress().String(),
 					},
 					{
@@ -362,11 +363,11 @@ func TestMsgMultiLiquidate_ValidateBasic(t *testing.T) {
 				Sender: testutil.AccAddress().String(),
 				Liquidations: []*MsgMultiLiquidate_MultiLiquidation{
 					{
-						Pair:   common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
+						Pair:   asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 						Trader: testutil.AccAddress().String(),
 					},
 					{
-						Pair:   common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
+						Pair:   asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 						Trader: "invalid",
 					},
 				}},

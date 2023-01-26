@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -31,7 +32,7 @@ const (
 )
 
 var (
-	whitelist                     = []common.AssetPair{common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD), common.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD)}
+	whitelist                     = []common.AssetPair{asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), asset.AssetRegistry.Pair(denoms.ETH, denoms.NUSD), asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD)}
 	voteHashMap map[string]string = make(map[string]string)
 )
 

@@ -16,6 +16,7 @@ import (
 	tmdb "github.com/tendermint/tm-db"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 )
 
@@ -37,8 +38,8 @@ func NewTestNibiruAppAndContext(shouldUseDefaultGenesis bool) (*NibiruTestApp, s
 	newNibiruApp := NewTestNibiruApp(shouldUseDefaultGenesis)
 	ctx := newNibiruApp.NewContext(false, tmproto.Header{})
 
-	newNibiruApp.OracleKeeper.SetPrice(ctx, common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), sdk.NewDec(20000))
-	// newNibiruApp.OracleKeeper.SetPrice(ctx, common.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), sdk.NewDec(10))
+	newNibiruApp.OracleKeeper.SetPrice(ctx, asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), sdk.NewDec(20000))
+	// newNibiruApp.OracleKeeper.SetPrice(ctx, asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), sdk.NewDec(10))
 	newNibiruApp.OracleKeeper.SetPrice(ctx, "xxx:yyy", sdk.NewDec(20000))
 
 	return newNibiruApp, ctx

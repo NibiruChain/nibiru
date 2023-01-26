@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 
 	"github.com/NibiruChain/nibiru/x/oracle/types"
@@ -31,8 +32,8 @@ func TestParams(t *testing.T) {
 	slashWindow := uint64(1000)
 	minValidPerWindow := sdk.NewDecWithPrec(1, 4)
 	whitelist := []common.AssetPair{
-		common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
-		common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
+		asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
+		asset.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
 	}
 
 	// Should really test validateParams, but skipping because obvious

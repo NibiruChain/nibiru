@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/set"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
@@ -133,11 +134,11 @@ func TestRemoveInvalidBallots(t *testing.T) {
 				"x": types.ExchangeRateBallots{
 					{Pair: "x", ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
 				},
-				common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD): types.ExchangeRateBallots{
-					{Pair: common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
+				asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD): types.ExchangeRateBallots{
+					{Pair: asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
 				},
-				common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD): types.ExchangeRateBallots{
-					{Pair: common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
+				asset.AssetRegistry.Pair(denoms.ETH, denoms.NUSD): types.ExchangeRateBallots{
+					{Pair: asset.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
 				},
 			},
 		},
