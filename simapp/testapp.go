@@ -16,6 +16,8 @@ import (
 	tmdb "github.com/tendermint/tm-db"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 )
 
 // NewTestNibiruApp creates an application instance ('app.NibiruApp') with an in-memory
@@ -36,8 +38,8 @@ func NewTestNibiruAppAndContext(shouldUseDefaultGenesis bool) (*NibiruTestApp, s
 	newNibiruApp := NewTestNibiruApp(shouldUseDefaultGenesis)
 	ctx := newNibiruApp.NewContext(false, tmproto.Header{})
 
-	newNibiruApp.OracleKeeper.SetPrice(ctx, common.Pair_BTC_NUSD, sdk.NewDec(20000))
-	// newNibiruApp.OracleKeeper.SetPrice(ctx, common.Pair_NIBI_NUSD, sdk.NewDec(10))
+	newNibiruApp.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdk.NewDec(20000))
+	// newNibiruApp.OracleKeeper.SetPrice(ctx, asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), sdk.NewDec(10))
 	newNibiruApp.OracleKeeper.SetPrice(ctx, "xxx:yyy", sdk.NewDec(20000))
 
 	return newNibiruApp, ctx
@@ -122,7 +124,7 @@ func NewTestGenesisState(codec codec.Codec, inGenState GenesisState,
 	var govGenState govtypes.GenesisState
 	codec.MustUnmarshalJSON(testGenState[govtypes.ModuleName], &govGenState)
 	govGenState.VotingParams.VotingPeriod = time.Second * 20
-	govGenState.DepositParams.MinDeposit = sdk.NewCoins(sdk.NewInt64Coin(common.DenomNIBI, 1*common.Precision)) // min deposit of 1 NIBI
+	govGenState.DepositParams.MinDeposit = sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 1*common.Precision)) // min deposit of 1 NIBI
 	testGenState[govtypes.ModuleName] = codec.MustMarshalJSON(&govGenState)
 
 	return testGenState

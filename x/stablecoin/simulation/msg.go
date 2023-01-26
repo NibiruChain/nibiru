@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/stablecoin/keeper"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 )
@@ -23,7 +23,7 @@ func SimulateMsgMintStable(
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		simAcc, _ := simtypes.RandomAcc(r, accs)
 		// How much stable should get minted?
-		simStable := sdk.NewCoin(common.DenomNUSD, sdk.NewInt(100))
+		simStable := sdk.NewCoin(denoms.NUSD, sdk.NewInt(100))
 		msg := &types.MsgMintStable{
 			Creator: simAcc.Address.String(),
 			Stable:  simStable,

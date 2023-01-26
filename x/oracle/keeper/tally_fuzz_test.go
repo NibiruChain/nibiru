@@ -11,6 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/common/set"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
 )
@@ -131,11 +134,11 @@ func TestRemoveInvalidBallots(t *testing.T) {
 				"x": types.ExchangeRateBallots{
 					{Pair: "x", ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
 				},
-				common.Pair_BTC_NUSD: types.ExchangeRateBallots{
-					{Pair: common.Pair_BTC_NUSD, ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
+				asset.Registry.Pair(denoms.BTC, denoms.NUSD): types.ExchangeRateBallots{
+					{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
 				},
-				common.Pair_ETH_NUSD: types.ExchangeRateBallots{
-					{Pair: common.Pair_BTC_NUSD, ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
+				asset.Registry.Pair(denoms.ETH, denoms.NUSD): types.ExchangeRateBallots{
+					{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
 				},
 			},
 		},
@@ -220,7 +223,8 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 	// test OracleKeeper.Pairs.Insert
 	voteTargets := map[common.AssetPair]struct{}{}
 	f.Fuzz(&voteTargets)
-	whitelistedPairs := make(common.StringSet)
+	whitelistedPairs := make(set.Set[string])
+
 	for key := range voteTargets {
 		assert.NotPanics(t, func() {
 			input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, key)

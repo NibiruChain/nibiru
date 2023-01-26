@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/testutil"
 )
 
@@ -504,7 +506,7 @@ func TestVpool_GetMarkPrice(t *testing.T) {
 		{
 			"happy path",
 			Vpool{
-				Pair:              common.Pair_BTC_NUSD,
+				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				BaseAssetReserve:  sdk.MustNewDecFromStr("10"),
 				QuoteAssetReserve: sdk.MustNewDecFromStr("10000"),
 			},
@@ -513,7 +515,7 @@ func TestVpool_GetMarkPrice(t *testing.T) {
 		{
 			"nil base",
 			Vpool{
-				Pair:              common.Pair_BTC_NUSD,
+				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				BaseAssetReserve:  sdk.Dec{},
 				QuoteAssetReserve: sdk.MustNewDecFromStr("10000"),
 			},
@@ -522,7 +524,7 @@ func TestVpool_GetMarkPrice(t *testing.T) {
 		{
 			"zero base",
 			Vpool{
-				Pair:              common.Pair_BTC_NUSD,
+				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				BaseAssetReserve:  sdk.ZeroDec(),
 				QuoteAssetReserve: sdk.MustNewDecFromStr("10000"),
 			},
@@ -531,7 +533,7 @@ func TestVpool_GetMarkPrice(t *testing.T) {
 		{
 			"nil quote",
 			Vpool{
-				Pair:              common.Pair_BTC_NUSD,
+				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				BaseAssetReserve:  sdk.MustNewDecFromStr("10"),
 				QuoteAssetReserve: sdk.Dec{},
 			},
@@ -540,7 +542,7 @@ func TestVpool_GetMarkPrice(t *testing.T) {
 		{
 			"zero quote",
 			Vpool{
-				Pair:              common.Pair_BTC_NUSD,
+				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				BaseAssetReserve:  sdk.MustNewDecFromStr("10"),
 				QuoteAssetReserve: sdk.ZeroDec(),
 			},
@@ -566,7 +568,7 @@ func TestVpool_IsOverFluctuationLimit(t *testing.T) {
 		{
 			name: "zero fluctuation limit ratio",
 			pool: Vpool{
-				Pair:              common.Pair_BTC_NUSD,
+				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				QuoteAssetReserve: sdk.OneDec(),
 				BaseAssetReserve:  sdk.OneDec(),
 				Config: VpoolConfig{
@@ -582,7 +584,7 @@ func TestVpool_IsOverFluctuationLimit(t *testing.T) {
 		{
 			name: "lower limit of fluctuation limit",
 			pool: Vpool{
-				Pair:              common.Pair_BTC_NUSD,
+				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				QuoteAssetReserve: sdk.NewDec(999),
 				BaseAssetReserve:  sdk.OneDec(),
 				Config: VpoolConfig{
@@ -598,7 +600,7 @@ func TestVpool_IsOverFluctuationLimit(t *testing.T) {
 		{
 			name: "upper limit of fluctuation limit",
 			pool: Vpool{
-				Pair:              common.Pair_BTC_NUSD,
+				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				QuoteAssetReserve: sdk.NewDec(1001),
 				BaseAssetReserve:  sdk.OneDec(),
 				Config: VpoolConfig{
@@ -614,7 +616,7 @@ func TestVpool_IsOverFluctuationLimit(t *testing.T) {
 		{
 			name: "under fluctuation limit",
 			pool: Vpool{
-				Pair:              common.Pair_BTC_NUSD,
+				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				QuoteAssetReserve: sdk.NewDec(998),
 				BaseAssetReserve:  sdk.OneDec(),
 				Config: VpoolConfig{
@@ -630,7 +632,7 @@ func TestVpool_IsOverFluctuationLimit(t *testing.T) {
 		{
 			name: "over fluctuation limit",
 			pool: Vpool{
-				Pair:              common.Pair_BTC_NUSD,
+				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				QuoteAssetReserve: sdk.NewDec(1002),
 				BaseAssetReserve:  sdk.OneDec(),
 				Config: VpoolConfig{
@@ -649,7 +651,7 @@ func TestVpool_IsOverFluctuationLimit(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			snapshot := NewReserveSnapshot(
-				common.Pair_BTC_NUSD,
+				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				sdk.OneDec(),
 				sdk.NewDec(1000),
 				time.Now(),
@@ -668,7 +670,7 @@ func TestVpool_ToSnapshot(t *testing.T) {
 		{
 			name: "happy path",
 			vpool: Vpool{
-				Pair:              common.Pair_BTC_NUSD,
+				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				BaseAssetReserve:  sdk.NewDec(10),
 				QuoteAssetReserve: sdk.NewDec(10_000),
 			},
@@ -677,7 +679,7 @@ func TestVpool_ToSnapshot(t *testing.T) {
 		{
 			name: "err invalid base",
 			vpool: Vpool{
-				Pair:              common.Pair_BTC_NUSD,
+				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				BaseAssetReserve:  sdk.Dec{},
 				QuoteAssetReserve: sdk.NewDec(500),
 			},
@@ -686,7 +688,7 @@ func TestVpool_ToSnapshot(t *testing.T) {
 		{
 			name: "err invalid quote",
 			vpool: Vpool{
-				Pair:              common.Pair_BTC_NUSD,
+				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				BaseAssetReserve:  sdk.NewDec(500),
 				QuoteAssetReserve: sdk.Dec{},
 			},
@@ -695,7 +697,7 @@ func TestVpool_ToSnapshot(t *testing.T) {
 		{
 			name: "err negative quote",
 			vpool: Vpool{
-				Pair:              common.Pair_BTC_NUSD,
+				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				BaseAssetReserve:  sdk.NewDec(500),
 				QuoteAssetReserve: sdk.NewDec(-500),
 			},
@@ -704,7 +706,7 @@ func TestVpool_ToSnapshot(t *testing.T) {
 		{
 			name: "err negative base",
 			vpool: Vpool{
-				Pair:              common.Pair_BTC_NUSD,
+				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				BaseAssetReserve:  sdk.NewDec(-500),
 				QuoteAssetReserve: sdk.NewDec(500),
 			},

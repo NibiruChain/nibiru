@@ -7,15 +7,15 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 )
 
 func TestIntegrationTestSuite(t *testing.T) {
 	coinsFromGenesis := []string{
-		common.DenomNIBI,
-		common.DenomNUSD,
-		common.DenomUSDC,
+		denoms.NIBI,
+		denoms.NUSD,
+		denoms.USDC,
 		"coin-1",
 		"coin-2",
 		"coin-3",
@@ -33,7 +33,7 @@ func TestIntegrationTestSuite(t *testing.T) {
 
 	cfg := testapp.BuildNetworkConfig(genesisState)
 	cfg.StartingTokens = sdk.NewCoins(
-		sdk.NewInt64Coin(common.DenomNIBI, 2e12), // for pool creation fee and more for tx fees
+		sdk.NewInt64Coin(denoms.NIBI, 2e12), // for pool creation fee and more for tx fees
 	)
 
 	for _, coin := range coinsFromGenesis {

@@ -11,6 +11,8 @@ import (
 	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
@@ -31,7 +33,7 @@ func TestQueryExchangeRate(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := sdk.NewDec(1700)
-	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, common.Pair_ETH_NUSD, rate)
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), rate)
 
 	// empty request
 	_, err := querier.ExchangeRate(ctx, nil)
@@ -39,7 +41,7 @@ func TestQueryExchangeRate(t *testing.T) {
 
 	// Query to grpc
 	res, err := querier.ExchangeRate(ctx, &types.QueryExchangeRateRequest{
-		Pair: common.Pair_ETH_NUSD,
+		Pair: asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 	})
 	require.NoError(t, err)
 	require.Equal(t, rate, res.ExchangeRate)
@@ -71,15 +73,15 @@ func TestQueryExchangeRates(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := sdk.NewDec(1700)
-	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, common.Pair_BTC_NUSD, rate)
-	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, common.Pair_ETH_NUSD, rate)
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), rate)
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), rate)
 
 	res, err := querier.ExchangeRates(ctx, &types.QueryExchangeRatesRequest{})
 	require.NoError(t, err)
 
 	require.Equal(t, types.ExchangeRateTuples{
-		{Pair: common.Pair_BTC_NUSD, ExchangeRate: rate},
-		{Pair: common.Pair_ETH_NUSD, ExchangeRate: rate},
+		{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: rate},
+		{Pair: asset.Registry.Pair(denoms.ETH, denoms.NUSD), ExchangeRate: rate},
 	}, res.ExchangeRates)
 }
 
@@ -89,12 +91,12 @@ func TestQueryExchangeRateTwap(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := sdk.NewDec(1700)
-	input.OracleKeeper.SetPrice(input.Ctx, common.Pair_BTC_NUSD, rate)
+	input.OracleKeeper.SetPrice(input.Ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), rate)
 
-	_, err := querier.ExchangeRateTwap(ctx, &types.QueryExchangeRateRequest{Pair: common.Pair_ETH_NUSD})
+	_, err := querier.ExchangeRateTwap(ctx, &types.QueryExchangeRateRequest{Pair: asset.Registry.Pair(denoms.ETH, denoms.NUSD)})
 	require.Error(t, err)
 
-	res, err := querier.ExchangeRateTwap(ctx, &types.QueryExchangeRateRequest{Pair: common.Pair_BTC_NUSD})
+	res, err := querier.ExchangeRateTwap(ctx, &types.QueryExchangeRateRequest{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)})
 	require.NoError(t, err)
 	require.Equal(t, sdk.MustNewDecFromStr("1700"), res.ExchangeRate)
 }
@@ -114,25 +116,25 @@ func TestCalcTwap(t *testing.T) {
 		// expected price: (9.5 * (35 - 30) + 8.5 * (30 - 20) + 9.0 * (20 - 5)) / 30 = 8.916666
 		{
 			name: "spot price twap calc, t=(5,35]",
-			pair: common.Pair_BTC_NUSD,
+			pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			priceSnapshots: []types.PriceSnapshot{
 				{
-					Pair:        common.Pair_BTC_NUSD,
+					Pair:        asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 					Price:       sdk.MustNewDecFromStr("90000.0"),
 					TimestampMs: time.UnixMilli(1).UnixMilli(),
 				},
 				{
-					Pair:        common.Pair_BTC_NUSD,
+					Pair:        asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 					Price:       sdk.MustNewDecFromStr("9.0"),
 					TimestampMs: time.UnixMilli(10).UnixMilli(),
 				},
 				{
-					Pair:        common.Pair_BTC_NUSD,
+					Pair:        asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 					Price:       sdk.MustNewDecFromStr("8.5"),
 					TimestampMs: time.UnixMilli(20).UnixMilli(),
 				},
 				{
-					Pair:        common.Pair_BTC_NUSD,
+					Pair:        asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 					Price:       sdk.MustNewDecFromStr("9.5"),
 					TimestampMs: time.UnixMilli(30).UnixMilli(),
 				},
@@ -166,12 +168,12 @@ func TestCalcTwap(t *testing.T) {
 			ctx = ctx.WithBlockTime(time.UnixMilli(0))
 			for _, reserve := range tc.priceSnapshots {
 				ctx = ctx.WithBlockTime(time.UnixMilli(reserve.TimestampMs))
-				input.OracleKeeper.SetPrice(ctx, common.Pair_BTC_NUSD, reserve.Price)
+				input.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), reserve.Price)
 			}
 
 			ctx = ctx.WithBlockTime(tc.currentBlockTime).WithBlockHeight(tc.currentBlockHeight)
 
-			price, err := querier.ExchangeRateTwap(sdk.WrapSDKContext(ctx), &types.QueryExchangeRateRequest{Pair: common.Pair_BTC_NUSD})
+			price, err := querier.ExchangeRateTwap(sdk.WrapSDKContext(ctx), &types.QueryExchangeRateRequest{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)})
 			require.NoError(t, err)
 
 			require.EqualValuesf(t, tc.expectedPrice, price.ExchangeRate,
@@ -186,17 +188,17 @@ func TestQueryActives(t *testing.T) {
 	queryClient := NewQuerier(input.OracleKeeper)
 
 	rate := sdk.NewDec(1700)
-	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, common.Pair_BTC_NUSD, rate)
-	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, common.Pair_NIBI_NUSD, rate)
-	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, common.Pair_ETH_NUSD, rate)
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), rate)
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD), rate)
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), rate)
 
 	res, err := queryClient.Actives(ctx, &types.QueryActivesRequest{})
 	require.NoError(t, err)
 
 	targetPairs := []common.AssetPair{
-		common.Pair_BTC_NUSD,
-		common.Pair_ETH_NUSD,
-		common.Pair_NIBI_NUSD,
+		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
+		asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 	}
 
 	require.Equal(t, targetPairs, res.Actives)

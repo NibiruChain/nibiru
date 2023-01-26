@@ -7,6 +7,8 @@ import (
 
 	"github.com/NibiruChain/collections"
 
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/testutil"
 
 	simapp2 "github.com/NibiruChain/nibiru/simapp"
@@ -15,7 +17,6 @@ import (
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/perp"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
@@ -39,9 +40,9 @@ func TestGenesis(t *testing.T) {
 		// create some positions
 		for i := int64(0); i < 100; i++ {
 			addr := testutil.AccAddress()
-			app.PerpKeeper.Positions.Insert(ctx, collections.Join(common.Pair_NIBI_NUSD, addr), types.Position{
+			app.PerpKeeper.Positions.Insert(ctx, collections.Join(asset.Registry.Pair(denoms.NIBI, denoms.NUSD), addr), types.Position{
 				TraderAddress:                   addr.String(),
-				Pair:                            common.Pair_NIBI_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 				Size_:                           sdk.NewDec(i + 1),
 				Margin:                          sdk.NewDec(i * 2),
 				OpenNotional:                    sdk.NewDec(i * 100),

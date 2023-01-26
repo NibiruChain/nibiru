@@ -8,6 +8,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -30,11 +31,11 @@ func NewParams(startingPoolNumber uint64, poolCreationFee sdk.Coins, whitelisted
 func DefaultParams() Params {
 	return Params{
 		StartingPoolNumber: 1,
-		PoolCreationFee:    sdk.NewCoins(sdk.NewInt64Coin(common.DenomNIBI, 1000*common.Precision)), // 1000 NIBI
+		PoolCreationFee:    sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 1000*common.Precision)), // 1000 NIBI
 		WhitelistedAsset: []string{
-			common.DenomNIBI,
-			common.DenomUSDC,
-			common.DenomNUSD,
+			denoms.NIBI,
+			denoms.USDC,
+			denoms.NUSD,
 		},
 	}
 }

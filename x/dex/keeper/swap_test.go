@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/testutil"
 
 	"github.com/NibiruChain/nibiru/x/testutil/testapp"
@@ -13,7 +14,6 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
 )
@@ -88,27 +88,27 @@ func TestSwapExactAmountIn(t *testing.T) {
 		{
 			name: "regular stableswap",
 			userInitialFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.DenomUSDC, 10),
+				sdk.NewInt64Coin(denoms.USDC, 10),
 			),
 			initialPool: mock.DexStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
-					sdk.NewInt64Coin(common.DenomUSDC, 100),
-					sdk.NewInt64Coin(common.DenomNUSD, 100),
+					sdk.NewInt64Coin(denoms.USDC, 100),
+					sdk.NewInt64Coin(denoms.NUSD, 100),
 				),
 				/*shares=*/ 100,
 			),
-			tokenIn:          sdk.NewInt64Coin(common.DenomUSDC, 10),
-			tokenOutDenom:    common.DenomNUSD,
-			expectedTokenOut: sdk.NewInt64Coin(common.DenomNUSD, 10),
+			tokenIn:          sdk.NewInt64Coin(denoms.USDC, 10),
+			tokenOutDenom:    denoms.NUSD,
+			expectedTokenOut: sdk.NewInt64Coin(denoms.NUSD, 10),
 			expectedUserFinalFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.DenomNUSD, 10),
+				sdk.NewInt64Coin(denoms.NUSD, 10),
 			),
 			expectedFinalPool: mock.DexStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
-					sdk.NewInt64Coin(common.DenomUSDC, 110),
-					sdk.NewInt64Coin(common.DenomNUSD, 90),
+					sdk.NewInt64Coin(denoms.USDC, 110),
+					sdk.NewInt64Coin(denoms.NUSD, 90),
 				),
 				/*shares=*/ 100,
 			),
@@ -123,21 +123,21 @@ func TestSwapExactAmountIn(t *testing.T) {
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
-					sdk.NewInt64Coin(common.DenomNUSD, 100),
+					sdk.NewInt64Coin(denoms.NUSD, 100),
 				),
 				/*shares=*/ 100,
 			),
 			tokenIn:          sdk.NewInt64Coin("unibi", 100),
-			tokenOutDenom:    common.DenomNUSD,
-			expectedTokenOut: sdk.NewInt64Coin(common.DenomNUSD, 50),
+			tokenOutDenom:    denoms.NUSD,
+			expectedTokenOut: sdk.NewInt64Coin(denoms.NUSD, 50),
 			expectedUserFinalFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.DenomNUSD, 50),
+				sdk.NewInt64Coin(denoms.NUSD, 50),
 			),
 			expectedFinalPool: mock.DexPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 200),
-					sdk.NewInt64Coin(common.DenomNUSD, 50),
+					sdk.NewInt64Coin(denoms.NUSD, 50),
 				),
 				/*shares=*/ 100,
 			),
@@ -152,12 +152,12 @@ func TestSwapExactAmountIn(t *testing.T) {
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
-					sdk.NewInt64Coin(common.DenomNUSD, 100),
+					sdk.NewInt64Coin(denoms.NUSD, 100),
 				),
 				/*shares=*/ 100,
 			),
 			tokenIn:       sdk.NewInt64Coin("unibi", 100),
-			tokenOutDenom: common.DenomNUSD,
+			tokenOutDenom: denoms.NUSD,
 			expectedUserFinalFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("unibi", 1),
 			),
@@ -165,7 +165,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
-					sdk.NewInt64Coin(common.DenomNUSD, 100),
+					sdk.NewInt64Coin(denoms.NUSD, 100),
 				),
 				/*shares=*/ 100,
 			),
@@ -180,12 +180,12 @@ func TestSwapExactAmountIn(t *testing.T) {
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
-					sdk.NewInt64Coin(common.DenomNUSD, 100),
+					sdk.NewInt64Coin(denoms.NUSD, 100),
 				),
 				/*shares=*/ 100,
 			),
 			tokenIn:       sdk.NewInt64Coin("foo", 100),
-			tokenOutDenom: common.DenomNUSD,
+			tokenOutDenom: denoms.NUSD,
 			expectedUserFinalFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("foo", 100),
 			),
@@ -193,7 +193,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
-					sdk.NewInt64Coin(common.DenomNUSD, 100),
+					sdk.NewInt64Coin(denoms.NUSD, 100),
 				),
 				/*shares=*/ 100,
 			),
@@ -208,7 +208,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
-					sdk.NewInt64Coin(common.DenomNUSD, 100),
+					sdk.NewInt64Coin(denoms.NUSD, 100),
 				),
 				/*shares=*/ 100,
 			),
@@ -221,7 +221,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
-					sdk.NewInt64Coin(common.DenomNUSD, 100),
+					sdk.NewInt64Coin(denoms.NUSD, 100),
 				),
 				/*shares=*/ 100,
 			),
@@ -236,7 +236,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
-					sdk.NewInt64Coin(common.DenomNUSD, 100),
+					sdk.NewInt64Coin(denoms.NUSD, 100),
 				),
 				/*shares=*/ 100,
 			),
@@ -249,7 +249,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
-					sdk.NewInt64Coin(common.DenomNUSD, 100),
+					sdk.NewInt64Coin(denoms.NUSD, 100),
 				),
 				/*shares=*/ 100,
 			),
@@ -322,27 +322,27 @@ func TestDoubleSwapExactAmountIn(t *testing.T) {
 		{
 			name: "double stableswap",
 			userInitialFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.DenomUSDC, 10_000),
+				sdk.NewInt64Coin(denoms.USDC, 10_000),
 			),
 			initialPool: mock.DexStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
-					sdk.NewInt64Coin(common.DenomUSDC, 100_000_000),
-					sdk.NewInt64Coin(common.DenomNUSD, 100_000_000),
+					sdk.NewInt64Coin(denoms.USDC, 100_000_000),
+					sdk.NewInt64Coin(denoms.NUSD, 100_000_000),
 				),
 				/*shares=*/ 100,
 			),
-			tokenIns:          []sdk.Coin{sdk.NewInt64Coin(common.DenomUSDC, 10_000), sdk.NewInt64Coin("unusd", 10_000)},
-			tokenOutDenoms:    []string{common.DenomNUSD, common.DenomUSDC},
-			expectedTokenOuts: []sdk.Coin{sdk.NewInt64Coin(common.DenomNUSD, 10_000), sdk.NewInt64Coin(common.DenomUSDC, 10_001)},
+			tokenIns:          []sdk.Coin{sdk.NewInt64Coin(denoms.USDC, 10_000), sdk.NewInt64Coin("unusd", 10_000)},
+			tokenOutDenoms:    []string{denoms.NUSD, denoms.USDC},
+			expectedTokenOuts: []sdk.Coin{sdk.NewInt64Coin(denoms.NUSD, 10_000), sdk.NewInt64Coin(denoms.USDC, 10_001)},
 			expectedUserFinalFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(common.DenomUSDC, 10_001), // TODO: fix https://github.com/NibiruChain/nibiru/issues/1152
+				sdk.NewInt64Coin(denoms.USDC, 10_001), // TODO: fix https://github.com/NibiruChain/nibiru/issues/1152
 			),
 			expectedFinalPool: mock.DexStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
-					sdk.NewInt64Coin(common.DenomUSDC, 99_999_999),
-					sdk.NewInt64Coin(common.DenomNUSD, 100_000_000),
+					sdk.NewInt64Coin(denoms.USDC, 99_999_999),
+					sdk.NewInt64Coin(denoms.NUSD, 100_000_000),
 				),
 				/*shares=*/ 100,
 			),

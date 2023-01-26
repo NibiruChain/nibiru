@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/testutil"
 
 	"github.com/NibiruChain/nibiru/x/testutil/testapp"
@@ -60,11 +61,11 @@ func TestSetAndFetchPool(t *testing.T) {
 		},
 		PoolAssets: []types.PoolAsset{
 			{
-				Token:  sdk.NewCoin(common.DenomBTC, sdk.NewInt(1000)),
+				Token:  sdk.NewCoin(denoms.BTC, sdk.NewInt(1000)),
 				Weight: sdk.NewInt(1),
 			},
 			{
-				Token:  sdk.NewCoin(common.DenomNUSD, sdk.NewInt(1000)),
+				Token:  sdk.NewCoin(denoms.NUSD, sdk.NewInt(1000)),
 				Weight: sdk.NewInt(1),
 			},
 		},
@@ -221,7 +222,7 @@ func TestFetchPoolFromPair(t *testing.T) {
 func TestNewPool(t *testing.T) {
 	app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
-	poolCreationFeeCoin := sdk.NewInt64Coin(common.DenomNIBI, 1000*common.Precision)
+	poolCreationFeeCoin := sdk.NewInt64Coin(denoms.NIBI, 1000*common.Precision)
 	app.DexKeeper.SetParams(ctx, types.NewParams(
 		/*startingPoolNumber=*/ 1,
 		/*poolCreationFee=*/ sdk.NewCoins(poolCreationFeeCoin),
@@ -294,7 +295,7 @@ func TestNewPoolNotEnoughFunds(t *testing.T) {
 
 	app.DexKeeper.SetParams(ctx, types.NewParams(
 		/*startingPoolNumber=*/ 1,
-		/*poolCreationFee=*/ sdk.NewCoins(sdk.NewInt64Coin(common.DenomNIBI, 1000*common.Precision)),
+		/*poolCreationFee=*/ sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 1000*common.Precision)),
 		/*whitelistedAssets*/ []string{},
 	))
 
@@ -426,9 +427,9 @@ func TestNewPoolDups(t *testing.T) {
 	userAddr, err := sdk.AccAddressFromBech32(testutil.AccAddress().String())
 	require.NoError(t, err)
 
-	poolCreationFeeCoin := sdk.NewCoins(sdk.NewInt64Coin(common.DenomNIBI, 1))
+	poolCreationFeeCoin := sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 1))
 	err = simapp.FundAccount(app.BankKeeper, ctx, userAddr, sdk.NewCoins(
-		sdk.NewCoin(common.DenomNIBI, sdk.NewInt(1000)),
+		sdk.NewCoin(denoms.NIBI, sdk.NewInt(1000)),
 		sdk.NewCoin("bar", sdk.NewInt(1000)),
 		sdk.NewCoin("foo", sdk.NewInt(1000)),
 	))

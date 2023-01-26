@@ -11,6 +11,8 @@ import (
 	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
@@ -32,14 +34,14 @@ func TestOrganizeAggregate(t *testing.T) {
 	staking.EndBlocker(ctx, input.StakingKeeper)
 
 	btcBallot := types.ExchangeRateBallots{
-		types.NewExchangeRateBallot(sdk.NewDec(17), common.Pair_BTC_NUSD, ValAddrs[0], power),
-		types.NewExchangeRateBallot(sdk.NewDec(10), common.Pair_BTC_NUSD, ValAddrs[1], power),
-		types.NewExchangeRateBallot(sdk.NewDec(6), common.Pair_BTC_NUSD, ValAddrs[2], power),
+		types.NewExchangeRateBallot(sdk.NewDec(17), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[0], power),
+		types.NewExchangeRateBallot(sdk.NewDec(10), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[1], power),
+		types.NewExchangeRateBallot(sdk.NewDec(6), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[2], power),
 	}
 	ethBallot := types.ExchangeRateBallots{
-		types.NewExchangeRateBallot(sdk.NewDec(1000), common.Pair_ETH_NUSD, ValAddrs[0], power),
-		types.NewExchangeRateBallot(sdk.NewDec(1300), common.Pair_ETH_NUSD, ValAddrs[1], power),
-		types.NewExchangeRateBallot(sdk.NewDec(2000), common.Pair_ETH_NUSD, ValAddrs[2], power),
+		types.NewExchangeRateBallot(sdk.NewDec(1000), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[0], power),
+		types.NewExchangeRateBallot(sdk.NewDec(1300), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[1], power),
+		types.NewExchangeRateBallot(sdk.NewDec(2000), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[2], power),
 	}
 
 	for i := range btcBallot {
@@ -78,11 +80,11 @@ func TestOrganizeAggregate(t *testing.T) {
 	// sort each ballot for comparison
 	sort.Sort(btcBallot)
 	sort.Sort(ethBallot)
-	sort.Sort(ballotMap[common.Pair_BTC_NUSD])
-	sort.Sort(ballotMap[common.Pair_ETH_NUSD])
+	sort.Sort(ballotMap[asset.Registry.Pair(denoms.BTC, denoms.NUSD)])
+	sort.Sort(ballotMap[asset.Registry.Pair(denoms.ETH, denoms.NUSD)])
 
-	require.Equal(t, btcBallot, ballotMap[common.Pair_BTC_NUSD])
-	require.Equal(t, ethBallot, ballotMap[common.Pair_ETH_NUSD])
+	require.Equal(t, btcBallot, ballotMap[asset.Registry.Pair(denoms.BTC, denoms.NUSD)])
+	require.Equal(t, ethBallot, ballotMap[asset.Registry.Pair(denoms.ETH, denoms.NUSD)])
 }
 
 func TestClearBallots(t *testing.T) {
@@ -103,14 +105,14 @@ func TestClearBallots(t *testing.T) {
 	staking.EndBlocker(ctx, input.StakingKeeper)
 
 	btcBallot := types.ExchangeRateBallots{
-		types.NewExchangeRateBallot(sdk.NewDec(17), common.Pair_BTC_NUSD, ValAddrs[0], power),
-		types.NewExchangeRateBallot(sdk.NewDec(10), common.Pair_BTC_NUSD, ValAddrs[1], power),
-		types.NewExchangeRateBallot(sdk.NewDec(6), common.Pair_BTC_NUSD, ValAddrs[2], power),
+		types.NewExchangeRateBallot(sdk.NewDec(17), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[0], power),
+		types.NewExchangeRateBallot(sdk.NewDec(10), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[1], power),
+		types.NewExchangeRateBallot(sdk.NewDec(6), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[2], power),
 	}
 	ethBallot := types.ExchangeRateBallots{
-		types.NewExchangeRateBallot(sdk.NewDec(1000), common.Pair_ETH_NUSD, ValAddrs[0], power),
-		types.NewExchangeRateBallot(sdk.NewDec(1300), common.Pair_ETH_NUSD, ValAddrs[1], power),
-		types.NewExchangeRateBallot(sdk.NewDec(2000), common.Pair_ETH_NUSD, ValAddrs[2], power),
+		types.NewExchangeRateBallot(sdk.NewDec(1000), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[0], power),
+		types.NewExchangeRateBallot(sdk.NewDec(1300), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[1], power),
+		types.NewExchangeRateBallot(sdk.NewDec(2000), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[2], power),
 	}
 
 	for i := range btcBallot {

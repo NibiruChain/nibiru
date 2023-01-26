@@ -7,7 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
@@ -17,7 +18,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 		Params: types.DefaultParams(),
 		PairMetadata: []types.PairMetadata{
 			{
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
 		},

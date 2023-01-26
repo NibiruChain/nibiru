@@ -9,7 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 )
 
@@ -67,7 +67,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 // GetModuleAccountBalance gets the airdrop coin balance of module account.
 func (k Keeper) GetModuleAccountBalance(ctx sdk.Context) sdk.Coin {
 	moduleAccAddr := k.AccountKeeper.GetModuleAddress(types.ModuleName)
-	return k.BankKeeper.GetBalance(ctx, moduleAccAddr, common.DenomNIBI)
+	return k.BankKeeper.GetBalance(ctx, moduleAccAddr, denoms.NIBI)
 }
 
 // GetParams get all parameters as types.Params

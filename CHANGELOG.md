@@ -42,6 +42,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### API Breaking
 
+* [#1158](https://github.com/NibiruChain/nibiru/pull/1158) - feat(asset-registry)!: Add `AssetRegistry`
+
+### State Machine Breaking
+
 * [#1154](https://github.com/NibiruChain/nibiru/pull/1154) - refactor(asset-pair)!: refactors `common.AssetPair` as an extension of string
 
 ### CI
@@ -60,6 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1141](https://github.com/NibiruChain/nibiru/pull/1141) - refactor(oracle): rename variables for readability
 * [#1146](https://github.com/NibiruChain/nibiru/pull/1146) - fix: local docker-compose network
 * [#1145](https://github.com/NibiruChain/nibiru/pull/1145) - chore: add USD quote asset
+* [#1160](https://github.com/NibiruChain/nibiru/pull/1160) - feat: generic set
 
 ### Bug Fixes
 

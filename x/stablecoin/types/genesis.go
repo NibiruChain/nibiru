@@ -3,7 +3,7 @@ package types
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 )
 
 // DefaultIndex is the default capability global index
@@ -13,7 +13,7 @@ const DefaultIndex uint64 = 1
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		Params:               DefaultParams(),
-		ModuleAccountBalance: sdk.NewCoin(common.DenomUSDC, sdk.ZeroInt()),
+		ModuleAccountBalance: sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
 	}
 }
 
