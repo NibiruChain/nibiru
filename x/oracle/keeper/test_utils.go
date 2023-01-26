@@ -112,7 +112,7 @@ var (
 	}
 
 	InitTokens = sdk.TokensFromConsensusPower(200, sdk.DefaultPowerReduction)
-	InitCoins  = sdk.NewCoins(sdk.NewCoin(denoms.DenomNIBI, InitTokens))
+	InitCoins  = sdk.NewCoins(sdk.NewCoin(denoms.NIBI, InitTokens))
 
 	OracleDecPrecision = 8
 )
@@ -176,7 +176,7 @@ func CreateTestInput(t *testing.T) TestInput {
 	accountKeeper := authkeeper.NewAccountKeeper(appCodec, keyAcc, paramsKeeper.Subspace(authtypes.ModuleName), authtypes.ProtoBaseAccount, maccPerms)
 	bankKeeper := bankkeeper.NewBaseKeeper(appCodec, keyBank, accountKeeper, paramsKeeper.Subspace(banktypes.ModuleName), blackListAddrs)
 
-	totalSupply := sdk.NewCoins(sdk.NewCoin(denoms.DenomNIBI, InitTokens.MulRaw(int64(len(Addrs)*10))))
+	totalSupply := sdk.NewCoins(sdk.NewCoin(denoms.NIBI, InitTokens.MulRaw(int64(len(Addrs)*10))))
 	bankKeeper.MintCoins(ctx, faucetAccountName, totalSupply)
 
 	stakingKeeper := stakingkeeper.NewKeeper(
@@ -188,7 +188,7 @@ func CreateTestInput(t *testing.T) TestInput {
 	)
 
 	stakingParams := stakingtypes.DefaultParams()
-	stakingParams.BondDenom = denoms.DenomNIBI
+	stakingParams.BondDenom = denoms.NIBI
 	stakingKeeper.SetParams(ctx, stakingParams)
 
 	distrKeeper := distrkeeper.NewKeeper(
@@ -211,7 +211,7 @@ func CreateTestInput(t *testing.T) TestInput {
 	distrAcc := authtypes.NewEmptyModuleAccount(distrtypes.ModuleName)
 	oracleAcc := authtypes.NewEmptyModuleAccount(types.ModuleName, authtypes.Minter)
 
-	bankKeeper.SendCoinsFromModuleToModule(ctx, faucetAccountName, stakingtypes.NotBondedPoolName, sdk.NewCoins(sdk.NewCoin(denoms.DenomNIBI, InitTokens.MulRaw(int64(len(Addrs))))))
+	bankKeeper.SendCoinsFromModuleToModule(ctx, faucetAccountName, stakingtypes.NotBondedPoolName, sdk.NewCoins(sdk.NewCoin(denoms.NIBI, InitTokens.MulRaw(int64(len(Addrs))))))
 
 	accountKeeper.SetModuleAccount(ctx, feeCollectorAcc)
 	accountKeeper.SetModuleAccount(ctx, bondPool)
@@ -250,7 +250,7 @@ func CreateTestInput(t *testing.T) TestInput {
 func NewTestMsgCreateValidator(address sdk.ValAddress, pubKey cryptotypes.PubKey, amt sdk.Int) *stakingtypes.MsgCreateValidator {
 	commission := stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec())
 	msg, _ := stakingtypes.NewMsgCreateValidator(
-		address, pubKey, sdk.NewCoin(denoms.DenomNIBI, amt),
+		address, pubKey, sdk.NewCoin(denoms.NIBI, amt),
 		stakingtypes.Description{}, commission, sdk.OneInt(),
 	)
 

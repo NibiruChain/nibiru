@@ -19,7 +19,7 @@ func TestCreatePool(t *testing.T) {
 
 	assert.NoError(t, vpoolKeeper.CreatePool(
 		ctx,
-		common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+		common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 
 		sdk.NewDec(10*common.Precision), // 10 tokens
 		sdk.NewDec(5*common.Precision),  // 5 tokens
@@ -32,7 +32,7 @@ func TestCreatePool(t *testing.T) {
 		},
 	))
 
-	exists := vpoolKeeper.ExistsPool(ctx, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD))
+	exists := vpoolKeeper.ExistsPool(ctx, common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD))
 	require.True(t, exists)
 
 	notExist := vpoolKeeper.ExistsPool(ctx, "BTC:OTHER")
@@ -40,7 +40,7 @@ func TestCreatePool(t *testing.T) {
 }
 
 func TestEditPoolConfig(t *testing.T) {
-	pair := common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD)
+	pair := common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD)
 	vpoolStart := types.Vpool{
 		Pair:              pair,
 		QuoteAssetReserve: sdk.NewDec(10 * common.Precision),
@@ -58,12 +58,12 @@ func TestEditPoolConfig(t *testing.T) {
 		vpoolKeeper, _, ctx := getKeeper(t)
 		assert.NoError(t, vpoolKeeper.CreatePool(
 			ctx,
-			common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+			common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 			vpoolStart.QuoteAssetReserve,
 			vpoolStart.BaseAssetReserve,
 			vpoolStart.Config,
 		))
-		exists := vpoolKeeper.ExistsPool(ctx, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD))
+		exists := vpoolKeeper.ExistsPool(ctx, common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD))
 		require.True(t, exists)
 		return vpoolKeeper, ctx
 	}
@@ -189,7 +189,7 @@ func TestGetPoolPrices(t *testing.T) {
 		{
 			name: "happy path - vpool + pricefeed active",
 			vpool: types.Vpool{
-				Pair:              common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD),
+				Pair:              common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
 				QuoteAssetReserve: sdk.NewDec(3 * common.Precision), // 3e6
 				BaseAssetReserve:  sdk.NewDec(1_000),                // 1e3
 				Config: types.VpoolConfig{
@@ -203,7 +203,7 @@ func TestGetPoolPrices(t *testing.T) {
 			shouldCreateVpool: true,
 			mockIndexPrice:    sdk.NewDec(99),
 			expectedPoolPrices: types.PoolPrices{
-				Pair:          common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD),
+				Pair:          common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
 				MarkPrice:     sdk.NewDec(3_000),
 				TwapMark:      sdk.NewDec(3_000).String(),
 				IndexPrice:    sdk.NewDec(99).String(),
@@ -214,7 +214,7 @@ func TestGetPoolPrices(t *testing.T) {
 		{
 			name: "happy path - vpool active, but no index price",
 			vpool: types.Vpool{
-				Pair:              common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD),
+				Pair:              common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
 				QuoteAssetReserve: sdk.NewDec(3 * common.Precision), // 3e6
 				BaseAssetReserve:  sdk.NewDec(1_000),                // 1e3
 				Config: types.VpoolConfig{
@@ -229,7 +229,7 @@ func TestGetPoolPrices(t *testing.T) {
 			mockIndexPrice:    sdk.OneDec().Neg(),
 			oracleKeeperErr:   fmt.Errorf("No index price"),
 			expectedPoolPrices: types.PoolPrices{
-				Pair:          common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD),
+				Pair:          common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
 				MarkPrice:     sdk.NewDec(3_000),
 				TwapMark:      sdk.NewDec(3_000).String(),
 				IndexPrice:    sdk.OneDec().Neg().String(),
@@ -240,7 +240,7 @@ func TestGetPoolPrices(t *testing.T) {
 		{
 			name: "vpool doesn't exist",
 			vpool: types.Vpool{
-				Pair:              common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD),
+				Pair:              common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
 				QuoteAssetReserve: sdk.NewDec(3 * common.Precision), // 3e6
 				BaseAssetReserve:  sdk.NewDec(1_000),                // 1e3
 				Config: types.VpoolConfig{
@@ -293,7 +293,7 @@ func TestGetPoolPrices(t *testing.T) {
 }
 
 func TestEditSwapInvariant(t *testing.T) {
-	pair := common.AssetRegistry.Pair(denoms.DenomNIBI, denoms.DenomNUSD)
+	pair := common.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD)
 	vpoolStart := types.Vpool{
 		Pair:              pair,
 		QuoteAssetReserve: sdk.NewDec(10 * common.Precision),

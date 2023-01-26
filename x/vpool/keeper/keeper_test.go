@@ -33,7 +33,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 	}{
 		{
 			name:                      "quote amount == 0",
-			pair:                      common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+			pair:                      common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_ADD_TO_POOL,
 			quoteAmount:               sdk.NewDec(0),
 			baseLimit:                 sdk.NewDec(10),
@@ -45,7 +45,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		},
 		{
 			name:                      "normal swap add",
-			pair:                      common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+			pair:                      common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_ADD_TO_POOL,
 			quoteAmount:               sdk.NewDec(100_000),
 			baseLimit:                 sdk.NewDec(49504),
@@ -57,7 +57,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		},
 		{
 			name:                      "normal swap remove",
-			pair:                      common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+			pair:                      common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_REMOVE_FROM_POOL,
 			quoteAmount:               sdk.NewDec(100_000),
 			baseLimit:                 sdk.NewDec(50506),
@@ -79,7 +79,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		},
 		{
 			name:                      "base amount less than base limit in Long",
-			pair:                      common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+			pair:                      common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_ADD_TO_POOL,
 			quoteAmount:               sdk.NewDec(500_000),
 			baseLimit:                 sdk.NewDec(454_500),
@@ -89,7 +89,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		},
 		{
 			name:                      "base amount more than base limit in Short",
-			pair:                      common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+			pair:                      common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_REMOVE_FROM_POOL,
 			quoteAmount:               sdk.NewDec(1 * common.Precision),
 			baseLimit:                 sdk.NewDec(454_500),
@@ -99,7 +99,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		},
 		{
 			name:                      "over trading limit when removing quote",
-			pair:                      common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+			pair:                      common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_REMOVE_FROM_POOL,
 			quoteAmount:               sdk.NewDec(9_000_001),
 			baseLimit:                 sdk.ZeroDec(),
@@ -109,7 +109,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		},
 		{
 			name:                      "over trading limit when adding quote",
-			pair:                      common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+			pair:                      common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_ADD_TO_POOL,
 			quoteAmount:               sdk.NewDec(9_000_001),
 			baseLimit:                 sdk.ZeroDec(),
@@ -119,7 +119,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		},
 		{
 			name:                      "over fluctuation limit fails on add",
-			pair:                      common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+			pair:                      common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_ADD_TO_POOL,
 			quoteAmount:               sdk.NewDec(1 * common.Precision),
 			baseLimit:                 sdk.NewDec(454_544),
@@ -129,7 +129,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		},
 		{
 			name:                      "over fluctuation limit fails on remove",
-			pair:                      common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+			pair:                      common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_REMOVE_FROM_POOL,
 			quoteAmount:               sdk.NewDec(1 * common.Precision),
 			baseLimit:                 sdk.NewDec(555_556),
@@ -139,7 +139,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		},
 		{
 			name:                      "over fluctuation limit allowed on add",
-			pair:                      common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+			pair:                      common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_ADD_TO_POOL,
 			quoteAmount:               sdk.NewDec(1 * common.Precision),
 			baseLimit:                 sdk.NewDec(454_544),
@@ -151,7 +151,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		},
 		{
 			name:                      "over fluctuation limit allowed on remove",
-			pair:                      common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+			pair:                      common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_REMOVE_FROM_POOL,
 			quoteAmount:               sdk.NewDec(1 * common.Precision),
 			baseLimit:                 sdk.NewDec(555_556),
@@ -173,7 +173,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 
 			assert.NoError(t, vpoolKeeper.CreatePool(
 				ctx,
-				common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteAssetReserve */ sdk.NewDec(10*common.Precision), // 10 tokens
 				/* baseAssetReserve */ sdk.NewDec(5*common.Precision), // 5 tokens
 				types.VpoolConfig{
@@ -201,7 +201,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 				assert.EqualValuesf(t, tc.expectedBaseAmount, baseAmt, "base amount mismatch")
 
 				t.Log("assert vpool")
-				pool, err := vpoolKeeper.Pools.Get(ctx, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD))
+				pool, err := vpoolKeeper.Pools.Get(ctx, common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD))
 				require.NoError(t, err)
 				assert.EqualValuesf(t, tc.expectedQuoteReserve, pool.QuoteAssetReserve, "pool quote asset reserve mismatch")
 				assert.EqualValuesf(t, tc.expectedBaseReserve, pool.BaseAssetReserve, "pool base asset reserve mismatch")
@@ -226,7 +226,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 	}{
 		{
 			name:                      "zero base asset swap",
-			pair:                      common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+			pair:                      common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_ADD_TO_POOL,
 			baseAmt:                   sdk.ZeroDec(),
 			quoteLimit:                sdk.ZeroDec(),
@@ -238,7 +238,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 		},
 		{
 			name:                      "add base asset swap",
-			pair:                      common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+			pair:                      common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_ADD_TO_POOL,
 			baseAmt:                   sdk.NewDec(100_000),
 			quoteLimit:                sdk.NewDec(196078),
@@ -250,7 +250,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 		},
 		{
 			name:                      "remove base asset",
-			pair:                      common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+			pair:                      common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_REMOVE_FROM_POOL,
 			baseAmt:                   sdk.NewDec(100_000),
 			quoteLimit:                sdk.NewDec(204_082),
@@ -272,7 +272,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 		},
 		{
 			name:                      "quote amount less than quote limit in Long",
-			pair:                      common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+			pair:                      common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_ADD_TO_POOL,
 			baseAmt:                   sdk.NewDec(100_000),
 			quoteLimit:                sdk.NewDec(196079),
@@ -282,7 +282,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 		},
 		{
 			name:                      "quote amount more than quote limit in Short",
-			pair:                      common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+			pair:                      common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_REMOVE_FROM_POOL,
 			baseAmt:                   sdk.NewDec(100_000),
 			quoteLimit:                sdk.NewDec(204_081),
@@ -292,7 +292,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 		},
 		{
 			name:                      "over trading limit when removing base",
-			pair:                      common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+			pair:                      common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_REMOVE_FROM_POOL,
 			baseAmt:                   sdk.NewDec(4_500_001),
 			quoteLimit:                sdk.ZeroDec(),
@@ -302,7 +302,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 		},
 		{
 			name:                      "over trading limit when adding base",
-			pair:                      common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+			pair:                      common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_ADD_TO_POOL,
 			baseAmt:                   sdk.NewDec(4_500_001),
 			quoteLimit:                sdk.ZeroDec(),
@@ -312,7 +312,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 		},
 		{
 			name:                      "over fluctuation limit fails on add",
-			pair:                      common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+			pair:                      common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_ADD_TO_POOL,
 			baseAmt:                   sdk.NewDec(1 * common.Precision),
 			quoteLimit:                sdk.NewDec(1_666_666),
@@ -322,7 +322,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 		},
 		{
 			name:                      "over fluctuation limit fails on remove",
-			pair:                      common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+			pair:                      common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_REMOVE_FROM_POOL,
 			baseAmt:                   sdk.NewDec(1 * common.Precision),
 			quoteLimit:                sdk.NewDec(2_500_001),
@@ -332,7 +332,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 		},
 		{
 			name:                      "over fluctuation limit allowed on add",
-			pair:                      common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+			pair:                      common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_ADD_TO_POOL,
 			baseAmt:                   sdk.NewDec(1 * common.Precision),
 			quoteLimit:                sdk.NewDec(1_666_666),
@@ -344,7 +344,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 		},
 		{
 			name:                      "over fluctuation limit allowed on remove",
-			pair:                      common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+			pair:                      common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_REMOVE_FROM_POOL,
 			baseAmt:                   sdk.NewDec(1 * common.Precision),
 			quoteLimit:                sdk.NewDec(2_500_001),
@@ -366,7 +366,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 
 			assert.NoError(t, vpoolKeeper.CreatePool(
 				ctx,
-				common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteAssetReserve */ sdk.NewDec(10*common.Precision), // 10 tokens
 				/* baseAssetReserve */ sdk.NewDec(5*common.Precision), // 5 tokens
 				types.VpoolConfig{
@@ -395,7 +395,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 					"expected %s; got %s", tc.expectedQuoteAssetAmount.String(), quoteAssetAmount.String())
 
 				t.Log("assert pool")
-				pool, err := vpoolKeeper.Pools.Get(ctx, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD))
+				pool, err := vpoolKeeper.Pools.Get(ctx, common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD))
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedQuoteReserve, pool.QuoteAssetReserve)
 				assert.Equal(t, tc.expectedBaseReserve, pool.BaseAssetReserve)
@@ -411,7 +411,7 @@ func TestGetVpools(t *testing.T) {
 
 	assert.NoError(t, vpoolKeeper.CreatePool(
 		ctx,
-		common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+		common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 		sdk.NewDec(10*common.Precision),
 		sdk.NewDec(5*common.Precision),
 		types.VpoolConfig{
@@ -424,7 +424,7 @@ func TestGetVpools(t *testing.T) {
 	))
 	assert.NoError(t, vpoolKeeper.CreatePool(
 		ctx,
-		common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD),
+		common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
 		sdk.NewDec(5*common.Precision),
 		sdk.NewDec(10*common.Precision),
 		types.VpoolConfig{
@@ -441,7 +441,7 @@ func TestGetVpools(t *testing.T) {
 	require.EqualValues(t, 2, len(pools))
 
 	require.EqualValues(t, pools[0], types.Vpool{
-		Pair:              common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+		Pair:              common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 		BaseAssetReserve:  sdk.NewDec(5 * common.Precision),
 		QuoteAssetReserve: sdk.NewDec(10 * common.Precision),
 		Config: types.VpoolConfig{
@@ -453,7 +453,7 @@ func TestGetVpools(t *testing.T) {
 		},
 	})
 	require.EqualValues(t, pools[1], types.Vpool{
-		Pair:              common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD),
+		Pair:              common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
 		BaseAssetReserve:  sdk.NewDec(10 * common.Precision),
 		QuoteAssetReserve: sdk.NewDec(5 * common.Precision),
 		Config: types.VpoolConfig{
@@ -477,7 +477,7 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 		{
 			name: "uses latest snapshot - does not result in error",
 			pool: types.Vpool{
-				Pair:              common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:              common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				QuoteAssetReserve: sdk.NewDec(1002),
 				BaseAssetReserve:  sdk.OneDec(),
 				Config: types.VpoolConfig{
@@ -490,13 +490,13 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 			},
 			existingSnapshots: []types.ReserveSnapshot{
 				{
-					Pair:              common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+					Pair:              common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 					QuoteAssetReserve: sdk.NewDec(1000),
 					BaseAssetReserve:  sdk.OneDec(),
 					TimestampMs:       0,
 				},
 				{
-					Pair:              common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+					Pair:              common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 					QuoteAssetReserve: sdk.NewDec(1002),
 					BaseAssetReserve:  sdk.OneDec(),
 					TimestampMs:       1,
@@ -507,7 +507,7 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 		{
 			name: "uses previous snapshot - results in error",
 			pool: types.Vpool{
-				Pair:              common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:              common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				QuoteAssetReserve: sdk.NewDec(1002),
 				BaseAssetReserve:  sdk.OneDec(),
 				Config: types.VpoolConfig{
@@ -520,7 +520,7 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 			},
 			existingSnapshots: []types.ReserveSnapshot{
 				{
-					Pair:              common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+					Pair:              common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 					QuoteAssetReserve: sdk.NewDec(1000),
 					BaseAssetReserve:  sdk.OneDec(),
 					TimestampMs:       0,
@@ -531,7 +531,7 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 		{
 			name: "only one snapshot - no error",
 			pool: types.Vpool{
-				Pair:              common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:              common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				QuoteAssetReserve: sdk.NewDec(1000),
 				BaseAssetReserve:  sdk.OneDec(),
 				Config: types.VpoolConfig{
@@ -544,7 +544,7 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 			},
 			existingSnapshots: []types.ReserveSnapshot{
 				{
-					Pair:              common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+					Pair:              common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 					QuoteAssetReserve: sdk.NewDec(1000),
 					BaseAssetReserve:  sdk.OneDec(),
 					TimestampMs:       0,
@@ -555,7 +555,7 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 		{
 			name: "zero fluctuation limit - no error",
 			pool: types.Vpool{
-				Pair:              common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:              common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				QuoteAssetReserve: sdk.NewDec(2000),
 				BaseAssetReserve:  sdk.OneDec(),
 				Config: types.VpoolConfig{
@@ -568,13 +568,13 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 			},
 			existingSnapshots: []types.ReserveSnapshot{
 				{
-					Pair:              common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+					Pair:              common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 					QuoteAssetReserve: sdk.NewDec(1000),
 					BaseAssetReserve:  sdk.OneDec(),
 					TimestampMs:       0,
 				},
 				{
-					Pair:              common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+					Pair:              common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 					QuoteAssetReserve: sdk.NewDec(1002),
 					BaseAssetReserve:  sdk.OneDec(),
 					TimestampMs:       1,
@@ -585,7 +585,7 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 		{
 			name: "multiple pools - no overlap",
 			pool: types.Vpool{
-				Pair:              common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:              common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				QuoteAssetReserve: sdk.NewDec(1000),
 				BaseAssetReserve:  sdk.OneDec(),
 				Config: types.VpoolConfig{
@@ -598,25 +598,25 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 			},
 			existingSnapshots: []types.ReserveSnapshot{
 				{
-					Pair:              common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+					Pair:              common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 					QuoteAssetReserve: sdk.NewDec(1000),
 					BaseAssetReserve:  sdk.OneDec(),
 					TimestampMs:       0,
 				},
 				{
-					Pair:              common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD),
+					Pair:              common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
 					QuoteAssetReserve: sdk.NewDec(2000),
 					BaseAssetReserve:  sdk.OneDec(),
 					TimestampMs:       0,
 				},
 				{
-					Pair:              common.AssetRegistry.Pair(denoms.DenomNIBI, denoms.DenomNUSD),
+					Pair:              common.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD),
 					QuoteAssetReserve: sdk.NewDec(2000),
 					BaseAssetReserve:  sdk.OneDec(),
 					TimestampMs:       0,
 				},
 				{
-					Pair:              common.AssetRegistry.Pair(denoms.DenomUSDC, denoms.DenomNUSD),
+					Pair:              common.AssetRegistry.Pair(denoms.USDC, denoms.NUSD),
 					QuoteAssetReserve: sdk.OneDec(),
 					BaseAssetReserve:  sdk.OneDec(),
 					TimestampMs:       0,
@@ -667,7 +667,7 @@ func TestGetMaintenanceMarginRatio(t *testing.T) {
 		{
 			name: "zero fluctuation limit ratio",
 			pool: types.Vpool{
-				Pair:              common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:              common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				QuoteAssetReserve: sdk.OneDec(),
 				BaseAssetReserve:  sdk.OneDec(),
 				Config: types.DefaultVpoolConfig().
@@ -678,7 +678,7 @@ func TestGetMaintenanceMarginRatio(t *testing.T) {
 		{
 			name: "zero fluctuation limit ratio",
 			pool: types.Vpool{
-				Pair:              common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:              common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				QuoteAssetReserve: sdk.OneDec(),
 				BaseAssetReserve:  sdk.OneDec(),
 				Config: types.DefaultVpoolConfig().
@@ -695,7 +695,7 @@ func TestGetMaintenanceMarginRatio(t *testing.T) {
 				mock.NewMockOracleKeeper(gomock.NewController(t)),
 			)
 			vpoolKeeper.Pools.Insert(ctx, tc.pool.Pair, tc.pool)
-			mmr, err := vpoolKeeper.GetMaintenanceMarginRatio(ctx, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD))
+			mmr, err := vpoolKeeper.GetMaintenanceMarginRatio(ctx, common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD))
 			assert.NoError(t, err)
 			assert.EqualValues(t, tc.expectedMaintenanceMarginRatio, mmr)
 		})
@@ -712,7 +712,7 @@ func TestGetMaxLeverage(t *testing.T) {
 		{
 			name: "zero fluctuation limit ratio",
 			pool: types.Vpool{
-				Pair:              common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:              common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				QuoteAssetReserve: sdk.OneDec(),
 				BaseAssetReserve:  sdk.OneDec(),
 				Config: types.VpoolConfig{
@@ -735,7 +735,7 @@ func TestGetMaxLeverage(t *testing.T) {
 			)
 			vpoolKeeper.Pools.Insert(ctx, tc.pool.Pair, tc.pool)
 
-			maxLeverage, err := vpoolKeeper.GetMaxLeverage(ctx, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD))
+			maxLeverage, err := vpoolKeeper.GetMaxLeverage(ctx, common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD))
 			assert.EqualValues(t, tc.expectedMaxLeverage, maxLeverage)
 			assert.NoError(t, err)
 		})

@@ -94,16 +94,16 @@ func (k Keeper) calcNeededGovAndFees(
 	ctx sdk.Context, stable sdk.Coin, govRatio sdk.Dec, feeRatio sdk.Dec,
 ) (sdk.Coin, sdk.Coin, error) {
 	priceGov, err := k.OracleKeeper.GetExchangeRate(
-		ctx, common.AssetRegistry.Pair(denoms.DenomNIBI, denoms.DenomNUSD))
+		ctx, common.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD))
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
 
 	neededGovUSD := stable.Amount.ToDec().Mul(govRatio)
 	neededGovAmt := neededGovUSD.Quo(priceGov).TruncateInt()
-	neededGov := sdk.NewCoin(denoms.DenomNIBI, neededGovAmt)
+	neededGov := sdk.NewCoin(denoms.NIBI, neededGovAmt)
 	govFeeAmt := neededGovAmt.ToDec().Mul(feeRatio).RoundInt()
-	govFee := sdk.NewCoin(denoms.DenomNIBI, govFeeAmt)
+	govFee := sdk.NewCoin(denoms.NIBI, govFeeAmt)
 
 	return neededGov, govFee, nil
 }
@@ -116,16 +116,16 @@ func (k Keeper) calcNeededCollateralAndFees(
 	feeRatio sdk.Dec,
 ) (sdk.Coin, sdk.Coin, error) {
 	priceColl, err := k.OracleKeeper.GetExchangeRate(
-		ctx, common.AssetRegistry.Pair(denoms.DenomUSDC, denoms.DenomNUSD))
+		ctx, common.AssetRegistry.Pair(denoms.USDC, denoms.NUSD))
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
 
 	neededCollUSD := stable.Amount.ToDec().Mul(collRatio)
 	neededCollAmt := neededCollUSD.Quo(priceColl).TruncateInt()
-	neededColl := sdk.NewCoin(denoms.DenomUSDC, neededCollAmt)
+	neededColl := sdk.NewCoin(denoms.USDC, neededCollAmt)
 	collFeeAmt := neededCollAmt.ToDec().Mul(feeRatio).RoundInt()
-	collFee := sdk.NewCoin(denoms.DenomUSDC, collFeeAmt)
+	collFee := sdk.NewCoin(denoms.USDC, collFeeAmt)
 
 	return neededColl, collFee, nil
 }
@@ -253,7 +253,7 @@ func (k Keeper) splitAndSendFeesToEfAndTreasury(
 		amountEf := c.Amount.ToDec().Mul(efFeeRatio).TruncateInt()
 		amountTreasury := c.Amount.Sub(amountEf)
 
-		if c.Denom == denoms.DenomNIBI {
+		if c.Denom == denoms.NIBI {
 			stableCoins := sdk.NewCoins(sdk.NewCoin(c.Denom, amountEf))
 			err := k.BankKeeper.SendCoinsFromAccountToModule(
 				ctx, account, types.StableEFModuleAccount, stableCoins)

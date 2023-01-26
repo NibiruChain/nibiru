@@ -31,7 +31,7 @@ const (
 )
 
 var (
-	whitelist                     = []common.AssetPair{common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD), common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD), common.AssetRegistry.Pair(denoms.DenomNIBI, denoms.DenomNUSD)}
+	whitelist                     = []common.AssetPair{common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD), common.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD)}
 	voteHashMap map[string]string = make(map[string]string)
 )
 

@@ -38,9 +38,9 @@ func TestCalcFreeCollateralErrors(t *testing.T) {
 			test: func() {
 				k, mocks, ctx := getKeeper(t)
 
-				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD)).Return(false)
+				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD)).Return(false)
 
-				pos := types.ZeroPosition(ctx, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD), testutil.AccAddress())
+				pos := types.ZeroPosition(ctx, common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), testutil.AccAddress())
 
 				_, err := k.calcFreeCollateral(ctx, pos)
 
@@ -54,12 +54,12 @@ func TestCalcFreeCollateralErrors(t *testing.T) {
 				k, mocks, ctx := getKeeper(t)
 
 				mocks.mockVpoolKeeper.EXPECT().
-					ExistsPool(ctx, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD)).Return(true)
+					ExistsPool(ctx, common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD)).Return(true)
 				mocks.mockVpoolKeeper.EXPECT().
-					GetMaintenanceMarginRatio(ctx, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD)).
+					GetMaintenanceMarginRatio(ctx, common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD)).
 					Return(sdk.MustNewDecFromStr("0.0625"), nil)
 
-				pos := types.ZeroPosition(ctx, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD), testutil.AccAddress())
+				pos := types.ZeroPosition(ctx, common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), testutil.AccAddress())
 
 				freeCollateral, err := k.calcFreeCollateral(ctx, pos)
 
@@ -151,7 +151,7 @@ func TestCalcFreeCollateralSuccess(t *testing.T) {
 
 			pos := types.Position{
 				TraderAddress:                   testutil.AccAddress().String(),
-				Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           tc.positionSize,
 				Margin:                          sdk.NewDec(100),
 				OpenNotional:                    sdk.NewDec(1000),
@@ -160,19 +160,19 @@ func TestCalcFreeCollateralSuccess(t *testing.T) {
 			}
 
 			t.Log("mock vpool keeper")
-			mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD)).Return(true)
+			mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD)).Return(true)
 			mocks.mockVpoolKeeper.EXPECT().
-				GetMaintenanceMarginRatio(ctx, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD)).
+				GetMaintenanceMarginRatio(ctx, common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD)).
 				Return(sdk.MustNewDecFromStr("0.0625"), nil)
 			mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(
 				ctx,
-				common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				tc.vpoolDirection,
 				sdk.OneDec(),
 			).Return(tc.positionNotional, nil)
 			mocks.mockVpoolKeeper.EXPECT().GetBaseAssetTWAP(
 				ctx,
-				common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				tc.vpoolDirection,
 				sdk.OneDec(),
 				15*time.Minute,
@@ -197,13 +197,13 @@ func TestGetLatestCumulativePremiumFraction(t *testing.T) {
 				keeper, _, ctx := getKeeper(t)
 
 				metadata := &types.PairMetadata{
-					Pair:                            common.AssetRegistry.Pair(denoms.DenomNIBI, denoms.DenomNUSD),
+					Pair:                            common.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD),
 					LatestCumulativePremiumFraction: sdk.NewDec(2),
 				}
 				setPairMetadata(keeper, ctx, *metadata)
 
 				latestCumulativePremiumFraction, err := keeper.
-					getLatestCumulativePremiumFraction(ctx, common.AssetRegistry.Pair(denoms.DenomNIBI, denoms.DenomNUSD))
+					getLatestCumulativePremiumFraction(ctx, common.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD))
 
 				require.NoError(t, err)
 				assert.Equal(t, sdk.NewDec(2), latestCumulativePremiumFraction)

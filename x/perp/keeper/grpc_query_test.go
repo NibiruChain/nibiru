@@ -31,7 +31,7 @@ func initAppVpools(
 	t.Log("initialize vpool and pair")
 	assert.NoError(t, vpoolKeeper.CreatePool(
 		ctx,
-		common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+		common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 		quoteAssetReserve,
 		baseAssetReserve,
 		vpooltypes.VpoolConfig{
@@ -43,12 +43,12 @@ func initAppVpools(
 		},
 	))
 	setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-		Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+		Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 	})
 	assert.NoError(t, vpoolKeeper.CreatePool(
 		ctx,
-		common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD),
+		common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
 		/* quoteReserve */ sdk.MustNewDecFromStr("100000"),
 		/* baseReserve */ sdk.MustNewDecFromStr("100000"),
 		vpooltypes.VpoolConfig{
@@ -60,12 +60,12 @@ func initAppVpools(
 		},
 	))
 	setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-		Pair:                            common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD),
+		Pair:                            common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 	})
 	assert.NoError(t, vpoolKeeper.CreatePool(
 		ctx,
-		common.AssetRegistry.Pair(denoms.DenomNIBI, denoms.DenomNUSD),
+		common.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD),
 		/* quoteReserve */ sdk.MustNewDecFromStr("100000"),
 		/* baseReserve */ sdk.MustNewDecFromStr("100000"),
 		vpooltypes.VpoolConfig{
@@ -77,7 +77,7 @@ func initAppVpools(
 		},
 	))
 	setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
-		Pair:                            common.AssetRegistry.Pair(denoms.DenomNIBI, denoms.DenomNUSD),
+		Pair:                            common.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD),
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 	})
 	return ctx, nibiruApp, queryServer
@@ -98,7 +98,7 @@ func TestQueryPosition(t *testing.T) {
 		{
 			name: "positive PnL",
 			initialPosition: &types.Position{
-				Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(10),
 				OpenNotional:                    sdk.NewDec(10),
 				Margin:                          sdk.NewDec(1),
@@ -115,7 +115,7 @@ func TestQueryPosition(t *testing.T) {
 		{
 			name: "negative PnL, positive margin ratio",
 			initialPosition: &types.Position{
-				Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(10),
 				OpenNotional:                    sdk.NewDec(10),
 				Margin:                          sdk.NewDec(1),
@@ -132,7 +132,7 @@ func TestQueryPosition(t *testing.T) {
 		{
 			name: "negative PnL, negative margin ratio",
 			initialPosition: &types.Position{
-				Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(10),
 				OpenNotional:                    sdk.NewDec(10),
 				Margin:                          sdk.NewDec(1),
@@ -167,7 +167,7 @@ func TestQueryPosition(t *testing.T) {
 				sdk.WrapSDKContext(ctx),
 				&types.QueryPositionRequest{
 					Trader: traderAddr.String(),
-					Pair:   common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+					Pair:   common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				},
 			)
 			require.NoError(t, err)
@@ -193,7 +193,7 @@ func TestQueryPositions(t *testing.T) {
 			name: "positive PnL",
 			Positions: []*types.Position{
 				{
-					Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+					Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 					Size_:                           sdk.NewDec(10),
 					OpenNotional:                    sdk.NewDec(10),
 					Margin:                          sdk.NewDec(1),
@@ -201,7 +201,7 @@ func TestQueryPositions(t *testing.T) {
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				},
 				{
-					Pair:                            common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD),
+					Pair:                            common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
 					Size_:                           sdk.NewDec(10),
 					OpenNotional:                    sdk.NewDec(10),
 					Margin:                          sdk.NewDec(1),
@@ -264,7 +264,7 @@ func TestQueryCumulativePremiumFraction(t *testing.T) {
 		{
 			name: "empty string pair",
 			initialPairMetadata: &types.PairMetadata{
-				Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
 			query: &types.QueryCumulativePremiumFractionRequest{
@@ -275,7 +275,7 @@ func TestQueryCumulativePremiumFraction(t *testing.T) {
 		{
 			name: "pair metadata not found",
 			initialPairMetadata: &types.PairMetadata{
-				Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
 			query: &types.QueryCumulativePremiumFractionRequest{
@@ -286,11 +286,11 @@ func TestQueryCumulativePremiumFraction(t *testing.T) {
 		{
 			name: "returns single funding payment",
 			initialPairMetadata: &types.PairMetadata{
-				Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
 			query: &types.QueryCumulativePremiumFractionRequest{
-				Pair: common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair: common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 			},
 			expectErr:            false,
 			expectedLatestCPF:    sdk.ZeroDec(),
@@ -305,7 +305,7 @@ func TestQueryCumulativePremiumFraction(t *testing.T) {
 			ctx, app, queryServer := initAppVpools(t, sdk.NewDec(481_000), sdk.NewDec(1_000))
 
 			t.Log("set index price")
-			app.OracleKeeper.SetPrice(ctx, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD), sdk.OneDec())
+			app.OracleKeeper.SetPrice(ctx, common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), sdk.OneDec())
 
 			t.Log("query cumulative premium fraction")
 			resp, err := queryServer.CumulativePremiumFraction(sdk.WrapSDKContext(ctx), tc.query)
@@ -340,7 +340,7 @@ func TestQueryMetrics(t *testing.T) {
 			name: "two longs",
 			Positions: []*types.Position{
 				{
-					Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+					Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 					TraderAddress:                   "WHALE",
 					Size_:                           sdk.NewDec(10),
 					OpenNotional:                    sdk.NewDec(100),
@@ -348,7 +348,7 @@ func TestQueryMetrics(t *testing.T) {
 				},
 				{
 					TraderAddress:                   "SHRIMP",
-					Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+					Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 					Size_:                           sdk.NewDec(10),
 					OpenNotional:                    sdk.NewDec(100),
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -362,7 +362,7 @@ func TestQueryMetrics(t *testing.T) {
 			name: "two shorts",
 			Positions: []*types.Position{
 				{
-					Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+					Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 					TraderAddress:                   "WHALE",
 					Size_:                           sdk.NewDec(-10),
 					OpenNotional:                    sdk.NewDec(100),
@@ -370,7 +370,7 @@ func TestQueryMetrics(t *testing.T) {
 				},
 				{
 					TraderAddress:                   "SHRIMP",
-					Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+					Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 					Size_:                           sdk.NewDec(-10),
 					OpenNotional:                    sdk.NewDec(100),
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -384,7 +384,7 @@ func TestQueryMetrics(t *testing.T) {
 			name: "one long, one short",
 			Positions: []*types.Position{
 				{
-					Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+					Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 					TraderAddress:                   "WHALE",
 					Size_:                           sdk.NewDec(10),
 					OpenNotional:                    sdk.NewDec(100),
@@ -392,7 +392,7 @@ func TestQueryMetrics(t *testing.T) {
 				},
 				{
 					TraderAddress:                   "SHRIMP",
-					Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+					Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 					Size_:                           sdk.NewDec(-10),
 					OpenNotional:                    sdk.NewDec(100),
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -406,14 +406,14 @@ func TestQueryMetrics(t *testing.T) {
 			name: "decrease position",
 			Positions: []*types.Position{
 				{
-					Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+					Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 					TraderAddress:                   "WHALE",
 					Size_:                           sdk.NewDec(10),
 					OpenNotional:                    sdk.NewDec(100),
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				},
 				{
-					Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+					Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 					TraderAddress:                   "WHALE",
 					Size_:                           sdk.NewDec(-10),
 					OpenNotional:                    sdk.NewDec(100),
@@ -428,42 +428,42 @@ func TestQueryMetrics(t *testing.T) {
 			name: "swap positions",
 			Positions: []*types.Position{
 				{
-					Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+					Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 					TraderAddress:                   "WHALE",
 					Size_:                           sdk.NewDec(10),
 					OpenNotional:                    sdk.NewDec(100),
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				},
 				{
-					Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+					Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 					TraderAddress:                   "SHRIMP",
 					Size_:                           sdk.NewDec(-10),
 					OpenNotional:                    sdk.NewDec(100),
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				},
 				{
-					Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+					Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 					TraderAddress:                   "WHALE",
 					Size_:                           sdk.NewDec(-10),
 					OpenNotional:                    sdk.NewDec(100),
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				},
 				{
-					Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+					Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 					TraderAddress:                   "WHALE",
 					Size_:                           sdk.NewDec(-20),
 					OpenNotional:                    sdk.NewDec(200),
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				},
 				{
-					Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+					Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 					TraderAddress:                   "SHRIMP",
 					Size_:                           sdk.NewDec(20),
 					OpenNotional:                    sdk.NewDec(200),
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				},
 				{
-					Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+					Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 					TraderAddress:                   "SHRIMP",
 					Size_:                           sdk.NewDec(20),
 					OpenNotional:                    sdk.NewDec(200),
@@ -489,7 +489,7 @@ func TestQueryMetrics(t *testing.T) {
 				// Detect position decrease
 				app.PerpKeeper.OnSwapEnd(
 					ctx,
-					common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+					common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 					position.OpenNotional,
 					position.Size_,
 				)
@@ -499,7 +499,7 @@ func TestQueryMetrics(t *testing.T) {
 			resp, err := queryServer.Metrics(
 				sdk.WrapSDKContext(ctx),
 				&types.QueryMetricsRequest{
-					Pair: common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+					Pair: common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				},
 			)
 			require.NoError(t, err)

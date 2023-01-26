@@ -1,20 +1,20 @@
 package denoms
 
 const ( // stablecoins
-	DenomUSDC = "uusdc"
-	DenomNUSD = "unusd"
-	DenomUSD  = "uusd"
-	DenomUSDT = "uusdt"
+	USDC = "uusdc"
+	NUSD = "unusd"
+	USD  = "uusd"
+	USDT = "uusdt"
 )
 
 const ( // volatile assets
-	DenomNIBI = "unibi"
-	DenomBTC  = "ubtc"
-	DenomETH  = "ueth"
-	DenomATOM = "uatom"
-	DenomOSMO = "uosmo"
-	DenomAVAX = "uavax"
-	DenomSOL  = "usol"
-	DenomBNB  = "ubnb"
-	DenomADA  = "uada"
+	NIBI = "unibi"
+	BTC  = "ubtc"
+	ETH  = "ueth"
+	ATOM = "uatom"
+	OSMO = "uosmo"
+	AVAX = "uavax"
+	SOL  = "usol"
+	BNB  = "ubnb"
+	ADA  = "uada"
 )

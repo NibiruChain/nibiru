@@ -16,7 +16,7 @@ func TestIsSupportedPair(t *testing.T) {
 	}
 
 	t.Log("test an unsupported pair")
-	require.False(t, AssetRegistry.IsSupportedPair(denoms.DenomATOM, denoms.DenomOSMO))
+	require.False(t, AssetRegistry.IsSupportedPair(denoms.ATOM, denoms.OSMO))
 }
 
 func TestPair(t *testing.T) {
@@ -27,13 +27,13 @@ func TestPair(t *testing.T) {
 	}
 
 	t.Log("test an unsupported pair")
-	require.Equal(t, AssetPair(""), AssetRegistry.Pair(denoms.DenomATOM, denoms.DenomOSMO))
+	require.Equal(t, AssetPair(""), AssetRegistry.Pair(denoms.ATOM, denoms.OSMO))
 
 	t.Log("test an unsupported base asset")
-	require.Equal(t, AssetPair(""), AssetRegistry.Pair("unsuported_denom", denoms.DenomUSDC))
+	require.Equal(t, AssetPair(""), AssetRegistry.Pair("unsuported_denom", denoms.USDC))
 
 	t.Log("test an unsupported quote asset")
-	require.Equal(t, AssetPair(""), AssetRegistry.Pair(denoms.DenomATOM, "unsupported_denom"))
+	require.Equal(t, AssetPair(""), AssetRegistry.Pair(denoms.ATOM, "unsupported_denom"))
 }
 
 func TestBaseDenoms(t *testing.T) {

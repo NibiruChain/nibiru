@@ -34,37 +34,37 @@ func TestMsgServerAddMargin(t *testing.T) {
 	}{
 		{
 			name:        "trader not enough funds",
-			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(denoms.DenomNUSD, 999)),
+			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 999)),
 			initialPosition: &types.Position{
-				Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.OneDec(),
 				Margin:                          sdk.OneDec(),
 				OpenNotional:                    sdk.OneDec(),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                     1,
 			},
-			margin:      sdk.NewInt64Coin(denoms.DenomNUSD, 1000),
+			margin:      sdk.NewInt64Coin(denoms.NUSD, 1000),
 			expectedErr: sdkerrors.ErrInsufficientFunds,
 		},
 		{
 			name:            "no initial position",
-			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(denoms.DenomNUSD, 1000)),
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1000)),
 			initialPosition: nil,
-			margin:          sdk.NewInt64Coin(denoms.DenomNUSD, 1000),
+			margin:          sdk.NewInt64Coin(denoms.NUSD, 1000),
 			expectedErr:     collections.ErrNotFound,
 		},
 		{
 			name:        "success",
-			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(denoms.DenomNUSD, 1000)),
+			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1000)),
 			initialPosition: &types.Position{
-				Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.OneDec(),
 				Margin:                          sdk.OneDec(),
 				OpenNotional:                    sdk.OneDec(),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                     1,
 			},
-			margin:      sdk.NewInt64Coin(denoms.DenomNUSD, 1000),
+			margin:      sdk.NewInt64Coin(denoms.NUSD, 1000),
 			expectedErr: nil,
 		},
 	}
@@ -79,7 +79,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 			t.Log("create vpool")
 			assert.NoError(t, app.VpoolKeeper.CreatePool(
 				ctx,
-				common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteReserve */ sdk.NewDec(1*common.Precision),
 				/* baseReserve */ sdk.NewDec(1*common.Precision),
 				vpooltypes.VpoolConfig{
@@ -91,7 +91,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 				},
 			))
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
-				Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
@@ -106,7 +106,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 
 			resp, err := msgServer.AddMargin(sdk.WrapSDKContext(ctx), &types.MsgAddMargin{
 				Sender: traderAddr.String(),
-				Pair:   common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:   common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				Margin: tc.margin,
 			})
 
@@ -141,51 +141,51 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 	}{
 		{
 			name:       "position not enough margin",
-			vaultFunds: sdk.NewCoins(sdk.NewInt64Coin(denoms.DenomNUSD, 1000)),
+			vaultFunds: sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1000)),
 			initialPosition: &types.Position{
-				Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.OneDec(),
 				Margin:                          sdk.OneDec(),
 				OpenNotional:                    sdk.OneDec(),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                     1,
 			},
-			marginToRemove: sdk.NewInt64Coin(denoms.DenomNUSD, 1000),
+			marginToRemove: sdk.NewInt64Coin(denoms.NUSD, 1000),
 			expectedErr:    types.ErrFailedRemoveMarginCanCauseBadDebt,
 		},
 		{
 			name:            "no initial position",
-			vaultFunds:      sdk.NewCoins(sdk.NewInt64Coin(denoms.DenomNUSD, 0)),
+			vaultFunds:      sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 0)),
 			initialPosition: nil,
-			marginToRemove:  sdk.NewInt64Coin(denoms.DenomNUSD, 1000),
+			marginToRemove:  sdk.NewInt64Coin(denoms.NUSD, 1000),
 			expectedErr:     collections.ErrNotFound,
 		},
 		{
 			name:       "vault insufficient funds",
-			vaultFunds: sdk.NewCoins(sdk.NewInt64Coin(denoms.DenomNUSD, 999)),
+			vaultFunds: sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 999)),
 			initialPosition: &types.Position{
-				Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.OneDec(),
 				Margin:                          sdk.NewDec(1 * common.Precision),
 				OpenNotional:                    sdk.OneDec(),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                     1,
 			},
-			marginToRemove: sdk.NewInt64Coin(denoms.DenomNUSD, 1000),
+			marginToRemove: sdk.NewInt64Coin(denoms.NUSD, 1000),
 			expectedErr:    sdkerrors.ErrInsufficientFunds,
 		},
 		{
 			name:       "success",
-			vaultFunds: sdk.NewCoins(sdk.NewInt64Coin(denoms.DenomNUSD, 1000)),
+			vaultFunds: sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1000)),
 			initialPosition: &types.Position{
-				Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.OneDec(),
 				Margin:                          sdk.NewDec(1 * common.Precision),
 				OpenNotional:                    sdk.OneDec(),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                     1,
 			},
-			marginToRemove: sdk.NewInt64Coin(denoms.DenomNUSD, 1000),
+			marginToRemove: sdk.NewInt64Coin(denoms.NUSD, 1000),
 			expectedErr:    nil,
 		},
 	}
@@ -200,7 +200,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			t.Log("create vpool")
 			assert.NoError(t, app.VpoolKeeper.CreatePool(
 				ctx,
-				common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteReserve */ sdk.NewDec(1*common.Precision),
 				/* baseReserve */ sdk.NewDec(1*common.Precision),
 				vpooltypes.VpoolConfig{
@@ -212,7 +212,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 				},
 			))
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
-				Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
@@ -229,7 +229,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 
 			resp, err := msgServer.RemoveMargin(sdk.WrapSDKContext(ctx), &types.MsgRemoveMargin{
 				Sender: traderAddr.String(),
-				Pair:   common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:   common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				Margin: tc.marginToRemove,
 			})
 
@@ -263,15 +263,15 @@ func TestMsgServerOpenPosition(t *testing.T) {
 	}{
 		{
 			name:        "trader not enough funds",
-			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(denoms.DenomNUSD, 999)),
-			pair:        common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 999)),
+			pair:        common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 			sender:      testutil.AccAddress().String(),
 			expectedErr: sdkerrors.ErrInsufficientFunds,
 		},
 		{
 			name:        "success",
-			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(denoms.DenomNUSD, 1020)),
-			pair:        common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1020)),
+			pair:        common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 			sender:      testutil.AccAddress().String(),
 			expectedErr: nil,
 		},
@@ -287,7 +287,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 			t.Log("create vpool")
 			assert.NoError(t, app.VpoolKeeper.CreatePool(
 				/* ctx */ ctx,
-				/* pair */ common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				/* pair */ common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
 				/* baseAssetReserve */ sdk.NewDec(1*common.Precision),
 				vpooltypes.VpoolConfig{
@@ -299,7 +299,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 				},
 			))
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
-				Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
@@ -358,7 +358,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 	}{
 		{
 			name:        "success",
-			pair:        common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+			pair:        common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 			traderAddr:  testutil.AccAddress(),
 			expectedErr: nil,
 		},
@@ -374,7 +374,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 
 			assert.NoError(t, app.VpoolKeeper.CreatePool(
 				ctx,
-				common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
 				/* baseAssetReserve */ sdk.NewDec(1*common.Precision),
 				vpooltypes.VpoolConfig{
@@ -386,7 +386,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 				},
 			))
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
-				Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
@@ -435,7 +435,7 @@ func TestMsgServerLiquidate(t *testing.T) {
 	}{
 		{
 			name:        "success",
-			pair:        common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+			pair:        common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 			liquidator:  testutil.AccAddress().String(),
 			trader:      testutil.AccAddress().String(),
 			expectedErr: nil,
@@ -453,7 +453,7 @@ func TestMsgServerLiquidate(t *testing.T) {
 			t.Log("create vpool")
 			assert.NoError(t, app.VpoolKeeper.CreatePool(
 				/* ctx */ ctx,
-				/* pair */ common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				/* pair */ common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
 				/* baseAssetReserve */ sdk.NewDec(1*common.Precision),
 				vpooltypes.VpoolConfig{
@@ -465,7 +465,7 @@ func TestMsgServerLiquidate(t *testing.T) {
 				},
 			))
 			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
-				Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
@@ -473,7 +473,7 @@ func TestMsgServerLiquidate(t *testing.T) {
 			traderAddr, err := sdk.AccAddressFromBech32(tc.trader)
 			if err == nil {
 				t.Log("set oracle price")
-				app.OracleKeeper.SetPrice(ctx, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD), sdk.OneDec())
+				app.OracleKeeper.SetPrice(ctx, common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), sdk.OneDec())
 
 				t.Log("create position")
 				setPosition(app.PerpKeeper, ctx, types.Position{
@@ -516,7 +516,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	ctx = ctx.WithBlockTime(time.Now())
 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
-	pair := common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD)
+	pair := common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD)
 	liquidator := testutil.AccAddress()
 
 	atRiskTrader1 := testutil.AccAddress()
@@ -544,7 +544,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
 
 	t.Log("set oracle price")
-	app.OracleKeeper.SetPrice(ctx, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD), sdk.OneDec())
+	app.OracleKeeper.SetPrice(ctx, common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), sdk.OneDec())
 
 	t.Log("create positions")
 	atRiskPosition1 := types.Position{
@@ -642,14 +642,14 @@ func TestMsgServerDonateToEcosystemFund(t *testing.T) {
 			name:         "not enough funds",
 			sender:       testutil.AccAddress(),
 			initialFunds: sdk.NewCoins(),
-			donation:     sdk.NewInt64Coin(denoms.DenomNUSD, 100),
+			donation:     sdk.NewInt64Coin(denoms.NUSD, 100),
 			expectedErr:  fmt.Errorf("insufficient funds"),
 		},
 		{
 			name:         "success",
 			sender:       testutil.AccAddress(),
-			initialFunds: sdk.NewCoins(sdk.NewInt64Coin(denoms.DenomNUSD, 1e6)),
-			donation:     sdk.NewInt64Coin(denoms.DenomNUSD, 100),
+			initialFunds: sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1e6)),
+			donation:     sdk.NewInt64Coin(denoms.NUSD, 100),
 			expectedErr:  nil,
 		},
 	}
@@ -677,7 +677,7 @@ func TestMsgServerDonateToEcosystemFund(t *testing.T) {
 					app.BankKeeper.GetBalance(
 						ctx,
 						app.AccountKeeper.GetModuleAddress(types.PerpEFModuleAccount),
-						denoms.DenomNUSD,
+						denoms.NUSD,
 					),
 				)
 			}

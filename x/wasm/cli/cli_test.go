@@ -25,7 +25,7 @@ import (
 var commonArgs = []string{
 	fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 	fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-	fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(denoms.DenomNIBI, sdk.NewInt(10))).String()),
+	fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(10))).String()),
 }
 
 type IntegrationTestSuite struct {
@@ -49,7 +49,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	vpoolGenesis := vpooltypes.DefaultGenesis()
 	vpoolGenesis.Vpools = []vpooltypes.Vpool{
 		{
-			Pair:              common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD),
+			Pair:              common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
 			BaseAssetReserve:  sdk.NewDec(10 * common.Precision),
 			QuoteAssetReserve: sdk.NewDec(60_000 * common.Precision),
 			Config: vpooltypes.VpoolConfig{

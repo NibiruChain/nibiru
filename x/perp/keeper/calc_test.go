@@ -29,7 +29,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				marginDelta := sdk.OneDec()
 				_, err := nibiruApp.PerpKeeper.CalcRemainMarginWithFundingPayment(
 					ctx, types.Position{
-						Pair: common.AssetRegistry.Pair(denoms.DenomNIBI, denoms.DenomNUSD),
+						Pair: common.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD),
 					}, marginDelta)
 				require.ErrorIs(t, err, collections.ErrNotFound)
 			},

@@ -111,7 +111,7 @@ func TestGetMarginRatio(t *testing.T) {
 			name: "margin without price changes",
 			position: types.Position{
 				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(10),
 				OpenNotional:                    sdk.NewDec(10),
 				Margin:                          sdk.NewDec(1),
@@ -124,7 +124,7 @@ func TestGetMarginRatio(t *testing.T) {
 			name: "margin with price changes",
 			position: types.Position{
 				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(10),
 				OpenNotional:                    sdk.NewDec(10),
 				Margin:                          sdk.NewDec(1),
@@ -144,7 +144,7 @@ func TestGetMarginRatio(t *testing.T) {
 			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetPrice(
 					ctx,
-					common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+					common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 					vpooltypes.Direction_ADD_TO_POOL,
 					tc.position.Size_.Abs(),
 				).
@@ -153,7 +153,7 @@ func TestGetMarginRatio(t *testing.T) {
 			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetTWAP(
 					ctx,
-					common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+					common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 					vpooltypes.Direction_ADD_TO_POOL,
 					tc.position.Size_.Abs(),
 					15*time.Minute,
@@ -161,7 +161,7 @@ func TestGetMarginRatio(t *testing.T) {
 				Return(tc.newPrice, nil)
 
 			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-				Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.OneDec(),
 			})
 
@@ -635,7 +635,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 			name: "long position; positive pnl; spot price calc",
 			initialPosition: types.Position{
 				TraderAddress: testutilevents.AccAddress().String(),
-				Pair:          common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:          common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
 				Margin:        sdk.NewDec(1),
@@ -644,7 +644,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+						common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
 					).
@@ -658,7 +658,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 			name: "long position; negative pnl; spot price calc",
 			initialPosition: types.Position{
 				TraderAddress: testutilevents.AccAddress().String(),
-				Pair:          common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:          common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
 				Margin:        sdk.NewDec(1),
@@ -667,7 +667,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+						common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
 					).
@@ -681,7 +681,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 			name: "long position; positive pnl; twap calc",
 			initialPosition: types.Position{
 				TraderAddress: testutilevents.AccAddress().String(),
-				Pair:          common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:          common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
 				Margin:        sdk.NewDec(1),
@@ -690,7 +690,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetTWAP(
 						ctx,
-						common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+						common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
 						15*time.Minute,
@@ -705,7 +705,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 			name: "long position; negative pnl; twap calc",
 			initialPosition: types.Position{
 				TraderAddress: testutilevents.AccAddress().String(),
-				Pair:          common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:          common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
 				Margin:        sdk.NewDec(1),
@@ -714,7 +714,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetTWAP(
 						ctx,
-						common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+						common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
 						15*time.Minute,
@@ -729,7 +729,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 			name: "long position; positive pnl; oracle calc",
 			initialPosition: types.Position{
 				TraderAddress: testutilevents.AccAddress().String(),
-				Pair:          common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:          common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
 				Margin:        sdk.NewDec(1),
@@ -738,7 +738,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockOracleKeeper.EXPECT().
 					GetExchangeRate(
 						ctx,
-						common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+						common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 					).
 					Return(sdk.NewDec(2), nil)
 			},
@@ -750,7 +750,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 			name: "long position; negative pnl; oracle calc",
 			initialPosition: types.Position{
 				TraderAddress: testutilevents.AccAddress().String(),
-				Pair:          common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:          common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
 				Margin:        sdk.NewDec(1),
@@ -759,7 +759,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockOracleKeeper.EXPECT().
 					GetExchangeRate(
 						ctx,
-						common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+						common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 					).
 					Return(sdk.MustNewDecFromStr("0.5"), nil)
 			},
@@ -771,7 +771,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 			name: "short position; positive pnl; spot price calc",
 			initialPosition: types.Position{
 				TraderAddress: testutilevents.AccAddress().String(),
-				Pair:          common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:          common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:         sdk.NewDec(-10),
 				OpenNotional:  sdk.NewDec(10),
 				Margin:        sdk.NewDec(1),
@@ -780,7 +780,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+						common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						sdk.NewDec(10),
 					).
@@ -794,7 +794,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 			name: "short position; negative pnl; spot price calc",
 			initialPosition: types.Position{
 				TraderAddress: testutilevents.AccAddress().String(),
-				Pair:          common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:          common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:         sdk.NewDec(-10),
 				OpenNotional:  sdk.NewDec(10),
 				Margin:        sdk.NewDec(1),
@@ -803,7 +803,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+						common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						sdk.NewDec(10),
 					).
@@ -817,7 +817,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 			name: "short position; positive pnl; twap calc",
 			initialPosition: types.Position{
 				TraderAddress: testutilevents.AccAddress().String(),
-				Pair:          common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:          common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:         sdk.NewDec(-10),
 				OpenNotional:  sdk.NewDec(10),
 				Margin:        sdk.NewDec(1),
@@ -826,7 +826,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetTWAP(
 						ctx,
-						common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+						common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						sdk.NewDec(10),
 						15*time.Minute,
@@ -841,7 +841,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 			name: "short position; negative pnl; twap calc",
 			initialPosition: types.Position{
 				TraderAddress: testutilevents.AccAddress().String(),
-				Pair:          common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:          common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:         sdk.NewDec(-10),
 				OpenNotional:  sdk.NewDec(10),
 				Margin:        sdk.NewDec(1),
@@ -850,7 +850,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetTWAP(
 						ctx,
-						common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+						common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						sdk.NewDec(10),
 						15*time.Minute,
@@ -865,7 +865,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 			name: "short position; positive pnl; oracle calc",
 			initialPosition: types.Position{
 				TraderAddress: testutilevents.AccAddress().String(),
-				Pair:          common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:          common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:         sdk.NewDec(-10),
 				OpenNotional:  sdk.NewDec(10),
 				Margin:        sdk.NewDec(1),
@@ -874,7 +874,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockOracleKeeper.EXPECT().
 					GetExchangeRate(
 						ctx,
-						common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+						common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 					).
 					Return(sdk.MustNewDecFromStr("0.5"), nil)
 			},
@@ -886,7 +886,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 			name: "long position; negative pnl; oracle calc",
 			initialPosition: types.Position{
 				TraderAddress: testutilevents.AccAddress().String(),
-				Pair:          common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:          common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:         sdk.NewDec(-10),
 				OpenNotional:  sdk.NewDec(10),
 				Margin:        sdk.NewDec(1),
@@ -895,7 +895,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				mocks.mockOracleKeeper.EXPECT().
 					GetExchangeRate(
 						ctx,
-						common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+						common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 					).
 					Return(sdk.NewDec(2), nil)
 			},
@@ -942,7 +942,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnL(t *testing.T) {
 			name: "max pnl, pick spot price",
 			initPosition: types.Position{
 				TraderAddress: testutilevents.AccAddress().String(),
-				Pair:          common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:          common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
 				Margin:        sdk.NewDec(1),
@@ -952,7 +952,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnL(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+						common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
 					).
@@ -961,7 +961,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnL(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetTWAP(
 						ctx,
-						common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+						common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
 						15*time.Minute,
@@ -976,7 +976,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnL(t *testing.T) {
 			name: "max pnl, pick twap",
 			initPosition: types.Position{
 				TraderAddress: testutilevents.AccAddress().String(),
-				Pair:          common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:          common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
 				Margin:        sdk.NewDec(1),
@@ -986,7 +986,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnL(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+						common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
 					).
@@ -995,7 +995,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnL(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetTWAP(
 						ctx,
-						common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+						common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
 						15*time.Minute,
@@ -1010,7 +1010,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnL(t *testing.T) {
 			name: "min pnl, pick spot price",
 			initPosition: types.Position{
 				TraderAddress: testutilevents.AccAddress().String(),
-				Pair:          common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:          common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
 				Margin:        sdk.NewDec(1),
@@ -1020,7 +1020,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnL(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+						common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
 					).
@@ -1029,7 +1029,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnL(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetTWAP(
 						ctx,
-						common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+						common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
 						15*time.Minute,
@@ -1044,7 +1044,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnL(t *testing.T) {
 			name: "min pnl, pick twap",
 			initPosition: types.Position{
 				TraderAddress: testutilevents.AccAddress().String(),
-				Pair:          common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+				Pair:          common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:         sdk.NewDec(10),
 				OpenNotional:  sdk.NewDec(10),
 				Margin:        sdk.NewDec(1),
@@ -1054,7 +1054,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnL(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+						common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
 					).
@@ -1063,7 +1063,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnL(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetTWAP(
 						ctx,
-						common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+						common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
 						15*time.Minute,

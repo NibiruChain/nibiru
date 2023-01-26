@@ -50,13 +50,13 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	// x/stablecoin genesis state
 	stableGen := stabletypes.DefaultGenesis()
 	stableGen.Params.IsCollateralRatioValid = true
-	stableGen.ModuleAccountBalance = sdk.NewCoin(denoms.DenomUSDC, sdk.NewInt(10000*common.Precision))
+	stableGen.ModuleAccountBalance = sdk.NewCoin(denoms.USDC, sdk.NewInt(10000*common.Precision))
 	genesisState[stabletypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(stableGen)
 
 	oracleGenesis := oracletypes.DefaultGenesisState()
 	oracleGenesis.ExchangeRates = []oracletypes.ExchangeRateTuple{
-		{Pair: common.AssetRegistry.Pair(denoms.DenomNIBI, denoms.DenomNUSD), ExchangeRate: sdk.NewDec(10)},
-		{Pair: common.AssetRegistry.Pair(denoms.DenomUSDC, denoms.DenomNUSD), ExchangeRate: sdk.NewDec(1)},
+		{Pair: common.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: sdk.NewDec(10)},
+		{Pair: common.AssetRegistry.Pair(denoms.USDC, denoms.NUSD), ExchangeRate: sdk.NewDec(1)},
 	}
 	oracleGenesis.Params.VotePeriod = 1_000
 
@@ -81,8 +81,8 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 	s.NoError(testutilcli.FillWalletFromValidator(
 		minter,
 		sdk.NewCoins(
-			sdk.NewInt64Coin(denoms.DenomNIBI, 100*common.Precision),
-			sdk.NewInt64Coin(denoms.DenomUSDC, 100*common.Precision),
+			sdk.NewInt64Coin(denoms.NIBI, 100*common.Precision),
+			sdk.NewInt64Coin(denoms.USDC, 100*common.Precision),
 		),
 		val,
 		s.cfg.BondDenom,
@@ -91,7 +91,7 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 	commonArgs := []string{
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(denoms.DenomNIBI, sdk.NewInt(10))).String()),
+		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(10))).String()),
 	}
 
 	testCases := []struct {
@@ -143,7 +143,7 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 				s.NoError(err)
 
 				s.Require().Equal(
-					balRes.Balances.AmountOf(denoms.DenomNUSD), tc.expectedStable)
+					balRes.Balances.AmountOf(denoms.NUSD), tc.expectedStable)
 			}
 		})
 	}
@@ -156,7 +156,7 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 		burner,
 		sdk.NewCoins(
 			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
-			sdk.NewInt64Coin(denoms.DenomNUSD, 50*common.Precision),
+			sdk.NewInt64Coin(denoms.NUSD, 50*common.Precision),
 		),
 		val,
 		s.cfg.BondDenom,
@@ -164,7 +164,7 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 
 	s.NoError(s.network.WaitForNextBlock())
 
-	defaultBondCoinsString := sdk.NewCoins(sdk.NewCoin(denoms.DenomNIBI, sdk.NewInt(10))).String()
+	defaultBondCoinsString := sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(10))).String()
 	commonArgs := []string{
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
@@ -192,8 +192,8 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 			expectedStable:   sdk.ZeroInt(),
 			expectedColl:     sdk.NewInt(50*common.Precision - 100_000), // Collateral minus 0,02% fees
 			expectedGov:      sdk.NewInt(19_990),
-			expectedTreasury: sdk.NewCoins(sdk.NewInt64Coin(denoms.DenomUSDC, 50_000)),
-			expectedEf:       sdk.NewCoins(sdk.NewInt64Coin(denoms.DenomUSDC, 50_000)),
+			expectedTreasury: sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 50_000)),
+			expectedEf:       sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 50_000)),
 			expectErr:        false,
 			respType:         &sdk.TxResponse{},
 			expectedCode:     0,
@@ -242,11 +242,11 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 				s.NoError(err)
 
 				s.Require().Equal(
-					tc.expectedColl, balRes.Balances.AmountOf(denoms.DenomUSDC))
+					tc.expectedColl, balRes.Balances.AmountOf(denoms.USDC))
 				s.Require().Equal(
-					tc.expectedGov, balRes.Balances.AmountOf(denoms.DenomNIBI))
+					tc.expectedGov, balRes.Balances.AmountOf(denoms.NIBI))
 				s.Require().Equal(
-					tc.expectedStable, balRes.Balances.AmountOf(denoms.DenomNUSD))
+					tc.expectedStable, balRes.Balances.AmountOf(denoms.NUSD))
 
 				// Query treasury pool balance
 				resp, err = banktestutil.QueryBalancesExec(

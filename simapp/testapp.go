@@ -37,8 +37,8 @@ func NewTestNibiruAppAndContext(shouldUseDefaultGenesis bool) (*NibiruTestApp, s
 	newNibiruApp := NewTestNibiruApp(shouldUseDefaultGenesis)
 	ctx := newNibiruApp.NewContext(false, tmproto.Header{})
 
-	newNibiruApp.OracleKeeper.SetPrice(ctx, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD), sdk.NewDec(20000))
-	// newNibiruApp.OracleKeeper.SetPrice(ctx, common.AssetRegistry.Pair(denoms.DenomNIBI, denoms.DenomNUSD), sdk.NewDec(10))
+	newNibiruApp.OracleKeeper.SetPrice(ctx, common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), sdk.NewDec(20000))
+	// newNibiruApp.OracleKeeper.SetPrice(ctx, common.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), sdk.NewDec(10))
 	newNibiruApp.OracleKeeper.SetPrice(ctx, "xxx:yyy", sdk.NewDec(20000))
 
 	return newNibiruApp, ctx
@@ -123,7 +123,7 @@ func NewTestGenesisState(codec codec.Codec, inGenState GenesisState,
 	var govGenState govtypes.GenesisState
 	codec.MustUnmarshalJSON(testGenState[govtypes.ModuleName], &govGenState)
 	govGenState.VotingParams.VotingPeriod = time.Second * 20
-	govGenState.DepositParams.MinDeposit = sdk.NewCoins(sdk.NewInt64Coin(denoms.DenomNIBI, 1*common.Precision)) // min deposit of 1 NIBI
+	govGenState.DepositParams.MinDeposit = sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 1*common.Precision)) // min deposit of 1 NIBI
 	testGenState[govtypes.ModuleName] = codec.MustMarshalJSON(&govGenState)
 
 	return testGenState

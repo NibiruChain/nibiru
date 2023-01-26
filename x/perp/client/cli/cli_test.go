@@ -52,7 +52,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	vpoolGenesis := vpooltypes.DefaultGenesis()
 	vpoolGenesis.Vpools = []vpooltypes.Vpool{
 		{
-			Pair:              common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+			Pair:              common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 			BaseAssetReserve:  sdk.NewDec(10 * common.Precision),
 			QuoteAssetReserve: sdk.NewDec(60_000 * common.Precision),
 			Config: vpooltypes.VpoolConfig{
@@ -64,7 +64,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			},
 		},
 		{
-			Pair:              common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD),
+			Pair:              common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
 			BaseAssetReserve:  sdk.NewDec(10 * common.Precision),
 			QuoteAssetReserve: sdk.NewDec(60_000 * common.Precision),
 			Config: vpooltypes.VpoolConfig{
@@ -82,11 +82,11 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	perpGenesis := perptypes.DefaultGenesis()
 	perpGenesis.PairMetadata = []perptypes.PairMetadata{
 		{
-			Pair:                            common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+			Pair:                            common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 			LatestCumulativePremiumFraction: sdk.NewDec(2),
 		},
 		{
-			Pair:                            common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD),
+			Pair:                            common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
 			LatestCumulativePremiumFraction: sdk.ZeroDec(),
 		},
 	}
@@ -95,12 +95,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	oracleGenesis := oracletypes.DefaultGenesisState()
 	oracleGenesis.Params.Whitelist = []common.AssetPair{
-		common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+		common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 	}
 	oracleGenesis.Params.VotePeriod = 1_000
 	oracleGenesis.ExchangeRates = []oracletypes.ExchangeRateTuple{
-		{Pair: common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD), ExchangeRate: sdk.NewDec(20_000)},
-		{Pair: common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD), ExchangeRate: sdk.NewDec(2_000)},
+		{Pair: common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: sdk.NewDec(20_000)},
+		{Pair: common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD), ExchangeRate: sdk.NewDec(2_000)},
 	}
 	genesisState[oracletypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(oracleGenesis)
 
@@ -124,56 +124,56 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.NoError(
 		testutilcli.FillWalletFromValidator(user1,
 			sdk.NewCoins(
-				sdk.NewInt64Coin(denoms.DenomNIBI, 10*common.Precision),
-				sdk.NewInt64Coin(denoms.DenomUSDC, 10*common.Precision),
-				sdk.NewInt64Coin(denoms.DenomNUSD, 50*common.Precision),
+				sdk.NewInt64Coin(denoms.NIBI, 10*common.Precision),
+				sdk.NewInt64Coin(denoms.USDC, 10*common.Precision),
+				sdk.NewInt64Coin(denoms.NUSD, 50*common.Precision),
 			),
 			val,
-			denoms.DenomNIBI,
+			denoms.NIBI,
 		),
 	)
 
 	s.NoError(
 		testutilcli.FillWalletFromValidator(user2,
 			sdk.NewCoins(
-				sdk.NewInt64Coin(denoms.DenomNIBI, 1000),
-				sdk.NewInt64Coin(denoms.DenomUSDC, 1000),
-				sdk.NewInt64Coin(denoms.DenomNUSD, 100000),
+				sdk.NewInt64Coin(denoms.NIBI, 1000),
+				sdk.NewInt64Coin(denoms.USDC, 1000),
+				sdk.NewInt64Coin(denoms.NUSD, 100000),
 			),
 			val,
-			denoms.DenomNIBI,
+			denoms.NIBI,
 		),
 	)
 
 	s.NoError(
 		testutilcli.FillWalletFromValidator(user3,
 			sdk.NewCoins(
-				sdk.NewInt64Coin(denoms.DenomNIBI, 1000),
-				sdk.NewInt64Coin(denoms.DenomUSDC, 1000),
-				sdk.NewInt64Coin(denoms.DenomNUSD, 49*common.Precision),
+				sdk.NewInt64Coin(denoms.NIBI, 1000),
+				sdk.NewInt64Coin(denoms.USDC, 1000),
+				sdk.NewInt64Coin(denoms.NUSD, 49*common.Precision),
 			),
 			val,
-			denoms.DenomNIBI,
+			denoms.NIBI,
 		),
 	)
 
 	s.NoError(
 		testutilcli.FillWalletFromValidator(user4,
 			sdk.NewCoins(
-				sdk.NewInt64Coin(denoms.DenomNIBI, 1000),
-				sdk.NewInt64Coin(denoms.DenomUSDC, 1000),
-				sdk.NewInt64Coin(denoms.DenomNUSD, 100000),
+				sdk.NewInt64Coin(denoms.NIBI, 1000),
+				sdk.NewInt64Coin(denoms.USDC, 1000),
+				sdk.NewInt64Coin(denoms.NUSD, 100000),
 			),
 			val,
-			denoms.DenomNIBI,
+			denoms.NIBI,
 		),
 	)
 
 	s.NoError(
 		testutilcli.FillWalletFromValidator(user5,
-			sdk.NewCoins(sdk.NewInt64Coin(denoms.DenomNIBI, 1000)),
+			sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 1000)),
 			val,
-			denoms.DenomNIBI,
+			denoms.NIBI,
 		),
 	)
 }
@@ -187,25 +187,25 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	val := s.network.Validators[0]
 	user := s.users[0]
 
-	exchangeRate, err := testutilcli.QueryOracleExchangeRate(val.ClientCtx, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD))
+	exchangeRate, err := testutilcli.QueryOracleExchangeRate(val.ClientCtx, common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD))
 	s.T().Logf("0. current exchange rate is: %+v", exchangeRate)
 	s.NoError(err)
 
 	s.T().Log("A. check vpool balances")
-	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD))
+	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD))
 	s.T().Logf("reserve assets: %+v", reserveAssets)
 	s.NoError(err)
 	s.EqualValues(sdk.NewDec(10*common.Precision), reserveAssets.BaseAssetReserve)
 	s.EqualValues(sdk.NewDec(60_000*common.Precision), reserveAssets.QuoteAssetReserve)
 
 	s.T().Log("A. check trader has no existing positions")
-	_, err = testutilcli.QueryPosition(val.ClientCtx, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD), user)
+	_, err = testutilcli.QueryPosition(val.ClientCtx, common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), user)
 	s.Error(err)
 
 	s.T().Log("B. open position")
 	txResp, err := testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), user, []string{
 		"buy",
-		common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD).String(),
+		common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD).String(),
 		/* leverage */ "1",
 		/* quoteAmt */ "1000000", // 10^6 uNUSD
 		/* baseAssetLimit */ "1"},
@@ -214,18 +214,18 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
 	s.T().Log("B. check vpool balance after open position")
-	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD))
+	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD))
 	s.T().Logf("reserve assets: %+v", reserveAssets)
 	s.NoError(err)
 	s.EqualValues(sdk.MustNewDecFromStr("9999833.336111064815586407"), reserveAssets.BaseAssetReserve)
 	s.EqualValues(sdk.NewDec(60_001*common.Precision), reserveAssets.QuoteAssetReserve)
 
 	s.T().Log("B. check trader position")
-	queryResp, err := testutilcli.QueryPosition(val.ClientCtx, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD), user)
+	queryResp, err := testutilcli.QueryPosition(val.ClientCtx, common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), user)
 	s.NoError(err)
 	s.T().Logf("query response: %+v", queryResp)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
-	s.EqualValues(common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD), queryResp.Position.Pair)
+	s.EqualValues(common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), queryResp.Position.Pair)
 	s.EqualValues(sdk.MustNewDecFromStr("166.663888935184413593"), queryResp.Position.Size_)
 	s.EqualValues(sdk.NewDec(1*common.Precision), queryResp.Position.Margin)
 	s.EqualValues(sdk.NewDec(1*common.Precision), queryResp.Position.OpenNotional)
@@ -237,7 +237,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.T().Log("C. open position with 2x leverage and zero baseAmtLimit")
 	txResp, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), user, []string{
 		"buy",
-		common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD).String(),
+		common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD).String(),
 		/* leverage */ "2",
 		/* quoteAmt */ "1000000", // 10^6 uNUSD
 		/* baseAmtLimit */ "0",
@@ -246,11 +246,11 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
 	s.T().Log("C. check trader position")
-	queryResp, err = testutilcli.QueryPosition(val.ClientCtx, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD), user)
+	queryResp, err = testutilcli.QueryPosition(val.ClientCtx, common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), user)
 	s.NoError(err)
 	s.T().Logf("query response: %+v", queryResp)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
-	s.EqualValues(common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD), queryResp.Position.Pair)
+	s.EqualValues(common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), queryResp.Position.Pair)
 	s.EqualValues(sdk.MustNewDecFromStr("499.975001249937503125"), queryResp.Position.Size_)
 	s.EqualValues(sdk.NewDec(2*common.Precision), queryResp.Position.Margin)
 	s.EqualValues(sdk.NewDec(3*common.Precision), queryResp.Position.OpenNotional)
@@ -261,7 +261,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.T().Log("D. Open a reverse position smaller than the existing position")
 	txResp, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), user, []string{
 		"sell",
-		common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD).String(),
+		common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD).String(),
 		/* leverage */ "1",
 		/* quoteAmt */ "100", // 100 uNUSD
 		/* baseAssetLimit */ "1",
@@ -270,18 +270,18 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
 	s.T().Log("D. Check vpool after opening reverse position")
-	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD))
+	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD))
 	s.NoError(err)
 	s.T().Logf(" \n reserve assets: %+v \n", reserveAssets)
 	s.EqualValues(sdk.MustNewDecFromStr("9999500.041663750215262154"), reserveAssets.BaseAssetReserve)
 	s.EqualValues(sdk.NewDec(60_002_999_900), reserveAssets.QuoteAssetReserve)
 
 	s.T().Log("D. Check trader position")
-	queryResp, err = testutilcli.QueryPosition(val.ClientCtx, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD), user)
+	queryResp, err = testutilcli.QueryPosition(val.ClientCtx, common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), user)
 	s.NoError(err)
 	s.T().Logf("query response: %+v", queryResp)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
-	s.EqualValues(common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD), queryResp.Position.Pair)
+	s.EqualValues(common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), queryResp.Position.Pair)
 	s.EqualValues(sdk.MustNewDecFromStr("499.958336249784737846"), queryResp.Position.Size_)
 	s.EqualValues(sdk.NewDec(2*common.Precision), queryResp.Position.Margin)
 	s.EqualValues(sdk.NewDec(2_999_900), queryResp.Position.OpenNotional)
@@ -292,7 +292,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.T().Log("E. Open a reverse position larger than the existing position")
 	txResp, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), user, []string{
 		"sell",
-		common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD).String(),
+		common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD).String(),
 		/* leverage */ "1",
 		/* quoteAmt */ "4000000", // 4*10^6 uNUSD
 		/* baseAssetLimit */ "0",
@@ -301,11 +301,11 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
 	s.T().Log("E. Check trader position")
-	queryResp, err = testutilcli.QueryPosition(val.ClientCtx, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD), user)
+	queryResp, err = testutilcli.QueryPosition(val.ClientCtx, common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), user)
 	s.NoError(err)
 	s.T().Logf("query response: %+v", queryResp)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
-	s.EqualValues(common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD), queryResp.Position.Pair)
+	s.EqualValues(common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), queryResp.Position.Pair)
 	s.EqualValues(sdk.MustNewDecFromStr("-166.686111713005402945"), queryResp.Position.Size_)
 	s.EqualValues(sdk.MustNewDecFromStr("1000100.000000000000000494"), queryResp.Position.OpenNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("1000100.000000000000000494"), queryResp.Position.Margin)
@@ -316,13 +316,13 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 
 	s.T().Log("F. Close position")
 	txResp, err = testutilcli.ExecTx(s.network, cli.ClosePositionCmd(), user, []string{
-		common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD).String(),
+		common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD).String(),
 	})
 	s.NoError(err)
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
 	s.T().Log("F. check trader position")
-	queryResp, err = testutilcli.QueryPosition(val.ClientCtx, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD), user)
+	queryResp, err = testutilcli.QueryPosition(val.ClientCtx, common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), user)
 	s.Error(err)
 	s.T().Logf("query response: %+v", queryResp)
 
@@ -336,12 +336,12 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 	user := s.users[0]
 
 	// verify trader has no position (empty)
-	_, err := testutilcli.QueryPosition(val.ClientCtx, common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD), user)
+	_, err := testutilcli.QueryPosition(val.ClientCtx, common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD), user)
 	s.Error(err, "no position found")
 
 	// close position should produce error
 	_, err = testutilcli.ExecTx(s.network, cli.ClosePositionCmd(), user, []string{
-		common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD).String(),
+		common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD).String(),
 	})
 	s.Contains(err.Error(), collections.ErrNotFound.Error())
 }
@@ -350,7 +350,7 @@ func (s *IntegrationTestSuite) TestQueryCumulativePremiumFractions() {
 	val := s.network.Validators[0]
 
 	s.T().Log("get cumulative funding payments")
-	queryResp, err := testutilcli.QueryCumulativePremiumFraction(val.ClientCtx, common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD))
+	queryResp, err := testutilcli.QueryCumulativePremiumFraction(val.ClientCtx, common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD))
 	s.NoError(err)
 	s.EqualValues(sdk.NewDec(2), queryResp.CumulativePremiumFraction)
 }
@@ -360,7 +360,7 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 	s.T().Log("opening a position with user 0")
 	txResp, err := testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[0], []string{
 		"buy",
-		common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD).String(),
+		common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD).String(),
 		"10", // Leverage
 		"1",  // Quote asset amount
 		"0.0000001",
@@ -371,15 +371,15 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 	// Remove margin to trigger bad debt on user 0
 	s.T().Log("removing margin on user 0....")
 	_, err = testutilcli.ExecTx(s.network, cli.RemoveMarginCmd(), s.users[0], []string{
-		common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD).String(),
-		fmt.Sprintf("%s%s", "100", denoms.DenomNUSD),
+		common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD).String(),
+		fmt.Sprintf("%s%s", "100", denoms.NUSD),
 	})
 	s.Contains(err.Error(), perptypes.ErrFailedRemoveMarginCanCauseBadDebt.Error())
 }
 
 func (s *IntegrationTestSuite) TestX_AddMargin() {
 	val := s.network.Validators[0]
-	pair := common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD)
+	pair := common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD)
 
 	// Open a new position
 	s.T().Log("opening a position with user 3....")
@@ -411,7 +411,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 		{
 			name: "FAIL: position not found",
 			args: []string{
-				common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD).String(),
+				common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD).String(),
 				fmt.Sprintf("%s%s", "10000", pair.QuoteDenom()),
 			},
 			expectedCode: 1,
@@ -438,7 +438,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 func (s *IntegrationTestSuite) TestLiquidate() {
 	s.T().Log("liquidate a position that does not exist")
 	_, err := testutilcli.ExecTx(s.network, cli.LiquidateCmd(), s.users[4], []string{
-		common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD).String(),
+		common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD).String(),
 		s.users[1].String(),
 	})
 	s.Contains(err.Error(), collections.ErrNotFound.Error())
@@ -446,7 +446,7 @@ func (s *IntegrationTestSuite) TestLiquidate() {
 	s.T().Log("opening a position with user 1....")
 	txResp, err := testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[1], []string{
 		"buy",
-		common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD).String(),
+		common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD).String(),
 		"15",    // Leverage
 		"90000", // Quote asset amount
 		"0",
@@ -456,7 +456,7 @@ func (s *IntegrationTestSuite) TestLiquidate() {
 
 	s.T().Log("liquidate a position that is above maintenance margin mario")
 	_, err = testutilcli.ExecTx(s.network, cli.LiquidateCmd(), s.users[4], []string{
-		common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD).String(),
+		common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD).String(),
 		s.users[1].String(),
 	})
 	s.Contains(err.Error(), "margin ratio is too healthy to liquidate")
@@ -464,7 +464,7 @@ func (s *IntegrationTestSuite) TestLiquidate() {
 	s.T().Log("opening a position with user 2...")
 	txResp, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[2], []string{
 		"sell",
-		common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD).String(),
+		common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD).String(),
 		"15",       // Leverage
 		"45000000", // Quote asset amount
 		"0",
@@ -480,7 +480,7 @@ func (s *IntegrationTestSuite) TestLiquidate() {
 
 	s.T().Log("liquidating user 1...")
 	txResp, err = testutilcli.ExecTx(s.network, cli.LiquidateCmd(), s.users[4], []string{
-		common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD).String(),
+		common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD).String(),
 		s.users[1].String(),
 	})
 	s.NoError(err)

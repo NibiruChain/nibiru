@@ -39,10 +39,10 @@ var (
 	DefaultVoteThreshold = sdk.NewDecWithPrec(50, 2) // 50%
 	DefaultRewardBand    = sdk.NewDecWithPrec(2, 2)  // 2% (-1, 1)
 	DefaultWhitelist     = []common.AssetPair{
-		common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
-		common.AssetRegistry.Pair(denoms.DenomUSDC, denoms.DenomNUSD),
-		common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD),
-		common.AssetRegistry.Pair(denoms.DenomNIBI, denoms.DenomNUSD),
+		common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
+		common.AssetRegistry.Pair(denoms.USDC, denoms.NUSD),
+		common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD),
+		common.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD),
 	}
 	DefaultSlashFraction      = sdk.NewDecWithPrec(1, 4)        // 0.01%
 	DefaultMinValidPerWindow  = sdk.NewDecWithPrec(5, 2)        // 5%

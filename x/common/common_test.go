@@ -20,23 +20,23 @@ func TestTryNewAssetPair(t *testing.T) {
 	}{
 		{
 			"only one token",
-			denoms.DenomNIBI,
+			denoms.NIBI,
 			common.ErrInvalidTokenPair,
 		},
 		{
 			"more than 2 tokens",
-			fmt.Sprintf("%s%s%s%s%s", denoms.DenomNIBI, common.PairSeparator, denoms.DenomNUSD,
-				common.PairSeparator, denoms.DenomUSDC),
+			fmt.Sprintf("%s%s%s%s%s", denoms.NIBI, common.PairSeparator, denoms.NUSD,
+				common.PairSeparator, denoms.USDC),
 			common.ErrInvalidTokenPair,
 		},
 		{
 			"different separator",
-			fmt.Sprintf("%s%s%s", denoms.DenomNIBI, "%", denoms.DenomNUSD),
+			fmt.Sprintf("%s%s%s", denoms.NIBI, "%", denoms.NUSD),
 			common.ErrInvalidTokenPair,
 		},
 		{
 			"correct pair",
-			fmt.Sprintf("%s%s%s", denoms.DenomNIBI, common.PairSeparator, denoms.DenomNUSD),
+			fmt.Sprintf("%s%s%s", denoms.NIBI, common.PairSeparator, denoms.NUSD),
 			nil,
 		},
 		{

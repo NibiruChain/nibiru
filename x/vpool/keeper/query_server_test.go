@@ -24,7 +24,7 @@ func TestQueryReserveAssets(t *testing.T) {
 
 	t.Log("initialize vpool")
 	pool := types.Vpool{
-		Pair:              common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+		Pair:              common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 		QuoteAssetReserve: sdk.NewDec(1 * common.Precision),
 		BaseAssetReserve:  sdk.NewDec(1000),
 		Config: types.VpoolConfig{
@@ -41,7 +41,7 @@ func TestQueryReserveAssets(t *testing.T) {
 	resp, err := queryServer.ReserveAssets(
 		sdk.WrapSDKContext(ctx),
 		&types.QueryReserveAssetsRequest{
-			Pair: common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD),
+			Pair: common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD),
 		},
 	)
 
@@ -58,7 +58,7 @@ func TestQueryAllPools(t *testing.T) {
 	queryServer := NewQuerier(vpoolKeeper)
 
 	t.Log("initialize vpool")
-	pair := common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD)
+	pair := common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD)
 	pool := &types.Vpool{
 		Pair:              pair,
 		QuoteAssetReserve: sdk.NewDec(1 * common.Precision),

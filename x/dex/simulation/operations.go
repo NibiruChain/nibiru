@@ -365,9 +365,9 @@ func genPoolAssets(
 func fundAccountWithTokens(ctx sdk.Context, address sdk.AccAddress, bk types.BankKeeper) {
 	million := 1 * common.Precision
 	newTokens := sdk.NewCoins(
-		sdk.NewCoin(denoms.DenomNIBI, sdk.NewInt(int64(10*million))),
-		sdk.NewCoin(denoms.DenomUSDC, sdk.NewInt(int64(10*million))),
-		sdk.NewCoin(denoms.DenomNUSD, sdk.NewInt(int64(10*million))),
+		sdk.NewCoin(denoms.NIBI, sdk.NewInt(int64(10*million))),
+		sdk.NewCoin(denoms.USDC, sdk.NewInt(int64(10*million))),
+		sdk.NewCoin(denoms.NUSD, sdk.NewInt(int64(10*million))),
 	)
 
 	err := bk.MintCoins(ctx, types.ModuleName, newTokens)

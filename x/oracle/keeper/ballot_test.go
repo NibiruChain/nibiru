@@ -33,14 +33,14 @@ func TestOrganizeAggregate(t *testing.T) {
 	staking.EndBlocker(ctx, input.StakingKeeper)
 
 	btcBallot := types.ExchangeRateBallots{
-		types.NewExchangeRateBallot(sdk.NewDec(17), common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD), ValAddrs[0], power),
-		types.NewExchangeRateBallot(sdk.NewDec(10), common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD), ValAddrs[1], power),
-		types.NewExchangeRateBallot(sdk.NewDec(6), common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD), ValAddrs[2], power),
+		types.NewExchangeRateBallot(sdk.NewDec(17), common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[0], power),
+		types.NewExchangeRateBallot(sdk.NewDec(10), common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[1], power),
+		types.NewExchangeRateBallot(sdk.NewDec(6), common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[2], power),
 	}
 	ethBallot := types.ExchangeRateBallots{
-		types.NewExchangeRateBallot(sdk.NewDec(1000), common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD), ValAddrs[0], power),
-		types.NewExchangeRateBallot(sdk.NewDec(1300), common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD), ValAddrs[1], power),
-		types.NewExchangeRateBallot(sdk.NewDec(2000), common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD), ValAddrs[2], power),
+		types.NewExchangeRateBallot(sdk.NewDec(1000), common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[0], power),
+		types.NewExchangeRateBallot(sdk.NewDec(1300), common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[1], power),
+		types.NewExchangeRateBallot(sdk.NewDec(2000), common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[2], power),
 	}
 
 	for i := range btcBallot {
@@ -79,11 +79,11 @@ func TestOrganizeAggregate(t *testing.T) {
 	// sort each ballot for comparison
 	sort.Sort(btcBallot)
 	sort.Sort(ethBallot)
-	sort.Sort(ballotMap[common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD)])
-	sort.Sort(ballotMap[common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD)])
+	sort.Sort(ballotMap[common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD)])
+	sort.Sort(ballotMap[common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD)])
 
-	require.Equal(t, btcBallot, ballotMap[common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD)])
-	require.Equal(t, ethBallot, ballotMap[common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD)])
+	require.Equal(t, btcBallot, ballotMap[common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD)])
+	require.Equal(t, ethBallot, ballotMap[common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD)])
 }
 
 func TestClearBallots(t *testing.T) {
@@ -104,14 +104,14 @@ func TestClearBallots(t *testing.T) {
 	staking.EndBlocker(ctx, input.StakingKeeper)
 
 	btcBallot := types.ExchangeRateBallots{
-		types.NewExchangeRateBallot(sdk.NewDec(17), common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD), ValAddrs[0], power),
-		types.NewExchangeRateBallot(sdk.NewDec(10), common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD), ValAddrs[1], power),
-		types.NewExchangeRateBallot(sdk.NewDec(6), common.AssetRegistry.Pair(denoms.DenomBTC, denoms.DenomNUSD), ValAddrs[2], power),
+		types.NewExchangeRateBallot(sdk.NewDec(17), common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[0], power),
+		types.NewExchangeRateBallot(sdk.NewDec(10), common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[1], power),
+		types.NewExchangeRateBallot(sdk.NewDec(6), common.AssetRegistry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[2], power),
 	}
 	ethBallot := types.ExchangeRateBallots{
-		types.NewExchangeRateBallot(sdk.NewDec(1000), common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD), ValAddrs[0], power),
-		types.NewExchangeRateBallot(sdk.NewDec(1300), common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD), ValAddrs[1], power),
-		types.NewExchangeRateBallot(sdk.NewDec(2000), common.AssetRegistry.Pair(denoms.DenomETH, denoms.DenomNUSD), ValAddrs[2], power),
+		types.NewExchangeRateBallot(sdk.NewDec(1000), common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[0], power),
+		types.NewExchangeRateBallot(sdk.NewDec(1300), common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[1], power),
+		types.NewExchangeRateBallot(sdk.NewDec(2000), common.AssetRegistry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[2], power),
 	}
 
 	for i := range btcBallot {
