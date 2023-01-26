@@ -190,6 +190,11 @@ func SimulateJoinPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keep
 			TokensIn: tokensIn,
 		}
 
+		_, err = pool.GetD(pool.PoolAssets)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "borked pool"), nil, nil
+		}
+
 		return simulation.GenAndDeliverTxWithRandFees(
 			simulation.OperationInput{
 				R:               r,

@@ -70,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * [#1126](https://github.com/NibiruChain/nibiru/pull/1126) - test(oracle): stop the tyrannical behavior of TestFuzz_PickReferencePair 
 * [#1131](https://github.com/NibiruChain/nibiru/pull/1131) - fix(oracle): use correct distribution module account
+* [#1151](https://github.com/NibiruChain/nibiru/pull/1151) - fix(dex): fix swap calculation for stableswap pools
 
 ## [v0.16.3](https://github.com/NibiruChain/nibiru/releases/tag/v0.16.3)
 
