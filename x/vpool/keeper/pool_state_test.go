@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -18,7 +20,7 @@ func TestCreatePool(t *testing.T) {
 
 	assert.NoError(t, vpoolKeeper.CreatePool(
 		ctx,
-		common.Pair_BTC_NUSD,
+		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 
 		sdk.NewDec(10*common.Precision), // 10 tokens
 		sdk.NewDec(5*common.Precision),  // 5 tokens
@@ -31,18 +33,15 @@ func TestCreatePool(t *testing.T) {
 		},
 	))
 
-	exists := vpoolKeeper.ExistsPool(ctx, common.Pair_BTC_NUSD)
+	exists := vpoolKeeper.ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 	require.True(t, exists)
 
-	notExist := vpoolKeeper.ExistsPool(ctx, common.AssetPair{
-		Token0: "BTC",
-		Token1: "OTHER",
-	})
+	notExist := vpoolKeeper.ExistsPool(ctx, "BTC:OTHER")
 	require.False(t, notExist)
 }
 
 func TestEditPoolConfig(t *testing.T) {
-	pair := common.Pair_BTC_NUSD
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	vpoolStart := types.Vpool{
 		Pair:              pair,
 		QuoteAssetReserve: sdk.NewDec(10 * common.Precision),
@@ -60,12 +59,12 @@ func TestEditPoolConfig(t *testing.T) {
 		vpoolKeeper, _, ctx := getKeeper(t)
 		assert.NoError(t, vpoolKeeper.CreatePool(
 			ctx,
-			common.Pair_BTC_NUSD,
+			asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			vpoolStart.QuoteAssetReserve,
 			vpoolStart.BaseAssetReserve,
 			vpoolStart.Config,
 		))
-		exists := vpoolKeeper.ExistsPool(ctx, common.Pair_BTC_NUSD)
+		exists := vpoolKeeper.ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 		require.True(t, exists)
 		return vpoolKeeper, ctx
 	}
@@ -141,8 +140,7 @@ func TestGetPoolPrices_SetupErrors(t *testing.T) {
 		{
 			name: "invalid pair ID on pool",
 			test: func(t *testing.T) {
-				vpoolWithInvalidPair := types.Vpool{
-					Pair: common.AssetPair{Token0: "o:o", Token1: "unibi"}}
+				vpoolWithInvalidPair := types.Vpool{Pair: "o:o:unibi"}
 				vpoolKeeper, _, ctx := getKeeper(t)
 				_, err := vpoolKeeper.GetPoolPrices(ctx, vpoolWithInvalidPair)
 				require.ErrorContains(t, err, common.ErrInvalidTokenPair.Error())
@@ -192,7 +190,7 @@ func TestGetPoolPrices(t *testing.T) {
 		{
 			name: "happy path - vpool + pricefeed active",
 			vpool: types.Vpool{
-				Pair:              common.Pair_ETH_NUSD,
+				Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 				QuoteAssetReserve: sdk.NewDec(3 * common.Precision), // 3e6
 				BaseAssetReserve:  sdk.NewDec(1_000),                // 1e3
 				Config: types.VpoolConfig{
@@ -206,7 +204,7 @@ func TestGetPoolPrices(t *testing.T) {
 			shouldCreateVpool: true,
 			mockIndexPrice:    sdk.NewDec(99),
 			expectedPoolPrices: types.PoolPrices{
-				Pair:          common.Pair_ETH_NUSD.String(),
+				Pair:          asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 				MarkPrice:     sdk.NewDec(3_000),
 				TwapMark:      sdk.NewDec(3_000).String(),
 				IndexPrice:    sdk.NewDec(99).String(),
@@ -217,7 +215,7 @@ func TestGetPoolPrices(t *testing.T) {
 		{
 			name: "happy path - vpool active, but no index price",
 			vpool: types.Vpool{
-				Pair:              common.Pair_ETH_NUSD,
+				Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 				QuoteAssetReserve: sdk.NewDec(3 * common.Precision), // 3e6
 				BaseAssetReserve:  sdk.NewDec(1_000),                // 1e3
 				Config: types.VpoolConfig{
@@ -232,7 +230,7 @@ func TestGetPoolPrices(t *testing.T) {
 			mockIndexPrice:    sdk.OneDec().Neg(),
 			oracleKeeperErr:   fmt.Errorf("No index price"),
 			expectedPoolPrices: types.PoolPrices{
-				Pair:          common.Pair_ETH_NUSD.String(),
+				Pair:          asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 				MarkPrice:     sdk.NewDec(3_000),
 				TwapMark:      sdk.NewDec(3_000).String(),
 				IndexPrice:    sdk.OneDec().Neg().String(),
@@ -243,7 +241,7 @@ func TestGetPoolPrices(t *testing.T) {
 		{
 			name: "vpool doesn't exist",
 			vpool: types.Vpool{
-				Pair:              common.Pair_ETH_NUSD,
+				Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 				QuoteAssetReserve: sdk.NewDec(3 * common.Precision), // 3e6
 				BaseAssetReserve:  sdk.NewDec(1_000),                // 1e3
 				Config: types.VpoolConfig{
@@ -279,7 +277,7 @@ func TestGetPoolPrices(t *testing.T) {
 
 			t.Log("mock oracleKeeper index price")
 			mocks.mockOracleKeeper.EXPECT().
-				GetExchangeRate(ctx, tc.vpool.Pair.String()).
+				GetExchangeRate(ctx, tc.vpool.Pair).
 				Return(tc.mockIndexPrice, tc.oracleKeeperErr).
 				AnyTimes()
 
@@ -296,7 +294,7 @@ func TestGetPoolPrices(t *testing.T) {
 }
 
 func TestEditSwapInvariant(t *testing.T) {
-	pair := common.Pair_NIBI_NUSD
+	pair := asset.Registry.Pair(denoms.NIBI, denoms.NUSD)
 	vpoolStart := types.Vpool{
 		Pair:              pair,
 		QuoteAssetReserve: sdk.NewDec(10 * common.Precision),
@@ -400,7 +398,7 @@ func TestEditSwapInvariant(t *testing.T) {
 			if tc.shouldErr {
 				err := vpoolKeeper.EditSwapInvariant(ctx,
 					types.EditSwapInvariantsProposal_SwapInvariantMultiple{
-						Pair: pair.String(), Multiplier: tc.swapInvariantMultiplier,
+						Pair: pair, Multiplier: tc.swapInvariantMultiplier,
 					})
 				// We expect the initial config if the change fails
 				assert.Error(t, err)
@@ -412,14 +410,14 @@ func TestEditSwapInvariant(t *testing.T) {
 				require.Panics(t, func() {
 					err := vpoolKeeper.EditSwapInvariant(ctx,
 						types.EditSwapInvariantsProposal_SwapInvariantMultiple{
-							Pair: pair.String(), Multiplier: tc.swapInvariantMultiplier,
+							Pair: pair, Multiplier: tc.swapInvariantMultiplier,
 						})
 					require.Error(t, err)
 				})
 			} else {
 				err := vpoolKeeper.EditSwapInvariant(ctx,
 					types.EditSwapInvariantsProposal_SwapInvariantMultiple{
-						Pair: pair.String(), Multiplier: tc.swapInvariantMultiplier,
+						Pair: pair, Multiplier: tc.swapInvariantMultiplier,
 					})
 				// We expect the new config if the change succeeds
 				require.NoError(t, err)

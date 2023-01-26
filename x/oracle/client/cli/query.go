@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -69,10 +70,14 @@ $ nibid query oracle exchange-rates nibi:usd
 				return clientCtx.PrintProto(res)
 			}
 
-			pair := args[0]
+			assetPair, err := common.TryNewAssetPair(args[0])
+			if err != nil {
+				return err
+			}
+
 			res, err := queryClient.ExchangeRate(
 				context.Background(),
-				&types.QueryExchangeRateRequest{Pair: pair},
+				&types.QueryExchangeRateRequest{Pair: assetPair},
 			)
 			if err != nil {
 				return err

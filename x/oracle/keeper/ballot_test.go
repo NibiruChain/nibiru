@@ -11,6 +11,8 @@ import (
 	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
@@ -32,14 +34,14 @@ func TestOrganizeAggregate(t *testing.T) {
 	staking.EndBlocker(ctx, input.StakingKeeper)
 
 	btcBallot := types.ExchangeRateBallots{
-		types.NewExchangeRateBallot(sdk.NewDec(17), common.Pair_BTC_NUSD.String(), ValAddrs[0], power),
-		types.NewExchangeRateBallot(sdk.NewDec(10), common.Pair_BTC_NUSD.String(), ValAddrs[1], power),
-		types.NewExchangeRateBallot(sdk.NewDec(6), common.Pair_BTC_NUSD.String(), ValAddrs[2], power),
+		types.NewExchangeRateBallot(sdk.NewDec(17), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[0], power),
+		types.NewExchangeRateBallot(sdk.NewDec(10), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[1], power),
+		types.NewExchangeRateBallot(sdk.NewDec(6), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[2], power),
 	}
 	ethBallot := types.ExchangeRateBallots{
-		types.NewExchangeRateBallot(sdk.NewDec(1000), common.Pair_ETH_NUSD.String(), ValAddrs[0], power),
-		types.NewExchangeRateBallot(sdk.NewDec(1300), common.Pair_ETH_NUSD.String(), ValAddrs[1], power),
-		types.NewExchangeRateBallot(sdk.NewDec(2000), common.Pair_ETH_NUSD.String(), ValAddrs[2], power),
+		types.NewExchangeRateBallot(sdk.NewDec(1000), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[0], power),
+		types.NewExchangeRateBallot(sdk.NewDec(1300), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[1], power),
+		types.NewExchangeRateBallot(sdk.NewDec(2000), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[2], power),
 	}
 
 	for i := range btcBallot {
@@ -78,11 +80,11 @@ func TestOrganizeAggregate(t *testing.T) {
 	// sort each ballot for comparison
 	sort.Sort(btcBallot)
 	sort.Sort(ethBallot)
-	sort.Sort(ballotMap[common.Pair_BTC_NUSD.String()])
-	sort.Sort(ballotMap[common.Pair_ETH_NUSD.String()])
+	sort.Sort(ballotMap[asset.Registry.Pair(denoms.BTC, denoms.NUSD)])
+	sort.Sort(ballotMap[asset.Registry.Pair(denoms.ETH, denoms.NUSD)])
 
-	require.Equal(t, btcBallot, ballotMap[common.Pair_BTC_NUSD.String()])
-	require.Equal(t, ethBallot, ballotMap[common.Pair_ETH_NUSD.String()])
+	require.Equal(t, btcBallot, ballotMap[asset.Registry.Pair(denoms.BTC, denoms.NUSD)])
+	require.Equal(t, ethBallot, ballotMap[asset.Registry.Pair(denoms.ETH, denoms.NUSD)])
 }
 
 func TestClearBallots(t *testing.T) {
@@ -103,14 +105,14 @@ func TestClearBallots(t *testing.T) {
 	staking.EndBlocker(ctx, input.StakingKeeper)
 
 	btcBallot := types.ExchangeRateBallots{
-		types.NewExchangeRateBallot(sdk.NewDec(17), common.Pair_BTC_NUSD.String(), ValAddrs[0], power),
-		types.NewExchangeRateBallot(sdk.NewDec(10), common.Pair_BTC_NUSD.String(), ValAddrs[1], power),
-		types.NewExchangeRateBallot(sdk.NewDec(6), common.Pair_BTC_NUSD.String(), ValAddrs[2], power),
+		types.NewExchangeRateBallot(sdk.NewDec(17), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[0], power),
+		types.NewExchangeRateBallot(sdk.NewDec(10), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[1], power),
+		types.NewExchangeRateBallot(sdk.NewDec(6), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[2], power),
 	}
 	ethBallot := types.ExchangeRateBallots{
-		types.NewExchangeRateBallot(sdk.NewDec(1000), common.Pair_ETH_NUSD.String(), ValAddrs[0], power),
-		types.NewExchangeRateBallot(sdk.NewDec(1300), common.Pair_ETH_NUSD.String(), ValAddrs[1], power),
-		types.NewExchangeRateBallot(sdk.NewDec(2000), common.Pair_ETH_NUSD.String(), ValAddrs[2], power),
+		types.NewExchangeRateBallot(sdk.NewDec(1000), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[0], power),
+		types.NewExchangeRateBallot(sdk.NewDec(1300), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[1], power),
+		types.NewExchangeRateBallot(sdk.NewDec(2000), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[2], power),
 	}
 
 	for i := range btcBallot {
@@ -143,28 +145,28 @@ func TestClearBallots(t *testing.T) {
 func TestApplyWhitelist(t *testing.T) {
 	input := CreateTestInput(t)
 
-	whitelist := []string{
+	whitelist := []common.AssetPair{
 		"nibi:usd",
 		"btc:usd",
 	}
 
 	// prepare test by resetting the genesis pairs
-	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[string]{}).Keys() {
+	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[common.AssetPair]{}).Keys() {
 		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 	}
 	for _, p := range whitelist {
 		input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, p)
 	}
 
-	voteTargets := map[string]struct{}{
+	voteTargets := map[common.AssetPair]struct{}{
 		"nibi:usd": {},
 		"btc:usd":  {},
 	}
 	// no updates case
 	input.OracleKeeper.updateWhitelist(input.Ctx, whitelist, voteTargets)
 
-	var gotPairs []string
-	gotPairs = append(gotPairs, input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[string]{}).Keys()...)
+	var gotPairs []common.AssetPair
+	gotPairs = append(gotPairs, input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[common.AssetPair]{}).Keys()...)
 
 	sort.Slice(whitelist, func(i, j int) bool {
 		return whitelist[i] < whitelist[j]
@@ -175,8 +177,8 @@ func TestApplyWhitelist(t *testing.T) {
 	whitelist = append(whitelist, "nibi:eth")
 	input.OracleKeeper.updateWhitelist(input.Ctx, whitelist, voteTargets)
 
-	gotPairs = []string{}
-	gotPairs = append(gotPairs, input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[string]{}).Keys()...)
+	gotPairs = []common.AssetPair{}
+	gotPairs = append(gotPairs, input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[common.AssetPair]{}).Keys()...)
 
 	sort.Slice(whitelist, func(i, j int) bool {
 		return whitelist[i] < whitelist[j]
@@ -188,8 +190,8 @@ func TestApplyWhitelist(t *testing.T) {
 	whitelist[0] = "nibi:usdt"           // update first pair
 	input.OracleKeeper.updateWhitelist(input.Ctx, whitelist, voteTargets)
 
-	gotPairs = []string{}
-	gotPairs = append(gotPairs, input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[string]{}).Keys()...)
+	gotPairs = []common.AssetPair{}
+	gotPairs = append(gotPairs, input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[common.AssetPair]{}).Keys()...)
 
 	sort.Slice(whitelist, func(i, j int) bool {
 		return whitelist[i] < whitelist[j]

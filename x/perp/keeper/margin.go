@@ -66,7 +66,7 @@ func (k Keeper) AddMargin(
 
 	if err = ctx.EventManager().EmitTypedEvent(
 		&types.PositionChangedEvent{
-			Pair:               pair.String(),
+			Pair:               pair,
 			TraderAddress:      traderAddr.String(),
 			Margin:             sdk.NewCoin(pair.QuoteDenom(), position.Margin.RoundInt()),
 			PositionNotional:   positionNotional,
@@ -162,7 +162,7 @@ func (k Keeper) RemoveMargin(
 
 	if err = ctx.EventManager().EmitTypedEvent(
 		&types.PositionChangedEvent{
-			Pair:               pair.String(),
+			Pair:               pair,
 			TraderAddress:      traderAddr.String(),
 			Margin:             sdk.NewCoin(pair.QuoteDenom(), position.Margin.RoundInt()),
 			PositionNotional:   positionNotional,
@@ -335,8 +335,7 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 			return sdk.ZeroDec(), sdk.ZeroDec(), err
 		}
 	case types.PnLCalcOption_ORACLE:
-		oraclePrice, err := k.OracleKeeper.GetExchangeRate(
-			ctx, currentPosition.Pair.String())
+		oraclePrice, err := k.OracleKeeper.GetExchangeRate(ctx, currentPosition.Pair)
 		if err != nil {
 			k.Logger(ctx).Error(err.Error(), "calc_option", pnlCalcOption.String())
 			return sdk.ZeroDec(), sdk.ZeroDec(), err

@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/epochs"
 	otypes "github.com/NibiruChain/nibiru/x/oracle/types"
 )
@@ -38,7 +40,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(time.Second * 60 * 16))
-				app.OracleKeeper.SetPrice(ctx, common.Pair_USDC_NUSD.String(), price)
+				app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.USDC, denoms.NUSD), price)
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 			},
 		},
@@ -52,7 +54,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(time.Second * 60 * 16))
-				app.OracleKeeper.SetPrice(ctx, common.Pair_USDC_NUSD.String(), price)
+				app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.USDC, denoms.NUSD), price)
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 			},
 		},
@@ -82,11 +84,11 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(time.Second + time.Minute*15))
-				app.OracleKeeper.SetPrice(ctx, common.Pair_USDC_NUSD.String(), price)
+				app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.USDC, denoms.NUSD), price)
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(time.Second + time.Minute*30))
-				app.OracleKeeper.SetPrice(ctx, common.Pair_USDC_NUSD.String(), price)
+				app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.USDC, denoms.NUSD), price)
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 			},
 		},
@@ -100,11 +102,11 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(time.Second + time.Minute*14))
-				app.OracleKeeper.SetPrice(ctx, common.Pair_USDC_NUSD.String(), price)
+				app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.USDC, denoms.NUSD), price)
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(ctx.BlockTime().Add(time.Second + time.Minute*16))
-				app.OracleKeeper.SetPrice(ctx, common.Pair_USDC_NUSD.String(), price)
+				app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.USDC, denoms.NUSD), price)
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 			},
 		},
@@ -141,12 +143,12 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
 	pairs := common.AssetPairs{
-		common.Pair_USDC_NUSD,
+		asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 	}
 	params := otypes.DefaultParams()
 	params.TwapLookbackWindow = 1 * time.Hour
 	app.OracleKeeper.SetParams(ctx, params)
-	app.OracleKeeper.SetPrice(ctx, pairs[0].String(), sdk.MustNewDecFromStr("0.9"))
+	app.OracleKeeper.SetPrice(ctx, pairs[0], sdk.MustNewDecFromStr("0.9"))
 
 	require.NoError(t, app.StablecoinKeeper.SetCollRatio(ctx, sdk.MustNewDecFromStr("0.8")))
 
@@ -159,7 +161,7 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	require.False(t, app.StablecoinKeeper.GetParams(ctx).IsCollateralRatioValid)
 
 	// Post price, collateral should be valid again
-	app.OracleKeeper.SetPrice(ctx, pairs[0].String(), sdk.MustNewDecFromStr("0.9"))
+	app.OracleKeeper.SetPrice(ctx, pairs[0], sdk.MustNewDecFromStr("0.9"))
 
 	// Mint block #4, median price and TWAP are computed again at the end of a new block
 	runBlock(15 * time.Minute) // Collateral ratio is set to valid at the next epoch

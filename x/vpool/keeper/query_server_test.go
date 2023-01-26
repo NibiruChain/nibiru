@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -23,7 +25,7 @@ func TestQueryReserveAssets(t *testing.T) {
 
 	t.Log("initialize vpool")
 	pool := types.Vpool{
-		Pair:              common.Pair_BTC_NUSD,
+		Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		QuoteAssetReserve: sdk.NewDec(1 * common.Precision),
 		BaseAssetReserve:  sdk.NewDec(1000),
 		Config: types.VpoolConfig{
@@ -40,7 +42,7 @@ func TestQueryReserveAssets(t *testing.T) {
 	resp, err := queryServer.ReserveAssets(
 		sdk.WrapSDKContext(ctx),
 		&types.QueryReserveAssetsRequest{
-			Pair: common.Pair_BTC_NUSD.String(),
+			Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		},
 	)
 
@@ -57,7 +59,7 @@ func TestQueryAllPools(t *testing.T) {
 	queryServer := NewQuerier(vpoolKeeper)
 
 	t.Log("initialize vpool")
-	pair := common.Pair_BTC_NUSD
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	pool := &types.Vpool{
 		Pair:              pair,
 		QuoteAssetReserve: sdk.NewDec(1 * common.Precision),
@@ -77,7 +79,7 @@ func TestQueryAllPools(t *testing.T) {
 	ctx = ctx.WithBlockHeight(2).WithBlockTime(time.Now().Add(5 * time.Second))
 	indexPrice := sdk.NewDec(25_000)
 	mocks.mockOracleKeeper.EXPECT().
-		GetExchangeRate(ctx, pair.String()).
+		GetExchangeRate(ctx, pair).
 		Return(indexPrice, nil)
 	resp, err := queryServer.AllPools(
 		sdk.WrapSDKContext(ctx),
@@ -87,7 +89,7 @@ func TestQueryAllPools(t *testing.T) {
 	t.Log("check if query response is accurate")
 	markPriceWanted := sdk.NewDec(1_000) // 1e6 / 1e3
 	poolPricesWanted := types.PoolPrices{
-		Pair:          pool.Pair.String(),
+		Pair:          pool.Pair,
 		MarkPrice:     markPriceWanted,
 		IndexPrice:    indexPrice.String(),
 		TwapMark:      markPriceWanted.String(),

@@ -7,10 +7,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 )
 
-func TestNewAssetPair_Constructor(t *testing.T) {
+func TestTryNewAssetPair(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name      string
 		tokenPair string
@@ -18,23 +20,23 @@ func TestNewAssetPair_Constructor(t *testing.T) {
 	}{
 		{
 			"only one token",
-			common.DenomNIBI,
+			denoms.NIBI,
 			common.ErrInvalidTokenPair,
 		},
 		{
 			"more than 2 tokens",
-			fmt.Sprintf("%s%s%s%s%s", common.DenomNIBI, common.PairSeparator, common.DenomNUSD,
-				common.PairSeparator, common.DenomUSDC),
+			fmt.Sprintf("%s%s%s%s%s", denoms.NIBI, common.PairSeparator, denoms.NUSD,
+				common.PairSeparator, denoms.USDC),
 			common.ErrInvalidTokenPair,
 		},
 		{
 			"different separator",
-			fmt.Sprintf("%s%s%s", common.DenomNIBI, "%", common.DenomNUSD),
+			fmt.Sprintf("%s%s%s", denoms.NIBI, "%", denoms.NUSD),
 			common.ErrInvalidTokenPair,
 		},
 		{
 			"correct pair",
-			fmt.Sprintf("%s%s%s", common.DenomNIBI, common.PairSeparator, common.DenomNUSD),
+			fmt.Sprintf("%s%s%s", denoms.NIBI, common.PairSeparator, denoms.NUSD),
 			nil,
 		},
 		{
@@ -57,7 +59,7 @@ func TestNewAssetPair_Constructor(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := common.NewAssetPair(tc.tokenPair)
+			_, err := common.TryNewAssetPair(tc.tokenPair)
 			if tc.err != nil {
 				require.ErrorContains(t, err, tc.err.Error())
 			} else {
@@ -67,46 +69,37 @@ func TestNewAssetPair_Constructor(t *testing.T) {
 	}
 }
 
-func TestAsset_GetQuoteBaseToken(t *testing.T) {
-	pair, err := common.NewAssetPair("uatom:unibi")
-	require.NoError(t, err)
+func TestAssetGetQuoteBaseToken(t *testing.T) {
+	pair := common.MustNewAssetPair("uatom:unibi")
 
 	require.Equal(t, "uatom", pair.BaseDenom())
 	require.Equal(t, "unibi", pair.QuoteDenom())
 }
 
-func TestAssetPair_Marshaling(t *testing.T) {
-	testCases := []testutil.FunctionTestCase{
-		{
-			Name: "verbose equal suite",
-			Test: func() {
-				pair := common.MustNewAssetPair("abc:xyz")
-				matchingOther := common.MustNewAssetPair("abc:xyz")
-				mismatchToken1 := common.MustNewAssetPair("abc:abc")
-				inversePair := common.MustNewAssetPair("xyz:abc")
+func TestAssetPairEquals(t *testing.T) {
+	pair := common.MustNewAssetPair("abc:xyz")
+	matchingOther := common.MustNewAssetPair("abc:xyz")
+	mismatchToken1 := common.MustNewAssetPair("abc:abc")
+	inversePair := common.MustNewAssetPair("xyz:abc")
 
-				require.NoError(t, (&pair).VerboseEqual(&matchingOther))
-				require.True(t, (&pair).Equal(&matchingOther))
+	require.True(t, pair.Equal(matchingOther))
+	require.False(t, pair.Equal(inversePair))
+	require.False(t, pair.Equal(mismatchToken1))
+}
 
-				require.Error(t, (&pair).VerboseEqual(&inversePair))
-				require.False(t, (&pair).Equal(&inversePair))
+func TestMustNewAssetPair(t *testing.T) {
+	require.Panics(t, func() {
+		common.MustNewAssetPair("aaa:bbb:ccc")
+	})
 
-				require.Error(t, (&pair).VerboseEqual(&mismatchToken1))
-				require.True(t, !(&pair).Equal(&mismatchToken1))
+	require.NotPanics(t, func() {
+		common.MustNewAssetPair("aaa:bbb")
+	})
+}
 
-				require.Error(t, (&pair).VerboseEqual(pair.String()))
-				require.False(t, (&pair).Equal(&mismatchToken1))
-			},
-		},
-		{
-			Name: "panics suite",
-			Test: func() {
-				require.Panics(t, func() {
-					common.MustNewAssetPair("aaa:bbb:ccc")
-				})
-			},
-		},
-	}
-
-	testutil.RunFunctionTests(t, testCases)
+func TestInverse(t *testing.T) {
+	pair := common.MustNewAssetPair("abc:xyz")
+	inverse := pair.Inverse()
+	require.Equal(t, "xyz", inverse.BaseDenom())
+	require.Equal(t, "abc", inverse.QuoteDenom())
 }

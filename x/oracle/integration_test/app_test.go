@@ -11,6 +11,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/simapp"
+	"github.com/NibiruChain/nibiru/x/common"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 )
@@ -28,7 +29,7 @@ func (s *IntegrationTestSuite) SetupTest() {
 	s.cfg.NumValidators = 4
 	s.cfg.GenesisState[oracletypes.ModuleName] = s.cfg.Codec.MustMarshalJSON(func() codec.ProtoMarshaler {
 		gs := oracletypes.DefaultGenesisState()
-		gs.Params.Whitelist = []string{
+		gs.Params.Whitelist = []common.AssetPair{
 			"nibi:usdc",
 			"btc:usdc",
 		}
@@ -50,7 +51,7 @@ func (s *IntegrationTestSuite) TestSuccessfulVoting() {
 	// so obviously, in this case, since validators have the same power
 	// once weight (based on power) >= total power (sum of weights)
 	// then the number picked is the one in the middle always.
-	prices := []map[string]sdk.Dec{
+	prices := []map[common.AssetPair]sdk.Dec{
 		{
 			"nibi:usdc": sdk.MustNewDecFromStr("1"),
 			"btc:usdc":  sdk.MustNewDecFromStr("100203.0"),
@@ -78,7 +79,7 @@ func (s *IntegrationTestSuite) TestSuccessfulVoting() {
 
 	gotPrices := s.currentPrices()
 	require.Equal(s.T(),
-		map[string]sdk.Dec{
+		map[common.AssetPair]sdk.Dec{
 			"nibi:usdc": sdk.MustNewDecFromStr("1"),
 			"btc:usdc":  sdk.MustNewDecFromStr("100200.9"),
 		},
@@ -86,7 +87,7 @@ func (s *IntegrationTestSuite) TestSuccessfulVoting() {
 	)
 }
 
-func (s *IntegrationTestSuite) sendPrevotes(prices []map[string]sdk.Dec) []string {
+func (s *IntegrationTestSuite) sendPrevotes(prices []map[common.AssetPair]sdk.Dec) []string {
 	strVotes := make([]string, len(prices))
 	for i, val := range s.network.Validators {
 		raw := prices[i]
@@ -142,11 +143,11 @@ func (s *IntegrationTestSuite) waitPriceUpdateBlock() {
 	s.waitVoteRevealBlock()
 }
 
-func (s *IntegrationTestSuite) currentPrices() map[string]sdk.Dec {
+func (s *IntegrationTestSuite) currentPrices() map[common.AssetPair]sdk.Dec {
 	rawRates, err := oracletypes.NewQueryClient(s.network.Validators[0].ClientCtx).ExchangeRates(context.Background(), &oracletypes.QueryExchangeRatesRequest{})
 	require.NoError(s.T(), err)
 
-	prices := make(map[string]sdk.Dec)
+	prices := make(map[common.AssetPair]sdk.Dec)
 
 	for _, p := range rawRates.ExchangeRates {
 		prices[p.Pair] = p.ExchangeRate
