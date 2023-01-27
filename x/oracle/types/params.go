@@ -40,10 +40,32 @@ var (
 	DefaultVoteThreshold = sdk.NewDecWithPrec(50, 2) // 50%
 	DefaultRewardBand    = sdk.NewDecWithPrec(2, 2)  // 2% (-1, 1)
 	DefaultWhitelist     = []common.AssetPair{
-		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-		asset.Registry.Pair(denoms.USDC, denoms.NUSD),
-		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
+
+		// paired against NUSD
 		asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
+		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
+		asset.Registry.Pair(denoms.ATOM, denoms.NUSD),
+		asset.Registry.Pair(denoms.OSMO, denoms.NUSD),
+		asset.Registry.Pair(denoms.AVAX, denoms.NUSD),
+		asset.Registry.Pair(denoms.SOL, denoms.NUSD),
+		asset.Registry.Pair(denoms.ADA, denoms.NUSD),
+		asset.Registry.Pair(denoms.BNB, denoms.NUSD),
+		asset.Registry.Pair(denoms.USDC, denoms.NUSD),
+		asset.Registry.Pair(denoms.USDT, denoms.NUSD),
+		asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
+
+		// paired against the US fiat dollar
+		asset.Registry.Pair(denoms.BTC, denoms.USD),
+		asset.Registry.Pair(denoms.ETH, denoms.USD),
+		asset.Registry.Pair(denoms.ATOM, denoms.USD),
+		asset.Registry.Pair(denoms.OSMO, denoms.USD),
+		asset.Registry.Pair(denoms.AVAX, denoms.USD),
+		asset.Registry.Pair(denoms.SOL, denoms.USD),
+		asset.Registry.Pair(denoms.ADA, denoms.USD),
+		asset.Registry.Pair(denoms.BNB, denoms.USD),
+		asset.Registry.Pair(denoms.USDC, denoms.USD),
+		asset.Registry.Pair(denoms.USDT, denoms.USD),
 	}
 	DefaultSlashFraction      = sdk.NewDecWithPrec(1, 4)        // 0.01%
 	DefaultMinValidPerWindow  = sdk.NewDecWithPrec(5, 2)        // 5%
