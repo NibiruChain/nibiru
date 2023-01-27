@@ -116,6 +116,9 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp"
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
+	"github.com/NibiruChain/nibiru/x/stablecoin"
+	stablecoinkeeper "github.com/NibiruChain/nibiru/x/stablecoin/keeper"
+	stablecointypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
 	"github.com/NibiruChain/nibiru/x/util"
 	utiltypes "github.com/NibiruChain/nibiru/x/util/types"
 	"github.com/NibiruChain/nibiru/x/vpool"
@@ -171,6 +174,7 @@ var (
 		dex.AppModuleBasic{},
 		oracle.AppModuleBasic{},
 		epochs.AppModuleBasic{},
+		stablecoin.AppModuleBasic{},
 		perp.AppModuleBasic{},
 		vpool.AppModuleBasic{},
 		util.AppModule{},
@@ -179,22 +183,24 @@ var (
 
 	// module account permissions
 	maccPerms = map[string][]string{
-		authtypes.FeeCollectorName:       nil,
-		distrtypes.ModuleName:            nil,
-		minttypes.ModuleName:             {authtypes.Minter},
-		stakingtypes.BondedPoolName:      {authtypes.Burner, authtypes.Staking},
-		stakingtypes.NotBondedPoolName:   {authtypes.Burner, authtypes.Staking},
-		govtypes.ModuleName:              {authtypes.Burner},
-		dextypes.ModuleName:              {authtypes.Minter, authtypes.Burner},
-		oracletypes.ModuleName:           {},
-		ibctransfertypes.ModuleName:      {authtypes.Minter, authtypes.Burner},
-		perptypes.ModuleName:             {authtypes.Minter, authtypes.Burner},
-		perptypes.VaultModuleAccount:     {},
-		perptypes.PerpEFModuleAccount:    {},
-		perptypes.FeePoolModuleAccount:   {},
-		epochstypes.ModuleName:           {},
-		common.TreasuryPoolModuleAccount: {},
-		wasm.ModuleName:                  {},
+		authtypes.FeeCollectorName:            nil,
+		distrtypes.ModuleName:                 nil,
+		minttypes.ModuleName:                  {authtypes.Minter},
+		stakingtypes.BondedPoolName:           {authtypes.Burner, authtypes.Staking},
+		stakingtypes.NotBondedPoolName:        {authtypes.Burner, authtypes.Staking},
+		govtypes.ModuleName:                   {authtypes.Burner},
+		dextypes.ModuleName:                   {authtypes.Minter, authtypes.Burner},
+		oracletypes.ModuleName:                {},
+		ibctransfertypes.ModuleName:           {authtypes.Minter, authtypes.Burner},
+		stablecointypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
+		perptypes.ModuleName:                  {authtypes.Minter, authtypes.Burner},
+		perptypes.VaultModuleAccount:          {},
+		perptypes.PerpEFModuleAccount:         {},
+		perptypes.FeePoolModuleAccount:        {},
+		epochstypes.ModuleName:                {},
+		stablecointypes.StableEFModuleAccount: {authtypes.Burner},
+		common.TreasuryPoolModuleAccount:      {},
+		wasm.ModuleName:                       {},
 	}
 )
 
@@ -224,8 +230,8 @@ type NibiruApp struct {
 	// NibiruTestApp Keepers
 	// --------------------------------------------------------------------
 
-	// accountKeeper encodes/decodes accounts using the go-amino (binary) encoding/decoding library
-	accountKeeper authkeeper.AccountKeeper
+	// AccountKeeper encodes/decodes accounts using the go-amino (binary) encoding/decoding library
+	AccountKeeper authkeeper.AccountKeeper
 	// BankKeeper defines a module interface that facilitates the transfer of coins between accounts
 	BankKeeper       bankkeeper.Keeper
 	capabilityKeeper *capabilitykeeper.Keeper
@@ -239,7 +245,7 @@ type NibiruApp struct {
 	upgradeKeeper  upgradekeeper.Keeper
 	paramsKeeper   paramskeeper.Keeper
 	authzKeeper    authzkeeper.Keeper
-	feeGrantKeeper feegrantkeeper.Keeper
+	FeeGrantKeeper feegrantkeeper.Keeper
 
 	// --------------------------------------------------------------------
 	// IBC keepers
@@ -261,11 +267,12 @@ type NibiruApp struct {
 	// ---------------
 	// Nibiru keepers
 	// ---------------
-	epochsKeeper epochskeeper.Keeper
-	perpKeeper   perpkeeper.Keeper
-	vpoolKeeper  vpoolkeeper.Keeper
-	DexKeeper    dexkeeper.Keeper
-	oracleKeeper oraclekeeper.Keeper
+	EpochsKeeper     epochskeeper.Keeper
+	PerpKeeper       perpkeeper.Keeper
+	VpoolKeeper      vpoolkeeper.Keeper
+	DexKeeper        dexkeeper.Keeper
+	OracleKeeper     oraclekeeper.Keeper
+	StablecoinKeeper stablecoinkeeper.Keeper
 
 	// WASM keepers
 	wasmKeeper       wasm.Keeper
@@ -342,6 +349,7 @@ func NewNibiruApp(
 		ibctransfertypes.StoreKey,
 		// nibiru x/ keys
 		dextypes.StoreKey,
+		stablecointypes.StoreKey,
 		oracletypes.StoreKey,
 		epochstypes.StoreKey,
 		perptypes.StoreKey,
@@ -352,6 +360,7 @@ func NewNibiruApp(
 
 	memKeys := sdk.NewMemoryStoreKeys(
 		capabilitytypes.MemStoreKey,
+		stablecointypes.MemStoreKey,
 	)
 
 	app := &NibiruApp{
@@ -384,21 +393,21 @@ func NewNibiruApp(
 	app.scopedTransferKeeper = app.capabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 
 	// add keepers
-	app.accountKeeper = authkeeper.NewAccountKeeper(
+	app.AccountKeeper = authkeeper.NewAccountKeeper(
 		appCodec, keys[authtypes.StoreKey], app.GetSubspace(authtypes.ModuleName), authtypes.ProtoBaseAccount, maccPerms,
 	)
 	app.BankKeeper = bankkeeper.NewBaseKeeper(
-		appCodec, keys[banktypes.StoreKey], app.accountKeeper, app.GetSubspace(banktypes.ModuleName), app.ModuleAccountAddrs(),
+		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.ModuleAccountAddrs(),
 	)
 	stakingKeeper := stakingkeeper.NewKeeper(
-		appCodec, keys[stakingtypes.StoreKey], app.accountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName),
+		appCodec, keys[stakingtypes.StoreKey], app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName),
 	)
 	app.mintKeeper = mintkeeper.NewKeeper(
 		appCodec, keys[minttypes.StoreKey], app.GetSubspace(minttypes.ModuleName), &stakingKeeper,
-		app.accountKeeper, app.BankKeeper, authtypes.FeeCollectorName,
+		app.AccountKeeper, app.BankKeeper, authtypes.FeeCollectorName,
 	)
 	app.distrKeeper = distrkeeper.NewKeeper(
-		appCodec, keys[distrtypes.StoreKey], app.GetSubspace(distrtypes.ModuleName), app.accountKeeper, app.BankKeeper,
+		appCodec, keys[distrtypes.StoreKey], app.GetSubspace(distrtypes.ModuleName), app.AccountKeeper, app.BankKeeper,
 		&stakingKeeper, authtypes.FeeCollectorName, app.ModuleAccountAddrs(),
 	)
 	app.slashingKeeper = slashingkeeper.NewKeeper(
@@ -408,7 +417,7 @@ func NewNibiruApp(
 		app.GetSubspace(crisistypes.ModuleName), invCheckPeriod, app.BankKeeper, authtypes.FeeCollectorName,
 	)
 
-	app.feeGrantKeeper = feegrantkeeper.NewKeeper(appCodec, keys[feegrant.StoreKey], app.accountKeeper)
+	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(appCodec, keys[feegrant.StoreKey], app.AccountKeeper)
 
 	/*upgradeKeeper must be created before ibcKeeper. */
 	app.upgradeKeeper = upgradekeeper.NewKeeper(
@@ -430,30 +439,36 @@ func NewNibiruApp(
 
 	app.DexKeeper = dexkeeper.NewKeeper(
 		appCodec, keys[dextypes.StoreKey], app.GetSubspace(dextypes.ModuleName),
-		app.accountKeeper, app.BankKeeper, app.distrKeeper)
+		app.AccountKeeper, app.BankKeeper, app.distrKeeper)
 
-	app.oracleKeeper = oraclekeeper.NewKeeper(appCodec, keys[oracletypes.StoreKey], app.GetSubspace(oracletypes.ModuleName),
-		app.accountKeeper, app.BankKeeper, app.distrKeeper, app.stakingKeeper, distrtypes.ModuleName,
+	app.StablecoinKeeper = stablecoinkeeper.NewKeeper(
+		appCodec, keys[stablecointypes.StoreKey], memKeys[stablecointypes.MemStoreKey],
+		app.GetSubspace(stablecointypes.ModuleName),
+		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.DexKeeper,
 	)
 
-	app.vpoolKeeper = vpoolkeeper.NewKeeper(
+	app.OracleKeeper = oraclekeeper.NewKeeper(appCodec, keys[oracletypes.StoreKey], app.GetSubspace(oracletypes.ModuleName),
+		app.AccountKeeper, app.BankKeeper, app.distrKeeper, app.stakingKeeper, distrtypes.ModuleName,
+	)
+
+	app.VpoolKeeper = vpoolkeeper.NewKeeper(
 		appCodec,
 		keys[vpooltypes.StoreKey],
-		app.oracleKeeper,
+		app.OracleKeeper,
 	)
 
-	app.epochsKeeper = epochskeeper.NewKeeper(
+	app.EpochsKeeper = epochskeeper.NewKeeper(
 		appCodec, keys[epochstypes.StoreKey],
 	)
 
-	app.perpKeeper = perpkeeper.NewKeeper(
+	app.PerpKeeper = perpkeeper.NewKeeper(
 		appCodec, keys[perptypes.StoreKey],
 		app.GetSubspace(perptypes.ModuleName),
-		app.accountKeeper, app.BankKeeper, app.oracleKeeper, app.vpoolKeeper, app.epochsKeeper,
+		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.VpoolKeeper, app.EpochsKeeper,
 	)
 
-	app.epochsKeeper.SetHooks(
-		epochstypes.NewMultiEpochHooks(app.perpKeeper.Hooks()),
+	app.EpochsKeeper.SetHooks(
+		epochstypes.NewMultiEpochHooks(app.StablecoinKeeper.Hooks(), app.PerpKeeper.Hooks()),
 	)
 
 	// ---------------------------------- IBC keepers
@@ -482,7 +497,7 @@ func NewNibiruApp(
 		appCodec,
 		keys[wasm.StoreKey],
 		app.GetSubspace(wasm.ModuleName),
-		app.accountKeeper,
+		app.AccountKeeper,
 		app.BankKeeper,
 		app.stakingKeeper,
 		app.distrKeeper,
@@ -507,7 +522,7 @@ func NewNibiruApp(
 		AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.distrKeeper)).
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.upgradeKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.ibcKeeper.ClientKeeper)).
-		AddRoute(vpooltypes.RouterKey, vpool.NewVpoolProposalHandler(app.vpoolKeeper))
+		AddRoute(vpooltypes.RouterKey, vpool.NewVpoolProposalHandler(app.VpoolKeeper))
 
 	app.transferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec,
@@ -516,7 +531,7 @@ func NewNibiruApp(
 		/* ibctransfertypes.ICS4Wrapper */ app.ibcKeeper.ChannelKeeper,
 		/* ibctransfertypes.ChannelKeeper */ app.ibcKeeper.ChannelKeeper,
 		/* ibctransfertypes.PortKeeper */ &app.ibcKeeper.PortKeeper,
-		app.accountKeeper,
+		app.AccountKeeper,
 		app.BankKeeper,
 		app.scopedTransferKeeper,
 	)
@@ -545,7 +560,7 @@ func NewNibiruApp(
 
 	app.govKeeper = govkeeper.NewKeeper(
 		appCodec, keys[govtypes.StoreKey], app.GetSubspace(govtypes.ModuleName),
-		app.accountKeeper, app.BankKeeper, &app.stakingKeeper, govRouter,
+		app.AccountKeeper, app.BankKeeper, &app.stakingKeeper, govRouter,
 	)
 
 	// -------------------------- Module Options --------------------------
@@ -558,15 +573,19 @@ func NewNibiruApp(
 		appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
 	dexModule := dex.NewAppModule(
-		appCodec, app.DexKeeper, app.accountKeeper, app.BankKeeper)
-	oracleModule := oracle.NewAppModule(appCodec, app.oracleKeeper, app.accountKeeper, app.BankKeeper)
-	epochsModule := epochs.NewAppModule(appCodec, app.epochsKeeper)
+		appCodec, app.DexKeeper, app.AccountKeeper, app.BankKeeper)
+	oracleModule := oracle.NewAppModule(appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper)
+	epochsModule := epochs.NewAppModule(appCodec, app.EpochsKeeper)
+	stablecoinModule := stablecoin.NewAppModule(
+		appCodec, app.StablecoinKeeper, app.AccountKeeper, app.BankKeeper,
+		nil,
+	)
 	perpModule := perp.NewAppModule(
-		appCodec, app.perpKeeper, app.accountKeeper, app.BankKeeper,
-		app.oracleKeeper,
+		appCodec, app.PerpKeeper, app.AccountKeeper, app.BankKeeper,
+		app.OracleKeeper,
 	)
 	vpoolModule := vpool.NewAppModule(
-		appCodec, app.vpoolKeeper, app.oracleKeeper,
+		appCodec, app.VpoolKeeper, app.OracleKeeper,
 	)
 	utilModule := util.NewAppModule(app.BankKeeper)
 
@@ -574,26 +593,27 @@ func NewNibiruApp(
 	// must be passed by reference here.
 	app.mm = module.NewManager(
 		genutil.NewAppModule(
-			app.accountKeeper, app.stakingKeeper, app.BaseApp.DeliverTx,
+			app.AccountKeeper, app.stakingKeeper, app.BaseApp.DeliverTx,
 			encodingConfig.TxConfig,
 		),
-		auth.NewAppModule(appCodec, app.accountKeeper, authsims.RandomGenesisAccounts),
-		vesting.NewAppModule(app.accountKeeper, app.BankKeeper),
-		bank.NewAppModule(appCodec, app.BankKeeper, app.accountKeeper),
+		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts),
+		vesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
+		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
 		capability.NewAppModule(appCodec, *app.capabilityKeeper),
 		crisis.NewAppModule(&app.crisisKeeper, skipGenesisInvariants),
-		feegrantmodule.NewAppModule(appCodec, app.accountKeeper, app.BankKeeper, app.feeGrantKeeper, app.interfaceRegistry),
-		gov.NewAppModule(appCodec, app.govKeeper, app.accountKeeper, app.BankKeeper),
-		mint.NewAppModule(appCodec, app.mintKeeper, app.accountKeeper),
-		slashing.NewAppModule(appCodec, app.slashingKeeper, app.accountKeeper, app.BankKeeper, app.stakingKeeper),
-		distr.NewAppModule(appCodec, app.distrKeeper, app.accountKeeper, app.BankKeeper, app.stakingKeeper),
-		staking.NewAppModule(appCodec, app.stakingKeeper, app.accountKeeper, app.BankKeeper),
+		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
+		gov.NewAppModule(appCodec, app.govKeeper, app.AccountKeeper, app.BankKeeper),
+		mint.NewAppModule(appCodec, app.mintKeeper, app.AccountKeeper),
+		slashing.NewAppModule(appCodec, app.slashingKeeper, app.AccountKeeper, app.BankKeeper, app.stakingKeeper),
+		distr.NewAppModule(appCodec, app.distrKeeper, app.AccountKeeper, app.BankKeeper, app.stakingKeeper),
+		staking.NewAppModule(appCodec, app.stakingKeeper, app.AccountKeeper, app.BankKeeper),
 		upgrade.NewAppModule(app.upgradeKeeper),
 		params.NewAppModule(app.paramsKeeper),
-		authzmodule.NewAppModule(appCodec, app.authzKeeper, app.accountKeeper, app.BankKeeper, app.interfaceRegistry),
+		authzmodule.NewAppModule(appCodec, app.authzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 
 		// native x/
 		dexModule,
+		stablecoinModule,
 		oracleModule,
 		epochsModule,
 		vpoolModule,
@@ -605,7 +625,7 @@ func NewNibiruApp(
 		ibc.NewAppModule(app.ibcKeeper),
 		transferModule,
 
-		wasm.NewAppModule(appCodec, &app.wasmKeeper, app.stakingKeeper, app.accountKeeper, app.BankKeeper),
+		wasm.NewAppModule(appCodec, &app.wasmKeeper, app.stakingKeeper, app.AccountKeeper, app.BankKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -634,6 +654,7 @@ func NewNibiruApp(
 		dextypes.ModuleName,
 		oracletypes.ModuleName,
 		epochstypes.ModuleName,
+		stablecointypes.ModuleName,
 		vpooltypes.ModuleName,
 		perptypes.ModuleName,
 		utiltypes.ModuleName,
@@ -661,6 +682,7 @@ func NewNibiruApp(
 		vestingtypes.ModuleName,
 		// native x/
 		epochstypes.ModuleName,
+		stablecointypes.ModuleName,
 		dextypes.ModuleName,
 		oracletypes.ModuleName,
 		vpooltypes.ModuleName,
@@ -696,6 +718,7 @@ func NewNibiruApp(
 		vestingtypes.ModuleName,
 		// native x/
 		epochstypes.ModuleName,
+		stablecointypes.ModuleName,
 		dextypes.ModuleName,
 		oracletypes.ModuleName,
 		vpooltypes.ModuleName,
@@ -729,16 +752,16 @@ func NewNibiruApp(
 	// NOTE: this is not required apps that don't use the simulator for fuzz testing
 	// transactions
 	app.sm = module.NewSimulationManager(
-		auth.NewAppModule(appCodec, app.accountKeeper, authsims.RandomGenesisAccounts),
-		bank.NewAppModule(appCodec, app.BankKeeper, app.accountKeeper),
-		feegrantmodule.NewAppModule(appCodec, app.accountKeeper, app.BankKeeper, app.feeGrantKeeper, app.interfaceRegistry),
-		gov.NewAppModule(appCodec, app.govKeeper, app.accountKeeper, app.BankKeeper),
-		mint.NewAppModule(appCodec, app.mintKeeper, app.accountKeeper),
-		staking.NewAppModule(appCodec, app.stakingKeeper, app.accountKeeper, app.BankKeeper),
-		distr.NewAppModule(appCodec, app.distrKeeper, app.accountKeeper, app.BankKeeper, app.stakingKeeper),
-		slashing.NewAppModule(appCodec, app.slashingKeeper, app.accountKeeper, app.BankKeeper, app.stakingKeeper),
+		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts),
+		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
+		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
+		gov.NewAppModule(appCodec, app.govKeeper, app.AccountKeeper, app.BankKeeper),
+		mint.NewAppModule(appCodec, app.mintKeeper, app.AccountKeeper),
+		staking.NewAppModule(appCodec, app.stakingKeeper, app.AccountKeeper, app.BankKeeper),
+		distr.NewAppModule(appCodec, app.distrKeeper, app.AccountKeeper, app.BankKeeper, app.stakingKeeper),
+		slashing.NewAppModule(appCodec, app.slashingKeeper, app.AccountKeeper, app.BankKeeper, app.stakingKeeper),
 		params.NewAppModule(app.paramsKeeper),
-		authzmodule.NewAppModule(appCodec, app.authzKeeper, app.accountKeeper, app.BankKeeper, app.interfaceRegistry),
+		authzmodule.NewAppModule(appCodec, app.authzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		// native x/
 		epochsModule,
 		// ibc
@@ -760,9 +783,9 @@ func NewNibiruApp(
 	app.SetBeginBlocker(app.BeginBlocker)
 	anteHandler, err := NewAnteHandler(AnteHandlerOptions{
 		HandlerOptions: ante.HandlerOptions{
-			AccountKeeper:   app.accountKeeper,
+			AccountKeeper:   app.AccountKeeper,
 			BankKeeper:      app.BankKeeper,
-			FeegrantKeeper:  app.feeGrantKeeper,
+			FeegrantKeeper:  app.FeeGrantKeeper,
 			SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
 			SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
 		},
@@ -996,6 +1019,7 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(dextypes.ModuleName)
 	paramsKeeper.Subspace(oracletypes.ModuleName)
 	paramsKeeper.Subspace(epochstypes.ModuleName)
+	paramsKeeper.Subspace(stablecointypes.ModuleName)
 	paramsKeeper.Subspace(perptypes.ModuleName)
 	// ibc params keepers
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)

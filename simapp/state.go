@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/NibiruChain/nibiru/app"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdksimapp "github.com/cosmos/cosmos-sdk/simapp"
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
@@ -37,7 +38,7 @@ func AppStateFn(cdc codec.JSONCodec, simManager *module.SimulationManager) simty
 
 		case config.GenesisFile != "":
 			// override the default chain-id from simapp to set it later to the config
-			genesisDoc, accounts := AppStateFromGenesisFileFn(r, cdc, config.GenesisFile)
+			genesisDoc, accounts := app.AppStateFromGenesisFileFn(r, cdc, config.GenesisFile)
 
 			if sdksimapp.FlagGenesisTimeValue == 0 {
 				// use genesis timestamp if no custom timestamp is provided (i.e no random timestamp)
@@ -139,7 +140,7 @@ func AppStateRandomizedFn(
 	accs []simtypes.Account, genesisTimestamp time.Time, appParams simtypes.AppParams,
 ) (json.RawMessage, []simtypes.Account) {
 	numAccs := int64(len(accs))
-	genesisState := NewDefaultGenesisState(cdc)
+	genesisState := app.NewDefaultGenesisState(cdc)
 
 	// generate a random amount of initial stake coins and collateral
 	// number of bonded accounts
