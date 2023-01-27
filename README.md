@@ -9,6 +9,7 @@
 
 [![Nibiru Test workflow][go-unit-tests-badge]][go-unit-tests-workflow]
 [![Nibiru Test workflow][go-integration-tests-badge]][go-integration-tests-workflow]
+[![Go Reference](https://pkg.go.dev/badge/github.com/NibiruChain/nibiru.svg)](https://pkg.go.dev/github.com/NibiruChain/nibiru)
 [![GitHub][license-badge]](https://github.com/NibiruChain/nibiru/blob/master/LICENSE.md)
 [<img align="right" alt="Personal Website" width="22px" src="https://raw.githubusercontent.com/iconic/open-iconic/master/svg/globe.svg" />][nibiru-website]
 [<img align="right" alt="Nibiru Discord" width="22px" src="https://cdn.jsdelivr.net/npm/simple-icons@v3/icons/discord.svg" />][nibiru-discord]
