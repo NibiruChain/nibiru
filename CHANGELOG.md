@@ -65,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1146](https://github.com/NibiruChain/nibiru/pull/1146) - fix: local docker-compose network
 * [#1145](https://github.com/NibiruChain/nibiru/pull/1145) - chore: add USD quote asset
 * [#1160](https://github.com/NibiruChain/nibiru/pull/1160) - feat: generic set
+* [#1139](https://github.com/NibiruChain/nibiru/pull/1139) - feat: add default oracle whitelisted pairs
 
 ### Bug Fixes
 
