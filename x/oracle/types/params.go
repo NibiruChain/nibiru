@@ -53,9 +53,9 @@ var (
 		asset.Registry.Pair(denoms.BNB, denoms.NUSD),
 		asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 		asset.Registry.Pair(denoms.USDT, denoms.NUSD),
-		asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 
 		// paired against the US fiat dollar
+		asset.Registry.Pair(denoms.NIBI, denoms.USD),
 		asset.Registry.Pair(denoms.BTC, denoms.USD),
 		asset.Registry.Pair(denoms.ETH, denoms.USD),
 		asset.Registry.Pair(denoms.ATOM, denoms.USD),
