@@ -441,14 +441,14 @@ func NewNibiruApp(
 		appCodec, keys[dextypes.StoreKey], app.GetSubspace(dextypes.ModuleName),
 		app.AccountKeeper, app.BankKeeper, app.distrKeeper)
 
+	app.OracleKeeper = oraclekeeper.NewKeeper(appCodec, keys[oracletypes.StoreKey], app.GetSubspace(oracletypes.ModuleName),
+		app.AccountKeeper, app.BankKeeper, app.distrKeeper, app.stakingKeeper, distrtypes.ModuleName,
+	)
+
 	app.StablecoinKeeper = stablecoinkeeper.NewKeeper(
 		appCodec, keys[stablecointypes.StoreKey], memKeys[stablecointypes.MemStoreKey],
 		app.GetSubspace(stablecointypes.ModuleName),
 		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.DexKeeper,
-	)
-
-	app.OracleKeeper = oraclekeeper.NewKeeper(appCodec, keys[oracletypes.StoreKey], app.GetSubspace(oracletypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.distrKeeper, app.stakingKeeper, distrtypes.ModuleName,
 	)
 
 	app.VpoolKeeper = vpoolkeeper.NewKeeper(
