@@ -8,7 +8,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 )
 
 func TestIntegrationTestSuite(t *testing.T) {

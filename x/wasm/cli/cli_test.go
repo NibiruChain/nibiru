@@ -18,7 +18,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
-	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
+	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
