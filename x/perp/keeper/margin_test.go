@@ -8,7 +8,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
-	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
+	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 
 	simapp2 "github.com/NibiruChain/nibiru/simapp"

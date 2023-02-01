@@ -3,9 +3,9 @@ package dex_test
 import (
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 
 	"github.com/stretchr/testify/require"
 
