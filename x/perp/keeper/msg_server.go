@@ -91,25 +91,6 @@ func (m msgServer) ClosePosition(goCtx context.Context, position *types.MsgClose
 	}, nil
 }
 
-func (m msgServer) Liquidate(goCtx context.Context, msg *types.MsgLiquidate,
-) (*types.MsgLiquidateResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	liquidatorAddr := sdk.MustAccAddressFromBech32(msg.Sender)
-
-	traderAddr := sdk.MustAccAddressFromBech32(msg.Trader)
-
-	feeToLiquidator, feeToFund, err := m.k.Liquidate(ctx, liquidatorAddr, msg.Pair, traderAddr)
-	if err != nil {
-		return nil, err
-	}
-
-	return &types.MsgLiquidateResponse{
-		FeeToLiquidator:        feeToLiquidator,
-		FeeToPerpEcosystemFund: feeToFund,
-	}, nil
-}
-
 func (m msgServer) MultiLiquidate(goCtx context.Context, req *types.MsgMultiLiquidate) (*types.MsgMultiLiquidateResponse, error) {
 	positions := make([]MultiLiquidationRequest, len(req.Liquidations))
 	for i, pos := range req.Liquidations {

@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/testutil"
 
 	"github.com/NibiruChain/nibiru/simapp"
@@ -22,7 +23,7 @@ func TestKeeper_GetStableMarketCap(t *testing.T) {
 
 	// We set some supply
 	err := k.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(
-		sdk.NewInt64Coin(common.DenomNUSD, 1*common.Precision),
+		sdk.NewInt64Coin(denoms.NUSD, 1*common.Precision),
 	))
 	require.NoError(t, err)
 
@@ -44,11 +45,11 @@ func TestKeeper_GetGovMarketCap(t *testing.T) {
 	}
 	poolAssets := []dextypes.PoolAsset{
 		{
-			Token:  sdk.NewInt64Coin(common.DenomNIBI, 2*common.Precision),
+			Token:  sdk.NewInt64Coin(denoms.NIBI, 2*common.Precision),
 			Weight: sdk.NewInt(100),
 		},
 		{
-			Token:  sdk.NewInt64Coin(common.DenomNUSD, 1*common.Precision),
+			Token:  sdk.NewInt64Coin(denoms.NUSD, 1*common.Precision),
 			Weight: sdk.NewInt(100),
 		},
 	}
@@ -59,7 +60,7 @@ func TestKeeper_GetGovMarketCap(t *testing.T) {
 
 	// We set some supply
 	err = keeper.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(
-		sdk.NewInt64Coin(common.DenomNIBI, 1*common.Precision),
+		sdk.NewInt64Coin(denoms.NIBI, 1*common.Precision),
 	))
 	require.NoError(t, err)
 
@@ -81,11 +82,11 @@ func TestKeeper_GetLiquidityRatio_AndBands(t *testing.T) {
 	}
 	poolAssets := []dextypes.PoolAsset{
 		{
-			Token:  sdk.NewInt64Coin(common.DenomNIBI, 2*common.Precision),
+			Token:  sdk.NewInt64Coin(denoms.NIBI, 2*common.Precision),
 			Weight: sdk.NewInt(100),
 		},
 		{
-			Token:  sdk.NewInt64Coin(common.DenomNUSD, 1*common.Precision),
+			Token:  sdk.NewInt64Coin(denoms.NUSD, 1*common.Precision),
 			Weight: sdk.NewInt(100),
 		},
 	}
@@ -96,12 +97,12 @@ func TestKeeper_GetLiquidityRatio_AndBands(t *testing.T) {
 
 	// We set some supply
 	err = keeper.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(
-		sdk.NewInt64Coin(common.DenomNIBI, 1*common.Precision),
+		sdk.NewInt64Coin(denoms.NIBI, 1*common.Precision),
 	))
 	require.NoError(t, err)
 
 	err = keeper.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(
-		sdk.NewInt64Coin(common.DenomNUSD, 1*common.Precision),
+		sdk.NewInt64Coin(denoms.NUSD, 1*common.Precision),
 	))
 	require.NoError(t, err)
 

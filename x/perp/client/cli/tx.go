@@ -27,7 +27,6 @@ func GetTxCmd() *cobra.Command {
 	txCmd.AddCommand(
 		RemoveMarginCmd(),
 		AddMarginCmd(),
-		LiquidateCmd(),
 		OpenPositionCmd(),
 		ClosePositionCmd(),
 		DonateToEcosystemFundCmd(),
@@ -205,50 +204,6 @@ func AddMarginCmd() *cobra.Command {
 				Sender: clientCtx.GetFromAddress().String(),
 				Pair:   pair,
 				Margin: marginToAdd,
-			}
-			if err = msg.ValidateBasic(); err != nil {
-				return err
-			}
-
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
-		},
-	}
-
-	flags.AddTxFlagsToCmd(cmd)
-
-	return cmd
-}
-
-func LiquidateCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "liquidate [vpool] [trader]",
-		Short: "liquidates the position of 'trader' on 'vpool' if possible",
-		Long: strings.TrimSpace(
-			fmt.Sprintf(`
-			$ %s tx perp liquidate osmo:nusd nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl
-			`, version.AppName),
-		),
-		Args: cobra.ExactArgs(2),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			traderAddr, err := sdk.AccAddressFromBech32(args[1])
-			if err != nil {
-				return err
-			}
-
-			pair, err := common.TryNewAssetPair(args[0])
-			if err != nil {
-				return err
-			}
-
-			msg := &types.MsgLiquidate{
-				Sender: clientCtx.GetFromAddress().String(),
-				Pair:   pair,
-				Trader: traderAddr.String(),
 			}
 			if err = msg.ValidateBasic(); err != nil {
 				return err
