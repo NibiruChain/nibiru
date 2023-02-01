@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 )
 
 func TestTryNewAssetPair(t *testing.T) {
@@ -19,23 +20,23 @@ func TestTryNewAssetPair(t *testing.T) {
 	}{
 		{
 			"only one token",
-			common.DenomNIBI,
+			denoms.NIBI,
 			common.ErrInvalidTokenPair,
 		},
 		{
 			"more than 2 tokens",
-			fmt.Sprintf("%s%s%s%s%s", common.DenomNIBI, common.PairSeparator, common.DenomNUSD,
-				common.PairSeparator, common.DenomUSDC),
+			fmt.Sprintf("%s%s%s%s%s", denoms.NIBI, common.PairSeparator, denoms.NUSD,
+				common.PairSeparator, denoms.USDC),
 			common.ErrInvalidTokenPair,
 		},
 		{
 			"different separator",
-			fmt.Sprintf("%s%s%s", common.DenomNIBI, "%", common.DenomNUSD),
+			fmt.Sprintf("%s%s%s", denoms.NIBI, "%", denoms.NUSD),
 			common.ErrInvalidTokenPair,
 		},
 		{
 			"correct pair",
-			fmt.Sprintf("%s%s%s", common.DenomNIBI, common.PairSeparator, common.DenomNUSD),
+			fmt.Sprintf("%s%s%s", denoms.NIBI, common.PairSeparator, denoms.NUSD),
 			nil,
 		},
 		{
