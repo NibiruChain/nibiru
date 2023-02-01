@@ -269,62 +269,6 @@ func TestMsgOpenPosition_ValidateBasic(t *testing.T) {
 	}
 }
 
-func TestMsgLiquidate_ValidateBasic(t *testing.T) {
-	type test struct {
-		msg     *MsgLiquidate
-		wantErr bool
-	}
-
-	cases := map[string]test{
-		"ok": {
-			msg: &MsgLiquidate{
-				Sender: testutil.AccAddress().String(),
-				Pair:   "NIBI:NUSD",
-				Trader: testutil.AccAddress().String(),
-			},
-			wantErr: false,
-		},
-		"invalid pair": {
-			msg: &MsgLiquidate{
-				Sender: testutil.AccAddress().String(),
-				Pair:   "xxx:yyy:zzz",
-				Trader: testutil.AccAddress().String(),
-			},
-			wantErr: true,
-		},
-		"invalid trader": {
-			msg: &MsgLiquidate{
-				Sender: testutil.AccAddress().String(),
-				Pair:   "NIBI:NUSD",
-				Trader: "",
-			},
-			wantErr: true,
-		},
-		"invalid liquidator": {
-			msg: &MsgLiquidate{
-				Sender: "",
-				Pair:   "NIBI:NUSD",
-				Trader: testutil.AccAddress().String(),
-			},
-			wantErr: true,
-		},
-	}
-
-	for name, tc := range cases {
-		tc := tc
-		name := name
-		t.Run(name, func(t *testing.T) {
-			err := tc.msg.ValidateBasic()
-			if err != nil && tc.wantErr == false {
-				t.Fatalf("unexpected error: %s", err)
-			}
-			if err == nil && tc.wantErr == true {
-				t.Fatalf("expected error: %s", err)
-			}
-		})
-	}
-}
-
 func TestMsgMultiLiquidate_ValidateBasic(t *testing.T) {
 	type test struct {
 		msg     *MsgMultiLiquidate

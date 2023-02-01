@@ -34,9 +34,6 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgOpenPosition:
 			res, err := msgServer.OpenPosition(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgLiquidate:
-			res, err := msgServer.Liquidate(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgClosePosition:
 			res, err := msgServer.ClosePosition(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)

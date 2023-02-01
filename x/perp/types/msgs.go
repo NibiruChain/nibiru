@@ -9,7 +9,6 @@ import (
 
 var _ sdk.Msg = &MsgRemoveMargin{}
 var _ sdk.Msg = &MsgAddMargin{}
-var _ sdk.Msg = &MsgLiquidate{}
 var _ sdk.Msg = &MsgOpenPosition{}
 var _ sdk.Msg = &MsgClosePosition{}
 var _ sdk.Msg = &MsgMultiLiquidate{}
@@ -123,36 +122,6 @@ func (m MsgOpenPosition) GetSignBytes() []byte {
 }
 
 func (m *MsgOpenPosition) GetSigners() []sdk.AccAddress {
-	signer, err := sdk.AccAddressFromBech32(m.Sender)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{signer}
-}
-
-// MsgLiquidate
-
-func (m MsgLiquidate) Route() string { return RouterKey }
-func (m MsgLiquidate) Type() string  { return "liquidate_msg" }
-
-func (m MsgLiquidate) ValidateBasic() (err error) {
-	if _, err = sdk.AccAddressFromBech32(m.Sender); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender address (%s)", err)
-	}
-	if _, err = sdk.AccAddressFromBech32(m.Trader); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid trader address (%s)", err)
-	}
-	if err := m.Pair.Validate(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (m MsgLiquidate) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
-}
-
-func (m MsgLiquidate) GetSigners() []sdk.AccAddress {
 	signer, err := sdk.AccAddressFromBech32(m.Sender)
 	if err != nil {
 		panic(err)

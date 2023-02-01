@@ -10,7 +10,6 @@ import (
 func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgRemoveMargin{}, "perp/remove_margin", nil)
 	cdc.RegisterConcrete(&MsgAddMargin{}, "perp/add_margin", nil)
-	cdc.RegisterConcrete(&MsgLiquidate{}, "perp/liquidate", nil)
 	cdc.RegisterConcrete(&MsgClosePosition{}, "perp/close_position", nil)
 }
 
@@ -20,7 +19,6 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		/* implementations */
 		&MsgRemoveMargin{},
 		&MsgAddMargin{},
-		&MsgLiquidate{},
 		&MsgOpenPosition{},
 		&MsgClosePosition{},
 		&MsgMultiLiquidate{},

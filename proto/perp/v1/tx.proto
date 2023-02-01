@@ -20,12 +20,6 @@ service Msg {
     option (google.api.http).post = "/nibiru/perp/add_margin";
   }
 
-  /* Liquidate is a transaction that allows the caller to fully or partially 
-  liquidate an existing position. */  
-  rpc Liquidate(MsgLiquidate) returns (MsgLiquidateResponse) {
-    option (google.api.http).post = "/nibiru/perp/liquidate";
-  }
-
   rpc MultiLiquidate(MsgMultiLiquidate) returns (MsgMultiLiquidateResponse) {
     option (google.api.http).post = "/nibiru/perp/multiliquidate";
   }
@@ -94,20 +88,6 @@ message MsgAddMarginResponse {
 
 // -------------------------- Liquidate --------------------------
 
-message MsgLiquidate {
-    // Sender is the liquidator address
-    string sender = 1;
-
-    // TokenPair is the identifier for the position's virtual pool
-    string pair = 2 [ 
-      (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
-      (gogoproto.nullable) = false
-    ];
-
-    // Trader is the address of the owner of the position 
-    string trader = 3;
-  }
-  
 message MsgLiquidateResponse {
   cosmos.base.v1beta1.Coin fee_to_liquidator = 1 [(gogoproto.nullable) = false];
   cosmos.base.v1beta1.Coin fee_to_perp_ecosystem_fund = 2 [(gogoproto.nullable) = false];
