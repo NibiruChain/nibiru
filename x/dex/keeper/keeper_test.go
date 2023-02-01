@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,8 +15,8 @@ import (
 	"github.com/tendermint/tendermint/crypto/ed25519"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/dex/types"
-	"github.com/NibiruChain/nibiru/x/testutil/mock"
 )
 
 func TestGetAndSetNextPoolNumber(t *testing.T) {

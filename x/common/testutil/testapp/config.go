@@ -14,7 +14,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/testutil/cli"
+	"github.com/NibiruChain/nibiru/x/common/testutil/cli"
 )
 
 // BuildNetworkConfig returns a configuration for a local in-testing network

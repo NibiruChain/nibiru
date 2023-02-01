@@ -8,7 +8,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
-	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
+	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -25,8 +25,8 @@ import (
 	tmdb "github.com/tendermint/tm-db"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/NibiruChain/nibiru/x/testutil/mock"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 

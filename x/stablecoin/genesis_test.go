@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 
 	"github.com/NibiruChain/nibiru/simapp"
 
