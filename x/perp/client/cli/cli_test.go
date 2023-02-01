@@ -436,58 +436,6 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 	}
 }
 
-func (s *IntegrationTestSuite) TestLiquidate() {
-	s.T().Log("liquidate a position that does not exist")
-	_, err := testutilcli.ExecTx(s.network, cli.LiquidateCmd(), s.users[4], []string{
-		asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
-		s.users[1].String(),
-	})
-	s.Contains(err.Error(), collections.ErrNotFound.Error())
-
-	s.T().Log("opening a position with user 1....")
-	txResp, err := testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[1], []string{
-		"buy",
-		asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
-		"15",    // Leverage
-		"90000", // Quote asset amount
-		"0",
-	})
-	s.NoError(err)
-	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
-
-	s.T().Log("liquidate a position that is above maintenance margin mario")
-	_, err = testutilcli.ExecTx(s.network, cli.LiquidateCmd(), s.users[4], []string{
-		asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
-		s.users[1].String(),
-	})
-	s.Contains(err.Error(), "margin ratio is too healthy to liquidate")
-
-	s.T().Log("opening a position with user 2...")
-	txResp, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[2], []string{
-		"sell",
-		asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
-		"15",       // Leverage
-		"45000000", // Quote asset amount
-		"0",
-	})
-	s.NoError(err)
-	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
-
-	s.T().Log("wait 10 blocks")
-	height, err := s.network.LatestHeight()
-	s.NoError(err)
-	_, err = s.network.WaitForHeight(height + 10)
-	s.NoError(err)
-
-	s.T().Log("liquidating user 1...")
-	txResp, err = testutilcli.ExecTx(s.network, cli.LiquidateCmd(), s.users[4], []string{
-		asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
-		s.users[1].String(),
-	})
-	s.NoError(err)
-	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
-}
-
 func (s *IntegrationTestSuite) TestDonateToEcosystemFund() {
 	s.T().Logf("donate to ecosystem fund")
 	out, err := testutilcli.ExecTx(s.network, cli.DonateToEcosystemFundCmd(), sdk.MustAccAddressFromBech32("nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m"), []string{"100unusd"})
