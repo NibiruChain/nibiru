@@ -3,7 +3,8 @@ package stablecoin
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/stablecoin/keeper"
 )
 
@@ -19,7 +20,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 		k.SetParams(ctx, params)
 	}
 
-	_, err := k.OracleKeeper.GetExchangeRateTwap(ctx, common.Pair_USDC_NUSD.String())
+	_, err := k.OracleKeeper.GetExchangeRateTwap(ctx, asset.Registry.Pair(denoms.USDC, denoms.NUSD))
 
 	if err != nil {
 		params := k.GetParams(ctx)

@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -85,9 +86,9 @@ func TestValidate(t *testing.T) {
 			require.Error(t, pair.ValidatorFn(sdk.NewDecWithPrec(-1, 2)))
 			require.Error(t, pair.ValidatorFn(sdk.NewDecWithPrec(101, 2)))
 		case bytes.Equal(types.KeyWhitelist, pair.Key):
-			require.NoError(t, pair.ValidatorFn([]string{"BTC:USDT"}))
+			require.NoError(t, pair.ValidatorFn([]common.AssetPair{"BTC:USDT"}))
 			require.Error(t, pair.ValidatorFn("invalid"))
-			require.Error(t, pair.ValidatorFn([]string{""}))
+			require.Error(t, pair.ValidatorFn([]common.AssetPair{""}))
 		}
 	}
 }

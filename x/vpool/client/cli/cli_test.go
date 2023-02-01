@@ -16,6 +16,8 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/vpool/client/cli"
@@ -34,8 +36,8 @@ func TestIntegrationTestSuite(t *testing.T) {
 }
 
 var START_VPOOLS = map[common.AssetPair]vpooltypes.Vpool{
-	common.Pair_ETH_NUSD: {
-		Pair:              common.Pair_ETH_NUSD,
+	asset.Registry.Pair(denoms.ETH, denoms.NUSD): {
+		Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 		BaseAssetReserve:  sdk.NewDec(10 * common.Precision),
 		QuoteAssetReserve: sdk.NewDec(60_000 * common.Precision),
 		Config: vpooltypes.VpoolConfig{
@@ -46,8 +48,8 @@ var START_VPOOLS = map[common.AssetPair]vpooltypes.Vpool{
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
 	},
-	common.Pair_NIBI_NUSD: {
-		Pair:              common.Pair_NIBI_NUSD,
+	asset.Registry.Pair(denoms.NIBI, denoms.NUSD): {
+		Pair:              asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 		BaseAssetReserve:  sdk.NewDec(500_000),
 		QuoteAssetReserve: sdk.NewDec(5 * common.Precision),
 		Config: vpooltypes.VpoolConfig{
@@ -73,14 +75,14 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	genesisState := simapp.NewTestGenesisStateFromDefault()
 	vpoolGenesis := vpooltypes.DefaultGenesis()
 	vpoolGenesis.Vpools = []vpooltypes.Vpool{
-		START_VPOOLS[common.Pair_ETH_NUSD],
-		START_VPOOLS[common.Pair_NIBI_NUSD],
+		START_VPOOLS[asset.Registry.Pair(denoms.ETH, denoms.NUSD)],
+		START_VPOOLS[asset.Registry.Pair(denoms.NIBI, denoms.NUSD)],
 	}
 
 	oracleGenesis := oracletypes.DefaultGenesisState()
 	oracleGenesis.ExchangeRates = []oracletypes.ExchangeRateTuple{
-		{Pair: common.Pair_ETH_NUSD.String(), ExchangeRate: sdk.NewDec(1_000)},
-		{Pair: common.Pair_NIBI_NUSD.String(), ExchangeRate: sdk.NewDec(10)},
+		{Pair: asset.Registry.Pair(denoms.ETH, denoms.NUSD), ExchangeRate: sdk.NewDec(1_000)},
+		{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: sdk.NewDec(10)},
 	}
 	oracleGenesis.Params.VotePeriod = 1_000
 
@@ -151,9 +153,9 @@ func (s *IntegrationTestSuite) TestCmdCreatePoolProposal() {
 
 	found := false
 	for _, pool := range vpoolsQueryResp.Pools {
-		if pool.Pair.String() == proposal.Pair {
+		if pool.Pair.Equal(proposal.Pair) {
 			s.EqualValues(vpooltypes.Vpool{
-				Pair:              common.MustNewAssetPair(proposal.Pair),
+				Pair:              proposal.Pair,
 				BaseAssetReserve:  proposal.BaseAssetReserve,
 				QuoteAssetReserve: proposal.QuoteAssetReserve,
 				Config:            proposal.Config,
@@ -168,13 +170,13 @@ func (s *IntegrationTestSuite) TestGetPrices() {
 	val := s.network.Validators[0]
 
 	s.T().Log("check vpool balances")
-	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, common.Pair_ETH_NUSD)
+	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, asset.Registry.Pair(denoms.ETH, denoms.NUSD))
 	s.NoError(err)
 	s.EqualValues(sdk.MustNewDecFromStr("10000000"), reserveAssets.BaseAssetReserve)
 	s.EqualValues(sdk.MustNewDecFromStr("60000000000"), reserveAssets.QuoteAssetReserve)
 
 	s.T().Log("check prices")
-	priceInfo, err := testutilcli.QueryBaseAssetPrice(val.ClientCtx, common.Pair_ETH_NUSD, "add", "100")
+	priceInfo, err := testutilcli.QueryBaseAssetPrice(val.ClientCtx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), "add", "100")
 	s.T().Logf("priceInfo: %+v", priceInfo)
 	s.EqualValues(sdk.MustNewDecFromStr("599994.000059999400006000"), priceInfo.PriceInQuoteDenom)
 	s.NoError(err)
@@ -186,11 +188,11 @@ func (s *IntegrationTestSuite) TestCmdEditPoolConfigProposal() {
 	// ----------------------------------------------------------------------
 	s.T().Log("load example proposal json as bytes")
 	// ----------------------------------------------------------------------
-	startVpool := START_VPOOLS[common.Pair_ETH_NUSD]
+	startVpool := START_VPOOLS[asset.Registry.Pair(denoms.ETH, denoms.NUSD)]
 	proposal := &vpooltypes.EditPoolConfigProposal{
 		Title:       "NIP-3: Edit config of the ueth:unusd vpool",
 		Description: "enables higher max leverage on ueth:unusd",
-		Pair:        startVpool.Pair.String(),
+		Pair:        startVpool.Pair,
 		Config: vpooltypes.VpoolConfig{
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
@@ -233,9 +235,9 @@ func (s *IntegrationTestSuite) TestCmdEditPoolConfigProposal() {
 
 	found := false
 	for _, vpool := range vpoolsQueryResp.Pools {
-		if vpool.Pair.String() == proposal.Pair {
+		if vpool.Pair.Equal(proposal.Pair) {
 			s.EqualValues(vpooltypes.Vpool{
-				Pair:              common.MustNewAssetPair(proposal.Pair),
+				Pair:              proposal.Pair,
 				BaseAssetReserve:  startVpool.BaseAssetReserve,
 				QuoteAssetReserve: startVpool.QuoteAssetReserve,
 				Config:            proposal.Config,
@@ -252,12 +254,12 @@ func (s *IntegrationTestSuite) TestCmdEditSwapInvariantsProposal() {
 	// ----------------------------------------------------------------------
 	s.T().Log("load example proposal json as bytes")
 	// ----------------------------------------------------------------------
-	startVpool := START_VPOOLS[common.Pair_NIBI_NUSD]
+	startVpool := START_VPOOLS[asset.Registry.Pair(denoms.NIBI, denoms.NUSD)]
 	proposal := &vpooltypes.EditSwapInvariantsProposal{
 		Title:       "NIP-4: Change the swap invariant for ATOM, OSMO, and BTC.",
 		Description: "increase swap invariant for many virtual pools",
 		SwapInvariantMaps: []vpooltypes.EditSwapInvariantsProposal_SwapInvariantMultiple{
-			{Pair: startVpool.Pair.String(), Multiplier: sdk.NewDec(100)},
+			{Pair: startVpool.Pair, Multiplier: sdk.NewDec(100)},
 		},
 	}
 	proposalFile := sdktestutil.WriteToNewTempFile(s.T(), string(val.ClientCtx.Codec.MustMarshalJSON(proposal)))
@@ -275,7 +277,7 @@ func (s *IntegrationTestSuite) TestCmdEditSwapInvariantsProposal() {
 		cli.CmdGetVpools(), nil, vpoolsQueryResp))
 	var vpoolBefore vpooltypes.Vpool
 	for _, vpool := range vpoolsQueryResp.Pools {
-		if vpool.Pair.String() == proposal.SwapInvariantMaps[0].Pair {
+		if vpool.Pair.Equal(proposal.SwapInvariantMaps[0].Pair) {
 			vpoolBefore = vpool
 			break
 		}
@@ -311,9 +313,9 @@ func (s *IntegrationTestSuite) TestCmdEditSwapInvariantsProposal() {
 			float64(10),
 			math.Sqrt(proposal.SwapInvariantMaps[0].Multiplier.MustFloat64()))
 
-		if vpool.Pair.String() == proposalPair {
+		if vpool.Pair.Equal(proposalPair) {
 			s.EqualValues(vpooltypes.Vpool{
-				Pair:              common.MustNewAssetPair(proposalPair),
+				Pair:              proposalPair,
 				BaseAssetReserve:  vpoolBefore.BaseAssetReserve.MulInt64(10), // multiplier = 100 = (c^2)
 				QuoteAssetReserve: vpoolBefore.QuoteAssetReserve.MulInt64(10),
 				Config:            vpoolBefore.Config,

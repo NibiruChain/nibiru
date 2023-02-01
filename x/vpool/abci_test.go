@@ -10,7 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/simapp"
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/testutil"
 	"github.com/NibiruChain/nibiru/x/vpool"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
@@ -31,7 +32,7 @@ func TestSnapshotUpdates(t *testing.T) {
 
 	require.NoError(t, vpoolKeeper.CreatePool(
 		ctx,
-		common.Pair_BTC_NUSD,
+		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		sdk.NewDec(1_000),
 		sdk.NewDec(1_000),
 		types.DefaultVpoolConfig().
@@ -39,7 +40,7 @@ func TestSnapshotUpdates(t *testing.T) {
 			WithFluctuationLimitRatio(sdk.OneDec()),
 	))
 	expectedSnapshot := types.NewReserveSnapshot(
-		common.Pair_BTC_NUSD,
+		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		sdk.NewDec(1_000),
 		sdk.NewDec(1_000),
 		ctx.BlockTime(),
@@ -47,14 +48,14 @@ func TestSnapshotUpdates(t *testing.T) {
 
 	t.Log("run one block of 5 seconds")
 	runBlock(5 * time.Second)
-	snapshot, err := vpoolKeeper.ReserveSnapshots.Get(ctx, collections.Join(common.Pair_BTC_NUSD, time.UnixMilli(expectedSnapshot.TimestampMs)))
+	snapshot, err := vpoolKeeper.ReserveSnapshots.Get(ctx, collections.Join(asset.Registry.Pair(denoms.BTC, denoms.NUSD), time.UnixMilli(expectedSnapshot.TimestampMs)))
 	require.NoError(t, err)
 	assert.EqualValues(t, expectedSnapshot, snapshot)
 
 	t.Log("affect mark price")
 	baseAmtAbs, err := vpoolKeeper.SwapQuoteForBase(
 		ctx,
-		common.Pair_BTC_NUSD,
+		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		types.Direction_ADD_TO_POOL,
 		sdk.NewDec(250), // ← dyAmm
 		sdk.ZeroDec(),
@@ -64,7 +65,7 @@ func TestSnapshotUpdates(t *testing.T) {
 	assert.EqualValues(t, sdk.NewDec(200), baseAmtAbs)
 	require.NoError(t, err)
 	expectedSnapshot = types.NewReserveSnapshot(
-		common.Pair_BTC_NUSD,
+		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		sdk.NewDec(800),   // ← x + dxAmm
 		sdk.NewDec(1_250), // ← y + dyAMM
 		ctx.BlockTime(),
@@ -75,12 +76,12 @@ func TestSnapshotUpdates(t *testing.T) {
 	timeSkipDuration := 5 * time.Second
 	runBlock(timeSkipDuration) // increments ctx.blockHeight and ctx.BlockTime
 	snapshot, err = vpoolKeeper.ReserveSnapshots.Get(ctx,
-		collections.Join(common.Pair_BTC_NUSD, time.UnixMilli(expectedSnapshot.TimestampMs)))
+		collections.Join(asset.Registry.Pair(denoms.BTC, denoms.NUSD), time.UnixMilli(expectedSnapshot.TimestampMs)))
 	require.NoError(t, err)
 	assert.EqualValues(t, expectedSnapshot, snapshot)
 
 	testutil.RequireContainsTypedEvent(t, ctx, &types.ReserveSnapshotSavedEvent{
-		Pair:           expectedSnapshot.Pair.String(),
+		Pair:           expectedSnapshot.Pair,
 		QuoteReserve:   expectedSnapshot.QuoteAssetReserve,
 		BaseReserve:    expectedSnapshot.BaseAssetReserve,
 		MarkPrice:      snapshot.QuoteAssetReserve.Quo(snapshot.BaseAssetReserve),

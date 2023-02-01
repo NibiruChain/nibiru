@@ -86,15 +86,15 @@ func CmdQueryPosition() *cobra.Command {
 				return fmt.Errorf("invalid trader address: %w", err)
 			}
 
-			tokenPair, err := common.NewAssetPair(args[1])
+			pair, err := common.TryNewAssetPair(args[1])
 			if err != nil {
 				return err
 			}
 
 			res, err := queryClient.QueryPosition(
 				cmd.Context(), &types.QueryPositionRequest{
-					Trader:    trader.String(),
-					TokenPair: tokenPair.String(),
+					Trader: trader.String(),
+					Pair:   pair,
 				},
 			)
 			if err != nil {
@@ -158,12 +158,17 @@ func CmdQueryCumulativePremiumFraction() *cobra.Command {
 				return err
 			}
 
+			assetPair, err := common.TryNewAssetPair(args[0])
+			if err != nil {
+				return err
+			}
+
 			queryClient := types.NewQueryClient(clientCtx)
 
 			res, err := queryClient.CumulativePremiumFraction(
 				cmd.Context(),
 				&types.QueryCumulativePremiumFractionRequest{
-					Pair: args[0],
+					Pair: assetPair,
 				},
 			)
 			if err != nil {
@@ -190,7 +195,7 @@ func CmdQueryMetrics() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			tokenPair, err := common.NewAssetPair(args[0])
+			tokenPair, err := common.TryNewAssetPair(args[0])
 			if err != nil {
 				return err
 			}
@@ -199,7 +204,7 @@ func CmdQueryMetrics() *cobra.Command {
 			res, err := queryClient.Metrics(
 				cmd.Context(),
 				&types.QueryMetricsRequest{
-					Pair: tokenPair.String(),
+					Pair: tokenPair,
 				},
 			)
 			if err != nil {

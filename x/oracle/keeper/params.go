@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -25,14 +26,14 @@ func (k Keeper) RewardBand(ctx sdk.Context) (res sdk.Dec) {
 }
 
 // Whitelist returns the pair list that can be activated
-func (k Keeper) Whitelist(ctx sdk.Context) (res []string) {
+func (k Keeper) Whitelist(ctx sdk.Context) (res []common.AssetPair) {
 	k.paramSpace.Get(ctx, types.KeyWhitelist, &res)
 	return
 }
 
 // SetWhitelist store new whitelist to param store
 // this function is only for test purpose
-func (k Keeper) SetWhitelist(ctx sdk.Context, whitelist []string) {
+func (k Keeper) SetWhitelist(ctx sdk.Context, whitelist []common.AssetPair) {
 	k.paramSpace.Set(ctx, types.KeyWhitelist, whitelist)
 }
 

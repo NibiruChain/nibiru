@@ -6,6 +6,8 @@ import (
 
 	"github.com/NibiruChain/collections"
 
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -116,7 +118,7 @@ func TestSwapQuoteAssetForBase(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						common.Pair_BTC_NUSD,
+						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 						vpooltypes.Direction_ADD_TO_POOL,
 						/*quoteAmount=*/ sdk.NewDec(10),
 						/*baseLimit=*/ sdk.NewDec(1),
@@ -132,7 +134,7 @@ func TestSwapQuoteAssetForBase(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						common.Pair_BTC_NUSD,
+						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*quoteAmount=*/ sdk.NewDec(10),
 						/*baseLimit=*/ sdk.NewDec(1),
@@ -153,7 +155,7 @@ func TestSwapQuoteAssetForBase(t *testing.T) {
 
 			baseAmount, err := perpKeeper.swapQuoteForBase(
 				ctx,
-				common.Pair_BTC_NUSD,
+				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				tc.side,
 				sdk.NewDec(10),
 				sdk.NewDec(1),
@@ -181,7 +183,7 @@ func TestIncreasePosition(t *testing.T) {
 			// user increases position by another 10 NUSD at 10x leverage
 			initPosition: types.Position{
 				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(100), // 100 BTC
 				Margin:                          sdk.NewDec(10),  // 10 NUSD
 				OpenNotional:                    sdk.NewDec(100), // 100 NUSD
@@ -193,7 +195,7 @@ func TestIncreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						common.Pair_BTC_NUSD,
+						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 						/*quoteAssetDirection=*/ vpooltypes.Direction_ADD_TO_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(100),
 						/*baseAssetLimit=*/ sdk.NewDec(50),
@@ -203,7 +205,7 @@ func TestIncreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.Pair_BTC_NUSD,
+						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 						vpooltypes.Direction_ADD_TO_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -212,7 +214,7 @@ func TestIncreasePosition(t *testing.T) {
 				t.Log("set up pair metadata and last cumulative funding rate")
 				setPairMetadata(perpKeeper, ctx,
 					types.PairMetadata{
-						Pair:                            common.Pair_BTC_NUSD,
+						Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 						LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 					},
 				)
@@ -255,7 +257,7 @@ func TestIncreasePosition(t *testing.T) {
 			// user increases position by another 10 NUSD at 10x leverage
 			initPosition: types.Position{
 				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(100), // 100 BTC
 				Margin:                          sdk.NewDec(10),  // 10 NUSD
 				OpenNotional:                    sdk.NewDec(100), // 100 NUSD
@@ -267,7 +269,7 @@ func TestIncreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						common.Pair_BTC_NUSD,
+						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 						/*quoteAssetDirection=*/ vpooltypes.Direction_ADD_TO_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(100),
 						/*baseAssetLimit=*/ sdk.NewDec(101),
@@ -277,7 +279,7 @@ func TestIncreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.Pair_BTC_NUSD,
+						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 						vpooltypes.Direction_ADD_TO_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -285,7 +287,7 @@ func TestIncreasePosition(t *testing.T) {
 
 				t.Log("set up pair metadata and last cumulative funding rate")
 				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-					Pair:                            common.Pair_BTC_NUSD,
+					Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 				})
 			},
@@ -330,7 +332,7 @@ func TestIncreasePosition(t *testing.T) {
 			// funding payment causes negative margin aka bad debt
 			initPosition: types.Position{
 				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(110), // 110 BTC
 				Margin:                          sdk.NewDec(11),  // 11 NUSD
 				OpenNotional:                    sdk.NewDec(110), // 110 NUSD
@@ -342,7 +344,7 @@ func TestIncreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						common.Pair_BTC_NUSD,
+						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 						/*quoteAssetDirection=*/ vpooltypes.Direction_ADD_TO_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(100),
 						/*baseAssetLimit=*/ sdk.NewDec(110),
@@ -352,7 +354,7 @@ func TestIncreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.Pair_BTC_NUSD,
+						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 						vpooltypes.Direction_ADD_TO_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(110),
 					).
@@ -360,7 +362,7 @@ func TestIncreasePosition(t *testing.T) {
 
 				t.Log("set up pair metadata and last cumulative funding rate")
 				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-					Pair:                            common.Pair_BTC_NUSD,
+					Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.2"),
 				})
 			},
@@ -403,7 +405,7 @@ func TestIncreasePosition(t *testing.T) {
 			// user increases position by another 10 NUSD at 10x leverage
 			initPosition: types.Position{
 				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(-100), // -100 BTC
 				Margin:                          sdk.NewDec(10),   // 10 NUSD
 				OpenNotional:                    sdk.NewDec(100),  // 100 NUSD
@@ -415,7 +417,7 @@ func TestIncreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						common.Pair_BTC_NUSD,
+						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 						/*quoteAssetDirection=*/ vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(100),
 						/*baseAssetLimit=*/ sdk.NewDec(200),
@@ -425,7 +427,7 @@ func TestIncreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.Pair_BTC_NUSD,
+						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -433,7 +435,7 @@ func TestIncreasePosition(t *testing.T) {
 
 				t.Log("set up pair metadata and last cumulative funding rate")
 				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-					Pair:                            common.Pair_BTC_NUSD,
+					Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 				})
 			},
@@ -476,7 +478,7 @@ func TestIncreasePosition(t *testing.T) {
 			// user increases position by another 10 NUSD at 10x leverage
 			initPosition: types.Position{
 				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(-100), // 100 BTC
 				Margin:                          sdk.NewDec(10),   // 10 NUSD
 				OpenNotional:                    sdk.NewDec(100),  // 100 NUSD
@@ -488,7 +490,7 @@ func TestIncreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						common.Pair_BTC_NUSD,
+						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 						/*quoteAssetDirection=*/ vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(100),
 						/*baseAssetLimit=*/ sdk.NewDec(99),
@@ -498,7 +500,7 @@ func TestIncreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.Pair_BTC_NUSD,
+						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -506,7 +508,7 @@ func TestIncreasePosition(t *testing.T) {
 
 				t.Log("set up pair metadata and last cumulative funding rate")
 				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-					Pair:                            common.Pair_BTC_NUSD,
+					Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 				})
 			},
@@ -552,7 +554,7 @@ func TestIncreasePosition(t *testing.T) {
 			// funding payment causes bad debt
 			initPosition: types.Position{
 				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(-100), // 100 BTC
 				Margin:                          sdk.NewDec(10),   // 10 NUSD
 				OpenNotional:                    sdk.NewDec(100),  // 100 NUSD
@@ -564,7 +566,7 @@ func TestIncreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						common.Pair_BTC_NUSD,
+						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 						/*quoteAssetDirection=*/ vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(105),
 						/*baseAssetLimit=*/ sdk.NewDec(100),
@@ -574,7 +576,7 @@ func TestIncreasePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
 						ctx,
-						common.Pair_BTC_NUSD,
+						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -582,7 +584,7 @@ func TestIncreasePosition(t *testing.T) {
 
 				t.Log("set up pair metadata and last cumulative funding rate")
 				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-					Pair:                            common.Pair_BTC_NUSD,
+					Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("-0.3"),
 				})
 			},
@@ -656,7 +658,7 @@ func TestClosePositionEntirely(t *testing.T) {
 			// user has position notional value of 200 NUSD and unrealized PnL of +100 NUSD
 			initialPosition: types.Position{
 				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(100), // 100 BTC
 				Margin:                          sdk.NewDec(10),  // 10 NUSD
 				OpenNotional:                    sdk.NewDec(100), // 100 NUSD
@@ -664,7 +666,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				BlockNumber:                     0,
 			},
 			pairMetadata: types.PairMetadata{
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 			},
 			direction:              vpooltypes.Direction_ADD_TO_POOL,
@@ -683,7 +685,7 @@ func TestClosePositionEntirely(t *testing.T) {
 			// user has position notional value of 100 NUSD and unrealized PnL of -5 NUSD
 			initialPosition: types.Position{
 				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(100),               // 100 BTC
 				Margin:                          sdk.MustNewDecFromStr("10.5"), // 10.5 NUSD
 				OpenNotional:                    sdk.NewDec(105),               // 105 NUSD
@@ -691,7 +693,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				BlockNumber:                     0,
 			},
 			pairMetadata: types.PairMetadata{
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 			},
 			direction:              vpooltypes.Direction_ADD_TO_POOL,
@@ -710,7 +712,7 @@ func TestClosePositionEntirely(t *testing.T) {
 			// user has position notional value of 100 NUSD and unrealized PnL of -50 NUSD
 			initialPosition: types.Position{
 				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(100), // 100 BTC
 				Margin:                          sdk.NewDec(15),  // 15 NUSD
 				OpenNotional:                    sdk.NewDec(150), // 150 NUSD
@@ -718,7 +720,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				BlockNumber:                     0,
 			},
 			pairMetadata: types.PairMetadata{
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 			},
 			direction:              vpooltypes.Direction_ADD_TO_POOL,
@@ -739,7 +741,7 @@ func TestClosePositionEntirely(t *testing.T) {
 			// user has position notional value of 100 NUSD and unrealized PnL of +50 NUSD
 			initialPosition: types.Position{
 				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(-150), // -150 BTC
 				Margin:                          sdk.NewDec(15),   // 15 NUSD
 				OpenNotional:                    sdk.NewDec(150),  // 150 NUSD
@@ -747,7 +749,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				BlockNumber:                     0,
 			},
 			pairMetadata: types.PairMetadata{
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 			},
 			direction:              vpooltypes.Direction_REMOVE_FROM_POOL,
@@ -766,7 +768,7 @@ func TestClosePositionEntirely(t *testing.T) {
 			// user has position notional value of 105 NUSD and unrealized PnL of -5 NUSD
 			initialPosition: types.Position{
 				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(-100), // -100 BTC
 				Margin:                          sdk.NewDec(10),   // 10 NUSD
 				OpenNotional:                    sdk.NewDec(100),  // 100 NUSD
@@ -774,7 +776,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				BlockNumber:                     0,
 			},
 			pairMetadata: types.PairMetadata{
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 			},
 			direction:              vpooltypes.Direction_REMOVE_FROM_POOL,
@@ -793,7 +795,7 @@ func TestClosePositionEntirely(t *testing.T) {
 			// user has position notional value of 150 NUSD and unrealized PnL of -50 NUSD
 			initialPosition: types.Position{
 				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(-100), // -100 BTC
 				Margin:                          sdk.NewDec(10),   // 10 NUSD
 				OpenNotional:                    sdk.NewDec(100),  // 100 NUSD
@@ -801,7 +803,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				BlockNumber:                     0,
 			},
 			pairMetadata: types.PairMetadata{
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 			},
 			direction:              vpooltypes.Direction_REMOVE_FROM_POOL,
@@ -826,7 +828,7 @@ func TestClosePositionEntirely(t *testing.T) {
 			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetPrice(
 					ctx,
-					common.Pair_BTC_NUSD,
+					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 					tc.direction,
 					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
 				).
@@ -835,7 +837,7 @@ func TestClosePositionEntirely(t *testing.T) {
 			mocks.mockVpoolKeeper.EXPECT().
 				SwapBaseForQuote(
 					ctx,
-					common.Pair_BTC_NUSD,
+					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 					/*quoteAssetDirection=*/ tc.direction,
 					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
 					/*quoteAssetLimit=*/ tc.quoteAssetLimit,
@@ -910,7 +912,7 @@ func TestDecreasePosition(t *testing.T) {
 			//   position notional value of 100 NUSD
 			initialPosition: types.Position{
 				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(100), // 100 BTC
 				Margin:                          sdk.NewDec(10),  // 10 NUSD
 				OpenNotional:                    sdk.NewDec(100), // 100 NUSD
@@ -945,7 +947,7 @@ func TestDecreasePosition(t *testing.T) {
 			//   position notional value of 95 NUSD
 			initialPosition: types.Position{
 				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(105),               // 105 BTC
 				Margin:                          sdk.MustNewDecFromStr("10.5"), // 10.5 NUSD
 				OpenNotional:                    sdk.NewDec(105),               // 105 NUSD
@@ -980,7 +982,7 @@ func TestDecreasePosition(t *testing.T) {
 			//   position notional value of 50 NUSD
 			initialPosition: types.Position{
 				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(100), // 100 BTC
 				Margin:                          sdk.NewDec(15),  // 15 NUSD
 				OpenNotional:                    sdk.NewDec(150), // 150 NUSD
@@ -1017,7 +1019,7 @@ func TestDecreasePosition(t *testing.T) {
 			//   position notional value of 95 NUSD
 			initialPosition: types.Position{
 				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(-105),              // -105 BTC
 				Margin:                          sdk.MustNewDecFromStr("10.5"), // 10.5 NUSD
 				OpenNotional:                    sdk.NewDec(105),               // 105 NUSD
@@ -1052,7 +1054,7 @@ func TestDecreasePosition(t *testing.T) {
 			//   position notional value of 99.75 NUSD
 			initialPosition: types.Position{
 				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(-100), // -100 BTC
 				Margin:                          sdk.NewDec(10),   // 10 NUSD
 				OpenNotional:                    sdk.NewDec(100),  // 100 NUSD
@@ -1087,7 +1089,7 @@ func TestDecreasePosition(t *testing.T) {
 			//   position notional value of 75 NUSD
 			initialPosition: types.Position{
 				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(-100), // -100 BTC
 				Margin:                          sdk.NewDec(10),   // 10 NUSD
 				OpenNotional:                    sdk.NewDec(100),  // 100 NUSD
@@ -1122,7 +1124,7 @@ func TestDecreasePosition(t *testing.T) {
 			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetPrice(
 					ctx,
-					common.Pair_BTC_NUSD,
+					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 					tc.baseAssetDir,
 					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
 				).
@@ -1131,7 +1133,7 @@ func TestDecreasePosition(t *testing.T) {
 			mocks.mockVpoolKeeper.EXPECT().
 				SwapQuoteForBase(
 					ctx,
-					common.Pair_BTC_NUSD,
+					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 					/*quoteAssetDirection=*/ tc.quoteAssetDir,
 					/*quoteAssetAmount=*/ tc.quoteAmountToDecrease,
 					/*baseAssetLimit=*/ tc.exchangedBaseAmount.Abs(),
@@ -1140,7 +1142,7 @@ func TestDecreasePosition(t *testing.T) {
 
 			t.Log("set up pair metadata and last cumulative funding rate")
 			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 			})
 
@@ -1508,7 +1510,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 			t.Log("set up initial position")
 			currentPosition := types.Position{
 				TraderAddress:                   traderAddr.String(),
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           tc.initialPositionSize,
 				Margin:                          tc.initialPositionMargin,
 				OpenNotional:                    tc.initialPositionOpenNotional,
@@ -1521,7 +1523,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetPrice(
 					ctx,
-					common.Pair_BTC_NUSD,
+					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 					tc.mockBaseDir,
 					/*baseAssetAmount=*/ currentPosition.Size_.Abs(),
 				).
@@ -1530,7 +1532,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 			mocks.mockVpoolKeeper.EXPECT().
 				SwapBaseForQuote(
 					ctx,
-					common.Pair_BTC_NUSD,
+					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 					tc.mockBaseDir,
 					/*baseAssetAmount=*/ currentPosition.Size_.Abs(),
 					/*quoteAssetLimit=*/ sdk.ZeroDec(),
@@ -1541,7 +1543,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						common.Pair_BTC_NUSD,
+						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 						/*quoteAssetDirection=*/ tc.mockQuoteDir,
 						/*quoteAssetAmount=*/ tc.inputQuoteAmount.Mul(tc.inputLeverage).Sub(tc.mockQuoteAmount),
 						/*baseAssetLimit=*/ sdk.MaxDec(tc.inputBaseAssetLimit.Sub(currentPosition.Size_.Abs()), sdk.ZeroDec()),
@@ -1551,7 +1553,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 
 			t.Log("set up pair metadata and last cumulative funding rate")
 			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 			})
 
@@ -1689,7 +1691,7 @@ func TestClosePosition(t *testing.T) {
 			//   position notional value of 0 NUSD
 			initialPosition: types.Position{
 				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(100), // 100 BTC
 				Margin:                          sdk.NewDec(10),  // 10 NUSD
 				OpenNotional:                    sdk.NewDec(100), // 100 NUSD
@@ -1715,7 +1717,7 @@ func TestClosePosition(t *testing.T) {
 			//   position notional value of 0 NUSD
 			initialPosition: types.Position{
 				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(105),               // 105 BTC
 				Margin:                          sdk.MustNewDecFromStr("10.5"), // 10.5 NUSD
 				OpenNotional:                    sdk.NewDec(105),               // 105 NUSD
@@ -1743,7 +1745,7 @@ func TestClosePosition(t *testing.T) {
 			//   position notional value of 0 NUSD
 			initialPosition: types.Position{
 				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(-105),              // -105 BTC
 				Margin:                          sdk.MustNewDecFromStr("10.5"), // 10.5 NUSD
 				OpenNotional:                    sdk.NewDec(105),               // 105 NUSD
@@ -1769,7 +1771,7 @@ func TestClosePosition(t *testing.T) {
 			//   position notional value of 0 NUSD
 			initialPosition: types.Position{
 				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(-100), // -100 BTC
 				Margin:                          sdk.NewDec(10),   // 10 NUSD
 				OpenNotional:                    sdk.NewDec(100),  // 100 NUSD
@@ -1806,7 +1808,7 @@ func TestClosePosition(t *testing.T) {
 			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetPrice(
 					ctx,
-					common.Pair_BTC_NUSD,
+					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 					tc.baseAssetDir,
 					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
 				).
@@ -1815,7 +1817,7 @@ func TestClosePosition(t *testing.T) {
 			mocks.mockVpoolKeeper.EXPECT().
 				SwapBaseForQuote(
 					ctx,
-					common.Pair_BTC_NUSD,
+					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 					/*baseAssetDirection=*/ tc.baseAssetDir,
 					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
 					/*quoteAssetLimit=*/ sdk.ZeroDec(),
@@ -1852,7 +1854,7 @@ func TestClosePosition(t *testing.T) {
 
 			t.Log("set up pair metadata and last cumulative funding rate")
 			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 			})
 
@@ -1882,7 +1884,7 @@ func TestClosePosition(t *testing.T) {
 			assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionChangedEvent{
-				Pair:               tc.initialPosition.Pair.String(),
+				Pair:               tc.initialPosition.Pair,
 				TraderAddress:      tc.initialPosition.TraderAddress,
 				Margin:             sdk.NewInt64Coin(tc.initialPosition.Pair.QuoteDenom(), 0),
 				PositionNotional:   sdk.ZeroDec(),
@@ -1891,7 +1893,7 @@ func TestClosePosition(t *testing.T) {
 				PositionSize:       sdk.ZeroDec(),
 				RealizedPnl:        tc.expectedRealizedPnl,
 				UnrealizedPnlAfter: sdk.ZeroDec(),
-				BadDebt:            sdk.NewCoin(common.Pair_BTC_NUSD.QuoteDenom(), sdk.ZeroInt()),
+				BadDebt:            sdk.NewCoin(asset.Registry.Pair(denoms.BTC, denoms.NUSD).QuoteDenom(), sdk.ZeroInt()),
 				MarkPrice:          tc.newPositionNotional.Quo(tc.initialPosition.Size_.Abs()),
 				FundingPayment:     sdk.MustNewDecFromStr("0.02").Mul(tc.initialPosition.Size_),
 				TransactionFee:     sdk.NewInt64Coin(tc.initialPosition.Pair.QuoteDenom(), 0),
@@ -1919,7 +1921,7 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 			// user cannot close position due to bad debt
 			initialPosition: types.Position{
 				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(100), // 100 BTC
 				Margin:                          sdk.NewDec(15),  // 15 NUSD
 				OpenNotional:                    sdk.NewDec(150), // 150 NUSD
@@ -1940,7 +1942,7 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 			// user cannot close position due to bad debt
 			initialPosition: types.Position{
 				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(-100), // -100 BTC
 				Margin:                          sdk.NewDec(10),   // 10 NUSD
 				OpenNotional:                    sdk.NewDec(100),  // 100 NUSD
@@ -1969,7 +1971,7 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetPrice(
 					ctx,
-					common.Pair_BTC_NUSD,
+					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 					tc.baseAssetDir,
 					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
 				).
@@ -1979,7 +1981,7 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 			mocks.mockVpoolKeeper.EXPECT().
 				SwapBaseForQuote(
 					ctx,
-					common.Pair_BTC_NUSD,
+					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 					/*baseAssetDirection=*/ tc.baseAssetDir,
 					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
 					/*quoteAssetLimit=*/ sdk.ZeroDec(),
@@ -1988,7 +1990,7 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 
 			t.Log("set up pair metadata and last cumulative funding rate")
 			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
-				Pair:                            common.Pair_BTC_NUSD,
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 			})
 

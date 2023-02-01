@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/testutil"
 )
 
@@ -86,12 +88,12 @@ func TestCombineErrorsGeneric(t *testing.T) {
 		{name: "type=[]string | mixed", in: []string{"", "abc", ""}, out: errors.New(": abc: ")},
 
 		// cases: fmt.Stringer
-		{name: "type=fmt.Stringer |", in: common.Pair_USDC_NUSD, out: errors.New("uusdc:unusd")},
+		{name: "type=fmt.Stringer |", in: asset.Registry.Pair(denoms.USDC, denoms.NUSD), out: errors.New("uusdc:unusd")},
 
 		// cases: []fmt.Stringer
 		{
 			name: "type=[]fmt.Stringer | happy",
-			in:   []fmt.Stringer{common.Pair_BTC_NUSD, common.Pair_ETH_NUSD},
+			in:   []fmt.Stringer{asset.Registry.Pair(denoms.BTC, denoms.NUSD), asset.Registry.Pair(denoms.ETH, denoms.NUSD)},
 			out:  errors.New("ubtc:unusd: ueth:unusd")},
 		{name: "type=[]fmt.Stringer | empty", in: []fmt.Stringer{}, out: nil},
 	}

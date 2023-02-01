@@ -6,7 +6,6 @@ option go_package = "github.com/NibiruChain/nibiru/x/vpool/types";
 
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
-import "common/common.proto";
 
 enum Direction {
   DIRECTION_UNSPECIFIED = 0;
@@ -32,7 +31,8 @@ enum TwapCalcOption {
 // No real liquidity exists in this pool.
 message Vpool {
   // always BASE:QUOTE, e.g. BTC:NUSD or ETH:NUSD
-  common.AssetPair pair = 1 [
+  string pair = 1 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
     (gogoproto.nullable) = false
   ];
 
@@ -95,7 +95,10 @@ message CurrentTWAP {
 
 // a snapshot of the vpool's reserves at a given point in time
 message ReserveSnapshot {
-  common.AssetPair pair = 5 [(gogoproto.nullable) = false];
+  string pair = 5 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.nullable) = false
+  ];
 
   string base_asset_reserve = 1 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
@@ -115,7 +118,10 @@ message ReserveSnapshot {
 // indicate that the price is currently unavailable. 
 message PoolPrices {
   // Pair identifier for the two assets. Always in format 'base:quote'
-  string pair = 9;
+  string pair = 9 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.nullable) = false
+  ];
 
   // MarkPrice is the instantaneous price of the perp. 
   // Equivalent to quoteAssetReserve / baseAssetReserve.

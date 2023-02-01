@@ -13,6 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/dex/keeper"
 	"github.com/NibiruChain/nibiru/x/dex/types"
 )
@@ -189,6 +190,11 @@ func SimulateJoinPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keep
 			TokensIn: tokensIn,
 		}
 
+		_, err = pool.GetD(pool.PoolAssets)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "borked pool"), nil, nil
+		}
+
 		return simulation.GenAndDeliverTxWithRandFees(
 			simulation.OperationInput{
 				R:               r,
@@ -359,9 +365,9 @@ func genPoolAssets(
 func fundAccountWithTokens(ctx sdk.Context, address sdk.AccAddress, bk types.BankKeeper) {
 	million := 1 * common.Precision
 	newTokens := sdk.NewCoins(
-		sdk.NewCoin(common.DenomNIBI, sdk.NewInt(int64(10*million))),
-		sdk.NewCoin(common.DenomUSDC, sdk.NewInt(int64(10*million))),
-		sdk.NewCoin(common.DenomNUSD, sdk.NewInt(int64(10*million))),
+		sdk.NewCoin(denoms.NIBI, sdk.NewInt(int64(10*million))),
+		sdk.NewCoin(denoms.USDC, sdk.NewInt(int64(10*million))),
+		sdk.NewCoin(denoms.NUSD, sdk.NewInt(int64(10*million))),
 	)
 
 	err := bk.MintCoins(ctx, types.ModuleName, newTokens)

@@ -3,7 +3,8 @@ package keeper
 import (
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 
 	"github.com/stretchr/testify/require"
 
@@ -19,7 +20,7 @@ func TestMsgServer_FeederDelegation(t *testing.T) {
 
 	exchangeRates := types.ExchangeRateTuples{
 		{
-			Pair:         common.Pair_BTC_NUSD.String(),
+			Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			ExchangeRate: randomExchangeRate,
 		},
 	}
@@ -86,51 +87,47 @@ func TestMsgServer_AggregatePrevoteVote(t *testing.T) {
 	salt := "1"
 	exchangeRates := types.ExchangeRateTuples{
 		{
-			Pair:         common.Pair_NIBI_NUSD.String(),
+			Pair:         asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 			ExchangeRate: sdk.MustNewDecFromStr("1000.23"),
 		},
 		{
-			Pair:         common.Pair_ETH_NUSD.String(),
+			Pair:         asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 			ExchangeRate: sdk.MustNewDecFromStr("0.29"),
 		},
 
 		{
-			Pair:         common.Pair_BTC_NUSD.String(),
+			Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			ExchangeRate: sdk.MustNewDecFromStr("0.27"),
 		},
 	}
 
 	otherExchangeRate := types.ExchangeRateTuples{
 		{
-			Pair:         common.Pair_NIBI_NUSD.String(),
+			Pair:         asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 			ExchangeRate: sdk.MustNewDecFromStr("1000.23"),
 		},
 		{
-			Pair:         common.Pair_ETH_NUSD.String(),
+			Pair:         asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 			ExchangeRate: sdk.MustNewDecFromStr("0.29"),
 		},
 
 		{
-			Pair:         common.Pair_ETH_NUSD.String(),
+			Pair:         asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 			ExchangeRate: sdk.MustNewDecFromStr("0.27"),
 		},
 	}
 
 	unintendedExchangeRateStr := types.ExchangeRateTuples{
 		{
-			Pair:         common.Pair_NIBI_NUSD.String(),
+			Pair:         asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 			ExchangeRate: sdk.MustNewDecFromStr("1000.23"),
 		},
 		{
-			Pair:         common.Pair_ETH_NUSD.String(),
+			Pair:         asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 			ExchangeRate: sdk.MustNewDecFromStr("0.29"),
 		},
-
 		{
-			Pair: common.AssetPair{
-				Token0: "BTC",
-				Token1: "CNY",
-			}.String(),
+			Pair:         "BTC:CNY",
 			ExchangeRate: sdk.MustNewDecFromStr("0.27"),
 		},
 	}

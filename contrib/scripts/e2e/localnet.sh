@@ -9,25 +9,26 @@ console_log_text_color() {
   reset=$(tput sgr0)
 }
 
-if [ console_log_text_color ]; then echo "succesfully toggled console coloring"
+if [ console_log_text_color ]; then
+  echo "succesfully toggled console coloring"
 else
   # For Ubuntu and Debian. MacOS has tput by default.
   apt-get install libncurses5-dbg -y
 fi
 
-echo_info () {
+echo_info() {
   echo "${blue}"
   echo "$1"
   echo "${reset}"
 }
 
-echo_error () {
+echo_error() {
   echo "${red}"
   echo "$1"
   echo "${reset}"
 }
 
-echo_success () {
+echo_success() {
   echo "${green}"
   echo "$1"
   echo "${reset}"
@@ -48,9 +49,9 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 fi
 
 # Stop nibid if it is already running
-if pgrep -x "$BINARY" > /dev/null; then
-    echo_error "Terminating $BINARY..."
-    killall nibid
+if pgrep -x "$BINARY" >/dev/null; then
+  echo_error "Terminating $BINARY..."
+  killall nibid
 fi
 
 # Remove previous data
@@ -71,7 +72,6 @@ else
   echo_error "Failed to initialize $CHAIN_ID"
 fi
 
-
 # Configure keyring-backend to "test"
 echo_info "Configuring keyring-backend..."
 if $BINARY config keyring-backend test; then
@@ -79,7 +79,6 @@ if $BINARY config keyring-backend test; then
 else
   echo_error "Failed to configure keyring-backend"
 fi
-
 
 # Configure chain-id
 echo_info "Configuring chain-id..."
@@ -162,7 +161,7 @@ fi
 add_genesis_param() {
   echo "jq input $1"
   # copy param ($1) to tmp_genesis.json
-  cat $CHAIN_DIR/config/genesis.json | jq "$1" > $CHAIN_DIR/config/tmp_genesis.json
+  cat $CHAIN_DIR/config/genesis.json | jq "$1" >$CHAIN_DIR/config/tmp_genesis.json
   # rewrite genesis.json with the contents of tmp_genesis.json
   mv $CHAIN_DIR/config/tmp_genesis.json $CHAIN_DIR/config/genesis.json
 }
@@ -174,13 +173,13 @@ add_genesis_vpools_with_coingecko_prices() {
   curl -X 'GET' \
     'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum&vs_currencies=usd' \
     -H 'accept: application/json' \
-    > $temp_json_fname
+    >$temp_json_fname
 
   local M=1000000
 
   local num_users=24000
-  local faucet_nusd_amt=100 
-  local quote_amt=$(($num_users * $faucet_nusd_amt * $M)) 
+  local faucet_nusd_amt=100
+  local quote_amt=$(($num_users * $faucet_nusd_amt * $M))
 
   price_btc=$(cat tmp_vpool_prices.json | jq -r '.bitcoin.usd')
   price_btc=${price_btc%.*}
@@ -205,7 +204,7 @@ add_genesis_vpools_default() {
   local quote_amt=10$KILO$MEGA
   local base_amt_btc=$(($quote_amt / 16500))
   local base_amt_eth=$(($quote_amt / 1200))
-  $BINARY add-genesis-vpool ubtc:unusd $base_amt_btc $quote_amt  0.1 0.1 0.1 0.0625 12
+  $BINARY add-genesis-vpool ubtc:unusd $base_amt_btc $quote_amt 0.1 0.1 0.1 0.0625 12
   $BINARY add-genesis-vpool ueth:unusd $base_amt_eth $quote_amt 0.1 0.1 0.1 0.0625 10
 }
 
@@ -231,10 +230,12 @@ add_genesis_param '.app_state.perp.pair_metadata[0].latest_cumulative_premium_fr
 add_genesis_param '.app_state.perp.pair_metadata[1].pair = {token0:"ueth",token1:"unusd"}'
 add_genesis_param '.app_state.perp.pair_metadata[1].latest_cumulative_premium_fraction = "0"'
 
-# x/pricefeed
-$BINARY add-genesis-oracle nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl
-
-cat $HOME/.nibid/config/genesis.json | jq '.app_state.pricefeed.params.twap_lookback_window = "900s"' > $HOME/.nibid/config/tmp_genesis.json && mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
+add_genesis_param '.app_state.oracle.params.twap_lookback_window = "900s"'
+add_genesis_param '.app_state.oracle.params.vote_period = "10"'
+add_genesis_param '.app_state.oracle.exchange_rates[0].pair = "ubtc:unusd"'
+add_genesis_param '.app_state.oracle.exchange_rates[0].exchange_rate = "20000"'
+add_genesis_param '.app_state.oracle.exchange_rates[1].pair = "ueth:unusd"'
+add_genesis_param '.app_state.oracle.exchange_rates[1].exchange_rate = "2000"'
 
 # Start the network
 echo_info "Starting $CHAIN_ID in $CHAIN_DIR..."
