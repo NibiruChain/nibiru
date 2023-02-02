@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/testutil"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	ibcclient "github.com/cosmos/ibc-go/v3/modules/core/02-client"
@@ -17,7 +15,9 @@ import (
 	ibcmock "github.com/cosmos/ibc-go/v3/testing/mock"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/simapp"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 )
 
 // init changes the value of 'DefaultTestingAppInit' to use custom initialization.
@@ -38,8 +38,8 @@ func SetupNibiruTestingApp() (
 	nibiruApp, _ := simapp.NewTestNibiruAppAndContext(true)
 
 	// Create genesis state
-	encCdc := simapp.MakeTestEncodingConfig()
-	genesisState := simapp.NewDefaultGenesisState(encCdc.Marshaler)
+	encCdc := app.MakeTestEncodingConfig()
+	genesisState := app.NewDefaultGenesisState(encCdc.Marshaler)
 
 	return nibiruApp, genesisState
 }

@@ -14,14 +14,14 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/testutil/mock"
+	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 func TestSwapQuoteForBase(t *testing.T) {
 	tests := []struct {
 		name                      string
-		pair                      common.AssetPair
+		pair                      asset.Pair
 		direction                 types.Direction
 		quoteAmount               sdk.Dec
 		baseLimit                 sdk.Dec
@@ -214,7 +214,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 func TestSwapBaseForQuote(t *testing.T) {
 	tests := []struct {
 		name                      string
-		pair                      common.AssetPair
+		pair                      asset.Pair
 		direction                 types.Direction
 		baseAmt                   sdk.Dec
 		quoteLimit                sdk.Dec
@@ -437,7 +437,7 @@ func TestGetVpools(t *testing.T) {
 		},
 	))
 
-	pools := vpoolKeeper.Pools.Iterate(ctx, collections.Range[common.AssetPair]{}).Values()
+	pools := vpoolKeeper.Pools.Iterate(ctx, collections.Range[asset.Pair]{}).Values()
 
 	require.EqualValues(t, 2, len(pools))
 

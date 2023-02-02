@@ -15,6 +15,7 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmdb "github.com/tendermint/tm-db"
 
+	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
@@ -23,18 +24,18 @@ import (
 // NewTestNibiruApp creates an application instance ('app.NibiruApp') with an in-memory
 // database ('tmdb.MemDB') and disabled logging. It either uses the application's
 // default genesis state or a blank one.
-func NewTestNibiruApp(shouldUseDefaultGenesis bool) *NibiruTestApp {
+func NewTestNibiruApp(shouldUseDefaultGenesis bool) *app.NibiruApp {
 	encoding := simapp.MakeTestEncodingConfig()
-	var appGenesis GenesisState
+	var appGenesis app.GenesisState
 	if shouldUseDefaultGenesis {
-		appGenesis = NewDefaultGenesisState(encoding.Marshaler)
+		appGenesis = app.NewDefaultGenesisState(encoding.Marshaler)
 	}
 	return NewTestNibiruAppWithGenesis(appGenesis)
 }
 
 // NewTestNibiruAppAndContext creates an 'app.NibiruApp' instance with an in-memory
 // 'tmdb.MemDB' and fresh 'sdk.Context'.
-func NewTestNibiruAppAndContext(shouldUseDefaultGenesis bool) (*NibiruTestApp, sdk.Context) {
+func NewTestNibiruAppAndContext(shouldUseDefaultGenesis bool) (*app.NibiruApp, sdk.Context) {
 	newNibiruApp := NewTestNibiruApp(shouldUseDefaultGenesis)
 	ctx := newNibiruApp.NewContext(false, tmproto.Header{})
 
@@ -48,7 +49,7 @@ func NewTestNibiruAppAndContext(shouldUseDefaultGenesis bool) (*NibiruTestApp, s
 // NewTestNibiruAppWithGenesis initializes a chain with the given genesis state to
 // creates an application instance ('app.NibiruApp'). This app uses an
 // in-memory database ('tmdb.MemDB') and has logging disabled.
-func NewTestNibiruAppWithGenesis(gen GenesisState) *NibiruTestApp {
+func NewTestNibiruAppWithGenesis(gen app.GenesisState) *app.NibiruApp {
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
 		panic(err)
@@ -58,9 +59,9 @@ func NewTestNibiruAppWithGenesis(gen GenesisState) *NibiruTestApp {
 	db := tmdb.NewMemDB()
 	logger := log.NewNopLogger()
 
-	encoding := MakeTestEncodingConfig()
+	encoding := app.MakeTestEncodingConfig()
 
-	nibiruApp := NewNibiruTestApp(
+	nibiruApp := app.NewNibiruApp(
 		logger,
 		db,
 		/*traceStore=*/ nil,
@@ -99,10 +100,10 @@ const (
 genesis as input. The blockchain genesis state is represented as a map from module
 identifier strings to raw json messages.
 */
-func NewTestGenesisStateFromDefault() GenesisState {
-	encodingConfig := MakeTestEncodingConfig()
+func NewTestGenesisStateFromDefault() app.GenesisState {
+	encodingConfig := app.MakeTestEncodingConfig()
 	codec := encodingConfig.Marshaler
-	genState := NewDefaultGenesisState(codec)
+	genState := app.NewDefaultGenesisState(codec)
 	return NewTestGenesisState(codec, genState)
 }
 
@@ -116,8 +117,8 @@ Args:
 - codec: Serializer for the module genesis state proto.Messages
 - inGenState: Input genesis state before the custom test setup is applied
 */
-func NewTestGenesisState(codec codec.Codec, inGenState GenesisState,
-) (testGenState GenesisState) {
+func NewTestGenesisState(codec codec.Codec, inGenState app.GenesisState,
+) (testGenState app.GenesisState) {
 	testGenState = inGenState
 
 	// Set short voting period to allow fast gov proposals in tests

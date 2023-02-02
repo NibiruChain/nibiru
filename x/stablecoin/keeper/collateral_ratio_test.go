@@ -4,18 +4,16 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/testutil"
-
-	simapp2 "github.com/NibiruChain/nibiru/simapp"
-
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	simapp2 "github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 )
 
@@ -168,7 +166,7 @@ func TestStableRequiredForTargetCollRatio(t *testing.T) {
 		name             string
 		protocolColl     sdk.Int
 		priceCollStable  sdk.Dec
-		postedAssetPairs []common.AssetPair
+		postedAssetPairs []asset.Pair
 		stableSupply     sdk.Int
 		targetCollRatio  sdk.Dec
 		neededUSD        sdk.Dec
@@ -179,7 +177,7 @@ func TestStableRequiredForTargetCollRatio(t *testing.T) {
 			name:            "Too little collateral gives correct positive value",
 			protocolColl:    sdk.NewInt(500),
 			priceCollStable: sdk.OneDec(), // startCollUSD = 500 * 1 -> 500
-			postedAssetPairs: []common.AssetPair{
+			postedAssetPairs: []asset.Pair{
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 			},
 			stableSupply:    sdk.NewInt(1000),
@@ -190,7 +188,7 @@ func TestStableRequiredForTargetCollRatio(t *testing.T) {
 			name:            "Too much collateral gives correct negative value",
 			protocolColl:    sdk.NewInt(600),
 			priceCollStable: sdk.OneDec(), // startCollUSD = 600 * 1 = 600
-			postedAssetPairs: []common.AssetPair{
+			postedAssetPairs: []asset.Pair{
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 			},
 			stableSupply:    sdk.NewInt(1000),
@@ -201,7 +199,7 @@ func TestStableRequiredForTargetCollRatio(t *testing.T) {
 			name:             "No price available for the collateral",
 			protocolColl:     sdk.NewInt(500),
 			priceCollStable:  sdk.OneDec(), // startCollUSD = 500 * 1 -> 500
-			postedAssetPairs: []common.AssetPair{},
+			postedAssetPairs: []asset.Pair{},
 			stableSupply:     sdk.NewInt(1_000),
 			targetCollRatio:  sdk.MustNewDecFromStr("0.6"), // 0.6 * 1000 = 600
 			neededUSD:        sdk.MustNewDecFromStr("100"), // = 600 - 500
@@ -223,7 +221,7 @@ func TestStableRequiredForTargetCollRatio(t *testing.T) {
 			))
 
 			// Post prices to each specified market with the oracle.
-			prices := map[common.AssetPair]sdk.Dec{
+			prices := map[asset.Pair]sdk.Dec{
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD): tc.priceCollStable,
 			}
 			for _, pair := range tc.postedAssetPairs {
@@ -358,7 +356,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 		priceGovStable   sdk.Dec
 		stableSupply     sdk.Int
 		targetCollRatio  sdk.Dec
-		postedAssetPairs []common.AssetPair
+		postedAssetPairs []asset.Pair
 
 		govOut       sdk.Int
 		expectedPass bool
@@ -368,7 +366,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 			protocolColl:     sdk.NewInt(500),
 			stableSupply:     sdk.NewInt(1000),
 			targetCollRatio:  sdk.MustNewDecFromStr("0.6"),
-			postedAssetPairs: []common.AssetPair{},
+			postedAssetPairs: []asset.Pair{},
 			govOut:           sdk.Int{},
 			expectedPass:     false,
 		},
@@ -378,7 +376,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 			stableSupply:    sdk.NewInt(1000),
 			targetCollRatio: sdk.MustNewDecFromStr("0.6"), // 0.6 * 1000 = 600
 			priceCollStable: sdk.OneDec(),
-			postedAssetPairs: []common.AssetPair{
+			postedAssetPairs: []asset.Pair{
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD)},
 			govOut:       sdk.Int{},
 			expectedPass: false,
@@ -389,7 +387,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 			stableSupply:    sdk.NewInt(1000),
 			targetCollRatio: sdk.MustNewDecFromStr("0.6"), // 0.6 * 1000 = 600
 			priceGovStable:  sdk.OneDec(),
-			postedAssetPairs: []common.AssetPair{
+			postedAssetPairs: []asset.Pair{
 				asset.Registry.Pair(denoms.NIBI, denoms.NUSD)},
 			govOut:       sdk.Int{},
 			expectedPass: false,
@@ -399,7 +397,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 			protocolColl:    sdk.NewInt(5_000),
 			stableSupply:    sdk.NewInt(10_000),
 			targetCollRatio: sdk.MustNewDecFromStr("0.7"), // 0.7 * 10_000 = 7_000
-			postedAssetPairs: []common.AssetPair{
+			postedAssetPairs: []asset.Pair{
 				asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 			},
@@ -415,7 +413,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 			protocolColl:    sdk.NewInt(50_000),
 			stableSupply:    sdk.NewInt(100_000),
 			targetCollRatio: sdk.MustNewDecFromStr("0.7"), // 0.7 * 100_000 = 70_000
-			postedAssetPairs: []common.AssetPair{
+			postedAssetPairs: []asset.Pair{
 				asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 			},
@@ -431,7 +429,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 			protocolColl:    sdk.NewInt(70_000),
 			stableSupply:    sdk.NewInt(100_000),
 			targetCollRatio: sdk.MustNewDecFromStr("0.5"), // 0.5 * 100_000 = 50_000
-			postedAssetPairs: []common.AssetPair{
+			postedAssetPairs: []asset.Pair{
 				asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 			},
@@ -457,7 +455,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 				),
 			))
 
-			prices := map[common.AssetPair]sdk.Dec{
+			prices := map[asset.Pair]sdk.Dec{
 				asset.Registry.Pair(denoms.NIBI, denoms.NUSD): tc.priceGovStable,
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD): tc.priceCollStable,
 			}
@@ -466,7 +464,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 			}
 
 			// Post prices to each specified market with the oracle.
-			prices = map[common.AssetPair]sdk.Dec{
+			prices = map[asset.Pair]sdk.Dec{
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD): tc.priceCollStable,
 				asset.Registry.Pair(denoms.NIBI, denoms.NUSD): tc.priceGovStable,
 			}
@@ -508,7 +506,7 @@ func TestRecollateralize(t *testing.T) {
 		expectedPass bool
 		err          error
 
-		postedAssetPairs  []common.AssetPair
+		postedAssetPairs  []asset.Pair
 		scenario          NeededCollScenario
 		priceGovStable    sdk.Dec
 		expectedNeededUSD sdk.Dec
@@ -519,7 +517,7 @@ func TestRecollateralize(t *testing.T) {
 	}{
 		{
 			name: "both prices are $1",
-			postedAssetPairs: []common.AssetPair{
+			postedAssetPairs: []asset.Pair{
 				asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 			},
@@ -552,7 +550,7 @@ func TestRecollateralize(t *testing.T) {
 		},
 		{
 			name: "arbitrary valid prices",
-			postedAssetPairs: []common.AssetPair{
+			postedAssetPairs: []asset.Pair{
 				asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 			},
@@ -587,7 +585,7 @@ func TestRecollateralize(t *testing.T) {
 		},
 		{
 			name: "protocol has sufficient collateral - error",
-			postedAssetPairs: []common.AssetPair{
+			postedAssetPairs: []asset.Pair{
 				asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 			},
@@ -614,7 +612,7 @@ func TestRecollateralize(t *testing.T) {
 		},
 		{
 			name: "caller is broke - error",
-			postedAssetPairs: []common.AssetPair{
+			postedAssetPairs: []asset.Pair{
 				asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 			},
@@ -641,7 +639,7 @@ func TestRecollateralize(t *testing.T) {
 		},
 		{
 			name: "negative msg.Coll.Amount - error",
-			postedAssetPairs: []common.AssetPair{
+			postedAssetPairs: []asset.Pair{
 				asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 			},
@@ -668,7 +666,7 @@ func TestRecollateralize(t *testing.T) {
 		},
 		{
 			name: "oracle prices are expired - error",
-			postedAssetPairs: []common.AssetPair{
+			postedAssetPairs: []asset.Pair{
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 			},
 			priceGovStable: sdk.NewDec(1),
@@ -717,7 +715,7 @@ func TestRecollateralize(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			prices := map[common.AssetPair]sdk.Dec{
+			prices := map[asset.Pair]sdk.Dec{
 				asset.Registry.Pair(denoms.NIBI, denoms.NUSD): tc.priceGovStable,
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD): tc.scenario.priceCollStable,
 			}
@@ -726,7 +724,7 @@ func TestRecollateralize(t *testing.T) {
 			}
 
 			// Post prices to each specified market with the oracle.
-			prices = map[common.AssetPair]sdk.Dec{
+			prices = map[asset.Pair]sdk.Dec{
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD): tc.scenario.priceCollStable,
 				asset.Registry.Pair(denoms.NIBI, denoms.NUSD): tc.priceGovStable,
 			}
@@ -838,7 +836,7 @@ func TestBuyback(t *testing.T) {
 		name         string
 		expectedPass bool
 
-		postedAssetPairs      []common.AssetPair
+		postedAssetPairs      []asset.Pair
 		scenario              NeededCollScenario
 		priceGovStable        sdk.Dec
 		expectedNeededUSD     sdk.Dec
@@ -850,7 +848,7 @@ func TestBuyback(t *testing.T) {
 	}{
 		{
 			name: "both prices are $1",
-			postedAssetPairs: []common.AssetPair{
+			postedAssetPairs: []asset.Pair{
 				asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 			},
@@ -886,7 +884,7 @@ func TestBuyback(t *testing.T) {
 		},
 		{
 			name: "arbitrary valid prices",
-			postedAssetPairs: []common.AssetPair{
+			postedAssetPairs: []asset.Pair{
 				asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 			},
@@ -927,7 +925,7 @@ func TestBuyback(t *testing.T) {
 		},
 		{
 			name: "msg has more NIBI than the protocol needs, only needed sent",
-			postedAssetPairs: []common.AssetPair{
+			postedAssetPairs: []asset.Pair{
 				asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 			},
@@ -960,7 +958,7 @@ func TestBuyback(t *testing.T) {
 		},
 		{
 			name: "protocol under-collateralized, so buyback won't run",
-			postedAssetPairs: []common.AssetPair{
+			postedAssetPairs: []asset.Pair{
 				asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 			},
@@ -986,7 +984,7 @@ func TestBuyback(t *testing.T) {
 		},
 		{
 			name: "caller has insufficient funds",
-			postedAssetPairs: []common.AssetPair{
+			postedAssetPairs: []asset.Pair{
 				asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 			},
@@ -1012,7 +1010,7 @@ func TestBuyback(t *testing.T) {
 		},
 		{
 			name: "fail: missing collateral price post",
-			postedAssetPairs: []common.AssetPair{
+			postedAssetPairs: []asset.Pair{
 				asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 			},
 			scenario: NeededCollScenario{
@@ -1037,7 +1035,7 @@ func TestBuyback(t *testing.T) {
 		},
 		{
 			name: "fail: missing NIBI price post",
-			postedAssetPairs: []common.AssetPair{
+			postedAssetPairs: []asset.Pair{
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 			},
 			scenario: NeededCollScenario{
@@ -1090,7 +1088,7 @@ func TestBuyback(t *testing.T) {
 			}
 
 			// Set up markets for the oracle keeper.
-			prices := map[common.AssetPair]sdk.Dec{
+			prices := map[asset.Pair]sdk.Dec{
 				asset.Registry.Pair(denoms.NIBI, denoms.NUSD): tc.priceGovStable,
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD): tc.scenario.priceCollStable,
 			}
@@ -1125,14 +1123,14 @@ func TestBuybackGovAmtForTargetCollRatio(t *testing.T) {
 		scenario     NeededCollScenario
 		expectedPass bool
 
-		postedAssetPairs []common.AssetPair
+		postedAssetPairs []asset.Pair
 		priceGovStable   sdk.Dec
 
 		outGovAmt sdk.Int
 	}{
 		{
 			name: "both prices $1, correct amount out",
-			postedAssetPairs: []common.AssetPair{
+			postedAssetPairs: []asset.Pair{
 				asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 			},
@@ -1149,7 +1147,7 @@ func TestBuybackGovAmtForTargetCollRatio(t *testing.T) {
 		},
 		{
 			name:             "both prices $1, correct amount out, no prices",
-			postedAssetPairs: []common.AssetPair{},
+			postedAssetPairs: []asset.Pair{},
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(700_000),
 				priceCollStable: sdk.OneDec(),
@@ -1163,7 +1161,7 @@ func TestBuybackGovAmtForTargetCollRatio(t *testing.T) {
 		},
 		{
 			name: "both prices $1, only coll price posted",
-			postedAssetPairs: []common.AssetPair{
+			postedAssetPairs: []asset.Pair{
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 			},
 			scenario: NeededCollScenario{
@@ -1192,7 +1190,7 @@ func TestBuybackGovAmtForTargetCollRatio(t *testing.T) {
 				),
 			))
 
-			prices := map[common.AssetPair]sdk.Dec{
+			prices := map[asset.Pair]sdk.Dec{
 				asset.Registry.Pair(denoms.NIBI, denoms.NUSD): tc.priceGovStable,
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD): tc.scenario.priceCollStable,
 			}

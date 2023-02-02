@@ -18,10 +18,10 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
+	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/NibiruChain/nibiru/x/perp/client/cli"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
-	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -95,7 +95,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	genesisState[perptypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(perpGenesis)
 
 	oracleGenesis := oracletypes.DefaultGenesisState()
-	oracleGenesis.Params.Whitelist = []common.AssetPair{
+	oracleGenesis.Params.Whitelist = []asset.Pair{
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 	}
 	oracleGenesis.Params.VotePeriod = 1_000

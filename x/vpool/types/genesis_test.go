@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 )
 
 func TestGenesisState_Validate(t *testing.T) {
@@ -19,7 +19,7 @@ func TestGenesisState_Validate(t *testing.T) {
 			genesis: &GenesisState{
 				Vpools: []Vpool{
 					{
-						Pair:              common.MustNewAssetPair("btc:usd"),
+						Pair:              asset.MustNewPair("btc:usd"),
 						BaseAssetReserve:  sdk.MustNewDecFromStr("100000"),
 						QuoteAssetReserve: sdk.MustNewDecFromStr("100000"),
 						Config: VpoolConfig{
@@ -31,7 +31,7 @@ func TestGenesisState_Validate(t *testing.T) {
 						},
 					},
 					{
-						Pair:              common.MustNewAssetPair("eth:usd"),
+						Pair:              asset.MustNewPair("eth:usd"),
 						BaseAssetReserve:  sdk.MustNewDecFromStr("100000"),
 						QuoteAssetReserve: sdk.MustNewDecFromStr("100000"),
 						Config: VpoolConfig{
@@ -50,7 +50,7 @@ func TestGenesisState_Validate(t *testing.T) {
 			genesis: &GenesisState{
 				Vpools: []Vpool{
 					{
-						Pair:              common.MustNewAssetPair("btc:usd"),
+						Pair:              asset.MustNewPair("btc:usd"),
 						BaseAssetReserve:  sdk.MustNewDecFromStr("100000"),
 						QuoteAssetReserve: sdk.MustNewDecFromStr("100000"),
 						Config: VpoolConfig{
@@ -62,7 +62,7 @@ func TestGenesisState_Validate(t *testing.T) {
 						},
 					},
 					{
-						Pair:              common.MustNewAssetPair("invalid:usd"),
+						Pair:              asset.MustNewPair("invalid:usd"),
 						BaseAssetReserve:  sdk.MustNewDecFromStr("100000"),
 						QuoteAssetReserve: sdk.MustNewDecFromStr("100000"),
 						Config: VpoolConfig{
@@ -81,7 +81,7 @@ func TestGenesisState_Validate(t *testing.T) {
 			genesis: &GenesisState{
 				Vpools: []Vpool{
 					{
-						Pair:              common.MustNewAssetPair("btc:usd"),
+						Pair:              asset.MustNewPair("btc:usd"),
 						BaseAssetReserve:  sdk.MustNewDecFromStr("100000"),
 						QuoteAssetReserve: sdk.MustNewDecFromStr("100000"),
 						Config: VpoolConfig{
@@ -93,7 +93,7 @@ func TestGenesisState_Validate(t *testing.T) {
 						},
 					},
 					{
-						Pair:              common.MustNewAssetPair("eth:usd"),
+						Pair:              asset.MustNewPair("eth:usd"),
 						BaseAssetReserve:  sdk.MustNewDecFromStr("100000"),
 						QuoteAssetReserve: sdk.MustNewDecFromStr("100000"),
 						Config: VpoolConfig{
@@ -105,7 +105,7 @@ func TestGenesisState_Validate(t *testing.T) {
 						},
 					},
 					{
-						Pair:              common.MustNewAssetPair("eth:usd"),
+						Pair:              asset.MustNewPair("eth:usd"),
 						BaseAssetReserve:  sdk.MustNewDecFromStr("100000"),
 						QuoteAssetReserve: sdk.MustNewDecFromStr("100000"),
 						Config: VpoolConfig{

@@ -19,10 +19,10 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
+	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/NibiruChain/nibiru/x/stablecoin/client/cli"
 	stabletypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
-	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 )
 
 type IntegrationTestSuite struct {

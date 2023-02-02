@@ -18,8 +18,8 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
+	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
-	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/vpool/client/cli"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -35,7 +35,7 @@ func TestIntegrationTestSuite(t *testing.T) {
 	suite.Run(t, new(IntegrationTestSuite))
 }
 
-var START_VPOOLS = map[common.AssetPair]vpooltypes.Vpool{
+var START_VPOOLS = map[asset.Pair]vpooltypes.Vpool{
 	asset.Registry.Pair(denoms.ETH, denoms.NUSD): {
 		Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 		BaseAssetReserve:  sdk.NewDec(10 * common.Precision),
@@ -71,7 +71,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	app.SetPrefixes(app.AccountAddressPrefix)
 
-	encodingConfig := simapp.MakeTestEncodingConfig()
+	encodingConfig := app.MakeTestEncodingConfig()
 	genesisState := simapp.NewTestGenesisStateFromDefault()
 	vpoolGenesis := vpooltypes.DefaultGenesis()
 	vpoolGenesis.Vpools = []vpooltypes.Vpool{

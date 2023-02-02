@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 
@@ -98,7 +97,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 			VotePeriod:    uint64(10_000),
 			VoteThreshold: voteThreshold,
 			RewardBand:    rewardBand,
-			Whitelist: []common.AssetPair{
+			Whitelist: []asset.Pair{
 				asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -115,7 +114,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 		[]types.MissCounter{},
 		[]types.AggregateExchangeRatePrevote{},
 		[]types.AggregateExchangeRateVote{},
-		[]common.AssetPair{},
+		[]asset.Pair{},
 		[]types.PairReward{},
 	)
 
