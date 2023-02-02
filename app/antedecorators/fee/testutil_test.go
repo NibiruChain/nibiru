@@ -24,7 +24,7 @@ import (
 type AnteTestSuite struct {
 	suite.Suite
 
-	app         *simapp.NibiruTestApp
+	app         *app.NibiruApp
 	anteHandler sdk.AnteHandler
 	ctx         sdk.Context
 	clientCtx   client.Context
@@ -32,7 +32,7 @@ type AnteTestSuite struct {
 }
 
 // returns context and app with params set on account keeper
-func createTestApp(isCheckTx bool) (*simapp.NibiruTestApp, sdk.Context) {
+func createTestApp(isCheckTx bool) (*app.NibiruApp, sdk.Context) {
 	app := simapp.NewTestNibiruApp(true)
 	ctx := app.BaseApp.NewContext(isCheckTx, tmproto.Header{})
 	app.AccountKeeper.SetParams(ctx, authtypes.DefaultParams())
