@@ -3,8 +3,8 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	dexkeeper "github.com/NibiruChain/nibiru/x/dex/keeper"
-	"github.com/NibiruChain/nibiru/x/testutil/testapp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"

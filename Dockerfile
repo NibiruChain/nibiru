@@ -1,7 +1,7 @@
 FROM golang:1.19 AS builder
 
 WORKDIR /nibiru
-ARG ARCH=aarch64
+
 ENV BUILD_TAGS=muslc \
   CGO_ENABLED=1 \
   LDFLAGS='-s -w -linkmode=external -extldflags "-Wl,-z,muldefs -static -lm"'
@@ -11,13 +11,20 @@ RUN apt-get update && \
   musl-dev && \
   rm -rf /var/lib/apt/lists/*
 
-RUN wget https://github.com/CosmWasm/wasmvm/releases/download/v1.1.1/libwasmvm_muslc.${ARCH}.a -O /lib/libwasmvm_muslc.a
+ARG TARGETARCH
+RUN if [ "${TARGETARCH}" = "arm64" ]; then \
+  wget https://github.com/CosmWasm/wasmvm/releases/download/v1.2.0/libwasmvm_muslc.aarch64.a -O /lib/libwasmvm_muslc.a; \
+  else \
+  wget https://github.com/CosmWasm/wasmvm/releases/download/v1.2.0/libwasmvm_muslc.x86_64.a -O /lib/libwasmvm_muslc.a; \
+  fi
 
-COPY go.* ./
+COPY go.sum go.mod ./
 RUN go mod download
+COPY . .
 
-COPY . ./
-RUN --mount=type=cache,target=/root/.cache/go-build make build
+RUN --mount=type=cache,target=/root/.cache/go-build \
+  --mount=type=cache,target=/go/pkg \
+  make build
 
 FROM alpine:latest
 WORKDIR /root
