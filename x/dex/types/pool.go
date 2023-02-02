@@ -5,8 +5,9 @@ import (
 	fmt "fmt"
 	math "math"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/holiman/uint256"
+
+	"github.com/NibiruChain/nibiru/x/common"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

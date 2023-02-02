@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/collections"
+
 	"github.com/NibiruChain/nibiru/x/common/asset"
 )
 

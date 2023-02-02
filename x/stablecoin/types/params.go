@@ -3,9 +3,10 @@ package types
 import (
 	fmt "fmt"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)

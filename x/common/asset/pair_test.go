@@ -44,12 +44,12 @@ func TestTryNewPair(t *testing.T) {
 		},
 		{
 			"invalid denom 1",
-			fmt.Sprint("-invalid1:valid"),
+			"-invalid1:valid",
 			fmt.Errorf("invalid denom"),
 		},
 		{
 			"invalid denom 2",
-			fmt.Sprint("valid:-invalid2"),
+			"valid:-invalid2",
 			fmt.Errorf("invalid denom"),
 		},
 	}
