@@ -95,7 +95,7 @@ func NewExchangeRateTupleFromString(s string) (ExchangeRateTuple, error) {
 		return ExchangeRateTuple{}, fmt.Errorf("invalid ExchangeRateTuple format")
 	}
 
-	pair, err := asset.TryNew(split[0])
+	pair, err := asset.TryNewPair(split[0])
 	if err != nil {
 		return ExchangeRateTuple{}, fmt.Errorf("invalid pair definition %s: %w", split[0], err)
 	}

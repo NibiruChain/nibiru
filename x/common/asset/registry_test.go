@@ -22,7 +22,7 @@ func TestIsSupportedPair(t *testing.T) {
 func TestPair(t *testing.T) {
 	for base := range Registry {
 		for quote := range Registry[base] {
-			require.Equal(t, New(base, quote), Registry.Pair(base, quote))
+			require.Equal(t, NewPair(base, quote), Registry.Pair(base, quote))
 		}
 	}
 

@@ -46,7 +46,7 @@ func TestFuzz_Tally(t *testing.T) {
 				var rate sdk.Dec
 				c.Fuzz(&rate)
 
-				ballot = append(ballot, types.NewExchangeRateBallot(rate, asset.New(c.RandString(), c.RandString()), addr, power))
+				ballot = append(ballot, types.NewExchangeRateBallot(rate, asset.NewPair(c.RandString(), c.RandString()), addr, power))
 			}
 
 			*e = ballot
@@ -167,13 +167,13 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 
 	f := fuzz.New().NilChance(0).Funcs(
 		func(e *asset.Pair, c fuzz.Continue) {
-			*e = asset.New(testutil.RandStringBytes(5), testutil.RandStringBytes(5))
+			*e = asset.NewPair(testutil.RandStringBytes(5), testutil.RandStringBytes(5))
 		},
 		func(e *[]asset.Pair, c fuzz.Continue) {
 			numPairs := c.Intn(100) + 5
 
 			for i := 0; i < numPairs; i++ {
-				*e = append(*e, asset.New(testutil.RandStringBytes(5), testutil.RandStringBytes(5)))
+				*e = append(*e, asset.NewPair(testutil.RandStringBytes(5), testutil.RandStringBytes(5)))
 			}
 		},
 		func(e *sdk.Dec, c fuzz.Continue) {

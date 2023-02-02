@@ -24,7 +24,7 @@ func TestKeeperClosePosition(t *testing.T) {
 		t.Log("Setup Nibiru app, pair, and trader")
 		nibiruApp, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
 		ctx = ctx.WithBlockTime(time.Now())
-		pair := asset.MustNew("xxx:yyy")
+		pair := asset.MustNewPair("xxx:yyy")
 
 		t.Log("Set vpool defined by pair on VpoolKeeper")
 		vpoolKeeper := &nibiruApp.VpoolKeeper

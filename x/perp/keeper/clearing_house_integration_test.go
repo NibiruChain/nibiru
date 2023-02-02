@@ -564,7 +564,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader without a vpool.")
 				nibiruApp, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
-				pair := asset.MustNew("xxx:yyy")
+				pair := asset.MustNewPair("xxx:yyy")
 
 				trader := testutil.AccAddress()
 
@@ -584,7 +584,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
-				pair := asset.MustNew("xxx:yyy")
+				pair := asset.MustNewPair("xxx:yyy")
 
 				t.Log("Set vpool defined by pair on VpoolKeeper")
 				vpoolKeeper := &nibiruApp.VpoolKeeper

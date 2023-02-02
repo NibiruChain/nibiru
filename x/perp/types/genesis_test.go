@@ -22,14 +22,14 @@ func TestGenesisState_Validate(t *testing.T) {
 				Params: DefaultParams(),
 				PairMetadata: []PairMetadata{
 					{
-						Pair:                            asset.MustNew("pair1:pair2"),
+						Pair:                            asset.MustNewPair("pair1:pair2"),
 						LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.1"),
 					},
 				},
 				Positions: []Position{
 					{
 						TraderAddress:                   testutil.AccAddress().String(),
-						Pair:                            asset.MustNew("valid:pair"),
+						Pair:                            asset.MustNewPair("valid:pair"),
 						Size_:                           sdk.MustNewDecFromStr("1000"),
 						Margin:                          sdk.MustNewDecFromStr("1000"),
 						OpenNotional:                    sdk.MustNewDecFromStr("1000"),

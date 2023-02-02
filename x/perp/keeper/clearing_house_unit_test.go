@@ -1596,7 +1596,7 @@ func TestTransferFee(t *testing.T) {
 		trader sdk.AccAddress, positionNotional sdk.Dec,
 	) {
 		perpKeeper, mocks, ctx := getKeeper(t)
-		pair = asset.MustNew("btc:usdc")
+		pair = asset.MustNewPair("btc:usdc")
 		perpKeeper.SetParams(ctx, types.DefaultParams())
 		metadata := &types.PairMetadata{
 			Pair: pair,

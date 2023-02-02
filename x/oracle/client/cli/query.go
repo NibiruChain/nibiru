@@ -70,7 +70,7 @@ $ nibid query oracle exchange-rates nibi:usd
 				return clientCtx.PrintProto(res)
 			}
 
-			assetPair, err := asset.TryNew(args[0])
+			assetPair, err := asset.TryNewPair(args[0])
 			if err != nil {
 				return err
 			}

@@ -17,7 +17,7 @@ func TestSettlePosition(t *testing.T) {
 	t.Run("success - settlement price zero", func(t *testing.T) {
 		k, dep, ctx := getKeeper(t)
 		traderAddr := testutil.AccAddress()
-		pair := asset.MustNew("LUNA:UST")
+		pair := asset.MustNewPair("LUNA:UST")
 
 		dep.mockVpoolKeeper.
 			EXPECT().
@@ -51,7 +51,7 @@ func TestSettlePosition(t *testing.T) {
 	t.Run("success - settlement price not zero", func(t *testing.T) {
 		k, dep, ctx := getKeeper(t)
 		traderAddr := testutil.AccAddress()
-		pair := asset.MustNew("LUNA:UST") // memeing
+		pair := asset.MustNewPair("LUNA:UST") // memeing
 
 		dep.mockVpoolKeeper.
 			EXPECT().
@@ -91,7 +91,7 @@ func TestSettlePosition(t *testing.T) {
 	t.Run("position size is zero", func(t *testing.T) {
 		k, _, ctx := getKeeper(t)
 		traderAddr := testutil.AccAddress()
-		pair := asset.MustNew("LUNA:UST")
+		pair := asset.MustNewPair("LUNA:UST")
 
 		pos := types.Position{
 			TraderAddress: traderAddr.String(),

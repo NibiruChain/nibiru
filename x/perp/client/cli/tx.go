@@ -56,7 +56,7 @@ func OpenPositionCmd() *cobra.Command {
 				return fmt.Errorf("invalid side: %s", args[0])
 			}
 
-			assetPair, err := asset.TryNew(args[1])
+			assetPair, err := asset.TryNewPair(args[1])
 			if err != nil {
 				return err
 			}
@@ -104,7 +104,7 @@ func ClosePositionCmd() *cobra.Command {
 				return err
 			}
 
-			pair, err := asset.TryNew(args[0])
+			pair, err := asset.TryNewPair(args[0])
 			if err != nil {
 				return err
 			}
@@ -151,7 +151,7 @@ func RemoveMarginCmd() *cobra.Command {
 				return err
 			}
 
-			pair, err := asset.TryNew(args[0])
+			pair, err := asset.TryNewPair(args[0])
 			if err != nil {
 				return err
 			}
@@ -195,7 +195,7 @@ func AddMarginCmd() *cobra.Command {
 				return err
 			}
 
-			pair, err := asset.TryNew(args[0])
+			pair, err := asset.TryNewPair(args[0])
 			if err != nil {
 				return err
 			}

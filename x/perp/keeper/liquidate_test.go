@@ -25,7 +25,7 @@ import (
 
 func TestExecuteFullLiquidation(t *testing.T) {
 	// constants for this suite
-	tokenPair := asset.MustNew("BTC:NUSD")
+	tokenPair := asset.MustNewPair("BTC:NUSD")
 
 	traderAddr := testutilevents.AccAddress()
 
@@ -191,7 +191,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 
 func TestExecutePartialLiquidation(t *testing.T) {
 	// constants for this suite
-	tokenPair := asset.MustNew("xxx:yyy")
+	tokenPair := asset.MustNewPair("xxx:yyy")
 
 	traderAddr := testutilevents.AccAddress()
 	partialLiquidationRatio := sdk.MustNewDecFromStr("0.4")

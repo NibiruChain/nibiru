@@ -186,7 +186,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("Build msg that specifies an impossible margin removal (too high)")
 				traderAddr := testutilevents.AccAddress()
-				pair := asset.New("osmo", "nusd")
+				pair := asset.NewPair("osmo", "nusd")
 
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
 
@@ -219,7 +219,7 @@ func TestRemoveMargin(t *testing.T) {
 				perpKeeper, mocks, ctx := getKeeper(t)
 
 				traderAddr := testutilevents.AccAddress()
-				pair := asset.MustNew("osmo:nusd")
+				pair := asset.MustNewPair("osmo:nusd")
 				marginToWithdraw := sdk.NewInt64Coin(pair.QuoteDenom(), 100)
 
 				t.Log("mock vpool keeper")
@@ -287,7 +287,7 @@ func TestRemoveMargin(t *testing.T) {
 				perpKeeper, mocks, ctx := getKeeper(t)
 
 				traderAddr := testutilevents.AccAddress()
-				pair := asset.MustNew("osmo:nusd")
+				pair := asset.MustNewPair("osmo:nusd")
 				marginToWithdraw := sdk.NewInt64Coin(pair.QuoteDenom(), 100)
 
 				t.Log("mock vpool keeper")
@@ -383,7 +383,7 @@ func TestRemoveMargin(t *testing.T) {
 				perpKeeper, mocks, ctx := getKeeper(t)
 
 				traderAddr := testutilevents.AccAddress()
-				pair := asset.MustNew("osmo:nusd")
+				pair := asset.MustNewPair("osmo:nusd")
 				marginToWithdraw := sdk.NewInt64Coin(pair.QuoteDenom(), 100)
 
 				t.Log("mock vpool keeper")
@@ -439,7 +439,7 @@ func TestAddMargin(t *testing.T) {
 				perpKeeper, mocks, ctx := getKeeper(t)
 
 				traderAddr := testutilevents.AccAddress()
-				pair := asset.New("uosmo", "unusd")
+				pair := asset.NewPair("uosmo", "unusd")
 				margin := sdk.NewInt64Coin(pair.QuoteDenom(), 600)
 
 				t.Log("set pair metadata")
@@ -476,7 +476,7 @@ func TestAddMargin(t *testing.T) {
 			name: "happy path - zero funding",
 			test: func() {
 				perpKeeper, mocks, ctx := getKeeper(t)
-				pair := asset.MustNew("uosmo:unusd")
+				pair := asset.MustNewPair("uosmo:unusd")
 				traderAddr := testutilevents.AccAddress()
 				margin := sdk.NewInt64Coin("unusd", 100)
 
@@ -547,7 +547,7 @@ func TestAddMargin(t *testing.T) {
 			test: func() {
 				perpKeeper, mocks, ctx := getKeeper(t)
 
-				pair := asset.MustNew("uosmo:unusd")
+				pair := asset.MustNewPair("uosmo:unusd")
 				traderAddr := testutilevents.AccAddress()
 				margin := sdk.NewInt64Coin("unusd", 100)
 

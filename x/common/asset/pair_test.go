@@ -57,7 +57,7 @@ func TestTryNewPair(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := TryNew(tc.tokenStr)
+			_, err := TryNewPair(tc.tokenStr)
 			if tc.err != nil {
 				require.ErrorContains(t, err, tc.err.Error())
 			} else {
@@ -68,17 +68,17 @@ func TestTryNewPair(t *testing.T) {
 }
 
 func TestGetDenoms(t *testing.T) {
-	pair := MustNew("uatom:unibi")
+	pair := MustNewPair("uatom:unibi")
 
 	require.Equal(t, "uatom", pair.BaseDenom())
 	require.Equal(t, "unibi", pair.QuoteDenom())
 }
 
 func TestEquals(t *testing.T) {
-	pair := MustNew("abc:xyz")
-	matchingOther := MustNew("abc:xyz")
-	mismatchToken1 := MustNew("abc:abc")
-	inversePair := MustNew("xyz:abc")
+	pair := MustNewPair("abc:xyz")
+	matchingOther := MustNewPair("abc:xyz")
+	mismatchToken1 := MustNewPair("abc:abc")
+	inversePair := MustNewPair("xyz:abc")
 
 	require.True(t, pair.Equal(matchingOther))
 	require.False(t, pair.Equal(inversePair))
@@ -87,16 +87,16 @@ func TestEquals(t *testing.T) {
 
 func TestMustNewAssetPair(t *testing.T) {
 	require.Panics(t, func() {
-		MustNew("aaa:bbb:ccc")
+		MustNewPair("aaa:bbb:ccc")
 	})
 
 	require.NotPanics(t, func() {
-		MustNew("aaa:bbb")
+		MustNewPair("aaa:bbb")
 	})
 }
 
 func TestInverse(t *testing.T) {
-	pair := MustNew("abc:xyz")
+	pair := MustNewPair("abc:xyz")
 	inverse := pair.Inverse()
 	require.Equal(t, "xyz", inverse.BaseDenom())
 	require.Equal(t, "abc", inverse.QuoteDenom())

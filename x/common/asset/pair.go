@@ -17,7 +17,7 @@ var (
 
 type Pair string
 
-func New(base string, quote string) Pair {
+func NewPair(base string, quote string) Pair {
 	// validate as denom
 	ap := fmt.Sprintf("%s%s%s", base, ":", quote)
 	return Pair(ap)
@@ -26,7 +26,7 @@ func New(base string, quote string) Pair {
 // New returns a new asset pair instance if the pair is valid.
 // The form, "token0:token1", is expected for 'pair'.
 // Use this function to return an error instead of panicking.
-func TryNew(pair string) (Pair, error) {
+func TryNewPair(pair string) (Pair, error) {
 	split := strings.Split(pair, ":")
 	splitLen := len(split)
 	if splitLen != 2 {
@@ -46,14 +46,14 @@ func TryNew(pair string) (Pair, error) {
 	}
 
 	// validate as denom
-	Pair := New(split[0], split[1])
+	Pair := NewPair(split[0], split[1])
 	return Pair, Pair.Validate()
 }
 
-// MustNew returns a new asset pair. It will panic if 'pair' is invalid.
+// MustNewPair returns a new asset pair. It will panic if 'pair' is invalid.
 // The form, "token0:token1", is expected for 'pair'.
-func MustNew(pair string) Pair {
-	Pair, err := TryNew(pair)
+func MustNewPair(pair string) Pair {
+	Pair, err := TryNewPair(pair)
 	if err != nil {
 		panic(err)
 	}
@@ -70,7 +70,7 @@ func (pair Pair) String() string {
 }
 
 func (pair Pair) Inverse() Pair {
-	return New(pair.QuoteDenom(), pair.BaseDenom())
+	return NewPair(pair.QuoteDenom(), pair.BaseDenom())
 }
 
 func (pair Pair) BaseDenom() string {
@@ -146,7 +146,7 @@ func (pairKeyEncoder) Encode(a Pair) []byte {
 }
 func (pairKeyEncoder) Decode(b []byte) (int, Pair) {
 	i, s := collections.StringKeyEncoder.Decode(b)
-	return i, MustNew(s)
+	return i, MustNewPair(s)
 }
 
 //-----------------------------------------------------------------------------
@@ -159,7 +159,7 @@ type Pairs []Pair
 // the provided pair names is invalid.
 func News(pairStrings ...string) (pairs Pairs) {
 	for _, pairString := range pairStrings {
-		pairs = append(pairs, MustNew(pairString))
+		pairs = append(pairs, MustNewPair(pairString))
 	}
 	return pairs
 }

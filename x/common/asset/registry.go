@@ -31,7 +31,7 @@ func init() {
 func (r registry) Pair(base string, quote string) Pair {
 	for q := range r[base] {
 		if q == quote {
-			return New(string(base), string(quote))
+			return NewPair(string(base), string(quote))
 		}
 	}
 

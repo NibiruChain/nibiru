@@ -116,7 +116,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 				trader := testutilevents.AccAddress()
-				pair := asset.MustNew("osmo:nusd")
+				pair := asset.MustNewPair("osmo:nusd")
 
 				_, _, _, err := nibiruApp.PerpKeeper.RemoveMargin(ctx, pair, trader, sdk.Coin{Denom: denoms.NUSD, Amount: removeAmt})
 				require.Error(t, err)
@@ -129,7 +129,7 @@ func TestRemoveMargin(t *testing.T) {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 				trader := testutilevents.AccAddress()
-				pair := asset.MustNew("osmo:nusd")
+				pair := asset.MustNewPair("osmo:nusd")
 
 				t.Log("Setup vpool defined by pair")
 				vpoolKeeper := &nibiruApp.VpoolKeeper
@@ -162,7 +162,7 @@ func TestRemoveMargin(t *testing.T) {
 				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 				ctx = ctx.WithBlockTime(time.Now())
 				traderAddr := testutilevents.AccAddress()
-				pair := asset.MustNew("xxx:yyy")
+				pair := asset.MustNewPair("xxx:yyy")
 
 				t.Log("Set vpool defined by pair on VpoolKeeper")
 				vpoolKeeper := &nibiruApp.VpoolKeeper

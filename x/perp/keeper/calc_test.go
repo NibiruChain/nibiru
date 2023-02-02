@@ -41,7 +41,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
 				trader := testutil.AccAddress()
-				pair := asset.MustNew("osmo:nusd")
+				pair := asset.MustNewPair("osmo:nusd")
 
 				t.Log("Set vpool defined by pair on VpoolKeeper")
 				vpoolKeeper := &nibiruApp.VpoolKeeper
@@ -94,7 +94,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
 				trader := testutil.AccAddress()
-				pair := asset.MustNew("osmo:nusd")
+				pair := asset.MustNewPair("osmo:nusd")
 
 				t.Log("Set vpool defined by pair on VpoolKeeper")
 				vpoolKeeper := &nibiruApp.VpoolKeeper
