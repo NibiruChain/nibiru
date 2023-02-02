@@ -9,6 +9,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 
+	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/simapp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -22,7 +23,7 @@ import (
 
 func initAppVpools(
 	t *testing.T, quoteAssetReserve sdk.Dec, baseAssetReserve sdk.Dec,
-) (sdk.Context, *simapp.NibiruTestApp, types.QueryServer) {
+) (sdk.Context, *app.NibiruApp, types.QueryServer) {
 	t.Log("initialize app and keeper")
 	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
 	perpKeeper := &nibiruApp.PerpKeeper
