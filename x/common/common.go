@@ -6,10 +6,9 @@ import (
 	"strings"
 
 	"github.com/NibiruChain/collections"
-	"github.com/holiman/uint256"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/holiman/uint256"
 )
 
 type AssetPair string
@@ -208,15 +207,4 @@ func (pairs AssetPairs) Validate() error {
 		seenPairs[pair.String()] = true
 	}
 	return nil
-}
-
-type assetPairsJSON AssetPairs
-
-// MarshalJSON implements a custom JSON marshaller for the AssetPairs type to allow
-// nil AssetPairs to be encoded as empty
-func (pairs AssetPairs) MarshalJSON() ([]byte, error) {
-	if pairs == nil {
-		return json.Marshal(assetPairsJSON(AssetPairs{}))
-	}
-	return json.Marshal(assetPairsJSON(pairs))
 }
