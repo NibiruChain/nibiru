@@ -8,13 +8,11 @@ import (
 	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
-	"github.com/NibiruChain/nibiru/x/common"
 )
 
 var (
 	// paired against USD
-	ErrInvalidTokenPair = sdkerrors.Register(common.ModuleName, 1, "invalid token pair")
+	ErrInvalidTokenPair = sdkerrors.Register("asset", 1, "invalid token pair")
 )
 
 type Pair string
