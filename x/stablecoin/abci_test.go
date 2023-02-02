@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/simapp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -24,7 +25,7 @@ type test struct {
 }
 
 func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
-	var app *simapp.NibiruTestApp
+	var app *app.NibiruApp
 	var ctx sdk.Context
 	var price sdk.Dec
 

@@ -15,6 +15,7 @@ import (
 	ibcmock "github.com/cosmos/ibc-go/v3/testing/mock"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 )
@@ -37,8 +38,8 @@ func SetupNibiruTestingApp() (
 	nibiruApp, _ := simapp.NewTestNibiruAppAndContext(true)
 
 	// Create genesis state
-	encCdc := simapp.MakeTestEncodingConfig()
-	genesisState := simapp.NewDefaultGenesisState(encCdc.Marshaler)
+	encCdc := app.MakeTestEncodingConfig()
+	genesisState := app.NewDefaultGenesisState(encCdc.Marshaler)
 
 	return nibiruApp, genesisState
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -20,7 +21,7 @@ import (
 
 func initAppVpools(
 	t *testing.T, quoteAssetReserve sdk.Dec, baseAssetReserve sdk.Dec,
-) (sdk.Context, *simapp.NibiruTestApp, types.QueryServer) {
+) (sdk.Context, *app.NibiruApp, types.QueryServer) {
 	t.Log("initialize app and keeper")
 	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
 	perpKeeper := &nibiruApp.PerpKeeper
