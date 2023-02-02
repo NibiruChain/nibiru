@@ -32,7 +32,7 @@ enum TwapCalcOption {
 message Vpool {
   // always BASE:QUOTE, e.g. BTC:NUSD or ETH:NUSD
   string pair = 1 [ 
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 
@@ -96,7 +96,7 @@ message CurrentTWAP {
 // a snapshot of the vpool's reserves at a given point in time
 message ReserveSnapshot {
   string pair = 5 [ 
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 
@@ -119,7 +119,7 @@ message ReserveSnapshot {
 message PoolPrices {
   // Pair identifier for the two assets. Always in format 'base:quote'
   string pair = 9 [ 
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 

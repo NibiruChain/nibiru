@@ -268,11 +268,11 @@ func TestOracleRewardDistribution(t *testing.T) {
 func TestOracleRewardBand(t *testing.T) {
 	input, h := setup(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
-	params.Whitelist = []common.AssetPair{asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}
+	params.Whitelist = []asset.Pair{asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
 	// clear pairs to reset vote targets
-	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[common.AssetPair]{}).Keys() {
+	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys() {
 		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 	}
 	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD))
@@ -484,7 +484,7 @@ func TestWhitelistedPairs(t *testing.T) {
 	input, h := setup(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
 
-	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[common.AssetPair]{}).Keys() {
+	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys() {
 		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 	}
 	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD))
@@ -495,7 +495,7 @@ func TestWhitelistedPairs(t *testing.T) {
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 2)
 
 	// set btcstable for next vote period
-	params.Whitelist = []common.AssetPair{asset.Registry.Pair(denoms.NIBI, denoms.NUSD), asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+	params.Whitelist = []asset.Pair{asset.Registry.Pair(denoms.NIBI, denoms.NUSD), asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 	input.OracleKeeper.SetParams(input.Ctx, params)
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
 
@@ -505,7 +505,7 @@ func TestWhitelistedPairs(t *testing.T) {
 	require.Equal(t, uint64(0), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[2], 0))
 
 	// whitelisted pairs are {govstable, btcstable}
-	require.Equal(t, []common.AssetPair{asset.Registry.Pair(denoms.BTC, denoms.NUSD), asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}, input.OracleKeeper.GetWhitelistedPairs(input.Ctx))
+	require.Equal(t, []asset.Pair{asset.Registry.Pair(denoms.BTC, denoms.NUSD), asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}, input.OracleKeeper.GetWhitelistedPairs(input.Ctx))
 
 	// govstable, missing btcstable
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 0)
@@ -513,7 +513,7 @@ func TestWhitelistedPairs(t *testing.T) {
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 2)
 
 	// delete btcstable for next vote period
-	params.Whitelist = []common.AssetPair{asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}
+	params.Whitelist = []asset.Pair{asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}
 	input.OracleKeeper.SetParams(input.Ctx, params)
 	oracle.EndBlocker(input.Ctx, input.OracleKeeper)
 
@@ -522,7 +522,7 @@ func TestWhitelistedPairs(t *testing.T) {
 	require.Equal(t, uint64(1), input.OracleKeeper.MissCounters.GetOr(input.Ctx, keeper.ValAddrs[2], 0))
 
 	// btcstable must be deleted
-	require.Equal(t, []common.AssetPair{asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}, input.OracleKeeper.GetWhitelistedPairs(input.Ctx))
+	require.Equal(t, []asset.Pair{asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}, input.OracleKeeper.GetWhitelistedPairs(input.Ctx))
 	require.False(t, input.OracleKeeper.WhitelistedPairs.Has(input.Ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)))
 
 	// govstable, no missing
@@ -541,7 +541,7 @@ func TestAbstainWithSmallStakingPower(t *testing.T) {
 	input, h := setupWithSmallVotingPower(t)
 
 	// clear tobin tax to reset vote targets
-	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[common.AssetPair]{}).Keys() {
+	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys() {
 		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 	}
 	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD))

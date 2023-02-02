@@ -5,12 +5,6 @@ import (
 	"time"
 
 	"github.com/NibiruChain/collections"
-
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
-
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -19,6 +13,10 @@ import (
 
 	nibisimapp "github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
+	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -566,7 +564,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader without a vpool.")
 				nibiruApp, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
-				pair := common.MustNewAssetPair("xxx:yyy")
+				pair := asset.MustNew("xxx:yyy")
 
 				trader := testutil.AccAddress()
 
@@ -586,7 +584,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
-				pair := common.MustNewAssetPair("xxx:yyy")
+				pair := asset.MustNew("xxx:yyy")
 
 				t.Log("Set vpool defined by pair on VpoolKeeper")
 				vpoolKeeper := &nibiruApp.VpoolKeeper

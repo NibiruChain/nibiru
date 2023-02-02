@@ -8,7 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
@@ -86,7 +86,7 @@ func CmdQueryPosition() *cobra.Command {
 				return fmt.Errorf("invalid trader address: %w", err)
 			}
 
-			pair, err := common.TryNewAssetPair(args[1])
+			pair, err := asset.TryNew(args[1])
 			if err != nil {
 				return err
 			}
@@ -158,7 +158,7 @@ func CmdQueryCumulativePremiumFraction() *cobra.Command {
 				return err
 			}
 
-			assetPair, err := common.TryNewAssetPair(args[0])
+			assetPair, err := asset.TryNew(args[0])
 			if err != nil {
 				return err
 			}
@@ -195,7 +195,7 @@ func CmdQueryMetrics() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			tokenPair, err := common.TryNewAssetPair(args[0])
+			tokenPair, err := asset.TryNew(args[0])
 			if err != nil {
 				return err
 			}

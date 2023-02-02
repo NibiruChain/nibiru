@@ -143,13 +143,13 @@ func TestGetPoolPrices_SetupErrors(t *testing.T) {
 				vpoolWithInvalidPair := types.Vpool{Pair: "o:o:unibi"}
 				vpoolKeeper, _, ctx := getKeeper(t)
 				_, err := vpoolKeeper.GetPoolPrices(ctx, vpoolWithInvalidPair)
-				require.ErrorContains(t, err, common.ErrInvalidTokenPair.Error())
+				require.ErrorContains(t, err, asset.ErrInvalidTokenPair.Error())
 			},
 		},
 		{
 			name: "attempt to use vpool that hasn't been added",
 			test: func(t *testing.T) {
-				vpool := types.Vpool{Pair: common.MustNewAssetPair("uatom:unibi")}
+				vpool := types.Vpool{Pair: asset.MustNew("uatom:unibi")}
 				vpoolKeeper, _, ctx := getKeeper(t)
 				_, err := vpoolKeeper.GetPoolPrices(ctx, vpool)
 				require.ErrorContains(t, err, types.ErrPairNotSupported.Error())
@@ -159,7 +159,7 @@ func TestGetPoolPrices_SetupErrors(t *testing.T) {
 			name: "vpool with reserves that don't make sense",
 			test: func(t *testing.T) {
 				vpool := types.Vpool{
-					Pair:              common.MustNewAssetPair("uatom:unibi"),
+					Pair:              asset.MustNew("uatom:unibi"),
 					BaseAssetReserve:  sdk.NewDec(999),
 					QuoteAssetReserve: sdk.NewDec(-400),
 				}

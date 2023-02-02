@@ -10,7 +10,6 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
@@ -104,7 +103,7 @@ func TestQueryExchangeRateTwap(t *testing.T) {
 func TestCalcTwap(t *testing.T) {
 	tests := []struct {
 		name               string
-		pair               common.AssetPair
+		pair               asset.Pair
 		priceSnapshots     []types.PriceSnapshot
 		currentBlockTime   time.Time
 		currentBlockHeight int64
@@ -195,7 +194,7 @@ func TestQueryActives(t *testing.T) {
 	res, err := queryClient.Actives(ctx, &types.QueryActivesRequest{})
 	require.NoError(t, err)
 
-	targetPairs := []common.AssetPair{
+	targetPairs := []asset.Pair{
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 		asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
@@ -331,11 +330,11 @@ func TestQueryVoteTargets(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	// clear pairs
-	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[common.AssetPair]{}).Keys() {
+	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys() {
 		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 	}
 
-	voteTargets := []common.AssetPair{"denom1:denom2", "denom3:denom4", "denom5:denom6"}
+	voteTargets := []asset.Pair{"denom1:denom2", "denom3:denom4", "denom5:denom6"}
 	for _, target := range voteTargets {
 		input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, target)
 	}

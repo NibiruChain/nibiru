@@ -4,15 +4,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -27,11 +25,11 @@ func TestCalcFreeCollateralErrors(t *testing.T) {
 			test: func() {
 				k, _, ctx := getKeeper(t)
 				alice := testutil.AccAddress()
-				pos := types.ZeroPosition(ctx, common.AssetPair("foobar"), alice)
+				pos := types.ZeroPosition(ctx, asset.Pair("foobar"), alice)
 				_, err := k.calcFreeCollateral(ctx, pos)
 
 				require.Error(t, err)
-				require.ErrorIs(t, err, common.ErrInvalidTokenPair)
+				require.ErrorIs(t, err, asset.ErrInvalidTokenPair)
 			},
 		},
 		{
@@ -214,7 +212,7 @@ func TestGetLatestCumulativePremiumFraction(t *testing.T) {
 			name: "uninitialized vpool has no metadata | fail",
 			test: func() {
 				perpKeeper, _, ctx := getKeeper(t)
-				vpool := common.AssetPair("xxx:yyy")
+				vpool := asset.Pair("xxx:yyy")
 				lcpf, err := perpKeeper.getLatestCumulativePremiumFraction(
 					ctx, vpool)
 				require.Error(t, err)

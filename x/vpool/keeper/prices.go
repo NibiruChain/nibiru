@@ -7,7 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -28,7 +28,7 @@ ret:
   - price: the price of the token pair as sdk.dec
   - err: error
 */
-func (k Keeper) GetMarkPrice(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error) {
+func (k Keeper) GetMarkPrice(ctx sdk.Context, pair asset.Pair) (sdk.Dec, error) {
 	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
 		return sdk.ZeroDec(), err
@@ -56,7 +56,7 @@ ret:
 */
 func (k Keeper) GetBaseAssetPrice(
 	ctx sdk.Context,
-	pair common.AssetPair,
+	pair asset.Pair,
 	dir types.Direction,
 	baseAssetAmount sdk.Dec,
 ) (quoteAmount sdk.Dec, err error) {
@@ -85,7 +85,7 @@ ret:
 */
 func (k Keeper) GetQuoteAssetPrice(
 	ctx sdk.Context,
-	pair common.AssetPair,
+	pair asset.Pair,
 	dir types.Direction,
 	quoteAmountAbs sdk.Dec,
 ) (baseAssetAmount sdk.Dec, err error) {
@@ -115,7 +115,7 @@ ret:
 */
 func (k Keeper) GetMarkPriceTWAP(
 	ctx sdk.Context,
-	pair common.AssetPair,
+	pair asset.Pair,
 	lookbackInterval time.Duration,
 ) (quoteAssetAmount sdk.Dec, err error) {
 	return k.calcTwap(
@@ -147,7 +147,7 @@ ret:
 */
 func (k Keeper) GetBaseAssetTWAP(
 	ctx sdk.Context,
-	pair common.AssetPair,
+	pair asset.Pair,
 	direction types.Direction,
 	baseAssetAmount sdk.Dec,
 	lookbackInterval time.Duration,
@@ -180,7 +180,7 @@ ret:
 */
 func (k Keeper) calcTwap(
 	ctx sdk.Context,
-	pair common.AssetPair,
+	pair asset.Pair,
 	twapCalcOption types.TwapCalcOption,
 	direction types.Direction,
 	assetAmount sdk.Dec,
@@ -191,7 +191,7 @@ func (k Keeper) calcTwap(
 
 	iter := k.ReserveSnapshots.Iterate(
 		ctx,
-		collections.PairRange[common.AssetPair, time.Time]{}.
+		collections.PairRange[asset.Pair, time.Time]{}.
 			Prefix(pair).
 			EndInclusive(ctx.BlockTime()).
 			Descending(),

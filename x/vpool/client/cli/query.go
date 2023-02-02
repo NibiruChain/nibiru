@@ -11,7 +11,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -53,7 +53,7 @@ func CmdGetVpoolReserveAssets() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			tokenPair, err := common.TryNewAssetPair(args[0])
+			tokenPair, err := asset.TryNew(args[0])
 			if err != nil {
 				return err
 			}
@@ -118,7 +118,7 @@ func CmdGetBaseAssetPrice() *cobra.Command {
 				return err
 			}
 
-			tokenPair, err := common.TryNewAssetPair(args[0])
+			tokenPair, err := asset.TryNew(args[0])
 			if err != nil {
 				return err
 			}

@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
@@ -187,7 +186,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("Build msg that specifies an impossible margin removal (too high)")
 				traderAddr := testutilevents.AccAddress()
-				pair := common.NewAssetPair("osmo", "nusd")
+				pair := asset.New("osmo", "nusd")
 
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
 
@@ -220,7 +219,7 @@ func TestRemoveMargin(t *testing.T) {
 				perpKeeper, mocks, ctx := getKeeper(t)
 
 				traderAddr := testutilevents.AccAddress()
-				pair := common.MustNewAssetPair("osmo:nusd")
+				pair := asset.MustNew("osmo:nusd")
 				marginToWithdraw := sdk.NewInt64Coin(pair.QuoteDenom(), 100)
 
 				t.Log("mock vpool keeper")
@@ -288,7 +287,7 @@ func TestRemoveMargin(t *testing.T) {
 				perpKeeper, mocks, ctx := getKeeper(t)
 
 				traderAddr := testutilevents.AccAddress()
-				pair := common.MustNewAssetPair("osmo:nusd")
+				pair := asset.MustNew("osmo:nusd")
 				marginToWithdraw := sdk.NewInt64Coin(pair.QuoteDenom(), 100)
 
 				t.Log("mock vpool keeper")
@@ -384,7 +383,7 @@ func TestRemoveMargin(t *testing.T) {
 				perpKeeper, mocks, ctx := getKeeper(t)
 
 				traderAddr := testutilevents.AccAddress()
-				pair := common.MustNewAssetPair("osmo:nusd")
+				pair := asset.MustNew("osmo:nusd")
 				marginToWithdraw := sdk.NewInt64Coin(pair.QuoteDenom(), 100)
 
 				t.Log("mock vpool keeper")
@@ -440,7 +439,7 @@ func TestAddMargin(t *testing.T) {
 				perpKeeper, mocks, ctx := getKeeper(t)
 
 				traderAddr := testutilevents.AccAddress()
-				pair := common.NewAssetPair("uosmo", "unusd")
+				pair := asset.New("uosmo", "unusd")
 				margin := sdk.NewInt64Coin(pair.QuoteDenom(), 600)
 
 				t.Log("set pair metadata")
@@ -477,7 +476,7 @@ func TestAddMargin(t *testing.T) {
 			name: "happy path - zero funding",
 			test: func() {
 				perpKeeper, mocks, ctx := getKeeper(t)
-				pair := common.MustNewAssetPair("uosmo:unusd")
+				pair := asset.MustNew("uosmo:unusd")
 				traderAddr := testutilevents.AccAddress()
 				margin := sdk.NewInt64Coin("unusd", 100)
 
@@ -548,7 +547,7 @@ func TestAddMargin(t *testing.T) {
 			test: func() {
 				perpKeeper, mocks, ctx := getKeeper(t)
 
-				pair := common.MustNewAssetPair("uosmo:unusd")
+				pair := asset.MustNew("uosmo:unusd")
 				traderAddr := testutilevents.AccAddress()
 				margin := sdk.NewInt64Coin("unusd", 100)
 

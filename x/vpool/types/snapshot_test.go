@@ -7,7 +7,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 )
@@ -31,7 +30,7 @@ func TestSnapshotValidate(t *testing.T) {
 		{
 			name: "invalid pair",
 			snapshot: ReserveSnapshot{
-				Pair:              common.NewAssetPair("$invalid", "valid"),
+				Pair:              asset.New("$invalid", "valid"),
 				BaseAssetReserve:  sdk.OneDec(),
 				QuoteAssetReserve: sdk.OneDec(),
 				TimestampMs:       time.Now().UnixMilli(),

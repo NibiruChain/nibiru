@@ -258,7 +258,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 	tests := []struct {
 		name        string
 		traderFunds sdk.Coins
-		pair        common.AssetPair
+		pair        asset.Pair
 		sender      string
 		expectedErr error
 	}{
@@ -352,7 +352,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 	tests := []struct {
 		name string
 
-		pair       common.AssetPair
+		pair       asset.Pair
 		traderAddr sdk.AccAddress
 
 		expectedErr error

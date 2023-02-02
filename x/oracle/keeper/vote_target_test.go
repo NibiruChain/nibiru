@@ -7,24 +7,23 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/collections"
-
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 )
 
 func TestKeeper_GetVoteTargets(t *testing.T) {
 	type TestCase struct {
 		name  string
-		in    []common.AssetPair
+		in    []asset.Pair
 		panic bool
 	}
 
 	panicCases := []TestCase{
-		{name: "blank pair", in: []common.AssetPair{""}, panic: true},
-		{name: "blank pair and others", in: []common.AssetPair{"", "x", "abc", "defafask"}, panic: true},
-		{name: "denom len too short", in: []common.AssetPair{"x:y", "xx:yy"}, panic: true},
+		{name: "blank pair", in: []asset.Pair{""}, panic: true},
+		{name: "blank pair and others", in: []asset.Pair{"", "x", "abc", "defafask"}, panic: true},
+		{name: "denom len too short", in: []asset.Pair{"x:y", "xx:yy"}, panic: true},
 	}
 	happyCases := []TestCase{
-		{name: "happy", in: []common.AssetPair{"foo:bar", "whoo:whoo"}},
+		{name: "happy", in: []asset.Pair{"foo:bar", "whoo:whoo"}},
 	}
 
 	for _, testCase := range append(panicCases, happyCases...) {
@@ -32,7 +31,7 @@ func TestKeeper_GetVoteTargets(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			input := CreateTestInput(t)
 
-			for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[common.AssetPair]{}).Keys() {
+			for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys() {
 				input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 			}
 
@@ -57,11 +56,11 @@ func TestKeeper_GetVoteTargets(t *testing.T) {
 
 	input := CreateTestInput(t)
 
-	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[common.AssetPair]{}).Keys() {
+	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys() {
 		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 	}
 
-	expectedTargets := []common.AssetPair{"foo:bar", "whoo:whoo"}
+	expectedTargets := []asset.Pair{"foo:bar", "whoo:whoo"}
 	for _, target := range expectedTargets {
 		input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, target)
 	}
@@ -73,11 +72,11 @@ func TestKeeper_GetVoteTargets(t *testing.T) {
 func TestIsWhitelistedPair(t *testing.T) {
 	input := CreateTestInput(t)
 
-	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[common.AssetPair]{}).Keys() {
+	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys() {
 		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 	}
 
-	validPairs := []common.AssetPair{"foo:bar", "xxx:yyy", "whoo:whoo"}
+	validPairs := []asset.Pair{"foo:bar", "xxx:yyy", "whoo:whoo"}
 	for _, target := range validPairs {
 		input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, target)
 		require.True(t, input.OracleKeeper.IsWhitelistedPair(input.Ctx, target))

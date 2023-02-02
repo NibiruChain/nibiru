@@ -7,7 +7,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
@@ -16,7 +15,7 @@ import (
 func TestGetSnapshotPrice(t *testing.T) {
 	tests := []struct {
 		name              string
-		pair              common.AssetPair
+		pair              asset.Pair
 		quoteAssetReserve sdk.Dec
 		baseAssetReserve  sdk.Dec
 		twapCalcOption    types.TwapCalcOption

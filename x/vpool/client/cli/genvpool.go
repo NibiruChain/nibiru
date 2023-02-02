@@ -15,7 +15,7 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/spf13/cobra"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -151,7 +151,7 @@ func newVpoolFromAddVpoolGenesisFlags(flagSet *flag.FlagSet,
 		}
 	}
 
-	pair, err := common.TryNewAssetPair(pairStr)
+	pair, err := asset.TryNew(pairStr)
 	if err != nil {
 		return
 	}
