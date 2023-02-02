@@ -198,7 +198,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#889](https://github.com/NibiruChain/nibiru/pull/889) - feat: decouple keeper from servers in pricefeed module
 * [#886](https://github.com/NibiruChain/nibiru/pull/886) - feat: decouple keeper from servers in perp module
 * [#901](https://github.com/NibiruChain/nibiru/pull/901) - refactor(vpool): remove `GetUnderlyingPrice` method
-* [#902](https://github.com/NibiruChain/nibiru/pull/902) - refactor(common): improve usability of `asset.Pair`
+* [#902](https://github.com/NibiruChain/nibiru/pull/902) - refactor(common): improve usability of `common.AssetPair`
 * [#913](https://github.com/NibiruChain/nibiru/pull/913) - chore(epochs): update x/epochs module
 * [#911](https://github.com/NibiruChain/nibiru/pull/911) - test(perp): add `MsgOpenPosition` simulation tests
 * [#917](https://github.com/NibiruChain/nibiru/pull/917) - refactor(proto): perp module files consistency
