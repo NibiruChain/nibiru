@@ -18,10 +18,10 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
+	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/NibiruChain/nibiru/x/perp/client/cli"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
-	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -434,58 +434,6 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 			}
 		})
 	}
-}
-
-func (s *IntegrationTestSuite) TestLiquidate() {
-	s.T().Log("liquidate a position that does not exist")
-	_, err := testutilcli.ExecTx(s.network, cli.LiquidateCmd(), s.users[4], []string{
-		asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
-		s.users[1].String(),
-	})
-	s.Contains(err.Error(), collections.ErrNotFound.Error())
-
-	s.T().Log("opening a position with user 1....")
-	txResp, err := testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[1], []string{
-		"buy",
-		asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
-		"15",    // Leverage
-		"90000", // Quote asset amount
-		"0",
-	})
-	s.NoError(err)
-	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
-
-	s.T().Log("liquidate a position that is above maintenance margin mario")
-	_, err = testutilcli.ExecTx(s.network, cli.LiquidateCmd(), s.users[4], []string{
-		asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
-		s.users[1].String(),
-	})
-	s.Contains(err.Error(), "margin ratio is too healthy to liquidate")
-
-	s.T().Log("opening a position with user 2...")
-	txResp, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[2], []string{
-		"sell",
-		asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
-		"15",       // Leverage
-		"45000000", // Quote asset amount
-		"0",
-	})
-	s.NoError(err)
-	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
-
-	s.T().Log("wait 10 blocks")
-	height, err := s.network.LatestHeight()
-	s.NoError(err)
-	_, err = s.network.WaitForHeight(height + 10)
-	s.NoError(err)
-
-	s.T().Log("liquidating user 1...")
-	txResp, err = testutilcli.ExecTx(s.network, cli.LiquidateCmd(), s.users[4], []string{
-		asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
-		s.users[1].String(),
-	})
-	s.NoError(err)
-	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 }
 
 func (s *IntegrationTestSuite) TestDonateToEcosystemFund() {

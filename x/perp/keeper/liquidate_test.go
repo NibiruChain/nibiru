@@ -6,7 +6,7 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
+	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"

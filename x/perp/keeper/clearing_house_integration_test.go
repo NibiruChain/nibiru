@@ -8,8 +8,8 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/testutil"
-	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
+	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"

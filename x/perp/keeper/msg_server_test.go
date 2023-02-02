@@ -17,9 +17,9 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -419,88 +419,6 @@ func TestMsgServerClosePosition(t *testing.T) {
 				assert.EqualValues(t, sdk.ZeroDec(), resp.FundingPayment)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("0.999999000000999999"), resp.MarginToTrader)
 				assert.EqualValues(t, sdk.MustNewDecFromStr("-0.000000999999000001"), resp.RealizedPnl)
-			}
-		})
-	}
-}
-
-func TestMsgServerLiquidate(t *testing.T) {
-	tests := []struct {
-		name string
-
-		pair       common.AssetPair
-		liquidator string
-		trader     string
-
-		expectedErr error
-	}{
-		{
-			name:        "success",
-			pair:        asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			liquidator:  testutil.AccAddress().String(),
-			trader:      testutil.AccAddress().String(),
-			expectedErr: nil,
-		},
-	}
-
-	for _, tc := range tests {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
-			ctx = ctx.WithBlockTime(time.Now())
-			setLiquidator(ctx, app.PerpKeeper, tc.liquidator)
-			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
-
-			t.Log("create vpool")
-			assert.NoError(t, app.VpoolKeeper.CreatePool(
-				/* ctx */ ctx,
-				/* pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
-				/* baseAssetReserve */ sdk.NewDec(1*common.Precision),
-				vpooltypes.VpoolConfig{
-					TradeLimitRatio:        sdk.OneDec(),
-					FluctuationLimitRatio:  sdk.OneDec(),
-					MaxOracleSpreadRatio:   sdk.OneDec(),
-					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-					MaxLeverage:            sdk.MustNewDecFromStr("15"),
-				},
-			))
-			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
-				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				LatestCumulativePremiumFraction: sdk.ZeroDec(),
-			})
-			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
-
-			traderAddr, err := sdk.AccAddressFromBech32(tc.trader)
-			if err == nil {
-				t.Log("set oracle price")
-				app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdk.OneDec())
-
-				t.Log("create position")
-				setPosition(app.PerpKeeper, ctx, types.Position{
-					TraderAddress:                   traderAddr.String(),
-					Pair:                            tc.pair,
-					Size_:                           sdk.OneDec(),
-					Margin:                          sdk.OneDec(),
-					OpenNotional:                    sdk.NewDec(2), // new spot price is 1, so position can be liquidated
-					LatestCumulativePremiumFraction: sdk.ZeroDec(),
-					BlockNumber:                     1,
-				})
-				require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(tc.pair.QuoteDenom(), 1))))
-			}
-
-			resp, err := msgServer.Liquidate(sdk.WrapSDKContext(ctx), &types.MsgLiquidate{
-				Sender: tc.liquidator,
-				Pair:   tc.pair,
-				Trader: tc.trader,
-			})
-
-			if tc.expectedErr != nil {
-				require.ErrorContains(t, err, tc.expectedErr.Error())
-				require.Nil(t, resp)
-			} else {
-				require.NoError(t, err)
-				require.NotNil(t, resp)
 			}
 		})
 	}

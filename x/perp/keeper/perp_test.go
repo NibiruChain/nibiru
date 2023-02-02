@@ -12,8 +12,8 @@ import (
 
 	nibisimapp "github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
