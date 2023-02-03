@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
@@ -68,7 +68,7 @@ func (q queryServer) QueryPosition(
 	return q.position(ctx, req.Pair, traderAddr)
 }
 
-func (q queryServer) position(ctx sdk.Context, pair common.AssetPair, trader sdk.AccAddress) (*types.QueryPositionResponse, error) {
+func (q queryServer) position(ctx sdk.Context, pair asset.Pair, trader sdk.AccAddress) (*types.QueryPositionResponse, error) {
 	position, err := q.k.Positions.Get(ctx, collections.Join(pair, trader))
 	if err != nil {
 		return nil, err

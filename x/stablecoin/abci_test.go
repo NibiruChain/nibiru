@@ -10,7 +10,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/epochs"
@@ -143,7 +142,7 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	ctx = ctx.WithBlockHeight(1).WithBlockTime(time.Now())
 	epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
-	pairs := common.AssetPairs{
+	pairs := asset.Pairs{
 		asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 	}
 	params := otypes.DefaultParams()

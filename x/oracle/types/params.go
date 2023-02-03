@@ -6,7 +6,6 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 
@@ -39,7 +38,7 @@ const (
 var (
 	DefaultVoteThreshold = sdk.NewDecWithPrec(50, 2) // 50%
 	DefaultRewardBand    = sdk.NewDecWithPrec(2, 2)  // 2% (-1, 1)
-	DefaultWhitelist     = []common.AssetPair{
+	DefaultWhitelist     = []asset.Pair{
 
 		// paired against NUSD
 		asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
@@ -195,7 +194,7 @@ func validateRewardBand(i interface{}) error {
 }
 
 func validateWhitelist(i interface{}) error {
-	v, ok := i.([]common.AssetPair)
+	v, ok := i.([]asset.Pair)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}

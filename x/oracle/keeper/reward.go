@@ -5,11 +5,11 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
-func (k Keeper) AllocatePairRewards(ctx sdk.Context, funderModule string, pair common.AssetPair, totalCoins sdk.Coins, votePeriods uint64) error {
+func (k Keeper) AllocatePairRewards(ctx sdk.Context, funderModule string, pair asset.Pair, totalCoins sdk.Coins, votePeriods uint64) error {
 	if !k.WhitelistedPairs.Has(ctx, pair) {
 		return types.ErrUnknownPair.Wrap(pair.String())
 	}
@@ -35,7 +35,7 @@ func (k Keeper) AllocatePairRewards(ctx sdk.Context, funderModule string, pair c
 // oracle reward pool to the oracle voters that voted faithfully.
 func (k Keeper) rewardBallotWinners(
 	ctx sdk.Context,
-	whitelistedPairs map[common.AssetPair]struct{},
+	whitelistedPairs map[asset.Pair]struct{},
 	validatorPerformanceMap map[string]types.ValidatorPerformance,
 ) {
 	totalRewardWeight := types.GetTotalRewardWeight(validatorPerformanceMap)
@@ -77,7 +77,7 @@ func (k Keeper) rewardBallotWinners(
 }
 
 // GatherRewardsForVotePeriod retrieves the pair rewards for the provided pair and current vote period.
-func (k Keeper) GatherRewardsForVotePeriod(ctx sdk.Context, pair common.AssetPair) sdk.Coins {
+func (k Keeper) GatherRewardsForVotePeriod(ctx sdk.Context, pair asset.Pair) sdk.Coins {
 	coins := sdk.NewCoins()
 	// iterate over
 	for _, rewardId := range k.PairRewards.Indexes.RewardsByPair.ExactMatch(ctx, pair).PrimaryKeys() {

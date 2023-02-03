@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### API Breaking
 
 * [#1158](https://github.com/NibiruChain/nibiru/pull/1158) - feat(asset-registry)!: Add `AssetRegistry`
+* [#1171](https://github.com/NibiruChain/nibiru/pull/1171) - refactor(asset)!: Replace `common.AssetPair` with `asset.Pair`.
 * [#1164](https://github.com/NibiruChain/nibiru/pull/1164) - refactor: remove client interface for liquidate msg
 
 ### State Machine Breaking

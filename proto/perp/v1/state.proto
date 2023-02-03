@@ -90,7 +90,7 @@ message Position {
 
   // pair identifies the pair associated with this position
   string pair = 2 [ 
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 
@@ -126,7 +126,7 @@ message Position {
 
 message PairMetadata {
   string pair = 1 [ 
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 
@@ -236,7 +236,7 @@ message LiquidateResp {
 message Metrics {
   // Pair identifier for the two assets. Always in format 'base:quote'
   string pair = 1 [ 
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 

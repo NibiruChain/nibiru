@@ -5,11 +5,6 @@ import (
 	"testing"
 
 	"github.com/NibiruChain/collections"
-
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"
@@ -25,6 +20,9 @@ import (
 	tmdb "github.com/tendermint/tm-db"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
+	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
@@ -1594,11 +1592,11 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 
 func TestTransferFee(t *testing.T) {
 	setup := func() (
-		k Keeper, mocks mockedDependencies, ctx sdk.Context, pair common.AssetPair,
+		k Keeper, mocks mockedDependencies, ctx sdk.Context, pair asset.Pair,
 		trader sdk.AccAddress, positionNotional sdk.Dec,
 	) {
 		perpKeeper, mocks, ctx := getKeeper(t)
-		pair = common.MustNewAssetPair("btc:usdc")
+		pair = asset.MustNewPair("btc:usdc")
 		perpKeeper.SetParams(ctx, types.DefaultParams())
 		metadata := &types.PairMetadata{
 			Pair: pair,

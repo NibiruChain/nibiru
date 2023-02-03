@@ -78,7 +78,7 @@ message QueryExchangeRateRequest {
 
   // pair defines the pair to query for.
   string pair = 1 [ 
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 }
@@ -112,7 +112,7 @@ message QueryActivesRequest {}
 message QueryActivesResponse {
   // actives defines a list of the pair which oracle prices agreed upon.
   repeated string actives = 1 [ 
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 }
@@ -126,7 +126,7 @@ message QueryVoteTargetsResponse {
   // vote_targets defines a list of the pairs in which everyone
   // should vote in the current vote period.
   repeated string vote_targets = 1 [ 
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 }

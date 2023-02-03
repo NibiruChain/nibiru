@@ -25,7 +25,7 @@ message Params {
   ];
   repeated string whitelist = 4 [
     (gogoproto.moretags)     = "yaml:\"whitelist\"",
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair"
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair"
   ];
   string slash_fraction = 5 [
     (gogoproto.moretags)   = "yaml:\"slash_fraction\"",
@@ -85,7 +85,7 @@ message ExchangeRateTuple {
 
   string pair = 1 [ 
     (gogoproto.moretags) = "yaml:\"pair\"",
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 
@@ -101,7 +101,7 @@ message ExchangeRateTuple {
 message PairReward {
   // pair defines the pair for which we incentivize validator to provide prices for.
   string pair = 1 [ 
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
   // id uniquely identifies the rewards instance of the pair

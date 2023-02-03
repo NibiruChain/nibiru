@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -56,7 +56,7 @@ func (q queryServer) AllPools(
 
 	var pools []types.Vpool
 	var pricesForPools []types.PoolPrices
-	for _, pool := range q.k.Pools.Iterate(ctx, collections.Range[common.AssetPair]{}).Values() {
+	for _, pool := range q.k.Pools.Iterate(ctx, collections.Range[asset.Pair]{}).Values() {
 		poolPrices, err := q.k.GetPoolPrices(ctx, pool)
 		if err != nil {
 			return nil, err

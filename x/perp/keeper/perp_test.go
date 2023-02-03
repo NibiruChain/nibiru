@@ -12,6 +12,7 @@ import (
 
 	nibisimapp "github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
@@ -23,7 +24,7 @@ func TestKeeperClosePosition(t *testing.T) {
 		t.Log("Setup Nibiru app, pair, and trader")
 		nibiruApp, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
 		ctx = ctx.WithBlockTime(time.Now())
-		pair := common.MustNewAssetPair("xxx:yyy")
+		pair := asset.MustNewPair("xxx:yyy")
 
 		t.Log("Set vpool defined by pair on VpoolKeeper")
 		vpoolKeeper := &nibiruApp.VpoolKeeper

@@ -5,21 +5,18 @@ import (
 	"time"
 
 	"github.com/NibiruChain/collections"
-
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
-	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
-
-	simapp2 "github.com/NibiruChain/nibiru/simapp"
-
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	simapp2 "github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
+	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/perp/types"
+	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 func TestAddMarginSuccess(t *testing.T) {
@@ -119,7 +116,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 				trader := testutilevents.AccAddress()
-				pair := common.MustNewAssetPair("osmo:nusd")
+				pair := asset.MustNewPair("osmo:nusd")
 
 				_, _, _, err := nibiruApp.PerpKeeper.RemoveMargin(ctx, pair, trader, sdk.Coin{Denom: denoms.NUSD, Amount: removeAmt})
 				require.Error(t, err)
@@ -132,7 +129,7 @@ func TestRemoveMargin(t *testing.T) {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 				trader := testutilevents.AccAddress()
-				pair := common.MustNewAssetPair("osmo:nusd")
+				pair := asset.MustNewPair("osmo:nusd")
 
 				t.Log("Setup vpool defined by pair")
 				vpoolKeeper := &nibiruApp.VpoolKeeper
@@ -165,7 +162,7 @@ func TestRemoveMargin(t *testing.T) {
 				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
 				ctx = ctx.WithBlockTime(time.Now())
 				traderAddr := testutilevents.AccAddress()
-				pair := common.MustNewAssetPair("xxx:yyy")
+				pair := asset.MustNewPair("xxx:yyy")
 
 				t.Log("Set vpool defined by pair on VpoolKeeper")
 				vpoolKeeper := &nibiruApp.VpoolKeeper
