@@ -4,7 +4,7 @@ package keeper
 import (
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -268,7 +268,7 @@ func FundAccount(input TestInput, addr sdk.AccAddress, amounts sdk.Coins) error 
 	return input.BankKeeper.SendCoinsFromModuleToAccount(input.Ctx, faucetAccountName, addr, amounts)
 }
 
-func AllocateRewards(t *testing.T, input TestInput, pair common.AssetPair, rewards sdk.Coins, votePeriods uint64) {
+func AllocateRewards(t *testing.T, input TestInput, pair asset.Pair, rewards sdk.Coins, votePeriods uint64) {
 	require.NoError(t, input.BankKeeper.MintCoins(input.Ctx, faucetAccountName, rewards))
 	require.NoError(t, input.OracleKeeper.AllocatePairRewards(input.Ctx, faucetAccountName, pair, rewards, votePeriods))
 }

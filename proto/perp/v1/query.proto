@@ -63,7 +63,7 @@ message QueryPositionsResponse {
 // module account.
 message QueryPositionRequest {
   string pair = 1 [ 
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 
@@ -114,7 +114,7 @@ message QueryPositionResponse {
 message QueryCumulativePremiumFractionRequest {
   // the pair to query for
   string pair = 1 [ 
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 }
@@ -137,7 +137,7 @@ message QueryCumulativePremiumFractionResponse {
 message QueryMetricsRequest {
   // the pair to query for
   string pair = 1 [ 
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 }

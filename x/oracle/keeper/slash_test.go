@@ -10,7 +10,6 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/oracle"
@@ -92,7 +91,7 @@ func TestSlashAndResetMissCounters(t *testing.T) {
 func TestInvalidVotesSlashing(t *testing.T) {
 	input, h := setup(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
-	params.Whitelist = []common.AssetPair{asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}
+	params.Whitelist = []asset.Pair{asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}
 	input.OracleKeeper.SetParams(input.Ctx, params)
 	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD))
 
@@ -173,11 +172,11 @@ func TestWhitelistSlashing(t *testing.T) {
 func TestNotPassedBallotSlashing(t *testing.T) {
 	input, h := setup(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
-	params.Whitelist = []common.AssetPair{asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}
+	params.Whitelist = []asset.Pair{asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
 	// clear tobin tax to reset vote targets
-	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[common.AssetPair]{}).Keys() {
+	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys() {
 		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 	}
 	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD))
@@ -196,11 +195,11 @@ func TestNotPassedBallotSlashing(t *testing.T) {
 func TestAbstainSlashing(t *testing.T) {
 	input, h := setup(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
-	params.Whitelist = []common.AssetPair{asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}
+	params.Whitelist = []asset.Pair{asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
 	// clear tobin tax to reset vote targets
-	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[common.AssetPair]{}).Keys() {
+	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys() {
 		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 	}
 	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD))

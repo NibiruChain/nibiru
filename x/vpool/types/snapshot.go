@@ -6,11 +6,11 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 )
 
 func NewReserveSnapshot(
-	pair common.AssetPair,
+	pair asset.Pair,
 	baseAssetReserve, quoteAssetReserve sdk.Dec,
 	blockTime time.Time,
 ) ReserveSnapshot {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 
 	"gopkg.in/yaml.v2"
 
@@ -48,7 +48,7 @@ func (v AggregateExchangeRateVote) String() string {
 }
 
 // NewExchangeRateTuple creates a ExchangeRateTuple instance
-func NewExchangeRateTuple(pair common.AssetPair, exchangeRate sdk.Dec) ExchangeRateTuple {
+func NewExchangeRateTuple(pair asset.Pair, exchangeRate sdk.Dec) ExchangeRateTuple {
 	return ExchangeRateTuple{
 		pair,
 		exchangeRate,
@@ -95,7 +95,7 @@ func NewExchangeRateTupleFromString(s string) (ExchangeRateTuple, error) {
 		return ExchangeRateTuple{}, fmt.Errorf("invalid ExchangeRateTuple format")
 	}
 
-	pair, err := common.TryNewAssetPair(split[0])
+	pair, err := asset.TryNewPair(split[0])
 	if err != nil {
 		return ExchangeRateTuple{}, fmt.Errorf("invalid pair definition %s: %w", split[0], err)
 	}
@@ -125,7 +125,7 @@ func NewExchangeRateTuplesFromString(s string) (ExchangeRateTuples, error) {
 
 	tuples := make(ExchangeRateTuples, len(stringTuples))
 
-	duplicates := make(map[common.AssetPair]struct{}, len(stringTuples))
+	duplicates := make(map[asset.Pair]struct{}, len(stringTuples))
 
 	for i, stringTuple := range stringTuples {
 		exchangeRate, err := NewExchangeRateTupleFromString(stringTuple)

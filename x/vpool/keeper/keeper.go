@@ -10,7 +10,7 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -23,10 +23,10 @@ func NewKeeper(
 		codec:        codec,
 		storeKey:     storeKey,
 		oracleKeeper: oracleKeeper,
-		Pools:        collections.NewMap(storeKey, 0, common.AssetPairKeyEncoder, collections.ProtoValueEncoder[types.Vpool](codec)),
+		Pools:        collections.NewMap(storeKey, 0, asset.PairKeyEncoder, collections.ProtoValueEncoder[types.Vpool](codec)),
 		ReserveSnapshots: collections.NewMap(
 			storeKey, 1,
-			collections.PairKeyEncoder(common.AssetPairKeyEncoder, collections.TimeKeyEncoder),
+			collections.PairKeyEncoder(asset.PairKeyEncoder, collections.TimeKeyEncoder),
 			collections.ProtoValueEncoder[types.ReserveSnapshot](codec),
 		),
 	}
@@ -37,8 +37,8 @@ type Keeper struct {
 	storeKey     sdk.StoreKey
 	oracleKeeper types.OracleKeeper
 
-	Pools            collections.Map[common.AssetPair, types.Vpool]
-	ReserveSnapshots collections.Map[collections.Pair[common.AssetPair, time.Time], types.ReserveSnapshot]
+	Pools            collections.Map[asset.Pair, types.Vpool]
+	ReserveSnapshots collections.Map[collections.Pair[asset.Pair, time.Time], types.ReserveSnapshot]
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
@@ -65,7 +65,7 @@ ret:
 */
 func (k Keeper) SwapBaseForQuote(
 	ctx sdk.Context,
-	pair common.AssetPair,
+	pair asset.Pair,
 	dir types.Direction,
 	baseAmt sdk.Dec,
 	quoteLimit sdk.Dec,
@@ -162,7 +162,7 @@ ret:
 */
 func (k Keeper) SwapQuoteForBase(
 	ctx sdk.Context,
-	pair common.AssetPair,
+	pair asset.Pair,
 	dir types.Direction,
 	quoteAmt sdk.Dec,
 	baseLimit sdk.Dec,
@@ -268,7 +268,7 @@ args:
   - pool: the vpool to check
 */
 func (k Keeper) GetLastSnapshot(ctx sdk.Context, pool types.Vpool) (types.ReserveSnapshot, error) {
-	it := k.ReserveSnapshots.Iterate(ctx, collections.PairRange[common.AssetPair, time.Time]{}.Prefix(pool.Pair).Descending())
+	it := k.ReserveSnapshots.Iterate(ctx, collections.PairRange[asset.Pair, time.Time]{}.Prefix(pool.Pair).Descending())
 	defer it.Close()
 	if !it.Valid() {
 		return types.ReserveSnapshot{}, fmt.Errorf("error getting last snapshot number for pair %s", pool.Pair)
@@ -288,7 +288,7 @@ args:
 ret:
   - bool: whether the price has deviated from the oracle price beyond a spread ratio
 */
-func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair common.AssetPair) (bool, error) {
+func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, pair asset.Pair) (bool, error) {
 	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
 		return false, err
@@ -313,7 +313,7 @@ ret:
   - sdk.Dec: The maintenance margin ratio for the pool
   - error
 */
-func (k Keeper) GetMaintenanceMarginRatio(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error) {
+func (k Keeper) GetMaintenanceMarginRatio(ctx sdk.Context, pair asset.Pair) (sdk.Dec, error) {
 	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
 		return sdk.Dec{}, err
@@ -333,7 +333,7 @@ ret:
   - sdk.Dec: The maintenance margin ratio for the pool
   - error
 */
-func (k Keeper) GetMaxLeverage(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error) {
+func (k Keeper) GetMaxLeverage(ctx sdk.Context, pair asset.Pair) (sdk.Dec, error) {
 	pool, err := k.Pools.Get(ctx, pair)
 	if err != nil {
 		return sdk.Dec{}, err
@@ -352,5 +352,5 @@ ret:
   - []types.Vpool: All defined vpool
 */
 func (k Keeper) GetAllPools(ctx sdk.Context) []types.Vpool {
-	return k.Pools.Iterate(ctx, collections.Range[common.AssetPair]{}).Values()
+	return k.Pools.Iterate(ctx, collections.Range[asset.Pair]{}).Values()
 }

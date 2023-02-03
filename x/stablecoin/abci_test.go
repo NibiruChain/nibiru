@@ -4,12 +4,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/simapp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/epochs"
@@ -25,7 +25,7 @@ type test struct {
 }
 
 func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
-	var app *simapp.NibiruTestApp
+	var app *app.NibiruApp
 	var ctx sdk.Context
 	var price sdk.Dec
 
@@ -142,7 +142,7 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	ctx = ctx.WithBlockHeight(1).WithBlockTime(time.Now())
 	epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
-	pairs := common.AssetPairs{
+	pairs := asset.Pairs{
 		asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 	}
 	params := otypes.DefaultParams()
