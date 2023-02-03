@@ -3,6 +3,7 @@ package types
 import (
 	"encoding/csv"
 	"encoding/json"
+	fmt "fmt"
 	"log"
 	"os"
 	"strconv"
@@ -290,9 +291,9 @@ func TestJoinPoolHappyPath(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			numShares, remCoins, err := tc.pool.AddTokensToPool(tc.tokensIn)
 			require.NoError(t, err)
-			require.Equal(t, tc.expectedNumShares, numShares)
-			require.Equal(t, tc.expectedRemCoins, remCoins)
-			require.Equal(t, tc.expectedPool, tc.pool)
+			require.Equal(t, tc.expectedNumShares.String(), numShares.String())
+			require.Equal(t, tc.expectedRemCoins.String(), remCoins.String())
+			require.Equal(t, tc.expectedPool.String(), tc.pool.String())
 		})
 	}
 }
@@ -768,7 +769,7 @@ func TestGetD(t *testing.T) {
 
 			D, err := pool.GetD(pool.PoolAssets)
 			require.NoError(t, err)
-			require.EqualValues(t, tc.expectedD, D.Uint64())
+			require.EqualValues(t, fmt.Sprint(tc.expectedD), fmt.Sprint(D.Uint64()))
 		})
 	}
 }

@@ -23,19 +23,20 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
+		goCtx := sdk.WrapSDKContext(ctx)
 
 		switch msg := msg.(type) {
 		case *types.MsgMintStable:
-			res, err := msgServer.MintStable(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.MintStable(goCtx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgBurnStable:
-			res, err := msgServer.BurnStable(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.BurnStable(goCtx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgRecollateralize:
-			res, err := msgServer.Recollateralize(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.Recollateralize(goCtx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgBuyback:
-			res, err := msgServer.Buyback(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.Buyback(goCtx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		default:
 			errMsg := fmt.Sprintf(

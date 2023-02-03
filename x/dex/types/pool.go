@@ -275,78 +275,78 @@ func (pool *Pool) setInitialPoolAssets(poolAssets []PoolAsset) (err error) {
 // Converging solution:
 // D[j+1] = (A * n**n * sum(x_i) - D[j]**(n+1) / (n**n prod(x_i))) / (A * n**n - 1)
 func (pool Pool) GetD(poolAssets []PoolAsset) (*uint256.Int, error) {
-	nCoins := uint256.NewInt().SetUint64(uint64(len(poolAssets)))
+	nCoins := uint256.NewInt(uint64(len(poolAssets)))
 
-	S := uint256.NewInt()
+	S := new(uint256.Int)
 	A_Precision := common.APrecision
 
-	Amp := uint256.NewInt().SetUint64(uint64(pool.PoolParams.A.Int64()))
+	Amp := uint256.NewInt(uint64(pool.PoolParams.A.Int64()))
 	Amp.Mul(Amp, A_Precision)
 
-	Ann := uint256.NewInt()
+	Ann := new(uint256.Int)
 
 	nCoinsFloat := float64(len(poolAssets))
-	Ann.Mul(Amp, uint256.NewInt().SetUint64(uint64(math.Pow(nCoinsFloat, nCoinsFloat))))
+	Ann.Mul(Amp, uint256.NewInt(uint64(math.Pow(nCoinsFloat, nCoinsFloat))))
 
 	var poolAssetsTokens []*uint256.Int
 	for _, token := range poolAssets {
-		amount := uint256.NewInt().SetUint64(token.Token.Amount.Uint64())
+		amount := uint256.NewInt(token.Token.Amount.Uint64())
 		poolAssetsTokens = append(poolAssetsTokens, amount)
 		S.Add(S, amount)
 	}
 
-	D := uint256.NewInt().Set(S)
+	D := new(uint256.Int).Set(S)
 
 	for i := 0; i < 255; i++ {
-		D_P := uint256.NewInt().Set(D)
+		D_P := new(uint256.Int).Set(D)
 		for _, token := range poolAssetsTokens {
 			D_P.Div(
-				uint256.NewInt().Mul(D_P, D),
-				uint256.NewInt().Mul(token, nCoins),
+				new(uint256.Int).Mul(D_P, D),
+				new(uint256.Int).Mul(token, nCoins),
 			)
 		}
-		previousD := uint256.NewInt().Set(D)
+		previousD := new(uint256.Int).Set(D)
 
 		// D = (Ann * S + D_P * N_COINS) * D / ((Ann - 1) * D + (N_COINS + 1) * D_P)
-		num := uint256.NewInt().Mul(
-			uint256.NewInt().Add(
-				uint256.NewInt().Mul(Ann, S),
-				uint256.NewInt().Mul(D_P, nCoins),
+		num := new(uint256.Int).Mul(
+			new(uint256.Int).Add(
+				new(uint256.Int).Mul(Ann, S),
+				new(uint256.Int).Mul(D_P, nCoins),
 			),
 			D,
 		)
-		denom := uint256.NewInt().Add(
-			uint256.NewInt().Mul(
-				uint256.NewInt().Add(
+		denom := new(uint256.Int).Add(
+			new(uint256.Int).Mul(
+				new(uint256.Int).Add(
 					nCoins,
-					uint256.NewInt().SetOne(),
+					uint256.NewInt(1),
 				),
 				D_P,
 			),
-			uint256.NewInt().Mul(
-				uint256.NewInt().Sub(Ann, uint256.NewInt().SetOne()),
+			new(uint256.Int).Mul(
+				new(uint256.Int).Sub(Ann, uint256.NewInt(1)),
 				D,
 			),
 		)
 
 		// D = (Ann * S / A_PRECISION + D_P * N_COINS) * D / ((Ann - A_PRECISION) * D / A_PRECISION + (N_COINS + 1) * D_P)
-		absDifference := uint256.NewInt()
+		absDifference := new(uint256.Int)
 		D.Div(num, denom)
 
-		absDifference.Abs(uint256.NewInt().Sub(D, previousD))
-		if absDifference.Lt(uint256.NewInt().SetUint64(2)) { // absDifference LTE 1 -> absDifference LT 2
+		absDifference.Abs(new(uint256.Int).Sub(D, previousD))
+		if absDifference.Lt(uint256.NewInt(2)) { // absDifference LTE 1 -> absDifference LT 2
 			return D, nil
 		}
 	}
 
 	// convergence typically occurs in 4 rounds or less, this should be unreachable!
 	// if it does happen the pool is borked and LPs can withdraw via `remove_liquidity`
-	return uint256.NewInt(), ErrBorkedPool
+	return new(uint256.Int), ErrBorkedPool
 }
 
 // getA returns the amplification factor of the pool
 func (pool Pool) getA() (Amp *uint256.Int) {
-	Amp = uint256.NewInt().SetUint64(uint64(pool.PoolParams.A.Int64()))
+	Amp = uint256.NewInt(uint64(pool.PoolParams.A.Int64()))
 	return
 }
 
@@ -366,7 +366,7 @@ func (pool Pool) getIJforSwap(denomIn, denomOut string) (i int, j int, err error
 }
 
 func MustSdkIntToUint256(num sdk.Int) *uint256.Int {
-	return uint256.NewInt().SetUint64(uint64(num.Int64()))
+	return uint256.NewInt(uint64(num.Int64()))
 }
 
 // Calculate the amount of token out
@@ -403,14 +403,14 @@ func (pool Pool) SolveStableswapInvariant(tokenIn sdk.Coin, tokenOutDenom string
 		return
 	}
 
-	Ann := uint256.NewInt()
-	nCoins := uint256.NewInt().SetUint64(uint64(len(pool.PoolAssets)))
+	Ann := new(uint256.Int)
+	nCoins := uint256.NewInt(uint64(len(pool.PoolAssets)))
 
 	nCoinsFloat := float64(len(pool.PoolAssets))
-	Ann.Mul(A, uint256.NewInt().SetUint64(uint64(math.Pow(nCoinsFloat, nCoinsFloat))))
+	Ann.Mul(A, uint256.NewInt(uint64(math.Pow(nCoinsFloat, nCoinsFloat))))
 
-	c := uint256.NewInt().Set(D)
-	S := uint256.NewInt()
+	c := new(uint256.Int).Set(D)
+	S := new(uint256.Int)
 	var _x *uint256.Int
 
 	i, j, err := pool.getIJforSwap(tokenIn.Denom, tokenOutDenom)
@@ -430,36 +430,37 @@ func (pool Pool) SolveStableswapInvariant(tokenIn sdk.Coin, tokenOutDenom string
 		S.Add(S, _x)
 
 		c.Div(
-			uint256.NewInt().Mul(c, D),
-			uint256.NewInt().Mul(_x, nCoins),
+			new(uint256.Int).Mul(c, D),
+			new(uint256.Int).Mul(_x, nCoins),
 		)
 	}
 
 	// c = c * D * A_PRECISION / (Ann * N_COINS)
 	c.Div(
-		uint256.NewInt().Mul(c, uint256.NewInt().Mul(D, common.APrecision)),
-		uint256.NewInt().Mul(Ann, nCoins),
+		new(uint256.Int).Mul(c, new(uint256.Int).Mul(D, common.APrecision)),
+		new(uint256.Int).Mul(Ann, nCoins),
 	)
 
-	b := uint256.NewInt().Add(
+	// b = S + (D / APrecision) * Ann
+	b := new(uint256.Int).Add(
 		S,
-		uint256.NewInt().Div(
-			uint256.NewInt().Mul(D, common.APrecision),
+		new(uint256.Int).Div(
+			new(uint256.Int).Mul(D, common.APrecision),
 			Ann,
 		),
 	)
 
-	y := uint256.NewInt().Set(D)
-	y_prev := uint256.NewInt()
+	y := new(uint256.Int).Set(D)
+	y_prev := new(uint256.Int)
 
 	for _i := 0; _i < 255; _i++ {
 		y_prev.Set(y)
 
 		y.Div(
-			uint256.NewInt().Add(uint256.NewInt().Mul(y, y), c),
-			uint256.NewInt().Sub(
-				uint256.NewInt().Add(
-					uint256.NewInt().Mul(uint256.NewInt().SetUint64(2),
+			new(uint256.Int).Add(new(uint256.Int).Mul(y, y), c),
+			new(uint256.Int).Sub(
+				new(uint256.Int).Add(
+					new(uint256.Int).Mul(uint256.NewInt(2),
 						y,
 					),
 					b,
@@ -468,9 +469,9 @@ func (pool Pool) SolveStableswapInvariant(tokenIn sdk.Coin, tokenOutDenom string
 			),
 		)
 
-		absDifference := uint256.NewInt()
-		absDifference.Abs(uint256.NewInt().Sub(y, y_prev))
-		if absDifference.Lt(uint256.NewInt().SetUint64(2)) { // LTE 1
+		absDifference := new(uint256.Int)
+		absDifference.Abs(new(uint256.Int).Sub(y, y_prev))
+		if absDifference.Lt(uint256.NewInt(2)) { // LTE 1
 			return sdk.NewIntFromUint64(y.Uint64()), nil
 		}
 	}
