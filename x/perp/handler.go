@@ -23,22 +23,23 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
+		goCtx := sdk.WrapSDKContext(ctx)
 
 		switch msg := msg.(type) {
 		case *types.MsgRemoveMargin:
-			res, err := msgServer.RemoveMargin(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.RemoveMargin(goCtx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgAddMargin:
-			res, err := msgServer.AddMargin(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.AddMargin(goCtx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgOpenPosition:
-			res, err := msgServer.OpenPosition(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.OpenPosition(goCtx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgClosePosition:
-			res, err := msgServer.ClosePosition(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.ClosePosition(goCtx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgMultiLiquidate:
-			res, err := msgServer.MultiLiquidate(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.MultiLiquidate(goCtx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		default:
 			errMsg := fmt.Sprintf(

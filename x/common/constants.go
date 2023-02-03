@@ -11,5 +11,5 @@ const (
 )
 
 var (
-	APrecision = uint256.NewInt().SetUint64(1)
+	APrecision = uint256.NewInt(1)
 )
