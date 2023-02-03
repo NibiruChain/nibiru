@@ -10,13 +10,14 @@ import (
 	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 // CreatePool creates a pool for a specific pair.
 func (k Keeper) CreatePool(
 	ctx sdk.Context,
-	pair common.AssetPair,
+	pair asset.Pair,
 	quoteAssetReserve sdk.Dec,
 	baseAssetReserve sdk.Dec,
 	config types.VpoolConfig,
@@ -46,7 +47,7 @@ func (k Keeper) CreatePool(
 
 func (k Keeper) EditPoolConfig(
 	ctx sdk.Context,
-	pair common.AssetPair,
+	pair asset.Pair,
 	config types.VpoolConfig,
 ) error {
 	// Grab current pool from state
@@ -155,7 +156,7 @@ func (k Keeper) updatePool(
 }
 
 // ExistsPool returns true if pool exists, false if not.
-func (k Keeper) ExistsPool(ctx sdk.Context, pair common.AssetPair) bool {
+func (k Keeper) ExistsPool(ctx sdk.Context, pair asset.Pair) bool {
 	_, err := k.Pools.Get(ctx, pair)
 	return err == nil
 }

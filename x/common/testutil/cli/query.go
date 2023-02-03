@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	oraclecli "github.com/NibiruChain/nibiru/x/oracle/client/cli"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	perpcli "github.com/NibiruChain/nibiru/x/perp/client/cli"
@@ -74,7 +74,7 @@ func ExecQuery(clientCtx client.Context, cmd *cobra.Command, args []string, resu
 	}
 }
 
-func QueryVpoolReserveAssets(clientCtx client.Context, pair common.AssetPair,
+func QueryVpoolReserveAssets(clientCtx client.Context, pair asset.Pair,
 ) (*vpooltypes.QueryReserveAssetsResponse, error) {
 	var queryResp vpooltypes.QueryReserveAssetsResponse
 	if err := ExecQuery(clientCtx, vpoolcli.CmdGetVpoolReserveAssets(), []string{pair.String()}, &queryResp); err != nil {
@@ -83,7 +83,7 @@ func QueryVpoolReserveAssets(clientCtx client.Context, pair common.AssetPair,
 	return &queryResp, nil
 }
 
-func QueryOracleExchangeRate(clientCtx client.Context, pair common.AssetPair) (*oracletypes.QueryExchangeRateResponse, error) {
+func QueryOracleExchangeRate(clientCtx client.Context, pair asset.Pair) (*oracletypes.QueryExchangeRateResponse, error) {
 	var queryResp oracletypes.QueryExchangeRateResponse
 	if err := ExecQuery(clientCtx, oraclecli.GetCmdQueryExchangeRates(), []string{pair.String()}, &queryResp); err != nil {
 		return nil, err
@@ -91,7 +91,7 @@ func QueryOracleExchangeRate(clientCtx client.Context, pair common.AssetPair) (*
 	return &queryResp, nil
 }
 
-func QueryBaseAssetPrice(clientCtx client.Context, pair common.AssetPair, direction string, amount string) (*vpooltypes.QueryBaseAssetPriceResponse, error) {
+func QueryBaseAssetPrice(clientCtx client.Context, pair asset.Pair, direction string, amount string) (*vpooltypes.QueryBaseAssetPriceResponse, error) {
 	var queryResp vpooltypes.QueryBaseAssetPriceResponse
 	if err := ExecQuery(clientCtx, vpoolcli.CmdGetBaseAssetPrice(), []string{pair.String(), direction, amount}, &queryResp); err != nil {
 		return nil, err
@@ -99,7 +99,7 @@ func QueryBaseAssetPrice(clientCtx client.Context, pair common.AssetPair, direct
 	return &queryResp, nil
 }
 
-func QueryPosition(ctx client.Context, pair common.AssetPair, trader sdk.AccAddress) (*perptypes.QueryPositionResponse, error) {
+func QueryPosition(ctx client.Context, pair asset.Pair, trader sdk.AccAddress) (*perptypes.QueryPositionResponse, error) {
 	var queryResp perptypes.QueryPositionResponse
 	if err := ExecQuery(ctx, perpcli.CmdQueryPosition(), []string{trader.String(), pair.String()}, &queryResp); err != nil {
 		return nil, err
@@ -107,7 +107,7 @@ func QueryPosition(ctx client.Context, pair common.AssetPair, trader sdk.AccAddr
 	return &queryResp, nil
 }
 
-func QueryCumulativePremiumFraction(clientCtx client.Context, pair common.AssetPair) (*perptypes.QueryCumulativePremiumFractionResponse, error) {
+func QueryCumulativePremiumFraction(clientCtx client.Context, pair asset.Pair) (*perptypes.QueryCumulativePremiumFractionResponse, error) {
 	var queryResp perptypes.QueryCumulativePremiumFractionResponse
 	if err := ExecQuery(clientCtx, perpcli.CmdQueryCumulativePremiumFraction(), []string{pair.String()}, &queryResp); err != nil {
 		return nil, err

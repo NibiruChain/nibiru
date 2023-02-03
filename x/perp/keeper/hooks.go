@@ -5,10 +5,9 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/x/common"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
@@ -22,7 +21,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64)
 		return
 	}
 
-	for _, pairMetadata := range k.PairsMetadata.Iterate(ctx, collections.Range[common.AssetPair]{}).Values() {
+	for _, pairMetadata := range k.PairsMetadata.Iterate(ctx, collections.Range[asset.Pair]{}).Values() {
 		if !k.VpoolKeeper.ExistsPool(ctx, pairMetadata.Pair) {
 			ctx.Logger().Error("no pool for pair found", "pairMetadata.Pair", pairMetadata.Pair)
 			continue

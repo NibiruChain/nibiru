@@ -5,7 +5,7 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -28,7 +28,7 @@ ret:
 func (k Keeper) Liquidate(
 	ctx sdk.Context,
 	liquidatorAddr sdk.AccAddress,
-	pair common.AssetPair,
+	pair asset.Pair,
 	traderAddr sdk.AccAddress,
 ) (feeToLiquidator sdk.Coin, feeToFund sdk.Coin, err error) {
 	if !k.canLiquidate(ctx, liquidatorAddr) {
@@ -355,7 +355,7 @@ func (k Keeper) ExecutePartialLiquidation(
 }
 
 type MultiLiquidationRequest struct {
-	pair   common.AssetPair
+	pair   asset.Pair
 	trader sdk.AccAddress
 }
 
@@ -375,7 +375,7 @@ func (m MultiLiquidationResponse) IntoMultiLiquidateResponse() *types.MsgMultiLi
 }
 
 func (k Keeper) MultiLiquidate(ctx sdk.Context, liquidator sdk.AccAddress, positions []MultiLiquidationRequest) []MultiLiquidationResponse {
-	liquidate := func(ctx sdk.Context, liquidator sdk.AccAddress, pair common.AssetPair, trader sdk.AccAddress) (*types.MsgLiquidateResponse, error) {
+	liquidate := func(ctx sdk.Context, liquidator sdk.AccAddress, pair asset.Pair, trader sdk.AccAddress) (*types.MsgLiquidateResponse, error) {
 		feeToLiquidator, feeToFund, err := k.Liquidate(ctx, liquidator, pair, trader)
 		if err != nil {
 			return nil, err

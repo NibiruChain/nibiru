@@ -6,7 +6,6 @@ import (
 	"math/rand"
 	"strings"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 
@@ -32,7 +31,7 @@ const (
 )
 
 var (
-	whitelist                     = []common.AssetPair{asset.Registry.Pair(denoms.BTC, denoms.NUSD), asset.Registry.Pair(denoms.ETH, denoms.NUSD), asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}
+	whitelist                     = []asset.Pair{asset.Registry.Pair(denoms.BTC, denoms.NUSD), asset.Registry.Pair(denoms.ETH, denoms.NUSD), asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}
 	voteHashMap map[string]string = make(map[string]string)
 )
 

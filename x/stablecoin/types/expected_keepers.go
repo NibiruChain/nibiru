@@ -4,7 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	dextypes "github.com/NibiruChain/nibiru/x/dex/types"
 )
 
@@ -35,8 +35,8 @@ type BankKeeper interface {
 }
 
 type OracleKeeper interface {
-	GetExchangeRate(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error)
-	GetExchangeRateTwap(ctx sdk.Context, pair common.AssetPair) (sdk.Dec, error)
+	GetExchangeRate(ctx sdk.Context, pair asset.Pair) (sdk.Dec, error)
+	GetExchangeRateTwap(ctx sdk.Context, pair asset.Pair) (sdk.Dec, error)
 }
 
 type DexKeeper interface {

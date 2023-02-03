@@ -6,14 +6,14 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/vpool/keeper"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 // EndBlocker Called every block to store a snapshot of the vpool.
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
-	for _, pool := range k.Pools.Iterate(ctx, collections.Range[common.AssetPair]{}).Values() {
+	for _, pool := range k.Pools.Iterate(ctx, collections.Range[asset.Pair]{}).Values() {
 		snapshot := types.NewReserveSnapshot(
 			pool.Pair,
 			pool.BaseAssetReserve,

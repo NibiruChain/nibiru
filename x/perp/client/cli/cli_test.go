@@ -95,7 +95,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	genesisState[perptypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(perpGenesis)
 
 	oracleGenesis := oracletypes.DefaultGenesisState()
-	oracleGenesis.Params.Whitelist = []common.AssetPair{
+	oracleGenesis.Params.Whitelist = []asset.Pair{
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 	}
 	oracleGenesis.Params.VotePeriod = 1_000

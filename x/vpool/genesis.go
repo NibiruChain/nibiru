@@ -5,7 +5,7 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/vpool/keeper"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -29,6 +29,6 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 // ExportGenesis returns the capability module's exported genesis.
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	return &types.GenesisState{
-		Vpools: k.Pools.Iterate(ctx, collections.Range[common.AssetPair]{}).Values(),
+		Vpools: k.Pools.Iterate(ctx, collections.Range[asset.Pair]{}).Values(),
 	}
 }

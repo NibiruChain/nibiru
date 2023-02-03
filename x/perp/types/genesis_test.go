@@ -7,7 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 )
 
 func TestGenesisState_Validate(t *testing.T) {
@@ -22,14 +22,14 @@ func TestGenesisState_Validate(t *testing.T) {
 				Params: DefaultParams(),
 				PairMetadata: []PairMetadata{
 					{
-						Pair:                            common.MustNewAssetPair("pair1:pair2"),
+						Pair:                            asset.MustNewPair("pair1:pair2"),
 						LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.1"),
 					},
 				},
 				Positions: []Position{
 					{
 						TraderAddress:                   testutil.AccAddress().String(),
-						Pair:                            common.MustNewAssetPair("valid:pair"),
+						Pair:                            asset.MustNewPair("valid:pair"),
 						Size_:                           sdk.MustNewDecFromStr("1000"),
 						Margin:                          sdk.MustNewDecFromStr("1000"),
 						OpenNotional:                    sdk.MustNewDecFromStr("1000"),

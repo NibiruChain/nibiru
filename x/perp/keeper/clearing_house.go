@@ -8,7 +8,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -31,7 +31,7 @@ ret:
 */
 func (k Keeper) OpenPosition(
 	ctx sdk.Context,
-	pair common.AssetPair,
+	pair asset.Pair,
 	side types.Side,
 	traderAddr sdk.AccAddress,
 	quoteAssetAmount sdk.Int,
@@ -99,7 +99,7 @@ func (k Keeper) OpenPosition(
 // - Checks that leverage is below requirement.
 func (k Keeper) checkOpenPositionRequirements(
 	ctx sdk.Context,
-	pair common.AssetPair,
+	pair asset.Pair,
 	quoteAssetAmount sdk.Int,
 	leverage sdk.Dec,
 ) error {
@@ -129,7 +129,7 @@ func (k Keeper) checkOpenPositionRequirements(
 // afterPositionUpdate is called when a position has been updated.
 func (k Keeper) afterPositionUpdate(
 	ctx sdk.Context,
-	pair common.AssetPair,
+	pair asset.Pair,
 	traderAddr sdk.AccAddress,
 	params types.Params,
 	isNewPosition bool,
@@ -676,7 +676,7 @@ ret:
   - positionResp: the response containing the updated position and applied funding payment, bad debt, PnL
   - err: error if any
 */
-func (k Keeper) ClosePosition(ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress) (*types.PositionResp, error) {
+func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.AccAddress) (*types.PositionResp, error) {
 	position, err := k.Positions.Get(ctx, collections.Join(pair, traderAddr))
 	if err != nil {
 		return nil, err
@@ -712,7 +712,7 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair common.AssetPair, traderAddr
 
 func (k Keeper) transferFee(
 	ctx sdk.Context,
-	pair common.AssetPair,
+	pair asset.Pair,
 	trader sdk.AccAddress,
 	positionNotional sdk.Dec,
 ) (fees sdk.Int, err error) {
@@ -773,7 +773,7 @@ ret:
 */
 func (k Keeper) swapQuoteForBase(
 	ctx sdk.Context,
-	pair common.AssetPair,
+	pair asset.Pair,
 	side types.Side,
 	quoteAssetAmount sdk.Dec,
 	baseAssetLimit sdk.Dec,
@@ -818,7 +818,7 @@ ret:
 */
 func (k Keeper) swapBaseForQuote(
 	ctx sdk.Context,
-	pair common.AssetPair,
+	pair asset.Pair,
 	side types.Side,
 	baseAssetAmount sdk.Dec,
 	quoteAssetLimit sdk.Dec,
@@ -846,7 +846,7 @@ func (k Keeper) swapBaseForQuote(
 // OnSwapEnd recalculates perp metrics for a particular pair.
 func (k Keeper) OnSwapEnd(
 	ctx sdk.Context,
-	pair common.AssetPair,
+	pair asset.Pair,
 	quoteAssetAmount sdk.Dec,
 	baseAssetAmount sdk.Dec,
 ) {

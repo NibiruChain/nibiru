@@ -7,7 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -18,7 +18,7 @@ import (
 to it. Adding margin increases the margin ratio of the corresponding position.
 */
 func (k Keeper) AddMargin(
-	ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress, margin sdk.Coin,
+	ctx sdk.Context, pair asset.Pair, traderAddr sdk.AccAddress, margin sdk.Coin,
 ) (res *types.MsgAddMarginResponse, err error) {
 	// validate vpool exists
 	if err = k.requireVpool(ctx, pair); err != nil {
@@ -112,7 +112,7 @@ ret:
   - err: error if any
 */
 func (k Keeper) RemoveMargin(
-	ctx sdk.Context, pair common.AssetPair, traderAddr sdk.AccAddress, margin sdk.Coin,
+	ctx sdk.Context, pair asset.Pair, traderAddr sdk.AccAddress, margin sdk.Coin,
 ) (marginOut sdk.Coin, fundingPayment sdk.Dec, position types.Position, err error) {
 	// validate vpool exists
 	if err = k.requireVpool(ctx, pair); err != nil {
@@ -242,7 +242,7 @@ func (k Keeper) GetMarginRatio(
 	return marginRatio, nil
 }
 
-func (k Keeper) requireVpool(ctx sdk.Context, pair common.AssetPair) (err error) {
+func (k Keeper) requireVpool(ctx sdk.Context, pair asset.Pair) (err error) {
 	if !k.VpoolKeeper.ExistsPool(ctx, pair) {
 		return types.ErrPairNotFound.Wrap(pair.String())
 	}

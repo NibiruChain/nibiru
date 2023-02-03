@@ -13,7 +13,7 @@ message CreatePoolProposal {
 
   // pair represents the pair of the vpool.
   string pair = 3 [ 
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 
@@ -38,7 +38,7 @@ message EditPoolConfigProposal {
   string description = 2;
 
   string pair = 3 [ 
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 
@@ -60,7 +60,7 @@ message EditSwapInvariantsProposal {
 
     // Pair is a string identifier for an asset pair. 
     string pair = 3 [ 
-      (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+      (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
       (gogoproto.nullable) = false
     ];
 

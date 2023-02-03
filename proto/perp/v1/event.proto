@@ -14,7 +14,7 @@ option go_package = "github.com/NibiruChain/nibiru/x/perp/types";
 message PositionChangedEvent {
     // identifier of the corresponding virtual pool for the position
     string pair = 1 [ 
-      (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+      (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
       (gogoproto.nullable) = false
     ];
 
@@ -109,7 +109,7 @@ message PositionChangedEvent {
 message PositionLiquidatedEvent {
     // identifier of the corresponding virtual pool for the position
     string pair = 1 [ 
-      (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+      (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
       (gogoproto.nullable) = false
     ];
 
@@ -190,7 +190,7 @@ message PositionLiquidatedEvent {
 message PositionSettledEvent {
     // Identifier for the virtual pool of the position.
     string pair = 1 [ 
-      (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+      (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
       (gogoproto.nullable) = false
     ];
 
@@ -210,7 +210,7 @@ message FundingRateChangedEvent {
 
     // The pair for which the funding rate was calculated.
     string pair = 1 [ 
-      (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+      (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
       (gogoproto.nullable) = false
     ];
 
@@ -255,7 +255,7 @@ message FundingRateChangedEvent {
 
 message MetricsEvent {
   string pair = 1 [ 
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common.AssetPair",
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 

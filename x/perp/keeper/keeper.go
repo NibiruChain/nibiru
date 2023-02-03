@@ -5,13 +5,12 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/x/common"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/tendermint/tendermint/libs/log"
 
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
@@ -26,11 +25,11 @@ type Keeper struct {
 	VpoolKeeper   types.VpoolKeeper
 	EpochKeeper   types.EpochKeeper
 
-	Positions      collections.Map[collections.Pair[common.AssetPair, sdk.AccAddress], types.Position]
-	PairsMetadata  collections.Map[common.AssetPair, types.PairMetadata]
+	Positions      collections.Map[collections.Pair[asset.Pair, sdk.AccAddress], types.Position]
+	PairsMetadata  collections.Map[asset.Pair, types.PairMetadata]
 	PrepaidBadDebt collections.Map[string, types.PrepaidBadDebt]
 
-	Metrics collections.Map[common.AssetPair, types.Metrics]
+	Metrics collections.Map[asset.Pair, types.Metrics]
 }
 
 // NewKeeper Creates a new x/perp Keeper instance.
@@ -66,13 +65,13 @@ func NewKeeper(
 		EpochKeeper:   epochKeeper,
 		Positions: collections.NewMap(
 			storeKey, 0,
-			collections.PairKeyEncoder(common.AssetPairKeyEncoder, collections.AccAddressKeyEncoder),
+			collections.PairKeyEncoder(asset.PairKeyEncoder, collections.AccAddressKeyEncoder),
 			collections.ProtoValueEncoder[types.Position](cdc),
 		),
-		PairsMetadata:  collections.NewMap(storeKey, 1, common.AssetPairKeyEncoder, collections.ProtoValueEncoder[types.PairMetadata](cdc)),
+		PairsMetadata:  collections.NewMap(storeKey, 1, asset.PairKeyEncoder, collections.ProtoValueEncoder[types.PairMetadata](cdc)),
 		PrepaidBadDebt: collections.NewMap(storeKey, 2, collections.StringKeyEncoder, collections.ProtoValueEncoder[types.PrepaidBadDebt](cdc)),
 
-		Metrics: collections.NewMap(storeKey, 3, common.AssetPairKeyEncoder, collections.ProtoValueEncoder[types.Metrics](cdc)),
+		Metrics: collections.NewMap(storeKey, 3, asset.PairKeyEncoder, collections.ProtoValueEncoder[types.Metrics](cdc)),
 	}
 }
 

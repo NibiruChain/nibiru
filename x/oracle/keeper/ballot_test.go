@@ -10,7 +10,6 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
@@ -145,28 +144,28 @@ func TestClearBallots(t *testing.T) {
 func TestApplyWhitelist(t *testing.T) {
 	input := CreateTestInput(t)
 
-	whitelist := []common.AssetPair{
+	whitelist := []asset.Pair{
 		"nibi:usd",
 		"btc:usd",
 	}
 
 	// prepare test by resetting the genesis pairs
-	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[common.AssetPair]{}).Keys() {
+	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys() {
 		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 	}
 	for _, p := range whitelist {
 		input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, p)
 	}
 
-	voteTargets := map[common.AssetPair]struct{}{
+	voteTargets := map[asset.Pair]struct{}{
 		"nibi:usd": {},
 		"btc:usd":  {},
 	}
 	// no updates case
 	input.OracleKeeper.updateWhitelist(input.Ctx, whitelist, voteTargets)
 
-	var gotPairs []common.AssetPair
-	gotPairs = append(gotPairs, input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[common.AssetPair]{}).Keys()...)
+	var gotPairs []asset.Pair
+	gotPairs = append(gotPairs, input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys()...)
 
 	sort.Slice(whitelist, func(i, j int) bool {
 		return whitelist[i] < whitelist[j]
@@ -177,8 +176,8 @@ func TestApplyWhitelist(t *testing.T) {
 	whitelist = append(whitelist, "nibi:eth")
 	input.OracleKeeper.updateWhitelist(input.Ctx, whitelist, voteTargets)
 
-	gotPairs = []common.AssetPair{}
-	gotPairs = append(gotPairs, input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[common.AssetPair]{}).Keys()...)
+	gotPairs = []asset.Pair{}
+	gotPairs = append(gotPairs, input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys()...)
 
 	sort.Slice(whitelist, func(i, j int) bool {
 		return whitelist[i] < whitelist[j]
@@ -190,8 +189,8 @@ func TestApplyWhitelist(t *testing.T) {
 	whitelist[0] = "nibi:usdt"           // update first pair
 	input.OracleKeeper.updateWhitelist(input.Ctx, whitelist, voteTargets)
 
-	gotPairs = []common.AssetPair{}
-	gotPairs = append(gotPairs, input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[common.AssetPair]{}).Keys()...)
+	gotPairs = []asset.Pair{}
+	gotPairs = append(gotPairs, input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys()...)
 
 	sort.Slice(whitelist, func(i, j int) bool {
 		return whitelist[i] < whitelist[j]

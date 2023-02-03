@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 )
 
 const (
@@ -29,7 +29,7 @@ var (
 	ErrUnauthorized                      = sdkerrors.Register(ModuleName, 9, "operation not authorized")
 )
 
-func ZeroPosition(ctx sdk.Context, tokenPair common.AssetPair, traderAddr sdk.AccAddress) Position {
+func ZeroPosition(ctx sdk.Context, tokenPair asset.Pair, traderAddr sdk.AccAddress) Position {
 	return Position{
 		TraderAddress:                   traderAddr.String(),
 		Pair:                            tokenPair,

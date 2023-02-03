@@ -3,8 +3,6 @@ package fee_test
 import (
 	"testing"
 
-	"github.com/NibiruChain/nibiru/simapp"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -18,6 +16,7 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/simapp"
 )
 
 // AnteTestSuite is a test suite to be used with ante handler tests.

@@ -3,10 +3,9 @@ package perp
 import (
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/x/common"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
@@ -40,13 +39,13 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis.Params = k.GetParams(ctx)
 
 	// export positions
-	genesis.Positions = k.Positions.Iterate(ctx, collections.PairRange[common.AssetPair, sdk.AccAddress]{}).Values()
+	genesis.Positions = k.Positions.Iterate(ctx, collections.PairRange[asset.Pair, sdk.AccAddress]{}).Values()
 
 	// export prepaid bad debt
 	genesis.PrepaidBadDebts = k.PrepaidBadDebt.Iterate(ctx, collections.Range[string]{}).Values()
 
 	// export pairMetadata
-	genesis.PairMetadata = k.PairsMetadata.Iterate(ctx, collections.Range[common.AssetPair]{}).Values()
+	genesis.PairMetadata = k.PairsMetadata.Iterate(ctx, collections.Range[asset.Pair]{}).Values()
 
 	return genesis
 }

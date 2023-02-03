@@ -3,7 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -17,7 +17,7 @@ BASE_ASSET_SWAP: price when swapping x amount of base assets
 */
 type snapshotPriceOptions struct {
 	// required
-	pair           common.AssetPair
+	pair           asset.Pair
 	twapCalcOption types.TwapCalcOption
 
 	// required only if twapCalcOption == QUOTE_ASSET_SWAP or BASE_ASSET_SWAP

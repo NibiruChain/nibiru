@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
@@ -57,8 +57,8 @@ func isPassingVoteThreshold(ballots types.ExchangeRateBallots, thresholdVotes sd
 // or which is not whitelisted anymore.
 func (k Keeper) RemoveInvalidBallots(
 	ctx sdk.Context,
-	pairBallotsMap map[common.AssetPair]types.ExchangeRateBallots,
-) (map[common.AssetPair]types.ExchangeRateBallots, map[common.AssetPair]struct{}) {
+	pairBallotsMap map[asset.Pair]types.ExchangeRateBallots,
+) (map[asset.Pair]types.ExchangeRateBallots, map[asset.Pair]struct{}) {
 	whitelistedPairs := k.getWhitelistedPairs(ctx)
 
 	totalBondedPower := sdk.TokensToConsensusPower(k.StakingKeeper.TotalBondedTokens(ctx), k.StakingKeeper.PowerReduction(ctx))
