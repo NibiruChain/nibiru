@@ -69,7 +69,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1145](https://github.com/NibiruChain/nibiru/pull/1145) - chore: add USD quote asset
 * [#1160](https://github.com/NibiruChain/nibiru/pull/1160) - feat: generic set
 * [#1139](https://github.com/NibiruChain/nibiru/pull/1139) - feat: add default oracle whitelisted pairs
-* [#1165](https://github.com/NibiruChain/nibiru/pull/1165) - chore: bump cosmos-sdk to [v0.45.12](https://github.com/cosmos/cosmos-sdk/blob/release/v0.45.x/CHANGELOG.md#v04512---2023-01-23)
+* [#1165](https://github.com/NibiruChain/nibiru/pull/1165) - chore(deps): bump cosmos-sdk to [v0.45.12](https://github.com/cosmos/cosmos-sdk/blob/release/v0.45.x/CHANGELOG.md#v04512---2023-01-23)
+* [#1149](https://github.com/NibiruChain/nibiru/pull/1149) - chore(deps): Bump [github.com/btcsuite/btcd](https://github.com/btcsuite/btcd) from 0.22.1 to 0.22.2
 
 ### Bug Fixes
 
