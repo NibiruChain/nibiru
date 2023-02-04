@@ -3,7 +3,7 @@ This script geenrates random test for swaps on balancer pools.
 The objective is to compare the performance of golang uint256 unit used against Python3 integer values.
 
 Python3 int type have no limit in term of size, which means that we can make arbitrary operations on ints and consider them as float.
-The curve class comes directly from the curve codebase, and is being used to create the tests, stored in `x/dex/types/misc/stabletests.csv`;.
+The curve class comes directly from the curve codebase, and is being used to create the tests, stored in `x/spot/types/misc/stabletests.csv`;.
 
 Theses test are then used to compare the value of python model's DY against the one obtained with our go code. 
 These are created for pools with random amount of assets (from 2 to 5), random amplification parameter (from 1 to 4* common.Precision) and for random coins of the pool.
@@ -188,7 +188,7 @@ class Curve:
 
 def generate_test_cases(n: int):
     """
-    Create n test cases and store them in x/dex/types/misc/stable-swap-math.csv
+    Create n test cases and store them in x/spot/types/misc/stable-swap-math.csv
 
     Args:
         n (int): The number of test to create
@@ -226,7 +226,7 @@ def generate_test_cases(n: int):
         )
 
     file_path = os.path.join(
-        os.path.dirname(__file__), "../../x/dex/types/misc/stabletests.csv"
+        os.path.dirname(__file__), "../../x/spot/types/misc/stabletests.csv"
     )
 
     with open(file_path, "w") as f:
