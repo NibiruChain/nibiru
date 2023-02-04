@@ -3,7 +3,7 @@ package mock
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/dex/types"
+	"github.com/NibiruChain/nibiru/x/spot/types"
 )
 
 // helper function to create dummy test pools

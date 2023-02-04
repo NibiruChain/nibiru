@@ -5,7 +5,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	dextypes "github.com/NibiruChain/nibiru/x/dex/types"
+	spottypes "github.com/NibiruChain/nibiru/x/spot/types"
 )
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)
@@ -39,8 +39,8 @@ type OracleKeeper interface {
 	GetExchangeRateTwap(ctx sdk.Context, pair asset.Pair) (sdk.Dec, error)
 }
 
-type DexKeeper interface {
+type SpotKeeper interface {
 	FetchPoolFromPair(ctx sdk.Context, denomA string, denomB string,
-	) (pool dextypes.Pool, err error)
-	FetchPool(ctx sdk.Context, poolId uint64) (pool dextypes.Pool, err error)
+	) (pool spottypes.Pool, err error)
+	FetchPool(ctx sdk.Context, poolId uint64) (pool spottypes.Pool, err error)
 }

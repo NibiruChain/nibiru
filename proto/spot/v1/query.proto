@@ -1,0 +1,296 @@
+syntax = "proto3";
+
+package nibiru.dex.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "spot/v1/params.proto";
+import "spot/v1/pool.proto";
+import "cosmos/base/v1beta1/coin.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/x/spot/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // Parameters of the spot module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/nibiru/dex/params";
+  }
+
+  // Next available pool id number.
+  rpc PoolNumber(QueryPoolNumberRequest) returns (QueryPoolNumberResponse) {
+    option (google.api.http).get = "/nibiru/dex/pool_number";
+  }
+
+  // Fetch a pool by id.
+  rpc Pool(QueryPoolRequest) returns (QueryPoolResponse) {
+    option (google.api.http).get = "/nibiru/dex/pool";
+  }
+
+  // Returns all pools.
+  rpc Pools(QueryPoolsRequest) returns (QueryPoolsResponse) {
+    option (google.api.http).get = "/nibiru/dex/pools";
+  }
+
+  // Parameters of a single pool.
+  rpc PoolParams(QueryPoolParamsRequest) returns (QueryPoolParamsResponse) {
+    option (google.api.http).get = "/nibiru/dex/pools/{pool_id}/params";
+  }
+
+  // Number of pools.
+  rpc NumPools(QueryNumPoolsRequest) returns (QueryNumPoolsResponse) {
+    option (google.api.http).get = "/nibiru/dex/num_pools";
+  }
+
+  // Total liquidity across all pools.
+  rpc TotalLiquidity(QueryTotalLiquidityRequest)
+      returns (QueryTotalLiquidityResponse) {
+    option (google.api.http).get = "/nibiru/dex/total_liquidity";
+  }
+
+  // Total liquidity in a single pool.
+  rpc TotalPoolLiquidity(QueryTotalPoolLiquidityRequest)
+      returns (QueryTotalPoolLiquidityResponse) {
+    option (google.api.http).get =
+        "/nibiru/dex/pools/{pool_id}/total_pool_liquidity";
+  }
+
+  // Total shares in a single pool.
+  rpc TotalShares(QueryTotalSharesRequest) returns (QueryTotalSharesResponse) {
+    option (google.api.http).get = "/nibiru/dex/pools/{pool_id}/total_shares";
+  }
+
+  // Instantaneous price of an asset in a pool.
+  rpc SpotPrice(QuerySpotPriceRequest) returns (QuerySpotPriceResponse) {
+    option (google.api.http).get = "/nibiru/dex/pools/{pool_id}/prices";
+  }
+
+  // Estimates the amount of assets returned given an exact amount of tokens to
+  // swap.
+  rpc EstimateSwapExactAmountIn(QuerySwapExactAmountInRequest)
+      returns (QuerySwapExactAmountInResponse) {
+    option (google.api.http).get =
+        "/nibiru/dex/{pool_id}/estimate/swap_exact_amount_in";
+  }
+
+  // Estimates the amount of tokens required to return the exact amount of
+  // assets requested.
+  rpc EstimateSwapExactAmountOut(QuerySwapExactAmountOutRequest)
+      returns (QuerySwapExactAmountOutResponse) {
+    option (google.api.http).get =
+        "/nibiru/dex/{pool_id}/estimate/swap_exact_amount_out";
+  }
+
+  // Estimates the amount of pool shares returned given an amount of tokens to
+  // join.
+  rpc EstimateJoinExactAmountIn(QueryJoinExactAmountInRequest)
+      returns (QueryJoinExactAmountInResponse) {
+    option (google.api.http).get =
+        "/nibiru/dex/{pool_id}/estimate/join_exact_amount_in";
+  }
+
+  // Estimates the amount of tokens required to obtain an exact amount of pool
+  // shares.
+  rpc EstimateJoinExactAmountOut(QueryJoinExactAmountOutRequest)
+      returns (QueryJoinExactAmountOutResponse) {
+    option (google.api.http).get =
+        "/nibiru/dex/{pool_id}/estimate/join_exact_amount_out";
+  }
+
+  // Estimates the amount of tokens returned to the user given an exact amount
+  // of pool shares.
+  rpc EstimateExitExactAmountIn(QueryExitExactAmountInRequest)
+      returns (QueryExitExactAmountInResponse) {
+    option (google.api.http).get =
+        "/nibiru/dex/{pool_id}/estimate/exit_exact_amount_in";
+  }
+
+  // Estimates the amount of pool shares required to extract an exact amount of
+  // tokens from the pool.
+  rpc EstimateExitExactAmountOut(QueryExitExactAmountOutRequest)
+      returns (QueryExitExactAmountOutResponse) {
+    option (google.api.http).get =
+        "/nibiru/dex/{pool_id}/estimate/exit_exact_amount_out";
+  }
+}
+
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params holds all the parameters of this module.
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryPoolNumberRequest {}
+message QueryPoolNumberResponse {
+  uint64 pool_id = 1;
+}
+
+message QueryPoolRequest {
+  uint64 pool_id = 1;
+}
+message QueryPoolResponse {
+  Pool pool = 1;
+}
+
+message QueryPoolsRequest {
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+message QueryPoolsResponse {
+  repeated Pool pools = 1;
+
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+message QueryPoolParamsRequest {
+  uint64 pool_id = 1;
+}
+message QueryPoolParamsResponse {
+  PoolParams pool_params = 1;
+}
+
+message QueryNumPoolsRequest {}
+message QueryNumPoolsResponse {
+  uint64 num_pools = 1;
+}
+
+// --------------------------------------------
+// Query total liquidity the protocol
+message QueryTotalLiquidityRequest {}
+message QueryTotalLiquidityResponse {  
+  repeated cosmos.base.v1beta1.Coin liquidity = 1 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (gogoproto.moretags) = "yaml:\"liquidity\"",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// --------------------------------------------
+// Query total liquidity for a pool
+message QueryTotalPoolLiquidityRequest {
+  uint64 pool_id = 1;
+}
+
+message QueryTotalPoolLiquidityResponse {  
+  repeated cosmos.base.v1beta1.Coin liquidity = 1 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (gogoproto.moretags) = "yaml:\"liquidity\"",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message QueryTotalSharesRequest {
+  uint64 pool_id = 1;
+}
+message QueryTotalSharesResponse {
+  // sum of all LP tokens sent out
+  cosmos.base.v1beta1.Coin total_shares = 1 [
+    (gogoproto.moretags) = "yaml:\"total_shares\"",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// Returns the amount of tokenInDenom to produce 1 tokenOutDenom
+// For example, if the price of NIBI = 9.123 NUSD, then setting tokenInDenom=NUSD
+// and tokenOutDenom=NIBI would give "9.123".
+message QuerySpotPriceRequest {
+  uint64 pool_id = 1;
+  // the denomination of the token you are giving into the pool
+  string token_in_denom = 2;
+  // the denomination of the token you are taking out of the pool
+  string token_out_denom = 3;
+}
+message QuerySpotPriceResponse {
+  string spot_price = 1;
+}
+
+// Given an exact amount of tokens in and a target tokenOutDenom, calculates
+// the expected amount of tokens out received from a swap.
+message QuerySwapExactAmountInRequest {
+  uint64 pool_id = 1;
+  cosmos.base.v1beta1.Coin token_in = 2 [
+    (gogoproto.moretags) = "yaml:\"token_in\"",
+    (gogoproto.nullable) = false
+  ];
+  string token_out_denom = 3;
+}
+message QuerySwapExactAmountInResponse {
+  cosmos.base.v1beta1.Coin token_out = 2 [
+    (gogoproto.moretags) = "yaml:\"token_out\"",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// Given an exact amount of tokens out and a target tokenInDenom, calculates
+// the expected amount of tokens in required to do the swap.
+message QuerySwapExactAmountOutRequest {
+  uint64 pool_id = 1;
+  cosmos.base.v1beta1.Coin token_out = 2 [
+    (gogoproto.moretags) = "yaml:\"token_out\"",
+    (gogoproto.nullable) = false
+  ];
+  string token_in_denom = 3;
+}
+message QuerySwapExactAmountOutResponse {
+  cosmos.base.v1beta1.Coin token_in = 2 [
+    (gogoproto.moretags) = "yaml:\"token_in\"",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message QueryJoinExactAmountInRequest {
+  uint64 pool_id = 1;
+  repeated cosmos.base.v1beta1.Coin tokens_in = 2 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (gogoproto.moretags) = "yaml:\"tokens_in\"",
+    (gogoproto.nullable) = false
+  ];
+}
+message QueryJoinExactAmountInResponse {
+
+  // amount of pool shares returned to user after join
+  string pool_shares_out = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.moretags) = "yaml:\"pool_shares_out\"",
+    (gogoproto.nullable) = false
+  ];
+
+  // coins remaining after pool join
+  repeated cosmos.base.v1beta1.Coin rem_coins = 2 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (gogoproto.moretags) = "yaml:\"rem_coins\"",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message QueryJoinExactAmountOutRequest {
+  uint64 pool_id = 1;
+}
+message QueryJoinExactAmountOutResponse {}
+
+message QueryExitExactAmountInRequest {
+  uint64 pool_id = 1;
+  // amount of pool shares to return to pool
+  string pool_shares_in = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.moretags) = "yaml:\"pool_shares_in\"",
+    (gogoproto.nullable) = false
+  ];
+}
+message QueryExitExactAmountInResponse {
+  // coins obtained after exiting
+  repeated cosmos.base.v1beta1.Coin tokens_out = 1 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (gogoproto.moretags) = "yaml:\"tokens_out\"",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message QueryExitExactAmountOutRequest {
+  uint64 pool_id = 1;
+}
+message QueryExitExactAmountOutResponse {}

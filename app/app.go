@@ -8,9 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	"github.com/prometheus/client_golang/prometheus"
-
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
@@ -94,6 +93,7 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cast"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -101,12 +101,7 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/CosmWasm/wasmd/x/wasm"
-
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/dex"
-	dexkeeper "github.com/NibiruChain/nibiru/x/dex/keeper"
-	dextypes "github.com/NibiruChain/nibiru/x/dex/types"
 	"github.com/NibiruChain/nibiru/x/epochs"
 	epochskeeper "github.com/NibiruChain/nibiru/x/epochs/keeper"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
@@ -116,6 +111,9 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp"
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
+	"github.com/NibiruChain/nibiru/x/spot"
+	spotkeeper "github.com/NibiruChain/nibiru/x/spot/keeper"
+	spottypes "github.com/NibiruChain/nibiru/x/spot/types"
 	"github.com/NibiruChain/nibiru/x/stablecoin"
 	stablecoinkeeper "github.com/NibiruChain/nibiru/x/stablecoin/keeper"
 	stablecointypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
@@ -171,7 +169,7 @@ var (
 		ibc.AppModuleBasic{},
 		ibctransfer.AppModuleBasic{},
 		// native x/
-		dex.AppModuleBasic{},
+		spot.AppModuleBasic{},
 		oracle.AppModuleBasic{},
 		epochs.AppModuleBasic{},
 		stablecoin.AppModuleBasic{},
@@ -189,7 +187,7 @@ var (
 		stakingtypes.BondedPoolName:           {authtypes.Burner, authtypes.Staking},
 		stakingtypes.NotBondedPoolName:        {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:                   {authtypes.Burner},
-		dextypes.ModuleName:                   {authtypes.Minter, authtypes.Burner},
+		spottypes.ModuleName:                  {authtypes.Minter, authtypes.Burner},
 		oracletypes.ModuleName:                {},
 		ibctransfertypes.ModuleName:           {authtypes.Minter, authtypes.Burner},
 		stablecointypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
@@ -270,7 +268,7 @@ type NibiruApp struct {
 	EpochsKeeper     epochskeeper.Keeper
 	PerpKeeper       perpkeeper.Keeper
 	VpoolKeeper      vpoolkeeper.Keeper
-	DexKeeper        dexkeeper.Keeper
+	DexKeeper        spotkeeper.Keeper
 	OracleKeeper     oraclekeeper.Keeper
 	StablecoinKeeper stablecoinkeeper.Keeper
 
@@ -348,7 +346,7 @@ func NewNibiruApp(
 		ibchost.StoreKey,
 		ibctransfertypes.StoreKey,
 		// nibiru x/ keys
-		dextypes.StoreKey,
+		spottypes.StoreKey,
 		stablecointypes.StoreKey,
 		oracletypes.StoreKey,
 		epochstypes.StoreKey,
@@ -437,8 +435,8 @@ func NewNibiruApp(
 
 	// ---------------------------------- Nibiru Chain x/ keepers
 
-	app.DexKeeper = dexkeeper.NewKeeper(
-		appCodec, keys[dextypes.StoreKey], app.GetSubspace(dextypes.ModuleName),
+	app.DexKeeper = spotkeeper.NewKeeper(
+		appCodec, keys[spottypes.StoreKey], app.GetSubspace(spottypes.ModuleName),
 		app.AccountKeeper, app.BankKeeper, app.distrKeeper)
 
 	app.OracleKeeper = oraclekeeper.NewKeeper(appCodec, keys[oracletypes.StoreKey], app.GetSubspace(oracletypes.ModuleName),
@@ -572,7 +570,7 @@ func NewNibiruApp(
 	var skipGenesisInvariants = cast.ToBool(
 		appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
-	dexModule := dex.NewAppModule(
+	spotModule := spot.NewAppModule(
 		appCodec, app.DexKeeper, app.AccountKeeper, app.BankKeeper)
 	oracleModule := oracle.NewAppModule(appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper)
 	epochsModule := epochs.NewAppModule(appCodec, app.EpochsKeeper)
@@ -612,7 +610,7 @@ func NewNibiruApp(
 		authzmodule.NewAppModule(appCodec, app.authzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 
 		// native x/
-		dexModule,
+		spotModule,
 		stablecoinModule,
 		oracleModule,
 		epochsModule,
@@ -651,7 +649,7 @@ func NewNibiruApp(
 		vestingtypes.ModuleName,
 		stakingtypes.ModuleName,
 		// native x/
-		dextypes.ModuleName,
+		spottypes.ModuleName,
 		oracletypes.ModuleName,
 		epochstypes.ModuleName,
 		stablecointypes.ModuleName,
@@ -683,7 +681,7 @@ func NewNibiruApp(
 		// native x/
 		epochstypes.ModuleName,
 		stablecointypes.ModuleName,
-		dextypes.ModuleName,
+		spottypes.ModuleName,
 		oracletypes.ModuleName,
 		vpooltypes.ModuleName,
 		perptypes.ModuleName,
@@ -719,7 +717,7 @@ func NewNibiruApp(
 		// native x/
 		epochstypes.ModuleName,
 		stablecointypes.ModuleName,
-		dextypes.ModuleName,
+		spottypes.ModuleName,
 		oracletypes.ModuleName,
 		vpooltypes.ModuleName,
 		perptypes.ModuleName,
@@ -1016,7 +1014,7 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable())
 	paramsKeeper.Subspace(crisistypes.ModuleName)
 	// Native params keepers
-	paramsKeeper.Subspace(dextypes.ModuleName)
+	paramsKeeper.Subspace(spottypes.ModuleName)
 	paramsKeeper.Subspace(oracletypes.ModuleName)
 	paramsKeeper.Subspace(epochstypes.ModuleName)
 	paramsKeeper.Subspace(stablecointypes.ModuleName)

@@ -27,7 +27,7 @@ func (k Keeper) GetStableMarketCap(ctx sdk.Context) sdk.Int {
 }
 
 func (k Keeper) GetGovMarketCap(ctx sdk.Context) (sdk.Int, error) {
-	pool, err := k.DexKeeper.FetchPoolFromPair(ctx, denoms.NIBI, denoms.NUSD)
+	pool, err := k.SpotKeeper.FetchPoolFromPair(ctx, denoms.NIBI, denoms.NUSD)
 	if err != nil {
 		return sdk.Int{}, err
 	}
