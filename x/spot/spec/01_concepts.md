@@ -4,7 +4,7 @@ order: 1
 
 # Concepts
 
-The `x/dex` module is responsible for for creating, joining, and exiting
+The `x/spot` module is responsible for for creating, joining, and exiting
 liquidity pools that are dictated by an AMM for swaps.
 
 ## Pool

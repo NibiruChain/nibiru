@@ -1496,37 +1496,37 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 }
 
 var (
-	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "dex", "params"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "spot", "params"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_PoolNumber_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "dex", "pool_number"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_PoolNumber_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "spot", "pool_number"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_Pool_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "dex", "pool"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Pool_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "spot", "pool"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_Pools_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "dex", "pools"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Pools_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "spot", "pools"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_PoolParams_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"nibiru", "dex", "pools", "pool_id", "params"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_PoolParams_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"nibiru", "spot", "pools", "pool_id", "params"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_NumPools_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "dex", "num_pools"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_NumPools_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "spot", "num_pools"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_TotalLiquidity_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "dex", "total_liquidity"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_TotalLiquidity_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "spot", "total_liquidity"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_TotalPoolLiquidity_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"nibiru", "dex", "pools", "pool_id", "total_pool_liquidity"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_TotalPoolLiquidity_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"nibiru", "spot", "pools", "pool_id", "total_pool_liquidity"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_TotalShares_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"nibiru", "dex", "pools", "pool_id", "total_shares"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_TotalShares_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"nibiru", "spot", "pools", "pool_id", "total_shares"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_SpotPrice_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"nibiru", "dex", "pools", "pool_id", "prices"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_SpotPrice_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"nibiru", "spot", "pools", "pool_id", "prices"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_EstimateSwapExactAmountIn_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3, 2, 4}, []string{"nibiru", "dex", "pool_id", "estimate", "swap_exact_amount_in"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_EstimateSwapExactAmountIn_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3, 2, 4}, []string{"nibiru", "spot", "pool_id", "estimate", "swap_exact_amount_in"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_EstimateSwapExactAmountOut_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3, 2, 4}, []string{"nibiru", "dex", "pool_id", "estimate", "swap_exact_amount_out"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_EstimateSwapExactAmountOut_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3, 2, 4}, []string{"nibiru", "spot", "pool_id", "estimate", "swap_exact_amount_out"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_EstimateJoinExactAmountIn_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3, 2, 4}, []string{"nibiru", "dex", "pool_id", "estimate", "join_exact_amount_in"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_EstimateJoinExactAmountIn_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3, 2, 4}, []string{"nibiru", "spot", "pool_id", "estimate", "join_exact_amount_in"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_EstimateJoinExactAmountOut_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3, 2, 4}, []string{"nibiru", "dex", "pool_id", "estimate", "join_exact_amount_out"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_EstimateJoinExactAmountOut_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3, 2, 4}, []string{"nibiru", "spot", "pool_id", "estimate", "join_exact_amount_out"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_EstimateExitExactAmountIn_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3, 2, 4}, []string{"nibiru", "dex", "pool_id", "estimate", "exit_exact_amount_in"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_EstimateExitExactAmountIn_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3, 2, 4}, []string{"nibiru", "spot", "pool_id", "estimate", "exit_exact_amount_in"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_EstimateExitExactAmountOut_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3, 2, 4}, []string{"nibiru", "dex", "pool_id", "estimate", "exit_exact_amount_out"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_EstimateExitExactAmountOut_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3, 2, 4}, []string{"nibiru", "spot", "pool_id", "estimate", "exit_exact_amount_out"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (

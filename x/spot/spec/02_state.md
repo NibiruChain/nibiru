@@ -6,7 +6,7 @@ The spot module stores a monotonically increasing counter denoting the next avai
 
 ## Pools
 
-Serialized protobufs representing pools are stored in the state, with the key 0x02 | poolId. See the [pool proto file](../../../proto/dex/v1/pool.proto) for what fields a pool has.
+Serialized protobufs representing pools are stored in the state, with the key 0x02 | poolId. See the [pool proto file](../../../proto/spot/v1/pool.proto) for what fields a pool has.
 
 ## Total Liquidity
 

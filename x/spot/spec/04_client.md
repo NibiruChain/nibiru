@@ -4,11 +4,11 @@ order: 9
 
 # CLI
 
-A user can query and interact with the `dex` module using the CLI.
+A user can query and interact with the `spot` module using the CLI.
 
 ## Query
 
-The `query` commands allow users to query `dex` state.
+The `query` commands allow users to query `spot` state.
 
 ```bash
 nibid query spot --help
@@ -146,7 +146,7 @@ liquidity:
 
 ## Transactions
 
-The `tx` commands allow users to interact with the `dex` module.
+The `tx` commands allow users to interact with the `spot` module.
 
 ```bash
 nibid tx spot --help

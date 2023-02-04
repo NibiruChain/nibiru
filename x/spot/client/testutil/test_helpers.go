@@ -140,7 +140,7 @@ func ExecMsgSwapAssets(
 	return clitestutil.ExecTestCLICmd(clientCtx, cli.CmdSwapAssets(), args)
 }
 
-// WhitelistGenesisAssets given a testapp.GenesisState includes the whitelisted assets into Dex Whitelisted assets.
+// WhitelistGenesisAssets given a testapp.GenesisState includes the whitelisted assets into spot Whitelisted assets.
 func WhitelistGenesisAssets(state testapp.GenesisState, assets []string) testapp.GenesisState {
 	encConfig := app.MakeTestEncodingConfig()
 

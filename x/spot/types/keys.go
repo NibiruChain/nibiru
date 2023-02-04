@@ -9,7 +9,7 @@ import (
 
 const (
 	// ModuleName defines the module name
-	ModuleName = "dex"
+	ModuleName = "spot"
 
 	// StoreKey defines the primary module store key
 	StoreKey = ModuleName

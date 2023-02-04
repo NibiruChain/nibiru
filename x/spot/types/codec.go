@@ -8,7 +8,8 @@ import (
 )
 
 func RegisterCodec(cdc *codec.LegacyAmino) {
-	cdc.RegisterConcrete(&MsgCreatePool{}, "dex/CreatePool", nil)
+	cdc.RegisterConcrete(&MsgCreatePool{}, "spot/CreatePool", nil)
+	// TODO(k-yang): register MsgJoinPool
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {

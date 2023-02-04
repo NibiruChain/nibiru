@@ -13,22 +13,22 @@ option go_package = "github.com/NibiruChain/nibiru/x/spot/types";
 service Msg {
   // Used to create a pool.
   rpc CreatePool(MsgCreatePool) returns (MsgCreatePoolResponse) {
-    option (google.api.http).post = "/nibiru/dex/pool";
+    option (google.api.http).post = "/nibiru/spot/pool";
   }
 
   // Join a pool as a liquidity provider.
   rpc JoinPool(MsgJoinPool) returns (MsgJoinPoolResponse) {
-    option (google.api.http).post = "/nibiru/dex/{pool_id}/join";
+    option (google.api.http).post = "/nibiru/spot/{pool_id}/join";
   }
 
   // Exit a pool position by returning LP shares
   rpc ExitPool(MsgExitPool) returns (MsgExitPoolResponse) {
-    option (google.api.http).post = "/nibiru/dex/{pool_id}/exit";
+    option (google.api.http).post = "/nibiru/spot/{pool_id}/exit";
   }
 
   // Swap assets in a pool
   rpc SwapAssets(MsgSwapAssets) returns (MsgSwapAssetsResponse) {
-    option (google.api.http).post = "/nibiru/dex/{pool_id}/swap";
+    option (google.api.http).post = "/nibiru/spot/{pool_id}/swap";
   }
 }
 
