@@ -275,7 +275,7 @@ func TestCreatePool(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testapp.NewTestNibiruAppAndContext(true)
-			msgServer := keeper.NewMsgServerImpl(app.DexKeeper)
+			msgServer := keeper.NewMsgServerImpl(app.SpotKeeper)
 
 			if tc.creatorAddr == nil {
 				tc.creatorAddr = ed25519.GenPrivKey().PubKey().Address().Bytes()
@@ -408,7 +408,7 @@ func TestCreateExitJoinPool(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testapp.NewTestNibiruAppAndContext(true)
-			msgServer := keeper.NewMsgServerImpl(app.DexKeeper)
+			msgServer := keeper.NewMsgServerImpl(app.SpotKeeper)
 
 			if tc.creatorAddr == nil {
 				tc.creatorAddr = ed25519.GenPrivKey().PubKey().Address().Bytes()
@@ -481,7 +481,7 @@ func TestMsgServerJoinPool(t *testing.T) {
 				sdk.NewInt64Coin(denoms.NIBI, 100),
 				sdk.NewInt64Coin(denoms.NUSD, 100),
 			),
-			initialPool: mock.DexPool(
+			initialPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 100),
@@ -495,7 +495,7 @@ func TestMsgServerJoinPool(t *testing.T) {
 			expectedNumSharesOut:     sdk.NewInt64Coin(shareDenom, 100),
 			expectedRemCoins:         sdk.NewCoins(),
 			expectedJoinerFinalFunds: sdk.NewCoins(sdk.NewInt64Coin(shareDenom, 100)),
-			expectedFinalPool: mock.DexPool(
+			expectedFinalPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 200),
@@ -509,7 +509,7 @@ func TestMsgServerJoinPool(t *testing.T) {
 				sdk.NewInt64Coin(denoms.NIBI, 100),
 				sdk.NewInt64Coin(denoms.NUSD, 100),
 			),
-			initialPool: mock.DexPool(
+			initialPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 100),
@@ -527,7 +527,7 @@ func TestMsgServerJoinPool(t *testing.T) {
 				sdk.NewInt64Coin(denoms.NIBI, 50),
 				sdk.NewInt64Coin(denoms.NUSD, 50),
 			),
-			expectedFinalPool: mock.DexPool(
+			expectedFinalPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 150),
@@ -541,7 +541,7 @@ func TestMsgServerJoinPool(t *testing.T) {
 				sdk.NewInt64Coin(denoms.NIBI, 100),
 				sdk.NewInt64Coin(denoms.NUSD, 100),
 			),
-			initialPool: mock.DexPool(
+			initialPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 100),
@@ -561,7 +561,7 @@ func TestMsgServerJoinPool(t *testing.T) {
 				sdk.NewInt64Coin(denoms.NIBI, 50),
 				sdk.NewInt64Coin(denoms.NUSD, 50),
 			),
-			expectedFinalPool: mock.DexPool(
+			expectedFinalPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 150),
@@ -575,7 +575,7 @@ func TestMsgServerJoinPool(t *testing.T) {
 				sdk.NewInt64Coin(denoms.NIBI, 100),
 				sdk.NewInt64Coin(denoms.NUSD, 100),
 			),
-			initialPool: mock.DexStablePool(
+			initialPool: mock.SpotStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 100),
@@ -589,7 +589,7 @@ func TestMsgServerJoinPool(t *testing.T) {
 			expectedNumSharesOut:     sdk.NewInt64Coin(shareDenom, 100),
 			expectedRemCoins:         sdk.NewCoins(),
 			expectedJoinerFinalFunds: sdk.NewCoins(sdk.NewInt64Coin(shareDenom, 100)),
-			expectedFinalPool: mock.DexStablePool(
+			expectedFinalPool: mock.SpotStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 200),
@@ -603,7 +603,7 @@ func TestMsgServerJoinPool(t *testing.T) {
 				sdk.NewInt64Coin(denoms.NIBI, 100),
 				sdk.NewInt64Coin(denoms.NUSD, 100),
 			),
-			initialPool: mock.DexStablePool(
+			initialPool: mock.SpotStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 100),
@@ -621,7 +621,7 @@ func TestMsgServerJoinPool(t *testing.T) {
 				sdk.NewInt64Coin(denoms.NIBI, 50),
 				sdk.NewInt64Coin(denoms.NUSD, 50),
 			),
-			expectedFinalPool: mock.DexStablePool(
+			expectedFinalPool: mock.SpotStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 150),
@@ -635,7 +635,7 @@ func TestMsgServerJoinPool(t *testing.T) {
 				sdk.NewInt64Coin(denoms.NIBI, 100),
 				sdk.NewInt64Coin(denoms.NUSD, 100),
 			),
-			initialPool: mock.DexStablePool(
+			initialPool: mock.SpotStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 100),
@@ -653,7 +653,7 @@ func TestMsgServerJoinPool(t *testing.T) {
 				sdk.NewInt64Coin(denoms.NIBI, 50),
 				sdk.NewInt64Coin(denoms.NUSD, 25),
 			),
-			expectedFinalPool: mock.DexStablePool(
+			expectedFinalPool: mock.SpotStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 150),
@@ -671,12 +671,12 @@ func TestMsgServerJoinPool(t *testing.T) {
 			poolAddr := testutil.AccAddress()
 			tc.initialPool.Address = poolAddr.String()
 			tc.expectedFinalPool.Address = poolAddr.String()
-			app.DexKeeper.SetPool(ctx, tc.initialPool)
+			app.SpotKeeper.SetPool(ctx, tc.initialPool)
 
 			joinerAddr := testutil.AccAddress()
 			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, joinerAddr, tc.joinerInitialFunds))
 
-			msgServer := keeper.NewMsgServerImpl(app.DexKeeper)
+			msgServer := keeper.NewMsgServerImpl(app.SpotKeeper)
 			resp, err := msgServer.JoinPool(
 				sdk.WrapSDKContext(ctx),
 				types.NewMsgJoinPool(joinerAddr.String(), tc.initialPool.Id, tc.tokensIn, false),
@@ -724,7 +724,7 @@ func TestMsgServerExitPool(t *testing.T) {
 				sdk.NewInt64Coin(denoms.NIBI, 100),
 				sdk.NewInt64Coin(denoms.NUSD, 100),
 			),
-			initialPool: mock.DexPool(
+			initialPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 100),
@@ -741,7 +741,7 @@ func TestMsgServerExitPool(t *testing.T) {
 				sdk.NewInt64Coin(denoms.NIBI, 199),
 				sdk.NewInt64Coin(denoms.NUSD, 199),
 			),
-			expectedFinalPool: mock.DexPool(
+			expectedFinalPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 1),
@@ -761,7 +761,7 @@ func TestMsgServerExitPool(t *testing.T) {
 				sdk.NewInt64Coin(denoms.NIBI, 100),
 				sdk.NewInt64Coin(denoms.NUSD, 100),
 			),
-			initialPool: mock.DexPool(
+			initialPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 100),
@@ -779,7 +779,7 @@ func TestMsgServerExitPool(t *testing.T) {
 				sdk.NewInt64Coin(denoms.NUSD, 149),
 				sdk.NewInt64Coin(shareDenom, 50),
 			),
-			expectedFinalPool: mock.DexPool(
+			expectedFinalPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 51),
@@ -799,7 +799,7 @@ func TestMsgServerExitPool(t *testing.T) {
 				sdk.NewInt64Coin(denoms.NIBI, 100),
 				sdk.NewInt64Coin(denoms.NUSD, 100),
 			),
-			initialPool: mock.DexStablePool(
+			initialPool: mock.SpotStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 100),
@@ -816,7 +816,7 @@ func TestMsgServerExitPool(t *testing.T) {
 				sdk.NewInt64Coin(denoms.NIBI, 200),
 				sdk.NewInt64Coin(denoms.NUSD, 200),
 			),
-			expectedFinalPool: mock.DexStablePool(
+			expectedFinalPool: mock.SpotStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 1),
@@ -836,7 +836,7 @@ func TestMsgServerExitPool(t *testing.T) {
 				sdk.NewInt64Coin(denoms.NIBI, 100),
 				sdk.NewInt64Coin(denoms.NUSD, 100),
 			),
-			initialPool: mock.DexStablePool(
+			initialPool: mock.SpotStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 100),
@@ -854,7 +854,7 @@ func TestMsgServerExitPool(t *testing.T) {
 				sdk.NewInt64Coin(denoms.NUSD, 150),
 				sdk.NewInt64Coin(shareDenom, 50),
 			),
-			expectedFinalPool: mock.DexStablePool(
+			expectedFinalPool: mock.SpotStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 50),
@@ -873,7 +873,7 @@ func TestMsgServerExitPool(t *testing.T) {
 			poolAddr := testutil.AccAddress()
 			tc.initialPool.Address = poolAddr.String()
 			tc.expectedFinalPool.Address = poolAddr.String()
-			app.DexKeeper.SetPool(ctx, tc.initialPool)
+			app.SpotKeeper.SetPool(ctx, tc.initialPool)
 
 			sender := testutil.AccAddress()
 			require.NoError(t, simapp.FundAccount(
@@ -881,7 +881,7 @@ func TestMsgServerExitPool(t *testing.T) {
 			require.NoError(t, simapp.FundAccount(
 				app.BankKeeper, ctx, tc.initialPool.GetAddress(), tc.poolFundsToAdd))
 
-			msgServer := keeper.NewMsgServerImpl(app.DexKeeper)
+			msgServer := keeper.NewMsgServerImpl(app.SpotKeeper)
 			resp, err := msgServer.ExitPool(
 				sdk.WrapSDKContext(ctx),
 				types.NewMsgExitPool(sender.String(), tc.initialPool.Id, tc.poolSharesIn),
@@ -931,7 +931,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			userInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.NIBI, 100),
 			),
-			initialPool: mock.DexPool(
+			initialPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 100),
@@ -945,7 +945,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			expectedUserFinalFunds: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.NUSD, 50),
 			),
-			expectedFinalPool: mock.DexPool(
+			expectedFinalPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 200),
@@ -960,7 +960,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			userInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.NIBI, 1),
 			),
-			initialPool: mock.DexPool(
+			initialPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 100),
@@ -973,7 +973,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			expectedUserFinalFunds: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.NIBI, 1),
 			),
-			expectedFinalPool: mock.DexPool(
+			expectedFinalPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 100),
@@ -988,7 +988,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			userInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("foo", 100),
 			),
-			initialPool: mock.DexPool(
+			initialPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 100),
@@ -1001,7 +1001,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			expectedUserFinalFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("foo", 100),
 			),
-			expectedFinalPool: mock.DexPool(
+			expectedFinalPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 100),
@@ -1016,7 +1016,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			userInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.NIBI, 100),
 			),
-			initialPool: mock.DexPool(
+			initialPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 100),
@@ -1029,7 +1029,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			expectedUserFinalFunds: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.NIBI, 100),
 			),
-			expectedFinalPool: mock.DexPool(
+			expectedFinalPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 100),
@@ -1044,7 +1044,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			userInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.NIBI, 100),
 			),
-			initialPool: mock.DexPool(
+			initialPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 100),
@@ -1057,7 +1057,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			expectedUserFinalFunds: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.NIBI, 100),
 			),
-			expectedFinalPool: mock.DexPool(
+			expectedFinalPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 100),
@@ -1072,7 +1072,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			userInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.NIBI, 100),
 			),
-			initialPool: mock.DexStablePool(
+			initialPool: mock.SpotStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 100),
@@ -1086,7 +1086,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			expectedUserFinalFunds: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.NUSD, 95),
 			),
-			expectedFinalPool: mock.DexStablePool(
+			expectedFinalPool: mock.SpotStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 200),
@@ -1101,7 +1101,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			userInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.NIBI, 1),
 			),
-			initialPool: mock.DexStablePool(
+			initialPool: mock.SpotStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 100),
@@ -1114,7 +1114,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			expectedUserFinalFunds: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.NIBI, 1),
 			),
-			expectedFinalPool: mock.DexStablePool(
+			expectedFinalPool: mock.SpotStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 100),
@@ -1129,7 +1129,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			userInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("foo", 100),
 			),
-			initialPool: mock.DexStablePool(
+			initialPool: mock.SpotStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 100),
@@ -1142,7 +1142,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			expectedUserFinalFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("foo", 100),
 			),
-			expectedFinalPool: mock.DexStablePool(
+			expectedFinalPool: mock.SpotStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 100),
@@ -1157,7 +1157,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			userInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.NIBI, 100),
 			),
-			initialPool: mock.DexStablePool(
+			initialPool: mock.SpotStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 100),
@@ -1170,7 +1170,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			expectedUserFinalFunds: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.NIBI, 100),
 			),
-			expectedFinalPool: mock.DexStablePool(
+			expectedFinalPool: mock.SpotStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 100),
@@ -1185,7 +1185,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			userInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.NIBI, 100),
 			),
-			initialPool: mock.DexStablePool(
+			initialPool: mock.SpotStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 100),
@@ -1198,7 +1198,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			expectedUserFinalFunds: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.NIBI, 100),
 			),
-			expectedFinalPool: mock.DexStablePool(
+			expectedFinalPool: mock.SpotStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 100),
@@ -1214,7 +1214,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testapp.NewTestNibiruAppAndContext(true)
-			msgServer := keeper.NewMsgServerImpl(app.DexKeeper)
+			msgServer := keeper.NewMsgServerImpl(app.SpotKeeper)
 
 			// fund pool account
 			poolAddr := testutil.AccAddress()
@@ -1228,7 +1228,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 					tc.initialPool.PoolBalances(),
 				),
 			)
-			app.DexKeeper.SetPool(ctx, tc.initialPool)
+			app.SpotKeeper.SetPool(ctx, tc.initialPool)
 
 			// fund user account
 			sender := testutil.AccAddress()
@@ -1267,7 +1267,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			)
 
 			// check final pool state
-			finalPool, err := app.DexKeeper.FetchPool(ctx, tc.initialPool.Id)
+			finalPool, err := app.SpotKeeper.FetchPool(ctx, tc.initialPool.Id)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedFinalPool, finalPool)
 		})

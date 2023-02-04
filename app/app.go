@@ -268,7 +268,7 @@ type NibiruApp struct {
 	EpochsKeeper     epochskeeper.Keeper
 	PerpKeeper       perpkeeper.Keeper
 	VpoolKeeper      vpoolkeeper.Keeper
-	DexKeeper        spotkeeper.Keeper
+	SpotKeeper       spotkeeper.Keeper
 	OracleKeeper     oraclekeeper.Keeper
 	StablecoinKeeper stablecoinkeeper.Keeper
 
@@ -435,7 +435,7 @@ func NewNibiruApp(
 
 	// ---------------------------------- Nibiru Chain x/ keepers
 
-	app.DexKeeper = spotkeeper.NewKeeper(
+	app.SpotKeeper = spotkeeper.NewKeeper(
 		appCodec, keys[spottypes.StoreKey], app.GetSubspace(spottypes.ModuleName),
 		app.AccountKeeper, app.BankKeeper, app.distrKeeper)
 
@@ -446,7 +446,7 @@ func NewNibiruApp(
 	app.StablecoinKeeper = stablecoinkeeper.NewKeeper(
 		appCodec, keys[stablecointypes.StoreKey], memKeys[stablecointypes.MemStoreKey],
 		app.GetSubspace(stablecointypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.DexKeeper,
+		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.SpotKeeper,
 	)
 
 	app.VpoolKeeper = vpoolkeeper.NewKeeper(
@@ -571,7 +571,7 @@ func NewNibiruApp(
 		appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
 	spotModule := spot.NewAppModule(
-		appCodec, app.DexKeeper, app.AccountKeeper, app.BankKeeper)
+		appCodec, app.SpotKeeper, app.AccountKeeper, app.BankKeeper)
 	oracleModule := oracle.NewAppModule(appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper)
 	epochsModule := epochs.NewAppModule(appCodec, app.EpochsKeeper)
 	stablecoinModule := stablecoin.NewAppModule(

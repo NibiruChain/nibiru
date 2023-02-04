@@ -14,7 +14,7 @@ func TestGetParams(t *testing.T) {
 	app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 	params := types.DefaultParams()
-	app.DexKeeper.SetParams(ctx, params)
+	app.SpotKeeper.SetParams(ctx, params)
 
-	require.EqualValues(t, params, app.DexKeeper.GetParams(ctx))
+	require.EqualValues(t, params, app.SpotKeeper.GetParams(ctx))
 }

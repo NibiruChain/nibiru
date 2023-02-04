@@ -17,8 +17,8 @@ func TestGenesis(t *testing.T) {
 	}
 
 	app, ctx := testapp.NewTestNibiruAppAndContext(true)
-	spot.InitGenesis(ctx, app.DexKeeper, genesisState)
-	got := spot.ExportGenesis(ctx, app.DexKeeper)
+	spot.InitGenesis(ctx, app.SpotKeeper, genesisState)
+	got := spot.ExportGenesis(ctx, app.SpotKeeper)
 	require.NotNil(t, got)
 
 	testutil.Fill(&genesisState)

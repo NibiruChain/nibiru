@@ -20,9 +20,9 @@ func TestParamsQuery(t *testing.T) {
 	app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 	params := types.DefaultParams()
-	app.DexKeeper.SetParams(ctx, params)
+	app.SpotKeeper.SetParams(ctx, params)
 
-	queryServer := keeper.NewQuerier(app.DexKeeper)
+	queryServer := keeper.NewQuerier(app.SpotKeeper)
 
 	response, err := queryServer.Params(sdk.WrapSDKContext(ctx), &types.QueryParamsRequest{})
 	require.NoError(t, err)
@@ -90,9 +90,9 @@ func TestQueryPoolHappyPath(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testapp.NewTestNibiruAppAndContext(true)
-			app.DexKeeper.SetPool(ctx, tc.existingPool)
+			app.SpotKeeper.SetPool(ctx, tc.existingPool)
 
-			queryServer := keeper.NewQuerier(app.DexKeeper)
+			queryServer := keeper.NewQuerier(app.SpotKeeper)
 
 			resp, err := queryServer.Pool(sdk.WrapSDKContext(ctx), &types.QueryPoolRequest{
 				PoolId: 1,
@@ -116,7 +116,7 @@ func TestQueryPoolFail(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testapp.NewTestNibiruAppAndContext(true)
-			queryServer := keeper.NewQuerier(app.DexKeeper)
+			queryServer := keeper.NewQuerier(app.SpotKeeper)
 			resp, err := queryServer.Pool(sdk.WrapSDKContext(ctx), nil)
 			require.Error(t, err)
 			require.Nil(t, resp)
@@ -134,7 +134,7 @@ func TestQueryPools(t *testing.T) {
 		{
 			name: "successful query single pool",
 			existingPools: []types.Pool{
-				mock.DexPool(
+				mock.SpotPool(
 					/*poolId=*/ 1,
 					/*assets=*/ sdk.NewCoins(
 						sdk.NewInt64Coin("foo", 100),
@@ -144,7 +144,7 @@ func TestQueryPools(t *testing.T) {
 				),
 			},
 			expectedPools: []types.Pool{
-				mock.DexPool(
+				mock.SpotPool(
 					/*poolId=*/ 1,
 					/*assets=*/ sdk.NewCoins(
 						sdk.NewInt64Coin("foo", 100),
@@ -157,7 +157,7 @@ func TestQueryPools(t *testing.T) {
 		{
 			name: "successful query multiple pools",
 			existingPools: []types.Pool{
-				mock.DexPool(
+				mock.SpotPool(
 					/*poolId=*/ 1,
 					/*assets=*/ sdk.NewCoins(
 						sdk.NewInt64Coin("foo", 100),
@@ -165,7 +165,7 @@ func TestQueryPools(t *testing.T) {
 					),
 					/*shares=*/ 100,
 				),
-				mock.DexPool(
+				mock.SpotPool(
 					/*poolId=*/ 2,
 					/*assets=*/ sdk.NewCoins(
 						sdk.NewInt64Coin("bar", 100),
@@ -175,7 +175,7 @@ func TestQueryPools(t *testing.T) {
 				),
 			},
 			expectedPools: []types.Pool{
-				mock.DexPool(
+				mock.SpotPool(
 					/*poolId=*/ 1,
 					/*assets=*/ sdk.NewCoins(
 						sdk.NewInt64Coin("foo", 100),
@@ -183,7 +183,7 @@ func TestQueryPools(t *testing.T) {
 					),
 					/*shares=*/ 100,
 				),
-				mock.DexPool(
+				mock.SpotPool(
 					/*poolId=*/ 2,
 					/*assets=*/ sdk.NewCoins(
 						sdk.NewInt64Coin("bar", 100),
@@ -196,7 +196,7 @@ func TestQueryPools(t *testing.T) {
 		{
 			name: "query pools with pagination",
 			existingPools: []types.Pool{
-				mock.DexPool(
+				mock.SpotPool(
 					/*poolId=*/ 1,
 					/*assets=*/ sdk.NewCoins(
 						sdk.NewInt64Coin("foo", 100),
@@ -204,7 +204,7 @@ func TestQueryPools(t *testing.T) {
 					),
 					/*shares=*/ 100,
 				),
-				mock.DexPool(
+				mock.SpotPool(
 					/*poolId=*/ 2,
 					/*assets=*/ sdk.NewCoins(
 						sdk.NewInt64Coin("bar", 100),
@@ -217,7 +217,7 @@ func TestQueryPools(t *testing.T) {
 				Limit: 1,
 			},
 			expectedPools: []types.Pool{
-				mock.DexPool(
+				mock.SpotPool(
 					/*poolId=*/ 1,
 					/*assets=*/ sdk.NewCoins(
 						sdk.NewInt64Coin("foo", 100),
@@ -234,10 +234,10 @@ func TestQueryPools(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testapp.NewTestNibiruAppAndContext(true)
 			for _, existingPool := range tc.existingPools {
-				app.DexKeeper.SetPool(ctx, existingPool)
+				app.SpotKeeper.SetPool(ctx, existingPool)
 			}
 
-			queryServer := keeper.NewQuerier(app.DexKeeper)
+			queryServer := keeper.NewQuerier(app.SpotKeeper)
 
 			resp, err := queryServer.Pools(
 				sdk.WrapSDKContext(ctx),
@@ -265,7 +265,7 @@ func TestQueryNumPools(t *testing.T) {
 		{
 			name: "one pool",
 			newPools: []types.Pool{
-				mock.DexPool(
+				mock.SpotPool(
 					/*poolId=*/ 1,
 					/*assets=*/ sdk.NewCoins(
 						sdk.NewInt64Coin("unibi", 100),
@@ -279,7 +279,7 @@ func TestQueryNumPools(t *testing.T) {
 		{
 			name: "multiple pools",
 			newPools: []types.Pool{
-				mock.DexPool(
+				mock.SpotPool(
 					/*poolId=*/ 1,
 					/*assets=*/ sdk.NewCoins(
 						sdk.NewInt64Coin("unibi", 100),
@@ -287,7 +287,7 @@ func TestQueryNumPools(t *testing.T) {
 					),
 					/*shares=*/ 100,
 				),
-				mock.DexPool(
+				mock.SpotPool(
 					/*poolId=*/ 2,
 					/*assets=*/ sdk.NewCoins(
 						sdk.NewInt64Coin(denoms.USDC, 100),
@@ -295,7 +295,7 @@ func TestQueryNumPools(t *testing.T) {
 					),
 					/*shares=*/ 100,
 				),
-				mock.DexPool(
+				mock.SpotPool(
 					/*poolId=*/ 3,
 					/*assets=*/ sdk.NewCoins(
 						sdk.NewInt64Coin(denoms.NUSD, 100),
@@ -326,7 +326,7 @@ func TestQueryNumPools(t *testing.T) {
 			))
 
 			for _, newPool := range tc.newPools {
-				_, err := app.DexKeeper.NewPool(
+				_, err := app.SpotKeeper.NewPool(
 					ctx,
 					sender,
 					newPool.PoolParams,
@@ -335,7 +335,7 @@ func TestQueryNumPools(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			queryServer := keeper.NewQuerier(app.DexKeeper)
+			queryServer := keeper.NewQuerier(app.SpotKeeper)
 
 			resp, err := queryServer.NumPools(
 				sdk.WrapSDKContext(ctx),
@@ -421,9 +421,9 @@ func TestQueryPoolParams(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testapp.NewTestNibiruAppAndContext(true)
-			app.DexKeeper.SetPool(ctx, tc.existingPool)
+			app.SpotKeeper.SetPool(ctx, tc.existingPool)
 
-			queryServer := keeper.NewQuerier(app.DexKeeper)
+			queryServer := keeper.NewQuerier(app.SpotKeeper)
 
 			resp, err := queryServer.PoolParams(sdk.WrapSDKContext(ctx), &types.QueryPoolParamsRequest{
 				PoolId: 1,
@@ -442,7 +442,7 @@ func TestQueryTotalShares(t *testing.T) {
 	}{
 		{
 			name: "successfully get existing shares",
-			existingPool: mock.DexPool(
+			existingPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
@@ -459,9 +459,9 @@ func TestQueryTotalShares(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
-			app.DexKeeper.SetPool(ctx, tc.existingPool)
+			app.SpotKeeper.SetPool(ctx, tc.existingPool)
 
-			queryServer := keeper.NewQuerier(app.DexKeeper)
+			queryServer := keeper.NewQuerier(app.SpotKeeper)
 
 			resp, err := queryServer.TotalShares(
 				sdk.WrapSDKContext(ctx),
@@ -485,7 +485,7 @@ func TestQuerySpotPrice(t *testing.T) {
 	}{
 		{
 			name: "same quantity",
-			existingPool: mock.DexPool(
+			existingPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
@@ -499,7 +499,7 @@ func TestQuerySpotPrice(t *testing.T) {
 		},
 		{
 			name: "price of 2 unusd per unibi",
-			existingPool: mock.DexPool(
+			existingPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
@@ -513,7 +513,7 @@ func TestQuerySpotPrice(t *testing.T) {
 		},
 		{
 			name: "price of 0.5 unibi per unusd",
-			existingPool: mock.DexPool(
+			existingPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
@@ -532,9 +532,9 @@ func TestQuerySpotPrice(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
-			app.DexKeeper.SetPool(ctx, tc.existingPool)
+			app.SpotKeeper.SetPool(ctx, tc.existingPool)
 
-			queryServer := keeper.NewQuerier(app.DexKeeper)
+			queryServer := keeper.NewQuerier(app.SpotKeeper)
 
 			resp, err := queryServer.SpotPrice(
 				sdk.WrapSDKContext(ctx),
@@ -560,7 +560,7 @@ func TestQueryEstimateSwapExactAmountIn(t *testing.T) {
 	}{
 		{
 			name: "simple swap",
-			existingPool: mock.DexPool(
+			existingPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
@@ -574,7 +574,7 @@ func TestQueryEstimateSwapExactAmountIn(t *testing.T) {
 		},
 		{
 			name: "complex swap",
-			existingPool: mock.DexPool(
+			existingPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 34844867),
@@ -593,8 +593,8 @@ func TestQueryEstimateSwapExactAmountIn(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testapp.NewTestNibiruAppAndContext(true)
-			app.DexKeeper.SetPool(ctx, tc.existingPool)
-			queryServer := keeper.NewQuerier(app.DexKeeper)
+			app.SpotKeeper.SetPool(ctx, tc.existingPool)
+			queryServer := keeper.NewQuerier(app.SpotKeeper)
 
 			resp, err := queryServer.EstimateSwapExactAmountIn(
 				sdk.WrapSDKContext(ctx),
@@ -621,7 +621,7 @@ func TestQueryEstimateSwapExactAmountOut(t *testing.T) {
 	}{
 		{
 			name: "simple swap",
-			existingPool: mock.DexPool(
+			existingPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
@@ -636,7 +636,7 @@ func TestQueryEstimateSwapExactAmountOut(t *testing.T) {
 		},
 		{
 			name: "complex swap",
-			existingPool: mock.DexPool(
+			existingPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 34844867),
@@ -655,8 +655,8 @@ func TestQueryEstimateSwapExactAmountOut(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testapp.NewTestNibiruAppAndContext(true)
-			app.DexKeeper.SetPool(ctx, tc.existingPool)
-			queryServer := keeper.NewQuerier(app.DexKeeper)
+			app.SpotKeeper.SetPool(ctx, tc.existingPool)
+			queryServer := keeper.NewQuerier(app.SpotKeeper)
 
 			resp, err := queryServer.EstimateSwapExactAmountOut(
 				sdk.WrapSDKContext(ctx),
@@ -683,7 +683,7 @@ func TestQueryEstimateJoinExactAmountIn(t *testing.T) {
 	}{
 		{
 			name: "complete join",
-			existingPool: mock.DexPool(
+			existingPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
@@ -700,7 +700,7 @@ func TestQueryEstimateJoinExactAmountIn(t *testing.T) {
 		},
 		{
 			name: "leftover coins",
-			existingPool: mock.DexPool(
+			existingPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
@@ -723,8 +723,8 @@ func TestQueryEstimateJoinExactAmountIn(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testapp.NewTestNibiruAppAndContext(true)
-			app.DexKeeper.SetPool(ctx, tc.existingPool)
-			queryServer := keeper.NewQuerier(app.DexKeeper)
+			app.SpotKeeper.SetPool(ctx, tc.existingPool)
+			queryServer := keeper.NewQuerier(app.SpotKeeper)
 
 			resp, err := queryServer.EstimateJoinExactAmountIn(
 				sdk.WrapSDKContext(ctx),
@@ -750,7 +750,7 @@ func TestQueryEstimateExitExactAmountIn(t *testing.T) {
 	}{
 		{
 			name: "complete exit",
-			existingPool: mock.DexPool(
+			existingPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
@@ -767,7 +767,7 @@ func TestQueryEstimateExitExactAmountIn(t *testing.T) {
 		},
 		{
 			name: "leftover coins",
-			existingPool: mock.DexPool(
+			existingPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
@@ -788,8 +788,8 @@ func TestQueryEstimateExitExactAmountIn(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testapp.NewTestNibiruAppAndContext(true)
-			app.DexKeeper.SetPool(ctx, tc.existingPool)
-			queryServer := keeper.NewQuerier(app.DexKeeper)
+			app.SpotKeeper.SetPool(ctx, tc.existingPool)
+			queryServer := keeper.NewQuerier(app.SpotKeeper)
 
 			resp, err := queryServer.EstimateExitExactAmountIn(
 				sdk.WrapSDKContext(ctx),

@@ -23,10 +23,10 @@ func TestGetAndSetNextPoolNumber(t *testing.T) {
 	app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 	// Write to store
-	app.DexKeeper.SetNextPoolNumber(ctx, 150)
+	app.SpotKeeper.SetNextPoolNumber(ctx, 150)
 
 	// Read from store
-	poolNumber, err := app.DexKeeper.GetNextPoolNumber(ctx)
+	poolNumber, err := app.SpotKeeper.GetNextPoolNumber(ctx)
 	assert.NoError(t, err)
 	require.EqualValues(t, poolNumber, 150)
 }
@@ -35,15 +35,15 @@ func TestGetNextPoolNumberAndIncrement(t *testing.T) {
 	app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 	// Write a pool number
-	app.DexKeeper.SetNextPoolNumber(ctx, 200)
+	app.SpotKeeper.SetNextPoolNumber(ctx, 200)
 
 	// Get next and increment should return the current pool number
-	poolNumber, err := app.DexKeeper.GetNextPoolNumberAndIncrement(ctx)
+	poolNumber, err := app.SpotKeeper.GetNextPoolNumberAndIncrement(ctx)
 	assert.NoError(t, err)
 	require.EqualValues(t, poolNumber, 200)
 
 	// Check that the previous call incremented the number
-	poolNumber, err = app.DexKeeper.GetNextPoolNumber(ctx)
+	poolNumber, err = app.SpotKeeper.GetNextPoolNumber(ctx)
 	assert.NoError(t, err)
 	require.EqualValues(t, poolNumber, 201)
 }
@@ -73,9 +73,9 @@ func TestSetAndFetchPool(t *testing.T) {
 		TotalShares: sdk.NewInt64Coin("nibiru/pool/150", 100),
 	}
 
-	app.DexKeeper.SetPool(ctx, pool)
+	app.SpotKeeper.SetPool(ctx, pool)
 
-	retrievedPool, err := app.DexKeeper.FetchPool(ctx, 150)
+	retrievedPool, err := app.SpotKeeper.FetchPool(ctx, 150)
 	assert.NoError(t, err)
 	require.Equal(t, pool, retrievedPool)
 }
@@ -160,7 +160,7 @@ func TestFetchPoolFromPair(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
-			app.DexKeeper.SetPool(ctx, types.Pool{
+			app.SpotKeeper.SetPool(ctx, types.Pool{
 				Id: 1,
 				PoolParams: types.PoolParams{
 					SwapFee:  sdk.NewDecWithPrec(3, 2),
@@ -183,7 +183,7 @@ func TestFetchPoolFromPair(t *testing.T) {
 				Address:     "address1",
 			})
 
-			app.DexKeeper.SetPool(ctx, types.Pool{
+			app.SpotKeeper.SetPool(ctx, types.Pool{
 				Id: 2,
 				PoolParams: types.PoolParams{
 					SwapFee:  sdk.NewDecWithPrec(3, 2),
@@ -206,7 +206,7 @@ func TestFetchPoolFromPair(t *testing.T) {
 				Address:     "address2",
 			})
 
-			retrievedPool, err := app.DexKeeper.FetchPoolFromPair(ctx, tc.firstToken, tc.secondToken)
+			retrievedPool, err := app.SpotKeeper.FetchPoolFromPair(ctx, tc.firstToken, tc.secondToken)
 			retrievedPoolId := retrievedPool.Id
 			if tc.expectedPass {
 				require.NoError(t, err)
@@ -223,7 +223,7 @@ func TestNewPool(t *testing.T) {
 	app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
 	poolCreationFeeCoin := sdk.NewInt64Coin(denoms.NIBI, 1000*common.Precision)
-	app.DexKeeper.SetParams(ctx, types.NewParams(
+	app.SpotKeeper.SetParams(ctx, types.NewParams(
 		/*startingPoolNumber=*/ 1,
 		/*poolCreationFee=*/ sdk.NewCoins(poolCreationFeeCoin),
 		/*whitelistedAssets*/ []string{
@@ -241,7 +241,7 @@ func TestNewPool(t *testing.T) {
 	))
 	require.NoError(t, err)
 
-	poolId, err := app.DexKeeper.NewPool(ctx,
+	poolId, err := app.SpotKeeper.NewPool(ctx,
 		// sender
 		userAddr,
 		// poolParams
@@ -264,7 +264,7 @@ func TestNewPool(t *testing.T) {
 		})
 	require.NoError(t, err)
 
-	retrievedPool, _ := app.DexKeeper.FetchPool(ctx, poolId)
+	retrievedPool, _ := app.SpotKeeper.FetchPool(ctx, poolId)
 
 	require.Equal(t, types.Pool{
 		Id:      1,
@@ -293,7 +293,7 @@ func TestNewPool(t *testing.T) {
 func TestNewPoolNotEnoughFunds(t *testing.T) {
 	app, ctx := testapp.NewTestNibiruAppAndContext(true)
 
-	app.DexKeeper.SetParams(ctx, types.NewParams(
+	app.SpotKeeper.SetParams(ctx, types.NewParams(
 		/*startingPoolNumber=*/ 1,
 		/*poolCreationFee=*/ sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 1000*common.Precision)),
 		/*whitelistedAssets*/ []string{},
@@ -308,7 +308,7 @@ func TestNewPoolNotEnoughFunds(t *testing.T) {
 	))
 	require.NoError(t, err)
 
-	_, err = app.DexKeeper.NewPool(ctx,
+	_, err = app.SpotKeeper.NewPool(ctx,
 		// sender
 		userAddr,
 		// poolParams
@@ -347,7 +347,7 @@ func TestNewPoolTooLittleAssets(t *testing.T) {
 		},
 	}
 
-	poolId, err := app.DexKeeper.NewPool(ctx, userAddr, poolParams, poolAssets)
+	poolId, err := app.SpotKeeper.NewPool(ctx, userAddr, poolParams, poolAssets)
 	require.ErrorIs(t, err, types.ErrTooFewPoolAssets)
 	require.Equal(t, uint64(0), poolId)
 }
@@ -372,7 +372,7 @@ func TestKeeperNewPoolNotWhitelistedAssets(t *testing.T) {
 		},
 	}
 
-	poolId, err := app.DexKeeper.NewPool(ctx, userAddr, poolParams, poolAssets)
+	poolId, err := app.SpotKeeper.NewPool(ctx, userAddr, poolParams, poolAssets)
 	require.ErrorIs(t, err, types.ErrTokenNotAllowed)
 	require.Equal(t, uint64(0), poolId)
 }
@@ -417,7 +417,7 @@ func TestNewPoolTooManyAssets(t *testing.T) {
 		},
 	}
 
-	poolId, err := app.DexKeeper.NewPool(ctx, userAddr, poolParams, poolAssets)
+	poolId, err := app.SpotKeeper.NewPool(ctx, userAddr, poolParams, poolAssets)
 	require.ErrorIs(t, err, types.ErrTooManyPoolAssets)
 	require.Equal(t, uint64(0), poolId)
 }
@@ -434,7 +434,7 @@ func TestNewPoolDups(t *testing.T) {
 		sdk.NewCoin("foo", sdk.NewInt(1000)),
 	))
 	require.NoError(t, err)
-	app.DexKeeper.SetParams(ctx, types.NewParams(
+	app.SpotKeeper.SetParams(ctx, types.NewParams(
 		/*startingPoolNumber=*/ 1,
 		/*poolCreationFee=*/ poolCreationFeeCoin,
 		/*whitelistedAssets*/ []string{
@@ -458,11 +458,11 @@ func TestNewPoolDups(t *testing.T) {
 		},
 	}
 
-	poolId, err := app.DexKeeper.NewPool(ctx, userAddr, poolParams, poolAssets)
+	poolId, err := app.SpotKeeper.NewPool(ctx, userAddr, poolParams, poolAssets)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), poolId)
 
-	_, err = app.DexKeeper.NewPool(ctx, userAddr, poolParams, poolAssets)
+	_, err = app.SpotKeeper.NewPool(ctx, userAddr, poolParams, poolAssets)
 	require.ErrorIs(t, err, types.ErrPoolWithSameAssetsExists)
 }
 
@@ -485,7 +485,7 @@ func TestJoinPool(t *testing.T) {
 				sdk.NewInt64Coin("bar", 100),
 				sdk.NewInt64Coin("foo", 100),
 			),
-			initialPool: mock.DexPool(
+			initialPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 100),
@@ -499,7 +499,7 @@ func TestJoinPool(t *testing.T) {
 			expectedNumSharesOut:     sdk.NewInt64Coin(shareDenom, 100),
 			expectedRemCoins:         sdk.NewCoins(),
 			expectedJoinerFinalFunds: sdk.NewCoins(sdk.NewInt64Coin(shareDenom, 100)),
-			expectedFinalPool: mock.DexPool(
+			expectedFinalPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 200),
@@ -513,7 +513,7 @@ func TestJoinPool(t *testing.T) {
 				sdk.NewInt64Coin("bar", 100),
 				sdk.NewInt64Coin("foo", 100),
 			),
-			initialPool: mock.DexPool(
+			initialPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 100),
@@ -531,7 +531,7 @@ func TestJoinPool(t *testing.T) {
 				sdk.NewInt64Coin("bar", 50),
 				sdk.NewInt64Coin("foo", 50),
 			),
-			expectedFinalPool: mock.DexPool(
+			expectedFinalPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 150),
@@ -545,7 +545,7 @@ func TestJoinPool(t *testing.T) {
 				sdk.NewInt64Coin("bar", 100),
 				sdk.NewInt64Coin("foo", 100),
 			),
-			initialPool: mock.DexPool(
+			initialPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 100),
@@ -565,7 +565,7 @@ func TestJoinPool(t *testing.T) {
 				sdk.NewInt64Coin("bar", 50),
 				sdk.NewInt64Coin("foo", 50),
 			),
-			expectedFinalPool: mock.DexPool(
+			expectedFinalPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 150),
@@ -583,12 +583,12 @@ func TestJoinPool(t *testing.T) {
 			poolAddr := testutil.AccAddress()
 			tc.initialPool.Address = poolAddr.String()
 			tc.expectedFinalPool.Address = poolAddr.String()
-			app.DexKeeper.SetPool(ctx, tc.initialPool)
+			app.SpotKeeper.SetPool(ctx, tc.initialPool)
 
 			joinerAddr := testutil.AccAddress()
 			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, joinerAddr, tc.joinerInitialFunds))
 
-			pool, numSharesOut, remCoins, err := app.DexKeeper.JoinPool(ctx, joinerAddr, 1, tc.tokensIn, false)
+			pool, numSharesOut, remCoins, err := app.SpotKeeper.JoinPool(ctx, joinerAddr, 1, tc.tokensIn, false)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedFinalPool, pool)
 			require.Equal(t, tc.expectedNumSharesOut, numSharesOut)
@@ -616,7 +616,7 @@ func TestJoinPoolAllAssets(t *testing.T) {
 				sdk.NewInt64Coin("bar", 100),
 				sdk.NewInt64Coin("foo", 100),
 			),
-			initialPool: mock.DexPool(
+			initialPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 100),
@@ -630,7 +630,7 @@ func TestJoinPoolAllAssets(t *testing.T) {
 			expectedNumSharesOut:     sdk.NewInt64Coin(shareDenom, 100),
 			expectedRemCoins:         sdk.NewCoins(),
 			expectedJoinerFinalFunds: sdk.NewCoins(sdk.NewInt64Coin(shareDenom, 100)),
-			expectedFinalPool: mock.DexPool(
+			expectedFinalPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 200),
@@ -644,7 +644,7 @@ func TestJoinPoolAllAssets(t *testing.T) {
 				sdk.NewInt64Coin("bar", 100),
 				sdk.NewInt64Coin("foo", 100),
 			),
-			initialPool: mock.DexPool(
+			initialPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 100),
@@ -662,7 +662,7 @@ func TestJoinPoolAllAssets(t *testing.T) {
 				sdk.NewInt64Coin("bar", 50),
 				sdk.NewInt64Coin("foo", 50),
 			),
-			expectedFinalPool: mock.DexPool(
+			expectedFinalPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 150),
@@ -675,7 +675,7 @@ func TestJoinPoolAllAssets(t *testing.T) {
 			joinerInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("foo", 100),
 			),
-			initialPool: mock.DexPool(
+			initialPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 100),
@@ -692,7 +692,7 @@ func TestJoinPoolAllAssets(t *testing.T) {
 				sdk.NewInt64Coin("bar", 0),
 				sdk.NewInt64Coin("foo", 0),
 			),
-			expectedFinalPool: mock.DexPool(
+			expectedFinalPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 100),
@@ -706,7 +706,7 @@ func TestJoinPoolAllAssets(t *testing.T) {
 				sdk.NewInt64Coin("bar", 100),
 				sdk.NewInt64Coin("foo", 100),
 			),
-			initialPool: mock.DexPool(
+			initialPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 100),
@@ -724,7 +724,7 @@ func TestJoinPoolAllAssets(t *testing.T) {
 				sdk.NewInt64Coin("bar", 50),
 				sdk.NewInt64Coin("foo", 25),
 			),
-			expectedFinalPool: mock.DexPool(
+			expectedFinalPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 150),
@@ -742,12 +742,12 @@ func TestJoinPoolAllAssets(t *testing.T) {
 			poolAddr := testutil.AccAddress()
 			tc.initialPool.Address = poolAddr.String()
 			tc.expectedFinalPool.Address = poolAddr.String()
-			app.DexKeeper.SetPool(ctx, tc.initialPool)
+			app.SpotKeeper.SetPool(ctx, tc.initialPool)
 
 			joinerAddr := testutil.AccAddress()
 			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, joinerAddr, tc.joinerInitialFunds))
 
-			pool, numSharesOut, remCoins, err := app.DexKeeper.JoinPool(ctx, joinerAddr, 1, tc.tokensIn, true)
+			pool, numSharesOut, remCoins, err := app.SpotKeeper.JoinPool(ctx, joinerAddr, 1, tc.tokensIn, true)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedFinalPool, pool)
 			require.Equal(t, tc.expectedNumSharesOut, numSharesOut)
@@ -781,7 +781,7 @@ func TestExitPool(t *testing.T) {
 				sdk.NewInt64Coin("bar", 100),
 				sdk.NewInt64Coin("foo", 100),
 			),
-			initialPool: mock.DexPool(
+			initialPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 100),
@@ -798,7 +798,7 @@ func TestExitPool(t *testing.T) {
 				sdk.NewInt64Coin("bar", 199),
 				sdk.NewInt64Coin("foo", 199),
 			),
-			expectedFinalPool: mock.DexPool(
+			expectedFinalPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 1),
@@ -818,7 +818,7 @@ func TestExitPool(t *testing.T) {
 				sdk.NewInt64Coin("bar", 100),
 				sdk.NewInt64Coin("foo", 100),
 			),
-			initialPool: mock.DexPool(
+			initialPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 100),
@@ -836,7 +836,7 @@ func TestExitPool(t *testing.T) {
 				sdk.NewInt64Coin("foo", 149),
 				sdk.NewInt64Coin(shareDenom, 50),
 			),
-			expectedFinalPool: mock.DexPool(
+			expectedFinalPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 51),
@@ -855,17 +855,17 @@ func TestExitPool(t *testing.T) {
 			poolAddr := testutil.AccAddress()
 			tc.initialPool.Address = poolAddr.String()
 			tc.expectedFinalPool.Address = poolAddr.String()
-			app.DexKeeper.SetPool(ctx, tc.initialPool)
+			app.SpotKeeper.SetPool(ctx, tc.initialPool)
 
 			sender := testutil.AccAddress()
 			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, sender, tc.joinerInitialFunds))
 			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, tc.initialPool.GetAddress(), tc.initialPoolFunds))
 
-			tokensOut, err := app.DexKeeper.ExitPool(ctx, sender, 1, tc.poolSharesIn)
+			tokensOut, err := app.SpotKeeper.ExitPool(ctx, sender, 1, tc.poolSharesIn)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedTokensOut, tokensOut)
 			require.Equal(t, tc.expectedJoinerFinalFunds, app.BankKeeper.GetAllBalances(ctx, sender))
-			pool, _ := app.DexKeeper.FetchPool(ctx, 1)
+			pool, _ := app.SpotKeeper.FetchPool(ctx, 1)
 			require.Equal(t, tc.expectedFinalPool, pool)
 		})
 	}

@@ -7,7 +7,7 @@ import (
 )
 
 // helper function to create dummy test pools
-func DexPool(poolId uint64, assets sdk.Coins, shares int64) types.Pool {
+func SpotPool(poolId uint64, assets sdk.Coins, shares int64) types.Pool {
 	poolAssets := make([]types.PoolAsset, len(assets))
 	for i, asset := range assets {
 		poolAssets[i] = types.PoolAsset{
@@ -30,7 +30,7 @@ func DexPool(poolId uint64, assets sdk.Coins, shares int64) types.Pool {
 }
 
 // helper function to create dummy test pools
-func DexStablePool(poolId uint64, assets sdk.Coins, shares int64) types.Pool {
+func SpotStablePool(poolId uint64, assets sdk.Coins, shares int64) types.Pool {
 	poolAssets := make([]types.PoolAsset, len(assets))
 	for i, asset := range assets {
 		poolAssets[i] = types.PoolAsset{

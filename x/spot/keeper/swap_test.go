@@ -88,7 +88,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 			userInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.USDC, 10),
 			),
-			initialPool: mock.DexStablePool(
+			initialPool: mock.SpotStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.USDC, 100),
@@ -102,7 +102,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 			expectedUserFinalFunds: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.NUSD, 10),
 			),
-			expectedFinalPool: mock.DexStablePool(
+			expectedFinalPool: mock.SpotStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.USDC, 110),
@@ -117,7 +117,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 			userInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("unibi", 100),
 			),
-			initialPool: mock.DexPool(
+			initialPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
@@ -131,7 +131,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 			expectedUserFinalFunds: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.NUSD, 50),
 			),
-			expectedFinalPool: mock.DexPool(
+			expectedFinalPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 200),
@@ -146,7 +146,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 			userInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("unibi", 1),
 			),
-			initialPool: mock.DexPool(
+			initialPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
@@ -159,7 +159,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 			expectedUserFinalFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("unibi", 1),
 			),
-			expectedFinalPool: mock.DexPool(
+			expectedFinalPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
@@ -174,7 +174,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 			userInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("foo", 100),
 			),
-			initialPool: mock.DexPool(
+			initialPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
@@ -187,7 +187,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 			expectedUserFinalFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("foo", 100),
 			),
-			expectedFinalPool: mock.DexPool(
+			expectedFinalPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
@@ -202,7 +202,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 			userInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("unibi", 100),
 			),
-			initialPool: mock.DexPool(
+			initialPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
@@ -215,7 +215,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 			expectedUserFinalFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("unibi", 100),
 			),
-			expectedFinalPool: mock.DexPool(
+			expectedFinalPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
@@ -230,7 +230,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 			userInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("unibi", 100),
 			),
-			initialPool: mock.DexPool(
+			initialPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
@@ -243,7 +243,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 			expectedUserFinalFunds: sdk.NewCoins(
 				sdk.NewInt64Coin("unibi", 100),
 			),
-			expectedFinalPool: mock.DexPool(
+			expectedFinalPool: mock.SpotPool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin("unibi", 100),
@@ -272,14 +272,14 @@ func TestSwapExactAmountIn(t *testing.T) {
 					tc.initialPool.PoolBalances(),
 				),
 			)
-			app.DexKeeper.SetPool(ctx, tc.initialPool)
+			app.SpotKeeper.SetPool(ctx, tc.initialPool)
 
 			// fund user account
 			sender := testutil.AccAddress()
 			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, sender, tc.userInitialFunds))
 
 			// swap assets
-			tokenOut, err := app.DexKeeper.SwapExactAmountIn(ctx, sender, tc.initialPool.Id, tc.tokenIn, tc.tokenOutDenom)
+			tokenOut, err := app.SpotKeeper.SwapExactAmountIn(ctx, sender, tc.initialPool.Id, tc.tokenIn, tc.tokenOutDenom)
 
 			if tc.expectedError != nil {
 				require.ErrorIs(t, err, tc.expectedError)
@@ -295,7 +295,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 			)
 
 			// check final pool state
-			finalPool, err := app.DexKeeper.FetchPool(ctx, tc.initialPool.Id)
+			finalPool, err := app.SpotKeeper.FetchPool(ctx, tc.initialPool.Id)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedFinalPool, finalPool)
 		})
@@ -322,7 +322,7 @@ func TestDoubleSwapExactAmountIn(t *testing.T) {
 			userInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.USDC, 10_000),
 			),
-			initialPool: mock.DexStablePool(
+			initialPool: mock.SpotStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.USDC, 100_000_000),
@@ -336,7 +336,7 @@ func TestDoubleSwapExactAmountIn(t *testing.T) {
 			expectedUserFinalFunds: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.USDC, 10_001), // TODO: fix https://github.com/NibiruChain/nibiru/issues/1152
 			),
-			expectedFinalPool: mock.DexStablePool(
+			expectedFinalPool: mock.SpotStablePool(
 				/*poolId=*/ 1,
 				/*assets=*/ sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.USDC, 99_999_999),
@@ -364,7 +364,7 @@ func TestDoubleSwapExactAmountIn(t *testing.T) {
 					tc.initialPool.PoolBalances(),
 				),
 			)
-			app.DexKeeper.SetPool(ctx, tc.initialPool)
+			app.SpotKeeper.SetPool(ctx, tc.initialPool)
 
 			// fund user account
 			sender := testutil.AccAddress()
@@ -372,11 +372,11 @@ func TestDoubleSwapExactAmountIn(t *testing.T) {
 
 			// swap assets
 			for i, tokenIn := range tc.tokenIns {
-				tokenOut, err := app.DexKeeper.SwapExactAmountIn(ctx, sender, tc.initialPool.Id, tokenIn, tc.tokenOutDenoms[i])
+				tokenOut, err := app.SpotKeeper.SwapExactAmountIn(ctx, sender, tc.initialPool.Id, tokenIn, tc.tokenOutDenoms[i])
 				require.NoError(t, err)
 
 				fmt.Println("-------------", i)
-				finalPool, err := app.DexKeeper.FetchPool(ctx, tc.initialPool.Id)
+				finalPool, err := app.SpotKeeper.FetchPool(ctx, tc.initialPool.Id)
 				require.NoError(t, err)
 				fmt.Println(finalPool.PoolAssets)
 
@@ -391,7 +391,7 @@ func TestDoubleSwapExactAmountIn(t *testing.T) {
 			)
 
 			// check final pool state
-			finalPool, err := app.DexKeeper.FetchPool(ctx, tc.initialPool.Id)
+			finalPool, err := app.SpotKeeper.FetchPool(ctx, tc.initialPool.Id)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedFinalPool, finalPool)
 		})

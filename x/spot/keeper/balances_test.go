@@ -60,7 +60,7 @@ func TestCheckBalances(t *testing.T) {
 			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, sender, tc.userInitialFunds))
 
 			// swap assets
-			err := app.DexKeeper.CheckEnoughBalances(ctx, tc.coinsToSpend, sender)
+			err := app.SpotKeeper.CheckEnoughBalances(ctx, tc.coinsToSpend, sender)
 
 			if tc.expectedError != nil {
 				require.ErrorIs(t, err, tc.expectedError)

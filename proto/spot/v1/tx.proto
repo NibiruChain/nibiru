@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package nibiru.dex.v1;
+package nibiru.spot.v1;
 
 import "spot/v1/pool.proto";
 import "gogoproto/gogo.proto";
