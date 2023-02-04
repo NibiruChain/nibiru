@@ -19,7 +19,7 @@ var _ = strconv.Itoa(0)
 
 // GetQueryCmd returns the cli query commands for this module
 func GetQueryCmd() *cobra.Command {
-	// Group dex queries under a subcommand
+	// Group spot queries under a subcommand
 	queryCommand := &cobra.Command{
 		Use: types.ModuleName,
 		Short: fmt.Sprintf(

@@ -12,7 +12,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	dextypes "github.com/NibiruChain/nibiru/x/dex/types"
+	spottypes "github.com/NibiruChain/nibiru/x/spot/types"
 	"github.com/NibiruChain/nibiru/x/stablecoin/mock"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 )
@@ -38,12 +38,12 @@ func TestKeeper_GetGovMarketCap(t *testing.T) {
 	keeper := nibiruApp.StablecoinKeeper
 
 	poolAccountAddr := testutil.AccAddress()
-	poolParams := dextypes.PoolParams{
+	poolParams := spottypes.PoolParams{
 		SwapFee:  sdk.NewDecWithPrec(3, 2),
 		ExitFee:  sdk.NewDecWithPrec(3, 2),
-		PoolType: dextypes.PoolType_BALANCER,
+		PoolType: spottypes.PoolType_BALANCER,
 	}
-	poolAssets := []dextypes.PoolAsset{
+	poolAssets := []spottypes.PoolAsset{
 		{
 			Token:  sdk.NewInt64Coin(denoms.NIBI, 2*common.Precision),
 			Weight: sdk.NewInt(100),
@@ -54,9 +54,9 @@ func TestKeeper_GetGovMarketCap(t *testing.T) {
 		},
 	}
 
-	pool, err := dextypes.NewPool(1, poolAccountAddr, poolParams, poolAssets)
+	pool, err := spottypes.NewPool(1, poolAccountAddr, poolParams, poolAssets)
 	require.NoError(t, err)
-	keeper.DexKeeper = mock.NewKeeper(pool)
+	keeper.SpotKeeper = mock.NewKeeper(pool)
 
 	// We set some supply
 	err = keeper.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(
@@ -75,12 +75,12 @@ func TestKeeper_GetLiquidityRatio_AndBands(t *testing.T) {
 	keeper := nibiruApp.StablecoinKeeper
 
 	poolAccountAddr := testutil.AccAddress()
-	poolParams := dextypes.PoolParams{
+	poolParams := spottypes.PoolParams{
 		SwapFee:  sdk.NewDecWithPrec(3, 2),
 		ExitFee:  sdk.NewDecWithPrec(3, 2),
-		PoolType: dextypes.PoolType_BALANCER,
+		PoolType: spottypes.PoolType_BALANCER,
 	}
-	poolAssets := []dextypes.PoolAsset{
+	poolAssets := []spottypes.PoolAsset{
 		{
 			Token:  sdk.NewInt64Coin(denoms.NIBI, 2*common.Precision),
 			Weight: sdk.NewInt(100),
@@ -91,9 +91,9 @@ func TestKeeper_GetLiquidityRatio_AndBands(t *testing.T) {
 		},
 	}
 
-	pool, err := dextypes.NewPool(1, poolAccountAddr, poolParams, poolAssets)
+	pool, err := spottypes.NewPool(1, poolAccountAddr, poolParams, poolAssets)
 	require.NoError(t, err)
-	keeper.DexKeeper = mock.NewKeeper(pool)
+	keeper.SpotKeeper = mock.NewKeeper(pool)
 
 	// We set some supply
 	err = keeper.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(
