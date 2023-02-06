@@ -44,9 +44,9 @@ func Tally(ballots types.ExchangeRateBallots, rewardBand sdk.Dec, validatorPerfo
 }
 
 // isPassingVoteThreshold ballot is passing the threshold amount of voting power
-func isPassingVoteThreshold(ballots types.ExchangeRateBallots, thresholdVotes sdk.Int) bool {
+func isPassingVoteThreshold(ballots types.ExchangeRateBallots, thresholdPower sdk.Int) bool {
 	ballotPower := sdk.NewInt(ballots.Power())
-	return !ballotPower.IsZero() && ballotPower.GTE(thresholdVotes)
+	return !ballotPower.IsZero() && ballotPower.GTE(thresholdPower)
 }
 
 // RemoveInvalidBallots removes the ballots which have not reached the vote threshold
@@ -59,27 +59,31 @@ func (k Keeper) RemoveInvalidBallots(
 	ctx sdk.Context,
 	pairBallotsMap map[asset.Pair]types.ExchangeRateBallots,
 ) (map[asset.Pair]types.ExchangeRateBallots, map[asset.Pair]struct{}) {
-	whitelistedPairs := k.getWhitelistedPairs(ctx)
+	whitelistedPairs := k.GetWhitelistedPairs(ctx)
+
+	whitelistedPairsMap := make(map[asset.Pair]struct{}, len(whitelistedPairs))
+	for _, pair := range whitelistedPairs {
+		whitelistedPairsMap[pair] = struct{}{}
+	}
 
 	totalBondedPower := sdk.TokensToConsensusPower(k.StakingKeeper.TotalBondedTokens(ctx), k.StakingKeeper.PowerReduction(ctx))
-	voteThreshold := k.VoteThreshold(ctx).MulInt64(totalBondedPower).RoundInt()
+	thresholdPower := k.VoteThreshold(ctx).MulInt64(totalBondedPower).RoundInt()
 
 	for pair, ballots := range pairBallotsMap {
-		// If pair is not whitelisted, or the ballot for it has failed, then skip
-		// and remove it from pairBallotsMap for iteration efficiency
-		if _, exists := whitelistedPairs[pair]; !exists {
+		// Ignore not whitelisted pairs
+		if _, exists := whitelistedPairsMap[pair]; !exists {
 			delete(pairBallotsMap, pair)
 			continue
 		}
 
 		// If the ballot is not passed, remove it from the whitelistedPairs set
 		// to prevent slashing validators who did valid vote.
-		if !isPassingVoteThreshold(ballots, voteThreshold) {
-			delete(whitelistedPairs, pair)
+		if !isPassingVoteThreshold(ballots, thresholdPower) {
+			delete(whitelistedPairsMap, pair)
 			delete(pairBallotsMap, pair)
 			continue
 		}
 	}
 
-	return pairBallotsMap, whitelistedPairs
+	return pairBallotsMap, whitelistedPairsMap
 }
