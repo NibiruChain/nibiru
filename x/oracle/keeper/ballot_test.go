@@ -5,13 +5,14 @@ import (
 	"testing"
 
 	"github.com/NibiruChain/collections"
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
 func TestOrganizeAggregate(t *testing.T) {
@@ -189,35 +190,33 @@ func TestApplyWhitelist(t *testing.T) {
 	require.Equal(t, nextWhitelist, input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys())
 }
 
-type VoteMap = map[asset.Pair]types.ExchangeRateBallots
-
 func TestRemoveInvalidBallots(t *testing.T) {
 	tests := []struct {
 		name    string
-		voteMap VoteMap
+		voteMap types.VoteMap
 	}{
 		{
 			name: "empty key, empty ballot",
-			voteMap: VoteMap{
+			voteMap: types.VoteMap{
 				"": types.ExchangeRateBallots{},
 			},
 		},
 		{
 			name: "nonempty key, empty ballot",
-			voteMap: VoteMap{
+			voteMap: types.VoteMap{
 				"xxx": types.ExchangeRateBallots{},
 			},
 		},
 		{
 			name: "nonempty keys, empty ballot",
-			voteMap: VoteMap{
+			voteMap: types.VoteMap{
 				"xxx":    types.ExchangeRateBallots{},
 				"abc123": types.ExchangeRateBallots{},
 			},
 		},
 		{
 			name: "mixed empty keys, empty ballot",
-			voteMap: VoteMap{
+			voteMap: types.VoteMap{
 				"xxx":    types.ExchangeRateBallots{},
 				"":       types.ExchangeRateBallots{},
 				"abc123": types.ExchangeRateBallots{},
@@ -226,7 +225,7 @@ func TestRemoveInvalidBallots(t *testing.T) {
 		},
 		{
 			name: "empty key, nonempty ballot, not whitelisted",
-			voteMap: VoteMap{
+			voteMap: types.VoteMap{
 				"": types.ExchangeRateBallots{
 					{Pair: "", ExchangeRate: sdk.ZeroDec(), Voter: sdk.ValAddress{}, Power: 0},
 				},
@@ -234,7 +233,7 @@ func TestRemoveInvalidBallots(t *testing.T) {
 		},
 		{
 			name: "nonempty key, nonempty ballot, whitelisted",
-			voteMap: VoteMap{
+			voteMap: types.VoteMap{
 				"x": types.ExchangeRateBallots{
 					{Pair: "x", ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
 				},
@@ -261,7 +260,7 @@ func TestRemoveInvalidBallots(t *testing.T) {
 			// TODO Include the error case when collections no longer panics
 			default:
 				assert.NotPanics(t, func() {
-					_, _ = oracleKeeper.RemoveInvalidBallots(ctx, tc.voteMap)
+					_, _ = oracleKeeper.removeInvalidBallots(ctx, tc.voteMap)
 				}, "voteMap: %v", tc.voteMap)
 			}
 		})

@@ -41,9 +41,3 @@ func Tally(ballots types.ExchangeRateBallots, rewardBand sdk.Dec, validatorPerfo
 
 	return weightedMedian
 }
-
-// isPassingVoteThreshold ballot is passing the threshold amount of voting power
-func isPassingVoteThreshold(ballots types.ExchangeRateBallots, thresholdPower sdk.Int) bool {
-	ballotPower := sdk.NewInt(ballots.Power())
-	return !ballotPower.IsZero() && ballotPower.GTE(thresholdPower)
-}

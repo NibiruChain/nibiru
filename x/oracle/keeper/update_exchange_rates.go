@@ -6,6 +6,7 @@ import (
 	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/set"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
@@ -15,9 +16,9 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 	k.resetExchangeRates(ctx)
 
 	validatorPerformances := k.newValidatorPerformances(ctx)
-	pairBallotsMap, whitelistedPairs := k.getPairBallotsMapAndWhitelistedPairs(ctx, validatorPerformances)
+	voteMap, whitelistedPairs := k.getVoteMapAndWhitelistedPairs(ctx, validatorPerformances)
 
-	k.countVotesAndUpdateExchangeRates(ctx, pairBallotsMap, validatorPerformances)
+	k.countVotesAndUpdateExchangeRates(ctx, voteMap, validatorPerformances)
 	k.registerMissedVotes(ctx, whitelistedPairs, validatorPerformances)
 	k.rewardBallotWinners(ctx, whitelistedPairs, validatorPerformances)
 
@@ -41,12 +42,12 @@ func (k Keeper) registerMissedVotes(ctx sdk.Context, whitelistedPairs map[asset.
 // countVotesAndUpdateExchangeRates processes the votes and updates the ExchangeRates based on the results.
 func (k Keeper) countVotesAndUpdateExchangeRates(
 	ctx sdk.Context,
-	pairBallotsMap map[asset.Pair]types.ExchangeRateBallots,
+	voteMap map[asset.Pair]types.ExchangeRateBallots,
 	validatorPerformances types.ValidatorPerformances,
 ) {
 	params := k.GetParams(ctx)
 
-	for pair, ballots := range pairBallotsMap {
+	for pair, ballots := range voteMap {
 		exchangeRate := Tally(ballots, params.RewardBand, validatorPerformances)
 
 		k.SetPrice(ctx, pair, exchangeRate)
@@ -60,15 +61,15 @@ func (k Keeper) countVotesAndUpdateExchangeRates(
 	}
 }
 
-// getPairBallotsMapAndWhitelistedPairs returns a map of pairs and ballots excluding invalid Ballots
-// and a map with all whitelisted pairs.
-func (k Keeper) getPairBallotsMapAndWhitelistedPairs(
+// getVoteMapAndWhitelistedPairs returns a map of pairs and ballots excluding invalid Ballots
+// and a set of all whitelisted pairs.
+func (k Keeper) getVoteMapAndWhitelistedPairs(
 	ctx sdk.Context,
 	validatorPerformances types.ValidatorPerformances,
-) (pairBallotsMap map[asset.Pair]types.ExchangeRateBallots, whitelistedPairsMap map[asset.Pair]struct{}) {
-	pairBallotsMap = k.groupBallotsByPair(ctx, validatorPerformances)
+) (voteMap types.VoteMap, whitelistedPairs set.Set[asset.Pair]) {
+	voteMap = k.groupBallotsByPair(ctx, validatorPerformances)
 
-	return k.RemoveInvalidBallots(ctx, pairBallotsMap)
+	return k.removeInvalidBallots(ctx, voteMap)
 }
 
 // resetExchangeRates removes all exchange rates from the state

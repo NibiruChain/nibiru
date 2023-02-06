@@ -171,6 +171,8 @@ func (pb ExchangeRateBallots) NumValidators() int {
 	return count
 }
 
+type VoteMap map[asset.Pair]ExchangeRateBallots
+
 // ValidatorPerformance keeps track of a validator performance in the voting period.
 type ValidatorPerformance struct {
 	Power        int64 // tendermint consensus power

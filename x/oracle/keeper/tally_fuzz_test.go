@@ -92,8 +92,6 @@ func TestOraclePairsInsert(t *testing.T) {
 	}
 }
 
-type VoteMap = map[asset.Pair]types.ExchangeRateBallots
-
 func TestFuzz_PickReferencePair(t *testing.T) {
 	var pairs []asset.Pair
 
@@ -175,6 +173,6 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 		panicAssertFn = assert.Panics
 	}
 	panicAssertFn(t, func() {
-		input.OracleKeeper.RemoveInvalidBallots(input.Ctx, voteMap)
+		input.OracleKeeper.removeInvalidBallots(input.Ctx, voteMap)
 	}, "voteMap: %v", voteMap)
 }

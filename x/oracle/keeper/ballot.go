@@ -6,6 +6,7 @@ import (
 	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/set"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
@@ -16,11 +17,11 @@ import (
 func (k Keeper) groupBallotsByPair(
 	ctx sdk.Context,
 	validatorsPerformance types.ValidatorPerformances,
-) (pairBallotsMap map[asset.Pair]types.ExchangeRateBallots) {
-	pairBallotsMap = map[asset.Pair]types.ExchangeRateBallots{}
+) (voteMap types.VoteMap) {
+	voteMap = map[asset.Pair]types.ExchangeRateBallots{}
 
 	for _, value := range k.Votes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {
-		voterAddr, aggregateVote := value.Key, value.Value
+		valAddr, aggregateVote := value.Key, value.Value
 
 		// organize ballot only for the active validators
 		if validatorPerformance, exists := validatorsPerformance[aggregateVote.Voter]; exists {
@@ -31,11 +32,11 @@ func (k Keeper) groupBallotsByPair(
 					power = 0
 				}
 
-				pairBallotsMap[exchangeRateTuple.Pair] = append(pairBallotsMap[exchangeRateTuple.Pair],
+				voteMap[exchangeRateTuple.Pair] = append(voteMap[exchangeRateTuple.Pair],
 					types.NewExchangeRateBallot(
 						exchangeRateTuple.ExchangeRate,
 						exchangeRateTuple.Pair,
-						voterAddr,
+						valAddr,
 						power,
 					),
 				)
@@ -46,7 +47,7 @@ func (k Keeper) groupBallotsByPair(
 	return
 }
 
-// clearVotesAndPreVotes clears all tallied prevotes and votes from the store
+// clearVotesAndPreVotes clears all prevotes and votes from the store
 func (k Keeper) clearVotesAndPreVotes(ctx sdk.Context, votePeriod uint64) {
 	// Clear all aggregate prevotes
 	for _, prevote := range k.Prevotes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {
@@ -94,41 +95,41 @@ func (k Keeper) updateWhitelist(ctx sdk.Context, nextWhitelist []asset.Pair, cur
 	}
 }
 
-// RemoveInvalidBallots removes the ballots which have not reached the vote threshold
+// isPassingVoteThreshold ballot is passing the threshold amount of voting power
+func isPassingVoteThreshold(ballots types.ExchangeRateBallots, thresholdPower sdk.Int) bool {
+	ballotPower := sdk.NewInt(ballots.Power())
+	return !ballotPower.IsZero() && ballotPower.GTE(thresholdPower)
+}
+
+// removeInvalidBallots removes the ballots which have not reached the vote threshold
 // or which are not part of the whitelisted pairs anymore: example when params change during a vote period
 // but some votes were already made.
 //
 // ALERT: This function mutates pairBallotMap slice, it removes the ballot for the pair which is not passing the threshold
 // or which is not whitelisted anymore.
-func (k Keeper) RemoveInvalidBallots(
+func (k Keeper) removeInvalidBallots(
 	ctx sdk.Context,
-	pairBallotsMap map[asset.Pair]types.ExchangeRateBallots,
-) (map[asset.Pair]types.ExchangeRateBallots, map[asset.Pair]struct{}) {
-	whitelistedPairs := k.GetWhitelistedPairs(ctx)
-
-	whitelistedPairsMap := make(map[asset.Pair]struct{}, len(whitelistedPairs))
-	for _, pair := range whitelistedPairs {
-		whitelistedPairsMap[pair] = struct{}{}
-	}
-
+	voteMap types.VoteMap,
+) (types.VoteMap, set.Set[asset.Pair]) {
+	whitelistedPairs := set.New(k.GetWhitelistedPairs(ctx)...)
 	totalBondedPower := sdk.TokensToConsensusPower(k.StakingKeeper.TotalBondedTokens(ctx), k.StakingKeeper.PowerReduction(ctx))
 	thresholdPower := k.VoteThreshold(ctx).MulInt64(totalBondedPower).RoundInt()
 
-	for pair, ballots := range pairBallotsMap {
+	for pair, ballots := range voteMap {
 		// Ignore not whitelisted pairs
-		if _, exists := whitelistedPairsMap[pair]; !exists {
-			delete(pairBallotsMap, pair)
+		if !whitelistedPairs.Has(pair) {
+			delete(voteMap, pair)
 			continue
 		}
 
 		// If the ballot is not passed, remove it from the whitelistedPairs set
 		// to prevent slashing validators who did valid vote.
 		if !isPassingVoteThreshold(ballots, thresholdPower) {
-			delete(whitelistedPairsMap, pair)
-			delete(pairBallotsMap, pair)
+			delete(whitelistedPairs, pair)
+			delete(voteMap, pair)
 			continue
 		}
 	}
 
-	return pairBallotsMap, whitelistedPairsMap
+	return voteMap, whitelistedPairs
 }
