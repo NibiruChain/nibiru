@@ -12,8 +12,8 @@ import (
 // Tally calculates the median and returns it. Sets the set of voters to be rewarded, i.e. voted within
 // a reasonable spread from the weighted median to the store
 //
-// ALERT: This function mutates validatorPerformanceMap slice based on the votes made by the validators.
-func Tally(ballots types.ExchangeRateBallots, rewardBand sdk.Dec, validatorPerformanceMap map[string]types.ValidatorPerformance) sdk.Dec {
+// ALERT: This function mutates validatorPerformances slice based on the votes made by the validators.
+func Tally(ballots types.ExchangeRateBallots, rewardBand sdk.Dec, validatorPerformances types.ValidatorPerformances) sdk.Dec {
 	sort.Sort(ballots)
 
 	weightedMedian := ballots.WeightedMedianWithAssertion()
@@ -33,10 +33,10 @@ func Tally(ballots types.ExchangeRateBallots, rewardBand sdk.Dec, validatorPerfo
 		if voteInsideSpread || isAbstainVote {
 			voterAddr := ballot.Voter.String()
 
-			validatorPerformance := validatorPerformanceMap[voterAddr]
+			validatorPerformance := validatorPerformances[voterAddr]
 			validatorPerformance.RewardWeight += ballot.Power
 			validatorPerformance.WinCount++
-			validatorPerformanceMap[voterAddr] = validatorPerformance
+			validatorPerformances[voterAddr] = validatorPerformance
 		}
 	}
 

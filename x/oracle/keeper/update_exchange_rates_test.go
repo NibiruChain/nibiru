@@ -6,14 +6,13 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/rand"
-
-	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -173,7 +172,7 @@ func TestOracleTally(t *testing.T) {
 		}
 	}
 
-	validatorClaimMap := make(map[string]types.ValidatorPerformance)
+	validatorClaimMap := make(types.ValidatorPerformances)
 	for _, valAddr := range valAddrs {
 		validatorClaimMap[valAddr.String()] = types.ValidatorPerformance{
 			Power:        stakingKeeper.Validator(input.Ctx, valAddr).GetConsensusPower(sdk.DefaultPowerReduction),
@@ -191,7 +190,7 @@ func TestOracleTally(t *testing.T) {
 		maxSpread = standardDeviation
 	}
 
-	expectedValidatorClaimMap := make(map[string]types.ValidatorPerformance)
+	expectedValidatorClaimMap := make(types.ValidatorPerformances)
 	for _, valAddr := range valAddrs {
 		expectedValidatorClaimMap[valAddr.String()] = types.ValidatorPerformance{
 			Power:        stakingKeeper.Validator(input.Ctx, valAddr).GetConsensusPower(sdk.DefaultPowerReduction),

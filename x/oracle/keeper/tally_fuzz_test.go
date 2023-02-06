@@ -31,11 +31,16 @@ func TestFuzz_Tally(t *testing.T) {
 				(*e)[sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()).String()] = c.Int63n(100)
 			}
 		},
-		func(e *map[string]types.ValidatorPerformance, c fuzz.Continue) {
+		func(e *types.ValidatorPerformances, c fuzz.Continue) {
 			for validator, power := range validators {
 				addr, err := sdk.ValAddressFromBech32(validator)
 				require.NoError(t, err)
-				(*e)[validator] = types.NewValidatorPerformance(power, addr)
+				(*e)[validator] = types.ValidatorPerformance{
+					Power:        power,
+					ValAddress:   addr,
+					RewardWeight: 0,
+					WinCount:     0,
+				}
 			}
 		},
 		func(e *types.ExchangeRateBallots, c fuzz.Continue) {
@@ -56,7 +61,7 @@ func TestFuzz_Tally(t *testing.T) {
 	// set random pairs and validators
 	f.Fuzz(&validators)
 
-	claimMap := map[string]types.ValidatorPerformance{}
+	claimMap := types.ValidatorPerformances{}
 	f.Fuzz(&claimMap)
 
 	ballot := types.ExchangeRateBallots{}

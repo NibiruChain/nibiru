@@ -29,14 +29,14 @@ func setup(t *testing.T) (keeper.TestInput, types.MsgServer) {
 	input.OracleKeeper.SetParams(input.Ctx, params)
 	h := keeper.NewMsgServerImpl(input.OracleKeeper)
 
-	sh := staking.NewHandler(input.StakingKeeper)
+	stakingHandler := staking.NewHandler(input.StakingKeeper)
 
 	// Validator created
-	_, err := sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[0], keeper.ValPubKeys[0], stakingAmt))
+	_, err := stakingHandler(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[0], keeper.ValPubKeys[0], stakingAmt))
 	require.NoError(t, err)
-	_, err = sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[1], keeper.ValPubKeys[1], stakingAmt))
+	_, err = stakingHandler(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[1], keeper.ValPubKeys[1], stakingAmt))
 	require.NoError(t, err)
-	_, err = sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[2], keeper.ValPubKeys[2], stakingAmt))
+	_, err = stakingHandler(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[2], keeper.ValPubKeys[2], stakingAmt))
 	require.NoError(t, err)
 	staking.EndBlocker(input.Ctx, input.StakingKeeper)
 

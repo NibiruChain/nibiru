@@ -179,20 +179,12 @@ type ValidatorPerformance struct {
 	ValAddress   sdk.ValAddress
 }
 
-// NewValidatorPerformance generates a ValidatorPerformance instance.
-func NewValidatorPerformance(power int64, recipient sdk.ValAddress) ValidatorPerformance {
-	return ValidatorPerformance{
-		Power:        power,
-		RewardWeight: 0,
-		WinCount:     0,
-		ValAddress:   recipient,
-	}
-}
+type ValidatorPerformances map[string]ValidatorPerformance
 
 // GetTotalRewardWeight returns the sum of the reward weight of all the validators included in the map
-func GetTotalRewardWeight(validators map[string]ValidatorPerformance) int64 {
+func (vp ValidatorPerformances) GetTotalRewardWeight() int64 {
 	totalRewardWeight := int64(0)
-	for _, validator := range validators {
+	for _, validator := range vp {
 		totalRewardWeight += validator.RewardWeight
 	}
 

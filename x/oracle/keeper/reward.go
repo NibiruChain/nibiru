@@ -36,9 +36,9 @@ func (k Keeper) AllocatePairRewards(ctx sdk.Context, funderModule string, pair a
 func (k Keeper) rewardBallotWinners(
 	ctx sdk.Context,
 	whitelistedPairs map[asset.Pair]struct{},
-	validatorPerformanceMap map[string]types.ValidatorPerformance,
+	validatorPerformances types.ValidatorPerformances,
 ) {
-	totalRewardWeight := types.GetTotalRewardWeight(validatorPerformanceMap)
+	totalRewardWeight := validatorPerformances.GetTotalRewardWeight()
 	if totalRewardWeight == 0 {
 		return
 	}
@@ -56,7 +56,7 @@ func (k Keeper) rewardBallotWinners(
 
 	// Dole out rewards
 	var distributedRewards sdk.Coins
-	for _, validatorPerformance := range validatorPerformanceMap {
+	for _, validatorPerformance := range validatorPerformances {
 		validator := k.StakingKeeper.Validator(ctx, validatorPerformance.ValAddress)
 		if validator == nil {
 			continue
