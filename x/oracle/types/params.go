@@ -27,17 +27,17 @@ var (
 
 // Default parameter values
 // TODO(mercilex): need to adjust this based on expected genesis parameters, this assumes block times are 1s
-// DefaultVotePeriod: 10s
+// DefaultVotePeriod: 10 blocks
 // DefaultSlashWindow: 1 Week
 const (
-	DefaultVotePeriod  = 10     // vote every 10s
+	DefaultVotePeriod  = 10     // vote every 10 blocks
 	DefaultSlashWindow = 604800 // 1 week
 )
 
 // Default parameter values
 var (
-	DefaultVoteThreshold = sdk.NewDecWithPrec(50, 2) // 50%
-	DefaultRewardBand    = sdk.NewDecWithPrec(2, 2)  // 2% (-1, 1)
+	DefaultVoteThreshold = sdk.OneDec().Quo(sdk.NewDec(3)) // 33.33%
+	DefaultRewardBand    = sdk.NewDecWithPrec(2, 2)        // 2% (-1, 1)
 	DefaultWhitelist     = []asset.Pair{
 
 		// paired against NUSD
