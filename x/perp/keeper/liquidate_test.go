@@ -6,7 +6,8 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/common"
+	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
@@ -18,13 +19,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
 func TestExecuteFullLiquidation(t *testing.T) {
 	// constants for this suite
-	tokenPair := common.MustNewAssetPair("BTC:NUSD")
+	tokenPair := asset.MustNewPair("BTC:NUSD")
 
 	traderAddr := testutilevents.AccAddress()
 
@@ -190,7 +191,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 
 func TestExecutePartialLiquidation(t *testing.T) {
 	// constants for this suite
-	tokenPair := common.MustNewAssetPair("xxx:yyy")
+	tokenPair := asset.MustNewPair("xxx:yyy")
 
 	traderAddr := testutilevents.AccAddress()
 	partialLiquidationRatio := sdk.MustNewDecFromStr("0.4")

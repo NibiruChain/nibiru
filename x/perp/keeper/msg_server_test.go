@@ -17,9 +17,9 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -258,7 +258,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 	tests := []struct {
 		name        string
 		traderFunds sdk.Coins
-		pair        common.AssetPair
+		pair        asset.Pair
 		sender      string
 		expectedErr error
 	}{
@@ -352,7 +352,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 	tests := []struct {
 		name string
 
-		pair       common.AssetPair
+		pair       asset.Pair
 		traderAddr sdk.AccAddress
 
 		expectedErr error

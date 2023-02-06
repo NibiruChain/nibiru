@@ -10,12 +10,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/set"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
 )
 
 func TestFuzz_Tally(t *testing.T) {
@@ -47,7 +46,7 @@ func TestFuzz_Tally(t *testing.T) {
 				var rate sdk.Dec
 				c.Fuzz(&rate)
 
-				ballot = append(ballot, types.NewExchangeRateBallot(rate, common.NewAssetPair(c.RandString(), c.RandString()), addr, power))
+				ballot = append(ballot, types.NewExchangeRateBallot(rate, asset.NewPair(c.RandString(), c.RandString()), addr, power))
 			}
 
 			*e = ballot
@@ -72,7 +71,7 @@ func TestFuzz_Tally(t *testing.T) {
 }
 
 func TestOraclePairsInsert(t *testing.T) {
-	testCases := []common.AssetPair{"", "1", "22", "2xxxx12312u30912u01u2309u21093u"}
+	testCases := []asset.Pair{"", "1", "22", "2xxxx12312u30912u01u2309u21093u"}
 
 	for _, tc := range testCases {
 		tc := tc
@@ -89,7 +88,7 @@ func TestOraclePairsInsert(t *testing.T) {
 	}
 }
 
-type VoteMap = map[common.AssetPair]types.ExchangeRateBallots
+type VoteMap = map[asset.Pair]types.ExchangeRateBallots
 
 func TestRemoveInvalidBallots(t *testing.T) {
 	testCases := []struct {
@@ -164,23 +163,23 @@ func TestRemoveInvalidBallots(t *testing.T) {
 }
 
 func TestFuzz_PickReferencePair(t *testing.T) {
-	var pairs []common.AssetPair
+	var pairs []asset.Pair
 
 	f := fuzz.New().NilChance(0).Funcs(
-		func(e *common.AssetPair, c fuzz.Continue) {
-			*e = common.NewAssetPair(testutil.RandStringBytes(5), testutil.RandStringBytes(5))
+		func(e *asset.Pair, c fuzz.Continue) {
+			*e = asset.NewPair(testutil.RandStringBytes(5), testutil.RandStringBytes(5))
 		},
-		func(e *[]common.AssetPair, c fuzz.Continue) {
+		func(e *[]asset.Pair, c fuzz.Continue) {
 			numPairs := c.Intn(100) + 5
 
 			for i := 0; i < numPairs; i++ {
-				*e = append(*e, common.NewAssetPair(testutil.RandStringBytes(5), testutil.RandStringBytes(5)))
+				*e = append(*e, asset.NewPair(testutil.RandStringBytes(5), testutil.RandStringBytes(5)))
 			}
 		},
 		func(e *sdk.Dec, c fuzz.Continue) {
 			*e = sdk.NewDec(c.Int63())
 		},
-		func(e *map[common.AssetPair]sdk.Dec, c fuzz.Continue) {
+		func(e *map[asset.Pair]sdk.Dec, c fuzz.Continue) {
 			for _, pair := range pairs {
 				var rate sdk.Dec
 				c.Fuzz(&rate)
@@ -194,7 +193,7 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 				(*e)[sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()).String()] = int64(c.Intn(100) + 1)
 			}
 		},
-		func(e *map[common.AssetPair]types.ExchangeRateBallots, c fuzz.Continue) {
+		func(e *map[asset.Pair]types.ExchangeRateBallots, c fuzz.Continue) {
 			validators := map[string]int64{}
 			c.Fuzz(&validators)
 
@@ -221,7 +220,7 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 	input, _ := setup(t)
 
 	// test OracleKeeper.Pairs.Insert
-	voteTargets := map[common.AssetPair]struct{}{}
+	voteTargets := map[asset.Pair]struct{}{}
 	f.Fuzz(&voteTargets)
 	whitelistedPairs := make(set.Set[string])
 
@@ -233,7 +232,7 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 	}
 
 	// test OracleKeeper.RemoveInvalidBallots
-	voteMap := map[common.AssetPair]types.ExchangeRateBallots{}
+	voteMap := map[asset.Pair]types.ExchangeRateBallots{}
 	f.Fuzz(&voteMap)
 
 	// Prevent collections error that arrises from iterating over a store with blank keys

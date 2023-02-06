@@ -6,7 +6,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
-	testutilevents "github.com/NibiruChain/nibiru/x/testutil"
+	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"

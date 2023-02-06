@@ -3,10 +3,9 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/x/common"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
@@ -120,7 +119,7 @@ func (k Keeper) calcFreeCollateral(
 // getLatestCumulativePremiumFraction returns the last cumulative funding rate recorded for the
 // specific pair.
 func (k Keeper) getLatestCumulativePremiumFraction(
-	ctx sdk.Context, pair common.AssetPair,
+	ctx sdk.Context, pair asset.Pair,
 ) (sdk.Dec, error) {
 	pairMetadata, err := k.PairsMetadata.Get(ctx, pair)
 	if err != nil {

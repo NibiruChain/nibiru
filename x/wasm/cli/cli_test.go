@@ -18,7 +18,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
-	testutilcli "github.com/NibiruChain/nibiru/x/testutil/cli"
+	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
@@ -45,7 +45,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	app.SetPrefixes(app.AccountAddressPrefix)
 
-	encodingConfig := simapp.MakeTestEncodingConfig()
+	encodingConfig := app.MakeTestEncodingConfig()
 	genesisState := simapp.NewTestGenesisStateFromDefault()
 	vpoolGenesis := vpooltypes.DefaultGenesis()
 	vpoolGenesis.Vpools = []vpooltypes.Vpool{

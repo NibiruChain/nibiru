@@ -6,12 +6,10 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-
-	"github.com/NibiruChain/nibiru/x/common"
 )
 
 func TestMsgAddMargin_ValidateBasic(t *testing.T) {
@@ -51,7 +49,7 @@ func TestMsgAddMargin_ValidateBasic(t *testing.T) {
 				Pair:   "NIBI-NUSD",
 				Margin: sdk.NewInt64Coin("NUSD", 100),
 			},
-			expectedErr: common.ErrInvalidTokenPair,
+			expectedErr: asset.ErrInvalidTokenPair,
 		},
 		"invalid margin amount": {
 			msg: &MsgAddMargin{
@@ -122,7 +120,7 @@ func TestMsgRemoveMargin_ValidateBasic(t *testing.T) {
 				Pair:   "NIBI-NUSD",
 				Margin: sdk.NewInt64Coin("NUSD", 100),
 			},
-			expectedErr: common.ErrInvalidTokenPair,
+			expectedErr: asset.ErrInvalidTokenPair,
 		},
 		"invalid margin amount": {
 			msg: &MsgRemoveMargin{

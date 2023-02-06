@@ -11,17 +11,16 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/testutil/mock"
+	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 func TestGetMarkPrice(t *testing.T) {
 	tests := []struct {
 		name              string
-		pair              common.AssetPair
+		pair              asset.Pair
 		quoteAssetReserve sdk.Dec
 		baseAssetReserve  sdk.Dec
 		expectedPrice     sdk.Dec
@@ -72,7 +71,7 @@ func TestGetMarkPrice(t *testing.T) {
 func TestGetBaseAssetPrice(t *testing.T) {
 	tests := []struct {
 		name                string
-		pair                common.AssetPair
+		pair                asset.Pair
 		quoteAssetReserve   sdk.Dec
 		baseAssetReserve    sdk.Dec
 		baseAmount          sdk.Dec
@@ -155,7 +154,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 func TestGetQuoteAssetPrice(t *testing.T) {
 	tests := []struct {
 		name               string
-		pair               common.AssetPair
+		pair               asset.Pair
 		quoteAssetReserve  sdk.Dec
 		baseAssetReserve   sdk.Dec
 		quoteAmount        sdk.Dec
@@ -238,7 +237,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 func TestCalcTwap(t *testing.T) {
 	tests := []struct {
 		name               string
-		pair               common.AssetPair
+		pair               asset.Pair
 		reserveSnapshots   []types.ReserveSnapshot
 		currentBlockTime   time.Time
 		currentBlockHeight int64

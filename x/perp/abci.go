@@ -6,14 +6,14 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
 // EndBlocker Called every block to store metrics.
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
-	for _, metrics := range k.Metrics.Iterate(ctx, collections.Range[common.AssetPair]{}).Values() {
+	for _, metrics := range k.Metrics.Iterate(ctx, collections.Range[asset.Pair]{}).Values() {
 		_ = ctx.EventManager().EmitTypedEvent(&types.MetricsEvent{
 			Pair:        metrics.Pair,
 			NetSize:     metrics.NetSize,
