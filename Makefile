@@ -8,5 +8,5 @@ include contrib/make/mock.mk
 include contrib/make/lint.mk
 include contrib/make/test.mk
 include contrib/make/simulation.mk
-
+include contrib/make/release.mk
 
