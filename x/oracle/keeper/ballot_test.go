@@ -6,14 +6,12 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/common/set"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
@@ -141,46 +139,4 @@ func TestClearBallots(t *testing.T) {
 	input.OracleKeeper.clearVotesAndPreVotes(input.Ctx.WithBlockHeight(input.Ctx.BlockHeight()+6), 5)
 	prevoteCounter = len(input.OracleKeeper.Prevotes.Iterate(input.Ctx, collections.Range[sdk.ValAddress]{}).Keys())
 	require.Equal(t, prevoteCounter, 0)
-}
-
-func TestUpdateWhitelist(t *testing.T) {
-	input := CreateTestInput(t)
-	// prepare test by resetting the genesis pairs
-	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys() {
-		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
-	}
-
-	currentWhitelist := set.New(asset.NewPair(denoms.NIBI, denoms.USD), asset.NewPair(denoms.BTC, denoms.USD))
-	for p := range currentWhitelist {
-		input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, p)
-	}
-
-	nextWhitelist := set.New(asset.NewPair(denoms.NIBI, denoms.USD), asset.NewPair(denoms.BTC, denoms.USD))
-
-	// no updates case
-	whitelistSlice := nextWhitelist.ToSlice()
-	sort.Slice(whitelistSlice, func(i, j int) bool {
-		return whitelistSlice[i].String() < whitelistSlice[j].String()
-	})
-	input.OracleKeeper.updateWhitelist(input.Ctx, whitelistSlice, currentWhitelist)
-	assert.Equal(t, whitelistSlice, input.OracleKeeper.GetWhitelistedPairs(input.Ctx))
-
-	// len update (fast path)
-	nextWhitelist.Add(asset.NewPair(denoms.NIBI, denoms.ETH))
-	whitelistSlice = nextWhitelist.ToSlice()
-	sort.Slice(whitelistSlice, func(i, j int) bool {
-		return whitelistSlice[i].String() < whitelistSlice[j].String()
-	})
-	input.OracleKeeper.updateWhitelist(input.Ctx, whitelistSlice, currentWhitelist)
-	assert.Equal(t, whitelistSlice, input.OracleKeeper.GetWhitelistedPairs(input.Ctx))
-
-	// diff update (slow path)
-	currentWhitelist.Add(asset.NewPair(denoms.NIBI, denoms.ETH))
-	nextWhitelist.Remove(asset.NewPair(denoms.NIBI, denoms.USD))
-	whitelistSlice = nextWhitelist.ToSlice()
-	sort.Slice(whitelistSlice, func(i, j int) bool {
-		return whitelistSlice[i].String() < whitelistSlice[j].String()
-	})
-	input.OracleKeeper.updateWhitelist(input.Ctx, whitelistSlice, currentWhitelist)
-	assert.Equal(t, whitelistSlice, input.OracleKeeper.GetWhitelistedPairs(input.Ctx))
 }

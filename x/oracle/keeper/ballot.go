@@ -6,7 +6,6 @@ import (
 	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/set"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
@@ -64,33 +63,6 @@ func (k Keeper) clearVotesAndPreVotes(ctx sdk.Context, votePeriod uint64) {
 		err := k.Votes.Delete(ctx, voteKey)
 		if err != nil {
 			panic(err)
-		}
-	}
-}
-
-// updateWhitelist updates the whitelist by detecting possible changes between
-// the current vote targets and the current updated whitelist.
-func (k Keeper) updateWhitelist(ctx sdk.Context, nextWhitelist []asset.Pair, currentWhitelist set.Set[asset.Pair]) {
-	updateRequired := false
-
-	if len(currentWhitelist) != len(nextWhitelist) {
-		updateRequired = true
-	} else {
-		for _, pair := range nextWhitelist {
-			_, exists := currentWhitelist[pair]
-			if !exists {
-				updateRequired = true
-				break
-			}
-		}
-	}
-
-	if updateRequired {
-		for _, p := range k.WhitelistedPairs.Iterate(ctx, collections.Range[asset.Pair]{}).Keys() {
-			k.WhitelistedPairs.Delete(ctx, p)
-		}
-		for _, pair := range nextWhitelist {
-			k.WhitelistedPairs.Insert(ctx, pair)
 		}
 	}
 }
