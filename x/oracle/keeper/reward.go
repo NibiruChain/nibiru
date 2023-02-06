@@ -6,6 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/set"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
@@ -35,7 +36,7 @@ func (k Keeper) AllocatePairRewards(ctx sdk.Context, funderModule string, pair a
 // oracle reward pool to the oracle voters that voted faithfully.
 func (k Keeper) rewardBallotWinners(
 	ctx sdk.Context,
-	whitelistedPairs map[asset.Pair]struct{},
+	whitelistedPairs set.Set[asset.Pair],
 	validatorPerformances types.ValidatorPerformances,
 ) {
 	totalRewardWeight := validatorPerformances.GetTotalRewardWeight()

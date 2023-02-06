@@ -101,8 +101,8 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-// ValidateFeeder return the given feeder is allowed to feed the message or not
-func (k Keeper) ValidateFeeder(ctx sdk.Context, feederAddr sdk.AccAddress, validatorAddr sdk.ValAddress) error {
+// validateFeeder return the given feeder is allowed to feed the message or not
+func (k Keeper) validateFeeder(ctx sdk.Context, feederAddr sdk.AccAddress, validatorAddr sdk.ValAddress) error {
 	if !feederAddr.Equals(validatorAddr) {
 		delegate := k.FeederDelegations.GetOr(ctx, validatorAddr, sdk.AccAddress(validatorAddr)) // the right is delegated to himself by default
 		if !delegate.Equals(feederAddr) {

@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"sort"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/collections"
@@ -70,7 +72,7 @@ func (k Keeper) clearVotesAndPreVotes(ctx sdk.Context, votePeriod uint64) {
 
 // updateWhitelist updates the whitelist by detecting possible changes between
 // the current vote targets and the current updated whitelist.
-func (k Keeper) updateWhitelist(ctx sdk.Context, nextWhitelist []asset.Pair, currentWhitelist map[asset.Pair]struct{}) {
+func (k Keeper) updateWhitelist(ctx sdk.Context, nextWhitelist []asset.Pair, currentWhitelist set.Set[asset.Pair]) {
 	updateRequired := false
 
 	if len(currentWhitelist) != len(nextWhitelist) {
@@ -132,4 +134,38 @@ func (k Keeper) removeInvalidBallots(
 	}
 
 	return voteMap, whitelistedPairs
+}
+
+// Tally calculates the median and returns it. Sets the set of voters to be rewarded, i.e. voted within
+// a reasonable spread from the weighted median to the store
+//
+// ALERT: This function mutates validatorPerformances slice based on the votes made by the validators.
+func Tally(ballots types.ExchangeRateBallots, rewardBand sdk.Dec, validatorPerformances types.ValidatorPerformances) sdk.Dec {
+	sort.Sort(ballots)
+
+	weightedMedian := ballots.WeightedMedianWithAssertion()
+	standardDeviation := ballots.StandardDeviation(weightedMedian)
+	rewardSpread := weightedMedian.Mul(rewardBand.QuoInt64(2))
+
+	if standardDeviation.GT(rewardSpread) {
+		rewardSpread = standardDeviation
+	}
+
+	for _, ballot := range ballots {
+		// Filter ballot winners & abstain voters
+		voteInsideSpread := ballot.ExchangeRate.GTE(weightedMedian.Sub(rewardSpread)) &&
+			ballot.ExchangeRate.LTE(weightedMedian.Add(rewardSpread))
+		isAbstainVote := !ballot.ExchangeRate.IsPositive()
+
+		if voteInsideSpread || isAbstainVote {
+			voterAddr := ballot.Voter.String()
+
+			validatorPerformance := validatorPerformances[voterAddr]
+			validatorPerformance.RewardWeight += ballot.Power
+			validatorPerformance.WinCount++
+			validatorPerformances[voterAddr] = validatorPerformance
+		}
+	}
+
+	return weightedMedian
 }

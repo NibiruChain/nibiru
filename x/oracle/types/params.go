@@ -36,7 +36,7 @@ const (
 
 // Default parameter values
 var (
-	DefaultVoteThreshold = sdk.OneDec().Quo(sdk.NewDec(3)) // 33.33%
+	DefaultVoteThreshold = sdk.OneDec().Quo(sdk.NewDec(2)) // 50%
 	DefaultRewardBand    = sdk.NewDecWithPrec(2, 2)        // 2% (-1, 1)
 	DefaultWhitelist     = []asset.Pair{
 

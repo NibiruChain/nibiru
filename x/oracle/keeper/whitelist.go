@@ -8,8 +8,8 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 )
 
-// IsWhitelistedPair returns existence of a pair in the voting target list
-func (k Keeper) IsWhitelistedPair(ctx sdk.Context, pair asset.Pair) bool {
+// isWhitelistedPair returns existence of a pair in the voting target list
+func (k Keeper) isWhitelistedPair(ctx sdk.Context, pair asset.Pair) bool {
 	return k.WhitelistedPairs.Has(ctx, pair)
 }
 

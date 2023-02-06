@@ -36,7 +36,7 @@ func (ms msgServer) AggregateExchangeRatePrevote(
 		return nil, err
 	}
 
-	if err := ms.ValidateFeeder(ctx, feederAddr, valAddr); err != nil {
+	if err := ms.validateFeeder(ctx, feederAddr, valAddr); err != nil {
 		return nil, err
 	}
 
@@ -76,7 +76,7 @@ func (ms msgServer) AggregateExchangeRateVote(goCtx context.Context, msg *types.
 		return nil, err
 	}
 
-	if err := ms.ValidateFeeder(ctx, feederAddr, valAddr); err != nil {
+	if err := ms.validateFeeder(ctx, feederAddr, valAddr); err != nil {
 		return nil, err
 	}
 
@@ -102,7 +102,7 @@ func (ms msgServer) AggregateExchangeRateVote(goCtx context.Context, msg *types.
 
 	// check all pairs are in the vote target
 	for _, tuple := range exchangeRateTuples {
-		if !ms.IsWhitelistedPair(ctx, tuple.Pair) {
+		if !ms.isWhitelistedPair(ctx, tuple.Pair) {
 			return nil, sdkerrors.Wrap(types.ErrUnknownPair, tuple.Pair.String())
 		}
 	}

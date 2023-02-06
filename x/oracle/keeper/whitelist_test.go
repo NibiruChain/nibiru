@@ -79,6 +79,6 @@ func TestIsWhitelistedPair(t *testing.T) {
 	validPairs := []asset.Pair{"foo:bar", "xxx:yyy", "whoo:whoo"}
 	for _, target := range validPairs {
 		input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, target)
-		require.True(t, input.OracleKeeper.IsWhitelistedPair(input.Ctx, target))
+		require.True(t, input.OracleKeeper.isWhitelistedPair(input.Ctx, target))
 	}
 }

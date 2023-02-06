@@ -6,7 +6,7 @@ issues:
   max-same-issues: 0 # infinite
   fix: true
   exclude:
-  # see https://github.com/stretchr/testify/issues/1199#issuecomment-1215592618, testify shows vet problem
+    # see https://github.com/stretchr/testify/issues/1199#issuecomment-1215592618, testify shows vet problem
     - 'github.com\/stretchr\/testify\/suite\.Suite contains sync\.RWMutex'
 linters:
   enable:
@@ -19,7 +19,6 @@ linters-settings:
   goimports:
     # Put imports beginning with prefix after 3rd-party packages.
     # It's a comma-separated list of prefixes.
-    local-prefixes: github.com/NibiruChain/nibiru
+    local-prefixes: github.com/NibiruChain/
 severity:
   default-severity: error
-

@@ -16,8 +16,7 @@ import (
 )
 
 var (
-	stakingAmt = sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction)
-
+	stakingAmt         = sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction)
 	randomExchangeRate = sdk.NewDec(1700)
 )
 

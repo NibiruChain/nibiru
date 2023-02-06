@@ -79,18 +79,18 @@ func TestValidateFeeder(t *testing.T) {
 	)
 	require.Equal(t, amt, input.StakingKeeper.Validator(ctx, addr1).GetBondedTokens())
 
-	require.NoError(t, input.OracleKeeper.ValidateFeeder(input.Ctx, sdk.AccAddress(addr), sdk.ValAddress(addr)))
-	require.NoError(t, input.OracleKeeper.ValidateFeeder(input.Ctx, sdk.AccAddress(addr1), sdk.ValAddress(addr1)))
+	require.NoError(t, input.OracleKeeper.validateFeeder(input.Ctx, sdk.AccAddress(addr), sdk.ValAddress(addr)))
+	require.NoError(t, input.OracleKeeper.validateFeeder(input.Ctx, sdk.AccAddress(addr1), sdk.ValAddress(addr1)))
 
 	// delegate works
 	input.OracleKeeper.FeederDelegations.Insert(input.Ctx, addr, sdk.AccAddress(addr1))
-	require.NoError(t, input.OracleKeeper.ValidateFeeder(input.Ctx, sdk.AccAddress(addr1), addr))
-	require.Error(t, input.OracleKeeper.ValidateFeeder(input.Ctx, Addrs[2], addr))
+	require.NoError(t, input.OracleKeeper.validateFeeder(input.Ctx, sdk.AccAddress(addr1), addr))
+	require.Error(t, input.OracleKeeper.validateFeeder(input.Ctx, Addrs[2], addr))
 
 	// only active validators can do oracle votes
 	validator, found := input.StakingKeeper.GetValidator(input.Ctx, addr)
 	require.True(t, found)
 	validator.Status = stakingtypes.Unbonded
 	input.StakingKeeper.SetValidator(input.Ctx, validator)
-	require.Error(t, input.OracleKeeper.ValidateFeeder(input.Ctx, sdk.AccAddress(addr1), addr))
+	require.Error(t, input.OracleKeeper.validateFeeder(input.Ctx, sdk.AccAddress(addr1), addr))
 }
