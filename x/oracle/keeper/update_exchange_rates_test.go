@@ -9,6 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/rand"
 
@@ -362,8 +363,8 @@ func TestOracleExchangeRate(t *testing.T) {
 	// Account 2, ethstable, govstable
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.ETH, denoms.NUSD), ExchangeRate: ethStableExchangeRate}, {Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: govStableExchangeRate}}, 1)
 
-	// Account 3, govstable, btcstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: govStableExchangeRate}, {Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 2)
+	// Account 3, ethstable, govstable
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.ETH, denoms.NUSD), ExchangeRate: sdk.ZeroDec()}, {Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: govStableExchangeRate}}, 2)
 
 	ethStableRewards := sdk.NewInt64Coin("ETHSTABLE", 1*common.Precision)
 	govStableRewards := sdk.NewInt64Coin("GOVSTABLE", 1*common.Precision)
@@ -384,11 +385,11 @@ func TestOracleExchangeRate(t *testing.T) {
 		QuoDec(sdk.NewDec(5)). // total votes
 		MulDec(sdk.NewDec(1))  // votes won by val3
 	rewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[0])
-	require.Equalf(t, expectedRewardAmt, rewards.Rewards, "%s <-> %s", expectedRewardAmt, rewards.Rewards)
+	assert.Equalf(t, expectedRewardAmt, rewards.Rewards, "%s <-> %s", expectedRewardAmt, rewards.Rewards)
 	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[1])
-	require.Equalf(t, expectedRewardAmt, rewards.Rewards, "%s <-> %s", expectedRewardAmt, rewards.Rewards)
+	assert.Equalf(t, expectedRewardAmt, rewards.Rewards, "%s <-> %s", expectedRewardAmt, rewards.Rewards)
 	rewards = input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(2), keeper.ValAddrs[2])
-	require.Equalf(t, expectedRewardAmt2, rewards.Rewards, "%s <-> %s", expectedRewardAmt2, rewards.Rewards)
+	assert.Equalf(t, expectedRewardAmt2, rewards.Rewards, "%s <-> %s", expectedRewardAmt2, rewards.Rewards)
 }
 
 func TestOracleEnsureSorted(t *testing.T) {
