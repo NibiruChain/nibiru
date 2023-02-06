@@ -15,7 +15,7 @@ import (
 // NOTE: **Make abstain votes to have zero vote power**
 func (k Keeper) groupBallotsByPair(
 	ctx sdk.Context,
-	validatorsPerformance map[string]types.ValidatorPerformance,
+	validatorsPerformance types.ValidatorPerformances,
 ) (pairBallotsMap map[asset.Pair]types.ExchangeRateBallots) {
 	pairBallotsMap = map[asset.Pair]types.ExchangeRateBallots{}
 

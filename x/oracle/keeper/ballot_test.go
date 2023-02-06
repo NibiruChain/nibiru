@@ -58,7 +58,7 @@ func TestOrganizeAggregate(t *testing.T) {
 	}
 
 	// organize votes by pair
-	ballotMap := input.OracleKeeper.groupBallotsByPair(input.Ctx, map[string]types.ValidatorPerformance{
+	ballotMap := input.OracleKeeper.groupBallotsByPair(input.Ctx, types.ValidatorPerformances{
 		ValAddrs[0].String(): {
 			Power:      power,
 			WinCount:   0,
