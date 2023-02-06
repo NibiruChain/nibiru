@@ -5,7 +5,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
@@ -47,43 +46,4 @@ func Tally(ballots types.ExchangeRateBallots, rewardBand sdk.Dec, validatorPerfo
 func isPassingVoteThreshold(ballots types.ExchangeRateBallots, thresholdPower sdk.Int) bool {
 	ballotPower := sdk.NewInt(ballots.Power())
 	return !ballotPower.IsZero() && ballotPower.GTE(thresholdPower)
-}
-
-// RemoveInvalidBallots removes the ballots which have not reached the vote threshold
-// or which are not part of the whitelisted pairs anymore: example when params change during a vote period
-// but some votes were already made.
-//
-// ALERT: This function mutates pairBallotMap slice, it removes the ballot for the pair which is not passing the threshold
-// or which is not whitelisted anymore.
-func (k Keeper) RemoveInvalidBallots(
-	ctx sdk.Context,
-	pairBallotsMap map[asset.Pair]types.ExchangeRateBallots,
-) (map[asset.Pair]types.ExchangeRateBallots, map[asset.Pair]struct{}) {
-	whitelistedPairs := k.GetWhitelistedPairs(ctx)
-
-	whitelistedPairsMap := make(map[asset.Pair]struct{}, len(whitelistedPairs))
-	for _, pair := range whitelistedPairs {
-		whitelistedPairsMap[pair] = struct{}{}
-	}
-
-	totalBondedPower := sdk.TokensToConsensusPower(k.StakingKeeper.TotalBondedTokens(ctx), k.StakingKeeper.PowerReduction(ctx))
-	thresholdPower := k.VoteThreshold(ctx).MulInt64(totalBondedPower).RoundInt()
-
-	for pair, ballots := range pairBallotsMap {
-		// Ignore not whitelisted pairs
-		if _, exists := whitelistedPairsMap[pair]; !exists {
-			delete(pairBallotsMap, pair)
-			continue
-		}
-
-		// If the ballot is not passed, remove it from the whitelistedPairs set
-		// to prevent slashing validators who did valid vote.
-		if !isPassingVoteThreshold(ballots, thresholdPower) {
-			delete(whitelistedPairsMap, pair)
-			delete(pairBallotsMap, pair)
-			continue
-		}
-	}
-
-	return pairBallotsMap, whitelistedPairsMap
 }

@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/set"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
@@ -76,96 +75,24 @@ func TestFuzz_Tally(t *testing.T) {
 }
 
 func TestOraclePairsInsert(t *testing.T) {
-	testCases := []asset.Pair{"", "1", "22", "2xxxx12312u30912u01u2309u21093u"}
+	pairs := []asset.Pair{"", "1", "22", "2xxxx12312u30912u01u2309u21093u"}
 
-	for _, tc := range testCases {
-		tc := tc
-		t.Run(fmt.Sprintf("key: %s", tc), func(t *testing.T) {
+	for _, pair := range pairs {
+		t.Run(fmt.Sprintf("key: %s", pair), func(t *testing.T) {
 			testSetup, _ := setup(t)
 			ctx := testSetup.Ctx
 			oracleKeeper := testSetup.OracleKeeper
 
 			assert.NotPanics(t, func() {
-				oracleKeeper.WhitelistedPairs.Insert(ctx, tc)
-			}, "key: %s", tc)
-			assert.True(t, oracleKeeper.WhitelistedPairs.Has(ctx, tc))
+				oracleKeeper.WhitelistedPairs.Insert(ctx, pair)
+			}, "key: %s", pair)
+
+			assert.True(t, oracleKeeper.WhitelistedPairs.Has(ctx, pair))
 		})
 	}
 }
 
 type VoteMap = map[asset.Pair]types.ExchangeRateBallots
-
-func TestRemoveInvalidBallots(t *testing.T) {
-	testCases := []struct {
-		name    string
-		voteMap VoteMap
-	}{
-		{
-			name: "empty key, empty ballot", voteMap: VoteMap{
-				"": types.ExchangeRateBallots{},
-			},
-		},
-		{
-			name: "nonempty key, empty ballot", voteMap: VoteMap{
-				"xxx": types.ExchangeRateBallots{},
-			},
-		},
-		{
-			name: "nonempty keys, empty ballot", voteMap: VoteMap{
-				"xxx":    types.ExchangeRateBallots{},
-				"abc123": types.ExchangeRateBallots{},
-			},
-		},
-		{
-			name: "mixed empty keys, empty ballot", voteMap: VoteMap{
-				"xxx":    types.ExchangeRateBallots{},
-				"":       types.ExchangeRateBallots{},
-				"abc123": types.ExchangeRateBallots{},
-				"0x":     types.ExchangeRateBallots{},
-			},
-		},
-		{
-			name: "empty key, nonempty ballot, not whitelisted",
-			voteMap: VoteMap{
-				"": types.ExchangeRateBallots{
-					{Pair: "", ExchangeRate: sdk.ZeroDec(), Voter: sdk.ValAddress{}, Power: 0},
-				},
-			},
-		},
-		{
-			name: "nonempty key, nonempty ballot, whitelisted",
-			voteMap: VoteMap{
-				"x": types.ExchangeRateBallots{
-					{Pair: "x", ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
-				},
-				asset.Registry.Pair(denoms.BTC, denoms.NUSD): types.ExchangeRateBallots{
-					{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
-				},
-				asset.Registry.Pair(denoms.ETH, denoms.NUSD): types.ExchangeRateBallots{
-					{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
-				},
-			},
-		},
-	}
-
-	for _, testCase := range testCases {
-		tc := testCase
-		t.Run(tc.name, func(t *testing.T) {
-			testSetup, _ := setup(t)
-			ctx := testSetup.Ctx
-			oracleKeeper := testSetup.OracleKeeper
-
-			switch {
-			// case tc.err:
-			// TODO Include the error case when collections no longer panics
-			default:
-				assert.NotPanics(t, func() {
-					_, _ = oracleKeeper.RemoveInvalidBallots(ctx, tc.voteMap)
-				}, "voteMap: %v", tc.voteMap)
-			}
-		})
-	}
-}
 
 func TestFuzz_PickReferencePair(t *testing.T) {
 	var pairs []asset.Pair
