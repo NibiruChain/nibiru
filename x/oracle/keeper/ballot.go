@@ -69,13 +69,13 @@ func (k Keeper) clearVotesAndPreVotes(ctx sdk.Context, votePeriod uint64) {
 
 // updateWhitelist updates the whitelist by detecting possible changes between
 // the current vote targets and the current updated whitelist.
-func (k Keeper) updateWhitelist(ctx sdk.Context, paramsWhitelist []asset.Pair, currentWhitelist map[asset.Pair]struct{}) {
+func (k Keeper) updateWhitelist(ctx sdk.Context, nextWhitelist []asset.Pair, currentWhitelist map[asset.Pair]struct{}) {
 	updateRequired := false
 
-	if len(currentWhitelist) != len(paramsWhitelist) {
+	if len(currentWhitelist) != len(nextWhitelist) {
 		updateRequired = true
 	} else {
-		for _, pair := range paramsWhitelist {
+		for _, pair := range nextWhitelist {
 			_, exists := currentWhitelist[pair]
 			if !exists {
 				updateRequired = true
@@ -88,7 +88,7 @@ func (k Keeper) updateWhitelist(ctx sdk.Context, paramsWhitelist []asset.Pair, c
 		for _, p := range k.WhitelistedPairs.Iterate(ctx, collections.Range[asset.Pair]{}).Keys() {
 			k.WhitelistedPairs.Delete(ctx, p)
 		}
-		for _, pair := range paramsWhitelist {
+		for _, pair := range nextWhitelist {
 			k.WhitelistedPairs.Insert(ctx, pair)
 		}
 	}
