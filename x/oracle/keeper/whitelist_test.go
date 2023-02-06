@@ -11,7 +11,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 )
 
-func TestKeeper_GetVoteTargets(t *testing.T) {
+func TestKeeperGetVoteTargets(t *testing.T) {
 	type TestCase struct {
 		name  string
 		in    []asset.Pair
@@ -32,7 +32,7 @@ func TestKeeper_GetVoteTargets(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			input := CreateTestInput(t)
 
-			for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys() {
+			for _, p := range input.OracleKeeper.GetWhitelistedPairs(input.Ctx) {
 				input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 			}
 
@@ -41,17 +41,16 @@ func TestKeeper_GetVoteTargets(t *testing.T) {
 				input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, target)
 			}
 
-			var panicAssertFn func(t assert.TestingT, f assert.PanicTestFunc, msgAndArgs ...interface{}) bool
-			switch tc.panic {
-			case true:
-				panicAssertFn = assert.Panics
-			default:
-				panicAssertFn = assert.NotPanics
+			if tc.panic {
+				assert.Panics(t, func() {
+					input.OracleKeeper.GetWhitelistedPairs(input.Ctx)
+				})
+			} else {
+				assert.NotPanics(t, func() {
+					targets := input.OracleKeeper.GetWhitelistedPairs(input.Ctx)
+					assert.Equal(t, expectedTargets, targets)
+				})
 			}
-			panicAssertFn(t, func() {
-				targets := input.OracleKeeper.GetWhitelistedPairs(input.Ctx)
-				assert.Equal(t, expectedTargets, targets)
-			})
 		})
 	}
 
