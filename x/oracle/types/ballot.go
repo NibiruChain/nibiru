@@ -142,6 +142,8 @@ func (pb ExchangeRateBallots) StandardDeviation(median sdk.Dec) (standardDeviati
 	return
 }
 
+var _ (sort.Interface) = ExchangeRateBallots{}
+
 // Len implements sort.Interface
 func (pb ExchangeRateBallots) Len() int {
 	return len(pb)
@@ -156,6 +158,17 @@ func (pb ExchangeRateBallots) Less(i, j int) bool {
 // Swap implements sort.Interface.
 func (pb ExchangeRateBallots) Swap(i, j int) {
 	pb[i], pb[j] = pb[j], pb[i]
+}
+
+// NumValidators returns the number of validators that voted in the ballot, excluding abstentions.
+func (pb ExchangeRateBallots) NumValidators() int {
+	count := 0
+	for _, vote := range pb {
+		if vote.ExchangeRate.IsPositive() {
+			count++
+		}
+	}
+	return count
 }
 
 // ValidatorPerformance keeps track of a validator performance in the voting period.

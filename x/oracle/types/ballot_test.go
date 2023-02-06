@@ -342,3 +342,61 @@ func TestNewClaim(t *testing.T) {
 		ValAddress:   addr,
 	}, claim)
 }
+
+func TestNumValidators(t *testing.T) {
+	tests := []struct {
+		name                  string
+		ballots               types.ExchangeRateBallots
+		expectedNumValidators int
+	}{
+		{
+			name:                  "no ballots",
+			ballots:               types.ExchangeRateBallots{},
+			expectedNumValidators: 0,
+		},
+		{
+			name: "one ballot",
+			ballots: types.ExchangeRateBallots{
+				types.ExchangeRateBallot{
+					Power:        1,
+					ExchangeRate: sdk.OneDec(),
+				},
+			},
+			expectedNumValidators: 1,
+		},
+		{
+			name: "multiple ballots",
+			ballots: types.ExchangeRateBallots{
+				types.ExchangeRateBallot{
+					Power:        1,
+					ExchangeRate: sdk.OneDec(),
+				},
+				types.ExchangeRateBallot{
+					Power:        1,
+					ExchangeRate: sdk.OneDec(),
+				},
+			},
+			expectedNumValidators: 2,
+		},
+		{
+			name: "contains abstain votes",
+			ballots: types.ExchangeRateBallots{
+				types.ExchangeRateBallot{
+					Power:        1,
+					ExchangeRate: sdk.OneDec(),
+				},
+				types.ExchangeRateBallot{
+					Power:        0,
+					ExchangeRate: sdk.ZeroDec(),
+				},
+			},
+			expectedNumValidators: 1,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.expectedNumValidators, tc.ballots.NumValidators())
+		})
+	}
+}
