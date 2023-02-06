@@ -55,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Improvements
 
+* [#1180](https://github.com/NibiruChain/nibiru/pull/1180) - refactor(oracle): whitelist refactor
 * [#1179](https://github.com/NibiruChain/nibiru/pull/1179) - refactor(oracle): types refactor for validator performance map and whitelist map
 * [#1161](https://github.com/NibiruChain/nibiru/pull/1161) - refactor: migrate simapp tests to use main app
 * [#1134](https://github.com/NibiruChain/nibiru/pull/1134) - refactor: remove panics from vpool and spillovers from the perp module. It's now impossible to call functions in x/perp that would panic in vpool.
