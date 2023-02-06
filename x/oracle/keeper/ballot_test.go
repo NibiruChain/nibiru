@@ -12,6 +12,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/common/set"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
@@ -157,7 +158,7 @@ func TestApplyWhitelist(t *testing.T) {
 		input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, p)
 	}
 
-	voteTargets := map[asset.Pair]struct{}{
+	voteTargets := set.Set[asset.Pair]{
 		"nibi:usd": {},
 		"btc:usd":  {},
 	}

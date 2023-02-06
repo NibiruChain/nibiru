@@ -220,7 +220,7 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 	input, _ := setup(t)
 
 	// test OracleKeeper.Pairs.Insert
-	voteTargets := map[asset.Pair]struct{}{}
+	voteTargets := set.Set[asset.Pair]{}
 	f.Fuzz(&voteTargets)
 	whitelistedPairs := make(set.Set[string])
 

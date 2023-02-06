@@ -6,6 +6,7 @@ import (
 	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/set"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
@@ -69,7 +70,7 @@ func (k Keeper) clearVotesAndPreVotes(ctx sdk.Context, votePeriod uint64) {
 
 // updateWhitelist updates the whitelist by detecting possible changes between
 // the current vote targets and the current updated whitelist.
-func (k Keeper) updateWhitelist(ctx sdk.Context, paramsWhitelist []asset.Pair, currentWhitelist map[asset.Pair]struct{}) {
+func (k Keeper) updateWhitelist(ctx sdk.Context, paramsWhitelist []asset.Pair, currentWhitelist set.Set[asset.Pair]) {
 	updateRequired := false
 
 	if len(currentWhitelist) != len(paramsWhitelist) {

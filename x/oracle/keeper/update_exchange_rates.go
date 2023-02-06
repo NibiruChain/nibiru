@@ -6,6 +6,7 @@ import (
 	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/set"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
@@ -27,7 +28,7 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 }
 
 // registerMissedVotes it parses all validators performance and increases the missed vote of those that did not vote.
-func (k Keeper) registerMissedVotes(ctx sdk.Context, whitelistedPairs map[asset.Pair]struct{}, validatorPerformances types.ValidatorPerformances) {
+func (k Keeper) registerMissedVotes(ctx sdk.Context, whitelistedPairs set.Set[asset.Pair], validatorPerformances types.ValidatorPerformances) {
 	for _, validatorPerformance := range validatorPerformances {
 		if int(validatorPerformance.WinCount) == len(whitelistedPairs) {
 			continue
@@ -65,15 +66,15 @@ func (k Keeper) countVotesAndUpdateExchangeRates(
 func (k Keeper) getPairBallotsMapAndWhitelistedPairs(
 	ctx sdk.Context,
 	validatorPerformances types.ValidatorPerformances,
-) (pairBallotsMap map[asset.Pair]types.ExchangeRateBallots, whitelistedPairsMap map[asset.Pair]struct{}) {
+) (pairBallotsMap map[asset.Pair]types.ExchangeRateBallots, whitelistedPairsMap set.Set[asset.Pair]) {
 	pairBallotsMap = k.groupBallotsByPair(ctx, validatorPerformances)
 
 	return k.RemoveInvalidBallots(ctx, pairBallotsMap)
 }
 
 // getWhitelistedPairs returns a map containing all the pairs as the key.
-func (k Keeper) getWhitelistedPairs(ctx sdk.Context) map[asset.Pair]struct{} {
-	whitelistedPairs := make(map[asset.Pair]struct{})
+func (k Keeper) getWhitelistedPairs(ctx sdk.Context) set.Set[asset.Pair] {
+	whitelistedPairs := make(set.Set[asset.Pair])
 	for _, p := range k.GetWhitelistedPairs(ctx) {
 		whitelistedPairs[p] = struct{}{}
 	}
