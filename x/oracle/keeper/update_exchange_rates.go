@@ -69,7 +69,7 @@ func (k Keeper) getPairBallotsMapAndWhitelistedPairs(
 ) (pairBallotsMap map[asset.Pair]types.ExchangeRateBallots, whitelistedPairsMap set.Set[asset.Pair]) {
 	pairBallotsMap = k.groupBallotsByPair(ctx, validatorPerformances)
 
-	return k.RemoveInvalidBallots(ctx, pairBallotsMap)
+	return k.removeInvalidBallots(ctx, pairBallotsMap)
 }
 
 // resetExchangeRates removes all exchange rates from the state
