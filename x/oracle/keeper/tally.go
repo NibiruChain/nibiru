@@ -60,7 +60,7 @@ func (k Keeper) RemoveInvalidBallots(
 	ctx sdk.Context,
 	pairBallotsMap map[asset.Pair]types.ExchangeRateBallots,
 ) (map[asset.Pair]types.ExchangeRateBallots, set.Set[asset.Pair]) {
-	whitelistedPairs := k.getWhitelistedPairs(ctx)
+	whitelistedPairs := set.New(k.GetWhitelistedPairs(ctx)...)
 
 	totalBondedPower := sdk.TokensToConsensusPower(k.StakingKeeper.TotalBondedTokens(ctx), k.StakingKeeper.PowerReduction(ctx))
 	voteThreshold := k.VoteThreshold(ctx).MulInt64(totalBondedPower).RoundInt()

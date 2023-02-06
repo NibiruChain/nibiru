@@ -158,17 +158,29 @@ func TestUpdateWhitelist(t *testing.T) {
 	nextWhitelist := set.New(asset.NewPair(denoms.NIBI, denoms.USD), asset.NewPair(denoms.BTC, denoms.USD))
 
 	// no updates case
-	input.OracleKeeper.updateWhitelist(input.Ctx, nextWhitelist.ToSlice(), currentWhitelist)
-	assert.Equal(t, nextWhitelist, input.OracleKeeper.getWhitelistedPairs(input.Ctx))
+	whitelistSlice := nextWhitelist.ToSlice()
+	sort.Slice(whitelistSlice, func(i, j int) bool {
+		return whitelistSlice[i].String() < whitelistSlice[j].String()
+	})
+	input.OracleKeeper.updateWhitelist(input.Ctx, whitelistSlice, currentWhitelist)
+	assert.Equal(t, whitelistSlice, input.OracleKeeper.GetWhitelistedPairs(input.Ctx))
 
 	// len update (fast path)
 	nextWhitelist.Add(asset.NewPair(denoms.NIBI, denoms.ETH))
-	input.OracleKeeper.updateWhitelist(input.Ctx, nextWhitelist.ToSlice(), currentWhitelist)
-	assert.Equal(t, nextWhitelist, input.OracleKeeper.getWhitelistedPairs(input.Ctx))
+	whitelistSlice = nextWhitelist.ToSlice()
+	sort.Slice(whitelistSlice, func(i, j int) bool {
+		return whitelistSlice[i].String() < whitelistSlice[j].String()
+	})
+	input.OracleKeeper.updateWhitelist(input.Ctx, whitelistSlice, currentWhitelist)
+	assert.Equal(t, whitelistSlice, input.OracleKeeper.GetWhitelistedPairs(input.Ctx))
 
 	// diff update (slow path)
 	currentWhitelist.Add(asset.NewPair(denoms.NIBI, denoms.ETH))
 	nextWhitelist.Remove(asset.NewPair(denoms.NIBI, denoms.USD))
-	input.OracleKeeper.updateWhitelist(input.Ctx, nextWhitelist.ToSlice(), currentWhitelist)
-	assert.Equal(t, nextWhitelist, input.OracleKeeper.getWhitelistedPairs(input.Ctx))
+	whitelistSlice = nextWhitelist.ToSlice()
+	sort.Slice(whitelistSlice, func(i, j int) bool {
+		return whitelistSlice[i].String() < whitelistSlice[j].String()
+	})
+	input.OracleKeeper.updateWhitelist(input.Ctx, whitelistSlice, currentWhitelist)
+	assert.Equal(t, whitelistSlice, input.OracleKeeper.GetWhitelistedPairs(input.Ctx))
 }

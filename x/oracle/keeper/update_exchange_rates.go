@@ -72,16 +72,6 @@ func (k Keeper) getPairBallotsMapAndWhitelistedPairs(
 	return k.RemoveInvalidBallots(ctx, pairBallotsMap)
 }
 
-// getWhitelistedPairs returns a map containing all the pairs as the key.
-func (k Keeper) getWhitelistedPairs(ctx sdk.Context) set.Set[asset.Pair] {
-	whitelistedPairs := make(set.Set[asset.Pair])
-	for _, p := range k.GetWhitelistedPairs(ctx) {
-		whitelistedPairs[p] = struct{}{}
-	}
-
-	return whitelistedPairs
-}
-
 // resetExchangeRates removes all exchange rates from the state
 func (k Keeper) resetExchangeRates(ctx sdk.Context) {
 	for _, key := range k.ExchangeRates.Iterate(ctx, collections.Range[asset.Pair]{}).Keys() {
