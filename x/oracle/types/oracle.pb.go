@@ -30,16 +30,36 @@ var _ = time.Kitchen
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// Params defines the parameters for the oracle module.
+// Params defines the module parameters for the x/oracle module.
 type Params struct {
-	VotePeriod        uint64                                              `protobuf:"varint,1,opt,name=vote_period,json=votePeriod,proto3" json:"vote_period,omitempty" yaml:"vote_period"`
-	VoteThreshold     github_com_cosmos_cosmos_sdk_types.Dec              `protobuf:"bytes,2,opt,name=vote_threshold,json=voteThreshold,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"vote_threshold" yaml:"vote_threshold"`
-	RewardBand        github_com_cosmos_cosmos_sdk_types.Dec              `protobuf:"bytes,3,opt,name=reward_band,json=rewardBand,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"reward_band" yaml:"reward_band"`
-	Whitelist         []github_com_NibiruChain_nibiru_x_common_asset.Pair `protobuf:"bytes,4,rep,name=whitelist,proto3,customtype=github.com/NibiruChain/nibiru/x/common/asset.Pair" json:"whitelist,omitempty" yaml:"whitelist"`
-	SlashFraction     github_com_cosmos_cosmos_sdk_types.Dec              `protobuf:"bytes,5,opt,name=slash_fraction,json=slashFraction,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"slash_fraction" yaml:"slash_fraction"`
-	SlashWindow       uint64                                              `protobuf:"varint,6,opt,name=slash_window,json=slashWindow,proto3" json:"slash_window,omitempty" yaml:"slash_window"`
-	MinValidPerWindow github_com_cosmos_cosmos_sdk_types.Dec              `protobuf:"bytes,7,opt,name=min_valid_per_window,json=minValidPerWindow,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"min_valid_per_window" yaml:"min_valid_per_window"`
-	// amount of time to look back for TWAP calculations
+	// VotePeriod defines the number of blocks during which voting takes place.
+	VotePeriod uint64 `protobuf:"varint,1,opt,name=vote_period,json=votePeriod,proto3" json:"vote_period,omitempty" yaml:"vote_period"`
+	// VoteThreshold specifies the minimum proportion of votes that must be
+	// received for a ballot to pass.
+	VoteThreshold github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=vote_threshold,json=voteThreshold,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"vote_threshold" yaml:"vote_threshold"`
+	// RewardBand defines a maxium divergence that a price vote can have from the
+	// weighted median in the ballot. If a vote lies within the valid range
+	// defined by:
+	//	μ := weightedMedian,
+	//	validRange := μ ± (μ * reward / 2),
+	// then rewards are added to the validator performance.
+	// Note that if the reward band is smaller than 1 standard
+	// deviation, the band is taken to be 1 standard deviation.a price
+	RewardBand github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,opt,name=reward_band,json=rewardBand,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"reward_band" yaml:"reward_band"`
+	// The set of whitelisted markets, or asset pairs, for the module.
+	// Ex. '["unibi:uusd","ubtc:uusd"]'
+	Whitelist []github_com_NibiruChain_nibiru_x_common_asset.Pair `protobuf:"bytes,4,rep,name=whitelist,proto3,customtype=github.com/NibiruChain/nibiru/x/common/asset.Pair" json:"whitelist,omitempty" yaml:"whitelist"`
+	// SlashFraction returns the proportion of an oracle's stake that gets
+	// slashed in the event of slashing. `SlashFraction` specifies the exact
+	// penalty for failing a voting period.
+	SlashFraction github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,5,opt,name=slash_fraction,json=slashFraction,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"slash_fraction" yaml:"slash_fraction"`
+	// SlashWindow returns the number of voting periods that specify a
+	// "slash window". After each slash window, all oracles that have missed more
+	// than the penalty threshold are slashed. Missing the penalty threshold is
+	// synonymous with submitting fewer valid votes than `MinValidPerWindow`.
+	SlashWindow       uint64                                 `protobuf:"varint,6,opt,name=slash_window,json=slashWindow,proto3" json:"slash_window,omitempty" yaml:"slash_window"`
+	MinValidPerWindow github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,7,opt,name=min_valid_per_window,json=minValidPerWindow,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"min_valid_per_window" yaml:"min_valid_per_window"`
+	// Amount of time to look back for TWAP calculations
 	TwapLookbackWindow time.Duration `protobuf:"bytes,8,opt,name=twap_lookback_window,json=twapLookbackWindow,proto3,stdduration" json:"twap_lookback_window,omitempty" yaml:"twap_lookback_window"`
 }
 
@@ -96,7 +116,7 @@ func (m *Params) GetTwapLookbackWindow() time.Duration {
 	return 0
 }
 
-// struct for aggregate prevoting on the ExchangeRateVote.
+// Struct for aggregate prevoting on the ExchangeRateVote.
 // The purpose of aggregate prevote is to hide vote exchange rates with hash
 // which is formatted as hex string in SHA256("{salt}:({pair},{exchange_rate})|...|({pair},{exchange_rate}):{voter}")
 type AggregateExchangeRatePrevote struct {
@@ -223,7 +243,7 @@ type PairReward struct {
 	Id uint64 `protobuf:"varint,2,opt,name=id,proto3" json:"id,omitempty"`
 	// vote_periods defines the vote periods left in which rewards will be distributed.
 	VotePeriods uint64 `protobuf:"varint,3,opt,name=vote_periods,json=votePeriods,proto3" json:"vote_periods,omitempty"`
-	// coins defines the amount of coins to distribute in a single vote period.
+	// Coins defines the amount of coins to distribute in a single vote period.
 	Coins []types.Coin `protobuf:"bytes,4,rep,name=coins,proto3" json:"coins"`
 }
 

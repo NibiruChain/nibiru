@@ -7,39 +7,60 @@ import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/oracle/types";
 
-// Params defines the parameters for the oracle module.
+// Params defines the module parameters for the x/oracle module.
 message Params {
   option (gogoproto.equal)            = true;
   option (gogoproto.goproto_stringer) = false;
 
+  // VotePeriod defines the number of blocks during which voting takes place. 
   uint64 vote_period    = 1 [(gogoproto.moretags) = "yaml:\"vote_period\""];
+  // VoteThreshold specifies the minimum proportion of votes that must be 
+  // received for a ballot to pass.
   string vote_threshold = 2 [
     (gogoproto.moretags)   = "yaml:\"vote_threshold\"",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
+  // RewardBand defines a maxium divergence that a price vote can have from the
+  // weighted median in the ballot. If a vote lies within the valid range
+  // defined by:
+  //	μ := weightedMedian,
+  //	validRange := μ ± (μ * reward / 2),
+  // then rewards are added to the validator performance.
+  // Note that if the reward band is smaller than 1 standard
+  // deviation, the band is taken to be 1 standard deviation.a price
   string reward_band = 3 [
     (gogoproto.moretags)   = "yaml:\"reward_band\"",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
+  // The set of whitelisted markets, or asset pairs, for the module. 
+  // Ex. '["unibi:uusd","ubtc:uusd"]'
   repeated string whitelist = 4 [
     (gogoproto.moretags)     = "yaml:\"whitelist\"",
     (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair"
   ];
+  // SlashFraction returns the proportion of an oracle's stake that gets 
+  // slashed in the event of slashing. `SlashFraction` specifies the exact 
+  // penalty for failing a voting period.  
   string slash_fraction = 5 [
     (gogoproto.moretags)   = "yaml:\"slash_fraction\"",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
-  uint64 slash_window         = 6 [(gogoproto.moretags) = "yaml:\"slash_window\""];
+  // SlashWindow returns the number of voting periods that specify a 
+  // "slash window". After each slash window, all oracles that have missed more 
+  // than the penalty threshold are slashed. Missing the penalty threshold is 
+  // synonymous with submitting fewer valid votes than `MinValidPerWindow`.
+  uint64 slash_window         = 6 [
+    (gogoproto.moretags) = "yaml:\"slash_window\""];
   string min_valid_per_window = 7 [
     (gogoproto.moretags)   = "yaml:\"min_valid_per_window\"",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
 
-  // amount of time to look back for TWAP calculations
+  // Amount of time to look back for TWAP calculations
   google.protobuf.Duration twap_lookback_window = 8 [
     (gogoproto.nullable) = false,
     (gogoproto.stdduration) = true,
@@ -48,7 +69,7 @@ message Params {
   ];  
 }
 
-// struct for aggregate prevoting on the ExchangeRateVote.
+// Struct for aggregate prevoting on the ExchangeRateVote.
 // The purpose of aggregate prevote is to hide vote exchange rates with hash
 // which is formatted as hex string in SHA256("{salt}:({pair},{exchange_rate})|...|({pair},{exchange_rate}):{voter}")
 message AggregateExchangeRatePrevote {
@@ -108,6 +129,6 @@ message PairReward {
   uint64 id = 2;
   // vote_periods defines the vote periods left in which rewards will be distributed.
   uint64 vote_periods = 3;
-  // coins defines the amount of coins to distribute in a single vote period.
+  // Coins defines the amount of coins to distribute in a single vote period.
   repeated cosmos.base.v1beta1.Coin coins = 4 [(gogoproto.nullable) = false];
 }
