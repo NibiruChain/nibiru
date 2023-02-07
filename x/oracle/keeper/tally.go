@@ -6,14 +6,15 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/set"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
 // Tally calculates the median and returns it. Sets the set of voters to be rewarded, i.e. voted within
 // a reasonable spread from the weighted median to the store
 //
-// ALERT: This function mutates validatorPerformanceMap slice based on the votes made by the validators.
-func Tally(ballots types.ExchangeRateBallots, rewardBand sdk.Dec, validatorPerformanceMap map[string]types.ValidatorPerformance) sdk.Dec {
+// ALERT: This function mutates validatorPerformances slice based on the votes made by the validators.
+func Tally(ballots types.ExchangeRateBallots, rewardBand sdk.Dec, validatorPerformances types.ValidatorPerformances) sdk.Dec {
 	sort.Sort(ballots)
 
 	weightedMedian := ballots.WeightedMedianWithAssertion()
@@ -33,10 +34,10 @@ func Tally(ballots types.ExchangeRateBallots, rewardBand sdk.Dec, validatorPerfo
 		if voteInsideSpread || isAbstainVote {
 			voterAddr := ballot.Voter.String()
 
-			validatorPerformance := validatorPerformanceMap[voterAddr]
+			validatorPerformance := validatorPerformances[voterAddr]
 			validatorPerformance.RewardWeight += ballot.Power
 			validatorPerformance.WinCount++
-			validatorPerformanceMap[voterAddr] = validatorPerformance
+			validatorPerformances[voterAddr] = validatorPerformance
 		}
 	}
 
@@ -58,7 +59,7 @@ func isPassingVoteThreshold(ballots types.ExchangeRateBallots, thresholdVotes sd
 func (k Keeper) RemoveInvalidBallots(
 	ctx sdk.Context,
 	pairBallotsMap map[asset.Pair]types.ExchangeRateBallots,
-) (map[asset.Pair]types.ExchangeRateBallots, map[asset.Pair]struct{}) {
+) (map[asset.Pair]types.ExchangeRateBallots, set.Set[asset.Pair]) {
 	whitelistedPairs := k.getWhitelistedPairs(ctx)
 
 	totalBondedPower := sdk.TokensToConsensusPower(k.StakingKeeper.TotalBondedTokens(ctx), k.StakingKeeper.PowerReduction(ctx))
