@@ -172,7 +172,7 @@ func TestOracleTally(t *testing.T) {
 		}
 	}
 
-	validatorClaimMap := make(map[string]types.ValidatorPerformance)
+	validatorClaimMap := make(types.ValidatorPerformances)
 	for _, valAddr := range valAddrs {
 		validatorClaimMap[valAddr.String()] = types.ValidatorPerformance{
 			Power:        stakingKeeper.Validator(input.Ctx, valAddr).GetConsensusPower(sdk.DefaultPowerReduction),
@@ -190,7 +190,7 @@ func TestOracleTally(t *testing.T) {
 		maxSpread = standardDeviation
 	}
 
-	expectedValidatorClaimMap := make(map[string]types.ValidatorPerformance)
+	expectedValidatorClaimMap := make(types.ValidatorPerformances)
 	for _, valAddr := range valAddrs {
 		expectedValidatorClaimMap[valAddr.String()] = types.ValidatorPerformance{
 			Power:        stakingKeeper.Validator(input.Ctx, valAddr).GetConsensusPower(sdk.DefaultPowerReduction),

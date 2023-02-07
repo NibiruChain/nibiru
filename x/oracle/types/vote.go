@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/set"
 
 	"gopkg.in/yaml.v2"
 
@@ -125,7 +126,7 @@ func NewExchangeRateTuplesFromString(s string) (ExchangeRateTuples, error) {
 
 	tuples := make(ExchangeRateTuples, len(stringTuples))
 
-	duplicates := make(map[asset.Pair]struct{}, len(stringTuples))
+	duplicates := make(set.Set[asset.Pair], len(stringTuples))
 
 	for i, stringTuple := range stringTuples {
 		exchangeRate, err := NewExchangeRateTupleFromString(stringTuple)

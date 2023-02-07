@@ -6,6 +6,7 @@ import (
 	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/set"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
@@ -14,12 +15,12 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 	k.Logger(ctx).Info("processing validator price votes")
 	k.resetExchangeRates(ctx)
 
-	validatorPerformanceMap := k.newValidatorPerformanceMap(ctx)
-	pairBallotsMap, whitelistedPairs := k.getPairBallotsMapAndWhitelistedPairs(ctx, validatorPerformanceMap)
+	validatorPerformances := k.newValidatorPerformances(ctx)
+	pairBallotsMap, whitelistedPairs := k.getPairBallotsMapAndWhitelistedPairs(ctx, validatorPerformances)
 
-	k.countVotesAndUpdateExchangeRates(ctx, pairBallotsMap, validatorPerformanceMap)
-	k.registerMissedVotes(ctx, whitelistedPairs, validatorPerformanceMap)
-	k.rewardBallotWinners(ctx, whitelistedPairs, validatorPerformanceMap)
+	k.countVotesAndUpdateExchangeRates(ctx, pairBallotsMap, validatorPerformances)
+	k.registerMissedVotes(ctx, whitelistedPairs, validatorPerformances)
+	k.rewardBallotWinners(ctx, whitelistedPairs, validatorPerformances)
 
 	params := k.GetParams(ctx)
 	k.clearVotesAndPreVotes(ctx, params.VotePeriod)
@@ -27,8 +28,8 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 }
 
 // registerMissedVotes it parses all validators performance and increases the missed vote of those that did not vote.
-func (k Keeper) registerMissedVotes(ctx sdk.Context, whitelistedPairs map[asset.Pair]struct{}, validatorPerformanceMap map[string]types.ValidatorPerformance) {
-	for _, validatorPerformance := range validatorPerformanceMap {
+func (k Keeper) registerMissedVotes(ctx sdk.Context, whitelistedPairs set.Set[asset.Pair], validatorPerformances types.ValidatorPerformances) {
+	for _, validatorPerformance := range validatorPerformances {
 		if int(validatorPerformance.WinCount) == len(whitelistedPairs) {
 			continue
 		}
@@ -42,12 +43,12 @@ func (k Keeper) registerMissedVotes(ctx sdk.Context, whitelistedPairs map[asset.
 func (k Keeper) countVotesAndUpdateExchangeRates(
 	ctx sdk.Context,
 	pairBallotsMap map[asset.Pair]types.ExchangeRateBallots,
-	validatorPerformanceMap map[string]types.ValidatorPerformance,
+	validatorPerformances types.ValidatorPerformances,
 ) {
 	params := k.GetParams(ctx)
 
 	for pair, ballots := range pairBallotsMap {
-		exchangeRate := Tally(ballots, params.RewardBand, validatorPerformanceMap)
+		exchangeRate := Tally(ballots, params.RewardBand, validatorPerformances)
 
 		k.SetPrice(ctx, pair, exchangeRate)
 
@@ -64,16 +65,16 @@ func (k Keeper) countVotesAndUpdateExchangeRates(
 // and a map with all whitelisted pairs.
 func (k Keeper) getPairBallotsMapAndWhitelistedPairs(
 	ctx sdk.Context,
-	validatorPerformanceMap map[string]types.ValidatorPerformance,
-) (pairBallotsMap map[asset.Pair]types.ExchangeRateBallots, whitelistedPairsMap map[asset.Pair]struct{}) {
-	pairBallotsMap = k.groupBallotsByPair(ctx, validatorPerformanceMap)
+	validatorPerformances types.ValidatorPerformances,
+) (pairBallotsMap map[asset.Pair]types.ExchangeRateBallots, whitelistedPairsMap set.Set[asset.Pair]) {
+	pairBallotsMap = k.groupBallotsByPair(ctx, validatorPerformances)
 
 	return k.RemoveInvalidBallots(ctx, pairBallotsMap)
 }
 
 // getWhitelistedPairs returns a map containing all the pairs as the key.
-func (k Keeper) getWhitelistedPairs(ctx sdk.Context) map[asset.Pair]struct{} {
-	whitelistedPairs := make(map[asset.Pair]struct{})
+func (k Keeper) getWhitelistedPairs(ctx sdk.Context) set.Set[asset.Pair] {
+	whitelistedPairs := make(set.Set[asset.Pair])
 	for _, p := range k.GetWhitelistedPairs(ctx) {
 		whitelistedPairs[p] = struct{}{}
 	}
@@ -91,10 +92,10 @@ func (k Keeper) resetExchangeRates(ctx sdk.Context) {
 	}
 }
 
-// newValidatorPerformanceMap creates a new map of validators and their performance, excluding validators that are
+// newValidatorPerformances creates a new map of validators and their performance, excluding validators that are
 // not bonded.
-func (k Keeper) newValidatorPerformanceMap(ctx sdk.Context) map[string]types.ValidatorPerformance {
-	validatorPerformanceMap := make(map[string]types.ValidatorPerformance)
+func (k Keeper) newValidatorPerformances(ctx sdk.Context) types.ValidatorPerformances {
+	validatorPerformances := make(map[string]types.ValidatorPerformance)
 
 	maxValidators := k.StakingKeeper.MaxValidators(ctx)
 	powerReduction := k.StakingKeeper.PowerReduction(ctx)
@@ -111,11 +112,11 @@ func (k Keeper) newValidatorPerformanceMap(ctx sdk.Context) map[string]types.Val
 		}
 
 		valAddr := validator.GetOperator()
-		validatorPerformanceMap[valAddr.String()] = types.NewValidatorPerformance(
+		validatorPerformances[valAddr.String()] = types.NewValidatorPerformance(
 			validator.GetConsensusPower(powerReduction), valAddr,
 		)
 		i++
 	}
 
-	return validatorPerformanceMap
+	return validatorPerformances
 }
