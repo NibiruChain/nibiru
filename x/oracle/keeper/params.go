@@ -19,7 +19,16 @@ func (k Keeper) VoteThreshold(ctx sdk.Context) (res sdk.Dec) {
 	return
 }
 
-// RewardBand returns the ratio of allowable exchange rate error that a validator can be rewared
+// RewardBand returns a maxium divergence that a price vote can have from the
+// weighted median in the ballot. If a vote lies within the valid range
+// defined by:
+//
+//	μ := weightedMedian,
+//	validRange := μ ± (μ * reward / 2),
+//
+// then rewards are added to the validator performance.
+// Note that if the reward band is smaller than 1 standard
+// deviation, the band is taken to be 1 standard deviation.a price
 func (k Keeper) RewardBand(ctx sdk.Context) (res sdk.Dec) {
 	k.paramSpace.Get(ctx, types.KeyRewardBand, &res)
 	return
@@ -43,7 +52,10 @@ func (k Keeper) SlashFraction(ctx sdk.Context) (res sdk.Dec) {
 	return
 }
 
-// SlashWindow returns # of vote period for oracle slashing
+// SlashWindow returns the number of voting periods that specify a "slash window".
+// After each slash window, all oracles that have missed more than the penalty
+// threshold are slashed. Missing the penalty threshold is synonymous with
+// submitting fewer valid votes than `MinValidPerWindow`.
 func (k Keeper) SlashWindow(ctx sdk.Context) (res uint64) {
 	k.paramSpace.Get(ctx, types.KeySlashWindow, &res)
 	return
