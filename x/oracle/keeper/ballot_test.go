@@ -6,6 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/collections"
@@ -142,59 +143,32 @@ func TestClearBallots(t *testing.T) {
 	require.Equal(t, prevoteCounter, 0)
 }
 
-func TestApplyWhitelist(t *testing.T) {
+func TestUpdateWhitelist(t *testing.T) {
 	input := CreateTestInput(t)
-
-	whitelist := []asset.Pair{
-		"nibi:usd",
-		"btc:usd",
-	}
-
 	// prepare test by resetting the genesis pairs
 	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys() {
 		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 	}
-	for _, p := range whitelist {
+
+	currentWhitelist := set.New(asset.NewPair(denoms.NIBI, denoms.USD), asset.NewPair(denoms.BTC, denoms.USD))
+	for p := range currentWhitelist {
 		input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, p)
 	}
 
-	voteTargets := set.Set[asset.Pair]{
-		"nibi:usd": {},
-		"btc:usd":  {},
-	}
+	nextWhitelist := set.New(asset.NewPair(denoms.NIBI, denoms.USD), asset.NewPair(denoms.BTC, denoms.USD))
+
 	// no updates case
-	input.OracleKeeper.updateWhitelist(input.Ctx, whitelist, voteTargets)
-
-	var gotPairs []asset.Pair
-	gotPairs = append(gotPairs, input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys()...)
-
-	sort.Slice(whitelist, func(i, j int) bool {
-		return whitelist[i] < whitelist[j]
-	})
-	require.Equal(t, whitelist, gotPairs)
+	input.OracleKeeper.updateWhitelist(input.Ctx, nextWhitelist.ToSlice(), currentWhitelist)
+	assert.Equal(t, nextWhitelist, input.OracleKeeper.getWhitelistedPairs(input.Ctx))
 
 	// len update (fast path)
-	whitelist = append(whitelist, "nibi:eth")
-	input.OracleKeeper.updateWhitelist(input.Ctx, whitelist, voteTargets)
-
-	gotPairs = []asset.Pair{}
-	gotPairs = append(gotPairs, input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys()...)
-
-	sort.Slice(whitelist, func(i, j int) bool {
-		return whitelist[i] < whitelist[j]
-	})
-	require.Equal(t, whitelist, gotPairs)
+	nextWhitelist.Add(asset.NewPair(denoms.NIBI, denoms.ETH))
+	input.OracleKeeper.updateWhitelist(input.Ctx, nextWhitelist.ToSlice(), currentWhitelist)
+	assert.Equal(t, nextWhitelist, input.OracleKeeper.getWhitelistedPairs(input.Ctx))
 
 	// diff update (slow path)
-	voteTargets["nibi:eth"] = struct{}{} // add previous pair
-	whitelist[0] = "nibi:usdt"           // update first pair
-	input.OracleKeeper.updateWhitelist(input.Ctx, whitelist, voteTargets)
-
-	gotPairs = []asset.Pair{}
-	gotPairs = append(gotPairs, input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys()...)
-
-	sort.Slice(whitelist, func(i, j int) bool {
-		return whitelist[i] < whitelist[j]
-	})
-	require.Equal(t, whitelist, gotPairs)
+	currentWhitelist.Add(asset.NewPair(denoms.NIBI, denoms.ETH))
+	nextWhitelist.Remove(asset.NewPair(denoms.NIBI, denoms.USD))
+	input.OracleKeeper.updateWhitelist(input.Ctx, nextWhitelist.ToSlice(), currentWhitelist)
+	assert.Equal(t, nextWhitelist, input.OracleKeeper.getWhitelistedPairs(input.Ctx))
 }
