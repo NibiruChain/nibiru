@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
@@ -330,11 +329,11 @@ func TestDoubleSwapExactAmountIn(t *testing.T) {
 				),
 				/*shares=*/ 100,
 			),
-			tokenIns:          []sdk.Coin{sdk.NewInt64Coin(denoms.USDC, 10_000), sdk.NewInt64Coin("unusd", 10_000)},
+			tokenIns:          []sdk.Coin{sdk.NewInt64Coin(denoms.USDC, 10_000), sdk.NewInt64Coin(denoms.NUSD, 10_000)},
 			tokenOutDenoms:    []string{denoms.NUSD, denoms.USDC},
 			expectedTokenOuts: []sdk.Coin{sdk.NewInt64Coin(denoms.NUSD, 10_000), sdk.NewInt64Coin(denoms.USDC, 10_001)},
 			expectedUserFinalFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(denoms.USDC, 10_001), // TODO: fix https://github.com/NibiruChain/nibiru/issues/1152
+				sdk.NewInt64Coin(denoms.USDC, 10_001),
 			),
 			expectedFinalPool: mock.SpotStablePool(
 				/*poolId=*/ 1,
@@ -375,12 +374,6 @@ func TestDoubleSwapExactAmountIn(t *testing.T) {
 				tokenOut, err := app.SpotKeeper.SwapExactAmountIn(ctx, sender, tc.initialPool.Id, tokenIn, tc.tokenOutDenoms[i])
 				require.NoError(t, err)
 
-				fmt.Println("-------------", i)
-				finalPool, err := app.SpotKeeper.FetchPool(ctx, tc.initialPool.Id)
-				require.NoError(t, err)
-				fmt.Println(finalPool.PoolAssets)
-
-				require.NoError(t, err)
 				require.Equal(t, tc.expectedTokenOuts[i], tokenOut)
 			}
 
