@@ -43,7 +43,8 @@ COPY --from=builder /nibiru/build/nibid /usr/local/bin/nibid
 COPY ./contrib/scripts/chaosnet.sh ./
 RUN chmod +x ./chaosnet.sh
 ARG MNEMONIC
-RUN MNEMONIC=${MNEMONIC} ./chaosnet.sh
+ARG CHAIN_ID
+RUN MNEMONIC=${MNEMONIC} CHAIN_ID=${CHAIN_ID} ./chaosnet.sh
 
 ENTRYPOINT ["nibid"]
 CMD [ "start" ]
