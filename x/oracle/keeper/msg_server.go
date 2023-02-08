@@ -82,12 +82,14 @@ func (ms msgServer) AggregateExchangeRateVote(goCtx context.Context, msg *types.
 
 	params := ms.GetParams(ctx)
 
+	// An aggergate prevote is required to get an aggregate vote.
 	aggregatePrevote, err := ms.Keeper.Prevotes.Get(ctx, valAddr)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrNoAggregatePrevote, msg.Validator)
 	}
 
 	// Check a msg is submitted proper period
+	// This condition necessary for the commit-reveal scheme.
 	if (uint64(ctx.BlockHeight())/params.VotePeriod)-(aggregatePrevote.SubmitBlock/params.VotePeriod) != 1 {
 		return nil, types.ErrRevealPeriodMissMatch.Wrapf(
 			"aggregate prevote block: %d, current block: %d, vote period: %d",
@@ -95,12 +97,13 @@ func (ms msgServer) AggregateExchangeRateVote(goCtx context.Context, msg *types.
 		)
 	}
 
+	// Slice of (Pair, ExchangeRate) tuples.
 	exchangeRateTuples, err := types.ParseExchangeRateTuples(msg.ExchangeRates)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, err.Error())
 	}
 
-	// check all pairs are in the vote target
+	// Check all pairs are in the vote target
 	for _, tuple := range exchangeRateTuples {
 		if !ms.IsWhitelistedPair(ctx, tuple.Pair) {
 			return nil, sdkerrors.Wrap(types.ErrUnknownPair, tuple.Pair.String())
