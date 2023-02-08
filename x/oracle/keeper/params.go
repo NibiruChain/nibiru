@@ -24,7 +24,7 @@ func (k Keeper) VoteThreshold(ctx sdk.Context) (res sdk.Dec) {
 // defined by:
 //
 //	μ := weightedMedian,
-//	validRange := μ ± (μ * reward / 2),
+//	validRange := μ ± (μ * rewardBand / 2),
 //
 // then rewards are added to the validator performance.
 // Note that if the reward band is smaller than 1 standard
