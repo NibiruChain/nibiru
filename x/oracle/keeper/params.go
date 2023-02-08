@@ -19,6 +19,12 @@ func (k Keeper) VoteThreshold(ctx sdk.Context) (res sdk.Dec) {
 	return
 }
 
+// VoteThreshold returns the minimum percentage of votes that must be received for a ballot to pass.
+func (k Keeper) MinVoters(ctx sdk.Context) (res uint64) {
+	k.paramSpace.Get(ctx, types.KeyMinVoters, &res)
+	return
+}
+
 // RewardBand returns a maxium divergence that a price vote can have from the
 // weighted median in the ballot. If a vote lies within the valid range
 // defined by:
@@ -28,7 +34,7 @@ func (k Keeper) VoteThreshold(ctx sdk.Context) (res sdk.Dec) {
 //
 // then rewards are added to the validator performance.
 // Note that if the reward band is smaller than 1 standard
-// deviation, the band is taken to be 1 standard deviation.a price
+// deviation, the band is taken to be 1 standard deviation.
 func (k Keeper) RewardBand(ctx sdk.Context) (res sdk.Dec) {
 	k.paramSpace.Get(ctx, types.KeyRewardBand, &res)
 	return
