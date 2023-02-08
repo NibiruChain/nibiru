@@ -66,6 +66,17 @@ func (pb ExchangeRateBallots) ToCrossRate(bases map[string]sdk.Dec) (cb Exchange
 	return
 }
 
+// NumValidVoters returns the number of voters who actually voted (i.e. did not abstain from voting for a pair).
+func (b ExchangeRateBallots) NumValidVoters() uint64 {
+	count := 0
+	for _, ballot := range b {
+		if ballot.ExchangeRate.IsPositive() {
+			count++
+		}
+	}
+	return uint64(count)
+}
+
 // Power returns the total amount of voting power in the ballot
 func (b ExchangeRateBallots) Power() int64 {
 	totalPower := int64(0)
@@ -176,10 +187,12 @@ func NewValidatorPerformance(power int64, recipient sdk.ValAddress) ValidatorPer
 	}
 }
 
+type ValidatorPerformances map[string]ValidatorPerformance
+
 // GetTotalRewardWeight returns the sum of the reward weight of all the validators included in the map
-func GetTotalRewardWeight(validators map[string]ValidatorPerformance) int64 {
+func (vp ValidatorPerformances) GetTotalRewardWeight() int64 {
 	totalRewardWeight := int64(0)
-	for _, validator := range validators {
+	for _, validator := range vp {
 		totalRewardWeight += validator.RewardWeight
 	}
 
