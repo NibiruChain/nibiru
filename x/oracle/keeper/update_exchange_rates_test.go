@@ -362,8 +362,8 @@ func TestOracleExchangeRate(t *testing.T) {
 	// Account 2, ethstable, govstable
 	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.ETH, denoms.NUSD), ExchangeRate: ethStableExchangeRate}, {Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: govStableExchangeRate}}, 1)
 
-	// Account 3, govstable, btcstable
-	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: govStableExchangeRate}, {Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 2)
+	// Account 3, govstable, btcstable(abstain)
+	makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: govStableExchangeRate}, {Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: sdk.ZeroDec()}}, 2)
 
 	ethStableRewards := sdk.NewInt64Coin("ETHSTABLE", 1*common.Precision)
 	govStableRewards := sdk.NewInt64Coin("GOVSTABLE", 1*common.Precision)

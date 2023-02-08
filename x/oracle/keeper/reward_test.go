@@ -38,6 +38,8 @@ func setup(t *testing.T) (keeper.TestInput, types.MsgServer) {
 	require.NoError(t, err)
 	_, err = sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[2], keeper.ValPubKeys[2], stakingAmt))
 	require.NoError(t, err)
+	_, err = sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[3], keeper.ValPubKeys[3], stakingAmt))
+	require.NoError(t, err)
 	staking.EndBlocker(input.Ctx, input.StakingKeeper)
 
 	return input, h

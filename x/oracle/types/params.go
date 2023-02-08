@@ -36,8 +36,8 @@ const (
 
 // Default parameter values
 var (
-	DefaultVoteThreshold = sdk.NewDecWithPrec(50, 2) // 50%
-	DefaultRewardBand    = sdk.NewDecWithPrec(2, 2)  // 2% (-1, 1)
+	DefaultVoteThreshold = sdk.OneDec().Quo(sdk.NewDec(3)) // 33.33%
+	DefaultRewardBand    = sdk.NewDecWithPrec(2, 2)        // 2% (-1, 1)
 	DefaultWhitelist     = []asset.Pair{
 
 		// paired against NUSD
