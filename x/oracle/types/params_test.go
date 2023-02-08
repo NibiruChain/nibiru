@@ -4,12 +4,10 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParamsEqual(t *testing.T) {
@@ -19,6 +17,10 @@ func TestParamsEqual(t *testing.T) {
 
 	// minus vote period
 	p1.VotePeriod = 0
+	err = p1.Validate()
+	require.Error(t, err)
+
+	p1.MinVoters = 0
 	err = p1.Validate()
 	require.Error(t, err)
 
@@ -69,7 +71,8 @@ func TestValidate(t *testing.T) {
 	for _, pair := range pairs {
 		switch {
 		case bytes.Equal(types.KeyVotePeriod, pair.Key) ||
-			bytes.Equal(types.KeySlashWindow, pair.Key):
+			bytes.Equal(types.KeySlashWindow, pair.Key) ||
+			bytes.Equal(types.KeyMinVoters, pair.Key):
 			require.NoError(t, pair.ValidatorFn(uint64(1)))
 			require.Error(t, pair.ValidatorFn("invalid"))
 			require.Error(t, pair.ValidatorFn(uint64(0)))
