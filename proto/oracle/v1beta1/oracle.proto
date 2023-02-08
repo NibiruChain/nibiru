@@ -67,6 +67,12 @@ message Params {
     (gogoproto.jsontag) = "twap_lookback_window,omitempty",
     (gogoproto.moretags) = "yaml:\"twap_lookback_window\""
   ];  
+
+  // The minimum number of voters (i.e. oracle validators) per pair for it to be considered a passing ballot.
+  // Recommended at least 4.
+  uint64 min_voters = 9 [
+    (gogoproto.moretags) = "yaml:\"min_voters\""
+  ];
 }
 
 // Struct for aggregate prevoting on the ExchangeRateVote.
