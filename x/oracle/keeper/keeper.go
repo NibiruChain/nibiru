@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -102,28 +103,43 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 // ValidateFeeder return the given feeder is allowed to feed the message or not
-func (k Keeper) ValidateFeeder(ctx sdk.Context, feederAddr sdk.AccAddress, validatorAddr sdk.ValAddress) error {
+func (k Keeper) ValidateFeeder(
+	ctx sdk.Context, feederAddr sdk.AccAddress, validatorAddr sdk.ValAddress,
+) error {
+	// A validator delegates price feeder consent to itself by default.
+	// Thus, we only need to verify consent for price feeder addresses that don't
+	// match the validator address.
 	if !feederAddr.Equals(validatorAddr) {
-		delegate := k.FeederDelegations.GetOr(ctx, validatorAddr, sdk.AccAddress(validatorAddr)) // the right is delegated to himself by default
+		delegate := k.FeederDelegations.GetOr(
+			ctx, validatorAddr, sdk.AccAddress(validatorAddr))
 		if !delegate.Equals(feederAddr) {
-			return sdkerrors.Wrapf(types.ErrNoVotingPermission, "wanted: %s, got: %s", delegate.String(), feederAddr.String())
+			return sdkerrors.Wrapf(
+				types.ErrNoVotingPermission,
+				"wanted: %s, got: %s", delegate.String(), feederAddr.String())
 		}
 	}
 
-	// Check that the given validator exists
+	// Check that the given validator is in the active set for consensus.
 	if val := k.StakingKeeper.Validator(ctx, validatorAddr); val == nil || !val.IsBonded() {
-		return sdkerrors.Wrapf(stakingtypes.ErrNoValidatorFound, "validator %s is not active set", validatorAddr.String())
+		return sdkerrors.Wrapf(
+			stakingtypes.ErrNoValidatorFound,
+			"validator %s is not active set", validatorAddr.String())
 	}
 
 	return nil
 }
 
 /*
-calcTwap walks through a slice of PriceSnapshots and tallies up the prices weighted by the amount of time they were active for.
-Callers of this function should already check if the snapshot slice is empty. Passing an empty snapshot slice will result in a panic.
+calcTwap walks through a slice of PriceSnapshots and tallies up the prices weighted
+by the amount of time they were active for.
+
+NOTE: Callers of this function should check if the snapshot slice is empty before
+calling 'calcTwap'.
 */
 func (k Keeper) calcTwap(ctx sdk.Context, snapshots []types.PriceSnapshot) (price sdk.Dec, err error) {
-	if len(snapshots) == 1 {
+	if len(snapshots) == 0 {
+		return price, errors.New("cannot calculate TWAP with empty snapshot slice")
+	} else if len(snapshots) == 1 {
 		return snapshots[0].Price, nil
 	}
 	twapLookBack := k.GetParams(ctx).TwapLookbackWindow.Milliseconds()

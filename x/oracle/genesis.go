@@ -33,31 +33,31 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 		keeper.SetPrice(ctx, ex.Pair, ex.ExchangeRate)
 	}
 
-	for _, mc := range data.MissCounters {
-		operator, err := sdk.ValAddressFromBech32(mc.ValidatorAddress)
+	for _, missCounter := range data.MissCounters {
+		operator, err := sdk.ValAddressFromBech32(missCounter.ValidatorAddress)
 		if err != nil {
 			panic(err)
 		}
 
-		keeper.MissCounters.Insert(ctx, operator, mc.MissCounter)
+		keeper.MissCounters.Insert(ctx, operator, missCounter.MissCounter)
 	}
 
-	for _, ap := range data.AggregateExchangeRatePrevotes {
-		valAddr, err := sdk.ValAddressFromBech32(ap.Voter)
+	for _, aggregatePrevote := range data.AggregateExchangeRatePrevotes {
+		valAddr, err := sdk.ValAddressFromBech32(aggregatePrevote.Voter)
 		if err != nil {
 			panic(err)
 		}
 
-		keeper.Prevotes.Insert(ctx, valAddr, ap)
+		keeper.Prevotes.Insert(ctx, valAddr, aggregatePrevote)
 	}
 
-	for _, av := range data.AggregateExchangeRateVotes {
-		valAddr, err := sdk.ValAddressFromBech32(av.Voter)
+	for _, aggregateVote := range data.AggregateExchangeRateVotes {
+		valAddr, err := sdk.ValAddressFromBech32(aggregateVote.Voter)
 		if err != nil {
 			panic(err)
 		}
 
-		keeper.Votes.Insert(ctx, valAddr, av)
+		keeper.Votes.Insert(ctx, valAddr, aggregateVote)
 	}
 
 	if len(data.Pairs) > 0 {
