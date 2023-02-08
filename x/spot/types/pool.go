@@ -7,8 +7,6 @@ import (
 
 	"github.com/holiman/uint256"
 
-	"github.com/NibiruChain/nibiru/x/common"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -278,10 +276,8 @@ func (pool Pool) GetD(poolAssets []PoolAsset) (*uint256.Int, error) {
 	nCoins := uint256.NewInt(uint64(len(poolAssets)))
 
 	S := new(uint256.Int)
-	A_Precision := common.APrecision
 
 	Amp := uint256.NewInt(uint64(pool.PoolParams.A.Int64()))
-	Amp.Mul(Amp, A_Precision)
 
 	Ann := new(uint256.Int)
 
@@ -290,6 +286,10 @@ func (pool Pool) GetD(poolAssets []PoolAsset) (*uint256.Int, error) {
 
 	var poolAssetsTokens []*uint256.Int
 	for _, token := range poolAssets {
+		if token.Token.Amount.IsZero() {
+			// Pool is borked and one asset is missing. Users can only withdraw funds.
+			return new(uint256.Int), ErrBorkedPool
+		}
 		amount := uint256.NewInt(token.Token.Amount.Uint64())
 		poolAssetsTokens = append(poolAssetsTokens, amount)
 		S.Add(S, amount)
@@ -300,6 +300,7 @@ func (pool Pool) GetD(poolAssets []PoolAsset) (*uint256.Int, error) {
 	for i := 0; i < 255; i++ {
 		D_P := new(uint256.Int).Set(D)
 		for _, token := range poolAssetsTokens {
+			// We ensure before that token is always != 0
 			D_P.Div(
 				new(uint256.Int).Mul(D_P, D),
 				new(uint256.Int).Mul(token, nCoins),
@@ -329,19 +330,17 @@ func (pool Pool) GetD(poolAssets []PoolAsset) (*uint256.Int, error) {
 			),
 		)
 
-		// D = (Ann * S / A_PRECISION + D_P * N_COINS) * D / ((Ann - A_PRECISION) * D / A_PRECISION + (N_COINS + 1) * D_P)
+		// D = (Ann * S + D_P * N_COINS) * D / ((Ann - 1) * D + (N_COINS + 1) * D_P)
 		absDifference := new(uint256.Int)
 		D.Div(num, denom)
 
 		absDifference.Abs(new(uint256.Int).Sub(D, previousD))
 		if absDifference.Lt(uint256.NewInt(2)) { // absDifference LTE 1 -> absDifference LT 2
-			return D, nil
+			break
 		}
 	}
 
-	// convergence typically occurs in 4 rounds or less, this should be unreachable!
-	// if it does happen the pool is borked and LPs can withdraw via `remove_liquidity`
-	return new(uint256.Int), ErrBorkedPool
+	return D, nil
 }
 
 // getA returns the amplification factor of the pool
@@ -381,6 +380,7 @@ func (pool Pool) Exchange(tokenIn sdk.Coin, tokenOutDenom string) (dy sdk.Int, e
 	}
 
 	dx := poolAssetIn.Token.Add(tokenIn)
+
 	yAmount, err := pool.SolveStableswapInvariant(dx, tokenOutDenom)
 	if err != nil {
 		return
@@ -437,15 +437,15 @@ func (pool Pool) SolveStableswapInvariant(tokenIn sdk.Coin, tokenOutDenom string
 
 	// c = c * D * A_PRECISION / (Ann * N_COINS)
 	c.Div(
-		new(uint256.Int).Mul(c, new(uint256.Int).Mul(D, common.APrecision)),
+		new(uint256.Int).Mul(c, D),
 		new(uint256.Int).Mul(Ann, nCoins),
 	)
 
-	// b = S + (D / APrecision) * Ann
+	// b = S + D / Ann
 	b := new(uint256.Int).Add(
 		S,
 		new(uint256.Int).Div(
-			new(uint256.Int).Mul(D, common.APrecision),
+			D,
 			Ann,
 		),
 	)
@@ -472,16 +472,9 @@ func (pool Pool) SolveStableswapInvariant(tokenIn sdk.Coin, tokenOutDenom string
 		absDifference := new(uint256.Int)
 		absDifference.Abs(new(uint256.Int).Sub(y, y_prev))
 		if absDifference.Lt(uint256.NewInt(2)) { // LTE 1
-			return sdk.NewIntFromUint64(y.Uint64()), nil
+			break
 		}
 	}
 
-	errvals := fmt.Sprintf(
-		"y=%v\ny_prev=%v\nb=%v\nD=%v\nc=%v\nS=%v\n",
-		y, y_prev, b, D, c, S,
-	)
-
-	// Should converge in a couple of round unless pool is borked
-	err = fmt.Errorf("%w: unable to compute the SolveStableswapInvariant for values %s", ErrBorkedPool, errvals)
-	return
+	return sdk.NewIntFromUint64(y.Uint64()), nil
 }
