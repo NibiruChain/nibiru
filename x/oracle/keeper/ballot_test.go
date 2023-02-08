@@ -5,20 +5,18 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/NibiruChain/collections"
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/common/set"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	fuzz "github.com/google/gofuzz"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/NibiruChain/collections"
-
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/common/set"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
 func TestOrganizeAggregate(t *testing.T) {

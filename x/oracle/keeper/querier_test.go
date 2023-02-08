@@ -5,14 +5,12 @@ import (
 	"testing"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
-
 	"github.com/NibiruChain/collections"
-
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
 )
 
 func TestQueryParams(t *testing.T) {
@@ -155,6 +153,7 @@ func TestCalcTwap(t *testing.T) {
 			newParams := types.Params{
 				VotePeriod:         types.DefaultVotePeriod,
 				VoteThreshold:      types.DefaultVoteThreshold,
+				MinVoters:          types.DefaultMinVoters,
 				RewardBand:         types.DefaultRewardBand,
 				Whitelist:          types.DefaultWhitelist,
 				SlashFraction:      types.DefaultSlashFraction,
