@@ -71,9 +71,21 @@ func (k Keeper) clearVotesAndPreVotes(ctx sdk.Context, votePeriod uint64) {
 }
 
 // isPassingVoteThreshold ballot is passing the threshold amount of voting power
-func isPassingVoteThreshold(ballots types.ExchangeRateBallots, thresholdVotes sdk.Int) bool {
+func isPassingVoteThreshold(ballots types.ExchangeRateBallots, thresholdVotingPower sdk.Int, minVoters uint64) bool {
 	ballotPower := sdk.NewInt(ballots.Power())
-	return !ballotPower.IsZero() && ballotPower.GTE(thresholdVotes)
+	if ballotPower.IsZero() {
+		return false
+	}
+
+	if ballotPower.LT(thresholdVotingPower) {
+		return false
+	}
+
+	if ballots.NumValidVoters() < minVoters {
+		return false
+	}
+
+	return true
 }
 
 // removeInvalidBallots removes the ballots which have not reached the vote threshold
@@ -89,7 +101,8 @@ func (k Keeper) removeInvalidBallots(
 	whitelistedPairs := set.New(k.GetWhitelistedPairs(ctx)...)
 
 	totalBondedPower := sdk.TokensToConsensusPower(k.StakingKeeper.TotalBondedTokens(ctx), k.StakingKeeper.PowerReduction(ctx))
-	voteThreshold := k.VoteThreshold(ctx).MulInt64(totalBondedPower).RoundInt()
+	thresholdVotingPower := k.VoteThreshold(ctx).MulInt64(totalBondedPower).RoundInt()
+	minVoters := k.MinVoters(ctx)
 
 	for pair, ballots := range pairBallotsMap {
 		// If pair is not whitelisted, or the ballot for it has failed, then skip
@@ -101,7 +114,7 @@ func (k Keeper) removeInvalidBallots(
 
 		// If the ballot is not passed, remove it from the whitelistedPairs set
 		// to prevent slashing validators who did valid vote.
-		if !isPassingVoteThreshold(ballots, voteThreshold) {
+		if !isPassingVoteThreshold(ballots, thresholdVotingPower, minVoters) {
 			delete(whitelistedPairs, pair)
 			delete(pairBallotsMap, pair)
 			continue

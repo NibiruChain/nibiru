@@ -45,10 +45,10 @@ func (k Keeper) countVotesAndUpdateExchangeRates(
 	pairBallotsMap map[asset.Pair]types.ExchangeRateBallots,
 	validatorPerformances types.ValidatorPerformances,
 ) {
-	params := k.GetParams(ctx)
+	rewardBand := k.RewardBand(ctx)
 
 	for pair, ballots := range pairBallotsMap {
-		exchangeRate := Tally(ballots, params.RewardBand, validatorPerformances)
+		exchangeRate := Tally(ballots, rewardBand, validatorPerformances)
 
 		k.SetPrice(ctx, pair, exchangeRate)
 

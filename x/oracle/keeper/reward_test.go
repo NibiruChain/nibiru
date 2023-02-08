@@ -38,6 +38,10 @@ func setup(t *testing.T) (keeper.TestInput, types.MsgServer) {
 	require.NoError(t, err)
 	_, err = sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[2], keeper.ValPubKeys[2], stakingAmt))
 	require.NoError(t, err)
+	_, err = sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[3], keeper.ValPubKeys[3], stakingAmt))
+	require.NoError(t, err)
+	_, err = sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[4], keeper.ValPubKeys[4], stakingAmt))
+	require.NoError(t, err)
 	staking.EndBlocker(input.Ctx, input.StakingKeeper)
 
 	return input, h
@@ -50,7 +54,7 @@ func TestKeeper_RewardsDistributionMultiVotePeriods(t *testing.T) {
 	// then we simulate that after the 5 voting periods are
 	// finished no more rewards distribution happen.
 	const periods uint64 = 5
-	const validators = 3
+	const validators = 4
 	input, h := setup(t) // set vote threshold
 	params := input.OracleKeeper.GetParams(input.Ctx)
 	input.OracleKeeper.SetParams(input.Ctx, params)

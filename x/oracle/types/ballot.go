@@ -66,6 +66,17 @@ func (pb ExchangeRateBallots) ToCrossRate(bases map[string]sdk.Dec) (cb Exchange
 	return
 }
 
+// NumValidVoters returns the number of voters who actually voted (i.e. did not abstain from voting for a pair).
+func (b ExchangeRateBallots) NumValidVoters() uint64 {
+	count := 0
+	for _, ballot := range b {
+		if ballot.ExchangeRate.IsPositive() {
+			count++
+		}
+	}
+	return uint64(count)
+}
+
 // Power returns the total amount of voting power in the ballot
 func (b ExchangeRateBallots) Power() int64 {
 	totalPower := int64(0)
