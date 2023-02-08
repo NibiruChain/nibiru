@@ -20,7 +20,9 @@ service Msg {
     option (google.api.http).post = "/nibiru/oracle/vote";
   }
 
-  // DelegateFeedConsent defines a method for setting the feeder delegation
+  // DelegateFeedConsent defines a method for delegating oracle voting rights 
+  // to another address known as a price feeder. 
+  // See https://github.com/NibiruChain/pricefeeder.
   rpc DelegateFeedConsent(MsgDelegateFeedConsent) returns (MsgDelegateFeedConsentResponse) {
     option (google.api.http).post = "/nibiru/oracle/feeder-delegate";
   }
@@ -33,7 +35,11 @@ message MsgAggregateExchangeRatePrevote {
   option (gogoproto.goproto_getters) = false;
 
   string hash      = 1 [(gogoproto.moretags) = "yaml:\"hash\""];
+  // Feeder is the Bech32 address of the price feeder. A validator may 
+  // specify multiple price feeders by delegating them consent. The validator  
+  // address is also a valid feeder by default.
   string feeder    = 2 [(gogoproto.moretags) = "yaml:\"feeder\""];
+  // Validator is the Bech32 address to which the prevote will be credited.
   string validator = 3 [(gogoproto.moretags) = "yaml:\"validator\""];
 }
 
@@ -48,15 +54,19 @@ message MsgAggregateExchangeRateVote {
 
   string salt           = 1 [(gogoproto.moretags) = "yaml:\"salt\""];
   string exchange_rates = 2 [(gogoproto.moretags) = "yaml:\"exchange_rates\""];
+  // Feeder is the Bech32 address of the price feeder. A validator may 
+  // specify multiple price feeders by delegating them consent. The validator  
+  // address is also a valid feeder by default.
   string feeder         = 3 [(gogoproto.moretags) = "yaml:\"feeder\""];
+  // Validator is the Bech32 address to which the vote will be credited.
   string validator      = 4 [(gogoproto.moretags) = "yaml:\"validator\""];
 }
 
 // MsgAggregateExchangeRateVoteResponse defines the Msg/AggregateExchangeRateVote response type.
 message MsgAggregateExchangeRateVoteResponse {}
 
-// MsgDelegateFeedConsent represents a message to
-// delegate oracle voting rights to another address.
+// MsgDelegateFeedConsent represents a message to delegate oracle voting rights 
+// to another address.
 message MsgDelegateFeedConsent {
   option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
