@@ -3,16 +3,14 @@ package keeper
 import (
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/staking"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
-
 	"github.com/NibiruChain/nibiru/x/oracle/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 func TestParams(t *testing.T) {
@@ -26,6 +24,7 @@ func TestParams(t *testing.T) {
 	// Test custom params setting
 	votePeriod := uint64(10)
 	voteThreshold := sdk.NewDecWithPrec(33, 2)
+	minVoters := uint64(4)
 	oracleRewardBand := sdk.NewDecWithPrec(1, 2)
 	slashFraction := sdk.NewDecWithPrec(1, 2)
 	slashWindow := uint64(1000)
@@ -39,6 +38,7 @@ func TestParams(t *testing.T) {
 	newParams := types.Params{
 		VotePeriod:        votePeriod,
 		VoteThreshold:     voteThreshold,
+		MinVoters:         minVoters,
 		RewardBand:        oracleRewardBand,
 		Whitelist:         whitelist,
 		SlashFraction:     slashFraction,

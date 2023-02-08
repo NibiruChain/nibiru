@@ -40,6 +40,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Features
+
+* [#1187](https://github.com/NibiruChain/nibiru/pull/1187) - feat(oracle): default vote threshold and min voters
+
 ### API Breaking
 
 * [#1158](https://github.com/NibiruChain/nibiru/pull/1158) - feat(asset-registry)!: Add `AssetRegistry`
@@ -55,6 +59,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Improvements
 
+* [#1184](https://github.com/NibiruChain/nibiru/pull/1184) - docs(oracle): proto type docs, (2) spec clean-up, and (3) remove panic case
+* [#1181](https://github.com/NibiruChain/nibiru/pull/1181) - refactor(oracle): keeper method locations
+* [#1180](https://github.com/NibiruChain/nibiru/pull/1180) - refactor(oracle): whitelist refactor
+* [#1179](https://github.com/NibiruChain/nibiru/pull/1179) - refactor(oracle): types refactor for validator performance map and whitelist map
 * [#1161](https://github.com/NibiruChain/nibiru/pull/1161) - refactor: migrate simapp tests to use main app
 * [#1134](https://github.com/NibiruChain/nibiru/pull/1134) - refactor: remove panics from vpool and spillovers from the perp module. It's now impossible to call functions in x/perp that would panic in vpool.
 * [#1127](https://github.com/NibiruChain/nibiru/pull/1127) - refactor: remove unnecessary panics from x/dex and x/stablecoin
