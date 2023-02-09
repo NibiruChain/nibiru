@@ -146,7 +146,7 @@ func TestClearBallots(t *testing.T) {
 	require.Equal(t, prevoteCounter, 0)
 }
 
-func TestFuzz_Tally(t *testing.T) {
+func TestFuzzTally(t *testing.T) {
 	validators := map[string]int64{}
 
 	f := fuzz.New().NilChance(0).Funcs(
@@ -291,7 +291,7 @@ func TestRemoveInvalidBallots(t *testing.T) {
 	}
 }
 
-func TestFuzz_PickReferencePair(t *testing.T) {
+func TestFuzzPickReferencePair(t *testing.T) {
 	var pairs []asset.Pair
 
 	f := fuzz.New().NilChance(0).Funcs(

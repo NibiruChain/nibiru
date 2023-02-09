@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMsgServer_FeederDelegation(t *testing.T) {
+func TestFeederDelegation(t *testing.T) {
 	input, msgServer := Setup(t)
 
 	exchangeRates := types.ExchangeRateTuples{
@@ -76,7 +76,7 @@ func TestMsgServer_FeederDelegation(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestMsgServer_AggregatePrevoteVote(t *testing.T) {
+func TestAggregatePrevoteVote(t *testing.T) {
 	input, msgServer := Setup(t)
 
 	salt := "1"
