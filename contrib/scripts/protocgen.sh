@@ -2,7 +2,7 @@
 
 set -eo pipefail
 
-nibiru_chain_version=v0.45.10
+nibiru_chain_version=v0.45.12
 
 protoc_gen_gocosmos() {
   if ! grep "github.com/gogo/protobuf => github.com/regen-network/protobuf" go.mod &>/dev/null; then

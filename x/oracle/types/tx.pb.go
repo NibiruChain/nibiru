@@ -32,8 +32,12 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 // MsgAggregateExchangeRatePrevote represents a message to submit
 // aggregate exchange rate prevote.
 type MsgAggregateExchangeRatePrevote struct {
-	Hash      string `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty" yaml:"hash"`
-	Feeder    string `protobuf:"bytes,2,opt,name=feeder,proto3" json:"feeder,omitempty" yaml:"feeder"`
+	Hash string `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty" yaml:"hash"`
+	// Feeder is the Bech32 address of the price feeder. A validator may
+	// specify multiple price feeders by delegating them consent. The validator
+	// address is also a valid feeder by default.
+	Feeder string `protobuf:"bytes,2,opt,name=feeder,proto3" json:"feeder,omitempty" yaml:"feeder"`
+	// Validator is the Bech32 address to which the prevote will be credited.
 	Validator string `protobuf:"bytes,3,opt,name=validator,proto3" json:"validator,omitempty" yaml:"validator"`
 }
 
@@ -114,8 +118,12 @@ var xxx_messageInfo_MsgAggregateExchangeRatePrevoteResponse proto.InternalMessag
 type MsgAggregateExchangeRateVote struct {
 	Salt          string `protobuf:"bytes,1,opt,name=salt,proto3" json:"salt,omitempty" yaml:"salt"`
 	ExchangeRates string `protobuf:"bytes,2,opt,name=exchange_rates,json=exchangeRates,proto3" json:"exchange_rates,omitempty" yaml:"exchange_rates"`
-	Feeder        string `protobuf:"bytes,3,opt,name=feeder,proto3" json:"feeder,omitempty" yaml:"feeder"`
-	Validator     string `protobuf:"bytes,4,opt,name=validator,proto3" json:"validator,omitempty" yaml:"validator"`
+	// Feeder is the Bech32 address of the price feeder. A validator may
+	// specify multiple price feeders by delegating them consent. The validator
+	// address is also a valid feeder by default.
+	Feeder string `protobuf:"bytes,3,opt,name=feeder,proto3" json:"feeder,omitempty" yaml:"feeder"`
+	// Validator is the Bech32 address to which the vote will be credited.
+	Validator string `protobuf:"bytes,4,opt,name=validator,proto3" json:"validator,omitempty" yaml:"validator"`
 }
 
 func (m *MsgAggregateExchangeRateVote) Reset()         { *m = MsgAggregateExchangeRateVote{} }
@@ -188,8 +196,8 @@ func (m *MsgAggregateExchangeRateVoteResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgAggregateExchangeRateVoteResponse proto.InternalMessageInfo
 
-// MsgDelegateFeedConsent represents a message to
-// delegate oracle voting rights to another address.
+// MsgDelegateFeedConsent represents a message to delegate oracle voting rights
+// to another address.
 type MsgDelegateFeedConsent struct {
 	Operator string `protobuf:"bytes,1,opt,name=operator,proto3" json:"operator,omitempty" yaml:"operator"`
 	Delegate string `protobuf:"bytes,2,opt,name=delegate,proto3" json:"delegate,omitempty" yaml:"delegate"`
@@ -334,7 +342,9 @@ type MsgClient interface {
 	// AggregateExchangeRateVote defines a method for submitting
 	// aggregate exchange rate vote
 	AggregateExchangeRateVote(ctx context.Context, in *MsgAggregateExchangeRateVote, opts ...grpc.CallOption) (*MsgAggregateExchangeRateVoteResponse, error)
-	// DelegateFeedConsent defines a method for setting the feeder delegation
+	// DelegateFeedConsent defines a method for delegating oracle voting rights
+	// to another address known as a price feeder.
+	// See https://github.com/NibiruChain/pricefeeder.
 	DelegateFeedConsent(ctx context.Context, in *MsgDelegateFeedConsent, opts ...grpc.CallOption) (*MsgDelegateFeedConsentResponse, error)
 }
 
@@ -381,7 +391,9 @@ type MsgServer interface {
 	// AggregateExchangeRateVote defines a method for submitting
 	// aggregate exchange rate vote
 	AggregateExchangeRateVote(context.Context, *MsgAggregateExchangeRateVote) (*MsgAggregateExchangeRateVoteResponse, error)
-	// DelegateFeedConsent defines a method for setting the feeder delegation
+	// DelegateFeedConsent defines a method for delegating oracle voting rights
+	// to another address known as a price feeder.
+	// See https://github.com/NibiruChain/pricefeeder.
 	DelegateFeedConsent(context.Context, *MsgDelegateFeedConsent) (*MsgDelegateFeedConsentResponse, error)
 }
 

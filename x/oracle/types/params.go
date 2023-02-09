@@ -17,6 +17,7 @@ import (
 var (
 	KeyVotePeriod         = []byte("VotePeriod")
 	KeyVoteThreshold      = []byte("VoteThreshold")
+	KeyMinVoters          = []byte("MinVoters")
 	KeyRewardBand         = []byte("RewardBand")
 	KeyWhitelist          = []byte("Whitelist")
 	KeySlashFraction      = []byte("SlashFraction")
@@ -32,12 +33,13 @@ var (
 const (
 	DefaultVotePeriod  = 10     // vote every 10s
 	DefaultSlashWindow = 604800 // 1 week
+	DefaultMinVoters   = 4      // minimum of 4 voters for a pair to become valid
 )
 
 // Default parameter values
 var (
-	DefaultVoteThreshold = sdk.NewDecWithPrec(50, 2) // 50%
-	DefaultRewardBand    = sdk.NewDecWithPrec(2, 2)  // 2% (-1, 1)
+	DefaultVoteThreshold = sdk.OneDec().Quo(sdk.NewDec(3)) // 33.33%
+	DefaultRewardBand    = sdk.NewDecWithPrec(2, 2)        // 2% (-1, 1)
 	DefaultWhitelist     = []asset.Pair{
 
 		// paired against NUSD
@@ -45,26 +47,26 @@ var (
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 		asset.Registry.Pair(denoms.ATOM, denoms.NUSD),
-		asset.Registry.Pair(denoms.OSMO, denoms.NUSD),
-		asset.Registry.Pair(denoms.AVAX, denoms.NUSD),
-		asset.Registry.Pair(denoms.SOL, denoms.NUSD),
-		asset.Registry.Pair(denoms.ADA, denoms.NUSD),
 		asset.Registry.Pair(denoms.BNB, denoms.NUSD),
 		asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 		asset.Registry.Pair(denoms.USDT, denoms.NUSD),
-		asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
+		// asset.Registry.Pair(denoms.OSMO, denoms.NUSD),
+		// asset.Registry.Pair(denoms.AVAX, denoms.NUSD),
+		// asset.Registry.Pair(denoms.SOL, denoms.NUSD),
+		// asset.Registry.Pair(denoms.ADA, denoms.NUSD),
 
 		// paired against the US fiat dollar
+		asset.Registry.Pair(denoms.NIBI, denoms.USD),
 		asset.Registry.Pair(denoms.BTC, denoms.USD),
 		asset.Registry.Pair(denoms.ETH, denoms.USD),
 		asset.Registry.Pair(denoms.ATOM, denoms.USD),
-		asset.Registry.Pair(denoms.OSMO, denoms.USD),
-		asset.Registry.Pair(denoms.AVAX, denoms.USD),
-		asset.Registry.Pair(denoms.SOL, denoms.USD),
-		asset.Registry.Pair(denoms.ADA, denoms.USD),
 		asset.Registry.Pair(denoms.BNB, denoms.USD),
 		asset.Registry.Pair(denoms.USDC, denoms.USD),
 		asset.Registry.Pair(denoms.USDT, denoms.USD),
+		// asset.Registry.Pair(denoms.OSMO, denoms.USD),
+		// asset.Registry.Pair(denoms.AVAX, denoms.USD),
+		// asset.Registry.Pair(denoms.SOL, denoms.USD),
+		// asset.Registry.Pair(denoms.ADA, denoms.USD),
 	}
 	DefaultSlashFraction      = sdk.NewDecWithPrec(1, 4)        // 0.01%
 	DefaultMinValidPerWindow  = sdk.NewDecWithPrec(5, 2)        // 5%
@@ -78,6 +80,7 @@ func DefaultParams() Params {
 	return Params{
 		VotePeriod:         DefaultVotePeriod,
 		VoteThreshold:      DefaultVoteThreshold,
+		MinVoters:          DefaultMinVoters,
 		RewardBand:         DefaultRewardBand,
 		Whitelist:          DefaultWhitelist,
 		SlashFraction:      DefaultSlashFraction,
@@ -98,6 +101,7 @@ func (p *Params) ParamSetPairs() paramstypes.ParamSetPairs {
 	return paramstypes.ParamSetPairs{
 		paramstypes.NewParamSetPair(KeyVotePeriod, &p.VotePeriod, validateVotePeriod),
 		paramstypes.NewParamSetPair(KeyVoteThreshold, &p.VoteThreshold, validateVoteThreshold),
+		paramstypes.NewParamSetPair(KeyMinVoters, &p.MinVoters, validateMinVoters),
 		paramstypes.NewParamSetPair(KeyRewardBand, &p.RewardBand, validateRewardBand),
 		paramstypes.NewParamSetPair(KeyWhitelist, &p.Whitelist, validateWhitelist),
 		paramstypes.NewParamSetPair(KeySlashFraction, &p.SlashFraction, validateSlashFraction),
@@ -118,8 +122,13 @@ func (p Params) Validate() error {
 	if p.VotePeriod == 0 {
 		return fmt.Errorf("oracle parameter VotePeriod must be > 0, is %d", p.VotePeriod)
 	}
+
 	if p.VoteThreshold.LTE(sdk.NewDecWithPrec(33, 2)) {
 		return fmt.Errorf("oracle parameter VoteThreshold must be greater than 33 percent")
+	}
+
+	if p.MinVoters <= 0 {
+		return fmt.Errorf("oracle parameter MinVoters must be greater than 0")
 	}
 
 	if p.RewardBand.GT(sdk.OneDec()) || p.RewardBand.IsNegative() {
@@ -154,6 +163,19 @@ func validateVotePeriod(i interface{}) error {
 
 	if v == 0 {
 		return fmt.Errorf("vote period must be positive: %d", v)
+	}
+
+	return nil
+}
+
+func validateMinVoters(i interface{}) error {
+	v, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v == 0 {
+		return fmt.Errorf("min voters must be positive: %d", v)
 	}
 
 	return nil
