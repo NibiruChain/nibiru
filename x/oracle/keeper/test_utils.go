@@ -301,18 +301,18 @@ func Setup(t *testing.T) (TestFixture, types.MsgServer) {
 	return input, h
 }
 
-func MakeAggregatePrevoteAndVote(t *testing.T, input TestFixture, h types.MsgServer, height int64, rates types.ExchangeRateTuples, valIdx int) {
+func MakeAggregatePrevoteAndVote(t *testing.T, input TestFixture, msgServer types.MsgServer, height int64, rates types.ExchangeRateTuples, valIdx int) {
 	salt := "1"
 	ratesStr, err := rates.ToString()
 	require.NoError(t, err)
 	hash := types.GetAggregateVoteHash(salt, ratesStr, ValAddrs[valIdx])
 
 	prevoteMsg := types.NewMsgAggregateExchangeRatePrevote(hash, Addrs[valIdx], ValAddrs[valIdx])
-	_, err = h.AggregateExchangeRatePrevote(sdk.WrapSDKContext(input.Ctx.WithBlockHeight(height)), prevoteMsg)
+	_, err = msgServer.AggregateExchangeRatePrevote(sdk.WrapSDKContext(input.Ctx.WithBlockHeight(height)), prevoteMsg)
 	require.NoError(t, err)
 
 	voteMsg := types.NewMsgAggregateExchangeRateVote(salt, ratesStr, Addrs[valIdx], ValAddrs[valIdx])
-	_, err = h.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx.WithBlockHeight(height+1)), voteMsg)
+	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx.WithBlockHeight(height+1)), voteMsg)
 	require.NoError(t, err)
 }
 
