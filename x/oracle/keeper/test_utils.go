@@ -117,8 +117,8 @@ var (
 	OracleDecPrecision = 8
 )
 
-// TestInput nolint
-type TestInput struct {
+// TestFixture nolint
+type TestFixture struct {
 	Ctx           sdk.Context
 	Cdc           *codec.LegacyAmino
 	AccountKeeper authkeeper.AccountKeeper
@@ -128,9 +128,9 @@ type TestInput struct {
 	DistrKeeper   distrkeeper.Keeper
 }
 
-// CreateTestInput nolint
+// CreateTestFixture nolint
 // Creates a base app, with 5 accounts,
-func CreateTestInput(t *testing.T) TestInput {
+func CreateTestFixture(t *testing.T) TestFixture {
 	keyAcc := sdk.NewKVStoreKey(authtypes.StoreKey)
 	keyBank := sdk.NewKVStoreKey(banktypes.StoreKey)
 	keyParams := sdk.NewKVStoreKey(paramstypes.StoreKey)
@@ -243,7 +243,7 @@ func CreateTestInput(t *testing.T) TestInput {
 		keeper.WhitelistedPairs.Insert(ctx, pair)
 	}
 
-	return TestInput{ctx, legacyAmino, accountKeeper, bankKeeper, keeper, stakingKeeper, distrKeeper}
+	return TestFixture{ctx, legacyAmino, accountKeeper, bankKeeper, keeper, stakingKeeper, distrKeeper}
 }
 
 // NewTestMsgCreateValidator test msg creator
@@ -260,7 +260,7 @@ func NewTestMsgCreateValidator(address sdk.ValAddress, pubKey cryptotypes.PubKey
 // FundAccount is a utility function that funds an account by minting and
 // sending the coins to the address. This should be used for testing purposes
 // only!
-func FundAccount(input TestInput, addr sdk.AccAddress, amounts sdk.Coins) error {
+func FundAccount(input TestFixture, addr sdk.AccAddress, amounts sdk.Coins) error {
 	if err := input.BankKeeper.MintCoins(input.Ctx, faucetAccountName, amounts); err != nil {
 		return err
 	}
@@ -268,7 +268,7 @@ func FundAccount(input TestInput, addr sdk.AccAddress, amounts sdk.Coins) error 
 	return input.BankKeeper.SendCoinsFromModuleToAccount(input.Ctx, faucetAccountName, addr, amounts)
 }
 
-func AllocateRewards(t *testing.T, input TestInput, pair asset.Pair, rewards sdk.Coins, votePeriods uint64) {
+func AllocateRewards(t *testing.T, input TestFixture, pair asset.Pair, rewards sdk.Coins, votePeriods uint64) {
 	require.NoError(t, input.BankKeeper.MintCoins(input.Ctx, faucetAccountName, rewards))
 	require.NoError(t, input.OracleKeeper.AllocatePairRewards(input.Ctx, faucetAccountName, pair, rewards, votePeriods))
 }

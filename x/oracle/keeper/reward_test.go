@@ -21,8 +21,8 @@ var (
 	randomExchangeRate = sdk.NewDec(1700)
 )
 
-func setup(t *testing.T) (keeper.TestInput, types.MsgServer) {
-	input := keeper.CreateTestInput(t)
+func setup(t *testing.T) (keeper.TestFixture, types.MsgServer) {
+	input := keeper.CreateTestFixture(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
 	params.VotePeriod = 1
 	params.SlashWindow = 100

@@ -657,7 +657,7 @@ func TestAbstainWithSmallStakingPower(t *testing.T) {
 	require.Error(t, err)
 }
 
-func makeAggregatePrevoteAndVote(t *testing.T, input keeper.TestInput, h types.MsgServer, height int64, rates types.ExchangeRateTuples, valIdx int) {
+func makeAggregatePrevoteAndVote(t *testing.T, input keeper.TestFixture, h types.MsgServer, height int64, rates types.ExchangeRateTuples, valIdx int) {
 	salt := "1"
 	ratesStr, err := rates.ToString()
 	require.NoError(t, err)
@@ -672,8 +672,8 @@ func makeAggregatePrevoteAndVote(t *testing.T, input keeper.TestInput, h types.M
 	require.NoError(t, err)
 }
 
-func setupWithSmallVotingPower(t *testing.T) (keeper.TestInput, types.MsgServer) {
-	input := keeper.CreateTestInput(t)
+func setupWithSmallVotingPower(t *testing.T) (keeper.TestFixture, types.MsgServer) {
+	input := keeper.CreateTestFixture(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
 	params.VotePeriod = 1
 	params.SlashWindow = 100
@@ -689,8 +689,8 @@ func setupWithSmallVotingPower(t *testing.T) (keeper.TestInput, types.MsgServer)
 	return input, h
 }
 
-func setupVal5(t *testing.T) (keeper.TestInput, types.MsgServer) {
-	input := keeper.CreateTestInput(t)
+func setupVal5(t *testing.T) (keeper.TestFixture, types.MsgServer) {
+	input := keeper.CreateTestFixture(t)
 	params := input.OracleKeeper.GetParams(input.Ctx)
 	params.VotePeriod = 1
 	params.SlashWindow = 100

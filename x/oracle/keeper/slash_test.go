@@ -19,7 +19,7 @@ import (
 
 func TestSlashAndResetMissCounters(t *testing.T) {
 	// initial setup
-	input := keeper.CreateTestInput(t)
+	input := keeper.CreateTestFixture(t)
 	addr, val := keeper.ValAddrs[0], keeper.ValPubKeys[0]
 	addr1, val1 := keeper.ValAddrs[1], keeper.ValPubKeys[1]
 	amt := sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)

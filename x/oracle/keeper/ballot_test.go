@@ -21,7 +21,7 @@ import (
 )
 
 func TestOrganizeAggregate(t *testing.T) {
-	input := CreateTestInput(t)
+	input := CreateTestFixture(t)
 
 	power := int64(100)
 	amt := sdk.TokensFromConsensusPower(power, sdk.DefaultPowerReduction)
@@ -37,25 +37,25 @@ func TestOrganizeAggregate(t *testing.T) {
 	require.NoError(t, err)
 	staking.EndBlocker(ctx, input.StakingKeeper)
 
-	btcBallot := types.ExchangeRateBallots{
+	btcBallots := types.ExchangeRateBallots{
 		types.NewExchangeRateBallot(sdk.NewDec(17), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[0], power),
 		types.NewExchangeRateBallot(sdk.NewDec(10), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[1], power),
 		types.NewExchangeRateBallot(sdk.NewDec(6), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[2], power),
 	}
-	ethBallot := types.ExchangeRateBallots{
+	ethBallots := types.ExchangeRateBallots{
 		types.NewExchangeRateBallot(sdk.NewDec(1000), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[0], power),
 		types.NewExchangeRateBallot(sdk.NewDec(1300), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[1], power),
 		types.NewExchangeRateBallot(sdk.NewDec(2000), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[2], power),
 	}
 
-	for i := range btcBallot {
+	for i := range btcBallots {
 		input.OracleKeeper.Votes.Insert(
 			input.Ctx,
 			ValAddrs[i],
 			types.NewAggregateExchangeRateVote(
 				types.ExchangeRateTuples{
-					{Pair: btcBallot[i].Pair, ExchangeRate: btcBallot[i].ExchangeRate},
-					{Pair: ethBallot[i].Pair, ExchangeRate: ethBallot[i].ExchangeRate},
+					{Pair: btcBallots[i].Pair, ExchangeRate: btcBallots[i].ExchangeRate},
+					{Pair: ethBallots[i].Pair, ExchangeRate: ethBallots[i].ExchangeRate},
 				},
 				ValAddrs[i],
 			),
@@ -82,17 +82,17 @@ func TestOrganizeAggregate(t *testing.T) {
 	})
 
 	// sort each ballot for comparison
-	sort.Sort(btcBallot)
-	sort.Sort(ethBallot)
+	sort.Sort(btcBallots)
+	sort.Sort(ethBallots)
 	sort.Sort(ballotMap[asset.Registry.Pair(denoms.BTC, denoms.NUSD)])
 	sort.Sort(ballotMap[asset.Registry.Pair(denoms.ETH, denoms.NUSD)])
 
-	require.Equal(t, btcBallot, ballotMap[asset.Registry.Pair(denoms.BTC, denoms.NUSD)])
-	require.Equal(t, ethBallot, ballotMap[asset.Registry.Pair(denoms.ETH, denoms.NUSD)])
+	require.Equal(t, btcBallots, ballotMap[asset.Registry.Pair(denoms.BTC, denoms.NUSD)])
+	require.Equal(t, ethBallots, ballotMap[asset.Registry.Pair(denoms.ETH, denoms.NUSD)])
 }
 
 func TestClearBallots(t *testing.T) {
-	input := CreateTestInput(t)
+	input := CreateTestFixture(t)
 
 	power := int64(100)
 	amt := sdk.TokensFromConsensusPower(power, sdk.DefaultPowerReduction)

@@ -33,7 +33,7 @@ func TestKeeper_GetVoteTargets(t *testing.T) {
 	for _, testCase := range append(panicCases, happyCases...) {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			input := CreateTestInput(t)
+			input := CreateTestFixture(t)
 
 			for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys() {
 				input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
@@ -58,7 +58,7 @@ func TestKeeper_GetVoteTargets(t *testing.T) {
 		})
 	}
 
-	input := CreateTestInput(t)
+	input := CreateTestFixture(t)
 
 	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys() {
 		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
@@ -74,7 +74,7 @@ func TestKeeper_GetVoteTargets(t *testing.T) {
 }
 
 func TestIsWhitelistedPair(t *testing.T) {
-	input := CreateTestInput(t)
+	input := CreateTestFixture(t)
 
 	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys() {
 		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
@@ -88,7 +88,7 @@ func TestIsWhitelistedPair(t *testing.T) {
 }
 
 func TestUpdateWhitelist(t *testing.T) {
-	input := CreateTestInput(t)
+	input := CreateTestFixture(t)
 	// prepare test by resetting the genesis pairs
 	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys() {
 		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
