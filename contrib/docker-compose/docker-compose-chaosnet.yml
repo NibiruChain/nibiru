@@ -1,0 +1,214 @@
+name: chaosnet
+
+services:
+  nibiru:
+    build:
+      context: ../.. # nibiru project folder
+      dockerfile: ./contrib/docker/chaosnet.Dockerfile # relative to context directory (i.e. nibiru project folder)
+      args:
+        MNEMONIC: guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host
+    ports:
+      - 26656:26656
+      - 26657:26657
+      - 1317:1317
+      - 9090:9090
+
+  faucet:
+    image: ghcr.io/nibiruchain/go-faucet:latest
+    environment:
+      NODE: nibiru:9090
+      MNEMONIC: guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host
+      SEND_COINS: 11000000unibi,100000000unusd,100000000uusdt
+      MAX_SEND_COINS: 110000000unibi,1000000000unusd,1000000000uusdt
+    depends_on:
+      - nibiru
+    restart: on-failure
+    ports:
+      - 8000:8000
+
+  liquidation-db:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: liquidator
+    ports:
+      - 5433:5432
+
+  liquidator:
+    image: ghcr.io/nibiruchain/liquidation:latest
+    platform: linux/amd64 # see https://github.com/psycopg/psycopg2/issues/1360 for why we need to force linux/amd64
+    restart: always
+    environment:
+      - ENVIRONMENT=localnet
+      - NETWORK_INSECURE=true
+      - CHAIN_ID=nibiru-localnet-0
+      - LCD_ENDPOINT=http://nibiru:1317
+      - GRPC_ENDPOINT=nibiru:9090
+      - RPC_ENDPOINT=nibiru:26657
+      - WEBSOCKET_ENDPOINT=ws://nibiru:26657/websocket
+      - DATABASE_URI=postgresql+psycopg2://postgres:postgres@liquidation-db:5432/liquidator
+      - WALLET_MNEMONIC=guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host
+      - VPOOLS=ubtc:unusd
+
+  heart-monitor-db:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: heart-monitor
+    ports:
+      - 5434:5432
+
+  heart-monitor:
+    image: ghcr.io/nibiruchain/heart-monitor:latest
+    platform: linux/amd64 # see https://github.com/psycopg/psycopg2/issues/1360 for why we need to force linux/amd64
+    restart: always
+    environment:
+      - DATABASE_URI=postgresql+psycopg2://postgres:postgres@heart-monitor-db:5432/heart-monitor
+      - ENVIRONMENT=localnet
+      - NETWORK_INSECURE=true
+      - LCD_ENDPOINT=http://nibiru:1317
+      - GRPC_ENDPOINT=tcp://nibiru:9090
+      - TENDERMINT_RPC_ENDPOINT=http://nibiru:26657
+      - WEBSOCKET_ENDPOINT=ws://nibiru:26657/websocket
+      - VALIDATOR_MNEMONIC=guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host
+      - MODULE_ACCOUNTS={'nibi1yl6hdjhmkf37639730gffanpzndzdpmhe6js7s':'transfer','nibi1fl48vsnmsdzcv85q5d2q4z5ajdha8yu3z7dksy':'bonded_tokens_pool','nibi1trh2mamq64u4g042zfeevvjk4cukrthvppfnc7':'perp_ef','nibi1tygms3xhhs3yv487phx3dw4a95jn7t7lk738xs':'not_bonded_tokens_pool','nibi10d07y265gmmuvt4z0w9aw880jnsr700jd8hulq':'gov','nibi1jv65s3grqf6v6jl3dp4t6c9t9rk99cd8s6q9qv':'distribution','nibi143kdcynewz7d08fmlu0ugtnn9sv8vljxwp7eug':'fee_pool','nibi1m3h30wlvsf8llruxtpukdvsy0km2kum8l5rpwn':'mint','nibi1umc2r7a58jy3jmw0e0hctyy0rx45chmurptawl':'vault','nibi17xpfvakm2amg962yls6f84z3kell8c5l8u8ezw':'fee_collector'}
+      - LOGGER_TIMESTAMP=true
+
+  # BDJUNO
+  bdjuno-repo-clone-task:
+    image: alpine/git
+    command:
+      [
+        "clone",
+        "https://github.com/NibiruChain/bdjuno.git",
+        "/bdjuno"
+      ]
+    volumes:
+      - bdjuno-repo:/bdjuno
+
+  bdjuno-database-schema-task:
+    image: alpine:latest
+    command:
+      [
+        "/bin/sh",
+        "-c",
+        "mv -v /bdjuno/database/schema/* /docker-entrypoint-initdb.d"
+      ]
+    volumes:
+      - bdjuno-repo:/bdjuno
+      - bdjuno-docker-entrypoint:/docker-entrypoint-initdb.d
+    depends_on:
+      bdjuno-repo-clone-task:
+        condition: service_completed_successfully
+
+  bdjuno-hasura-metadata-task:
+    image: alpine:latest
+    command:
+      [
+        "/bin/sh",
+        "-c",
+        "mv -v /bdjuno/hasura/metadata/* /hasura-metadata"
+      ]
+    volumes:
+      - bdjuno-repo:/bdjuno
+      - bdjuno-hasura-metadata:/hasura-metadata
+    depends_on:
+      bdjuno-repo-clone-task:
+        condition: service_completed_successfully
+
+  bdjuno-db:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: bdjuno
+    ports:
+      - 5435:5432
+    volumes:
+      - bdjuno-docker-entrypoint:/docker-entrypoint-initdb.d:ro
+    depends_on:
+      bdjuno-repo-clone-task:
+        condition: service_completed_successfully
+
+  bdjuno-genesis-task:
+    image: apteno/alpine-jq
+    command:
+      [
+        "sh",
+        "-c",
+        "curl -s http://nibiru:26657/genesis | jq -r '.result.genesis' > /bdjuno/.bdjuno/genesis.json"
+      ]
+    volumes:
+      - bdjuno-genesis:/bdjuno/.bdjuno
+    depends_on:
+      nibiru:
+        condition: service_started
+
+  bdjuno:
+    image: ghcr.io/nibiruchain/bdjuno:latest
+    restart: always
+    command: [ "bdjuno", "start", "--home", "/bdjuno/.bdjuno" ]
+    volumes:
+      - type: bind
+        source: ../templates/bdjuno.yaml
+        target: /bdjuno/.bdjuno/config.yaml
+      - bdjuno-genesis:/bdjuno/.bdjuno
+    depends_on:
+      bdjuno-genesis-task:
+        condition: service_completed_successfully
+      bdjuno-db:
+        condition: service_started
+
+  hasura:
+    image: hasura/graphql-engine:latest.cli-migrations-v3
+    restart: always
+    environment:
+      HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:postgres@bdjuno-db:5432/bdjuno
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
+      HASURA_GRAPHQL_ADMIN_SECRET: hasura
+      HASURA_GRAPHQL_UNAUTHORIZED_ROLE: anonymous
+      ACTION_BASE_URL: http://bdjuno:3000
+      HASURA_GRAPHQL_ENABLED_LOG_TYPES: "startup, http-log, webhook-log, websocket-log, query-log"
+    ports:
+      - 8080:8080
+    volumes:
+      - bdjuno-hasura-metadata:/hasura-metadata
+    depends_on:
+      bdjuno-hasura-metadata-task:
+        condition: service_completed_successfully
+      bdjuno-db:
+        condition: service_started
+
+  big-dipper:
+    image: ghcr.io/nibiruchain/big-dipper:localnet-0
+    platform: linux/amd64
+    restart: always
+    ports:
+      - 3000:3000
+    environment:
+      NODE_ENV: production
+    depends_on:
+      hasura:
+        condition: service_started
+
+  pricefeeder:
+    image: ghcr.io/nibiruchain/pricefeeder:latest
+    restart: always
+    environment:
+      CHAIN_ID: "nibiru-localnet-0"
+      GRPC_ENDPOINT: nibiru:9090
+      WEBSOCKET_ENDPOINT: ws://nibiru:26657/websocket
+      FEEDER_MNEMONIC: guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host
+      EXCHANGE_SYMBOLS_MAP: '{ "bitfinex": { "ubtc:uusd": "tBTCUSD", "ueth:uusd": "tETHUSD", "uusdt:uusd": "tUSTUSD" }, "binance": { "ubtc:uusd": "BTCUSD", "ueth:uusd": "ETHUSD", "uusdt:uusd": "USDTUSD", "uusdc:uusd": "USDCUSD", "uatom:uusd": "ATOMUSD", "ubnb:uusd": "BNBUSD", "uavax:uusd": "AVAXUSD", "usol:uusd": "SOLUSD", "uada:uusd": "ADAUSD", "ubtc:unusd": "BTCUSD", "ueth:unusd": "ETHUSD", "uusdt:unusd": "USDTUSD", "uusdc:unusd": "USDCUSD", "uatom:unusd": "ATOMUSD", "ubnb:unusd": "BNBUSD", "uavax:unusd": "AVAXUSD", "usol:unusd": "SOLUSD", "uada:unusd": "ADAUSD" } }'
+
+    depends_on:
+      nibiru:
+        condition: service_started
+
+volumes:
+  bdjuno-repo:
+  bdjuno-docker-entrypoint:
+  bdjuno-genesis:
+  bdjuno-hasura-metadata:
