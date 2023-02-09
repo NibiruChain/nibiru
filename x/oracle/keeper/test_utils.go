@@ -4,45 +4,42 @@ package keeper
 import (
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/cosmos/cosmos-sdk/std"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/bank"
-	distr "github.com/cosmos/cosmos-sdk/x/distribution"
-	"github.com/cosmos/cosmos-sdk/x/params"
-	"github.com/cosmos/cosmos-sdk/x/staking"
-
-	"github.com/NibiruChain/nibiru/x/oracle/types"
-	"github.com/stretchr/testify/require"
-
 	"time"
 
-	"github.com/tendermint/tendermint/crypto"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
-	"github.com/tendermint/tendermint/libs/log"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	dbm "github.com/tendermint/tm-db"
-
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	simparams "github.com/cosmos/cosmos-sdk/simapp/params"
+	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/cosmos/cosmos-sdk/x/auth"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	"github.com/cosmos/cosmos-sdk/x/params"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/stretchr/testify/require"
+	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
+	"github.com/tendermint/tendermint/libs/log"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+	dbm "github.com/tendermint/tm-db"
 )
 
 const faucetAccountName = "faucet"
@@ -271,4 +268,93 @@ func FundAccount(input TestFixture, addr sdk.AccAddress, amounts sdk.Coins) erro
 func AllocateRewards(t *testing.T, input TestFixture, pair asset.Pair, rewards sdk.Coins, votePeriods uint64) {
 	require.NoError(t, input.BankKeeper.MintCoins(input.Ctx, faucetAccountName, rewards))
 	require.NoError(t, input.OracleKeeper.AllocatePairRewards(input.Ctx, faucetAccountName, pair, rewards, votePeriods))
+}
+
+var (
+	stakingAmt         = sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction)
+	randomExchangeRate = sdk.NewDec(1700)
+)
+
+func Setup(t *testing.T) (TestFixture, types.MsgServer) {
+	input := CreateTestFixture(t)
+	params := input.OracleKeeper.GetParams(input.Ctx)
+	params.VotePeriod = 1
+	params.SlashWindow = 100
+	input.OracleKeeper.SetParams(input.Ctx, params)
+	h := NewMsgServerImpl(input.OracleKeeper)
+
+	sh := staking.NewHandler(input.StakingKeeper)
+
+	// Validator created
+	_, err := sh(input.Ctx, NewTestMsgCreateValidator(ValAddrs[0], ValPubKeys[0], stakingAmt))
+	require.NoError(t, err)
+	_, err = sh(input.Ctx, NewTestMsgCreateValidator(ValAddrs[1], ValPubKeys[1], stakingAmt))
+	require.NoError(t, err)
+	_, err = sh(input.Ctx, NewTestMsgCreateValidator(ValAddrs[2], ValPubKeys[2], stakingAmt))
+	require.NoError(t, err)
+	_, err = sh(input.Ctx, NewTestMsgCreateValidator(ValAddrs[3], ValPubKeys[3], stakingAmt))
+	require.NoError(t, err)
+	_, err = sh(input.Ctx, NewTestMsgCreateValidator(ValAddrs[4], ValPubKeys[4], stakingAmt))
+	require.NoError(t, err)
+	staking.EndBlocker(input.Ctx, input.StakingKeeper)
+
+	return input, h
+}
+
+func MakeAggregatePrevoteAndVote(t *testing.T, input TestFixture, h types.MsgServer, height int64, rates types.ExchangeRateTuples, valIdx int) {
+	salt := "1"
+	ratesStr, err := rates.ToString()
+	require.NoError(t, err)
+	hash := types.GetAggregateVoteHash(salt, ratesStr, ValAddrs[valIdx])
+
+	prevoteMsg := types.NewMsgAggregateExchangeRatePrevote(hash, Addrs[valIdx], ValAddrs[valIdx])
+	_, err = h.AggregateExchangeRatePrevote(sdk.WrapSDKContext(input.Ctx.WithBlockHeight(height)), prevoteMsg)
+	require.NoError(t, err)
+
+	voteMsg := types.NewMsgAggregateExchangeRateVote(salt, ratesStr, Addrs[valIdx], ValAddrs[valIdx])
+	_, err = h.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx.WithBlockHeight(height+1)), voteMsg)
+	require.NoError(t, err)
+}
+
+func setupWithSmallVotingPower(t *testing.T) (TestFixture, types.MsgServer) {
+	input := CreateTestFixture(t)
+	params := input.OracleKeeper.GetParams(input.Ctx)
+	params.VotePeriod = 1
+	params.SlashWindow = 100
+	input.OracleKeeper.SetParams(input.Ctx, params)
+	h := NewMsgServerImpl(input.OracleKeeper)
+
+	sh := staking.NewHandler(input.StakingKeeper)
+	_, err := sh(input.Ctx, NewTestMsgCreateValidator(ValAddrs[0], ValPubKeys[0], sdk.TokensFromConsensusPower(1, sdk.DefaultPowerReduction)))
+	require.NoError(t, err)
+
+	staking.EndBlocker(input.Ctx, input.StakingKeeper)
+
+	return input, h
+}
+
+func setupVal5(t *testing.T) (TestFixture, types.MsgServer) {
+	input := CreateTestFixture(t)
+	params := input.OracleKeeper.GetParams(input.Ctx)
+	params.VotePeriod = 1
+	params.SlashWindow = 100
+	input.OracleKeeper.SetParams(input.Ctx, params)
+	h := NewMsgServerImpl(input.OracleKeeper)
+
+	sh := staking.NewHandler(input.StakingKeeper)
+
+	// Validator created
+	_, err := sh(input.Ctx, NewTestMsgCreateValidator(ValAddrs[0], ValPubKeys[0], stakingAmt))
+	require.NoError(t, err)
+	_, err = sh(input.Ctx, NewTestMsgCreateValidator(ValAddrs[1], ValPubKeys[1], stakingAmt))
+	require.NoError(t, err)
+	_, err = sh(input.Ctx, NewTestMsgCreateValidator(ValAddrs[2], ValPubKeys[2], stakingAmt))
+	require.NoError(t, err)
+	_, err = sh(input.Ctx, NewTestMsgCreateValidator(ValAddrs[3], ValPubKeys[3], stakingAmt))
+	require.NoError(t, err)
+	_, err = sh(input.Ctx, NewTestMsgCreateValidator(ValAddrs[4], ValPubKeys[4], stakingAmt))
+	require.NoError(t, err)
+	staking.EndBlocker(input.Ctx, input.StakingKeeper)
+
+	return input, h
 }

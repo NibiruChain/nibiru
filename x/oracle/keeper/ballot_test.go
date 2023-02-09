@@ -205,7 +205,7 @@ func TestOraclePairsInsert(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(fmt.Sprintf("key: %s", tc), func(t *testing.T) {
-			testSetup, _ := setup(t)
+			testSetup, _ := Setup(t)
 			ctx := testSetup.Ctx
 			oracleKeeper := testSetup.OracleKeeper
 
@@ -275,7 +275,7 @@ func TestRemoveInvalidBallots(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			testSetup, _ := setup(t)
+			testSetup, _ := Setup(t)
 			ctx := testSetup.Ctx
 			oracleKeeper := testSetup.OracleKeeper
 
@@ -346,7 +346,7 @@ func TestFuzz_PickReferencePair(t *testing.T) {
 	// set random pairs
 	f.Fuzz(&pairs)
 
-	input, _ := setup(t)
+	input, _ := Setup(t)
 
 	// test OracleKeeper.Pairs.Insert
 	voteTargets := set.Set[asset.Pair]{}

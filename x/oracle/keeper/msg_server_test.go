@@ -5,18 +5,13 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
-
-	"github.com/stretchr/testify/require"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/NibiruChain/nibiru/x/oracle/types"
-
-	"github.com/cosmos/cosmos-sdk/x/staking"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMsgServer_FeederDelegation(t *testing.T) {
-	input, msgServer := setup(t)
+	input, msgServer := Setup(t)
 
 	exchangeRates := types.ExchangeRateTuples{
 		{
@@ -82,7 +77,7 @@ func TestMsgServer_FeederDelegation(t *testing.T) {
 }
 
 func TestMsgServer_AggregatePrevoteVote(t *testing.T) {
-	input, msgServer := setup(t)
+	input, msgServer := Setup(t)
 
 	salt := "1"
 	exchangeRates := types.ExchangeRateTuples{
@@ -193,31 +188,4 @@ func TestMsgServer_AggregatePrevoteVote(t *testing.T) {
 	aggregateExchangeRateVoteMsg = types.NewMsgAggregateExchangeRateVote(salt, exchangeRatesStr, Addrs[0], ValAddrs[0])
 	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx), aggregateExchangeRateVoteMsg)
 	require.NoError(t, err)
-}
-
-var (
-	stakingAmt         = sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction)
-	randomExchangeRate = sdk.NewDec(1700)
-)
-
-func setup(t *testing.T) (TestFixture, types.MsgServer) {
-	input := CreateTestFixture(t)
-	params := input.OracleKeeper.GetParams(input.Ctx)
-	params.VotePeriod = 1
-	params.SlashWindow = 100
-	input.OracleKeeper.SetParams(input.Ctx, params)
-	msgServer := NewMsgServerImpl(input.OracleKeeper)
-
-	sh := staking.NewHandler(input.StakingKeeper)
-
-	// Validator created
-	_, err := sh(input.Ctx, NewTestMsgCreateValidator(ValAddrs[0], ValPubKeys[0], stakingAmt))
-	require.NoError(t, err)
-	_, err = sh(input.Ctx, NewTestMsgCreateValidator(ValAddrs[1], ValPubKeys[1], stakingAmt))
-	require.NoError(t, err)
-	_, err = sh(input.Ctx, NewTestMsgCreateValidator(ValAddrs[2], ValPubKeys[2], stakingAmt))
-	require.NoError(t, err)
-	staking.EndBlocker(input.Ctx, input.StakingKeeper)
-
-	return input, msgServer
 }

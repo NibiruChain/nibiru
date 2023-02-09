@@ -1,51 +1,16 @@
-package keeper_test
+package keeper
 
 import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/oracle"
-	"github.com/NibiruChain/nibiru/x/oracle/keeper"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
-
-var (
-	stakingAmt = sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction)
-
-	randomExchangeRate = sdk.NewDec(1700)
-)
-
-func setup(t *testing.T) (keeper.TestFixture, types.MsgServer) {
-	input := keeper.CreateTestFixture(t)
-	params := input.OracleKeeper.GetParams(input.Ctx)
-	params.VotePeriod = 1
-	params.SlashWindow = 100
-	input.OracleKeeper.SetParams(input.Ctx, params)
-	h := keeper.NewMsgServerImpl(input.OracleKeeper)
-
-	sh := staking.NewHandler(input.StakingKeeper)
-
-	// Validator created
-	_, err := sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[0], keeper.ValPubKeys[0], stakingAmt))
-	require.NoError(t, err)
-	_, err = sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[1], keeper.ValPubKeys[1], stakingAmt))
-	require.NoError(t, err)
-	_, err = sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[2], keeper.ValPubKeys[2], stakingAmt))
-	require.NoError(t, err)
-	_, err = sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[3], keeper.ValPubKeys[3], stakingAmt))
-	require.NoError(t, err)
-	_, err = sh(input.Ctx, keeper.NewTestMsgCreateValidator(keeper.ValAddrs[4], keeper.ValPubKeys[4], stakingAmt))
-	require.NoError(t, err)
-	staking.EndBlocker(input.Ctx, input.StakingKeeper)
-
-	return input, h
-}
 
 func TestKeeper_RewardsDistributionMultiVotePeriods(t *testing.T) {
 	// this simulates allocating rewards for the pair gov stable
@@ -55,7 +20,7 @@ func TestKeeper_RewardsDistributionMultiVotePeriods(t *testing.T) {
 	// finished no more rewards distribution happen.
 	const periods uint64 = 5
 	const validators = 4
-	input, h := setup(t) // set vote threshold
+	input, h := Setup(t) // set vote threshold
 	params := input.OracleKeeper.GetParams(input.Ctx)
 	input.OracleKeeper.SetParams(input.Ctx, params)
 
@@ -63,22 +28,25 @@ func TestKeeper_RewardsDistributionMultiVotePeriods(t *testing.T) {
 	valPeriodicRewards := sdk.NewDecCoinsFromCoins(rewards).
 		QuoDec(sdk.NewDec(int64(periods))).
 		QuoDec(sdk.NewDec(int64(validators)))
-	keeper.AllocateRewards(t, input, asset.Registry.Pair(denoms.NIBI, denoms.NUSD), sdk.NewCoins(rewards), periods)
+	AllocateRewards(t, input, asset.Registry.Pair(denoms.NIBI, denoms.NUSD), sdk.NewCoins(rewards), periods)
 
 	for i := uint64(1); i <= periods; i++ {
 		for valIndex := 0; valIndex < validators; valIndex++ {
 			// for doc's sake, this function is capable of making prevotes and votes because it
 			// passes the current context block height for pre vote
 			// then changes the height to current height + vote period for the vote
-			makeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{
-				Pair:         asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
-				ExchangeRate: randomExchangeRate,
-			}}, valIndex)
+			MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{
+				{
+					Pair:         asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
+					ExchangeRate: randomExchangeRate,
+				},
+			}, valIndex)
 		}
 		input.Ctx = input.Ctx.WithBlockHeight(input.Ctx.BlockHeight() + 1)
-		oracle.EndBlocker(input.Ctx, input.OracleKeeper)
+		input.OracleKeeper.UpdateExchangeRates(input.Ctx)
+		// input.OracleKeeper.UpdateExchangeRates(input.Ctx)
 		// assert rewards
-		distributionRewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(input.Ctx.BlockHeight()+1), keeper.ValAddrs[0])
+		distributionRewards := input.DistrKeeper.GetValidatorOutstandingRewards(input.Ctx.WithBlockHeight(input.Ctx.BlockHeight()+1), ValAddrs[0])
 		truncatedGot, _ := distributionRewards.Rewards.
 			QuoDec(sdk.NewDec(int64(i))). // outstanding rewards will count for the previous vote period too, so we divide it by current period
 			TruncateDecimal()             // NOTE: not applying this on truncatedExpected because of rounding the test fails

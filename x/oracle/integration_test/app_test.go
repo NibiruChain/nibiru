@@ -13,7 +13,7 @@ import (
 	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
-	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
 type IntegrationTestSuite struct {
@@ -27,8 +27,8 @@ func (s *IntegrationTestSuite) SetupTest() {
 	app.SetPrefixes(app.AccountAddressPrefix)
 	s.cfg = testutilcli.BuildNetworkConfig(simapp.NewTestGenesisStateFromDefault())
 	s.cfg.NumValidators = 4
-	s.cfg.GenesisState[oracletypes.ModuleName] = s.cfg.Codec.MustMarshalJSON(func() codec.ProtoMarshaler {
-		gs := oracletypes.DefaultGenesisState()
+	s.cfg.GenesisState[types.ModuleName] = s.cfg.Codec.MustMarshalJSON(func() codec.ProtoMarshaler {
+		gs := types.DefaultGenesisState()
 		gs.Params.Whitelist = []asset.Pair{
 			"nibi:usdc",
 			"btc:usdc",
@@ -91,15 +91,15 @@ func (s *IntegrationTestSuite) sendPrevotes(prices []map[asset.Pair]sdk.Dec) []s
 	strVotes := make([]string, len(prices))
 	for i, val := range s.network.Validators {
 		raw := prices[i]
-		votes := make(oracletypes.ExchangeRateTuples, 0, len(raw))
+		votes := make(types.ExchangeRateTuples, 0, len(raw))
 		for pair, price := range raw {
-			votes = append(votes, oracletypes.NewExchangeRateTuple(pair, price))
+			votes = append(votes, types.NewExchangeRateTuple(pair, price))
 		}
 
 		pricesStr, err := votes.ToString()
 		require.NoError(s.T(), err)
-		_, err = s.network.SendTx(val.Address, &oracletypes.MsgAggregateExchangeRatePrevote{
-			Hash:      oracletypes.GetAggregateVoteHash("1", pricesStr, val.ValAddress).String(),
+		_, err = s.network.SendTx(val.Address, &types.MsgAggregateExchangeRatePrevote{
+			Hash:      types.GetAggregateVoteHash("1", pricesStr, val.ValAddress).String(),
 			Feeder:    val.Address.String(),
 			Validator: val.ValAddress.String(),
 		})
@@ -113,7 +113,7 @@ func (s *IntegrationTestSuite) sendPrevotes(prices []map[asset.Pair]sdk.Dec) []s
 
 func (s *IntegrationTestSuite) sendVotes(rates []string) {
 	for i, val := range s.network.Validators {
-		_, err := s.network.SendTx(val.Address, &oracletypes.MsgAggregateExchangeRateVote{
+		_, err := s.network.SendTx(val.Address, &types.MsgAggregateExchangeRateVote{
 			Salt:          "1",
 			ExchangeRates: rates[i],
 			Feeder:        val.Address.String(),
@@ -124,7 +124,7 @@ func (s *IntegrationTestSuite) sendVotes(rates []string) {
 }
 
 func (s *IntegrationTestSuite) waitVoteRevealBlock() {
-	params, err := oracletypes.NewQueryClient(s.network.Validators[0].ClientCtx).Params(context.Background(), &oracletypes.QueryParamsRequest{})
+	params, err := types.NewQueryClient(s.network.Validators[0].ClientCtx).Params(context.Background(), &types.QueryParamsRequest{})
 	require.NoError(s.T(), err)
 
 	votePeriod := params.Params.VotePeriod
@@ -144,7 +144,7 @@ func (s *IntegrationTestSuite) waitPriceUpdateBlock() {
 }
 
 func (s *IntegrationTestSuite) currentPrices() map[asset.Pair]sdk.Dec {
-	rawRates, err := oracletypes.NewQueryClient(s.network.Validators[0].ClientCtx).ExchangeRates(context.Background(), &oracletypes.QueryExchangeRatesRequest{})
+	rawRates, err := types.NewQueryClient(s.network.Validators[0].ClientCtx).ExchangeRates(context.Background(), &types.QueryExchangeRatesRequest{})
 	require.NoError(s.T(), err)
 
 	prices := make(map[asset.Pair]sdk.Dec)
