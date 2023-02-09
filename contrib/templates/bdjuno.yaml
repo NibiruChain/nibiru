@@ -1,0 +1,70 @@
+chain:
+  bech32_prefix: nibi
+  modules:
+    - modules
+    - messages
+    - auth
+    - bank
+    - consensus
+    - gov
+    - mint
+    - slashing
+    - staking
+    - distribution
+    - actions
+
+node:
+  type: remote
+  config:
+    rpc:
+      client_name: juno
+      address: http://nibiru:26657
+      max_connections: 20
+    grpc:
+      address: nibiru:9090
+      insecure: true
+
+parsing:
+  workers: 1
+  listen_new_blocks: true
+  parse_old_blocks: true
+  parse_genesis: true
+  start_height: 1
+  fast_sync: true
+  genesis_file_path: /bdjuno/.bdjuno/genesis.json
+  average_block_time: 1s
+
+database:
+  name: bdjuno
+  host: bdjuno-db
+  port: 5432
+  user: postgres
+  password: postgres
+  schema: public
+  max_open_connections: 10
+  max_idle_connections: 10
+  partition_size: 100000
+  partition_batch: 1000
+
+logging:
+  level: error
+  format: text
+
+telemetry:
+  port: 5000
+
+pruning:
+  keep_recent: 100
+  keep_every: 500
+  interval: 10
+
+actions:
+  port: 3000
+  node:
+    rpc:
+      client_name: hasura-actions
+      address: http://nibiru:26657
+      max_connections: 20
+    grpc:
+      address: nibiru:9090
+      insecure: true
