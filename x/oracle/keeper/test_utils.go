@@ -276,29 +276,29 @@ var (
 )
 
 func Setup(t *testing.T) (TestFixture, types.MsgServer) {
-	input := CreateTestFixture(t)
-	params := input.OracleKeeper.GetParams(input.Ctx)
+	fixture := CreateTestFixture(t)
+	params := fixture.OracleKeeper.GetParams(fixture.Ctx)
 	params.VotePeriod = 1
 	params.SlashWindow = 100
-	input.OracleKeeper.SetParams(input.Ctx, params)
-	h := NewMsgServerImpl(input.OracleKeeper)
+	fixture.OracleKeeper.SetParams(fixture.Ctx, params)
+	h := NewMsgServerImpl(fixture.OracleKeeper)
 
-	sh := staking.NewHandler(input.StakingKeeper)
+	sh := staking.NewHandler(fixture.StakingKeeper)
 
 	// Validator created
-	_, err := sh(input.Ctx, NewTestMsgCreateValidator(ValAddrs[0], ValPubKeys[0], stakingAmt))
+	_, err := sh(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[0], ValPubKeys[0], stakingAmt))
 	require.NoError(t, err)
-	_, err = sh(input.Ctx, NewTestMsgCreateValidator(ValAddrs[1], ValPubKeys[1], stakingAmt))
+	_, err = sh(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[1], ValPubKeys[1], stakingAmt))
 	require.NoError(t, err)
-	_, err = sh(input.Ctx, NewTestMsgCreateValidator(ValAddrs[2], ValPubKeys[2], stakingAmt))
+	_, err = sh(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[2], ValPubKeys[2], stakingAmt))
 	require.NoError(t, err)
-	_, err = sh(input.Ctx, NewTestMsgCreateValidator(ValAddrs[3], ValPubKeys[3], stakingAmt))
+	_, err = sh(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[3], ValPubKeys[3], stakingAmt))
 	require.NoError(t, err)
-	_, err = sh(input.Ctx, NewTestMsgCreateValidator(ValAddrs[4], ValPubKeys[4], stakingAmt))
+	_, err = sh(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[4], ValPubKeys[4], stakingAmt))
 	require.NoError(t, err)
-	staking.EndBlocker(input.Ctx, input.StakingKeeper)
+	staking.EndBlocker(fixture.Ctx, fixture.StakingKeeper)
 
-	return input, h
+	return fixture, h
 }
 
 func MakeAggregatePrevoteAndVote(t *testing.T, input TestFixture, msgServer types.MsgServer, height int64, rates types.ExchangeRateTuples, valIdx int) {
@@ -314,47 +314,4 @@ func MakeAggregatePrevoteAndVote(t *testing.T, input TestFixture, msgServer type
 	voteMsg := types.NewMsgAggregateExchangeRateVote(salt, ratesStr, Addrs[valIdx], ValAddrs[valIdx])
 	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx.WithBlockHeight(height+1)), voteMsg)
 	require.NoError(t, err)
-}
-
-func setupWithSmallVotingPower(t *testing.T) (TestFixture, types.MsgServer) {
-	input := CreateTestFixture(t)
-	params := input.OracleKeeper.GetParams(input.Ctx)
-	params.VotePeriod = 1
-	params.SlashWindow = 100
-	input.OracleKeeper.SetParams(input.Ctx, params)
-	h := NewMsgServerImpl(input.OracleKeeper)
-
-	sh := staking.NewHandler(input.StakingKeeper)
-	_, err := sh(input.Ctx, NewTestMsgCreateValidator(ValAddrs[0], ValPubKeys[0], sdk.TokensFromConsensusPower(1, sdk.DefaultPowerReduction)))
-	require.NoError(t, err)
-
-	staking.EndBlocker(input.Ctx, input.StakingKeeper)
-
-	return input, h
-}
-
-func setupVal5(t *testing.T) (TestFixture, types.MsgServer) {
-	input := CreateTestFixture(t)
-	params := input.OracleKeeper.GetParams(input.Ctx)
-	params.VotePeriod = 1
-	params.SlashWindow = 100
-	input.OracleKeeper.SetParams(input.Ctx, params)
-	h := NewMsgServerImpl(input.OracleKeeper)
-
-	sh := staking.NewHandler(input.StakingKeeper)
-
-	// Validator created
-	_, err := sh(input.Ctx, NewTestMsgCreateValidator(ValAddrs[0], ValPubKeys[0], stakingAmt))
-	require.NoError(t, err)
-	_, err = sh(input.Ctx, NewTestMsgCreateValidator(ValAddrs[1], ValPubKeys[1], stakingAmt))
-	require.NoError(t, err)
-	_, err = sh(input.Ctx, NewTestMsgCreateValidator(ValAddrs[2], ValPubKeys[2], stakingAmt))
-	require.NoError(t, err)
-	_, err = sh(input.Ctx, NewTestMsgCreateValidator(ValAddrs[3], ValPubKeys[3], stakingAmt))
-	require.NoError(t, err)
-	_, err = sh(input.Ctx, NewTestMsgCreateValidator(ValAddrs[4], ValPubKeys[4], stakingAmt))
-	require.NoError(t, err)
-	staking.EndBlocker(input.Ctx, input.StakingKeeper)
-
-	return input, h
 }

@@ -88,15 +88,15 @@ func TestIsWhitelistedPair(t *testing.T) {
 }
 
 func TestUpdateWhitelist(t *testing.T) {
-	input := CreateTestFixture(t)
+	fixture := CreateTestFixture(t)
 	// prepare test by resetting the genesis pairs
-	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys() {
-		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
+	for _, p := range fixture.OracleKeeper.WhitelistedPairs.Iterate(fixture.Ctx, collections.Range[asset.Pair]{}).Keys() {
+		fixture.OracleKeeper.WhitelistedPairs.Delete(fixture.Ctx, p)
 	}
 
 	currentWhitelist := set.New(asset.NewPair(denoms.NIBI, denoms.USD), asset.NewPair(denoms.BTC, denoms.USD))
 	for p := range currentWhitelist {
-		input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, p)
+		fixture.OracleKeeper.WhitelistedPairs.Insert(fixture.Ctx, p)
 	}
 
 	nextWhitelist := set.New(asset.NewPair(denoms.NIBI, denoms.USD), asset.NewPair(denoms.BTC, denoms.USD))
@@ -106,8 +106,8 @@ func TestUpdateWhitelist(t *testing.T) {
 	sort.Slice(whitelistSlice, func(i, j int) bool {
 		return whitelistSlice[i].String() < whitelistSlice[j].String()
 	})
-	input.OracleKeeper.updateWhitelist(input.Ctx, whitelistSlice, currentWhitelist)
-	assert.Equal(t, whitelistSlice, input.OracleKeeper.GetWhitelistedPairs(input.Ctx))
+	fixture.OracleKeeper.updateWhitelist(fixture.Ctx, whitelistSlice, currentWhitelist)
+	assert.Equal(t, whitelistSlice, fixture.OracleKeeper.GetWhitelistedPairs(fixture.Ctx))
 
 	// len update (fast path)
 	nextWhitelist.Add(asset.NewPair(denoms.NIBI, denoms.ETH))
@@ -115,8 +115,8 @@ func TestUpdateWhitelist(t *testing.T) {
 	sort.Slice(whitelistSlice, func(i, j int) bool {
 		return whitelistSlice[i].String() < whitelistSlice[j].String()
 	})
-	input.OracleKeeper.updateWhitelist(input.Ctx, whitelistSlice, currentWhitelist)
-	assert.Equal(t, whitelistSlice, input.OracleKeeper.GetWhitelistedPairs(input.Ctx))
+	fixture.OracleKeeper.updateWhitelist(fixture.Ctx, whitelistSlice, currentWhitelist)
+	assert.Equal(t, whitelistSlice, fixture.OracleKeeper.GetWhitelistedPairs(fixture.Ctx))
 
 	// diff update (slow path)
 	currentWhitelist.Add(asset.NewPair(denoms.NIBI, denoms.ETH))
@@ -125,6 +125,6 @@ func TestUpdateWhitelist(t *testing.T) {
 	sort.Slice(whitelistSlice, func(i, j int) bool {
 		return whitelistSlice[i].String() < whitelistSlice[j].String()
 	})
-	input.OracleKeeper.updateWhitelist(input.Ctx, whitelistSlice, currentWhitelist)
-	assert.Equal(t, whitelistSlice, input.OracleKeeper.GetWhitelistedPairs(input.Ctx))
+	fixture.OracleKeeper.updateWhitelist(fixture.Ctx, whitelistSlice, currentWhitelist)
+	assert.Equal(t, whitelistSlice, fixture.OracleKeeper.GetWhitelistedPairs(fixture.Ctx))
 }

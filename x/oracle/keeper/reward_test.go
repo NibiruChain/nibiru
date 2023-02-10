@@ -46,14 +46,16 @@ func TestKeeperRewardsDistributionMultiVotePeriods(t *testing.T) {
 		// input.Ctx = input.Ctx.WithBlockHeight(input.Ctx.BlockHeight() + 1)
 		fixture.OracleKeeper.UpdateExchangeRates(fixture.Ctx)
 
-		// assert rewards
-		distributionRewards := fixture.DistrKeeper.GetValidatorOutstandingRewards(fixture.Ctx, ValAddrs[0])
-		truncatedGot, _ := distributionRewards.Rewards.
-			QuoDec(sdk.NewDec(int64(i))). // outstanding rewards will count for the previous vote period too, so we divide it by current period
-			TruncateDecimal()             // NOTE: not applying this on truncatedExpected because of rounding the test fails
-		truncatedExpected, _ := valPeriodicRewards.TruncateDecimal()
+		for valIndex := 0; valIndex < validators; valIndex++ {
+			distributionRewards := fixture.DistrKeeper.GetValidatorOutstandingRewards(fixture.Ctx, ValAddrs[0])
+			truncatedGot, _ := distributionRewards.Rewards.
+				QuoDec(sdk.NewDec(int64(i))). // outstanding rewards will count for the previous vote period too, so we divide it by current period
+				TruncateDecimal()             // NOTE: not applying this on truncatedExpected because of rounding the test fails
+			truncatedExpected, _ := valPeriodicRewards.TruncateDecimal()
 
-		require.Equalf(t, truncatedExpected, truncatedGot, "period: %d, %s <-> %s", i, truncatedExpected.String(), truncatedGot.String())
+			require.Equalf(t, truncatedExpected, truncatedGot, "period: %d, %s <-> %s", i, truncatedExpected.String(), truncatedGot.String())
+		}
+		// assert rewards
 
 		fixture.Ctx = fixture.Ctx.WithBlockHeight(fixture.Ctx.BlockHeight() + int64(votePeriod))
 	}
