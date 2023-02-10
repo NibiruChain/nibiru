@@ -53,8 +53,9 @@ func (k Keeper) groupBallotsByPair(
 func (k Keeper) clearVotesAndPreVotes(ctx sdk.Context, votePeriod uint64) {
 	// Clear all aggregate prevotes
 	for _, prevote := range k.Prevotes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {
-		if ctx.BlockHeight() > int64(prevote.Value.SubmitBlock+votePeriod) {
-			err := k.Prevotes.Delete(ctx, prevote.Key)
+		valAddr, aggregatePrevote := prevote.Key, prevote.Value
+		if ctx.BlockHeight() >= int64(aggregatePrevote.SubmitBlock+votePeriod) {
+			err := k.Prevotes.Delete(ctx, valAddr)
 			if err != nil {
 				panic(err)
 			}
@@ -62,8 +63,8 @@ func (k Keeper) clearVotesAndPreVotes(ctx sdk.Context, votePeriod uint64) {
 	}
 
 	// Clear all aggregate votes
-	for _, voteKey := range k.Votes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).Keys() {
-		err := k.Votes.Delete(ctx, voteKey)
+	for _, valAddr := range k.Votes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).Keys() {
+		err := k.Votes.Delete(ctx, valAddr)
 		if err != nil {
 			panic(err)
 		}
