@@ -10,7 +10,7 @@ chaosnet-build:
 # Run a chaosnet testnet locally
 .PHONY: chaosnet
 chaosnet: chaosnet-down
-	docker compose -f ./contrib/docker-compose/docker-compose-chaosnet.yml up --detach
+	docker compose -f ./contrib/docker-compose/docker-compose-chaosnet.yml up --detach --build
 
 # Stop chaosnet
 .PHONY: chaosnet-down
