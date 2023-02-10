@@ -44,7 +44,6 @@ func TestOracleThreshold(t *testing.T) {
 		_, err2 := msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(fixture.Ctx.WithBlockHeight(1)), voteMsg)
 		require.NoError(t, err1)
 		require.NoError(t, err2)
-
 	}
 	fixture.OracleKeeper.UpdateExchangeRates(fixture.Ctx)
 	_, err = fixture.OracleKeeper.ExchangeRates.Get(fixture.Ctx.WithBlockHeight(1), exchangeRates[0].Pair)
