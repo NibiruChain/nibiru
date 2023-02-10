@@ -62,6 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1193](https://github.com/NibiruChain/nibiru/pull/1193) - refactor(oracle): clean up `x/oracle/keeper` tests
 * [#1192](https://github.com/NibiruChain/nibiru/pull/1192) - feat: chaosnet docker-compose
 * [#1191](https://github.com/NibiruChain/nibiru/pull/1191) - fix(oracle): default whitelisted pairs
+* [#1189](https://github.com/NibiruChain/nibiru/pull/1189) - ci(codecov): add Codecov reporting
 * [#1184](https://github.com/NibiruChain/nibiru/pull/1184) - docs(oracle): proto type docs, (2) spec clean-up, and (3) remove panic case
 * [#1181](https://github.com/NibiruChain/nibiru/pull/1181) - refactor(oracle): keeper method locations
 * [#1180](https://github.com/NibiruChain/nibiru/pull/1180) - refactor(oracle): whitelist refactor
