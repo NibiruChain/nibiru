@@ -72,7 +72,6 @@ func (k Keeper) rewardBallotWinners(
 	// Move distributed reward to distribution module
 	err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, k.distrModuleName, distributedRewards)
 	if err != nil {
-		// TODO(k-yang): revisit panic behavior
 		panic(fmt.Sprintf("[oracle] Failed to send coins to distribution module %s", err.Error()))
 	}
 }
@@ -84,8 +83,7 @@ func (k Keeper) GatherRewardsForVotePeriod(ctx sdk.Context, pair asset.Pair) sdk
 	for _, rewardId := range k.PairRewards.Indexes.RewardsByPair.ExactMatch(ctx, pair).PrimaryKeys() {
 		pairReward, err := k.PairRewards.Get(ctx, rewardId)
 		if err != nil {
-			// TODO(k-yang): revisit panic behavior
-			panic(err)
+			panic(fmt.Sprintf("[oracle] Failed to get pair reward %s", err.Error()))
 		}
 		coins = coins.Add(pairReward.Coins...)
 
@@ -95,8 +93,7 @@ func (k Keeper) GatherRewardsForVotePeriod(ctx sdk.Context, pair asset.Pair) sdk
 			// If the distribution period count drops to 0: the reward instance is removed.
 			err := k.PairRewards.Delete(ctx, rewardId)
 			if err != nil {
-				// TODO(k-yang): revisit panic behavior
-				panic(err)
+				panic(fmt.Sprintf("[oracle] Failed to delete pair reward %s", err.Error()))
 			}
 		} else {
 			k.PairRewards.Insert(ctx, rewardId, pairReward)

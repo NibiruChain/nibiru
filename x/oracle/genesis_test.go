@@ -13,7 +13,7 @@ import (
 )
 
 func TestExportInitGenesis(t *testing.T) {
-	input := keeper.CreateTestInput(t)
+	input := keeper.CreateTestFixture(t)
 
 	input.OracleKeeper.FeederDelegations.Insert(input.Ctx, keeper.ValAddrs[0], keeper.Addrs[1])
 	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, "pair1:pair2", sdk.NewDec(123))
@@ -30,7 +30,7 @@ func TestExportInitGenesis(t *testing.T) {
 	})
 	genesis := oracle.ExportGenesis(input.Ctx, input.OracleKeeper)
 
-	newInput := keeper.CreateTestInput(t)
+	newInput := keeper.CreateTestFixture(t)
 	oracle.InitGenesis(newInput.Ctx, newInput.OracleKeeper, genesis)
 	newGenesis := oracle.ExportGenesis(newInput.Ctx, newInput.OracleKeeper)
 
@@ -38,7 +38,7 @@ func TestExportInitGenesis(t *testing.T) {
 }
 
 func TestInitGenesis(t *testing.T) {
-	input := keeper.CreateTestInput(t)
+	input := keeper.CreateTestFixture(t)
 	genesis := types.DefaultGenesisState()
 	require.NotPanics(t, func() {
 		oracle.InitGenesis(input.Ctx, input.OracleKeeper, genesis)

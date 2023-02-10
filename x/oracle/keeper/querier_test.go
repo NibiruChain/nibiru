@@ -15,7 +15,7 @@ import (
 )
 
 func TestQueryParams(t *testing.T) {
-	input := CreateTestInput(t)
+	input := CreateTestFixture(t)
 	ctx := sdk.WrapSDKContext(input.Ctx)
 
 	querier := NewQuerier(input.OracleKeeper)
@@ -26,7 +26,7 @@ func TestQueryParams(t *testing.T) {
 }
 
 func TestQueryExchangeRate(t *testing.T) {
-	input := CreateTestInput(t)
+	input := CreateTestFixture(t)
 	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
@@ -46,7 +46,7 @@ func TestQueryExchangeRate(t *testing.T) {
 }
 
 func TestQueryMissCounter(t *testing.T) {
-	input := CreateTestInput(t)
+	input := CreateTestFixture(t)
 	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
@@ -66,7 +66,7 @@ func TestQueryMissCounter(t *testing.T) {
 }
 
 func TestQueryExchangeRates(t *testing.T) {
-	input := CreateTestInput(t)
+	input := CreateTestFixture(t)
 	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
@@ -84,7 +84,7 @@ func TestQueryExchangeRates(t *testing.T) {
 }
 
 func TestQueryExchangeRateTwap(t *testing.T) {
-	input := CreateTestInput(t)
+	input := CreateTestFixture(t)
 	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
@@ -147,7 +147,7 @@ func TestCalcTwap(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			input := CreateTestInput(t)
+			input := CreateTestFixture(t)
 			querier := NewQuerier(input.OracleKeeper)
 			ctx := input.Ctx
 
@@ -182,7 +182,7 @@ func TestCalcTwap(t *testing.T) {
 }
 
 func TestQueryActives(t *testing.T) {
-	input := CreateTestInput(t)
+	input := CreateTestFixture(t)
 	ctx := sdk.WrapSDKContext(input.Ctx)
 	queryClient := NewQuerier(input.OracleKeeper)
 
@@ -204,7 +204,7 @@ func TestQueryActives(t *testing.T) {
 }
 
 func TestQueryFeederDelegation(t *testing.T) {
-	input := CreateTestInput(t)
+	input := CreateTestFixture(t)
 	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
@@ -223,7 +223,7 @@ func TestQueryFeederDelegation(t *testing.T) {
 }
 
 func TestQueryAggregatePrevote(t *testing.T) {
-	input := CreateTestInput(t)
+	input := CreateTestFixture(t)
 	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
@@ -252,7 +252,7 @@ func TestQueryAggregatePrevote(t *testing.T) {
 }
 
 func TestQueryAggregatePrevotes(t *testing.T) {
-	input := CreateTestInput(t)
+	input := CreateTestFixture(t)
 	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
@@ -274,7 +274,7 @@ func TestQueryAggregatePrevotes(t *testing.T) {
 }
 
 func TestQueryAggregateVote(t *testing.T) {
-	input := CreateTestInput(t)
+	input := CreateTestFixture(t)
 	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
@@ -303,7 +303,7 @@ func TestQueryAggregateVote(t *testing.T) {
 }
 
 func TestQueryAggregateVotes(t *testing.T) {
-	input := CreateTestInput(t)
+	input := CreateTestFixture(t)
 	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
@@ -325,7 +325,7 @@ func TestQueryAggregateVotes(t *testing.T) {
 }
 
 func TestQueryVoteTargets(t *testing.T) {
-	input := CreateTestInput(t)
+	input := CreateTestFixture(t)
 	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 

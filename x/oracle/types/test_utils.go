@@ -1,4 +1,4 @@
-//nolint
+// nolint
 package types
 
 import (
@@ -18,8 +18,8 @@ import (
 const OracleDecPrecision = 8
 
 // GenerateRandomTestCase nolint
-func GenerateRandomTestCase() (rates []float64, valValAddrs []sdk.ValAddress, stakingKeeper DummyStakingKeeper) {
-	valValAddrs = []sdk.ValAddress{}
+func GenerateRandomTestCase() (rates []float64, valAddrs []sdk.ValAddress, stakingKeeper DummyStakingKeeper) {
+	valAddrs = []sdk.ValAddress{}
 	mockValidators := []MockValidator{}
 
 	base := math.Pow10(OracleDecPrecision)
@@ -31,11 +31,11 @@ func GenerateRandomTestCase() (rates []float64, valValAddrs []sdk.ValAddress, st
 		rates = append(rates, rate)
 
 		pubKey := secp256k1.GenPrivKey().PubKey()
-		valValAddr := sdk.ValAddress(pubKey.Address())
-		valValAddrs = append(valValAddrs, valValAddr)
+		valAddr := sdk.ValAddress(pubKey.Address())
+		valAddrs = append(valAddrs, valAddr)
 
 		power := rand.Int63()%1000 + 1
-		mockValidator := NewMockValidator(valValAddr, power)
+		mockValidator := NewMockValidator(valAddr, power)
 		mockValidators = append(mockValidators, mockValidator)
 	}
 
@@ -109,8 +109,8 @@ func (DummyStakingKeeper) PowerReduction(ctx sdk.Context) (res sdk.Int) {
 
 // MockValidator nolint
 type MockValidator struct {
-	power    int64
-	operator sdk.ValAddress
+	power       int64
+	valOperAddr sdk.ValAddress
 }
 
 var _ stakingtypes.ValidatorI = MockValidator{}
@@ -121,7 +121,7 @@ func (MockValidator) GetStatus() stakingtypes.BondStatus      { return stakingty
 func (MockValidator) IsBonded() bool                          { return true }
 func (MockValidator) IsUnbonded() bool                        { return false }
 func (MockValidator) IsUnbonding() bool                       { return false }
-func (v MockValidator) GetOperator() sdk.ValAddress           { return v.operator }
+func (v MockValidator) GetOperator() sdk.ValAddress           { return v.valOperAddr }
 func (MockValidator) ConsPubKey() (cryptotypes.PubKey, error) { return nil, nil }
 func (MockValidator) TmConsPublicKey() (tmprotocrypto.PublicKey, error) {
 	return tmprotocrypto.PublicKey{}, nil
@@ -148,7 +148,7 @@ func (v MockValidator) SharesFromTokensTruncated(amt sdk.Int) (sdk.Dec, error) {
 
 func NewMockValidator(valAddr sdk.ValAddress, power int64) MockValidator {
 	return MockValidator{
-		power:    power,
-		operator: valAddr,
+		power:       power,
+		valOperAddr: valAddr,
 	}
 }
