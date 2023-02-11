@@ -21,8 +21,8 @@ args:
   - traderAddr: the trader who owns the position being liquidated
 
 ret:
-  - feeToLiquidator: the amount of coins given to the liquidator
-  - feeToFund: the amount of coins given to the ecosystem fund
+  - liquidatorFee: the amount of coins given to the liquidator
+  - perpEcosystemFundFee: the amount of coins given to the ecosystem fund
   - err: error
 */
 func (k Keeper) Liquidate(
@@ -30,7 +30,7 @@ func (k Keeper) Liquidate(
 	liquidatorAddr sdk.AccAddress,
 	pair asset.Pair,
 	traderAddr sdk.AccAddress,
-) (feeToLiquidator sdk.Coin, feeToFund sdk.Coin, err error) {
+) (liquidatorFee sdk.Coin, perpEcosystemFundFee sdk.Coin, err error) {
 	if !k.canLiquidate(ctx, liquidatorAddr) {
 		err = types.ErrUnauthorized.Wrapf("not allowed to liquidate: %s", traderAddr)
 		return
@@ -62,7 +62,7 @@ func (k Keeper) Liquidate(
 		marginRatioBasedOnOracle, err := k.GetMarginRatio(
 			ctx, position, types.MarginCalculationPriceOption_INDEX)
 		if err != nil {
-			return feeToLiquidator, feeToFund, err
+			return liquidatorFee, perpEcosystemFundFee, err
 		}
 
 		marginRatio = sdk.MaxDec(marginRatio, marginRatioBasedOnOracle)
@@ -95,17 +95,17 @@ func (k Keeper) Liquidate(
 		return
 	}
 
-	feeToLiquidator = sdk.NewCoin(
+	liquidatorFee = sdk.NewCoin(
 		pair.QuoteDenom(),
 		liquidationResponse.FeeToLiquidator,
 	)
 
-	feeToFund = sdk.NewCoin(
+	perpEcosystemFundFee = sdk.NewCoin(
 		pair.QuoteDenom(),
 		liquidationResponse.FeeToPerpEcosystemFund,
 	)
 
-	return feeToLiquidator, feeToFund, nil
+	return liquidatorFee, perpEcosystemFundFee, nil
 }
 
 /*
@@ -354,48 +354,26 @@ func (k Keeper) ExecutePartialLiquidation(
 	return liquidationResponse, err
 }
 
-type MultiLiquidationRequest struct {
-	pair   asset.Pair
-	trader sdk.AccAddress
-}
+func (k Keeper) MultiLiquidate(ctx sdk.Context, liquidator sdk.AccAddress, liquidationRequests []*types.MsgMultiLiquidate_SingleLiquidation) []*types.MsgMultiLiquidateResponse_SingleLiquidation {
+	resp := make([]*types.MsgMultiLiquidateResponse_SingleLiquidation, len(liquidationRequests))
 
-type MultiLiquidationResponse struct {
-	success *types.MsgLiquidateResponse
-	error   error
-}
-
-func (m MultiLiquidationResponse) IntoMultiLiquidateResponse() *types.MsgMultiLiquidateResponse_MultiLiquidateResponse {
-	if m.success != nil {
-		return &types.MsgMultiLiquidateResponse_MultiLiquidateResponse{
-			Response: &types.MsgMultiLiquidateResponse_MultiLiquidateResponse_Liquidation{
-				Liquidation: m.success}}
-	} else {
-		return &types.MsgMultiLiquidateResponse_MultiLiquidateResponse{Response: &types.MsgMultiLiquidateResponse_MultiLiquidateResponse_Error{Error: m.error.Error()}}
-	}
-}
-
-func (k Keeper) MultiLiquidate(ctx sdk.Context, liquidator sdk.AccAddress, positions []MultiLiquidationRequest) []MultiLiquidationResponse {
-	liquidate := func(ctx sdk.Context, liquidator sdk.AccAddress, pair asset.Pair, trader sdk.AccAddress) (*types.MsgLiquidateResponse, error) {
-		feeToLiquidator, feeToFund, err := k.Liquidate(ctx, liquidator, pair, trader)
-		if err != nil {
-			return nil, err
-		}
-
-		return &types.MsgLiquidateResponse{
-			FeeToLiquidator:        feeToLiquidator,
-			FeeToPerpEcosystemFund: feeToFund,
-		}, nil
-	}
-
-	resp := make([]MultiLiquidationResponse, len(positions))
-
-	for i, position := range positions {
+	for i, req := range liquidationRequests {
+		traderAddr := sdk.MustAccAddressFromBech32(req.Trader)
 		cachedCtx, commit := ctx.CacheContext()
-		liq, err := liquidate(cachedCtx, liquidator, position.pair, position.trader)
+		liquidatorFee, perpEfFee, err := k.Liquidate(cachedCtx, liquidator, req.Pair, traderAddr)
+
 		if err != nil {
-			resp[i] = MultiLiquidationResponse{error: err}
+			resp[i] = &types.MsgMultiLiquidateResponse_SingleLiquidation{
+				Success: false,
+				Error:   err.Error(),
+			}
 		} else {
-			resp[i] = MultiLiquidationResponse{success: liq}
+			resp[i] = &types.MsgMultiLiquidateResponse_SingleLiquidation{
+				Success:       true,
+				LiquidatorFee: liquidatorFee,
+				PerpEfFee:     perpEfFee,
+			}
+
 			ctx.EventManager().EmitEvents(cachedCtx.EventManager().Events())
 			commit()
 		}

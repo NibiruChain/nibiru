@@ -92,22 +92,9 @@ func (m msgServer) ClosePosition(goCtx context.Context, position *types.MsgClose
 }
 
 func (m msgServer) MultiLiquidate(goCtx context.Context, req *types.MsgMultiLiquidate) (*types.MsgMultiLiquidateResponse, error) {
-	positions := make([]MultiLiquidationRequest, len(req.Liquidations))
-	for i, pos := range req.Liquidations {
-		positions[i] = MultiLiquidationRequest{
-			pair:   pos.Pair,
-			trader: sdk.MustAccAddressFromBech32(pos.Trader),
-		}
-	}
+	resp := m.k.MultiLiquidate(sdk.UnwrapSDKContext(goCtx), sdk.MustAccAddressFromBech32(req.Sender), req.Liquidations)
 
-	resp := m.k.MultiLiquidate(sdk.UnwrapSDKContext(goCtx), sdk.MustAccAddressFromBech32(req.Sender), positions)
-
-	liqResp := make([]*types.MsgMultiLiquidateResponse_MultiLiquidateResponse, len(resp))
-	for i, r := range resp {
-		liqResp[i] = r.IntoMultiLiquidateResponse()
-	}
-
-	return &types.MsgMultiLiquidateResponse{LiquidationResponses: liqResp}, nil
+	return &types.MsgMultiLiquidateResponse{Liquidations: resp}, nil
 }
 
 func (m msgServer) DonateToEcosystemFund(ctx context.Context, msg *types.MsgDonateToEcosystemFund) (*types.MsgDonateToEcosystemFundResponse, error) {

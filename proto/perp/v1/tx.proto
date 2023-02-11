@@ -86,17 +86,12 @@ message MsgAddMarginResponse {
   Position position = 2;
 }
 
-// -------------------------- Liquidate --------------------------
-
-message MsgLiquidateResponse {
-  cosmos.base.v1beta1.Coin fee_to_liquidator = 1 [(gogoproto.nullable) = false];
-  cosmos.base.v1beta1.Coin fee_to_perp_ecosystem_fund = 2 [(gogoproto.nullable) = false];
-}
+// -------------------------- Liquidation --------------------------
 
 message MsgMultiLiquidate {
   string sender = 1;
 
-  message MultiLiquidation {
+  message SingleLiquidation {
     string pair = 1 [ 
       (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
       (gogoproto.nullable) = false
@@ -104,17 +99,19 @@ message MsgMultiLiquidate {
     string trader = 2;
   }
 
-  repeated MultiLiquidation liquidations = 2;
+  repeated SingleLiquidation liquidations = 2;
 }
 
 message MsgMultiLiquidateResponse {
-  message MultiLiquidateResponse {
-    oneof response {
-      string error = 1;
-      MsgLiquidateResponse liquidation = 2;
-    }
+  message SingleLiquidation {
+    bool success = 1;
+    string error = 2;
+
+    cosmos.base.v1beta1.Coin liquidator_fee = 3 [(gogoproto.nullable) = false];
+    cosmos.base.v1beta1.Coin perp_ef_fee = 4 [(gogoproto.nullable) = false]; // perp ecosystem fund
   }
-  repeated MultiLiquidateResponse liquidation_responses = 1;
+
+  repeated SingleLiquidation liquidations = 1;
 }
 
 // -------------------------- OpenPosition --------------------------

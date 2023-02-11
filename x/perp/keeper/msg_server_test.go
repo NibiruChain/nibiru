@@ -501,7 +501,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	setLiquidator(ctx, app.PerpKeeper, liquidator.String())
 	resp, err := msgServer.MultiLiquidate(sdk.WrapSDKContext(ctx), &types.MsgMultiLiquidate{
 		Sender: liquidator.String(),
-		Liquidations: []*types.MsgMultiLiquidate_MultiLiquidation{
+		Liquidations: []*types.MsgMultiLiquidate_SingleLiquidation{
 			{
 				Pair:   pair,
 				Trader: atRiskTrader1.String(),
@@ -518,14 +518,9 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	_, successLiq := resp.LiquidationResponses[0].Response.(*types.MsgMultiLiquidateResponse_MultiLiquidateResponse_Liquidation)
-	require.True(t, successLiq)
-
-	_, unsuccessfulLiq := resp.LiquidationResponses[1].Response.(*types.MsgMultiLiquidateResponse_MultiLiquidateResponse_Error)
-	require.True(t, unsuccessfulLiq)
-
-	_, successLiq = resp.LiquidationResponses[2].Response.(*types.MsgMultiLiquidateResponse_MultiLiquidateResponse_Liquidation)
-	require.True(t, successLiq)
+	assert.True(t, resp.Liquidations[0].Success)
+	assert.False(t, resp.Liquidations[1].Success)
+	assert.True(t, resp.Liquidations[2].Success)
 
 	// NOTE: we don't care about checking if liquidations math is correct. This is the duty of keeper.Liquidate
 	// what we care about is that the first and third liquidations made some modifications at state
@@ -534,7 +529,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	assertNotLiquidated := func(old types.Position) {
 		position, err := app.PerpKeeper.Positions.Get(ctx, collections.Join(old.Pair, sdk.MustAccAddressFromBech32(old.TraderAddress)))
 		require.NoError(t, err)
-		require.Equal(t, old, position)
+		assert.Equal(t, old, position)
 	}
 
 	assertLiquidated := func(old types.Position) {
