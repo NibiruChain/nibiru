@@ -2,8 +2,9 @@ package keeper
 
 import (
 	"github.com/NibiruChain/collections"
-	"github.com/NibiruChain/nibiru/x/perp/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
 func SetPosition(k Keeper, ctx sdk.Context, pos types.Position) {
