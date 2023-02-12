@@ -424,9 +424,9 @@ func TestMsgServerClosePosition(t *testing.T) {
 	}
 }
 
-func setLiquidator(ctx sdk.Context, perpKeeper keeper.Keeper, liquidator string) {
+func setLiquidator(ctx sdk.Context, perpKeeper keeper.Keeper, liquidator sdk.AccAddress) {
 	p := perpKeeper.GetParams(ctx)
-	p.WhitelistedLiquidators = []string{liquidator}
+	p.WhitelistedLiquidators = []string{liquidator.String()}
 	perpKeeper.SetParams(ctx, p)
 }
 
@@ -498,7 +498,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 
 	require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
 
-	setLiquidator(ctx, app.PerpKeeper, liquidator.String())
+	setLiquidator(ctx, app.PerpKeeper, liquidator)
 	resp, err := msgServer.MultiLiquidate(sdk.WrapSDKContext(ctx), &types.MsgMultiLiquidate{
 		Sender: liquidator.String(),
 		Liquidations: []*types.MsgMultiLiquidate_SingleLiquidation{
