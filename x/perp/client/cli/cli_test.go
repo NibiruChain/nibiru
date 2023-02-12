@@ -7,7 +7,6 @@ import (
 	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 	"google.golang.org/grpc/codes"
@@ -28,9 +27,10 @@ import (
 type IntegrationTestSuite struct {
 	suite.Suite
 
-	cfg     testutilcli.Config
-	network *testutilcli.Network
-	users   []sdk.AccAddress
+	cfg        testutilcli.Config
+	network    *testutilcli.Network
+	users      []sdk.AccAddress
+	liquidator sdk.AccAddress
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
@@ -58,8 +58,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			QuoteAssetReserve: sdk.NewDec(60_000 * common.Precision),
 			Config: vpooltypes.VpoolConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
-				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
-				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.2"),
+				FluctuationLimitRatio:  sdk.OneDec(),
+				MaxOracleSpreadRatio:   sdk.OneDec(),
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
@@ -71,7 +71,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			Config: vpooltypes.VpoolConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
-				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.2"),
+				MaxOracleSpreadRatio:   sdk.OneDec(),
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
@@ -97,6 +97,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	oracleGenesis := oracletypes.DefaultGenesisState()
 	oracleGenesis.Params.Whitelist = []asset.Pair{
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 	}
 	oracleGenesis.Params.VotePeriod = 1_000
 	oracleGenesis.ExchangeRates = []oracletypes.ExchangeRateTuple{
@@ -111,67 +112,27 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
 	s.NoError(s.network.WaitForNextBlock())
 
-	user1 := testutilcli.NewAccount(s.network, "user1")
-	user2 := testutilcli.NewAccount(s.network, "user2")
-	user3 := testutilcli.NewAccount(s.network, "user3")
-	user4 := testutilcli.NewAccount(s.network, "user4")
-	user5 := sdk.MustAccAddressFromBech32("nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m")
-	s.users = []sdk.AccAddress{user1, user2, user3, user4, user5}
-
 	val := s.network.Validators[0]
-	_, err := s.network.WaitForHeight(2)
-	require.NoError(s.T(), err)
 
-	s.NoError(
-		testutilcli.FillWalletFromValidator(user1,
-			sdk.NewCoins(
-				sdk.NewInt64Coin(denoms.NIBI, 10*common.Precision),
-				sdk.NewInt64Coin(denoms.USDC, 10*common.Precision),
-				sdk.NewInt64Coin(denoms.NUSD, 50*common.Precision),
+	for i := 0; i < 8; i++ {
+		newUser := testutilcli.NewAccount(s.network, fmt.Sprintf("user%d", i))
+		s.users = append(s.users, newUser)
+		s.NoError(
+			testutilcli.FillWalletFromValidator(newUser,
+				sdk.NewCoins(
+					sdk.NewInt64Coin(denoms.NIBI, 10*common.Precision),
+					sdk.NewInt64Coin(denoms.USDC, 1e3*common.Precision),
+					sdk.NewInt64Coin(denoms.NUSD, 5e3*common.Precision),
+				),
+				val,
+				denoms.NIBI,
 			),
-			val,
-			denoms.NIBI,
-		),
-	)
+		)
+	}
 
+	s.liquidator = sdk.MustAccAddressFromBech32("nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m")
 	s.NoError(
-		testutilcli.FillWalletFromValidator(user2,
-			sdk.NewCoins(
-				sdk.NewInt64Coin(denoms.NIBI, 1000),
-				sdk.NewInt64Coin(denoms.USDC, 1000),
-				sdk.NewInt64Coin(denoms.NUSD, 100000),
-			),
-			val,
-			denoms.NIBI,
-		),
-	)
-
-	s.NoError(
-		testutilcli.FillWalletFromValidator(user3,
-			sdk.NewCoins(
-				sdk.NewInt64Coin(denoms.NIBI, 1000),
-				sdk.NewInt64Coin(denoms.USDC, 1000),
-				sdk.NewInt64Coin(denoms.NUSD, 49*common.Precision),
-			),
-			val,
-			denoms.NIBI,
-		),
-	)
-
-	s.NoError(
-		testutilcli.FillWalletFromValidator(user4,
-			sdk.NewCoins(
-				sdk.NewInt64Coin(denoms.NIBI, 1000),
-				sdk.NewInt64Coin(denoms.USDC, 1000),
-				sdk.NewInt64Coin(denoms.NUSD, 100000),
-			),
-			val,
-			denoms.NIBI,
-		),
-	)
-
-	s.NoError(
-		testutilcli.FillWalletFromValidator(user5,
+		testutilcli.FillWalletFromValidator(s.liquidator,
 			sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 1000)),
 			val,
 			denoms.NIBI,
@@ -184,6 +145,7 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 	s.network.Cleanup()
 }
 
+// user[0] opens a long position
 func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	val := s.network.Validators[0]
 	user := s.users[0]
@@ -356,15 +318,16 @@ func (s *IntegrationTestSuite) TestQueryCumulativePremiumFractions() {
 	s.EqualValues(sdk.NewDec(2), queryResp.CumulativePremiumFraction)
 }
 
+// user[0] opens a position and removes margin to trigger bad debt
 func (s *IntegrationTestSuite) TestRemoveMargin() {
 	// Open a position with first user
 	s.T().Log("opening a position with user 0")
 	txResp, err := testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[0], []string{
 		"buy",
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
-		"10", // Leverage
-		"1",  // Quote asset amount
-		"0.0000001",
+		"5", // Leverage
+		"1", // Quote asset amount
+		"0",
 	})
 	s.NoError(err)
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
@@ -376,15 +339,24 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 		fmt.Sprintf("%s%s", "100", denoms.NUSD),
 	})
 	s.Contains(err.Error(), perptypes.ErrFailedRemoveMarginCanCauseBadDebt.Error())
+
+	s.T().Log("removing margin on user 0....")
+	txResp, err = testutilcli.ExecTx(s.network, cli.RemoveMarginCmd(), s.users[0], []string{
+		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
+		fmt.Sprintf("%s%s", "0.1", denoms.NUSD),
+	})
+	s.NoError(err)
+	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 }
 
+// user[1] opens a position and adds margin
 func (s *IntegrationTestSuite) TestX_AddMargin() {
 	val := s.network.Validators[0]
 	pair := asset.Registry.Pair(denoms.ETH, denoms.NUSD)
 
 	// Open a new position
 	s.T().Log("opening a position with user 3....")
-	txResp, err := testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[3], []string{
+	txResp, err := testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[1], []string{
 		"buy",
 		pair.String(),
 		"10",    // Leverage
@@ -422,7 +394,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 	for _, tc := range testCases {
 		s.T().Run(tc.name, func(t *testing.T) {
 			s.T().Log("adding margin on user 3....")
-			txResp, err = testutilcli.ExecTx(s.network, cli.AddMarginCmd(), s.users[3], tc.args, testutilcli.WithTxCanFail(true))
+			txResp, err = testutilcli.ExecTx(s.network, cli.AddMarginCmd(), s.users[1], tc.args, testutilcli.WithTxCanFail(true))
 			s.NoError(err)
 			s.EqualValues(tc.expectedCode, txResp.Code)
 
@@ -454,6 +426,66 @@ func (s *IntegrationTestSuite) TestDonateToEcosystemFund() {
 		),
 	)
 	s.Require().EqualValues(sdk.NewInt64Coin("unusd", 100), *resp)
+}
+
+func (s *IntegrationTestSuite) TestMultiLiquidate() {
+	s.T().Log("opening positions")
+	_, err := testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[2], []string{
+		"buy",
+		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
+		"15",    // Leverage
+		"90000", // Quote asset amount
+		"0",     // Base asset limit
+	})
+	s.Require().NoError(err)
+
+	_, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[3], []string{
+		"buy",
+		asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
+		"15",    // Leverage
+		"90000", // Quote asset amount
+		"0",     // Base asset limit
+	})
+	s.NoError(err)
+
+	s.T().Log("opening counter positions")
+	_, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[4], []string{
+		"sell",
+		asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
+		"15",       // Leverage
+		"90000000", // Quote asset amount
+		"0",
+	})
+	s.NoError(err)
+
+	_, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[5], []string{
+		"sell",
+		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
+		"15",       // Leverage
+		"90000000", // Quote asset amount
+		"0",
+	})
+	s.Require().NoError(err)
+
+	s.T().Log("wait 10 blocks")
+	height, err := s.network.LatestHeight()
+	s.Require().NoError(err)
+	_, err = s.network.WaitForHeight(height + 10)
+	s.Require().NoError(err)
+
+	s.T().Log("liquidating all users...")
+	_, err = testutilcli.ExecTx(s.network, cli.MultiLiquidateCmd(), s.liquidator, []string{
+		fmt.Sprintf("%s:%s:%s", denoms.BTC, denoms.NUSD, s.users[2].String()),
+		fmt.Sprintf("%s:%s:%s", denoms.ETH, denoms.NUSD, s.users[3].String()),
+	})
+	s.Require().NoError(err)
+
+	s.T().Log("check trader position")
+	_, err = testutilcli.QueryPosition(s.network.Validators[0].ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), s.users[2])
+	s.Require().Error(err)
+
+	_, err = testutilcli.QueryPosition(s.network.Validators[0].ClientCtx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), s.users[3])
+	s.Require().Error(err)
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
