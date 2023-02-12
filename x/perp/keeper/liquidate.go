@@ -31,10 +31,11 @@ func (k Keeper) Liquidate(
 	pair asset.Pair,
 	traderAddr sdk.AccAddress,
 ) (liquidatorFee sdk.Coin, perpEcosystemFundFee sdk.Coin, err error) {
-	if !k.canLiquidate(ctx, liquidatorAddr) {
+	if !k.isWhitelistedLiquidator(ctx, liquidatorAddr) {
 		err = types.ErrUnauthorized.Wrapf("not allowed to liquidate: %s", traderAddr)
 		return
 	}
+
 	err = k.requireVpool(ctx, pair)
 	if err != nil {
 		return
@@ -382,9 +383,10 @@ func (k Keeper) MultiLiquidate(ctx sdk.Context, liquidator sdk.AccAddress, liqui
 	return resp
 }
 
-func (k Keeper) canLiquidate(ctx sdk.Context, addr sdk.AccAddress) bool {
+func (k Keeper) isWhitelistedLiquidator(ctx sdk.Context, addr sdk.AccAddress) bool {
 	addrStr := addr.String()
 	params := k.GetParams(ctx)
+	// TODO(k-yang): look into an O(1) lookup data structure here
 	for _, whitelisted := range params.WhitelistedLiquidators {
 		if addrStr == whitelisted {
 			return true

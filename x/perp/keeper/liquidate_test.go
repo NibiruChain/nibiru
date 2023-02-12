@@ -5,22 +5,17 @@ import (
 	"time"
 
 	"github.com/NibiruChain/collections"
-
-	"github.com/NibiruChain/nibiru/x/common"
-	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
-	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
-
-	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
-
 	simapp2 "github.com/NibiruChain/nibiru/simapp"
-
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/perp/keeper"
+	"github.com/NibiruChain/nibiru/x/perp/types"
+	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
 func TestExecuteFullLiquidation(t *testing.T) {
@@ -116,7 +111,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				"hour",
 				15*time.Minute,
 			))
-			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
+			keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            tokenPair,
 				LatestCumulativePremiumFraction: sdk.OneDec(),
 			})
@@ -295,7 +290,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 				15*time.Minute,
 			))
 
-			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
+			keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            tokenPair,
 				LatestCumulativePremiumFraction: sdk.OneDec(),
 			})
@@ -379,12 +374,4 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			})
 		})
 	}
-}
-
-func setPosition(k perpkeeper.Keeper, ctx sdk.Context, pos types.Position) {
-	k.Positions.Insert(ctx, collections.Join(pos.Pair, sdk.MustAccAddressFromBech32(pos.TraderAddress)), pos)
-}
-
-func setPairMetadata(k perpkeeper.Keeper, ctx sdk.Context, pm types.PairMetadata) {
-	k.PairsMetadata.Insert(ctx, pm.Pair, pm)
 }

@@ -91,7 +91,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
 			))
-			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
+			keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
@@ -102,7 +102,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 			if tc.initialPosition != nil {
 				t.Log("create position")
 				tc.initialPosition.TraderAddress = traderAddr.String()
-				setPosition(app.PerpKeeper, ctx, *tc.initialPosition)
+				keeper.SetPosition(app.PerpKeeper, ctx, *tc.initialPosition)
 			}
 
 			resp, err := msgServer.AddMargin(sdk.WrapSDKContext(ctx), &types.MsgAddMargin{
@@ -212,7 +212,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
 			))
-			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
+			keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
@@ -223,7 +223,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			if tc.initialPosition != nil {
 				t.Log("create position")
 				tc.initialPosition.TraderAddress = traderAddr.String()
-				setPosition(app.PerpKeeper, ctx, *tc.initialPosition)
+				keeper.SetPosition(app.PerpKeeper, ctx, *tc.initialPosition)
 			}
 
 			ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second * 5)).WithBlockHeight(ctx.BlockHeight() + 1)
@@ -299,7 +299,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
 			))
-			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
+			keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
@@ -386,13 +386,13 @@ func TestMsgServerClosePosition(t *testing.T) {
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
 			))
-			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
+			keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
 			t.Log("create position")
-			setPosition(app.PerpKeeper, ctx, types.Position{
+			keeper.SetPosition(app.PerpKeeper, ctx, types.Position{
 				TraderAddress:                   tc.traderAddr.String(),
 				Pair:                            tc.pair,
 				Size_:                           sdk.OneDec(),
@@ -456,7 +456,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
 	))
-	setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
+	keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 		Pair:                            pair,
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 	})
@@ -492,9 +492,9 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 		BlockNumber:                     1,
 	}
-	setPosition(app.PerpKeeper, ctx, atRiskPosition1)
-	setPosition(app.PerpKeeper, ctx, notAtRiskPosition)
-	setPosition(app.PerpKeeper, ctx, atRiskPosition2)
+	keeper.SetPosition(app.PerpKeeper, ctx, atRiskPosition1)
+	keeper.SetPosition(app.PerpKeeper, ctx, notAtRiskPosition)
+	keeper.SetPosition(app.PerpKeeper, ctx, atRiskPosition2)
 
 	require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
 
