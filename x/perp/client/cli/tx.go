@@ -38,7 +38,7 @@ func GetTxCmd() *cobra.Command {
 
 func MultiLiquidateCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "multi-liquidate ubtc:unusd:nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl ueth:unusd:nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
+		Use:   "multi-liquidate [Pair1:Trader1] [Pair2:Trader2] ...",
 		Short: "liquidates multiple positions at once",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`
