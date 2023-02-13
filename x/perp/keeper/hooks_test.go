@@ -130,7 +130,7 @@ func initParams(ctx sdk.Context, k Keeper) {
 		FundingRateInterval:     "30 min",
 		TwapLookbackWindow:      15 * time.Minute,
 	})
-	setPairMetadata(k, ctx, types.PairMetadata{
+	SetPairMetadata(k, ctx, types.PairMetadata{
 		Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		// start with one entry to ensure we append
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),

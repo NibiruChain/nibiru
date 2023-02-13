@@ -149,9 +149,9 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 		StakingTokens: sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),
 		BondedTokens:  sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
 		StartingTokens: sdk.NewCoins(
-			sdk.NewCoin(denoms.NUSD, sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
-			sdk.NewCoin(denoms.NIBI, sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction)),
-			sdk.NewCoin(denoms.USDC, sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)),
+			sdk.NewCoin(denoms.NUSD, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
+			sdk.NewCoin(denoms.NIBI, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
+			sdk.NewCoin(denoms.USDC, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
 		),
 		PruningStrategy: storetypes.PruningOptionNothing,
 		CleanupDir:      true,

@@ -42,7 +42,7 @@ func initAppVpools(
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
 	))
-	setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
+	keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 		Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 	})
@@ -59,7 +59,7 @@ func initAppVpools(
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
 	))
-	setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
+	keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 		Pair:                            asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 	})
@@ -76,7 +76,7 @@ func initAppVpools(
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
 	))
-	setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
+	keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 		Pair:                            asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 	})
@@ -159,7 +159,7 @@ func TestQueryPosition(t *testing.T) {
 			ctx, app, queryServer := initAppVpools(t, tc.quoteAssetReserve, tc.baseAssetReserve)
 
 			t.Log("initialize position")
-			setPosition(app.PerpKeeper, ctx, *tc.initialPosition)
+			keeper.SetPosition(app.PerpKeeper, ctx, *tc.initialPosition)
 
 			t.Log("query position")
 			ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second))
@@ -231,7 +231,7 @@ func TestQueryPositions(t *testing.T) {
 			for _, position := range tc.Positions {
 				currentPosition := position
 				currentPosition.TraderAddress = traderAddr.String()
-				setPosition(app.PerpKeeper, ctx, *currentPosition)
+				keeper.SetPosition(app.PerpKeeper, ctx, *currentPosition)
 			}
 
 			t.Log("query position")

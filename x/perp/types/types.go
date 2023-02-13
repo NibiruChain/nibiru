@@ -27,6 +27,7 @@ var (
 	ErrMarginRatioTooLow                 = sdkerrors.Register(ModuleName, 7, "margin ratio did not meet maintenance margin ratio")
 	ErrLeverageIsTooHigh                 = sdkerrors.Register(ModuleName, 8, "leverage cannot be higher than vpool parameter")
 	ErrUnauthorized                      = sdkerrors.Register(ModuleName, 9, "operation not authorized")
+	ErrAllLiquidationsFailed             = sdkerrors.Register(ModuleName, 10, "all liquidations failed")
 )
 
 func ZeroPosition(ctx sdk.Context, tokenPair asset.Pair, traderAddr sdk.AccAddress) Position {

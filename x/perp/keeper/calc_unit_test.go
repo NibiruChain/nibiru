@@ -199,7 +199,7 @@ func TestGetLatestCumulativePremiumFraction(t *testing.T) {
 					Pair:                            asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 					LatestCumulativePremiumFraction: sdk.NewDec(2),
 				}
-				setPairMetadata(keeper, ctx, *metadata)
+				SetPairMetadata(keeper, ctx, *metadata)
 
 				latestCumulativePremiumFraction, err := keeper.
 					getLatestCumulativePremiumFraction(ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD))

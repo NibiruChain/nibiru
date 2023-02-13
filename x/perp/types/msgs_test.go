@@ -277,7 +277,7 @@ func TestMsgMultiLiquidate_ValidateBasic(t *testing.T) {
 		"success": {
 			msg: &MsgMultiLiquidate{
 				Sender: testutil.AccAddress().String(),
-				Liquidations: []*MsgMultiLiquidate_MultiLiquidation{
+				Liquidations: []*MsgMultiLiquidate_Liquidation{
 					{
 						Pair:   asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 						Trader: testutil.AccAddress().String(),
@@ -288,7 +288,7 @@ func TestMsgMultiLiquidate_ValidateBasic(t *testing.T) {
 		"invalid token pair": {
 			msg: &MsgMultiLiquidate{
 				Sender: testutil.AccAddress().String(),
-				Liquidations: []*MsgMultiLiquidate_MultiLiquidation{
+				Liquidations: []*MsgMultiLiquidate_Liquidation{
 					{
 						Pair:   asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 						Trader: testutil.AccAddress().String(),
@@ -303,7 +303,7 @@ func TestMsgMultiLiquidate_ValidateBasic(t *testing.T) {
 		"invalid liquidated address": {
 			msg: &MsgMultiLiquidate{
 				Sender: testutil.AccAddress().String(),
-				Liquidations: []*MsgMultiLiquidate_MultiLiquidation{
+				Liquidations: []*MsgMultiLiquidate_Liquidation{
 					{
 						Pair:   asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 						Trader: testutil.AccAddress().String(),
