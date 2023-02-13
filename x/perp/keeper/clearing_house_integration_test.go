@@ -17,6 +17,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -278,7 +279,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 					TradeLimitRatio:        sdk.OneDec(),
 				},
 			))
-			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
+			keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
@@ -289,7 +290,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			if tc.initialPosition != nil {
 				t.Log("set initial position")
 				tc.initialPosition.TraderAddress = traderAddr.String()
-				setPosition(nibiruApp.PerpKeeper, ctx, *tc.initialPosition)
+				keeper.SetPosition(nibiruApp.PerpKeeper, ctx, *tc.initialPosition)
 				exchangedSize = exchangedSize.Sub(tc.initialPosition.Size_)
 			}
 
@@ -532,7 +533,7 @@ func TestOpenPositionError(t *testing.T) {
 					TradeLimitRatio:        tc.poolTradeLimitRatio,
 				},
 			))
-			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
+			keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
@@ -543,7 +544,7 @@ func TestOpenPositionError(t *testing.T) {
 			if tc.initialPosition != nil {
 				t.Log("set initial position")
 				tc.initialPosition.TraderAddress = traderAddr.String()
-				setPosition(nibiruApp.PerpKeeper, ctx, *tc.initialPosition)
+				keeper.SetPosition(nibiruApp.PerpKeeper, ctx, *tc.initialPosition)
 			}
 
 			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(ctx.BlockTime().Add(time.Second * 5))
