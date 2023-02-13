@@ -542,6 +542,149 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	assertLiquidated(atRiskPosition2)
 }
 
+func TestMsgServerMultiLiquidate_NotAuthorized(t *testing.T) {
+	app, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
+	ctx = ctx.WithBlockTime(time.Now())
+	msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
+
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	liquidator := testutil.AccAddress()
+
+	atRiskTrader1 := testutil.AccAddress()
+
+	t.Log("create vpool")
+	assert.NoError(t, app.VpoolKeeper.CreatePool(
+		/* ctx */ ctx,
+		/* pair */ pair,
+		/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
+		/* baseAssetReserve */ sdk.NewDec(1*common.Precision),
+		vpooltypes.VpoolConfig{
+			TradeLimitRatio:        sdk.OneDec(),
+			FluctuationLimitRatio:  sdk.OneDec(),
+			MaxOracleSpreadRatio:   sdk.OneDec(),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
+		},
+	))
+	keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
+		Pair:                            pair,
+		LatestCumulativePremiumFraction: sdk.ZeroDec(),
+	})
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
+
+	t.Log("set oracle price")
+	app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdk.OneDec())
+
+	t.Log("create positions")
+	atRiskPosition1 := types.Position{
+		TraderAddress:                   atRiskTrader1.String(),
+		Pair:                            pair,
+		Size_:                           sdk.OneDec(),
+		Margin:                          sdk.OneDec(),
+		OpenNotional:                    sdk.NewDec(2),
+		LatestCumulativePremiumFraction: sdk.ZeroDec(),
+	}
+	keeper.SetPosition(app.PerpKeeper, ctx, atRiskPosition1)
+
+	require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
+
+	resp, err := msgServer.MultiLiquidate(sdk.WrapSDKContext(ctx), &types.MsgMultiLiquidate{
+		Sender: liquidator.String(),
+		Liquidations: []*types.MsgMultiLiquidate_Liquidation{
+			{
+				Pair:   pair,
+				Trader: atRiskTrader1.String(),
+			},
+		},
+	})
+	assert.Nil(t, resp)
+	require.ErrorIs(t, err, types.ErrUnauthorized)
+
+	// NOTE: we don't care about checking if liquidations math is correct. This is the duty of keeper.Liquidate
+	// what we care about is that the first and third liquidations made some modifications at state
+	// and events levels, whilst the second (which failed) didn't.
+
+	assertNotLiquidated := func(old types.Position) {
+		position, err := app.PerpKeeper.Positions.Get(ctx, collections.Join(old.Pair, sdk.MustAccAddressFromBech32(old.TraderAddress)))
+		require.NoError(t, err)
+		assert.Equal(t, old, position)
+	}
+
+	assertNotLiquidated(atRiskPosition1)
+}
+
+func TestMsgServerMultiLiquidate_AllFailed(t *testing.T) {
+	app, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
+	ctx = ctx.WithBlockTime(time.Now())
+	msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
+
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	liquidator := testutil.AccAddress()
+
+	notAtRiskTrader := testutil.AccAddress()
+
+	t.Log("create vpool")
+	assert.NoError(t, app.VpoolKeeper.CreatePool(
+		/* ctx */ ctx,
+		/* pair */ pair,
+		/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
+		/* baseAssetReserve */ sdk.NewDec(1*common.Precision),
+		vpooltypes.VpoolConfig{
+			TradeLimitRatio:        sdk.OneDec(),
+			FluctuationLimitRatio:  sdk.OneDec(),
+			MaxOracleSpreadRatio:   sdk.OneDec(),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
+		},
+	))
+	keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
+		Pair:                            pair,
+		LatestCumulativePremiumFraction: sdk.ZeroDec(),
+	})
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
+
+	t.Log("set oracle price")
+	app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdk.OneDec())
+
+	t.Log("create positions")
+	notAtRiskPosition := types.Position{
+		TraderAddress:                   notAtRiskTrader.String(),
+		Pair:                            pair,
+		Size_:                           sdk.OneDec(),
+		Margin:                          sdk.OneDec(),
+		OpenNotional:                    sdk.OneDec(),
+		LatestCumulativePremiumFraction: sdk.ZeroDec(),
+	}
+	keeper.SetPosition(app.PerpKeeper, ctx, notAtRiskPosition)
+
+	require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
+
+	setLiquidator(ctx, app.PerpKeeper, liquidator)
+	resp, err := msgServer.MultiLiquidate(sdk.WrapSDKContext(ctx), &types.MsgMultiLiquidate{
+		Sender: liquidator.String(),
+		Liquidations: []*types.MsgMultiLiquidate_Liquidation{
+			{
+				Pair:   pair,
+				Trader: notAtRiskTrader.String(),
+			},
+		},
+	})
+	assert.Nil(t, resp)
+	require.ErrorIs(t, err, types.ErrAllLiquidationsFailed)
+
+	// NOTE: we don't care about checking if liquidations math is correct. This is the duty of keeper.Liquidate
+	// what we care about is that the first and third liquidations made some modifications at state
+	// and events levels, whilst the second (which failed) didn't.
+
+	assertNotLiquidated := func(old types.Position) {
+		position, err := app.PerpKeeper.Positions.Get(ctx, collections.Join(old.Pair, sdk.MustAccAddressFromBech32(old.TraderAddress)))
+		require.NoError(t, err)
+		assert.Equal(t, old, position)
+	}
+
+	assertNotLiquidated(notAtRiskPosition)
+}
+
 func TestMsgServerDonateToEcosystemFund(t *testing.T) {
 	tests := []struct {
 		name string

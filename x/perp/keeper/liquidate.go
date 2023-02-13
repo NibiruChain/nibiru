@@ -16,9 +16,9 @@ import (
 required margin maintenance ratio.
 
 args:
-  - liquidatorAddr: the liquidator who is executing the liquidation
+  - liquidator: the liquidator who is executing the liquidation
   - pair: the asset pair
-  - traderAddr: the trader who owns the position being liquidated
+  - trader: the trader who owns the position being liquidated
 
 ret:
   - liquidatorFee: the amount of coins given to the liquidator
@@ -27,21 +27,16 @@ ret:
 */
 func (k Keeper) Liquidate(
 	ctx sdk.Context,
-	liquidatorAddr sdk.AccAddress,
+	liquidator sdk.AccAddress,
 	pair asset.Pair,
-	traderAddr sdk.AccAddress,
+	trader sdk.AccAddress,
 ) (liquidatorFee sdk.Coin, perpEcosystemFundFee sdk.Coin, err error) {
-	if !k.isWhitelistedLiquidator(ctx, liquidatorAddr) {
-		err = types.ErrUnauthorized.Wrapf("not allowed to liquidate: %s", traderAddr)
-		return
-	}
-
 	err = k.requireVpool(ctx, pair)
 	if err != nil {
 		return
 	}
 
-	position, err := k.Positions.Get(ctx, collections.Join(pair, traderAddr))
+	position, err := k.Positions.Get(ctx, collections.Join(pair, trader))
 	if err != nil {
 		return
 	}
@@ -88,9 +83,9 @@ func (k Keeper) Liquidate(
 
 	var liquidationResponse types.LiquidateResp
 	if marginRatioBasedOnSpot.GTE(params.LiquidationFeeRatio) {
-		liquidationResponse, err = k.ExecutePartialLiquidation(ctx, liquidatorAddr, &position)
+		liquidationResponse, err = k.ExecutePartialLiquidation(ctx, liquidator, &position)
 	} else {
-		liquidationResponse, err = k.ExecuteFullLiquidation(ctx, liquidatorAddr, &position)
+		liquidationResponse, err = k.ExecuteFullLiquidation(ctx, liquidator, &position)
 	}
 	if err != nil {
 		return
@@ -355,9 +350,16 @@ func (k Keeper) ExecutePartialLiquidation(
 	return liquidationResponse, err
 }
 
-func (k Keeper) MultiLiquidate(ctx sdk.Context, liquidator sdk.AccAddress, liquidationRequests []*types.MsgMultiLiquidate_Liquidation) []*types.MsgMultiLiquidateResponse_LiquidationResponse {
+func (k Keeper) MultiLiquidate(
+	ctx sdk.Context, liquidator sdk.AccAddress, liquidationRequests []*types.MsgMultiLiquidate_Liquidation,
+) ([]*types.MsgMultiLiquidateResponse_LiquidationResponse, error) {
+	if !k.isWhitelistedLiquidator(ctx, liquidator) {
+		return nil, types.ErrUnauthorized.Wrapf("%s is not a whitelisted liquidator", liquidator.String())
+	}
+
 	resp := make([]*types.MsgMultiLiquidateResponse_LiquidationResponse, len(liquidationRequests))
 
+	var allFailed bool = true
 	for i, req := range liquidationRequests {
 		traderAddr := sdk.MustAccAddressFromBech32(req.Trader)
 		cachedCtx, commit := ctx.CacheContext()
@@ -369,6 +371,7 @@ func (k Keeper) MultiLiquidate(ctx sdk.Context, liquidator sdk.AccAddress, liqui
 				Error:   err.Error(),
 			}
 		} else {
+			allFailed = false
 			resp[i] = &types.MsgMultiLiquidateResponse_LiquidationResponse{
 				Success:       true,
 				LiquidatorFee: liquidatorFee,
@@ -380,7 +383,11 @@ func (k Keeper) MultiLiquidate(ctx sdk.Context, liquidator sdk.AccAddress, liqui
 		}
 	}
 
-	return resp
+	if allFailed {
+		return nil, types.ErrAllLiquidationsFailed.Wrapf("%d liquidations failed", len(liquidationRequests))
+	}
+
+	return resp, nil
 }
 
 func (k Keeper) isWhitelistedLiquidator(ctx sdk.Context, addr sdk.AccAddress) bool {

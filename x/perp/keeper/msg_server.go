@@ -92,7 +92,10 @@ func (m msgServer) ClosePosition(goCtx context.Context, position *types.MsgClose
 }
 
 func (m msgServer) MultiLiquidate(goCtx context.Context, req *types.MsgMultiLiquidate) (*types.MsgMultiLiquidateResponse, error) {
-	resp := m.k.MultiLiquidate(sdk.UnwrapSDKContext(goCtx), sdk.MustAccAddressFromBech32(req.Sender), req.Liquidations)
+	resp, err := m.k.MultiLiquidate(sdk.UnwrapSDKContext(goCtx), sdk.MustAccAddressFromBech32(req.Sender), req.Liquidations)
+	if err != nil {
+		return nil, err
+	}
 
 	return &types.MsgMultiLiquidateResponse{Liquidations: resp}, nil
 }
