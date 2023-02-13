@@ -52,7 +52,7 @@ func MultiLiquidateCmd() *cobra.Command {
 				return err
 			}
 
-			liquidations := make([]*types.MsgMultiLiquidate_SingleLiquidation, len(args))
+			liquidations := make([]*types.MsgMultiLiquidate_Liquidation, len(args))
 
 			for i, arg := range args {
 				parts := strings.Split(arg, ":")
@@ -70,7 +70,7 @@ func MultiLiquidateCmd() *cobra.Command {
 					return err
 				}
 
-				liquidations[i] = &types.MsgMultiLiquidate_SingleLiquidation{
+				liquidations[i] = &types.MsgMultiLiquidate_Liquidation{
 					Pair:   pair,
 					Trader: traderAddr.String(),
 				}

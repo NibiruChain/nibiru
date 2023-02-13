@@ -463,12 +463,12 @@ func TestMultiLiquidate(t *testing.T) {
 			app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdk.OneDec())
 
 			t.Log("create position")
-			liquidations := make([]*types.MsgMultiLiquidate_SingleLiquidation, len(tc.positions))
+			liquidations := make([]*types.MsgMultiLiquidate_Liquidation, len(tc.positions))
 			for i, pos := range tc.positions {
 				keeper.SetPosition(app.PerpKeeper, ctx, pos)
 				require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pos.Pair.QuoteDenom(), 1))))
 
-				liquidations[i] = &types.MsgMultiLiquidate_SingleLiquidation{
+				liquidations[i] = &types.MsgMultiLiquidate_Liquidation{
 					Pair:   pos.Pair,
 					Trader: pos.TraderAddress,
 				}

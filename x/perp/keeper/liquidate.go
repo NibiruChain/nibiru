@@ -355,8 +355,8 @@ func (k Keeper) ExecutePartialLiquidation(
 	return liquidationResponse, err
 }
 
-func (k Keeper) MultiLiquidate(ctx sdk.Context, liquidator sdk.AccAddress, liquidationRequests []*types.MsgMultiLiquidate_SingleLiquidation) []*types.MsgMultiLiquidateResponse_SingleLiquidation {
-	resp := make([]*types.MsgMultiLiquidateResponse_SingleLiquidation, len(liquidationRequests))
+func (k Keeper) MultiLiquidate(ctx sdk.Context, liquidator sdk.AccAddress, liquidationRequests []*types.MsgMultiLiquidate_Liquidation) []*types.MsgMultiLiquidateResponse_LiquidationResponse {
+	resp := make([]*types.MsgMultiLiquidateResponse_LiquidationResponse, len(liquidationRequests))
 
 	for i, req := range liquidationRequests {
 		traderAddr := sdk.MustAccAddressFromBech32(req.Trader)
@@ -364,12 +364,12 @@ func (k Keeper) MultiLiquidate(ctx sdk.Context, liquidator sdk.AccAddress, liqui
 		liquidatorFee, perpEfFee, err := k.Liquidate(cachedCtx, liquidator, req.Pair, traderAddr)
 
 		if err != nil {
-			resp[i] = &types.MsgMultiLiquidateResponse_SingleLiquidation{
+			resp[i] = &types.MsgMultiLiquidateResponse_LiquidationResponse{
 				Success: false,
 				Error:   err.Error(),
 			}
 		} else {
-			resp[i] = &types.MsgMultiLiquidateResponse_SingleLiquidation{
+			resp[i] = &types.MsgMultiLiquidateResponse_LiquidationResponse{
 				Success:       true,
 				LiquidatorFee: liquidatorFee,
 				PerpEfFee:     perpEfFee,

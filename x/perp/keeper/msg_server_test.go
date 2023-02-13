@@ -501,7 +501,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	setLiquidator(ctx, app.PerpKeeper, liquidator)
 	resp, err := msgServer.MultiLiquidate(sdk.WrapSDKContext(ctx), &types.MsgMultiLiquidate{
 		Sender: liquidator.String(),
-		Liquidations: []*types.MsgMultiLiquidate_SingleLiquidation{
+		Liquidations: []*types.MsgMultiLiquidate_Liquidation{
 			{
 				Pair:   pair,
 				Trader: atRiskTrader1.String(),
