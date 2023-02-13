@@ -208,49 +208,81 @@ message PositionSettledEvent {
 // Emitted when a new funding rate is calculated.
 message FundingRateChangedEvent {
 
-    // The pair for which the funding rate was calculated.
-    string pair = 1 [ 
-      (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
-      (gogoproto.nullable) = false
-    ];
+  // The pair for which the funding rate was calculated.
+  string pair = 1 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
 
-    // The mark price of the pair.
-    string mark_price = 2 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-      (gogoproto.nullable) = false
-    ];
+  // The mark price of the pair.
+  string mark_price = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
-    // The oracle index price of the pair.
-    string index_price = 3 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-      (gogoproto.nullable) = false
-    ];
+  // The oracle index price of the pair.
+  string index_price = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
-    // The latest funding rate.
-    string latest_funding_rate = 4 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-      (gogoproto.nullable) = false
-    ];
+  // The latest funding rate.
+  string latest_funding_rate = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
-    // The latest premium fraction just calculated.
-    string latest_premium_fraction = 5 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-      (gogoproto.nullable) = false
-    ];
+  // The latest premium fraction just calculated.
+  string latest_premium_fraction = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
-    // The latest cumulative premium fraction.
-    // The funding payment a position will pay is the difference between this value
-    // and the latest cumulative premium fraction on the position, multiplied by the position size.
-    string cumulative_premium_fraction = 6 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-      (gogoproto.nullable) = false
-    ];
+  // The latest cumulative premium fraction.
+  // The funding payment a position will pay is the difference between this value
+  // and the latest cumulative premium fraction on the position, multiplied by the position size.
+  string cumulative_premium_fraction = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
-    // The block number at which the funding rate was calculated.
-    int64 block_height = 7;
+  // The block number at which the funding rate was calculated.
+  int64 block_height = 7;
 
-    // The block time in unix milliseconds at which the funding rate was calculated.
-    int64 block_time_ms = 8;
+  // The block time in unix milliseconds at which the funding rate was calculated.
+  int64 block_time_ms = 8;
+}
+
+
+// Emitted when liquidation fails.
+message LiquidationFailedEvent {
+  // The pair for which we are trying to liquidate.
+  string pair = 1 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+
+  // owner of the position.
+  string trader = 2;
+
+  // Address of the account that executed the tx.
+  string liquidator = 3;
+
+
+  enum LiquidationFailedReason {
+    UNSPECIFIED = 0;
+
+    // the position is healthy and does not need to be liquidated.
+    POSITION_HEALTHY = 1;
+
+    // the pair does not exist.
+    NONEXISTENT_PAIR = 2;
+
+    // the position does not exist.
+    NONEXISTENT_POSITION = 3;
+  }
+  // Reason for the liquidation failure.
+  LiquidationFailedReason reason = 4;
 }
 
 message MetricsEvent {
