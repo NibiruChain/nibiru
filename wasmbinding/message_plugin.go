@@ -73,6 +73,11 @@ func PerformOpenPosition(perp *perpkeeper.Keeper, ctx sdk.Context, contractAddr 
 		return wasmvmtypes.InvalidRequest{Err: "open position null open position"}
 	}
 
+	_, err := asset.TryNewPair(openPosition.Pair)
+	if err != nil {
+		return wasmvmtypes.InvalidRequest{Err: "invalid pair"}
+	}
+
 	msgServer := perpkeeper.NewMsgServerImpl(*perp)
 
 	msgOpenPosition := &perptypes.MsgOpenPosition{
@@ -89,7 +94,7 @@ func PerformOpenPosition(perp *perpkeeper.Keeper, ctx sdk.Context, contractAddr 
 	}
 
 	// Open position
-	_, err := msgServer.OpenPosition(sdk.WrapSDKContext(ctx), msgOpenPosition)
+	_, err = msgServer.OpenPosition(sdk.WrapSDKContext(ctx), msgOpenPosition)
 	if err != nil {
 		return sdkerrors.Wrap(err, "opening position")
 	}
@@ -110,6 +115,11 @@ func PerformClosePosition(perp *perpkeeper.Keeper, ctx sdk.Context, contractAddr
 		return wasmvmtypes.InvalidRequest{Err: "close position null close position"}
 	}
 
+	_, err := asset.TryNewPair(closePosition.Pair)
+	if err != nil {
+		return wasmvmtypes.InvalidRequest{Err: "invalid pair"}
+	}
+
 	msgServer := perpkeeper.NewMsgServerImpl(*perp)
 
 	msgClosePosition := &perptypes.MsgClosePosition{
@@ -122,7 +132,7 @@ func PerformClosePosition(perp *perpkeeper.Keeper, ctx sdk.Context, contractAddr
 	}
 
 	// Close position
-	_, err := msgServer.ClosePosition(sdk.WrapSDKContext(ctx), msgClosePosition)
+	_, err = msgServer.ClosePosition(sdk.WrapSDKContext(ctx), msgClosePosition)
 	if err != nil {
 		return sdkerrors.Wrap(err, "closing position")
 	}

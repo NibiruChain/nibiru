@@ -19,6 +19,33 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 			return nil, sdkerrors.Wrap(err, "nibiru query")
 		}
 
-		return nil, wasmvmtypes.UnsupportedRequest{Kind: "unknown Custom variant"}
+		switch {
+		case contractQuery.Position != nil:
+			res, err := qp.GetPosition(ctx, contractQuery.Position.Trader, contractQuery.Position.Pair)
+			if err != nil {
+				return nil, sdkerrors.Wrap(err, "position")
+			}
+
+			bz, err := json.Marshal(res)
+			if err != nil {
+				return nil, sdkerrors.Wrap(err, "position")
+			}
+
+			return bz, nil
+		case contractQuery.Positions != nil:
+			res, err := qp.GetPositions(ctx, contractQuery.Position.Trader)
+			if err != nil {
+				return nil, sdkerrors.Wrap(err, "positions")
+			}
+
+			bz, err := json.Marshal(res)
+			if err != nil {
+				return nil, sdkerrors.Wrap(err, "positions")
+			}
+
+			return bz, nil
+		default:
+			return nil, wasmvmtypes.UnsupportedRequest{Kind: "unknown Custom variant"}
+		}
 	}
 }
