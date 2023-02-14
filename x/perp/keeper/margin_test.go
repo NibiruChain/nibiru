@@ -15,6 +15,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -80,14 +81,14 @@ func TestAddMarginSuccess(t *testing.T) {
 			require.True(t, vpoolKeeper.ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)))
 
 			t.Log("set pair metadata")
-			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
+			keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: tc.latestCumulativePremiumFraction,
 			},
 			)
 
 			t.Log("establish initial position")
-			setPosition(nibiruApp.PerpKeeper, ctx, tc.initialPosition)
+			keeper.SetPosition(nibiruApp.PerpKeeper, ctx, tc.initialPosition)
 
 			resp, err := nibiruApp.PerpKeeper.AddMargin(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), traderAddr, tc.marginToAdd)
 			require.NoError(t, err)
@@ -184,7 +185,7 @@ func TestRemoveMargin(t *testing.T) {
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
-				setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
+				keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 					Pair:                            pair,
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				})
