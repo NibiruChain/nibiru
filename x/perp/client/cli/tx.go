@@ -29,10 +29,68 @@ func GetTxCmd() *cobra.Command {
 		AddMarginCmd(),
 		OpenPositionCmd(),
 		ClosePositionCmd(),
+		MultiLiquidateCmd(),
 		DonateToEcosystemFundCmd(),
 	)
 
 	return txCmd
+}
+
+func MultiLiquidateCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "multi-liquidate [Pair1:Trader1] [Pair2:Trader2] ...",
+		Short: "liquidates multiple positions at once",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`
+			$ %s tx perp multi-liquidate ubtc:unusd:nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl ueth:unusd:nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl
+			`, version.AppName),
+		),
+		Args: cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			liquidations := make([]*types.MsgMultiLiquidate_Liquidation, len(args))
+
+			for i, arg := range args {
+				parts := strings.Split(arg, ":")
+				if len(parts) != 3 {
+					return fmt.Errorf("invalid liquidation format: %s", arg)
+				}
+
+				pair, err := asset.TryNewPair(fmt.Sprintf("%s:%s", parts[0], parts[1]))
+				if err != nil {
+					return err
+				}
+
+				traderAddr, err := sdk.AccAddressFromBech32(parts[2])
+				if err != nil {
+					return err
+				}
+
+				liquidations[i] = &types.MsgMultiLiquidate_Liquidation{
+					Pair:   pair,
+					Trader: traderAddr.String(),
+				}
+			}
+
+			msg := &types.MsgMultiLiquidate{
+				Sender:       clientCtx.GetFromAddress().String(),
+				Liquidations: liquidations,
+			}
+			if err = msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
 }
 
 func OpenPositionCmd() *cobra.Command {

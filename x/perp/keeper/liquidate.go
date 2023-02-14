@@ -16,32 +16,40 @@ import (
 required margin maintenance ratio.
 
 args:
-  - liquidatorAddr: the liquidator who is executing the liquidation
+  - liquidator: the liquidator who is executing the liquidation
   - pair: the asset pair
-  - traderAddr: the trader who owns the position being liquidated
+  - trader: the trader who owns the position being liquidated
 
 ret:
-  - feeToLiquidator: the amount of coins given to the liquidator
-  - feeToFund: the amount of coins given to the ecosystem fund
+  - liquidatorFee: the amount of coins given to the liquidator
+  - perpEcosystemFundFee: the amount of coins given to the ecosystem fund
   - err: error
 */
 func (k Keeper) Liquidate(
 	ctx sdk.Context,
-	liquidatorAddr sdk.AccAddress,
+	liquidator sdk.AccAddress,
 	pair asset.Pair,
-	traderAddr sdk.AccAddress,
-) (feeToLiquidator sdk.Coin, feeToFund sdk.Coin, err error) {
-	if !k.canLiquidate(ctx, liquidatorAddr) {
-		err = types.ErrUnauthorized.Wrapf("not allowed to liquidate: %s", traderAddr)
-		return
-	}
+	trader sdk.AccAddress,
+) (liquidatorFee sdk.Coin, perpEcosystemFundFee sdk.Coin, err error) {
 	err = k.requireVpool(ctx, pair)
 	if err != nil {
+		ctx.EventManager().EmitTypedEvent(&types.LiquidationFailedEvent{
+			Pair:       pair,
+			Trader:     trader.String(),
+			Liquidator: liquidator.String(),
+			Reason:     types.LiquidationFailedEvent_NONEXISTENT_PAIR,
+		})
 		return
 	}
 
-	position, err := k.Positions.Get(ctx, collections.Join(pair, traderAddr))
+	position, err := k.Positions.Get(ctx, collections.Join(pair, trader))
 	if err != nil {
+		ctx.EventManager().EmitTypedEvent(&types.LiquidationFailedEvent{
+			Pair:       pair,
+			Trader:     trader.String(),
+			Liquidator: liquidator.String(),
+			Reason:     types.LiquidationFailedEvent_NONEXISTENT_POSITION,
+		})
 		return
 	}
 
@@ -62,7 +70,7 @@ func (k Keeper) Liquidate(
 		marginRatioBasedOnOracle, err := k.GetMarginRatio(
 			ctx, position, types.MarginCalculationPriceOption_INDEX)
 		if err != nil {
-			return feeToLiquidator, feeToFund, err
+			return liquidatorFee, perpEcosystemFundFee, err
 		}
 
 		marginRatio = sdk.MaxDec(marginRatio, marginRatioBasedOnOracle)
@@ -76,6 +84,12 @@ func (k Keeper) Liquidate(
 	}
 	err = validateMarginRatio(marginRatio, maintenanceMarginRatio, false)
 	if err != nil {
+		ctx.EventManager().EmitTypedEvent(&types.LiquidationFailedEvent{
+			Pair:       pair,
+			Trader:     trader.String(),
+			Liquidator: liquidator.String(),
+			Reason:     types.LiquidationFailedEvent_POSITION_HEALTHY,
+		})
 		return
 	}
 
@@ -87,25 +101,25 @@ func (k Keeper) Liquidate(
 
 	var liquidationResponse types.LiquidateResp
 	if marginRatioBasedOnSpot.GTE(params.LiquidationFeeRatio) {
-		liquidationResponse, err = k.ExecutePartialLiquidation(ctx, liquidatorAddr, &position)
+		liquidationResponse, err = k.ExecutePartialLiquidation(ctx, liquidator, &position)
 	} else {
-		liquidationResponse, err = k.ExecuteFullLiquidation(ctx, liquidatorAddr, &position)
+		liquidationResponse, err = k.ExecuteFullLiquidation(ctx, liquidator, &position)
 	}
 	if err != nil {
 		return
 	}
 
-	feeToLiquidator = sdk.NewCoin(
+	liquidatorFee = sdk.NewCoin(
 		pair.QuoteDenom(),
 		liquidationResponse.FeeToLiquidator,
 	)
 
-	feeToFund = sdk.NewCoin(
+	perpEcosystemFundFee = sdk.NewCoin(
 		pair.QuoteDenom(),
 		liquidationResponse.FeeToPerpEcosystemFund,
 	)
 
-	return feeToLiquidator, feeToFund, nil
+	return liquidatorFee, perpEcosystemFundFee, nil
 }
 
 /*
@@ -354,59 +368,50 @@ func (k Keeper) ExecutePartialLiquidation(
 	return liquidationResponse, err
 }
 
-type MultiLiquidationRequest struct {
-	pair   asset.Pair
-	trader sdk.AccAddress
-}
-
-type MultiLiquidationResponse struct {
-	success *types.MsgLiquidateResponse
-	error   error
-}
-
-func (m MultiLiquidationResponse) IntoMultiLiquidateResponse() *types.MsgMultiLiquidateResponse_MultiLiquidateResponse {
-	if m.success != nil {
-		return &types.MsgMultiLiquidateResponse_MultiLiquidateResponse{
-			Response: &types.MsgMultiLiquidateResponse_MultiLiquidateResponse_Liquidation{
-				Liquidation: m.success}}
-	} else {
-		return &types.MsgMultiLiquidateResponse_MultiLiquidateResponse{Response: &types.MsgMultiLiquidateResponse_MultiLiquidateResponse_Error{Error: m.error.Error()}}
-	}
-}
-
-func (k Keeper) MultiLiquidate(ctx sdk.Context, liquidator sdk.AccAddress, positions []MultiLiquidationRequest) []MultiLiquidationResponse {
-	liquidate := func(ctx sdk.Context, liquidator sdk.AccAddress, pair asset.Pair, trader sdk.AccAddress) (*types.MsgLiquidateResponse, error) {
-		feeToLiquidator, feeToFund, err := k.Liquidate(ctx, liquidator, pair, trader)
-		if err != nil {
-			return nil, err
-		}
-
-		return &types.MsgLiquidateResponse{
-			FeeToLiquidator:        feeToLiquidator,
-			FeeToPerpEcosystemFund: feeToFund,
-		}, nil
+func (k Keeper) MultiLiquidate(
+	ctx sdk.Context, liquidator sdk.AccAddress, liquidationRequests []*types.MsgMultiLiquidate_Liquidation,
+) ([]*types.MsgMultiLiquidateResponse_LiquidationResponse, error) {
+	if !k.isWhitelistedLiquidator(ctx, liquidator) {
+		return nil, types.ErrUnauthorized.Wrapf("%s is not a whitelisted liquidator", liquidator.String())
 	}
 
-	resp := make([]MultiLiquidationResponse, len(positions))
+	resp := make([]*types.MsgMultiLiquidateResponse_LiquidationResponse, len(liquidationRequests))
 
-	for i, position := range positions {
+	var allFailed bool = true
+	for i, req := range liquidationRequests {
+		traderAddr := sdk.MustAccAddressFromBech32(req.Trader)
 		cachedCtx, commit := ctx.CacheContext()
-		liq, err := liquidate(cachedCtx, liquidator, position.pair, position.trader)
+		liquidatorFee, perpEfFee, err := k.Liquidate(cachedCtx, liquidator, req.Pair, traderAddr)
+
 		if err != nil {
-			resp[i] = MultiLiquidationResponse{error: err}
+			resp[i] = &types.MsgMultiLiquidateResponse_LiquidationResponse{
+				Success: false,
+				Error:   err.Error(),
+			}
 		} else {
-			resp[i] = MultiLiquidationResponse{success: liq}
+			allFailed = false
+			resp[i] = &types.MsgMultiLiquidateResponse_LiquidationResponse{
+				Success:       true,
+				LiquidatorFee: liquidatorFee,
+				PerpEfFee:     perpEfFee,
+			}
+
 			ctx.EventManager().EmitEvents(cachedCtx.EventManager().Events())
 			commit()
 		}
 	}
 
-	return resp
+	if allFailed {
+		return nil, types.ErrAllLiquidationsFailed.Wrapf("%d liquidations failed", len(liquidationRequests))
+	}
+
+	return resp, nil
 }
 
-func (k Keeper) canLiquidate(ctx sdk.Context, addr sdk.AccAddress) bool {
+func (k Keeper) isWhitelistedLiquidator(ctx sdk.Context, addr sdk.AccAddress) bool {
 	addrStr := addr.String()
 	params := k.GetParams(ctx)
+	// TODO(k-yang): look into an O(1) lookup data structure here
 	for _, whitelisted := range params.WhitelistedLiquidators {
 		if addrStr == whitelisted {
 			return true

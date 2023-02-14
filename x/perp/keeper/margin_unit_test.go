@@ -160,7 +160,7 @@ func TestGetMarginRatio(t *testing.T) {
 				).
 				Return(tc.newPrice, nil)
 
-			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
+			SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.OneDec(),
 			})
@@ -191,13 +191,13 @@ func TestRemoveMargin(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
-				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
+				SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
 					Pair:                            pair,
 					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.1"),
 				})
 
 				t.Log("Set an underwater position, positive bad debt due to excessive margin request")
-				setPosition(perpKeeper, ctx, types.Position{
+				SetPosition(perpKeeper, ctx, types.Position{
 					TraderAddress:                   traderAddr.String(),
 					Pair:                            pair,
 					Size_:                           sdk.NewDec(1_000),
@@ -258,13 +258,13 @@ func TestRemoveMargin(t *testing.T) {
 				).Return(sdk.NewInt64Coin(pair.QuoteDenom(), 0))
 
 				t.Log("set pair metadata")
-				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
+				SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
 					Pair:                            pair,
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				})
 
 				t.Log("Set position a healthy position that has 0 unrealized funding")
-				setPosition(perpKeeper, ctx, types.Position{
+				SetPosition(perpKeeper, ctx, types.Position{
 					TraderAddress:                   traderAddr.String(),
 					Pair:                            pair,
 					Size_:                           sdk.NewDec(1_000),
@@ -319,13 +319,13 @@ func TestRemoveMargin(t *testing.T) {
 				).Return(nil)
 
 				t.Log("set pair metadata")
-				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
+				SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
 					Pair:                            pair,
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				})
 
 				t.Log("Set position a healthy position that has 0 unrealized funding")
-				setPosition(perpKeeper, ctx, types.Position{
+				SetPosition(perpKeeper, ctx, types.Position{
 					TraderAddress:                   traderAddr.String(),
 					Pair:                            pair,
 					Size_:                           sdk.NewDec(1_000),
@@ -390,13 +390,13 @@ func TestRemoveMargin(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
 
 				t.Log("set pair metadata")
-				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
+				SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
 					Pair:                            pair,
 					LatestCumulativePremiumFraction: sdk.OneDec(),
 				})
 
 				t.Log("Set position a healthy position that has 0 unrealized funding")
-				setPosition(perpKeeper, ctx, types.Position{
+				SetPosition(perpKeeper, ctx, types.Position{
 					TraderAddress:                   traderAddr.String(),
 					Pair:                            pair,
 					Size_:                           sdk.NewDec(500),
@@ -443,14 +443,14 @@ func TestAddMargin(t *testing.T) {
 				margin := sdk.NewInt64Coin(pair.QuoteDenom(), 600)
 
 				t.Log("set pair metadata")
-				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
+				SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
 					Pair:                            pair,
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				})
 				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
 
 				t.Log("set a position")
-				setPosition(perpKeeper, ctx, types.Position{
+				SetPosition(perpKeeper, ctx, types.Position{
 					TraderAddress:                   traderAddr.String(),
 					Pair:                            pair,
 					Size_:                           sdk.NewDec(1_000),
@@ -485,13 +485,13 @@ func TestAddMargin(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().GetMarkPrice(ctx, pair).Return(sdk.OneDec(), nil)
 
 				t.Log("set pair metadata")
-				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
+				SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
 					Pair:                            pair,
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				})
 
 				t.Log("set position")
-				setPosition(perpKeeper, ctx, types.Position{
+				SetPosition(perpKeeper, ctx, types.Position{
 					TraderAddress:                   traderAddr.String(),
 					Pair:                            pair,
 					Size_:                           sdk.NewDec(1_000),
@@ -556,13 +556,13 @@ func TestAddMargin(t *testing.T) {
 				mocks.mockVpoolKeeper.EXPECT().GetMarkPrice(ctx, pair).Return(sdk.OneDec(), nil)
 
 				t.Log("set pair metadata")
-				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
+				SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
 					Pair:                            pair,
 					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.001"),
 				})
 
 				t.Log("set position")
-				setPosition(perpKeeper, ctx, types.Position{
+				SetPosition(perpKeeper, ctx, types.Position{
 					TraderAddress:                   traderAddr.String(),
 					Pair:                            pair,
 					Size_:                           sdk.NewDec(1_000),
