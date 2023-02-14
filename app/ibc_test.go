@@ -16,8 +16,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 )
 
 // init changes the value of 'DefaultTestingAppInit' to use custom initialization.
@@ -35,7 +35,7 @@ func SetupNibiruTestingApp() (
 	defaultGenesis map[string]json.RawMessage,
 ) {
 	// create testing app
-	nibiruApp, _ := simapp.NewTestNibiruAppAndContext(true)
+	nibiruApp, _ := testapp.NewNibiruTestAppAndContext(true)
 
 	// Create genesis state
 	encCdc := app.MakeTestEncodingConfig()
