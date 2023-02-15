@@ -13,11 +13,11 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	nibisimapp "github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
@@ -73,7 +73,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 			traderAddr := testutil.AccAddress()
 
@@ -91,7 +91,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
 			))
-			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
+			keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
@@ -102,7 +102,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 			if tc.initialPosition != nil {
 				t.Log("create position")
 				tc.initialPosition.TraderAddress = traderAddr.String()
-				setPosition(app.PerpKeeper, ctx, *tc.initialPosition)
+				keeper.SetPosition(app.PerpKeeper, ctx, *tc.initialPosition)
 			}
 
 			resp, err := msgServer.AddMargin(sdk.WrapSDKContext(ctx), &types.MsgAddMargin{
@@ -194,7 +194,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 			traderAddr := testutil.AccAddress()
 
@@ -212,7 +212,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
 			))
-			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
+			keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
@@ -223,7 +223,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			if tc.initialPosition != nil {
 				t.Log("create position")
 				tc.initialPosition.TraderAddress = traderAddr.String()
-				setPosition(app.PerpKeeper, ctx, *tc.initialPosition)
+				keeper.SetPosition(app.PerpKeeper, ctx, *tc.initialPosition)
 			}
 
 			ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second * 5)).WithBlockHeight(ctx.BlockHeight() + 1)
@@ -281,7 +281,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 			ctx = ctx.WithBlockTime(time.Now())
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
@@ -299,7 +299,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
 			))
-			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
+			keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
@@ -368,7 +368,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
 			t.Log("create vpool")
@@ -386,13 +386,13 @@ func TestMsgServerClosePosition(t *testing.T) {
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
 			))
-			setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
+			keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
 			t.Log("create position")
-			setPosition(app.PerpKeeper, ctx, types.Position{
+			keeper.SetPosition(app.PerpKeeper, ctx, types.Position{
 				TraderAddress:                   tc.traderAddr.String(),
 				Pair:                            tc.pair,
 				Size_:                           sdk.OneDec(),
@@ -424,14 +424,14 @@ func TestMsgServerClosePosition(t *testing.T) {
 	}
 }
 
-func setLiquidator(ctx sdk.Context, perpKeeper keeper.Keeper, liquidator string) {
+func setLiquidator(ctx sdk.Context, perpKeeper keeper.Keeper, liquidator sdk.AccAddress) {
 	p := perpKeeper.GetParams(ctx)
-	p.WhitelistedLiquidators = []string{liquidator}
+	p.WhitelistedLiquidators = []string{liquidator.String()}
 	perpKeeper.SetParams(ctx, p)
 }
 
 func TestMsgServerMultiLiquidate(t *testing.T) {
-	app, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext(true)
 	ctx = ctx.WithBlockTime(time.Now())
 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
@@ -456,7 +456,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
 	))
-	setPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
+	keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 		Pair:                            pair,
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 	})
@@ -492,16 +492,16 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 		BlockNumber:                     1,
 	}
-	setPosition(app.PerpKeeper, ctx, atRiskPosition1)
-	setPosition(app.PerpKeeper, ctx, notAtRiskPosition)
-	setPosition(app.PerpKeeper, ctx, atRiskPosition2)
+	keeper.SetPosition(app.PerpKeeper, ctx, atRiskPosition1)
+	keeper.SetPosition(app.PerpKeeper, ctx, notAtRiskPosition)
+	keeper.SetPosition(app.PerpKeeper, ctx, atRiskPosition2)
 
 	require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
 
-	setLiquidator(ctx, app.PerpKeeper, liquidator.String())
+	setLiquidator(ctx, app.PerpKeeper, liquidator)
 	resp, err := msgServer.MultiLiquidate(sdk.WrapSDKContext(ctx), &types.MsgMultiLiquidate{
 		Sender: liquidator.String(),
-		Liquidations: []*types.MsgMultiLiquidate_MultiLiquidation{
+		Liquidations: []*types.MsgMultiLiquidate_Liquidation{
 			{
 				Pair:   pair,
 				Trader: atRiskTrader1.String(),
@@ -518,14 +518,9 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	_, successLiq := resp.LiquidationResponses[0].Response.(*types.MsgMultiLiquidateResponse_MultiLiquidateResponse_Liquidation)
-	require.True(t, successLiq)
-
-	_, unsuccessfulLiq := resp.LiquidationResponses[1].Response.(*types.MsgMultiLiquidateResponse_MultiLiquidateResponse_Error)
-	require.True(t, unsuccessfulLiq)
-
-	_, successLiq = resp.LiquidationResponses[2].Response.(*types.MsgMultiLiquidateResponse_MultiLiquidateResponse_Liquidation)
-	require.True(t, successLiq)
+	assert.True(t, resp.Liquidations[0].Success)
+	assert.False(t, resp.Liquidations[1].Success)
+	assert.True(t, resp.Liquidations[2].Success)
 
 	// NOTE: we don't care about checking if liquidations math is correct. This is the duty of keeper.Liquidate
 	// what we care about is that the first and third liquidations made some modifications at state
@@ -534,7 +529,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	assertNotLiquidated := func(old types.Position) {
 		position, err := app.PerpKeeper.Positions.Get(ctx, collections.Join(old.Pair, sdk.MustAccAddressFromBech32(old.TraderAddress)))
 		require.NoError(t, err)
-		require.Equal(t, old, position)
+		assert.Equal(t, old, position)
 	}
 
 	assertLiquidated := func(old types.Position) {
@@ -545,6 +540,149 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	assertNotLiquidated(notAtRiskPosition)
 	assertLiquidated(atRiskPosition1)
 	assertLiquidated(atRiskPosition2)
+}
+
+func TestMsgServerMultiLiquidate_NotAuthorized(t *testing.T) {
+	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+	ctx = ctx.WithBlockTime(time.Now())
+	msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
+
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	liquidator := testutil.AccAddress()
+
+	atRiskTrader1 := testutil.AccAddress()
+
+	t.Log("create vpool")
+	assert.NoError(t, app.VpoolKeeper.CreatePool(
+		/* ctx */ ctx,
+		/* pair */ pair,
+		/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
+		/* baseAssetReserve */ sdk.NewDec(1*common.Precision),
+		vpooltypes.VpoolConfig{
+			TradeLimitRatio:        sdk.OneDec(),
+			FluctuationLimitRatio:  sdk.OneDec(),
+			MaxOracleSpreadRatio:   sdk.OneDec(),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
+		},
+	))
+	keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
+		Pair:                            pair,
+		LatestCumulativePremiumFraction: sdk.ZeroDec(),
+	})
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
+
+	t.Log("set oracle price")
+	app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdk.OneDec())
+
+	t.Log("create positions")
+	atRiskPosition1 := types.Position{
+		TraderAddress:                   atRiskTrader1.String(),
+		Pair:                            pair,
+		Size_:                           sdk.OneDec(),
+		Margin:                          sdk.OneDec(),
+		OpenNotional:                    sdk.NewDec(2),
+		LatestCumulativePremiumFraction: sdk.ZeroDec(),
+	}
+	keeper.SetPosition(app.PerpKeeper, ctx, atRiskPosition1)
+
+	require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
+
+	resp, err := msgServer.MultiLiquidate(sdk.WrapSDKContext(ctx), &types.MsgMultiLiquidate{
+		Sender: liquidator.String(),
+		Liquidations: []*types.MsgMultiLiquidate_Liquidation{
+			{
+				Pair:   pair,
+				Trader: atRiskTrader1.String(),
+			},
+		},
+	})
+	assert.Nil(t, resp)
+	require.ErrorIs(t, err, types.ErrUnauthorized)
+
+	// NOTE: we don't care about checking if liquidations math is correct. This is the duty of keeper.Liquidate
+	// what we care about is that the first and third liquidations made some modifications at state
+	// and events levels, whilst the second (which failed) didn't.
+
+	assertNotLiquidated := func(old types.Position) {
+		position, err := app.PerpKeeper.Positions.Get(ctx, collections.Join(old.Pair, sdk.MustAccAddressFromBech32(old.TraderAddress)))
+		require.NoError(t, err)
+		assert.Equal(t, old, position)
+	}
+
+	assertNotLiquidated(atRiskPosition1)
+}
+
+func TestMsgServerMultiLiquidate_AllFailed(t *testing.T) {
+	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+	ctx = ctx.WithBlockTime(time.Now())
+	msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
+
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	liquidator := testutil.AccAddress()
+
+	notAtRiskTrader := testutil.AccAddress()
+
+	t.Log("create vpool")
+	assert.NoError(t, app.VpoolKeeper.CreatePool(
+		/* ctx */ ctx,
+		/* pair */ pair,
+		/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
+		/* baseAssetReserve */ sdk.NewDec(1*common.Precision),
+		vpooltypes.VpoolConfig{
+			TradeLimitRatio:        sdk.OneDec(),
+			FluctuationLimitRatio:  sdk.OneDec(),
+			MaxOracleSpreadRatio:   sdk.OneDec(),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
+		},
+	))
+	keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
+		Pair:                            pair,
+		LatestCumulativePremiumFraction: sdk.ZeroDec(),
+	})
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
+
+	t.Log("set oracle price")
+	app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdk.OneDec())
+
+	t.Log("create positions")
+	notAtRiskPosition := types.Position{
+		TraderAddress:                   notAtRiskTrader.String(),
+		Pair:                            pair,
+		Size_:                           sdk.OneDec(),
+		Margin:                          sdk.OneDec(),
+		OpenNotional:                    sdk.OneDec(),
+		LatestCumulativePremiumFraction: sdk.ZeroDec(),
+	}
+	keeper.SetPosition(app.PerpKeeper, ctx, notAtRiskPosition)
+
+	require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
+
+	setLiquidator(ctx, app.PerpKeeper, liquidator)
+	resp, err := msgServer.MultiLiquidate(sdk.WrapSDKContext(ctx), &types.MsgMultiLiquidate{
+		Sender: liquidator.String(),
+		Liquidations: []*types.MsgMultiLiquidate_Liquidation{
+			{
+				Pair:   pair,
+				Trader: notAtRiskTrader.String(),
+			},
+		},
+	})
+	assert.Nil(t, resp)
+	require.ErrorIs(t, err, types.ErrAllLiquidationsFailed)
+
+	// NOTE: we don't care about checking if liquidations math is correct. This is the duty of keeper.Liquidate
+	// what we care about is that the first and third liquidations made some modifications at state
+	// and events levels, whilst the second (which failed) didn't.
+
+	assertNotLiquidated := func(old types.Position) {
+		position, err := app.PerpKeeper.Positions.Get(ctx, collections.Join(old.Pair, sdk.MustAccAddressFromBech32(old.TraderAddress)))
+		require.NoError(t, err)
+		assert.Equal(t, old, position)
+	}
+
+	assertNotLiquidated(notAtRiskPosition)
 }
 
 func TestMsgServerDonateToEcosystemFund(t *testing.T) {
@@ -576,7 +714,7 @@ func TestMsgServerDonateToEcosystemFund(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, tc.sender, tc.initialFunds))
 

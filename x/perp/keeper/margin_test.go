@@ -10,11 +10,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	simapp2 "github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -51,7 +52,7 @@ func TestAddMarginSuccess(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 			traderAddr := sdk.MustAccAddressFromBech32(tc.initialPosition.TraderAddress)
 
 			t.Log("add trader funds")
@@ -80,14 +81,14 @@ func TestAddMarginSuccess(t *testing.T) {
 			require.True(t, vpoolKeeper.ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)))
 
 			t.Log("set pair metadata")
-			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
+			keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: tc.latestCumulativePremiumFraction,
 			},
 			)
 
 			t.Log("establish initial position")
-			setPosition(nibiruApp.PerpKeeper, ctx, tc.initialPosition)
+			keeper.SetPosition(nibiruApp.PerpKeeper, ctx, tc.initialPosition)
 
 			resp, err := nibiruApp.PerpKeeper.AddMargin(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), traderAddr, tc.marginToAdd)
 			require.NoError(t, err)
@@ -114,7 +115,7 @@ func TestRemoveMargin(t *testing.T) {
 			test: func() {
 				removeAmt := sdk.NewInt(5)
 
-				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+				nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 				trader := testutilevents.AccAddress()
 				pair := asset.MustNewPair("osmo:nusd")
 
@@ -127,7 +128,7 @@ func TestRemoveMargin(t *testing.T) {
 			name: "pool exists but trader doesn't have position - fail",
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
-				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+				nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 				trader := testutilevents.AccAddress()
 				pair := asset.MustNewPair("osmo:nusd")
 
@@ -159,7 +160,7 @@ func TestRemoveMargin(t *testing.T) {
 			name: "remove margin from healthy position",
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
-				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+				nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 				ctx = ctx.WithBlockTime(time.Now())
 				traderAddr := testutilevents.AccAddress()
 				pair := asset.MustNewPair("xxx:yyy")
@@ -184,7 +185,7 @@ func TestRemoveMargin(t *testing.T) {
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
-				setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
+				keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 					Pair:                            pair,
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				})

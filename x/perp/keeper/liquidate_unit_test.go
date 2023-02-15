@@ -96,14 +96,14 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 				Margin:        tc.initialPositionMargin,
 				OpenNotional:  tc.initialPositionOpenNotional,
 			}
-			setPosition(perpKeeper, ctx, position)
+			SetPosition(perpKeeper, ctx, position)
 
 			t.Log("set params")
 			params := types.DefaultParams()
 			perpKeeper.SetParams(ctx, params)
 
 			t.Log("set pair metadata")
-			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
+			SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
@@ -271,14 +271,14 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 				Margin:        tc.initialPositionMargin,
 				OpenNotional:  tc.initialPositionOpenNotional,
 			}
-			setPosition(perpKeeper, ctx, position)
+			SetPosition(perpKeeper, ctx, position)
 
 			t.Log("set params")
 			params := types.DefaultParams()
 			perpKeeper.SetParams(ctx, params)
 
 			t.Log("set pair metadata")
-			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
+			SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
@@ -442,14 +442,14 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 				Margin:        tc.initialPositionMargin,
 				OpenNotional:  tc.initialPositionOpenNotional,
 			}
-			setPosition(perpKeeper, ctx, position)
+			SetPosition(perpKeeper, ctx, position)
 
 			t.Log("set params")
 			params := types.DefaultParams()
 			perpKeeper.SetParams(ctx, params)
 
 			t.Log("set pair metadata")
-			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
+			SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
@@ -928,7 +928,7 @@ func TestKeeper_ExecuteFullLiquidation(t *testing.T) {
 			newParams := types.DefaultParams()
 			newParams.LiquidationFeeRatio = tc.liquidationFee
 			perpKeeper.SetParams(ctx, newParams)
-			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
+			SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
@@ -966,7 +966,7 @@ func TestKeeper_ExecuteFullLiquidation(t *testing.T) {
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                     ctx.BlockHeight(),
 			}
-			setPosition(perpKeeper, ctx, position)
+			SetPosition(perpKeeper, ctx, position)
 
 			t.Log("execute full liquidation")
 			liquidationResp, err := perpKeeper.ExecuteFullLiquidation(
@@ -1219,7 +1219,7 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 			newParams.LiquidationFeeRatio = tc.liquidationFee
 			newParams.PartialLiquidationRatio = tc.partialLiquidationRatio
 			perpKeeper.SetParams(ctx, newParams)
-			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
+			SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
@@ -1280,7 +1280,7 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                     ctx.BlockHeight(),
 			}
-			setPosition(perpKeeper, ctx, position)
+			SetPosition(perpKeeper, ctx, position)
 
 			t.Log("execute partial liquidation")
 			liquidationResp, err := perpKeeper.ExecutePartialLiquidation(

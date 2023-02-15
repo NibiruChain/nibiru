@@ -6,8 +6,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
-
-	"github.com/NibiruChain/nibiru/simapp"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -18,7 +17,7 @@ import (
 )
 
 func TestKeeper_GetStableMarketCap(t *testing.T) {
-	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(false)
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(false)
 	k := nibiruApp.StablecoinKeeper
 
 	// We set some supply
@@ -34,7 +33,7 @@ func TestKeeper_GetStableMarketCap(t *testing.T) {
 }
 
 func TestKeeper_GetGovMarketCap(t *testing.T) {
-	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(false)
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(false)
 	keeper := nibiruApp.StablecoinKeeper
 
 	poolAccountAddr := testutil.AccAddress()
@@ -71,7 +70,7 @@ func TestKeeper_GetGovMarketCap(t *testing.T) {
 }
 
 func TestKeeper_GetLiquidityRatio_AndBands(t *testing.T) {
-	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(false)
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(false)
 	keeper := nibiruApp.StablecoinKeeper
 
 	poolAccountAddr := testutil.AccAddress()

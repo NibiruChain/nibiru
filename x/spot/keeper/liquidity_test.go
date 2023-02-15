@@ -12,7 +12,7 @@ import (
 )
 
 func TestGetSetDenomLiquidity(t *testing.T) {
-	app, ctx := testapp.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext(true)
 
 	// Write to store
 	coin := sdk.NewCoin("nibi", sdk.NewInt(1_000))
@@ -25,7 +25,7 @@ func TestGetSetDenomLiquidity(t *testing.T) {
 }
 
 func TestGetTotalLiquidity(t *testing.T) {
-	app, ctx := testapp.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext(true)
 
 	// Write to store
 	coinMap := map[string]sdk.Int{
@@ -64,7 +64,7 @@ func assertLiqValues(
 }
 
 func TestSetTotalLiquidity(t *testing.T) {
-	app, ctx := testapp.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext(true)
 
 	// Write to store
 	assert.NoError(t, app.SpotKeeper.SetTotalLiquidity(ctx, sdk.NewCoins(
@@ -83,7 +83,7 @@ func TestSetTotalLiquidity(t *testing.T) {
 }
 
 func TestRecordTotalLiquidityIncrease(t *testing.T) {
-	app, ctx := testapp.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext(true)
 
 	// Write to store
 	assert.NoError(t, app.SpotKeeper.SetTotalLiquidity(ctx, sdk.NewCoins(
@@ -104,7 +104,7 @@ func TestRecordTotalLiquidityIncrease(t *testing.T) {
 }
 
 func TestRecordTotalLiquidityDecrease(t *testing.T) {
-	app, ctx := testapp.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext(true)
 
 	// Write to store
 	assert.NoError(t, app.SpotKeeper.SetTotalLiquidity(ctx, sdk.NewCoins(
