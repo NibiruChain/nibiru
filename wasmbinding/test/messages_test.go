@@ -8,10 +8,8 @@ import (
 
 	"github.com/NibiruChain/nibiru/wasmbinding"
 	"github.com/NibiruChain/nibiru/wasmbinding/bindings"
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
-	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 
 	"github.com/stretchr/testify/require"
 
@@ -31,7 +29,7 @@ func fundAccount(t *testing.T, ctx sdk.Context, app *app.NibiruApp, addr sdk.Acc
 	require.NoError(t, err)
 }
 
-func TestOpenClosePosition(t *testing.T) {
+func TestOpenPosition(t *testing.T) {
 	actor := RandomAccountAddress()
 	app, ctx := SetupCustomApp(t, actor)
 	ctx = ctx.WithBlockTime(time.Now())
@@ -60,29 +58,8 @@ func TestOpenClosePosition(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			t.Log("Create vpool")
-			vpoolKeeper := &app.VpoolKeeper
+			PreparePool(t, app, ctx, tokenPair)
 			perpKeeper := &app.PerpKeeper
-			assert.NoError(t, vpoolKeeper.CreatePool(
-				ctx,
-				tokenPair,
-				sdk.NewDec(10*common.Precision),
-				sdk.NewDec(5*common.Precision),
-				vpooltypes.VpoolConfig{
-					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
-					FluctuationLimitRatio:  sdk.OneDec(),
-					MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
-					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-					MaxLeverage:            sdk.MustNewDecFromStr("15"),
-				},
-			))
-			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
-			app.OracleKeeper.SetPrice(ctx, tokenPair, sdk.NewDec(2))
-
-			pairMetadata := perptypes.PairMetadata{
-				Pair:                            tokenPair,
-				LatestCumulativePremiumFraction: sdk.ZeroDec(),
-			}
-			perpKeeper.PairsMetadata.Insert(ctx, pairMetadata.Pair, pairMetadata)
 
 			t.Log("Fund trader account with sufficient quote")
 			fundAccount(t, ctx, app, actor, sdk.NewCoins(sdk.NewInt64Coin("NUSD", 50_100)))
@@ -127,29 +104,8 @@ func TestClosePosition(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			t.Log("Create vpool")
-			vpoolKeeper := &app.VpoolKeeper
+			PreparePool(t, app, ctx, tokenPair)
 			perpKeeper := &app.PerpKeeper
-			assert.NoError(t, vpoolKeeper.CreatePool(
-				ctx,
-				tokenPair,
-				sdk.NewDec(10*common.Precision),
-				sdk.NewDec(5*common.Precision),
-				vpooltypes.VpoolConfig{
-					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
-					FluctuationLimitRatio:  sdk.OneDec(),
-					MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
-					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-					MaxLeverage:            sdk.MustNewDecFromStr("15"),
-				},
-			))
-			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
-			app.OracleKeeper.SetPrice(ctx, tokenPair, sdk.NewDec(2))
-
-			pairMetadata := perptypes.PairMetadata{
-				Pair:                            tokenPair,
-				LatestCumulativePremiumFraction: sdk.ZeroDec(),
-			}
-			perpKeeper.PairsMetadata.Insert(ctx, pairMetadata.Pair, pairMetadata)
 
 			t.Log("Fund trader account with sufficient quote")
 			fundAccount(t, ctx, app, actor, sdk.NewCoins(sdk.NewInt64Coin("NUSD", 50_100)))
