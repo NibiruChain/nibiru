@@ -9,16 +9,16 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/vpool"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 func TestSnapshotUpdates(t *testing.T) {
-	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 	vpoolKeeper := nibiruApp.VpoolKeeper
 
 	runBlock := func(duration time.Duration) {
