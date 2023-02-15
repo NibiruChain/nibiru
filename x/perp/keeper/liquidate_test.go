@@ -10,13 +10,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	nibisimapp "github.com/NibiruChain/nibiru/simapp"
-	simapp2 "github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
@@ -81,7 +80,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 	for name, testCase := range testCases {
 		tc := testCase
 		t.Run(name, func(t *testing.T) {
-			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 			ctx = ctx.WithBlockTime(time.Now())
 			perpKeeper := &nibiruApp.PerpKeeper
 
@@ -260,7 +259,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 			ctx = ctx.WithBlockTime(time.Now())
 
 			t.Log("Set vpool defined by pair on VpoolKeeper")
@@ -432,7 +431,7 @@ func TestMultiLiquidate(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 			ctx = ctx.WithBlockTime(time.Now())
 			setLiquidator(ctx, app.PerpKeeper, tc.liquidator)
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)

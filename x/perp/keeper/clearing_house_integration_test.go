@@ -11,12 +11,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	nibisimapp "github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
@@ -261,7 +261,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
 			t.Log("Setup Nibiru app and constants")
-			nibiruApp, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 			traderAddr := testutil.AccAddress()
 			exchangedSize := tc.expectedSize
 
@@ -514,7 +514,7 @@ func TestOpenPositionError(t *testing.T) {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
 			t.Log("Setup Nibiru app and constants")
-			nibiruApp, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 			traderAddr := testutil.AccAddress()
 
 			t.Log("initialize vpool")
@@ -564,7 +564,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 			name: "open pos - uninitialized pool raised pair not supported error",
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader without a vpool.")
-				nibiruApp, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
+				nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 				pair := asset.MustNewPair("xxx:yyy")
 
 				trader := testutil.AccAddress()
@@ -584,7 +584,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 			name: "open pos - vpool not set on the perp PairMetadata ",
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
-				nibiruApp, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
+				nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 				pair := asset.MustNewPair("xxx:yyy")
 
 				t.Log("Set vpool defined by pair on VpoolKeeper")

@@ -14,7 +14,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/spot/client/cli"
 	"github.com/NibiruChain/nibiru/x/spot/types"
 )
@@ -141,7 +140,7 @@ func ExecMsgSwapAssets(
 }
 
 // WhitelistGenesisAssets given a testapp.GenesisState includes the whitelisted assets into spot Whitelisted assets.
-func WhitelistGenesisAssets(state testapp.GenesisState, assets []string) testapp.GenesisState {
+func WhitelistGenesisAssets(state app.GenesisState, assets []string) app.GenesisState {
 	encConfig := app.MakeTestEncodingConfig()
 
 	jsonState := state[types.ModuleName]

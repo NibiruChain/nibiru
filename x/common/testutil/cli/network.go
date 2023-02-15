@@ -14,9 +14,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 
+	"github.com/NibiruChain/nibiru/app"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -43,8 +44,6 @@ import (
 	"github.com/tendermint/tendermint/node"
 	tmclient "github.com/tendermint/tendermint/rpc/client"
 	"google.golang.org/grpc"
-
-	"github.com/NibiruChain/nibiru/app"
 )
 
 // package-wide network lock to only allow one test network at a time
@@ -137,7 +136,7 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 		InterfaceRegistry: encCfg.InterfaceRegistry,
 		AccountRetriever:  authtypes.AccountRetriever{},
 		AppConstructor: func(val Validator) servertypes.Application {
-			return simapp.NewTestNibiruAppWithGenesis(appGenesis)
+			return testapp.NewNibiruTestApp(appGenesis)
 		},
 		GenesisState:  appGenesis,
 		TimeoutCommit: time.Second / 2,

@@ -3,10 +3,6 @@ package stablecoin
 import (
 	"math/rand"
 
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
@@ -14,15 +10,6 @@ import (
 
 	scsim "github.com/NibiruChain/nibiru/x/stablecoin/simulation"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
-)
-
-// avoid unused import issue
-var (
-	_ = testutil.AccAddress
-	_ = scsim.FindAccount
-	_ = simappparams.StakePerAccount
-	_ = simulation.MsgEntryKind
-	_ = baseapp.Paramspace
 )
 
 const (
