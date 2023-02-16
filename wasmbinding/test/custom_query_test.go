@@ -51,9 +51,9 @@ func TestQueryPosition(t *testing.T) {
 		},
 	}
 	resp := perptypes.QueryPositionResponse{}
-	queryCustom(t, ctx, app, perp, query, &resp)
+	queryCustom(t, ctx, app, perp, query, &resp, false)
 
-	require.Equal(t, resp.Position.Pair, tokenPair)
+	require.Equal(t, resp.Position.Pair, pair)
 }
 
 func TestQueryPositions(t *testing.T) {
@@ -89,24 +89,22 @@ func TestQueryPositions(t *testing.T) {
 		},
 	}
 	resp := perptypes.QueryPositionsResponse{}
-	queryCustom(t, ctx, app, perp, query, &resp)
+	queryCustom(t, ctx, app, perp, query, &resp, false)
 
-	require.Equal(t, resp.Positions[0].Position.Pair, tokenPair)
+	require.Equal(t, resp.Positions[0].Position.Pair, pair)
 }
 
-type WasmResponse struct {
-	Data []byte `json:"data"`
-}
-
-func queryCustom(t *testing.T, ctx sdk.Context, app *app.NibiruApp, contract sdk.AccAddress, request bindings.NibiruQuery, response interface{}) {
+func queryCustom(t *testing.T, ctx sdk.Context, app *app.NibiruApp, contract sdk.AccAddress, request bindings.NibiruQuery, response interface{}, shouldFail bool) {
 	queryBz, err := json.Marshal(request)
 	require.NoError(t, err)
 
 	resBz, err := app.WasmKeeper.QuerySmart(ctx, contract, queryBz)
+	if shouldFail {
+		require.Error(t, err)
+		return
+	}
+
 	require.NoError(t, err)
-	var resp WasmResponse
-	err = json.Unmarshal(resBz, &resp)
-	require.NoError(t, err)
-	err = json.Unmarshal(resp.Data, response)
+	err = json.Unmarshal(resBz, response)
 	require.NoError(t, err)
 }

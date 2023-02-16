@@ -50,9 +50,9 @@ func TestOpenPositionMsg(t *testing.T) {
 		},
 	}
 	resp := perptypes.QueryPositionResponse{}
-	queryCustom(t, ctx, app, perp, query, &resp)
+	queryCustom(t, ctx, app, perp, query, &resp, false)
 
-	require.Equal(t, resp.Position.Pair, tokenPair)
+	require.Equal(t, resp.Position.Pair, pair)
 }
 
 func TestClosePositionMsg(t *testing.T) {
@@ -97,9 +97,7 @@ func TestClosePositionMsg(t *testing.T) {
 		},
 	}
 	resp := perptypes.QueryPositionResponse{}
-	queryCustom(t, ctx, app, perp, query, &resp)
-
-	require.Equal(t, resp.Position, nil)
+	queryCustom(t, ctx, app, perp, query, &resp, true)
 }
 
 func executeCustom(t *testing.T, ctx sdk.Context, app *app.NibiruApp, contract sdk.AccAddress, sender sdk.AccAddress, msg bindings.NibiruMsg, funds sdk.Coin) error {

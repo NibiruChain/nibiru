@@ -26,14 +26,14 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 				return nil, sdkerrors.Wrap(err, "position")
 			}
 
-			bz, err := json.Marshal(res)
+			bz, err := json.Marshal(*res)
 			if err != nil {
 				return nil, sdkerrors.Wrap(err, "position")
 			}
 
 			return bz, nil
 		case contractQuery.Positions != nil:
-			res, err := qp.GetPositions(ctx, contractQuery.Position.Trader)
+			res, err := qp.GetPositions(ctx, contractQuery.Positions.Trader)
 			if err != nil {
 				return nil, sdkerrors.Wrap(err, "positions")
 			}

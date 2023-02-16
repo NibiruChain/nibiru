@@ -18,10 +18,10 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/NibiruChain/nibiru/app"
-	nibirusimapp "github.com/NibiruChain/nibiru/simapp"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -85,7 +85,8 @@ func instantiatePerpContract(t *testing.T, ctx sdk.Context, nibiru *app.NibiruAp
 }
 
 func CreateTestInput() (*app.NibiruApp, sdk.Context) {
-	app := nibirusimapp.NewTestNibiruApp(true)
+	encoding := app.MakeTestEncodingConfig()
+	app := testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encoding.Marshaler))
 	ctx := app.BaseApp.NewContext(false, tmproto.Header{Height: 1, ChainID: "kujira-1", Time: time.Now().UTC()})
 	return app, ctx
 }
