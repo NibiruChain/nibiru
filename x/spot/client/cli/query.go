@@ -44,7 +44,7 @@ func GetQueryCmd() *cobra.Command {
 func CmdGetPoolNumber() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "get-pool-number",
-		Short: "QueryPoolNumber",
+		Short: "Returns the next available pool ID",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -72,7 +72,7 @@ func CmdGetPoolNumber() *cobra.Command {
 
 func CmdGetPool() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get-pool [pool-id]",
+		Use:   "pool [pool-id]",
 		Short: "Get a pool by its ID",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {

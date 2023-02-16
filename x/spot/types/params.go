@@ -36,6 +36,7 @@ func DefaultParams() Params {
 			denoms.NIBI,
 			denoms.USDC,
 			denoms.NUSD,
+			denoms.USDT,
 		},
 	}
 }
