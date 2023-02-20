@@ -3,8 +3,7 @@ name: CosmWasm e2e contract tests
 
 on:
   # On normal PRs or when workflow goreleaser finishes, as it gets the last release tag.
-  push:
-#  pull_request:
+  pull_request:
 #  workflow_run:
 #    workflows: ["goreleaser"]
 #    types:
@@ -19,7 +18,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Download release
-        id: v0.19.0
+        id: latest_release
         uses: pozetroninc/github-action-get-latest-release@v0.6.0
         with:
           repository: ${{ github.repository }}
@@ -27,7 +26,8 @@ jobs:
       - name: download release
         uses: robinraju/release-downloader@v1.6
         with:
-          tag: ${{ steps.latest_release.outputs.release }}
+          tag: v0.18.0-rc4
+#          tag: ${{ steps.latest_release.outputs.release }}
           fileName: "*linux_amd64.tar.gz"
 
       - name: unpack release
