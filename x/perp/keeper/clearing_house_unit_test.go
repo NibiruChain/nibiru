@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/NibiruChain/collections"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"
@@ -210,7 +209,7 @@ func TestIncreasePosition(t *testing.T) {
 					Return( /*quoteAssetAmount=*/ sdk.NewDec(200), nil)
 
 				t.Log("set up pair metadata and last cumulative funding rate")
-				setPairMetadata(perpKeeper, ctx,
+				SetPairMetadata(perpKeeper, ctx,
 					types.PairMetadata{
 						Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 						LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
@@ -284,7 +283,7 @@ func TestIncreasePosition(t *testing.T) {
 					Return( /*quoteAssetAmount=*/ sdk.NewDec(99), nil)
 
 				t.Log("set up pair metadata and last cumulative funding rate")
-				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
+				SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
 					Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 				})
@@ -359,7 +358,7 @@ func TestIncreasePosition(t *testing.T) {
 					Return( /*quoteAssetAmount=*/ sdk.NewDec(100), nil)
 
 				t.Log("set up pair metadata and last cumulative funding rate")
-				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
+				SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
 					Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.2"),
 				})
@@ -432,7 +431,7 @@ func TestIncreasePosition(t *testing.T) {
 					Return( /*quoteAssetAmount=*/ sdk.NewDec(50), nil)
 
 				t.Log("set up pair metadata and last cumulative funding rate")
-				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
+				SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
 					Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 				})
@@ -505,7 +504,7 @@ func TestIncreasePosition(t *testing.T) {
 					Return( /*quoteAssetAmount=*/ sdk.NewDec(101), nil)
 
 				t.Log("set up pair metadata and last cumulative funding rate")
-				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
+				SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
 					Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 				})
@@ -581,7 +580,7 @@ func TestIncreasePosition(t *testing.T) {
 					Return( /*quoteAssetAmount=*/ sdk.NewDec(105), nil)
 
 				t.Log("set up pair metadata and last cumulative funding rate")
-				setPairMetadata(perpKeeper, ctx, types.PairMetadata{
+				SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
 					Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("-0.3"),
 				})
@@ -820,7 +819,7 @@ func TestClosePositionEntirely(t *testing.T) {
 			perpKeeper, mocks, ctx := getKeeper(t)
 
 			t.Log("set up initial position")
-			setPosition(perpKeeper, ctx, tc.initialPosition)
+			SetPosition(perpKeeper, ctx, tc.initialPosition)
 
 			t.Log("mock vpool")
 			mocks.mockVpoolKeeper.EXPECT().
@@ -843,7 +842,7 @@ func TestClosePositionEntirely(t *testing.T) {
 				).Return( /*quoteAssetAmount=*/ tc.newPositionNotional, nil)
 
 			t.Log("set up pair metadata and last cumulative funding rate")
-			setPairMetadata(perpKeeper, ctx, tc.pairMetadata)
+			SetPairMetadata(perpKeeper, ctx, tc.pairMetadata)
 
 			t.Log("close position")
 			resp, err := perpKeeper.closePositionEntirely(
@@ -1139,7 +1138,7 @@ func TestDecreasePosition(t *testing.T) {
 				).Return( /*baseAssetAmount=*/ tc.baseAssetLimit, nil)
 
 			t.Log("set up pair metadata and last cumulative funding rate")
-			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
+			SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 			})
@@ -1515,7 +1514,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                     0,
 			}
-			setPosition(perpKeeper, ctx, currentPosition)
+			SetPosition(perpKeeper, ctx, currentPosition)
 
 			t.Log("mock vpool")
 			mocks.mockVpoolKeeper.EXPECT().
@@ -1550,7 +1549,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 			}
 
 			t.Log("set up pair metadata and last cumulative funding rate")
-			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
+			SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 			})
@@ -1601,7 +1600,7 @@ func TestTransferFee(t *testing.T) {
 		metadata := &types.PairMetadata{
 			Pair: pair,
 		}
-		setPairMetadata(perpKeeper, ctx, *metadata)
+		SetPairMetadata(perpKeeper, ctx, *metadata)
 		trader = testutilevents.AccAddress()
 		positionNotional = sdk.NewDec(5_000)
 		return perpKeeper, mocks, ctx, pair, trader, positionNotional
@@ -1794,7 +1793,7 @@ func TestClosePosition(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Log("set position")
-			setPosition(perpKeeper, ctx, tc.initialPosition)
+			SetPosition(perpKeeper, ctx, tc.initialPosition)
 
 			t.Log("set params")
 			params := types.DefaultParams()
@@ -1851,7 +1850,7 @@ func TestClosePosition(t *testing.T) {
 				Return(sdk.AccAddress{0x1, 0x2, 0x3})
 
 			t.Log("set up pair metadata and last cumulative funding rate")
-			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
+			SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 			})
@@ -1960,7 +1959,7 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Log("set position")
-			setPosition(perpKeeper, ctx, tc.initialPosition)
+			SetPosition(perpKeeper, ctx, tc.initialPosition)
 
 			t.Log("set params")
 			perpKeeper.SetParams(ctx, types.DefaultParams())
@@ -1987,7 +1986,7 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 				).Return( /*quoteAssetAmount=*/ tc.newPositionNotional, nil)
 
 			t.Log("set up pair metadata and last cumulative funding rate")
-			setPairMetadata(perpKeeper, ctx, types.PairMetadata{
+			SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 			})
@@ -2003,12 +2002,4 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 			require.Nil(t, resp)
 		})
 	}
-}
-
-func setPosition(k Keeper, ctx sdk.Context, pos types.Position) {
-	k.Positions.Insert(ctx, collections.Join(pos.Pair, sdk.MustAccAddressFromBech32(pos.TraderAddress)), pos)
-}
-
-func setPairMetadata(k Keeper, ctx sdk.Context, pm types.PairMetadata) {
-	k.PairsMetadata.Insert(ctx, pm.Pair, pm)
 }
