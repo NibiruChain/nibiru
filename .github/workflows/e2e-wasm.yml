@@ -18,7 +18,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Download release
-        id: latest_release
+        id: v0.19.0
         uses: pozetroninc/github-action-get-latest-release@v0.6.0
         with:
           repository: ${{ github.repository }}
