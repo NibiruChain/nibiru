@@ -16,7 +16,7 @@ func TestGenesis(t *testing.T) {
 		Params: types.DefaultParams(),
 	}
 
-	app, ctx := testapp.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext(true)
 	spot.InitGenesis(ctx, app.SpotKeeper, genesisState)
 	got := spot.ExportGenesis(ctx, app.SpotKeeper)
 	require.NotNil(t, got)
