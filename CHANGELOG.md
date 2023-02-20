@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### API Breaking
 
+* [#1196](https://github.com/NibiruChain/nibiru/pull/1196) - refactor(spot)!: default whitelisted asset and query cli
 * [#1195](https://github.com/NibiruChain/nibiru/pull/1195) - feat(perp)!: Add `MultiLiquidation` feature for perps
 * [#1158](https://github.com/NibiruChain/nibiru/pull/1158) - feat(asset-registry)!: Add `AssetRegistry`
 * [#1171](https://github.com/NibiruChain/nibiru/pull/1171) - refactor(asset)!: Replace `common.AssetPair` with `asset.Pair`.
