@@ -4,10 +4,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/simapp"
-
 	"github.com/stretchr/testify/assert"
 
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	sctypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
 )
 
@@ -20,7 +19,7 @@ func TestExpectedKeepers(t *testing.T) {
 		appKeeper      interface{}
 	}
 
-	nibiruApp, _ := simapp.NewTestNibiruAppAndContext(true)
+	nibiruApp, _ := testapp.NewNibiruTestAppAndContext(true)
 	testCases := []TestCase{
 		{
 			name:           "OracleKeeper from x/oracle",

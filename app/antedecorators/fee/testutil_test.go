@@ -11,12 +11,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	xauthsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/suite"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/simapp"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 )
 
 // AnteTestSuite is a test suite to be used with ante handler tests.
@@ -30,18 +28,9 @@ type AnteTestSuite struct {
 	txBuilder   client.TxBuilder
 }
 
-// returns context and app with params set on account keeper
-func createTestApp(isCheckTx bool) (*app.NibiruApp, sdk.Context) {
-	app := simapp.NewTestNibiruApp(true)
-	ctx := app.BaseApp.NewContext(isCheckTx, tmproto.Header{})
-	app.AccountKeeper.SetParams(ctx, authtypes.DefaultParams())
-
-	return app, ctx
-}
-
 // SetupTest setups a new test, with new app, context, and anteHandler.
 func (suite *AnteTestSuite) SetupTest(isCheckTx bool) {
-	suite.app, suite.ctx = createTestApp(isCheckTx)
+	suite.app, suite.ctx = testapp.NewNibiruTestAppAndContext(false)
 	suite.ctx = suite.ctx.WithBlockHeight(1)
 
 	// Set up TxConfig.

@@ -5,13 +5,13 @@ import (
 	"time"
 
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/simapp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/epochs"
 	otypes "github.com/NibiruChain/nibiru/x/oracle/types"
 )
@@ -115,7 +115,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
-			app, ctx = simapp.NewTestNibiruAppAndContext(true)
+			app, ctx = testapp.NewNibiruTestAppAndContext(true)
 
 			ctx = ctx.WithBlockHeight(1)
 			price = tc.price
@@ -131,7 +131,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 }
 
 func TestEpochInfoChangesCollateralValidity(t *testing.T) {
-	app, ctx := simapp.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext(true)
 
 	runBlock := func(duration time.Duration) {
 		ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(ctx.BlockTime().Add(duration))

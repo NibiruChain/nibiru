@@ -8,14 +8,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/simapp"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/epochs/keeper"
 
 	"github.com/NibiruChain/nibiru/x/epochs/types"
 )
 
 func TestQueryEpochInfos(t *testing.T) {
-	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 
 	queryHelper := baseapp.NewQueryServerTestHelper(ctx, nibiruApp.InterfaceRegistry())
 	types.RegisterQueryServer(queryHelper, keeper.NewQuerier(nibiruApp.EpochsKeeper))

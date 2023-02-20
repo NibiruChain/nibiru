@@ -9,11 +9,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	simapp2 "github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 )
 
@@ -27,7 +27,7 @@ func TestSetCollRatio_Input(t *testing.T) {
 	executeTest := func(t *testing.T, testCase TestCase) {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 			stablecoinKeeper := &nibiruApp.StablecoinKeeper
 
 			err := stablecoinKeeper.SetCollRatio(ctx, tc.inCollRatio)
@@ -76,7 +76,7 @@ func TestSetCollRatioUpdate(t *testing.T) {
 	executeTest := func(t *testing.T, testCase TestCase) {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 
 			stablecoinKeeper := &nibiruApp.StablecoinKeeper
 			oracleKeeper := &nibiruApp.OracleKeeper
@@ -135,7 +135,7 @@ func TestSetCollRatioUpdate(t *testing.T) {
 func TestGetCollRatio_Input(t *testing.T) {
 	testName := "GetCollRatio after setting default params returns expected value"
 	t.Run(testName, func(t *testing.T) {
-		nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+		nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 		stablecoinKeeper := &nibiruApp.StablecoinKeeper
 
 		stablecoinKeeper.SetParams(ctx, types.DefaultParams())
@@ -148,7 +148,7 @@ func TestGetCollRatio_Input(t *testing.T) {
 
 	testName = "Setting to non-default value returns expected value"
 	t.Run(testName, func(t *testing.T) {
-		nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+		nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 		stablecoinKeeper := &nibiruApp.StablecoinKeeper
 
 		expectedCollRatio := sdk.MustNewDecFromStr("0.5")
@@ -210,7 +210,7 @@ func TestStableRequiredForTargetCollRatio(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 			stablecoinKeeper := &nibiruApp.StablecoinKeeper
 			require.NoError(t, stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio))
 			require.NoError(t, nibiruApp.BankKeeper.MintCoins(
@@ -284,7 +284,7 @@ func TestRecollateralizeCollAmtForTargetCollRatio(t *testing.T) {
 	for _, testCase := range expectedPasses {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 			stablecoinKeeper := &nibiruApp.StablecoinKeeper
 			require.NoError(t, stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio))
 			require.NoError(t, nibiruApp.BankKeeper.MintCoins(
@@ -323,7 +323,7 @@ func TestRecollateralizeCollAmtForTargetCollRatio(t *testing.T) {
 	for _, testCase := range expectedFails {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 			stablecoinKeeper := &nibiruApp.StablecoinKeeper
 			require.NoError(t, stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio))
 			require.NoError(t, nibiruApp.BankKeeper.MintCoins(
@@ -445,7 +445,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 			stablecoinKeeper := &nibiruApp.StablecoinKeeper
 			require.NoError(t, stablecoinKeeper.SetCollRatio(ctx, tc.targetCollRatio))
 			require.NoError(t, nibiruApp.BankKeeper.MintCoins(
@@ -696,7 +696,7 @@ func TestRecollateralize(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			require.EqualValues(t, tc.expectedNeededUSD, tc.scenario.CalcNeededUSD())
 
-			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 			stablecoinKeeper := &nibiruApp.StablecoinKeeper
 			require.NoError(t, stablecoinKeeper.SetCollRatio(ctx, tc.scenario.collRatio))
 			require.NoError(t, nibiruApp.BankKeeper.MintCoins(
@@ -754,7 +754,7 @@ func TestRecollateralize_Short(t *testing.T) {
 		{
 			name: "invalid address - error",
 			test: func() {
-				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+				nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 				goCtx := sdk.WrapSDKContext(ctx)
 
 				msg := &types.MsgRecollateralize{
@@ -767,7 +767,7 @@ func TestRecollateralize_Short(t *testing.T) {
 		{
 			name: "prices expired - error",
 			test: func() {
-				nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+				nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 				goCtx := sdk.WrapSDKContext(ctx)
 				sender := testutil.AccAddress()
 				msg := &types.MsgRecollateralize{
@@ -812,7 +812,7 @@ func TestBuyback_MsgFormat(t *testing.T) {
 	} {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 			msg := types.MsgBuyback{
 				Creator: tc.caller,
 				Gov:     tc.gov,
@@ -1065,7 +1065,7 @@ func TestBuyback(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			require.EqualValues(t, tc.expectedNeededUSD, tc.scenario.CalcNeededUSD())
 
-			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 			stablecoinKeeper := &nibiruApp.StablecoinKeeper
 			require.NoError(t, stablecoinKeeper.SetCollRatio(ctx, tc.scenario.collRatio))
 
@@ -1180,7 +1180,7 @@ func TestBuybackGovAmtForTargetCollRatio(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 			stablecoinKeeper := &nibiruApp.StablecoinKeeper
 			require.NoError(t, stablecoinKeeper.SetCollRatio(ctx, tc.scenario.collRatio))
 			require.NoError(t, nibiruApp.BankKeeper.MintCoins(

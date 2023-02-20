@@ -3,10 +3,9 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/NibiruChain/nibiru/simapp"
-
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	sckeeper "github.com/NibiruChain/nibiru/x/stablecoin/keeper"
 )
 
@@ -24,7 +23,7 @@ func TestNewMsgServerImpl(t *testing.T) {
 		})
 	}
 
-	nibiruApp, _ := simapp.NewTestNibiruAppAndContext(true)
+	nibiruApp, _ := testapp.NewNibiruTestAppAndContext(true)
 	testCases := []TestCase{
 		{
 			name:   "Default NibiruApp.StablecoinKeeper, should pass",

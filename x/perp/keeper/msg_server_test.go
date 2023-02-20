@@ -13,11 +13,11 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	nibisimapp "github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
@@ -73,7 +73,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 			traderAddr := testutil.AccAddress()
 
@@ -194,7 +194,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 			traderAddr := testutil.AccAddress()
 
@@ -281,7 +281,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 			ctx = ctx.WithBlockTime(time.Now())
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
@@ -368,7 +368,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
 			t.Log("create vpool")
@@ -431,7 +431,7 @@ func setLiquidator(ctx sdk.Context, perpKeeper keeper.Keeper, liquidator sdk.Acc
 }
 
 func TestMsgServerMultiLiquidate(t *testing.T) {
-	app, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext(true)
 	ctx = ctx.WithBlockTime(time.Now())
 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
@@ -543,7 +543,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 }
 
 func TestMsgServerMultiLiquidate_NotAuthorized(t *testing.T) {
-	app, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext(true)
 	ctx = ctx.WithBlockTime(time.Now())
 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
@@ -614,7 +614,7 @@ func TestMsgServerMultiLiquidate_NotAuthorized(t *testing.T) {
 }
 
 func TestMsgServerMultiLiquidate_AllFailed(t *testing.T) {
-	app, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext(true)
 	ctx = ctx.WithBlockTime(time.Now())
 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
@@ -714,7 +714,7 @@ func TestMsgServerDonateToEcosystemFund(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := nibisimapp.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, tc.sender, tc.initialFunds))
 

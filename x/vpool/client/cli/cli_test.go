@@ -14,11 +14,11 @@ import (
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
+	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/NibiruChain/nibiru/x/vpool/client/cli"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
@@ -72,7 +72,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	app.SetPrefixes(app.AccountAddressPrefix)
 
 	encodingConfig := app.MakeTestEncodingConfig()
-	genesisState := simapp.NewTestGenesisStateFromDefault()
+	genesisState := genesis.NewTestGenesisState()
 	vpoolGenesis := vpooltypes.DefaultGenesis()
 	vpoolGenesis.Vpools = []vpooltypes.Vpool{
 		START_VPOOLS[asset.Registry.Pair(denoms.ETH, denoms.NUSD)],

@@ -7,6 +7,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	sdkSimapp "github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/simapp/helpers"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
@@ -35,23 +37,24 @@ func TestFullAppSimulation(tb *testing.T) {
 		}
 	}()
 
-	nibiru := NewTestNibiruApp( /*shouldUseDefaultGenesis*/ true)
+	encoding := app.MakeTestEncodingConfig()
+	app := testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encoding.Marshaler))
 
 	// Run randomized simulation:
 	_, simParams, simErr := simulation.SimulateFromSeed(
 		/* tb */ tb,
 		/* w */ os.Stdout,
-		/* app */ nibiru.BaseApp,
-		/* appStateFn */ AppStateFn(nibiru.AppCodec(), nibiru.SimulationManager()),
+		/* app */ app.BaseApp,
+		/* appStateFn */ AppStateFn(app.AppCodec(), app.SimulationManager()),
 		/* randAccFn */ simulationtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
-		/* ops */ sdkSimapp.SimulationOperations(nibiru, nibiru.AppCodec(), config), // Run all registered operations
-		/* blockedAddrs */ nibiru.ModuleAccountAddrs(),
+		/* ops */ sdkSimapp.SimulationOperations(app, app.AppCodec(), config), // Run all registered operations
+		/* blockedAddrs */ app.ModuleAccountAddrs(),
 		/* config */ config,
-		/* cdc */ nibiru.AppCodec(),
+		/* cdc */ app.AppCodec(),
 	)
 
 	// export state and simParams before the simulation error is checked
-	if err = sdkSimapp.CheckExportSimulation(nibiru, config, simParams); err != nil {
+	if err = sdkSimapp.CheckExportSimulation(app, config, simParams); err != nil {
 		tb.Fatal(err)
 	}
 
@@ -69,6 +72,8 @@ func TestAppStateDeterminism(t *testing.T) {
 		t.Skip("skipping application simulation")
 	}
 
+	encoding := app.MakeTestEncodingConfig()
+
 	config := sdkSimapp.NewConfigFromFlags()
 	config.InitialBlockHeight = 1
 	config.ExportParamsPath = ""
@@ -85,7 +90,7 @@ func TestAppStateDeterminism(t *testing.T) {
 
 		for j := 0; j < numTimesToRunPerSeed; j++ {
 			db := dbm.NewMemDB()
-			app := NewTestNibiruApp( /*shouldUseDefaultGenesis*/ true)
+			app := testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encoding.Marshaler))
 
 			fmt.Printf(
 				"running non-determinism simulation; seed %d: %d/%d, attempt: %d/%d\n",

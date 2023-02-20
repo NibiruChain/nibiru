@@ -6,13 +6,12 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/simapp"
-
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/epochs/types"
 )
 
 func TestUpsertEpochInfo_HappyPath(t *testing.T) {
-	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 
 	epochInfo := types.EpochInfo{
 		Identifier:            "monthly",
@@ -39,7 +38,7 @@ func TestUpsertEpochInfo_HappyPath(t *testing.T) {
 }
 
 func TestEpochExists(t *testing.T) {
-	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 
 	epochInfo := types.EpochInfo{
 		Identifier:            "monthly",
@@ -56,7 +55,7 @@ func TestEpochExists(t *testing.T) {
 }
 
 func TestItFailsAddingEpochThatExists(t *testing.T) {
-	nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 
 	epochInfo := types.EpochInfo{
 		Identifier:            "monthly",
