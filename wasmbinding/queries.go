@@ -3,10 +3,11 @@ package wasmbinding
 import (
 	"fmt"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type QueryPlugin struct {

@@ -8,14 +8,16 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
-	"github.com/NibiruChain/nibiru/wasmbinding"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/wasmbinding"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/wasmbinding/bindings"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestOpenPositionMsg(t *testing.T) {

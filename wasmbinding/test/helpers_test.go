@@ -7,22 +7,24 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
-	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
+	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
+	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
+
 	"github.com/NibiruChain/nibiru/app"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 )
 
 func SetupCustomApp(t *testing.T, addr sdk.AccAddress) (*app.NibiruApp, sdk.Context) {

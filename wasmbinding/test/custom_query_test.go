@@ -9,12 +9,13 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/wasmbinding"
 	"github.com/NibiruChain/nibiru/wasmbinding/bindings"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestQueryPosition(t *testing.T) {
