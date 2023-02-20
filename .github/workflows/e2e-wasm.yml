@@ -4,6 +4,7 @@ name: CosmWasm e2e contract tests
 on:
   # On normal PRs or when workflow goreleaser finishes, as it gets the last release tag.
   pull_request:
+  push:
 #  workflow_run:
 #    workflows: ["goreleaser"]
 #    types:
