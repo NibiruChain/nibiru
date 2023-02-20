@@ -242,6 +242,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Features
 
+* [#1182](https://github.com/NibiruChain/nibiru/pull/1182) - feat: wasmbinding integration
 * [#1019](https://github.com/NibiruChain/nibiru/pull/1019) - add fields to the snapshot reserve event
 * [#1010](https://github.com/NibiruChain/nibiru/pull/1010) - feeder: initialize oracle feeder core logic
 * [#966](https://github.com/NibiruChain/nibiru/pull/966) - collections: add indexed map
