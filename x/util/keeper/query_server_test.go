@@ -6,14 +6,14 @@ import (
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/util/keeper"
 	"github.com/NibiruChain/nibiru/x/util/types"
 )
 
 func TestQueryServer_ModuleAccounts(t *testing.T) {
-	app, ctx := simapp.NewTestNibiruAppAndContext(false)
+	app, ctx := testapp.NewNibiruTestAppAndContext(false)
 	goCtx := sdktypes.WrapSDKContext(ctx)
 
 	qServer := keeper.NewQueryServer(app.BankKeeper)

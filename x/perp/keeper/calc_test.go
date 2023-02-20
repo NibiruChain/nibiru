@@ -8,11 +8,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -25,7 +26,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 		{
 			name: "get - no positions set raises vpool not found error",
 			test: func() {
-				nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
+				nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 
 				marginDelta := sdk.OneDec()
 				_, err := nibiruApp.PerpKeeper.CalcRemainMarginWithFundingPayment(
@@ -39,7 +40,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 			name: "signedRemainMargin negative bc of marginDelta",
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
-				nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
+				nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 				trader := testutil.AccAddress()
 				pair := asset.MustNewPair("osmo:nusd")
 
@@ -61,7 +62,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
-				setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
+				keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 					Pair:                            pair,
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				})
@@ -92,7 +93,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 			name: "large fPayment lowers pos value by half",
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
-				nibiruApp, ctx := simapp.NewTestNibiruAppAndContext(true)
+				nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 				trader := testutil.AccAddress()
 				pair := asset.MustNewPair("osmo:nusd")
 
@@ -114,7 +115,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
-				setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
+				keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 					Pair:                            pair,
 					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.75"),
 				})

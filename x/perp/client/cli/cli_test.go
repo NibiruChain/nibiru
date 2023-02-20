@@ -7,18 +7,17 @@ import (
 	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
+	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/NibiruChain/nibiru/x/perp/client/cli"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
@@ -28,9 +27,10 @@ import (
 type IntegrationTestSuite struct {
 	suite.Suite
 
-	cfg     testutilcli.Config
-	network *testutilcli.Network
-	users   []sdk.AccAddress
+	cfg        testutilcli.Config
+	network    *testutilcli.Network
+	users      []sdk.AccAddress
+	liquidator sdk.AccAddress
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
@@ -47,7 +47,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	app.SetPrefixes(app.AccountAddressPrefix)
 	encodingConfig := app.MakeTestEncodingConfig()
-	genesisState := simapp.NewTestGenesisStateFromDefault()
+	genesisState := genesis.NewTestGenesisState()
 
 	// setup vpool
 	vpoolGenesis := vpooltypes.DefaultGenesis()
@@ -58,8 +58,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			QuoteAssetReserve: sdk.NewDec(60_000 * common.Precision),
 			Config: vpooltypes.VpoolConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
-				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
-				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.2"),
+				FluctuationLimitRatio:  sdk.OneDec(),
+				MaxOracleSpreadRatio:   sdk.OneDec(),
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
@@ -71,7 +71,31 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			Config: vpooltypes.VpoolConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
-				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.2"),
+				MaxOracleSpreadRatio:   sdk.OneDec(),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			},
+		},
+		{
+			Pair:              asset.Registry.Pair(denoms.ATOM, denoms.NUSD),
+			BaseAssetReserve:  sdk.NewDec(10 * common.Precision),
+			QuoteAssetReserve: sdk.NewDec(60_000 * common.Precision),
+			Config: vpooltypes.VpoolConfig{
+				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
+				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
+				MaxOracleSpreadRatio:   sdk.OneDec(),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			},
+		},
+		{
+			Pair:              asset.Registry.Pair(denoms.OSMO, denoms.NUSD),
+			BaseAssetReserve:  sdk.NewDec(10 * common.Precision),
+			QuoteAssetReserve: sdk.NewDec(60_000 * common.Precision),
+			Config: vpooltypes.VpoolConfig{
+				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
+				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
+				MaxOracleSpreadRatio:   sdk.OneDec(),
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
@@ -90,6 +114,14 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			Pair:                            asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 			LatestCumulativePremiumFraction: sdk.ZeroDec(),
 		},
+		{
+			Pair:                            asset.Registry.Pair(denoms.ATOM, denoms.NUSD),
+			LatestCumulativePremiumFraction: sdk.ZeroDec(),
+		},
+		{
+			Pair:                            asset.Registry.Pair(denoms.OSMO, denoms.NUSD),
+			LatestCumulativePremiumFraction: sdk.ZeroDec(),
+		},
 	}
 	perpGenesis.Params.WhitelistedLiquidators = []string{"nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m"} // address associated with mnemonic below
 	genesisState[perptypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(perpGenesis)
@@ -97,11 +129,16 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	oracleGenesis := oracletypes.DefaultGenesisState()
 	oracleGenesis.Params.Whitelist = []asset.Pair{
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
+		asset.Registry.Pair(denoms.ATOM, denoms.NUSD),
+		asset.Registry.Pair(denoms.OSMO, denoms.NUSD),
 	}
 	oracleGenesis.Params.VotePeriod = 1_000
 	oracleGenesis.ExchangeRates = []oracletypes.ExchangeRateTuple{
 		{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: sdk.NewDec(20_000)},
 		{Pair: asset.Registry.Pair(denoms.ETH, denoms.NUSD), ExchangeRate: sdk.NewDec(2_000)},
+		{Pair: asset.Registry.Pair(denoms.ATOM, denoms.NUSD), ExchangeRate: sdk.NewDec(6_000)},
+		{Pair: asset.Registry.Pair(denoms.OSMO, denoms.NUSD), ExchangeRate: sdk.NewDec(6_000)},
 	}
 	genesisState[oracletypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(oracleGenesis)
 
@@ -111,67 +148,27 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
 	s.NoError(s.network.WaitForNextBlock())
 
-	user1 := testutilcli.NewAccount(s.network, "user1")
-	user2 := testutilcli.NewAccount(s.network, "user2")
-	user3 := testutilcli.NewAccount(s.network, "user3")
-	user4 := testutilcli.NewAccount(s.network, "user4")
-	user5 := sdk.MustAccAddressFromBech32("nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m")
-	s.users = []sdk.AccAddress{user1, user2, user3, user4, user5}
-
 	val := s.network.Validators[0]
-	_, err := s.network.WaitForHeight(2)
-	require.NoError(s.T(), err)
 
-	s.NoError(
-		testutilcli.FillWalletFromValidator(user1,
-			sdk.NewCoins(
-				sdk.NewInt64Coin(denoms.NIBI, 10*common.Precision),
-				sdk.NewInt64Coin(denoms.USDC, 10*common.Precision),
-				sdk.NewInt64Coin(denoms.NUSD, 50*common.Precision),
+	for i := 0; i < 8; i++ {
+		newUser := testutilcli.NewAccount(s.network, fmt.Sprintf("user%d", i))
+		s.users = append(s.users, newUser)
+		s.NoError(
+			testutilcli.FillWalletFromValidator(newUser,
+				sdk.NewCoins(
+					sdk.NewInt64Coin(denoms.NIBI, 10*common.Precision),
+					sdk.NewInt64Coin(denoms.USDC, 1e3*common.Precision),
+					sdk.NewInt64Coin(denoms.NUSD, 5e3*common.Precision),
+				),
+				val,
+				denoms.NIBI,
 			),
-			val,
-			denoms.NIBI,
-		),
-	)
+		)
+	}
 
+	s.liquidator = sdk.MustAccAddressFromBech32("nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m")
 	s.NoError(
-		testutilcli.FillWalletFromValidator(user2,
-			sdk.NewCoins(
-				sdk.NewInt64Coin(denoms.NIBI, 1000),
-				sdk.NewInt64Coin(denoms.USDC, 1000),
-				sdk.NewInt64Coin(denoms.NUSD, 100000),
-			),
-			val,
-			denoms.NIBI,
-		),
-	)
-
-	s.NoError(
-		testutilcli.FillWalletFromValidator(user3,
-			sdk.NewCoins(
-				sdk.NewInt64Coin(denoms.NIBI, 1000),
-				sdk.NewInt64Coin(denoms.USDC, 1000),
-				sdk.NewInt64Coin(denoms.NUSD, 49*common.Precision),
-			),
-			val,
-			denoms.NIBI,
-		),
-	)
-
-	s.NoError(
-		testutilcli.FillWalletFromValidator(user4,
-			sdk.NewCoins(
-				sdk.NewInt64Coin(denoms.NIBI, 1000),
-				sdk.NewInt64Coin(denoms.USDC, 1000),
-				sdk.NewInt64Coin(denoms.NUSD, 100000),
-			),
-			val,
-			denoms.NIBI,
-		),
-	)
-
-	s.NoError(
-		testutilcli.FillWalletFromValidator(user5,
+		testutilcli.FillWalletFromValidator(s.liquidator,
 			sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 1000)),
 			val,
 			denoms.NIBI,
@@ -184,6 +181,79 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 	s.network.Cleanup()
 }
 
+func (s *IntegrationTestSuite) TestMultiLiquidate() {
+	s.T().Log("opening positions")
+	_, err := testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[2], []string{
+		"buy",
+		asset.Registry.Pair(denoms.ATOM, denoms.NUSD).String(),
+		"15",    // Leverage
+		"90000", // Quote asset amount
+		"0",     // Base asset limit
+	})
+	s.Require().NoError(err)
+
+	_, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[3], []string{
+		"buy",
+		asset.Registry.Pair(denoms.OSMO, denoms.NUSD).String(),
+		"15",    // Leverage
+		"90000", // Quote asset amount
+		"0",     // Base asset limit
+	})
+	s.NoError(err)
+
+	s.T().Log("opening counter positions")
+	_, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[4], []string{
+		"sell",
+		asset.Registry.Pair(denoms.ATOM, denoms.NUSD).String(),
+		"15",       // Leverage
+		"90000000", // Quote asset amount
+		"0",
+	})
+	s.NoError(err)
+
+	_, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[5], []string{
+		"sell",
+		asset.Registry.Pair(denoms.OSMO, denoms.NUSD).String(),
+		"15",       // Leverage
+		"90000000", // Quote asset amount
+		"0",
+	})
+	s.Require().NoError(err)
+
+	s.T().Log("wait 10 blocks")
+	height, err := s.network.LatestHeight()
+	s.Require().NoError(err)
+	_, err = s.network.WaitForHeight(height + 10)
+	s.Require().NoError(err)
+
+	s.T().Log("liquidating all users...")
+	_, err = testutilcli.ExecTx(s.network, cli.MultiLiquidateCmd(), s.liquidator, []string{
+		fmt.Sprintf("%s:%s:%s", denoms.ATOM, denoms.NUSD, s.users[2].String()),
+		fmt.Sprintf("%s:%s:%s", denoms.OSMO, denoms.NUSD, s.users[3].String()),
+	})
+	s.Require().NoError(err)
+
+	s.T().Log("check trader position")
+	_, err = testutilcli.QueryPosition(s.network.Validators[0].ClientCtx, asset.Registry.Pair(denoms.ATOM, denoms.NUSD), s.users[2])
+	s.Require().Error(err)
+
+	_, err = testutilcli.QueryPosition(s.network.Validators[0].ClientCtx, asset.Registry.Pair(denoms.OSMO, denoms.NUSD), s.users[3])
+	s.Require().Error(err)
+
+	s.T().Log("closing positions")
+
+	_, err = testutilcli.ExecTx(s.network, cli.ClosePositionCmd(), s.users[4], []string{
+		asset.Registry.Pair(denoms.ATOM, denoms.NUSD).String(),
+	})
+	s.Require().NoError(err)
+
+	_, err = testutilcli.ExecTx(s.network, cli.ClosePositionCmd(), s.users[5], []string{
+		asset.Registry.Pair(denoms.OSMO, denoms.NUSD).String(),
+	})
+	s.Require().NoError(err)
+}
+
+// user[0] opens a long position
 func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	val := s.network.Validators[0]
 	user := s.users[0]
@@ -356,18 +426,18 @@ func (s *IntegrationTestSuite) TestQueryCumulativePremiumFractions() {
 	s.EqualValues(sdk.NewDec(2), queryResp.CumulativePremiumFraction)
 }
 
+// user[0] opens a position and removes margin to trigger bad debt
 func (s *IntegrationTestSuite) TestRemoveMargin() {
 	// Open a position with first user
 	s.T().Log("opening a position with user 0")
-	txResp, err := testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[0], []string{
+	_, err := testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[0], []string{
 		"buy",
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 		"10", // Leverage
-		"1",  // Quote asset amount
-		"0.0000001",
+		"10", // Quote asset amount
+		"0",
 	})
 	s.NoError(err)
-	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
 	// Remove margin to trigger bad debt on user 0
 	s.T().Log("removing margin on user 0....")
@@ -376,23 +446,27 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 		fmt.Sprintf("%s%s", "100", denoms.NUSD),
 	})
 	s.Contains(err.Error(), perptypes.ErrFailedRemoveMarginCanCauseBadDebt.Error())
+
+	s.T().Log("removing margin on user 0....")
+	_, err = testutilcli.ExecTx(s.network, cli.RemoveMarginCmd(), s.users[0], []string{
+		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
+		fmt.Sprintf("%s%s", "1", denoms.NUSD),
+	})
+	s.NoError(err)
 }
 
+// user[1] opens a position and adds margin
 func (s *IntegrationTestSuite) TestX_AddMargin() {
-	val := s.network.Validators[0]
-	pair := asset.Registry.Pair(denoms.ETH, denoms.NUSD)
-
 	// Open a new position
-	s.T().Log("opening a position with user 3....")
-	txResp, err := testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[3], []string{
+	s.T().Log("opening a position with user 1....")
+	txResp, err := testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[1], []string{
 		"buy",
-		pair.String(),
+		asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
 		"10",    // Leverage
 		"10000", // Quote asset amount
 		"0.0000001",
 	})
-	s.NoError(err)
-	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
+	s.Require().NoError(err)
 
 	testCases := []struct {
 		name           string
@@ -403,8 +477,8 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 		{
 			name: "PASS: add margin to correct position",
 			args: []string{
-				pair.String(),
-				fmt.Sprintf("%s%s", "10000", pair.QuoteDenom()),
+				asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
+				fmt.Sprintf("10000%s", denoms.NUSD),
 			},
 			expectedCode:   0,
 			expectedMargin: sdk.NewDec(20_000),
@@ -413,7 +487,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 			name: "FAIL: position not found",
 			args: []string{
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
-				fmt.Sprintf("%s%s", "10000", pair.QuoteDenom()),
+				fmt.Sprintf("10000%s", denoms.NUSD),
 			},
 			expectedCode: 1,
 		},
@@ -422,13 +496,13 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 	for _, tc := range testCases {
 		s.T().Run(tc.name, func(t *testing.T) {
 			s.T().Log("adding margin on user 3....")
-			txResp, err = testutilcli.ExecTx(s.network, cli.AddMarginCmd(), s.users[3], tc.args, testutilcli.WithTxCanFail(true))
+			txResp, err = testutilcli.ExecTx(s.network, cli.AddMarginCmd(), s.users[1], tc.args, testutilcli.WithTxCanFail(true))
 			s.NoError(err)
 			s.EqualValues(tc.expectedCode, txResp.Code)
 
 			if tc.expectedCode == 0 {
 				// query trader position
-				queryResp, err := testutilcli.QueryPosition(val.ClientCtx, pair, s.users[3])
+				queryResp, err := testutilcli.QueryPosition(s.network.Validators[0].ClientCtx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), s.users[1])
 				s.NoError(err)
 				s.EqualValues(tc.expectedMargin, queryResp.Position.Margin)
 			}

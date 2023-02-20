@@ -9,11 +9,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	simapp2 "github.com/NibiruChain/nibiru/simapp"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/stablecoin/types"
 )
 
@@ -113,14 +113,13 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 			acc, _ := sdk.AccAddressFromBech32(tc.msgMint.Creator)
 
 			// We get module account, to create it.
 			nibiruApp.AccountKeeper.GetModuleAccount(ctx, types.StableEFModuleAccount)
 
 			// Set up pairs for the oracle keeper.
-
 			collRatio := sdk.MustNewDecFromStr("0.9")
 			feeRatio := sdk.MustNewDecFromStr("0.002")
 			feeRatioEF := sdk.MustNewDecFromStr("0.5")
@@ -272,7 +271,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 			acc, _ := sdk.AccAddressFromBech32(tc.msgMint.Creator)
 
 			// We get module account, to create it.
@@ -417,7 +416,7 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 			acc, _ := sdk.AccAddressFromBech32(tc.msgBurn.Creator)
 
 			// Set stablecoin params
@@ -543,7 +542,7 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 			acc, _ := sdk.AccAddressFromBech32(tc.msgBurn.Creator)
 
 			// Set stablecoin params

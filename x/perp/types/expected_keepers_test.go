@@ -4,10 +4,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/simapp"
-
 	"github.com/stretchr/testify/assert"
 
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
@@ -18,7 +17,7 @@ TestExpectedKeepers verifies that the expected keeper interfaces in x/perp
 	'NibiruApp.KeeperName'
 */
 func TestExpectedKeepers(t *testing.T) {
-	nibiruApp, _ := simapp.NewTestNibiruAppAndContext(true)
+	nibiruApp, _ := testapp.NewNibiruTestAppAndContext(true)
 	testCases := []struct {
 		name           string
 		expectedKeeper interface{}

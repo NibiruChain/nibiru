@@ -5,22 +5,20 @@ import (
 	"time"
 
 	"github.com/NibiruChain/collections"
-
-	"github.com/NibiruChain/nibiru/x/common"
-	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
-	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
-
-	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
-
-	simapp2 "github.com/NibiruChain/nibiru/simapp"
-
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
+	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
+	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 func TestExecuteFullLiquidation(t *testing.T) {
@@ -82,7 +80,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 	for name, testCase := range testCases {
 		tc := testCase
 		t.Run(name, func(t *testing.T) {
-			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 			ctx = ctx.WithBlockTime(time.Now())
 			perpKeeper := &nibiruApp.PerpKeeper
 
@@ -116,7 +114,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				"hour",
 				15*time.Minute,
 			))
-			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
+			keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            tokenPair,
 				LatestCumulativePremiumFraction: sdk.OneDec(),
 			})
@@ -261,7 +259,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			nibiruApp, ctx := simapp2.NewTestNibiruAppAndContext(true)
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 			ctx = ctx.WithBlockTime(time.Now())
 
 			t.Log("Set vpool defined by pair on VpoolKeeper")
@@ -295,7 +293,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 				15*time.Minute,
 			))
 
-			setPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
+			keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            tokenPair,
 				LatestCumulativePremiumFraction: sdk.OneDec(),
 			})
@@ -380,11 +378,127 @@ func TestExecutePartialLiquidation(t *testing.T) {
 		})
 	}
 }
+func TestMultiLiquidate(t *testing.T) {
+	tests := []struct {
+		name string
 
-func setPosition(k perpkeeper.Keeper, ctx sdk.Context, pos types.Position) {
-	k.Positions.Insert(ctx, collections.Join(pos.Pair, sdk.MustAccAddressFromBech32(pos.TraderAddress)), pos)
-}
+		liquidator sdk.AccAddress
 
-func setPairMetadata(k perpkeeper.Keeper, ctx sdk.Context, pm types.PairMetadata) {
-	k.PairsMetadata.Insert(ctx, pm.Pair, pm)
+		positions      []types.Position
+		isLiquidatable []bool
+		expectedErr    error
+	}{
+		{
+			name:       "success",
+			liquidator: testutil.AccAddress(),
+			positions: []types.Position{
+				// liquidated
+				{
+					TraderAddress:                   testutil.AccAddress().String(),
+					Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					Size_:                           sdk.OneDec(),
+					Margin:                          sdk.OneDec(),
+					OpenNotional:                    sdk.NewDec(2),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+					BlockNumber:                     1,
+				},
+				// not liquidated
+				{
+					TraderAddress:                   testutil.AccAddress().String(),
+					Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					Size_:                           sdk.OneDec(),
+					Margin:                          sdk.OneDec(),
+					OpenNotional:                    sdk.NewDec(1),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+					BlockNumber:                     1,
+				},
+				// liquidated
+				{
+					TraderAddress:                   testutil.AccAddress().String(),
+					Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					Size_:                           sdk.OneDec(),
+					Margin:                          sdk.OneDec(),
+					OpenNotional:                    sdk.NewDec(2),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+					BlockNumber:                     1,
+				},
+			},
+			isLiquidatable: []bool{true, false, true},
+			expectedErr:    nil,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			app, ctx := testapp.NewNibiruTestAppAndContext(true)
+			ctx = ctx.WithBlockTime(time.Now())
+			setLiquidator(ctx, app.PerpKeeper, tc.liquidator)
+			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
+
+			t.Log("create vpool")
+			assert.NoError(t, app.VpoolKeeper.CreatePool(
+				/* ctx */ ctx,
+				/* pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
+				/* baseAssetReserve */ sdk.NewDec(1*common.Precision),
+				vpooltypes.VpoolConfig{
+					TradeLimitRatio:        sdk.OneDec(),
+					FluctuationLimitRatio:  sdk.OneDec(),
+					MaxOracleSpreadRatio:   sdk.OneDec(),
+					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+				},
+			))
+
+			t.Log("set pair metadata")
+			keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+			})
+			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
+
+			t.Log("set oracle price")
+			app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdk.OneDec())
+
+			t.Log("create position")
+			liquidations := make([]*types.MsgMultiLiquidate_Liquidation, len(tc.positions))
+			for i, pos := range tc.positions {
+				keeper.SetPosition(app.PerpKeeper, ctx, pos)
+				require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pos.Pair.QuoteDenom(), 1))))
+
+				liquidations[i] = &types.MsgMultiLiquidate_Liquidation{
+					Pair:   pos.Pair,
+					Trader: pos.TraderAddress,
+				}
+			}
+
+			resp, err := msgServer.MultiLiquidate(sdk.WrapSDKContext(ctx), &types.MsgMultiLiquidate{
+				Sender:       tc.liquidator.String(),
+				Liquidations: liquidations,
+			})
+
+			if tc.expectedErr != nil {
+				require.ErrorContains(t, err, tc.expectedErr.Error())
+				require.Nil(t, resp)
+				return
+			}
+
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+
+			for i, p := range tc.positions {
+				traderAddr := sdk.MustAccAddressFromBech32(p.TraderAddress)
+				position, err := app.PerpKeeper.Positions.Get(ctx, collections.Join(p.Pair, traderAddr))
+				if tc.isLiquidatable[i] {
+					require.Error(t, err)
+					assert.True(t, resp.Liquidations[i].Success)
+				} else {
+					require.NoError(t, err)
+					assert.False(t, position.Size_.IsZero())
+					assert.False(t, resp.Liquidations[i].Success)
+				}
+			}
+		})
+	}
 }

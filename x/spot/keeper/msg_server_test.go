@@ -274,7 +274,7 @@ func TestCreatePool(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 			msgServer := keeper.NewMsgServerImpl(app.SpotKeeper)
 
 			if tc.creatorAddr == nil {
@@ -407,7 +407,7 @@ func TestCreateExitJoinPool(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 			msgServer := keeper.NewMsgServerImpl(app.SpotKeeper)
 
 			if tc.creatorAddr == nil {
@@ -666,7 +666,7 @@ func TestMsgServerJoinPool(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 
 			poolAddr := testutil.AccAddress()
 			tc.initialPool.Address = poolAddr.String()
@@ -868,7 +868,7 @@ func TestMsgServerExitPool(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 
 			poolAddr := testutil.AccAddress()
 			tc.initialPool.Address = poolAddr.String()
@@ -1213,7 +1213,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewTestNibiruAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 			msgServer := keeper.NewMsgServerImpl(app.SpotKeeper)
 
 			// fund pool account
