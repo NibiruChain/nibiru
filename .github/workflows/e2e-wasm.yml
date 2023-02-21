@@ -22,6 +22,7 @@ jobs:
         uses: pozetroninc/github-action-get-latest-release@v0.6.0
         with:
           repository: ${{ github.repository }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: download release
         uses: robinraju/release-downloader@v1.6
