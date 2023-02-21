@@ -189,8 +189,8 @@ add_genesis_vpools_with_coingecko_prices() {
   price_eth=${price_eth%.*}
   base_amt_eth=$(($quote_amt / $price_eth))
 
-  $BINARY add-genesis-vpool ubtc:unusd $base_amt_btc $quote_amt 0.1 0.1 0.1 0.0625 12
-  $BINARY add-genesis-vpool ueth:unusd $base_amt_eth $quote_amt 0.1 0.1 0.1 0.04 20
+  nibid add-genesis-vpool --pair=ubtc:unusd --base-amt=$base_amt_btc --quote-amt=$quote_amt --max-leverage=12
+  nibid add-genesis-vpool --pair=ueth:unusd --base-amt=$base_amt_eth --quote-amt=$quote_amt --max-leverage=20 --mmr=0.04
 
   echo 'tmp_vpool_prices: '
   cat $temp_json_fname | jq .
@@ -204,8 +204,8 @@ add_genesis_vpools_default() {
   local quote_amt=10$KILO$MEGA
   local base_amt_btc=$(($quote_amt / 16500))
   local base_amt_eth=$(($quote_amt / 1200))
-  $BINARY add-genesis-vpool ubtc:unusd $base_amt_btc $quote_amt 0.1 0.1 0.1 0.0625 12
-  $BINARY add-genesis-vpool ueth:unusd $base_amt_eth $quote_amt 0.1 0.1 0.1 0.0625 10
+  nibid add-genesis-vpool --pair=ubtc:unusd --base-amt=$base_amt_btc --quote-amt=$quote_amt --max-leverage=12
+  nibid add-genesis-vpool --pair=ueth:unusd --base-amt=$base_amt_eth --quote-amt=$quote_amt --max-leverage=20 --mmr=0.04
 }
 
 # x/vpool
@@ -225,13 +225,15 @@ add_genesis_param '.app_state.perp.params.liquidation_fee_ratio = "0.025"'
 add_genesis_param '.app_state.perp.params.partial_liquidation_ratio = "0.25"'
 add_genesis_param '.app_state.perp.params.funding_rate_interval = "30 min"'
 add_genesis_param '.app_state.perp.params.twap_lookback_window = "900s"'
-add_genesis_param '.app_state.perp.pair_metadata[0].pair = {token0:"ubtc",token1:"unusd"}'
+add_genesis_param '.app_state.perp.params.whitelisted_liquidators = ["nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"]'
+add_genesis_param '.app_state.perp.pair_metadata[0].pair = "ubtc:unusd"'
 add_genesis_param '.app_state.perp.pair_metadata[0].latest_cumulative_premium_fraction = "0"'
-add_genesis_param '.app_state.perp.pair_metadata[1].pair = {token0:"ueth",token1:"unusd"}'
+add_genesis_param '.app_state.perp.pair_metadata[1].pair = "ueth:unusd"'
 add_genesis_param '.app_state.perp.pair_metadata[1].latest_cumulative_premium_fraction = "0"'
 
 add_genesis_param '.app_state.oracle.params.twap_lookback_window = "900s"'
 add_genesis_param '.app_state.oracle.params.vote_period = "10"'
+add_genesis_param '.app_state.oracle.params.min_voters = "1"'
 add_genesis_param '.app_state.oracle.exchange_rates[0].pair = "ubtc:unusd"'
 add_genesis_param '.app_state.oracle.exchange_rates[0].exchange_rate = "20000"'
 add_genesis_param '.app_state.oracle.exchange_rates[1].pair = "ueth:unusd"'
@@ -239,5 +241,4 @@ add_genesis_param '.app_state.oracle.exchange_rates[1].exchange_rate = "2000"'
 
 # Start the network
 echo_info "Starting $CHAIN_ID in $CHAIN_DIR..."
-
-$BINARY start &
+$BINARY start
