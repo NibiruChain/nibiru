@@ -4,11 +4,11 @@ name: CosmWasm e2e contract tests
 on:
   # On normal PRs or when workflow goreleaser finishes, as it gets the last release tag.
   pull_request:
-  workflow_run:
-    workflows: ["goreleaser"]
-    types:
-      - completed
-  workflow_dispatch:
+#  workflow_run:
+#    workflows: ["goreleaser"]
+#    types:
+#      - completed
+#  workflow_dispatch:
 
 jobs:
   get-release:
@@ -22,6 +22,7 @@ jobs:
         uses: pozetroninc/github-action-get-latest-release@v0.6.0
         with:
           repository: ${{ github.repository }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: download release
         uses: robinraju/release-downloader@v1.6
