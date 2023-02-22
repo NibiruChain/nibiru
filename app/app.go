@@ -273,7 +273,7 @@ type NibiruApp struct {
 	StablecoinKeeper stablecoinkeeper.Keeper
 
 	// WASM keepers
-	wasmKeeper       wasm.Keeper
+	WasmKeeper       wasm.Keeper
 	scopedWasmKeeper capabilitykeeper.ScopedKeeper
 
 	// the module manager
@@ -491,7 +491,7 @@ func NewNibiruApp(
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks
 	supportedFeatures := "iterator,staking,stargate"
-	app.wasmKeeper = wasm.NewKeeper(
+	app.WasmKeeper = wasm.NewKeeper(
 		appCodec,
 		keys[wasm.StoreKey],
 		app.GetSubspace(wasm.ModuleName),
@@ -550,7 +550,7 @@ func NewNibiruApp(
 		AddRoute(
 			/* module    */ ibctransfertypes.ModuleName,
 			/* ibcModule */ transferIBCModule).
-		AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.wasmKeeper, app.ibcKeeper.ChannelKeeper))
+		AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.WasmKeeper, app.ibcKeeper.ChannelKeeper))
 
 	/* SetRouter finalizes all routes by sealing the router.
 	   No more routes can be added. */
@@ -623,7 +623,7 @@ func NewNibiruApp(
 		ibc.NewAppModule(app.ibcKeeper),
 		transferModule,
 
-		wasm.NewAppModule(appCodec, &app.wasmKeeper, app.stakingKeeper, app.AccountKeeper, app.BankKeeper),
+		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.stakingKeeper, app.AccountKeeper, app.BankKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
