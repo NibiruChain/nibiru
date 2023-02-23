@@ -16,12 +16,15 @@ builds:
       - CC=o64-clang
     flags:
       - -mod=readonly
+      - -trimpath
     ldflags:
       - -s -w -X main.commit={{.Commit}} -X main.date={{ .CommitDate }} -X github.com/cosmos/cosmos-sdk/version.Name=nibiru -X github.com/cosmos/cosmos-sdk/version.AppName=nibid -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }} -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }} -X github.com/tendermint/tendermint/version.TMCoreSemVer={{ .Env.TM_VERSION }}
       - -linkmode=external
     tags:
       - netgo
+      - osusergo
       - ledger
+      - static_build
       - static_wasm
     overrides:
       - goos: darwin
@@ -45,14 +48,17 @@ builds:
       - CC=x86_64-linux-gnu-gcc
     flags:
       - -mod=readonly
+      - -trimpath
     ldflags:
       - -s -w -X main.commit={{.Commit}} -X main.date={{ .CommitDate }} -X github.com/cosmos/cosmos-sdk/version.Name=nibiru -X github.com/cosmos/cosmos-sdk/version.AppName=nibid -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }} -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }} -X github.com/tendermint/tendermint/version.TMCoreSemVer={{ .Env.TM_VERSION }}
       - -linkmode=external
       - -extldflags '-Wl,-z,muldefs -static -lm'
     tags:
       - netgo
+      - osusergo
       - ledger
       - muslc
+      - static_build
     overrides:
       - goos: linux
         goarch: arm64
