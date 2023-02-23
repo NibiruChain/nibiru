@@ -2,11 +2,10 @@ package integration_test
 
 import (
 	"testing"
-
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 )
 
 func TestHappyPath(t *testing.T) {
-	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
-
+	//nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(false)
+	//
+	//nibiruApp.
 }
