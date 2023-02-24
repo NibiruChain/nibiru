@@ -31,3 +31,9 @@ make chaosnet-build
 ```
 
 to force re-build and pull images.
+
+## FAQ
+
+### `make chaosnet` says that "Additional property name is not allowed"
+
+Make sure to update your docker application to version 23.0.1
