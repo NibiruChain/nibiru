@@ -2,6 +2,7 @@ name: chaosnet
 
 services:
   nibiru:
+    image: ghcr.io/nibiruchain/nibiru:latest
     build:
       context: ../.. # nibiru project folder
       dockerfile: ./contrib/docker/chaosnet.Dockerfile # relative to context directory (i.e. nibiru project folder)
