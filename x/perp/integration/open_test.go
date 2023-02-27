@@ -1,20 +1,45 @@
 package integration_test
 
 import (
-	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
+	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
+	"github.com/cosmos/cosmos-sdk/simapp"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
+type GivenAction interface {
+	Do(app *app.NibiruApp, ctx sdk.Context)
+}
+
+type CreatePoolAction struct {
+	Pair asset.Pair
+
+	Quote sdk.Dec
+}
+
 func TestHappyPath(t *testing.T) {
-	//nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(false)
-	//
-	//nibiruApp.
-	gen := genesis.NewTestGenesisState()
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 
-	perpRawGenesis := gen[perptypes.ModuleName]
-	perp := perptypes.GenesisState{}
+	err := nibiruApp.VpoolKeeper.CreatePool(
+		ctx,
+		"ubtc:uusdc",
+		sdk.NewDec(1000),
+		sdk.NewDec(100),
+		vpooltypes.DefaultVpoolConfig(),
+	)
+	require.NoError(t, err)
 
-	appChain := testapp.NewNibiruTestApp()
+	// open short position Alice
+	aliceAccount := testutilevents.AccAddress()
+	simapp.FundAccount(
+		nibiruApp.BankKeeper,
+		ctx,
+		aliceAccount,
+	)
+
 }
