@@ -214,7 +214,8 @@ func (pool *Pool) ExitPool(exitingShares sdk.Int) (
 	}
 
 	if !exitedCoins.IsValid() {
-		return sdk.Coins{}, errors.New("not enough pool shares to withdraw")
+		minShares := pool.MinSharesInForTokensOut()
+		return sdk.Coins{}, fmt.Errorf("not enough pool shares to withdraw - please provide at least %v shares", minShares)
 	}
 
 	// update the pool's balances
