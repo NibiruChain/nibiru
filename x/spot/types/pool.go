@@ -83,6 +83,28 @@ func NewPool(
 }
 
 /*
+Ensure the denoms of the tokens in are assets of the pool
+
+args:
+
+  - tokensIn: the tokens to check
+
+ret:
+
+  - ok: true if all the denom from tokens in tokens in are in the pool
+*/
+func (pool Pool) AreTokensInDenomInPoolAssets(tokensIn sdk.Coins) bool {
+	for _, asset := range tokensIn {
+		_, _, err := pool.getPoolAssetAndIndex(asset.Denom)
+
+		if err != nil {
+			return false
+		}
+	}
+	return true
+}
+
+/*
 Adds tokens to a pool and updates the pool balances (i.e. liquidity).
 
 args:
