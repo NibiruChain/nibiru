@@ -32,4 +32,5 @@ message EventAssetsSwapped {
   uint64 pool_id = 2;
   cosmos.base.v1beta1.Coin token_in = 3 [(gogoproto.nullable) = false];
   cosmos.base.v1beta1.Coin token_out = 4 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin fee = 5 [(gogoproto.nullable) = false];
 }

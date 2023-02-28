@@ -9,7 +9,7 @@ import (
 )
 
 /*
-Calculates the amount of tokenOut given tokenIn, deducting the swap fee.
+CalcOutAmtGivenIn Calculates the amount of tokenOut given tokenIn, deducting the swap fee.
 Solved using the SolveConstantProductInvariant AMM curve.
 Only supports single asset swaps.
 
@@ -20,19 +20,20 @@ args:
 
 ret:
   - tokenOut: the tokens received from the swap
+  - fee: the fee deducted from the swap
   - err: error if any
 */
 func (pool Pool) CalcOutAmtGivenIn(tokenIn sdk.Coin, tokenOutDenom string, noFee bool) (
-	tokenOut sdk.Coin, err error,
+	tokenOut sdk.Coin, fee sdk.Coin, err error,
 ) {
 	_, poolAssetIn, err := pool.getPoolAssetAndIndex(tokenIn.Denom)
 	if err != nil {
-		return tokenOut, err
+		return tokenOut, fee, err
 	}
 
 	_, poolAssetOut, err := pool.getPoolAssetAndIndex(tokenOutDenom)
 	if err != nil {
-		return tokenOut, err
+		return tokenOut, fee, err
 	}
 
 	var tokenAmountInAfterFee sdk.Dec
@@ -41,6 +42,8 @@ func (pool Pool) CalcOutAmtGivenIn(tokenIn sdk.Coin, tokenOutDenom string, noFee
 	} else {
 		tokenAmountInAfterFee = tokenIn.Amount.ToDec().Mul(sdk.OneDec().Sub(pool.PoolParams.SwapFee))
 	}
+	feeAmount := tokenIn.Amount.ToDec().Sub(tokenAmountInAfterFee)
+	fee = sdk.NewCoin(tokenIn.Denom, feeAmount.TruncateInt())
 
 	poolTokenInBalance := poolAssetIn.Token.Amount.ToDec()
 	poolTokenInBalancePostSwap := poolTokenInBalance.Add(tokenAmountInAfterFee)
@@ -65,10 +68,10 @@ func (pool Pool) CalcOutAmtGivenIn(tokenIn sdk.Coin, tokenOutDenom string, noFee
 	}
 
 	if tokenAmountOut.IsZero() {
-		return tokenOut, fmt.Errorf("tokenIn (%s) must be higher to perform a swap", tokenIn.Denom)
+		return tokenOut, fee, fmt.Errorf("tokenIn (%s) must be higher to perform a swap", tokenIn.Denom)
 	}
 
-	return sdk.NewCoin(tokenOutDenom, tokenAmountOut), nil
+	return sdk.NewCoin(tokenOutDenom, tokenAmountOut), fee, nil
 }
 
 /*

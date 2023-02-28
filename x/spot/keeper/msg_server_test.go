@@ -1257,6 +1257,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 					PoolId:   1,
 					TokenIn:  tc.tokenIn,
 					TokenOut: tc.expectedTokenOut,
+					Fee:      sdk.NewInt64Coin("unibi", 0),
 				})
 			}
 
