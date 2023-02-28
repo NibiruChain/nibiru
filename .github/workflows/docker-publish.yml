@@ -41,15 +41,6 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: ghcr.io/nibiruchain/nibiru:${{ steps.get_version.outputs.version-without-v }}
 
-      # tag the image with a version when adding a git tag that starts with 'v'
-      - name: Build and push versioned image
-        uses: docker/build-push-action@v4
-        with:
-          context: contrib/docker-compose/docker-compose-chaosnet.yml
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: ghcr.io/nibiruchain/chaosnet:${{ steps.get_version.outputs.version-without-v }}
-
       - name: Build and push latest image
         uses: docker/build-push-action@v4
         if: github.ref == 'refs/heads/master'
