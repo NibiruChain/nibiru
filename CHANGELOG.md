@@ -43,6 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Improvements
 
 * [#1203](https://github.com/NibiruChain/nibiru/pull/1203) - ci: make chaosnet pull nibiru image if --build is not specified
+* [#1197](https://github.com/NibiruChain/nibiru/pull/1197) - feat: add fees into events in spot module.
+  * add `fee` field into `MsgSwap` event.
 
 ### Bug Fixes
 
