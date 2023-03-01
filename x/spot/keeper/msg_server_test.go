@@ -302,6 +302,7 @@ func TestCreatePool(t *testing.T) {
 				testutil.RequireHasTypedEvent(t, ctx, &types.EventPoolCreated{
 					Creator: tc.creatorAddr.String(),
 					PoolId:  1,
+					Fees:    sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 1e9)),
 				})
 			}
 		})
@@ -428,6 +429,7 @@ func TestCreateExitJoinPool(t *testing.T) {
 			testutil.RequireHasTypedEvent(t, ctx, &types.EventPoolCreated{
 				Creator: tc.creatorAddr.String(),
 				PoolId:  1,
+				Fees:    sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 1e9)),
 			})
 
 			poolShares := app.BankKeeper.GetBalance(ctx, tc.creatorAddr, "nibiru/pool/1")
