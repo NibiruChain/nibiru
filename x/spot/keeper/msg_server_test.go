@@ -712,6 +712,7 @@ func TestMsgServerExitPool(t *testing.T) {
 		expectedTokensOut        sdk.Coins
 		expectedJoinerFinalFunds sdk.Coins
 		expectedFinalPool        types.Pool
+		expectedFees             sdk.Coins
 	}{
 		{
 			name: "exit all pool shares",
@@ -748,6 +749,10 @@ func TestMsgServerExitPool(t *testing.T) {
 					sdk.NewInt64Coin(denoms.NUSD, 1),
 				),
 				/*shares=*/ 0,
+			),
+			expectedFees: sdk.NewCoins(
+				sdk.NewInt64Coin(denoms.NIBI, 1),
+				sdk.NewInt64Coin(denoms.NUSD, 1),
 			),
 		},
 		{
@@ -787,6 +792,10 @@ func TestMsgServerExitPool(t *testing.T) {
 				),
 				/*shares=*/ 50,
 			),
+			expectedFees: sdk.NewCoins(
+				sdk.NewInt64Coin(denoms.NIBI, 1),
+				sdk.NewInt64Coin(denoms.NUSD, 1),
+			),
 		},
 		{
 			name: "exit all pool shares - StablePool",
@@ -823,6 +832,10 @@ func TestMsgServerExitPool(t *testing.T) {
 					sdk.NewInt64Coin(denoms.NUSD, 1),
 				),
 				/*shares=*/ 0,
+			),
+			expectedFees: sdk.NewCoins(
+				sdk.NewInt64Coin(denoms.NIBI, 0),
+				sdk.NewInt64Coin(denoms.NUSD, 0),
 			),
 		},
 		{
@@ -861,6 +874,10 @@ func TestMsgServerExitPool(t *testing.T) {
 					sdk.NewInt64Coin(denoms.NUSD, 50),
 				),
 				/*shares=*/ 50,
+			),
+			expectedFees: sdk.NewCoins(
+				sdk.NewInt64Coin(denoms.NIBI, 0),
+				sdk.NewInt64Coin(denoms.NUSD, 0),
 			),
 		},
 	}
@@ -903,6 +920,7 @@ func TestMsgServerExitPool(t *testing.T) {
 				PoolId:       1,
 				PoolSharesIn: tc.poolSharesIn,
 				TokensOut:    resp.TokensOut,
+				Fees:         tc.expectedFees,
 			}
 
 			testutil.RequireHasTypedEvent(t, ctx, expectedEvent)

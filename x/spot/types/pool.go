@@ -83,7 +83,7 @@ func NewPool(
 }
 
 /*
-Adds tokens to a pool and updates the pool balances (i.e. liquidity).
+AddTokensToPool Adds tokens to a pool and updates the pool balances (i.e. liquidity).
 
 args:
   - tokensIn: the tokens to add to the pool
@@ -119,7 +119,7 @@ func (pool *Pool) AddTokensToPool(tokensIn sdk.Coins) (
 }
 
 /*
-Adds tokens to a pool optimizing the amount of shares (swap + join) and updates the pool balances (i.e. liquidity).
+AddAllTokensToPool Adds tokens to a pool optimizing the amount of shares (swap + join) and updates the pool balances (i.e. liquidity).
 We maximally join with both tokens first, and then perform a single asset join with the remaining assets.
 
 This function is only necessary for balancer pool. Stableswap pool already takes all the deposit from the user.
@@ -162,7 +162,7 @@ func (pool *Pool) AddAllTokensToPool(tokensIn sdk.Coins) (
 }
 
 /*
-Fetch the pool's address as an sdk.Address.
+GetAddress Fetch the pool's address as an sdk.Address.
 */
 func (pool Pool) GetAddress() (addr sdk.AccAddress) {
 	addr, err := sdk.AccAddressFromBech32(pool.Address)
@@ -173,38 +173,38 @@ func (pool Pool) GetAddress() (addr sdk.AccAddress) {
 }
 
 /*
-Given the amount of pool shares to exit, calculates the amount of coins to exit
+ExitPool Given the amount of pool shares to exit, calculates the amount of coins to exit
 from the pool and modifies the pool. Accounts for an exit fee, if any, on the pool.
 
 args:
   - exitingShares: the number of pool shares to exit from the pool
 */
 func (pool *Pool) ExitPool(exitingShares sdk.Int) (
-	exitedCoins sdk.Coins, err error,
+	exitedCoins sdk.Coins, fees sdk.Coins, err error,
 ) {
 	if exitingShares.GT(pool.TotalShares.Amount) {
-		return sdk.Coins{}, errors.New("too many shares out")
+		return sdk.Coins{}, sdk.Coins{}, errors.New("too many shares out")
 	}
 
-	exitedCoins, err = pool.TokensOutFromPoolSharesIn(exitingShares)
+	exitedCoins, fees, err = pool.TokensOutFromPoolSharesIn(exitingShares)
 	if err != nil {
-		return sdk.Coins{}, err
+		return sdk.Coins{}, sdk.Coins{}, err
 	}
 
 	if !exitedCoins.IsValid() {
-		return sdk.Coins{}, errors.New("not enough pool shares to withdraw")
+		return sdk.Coins{}, sdk.Coins{}, errors.New("not enough pool shares to withdraw")
 	}
 
 	// update the pool's balances
 	for _, exitedCoin := range exitedCoins {
 		err = pool.SubtractPoolAssetBalance(exitedCoin.Denom, exitedCoin.Amount)
 		if err != nil {
-			return sdk.Coins{}, err
+			return sdk.Coins{}, sdk.Coins{}, err
 		}
 	}
 
 	pool.TotalShares = sdk.NewCoin(pool.TotalShares.Denom, pool.TotalShares.Amount.Sub(exitingShares))
-	return exitedCoins, nil
+	return exitedCoins, fees, nil
 }
 
 /*

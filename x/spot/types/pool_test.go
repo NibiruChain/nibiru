@@ -482,6 +482,7 @@ func TestExitPoolHappyPath(t *testing.T) {
 		expectedCoins           sdk.Coins
 		expectedRemainingShares sdk.Coin
 		expectedExitedCoins     sdk.Coins
+		expectedFees            sdk.Coins
 	}{
 		{
 			name: "all coins withdrawn, no exit fee",
@@ -506,6 +507,10 @@ func TestExitPoolHappyPath(t *testing.T) {
 			expectedExitedCoins: sdk.NewCoins(
 				sdk.NewInt64Coin("aaa", 100),
 				sdk.NewInt64Coin("bbb", 200),
+			),
+			expectedFees: sdk.NewCoins(
+				sdk.NewCoin("aaa", sdk.ZeroInt()),
+				sdk.NewCoin("bbb", sdk.ZeroInt()),
 			),
 		},
 		{
@@ -532,6 +537,10 @@ func TestExitPoolHappyPath(t *testing.T) {
 				sdk.NewInt64Coin("bbb", 100),
 			),
 			expectedExitedCoins: sdk.NewCoins(
+				sdk.NewInt64Coin("aaa", 50),
+				sdk.NewInt64Coin("bbb", 100),
+			),
+			expectedFees: sdk.NewCoins(
 				sdk.NewInt64Coin("aaa", 50),
 				sdk.NewInt64Coin("bbb", 100),
 			),
@@ -563,6 +572,10 @@ func TestExitPoolHappyPath(t *testing.T) {
 				sdk.NewInt64Coin("aaa", 50),
 				sdk.NewInt64Coin("bbb", 100),
 			),
+			expectedFees: sdk.NewCoins(
+				sdk.NewCoin("aaa", sdk.ZeroInt()),
+				sdk.NewCoin("bbb", sdk.ZeroInt()),
+			),
 		},
 		{
 			name: "some coins withdrawn, exit fee",
@@ -588,6 +601,10 @@ func TestExitPoolHappyPath(t *testing.T) {
 				sdk.NewInt64Coin("bbb", 150),
 			),
 			expectedExitedCoins: sdk.NewCoins(
+				sdk.NewInt64Coin("aaa", 25),
+				sdk.NewInt64Coin("bbb", 50),
+			),
+			expectedFees: sdk.NewCoins(
 				sdk.NewInt64Coin("aaa", 25),
 				sdk.NewInt64Coin("bbb", 50),
 			),
@@ -619,11 +636,15 @@ func TestExitPoolHappyPath(t *testing.T) {
 				sdk.NewInt64Coin("aaa", 1_097_889),
 				sdk.NewInt64Coin("bbb", 2_078_245),
 			),
+			expectedFees: sdk.NewCoins(
+				sdk.NewInt64Coin("aaa", 3304),
+				sdk.NewInt64Coin("bbb", 6253),
+			),
 		},
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			exitedCoins, err := tc.pool.ExitPool(tc.exitingShares.Amount)
+			exitedCoins, fees, err := tc.pool.ExitPool(tc.exitingShares.Amount)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedCoins, tc.pool.PoolBalances())
 			// Comparing zero initialized sdk.Int with zero value sdk.Int leads to different results
@@ -633,6 +654,7 @@ func TestExitPoolHappyPath(t *testing.T) {
 				require.Equal(t, tc.expectedRemainingShares, tc.pool.TotalShares)
 			}
 			require.Equal(t, tc.expectedExitedCoins, exitedCoins)
+			require.Equal(t, tc.expectedFees, fees)
 		})
 	}
 }

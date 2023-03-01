@@ -256,7 +256,7 @@ func SimulateExitPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keep
 		if err != nil {
 			return opMsg, futureOp, err
 		}
-		tokensOut, err := pool.TokensOutFromPoolSharesIn(shareTokensIn.Amount)
+		tokensOut, _, err := pool.TokensOutFromPoolSharesIn(shareTokensIn.Amount)
 		if err != nil {
 			return opMsg, futureOp, err
 		}

@@ -560,7 +560,7 @@ func (k Keeper) ExitPool(
 	}
 
 	// calculate withdrawn liquidity
-	tokensOut, err = pool.ExitPool(poolSharesOut.Amount)
+	tokensOut, fees, err := pool.ExitPool(poolSharesOut.Amount)
 	if err != nil {
 		return sdk.Coins{}, err
 	}
@@ -585,6 +585,7 @@ func (k Keeper) ExitPool(
 		PoolId:       poolId,
 		PoolSharesIn: poolSharesOut,
 		TokensOut:    tokensOut,
+		Fees:         fees,
 	})
 	if err != nil {
 		return sdk.Coins{}, err

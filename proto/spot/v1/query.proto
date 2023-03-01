@@ -292,6 +292,12 @@ message QueryExitExactAmountInResponse {
     (gogoproto.moretags) = "yaml:\"tokens_out\"",
     (gogoproto.nullable) = false
   ];
+
+  repeated cosmos.base.v1beta1.Coin fees = 2 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (gogoproto.moretags) = "yaml:\"fees\"",
+    (gogoproto.nullable) = false
+  ];
 }
 
 message QueryExitExactAmountOutRequest {

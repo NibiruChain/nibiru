@@ -318,12 +318,13 @@ func (k queryServer) EstimateExitExactAmountIn(
 	if err != nil {
 		return nil, err
 	}
-	tokensOut, err := pool.ExitPool(req.PoolSharesIn)
+	tokensOut, fees, err := pool.ExitPool(req.PoolSharesIn)
 	if err != nil {
 		return nil, err
 	}
 	return &types.QueryExitExactAmountInResponse{
 		TokensOut: tokensOut,
+		Fees:      fees,
 	}, nil
 }
 
