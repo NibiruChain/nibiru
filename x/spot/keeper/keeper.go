@@ -402,6 +402,7 @@ func (k Keeper) NewPool(
 	err = ctx.EventManager().EmitTypedEvent(&types.EventPoolCreated{
 		Creator: sender.String(),
 		PoolId:  poolId,
+		Fees:    params.PoolCreationFee,
 	})
 	if err != nil {
 		return

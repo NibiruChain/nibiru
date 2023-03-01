@@ -18,6 +18,7 @@ message EventPoolJoined {
 message EventPoolCreated {
   string creator = 1;
   uint64 pool_id = 2;
+  repeated cosmos.base.v1beta1.Coin fees = 3 [(gogoproto.nullable) = false];
 }
 
 message EventPoolExited {
