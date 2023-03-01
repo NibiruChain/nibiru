@@ -33,7 +33,7 @@ func (k Keeper) Liquidate(
 ) (liquidatorFee sdk.Coin, perpEcosystemFundFee sdk.Coin, err error) {
 	err = k.requireVpool(ctx, pair)
 	if err != nil {
-		ctx.EventManager().EmitTypedEvent(&types.LiquidationFailedEvent{
+		ctx.EventManager().EmitTypedEvent(&types.LiquidationFailedEvent{ // nolint:errcheck
 			Pair:       pair,
 			Trader:     trader.String(),
 			Liquidator: liquidator.String(),
@@ -44,7 +44,7 @@ func (k Keeper) Liquidate(
 
 	position, err := k.Positions.Get(ctx, collections.Join(pair, trader))
 	if err != nil {
-		ctx.EventManager().EmitTypedEvent(&types.LiquidationFailedEvent{
+		ctx.EventManager().EmitTypedEvent(&types.LiquidationFailedEvent{ // nolint:errcheck
 			Pair:       pair,
 			Trader:     trader.String(),
 			Liquidator: liquidator.String(),
@@ -84,7 +84,7 @@ func (k Keeper) Liquidate(
 	}
 	err = validateMarginRatio(marginRatio, maintenanceMarginRatio, false)
 	if err != nil {
-		ctx.EventManager().EmitTypedEvent(&types.LiquidationFailedEvent{
+		ctx.EventManager().EmitTypedEvent(&types.LiquidationFailedEvent{ // nolint:errcheck
 			Pair:       pair,
 			Trader:     trader.String(),
 			Liquidator: liquidator.String(),
