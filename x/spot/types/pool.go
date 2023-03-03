@@ -173,7 +173,7 @@ func (pool Pool) GetAddress() (addr sdk.AccAddress) {
 }
 
 /*
-Given the amount of pool shares to exit, calculates the amount of coins to exit
+given the amount of pool shares to exit, calculates the amount of coins to exit
 from the pool and modifies the pool. Accounts for an exit fee, if any, on the pool.
 
 args:

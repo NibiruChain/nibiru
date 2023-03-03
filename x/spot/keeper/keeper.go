@@ -152,7 +152,7 @@ func (k Keeper) FetchPool(ctx sdk.Context, poolId uint64) (pool types.Pool, err 
 }
 
 /*
-Given a pair of denom, find the corresponding pool id if it exists.
+given a pair of denom, find the corresponding pool id if it exists.
 
 args:
   - denomA: One denom

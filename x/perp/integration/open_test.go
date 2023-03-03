@@ -1,45 +1,32 @@
 package integration_test
 
 import (
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
-	"github.com/cosmos/cosmos-sdk/simapp"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
+	testutil2 "github.com/NibiruChain/nibiru/x/common/testutil"
+	. "github.com/NibiruChain/nibiru/x/perp/integration/action"
+	. "github.com/NibiruChain/nibiru/x/testutil"
+	. "github.com/NibiruChain/nibiru/x/testutil/action"
+	"github.com/cosmos/cosmos-sdk/types"
 	"testing"
 )
 
-type GivenAction interface {
-	Do(app *app.NibiruApp, ctx sdk.Context)
-}
-
-type CreatePoolAction struct {
-	Pair asset.Pair
-
-	Quote sdk.Dec
-}
-
 func TestHappyPath(t *testing.T) {
-	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
+	ts := NewTestSuite(t)
+	alice, bob := testutil2.AccAddress(), testutil2.AccAddress()
 
-	err := nibiruApp.VpoolKeeper.CreatePool(
-		ctx,
-		"ubtc:uusdc",
-		sdk.NewDec(1000),
-		sdk.NewDec(100),
-		vpooltypes.DefaultVpoolConfig(),
-	)
-	require.NoError(t, err)
+	tc := TestCases{
 
-	// open short position Alice
-	aliceAccount := testutilevents.AccAddress()
-	simapp.FundAccount(
-		nibiruApp.BankKeeper,
-		ctx,
-		aliceAccount,
-	)
+		TC("happy path").
+			Given(
+				CreateBaseVpool(),
+				FundAccount(alice, types.NewCoins(types.NewCoin("uusdc", types.NewInt(1000)))),
+				FundAccount(bob, types.NewCoins(types.NewCoin("uusdc", types.NewInt(1000)))),
+			).
+			Then(
+				BalanceEqual(alice, types.NewCoins(types.NewCoin("uusdc", types.NewInt(1000)))),
+			),
 
+		TC("other test"),
+	}
+
+	ts.WithTestCases(tc...).Run()
 }

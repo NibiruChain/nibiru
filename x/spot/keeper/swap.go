@@ -49,7 +49,7 @@ func (k Keeper) updatePoolForSwap(
 }
 
 /*
-Given a poolId and the amount of tokens to swap in, returns the number of tokens out
+given a poolId and the amount of tokens to swap in, returns the number of tokens out
 received, specified by the tokenOutDenom.
 
 For example, if pool 1 has 100foo and 100bar, this function can be called with
