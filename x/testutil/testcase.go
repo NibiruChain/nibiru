@@ -65,17 +65,17 @@ func (t *TestSuite) Run() {
 	for _, testCase := range t.testCases {
 		for _, action := range testCase.given {
 			err := action.Do(nibiruApp, ctx)
-			require.NoError(t.t, err)
+			require.NoError(t.t, err, "failed to execute given action: %s", testCase.Name)
 		}
 
 		for _, action := range testCase.when {
 			err := action.Do(nibiruApp, ctx)
-			require.NoError(t.t, err)
+			require.NoError(t.t, err, "failed to execute when action: %s", testCase.Name)
 		}
 
 		for _, action := range testCase.then {
 			err := action.Do(nibiruApp, ctx)
-			require.NoError(t.t, err)
+			require.NoError(t.t, err, "failed to execute then action: %s", testCase.Name)
 		}
 	}
 }

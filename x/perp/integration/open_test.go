@@ -1,17 +1,19 @@
 package integration_test
 
 import (
-	testutil2 "github.com/NibiruChain/nibiru/x/common/testutil"
+	"testing"
+
+	"github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/action"
 	. "github.com/NibiruChain/nibiru/x/testutil"
 	. "github.com/NibiruChain/nibiru/x/testutil/action"
-	"github.com/cosmos/cosmos-sdk/types"
-	"testing"
 )
 
 func TestHappyPath(t *testing.T) {
 	ts := NewTestSuite(t)
-	alice, bob := testutil2.AccAddress(), testutil2.AccAddress()
+	alice, bob := testutil.AccAddress(), testutil.AccAddress()
 
 	tc := TestCases{
 
