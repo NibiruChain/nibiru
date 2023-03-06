@@ -3,7 +3,7 @@
 ###############################################################################
 
 PACKAGE_NAME		  := github.com/NibiruChain/nibiru
-GOLANG_CROSS_VERSION  ?= v1.19
+GOLANG_CROSS_VERSION  ?= v1.19.4
 
 release:
 	docker run \
