@@ -457,6 +457,11 @@ func (k Keeper) JoinPool(
 		return pool, numSharesOut, remCoins, errors.New("too few assets to join this pool")
 	}
 
+	if !pool.AreTokensInDenomInPoolAssets(tokensIn) {
+		err = types.ErrTokenDenomNotFound
+		return
+	}
+
 	poolAddr := pool.GetAddress()
 
 	var numShares sdk.Int

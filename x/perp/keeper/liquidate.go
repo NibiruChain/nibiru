@@ -33,7 +33,7 @@ func (k Keeper) Liquidate(
 ) (liquidatorFee sdk.Coin, perpEcosystemFundFee sdk.Coin, err error) {
 	err = k.requireVpool(ctx, pair)
 	if err != nil {
-		ctx.EventManager().EmitTypedEvent(&types.LiquidationFailedEvent{
+		_ = ctx.EventManager().EmitTypedEvent(&types.LiquidationFailedEvent{
 			Pair:       pair,
 			Trader:     trader.String(),
 			Liquidator: liquidator.String(),
@@ -44,7 +44,7 @@ func (k Keeper) Liquidate(
 
 	position, err := k.Positions.Get(ctx, collections.Join(pair, trader))
 	if err != nil {
-		ctx.EventManager().EmitTypedEvent(&types.LiquidationFailedEvent{
+		_ = ctx.EventManager().EmitTypedEvent(&types.LiquidationFailedEvent{
 			Pair:       pair,
 			Trader:     trader.String(),
 			Liquidator: liquidator.String(),
@@ -84,7 +84,7 @@ func (k Keeper) Liquidate(
 	}
 	err = validateMarginRatio(marginRatio, maintenanceMarginRatio, false)
 	if err != nil {
-		ctx.EventManager().EmitTypedEvent(&types.LiquidationFailedEvent{
+		_ = ctx.EventManager().EmitTypedEvent(&types.LiquidationFailedEvent{
 			Pair:       pair,
 			Trader:     trader.String(),
 			Liquidator: liquidator.String(),
@@ -204,7 +204,7 @@ func (k Keeper) ExecuteFullLiquidation(
 		return types.LiquidateResp{}, err
 	}
 
-	err = ctx.EventManager().EmitTypedEvent(&types.PositionLiquidatedEvent{
+	_ = ctx.EventManager().EmitTypedEvent(&types.PositionLiquidatedEvent{
 		Pair:                  position.Pair,
 		TraderAddress:         traderAddr.String(),
 		ExchangedQuoteAmount:  positionResp.ExchangedNotionalValue,
@@ -347,7 +347,7 @@ func (k Keeper) ExecutePartialLiquidation(
 		return types.LiquidateResp{}, err
 	}
 
-	err = ctx.EventManager().EmitTypedEvent(&types.PositionLiquidatedEvent{
+	_ = ctx.EventManager().EmitTypedEvent(&types.PositionLiquidatedEvent{
 		Pair:                  currentPosition.Pair,
 		TraderAddress:         traderAddr.String(),
 		ExchangedQuoteAmount:  positionResp.ExchangedNotionalValue,

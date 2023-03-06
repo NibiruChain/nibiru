@@ -7,8 +7,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	sdkSimapp "github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/simapp/helpers"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
@@ -16,6 +14,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 	"github.com/stretchr/testify/require"
 	dbm "github.com/tendermint/tm-db"
+
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 )
 
 func init() {

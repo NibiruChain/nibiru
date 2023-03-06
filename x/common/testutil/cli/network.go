@@ -17,7 +17,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 
-	"github.com/NibiruChain/nibiru/app"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -44,6 +43,8 @@ import (
 	"github.com/tendermint/tendermint/node"
 	tmclient "github.com/tendermint/tendermint/rpc/client"
 	"google.golang.org/grpc"
+
+	"github.com/NibiruChain/nibiru/app"
 )
 
 // package-wide network lock to only allow one test network at a time
