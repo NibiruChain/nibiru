@@ -1,26 +1,101 @@
 package keeper_test
 
 import (
+	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion"
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/collections"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/collections"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	. "github.com/NibiruChain/nibiru/x/oracle/integration_test/action"
+	. "github.com/NibiruChain/nibiru/x/perp/integration/action"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
+	. "github.com/NibiruChain/nibiru/x/testutil"
+	. "github.com/NibiruChain/nibiru/x/testutil/action"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
+
+func createInitVPool() Action {
+	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.USDC)
+
+	return CreateCustomVpool(pairBtcUsdc,
+		/* quoteReserve */ sdk.NewDec(1*common.Precision*common.Precision),
+		/* baseReserve */ sdk.NewDec(1*common.Precision*common.Precision),
+		vpooltypes.VpoolConfig{
+			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			MaxOracleSpreadRatio:   sdk.OneDec(), // 100%,
+			TradeLimitRatio:        sdk.OneDec(),
+		})
+}
+
+func TestOpenPosition(t *testing.T) {
+	ts := NewTestSuite(t)
+	alice := testutil.AccAddress()
+
+	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.USDC)
+
+	tc := TestCases{
+
+		TC("new long position").
+			Given(
+				createInitVPool(),
+				IncreaseBlockNumberBy(1),
+				IncreaseBlockTimeBy(5*time.Second),
+				SetPairPrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
+			).
+			When(
+				OpenPosition(alice, pairBtcUsdc, perptypes.Side_BUY, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec(),
+					OpenPositionResp_PositionShouldBeEqual(
+						types.Position{
+							Pair:                            pairBtcUsdc,
+							TraderAddress:                   alice.String(),
+							Margin:                          sdk.NewDec(1000),
+							OpenNotional:                    sdk.NewDec(10_000),
+							Size_:                           sdk.MustNewDecFromStr("9999.999900000001"),
+							BlockNumber:                     1,
+							LatestCumulativePremiumFraction: sdk.ZeroDec(),
+						}),
+					OpenPositionResp_ExchangeNotionalValueShouldBeEqual(sdk.NewDec(1000*10)), // margin * leverage
+					OpenPositionResp_ExchangedPositionSizeShouldBeEqual(sdk.MustNewDecFromStr("9999.999900000001")),
+					OpenPositionResp_BadDebtShouldBeEqual(sdk.ZeroDec()),
+					OpenPositionResp_FundingPaymentShouldBeEqual(sdk.ZeroDec()),
+					OpenPositionResp_RealizedPnlShouldBeEqual(sdk.ZeroDec()),
+					OpenPositionResp_UnrealizedPnlAfterShouldBeEqual(sdk.ZeroDec()),
+					OpenPositionResp_MarginToVaultShouldBeEqual(sdk.NewDec(1000)),
+					OpenPositionResp_PositionNotionalShouldBeEqual(sdk.NewDec(10_000)),
+				),
+			).
+			Then(
+				PositionShouldBeEqual(alice, pairBtcUsdc, types.Position{
+					Pair:                            pairBtcUsdc,
+					TraderAddress:                   alice.String(),
+					Margin:                          sdk.NewDec(1000),
+					OpenNotional:                    sdk.NewDec(10_000),
+					Size_:                           sdk.MustNewDecFromStr("9999.999900000001"),
+					BlockNumber:                     1,
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				}),
+			),
+	}
+
+	ts.WithTestCases(tc...).Run()
+}
 
 func TestOpenPositionSuccess(t *testing.T) {
 	testCases := []struct {

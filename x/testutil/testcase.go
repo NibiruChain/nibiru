@@ -11,7 +11,7 @@ import (
 )
 
 type Action interface {
-	Do(app *app.NibiruApp, ctx sdk.Context) error
+	Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error)
 }
 
 type TestCases []TestCase
@@ -61,20 +61,21 @@ func (t *TestSuite) WithTestCases(testCase ...TestCase) *TestSuite {
 
 func (t *TestSuite) Run() {
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
+	var err error
 
 	for _, testCase := range t.testCases {
 		for _, action := range testCase.given {
-			err := action.Do(nibiruApp, ctx)
+			ctx, err = action.Do(nibiruApp, ctx)
 			require.NoError(t.t, err, "failed to execute given action: %s", testCase.Name)
 		}
 
 		for _, action := range testCase.when {
-			err := action.Do(nibiruApp, ctx)
+			ctx, err = action.Do(nibiruApp, ctx)
 			require.NoError(t.t, err, "failed to execute when action: %s", testCase.Name)
 		}
 
 		for _, action := range testCase.then {
-			err := action.Do(nibiruApp, ctx)
+			ctx, err = action.Do(nibiruApp, ctx)
 			require.NoError(t.t, err, "failed to execute then action: %s", testCase.Name)
 		}
 	}
