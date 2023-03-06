@@ -60,10 +60,10 @@ func (t *TestSuite) WithTestCases(testCase ...TestCase) *TestSuite {
 }
 
 func (t *TestSuite) Run() {
-	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
-	var err error
-
 	for _, testCase := range t.testCases {
+		nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
+		var err error
+
 		for _, action := range testCase.given {
 			ctx, err = action.Do(nibiruApp, ctx)
 			require.NoError(t.t, err, "failed to execute given action: %s", testCase.Name)
