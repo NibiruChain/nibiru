@@ -1,6 +1,9 @@
 package assertion
 
 import (
+	"fmt"
+	"reflect"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gogo/protobuf/proto"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -56,13 +59,17 @@ func (p positionChangedEventShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Contex
 		if err != nil {
 			return ctx, err
 		}
+
+		if !reflect.DeepEqual(typedEvent, p.ExpectedEvent) {
+			return ctx, fmt.Errorf("expected event %v, got %v", p.ExpectedEvent, typedEvent)
+		}
 	}
 
 	return ctx, nil
 }
 
 // PositionChangedEventShouldBeEqual checks that the position changed event is equal to the expected event.
-func PositionChangedEventShouldBeEqual(expectedEvent types.PositionChangedEvent) testutil.Action {
+func PositionChangedEventShouldBeEqual(expectedEvent *types.PositionChangedEvent) testutil.Action {
 	return positionChangedEventShouldBeEqual{
 		ExpectedEvent: expectedEvent,
 	}

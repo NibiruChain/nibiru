@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion"
 	"testing"
 	"time"
 
@@ -20,6 +19,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	. "github.com/NibiruChain/nibiru/x/oracle/integration_test/action"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/action"
+	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
@@ -90,6 +90,23 @@ func TestOpenPosition(t *testing.T) {
 					Size_:                           sdk.MustNewDecFromStr("9999.999900000001"),
 					BlockNumber:                     1,
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				}),
+				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
+					Pair:               pairBtcUsdc,
+					TraderAddress:      alice.String(),
+					Margin:             sdk.NewCoin(denoms.USDC, sdk.NewDec(1000).TruncateInt()),
+					PositionNotional:   sdk.NewDec(10_000),
+					ExchangedNotional:  sdk.NewDec(1000 * 10),
+					ExchangedSize:      sdk.MustNewDecFromStr("9999.999900000001"),
+					PositionSize:       sdk.MustNewDecFromStr("9999.999900000001"),
+					RealizedPnl:        sdk.ZeroDec(),
+					UnrealizedPnlAfter: sdk.ZeroDec(),
+					BadDebt:            sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+					MarkPrice:          sdk.MustNewDecFromStr("1.0000000200000001"),
+					FundingPayment:     sdk.ZeroDec(),
+					TransactionFee:     sdk.NewCoin(denoms.USDC, sdk.NewInt(20)),
+					BlockHeight:        1,
+					BlockTimeMs:        -57135596800000,
 				}),
 			),
 	}
