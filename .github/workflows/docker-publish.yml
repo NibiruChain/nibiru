@@ -42,12 +42,11 @@ jobs:
       #     platforms: linux/amd64,linux/arm64
       #     tags: ghcr.io/nibiruchain/nibiru:${{ steps.get_version.outputs.version-without-v }}
 
-      - name: Build and push versioned image
+      - name: Build and push chaosnet image
         uses: docker/build-push-action@v4
         # if: startsWith(github.ref, 'refs/tags/v')
         with:
           file: contrib/docker/chaosnet.Dockerfile
-          build-args: MNEMONIC="guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host"
           context: .
           push: true
           platforms: linux/amd64,linux/arm64
