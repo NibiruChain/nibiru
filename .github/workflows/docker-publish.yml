@@ -46,7 +46,8 @@ jobs:
         uses: docker/build-push-action@v4
         # if: startsWith(github.ref, 'refs/tags/v')
         with:
-          context: ./contrib/docker/
+          file: contrib/docker/chaosnet.Dockerfile
+          context: .
           push: true
           platforms: linux/amd64,linux/arm64
           tags: ghcr.io/nibiruchain/chaosnet:latest
