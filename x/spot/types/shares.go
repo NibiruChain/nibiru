@@ -195,6 +195,26 @@ func (pool Pool) TokensOutFromPoolSharesIn(numSharesIn sdk.Int) (
 }
 
 /*
+Compute the minimum number of shares a user need to provide to get at least one u-token
+*/
+func (pool Pool) MinSharesInForTokensOut() (minShares sdk.Int) {
+	poolLiquidity := pool.PoolBalances()
+
+	minShares = sdk.ZeroInt()
+
+	for _, coin := range poolLiquidity {
+		shareRatio := sdk.MustNewDecFromStr("2").Quo(coin.Amount.ToDec()).Quo(sdk.OneDec().Sub(pool.PoolParams.ExitFee))
+
+		shares := shareRatio.MulInt(pool.TotalShares.Amount).TruncateInt()
+
+		if minShares.IsZero() || minShares.LT(shares) {
+			minShares = shares
+		}
+	}
+	return
+}
+
+/*
 Adds new liquidity to the pool and increments the total number of shares.
 
 args:
