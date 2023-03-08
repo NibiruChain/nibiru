@@ -245,6 +245,14 @@ func (s *IntegrationTestSuite) TestNewJoinPoolCmd() {
 			expectedCode: 5, // bankKeeper code for insufficient funds
 		},
 		{
+			name:         "join pool with wrong tokens",
+			poolId:       poolID,
+			tokensIn:     fmt.Sprintf("1000000000%s,10000000000%s", "coin-1", "coin-3"),
+			expectErr:    false,
+			respType:     &sdk.TxResponse{},
+			expectedCode: 13, // bankKeeper code for insufficient funds
+		},
+		{
 			name:         "join pool with sufficient balance",
 			poolId:       poolID,
 			tokensIn:     fmt.Sprintf("100%s,100%s", "coin-2", "coin-3"),

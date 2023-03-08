@@ -69,6 +69,32 @@ func TestGetAddress(t *testing.T) {
 	}
 }
 
+func TestMinSharesInForTokensOut(t *testing.T) {
+	poolAccountAddr := testutil.AccAddress()
+	poolParams := PoolParams{
+		PoolType: PoolType_BALANCER,
+		SwapFee:  sdk.NewDecWithPrec(3, 2),
+		ExitFee:  sdk.NewDecWithPrec(3, 2),
+	}
+	poolAssets := []PoolAsset{
+		{
+			Token:  sdk.NewInt64Coin("foo", 123124124124),
+			Weight: sdk.NewInt(1),
+		},
+		{
+			Token:  sdk.NewInt64Coin("bar", 13224112312124124),
+			Weight: sdk.NewInt(1),
+		},
+	}
+
+	pool, err := NewPool(1 /*=poold*/, poolAccountAddr, poolParams, poolAssets)
+	require.NoError(t, err)
+
+	tokenOut, err := pool.TokensOutFromPoolSharesIn(pool.MinSharesInForTokensOut())
+	require.NoError(t, err)
+	require.True(t, tokenOut.IsValid())
+}
+
 func TestNewPool(t *testing.T) {
 	poolAccountAddr := testutil.AccAddress()
 	poolParams := PoolParams{
@@ -470,6 +496,55 @@ func TestJoinPoolAllTokens(t *testing.T) {
 			require.Equal(t, tc.expectedNumShares, numShares)
 			require.Equal(t, tc.expectedRemCoins, remCoins)
 			require.Equal(t, tc.expectedPool, tc.pool)
+		})
+	}
+}
+
+func TestExitPoolError(t *testing.T) {
+	for _, tc := range []struct {
+		name                    string
+		pool                    Pool
+		exitingShares           sdk.Coin
+		expectedCoins           sdk.Coins
+		expectedRemainingShares sdk.Coin
+		expectedExitedCoins     sdk.Coins
+	}{
+		{
+			name: "all coins withdrawn, no exit fee",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("aaa", 1000000),
+					},
+					{
+						Token: sdk.NewInt64Coin("bbb", 2000000),
+					},
+				},
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 10000000000000),
+				PoolParams: PoolParams{
+					PoolType: PoolType_BALANCER,
+					ExitFee:  sdk.ZeroDec(),
+				},
+			},
+			exitingShares:           sdk.NewInt64Coin("nibiru/pool/1", 100),
+			expectedRemainingShares: sdk.NewInt64Coin("nibiru/pool/1", 0),
+			expectedCoins:           nil,
+			expectedExitedCoins: sdk.NewCoins(
+				sdk.NewInt64Coin("aaa", 100),
+				sdk.NewInt64Coin("bbb", 200),
+			),
+		},
+	} {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := tc.pool.ExitPool(sdk.OneInt())
+			fmt.Println(err)
+			require.Error(t, err)
+			expectedErrorMsg := fmt.Sprintf("not enough pool shares to withdraw - please provide at least %v shares", tc.pool.MinSharesInForTokensOut())
+			require.Contains(t, err.Error(), expectedErrorMsg)
+
+			_, err = tc.pool.ExitPool(tc.pool.MinSharesInForTokensOut())
+			require.NoError(t, err)
 		})
 	}
 }
