@@ -18,6 +18,7 @@ message EventPoolJoined {
 message EventPoolCreated {
   string creator = 1;
   uint64 pool_id = 2;
+  repeated cosmos.base.v1beta1.Coin fees = 3 [(gogoproto.nullable) = false];
 }
 
 message EventPoolExited {
@@ -25,6 +26,7 @@ message EventPoolExited {
   uint64 pool_id = 2;
   cosmos.base.v1beta1.Coin pool_shares_in = 3 [(gogoproto.nullable) = false];
   repeated cosmos.base.v1beta1.Coin tokens_out = 4 [(gogoproto.nullable) = false];
+  repeated cosmos.base.v1beta1.Coin fees = 5 [(gogoproto.nullable) = false];
 }
 
 message EventAssetsSwapped {
@@ -32,4 +34,5 @@ message EventAssetsSwapped {
   uint64 pool_id = 2;
   cosmos.base.v1beta1.Coin token_in = 3 [(gogoproto.nullable) = false];
   cosmos.base.v1beta1.Coin token_out = 4 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin fee = 5 [(gogoproto.nullable) = false];
 }

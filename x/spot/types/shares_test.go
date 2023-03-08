@@ -138,6 +138,7 @@ func TestTokensOutFromExactSharesHappyPath(t *testing.T) {
 		pool              Pool
 		numSharesIn       sdk.Int
 		expectedTokensOut sdk.Coins
+		expectedFees      sdk.Coins
 	}{
 		{
 			name: "all coins withdrawn, no exit fee",
@@ -160,6 +161,7 @@ func TestTokensOutFromExactSharesHappyPath(t *testing.T) {
 				sdk.NewInt64Coin("bar", 100),
 				sdk.NewInt64Coin("foo", 200),
 			),
+			expectedFees: sdk.Coins{},
 		},
 		{
 			name: "partial coins withdrawn, no exit fee",
@@ -182,6 +184,7 @@ func TestTokensOutFromExactSharesHappyPath(t *testing.T) {
 				sdk.NewInt64Coin("bar", 50),
 				sdk.NewInt64Coin("foo", 100),
 			),
+			expectedFees: sdk.Coins{},
 		},
 		{
 			name: "fractional coins withdrawn truncates to int, no exit fee",
@@ -204,6 +207,7 @@ func TestTokensOutFromExactSharesHappyPath(t *testing.T) {
 				sdk.NewInt64Coin("bar", 2),
 				sdk.NewInt64Coin("foo", 5),
 			),
+			expectedFees: sdk.Coins{},
 		},
 		{
 			name: "all coins withdrawn, with exit fee",
@@ -223,6 +227,10 @@ func TestTokensOutFromExactSharesHappyPath(t *testing.T) {
 			},
 			numSharesIn: sdk.NewInt(50),
 			expectedTokensOut: sdk.NewCoins(
+				sdk.NewInt64Coin("bar", 50),
+				sdk.NewInt64Coin("foo", 100),
+			),
+			expectedFees: sdk.NewCoins(
 				sdk.NewInt64Coin("bar", 50),
 				sdk.NewInt64Coin("foo", 100),
 			),
@@ -248,13 +256,18 @@ func TestTokensOutFromExactSharesHappyPath(t *testing.T) {
 				sdk.NewInt64Coin("bar", 25),
 				sdk.NewInt64Coin("foo", 50),
 			),
+			expectedFees: sdk.NewCoins(
+				sdk.NewInt64Coin("bar", 25),
+				sdk.NewInt64Coin("foo", 50),
+			),
 		},
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			tokensOut, err := tc.pool.TokensOutFromPoolSharesIn(tc.numSharesIn)
+			tokensOut, fees, err := tc.pool.TokensOutFromPoolSharesIn(tc.numSharesIn)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedTokensOut, tokensOut)
+			require.Equal(t, tc.expectedFees, fees)
 		})
 	}
 }
@@ -298,7 +311,7 @@ func TestTokensOutFromExactSharesErrors(t *testing.T) {
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := tc.pool.TokensOutFromPoolSharesIn(tc.numSharesIn)
+			_, _, err := tc.pool.TokensOutFromPoolSharesIn(tc.numSharesIn)
 			require.Error(t, err)
 		})
 	}

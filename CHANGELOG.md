@@ -45,6 +45,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1199](https://github.com/NibiruChain/nibiru/pull/1199) - chore(deps): bump golang.org/x/net from 0.4.0 to 0.7.0
 * [#1211](https://github.com/NibiruChain/nibiru/pull/1211) - chore(deps): Bump github.com/stretchr/testify from 1.8.1 to 1.8.2
 * [#1203](https://github.com/NibiruChain/nibiru/pull/1203) - ci: make chaosnet pull nibiru image if --build is not specified
+* [#1197](https://github.com/NibiruChain/nibiru/pull/1197) - feat: add fees into events in spot module.
+  * add `fees` field into `EventPoolCreated` event.
+  * add `fees` field into `EventPoolExited` event.
+  * add `fee` field into `EventAssetsSwapped` event.
 
 ### Bug Fixes
 
