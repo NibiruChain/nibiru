@@ -154,7 +154,7 @@ func (pool Pool) numSharesOutFromTokensInStableSwap(tokensIn sdk.Coins) (
 }
 
 /*
-Calculates the number of tokens to remove from liquidity given LP shares returned to the pool.
+TokensOutFromPoolSharesIn Calculates the number of tokens to remove from liquidity given LP shares returned to the pool.
 
 Note that this function is pure/read-only. It only calculates the theoretical amoount
 and doesn't modify the actual state.
@@ -164,34 +164,38 @@ args:
 
 ret:
   - tokensOut: the tokens withdrawn from the pool
+  - fees: the fees collected
   - err: error if any
 */
 func (pool Pool) TokensOutFromPoolSharesIn(numSharesIn sdk.Int) (
-	tokensOut sdk.Coins, err error,
+	tokensOut sdk.Coins, fees sdk.Coins, err error,
 ) {
 	if numSharesIn.IsZero() {
-		return nil, errors.New("num shares in must be greater than zero")
+		return nil, nil, errors.New("num shares in must be greater than zero")
 	}
 
 	shareRatio := numSharesIn.ToDec().QuoInt(pool.TotalShares.Amount)
 	if shareRatio.IsZero() {
-		return nil, errors.New("share ratio must be greater than zero")
+		return nil, nil, errors.New("share ratio must be greater than zero")
 	}
 	if shareRatio.GT(sdk.OneDec()) {
-		return nil, errors.New("share ratio cannot be greater than one")
+		return nil, nil, errors.New("share ratio cannot be greater than one")
 	}
 
 	poolLiquidity := pool.PoolBalances()
 	tokensOut = make(sdk.Coins, len(poolLiquidity))
+	fees = make(sdk.Coins, len(poolLiquidity))
 	for i, coin := range poolLiquidity {
 		// tokenOut = shareRatio * poolTokenAmt * (1 - exitFee)
-		tokenOutAmt := shareRatio.MulInt(coin.Amount).Mul(
+		tokenAmount := shareRatio.MulInt(coin.Amount)
+		tokenOutAmt := tokenAmount.Mul(
 			sdk.OneDec().Sub(pool.PoolParams.ExitFee),
 		).TruncateInt()
 		tokensOut[i] = sdk.NewCoin(coin.Denom, tokenOutAmt)
+		fees[i] = sdk.NewCoin(coin.Denom, tokenAmount.TruncateInt().Sub(tokenOutAmt))
 	}
 
-	return tokensOut, nil
+	return tokensOut, sdk.NewCoins(fees...), nil
 }
 
 /*

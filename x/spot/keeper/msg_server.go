@@ -21,7 +21,7 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 var _ types.MsgServer = msgServer{}
 
 /*
-Handler for the MsgCreatePool transaction.
+CreatePool Handler for the MsgCreatePool transaction.
 
 args
 
@@ -52,7 +52,7 @@ func (k msgServer) CreatePool(goCtx context.Context, msg *types.MsgCreatePool) (
 }
 
 /*
-Handler for the MsgJoinPool transaction.
+JoinPool Handler for the MsgJoinPool transaction.
 
 args
 
@@ -91,7 +91,7 @@ func (k msgServer) JoinPool(ctx context.Context, msg *types.MsgJoinPool) (*types
 }
 
 /*
-Handler for the MsgExitPool transaction.
+ExitPool Handler for the MsgExitPool transaction.
 
 args
 
@@ -127,7 +127,7 @@ func (k msgServer) ExitPool(ctx context.Context, msg *types.MsgExitPool) (*types
 }
 
 /*
-Handler for the MsgJoinPool transaction.
+SwapAssets Handler for the MsgJoinPool transaction.
 
 args
 
