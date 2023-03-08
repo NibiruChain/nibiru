@@ -61,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Improvements
 
+* [#1211](https://github.com/NibiruChain/nibiru/pull/1211) - chore(deps): Bump github.com/stretchr/testify from 1.8.1 to 1.8.2
 * [#1197](https://github.com/NibiruChain/nibiru/pull/1197) - refactor(testutil): clean up `x/common/testutil` test setup code
 * [#1193](https://github.com/NibiruChain/nibiru/pull/1193) - refactor(oracle): clean up `x/oracle/keeper` tests
 * [#1192](https://github.com/NibiruChain/nibiru/pull/1192) - feat: chaosnet docker-compose
