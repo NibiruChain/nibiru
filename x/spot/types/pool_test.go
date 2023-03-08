@@ -90,7 +90,7 @@ func TestMinSharesInForTokensOut(t *testing.T) {
 	pool, err := NewPool(1 /*=poold*/, poolAccountAddr, poolParams, poolAssets)
 	require.NoError(t, err)
 
-	tokenOut, err := pool.TokensOutFromPoolSharesIn(pool.MinSharesInForTokensOut())
+	tokenOut, _, err := pool.TokensOutFromPoolSharesIn(pool.MinSharesInForTokensOut())
 	require.NoError(t, err)
 	require.True(t, tokenOut.IsValid())
 }
@@ -537,13 +537,13 @@ func TestExitPoolError(t *testing.T) {
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := tc.pool.ExitPool(sdk.OneInt())
+			_, _, err := tc.pool.ExitPool(sdk.OneInt())
 			fmt.Println(err)
 			require.Error(t, err)
 			expectedErrorMsg := fmt.Sprintf("not enough pool shares to withdraw - please provide at least %v shares", tc.pool.MinSharesInForTokensOut())
 			require.Contains(t, err.Error(), expectedErrorMsg)
 
-			_, err = tc.pool.ExitPool(tc.pool.MinSharesInForTokensOut())
+			_, _, err = tc.pool.ExitPool(tc.pool.MinSharesInForTokensOut())
 			require.NoError(t, err)
 		})
 	}
