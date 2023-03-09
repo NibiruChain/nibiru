@@ -20,7 +20,7 @@ func (gd FixedPriceGasDecorator) AnteHandle(
 	simulate bool,
 	next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
-	if simulate || !isTxGasless(tx, ctx, gd.oracleKeeper) {
+	if simulate || !isTxGasless(tx, ctx) {
 		return next(ctx, tx, simulate)
 	}
 
@@ -35,11 +35,7 @@ func isTxGasless(tx sdk.Tx, ctx sdk.Context) bool {
 		return false
 	}
 	for _, msg := range tx.GetMsgs() {
-		switch m := msg.(type) {
-		case *pricefeedtypes.MsgPostPrice:
-			if pricefeedPostPriceIsGasless(m, ctx, pricefeedKeeper) {
-				continue
-			}
+		switch _ := msg.(type) {
 			return false
 		default:
 			return false
