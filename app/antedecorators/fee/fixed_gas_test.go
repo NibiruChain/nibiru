@@ -8,6 +8,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/x/bank/types"
 	"testing"
 )
 
@@ -30,6 +32,106 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 				},
 			},
 			expectedGas: fee.OracleMessageGas,
+			expectedErr: nil,
+		},
+		{
+			name: "Oracle Vote Transaction",
+			messages: []sdk.Msg{
+				&oracletypes.MsgAggregateExchangeRateVote{
+					Salt:          "dummySalt",
+					ExchangeRates: "someData",
+					Feeder:        addr.String(),
+					Validator:     addr.String(),
+				},
+			},
+			expectedGas: fee.OracleMessageGas,
+			expectedErr: nil,
+		},
+		{
+			name: "Two messages in a transaction, one of them is an oracle vote message should fail (with MsgAggregateExchangeRatePrevote)",
+			messages: []sdk.Msg{
+				&oracletypes.MsgAggregateExchangeRatePrevote{
+					Hash:      "",
+					Feeder:    addr.String(),
+					Validator: addr.String(),
+				},
+				&types.MsgSend{
+					FromAddress: addr.String(),
+					ToAddress:   addr.String(),
+					Amount:      sdk.NewCoins(sdk.NewInt64Coin(app.BondDenom, 100)),
+				},
+			},
+			expectedGas: 0x151a,
+			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "oracle vote message must be the only message in the transaction"),
+		},
+		{
+			name: "Two messages in a transaction, one of them is an oracle vote message should fail (with MsgAggregateExchangeRatePrevote) permutation 2",
+			messages: []sdk.Msg{
+				&types.MsgSend{
+					FromAddress: addr.String(),
+					ToAddress:   addr.String(),
+					Amount:      sdk.NewCoins(sdk.NewInt64Coin(app.BondDenom, 100)),
+				},
+				&oracletypes.MsgAggregateExchangeRatePrevote{
+					Hash:      "",
+					Feeder:    addr.String(),
+					Validator: addr.String(),
+				},
+			},
+			expectedGas: 0x151a,
+			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "oracle vote message must be the only message in the transaction"),
+		},
+		{
+			name: "Two messages in a transaction, one of them is an oracle vote message should fail (with MsgAggregateExchangeRateVote)",
+			messages: []sdk.Msg{
+				&oracletypes.MsgAggregateExchangeRateVote{
+					Salt:          "dummySalt",
+					ExchangeRates: "someData",
+					Feeder:        addr.String(),
+					Validator:     addr.String(),
+				},
+				&types.MsgSend{
+					FromAddress: addr.String(),
+					ToAddress:   addr.String(),
+					Amount:      sdk.NewCoins(sdk.NewInt64Coin(app.BondDenom, 100)),
+				},
+			},
+			expectedGas: 0x151a,
+			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "oracle vote message must be the only message in the transaction"),
+		},
+		{
+			name: "Two messages in a transaction, one of them is an oracle vote message should fail (with MsgAggregateExchangeRateVote) permutation 2",
+			messages: []sdk.Msg{
+				&types.MsgSend{
+					FromAddress: addr.String(),
+					ToAddress:   addr.String(),
+					Amount:      sdk.NewCoins(sdk.NewInt64Coin(app.BondDenom, 100)),
+				},
+				&oracletypes.MsgAggregateExchangeRateVote{
+					Salt:          "dummySalt",
+					ExchangeRates: "someData",
+					Feeder:        addr.String(),
+					Validator:     addr.String(),
+				},
+			},
+			expectedGas: 0x151a,
+			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "oracle vote message must be the only message in the transaction"),
+		},
+		{
+			name: "Other two messages",
+			messages: []sdk.Msg{
+				&types.MsgSend{
+					FromAddress: addr.String(),
+					ToAddress:   addr.String(),
+					Amount:      sdk.NewCoins(sdk.NewInt64Coin(app.BondDenom, 100)),
+				},
+				&types.MsgSend{
+					FromAddress: addr.String(),
+					ToAddress:   addr.String(),
+					Amount:      sdk.NewCoins(sdk.NewInt64Coin(app.BondDenom, 200)),
+				},
+			},
+			expectedGas: 0xddee,
 			expectedErr: nil,
 		},
 	}
@@ -57,7 +159,11 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 			}
 
 			suite.ctx, err = suite.anteHandler(suite.ctx, tx, false)
-			suite.Require().Equal(tc.expectedErr, err)
+			if tc.expectedErr != nil {
+				suite.Require().Contains(err.Error(), tc.expectedErr.Error())
+			} else {
+				suite.Require().NoError(err)
+			}
 			suite.Require().Equal(tc.expectedGas, suite.ctx.GasMeter().GasConsumed())
 		})
 	}
