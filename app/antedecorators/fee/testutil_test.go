@@ -1,15 +1,16 @@
 package fee_test
 
 import (
+	feeante "github.com/NibiruChain/nibiru/app/antedecorators/fee"
+	"github.com/cosmos/cosmos-sdk/x/auth/ante"
+	ibcante "github.com/cosmos/ibc-go/v3/modules/core/ante"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
-	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	xauthsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/stretchr/testify/suite"
 
@@ -29,31 +30,37 @@ type AnteTestSuite struct {
 }
 
 // SetupTest setups a new test, with new app, context, and anteHandler.
-func (suite *AnteTestSuite) SetupTest(isCheckTx bool) {
-	suite.app, suite.ctx = testapp.NewNibiruTestAppAndContext(false)
-	suite.ctx = suite.ctx.WithBlockHeight(1)
+func (suite *AnteTestSuite) SetupTest() {
+	suite.app, suite.ctx = testapp.NewNibiruTestAppAndContext(true)
+	suite.ctx = suite.ctx.WithBlockHeight(1).WithChainID("test-chain-id")
 
 	// Set up TxConfig.
 	encodingConfig := app.MakeTestEncodingConfig()
-	// We're using TestMsg encoding in some tests, so register it here.
-	encodingConfig.Amino.RegisterConcrete(&testdata.TestMsg{}, "testdata.TestMsg", nil)
-	testdata.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 
 	suite.clientCtx = client.Context{}.
-		WithTxConfig(encodingConfig.TxConfig)
+		WithTxConfig(encodingConfig.TxConfig).
+		WithChainID("test-chain-id")
 
-	anteHandler, err := ante.NewAnteHandler(
-		ante.HandlerOptions{
-			AccountKeeper:   suite.app.AccountKeeper,
-			BankKeeper:      suite.app.BankKeeper,
-			FeegrantKeeper:  suite.app.FeeGrantKeeper,
-			SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
-			SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
-		},
-	)
+	anteDecorators := []sdk.AnteDecorator{
+		ante.NewSetUpContextDecorator(),
+		ante.NewRejectExtensionOptionsDecorator(),
+		ante.NewMempoolFeeDecorator(),
+		ante.NewValidateBasicDecorator(),
+		ante.NewTxTimeoutHeightDecorator(),
+		ante.NewValidateMemoDecorator(suite.app.AccountKeeper),
+		feeante.NewPostPriceFixedPriceDecorator(),
+		ante.NewConsumeGasForTxSizeDecorator(suite.app.AccountKeeper),
+		feeante.NewDeductFeeDecorator(suite.app.AccountKeeper, suite.app.BankKeeper, suite.app.FeeGrantKeeper), // Replace fee ante from cosmos auth with a custom one.
+		// SetPubKeyDecorator must be called before all signature verification decorators
+		ante.NewSetPubKeyDecorator(suite.app.AccountKeeper),
+		ante.NewValidateSigCountDecorator(suite.app.AccountKeeper),
+		ante.NewSigGasConsumeDecorator(suite.app.AccountKeeper, ante.DefaultSigVerificationGasConsumer),
+		ante.NewSigVerificationDecorator(suite.app.AccountKeeper, encodingConfig.TxConfig.SignModeHandler()),
+		ante.NewIncrementSequenceDecorator(suite.app.AccountKeeper),
+		ibcante.NewAnteDecorator(suite.app.GetIBCKeeper()),
+	}
 
-	suite.Require().NoError(err)
-	suite.anteHandler = anteHandler
+	suite.anteHandler = sdk.ChainAnteDecorators(anteDecorators...)
 }
 
 // CreateTestTx is a helper function to create a tx given multiple inputs.

@@ -12,7 +12,7 @@ import (
 )
 
 func (suite *AnteTestSuite) TestDeductFees() {
-	suite.SetupTest(false) // setup
+	suite.SetupTest() // setup
 	suite.txBuilder = suite.clientCtx.TxConfig.NewTxBuilder()
 
 	// keys and addresses
@@ -55,7 +55,7 @@ func (suite *AnteTestSuite) TestDeductFees() {
 }
 
 func (suite *AnteTestSuite) TestPostPriceTxHasFixedFees(t *testing.T) {
-	suite.SetupTest(false) // setup
+	suite.SetupTest() // setup
 	suite.txBuilder = suite.clientCtx.TxConfig.NewTxBuilder()
 
 	// keys and addresses

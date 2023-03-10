@@ -6,40 +6,40 @@ import (
 	"github.com/cosmos/cosmos-sdk/types"
 )
 
-type gaslessMeter struct {
+type fixedGasMeter struct {
 	consumed types.Gas
 }
 
-// GasLessMeter returns a reference to a new gaslessMeter.
-func GasLessMeter() types.GasMeter {
-	return &gaslessMeter{
-		consumed: 1,
+// NewFixedGasMeter returns a reference to a new fixedGasMeter.
+func NewFixedGasMeter(fixedGas types.Gas) types.GasMeter {
+	return &fixedGasMeter{
+		consumed: fixedGas,
 	}
 }
 
-func (g *gaslessMeter) GasConsumed() types.Gas {
-	return 1
+func (g *fixedGasMeter) GasConsumed() types.Gas {
+	return g.consumed
 }
 
-func (g *gaslessMeter) GasConsumedToLimit() types.Gas {
-	return 1
+func (g *fixedGasMeter) GasConsumedToLimit() types.Gas {
+	return g.consumed
 }
 
-func (g *gaslessMeter) Limit() types.Gas {
-	return 1
+func (g *fixedGasMeter) Limit() types.Gas {
+	return g.consumed
 }
 
-func (g *gaslessMeter) ConsumeGas(types.Gas, string) {}
-func (g *gaslessMeter) RefundGas(types.Gas, string)  {}
+func (g *fixedGasMeter) ConsumeGas(types.Gas, string) {}
+func (g *fixedGasMeter) RefundGas(types.Gas, string)  {}
 
-func (g *gaslessMeter) IsPastLimit() bool {
+func (g *fixedGasMeter) IsPastLimit() bool {
 	return false
 }
 
-func (g *gaslessMeter) IsOutOfGas() bool {
+func (g *fixedGasMeter) IsOutOfGas() bool {
 	return false
 }
 
-func (g *gaslessMeter) String() string {
+func (g *fixedGasMeter) String() string {
 	return fmt.Sprintf("GaslessMeter:\n  consumed: %d", g.consumed)
 }
