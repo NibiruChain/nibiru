@@ -50,7 +50,7 @@ func (suite *AnteTestSuite) SetupTest() {
 		ante.NewValidateMemoDecorator(suite.app.AccountKeeper),
 		feeante.NewPostPriceFixedPriceDecorator(),
 		ante.NewConsumeGasForTxSizeDecorator(suite.app.AccountKeeper),
-		feeante.NewDeductFeeDecorator(suite.app.AccountKeeper, suite.app.BankKeeper, suite.app.FeeGrantKeeper), // Replace fee ante from cosmos auth with a custom one.
+		ante.NewDeductFeeDecorator(suite.app.AccountKeeper, suite.app.BankKeeper, suite.app.FeeGrantKeeper), // Replace fee ante from cosmos auth with a custom one.
 		// SetPubKeyDecorator must be called before all signature verification decorators
 		ante.NewSetPubKeyDecorator(suite.app.AccountKeeper),
 		ante.NewValidateSigCountDecorator(suite.app.AccountKeeper),
