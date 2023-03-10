@@ -223,6 +223,10 @@ message QuerySwapExactAmountInResponse {
     (gogoproto.moretags) = "yaml:\"token_out\"",
     (gogoproto.nullable) = false
   ];
+  cosmos.base.v1beta1.Coin fee = 3 [
+    (gogoproto.moretags) = "yaml:\"fee\"",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // Given an exact amount of tokens out and a target tokenInDenom, calculates
@@ -286,6 +290,12 @@ message QueryExitExactAmountInResponse {
   repeated cosmos.base.v1beta1.Coin tokens_out = 1 [
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
     (gogoproto.moretags) = "yaml:\"tokens_out\"",
+    (gogoproto.nullable) = false
+  ];
+
+  repeated cosmos.base.v1beta1.Coin fees = 2 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (gogoproto.moretags) = "yaml:\"fees\"",
     (gogoproto.nullable) = false
   ];
 }

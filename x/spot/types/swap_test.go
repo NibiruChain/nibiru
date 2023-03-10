@@ -16,6 +16,7 @@ func TestCalcOutAmtGivenIn(t *testing.T) {
 		tokenIn          sdk.Coin
 		tokenOutDenom    string
 		expectedTokenOut sdk.Coin
+		expectedFee      sdk.Coin
 		shouldError      bool
 	}{
 		{
@@ -40,6 +41,7 @@ func TestCalcOutAmtGivenIn(t *testing.T) {
 			tokenIn:          sdk.NewInt64Coin("aaa", 10),
 			tokenOutDenom:    "bbb",
 			expectedTokenOut: sdk.NewInt64Coin("bbb", 9),
+			expectedFee:      sdk.NewInt64Coin("aaa", 0), // 0.0003 * 10 = 0.003, truncated to 0
 		},
 		{
 			name: "big simple numbers",
@@ -63,6 +65,7 @@ func TestCalcOutAmtGivenIn(t *testing.T) {
 			tokenIn:          sdk.NewInt64Coin("aaa", 10),
 			tokenOutDenom:    "bbb",
 			expectedTokenOut: sdk.NewInt64Coin("bbb", 9),
+			expectedFee:      sdk.NewInt64Coin("aaa", 0), // 0.0003 * 10 = 0.003, truncated to 0
 		},
 		{
 			name: "big simple numbers, huge swap fee",
@@ -86,6 +89,7 @@ func TestCalcOutAmtGivenIn(t *testing.T) {
 			tokenIn:          sdk.NewInt64Coin("aaa", 10),
 			tokenOutDenom:    "bbb",
 			expectedTokenOut: sdk.NewInt64Coin("bbb", 4),
+			expectedFee:      sdk.NewInt64Coin("aaa", 5), // 0.5 * 10 = 5
 		},
 		{
 			name: "real numbers",
@@ -110,6 +114,7 @@ func TestCalcOutAmtGivenIn(t *testing.T) {
 			tokenOutDenom: "bbb",
 			// solved with wolfram alpha (https://www.wolframalpha.com/input?i=23318504+-+%283498723457*23318504%29%2F+%283498723457%2B5844683*%281-0.0003%29%29)
 			expectedTokenOut: sdk.NewInt64Coin("bbb", 38877),
+			expectedFee:      sdk.NewInt64Coin("aaa", 1753), // 0.0003 * 5844683 = 1753.4049, truncated to 1753
 		},
 		{
 			name: "swap with very low output token amount",
@@ -137,12 +142,13 @@ func TestCalcOutAmtGivenIn(t *testing.T) {
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			tokenOut, err := tc.pool.CalcOutAmtGivenIn(tc.tokenIn, tc.tokenOutDenom, false)
+			tokenOut, fee, err := tc.pool.CalcOutAmtGivenIn(tc.tokenIn, tc.tokenOutDenom, false)
 			if tc.shouldError {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
 				require.Equal(t, tc.expectedTokenOut, tokenOut)
+				require.Equal(t, tc.expectedFee, fee)
 			}
 		})
 	}
