@@ -1,16 +1,18 @@
 package fee_test
 
 import (
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/app/antedecorators/fee"
-	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
+	"testing"
+
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
-	"testing"
+
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/app/antedecorators/fee"
+	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
 func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
