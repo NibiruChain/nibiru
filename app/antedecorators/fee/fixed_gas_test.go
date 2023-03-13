@@ -64,7 +64,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 				},
 			},
 			expectedGas: 0x151a,
-			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "oracle vote message must be the only message in the transaction"),
+			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than a single message"),
 		},
 		{
 			name: "Two messages in a transaction, one of them is an oracle vote message should fail (with MsgAggregateExchangeRatePrevote) permutation 2",
@@ -81,7 +81,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 				},
 			},
 			expectedGas: 0x151a,
-			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "oracle vote message must be the only message in the transaction"),
+			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than a single message"),
 		},
 		{
 			name: "Two messages in a transaction, one of them is an oracle vote message should fail (with MsgAggregateExchangeRateVote)",
@@ -99,7 +99,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 				},
 			},
 			expectedGas: 0x151a,
-			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "oracle vote message must be the only message in the transaction"),
+			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than a single message"),
 		},
 		{
 			name: "Two messages in a transaction, one of them is an oracle vote message should fail (with MsgAggregateExchangeRateVote) permutation 2",
@@ -117,7 +117,66 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 				},
 			},
 			expectedGas: 0x151a,
-			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "oracle vote message must be the only message in the transaction"),
+			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than a single message"),
+		},
+		{
+			name: "Two messages in a transaction, one is oracle vote, the other oracle pre vote: should work with fixed price",
+			messages: []sdk.Msg{
+				&oracletypes.MsgAggregateExchangeRatePrevote{
+					Hash:      "",
+					Feeder:    addr.String(),
+					Validator: addr.String(),
+				},
+				&oracletypes.MsgAggregateExchangeRateVote{
+					Salt:          "dummySalt",
+					ExchangeRates: "someData",
+					Feeder:        addr.String(),
+					Validator:     addr.String(),
+				},
+			},
+			expectedGas: fee.OracleMessageGas,
+			expectedErr: nil,
+		},
+		{
+			name: "Two messages in a transaction, one is oracle vote, the other oracle pre vote: should work with fixed price permutation 2",
+			messages: []sdk.Msg{
+				&oracletypes.MsgAggregateExchangeRateVote{
+					Salt:          "dummySalt",
+					ExchangeRates: "someData",
+					Feeder:        addr.String(),
+					Validator:     addr.String(),
+				},
+				&oracletypes.MsgAggregateExchangeRatePrevote{
+					Hash:      "",
+					Feeder:    addr.String(),
+					Validator: addr.String(),
+				},
+			},
+			expectedGas: fee.OracleMessageGas,
+			expectedErr: nil,
+		},
+		{
+			name: "Three messages in tx, two related to oracle, but other one is not: should fail",
+			messages: []sdk.Msg{
+				&oracletypes.MsgAggregateExchangeRateVote{
+					Salt:          "dummySalt",
+					ExchangeRates: "someData",
+					Feeder:        addr.String(),
+					Validator:     addr.String(),
+				},
+				&types.MsgSend{
+					FromAddress: addr.String(),
+					ToAddress:   addr.String(),
+					Amount:      sdk.NewCoins(sdk.NewInt64Coin(app.BondDenom, 100)),
+				},
+				&oracletypes.MsgAggregateExchangeRatePrevote{
+					Hash:      "",
+					Feeder:    addr.String(),
+					Validator: addr.String(),
+				},
+			},
+			expectedGas: 0x151a,
+			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "a transaction cannot have more than a single oracle vote and prevote message"),
 		},
 		{
 			name: "Other two messages",
