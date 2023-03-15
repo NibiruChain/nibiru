@@ -13,6 +13,8 @@ services:
       - 26657:26657
       - 1317:1317
       - 9090:9090
+    networks:
+      - nibiru
 
   faucet:
     image: ghcr.io/nibiruchain/go-faucet:latest
@@ -26,6 +28,8 @@ services:
     restart: on-failure
     ports:
       - 8000:8000
+    networks:
+      - nibiru
 
   liquidation-db:
     image: postgres:latest
@@ -35,6 +39,8 @@ services:
       POSTGRES_DB: liquidator
     ports:
       - 5433:5432
+    networks:
+      - nibiru
 
   liquidator:
     image: ghcr.io/nibiruchain/liquidation:latest
@@ -51,6 +57,8 @@ services:
       - DATABASE_URI=postgresql+psycopg2://postgres:postgres@liquidation-db:5432/liquidator
       - WALLET_MNEMONIC=guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host
       - VPOOLS=ubtc:unusd
+    networks:
+      - nibiru
 
   heart-monitor-db:
     image: postgres:latest
@@ -60,6 +68,8 @@ services:
       POSTGRES_DB: heart-monitor
     ports:
       - 5434:5432
+    networks:
+      - nibiru
 
   heart-monitor:
     image: ghcr.io/nibiruchain/heart-monitor:latest
@@ -76,6 +86,8 @@ services:
       - VALIDATOR_MNEMONIC=guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host
       - MODULE_ACCOUNTS={'nibi1yl6hdjhmkf37639730gffanpzndzdpmhe6js7s':'transfer','nibi1fl48vsnmsdzcv85q5d2q4z5ajdha8yu3z7dksy':'bonded_tokens_pool','nibi1trh2mamq64u4g042zfeevvjk4cukrthvppfnc7':'perp_ef','nibi1tygms3xhhs3yv487phx3dw4a95jn7t7lk738xs':'not_bonded_tokens_pool','nibi10d07y265gmmuvt4z0w9aw880jnsr700jd8hulq':'gov','nibi1jv65s3grqf6v6jl3dp4t6c9t9rk99cd8s6q9qv':'distribution','nibi143kdcynewz7d08fmlu0ugtnn9sv8vljxwp7eug':'fee_pool','nibi1m3h30wlvsf8llruxtpukdvsy0km2kum8l5rpwn':'mint','nibi1umc2r7a58jy3jmw0e0hctyy0rx45chmurptawl':'vault','nibi17xpfvakm2amg962yls6f84z3kell8c5l8u8ezw':'fee_collector'}
       - LOGGER_TIMESTAMP=true
+    networks:
+      - nibiru
 
   # BDJUNO
   bdjuno-repo-clone-task:
@@ -88,6 +100,8 @@ services:
       ]
     volumes:
       - bdjuno-repo:/bdjuno
+    networks:
+      - nibiru
 
   bdjuno-database-schema-task:
     image: alpine:latest
@@ -103,6 +117,8 @@ services:
     depends_on:
       bdjuno-repo-clone-task:
         condition: service_completed_successfully
+    networks:
+      - nibiru
 
   bdjuno-hasura-metadata-task:
     image: alpine:latest
@@ -118,6 +134,8 @@ services:
     depends_on:
       bdjuno-repo-clone-task:
         condition: service_completed_successfully
+    networks:
+      - nibiru
 
   bdjuno-db:
     image: postgres:latest
@@ -132,6 +150,8 @@ services:
     depends_on:
       bdjuno-repo-clone-task:
         condition: service_completed_successfully
+    networks:
+      - nibiru
 
   bdjuno-genesis-task:
     image: apteno/alpine-jq
@@ -146,6 +166,8 @@ services:
     depends_on:
       nibiru:
         condition: service_started
+    networks:
+      - nibiru
 
   bdjuno:
     image: ghcr.io/nibiruchain/bdjuno:latest
@@ -161,6 +183,8 @@ services:
         condition: service_completed_successfully
       bdjuno-db:
         condition: service_started
+    networks:
+      - nibiru
 
   hasura:
     image: hasura/graphql-engine:latest.cli-migrations-v3
@@ -181,6 +205,8 @@ services:
         condition: service_completed_successfully
       bdjuno-db:
         condition: service_started
+    networks:
+      - nibiru
 
   big-dipper:
     image: ghcr.io/nibiruchain/big-dipper:localnet-0
@@ -193,6 +219,8 @@ services:
     depends_on:
       hasura:
         condition: service_started
+    networks:
+      - nibiru
 
   pricefeeder:
     image: ghcr.io/nibiruchain/pricefeeder:latest
@@ -207,9 +235,14 @@ services:
     depends_on:
       nibiru:
         condition: service_started
+    networks:
+      - nibiru
 
 volumes:
   bdjuno-repo:
   bdjuno-docker-entrypoint:
   bdjuno-genesis:
   bdjuno-hasura-metadata:
+
+networks:
+  nibiru:
