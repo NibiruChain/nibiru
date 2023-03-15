@@ -63,7 +63,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 					Amount:      sdk.NewCoins(sdk.NewInt64Coin(app.BondDenom, 100)),
 				},
 			},
-			expectedGas: 0x151a,
+			expectedGas: 5402,
 			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than a single message"),
 		},
 		{
@@ -80,7 +80,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 					Validator: addr.String(),
 				},
 			},
-			expectedGas: 0x151a,
+			expectedGas: 5402,
 			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than a single message"),
 		},
 		{
@@ -98,7 +98,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 					Amount:      sdk.NewCoins(sdk.NewInt64Coin(app.BondDenom, 100)),
 				},
 			},
-			expectedGas: 0x151a,
+			expectedGas: 5402,
 			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than a single message"),
 		},
 		{
@@ -116,7 +116,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 					Validator:     addr.String(),
 				},
 			},
-			expectedGas: 0x151a,
+			expectedGas: 5402,
 			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than a single message"),
 		},
 		{
@@ -175,7 +175,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 					Validator: addr.String(),
 				},
 			},
-			expectedGas: 0x151a,
+			expectedGas: 5402,
 			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "a transaction cannot have more than a single oracle vote and prevote message"),
 		},
 		{
@@ -192,7 +192,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 					Amount:      sdk.NewCoins(sdk.NewInt64Coin(app.BondDenom, 200)),
 				},
 			},
-			expectedGas: 0xddee,
+			expectedGas: 56814,
 			expectedErr: nil,
 		},
 	}
