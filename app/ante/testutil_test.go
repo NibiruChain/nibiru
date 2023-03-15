@@ -1,12 +1,12 @@
-package fee_test
+package ante_test
 
 import (
 	"testing"
 
+	feeante "github.com/NibiruChain/nibiru/app/ante"
+
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	ibcante "github.com/cosmos/ibc-go/v3/modules/core/ante"
-
-	feeante "github.com/NibiruChain/nibiru/app/antedecorators/fee"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"

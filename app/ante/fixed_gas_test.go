@@ -1,4 +1,4 @@
-package fee_test
+package ante_test
 
 import (
 	"testing"
@@ -11,7 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/app/antedecorators/fee"
+	"github.com/NibiruChain/nibiru/app/ante"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
@@ -33,7 +33,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 					Validator: addr.String(),
 				},
 			},
-			expectedGas: fee.OracleMessageGas,
+			expectedGas: ante.OracleMessageGas,
 			expectedErr: nil,
 		},
 		{
@@ -46,7 +46,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 					Validator:     addr.String(),
 				},
 			},
-			expectedGas: fee.OracleMessageGas,
+			expectedGas: ante.OracleMessageGas,
 			expectedErr: nil,
 		},
 		{
@@ -134,7 +134,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 					Validator:     addr.String(),
 				},
 			},
-			expectedGas: fee.OracleMessageGas,
+			expectedGas: ante.OracleMessageGas,
 			expectedErr: nil,
 		},
 		{
@@ -152,7 +152,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 					Validator: addr.String(),
 				},
 			},
-			expectedGas: fee.OracleMessageGas,
+			expectedGas: ante.OracleMessageGas,
 			expectedErr: nil,
 		},
 		{
