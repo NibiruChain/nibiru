@@ -64,7 +64,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 				},
 			},
 			expectedGas: 5402,
-			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than a single message"),
+			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than those two messages"),
 		},
 		{
 			name: "Two messages in a transaction, one of them is an oracle vote message should fail (with MsgAggregateExchangeRatePrevote) permutation 2",
@@ -81,7 +81,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 				},
 			},
 			expectedGas: 5402,
-			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than a single message"),
+			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than those two messages"),
 		},
 		{
 			name: "Two messages in a transaction, one of them is an oracle vote message should fail (with MsgAggregateExchangeRateVote)",
@@ -99,7 +99,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 				},
 			},
 			expectedGas: 5402,
-			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than a single message"),
+			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than those two messages"),
 		},
 		{
 			name: "Two messages in a transaction, one of them is an oracle vote message should fail (with MsgAggregateExchangeRateVote) permutation 2",
@@ -117,7 +117,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 				},
 			},
 			expectedGas: 5402,
-			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than a single message"),
+			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than those two messages"),
 		},
 		{
 			name: "Two messages in a transaction, one is oracle vote, the other oracle pre vote: should work with fixed price",

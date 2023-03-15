@@ -43,7 +43,7 @@ func (gd EnsureSinglePostPriceMessageDecorator) AnteHandle(
 		ctx = ctx.WithGasMeter(NewFixedGasMeter(OracleMessageGas))
 	} else if hasOraclePreVoteMsg || hasOracleVoteMsg {
 		if len(tx.GetMsgs()) > 1 {
-			return ctx, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than a single message")
+			return ctx, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than those two messages")
 		}
 
 		ctx = ctx.WithGasMeter(NewFixedGasMeter(OracleMessageGas))
