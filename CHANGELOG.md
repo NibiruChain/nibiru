@@ -40,6 +40,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Breaking
+
+* [#1252](https://github.com/NibiruChain/nibiru/pull/1220) - feat: reduce gas fees when posting price
+
 ### Improvements
 
 * [#1199](https://github.com/NibiruChain/nibiru/pull/1199) - chore(deps): bump golang.org/x/net from 0.4.0 to 0.7.0
