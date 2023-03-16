@@ -791,7 +791,6 @@ func NewNibiruApp(
 		TxCounterStoreKey: keys[wasm.StoreKey],
 		WasmConfig:        wasmConfig,
 	})
-
 	if err != nil {
 		panic(fmt.Errorf("failed to create sdk.AnteHandler: %s", err))
 	}
