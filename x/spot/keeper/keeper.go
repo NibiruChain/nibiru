@@ -28,7 +28,7 @@ type (
 )
 
 /*
-Creates a new keeper for the spot module.
+NewKeeper Creates a new keeper for the spot module.
 
 args
 
@@ -85,7 +85,7 @@ func (k Keeper) SetNextPoolNumber(ctx sdk.Context, poolNumber uint64) {
 }
 
 /*
-Retrieves the next pool id number to use when creating a new pool.
+GetNextPoolNumber Retrieves the next pool id number to use when creating a new pool.
 This function is idempotent (does not change state).
 
 args
@@ -107,7 +107,7 @@ func (k Keeper) GetNextPoolNumber(ctx sdk.Context) (poolNumber uint64, err error
 }
 
 /*
-Returns the next pool id number, and increments the state's next pool id number by one
+GetNextPoolNumberAndIncrement Returns the next pool id number, and increments the state's next pool id number by one
 so that the next pool creation uses an autoincremented id number.
 
 args
@@ -128,7 +128,7 @@ func (k Keeper) GetNextPoolNumberAndIncrement(ctx sdk.Context) (uint64, error) {
 }
 
 /*
-Fetches a pool by id number.
+FetchPool Fetches a pool by id number.
 Does not modify state.
 Panics if the bytes could not be unmarshalled to a Pool proto object.
 
@@ -152,7 +152,7 @@ func (k Keeper) FetchPool(ctx sdk.Context, poolId uint64) (pool types.Pool, err 
 }
 
 /*
-given a pair of denom, find the corresponding pool id if it exists.
+FetchPoolFromPair Given a pair of denom, find the corresponding pool id if it exists.
 
 args:
   - denomA: One denom
@@ -178,7 +178,7 @@ func (k Keeper) FetchPoolFromPair(ctx sdk.Context, denomA string, denomB string)
 }
 
 /*
-FeatchAllPools fetch all pools from the store and returns them.
+FetchAllPools fetch all pools from the store and returns them.
 */
 func (k Keeper) FetchAllPools(ctx sdk.Context) (pools []types.Pool) {
 	iterator := sdk.KVStorePrefixIterator(ctx.KVStore(k.storeKey), types.KeyPrefixPools)
@@ -193,7 +193,7 @@ func (k Keeper) FetchAllPools(ctx sdk.Context) (pools []types.Pool) {
 }
 
 /*
-Writes a pool to the state.
+SetPool Writes a pool to the state.
 Panics if the pool proto could not be marshaled.
 
 args:
@@ -208,7 +208,7 @@ func (k Keeper) SetPool(ctx sdk.Context, pool types.Pool) {
 }
 
 /*
-Writes a pool to the state accessible with the PoolId.
+SetPoolIdByDenom Writes a pool to the state accessible with the PoolId.
 Panics if the pool proto could not be marshaled.
 
 args:
@@ -299,7 +299,7 @@ func (k Keeper) burnPoolShareFromAccount(
 }
 
 /*
-Creates a brand new pool and writes it to the state.
+NewPool Creates a brand new pool and writes it to the state.
 
 args
 
@@ -402,6 +402,7 @@ func (k Keeper) NewPool(
 	err = ctx.EventManager().EmitTypedEvent(&types.EventPoolCreated{
 		Creator: sender.String(),
 		PoolId:  poolId,
+		Fees:    params.PoolCreationFee,
 	})
 	if err != nil {
 		return
@@ -423,7 +424,7 @@ func (k Keeper) areAllAssetsWhitelisted(ctx sdk.Context, assets []types.PoolAsse
 }
 
 /*
-Joins a pool without swapping leftover assets if the ratios don't exactly match the pool's asset ratios.
+JoinPool Joins a pool without swapping leftover assets if the ratios don't exactly match the pool's asset ratios.
 
 For example, if a pool has 100 pool shares, 100foo, 100bar,
 and JoinPool is called with 75foo and bar, only 50foo and 50bar would be deposited.
@@ -455,6 +456,11 @@ func (k Keeper) JoinPool(
 
 	if len(tokensIn) != len(pool.PoolAssets) && !shouldSwap {
 		return pool, numSharesOut, remCoins, errors.New("too few assets to join this pool")
+	}
+
+	if !pool.AreTokensInDenomInPoolAssets(tokensIn) {
+		err = types.ErrTokenDenomNotFound
+		return
 	}
 
 	poolAddr := pool.GetAddress()
@@ -514,7 +520,7 @@ func (k Keeper) JoinPool(
 }
 
 /*
-Exits a pool by taking out tokens relative to the amount of pool shares
+ExitPool Exits a pool by taking out tokens relative to the amount of pool shares
 in proportion to the total amount of pool shares.
 
 For example, if a pool has 100 pool shares and ExitPool is called with 50 pool shares,
@@ -560,7 +566,7 @@ func (k Keeper) ExitPool(
 	}
 
 	// calculate withdrawn liquidity
-	tokensOut, err = pool.ExitPool(poolSharesOut.Amount)
+	tokensOut, fees, err := pool.ExitPool(poolSharesOut.Amount)
 	if err != nil {
 		return sdk.Coins{}, err
 	}
@@ -585,6 +591,7 @@ func (k Keeper) ExitPool(
 		PoolId:       poolId,
 		PoolSharesIn: poolSharesOut,
 		TokensOut:    tokensOut,
+		Fees:         fees,
 	})
 	if err != nil {
 		return sdk.Coins{}, err

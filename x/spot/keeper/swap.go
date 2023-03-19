@@ -49,7 +49,7 @@ func (k Keeper) updatePoolForSwap(
 }
 
 /*
-given a poolId and the amount of tokens to swap in, returns the number of tokens out
+SwapExactAmountIn Given a poolId and the amount of tokens to swap in, returns the number of tokens out
 received, specified by the tokenOutDenom.
 
 For example, if pool 1 has 100foo and 100bar, this function can be called with
@@ -83,7 +83,7 @@ func (k Keeper) SwapExactAmountIn(
 	}
 
 	// calculate tokenOut and validate
-	tokenOut, err = pool.CalcOutAmtGivenIn(tokenIn, tokenOutDenom, false)
+	tokenOut, fee, err := pool.CalcOutAmtGivenIn(tokenIn, tokenOutDenom, false)
 	if err != nil {
 		return sdk.Coin{}, err
 	}
@@ -111,6 +111,7 @@ func (k Keeper) SwapExactAmountIn(
 		PoolId:   poolId,
 		TokenIn:  tokenIn,
 		TokenOut: tokenOut,
+		Fee:      fee,
 	})
 	if err != nil {
 		return tokenOut, err
