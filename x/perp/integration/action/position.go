@@ -2,11 +2,13 @@ package action
 
 import (
 	"fmt"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/testutil"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // OpenPosition opens a position with the given parameters.
@@ -59,7 +61,6 @@ func (o openPositionAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context
 				return ctx, err
 			}
 		}
-
 	}
 
 	return ctx, nil

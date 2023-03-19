@@ -1,10 +1,11 @@
 package action
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/testutil"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func SetPairPrice(pair asset.Pair, price sdk.Dec) testutil.Action {

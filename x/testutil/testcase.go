@@ -3,9 +3,10 @@ package testutil
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

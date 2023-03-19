@@ -1,9 +1,10 @@
 package action
 
 import (
-	"github.com/NibiruChain/nibiru/x/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+
+	"github.com/NibiruChain/nibiru/x/testutil"
 
 	"github.com/NibiruChain/nibiru/app"
 )

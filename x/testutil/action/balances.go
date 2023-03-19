@@ -3,8 +3,9 @@ package action
 import (
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/app"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/app"
 )
 
 func BalanceShouldBeEqual(account sdk.AccAddress, amount sdk.Coins) *BalanceEqualAction {
