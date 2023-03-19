@@ -3,6 +3,7 @@ package action
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/abci/types"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	"time"
 
 	"github.com/NibiruChain/nibiru/app"
@@ -64,4 +65,24 @@ func (s setBlockNumber) Do(_ *app.NibiruApp, ctx sdk.Context) (sdk.Context, erro
 // SetBlockNumber sets the block number to the given value
 func SetBlockNumber(blockNumber int64) testutil.Action {
 	return setBlockNumber{blockNumber: blockNumber}
+}
+
+type moveToNextBlock struct{}
+
+func (m moveToNextBlock) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+	app.EndBlock(types.RequestEndBlock{})
+	app.Commit()
+
+	app.BeginBlock(types.RequestBeginBlock{
+		Header: tmproto.Header{Height: ctx.BlockHeight() + 1},
+	})
+
+	return app.NewContext(
+		false,
+		tmproto.Header{Height: ctx.BlockHeight() + 1},
+	).WithBlockTime(ctx.BlockTime().Add(time.Second * 5)), nil
+}
+
+func MoveToNextBlock() testutil.Action {
+	return moveToNextBlock{}
 }

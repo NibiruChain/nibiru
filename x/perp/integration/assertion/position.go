@@ -115,11 +115,11 @@ func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context)
 		}
 
 		if theEvent.BlockHeight != p.ExpectedEvent.BlockHeight {
-			return ctx, fmt.Errorf("expected block height %s, got %s", p.ExpectedEvent.BlockHeight, theEvent.BlockHeight)
+			return ctx, fmt.Errorf("expected block height %d, got %d", p.ExpectedEvent.BlockHeight, theEvent.BlockHeight)
 		}
 
 		if theEvent.BlockTimeMs != p.ExpectedEvent.BlockTimeMs {
-			return ctx, fmt.Errorf("expected block time ms %s, got %s", p.ExpectedEvent.BlockTimeMs, theEvent.BlockTimeMs)
+			return ctx, fmt.Errorf("expected block time ms %d, got %d", p.ExpectedEvent.BlockTimeMs, theEvent.BlockTimeMs)
 		}
 	}
 
