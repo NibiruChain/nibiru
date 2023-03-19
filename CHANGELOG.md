@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   * add `fees` field into `EventPoolExited` event.
   * add `fee` field into `EventAssetsSwapped` event.
 * [#1223](https://github.com/NibiruChain/nibiru/pull/1223) - chore(deps): bump github.com/golang/protobuf from 1.5.2 to 1.5.3
+* [#1205](https://github.com/NibiruChain/nibiru/pull/1205) - test: first testing framework skeleton and example
 
 ### Bug Fixes
 
