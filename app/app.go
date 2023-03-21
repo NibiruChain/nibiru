@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+	ibcmock "github.com/cosmos/ibc-go/v4/testing/mock"
 	"io"
 	"net/http"
 	"os"
@@ -81,17 +82,17 @@ import (
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	ibctransfer "github.com/cosmos/ibc-go/v3/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
-	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v3/modules/core"
-	ibcclient "github.com/cosmos/ibc-go/v3/modules/core/02-client"
-	ibcclientclient "github.com/cosmos/ibc-go/v3/modules/core/02-client/client"
-	ibcclienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
-	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
-	ibchost "github.com/cosmos/ibc-go/v3/modules/core/24-host"
-	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
-	ibctesting "github.com/cosmos/ibc-go/v3/testing"
+	ibctransfer "github.com/cosmos/ibc-go/v4/modules/apps/transfer"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v4/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/v4/modules/core"
+	ibcclient "github.com/cosmos/ibc-go/v4/modules/core/02-client"
+	ibcclientclient "github.com/cosmos/ibc-go/v4/modules/core/02-client/client"
+	ibcclienttypes "github.com/cosmos/ibc-go/v4/modules/core/02-client/types"
+	porttypes "github.com/cosmos/ibc-go/v4/modules/core/05-port/types"
+	ibchost "github.com/cosmos/ibc-go/v4/modules/core/24-host"
+	ibckeeper "github.com/cosmos/ibc-go/v4/modules/core/keeper"
+	ibctesting "github.com/cosmos/ibc-go/v4/testing"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rakyll/statik/fs"
@@ -127,7 +128,7 @@ import (
 
 const (
 	AccountAddressPrefix = "nibi"
-	AppName              = "Nibiru"
+	appName              = "Nibiru"
 	BondDenom            = "unibi"
 	DisplayDenom         = "NIBI"
 )
@@ -252,6 +253,7 @@ type NibiruApp struct {
 	   and query handling for the evidence module. It is required to set up
 	   the IBC light client misbehavior evidence route. */
 	evidenceKeeper evidencekeeper.Keeper
+
 	/* ibcKeeper defines each ICS keeper for IBC. ibcKeeper must be a pointer in
 	   the app, so we can SetRouter on it correctly. */
 	ibcKeeper *ibckeeper.Keeper
@@ -323,7 +325,7 @@ func NewNibiruApp(
 	interfaceRegistry := encodingConfig.InterfaceRegistry
 
 	bApp := baseapp.NewBaseApp(
-		AppName, logger, db, encodingConfig.TxConfig.TxDecoder(), baseAppOptions...)
+		appName, logger, db, encodingConfig.TxConfig.TxDecoder(), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	bApp.SetVersion(version.Version)
 	bApp.SetInterfaceRegistry(interfaceRegistry)
@@ -342,9 +344,11 @@ func NewNibiruApp(
 		evidencetypes.StoreKey,
 		capabilitytypes.StoreKey,
 		authzkeeper.StoreKey,
+
 		// ibc keys
 		ibchost.StoreKey,
 		ibctransfertypes.StoreKey,
+
 		// nibiru x/ keys
 		spottypes.StoreKey,
 		stablecointypes.StoreKey,
@@ -355,11 +359,7 @@ func NewNibiruApp(
 		wasm.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
-
-	memKeys := sdk.NewMemoryStoreKeys(
-		capabilitytypes.MemStoreKey,
-		stablecointypes.MemStoreKey,
-	)
+	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey, stablecointypes.MemStoreKey)
 
 	app := &NibiruApp{
 		BaseApp:           bApp,
@@ -378,17 +378,22 @@ func NewNibiruApp(
 	)
 
 	// set the BaseApp's parameter store
-	bApp.SetParamStore(app.paramsKeeper.Subspace(baseapp.Paramspace).
-		WithKeyTable(paramskeeper.ConsensusParamsKeyTable()))
+	bApp.SetParamStore(app.paramsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramskeeper.ConsensusParamsKeyTable()))
 
 	/* Add capabilityKeeper and ScopeToModule for the ibc module
 	   This allows authentication of object-capability permissions for each of
 	   the IBC channels.
 	*/
-	app.capabilityKeeper = capabilitykeeper.NewKeeper(
-		appCodec, keys[capabilitytypes.StoreKey], memKeys[capabilitytypes.MemStoreKey])
+	app.capabilityKeeper = capabilitykeeper.NewKeeper(appCodec, keys[capabilitytypes.StoreKey], memKeys[capabilitytypes.MemStoreKey])
 	app.scopedIBCKeeper = app.capabilityKeeper.ScopeToModule(ibchost.ModuleName)
 	app.scopedTransferKeeper = app.capabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
+
+	// NOTE: the IBC mock keeper and application module is used only for testing core IBC. Do
+	// not replicate if you do not need to test core IBC or light clients.
+	_ = app.capabilityKeeper.ScopeToModule(ibcmock.ModuleName)
+
+	// seal capability keeper after scoping modules
+	//app.capabilityKeeper.Seal()
 
 	// add keepers
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
