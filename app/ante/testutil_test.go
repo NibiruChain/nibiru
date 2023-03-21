@@ -6,7 +6,7 @@ import (
 	feeante "github.com/NibiruChain/nibiru/app/ante"
 
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
-	ibcante "github.com/cosmos/ibc-go/v4/modules/core/ante"
+	ibcante "github.com/cosmos/ibc-go/v3/modules/core/ante"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"

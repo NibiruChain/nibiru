@@ -5,14 +5,14 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	transfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
-	ibcclient "github.com/cosmos/ibc-go/v4/modules/core/02-client"
-	ibcclienttypes "github.com/cosmos/ibc-go/v4/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
-	ibcexported "github.com/cosmos/ibc-go/v4/modules/core/exported"
-	localhosttypes "github.com/cosmos/ibc-go/v4/modules/light-clients/09-localhost/types"
-	ibctesting "github.com/cosmos/ibc-go/v4/testing"
-	ibcmock "github.com/cosmos/ibc-go/v4/testing/mock"
+	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
+	ibcclient "github.com/cosmos/ibc-go/v3/modules/core/02-client"
+	ibcclienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
+	localhosttypes "github.com/cosmos/ibc-go/v3/modules/light-clients/09-localhost/types"
+	ibctesting "github.com/cosmos/ibc-go/v3/testing"
+	ibcmock "github.com/cosmos/ibc-go/v3/testing/mock"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/app"
@@ -122,19 +122,21 @@ func (suite IBCTestSuite) TestClientAndConnectionSetup() {
 	suite.Assert().Equal("07-tendermint-1", suite.path.EndpointA.ClientID)
 	suite.Assert().Equal("07-tendermint-1", suite.path.EndpointB.ClientID)
 
-	suite.coordinator.CreateChannels(suite.path)
+	err := suite.coordinator.ChanOpenInitOnBothChains(suite.path)
 	suite.Assert().Equal("channel-0", suite.path.EndpointA.ChannelID)
 	suite.Assert().Equal("channel-0", suite.path.EndpointB.ChannelID)
+	suite.Require().NoError(err)
 	suite.T().Log("clientID, connectionID, channelID filled")
 }
 
 func (suite IBCTestSuite) TestInitialization() {
 	suite.SetupTest()
 
-	suite.coordinator.CreateConnections(suite.path)
+	var err error = suite.coordinator.ConnOpenInitOnBothChains(suite.path)
 	suite.Assert().Equal("channel-0", suite.path.EndpointA.ChannelID)
 	suite.Assert().Equal("07-tendermint-0", suite.path.EndpointA.ClientID)
 	suite.Assert().Equal("07-tendermint-0", suite.path.EndpointB.ClientID)
+	suite.Require().NoError(err)
 }
 
 func (suite IBCTestSuite) TestClient_BeginBlocker() {

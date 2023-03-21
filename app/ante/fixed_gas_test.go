@@ -210,7 +210,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 			suite.txBuilder.SetGasLimit(gasLimit)
 			suite.Require().NoError(suite.txBuilder.SetMsgs(tc.messages...))
 
-			privs, accNums, accSeqs := []cryptotypes.PrivKey{priv1}, []uint64{11}, []uint64{0}
+			privs, accNums, accSeqs := []cryptotypes.PrivKey{priv1}, []uint64{12}, []uint64{0}
 			tx, err := suite.CreateTestTx(privs, accNums, accSeqs, suite.ctx.ChainID())
 			suite.Require().NoError(err)
 

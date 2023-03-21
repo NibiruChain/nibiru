@@ -81,20 +81,17 @@ import (
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	ibcfee "github.com/cosmos/ibc-go/v4/modules/apps/29-fee"
-	ibcfeekeeper "github.com/cosmos/ibc-go/v4/modules/apps/29-fee/keeper"
-	ibcfeetypes "github.com/cosmos/ibc-go/v4/modules/apps/29-fee/types"
-	ibctransfer "github.com/cosmos/ibc-go/v4/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v4/modules/apps/transfer/keeper"
-	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v4/modules/core"
-	ibcclient "github.com/cosmos/ibc-go/v4/modules/core/02-client"
-	ibcclientclient "github.com/cosmos/ibc-go/v4/modules/core/02-client/client"
-	ibcclienttypes "github.com/cosmos/ibc-go/v4/modules/core/02-client/types"
-	porttypes "github.com/cosmos/ibc-go/v4/modules/core/05-port/types"
-	ibchost "github.com/cosmos/ibc-go/v4/modules/core/24-host"
-	ibckeeper "github.com/cosmos/ibc-go/v4/modules/core/keeper"
-	ibctesting "github.com/cosmos/ibc-go/v4/testing"
+	ibctransfer "github.com/cosmos/ibc-go/v3/modules/apps/transfer"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/v3/modules/core"
+	ibcclient "github.com/cosmos/ibc-go/v3/modules/core/02-client"
+	ibcclientclient "github.com/cosmos/ibc-go/v3/modules/core/02-client/client"
+	ibcclienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
+	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
+	ibchost "github.com/cosmos/ibc-go/v3/modules/core/24-host"
+	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
+	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rakyll/statik/fs"
@@ -171,7 +168,6 @@ var (
 		// ibc 'AppModuleBasic's
 		ibc.AppModuleBasic{},
 		ibctransfer.AppModuleBasic{},
-		ibcfee.AppModuleBasic{},
 		// native x/
 		spot.AppModuleBasic{},
 		oracle.AppModuleBasic{},
@@ -194,7 +190,6 @@ var (
 		spottypes.ModuleName:                  {authtypes.Minter, authtypes.Burner},
 		oracletypes.ModuleName:                {},
 		ibctransfertypes.ModuleName:           {authtypes.Minter, authtypes.Burner},
-		ibcfeetypes.ModuleName:                nil,
 		stablecointypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
 		perptypes.ModuleName:                  {authtypes.Minter, authtypes.Burner},
 		perptypes.VaultModuleAccount:          {},
@@ -257,18 +252,14 @@ type NibiruApp struct {
 	   and query handling for the evidence module. It is required to set up
 	   the IBC light client misbehavior evidence route. */
 	evidenceKeeper evidencekeeper.Keeper
-
 	/* ibcKeeper defines each ICS keeper for IBC. ibcKeeper must be a pointer in
 	   the app, so we can SetRouter on it correctly. */
-	ibcKeeper    *ibckeeper.Keeper
-	IBCFeeKeeper ibcfeekeeper.Keeper
-
+	ibcKeeper *ibckeeper.Keeper
 	/* transferKeeper is for cross-chain fungible token transfers. */
 	transferKeeper ibctransferkeeper.Keeper
 
 	// make scoped keepers public for test purposes
 	scopedIBCKeeper      capabilitykeeper.ScopedKeeper
-	scopedIBCFeeKeeper   capabilitykeeper.ScopedKeeper
 	scopedTransferKeeper capabilitykeeper.ScopedKeeper
 
 	// ---------------
@@ -354,7 +345,6 @@ func NewNibiruApp(
 		// ibc keys
 		ibchost.StoreKey,
 		ibctransfertypes.StoreKey,
-		ibcfeetypes.StoreKey,
 		// nibiru x/ keys
 		spottypes.StoreKey,
 		stablecointypes.StoreKey,
@@ -490,14 +480,6 @@ func NewNibiruApp(
 		app.scopedIBCKeeper,
 	)
 
-	// IBC Fee Module keeper
-	app.IBCFeeKeeper = ibcfeekeeper.NewKeeper(
-		appCodec, keys[ibcfeetypes.StoreKey], app.GetSubspace(ibcfeetypes.ModuleName),
-		app.ibcKeeper.ChannelKeeper, // may be replaced with IBC middleware
-		app.ibcKeeper.ChannelKeeper,
-		&app.ibcKeeper.PortKeeper, app.AccountKeeper, app.BankKeeper,
-	)
-
 	scopedWasmKeeper := app.capabilityKeeper.ScopeToModule(wasm.ModuleName)
 
 	wasmDir := filepath.Join(homePath, "data")
@@ -568,7 +550,7 @@ func NewNibiruApp(
 		AddRoute(
 			/* module    */ ibctransfertypes.ModuleName,
 			/* ibcModule */ transferIBCModule).
-		AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.wasmKeeper, app.ibcKeeper.ChannelKeeper, app.IBCFeeKeeper))
+		AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.wasmKeeper, app.ibcKeeper.ChannelKeeper))
 
 	/* SetRouter finalizes all routes by sealing the router.
 	   No more routes can be added. */
@@ -640,7 +622,6 @@ func NewNibiruApp(
 		evidence.NewAppModule(app.evidenceKeeper),
 		ibc.NewAppModule(app.ibcKeeper),
 		transferModule,
-		ibcfee.NewAppModule(app.IBCFeeKeeper),
 
 		wasm.NewAppModule(appCodec, &app.wasmKeeper, app.stakingKeeper, app.AccountKeeper, app.BankKeeper),
 	)
@@ -678,7 +659,6 @@ func NewNibiruApp(
 		// ibc modules
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
-		ibcfeetypes.ModuleName,
 		wasm.ModuleName,
 	)
 	app.mm.SetOrderEndBlockers(
@@ -709,7 +689,6 @@ func NewNibiruApp(
 		// ibc
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
-		ibcfeetypes.ModuleName,
 		wasm.ModuleName,
 	)
 
@@ -746,7 +725,6 @@ func NewNibiruApp(
 		// ibc
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
-		ibcfeetypes.ModuleName,
 		wasm.ModuleName,
 	)
 
