@@ -82,6 +82,9 @@ import (
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	ibcfee "github.com/cosmos/ibc-go/v4/modules/apps/29-fee"
+	ibcfeekeeper "github.com/cosmos/ibc-go/v4/modules/apps/29-fee/keeper"
+	ibcfeetypes "github.com/cosmos/ibc-go/v4/modules/apps/29-fee/types"
 	ibctransfer "github.com/cosmos/ibc-go/v4/modules/apps/transfer"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v4/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
@@ -133,6 +136,11 @@ const (
 	DisplayDenom         = "NIBI"
 )
 
+// IBC application testing ports
+const (
+	MockFeePort string = ibcmock.ModuleName + ibcfeetypes.ModuleName
+)
+
 var (
 	// DefaultNodeHome default home directories for the application daemon
 	DefaultNodeHome string
@@ -178,6 +186,7 @@ var (
 		vpool.AppModuleBasic{},
 		util.AppModule{},
 		wasm.AppModuleBasic{},
+		ibcfee.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -256,13 +265,18 @@ type NibiruApp struct {
 
 	/* ibcKeeper defines each ICS keeper for IBC. ibcKeeper must be a pointer in
 	   the app, so we can SetRouter on it correctly. */
-	ibcKeeper *ibckeeper.Keeper
+	ibcKeeper    *ibckeeper.Keeper
+	ibcFeeKeeper ibcfeekeeper.Keeper
 	/* transferKeeper is for cross-chain fungible token transfers. */
 	transferKeeper ibctransferkeeper.Keeper
 
 	// make scoped keepers public for test purposes
 	scopedIBCKeeper      capabilitykeeper.ScopedKeeper
 	scopedTransferKeeper capabilitykeeper.ScopedKeeper
+
+	// make IBC modules public for test purposes
+	// these modules are never directly routed to by the IBC Router
+	FeeMockModule ibcmock.IBCModule
 
 	// ---------------
 	// Nibiru keepers
@@ -386,6 +400,7 @@ func NewNibiruApp(
 	*/
 	app.capabilityKeeper = capabilitykeeper.NewKeeper(appCodec, keys[capabilitytypes.StoreKey], memKeys[capabilitytypes.MemStoreKey])
 	app.scopedIBCKeeper = app.capabilityKeeper.ScopeToModule(ibchost.ModuleName)
+	scopedFeeMockKeeper := app.capabilityKeeper.ScopeToModule(MockFeePort)
 	app.scopedTransferKeeper = app.capabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 
 	// NOTE: the IBC mock keeper and application module is used only for testing core IBC. Do
@@ -485,6 +500,14 @@ func NewNibiruApp(
 		app.scopedIBCKeeper,
 	)
 
+	// IBC Fee Module keeper
+	app.ibcFeeKeeper = ibcfeekeeper.NewKeeper(
+		appCodec, keys[ibcfeetypes.StoreKey], app.GetSubspace(ibcfeetypes.ModuleName),
+		app.ibcKeeper.ChannelKeeper, // may be replaced with IBC middleware
+		app.ibcKeeper.ChannelKeeper,
+		&app.ibcKeeper.PortKeeper, app.AccountKeeper, app.BankKeeper,
+	)
+
 	scopedWasmKeeper := app.capabilityKeeper.ScopeToModule(wasm.ModuleName)
 
 	wasmDir := filepath.Join(homePath, "data")
@@ -527,20 +550,6 @@ func NewNibiruApp(
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.ibcKeeper.ClientKeeper)).
 		AddRoute(vpooltypes.RouterKey, vpool.NewVpoolProposalHandler(app.VpoolKeeper))
 
-	app.transferKeeper = ibctransferkeeper.NewKeeper(
-		appCodec,
-		keys[ibctransfertypes.StoreKey],
-		/* paramSubspace */ app.GetSubspace(ibctransfertypes.ModuleName),
-		/* ibctransfertypes.ICS4Wrapper */ app.ibcKeeper.ChannelKeeper,
-		/* ibctransfertypes.ChannelKeeper */ app.ibcKeeper.ChannelKeeper,
-		/* ibctransfertypes.PortKeeper */ &app.ibcKeeper.PortKeeper,
-		app.AccountKeeper,
-		app.BankKeeper,
-		app.scopedTransferKeeper,
-	)
-	transferModule := ibctransfer.NewAppModule(app.transferKeeper)
-	transferIBCModule := ibctransfer.NewIBCModule(app.transferKeeper)
-
 	// Create evidence keeper.
 	// This keeper automatically includes an evidence router.
 	app.evidenceKeeper = *evidencekeeper.NewKeeper(
@@ -550,12 +559,58 @@ func NewNibiruApp(
 
 	/* Create IBC module and a static IBC router */
 	ibcRouter := porttypes.NewRouter()
-	/* Add an ibc-transfer module route, then set it and seal it. */
-	ibcRouter.
-		AddRoute(
-			/* module    */ ibctransfertypes.ModuleName,
-			/* ibcModule */ transferIBCModule).
-		AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.wasmKeeper, app.ibcKeeper.ChannelKeeper))
+
+	app.transferKeeper = ibctransferkeeper.NewKeeper(
+		appCodec,
+		keys[ibctransfertypes.StoreKey],
+		/* paramSubspace */ app.GetSubspace(ibctransfertypes.ModuleName),
+		/* ibctransfertypes.ICS4Wrapper */ app.ibcFeeKeeper,
+		/* ibctransfertypes.ChannelKeeper */ app.ibcKeeper.ChannelKeeper,
+		/* ibctransfertypes.PortKeeper */ &app.ibcKeeper.PortKeeper,
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.scopedTransferKeeper,
+	)
+
+	// Mock Module setup for testing IBC and also acts as the interchain accounts authentication module
+	// NOTE: the IBC mock keeper and application module is used only for testing core IBC. Do
+	// not replicate if you do not need to test core IBC or light clients.
+	mockModule := ibcmock.NewAppModule(&app.ibcKeeper.PortKeeper)
+
+	// Create Transfer Stack
+	// SendPacket, since it is originating from the application to core IBC:
+	// transferKeeper.SendPacket -> fee.SendPacket -> channel.SendPacket
+
+	// RecvPacket, message that originates from core IBC and goes down to app, the flow is the other way
+	// channel.RecvPacket -> fee.OnRecvPacket -> transfer.OnRecvPacket
+
+	// transfer stack contains (from top to bottom):
+	// - IBC Fee Middleware
+	// - Transfer
+
+	// create IBC module from bottom to top of stack
+	var transferStack porttypes.IBCModule
+	transferStack = ibctransfer.NewIBCModule(app.transferKeeper)
+	transferStack = ibcfee.NewIBCMiddleware(transferStack, app.ibcFeeKeeper)
+
+	// Add transfer stack to IBC Router
+	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferStack)
+
+	// Create Mock IBC Fee module stack for testing
+	// SendPacket, since it is originating from the application to core IBC:
+	// mockModule.SendPacket -> fee.SendPacket -> channel.SendPacket
+
+	// OnRecvPacket, message that originates from core IBC and goes down to app, the flow is the otherway
+	// channel.RecvPacket -> fee.OnRecvPacket -> mockModule.OnRecvPacket
+
+	// OnAcknowledgementPacket as this is where fee's are paid out
+	// mockModule.OnAcknowledgementPacket -> fee.OnAcknowledgementPacket -> channel.OnAcknowledgementPacket
+
+	// create fee wrapped mock module
+	feeMockModule := ibcmock.NewIBCModule(&mockModule, ibcmock.NewMockIBCApp(MockFeePort, scopedFeeMockKeeper))
+	app.FeeMockModule = feeMockModule
+	feeWithMockModule := ibcfee.NewIBCMiddleware(feeMockModule, app.ibcFeeKeeper)
+	ibcRouter.AddRoute(MockFeePort, feeWithMockModule)
 
 	/* SetRouter finalizes all routes by sealing the router.
 	   No more routes can be added. */
@@ -626,7 +681,7 @@ func NewNibiruApp(
 		// ibc
 		evidence.NewAppModule(app.evidenceKeeper),
 		ibc.NewAppModule(app.ibcKeeper),
-		transferModule,
+		ibctransfer.NewAppModule(app.transferKeeper),
 
 		wasm.NewAppModule(appCodec, &app.wasmKeeper, app.stakingKeeper, app.AccountKeeper, app.BankKeeper),
 	)
@@ -771,7 +826,7 @@ func NewNibiruApp(
 		capability.NewAppModule(appCodec, *app.capabilityKeeper),
 		evidence.NewAppModule(app.evidenceKeeper),
 		ibc.NewAppModule(app.ibcKeeper),
-		transferModule,
+		ibctransfer.NewAppModule(app.transferKeeper),
 	)
 
 	app.sm.RegisterStoreDecoders()
