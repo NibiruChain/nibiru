@@ -3,11 +3,12 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	ibcmock "github.com/cosmos/ibc-go/v4/testing/mock"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+
+	ibcmock "github.com/cosmos/ibc-go/v4/testing/mock"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
