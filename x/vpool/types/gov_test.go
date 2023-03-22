@@ -7,7 +7,7 @@ import (
 
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	simappparams "github.com/cosmos/ibc-go/v3/testing/simapp/params"
+	simappparams "github.com/cosmos/ibc-go/v4/testing/simapp/params"
 	"github.com/gogo/protobuf/jsonpb"
 
 	"github.com/NibiruChain/nibiru/x/common"
