@@ -99,7 +99,7 @@ func (suite *IBCTestSuite) SetupTest() {
 	suite.T().Log("clientID, connectionID, channelID filled")
 }
 
-func (suite IBCTestSuite) TestClientAndConnectionSetup() {
+func (suite *IBCTestSuite) TestClientAndConnectionSetup() {
 	suite.T().Log("initializes 2 test chains")
 	suite.coordinator = ibctesting.NewCoordinator(suite.T(), 2)
 	suite.chainA = suite.coordinator.GetChain(ibctesting.GetChainID(1))
@@ -129,7 +129,7 @@ func (suite IBCTestSuite) TestClientAndConnectionSetup() {
 	suite.T().Log("clientID, connectionID, channelID filled")
 }
 
-func (suite IBCTestSuite) TestInitialization() {
+func (suite *IBCTestSuite) TestInitialization() {
 	suite.SetupTest()
 
 	var err error = suite.coordinator.ConnOpenInitOnBothChains(suite.path)
