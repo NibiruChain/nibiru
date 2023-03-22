@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Breaking
 
 * [#1252](https://github.com/NibiruChain/nibiru/pull/1220) - feat: reduce gas fees when posting price
+* [#1229](https://github.com/NibiruChain/nibiru/pull/1229) - feat: upgrade ibc to v4.2.0 and wasm v0.30.0
 
 ### Improvements
 
