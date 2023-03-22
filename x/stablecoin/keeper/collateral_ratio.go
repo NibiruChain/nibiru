@@ -29,7 +29,7 @@ func (k *Keeper) GetCollRatio(ctx sdk.Context) (collRatio sdk.Dec) {
 
 /*
 SetCollRatio manually sets the 'collRatio'. This method is mainly used for
-testing. When the chain is live, the collateral ratio cannot be manually set, only
+testing. when the chain is live, the collateral ratio cannot be manually set, only
 adjusted by a fixed amount (e.g. 0.25%).
 */
 func (k *Keeper) SetCollRatio(ctx sdk.Context, collRatio sdk.Dec) (err error) {
