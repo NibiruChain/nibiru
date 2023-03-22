@@ -7,7 +7,7 @@ import (
 )
 
 // TryCatch is an implementation of the try-catch block from languages like C++ and JS.
-// Given a 'callback' function, TryCatch defers and recovers from any panics or
+// given a 'callback' function, TryCatch defers and recovers from any panics or
 // errors, allowing one to safely handle multiple panics in succession.
 //
 // Typically, you'll write something like: `err := TryCatch(aRiskyFunction)()`

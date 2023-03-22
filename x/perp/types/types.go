@@ -68,3 +68,38 @@ func (l *LiquidateResp) Validate() error {
 
 	return nil
 }
+
+func PositionsAreEqual(expected, actual *Position) error {
+	if expected.Pair != actual.Pair {
+		return fmt.Errorf("expected position pair %s, got %s", expected.Pair, actual.Pair)
+	}
+
+	if expected.TraderAddress != actual.TraderAddress {
+		return fmt.Errorf("expected position trader address %s, got %s", expected.TraderAddress, actual.TraderAddress)
+	}
+
+	if !expected.Margin.Equal(actual.Margin) {
+		return fmt.Errorf("expected position margin %s, got %s", expected.Margin, actual.Margin)
+	}
+
+	if !expected.OpenNotional.Equal(actual.OpenNotional) {
+		return fmt.Errorf("expected position open notional %s, got %s", expected.OpenNotional, actual.OpenNotional)
+	}
+
+	if !expected.Size_.Equal(actual.Size_) {
+		return fmt.Errorf("expected position size %s, got %s", expected.Size_, actual.Size_)
+	}
+
+	if expected.BlockNumber != actual.BlockNumber {
+		return fmt.Errorf("expected position block number %d, got %d", expected.BlockNumber, actual.BlockNumber)
+	}
+
+	if !expected.LatestCumulativePremiumFraction.Equal(actual.LatestCumulativePremiumFraction) {
+		return fmt.Errorf(
+			"expected position latest cumulative premium fraction %s, got %s",
+			expected.LatestCumulativePremiumFraction,
+			actual.LatestCumulativePremiumFraction,
+		)
+	}
+	return nil
+}

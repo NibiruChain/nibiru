@@ -4,12 +4,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/collections"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -17,10 +18,153 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	. "github.com/NibiruChain/nibiru/x/oracle/integration_test/action"
+	. "github.com/NibiruChain/nibiru/x/perp/integration/action"
+	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
+	. "github.com/NibiruChain/nibiru/x/testutil"
+	. "github.com/NibiruChain/nibiru/x/testutil/action"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
+
+func createInitVPool() Action {
+	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.USDC)
+
+	return CreateCustomVpool(pairBtcUsdc,
+		/* quoteReserve */ sdk.NewDec(1*common.Precision*common.Precision),
+		/* baseReserve */ sdk.NewDec(1*common.Precision*common.Precision),
+		vpooltypes.VpoolConfig{
+			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			MaxOracleSpreadRatio:   sdk.OneDec(), // 100%,
+			TradeLimitRatio:        sdk.OneDec(),
+		})
+}
+
+func TestOpenPosition(t *testing.T) {
+	ts := NewTestSuite(t)
+
+	alice := testutil.AccAddress()
+
+	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.USDC)
+
+	startBlockTime := time.Now()
+	tc := TestCases{
+
+		TC("new long position").
+			Given(
+				createInitVPool(),
+				SetBlockTime(startBlockTime),
+				SetBlockNumber(1),
+				SetPairPrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
+			).
+			When(
+				OpenPosition(alice, pairBtcUsdc, perptypes.Side_BUY, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec(),
+					OpenPositionResp_PositionShouldBeEqual(
+						types.Position{
+							Pair:                            pairBtcUsdc,
+							TraderAddress:                   alice.String(),
+							Margin:                          sdk.NewDec(1000),
+							OpenNotional:                    sdk.NewDec(10_000),
+							Size_:                           sdk.MustNewDecFromStr("9999.999900000001"),
+							BlockNumber:                     1,
+							LatestCumulativePremiumFraction: sdk.ZeroDec(),
+						}),
+					OpenPositionResp_ExchangeNotionalValueShouldBeEqual(sdk.NewDec(1000*10)), // margin * leverage
+					OpenPositionResp_ExchangedPositionSizeShouldBeEqual(sdk.MustNewDecFromStr("9999.999900000001")),
+					OpenPositionResp_BadDebtShouldBeEqual(sdk.ZeroDec()),
+					OpenPositionResp_FundingPaymentShouldBeEqual(sdk.ZeroDec()),
+					OpenPositionResp_RealizedPnlShouldBeEqual(sdk.ZeroDec()),
+					OpenPositionResp_UnrealizedPnlAfterShouldBeEqual(sdk.ZeroDec()),
+					OpenPositionResp_MarginToVaultShouldBeEqual(sdk.NewDec(1000)),
+					OpenPositionResp_PositionNotionalShouldBeEqual(sdk.NewDec(10_000)),
+				),
+			).
+			Then(
+				PositionShouldBeEqual(alice, pairBtcUsdc, types.Position{
+					Pair:                            pairBtcUsdc,
+					TraderAddress:                   alice.String(),
+					Margin:                          sdk.NewDec(1000),
+					OpenNotional:                    sdk.NewDec(10_000),
+					Size_:                           sdk.MustNewDecFromStr("9999.999900000001"),
+					BlockNumber:                     1,
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				}),
+				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
+					Pair:               pairBtcUsdc,
+					TraderAddress:      alice.String(),
+					Margin:             sdk.NewCoin(denoms.USDC, sdk.NewDec(1000).TruncateInt()),
+					PositionNotional:   sdk.NewDec(10_000),
+					ExchangedNotional:  sdk.NewDec(1000 * 10),
+					ExchangedSize:      sdk.MustNewDecFromStr("9999.999900000001"),
+					PositionSize:       sdk.MustNewDecFromStr("9999.999900000001"),
+					RealizedPnl:        sdk.ZeroDec(),
+					UnrealizedPnlAfter: sdk.ZeroDec(),
+					BadDebt:            sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+					MarkPrice:          sdk.MustNewDecFromStr("1.0000000200000001"),
+					FundingPayment:     sdk.ZeroDec(),
+					TransactionFee:     sdk.NewCoin(denoms.USDC, sdk.NewInt(20)),
+					BlockHeight:        1,
+					BlockTimeMs:        startBlockTime.UnixNano() / 1e6,
+				}),
+			),
+
+		TC("existing long position, go more long").Given(
+			createInitVPool(),
+			SetBlockNumber(1),
+			SetBlockTime(startBlockTime),
+			SetPairPrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
+			FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2040)))),
+			OpenPosition(alice, pairBtcUsdc, perptypes.Side_BUY, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+		).When(
+			MoveToNextBlock(),
+			OpenPosition(alice, pairBtcUsdc, perptypes.Side_BUY, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec(),
+				OpenPositionResp_PositionShouldBeEqual(
+					types.Position{
+						Pair:                            pairBtcUsdc,
+						TraderAddress:                   alice.String(),
+						Margin:                          sdk.NewDec(2000),
+						OpenNotional:                    sdk.NewDec(20_000),
+						Size_:                           sdk.MustNewDecFromStr("19999.999600000008000000"),
+						BlockNumber:                     2,
+						LatestCumulativePremiumFraction: sdk.ZeroDec(),
+					}),
+				OpenPositionResp_ExchangeNotionalValueShouldBeEqual(sdk.NewDec(1000*10)), // margin * leverage
+				OpenPositionResp_ExchangedPositionSizeShouldBeEqual(sdk.MustNewDecFromStr("9999.999700000007000000")),
+				OpenPositionResp_BadDebtShouldBeEqual(sdk.ZeroDec()),
+				OpenPositionResp_FundingPaymentShouldBeEqual(sdk.ZeroDec()),
+				OpenPositionResp_RealizedPnlShouldBeEqual(sdk.ZeroDec()),
+				OpenPositionResp_UnrealizedPnlAfterShouldBeEqual(sdk.MustNewDecFromStr("0.000199999998000000")),
+				OpenPositionResp_MarginToVaultShouldBeEqual(sdk.NewDec(1000)),
+				OpenPositionResp_PositionNotionalShouldBeEqual(sdk.MustNewDecFromStr("20000.000199999998000000")),
+			),
+		).Then(
+			PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
+				Pair:               pairBtcUsdc,
+				TraderAddress:      alice.String(),
+				Margin:             sdk.NewCoin(denoms.USDC, sdk.NewDec(2000).TruncateInt()),
+				PositionNotional:   sdk.MustNewDecFromStr("20000.000199999998000000"),
+				ExchangedNotional:  sdk.NewDec(1000 * 10),
+				ExchangedSize:      sdk.MustNewDecFromStr("9999.999700000007000000"),
+				PositionSize:       sdk.MustNewDecFromStr("19999.999600000008000000"),
+				RealizedPnl:        sdk.ZeroDec(),
+				UnrealizedPnlAfter: sdk.MustNewDecFromStr("0.000199999998000000"),
+				BadDebt:            sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+				MarkPrice:          sdk.MustNewDecFromStr("1.000000040000000400"),
+				FundingPayment:     sdk.ZeroDec(),
+				TransactionFee:     sdk.NewCoin(denoms.USDC, sdk.NewInt(20)),
+				BlockHeight:        2,
+				BlockTimeMs:        startBlockTime.Add(time.Second*5).UnixNano() / 1e6,
+			}),
+		),
+	}
+
+	ts.WithTestCases(tc...).Run()
+}
 
 func TestOpenPositionSuccess(t *testing.T) {
 	testCases := []struct {
