@@ -201,6 +201,7 @@ var (
 		spottypes.ModuleName:                  {authtypes.Minter, authtypes.Burner},
 		oracletypes.ModuleName:                {},
 		ibctransfertypes.ModuleName:           {authtypes.Minter, authtypes.Burner},
+		ibcfeetypes.ModuleName:                nil,
 		stablecointypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
 		perptypes.ModuleName:                  {authtypes.Minter, authtypes.Burner},
 		perptypes.VaultModuleAccount:          {},
@@ -363,6 +364,7 @@ func NewNibiruApp(
 		// ibc keys
 		ibchost.StoreKey,
 		ibctransfertypes.StoreKey,
+		ibcfeetypes.StoreKey,
 
 		// nibiru x/ keys
 		spottypes.StoreKey,
@@ -683,6 +685,7 @@ func NewNibiruApp(
 		evidence.NewAppModule(app.evidenceKeeper),
 		ibc.NewAppModule(app.ibcKeeper),
 		ibctransfer.NewAppModule(app.transferKeeper),
+		ibcfee.NewAppModule(app.ibcFeeKeeper),
 
 		wasm.NewAppModule(appCodec, &app.wasmKeeper, app.stakingKeeper, app.AccountKeeper, app.BankKeeper),
 	)
@@ -720,6 +723,7 @@ func NewNibiruApp(
 		// ibc modules
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
+		ibcfeetypes.ModuleName,
 		wasm.ModuleName,
 	)
 	app.mm.SetOrderEndBlockers(
@@ -750,6 +754,7 @@ func NewNibiruApp(
 		// ibc
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
+		ibcfeetypes.ModuleName,
 		wasm.ModuleName,
 	)
 
@@ -786,6 +791,7 @@ func NewNibiruApp(
 		// ibc
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
+		ibcfeetypes.ModuleName,
 		wasm.ModuleName,
 	)
 
@@ -828,6 +834,7 @@ func NewNibiruApp(
 		evidence.NewAppModule(app.evidenceKeeper),
 		ibc.NewAppModule(app.ibcKeeper),
 		ibctransfer.NewAppModule(app.transferKeeper),
+		ibcfee.NewAppModule(app.ibcFeeKeeper),
 	)
 
 	app.sm.RegisterStoreDecoders()
