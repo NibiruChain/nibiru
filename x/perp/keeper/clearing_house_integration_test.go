@@ -48,7 +48,6 @@ func TestOpenPosition(t *testing.T) {
 	ts := NewTestSuite(t)
 
 	alice := testutil.AccAddress()
-
 	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.USDC)
 
 	startBlockTime := time.Now()
