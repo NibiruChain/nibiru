@@ -354,3 +354,7 @@ ret:
 func (k Keeper) GetAllPools(ctx sdk.Context) []types.Vpool {
 	return k.Pools.Iterate(ctx, collections.Range[asset.Pair]{}).Values()
 }
+
+func (k Keeper) GetPool(ctx sdk.Context, pair asset.Pair) (types.Vpool, error) {
+	return k.Pools.Get(ctx, pair)
+}

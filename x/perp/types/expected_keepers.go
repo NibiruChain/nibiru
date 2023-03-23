@@ -102,6 +102,7 @@ type VpoolKeeper interface {
 	) (quoteAssetAmount sdk.Dec, err error)
 
 	GetAllPools(ctx sdk.Context) []vpooltypes.Vpool
+	GetPool(ctx sdk.Context, pair asset.Pair) (vpooltypes.Vpool, error)
 
 	IsOverSpreadLimit(ctx sdk.Context, pair asset.Pair) (bool, error)
 	GetMaintenanceMarginRatio(ctx sdk.Context, pair asset.Pair) (sdk.Dec, error)

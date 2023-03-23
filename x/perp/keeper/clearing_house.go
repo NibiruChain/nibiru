@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/NibiruChain/collections"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -38,13 +37,10 @@ func (k Keeper) OpenPosition(
 	leverage sdk.Dec,
 	baseAmtLimit sdk.Dec,
 ) (positionResp *types.PositionResp, err error) {
-	err = k.checkOpenPositionRequirements(ctx, pair, quoteAssetAmount, leverage)
+	_, err = k.checkOpenPositionRequirements(ctx, pair, quoteAssetAmount, leverage)
 	if err != nil {
 		return nil, err
 	}
-
-	// require params
-	params := k.GetParams(ctx)
 
 	position, err := k.Positions.Get(ctx, collections.Join(pair, traderAddr))
 	isNewPosition := errors.Is(err, collections.ErrNotFound)
@@ -84,7 +80,7 @@ func (k Keeper) OpenPosition(
 		}
 	}
 
-	if err = k.afterPositionUpdate(ctx, pair, traderAddr, params, isNewPosition, *positionResp); err != nil {
+	if err = k.afterPositionUpdate(ctx, pair, traderAddr, *positionResp); err != nil {
 		return nil, err
 	}
 
@@ -97,33 +93,25 @@ func (k Keeper) OpenPosition(
 // - Checks that quote asset is not zero.
 // - Checks that leverage is not zero.
 // - Checks that leverage is below requirement.
-func (k Keeper) checkOpenPositionRequirements(
-	ctx sdk.Context,
-	pair asset.Pair,
-	quoteAssetAmount sdk.Int,
-	leverage sdk.Dec,
-) error {
-	if err := k.requireVpool(ctx, pair); err != nil {
-		return err
+func (k Keeper) checkOpenPositionRequirements(ctx sdk.Context, pair asset.Pair, quoteAssetAmount sdk.Int, leverage sdk.Dec) (vpooltypes.Vpool, error) {
+	vpool, err := k.VpoolKeeper.GetPool(ctx, pair)
+	if err != nil {
+		return vpooltypes.Vpool{}, err
 	}
 
 	if quoteAssetAmount.IsZero() {
-		return types.ErrQuoteAmountIsZero
+		return vpooltypes.Vpool{}, types.ErrQuoteAmountIsZero
 	}
 
 	if leverage.IsZero() {
-		return types.ErrLeverageIsZero
+		return vpooltypes.Vpool{}, types.ErrLeverageIsZero
 	}
 
-	maxLeverage, err := k.VpoolKeeper.GetMaxLeverage(ctx, pair)
-	if err != nil {
-		return err
-	}
-	if leverage.GT(maxLeverage) {
-		return types.ErrLeverageIsTooHigh
+	if leverage.GT(vpool.Config.MaxLeverage) {
+		return vpooltypes.Vpool{}, types.ErrLeverageIsTooHigh
 	}
 
-	return nil
+	return vpool, nil
 }
 
 // afterPositionUpdate is called when a position has been updated.
@@ -131,8 +119,6 @@ func (k Keeper) afterPositionUpdate(
 	ctx sdk.Context,
 	pair asset.Pair,
 	traderAddr sdk.AccAddress,
-	params types.Params,
-	isNewPosition bool,
 	positionResp types.PositionResp,
 ) (err error) {
 	// update position in state
@@ -700,8 +686,6 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.A
 		ctx,
 		pair,
 		traderAddr,
-		k.GetParams(ctx),
-		/* isNewPosition */ false,
 		*positionResp,
 	); err != nil {
 		return nil, err
