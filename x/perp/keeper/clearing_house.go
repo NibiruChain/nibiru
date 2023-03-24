@@ -37,7 +37,12 @@ func (k Keeper) OpenPosition(
 	leverage sdk.Dec,
 	baseAmtLimit sdk.Dec,
 ) (positionResp *types.PositionResp, err error) {
-	_, err = k.checkOpenPositionRequirements(ctx, pair, quoteAssetAmount, leverage)
+	vpool, err := k.VpoolKeeper.GetPool(ctx, pair)
+	if err != nil {
+		return nil, types.ErrPairNotFound
+	}
+
+	err = k.checkOpenPositionRequirements(vpool, quoteAssetAmount, leverage)
 	if err != nil {
 		return nil, err
 	}
@@ -46,16 +51,15 @@ func (k Keeper) OpenPosition(
 	isNewPosition := errors.Is(err, collections.ErrNotFound)
 	if isNewPosition {
 		position = types.ZeroPosition(ctx, pair, traderAddr)
-		k.Positions.Insert(ctx, collections.Join(pair, traderAddr), position)
 	} else if err != nil && !isNewPosition {
 		return nil, err
 	}
 
 	sameSideLong := position.Size_.IsPositive() && side == types.Side_BUY
 	sameSideShort := position.Size_.IsNegative() && side == types.Side_SELL
+
 	var openSideMatchesPosition = sameSideLong || sameSideShort
 	if isNewPosition || openSideMatchesPosition {
-		// increase position case
 		positionResp, err = k.increasePosition(
 			ctx,
 			position,
@@ -67,7 +71,6 @@ func (k Keeper) OpenPosition(
 			return nil, err
 		}
 	} else {
-		// everything else decreases the position
 		positionResp, err = k.openReversePosition(
 			ctx,
 			position,
@@ -80,7 +83,7 @@ func (k Keeper) OpenPosition(
 		}
 	}
 
-	if err = k.afterPositionUpdate(ctx, pair, traderAddr, *positionResp); err != nil {
+	if err = k.afterPositionUpdate(ctx, vpool, traderAddr, *positionResp); err != nil {
 		return nil, err
 	}
 
@@ -93,35 +96,30 @@ func (k Keeper) OpenPosition(
 // - Checks that quote asset is not zero.
 // - Checks that leverage is not zero.
 // - Checks that leverage is below requirement.
-func (k Keeper) checkOpenPositionRequirements(ctx sdk.Context, pair asset.Pair, quoteAssetAmount sdk.Int, leverage sdk.Dec) (vpooltypes.Vpool, error) {
-	vpool, err := k.VpoolKeeper.GetPool(ctx, pair)
-	if err != nil {
-		return vpooltypes.Vpool{}, err
-	}
-
+func (k Keeper) checkOpenPositionRequirements(vpool vpooltypes.Vpool, quoteAssetAmount sdk.Int, leverage sdk.Dec) error {
 	if quoteAssetAmount.IsZero() {
-		return vpooltypes.Vpool{}, types.ErrQuoteAmountIsZero
+		return types.ErrQuoteAmountIsZero
 	}
 
 	if leverage.IsZero() {
-		return vpooltypes.Vpool{}, types.ErrLeverageIsZero
+		return types.ErrLeverageIsZero
 	}
 
 	if leverage.GT(vpool.Config.MaxLeverage) {
-		return vpooltypes.Vpool{}, types.ErrLeverageIsTooHigh
+		return types.ErrLeverageIsTooHigh
 	}
 
-	return vpool, nil
+	return nil
 }
 
 // afterPositionUpdate is called when a position has been updated.
 func (k Keeper) afterPositionUpdate(
 	ctx sdk.Context,
-	pair asset.Pair,
+	vpool vpooltypes.Vpool,
 	traderAddr sdk.AccAddress,
 	positionResp types.PositionResp,
 ) (err error) {
-	// update position in state
+	pair := vpool.Pair
 	if !positionResp.Position.Size_.IsZero() {
 		k.Positions.Insert(ctx, collections.Join(pair, traderAddr), *positionResp.Position)
 	}
@@ -140,10 +138,7 @@ func (k Keeper) afterPositionUpdate(
 			return err
 		}
 
-		maintenanceMarginRatio, err := k.VpoolKeeper.GetMaintenanceMarginRatio(ctx, pair)
-		if err != nil {
-			return err
-		}
+		maintenanceMarginRatio := vpool.Config.MaintenanceMarginRatio
 		if err = validateMarginRatio(marginRatio, maintenanceMarginRatio, true); err != nil {
 			return types.ErrMarginRatioTooLow
 		}
@@ -177,7 +172,7 @@ func (k Keeper) afterPositionUpdate(
 	// calculate positionNotional (it's different depends on long or short side)
 	// long: unrealizedPnl = positionNotional - openNotional => positionNotional = openNotional + unrealizedPnl
 	// short: unrealizedPnl = openNotional - positionNotional => positionNotional = openNotional - unrealizedPnl
-	var positionNotional sdk.Dec = sdk.ZeroDec()
+	positionNotional := sdk.ZeroDec()
 	if positionResp.Position.Size_.IsPositive() {
 		positionNotional = positionResp.Position.OpenNotional.Add(positionResp.UnrealizedPnlAfter)
 	} else if positionResp.Position.Size_.IsNegative() {
@@ -668,6 +663,11 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.A
 		return nil, err
 	}
 
+	vpool, err := k.VpoolKeeper.GetPool(ctx, pair)
+	if err != nil {
+		return nil, types.ErrPairNotFound
+	}
+
 	positionResp, err := k.closePositionEntirely(
 		ctx,
 		position,
@@ -684,7 +684,7 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.A
 
 	if err = k.afterPositionUpdate(
 		ctx,
-		pair,
+		vpool,
 		traderAddr,
 		*positionResp,
 	); err != nil {

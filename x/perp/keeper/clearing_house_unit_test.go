@@ -1803,6 +1803,9 @@ func TestClosePosition(t *testing.T) {
 
 			t.Log("mock vpool keeper")
 			mocks.mockVpoolKeeper.EXPECT().
+				GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).
+				Return(vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}, nil)
+			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetPrice(
 					ctx,
 					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -1965,6 +1968,10 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 			perpKeeper.SetParams(ctx, types.DefaultParams())
 
 			t.Log("mock vpool keeper")
+			mocks.mockVpoolKeeper.EXPECT().
+				GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).
+				Return(vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}, nil)
+
 			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetPrice(
 					ctx,
