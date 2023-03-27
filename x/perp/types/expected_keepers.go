@@ -61,12 +61,12 @@ type VpoolKeeper interface {
 
 	SwapQuoteForBase(
 		ctx sdk.Context,
-		pair asset.Pair,
+		vpool vpooltypes.Vpool,
 		dir vpooltypes.Direction,
 		quoteAssetAmount sdk.Dec,
 		baseAmountLimit sdk.Dec,
 		skipFluctuationLimitCheck bool,
-	) (sdk.Dec, error)
+	) (vpooltypes.Vpool, sdk.Dec, error)
 
 	GetBaseAssetTWAP(
 		ctx sdk.Context,
@@ -77,8 +77,7 @@ type VpoolKeeper interface {
 	) (quoteAssetAmount sdk.Dec, err error)
 
 	GetBaseAssetPrice(
-		ctx sdk.Context,
-		pair asset.Pair,
+		vpool vpooltypes.Vpool,
 		direction vpooltypes.Direction,
 		baseAssetAmount sdk.Dec,
 	) (quoteAssetAmount sdk.Dec, err error)

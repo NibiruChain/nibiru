@@ -185,10 +185,12 @@ func TestSwapQuoteForBase(t *testing.T) {
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
 			))
+			vpool, err := vpoolKeeper.GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+			require.NoError(t, err)
 
-			baseAmt, err := vpoolKeeper.SwapQuoteForBase(
+			_, baseAmt, err := vpoolKeeper.SwapQuoteForBase(
 				ctx,
-				tc.pair,
+				vpool,
 				tc.direction,
 				tc.quoteAmount,
 				tc.baseLimit,

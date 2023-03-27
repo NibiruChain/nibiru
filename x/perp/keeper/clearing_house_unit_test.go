@@ -152,7 +152,7 @@ func TestSwapQuoteAssetForBase(t *testing.T) {
 
 			vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 
-			baseAmount, err := perpKeeper.swapQuoteForBase(
+			_, baseAmount, err := perpKeeper.swapQuoteForBase(
 				ctx,
 				vpool,
 				tc.side,
@@ -172,7 +172,7 @@ func TestIncreasePosition(t *testing.T) {
 		name         string
 		initPosition types.Position
 		given        func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper)
-		when         func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error)
+		when         func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (vpooltypes.Vpool, *types.PositionResp, error)
 		then         func(t *testing.T, ctx sdk.Context, initPosition types.Position, resp *types.PositionResp, err error)
 	}{
 		{
@@ -218,7 +218,7 @@ func TestIncreasePosition(t *testing.T) {
 					},
 				)
 			},
-			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error) {
+			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (vpooltypes.Vpool, *types.PositionResp, error) {
 				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
 				return perpKeeper.increasePosition(
 					ctx,
@@ -291,7 +291,7 @@ func TestIncreasePosition(t *testing.T) {
 					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 				})
 			},
-			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error) {
+			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (vpooltypes.Vpool, *types.PositionResp, error) {
 				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
 				return perpKeeper.increasePosition(
 					ctx,
@@ -367,7 +367,7 @@ func TestIncreasePosition(t *testing.T) {
 					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.2"),
 				})
 			},
-			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error) {
+			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (vpooltypes.Vpool, *types.PositionResp, error) {
 				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
 				return perpKeeper.increasePosition(
 					ctx,
@@ -441,7 +441,7 @@ func TestIncreasePosition(t *testing.T) {
 					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 				})
 			},
-			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error) {
+			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (vpooltypes.Vpool, *types.PositionResp, error) {
 				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
 				return perpKeeper.increasePosition(
 					ctx,
@@ -515,7 +515,7 @@ func TestIncreasePosition(t *testing.T) {
 					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 				})
 			},
-			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error) {
+			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (vpooltypes.Vpool, *types.PositionResp, error) {
 				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
 				return perpKeeper.increasePosition(
 					ctx,
@@ -592,7 +592,7 @@ func TestIncreasePosition(t *testing.T) {
 					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("-0.3"),
 				})
 			},
-			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error) {
+			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (vpooltypes.Vpool, *types.PositionResp, error) {
 				t.Log("Increase position with 10.5 NUSD margin and 10x leverage.")
 				return perpKeeper.increasePosition(
 					ctx,
@@ -633,7 +633,7 @@ func TestIncreasePosition(t *testing.T) {
 
 			tc.given(ctx, mocks, perpKeeper)
 
-			resp, err := tc.when(ctx, perpKeeper, tc.initPosition)
+			_, resp, err := tc.when(ctx, perpKeeper, tc.initPosition)
 
 			tc.then(t, ctx, tc.initPosition, resp, err)
 		})
@@ -1152,7 +1152,7 @@ func TestDecreasePosition(t *testing.T) {
 			})
 
 			t.Log("decrease position")
-			resp, err := perpKeeper.decreasePosition(
+			_, resp, err := perpKeeper.decreasePosition(
 				ctx,
 				vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
 				tc.initialPosition,
@@ -1564,7 +1564,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 			})
 
 			t.Log("close position and open reverse")
-			resp, err := perpKeeper.closeAndOpenReversePosition(
+			_, resp, err := perpKeeper.closeAndOpenReversePosition(
 				ctx,
 				vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
 				currentPosition,

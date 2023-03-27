@@ -74,7 +74,12 @@ func (q queryServer) position(ctx sdk.Context, pair asset.Pair, trader sdk.AccAd
 		return nil, err
 	}
 
-	positionNotional, unrealizedPnl, err := q.k.getPositionNotionalAndUnrealizedPnL(ctx, position, types.PnLCalcOption_SPOT_PRICE)
+	vpool, err := q.k.VpoolKeeper.GetPool(ctx, pair)
+	if err != nil {
+		return nil, types.ErrPairNotFound
+	}
+
+	positionNotional, unrealizedPnl, err := q.k.getPositionNotionalAndUnrealizedPnL(ctx, vpool, position, types.PnLCalcOption_SPOT_PRICE)
 	if err != nil {
 		return nil, err
 	}

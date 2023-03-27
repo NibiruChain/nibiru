@@ -20,9 +20,9 @@ to it. Adding margin increases the margin ratio of the corresponding position.
 func (k Keeper) AddMargin(
 	ctx sdk.Context, pair asset.Pair, traderAddr sdk.AccAddress, margin sdk.Coin,
 ) (res *types.MsgAddMarginResponse, err error) {
-	// validate vpool exists
-	if err = k.requireVpool(ctx, pair); err != nil {
-		return nil, err
+	vpool, err := k.VpoolKeeper.GetPool(ctx, pair)
+	if err != nil {
+		return nil, types.ErrPairNotFound
 	}
 
 	// ------------- AddMargin -------------
@@ -54,7 +54,7 @@ func (k Keeper) AddMargin(
 	position.BlockNumber = ctx.BlockHeight()
 	k.Positions.Insert(ctx, collections.Join(position.Pair, traderAddr), position)
 
-	positionNotional, unrealizedPnl, err := k.getPositionNotionalAndUnrealizedPnL(ctx, position, types.PnLCalcOption_SPOT_PRICE)
+	positionNotional, unrealizedPnl, err := k.getPositionNotionalAndUnrealizedPnL(ctx, vpool, position, types.PnLCalcOption_SPOT_PRICE)
 	if err != nil {
 		return nil, err
 	}
@@ -114,9 +114,9 @@ ret:
 func (k Keeper) RemoveMargin(
 	ctx sdk.Context, pair asset.Pair, traderAddr sdk.AccAddress, margin sdk.Coin,
 ) (marginOut sdk.Coin, fundingPayment sdk.Dec, position types.Position, err error) {
-	// validate vpool exists
-	if err = k.requireVpool(ctx, pair); err != nil {
-		return sdk.Coin{}, sdk.Dec{}, types.Position{}, err
+	vpool, err := k.VpoolKeeper.GetPool(ctx, pair)
+	if err != nil {
+		return sdk.Coin{}, sdk.Dec{}, types.Position{}, types.ErrPairNotFound
 	}
 
 	// ------------- RemoveMargin -------------
@@ -146,7 +146,7 @@ func (k Keeper) RemoveMargin(
 
 	k.Positions.Insert(ctx, collections.Join(position.Pair, traderAddr), position)
 
-	positionNotional, unrealizedPnl, err := k.getPositionNotionalAndUnrealizedPnL(ctx, position, types.PnLCalcOption_SPOT_PRICE)
+	positionNotional, unrealizedPnl, err := k.getPositionNotionalAndUnrealizedPnL(ctx, vpool, position, types.PnLCalcOption_SPOT_PRICE)
 	if err != nil {
 		return sdk.Coin{}, sdk.Dec{}, types.Position{}, err
 	}
@@ -293,6 +293,7 @@ Returns:
 */
 func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 	ctx sdk.Context,
+	vpool vpooltypes.Vpool,
 	currentPosition types.Position,
 	pnlCalcOption types.PnLCalcOption,
 ) (positionNotional sdk.Dec, unrealizedPnL sdk.Dec, err error) {
@@ -325,8 +326,7 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 		}
 	case types.PnLCalcOption_SPOT_PRICE:
 		positionNotional, err = k.VpoolKeeper.GetBaseAssetPrice(
-			ctx,
-			currentPosition.Pair,
+			vpool,
 			baseAssetDirection,
 			positionSizeAbs,
 		)

@@ -308,8 +308,7 @@ func (k Keeper) ExecutePartialLiquidation(
 	}
 
 	partiallyLiquidatedPositionNotional, err := k.VpoolKeeper.GetBaseAssetPrice(
-		ctx,
-		currentPosition.Pair,
+		vpool,
 		baseAssetDir,
 		/* abs= */ currentPosition.Size_.Mul(params.PartialLiquidationRatio),
 	)
@@ -317,7 +316,7 @@ func (k Keeper) ExecutePartialLiquidation(
 		return types.LiquidateResp{}, err
 	}
 
-	positionResp, err := k.decreasePosition(
+	_, positionResp, err := k.decreasePosition(
 		/* ctx */ ctx,
 		vpool,
 		/* currentPosition */ *currentPosition,
