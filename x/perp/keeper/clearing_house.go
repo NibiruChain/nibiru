@@ -62,6 +62,7 @@ func (k Keeper) OpenPosition(
 	if isNewPosition || openSideMatchesPosition {
 		positionResp, err = k.increasePosition(
 			ctx,
+			vpool,
 			position,
 			side,
 			/* openNotional */ leverage.MulInt(quoteAssetAmount),
@@ -73,6 +74,7 @@ func (k Keeper) OpenPosition(
 	} else {
 		positionResp, err = k.openReversePosition(
 			ctx,
+			vpool,
 			position,
 			/* quoteAssetAmount */ quoteAssetAmount.ToDec(),
 			/* leverage */ leverage,
@@ -227,6 +229,7 @@ ret:
 */
 func (k Keeper) increasePosition(
 	ctx sdk.Context,
+	vpool vpooltypes.Vpool,
 	currentPosition types.Position,
 	side types.Side,
 	increasedNotional sdk.Dec,
@@ -237,7 +240,7 @@ func (k Keeper) increasePosition(
 
 	positionResp.ExchangedPositionSize, err = k.swapQuoteForBase(
 		ctx,
-		currentPosition.Pair,
+		vpool,
 		side,
 		increasedNotional,
 		baseAmtLimit,
@@ -290,6 +293,7 @@ func (k Keeper) increasePosition(
 // TODO test: openReversePosition | https://github.com/NibiruChain/nibiru/issues/299
 func (k Keeper) openReversePosition(
 	ctx sdk.Context,
+	vpool vpooltypes.Vpool,
 	currentPosition types.Position,
 	quoteAssetAmount sdk.Dec,
 	leverage sdk.Dec,
@@ -309,6 +313,7 @@ func (k Keeper) openReversePosition(
 		// position reduction
 		return k.decreasePosition(
 			ctx,
+			vpool,
 			currentPosition,
 			notionalToDecreaseBy,
 			baseAmtLimit,
@@ -318,6 +323,7 @@ func (k Keeper) openReversePosition(
 		// close and reverse
 		return k.closeAndOpenReversePosition(
 			ctx,
+			vpool,
 			currentPosition,
 			quoteAssetAmount,
 			leverage,
@@ -349,6 +355,7 @@ ret:
 */
 func (k Keeper) decreasePosition(
 	ctx sdk.Context,
+	vpool vpooltypes.Vpool,
 	currentPosition types.Position,
 	decreasedNotional sdk.Dec,
 	baseAmtLimit sdk.Dec,
@@ -382,7 +389,7 @@ func (k Keeper) decreasePosition(
 
 	positionResp.ExchangedPositionSize, err = k.swapQuoteForBase(
 		ctx,
-		currentPosition.Pair,
+		vpool,
 		sideToTake,
 		decreasedNotional,
 		baseAmtLimit,
@@ -460,6 +467,7 @@ ret:
 */
 func (k Keeper) closeAndOpenReversePosition(
 	ctx sdk.Context,
+	vpool vpooltypes.Vpool,
 	existingPosition types.Position,
 	quoteAssetAmount sdk.Dec,
 	leverage sdk.Dec,
@@ -520,6 +528,7 @@ func (k Keeper) closeAndOpenReversePosition(
 		)
 		increasePositionResp, err := k.increasePosition(
 			ctx,
+			vpool,
 			newPosition,
 			sideToTake,
 			remainingReverseNotionalValue,
@@ -757,7 +766,7 @@ ret:
 */
 func (k Keeper) swapQuoteForBase(
 	ctx sdk.Context,
-	pair asset.Pair,
+	vpool vpooltypes.Vpool,
 	side types.Side,
 	quoteAssetAmount sdk.Dec,
 	baseAssetLimit sdk.Dec,
@@ -772,14 +781,14 @@ func (k Keeper) swapQuoteForBase(
 	}
 
 	baseAssetAmount, err = k.VpoolKeeper.SwapQuoteForBase(
-		ctx, pair, quoteAssetDirection, quoteAssetAmount, baseAssetLimit, skipFluctuationLimitCheck)
+		ctx, vpool.Pair, quoteAssetDirection, quoteAssetAmount, baseAssetLimit, skipFluctuationLimitCheck)
 	if err != nil {
 		return sdk.Dec{}, err
 	}
 	if side == types.Side_SELL {
 		baseAssetAmount = baseAssetAmount.Neg()
 	}
-	k.OnSwapEnd(ctx, pair, quoteAssetAmount, baseAssetAmount)
+	k.OnSwapEnd(ctx, vpool.Pair, quoteAssetAmount, baseAssetAmount)
 	return baseAssetAmount, nil
 }
 

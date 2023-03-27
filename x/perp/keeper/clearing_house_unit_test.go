@@ -150,9 +150,11 @@ func TestSwapQuoteAssetForBase(t *testing.T) {
 
 			tc.setMocks(ctx, mocks)
 
+			vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+
 			baseAmount, err := perpKeeper.swapQuoteForBase(
 				ctx,
-				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				vpool,
 				tc.side,
 				sdk.NewDec(10),
 				sdk.NewDec(1),
@@ -220,6 +222,7 @@ func TestIncreasePosition(t *testing.T) {
 				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
 				return perpKeeper.increasePosition(
 					ctx,
+					vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
 					initPosition,
 					types.Side_BUY,
 					/*openNotional=*/ sdk.NewDec(100), // NUSD
@@ -292,6 +295,7 @@ func TestIncreasePosition(t *testing.T) {
 				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
 				return perpKeeper.increasePosition(
 					ctx,
+					vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
 					initPosition,
 					types.Side_BUY,
 					/*openNotional=*/ sdk.NewDec(100), // NUSD
@@ -367,6 +371,7 @@ func TestIncreasePosition(t *testing.T) {
 				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
 				return perpKeeper.increasePosition(
 					ctx,
+					vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
 					initPosition,
 					types.Side_BUY,
 					/*openNotional=*/ sdk.NewDec(100), // NUSD
@@ -440,6 +445,7 @@ func TestIncreasePosition(t *testing.T) {
 				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
 				return perpKeeper.increasePosition(
 					ctx,
+					vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
 					initPosition,
 					types.Side_SELL,
 					/*openNotional=*/ sdk.NewDec(100), // NUSD
@@ -513,6 +519,7 @@ func TestIncreasePosition(t *testing.T) {
 				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
 				return perpKeeper.increasePosition(
 					ctx,
+					vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
 					initPosition,
 					types.Side_SELL,
 					/*openNotional=*/ sdk.NewDec(100), // NUSD
@@ -589,6 +596,7 @@ func TestIncreasePosition(t *testing.T) {
 				t.Log("Increase position with 10.5 NUSD margin and 10x leverage.")
 				return perpKeeper.increasePosition(
 					ctx,
+					vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
 					initPosition,
 					types.Side_SELL,
 					/*openNotional=*/ sdk.NewDec(105), // NUSD
@@ -1146,6 +1154,7 @@ func TestDecreasePosition(t *testing.T) {
 			t.Log("decrease position")
 			resp, err := perpKeeper.decreasePosition(
 				ctx,
+				vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
 				tc.initialPosition,
 				/*openNotional=*/ tc.quoteAmountToDecrease, // NUSD
 				/*baseLimit=*/ tc.baseAssetLimit, // BTC
@@ -1557,6 +1566,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 			t.Log("close position and open reverse")
 			resp, err := perpKeeper.closeAndOpenReversePosition(
 				ctx,
+				vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
 				currentPosition,
 				/*quoteAssetAmount=*/ tc.inputQuoteAmount, // NUSD
 				/*leverage=*/ tc.inputLeverage,

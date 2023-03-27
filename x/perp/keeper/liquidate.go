@@ -31,7 +31,11 @@ func (k Keeper) Liquidate(
 	pair asset.Pair,
 	trader sdk.AccAddress,
 ) (liquidatorFee sdk.Coin, perpEcosystemFundFee sdk.Coin, err error) {
-	err = k.requireVpool(ctx, pair)
+	_, err = k.VpoolKeeper.GetPool(ctx, pair)
+	if err != nil {
+		return sdk.Coin{}, sdk.Coin{}, types.ErrPairNotFound
+	}
+
 	if err != nil {
 		_ = ctx.EventManager().EmitTypedEvent(&types.LiquidationFailedEvent{ // nolint:errcheck
 			Pair:       pair,
@@ -286,6 +290,11 @@ func (k Keeper) ExecutePartialLiquidation(
 ) (types.LiquidateResp, error) {
 	params := k.GetParams(ctx)
 
+	vpool, err := k.VpoolKeeper.GetPool(ctx, currentPosition.Pair)
+	if err != nil {
+		return types.LiquidateResp{}, types.ErrPairNotFound
+	}
+
 	traderAddr, err := sdk.AccAddressFromBech32(currentPosition.TraderAddress)
 	if err != nil {
 		return types.LiquidateResp{}, err
@@ -310,6 +319,7 @@ func (k Keeper) ExecutePartialLiquidation(
 
 	positionResp, err := k.decreasePosition(
 		/* ctx */ ctx,
+		vpool,
 		/* currentPosition */ *currentPosition,
 		/* quoteAssetAmount */ partiallyLiquidatedPositionNotional,
 		/* baseAmtLimit */ sdk.ZeroDec(),
