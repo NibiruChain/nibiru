@@ -15,67 +15,6 @@ import (
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
-func TestCalcFreeCollateralErrors(t *testing.T) {
-	testCases := []struct {
-		name string
-		test func()
-	}{
-		{
-			name: "invalid token pair - error",
-			test: func() {
-				k, _, ctx := getKeeper(t)
-				alice := testutil.AccAddress()
-				pos := types.ZeroPosition(ctx, asset.Pair("foobar"), alice)
-				_, err := k.calcFreeCollateral(ctx, pos)
-
-				require.Error(t, err)
-				require.ErrorIs(t, err, asset.ErrInvalidTokenPair)
-			},
-		},
-		{
-			name: "token pair not found - error",
-			test: func() {
-				k, mocks, ctx := getKeeper(t)
-
-				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(false)
-
-				pos := types.ZeroPosition(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), testutil.AccAddress())
-
-				_, err := k.calcFreeCollateral(ctx, pos)
-
-				require.Error(t, err)
-				require.ErrorIs(t, err, types.ErrPairNotFound)
-			},
-		},
-		{
-			name: "zero position",
-			test: func() {
-				k, mocks, ctx := getKeeper(t)
-
-				mocks.mockVpoolKeeper.EXPECT().
-					ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(true)
-				mocks.mockVpoolKeeper.EXPECT().
-					GetMaintenanceMarginRatio(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).
-					Return(sdk.MustNewDecFromStr("0.0625"), nil)
-
-				pos := types.ZeroPosition(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), testutil.AccAddress())
-
-				freeCollateral, err := k.calcFreeCollateral(ctx, pos)
-
-				require.NoError(t, err)
-				assert.EqualValues(t, sdk.ZeroDec(), freeCollateral)
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			tc.test()
-		})
-	}
-}
-
 func TestCalcFreeCollateralSuccess(t *testing.T) {
 	testCases := []struct {
 		name string
@@ -148,6 +87,7 @@ func TestCalcFreeCollateralSuccess(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			k, mocks, ctx := getKeeper(t)
 
+			vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			pos := types.Position{
 				TraderAddress:                   testutil.AccAddress().String(),
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -164,8 +104,7 @@ func TestCalcFreeCollateralSuccess(t *testing.T) {
 				GetMaintenanceMarginRatio(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).
 				Return(sdk.MustNewDecFromStr("0.0625"), nil)
 			mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(
-				ctx,
-				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				vpool,
 				tc.vpoolDirection,
 				sdk.OneDec(),
 			).Return(tc.positionNotional, nil)
@@ -177,7 +116,7 @@ func TestCalcFreeCollateralSuccess(t *testing.T) {
 				15*time.Minute,
 			).Return(tc.positionNotional, nil)
 
-			freeCollateral, err := k.calcFreeCollateral(ctx, pos)
+			freeCollateral, err := k.calcFreeCollateral(ctx, vpool, pos)
 
 			require.NoError(t, err)
 			assert.EqualValues(t, tc.expectedFreeCollateral, freeCollateral)

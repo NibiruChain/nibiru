@@ -137,7 +137,7 @@ func (k Keeper) RemoveMargin(
 	position.Margin = remainingMargin.Margin
 	position.LatestCumulativePremiumFraction = remainingMargin.LatestCumulativePremiumFraction
 
-	freeCollateral, err := k.calcFreeCollateral(ctx, position)
+	freeCollateral, err := k.calcFreeCollateral(ctx, vpool, position)
 	if err != nil {
 		return sdk.Coin{}, sdk.Dec{}, types.Position{}, err
 	} else if !freeCollateral.IsPositive() {
@@ -187,7 +187,7 @@ func (k Keeper) RemoveMargin(
 
 // GetMarginRatio calculates the MarginRatio from a Position
 func (k Keeper) GetMarginRatio(
-	ctx sdk.Context, position types.Position, priceOption types.MarginCalculationPriceOption,
+	ctx sdk.Context, vpool vpooltypes.Vpool, position types.Position, priceOption types.MarginCalculationPriceOption,
 ) (marginRatio sdk.Dec, err error) {
 	if position.Size_.IsZero() {
 		return sdk.Dec{}, types.ErrPositionZero
@@ -202,18 +202,21 @@ func (k Keeper) GetMarginRatio(
 	case types.MarginCalculationPriceOption_MAX_PNL:
 		positionNotional, unrealizedPnL, err = k.GetPreferencePositionNotionalAndUnrealizedPnL(
 			ctx,
+			vpool,
 			position,
 			types.PnLPreferenceOption_MAX,
 		)
 	case types.MarginCalculationPriceOption_INDEX:
 		positionNotional, unrealizedPnL, err = k.getPositionNotionalAndUnrealizedPnL(
 			ctx,
+			vpool,
 			position,
 			types.PnLCalcOption_ORACLE,
 		)
 	case types.MarginCalculationPriceOption_SPOT:
 		positionNotional, unrealizedPnL, err = k.getPositionNotionalAndUnrealizedPnL(
 			ctx,
+			vpool,
 			position,
 			types.PnLCalcOption_SPOT_PRICE,
 		)
@@ -388,11 +391,13 @@ Returns:
 */
 func (k Keeper) GetPreferencePositionNotionalAndUnrealizedPnL(
 	ctx sdk.Context,
+	vpool vpooltypes.Vpool,
 	position types.Position,
 	pnLPreferenceOption types.PnLPreferenceOption,
 ) (positionNotional sdk.Dec, unrealizedPnl sdk.Dec, err error) {
 	spotPositionNotional, spotPricePnl, err := k.getPositionNotionalAndUnrealizedPnL(
 		ctx,
+		vpool,
 		position,
 		types.PnLCalcOption_SPOT_PRICE,
 	)
@@ -409,6 +414,7 @@ func (k Keeper) GetPreferencePositionNotionalAndUnrealizedPnL(
 
 	twapPositionNotional, twapPnl, err := k.getPositionNotionalAndUnrealizedPnL(
 		ctx,
+		vpool,
 		position,
 		types.PnLCalcOption_TWAP,
 	)

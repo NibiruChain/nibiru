@@ -853,8 +853,10 @@ func TestClosePositionEntirely(t *testing.T) {
 			SetPairMetadata(perpKeeper, ctx, tc.pairMetadata)
 
 			t.Log("close position")
+			vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			resp, err := perpKeeper.closePositionEntirely(
 				ctx,
+				vpool,
 				tc.initialPosition,
 				/*quoteAssetLimit=*/ tc.quoteAssetLimit, // NUSD
 				/* skipFluctuationLimitCheck */ false,

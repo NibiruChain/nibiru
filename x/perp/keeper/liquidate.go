@@ -31,7 +31,7 @@ func (k Keeper) Liquidate(
 	pair asset.Pair,
 	trader sdk.AccAddress,
 ) (liquidatorFee sdk.Coin, perpEcosystemFundFee sdk.Coin, err error) {
-	_, err = k.VpoolKeeper.GetPool(ctx, pair)
+	vpool, err := k.VpoolKeeper.GetPool(ctx, pair)
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, types.ErrPairNotFound
 	}
@@ -59,6 +59,7 @@ func (k Keeper) Liquidate(
 
 	marginRatio, err := k.GetMarginRatio(
 		ctx,
+		vpool,
 		position,
 		types.MarginCalculationPriceOption_MAX_PNL,
 	)
@@ -72,7 +73,7 @@ func (k Keeper) Liquidate(
 	}
 	if isOverSpreadLimit {
 		marginRatioBasedOnOracle, err := k.GetMarginRatio(
-			ctx, position, types.MarginCalculationPriceOption_INDEX)
+			ctx, vpool, position, types.MarginCalculationPriceOption_INDEX)
 		if err != nil {
 			return liquidatorFee, perpEcosystemFundFee, err
 		}
@@ -98,7 +99,7 @@ func (k Keeper) Liquidate(
 	}
 
 	marginRatioBasedOnSpot, err := k.GetMarginRatio(
-		ctx, position, types.MarginCalculationPriceOption_SPOT)
+		ctx, vpool, position, types.MarginCalculationPriceOption_SPOT)
 	if err != nil {
 		return
 	}
@@ -144,6 +145,11 @@ func (k Keeper) ExecuteFullLiquidation(
 ) (liquidationResp types.LiquidateResp, err error) {
 	params := k.GetParams(ctx)
 
+	vpool, err := k.VpoolKeeper.GetPool(ctx, position.Pair)
+	if err != nil {
+		return types.LiquidateResp{}, types.ErrPairNotFound
+	}
+
 	traderAddr, err := sdk.AccAddressFromBech32(position.TraderAddress)
 	if err != nil {
 		return types.LiquidateResp{}, err
@@ -151,6 +157,7 @@ func (k Keeper) ExecuteFullLiquidation(
 
 	positionResp, err := k.closePositionEntirely(
 		ctx,
+		vpool,
 		/* currentPosition */ *position,
 		/* quoteAssetAmountLimit */ sdk.ZeroDec(),
 		/* skipFluctuationLimitCheck */ true,

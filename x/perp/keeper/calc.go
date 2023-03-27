@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -86,19 +87,16 @@ position without making it go underwater.
 - err: error
 */
 func (k Keeper) calcFreeCollateral(
-	ctx sdk.Context, pos types.Position,
+	ctx sdk.Context, vpool vpooltypes.Vpool, pos types.Position,
 ) (freeCollateral sdk.Dec, err error) {
 	if err = pos.Pair.Validate(); err != nil {
-		return
-	}
-
-	if err = k.requireVpool(ctx, pos.Pair); err != nil {
 		return
 	}
 
 	positionNotional, unrealizedPnL, err := k.
 		GetPreferencePositionNotionalAndUnrealizedPnL(
 			ctx,
+			vpool,
 			pos,
 			types.PnLPreferenceOption_MIN,
 		)

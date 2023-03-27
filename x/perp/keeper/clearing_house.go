@@ -134,6 +134,7 @@ func (k Keeper) afterPositionUpdate(
 	if !positionResp.Position.Size_.IsZero() {
 		marginRatio, err := k.GetMarginRatio(
 			ctx,
+			vpool,
 			*positionResp.Position,
 			types.MarginCalculationPriceOption_MAX_PNL,
 		)
@@ -484,6 +485,7 @@ func (k Keeper) closeAndOpenReversePosition(
 
 	closePositionResp, err := k.closePositionEntirely(
 		ctx,
+		vpool,
 		existingPosition,
 		/* quoteAssetAmountLimit */ sdk.ZeroDec(),
 		/* skipFluctuationLimitCheck */ false,
@@ -687,6 +689,7 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.A
 
 	positionResp, err := k.closePositionEntirely(
 		ctx,
+		vpool,
 		position,
 		/* quoteAssetAmountLimit */ sdk.ZeroDec(),
 		/* skipFluctuationLimitCheck */ false,

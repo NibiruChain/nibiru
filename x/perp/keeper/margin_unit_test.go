@@ -85,8 +85,9 @@ func TestGetMarginRatio_Errors(t *testing.T) {
 					Size_: sdk.ZeroDec(),
 				}
 
+				vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 				_, err := k.GetMarginRatio(
-					ctx, pos, types.MarginCalculationPriceOption_MAX_PNL)
+					ctx, vpool, pos, types.MarginCalculationPriceOption_MAX_PNL)
 				assert.EqualError(t, err, types.ErrPositionZero.Error())
 			},
 		},
@@ -165,8 +166,10 @@ func TestGetMarginRatio(t *testing.T) {
 				LatestCumulativePremiumFraction: sdk.OneDec(),
 			})
 
+			vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			marginRatio, err := perpKeeper.GetMarginRatio(
-				ctx, tc.position, types.MarginCalculationPriceOption_MAX_PNL)
+				ctx, vpool, tc.position, types.MarginCalculationPriceOption_MAX_PNL,
+			)
 
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedMarginRatio, marginRatio)
@@ -912,9 +915,11 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 
 			tc.setMocks(ctx, mocks)
 
+			vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			positionalNotional, unrealizedPnl, err := perpKeeper.
 				getPositionNotionalAndUnrealizedPnL(
 					ctx,
+					vpool,
 					tc.initialPosition,
 					tc.pnlCalcOption,
 				)
@@ -1083,9 +1088,11 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnL(t *testing.T) {
 
 			tc.setMocks(ctx, mocks)
 
+			vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			positionalNotional, unrealizedPnl, err := perpKeeper.
 				GetPreferencePositionNotionalAndUnrealizedPnL(
 					ctx,
+					vpool,
 					tc.initPosition,
 					tc.pnlPreferenceOption,
 				)
