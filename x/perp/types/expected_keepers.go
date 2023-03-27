@@ -106,7 +106,6 @@ type VpoolKeeper interface {
 
 	IsOverSpreadLimit(ctx sdk.Context, pair asset.Pair) (bool, error)
 	GetMaintenanceMarginRatio(ctx sdk.Context, pair asset.Pair) (sdk.Dec, error)
-	GetMaxLeverage(ctx sdk.Context, pair asset.Pair) (sdk.Dec, error)
 	ExistsPool(ctx sdk.Context, pair asset.Pair) bool
 	GetSettlementPrice(ctx sdk.Context, pair asset.Pair) (sdk.Dec, error)
 	GetLastSnapshot(ctx sdk.Context, pool vpooltypes.Vpool) (vpooltypes.ReserveSnapshot, error)

@@ -363,7 +363,8 @@ func TestSwapBaseForQuote(t *testing.T) {
 			pfKeeper := mock.NewMockOracleKeeper(gomock.NewController(t))
 
 			vpoolKeeper, ctx := VpoolKeeper(t, pfKeeper)
-			pfKeeper.EXPECT().GetExchangeRate(gomock.Any(), gomock.Any()).Return(sdk.NewDec(1), nil).AnyTimes()
+			pfKeeper.EXPECT().
+				GetExchangeRate(gomock.Any(), gomock.Any()).Return(sdk.NewDec(1), nil).AnyTimes()
 
 			assert.NoError(t, vpoolKeeper.CreatePool(
 				ctx,
@@ -699,46 +700,6 @@ func TestGetMaintenanceMarginRatio(t *testing.T) {
 			mmr, err := vpoolKeeper.GetMaintenanceMarginRatio(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 			assert.NoError(t, err)
 			assert.EqualValues(t, tc.expectedMaintenanceMarginRatio, mmr)
-		})
-	}
-}
-
-func TestGetMaxLeverage(t *testing.T) {
-	tests := []struct {
-		name string
-		pool types.Vpool
-
-		expectedMaxLeverage sdk.Dec
-	}{
-		{
-			name: "zero fluctuation limit ratio",
-			pool: types.Vpool{
-				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				QuoteAssetReserve: sdk.OneDec(),
-				BaseAssetReserve:  sdk.OneDec(),
-				Config: types.VpoolConfig{
-					FluctuationLimitRatio:  sdk.ZeroDec(),
-					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.42"),
-					MaxLeverage:            sdk.MustNewDecFromStr("15"),
-					MaxOracleSpreadRatio:   sdk.OneDec(),
-					TradeLimitRatio:        sdk.OneDec(),
-				},
-			},
-			expectedMaxLeverage: sdk.MustNewDecFromStr("15"),
-		},
-	}
-
-	for _, tc := range tests {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			vpoolKeeper, ctx := VpoolKeeper(t,
-				mock.NewMockOracleKeeper(gomock.NewController(t)),
-			)
-			vpoolKeeper.Pools.Insert(ctx, tc.pool.Pair, tc.pool)
-
-			maxLeverage, err := vpoolKeeper.GetMaxLeverage(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
-			assert.EqualValues(t, tc.expectedMaxLeverage, maxLeverage)
-			assert.NoError(t, err)
 		})
 	}
 }
