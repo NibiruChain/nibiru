@@ -369,7 +369,7 @@ func (k Keeper) NewPool(
 	}
 
 	// Mint the initial 100.000000000000000000 pool share tokens to the sender
-	if err = k.mintPoolShareToAccount(ctx, pool.Id, sender, types.InitPoolSharesSupply); err != nil {
+	if err = k.mintPoolShareToAccount(ctx, pool.Id, sender, sdk.NewInt(types.InitPoolShareSupply)); err != nil {
 		return 0, err
 	}
 

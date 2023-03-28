@@ -71,7 +71,7 @@ func NewPool(
 		PoolParams:  poolParams,
 		PoolAssets:  nil,
 		TotalWeight: sdk.ZeroInt(),
-		TotalShares: sdk.NewCoin(GetPoolShareBaseDenom(poolId), InitPoolSharesSupply),
+		TotalShares: sdk.NewCoin(GetPoolShareBaseDenom(poolId), sdk.NewInt(InitPoolShareSupply)),
 	}
 
 	err = pool.setInitialPoolAssets(poolAssets)
@@ -120,7 +120,7 @@ func (pool *Pool) AddTokensToPool(tokensIn sdk.Coins) (
 ) {
 	if pool.TotalShares.Amount.IsZero() {
 		// Mint the initial 100.000000000000000000 pool share tokens to the sender
-		numShares = InitPoolSharesSupply
+		numShares = sdk.NewInt(InitPoolShareSupply)
 		remCoins = sdk.Coins{}
 	} else if pool.PoolParams.PoolType == PoolType_STABLESWAP {
 		numShares, err = pool.numSharesOutFromTokensInStableSwap(tokensIn)

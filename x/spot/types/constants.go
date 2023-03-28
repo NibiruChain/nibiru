@@ -10,23 +10,20 @@ const (
 	// maximum number of assets a pool may have
 	MaxPoolAssets = 2
 
-	// the exponent of a pool display share compared to a pool base share (one pool display share = 10^18 pool base shares)
-	DisplayPoolShareExponent = 18
-
 	// Scaling factor for every weight. The pool weight is:
 	// weight_in_MsgCreateBalancerPool * GuaranteedWeightPrecision
 	//
 	// This is done so that smooth weight changes have enough precision to actually be smooth.
 	GuaranteedWeightPrecision int64 = 1 << 30
+
+	// OneDisplayPoolShare represents one display pool share
+	OneDisplayPoolShare = 1e6
+
+	// InitPoolSharesSupply is the amount of new shares to initialize a pool with.
+	InitPoolShareSupply = 100e6
 )
 
 var (
-	// OneDisplayPoolShare represents one display pool share
-	OneDisplayPoolShare sdk.Int = sdk.NewIntWithDecimal(1, DisplayPoolShareExponent)
-
-	// InitPoolSharesSupply is the amount of new shares to initialize a pool with.
-	InitPoolSharesSupply sdk.Int = OneDisplayPoolShare.MulRaw(100)
-
 	// Pool creators can specify a weight in [1, MaxUserSpecifiedWeight)
 	// for every token in the balancer pool.
 	//
