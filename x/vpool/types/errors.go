@@ -13,5 +13,8 @@ var (
 	ErrNoValidPrice         = sdkerrors.Register(ModuleName, 8, "no valid prices available")
 	ErrNoValidTWAP          = sdkerrors.Register(ModuleName, 9, "TWAP price not found")
 	// Could replace ErrBaseReserveAtZero and ErrQUoteReserveAtZero if wrapped
-	ErrNonPositiveReserves = sdkerrors.Register(ModuleName, 10, "base and quote reserves must always be positive")
+	ErrNonPositiveReserves = sdkerrors.Register(ModuleName, 10,
+		"base and quote reserves must always be positive")
+	ErrLiquidityDepth = sdkerrors.Register(ModuleName, 11,
+		"liquidity depth must be positve and equal to the square of the reserves")
 )
