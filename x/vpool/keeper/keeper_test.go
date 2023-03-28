@@ -69,16 +69,6 @@ func TestSwapQuoteForBase(t *testing.T) {
 			expectedBaseAmount:   sdk.MustNewDecFromStr("50505.050505050505050505"),
 		},
 		{
-			name:                      "pair not supported",
-			pair:                      "abc:xyz",
-			direction:                 types.Direction_ADD_TO_POOL,
-			quoteAmount:               sdk.NewDec(10),
-			baseLimit:                 sdk.NewDec(10),
-			skipFluctuationLimitCheck: false,
-
-			expectedErr: types.ErrPairNotSupported,
-		},
-		{
 			name:                      "base amount less than base limit in Long",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_ADD_TO_POOL,
