@@ -1,17 +1,17 @@
-# skip-unit-tests.yml runs when unit-tests.yml is skipped
-name: Unit Tests
+# skip-proto-gen.yml runs when proto-gen.yml is skipped
+name: Proto Generation
 
 on:
   pull_request:
     # paths-ignore makes the action run when the given paths are unchanged
     # See "Handling skipped but required checks" in
     # https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/troubleshooting-required-status-checks#handling-skipped-but-required-checks
-    paths-ignore: ["**.go", "**.proto", "go.mod", "go.sum"]
-
+    paths-ignore: ["**.proto", "**protocgen**"]
+  
 jobs:
-  unit-tests:
+  proto-gen:
     runs-on: ubuntu-latest
     steps:
-      - name: skip-tests
-        run: |
-          echo "unit-tests.yml skipped since Golang files were not changed."
+    - name: skip-tests
+      run: |
+        echo "proto-gen.yml skipped since proto files were not changed."
