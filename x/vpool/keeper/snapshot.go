@@ -3,6 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
@@ -56,6 +57,7 @@ func getPriceWithSnapshot(
 			Pair:              snapshotPriceOpts.pair,
 			QuoteAssetReserve: snapshot.QuoteAssetReserve,
 			BaseAssetReserve:  snapshot.BaseAssetReserve,
+			SqrtDepth:         common.SqrtDec(snapshot.QuoteAssetReserve.Mul(snapshot.BaseAssetReserve)),
 			Config: types.VpoolConfig{
 				FluctuationLimitRatio:  sdk.ZeroDec(), // unused
 				MaintenanceMarginRatio: sdk.ZeroDec(), // unused
@@ -71,6 +73,7 @@ func getPriceWithSnapshot(
 			Pair:              snapshotPriceOpts.pair,
 			QuoteAssetReserve: snapshot.QuoteAssetReserve,
 			BaseAssetReserve:  snapshot.BaseAssetReserve,
+			SqrtDepth:         common.SqrtDec(snapshot.QuoteAssetReserve.Mul(snapshot.BaseAssetReserve)),
 			Config: types.VpoolConfig{
 				FluctuationLimitRatio:  sdk.ZeroDec(), // unused
 				MaintenanceMarginRatio: sdk.ZeroDec(), // unused

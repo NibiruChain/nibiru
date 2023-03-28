@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"fmt"
-	"math"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -26,6 +24,7 @@ func (k Keeper) CreatePool(
 		Pair:              pair,
 		BaseAssetReserve:  baseAssetReserve,
 		QuoteAssetReserve: quoteAssetReserve,
+		SqrtDepth:         common.SqrtDec(quoteAssetReserve.Mul(baseAssetReserve)),
 		Config:            config,
 	}
 
@@ -60,6 +59,7 @@ func (k Keeper) EditPoolConfig(
 		Pair:              vpool.Pair,
 		BaseAssetReserve:  vpool.BaseAssetReserve,
 		QuoteAssetReserve: vpool.QuoteAssetReserve,
+		SqrtDepth:         vpool.SqrtDepth,
 		Config:            config, // main change is here
 	}
 	if err := newVpool.Validate(); err != nil {
@@ -90,28 +90,32 @@ func (k Keeper) EditSwapInvariant(
 		return err
 	}
 
-	// price = y / x
 	// k = x * y
 	// newK = (cx) * (cy) = c^2 xy = c^2 k
-	// newPrice = (c y) / (c x) = y / x = price
+	// newPrice = (c y) / (c x) = y / x = price  |   unchanged price
 	swapInvariant := vpool.BaseAssetReserve.Mul(vpool.QuoteAssetReserve)
 	newSwapInvariant := swapInvariant.Mul(swapInvariantMap.Multiplier)
 
 	// Change the swap invariant while holding price constant.
 	// Multiplying by the same factor to both of the reserves won't affect price.
-	cSquared := newSwapInvariant.Quo(swapInvariant).MustFloat64()
-	cAsFloat := math.Sqrt(cSquared)
-	c, err := sdk.NewDecFromStr(fmt.Sprintf("%f", cAsFloat))
-	if err != nil {
-		return err
+	cSquared := newSwapInvariant.Quo(swapInvariant)
+	var c sdk.Dec
+	panicError := common.TryCatch(func() {
+		c = common.SqrtDec(cSquared)
+	})()
+	if panicError != nil {
+		return panicError
 	}
+
 	newBaseAmount := c.Mul(vpool.BaseAssetReserve)
 	newQuoteAmount := c.Mul(vpool.QuoteAssetReserve)
+	newSqrtDepth := common.SqrtDec(newBaseAmount.Mul(newQuoteAmount))
 
 	newVpool := types.Vpool{
 		Pair:              vpool.Pair,
 		BaseAssetReserve:  newBaseAmount,
 		QuoteAssetReserve: newQuoteAmount,
+		SqrtDepth:         newSqrtDepth,
 		Config:            vpool.Config,
 	}
 	if err := newVpool.Validate(); err != nil {

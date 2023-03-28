@@ -20,10 +20,9 @@ func TestCreatePool(t *testing.T) {
 
 	assert.NoError(t, vpoolKeeper.CreatePool(
 		ctx,
-		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-
-		sdk.NewDec(10*common.Precision), // 10 tokens
-		sdk.NewDec(5*common.Precision),  // 5 tokens
+		/* pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+		/* quote */ sdk.NewDec(10*common.MICRO), // 10 tokens
+		/* base */ sdk.NewDec(5*common.MICRO), // 5 tokens
 		types.VpoolConfig{
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -44,8 +43,9 @@ func TestEditPoolConfig(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	vpoolStart := types.Vpool{
 		Pair:              pair,
-		QuoteAssetReserve: sdk.NewDec(10 * common.Precision),
-		BaseAssetReserve:  sdk.NewDec(5 * common.Precision),
+		QuoteAssetReserve: sdk.NewDec(10 * common.MICRO),
+		BaseAssetReserve:  sdk.NewDec(5 * common.MICRO),
+		SqrtDepth:         common.SqrtDec(sdk.NewDec(5 * 10 * common.MICRO * common.MICRO)),
 		Config: types.VpoolConfig{
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -191,8 +191,9 @@ func TestGetPoolPrices(t *testing.T) {
 			name: "happy path - vpool + pricefeed active",
 			vpool: types.Vpool{
 				Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-				QuoteAssetReserve: sdk.NewDec(3 * common.Precision), // 3e6
-				BaseAssetReserve:  sdk.NewDec(1_000),                // 1e3
+				QuoteAssetReserve: sdk.NewDec(3 * common.MICRO), // 3e6
+				BaseAssetReserve:  sdk.NewDec(1_000),            // 1e3
+				SqrtDepth:         common.SqrtDec(sdk.NewDec(3_000 * common.MICRO)),
 				Config: types.VpoolConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -208,7 +209,7 @@ func TestGetPoolPrices(t *testing.T) {
 				MarkPrice:     sdk.NewDec(3_000),
 				TwapMark:      sdk.NewDec(3_000).String(),
 				IndexPrice:    sdk.NewDec(99).String(),
-				SwapInvariant: sdk.NewInt(3_000 * common.Precision), // 1e3 * 3e6 = 3e9
+				SwapInvariant: sdk.NewInt(3_000 * common.MICRO), // 1e3 * 3e6 = 3e9
 				BlockNumber:   2,
 			},
 		},
@@ -216,8 +217,9 @@ func TestGetPoolPrices(t *testing.T) {
 			name: "happy path - vpool active, but no index price",
 			vpool: types.Vpool{
 				Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-				QuoteAssetReserve: sdk.NewDec(3 * common.Precision), // 3e6
-				BaseAssetReserve:  sdk.NewDec(1_000),                // 1e3
+				QuoteAssetReserve: sdk.NewDec(3 * common.MICRO), // 3e6
+				BaseAssetReserve:  sdk.NewDec(1_000),            // 1e3
+				SqrtDepth:         common.SqrtDec(sdk.NewDec(3_000 * common.MICRO)),
 				Config: types.VpoolConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -234,7 +236,7 @@ func TestGetPoolPrices(t *testing.T) {
 				MarkPrice:     sdk.NewDec(3_000),
 				TwapMark:      sdk.NewDec(3_000).String(),
 				IndexPrice:    sdk.OneDec().Neg().String(),
-				SwapInvariant: sdk.NewInt(3_000 * common.Precision), // 1e3 * 3e6 = 3e9
+				SwapInvariant: sdk.NewInt(3_000 * common.MICRO), // 1e3 * 3e6 = 3e9
 				BlockNumber:   2,
 			},
 		},
@@ -242,8 +244,9 @@ func TestGetPoolPrices(t *testing.T) {
 			name: "vpool doesn't exist",
 			vpool: types.Vpool{
 				Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-				QuoteAssetReserve: sdk.NewDec(3 * common.Precision), // 3e6
-				BaseAssetReserve:  sdk.NewDec(1_000),                // 1e3
+				QuoteAssetReserve: sdk.NewDec(3 * common.MICRO), // 3e6
+				BaseAssetReserve:  sdk.NewDec(1_000),            // 1e3
+				SqrtDepth:         common.SqrtDec(sdk.NewDec(3_000 * common.MICRO)),
 				Config: types.VpoolConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -297,8 +300,9 @@ func TestEditSwapInvariant(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.NIBI, denoms.NUSD)
 	vpoolStart := types.Vpool{
 		Pair:              pair,
-		QuoteAssetReserve: sdk.NewDec(10 * common.Precision),
-		BaseAssetReserve:  sdk.NewDec(5 * common.Precision),
+		QuoteAssetReserve: sdk.NewDec(10 * common.MICRO),
+		BaseAssetReserve:  sdk.NewDec(5 * common.MICRO),
+		SqrtDepth:         common.SqrtDec(sdk.NewDec(5 * 10 * common.MICRO * common.MICRO)),
 		Config: types.VpoolConfig{
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
