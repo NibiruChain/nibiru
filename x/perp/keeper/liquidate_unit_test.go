@@ -109,10 +109,11 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 			})
 
 			t.Log("mock vpool keeper")
+			vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			mocks.mockVpoolKeeper.EXPECT().
 				GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).
 				Times(2).
-				Return(vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}, nil)
+				Return(vpool, nil)
 			mocks.mockVpoolKeeper.EXPECT().
 				ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(true).Times(1)
 			mocks.mockVpoolKeeper.EXPECT().
@@ -134,16 +135,14 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 				Return(tc.newPositionNotional, nil)
 			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetPrice(
-					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					vpool,
 					vpooltypes.Direction_ADD_TO_POOL,
 					sdk.OneDec(),
 				).
 				Return(tc.newPositionNotional, nil).Times(3)
 			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetPrice(
-					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					vpool,
 					vpooltypes.Direction_ADD_TO_POOL,
 					tc.exchangedSize,
 				).
@@ -288,9 +287,10 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 			})
 
 			t.Log("mock vpool keeper")
+			vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			mocks.mockVpoolKeeper.EXPECT().
 				GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).
-				Return(vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}, nil)
+				Return(vpool, nil)
 			mocks.mockVpoolKeeper.EXPECT().
 				ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(true)
 			mocks.mockVpoolKeeper.EXPECT().
@@ -311,8 +311,7 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 				Return(tc.newPositionNotional, nil)
 			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetPrice(
-					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					vpool,
 					vpooltypes.Direction_ADD_TO_POOL,
 					tc.initialPositionSize,
 				).
@@ -462,9 +461,10 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 			})
 
 			t.Log("mock vpool keeper")
+			vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			mocks.mockVpoolKeeper.EXPECT().
 				GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).
-				Return(vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}, nil)
+				Return(vpool, nil)
 			mocks.mockVpoolKeeper.EXPECT().
 				ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(true)
 			mocks.mockVpoolKeeper.EXPECT().
@@ -485,8 +485,7 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 				Return(tc.newPositionNotional, nil)
 			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetPrice(
-					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					vpool,
 					vpooltypes.Direction_ADD_TO_POOL,
 					tc.initialPositionSize,
 				).
@@ -944,11 +943,11 @@ func TestKeeper_ExecuteFullLiquidation(t *testing.T) {
 			})
 
 			t.Log("mock vpool")
+			vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).AnyTimes().Return(true)
 			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetPrice(
-					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					vpool,
 					baseAssetDirection,
 					/*baseAssetAmount=*/ tc.initialPositionSize.Abs(),
 				).
@@ -1235,14 +1234,14 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 			})
 
 			t.Log("mock vpool")
+			vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			mocks.mockVpoolKeeper.EXPECT().
 				GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).
-				Return(vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}, nil)
+				Return(vpool, nil)
 			mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).AnyTimes().Return(true)
 			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetPrice(
-					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					vpool,
 					baseAssetDirection,
 					/*baseAssetAmount=*/ tc.initialPositionSize.Mul(tc.partialLiquidationRatio),
 				).
@@ -1250,8 +1249,7 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 
 			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetPrice(
-					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					vpool,
 					baseAssetDirection,
 					/*baseAssetAmount=*/ tc.initialPositionSize.Abs(),
 				).

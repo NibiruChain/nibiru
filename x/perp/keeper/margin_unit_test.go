@@ -142,10 +142,10 @@ func TestGetMarginRatio(t *testing.T) {
 			perpKeeper, mocks, ctx := getKeeper(t)
 
 			t.Log("Mock vpool spot price")
+			vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetPrice(
-					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					vpool,
 					vpooltypes.Direction_ADD_TO_POOL,
 					tc.position.Size_.Abs(),
 				).
@@ -166,7 +166,6 @@ func TestGetMarginRatio(t *testing.T) {
 				LatestCumulativePremiumFraction: sdk.OneDec(),
 			})
 
-			vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			marginRatio, err := perpKeeper.GetMarginRatio(
 				ctx, vpool, tc.position, types.MarginCalculationPriceOption_MAX_PNL,
 			)
@@ -191,7 +190,7 @@ func TestRemoveMargin(t *testing.T) {
 				traderAddr := testutilevents.AccAddress()
 				pair := asset.NewPair("osmo", "nusd")
 
-				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
+				mocks.mockVpoolKeeper.EXPECT().GetPool(ctx, pair).Return(vpooltypes.Vpool{Pair: pair}, nil)
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
 				SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
@@ -226,13 +225,13 @@ func TestRemoveMargin(t *testing.T) {
 				marginToWithdraw := sdk.NewInt64Coin(pair.QuoteDenom(), 100)
 
 				t.Log("mock vpool keeper")
-				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).AnyTimes().Return(true)
+				vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+				mocks.mockVpoolKeeper.EXPECT().GetPool(ctx, pair).Return(vpool, nil)
 				mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, pair).
 					Return(sdk.MustNewDecFromStr("0.0625"), nil)
 				mocks.mockVpoolKeeper.EXPECT().GetMarkPrice(ctx, pair).Return(sdk.OneDec(), nil)
 				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(
-					ctx,
-					pair,
+					vpool,
 					vpooltypes.Direction_ADD_TO_POOL,
 					sdk.NewDec(1_000),
 				).Return(sdk.NewDec(1000), nil).Times(2)
@@ -294,14 +293,14 @@ func TestRemoveMargin(t *testing.T) {
 				marginToWithdraw := sdk.NewInt64Coin(pair.QuoteDenom(), 100)
 
 				t.Log("mock vpool keeper")
-				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
+				vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+				mocks.mockVpoolKeeper.EXPECT().GetPool(ctx, pair).Return(vpool, nil)
 				mocks.mockVpoolKeeper.EXPECT().GetMaintenanceMarginRatio(ctx, pair).
 					Return(sdk.MustNewDecFromStr("0.0625"), nil)
-				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
 
 				mocks.mockVpoolKeeper.EXPECT().GetMarkPrice(ctx, pair).Return(sdk.OneDec(), nil)
 				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(
-					ctx, pair, vpooltypes.Direction_ADD_TO_POOL, sdk.NewDec(1_000)).
+					vpool, vpooltypes.Direction_ADD_TO_POOL, sdk.NewDec(1_000)).
 					Return(sdk.NewDec(1000), nil).Times(2)
 				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetTWAP(
 					ctx, pair, vpooltypes.Direction_ADD_TO_POOL, sdk.NewDec(1_000),
@@ -390,7 +389,8 @@ func TestRemoveMargin(t *testing.T) {
 				marginToWithdraw := sdk.NewInt64Coin(pair.QuoteDenom(), 100)
 
 				t.Log("mock vpool keeper")
-				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
+				vpool := vpooltypes.Vpool{Pair: pair}
+				mocks.mockVpoolKeeper.EXPECT().GetPool(ctx, pair).Return(vpool, nil)
 
 				t.Log("set pair metadata")
 				SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
@@ -450,7 +450,7 @@ func TestAddMargin(t *testing.T) {
 					Pair:                            pair,
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				})
-				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
+				mocks.mockVpoolKeeper.EXPECT().GetPool(ctx, pair).Return(vpooltypes.Vpool{Pair: pair}, nil)
 
 				t.Log("set a position")
 				SetPosition(perpKeeper, ctx, types.Position{
@@ -483,8 +483,9 @@ func TestAddMargin(t *testing.T) {
 				traderAddr := testutilevents.AccAddress()
 				margin := sdk.NewInt64Coin("unusd", 100)
 
-				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
-				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(ctx, pair, vpooltypes.Direction_ADD_TO_POOL, sdk.NewDec(1000)).Return(sdk.NewDec(1000), nil)
+				vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+				mocks.mockVpoolKeeper.EXPECT().GetPool(ctx, pair).Return(vpool, nil)
+				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(vpool, vpooltypes.Direction_ADD_TO_POOL, sdk.NewDec(1000)).Return(sdk.NewDec(1000), nil)
 				mocks.mockVpoolKeeper.EXPECT().GetMarkPrice(ctx, pair).Return(sdk.OneDec(), nil)
 
 				t.Log("set pair metadata")
@@ -554,8 +555,9 @@ func TestAddMargin(t *testing.T) {
 				traderAddr := testutilevents.AccAddress()
 				margin := sdk.NewInt64Coin("unusd", 100)
 
-				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, pair).Return(true)
-				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(ctx, pair, vpooltypes.Direction_ADD_TO_POOL, sdk.NewDec(1000)).Return(sdk.NewDec(1000), nil)
+				vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+				mocks.mockVpoolKeeper.EXPECT().GetPool(ctx, pair).Return(vpool, nil)
+				mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(vpool, vpooltypes.Direction_ADD_TO_POOL, sdk.NewDec(1000)).Return(sdk.NewDec(1000), nil)
 				mocks.mockVpoolKeeper.EXPECT().GetMarkPrice(ctx, pair).Return(sdk.OneDec(), nil)
 
 				t.Log("set pair metadata")
@@ -644,10 +646,10 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				Margin:        sdk.NewDec(1),
 			},
 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
+				vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
-						ctx,
-						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+						vpool,
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
 					).
@@ -667,10 +669,10 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				Margin:        sdk.NewDec(1),
 			},
 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
+				vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
-						ctx,
-						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+						vpool,
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
 					).
@@ -780,10 +782,10 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				Margin:        sdk.NewDec(1),
 			},
 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
+				vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
-						ctx,
-						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+						vpool,
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						sdk.NewDec(10),
 					).
@@ -803,10 +805,10 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				Margin:        sdk.NewDec(1),
 			},
 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
+				vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
-						ctx,
-						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+						vpool,
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						sdk.NewDec(10),
 					).
@@ -954,10 +956,10 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnL(t *testing.T) {
 			},
 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
 				t.Log("Mock vpool spot price")
+				vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
-						ctx,
-						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+						vpool,
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
 					).
@@ -988,10 +990,10 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnL(t *testing.T) {
 			},
 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
 				t.Log("Mock vpool spot price")
+				vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
-						ctx,
-						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+						vpool,
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
 					).
@@ -1022,10 +1024,10 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnL(t *testing.T) {
 			},
 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
 				t.Log("Mock vpool spot price")
+				vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
-						ctx,
-						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+						vpool,
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
 					).
@@ -1056,10 +1058,10 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnL(t *testing.T) {
 			},
 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
 				t.Log("Mock vpool spot price")
+				vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
-						ctx,
-						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+						vpool,
 						vpooltypes.Direction_ADD_TO_POOL,
 						sdk.NewDec(10),
 					).
