@@ -2,7 +2,7 @@ name: Proto Generation
 
 on:
   pull_request:
-    paths: ["**.proto", "**protocgen**"]
+    paths: ["**.proto", "**protocgen-any.sh", "**protocgen.sh"]
 
 jobs:
   proto-gen:
