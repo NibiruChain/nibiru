@@ -455,12 +455,13 @@ func (mr *MockVpoolKeeperMockRecorder) IsOverSpreadLimit(arg0, arg1 interface{})
 }
 
 // SwapBaseForQuote mocks base method.
-func (m *MockVpoolKeeper) SwapBaseForQuote(arg0 types1.Context, arg1 asset.Pair, arg2 types0.Direction, arg3, arg4 types1.Dec, arg5 bool) (types1.Dec, error) {
+func (m *MockVpoolKeeper) SwapBaseForQuote(arg0 types1.Context, arg1 types0.Vpool, arg2 types0.Direction, arg3, arg4 types1.Dec, arg5 bool) (types0.Vpool, types1.Dec, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SwapBaseForQuote", arg0, arg1, arg2, arg3, arg4, arg5)
-	ret0, _ := ret[0].(types1.Dec)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret0, _ := ret[0].(types0.Vpool)
+	ret1, _ := ret[1].(types1.Dec)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // SwapBaseForQuote indicates an expected call of SwapBaseForQuote.

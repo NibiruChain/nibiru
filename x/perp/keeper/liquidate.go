@@ -155,7 +155,7 @@ func (k Keeper) ExecuteFullLiquidation(
 		return types.LiquidateResp{}, err
 	}
 
-	positionResp, err := k.closePositionEntirely(
+	_, positionResp, err := k.closePositionEntirely(
 		ctx,
 		vpool,
 		/* currentPosition */ *position,

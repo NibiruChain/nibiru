@@ -254,16 +254,6 @@ func TestSwapBaseForQuote(t *testing.T) {
 			expectedQuoteAssetAmount: sdk.MustNewDecFromStr("204081.632653061224489796"),
 		},
 		{
-			name:                      "pair not supported",
-			pair:                      "abc:xyz",
-			direction:                 types.Direction_ADD_TO_POOL,
-			baseAmt:                   sdk.NewDec(10),
-			quoteLimit:                sdk.NewDec(10),
-			skipFluctuationLimitCheck: false,
-
-			expectedErr: types.ErrPairNotSupported,
-		},
-		{
 			name:                      "quote amount less than quote limit in Long",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_ADD_TO_POOL,
@@ -372,9 +362,11 @@ func TestSwapBaseForQuote(t *testing.T) {
 				},
 			))
 
-			quoteAssetAmount, err := vpoolKeeper.SwapBaseForQuote(
+			vpool, err := vpoolKeeper.GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+			require.NoError(t, err)
+			_, quoteAssetAmount, err := vpoolKeeper.SwapBaseForQuote(
 				ctx,
-				tc.pair,
+				vpool,
 				tc.direction,
 				tc.baseAmt,
 				tc.quoteLimit,

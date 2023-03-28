@@ -858,19 +858,19 @@ func TestClosePositionEntirely(t *testing.T) {
 			mocks.mockVpoolKeeper.EXPECT().
 				SwapBaseForQuote(
 					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					vpool,
 					/*quoteAssetDirection=*/ tc.direction,
 					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
 					/*quoteAssetLimit=*/ tc.quoteAssetLimit,
 					/* skipFluctuationLimitCheck */ false,
-				).Return( /*quoteAssetAmount=*/ tc.newPositionNotional, nil)
+				).Return(vpool /*quoteAssetAmount=*/, tc.newPositionNotional, nil)
 
 			t.Log("set up pair metadata and last cumulative funding rate")
 			SetPairMetadata(perpKeeper, ctx, tc.pairMetadata)
 
 			t.Log("close position")
 
-			resp, err := perpKeeper.closePositionEntirely(
+			_, resp, err := perpKeeper.closePositionEntirely(
 				ctx,
 				vpool,
 				tc.initialPosition,
@@ -1556,12 +1556,12 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 			mocks.mockVpoolKeeper.EXPECT().
 				SwapBaseForQuote(
 					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					vpool,
 					tc.mockBaseDir,
 					/*baseAssetAmount=*/ currentPosition.Size_.Abs(),
 					/*quoteAssetLimit=*/ sdk.ZeroDec(),
 					/* skipFluctuationLimitCheck */ false,
-				).Return( /*quoteAssetAmount=*/ tc.mockQuoteAmount, nil)
+				).Return(vpool /*quoteAssetAmount=*/, tc.mockQuoteAmount, nil)
 
 			if tc.expectedErr == nil {
 				mocks.mockVpoolKeeper.EXPECT().
@@ -1845,12 +1845,12 @@ func TestClosePosition(t *testing.T) {
 			mocks.mockVpoolKeeper.EXPECT().
 				SwapBaseForQuote(
 					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					vpool,
 					/*baseAssetDirection=*/ tc.baseAssetDir,
 					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
 					/*quoteAssetLimit=*/ sdk.ZeroDec(),
 					/* skipFluctuationLimitCheck */ false,
-				).Return( /*quoteAssetAmount=*/ tc.newPositionNotional, nil)
+				).Return(vpool /*quoteAssetAmount=*/, tc.newPositionNotional, nil)
 
 			mocks.mockVpoolKeeper.EXPECT().
 				GetMarkPrice(
@@ -2013,12 +2013,12 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 			mocks.mockVpoolKeeper.EXPECT().
 				SwapBaseForQuote(
 					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					vpool,
 					/*baseAssetDirection=*/ tc.baseAssetDir,
 					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
 					/*quoteAssetLimit=*/ sdk.ZeroDec(),
 					/* skipFluctuationLimitCheck */ false,
-				).Return( /*quoteAssetAmount=*/ tc.newPositionNotional, nil)
+				).Return(vpool /*quoteAssetAmount=*/, tc.newPositionNotional, nil)
 
 			t.Log("set up pair metadata and last cumulative funding rate")
 			SetPairMetadata(perpKeeper, ctx, types.PairMetadata{

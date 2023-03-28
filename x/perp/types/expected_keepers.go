@@ -52,12 +52,12 @@ type OracleKeeper interface {
 type VpoolKeeper interface {
 	SwapBaseForQuote(
 		ctx sdk.Context,
-		pair asset.Pair,
+		vpool vpooltypes.Vpool,
 		dir vpooltypes.Direction,
 		baseAssetAmount sdk.Dec,
 		quoteAmountLimit sdk.Dec,
 		skipFluctuationLimitCheck bool,
-	) (sdk.Dec, error)
+	) (vpooltypes.Vpool, sdk.Dec, error)
 
 	SwapQuoteForBase(
 		ctx sdk.Context,

@@ -319,13 +319,13 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 			mocks.mockVpoolKeeper.EXPECT().
 				SwapBaseForQuote(
 					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					vpool,
 					vpooltypes.Direction_ADD_TO_POOL,
 					/* baseAmt */ tc.initialPositionSize,
 					/* quoteLimit */ sdk.ZeroDec(),
 					/* skipFluctuationLimitCheck */ true,
 				).
-				Return(tc.newPositionNotional, nil)
+				Return(vpool, tc.newPositionNotional, nil)
 
 			t.Log("mock account keeper")
 			mocks.mockAccountKeeper.EXPECT().
@@ -493,13 +493,13 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 			mocks.mockVpoolKeeper.EXPECT().
 				SwapBaseForQuote(
 					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					vpool,
 					vpooltypes.Direction_ADD_TO_POOL,
 					/* baseAmt */ tc.initialPositionSize,
 					/* quoteLimit */ sdk.ZeroDec(),
 					/* skipFluctuationLimitCheck */ true,
 				).
-				Return(tc.newPositionNotional, nil)
+				Return(vpool, tc.newPositionNotional, nil)
 
 			t.Log("mock account keeper")
 			mocks.mockAccountKeeper.EXPECT().
@@ -956,12 +956,12 @@ func TestKeeper_ExecuteFullLiquidation(t *testing.T) {
 			mocks.mockVpoolKeeper.EXPECT().
 				SwapBaseForQuote(
 					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					vpool,
 					baseAssetDirection,
 					/*baseAssetAmount=*/ tc.initialPositionSize.Abs(),
 					/*quoteAssetAssetLimit=*/ sdk.ZeroDec(),
 					/* skipFluctuationLimitCheck */ true,
-				).Return( /*quoteAssetAmount=*/ tc.baseAssetPriceInQuote, nil)
+				).Return(vpool /*quoteAssetAmount=*/, tc.baseAssetPriceInQuote, nil)
 			mocks.mockVpoolKeeper.EXPECT().
 				GetMarkPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).
 				Return(sdk.OneDec(), nil)

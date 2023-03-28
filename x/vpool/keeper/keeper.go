@@ -65,48 +65,43 @@ ret:
 */
 func (k Keeper) SwapBaseForQuote(
 	ctx sdk.Context,
-	pair asset.Pair,
+	pool types.Vpool,
 	dir types.Direction,
 	baseAmt sdk.Dec,
 	quoteLimit sdk.Dec,
 	skipFluctuationLimitCheck bool,
-) (quoteAmtAbs sdk.Dec, err error) {
+) (updatedVpool types.Vpool, quoteAmtAbs sdk.Dec, err error) {
 	if baseAmt.IsZero() {
-		return sdk.ZeroDec(), nil
+		return pool, sdk.ZeroDec(), nil
 	}
 
-	if _, err = k.oracleKeeper.GetExchangeRate(ctx, pair); err != nil {
-		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair)
-	}
-
-	pool, err := k.Pools.Get(ctx, pair)
-	if err != nil {
-		return sdk.Dec{}, types.ErrPairNotSupported
+	if _, err = k.oracleKeeper.GetExchangeRate(ctx, pool.Pair); err != nil {
+		return pool, sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pool.Pair)
 	}
 
 	baseAmtAbs := baseAmt.Abs()
 	quoteAmtAbs, err = pool.GetQuoteAmountByBaseAmount(baseAmtAbs.MulInt64(dir.ToMultiplier()))
 	if err != nil {
-		return sdk.Dec{}, err
+		return pool, sdk.Dec{}, err
 	}
 
 	if err := pool.HasEnoughReservesForTrade(quoteAmtAbs, baseAmtAbs); err != nil {
-		return sdk.Dec{}, err
+		return pool, sdk.Dec{}, err
 	}
 
 	if err := checkIfLimitIsViolated(quoteLimit, quoteAmtAbs, dir); err != nil {
-		return sdk.Dec{}, err
+		return pool, sdk.Dec{}, err
 	}
 
 	quoteDelta := quoteAmtAbs.Neg().MulInt64(dir.ToMultiplier())
 	baseAmt = baseAmtAbs.MulInt64(dir.ToMultiplier())
 
-	pool, err = k.executeSwap(ctx, pool, quoteDelta, baseAmt, skipFluctuationLimitCheck)
+	updatedVpool, err = k.executeSwap(ctx, pool, quoteDelta, baseAmt, skipFluctuationLimitCheck)
 	if err != nil {
-		return sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
+		return pool, sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
-	return quoteAmtAbs, err
+	return updatedVpool, quoteAmtAbs, err
 }
 
 func (k Keeper) executeSwap(
