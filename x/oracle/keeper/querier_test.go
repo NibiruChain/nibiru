@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/NibiruChain/collections"
+	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
@@ -90,6 +91,14 @@ func TestQueryExchangeRateTwap(t *testing.T) {
 
 	rate := sdk.NewDec(1700)
 	input.OracleKeeper.SetPrice(input.Ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), rate)
+	testutilevents.RequireContainsTypedEvent(
+		t,
+		input.Ctx,
+		&types.OraclePriceUpdate{
+			Pair:        asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
+			Price:       rate,
+			TimestampMs: input.Ctx.BlockTime().UnixMilli()},
+	)
 
 	_, err := querier.ExchangeRateTwap(ctx, &types.QueryExchangeRateRequest{Pair: asset.Registry.Pair(denoms.ETH, denoms.NUSD)})
 	require.Error(t, err)
