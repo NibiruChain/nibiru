@@ -16,5 +16,5 @@ var (
 	ErrNonPositiveReserves = sdkerrors.Register(ModuleName, 10,
 		"base and quote reserves must always be positive")
 	ErrLiquidityDepth = sdkerrors.Register(ModuleName, 11,
-		"liquidity depth must be positve and equal to the square of the reserves")
+		"liquidity depth must be positive and equal to the square of the reserves")
 )

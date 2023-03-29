@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 // String returns the string representation of the pool. Note that this differs

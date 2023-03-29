@@ -7,12 +7,12 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 func TestSqrtBigInt(t *testing.T) {
-
 	testCases := []struct {
 		bigInt     *big.Int
 		sqrtBigInt *big.Int
@@ -33,7 +33,6 @@ func TestSqrtBigInt(t *testing.T) {
 }
 
 func TestSqrtDec(t *testing.T) {
-
 	testCases := []struct {
 		dec     sdk.Dec
 		sqrtDec sdk.Dec
@@ -71,5 +70,4 @@ func TestSqrtDec(t *testing.T) {
 			assert.Equal(t, tc.sqrtDec.String(), sqrtDec.String())
 		})
 	}
-
 }
