@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Improvements
 
+* [#1230](https://github.com/NibiruChain/nibiru/pull/1230) - chore(deps): Bump github.com/holiman/uint256 from 1.2.1 to 1.2.2
 * [#1240](https://github.com/NibiruChain/nibiru/pull/1240) - ci: Test `make proto-gen` when the proto gen scripts or .proto files change
 * [#1199](https://github.com/NibiruChain/nibiru/pull/1199) - chore(deps): bump golang.org/x/net from 0.4.0 to 0.7.0
 * [#1211](https://github.com/NibiruChain/nibiru/pull/1211) - chore(deps): Bump github.com/stretchr/testify from 1.8.1 to 1.8.2

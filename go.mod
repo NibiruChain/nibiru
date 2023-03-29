@@ -14,7 +14,7 @@ require (
 	github.com/google/gofuzz v1.2.0
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
-	github.com/holiman/uint256 v1.2.1
+	github.com/holiman/uint256 v1.2.2
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.14.0
 	github.com/rakyll/statik v0.1.7
