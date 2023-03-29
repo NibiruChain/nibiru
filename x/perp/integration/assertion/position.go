@@ -10,8 +10,8 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/testutil/action"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
 )
 
 type positionShouldBeEqual struct {
@@ -33,7 +33,9 @@ func (p positionShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Cont
 	return ctx, nil
 }
 
-func PositionShouldBeEqual(account sdk.AccAddress, pair asset.Pair, expectedPosition types.Position) testutil.Action {
+func PositionShouldBeEqual(
+	account sdk.AccAddress, pair asset.Pair, expectedPosition types.Position,
+) action.Action {
 	return positionShouldBeEqual{
 		Account: account,
 		Pair:    pair,
@@ -129,7 +131,9 @@ func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context)
 }
 
 // PositionChangedEventShouldBeEqual checks that the position changed event is equal to the expected event.
-func PositionChangedEventShouldBeEqual(expectedEvent *types.PositionChangedEvent) testutil.Action {
+func PositionChangedEventShouldBeEqual(
+	expectedEvent *types.PositionChangedEvent,
+) action.Action {
 	return positionChangedEventShouldBeEqual{
 		ExpectedEvent: expectedEvent,
 	}
