@@ -21,12 +21,20 @@ func TestSqrtBigInt(t *testing.T) {
 		{bigInt: big.NewInt(4), sqrtBigInt: big.NewInt(2)},
 		{bigInt: big.NewInt(250_000), sqrtBigInt: big.NewInt(500)},
 		{bigInt: big.NewInt(4_819_136_400), sqrtBigInt: big.NewInt(69_420)},
+		{
+			bigInt:     new(big.Int).Mul(big.NewInt(4_819_136_400), common.BigIntPow10(32)),
+			sqrtBigInt: new(big.Int).Mul(big.NewInt(69_420), common.BigIntPow10(16)),
+		},
+		{
+			bigInt:     new(big.Int).Mul(big.NewInt(9), common.BigIntPow10(100)),
+			sqrtBigInt: new(big.Int).Mul(big.NewInt(3), common.BigIntPow10(50)),
+		},
 	}
 
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(fmt.Sprintf(`bigInt: %s, sqrtBigInt: %s`, tc.bigInt, tc.sqrtBigInt), func(t *testing.T) {
-			sqrtInt := common.SqrtBigInt(tc.bigInt)
+			sqrtInt := common.MustSqrtBigInt(tc.bigInt)
 			assert.Equal(t, tc.sqrtBigInt.String(), sqrtInt.String())
 		})
 	}
