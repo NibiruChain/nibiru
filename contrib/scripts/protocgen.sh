@@ -13,7 +13,7 @@ protoc_gen_gocosmos() {
   # get protoc executions
   go get github.com/regen-network/cosmos-proto/protoc-gen-gocosmos@latest 2>/dev/null
 
-  # get cosmos sdk from github
+  # get cosmos sdk
   go get github.com/cosmos/cosmos-sdk@$nibiru_chain_version 2>/dev/null
 }
 
