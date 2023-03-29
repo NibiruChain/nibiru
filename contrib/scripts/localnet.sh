@@ -193,10 +193,16 @@ add_genesis_vpools_with_coingecko_prices() {
 
   price_btc=$(cat tmp_vpool_prices.json | jq -r '.bitcoin.usd')
   price_btc=${price_btc%.*}
+  if [ -z "$price_btc" ]; then
+    return 1
+  fi
   base_amt_btc=$(($quote_amt / $price_btc))
 
   price_eth=$(cat tmp_vpool_prices.json | jq -r '.ethereum.usd')
   price_eth=${price_eth%.*}
+  if [ -z "$price_eth" ]; then
+    return 1
+  fi
   base_amt_eth=$(($quote_amt / $price_eth))
 
   nibid add-genesis-vpool --pair=ubtc:unusd --base-amt=$base_amt_btc --quote-amt=$quote_amt --max-leverage=12
