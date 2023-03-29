@@ -4,7 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 
-	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 
 	"github.com/NibiruChain/nibiru/app"
 )
@@ -30,4 +30,4 @@ func (c fundAccount) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error
 	}
 
 	return ctx, nil
-}
+
