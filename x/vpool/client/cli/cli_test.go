@@ -38,8 +38,9 @@ func TestIntegrationTestSuite(t *testing.T) {
 var START_VPOOLS = map[asset.Pair]vpooltypes.Vpool{
 	asset.Registry.Pair(denoms.ETH, denoms.NUSD): {
 		Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-		BaseAssetReserve:  sdk.NewDec(10 * common.Precision),
-		QuoteAssetReserve: sdk.NewDec(60_000 * common.Precision),
+		BaseAssetReserve:  sdk.NewDec(10 * common.MICRO),
+		QuoteAssetReserve: sdk.NewDec(60_000 * common.MICRO),
+		SqrtDepth:         common.SqrtDec(sdk.NewDec(600_000 * common.MICRO)),
 		Config: vpooltypes.VpoolConfig{
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
@@ -51,7 +52,8 @@ var START_VPOOLS = map[asset.Pair]vpooltypes.Vpool{
 	asset.Registry.Pair(denoms.NIBI, denoms.NUSD): {
 		Pair:              asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 		BaseAssetReserve:  sdk.NewDec(500_000),
-		QuoteAssetReserve: sdk.NewDec(5 * common.Precision),
+		QuoteAssetReserve: sdk.NewDec(5 * common.MICRO),
+		SqrtDepth:         common.SqrtDec(sdk.NewDec(2500_000 * common.MICRO)),
 		Config: vpooltypes.VpoolConfig{
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
@@ -109,8 +111,8 @@ func (s *IntegrationTestSuite) TestCmdCreatePoolProposal() {
 		Title:             "Create ETH:USD pool",
 		Description:       "Creates an ETH:USD pool",
 		Pair:              "ETH:USD",
-		QuoteAssetReserve: sdk.NewDec(1 * common.Precision),
-		BaseAssetReserve:  sdk.NewDec(1 * common.Precision),
+		QuoteAssetReserve: sdk.NewDec(1 * common.MICRO),
+		BaseAssetReserve:  sdk.NewDec(1 * common.MICRO),
 		Config: vpooltypes.VpoolConfig{
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.05"),
@@ -158,6 +160,7 @@ func (s *IntegrationTestSuite) TestCmdCreatePoolProposal() {
 				Pair:              proposal.Pair,
 				BaseAssetReserve:  proposal.BaseAssetReserve,
 				QuoteAssetReserve: proposal.QuoteAssetReserve,
+				SqrtDepth:         common.SqrtDec(proposal.BaseAssetReserve.Mul(proposal.QuoteAssetReserve)),
 				Config:            proposal.Config,
 			}, pool)
 			found = true

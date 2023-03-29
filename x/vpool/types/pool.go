@@ -2,10 +2,25 @@ package types
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
+
+// String returns the string representation of the pool. Note that this differs
+// from the default output of the proto-generated 'String' method.
+func (pool *Vpool) String() string {
+	elems := []string{
+		fmt.Sprintf("pair: %s", pool.Pair),
+		fmt.Sprintf("base_reserves: %s", pool.BaseAssetReserve),
+		fmt.Sprintf("quote_reserves: %s", pool.QuoteAssetReserve),
+		fmt.Sprintf("sqrt_depth: %s", pool.SqrtDepth),
+		fmt.Sprintf("config: %s", &pool.Config),
+	}
+	elemString := strings.Join(elems, ", ")
+	return "{ " + elemString + " }"
+}
 
 // HasEnoughQuoteReserve returns true if there is enough quote reserve based on
 // quoteReserve * tradeLimitRatio
@@ -78,6 +93,17 @@ func (vpool *Vpool) ComputeSqrtDepth() (sqrtDepth sdk.Dec, err error) {
 	} else {
 		return sdk.Dec{}, potentialPanic
 	}
+}
+
+func (vpool *Vpool) InitLiqDepth() (Vpool, error) {
+	sqrtDepth, err := vpool.ComputeSqrtDepth()
+	if err != nil {
+		return Vpool{}, err
+	}
+
+	pool := *vpool
+	pool.SqrtDepth = sqrtDepth
+	return pool, nil
 }
 
 /*

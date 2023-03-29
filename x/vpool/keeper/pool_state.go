@@ -92,7 +92,7 @@ func (k Keeper) EditSwapInvariant(
 
 	// k = x * y
 	// newK = (cx) * (cy) = c^2 xy = c^2 k
-	// newPrice = (c y) / (c x) = y / x = price  |   unchanged price
+	// newPrice = (c y) / (c x) = y / x = price | unchanged price
 	swapInvariant := vpool.BaseAssetReserve.Mul(vpool.QuoteAssetReserve)
 	newSwapInvariant := swapInvariant.Mul(swapInvariantMap.Multiplier)
 
