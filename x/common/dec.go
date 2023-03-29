@@ -9,12 +9,20 @@ import (
 
 // Computes the square root of the input decimal using its underlying big.Int
 // The big.Int.Sqrt method is part of the standard library and thoroughly tested.
-//   - NOTE, SqrtDec panics if it is called on a negative number, similar to the
+//   - NOTE, MustSqrtDec panics if it is called on a negative number, similar to the
 //     sdk.NewCoin and SqrtBigInt functions.
-func SqrtDec(dec sdk.Dec) sdk.Dec {
+func MustSqrtDec(dec sdk.Dec) sdk.Dec {
 	sqrtBigInt := SqrtBigInt(dec.BigInt())
 	precision := sdk.NewDecFromBigInt(PRECISION_MULT)
 	return sdk.NewDecFromBigInt(sqrtBigInt).Quo(precision)
+}
+
+func SqrtDec(dec sdk.Dec) (sdk.Dec, error) {
+	var sqrtDec sdk.Dec
+	var panicErr error = TryCatch(func() {
+		sqrtDec = MustSqrtDec(dec)
+	})()
+	return sqrtDec, panicErr
 }
 
 // SqrtBigInt returns the square root of the input.
@@ -26,7 +34,9 @@ func SqrtBigInt(i *big.Int) *big.Int {
 }
 
 // ————————————————————————————————————————————————
-// Private functions needed from the Cosmos-SDK
+// Logic needed from private code in the Cosmos-SDK
+// See https://github.com/cosmos/cosmos-sdk/blob/v0.45.12/types/decimal.go
+//
 
 const (
 	PRECISION = 18

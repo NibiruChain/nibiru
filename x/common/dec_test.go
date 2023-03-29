@@ -58,7 +58,7 @@ func TestSqrtDec(t *testing.T) {
 
 	t.Run("negative sqrt should panic", func(t *testing.T) {
 		panicString := common.TryCatch(func() {
-			common.SqrtDec(sdk.NewDec(-9))
+			common.MustSqrtDec(sdk.NewDec(-9))
 		})().Error()
 
 		assert.Contains(t, panicString, "square root of negative number")
@@ -67,7 +67,7 @@ func TestSqrtDec(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(fmt.Sprintf(`dec: %s, sqrtDec: %s`, tc.dec, tc.sqrtDec), func(t *testing.T) {
-			sqrtDec := common.SqrtDec(tc.dec)
+			sqrtDec := common.MustSqrtDec(tc.dec)
 			assert.Equal(t, tc.sqrtDec.String(), sqrtDec.String())
 		})
 	}
