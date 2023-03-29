@@ -1,0 +1,18 @@
+name: Proto Generation
+
+on:
+  pull_request:
+    paths: ["**.proto", "**protocgen-any.sh", "**protocgen.sh"]
+
+jobs:
+  proto-gen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+          cache: true
+
+      - name: Generate proto code
+        run: make proto-gen
