@@ -1,11 +1,23 @@
 # Nibiru Modules
 
-- [common](common/spec/README.md): TODO
+| Module | Active?   | Description |
+| --- | --- | --- |
+| [common][code-x-common] | Holds helper and utility functions to be utilized by other `x/` modules. |
+| [epochs][code-x-epochs] | Often in the SDK, we would like to run certain code every-so often. The purpose of `epochs` module is to allow other modules to set that they would like to be signaled once every period. So another module can specify it wants to execute code once a week, starting at UTC-time = x. `epochs` creates a generalized epoch interface to other modules so that they can easily be signalled upon such events. |
+| [oracle][code-x-oracle] | Handles the posting of an up-to-date and accurate feed of exchange rates from the validators. | 
+| [perp][code-x-perp] | Powers the Nibi-Perps exchange. This module enables traders to open long and short leveraged positions and houses all of the PnL calculation and liquidation logic. |
+| [spot][code-x-spot] | Responsible for creating, joining, and exiting liquidity pools. It also allows users to swap between two assets in an existing pool. It's a fully functional AMM. |
+| [stablecoin][code-x-stablecoin] | Resonsible for handling mint and redeem transactions with NUSD. |
+| [testutil][code-x-testutil] | Helper functions for unit and integration tests. |
+| [vpool][code-x-vpool] | The vpool module manages the virtual AMM pools (vpools) that support Nibi-Perps. |
+| [wasm][code-x-wasm] | Implements the execution environment for [WebAssembly (WASM) smart contracts](https://book.cosmwasm.com/). |
 
-- [spot](spot/spec/README.md): TODO
-
-- [perp](perp/README.md): The `x/perp` module powers the Nibi-Perps exchange. This module enables traders to open long and short leveraged positions and houses all of the PnL calculation and liquidation logic.
-
-- [stablecoin](stablecoin/spec/README.md): `x/stablecoin` is resonsible for handling mint and redeem transactions with NUSD.
-
-- [testutil](testutil/spec/README.md): Helper functions for unit and integration tests.
+[code-x-common]: https://github.com/NibiruChain/nibiru/tree/master/x/common
+[code-x-epochs]: https://github.com/NibiruChain/nibiru/tree/master/x/epochs
+[code-x-oracle]: https://github.com/NibiruChain/nibiru/tree/master/x/oracle
+[code-x-perp]: https://github.com/NibiruChain/nibiru/tree/master/x/perp
+[code-x-spot]: https://github.com/NibiruChain/nibiru/tree/master/x/spot
+[code-x-stablecoin]: https://github.com/NibiruChain/nibiru/tree/master/x/stablecoin
+[code-x-testutil]: https://github.com/NibiruChain/nibiru/tree/master/x/testutil
+[code-x-vpool]: https://github.com/NibiruChain/nibiru/tree/master/x/vpool
+[code-x-wasm]: https://github.com/NibiruChain/nibiru/tree/master/x/wasm
