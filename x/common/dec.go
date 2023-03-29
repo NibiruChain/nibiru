@@ -76,7 +76,9 @@ var (
 	tenInt         = big.NewInt(10)
 )
 
-// calculate the precision multiplier
+// calcPrecisionMultiplier computes a multiplier needed to maintain a target
+// precision defined by 10 ** (PRECISION_SQRT - prec).
+// The maximum available precision is PRECISION_SQRT (9).
 func calcPrecisionMultiplier(prec int64) *big.Int {
 	if prec > PRECISION_SQRT {
 		panic(fmt.Sprintf("too much precision, maximum %v, provided %v", PRECISION_SQRT, prec))
