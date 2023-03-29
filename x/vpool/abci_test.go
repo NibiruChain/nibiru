@@ -53,9 +53,11 @@ func TestSnapshotUpdates(t *testing.T) {
 	assert.EqualValues(t, expectedSnapshot, snapshot)
 
 	t.Log("affect mark price")
-	baseAmtAbs, err := vpoolKeeper.SwapQuoteForBase(
+	vpool, err := vpoolKeeper.GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+	require.NoError(t, err)
+	_, baseAmtAbs, err := vpoolKeeper.SwapQuoteForBase(
 		ctx,
-		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+		vpool,
 		types.Direction_ADD_TO_POOL,
 		sdk.NewDec(250), // ← dyAmm
 		sdk.ZeroDec(),
