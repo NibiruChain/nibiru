@@ -31,7 +31,11 @@ func (k Keeper) Liquidate(
 	pair asset.Pair,
 	trader sdk.AccAddress,
 ) (liquidatorFee sdk.Coin, perpEcosystemFundFee sdk.Coin, err error) {
-	err = k.requireVpool(ctx, pair)
+	vpool, err := k.VpoolKeeper.GetPool(ctx, pair)
+	if err != nil {
+		return sdk.Coin{}, sdk.Coin{}, types.ErrPairNotFound
+	}
+
 	if err != nil {
 		_ = ctx.EventManager().EmitTypedEvent(&types.LiquidationFailedEvent{ // nolint:errcheck
 			Pair:       pair,
@@ -55,6 +59,7 @@ func (k Keeper) Liquidate(
 
 	marginRatio, err := k.GetMarginRatio(
 		ctx,
+		vpool,
 		position,
 		types.MarginCalculationPriceOption_MAX_PNL,
 	)
@@ -68,7 +73,7 @@ func (k Keeper) Liquidate(
 	}
 	if isOverSpreadLimit {
 		marginRatioBasedOnOracle, err := k.GetMarginRatio(
-			ctx, position, types.MarginCalculationPriceOption_INDEX)
+			ctx, vpool, position, types.MarginCalculationPriceOption_INDEX)
 		if err != nil {
 			return liquidatorFee, perpEcosystemFundFee, err
 		}
@@ -94,7 +99,7 @@ func (k Keeper) Liquidate(
 	}
 
 	marginRatioBasedOnSpot, err := k.GetMarginRatio(
-		ctx, position, types.MarginCalculationPriceOption_SPOT)
+		ctx, vpool, position, types.MarginCalculationPriceOption_SPOT)
 	if err != nil {
 		return
 	}
@@ -140,13 +145,19 @@ func (k Keeper) ExecuteFullLiquidation(
 ) (liquidationResp types.LiquidateResp, err error) {
 	params := k.GetParams(ctx)
 
+	vpool, err := k.VpoolKeeper.GetPool(ctx, position.Pair)
+	if err != nil {
+		return types.LiquidateResp{}, types.ErrPairNotFound
+	}
+
 	traderAddr, err := sdk.AccAddressFromBech32(position.TraderAddress)
 	if err != nil {
 		return types.LiquidateResp{}, err
 	}
 
-	positionResp, err := k.closePositionEntirely(
+	_, positionResp, err := k.closePositionEntirely(
 		ctx,
+		vpool,
 		/* currentPosition */ *position,
 		/* quoteAssetAmountLimit */ sdk.ZeroDec(),
 		/* skipFluctuationLimitCheck */ true,
@@ -286,6 +297,11 @@ func (k Keeper) ExecutePartialLiquidation(
 ) (types.LiquidateResp, error) {
 	params := k.GetParams(ctx)
 
+	vpool, err := k.VpoolKeeper.GetPool(ctx, currentPosition.Pair)
+	if err != nil {
+		return types.LiquidateResp{}, types.ErrPairNotFound
+	}
+
 	traderAddr, err := sdk.AccAddressFromBech32(currentPosition.TraderAddress)
 	if err != nil {
 		return types.LiquidateResp{}, err
@@ -299,8 +315,7 @@ func (k Keeper) ExecutePartialLiquidation(
 	}
 
 	partiallyLiquidatedPositionNotional, err := k.VpoolKeeper.GetBaseAssetPrice(
-		ctx,
-		currentPosition.Pair,
+		vpool,
 		baseAssetDir,
 		/* abs= */ currentPosition.Size_.Mul(params.PartialLiquidationRatio),
 	)
@@ -308,8 +323,9 @@ func (k Keeper) ExecutePartialLiquidation(
 		return types.LiquidateResp{}, err
 	}
 
-	positionResp, err := k.decreasePosition(
+	_, positionResp, err := k.decreasePosition(
 		/* ctx */ ctx,
+		vpool,
 		/* currentPosition */ *currentPosition,
 		/* quoteAssetAmount */ partiallyLiquidatedPositionNotional,
 		/* baseAmtLimit */ sdk.ZeroDec(),
