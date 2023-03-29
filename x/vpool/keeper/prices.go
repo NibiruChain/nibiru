@@ -55,17 +55,11 @@ ret:
   - err: error
 */
 func (k Keeper) GetBaseAssetPrice(
-	ctx sdk.Context,
-	pair asset.Pair,
+	vpool types.Vpool,
 	dir types.Direction,
 	baseAssetAmount sdk.Dec,
 ) (quoteAmount sdk.Dec, err error) {
-	pool, err := k.Pools.Get(ctx, pair)
-	if err != nil {
-		return sdk.ZeroDec(), err
-	}
-
-	return pool.GetQuoteAmountByBaseAmount(baseAssetAmount.MulInt64(dir.ToMultiplier()))
+	return vpool.GetQuoteAmountByBaseAmount(baseAssetAmount.MulInt64(dir.ToMultiplier()))
 }
 
 /*

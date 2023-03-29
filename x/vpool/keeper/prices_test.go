@@ -137,7 +137,10 @@ func TestGetBaseAssetPrice(t *testing.T) {
 				},
 			))
 
-			quoteAmount, err := vpoolKeeper.GetBaseAssetPrice(ctx, tc.pair, tc.direction, tc.baseAmount)
+			vpool, err := vpoolKeeper.GetPool(ctx, tc.pair)
+			require.NoError(t, err)
+
+			quoteAmount, err := vpoolKeeper.GetBaseAssetPrice(vpool, tc.direction, tc.baseAmount)
 			if tc.expectedErr != nil {
 				require.ErrorIs(t, err, tc.expectedErr,
 					"expected error: %w, got: %w", tc.expectedErr, err)

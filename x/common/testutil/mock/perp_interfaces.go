@@ -305,18 +305,18 @@ func (mr *MockVpoolKeeperMockRecorder) GetAllPools(arg0 interface{}) *gomock.Cal
 }
 
 // GetBaseAssetPrice mocks base method.
-func (m *MockVpoolKeeper) GetBaseAssetPrice(arg0 types1.Context, arg1 asset.Pair, arg2 types0.Direction, arg3 types1.Dec) (types1.Dec, error) {
+func (m *MockVpoolKeeper) GetBaseAssetPrice(arg0 types0.Vpool, arg1 types0.Direction, arg2 types1.Dec) (types1.Dec, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetBaseAssetPrice", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "GetBaseAssetPrice", arg0, arg1, arg2)
 	ret0, _ := ret[0].(types1.Dec)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetBaseAssetPrice indicates an expected call of GetBaseAssetPrice.
-func (mr *MockVpoolKeeperMockRecorder) GetBaseAssetPrice(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+func (mr *MockVpoolKeeperMockRecorder) GetBaseAssetPrice(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBaseAssetPrice", reflect.TypeOf((*MockVpoolKeeper)(nil).GetBaseAssetPrice), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBaseAssetPrice", reflect.TypeOf((*MockVpoolKeeper)(nil).GetBaseAssetPrice), arg0, arg1, arg2)
 }
 
 // GetBaseAssetTWAP mocks base method.
@@ -394,19 +394,19 @@ func (mr *MockVpoolKeeperMockRecorder) GetMarkPriceTWAP(arg0, arg1, arg2 interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMarkPriceTWAP", reflect.TypeOf((*MockVpoolKeeper)(nil).GetMarkPriceTWAP), arg0, arg1, arg2)
 }
 
-// GetMaxLeverage mocks base method.
-func (m *MockVpoolKeeper) GetMaxLeverage(arg0 types1.Context, arg1 asset.Pair) (types1.Dec, error) {
+// GetPool mocks base method.
+func (m *MockVpoolKeeper) GetPool(arg0 types1.Context, arg1 asset.Pair) (types0.Vpool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMaxLeverage", arg0, arg1)
-	ret0, _ := ret[0].(types1.Dec)
+	ret := m.ctrl.Call(m, "GetPool", arg0, arg1)
+	ret0, _ := ret[0].(types0.Vpool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetMaxLeverage indicates an expected call of GetMaxLeverage.
-func (mr *MockVpoolKeeperMockRecorder) GetMaxLeverage(arg0, arg1 interface{}) *gomock.Call {
+// GetPool indicates an expected call of GetPool.
+func (mr *MockVpoolKeeperMockRecorder) GetPool(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMaxLeverage", reflect.TypeOf((*MockVpoolKeeper)(nil).GetMaxLeverage), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPool", reflect.TypeOf((*MockVpoolKeeper)(nil).GetPool), arg0, arg1)
 }
 
 // GetQuoteAssetPrice mocks base method.
@@ -455,12 +455,13 @@ func (mr *MockVpoolKeeperMockRecorder) IsOverSpreadLimit(arg0, arg1 interface{})
 }
 
 // SwapBaseForQuote mocks base method.
-func (m *MockVpoolKeeper) SwapBaseForQuote(arg0 types1.Context, arg1 asset.Pair, arg2 types0.Direction, arg3, arg4 types1.Dec, arg5 bool) (types1.Dec, error) {
+func (m *MockVpoolKeeper) SwapBaseForQuote(arg0 types1.Context, arg1 types0.Vpool, arg2 types0.Direction, arg3, arg4 types1.Dec, arg5 bool) (types0.Vpool, types1.Dec, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SwapBaseForQuote", arg0, arg1, arg2, arg3, arg4, arg5)
-	ret0, _ := ret[0].(types1.Dec)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret0, _ := ret[0].(types0.Vpool)
+	ret1, _ := ret[1].(types1.Dec)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // SwapBaseForQuote indicates an expected call of SwapBaseForQuote.
@@ -470,12 +471,13 @@ func (mr *MockVpoolKeeperMockRecorder) SwapBaseForQuote(arg0, arg1, arg2, arg3, 
 }
 
 // SwapQuoteForBase mocks base method.
-func (m *MockVpoolKeeper) SwapQuoteForBase(arg0 types1.Context, arg1 asset.Pair, arg2 types0.Direction, arg3, arg4 types1.Dec, arg5 bool) (types1.Dec, error) {
+func (m *MockVpoolKeeper) SwapQuoteForBase(arg0 types1.Context, arg1 types0.Vpool, arg2 types0.Direction, arg3, arg4 types1.Dec, arg5 bool) (types0.Vpool, types1.Dec, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SwapQuoteForBase", arg0, arg1, arg2, arg3, arg4, arg5)
-	ret0, _ := ret[0].(types1.Dec)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret0, _ := ret[0].(types0.Vpool)
+	ret1, _ := ret[1].(types1.Dec)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // SwapQuoteForBase indicates an expected call of SwapQuoteForBase.

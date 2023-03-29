@@ -52,21 +52,21 @@ type OracleKeeper interface {
 type VpoolKeeper interface {
 	SwapBaseForQuote(
 		ctx sdk.Context,
-		pair asset.Pair,
+		vpool vpooltypes.Vpool,
 		dir vpooltypes.Direction,
 		baseAssetAmount sdk.Dec,
 		quoteAmountLimit sdk.Dec,
 		skipFluctuationLimitCheck bool,
-	) (sdk.Dec, error)
+	) (vpooltypes.Vpool, sdk.Dec, error)
 
 	SwapQuoteForBase(
 		ctx sdk.Context,
-		pair asset.Pair,
+		vpool vpooltypes.Vpool,
 		dir vpooltypes.Direction,
 		quoteAssetAmount sdk.Dec,
 		baseAmountLimit sdk.Dec,
 		skipFluctuationLimitCheck bool,
-	) (sdk.Dec, error)
+	) (vpooltypes.Vpool, sdk.Dec, error)
 
 	GetBaseAssetTWAP(
 		ctx sdk.Context,
@@ -77,8 +77,7 @@ type VpoolKeeper interface {
 	) (quoteAssetAmount sdk.Dec, err error)
 
 	GetBaseAssetPrice(
-		ctx sdk.Context,
-		pair asset.Pair,
+		vpool vpooltypes.Vpool,
 		direction vpooltypes.Direction,
 		baseAssetAmount sdk.Dec,
 	) (quoteAssetAmount sdk.Dec, err error)
@@ -102,10 +101,10 @@ type VpoolKeeper interface {
 	) (quoteAssetAmount sdk.Dec, err error)
 
 	GetAllPools(ctx sdk.Context) []vpooltypes.Vpool
+	GetPool(ctx sdk.Context, pair asset.Pair) (vpooltypes.Vpool, error)
 
 	IsOverSpreadLimit(ctx sdk.Context, pair asset.Pair) (bool, error)
 	GetMaintenanceMarginRatio(ctx sdk.Context, pair asset.Pair) (sdk.Dec, error)
-	GetMaxLeverage(ctx sdk.Context, pair asset.Pair) (sdk.Dec, error)
 	ExistsPool(ctx sdk.Context, pair asset.Pair) bool
 	GetSettlementPrice(ctx sdk.Context, pair asset.Pair) (sdk.Dec, error)
 	GetLastSnapshot(ctx sdk.Context, pool vpooltypes.Vpool) (vpooltypes.ReserveSnapshot, error)
