@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Improvements
 
+* [#1240](https://github.com/NibiruChain/nibiru/pull/1240) - ci: Test `make proto-gen` when the proto gen scripts or .proto files change
 * [#1199](https://github.com/NibiruChain/nibiru/pull/1199) - chore(deps): bump golang.org/x/net from 0.4.0 to 0.7.0
 * [#1211](https://github.com/NibiruChain/nibiru/pull/1211) - chore(deps): Bump github.com/stretchr/testify from 1.8.1 to 1.8.2
 * [#1203](https://github.com/NibiruChain/nibiru/pull/1203) - ci: make chaosnet pull nibiru image if --build is not specified
@@ -58,6 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1205](https://github.com/NibiruChain/nibiru/pull/1205) - test: first testing framework skeleton and example
 * [#1228](https://github.com/NibiruChain/nibiru/pull/1228) - feat: update github.com/CosmWasm/wasmd 0.29.2
 * [#1244](https://github.com/NibiruChain/nibiru/pull/1244) - feat: add typed event for oracle post price
+* [#1237](https://github.com/NibiruChain/nibiru/pull/1237) - feat: reduce gas on openposition
 
 ### Bug Fixes
 
