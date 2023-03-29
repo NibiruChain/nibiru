@@ -6,9 +6,10 @@ import (
 	"time"
 
 	"github.com/NibiruChain/collections"
-	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
