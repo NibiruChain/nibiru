@@ -7,8 +7,8 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/testutil/action"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	"github.com/NibiruChain/nibiru/x/testutil"
 )
 
 // OpenPosition opens a position with the given parameters.
@@ -22,7 +22,7 @@ func OpenPosition(
 	leverage sdk.Dec,
 	baseLimit sdk.Dec,
 	responseCheckers ...OpenPositionResponseChecker,
-) testutil.Action {
+) action.Action {
 	return &openPositionAction{
 		Account:   account,
 		Pair:      pair,

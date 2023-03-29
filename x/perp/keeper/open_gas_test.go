@@ -9,12 +9,11 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
+	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
+	"github.com/NibiruChain/nibiru/x/common/testutil/assertion"
 	. "github.com/NibiruChain/nibiru/x/oracle/integration_test/action"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/action"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
-	. "github.com/NibiruChain/nibiru/x/testutil"
-	. "github.com/NibiruChain/nibiru/x/testutil/action"
-	"github.com/NibiruChain/nibiru/x/testutil/assertion"
 )
 
 func TestOpenGasConsumed(t *testing.T) {
