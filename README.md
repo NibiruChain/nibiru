@@ -1,13 +1,10 @@
 # Nibiru Chain          <!-- omit in toc -->
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/NibiruChain/nibiru.svg)](https://pkg.go.dev/github.com/NibiruChain/nibiru)
 [![Nibiru Test workflow][badge-go-linter]][workflow-go-linter]
 [![Nibiru Test workflow][badge-go-releaser]][workflow-go-releaser]
-[![Go Reference](https://pkg.go.dev/badge/github.com/NibiruChain/nibiru.svg)](https://pkg.go.dev/github.com/NibiruChain/nibiru)
 [![GitHub][license-badge]](https://github.com/NibiruChain/nibiru/blob/master/LICENSE.md)
-
-<a target="_blank" href="https://discord.gg/nibiru">
-  <img align="right" src="https://dcbadge.vercel.app/api/server/nibiru?style=flat" style="height: 20px">
-</a>
+[![Discord Badge](https://dcbadge.vercel.app/api/server/nibiru?style=flat)](https://discord.gg/nibiru)
 
 **Nibiru Chain** is a proof-of-stake blockchain that unifies leveraged derivatives trading, spot trading, staking, and bonded liquidity provision into a seamless user experience, enabling users of over 40 blockchains to trade with leverage using a suite of composable decentralized applications.
 
@@ -22,7 +19,7 @@
 ## Modules
 
 | Module |  Description |
-| --- | --- | --- |
+| --- | --- | 
 | [common][code-x-common] | Holds helper and utility functions to be utilized by other `x/` modules. |
 | [epochs][code-x-epochs] | Often in the SDK, we would like to run certain code every-so often. The purpose of `epochs` module is to allow other modules to set that they would like to be signaled once every period. So another module can specify it wants to execute code once a week, starting at UTC-time = x. `epochs` creates a generalized epoch interface to other modules so that they can easily be signalled upon such events. |
 | [oracle][code-x-oracle] | Handles the posting of an up-to-date and accurate feed of exchange rates from the validators. | 
