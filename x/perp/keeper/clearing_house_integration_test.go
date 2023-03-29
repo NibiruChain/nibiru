@@ -17,6 +17,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
+	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	. "github.com/NibiruChain/nibiru/x/oracle/integration_test/action"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/action"
@@ -24,8 +25,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
-	. "github.com/NibiruChain/nibiru/x/testutil"
-	. "github.com/NibiruChain/nibiru/x/testutil/action"
 	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 

@@ -8,7 +8,6 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
 )
 
 type increaseBlockNumberBy struct {
@@ -24,22 +23,22 @@ func (i increaseBlockNumberBy) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Cont
 }
 
 // IncreaseBlockNumberBy increases the block number by the given number of blocks
-func IncreaseBlockNumberBy(numBlocks int64) testutil.Action {
+func IncreaseBlockNumberBy(numBlocks int64) Action {
 	return increaseBlockNumberBy{numBlocks: numBlocks}
 }
 
 type increaseBlockTimeBy struct {
-	numSeconds time.Duration
+	seconds time.Duration
 }
 
 func (i increaseBlockTimeBy) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
-	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second * i.numSeconds))
+	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second * i.seconds))
 
 	return ctx, nil
 }
 
-func IncreaseBlockTimeBy(numSeconds time.Duration) testutil.Action {
-	return increaseBlockTimeBy{numSeconds: numSeconds}
+func IncreaseBlockTimeBy(seconds time.Duration) Action {
+	return increaseBlockTimeBy{seconds: seconds}
 }
 
 type setBlockTime struct {
@@ -51,7 +50,7 @@ func (s setBlockTime) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, erro
 }
 
 // SetBlockTime sets the block time to the given value
-func SetBlockTime(blockTime time.Time) testutil.Action {
+func SetBlockTime(blockTime time.Time) Action {
 	return setBlockTime{blockTime: blockTime}
 }
 
@@ -64,7 +63,7 @@ func (s setBlockNumber) Do(_ *app.NibiruApp, ctx sdk.Context) (sdk.Context, erro
 }
 
 // SetBlockNumber sets the block number to the given value
-func SetBlockNumber(blockNumber int64) testutil.Action {
+func SetBlockNumber(blockNumber int64) Action {
 	return setBlockNumber{blockNumber: blockNumber}
 }
 
@@ -84,6 +83,6 @@ func (m moveToNextBlock) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, e
 	).WithBlockTime(ctx.BlockTime().Add(time.Second * 5)), nil
 }
 
-func MoveToNextBlock() testutil.Action {
+func MoveToNextBlock() Action {
 	return moveToNextBlock{}
 }

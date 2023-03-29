@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/common/testutil/action"
 )
 
 type gasConsumedShouldBe struct {
@@ -22,6 +22,6 @@ func (g gasConsumedShouldBe) Do(_ *app.NibiruApp, ctx sdk.Context) (sdk.Context,
 	return ctx, nil
 }
 
-func GasConsumedShouldBe(gasConsumed uint64) testutil.Action {
+func GasConsumedShouldBe(gasConsumed uint64) action.Action {
 	return &gasConsumedShouldBe{gasConsumed: gasConsumed}
 }

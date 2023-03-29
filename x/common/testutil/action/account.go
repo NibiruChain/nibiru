@@ -4,8 +4,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-
 	"github.com/NibiruChain/nibiru/app"
 )
 
@@ -14,7 +12,7 @@ type fundAccount struct {
 	Amount  sdk.Coins
 }
 
-func FundAccount(account sdk.AccAddress, amount sdk.Coins) testutil.Action {
+func FundAccount(account sdk.AccAddress, amount sdk.Coins) Action {
 	return &fundAccount{Account: account, Amount: amount}
 }
 
@@ -30,4 +28,4 @@ func (c fundAccount) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error
 	}
 
 	return ctx, nil
-
+}
