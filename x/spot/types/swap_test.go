@@ -52,11 +52,11 @@ func TestCalcOutAmtGivenIn(t *testing.T) {
 				},
 				PoolAssets: []PoolAsset{
 					{
-						Token:  sdk.NewInt64Coin("aaa", 100*common.Precision),
+						Token:  sdk.NewInt64Coin("aaa", 100*common.MICRO),
 						Weight: sdk.OneInt(),
 					},
 					{
-						Token:  sdk.NewInt64Coin("bbb", 100*common.Precision),
+						Token:  sdk.NewInt64Coin("bbb", 100*common.MICRO),
 						Weight: sdk.OneInt(),
 					},
 				},
@@ -76,11 +76,11 @@ func TestCalcOutAmtGivenIn(t *testing.T) {
 				},
 				PoolAssets: []PoolAsset{
 					{
-						Token:  sdk.NewInt64Coin("aaa", 1*common.Precision),
+						Token:  sdk.NewInt64Coin("aaa", 1*common.MICRO),
 						Weight: sdk.OneInt(),
 					},
 					{
-						Token:  sdk.NewInt64Coin("bbb", 1*common.Precision),
+						Token:  sdk.NewInt64Coin("bbb", 1*common.MICRO),
 						Weight: sdk.OneInt(),
 					},
 				},
@@ -194,11 +194,11 @@ func TestCalcInAmtGivenOut(t *testing.T) {
 				},
 				PoolAssets: []PoolAsset{
 					{
-						Token:  sdk.NewInt64Coin("aaa", 100*common.Precision),
+						Token:  sdk.NewInt64Coin("aaa", 100*common.MICRO),
 						Weight: sdk.OneInt(),
 					},
 					{
-						Token:  sdk.NewInt64Coin("bbb", 100*common.Precision),
+						Token:  sdk.NewInt64Coin("bbb", 100*common.MICRO),
 						Weight: sdk.OneInt(),
 					},
 				},
@@ -217,11 +217,11 @@ func TestCalcInAmtGivenOut(t *testing.T) {
 				},
 				PoolAssets: []PoolAsset{
 					{
-						Token:  sdk.NewInt64Coin("aaa", 1*common.Precision),
+						Token:  sdk.NewInt64Coin("aaa", 1*common.MICRO),
 						Weight: sdk.OneInt(),
 					},
 					{
-						Token:  sdk.NewInt64Coin("bbb", 1*common.Precision),
+						Token:  sdk.NewInt64Coin("bbb", 1*common.MICRO),
 						Weight: sdk.OneInt(),
 					},
 				},

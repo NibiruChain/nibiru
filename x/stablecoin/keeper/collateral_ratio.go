@@ -24,7 +24,7 @@ stablecoin mints and burns.
 
 // GetCollRatio queries the 'collRatio'.
 func (k *Keeper) GetCollRatio(ctx sdk.Context) (collRatio sdk.Dec) {
-	return sdk.NewDec(k.GetParams(ctx).CollRatio).QuoInt64(1 * common.Precision)
+	return sdk.NewDec(k.GetParams(ctx).CollRatio).QuoInt64(1 * common.MICRO)
 }
 
 /*
@@ -42,7 +42,7 @@ func (k *Keeper) SetCollRatio(ctx sdk.Context, collRatio sdk.Dec) (err error) {
 	}
 
 	params := k.GetParams(ctx)
-	million := sdk.NewDec(1 * common.Precision)
+	million := sdk.NewDec(1 * common.MICRO)
 	collRatioInt := collRatio.Mul(million).RoundInt().Int64()
 
 	params.CollRatio = collRatioInt

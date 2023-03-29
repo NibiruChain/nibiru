@@ -83,16 +83,8 @@ func (vpool *Vpool) GetBaseAmountByQuoteAmount(
 }
 
 func (vpool *Vpool) ComputeSqrtDepth() (sqrtDepth sdk.Dec, err error) {
-	var potentialPanic error = common.TryCatch(func() {
-		liqDepth := vpool.QuoteAssetReserve.Mul(vpool.BaseAssetReserve)
-		sqrtDepth = common.SqrtDec(liqDepth)
-	})()
-
-	if potentialPanic == nil {
-		return sqrtDepth, potentialPanic
-	} else {
-		return sdk.Dec{}, potentialPanic
-	}
+	liqDepth := vpool.QuoteAssetReserve.Mul(vpool.BaseAssetReserve)
+	return common.SqrtDec(liqDepth)
 }
 
 func (vpool *Vpool) InitLiqDepth() (Vpool, error) {
@@ -165,8 +157,6 @@ func (vpool *Vpool) ValidateReserves() error {
 
 // ValidateLiquidityDepth checks that reserves are positive.
 func (vpool *Vpool) ValidateLiquidityDepth() error {
-	reserveProduct := vpool.QuoteAssetReserve.Mul(vpool.BaseAssetReserve)
-	liqDepth := vpool.SqrtDepth.Power(2)
 	computedSqrtDepth, err := vpool.ComputeSqrtDepth()
 	if err != nil {
 		return err
@@ -175,10 +165,6 @@ func (vpool *Vpool) ValidateLiquidityDepth() error {
 	if !vpool.SqrtDepth.IsPositive() {
 		return ErrLiquidityDepth.Wrap(
 			"liq depth must be positive. pool: " + vpool.String())
-	} else if !reserveProduct.RoundInt().Equal(liqDepth.RoundInt()) {
-		// rounding should be close enough.
-		return ErrLiquidityDepth.Wrap(
-			"squaring sqrt(liq depth) should be equal to the product of the base and quote reserves. pool: " + vpool.String())
 	} else if !vpool.SqrtDepth.Sub(computedSqrtDepth).Abs().LTE(sdk.NewDec(1)) {
 		return ErrLiquidityDepth.Wrap(
 			"computed sqrt and current sqrt are mismatched. pool: " + vpool.String())

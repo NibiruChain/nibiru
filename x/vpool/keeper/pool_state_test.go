@@ -45,7 +45,7 @@ func TestEditPoolConfig(t *testing.T) {
 		Pair:              pair,
 		QuoteAssetReserve: sdk.NewDec(10 * common.MICRO),
 		BaseAssetReserve:  sdk.NewDec(5 * common.MICRO),
-		SqrtDepth:         common.SqrtDec(sdk.NewDec(5 * 10 * common.MICRO * common.MICRO)),
+		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(5 * 10 * common.MICRO * common.MICRO)),
 		Config: types.VpoolConfig{
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -193,7 +193,7 @@ func TestGetPoolPrices(t *testing.T) {
 				Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 				QuoteAssetReserve: sdk.NewDec(3 * common.MICRO), // 3e6
 				BaseAssetReserve:  sdk.NewDec(1_000),            // 1e3
-				SqrtDepth:         common.SqrtDec(sdk.NewDec(3_000 * common.MICRO)),
+				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(3_000 * common.MICRO)),
 				Config: types.VpoolConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -219,7 +219,7 @@ func TestGetPoolPrices(t *testing.T) {
 				Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 				QuoteAssetReserve: sdk.NewDec(3 * common.MICRO), // 3e6
 				BaseAssetReserve:  sdk.NewDec(1_000),            // 1e3
-				SqrtDepth:         common.SqrtDec(sdk.NewDec(3_000 * common.MICRO)),
+				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(3_000 * common.MICRO)),
 				Config: types.VpoolConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -246,7 +246,7 @@ func TestGetPoolPrices(t *testing.T) {
 				Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 				QuoteAssetReserve: sdk.NewDec(3 * common.MICRO), // 3e6
 				BaseAssetReserve:  sdk.NewDec(1_000),            // 1e3
-				SqrtDepth:         common.SqrtDec(sdk.NewDec(3_000 * common.MICRO)),
+				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(3_000 * common.MICRO)),
 				Config: types.VpoolConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -302,7 +302,7 @@ func TestEditSwapInvariant(t *testing.T) {
 		Pair:              pair,
 		QuoteAssetReserve: sdk.NewDec(10 * common.MICRO),
 		BaseAssetReserve:  sdk.NewDec(5 * common.MICRO),
-		SqrtDepth:         common.SqrtDec(sdk.NewDec(5 * 10 * common.MICRO * common.MICRO)),
+		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(5 * 10 * common.MICRO * common.MICRO)),
 		Config: types.VpoolConfig{
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),

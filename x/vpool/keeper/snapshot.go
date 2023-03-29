@@ -57,7 +57,7 @@ func getPriceWithSnapshot(
 			Pair:              snapshotPriceOpts.pair,
 			QuoteAssetReserve: snapshot.QuoteAssetReserve,
 			BaseAssetReserve:  snapshot.BaseAssetReserve,
-			SqrtDepth:         common.SqrtDec(snapshot.QuoteAssetReserve.Mul(snapshot.BaseAssetReserve)),
+			SqrtDepth:         common.MustSqrtDec(snapshot.QuoteAssetReserve.Mul(snapshot.BaseAssetReserve)),
 			Config: types.VpoolConfig{
 				FluctuationLimitRatio:  sdk.ZeroDec(), // unused
 				MaintenanceMarginRatio: sdk.ZeroDec(), // unused
@@ -73,7 +73,7 @@ func getPriceWithSnapshot(
 			Pair:              snapshotPriceOpts.pair,
 			QuoteAssetReserve: snapshot.QuoteAssetReserve,
 			BaseAssetReserve:  snapshot.BaseAssetReserve,
-			SqrtDepth:         common.SqrtDec(snapshot.QuoteAssetReserve.Mul(snapshot.BaseAssetReserve)),
+			SqrtDepth:         common.MustSqrtDec(snapshot.QuoteAssetReserve.Mul(snapshot.BaseAssetReserve)),
 			Config: types.VpoolConfig{
 				FluctuationLimitRatio:  sdk.ZeroDec(), // unused
 				MaintenanceMarginRatio: sdk.ZeroDec(), // unused

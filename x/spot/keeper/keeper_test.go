@@ -222,7 +222,7 @@ func TestFetchPoolFromPair(t *testing.T) {
 func TestNewPool(t *testing.T) {
 	app, ctx := testapp.NewNibiruTestAppAndContext(true)
 
-	poolCreationFeeCoin := sdk.NewInt64Coin(denoms.NIBI, 1000*common.Precision)
+	poolCreationFeeCoin := sdk.NewInt64Coin(denoms.NIBI, 1000*common.MICRO)
 	app.SpotKeeper.SetParams(ctx, types.NewParams(
 		/*startingPoolNumber=*/ 1,
 		/*poolCreationFee=*/ sdk.NewCoins(poolCreationFeeCoin),
@@ -295,7 +295,7 @@ func TestNewPoolNotEnoughFunds(t *testing.T) {
 
 	app.SpotKeeper.SetParams(ctx, types.NewParams(
 		/*startingPoolNumber=*/ 1,
-		/*poolCreationFee=*/ sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 1000*common.Precision)),
+		/*poolCreationFee=*/ sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 1000*common.MICRO)),
 		/*whitelistedAssets*/ []string{},
 	))
 
@@ -304,7 +304,7 @@ func TestNewPoolNotEnoughFunds(t *testing.T) {
 	err := simapp.FundAccount(app.BankKeeper, ctx, userAddr, sdk.NewCoins(
 		sdk.NewCoin("uatom", sdk.NewInt(1000)),
 		sdk.NewCoin("uosmo", sdk.NewInt(1000)),
-		sdk.NewCoin("unibi", sdk.NewInt(999*common.Precision)),
+		sdk.NewCoin("unibi", sdk.NewInt(999*common.MICRO)),
 	))
 	require.NoError(t, err)
 

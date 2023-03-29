@@ -21,7 +21,7 @@ func TestPoolHasEnoughQuoteReserve(t *testing.T) {
 		Pair:              pair,
 		QuoteAssetReserve: sdk.NewDec(10 * common.MICRO),
 		BaseAssetReserve:  sdk.NewDec(10 * common.MICRO),
-		SqrtDepth:         common.SqrtDec(sdk.NewDec(10 * 10 * common.MICRO)),
+		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 10 * common.MICRO)),
 		Config: VpoolConfig{
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
@@ -48,7 +48,7 @@ func TestSetMarginRatioAndLeverage(t *testing.T) {
 		Pair:              pair,
 		QuoteAssetReserve: sdk.NewDec(10 * common.MICRO),
 		BaseAssetReserve:  sdk.NewDec(10 * common.MICRO),
-		SqrtDepth:         common.SqrtDec(sdk.NewDec(10 * 10 * common.MICRO)),
+		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 10 * common.MICRO)),
 		Config: VpoolConfig{
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.42"),
@@ -126,7 +126,7 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 				Pair:              pair,
 				QuoteAssetReserve: tc.quoteAssetReserve,
 				BaseAssetReserve:  tc.baseAssetReserve,
-				SqrtDepth:         common.SqrtDec(tc.quoteAssetReserve.Mul(tc.baseAssetReserve)),
+				SqrtDepth:         common.MustSqrtDec(tc.quoteAssetReserve.Mul(tc.baseAssetReserve)),
 				Config: VpoolConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -198,7 +198,7 @@ func TestGetQuoteAmountByBaseAmount(t *testing.T) {
 				Pair:              pair,
 				QuoteAssetReserve: tc.quoteAssetReserve,
 				BaseAssetReserve:  tc.baseAssetReserve,
-				SqrtDepth:         common.SqrtDec(tc.quoteAssetReserve.Mul(tc.baseAssetReserve)),
+				SqrtDepth:         common.MustSqrtDec(tc.quoteAssetReserve.Mul(tc.baseAssetReserve)),
 				Config: VpoolConfig{
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -229,7 +229,7 @@ func TestIncreaseDecreaseReserves(t *testing.T) {
 		Pair:              pair,
 		QuoteAssetReserve: sdk.NewDec(1 * common.MICRO),
 		BaseAssetReserve:  sdk.NewDec(1 * common.MICRO),
-		SqrtDepth:         common.SqrtDec(sdk.NewDec(common.MICRO * common.MICRO)),
+		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(common.MICRO * common.MICRO)),
 		Config: VpoolConfig{
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -268,7 +268,7 @@ func TestPool_Validate(t *testing.T) {
 				Pair:              "",
 				BaseAssetReserve:  sdk.OneDec(),
 				QuoteAssetReserve: sdk.OneDec(),
-				SqrtDepth:         common.SqrtDec(sdk.NewDec(1)),
+				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1)),
 				Config: VpoolConfig{
 					TradeLimitRatio:        sdk.NewDec(-1),
 					FluctuationLimitRatio:  sdk.OneDec(),
@@ -285,7 +285,7 @@ func TestPool_Validate(t *testing.T) {
 				Pair:              asset.MustNewPair("btc:usd"),
 				BaseAssetReserve:  sdk.OneDec(),
 				QuoteAssetReserve: sdk.OneDec(),
-				SqrtDepth:         common.SqrtDec(sdk.NewDec(1)),
+				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1)),
 				Config: VpoolConfig{
 					TradeLimitRatio:        sdk.NewDec(-1),
 					FluctuationLimitRatio:  sdk.OneDec(),
@@ -302,7 +302,7 @@ func TestPool_Validate(t *testing.T) {
 				Pair:              asset.MustNewPair("btc:usd"),
 				BaseAssetReserve:  sdk.OneDec(),
 				QuoteAssetReserve: sdk.OneDec(),
-				SqrtDepth:         common.SqrtDec(sdk.NewDec(1)),
+				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1)),
 				Config: VpoolConfig{
 					TradeLimitRatio:        sdk.NewDec(2),
 					FluctuationLimitRatio:  sdk.OneDec(),
@@ -319,7 +319,7 @@ func TestPool_Validate(t *testing.T) {
 				Pair:              asset.MustNewPair("btc:usd"),
 				BaseAssetReserve:  sdk.NewDec(999),
 				QuoteAssetReserve: sdk.ZeroDec(),
-				SqrtDepth:         common.SqrtDec(sdk.NewDec(999)),
+				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(999)),
 				Config: VpoolConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
 					FluctuationLimitRatio:  sdk.OneDec(),
@@ -353,7 +353,7 @@ func TestPool_Validate(t *testing.T) {
 				Pair:              asset.MustNewPair("btc:usd"),
 				QuoteAssetReserve: sdk.NewDec(1 * common.MICRO),
 				BaseAssetReserve:  sdk.NewDec(1 * common.MICRO),
-				SqrtDepth:         common.SqrtDec(sdk.NewDec(1 * common.MICRO * common.MICRO)),
+				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1 * common.MICRO * common.MICRO)),
 				Config: VpoolConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
 					FluctuationLimitRatio:  sdk.NewDec(-1),
@@ -370,7 +370,7 @@ func TestPool_Validate(t *testing.T) {
 				Pair:              asset.MustNewPair("btc:usd"),
 				QuoteAssetReserve: sdk.NewDec(1 * common.MICRO),
 				BaseAssetReserve:  sdk.NewDec(1 * common.MICRO),
-				SqrtDepth:         common.SqrtDec(sdk.NewDec(1 * common.MICRO * common.MICRO)),
+				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1 * common.MICRO * common.MICRO)),
 				Config: VpoolConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
 					FluctuationLimitRatio:  sdk.NewDec(2),
@@ -387,7 +387,7 @@ func TestPool_Validate(t *testing.T) {
 				Pair:              asset.MustNewPair("btc:usd"),
 				QuoteAssetReserve: sdk.NewDec(1 * common.MICRO),
 				BaseAssetReserve:  sdk.NewDec(1 * common.MICRO),
-				SqrtDepth:         common.SqrtDec(sdk.NewDec(1 * common.MICRO * common.MICRO)),
+				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1 * common.MICRO * common.MICRO)),
 				Config: VpoolConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
 					MaintenanceMarginRatio: sdk.OneDec(),
@@ -404,7 +404,7 @@ func TestPool_Validate(t *testing.T) {
 				Pair:              asset.MustNewPair("btc:usd"),
 				QuoteAssetReserve: sdk.NewDec(1 * common.MICRO),
 				BaseAssetReserve:  sdk.NewDec(1 * common.MICRO),
-				SqrtDepth:         common.SqrtDec(sdk.NewDec(1 * common.MICRO * common.MICRO)),
+				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1 * common.MICRO * common.MICRO)),
 				Config: VpoolConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
 					MaintenanceMarginRatio: sdk.OneDec(),
@@ -428,7 +428,7 @@ func TestPool_Validate(t *testing.T) {
 				},
 				QuoteAssetReserve: sdk.NewDec(1 * common.MICRO),
 				BaseAssetReserve:  sdk.NewDec(1 * common.MICRO),
-				SqrtDepth:         common.SqrtDec(sdk.NewDec(1 * common.MICRO * common.MICRO)),
+				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1 * common.MICRO * common.MICRO)),
 			},
 			expectErr: true,
 		},
@@ -438,7 +438,7 @@ func TestPool_Validate(t *testing.T) {
 				Pair:              asset.MustNewPair("btc:usd"),
 				QuoteAssetReserve: sdk.NewDec(1 * common.MICRO),
 				BaseAssetReserve:  sdk.NewDec(1 * common.MICRO),
-				SqrtDepth:         common.SqrtDec(sdk.NewDec(1 * common.MICRO * common.MICRO)),
+				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1 * common.MICRO * common.MICRO)),
 				Config: VpoolConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
 					MaintenanceMarginRatio: sdk.NewDec(2),
@@ -455,7 +455,7 @@ func TestPool_Validate(t *testing.T) {
 				Pair:              asset.MustNewPair("btc:usd"),
 				QuoteAssetReserve: sdk.NewDec(1 * common.MICRO),
 				BaseAssetReserve:  sdk.NewDec(1 * common.MICRO),
-				SqrtDepth:         common.SqrtDec(sdk.NewDec(1 * common.MICRO * common.MICRO)),
+				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1 * common.MICRO * common.MICRO)),
 				Config: VpoolConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.10"),
@@ -472,7 +472,7 @@ func TestPool_Validate(t *testing.T) {
 				Pair:              asset.MustNewPair("btc:usd"),
 				QuoteAssetReserve: sdk.NewDec(1 * common.MICRO),
 				BaseAssetReserve:  sdk.NewDec(1 * common.MICRO),
-				SqrtDepth:         common.SqrtDec(sdk.NewDec(1 * common.MICRO * common.MICRO)),
+				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1 * common.MICRO * common.MICRO)),
 				Config: VpoolConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.10"), // Equivalent to 10 leverage
@@ -489,7 +489,7 @@ func TestPool_Validate(t *testing.T) {
 				Pair:              asset.MustNewPair("btc:usd"),
 				QuoteAssetReserve: sdk.NewDec(1 * common.MICRO),
 				BaseAssetReserve:  sdk.NewDec(1 * common.MICRO),
-				SqrtDepth:         common.SqrtDec(sdk.NewDec(1 * common.MICRO * common.MICRO)),
+				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1 * common.MICRO * common.MICRO)),
 				Config: VpoolConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),

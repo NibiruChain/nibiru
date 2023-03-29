@@ -20,15 +20,19 @@ func (k Keeper) CreatePool(
 	baseAssetReserve sdk.Dec,
 	config types.VpoolConfig,
 ) error {
+	sqrtDepth, err := common.SqrtDec(quoteAssetReserve.Mul(baseAssetReserve))
+	if err != nil {
+		return err
+	}
 	vpool := types.Vpool{
 		Pair:              pair,
 		BaseAssetReserve:  baseAssetReserve,
 		QuoteAssetReserve: quoteAssetReserve,
-		SqrtDepth:         common.SqrtDec(quoteAssetReserve.Mul(baseAssetReserve)),
+		SqrtDepth:         sqrtDepth,
 		Config:            config,
 	}
 
-	err := vpool.Validate()
+	err = vpool.Validate()
 	if err != nil {
 		return err
 	}
@@ -99,17 +103,14 @@ func (k Keeper) EditSwapInvariant(
 	// Change the swap invariant while holding price constant.
 	// Multiplying by the same factor to both of the reserves won't affect price.
 	cSquared := newSwapInvariant.Quo(swapInvariant)
-	var c sdk.Dec
-	panicError := common.TryCatch(func() {
-		c = common.SqrtDec(cSquared)
-	})()
-	if panicError != nil {
-		return panicError
+	c, err := common.SqrtDec(cSquared)
+	if err != nil {
+		return err
 	}
 
 	newBaseAmount := c.Mul(vpool.BaseAssetReserve)
 	newQuoteAmount := c.Mul(vpool.QuoteAssetReserve)
-	newSqrtDepth := common.SqrtDec(newBaseAmount.Mul(newQuoteAmount))
+	newSqrtDepth := common.MustSqrtDec(newBaseAmount.Mul(newQuoteAmount))
 
 	newVpool := types.Vpool{
 		Pair:              vpool.Pair,

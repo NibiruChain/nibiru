@@ -24,7 +24,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 
 	quoteReserve := sdk.NewDec(10e12).Add(simtypes.RandomDecAmount(simState.Rand, sdk.NewDec(10e12)))
 	baseReserve := sdk.NewDec(10e12).Add(simtypes.RandomDecAmount(simState.Rand, sdk.NewDec(10e12)))
-	sqrtDepth := common.SqrtDec(quoteReserve.Mul(baseReserve))
+	sqrtDepth := common.MustSqrtDec(quoteReserve.Mul(baseReserve))
 	vpoolGenesis := types.GenesisState{
 		Vpools: []types.Vpool{
 			{
