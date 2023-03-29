@@ -919,7 +919,7 @@ func (m *QuerySpotPriceResponse) GetSpotPrice() string {
 	return ""
 }
 
-// given an exact amount of tokens in and a target tokenOutDenom, calculates
+// Given an exact amount of tokens in and a target tokenOutDenom, calculates
 // the expected amount of tokens out received from a swap.
 type QuerySwapExactAmountInRequest struct {
 	PoolId        uint64     `protobuf:"varint,1,opt,name=pool_id,json=poolId,proto3" json:"pool_id,omitempty"`
@@ -1033,7 +1033,7 @@ func (m *QuerySwapExactAmountInResponse) GetFee() types.Coin {
 	return types.Coin{}
 }
 
-// given an exact amount of tokens out and a target tokenInDenom, calculates
+// Given an exact amount of tokens out and a target tokenInDenom, calculates
 // the expected amount of tokens in required to do the swap.
 type QuerySwapExactAmountOutRequest struct {
 	PoolId       uint64     `protobuf:"varint,1,opt,name=pool_id,json=poolId,proto3" json:"pool_id,omitempty"`
