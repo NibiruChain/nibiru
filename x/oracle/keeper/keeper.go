@@ -199,9 +199,17 @@ func (k Keeper) SetPrice(ctx sdk.Context, pair asset.Pair, price sdk.Dec) {
 	k.ExchangeRates.Insert(ctx, pair, price)
 
 	key := collections.Join(pair, ctx.BlockTime())
+	timestampMs := ctx.BlockTime().UnixMilli()
 	k.PriceSnapshots.Insert(ctx, key, types.PriceSnapshot{
 		Pair:        pair,
 		Price:       price,
-		TimestampMs: ctx.BlockTime().UnixMilli(),
+		TimestampMs: timestampMs,
 	})
+	if err := ctx.EventManager().EmitTypedEvent(&types.OraclePriceUpdate{
+		Pair:        pair.String(),
+		Price:       price,
+		TimestampMs: timestampMs,
+	}); err != nil {
+		ctx.Logger().Error("failed to emit OraclePriceUpdate", "pair", pair, "error", err)
+	}
 }
