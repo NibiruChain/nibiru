@@ -58,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   * add `fees` field into `EventPoolCreated` event.
   * add `fees` field into `EventPoolExited` event.
   * add `fee` field into `EventAssetsSwapped` event.
+* [#1222](https://github.com/NibiruChain/nibiru/pull/1222) - chore(deps): bump google.golang.org/protobuf from 1.28.2-0.20220831092852-f930b1dc76e8 to 1.29.0
 * [#1223](https://github.com/NibiruChain/nibiru/pull/1223) - chore(deps): bump github.com/golang/protobuf from 1.5.2 to 1.5.3
 * [#1205](https://github.com/NibiruChain/nibiru/pull/1205) - test: first testing framework skeleton and example
 * [#1228](https://github.com/NibiruChain/nibiru/pull/1228) - feat: update github.com/CosmWasm/wasmd 0.29.2
