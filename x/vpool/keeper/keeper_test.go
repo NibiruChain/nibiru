@@ -69,16 +69,6 @@ func TestSwapQuoteForBase(t *testing.T) {
 			expectedBaseAmount:   sdk.MustNewDecFromStr("50505.050505050505050505"),
 		},
 		{
-			name:                      "pair not supported",
-			pair:                      "abc:xyz",
-			direction:                 types.Direction_ADD_TO_POOL,
-			quoteAmount:               sdk.NewDec(10),
-			baseLimit:                 sdk.NewDec(10),
-			skipFluctuationLimitCheck: false,
-
-			expectedErr: types.ErrPairNotSupported,
-		},
-		{
 			name:                      "base amount less than base limit in Long",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_ADD_TO_POOL,
@@ -185,10 +175,12 @@ func TestSwapQuoteForBase(t *testing.T) {
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
 			))
+			vpool, err := vpoolKeeper.GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+			require.NoError(t, err)
 
-			baseAmt, err := vpoolKeeper.SwapQuoteForBase(
+			_, baseAmt, err := vpoolKeeper.SwapQuoteForBase(
 				ctx,
-				tc.pair,
+				vpool,
 				tc.direction,
 				tc.quoteAmount,
 				tc.baseLimit,
@@ -260,16 +252,6 @@ func TestSwapBaseForQuote(t *testing.T) {
 			expectedQuoteReserve:     sdk.MustNewDecFromStr("10204081.632653061224489796"),
 			expectedBaseReserve:      sdk.NewDec(4_900_000),
 			expectedQuoteAssetAmount: sdk.MustNewDecFromStr("204081.632653061224489796"),
-		},
-		{
-			name:                      "pair not supported",
-			pair:                      "abc:xyz",
-			direction:                 types.Direction_ADD_TO_POOL,
-			baseAmt:                   sdk.NewDec(10),
-			quoteLimit:                sdk.NewDec(10),
-			skipFluctuationLimitCheck: false,
-
-			expectedErr: types.ErrPairNotSupported,
 		},
 		{
 			name:                      "quote amount less than quote limit in Long",
@@ -363,7 +345,8 @@ func TestSwapBaseForQuote(t *testing.T) {
 			pfKeeper := mock.NewMockOracleKeeper(gomock.NewController(t))
 
 			vpoolKeeper, ctx := VpoolKeeper(t, pfKeeper)
-			pfKeeper.EXPECT().GetExchangeRate(gomock.Any(), gomock.Any()).Return(sdk.NewDec(1), nil).AnyTimes()
+			pfKeeper.EXPECT().
+				GetExchangeRate(gomock.Any(), gomock.Any()).Return(sdk.NewDec(1), nil).AnyTimes()
 
 			assert.NoError(t, vpoolKeeper.CreatePool(
 				ctx,
@@ -379,9 +362,11 @@ func TestSwapBaseForQuote(t *testing.T) {
 				},
 			))
 
-			quoteAssetAmount, err := vpoolKeeper.SwapBaseForQuote(
+			vpool, err := vpoolKeeper.GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+			require.NoError(t, err)
+			_, quoteAssetAmount, err := vpoolKeeper.SwapBaseForQuote(
 				ctx,
-				tc.pair,
+				vpool,
 				tc.direction,
 				tc.baseAmt,
 				tc.quoteLimit,
@@ -708,47 +693,6 @@ func TestGetMaintenanceMarginRatio(t *testing.T) {
 			mmr, err := vpoolKeeper.GetMaintenanceMarginRatio(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 			assert.NoError(t, err)
 			assert.EqualValues(t, tc.expectedMaintenanceMarginRatio, mmr)
-		})
-	}
-}
-
-func TestGetMaxLeverage(t *testing.T) {
-	tests := []struct {
-		name string
-		pool types.Vpool
-
-		expectedMaxLeverage sdk.Dec
-	}{
-		{
-			name: "zero fluctuation limit ratio",
-			pool: types.Vpool{
-				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				QuoteAssetReserve: sdk.OneDec(),
-				BaseAssetReserve:  sdk.OneDec(),
-				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1)),
-				Config: types.VpoolConfig{
-					FluctuationLimitRatio:  sdk.ZeroDec(),
-					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.42"),
-					MaxLeverage:            sdk.MustNewDecFromStr("15"),
-					MaxOracleSpreadRatio:   sdk.OneDec(),
-					TradeLimitRatio:        sdk.OneDec(),
-				},
-			},
-			expectedMaxLeverage: sdk.MustNewDecFromStr("15"),
-		},
-	}
-
-	for _, tc := range tests {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			vpoolKeeper, ctx := VpoolKeeper(t,
-				mock.NewMockOracleKeeper(gomock.NewController(t)),
-			)
-			vpoolKeeper.Pools.Insert(ctx, tc.pool.Pair, tc.pool)
-
-			maxLeverage, err := vpoolKeeper.GetMaxLeverage(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
-			assert.EqualValues(t, tc.expectedMaxLeverage, maxLeverage)
-			assert.NoError(t, err)
 		})
 	}
 }

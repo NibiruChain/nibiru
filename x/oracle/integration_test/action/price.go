@@ -5,10 +5,10 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/testutil"
+	"github.com/NibiruChain/nibiru/x/common/testutil/action"
 )
 
-func SetPairPrice(pair asset.Pair, price sdk.Dec) testutil.Action {
+func SetPairPrice(pair asset.Pair, price sdk.Dec) action.Action {
 	return &setPairPrice{
 		Pair:  pair,
 		Price: price,
