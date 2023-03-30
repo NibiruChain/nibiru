@@ -14,4 +14,4 @@ jobs:
     steps:
       - name: skip-tests
         run: |
-          echo "unit-tests skipped since Golang files were not changed."
+          echo "unit-tests.yml skipped since Golang files were not changed."

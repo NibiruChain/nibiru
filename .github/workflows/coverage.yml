@@ -2,6 +2,7 @@ name: Test Coverage
 
 on:
   pull_request:
+    paths: ["**.go", "**.proto", "go.mod", "go.sum"]
 
 jobs:
   unit-tests:

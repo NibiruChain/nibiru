@@ -65,48 +65,43 @@ ret:
 */
 func (k Keeper) SwapBaseForQuote(
 	ctx sdk.Context,
-	pair asset.Pair,
+	pool types.Vpool,
 	dir types.Direction,
 	baseAmt sdk.Dec,
 	quoteLimit sdk.Dec,
 	skipFluctuationLimitCheck bool,
-) (quoteAmtAbs sdk.Dec, err error) {
+) (updatedVpool types.Vpool, quoteAmtAbs sdk.Dec, err error) {
 	if baseAmt.IsZero() {
-		return sdk.ZeroDec(), nil
+		return pool, sdk.ZeroDec(), nil
 	}
 
-	if _, err = k.oracleKeeper.GetExchangeRate(ctx, pair); err != nil {
-		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair)
-	}
-
-	pool, err := k.Pools.Get(ctx, pair)
-	if err != nil {
-		return sdk.Dec{}, types.ErrPairNotSupported
+	if _, err = k.oracleKeeper.GetExchangeRate(ctx, pool.Pair); err != nil {
+		return pool, sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pool.Pair)
 	}
 
 	baseAmtAbs := baseAmt.Abs()
 	quoteAmtAbs, err = pool.GetQuoteAmountByBaseAmount(baseAmtAbs.MulInt64(dir.ToMultiplier()))
 	if err != nil {
-		return sdk.Dec{}, err
+		return pool, sdk.Dec{}, err
 	}
 
 	if err := pool.HasEnoughReservesForTrade(quoteAmtAbs, baseAmtAbs); err != nil {
-		return sdk.Dec{}, err
+		return pool, sdk.Dec{}, err
 	}
 
 	if err := checkIfLimitIsViolated(quoteLimit, quoteAmtAbs, dir); err != nil {
-		return sdk.Dec{}, err
+		return pool, sdk.Dec{}, err
 	}
 
 	quoteDelta := quoteAmtAbs.Neg().MulInt64(dir.ToMultiplier())
 	baseAmt = baseAmtAbs.MulInt64(dir.ToMultiplier())
 
-	pool, err = k.executeSwap(ctx, pool, quoteDelta, baseAmt, skipFluctuationLimitCheck)
+	updatedVpool, err = k.executeSwap(ctx, pool, quoteDelta, baseAmt, skipFluctuationLimitCheck)
 	if err != nil {
-		return sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
+		return pool, sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
-	return quoteAmtAbs, err
+	return updatedVpool, quoteAmtAbs, err
 }
 
 func (k Keeper) executeSwap(
@@ -162,50 +157,45 @@ ret:
 */
 func (k Keeper) SwapQuoteForBase(
 	ctx sdk.Context,
-	pair asset.Pair,
+	vpool types.Vpool,
 	dir types.Direction,
 	quoteAmt sdk.Dec,
 	baseLimit sdk.Dec,
 	skipFluctuationLimitCheck bool,
-) (baseAmtAbs sdk.Dec, err error) {
+) (updatedVpool types.Vpool, baseAmtAbs sdk.Dec, err error) {
 	if quoteAmt.IsZero() {
-		return sdk.ZeroDec(), nil
+		return types.Vpool{}, sdk.ZeroDec(), nil
 	}
 
-	if _, err = k.oracleKeeper.GetExchangeRate(ctx, pair); err != nil {
-		return sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pair)
-	}
-
-	pool, err := k.Pools.Get(ctx, pair)
-	if err != nil {
-		return sdk.Dec{}, types.ErrPairNotSupported
+	if _, err = k.oracleKeeper.GetExchangeRate(ctx, vpool.Pair); err != nil {
+		return types.Vpool{}, sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", vpool.Pair)
 	}
 
 	// check trade limit ratio on quote in either direction
 	quoteAmtAbs := quoteAmt.Abs()
-	baseAmtAbs, err = pool.GetBaseAmountByQuoteAmount(
+	baseAmtAbs, err = vpool.GetBaseAmountByQuoteAmount(
 		quoteAmtAbs.MulInt64(dir.ToMultiplier()))
 	if err != nil {
-		return sdk.Dec{}, err
+		return types.Vpool{}, sdk.Dec{}, err
 	}
 
-	if err := pool.HasEnoughReservesForTrade(quoteAmtAbs, baseAmtAbs); err != nil {
-		return sdk.Dec{}, err
+	if err := vpool.HasEnoughReservesForTrade(quoteAmtAbs, baseAmtAbs); err != nil {
+		return types.Vpool{}, sdk.Dec{}, err
 	}
 
 	if err := checkIfLimitIsViolated(baseLimit, baseAmtAbs, dir); err != nil {
-		return sdk.Dec{}, err
+		return types.Vpool{}, sdk.Dec{}, err
 	}
 
 	quoteAmt = quoteAmtAbs.MulInt64(dir.ToMultiplier())
 	baseDelta := baseAmtAbs.Neg().MulInt64(dir.ToMultiplier())
 
-	pool, err = k.executeSwap(ctx, pool, quoteAmt, baseDelta, skipFluctuationLimitCheck)
+	updatedVpool, err = k.executeSwap(ctx, vpool, quoteAmt, baseDelta, skipFluctuationLimitCheck)
 	if err != nil {
-		return sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
+		return types.Vpool{}, sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
-	return baseAmtAbs, err
+	return updatedVpool, baseAmtAbs, err
 }
 
 // checkIfLimitIsViolated checks if the limit is violated by the amount.
@@ -323,26 +313,6 @@ func (k Keeper) GetMaintenanceMarginRatio(ctx sdk.Context, pair asset.Pair) (sdk
 }
 
 /*
-GetMaxLeverage returns the maximum leverage required to open a position in the pool.
-
-args:
-  - ctx: the cosmos-sdk context
-  - pair: the asset pair
-
-ret:
-  - sdk.Dec: The maintenance margin ratio for the pool
-  - error
-*/
-func (k Keeper) GetMaxLeverage(ctx sdk.Context, pair asset.Pair) (sdk.Dec, error) {
-	pool, err := k.Pools.Get(ctx, pair)
-	if err != nil {
-		return sdk.Dec{}, err
-	}
-
-	return pool.Config.MaxLeverage, nil
-}
-
-/*
 GetAllPools returns an array of all the pools
 
 args:
@@ -353,4 +323,8 @@ ret:
 */
 func (k Keeper) GetAllPools(ctx sdk.Context) []types.Vpool {
 	return k.Pools.Iterate(ctx, collections.Range[asset.Pair]{}).Values()
+}
+
+func (k Keeper) GetPool(ctx sdk.Context, pair asset.Pair) (types.Vpool, error) {
+	return k.Pools.Get(ctx, pair)
 }

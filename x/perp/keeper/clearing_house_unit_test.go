@@ -112,15 +112,16 @@ func TestSwapQuoteAssetForBase(t *testing.T) {
 		{
 			name: "long position - buy",
 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
+				vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+						vpool,
 						vpooltypes.Direction_ADD_TO_POOL,
 						/*quoteAmount=*/ sdk.NewDec(10),
 						/*baseLimit=*/ sdk.NewDec(1),
 						/* skipFluctuationLimitCheck */ false,
-					).Return(sdk.NewDec(5), nil)
+					).Return(vpool, sdk.NewDec(5), nil)
 			},
 			side:               types.Side_BUY,
 			expectedBaseAmount: sdk.NewDec(5),
@@ -128,15 +129,16 @@ func TestSwapQuoteAssetForBase(t *testing.T) {
 		{
 			name: "short position - sell",
 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
+				vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+						vpool,
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*quoteAmount=*/ sdk.NewDec(10),
 						/*baseLimit=*/ sdk.NewDec(1),
 						/* skipFluctuationLimitCheck */ false,
-					).Return(sdk.NewDec(5), nil)
+					).Return(vpool, sdk.NewDec(5), nil)
 			},
 			side:               types.Side_SELL,
 			expectedBaseAmount: sdk.NewDec(-5),
@@ -150,9 +152,11 @@ func TestSwapQuoteAssetForBase(t *testing.T) {
 
 			tc.setMocks(ctx, mocks)
 
-			baseAmount, err := perpKeeper.swapQuoteForBase(
+			vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+
+			_, baseAmount, err := perpKeeper.swapQuoteForBase(
 				ctx,
-				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				vpool,
 				tc.side,
 				sdk.NewDec(10),
 				sdk.NewDec(1),
@@ -170,7 +174,7 @@ func TestIncreasePosition(t *testing.T) {
 		name         string
 		initPosition types.Position
 		given        func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper)
-		when         func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error)
+		when         func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (vpooltypes.Vpool, *types.PositionResp, error)
 		then         func(t *testing.T, ctx sdk.Context, initPosition types.Position, resp *types.PositionResp, err error)
 	}{
 		{
@@ -189,20 +193,22 @@ func TestIncreasePosition(t *testing.T) {
 			},
 			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
 				t.Log("mock vpool")
+				vpool := vpooltypes.Vpool{
+					Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				}
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+						vpool,
 						/*quoteAssetDirection=*/ vpooltypes.Direction_ADD_TO_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(100),
 						/*baseAssetLimit=*/ sdk.NewDec(50),
 						/* skipFluctuationLimitCheck */ false,
-					).Return( /*baseAssetAmount=*/ sdk.NewDec(50), nil)
+					).Return(vpool /*baseAssetAmount=*/, sdk.NewDec(50), nil)
 
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
-						ctx,
-						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+						vpool,
 						vpooltypes.Direction_ADD_TO_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -216,10 +222,11 @@ func TestIncreasePosition(t *testing.T) {
 					},
 				)
 			},
-			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error) {
+			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (vpooltypes.Vpool, *types.PositionResp, error) {
 				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
 				return perpKeeper.increasePosition(
 					ctx,
+					vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
 					initPosition,
 					types.Side_BUY,
 					/*openNotional=*/ sdk.NewDec(100), // NUSD
@@ -263,20 +270,22 @@ func TestIncreasePosition(t *testing.T) {
 			},
 			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
 				t.Log("mock vpool")
+				vpool := vpooltypes.Vpool{
+					Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				}
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+						vpool,
 						/*quoteAssetDirection=*/ vpooltypes.Direction_ADD_TO_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(100),
 						/*baseAssetLimit=*/ sdk.NewDec(101),
 						/* skipFluctuationLimitCheck */ false,
-					).Return( /*baseAssetAmount=*/ sdk.NewDec(101), nil)
+					).Return(vpool /*baseAssetAmount=*/, sdk.NewDec(101), nil)
 
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
-						ctx,
-						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+						vpool,
 						vpooltypes.Direction_ADD_TO_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -288,10 +297,11 @@ func TestIncreasePosition(t *testing.T) {
 					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 				})
 			},
-			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error) {
+			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (vpooltypes.Vpool, *types.PositionResp, error) {
 				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
 				return perpKeeper.increasePosition(
 					ctx,
+					vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
 					initPosition,
 					types.Side_BUY,
 					/*openNotional=*/ sdk.NewDec(100), // NUSD
@@ -338,20 +348,22 @@ func TestIncreasePosition(t *testing.T) {
 			},
 			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
 				t.Log("mock vpool")
+				vpool := vpooltypes.Vpool{
+					Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				}
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+						vpool,
 						/*quoteAssetDirection=*/ vpooltypes.Direction_ADD_TO_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(100),
 						/*baseAssetLimit=*/ sdk.NewDec(110),
 						/* skipFluctuationLimitCheck */ false,
-					).Return( /*baseAssetAmount=*/ sdk.NewDec(110), nil)
+					).Return(vpool /*baseAssetAmount=*/, sdk.NewDec(110), nil)
 
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
-						ctx,
-						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+						vpool,
 						vpooltypes.Direction_ADD_TO_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(110),
 					).
@@ -363,10 +375,11 @@ func TestIncreasePosition(t *testing.T) {
 					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.2"),
 				})
 			},
-			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error) {
+			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (vpooltypes.Vpool, *types.PositionResp, error) {
 				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
 				return perpKeeper.increasePosition(
 					ctx,
+					vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
 					initPosition,
 					types.Side_BUY,
 					/*openNotional=*/ sdk.NewDec(100), // NUSD
@@ -411,20 +424,22 @@ func TestIncreasePosition(t *testing.T) {
 			},
 			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
 				t.Log("mock vpool")
+				vpool := vpooltypes.Vpool{
+					Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				}
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+						vpool,
 						/*quoteAssetDirection=*/ vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(100),
 						/*baseAssetLimit=*/ sdk.NewDec(200),
 						/* skipFluctuationLimitCheck */ false,
-					).Return( /*baseAssetAmount=*/ sdk.NewDec(200), nil)
+					).Return(vpool /*baseAssetAmount=*/, sdk.NewDec(200), nil)
 
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
-						ctx,
-						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+						vpool,
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -436,10 +451,11 @@ func TestIncreasePosition(t *testing.T) {
 					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 				})
 			},
-			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error) {
+			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (vpooltypes.Vpool, *types.PositionResp, error) {
 				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
 				return perpKeeper.increasePosition(
 					ctx,
+					vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
 					initPosition,
 					types.Side_SELL,
 					/*openNotional=*/ sdk.NewDec(100), // NUSD
@@ -484,20 +500,22 @@ func TestIncreasePosition(t *testing.T) {
 			},
 			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
 				t.Log("mock vpool")
+				vpool := vpooltypes.Vpool{
+					Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				}
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+						vpool,
 						/*quoteAssetDirection=*/ vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(100),
 						/*baseAssetLimit=*/ sdk.NewDec(99),
 						/* skipFluctuationLimitCheck */ false,
-					).Return( /*baseAssetAmount=*/ sdk.NewDec(99), nil)
+					).Return(vpool /*baseAssetAmount=*/, sdk.NewDec(99), nil)
 
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
-						ctx,
-						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+						vpool,
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -509,10 +527,11 @@ func TestIncreasePosition(t *testing.T) {
 					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
 				})
 			},
-			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error) {
+			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (vpooltypes.Vpool, *types.PositionResp, error) {
 				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
 				return perpKeeper.increasePosition(
 					ctx,
+					vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
 					initPosition,
 					types.Side_SELL,
 					/*openNotional=*/ sdk.NewDec(100), // NUSD
@@ -560,20 +579,22 @@ func TestIncreasePosition(t *testing.T) {
 			},
 			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
 				t.Log("mock vpool")
+				vpool := vpooltypes.Vpool{
+					Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				}
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+						vpool,
 						/*quoteAssetDirection=*/ vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*quoteAssetAmount=*/ sdk.NewDec(105),
 						/*baseAssetLimit=*/ sdk.NewDec(100),
 						/* skipFluctuationLimitCheck */ false,
-					).Return( /*baseAssetAmount=*/ sdk.NewDec(100), nil)
+					).Return(vpool /*baseAssetAmount=*/, sdk.NewDec(100), nil)
 
 				mocks.mockVpoolKeeper.EXPECT().
 					GetBaseAssetPrice(
-						ctx,
-						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+						vpool,
 						vpooltypes.Direction_REMOVE_FROM_POOL,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -585,10 +606,11 @@ func TestIncreasePosition(t *testing.T) {
 					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("-0.3"),
 				})
 			},
-			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (*types.PositionResp, error) {
+			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition types.Position) (vpooltypes.Vpool, *types.PositionResp, error) {
 				t.Log("Increase position with 10.5 NUSD margin and 10x leverage.")
 				return perpKeeper.increasePosition(
 					ctx,
+					vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
 					initPosition,
 					types.Side_SELL,
 					/*openNotional=*/ sdk.NewDec(105), // NUSD
@@ -625,7 +647,7 @@ func TestIncreasePosition(t *testing.T) {
 
 			tc.given(ctx, mocks, perpKeeper)
 
-			resp, err := tc.when(ctx, perpKeeper, tc.initPosition)
+			_, resp, err := tc.when(ctx, perpKeeper, tc.initPosition)
 
 			tc.then(t, ctx, tc.initPosition, resp, err)
 		})
@@ -822,10 +844,12 @@ func TestClosePositionEntirely(t *testing.T) {
 			SetPosition(perpKeeper, ctx, tc.initialPosition)
 
 			t.Log("mock vpool")
+			vpool := vpooltypes.Vpool{
+				Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+			}
 			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetPrice(
-					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					vpool,
 					tc.direction,
 					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
 				).
@@ -834,19 +858,21 @@ func TestClosePositionEntirely(t *testing.T) {
 			mocks.mockVpoolKeeper.EXPECT().
 				SwapBaseForQuote(
 					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					vpool,
 					/*quoteAssetDirection=*/ tc.direction,
 					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
 					/*quoteAssetLimit=*/ tc.quoteAssetLimit,
 					/* skipFluctuationLimitCheck */ false,
-				).Return( /*quoteAssetAmount=*/ tc.newPositionNotional, nil)
+				).Return(vpool /*quoteAssetAmount=*/, tc.newPositionNotional, nil)
 
 			t.Log("set up pair metadata and last cumulative funding rate")
 			SetPairMetadata(perpKeeper, ctx, tc.pairMetadata)
 
 			t.Log("close position")
-			resp, err := perpKeeper.closePositionEntirely(
+
+			_, resp, err := perpKeeper.closePositionEntirely(
 				ctx,
+				vpool,
 				tc.initialPosition,
 				/*quoteAssetLimit=*/ tc.quoteAssetLimit, // NUSD
 				/* skipFluctuationLimitCheck */ false,
@@ -1118,10 +1144,10 @@ func TestDecreasePosition(t *testing.T) {
 			perpKeeper, mocks, ctx := getKeeper(t)
 
 			t.Log("mock vpool")
+			vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetPrice(
-					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					vpool,
 					tc.baseAssetDir,
 					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
 				).
@@ -1130,12 +1156,12 @@ func TestDecreasePosition(t *testing.T) {
 			mocks.mockVpoolKeeper.EXPECT().
 				SwapQuoteForBase(
 					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					vpool,
 					/*quoteAssetDirection=*/ tc.quoteAssetDir,
 					/*quoteAssetAmount=*/ tc.quoteAmountToDecrease,
 					/*baseAssetLimit=*/ tc.exchangedBaseAmount.Abs(),
 					/* skipFluctuationLimitCheck */ false,
-				).Return( /*baseAssetAmount=*/ tc.baseAssetLimit, nil)
+				).Return(vpool /*baseAssetAmount=*/, tc.baseAssetLimit, nil)
 
 			t.Log("set up pair metadata and last cumulative funding rate")
 			SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
@@ -1144,8 +1170,9 @@ func TestDecreasePosition(t *testing.T) {
 			})
 
 			t.Log("decrease position")
-			resp, err := perpKeeper.decreasePosition(
+			_, resp, err := perpKeeper.decreasePosition(
 				ctx,
+				vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
 				tc.initialPosition,
 				/*openNotional=*/ tc.quoteAmountToDecrease, // NUSD
 				/*baseLimit=*/ tc.baseAssetLimit, // BTC
@@ -1517,10 +1544,10 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 			SetPosition(perpKeeper, ctx, currentPosition)
 
 			t.Log("mock vpool")
+			vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetPrice(
-					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					vpool,
 					tc.mockBaseDir,
 					/*baseAssetAmount=*/ currentPosition.Size_.Abs(),
 				).
@@ -1529,23 +1556,23 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 			mocks.mockVpoolKeeper.EXPECT().
 				SwapBaseForQuote(
 					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					vpool,
 					tc.mockBaseDir,
 					/*baseAssetAmount=*/ currentPosition.Size_.Abs(),
 					/*quoteAssetLimit=*/ sdk.ZeroDec(),
 					/* skipFluctuationLimitCheck */ false,
-				).Return( /*quoteAssetAmount=*/ tc.mockQuoteAmount, nil)
+				).Return(vpool /*quoteAssetAmount=*/, tc.mockQuoteAmount, nil)
 
 			if tc.expectedErr == nil {
 				mocks.mockVpoolKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+						vpool,
 						/*quoteAssetDirection=*/ tc.mockQuoteDir,
 						/*quoteAssetAmount=*/ tc.inputQuoteAmount.Mul(tc.inputLeverage).Sub(tc.mockQuoteAmount),
 						/*baseAssetLimit=*/ sdk.MaxDec(tc.inputBaseAssetLimit.Sub(currentPosition.Size_.Abs()), sdk.ZeroDec()),
 						/* skipFluctuationLimitCheck */ false,
-					).Return( /*baseAssetAmount=*/ tc.mockBaseAmount, nil)
+					).Return(vpool /*baseAssetAmount=*/, tc.mockBaseAmount, nil)
 			}
 
 			t.Log("set up pair metadata and last cumulative funding rate")
@@ -1555,8 +1582,9 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 			})
 
 			t.Log("close position and open reverse")
-			resp, err := perpKeeper.closeAndOpenReversePosition(
+			_, resp, err := perpKeeper.closeAndOpenReversePosition(
 				ctx,
+				vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
 				currentPosition,
 				/*quoteAssetAmount=*/ tc.inputQuoteAmount, // NUSD
 				/*leverage=*/ tc.inputLeverage,
@@ -1802,10 +1830,13 @@ func TestClosePosition(t *testing.T) {
 			perpKeeper.SetParams(ctx, params)
 
 			t.Log("mock vpool keeper")
+			vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+			mocks.mockVpoolKeeper.EXPECT().
+				GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).
+				Return(vpool, nil)
 			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetPrice(
-					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					vpool,
 					tc.baseAssetDir,
 					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
 				).
@@ -1814,12 +1845,12 @@ func TestClosePosition(t *testing.T) {
 			mocks.mockVpoolKeeper.EXPECT().
 				SwapBaseForQuote(
 					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					vpool,
 					/*baseAssetDirection=*/ tc.baseAssetDir,
 					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
 					/*quoteAssetLimit=*/ sdk.ZeroDec(),
 					/* skipFluctuationLimitCheck */ false,
-				).Return( /*quoteAssetAmount=*/ tc.newPositionNotional, nil)
+				).Return(vpool /*quoteAssetAmount=*/, tc.newPositionNotional, nil)
 
 			mocks.mockVpoolKeeper.EXPECT().
 				GetMarkPrice(
@@ -1965,10 +1996,14 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 			perpKeeper.SetParams(ctx, types.DefaultParams())
 
 			t.Log("mock vpool keeper")
+			vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+			mocks.mockVpoolKeeper.EXPECT().
+				GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).
+				Return(vpool, nil)
+
 			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetPrice(
-					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					vpool,
 					tc.baseAssetDir,
 					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
 				).
@@ -1978,12 +2013,12 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 			mocks.mockVpoolKeeper.EXPECT().
 				SwapBaseForQuote(
 					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					vpool,
 					/*baseAssetDirection=*/ tc.baseAssetDir,
 					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
 					/*quoteAssetLimit=*/ sdk.ZeroDec(),
 					/* skipFluctuationLimitCheck */ false,
-				).Return( /*quoteAssetAmount=*/ tc.newPositionNotional, nil)
+				).Return(vpool /*quoteAssetAmount=*/, tc.newPositionNotional, nil)
 
 			t.Log("set up pair metadata and last cumulative funding rate")
 			SetPairMetadata(perpKeeper, ctx, types.PairMetadata{

@@ -33,7 +33,8 @@ func (k Keeper) CreatePool(
 	if err != nil {
 		return err
 	}
-	err = common.TryCatch(func() {
+
+	return common.TryCatch(func() {
 		k.Pools.Insert(ctx, pair, vpool)
 
 		k.ReserveSnapshots.Insert(
@@ -42,7 +43,6 @@ func (k Keeper) CreatePool(
 			vpool.ToSnapshot(ctx),
 		)
 	})()
-	return err
 }
 
 func (k Keeper) EditPoolConfig(

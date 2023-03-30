@@ -40,8 +40,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Breaking
+
+* [#1252](https://github.com/NibiruChain/nibiru/pull/1220) - feat: reduce gas fees when posting price
+* [#1229](https://github.com/NibiruChain/nibiru/pull/1229) - feat: upgrade ibc to v4.2.0 and wasm v0.30.0
+
 ### Improvements
 
+* [#1248](https://github.com/NibiruChain/nibiru/pull/1248) - refactor(common): Combine x/testutil and x/common/testutil.
+* [#1245](https://github.com/NibiruChain/nibiru/pull/1245) - fix(localnet.sh): force localnet.sh to work even if Coingecko is down
+* [#1230](https://github.com/NibiruChain/nibiru/pull/1230) - chore(deps): Bump github.com/holiman/uint256 from 1.2.1 to 1.2.2
+* [#1240](https://github.com/NibiruChain/nibiru/pull/1240) - ci: Test `make proto-gen` when the proto gen scripts or .proto files change
 * [#1199](https://github.com/NibiruChain/nibiru/pull/1199) - chore(deps): bump golang.org/x/net from 0.4.0 to 0.7.0
 * [#1211](https://github.com/NibiruChain/nibiru/pull/1211) - chore(deps): Bump github.com/stretchr/testify from 1.8.1 to 1.8.2
 * [#1203](https://github.com/NibiruChain/nibiru/pull/1203) - ci: make chaosnet pull nibiru image if --build is not specified
@@ -50,6 +59,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   * add `fees` field into `EventPoolExited` event.
   * add `fee` field into `EventAssetsSwapped` event.
 * [#1222](https://github.com/NibiruChain/nibiru/pull/1222) - chore(deps): bump google.golang.org/protobuf from 1.28.2-0.20220831092852-f930b1dc76e8 to 1.29.0
+* [#1223](https://github.com/NibiruChain/nibiru/pull/1223) - chore(deps): bump github.com/golang/protobuf from 1.5.2 to 1.5.3
+* [#1205](https://github.com/NibiruChain/nibiru/pull/1205) - test: first testing framework skeleton and example
+* [#1228](https://github.com/NibiruChain/nibiru/pull/1228) - feat: update github.com/CosmWasm/wasmd 0.29.2
+* [#1244](https://github.com/NibiruChain/nibiru/pull/1244) - feat: add typed event for oracle post price
+* [#1237](https://github.com/NibiruChain/nibiru/pull/1237) - feat: reduce gas on openposition
 
 ### Bug Fixes
 
