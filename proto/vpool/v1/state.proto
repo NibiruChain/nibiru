@@ -50,9 +50,13 @@ message Vpool {
     (gogoproto.nullable) = false
   ];
 
+  VpoolConfig config = 4 [
+    (gogoproto.nullable) = false
+  ];
+
   // The square root of the liquidity depth. Liquidity depth is the product of
   // the reserves.
-  string sqrt_depth = 4 [
+  string sqrt_depth = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
@@ -65,14 +69,10 @@ message Vpool {
   // ];
 
   // TD docs. For now, leave this as 1 until the feature PR.
-  // string price_mult = 6 [
+  // string price_mult = 7 [
   //   (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
   //   (gogoproto.nullable) = false
   // ];
-
-  VpoolConfig config = 7 [
-    (gogoproto.nullable) = false
-  ];
 }
 
 message VpoolConfig {
