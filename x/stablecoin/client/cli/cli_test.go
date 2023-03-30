@@ -50,7 +50,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	// x/stablecoin genesis state
 	stableGen := stabletypes.DefaultGenesis()
 	stableGen.Params.IsCollateralRatioValid = true
-	stableGen.ModuleAccountBalance = sdk.NewCoin(denoms.USDC, sdk.NewInt(10000*common.MICRO))
+	stableGen.ModuleAccountBalance = sdk.NewCoin(denoms.USDC, sdk.NewInt(10000*common.TO_MICRO))
 	genesisState[stabletypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(stableGen)
 
 	oracleGenesis := oracletypes.DefaultGenesisState()
@@ -81,8 +81,8 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 	s.NoError(testutilcli.FillWalletFromValidator(
 		minter,
 		sdk.NewCoins(
-			sdk.NewInt64Coin(denoms.NIBI, 100*common.MICRO),
-			sdk.NewInt64Coin(denoms.USDC, 100*common.MICRO),
+			sdk.NewInt64Coin(denoms.NIBI, 100*common.TO_MICRO),
+			sdk.NewInt64Coin(denoms.USDC, 100*common.TO_MICRO),
 		),
 		val,
 		s.cfg.BondDenom,
@@ -108,7 +108,7 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 			args: append([]string{
 				"1000000unusd",
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, "minter2")}, commonArgs...),
-			expectedStable: sdk.NewInt(1 * common.MICRO),
+			expectedStable: sdk.NewInt(1 * common.TO_MICRO),
 			expectErr:      false,
 			respType:       &sdk.TxResponse{},
 			expectedCode:   0,
@@ -156,7 +156,7 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 		burner,
 		sdk.NewCoins(
 			sdk.NewInt64Coin(s.cfg.BondDenom, 20_000),
-			sdk.NewInt64Coin(denoms.NUSD, 50*common.MICRO),
+			sdk.NewInt64Coin(denoms.NUSD, 50*common.TO_MICRO),
 		),
 		val,
 		s.cfg.BondDenom,
@@ -190,7 +190,7 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 				"50000000unusd",
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, "burn")}, commonArgs...),
 			expectedStable:   sdk.ZeroInt(),
-			expectedColl:     sdk.NewInt(50*common.MICRO - 100_000), // Collateral minus 0,02% fees
+			expectedColl:     sdk.NewInt(50*common.TO_MICRO - 100_000), // Collateral minus 0,02% fees
 			expectedGov:      sdk.NewInt(19_990),
 			expectedTreasury: sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 50_000)),
 			expectedEf:       sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 50_000)),
@@ -204,8 +204,8 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 		// 		"100000000unusd",
 		// 		fmt.Sprintf("--%s=%s", flags.FlagFrom, "burn")}, commonArgs...),
 		// 	expectedStable: sdk.NewInt(0),
-		// 	expectedColl:   sdk.NewInt(90 * common.MICRO),
-		// 	expectedGov:    sdk.NewInt(1 * common.MICRO),
+		// 	expectedColl:   sdk.NewInt(90 * common.TO_MICRO),
+		// 	expectedGov:    sdk.NewInt(1 * common.TO_MICRO),
 		// 	expectErr:      false,
 		// 	respType:       &sdk.TxResponse{},
 		// 	expectedCode:   0,

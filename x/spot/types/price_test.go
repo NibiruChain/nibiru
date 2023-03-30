@@ -20,11 +20,11 @@ func TestCalSpotPrice(t *testing.T) {
 			"equal weight: 2 tokens",
 			[]PoolAsset{
 				{
-					Token:  sdk.NewInt64Coin("foo", 2*common.MICRO),
+					Token:  sdk.NewInt64Coin("foo", 2*common.TO_MICRO),
 					Weight: sdk.NewInt(100),
 				},
 				{
-					Token:  sdk.NewInt64Coin("bar", 1*common.MICRO),
+					Token:  sdk.NewInt64Coin("bar", 1*common.TO_MICRO),
 					Weight: sdk.NewInt(100),
 				},
 			},
@@ -34,11 +34,11 @@ func TestCalSpotPrice(t *testing.T) {
 			"different weight: 2 tokens",
 			[]PoolAsset{
 				{
-					Token:  sdk.NewInt64Coin("foo", 2*common.MICRO),
+					Token:  sdk.NewInt64Coin("foo", 2*common.TO_MICRO),
 					Weight: sdk.NewInt(80),
 				},
 				{
-					Token:  sdk.NewInt64Coin("bar", 1*common.MICRO),
+					Token:  sdk.NewInt64Coin("bar", 1*common.TO_MICRO),
 					Weight: sdk.NewInt(20),
 				},
 			},
@@ -48,15 +48,15 @@ func TestCalSpotPrice(t *testing.T) {
 			"equal weight: 3 tokens",
 			[]PoolAsset{
 				{
-					Token:  sdk.NewInt64Coin("foo", 2*common.MICRO),
+					Token:  sdk.NewInt64Coin("foo", 2*common.TO_MICRO),
 					Weight: sdk.NewInt(100),
 				},
 				{
-					Token:  sdk.NewInt64Coin("goo", 1*common.MICRO),
+					Token:  sdk.NewInt64Coin("goo", 1*common.TO_MICRO),
 					Weight: sdk.NewInt(100),
 				},
 				{
-					Token:  sdk.NewInt64Coin("bar", 1*common.MICRO),
+					Token:  sdk.NewInt64Coin("bar", 1*common.TO_MICRO),
 					Weight: sdk.NewInt(100),
 				},
 			},
@@ -66,15 +66,15 @@ func TestCalSpotPrice(t *testing.T) {
 			"different weight: 3 tokens",
 			[]PoolAsset{
 				{
-					Token:  sdk.NewInt64Coin("foo", 2*common.MICRO),
+					Token:  sdk.NewInt64Coin("foo", 2*common.TO_MICRO),
 					Weight: sdk.NewInt(60),
 				},
 				{
-					Token:  sdk.NewInt64Coin("bar", 1*common.MICRO),
+					Token:  sdk.NewInt64Coin("bar", 1*common.TO_MICRO),
 					Weight: sdk.NewInt(20),
 				},
 				{
-					Token:  sdk.NewInt64Coin("foobar", 1*common.MICRO),
+					Token:  sdk.NewInt64Coin("foobar", 1*common.TO_MICRO),
 					Weight: sdk.NewInt(20),
 				},
 			},

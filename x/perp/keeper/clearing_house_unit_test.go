@@ -1876,7 +1876,7 @@ func TestClosePosition(t *testing.T) {
 			).Return(nil)
 
 			mocks.mockBankKeeper.EXPECT().GetBalance(ctx, sdk.AccAddress{0x1, 0x2, 0x3}, tc.initialPosition.Pair.QuoteDenom()).
-				Return(sdk.NewCoin("NUSD", sdk.NewInt(100000*common.MICRO)))
+				Return(sdk.NewCoin("NUSD", sdk.NewInt(100000*common.TO_MICRO)))
 			mocks.mockAccountKeeper.EXPECT().GetModuleAddress(types.VaultModuleAccount).
 				Return(sdk.AccAddress{0x1, 0x2, 0x3})
 

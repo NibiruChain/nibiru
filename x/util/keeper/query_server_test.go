@@ -29,7 +29,7 @@ func TestQueryServer_ModuleAccounts(t *testing.T) {
 	err = app.BankKeeper.MintCoins(
 		ctx,
 		someModuleAccount,
-		sdktypes.NewCoins(sdktypes.NewInt64Coin("uniques", 1*common.MICRO)),
+		sdktypes.NewCoins(sdktypes.NewInt64Coin("uniques", 1*common.TO_MICRO)),
 	)
 	require.NoError(t, err)
 
@@ -37,5 +37,5 @@ func TestQueryServer_ModuleAccounts(t *testing.T) {
 	accounts, err = qServer.ModuleAccounts(goCtx, &types.QueryModuleAccountsRequest{})
 	require.NoError(t, err)
 	require.Len(t, accounts.Accounts, len(types.ModuleAccounts))
-	require.Equal(t, accounts.Accounts[0].Balance, sdktypes.NewCoins(sdktypes.NewInt64Coin("uniques", 1*common.MICRO)))
+	require.Equal(t, accounts.Accounts[0].Balance, sdktypes.NewCoins(sdktypes.NewInt64Coin("uniques", 1*common.TO_MICRO)))
 }

@@ -32,8 +32,8 @@ func TestKeeperClosePosition(t *testing.T) {
 		require.NoError(t, vpoolKeeper.CreatePool(
 			ctx,
 			pair,
-			/*quoteAssetReserve*/ sdk.NewDec(10*common.MICRO),
-			/*baseAssetReserve*/ sdk.NewDec(5*common.MICRO),
+			/*quoteAssetReserve*/ sdk.NewDec(10*common.TO_MICRO),
+			/*baseAssetReserve*/ sdk.NewDec(5*common.TO_MICRO),
 			vpooltypes.VpoolConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),

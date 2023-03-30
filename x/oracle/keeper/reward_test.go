@@ -25,7 +25,7 @@ func TestKeeperRewardsDistributionMultiVotePeriods(t *testing.T) {
 	fixture, msgServer := Setup(t)
 	votePeriod := fixture.OracleKeeper.VotePeriod(fixture.Ctx)
 
-	rewards := sdk.NewInt64Coin("reward", 1*common.MICRO)
+	rewards := sdk.NewInt64Coin("reward", 1*common.TO_MICRO)
 	valPeriodicRewards := sdk.NewDecCoinsFromCoins(rewards).
 		QuoDec(sdk.NewDec(int64(periods))).
 		QuoDec(sdk.NewDec(int64(validators)))
@@ -75,7 +75,7 @@ func TestAllocateRewardsForUnlistedPair(t *testing.T) {
 		fixture.Ctx,
 		faucetAccountName,
 		asset.Registry.Pair("foo", "bar"), // pair doesn't exist
-		sdk.NewCoins(sdk.NewInt64Coin("reward", 1*common.MICRO)),
+		sdk.NewCoins(sdk.NewInt64Coin("reward", 1*common.TO_MICRO)),
 		1,
 	))
 }

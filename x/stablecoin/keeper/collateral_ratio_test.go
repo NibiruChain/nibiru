@@ -524,13 +524,13 @@ func TestRecollateralize(t *testing.T) {
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(500_000),
 				priceCollStable: sdk.OneDec(),
-				stableSupply:    sdk.NewInt(1 * common.MICRO),
+				stableSupply:    sdk.NewInt(1 * common.TO_MICRO),
 				collRatio:       sdk.MustNewDecFromStr("0.6"),
 				// neededUSD =  (0.6 * 1000e3) - (500e3 *1) = 100_000
 			},
 			priceGovStable: sdk.OneDec(),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(denoms.USDC, 1_000*common.MICRO),
+				sdk.NewInt64Coin(denoms.USDC, 1_000*common.TO_MICRO),
 			),
 
 			expectedNeededUSD: sdk.NewDec(100_000),
@@ -557,13 +557,13 @@ func TestRecollateralize(t *testing.T) {
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(500_000),
 				priceCollStable: sdk.MustNewDecFromStr("1.099999"),
-				stableSupply:    sdk.NewInt(1 * common.MICRO),
+				stableSupply:    sdk.NewInt(1 * common.TO_MICRO),
 				collRatio:       sdk.MustNewDecFromStr("0.7"),
 				// neededUSD =  (0.7 * 1000e3) - (500e3 *1.09999) = 150_000.5
 			},
 			priceGovStable: sdk.NewDec(5),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(denoms.USDC, 1_000*common.MICRO),
+				sdk.NewInt64Coin(denoms.USDC, 1_000*common.TO_MICRO),
 			),
 
 			expectedNeededUSD: sdk.MustNewDecFromStr("150000.5"),
@@ -599,7 +599,7 @@ func TestRecollateralize(t *testing.T) {
 			},
 			expectedNeededUSD: sdk.MustNewDecFromStr("-49.9995"),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(denoms.USDC, 1*common.MICRO),
+				sdk.NewInt64Coin(denoms.USDC, 1*common.TO_MICRO),
 			),
 
 			// Since 'neededUSD' is
@@ -855,13 +855,13 @@ func TestBuyback(t *testing.T) {
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(700_000),
 				priceCollStable: sdk.OneDec(),
-				stableSupply:    sdk.NewInt(1 * common.MICRO),
+				stableSupply:    sdk.NewInt(1 * common.TO_MICRO),
 				collRatio:       sdk.MustNewDecFromStr("0.6"),
 				// neededUSD = (0.6 * 1000e3) - (700e3 *1) = -100_000
 			},
 			priceGovStable: sdk.OneDec(),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(denoms.NIBI, 1*common.MICRO),
+				sdk.NewInt64Coin(denoms.NIBI, 1*common.TO_MICRO),
 			),
 			expectedAccFundsAfter: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.NIBI, 900_000), // accFunds - inGov.Amount
@@ -891,13 +891,13 @@ func TestBuyback(t *testing.T) {
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(850_000),
 				priceCollStable: sdk.MustNewDecFromStr("1.099999"),
-				stableSupply:    sdk.NewInt(1 * common.MICRO),
+				stableSupply:    sdk.NewInt(1 * common.TO_MICRO),
 				collRatio:       sdk.MustNewDecFromStr("0.7"),
 				// neededUSD =  (0.7 * 1000e3) - (850e3 *1.09999) = -234999.15
 			},
 			priceGovStable: sdk.NewDec(5),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(denoms.NIBI, 1*common.MICRO),
+				sdk.NewInt64Coin(denoms.NIBI, 1*common.TO_MICRO),
 			),
 			expectedAccFundsAfter: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.NIBI, 953_000), // accFunds - inGov.Amount
@@ -932,13 +932,13 @@ func TestBuyback(t *testing.T) {
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(700_000),
 				priceCollStable: sdk.OneDec(),
-				stableSupply:    sdk.NewInt(1 * common.MICRO),
+				stableSupply:    sdk.NewInt(1 * common.TO_MICRO),
 				collRatio:       sdk.MustNewDecFromStr("0.6"),
 				// neededUSD = (0.6 * 1000e3) - (700e3 *1) = -100_000
 			},
 			priceGovStable: sdk.OneDec(),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(denoms.NIBI, 1*common.MICRO),
+				sdk.NewInt64Coin(denoms.NIBI, 1*common.TO_MICRO),
 			),
 			expectedAccFundsAfter: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.NIBI, 900_000), // accFunds - inGov.Amount
@@ -965,13 +965,13 @@ func TestBuyback(t *testing.T) {
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(700_000),
 				priceCollStable: sdk.OneDec(),
-				stableSupply:    sdk.NewInt(1 * common.MICRO),
+				stableSupply:    sdk.NewInt(1 * common.TO_MICRO),
 				collRatio:       sdk.MustNewDecFromStr("0.8"),
 				// neededUSD = (0.8 * 1000e3) - (700e3 *1) = 100_000
 			},
 			priceGovStable: sdk.OneDec(),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(denoms.NIBI, 1_000*common.MICRO),
+				sdk.NewInt64Coin(denoms.NIBI, 1_000*common.TO_MICRO),
 			),
 
 			expectedNeededUSD: sdk.NewDec(100_000),
@@ -991,7 +991,7 @@ func TestBuyback(t *testing.T) {
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(700_000),
 				priceCollStable: sdk.OneDec(),
-				stableSupply:    sdk.NewInt(1 * common.MICRO),
+				stableSupply:    sdk.NewInt(1 * common.TO_MICRO),
 				collRatio:       sdk.MustNewDecFromStr("0.6"),
 				// neededUSD = (0.6 * 1000e3) - (700e3 *1) = -100_000
 			},
@@ -1016,13 +1016,13 @@ func TestBuyback(t *testing.T) {
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(700_000),
 				priceCollStable: sdk.OneDec(),
-				stableSupply:    sdk.NewInt(1 * common.MICRO),
+				stableSupply:    sdk.NewInt(1 * common.TO_MICRO),
 				collRatio:       sdk.MustNewDecFromStr("0.6"),
 				// neededUSD = (0.6 * 1000e3) - (700e3 *1) = -100_000
 			},
 			priceGovStable: sdk.OneDec(),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(denoms.NIBI, 1_000*common.MICRO),
+				sdk.NewInt64Coin(denoms.NIBI, 1_000*common.TO_MICRO),
 			),
 
 			expectedNeededUSD: sdk.NewDec(-100_000),
@@ -1041,13 +1041,13 @@ func TestBuyback(t *testing.T) {
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(700_000),
 				priceCollStable: sdk.OneDec(),
-				stableSupply:    sdk.NewInt(1 * common.MICRO),
+				stableSupply:    sdk.NewInt(1 * common.TO_MICRO),
 				collRatio:       sdk.MustNewDecFromStr("0.6"),
 				// neededUSD = (0.6 * 1000e3) - (700e3 *1) = -100_000
 			},
 			priceGovStable: sdk.OneDec(),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(denoms.NIBI, 1_000*common.MICRO),
+				sdk.NewInt64Coin(denoms.NIBI, 1_000*common.TO_MICRO),
 			),
 
 			expectedNeededUSD: sdk.NewDec(-100_000),
@@ -1137,7 +1137,7 @@ func TestBuybackGovAmtForTargetCollRatio(t *testing.T) {
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(700_000),
 				priceCollStable: sdk.OneDec(),
-				stableSupply:    sdk.NewInt(1 * common.MICRO),
+				stableSupply:    sdk.NewInt(1 * common.TO_MICRO),
 				collRatio:       sdk.MustNewDecFromStr("0.6"),
 				// neededUSD = (0.6 * 1000e3) - (700e3 *1) = -100_000
 			},
@@ -1151,7 +1151,7 @@ func TestBuybackGovAmtForTargetCollRatio(t *testing.T) {
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(700_000),
 				priceCollStable: sdk.OneDec(),
-				stableSupply:    sdk.NewInt(1 * common.MICRO),
+				stableSupply:    sdk.NewInt(1 * common.TO_MICRO),
 				collRatio:       sdk.MustNewDecFromStr("0.6"),
 				// neededUSD = (0.6 * 1000e3) - (700e3 *1) = -100_000
 			},
@@ -1167,7 +1167,7 @@ func TestBuybackGovAmtForTargetCollRatio(t *testing.T) {
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(700_000),
 				priceCollStable: sdk.OneDec(),
-				stableSupply:    sdk.NewInt(1 * common.MICRO),
+				stableSupply:    sdk.NewInt(1 * common.TO_MICRO),
 				collRatio:       sdk.MustNewDecFromStr("0.6"),
 				// neededUSD = (0.6 * 1000e3) - (700e3 *1) = -100_000
 			},

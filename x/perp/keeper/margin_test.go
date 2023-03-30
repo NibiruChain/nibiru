@@ -68,8 +68,8 @@ func TestAddMarginSuccess(t *testing.T) {
 			assert.NoError(t, vpoolKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				sdk.NewDec(10*common.MICRO), // 10 tokens
-				sdk.NewDec(5*common.MICRO),  // 5 tokens
+				sdk.NewDec(10*common.TO_MICRO), // 10 tokens
+				sdk.NewDec(5*common.TO_MICRO),  // 5 tokens
 				vpooltypes.VpoolConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"), // 0.1 ratio
@@ -138,8 +138,8 @@ func TestRemoveMargin(t *testing.T) {
 				assert.NoError(t, vpoolKeeper.CreatePool(
 					ctx,
 					pair,
-					/* y */ sdk.NewDec(1*common.MICRO), //
-					/* x */ sdk.NewDec(1*common.MICRO), //
+					/* y */ sdk.NewDec(1*common.TO_MICRO), //
+					/* x */ sdk.NewDec(1*common.TO_MICRO), //
 					vpooltypes.VpoolConfig{
 						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 						FluctuationLimitRatio:  sdk.OneDec(),
@@ -167,8 +167,8 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("Set vpool defined by pair on VpoolKeeper")
 				vpoolKeeper := &nibiruApp.VpoolKeeper
-				quoteReserves := sdk.NewDec(1 * common.MICRO)
-				baseReserves := sdk.NewDec(1 * common.MICRO)
+				quoteReserves := sdk.NewDec(1 * common.TO_MICRO)
+				baseReserves := sdk.NewDec(1 * common.TO_MICRO)
 				assert.NoError(t, vpoolKeeper.CreatePool(
 					ctx,
 					pair,

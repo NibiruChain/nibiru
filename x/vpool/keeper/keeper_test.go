@@ -40,8 +40,8 @@ func TestSwapQuoteForBase(t *testing.T) {
 			baseLimit:                 sdk.NewDec(10),
 			skipFluctuationLimitCheck: false,
 
-			expectedQuoteReserve: sdk.NewDec(10 * common.MICRO),
-			expectedBaseReserve:  sdk.NewDec(5 * common.MICRO),
+			expectedQuoteReserve: sdk.NewDec(10 * common.TO_MICRO),
+			expectedBaseReserve:  sdk.NewDec(5 * common.TO_MICRO),
 			expectedBaseAmount:   sdk.ZeroDec(),
 		},
 		{
@@ -82,7 +82,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 			name:                      "base amount more than base limit in Short",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_REMOVE_FROM_POOL,
-			quoteAmount:               sdk.NewDec(1 * common.MICRO),
+			quoteAmount:               sdk.NewDec(1 * common.TO_MICRO),
 			baseLimit:                 sdk.NewDec(454_500),
 			skipFluctuationLimitCheck: false,
 
@@ -112,7 +112,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 			name:                      "over fluctuation limit fails on add",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_ADD_TO_POOL,
-			quoteAmount:               sdk.NewDec(1 * common.MICRO),
+			quoteAmount:               sdk.NewDec(1 * common.TO_MICRO),
 			baseLimit:                 sdk.NewDec(454_544),
 			skipFluctuationLimitCheck: false,
 
@@ -122,7 +122,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 			name:                      "over fluctuation limit fails on remove",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_REMOVE_FROM_POOL,
-			quoteAmount:               sdk.NewDec(1 * common.MICRO),
+			quoteAmount:               sdk.NewDec(1 * common.TO_MICRO),
 			baseLimit:                 sdk.NewDec(555_556),
 			skipFluctuationLimitCheck: false,
 
@@ -132,11 +132,11 @@ func TestSwapQuoteForBase(t *testing.T) {
 			name:                      "over fluctuation limit allowed on add",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_ADD_TO_POOL,
-			quoteAmount:               sdk.NewDec(1 * common.MICRO),
+			quoteAmount:               sdk.NewDec(1 * common.TO_MICRO),
 			baseLimit:                 sdk.NewDec(454_544),
 			skipFluctuationLimitCheck: true,
 
-			expectedQuoteReserve: sdk.NewDec(11 * common.MICRO),
+			expectedQuoteReserve: sdk.NewDec(11 * common.TO_MICRO),
 			expectedBaseReserve:  sdk.MustNewDecFromStr("4545454.545454545454545455"),
 			expectedBaseAmount:   sdk.MustNewDecFromStr("454545.454545454545454545"),
 		},
@@ -144,11 +144,11 @@ func TestSwapQuoteForBase(t *testing.T) {
 			name:                      "over fluctuation limit allowed on remove",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_REMOVE_FROM_POOL,
-			quoteAmount:               sdk.NewDec(1 * common.MICRO),
+			quoteAmount:               sdk.NewDec(1 * common.TO_MICRO),
 			baseLimit:                 sdk.NewDec(555_556),
 			skipFluctuationLimitCheck: true,
 
-			expectedQuoteReserve: sdk.NewDec(9 * common.MICRO),
+			expectedQuoteReserve: sdk.NewDec(9 * common.TO_MICRO),
 			expectedBaseReserve:  sdk.MustNewDecFromStr("5555555.555555555555555556"),
 			expectedBaseAmount:   sdk.MustNewDecFromStr("555555.555555555555555556"),
 		},
@@ -165,8 +165,8 @@ func TestSwapQuoteForBase(t *testing.T) {
 			assert.NoError(t, vpoolKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				/* quoteAssetReserve */ sdk.NewDec(10*common.MICRO), // 10 tokens
-				/* baseAssetReserve */ sdk.NewDec(5*common.MICRO), // 5 tokens
+				/* quoteAssetReserve */ sdk.NewDec(10*common.TO_MICRO), // 10 tokens
+				/* baseAssetReserve */ sdk.NewDec(5*common.TO_MICRO), // 5 tokens
 				types.VpoolConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
@@ -225,8 +225,8 @@ func TestSwapBaseForQuote(t *testing.T) {
 			quoteLimit:                sdk.ZeroDec(),
 			skipFluctuationLimitCheck: false,
 
-			expectedQuoteReserve:     sdk.NewDec(10 * common.MICRO),
-			expectedBaseReserve:      sdk.NewDec(5 * common.MICRO),
+			expectedQuoteReserve:     sdk.NewDec(10 * common.TO_MICRO),
+			expectedBaseReserve:      sdk.NewDec(5 * common.TO_MICRO),
 			expectedQuoteAssetAmount: sdk.ZeroDec(),
 		},
 		{
@@ -297,7 +297,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 			name:                      "over fluctuation limit fails on add",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_ADD_TO_POOL,
-			baseAmt:                   sdk.NewDec(1 * common.MICRO),
+			baseAmt:                   sdk.NewDec(1 * common.TO_MICRO),
 			quoteLimit:                sdk.NewDec(1_666_666),
 			skipFluctuationLimitCheck: false,
 
@@ -307,7 +307,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 			name:                      "over fluctuation limit fails on remove",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_REMOVE_FROM_POOL,
-			baseAmt:                   sdk.NewDec(1 * common.MICRO),
+			baseAmt:                   sdk.NewDec(1 * common.TO_MICRO),
 			quoteLimit:                sdk.NewDec(2_500_001),
 			skipFluctuationLimitCheck: false,
 
@@ -317,24 +317,24 @@ func TestSwapBaseForQuote(t *testing.T) {
 			name:                      "over fluctuation limit allowed on add",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_ADD_TO_POOL,
-			baseAmt:                   sdk.NewDec(1 * common.MICRO),
+			baseAmt:                   sdk.NewDec(1 * common.TO_MICRO),
 			quoteLimit:                sdk.NewDec(1_666_666),
 			skipFluctuationLimitCheck: true,
 
 			expectedQuoteReserve:     sdk.MustNewDecFromStr("8333333.333333333333333333"),
-			expectedBaseReserve:      sdk.NewDec(6 * common.MICRO),
+			expectedBaseReserve:      sdk.NewDec(6 * common.TO_MICRO),
 			expectedQuoteAssetAmount: sdk.MustNewDecFromStr("1666666.666666666666666667"),
 		},
 		{
 			name:                      "over fluctuation limit allowed on remove",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_REMOVE_FROM_POOL,
-			baseAmt:                   sdk.NewDec(1 * common.MICRO),
+			baseAmt:                   sdk.NewDec(1 * common.TO_MICRO),
 			quoteLimit:                sdk.NewDec(2_500_001),
 			skipFluctuationLimitCheck: true,
 
 			expectedQuoteReserve:     sdk.NewDec(12_500_000),
-			expectedBaseReserve:      sdk.NewDec(4 * common.MICRO),
+			expectedBaseReserve:      sdk.NewDec(4 * common.TO_MICRO),
 			expectedQuoteAssetAmount: sdk.NewDec(2_500_000),
 		},
 	}
@@ -351,8 +351,8 @@ func TestSwapBaseForQuote(t *testing.T) {
 			assert.NoError(t, vpoolKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				/* quoteAssetReserve */ sdk.NewDec(10*common.MICRO), // 10 tokens
-				/* baseAssetReserve */ sdk.NewDec(5*common.MICRO), // 5 tokens
+				/* quoteAssetReserve */ sdk.NewDec(10*common.TO_MICRO), // 10 tokens
+				/* baseAssetReserve */ sdk.NewDec(5*common.TO_MICRO), // 5 tokens
 				types.VpoolConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
@@ -398,8 +398,8 @@ func TestGetVpools(t *testing.T) {
 	assert.NoError(t, vpoolKeeper.CreatePool(
 		ctx,
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-		sdk.NewDec(10*common.MICRO),
-		sdk.NewDec(5*common.MICRO),
+		sdk.NewDec(10*common.TO_MICRO),
+		sdk.NewDec(5*common.TO_MICRO),
 		types.VpoolConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),
@@ -411,8 +411,8 @@ func TestGetVpools(t *testing.T) {
 	assert.NoError(t, vpoolKeeper.CreatePool(
 		ctx,
 		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-		sdk.NewDec(5*common.MICRO),
-		sdk.NewDec(10*common.MICRO),
+		sdk.NewDec(5*common.TO_MICRO),
+		sdk.NewDec(10*common.TO_MICRO),
 		types.VpoolConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),
@@ -428,9 +428,9 @@ func TestGetVpools(t *testing.T) {
 
 	require.EqualValues(t, pools[0], types.Vpool{
 		Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-		BaseAssetReserve:  sdk.NewDec(5 * common.MICRO),
-		QuoteAssetReserve: sdk.NewDec(10 * common.MICRO),
-		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(5 * 10 * common.MICRO * common.MICRO)),
+		BaseAssetReserve:  sdk.NewDec(5 * common.TO_MICRO),
+		QuoteAssetReserve: sdk.NewDec(10 * common.TO_MICRO),
+		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(5 * 10 * common.TO_MICRO * common.TO_MICRO)),
 		Config: types.VpoolConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),
@@ -441,9 +441,9 @@ func TestGetVpools(t *testing.T) {
 	})
 	require.EqualValues(t, pools[1], types.Vpool{
 		Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-		BaseAssetReserve:  sdk.NewDec(10 * common.MICRO),
-		QuoteAssetReserve: sdk.NewDec(5 * common.MICRO),
-		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(5 * 10 * common.MICRO * common.MICRO)),
+		BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
+		QuoteAssetReserve: sdk.NewDec(5 * common.TO_MICRO),
+		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(5 * 10 * common.TO_MICRO * common.TO_MICRO)),
 		Config: types.VpoolConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),
