@@ -84,7 +84,7 @@ func TestSubtractPoolAssetBalance(t *testing.T) {
 			pool: Pool{
 				PoolAssets: []PoolAsset{
 					{
-						Token: sdk.NewInt64Coin("aaa", 1*common.Precision),
+						Token: sdk.NewInt64Coin("aaa", 1*common.TO_MICRO),
 					},
 				},
 			},
@@ -97,12 +97,12 @@ func TestSubtractPoolAssetBalance(t *testing.T) {
 			pool: Pool{
 				PoolAssets: []PoolAsset{
 					{
-						Token: sdk.NewInt64Coin("aaa", 1*common.Precision),
+						Token: sdk.NewInt64Coin("aaa", 1*common.TO_MICRO),
 					},
 				},
 			},
 			tokenDenom:    "aaa",
-			subAmt:        sdk.NewInt(1 * common.Precision),
+			subAmt:        sdk.NewInt(1 * common.TO_MICRO),
 			expectedCoins: nil,
 		},
 	} {

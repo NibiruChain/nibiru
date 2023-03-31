@@ -255,7 +255,7 @@ func TestJoinPoolHappyPath(t *testing.T) {
 						Token: sdk.NewInt64Coin("bbb", 1_403_945),
 					},
 				},
-				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1*common.Precision),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1*common.TO_MICRO),
 				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: PoolType_BALANCER},
 			},
 			tokensIn: sdk.NewCoins(
@@ -290,7 +290,7 @@ func TestJoinPoolHappyPath(t *testing.T) {
 						Token: sdk.NewInt64Coin("bbb", 1_403_945),
 					},
 				},
-				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1*common.Precision),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1*common.TO_MICRO),
 				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: PoolType_STABLESWAP},
 			},
 			tokensIn: sdk.NewCoins(
@@ -424,7 +424,7 @@ func TestJoinPoolAllTokens(t *testing.T) {
 						Weight: sdk.NewInt(1 << 30),
 					},
 				},
-				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1*common.Precision),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1*common.TO_MICRO),
 				TotalWeight: sdk.NewInt(2 << 30),
 				PoolParams:  PoolParams{PoolType: PoolType_BALANCER, SwapFee: sdk.ZeroDec()},
 			},
@@ -463,7 +463,7 @@ func TestJoinPoolAllTokens(t *testing.T) {
 						Weight: sdk.NewInt(1 << 30),
 					},
 				},
-				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1*common.Precision),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1*common.TO_MICRO),
 				TotalWeight: sdk.NewInt(2 << 30),
 				PoolParams:  PoolParams{PoolType: PoolType_BALANCER, SwapFee: sdk.ZeroDec()},
 			},
@@ -846,10 +846,10 @@ func TestGetD(t *testing.T) {
 			name: "Compute D - 2 assets, A big, high values - tested against Curve contracts code..",
 			poolAssets: []PoolAsset{
 				{
-					Token: sdk.NewInt64Coin("aaa", 200*common.Precision),
+					Token: sdk.NewInt64Coin("aaa", 200*common.TO_MICRO),
 				},
 				{
-					Token: sdk.NewInt64Coin("bbb", 100*common.Precision),
+					Token: sdk.NewInt64Coin("bbb", 100*common.TO_MICRO),
 				},
 			},
 			amplificationParameter: sdk.NewInt(4000),
