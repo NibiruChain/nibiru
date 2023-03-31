@@ -426,34 +426,33 @@ func TestGetVpools(t *testing.T) {
 
 	require.EqualValues(t, 2, len(pools))
 
-	require.EqualValues(t, pools[0], types.Vpool{
-		Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-		BaseAssetReserve:  sdk.NewDec(5 * common.TO_MICRO),
-		QuoteAssetReserve: sdk.NewDec(10 * common.TO_MICRO),
-		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(5 * 10 * common.TO_MICRO * common.TO_MICRO)),
-		Config: types.VpoolConfig{
+	require.EqualValues(t, pools[0], types.NewVpool(types.ArgsNewVpool{
+		Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+		BaseReserves:  sdk.NewDec(5 * common.TO_MICRO),
+		QuoteReserves: sdk.NewDec(10 * common.TO_MICRO),
+		Config: &types.VpoolConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),
 			MaxOracleSpreadRatio:   sdk.OneDec(),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
-	})
-	require.EqualValues(t, pools[1], types.Vpool{
-		Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-		BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
-		QuoteAssetReserve: sdk.NewDec(5 * common.TO_MICRO),
-		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(5 * 10 * common.TO_MICRO * common.TO_MICRO)),
-		Config: types.VpoolConfig{
+	}))
+	require.EqualValues(t, pools[1], types.NewVpool(types.ArgsNewVpool{
+		Pair:          asset.Registry.Pair(denoms.ETH, denoms.NUSD),
+		BaseReserves:  sdk.NewDec(10 * common.TO_MICRO),
+		QuoteReserves: sdk.NewDec(5 * common.TO_MICRO),
+		Config: &types.VpoolConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),
 			MaxOracleSpreadRatio:   sdk.OneDec(),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
-	})
+	}))
 }
 
+// TODO
 func TestCheckFluctuationLimitRatio(t *testing.T) {
 	tests := []struct {
 		name              string
@@ -664,7 +663,7 @@ func TestGetMaintenanceMarginRatio(t *testing.T) {
 				QuoteAssetReserve: sdk.OneDec(),
 				BaseAssetReserve:  sdk.OneDec(),
 				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1)),
-				Config: types.DefaultVpoolConfig().
+				Config: *types.DefaultVpoolConfig().
 					WithMaintenanceMarginRatio(sdk.MustNewDecFromStr("0.9876")),
 			},
 			expectedMaintenanceMarginRatio: sdk.MustNewDecFromStr("0.9876"),
@@ -676,7 +675,7 @@ func TestGetMaintenanceMarginRatio(t *testing.T) {
 				QuoteAssetReserve: sdk.OneDec(),
 				BaseAssetReserve:  sdk.OneDec(),
 				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1)),
-				Config: types.DefaultVpoolConfig().
+				Config: *types.DefaultVpoolConfig().
 					WithMaintenanceMarginRatio(sdk.MustNewDecFromStr("0.4242")),
 			},
 			expectedMaintenanceMarginRatio: sdk.MustNewDecFromStr("0.4242"),

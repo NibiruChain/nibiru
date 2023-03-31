@@ -7,48 +7,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 )
 
-// String returns the string representation of the pool. Note that this differs
-// from the default output of the proto-generated 'String' method.
-func (pool *Vpool) String() string {
-	elems := []string{
-		fmt.Sprintf("pair: %s", pool.Pair),
-		fmt.Sprintf("base_reserves: %s", pool.BaseAssetReserve),
-		fmt.Sprintf("quote_reserves: %s", pool.QuoteAssetReserve),
-		fmt.Sprintf("sqrt_depth: %s", pool.SqrtDepth),
-		fmt.Sprintf("config: %s", &pool.Config),
-	}
-	elemString := strings.Join(elems, ", ")
-	return "{ " + elemString + " }"
-}
-
-// HasEnoughQuoteReserve returns true if there is enough quote reserve based on
-// quoteReserve * tradeLimitRatio
-func (vpool *Vpool) HasEnoughQuoteReserve(quoteAmount sdk.Dec) bool {
-	return vpool.QuoteAssetReserve.Mul(vpool.Config.TradeLimitRatio).GTE(quoteAmount.Abs())
-}
-
-// HasEnoughBaseReserve returns true if there is enough base reserve based on
-// baseReserve * tradeLimitRatio
-func (vpool *Vpool) HasEnoughBaseReserve(baseAmount sdk.Dec) bool {
-	return vpool.BaseAssetReserve.Mul(vpool.Config.TradeLimitRatio).GTE(baseAmount.Abs())
-}
-
-func (vpool *Vpool) HasEnoughReservesForTrade(
-	quoteAmtAbs sdk.Dec, baseAmtAbs sdk.Dec,
-) (err error) {
-	if !vpool.HasEnoughQuoteReserve(quoteAmtAbs) {
-		return ErrOverTradingLimit.Wrapf(
-			"quote amount %s is over trading limit", quoteAmtAbs)
-	}
-	if !vpool.HasEnoughBaseReserve(baseAmtAbs) {
-		return ErrOverTradingLimit.Wrapf(
-			"base amount %s is over trading limit", baseAmtAbs)
-	}
-
-	return nil
-}
+// ----------------------------------------------------------------------------
+// Vpool - core functions
+// ----------------------------------------------------------------------------
 
 /*
 GetBaseAmountByQuoteAmount returns the amount of base asset you will get out
@@ -81,22 +45,6 @@ func (vpool *Vpool) GetBaseAmountByQuoteAmount(
 	baseOutAbs = baseReservesAfter.Sub(vpool.BaseAssetReserve).Abs()
 
 	return baseOutAbs, nil
-}
-
-func (vpool *Vpool) ComputeSqrtDepth() (sqrtDepth sdk.Dec, err error) {
-	liqDepth := vpool.QuoteAssetReserve.Mul(vpool.BaseAssetReserve)
-	return common.SqrtDec(liqDepth)
-}
-
-func (vpool *Vpool) InitLiqDepth() (Vpool, error) {
-	sqrtDepth, err := vpool.ComputeSqrtDepth()
-	if err != nil {
-		return Vpool{}, err
-	}
-
-	pool := *vpool
-	pool.SqrtDepth = sqrtDepth
-	return pool, nil
 }
 
 /*
@@ -135,6 +83,16 @@ func (vpool *Vpool) GetQuoteAmountByBaseAmount(
 	return quoteOutAbs, nil
 }
 
+// GetMarkPrice returns the price of the asset.
+func (vpool Vpool) GetMarkPrice() sdk.Dec {
+	if vpool.BaseAssetReserve.IsNil() || vpool.BaseAssetReserve.IsZero() ||
+		vpool.QuoteAssetReserve.IsNil() || vpool.QuoteAssetReserve.IsZero() {
+		return sdk.ZeroDec()
+	}
+
+	return vpool.QuoteAssetReserve.Quo(vpool.BaseAssetReserve)
+}
+
 // AddToQuoteAssetReserve adds 'amount' to the quote asset reserves
 // The 'amount' is not assumed to be positive.
 func (vpool *Vpool) AddToQuoteAssetReserve(amount sdk.Dec) {
@@ -147,32 +105,63 @@ func (vpool *Vpool) AddToBaseAssetReserve(amount sdk.Dec) {
 	vpool.BaseAssetReserve = vpool.BaseAssetReserve.Add(amount)
 }
 
-// ValidateReserves checks that reserves are positive.
-func (vpool *Vpool) ValidateReserves() error {
-	if !vpool.QuoteAssetReserve.IsPositive() || !vpool.BaseAssetReserve.IsPositive() {
-		return ErrNonPositiveReserves.Wrap("pool: " + vpool.String())
+type ArgsNewVpool struct {
+	Pair          asset.Pair
+	BaseReserves  sdk.Dec
+	QuoteReserves sdk.Dec
+	Config        *VpoolConfig
+}
+
+func NewVpool(args ArgsNewVpool) Vpool {
+	var config VpoolConfig
+	if args.Config != nil {
+		config = *args.Config
 	} else {
-		return nil
+		config = *DefaultVpoolConfig()
+	}
+
+	return Vpool{
+		Pair:              args.Pair,
+		BaseAssetReserve:  args.BaseReserves,
+		QuoteAssetReserve: args.QuoteReserves,
+		Config:            config,
+		SqrtDepth:         common.MustSqrtDec(args.QuoteReserves.Mul(args.BaseReserves)),
 	}
 }
 
-// ValidateLiquidityDepth checks that reserves are positive.
-func (vpool *Vpool) ValidateLiquidityDepth() error {
-	computedSqrtDepth, err := vpool.ComputeSqrtDepth()
+func (vpool *Vpool) ComputeSqrtDepth() (sqrtDepth sdk.Dec, err error) {
+	liqDepth := vpool.QuoteAssetReserve.Mul(vpool.BaseAssetReserve)
+	return common.SqrtDec(liqDepth)
+}
+
+func (vpool *Vpool) InitLiqDepth() (Vpool, error) {
+	sqrtDepth, err := vpool.ComputeSqrtDepth()
 	if err != nil {
-		return err
+		return Vpool{}, err
 	}
 
-	if !vpool.SqrtDepth.IsPositive() {
-		return ErrLiquidityDepth.Wrap(
-			"liq depth must be positive. pool: " + vpool.String())
-	} else if !vpool.SqrtDepth.Sub(computedSqrtDepth).Abs().LTE(sdk.NewDec(1)) {
-		return ErrLiquidityDepth.Wrap(
-			"computed sqrt and current sqrt are mismatched. pool: " + vpool.String())
-	} else {
-		return nil
-	}
+	pool := *vpool
+	pool.SqrtDepth = sqrtDepth
+	return pool, nil
 }
+
+// String returns the string representation of the pool. Note that this differs
+// from the default output of the proto-generated 'String' method.
+func (pool *Vpool) String() string {
+	elems := []string{
+		fmt.Sprintf("pair: %s", pool.Pair),
+		fmt.Sprintf("base_reserves: %s", pool.BaseAssetReserve),
+		fmt.Sprintf("quote_reserves: %s", pool.QuoteAssetReserve),
+		fmt.Sprintf("sqrt_depth: %s", pool.SqrtDepth),
+		fmt.Sprintf("config: %s", &pool.Config),
+	}
+	elemString := strings.Join(elems, ", ")
+	return "{ " + elemString + " }"
+}
+
+// ----------------------------------------------------------------------------
+// VpoolConfig
+// ----------------------------------------------------------------------------
 
 func (cfg *VpoolConfig) Validate() error {
 	// trade limit ratio always between 0 and 1
@@ -207,6 +196,61 @@ func (cfg *VpoolConfig) Validate() error {
 	return nil
 }
 
+func DefaultVpoolConfig() *VpoolConfig {
+	return &VpoolConfig{
+		TradeLimitRatio:        sdk.MustNewDecFromStr("0.1"),
+		FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
+		MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
+		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+		// 0.0625 = 1 / 16. This implies that an effective leverage of 16x is
+		// what defines the liquidation threshold and maintenance margin ratio.
+		MaxLeverage: sdk.NewDec(10),
+	}
+}
+
+func (poolCfg *VpoolConfig) SetConfig(cfg VpoolConfig) *VpoolConfig {
+	poolCfg.TradeLimitRatio = cfg.TradeLimitRatio
+	poolCfg.FluctuationLimitRatio = cfg.FluctuationLimitRatio
+	poolCfg.MaxOracleSpreadRatio = cfg.MaxOracleSpreadRatio
+	poolCfg.MaintenanceMarginRatio = cfg.MaintenanceMarginRatio
+	poolCfg.MaxLeverage = cfg.MaxLeverage
+	return poolCfg
+}
+
+func (poolCfg *VpoolConfig) WithTradeLimitRatio(value sdk.Dec) *VpoolConfig {
+	newPoolCfg := new(VpoolConfig).SetConfig(*poolCfg)
+	newPoolCfg.TradeLimitRatio = value
+	return newPoolCfg
+}
+
+func (poolCfg *VpoolConfig) WithFluctuationLimitRatio(value sdk.Dec) *VpoolConfig {
+	newPoolCfg := new(VpoolConfig).SetConfig(*poolCfg)
+	newPoolCfg.FluctuationLimitRatio = value
+	return newPoolCfg
+}
+
+func (poolCfg *VpoolConfig) WithMaxOracleSpreadRatio(value sdk.Dec) *VpoolConfig {
+	newPoolCfg := new(VpoolConfig).SetConfig(*poolCfg)
+	newPoolCfg.MaxOracleSpreadRatio = value
+	return newPoolCfg
+}
+
+func (poolCfg *VpoolConfig) WithMaintenanceMarginRatio(value sdk.Dec) *VpoolConfig {
+	newPoolCfg := new(VpoolConfig).SetConfig(*poolCfg)
+	newPoolCfg.MaintenanceMarginRatio = value
+	return newPoolCfg
+}
+
+func (poolCfg *VpoolConfig) WithMaxLeverage(value sdk.Dec) *VpoolConfig {
+	newPoolCfg := new(VpoolConfig).SetConfig(*poolCfg)
+	newPoolCfg.MaxLeverage = value
+	return newPoolCfg
+}
+
+// ----------------------------------------------------------------------------
+// Vpool - validation functions
+// ----------------------------------------------------------------------------
+
 func (vpool *Vpool) Validate() error {
 	if err := vpool.Pair.Validate(); err != nil {
 		return fmt.Errorf("invalid asset pair: %w", err)
@@ -228,14 +272,58 @@ func (vpool *Vpool) Validate() error {
 	return nil
 }
 
-// GetMarkPrice returns the price of the asset.
-func (vpool Vpool) GetMarkPrice() sdk.Dec {
-	if vpool.BaseAssetReserve.IsNil() || vpool.BaseAssetReserve.IsZero() ||
-		vpool.QuoteAssetReserve.IsNil() || vpool.QuoteAssetReserve.IsZero() {
-		return sdk.ZeroDec()
+// HasEnoughQuoteReserve returns true if there is enough quote reserve based on
+// quoteReserve * tradeLimitRatio
+func (vpool *Vpool) HasEnoughQuoteReserve(quoteAmount sdk.Dec) bool {
+	return vpool.QuoteAssetReserve.Mul(vpool.Config.TradeLimitRatio).GTE(quoteAmount.Abs())
+}
+
+// HasEnoughBaseReserve returns true if there is enough base reserve based on
+// baseReserve * tradeLimitRatio
+func (vpool *Vpool) HasEnoughBaseReserve(baseAmount sdk.Dec) bool {
+	return vpool.BaseAssetReserve.Mul(vpool.Config.TradeLimitRatio).GTE(baseAmount.Abs())
+}
+
+func (vpool *Vpool) HasEnoughReservesForTrade(
+	quoteAmtAbs sdk.Dec, baseAmtAbs sdk.Dec,
+) (err error) {
+	if !vpool.HasEnoughQuoteReserve(quoteAmtAbs) {
+		return ErrOverTradingLimit.Wrapf(
+			"quote amount %s is over trading limit", quoteAmtAbs)
+	}
+	if !vpool.HasEnoughBaseReserve(baseAmtAbs) {
+		return ErrOverTradingLimit.Wrapf(
+			"base amount %s is over trading limit", baseAmtAbs)
 	}
 
-	return vpool.QuoteAssetReserve.Quo(vpool.BaseAssetReserve)
+	return nil
+}
+
+// ValidateReserves checks that reserves are positive.
+func (vpool *Vpool) ValidateReserves() error {
+	if !vpool.QuoteAssetReserve.IsPositive() || !vpool.BaseAssetReserve.IsPositive() {
+		return ErrNonPositiveReserves.Wrap("pool: " + vpool.String())
+	} else {
+		return nil
+	}
+}
+
+// ValidateLiquidityDepth checks that reserves are positive.
+func (vpool *Vpool) ValidateLiquidityDepth() error {
+	computedSqrtDepth, err := vpool.ComputeSqrtDepth()
+	if err != nil {
+		return err
+	}
+
+	if !vpool.SqrtDepth.IsPositive() {
+		return ErrLiquidityDepth.Wrap(
+			"liq depth must be positive. pool: " + vpool.String())
+	} else if !vpool.SqrtDepth.Sub(computedSqrtDepth).Abs().LTE(sdk.NewDec(1)) {
+		return ErrLiquidityDepth.Wrap(
+			"computed sqrt and current sqrt are mismatched. pool: " + vpool.String())
+	} else {
+		return nil
+	}
 }
 
 /*
@@ -306,44 +394,4 @@ func (dir Direction) ToMultiplier() int64 {
 		dirMult = -1
 	}
 	return dirMult
-}
-
-func DefaultVpoolConfig() VpoolConfig {
-	return VpoolConfig{
-		TradeLimitRatio:        sdk.MustNewDecFromStr("0.1"),
-		FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
-		MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
-		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-		MaxLeverage:            sdk.NewDec(10),
-	}
-}
-
-func (poolCfg VpoolConfig) WithTradeLimitRatio(value sdk.Dec) VpoolConfig {
-	newPoolCfg := VpoolConfig(poolCfg)
-	newPoolCfg.TradeLimitRatio = value
-	return newPoolCfg
-}
-
-func (poolCfg VpoolConfig) WithFluctuationLimitRatio(value sdk.Dec) VpoolConfig {
-	newPoolCfg := VpoolConfig(poolCfg)
-	newPoolCfg.FluctuationLimitRatio = value
-	return newPoolCfg
-}
-
-func (poolCfg VpoolConfig) WithMaxOracleSpreadRatio(value sdk.Dec) VpoolConfig {
-	newPoolCfg := VpoolConfig(poolCfg)
-	newPoolCfg.MaxOracleSpreadRatio = value
-	return newPoolCfg
-}
-
-func (poolCfg VpoolConfig) WithMaintenanceMarginRatio(value sdk.Dec) VpoolConfig {
-	newPoolCfg := VpoolConfig(poolCfg)
-	newPoolCfg.MaintenanceMarginRatio = value
-	return newPoolCfg
-}
-
-func (poolCfg VpoolConfig) WithMaxLeverage(value sdk.Dec) VpoolConfig {
-	newPoolCfg := VpoolConfig(poolCfg)
-	newPoolCfg.MaxLeverage = value
-	return newPoolCfg
 }
