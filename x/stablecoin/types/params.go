@@ -28,7 +28,7 @@ func NewParams(
 	priceUpperBound sdk.Dec,
 	isCollateralRatioValid bool,
 ) Params {
-	million := sdk.NewDec(1 * common.Precision)
+	million := sdk.NewDec(1 * common.TO_MICRO)
 	collRatioInt := collRatio.Mul(million).RoundInt().Int64()
 	feeRationInt := feeRatio.Mul(million).RoundInt().Int64()
 	efFeeRatioInt := efFeeRatio.Mul(million).RoundInt().Int64()
@@ -176,7 +176,7 @@ func validateCollRatio(i interface{}) error {
 		return err
 	}
 
-	if collRatio > 1*common.Precision {
+	if collRatio > 1*common.TO_MICRO {
 		return fmt.Errorf("collateral ratio is above max value(1e6): %d", collRatio)
 	} else if collRatio < 0 {
 		return fmt.Errorf("collateral Ratio is negative: %d", collRatio)
@@ -199,7 +199,7 @@ func validateBonusRateRecoll(i interface{}) error {
 		return err
 	}
 
-	if bonusRateRecoll > 1*common.Precision {
+	if bonusRateRecoll > 1*common.TO_MICRO {
 		return fmt.Errorf("collateral Ratio is above max value(1e6): %d", bonusRateRecoll)
 	} else if bonusRateRecoll < 0 {
 		return fmt.Errorf("collateral Ratio is negative: %d", bonusRateRecoll)
@@ -214,7 +214,7 @@ func validateFeeRatio(i interface{}) error {
 		return err
 	}
 
-	if feeRatio > 1*common.Precision {
+	if feeRatio > 1*common.TO_MICRO {
 		return fmt.Errorf("fee ratio is above max value(1e6): %d", feeRatio)
 	} else if feeRatio < 0 {
 		return fmt.Errorf("fee ratio is negative: %d", feeRatio)
@@ -229,7 +229,7 @@ func validateEfFeeRatio(i interface{}) error {
 		return err
 	}
 
-	if efFeeRatio > 1*common.Precision {
+	if efFeeRatio > 1*common.TO_MICRO {
 		return fmt.Errorf("stable EF fee ratio is above max value(1e6): %d", efFeeRatio)
 	} else if efFeeRatio < 0 {
 		return fmt.Errorf("stable EF fee ratio is negative: %d", efFeeRatio)
@@ -252,7 +252,7 @@ func validateAdjustmentStep(i interface{}) error {
 		return err
 	}
 
-	if adjustmentStep > 1*common.Precision {
+	if adjustmentStep > 1*common.TO_MICRO {
 		return fmt.Errorf("AdjustmentStep is above max value(1e6): %d", adjustmentStep)
 	} else if adjustmentStep < 0 {
 		return fmt.Errorf("AdjustmentStep is negative: %d", adjustmentStep)
@@ -267,7 +267,7 @@ func validatePriceLowerBound(i interface{}) error {
 		return err
 	}
 
-	if priceLowerBound > 1*common.Precision {
+	if priceLowerBound > 1*common.TO_MICRO {
 		return fmt.Errorf("PriceLowerBound is above max value(1e6): %d", priceLowerBound)
 	} else if priceLowerBound < 0 {
 		return fmt.Errorf("PriceLowerBound is negative: %d", priceLowerBound)
@@ -282,7 +282,7 @@ func validatePriceUpperBound(i interface{}) error {
 		return err
 	}
 
-	if priceUpperBound > 2*common.Precision {
+	if priceUpperBound > 2*common.TO_MICRO {
 		return fmt.Errorf("PriceUpperBound is above max value(1e6): %d", priceUpperBound)
 	} else if priceUpperBound < 0 {
 		return fmt.Errorf("PriceUpperBound is negative: %d", priceUpperBound)

@@ -2,7 +2,6 @@ package cli_test
 
 import (
 	"fmt"
-	"math"
 	"os"
 	"testing"
 
@@ -38,8 +37,9 @@ func TestIntegrationTestSuite(t *testing.T) {
 var START_VPOOLS = map[asset.Pair]vpooltypes.Vpool{
 	asset.Registry.Pair(denoms.ETH, denoms.NUSD): {
 		Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-		BaseAssetReserve:  sdk.NewDec(10 * common.Precision),
-		QuoteAssetReserve: sdk.NewDec(60_000 * common.Precision),
+		BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
+		QuoteAssetReserve: sdk.NewDec(60_000 * common.TO_MICRO),
+		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(600_000 * common.TO_MICRO * common.TO_MICRO)),
 		Config: vpooltypes.VpoolConfig{
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
@@ -51,7 +51,8 @@ var START_VPOOLS = map[asset.Pair]vpooltypes.Vpool{
 	asset.Registry.Pair(denoms.NIBI, denoms.NUSD): {
 		Pair:              asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 		BaseAssetReserve:  sdk.NewDec(500_000),
-		QuoteAssetReserve: sdk.NewDec(5 * common.Precision),
+		QuoteAssetReserve: sdk.NewDec(5 * common.TO_MICRO),
+		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(5 * 500_000 * common.TO_MICRO)),
 		Config: vpooltypes.VpoolConfig{
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
@@ -109,8 +110,8 @@ func (s *IntegrationTestSuite) TestCmdCreatePoolProposal() {
 		Title:             "Create ETH:USD pool",
 		Description:       "Creates an ETH:USD pool",
 		Pair:              "ETH:USD",
-		QuoteAssetReserve: sdk.NewDec(1 * common.Precision),
-		BaseAssetReserve:  sdk.NewDec(1 * common.Precision),
+		QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
+		BaseAssetReserve:  sdk.NewDec(1 * common.TO_MICRO),
 		Config: vpooltypes.VpoolConfig{
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.05"),
@@ -158,6 +159,7 @@ func (s *IntegrationTestSuite) TestCmdCreatePoolProposal() {
 				Pair:              proposal.Pair,
 				BaseAssetReserve:  proposal.BaseAssetReserve,
 				QuoteAssetReserve: proposal.QuoteAssetReserve,
+				SqrtDepth:         common.MustSqrtDec(proposal.BaseAssetReserve.Mul(proposal.QuoteAssetReserve)),
 				Config:            proposal.Config,
 			}, pool)
 			found = true
@@ -240,6 +242,7 @@ func (s *IntegrationTestSuite) TestCmdEditPoolConfigProposal() {
 				Pair:              proposal.Pair,
 				BaseAssetReserve:  startVpool.BaseAssetReserve,
 				QuoteAssetReserve: startVpool.QuoteAssetReserve,
+				SqrtDepth:         startVpool.SqrtDepth,
 				Config:            proposal.Config,
 			}, vpool)
 			found = true
@@ -256,13 +259,15 @@ func (s *IntegrationTestSuite) TestCmdEditSwapInvariantsProposal() {
 	// ----------------------------------------------------------------------
 	startVpool := START_VPOOLS[asset.Registry.Pair(denoms.NIBI, denoms.NUSD)]
 	proposal := &vpooltypes.EditSwapInvariantsProposal{
-		Title:       "NIP-4: Change the swap invariant for ATOM, OSMO, and BTC.",
+		Title:       "NIP-4: Change the swap invariant for NIBI.",
 		Description: "increase swap invariant for many virtual pools",
 		SwapInvariantMaps: []vpooltypes.EditSwapInvariantsProposal_SwapInvariantMultiple{
 			{Pair: startVpool.Pair, Multiplier: sdk.NewDec(100)},
 		},
 	}
-	proposalFile := sdktestutil.WriteToNewTempFile(s.T(), string(val.ClientCtx.Codec.MustMarshalJSON(proposal)))
+	proposalFile := sdktestutil.WriteToNewTempFile(
+		s.T(), string(val.ClientCtx.Codec.MustMarshalJSON(proposal)),
+	)
 	contents, err := os.ReadFile(proposalFile.Name())
 	s.Require().NoError(err)
 
@@ -299,27 +304,36 @@ func (s *IntegrationTestSuite) TestCmdEditSwapInvariantsProposal() {
 	testutilcli.PassGovProposal(s.Suite, s.network)
 
 	// ----------------------------------------------------------------------
-	s.T().Log("verify that the newly proposed vpool config has been set")
+	s.T().Log("verify that the newly proposed liquidity depth changes go through")
 	// ----------------------------------------------------------------------
 	s.Require().NoError(s.network.WaitForNextBlock())
 
 	vpoolsQueryResp = new(vpooltypes.QueryAllPoolsResponse)
-	s.Require().NoError(testutilcli.ExecQuery(s.network.Validators[0].ClientCtx, cli.CmdGetVpools(), nil, vpoolsQueryResp))
+	s.Require().NoError(testutilcli.ExecQuery(
+		s.network.Validators[0].ClientCtx, cli.CmdGetVpools(), nil, vpoolsQueryResp,
+	))
 
 	found := false
 	for _, vpool := range vpoolsQueryResp.Pools {
 		proposalPair := proposal.SwapInvariantMaps[0].Pair
-		s.Assert().EqualValues(
-			float64(10),
-			math.Sqrt(proposal.SwapInvariantMaps[0].Multiplier.MustFloat64()))
 
 		if vpool.Pair.Equal(proposalPair) {
-			s.EqualValues(vpooltypes.Vpool{
+			// get multiplier applied to the reserves, which should be 10.
+			multiplierToSqrtDepth := common.MustSqrtDec(proposal.SwapInvariantMaps[0].Multiplier)
+			s.Assert().EqualValues(sdk.NewDec(10).String(), multiplierToSqrtDepth.String())
+
+			// get vpool after proposal
+			vpoolAfter := vpooltypes.Vpool{
 				Pair:              proposalPair,
-				BaseAssetReserve:  vpoolBefore.BaseAssetReserve.MulInt64(10), // multiplier = 100 = (c^2)
-				QuoteAssetReserve: vpoolBefore.QuoteAssetReserve.MulInt64(10),
+				BaseAssetReserve:  vpoolBefore.BaseAssetReserve.Mul(multiplierToSqrtDepth),
+				QuoteAssetReserve: vpoolBefore.QuoteAssetReserve.Mul(multiplierToSqrtDepth),
 				Config:            vpoolBefore.Config,
-			}, vpool)
+			}
+			sqrtDepthAfter, err := vpoolAfter.ComputeSqrtDepth()
+			s.Require().NoError(err)
+			vpoolAfter.SqrtDepth = sqrtDepthAfter
+
+			s.EqualValues(vpoolAfter, vpool)
 			found = true
 		}
 	}

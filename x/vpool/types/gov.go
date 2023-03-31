@@ -52,6 +52,12 @@ func (proposal *CreatePoolProposal) ValidateBasic() error {
 		QuoteAssetReserve: proposal.QuoteAssetReserve,
 		Config:            proposal.Config,
 	}
+	sqrtDepth, err := pool.ComputeSqrtDepth()
+	if err != nil {
+		return err
+	} else {
+		pool.SqrtDepth = sqrtDepth
+	}
 
 	return pool.Validate()
 }

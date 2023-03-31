@@ -81,8 +81,8 @@ func TestMsgServerAddMargin(t *testing.T) {
 			assert.NoError(t, app.VpoolKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				/* quoteReserve */ sdk.NewDec(1*common.Precision),
-				/* baseReserve */ sdk.NewDec(1*common.Precision),
+				/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO),
+				/* baseReserve */ sdk.NewDec(1*common.TO_MICRO),
 				vpooltypes.VpoolConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.OneDec(),
@@ -167,7 +167,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			initialPosition: &types.Position{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.OneDec(),
-				Margin:                          sdk.NewDec(1 * common.Precision),
+				Margin:                          sdk.NewDec(1 * common.TO_MICRO),
 				OpenNotional:                    sdk.OneDec(),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                     1,
@@ -181,7 +181,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			initialPosition: &types.Position{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.OneDec(),
-				Margin:                          sdk.NewDec(1 * common.Precision),
+				Margin:                          sdk.NewDec(1 * common.TO_MICRO),
 				OpenNotional:                    sdk.OneDec(),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                     1,
@@ -202,8 +202,8 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			assert.NoError(t, app.VpoolKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				/* quoteReserve */ sdk.NewDec(1*common.Precision),
-				/* baseReserve */ sdk.NewDec(1*common.Precision),
+				/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO),
+				/* baseReserve */ sdk.NewDec(1*common.TO_MICRO),
 				vpooltypes.VpoolConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.OneDec(),
@@ -289,8 +289,8 @@ func TestMsgServerOpenPosition(t *testing.T) {
 			assert.NoError(t, app.VpoolKeeper.CreatePool(
 				/* ctx */ ctx,
 				/* pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
-				/* baseAssetReserve */ sdk.NewDec(1*common.Precision),
+				/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
+				/* baseAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
 				vpooltypes.VpoolConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.OneDec(),
@@ -376,8 +376,8 @@ func TestMsgServerClosePosition(t *testing.T) {
 			assert.NoError(t, app.VpoolKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
-				/* baseAssetReserve */ sdk.NewDec(1*common.Precision),
+				/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
+				/* baseAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
 				vpooltypes.VpoolConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.OneDec(),
@@ -446,8 +446,8 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	assert.NoError(t, app.VpoolKeeper.CreatePool(
 		/* ctx */ ctx,
 		/* pair */ pair,
-		/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
-		/* baseAssetReserve */ sdk.NewDec(1*common.Precision),
+		/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
+		/* baseAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
 		vpooltypes.VpoolConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),
@@ -556,8 +556,8 @@ func TestMsgServerMultiLiquidate_NotAuthorized(t *testing.T) {
 	assert.NoError(t, app.VpoolKeeper.CreatePool(
 		/* ctx */ ctx,
 		/* pair */ pair,
-		/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
-		/* baseAssetReserve */ sdk.NewDec(1*common.Precision),
+		/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
+		/* baseAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
 		vpooltypes.VpoolConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),
@@ -627,8 +627,8 @@ func TestMsgServerMultiLiquidate_AllFailed(t *testing.T) {
 	assert.NoError(t, app.VpoolKeeper.CreatePool(
 		/* ctx */ ctx,
 		/* pair */ pair,
-		/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
-		/* baseAssetReserve */ sdk.NewDec(1*common.Precision),
+		/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
+		/* baseAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
 		vpooltypes.VpoolConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),

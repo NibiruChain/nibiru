@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 )
 
@@ -20,8 +21,9 @@ func TestGenesisState_Validate(t *testing.T) {
 				Vpools: []Vpool{
 					{
 						Pair:              asset.MustNewPair("btc:usd"),
-						BaseAssetReserve:  sdk.MustNewDecFromStr("100000"),
-						QuoteAssetReserve: sdk.MustNewDecFromStr("100000"),
+						BaseAssetReserve:  sdk.NewDec(100_000),
+						QuoteAssetReserve: sdk.NewDec(100_000),
+						SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1e10)),
 						Config: VpoolConfig{
 							FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.5"),
 							MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.05"),
@@ -32,8 +34,9 @@ func TestGenesisState_Validate(t *testing.T) {
 					},
 					{
 						Pair:              asset.MustNewPair("eth:usd"),
-						BaseAssetReserve:  sdk.MustNewDecFromStr("100000"),
-						QuoteAssetReserve: sdk.MustNewDecFromStr("100000"),
+						BaseAssetReserve:  sdk.NewDec(100_000),
+						QuoteAssetReserve: sdk.NewDec(100_000),
+						SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1e10)),
 						Config: VpoolConfig{
 							FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.5"),
 							MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.05"),
@@ -51,8 +54,9 @@ func TestGenesisState_Validate(t *testing.T) {
 				Vpools: []Vpool{
 					{
 						Pair:              asset.MustNewPair("btc:usd"),
-						BaseAssetReserve:  sdk.MustNewDecFromStr("100000"),
-						QuoteAssetReserve: sdk.MustNewDecFromStr("100000"),
+						BaseAssetReserve:  sdk.NewDec(100_000),
+						QuoteAssetReserve: sdk.NewDec(100_000),
+						SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1e10)),
 						Config: VpoolConfig{
 							FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.5"),
 							MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.05"),
@@ -63,8 +67,9 @@ func TestGenesisState_Validate(t *testing.T) {
 					},
 					{
 						Pair:              asset.MustNewPair("invalid:usd"),
-						BaseAssetReserve:  sdk.MustNewDecFromStr("100000"),
-						QuoteAssetReserve: sdk.MustNewDecFromStr("100000"),
+						BaseAssetReserve:  sdk.NewDec(100_000),
+						QuoteAssetReserve: sdk.NewDec(100_000),
+						SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1e10)),
 						Config: VpoolConfig{
 							FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.5"),
 							MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.5"),
@@ -82,8 +87,9 @@ func TestGenesisState_Validate(t *testing.T) {
 				Vpools: []Vpool{
 					{
 						Pair:              asset.MustNewPair("btc:usd"),
-						BaseAssetReserve:  sdk.MustNewDecFromStr("100000"),
-						QuoteAssetReserve: sdk.MustNewDecFromStr("100000"),
+						BaseAssetReserve:  sdk.NewDec(100_000),
+						QuoteAssetReserve: sdk.NewDec(100_000),
+						SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1e10)),
 						Config: VpoolConfig{
 							FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.5"),
 							MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.05"),
@@ -94,8 +100,9 @@ func TestGenesisState_Validate(t *testing.T) {
 					},
 					{
 						Pair:              asset.MustNewPair("eth:usd"),
-						BaseAssetReserve:  sdk.MustNewDecFromStr("100000"),
-						QuoteAssetReserve: sdk.MustNewDecFromStr("100000"),
+						BaseAssetReserve:  sdk.NewDec(100_000),
+						QuoteAssetReserve: sdk.NewDec(100_000),
+						SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1e10)),
 						Config: VpoolConfig{
 							FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.5"),
 							MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.05"),
@@ -106,8 +113,9 @@ func TestGenesisState_Validate(t *testing.T) {
 					},
 					{
 						Pair:              asset.MustNewPair("eth:usd"),
-						BaseAssetReserve:  sdk.MustNewDecFromStr("100000"),
-						QuoteAssetReserve: sdk.MustNewDecFromStr("100000"),
+						BaseAssetReserve:  sdk.NewDec(100_000),
+						QuoteAssetReserve: sdk.NewDec(100_000),
+						SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1e10)),
 						Config: VpoolConfig{
 							FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.5"),
 							MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.05"),

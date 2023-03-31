@@ -53,7 +53,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			//   = positionResp.ExchangedNotionalValue * liquidationFee / 2
 			//   = 50_000 * 0.1 / 2 = 2500
 			expectedLiquidatorBalance: sdk.NewInt64Coin("NUSD", 2_500),
-			// startingBalance = 1* common.Precision
+			// startingBalance = 1* common.TO_MICRO
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
 			expectedPerpEFBalance: sdk.NewInt64Coin("NUSD", 1_047_550),
 		},
@@ -71,7 +71,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			//   = positionResp.ExchangedNotionalValue * liquidationFee / 2
 			//   = 50_000 * 0.123123 / 2 = 3078.025 → 3078
 			expectedLiquidatorBalance: sdk.NewInt64Coin("NUSD", 3078),
-			// startingBalance = 1* common.Precision
+			// startingBalance = 1* common.TO_MICRO
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
 			expectedPerpEFBalance: sdk.NewInt64Coin("NUSD", 1_046_972),
 		},
@@ -89,8 +89,8 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			assert.NoError(t, vpoolKeeper.CreatePool(
 				ctx,
 				tokenPair,
-				/* quoteAssetReserves */ sdk.NewDec(10*common.Precision),
-				/* baseAssetReserves */ sdk.NewDec(5*common.Precision),
+				/* quoteAssetReserves */ sdk.NewDec(10*common.TO_MICRO),
+				/* baseAssetReserves */ sdk.NewDec(5*common.TO_MICRO),
 				vpooltypes.VpoolConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					FluctuationLimitRatio:  sdk.OneDec(),
@@ -136,7 +136,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 
 			t.Log("Artificially populate Vault and PerpEF to prevent bankKeeper errors")
 			startingModuleFunds := sdk.NewCoins(sdk.NewInt64Coin(
-				tokenPair.QuoteDenom(), 1*common.Precision))
+				tokenPair.QuoteDenom(), 1*common.TO_MICRO))
 			assert.NoError(t, simapp.FundModuleAccount(
 				nibiruApp.BankKeeper, ctx, types.VaultModuleAccount, startingModuleFunds))
 			assert.NoError(t, simapp.FundModuleAccount(
@@ -226,7 +226,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			//   = 50_000 * 0.4 * 0.1 / 2 = 1_000
 			expectedLiquidatorBalance: sdk.NewInt64Coin("yyy", 1_000),
 
-			// startingBalance = 1* common.Precision
+			// startingBalance = 1* common.TO_MICRO
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
 			expectedPerpEFBalance: sdk.NewInt64Coin("yyy", 1_001_050),
 		},
@@ -250,7 +250,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			//   = 50_000 * 0.4 * 0.1 / 2 = 1_000
 			expectedLiquidatorBalance: sdk.NewInt64Coin("yyy", 1_000),
 
-			// startingBalance = 1* common.Precision
+			// startingBalance = 1* common.TO_MICRO
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
 			expectedPerpEFBalance: sdk.NewInt64Coin("yyy", 1_001_050),
 		},
@@ -267,8 +267,8 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			assert.NoError(t, vpoolKeeper.CreatePool(
 				ctx,
 				tokenPair,
-				/* quoteAssetReserves */ sdk.NewDec(10_000*common.Precision*common.Precision),
-				/* baseAssetReserves */ sdk.NewDec(5_000*common.Precision*common.Precision),
+				/* quoteAssetReserves */ sdk.NewDec(10_000*common.TO_MICRO*common.TO_MICRO),
+				/* baseAssetReserves */ sdk.NewDec(5_000*common.TO_MICRO*common.TO_MICRO),
 				vpooltypes.VpoolConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					FluctuationLimitRatio:  sdk.OneDec(),
@@ -315,7 +315,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 
 			t.Log("Artificially populate Vault and PerpEF to prevent bankKeeper errors")
 			startingModuleFunds := sdk.NewCoins(sdk.NewInt64Coin(
-				tokenPair.QuoteDenom(), 1*common.Precision))
+				tokenPair.QuoteDenom(), 1*common.TO_MICRO))
 			assert.NoError(t, simapp.FundModuleAccount(
 				nibiruApp.BankKeeper, ctx, types.VaultModuleAccount, startingModuleFunds))
 			assert.NoError(t, simapp.FundModuleAccount(
@@ -440,8 +440,8 @@ func TestMultiLiquidate(t *testing.T) {
 			assert.NoError(t, app.VpoolKeeper.CreatePool(
 				/* ctx */ ctx,
 				/* pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
-				/* baseAssetReserve */ sdk.NewDec(1*common.Precision),
+				/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
+				/* baseAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
 				vpooltypes.VpoolConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.OneDec(),

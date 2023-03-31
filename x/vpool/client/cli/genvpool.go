@@ -201,6 +201,10 @@ func newVpoolFromAddVpoolGenesisFlags(flagSet *flag.FlagSet,
 			MaxLeverage:            maxLeverage,
 		},
 	}
+	vpool, err = vpool.InitLiqDepth()
+	if err != nil {
+		return
+	}
 
 	return vpool, vpool.Validate()
 }
