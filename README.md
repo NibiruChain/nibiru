@@ -1,13 +1,10 @@
 # Nibiru Chain          <!-- omit in toc -->
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/NibiruChain/nibiru.svg)](https://pkg.go.dev/github.com/NibiruChain/nibiru)
 [![Nibiru Test workflow][badge-go-linter]][workflow-go-linter]
 [![Nibiru Test workflow][badge-go-releaser]][workflow-go-releaser]
-[![Go Reference](https://pkg.go.dev/badge/github.com/NibiruChain/nibiru.svg)](https://pkg.go.dev/github.com/NibiruChain/nibiru)
 [![GitHub][license-badge]](https://github.com/NibiruChain/nibiru/blob/master/LICENSE.md)
-
-<a target="_blank" href="https://discord.gg/nibiru">
-  <img align="right" src="https://dcbadge.vercel.app/api/server/nibiru?style=flat" style="height: 20px">
-</a>
+[![Discord Badge](https://dcbadge.vercel.app/api/server/nibiru?style=flat)](https://discord.gg/nibiru)
 
 **Nibiru Chain** is a proof-of-stake blockchain that unifies leveraged derivatives trading, spot trading, staking, and bonded liquidity provision into a seamless user experience, enabling users of over 40 blockchains to trade with leverage using a suite of composable decentralized applications.
 
@@ -22,14 +19,13 @@
 ## Modules
 
 | Module |  Description |
-| --- | --- | --- |
+| --- | --- | 
 | [common][code-x-common] | Holds helper and utility functions to be utilized by other `x/` modules. |
 | [epochs][code-x-epochs] | Often in the SDK, we would like to run certain code every-so often. The purpose of `epochs` module is to allow other modules to set that they would like to be signaled once every period. So another module can specify it wants to execute code once a week, starting at UTC-time = x. `epochs` creates a generalized epoch interface to other modules so that they can easily be signalled upon such events. |
 | [oracle][code-x-oracle] | Handles the posting of an up-to-date and accurate feed of exchange rates from the validators. | 
 | [perp][code-x-perp] | Powers the Nibi-Perps exchange. This module enables traders to open long and short leveraged positions and houses all of the PnL calculation and liquidation logic. |
 | [spot][code-x-spot] | Responsible for creating, joining, and exiting liquidity pools. It also allows users to swap between two assets in an existing pool. It's a fully functional AMM. |
 | [stablecoin][code-x-stablecoin] | Resonsible for handling mint and redeem transactions with NUSD. |
-| [testutil][code-x-testutil] | Helper functions for unit and integration tests. |
 | [vpool][code-x-vpool] | The vpool module manages the virtual AMM pools (vpools) that support Nibi-Perps. |
 | [wasm][code-x-wasm] | Implements the execution environment for [WebAssembly (WASM) smart contracts](https://book.cosmwasm.com/). |
 
@@ -39,7 +35,6 @@
 [code-x-perp]: https://github.com/NibiruChain/nibiru/tree/master/x/perp
 [code-x-spot]: https://github.com/NibiruChain/nibiru/tree/master/x/spot
 [code-x-stablecoin]: https://github.com/NibiruChain/nibiru/tree/master/x/stablecoin
-[code-x-testutil]: https://github.com/NibiruChain/nibiru/tree/master/x/testutil
 [code-x-vpool]: https://github.com/NibiruChain/nibiru/tree/master/x/vpool
 [code-x-wasm]: https://github.com/NibiruChain/nibiru/tree/master/x/wasm
 
