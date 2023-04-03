@@ -419,6 +419,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 					MaxOracleSpreadRatio:   sdk.OneDec(), // 100%,
 					TradeLimitRatio:        sdk.OneDec(),
 				},
+				sdk.ZeroDec(),
 			))
 			keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, perptypes.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -673,6 +674,7 @@ func TestOpenPositionError(t *testing.T) {
 					MaxOracleSpreadRatio:   sdk.OneDec(), // 100%,
 					TradeLimitRatio:        tc.poolTradeLimitRatio,
 				},
+				sdk.ZeroDec(),
 			))
 			keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, perptypes.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -742,6 +744,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 						MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"), // 100%,
 						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					},
+					sdk.ZeroDec(),
 				))
 
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))

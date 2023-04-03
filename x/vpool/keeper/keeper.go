@@ -195,6 +195,8 @@ func (k Keeper) SwapQuoteForBase(
 		return types.Vpool{}, sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
+	updatedVpool.Bias = updatedVpool.Bias.Add(baseDelta)
+
 	return updatedVpool, baseAmtAbs, err
 }
 

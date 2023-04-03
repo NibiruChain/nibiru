@@ -19,6 +19,7 @@ func (k Keeper) CreatePool(
 	quoteAssetReserve sdk.Dec,
 	baseAssetReserve sdk.Dec,
 	config types.VpoolConfig,
+	bias sdk.Dec,
 ) error {
 	sqrtDepth, err := common.SqrtDec(quoteAssetReserve.Mul(baseAssetReserve))
 	if err != nil {
@@ -30,6 +31,7 @@ func (k Keeper) CreatePool(
 		QuoteAssetReserve: quoteAssetReserve,
 		SqrtDepth:         sqrtDepth,
 		Config:            config,
+		Bias:              bias,
 	}
 
 	err = vpool.Validate()
