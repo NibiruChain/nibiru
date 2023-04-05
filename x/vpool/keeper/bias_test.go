@@ -122,7 +122,7 @@ func TestBiasChangeOnVpool(t *testing.T) {
 				SetBlockNumber(1),
 				SetPairPrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2040)))),
-				OpenPosition(alice, pairBtcUsdc, perptypes.Side_SELL, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				OpenPosition(alice, pairBtcUsdc, perptypes.Side_BUY, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
 			When(
@@ -133,6 +133,25 @@ func TestBiasChangeOnVpool(t *testing.T) {
 					VPool_BiasShouldBeEqualTo(sdk.ZeroDec()), // Bias equal to PositionSize
 				),
 				PositionShouldNotExist(alice, pairBtcUsdc),
+			),
+		TC("open long position and open smaller short").
+			Given(
+				createInitVPool(),
+				SetBlockTime(startBlockTime),
+				SetBlockNumber(1),
+				SetPairPrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2040)))),
+				OpenPosition(alice, pairBtcUsdc, perptypes.Side_BUY, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				MoveToNextBlock(),
+			).
+			When(
+				OpenPosition(alice, pairBtcUsdc, perptypes.Side_SELL, sdk.NewInt(100), sdk.NewDec(10), sdk.ZeroDec()),
+			).
+			Then(
+				VpoolShouldBeEqual(pairBtcUsdc,
+					VPool_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("8999.999919000000729000")), // Bias equal to PositionSize
+				),
+				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("8999.999919000000729000"))),
 			),
 		TC("2 positions, one long, one short with same amount should set Bias to 0").
 			Given(
