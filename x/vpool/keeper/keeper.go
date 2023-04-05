@@ -190,12 +190,12 @@ func (k Keeper) SwapQuoteForBase(
 	quoteAmt = quoteAmtAbs.MulInt64(dir.ToMultiplier())
 	baseDelta := baseAmtAbs.Neg().MulInt64(dir.ToMultiplier())
 
+	vpool.Bias = vpool.Bias.Add(baseAmtAbs.MulInt64(dir.ToMultiplier()))
+
 	updatedVpool, err = k.executeSwap(ctx, vpool, quoteAmt, baseDelta, skipFluctuationLimitCheck)
 	if err != nil {
 		return types.Vpool{}, sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
-
-	updatedVpool.Bias = updatedVpool.Bias.Add(baseDelta)
 
 	return updatedVpool, baseAmtAbs, err
 }

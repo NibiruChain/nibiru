@@ -39,18 +39,15 @@ func createInitVPool() Action {
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			MaxOracleSpreadRatio:   sdk.OneDec(), // 100%,
 			TradeLimitRatio:        sdk.OneDec(),
-		})
+		}, sdk.ZeroDec())
 }
 
 func TestOpenPosition(t *testing.T) {
-	ts := NewTestSuite(t)
-
 	alice := testutil.AccAddress()
 	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.USDC)
-
 	startBlockTime := time.Now()
-	tc := TestCases{
 
+	tc := TestCases{
 		TC("new long position").
 			Given(
 				createInitVPool(),
@@ -82,7 +79,7 @@ func TestOpenPosition(t *testing.T) {
 				),
 			).
 			Then(
-				PositionShouldBeEqual(alice, pairBtcUsdc, perptypes.Position{
+				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionShouldBeEqualTo(perptypes.Position{
 					Pair:                            pairBtcUsdc,
 					TraderAddress:                   alice.String(),
 					Margin:                          sdk.NewDec(1000),
@@ -90,7 +87,7 @@ func TestOpenPosition(t *testing.T) {
 					Size_:                           sdk.MustNewDecFromStr("9999.999900000001"),
 					BlockNumber:                     1,
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
-				}),
+				})),
 				PositionChangedEventShouldBeEqual(&perptypes.PositionChangedEvent{
 					Pair:               pairBtcUsdc,
 					TraderAddress:      alice.String(),
@@ -160,7 +157,7 @@ func TestOpenPosition(t *testing.T) {
 		),
 	}
 
-	ts.WithTestCases(tc...).Run()
+	NewTestSuite(t).WithTestCases(tc...).Run()
 }
 
 func TestOpenPositionSuccess(t *testing.T) {
