@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion"
+	. "github.com/NibiruChain/nibiru/x/vpool/integration/action"
 	. "github.com/NibiruChain/nibiru/x/vpool/integration/assertion"
 	"testing"
 	"time"
@@ -181,8 +182,11 @@ func TestBiasChangeOnVpool(t *testing.T) {
 				SetBlockNumber(1),
 				SetPairPrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
+				FundAccount(bob, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
 				OpenPosition(alice, pairBtcUsdc, perptypes.Side_BUY, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 				MoveToNextBlock(),
+				ChangeMaintenanceMarginRatio(pairBtcUsdc, sdk.MustNewDecFromStr("0.2")),
+				ChangeLiquidationFeeRatio(sdk.MustNewDecFromStr("0.2")),
 			).
 			When(
 				LiquidatePosition(bob, alice, pairBtcUsdc),
