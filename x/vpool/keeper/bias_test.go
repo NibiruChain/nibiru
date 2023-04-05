@@ -173,6 +173,25 @@ func TestBiasChangeOnVpool(t *testing.T) {
 				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("9999.999900000001000000"))),
 				PositionShouldBeEqual(bob, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("-9999.999900000001000000"))),
 			),
+		TC("Open long position and liquidate").
+			Given(
+				createInitVPool(),
+				SetLiquidator(bob),
+				SetBlockTime(startBlockTime),
+				SetBlockNumber(1),
+				SetPairPrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
+				OpenPosition(alice, pairBtcUsdc, perptypes.Side_BUY, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				MoveToNextBlock(),
+			).
+			When(
+				LiquidatePosition(bob, alice, pairBtcUsdc),
+			).Then(
+			VpoolShouldBeEqual(pairBtcUsdc,
+				VPool_BiasShouldBeEqualTo(sdk.ZeroDec()), // Bias equal to PositionSize
+			),
+			PositionShouldNotExist(alice, pairBtcUsdc),
+		),
 	}
 
 	NewTestSuite(t).WithTestCases(tc...).Run()
