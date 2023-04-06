@@ -3,14 +3,14 @@ package keeper
 import (
 	"github.com/NibiruChain/collections"
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
+	"github.com/NibiruChain/nibiru/x/perp/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 )
 
-func From1To2(k Keeper, perpKeeper perpkeeper.Keeper) module.MigrationHandler {
+func From2To3(perpKeeper Keeper, vpoolKeeper types.VpoolKeeper) module.MigrationHandler {
 	return func(ctx sdk.Context) error {
-		iterator := k.Pools.Iterate(ctx, collections.Range[asset.Pair]{}).Values()
+		iterator := vpoolKeeper.Pools.Iterate(ctx, collections.Range[asset.Pair]{}).Values()
 		for _, pool := range iterator {
 			sumBias := sdk.ZeroDec()
 
@@ -20,7 +20,7 @@ func From1To2(k Keeper, perpKeeper perpkeeper.Keeper) module.MigrationHandler {
 			}
 
 			pool.Bias = sumBias
-			k.Pools.Insert(ctx, pool.Pair, pool)
+			vpoolKeeper.Pools.Insert(ctx, pool.Pair, pool)
 		}
 
 		return nil
