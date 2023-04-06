@@ -1,9 +1,10 @@
 package action
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type changeLiquidationFeeRatio struct {

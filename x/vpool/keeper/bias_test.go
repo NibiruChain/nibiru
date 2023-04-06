@@ -1,11 +1,12 @@
 package keeper_test
 
 import (
+	"testing"
+	"time"
+
 	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion"
 	. "github.com/NibiruChain/nibiru/x/vpool/integration/action"
 	. "github.com/NibiruChain/nibiru/x/vpool/integration/assertion"
-	"testing"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 

@@ -4,13 +4,19 @@ import (
 	"github.com/NibiruChain/collections"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/perp/types"
+	vpoolkeeper "github.com/NibiruChain/nibiru/x/vpool/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 )
 
 func From2To3(perpKeeper Keeper, vpoolKeeper types.VpoolKeeper) module.MigrationHandler {
 	return func(ctx sdk.Context) error {
-		iterator := vpoolKeeper.Pools.Iterate(ctx, collections.Range[asset.Pair]{}).Values()
+		k, ok := vpoolKeeper.(vpoolkeeper.Keeper)
+		if !ok {
+			panic("vpool keeper is not vpoolkeeper.Keeper")
+		}
+
+		iterator := k.Pools.Iterate(ctx, collections.Range[asset.Pair]{}).Values()
 		for _, pool := range iterator {
 			sumBias := sdk.ZeroDec()
 
@@ -20,7 +26,7 @@ func From2To3(perpKeeper Keeper, vpoolKeeper types.VpoolKeeper) module.Migration
 			}
 
 			pool.Bias = sumBias
-			vpoolKeeper.Pools.Insert(ctx, pool.Pair, pool)
+			k.Pools.Insert(ctx, pool.Pair, pool)
 		}
 
 		return nil

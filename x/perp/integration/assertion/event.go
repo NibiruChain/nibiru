@@ -2,12 +2,14 @@ package assertion
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/testutil/action"
-	"github.com/NibiruChain/nibiru/x/perp/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gogo/protobuf/proto"
 	abci "github.com/tendermint/tendermint/abci/types"
+
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/common/testutil/action"
+	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
 type positionChangedEventShouldBeEqual struct {

@@ -149,8 +149,14 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQuerier(am.keeper))
 	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
 
-	cfg.RegisterMigration(types.ModuleName, 1, func(ctx sdk.Context) error { return nil })        // From 1 to 2
-	cfg.RegisterMigration(types.ModuleName, 2, keeper.From2To3(am.keeper, am.keeper.VpoolKeeper)) // From 1 to 2
+	err := cfg.RegisterMigration(types.ModuleName, 1, func(ctx sdk.Context) error { return nil }) // From 1 to 2
+	if err != nil {
+		panic(fmt.Errorf("failed to register migration: %w", err))
+	}
+	err = cfg.RegisterMigration(types.ModuleName, 2, keeper.From2To3(am.keeper, am.keeper.VpoolKeeper)) // From 2 to 3
+	if err != nil {
+		panic(fmt.Errorf("failed to register migration: %w", err))
+	}
 }
 
 // RegisterInvariants registers the capability module's invariants.

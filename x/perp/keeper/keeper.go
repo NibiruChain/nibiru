@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"fmt"
-
 	"github.com/NibiruChain/collections"
 
 	"github.com/cosmos/cosmos-sdk/codec"
