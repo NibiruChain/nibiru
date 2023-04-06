@@ -21,6 +21,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			vp.BaseAssetReserve,
 			vp.Config,
 			vp.Bias,
+			vp.PegMultiplier,
 		); err != nil {
 			panic(err)
 		}

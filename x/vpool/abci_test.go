@@ -39,6 +39,7 @@ func TestSnapshotUpdates(t *testing.T) {
 			WithTradeLimitRatio(sdk.OneDec()).
 			WithFluctuationLimitRatio(sdk.OneDec()),
 		sdk.ZeroDec(),
+		sdk.OneDec(),
 	))
 	expectedSnapshot := types.NewReserveSnapshot(
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD),

@@ -111,6 +111,7 @@ type ArgsNewVpool struct {
 	QuoteReserves sdk.Dec
 	Config        *VpoolConfig
 	Bias          sdk.Dec
+	PegMultiplier sdk.Dec
 }
 
 func NewVpool(args ArgsNewVpool) Vpool {
@@ -128,6 +129,7 @@ func NewVpool(args ArgsNewVpool) Vpool {
 		Config:            config,
 		SqrtDepth:         common.MustSqrtDec(args.QuoteReserves.Mul(args.BaseReserves)),
 		Bias:              args.Bias,
+		PegMultiplier:     args.PegMultiplier,
 	}
 }
 
