@@ -314,15 +314,15 @@ func TestOracleExchangeRate(t *testing.T) {
 		{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: sdk.ZeroDec()},
 	}, 3)
 
-	ethNusdRewards := sdk.NewInt64Coin("ETHREWARD", 1*common.Precision)
-	nibiNusdRewards := sdk.NewInt64Coin("NIBIREWARD", 1*common.Precision)
+	ethNusdRewards := sdk.NewInt64Coin("ETHREWARD", 1*common.TO_MICRO)
+	nibiNusdRewards := sdk.NewInt64Coin("NIBIREWARD", 1*common.TO_MICRO)
 
 	AllocateRewards(t, input, asset.Registry.Pair(denoms.ETH, denoms.NUSD), sdk.NewCoins(ethNusdRewards), 1)
 	AllocateRewards(t, input, asset.Registry.Pair(denoms.NIBI, denoms.NUSD), sdk.NewCoins(nibiNusdRewards), 1)
 
 	input.OracleKeeper.UpdateExchangeRates(input.Ctx)
 
-	// total reward pool for the current vote period is 1* common.Precision for eth:nusd and 1* common.Precision for nibi:nusd
+	// total reward pool for the current vote period is 1* common.TO_MICRO for eth:nusd and 1* common.TO_MICRO for nibi:nusd
 	// val 1,2,3,4 all won on 2 pairs
 	// so total votes are 2 * 2 + 2 + 2 = 8
 	expectedRewardAmt := sdk.NewDecCoinsFromCoins(ethNusdRewards, nibiNusdRewards).

@@ -49,8 +49,8 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				assert.NoError(t, vpoolKeeper.CreatePool(
 					ctx,
 					pair,
-					/* y */ sdk.NewDec(1*common.Precision), //
-					/* x */ sdk.NewDec(1*common.Precision), //
+					/* y */ sdk.NewDec(1*common.TO_MICRO), //
+					/* x */ sdk.NewDec(1*common.TO_MICRO), //
 					vpooltypes.VpoolConfig{
 						FluctuationLimitRatio:  sdk.MustNewDecFromStr("1.0"),
 						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -58,6 +58,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 						MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("1.0"), // 100%,
 						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					},
+					sdk.ZeroDec(),
 				))
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 
@@ -102,8 +103,8 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				assert.NoError(t, vpoolKeeper.CreatePool(
 					ctx,
 					pair,
-					/* y */ sdk.NewDec(1*common.Precision), //
-					/* x */ sdk.NewDec(1*common.Precision), //
+					/* y */ sdk.NewDec(1*common.TO_MICRO), //
+					/* x */ sdk.NewDec(1*common.TO_MICRO), //
 					vpooltypes.VpoolConfig{
 						FluctuationLimitRatio:  sdk.MustNewDecFromStr("1.0"),
 						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -111,6 +112,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 						MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("1.0"), // 100%,
 						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					},
+					sdk.ZeroDec(),
 				))
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 

@@ -68,8 +68,8 @@ func TestAddMarginSuccess(t *testing.T) {
 			assert.NoError(t, vpoolKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				sdk.NewDec(10*common.Precision), // 10 tokens
-				sdk.NewDec(5*common.Precision),  // 5 tokens
+				sdk.NewDec(10*common.TO_MICRO), // 10 tokens
+				sdk.NewDec(5*common.TO_MICRO),  // 5 tokens
 				vpooltypes.VpoolConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"), // 0.1 ratio
@@ -77,6 +77,7 @@ func TestAddMarginSuccess(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
+				sdk.ZeroDec(),
 			))
 			require.True(t, vpoolKeeper.ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)))
 
@@ -138,8 +139,8 @@ func TestRemoveMargin(t *testing.T) {
 				assert.NoError(t, vpoolKeeper.CreatePool(
 					ctx,
 					pair,
-					/* y */ sdk.NewDec(1*common.Precision), //
-					/* x */ sdk.NewDec(1*common.Precision), //
+					/* y */ sdk.NewDec(1*common.TO_MICRO), //
+					/* x */ sdk.NewDec(1*common.TO_MICRO), //
 					vpooltypes.VpoolConfig{
 						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 						FluctuationLimitRatio:  sdk.OneDec(),
@@ -147,6 +148,7 @@ func TestRemoveMargin(t *testing.T) {
 						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 						MaxLeverage:            sdk.MustNewDecFromStr("15"),
 					},
+					sdk.ZeroDec(),
 				))
 
 				removeAmt := sdk.NewInt(5)
@@ -167,8 +169,8 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("Set vpool defined by pair on VpoolKeeper")
 				vpoolKeeper := &nibiruApp.VpoolKeeper
-				quoteReserves := sdk.NewDec(1 * common.Precision)
-				baseReserves := sdk.NewDec(1 * common.Precision)
+				quoteReserves := sdk.NewDec(1 * common.TO_MICRO)
+				baseReserves := sdk.NewDec(1 * common.TO_MICRO)
 				assert.NoError(t, vpoolKeeper.CreatePool(
 					ctx,
 					pair,
@@ -181,6 +183,7 @@ func TestRemoveMargin(t *testing.T) {
 						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 						MaxLeverage:            sdk.MustNewDecFromStr("15"),
 					},
+					sdk.ZeroDec(),
 				))
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 

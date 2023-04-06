@@ -26,7 +26,7 @@ func TestQueryReserveAssets(t *testing.T) {
 	t.Log("initialize vpool")
 	pool := types.Vpool{
 		Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-		QuoteAssetReserve: sdk.NewDec(1 * common.Precision),
+		QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
 		BaseAssetReserve:  sdk.NewDec(1000),
 		Config: types.VpoolConfig{
 			FluctuationLimitRatio:  sdk.ZeroDec(),
@@ -62,7 +62,7 @@ func TestQueryAllPools(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	pool := &types.Vpool{
 		Pair:              pair,
-		QuoteAssetReserve: sdk.NewDec(1 * common.Precision),
+		QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
 		BaseAssetReserve:  sdk.NewDec(1000),
 		Config: types.VpoolConfig{
 			FluctuationLimitRatio:  sdk.ZeroDec(),
@@ -73,7 +73,7 @@ func TestQueryAllPools(t *testing.T) {
 		},
 	}
 	assert.NoError(t, vpoolKeeper.CreatePool(
-		ctx, pair, pool.QuoteAssetReserve, pool.BaseAssetReserve, pool.Config))
+		ctx, pair, pool.QuoteAssetReserve, pool.BaseAssetReserve, pool.Config, sdk.ZeroDec()))
 
 	t.Log("query reserve assets and prices for the pair")
 	ctx = ctx.WithBlockHeight(2).WithBlockTime(time.Now().Add(5 * time.Second))
@@ -93,7 +93,7 @@ func TestQueryAllPools(t *testing.T) {
 		MarkPrice:     markPriceWanted,
 		IndexPrice:    indexPrice.String(),
 		TwapMark:      markPriceWanted.String(),
-		SwapInvariant: sdk.NewInt(1_000 * common.Precision),
+		SwapInvariant: sdk.NewInt(1_000 * common.TO_MICRO),
 		BlockNumber:   2,
 	}
 	require.NoError(t, err)

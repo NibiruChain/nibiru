@@ -31,26 +31,23 @@ func createInitVPool() Action {
 	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.USDC)
 
 	return CreateCustomVpool(pairBtcUsdc,
-		/* quoteReserve */ sdk.NewDec(1*common.Precision*common.Precision),
-		/* baseReserve */ sdk.NewDec(1*common.Precision*common.Precision),
+		/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO*common.TO_MICRO),
+		/* baseReserve */ sdk.NewDec(1*common.TO_MICRO*common.TO_MICRO),
 		vpooltypes.VpoolConfig{
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			MaxOracleSpreadRatio:   sdk.OneDec(), // 100%,
 			TradeLimitRatio:        sdk.OneDec(),
-		})
+		}, sdk.ZeroDec())
 }
 
 func TestOpenPosition(t *testing.T) {
-	ts := NewTestSuite(t)
-
 	alice := testutil.AccAddress()
 	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.USDC)
-
 	startBlockTime := time.Now()
-	tc := TestCases{
 
+	tc := TestCases{
 		TC("new long position").
 			Given(
 				createInitVPool(),
@@ -82,7 +79,7 @@ func TestOpenPosition(t *testing.T) {
 				),
 			).
 			Then(
-				PositionShouldBeEqual(alice, pairBtcUsdc, perptypes.Position{
+				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionShouldBeEqualTo(perptypes.Position{
 					Pair:                            pairBtcUsdc,
 					TraderAddress:                   alice.String(),
 					Margin:                          sdk.NewDec(1000),
@@ -90,7 +87,7 @@ func TestOpenPosition(t *testing.T) {
 					Size_:                           sdk.MustNewDecFromStr("9999.999900000001"),
 					BlockNumber:                     1,
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
-				}),
+				})),
 				PositionChangedEventShouldBeEqual(&perptypes.PositionChangedEvent{
 					Pair:               pairBtcUsdc,
 					TraderAddress:      alice.String(),
@@ -160,7 +157,7 @@ func TestOpenPosition(t *testing.T) {
 		),
 	}
 
-	ts.WithTestCases(tc...).Run()
+	NewTestSuite(t).WithTestCases(tc...).Run()
 }
 
 func TestOpenPositionSuccess(t *testing.T) {
@@ -275,7 +272,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 		},
 		{
 			name:                     "new long position just under fluctuation limit",
-			traderFunds:              sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1*common.Precision*common.Precision)),
+			traderFunds:              sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1*common.TO_MICRO*common.TO_MICRO)),
 			initialPosition:          nil,
 			side:                     perptypes.Side_BUY,
 			margin:                   sdk.NewInt(47_619_047_619),
@@ -381,7 +378,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 		},
 		{
 			name:                     "new short position just under fluctuation limit",
-			traderFunds:              sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1*common.Precision*common.Precision)),
+			traderFunds:              sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1*common.TO_MICRO*common.TO_MICRO)),
 			initialPosition:          nil,
 			side:                     perptypes.Side_SELL,
 			margin:                   sdk.NewInt(47_619_047_619),
@@ -410,8 +407,8 @@ func TestOpenPositionSuccess(t *testing.T) {
 			assert.NoError(t, nibiruApp.VpoolKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				/* quoteReserve */ sdk.NewDec(1*common.Precision*common.Precision),
-				/* baseReserve */ sdk.NewDec(1*common.Precision*common.Precision),
+				/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO*common.TO_MICRO),
+				/* baseReserve */ sdk.NewDec(1*common.TO_MICRO*common.TO_MICRO),
 				vpooltypes.VpoolConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -419,6 +416,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 					MaxOracleSpreadRatio:   sdk.OneDec(), // 100%,
 					TradeLimitRatio:        sdk.OneDec(),
 				},
+				sdk.ZeroDec(),
 			))
 			keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, perptypes.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -607,44 +605,44 @@ func TestOpenPositionError(t *testing.T) {
 		},
 		{
 			name:                "new long position over fluctuation limit",
-			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1*common.Precision*common.Precision)),
+			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1*common.TO_MICRO*common.TO_MICRO)),
 			poolTradeLimitRatio: sdk.OneDec(),
 			initialPosition:     nil,
 			side:                perptypes.Side_BUY,
-			margin:              sdk.NewInt(100_000 * common.Precision),
+			margin:              sdk.NewInt(100_000 * common.TO_MICRO),
 			leverage:            sdk.OneDec(),
 			baseLimit:           sdk.ZeroDec(),
 			expectedErr:         vpooltypes.ErrOverFluctuationLimit,
 		},
 		{
 			name:                "new short position over fluctuation limit",
-			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1*common.Precision*common.Precision)),
+			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1*common.TO_MICRO*common.TO_MICRO)),
 			poolTradeLimitRatio: sdk.OneDec(),
 			initialPosition:     nil,
 			side:                perptypes.Side_SELL,
-			margin:              sdk.NewInt(100_000 * common.Precision),
+			margin:              sdk.NewInt(100_000 * common.TO_MICRO),
 			leverage:            sdk.OneDec(),
 			baseLimit:           sdk.ZeroDec(),
 			expectedErr:         vpooltypes.ErrOverFluctuationLimit,
 		},
 		{
 			name:                "new long position over trade limit",
-			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 10_000*common.Precision)),
+			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 10_000*common.TO_MICRO)),
 			poolTradeLimitRatio: sdk.MustNewDecFromStr("0.01"),
 			initialPosition:     nil,
 			side:                perptypes.Side_BUY,
-			margin:              sdk.NewInt(100_000 * common.Precision),
+			margin:              sdk.NewInt(100_000 * common.TO_MICRO),
 			leverage:            sdk.OneDec(),
 			baseLimit:           sdk.ZeroDec(),
 			expectedErr:         vpooltypes.ErrOverTradingLimit,
 		},
 		{
 			name:                "new short position over trade limit",
-			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 10_000*common.Precision)),
+			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 10_000*common.TO_MICRO)),
 			poolTradeLimitRatio: sdk.MustNewDecFromStr("0.01"),
 			initialPosition:     nil,
 			side:                perptypes.Side_SELL,
-			margin:              sdk.NewInt(100_000 * common.Precision),
+			margin:              sdk.NewInt(100_000 * common.TO_MICRO),
 			leverage:            sdk.OneDec(),
 			baseLimit:           sdk.ZeroDec(),
 			expectedErr:         vpooltypes.ErrOverTradingLimit,
@@ -664,8 +662,8 @@ func TestOpenPositionError(t *testing.T) {
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				/* tradeLimitRatio */
 				/* quoteReserve */
-				sdk.NewDec(1*common.Precision*common.Precision),
-				/* baseReserve */ sdk.NewDec(1*common.Precision*common.Precision),
+				sdk.NewDec(1*common.TO_MICRO*common.TO_MICRO),
+				/* baseReserve */ sdk.NewDec(1*common.TO_MICRO*common.TO_MICRO),
 				vpooltypes.VpoolConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -673,6 +671,7 @@ func TestOpenPositionError(t *testing.T) {
 					MaxOracleSpreadRatio:   sdk.OneDec(), // 100%,
 					TradeLimitRatio:        tc.poolTradeLimitRatio,
 				},
+				sdk.ZeroDec(),
 			))
 			keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, perptypes.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -733,8 +732,8 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 				assert.NoError(t, nibiruApp.VpoolKeeper.CreatePool(
 					ctx,
 					pair,
-					sdk.NewDec(10*common.Precision), //
-					sdk.NewDec(5*common.Precision),  // 5 tokens
+					sdk.NewDec(10*common.TO_MICRO), //
+					sdk.NewDec(5*common.TO_MICRO),  // 5 tokens
 					vpooltypes.VpoolConfig{
 						FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -742,6 +741,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 						MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"), // 100%,
 						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					},
+					sdk.ZeroDec(),
 				))
 
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))

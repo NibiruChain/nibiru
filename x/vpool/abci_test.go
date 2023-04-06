@@ -35,9 +35,10 @@ func TestSnapshotUpdates(t *testing.T) {
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		sdk.NewDec(1_000),
 		sdk.NewDec(1_000),
-		types.DefaultVpoolConfig().
+		*types.DefaultVpoolConfig().
 			WithTradeLimitRatio(sdk.OneDec()).
 			WithFluctuationLimitRatio(sdk.OneDec()),
+		sdk.ZeroDec(),
 	))
 	expectedSnapshot := types.NewReserveSnapshot(
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD),

@@ -30,6 +30,8 @@ enum TwapCalcOption {
 // A virtual pool used only for price discovery of perpetual futures contracts.
 // No real liquidity exists in this pool.
 message Vpool {
+  option (gogoproto.goproto_stringer) = false;
+
   // always BASE:QUOTE, e.g. BTC:NUSD or ETH:NUSD
   string pair = 1 [ 
     (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
@@ -51,6 +53,26 @@ message Vpool {
   VpoolConfig config = 4 [
     (gogoproto.nullable) = false
   ];
+
+  // The square root of the liquidity depth. Liquidity depth is the product of
+  // the reserves.
+  string sqrt_depth = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // Bias refers to the net long-short bias of the market. The bias of a pool 
+  // is equivalent to the sum of all base reserve changes since its creation.
+  string bias = 6 [
+     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+     (gogoproto.nullable) = false
+  ];
+
+  // TD docs. For now, leave this as 1 until the feature PR.
+  // string price_mult = 7 [
+  //   (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+  //   (gogoproto.nullable) = false
+  // ];
 }
 
 message VpoolConfig {

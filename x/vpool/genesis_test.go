@@ -19,8 +19,9 @@ func TestGenesis(t *testing.T) {
 	vpools := []types.Vpool{
 		{
 			Pair:              asset.MustNewPair("BTC:NUSD"),
-			BaseAssetReserve:  sdk.NewDec(1 * common.Precision),      // 1
-			QuoteAssetReserve: sdk.NewDec(30_000 * common.Precision), // 30,000
+			BaseAssetReserve:  sdk.NewDec(1 * common.TO_MICRO),      // 1
+			QuoteAssetReserve: sdk.NewDec(30_000 * common.TO_MICRO), // 30,000
+			SqrtDepth:         common.MustSqrtDec(sdk.NewDec(30_000 * common.TO_MICRO * common.TO_MICRO)),
 			Config: types.VpoolConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.88"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.20"),
@@ -28,11 +29,13 @@ func TestGenesis(t *testing.T) {
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
+			Bias: sdk.NewDec(1 * common.TO_MICRO),
 		},
 		{
 			Pair:              asset.MustNewPair("ETH:NUSD"),
-			BaseAssetReserve:  sdk.NewDec(2 * common.Precision),      // 2
-			QuoteAssetReserve: sdk.NewDec(60_000 * common.Precision), // 60,000
+			BaseAssetReserve:  sdk.NewDec(2 * common.TO_MICRO),      // 2
+			QuoteAssetReserve: sdk.NewDec(60_000 * common.TO_MICRO), // 60,000
+			SqrtDepth:         common.MustSqrtDec(sdk.NewDec(2 * 60_000 * common.TO_MICRO * common.TO_MICRO)),
 			Config: types.VpoolConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.77"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
@@ -40,6 +43,7 @@ func TestGenesis(t *testing.T) {
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
+			Bias: sdk.NewDec(0),
 		},
 	}
 
