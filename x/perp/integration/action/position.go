@@ -166,3 +166,27 @@ func OpenPositionResp_PositionNotionalShouldBeEqual(expected sdk.Dec) OpenPositi
 		return nil
 	}
 }
+
+// Close Position
+
+type closePositionAction struct {
+	Account sdk.AccAddress
+	Pair    asset.Pair
+}
+
+func (c closePositionAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+	_, err := app.PerpKeeper.ClosePosition(ctx, c.Pair, c.Account)
+	if err != nil {
+		return ctx, err
+	}
+
+	return ctx, nil
+}
+
+// ClosePosition closes a position for the given account and pair.
+func ClosePosition(account sdk.AccAddress, pair asset.Pair) action.Action {
+	return &closePositionAction{
+		Account: account,
+		Pair:    pair,
+	}
+}

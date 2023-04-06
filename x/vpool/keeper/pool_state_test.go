@@ -30,6 +30,7 @@ func TestCreatePool(t *testing.T) {
 			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 		},
+		sdk.ZeroDec(),
 	))
 
 	exists := vpoolKeeper.ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
@@ -63,6 +64,7 @@ func TestEditPoolConfig(t *testing.T) {
 			vpoolStart.QuoteAssetReserve,
 			vpoolStart.BaseAssetReserve,
 			vpoolStart.Config,
+			sdk.ZeroDec(),
 		))
 		exists := vpoolKeeper.ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 		require.True(t, exists)
@@ -273,6 +275,7 @@ func TestGetPoolPrices(t *testing.T) {
 					tc.vpool.QuoteAssetReserve,
 					tc.vpool.BaseAssetReserve,
 					tc.vpool.Config,
+					sdk.ZeroDec(),
 				))
 			}
 
@@ -320,6 +323,7 @@ func TestEditSwapInvariant(t *testing.T) {
 			vpoolStart.QuoteAssetReserve,
 			vpoolStart.BaseAssetReserve,
 			vpoolStart.Config,
+			sdk.ZeroDec(),
 		))
 		exists := vpoolKeeper.ExistsPool(ctx, pair)
 		require.True(t, exists)

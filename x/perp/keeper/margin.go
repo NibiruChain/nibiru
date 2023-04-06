@@ -375,7 +375,7 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 }
 
 /*
-Calculates both position notional value and unrealized PnL based on
+GetPreferencePositionNotionalAndUnrealizedPnL Calculates both position notional value and unrealized PnL based on
 both spot price and TWAP, and lets the caller pick which one based on MAX or MIN.
 
 args:

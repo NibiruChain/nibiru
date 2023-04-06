@@ -58,6 +58,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 						MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("1.0"), // 100%,
 						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					},
+					sdk.ZeroDec(),
 				))
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 
@@ -111,6 +112,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 						MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("1.0"), // 100%,
 						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					},
+					sdk.ZeroDec(),
 				))
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 

@@ -65,40 +65,42 @@ ret:
 */
 func (k Keeper) SwapBaseForQuote(
 	ctx sdk.Context,
-	pool types.Vpool,
+	vpool types.Vpool,
 	dir types.Direction,
 	baseAmt sdk.Dec,
 	quoteLimit sdk.Dec,
 	skipFluctuationLimitCheck bool,
 ) (updatedVpool types.Vpool, quoteAmtAbs sdk.Dec, err error) {
 	if baseAmt.IsZero() {
-		return pool, sdk.ZeroDec(), nil
+		return vpool, sdk.ZeroDec(), nil
 	}
 
-	if _, err = k.oracleKeeper.GetExchangeRate(ctx, pool.Pair); err != nil {
-		return pool, sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", pool.Pair)
+	if _, err = k.oracleKeeper.GetExchangeRate(ctx, vpool.Pair); err != nil {
+		return vpool, sdk.Dec{}, types.ErrNoValidPrice.Wrapf("%s", vpool.Pair)
 	}
 
 	baseAmtAbs := baseAmt.Abs()
-	quoteAmtAbs, err = pool.GetQuoteAmountByBaseAmount(baseAmtAbs.MulInt64(dir.ToMultiplier()))
+	quoteAmtAbs, err = vpool.GetQuoteAmountByBaseAmount(baseAmtAbs.MulInt64(dir.ToMultiplier()))
 	if err != nil {
-		return pool, sdk.Dec{}, err
+		return vpool, sdk.Dec{}, err
 	}
 
-	if err := pool.HasEnoughReservesForTrade(quoteAmtAbs, baseAmtAbs); err != nil {
-		return pool, sdk.Dec{}, err
+	if err := vpool.HasEnoughReservesForTrade(quoteAmtAbs, baseAmtAbs); err != nil {
+		return vpool, sdk.Dec{}, err
 	}
 
 	if err := checkIfLimitIsViolated(quoteLimit, quoteAmtAbs, dir); err != nil {
-		return pool, sdk.Dec{}, err
+		return vpool, sdk.Dec{}, err
 	}
 
 	quoteDelta := quoteAmtAbs.Neg().MulInt64(dir.ToMultiplier())
 	baseAmt = baseAmtAbs.MulInt64(dir.ToMultiplier())
 
-	updatedVpool, err = k.executeSwap(ctx, pool, quoteDelta, baseAmt, skipFluctuationLimitCheck)
+	vpool.Bias = vpool.Bias.Add(baseAmt.Neg())
+
+	updatedVpool, err = k.executeSwap(ctx, vpool, quoteDelta, baseAmt, skipFluctuationLimitCheck)
 	if err != nil {
-		return pool, sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
+		return vpool, sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
 	return updatedVpool, quoteAmtAbs, err
@@ -189,6 +191,8 @@ func (k Keeper) SwapQuoteForBase(
 
 	quoteAmt = quoteAmtAbs.MulInt64(dir.ToMultiplier())
 	baseDelta := baseAmtAbs.Neg().MulInt64(dir.ToMultiplier())
+
+	vpool.Bias = vpool.Bias.Add(baseAmtAbs.MulInt64(dir.ToMultiplier()))
 
 	updatedVpool, err = k.executeSwap(ctx, vpool, quoteAmt, baseDelta, skipFluctuationLimitCheck)
 	if err != nil {

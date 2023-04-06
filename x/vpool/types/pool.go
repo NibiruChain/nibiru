@@ -110,6 +110,7 @@ type ArgsNewVpool struct {
 	BaseReserves  sdk.Dec
 	QuoteReserves sdk.Dec
 	Config        *VpoolConfig
+	Bias          sdk.Dec
 }
 
 func NewVpool(args ArgsNewVpool) Vpool {
@@ -126,6 +127,7 @@ func NewVpool(args ArgsNewVpool) Vpool {
 		QuoteAssetReserve: args.QuoteReserves,
 		Config:            config,
 		SqrtDepth:         common.MustSqrtDec(args.QuoteReserves.Mul(args.BaseReserves)),
+		Bias:              args.Bias,
 	}
 }
 

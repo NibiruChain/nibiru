@@ -57,6 +57,7 @@ func handleProposalCreatePool(
 		proposal.QuoteAssetReserve,
 		proposal.BaseAssetReserve,
 		proposal.Config,
+		sdk.ZeroDec(),
 	)
 }
 

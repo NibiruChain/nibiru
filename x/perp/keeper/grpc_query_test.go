@@ -41,6 +41,7 @@ func initAppVpools(
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
+		sdk.ZeroDec(),
 	))
 	keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 		Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -58,6 +59,7 @@ func initAppVpools(
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
+		sdk.ZeroDec(),
 	))
 	keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 		Pair:                            asset.Registry.Pair(denoms.ETH, denoms.NUSD),
@@ -75,6 +77,7 @@ func initAppVpools(
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
+		sdk.ZeroDec(),
 	))
 	keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 		Pair:                            asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
