@@ -120,6 +120,7 @@ func TestFrom2To3(t *testing.T) {
 			savedPool, err := app.VpoolKeeper.Pools.Get(ctx, vpool.Pair)
 			require.NoError(t, err)
 			require.Equal(t, sdk.ZeroDec(), savedPool.Bias)
+			require.Equal(t, sdk.ZeroDec(), savedPool.PegMultiplier)
 
 			for _, pos := range tc.positions {
 				addr, err := sdk.AccAddressFromBech32(pos.TraderAddress)
@@ -136,6 +137,7 @@ func TestFrom2To3(t *testing.T) {
 			savedPool, err = app.VpoolKeeper.Pools.Get(ctx, vpool.Pair)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedBias, savedPool.Bias)
+			require.Equal(t, sdk.OneDec(), savedPool.PegMultiplier)
 		})
 	}
 }

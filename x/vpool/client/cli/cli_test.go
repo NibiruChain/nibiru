@@ -162,6 +162,7 @@ func (s *IntegrationTestSuite) TestCmdCreatePoolProposal() {
 				SqrtDepth:         common.MustSqrtDec(proposal.BaseAssetReserve.Mul(proposal.QuoteAssetReserve)),
 				Config:            proposal.Config,
 				Bias:              sdk.ZeroDec(),
+				PegMultiplier:     sdk.OneDec(),
 			}, pool)
 			found = true
 		}
@@ -246,6 +247,7 @@ func (s *IntegrationTestSuite) TestCmdEditPoolConfigProposal() {
 				SqrtDepth:         startVpool.SqrtDepth,
 				Config:            proposal.Config,
 				Bias:              sdk.ZeroDec(),
+				PegMultiplier:     sdk.ZeroDec(),
 			}, vpool)
 			found = true
 		}
@@ -331,6 +333,7 @@ func (s *IntegrationTestSuite) TestCmdEditSwapInvariantsProposal() {
 				QuoteAssetReserve: vpoolBefore.QuoteAssetReserve.Mul(multiplierToSqrtDepth),
 				Config:            vpoolBefore.Config,
 				Bias:              sdk.ZeroDec(),
+				PegMultiplier:     sdk.ZeroDec(),
 			}
 			sqrtDepthAfter, err := vpoolAfter.ComputeSqrtDepth()
 			s.Require().NoError(err)

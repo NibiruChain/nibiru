@@ -59,6 +59,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					},
 					sdk.ZeroDec(),
+					sdk.OneDec(),
 				))
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 
@@ -113,6 +114,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					},
 					sdk.ZeroDec(),
+					sdk.OneDec(),
 				))
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 

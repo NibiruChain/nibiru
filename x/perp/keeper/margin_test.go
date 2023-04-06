@@ -78,6 +78,7 @@ func TestAddMarginSuccess(t *testing.T) {
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
 				sdk.ZeroDec(),
+				sdk.OneDec(),
 			))
 			require.True(t, vpoolKeeper.ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)))
 
@@ -149,6 +150,7 @@ func TestRemoveMargin(t *testing.T) {
 						MaxLeverage:            sdk.MustNewDecFromStr("15"),
 					},
 					sdk.ZeroDec(),
+					sdk.OneDec(),
 				))
 
 				removeAmt := sdk.NewInt(5)
@@ -184,6 +186,7 @@ func TestRemoveMargin(t *testing.T) {
 						MaxLeverage:            sdk.MustNewDecFromStr("15"),
 					},
 					sdk.ZeroDec(),
+					sdk.OneDec(),
 				))
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 
