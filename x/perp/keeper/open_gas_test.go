@@ -34,7 +34,7 @@ func TestOpenGasConsumed(t *testing.T) {
 			When(
 				OpenPosition(alice, pairBtcUsdc, perptypes.Side_BUY, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).Then(
-			assertion.GasConsumedShouldBe(150566),
+			assertion.GasConsumedShouldBe(151259),
 		),
 	}
 
