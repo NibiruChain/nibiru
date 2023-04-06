@@ -21,6 +21,8 @@ type CreateVPoolAction struct {
 	BaseAssetReserve  sdk.Dec
 
 	VPoolConfig vpooltypes.VpoolConfig
+
+	Bias sdk.Dec
 }
 
 func (c CreateVPoolAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
@@ -30,6 +32,7 @@ func (c CreateVPoolAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context,
 		c.QuoteAssetReserve,
 		c.BaseAssetReserve,
 		c.VPoolConfig,
+		c.Bias,
 	)
 	if err != nil {
 		return ctx, err
@@ -68,11 +71,13 @@ func CreateCustomVpool(
 	pair asset.Pair,
 	quoteAssetReserve, baseAssetReserve sdk.Dec,
 	vpoolConfig vpooltypes.VpoolConfig,
+	bias sdk.Dec,
 ) action.Action {
 	return CreateVPoolAction{
 		Pair:              pair,
 		QuoteAssetReserve: quoteAssetReserve,
 		BaseAssetReserve:  baseAssetReserve,
 		VPoolConfig:       vpoolConfig,
+		Bias:              bias,
 	}
 }

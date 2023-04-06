@@ -59,6 +59,7 @@ func TestGetMarkPrice(t *testing.T) {
 					MaxOracleSpreadRatio:   sdk.OneDec(),
 					TradeLimitRatio:        sdk.OneDec(),
 				},
+				sdk.ZeroDec(),
 			))
 
 			price, err := vpoolKeeper.GetMarkPrice(ctx, tc.pair)
@@ -135,6 +136,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 					MaxOracleSpreadRatio:   sdk.OneDec(),
 					TradeLimitRatio:        sdk.OneDec(),
 				},
+				sdk.ZeroDec(),
 			))
 
 			vpool, err := vpoolKeeper.GetPool(ctx, tc.pair)
@@ -221,6 +223,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 					MaxOracleSpreadRatio:   sdk.OneDec(),
 					TradeLimitRatio:        sdk.OneDec(),
 				},
+				sdk.ZeroDec(),
 			))
 
 			baseAmount, err := vpoolKeeper.GetQuoteAssetPrice(ctx, tc.pair, tc.direction, tc.quoteAmount)
@@ -529,6 +532,7 @@ func TestCalcTwap(t *testing.T) {
 				/*quoteAssetReserve=*/ sdk.OneDec(),
 				/*baseAssetReserve=*/ sdk.OneDec(),
 				*types.DefaultVpoolConfig().WithMaxLeverage(sdk.NewDec(15)),
+				sdk.ZeroDec(),
 			))
 
 			t.Log("throw in another market pair to ensure key iteration doesn't overlap")
@@ -538,6 +542,7 @@ func TestCalcTwap(t *testing.T) {
 				/*quoteAssetReserve=*/ sdk.NewDec(100),
 				/*baseAssetReserve=*/ sdk.OneDec(),
 				*types.DefaultVpoolConfig().WithMaxLeverage(sdk.NewDec(15)),
+				sdk.ZeroDec(),
 			))
 
 			for _, snapshot := range tc.reserveSnapshots {

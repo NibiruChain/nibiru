@@ -98,6 +98,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
+				sdk.ZeroDec(),
 			))
 			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
 
@@ -276,6 +277,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
+				sdk.ZeroDec(),
 			))
 			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
 
@@ -449,6 +451,7 @@ func TestMultiLiquidate(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
+				sdk.ZeroDec(),
 			))
 
 			t.Log("set pair metadata")
