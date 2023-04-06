@@ -33,6 +33,7 @@ func (c CreateVPoolAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context,
 		c.BaseAssetReserve,
 		c.VPoolConfig,
 		c.Bias,
+		sdk.OneDec(),
 	)
 	if err != nil {
 		return ctx, err

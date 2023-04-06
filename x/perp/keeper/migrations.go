@@ -27,6 +27,7 @@ func From2To3(perpKeeper Keeper, vpoolKeeper types.VpoolKeeper) module.Migration
 			}
 
 			pool.Bias = sumBias
+			pool.PegMultiplier = sdk.OneDec()
 			k.Pools.Insert(ctx, pool.Pair, pool)
 		}
 

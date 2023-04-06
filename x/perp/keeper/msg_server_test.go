@@ -91,6 +91,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
 				sdk.ZeroDec(),
+				sdk.OneDec(),
 			))
 			keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -213,6 +214,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
 				sdk.ZeroDec(),
+				sdk.OneDec(),
 			))
 			keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -301,6 +303,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
 				sdk.ZeroDec(),
+				sdk.OneDec(),
 			))
 			keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -389,6 +392,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
 				sdk.ZeroDec(),
+				sdk.OneDec(),
 			))
 			keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -460,6 +464,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
 		sdk.ZeroDec(),
+		sdk.OneDec(),
 	))
 	keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 		Pair:                            pair,
@@ -571,6 +576,7 @@ func TestMsgServerMultiLiquidate_NotAuthorized(t *testing.T) {
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
 		sdk.ZeroDec(),
+		sdk.OneDec(),
 	))
 	keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 		Pair:                            pair,
@@ -643,6 +649,7 @@ func TestMsgServerMultiLiquidate_AllFailed(t *testing.T) {
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
 		sdk.ZeroDec(),
+		sdk.OneDec(),
 	))
 	keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 		Pair:                            pair,

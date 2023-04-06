@@ -20,21 +20,18 @@ func (k Keeper) CreatePool(
 	baseAssetReserve sdk.Dec,
 	config types.VpoolConfig,
 	bias sdk.Dec,
+	pegMultiplier sdk.Dec,
 ) error {
-	sqrtDepth, err := common.SqrtDec(quoteAssetReserve.Mul(baseAssetReserve))
-	if err != nil {
-		return err
-	}
-	vpool := types.Vpool{
-		Pair:              pair,
-		BaseAssetReserve:  baseAssetReserve,
-		QuoteAssetReserve: quoteAssetReserve,
-		SqrtDepth:         sqrtDepth,
-		Config:            config,
-		Bias:              bias,
-	}
+	vpool := types.NewVpool(types.ArgsNewVpool{
+		Pair:          pair,
+		BaseReserves:  baseAssetReserve,
+		QuoteReserves: quoteAssetReserve,
+		Config:        &config,
+		Bias:          bias,
+		PegMultiplier: pegMultiplier,
+	})
 
-	err = vpool.Validate()
+	err := vpool.Validate()
 	if err != nil {
 		return err
 	}

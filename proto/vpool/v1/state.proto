@@ -69,10 +69,10 @@ message Vpool {
   ];
 
   // TD docs. For now, leave this as 1 until the feature PR.
-  // string price_mult = 7 [
-  //   (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-  //   (gogoproto.nullable) = false
-  // ];
+  string peg_multiplier = 7 [
+     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+     (gogoproto.nullable) = false
+  ];
 }
 
 message VpoolConfig {

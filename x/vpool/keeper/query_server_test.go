@@ -73,7 +73,7 @@ func TestQueryAllPools(t *testing.T) {
 		},
 	}
 	assert.NoError(t, vpoolKeeper.CreatePool(
-		ctx, pair, pool.QuoteAssetReserve, pool.BaseAssetReserve, pool.Config, sdk.ZeroDec()))
+		ctx, pair, pool.QuoteAssetReserve, pool.BaseAssetReserve, pool.Config, sdk.ZeroDec(), sdk.OneDec()))
 
 	t.Log("query reserve assets and prices for the pair")
 	ctx = ctx.WithBlockHeight(2).WithBlockTime(time.Now().Add(5 * time.Second))

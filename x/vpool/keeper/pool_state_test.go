@@ -31,6 +31,7 @@ func TestCreatePool(t *testing.T) {
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 		},
 		sdk.ZeroDec(),
+		sdk.OneDec(),
 	))
 
 	exists := vpoolKeeper.ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
@@ -65,6 +66,7 @@ func TestEditPoolConfig(t *testing.T) {
 			vpoolStart.BaseAssetReserve,
 			vpoolStart.Config,
 			sdk.ZeroDec(),
+			sdk.OneDec(),
 		))
 		exists := vpoolKeeper.ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 		require.True(t, exists)
@@ -276,6 +278,7 @@ func TestGetPoolPrices(t *testing.T) {
 					tc.vpool.BaseAssetReserve,
 					tc.vpool.Config,
 					sdk.ZeroDec(),
+					sdk.OneDec(),
 				))
 			}
 
@@ -324,6 +327,7 @@ func TestEditSwapInvariant(t *testing.T) {
 			vpoolStart.BaseAssetReserve,
 			vpoolStart.Config,
 			sdk.ZeroDec(),
+			sdk.OneDec(),
 		))
 		exists := vpoolKeeper.ExistsPool(ctx, pair)
 		require.True(t, exists)

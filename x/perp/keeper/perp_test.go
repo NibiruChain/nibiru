@@ -42,6 +42,7 @@ func TestKeeperClosePosition(t *testing.T) {
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
 			sdk.ZeroDec(),
+			sdk.OneDec(),
 		))
 		require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
 
