@@ -175,6 +175,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
 				sdk.ZeroDec(),
+				sdk.OneDec(),
 			))
 			vpool, err := vpoolKeeper.GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 			require.NoError(t, err)
@@ -362,6 +363,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
 				sdk.ZeroDec(),
+				sdk.OneDec(),
 			))
 
 			vpool, err := vpoolKeeper.GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
@@ -410,6 +412,7 @@ func TestGetVpools(t *testing.T) {
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
 		sdk.ZeroDec(),
+		sdk.OneDec(),
 	))
 	assert.NoError(t, vpoolKeeper.CreatePool(
 		ctx,
@@ -424,6 +427,7 @@ func TestGetVpools(t *testing.T) {
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
 		sdk.ZeroDec(),
+		sdk.OneDec(),
 	))
 
 	pools := vpoolKeeper.Pools.Iterate(ctx, collections.Range[asset.Pair]{}).Values()
@@ -441,7 +445,8 @@ func TestGetVpools(t *testing.T) {
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
-		Bias: sdk.ZeroDec(),
+		Bias:          sdk.ZeroDec(),
+		PegMultiplier: sdk.OneDec(),
 	}))
 	require.EqualValues(t, pools[1], types.NewVpool(types.ArgsNewVpool{
 		Pair:          asset.Registry.Pair(denoms.ETH, denoms.NUSD),
@@ -454,7 +459,8 @@ func TestGetVpools(t *testing.T) {
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
-		Bias: sdk.ZeroDec(),
+		Bias:          sdk.ZeroDec(),
+		PegMultiplier: sdk.OneDec(),
 	}))
 }
 

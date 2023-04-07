@@ -58,6 +58,7 @@ func handleProposalCreatePool(
 		proposal.BaseAssetReserve,
 		proposal.Config,
 		sdk.ZeroDec(),
+		sdk.OneDec(), // TODO: peg multiplier is 1 by default
 	)
 }
 

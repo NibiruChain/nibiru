@@ -29,7 +29,8 @@ func TestGenesis(t *testing.T) {
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
-			Bias: sdk.NewDec(1 * common.TO_MICRO),
+			Bias:          sdk.NewDec(1 * common.TO_MICRO),
+			PegMultiplier: sdk.OneDec(),
 		},
 		{
 			Pair:              asset.MustNewPair("ETH:NUSD"),
@@ -43,7 +44,8 @@ func TestGenesis(t *testing.T) {
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
-			Bias: sdk.NewDec(0),
+			Bias:          sdk.NewDec(0),
+			PegMultiplier: sdk.MustNewDecFromStr("0.2"),
 		},
 	}
 

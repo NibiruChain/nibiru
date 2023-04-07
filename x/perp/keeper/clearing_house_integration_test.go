@@ -417,6 +417,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 					TradeLimitRatio:        sdk.OneDec(),
 				},
 				sdk.ZeroDec(),
+				sdk.OneDec(),
 			))
 			keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, perptypes.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -672,6 +673,7 @@ func TestOpenPositionError(t *testing.T) {
 					TradeLimitRatio:        tc.poolTradeLimitRatio,
 				},
 				sdk.ZeroDec(),
+				sdk.OneDec(),
 			))
 			keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, perptypes.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -742,6 +744,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					},
 					sdk.ZeroDec(),
+					sdk.OneDec(),
 				))
 
 				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
