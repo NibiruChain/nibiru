@@ -16,7 +16,7 @@ import (
 	tmdb "github.com/tendermint/tm-db"
 
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
-	"github.com/NibiruChain/nibiru/x/vpool/types"
+	"github.com/NibiruChain/nibiru/x/perp/amm/types"
 )
 
 func VpoolKeeper(t *testing.T, oracleKeeper types.OracleKeeper) (
@@ -38,7 +38,7 @@ func VpoolKeeper(t *testing.T, oracleKeeper types.OracleKeeper) (
 	return vpoolKeeper, ctx
 }
 
-// holds mocks for interfaces defined in vpool/types/expected_keepers.go
+// holds mocks for interfaces defined in perp/amm/types/expected_keepers.go
 type mockedDependencies struct {
 	mockOracleKeeper  *mock.MockOracleKeeper
 	mockAccountKeeper *mock.MockAccountKeeper

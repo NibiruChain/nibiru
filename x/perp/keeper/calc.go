@@ -3,7 +3,7 @@ package keeper
 import (
 	"fmt"
 
-	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
+	vpooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 

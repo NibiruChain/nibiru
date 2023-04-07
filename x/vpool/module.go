@@ -16,10 +16,10 @@ import (
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
+	"github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/vpool/client/cli"
 	"github.com/NibiruChain/nibiru/x/vpool/keeper"
 	"github.com/NibiruChain/nibiru/x/vpool/simulation"
-	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 var (

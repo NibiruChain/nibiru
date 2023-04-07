@@ -7,8 +7,8 @@ import (
 	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/vpool/keeper"
-	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 // EndBlocker Called every block to store a snapshot of the vpool.

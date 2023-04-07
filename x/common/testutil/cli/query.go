@@ -13,10 +13,10 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	oraclecli "github.com/NibiruChain/nibiru/x/oracle/client/cli"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
+	vpooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	perpcli "github.com/NibiruChain/nibiru/x/perp/client/cli"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 	vpoolcli "github.com/NibiruChain/nibiru/x/vpool/client/cli"
-	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 // ExecQueryOption defines a type which customizes a CLI query operation.

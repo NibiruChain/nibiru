@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package nibiru.vpool.v1;
+package nibiru.perp.amm.v1;
 
-option go_package = "github.com/NibiruChain/nibiru/x/vpool/types";
+option go_package = "github.com/NibiruChain/nibiru/x/perp/amm/types";
 
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
@@ -115,7 +115,7 @@ message CurrentTWAP {
   string price = 4 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
 }
 
-// a snapshot of the vpool's reserves at a given point in time
+// a snapshot of the perp.amm's reserves at a given point in time
 message ReserveSnapshot {
   string pair = 5 [ 
     (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",

@@ -1,29 +1,29 @@
 syntax = "proto3";
 
-package nibiru.vpool.v1;
+package nibiru.perp.amm.v1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "vpool/v1/state.proto";
+import "perp/amm/v1/state.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/vpool/types";
+option go_package = "github.com/NibiruChain/nibiru/x/perp/amm/types";
 
 // Query defines the gRPC querier service.
 service Query {
 
   // Queries the reserve assets in a given pool, identified by a token pair.
   rpc ReserveAssets(QueryReserveAssetsRequest) returns (QueryReserveAssetsResponse) {
-    option (google.api.http).get = "/nibiru/vpool/reserve_assets";
+    option (google.api.http).get = "/nibiru/perp/amm/reserve_assets";
   }
 
   // Queries all virtual pools.
   rpc AllPools(QueryAllPoolsRequest) returns (QueryAllPoolsResponse) {
-    option (google.api.http).get = "/nibiru/vpool/all_pools";
+    option (google.api.http).get = "/nibiru/perp/amm/all_pools";
   }
 
   // Queries prices
   rpc BaseAssetPrice(QueryBaseAssetPriceRequest) returns (QueryBaseAssetPriceResponse) {
-    option (google.api.http).get = "/nibiru/vpool/base_asset_price";
+    option (google.api.http).get = "/nibiru/perp/amm/base_asset_price";
   }  
   
 }

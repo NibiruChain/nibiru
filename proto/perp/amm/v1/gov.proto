@@ -1,11 +1,11 @@
 syntax = "proto3";
 
-package nibiru.vpool.v1;
+package nibiru.perp.amm.v1;
 
 import "gogoproto/gogo.proto";
-import "vpool/v1/state.proto";
+import "perp/amm/v1/state.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/vpool/types";
+option go_package = "github.com/NibiruChain/nibiru/x/perp/amm/types";
 
 message CreatePoolProposal {
   string title = 1;
@@ -17,12 +17,14 @@ message CreatePoolProposal {
     (gogoproto.nullable) = false
   ];
 
-  // quote_asset_reserve is the amount of quote asset the pool will be initialized with.
+  // quote_asset_reserve is the amount of quote asset the pool will be 
+  // initialized with.
   string quote_asset_reserve = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  // base_asset_reserve is the amount of base asset the pool will be initialized with.
+  // base_asset_reserve is the amount of base asset the pool will be 
+  // initialized with.
   string base_asset_reserve = 6 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
