@@ -6,8 +6,8 @@ import (
 	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/perp/amm/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/amm/types"
-	"github.com/NibiruChain/nibiru/x/vpool/keeper"
 )
 
 // InitGenesis initializes the capability module's state from a provided genesis
