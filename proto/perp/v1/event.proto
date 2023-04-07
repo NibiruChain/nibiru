@@ -116,7 +116,7 @@ message PositionLiquidatedEvent {
     // owner of the position.
     string trader_address = 2;
 
-    // margin * leverage * vPrice. 'notional' is the virtual size times  the virtual price on 'vpool'.
+    // margin * leverage * vPrice. 'notional' is the virtual size times  the virtual price on 'perp.amm'.
     string exchanged_quote_amount = 3 [
         (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
         (gogoproto.nullable) = false
@@ -197,7 +197,7 @@ message PositionSettledEvent {
     // Owner of the position.
     string trader_address = 2;
 
-    // Settled coin as dictated by the settlement price of the vpool.
+    // Settled coin as dictated by the settlement price of the perp.amm.
     repeated cosmos.base.v1beta1.Coin settled_coins = 3 [
         (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
         (gogoproto.moretags) = "yaml:\"settled_coins\"",

@@ -114,6 +114,9 @@ import (
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/NibiruChain/nibiru/x/perp"
+	perpammcli "github.com/NibiruChain/nibiru/x/perp/amm/cli"
+	vpoolkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
+	vpooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/spot"
@@ -125,9 +128,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/util"
 	utiltypes "github.com/NibiruChain/nibiru/x/util/types"
 	"github.com/NibiruChain/nibiru/x/vpool"
-	vpoolcli "github.com/NibiruChain/nibiru/x/vpool/client/cli"
-	vpoolkeeper "github.com/NibiruChain/nibiru/x/vpool/keeper"
-	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 const (
@@ -162,8 +162,8 @@ var (
 			distrclient.ProposalHandler,
 			upgradeclient.ProposalHandler,
 			upgradeclient.CancelProposalHandler,
-			vpoolcli.CreatePoolProposalHandler,
-			vpoolcli.EditPoolConfigProposalHandler,
+			perpammcli.CreatePoolProposalHandler,
+			perpammcli.EditPoolConfigProposalHandler,
 			ibcclientclient.UpdateClientProposalHandler,
 			ibcclientclient.UpgradeProposalHandler,
 		),

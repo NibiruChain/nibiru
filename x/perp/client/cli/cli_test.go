@@ -19,9 +19,9 @@ import (
 	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
+	vpooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/client/cli"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
-	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 type IntegrationTestSuite struct {

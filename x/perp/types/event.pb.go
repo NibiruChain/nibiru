@@ -190,7 +190,7 @@ type PositionLiquidatedEvent struct {
 	Pair github_com_NibiruChain_nibiru_x_common_asset.Pair `protobuf:"bytes,1,opt,name=pair,proto3,customtype=github.com/NibiruChain/nibiru/x/common/asset.Pair" json:"pair"`
 	// owner of the position.
 	TraderAddress string `protobuf:"bytes,2,opt,name=trader_address,json=traderAddress,proto3" json:"trader_address,omitempty"`
-	// margin * leverage * vPrice. 'notional' is the virtual size times  the virtual price on 'vpool'.
+	// margin * leverage * vPrice. 'notional' is the virtual size times  the virtual price on 'perp.amm'.
 	ExchangedQuoteAmount github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,opt,name=exchanged_quote_amount,json=exchangedQuoteAmount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"exchanged_quote_amount"`
 	// virtual amount of base assets for the position, which would be margin * leverage * priceBasePerQuote.
 	ExchangedPositionSize github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,4,opt,name=exchanged_position_size,json=exchangedPositionSize,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"exchanged_position_size"`
@@ -313,7 +313,7 @@ type PositionSettledEvent struct {
 	Pair github_com_NibiruChain_nibiru_x_common_asset.Pair `protobuf:"bytes,1,opt,name=pair,proto3,customtype=github.com/NibiruChain/nibiru/x/common/asset.Pair" json:"pair"`
 	// Owner of the position.
 	TraderAddress string `protobuf:"bytes,2,opt,name=trader_address,json=traderAddress,proto3" json:"trader_address,omitempty"`
-	// Settled coin as dictated by the settlement price of the vpool.
+	// Settled coin as dictated by the settlement price of the perp.amm.
 	SettledCoins github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,3,rep,name=settled_coins,json=settledCoins,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"settled_coins" yaml:"settled_coins"`
 }
 

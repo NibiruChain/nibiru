@@ -23,8 +23,8 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
+	vpooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 type mockedDependencies struct {
