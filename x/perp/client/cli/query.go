@@ -9,13 +9,14 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
+	perpammcli "github.com/NibiruChain/nibiru/x/perp/amm/cli"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module
 func GetQueryCmd() *cobra.Command {
 	// Group stablecoin queries under a subcommand
-	perpQueryCmd := &cobra.Command{
+	moduleQueryCmd := &cobra.Command{
 		Use: types.ModuleName,
 		Short: fmt.Sprintf(
 			"Querying commands for the %s module", types.ModuleName),
@@ -30,12 +31,15 @@ func GetQueryCmd() *cobra.Command {
 		CmdQueryPositions(),
 		CmdQueryCumulativePremiumFraction(),
 		CmdQueryMetrics(),
+		perpammcli.CmdGetVpoolReserveAssets(),
+		perpammcli.CmdGetVpools(),
+		perpammcli.CmdGetBaseAssetPrice(),
 	}
 	for _, cmd := range cmds {
-		perpQueryCmd.AddCommand(cmd)
+		moduleQueryCmd.AddCommand(cmd)
 	}
 
-	return perpQueryCmd
+	return moduleQueryCmd
 }
 
 func CmdQueryParams() *cobra.Command {

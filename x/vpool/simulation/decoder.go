@@ -7,7 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/kv"
 
-	"github.com/NibiruChain/nibiru/x/vpool/types"
+	"github.com/NibiruChain/nibiru/x/perp/amm/types"
 )
 
 // NewDecodeStore returns a decoder function closure that unmarshals the KVPair's

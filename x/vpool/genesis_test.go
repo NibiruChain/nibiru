@@ -11,8 +11,8 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/vpool"
-	"github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 func TestGenesis(t *testing.T) {

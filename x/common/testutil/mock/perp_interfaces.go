@@ -10,7 +10,7 @@ import (
 
 	asset "github.com/NibiruChain/nibiru/x/common/asset"
 	types "github.com/NibiruChain/nibiru/x/epochs/types"
-	types0 "github.com/NibiruChain/nibiru/x/vpool/types"
+	types0 "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	types1 "github.com/cosmos/cosmos-sdk/types"
 	types2 "github.com/cosmos/cosmos-sdk/x/auth/types"
 	gomock "github.com/golang/mock/gomock"

@@ -8,7 +8,7 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
-	"github.com/NibiruChain/nibiru/x/vpool/types"
+	"github.com/NibiruChain/nibiru/x/perp/amm/types"
 )
 
 type VpoolChecker func(resp types.Vpool) error

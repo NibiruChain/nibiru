@@ -6,8 +6,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
+	vpoolkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	vpoolkeeper "github.com/NibiruChain/nibiru/x/vpool/keeper"
 )
 
 func From2To3(perpKeeper Keeper, vpoolKeeper types.VpoolKeeper) module.MigrationHandler {

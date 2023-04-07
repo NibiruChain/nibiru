@@ -12,7 +12,7 @@ import (
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
+	vpooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 )
 
 // ----------------------------------------------------------

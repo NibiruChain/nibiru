@@ -8,8 +8,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/NibiruChain/nibiru/x/vpool/keeper"
-	"github.com/NibiruChain/nibiru/x/vpool/types"
+	"github.com/NibiruChain/nibiru/x/perp/amm/keeper"
+	"github.com/NibiruChain/nibiru/x/perp/amm/types"
 )
 
 // NewHandler ...
