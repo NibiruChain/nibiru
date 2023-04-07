@@ -4,7 +4,7 @@
 [![Nibiru Test workflow][badge-go-linter]][workflow-go-linter]
 [![Nibiru Test workflow][badge-go-releaser]][workflow-go-releaser]
 [![GitHub][license-badge]](https://github.com/NibiruChain/nibiru/blob/master/LICENSE.md)
-[![Discord Badge](https://dcbadge.vercel.app/api/server/nibiru?style=flat)](https://discord.gg/nibiru)
+[![Discord Badge](https://dcbadge.vercel.app/api/server/nibiru?style=flat)](https://discord.gg/nibiruchain)
 
 **Nibiru Chain** is a proof-of-stake blockchain that unifies leveraged derivatives trading, spot trading, staking, and bonded liquidity provision into a seamless user experience, enabling users of over 40 blockchains to trade with leverage using a suite of composable decentralized applications.
 
@@ -55,7 +55,7 @@ If you have questions or concerns, feel free to connect with a developer or comm
 -->
 
 <p style="display: flex; gap: 24px; justify-content: center; text-align:center">
-<a href="https://discord.gg/nibiru"><img src="https://img.shields.io/badge/Discord-7289DA?&logo=discord&logoColor=white" alt="Discord" height="22"/></a>
+<a href="https://discord.gg/nibiruchain"><img src="https://img.shields.io/badge/Discord-7289DA?&logo=discord&logoColor=white" alt="Discord" height="22"/></a>
 <a href="https://twitter.com/NibiruChain"><img src="https://img.shields.io/badge/Twitter-1DA1F2?&logo=twitter&logoColor=white" alt="Tweet" height="22"/></a>
 <a href="example.com"><img src="https://img.shields.io/badge/Telegram-2CA5E0?&logo=telegram&logoColor=white" alt="Telegram" height="22"/></a>
 </p>
@@ -127,7 +127,7 @@ Licensed under the [MIT License](./LICENSE.md).
 [workflow-go-releaser]: https://github.com/NibiruChain/nibiru/actions/workflows/goreleaser.yml?query=branch%3Amaster
 
 [social-twitter]: https://twitter.com/NibiruChain
-[social-discord]: https://discord.gg/nibiru
+[social-discord]: https://discord.gg/nibiruchain
 [social-telegram]: https://t.me/nibiruchain
 
 [discord-badge]: https://img.shields.io/badge/Discord-7289DA?&logo=discord&logoColor=white
