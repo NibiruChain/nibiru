@@ -13,10 +13,10 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	oraclecli "github.com/NibiruChain/nibiru/x/oracle/client/cli"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
+	perpammcli "github.com/NibiruChain/nibiru/x/perp/amm/cli"
 	vpooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	perpcli "github.com/NibiruChain/nibiru/x/perp/client/cli"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
-	vpoolcli "github.com/NibiruChain/nibiru/x/vpool/client/cli"
 )
 
 // ExecQueryOption defines a type which customizes a CLI query operation.
@@ -77,7 +77,7 @@ func ExecQuery(clientCtx client.Context, cmd *cobra.Command, args []string, resu
 func QueryVpoolReserveAssets(clientCtx client.Context, pair asset.Pair,
 ) (*vpooltypes.QueryReserveAssetsResponse, error) {
 	var queryResp vpooltypes.QueryReserveAssetsResponse
-	if err := ExecQuery(clientCtx, vpoolcli.CmdGetVpoolReserveAssets(), []string{pair.String()}, &queryResp); err != nil {
+	if err := ExecQuery(clientCtx, perpammcli.CmdGetVpoolReserveAssets(), []string{pair.String()}, &queryResp); err != nil {
 		return nil, err
 	}
 	return &queryResp, nil
@@ -93,7 +93,7 @@ func QueryOracleExchangeRate(clientCtx client.Context, pair asset.Pair) (*oracle
 
 func QueryBaseAssetPrice(clientCtx client.Context, pair asset.Pair, direction string, amount string) (*vpooltypes.QueryBaseAssetPriceResponse, error) {
 	var queryResp vpooltypes.QueryBaseAssetPriceResponse
-	if err := ExecQuery(clientCtx, vpoolcli.CmdGetBaseAssetPrice(), []string{pair.String(), direction, amount}, &queryResp); err != nil {
+	if err := ExecQuery(clientCtx, perpammcli.CmdGetBaseAssetPrice(), []string{pair.String(), direction, amount}, &queryResp); err != nil {
 		return nil, err
 	}
 	return &queryResp, nil

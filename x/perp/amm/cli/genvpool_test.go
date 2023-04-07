@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/log"
 
-	"github.com/NibiruChain/nibiru/x/vpool/client/cli"
+	"github.com/NibiruChain/nibiru/x/perp/amm/cli"
 )
 
 var testModuleBasicManager = module.NewBasicManager(genutil.AppModuleBasic{})
