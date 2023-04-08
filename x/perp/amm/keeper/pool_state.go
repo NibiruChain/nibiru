@@ -18,11 +18,11 @@ func (k Keeper) CreatePool(
 	pair asset.Pair,
 	quoteAssetReserve sdk.Dec,
 	baseAssetReserve sdk.Dec,
-	config types.VpoolConfig,
+	config types.MarketConfig,
 	bias sdk.Dec,
 	pegMultiplier sdk.Dec,
 ) error {
-	vpool := types.NewVpool(types.ArgsNewVpool{
+	vpool := types.NewMarket(types.ArgsNewMarket{
 		Pair:          pair,
 		BaseReserves:  baseAssetReserve,
 		QuoteReserves: quoteAssetReserve,
@@ -50,7 +50,7 @@ func (k Keeper) CreatePool(
 func (k Keeper) EditPoolConfig(
 	ctx sdk.Context,
 	pair asset.Pair,
-	config types.VpoolConfig,
+	config types.MarketConfig,
 ) error {
 	// Grab current pool from state
 	vpool, err := k.Pools.Get(ctx, pair)
@@ -58,20 +58,20 @@ func (k Keeper) EditPoolConfig(
 		return err
 	}
 
-	newVpool := types.Vpool{
+	newMarket := types.Market{
 		Pair:              vpool.Pair,
 		BaseAssetReserve:  vpool.BaseAssetReserve,
 		QuoteAssetReserve: vpool.QuoteAssetReserve,
 		SqrtDepth:         vpool.SqrtDepth,
 		Config:            config, // main change is here
 	}
-	if err := newVpool.Validate(); err != nil {
+	if err := newMarket.Validate(); err != nil {
 		return err
 	}
 
 	err = k.updatePool(
 		ctx,
-		newVpool,
+		newMarket,
 		/*skipFluctuationLimitCheck*/ true)
 	if err != nil {
 		return err
@@ -111,20 +111,20 @@ func (k Keeper) EditSwapInvariant(
 	newQuoteAmount := c.Mul(vpool.QuoteAssetReserve)
 	newSqrtDepth := common.MustSqrtDec(newBaseAmount.Mul(newQuoteAmount))
 
-	newVpool := types.Vpool{
+	newMarket := types.Market{
 		Pair:              vpool.Pair,
 		BaseAssetReserve:  newBaseAmount,
 		QuoteAssetReserve: newQuoteAmount,
 		SqrtDepth:         newSqrtDepth,
 		Config:            vpool.Config,
 	}
-	if err := newVpool.Validate(); err != nil {
+	if err := newMarket.Validate(); err != nil {
 		return err
 	}
 
 	err = k.updatePool(
 		ctx,
-		newVpool,
+		newMarket,
 		/*skipFluctuationLimitCheck*/ true)
 	if err != nil {
 		return err
@@ -145,7 +145,7 @@ ret:
 */
 func (k Keeper) updatePool(
 	ctx sdk.Context,
-	updatedPool types.Vpool,
+	updatedPool types.Market,
 	skipFluctuationCheck bool,
 ) (err error) {
 	if !skipFluctuationCheck {
@@ -169,7 +169,7 @@ func (k Keeper) ExistsPool(ctx sdk.Context, pair asset.Pair) bool {
 // An error is returned if the pool does not exist.
 // No error is returned if the prices don't exist, however.
 func (k Keeper) GetPoolPrices(
-	ctx sdk.Context, pool types.Vpool,
+	ctx sdk.Context, pool types.Market,
 ) (types.PoolPrices, error) {
 	if err := pool.Pair.Validate(); err != nil {
 		return types.PoolPrices{}, err

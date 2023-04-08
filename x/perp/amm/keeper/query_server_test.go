@@ -24,11 +24,11 @@ func TestQueryReserveAssets(t *testing.T) {
 	queryServer := NewQuerier(vpoolKeeper)
 
 	t.Log("initialize vpool")
-	pool := types.Vpool{
+	pool := types.Market{
 		Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
 		BaseAssetReserve:  sdk.NewDec(1000),
-		Config: types.VpoolConfig{
+		Config: types.MarketConfig{
 			FluctuationLimitRatio:  sdk.ZeroDec(),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
@@ -60,11 +60,11 @@ func TestQueryAllPools(t *testing.T) {
 
 	t.Log("initialize vpool")
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
-	pool := &types.Vpool{
+	pool := &types.Market{
 		Pair:              pair,
 		QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
 		BaseAssetReserve:  sdk.NewDec(1000),
-		Config: types.VpoolConfig{
+		Config: types.MarketConfig{
 			FluctuationLimitRatio:  sdk.ZeroDec(),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
@@ -97,6 +97,6 @@ func TestQueryAllPools(t *testing.T) {
 		BlockNumber:   2,
 	}
 	require.NoError(t, err)
-	assert.EqualValues(t, pool.Pair, resp.Pools[0].Pair)
+	assert.EqualValues(t, pool.Pair, resp.Markets[0].Pair)
 	assert.EqualValues(t, poolPricesWanted, resp.Prices[0])
 }

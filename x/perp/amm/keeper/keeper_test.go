@@ -35,7 +35,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		{
 			name:                      "quote amount == 0",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			direction:                 types.Direction_ADD_TO_POOL,
+			direction:                 types.Direction_LONG,
 			quoteAmount:               sdk.NewDec(0),
 			baseLimit:                 sdk.NewDec(10),
 			skipFluctuationLimitCheck: false,
@@ -47,7 +47,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		{
 			name:                      "normal swap add",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			direction:                 types.Direction_ADD_TO_POOL,
+			direction:                 types.Direction_LONG,
 			quoteAmount:               sdk.NewDec(100_000),
 			baseLimit:                 sdk.NewDec(49504),
 			skipFluctuationLimitCheck: false,
@@ -59,7 +59,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		{
 			name:                      "normal swap remove",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			direction:                 types.Direction_REMOVE_FROM_POOL,
+			direction:                 types.Direction_SHORT,
 			quoteAmount:               sdk.NewDec(100_000),
 			baseLimit:                 sdk.NewDec(50506),
 			skipFluctuationLimitCheck: false,
@@ -71,7 +71,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		{
 			name:                      "base amount less than base limit in Long",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			direction:                 types.Direction_ADD_TO_POOL,
+			direction:                 types.Direction_LONG,
 			quoteAmount:               sdk.NewDec(500_000),
 			baseLimit:                 sdk.NewDec(454_500),
 			skipFluctuationLimitCheck: false,
@@ -81,7 +81,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		{
 			name:                      "base amount more than base limit in Short",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			direction:                 types.Direction_REMOVE_FROM_POOL,
+			direction:                 types.Direction_SHORT,
 			quoteAmount:               sdk.NewDec(1 * common.TO_MICRO),
 			baseLimit:                 sdk.NewDec(454_500),
 			skipFluctuationLimitCheck: false,
@@ -91,7 +91,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		{
 			name:                      "over trading limit when removing quote",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			direction:                 types.Direction_REMOVE_FROM_POOL,
+			direction:                 types.Direction_SHORT,
 			quoteAmount:               sdk.NewDec(9_000_001),
 			baseLimit:                 sdk.ZeroDec(),
 			skipFluctuationLimitCheck: false,
@@ -101,7 +101,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		{
 			name:                      "over trading limit when adding quote",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			direction:                 types.Direction_ADD_TO_POOL,
+			direction:                 types.Direction_LONG,
 			quoteAmount:               sdk.NewDec(9_000_001),
 			baseLimit:                 sdk.ZeroDec(),
 			skipFluctuationLimitCheck: false,
@@ -111,7 +111,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		{
 			name:                      "over fluctuation limit fails on add",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			direction:                 types.Direction_ADD_TO_POOL,
+			direction:                 types.Direction_LONG,
 			quoteAmount:               sdk.NewDec(1 * common.TO_MICRO),
 			baseLimit:                 sdk.NewDec(454_544),
 			skipFluctuationLimitCheck: false,
@@ -121,7 +121,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		{
 			name:                      "over fluctuation limit fails on remove",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			direction:                 types.Direction_REMOVE_FROM_POOL,
+			direction:                 types.Direction_SHORT,
 			quoteAmount:               sdk.NewDec(1 * common.TO_MICRO),
 			baseLimit:                 sdk.NewDec(555_556),
 			skipFluctuationLimitCheck: false,
@@ -131,7 +131,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		{
 			name:                      "over fluctuation limit allowed on add",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			direction:                 types.Direction_ADD_TO_POOL,
+			direction:                 types.Direction_LONG,
 			quoteAmount:               sdk.NewDec(1 * common.TO_MICRO),
 			baseLimit:                 sdk.NewDec(454_544),
 			skipFluctuationLimitCheck: true,
@@ -143,7 +143,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 		{
 			name:                      "over fluctuation limit allowed on remove",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			direction:                 types.Direction_REMOVE_FROM_POOL,
+			direction:                 types.Direction_SHORT,
 			quoteAmount:               sdk.NewDec(1 * common.TO_MICRO),
 			baseLimit:                 sdk.NewDec(555_556),
 			skipFluctuationLimitCheck: true,
@@ -167,7 +167,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteAssetReserve */ sdk.NewDec(10*common.TO_MICRO), // 10 tokens
 				/* baseAssetReserve */ sdk.NewDec(5*common.TO_MICRO), // 5 tokens
-				types.VpoolConfig{
+				types.MarketConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 					MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
@@ -222,7 +222,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 		{
 			name:                      "zero base asset swap",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			direction:                 types.Direction_ADD_TO_POOL,
+			direction:                 types.Direction_LONG,
 			baseAmt:                   sdk.ZeroDec(),
 			quoteLimit:                sdk.ZeroDec(),
 			skipFluctuationLimitCheck: false,
@@ -234,7 +234,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 		{
 			name:                      "add base asset swap",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			direction:                 types.Direction_ADD_TO_POOL,
+			direction:                 types.Direction_LONG,
 			baseAmt:                   sdk.NewDec(100_000),
 			quoteLimit:                sdk.NewDec(196078),
 			skipFluctuationLimitCheck: false,
@@ -246,7 +246,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 		{
 			name:                      "remove base asset",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			direction:                 types.Direction_REMOVE_FROM_POOL,
+			direction:                 types.Direction_SHORT,
 			baseAmt:                   sdk.NewDec(100_000),
 			quoteLimit:                sdk.NewDec(204_082),
 			skipFluctuationLimitCheck: false,
@@ -258,7 +258,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 		{
 			name:                      "quote amount less than quote limit in Long",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			direction:                 types.Direction_ADD_TO_POOL,
+			direction:                 types.Direction_LONG,
 			baseAmt:                   sdk.NewDec(100_000),
 			quoteLimit:                sdk.NewDec(196079),
 			skipFluctuationLimitCheck: false,
@@ -268,7 +268,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 		{
 			name:                      "quote amount more than quote limit in Short",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			direction:                 types.Direction_REMOVE_FROM_POOL,
+			direction:                 types.Direction_SHORT,
 			baseAmt:                   sdk.NewDec(100_000),
 			quoteLimit:                sdk.NewDec(204_081),
 			skipFluctuationLimitCheck: false,
@@ -278,7 +278,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 		{
 			name:                      "over trading limit when removing base",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			direction:                 types.Direction_REMOVE_FROM_POOL,
+			direction:                 types.Direction_SHORT,
 			baseAmt:                   sdk.NewDec(4_500_001),
 			quoteLimit:                sdk.ZeroDec(),
 			skipFluctuationLimitCheck: false,
@@ -288,7 +288,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 		{
 			name:                      "over trading limit when adding base",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			direction:                 types.Direction_ADD_TO_POOL,
+			direction:                 types.Direction_LONG,
 			baseAmt:                   sdk.NewDec(4_500_001),
 			quoteLimit:                sdk.ZeroDec(),
 			skipFluctuationLimitCheck: false,
@@ -298,7 +298,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 		{
 			name:                      "over fluctuation limit fails on add",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			direction:                 types.Direction_ADD_TO_POOL,
+			direction:                 types.Direction_LONG,
 			baseAmt:                   sdk.NewDec(1 * common.TO_MICRO),
 			quoteLimit:                sdk.NewDec(1_666_666),
 			skipFluctuationLimitCheck: false,
@@ -308,7 +308,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 		{
 			name:                      "over fluctuation limit fails on remove",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			direction:                 types.Direction_REMOVE_FROM_POOL,
+			direction:                 types.Direction_SHORT,
 			baseAmt:                   sdk.NewDec(1 * common.TO_MICRO),
 			quoteLimit:                sdk.NewDec(2_500_001),
 			skipFluctuationLimitCheck: false,
@@ -318,7 +318,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 		{
 			name:                      "over fluctuation limit allowed on add",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			direction:                 types.Direction_ADD_TO_POOL,
+			direction:                 types.Direction_LONG,
 			baseAmt:                   sdk.NewDec(1 * common.TO_MICRO),
 			quoteLimit:                sdk.NewDec(1_666_666),
 			skipFluctuationLimitCheck: true,
@@ -330,7 +330,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 		{
 			name:                      "over fluctuation limit allowed on remove",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			direction:                 types.Direction_REMOVE_FROM_POOL,
+			direction:                 types.Direction_SHORT,
 			baseAmt:                   sdk.NewDec(1 * common.TO_MICRO),
 			quoteLimit:                sdk.NewDec(2_500_001),
 			skipFluctuationLimitCheck: true,
@@ -355,7 +355,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteAssetReserve */ sdk.NewDec(10*common.TO_MICRO), // 10 tokens
 				/* baseAssetReserve */ sdk.NewDec(5*common.TO_MICRO), // 5 tokens
-				types.VpoolConfig{
+				types.MarketConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 					MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
@@ -394,7 +394,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 	}
 }
 
-func TestGetVpools(t *testing.T) {
+func TestGetMarkets(t *testing.T) {
 	vpoolKeeper, ctx := VpoolKeeper(t,
 		mock.NewMockOracleKeeper(gomock.NewController(t)),
 	)
@@ -404,7 +404,7 @@ func TestGetVpools(t *testing.T) {
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		sdk.NewDec(10*common.TO_MICRO),
 		sdk.NewDec(5*common.TO_MICRO),
-		types.VpoolConfig{
+		types.MarketConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),
 			MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -419,7 +419,7 @@ func TestGetVpools(t *testing.T) {
 		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 		sdk.NewDec(5*common.TO_MICRO),
 		sdk.NewDec(10*common.TO_MICRO),
-		types.VpoolConfig{
+		types.MarketConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),
 			MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -434,11 +434,11 @@ func TestGetVpools(t *testing.T) {
 
 	require.EqualValues(t, 2, len(pools))
 
-	require.EqualValues(t, pools[0], types.NewVpool(types.ArgsNewVpool{
+	require.EqualValues(t, pools[0], types.NewMarket(types.ArgsNewMarket{
 		Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		BaseReserves:  sdk.NewDec(5 * common.TO_MICRO),
 		QuoteReserves: sdk.NewDec(10 * common.TO_MICRO),
-		Config: &types.VpoolConfig{
+		Config: &types.MarketConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),
 			MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -448,11 +448,11 @@ func TestGetVpools(t *testing.T) {
 		Bias:          sdk.ZeroDec(),
 		PegMultiplier: sdk.OneDec(),
 	}))
-	require.EqualValues(t, pools[1], types.NewVpool(types.ArgsNewVpool{
+	require.EqualValues(t, pools[1], types.NewMarket(types.ArgsNewMarket{
 		Pair:          asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 		BaseReserves:  sdk.NewDec(10 * common.TO_MICRO),
 		QuoteReserves: sdk.NewDec(5 * common.TO_MICRO),
-		Config: &types.VpoolConfig{
+		Config: &types.MarketConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),
 			MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -468,19 +468,19 @@ func TestGetVpools(t *testing.T) {
 func TestCheckFluctuationLimitRatio(t *testing.T) {
 	tests := []struct {
 		name              string
-		pool              types.Vpool
+		pool              types.Market
 		existingSnapshots []types.ReserveSnapshot
 
 		expectedErr error
 	}{
 		{
 			name: "uses latest snapshot - does not result in error",
-			pool: types.Vpool{
+			pool: types.Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				QuoteAssetReserve: sdk.NewDec(1002),
 				BaseAssetReserve:  sdk.OneDec(),
 				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1_002)),
-				Config: types.VpoolConfig{
+				Config: types.MarketConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
 					MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -506,12 +506,12 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 		},
 		{
 			name: "uses previous snapshot - results in error",
-			pool: types.Vpool{
+			pool: types.Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				QuoteAssetReserve: sdk.NewDec(1002),
 				BaseAssetReserve:  sdk.OneDec(),
 				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1_002)),
-				Config: types.VpoolConfig{
+				Config: types.MarketConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
 					MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -531,12 +531,12 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 		},
 		{
 			name: "only one snapshot - no error",
-			pool: types.Vpool{
+			pool: types.Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				QuoteAssetReserve: sdk.NewDec(1000),
 				BaseAssetReserve:  sdk.OneDec(),
 				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1_000)),
-				Config: types.VpoolConfig{
+				Config: types.MarketConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
 					MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -556,12 +556,12 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 		},
 		{
 			name: "zero fluctuation limit - no error",
-			pool: types.Vpool{
+			pool: types.Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				QuoteAssetReserve: sdk.NewDec(2000),
 				BaseAssetReserve:  sdk.OneDec(),
 				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(2_000)),
-				Config: types.VpoolConfig{
+				Config: types.MarketConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.ZeroDec(),
 					MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -587,12 +587,12 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 		},
 		{
 			name: "multiple pools - no overlap",
-			pool: types.Vpool{
+			pool: types.Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				QuoteAssetReserve: sdk.NewDec(1000),
 				BaseAssetReserve:  sdk.OneDec(),
 				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1_000)),
-				Config: types.VpoolConfig{
+				Config: types.MarketConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
 					MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -664,30 +664,30 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 func TestGetMaintenanceMarginRatio(t *testing.T) {
 	tests := []struct {
 		name string
-		pool types.Vpool
+		pool types.Market
 
 		expectedMaintenanceMarginRatio sdk.Dec
 	}{
 		{
 			name: "zero fluctuation limit ratio",
-			pool: types.Vpool{
+			pool: types.Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				QuoteAssetReserve: sdk.OneDec(),
 				BaseAssetReserve:  sdk.OneDec(),
 				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1)),
-				Config: *types.DefaultVpoolConfig().
+				Config: *types.DefaultMarketConfig().
 					WithMaintenanceMarginRatio(sdk.MustNewDecFromStr("0.9876")),
 			},
 			expectedMaintenanceMarginRatio: sdk.MustNewDecFromStr("0.9876"),
 		},
 		{
 			name: "zero fluctuation limit ratio",
-			pool: types.Vpool{
+			pool: types.Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				QuoteAssetReserve: sdk.OneDec(),
 				BaseAssetReserve:  sdk.OneDec(),
 				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1)),
-				Config: *types.DefaultVpoolConfig().
+				Config: *types.DefaultMarketConfig().
 					WithMaintenanceMarginRatio(sdk.MustNewDecFromStr("0.4242")),
 			},
 			expectedMaintenanceMarginRatio: sdk.MustNewDecFromStr("0.4242"),

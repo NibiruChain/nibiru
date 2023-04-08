@@ -18,7 +18,6 @@ import (
 	. "github.com/NibiruChain/nibiru/x/oracle/integration_test/action"
 	"github.com/NibiruChain/nibiru/x/perp/amm/types"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/action"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 )
 
 func createInitVPool() Action {
@@ -27,7 +26,7 @@ func createInitVPool() Action {
 	return CreateCustomVpool(pairBtcUsdc,
 		/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO*common.TO_MICRO),
 		/* baseReserve */ sdk.NewDec(1*common.TO_MICRO*common.TO_MICRO),
-		types.VpoolConfig{
+		types.MarketConfig{
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
@@ -52,7 +51,7 @@ func TestBiasChangeOnVpool(t *testing.T) {
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
 			).
 			When(
-				OpenPosition(alice, pairBtcUsdc, perptypes.Side_BUY, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			Then(
 				vpoolassertion.VpoolShouldBeEqual(pairBtcUsdc,
@@ -68,11 +67,11 @@ func TestBiasChangeOnVpool(t *testing.T) {
 				SetBlockNumber(1),
 				SetPairPrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2040)))),
-				OpenPosition(alice, pairBtcUsdc, perptypes.Side_BUY, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
 			When(
-				OpenPosition(alice, pairBtcUsdc, perptypes.Side_BUY, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			Then(
 				vpoolassertion.VpoolShouldBeEqual(pairBtcUsdc,
@@ -89,7 +88,7 @@ func TestBiasChangeOnVpool(t *testing.T) {
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
 			).
 			When(
-				OpenPosition(alice, pairBtcUsdc, perptypes.Side_SELL, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				OpenPosition(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			Then(
 				vpoolassertion.VpoolShouldBeEqual(pairBtcUsdc,
@@ -105,11 +104,11 @@ func TestBiasChangeOnVpool(t *testing.T) {
 				SetBlockNumber(1),
 				SetPairPrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2040)))),
-				OpenPosition(alice, pairBtcUsdc, perptypes.Side_SELL, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				OpenPosition(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
 			When(
-				OpenPosition(alice, pairBtcUsdc, perptypes.Side_SELL, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				OpenPosition(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			Then(
 				vpoolassertion.VpoolShouldBeEqual(pairBtcUsdc,
@@ -124,7 +123,7 @@ func TestBiasChangeOnVpool(t *testing.T) {
 				SetBlockNumber(1),
 				SetPairPrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2040)))),
-				OpenPosition(alice, pairBtcUsdc, perptypes.Side_BUY, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
 			When(
@@ -143,11 +142,11 @@ func TestBiasChangeOnVpool(t *testing.T) {
 				SetBlockNumber(1),
 				SetPairPrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2040)))),
-				OpenPosition(alice, pairBtcUsdc, perptypes.Side_BUY, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
 			When(
-				OpenPosition(alice, pairBtcUsdc, perptypes.Side_SELL, sdk.NewInt(100), sdk.NewDec(10), sdk.ZeroDec()),
+				OpenPosition(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(100), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			Then(
 				vpoolassertion.VpoolShouldBeEqual(pairBtcUsdc,
@@ -166,8 +165,8 @@ func TestBiasChangeOnVpool(t *testing.T) {
 				FundAccount(bob, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
 			).
 			When(
-				OpenPosition(alice, pairBtcUsdc, perptypes.Side_BUY, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
-				OpenPosition(bob, pairBtcUsdc, perptypes.Side_SELL, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				OpenPosition(bob, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			Then(
 				vpoolassertion.VpoolShouldBeEqual(pairBtcUsdc,
@@ -186,7 +185,7 @@ func TestBiasChangeOnVpool(t *testing.T) {
 				SetPairPrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
 				FundAccount(bob, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
-				OpenPosition(alice, pairBtcUsdc, perptypes.Side_BUY, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 				MoveToNextBlock(),
 				integrationaction.ChangeMaintenanceMarginRatio(pairBtcUsdc, sdk.MustNewDecFromStr("0.2")),
 				ChangeLiquidationFeeRatio(sdk.MustNewDecFromStr("0.2")),

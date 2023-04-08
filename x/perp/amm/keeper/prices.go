@@ -55,7 +55,7 @@ ret:
   - err: error
 */
 func (k Keeper) GetBaseAssetPrice(
-	amm types.Vpool,
+	amm types.Market,
 	dir types.Direction,
 	baseAssetAmount sdk.Dec,
 ) (quoteAmount sdk.Dec, err error) {
