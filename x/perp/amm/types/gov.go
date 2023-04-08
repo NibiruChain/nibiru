@@ -46,7 +46,7 @@ func (proposal *CreatePoolProposal) ValidateBasic() error {
 		return err
 	}
 
-	pool := &Vpool{
+	pool := &Market{
 		Pair:              proposal.Pair,
 		BaseAssetReserve:  proposal.BaseAssetReserve,
 		QuoteAssetReserve: proposal.QuoteAssetReserve,

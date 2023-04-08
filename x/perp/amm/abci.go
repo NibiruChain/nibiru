@@ -1,4 +1,4 @@
-package vpool
+package amm
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -11,7 +11,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/amm/types"
 )
 
-// EndBlocker Called every block to store a snapshot of the vpool.
+// EndBlocker Called every block to store a snapshot of the perpamm.
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 	for _, pool := range k.Pools.Iterate(ctx, collections.Range[asset.Pair]{}).Values() {
 		snapshot := types.NewReserveSnapshot(

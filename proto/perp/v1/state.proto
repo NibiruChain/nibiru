@@ -9,12 +9,6 @@ import "google/protobuf/duration.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/perp/types";
 
-enum Side {
-  SIDE_UNSPECIFIED = 0;
-  BUY = 1;
-  SELL = 2;
-}
-
 enum PnLCalcOption {
   PNL_CALC_OPTION_UNSPECIFIED = 0;
   SPOT_PRICE = 1;

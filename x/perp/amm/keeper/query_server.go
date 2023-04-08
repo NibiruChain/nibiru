@@ -54,7 +54,7 @@ func (q queryServer) AllPools(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	var pools []types.Vpool
+	var pools []types.Market
 	var pricesForPools []types.PoolPrices
 	for _, pool := range q.k.Pools.Iterate(ctx, collections.Range[asset.Pair]{}).Values() {
 		poolPrices, err := q.k.GetPoolPrices(ctx, pool)
@@ -67,8 +67,8 @@ func (q queryServer) AllPools(
 	}
 
 	return &types.QueryAllPoolsResponse{
-		Pools:  pools,
-		Prices: pricesForPools,
+		Markets: pools,
+		Prices:  pricesForPools,
 	}, nil
 }
 
@@ -82,12 +82,12 @@ func (q queryServer) BaseAssetPrice(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	vpool, err := q.k.GetPool(ctx, req.Pair)
+	market, err := q.k.GetPool(ctx, req.Pair)
 	if err != nil {
 		return nil, types.ErrPairNotSupported
 	}
 	priceInQuoteDenom, err := q.k.GetBaseAssetPrice(
-		vpool,
+		market,
 		req.Direction,
 		req.BaseAssetAmount,
 	)

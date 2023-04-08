@@ -44,15 +44,15 @@ func TestGetMarkPrice(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			vpoolKeeper, ctx := VpoolKeeper(t,
+			perpammKeeper, ctx := PerpAmmKeeper(t,
 				mock.NewMockOracleKeeper(gomock.NewController(t)))
 
-			assert.NoError(t, vpoolKeeper.CreatePool(
+			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				tc.pair,
 				tc.quoteAssetReserve,
 				tc.baseAssetReserve,
-				types.VpoolConfig{
+				types.MarketConfig{
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
@@ -63,7 +63,7 @@ func TestGetMarkPrice(t *testing.T) {
 				sdk.OneDec(),
 			))
 
-			price, err := vpoolKeeper.GetMarkPrice(ctx, tc.pair)
+			price, err := perpammKeeper.GetMarkPrice(ctx, tc.pair)
 			require.NoError(t, err)
 			require.EqualValues(t, tc.expectedPrice, price)
 		})
@@ -87,7 +87,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 			quoteAssetReserve:   sdk.NewDec(40_000),
 			baseAssetReserve:    sdk.NewDec(10_000),
 			baseAmount:          sdk.ZeroDec(),
-			direction:           types.Direction_ADD_TO_POOL,
+			direction:           types.Direction_LONG,
 			expectedQuoteAmount: sdk.ZeroDec(),
 		},
 		{
@@ -96,7 +96,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 			baseAssetReserve:    sdk.NewDec(1000),
 			quoteAssetReserve:   sdk.NewDec(1000),
 			baseAmount:          sdk.MustNewDecFromStr("500"),
-			direction:           types.Direction_ADD_TO_POOL,
+			direction:           types.Direction_LONG,
 			expectedQuoteAmount: sdk.MustNewDecFromStr("333.333333333333333333"), // rounds down
 		},
 		{
@@ -105,7 +105,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 			baseAssetReserve:    sdk.NewDec(1000),
 			quoteAssetReserve:   sdk.NewDec(1000),
 			baseAmount:          sdk.MustNewDecFromStr("500"),
-			direction:           types.Direction_REMOVE_FROM_POOL,
+			direction:           types.Direction_SHORT,
 			expectedQuoteAmount: sdk.MustNewDecFromStr("1000"),
 		},
 		{
@@ -114,7 +114,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 			baseAssetReserve:  sdk.NewDec(1000),
 			quoteAssetReserve: sdk.NewDec(1000),
 			baseAmount:        sdk.MustNewDecFromStr("1000"),
-			direction:         types.Direction_REMOVE_FROM_POOL,
+			direction:         types.Direction_SHORT,
 			expectedErr:       types.ErrBaseReserveAtZero,
 		},
 	}
@@ -122,15 +122,15 @@ func TestGetBaseAssetPrice(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			vpoolKeeper, ctx := VpoolKeeper(t,
+			perpammKeeper, ctx := PerpAmmKeeper(t,
 				mock.NewMockOracleKeeper(gomock.NewController(t)))
 
-			assert.NoError(t, vpoolKeeper.CreatePool(
+			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				tc.pair,
 				tc.quoteAssetReserve,
 				tc.baseAssetReserve,
-				types.VpoolConfig{
+				types.MarketConfig{
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
@@ -141,10 +141,10 @@ func TestGetBaseAssetPrice(t *testing.T) {
 				sdk.OneDec(),
 			))
 
-			vpool, err := vpoolKeeper.GetPool(ctx, tc.pair)
+			market, err := perpammKeeper.GetPool(ctx, tc.pair)
 			require.NoError(t, err)
 
-			quoteAmount, err := vpoolKeeper.GetBaseAssetPrice(vpool, tc.direction, tc.baseAmount)
+			quoteAmount, err := perpammKeeper.GetBaseAssetPrice(market, tc.direction, tc.baseAmount)
 			if tc.expectedErr != nil {
 				require.ErrorIs(t, err, tc.expectedErr,
 					"expected error: %w, got: %w", tc.expectedErr, err)
@@ -175,7 +175,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 			quoteAssetReserve:  sdk.NewDec(40_000),
 			baseAssetReserve:   sdk.NewDec(10_000),
 			quoteAmount:        sdk.ZeroDec(),
-			direction:          types.Direction_ADD_TO_POOL,
+			direction:          types.Direction_LONG,
 			expectedBaseAmount: sdk.ZeroDec(),
 		},
 		{
@@ -184,7 +184,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 			baseAssetReserve:   sdk.NewDec(1000),
 			quoteAssetReserve:  sdk.NewDec(1000),
 			quoteAmount:        sdk.NewDec(500),
-			direction:          types.Direction_ADD_TO_POOL,
+			direction:          types.Direction_LONG,
 			expectedBaseAmount: sdk.MustNewDecFromStr("333.333333333333333333"), // rounds down
 		},
 		{
@@ -193,7 +193,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 			baseAssetReserve:   sdk.NewDec(1000),
 			quoteAssetReserve:  sdk.NewDec(1000),
 			quoteAmount:        sdk.NewDec(500),
-			direction:          types.Direction_REMOVE_FROM_POOL,
+			direction:          types.Direction_SHORT,
 			expectedBaseAmount: sdk.NewDec(1000),
 		},
 		{
@@ -202,7 +202,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 			baseAssetReserve:  sdk.NewDec(1000),
 			quoteAssetReserve: sdk.NewDec(1000),
 			quoteAmount:       sdk.NewDec(1000),
-			direction:         types.Direction_REMOVE_FROM_POOL,
+			direction:         types.Direction_SHORT,
 			expectedErr:       types.ErrQuoteReserveAtZero,
 		},
 	}
@@ -210,15 +210,15 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			vpoolKeeper, ctx := VpoolKeeper(t,
+			perpammKeeper, ctx := PerpAmmKeeper(t,
 				mock.NewMockOracleKeeper(gomock.NewController(t)))
 
-			assert.NoError(t, vpoolKeeper.CreatePool(
+			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				tc.pair,
 				tc.quoteAssetReserve,
 				tc.baseAssetReserve,
-				types.VpoolConfig{
+				types.MarketConfig{
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
@@ -229,7 +229,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 				sdk.OneDec(),
 			))
 
-			baseAmount, err := vpoolKeeper.GetQuoteAssetPrice(ctx, tc.pair, tc.direction, tc.quoteAmount)
+			baseAmount, err := perpammKeeper.GetQuoteAssetPrice(ctx, tc.pair, tc.direction, tc.quoteAmount)
 			if tc.expectedErr != nil {
 				require.ErrorIs(t, err, tc.expectedErr,
 					"expected error: %w, got: %w", tc.expectedErr, err)
@@ -390,7 +390,7 @@ func TestCalcTwap(t *testing.T) {
 			currentBlockHeight: 3,
 			lookbackInterval:   20 * time.Millisecond,
 			twapCalcOption:     types.TwapCalcOption_QUOTE_ASSET_SWAP,
-			direction:          types.Direction_ADD_TO_POOL,
+			direction:          types.Direction_LONG,
 			assetAmount:        sdk.NewDec(10),
 			expectedPrice:      sdk.NewDec(2),
 		},
@@ -419,7 +419,7 @@ func TestCalcTwap(t *testing.T) {
 			currentBlockHeight: 3,
 			lookbackInterval:   20 * time.Millisecond,
 			twapCalcOption:     types.TwapCalcOption_QUOTE_ASSET_SWAP,
-			direction:          types.Direction_REMOVE_FROM_POOL,
+			direction:          types.Direction_SHORT,
 			assetAmount:        sdk.NewDec(10),
 			expectedPrice:      sdk.MustNewDecFromStr("2.5"),
 		},
@@ -438,7 +438,7 @@ func TestCalcTwap(t *testing.T) {
 			currentBlockHeight: 3,
 			lookbackInterval:   20 * time.Millisecond,
 			twapCalcOption:     types.TwapCalcOption_QUOTE_ASSET_SWAP,
-			direction:          types.Direction_REMOVE_FROM_POOL,
+			direction:          types.Direction_SHORT,
 			assetAmount:        sdk.NewDec(20),
 			expectedErr:        types.ErrQuoteReserveAtZero,
 		},
@@ -467,7 +467,7 @@ func TestCalcTwap(t *testing.T) {
 			currentBlockHeight: 3,
 			lookbackInterval:   20 * time.Millisecond,
 			twapCalcOption:     types.TwapCalcOption_BASE_ASSET_SWAP,
-			direction:          types.Direction_ADD_TO_POOL,
+			direction:          types.Direction_LONG,
 			assetAmount:        sdk.NewDec(10),
 			expectedPrice:      sdk.NewDec(20),
 		},
@@ -496,7 +496,7 @@ func TestCalcTwap(t *testing.T) {
 			currentBlockHeight: 3,
 			lookbackInterval:   20 * time.Millisecond,
 			twapCalcOption:     types.TwapCalcOption_BASE_ASSET_SWAP,
-			direction:          types.Direction_REMOVE_FROM_POOL,
+			direction:          types.Direction_SHORT,
 			assetAmount:        sdk.NewDec(2),
 			expectedPrice:      sdk.NewDec(20),
 		},
@@ -515,7 +515,7 @@ func TestCalcTwap(t *testing.T) {
 			currentBlockHeight: 3,
 			lookbackInterval:   20 * time.Millisecond,
 			twapCalcOption:     types.TwapCalcOption_BASE_ASSET_SWAP,
-			direction:          types.Direction_REMOVE_FROM_POOL,
+			direction:          types.Direction_SHORT,
 			assetAmount:        sdk.NewDec(10),
 			expectedErr:        types.ErrBaseReserveAtZero,
 		},
@@ -524,28 +524,28 @@ func TestCalcTwap(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			vpoolKeeper, ctx := VpoolKeeper(t,
+			perpammKeeper, ctx := PerpAmmKeeper(t,
 				mock.NewMockOracleKeeper(gomock.NewController(t)))
 			ctx = ctx.WithBlockTime(time.UnixMilli(0))
 
 			t.Log("Create an empty pool for the first block")
-			assert.NoError(t, vpoolKeeper.CreatePool(
+			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				tc.pair,
 				/*quoteAssetReserve=*/ sdk.OneDec(),
 				/*baseAssetReserve=*/ sdk.OneDec(),
-				*types.DefaultVpoolConfig().WithMaxLeverage(sdk.NewDec(15)),
+				*types.DefaultMarketConfig().WithMaxLeverage(sdk.NewDec(15)),
 				sdk.ZeroDec(),
 				sdk.OneDec(),
 			))
 
 			t.Log("throw in another market pair to ensure key iteration doesn't overlap")
-			assert.NoError(t, vpoolKeeper.CreatePool(
+			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				tc.pair,
 				/*quoteAssetReserve=*/ sdk.NewDec(100),
 				/*baseAssetReserve=*/ sdk.OneDec(),
-				*types.DefaultVpoolConfig().WithMaxLeverage(sdk.NewDec(15)),
+				*types.DefaultMarketConfig().WithMaxLeverage(sdk.NewDec(15)),
 				sdk.ZeroDec(),
 				sdk.OneDec(),
 			))
@@ -558,10 +558,10 @@ func TestCalcTwap(t *testing.T) {
 					snapshot.QuoteAssetReserve,
 					ctx.BlockTime(),
 				)
-				vpoolKeeper.ReserveSnapshots.Insert(ctx, collections.Join(snapshot.Pair, time.UnixMilli(snapshot.TimestampMs)), snapshot)
+				perpammKeeper.ReserveSnapshots.Insert(ctx, collections.Join(snapshot.Pair, time.UnixMilli(snapshot.TimestampMs)), snapshot)
 			}
 			ctx = ctx.WithBlockTime(tc.currentBlockTime).WithBlockHeight(tc.currentBlockHeight)
-			price, err := vpoolKeeper.calcTwap(ctx,
+			price, err := perpammKeeper.calcTwap(ctx,
 				tc.pair,
 				tc.twapCalcOption,
 				tc.direction,

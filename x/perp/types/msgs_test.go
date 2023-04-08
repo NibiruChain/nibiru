@@ -7,6 +7,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -165,7 +166,7 @@ func TestMsgOpenPosition_ValidateBasic(t *testing.T) {
 			msg: &MsgOpenPosition{
 				Sender:               testutil.AccAddress().String(),
 				Pair:                 "NIBI:NUSD",
-				Side:                 Side_BUY,
+				Side:                 perpammtypes.Direction_LONG,
 				QuoteAssetAmount:     sdk.NewInt(100),
 				Leverage:             sdk.NewDec(10),
 				BaseAssetAmountLimit: sdk.NewInt(100),
@@ -188,7 +189,7 @@ func TestMsgOpenPosition_ValidateBasic(t *testing.T) {
 			msg: &MsgOpenPosition{
 				Sender:               testutil.AccAddress().String(),
 				Pair:                 "NIBI:NUSD",
-				Side:                 Side_SIDE_UNSPECIFIED,
+				Side:                 perpammtypes.Direction_DIRECTION_UNSPECIFIED,
 				QuoteAssetAmount:     sdk.NewInt(100),
 				Leverage:             sdk.NewDec(10),
 				BaseAssetAmountLimit: sdk.NewInt(100),
@@ -199,7 +200,7 @@ func TestMsgOpenPosition_ValidateBasic(t *testing.T) {
 			msg: &MsgOpenPosition{
 				Sender:               "",
 				Pair:                 "NIBI:NUSD",
-				Side:                 Side_SELL,
+				Side:                 perpammtypes.Direction_SHORT,
 				QuoteAssetAmount:     sdk.NewInt(100),
 				Leverage:             sdk.NewDec(10),
 				BaseAssetAmountLimit: sdk.NewInt(100),
@@ -210,7 +211,7 @@ func TestMsgOpenPosition_ValidateBasic(t *testing.T) {
 			msg: &MsgOpenPosition{
 				Sender:               testutil.AccAddress().String(),
 				Pair:                 "NIBI:NUSD",
-				Side:                 Side_BUY,
+				Side:                 perpammtypes.Direction_LONG,
 				QuoteAssetAmount:     sdk.NewInt(100),
 				Leverage:             sdk.ZeroDec(),
 				BaseAssetAmountLimit: sdk.NewInt(100),
@@ -221,7 +222,7 @@ func TestMsgOpenPosition_ValidateBasic(t *testing.T) {
 			msg: &MsgOpenPosition{
 				Sender:               testutil.AccAddress().String(),
 				Pair:                 "NIBI:NUSD",
-				Side:                 Side_BUY,
+				Side:                 perpammtypes.Direction_LONG,
 				QuoteAssetAmount:     sdk.NewInt(0),
 				Leverage:             sdk.NewDec(10),
 				BaseAssetAmountLimit: sdk.NewInt(100),
@@ -232,7 +233,7 @@ func TestMsgOpenPosition_ValidateBasic(t *testing.T) {
 			msg: &MsgOpenPosition{
 				Sender:               testutil.AccAddress().String(),
 				Pair:                 "NIBI-NUSD",
-				Side:                 Side_BUY,
+				Side:                 perpammtypes.Direction_LONG,
 				QuoteAssetAmount:     sdk.NewInt(0),
 				Leverage:             sdk.NewDec(10),
 				BaseAssetAmountLimit: sdk.NewInt(100),
@@ -243,7 +244,7 @@ func TestMsgOpenPosition_ValidateBasic(t *testing.T) {
 			msg: &MsgOpenPosition{
 				Sender:               testutil.AccAddress().String(),
 				Pair:                 "NIBI:NUSD",
-				Side:                 Side_BUY,
+				Side:                 perpammtypes.Direction_LONG,
 				QuoteAssetAmount:     sdk.NewInt(0),
 				Leverage:             sdk.NewDec(10),
 				BaseAssetAmountLimit: sdk.ZeroInt(),

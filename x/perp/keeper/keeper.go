@@ -22,7 +22,7 @@ type Keeper struct {
 	BankKeeper    types.BankKeeper
 	AccountKeeper types.AccountKeeper
 	OracleKeeper  types.OracleKeeper
-	VpoolKeeper   types.VpoolKeeper
+	PerpAmmKeeper types.PerpAmmKeeper
 	EpochKeeper   types.EpochKeeper
 
 	Positions      collections.Map[collections.Pair[asset.Pair, sdk.AccAddress], types.Position]
@@ -41,7 +41,7 @@ func NewKeeper(
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	oracleKeeper types.OracleKeeper,
-	vpoolKeeper types.VpoolKeeper,
+	perpammKeeper types.PerpAmmKeeper,
 	epochKeeper types.EpochKeeper,
 ) Keeper {
 	// Ensure that the module account is set.
@@ -61,7 +61,7 @@ func NewKeeper(
 		BankKeeper:    bankKeeper,
 		AccountKeeper: accountKeeper,
 		OracleKeeper:  oracleKeeper,
-		VpoolKeeper:   vpoolKeeper,
+		PerpAmmKeeper: perpammKeeper,
 		EpochKeeper:   epochKeeper,
 		Positions: collections.NewMap(
 			storeKey, 0,

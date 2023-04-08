@@ -10,28 +10,28 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	vpooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 )
 
-// CreateVPoolAction creates a vpool
-type CreateVPoolAction struct {
+// CreateMarketAction creates a market
+type CreateMarketAction struct {
 	Pair asset.Pair
 
 	QuoteAssetReserve sdk.Dec
 	BaseAssetReserve  sdk.Dec
 
-	VPoolConfig vpooltypes.VpoolConfig
+	MarketConfig perpammtypes.MarketConfig
 
 	Bias sdk.Dec
 }
 
-func (c CreateVPoolAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
-	err := app.VpoolKeeper.CreatePool(
+func (c CreateMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+	err := app.PerpAmmKeeper.CreatePool(
 		ctx,
 		c.Pair,
 		c.QuoteAssetReserve,
 		c.BaseAssetReserve,
-		c.VPoolConfig,
+		c.MarketConfig,
 		c.Bias,
 		sdk.OneDec(),
 	)
@@ -47,17 +47,17 @@ func (c CreateVPoolAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context,
 	return ctx, nil
 }
 
-// CreateBaseVpool creates a base vpool with:
+// CreateBaseMarket creates a base market with:
 // - pair: ubtc:uusdc
 // - quote asset reserve: 1000
 // - base asset reserve: 100
-// - vpool config: default
-func CreateBaseVpool() CreateVPoolAction {
-	return CreateVPoolAction{
+// - market config: default
+func CreateBaseMarket() CreateMarketAction {
+	return CreateMarketAction{
 		Pair:              asset.NewPair(denoms.BTC, denoms.USDC),
 		QuoteAssetReserve: sdk.NewDec(1000e6),
 		BaseAssetReserve:  sdk.NewDec(100e6),
-		VPoolConfig: vpooltypes.VpoolConfig{
+		MarketConfig: perpammtypes.MarketConfig{
 			TradeLimitRatio:        sdk.MustNewDecFromStr("1"),
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("1"),
 			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
@@ -67,18 +67,18 @@ func CreateBaseVpool() CreateVPoolAction {
 	}
 }
 
-// CreateCustomVpool creates a vpool with custom parameters
-func CreateCustomVpool(
+// CreateCustomMarket creates a market with custom parameters
+func CreateCustomMarket(
 	pair asset.Pair,
 	quoteAssetReserve, baseAssetReserve sdk.Dec,
-	vpoolConfig vpooltypes.VpoolConfig,
+	marketConfig perpammtypes.MarketConfig,
 	bias sdk.Dec,
 ) action.Action {
-	return CreateVPoolAction{
+	return CreateMarketAction{
 		Pair:              pair,
 		QuoteAssetReserve: quoteAssetReserve,
 		BaseAssetReserve:  baseAssetReserve,
-		VPoolConfig:       vpoolConfig,
+		MarketConfig:      marketConfig,
 		Bias:              bias,
 	}
 }

@@ -29,7 +29,7 @@ func (k Keeper) SettlePosition(
 	}
 
 	// run calculations on settled values
-	settlementPrice, err := k.VpoolKeeper.GetSettlementPrice(ctx, currentPosition.Pair)
+	settlementPrice, err := k.PerpAmmKeeper.GetSettlementPrice(ctx, currentPosition.Pair)
 	if err != nil {
 		return sdk.NewCoins(), nil
 	}

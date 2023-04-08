@@ -1,4 +1,4 @@
-package vpool_test
+package amm_test
 
 import (
 	"testing"
@@ -13,16 +13,16 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	perpamm "github.com/NibiruChain/nibiru/x/perp/amm"
 	"github.com/NibiruChain/nibiru/x/perp/amm/types"
-	"github.com/NibiruChain/nibiru/x/vpool"
 )
 
 func TestSnapshotUpdates(t *testing.T) {
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
-	vpoolKeeper := nibiruApp.VpoolKeeper
+	perpammKeeper := nibiruApp.PerpAmmKeeper
 
 	runBlock := func(duration time.Duration) {
-		vpool.EndBlocker(ctx, nibiruApp.VpoolKeeper)
+		perpamm.EndBlocker(ctx, nibiruApp.PerpAmmKeeper)
 		ctx = ctx.
 			WithBlockHeight(ctx.BlockHeight() + 1).
 			WithBlockTime(ctx.BlockTime().Add(duration))
@@ -30,12 +30,12 @@ func TestSnapshotUpdates(t *testing.T) {
 
 	ctx = ctx.WithBlockTime(time.Date(2015, 10, 21, 0, 0, 0, 0, time.UTC)).WithBlockHeight(1)
 
-	require.NoError(t, vpoolKeeper.CreatePool(
+	require.NoError(t, perpammKeeper.CreatePool(
 		ctx,
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		sdk.NewDec(1_000),
 		sdk.NewDec(1_000),
-		*types.DefaultVpoolConfig().
+		*types.DefaultMarketConfig().
 			WithTradeLimitRatio(sdk.OneDec()).
 			WithFluctuationLimitRatio(sdk.OneDec()),
 		sdk.ZeroDec(),
@@ -50,17 +50,17 @@ func TestSnapshotUpdates(t *testing.T) {
 
 	t.Log("run one block of 5 seconds")
 	runBlock(5 * time.Second)
-	snapshot, err := vpoolKeeper.ReserveSnapshots.Get(ctx, collections.Join(asset.Registry.Pair(denoms.BTC, denoms.NUSD), time.UnixMilli(expectedSnapshot.TimestampMs)))
+	snapshot, err := perpammKeeper.ReserveSnapshots.Get(ctx, collections.Join(asset.Registry.Pair(denoms.BTC, denoms.NUSD), time.UnixMilli(expectedSnapshot.TimestampMs)))
 	require.NoError(t, err)
 	assert.EqualValues(t, expectedSnapshot, snapshot)
 
 	t.Log("affect mark price")
-	vpool, err := vpoolKeeper.GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+	market, err := perpammKeeper.GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 	require.NoError(t, err)
-	_, baseAmtAbs, err := vpoolKeeper.SwapQuoteForBase(
+	_, baseAmtAbs, err := perpammKeeper.SwapQuoteForBase(
 		ctx,
-		vpool,
-		types.Direction_ADD_TO_POOL,
+		market,
+		types.Direction_LONG,
 		sdk.NewDec(250), // ← dyAmm
 		sdk.ZeroDec(),
 		false,
@@ -79,7 +79,7 @@ func TestSnapshotUpdates(t *testing.T) {
 	ctxAtSnapshot := sdk.Context(ctx) // manually copy ctx before the time skip
 	timeSkipDuration := 5 * time.Second
 	runBlock(timeSkipDuration) // increments ctx.blockHeight and ctx.BlockTime
-	snapshot, err = vpoolKeeper.ReserveSnapshots.Get(ctx,
+	snapshot, err = perpammKeeper.ReserveSnapshots.Get(ctx,
 		collections.Join(asset.Registry.Pair(denoms.BTC, denoms.NUSD), time.UnixMilli(expectedSnapshot.TimestampMs)))
 	require.NoError(t, err)
 	assert.EqualValues(t, expectedSnapshot, snapshot)

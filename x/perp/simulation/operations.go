@@ -15,6 +15,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	pooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
@@ -53,7 +54,7 @@ func SimulateMsgOpenPosition(ak types.AccountKeeper, bk types.BankKeeper, k keep
 		errFundAccount := fundAccountWithTokens(ctx, simAccount.Address, bk)
 		spendableCoins := bk.SpendableCoins(ctx, simAccount.Address)
 
-		pools := k.VpoolKeeper.GetAllPools(ctx)
+		pools := k.PerpAmmKeeper.GetAllPools(ctx)
 		pool := pools[rand.Intn(len(pools))]
 
 		maxQuote := getMaxQuoteForPool(pool)
@@ -62,14 +63,14 @@ func SimulateMsgOpenPosition(ak types.AccountKeeper, bk types.BankKeeper, k keep
 		leverage := simtypes.RandomDecAmount(r, pool.Config.MaxLeverage.Sub(sdk.OneDec())).Add(sdk.OneDec()) // between [1, MaxLeverage]
 		openNotional := leverage.MulInt(quoteAmt)
 
-		var side types.Side
+		var side perpammtypes.Direction
 		var direction pooltypes.Direction
 		if r.Float32() < .5 {
-			side = types.Side_BUY
-			direction = pooltypes.Direction_ADD_TO_POOL
+			side = perpammtypes.Direction_LONG
+			direction = pooltypes.Direction_LONG
 		} else {
-			side = types.Side_SELL
-			direction = pooltypes.Direction_REMOVE_FROM_POOL
+			side = perpammtypes.Direction_SHORT
+			direction = pooltypes.Direction_SHORT
 		}
 
 		feesAmt := openNotional.Mul(sdk.MustNewDecFromStr("0.002")).Ceil().TruncateInt()
@@ -115,10 +116,10 @@ func SimulateMsgOpenPosition(ak types.AccountKeeper, bk types.BankKeeper, k keep
 
 // Ensure wether the position we open won't trigger the fluctuation limit.
 func checkIsOverFluctation(
-	ctx sdk.Context, k keeper.Keeper, pool pooltypes.Vpool, openNotional sdk.Dec, direction pooltypes.Direction) bool {
+	ctx sdk.Context, k keeper.Keeper, pool pooltypes.Market, openNotional sdk.Dec, direction pooltypes.Direction) bool {
 	quoteDelta := openNotional
 	baseDelta, _ := pool.GetBaseAmountByQuoteAmount(quoteDelta.Abs().MulInt64(direction.ToMultiplier()))
-	snapshot, _ := k.VpoolKeeper.GetLastSnapshot(ctx, pool)
+	snapshot, _ := k.PerpAmmKeeper.GetLastSnapshot(ctx, pool)
 	currentPrice := snapshot.QuoteAssetReserve.Quo(snapshot.BaseAssetReserve)
 	newPrice := pool.QuoteAssetReserve.Add(quoteDelta).Quo(pool.BaseAssetReserve.Sub(baseDelta))
 
@@ -156,7 +157,7 @@ Trade limit ratio:
 
 		with tl the trade limit ratio.
 */
-func getMaxQuoteForPool(pool pooltypes.Vpool) sdk.Dec {
+func getMaxQuoteForPool(pool pooltypes.Market) sdk.Dec {
 	ratioFloat := math.Sqrt(pool.Config.FluctuationLimitRatio.Add(sdk.OneDec()).MustFloat64())
 	maxQuoteFluctationLimit := sdk.MustNewDecFromStr(fmt.Sprintf("%f", ratioFloat)).Mul(pool.QuoteAssetReserve)
 
@@ -269,7 +270,7 @@ func SimulateMsgRemoveMargin(ak types.AccountKeeper, bk types.BankKeeper, k keep
 		}
 
 		//simple calculation, might still fail due to funding rate or unrealizedPnL
-		maintenanceMarginRatio, err := k.VpoolKeeper.GetMaintenanceMarginRatio(ctx, position.Pair)
+		maintenanceMarginRatio, err := k.PerpAmmKeeper.GetMaintenanceMarginRatio(ctx, position.Pair)
 		if err != nil {
 			return
 		}

@@ -19,7 +19,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
-	vpooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 )
 
 // commonArgs is args for CLI test commands.
@@ -47,14 +47,14 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	encodingConfig := app.MakeTestEncodingConfig()
 	genesisState := genesis.NewTestGenesisState()
-	vpoolGenesis := vpooltypes.DefaultGenesis()
-	vpoolGenesis.Vpools = []vpooltypes.Vpool{
+	marketGenesis := perpammtypes.DefaultGenesis()
+	marketGenesis.Markets = []perpammtypes.Market{
 		{
 			Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 			BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
 			QuoteAssetReserve: sdk.NewDec(60_000 * common.TO_MICRO),
 			SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 60_000 * common.TO_MICRO * common.TO_MICRO)),
-			Config: vpooltypes.VpoolConfig{
+			Config: perpammtypes.MarketConfig{
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
@@ -63,7 +63,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			},
 		},
 	}
-	genesisState[vpooltypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(vpoolGenesis)
+	genesisState[perpammtypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(marketGenesis)
 
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)

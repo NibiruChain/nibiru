@@ -16,14 +16,14 @@ import (
 )
 
 func TestCreatePool(t *testing.T) {
-	vpoolKeeper, _, ctx := getKeeper(t)
+	perpammKeeper, _, ctx := getKeeper(t)
 
-	assert.NoError(t, vpoolKeeper.CreatePool(
+	assert.NoError(t, perpammKeeper.CreatePool(
 		ctx,
 		/* pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		/* quote */ sdk.NewDec(10*common.TO_MICRO), // 10 tokens
 		/* base */ sdk.NewDec(5*common.TO_MICRO), // 5 tokens
-		types.VpoolConfig{
+		types.MarketConfig{
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
@@ -34,21 +34,21 @@ func TestCreatePool(t *testing.T) {
 		sdk.OneDec(),
 	))
 
-	exists := vpoolKeeper.ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+	exists := perpammKeeper.ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 	require.True(t, exists)
 
-	notExist := vpoolKeeper.ExistsPool(ctx, "BTC:OTHER")
+	notExist := perpammKeeper.ExistsPool(ctx, "BTC:OTHER")
 	require.False(t, notExist)
 }
 
 func TestEditPoolConfig(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
-	vpoolStart := types.Vpool{
+	marketStart := types.Market{
 		Pair:              pair,
 		QuoteAssetReserve: sdk.NewDec(10 * common.TO_MICRO),
 		BaseAssetReserve:  sdk.NewDec(5 * common.TO_MICRO),
 		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(5 * 10 * common.TO_MICRO * common.TO_MICRO)),
-		Config: types.VpoolConfig{
+		Config: types.MarketConfig{
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
@@ -58,45 +58,45 @@ func TestEditPoolConfig(t *testing.T) {
 	}
 
 	setupTest := func() (Keeper, sdk.Context) {
-		vpoolKeeper, _, ctx := getKeeper(t)
-		assert.NoError(t, vpoolKeeper.CreatePool(
+		perpammKeeper, _, ctx := getKeeper(t)
+		assert.NoError(t, perpammKeeper.CreatePool(
 			ctx,
 			asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			vpoolStart.QuoteAssetReserve,
-			vpoolStart.BaseAssetReserve,
-			vpoolStart.Config,
+			marketStart.QuoteAssetReserve,
+			marketStart.BaseAssetReserve,
+			marketStart.Config,
 			sdk.ZeroDec(),
 			sdk.OneDec(),
 		))
-		exists := vpoolKeeper.ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+		exists := perpammKeeper.ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 		require.True(t, exists)
-		return vpoolKeeper, ctx
+		return perpammKeeper, ctx
 	}
 
 	testCases := []struct {
 		name        string
-		newConfig   types.VpoolConfig
+		newConfig   types.MarketConfig
 		shouldErr   bool
 		shouldPanic bool
 	}{
 		{
 			name:      "happy no change to config",
-			newConfig: vpoolStart.Config,
+			newConfig: marketStart.Config,
 			shouldErr: false,
 		},
 		{
 			name:      "happy valid with expected config change",
-			newConfig: vpoolStart.Config,
+			newConfig: marketStart.Config,
 			shouldErr: false,
 		},
 		{
 			name:        "err invalid config nil",
-			newConfig:   types.VpoolConfig{},
+			newConfig:   types.MarketConfig{},
 			shouldPanic: true,
 		},
 		{
 			name: "err invalid config max leverage too high",
-			newConfig: types.VpoolConfig{
+			newConfig: types.MarketConfig{
 				// max leverage set too high on purpose
 				MaxLeverage:            sdk.MustNewDecFromStr("9001"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
@@ -111,26 +111,26 @@ func TestEditPoolConfig(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			vpoolKeeper, ctx := setupTest()
+			perpammKeeper, ctx := setupTest()
 			if tc.shouldErr {
-				err := vpoolKeeper.EditPoolConfig(ctx, pair, tc.newConfig)
+				err := perpammKeeper.EditPoolConfig(ctx, pair, tc.newConfig)
 				// We expect the initial config if the change fails
 				assert.Error(t, err)
-				vpool, err := vpoolKeeper.Pools.Get(ctx, pair)
+				market, err := perpammKeeper.Pools.Get(ctx, pair)
 				assert.NoError(t, err)
-				assert.EqualValues(t, vpoolStart.Config, vpool.Config)
+				assert.EqualValues(t, marketStart.Config, market.Config)
 			} else if tc.shouldPanic {
 				require.Panics(t, func() {
-					err := vpoolKeeper.EditPoolConfig(ctx, pair, tc.newConfig)
+					err := perpammKeeper.EditPoolConfig(ctx, pair, tc.newConfig)
 					require.Error(t, err)
 				})
 			} else {
-				err := vpoolKeeper.EditPoolConfig(ctx, pair, tc.newConfig)
+				err := perpammKeeper.EditPoolConfig(ctx, pair, tc.newConfig)
 				// We expect the new config if the change succeeds
 				require.NoError(t, err)
-				vpool, err := vpoolKeeper.Pools.Get(ctx, pair)
+				market, err := perpammKeeper.Pools.Get(ctx, pair)
 				assert.NoError(t, err)
-				assert.EqualValues(t, tc.newConfig, vpool.Config)
+				assert.EqualValues(t, tc.newConfig, market.Config)
 			}
 		})
 	}
@@ -144,32 +144,32 @@ func TestGetPoolPrices_SetupErrors(t *testing.T) {
 		{
 			name: "invalid pair ID on pool",
 			test: func(t *testing.T) {
-				vpoolWithInvalidPair := types.Vpool{Pair: "o:o:unibi"}
-				vpoolKeeper, _, ctx := getKeeper(t)
-				_, err := vpoolKeeper.GetPoolPrices(ctx, vpoolWithInvalidPair)
+				marketWithInvalidPair := types.Market{Pair: "o:o:unibi"}
+				perpammKeeper, _, ctx := getKeeper(t)
+				_, err := perpammKeeper.GetPoolPrices(ctx, marketWithInvalidPair)
 				require.ErrorContains(t, err, asset.ErrInvalidTokenPair.Error())
 			},
 		},
 		{
-			name: "attempt to use vpool that hasn't been added",
+			name: "attempt to use market that hasn't been added",
 			test: func(t *testing.T) {
-				vpool := types.Vpool{Pair: asset.MustNewPair("uatom:unibi")}
-				vpoolKeeper, _, ctx := getKeeper(t)
-				_, err := vpoolKeeper.GetPoolPrices(ctx, vpool)
+				market := types.Market{Pair: asset.MustNewPair("uatom:unibi")}
+				perpammKeeper, _, ctx := getKeeper(t)
+				_, err := perpammKeeper.GetPoolPrices(ctx, market)
 				require.ErrorContains(t, err, types.ErrPairNotSupported.Error())
 			},
 		},
 		{
-			name: "vpool with reserves that don't make sense",
+			name: "market with reserves that don't make sense",
 			test: func(t *testing.T) {
-				vpool := types.Vpool{
+				market := types.Market{
 					Pair:              asset.MustNewPair("uatom:unibi"),
 					BaseAssetReserve:  sdk.NewDec(999),
 					QuoteAssetReserve: sdk.NewDec(-400),
 				}
-				vpoolKeeper, _, ctx := getKeeper(t)
-				vpoolKeeper.Pools.Insert(ctx, vpool.Pair, vpool)
-				_, err := vpoolKeeper.GetPoolPrices(ctx, vpool)
+				perpammKeeper, _, ctx := getKeeper(t)
+				perpammKeeper.Pools.Insert(ctx, market.Pair, market)
+				_, err := perpammKeeper.GetPoolPrices(ctx, market)
 				require.ErrorContains(t, err, types.ErrNonPositiveReserves.Error())
 			},
 		},
@@ -183,22 +183,22 @@ func TestGetPoolPrices_SetupErrors(t *testing.T) {
 
 func TestGetPoolPrices(t *testing.T) {
 	testCases := []struct {
-		name               string      // test case name
-		vpool              types.Vpool // vpool passed to GetPoolPrices
-		shouldCreateVpool  bool        // whether to write 'vpool' into the kv store
-		mockIndexPrice     sdk.Dec     // indexPriceVal returned by the x/pricefeed keepr
+		name               string       // test case name
+		market             types.Market // market passed to GetPoolPrices
+		shouldCreateMarket bool         // whether to write 'market' into the kv store
+		mockIndexPrice     sdk.Dec      // indexPriceVal returned by the x/pricefeed keepr
 		oracleKeeperErr    error
 		err                error            // An error raised from calling Keeper.GetPoolPrices
 		expectedPoolPrices types.PoolPrices // expected output from callign GetPoolPrices
 	}{
 		{
-			name: "happy path - vpool + pricefeed active",
-			vpool: types.Vpool{
+			name: "happy path - market + pricefeed active",
+			market: types.Market{
 				Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 				QuoteAssetReserve: sdk.NewDec(3 * common.TO_MICRO), // 3e6
 				BaseAssetReserve:  sdk.NewDec(1_000),               // 1e3
 				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(3_000 * common.TO_MICRO)),
-				Config: types.VpoolConfig{
+				Config: types.MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
@@ -206,8 +206,8 @@ func TestGetPoolPrices(t *testing.T) {
 					TradeLimitRatio:        sdk.OneDec(),
 				},
 			},
-			shouldCreateVpool: true,
-			mockIndexPrice:    sdk.NewDec(99),
+			shouldCreateMarket: true,
+			mockIndexPrice:     sdk.NewDec(99),
 			expectedPoolPrices: types.PoolPrices{
 				Pair:          asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 				MarkPrice:     sdk.NewDec(3_000),
@@ -218,13 +218,13 @@ func TestGetPoolPrices(t *testing.T) {
 			},
 		},
 		{
-			name: "happy path - vpool active, but no index price",
-			vpool: types.Vpool{
+			name: "happy path - market active, but no index price",
+			market: types.Market{
 				Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 				QuoteAssetReserve: sdk.NewDec(3 * common.TO_MICRO), // 3e6
 				BaseAssetReserve:  sdk.NewDec(1_000),               // 1e3
 				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(3_000 * common.TO_MICRO)),
-				Config: types.VpoolConfig{
+				Config: types.MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
@@ -232,9 +232,9 @@ func TestGetPoolPrices(t *testing.T) {
 					TradeLimitRatio:        sdk.OneDec(),
 				},
 			},
-			shouldCreateVpool: true,
-			mockIndexPrice:    sdk.OneDec().Neg(),
-			oracleKeeperErr:   fmt.Errorf("No index price"),
+			shouldCreateMarket: true,
+			mockIndexPrice:     sdk.OneDec().Neg(),
+			oracleKeeperErr:    fmt.Errorf("No index price"),
 			expectedPoolPrices: types.PoolPrices{
 				Pair:          asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 				MarkPrice:     sdk.NewDec(3_000),
@@ -245,13 +245,13 @@ func TestGetPoolPrices(t *testing.T) {
 			},
 		},
 		{
-			name: "vpool doesn't exist",
-			vpool: types.Vpool{
+			name: "market doesn't exist",
+			market: types.Market{
 				Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 				QuoteAssetReserve: sdk.NewDec(3 * common.TO_MICRO), // 3e6
 				BaseAssetReserve:  sdk.NewDec(1_000),               // 1e3
 				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(3_000 * common.TO_MICRO)),
-				Config: types.VpoolConfig{
+				Config: types.MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
@@ -259,24 +259,24 @@ func TestGetPoolPrices(t *testing.T) {
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 				},
 			},
-			shouldCreateVpool: false,
-			err:               types.ErrPairNotSupported,
+			shouldCreateMarket: false,
+			err:                types.ErrPairNotSupported,
 		},
 	}
 
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			vpoolKeeper, mocks, ctx := getKeeper(t)
+			perpammKeeper, mocks, ctx := getKeeper(t)
 			ctx = ctx.WithBlockHeight(1).WithBlockTime(time.Now())
 
-			if tc.shouldCreateVpool {
-				assert.NoError(t, vpoolKeeper.CreatePool(
+			if tc.shouldCreateMarket {
+				assert.NoError(t, perpammKeeper.CreatePool(
 					ctx,
-					tc.vpool.Pair,
-					tc.vpool.QuoteAssetReserve,
-					tc.vpool.BaseAssetReserve,
-					tc.vpool.Config,
+					tc.market.Pair,
+					tc.market.QuoteAssetReserve,
+					tc.market.BaseAssetReserve,
+					tc.market.Config,
 					sdk.ZeroDec(),
 					sdk.OneDec(),
 				))
@@ -286,13 +286,13 @@ func TestGetPoolPrices(t *testing.T) {
 
 			t.Log("mock oracleKeeper index price")
 			mocks.mockOracleKeeper.EXPECT().
-				GetExchangeRate(ctx, tc.vpool.Pair).
+				GetExchangeRate(ctx, tc.market.Pair).
 				Return(tc.mockIndexPrice, tc.oracleKeeperErr).
 				AnyTimes()
 
 			// logged errors would be called in GetPoolPrices
 			var poolPrices types.PoolPrices
-			poolPrices, err := vpoolKeeper.GetPoolPrices(ctx, tc.vpool)
+			poolPrices, err := perpammKeeper.GetPoolPrices(ctx, tc.market)
 			if tc.err != nil {
 				assert.ErrorContains(t, err, tc.err.Error())
 			} else {
@@ -304,12 +304,12 @@ func TestGetPoolPrices(t *testing.T) {
 
 func TestEditSwapInvariant(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.NIBI, denoms.NUSD)
-	vpoolStart := types.Vpool{
+	marketStart := types.Market{
 		Pair:              pair,
 		QuoteAssetReserve: sdk.NewDec(10 * common.TO_MICRO),
 		BaseAssetReserve:  sdk.NewDec(5 * common.TO_MICRO),
 		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(5 * 10 * common.TO_MICRO * common.TO_MICRO)),
-		Config: types.VpoolConfig{
+		Config: types.MarketConfig{
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
@@ -319,19 +319,19 @@ func TestEditSwapInvariant(t *testing.T) {
 	}
 
 	setupTest := func() (Keeper, sdk.Context) {
-		vpoolKeeper, _, ctx := getKeeper(t)
-		assert.NoError(t, vpoolKeeper.CreatePool(
+		perpammKeeper, _, ctx := getKeeper(t)
+		assert.NoError(t, perpammKeeper.CreatePool(
 			ctx,
 			pair,
-			vpoolStart.QuoteAssetReserve,
-			vpoolStart.BaseAssetReserve,
-			vpoolStart.Config,
+			marketStart.QuoteAssetReserve,
+			marketStart.BaseAssetReserve,
+			marketStart.Config,
 			sdk.ZeroDec(),
 			sdk.OneDec(),
 		))
-		exists := vpoolKeeper.ExistsPool(ctx, pair)
+		exists := perpammKeeper.ExistsPool(ctx, pair)
 		require.True(t, exists)
-		return vpoolKeeper, ctx
+		return perpammKeeper, ctx
 	}
 
 	type Reserves struct {
@@ -350,40 +350,40 @@ func TestEditSwapInvariant(t *testing.T) {
 			name:                    "happy reserves increase 2x",
 			swapInvariantMultiplier: sdk.NewDec(4),
 			newReserves: Reserves{
-				Base:  vpoolStart.BaseAssetReserve.MulInt64(2),
-				Quote: vpoolStart.QuoteAssetReserve.MulInt64(2)},
+				Base:  marketStart.BaseAssetReserve.MulInt64(2),
+				Quote: marketStart.QuoteAssetReserve.MulInt64(2)},
 			shouldErr: false,
 		},
 		{
 			name:                    "happy no change",
 			swapInvariantMultiplier: sdk.NewDec(1),
 			newReserves: Reserves{
-				Base:  vpoolStart.BaseAssetReserve,
-				Quote: vpoolStart.QuoteAssetReserve},
+				Base:  marketStart.BaseAssetReserve,
+				Quote: marketStart.QuoteAssetReserve},
 			shouldErr: false,
 		},
 		{
 			name:                    "happy reserves increase 500x",
 			swapInvariantMultiplier: sdk.NewDec(250_000), // 500**2
 			newReserves: Reserves{
-				Base:  vpoolStart.BaseAssetReserve.MulInt64(500),
-				Quote: vpoolStart.QuoteAssetReserve.MulInt64(500)},
+				Base:  marketStart.BaseAssetReserve.MulInt64(500),
+				Quote: marketStart.QuoteAssetReserve.MulInt64(500)},
 			shouldErr: false,
 		},
 		{
 			name:                    "happy reserves shrink 2x",
 			swapInvariantMultiplier: sdk.MustNewDecFromStr("0.25"), // (1/2)**2
 			newReserves: Reserves{
-				Base:  vpoolStart.BaseAssetReserve.QuoInt64(2),
-				Quote: vpoolStart.QuoteAssetReserve.QuoInt64(2)},
+				Base:  marketStart.BaseAssetReserve.QuoInt64(2),
+				Quote: marketStart.QuoteAssetReserve.QuoInt64(2)},
 			shouldErr: false,
 		},
 		{
 			name:                    "happy reserves shrink 100x",
 			swapInvariantMultiplier: sdk.MustNewDecFromStr("0.0001"), // (1/100)**2
 			newReserves: Reserves{
-				Base:  vpoolStart.BaseAssetReserve.QuoInt64(100),
-				Quote: vpoolStart.QuoteAssetReserve.QuoInt64(100)},
+				Base:  marketStart.BaseAssetReserve.QuoInt64(100),
+				Quote: marketStart.QuoteAssetReserve.QuoInt64(100)},
 			shouldErr: false,
 		},
 		{
@@ -406,37 +406,37 @@ func TestEditSwapInvariant(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			vpoolKeeper, ctx := setupTest()
+			perpammKeeper, ctx := setupTest()
 			if tc.shouldErr {
-				err := vpoolKeeper.EditSwapInvariant(ctx,
+				err := perpammKeeper.EditSwapInvariant(ctx,
 					types.EditSwapInvariantsProposal_SwapInvariantMultiple{
 						Pair: pair, Multiplier: tc.swapInvariantMultiplier,
 					})
 				// We expect the initial config if the change fails
 				assert.Error(t, err)
-				vpool, err := vpoolKeeper.Pools.Get(ctx, pair)
+				market, err := perpammKeeper.Pools.Get(ctx, pair)
 				assert.NoError(t, err)
-				assert.EqualValues(t, vpoolStart.BaseAssetReserve, vpool.BaseAssetReserve)
-				assert.EqualValues(t, vpoolStart.QuoteAssetReserve, vpool.QuoteAssetReserve)
+				assert.EqualValues(t, marketStart.BaseAssetReserve, market.BaseAssetReserve)
+				assert.EqualValues(t, marketStart.QuoteAssetReserve, market.QuoteAssetReserve)
 			} else if tc.shouldPanic {
 				require.Panics(t, func() {
-					err := vpoolKeeper.EditSwapInvariant(ctx,
+					err := perpammKeeper.EditSwapInvariant(ctx,
 						types.EditSwapInvariantsProposal_SwapInvariantMultiple{
 							Pair: pair, Multiplier: tc.swapInvariantMultiplier,
 						})
 					require.Error(t, err)
 				})
 			} else {
-				err := vpoolKeeper.EditSwapInvariant(ctx,
+				err := perpammKeeper.EditSwapInvariant(ctx,
 					types.EditSwapInvariantsProposal_SwapInvariantMultiple{
 						Pair: pair, Multiplier: tc.swapInvariantMultiplier,
 					})
 				// We expect the new config if the change succeeds
 				require.NoError(t, err)
-				vpool, err := vpoolKeeper.Pools.Get(ctx, pair)
+				market, err := perpammKeeper.Pools.Get(ctx, pair)
 				assert.NoError(t, err)
-				assert.EqualValues(t, tc.newReserves.Base, vpool.BaseAssetReserve)
-				assert.EqualValues(t, tc.newReserves.Quote, vpool.QuoteAssetReserve)
+				assert.EqualValues(t, tc.newReserves.Base, market.BaseAssetReserve)
+				assert.EqualValues(t, tc.newReserves.Quote, market.QuoteAssetReserve)
 			}
 		})
 	}

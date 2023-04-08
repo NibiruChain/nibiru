@@ -53,12 +53,12 @@ func getPriceWithSnapshot(
 		return snapshot.QuoteAssetReserve.Quo(snapshot.BaseAssetReserve), nil
 
 	case types.TwapCalcOption_QUOTE_ASSET_SWAP:
-		pool := &types.Vpool{
+		pool := &types.Market{
 			Pair:              snapshotPriceOpts.pair,
 			QuoteAssetReserve: snapshot.QuoteAssetReserve,
 			BaseAssetReserve:  snapshot.BaseAssetReserve,
 			SqrtDepth:         common.MustSqrtDec(snapshot.QuoteAssetReserve.Mul(snapshot.BaseAssetReserve)),
-			Config: types.VpoolConfig{
+			Config: types.MarketConfig{
 				FluctuationLimitRatio:  sdk.ZeroDec(), // unused
 				MaintenanceMarginRatio: sdk.ZeroDec(), // unused
 				MaxLeverage:            sdk.ZeroDec(), // unused
@@ -69,12 +69,12 @@ func getPriceWithSnapshot(
 		return pool.GetBaseAmountByQuoteAmount(snapshotPriceOpts.assetAmount.MulInt64(snapshotPriceOpts.direction.ToMultiplier()))
 
 	case types.TwapCalcOption_BASE_ASSET_SWAP:
-		pool := &types.Vpool{
+		pool := &types.Market{
 			Pair:              snapshotPriceOpts.pair,
 			QuoteAssetReserve: snapshot.QuoteAssetReserve,
 			BaseAssetReserve:  snapshot.BaseAssetReserve,
 			SqrtDepth:         common.MustSqrtDec(snapshot.QuoteAssetReserve.Mul(snapshot.BaseAssetReserve)),
-			Config: types.VpoolConfig{
+			Config: types.MarketConfig{
 				FluctuationLimitRatio:  sdk.ZeroDec(), // unused
 				MaintenanceMarginRatio: sdk.ZeroDec(), // unused
 				MaxLeverage:            sdk.ZeroDec(), // unused

@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
@@ -104,12 +105,12 @@ func OpenPositionCmd() *cobra.Command {
 				return err
 			}
 
-			var side types.Side
+			var side perpammtypes.Direction
 			switch args[0] {
 			case "buy":
-				side = types.Side_BUY
+				side = perpammtypes.Direction_LONG
 			case "sell":
-				side = types.Side_SELL
+				side = perpammtypes.Direction_SHORT
 			default:
 				return fmt.Errorf("invalid side: %s", args[0])
 			}
@@ -190,7 +191,7 @@ realizing any outstanding funding payments and decreasing the margin ratio.
 */
 func RemoveMarginCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "remove-margin [vpool] [margin]",
+		Use:   "remove-margin [market] [margin]",
 		Short: "Removes margin from a position, decreasing its margin ratio",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`
@@ -234,7 +235,7 @@ func RemoveMarginCmd() *cobra.Command {
 
 func AddMarginCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-margin [vpool] [margin]",
+		Use:   "add-margin [market] [margin]",
 		Short: "Adds margin to a position, increasing its margin ratio",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`

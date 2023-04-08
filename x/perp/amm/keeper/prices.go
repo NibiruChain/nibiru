@@ -17,7 +17,7 @@ GetMarkPrice retrieves the price of the base asset denominated in quote asset.
 The convention is the amount of quote assets required to buy one base asset.
 
 e.g. If the tokenPair is BTC:NUSD, the method would return sdk.Dec(40,000.00)
-because the instantaneous tangent slope on the vpool curve is 40,000.00,
+because the instantaneous tangent slope on the market curve is 40,000.00,
 so it would cost ~40,000.00 to buy one BTC:NUSD perp.
 
 args:
@@ -55,11 +55,11 @@ ret:
   - err: error
 */
 func (k Keeper) GetBaseAssetPrice(
-	vpool types.Vpool,
+	amm types.Market,
 	dir types.Direction,
 	baseAssetAmount sdk.Dec,
 ) (quoteAmount sdk.Dec, err error) {
-	return vpool.GetQuoteAmountByBaseAmount(baseAssetAmount.MulInt64(dir.ToMultiplier()))
+	return amm.GetQuoteAmountByBaseAmount(baseAssetAmount.MulInt64(dir.ToMultiplier()))
 }
 
 /*

@@ -14,27 +14,27 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	vpooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
-func initAppVpools(
+func initAppMarkets(
 	t *testing.T, quoteAssetReserve sdk.Dec, baseAssetReserve sdk.Dec,
 ) (sdk.Context, *app.NibiruApp, types.QueryServer) {
 	t.Log("initialize app and keeper")
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 	perpKeeper := &nibiruApp.PerpKeeper
-	vpoolKeeper := &nibiruApp.VpoolKeeper
+	perpammKeeper := &nibiruApp.PerpAmmKeeper
 	queryServer := keeper.NewQuerier(*perpKeeper)
 
-	t.Log("initialize vpool and pair")
-	assert.NoError(t, vpoolKeeper.CreatePool(
+	t.Log("initialize market and pair")
+	assert.NoError(t, perpammKeeper.CreatePool(
 		ctx,
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		quoteAssetReserve,
 		baseAssetReserve,
-		vpooltypes.VpoolConfig{
+		perpammtypes.MarketConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),
 			MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -48,12 +48,12 @@ func initAppVpools(
 		Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 	})
-	assert.NoError(t, vpoolKeeper.CreatePool(
+	assert.NoError(t, perpammKeeper.CreatePool(
 		ctx,
 		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 		/* quoteReserve */ sdk.MustNewDecFromStr("100000"),
 		/* baseReserve */ sdk.MustNewDecFromStr("100000"),
-		vpooltypes.VpoolConfig{
+		perpammtypes.MarketConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),
 			MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -67,12 +67,12 @@ func initAppVpools(
 		Pair:                            asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 	})
-	assert.NoError(t, vpoolKeeper.CreatePool(
+	assert.NoError(t, perpammKeeper.CreatePool(
 		ctx,
 		asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 		/* quoteReserve */ sdk.MustNewDecFromStr("100000"),
 		/* baseReserve */ sdk.MustNewDecFromStr("100000"),
-		vpooltypes.VpoolConfig{
+		perpammtypes.MarketConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),
 			MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -162,7 +162,7 @@ func TestQueryPosition(t *testing.T) {
 			tc.initialPosition.TraderAddress = traderAddr.String()
 
 			t.Log("initialize app and keeper")
-			ctx, app, queryServer := initAppVpools(t, tc.quoteAssetReserve, tc.baseAssetReserve)
+			ctx, app, queryServer := initAppMarkets(t, tc.quoteAssetReserve, tc.baseAssetReserve)
 
 			t.Log("initialize position")
 			keeper.SetPosition(app.PerpKeeper, ctx, *tc.initialPosition)
@@ -227,7 +227,7 @@ func TestQueryPositions(t *testing.T) {
 			tc.Positions[0].TraderAddress = traderAddr.String()
 			tc.Positions[0].TraderAddress = traderAddr.String()
 
-			ctx, app, queryServer := initAppVpools(
+			ctx, app, queryServer := initAppMarkets(
 				t,
 				/* quoteReserve */ sdk.NewDec(100_000),
 				/* baseReserve */ sdk.NewDec(100_000),
@@ -308,7 +308,7 @@ func TestQueryCumulativePremiumFraction(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Log("initialize app and keeper")
-			ctx, app, queryServer := initAppVpools(t, sdk.NewDec(481_000), sdk.NewDec(1_000))
+			ctx, app, queryServer := initAppMarkets(t, sdk.NewDec(481_000), sdk.NewDec(1_000))
 
 			t.Log("set index price")
 			app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdk.OneDec())
@@ -485,7 +485,7 @@ func TestQueryMetrics(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			ctx, app, queryServer := initAppVpools(
+			ctx, app, queryServer := initAppMarkets(
 				t,
 				/* quoteReserve */ sdk.NewDec(100_000),
 				/* baseReserve */ sdk.NewDec(100_000),
