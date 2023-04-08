@@ -39,8 +39,8 @@ func (v marketShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Contex
 
 // MarketCheckers
 
-// VPool_BiasShouldBeEqualTo checks if the bias is equal to the expected bias
-func VPool_BiasShouldBeEqualTo(bias sdk.Dec) MarketChecker {
+// Market_BiasShouldBeEqualTo checks if the bias is equal to the expected bias
+func Market_BiasShouldBeEqualTo(bias sdk.Dec) MarketChecker {
 	return func(market types.Market) error {
 		if market.Bias.Equal(bias) {
 			return nil

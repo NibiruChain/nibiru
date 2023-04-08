@@ -65,8 +65,8 @@ func AddMarketGenesisCmd(defaultNodeHome string) *cobra.Command {
 	}
 	cmd := &cobra.Command{
 		Use:   fmt.Sprintf("add-genesis-perp-market [%s]", usageExampleTail),
-		Short: "Add vPools to genesis.json",
-		Long:  `Add vPools to genesis.json.`,
+		Short: "Add perp markets to genesis.json",
+		Long:  `Add perp markets to genesis.json.`,
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
@@ -81,20 +81,20 @@ func AddMarketGenesisCmd(defaultNodeHome string) *cobra.Command {
 				return err
 			}
 
-			vPool, err := newMarketFromAddMarketGenesisFlags(cmd.Flags())
+			market, err := newMarketFromAddMarketGenesisFlags(cmd.Flags())
 			if err != nil {
 				return err
 			}
 
-			vPoolGenState := types.GetGenesisStateFromAppState(clientCtx.Codec, appState)
-			vPoolGenState.Markets = append(vPoolGenState.Markets, vPool)
+			perpAmmGenState := types.GetGenesisStateFromAppState(clientCtx.Codec, appState)
+			perpAmmGenState.Markets = append(perpAmmGenState.Markets, market)
 
-			vPoolGenStateBz, err := clientCtx.Codec.MarshalJSON(vPoolGenState)
+			perpAmmGenStateBz, err := clientCtx.Codec.MarshalJSON(perpAmmGenState)
 			if err != nil {
 				return fmt.Errorf("failed to marshal market genesis state: %w", err)
 			}
 
-			appState[types.ModuleName] = vPoolGenStateBz
+			appState[types.ModuleName] = perpAmmGenStateBz
 
 			appStateJSON, err := json.Marshal(appState)
 			if err != nil {

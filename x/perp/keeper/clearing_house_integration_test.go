@@ -27,7 +27,7 @@ import (
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 )
 
-func createInitVPool() Action {
+func createInitMarket() Action {
 	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.USDC)
 
 	return CreateCustomMarket(pairBtcUsdc,
@@ -50,7 +50,7 @@ func TestOpenPosition(t *testing.T) {
 	tc := TestCases{
 		TC("new long position").
 			Given(
-				createInitVPool(),
+				createInitMarket(),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				SetPairPrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
@@ -108,7 +108,7 @@ func TestOpenPosition(t *testing.T) {
 			),
 
 		TC("existing long position, go more long").Given(
-			createInitVPool(),
+			createInitMarket(),
 			SetBlockNumber(1),
 			SetBlockTime(startBlockTime),
 			SetPairPrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),

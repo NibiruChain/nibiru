@@ -34,7 +34,7 @@ func TestIntegrationTestSuite(t *testing.T) {
 	suite.Run(t, new(IntegrationTestSuite))
 }
 
-var START_VPOOLS = map[asset.Pair]perpammtypes.Market{
+var START_MARKETS = map[asset.Pair]perpammtypes.Market{
 	asset.Registry.Pair(denoms.ETH, denoms.NUSD): {
 		Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 		BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
@@ -76,8 +76,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	genesisState := genesis.NewTestGenesisState()
 	marketGenesis := perpammtypes.DefaultGenesis()
 	marketGenesis.Markets = []perpammtypes.Market{
-		START_VPOOLS[asset.Registry.Pair(denoms.ETH, denoms.NUSD)],
-		START_VPOOLS[asset.Registry.Pair(denoms.NIBI, denoms.NUSD)],
+		START_MARKETS[asset.Registry.Pair(denoms.ETH, denoms.NUSD)],
+		START_MARKETS[asset.Registry.Pair(denoms.NIBI, denoms.NUSD)],
 	}
 
 	oracleGenesis := oracletypes.DefaultGenesisState()
@@ -192,7 +192,7 @@ func (s *IntegrationTestSuite) TestCmdEditPoolConfigProposal() {
 	// ----------------------------------------------------------------------
 	s.T().Log("load example proposal json as bytes")
 	// ----------------------------------------------------------------------
-	startMarket := START_VPOOLS[asset.Registry.Pair(denoms.ETH, denoms.NUSD)]
+	startMarket := START_MARKETS[asset.Registry.Pair(denoms.ETH, denoms.NUSD)]
 	proposal := &perpammtypes.EditPoolConfigProposal{
 		Title:       "NIP-3: Edit config of the ueth:unusd market",
 		Description: "enables higher max leverage on ueth:unusd",
@@ -261,7 +261,7 @@ func (s *IntegrationTestSuite) TestCmdEditSwapInvariantsProposal() {
 	// ----------------------------------------------------------------------
 	s.T().Log("load example proposal json as bytes")
 	// ----------------------------------------------------------------------
-	startMarket := START_VPOOLS[asset.Registry.Pair(denoms.NIBI, denoms.NUSD)]
+	startMarket := START_MARKETS[asset.Registry.Pair(denoms.NIBI, denoms.NUSD)]
 	proposal := &perpammtypes.EditSwapInvariantsProposal{
 		Title:       "NIP-4: Change the swap invariant for NIBI.",
 		Description: "increase swap invariant for many virtual pools",

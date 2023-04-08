@@ -20,7 +20,7 @@ import (
 	. "github.com/NibiruChain/nibiru/x/perp/integration/action"
 )
 
-func createInitVPool() Action {
+func createInitMarket() Action {
 	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.USDC)
 
 	return CreateCustomMarket(pairBtcUsdc,
@@ -44,7 +44,7 @@ func TestBiasChangeOnMarket(t *testing.T) {
 	tc := TestCases{
 		TC("simple open long position").
 			Given(
-				createInitVPool(),
+				createInitMarket(),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				SetPairPrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
@@ -55,14 +55,14 @@ func TestBiasChangeOnMarket(t *testing.T) {
 			).
 			Then(
 				ammassertion.MarketShouldBeEqual(pairBtcUsdc,
-					ammassertion.VPool_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("9999.999900000001000000")), // Bias equal to PositionSize
+					ammassertion.Market_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("9999.999900000001000000")), // Bias equal to PositionSize
 				),
 				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("9999.999900000001000000"))),
 			),
 
 		TC("additional long position").
 			Given(
-				createInitVPool(),
+				createInitMarket(),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				SetPairPrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
@@ -75,13 +75,13 @@ func TestBiasChangeOnMarket(t *testing.T) {
 			).
 			Then(
 				ammassertion.MarketShouldBeEqual(pairBtcUsdc,
-					ammassertion.VPool_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("19999.999600000008000000")), // Bias equal to PositionSize
+					ammassertion.Market_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("19999.999600000008000000")), // Bias equal to PositionSize
 				),
 				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("19999.999600000008000000"))),
 			),
 		TC("simple open short position").
 			Given(
-				createInitVPool(),
+				createInitMarket(),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				SetPairPrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
@@ -92,14 +92,14 @@ func TestBiasChangeOnMarket(t *testing.T) {
 			).
 			Then(
 				ammassertion.MarketShouldBeEqual(pairBtcUsdc,
-					ammassertion.VPool_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("-10000.000100000001000000")), // Bias equal to PositionSize
+					ammassertion.Market_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("-10000.000100000001000000")), // Bias equal to PositionSize
 				),
 				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("-10000.000100000001000000"))),
 			),
 
 		TC("additional short position").
 			Given(
-				createInitVPool(),
+				createInitMarket(),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				SetPairPrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
@@ -112,13 +112,13 @@ func TestBiasChangeOnMarket(t *testing.T) {
 			).
 			Then(
 				ammassertion.MarketShouldBeEqual(pairBtcUsdc,
-					ammassertion.VPool_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("-20000.000400000008000000")), // Bias equal to PositionSize
+					ammassertion.Market_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("-20000.000400000008000000")), // Bias equal to PositionSize
 				),
 				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("-20000.000400000008000000"))),
 			),
 		TC("open long position and close it").
 			Given(
-				createInitVPool(),
+				createInitMarket(),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				SetPairPrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
@@ -131,13 +131,13 @@ func TestBiasChangeOnMarket(t *testing.T) {
 			).
 			Then(
 				ammassertion.MarketShouldBeEqual(pairBtcUsdc,
-					ammassertion.VPool_BiasShouldBeEqualTo(sdk.ZeroDec()), // Bias equal to PositionSize
+					ammassertion.Market_BiasShouldBeEqualTo(sdk.ZeroDec()), // Bias equal to PositionSize
 				),
 				PositionShouldNotExist(alice, pairBtcUsdc),
 			),
 		TC("open long position and open smaller short").
 			Given(
-				createInitVPool(),
+				createInitMarket(),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				SetPairPrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
@@ -150,14 +150,14 @@ func TestBiasChangeOnMarket(t *testing.T) {
 			).
 			Then(
 				ammassertion.MarketShouldBeEqual(pairBtcUsdc,
-					ammassertion.VPool_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("8999.999919000000729000")), // Bias equal to PositionSize
+					ammassertion.Market_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("8999.999919000000729000")), // Bias equal to PositionSize
 				),
 				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("8999.999919000000729000"))),
 			),
 
 		TC("2 positions, one long, one short with same amount should set Bias to 0").
 			Given(
-				createInitVPool(),
+				createInitMarket(),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				SetPairPrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
@@ -170,7 +170,7 @@ func TestBiasChangeOnMarket(t *testing.T) {
 			).
 			Then(
 				ammassertion.MarketShouldBeEqual(pairBtcUsdc,
-					ammassertion.VPool_BiasShouldBeEqualTo(sdk.ZeroDec()), // Bias equal to PositionSize
+					ammassertion.Market_BiasShouldBeEqualTo(sdk.ZeroDec()), // Bias equal to PositionSize
 				),
 				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("9999.999900000001000000"))),
 				PositionShouldBeEqual(bob, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("-9999.999900000001000000"))),
@@ -178,7 +178,7 @@ func TestBiasChangeOnMarket(t *testing.T) {
 
 		TC("Open long position and liquidate").
 			Given(
-				createInitVPool(),
+				createInitMarket(),
 				SetLiquidator(bob),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
@@ -194,7 +194,7 @@ func TestBiasChangeOnMarket(t *testing.T) {
 				LiquidatePosition(bob, alice, pairBtcUsdc),
 			).Then(
 			ammassertion.MarketShouldBeEqual(pairBtcUsdc,
-				ammassertion.VPool_BiasShouldBeEqualTo(sdk.ZeroDec()), // Bias equal to PositionSize
+				ammassertion.Market_BiasShouldBeEqualTo(sdk.ZeroDec()), // Bias equal to PositionSize
 			),
 			PositionShouldNotExist(alice, pairBtcUsdc),
 		),

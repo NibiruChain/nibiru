@@ -25,7 +25,7 @@ func TestOpenGasConsumed(t *testing.T) {
 	testCases := TestCases{
 		TC("open position gas consumed").
 			Given(
-				createInitVPool(),
+				createInitMarket(),
 				SetBlockTime(time.Now()),
 				SetBlockNumber(1),
 				SetPairPrice(pairBtcUsdc, sdk.NewDec(10000)),

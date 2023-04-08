@@ -13,8 +13,8 @@ import (
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 )
 
-// CreateVPoolAction creates a market
-type CreateVPoolAction struct {
+// CreateMarketAction creates a market
+type CreateMarketAction struct {
 	Pair asset.Pair
 
 	QuoteAssetReserve sdk.Dec
@@ -25,7 +25,7 @@ type CreateVPoolAction struct {
 	Bias sdk.Dec
 }
 
-func (c CreateVPoolAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+func (c CreateMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	err := app.PerpAmmKeeper.CreatePool(
 		ctx,
 		c.Pair,
@@ -52,8 +52,8 @@ func (c CreateVPoolAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context,
 // - quote asset reserve: 1000
 // - base asset reserve: 100
 // - market config: default
-func CreateBaseMarket() CreateVPoolAction {
-	return CreateVPoolAction{
+func CreateBaseMarket() CreateMarketAction {
+	return CreateMarketAction{
 		Pair:              asset.NewPair(denoms.BTC, denoms.USDC),
 		QuoteAssetReserve: sdk.NewDec(1000e6),
 		BaseAssetReserve:  sdk.NewDec(100e6),
@@ -74,7 +74,7 @@ func CreateCustomMarket(
 	marketConfig perpammtypes.MarketConfig,
 	bias sdk.Dec,
 ) action.Action {
-	return CreateVPoolAction{
+	return CreateMarketAction{
 		Pair:              pair,
 		QuoteAssetReserve: quoteAssetReserve,
 		BaseAssetReserve:  baseAssetReserve,
