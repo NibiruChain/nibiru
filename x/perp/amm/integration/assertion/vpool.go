@@ -11,14 +11,14 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/amm/types"
 )
 
-type VpoolChecker func(resp types.Vpool) error
+type MarketChecker func(resp types.Market) error
 
 type vpoolShouldBeEqual struct {
 	pair     asset.Pair
-	checkers []VpoolChecker
+	checkers []MarketChecker
 }
 
-func VpoolShouldBeEqual(pair asset.Pair, checkers ...VpoolChecker) action.Action {
+func VpoolShouldBeEqual(pair asset.Pair, checkers ...MarketChecker) action.Action {
 	return &vpoolShouldBeEqual{pair: pair, checkers: checkers}
 }
 
@@ -37,11 +37,11 @@ func (v vpoolShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context
 	return ctx, nil
 }
 
-// VpoolCheckers
+// MarketCheckers
 
 // VPool_BiasShouldBeEqualTo checks if the bias is equal to the expected bias
-func VPool_BiasShouldBeEqualTo(bias sdk.Dec) VpoolChecker {
-	return func(vpool types.Vpool) error {
+func VPool_BiasShouldBeEqualTo(bias sdk.Dec) MarketChecker {
+	return func(vpool types.Market) error {
 		if vpool.Bias.Equal(bias) {
 			return nil
 		}

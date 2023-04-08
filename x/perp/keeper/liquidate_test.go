@@ -28,7 +28,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 	traderAddr := testutilevents.AccAddress()
 
 	type test struct {
-		positionSide              types.Side
+		positionSide              perpammtypes.Direction
 		quoteAmount               sdk.Int
 		leverage                  sdk.Dec
 		baseAssetLimit            sdk.Dec
@@ -40,7 +40,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 
 	testCases := map[string]test{
 		"happy path - Buy": {
-			positionSide:   types.Side_BUY,
+			positionSide:   perpammtypes.Direction_LONG,
 			quoteAmount:    sdk.NewInt(50_000),
 			leverage:       sdk.OneDec(),
 			baseAssetLimit: sdk.ZeroDec(),
@@ -58,7 +58,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			expectedPerpEFBalance: sdk.NewInt64Coin("NUSD", 1_047_550),
 		},
 		"happy path - Sell": {
-			positionSide: types.Side_SELL,
+			positionSide: perpammtypes.Direction_SHORT,
 			quoteAmount:  sdk.NewInt(50_000),
 			// There's a 20 bps tx fee on open position.
 			// This tx fee is split 50/50 bw the PerpEF and Treasury.
@@ -91,7 +91,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				tokenPair,
 				/* quoteAssetReserves */ sdk.NewDec(10*common.TO_MICRO),
 				/* baseAssetReserves */ sdk.NewDec(5*common.TO_MICRO),
-				perpammtypes.VpoolConfig{
+				perpammtypes.MarketConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
@@ -198,7 +198,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 
 	testCases := []struct {
 		name           string
-		side           types.Side
+		side           perpammtypes.Direction
 		quote          sdk.Int
 		leverage       sdk.Dec
 		baseLimit      sdk.Dec
@@ -212,7 +212,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 	}{
 		{
 			name:           "happy path - Buy",
-			side:           types.Side_BUY,
+			side:           perpammtypes.Direction_LONG,
 			quote:          sdk.NewInt(50_000),
 			leverage:       sdk.OneDec(),
 			baseLimit:      sdk.ZeroDec(),
@@ -234,7 +234,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 		},
 		{
 			name:           "happy path - Sell",
-			side:           types.Side_SELL,
+			side:           perpammtypes.Direction_SHORT,
 			quote:          sdk.NewInt(50_000),
 			leverage:       sdk.OneDec(),
 			baseLimit:      sdk.ZeroDec(),
@@ -271,7 +271,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 				tokenPair,
 				/* quoteAssetReserves */ sdk.NewDec(10_000*common.TO_MICRO*common.TO_MICRO),
 				/* baseAssetReserves */ sdk.NewDec(5_000*common.TO_MICRO*common.TO_MICRO),
-				perpammtypes.VpoolConfig{
+				perpammtypes.MarketConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
@@ -446,7 +446,7 @@ func TestMultiLiquidate(t *testing.T) {
 				/* pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
 				/* baseAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
-				perpammtypes.VpoolConfig{
+				perpammtypes.MarketConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaxOracleSpreadRatio:   sdk.OneDec(),

@@ -51,13 +51,13 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	// setup vpool
 	vpoolGenesis := perpammtypes.DefaultGenesis()
-	vpoolGenesis.Vpools = []perpammtypes.Vpool{
+	vpoolGenesis.Markets = []perpammtypes.Market{
 		{
 			Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
 			QuoteAssetReserve: sdk.NewDec(60_000 * common.TO_MICRO),
 			SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 60_000 * common.TO_MICRO * common.TO_MICRO)),
-			Config: perpammtypes.VpoolConfig{
+			Config: perpammtypes.MarketConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 				FluctuationLimitRatio:  sdk.OneDec(),
 				MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -70,7 +70,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
 			QuoteAssetReserve: sdk.NewDec(60_000 * common.TO_MICRO),
 			SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 60_000 * common.TO_MICRO * common.TO_MICRO)),
-			Config: perpammtypes.VpoolConfig{
+			Config: perpammtypes.MarketConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
 				MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -83,7 +83,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
 			QuoteAssetReserve: sdk.NewDec(60_000 * common.TO_MICRO),
 			SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 60_000 * common.TO_MICRO * common.TO_MICRO)),
-			Config: perpammtypes.VpoolConfig{
+			Config: perpammtypes.MarketConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
 				MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -96,7 +96,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
 			QuoteAssetReserve: sdk.NewDec(60_000 * common.TO_MICRO),
 			SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 60_000 * common.TO_MICRO * common.TO_MICRO)),
-			Config: perpammtypes.VpoolConfig{
+			Config: perpammtypes.MarketConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
 				MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -267,7 +267,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.NoError(err)
 
 	s.T().Log("A. check vpool balances")
-	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+	reserveAssets, err := testutilcli.QueryMarketReserveAssets(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 	s.T().Logf("reserve assets: %+v", reserveAssets)
 	s.NoError(err)
 	s.EqualValues(sdk.NewDec(10*common.TO_MICRO), reserveAssets.BaseAssetReserve)
@@ -289,7 +289,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
 	s.T().Log("B. check vpool balance after open position")
-	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+	reserveAssets, err = testutilcli.QueryMarketReserveAssets(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 	s.T().Logf("reserve assets: %+v", reserveAssets)
 	s.NoError(err)
 	s.EqualValues(sdk.MustNewDecFromStr("9999833.336111064815586407"), reserveAssets.BaseAssetReserve)
@@ -345,7 +345,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
 	s.T().Log("D. Check vpool after opening reverse position")
-	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+	reserveAssets, err = testutilcli.QueryMarketReserveAssets(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 	s.NoError(err)
 	s.T().Logf(" \n reserve assets: %+v \n", reserveAssets)
 	s.EqualValues(sdk.MustNewDecFromStr("9999500.041663750215262154"), reserveAssets.BaseAssetReserve)

@@ -187,7 +187,7 @@ func (k Keeper) RemoveMargin(
 
 // GetMarginRatio calculates the MarginRatio from a Position
 func (k Keeper) GetMarginRatio(
-	ctx sdk.Context, vpool perpammtypes.Vpool, position types.Position, priceOption types.MarginCalculationPriceOption,
+	ctx sdk.Context, vpool perpammtypes.Market, position types.Position, priceOption types.MarginCalculationPriceOption,
 ) (marginRatio sdk.Dec, err error) {
 	if position.Size_.IsZero() {
 		return sdk.Dec{}, types.ErrPositionZero
@@ -296,7 +296,7 @@ Returns:
 */
 func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 	ctx sdk.Context,
-	vpool perpammtypes.Vpool,
+	vpool perpammtypes.Market,
 	currentPosition types.Position,
 	pnlCalcOption types.PnLCalcOption,
 ) (positionNotional sdk.Dec, unrealizedPnL sdk.Dec, err error) {
@@ -308,10 +308,10 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 	var baseAssetDirection perpammtypes.Direction
 	if currentPosition.Size_.IsPositive() {
 		// LONG
-		baseAssetDirection = perpammtypes.Direction_ADD_TO_POOL
+		baseAssetDirection = perpammtypes.Direction_LONG
 	} else {
 		// SHORT
-		baseAssetDirection = perpammtypes.Direction_REMOVE_FROM_POOL
+		baseAssetDirection = perpammtypes.Direction_SHORT
 	}
 
 	switch pnlCalcOption {
@@ -391,7 +391,7 @@ Returns:
 */
 func (k Keeper) GetPreferencePositionNotionalAndUnrealizedPnL(
 	ctx sdk.Context,
-	vpool perpammtypes.Vpool,
+	vpool perpammtypes.Market,
 	position types.Position,
 	pnLPreferenceOption types.PnLPreferenceOption,
 ) (positionNotional sdk.Dec, unrealizedPnl sdk.Dec, err error) {

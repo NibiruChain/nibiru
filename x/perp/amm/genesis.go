@@ -13,7 +13,7 @@ import (
 // InitGenesis initializes the capability module's state from a provided genesis
 // state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
-	for _, vp := range genState.Vpools {
+	for _, vp := range genState.Markets {
 		if err := k.CreatePool(
 			ctx,
 			vp.Pair,
@@ -31,6 +31,6 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 // ExportGenesis returns the capability module's exported genesis.
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	return &types.GenesisState{
-		Vpools: k.Pools.Iterate(ctx, collections.Range[asset.Pair]{}).Values(),
+		Markets: k.Pools.Iterate(ctx, collections.Range[asset.Pair]{}).Values(),
 	}
 }

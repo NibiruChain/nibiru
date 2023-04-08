@@ -34,13 +34,13 @@ func TestIntegrationTestSuite(t *testing.T) {
 	suite.Run(t, new(IntegrationTestSuite))
 }
 
-var START_VPOOLS = map[asset.Pair]perpammtypes.Vpool{
+var START_VPOOLS = map[asset.Pair]perpammtypes.Market{
 	asset.Registry.Pair(denoms.ETH, denoms.NUSD): {
 		Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 		BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
 		QuoteAssetReserve: sdk.NewDec(60_000 * common.TO_MICRO),
 		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(600_000 * common.TO_MICRO * common.TO_MICRO)),
-		Config: perpammtypes.VpoolConfig{
+		Config: perpammtypes.MarketConfig{
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
 			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.2"),
@@ -53,7 +53,7 @@ var START_VPOOLS = map[asset.Pair]perpammtypes.Vpool{
 		BaseAssetReserve:  sdk.NewDec(500_000),
 		QuoteAssetReserve: sdk.NewDec(5 * common.TO_MICRO),
 		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(5 * 500_000 * common.TO_MICRO)),
-		Config: perpammtypes.VpoolConfig{
+		Config: perpammtypes.MarketConfig{
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
 			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.2"),
@@ -75,7 +75,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	encodingConfig := app.MakeTestEncodingConfig()
 	genesisState := genesis.NewTestGenesisState()
 	vpoolGenesis := perpammtypes.DefaultGenesis()
-	vpoolGenesis.Vpools = []perpammtypes.Vpool{
+	vpoolGenesis.Markets = []perpammtypes.Market{
 		START_VPOOLS[asset.Registry.Pair(denoms.ETH, denoms.NUSD)],
 		START_VPOOLS[asset.Registry.Pair(denoms.NIBI, denoms.NUSD)],
 	}
@@ -112,7 +112,7 @@ func (s *IntegrationTestSuite) TestCmdCreatePoolProposal() {
 		Pair:              "ETH:USD",
 		QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
 		BaseAssetReserve:  sdk.NewDec(1 * common.TO_MICRO),
-		Config: perpammtypes.VpoolConfig{
+		Config: perpammtypes.MarketConfig{
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.05"),
 			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.05"),
@@ -150,12 +150,12 @@ func (s *IntegrationTestSuite) TestCmdCreatePoolProposal() {
 	s.Require().NoError(s.network.WaitForNextBlock())
 
 	vpoolsQueryResp := &perpammtypes.QueryAllPoolsResponse{}
-	s.Require().NoError(testutilcli.ExecQuery(s.network.Validators[0].ClientCtx, cli.CmdGetVpools(), nil, vpoolsQueryResp))
+	s.Require().NoError(testutilcli.ExecQuery(s.network.Validators[0].ClientCtx, cli.CmdGetMarkets(), nil, vpoolsQueryResp))
 
 	found := false
-	for _, pool := range vpoolsQueryResp.Pools {
+	for _, pool := range vpoolsQueryResp.Markets {
 		if pool.Pair.Equal(proposal.Pair) {
-			s.EqualValues(perpammtypes.Vpool{
+			s.EqualValues(perpammtypes.Market{
 				Pair:              proposal.Pair,
 				BaseAssetReserve:  proposal.BaseAssetReserve,
 				QuoteAssetReserve: proposal.QuoteAssetReserve,
@@ -174,7 +174,7 @@ func (s *IntegrationTestSuite) TestGetPrices() {
 	val := s.network.Validators[0]
 
 	s.T().Log("check vpool balances")
-	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, asset.Registry.Pair(denoms.ETH, denoms.NUSD))
+	reserveAssets, err := testutilcli.QueryMarketReserveAssets(val.ClientCtx, asset.Registry.Pair(denoms.ETH, denoms.NUSD))
 	s.NoError(err)
 	s.EqualValues(sdk.MustNewDecFromStr("10000000"), reserveAssets.BaseAssetReserve)
 	s.EqualValues(sdk.MustNewDecFromStr("60000000000"), reserveAssets.QuoteAssetReserve)
@@ -192,12 +192,12 @@ func (s *IntegrationTestSuite) TestCmdEditPoolConfigProposal() {
 	// ----------------------------------------------------------------------
 	s.T().Log("load example proposal json as bytes")
 	// ----------------------------------------------------------------------
-	startVpool := START_VPOOLS[asset.Registry.Pair(denoms.ETH, denoms.NUSD)]
+	startMarket := START_VPOOLS[asset.Registry.Pair(denoms.ETH, denoms.NUSD)]
 	proposal := &perpammtypes.EditPoolConfigProposal{
 		Title:       "NIP-3: Edit config of the ueth:unusd vpool",
 		Description: "enables higher max leverage on ueth:unusd",
-		Pair:        startVpool.Pair,
-		Config: perpammtypes.VpoolConfig{
+		Pair:        startMarket.Pair,
+		Config: perpammtypes.MarketConfig{
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
 			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.2"),
@@ -235,16 +235,16 @@ func (s *IntegrationTestSuite) TestCmdEditPoolConfigProposal() {
 	s.Require().NoError(s.network.WaitForNextBlock())
 
 	vpoolsQueryResp := &perpammtypes.QueryAllPoolsResponse{}
-	s.Require().NoError(testutilcli.ExecQuery(s.network.Validators[0].ClientCtx, cli.CmdGetVpools(), nil, vpoolsQueryResp))
+	s.Require().NoError(testutilcli.ExecQuery(s.network.Validators[0].ClientCtx, cli.CmdGetMarkets(), nil, vpoolsQueryResp))
 
 	found := false
-	for _, vpool := range vpoolsQueryResp.Pools {
+	for _, vpool := range vpoolsQueryResp.Markets {
 		if vpool.Pair.Equal(proposal.Pair) {
-			s.EqualValues(perpammtypes.Vpool{
+			s.EqualValues(perpammtypes.Market{
 				Pair:              proposal.Pair,
-				BaseAssetReserve:  startVpool.BaseAssetReserve,
-				QuoteAssetReserve: startVpool.QuoteAssetReserve,
-				SqrtDepth:         startVpool.SqrtDepth,
+				BaseAssetReserve:  startMarket.BaseAssetReserve,
+				QuoteAssetReserve: startMarket.QuoteAssetReserve,
+				SqrtDepth:         startMarket.SqrtDepth,
 				Config:            proposal.Config,
 				Bias:              sdk.ZeroDec(),
 				PegMultiplier:     sdk.ZeroDec(),
@@ -261,12 +261,12 @@ func (s *IntegrationTestSuite) TestCmdEditSwapInvariantsProposal() {
 	// ----------------------------------------------------------------------
 	s.T().Log("load example proposal json as bytes")
 	// ----------------------------------------------------------------------
-	startVpool := START_VPOOLS[asset.Registry.Pair(denoms.NIBI, denoms.NUSD)]
+	startMarket := START_VPOOLS[asset.Registry.Pair(denoms.NIBI, denoms.NUSD)]
 	proposal := &perpammtypes.EditSwapInvariantsProposal{
 		Title:       "NIP-4: Change the swap invariant for NIBI.",
 		Description: "increase swap invariant for many virtual pools",
 		SwapInvariantMaps: []perpammtypes.EditSwapInvariantsProposal_SwapInvariantMultiple{
-			{Pair: startVpool.Pair, Multiplier: sdk.NewDec(100)},
+			{Pair: startMarket.Pair, Multiplier: sdk.NewDec(100)},
 		},
 	}
 	proposalFile := sdktestutil.WriteToNewTempFile(
@@ -283,9 +283,9 @@ func (s *IntegrationTestSuite) TestCmdEditSwapInvariantsProposal() {
 	vpoolsQueryResp := new(perpammtypes.QueryAllPoolsResponse)
 	s.Require().NoError(testutilcli.ExecQuery(
 		s.network.Validators[0].ClientCtx,
-		cli.CmdGetVpools(), nil, vpoolsQueryResp))
-	var vpoolBefore perpammtypes.Vpool
-	for _, vpool := range vpoolsQueryResp.Pools {
+		cli.CmdGetMarkets(), nil, vpoolsQueryResp))
+	var vpoolBefore perpammtypes.Market
+	for _, vpool := range vpoolsQueryResp.Markets {
 		if vpool.Pair.Equal(proposal.SwapInvariantMaps[0].Pair) {
 			vpoolBefore = vpool
 			break
@@ -314,11 +314,11 @@ func (s *IntegrationTestSuite) TestCmdEditSwapInvariantsProposal() {
 
 	vpoolsQueryResp = new(perpammtypes.QueryAllPoolsResponse)
 	s.Require().NoError(testutilcli.ExecQuery(
-		s.network.Validators[0].ClientCtx, cli.CmdGetVpools(), nil, vpoolsQueryResp,
+		s.network.Validators[0].ClientCtx, cli.CmdGetMarkets(), nil, vpoolsQueryResp,
 	))
 
 	found := false
-	for _, vpool := range vpoolsQueryResp.Pools {
+	for _, vpool := range vpoolsQueryResp.Markets {
 		proposalPair := proposal.SwapInvariantMaps[0].Pair
 
 		if vpool.Pair.Equal(proposalPair) {
@@ -327,7 +327,7 @@ func (s *IntegrationTestSuite) TestCmdEditSwapInvariantsProposal() {
 			s.Assert().EqualValues(sdk.NewDec(10).String(), multiplierToSqrtDepth.String())
 
 			// get vpool after proposal
-			vpoolAfter := perpammtypes.Vpool{
+			vpoolAfter := perpammtypes.Market{
 				Pair:              proposalPair,
 				BaseAssetReserve:  vpoolBefore.BaseAssetReserve.Mul(multiplierToSqrtDepth),
 				QuoteAssetReserve: vpoolBefore.QuoteAssetReserve.Mul(multiplierToSqrtDepth),

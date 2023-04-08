@@ -70,7 +70,7 @@ func TestAddMarginSuccess(t *testing.T) {
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				sdk.NewDec(10*common.TO_MICRO), // 10 tokens
 				sdk.NewDec(5*common.TO_MICRO),  // 5 tokens
-				perpammtypes.VpoolConfig{
+				perpammtypes.MarketConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"), // 0.1 ratio
 					MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -142,7 +142,7 @@ func TestRemoveMargin(t *testing.T) {
 					pair,
 					/* y */ sdk.NewDec(1*common.TO_MICRO), //
 					/* x */ sdk.NewDec(1*common.TO_MICRO), //
-					perpammtypes.VpoolConfig{
+					perpammtypes.MarketConfig{
 						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 						FluctuationLimitRatio:  sdk.OneDec(),
 						MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -178,7 +178,7 @@ func TestRemoveMargin(t *testing.T) {
 					pair,
 					/* y */ quoteReserves,
 					/* x */ baseReserves,
-					perpammtypes.VpoolConfig{
+					perpammtypes.MarketConfig{
 						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 						FluctuationLimitRatio:  sdk.OneDec(),
 						MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.4"),
@@ -207,7 +207,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("Open long position with 5x leverage")
 				perpKeeper := nibiruApp.PerpKeeper
-				side := types.Side_BUY
+				side := perpammtypes.Direction_LONG
 				quote := sdk.NewInt(60)
 				leverage := sdk.NewDec(5)
 				baseLimit := sdk.ZeroDec()

@@ -20,7 +20,7 @@ type CreateVPoolAction struct {
 	QuoteAssetReserve sdk.Dec
 	BaseAssetReserve  sdk.Dec
 
-	VPoolConfig perpammtypes.VpoolConfig
+	MarketConfig perpammtypes.MarketConfig
 
 	Bias sdk.Dec
 }
@@ -31,7 +31,7 @@ func (c CreateVPoolAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context,
 		c.Pair,
 		c.QuoteAssetReserve,
 		c.BaseAssetReserve,
-		c.VPoolConfig,
+		c.MarketConfig,
 		c.Bias,
 		sdk.OneDec(),
 	)
@@ -57,7 +57,7 @@ func CreateBaseVpool() CreateVPoolAction {
 		Pair:              asset.NewPair(denoms.BTC, denoms.USDC),
 		QuoteAssetReserve: sdk.NewDec(1000e6),
 		BaseAssetReserve:  sdk.NewDec(100e6),
-		VPoolConfig: perpammtypes.VpoolConfig{
+		MarketConfig: perpammtypes.MarketConfig{
 			TradeLimitRatio:        sdk.MustNewDecFromStr("1"),
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("1"),
 			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
@@ -71,14 +71,14 @@ func CreateBaseVpool() CreateVPoolAction {
 func CreateCustomVpool(
 	pair asset.Pair,
 	quoteAssetReserve, baseAssetReserve sdk.Dec,
-	vpoolConfig perpammtypes.VpoolConfig,
+	marketConfig perpammtypes.MarketConfig,
 	bias sdk.Dec,
 ) action.Action {
 	return CreateVPoolAction{
 		Pair:              pair,
 		QuoteAssetReserve: quoteAssetReserve,
 		BaseAssetReserve:  baseAssetReserve,
-		VPoolConfig:       vpoolConfig,
+		MarketConfig:      marketConfig,
 		Bias:              bias,
 	}
 }

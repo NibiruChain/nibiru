@@ -88,7 +88,7 @@ position without making it go underwater.
 - err: error
 */
 func (k Keeper) calcFreeCollateral(
-	ctx sdk.Context, vpool perpammtypes.Vpool, pos types.Position,
+	ctx sdk.Context, vpool perpammtypes.Market, pos types.Position,
 ) (freeCollateral sdk.Dec, err error) {
 	if err = pos.Pair.Validate(); err != nil {
 		return

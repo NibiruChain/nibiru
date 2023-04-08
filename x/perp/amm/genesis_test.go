@@ -16,13 +16,13 @@ import (
 )
 
 func TestGenesis(t *testing.T) {
-	vpools := []types.Vpool{
+	vpools := []types.Market{
 		{
 			Pair:              asset.MustNewPair("BTC:NUSD"),
 			BaseAssetReserve:  sdk.NewDec(1 * common.TO_MICRO),      // 1
 			QuoteAssetReserve: sdk.NewDec(30_000 * common.TO_MICRO), // 30,000
 			SqrtDepth:         common.MustSqrtDec(sdk.NewDec(30_000 * common.TO_MICRO * common.TO_MICRO)),
-			Config: types.VpoolConfig{
+			Config: types.MarketConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.88"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.20"),
 				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.20"),
@@ -37,7 +37,7 @@ func TestGenesis(t *testing.T) {
 			BaseAssetReserve:  sdk.NewDec(2 * common.TO_MICRO),      // 2
 			QuoteAssetReserve: sdk.NewDec(60_000 * common.TO_MICRO), // 60,000
 			SqrtDepth:         common.MustSqrtDec(sdk.NewDec(2 * 60_000 * common.TO_MICRO * common.TO_MICRO)),
-			Config: types.VpoolConfig{
+			Config: types.MarketConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.77"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
 				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.30"),
@@ -50,7 +50,7 @@ func TestGenesis(t *testing.T) {
 	}
 
 	genesisState := types.GenesisState{
-		Vpools: vpools,
+		Markets: vpools,
 	}
 
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
@@ -63,7 +63,7 @@ func TestGenesis(t *testing.T) {
 	}
 
 	exportedGenesis := perpamm.ExportGenesis(ctx, k)
-	require.Len(t, exportedGenesis.Vpools, 2)
+	require.Len(t, exportedGenesis.Markets, 2)
 
 	iter := k.ReserveSnapshots.Iterate(
 		ctx,
@@ -72,7 +72,7 @@ func TestGenesis(t *testing.T) {
 
 	require.Len(t, iter.Values(), 2)
 
-	for _, pool := range genesisState.Vpools {
-		require.Contains(t, exportedGenesis.Vpools, pool)
+	for _, pool := range genesisState.Markets {
+		require.Contains(t, exportedGenesis.Markets, pool)
 	}
 }

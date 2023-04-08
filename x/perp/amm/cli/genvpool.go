@@ -81,13 +81,13 @@ func AddVpoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 				return err
 			}
 
-			vPool, err := newVpoolFromAddVpoolGenesisFlags(cmd.Flags())
+			vPool, err := newMarketFromAddVpoolGenesisFlags(cmd.Flags())
 			if err != nil {
 				return err
 			}
 
 			vPoolGenState := types.GetGenesisStateFromAppState(clientCtx.Codec, appState)
-			vPoolGenState.Vpools = append(vPoolGenState.Vpools, vPool)
+			vPoolGenState.Markets = append(vPoolGenState.Markets, vPool)
 
 			vPoolGenStateBz, err := clientCtx.Codec.MarshalJSON(vPoolGenState)
 			if err != nil {
@@ -118,8 +118,8 @@ func AddVpoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 	return cmd
 }
 
-func newVpoolFromAddVpoolGenesisFlags(flagSet *flag.FlagSet,
-) (vpool types.Vpool, err error) {
+func newMarketFromAddVpoolGenesisFlags(flagSet *flag.FlagSet,
+) (vpool types.Market, err error) {
 	var flagErrors = []error{}
 	pairStr, err := flagSet.GetString(FlagPair)
 	flagErrors = append(flagErrors, err)
@@ -186,14 +186,14 @@ func newVpoolFromAddVpoolGenesisFlags(flagSet *flag.FlagSet,
 
 	maxLeverage, err := sdk.NewDecFromStr(maxLeverageStr)
 	if err != nil {
-		return types.Vpool{}, err
+		return types.Market{}, err
 	}
 
-	vpool = types.Vpool{
+	vpool = types.Market{
 		Pair:              pair,
 		QuoteAssetReserve: quoteAsset,
 		BaseAssetReserve:  baseAsset,
-		Config: types.VpoolConfig{
+		Config: types.MarketConfig{
 			TradeLimitRatio:        tradeLimit,
 			FluctuationLimitRatio:  fluctuationLimitRatio,
 			MaxOracleSpreadRatio:   maxOracleSpread,

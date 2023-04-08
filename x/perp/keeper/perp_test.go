@@ -34,7 +34,7 @@ func TestKeeperClosePosition(t *testing.T) {
 			pair,
 			/*quoteAssetReserve*/ sdk.NewDec(10*common.TO_MICRO),
 			/*baseAssetReserve*/ sdk.NewDec(5*common.TO_MICRO),
-			perpammtypes.VpoolConfig{
+			perpammtypes.MarketConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
@@ -61,7 +61,7 @@ func TestKeeperClosePosition(t *testing.T) {
 			sdk.NewCoins(sdk.NewInt64Coin("yyy", 300)))
 		require.NoError(t, err)
 
-		aliceSide := types.Side_BUY
+		aliceSide := perpammtypes.Direction_LONG
 		aliceQuote := sdk.NewInt(60)
 		aliceLeverage := sdk.NewDec(10)
 		aliceBaseLimit := sdk.NewDec(150)
@@ -83,7 +83,7 @@ func TestKeeperClosePosition(t *testing.T) {
 			sdk.NewCoins(sdk.NewInt64Coin("yyy", 62)))
 		require.NoError(t, err)
 
-		bobSide := types.Side_BUY
+		bobSide := perpammtypes.Direction_LONG
 		bobQuote := sdk.NewInt(60)
 		bobLeverage := sdk.NewDec(10)
 		bobBaseLimit := sdk.NewDec(150)

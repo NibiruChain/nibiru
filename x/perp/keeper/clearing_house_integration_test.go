@@ -33,7 +33,7 @@ func createInitVPool() Action {
 	return CreateCustomVpool(pairBtcUsdc,
 		/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO*common.TO_MICRO),
 		/* baseReserve */ sdk.NewDec(1*common.TO_MICRO*common.TO_MICRO),
-		perpammtypes.VpoolConfig{
+		perpammtypes.MarketConfig{
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
@@ -57,7 +57,7 @@ func TestOpenPosition(t *testing.T) {
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
 			).
 			When(
-				OpenPosition(alice, pairBtcUsdc, perptypes.Side_BUY, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec(),
+				OpenPosition(alice, pairBtcUsdc, perpammtypes.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec(),
 					OpenPositionResp_PositionShouldBeEqual(
 						perptypes.Position{
 							Pair:                            pairBtcUsdc,
@@ -113,10 +113,10 @@ func TestOpenPosition(t *testing.T) {
 			SetBlockTime(startBlockTime),
 			SetPairPrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
 			FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2040)))),
-			OpenPosition(alice, pairBtcUsdc, perptypes.Side_BUY, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+			OpenPosition(alice, pairBtcUsdc, perpammtypes.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 		).When(
 			MoveToNextBlock(),
-			OpenPosition(alice, pairBtcUsdc, perptypes.Side_BUY, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec(),
+			OpenPosition(alice, pairBtcUsdc, perpammtypes.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec(),
 				OpenPositionResp_PositionShouldBeEqual(
 					perptypes.Position{
 						Pair:                            pairBtcUsdc,
@@ -167,7 +167,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 
 		initialPosition *perptypes.Position
 
-		side      perptypes.Side
+		side      perpammtypes.Direction
 		margin    sdk.Int
 		leverage  sdk.Dec
 		baseLimit sdk.Dec
@@ -185,7 +185,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			name:                     "new long position",
 			traderFunds:              sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1020)),
 			initialPosition:          nil,
-			side:                     perptypes.Side_BUY,
+			side:                     perpammtypes.Direction_LONG,
 			margin:                   sdk.NewInt(1000),
 			leverage:                 sdk.NewDec(10),
 			baseLimit:                sdk.ZeroDec(),
@@ -209,7 +209,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                     1,
 			},
-			side:                     perptypes.Side_BUY,
+			side:                     perpammtypes.Direction_LONG,
 			margin:                   sdk.NewInt(1000),
 			leverage:                 sdk.NewDec(10),
 			baseLimit:                sdk.ZeroDec(),
@@ -233,7 +233,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                     1,
 			},
-			side:                     perptypes.Side_SELL,
+			side:                     perpammtypes.Direction_SHORT,
 			margin:                   sdk.NewInt(500),
 			leverage:                 sdk.NewDec(10),
 			baseLimit:                sdk.ZeroDec(),
@@ -257,7 +257,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                     1,
 			},
-			side:                     perptypes.Side_SELL,
+			side:                     perpammtypes.Direction_SHORT,
 			margin:                   sdk.NewInt(3000),
 			leverage:                 sdk.NewDec(10),
 			baseLimit:                sdk.ZeroDec(),
@@ -274,7 +274,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			name:                     "new long position just under fluctuation limit",
 			traderFunds:              sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1*common.TO_MICRO*common.TO_MICRO)),
 			initialPosition:          nil,
-			side:                     perptypes.Side_BUY,
+			side:                     perpammtypes.Direction_LONG,
 			margin:                   sdk.NewInt(47_619_047_619),
 			leverage:                 sdk.OneDec(),
 			baseLimit:                sdk.ZeroDec(),
@@ -291,7 +291,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			name:                     "new short position",
 			traderFunds:              sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1020)),
 			initialPosition:          nil,
-			side:                     perptypes.Side_SELL,
+			side:                     perpammtypes.Direction_SHORT,
 			margin:                   sdk.NewInt(1000),
 			leverage:                 sdk.NewDec(10),
 			baseLimit:                sdk.ZeroDec(),
@@ -315,7 +315,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                     1,
 			},
-			side:                     perptypes.Side_SELL,
+			side:                     perpammtypes.Direction_SHORT,
 			margin:                   sdk.NewInt(1000),
 			leverage:                 sdk.NewDec(10),
 			baseLimit:                sdk.ZeroDec(),
@@ -339,7 +339,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                     1,
 			},
-			side:                     perptypes.Side_BUY,
+			side:                     perpammtypes.Direction_LONG,
 			margin:                   sdk.NewInt(500),
 			leverage:                 sdk.NewDec(10),
 			baseLimit:                sdk.ZeroDec(),
@@ -363,7 +363,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                     1,
 			},
-			side:                     perptypes.Side_BUY,
+			side:                     perpammtypes.Direction_LONG,
 			margin:                   sdk.NewInt(3000),
 			leverage:                 sdk.NewDec(10),
 			baseLimit:                sdk.ZeroDec(),
@@ -380,7 +380,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			name:                     "new short position just under fluctuation limit",
 			traderFunds:              sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1*common.TO_MICRO*common.TO_MICRO)),
 			initialPosition:          nil,
-			side:                     perptypes.Side_SELL,
+			side:                     perpammtypes.Direction_SHORT,
 			margin:                   sdk.NewInt(47_619_047_619),
 			leverage:                 sdk.OneDec(),
 			baseLimit:                sdk.ZeroDec(),
@@ -409,7 +409,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO*common.TO_MICRO),
 				/* baseReserve */ sdk.NewDec(1*common.TO_MICRO*common.TO_MICRO),
-				perpammtypes.VpoolConfig{
+				perpammtypes.MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
@@ -502,7 +502,7 @@ func TestOpenPositionError(t *testing.T) {
 		initialPosition *perptypes.Position
 
 		// position arguments
-		side      perptypes.Side
+		side      perpammtypes.Direction
 		margin    sdk.Int
 		leverage  sdk.Dec
 		baseLimit sdk.Dec
@@ -514,7 +514,7 @@ func TestOpenPositionError(t *testing.T) {
 			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 999)),
 			poolTradeLimitRatio: sdk.OneDec(),
 			initialPosition:     nil,
-			side:                perptypes.Side_BUY,
+			side:                perpammtypes.Direction_LONG,
 			margin:              sdk.NewInt(1000),
 			leverage:            sdk.NewDec(10),
 			baseLimit:           sdk.ZeroDec(),
@@ -532,7 +532,7 @@ func TestOpenPositionError(t *testing.T) {
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                     1,
 			},
-			side:        perptypes.Side_BUY,
+			side:        perpammtypes.Direction_LONG,
 			margin:      sdk.NewInt(1),
 			leverage:    sdk.OneDec(),
 			baseLimit:   sdk.ZeroDec(),
@@ -543,7 +543,7 @@ func TestOpenPositionError(t *testing.T) {
 			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1020)),
 			poolTradeLimitRatio: sdk.OneDec(),
 			initialPosition:     nil,
-			side:                perptypes.Side_BUY,
+			side:                perpammtypes.Direction_LONG,
 			margin:              sdk.NewInt(1000),
 			leverage:            sdk.NewDec(10),
 			baseLimit:           sdk.NewDec(10_000),
@@ -554,7 +554,7 @@ func TestOpenPositionError(t *testing.T) {
 			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1020)),
 			poolTradeLimitRatio: sdk.OneDec(),
 			initialPosition:     nil,
-			side:                perptypes.Side_SELL,
+			side:                perpammtypes.Direction_SHORT,
 			margin:              sdk.NewInt(1000),
 			leverage:            sdk.NewDec(10),
 			baseLimit:           sdk.NewDec(10_000),
@@ -565,7 +565,7 @@ func TestOpenPositionError(t *testing.T) {
 			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1020)),
 			poolTradeLimitRatio: sdk.OneDec(),
 			initialPosition:     nil,
-			side:                perptypes.Side_SELL,
+			side:                perpammtypes.Direction_SHORT,
 			margin:              sdk.NewInt(0),
 			leverage:            sdk.NewDec(10),
 			baseLimit:           sdk.NewDec(10_000),
@@ -576,7 +576,7 @@ func TestOpenPositionError(t *testing.T) {
 			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1020)),
 			poolTradeLimitRatio: sdk.OneDec(),
 			initialPosition:     nil,
-			side:                perptypes.Side_SELL,
+			side:                perpammtypes.Direction_SHORT,
 			margin:              sdk.NewInt(1000),
 			leverage:            sdk.NewDec(0),
 			baseLimit:           sdk.NewDec(10_000),
@@ -587,7 +587,7 @@ func TestOpenPositionError(t *testing.T) {
 			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1020)),
 			poolTradeLimitRatio: sdk.OneDec(),
 			initialPosition:     nil,
-			side:                perptypes.Side_SELL,
+			side:                perpammtypes.Direction_SHORT,
 			margin:              sdk.NewInt(100),
 			leverage:            sdk.NewDec(100),
 			baseLimit:           sdk.NewDec(11_000),
@@ -598,7 +598,7 @@ func TestOpenPositionError(t *testing.T) {
 			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1020)),
 			poolTradeLimitRatio: sdk.OneDec(),
 			initialPosition:     nil,
-			side:                perptypes.Side_BUY,
+			side:                perpammtypes.Direction_LONG,
 			margin:              sdk.NewInt(100),
 			leverage:            sdk.NewDec(16),
 			baseLimit:           sdk.NewDec(0),
@@ -609,7 +609,7 @@ func TestOpenPositionError(t *testing.T) {
 			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1*common.TO_MICRO*common.TO_MICRO)),
 			poolTradeLimitRatio: sdk.OneDec(),
 			initialPosition:     nil,
-			side:                perptypes.Side_BUY,
+			side:                perpammtypes.Direction_LONG,
 			margin:              sdk.NewInt(100_000 * common.TO_MICRO),
 			leverage:            sdk.OneDec(),
 			baseLimit:           sdk.ZeroDec(),
@@ -620,7 +620,7 @@ func TestOpenPositionError(t *testing.T) {
 			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1*common.TO_MICRO*common.TO_MICRO)),
 			poolTradeLimitRatio: sdk.OneDec(),
 			initialPosition:     nil,
-			side:                perptypes.Side_SELL,
+			side:                perpammtypes.Direction_SHORT,
 			margin:              sdk.NewInt(100_000 * common.TO_MICRO),
 			leverage:            sdk.OneDec(),
 			baseLimit:           sdk.ZeroDec(),
@@ -631,7 +631,7 @@ func TestOpenPositionError(t *testing.T) {
 			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 10_000*common.TO_MICRO)),
 			poolTradeLimitRatio: sdk.MustNewDecFromStr("0.01"),
 			initialPosition:     nil,
-			side:                perptypes.Side_BUY,
+			side:                perpammtypes.Direction_LONG,
 			margin:              sdk.NewInt(100_000 * common.TO_MICRO),
 			leverage:            sdk.OneDec(),
 			baseLimit:           sdk.ZeroDec(),
@@ -642,7 +642,7 @@ func TestOpenPositionError(t *testing.T) {
 			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 10_000*common.TO_MICRO)),
 			poolTradeLimitRatio: sdk.MustNewDecFromStr("0.01"),
 			initialPosition:     nil,
-			side:                perptypes.Side_SELL,
+			side:                perpammtypes.Direction_SHORT,
 			margin:              sdk.NewInt(100_000 * common.TO_MICRO),
 			leverage:            sdk.OneDec(),
 			baseLimit:           sdk.ZeroDec(),
@@ -665,7 +665,7 @@ func TestOpenPositionError(t *testing.T) {
 				/* quoteReserve */
 				sdk.NewDec(1*common.TO_MICRO*common.TO_MICRO),
 				/* baseReserve */ sdk.NewDec(1*common.TO_MICRO*common.TO_MICRO),
-				perpammtypes.VpoolConfig{
+				perpammtypes.MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
@@ -712,7 +712,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 				trader := testutil.AccAddress()
 
 				t.Log("open a position on invalid 'pair'")
-				side := perptypes.Side_BUY
+				side := perpammtypes.Direction_LONG
 				quote := sdk.NewInt(60)
 				leverage := sdk.NewDec(10)
 				baseLimit := sdk.NewDec(150)
@@ -736,7 +736,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 					pair,
 					sdk.NewDec(10*common.TO_MICRO), //
 					sdk.NewDec(5*common.TO_MICRO),  // 5 tokens
-					perpammtypes.VpoolConfig{
+					perpammtypes.MarketConfig{
 						FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 						MaxLeverage:            sdk.MustNewDecFromStr("15"),
@@ -751,7 +751,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 
 				t.Log("Attempt to open long position (expected unsuccessful)")
 				trader := testutil.AccAddress()
-				side := perptypes.Side_BUY
+				side := perpammtypes.Direction_LONG
 				quote := sdk.NewInt(60)
 				leverage := sdk.NewDec(10)
 				baseLimit := sdk.NewDec(150)

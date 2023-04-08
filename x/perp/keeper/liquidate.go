@@ -309,9 +309,9 @@ func (k Keeper) ExecutePartialLiquidation(
 
 	var baseAssetDir perpammtypes.Direction
 	if currentPosition.Size_.IsPositive() {
-		baseAssetDir = perpammtypes.Direction_ADD_TO_POOL
+		baseAssetDir = perpammtypes.Direction_LONG
 	} else {
-		baseAssetDir = perpammtypes.Direction_REMOVE_FROM_POOL
+		baseAssetDir = perpammtypes.Direction_SHORT
 	}
 
 	partiallyLiquidatedPositionNotional, err := k.VpoolKeeper.GetBaseAssetPrice(

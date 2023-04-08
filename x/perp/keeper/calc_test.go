@@ -51,7 +51,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 					pair,
 					/* y */ sdk.NewDec(1*common.TO_MICRO), //
 					/* x */ sdk.NewDec(1*common.TO_MICRO), //
-					perpammtypes.VpoolConfig{
+					perpammtypes.MarketConfig{
 						FluctuationLimitRatio:  sdk.MustNewDecFromStr("1.0"),
 						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 						MaxLeverage:            sdk.MustNewDecFromStr("15"),
@@ -106,7 +106,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 					pair,
 					/* y */ sdk.NewDec(1*common.TO_MICRO), //
 					/* x */ sdk.NewDec(1*common.TO_MICRO), //
-					perpammtypes.VpoolConfig{
+					perpammtypes.MarketConfig{
 						FluctuationLimitRatio:  sdk.MustNewDecFromStr("1.0"),
 						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 						MaxLeverage:            sdk.MustNewDecFromStr("15"),

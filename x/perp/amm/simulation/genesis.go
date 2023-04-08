@@ -26,13 +26,13 @@ func RandomizedGenState(simState *module.SimulationState) {
 	baseReserve := sdk.NewDec(10e12).Add(simtypes.RandomDecAmount(simState.Rand, sdk.NewDec(10e12)))
 	sqrtDepth := common.MustSqrtDec(quoteReserve.Mul(baseReserve))
 	vpoolGenesis := types.GenesisState{
-		Vpools: []types.Vpool{
+		Markets: []types.Market{
 			{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				QuoteAssetReserve: quoteReserve,
 				BaseAssetReserve:  baseReserve,
 				SqrtDepth:         sqrtDepth,
-				Config: types.VpoolConfig{
+				Config: types.MarketConfig{
 					FluctuationLimitRatio:  sdk.MaxDec(smallDec, simtypes.RandomDecAmount(simState.Rand, sdk.OneDec())),
 					MaintenanceMarginRatio: maintenanceMarginRatio,
 					MaxLeverage:            maxLeverage,

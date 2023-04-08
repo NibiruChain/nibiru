@@ -109,7 +109,7 @@ func TestFrom2To3(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 
-			vpool := types.Vpool{
+			vpool := types.Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				BaseAssetReserve:  sdk.MustNewDecFromStr("10000000"),
 				QuoteAssetReserve: sdk.MustNewDecFromStr("20000000"),

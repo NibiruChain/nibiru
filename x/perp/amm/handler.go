@@ -22,7 +22,7 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 	}
 }
 
-func NewVpoolProposalHandler(k keeper.Keeper) govtypes.Handler {
+func NewMarketProposalHandler(k keeper.Keeper) govtypes.Handler {
 	return func(ctx sdk.Context, content govtypes.Content) error {
 		switch proposal := content.(type) {
 		case *types.CreatePoolProposal:

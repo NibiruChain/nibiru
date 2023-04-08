@@ -27,27 +27,27 @@ func TestCalcFreeCollateralSuccess(t *testing.T) {
 		{
 			name:                   "long position, zero PnL",
 			positionSize:           sdk.OneDec(),
-			vpoolDirection:         perpammtypes.Direction_ADD_TO_POOL,
+			vpoolDirection:         perpammtypes.Direction_LONG,
 			positionNotional:       sdk.NewDec(1000),
 			expectedFreeCollateral: sdk.MustNewDecFromStr("37.5"),
 		},
 		{
 			name:                   "long position, positive PnL",
 			positionSize:           sdk.OneDec(),
-			vpoolDirection:         perpammtypes.Direction_ADD_TO_POOL,
+			vpoolDirection:         perpammtypes.Direction_LONG,
 			positionNotional:       sdk.NewDec(1100),
 			expectedFreeCollateral: sdk.MustNewDecFromStr("31.25"),
 		},
 		{
 			name:                   "long position, negative PnL",
-			vpoolDirection:         perpammtypes.Direction_ADD_TO_POOL,
+			vpoolDirection:         perpammtypes.Direction_LONG,
 			positionSize:           sdk.OneDec(),
 			positionNotional:       sdk.NewDec(970),
 			expectedFreeCollateral: sdk.MustNewDecFromStr("9.375"),
 		},
 		{
 			name:                   "long position, huge negative PnL",
-			vpoolDirection:         perpammtypes.Direction_ADD_TO_POOL,
+			vpoolDirection:         perpammtypes.Direction_LONG,
 			positionSize:           sdk.OneDec(),
 			positionNotional:       sdk.NewDec(900),
 			expectedFreeCollateral: sdk.MustNewDecFromStr("-56.25"),
@@ -55,28 +55,28 @@ func TestCalcFreeCollateralSuccess(t *testing.T) {
 		{
 			name:                   "short position, zero PnL",
 			positionSize:           sdk.OneDec().Neg(),
-			vpoolDirection:         perpammtypes.Direction_REMOVE_FROM_POOL,
+			vpoolDirection:         perpammtypes.Direction_SHORT,
 			positionNotional:       sdk.NewDec(1000),
 			expectedFreeCollateral: sdk.MustNewDecFromStr("37.5"),
 		},
 		{
 			name:                   "short position, positive PnL",
 			positionSize:           sdk.OneDec().Neg(),
-			vpoolDirection:         perpammtypes.Direction_REMOVE_FROM_POOL,
+			vpoolDirection:         perpammtypes.Direction_SHORT,
 			positionNotional:       sdk.NewDec(900),
 			expectedFreeCollateral: sdk.MustNewDecFromStr("43.75"),
 		},
 		{
 			name:                   "short position, negative PnL",
 			positionSize:           sdk.OneDec().Neg(),
-			vpoolDirection:         perpammtypes.Direction_REMOVE_FROM_POOL,
+			vpoolDirection:         perpammtypes.Direction_SHORT,
 			positionNotional:       sdk.NewDec(1030),
 			expectedFreeCollateral: sdk.MustNewDecFromStr("5.625"),
 		},
 		{
 			name:                   "short position, huge negative PnL",
 			positionSize:           sdk.OneDec().Neg(),
-			vpoolDirection:         perpammtypes.Direction_REMOVE_FROM_POOL,
+			vpoolDirection:         perpammtypes.Direction_SHORT,
 			positionNotional:       sdk.NewDec(1100),
 			expectedFreeCollateral: sdk.MustNewDecFromStr("-68.75"),
 		},
@@ -87,7 +87,7 @@ func TestCalcFreeCollateralSuccess(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			k, mocks, ctx := getKeeper(t)
 
-			vpool := perpammtypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+			vpool := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			pos := types.Position{
 				TraderAddress:                   testutil.AccAddress().String(),
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),

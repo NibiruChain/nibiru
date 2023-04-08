@@ -52,21 +52,21 @@ type OracleKeeper interface {
 type VpoolKeeper interface {
 	SwapBaseForQuote(
 		ctx sdk.Context,
-		vpool perpammtypes.Vpool,
+		vpool perpammtypes.Market,
 		dir perpammtypes.Direction,
 		baseAssetAmount sdk.Dec,
 		quoteAmountLimit sdk.Dec,
 		skipFluctuationLimitCheck bool,
-	) (perpammtypes.Vpool, sdk.Dec, error)
+	) (perpammtypes.Market, sdk.Dec, error)
 
 	SwapQuoteForBase(
 		ctx sdk.Context,
-		vpool perpammtypes.Vpool,
+		vpool perpammtypes.Market,
 		dir perpammtypes.Direction,
 		quoteAssetAmount sdk.Dec,
 		baseAmountLimit sdk.Dec,
 		skipFluctuationLimitCheck bool,
-	) (perpammtypes.Vpool, sdk.Dec, error)
+	) (perpammtypes.Market, sdk.Dec, error)
 
 	GetBaseAssetTWAP(
 		ctx sdk.Context,
@@ -77,7 +77,7 @@ type VpoolKeeper interface {
 	) (quoteAssetAmount sdk.Dec, err error)
 
 	GetBaseAssetPrice(
-		vpool perpammtypes.Vpool,
+		vpool perpammtypes.Market,
 		direction perpammtypes.Direction,
 		baseAssetAmount sdk.Dec,
 	) (quoteAssetAmount sdk.Dec, err error)
@@ -100,14 +100,14 @@ type VpoolKeeper interface {
 		lookbackInterval time.Duration,
 	) (quoteAssetAmount sdk.Dec, err error)
 
-	GetAllPools(ctx sdk.Context) []perpammtypes.Vpool
-	GetPool(ctx sdk.Context, pair asset.Pair) (perpammtypes.Vpool, error)
+	GetAllPools(ctx sdk.Context) []perpammtypes.Market
+	GetPool(ctx sdk.Context, pair asset.Pair) (perpammtypes.Market, error)
 
 	IsOverSpreadLimit(ctx sdk.Context, pair asset.Pair) (bool, error)
 	GetMaintenanceMarginRatio(ctx sdk.Context, pair asset.Pair) (sdk.Dec, error)
 	ExistsPool(ctx sdk.Context, pair asset.Pair) bool
 	GetSettlementPrice(ctx sdk.Context, pair asset.Pair) (sdk.Dec, error)
-	GetLastSnapshot(ctx sdk.Context, pool perpammtypes.Vpool) (perpammtypes.ReserveSnapshot, error)
+	GetLastSnapshot(ctx sdk.Context, pool perpammtypes.Market) (perpammtypes.ReserveSnapshot, error)
 }
 
 type EpochKeeper interface {

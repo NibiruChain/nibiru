@@ -35,7 +35,7 @@ func TestSnapshotUpdates(t *testing.T) {
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		sdk.NewDec(1_000),
 		sdk.NewDec(1_000),
-		*types.DefaultVpoolConfig().
+		*types.DefaultMarketConfig().
 			WithTradeLimitRatio(sdk.OneDec()).
 			WithFluctuationLimitRatio(sdk.OneDec()),
 		sdk.ZeroDec(),
@@ -60,7 +60,7 @@ func TestSnapshotUpdates(t *testing.T) {
 	_, baseAmtAbs, err := vpoolKeeper.SwapQuoteForBase(
 		ctx,
 		vpool,
-		types.Direction_ADD_TO_POOL,
+		types.Direction_LONG,
 		sdk.NewDec(250), // ← dyAmm
 		sdk.ZeroDec(),
 		false,

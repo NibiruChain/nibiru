@@ -16,7 +16,7 @@ func NewDecodeStore(cdc codec.BinaryCodec) func(kvA, kvB kv.Pair) string {
 	return func(kvA, kvB kv.Pair) string {
 		switch {
 		case bytes.Equal(kvA.Key[:1], []byte{0x0}):
-			var vpoolA, vpoolB types.Vpool
+			var vpoolA, vpoolB types.Market
 			cdc.MustUnmarshal(kvA.Value, &vpoolA)
 			cdc.MustUnmarshal(kvB.Value, &vpoolB)
 			return fmt.Sprintf("%v\n%v", vpoolA, vpoolB)

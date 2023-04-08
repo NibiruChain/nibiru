@@ -31,7 +31,7 @@ func GetQueryCmd() *cobra.Command {
 
 	for _, cmd := range []*cobra.Command{
 		CmdGetVpoolReserveAssets(),
-		CmdGetVpools(),
+		CmdGetMarkets(),
 		CmdGetBaseAssetPrice(),
 	} {
 		queryCommand.AddCommand(cmd)
@@ -77,7 +77,7 @@ func CmdGetVpoolReserveAssets() *cobra.Command {
 	return cmd
 }
 
-func CmdGetVpools() *cobra.Command {
+func CmdGetMarkets() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "all-pools",
 		Short: "query all pools information",
@@ -110,7 +110,7 @@ func CmdGetVpools() *cobra.Command {
 func CmdGetBaseAssetPrice() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "prices [pair] [direction] [base-asset-amount]",
-		Short: "calls the GetBaseAssetPrice function, direction is add (ADD_TO_POOL) or remove (REMOVE_FROM_POOL)",
+		Short: "calls the GetBaseAssetPrice function, direction is add (LONG) or remove (SHORT)",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -131,9 +131,9 @@ func CmdGetBaseAssetPrice() *cobra.Command {
 			var direction types.Direction
 			switch strings.TrimSpace(args[1]) {
 			case "add":
-				direction = types.Direction_ADD_TO_POOL
+				direction = types.Direction_LONG
 			case "remove":
-				direction = types.Direction_REMOVE_FROM_POOL
+				direction = types.Direction_SHORT
 			default:
 				return fmt.Errorf("invalid direction %s", args[1])
 			}
