@@ -10,7 +10,7 @@ import (
 // DefaultGenesis returns the default Capability genesis state
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
-		Vpools: []Vpool{},
+		Markets: []Market{},
 	}
 }
 
@@ -18,8 +18,8 @@ func DefaultGenesis() *GenesisState {
 // failure.
 func (gs GenesisState) Validate() error {
 	// validate vpools
-	vpools := make(map[string]struct{}, len(gs.Vpools))
-	for _, p := range gs.Vpools {
+	vpools := make(map[string]struct{}, len(gs.Markets))
+	for _, p := range gs.Markets {
 		if err := p.Validate(); err != nil {
 			return err
 		}

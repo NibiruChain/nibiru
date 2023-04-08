@@ -18,13 +18,13 @@ func TestGenesisState_Validate(t *testing.T) {
 	cases := map[string]test{
 		"success": {
 			genesis: &GenesisState{
-				Vpools: []Vpool{
+				Markets: []Market{
 					{
 						Pair:              asset.MustNewPair("btc:usd"),
 						BaseAssetReserve:  sdk.NewDec(100_000),
 						QuoteAssetReserve: sdk.NewDec(100_000),
 						SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1e10)),
-						Config: VpoolConfig{
+						Config: MarketConfig{
 							FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.5"),
 							MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.05"),
 							MaxLeverage:            sdk.MustNewDecFromStr("10"),
@@ -37,7 +37,7 @@ func TestGenesisState_Validate(t *testing.T) {
 						BaseAssetReserve:  sdk.NewDec(100_000),
 						QuoteAssetReserve: sdk.NewDec(100_000),
 						SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1e10)),
-						Config: VpoolConfig{
+						Config: MarketConfig{
 							FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.5"),
 							MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.05"),
 							MaxLeverage:            sdk.MustNewDecFromStr("10"),
@@ -51,13 +51,13 @@ func TestGenesisState_Validate(t *testing.T) {
 		},
 		"invalid vpool": {
 			genesis: &GenesisState{
-				Vpools: []Vpool{
+				Markets: []Market{
 					{
 						Pair:              asset.MustNewPair("btc:usd"),
 						BaseAssetReserve:  sdk.NewDec(100_000),
 						QuoteAssetReserve: sdk.NewDec(100_000),
 						SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1e10)),
-						Config: VpoolConfig{
+						Config: MarketConfig{
 							FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.5"),
 							MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.05"),
 							MaxLeverage:            sdk.MustNewDecFromStr("10"),
@@ -70,7 +70,7 @@ func TestGenesisState_Validate(t *testing.T) {
 						BaseAssetReserve:  sdk.NewDec(100_000),
 						QuoteAssetReserve: sdk.NewDec(100_000),
 						SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1e10)),
-						Config: VpoolConfig{
+						Config: MarketConfig{
 							FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.5"),
 							MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.5"),
 							MaxLeverage:            sdk.MustNewDecFromStr("0"),
@@ -84,13 +84,13 @@ func TestGenesisState_Validate(t *testing.T) {
 		},
 		"duplicate vpool": {
 			genesis: &GenesisState{
-				Vpools: []Vpool{
+				Markets: []Market{
 					{
 						Pair:              asset.MustNewPair("btc:usd"),
 						BaseAssetReserve:  sdk.NewDec(100_000),
 						QuoteAssetReserve: sdk.NewDec(100_000),
 						SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1e10)),
-						Config: VpoolConfig{
+						Config: MarketConfig{
 							FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.5"),
 							MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.05"),
 							MaxLeverage:            sdk.MustNewDecFromStr("10"),
@@ -103,7 +103,7 @@ func TestGenesisState_Validate(t *testing.T) {
 						BaseAssetReserve:  sdk.NewDec(100_000),
 						QuoteAssetReserve: sdk.NewDec(100_000),
 						SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1e10)),
-						Config: VpoolConfig{
+						Config: MarketConfig{
 							FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.5"),
 							MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.05"),
 							MaxLeverage:            sdk.MustNewDecFromStr("10"),
@@ -116,7 +116,7 @@ func TestGenesisState_Validate(t *testing.T) {
 						BaseAssetReserve:  sdk.NewDec(100_000),
 						QuoteAssetReserve: sdk.NewDec(100_000),
 						SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1e10)),
-						Config: VpoolConfig{
+						Config: MarketConfig{
 							FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.5"),
 							MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.05"),
 							MaxLeverage:            sdk.MustNewDecFromStr("10"),

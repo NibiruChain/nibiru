@@ -42,7 +42,7 @@ func TestCreatePoolProposal_ValidateBasic(t *testing.T) {
 				Pair:              "valid:pair",
 				QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
 				BaseAssetReserve:  sdk.NewDec(1 * common.TO_MICRO),
-				Config: VpoolConfig{
+				Config: MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
@@ -77,7 +77,7 @@ func TestEditPoolConfigProposal_ValidateBasic(t *testing.T) {
 		expectErr bool
 	}
 
-	validConfig := VpoolConfig{
+	validConfig := MarketConfig{
 		FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
 		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 		MaxLeverage:            sdk.MustNewDecFromStr("15"),
@@ -92,7 +92,7 @@ func TestEditPoolConfigProposal_ValidateBasic(t *testing.T) {
 				Description: "proposal description",
 				Pair:        "valid:pair",
 				Config:      validConfig,
-				// VpoolConfig.Validate() already has full test coverage
+				// MarketConfig.Validate() already has full test coverage
 			},
 			expectErr: false,
 		},
@@ -147,7 +147,7 @@ func TestMarshalProposalEditPoolConfig(t *testing.T) {
 		Title:       "Edit vpool config for NIBI:NUSD",
 		Description: "I want to take 100x leverage on my NIBI",
 		Pair:        asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
-		Config: VpoolConfig{
+		Config: MarketConfig{
 			MaxLeverage:            sdk.MustNewDecFromStr("100"),
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.01"),

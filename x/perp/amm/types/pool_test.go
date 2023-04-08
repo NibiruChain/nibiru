@@ -14,34 +14,34 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 )
 
-func TestVpool_NewPool(t *testing.T) {
+func TestMarket_NewPool(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	tests := []struct {
 		name        string
-		args        ArgsNewVpool
+		args        ArgsNewMarket
 		shouldPanic bool
 		sqrtDepth   sdk.Dec
 	}{
 		{name: "pass: normal",
-			args: ArgsNewVpool{
+			args: ArgsNewMarket{
 				Pair:          pair,
 				BaseReserves:  sdk.NewDec(10 * 10), // 10**2
 				QuoteReserves: sdk.NewDec(15 * 15), // 15**2
 			}, shouldPanic: false, sqrtDepth: sdk.NewDec(150), // 10 * 15
 		},
 		{name: "pass: zero reserves",
-			args: ArgsNewVpool{
+			args: ArgsNewMarket{
 				Pair:          pair,
 				BaseReserves:  sdk.NewDec(10),
 				QuoteReserves: sdk.NewDec(0),
 			}, shouldPanic: false, sqrtDepth: sdk.NewDec(0),
 		},
 		{name: "pass: custom config",
-			args: ArgsNewVpool{
+			args: ArgsNewMarket{
 				Pair:          pair,
 				BaseReserves:  sdk.NewDec(22 * 22), // 22**2
 				QuoteReserves: sdk.NewDec(7 * 7),   // 7**2
-				Config: &VpoolConfig{
+				Config: &MarketConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.1"),
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 					MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -51,7 +51,7 @@ func TestVpool_NewPool(t *testing.T) {
 			}, shouldPanic: false, sqrtDepth: sdk.NewDec(154), // 22 * 7
 		},
 		{name: "err: negative sqrt depth",
-			args: ArgsNewVpool{
+			args: ArgsNewMarket{
 				Pair:          pair,
 				BaseReserves:  sdk.NewDec(10),
 				QuoteReserves: sdk.NewDec(-10),
@@ -64,10 +64,10 @@ func TestVpool_NewPool(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.shouldPanic {
 				require.Panics(t, func() {
-					_ = NewVpool(tc.args)
+					_ = NewMarket(tc.args)
 				})
 			} else {
-				vpool := NewVpool(tc.args)
+				vpool := NewMarket(tc.args)
 				assert.EqualValues(t, tc.args.Pair, vpool.Pair)
 				assert.EqualValues(t, tc.args.BaseReserves, vpool.BaseAssetReserve)
 				assert.EqualValues(t, tc.args.QuoteReserves, vpool.QuoteAssetReserve)
@@ -76,9 +76,9 @@ func TestVpool_NewPool(t *testing.T) {
 				assert.NoError(t, err)
 				assert.EqualValues(t, sqrtDepth, vpool.SqrtDepth)
 
-				var config VpoolConfig
+				var config MarketConfig
 				if tc.args.Config == nil {
-					config = *DefaultVpoolConfig()
+					config = *DefaultMarketConfig()
 				} else {
 					config = *tc.args.Config
 				}
@@ -91,12 +91,12 @@ func TestVpool_NewPool(t *testing.T) {
 func TestPoolHasEnoughQuoteReserve(t *testing.T) {
 	pair := asset.MustNewPair("BTC:NUSD")
 
-	pool := &Vpool{
+	pool := &Market{
 		Pair:              pair,
 		QuoteAssetReserve: sdk.NewDec(10 * common.TO_MICRO),
 		BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
 		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 10 * common.TO_MICRO)),
-		Config: VpoolConfig{
+		Config: MarketConfig{
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -118,12 +118,12 @@ func TestPoolHasEnoughQuoteReserve(t *testing.T) {
 func TestSetMarginRatioAndLeverage(t *testing.T) {
 	pair := asset.MustNewPair("BTC:NUSD")
 
-	pool := &Vpool{
+	pool := &Market{
 		Pair:              pair,
 		QuoteAssetReserve: sdk.NewDec(10 * common.TO_MICRO),
 		BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
 		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 10 * common.TO_MICRO)),
-		Config: VpoolConfig{
+		Config: MarketConfig{
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.42"),
 			MaxLeverage:            sdk.NewDec(15),
@@ -196,11 +196,11 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			pool := NewVpool(ArgsNewVpool{
+			pool := NewMarket(ArgsNewMarket{
 				Pair:          pair,
 				QuoteReserves: tc.quoteAssetReserve,
 				BaseReserves:  tc.baseAssetReserve,
-				Config: &VpoolConfig{
+				Config: &MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.NewDec(15),
@@ -267,12 +267,12 @@ func TestGetQuoteAmountByBaseAmount(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			pool := &Vpool{
+			pool := &Market{
 				Pair:              pair,
 				QuoteAssetReserve: tc.quoteAssetReserve,
 				BaseAssetReserve:  tc.baseAssetReserve,
 				SqrtDepth:         common.MustSqrtDec(tc.quoteAssetReserve.Mul(tc.baseAssetReserve)),
-				Config: VpoolConfig{
+				Config: MarketConfig{
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.NewDec(15),
@@ -298,11 +298,11 @@ func TestGetQuoteAmountByBaseAmount(t *testing.T) {
 func TestIncreaseDecreaseReserves(t *testing.T) {
 	pair := asset.MustNewPair("ATOM:NUSD")
 
-	pool := NewVpool(ArgsNewVpool{
+	pool := NewMarket(ArgsNewMarket{
 		Pair:          pair,
 		QuoteReserves: sdk.NewDec(1 * common.TO_MICRO),
 		BaseReserves:  sdk.NewDec(1 * common.TO_MICRO),
-		Config: &VpoolConfig{
+		Config: &MarketConfig{
 			FluctuationLimitRatio:  sdk.OneDec(),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.NewDec(15),
@@ -330,18 +330,18 @@ func TestIncreaseDecreaseReserves(t *testing.T) {
 
 func TestPool_Validate(t *testing.T) {
 	type test struct {
-		m         *Vpool
+		m         *Market
 		expectErr bool
 	}
 
 	cases := map[string]test{
 		"invalid pair": {
-			m: &Vpool{
+			m: &Market{
 				Pair:              "",
 				BaseAssetReserve:  sdk.OneDec(),
 				QuoteAssetReserve: sdk.OneDec(),
 				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1)),
-				Config: VpoolConfig{
+				Config: MarketConfig{
 					TradeLimitRatio:        sdk.NewDec(-1),
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -353,12 +353,12 @@ func TestPool_Validate(t *testing.T) {
 		},
 
 		"invalid trade limit ratio < 0": {
-			m: &Vpool{
+			m: &Market{
 				Pair:              asset.MustNewPair("btc:usd"),
 				BaseAssetReserve:  sdk.OneDec(),
 				QuoteAssetReserve: sdk.OneDec(),
 				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1)),
-				Config: VpoolConfig{
+				Config: MarketConfig{
 					TradeLimitRatio:        sdk.NewDec(-1),
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -370,12 +370,12 @@ func TestPool_Validate(t *testing.T) {
 		},
 
 		"invalid trade limit ratio > 1": {
-			m: &Vpool{
+			m: &Market{
 				Pair:              asset.MustNewPair("btc:usd"),
 				BaseAssetReserve:  sdk.OneDec(),
 				QuoteAssetReserve: sdk.OneDec(),
 				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1)),
-				Config: VpoolConfig{
+				Config: MarketConfig{
 					TradeLimitRatio:        sdk.NewDec(2),
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -387,12 +387,12 @@ func TestPool_Validate(t *testing.T) {
 		},
 
 		"quote asset reserve 0": {
-			m: &Vpool{
+			m: &Market{
 				Pair:              asset.MustNewPair("btc:usd"),
 				BaseAssetReserve:  sdk.NewDec(999),
 				QuoteAssetReserve: sdk.ZeroDec(),
 				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(999)),
-				Config: VpoolConfig{
+				Config: MarketConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -404,12 +404,12 @@ func TestPool_Validate(t *testing.T) {
 		},
 
 		"base asset reserve 0": {
-			m: &Vpool{
+			m: &Market{
 				Pair:              asset.MustNewPair("btc:usd"),
 				QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
 				BaseAssetReserve:  sdk.ZeroDec(),
 				SqrtDepth:         sdk.ZeroDec(),
-				Config: VpoolConfig{
+				Config: MarketConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -421,12 +421,12 @@ func TestPool_Validate(t *testing.T) {
 		},
 
 		"fluctuation < 0": {
-			m: &Vpool{
+			m: &Market{
 				Pair:              asset.MustNewPair("btc:usd"),
 				QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
 				BaseAssetReserve:  sdk.NewDec(1 * common.TO_MICRO),
 				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1 * common.TO_MICRO * common.TO_MICRO)),
-				Config: VpoolConfig{
+				Config: MarketConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
 					FluctuationLimitRatio:  sdk.NewDec(-1),
 					MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -438,12 +438,12 @@ func TestPool_Validate(t *testing.T) {
 		},
 
 		"fluctuation > 1": {
-			m: &Vpool{
+			m: &Market{
 				Pair:              asset.MustNewPair("btc:usd"),
 				QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
 				BaseAssetReserve:  sdk.NewDec(1 * common.TO_MICRO),
 				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1 * common.TO_MICRO * common.TO_MICRO)),
-				Config: VpoolConfig{
+				Config: MarketConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
 					FluctuationLimitRatio:  sdk.NewDec(2),
 					MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -455,12 +455,12 @@ func TestPool_Validate(t *testing.T) {
 		},
 
 		"max oracle spread ratio < 0": {
-			m: &Vpool{
+			m: &Market{
 				Pair:              asset.MustNewPair("btc:usd"),
 				QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
 				BaseAssetReserve:  sdk.NewDec(1 * common.TO_MICRO),
 				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1 * common.TO_MICRO * common.TO_MICRO)),
-				Config: VpoolConfig{
+				Config: MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
 					MaintenanceMarginRatio: sdk.OneDec(),
 					MaxLeverage:            sdk.OneDec(),
@@ -472,12 +472,12 @@ func TestPool_Validate(t *testing.T) {
 		},
 
 		"max oracle spread ratio > 1": {
-			m: &Vpool{
+			m: &Market{
 				Pair:              asset.MustNewPair("btc:usd"),
 				QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
 				BaseAssetReserve:  sdk.NewDec(1 * common.TO_MICRO),
 				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1 * common.TO_MICRO * common.TO_MICRO)),
-				Config: VpoolConfig{
+				Config: MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
 					MaintenanceMarginRatio: sdk.OneDec(),
 					MaxLeverage:            sdk.OneDec(),
@@ -489,9 +489,9 @@ func TestPool_Validate(t *testing.T) {
 		},
 
 		"maintenance ratio < 0": {
-			m: &Vpool{
+			m: &Market{
 				Pair: asset.MustNewPair("btc:usd"),
-				Config: VpoolConfig{
+				Config: MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
 					MaintenanceMarginRatio: sdk.NewDec(-1),
 					MaxLeverage:            sdk.OneDec(),
@@ -506,12 +506,12 @@ func TestPool_Validate(t *testing.T) {
 		},
 
 		"maintenance ratio > 1": {
-			m: &Vpool{
+			m: &Market{
 				Pair:              asset.MustNewPair("btc:usd"),
 				QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
 				BaseAssetReserve:  sdk.NewDec(1 * common.TO_MICRO),
 				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1 * common.TO_MICRO * common.TO_MICRO)),
-				Config: VpoolConfig{
+				Config: MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
 					MaintenanceMarginRatio: sdk.NewDec(2),
 					MaxLeverage:            sdk.OneDec(),
@@ -523,12 +523,12 @@ func TestPool_Validate(t *testing.T) {
 		},
 
 		"max leverage < 0": {
-			m: &Vpool{
+			m: &Market{
 				Pair:              asset.MustNewPair("btc:usd"),
 				QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
 				BaseAssetReserve:  sdk.NewDec(1 * common.TO_MICRO),
 				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1 * common.TO_MICRO * common.TO_MICRO)),
-				Config: VpoolConfig{
+				Config: MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.10"),
 					MaxLeverage:            sdk.MustNewDecFromStr("-0.10"),
@@ -540,12 +540,12 @@ func TestPool_Validate(t *testing.T) {
 		},
 
 		"max leverage too high for maintenance margin ratio": {
-			m: &Vpool{
+			m: &Market{
 				Pair:              asset.MustNewPair("btc:usd"),
 				QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
 				BaseAssetReserve:  sdk.NewDec(1 * common.TO_MICRO),
 				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1 * common.TO_MICRO * common.TO_MICRO)),
-				Config: VpoolConfig{
+				Config: MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.10"), // Equivalent to 10 leverage
 					MaxLeverage:            sdk.MustNewDecFromStr("11"),
@@ -557,12 +557,12 @@ func TestPool_Validate(t *testing.T) {
 		},
 
 		"success": {
-			m: &Vpool{
+			m: &Market{
 				Pair:              asset.MustNewPair("btc:usd"),
 				QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
 				BaseAssetReserve:  sdk.NewDec(1 * common.TO_MICRO),
 				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1 * common.TO_MICRO * common.TO_MICRO)),
-				Config: VpoolConfig{
+				Config: MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
@@ -587,15 +587,15 @@ func TestPool_Validate(t *testing.T) {
 	}
 }
 
-func TestVpool_GetMarkPrice(t *testing.T) {
+func TestMarket_GetMarkPrice(t *testing.T) {
 	tests := []struct {
 		name          string
-		pool          Vpool
+		pool          Market
 		expectedValue sdk.Dec
 	}{
 		{
 			"happy path",
-			Vpool{
+			Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				BaseAssetReserve:  sdk.MustNewDecFromStr("10"),
 				QuoteAssetReserve: sdk.MustNewDecFromStr("10000"),
@@ -604,7 +604,7 @@ func TestVpool_GetMarkPrice(t *testing.T) {
 		},
 		{
 			"nil base",
-			Vpool{
+			Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				BaseAssetReserve:  sdk.Dec{},
 				QuoteAssetReserve: sdk.MustNewDecFromStr("10000"),
@@ -613,7 +613,7 @@ func TestVpool_GetMarkPrice(t *testing.T) {
 		},
 		{
 			"zero base",
-			Vpool{
+			Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				BaseAssetReserve:  sdk.ZeroDec(),
 				QuoteAssetReserve: sdk.MustNewDecFromStr("10000"),
@@ -622,7 +622,7 @@ func TestVpool_GetMarkPrice(t *testing.T) {
 		},
 		{
 			"nil quote",
-			Vpool{
+			Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				BaseAssetReserve:  sdk.MustNewDecFromStr("10"),
 				QuoteAssetReserve: sdk.Dec{},
@@ -631,7 +631,7 @@ func TestVpool_GetMarkPrice(t *testing.T) {
 		},
 		{
 			"zero quote",
-			Vpool{
+			Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				BaseAssetReserve:  sdk.MustNewDecFromStr("10"),
 				QuoteAssetReserve: sdk.ZeroDec(),
@@ -648,20 +648,20 @@ func TestVpool_GetMarkPrice(t *testing.T) {
 	}
 }
 
-func TestVpool_IsOverFluctuationLimit(t *testing.T) {
+func TestMarket_IsOverFluctuationLimit(t *testing.T) {
 	tests := []struct {
 		name string
-		pool Vpool
+		pool Market
 
 		isOverLimit bool
 	}{
 		{
 			name: "zero fluctuation limit ratio",
-			pool: Vpool{
+			pool: Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				QuoteAssetReserve: sdk.OneDec(),
 				BaseAssetReserve:  sdk.OneDec(),
-				Config: VpoolConfig{
+				Config: MarketConfig{
 					FluctuationLimitRatio:  sdk.ZeroDec(),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
@@ -673,11 +673,11 @@ func TestVpool_IsOverFluctuationLimit(t *testing.T) {
 		},
 		{
 			name: "lower limit of fluctuation limit",
-			pool: Vpool{
+			pool: Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				QuoteAssetReserve: sdk.NewDec(999),
 				BaseAssetReserve:  sdk.OneDec(),
-				Config: VpoolConfig{
+				Config: MarketConfig{
 					FluctuationLimitRatio:  sdk.ZeroDec(),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
@@ -689,11 +689,11 @@ func TestVpool_IsOverFluctuationLimit(t *testing.T) {
 		},
 		{
 			name: "upper limit of fluctuation limit",
-			pool: Vpool{
+			pool: Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				QuoteAssetReserve: sdk.NewDec(1001),
 				BaseAssetReserve:  sdk.OneDec(),
-				Config: VpoolConfig{
+				Config: MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
@@ -705,11 +705,11 @@ func TestVpool_IsOverFluctuationLimit(t *testing.T) {
 		},
 		{
 			name: "under fluctuation limit",
-			pool: Vpool{
+			pool: Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				QuoteAssetReserve: sdk.NewDec(998),
 				BaseAssetReserve:  sdk.OneDec(),
-				Config: VpoolConfig{
+				Config: MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
@@ -721,11 +721,11 @@ func TestVpool_IsOverFluctuationLimit(t *testing.T) {
 		},
 		{
 			name: "over fluctuation limit",
-			pool: Vpool{
+			pool: Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				QuoteAssetReserve: sdk.NewDec(1002),
 				BaseAssetReserve:  sdk.OneDec(),
-				Config: VpoolConfig{
+				Config: MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
@@ -751,15 +751,15 @@ func TestVpool_IsOverFluctuationLimit(t *testing.T) {
 	}
 }
 
-func TestVpool_ToSnapshot(t *testing.T) {
+func TestMarket_ToSnapshot(t *testing.T) {
 	tests := []struct {
 		name       string
-		vpool      Vpool
+		vpool      Market
 		expectFail bool
 	}{
 		{
 			name: "happy path",
-			vpool: Vpool{
+			vpool: Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				BaseAssetReserve:  sdk.NewDec(10),
 				QuoteAssetReserve: sdk.NewDec(10_000),
@@ -768,7 +768,7 @@ func TestVpool_ToSnapshot(t *testing.T) {
 		},
 		{
 			name: "err invalid base",
-			vpool: Vpool{
+			vpool: Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				BaseAssetReserve:  sdk.Dec{},
 				QuoteAssetReserve: sdk.NewDec(500),
@@ -777,7 +777,7 @@ func TestVpool_ToSnapshot(t *testing.T) {
 		},
 		{
 			name: "err invalid quote",
-			vpool: Vpool{
+			vpool: Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				BaseAssetReserve:  sdk.NewDec(500),
 				QuoteAssetReserve: sdk.Dec{},
@@ -786,7 +786,7 @@ func TestVpool_ToSnapshot(t *testing.T) {
 		},
 		{
 			name: "err negative quote",
-			vpool: Vpool{
+			vpool: Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				BaseAssetReserve:  sdk.NewDec(500),
 				QuoteAssetReserve: sdk.NewDec(-500),
@@ -795,7 +795,7 @@ func TestVpool_ToSnapshot(t *testing.T) {
 		},
 		{
 			name: "err negative base",
-			vpool: Vpool{
+			vpool: Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				BaseAssetReserve:  sdk.NewDec(-500),
 				QuoteAssetReserve: sdk.NewDec(500),
@@ -823,16 +823,16 @@ func TestVpool_ToSnapshot(t *testing.T) {
 	}
 }
 
-func TestDefaultVpoolConfig(t *testing.T) {
-	vpoolCfg := DefaultVpoolConfig()
+func TestDefaultMarketConfig(t *testing.T) {
+	vpoolCfg := DefaultMarketConfig()
 	err := vpoolCfg.Validate()
 	require.NoError(t, err)
 }
 
-func TestVpoolConfigWith(t *testing.T) {
-	vpoolCfg := DefaultVpoolConfig()
+func TestMarketConfigWith(t *testing.T) {
+	vpoolCfg := DefaultMarketConfig()
 
-	vpoolCfgUpdates := VpoolConfig{
+	vpoolCfgUpdates := MarketConfig{
 		TradeLimitRatio:        sdk.NewDec(12),
 		FluctuationLimitRatio:  sdk.NewDec(34),
 		MaxOracleSpreadRatio:   sdk.NewDec(56),
@@ -840,33 +840,33 @@ func TestVpoolConfigWith(t *testing.T) {
 		MaxLeverage:            sdk.NewDec(910),
 	}
 
-	var newVpoolCfg VpoolConfig
+	var newMarketCfg MarketConfig
 
 	testCases := testutil.FunctionTestCases{
 		{Name: "WithTradeLimitRatio", Test: func() {
 			assert.NotEqualValues(t, vpoolCfgUpdates.TradeLimitRatio, vpoolCfg.TradeLimitRatio)
-			newVpoolCfg = *vpoolCfg.WithTradeLimitRatio(vpoolCfgUpdates.TradeLimitRatio)
-			assert.EqualValues(t, vpoolCfgUpdates.TradeLimitRatio, newVpoolCfg.TradeLimitRatio)
+			newMarketCfg = *vpoolCfg.WithTradeLimitRatio(vpoolCfgUpdates.TradeLimitRatio)
+			assert.EqualValues(t, vpoolCfgUpdates.TradeLimitRatio, newMarketCfg.TradeLimitRatio)
 		}},
 		{Name: "WithFluctuationLimitRatio", Test: func() {
 			assert.NotEqualValues(t, vpoolCfgUpdates.FluctuationLimitRatio, vpoolCfg.FluctuationLimitRatio)
-			newVpoolCfg = *vpoolCfg.WithFluctuationLimitRatio(vpoolCfgUpdates.FluctuationLimitRatio)
-			assert.EqualValues(t, vpoolCfgUpdates.FluctuationLimitRatio, newVpoolCfg.FluctuationLimitRatio)
+			newMarketCfg = *vpoolCfg.WithFluctuationLimitRatio(vpoolCfgUpdates.FluctuationLimitRatio)
+			assert.EqualValues(t, vpoolCfgUpdates.FluctuationLimitRatio, newMarketCfg.FluctuationLimitRatio)
 		}},
 		{Name: "WithMaxOracleSpreadRatio", Test: func() {
 			assert.NotEqualValues(t, vpoolCfgUpdates.MaxOracleSpreadRatio, vpoolCfg.MaxOracleSpreadRatio)
-			newVpoolCfg = *vpoolCfg.WithMaxOracleSpreadRatio(vpoolCfgUpdates.MaxOracleSpreadRatio)
-			assert.EqualValues(t, vpoolCfgUpdates.MaxOracleSpreadRatio, newVpoolCfg.MaxOracleSpreadRatio)
+			newMarketCfg = *vpoolCfg.WithMaxOracleSpreadRatio(vpoolCfgUpdates.MaxOracleSpreadRatio)
+			assert.EqualValues(t, vpoolCfgUpdates.MaxOracleSpreadRatio, newMarketCfg.MaxOracleSpreadRatio)
 		}},
 		{Name: "WithMaintenanceMarginRatio", Test: func() {
 			assert.NotEqualValues(t, vpoolCfgUpdates.MaintenanceMarginRatio, vpoolCfg.MaintenanceMarginRatio)
-			newVpoolCfg = *vpoolCfg.WithMaintenanceMarginRatio(vpoolCfgUpdates.MaintenanceMarginRatio)
-			assert.EqualValues(t, vpoolCfgUpdates.MaintenanceMarginRatio, newVpoolCfg.MaintenanceMarginRatio)
+			newMarketCfg = *vpoolCfg.WithMaintenanceMarginRatio(vpoolCfgUpdates.MaintenanceMarginRatio)
+			assert.EqualValues(t, vpoolCfgUpdates.MaintenanceMarginRatio, newMarketCfg.MaintenanceMarginRatio)
 		}},
 		{Name: "WithMaxLeverage", Test: func() {
 			assert.NotEqualValues(t, vpoolCfgUpdates.MaxLeverage, vpoolCfg.MaxLeverage)
-			newVpoolCfg = *vpoolCfg.WithMaxLeverage(vpoolCfgUpdates.MaxLeverage)
-			assert.EqualValues(t, vpoolCfgUpdates.MaxLeverage, newVpoolCfg.MaxLeverage)
+			newMarketCfg = *vpoolCfg.WithMaxLeverage(vpoolCfgUpdates.MaxLeverage)
+			assert.EqualValues(t, vpoolCfgUpdates.MaxLeverage, newMarketCfg.MaxLeverage)
 		}},
 	}
 
