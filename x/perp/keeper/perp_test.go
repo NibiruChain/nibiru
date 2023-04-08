@@ -27,9 +27,9 @@ func TestKeeperClosePosition(t *testing.T) {
 		ctx = ctx.WithBlockTime(time.Now())
 		pair := asset.MustNewPair("xxx:yyy")
 
-		t.Log("Set vpool defined by pair on VpoolKeeper")
-		vpoolKeeper := &nibiruApp.VpoolKeeper
-		require.NoError(t, vpoolKeeper.CreatePool(
+		t.Log("Set vpool defined by pair on PerpAmmKeeper")
+		perpammKeeper := &nibiruApp.PerpAmmKeeper
+		require.NoError(t, perpammKeeper.CreatePool(
 			ctx,
 			pair,
 			/*quoteAssetReserve*/ sdk.NewDec(10*common.TO_MICRO),
@@ -44,7 +44,7 @@ func TestKeeperClosePosition(t *testing.T) {
 			sdk.ZeroDec(),
 			sdk.OneDec(),
 		))
-		require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
+		require.True(t, perpammKeeper.ExistsPool(ctx, pair))
 
 		t.Log("Set vpool defined by pair on PerpKeeper")
 		keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{

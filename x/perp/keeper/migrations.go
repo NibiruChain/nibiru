@@ -10,9 +10,9 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
-func From2To3(perpKeeper Keeper, vpoolKeeper types.VpoolKeeper) module.MigrationHandler {
+func From2To3(perpKeeper Keeper, perpammKeeper types.PerpAmmKeeper) module.MigrationHandler {
 	return func(ctx sdk.Context) error {
-		k, ok := vpoolKeeper.(perpammkeeper.Keeper)
+		k, ok := perpammKeeper.(perpammkeeper.Keeper)
 		if !ok {
 			panic("vpool keeper is not perpammkeeper.Keeper")
 		}

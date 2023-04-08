@@ -149,11 +149,11 @@ func (s *IntegrationTestSuite) TestCmdCreatePoolProposal() {
 	// ----------------------------------------------------------------------
 	s.Require().NoError(s.network.WaitForNextBlock())
 
-	vpoolsQueryResp := &perpammtypes.QueryAllPoolsResponse{}
-	s.Require().NoError(testutilcli.ExecQuery(s.network.Validators[0].ClientCtx, cli.CmdGetMarkets(), nil, vpoolsQueryResp))
+	marketsQueryResp := &perpammtypes.QueryAllPoolsResponse{}
+	s.Require().NoError(testutilcli.ExecQuery(s.network.Validators[0].ClientCtx, cli.CmdGetMarkets(), nil, marketsQueryResp))
 
 	found := false
-	for _, pool := range vpoolsQueryResp.Markets {
+	for _, pool := range marketsQueryResp.Markets {
 		if pool.Pair.Equal(proposal.Pair) {
 			s.EqualValues(perpammtypes.Market{
 				Pair:              proposal.Pair,
@@ -234,11 +234,11 @@ func (s *IntegrationTestSuite) TestCmdEditPoolConfigProposal() {
 	// ----------------------------------------------------------------------
 	s.Require().NoError(s.network.WaitForNextBlock())
 
-	vpoolsQueryResp := &perpammtypes.QueryAllPoolsResponse{}
-	s.Require().NoError(testutilcli.ExecQuery(s.network.Validators[0].ClientCtx, cli.CmdGetMarkets(), nil, vpoolsQueryResp))
+	marketsQueryResp := &perpammtypes.QueryAllPoolsResponse{}
+	s.Require().NoError(testutilcli.ExecQuery(s.network.Validators[0].ClientCtx, cli.CmdGetMarkets(), nil, marketsQueryResp))
 
 	found := false
-	for _, vpool := range vpoolsQueryResp.Markets {
+	for _, vpool := range marketsQueryResp.Markets {
 		if vpool.Pair.Equal(proposal.Pair) {
 			s.EqualValues(perpammtypes.Market{
 				Pair:              proposal.Pair,
@@ -280,14 +280,14 @@ func (s *IntegrationTestSuite) TestCmdEditSwapInvariantsProposal() {
 	val.ClientCtx.Codec.MustUnmarshalJSON(contents, proposal)
 	s.Require().NoError(proposal.ValidateBasic())
 
-	vpoolsQueryResp := new(perpammtypes.QueryAllPoolsResponse)
+	marketsQueryResp := new(perpammtypes.QueryAllPoolsResponse)
 	s.Require().NoError(testutilcli.ExecQuery(
 		s.network.Validators[0].ClientCtx,
-		cli.CmdGetMarkets(), nil, vpoolsQueryResp))
-	var vpoolBefore perpammtypes.Market
-	for _, vpool := range vpoolsQueryResp.Markets {
+		cli.CmdGetMarkets(), nil, marketsQueryResp))
+	var marketBefore perpammtypes.Market
+	for _, vpool := range marketsQueryResp.Markets {
 		if vpool.Pair.Equal(proposal.SwapInvariantMaps[0].Pair) {
-			vpoolBefore = vpool
+			marketBefore = vpool
 			break
 		}
 	}
@@ -312,13 +312,13 @@ func (s *IntegrationTestSuite) TestCmdEditSwapInvariantsProposal() {
 	// ----------------------------------------------------------------------
 	s.Require().NoError(s.network.WaitForNextBlock())
 
-	vpoolsQueryResp = new(perpammtypes.QueryAllPoolsResponse)
+	marketsQueryResp = new(perpammtypes.QueryAllPoolsResponse)
 	s.Require().NoError(testutilcli.ExecQuery(
-		s.network.Validators[0].ClientCtx, cli.CmdGetMarkets(), nil, vpoolsQueryResp,
+		s.network.Validators[0].ClientCtx, cli.CmdGetMarkets(), nil, marketsQueryResp,
 	))
 
 	found := false
-	for _, vpool := range vpoolsQueryResp.Markets {
+	for _, vpool := range marketsQueryResp.Markets {
 		proposalPair := proposal.SwapInvariantMaps[0].Pair
 
 		if vpool.Pair.Equal(proposalPair) {
@@ -327,19 +327,19 @@ func (s *IntegrationTestSuite) TestCmdEditSwapInvariantsProposal() {
 			s.Assert().EqualValues(sdk.NewDec(10).String(), multiplierToSqrtDepth.String())
 
 			// get vpool after proposal
-			vpoolAfter := perpammtypes.Market{
+			marketAfter := perpammtypes.Market{
 				Pair:              proposalPair,
-				BaseAssetReserve:  vpoolBefore.BaseAssetReserve.Mul(multiplierToSqrtDepth),
-				QuoteAssetReserve: vpoolBefore.QuoteAssetReserve.Mul(multiplierToSqrtDepth),
-				Config:            vpoolBefore.Config,
+				BaseAssetReserve:  marketBefore.BaseAssetReserve.Mul(multiplierToSqrtDepth),
+				QuoteAssetReserve: marketBefore.QuoteAssetReserve.Mul(multiplierToSqrtDepth),
+				Config:            marketBefore.Config,
 				Bias:              sdk.ZeroDec(),
 				PegMultiplier:     sdk.ZeroDec(),
 			}
-			sqrtDepthAfter, err := vpoolAfter.ComputeSqrtDepth()
+			sqrtDepthAfter, err := marketAfter.ComputeSqrtDepth()
 			s.Require().NoError(err)
-			vpoolAfter.SqrtDepth = sqrtDepthAfter
+			marketAfter.SqrtDepth = sqrtDepthAfter
 
-			s.EqualValues(vpoolAfter, vpool)
+			s.EqualValues(marketAfter, vpool)
 			found = true
 		}
 	}

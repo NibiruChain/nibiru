@@ -37,7 +37,7 @@ func (q queryServer) QueryPositions(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	pools := q.k.VpoolKeeper.GetAllPools(ctx)
+	pools := q.k.PerpAmmKeeper.GetAllPools(ctx)
 	var positions []*types.QueryPositionResponse
 
 	for _, pool := range pools {
@@ -74,7 +74,7 @@ func (q queryServer) position(ctx sdk.Context, pair asset.Pair, trader sdk.AccAd
 		return nil, err
 	}
 
-	vpool, err := q.k.VpoolKeeper.GetPool(ctx, pair)
+	vpool, err := q.k.PerpAmmKeeper.GetPool(ctx, pair)
 	if err != nil {
 		return nil, types.ErrPairNotFound
 	}
@@ -131,7 +131,7 @@ func (q queryServer) CumulativePremiumFraction(
 		return nil, status.Errorf(codes.NotFound, "could not find pair: %s", req.Pair)
 	}
 
-	if !q.k.VpoolKeeper.ExistsPool(ctx, pairMetadata.Pair) {
+	if !q.k.PerpAmmKeeper.ExistsPool(ctx, pairMetadata.Pair) {
 		return nil, status.Errorf(codes.NotFound, "could not find pair: %s", req.Pair)
 	}
 
@@ -143,7 +143,7 @@ func (q queryServer) CumulativePremiumFraction(
 		return nil, status.Errorf(codes.FailedPrecondition, "twap index price for pair: %s is zero", req.Pair)
 	}
 
-	markTwap, err := q.k.VpoolKeeper.GetMarkPriceTWAP(ctx, pairMetadata.Pair, q.k.GetParams(ctx).TwapLookbackWindow)
+	markTwap, err := q.k.PerpAmmKeeper.GetMarkPriceTWAP(ctx, pairMetadata.Pair, q.k.GetParams(ctx).TwapLookbackWindow)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "failed to fetch twap mark price for pair: %s", req.Pair)
 	}
@@ -169,7 +169,7 @@ func (q queryServer) Metrics(
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if !q.k.VpoolKeeper.ExistsPool(ctx, req.Pair) {
+	if !q.k.PerpAmmKeeper.ExistsPool(ctx, req.Pair) {
 		return nil, status.Errorf(codes.InvalidArgument, "pool not found: %s", req.Pair)
 	}
 	metrics := q.k.Metrics.GetOr(ctx, req.Pair, types.Metrics{

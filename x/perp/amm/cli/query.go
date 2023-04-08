@@ -30,7 +30,7 @@ func GetQueryCmd() *cobra.Command {
 	}
 
 	for _, cmd := range []*cobra.Command{
-		CmdGetVpoolReserveAssets(),
+		CmdGetMarketReserveAssets(),
 		CmdGetMarkets(),
 		CmdGetBaseAssetPrice(),
 	} {
@@ -40,7 +40,7 @@ func GetQueryCmd() *cobra.Command {
 	return queryCommand
 }
 
-func CmdGetVpoolReserveAssets() *cobra.Command {
+func CmdGetMarketReserveAssets() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "reserve-assets [pair]",
 		Short: "query the reserve assets of a pool",

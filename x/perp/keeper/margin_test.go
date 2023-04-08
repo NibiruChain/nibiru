@@ -64,8 +64,8 @@ func TestAddMarginSuccess(t *testing.T) {
 			))
 
 			t.Log("create vpool")
-			vpoolKeeper := &nibiruApp.VpoolKeeper
-			assert.NoError(t, vpoolKeeper.CreatePool(
+			perpammKeeper := &nibiruApp.PerpAmmKeeper
+			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				sdk.NewDec(10*common.TO_MICRO), // 10 tokens
@@ -80,7 +80,7 @@ func TestAddMarginSuccess(t *testing.T) {
 				sdk.ZeroDec(),
 				sdk.OneDec(),
 			))
-			require.True(t, vpoolKeeper.ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)))
+			require.True(t, perpammKeeper.ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)))
 
 			t.Log("set pair metadata")
 			keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
@@ -135,9 +135,9 @@ func TestRemoveMargin(t *testing.T) {
 				pair := asset.MustNewPair("osmo:nusd")
 
 				t.Log("Setup vpool defined by pair")
-				vpoolKeeper := &nibiruApp.VpoolKeeper
+				perpammKeeper := &nibiruApp.PerpAmmKeeper
 				perpKeeper := &nibiruApp.PerpKeeper
-				assert.NoError(t, vpoolKeeper.CreatePool(
+				assert.NoError(t, perpammKeeper.CreatePool(
 					ctx,
 					pair,
 					/* y */ sdk.NewDec(1*common.TO_MICRO), //
@@ -169,11 +169,11 @@ func TestRemoveMargin(t *testing.T) {
 				traderAddr := testutilevents.AccAddress()
 				pair := asset.MustNewPair("xxx:yyy")
 
-				t.Log("Set vpool defined by pair on VpoolKeeper")
-				vpoolKeeper := &nibiruApp.VpoolKeeper
+				t.Log("Set vpool defined by pair on PerpAmmKeeper")
+				perpammKeeper := &nibiruApp.PerpAmmKeeper
 				quoteReserves := sdk.NewDec(1 * common.TO_MICRO)
 				baseReserves := sdk.NewDec(1 * common.TO_MICRO)
-				assert.NoError(t, vpoolKeeper.CreatePool(
+				assert.NoError(t, perpammKeeper.CreatePool(
 					ctx,
 					pair,
 					/* y */ quoteReserves,
@@ -188,7 +188,7 @@ func TestRemoveMargin(t *testing.T) {
 					sdk.ZeroDec(),
 					sdk.OneDec(),
 				))
-				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
+				require.True(t, perpammKeeper.ExistsPool(ctx, pair))
 
 				t.Log("Set vpool defined by pair on PerpKeeper")
 				keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{

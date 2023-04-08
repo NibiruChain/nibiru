@@ -206,7 +206,7 @@ func CmdEditSwapInvariantsProposal() *cobra.Command {
 			$ %s tx gov submit-proposal edit-invariant <path/to/proposal.json> --deposit="1000unibi" --from=<key_or_address> 
 			`, version.AppName)),
 		Long: strings.TrimSpace(
-			`Submits a proposal to edit the swap invariant of one or more vpools.
+			`Submits a proposal to edit the swap invariant of one or more markets.
 
 			A proposal.json for 'EditSwapInvariantsProposal' contains:
 			{

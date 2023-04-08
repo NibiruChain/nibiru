@@ -30,7 +30,7 @@ import (
 func createInitVPool() Action {
 	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.USDC)
 
-	return CreateCustomVpool(pairBtcUsdc,
+	return CreateCustomMarket(pairBtcUsdc,
 		/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO*common.TO_MICRO),
 		/* baseReserve */ sdk.NewDec(1*common.TO_MICRO*common.TO_MICRO),
 		perpammtypes.MarketConfig{
@@ -404,7 +404,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			exchangedSize := tc.expectedSize
 
 			t.Log("initialize vpool")
-			assert.NoError(t, nibiruApp.VpoolKeeper.CreatePool(
+			assert.NoError(t, nibiruApp.PerpAmmKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO*common.TO_MICRO),
@@ -658,7 +658,7 @@ func TestOpenPositionError(t *testing.T) {
 			traderAddr := testutil.AccAddress()
 
 			t.Log("initialize vpool")
-			assert.NoError(t, nibiruApp.VpoolKeeper.CreatePool(
+			assert.NoError(t, nibiruApp.PerpAmmKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				/* tradeLimitRatio */
@@ -729,9 +729,9 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 				nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 				pair := asset.MustNewPair("xxx:yyy")
 
-				t.Log("Set vpool defined by pair on VpoolKeeper")
-				vpoolKeeper := &nibiruApp.VpoolKeeper
-				assert.NoError(t, nibiruApp.VpoolKeeper.CreatePool(
+				t.Log("Set vpool defined by pair on PerpAmmKeeper")
+				perpammKeeper := &nibiruApp.PerpAmmKeeper
+				assert.NoError(t, nibiruApp.PerpAmmKeeper.CreatePool(
 					ctx,
 					pair,
 					sdk.NewDec(10*common.TO_MICRO), //
@@ -747,7 +747,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 					sdk.OneDec(),
 				))
 
-				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
+				require.True(t, perpammKeeper.ExistsPool(ctx, pair))
 
 				t.Log("Attempt to open long position (expected unsuccessful)")
 				trader := testutil.AccAddress()

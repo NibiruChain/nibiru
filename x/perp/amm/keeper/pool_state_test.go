@@ -16,9 +16,9 @@ import (
 )
 
 func TestCreatePool(t *testing.T) {
-	vpoolKeeper, _, ctx := getKeeper(t)
+	perpammKeeper, _, ctx := getKeeper(t)
 
-	assert.NoError(t, vpoolKeeper.CreatePool(
+	assert.NoError(t, perpammKeeper.CreatePool(
 		ctx,
 		/* pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		/* quote */ sdk.NewDec(10*common.TO_MICRO), // 10 tokens
@@ -34,10 +34,10 @@ func TestCreatePool(t *testing.T) {
 		sdk.OneDec(),
 	))
 
-	exists := vpoolKeeper.ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+	exists := perpammKeeper.ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 	require.True(t, exists)
 
-	notExist := vpoolKeeper.ExistsPool(ctx, "BTC:OTHER")
+	notExist := perpammKeeper.ExistsPool(ctx, "BTC:OTHER")
 	require.False(t, notExist)
 }
 
@@ -58,8 +58,8 @@ func TestEditPoolConfig(t *testing.T) {
 	}
 
 	setupTest := func() (Keeper, sdk.Context) {
-		vpoolKeeper, _, ctx := getKeeper(t)
-		assert.NoError(t, vpoolKeeper.CreatePool(
+		perpammKeeper, _, ctx := getKeeper(t)
+		assert.NoError(t, perpammKeeper.CreatePool(
 			ctx,
 			asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			vpoolStart.QuoteAssetReserve,
@@ -68,9 +68,9 @@ func TestEditPoolConfig(t *testing.T) {
 			sdk.ZeroDec(),
 			sdk.OneDec(),
 		))
-		exists := vpoolKeeper.ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+		exists := perpammKeeper.ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 		require.True(t, exists)
-		return vpoolKeeper, ctx
+		return perpammKeeper, ctx
 	}
 
 	testCases := []struct {
@@ -111,24 +111,24 @@ func TestEditPoolConfig(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			vpoolKeeper, ctx := setupTest()
+			perpammKeeper, ctx := setupTest()
 			if tc.shouldErr {
-				err := vpoolKeeper.EditPoolConfig(ctx, pair, tc.newConfig)
+				err := perpammKeeper.EditPoolConfig(ctx, pair, tc.newConfig)
 				// We expect the initial config if the change fails
 				assert.Error(t, err)
-				vpool, err := vpoolKeeper.Pools.Get(ctx, pair)
+				vpool, err := perpammKeeper.Pools.Get(ctx, pair)
 				assert.NoError(t, err)
 				assert.EqualValues(t, vpoolStart.Config, vpool.Config)
 			} else if tc.shouldPanic {
 				require.Panics(t, func() {
-					err := vpoolKeeper.EditPoolConfig(ctx, pair, tc.newConfig)
+					err := perpammKeeper.EditPoolConfig(ctx, pair, tc.newConfig)
 					require.Error(t, err)
 				})
 			} else {
-				err := vpoolKeeper.EditPoolConfig(ctx, pair, tc.newConfig)
+				err := perpammKeeper.EditPoolConfig(ctx, pair, tc.newConfig)
 				// We expect the new config if the change succeeds
 				require.NoError(t, err)
-				vpool, err := vpoolKeeper.Pools.Get(ctx, pair)
+				vpool, err := perpammKeeper.Pools.Get(ctx, pair)
 				assert.NoError(t, err)
 				assert.EqualValues(t, tc.newConfig, vpool.Config)
 			}
@@ -145,8 +145,8 @@ func TestGetPoolPrices_SetupErrors(t *testing.T) {
 			name: "invalid pair ID on pool",
 			test: func(t *testing.T) {
 				vpoolWithInvalidPair := types.Market{Pair: "o:o:unibi"}
-				vpoolKeeper, _, ctx := getKeeper(t)
-				_, err := vpoolKeeper.GetPoolPrices(ctx, vpoolWithInvalidPair)
+				perpammKeeper, _, ctx := getKeeper(t)
+				_, err := perpammKeeper.GetPoolPrices(ctx, vpoolWithInvalidPair)
 				require.ErrorContains(t, err, asset.ErrInvalidTokenPair.Error())
 			},
 		},
@@ -154,8 +154,8 @@ func TestGetPoolPrices_SetupErrors(t *testing.T) {
 			name: "attempt to use vpool that hasn't been added",
 			test: func(t *testing.T) {
 				vpool := types.Market{Pair: asset.MustNewPair("uatom:unibi")}
-				vpoolKeeper, _, ctx := getKeeper(t)
-				_, err := vpoolKeeper.GetPoolPrices(ctx, vpool)
+				perpammKeeper, _, ctx := getKeeper(t)
+				_, err := perpammKeeper.GetPoolPrices(ctx, vpool)
 				require.ErrorContains(t, err, types.ErrPairNotSupported.Error())
 			},
 		},
@@ -167,9 +167,9 @@ func TestGetPoolPrices_SetupErrors(t *testing.T) {
 					BaseAssetReserve:  sdk.NewDec(999),
 					QuoteAssetReserve: sdk.NewDec(-400),
 				}
-				vpoolKeeper, _, ctx := getKeeper(t)
-				vpoolKeeper.Pools.Insert(ctx, vpool.Pair, vpool)
-				_, err := vpoolKeeper.GetPoolPrices(ctx, vpool)
+				perpammKeeper, _, ctx := getKeeper(t)
+				perpammKeeper.Pools.Insert(ctx, vpool.Pair, vpool)
+				_, err := perpammKeeper.GetPoolPrices(ctx, vpool)
 				require.ErrorContains(t, err, types.ErrNonPositiveReserves.Error())
 			},
 		},
@@ -267,11 +267,11 @@ func TestGetPoolPrices(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			vpoolKeeper, mocks, ctx := getKeeper(t)
+			perpammKeeper, mocks, ctx := getKeeper(t)
 			ctx = ctx.WithBlockHeight(1).WithBlockTime(time.Now())
 
 			if tc.shouldCreateMarket {
-				assert.NoError(t, vpoolKeeper.CreatePool(
+				assert.NoError(t, perpammKeeper.CreatePool(
 					ctx,
 					tc.vpool.Pair,
 					tc.vpool.QuoteAssetReserve,
@@ -292,7 +292,7 @@ func TestGetPoolPrices(t *testing.T) {
 
 			// logged errors would be called in GetPoolPrices
 			var poolPrices types.PoolPrices
-			poolPrices, err := vpoolKeeper.GetPoolPrices(ctx, tc.vpool)
+			poolPrices, err := perpammKeeper.GetPoolPrices(ctx, tc.vpool)
 			if tc.err != nil {
 				assert.ErrorContains(t, err, tc.err.Error())
 			} else {
@@ -319,8 +319,8 @@ func TestEditSwapInvariant(t *testing.T) {
 	}
 
 	setupTest := func() (Keeper, sdk.Context) {
-		vpoolKeeper, _, ctx := getKeeper(t)
-		assert.NoError(t, vpoolKeeper.CreatePool(
+		perpammKeeper, _, ctx := getKeeper(t)
+		assert.NoError(t, perpammKeeper.CreatePool(
 			ctx,
 			pair,
 			vpoolStart.QuoteAssetReserve,
@@ -329,9 +329,9 @@ func TestEditSwapInvariant(t *testing.T) {
 			sdk.ZeroDec(),
 			sdk.OneDec(),
 		))
-		exists := vpoolKeeper.ExistsPool(ctx, pair)
+		exists := perpammKeeper.ExistsPool(ctx, pair)
 		require.True(t, exists)
-		return vpoolKeeper, ctx
+		return perpammKeeper, ctx
 	}
 
 	type Reserves struct {
@@ -406,34 +406,34 @@ func TestEditSwapInvariant(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			vpoolKeeper, ctx := setupTest()
+			perpammKeeper, ctx := setupTest()
 			if tc.shouldErr {
-				err := vpoolKeeper.EditSwapInvariant(ctx,
+				err := perpammKeeper.EditSwapInvariant(ctx,
 					types.EditSwapInvariantsProposal_SwapInvariantMultiple{
 						Pair: pair, Multiplier: tc.swapInvariantMultiplier,
 					})
 				// We expect the initial config if the change fails
 				assert.Error(t, err)
-				vpool, err := vpoolKeeper.Pools.Get(ctx, pair)
+				vpool, err := perpammKeeper.Pools.Get(ctx, pair)
 				assert.NoError(t, err)
 				assert.EqualValues(t, vpoolStart.BaseAssetReserve, vpool.BaseAssetReserve)
 				assert.EqualValues(t, vpoolStart.QuoteAssetReserve, vpool.QuoteAssetReserve)
 			} else if tc.shouldPanic {
 				require.Panics(t, func() {
-					err := vpoolKeeper.EditSwapInvariant(ctx,
+					err := perpammKeeper.EditSwapInvariant(ctx,
 						types.EditSwapInvariantsProposal_SwapInvariantMultiple{
 							Pair: pair, Multiplier: tc.swapInvariantMultiplier,
 						})
 					require.Error(t, err)
 				})
 			} else {
-				err := vpoolKeeper.EditSwapInvariant(ctx,
+				err := perpammKeeper.EditSwapInvariant(ctx,
 					types.EditSwapInvariantsProposal_SwapInvariantMultiple{
 						Pair: pair, Multiplier: tc.swapInvariantMultiplier,
 					})
 				// We expect the new config if the change succeeds
 				require.NoError(t, err)
-				vpool, err := vpoolKeeper.Pools.Get(ctx, pair)
+				vpool, err := perpammKeeper.Pools.Get(ctx, pair)
 				assert.NoError(t, err)
 				assert.EqualValues(t, tc.newReserves.Base, vpool.BaseAssetReserve)
 				assert.EqualValues(t, tc.newReserves.Quote, vpool.QuoteAssetReserve)

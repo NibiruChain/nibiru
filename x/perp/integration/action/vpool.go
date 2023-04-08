@@ -26,7 +26,7 @@ type CreateVPoolAction struct {
 }
 
 func (c CreateVPoolAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
-	err := app.VpoolKeeper.CreatePool(
+	err := app.PerpAmmKeeper.CreatePool(
 		ctx,
 		c.Pair,
 		c.QuoteAssetReserve,
@@ -47,12 +47,12 @@ func (c CreateVPoolAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context,
 	return ctx, nil
 }
 
-// CreateBaseVpool creates a base vpool with:
+// CreateBaseMarket creates a base vpool with:
 // - pair: ubtc:uusdc
 // - quote asset reserve: 1000
 // - base asset reserve: 100
 // - vpool config: default
-func CreateBaseVpool() CreateVPoolAction {
+func CreateBaseMarket() CreateVPoolAction {
 	return CreateVPoolAction{
 		Pair:              asset.NewPair(denoms.BTC, denoms.USDC),
 		QuoteAssetReserve: sdk.NewDec(1000e6),
@@ -67,8 +67,8 @@ func CreateBaseVpool() CreateVPoolAction {
 	}
 }
 
-// CreateCustomVpool creates a vpool with custom parameters
-func CreateCustomVpool(
+// CreateCustomMarket creates a vpool with custom parameters
+func CreateCustomMarket(
 	pair asset.Pair,
 	quoteAssetReserve, baseAssetReserve sdk.Dec,
 	marketConfig perpammtypes.MarketConfig,

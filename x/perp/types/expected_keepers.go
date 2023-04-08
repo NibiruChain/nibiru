@@ -1,6 +1,6 @@
 package types
 
-//go:generate  mockgen -destination=../../common/testutil/mock/perp_interfaces.go -package=mock github.com/NibiruChain/nibiru/x/perp/types AccountKeeper,BankKeeper,OracleKeeper,VpoolKeeper,EpochKeeper
+//go:generate  mockgen -destination=../../common/testutil/mock/perp_interfaces.go -package=mock github.com/NibiruChain/nibiru/x/perp/types AccountKeeper,BankKeeper,OracleKeeper,PerpAmmKeeper,EpochKeeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -49,7 +49,7 @@ type OracleKeeper interface {
 	SetPrice(ctx sdk.Context, pair asset.Pair, price sdk.Dec)
 }
 
-type VpoolKeeper interface {
+type PerpAmmKeeper interface {
 	SwapBaseForQuote(
 		ctx sdk.Context,
 		vpool perpammtypes.Market,

@@ -13,17 +13,17 @@ import (
 
 type MarketChecker func(resp types.Market) error
 
-type vpoolShouldBeEqual struct {
+type marketShouldBeEqual struct {
 	pair     asset.Pair
 	checkers []MarketChecker
 }
 
-func VpoolShouldBeEqual(pair asset.Pair, checkers ...MarketChecker) action.Action {
-	return &vpoolShouldBeEqual{pair: pair, checkers: checkers}
+func MarketShouldBeEqual(pair asset.Pair, checkers ...MarketChecker) action.Action {
+	return &marketShouldBeEqual{pair: pair, checkers: checkers}
 }
 
-func (v vpoolShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
-	vpool, err := app.VpoolKeeper.GetPool(ctx, v.pair)
+func (v marketShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+	vpool, err := app.PerpAmmKeeper.GetPool(ctx, v.pair)
 	if err != nil {
 		return ctx, err
 	}

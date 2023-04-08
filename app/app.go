@@ -285,7 +285,7 @@ type NibiruApp struct {
 	// ---------------
 	EpochsKeeper     epochskeeper.Keeper
 	PerpKeeper       perpkeeper.Keeper
-	VpoolKeeper      perpammkeeper.Keeper
+	PerpAmmKeeper    perpammkeeper.Keeper
 	SpotKeeper       spotkeeper.Keeper
 	OracleKeeper     oraclekeeper.Keeper
 	StablecoinKeeper stablecoinkeeper.Keeper
@@ -472,7 +472,7 @@ func NewNibiruApp(
 		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.SpotKeeper,
 	)
 
-	app.VpoolKeeper = perpammkeeper.NewKeeper(
+	app.PerpAmmKeeper = perpammkeeper.NewKeeper(
 		appCodec,
 		keys[perpammtypes.StoreKey],
 		app.OracleKeeper,
@@ -485,7 +485,7 @@ func NewNibiruApp(
 	app.PerpKeeper = perpkeeper.NewKeeper(
 		appCodec, keys[perptypes.StoreKey],
 		app.GetSubspace(perptypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.VpoolKeeper, app.EpochsKeeper,
+		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.PerpAmmKeeper, app.EpochsKeeper,
 	)
 
 	app.EpochsKeeper.SetHooks(
@@ -551,7 +551,7 @@ func NewNibiruApp(
 		AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.distrKeeper)).
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.upgradeKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.ibcKeeper.ClientKeeper)).
-		AddRoute(perpammtypes.RouterKey, perpamm.NewMarketProposalHandler(app.VpoolKeeper))
+		AddRoute(perpammtypes.RouterKey, perpamm.NewMarketProposalHandler(app.PerpAmmKeeper))
 
 	// Create evidence keeper.
 	// This keeper automatically includes an evidence router.
@@ -645,8 +645,8 @@ func NewNibiruApp(
 		appCodec, app.PerpKeeper, app.AccountKeeper, app.BankKeeper,
 		app.OracleKeeper,
 	)
-	vpoolModule := perpamm.NewAppModule(
-		appCodec, app.VpoolKeeper, app.OracleKeeper,
+	perpAmmModule := perpamm.NewAppModule(
+		appCodec, app.PerpAmmKeeper, app.OracleKeeper,
 	)
 	utilModule := util.NewAppModule(app.BankKeeper)
 
@@ -677,7 +677,7 @@ func NewNibiruApp(
 		stablecoinModule,
 		oracleModule,
 		epochsModule,
-		vpoolModule,
+		perpAmmModule,
 		perpModule,
 		utilModule,
 

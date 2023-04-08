@@ -158,11 +158,11 @@ func TestSwapQuoteForBase(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			oracleKeeper := mock.NewMockOracleKeeper(gomock.NewController(t))
-			vpoolKeeper, ctx := VpoolKeeper(t, oracleKeeper)
+			perpammKeeper, ctx := PerpAmmKeeper(t, oracleKeeper)
 
 			oracleKeeper.EXPECT().GetExchangeRate(gomock.Any(), gomock.Any()).Return(sdk.NewDec(1), nil).AnyTimes()
 
-			assert.NoError(t, vpoolKeeper.CreatePool(
+			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteAssetReserve */ sdk.NewDec(10*common.TO_MICRO), // 10 tokens
@@ -177,10 +177,10 @@ func TestSwapQuoteForBase(t *testing.T) {
 				sdk.ZeroDec(),
 				sdk.OneDec(),
 			))
-			vpool, err := vpoolKeeper.GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+			vpool, err := perpammKeeper.GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 			require.NoError(t, err)
 
-			_, baseAmt, err := vpoolKeeper.SwapQuoteForBase(
+			_, baseAmt, err := perpammKeeper.SwapQuoteForBase(
 				ctx,
 				vpool,
 				tc.direction,
@@ -196,7 +196,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 				assert.EqualValuesf(t, tc.expectedBaseAmount, baseAmt, "base amount mismatch")
 
 				t.Log("assert vpool")
-				pool, err := vpoolKeeper.Pools.Get(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+				pool, err := perpammKeeper.Pools.Get(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 				require.NoError(t, err)
 				assert.EqualValuesf(t, tc.expectedQuoteReserve, pool.QuoteAssetReserve, "pool quote asset reserve mismatch")
 				assert.EqualValuesf(t, tc.expectedBaseReserve, pool.BaseAssetReserve, "pool base asset reserve mismatch")
@@ -346,11 +346,11 @@ func TestSwapBaseForQuote(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			pfKeeper := mock.NewMockOracleKeeper(gomock.NewController(t))
 
-			vpoolKeeper, ctx := VpoolKeeper(t, pfKeeper)
+			perpammKeeper, ctx := PerpAmmKeeper(t, pfKeeper)
 			pfKeeper.EXPECT().
 				GetExchangeRate(gomock.Any(), gomock.Any()).Return(sdk.NewDec(1), nil).AnyTimes()
 
-			assert.NoError(t, vpoolKeeper.CreatePool(
+			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteAssetReserve */ sdk.NewDec(10*common.TO_MICRO), // 10 tokens
@@ -366,9 +366,9 @@ func TestSwapBaseForQuote(t *testing.T) {
 				sdk.OneDec(),
 			))
 
-			vpool, err := vpoolKeeper.GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+			vpool, err := perpammKeeper.GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 			require.NoError(t, err)
-			_, quoteAssetAmount, err := vpoolKeeper.SwapBaseForQuote(
+			_, quoteAssetAmount, err := perpammKeeper.SwapBaseForQuote(
 				ctx,
 				vpool,
 				tc.direction,
@@ -385,7 +385,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 					"expected %s; got %s", tc.expectedQuoteAssetAmount.String(), quoteAssetAmount.String())
 
 				t.Log("assert pool")
-				pool, err := vpoolKeeper.Pools.Get(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+				pool, err := perpammKeeper.Pools.Get(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedQuoteReserve, pool.QuoteAssetReserve)
 				assert.Equal(t, tc.expectedBaseReserve, pool.BaseAssetReserve)
@@ -395,11 +395,11 @@ func TestSwapBaseForQuote(t *testing.T) {
 }
 
 func TestGetMarkets(t *testing.T) {
-	vpoolKeeper, ctx := VpoolKeeper(t,
+	perpammKeeper, ctx := PerpAmmKeeper(t,
 		mock.NewMockOracleKeeper(gomock.NewController(t)),
 	)
 
-	assert.NoError(t, vpoolKeeper.CreatePool(
+	assert.NoError(t, perpammKeeper.CreatePool(
 		ctx,
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		sdk.NewDec(10*common.TO_MICRO),
@@ -414,7 +414,7 @@ func TestGetMarkets(t *testing.T) {
 		sdk.ZeroDec(),
 		sdk.OneDec(),
 	))
-	assert.NoError(t, vpoolKeeper.CreatePool(
+	assert.NoError(t, perpammKeeper.CreatePool(
 		ctx,
 		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 		sdk.NewDec(5*common.TO_MICRO),
@@ -430,7 +430,7 @@ func TestGetMarkets(t *testing.T) {
 		sdk.OneDec(),
 	))
 
-	pools := vpoolKeeper.Pools.Iterate(ctx, collections.Range[asset.Pair]{}).Values()
+	pools := perpammKeeper.Pools.Iterate(ctx, collections.Range[asset.Pair]{}).Values()
 
 	require.EqualValues(t, 2, len(pools))
 
@@ -633,14 +633,14 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			vpoolKeeper, ctx := VpoolKeeper(t,
+			perpammKeeper, ctx := PerpAmmKeeper(t,
 				mock.NewMockOracleKeeper(gomock.NewController(t)),
 			)
 
-			vpoolKeeper.Pools.Insert(ctx, tc.pool.Pair, tc.pool)
+			perpammKeeper.Pools.Insert(ctx, tc.pool.Pair, tc.pool)
 
 			for _, snapshot := range tc.existingSnapshots {
-				vpoolKeeper.ReserveSnapshots.Insert(
+				perpammKeeper.ReserveSnapshots.Insert(
 					ctx,
 					collections.Join(
 						snapshot.Pair,
@@ -649,7 +649,7 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 			}
 
 			t.Log("check fluctuation limit")
-			err := vpoolKeeper.checkFluctuationLimitRatio(ctx, tc.pool)
+			err := perpammKeeper.checkFluctuationLimitRatio(ctx, tc.pool)
 
 			t.Log("check error if any")
 			if tc.expectedErr != nil {
@@ -697,11 +697,11 @@ func TestGetMaintenanceMarginRatio(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			vpoolKeeper, ctx := VpoolKeeper(t,
+			perpammKeeper, ctx := PerpAmmKeeper(t,
 				mock.NewMockOracleKeeper(gomock.NewController(t)),
 			)
-			vpoolKeeper.Pools.Insert(ctx, tc.pool.Pair, tc.pool)
-			mmr, err := vpoolKeeper.GetMaintenanceMarginRatio(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+			perpammKeeper.Pools.Insert(ctx, tc.pool.Pair, tc.pool)
+			mmr, err := perpammKeeper.GetMaintenanceMarginRatio(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 			assert.NoError(t, err)
 			assert.EqualValues(t, tc.expectedMaintenanceMarginRatio, mmr)
 		})

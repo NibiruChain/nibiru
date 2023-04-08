@@ -18,10 +18,10 @@ import (
 
 func TestQueryReserveAssets(t *testing.T) {
 	t.Log("initialize perpammkeeper")
-	vpoolKeeper, ctx := VpoolKeeper(t,
+	perpammKeeper, ctx := PerpAmmKeeper(t,
 		mock.NewMockOracleKeeper(gomock.NewController(t)),
 	)
-	queryServer := NewQuerier(vpoolKeeper)
+	queryServer := NewQuerier(perpammKeeper)
 
 	t.Log("initialize vpool")
 	pool := types.Market{
@@ -36,7 +36,7 @@ func TestQueryReserveAssets(t *testing.T) {
 			TradeLimitRatio:        sdk.ZeroDec(),
 		},
 	}
-	vpoolKeeper.Pools.Insert(ctx, pool.Pair, pool)
+	perpammKeeper.Pools.Insert(ctx, pool.Pair, pool)
 
 	t.Log("query reserve assets")
 	resp, err := queryServer.ReserveAssets(
@@ -54,9 +54,9 @@ func TestQueryReserveAssets(t *testing.T) {
 
 func TestQueryAllPools(t *testing.T) {
 	t.Log("initialize perpammkeeper")
-	vpoolKeeper, mocks, ctx := getKeeper(t)
+	perpammKeeper, mocks, ctx := getKeeper(t)
 	ctx = ctx.WithBlockHeight(1).WithBlockTime(time.Now())
-	queryServer := NewQuerier(vpoolKeeper)
+	queryServer := NewQuerier(perpammKeeper)
 
 	t.Log("initialize vpool")
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
@@ -72,7 +72,7 @@ func TestQueryAllPools(t *testing.T) {
 			TradeLimitRatio:        sdk.ZeroDec(),
 		},
 	}
-	assert.NoError(t, vpoolKeeper.CreatePool(
+	assert.NoError(t, perpammKeeper.CreatePool(
 		ctx, pair, pool.QuoteAssetReserve, pool.BaseAssetReserve, pool.Config, sdk.ZeroDec(), sdk.OneDec()))
 
 	t.Log("query reserve assets and prices for the pair")

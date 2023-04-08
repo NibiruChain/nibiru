@@ -153,7 +153,7 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	if err != nil {
 		panic(fmt.Errorf("failed to register migration: %w", err))
 	}
-	err = cfg.RegisterMigration(types.ModuleName, 2, keeper.From2To3(am.keeper, am.keeper.VpoolKeeper)) // From 2 to 3
+	err = cfg.RegisterMigration(types.ModuleName, 2, keeper.From2To3(am.keeper, am.keeper.PerpAmmKeeper)) // From 2 to 3
 	if err != nil {
 		panic(fmt.Errorf("failed to register migration: %w", err))
 	}

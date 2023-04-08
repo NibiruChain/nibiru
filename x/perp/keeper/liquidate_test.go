@@ -85,8 +85,8 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			perpKeeper := &nibiruApp.PerpKeeper
 
 			t.Log("create vpool")
-			vpoolKeeper := &nibiruApp.VpoolKeeper
-			assert.NoError(t, vpoolKeeper.CreatePool(
+			perpammKeeper := &nibiruApp.PerpAmmKeeper
+			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				tokenPair,
 				/* quoteAssetReserves */ sdk.NewDec(10*common.TO_MICRO),
@@ -101,7 +101,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				sdk.ZeroDec(),
 				sdk.OneDec(),
 			))
-			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
+			require.True(t, perpammKeeper.ExistsPool(ctx, tokenPair))
 
 			nibiruApp.OracleKeeper.SetPrice(ctx, tokenPair, sdk.NewDec(2))
 
@@ -166,7 +166,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			require.EqualValues(t, tc.expectedPerpEFBalance, perpEFBalance)
 
 			t.Log("check emitted events")
-			newMarkPrice, err := vpoolKeeper.GetMarkPrice(ctx, tokenPair)
+			newMarkPrice, err := perpammKeeper.GetMarkPrice(ctx, tokenPair)
 			require.NoError(t, err)
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
 				Pair:                  tokenPair,
@@ -264,9 +264,9 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 			ctx = ctx.WithBlockTime(time.Now())
 
-			t.Log("Set vpool defined by pair on VpoolKeeper")
-			vpoolKeeper := &nibiruApp.VpoolKeeper
-			assert.NoError(t, vpoolKeeper.CreatePool(
+			t.Log("Set vpool defined by pair on PerpAmmKeeper")
+			perpammKeeper := &nibiruApp.PerpAmmKeeper
+			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				tokenPair,
 				/* quoteAssetReserves */ sdk.NewDec(10_000*common.TO_MICRO*common.TO_MICRO),
@@ -281,7 +281,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 				sdk.ZeroDec(),
 				sdk.OneDec(),
 			))
-			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
+			require.True(t, perpammKeeper.ExistsPool(ctx, tokenPair))
 
 			t.Log("Set vpool defined by pair on PerpKeeper")
 			perpKeeper := &nibiruApp.PerpKeeper
@@ -360,7 +360,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			)
 
 			t.Log("check emitted events")
-			newMarkPrice, err := vpoolKeeper.GetMarkPrice(ctx, tokenPair)
+			newMarkPrice, err := perpammKeeper.GetMarkPrice(ctx, tokenPair)
 			require.NoError(t, err)
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
 				Pair:                  tokenPair,
@@ -441,7 +441,7 @@ func TestMultiLiquidate(t *testing.T) {
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
 			t.Log("create vpool")
-			assert.NoError(t, app.VpoolKeeper.CreatePool(
+			assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 				/* ctx */ ctx,
 				/* pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),

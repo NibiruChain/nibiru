@@ -20,7 +20,7 @@ to it. Adding margin increases the margin ratio of the corresponding position.
 func (k Keeper) AddMargin(
 	ctx sdk.Context, pair asset.Pair, traderAddr sdk.AccAddress, margin sdk.Coin,
 ) (res *types.MsgAddMarginResponse, err error) {
-	vpool, err := k.VpoolKeeper.GetPool(ctx, pair)
+	vpool, err := k.PerpAmmKeeper.GetPool(ctx, pair)
 	if err != nil {
 		return nil, types.ErrPairNotFound
 	}
@@ -59,7 +59,7 @@ func (k Keeper) AddMargin(
 		return nil, err
 	}
 
-	markPrice, err := k.VpoolKeeper.GetMarkPrice(ctx, pair)
+	markPrice, err := k.PerpAmmKeeper.GetMarkPrice(ctx, pair)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +114,7 @@ ret:
 func (k Keeper) RemoveMargin(
 	ctx sdk.Context, pair asset.Pair, traderAddr sdk.AccAddress, margin sdk.Coin,
 ) (marginOut sdk.Coin, fundingPayment sdk.Dec, position types.Position, err error) {
-	vpool, err := k.VpoolKeeper.GetPool(ctx, pair)
+	vpool, err := k.PerpAmmKeeper.GetPool(ctx, pair)
 	if err != nil {
 		return sdk.Coin{}, sdk.Dec{}, types.Position{}, types.ErrPairNotFound
 	}
@@ -151,7 +151,7 @@ func (k Keeper) RemoveMargin(
 		return sdk.Coin{}, sdk.Dec{}, types.Position{}, err
 	}
 
-	markPrice, err := k.VpoolKeeper.GetMarkPrice(ctx, pair)
+	markPrice, err := k.PerpAmmKeeper.GetMarkPrice(ctx, pair)
 	if err != nil {
 		return sdk.Coin{}, sdk.Dec{}, types.Position{}, err
 	}
@@ -245,8 +245,8 @@ func (k Keeper) GetMarginRatio(
 	return marginRatio, nil
 }
 
-func (k Keeper) requireVpool(ctx sdk.Context, pair asset.Pair) (err error) {
-	if !k.VpoolKeeper.ExistsPool(ctx, pair) {
+func (k Keeper) requireMarket(ctx sdk.Context, pair asset.Pair) (err error) {
+	if !k.PerpAmmKeeper.ExistsPool(ctx, pair) {
 		return types.ErrPairNotFound.Wrap(pair.String())
 	}
 	return nil
@@ -316,7 +316,7 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 
 	switch pnlCalcOption {
 	case types.PnLCalcOption_TWAP:
-		positionNotional, err = k.VpoolKeeper.GetBaseAssetTWAP(
+		positionNotional, err = k.PerpAmmKeeper.GetBaseAssetTWAP(
 			ctx,
 			currentPosition.Pair,
 			baseAssetDirection,
@@ -328,7 +328,7 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 			return sdk.ZeroDec(), sdk.ZeroDec(), err
 		}
 	case types.PnLCalcOption_SPOT_PRICE:
-		positionNotional, err = k.VpoolKeeper.GetBaseAssetPrice(
+		positionNotional, err = k.PerpAmmKeeper.GetBaseAssetPrice(
 			vpool,
 			baseAssetDirection,
 			positionSizeAbs,

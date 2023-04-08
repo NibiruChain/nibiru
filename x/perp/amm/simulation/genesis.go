@@ -47,6 +47,6 @@ func RandomizedGenState(simState *module.SimulationState) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("Selected randomly generated vpools:\n%s\n", vpoolGenesisBytes)
+	fmt.Printf("Selected randomly generated markets:\n%s\n", vpoolGenesisBytes)
 	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(&vpoolGenesis)
 }

@@ -25,11 +25,11 @@ func initAppMarkets(
 	t.Log("initialize app and keeper")
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 	perpKeeper := &nibiruApp.PerpKeeper
-	vpoolKeeper := &nibiruApp.VpoolKeeper
+	perpammKeeper := &nibiruApp.PerpAmmKeeper
 	queryServer := keeper.NewQuerier(*perpKeeper)
 
 	t.Log("initialize vpool and pair")
-	assert.NoError(t, vpoolKeeper.CreatePool(
+	assert.NoError(t, perpammKeeper.CreatePool(
 		ctx,
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		quoteAssetReserve,
@@ -48,7 +48,7 @@ func initAppMarkets(
 		Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 	})
-	assert.NoError(t, vpoolKeeper.CreatePool(
+	assert.NoError(t, perpammKeeper.CreatePool(
 		ctx,
 		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 		/* quoteReserve */ sdk.MustNewDecFromStr("100000"),
@@ -67,7 +67,7 @@ func initAppMarkets(
 		Pair:                            asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 	})
-	assert.NoError(t, vpoolKeeper.CreatePool(
+	assert.NoError(t, perpammKeeper.CreatePool(
 		ctx,
 		asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 		/* quoteReserve */ sdk.MustNewDecFromStr("100000"),

@@ -11,7 +11,7 @@ import (
 )
 
 // ----------------------------------------------------------------------------
-// Vpool - core functions
+// Market - core functions
 // ----------------------------------------------------------------------------
 
 /*
@@ -252,7 +252,7 @@ func (poolCfg *MarketConfig) WithMaxLeverage(value sdk.Dec) *MarketConfig {
 }
 
 // ----------------------------------------------------------------------------
-// Vpool - validation functions
+// Market - validation functions
 // ----------------------------------------------------------------------------
 
 func (vpool *Market) Validate() error {

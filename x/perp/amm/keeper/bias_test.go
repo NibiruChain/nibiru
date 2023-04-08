@@ -5,7 +5,7 @@ import (
 	"time"
 
 	integrationaction "github.com/NibiruChain/nibiru/x/perp/amm/integration/action"
-	vpoolassertion "github.com/NibiruChain/nibiru/x/perp/amm/integration/assertion"
+	ammassertion "github.com/NibiruChain/nibiru/x/perp/amm/integration/assertion"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -23,7 +23,7 @@ import (
 func createInitVPool() Action {
 	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.USDC)
 
-	return CreateCustomVpool(pairBtcUsdc,
+	return CreateCustomMarket(pairBtcUsdc,
 		/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO*common.TO_MICRO),
 		/* baseReserve */ sdk.NewDec(1*common.TO_MICRO*common.TO_MICRO),
 		types.MarketConfig{
@@ -36,7 +36,7 @@ func createInitVPool() Action {
 		sdk.ZeroDec())
 }
 
-func TestBiasChangeOnVpool(t *testing.T) {
+func TestBiasChangeOnMarket(t *testing.T) {
 	alice, bob := testutil.AccAddress(), testutil.AccAddress()
 	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.USDC)
 	startBlockTime := time.Now()
@@ -54,8 +54,8 @@ func TestBiasChangeOnVpool(t *testing.T) {
 				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			Then(
-				vpoolassertion.VpoolShouldBeEqual(pairBtcUsdc,
-					vpoolassertion.VPool_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("9999.999900000001000000")), // Bias equal to PositionSize
+				ammassertion.MarketShouldBeEqual(pairBtcUsdc,
+					ammassertion.VPool_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("9999.999900000001000000")), // Bias equal to PositionSize
 				),
 				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("9999.999900000001000000"))),
 			),
@@ -74,8 +74,8 @@ func TestBiasChangeOnVpool(t *testing.T) {
 				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			Then(
-				vpoolassertion.VpoolShouldBeEqual(pairBtcUsdc,
-					vpoolassertion.VPool_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("19999.999600000008000000")), // Bias equal to PositionSize
+				ammassertion.MarketShouldBeEqual(pairBtcUsdc,
+					ammassertion.VPool_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("19999.999600000008000000")), // Bias equal to PositionSize
 				),
 				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("19999.999600000008000000"))),
 			),
@@ -91,8 +91,8 @@ func TestBiasChangeOnVpool(t *testing.T) {
 				OpenPosition(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			Then(
-				vpoolassertion.VpoolShouldBeEqual(pairBtcUsdc,
-					vpoolassertion.VPool_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("-10000.000100000001000000")), // Bias equal to PositionSize
+				ammassertion.MarketShouldBeEqual(pairBtcUsdc,
+					ammassertion.VPool_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("-10000.000100000001000000")), // Bias equal to PositionSize
 				),
 				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("-10000.000100000001000000"))),
 			),
@@ -111,8 +111,8 @@ func TestBiasChangeOnVpool(t *testing.T) {
 				OpenPosition(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			Then(
-				vpoolassertion.VpoolShouldBeEqual(pairBtcUsdc,
-					vpoolassertion.VPool_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("-20000.000400000008000000")), // Bias equal to PositionSize
+				ammassertion.MarketShouldBeEqual(pairBtcUsdc,
+					ammassertion.VPool_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("-20000.000400000008000000")), // Bias equal to PositionSize
 				),
 				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("-20000.000400000008000000"))),
 			),
@@ -130,8 +130,8 @@ func TestBiasChangeOnVpool(t *testing.T) {
 				ClosePosition(alice, pairBtcUsdc),
 			).
 			Then(
-				vpoolassertion.VpoolShouldBeEqual(pairBtcUsdc,
-					vpoolassertion.VPool_BiasShouldBeEqualTo(sdk.ZeroDec()), // Bias equal to PositionSize
+				ammassertion.MarketShouldBeEqual(pairBtcUsdc,
+					ammassertion.VPool_BiasShouldBeEqualTo(sdk.ZeroDec()), // Bias equal to PositionSize
 				),
 				PositionShouldNotExist(alice, pairBtcUsdc),
 			),
@@ -149,8 +149,8 @@ func TestBiasChangeOnVpool(t *testing.T) {
 				OpenPosition(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(100), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			Then(
-				vpoolassertion.VpoolShouldBeEqual(pairBtcUsdc,
-					vpoolassertion.VPool_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("8999.999919000000729000")), // Bias equal to PositionSize
+				ammassertion.MarketShouldBeEqual(pairBtcUsdc,
+					ammassertion.VPool_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("8999.999919000000729000")), // Bias equal to PositionSize
 				),
 				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("8999.999919000000729000"))),
 			),
@@ -169,8 +169,8 @@ func TestBiasChangeOnVpool(t *testing.T) {
 				OpenPosition(bob, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			Then(
-				vpoolassertion.VpoolShouldBeEqual(pairBtcUsdc,
-					vpoolassertion.VPool_BiasShouldBeEqualTo(sdk.ZeroDec()), // Bias equal to PositionSize
+				ammassertion.MarketShouldBeEqual(pairBtcUsdc,
+					ammassertion.VPool_BiasShouldBeEqualTo(sdk.ZeroDec()), // Bias equal to PositionSize
 				),
 				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("9999.999900000001000000"))),
 				PositionShouldBeEqual(bob, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("-9999.999900000001000000"))),
@@ -193,8 +193,8 @@ func TestBiasChangeOnVpool(t *testing.T) {
 			When(
 				LiquidatePosition(bob, alice, pairBtcUsdc),
 			).Then(
-			vpoolassertion.VpoolShouldBeEqual(pairBtcUsdc,
-				vpoolassertion.VPool_BiasShouldBeEqualTo(sdk.ZeroDec()), // Bias equal to PositionSize
+			ammassertion.MarketShouldBeEqual(pairBtcUsdc,
+				ammassertion.VPool_BiasShouldBeEqualTo(sdk.ZeroDec()), // Bias equal to PositionSize
 			),
 			PositionShouldNotExist(alice, pairBtcUsdc),
 		),

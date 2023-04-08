@@ -37,7 +37,7 @@ func (k Keeper) OpenPosition(
 	leverage sdk.Dec,
 	baseAmtLimit sdk.Dec,
 ) (positionResp *types.PositionResp, err error) {
-	vpool, err := k.VpoolKeeper.GetPool(ctx, pair)
+	vpool, err := k.PerpAmmKeeper.GetPool(ctx, pair)
 	if err != nil {
 		return nil, types.ErrPairNotFound
 	}
@@ -95,7 +95,7 @@ func (k Keeper) OpenPosition(
 
 // checkOpenPositionRequirements checks the minimum requirements to open a position.
 //
-// - Checks that the Vpool exists.
+// - Checks that the Market exists.
 // - Checks that quote asset is not zero.
 // - Checks that leverage is not zero.
 // - Checks that leverage is below requirement.
@@ -168,7 +168,7 @@ func (k Keeper) afterPositionUpdate(
 		return err
 	}
 
-	markPrice, err := k.VpoolKeeper.GetMarkPrice(ctx, pair)
+	markPrice, err := k.PerpAmmKeeper.GetMarkPrice(ctx, pair)
 	if err != nil {
 		return err
 	}
@@ -681,7 +681,7 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.A
 		return nil, err
 	}
 
-	vpool, err := k.VpoolKeeper.GetPool(ctx, pair)
+	vpool, err := k.PerpAmmKeeper.GetPool(ctx, pair)
 	if err != nil {
 		return nil, types.ErrPairNotFound
 	}
@@ -790,7 +790,7 @@ func (k Keeper) swapQuoteForBase(
 		quoteAssetDirection = perpammtypes.Direction_SHORT
 	}
 
-	updatedMarket, baseAssetAmount, err = k.VpoolKeeper.SwapQuoteForBase(
+	updatedMarket, baseAssetAmount, err = k.PerpAmmKeeper.SwapQuoteForBase(
 		ctx, vpool, quoteAssetDirection, quoteAssetAmount, baseAssetLimit, skipFluctuationLimitCheck)
 	if err != nil {
 		return perpammtypes.Market{}, sdk.Dec{}, err
@@ -835,7 +835,7 @@ func (k Keeper) swapBaseForQuote(
 		baseAssetDirection = perpammtypes.Direction_SHORT
 	}
 
-	updatedMarket, quoteAssetAmount, err := k.VpoolKeeper.SwapBaseForQuote(
+	updatedMarket, quoteAssetAmount, err := k.PerpAmmKeeper.SwapBaseForQuote(
 		ctx, vpool, baseAssetDirection, baseAssetAmount, quoteAssetLimit, skipFluctuationLimitCheck)
 	if err != nil {
 		return perpammtypes.Market{}, sdk.Dec{}, err

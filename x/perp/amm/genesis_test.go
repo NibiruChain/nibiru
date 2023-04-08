@@ -16,7 +16,7 @@ import (
 )
 
 func TestGenesis(t *testing.T) {
-	vpools := []types.Market{
+	markets := []types.Market{
 		{
 			Pair:              asset.MustNewPair("BTC:NUSD"),
 			BaseAssetReserve:  sdk.NewDec(1 * common.TO_MICRO),      // 1
@@ -50,15 +50,15 @@ func TestGenesis(t *testing.T) {
 	}
 
 	genesisState := types.GenesisState{
-		Markets: vpools,
+		Markets: markets,
 	}
 
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
-	k := nibiruApp.VpoolKeeper
+	k := nibiruApp.PerpAmmKeeper
 
 	perpamm.InitGenesis(ctx, k, genesisState)
 
-	for _, vp := range vpools {
+	for _, vp := range markets {
 		require.True(t, k.ExistsPool(ctx, vp.Pair))
 	}
 

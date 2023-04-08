@@ -44,10 +44,10 @@ func TestGetMarkPrice(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			vpoolKeeper, ctx := VpoolKeeper(t,
+			perpammKeeper, ctx := PerpAmmKeeper(t,
 				mock.NewMockOracleKeeper(gomock.NewController(t)))
 
-			assert.NoError(t, vpoolKeeper.CreatePool(
+			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				tc.pair,
 				tc.quoteAssetReserve,
@@ -63,7 +63,7 @@ func TestGetMarkPrice(t *testing.T) {
 				sdk.OneDec(),
 			))
 
-			price, err := vpoolKeeper.GetMarkPrice(ctx, tc.pair)
+			price, err := perpammKeeper.GetMarkPrice(ctx, tc.pair)
 			require.NoError(t, err)
 			require.EqualValues(t, tc.expectedPrice, price)
 		})
@@ -122,10 +122,10 @@ func TestGetBaseAssetPrice(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			vpoolKeeper, ctx := VpoolKeeper(t,
+			perpammKeeper, ctx := PerpAmmKeeper(t,
 				mock.NewMockOracleKeeper(gomock.NewController(t)))
 
-			assert.NoError(t, vpoolKeeper.CreatePool(
+			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				tc.pair,
 				tc.quoteAssetReserve,
@@ -141,10 +141,10 @@ func TestGetBaseAssetPrice(t *testing.T) {
 				sdk.OneDec(),
 			))
 
-			vpool, err := vpoolKeeper.GetPool(ctx, tc.pair)
+			vpool, err := perpammKeeper.GetPool(ctx, tc.pair)
 			require.NoError(t, err)
 
-			quoteAmount, err := vpoolKeeper.GetBaseAssetPrice(vpool, tc.direction, tc.baseAmount)
+			quoteAmount, err := perpammKeeper.GetBaseAssetPrice(vpool, tc.direction, tc.baseAmount)
 			if tc.expectedErr != nil {
 				require.ErrorIs(t, err, tc.expectedErr,
 					"expected error: %w, got: %w", tc.expectedErr, err)
@@ -210,10 +210,10 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			vpoolKeeper, ctx := VpoolKeeper(t,
+			perpammKeeper, ctx := PerpAmmKeeper(t,
 				mock.NewMockOracleKeeper(gomock.NewController(t)))
 
-			assert.NoError(t, vpoolKeeper.CreatePool(
+			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				tc.pair,
 				tc.quoteAssetReserve,
@@ -229,7 +229,7 @@ func TestGetQuoteAssetPrice(t *testing.T) {
 				sdk.OneDec(),
 			))
 
-			baseAmount, err := vpoolKeeper.GetQuoteAssetPrice(ctx, tc.pair, tc.direction, tc.quoteAmount)
+			baseAmount, err := perpammKeeper.GetQuoteAssetPrice(ctx, tc.pair, tc.direction, tc.quoteAmount)
 			if tc.expectedErr != nil {
 				require.ErrorIs(t, err, tc.expectedErr,
 					"expected error: %w, got: %w", tc.expectedErr, err)
@@ -524,12 +524,12 @@ func TestCalcTwap(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			vpoolKeeper, ctx := VpoolKeeper(t,
+			perpammKeeper, ctx := PerpAmmKeeper(t,
 				mock.NewMockOracleKeeper(gomock.NewController(t)))
 			ctx = ctx.WithBlockTime(time.UnixMilli(0))
 
 			t.Log("Create an empty pool for the first block")
-			assert.NoError(t, vpoolKeeper.CreatePool(
+			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				tc.pair,
 				/*quoteAssetReserve=*/ sdk.OneDec(),
@@ -540,7 +540,7 @@ func TestCalcTwap(t *testing.T) {
 			))
 
 			t.Log("throw in another market pair to ensure key iteration doesn't overlap")
-			assert.NoError(t, vpoolKeeper.CreatePool(
+			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				tc.pair,
 				/*quoteAssetReserve=*/ sdk.NewDec(100),
@@ -558,10 +558,10 @@ func TestCalcTwap(t *testing.T) {
 					snapshot.QuoteAssetReserve,
 					ctx.BlockTime(),
 				)
-				vpoolKeeper.ReserveSnapshots.Insert(ctx, collections.Join(snapshot.Pair, time.UnixMilli(snapshot.TimestampMs)), snapshot)
+				perpammKeeper.ReserveSnapshots.Insert(ctx, collections.Join(snapshot.Pair, time.UnixMilli(snapshot.TimestampMs)), snapshot)
 			}
 			ctx = ctx.WithBlockTime(tc.currentBlockTime).WithBlockHeight(tc.currentBlockHeight)
-			price, err := vpoolKeeper.calcTwap(ctx,
+			price, err := perpammKeeper.calcTwap(ctx,
 				tc.pair,
 				tc.twapCalcOption,
 				tc.direction,

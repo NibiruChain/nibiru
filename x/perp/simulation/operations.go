@@ -54,7 +54,7 @@ func SimulateMsgOpenPosition(ak types.AccountKeeper, bk types.BankKeeper, k keep
 		errFundAccount := fundAccountWithTokens(ctx, simAccount.Address, bk)
 		spendableCoins := bk.SpendableCoins(ctx, simAccount.Address)
 
-		pools := k.VpoolKeeper.GetAllPools(ctx)
+		pools := k.PerpAmmKeeper.GetAllPools(ctx)
 		pool := pools[rand.Intn(len(pools))]
 
 		maxQuote := getMaxQuoteForPool(pool)
@@ -119,7 +119,7 @@ func checkIsOverFluctation(
 	ctx sdk.Context, k keeper.Keeper, pool pooltypes.Market, openNotional sdk.Dec, direction pooltypes.Direction) bool {
 	quoteDelta := openNotional
 	baseDelta, _ := pool.GetBaseAmountByQuoteAmount(quoteDelta.Abs().MulInt64(direction.ToMultiplier()))
-	snapshot, _ := k.VpoolKeeper.GetLastSnapshot(ctx, pool)
+	snapshot, _ := k.PerpAmmKeeper.GetLastSnapshot(ctx, pool)
 	currentPrice := snapshot.QuoteAssetReserve.Quo(snapshot.BaseAssetReserve)
 	newPrice := pool.QuoteAssetReserve.Add(quoteDelta).Quo(pool.BaseAssetReserve.Sub(baseDelta))
 
@@ -270,7 +270,7 @@ func SimulateMsgRemoveMargin(ak types.AccountKeeper, bk types.BankKeeper, k keep
 		}
 
 		//simple calculation, might still fail due to funding rate or unrealizedPnL
-		maintenanceMarginRatio, err := k.VpoolKeeper.GetMaintenanceMarginRatio(ctx, position.Pair)
+		maintenanceMarginRatio, err := k.PerpAmmKeeper.GetMaintenanceMarginRatio(ctx, position.Pair)
 		if err != nil {
 			return
 		}

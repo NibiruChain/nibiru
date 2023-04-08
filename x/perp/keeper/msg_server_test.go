@@ -78,7 +78,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 			traderAddr := testutil.AccAddress()
 
 			t.Log("create vpool")
-			assert.NoError(t, app.VpoolKeeper.CreatePool(
+			assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO),
@@ -201,7 +201,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			traderAddr := testutil.AccAddress()
 
 			t.Log("create vpool")
-			assert.NoError(t, app.VpoolKeeper.CreatePool(
+			assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO),
@@ -290,7 +290,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
 			t.Log("create vpool")
-			assert.NoError(t, app.VpoolKeeper.CreatePool(
+			assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 				/* ctx */ ctx,
 				/* pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
@@ -379,7 +379,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 
 			t.Log("create vpool")
 
-			assert.NoError(t, app.VpoolKeeper.CreatePool(
+			assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
@@ -451,7 +451,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	atRiskTrader2 := testutil.AccAddress()
 
 	t.Log("create vpool")
-	assert.NoError(t, app.VpoolKeeper.CreatePool(
+	assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 		/* ctx */ ctx,
 		/* pair */ pair,
 		/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
@@ -563,7 +563,7 @@ func TestMsgServerMultiLiquidate_NotAuthorized(t *testing.T) {
 	atRiskTrader1 := testutil.AccAddress()
 
 	t.Log("create vpool")
-	assert.NoError(t, app.VpoolKeeper.CreatePool(
+	assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 		/* ctx */ ctx,
 		/* pair */ pair,
 		/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
@@ -636,7 +636,7 @@ func TestMsgServerMultiLiquidate_AllFailed(t *testing.T) {
 	notAtRiskTrader := testutil.AccAddress()
 
 	t.Log("create vpool")
-	assert.NoError(t, app.VpoolKeeper.CreatePool(
+	assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 		/* ctx */ ctx,
 		/* pair */ pair,
 		/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),

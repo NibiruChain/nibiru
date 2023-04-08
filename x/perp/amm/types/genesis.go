@@ -17,17 +17,17 @@ func DefaultGenesis() *GenesisState {
 // Validate performs basic genesis state validation returning an error upon any
 // failure.
 func (gs GenesisState) Validate() error {
-	// validate vpools
-	vpools := make(map[string]struct{}, len(gs.Markets))
+	// validate markets
+	markets := make(map[string]struct{}, len(gs.Markets))
 	for _, p := range gs.Markets {
 		if err := p.Validate(); err != nil {
 			return err
 		}
 		pair := p.Pair.String()
-		if _, exists := vpools[pair]; exists {
+		if _, exists := markets[pair]; exists {
 			return fmt.Errorf("duplicate vpool: %s", pair)
 		}
-		vpools[pair] = struct{}{}
+		markets[pair] = struct{}{}
 	}
 
 	return nil

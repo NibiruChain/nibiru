@@ -31,7 +31,7 @@ func GetQueryCmd() *cobra.Command {
 		CmdQueryPositions(),
 		CmdQueryCumulativePremiumFraction(),
 		CmdQueryMetrics(),
-		perpammcli.CmdGetVpoolReserveAssets(),
+		perpammcli.CmdGetMarketReserveAssets(),
 		perpammcli.CmdGetMarkets(),
 		perpammcli.CmdGetBaseAssetPrice(),
 	}

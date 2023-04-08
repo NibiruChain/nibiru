@@ -115,9 +115,9 @@ func TestFrom2To3(t *testing.T) {
 				QuoteAssetReserve: sdk.MustNewDecFromStr("20000000"),
 				Bias:              sdk.ZeroDec(),
 			}
-			app.VpoolKeeper.Pools.Insert(ctx, vpool.Pair, vpool)
+			app.PerpAmmKeeper.Pools.Insert(ctx, vpool.Pair, vpool)
 
-			savedPool, err := app.VpoolKeeper.Pools.Get(ctx, vpool.Pair)
+			savedPool, err := app.PerpAmmKeeper.Pools.Get(ctx, vpool.Pair)
 			require.NoError(t, err)
 			require.Equal(t, sdk.ZeroDec(), savedPool.Bias)
 			require.Equal(t, sdk.ZeroDec(), savedPool.PegMultiplier)
@@ -131,10 +131,10 @@ func TestFrom2To3(t *testing.T) {
 			}
 
 			// Run migration
-			err = keeper.From2To3(app.PerpKeeper, app.VpoolKeeper)(ctx)
+			err = keeper.From2To3(app.PerpKeeper, app.PerpAmmKeeper)(ctx)
 			require.NoError(t, err)
 
-			savedPool, err = app.VpoolKeeper.Pools.Get(ctx, vpool.Pair)
+			savedPool, err = app.PerpAmmKeeper.Pools.Get(ctx, vpool.Pair)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedBias, savedPool.Bias)
 			require.Equal(t, sdk.OneDec(), savedPool.PegMultiplier)

@@ -19,8 +19,8 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/amm/types"
 )
 
-func VpoolKeeper(t *testing.T, oracleKeeper types.OracleKeeper) (
-	vpoolKeeper Keeper, ctx sdk.Context,
+func PerpAmmKeeper(t *testing.T, oracleKeeper types.OracleKeeper) (
+	perpammKeeper Keeper, ctx sdk.Context,
 ) {
 	storeKey := sdk.NewKVStoreKey(types.StoreKey)
 
@@ -29,13 +29,13 @@ func VpoolKeeper(t *testing.T, oracleKeeper types.OracleKeeper) (
 	stateStore.MountStoreWithDB(storeKey, sdk.StoreTypeIAVL, db)
 	require.NoError(t, stateStore.LoadLatestVersion())
 
-	vpoolKeeper = NewKeeper(
+	perpammKeeper = NewKeeper(
 		codec.NewProtoCodec(codectypes.NewInterfaceRegistry()),
 		storeKey, oracleKeeper,
 	)
 	ctx = sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())
 
-	return vpoolKeeper, ctx
+	return perpammKeeper, ctx
 }
 
 // holds mocks for interfaces defined in perp/amm/types/expected_keepers.go

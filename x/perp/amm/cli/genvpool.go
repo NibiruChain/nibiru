@@ -30,7 +30,7 @@ const (
 	FlagMaxOracleSpreadRatio   = "max-oracle-spread-ratio"
 )
 
-var flagsAddVpoolGenesis = map[string]struct {
+var flagsAddMarketGenesis = map[string]struct {
 	flagName       string
 	defaultValue   string
 	usageDocString string
@@ -45,8 +45,8 @@ var flagsAddVpoolGenesis = map[string]struct {
 	FlagMaxOracleSpreadRatio:   {"max-oracle-spread-ratio", "0.1", "max oracle spread ratio"},
 }
 
-// AddVpoolGenesisCmd returns add-vpool-genesis
-func AddVpoolGenesisCmd(defaultNodeHome string) *cobra.Command {
+// AddMarketGenesisCmd returns add-vpool-genesis
+func AddMarketGenesisCmd(defaultNodeHome string) *cobra.Command {
 	usageExampleTail := strings.Join([]string{
 		"pair", "base-asset-reserve", "quote-asset-reserve", "trade-limit-ratio",
 		"fluctuation-limit-ratio", "max-oracle-spread-ratio", "maintenance-margin-ratio",
@@ -57,7 +57,7 @@ func AddVpoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 	getCmdFlagSet := func() (fs *flag.FlagSet, reqFlags []string) {
 		fs = flag.NewFlagSet("flags-add-genesis-pool", flag.ContinueOnError)
 
-		for _, flagDefinitionArgs := range flagsAddVpoolGenesis {
+		for _, flagDefinitionArgs := range flagsAddMarketGenesis {
 			args := flagDefinitionArgs
 			fs.String(args.flagName, args.defaultValue, args.usageDocString)
 		}
@@ -81,7 +81,7 @@ func AddVpoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 				return err
 			}
 
-			vPool, err := newMarketFromAddVpoolGenesisFlags(cmd.Flags())
+			vPool, err := newMarketFromAddMarketGenesisFlags(cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -118,7 +118,7 @@ func AddVpoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 	return cmd
 }
 
-func newMarketFromAddVpoolGenesisFlags(flagSet *flag.FlagSet,
+func newMarketFromAddMarketGenesisFlags(flagSet *flag.FlagSet,
 ) (vpool types.Market, err error) {
 	var flagErrors = []error{}
 	pairStr, err := flagSet.GetString(FlagPair)

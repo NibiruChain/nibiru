@@ -99,15 +99,15 @@ func TestCalcFreeCollateralSuccess(t *testing.T) {
 			}
 
 			t.Log("mock vpool keeper")
-			mocks.mockVpoolKeeper.EXPECT().
+			mocks.mockPerpAmmKeeper.EXPECT().
 				GetMaintenanceMarginRatio(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).
 				Return(sdk.MustNewDecFromStr("0.0625"), nil)
-			mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(
+			mocks.mockPerpAmmKeeper.EXPECT().GetBaseAssetPrice(
 				vpool,
 				tc.vpoolDirection,
 				sdk.OneDec(),
 			).Return(tc.positionNotional, nil)
-			mocks.mockVpoolKeeper.EXPECT().GetBaseAssetTWAP(
+			mocks.mockPerpAmmKeeper.EXPECT().GetBaseAssetTWAP(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				tc.vpoolDirection,
