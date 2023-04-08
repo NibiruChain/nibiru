@@ -7,6 +7,7 @@ import (
 	"github.com/NibiruChain/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -179,4 +180,26 @@ func (q queryServer) Metrics(
 		VolumeBase:  sdk.NewDec(0),
 	})
 	return &types.QueryMetricsResponse{Metrics: metrics}, nil
+}
+
+func (q queryServer) ModuleAccounts(
+	ctx context.Context, _ *types.QueryModuleAccountsRequest,
+) (*types.QueryModuleAccountsResponse, error) {
+	sdkContext := sdk.UnwrapSDKContext(ctx)
+
+	var moduleAccountsWithBalances []types.AccountWithBalance
+	for _, acc := range types.ModuleAccounts {
+		account := authtypes.NewModuleAddress(acc)
+
+		balances := q.k.BankKeeper.GetAllBalances(sdkContext, account)
+
+		accWithBalance := types.AccountWithBalance{
+			Name:    acc,
+			Address: account.String(),
+			Balance: balances,
+		}
+		moduleAccountsWithBalances = append(moduleAccountsWithBalances, accWithBalance)
+	}
+
+	return &types.QueryModuleAccountsResponse{Accounts: moduleAccountsWithBalances}, nil
 }
