@@ -18,7 +18,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	vpooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
@@ -77,13 +77,13 @@ func TestMsgServerAddMargin(t *testing.T) {
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 			traderAddr := testutil.AccAddress()
 
-			t.Log("create vpool")
-			assert.NoError(t, app.VpoolKeeper.CreatePool(
+			t.Log("create market")
+			assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO),
 				/* baseReserve */ sdk.NewDec(1*common.TO_MICRO),
-				vpooltypes.VpoolConfig{
+				perpammtypes.MarketConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -200,13 +200,13 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 			traderAddr := testutil.AccAddress()
 
-			t.Log("create vpool")
-			assert.NoError(t, app.VpoolKeeper.CreatePool(
+			t.Log("create market")
+			assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO),
 				/* baseReserve */ sdk.NewDec(1*common.TO_MICRO),
-				vpooltypes.VpoolConfig{
+				perpammtypes.MarketConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -289,13 +289,13 @@ func TestMsgServerOpenPosition(t *testing.T) {
 			ctx = ctx.WithBlockTime(time.Now())
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
-			t.Log("create vpool")
-			assert.NoError(t, app.VpoolKeeper.CreatePool(
+			t.Log("create market")
+			assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 				/* ctx */ ctx,
 				/* pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
 				/* baseAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
-				vpooltypes.VpoolConfig{
+				perpammtypes.MarketConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -323,7 +323,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 			resp, err := msgServer.OpenPosition(sdk.WrapSDKContext(ctx), &types.MsgOpenPosition{
 				Sender:               tc.sender,
 				Pair:                 tc.pair,
-				Side:                 types.Side_BUY,
+				Side:                 perpammtypes.Direction_LONG,
 				QuoteAssetAmount:     sdk.NewInt(1000),
 				Leverage:             sdk.NewDec(10),
 				BaseAssetAmountLimit: sdk.ZeroInt(),
@@ -377,14 +377,14 @@ func TestMsgServerClosePosition(t *testing.T) {
 			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
-			t.Log("create vpool")
+			t.Log("create market")
 
-			assert.NoError(t, app.VpoolKeeper.CreatePool(
+			assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
 				/* baseAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
-				vpooltypes.VpoolConfig{
+				perpammtypes.MarketConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -450,13 +450,13 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	notAtRiskTrader := testutil.AccAddress()
 	atRiskTrader2 := testutil.AccAddress()
 
-	t.Log("create vpool")
-	assert.NoError(t, app.VpoolKeeper.CreatePool(
+	t.Log("create market")
+	assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 		/* ctx */ ctx,
 		/* pair */ pair,
 		/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
 		/* baseAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
-		vpooltypes.VpoolConfig{
+		perpammtypes.MarketConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),
 			MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -562,13 +562,13 @@ func TestMsgServerMultiLiquidate_NotAuthorized(t *testing.T) {
 
 	atRiskTrader1 := testutil.AccAddress()
 
-	t.Log("create vpool")
-	assert.NoError(t, app.VpoolKeeper.CreatePool(
+	t.Log("create market")
+	assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 		/* ctx */ ctx,
 		/* pair */ pair,
 		/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
 		/* baseAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
-		vpooltypes.VpoolConfig{
+		perpammtypes.MarketConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),
 			MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -635,13 +635,13 @@ func TestMsgServerMultiLiquidate_AllFailed(t *testing.T) {
 
 	notAtRiskTrader := testutil.AccAddress()
 
-	t.Log("create vpool")
-	assert.NoError(t, app.VpoolKeeper.CreatePool(
+	t.Log("create market")
+	assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 		/* ctx */ ctx,
 		/* pair */ pair,
 		/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
 		/* baseAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
-		vpooltypes.VpoolConfig{
+		perpammtypes.MarketConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),
 			MaxOracleSpreadRatio:   sdk.OneDec(),

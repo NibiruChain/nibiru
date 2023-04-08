@@ -30,7 +30,7 @@ const (
 	FlagMaxOracleSpreadRatio   = "max-oracle-spread-ratio"
 )
 
-var flagsAddVpoolGenesis = map[string]struct {
+var flagsAddMarketGenesis = map[string]struct {
 	flagName       string
 	defaultValue   string
 	usageDocString string
@@ -45,8 +45,8 @@ var flagsAddVpoolGenesis = map[string]struct {
 	FlagMaxOracleSpreadRatio:   {"max-oracle-spread-ratio", "0.1", "max oracle spread ratio"},
 }
 
-// AddVpoolGenesisCmd returns add-vpool-genesis
-func AddVpoolGenesisCmd(defaultNodeHome string) *cobra.Command {
+// AddMarketGenesisCmd returns add-market-genesis
+func AddMarketGenesisCmd(defaultNodeHome string) *cobra.Command {
 	usageExampleTail := strings.Join([]string{
 		"pair", "base-asset-reserve", "quote-asset-reserve", "trade-limit-ratio",
 		"fluctuation-limit-ratio", "max-oracle-spread-ratio", "maintenance-margin-ratio",
@@ -57,16 +57,16 @@ func AddVpoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 	getCmdFlagSet := func() (fs *flag.FlagSet, reqFlags []string) {
 		fs = flag.NewFlagSet("flags-add-genesis-pool", flag.ContinueOnError)
 
-		for _, flagDefinitionArgs := range flagsAddVpoolGenesis {
+		for _, flagDefinitionArgs := range flagsAddMarketGenesis {
 			args := flagDefinitionArgs
 			fs.String(args.flagName, args.defaultValue, args.usageDocString)
 		}
 		return fs, []string{"pair", "base-amt", "quote-amt"}
 	}
 	cmd := &cobra.Command{
-		Use:   fmt.Sprintf("add-genesis-vpool [%s]", usageExampleTail),
-		Short: "Add vPools to genesis.json",
-		Long:  `Add vPools to genesis.json.`,
+		Use:   fmt.Sprintf("add-genesis-perp-market [%s]", usageExampleTail),
+		Short: "Add perp markets to genesis.json",
+		Long:  `Add perp markets to genesis.json.`,
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
@@ -81,20 +81,20 @@ func AddVpoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 				return err
 			}
 
-			vPool, err := newVpoolFromAddVpoolGenesisFlags(cmd.Flags())
+			market, err := newMarketFromAddMarketGenesisFlags(cmd.Flags())
 			if err != nil {
 				return err
 			}
 
-			vPoolGenState := types.GetGenesisStateFromAppState(clientCtx.Codec, appState)
-			vPoolGenState.Vpools = append(vPoolGenState.Vpools, vPool)
+			perpAmmGenState := types.GetGenesisStateFromAppState(clientCtx.Codec, appState)
+			perpAmmGenState.Markets = append(perpAmmGenState.Markets, market)
 
-			vPoolGenStateBz, err := clientCtx.Codec.MarshalJSON(vPoolGenState)
+			perpAmmGenStateBz, err := clientCtx.Codec.MarshalJSON(perpAmmGenState)
 			if err != nil {
-				return fmt.Errorf("failed to marshal vpool genesis state: %w", err)
+				return fmt.Errorf("failed to marshal market genesis state: %w", err)
 			}
 
-			appState[types.ModuleName] = vPoolGenStateBz
+			appState[types.ModuleName] = perpAmmGenStateBz
 
 			appStateJSON, err := json.Marshal(appState)
 			if err != nil {
@@ -118,8 +118,8 @@ func AddVpoolGenesisCmd(defaultNodeHome string) *cobra.Command {
 	return cmd
 }
 
-func newVpoolFromAddVpoolGenesisFlags(flagSet *flag.FlagSet,
-) (vpool types.Vpool, err error) {
+func newMarketFromAddMarketGenesisFlags(flagSet *flag.FlagSet,
+) (market types.Market, err error) {
 	var flagErrors = []error{}
 	pairStr, err := flagSet.GetString(FlagPair)
 	flagErrors = append(flagErrors, err)
@@ -147,7 +147,7 @@ func newVpoolFromAddVpoolGenesisFlags(flagSet *flag.FlagSet,
 
 	for _, err := range flagErrors { // for brevity's sake
 		if err != nil {
-			return vpool, err
+			return market, err
 		}
 	}
 
@@ -186,14 +186,14 @@ func newVpoolFromAddVpoolGenesisFlags(flagSet *flag.FlagSet,
 
 	maxLeverage, err := sdk.NewDecFromStr(maxLeverageStr)
 	if err != nil {
-		return types.Vpool{}, err
+		return types.Market{}, err
 	}
 
-	vpool = types.Vpool{
+	market = types.Market{
 		Pair:              pair,
 		QuoteAssetReserve: quoteAsset,
 		BaseAssetReserve:  baseAsset,
-		Config: types.VpoolConfig{
+		Config: types.MarketConfig{
 			TradeLimitRatio:        tradeLimit,
 			FluctuationLimitRatio:  fluctuationLimitRatio,
 			MaxOracleSpreadRatio:   maxOracleSpread,
@@ -201,10 +201,10 @@ func newVpoolFromAddVpoolGenesisFlags(flagSet *flag.FlagSet,
 			MaxLeverage:            maxLeverage,
 		},
 	}
-	vpool, err = vpool.InitLiqDepth()
+	market, err = market.InitLiqDepth()
 	if err != nil {
 		return
 	}
 
-	return vpool, vpool.Validate()
+	return market, market.Validate()
 }

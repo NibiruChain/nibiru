@@ -138,7 +138,7 @@ func initParams(ctx sdk.Context, k Keeper) {
 }
 
 func setMocks(ctx sdk.Context, mocks mockedDependencies, indexPrice sdk.Dec, markPrice sdk.Dec) {
-	mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(true)
+	mocks.mockPerpAmmKeeper.EXPECT().ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(true)
 
 	mocks.mockEpochKeeper.EXPECT().GetEpochInfo(ctx, "30 min").Return(
 		epochtypes.EpochInfo{Duration: 30 * time.Minute},
@@ -147,7 +147,7 @@ func setMocks(ctx sdk.Context, mocks mockedDependencies, indexPrice sdk.Dec, mar
 	mocks.mockOracleKeeper.EXPECT().
 		GetExchangeRateTwap(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(indexPrice, nil).MaxTimes(1)
 
-	mocks.mockVpoolKeeper.EXPECT().
+	mocks.mockPerpAmmKeeper.EXPECT().
 		GetMarkPriceTWAP(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), 15*time.Minute).
 		Return(markPrice, nil).MaxTimes(1)
 }

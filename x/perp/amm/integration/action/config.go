@@ -14,13 +14,13 @@ type changeMaintenanceMarginRatio struct {
 }
 
 func (c changeMaintenanceMarginRatio) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
-	pool, err := app.VpoolKeeper.GetPool(ctx, c.Pair)
+	pool, err := app.PerpAmmKeeper.GetPool(ctx, c.Pair)
 	if err != nil {
 		return ctx, err
 	}
 
 	pool.Config.MaintenanceMarginRatio = c.MaintenanceMarginRatio
-	app.VpoolKeeper.Pools.Insert(ctx, c.Pair, pool)
+	app.PerpAmmKeeper.Pools.Insert(ctx, c.Pair, pool)
 	return ctx, err
 }
 

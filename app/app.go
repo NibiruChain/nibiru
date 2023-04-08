@@ -114,9 +114,10 @@ import (
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/NibiruChain/nibiru/x/perp"
+	perpamm "github.com/NibiruChain/nibiru/x/perp/amm"
 	perpammcli "github.com/NibiruChain/nibiru/x/perp/amm/cli"
-	vpoolkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
-	vpooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/spot"
@@ -125,9 +126,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/stablecoin"
 	stablecoinkeeper "github.com/NibiruChain/nibiru/x/stablecoin/keeper"
 	stablecointypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
-	"github.com/NibiruChain/nibiru/x/util"
-	utiltypes "github.com/NibiruChain/nibiru/x/util/types"
-	"github.com/NibiruChain/nibiru/x/vpool"
 )
 
 const (
@@ -184,8 +182,7 @@ var (
 		epochs.AppModuleBasic{},
 		stablecoin.AppModuleBasic{},
 		perp.AppModuleBasic{},
-		vpool.AppModuleBasic{},
-		util.AppModule{},
+		perpamm.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		ibcfee.AppModuleBasic{},
 	)
@@ -285,7 +282,7 @@ type NibiruApp struct {
 	// ---------------
 	EpochsKeeper     epochskeeper.Keeper
 	PerpKeeper       perpkeeper.Keeper
-	VpoolKeeper      vpoolkeeper.Keeper
+	PerpAmmKeeper    perpammkeeper.Keeper
 	SpotKeeper       spotkeeper.Keeper
 	OracleKeeper     oraclekeeper.Keeper
 	StablecoinKeeper stablecoinkeeper.Keeper
@@ -372,7 +369,7 @@ func NewNibiruApp(
 		oracletypes.StoreKey,
 		epochstypes.StoreKey,
 		perptypes.StoreKey,
-		vpooltypes.StoreKey,
+		perpammtypes.StoreKey,
 		wasm.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -472,9 +469,9 @@ func NewNibiruApp(
 		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.SpotKeeper,
 	)
 
-	app.VpoolKeeper = vpoolkeeper.NewKeeper(
+	app.PerpAmmKeeper = perpammkeeper.NewKeeper(
 		appCodec,
-		keys[vpooltypes.StoreKey],
+		keys[perpammtypes.StoreKey],
 		app.OracleKeeper,
 	)
 
@@ -485,7 +482,7 @@ func NewNibiruApp(
 	app.PerpKeeper = perpkeeper.NewKeeper(
 		appCodec, keys[perptypes.StoreKey],
 		app.GetSubspace(perptypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.VpoolKeeper, app.EpochsKeeper,
+		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.PerpAmmKeeper, app.EpochsKeeper,
 	)
 
 	app.EpochsKeeper.SetHooks(
@@ -551,7 +548,7 @@ func NewNibiruApp(
 		AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.distrKeeper)).
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.upgradeKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.ibcKeeper.ClientKeeper)).
-		AddRoute(vpooltypes.RouterKey, vpool.NewVpoolProposalHandler(app.VpoolKeeper))
+		AddRoute(perpammtypes.RouterKey, perpamm.NewMarketProposalHandler(app.PerpAmmKeeper))
 
 	// Create evidence keeper.
 	// This keeper automatically includes an evidence router.
@@ -645,10 +642,9 @@ func NewNibiruApp(
 		appCodec, app.PerpKeeper, app.AccountKeeper, app.BankKeeper,
 		app.OracleKeeper,
 	)
-	vpoolModule := vpool.NewAppModule(
-		appCodec, app.VpoolKeeper, app.OracleKeeper,
+	perpAmmModule := perpamm.NewAppModule(
+		appCodec, app.PerpAmmKeeper, app.OracleKeeper,
 	)
-	utilModule := util.NewAppModule(app.BankKeeper)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
@@ -677,9 +673,8 @@ func NewNibiruApp(
 		stablecoinModule,
 		oracleModule,
 		epochsModule,
-		vpoolModule,
+		perpAmmModule,
 		perpModule,
-		utilModule,
 
 		// ibc
 		evidence.NewAppModule(app.evidenceKeeper),
@@ -717,9 +712,8 @@ func NewNibiruApp(
 		oracletypes.ModuleName,
 		epochstypes.ModuleName,
 		stablecointypes.ModuleName,
-		vpooltypes.ModuleName,
+		perpammtypes.ModuleName,
 		perptypes.ModuleName,
-		utiltypes.ModuleName,
 		// ibc modules
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
@@ -748,9 +742,8 @@ func NewNibiruApp(
 		stablecointypes.ModuleName,
 		spottypes.ModuleName,
 		oracletypes.ModuleName,
-		vpooltypes.ModuleName,
+		perpammtypes.ModuleName,
 		perptypes.ModuleName,
-		utiltypes.ModuleName,
 		// ibc
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
@@ -785,9 +778,8 @@ func NewNibiruApp(
 		stablecointypes.ModuleName,
 		spottypes.ModuleName,
 		oracletypes.ModuleName,
-		vpooltypes.ModuleName,
+		perpammtypes.ModuleName,
 		perptypes.ModuleName,
-		utiltypes.ModuleName,
 		// ibc
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
@@ -1066,7 +1058,7 @@ func RegisterSwaggerAPI(ctx client.Context, rtr *mux.Router) {
 	rtr.PathPrefix("/swagger/").Handler(http.StripPrefix("/swagger/", staticServer))
 }
 
-// initParamsKeeper init params vpoolkeeper and its subspaces
+// initParamsKeeper init params perpammkeeper and its subspaces
 func initParamsKeeper(
 	appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key,
 	tkey storetypes.StoreKey) paramskeeper.Keeper {

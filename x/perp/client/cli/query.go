@@ -31,8 +31,9 @@ func GetQueryCmd() *cobra.Command {
 		CmdQueryPositions(),
 		CmdQueryCumulativePremiumFraction(),
 		CmdQueryMetrics(),
-		perpammcli.CmdGetVpoolReserveAssets(),
-		perpammcli.CmdGetVpools(),
+		CmdQueryModuleAccounts(),
+		perpammcli.CmdGetMarketReserveAssets(),
+		perpammcli.CmdGetMarkets(),
 		perpammcli.CmdGetBaseAssetPrice(),
 	}
 	for _, cmd := range cmds {
@@ -75,7 +76,7 @@ func CmdQueryParams() *cobra.Command {
 func CmdQueryPosition() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "position [trader] [token-pair]",
-		Short: "trader's position for a given token pair/vpool",
+		Short: "trader's position for a given token pair/perp/amm",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -211,6 +212,33 @@ func CmdQueryMetrics() *cobra.Command {
 					Pair: tokenPair,
 				},
 			)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdQueryModuleAccounts() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "module-accounts",
+		Short: "shows all the module accounts in the blockchain",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.ModuleAccounts(cmd.Context(), &types.QueryModuleAccountsRequest{})
 			if err != nil {
 				return err
 			}

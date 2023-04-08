@@ -1,8 +1,8 @@
 package types
 
 const (
-	ModuleName   = "vpool"
-	StoreKey     = "vpoolkey"
+	ModuleName   = "market"
+	StoreKey     = "marketkey"
 	RouterKey    = ModuleName
 	QuerierRoute = ModuleName
 )

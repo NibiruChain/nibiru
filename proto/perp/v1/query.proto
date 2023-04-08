@@ -5,6 +5,7 @@ package nibiru.perp.v1;
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "perp/v1/state.proto";
+import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/perp/types";
 
@@ -32,6 +33,11 @@ service Query {
 
   rpc Metrics(QueryMetricsRequest) returns (QueryMetricsResponse) {
     option (google.api.http).get = "/nibiru/perp/metrics";
+  }
+
+  // Queries the reserve assets in a given pool, identified by a token pair.
+  rpc ModuleAccounts(QueryModuleAccountsRequest) returns (QueryModuleAccountsResponse) {
+    option (google.api.http).get = "/nibiru/util/module_accounts";
   }
 }
 
@@ -140,4 +146,22 @@ message QueryMetricsRequest {
 message QueryMetricsResponse {
   // list of perp metrics
   Metrics metrics = 1 [ (gogoproto.nullable) = false ];
+}
+
+// ----------------------------------------
+
+message QueryModuleAccountsRequest {}
+
+message QueryModuleAccountsResponse {
+  repeated AccountWithBalance accounts = 1 [(gogoproto.nullable) = false];
+}
+
+message AccountWithBalance {
+  string name = 1;
+  string address = 2;
+
+  repeated cosmos.base.v1beta1.Coin balance = 3 [
+    (gogoproto.nullable) = false, 
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
 }

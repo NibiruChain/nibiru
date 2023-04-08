@@ -14,7 +14,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	vpooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
@@ -27,14 +27,14 @@ func TestKeeperClosePosition(t *testing.T) {
 		ctx = ctx.WithBlockTime(time.Now())
 		pair := asset.MustNewPair("xxx:yyy")
 
-		t.Log("Set vpool defined by pair on VpoolKeeper")
-		vpoolKeeper := &nibiruApp.VpoolKeeper
-		require.NoError(t, vpoolKeeper.CreatePool(
+		t.Log("Set market defined by pair on PerpAmmKeeper")
+		perpammKeeper := &nibiruApp.PerpAmmKeeper
+		require.NoError(t, perpammKeeper.CreatePool(
 			ctx,
 			pair,
 			/*quoteAssetReserve*/ sdk.NewDec(10*common.TO_MICRO),
 			/*baseAssetReserve*/ sdk.NewDec(5*common.TO_MICRO),
-			vpooltypes.VpoolConfig{
+			perpammtypes.MarketConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
@@ -44,9 +44,9 @@ func TestKeeperClosePosition(t *testing.T) {
 			sdk.ZeroDec(),
 			sdk.OneDec(),
 		))
-		require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
+		require.True(t, perpammKeeper.ExistsPool(ctx, pair))
 
-		t.Log("Set vpool defined by pair on PerpKeeper")
+		t.Log("Set market defined by pair on PerpKeeper")
 		keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 			Pair:                            pair,
 			LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.2"),
@@ -61,7 +61,7 @@ func TestKeeperClosePosition(t *testing.T) {
 			sdk.NewCoins(sdk.NewInt64Coin("yyy", 300)))
 		require.NoError(t, err)
 
-		aliceSide := types.Side_BUY
+		aliceSide := perpammtypes.Direction_LONG
 		aliceQuote := sdk.NewInt(60)
 		aliceLeverage := sdk.NewDec(10)
 		aliceBaseLimit := sdk.NewDec(150)
@@ -83,7 +83,7 @@ func TestKeeperClosePosition(t *testing.T) {
 			sdk.NewCoins(sdk.NewInt64Coin("yyy", 62)))
 		require.NoError(t, err)
 
-		bobSide := types.Side_BUY
+		bobSide := perpammtypes.Direction_LONG
 		bobQuote := sdk.NewInt(60)
 		bobLeverage := sdk.NewDec(10)
 		bobBaseLimit := sdk.NewDec(150)

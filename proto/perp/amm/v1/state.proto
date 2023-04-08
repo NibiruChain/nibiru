@@ -9,8 +9,8 @@ import "gogoproto/gogo.proto";
 
 enum Direction {
   DIRECTION_UNSPECIFIED = 0;
-  ADD_TO_POOL = 1;
-  REMOVE_FROM_POOL = 2;
+  LONG = 1;
+  SHORT = 2;
 }
 
 // Enumerates different options of calculating twap.
@@ -29,7 +29,7 @@ enum TwapCalcOption {
 
 // A virtual pool used only for price discovery of perpetual futures contracts.
 // No real liquidity exists in this pool.
-message Vpool {
+message Market {
   option (gogoproto.goproto_stringer) = false;
 
   // always BASE:QUOTE, e.g. BTC:NUSD or ETH:NUSD
@@ -51,7 +51,7 @@ message Vpool {
     (gogoproto.nullable) = false
   ];
 
-  VpoolConfig config = 4 [ (gogoproto.nullable) = false ];
+  MarketConfig config = 4 [ (gogoproto.nullable) = false ];
 
   // The square root of the liquidity depth. Liquidity depth is the product of
   // the reserves.
@@ -74,7 +74,7 @@ message Vpool {
   ];
 }
 
-message VpoolConfig {
+message MarketConfig {
   // ratio applied to reserves in order not to over trade
   string trade_limit_ratio = 1 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",

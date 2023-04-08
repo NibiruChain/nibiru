@@ -8,6 +8,7 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
@@ -17,7 +18,7 @@ import (
 func OpenPosition(
 	account sdk.AccAddress,
 	pair asset.Pair,
-	side types.Side,
+	side perpammtypes.Direction,
 	margin sdk.Int,
 	leverage sdk.Dec,
 	baseLimit sdk.Dec,
@@ -40,7 +41,7 @@ type OpenPositionResponseChecker func(resp *types.PositionResp) error
 type openPositionAction struct {
 	Account   sdk.AccAddress
 	Pair      asset.Pair
-	Side      types.Side
+	Side      perpammtypes.Direction
 	Margin    sdk.Int
 	Leverage  sdk.Dec
 	BaseLimit sdk.Dec
@@ -49,7 +50,10 @@ type openPositionAction struct {
 }
 
 func (o openPositionAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
-	resp, err := app.PerpKeeper.OpenPosition(ctx, o.Pair, o.Side, o.Account, o.Margin, o.Leverage, o.BaseLimit)
+	resp, err := app.PerpKeeper.OpenPosition(
+		ctx, o.Pair, o.Side, o.Account,
+		o.Margin, o.Leverage, o.BaseLimit,
+	)
 	if err != nil {
 		return ctx, err
 	}

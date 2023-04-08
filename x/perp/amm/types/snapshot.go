@@ -66,7 +66,7 @@ func (s ReserveSnapshot) GetLowerMarkPriceFluctuationLimit(fluctuationLimitRatio
 }
 
 // getMarkPrice returns the price of the mark price at the moment of the snapshot.
-// It is the equivalent of getMarkPrice from Vpool
+// It is the equivalent of getMarkPrice from Market
 func (s ReserveSnapshot) getMarkPrice() sdk.Dec {
 	if s.BaseAssetReserve.IsNil() || s.BaseAssetReserve.IsZero() ||
 		s.QuoteAssetReserve.IsNil() || s.QuoteAssetReserve.IsZero() {
