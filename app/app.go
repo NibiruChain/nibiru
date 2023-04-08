@@ -114,6 +114,7 @@ import (
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/NibiruChain/nibiru/x/perp"
+	vpool "github.com/NibiruChain/nibiru/x/perp/amm"
 	perpammcli "github.com/NibiruChain/nibiru/x/perp/amm/cli"
 	vpoolkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
 	vpooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
@@ -127,7 +128,6 @@ import (
 	stablecointypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
 	"github.com/NibiruChain/nibiru/x/util"
 	utiltypes "github.com/NibiruChain/nibiru/x/util/types"
-	"github.com/NibiruChain/nibiru/x/vpool"
 )
 
 const (

@@ -18,8 +18,8 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/perp/amm/cli"
 	"github.com/NibiruChain/nibiru/x/perp/amm/keeper"
+	"github.com/NibiruChain/nibiru/x/perp/amm/simulation"
 	"github.com/NibiruChain/nibiru/x/perp/amm/types"
-	"github.com/NibiruChain/nibiru/x/vpool/simulation"
 )
 
 var (

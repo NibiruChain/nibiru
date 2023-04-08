@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
+	integrationaction "github.com/NibiruChain/nibiru/x/perp/amm/integration/action"
+	vpoolassertion "github.com/NibiruChain/nibiru/x/perp/amm/integration/assertion"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion"
-	integrationaction "github.com/NibiruChain/nibiru/x/vpool/integration/action"
-	vpoolassertion "github.com/NibiruChain/nibiru/x/vpool/integration/assertion"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 

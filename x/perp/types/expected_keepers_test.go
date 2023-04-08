@@ -39,7 +39,7 @@ func TestExpectedKeepers(t *testing.T) {
 			appKeeper:      nibiruApp.AccountKeeper,
 		},
 		{
-			name:           "VpoolKeeper from x/vpool",
+			name:           "VpoolKeeper from x/perp/amm",
 			expectedKeeper: (*types.VpoolKeeper)(nil),
 			appKeeper:      nibiruApp.VpoolKeeper,
 		},

@@ -13,8 +13,8 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	vpool "github.com/NibiruChain/nibiru/x/perp/amm"
 	"github.com/NibiruChain/nibiru/x/perp/amm/types"
-	"github.com/NibiruChain/nibiru/x/vpool"
 )
 
 func TestSnapshotUpdates(t *testing.T) {

@@ -75,7 +75,7 @@ func CmdQueryParams() *cobra.Command {
 func CmdQueryPosition() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "position [trader] [token-pair]",
-		Short: "trader's position for a given token pair/vpool",
+		Short: "trader's position for a given token pair/perp/amm",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)

@@ -9,7 +9,6 @@
 | [spot][code-x-spot] | Responsible for creating, joining, and exiting liquidity pools. It also allows users to swap between two assets in an existing pool. It's a fully functional AMM. |
 | [stablecoin][code-x-stablecoin] | Resonsible for handling mint and redeem transactions with NUSD. |
 | [testutil][code-x-testutil] | Helper functions for unit and integration tests. |
-| [vpool][code-x-vpool] | The vpool module manages the virtual AMM pools (vpools) that support Nibi-Perps. |
 | [wasm][code-x-wasm] | Implements the execution environment for [WebAssembly (WASM) smart contracts](https://book.cosmwasm.com/). |
 
 [code-x-common]: https://github.com/NibiruChain/nibiru/tree/master/x/common
@@ -19,5 +18,4 @@
 [code-x-spot]: https://github.com/NibiruChain/nibiru/tree/master/x/spot
 [code-x-stablecoin]: https://github.com/NibiruChain/nibiru/tree/master/x/stablecoin
 [code-x-testutil]: https://github.com/NibiruChain/nibiru/tree/master/x/testutil
-[code-x-vpool]: https://github.com/NibiruChain/nibiru/tree/master/x/vpool
 [code-x-wasm]: https://github.com/NibiruChain/nibiru/tree/master/x/wasm
