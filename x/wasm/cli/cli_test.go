@@ -48,13 +48,13 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	encodingConfig := app.MakeTestEncodingConfig()
 	genesisState := genesis.NewTestGenesisState()
 	vpoolGenesis := perpammtypes.DefaultGenesis()
-	vpoolGenesis.Vpools = []perpammtypes.Vpool{
+	vpoolGenesis.Markets = []perpammtypes.Market{
 		{
 			Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 			BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
 			QuoteAssetReserve: sdk.NewDec(60_000 * common.TO_MICRO),
 			SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 60_000 * common.TO_MICRO * common.TO_MICRO)),
-			Config: perpammtypes.VpoolConfig{
+			Config: perpammtypes.MarketConfig{
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),

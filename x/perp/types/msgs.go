@@ -3,9 +3,10 @@ package types
 import (
 	"fmt"
 
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 )
 
 var _ sdk.Msg = &MsgRemoveMargin{}

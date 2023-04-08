@@ -74,7 +74,7 @@ func ExecQuery(clientCtx client.Context, cmd *cobra.Command, args []string, resu
 	}
 }
 
-func QueryVpoolReserveAssets(clientCtx client.Context, pair asset.Pair,
+func QueryMarketReserveAssets(clientCtx client.Context, pair asset.Pair,
 ) (*perpammtypes.QueryReserveAssetsResponse, error) {
 	var queryResp perpammtypes.QueryReserveAssetsResponse
 	if err := ExecQuery(clientCtx, perpammcli.CmdGetVpoolReserveAssets(), []string{pair.String()}, &queryResp); err != nil {

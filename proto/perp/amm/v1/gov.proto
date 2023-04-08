@@ -30,7 +30,7 @@ message CreatePoolProposal {
     (gogoproto.nullable) = false
   ];
 
-  VpoolConfig config = 7 [
+  MarketConfig config = 7 [
     (gogoproto.nullable) = false
   ];
 }
@@ -44,7 +44,7 @@ message EditPoolConfigProposal {
     (gogoproto.nullable) = false
   ];
 
-  VpoolConfig config = 4 [
+  MarketConfig config = 4 [
     (gogoproto.nullable) = false
   ];
 }

@@ -43,7 +43,7 @@ message ReserveSnapshotSavedEvent {
 // A swap on the perp.amm represented by 'pair'. 
 // Amounts are negative or positive base on the perspective of the pool, i.e.
 // a negative quote means the trader has gained quote and the perp.amm lost quote. 
-message SwapOnVpoolEvent {
+message SwapEvent {
   string pair = 1 [ 
     (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false

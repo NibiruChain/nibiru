@@ -551,7 +551,7 @@ func NewNibiruApp(
 		AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.distrKeeper)).
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.upgradeKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.ibcKeeper.ClientKeeper)).
-		AddRoute(perpammtypes.RouterKey, perpamm.NewVpoolProposalHandler(app.VpoolKeeper))
+		AddRoute(perpammtypes.RouterKey, perpamm.NewMarketProposalHandler(app.VpoolKeeper))
 
 	// Create evidence keeper.
 	// This keeper automatically includes an evidence router.
