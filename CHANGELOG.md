@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * [#1271](https://github.com/NibiruChain/nibiru/pull/1271) - refactor(perp)!: vpool → perp/amm #2 | imports and renames
 * [#1267](https://github.com/NibiruChain/nibiru/pull/1267) - refactor(perp)!: vpool → perp/amm #1 | Moves types, keeper, and cli 
+* [#1269](https://github.com/NibiruChain/nibiru/pull/1269) - refactor(perp)!: merge x/util with x/perp
 * [#1243](https://github.com/NibiruChain/nibiru/pull/1243) - feat(vpool): sqrt of liquidity depth tracked on pool
 * [#1220](https://github.com/NibiruChain/nibiru/pull/1220) - feat: reduce gas fees when posting price
 * [#1229](https://github.com/NibiruChain/nibiru/pull/1229) - feat: upgrade ibc to v4.2.0 and wasm v0.30.0
@@ -71,7 +72,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1237](https://github.com/NibiruChain/nibiru/pull/1237) - feat: reduce gas on openposition
 * [#1231](https://github.com/NibiruChain/nibiru/pull/1231) - chore(deps): bump github.com/cosmos/ibc-go/v4 from 4.2.0 to 4.3.0 #1231
 * [#1256](https://github.com/NibiruChain/nibiru/pull/1256) - chore(deps): bump github.com/spf13/cobra from 1.6.1 to 1.7.0
-
 
 ### Bug Fixes
 
