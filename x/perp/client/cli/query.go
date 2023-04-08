@@ -31,6 +31,7 @@ func GetQueryCmd() *cobra.Command {
 		CmdQueryPositions(),
 		CmdQueryCumulativePremiumFraction(),
 		CmdQueryMetrics(),
+		CmdQueryModuleAccounts(),
 		perpammcli.CmdGetVpoolReserveAssets(),
 		perpammcli.CmdGetVpools(),
 		perpammcli.CmdGetBaseAssetPrice(),
@@ -211,6 +212,33 @@ func CmdQueryMetrics() *cobra.Command {
 					Pair: tokenPair,
 				},
 			)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdQueryModuleAccounts() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "module-accounts",
+		Short: "shows all the module accounts in the blockchain",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.ModuleAccounts(cmd.Context(), &types.QueryModuleAccountsRequest{})
 			if err != nil {
 				return err
 			}
