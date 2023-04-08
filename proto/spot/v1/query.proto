@@ -120,20 +120,14 @@ message QueryParamsRequest {}
 // QueryParamsResponse is response type for the Query/Params RPC method.
 message QueryParamsResponse {
   // params holds all the parameters of this module.
-  Params params = 1 [(gogoproto.nullable) = false];
+  Params params = 1 [ (gogoproto.nullable) = false ];
 }
 
 message QueryPoolNumberRequest {}
-message QueryPoolNumberResponse {
-  uint64 pool_id = 1;
-}
+message QueryPoolNumberResponse { uint64 pool_id = 1; }
 
-message QueryPoolRequest {
-  uint64 pool_id = 1;
-}
-message QueryPoolResponse {
-  Pool pool = 1;
-}
+message QueryPoolRequest { uint64 pool_id = 1; }
+message QueryPoolResponse { Pool pool = 1; }
 
 message QueryPoolsRequest {
   // pagination defines an optional pagination for the request.
@@ -146,22 +140,16 @@ message QueryPoolsResponse {
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
-message QueryPoolParamsRequest {
-  uint64 pool_id = 1;
-}
-message QueryPoolParamsResponse {
-  PoolParams pool_params = 1;
-}
+message QueryPoolParamsRequest { uint64 pool_id = 1; }
+message QueryPoolParamsResponse { PoolParams pool_params = 1; }
 
 message QueryNumPoolsRequest {}
-message QueryNumPoolsResponse {
-  uint64 num_pools = 1;
-}
+message QueryNumPoolsResponse { uint64 num_pools = 1; }
 
 // --------------------------------------------
 // Query total liquidity the protocol
 message QueryTotalLiquidityRequest {}
-message QueryTotalLiquidityResponse {  
+message QueryTotalLiquidityResponse {
   repeated cosmos.base.v1beta1.Coin liquidity = 1 [
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
     (gogoproto.moretags) = "yaml:\"liquidity\"",
@@ -171,11 +159,9 @@ message QueryTotalLiquidityResponse {
 
 // --------------------------------------------
 // Query total liquidity for a pool
-message QueryTotalPoolLiquidityRequest {
-  uint64 pool_id = 1;
-}
+message QueryTotalPoolLiquidityRequest { uint64 pool_id = 1; }
 
-message QueryTotalPoolLiquidityResponse {  
+message QueryTotalPoolLiquidityResponse {
   repeated cosmos.base.v1beta1.Coin liquidity = 1 [
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
     (gogoproto.moretags) = "yaml:\"liquidity\"",
@@ -183,9 +169,7 @@ message QueryTotalPoolLiquidityResponse {
   ];
 }
 
-message QueryTotalSharesRequest {
-  uint64 pool_id = 1;
-}
+message QueryTotalSharesRequest { uint64 pool_id = 1; }
 message QueryTotalSharesResponse {
   // sum of all LP tokens sent out
   cosmos.base.v1beta1.Coin total_shares = 1 [
@@ -195,8 +179,8 @@ message QueryTotalSharesResponse {
 }
 
 // Returns the amount of tokenInDenom to produce 1 tokenOutDenom
-// For example, if the price of NIBI = 9.123 NUSD, then setting tokenInDenom=NUSD
-// and tokenOutDenom=NIBI would give "9.123".
+// For example, if the price of NIBI = 9.123 NUSD, then setting
+// tokenInDenom=NUSD and tokenOutDenom=NIBI would give "9.123".
 message QuerySpotPriceRequest {
   uint64 pool_id = 1;
   // the denomination of the token you are giving into the pool
@@ -204,9 +188,7 @@ message QuerySpotPriceRequest {
   // the denomination of the token you are taking out of the pool
   string token_out_denom = 3;
 }
-message QuerySpotPriceResponse {
-  string spot_price = 1;
-}
+message QuerySpotPriceResponse { string spot_price = 1; }
 
 // Given an exact amount of tokens in and a target tokenOutDenom, calculates
 // the expected amount of tokens out received from a swap.
@@ -223,10 +205,8 @@ message QuerySwapExactAmountInResponse {
     (gogoproto.moretags) = "yaml:\"token_out\"",
     (gogoproto.nullable) = false
   ];
-  cosmos.base.v1beta1.Coin fee = 3 [
-    (gogoproto.moretags) = "yaml:\"fee\"",
-    (gogoproto.nullable) = false
-  ];
+  cosmos.base.v1beta1.Coin fee = 3
+      [ (gogoproto.moretags) = "yaml:\"fee\"", (gogoproto.nullable) = false ];
 }
 
 // Given an exact amount of tokens out and a target tokenInDenom, calculates
@@ -271,9 +251,7 @@ message QueryJoinExactAmountInResponse {
   ];
 }
 
-message QueryJoinExactAmountOutRequest {
-  uint64 pool_id = 1;
-}
+message QueryJoinExactAmountOutRequest { uint64 pool_id = 1; }
 message QueryJoinExactAmountOutResponse {}
 
 message QueryExitExactAmountInRequest {
@@ -300,7 +278,5 @@ message QueryExitExactAmountInResponse {
   ];
 }
 
-message QueryExitExactAmountOutRequest {
-  uint64 pool_id = 1;
-}
+message QueryExitExactAmountOutRequest { uint64 pool_id = 1; }
 message QueryExitExactAmountOutResponse {}

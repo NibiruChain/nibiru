@@ -10,207 +10,213 @@ import "perp/v1/state.proto";
 option go_package = "github.com/NibiruChain/nibiru/x/perp/types";
 
 // Emitted when a position changes.
-// TODO: Is there a way to split this into different events without creating too much complexity?
+// TODO: Is there a way to split this into different events without creating too
+// much complexity?
 message PositionChangedEvent {
-    // identifier of the corresponding virtual pool for the position
-    string pair = 1 [ 
-      (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
-      (gogoproto.nullable) = false
-    ];
+  // identifier of the corresponding virtual pool for the position
+  string pair = 1 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
 
-    // owner of the position.
-    string trader_address = 2;
-  
-    // Amount of collateral (quote units) backing the position after the change.
-    cosmos.base.v1beta1.Coin margin = 3 [
-      (gogoproto.moretags) = "yaml:\"margin\"",
-      (gogoproto.nullable) = false
-    ];
-  
-    // Position notional (quote units) after the change. In general, 
-    // 'notional = baseAmount * priceQuotePerBase', where size is the baseAmount.
-    string position_notional = 4 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-      (gogoproto.nullable) = false];
-  
-    // Exchanged size is the magnitude of the change to position size (base units). 
-    // The size is a signed quantity expressing how much exposure a position has in 
-    // base units of the pair. 
-    string exchanged_size = 5 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-      (gogoproto.nullable) = false
-    ];
+  // owner of the position.
+  string trader_address = 2;
 
-    /**
-     * Exchanged notional is the value of the exchanged size in quote units.
-     * exchangedNotional = posBefore.OpenNotional + (direction * realizedPnl), 
-     * where 'posBefore' is the position before the change, and 
-     * direction is 1 if posBefore.Size > 0 or -1 if posBefore.Size < 0, 
-     */
-    string exchanged_notional = 6 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-      (gogoproto.nullable) = false
-    ];
+  // Amount of collateral (quote units) backing the position after the change.
+  cosmos.base.v1beta1.Coin margin = 3 [
+    (gogoproto.moretags) = "yaml:\"margin\"",
+    (gogoproto.nullable) = false
+  ];
 
-    // Transaction fee paid. A "taker" fee.
-    cosmos.base.v1beta1.Coin transaction_fee = 7 [
-      (gogoproto.moretags) = "yaml:\"transaction_fee\"",
-      (gogoproto.nullable) = false
-    ];
-  
-    // Position size after the change.
-    string position_size = 8 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-      (gogoproto.nullable) = false
-    ];
-  
-    // realize profits and losses after the change
-    string realized_pnl = 9 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-      (gogoproto.nullable) = false
-    ];
-  
-    // unrealized profits and losses after the change
-    string unrealized_pnl_after = 10 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-      (gogoproto.nullable) = false
-    ];
-  
-    // Amount of bad debt cleared by the PerpEF during the change. 
-    // Bad debt is negative net margin past the liquidation point of a position.
-    cosmos.base.v1beta1.Coin bad_debt = 11 [(gogoproto.nullable) = false];
-  
-    // Mark price, synonymous with mark price in this context, is the quotient of
-    // the quote reserves and base reserves 
-    string mark_price = 12 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-      (gogoproto.nullable) = false
-    ];
-      
-    /* A funding payment made or received by the trader on the current position. 
-    'fundingPayment' is positive if 'owner' is the sender and negative if 'owner'
-    is the receiver of the payment. Its magnitude is abs(vSize * fundingRate). 
-    Funding payments act to converge the mark price (vPrice) and index price 
-    (average price on major exchanges).
-      */
-    string funding_payment = 13 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-      (gogoproto.nullable) = false
-    ];
+  // Position notional (quote units) after the change. In general,
+  // 'notional = baseAmount * priceQuotePerBase', where size is the baseAmount.
+  string position_notional = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
-    // The block number at which this position was changed.
-    int64 block_height = 14;
+  // Exchanged size is the magnitude of the change to position size (base
+  // units). The size is a signed quantity expressing how much exposure a
+  // position has in base units of the pair.
+  string exchanged_size = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
-    // The block time in unix milliseconds at which this position was changed.
-    int64 block_time_ms = 15;
+  /**
+   * Exchanged notional is the value of the exchanged size in quote units.
+   * exchangedNotional = posBefore.OpenNotional + (direction * realizedPnl),
+   * where 'posBefore' is the position before the change, and
+   * direction is 1 if posBefore.Size > 0 or -1 if posBefore.Size < 0,
+   */
+  string exchanged_notional = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // Transaction fee paid. A "taker" fee.
+  cosmos.base.v1beta1.Coin transaction_fee = 7 [
+    (gogoproto.moretags) = "yaml:\"transaction_fee\"",
+    (gogoproto.nullable) = false
+  ];
+
+  // Position size after the change.
+  string position_size = 8 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // realize profits and losses after the change
+  string realized_pnl = 9 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // unrealized profits and losses after the change
+  string unrealized_pnl_after = 10 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // Amount of bad debt cleared by the PerpEF during the change.
+  // Bad debt is negative net margin past the liquidation point of a position.
+  cosmos.base.v1beta1.Coin bad_debt = 11 [ (gogoproto.nullable) = false ];
+
+  // Mark price, synonymous with mark price in this context, is the quotient of
+  // the quote reserves and base reserves
+  string mark_price = 12 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  /* A funding payment made or received by the trader on the current position.
+  'fundingPayment' is positive if 'owner' is the sender and negative if 'owner'
+  is the receiver of the payment. Its magnitude is abs(vSize * fundingRate).
+  Funding payments act to converge the mark price (vPrice) and index price
+  (average price on major exchanges).
+    */
+  string funding_payment = 13 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // The block number at which this position was changed.
+  int64 block_height = 14;
+
+  // The block time in unix milliseconds at which this position was changed.
+  int64 block_time_ms = 15;
 }
 
 // Emitted when a position is liquidated.
 message PositionLiquidatedEvent {
-    // identifier of the corresponding virtual pool for the position
-    string pair = 1 [ 
-      (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
-      (gogoproto.nullable) = false
-    ];
+  // identifier of the corresponding virtual pool for the position
+  string pair = 1 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
 
-    // owner of the position.
-    string trader_address = 2;
+  // owner of the position.
+  string trader_address = 2;
 
-    // margin * leverage * vPrice. 'notional' is the virtual size times  the virtual price on 'perp.amm'.
-    string exchanged_quote_amount = 3 [
-        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-        (gogoproto.nullable) = false
-    ];
+  // margin * leverage * vPrice. 'notional' is the virtual size times  the
+  // virtual price on 'perp.amm'.
+  string exchanged_quote_amount = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
-    // virtual amount of base assets for the position, which would be margin * leverage * priceBasePerQuote.
-    string exchanged_position_size = 4 [
-        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-        (gogoproto.nullable) = false
-    ];
+  // virtual amount of base assets for the position, which would be margin *
+  // leverage * priceBasePerQuote.
+  string exchanged_position_size = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
-    // Address of the account that executed the tx.
-    string liquidator_address = 5;
+  // Address of the account that executed the tx.
+  string liquidator_address = 5;
 
-    // Commission (in margin units) received by 'liquidator'.
-    cosmos.base.v1beta1.Coin fee_to_liquidator = 6 [
-        (gogoproto.moretags) = "yaml:\"fee_to_liquidator\"",
-        (gogoproto.nullable) = false
-    ];
+  // Commission (in margin units) received by 'liquidator'.
+  cosmos.base.v1beta1.Coin fee_to_liquidator = 6 [
+    (gogoproto.moretags) = "yaml:\"fee_to_liquidator\"",
+    (gogoproto.nullable) = false
+  ];
 
-    // Commission (in margin units) given to the ecosystem fund.
-    cosmos.base.v1beta1.Coin fee_to_ecosystem_fund = 7 [
-        (gogoproto.moretags) = "yaml:\"fee_to_ecosystem_fund\"",
-        (gogoproto.nullable) = false
-    ];
+  // Commission (in margin units) given to the ecosystem fund.
+  cosmos.base.v1beta1.Coin fee_to_ecosystem_fund = 7 [
+    (gogoproto.moretags) = "yaml:\"fee_to_ecosystem_fund\"",
+    (gogoproto.nullable) = false
+  ];
 
-    //  Bad debt (margin units) cleared by the PerpEF during the tx. Bad debt is negative net margin past the liquidation point of a position.
-    cosmos.base.v1beta1.Coin bad_debt = 8 [(gogoproto.nullable) = false];
-
+  //  Bad debt (margin units) cleared by the PerpEF during the tx. Bad debt is
+  //  negative net margin past the liquidation point of a position.
+  cosmos.base.v1beta1.Coin bad_debt = 8 [ (gogoproto.nullable) = false ];
 
   // Remaining margin in the position after liquidation
-    cosmos.base.v1beta1.Coin margin = 9 [
-      (gogoproto.moretags) = "yaml:\"margin\"",
-      (gogoproto.nullable) = false
-    ];
+  cosmos.base.v1beta1.Coin margin = 9 [
+    (gogoproto.moretags) = "yaml:\"margin\"",
+    (gogoproto.nullable) = false
+  ];
 
-    // Remaining position notional in the position after liquidation
-    string position_notional = 10 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-      (gogoproto.nullable) = false
-    ];
+  // Remaining position notional in the position after liquidation
+  string position_notional = 10 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
-    // Remaining position size in the position after liquidation
-    string position_size = 11 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-      (gogoproto.nullable) = false
-    ];
+  // Remaining position size in the position after liquidation
+  string position_size = 11 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
-    // Unrealized PnL in the position after liquidation
-    string unrealizedPnl = 12 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-      (gogoproto.nullable) = false
-    ];
+  // Unrealized PnL in the position after liquidation
+  string unrealizedPnl = 12 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
+  // Spot price of the vAMM after liquidation
+  string mark_price = 13 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
-    // Spot price of the vAMM after liquidation
-    string mark_price = 13 [
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-      (gogoproto.nullable) = false
-    ];
+  // The block number at which this liquidation occured.
+  int64 block_height = 14;
 
-    // The block number at which this liquidation occured.
-    int64 block_height = 14;
-
-    // The unix timestamp in milliseconds at which this liquidation occured. 
-    int64 block_time_ms = 15;
-
+  // The unix timestamp in milliseconds at which this liquidation occured.
+  int64 block_time_ms = 15;
 }
 
 // Emitted when a position is settled.
 message PositionSettledEvent {
-    // Identifier for the virtual pool of the position.
-    string pair = 1 [ 
-      (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
-      (gogoproto.nullable) = false
-    ];
+  // Identifier for the virtual pool of the position.
+  string pair = 1 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
 
-    // Owner of the position.
-    string trader_address = 2;
+  // Owner of the position.
+  string trader_address = 2;
 
-    // Settled coin as dictated by the settlement price of the perp.amm.
-    repeated cosmos.base.v1beta1.Coin settled_coins = 3 [
-        (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
-        (gogoproto.moretags) = "yaml:\"settled_coins\"",
-        (gogoproto.nullable) = false
-    ];
+  // Settled coin as dictated by the settlement price of the perp.amm.
+  repeated cosmos.base.v1beta1.Coin settled_coins = 3 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (gogoproto.moretags) = "yaml:\"settled_coins\"",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // Emitted when a new funding rate is calculated.
 message FundingRateChangedEvent {
 
   // The pair for which the funding rate was calculated.
-  string pair = 1 [ 
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+  string pair = 1 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 
@@ -239,8 +245,9 @@ message FundingRateChangedEvent {
   ];
 
   // The latest cumulative premium fraction.
-  // The funding payment a position will pay is the difference between this value
-  // and the latest cumulative premium fraction on the position, multiplied by the position size.
+  // The funding payment a position will pay is the difference between this
+  // value and the latest cumulative premium fraction on the position,
+  // multiplied by the position size.
   string cumulative_premium_fraction = 6 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
@@ -249,16 +256,17 @@ message FundingRateChangedEvent {
   // The block number at which the funding rate was calculated.
   int64 block_height = 7;
 
-  // The block time in unix milliseconds at which the funding rate was calculated.
+  // The block time in unix milliseconds at which the funding rate was
+  // calculated.
   int64 block_time_ms = 8;
 }
-
 
 // Emitted when liquidation fails.
 message LiquidationFailedEvent {
   // The pair for which we are trying to liquidate.
-  string pair = 1 [ 
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+  string pair = 1 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 
@@ -267,7 +275,6 @@ message LiquidationFailedEvent {
 
   // Address of the account that executed the tx.
   string liquidator = 3;
-
 
   enum LiquidationFailedReason {
     UNSPECIFIED = 0;
@@ -286,8 +293,9 @@ message LiquidationFailedEvent {
 }
 
 message MetricsEvent {
-  string pair = 1 [ 
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+  string pair = 1 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 

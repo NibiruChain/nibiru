@@ -517,16 +517,20 @@ type MsgOpenPositionResponse struct {
 	ExchangedNotionalValue github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=exchanged_notional_value,json=exchangedNotionalValue,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"exchanged_notional_value"`
 	// The amount of base assets exchanged.
 	ExchangedPositionSize github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,opt,name=exchanged_position_size,json=exchangedPositionSize,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"exchanged_position_size"`
-	// The funding payment applied on this position change, measured in quote units.
+	// The funding payment applied on this position change, measured in quote
+	// units.
 	FundingPayment github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,4,opt,name=funding_payment,json=fundingPayment,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"funding_payment"`
-	// The amount of PnL realized on this position changed, measured in quote units.
+	// The amount of PnL realized on this position changed, measured in quote
+	// units.
 	RealizedPnl github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,5,opt,name=realized_pnl,json=realizedPnl,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"realized_pnl"`
-	// The unrealized PnL in the position after the position change, measured in quote units.
+	// The unrealized PnL in the position after the position change, measured in
+	// quote units.
 	UnrealizedPnlAfter github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,6,opt,name=unrealized_pnl_after,json=unrealizedPnlAfter,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"unrealized_pnl_after"`
 	// The amount of margin the trader has to give to the vault.
 	// A negative value means the vault pays the trader.
 	MarginToVault github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,7,opt,name=margin_to_vault,json=marginToVault,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"margin_to_vault"`
-	// The position's notional value after the position change, measured in quote units.
+	// The position's notional value after the position change, measured in quote
+	// units.
 	PositionNotional github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,8,opt,name=position_notional,json=positionNotional,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"position_notional"`
 }
 
@@ -620,12 +624,14 @@ type MsgClosePositionResponse struct {
 	ExchangedNotionalValue github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,1,opt,name=exchanged_notional_value,json=exchangedNotionalValue,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"exchanged_notional_value"`
 	// The amount of base assets exchanged.
 	ExchangedPositionSize github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=exchanged_position_size,json=exchangedPositionSize,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"exchanged_position_size"`
-	// The funding payment applied on this position change, measured in quote units.
+	// The funding payment applied on this position change, measured in quote
+	// units.
 	FundingPayment github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,opt,name=funding_payment,json=fundingPayment,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"funding_payment"`
-	// The amount of PnL realized on this position changed, measured in quote units.
+	// The amount of PnL realized on this position changed, measured in quote
+	// units.
 	RealizedPnl github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,4,opt,name=realized_pnl,json=realizedPnl,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"realized_pnl"`
-	// The amount of margin the trader receives after closing the position, from the vault.
-	// Should never be negative.
+	// The amount of margin the trader receives after closing the position, from
+	// the vault. Should never be negative.
 	MarginToTrader github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,7,opt,name=margin_to_trader,json=marginToTrader,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"margin_to_trader"`
 }
 

@@ -151,7 +151,8 @@ func (m *Market) GetConfig() MarketConfig {
 type MarketConfig struct {
 	// ratio applied to reserves in order not to over trade
 	TradeLimitRatio github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,1,opt,name=trade_limit_ratio,json=tradeLimitRatio,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"trade_limit_ratio"`
-	// percentage that a single open or close position can alter the reserve amounts
+	// percentage that a single open or close position can alter the reserve
+	// amounts
 	FluctuationLimitRatio github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=fluctuation_limit_ratio,json=fluctuationLimitRatio,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"fluctuation_limit_ratio"`
 	// max_oracle_spread_ratio
 	MaxOracleSpreadRatio github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,opt,name=max_oracle_spread_ratio,json=maxOracleSpreadRatio,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"max_oracle_spread_ratio"`
@@ -194,7 +195,8 @@ func (m *MarketConfig) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MarketConfig proto.InternalMessageInfo
 
-// CurrentTWAP states defines the numerator and denominator for the TWAP calculation
+// CurrentTWAP states defines the numerator and denominator for the TWAP
+// calculation
 type CurrentTWAP struct {
 	PairID      string                                 `protobuf:"bytes,1,opt,name=pair_id,json=pairId,proto3" json:"pair_id,omitempty"`
 	Numerator   github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=numerator,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"numerator"`
@@ -292,9 +294,9 @@ func (m *ReserveSnapshot) GetTimestampMs() int64 {
 	return 0
 }
 
-// PoolPrices is a simple structure that displays a snapshot of the mark and index
-// prices for an asset. Empty strings for the indexPrice or twapMark fields
-// indicate that the price is currently unavailable.
+// PoolPrices is a simple structure that displays a snapshot of the mark and
+// index prices for an asset. Empty strings for the indexPrice or twapMark
+// fields indicate that the price is currently unavailable.
 type PoolPrices struct {
 	// Pair identifier for the two assets. Always in format 'base:quote'
 	Pair github_com_NibiruChain_nibiru_x_common_asset.Pair `protobuf:"bytes,9,opt,name=pair,proto3,customtype=github.com/NibiruChain/nibiru/x/common/asset.Pair" json:"pair"`

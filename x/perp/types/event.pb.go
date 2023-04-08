@@ -62,7 +62,8 @@ func (LiquidationFailedEvent_LiquidationFailedReason) EnumDescriptor() ([]byte, 
 }
 
 // Emitted when a position changes.
-// TODO: Is there a way to split this into different events without creating too much complexity?
+// TODO: Is there a way to split this into different events without creating too
+// much complexity?
 type PositionChangedEvent struct {
 	// identifier of the corresponding virtual pool for the position
 	Pair github_com_NibiruChain_nibiru_x_common_asset.Pair `protobuf:"bytes,1,opt,name=pair,proto3,customtype=github.com/NibiruChain/nibiru/x/common/asset.Pair" json:"pair"`
@@ -73,9 +74,9 @@ type PositionChangedEvent struct {
 	// Position notional (quote units) after the change. In general,
 	// 'notional = baseAmount * priceQuotePerBase', where size is the baseAmount.
 	PositionNotional github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,4,opt,name=position_notional,json=positionNotional,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"position_notional"`
-	// Exchanged size is the magnitude of the change to position size (base units).
-	// The size is a signed quantity expressing how much exposure a position has in
-	// base units of the pair.
+	// Exchanged size is the magnitude of the change to position size (base
+	// units). The size is a signed quantity expressing how much exposure a
+	// position has in base units of the pair.
 	ExchangedSize github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,5,opt,name=exchanged_size,json=exchangedSize,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"exchanged_size"`
 	//
 	// Exchanged notional is the value of the exchanged size in quote units.
@@ -190,9 +191,11 @@ type PositionLiquidatedEvent struct {
 	Pair github_com_NibiruChain_nibiru_x_common_asset.Pair `protobuf:"bytes,1,opt,name=pair,proto3,customtype=github.com/NibiruChain/nibiru/x/common/asset.Pair" json:"pair"`
 	// owner of the position.
 	TraderAddress string `protobuf:"bytes,2,opt,name=trader_address,json=traderAddress,proto3" json:"trader_address,omitempty"`
-	// margin * leverage * vPrice. 'notional' is the virtual size times  the virtual price on 'perp.amm'.
+	// margin * leverage * vPrice. 'notional' is the virtual size times  the
+	// virtual price on 'perp.amm'.
 	ExchangedQuoteAmount github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,opt,name=exchanged_quote_amount,json=exchangedQuoteAmount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"exchanged_quote_amount"`
-	// virtual amount of base assets for the position, which would be margin * leverage * priceBasePerQuote.
+	// virtual amount of base assets for the position, which would be margin *
+	// leverage * priceBasePerQuote.
 	ExchangedPositionSize github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,4,opt,name=exchanged_position_size,json=exchangedPositionSize,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"exchanged_position_size"`
 	// Address of the account that executed the tx.
 	LiquidatorAddress string `protobuf:"bytes,5,opt,name=liquidator_address,json=liquidatorAddress,proto3" json:"liquidator_address,omitempty"`
@@ -200,7 +203,8 @@ type PositionLiquidatedEvent struct {
 	FeeToLiquidator types.Coin `protobuf:"bytes,6,opt,name=fee_to_liquidator,json=feeToLiquidator,proto3" json:"fee_to_liquidator" yaml:"fee_to_liquidator"`
 	// Commission (in margin units) given to the ecosystem fund.
 	FeeToEcosystemFund types.Coin `protobuf:"bytes,7,opt,name=fee_to_ecosystem_fund,json=feeToEcosystemFund,proto3" json:"fee_to_ecosystem_fund" yaml:"fee_to_ecosystem_fund"`
-	//  Bad debt (margin units) cleared by the PerpEF during the tx. Bad debt is negative net margin past the liquidation point of a position.
+	//  Bad debt (margin units) cleared by the PerpEF during the tx. Bad debt is
+	//  negative net margin past the liquidation point of a position.
 	BadDebt types.Coin `protobuf:"bytes,8,opt,name=bad_debt,json=badDebt,proto3" json:"bad_debt"`
 	// Remaining margin in the position after liquidation
 	Margin types.Coin `protobuf:"bytes,9,opt,name=margin,proto3" json:"margin" yaml:"margin"`
@@ -377,12 +381,14 @@ type FundingRateChangedEvent struct {
 	// The latest premium fraction just calculated.
 	LatestPremiumFraction github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,5,opt,name=latest_premium_fraction,json=latestPremiumFraction,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"latest_premium_fraction"`
 	// The latest cumulative premium fraction.
-	// The funding payment a position will pay is the difference between this value
-	// and the latest cumulative premium fraction on the position, multiplied by the position size.
+	// The funding payment a position will pay is the difference between this
+	// value and the latest cumulative premium fraction on the position,
+	// multiplied by the position size.
 	CumulativePremiumFraction github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,6,opt,name=cumulative_premium_fraction,json=cumulativePremiumFraction,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"cumulative_premium_fraction"`
 	// The block number at which the funding rate was calculated.
 	BlockHeight int64 `protobuf:"varint,7,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
-	// The block time in unix milliseconds at which the funding rate was calculated.
+	// The block time in unix milliseconds at which the funding rate was
+	// calculated.
 	BlockTimeMs int64 `protobuf:"varint,8,opt,name=block_time_ms,json=blockTimeMs,proto3" json:"block_time_ms,omitempty"`
 }
 
