@@ -3,13 +3,13 @@ package nibiru.stablecoin.v1;
 
 import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
-import "stablecoin/params.proto";
+import "stablecoin/v1/params.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/stablecoin/types";
 
 // GenesisState defines the stablecoin module's genesis state.
 message GenesisState {
-  Params params = 1 [(gogoproto.nullable) = false];
+  Params params = 1 [ (gogoproto.nullable) = false ];
   cosmos.base.v1beta1.Coin module_account_balance = 2 [
     (gogoproto.moretags) = "yaml:\"module_account_balance\"",
     (gogoproto.nullable) = false

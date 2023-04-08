@@ -564,7 +564,8 @@ type QueryClient interface {
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
 	QueryPosition(ctx context.Context, in *QueryPositionRequest, opts ...grpc.CallOption) (*QueryPositionResponse, error)
 	QueryPositions(ctx context.Context, in *QueryPositionsRequest, opts ...grpc.CallOption) (*QueryPositionsResponse, error)
-	// Queries the latest cumulative premium fraction and the estimated next cumulative premium fraction.
+	// Queries the latest cumulative premium fraction and the estimated next
+	// cumulative premium fraction.
 	CumulativePremiumFraction(ctx context.Context, in *QueryCumulativePremiumFractionRequest, opts ...grpc.CallOption) (*QueryCumulativePremiumFractionResponse, error)
 	Metrics(ctx context.Context, in *QueryMetricsRequest, opts ...grpc.CallOption) (*QueryMetricsResponse, error)
 }
@@ -628,7 +629,8 @@ type QueryServer interface {
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
 	QueryPosition(context.Context, *QueryPositionRequest) (*QueryPositionResponse, error)
 	QueryPositions(context.Context, *QueryPositionsRequest) (*QueryPositionsResponse, error)
-	// Queries the latest cumulative premium fraction and the estimated next cumulative premium fraction.
+	// Queries the latest cumulative premium fraction and the estimated next
+	// cumulative premium fraction.
 	CumulativePremiumFraction(context.Context, *QueryCumulativePremiumFractionRequest) (*QueryCumulativePremiumFractionResponse, error)
 	Metrics(context.Context, *QueryMetricsRequest) (*QueryMetricsResponse, error)
 }

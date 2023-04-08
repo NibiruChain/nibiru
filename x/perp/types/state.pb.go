@@ -305,8 +305,8 @@ type PairMetadata struct {
 	Pair github_com_NibiruChain_nibiru_x_common_asset.Pair `protobuf:"bytes,1,opt,name=pair,proto3,customtype=github.com/NibiruChain/nibiru/x/common/asset.Pair" json:"pair"`
 	// Latest cumulative premium fraction for a given pair.
 	// Calculated once per funding rate interval.
-	// A premium fraction is the difference between mark and index, divided by the number of payments per day.
-	// (mark - index) / # payments in a day
+	// A premium fraction is the difference between mark and index, divided by the
+	// number of payments per day. (mark - index) / # payments in a day
 	LatestCumulativePremiumFraction github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=latest_cumulative_premium_fraction,json=latestCumulativePremiumFraction,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"latest_cumulative_premium_fraction"`
 }
 
@@ -513,7 +513,8 @@ func (m *LiquidateResp) GetPositionResp() *PositionResp {
 	return nil
 }
 
-// PoolMetrics is a structure that displays a snapshot of perp metrics for each pair.
+// PoolMetrics is a structure that displays a snapshot of perp metrics for each
+// pair.
 type Metrics struct {
 	// Pair identifier for the two assets. Always in format 'base:quote'
 	Pair github_com_NibiruChain_nibiru_x_common_asset.Pair `protobuf:"bytes,1,opt,name=pair,proto3,customtype=github.com/NibiruChain/nibiru/x/common/asset.Pair" json:"pair"`

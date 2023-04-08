@@ -811,8 +811,8 @@ func (m *QueryTotalSharesResponse) GetTotalShares() types.Coin {
 }
 
 // Returns the amount of tokenInDenom to produce 1 tokenOutDenom
-// For example, if the price of NIBI = 9.123 NUSD, then setting tokenInDenom=NUSD
-// and tokenOutDenom=NIBI would give "9.123".
+// For example, if the price of NIBI = 9.123 NUSD, then setting
+// tokenInDenom=NUSD and tokenOutDenom=NIBI would give "9.123".
 type QuerySpotPriceRequest struct {
 	PoolId uint64 `protobuf:"varint,1,opt,name=pool_id,json=poolId,proto3" json:"pool_id,omitempty"`
 	// the denomination of the token you are giving into the pool
