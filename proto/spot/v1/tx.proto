@@ -35,29 +35,27 @@ service Msg {
 message MsgCreatePool {
   string creator = 1;
 
-  PoolParams pool_params = 2 [(gogoproto.moretags) = "yaml:\"pool_params\""];
+  PoolParams pool_params = 2 [ (gogoproto.moretags) = "yaml:\"pool_params\"" ];
 
-  repeated PoolAsset pool_assets = 3 [(gogoproto.nullable) = false];
+  repeated PoolAsset pool_assets = 3 [ (gogoproto.nullable) = false ];
 }
 
-message MsgCreatePoolResponse {
-  uint64 pool_id = 1;
-}
+message MsgCreatePoolResponse { uint64 pool_id = 1; }
 
 /*
 Message to join a pool (identified by poolId) with a set of tokens to deposit.
 */
 message MsgJoinPool {
-  string sender = 1 [(gogoproto.moretags) = "yaml:\"sender\""];
+  string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
 
-  uint64 pool_id = 2 [(gogoproto.moretags) = "yaml:\"pool_id\""];
+  uint64 pool_id = 2 [ (gogoproto.moretags) = "yaml:\"pool_id\"" ];
 
   repeated cosmos.base.v1beta1.Coin tokens_in = 3 [
     (gogoproto.moretags) = "yaml:\"tokens_in\"",
     (gogoproto.nullable) = false
   ];
 
-  bool use_all_coins = 4 [(gogoproto.moretags) = "yaml:\"use_all_coins\""];  
+  bool use_all_coins = 4 [ (gogoproto.moretags) = "yaml:\"use_all_coins\"" ];
 }
 
 /*
@@ -81,9 +79,9 @@ message MsgJoinPoolResponse {
 }
 
 message MsgExitPool {
-  string sender = 1 [(gogoproto.moretags) = "yaml:\"sender\""];
+  string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
 
-  uint64 pool_id = 2 [(gogoproto.moretags) = "yaml:\"pool_id\""];
+  uint64 pool_id = 2 [ (gogoproto.moretags) = "yaml:\"pool_id\"" ];
 
   cosmos.base.v1beta1.Coin pool_shares = 3 [
     (gogoproto.moretags) = "yaml:\"pool_shares\"",
@@ -99,16 +97,17 @@ message MsgExitPoolResponse {
 }
 
 message MsgSwapAssets {
-  string sender = 1 [(gogoproto.moretags) = "yaml:\"sender\""];
+  string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
 
-  uint64 pool_id = 2 [(gogoproto.moretags) = "yaml:\"pool_id\""];
+  uint64 pool_id = 2 [ (gogoproto.moretags) = "yaml:\"pool_id\"" ];
 
   cosmos.base.v1beta1.Coin token_in = 3 [
     (gogoproto.moretags) = "yaml:\"token_in\"",
     (gogoproto.nullable) = false
   ];
 
-  string token_out_denom = 4 [(gogoproto.moretags) = "yaml:\"token_out_denom\""];
+  string token_out_denom = 4
+      [ (gogoproto.moretags) = "yaml:\"token_out_denom\"" ];
 }
 
 message MsgSwapAssetsResponse {

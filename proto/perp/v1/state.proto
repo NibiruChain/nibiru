@@ -83,8 +83,9 @@ message Position {
   string trader_address = 1;
 
   // pair identifies the pair associated with this position
-  string pair = 2 [ 
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+  string pair = 2 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 
@@ -119,15 +120,16 @@ message Position {
 }
 
 message PairMetadata {
-  string pair = 1 [ 
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+  string pair = 1 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 
   // Latest cumulative premium fraction for a given pair.
   // Calculated once per funding rate interval.
-  // A premium fraction is the difference between mark and index, divided by the number of payments per day.
-  // (mark - index) / # payments in a day
+  // A premium fraction is the difference between mark and index, divided by the
+  // number of payments per day. (mark - index) / # payments in a day
   string latest_cumulative_premium_fraction = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
@@ -226,11 +228,13 @@ message LiquidateResp {
   PositionResp position_resp = 5;
 }
 
-// PoolMetrics is a structure that displays a snapshot of perp metrics for each pair.
+// PoolMetrics is a structure that displays a snapshot of perp metrics for each
+// pair.
 message Metrics {
   // Pair identifier for the two assets. Always in format 'base:quote'
-  string pair = 1 [ 
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+  string pair = 1 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 

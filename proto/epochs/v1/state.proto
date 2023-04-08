@@ -36,10 +36,10 @@ message EpochInfo {
     (gogoproto.moretags) = "yaml:\"current_epoch_start_time\""
   ];
 
-  // Whether or not this epoch has started. Set to true if current blocktime >= start_time.
+  // Whether or not this epoch has started. Set to true if current blocktime >=
+  // start_time.
   bool epoch_counting_started = 6;
 
   // The block height at which the current epoch started at.
   int64 current_epoch_start_height = 7;
 }
-

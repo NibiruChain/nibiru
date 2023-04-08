@@ -17,5 +17,6 @@ message GenesisState {
 
   repeated Position positions = 3 [ (gogoproto.nullable) = false ];
 
-  repeated PrepaidBadDebt prepaid_bad_debts = 4 [ (gogoproto.nullable) = false ];
+  repeated PrepaidBadDebt prepaid_bad_debts = 4
+      [ (gogoproto.nullable) = false ];
 }

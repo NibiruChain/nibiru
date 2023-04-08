@@ -9,7 +9,7 @@ import "gogoproto/gogo.proto";
 import "perp/v1/state.proto";
 import "perp/amm/v1/state.proto";
 
-option go_package="github.com/NibiruChain/nibiru/x/perp/types";
+option go_package = "github.com/NibiruChain/nibiru/x/perp/types";
 
 // Msg defines the x/perp Msg service.
 service Msg {
@@ -34,7 +34,8 @@ service Msg {
     option (google.api.http).post = "/nibiru/perp/close_position";
   }
 
-  rpc DonateToEcosystemFund(MsgDonateToEcosystemFund) returns (MsgDonateToEcosystemFundResponse) {
+  rpc DonateToEcosystemFund(MsgDonateToEcosystemFund)
+      returns (MsgDonateToEcosystemFundResponse) {
     option (google.api.http).post = "/nibiru/perp/donate_to_ecosystem_fund";
   }
 }
@@ -45,22 +46,24 @@ service Msg {
 message MsgRemoveMargin {
   string sender = 1;
 
-  string pair = 2 [ 
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+  string pair = 2 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 
-  cosmos.base.v1beta1.Coin margin = 3 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin margin = 3 [ (gogoproto.nullable) = false ];
 }
 
 message MsgRemoveMarginResponse {
   // tokens transferred back to the trader
-  cosmos.base.v1beta1.Coin margin_out = 1 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin margin_out = 1 [ (gogoproto.nullable) = false ];
 
   // the funding payment applied on this position interaction
   string funding_payment = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false];
+    (gogoproto.nullable) = false
+  ];
 
   // The resulting position
   Position position = 3;
@@ -72,18 +75,20 @@ message MsgRemoveMarginResponse {
 message MsgAddMargin {
   string sender = 1;
 
-  string pair = 2 [ 
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+  string pair = 2 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 
-  cosmos.base.v1beta1.Coin margin = 3 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin margin = 3 [ (gogoproto.nullable) = false ];
 }
 
 message MsgAddMarginResponse {
   string funding_payment = 1 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false];
+    (gogoproto.nullable) = false
+  ];
 
   Position position = 2;
 }
@@ -94,8 +99,9 @@ message MsgMultiLiquidate {
   string sender = 1;
 
   message Liquidation {
-    string pair = 1 [ 
-      (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    string pair = 1 [
+      (gogoproto.customtype) =
+          "github.com/NibiruChain/nibiru/x/common/asset.Pair",
       (gogoproto.nullable) = false
     ];
     string trader = 2;
@@ -109,8 +115,10 @@ message MsgMultiLiquidateResponse {
     bool success = 1;
     string error = 2;
 
-    cosmos.base.v1beta1.Coin liquidator_fee = 3 [(gogoproto.nullable) = false];
-    cosmos.base.v1beta1.Coin perp_ef_fee = 4 [(gogoproto.nullable) = false]; // perp ecosystem fund
+    cosmos.base.v1beta1.Coin liquidator_fee = 3
+        [ (gogoproto.nullable) = false ];
+    cosmos.base.v1beta1.Coin perp_ef_fee = 4
+        [ (gogoproto.nullable) = false ]; // perp ecosystem fund
   }
 
   repeated LiquidationResponse liquidations = 1;
@@ -121,8 +129,9 @@ message MsgMultiLiquidateResponse {
 message MsgOpenPosition {
   string sender = 1;
 
-  string pair = 2 [ 
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+  string pair = 2 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 
@@ -130,15 +139,18 @@ message MsgOpenPosition {
 
   string quote_asset_amount = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false];
+    (gogoproto.nullable) = false
+  ];
 
   string leverage = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false];
+    (gogoproto.nullable) = false
+  ];
 
   string base_asset_amount_limit = 6 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false];
+    (gogoproto.nullable) = false
+  ];
 }
 
 message MsgOpenPositionResponse {
@@ -147,38 +159,49 @@ message MsgOpenPositionResponse {
   // The amount of quote assets exchanged.
   string exchanged_notional_value = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false];
+    (gogoproto.nullable) = false
+  ];
 
-  // The amount of base assets exchanged. 
+  // The amount of base assets exchanged.
   string exchanged_position_size = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false];
+    (gogoproto.nullable) = false
+  ];
 
-  // The funding payment applied on this position change, measured in quote units.
+  // The funding payment applied on this position change, measured in quote
+  // units.
   string funding_payment = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false];
+    (gogoproto.nullable) = false
+  ];
 
-  // The amount of PnL realized on this position changed, measured in quote units.
+  // The amount of PnL realized on this position changed, measured in quote
+  // units.
   string realized_pnl = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false];
+    (gogoproto.nullable) = false
+  ];
 
-  // The unrealized PnL in the position after the position change, measured in quote units.
+  // The unrealized PnL in the position after the position change, measured in
+  // quote units.
   string unrealized_pnl_after = 6 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false];
+    (gogoproto.nullable) = false
+  ];
 
   // The amount of margin the trader has to give to the vault.
   // A negative value means the vault pays the trader.
   string margin_to_vault = 7 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false];
+    (gogoproto.nullable) = false
+  ];
 
-  // The position's notional value after the position change, measured in quote units.
+  // The position's notional value after the position change, measured in quote
+  // units.
   string position_notional = 8 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false];
+    (gogoproto.nullable) = false
+  ];
 }
 
 // -------------------------- ClosePosition --------------------------
@@ -186,8 +209,9 @@ message MsgOpenPositionResponse {
 message MsgClosePosition {
   string sender = 1;
 
-  string pair = 2 [ 
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+  string pair = 2 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 }
@@ -196,28 +220,35 @@ message MsgClosePositionResponse {
   // The amount of quote assets exchanged.
   string exchanged_notional_value = 1 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false];
+    (gogoproto.nullable) = false
+  ];
 
-  // The amount of base assets exchanged. 
+  // The amount of base assets exchanged.
   string exchanged_position_size = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false];
+    (gogoproto.nullable) = false
+  ];
 
-  // The funding payment applied on this position change, measured in quote units.
+  // The funding payment applied on this position change, measured in quote
+  // units.
   string funding_payment = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false];
+    (gogoproto.nullable) = false
+  ];
 
-  // The amount of PnL realized on this position changed, measured in quote units.
+  // The amount of PnL realized on this position changed, measured in quote
+  // units.
   string realized_pnl = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false];
+    (gogoproto.nullable) = false
+  ];
 
-  // The amount of margin the trader receives after closing the position, from the vault.
-  // Should never be negative.
+  // The amount of margin the trader receives after closing the position, from
+  // the vault. Should never be negative.
   string margin_to_trader = 7 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false];
+    (gogoproto.nullable) = false
+  ];
 }
 
 // -------------------------- DonateToEcosystemFund --------------------------
@@ -232,5 +263,4 @@ message MsgDonateToEcosystemFund {
   ];
 }
 
-message MsgDonateToEcosystemFundResponse {
-}
+message MsgDonateToEcosystemFundResponse {}
