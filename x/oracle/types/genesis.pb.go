@@ -229,9 +229,9 @@ func (m *MissCounter) GetMissCounter() uint64 {
 }
 
 func init() {
-	proto.RegisterType((*GenesisState)(nil), "nibiru.oracle.v1beta1.GenesisState")
-	proto.RegisterType((*FeederDelegation)(nil), "nibiru.oracle.v1beta1.FeederDelegation")
-	proto.RegisterType((*MissCounter)(nil), "nibiru.oracle.v1beta1.MissCounter")
+	proto.RegisterType((*GenesisState)(nil), "nibiru.oracle.v1.GenesisState")
+	proto.RegisterType((*FeederDelegation)(nil), "nibiru.oracle.v1.FeederDelegation")
+	proto.RegisterType((*MissCounter)(nil), "nibiru.oracle.v1.MissCounter")
 }
 
 func init() { proto.RegisterFile("oracle/v1beta1/genesis.proto", fileDescriptor_6d8ee91da7d45482) }

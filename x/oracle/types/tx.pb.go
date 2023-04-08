@@ -274,12 +274,12 @@ func (m *MsgDelegateFeedConsentResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgDelegateFeedConsentResponse proto.InternalMessageInfo
 
 func init() {
-	proto.RegisterType((*MsgAggregateExchangeRatePrevote)(nil), "nibiru.oracle.v1beta1.MsgAggregateExchangeRatePrevote")
-	proto.RegisterType((*MsgAggregateExchangeRatePrevoteResponse)(nil), "nibiru.oracle.v1beta1.MsgAggregateExchangeRatePrevoteResponse")
-	proto.RegisterType((*MsgAggregateExchangeRateVote)(nil), "nibiru.oracle.v1beta1.MsgAggregateExchangeRateVote")
-	proto.RegisterType((*MsgAggregateExchangeRateVoteResponse)(nil), "nibiru.oracle.v1beta1.MsgAggregateExchangeRateVoteResponse")
-	proto.RegisterType((*MsgDelegateFeedConsent)(nil), "nibiru.oracle.v1beta1.MsgDelegateFeedConsent")
-	proto.RegisterType((*MsgDelegateFeedConsentResponse)(nil), "nibiru.oracle.v1beta1.MsgDelegateFeedConsentResponse")
+	proto.RegisterType((*MsgAggregateExchangeRatePrevote)(nil), "nibiru.oracle.v1.MsgAggregateExchangeRatePrevote")
+	proto.RegisterType((*MsgAggregateExchangeRatePrevoteResponse)(nil), "nibiru.oracle.v1.MsgAggregateExchangeRatePrevoteResponse")
+	proto.RegisterType((*MsgAggregateExchangeRateVote)(nil), "nibiru.oracle.v1.MsgAggregateExchangeRateVote")
+	proto.RegisterType((*MsgAggregateExchangeRateVoteResponse)(nil), "nibiru.oracle.v1.MsgAggregateExchangeRateVoteResponse")
+	proto.RegisterType((*MsgDelegateFeedConsent)(nil), "nibiru.oracle.v1.MsgDelegateFeedConsent")
+	proto.RegisterType((*MsgDelegateFeedConsentResponse)(nil), "nibiru.oracle.v1.MsgDelegateFeedConsentResponse")
 }
 
 func init() { proto.RegisterFile("oracle/v1beta1/tx.proto", fileDescriptor_8f0903e1642d8c8a) }
@@ -358,7 +358,7 @@ func NewMsgClient(cc grpc1.ClientConn) MsgClient {
 
 func (c *msgClient) AggregateExchangeRatePrevote(ctx context.Context, in *MsgAggregateExchangeRatePrevote, opts ...grpc.CallOption) (*MsgAggregateExchangeRatePrevoteResponse, error) {
 	out := new(MsgAggregateExchangeRatePrevoteResponse)
-	err := c.cc.Invoke(ctx, "/nibiru.oracle.v1beta1.Msg/AggregateExchangeRatePrevote", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/nibiru.oracle.v1.Msg/AggregateExchangeRatePrevote", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -367,7 +367,7 @@ func (c *msgClient) AggregateExchangeRatePrevote(ctx context.Context, in *MsgAgg
 
 func (c *msgClient) AggregateExchangeRateVote(ctx context.Context, in *MsgAggregateExchangeRateVote, opts ...grpc.CallOption) (*MsgAggregateExchangeRateVoteResponse, error) {
 	out := new(MsgAggregateExchangeRateVoteResponse)
-	err := c.cc.Invoke(ctx, "/nibiru.oracle.v1beta1.Msg/AggregateExchangeRateVote", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/nibiru.oracle.v1.Msg/AggregateExchangeRateVote", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -376,7 +376,7 @@ func (c *msgClient) AggregateExchangeRateVote(ctx context.Context, in *MsgAggreg
 
 func (c *msgClient) DelegateFeedConsent(ctx context.Context, in *MsgDelegateFeedConsent, opts ...grpc.CallOption) (*MsgDelegateFeedConsentResponse, error) {
 	out := new(MsgDelegateFeedConsentResponse)
-	err := c.cc.Invoke(ctx, "/nibiru.oracle.v1beta1.Msg/DelegateFeedConsent", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/nibiru.oracle.v1.Msg/DelegateFeedConsent", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -425,7 +425,7 @@ func _Msg_AggregateExchangeRatePrevote_Handler(srv interface{}, ctx context.Cont
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/nibiru.oracle.v1beta1.Msg/AggregateExchangeRatePrevote",
+		FullMethod: "/nibiru.oracle.v1.Msg/AggregateExchangeRatePrevote",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MsgServer).AggregateExchangeRatePrevote(ctx, req.(*MsgAggregateExchangeRatePrevote))
@@ -443,7 +443,7 @@ func _Msg_AggregateExchangeRateVote_Handler(srv interface{}, ctx context.Context
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/nibiru.oracle.v1beta1.Msg/AggregateExchangeRateVote",
+		FullMethod: "/nibiru.oracle.v1.Msg/AggregateExchangeRateVote",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MsgServer).AggregateExchangeRateVote(ctx, req.(*MsgAggregateExchangeRateVote))
@@ -461,7 +461,7 @@ func _Msg_DelegateFeedConsent_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/nibiru.oracle.v1beta1.Msg/DelegateFeedConsent",
+		FullMethod: "/nibiru.oracle.v1.Msg/DelegateFeedConsent",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MsgServer).DelegateFeedConsent(ctx, req.(*MsgDelegateFeedConsent))
@@ -470,7 +470,7 @@ func _Msg_DelegateFeedConsent_Handler(srv interface{}, ctx context.Context, dec 
 }
 
 var _Msg_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "nibiru.oracle.v1beta1.Msg",
+	ServiceName: "nibiru.oracle.v1.Msg",
 	HandlerType: (*MsgServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

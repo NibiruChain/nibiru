@@ -312,11 +312,11 @@ func (m *PairReward) GetCoins() []types.Coin {
 }
 
 func init() {
-	proto.RegisterType((*Params)(nil), "nibiru.oracle.v1beta1.Params")
-	proto.RegisterType((*AggregateExchangeRatePrevote)(nil), "nibiru.oracle.v1beta1.AggregateExchangeRatePrevote")
-	proto.RegisterType((*AggregateExchangeRateVote)(nil), "nibiru.oracle.v1beta1.AggregateExchangeRateVote")
-	proto.RegisterType((*ExchangeRateTuple)(nil), "nibiru.oracle.v1beta1.ExchangeRateTuple")
-	proto.RegisterType((*PairReward)(nil), "nibiru.oracle.v1beta1.PairReward")
+	proto.RegisterType((*Params)(nil), "nibiru.oracle.v1.Params")
+	proto.RegisterType((*AggregateExchangeRatePrevote)(nil), "nibiru.oracle.v1.AggregateExchangeRatePrevote")
+	proto.RegisterType((*AggregateExchangeRateVote)(nil), "nibiru.oracle.v1.AggregateExchangeRateVote")
+	proto.RegisterType((*ExchangeRateTuple)(nil), "nibiru.oracle.v1.ExchangeRateTuple")
+	proto.RegisterType((*PairReward)(nil), "nibiru.oracle.v1.PairReward")
 }
 
 func init() { proto.RegisterFile("oracle/v1beta1/oracle.proto", fileDescriptor_2784fd4b0e83b02f) }

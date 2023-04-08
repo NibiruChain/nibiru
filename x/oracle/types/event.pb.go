@@ -80,7 +80,7 @@ func (m *OraclePriceUpdate) GetTimestampMs() int64 {
 }
 
 func init() {
-	proto.RegisterType((*OraclePriceUpdate)(nil), "nibiru.oracle.v1beta1.OraclePriceUpdate")
+	proto.RegisterType((*OraclePriceUpdate)(nil), "nibiru.oracle.v1.OraclePriceUpdate")
 }
 
 func init() { proto.RegisterFile("oracle/v1beta1/event.proto", fileDescriptor_3fd5f4c55193a4f5) }
