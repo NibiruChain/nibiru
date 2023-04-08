@@ -19,7 +19,7 @@ func TestSettlePosition(t *testing.T) {
 		traderAddr := testutil.AccAddress()
 		pair := asset.MustNewPair("LUNA:UST")
 
-		dep.mockVpoolKeeper.
+		dep.mockPerpAmmKeeper.
 			EXPECT().
 			GetSettlementPrice(gomock.Eq(ctx), gomock.Eq(pair)).
 			Return(sdk.ZeroDec(), error(nil))
@@ -53,7 +53,7 @@ func TestSettlePosition(t *testing.T) {
 		traderAddr := testutil.AccAddress()
 		pair := asset.MustNewPair("LUNA:UST") // memeing
 
-		dep.mockVpoolKeeper.
+		dep.mockPerpAmmKeeper.
 			EXPECT().
 			GetSettlementPrice(ctx, pair).
 			Return(sdk.NewDec(1000), error(nil))

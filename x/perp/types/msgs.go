@@ -5,6 +5,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 )
 
 var _ sdk.Msg = &MsgRemoveMargin{}
@@ -95,7 +97,7 @@ func (m MsgOpenPosition) Route() string { return RouterKey }
 func (m MsgOpenPosition) Type() string  { return "open_position_msg" }
 
 func (m *MsgOpenPosition) ValidateBasic() error {
-	if m.Side != Side_SELL && m.Side != Side_BUY {
+	if m.Side != perpammtypes.Direction_SHORT && m.Side != perpammtypes.Direction_LONG {
 		return fmt.Errorf("invalid side")
 	}
 	if err := m.Pair.Validate(); err != nil {

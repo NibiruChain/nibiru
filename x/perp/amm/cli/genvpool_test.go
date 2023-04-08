@@ -21,8 +21,8 @@ import (
 
 var testModuleBasicManager = module.NewBasicManager(genutil.AppModuleBasic{})
 
-// Tests "add-genesis-vpool", a command that adds a vpool to genesis.json
-func TestAddGenesisVpoolCmd(t *testing.T) {
+// Tests "add-genesis-perp-market", a command that adds a market to genesis.json
+func TestAddMarketGenesisCmd(t *testing.T) {
 	tests := []struct {
 		name          string
 		pairName      string
@@ -96,7 +96,7 @@ func TestAddGenesisVpoolCmd(t *testing.T) {
 			expectError:   true,
 		},
 		{
-			name:          "valid vpool pair",
+			name:          "valid market pair",
 			pairName:      "token0:token1",
 			baseAmt:       "100",
 			quoteAmt:      "100",
@@ -129,7 +129,7 @@ func TestAddGenesisVpoolCmd(t *testing.T) {
 			ctx = context.WithValue(ctx, client.ClientContextKey, &clientCtx)
 			ctx = context.WithValue(ctx, server.ServerContextKey, serverCtx)
 
-			cmd := cli.AddVpoolGenesisCmd("home")
+			cmd := cli.AddMarketGenesisCmd("home")
 			cmd.SetArgs([]string{
 				fmt.Sprintf("--%s=%s", cli.FlagPair, tc.pairName),
 				fmt.Sprintf("--%s=%s", cli.FlagBaseAmt, tc.baseAmt),

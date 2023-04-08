@@ -109,15 +109,15 @@ func TestFrom2To3(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 
-			vpool := types.Vpool{
+			market := types.Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				BaseAssetReserve:  sdk.MustNewDecFromStr("10000000"),
 				QuoteAssetReserve: sdk.MustNewDecFromStr("20000000"),
 				Bias:              sdk.ZeroDec(),
 			}
-			app.VpoolKeeper.Pools.Insert(ctx, vpool.Pair, vpool)
+			app.PerpAmmKeeper.Pools.Insert(ctx, market.Pair, market)
 
-			savedPool, err := app.VpoolKeeper.Pools.Get(ctx, vpool.Pair)
+			savedPool, err := app.PerpAmmKeeper.Pools.Get(ctx, market.Pair)
 			require.NoError(t, err)
 			require.Equal(t, sdk.ZeroDec(), savedPool.Bias)
 			require.Equal(t, sdk.ZeroDec(), savedPool.PegMultiplier)
@@ -131,10 +131,10 @@ func TestFrom2To3(t *testing.T) {
 			}
 
 			// Run migration
-			err = keeper.From2To3(app.PerpKeeper, app.VpoolKeeper)(ctx)
+			err = keeper.From2To3(app.PerpKeeper, app.PerpAmmKeeper)(ctx)
 			require.NoError(t, err)
 
-			savedPool, err = app.VpoolKeeper.Pools.Get(ctx, vpool.Pair)
+			savedPool, err = app.PerpAmmKeeper.Pools.Get(ctx, market.Pair)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedBias, savedPool.Bias)
 			require.Equal(t, sdk.OneDec(), savedPool.PegMultiplier)

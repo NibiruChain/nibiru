@@ -11,7 +11,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
-	vpooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
@@ -20,34 +20,34 @@ func TestCalcFreeCollateralSuccess(t *testing.T) {
 		name string
 
 		positionSize           sdk.Dec
-		vpoolDirection         vpooltypes.Direction
+		marketDirection        perpammtypes.Direction
 		positionNotional       sdk.Dec
 		expectedFreeCollateral sdk.Dec
 	}{
 		{
 			name:                   "long position, zero PnL",
 			positionSize:           sdk.OneDec(),
-			vpoolDirection:         vpooltypes.Direction_ADD_TO_POOL,
+			marketDirection:        perpammtypes.Direction_LONG,
 			positionNotional:       sdk.NewDec(1000),
 			expectedFreeCollateral: sdk.MustNewDecFromStr("37.5"),
 		},
 		{
 			name:                   "long position, positive PnL",
 			positionSize:           sdk.OneDec(),
-			vpoolDirection:         vpooltypes.Direction_ADD_TO_POOL,
+			marketDirection:        perpammtypes.Direction_LONG,
 			positionNotional:       sdk.NewDec(1100),
 			expectedFreeCollateral: sdk.MustNewDecFromStr("31.25"),
 		},
 		{
 			name:                   "long position, negative PnL",
-			vpoolDirection:         vpooltypes.Direction_ADD_TO_POOL,
+			marketDirection:        perpammtypes.Direction_LONG,
 			positionSize:           sdk.OneDec(),
 			positionNotional:       sdk.NewDec(970),
 			expectedFreeCollateral: sdk.MustNewDecFromStr("9.375"),
 		},
 		{
 			name:                   "long position, huge negative PnL",
-			vpoolDirection:         vpooltypes.Direction_ADD_TO_POOL,
+			marketDirection:        perpammtypes.Direction_LONG,
 			positionSize:           sdk.OneDec(),
 			positionNotional:       sdk.NewDec(900),
 			expectedFreeCollateral: sdk.MustNewDecFromStr("-56.25"),
@@ -55,28 +55,28 @@ func TestCalcFreeCollateralSuccess(t *testing.T) {
 		{
 			name:                   "short position, zero PnL",
 			positionSize:           sdk.OneDec().Neg(),
-			vpoolDirection:         vpooltypes.Direction_REMOVE_FROM_POOL,
+			marketDirection:        perpammtypes.Direction_SHORT,
 			positionNotional:       sdk.NewDec(1000),
 			expectedFreeCollateral: sdk.MustNewDecFromStr("37.5"),
 		},
 		{
 			name:                   "short position, positive PnL",
 			positionSize:           sdk.OneDec().Neg(),
-			vpoolDirection:         vpooltypes.Direction_REMOVE_FROM_POOL,
+			marketDirection:        perpammtypes.Direction_SHORT,
 			positionNotional:       sdk.NewDec(900),
 			expectedFreeCollateral: sdk.MustNewDecFromStr("43.75"),
 		},
 		{
 			name:                   "short position, negative PnL",
 			positionSize:           sdk.OneDec().Neg(),
-			vpoolDirection:         vpooltypes.Direction_REMOVE_FROM_POOL,
+			marketDirection:        perpammtypes.Direction_SHORT,
 			positionNotional:       sdk.NewDec(1030),
 			expectedFreeCollateral: sdk.MustNewDecFromStr("5.625"),
 		},
 		{
 			name:                   "short position, huge negative PnL",
 			positionSize:           sdk.OneDec().Neg(),
-			vpoolDirection:         vpooltypes.Direction_REMOVE_FROM_POOL,
+			marketDirection:        perpammtypes.Direction_SHORT,
 			positionNotional:       sdk.NewDec(1100),
 			expectedFreeCollateral: sdk.MustNewDecFromStr("-68.75"),
 		},
@@ -87,7 +87,7 @@ func TestCalcFreeCollateralSuccess(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			k, mocks, ctx := getKeeper(t)
 
-			vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+			market := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			pos := types.Position{
 				TraderAddress:                   testutil.AccAddress().String(),
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -98,24 +98,24 @@ func TestCalcFreeCollateralSuccess(t *testing.T) {
 				BlockNumber:                     1,
 			}
 
-			t.Log("mock vpool keeper")
-			mocks.mockVpoolKeeper.EXPECT().
+			t.Log("mock market keeper")
+			mocks.mockPerpAmmKeeper.EXPECT().
 				GetMaintenanceMarginRatio(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).
 				Return(sdk.MustNewDecFromStr("0.0625"), nil)
-			mocks.mockVpoolKeeper.EXPECT().GetBaseAssetPrice(
-				vpool,
-				tc.vpoolDirection,
+			mocks.mockPerpAmmKeeper.EXPECT().GetBaseAssetPrice(
+				market,
+				tc.marketDirection,
 				sdk.OneDec(),
 			).Return(tc.positionNotional, nil)
-			mocks.mockVpoolKeeper.EXPECT().GetBaseAssetTWAP(
+			mocks.mockPerpAmmKeeper.EXPECT().GetBaseAssetTWAP(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				tc.vpoolDirection,
+				tc.marketDirection,
 				sdk.OneDec(),
 				15*time.Minute,
 			).Return(tc.positionNotional, nil)
 
-			freeCollateral, err := k.calcFreeCollateral(ctx, vpool, pos)
+			freeCollateral, err := k.calcFreeCollateral(ctx, market, pos)
 
 			require.NoError(t, err)
 			assert.EqualValues(t, tc.expectedFreeCollateral, freeCollateral)
@@ -147,12 +147,12 @@ func TestGetLatestCumulativePremiumFraction(t *testing.T) {
 			},
 		},
 		{
-			name: "uninitialized vpool has no metadata | fail",
+			name: "uninitialized market has no metadata | fail",
 			test: func() {
 				perpKeeper, _, ctx := getKeeper(t)
-				vpool := asset.Pair("xxx:yyy")
+				market := asset.Pair("xxx:yyy")
 				lcpf, err := perpKeeper.getLatestCumulativePremiumFraction(
-					ctx, vpool)
+					ctx, market)
 				require.Error(t, err)
 				assert.EqualValues(t, sdk.Dec{}, lcpf)
 			},

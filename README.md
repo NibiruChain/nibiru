@@ -10,11 +10,11 @@
 
 ## Components of Nibiru
 
+- **CosmWasm Smart Contracts**: Rust-based, [WebAssembly (WASM) smart contracts](https://book.cosmwasm.com/) built for the Cosmos Ecosystem. 
 - **Nibi-Perps**: A perpetual futures exchange where users can take leveraged exposure and trade on a plethora of assets — completely on-chain, completely non-custodially, and with minimal gas fees.
+- **Oracle Module**: Nibiru accurately prices assets using a native, system of decentralized oracles, and communicates with other Cosmos layer-1 chains using the Inter-Blockchain Communication (IBC) (opens new window)protocol.
 - **Nibi-Swap**: An automated market maker protocol for multichain assets. This application gives users access to swaps, pools, and bonded liquidity gauges.
 - **NUSD Stablecoin**: Nibiru powers a two-token economic model, where NIBI is the staking and utility token for the protocol and NUSD is a capital-efficient, partially collateralized stablecoin for the protocol.
-- **Oracle Module**: Nibiru accurately prices assets using a native, system of decentralized oracles, and communicates with other Cosmos layer-1 chains using the Inter-Blockchain Communication (IBC) (opens new window)protocol.
-- **CosmWasm Smart Contracts**: Rust-based, [WebAssembly (WASM) smart contracts](https://book.cosmwasm.com/) built for the Cosmos Ecosystem. 
 
 ## Modules
 
@@ -26,7 +26,6 @@
 | [perp][code-x-perp] | Powers the Nibi-Perps exchange. This module enables traders to open long and short leveraged positions and houses all of the PnL calculation and liquidation logic. |
 | [spot][code-x-spot] | Responsible for creating, joining, and exiting liquidity pools. It also allows users to swap between two assets in an existing pool. It's a fully functional AMM. |
 | [stablecoin][code-x-stablecoin] | Resonsible for handling mint and redeem transactions with NUSD. |
-| [vpool][code-x-vpool] | The vpool module manages the virtual AMM pools (vpools) that support Nibi-Perps. |
 | [wasm][code-x-wasm] | Implements the execution environment for [WebAssembly (WASM) smart contracts](https://book.cosmwasm.com/). |
 
 [code-x-common]: https://github.com/NibiruChain/nibiru/tree/master/x/common
@@ -35,7 +34,6 @@
 [code-x-perp]: https://github.com/NibiruChain/nibiru/tree/master/x/perp
 [code-x-spot]: https://github.com/NibiruChain/nibiru/tree/master/x/spot
 [code-x-stablecoin]: https://github.com/NibiruChain/nibiru/tree/master/x/stablecoin
-[code-x-vpool]: https://github.com/NibiruChain/nibiru/tree/master/x/vpool
 [code-x-wasm]: https://github.com/NibiruChain/nibiru/tree/master/x/wasm
 
 Nibiru is built with the [Cosmos-SDK][cosmos-sdk-repo] on [Tendermint Core](https://tendermint.com/core/) consensus, accurately prices assets using a system of decentralized oracles, and communicates with other Cosmos layer-1 chains using the [Inter-Blockchain Communication (IBC)](https://github.com/cosmos/ibc) protocol.  

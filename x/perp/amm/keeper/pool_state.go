@@ -18,11 +18,11 @@ func (k Keeper) CreatePool(
 	pair asset.Pair,
 	quoteAssetReserve sdk.Dec,
 	baseAssetReserve sdk.Dec,
-	config types.VpoolConfig,
+	config types.MarketConfig,
 	bias sdk.Dec,
 	pegMultiplier sdk.Dec,
 ) error {
-	vpool := types.NewVpool(types.ArgsNewVpool{
+	market := types.NewMarket(types.ArgsNewMarket{
 		Pair:          pair,
 		BaseReserves:  baseAssetReserve,
 		QuoteReserves: quoteAssetReserve,
@@ -31,18 +31,18 @@ func (k Keeper) CreatePool(
 		PegMultiplier: pegMultiplier,
 	})
 
-	err := vpool.Validate()
+	err := market.Validate()
 	if err != nil {
 		return err
 	}
 
 	return common.TryCatch(func() {
-		k.Pools.Insert(ctx, pair, vpool)
+		k.Pools.Insert(ctx, pair, market)
 
 		k.ReserveSnapshots.Insert(
 			ctx,
 			collections.Join(pair, ctx.BlockTime()),
-			vpool.ToSnapshot(ctx),
+			market.ToSnapshot(ctx),
 		)
 	})()
 }
@@ -50,28 +50,28 @@ func (k Keeper) CreatePool(
 func (k Keeper) EditPoolConfig(
 	ctx sdk.Context,
 	pair asset.Pair,
-	config types.VpoolConfig,
+	config types.MarketConfig,
 ) error {
 	// Grab current pool from state
-	vpool, err := k.Pools.Get(ctx, pair)
+	market, err := k.Pools.Get(ctx, pair)
 	if err != nil {
 		return err
 	}
 
-	newVpool := types.Vpool{
-		Pair:              vpool.Pair,
-		BaseAssetReserve:  vpool.BaseAssetReserve,
-		QuoteAssetReserve: vpool.QuoteAssetReserve,
-		SqrtDepth:         vpool.SqrtDepth,
+	newMarket := types.Market{
+		Pair:              market.Pair,
+		BaseAssetReserve:  market.BaseAssetReserve,
+		QuoteAssetReserve: market.QuoteAssetReserve,
+		SqrtDepth:         market.SqrtDepth,
 		Config:            config, // main change is here
 	}
-	if err := newVpool.Validate(); err != nil {
+	if err := newMarket.Validate(); err != nil {
 		return err
 	}
 
 	err = k.updatePool(
 		ctx,
-		newVpool,
+		newMarket,
 		/*skipFluctuationLimitCheck*/ true)
 	if err != nil {
 		return err
@@ -88,7 +88,7 @@ func (k Keeper) EditSwapInvariant(
 	}
 
 	// Grab current pool from state
-	vpool, err := k.Pools.Get(ctx, swapInvariantMap.Pair)
+	market, err := k.Pools.Get(ctx, swapInvariantMap.Pair)
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func (k Keeper) EditSwapInvariant(
 	// k = x * y
 	// newK = (cx) * (cy) = c^2 xy = c^2 k
 	// newPrice = (c y) / (c x) = y / x = price | unchanged price
-	swapInvariant := vpool.BaseAssetReserve.Mul(vpool.QuoteAssetReserve)
+	swapInvariant := market.BaseAssetReserve.Mul(market.QuoteAssetReserve)
 	newSwapInvariant := swapInvariant.Mul(swapInvariantMap.Multiplier)
 
 	// Change the swap invariant while holding price constant.
@@ -107,24 +107,24 @@ func (k Keeper) EditSwapInvariant(
 		return err
 	}
 
-	newBaseAmount := c.Mul(vpool.BaseAssetReserve)
-	newQuoteAmount := c.Mul(vpool.QuoteAssetReserve)
+	newBaseAmount := c.Mul(market.BaseAssetReserve)
+	newQuoteAmount := c.Mul(market.QuoteAssetReserve)
 	newSqrtDepth := common.MustSqrtDec(newBaseAmount.Mul(newQuoteAmount))
 
-	newVpool := types.Vpool{
-		Pair:              vpool.Pair,
+	newMarket := types.Market{
+		Pair:              market.Pair,
 		BaseAssetReserve:  newBaseAmount,
 		QuoteAssetReserve: newQuoteAmount,
 		SqrtDepth:         newSqrtDepth,
-		Config:            vpool.Config,
+		Config:            market.Config,
 	}
-	if err := newVpool.Validate(); err != nil {
+	if err := newMarket.Validate(); err != nil {
 		return err
 	}
 
 	err = k.updatePool(
 		ctx,
-		newVpool,
+		newMarket,
 		/*skipFluctuationLimitCheck*/ true)
 	if err != nil {
 		return err
@@ -145,7 +145,7 @@ ret:
 */
 func (k Keeper) updatePool(
 	ctx sdk.Context,
-	updatedPool types.Vpool,
+	updatedPool types.Market,
 	skipFluctuationCheck bool,
 ) (err error) {
 	if !skipFluctuationCheck {
@@ -165,11 +165,11 @@ func (k Keeper) ExistsPool(ctx sdk.Context, pair asset.Pair) bool {
 	return err == nil
 }
 
-// GetPoolPrices returns the mark price, twap (mark) price, and index price for a vpool.
+// GetPoolPrices returns the mark price, twap (mark) price, and index price for a market.
 // An error is returned if the pool does not exist.
 // No error is returned if the prices don't exist, however.
 func (k Keeper) GetPoolPrices(
-	ctx sdk.Context, pool types.Vpool,
+	ctx sdk.Context, pool types.Market,
 ) (types.PoolPrices, error) {
 	if err := pool.Pair.Validate(); err != nil {
 		return types.PoolPrices{}, err
@@ -185,7 +185,7 @@ func (k Keeper) GetPoolPrices(
 
 	indexPrice, err := k.oracleKeeper.GetExchangeRate(ctx, pool.Pair)
 	if err != nil {
-		// fail gracefully so that vpool queries run even if the oracle price feeds stop
+		// fail gracefully so that market queries run even if the oracle price feeds stop
 		k.Logger(ctx).Error(err.Error())
 	}
 
@@ -198,7 +198,7 @@ func (k Keeper) GetPoolPrices(
 		15*time.Minute,
 	)
 	if err != nil {
-		// fail gracefully so that vpool queries run even if the TWAP is undefined.
+		// fail gracefully so that market queries run even if the TWAP is undefined.
 		k.Logger(ctx).Error(err.Error())
 	}
 

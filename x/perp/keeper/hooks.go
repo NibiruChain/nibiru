@@ -22,7 +22,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64)
 	}
 
 	for _, pairMetadata := range k.PairsMetadata.Iterate(ctx, collections.Range[asset.Pair]{}).Values() {
-		if !k.VpoolKeeper.ExistsPool(ctx, pairMetadata.Pair) {
+		if !k.PerpAmmKeeper.ExistsPool(ctx, pairMetadata.Pair) {
 			ctx.Logger().Error("no pool for pair found", "pairMetadata.Pair", pairMetadata.Pair)
 			continue
 		}
@@ -37,7 +37,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64)
 			continue
 		}
 
-		markTwap, err := k.VpoolKeeper.GetMarkPriceTWAP(ctx, pairMetadata.Pair, params.TwapLookbackWindow)
+		markTwap, err := k.PerpAmmKeeper.GetMarkPriceTWAP(ctx, pairMetadata.Pair, params.TwapLookbackWindow)
 		if err != nil {
 			ctx.Logger().Error("failed to fetch twap mark price", "pairMetadata.Pair", pairMetadata.Pair, "error", err)
 			continue

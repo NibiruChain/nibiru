@@ -16,7 +16,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	vpooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
@@ -28,7 +28,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 	traderAddr := testutilevents.AccAddress()
 
 	type test struct {
-		positionSide              types.Side
+		positionSide              perpammtypes.Direction
 		quoteAmount               sdk.Int
 		leverage                  sdk.Dec
 		baseAssetLimit            sdk.Dec
@@ -40,7 +40,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 
 	testCases := map[string]test{
 		"happy path - Buy": {
-			positionSide:   types.Side_BUY,
+			positionSide:   perpammtypes.Direction_LONG,
 			quoteAmount:    sdk.NewInt(50_000),
 			leverage:       sdk.OneDec(),
 			baseAssetLimit: sdk.ZeroDec(),
@@ -58,7 +58,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			expectedPerpEFBalance: sdk.NewInt64Coin("NUSD", 1_047_550),
 		},
 		"happy path - Sell": {
-			positionSide: types.Side_SELL,
+			positionSide: perpammtypes.Direction_SHORT,
 			quoteAmount:  sdk.NewInt(50_000),
 			// There's a 20 bps tx fee on open position.
 			// This tx fee is split 50/50 bw the PerpEF and Treasury.
@@ -84,14 +84,14 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			ctx = ctx.WithBlockTime(time.Now())
 			perpKeeper := &nibiruApp.PerpKeeper
 
-			t.Log("create vpool")
-			vpoolKeeper := &nibiruApp.VpoolKeeper
-			assert.NoError(t, vpoolKeeper.CreatePool(
+			t.Log("create market")
+			perpammKeeper := &nibiruApp.PerpAmmKeeper
+			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				tokenPair,
 				/* quoteAssetReserves */ sdk.NewDec(10*common.TO_MICRO),
 				/* baseAssetReserves */ sdk.NewDec(5*common.TO_MICRO),
-				vpooltypes.VpoolConfig{
+				perpammtypes.MarketConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
@@ -101,7 +101,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				sdk.ZeroDec(),
 				sdk.OneDec(),
 			))
-			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
+			require.True(t, perpammKeeper.ExistsPool(ctx, tokenPair))
 
 			nibiruApp.OracleKeeper.SetPrice(ctx, tokenPair, sdk.NewDec(2))
 
@@ -166,7 +166,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			require.EqualValues(t, tc.expectedPerpEFBalance, perpEFBalance)
 
 			t.Log("check emitted events")
-			newMarkPrice, err := vpoolKeeper.GetMarkPrice(ctx, tokenPair)
+			newMarkPrice, err := perpammKeeper.GetMarkPrice(ctx, tokenPair)
 			require.NoError(t, err)
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
 				Pair:                  tokenPair,
@@ -198,7 +198,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 
 	testCases := []struct {
 		name           string
-		side           types.Side
+		side           perpammtypes.Direction
 		quote          sdk.Int
 		leverage       sdk.Dec
 		baseLimit      sdk.Dec
@@ -212,7 +212,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 	}{
 		{
 			name:           "happy path - Buy",
-			side:           types.Side_BUY,
+			side:           perpammtypes.Direction_LONG,
 			quote:          sdk.NewInt(50_000),
 			leverage:       sdk.OneDec(),
 			baseLimit:      sdk.ZeroDec(),
@@ -234,7 +234,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 		},
 		{
 			name:           "happy path - Sell",
-			side:           types.Side_SELL,
+			side:           perpammtypes.Direction_SHORT,
 			quote:          sdk.NewInt(50_000),
 			leverage:       sdk.OneDec(),
 			baseLimit:      sdk.ZeroDec(),
@@ -264,14 +264,14 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 			ctx = ctx.WithBlockTime(time.Now())
 
-			t.Log("Set vpool defined by pair on VpoolKeeper")
-			vpoolKeeper := &nibiruApp.VpoolKeeper
-			assert.NoError(t, vpoolKeeper.CreatePool(
+			t.Log("Set market defined by pair on PerpAmmKeeper")
+			perpammKeeper := &nibiruApp.PerpAmmKeeper
+			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				tokenPair,
 				/* quoteAssetReserves */ sdk.NewDec(10_000*common.TO_MICRO*common.TO_MICRO),
 				/* baseAssetReserves */ sdk.NewDec(5_000*common.TO_MICRO*common.TO_MICRO),
-				vpooltypes.VpoolConfig{
+				perpammtypes.MarketConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
@@ -281,9 +281,9 @@ func TestExecutePartialLiquidation(t *testing.T) {
 				sdk.ZeroDec(),
 				sdk.OneDec(),
 			))
-			require.True(t, vpoolKeeper.ExistsPool(ctx, tokenPair))
+			require.True(t, perpammKeeper.ExistsPool(ctx, tokenPair))
 
-			t.Log("Set vpool defined by pair on PerpKeeper")
+			t.Log("Set market defined by pair on PerpKeeper")
 			perpKeeper := &nibiruApp.PerpKeeper
 			params := types.DefaultParams()
 
@@ -360,7 +360,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			)
 
 			t.Log("check emitted events")
-			newMarkPrice, err := vpoolKeeper.GetMarkPrice(ctx, tokenPair)
+			newMarkPrice, err := perpammKeeper.GetMarkPrice(ctx, tokenPair)
 			require.NoError(t, err)
 			testutilevents.RequireHasTypedEvent(t, ctx, &types.PositionLiquidatedEvent{
 				Pair:                  tokenPair,
@@ -440,13 +440,13 @@ func TestMultiLiquidate(t *testing.T) {
 			setLiquidator(ctx, app.PerpKeeper, tc.liquidator)
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
-			t.Log("create vpool")
-			assert.NoError(t, app.VpoolKeeper.CreatePool(
+			t.Log("create market")
+			assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 				/* ctx */ ctx,
 				/* pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
 				/* baseAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
-				vpooltypes.VpoolConfig{
+				perpammtypes.MarketConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaxOracleSpreadRatio:   sdk.OneDec(),

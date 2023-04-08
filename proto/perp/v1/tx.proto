@@ -5,7 +5,9 @@ package nibiru.perp.v1;
 import "google/api/annotations.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
+
 import "perp/v1/state.proto";
+import "perp/amm/v1/state.proto";
 
 option go_package="github.com/NibiruChain/nibiru/x/perp/types";
 
@@ -124,7 +126,7 @@ message MsgOpenPosition {
     (gogoproto.nullable) = false
   ];
 
-  nibiru.perp.v1.Side side = 3;
+  nibiru.perp.amm.v1.Direction side = 3;
 
   string quote_asset_amount = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",

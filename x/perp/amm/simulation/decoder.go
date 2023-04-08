@@ -16,17 +16,17 @@ func NewDecodeStore(cdc codec.BinaryCodec) func(kvA, kvB kv.Pair) string {
 	return func(kvA, kvB kv.Pair) string {
 		switch {
 		case bytes.Equal(kvA.Key[:1], []byte{0x0}):
-			var vpoolA, vpoolB types.Vpool
-			cdc.MustUnmarshal(kvA.Value, &vpoolA)
-			cdc.MustUnmarshal(kvB.Value, &vpoolB)
-			return fmt.Sprintf("%v\n%v", vpoolA, vpoolB)
+			var marketA, marketB types.Market
+			cdc.MustUnmarshal(kvA.Value, &marketA)
+			cdc.MustUnmarshal(kvB.Value, &marketB)
+			return fmt.Sprintf("%v\n%v", marketA, marketB)
 		case bytes.Equal(kvA.Key[:1], []byte{0x1}):
 			var snapshotA, snapshotB types.ReserveSnapshot
 			cdc.MustUnmarshal(kvA.Value, &snapshotA)
 			cdc.MustUnmarshal(kvB.Value, &snapshotB)
 			return fmt.Sprintf("%v\n%v", snapshotA, snapshotB)
 		default:
-			panic(fmt.Sprintf("invalid vpool key %X", kvA.Key))
+			panic(fmt.Sprintf("invalid market key %X", kvA.Key))
 		}
 	}
 }

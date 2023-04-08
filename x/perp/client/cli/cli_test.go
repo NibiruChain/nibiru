@@ -19,7 +19,7 @@ import (
 	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
-	vpooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/client/cli"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 )
@@ -49,15 +49,15 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	encodingConfig := app.MakeTestEncodingConfig()
 	genesisState := genesis.NewTestGenesisState()
 
-	// setup vpool
-	vpoolGenesis := vpooltypes.DefaultGenesis()
-	vpoolGenesis.Vpools = []vpooltypes.Vpool{
+	// setup market
+	marketGenesis := perpammtypes.DefaultGenesis()
+	marketGenesis.Markets = []perpammtypes.Market{
 		{
 			Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
 			QuoteAssetReserve: sdk.NewDec(60_000 * common.TO_MICRO),
 			SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 60_000 * common.TO_MICRO * common.TO_MICRO)),
-			Config: vpooltypes.VpoolConfig{
+			Config: perpammtypes.MarketConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 				FluctuationLimitRatio:  sdk.OneDec(),
 				MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -70,7 +70,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
 			QuoteAssetReserve: sdk.NewDec(60_000 * common.TO_MICRO),
 			SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 60_000 * common.TO_MICRO * common.TO_MICRO)),
-			Config: vpooltypes.VpoolConfig{
+			Config: perpammtypes.MarketConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
 				MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -83,7 +83,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
 			QuoteAssetReserve: sdk.NewDec(60_000 * common.TO_MICRO),
 			SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 60_000 * common.TO_MICRO * common.TO_MICRO)),
-			Config: vpooltypes.VpoolConfig{
+			Config: perpammtypes.MarketConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
 				MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -96,7 +96,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
 			QuoteAssetReserve: sdk.NewDec(60_000 * common.TO_MICRO),
 			SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 60_000 * common.TO_MICRO * common.TO_MICRO)),
-			Config: vpooltypes.VpoolConfig{
+			Config: perpammtypes.MarketConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
 				MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -105,7 +105,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			},
 		},
 	}
-	genesisState[vpooltypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(vpoolGenesis)
+	genesisState[perpammtypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(marketGenesis)
 
 	// setup perp
 	perpGenesis := perptypes.DefaultGenesis()
@@ -266,8 +266,8 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.T().Logf("0. current exchange rate is: %+v", exchangeRate)
 	s.NoError(err)
 
-	s.T().Log("A. check vpool balances")
-	reserveAssets, err := testutilcli.QueryVpoolReserveAssets(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+	s.T().Log("A. check market balances")
+	reserveAssets, err := testutilcli.QueryMarketReserveAssets(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 	s.T().Logf("reserve assets: %+v", reserveAssets)
 	s.NoError(err)
 	s.EqualValues(sdk.NewDec(10*common.TO_MICRO), reserveAssets.BaseAssetReserve)
@@ -288,8 +288,8 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.NoError(err)
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
-	s.T().Log("B. check vpool balance after open position")
-	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+	s.T().Log("B. check market balance after open position")
+	reserveAssets, err = testutilcli.QueryMarketReserveAssets(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 	s.T().Logf("reserve assets: %+v", reserveAssets)
 	s.NoError(err)
 	s.EqualValues(sdk.MustNewDecFromStr("9999833.336111064815586407"), reserveAssets.BaseAssetReserve)
@@ -344,8 +344,8 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.NoError(err)
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
-	s.T().Log("D. Check vpool after opening reverse position")
-	reserveAssets, err = testutilcli.QueryVpoolReserveAssets(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+	s.T().Log("D. Check market after opening reverse position")
+	reserveAssets, err = testutilcli.QueryMarketReserveAssets(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 	s.NoError(err)
 	s.T().Logf(" \n reserve assets: %+v \n", reserveAssets)
 	s.EqualValues(sdk.MustNewDecFromStr("9999500.041663750215262154"), reserveAssets.BaseAssetReserve)
