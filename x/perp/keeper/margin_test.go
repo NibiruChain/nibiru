@@ -15,7 +15,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	vpooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
@@ -70,7 +70,7 @@ func TestAddMarginSuccess(t *testing.T) {
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				sdk.NewDec(10*common.TO_MICRO), // 10 tokens
 				sdk.NewDec(5*common.TO_MICRO),  // 5 tokens
-				vpooltypes.VpoolConfig{
+				perpammtypes.VpoolConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"), // 0.1 ratio
 					MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -142,7 +142,7 @@ func TestRemoveMargin(t *testing.T) {
 					pair,
 					/* y */ sdk.NewDec(1*common.TO_MICRO), //
 					/* x */ sdk.NewDec(1*common.TO_MICRO), //
-					vpooltypes.VpoolConfig{
+					perpammtypes.VpoolConfig{
 						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 						FluctuationLimitRatio:  sdk.OneDec(),
 						MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -178,7 +178,7 @@ func TestRemoveMargin(t *testing.T) {
 					pair,
 					/* y */ quoteReserves,
 					/* x */ baseReserves,
-					vpooltypes.VpoolConfig{
+					perpammtypes.VpoolConfig{
 						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 						FluctuationLimitRatio:  sdk.OneDec(),
 						MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.4"),

@@ -55,11 +55,11 @@ ret:
   - err: error
 */
 func (k Keeper) GetBaseAssetPrice(
-	vpool types.Vpool,
+	amm types.Vpool,
 	dir types.Direction,
 	baseAssetAmount sdk.Dec,
 ) (quoteAmount sdk.Dec, err error) {
-	return vpool.GetQuoteAmountByBaseAmount(baseAssetAmount.MulInt64(dir.ToMultiplier()))
+	return amm.GetQuoteAmountByBaseAmount(baseAssetAmount.MulInt64(dir.ToMultiplier()))
 }
 
 /*

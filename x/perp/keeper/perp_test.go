@@ -14,7 +14,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	vpooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
@@ -34,7 +34,7 @@ func TestKeeperClosePosition(t *testing.T) {
 			pair,
 			/*quoteAssetReserve*/ sdk.NewDec(10*common.TO_MICRO),
 			/*baseAssetReserve*/ sdk.NewDec(5*common.TO_MICRO),
-			vpooltypes.VpoolConfig{
+			perpammtypes.VpoolConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),

@@ -1,4 +1,4 @@
-package vpool_test
+package amm_test
 
 import (
 	"testing"
@@ -11,7 +11,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	vpool "github.com/NibiruChain/nibiru/x/perp/amm"
+	perpamm "github.com/NibiruChain/nibiru/x/perp/amm"
 	"github.com/NibiruChain/nibiru/x/perp/amm/types"
 )
 
@@ -56,13 +56,13 @@ func TestGenesis(t *testing.T) {
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 	k := nibiruApp.VpoolKeeper
 
-	vpool.InitGenesis(ctx, k, genesisState)
+	perpamm.InitGenesis(ctx, k, genesisState)
 
 	for _, vp := range vpools {
 		require.True(t, k.ExistsPool(ctx, vp.Pair))
 	}
 
-	exportedGenesis := vpool.ExportGenesis(ctx, k)
+	exportedGenesis := perpamm.ExportGenesis(ctx, k)
 	require.Len(t, exportedGenesis.Vpools, 2)
 
 	iter := k.ReserveSnapshots.Iterate(

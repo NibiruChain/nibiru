@@ -1,4 +1,4 @@
-package vpool
+package amm
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"

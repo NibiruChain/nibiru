@@ -3,7 +3,7 @@ package keeper
 import (
 	"fmt"
 
-	vpooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -88,7 +88,7 @@ position without making it go underwater.
 - err: error
 */
 func (k Keeper) calcFreeCollateral(
-	ctx sdk.Context, vpool vpooltypes.Vpool, pos types.Position,
+	ctx sdk.Context, vpool perpammtypes.Vpool, pos types.Position,
 ) (freeCollateral sdk.Dec, err error) {
 	if err = pos.Pair.Validate(); err != nil {
 		return

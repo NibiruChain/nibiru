@@ -13,7 +13,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	vpooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
@@ -51,7 +51,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 					pair,
 					/* y */ sdk.NewDec(1*common.TO_MICRO), //
 					/* x */ sdk.NewDec(1*common.TO_MICRO), //
-					vpooltypes.VpoolConfig{
+					perpammtypes.VpoolConfig{
 						FluctuationLimitRatio:  sdk.MustNewDecFromStr("1.0"),
 						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 						MaxLeverage:            sdk.MustNewDecFromStr("15"),
@@ -106,7 +106,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 					pair,
 					/* y */ sdk.NewDec(1*common.TO_MICRO), //
 					/* x */ sdk.NewDec(1*common.TO_MICRO), //
-					vpooltypes.VpoolConfig{
+					perpammtypes.VpoolConfig{
 						FluctuationLimitRatio:  sdk.MustNewDecFromStr("1.0"),
 						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 						MaxLeverage:            sdk.MustNewDecFromStr("15"),

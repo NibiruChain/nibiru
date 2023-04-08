@@ -19,7 +19,7 @@ import (
 	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
-	vpooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/client/cli"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 )
@@ -50,14 +50,14 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	genesisState := genesis.NewTestGenesisState()
 
 	// setup vpool
-	vpoolGenesis := vpooltypes.DefaultGenesis()
-	vpoolGenesis.Vpools = []vpooltypes.Vpool{
+	vpoolGenesis := perpammtypes.DefaultGenesis()
+	vpoolGenesis.Vpools = []perpammtypes.Vpool{
 		{
 			Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
 			QuoteAssetReserve: sdk.NewDec(60_000 * common.TO_MICRO),
 			SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 60_000 * common.TO_MICRO * common.TO_MICRO)),
-			Config: vpooltypes.VpoolConfig{
+			Config: perpammtypes.VpoolConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 				FluctuationLimitRatio:  sdk.OneDec(),
 				MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -70,7 +70,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
 			QuoteAssetReserve: sdk.NewDec(60_000 * common.TO_MICRO),
 			SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 60_000 * common.TO_MICRO * common.TO_MICRO)),
-			Config: vpooltypes.VpoolConfig{
+			Config: perpammtypes.VpoolConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
 				MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -83,7 +83,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
 			QuoteAssetReserve: sdk.NewDec(60_000 * common.TO_MICRO),
 			SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 60_000 * common.TO_MICRO * common.TO_MICRO)),
-			Config: vpooltypes.VpoolConfig{
+			Config: perpammtypes.VpoolConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
 				MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -96,7 +96,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
 			QuoteAssetReserve: sdk.NewDec(60_000 * common.TO_MICRO),
 			SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 60_000 * common.TO_MICRO * common.TO_MICRO)),
-			Config: vpooltypes.VpoolConfig{
+			Config: perpammtypes.VpoolConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
 				MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -105,7 +105,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			},
 		},
 	}
-	genesisState[vpooltypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(vpoolGenesis)
+	genesisState[perpammtypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(vpoolGenesis)
 
 	// setup perp
 	perpGenesis := perptypes.DefaultGenesis()

@@ -8,7 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	vpooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
@@ -187,7 +187,7 @@ func (k Keeper) RemoveMargin(
 
 // GetMarginRatio calculates the MarginRatio from a Position
 func (k Keeper) GetMarginRatio(
-	ctx sdk.Context, vpool vpooltypes.Vpool, position types.Position, priceOption types.MarginCalculationPriceOption,
+	ctx sdk.Context, vpool perpammtypes.Vpool, position types.Position, priceOption types.MarginCalculationPriceOption,
 ) (marginRatio sdk.Dec, err error) {
 	if position.Size_.IsZero() {
 		return sdk.Dec{}, types.ErrPositionZero
@@ -296,7 +296,7 @@ Returns:
 */
 func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 	ctx sdk.Context,
-	vpool vpooltypes.Vpool,
+	vpool perpammtypes.Vpool,
 	currentPosition types.Position,
 	pnlCalcOption types.PnLCalcOption,
 ) (positionNotional sdk.Dec, unrealizedPnL sdk.Dec, err error) {
@@ -305,13 +305,13 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 		return sdk.ZeroDec(), sdk.ZeroDec(), nil
 	}
 
-	var baseAssetDirection vpooltypes.Direction
+	var baseAssetDirection perpammtypes.Direction
 	if currentPosition.Size_.IsPositive() {
 		// LONG
-		baseAssetDirection = vpooltypes.Direction_ADD_TO_POOL
+		baseAssetDirection = perpammtypes.Direction_ADD_TO_POOL
 	} else {
 		// SHORT
-		baseAssetDirection = vpooltypes.Direction_REMOVE_FROM_POOL
+		baseAssetDirection = perpammtypes.Direction_REMOVE_FROM_POOL
 	}
 
 	switch pnlCalcOption {
@@ -391,7 +391,7 @@ Returns:
 */
 func (k Keeper) GetPreferencePositionNotionalAndUnrealizedPnL(
 	ctx sdk.Context,
-	vpool vpooltypes.Vpool,
+	vpool perpammtypes.Vpool,
 	position types.Position,
 	pnLPreferenceOption types.PnLPreferenceOption,
 ) (positionNotional sdk.Dec, unrealizedPnl sdk.Dec, err error) {

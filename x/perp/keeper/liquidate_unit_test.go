@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	vpooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
@@ -109,7 +109,7 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 			})
 
 			t.Log("mock vpool keeper")
-			vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+			vpool := perpammtypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			mocks.mockVpoolKeeper.EXPECT().
 				GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).
 				Times(2).
@@ -128,7 +128,7 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 				GetBaseAssetTWAP(
 					ctx,
 					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					vpooltypes.Direction_ADD_TO_POOL,
+					perpammtypes.Direction_ADD_TO_POOL,
 					sdk.OneDec(),
 					15*time.Minute,
 				).
@@ -136,14 +136,14 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetPrice(
 					vpool,
-					vpooltypes.Direction_ADD_TO_POOL,
+					perpammtypes.Direction_ADD_TO_POOL,
 					sdk.OneDec(),
 				).
 				Return(tc.newPositionNotional, nil).Times(3)
 			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetPrice(
 					vpool,
-					vpooltypes.Direction_ADD_TO_POOL,
+					perpammtypes.Direction_ADD_TO_POOL,
 					tc.exchangedSize,
 				).
 				Return(tc.exchangedNotional, nil)
@@ -151,7 +151,7 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 				SwapQuoteForBase(
 					ctx,
 					vpool,
-					vpooltypes.Direction_REMOVE_FROM_POOL,
+					perpammtypes.Direction_REMOVE_FROM_POOL,
 					/* quoteAmt */ tc.exchangedNotional,
 					/* baseLimit */ sdk.ZeroDec(),
 					/* skipFluctuationLimitCheck */ true,
@@ -287,7 +287,7 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 			})
 
 			t.Log("mock vpool keeper")
-			vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+			vpool := perpammtypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			mocks.mockVpoolKeeper.EXPECT().
 				GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Times(2).
 				Return(vpool, nil)
@@ -304,7 +304,7 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 				GetBaseAssetTWAP(
 					ctx,
 					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					vpooltypes.Direction_ADD_TO_POOL,
+					perpammtypes.Direction_ADD_TO_POOL,
 					tc.initialPositionSize,
 					15*time.Minute,
 				).
@@ -312,7 +312,7 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetPrice(
 					vpool,
-					vpooltypes.Direction_ADD_TO_POOL,
+					perpammtypes.Direction_ADD_TO_POOL,
 					tc.initialPositionSize,
 				).
 				Return(tc.newPositionNotional, nil).Times(3)
@@ -320,7 +320,7 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 				SwapBaseForQuote(
 					ctx,
 					vpool,
-					vpooltypes.Direction_ADD_TO_POOL,
+					perpammtypes.Direction_ADD_TO_POOL,
 					/* baseAmt */ tc.initialPositionSize,
 					/* quoteLimit */ sdk.ZeroDec(),
 					/* skipFluctuationLimitCheck */ true,
@@ -461,7 +461,7 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 			})
 
 			t.Log("mock vpool keeper")
-			vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+			vpool := perpammtypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			mocks.mockVpoolKeeper.EXPECT().
 				GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Times(2).
 				Return(vpool, nil)
@@ -478,7 +478,7 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 				GetBaseAssetTWAP(
 					ctx,
 					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					vpooltypes.Direction_ADD_TO_POOL,
+					perpammtypes.Direction_ADD_TO_POOL,
 					tc.initialPositionSize,
 					15*time.Minute,
 				).
@@ -486,7 +486,7 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 			mocks.mockVpoolKeeper.EXPECT().
 				GetBaseAssetPrice(
 					vpool,
-					vpooltypes.Direction_ADD_TO_POOL,
+					perpammtypes.Direction_ADD_TO_POOL,
 					tc.initialPositionSize,
 				).
 				Return(tc.newPositionNotional, nil).Times(3)
@@ -494,7 +494,7 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 				SwapBaseForQuote(
 					ctx,
 					vpool,
-					vpooltypes.Direction_ADD_TO_POOL,
+					perpammtypes.Direction_ADD_TO_POOL,
 					/* baseAmt */ tc.initialPositionSize,
 					/* quoteLimit */ sdk.ZeroDec(),
 					/* skipFluctuationLimitCheck */ true,
@@ -902,9 +902,9 @@ func TestKeeper_ExecuteFullLiquidation(t *testing.T) {
 			perpKeeper, mocks, ctx := getKeeper(t)
 			liquidatorAddr := testutilevents.AccAddress()
 			traderAddr := testutilevents.AccAddress()
-			baseAssetDirection := vpooltypes.Direction_ADD_TO_POOL
+			baseAssetDirection := perpammtypes.Direction_ADD_TO_POOL
 			if tc.initialPositionSize.IsNegative() {
-				baseAssetDirection = vpooltypes.Direction_REMOVE_FROM_POOL
+				baseAssetDirection = perpammtypes.Direction_REMOVE_FROM_POOL
 			}
 
 			t.Log("mock bank keeper")
@@ -943,7 +943,7 @@ func TestKeeper_ExecuteFullLiquidation(t *testing.T) {
 			})
 
 			t.Log("mock vpool")
-			vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+			vpool := perpammtypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			mocks.mockVpoolKeeper.EXPECT().GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(vpool, nil)
 			mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).AnyTimes().Return(true)
 			mocks.mockVpoolKeeper.EXPECT().
@@ -1198,9 +1198,9 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 			perpKeeper, mocks, ctx := getKeeper(t)
 			liquidatorAddr := testutilevents.AccAddress()
 			traderAddr := testutilevents.AccAddress()
-			baseAssetDirection := vpooltypes.Direction_ADD_TO_POOL
+			baseAssetDirection := perpammtypes.Direction_ADD_TO_POOL
 			if tc.initialPositionSize.IsNegative() {
-				baseAssetDirection = vpooltypes.Direction_REMOVE_FROM_POOL
+				baseAssetDirection = perpammtypes.Direction_REMOVE_FROM_POOL
 			}
 
 			t.Log("mock bank keeper")
@@ -1235,7 +1235,7 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 			})
 
 			t.Log("mock vpool")
-			vpool := vpooltypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+			vpool := perpammtypes.Vpool{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			mocks.mockVpoolKeeper.EXPECT().
 				GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).
 				Return(vpool, nil)
@@ -1261,7 +1261,7 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 					SwapQuoteForBase(
 						ctx,
 						vpool,
-						vpooltypes.Direction_ADD_TO_POOL,
+						perpammtypes.Direction_ADD_TO_POOL,
 						/*baseAssetAmount=*/ tc.baseAssetPriceInQuote.Mul(tc.partialLiquidationRatio),
 						/*quoteAssetAssetLimit=*/ sdk.ZeroDec(),
 						/* skipFluctuationLimitCheck */ true,
@@ -1271,7 +1271,7 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 					SwapQuoteForBase(
 						ctx,
 						vpool,
-						vpooltypes.Direction_REMOVE_FROM_POOL,
+						perpammtypes.Direction_REMOVE_FROM_POOL,
 						/*baseAssetAmount=*/ tc.baseAssetPriceInQuote.Mul(tc.partialLiquidationRatio),
 						/*quoteAssetAssetLimit=*/ sdk.ZeroDec(),
 						/* skipFluctuationLimitCheck */ true,

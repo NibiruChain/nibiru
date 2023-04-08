@@ -18,7 +18,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	vpooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
@@ -83,7 +83,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO),
 				/* baseReserve */ sdk.NewDec(1*common.TO_MICRO),
-				vpooltypes.VpoolConfig{
+				perpammtypes.VpoolConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -206,7 +206,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO),
 				/* baseReserve */ sdk.NewDec(1*common.TO_MICRO),
-				vpooltypes.VpoolConfig{
+				perpammtypes.VpoolConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -295,7 +295,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 				/* pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
 				/* baseAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
-				vpooltypes.VpoolConfig{
+				perpammtypes.VpoolConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -384,7 +384,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
 				/* baseAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
-				vpooltypes.VpoolConfig{
+				perpammtypes.VpoolConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -456,7 +456,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 		/* pair */ pair,
 		/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
 		/* baseAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
-		vpooltypes.VpoolConfig{
+		perpammtypes.VpoolConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),
 			MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -568,7 +568,7 @@ func TestMsgServerMultiLiquidate_NotAuthorized(t *testing.T) {
 		/* pair */ pair,
 		/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
 		/* baseAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
-		vpooltypes.VpoolConfig{
+		perpammtypes.VpoolConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),
 			MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -641,7 +641,7 @@ func TestMsgServerMultiLiquidate_AllFailed(t *testing.T) {
 		/* pair */ pair,
 		/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
 		/* baseAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
-		vpooltypes.VpoolConfig{
+		perpammtypes.VpoolConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),
 			MaxOracleSpreadRatio:   sdk.OneDec(),

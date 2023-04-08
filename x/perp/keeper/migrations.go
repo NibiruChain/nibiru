@@ -6,15 +6,15 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	vpoolkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
+	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
 func From2To3(perpKeeper Keeper, vpoolKeeper types.VpoolKeeper) module.MigrationHandler {
 	return func(ctx sdk.Context) error {
-		k, ok := vpoolKeeper.(vpoolkeeper.Keeper)
+		k, ok := vpoolKeeper.(perpammkeeper.Keeper)
 		if !ok {
-			panic("vpool keeper is not vpoolkeeper.Keeper")
+			panic("vpool keeper is not perpammkeeper.Keeper")
 		}
 
 		iterator := k.Pools.Iterate(ctx, collections.Range[asset.Pair]{}).Values()

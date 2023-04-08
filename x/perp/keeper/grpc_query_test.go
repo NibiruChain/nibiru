@@ -14,7 +14,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	vpooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
@@ -34,7 +34,7 @@ func initAppVpools(
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		quoteAssetReserve,
 		baseAssetReserve,
-		vpooltypes.VpoolConfig{
+		perpammtypes.VpoolConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),
 			MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -53,7 +53,7 @@ func initAppVpools(
 		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 		/* quoteReserve */ sdk.MustNewDecFromStr("100000"),
 		/* baseReserve */ sdk.MustNewDecFromStr("100000"),
-		vpooltypes.VpoolConfig{
+		perpammtypes.VpoolConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),
 			MaxOracleSpreadRatio:   sdk.OneDec(),
@@ -72,7 +72,7 @@ func initAppVpools(
 		asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 		/* quoteReserve */ sdk.MustNewDecFromStr("100000"),
 		/* baseReserve */ sdk.MustNewDecFromStr("100000"),
-		vpooltypes.VpoolConfig{
+		perpammtypes.VpoolConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),
 			MaxOracleSpreadRatio:   sdk.OneDec(),

@@ -17,7 +17,7 @@ import (
 )
 
 func TestQueryReserveAssets(t *testing.T) {
-	t.Log("initialize vpoolkeeper")
+	t.Log("initialize perpammkeeper")
 	vpoolKeeper, ctx := VpoolKeeper(t,
 		mock.NewMockOracleKeeper(gomock.NewController(t)),
 	)
@@ -53,7 +53,7 @@ func TestQueryReserveAssets(t *testing.T) {
 }
 
 func TestQueryAllPools(t *testing.T) {
-	t.Log("initialize vpoolkeeper")
+	t.Log("initialize perpammkeeper")
 	vpoolKeeper, mocks, ctx := getKeeper(t)
 	ctx = ctx.WithBlockHeight(1).WithBlockTime(time.Now())
 	queryServer := NewQuerier(vpoolKeeper)

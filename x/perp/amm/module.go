@@ -1,4 +1,4 @@
-package vpool
+package amm
 
 import (
 	"encoding/json"

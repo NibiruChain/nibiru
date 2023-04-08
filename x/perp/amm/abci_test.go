@@ -1,4 +1,4 @@
-package vpool_test
+package amm_test
 
 import (
 	"testing"
@@ -13,7 +13,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	vpool "github.com/NibiruChain/nibiru/x/perp/amm"
+	perpamm "github.com/NibiruChain/nibiru/x/perp/amm"
 	"github.com/NibiruChain/nibiru/x/perp/amm/types"
 )
 
@@ -22,7 +22,7 @@ func TestSnapshotUpdates(t *testing.T) {
 	vpoolKeeper := nibiruApp.VpoolKeeper
 
 	runBlock := func(duration time.Duration) {
-		vpool.EndBlocker(ctx, nibiruApp.VpoolKeeper)
+		perpamm.EndBlocker(ctx, nibiruApp.VpoolKeeper)
 		ctx = ctx.
 			WithBlockHeight(ctx.BlockHeight() + 1).
 			WithBlockTime(ctx.BlockTime().Add(duration))

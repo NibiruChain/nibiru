@@ -12,7 +12,7 @@ import (
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	vpooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 )
 
 // ----------------------------------------------------------
@@ -52,40 +52,40 @@ type OracleKeeper interface {
 type VpoolKeeper interface {
 	SwapBaseForQuote(
 		ctx sdk.Context,
-		vpool vpooltypes.Vpool,
-		dir vpooltypes.Direction,
+		vpool perpammtypes.Vpool,
+		dir perpammtypes.Direction,
 		baseAssetAmount sdk.Dec,
 		quoteAmountLimit sdk.Dec,
 		skipFluctuationLimitCheck bool,
-	) (vpooltypes.Vpool, sdk.Dec, error)
+	) (perpammtypes.Vpool, sdk.Dec, error)
 
 	SwapQuoteForBase(
 		ctx sdk.Context,
-		vpool vpooltypes.Vpool,
-		dir vpooltypes.Direction,
+		vpool perpammtypes.Vpool,
+		dir perpammtypes.Direction,
 		quoteAssetAmount sdk.Dec,
 		baseAmountLimit sdk.Dec,
 		skipFluctuationLimitCheck bool,
-	) (vpooltypes.Vpool, sdk.Dec, error)
+	) (perpammtypes.Vpool, sdk.Dec, error)
 
 	GetBaseAssetTWAP(
 		ctx sdk.Context,
 		pair asset.Pair,
-		direction vpooltypes.Direction,
+		direction perpammtypes.Direction,
 		baseAssetAmount sdk.Dec,
 		lookbackInterval time.Duration,
 	) (quoteAssetAmount sdk.Dec, err error)
 
 	GetBaseAssetPrice(
-		vpool vpooltypes.Vpool,
-		direction vpooltypes.Direction,
+		vpool perpammtypes.Vpool,
+		direction perpammtypes.Direction,
 		baseAssetAmount sdk.Dec,
 	) (quoteAssetAmount sdk.Dec, err error)
 
 	GetQuoteAssetPrice(
 		ctx sdk.Context,
 		pair asset.Pair,
-		dir vpooltypes.Direction,
+		dir perpammtypes.Direction,
 		quoteAmount sdk.Dec,
 	) (baseAssetAmount sdk.Dec, err error)
 
@@ -100,14 +100,14 @@ type VpoolKeeper interface {
 		lookbackInterval time.Duration,
 	) (quoteAssetAmount sdk.Dec, err error)
 
-	GetAllPools(ctx sdk.Context) []vpooltypes.Vpool
-	GetPool(ctx sdk.Context, pair asset.Pair) (vpooltypes.Vpool, error)
+	GetAllPools(ctx sdk.Context) []perpammtypes.Vpool
+	GetPool(ctx sdk.Context, pair asset.Pair) (perpammtypes.Vpool, error)
 
 	IsOverSpreadLimit(ctx sdk.Context, pair asset.Pair) (bool, error)
 	GetMaintenanceMarginRatio(ctx sdk.Context, pair asset.Pair) (sdk.Dec, error)
 	ExistsPool(ctx sdk.Context, pair asset.Pair) bool
 	GetSettlementPrice(ctx sdk.Context, pair asset.Pair) (sdk.Dec, error)
-	GetLastSnapshot(ctx sdk.Context, pool vpooltypes.Vpool) (vpooltypes.ReserveSnapshot, error)
+	GetLastSnapshot(ctx sdk.Context, pool perpammtypes.Vpool) (perpammtypes.ReserveSnapshot, error)
 }
 
 type EpochKeeper interface {

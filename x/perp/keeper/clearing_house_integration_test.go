@@ -23,7 +23,7 @@ import (
 	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 
-	vpooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 )
 
@@ -33,7 +33,7 @@ func createInitVPool() Action {
 	return CreateCustomVpool(pairBtcUsdc,
 		/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO*common.TO_MICRO),
 		/* baseReserve */ sdk.NewDec(1*common.TO_MICRO*common.TO_MICRO),
-		vpooltypes.VpoolConfig{
+		perpammtypes.VpoolConfig{
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
@@ -409,7 +409,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO*common.TO_MICRO),
 				/* baseReserve */ sdk.NewDec(1*common.TO_MICRO*common.TO_MICRO),
-				vpooltypes.VpoolConfig{
+				perpammtypes.VpoolConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
@@ -547,7 +547,7 @@ func TestOpenPositionError(t *testing.T) {
 			margin:              sdk.NewInt(1000),
 			leverage:            sdk.NewDec(10),
 			baseLimit:           sdk.NewDec(10_000),
-			expectedErr:         vpooltypes.ErrAssetFailsUserLimit,
+			expectedErr:         perpammtypes.ErrAssetFailsUserLimit,
 		},
 		{
 			name:                "new short position not under base limit",
@@ -558,7 +558,7 @@ func TestOpenPositionError(t *testing.T) {
 			margin:              sdk.NewInt(1000),
 			leverage:            sdk.NewDec(10),
 			baseLimit:           sdk.NewDec(10_000),
-			expectedErr:         vpooltypes.ErrAssetFailsUserLimit,
+			expectedErr:         perpammtypes.ErrAssetFailsUserLimit,
 		},
 		{
 			name:                "quote asset amount is zero",
@@ -613,7 +613,7 @@ func TestOpenPositionError(t *testing.T) {
 			margin:              sdk.NewInt(100_000 * common.TO_MICRO),
 			leverage:            sdk.OneDec(),
 			baseLimit:           sdk.ZeroDec(),
-			expectedErr:         vpooltypes.ErrOverFluctuationLimit,
+			expectedErr:         perpammtypes.ErrOverFluctuationLimit,
 		},
 		{
 			name:                "new short position over fluctuation limit",
@@ -624,7 +624,7 @@ func TestOpenPositionError(t *testing.T) {
 			margin:              sdk.NewInt(100_000 * common.TO_MICRO),
 			leverage:            sdk.OneDec(),
 			baseLimit:           sdk.ZeroDec(),
-			expectedErr:         vpooltypes.ErrOverFluctuationLimit,
+			expectedErr:         perpammtypes.ErrOverFluctuationLimit,
 		},
 		{
 			name:                "new long position over trade limit",
@@ -635,7 +635,7 @@ func TestOpenPositionError(t *testing.T) {
 			margin:              sdk.NewInt(100_000 * common.TO_MICRO),
 			leverage:            sdk.OneDec(),
 			baseLimit:           sdk.ZeroDec(),
-			expectedErr:         vpooltypes.ErrOverTradingLimit,
+			expectedErr:         perpammtypes.ErrOverTradingLimit,
 		},
 		{
 			name:                "new short position over trade limit",
@@ -646,7 +646,7 @@ func TestOpenPositionError(t *testing.T) {
 			margin:              sdk.NewInt(100_000 * common.TO_MICRO),
 			leverage:            sdk.OneDec(),
 			baseLimit:           sdk.ZeroDec(),
-			expectedErr:         vpooltypes.ErrOverTradingLimit,
+			expectedErr:         perpammtypes.ErrOverTradingLimit,
 		},
 	}
 
@@ -665,7 +665,7 @@ func TestOpenPositionError(t *testing.T) {
 				/* quoteReserve */
 				sdk.NewDec(1*common.TO_MICRO*common.TO_MICRO),
 				/* baseReserve */ sdk.NewDec(1*common.TO_MICRO*common.TO_MICRO),
-				vpooltypes.VpoolConfig{
+				perpammtypes.VpoolConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
@@ -705,7 +705,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 		{
 			name: "open pos - uninitialized pool raised pair not supported error",
 			test: func() {
-				t.Log("Setup Nibiru app, pair, and trader without a vpool.")
+				t.Log("Setup Nibiru app, pair, and trader without a perpamm.")
 				nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 				pair := asset.MustNewPair("xxx:yyy")
 
@@ -736,7 +736,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 					pair,
 					sdk.NewDec(10*common.TO_MICRO), //
 					sdk.NewDec(5*common.TO_MICRO),  // 5 tokens
-					vpooltypes.VpoolConfig{
+					perpammtypes.VpoolConfig{
 						FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 						MaxLeverage:            sdk.MustNewDecFromStr("15"),

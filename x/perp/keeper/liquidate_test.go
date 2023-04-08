@@ -16,7 +16,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	vpooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
@@ -91,7 +91,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 				tokenPair,
 				/* quoteAssetReserves */ sdk.NewDec(10*common.TO_MICRO),
 				/* baseAssetReserves */ sdk.NewDec(5*common.TO_MICRO),
-				vpooltypes.VpoolConfig{
+				perpammtypes.VpoolConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
@@ -271,7 +271,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 				tokenPair,
 				/* quoteAssetReserves */ sdk.NewDec(10_000*common.TO_MICRO*common.TO_MICRO),
 				/* baseAssetReserves */ sdk.NewDec(5_000*common.TO_MICRO*common.TO_MICRO),
-				vpooltypes.VpoolConfig{
+				perpammtypes.VpoolConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
@@ -446,7 +446,7 @@ func TestMultiLiquidate(t *testing.T) {
 				/* pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
 				/* baseAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
-				vpooltypes.VpoolConfig{
+				perpammtypes.VpoolConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaxOracleSpreadRatio:   sdk.OneDec(),

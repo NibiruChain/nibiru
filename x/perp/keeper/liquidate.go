@@ -6,7 +6,7 @@ import (
 	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	vpooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
@@ -307,11 +307,11 @@ func (k Keeper) ExecutePartialLiquidation(
 		return types.LiquidateResp{}, err
 	}
 
-	var baseAssetDir vpooltypes.Direction
+	var baseAssetDir perpammtypes.Direction
 	if currentPosition.Size_.IsPositive() {
-		baseAssetDir = vpooltypes.Direction_ADD_TO_POOL
+		baseAssetDir = perpammtypes.Direction_ADD_TO_POOL
 	} else {
-		baseAssetDir = vpooltypes.Direction_REMOVE_FROM_POOL
+		baseAssetDir = perpammtypes.Direction_REMOVE_FROM_POOL
 	}
 
 	partiallyLiquidatedPositionNotional, err := k.VpoolKeeper.GetBaseAssetPrice(
