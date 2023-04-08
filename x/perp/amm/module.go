@@ -154,7 +154,7 @@ func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage) []abci.ValidatorUpdate {
 	var genState types.GenesisState
-	// Initialize global invpool to invpool in genesis state
+	// Initialize global inmarket to inmarket in genesis state
 	cdc.MustUnmarshalJSON(gs, &genState)
 
 	InitGenesis(ctx, am.keeper, genState)
@@ -184,7 +184,7 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 
 // AppModuleSimulation functions
 
-// GenerateGenesisState creates a randomized GenState of the vpool module.
+// GenerateGenesisState creates a randomized GenState of the market module.
 func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 	simulation.RandomizedGenState(simState)
 }

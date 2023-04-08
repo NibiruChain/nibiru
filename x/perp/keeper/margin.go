@@ -20,7 +20,7 @@ to it. Adding margin increases the margin ratio of the corresponding position.
 func (k Keeper) AddMargin(
 	ctx sdk.Context, pair asset.Pair, traderAddr sdk.AccAddress, margin sdk.Coin,
 ) (res *types.MsgAddMarginResponse, err error) {
-	vpool, err := k.PerpAmmKeeper.GetPool(ctx, pair)
+	market, err := k.PerpAmmKeeper.GetPool(ctx, pair)
 	if err != nil {
 		return nil, types.ErrPairNotFound
 	}
@@ -54,7 +54,7 @@ func (k Keeper) AddMargin(
 	position.BlockNumber = ctx.BlockHeight()
 	k.Positions.Insert(ctx, collections.Join(position.Pair, traderAddr), position)
 
-	positionNotional, unrealizedPnl, err := k.getPositionNotionalAndUnrealizedPnL(ctx, vpool, position, types.PnLCalcOption_SPOT_PRICE)
+	positionNotional, unrealizedPnl, err := k.getPositionNotionalAndUnrealizedPnL(ctx, market, position, types.PnLCalcOption_SPOT_PRICE)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +114,7 @@ ret:
 func (k Keeper) RemoveMargin(
 	ctx sdk.Context, pair asset.Pair, traderAddr sdk.AccAddress, margin sdk.Coin,
 ) (marginOut sdk.Coin, fundingPayment sdk.Dec, position types.Position, err error) {
-	vpool, err := k.PerpAmmKeeper.GetPool(ctx, pair)
+	market, err := k.PerpAmmKeeper.GetPool(ctx, pair)
 	if err != nil {
 		return sdk.Coin{}, sdk.Dec{}, types.Position{}, types.ErrPairNotFound
 	}
@@ -137,7 +137,7 @@ func (k Keeper) RemoveMargin(
 	position.Margin = remainingMargin.Margin
 	position.LatestCumulativePremiumFraction = remainingMargin.LatestCumulativePremiumFraction
 
-	freeCollateral, err := k.calcFreeCollateral(ctx, vpool, position)
+	freeCollateral, err := k.calcFreeCollateral(ctx, market, position)
 	if err != nil {
 		return sdk.Coin{}, sdk.Dec{}, types.Position{}, err
 	} else if !freeCollateral.IsPositive() {
@@ -146,7 +146,7 @@ func (k Keeper) RemoveMargin(
 
 	k.Positions.Insert(ctx, collections.Join(position.Pair, traderAddr), position)
 
-	positionNotional, unrealizedPnl, err := k.getPositionNotionalAndUnrealizedPnL(ctx, vpool, position, types.PnLCalcOption_SPOT_PRICE)
+	positionNotional, unrealizedPnl, err := k.getPositionNotionalAndUnrealizedPnL(ctx, market, position, types.PnLCalcOption_SPOT_PRICE)
 	if err != nil {
 		return sdk.Coin{}, sdk.Dec{}, types.Position{}, err
 	}
@@ -187,7 +187,7 @@ func (k Keeper) RemoveMargin(
 
 // GetMarginRatio calculates the MarginRatio from a Position
 func (k Keeper) GetMarginRatio(
-	ctx sdk.Context, vpool perpammtypes.Market, position types.Position, priceOption types.MarginCalculationPriceOption,
+	ctx sdk.Context, market perpammtypes.Market, position types.Position, priceOption types.MarginCalculationPriceOption,
 ) (marginRatio sdk.Dec, err error) {
 	if position.Size_.IsZero() {
 		return sdk.Dec{}, types.ErrPositionZero
@@ -202,21 +202,21 @@ func (k Keeper) GetMarginRatio(
 	case types.MarginCalculationPriceOption_MAX_PNL:
 		positionNotional, unrealizedPnL, err = k.GetPreferencePositionNotionalAndUnrealizedPnL(
 			ctx,
-			vpool,
+			market,
 			position,
 			types.PnLPreferenceOption_MAX,
 		)
 	case types.MarginCalculationPriceOption_INDEX:
 		positionNotional, unrealizedPnL, err = k.getPositionNotionalAndUnrealizedPnL(
 			ctx,
-			vpool,
+			market,
 			position,
 			types.PnLCalcOption_ORACLE,
 		)
 	case types.MarginCalculationPriceOption_SPOT:
 		positionNotional, unrealizedPnL, err = k.getPositionNotionalAndUnrealizedPnL(
 			ctx,
-			vpool,
+			market,
 			position,
 			types.PnLCalcOption_SPOT_PRICE,
 		)
@@ -296,7 +296,7 @@ Returns:
 */
 func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 	ctx sdk.Context,
-	vpool perpammtypes.Market,
+	market perpammtypes.Market,
 	currentPosition types.Position,
 	pnlCalcOption types.PnLCalcOption,
 ) (positionNotional sdk.Dec, unrealizedPnL sdk.Dec, err error) {
@@ -329,7 +329,7 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 		}
 	case types.PnLCalcOption_SPOT_PRICE:
 		positionNotional, err = k.PerpAmmKeeper.GetBaseAssetPrice(
-			vpool,
+			market,
 			baseAssetDirection,
 			positionSizeAbs,
 		)
@@ -391,13 +391,13 @@ Returns:
 */
 func (k Keeper) GetPreferencePositionNotionalAndUnrealizedPnL(
 	ctx sdk.Context,
-	vpool perpammtypes.Market,
+	market perpammtypes.Market,
 	position types.Position,
 	pnLPreferenceOption types.PnLPreferenceOption,
 ) (positionNotional sdk.Dec, unrealizedPnl sdk.Dec, err error) {
 	spotPositionNotional, spotPricePnl, err := k.getPositionNotionalAndUnrealizedPnL(
 		ctx,
-		vpool,
+		market,
 		position,
 		types.PnLCalcOption_SPOT_PRICE,
 	)
@@ -414,7 +414,7 @@ func (k Keeper) GetPreferencePositionNotionalAndUnrealizedPnL(
 
 	twapPositionNotional, twapPnl, err := k.getPositionNotionalAndUnrealizedPnL(
 		ctx,
-		vpool,
+		market,
 		position,
 		types.PnLCalcOption_TWAP,
 	)

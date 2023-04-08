@@ -22,7 +22,7 @@ func (k Keeper) CreatePool(
 	bias sdk.Dec,
 	pegMultiplier sdk.Dec,
 ) error {
-	vpool := types.NewMarket(types.ArgsNewMarket{
+	market := types.NewMarket(types.ArgsNewMarket{
 		Pair:          pair,
 		BaseReserves:  baseAssetReserve,
 		QuoteReserves: quoteAssetReserve,
@@ -31,18 +31,18 @@ func (k Keeper) CreatePool(
 		PegMultiplier: pegMultiplier,
 	})
 
-	err := vpool.Validate()
+	err := market.Validate()
 	if err != nil {
 		return err
 	}
 
 	return common.TryCatch(func() {
-		k.Pools.Insert(ctx, pair, vpool)
+		k.Pools.Insert(ctx, pair, market)
 
 		k.ReserveSnapshots.Insert(
 			ctx,
 			collections.Join(pair, ctx.BlockTime()),
-			vpool.ToSnapshot(ctx),
+			market.ToSnapshot(ctx),
 		)
 	})()
 }
@@ -53,16 +53,16 @@ func (k Keeper) EditPoolConfig(
 	config types.MarketConfig,
 ) error {
 	// Grab current pool from state
-	vpool, err := k.Pools.Get(ctx, pair)
+	market, err := k.Pools.Get(ctx, pair)
 	if err != nil {
 		return err
 	}
 
 	newMarket := types.Market{
-		Pair:              vpool.Pair,
-		BaseAssetReserve:  vpool.BaseAssetReserve,
-		QuoteAssetReserve: vpool.QuoteAssetReserve,
-		SqrtDepth:         vpool.SqrtDepth,
+		Pair:              market.Pair,
+		BaseAssetReserve:  market.BaseAssetReserve,
+		QuoteAssetReserve: market.QuoteAssetReserve,
+		SqrtDepth:         market.SqrtDepth,
 		Config:            config, // main change is here
 	}
 	if err := newMarket.Validate(); err != nil {
@@ -88,7 +88,7 @@ func (k Keeper) EditSwapInvariant(
 	}
 
 	// Grab current pool from state
-	vpool, err := k.Pools.Get(ctx, swapInvariantMap.Pair)
+	market, err := k.Pools.Get(ctx, swapInvariantMap.Pair)
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func (k Keeper) EditSwapInvariant(
 	// k = x * y
 	// newK = (cx) * (cy) = c^2 xy = c^2 k
 	// newPrice = (c y) / (c x) = y / x = price | unchanged price
-	swapInvariant := vpool.BaseAssetReserve.Mul(vpool.QuoteAssetReserve)
+	swapInvariant := market.BaseAssetReserve.Mul(market.QuoteAssetReserve)
 	newSwapInvariant := swapInvariant.Mul(swapInvariantMap.Multiplier)
 
 	// Change the swap invariant while holding price constant.
@@ -107,16 +107,16 @@ func (k Keeper) EditSwapInvariant(
 		return err
 	}
 
-	newBaseAmount := c.Mul(vpool.BaseAssetReserve)
-	newQuoteAmount := c.Mul(vpool.QuoteAssetReserve)
+	newBaseAmount := c.Mul(market.BaseAssetReserve)
+	newQuoteAmount := c.Mul(market.QuoteAssetReserve)
 	newSqrtDepth := common.MustSqrtDec(newBaseAmount.Mul(newQuoteAmount))
 
 	newMarket := types.Market{
-		Pair:              vpool.Pair,
+		Pair:              market.Pair,
 		BaseAssetReserve:  newBaseAmount,
 		QuoteAssetReserve: newQuoteAmount,
 		SqrtDepth:         newSqrtDepth,
-		Config:            vpool.Config,
+		Config:            market.Config,
 	}
 	if err := newMarket.Validate(); err != nil {
 		return err
@@ -165,7 +165,7 @@ func (k Keeper) ExistsPool(ctx sdk.Context, pair asset.Pair) bool {
 	return err == nil
 }
 
-// GetPoolPrices returns the mark price, twap (mark) price, and index price for a vpool.
+// GetPoolPrices returns the mark price, twap (mark) price, and index price for a market.
 // An error is returned if the pool does not exist.
 // No error is returned if the prices don't exist, however.
 func (k Keeper) GetPoolPrices(
@@ -185,7 +185,7 @@ func (k Keeper) GetPoolPrices(
 
 	indexPrice, err := k.oracleKeeper.GetExchangeRate(ctx, pool.Pair)
 	if err != nil {
-		// fail gracefully so that vpool queries run even if the oracle price feeds stop
+		// fail gracefully so that market queries run even if the oracle price feeds stop
 		k.Logger(ctx).Error(err.Error())
 	}
 
@@ -198,7 +198,7 @@ func (k Keeper) GetPoolPrices(
 		15*time.Minute,
 	)
 	if err != nil {
-		// fail gracefully so that vpool queries run even if the TWAP is undefined.
+		// fail gracefully so that market queries run even if the TWAP is undefined.
 		k.Logger(ctx).Error(err.Error())
 	}
 

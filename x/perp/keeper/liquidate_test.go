@@ -84,7 +84,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			ctx = ctx.WithBlockTime(time.Now())
 			perpKeeper := &nibiruApp.PerpKeeper
 
-			t.Log("create vpool")
+			t.Log("create market")
 			perpammKeeper := &nibiruApp.PerpAmmKeeper
 			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
@@ -264,7 +264,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 			ctx = ctx.WithBlockTime(time.Now())
 
-			t.Log("Set vpool defined by pair on PerpAmmKeeper")
+			t.Log("Set market defined by pair on PerpAmmKeeper")
 			perpammKeeper := &nibiruApp.PerpAmmKeeper
 			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
@@ -283,7 +283,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			))
 			require.True(t, perpammKeeper.ExistsPool(ctx, tokenPair))
 
-			t.Log("Set vpool defined by pair on PerpKeeper")
+			t.Log("Set market defined by pair on PerpKeeper")
 			perpKeeper := &nibiruApp.PerpKeeper
 			params := types.DefaultParams()
 
@@ -440,7 +440,7 @@ func TestMultiLiquidate(t *testing.T) {
 			setLiquidator(ctx, app.PerpKeeper, tc.liquidator)
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
-			t.Log("create vpool")
+			t.Log("create market")
 			assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 				/* ctx */ ctx,
 				/* pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),

@@ -27,22 +27,22 @@ ret:
     always an absolute value
   - err: error
 */
-func (vpool *Market) GetBaseAmountByQuoteAmount(
+func (market *Market) GetBaseAmountByQuoteAmount(
 	quoteDelta sdk.Dec,
 ) (baseOutAbs sdk.Dec, err error) {
 	if quoteDelta.IsZero() {
 		return sdk.ZeroDec(), nil
 	}
 
-	invariant := vpool.QuoteAssetReserve.Mul(vpool.BaseAssetReserve) // x * y = k
+	invariant := market.QuoteAssetReserve.Mul(market.BaseAssetReserve) // x * y = k
 
-	quoteReservesAfter := vpool.QuoteAssetReserve.Add(quoteDelta)
+	quoteReservesAfter := market.QuoteAssetReserve.Add(quoteDelta)
 	if quoteReservesAfter.LTE(sdk.ZeroDec()) {
 		return sdk.Dec{}, ErrQuoteReserveAtZero
 	}
 
 	baseReservesAfter := invariant.Quo(quoteReservesAfter)
-	baseOutAbs = baseReservesAfter.Sub(vpool.BaseAssetReserve).Abs()
+	baseOutAbs = baseReservesAfter.Sub(market.BaseAssetReserve).Abs()
 
 	return baseOutAbs, nil
 }
@@ -60,16 +60,16 @@ ret:
     always an absolute value
   - err: error
 */
-func (vpool *Market) GetQuoteAmountByBaseAmount(
+func (market *Market) GetQuoteAmountByBaseAmount(
 	baseDelta sdk.Dec,
 ) (quoteOutAbs sdk.Dec, err error) {
 	if baseDelta.IsZero() {
 		return sdk.ZeroDec(), nil
 	}
 
-	invariant := vpool.QuoteAssetReserve.Mul(vpool.BaseAssetReserve) // x * y = k
+	invariant := market.QuoteAssetReserve.Mul(market.BaseAssetReserve) // x * y = k
 
-	baseReservesAfter := vpool.BaseAssetReserve.Add(baseDelta)
+	baseReservesAfter := market.BaseAssetReserve.Add(baseDelta)
 	if baseReservesAfter.LTE(sdk.ZeroDec()) {
 		return sdk.Dec{}, ErrBaseReserveAtZero.Wrapf(
 			"base assets below zero after trying to swap %s base assets",
@@ -78,31 +78,31 @@ func (vpool *Market) GetQuoteAmountByBaseAmount(
 	}
 
 	quoteReservesAfter := invariant.Quo(baseReservesAfter)
-	quoteOutAbs = quoteReservesAfter.Sub(vpool.QuoteAssetReserve).Abs()
+	quoteOutAbs = quoteReservesAfter.Sub(market.QuoteAssetReserve).Abs()
 
 	return quoteOutAbs, nil
 }
 
 // GetMarkPrice returns the price of the asset.
-func (vpool Market) GetMarkPrice() sdk.Dec {
-	if vpool.BaseAssetReserve.IsNil() || vpool.BaseAssetReserve.IsZero() ||
-		vpool.QuoteAssetReserve.IsNil() || vpool.QuoteAssetReserve.IsZero() {
+func (market Market) GetMarkPrice() sdk.Dec {
+	if market.BaseAssetReserve.IsNil() || market.BaseAssetReserve.IsZero() ||
+		market.QuoteAssetReserve.IsNil() || market.QuoteAssetReserve.IsZero() {
 		return sdk.ZeroDec()
 	}
 
-	return vpool.QuoteAssetReserve.Quo(vpool.BaseAssetReserve)
+	return market.QuoteAssetReserve.Quo(market.BaseAssetReserve)
 }
 
 // AddToQuoteAssetReserve adds 'amount' to the quote asset reserves
 // The 'amount' is not assumed to be positive.
-func (vpool *Market) AddToQuoteAssetReserve(amount sdk.Dec) {
-	vpool.QuoteAssetReserve = vpool.QuoteAssetReserve.Add(amount)
+func (market *Market) AddToQuoteAssetReserve(amount sdk.Dec) {
+	market.QuoteAssetReserve = market.QuoteAssetReserve.Add(amount)
 }
 
 // AddToBaseAssetReserve adds 'amount' to the base asset reserves
 // The 'amount' is not assumed to be positive.
-func (vpool *Market) AddToBaseAssetReserve(amount sdk.Dec) {
-	vpool.BaseAssetReserve = vpool.BaseAssetReserve.Add(amount)
+func (market *Market) AddToBaseAssetReserve(amount sdk.Dec) {
+	market.BaseAssetReserve = market.BaseAssetReserve.Add(amount)
 }
 
 type ArgsNewMarket struct {
@@ -133,18 +133,18 @@ func NewMarket(args ArgsNewMarket) Market {
 	}
 }
 
-func (vpool *Market) ComputeSqrtDepth() (sqrtDepth sdk.Dec, err error) {
-	liqDepth := vpool.QuoteAssetReserve.Mul(vpool.BaseAssetReserve)
+func (market *Market) ComputeSqrtDepth() (sqrtDepth sdk.Dec, err error) {
+	liqDepth := market.QuoteAssetReserve.Mul(market.BaseAssetReserve)
 	return common.SqrtDec(liqDepth)
 }
 
-func (vpool *Market) InitLiqDepth() (Market, error) {
-	sqrtDepth, err := vpool.ComputeSqrtDepth()
+func (market *Market) InitLiqDepth() (Market, error) {
+	sqrtDepth, err := market.ComputeSqrtDepth()
 	if err != nil {
 		return Market{}, err
 	}
 
-	pool := *vpool
+	pool := *market
 	pool.SqrtDepth = sqrtDepth
 	return pool, nil
 }
@@ -255,21 +255,21 @@ func (poolCfg *MarketConfig) WithMaxLeverage(value sdk.Dec) *MarketConfig {
 // Market - validation functions
 // ----------------------------------------------------------------------------
 
-func (vpool *Market) Validate() error {
-	if err := vpool.Pair.Validate(); err != nil {
+func (market *Market) Validate() error {
+	if err := market.Pair.Validate(); err != nil {
 		return fmt.Errorf("invalid asset pair: %w", err)
 	}
 
 	// base asset reserve always > 0
 	// quote asset reserve always > 0
-	if err := vpool.ValidateReserves(); err != nil {
+	if err := market.ValidateReserves(); err != nil {
 		return err
 	}
-	if err := vpool.ValidateLiquidityDepth(); err != nil {
+	if err := market.ValidateLiquidityDepth(); err != nil {
 		return err
 	}
 
-	if err := vpool.Config.Validate(); err != nil {
+	if err := market.Config.Validate(); err != nil {
 		return err
 	}
 
@@ -278,24 +278,24 @@ func (vpool *Market) Validate() error {
 
 // HasEnoughQuoteReserve returns true if there is enough quote reserve based on
 // quoteReserve * tradeLimitRatio
-func (vpool *Market) HasEnoughQuoteReserve(quoteAmount sdk.Dec) bool {
-	return vpool.QuoteAssetReserve.Mul(vpool.Config.TradeLimitRatio).GTE(quoteAmount.Abs())
+func (market *Market) HasEnoughQuoteReserve(quoteAmount sdk.Dec) bool {
+	return market.QuoteAssetReserve.Mul(market.Config.TradeLimitRatio).GTE(quoteAmount.Abs())
 }
 
 // HasEnoughBaseReserve returns true if there is enough base reserve based on
 // baseReserve * tradeLimitRatio
-func (vpool *Market) HasEnoughBaseReserve(baseAmount sdk.Dec) bool {
-	return vpool.BaseAssetReserve.Mul(vpool.Config.TradeLimitRatio).GTE(baseAmount.Abs())
+func (market *Market) HasEnoughBaseReserve(baseAmount sdk.Dec) bool {
+	return market.BaseAssetReserve.Mul(market.Config.TradeLimitRatio).GTE(baseAmount.Abs())
 }
 
-func (vpool *Market) HasEnoughReservesForTrade(
+func (market *Market) HasEnoughReservesForTrade(
 	quoteAmtAbs sdk.Dec, baseAmtAbs sdk.Dec,
 ) (err error) {
-	if !vpool.HasEnoughQuoteReserve(quoteAmtAbs) {
+	if !market.HasEnoughQuoteReserve(quoteAmtAbs) {
 		return ErrOverTradingLimit.Wrapf(
 			"quote amount %s is over trading limit", quoteAmtAbs)
 	}
-	if !vpool.HasEnoughBaseReserve(baseAmtAbs) {
+	if !market.HasEnoughBaseReserve(baseAmtAbs) {
 		return ErrOverTradingLimit.Wrapf(
 			"base amount %s is over trading limit", baseAmtAbs)
 	}
@@ -304,27 +304,27 @@ func (vpool *Market) HasEnoughReservesForTrade(
 }
 
 // ValidateReserves checks that reserves are positive.
-func (vpool *Market) ValidateReserves() error {
-	if !vpool.QuoteAssetReserve.IsPositive() || !vpool.BaseAssetReserve.IsPositive() {
-		return ErrNonPositiveReserves.Wrap("pool: " + vpool.String())
+func (market *Market) ValidateReserves() error {
+	if !market.QuoteAssetReserve.IsPositive() || !market.BaseAssetReserve.IsPositive() {
+		return ErrNonPositiveReserves.Wrap("pool: " + market.String())
 	} else {
 		return nil
 	}
 }
 
 // ValidateLiquidityDepth checks that reserves are positive.
-func (vpool *Market) ValidateLiquidityDepth() error {
-	computedSqrtDepth, err := vpool.ComputeSqrtDepth()
+func (market *Market) ValidateLiquidityDepth() error {
+	computedSqrtDepth, err := market.ComputeSqrtDepth()
 	if err != nil {
 		return err
 	}
 
-	if !vpool.SqrtDepth.IsPositive() {
+	if !market.SqrtDepth.IsPositive() {
 		return ErrLiquidityDepth.Wrap(
-			"liq depth must be positive. pool: " + vpool.String())
-	} else if !vpool.SqrtDepth.Sub(computedSqrtDepth).Abs().LTE(sdk.NewDec(1)) {
+			"liq depth must be positive. pool: " + market.String())
+	} else if !market.SqrtDepth.Sub(computedSqrtDepth).Abs().LTE(sdk.NewDec(1)) {
 		return ErrLiquidityDepth.Wrap(
-			"computed sqrt and current sqrt are mismatched. pool: " + vpool.String())
+			"computed sqrt and current sqrt are mismatched. pool: " + market.String())
 	} else {
 		return nil
 	}
@@ -336,22 +336,22 @@ IsOverFluctuationLimitInRelationWithSnapshot compares the updated pool's spot pr
 If the fluctuation limit ratio is zero, then the fluctuation limit check is skipped.
 
 args:
-  - pool: the updated vpool
+  - pool: the updated market
   - snapshot: the snapshot to compare against
 
 ret:
   - bool: true if the fluctuation limit is violated. false otherwise
 */
-func (vpool Market) IsOverFluctuationLimitInRelationWithSnapshot(snapshot ReserveSnapshot) bool {
-	if vpool.Config.FluctuationLimitRatio.IsZero() {
+func (market Market) IsOverFluctuationLimitInRelationWithSnapshot(snapshot ReserveSnapshot) bool {
+	if market.Config.FluctuationLimitRatio.IsZero() {
 		return false
 	}
 
-	markPrice := vpool.GetMarkPrice()
+	markPrice := market.GetMarkPrice()
 	snapshotUpperLimit := snapshot.GetUpperMarkPriceFluctuationLimit(
-		vpool.Config.FluctuationLimitRatio)
+		market.Config.FluctuationLimitRatio)
 	snapshotLowerLimit := snapshot.GetLowerMarkPriceFluctuationLimit(
-		vpool.Config.FluctuationLimitRatio)
+		market.Config.FluctuationLimitRatio)
 
 	if markPrice.GT(snapshotUpperLimit) || markPrice.LT(snapshotLowerLimit) {
 		return true
@@ -361,7 +361,7 @@ func (vpool Market) IsOverFluctuationLimitInRelationWithSnapshot(snapshot Reserv
 }
 
 /*
-IsOverSpreadLimit compares the current mark price of the vpool
+IsOverSpreadLimit compares the current mark price of the market
 to the underlying's index price.
 It panics if you provide it with a pair that doesn't exist in the state.
 
@@ -371,16 +371,16 @@ args:
 ret:
   - bool: whether or not the price has deviated from the oracle price beyond a spread ratio
 */
-func (vpool Market) IsOverSpreadLimit(indexPrice sdk.Dec) bool {
-	return vpool.GetMarkPrice().Sub(indexPrice).
-		Quo(indexPrice).Abs().GTE(vpool.Config.MaxOracleSpreadRatio)
+func (market Market) IsOverSpreadLimit(indexPrice sdk.Dec) bool {
+	return market.GetMarkPrice().Sub(indexPrice).
+		Quo(indexPrice).Abs().GTE(market.Config.MaxOracleSpreadRatio)
 }
 
-func (vpool Market) ToSnapshot(ctx sdk.Context) ReserveSnapshot {
+func (market Market) ToSnapshot(ctx sdk.Context) ReserveSnapshot {
 	snapshot := NewReserveSnapshot(
-		vpool.Pair,
-		vpool.BaseAssetReserve,
-		vpool.QuoteAssetReserve,
+		market.Pair,
+		market.BaseAssetReserve,
+		market.QuoteAssetReserve,
 		ctx.BlockTime(),
 	)
 	if err := snapshot.Validate(); err != nil {

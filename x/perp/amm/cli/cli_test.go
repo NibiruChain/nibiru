@@ -74,8 +74,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	encodingConfig := app.MakeTestEncodingConfig()
 	genesisState := genesis.NewTestGenesisState()
-	vpoolGenesis := perpammtypes.DefaultGenesis()
-	vpoolGenesis.Markets = []perpammtypes.Market{
+	marketGenesis := perpammtypes.DefaultGenesis()
+	marketGenesis.Markets = []perpammtypes.Market{
 		START_VPOOLS[asset.Registry.Pair(denoms.ETH, denoms.NUSD)],
 		START_VPOOLS[asset.Registry.Pair(denoms.NIBI, denoms.NUSD)],
 	}
@@ -88,7 +88,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	oracleGenesis.Params.VotePeriod = 1_000
 
 	genesisState[perpammtypes.ModuleName] = encodingConfig.Marshaler.
-		MustMarshalJSON(vpoolGenesis)
+		MustMarshalJSON(marketGenesis)
 
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
@@ -173,7 +173,7 @@ func (s *IntegrationTestSuite) TestCmdCreatePoolProposal() {
 func (s *IntegrationTestSuite) TestGetPrices() {
 	val := s.network.Validators[0]
 
-	s.T().Log("check vpool balances")
+	s.T().Log("check market balances")
 	reserveAssets, err := testutilcli.QueryMarketReserveAssets(val.ClientCtx, asset.Registry.Pair(denoms.ETH, denoms.NUSD))
 	s.NoError(err)
 	s.EqualValues(sdk.MustNewDecFromStr("10000000"), reserveAssets.BaseAssetReserve)
@@ -194,7 +194,7 @@ func (s *IntegrationTestSuite) TestCmdEditPoolConfigProposal() {
 	// ----------------------------------------------------------------------
 	startMarket := START_VPOOLS[asset.Registry.Pair(denoms.ETH, denoms.NUSD)]
 	proposal := &perpammtypes.EditPoolConfigProposal{
-		Title:       "NIP-3: Edit config of the ueth:unusd vpool",
+		Title:       "NIP-3: Edit config of the ueth:unusd market",
 		Description: "enables higher max leverage on ueth:unusd",
 		Pair:        startMarket.Pair,
 		Config: perpammtypes.MarketConfig{
@@ -230,7 +230,7 @@ func (s *IntegrationTestSuite) TestCmdEditPoolConfigProposal() {
 	testutilcli.PassGovProposal(s.Suite, s.network)
 
 	// ----------------------------------------------------------------------
-	s.T().Log("verify that the newly proposed vpool config has been set")
+	s.T().Log("verify that the newly proposed market config has been set")
 	// ----------------------------------------------------------------------
 	s.Require().NoError(s.network.WaitForNextBlock())
 
@@ -238,8 +238,8 @@ func (s *IntegrationTestSuite) TestCmdEditPoolConfigProposal() {
 	s.Require().NoError(testutilcli.ExecQuery(s.network.Validators[0].ClientCtx, cli.CmdGetMarkets(), nil, marketsQueryResp))
 
 	found := false
-	for _, vpool := range marketsQueryResp.Markets {
-		if vpool.Pair.Equal(proposal.Pair) {
+	for _, market := range marketsQueryResp.Markets {
+		if market.Pair.Equal(proposal.Pair) {
 			s.EqualValues(perpammtypes.Market{
 				Pair:              proposal.Pair,
 				BaseAssetReserve:  startMarket.BaseAssetReserve,
@@ -248,7 +248,7 @@ func (s *IntegrationTestSuite) TestCmdEditPoolConfigProposal() {
 				Config:            proposal.Config,
 				Bias:              sdk.ZeroDec(),
 				PegMultiplier:     sdk.ZeroDec(),
-			}, vpool)
+			}, market)
 			found = true
 		}
 	}
@@ -285,9 +285,9 @@ func (s *IntegrationTestSuite) TestCmdEditSwapInvariantsProposal() {
 		s.network.Validators[0].ClientCtx,
 		cli.CmdGetMarkets(), nil, marketsQueryResp))
 	var marketBefore perpammtypes.Market
-	for _, vpool := range marketsQueryResp.Markets {
-		if vpool.Pair.Equal(proposal.SwapInvariantMaps[0].Pair) {
-			marketBefore = vpool
+	for _, market := range marketsQueryResp.Markets {
+		if market.Pair.Equal(proposal.SwapInvariantMaps[0].Pair) {
+			marketBefore = market
 			break
 		}
 	}
@@ -318,15 +318,15 @@ func (s *IntegrationTestSuite) TestCmdEditSwapInvariantsProposal() {
 	))
 
 	found := false
-	for _, vpool := range marketsQueryResp.Markets {
+	for _, market := range marketsQueryResp.Markets {
 		proposalPair := proposal.SwapInvariantMaps[0].Pair
 
-		if vpool.Pair.Equal(proposalPair) {
+		if market.Pair.Equal(proposalPair) {
 			// get multiplier applied to the reserves, which should be 10.
 			multiplierToSqrtDepth := common.MustSqrtDec(proposal.SwapInvariantMaps[0].Multiplier)
 			s.Assert().EqualValues(sdk.NewDec(10).String(), multiplierToSqrtDepth.String())
 
-			// get vpool after proposal
+			// get market after proposal
 			marketAfter := perpammtypes.Market{
 				Pair:              proposalPair,
 				BaseAssetReserve:  marketBefore.BaseAssetReserve.Mul(multiplierToSqrtDepth),
@@ -339,7 +339,7 @@ func (s *IntegrationTestSuite) TestCmdEditSwapInvariantsProposal() {
 			s.Require().NoError(err)
 			marketAfter.SqrtDepth = sqrtDepthAfter
 
-			s.EqualValues(marketAfter, vpool)
+			s.EqualValues(marketAfter, market)
 			found = true
 		}
 	}

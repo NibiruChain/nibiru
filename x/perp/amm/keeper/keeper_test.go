@@ -177,12 +177,12 @@ func TestSwapQuoteForBase(t *testing.T) {
 				sdk.ZeroDec(),
 				sdk.OneDec(),
 			))
-			vpool, err := perpammKeeper.GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+			market, err := perpammKeeper.GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 			require.NoError(t, err)
 
 			_, baseAmt, err := perpammKeeper.SwapQuoteForBase(
 				ctx,
-				vpool,
+				market,
 				tc.direction,
 				tc.quoteAmount,
 				tc.baseLimit,
@@ -195,7 +195,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 				require.NoError(t, err)
 				assert.EqualValuesf(t, tc.expectedBaseAmount, baseAmt, "base amount mismatch")
 
-				t.Log("assert vpool")
+				t.Log("assert market")
 				pool, err := perpammKeeper.Pools.Get(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 				require.NoError(t, err)
 				assert.EqualValuesf(t, tc.expectedQuoteReserve, pool.QuoteAssetReserve, "pool quote asset reserve mismatch")
@@ -366,11 +366,11 @@ func TestSwapBaseForQuote(t *testing.T) {
 				sdk.OneDec(),
 			))
 
-			vpool, err := perpammKeeper.GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+			market, err := perpammKeeper.GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 			require.NoError(t, err)
 			_, quoteAssetAmount, err := perpammKeeper.SwapBaseForQuote(
 				ctx,
-				vpool,
+				market,
 				tc.direction,
 				tc.baseAmt,
 				tc.quoteLimit,

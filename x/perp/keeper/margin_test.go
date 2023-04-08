@@ -63,7 +63,7 @@ func TestAddMarginSuccess(t *testing.T) {
 				sdk.NewCoins(tc.marginToAdd),
 			))
 
-			t.Log("create vpool")
+			t.Log("create market")
 			perpammKeeper := &nibiruApp.PerpAmmKeeper
 			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
@@ -113,7 +113,7 @@ func TestRemoveMargin(t *testing.T) {
 	}{
 
 		{
-			name: "vpool doesn't exit - fail",
+			name: "market doesn't exit - fail",
 			test: func() {
 				removeAmt := sdk.NewInt(5)
 
@@ -134,7 +134,7 @@ func TestRemoveMargin(t *testing.T) {
 				trader := testutilevents.AccAddress()
 				pair := asset.MustNewPair("osmo:nusd")
 
-				t.Log("Setup vpool defined by pair")
+				t.Log("Setup market defined by pair")
 				perpammKeeper := &nibiruApp.PerpAmmKeeper
 				perpKeeper := &nibiruApp.PerpKeeper
 				assert.NoError(t, perpammKeeper.CreatePool(
@@ -169,7 +169,7 @@ func TestRemoveMargin(t *testing.T) {
 				traderAddr := testutilevents.AccAddress()
 				pair := asset.MustNewPair("xxx:yyy")
 
-				t.Log("Set vpool defined by pair on PerpAmmKeeper")
+				t.Log("Set market defined by pair on PerpAmmKeeper")
 				perpammKeeper := &nibiruApp.PerpAmmKeeper
 				quoteReserves := sdk.NewDec(1 * common.TO_MICRO)
 				baseReserves := sdk.NewDec(1 * common.TO_MICRO)
@@ -190,7 +190,7 @@ func TestRemoveMargin(t *testing.T) {
 				))
 				require.True(t, perpammKeeper.ExistsPool(ctx, pair))
 
-				t.Log("Set vpool defined by pair on PerpKeeper")
+				t.Log("Set market defined by pair on PerpKeeper")
 				keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 					Pair:                            pair,
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),

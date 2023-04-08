@@ -191,7 +191,7 @@ realizing any outstanding funding payments and decreasing the margin ratio.
 */
 func RemoveMarginCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "remove-margin [vpool] [margin]",
+		Use:   "remove-margin [market] [margin]",
 		Short: "Removes margin from a position, decreasing its margin ratio",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`
@@ -235,7 +235,7 @@ func RemoveMarginCmd() *cobra.Command {
 
 func AddMarginCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-margin [vpool] [margin]",
+		Use:   "add-margin [market] [margin]",
 		Short: "Adds margin to a position, increasing its margin ratio",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`

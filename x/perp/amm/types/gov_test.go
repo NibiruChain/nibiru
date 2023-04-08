@@ -144,7 +144,7 @@ func TestEditPoolConfigProposal_ValidateBasic(t *testing.T) {
 func TestMarshalProposalEditPoolConfig(t *testing.T) {
 	t.Log("load example json as bytes")
 	proposal := EditPoolConfigProposal{
-		Title:       "Edit vpool config for NIBI:NUSD",
+		Title:       "Edit market config for NIBI:NUSD",
 		Description: "I want to take 100x leverage on my NIBI",
 		Pair:        asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 		Config: MarketConfig{

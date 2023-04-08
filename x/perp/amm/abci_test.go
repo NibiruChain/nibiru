@@ -55,11 +55,11 @@ func TestSnapshotUpdates(t *testing.T) {
 	assert.EqualValues(t, expectedSnapshot, snapshot)
 
 	t.Log("affect mark price")
-	vpool, err := perpammKeeper.GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+	market, err := perpammKeeper.GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 	require.NoError(t, err)
 	_, baseAmtAbs, err := perpammKeeper.SwapQuoteForBase(
 		ctx,
-		vpool,
+		market,
 		types.Direction_LONG,
 		sdk.NewDec(250), // ← dyAmm
 		sdk.ZeroDec(),

@@ -74,21 +74,21 @@ func (q queryServer) position(ctx sdk.Context, pair asset.Pair, trader sdk.AccAd
 		return nil, err
 	}
 
-	vpool, err := q.k.PerpAmmKeeper.GetPool(ctx, pair)
+	market, err := q.k.PerpAmmKeeper.GetPool(ctx, pair)
 	if err != nil {
 		return nil, types.ErrPairNotFound
 	}
 
-	positionNotional, unrealizedPnl, err := q.k.getPositionNotionalAndUnrealizedPnL(ctx, vpool, position, types.PnLCalcOption_SPOT_PRICE)
+	positionNotional, unrealizedPnl, err := q.k.getPositionNotionalAndUnrealizedPnL(ctx, market, position, types.PnLCalcOption_SPOT_PRICE)
 	if err != nil {
 		return nil, err
 	}
 
-	marginRatioMark, err := q.k.GetMarginRatio(ctx, vpool, position, types.MarginCalculationPriceOption_MAX_PNL)
+	marginRatioMark, err := q.k.GetMarginRatio(ctx, market, position, types.MarginCalculationPriceOption_MAX_PNL)
 	if err != nil {
 		return nil, err
 	}
-	marginRatioIndex, err := q.k.GetMarginRatio(ctx, vpool, position, types.MarginCalculationPriceOption_INDEX)
+	marginRatioIndex, err := q.k.GetMarginRatio(ctx, market, position, types.MarginCalculationPriceOption_INDEX)
 	if err != nil {
 		// The index portion of the query fails silently as not to distrupt all
 		// position queries when oracles aren't posting prices.

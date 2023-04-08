@@ -49,9 +49,9 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	encodingConfig := app.MakeTestEncodingConfig()
 	genesisState := genesis.NewTestGenesisState()
 
-	// setup vpool
-	vpoolGenesis := perpammtypes.DefaultGenesis()
-	vpoolGenesis.Markets = []perpammtypes.Market{
+	// setup market
+	marketGenesis := perpammtypes.DefaultGenesis()
+	marketGenesis.Markets = []perpammtypes.Market{
 		{
 			Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
@@ -105,7 +105,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			},
 		},
 	}
-	genesisState[perpammtypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(vpoolGenesis)
+	genesisState[perpammtypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(marketGenesis)
 
 	// setup perp
 	perpGenesis := perptypes.DefaultGenesis()
@@ -266,7 +266,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.T().Logf("0. current exchange rate is: %+v", exchangeRate)
 	s.NoError(err)
 
-	s.T().Log("A. check vpool balances")
+	s.T().Log("A. check market balances")
 	reserveAssets, err := testutilcli.QueryMarketReserveAssets(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 	s.T().Logf("reserve assets: %+v", reserveAssets)
 	s.NoError(err)
@@ -288,7 +288,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.NoError(err)
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
-	s.T().Log("B. check vpool balance after open position")
+	s.T().Log("B. check market balance after open position")
 	reserveAssets, err = testutilcli.QueryMarketReserveAssets(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 	s.T().Logf("reserve assets: %+v", reserveAssets)
 	s.NoError(err)
@@ -344,7 +344,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.NoError(err)
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
-	s.T().Log("D. Check vpool after opening reverse position")
+	s.T().Log("D. Check market after opening reverse position")
 	reserveAssets, err = testutilcli.QueryMarketReserveAssets(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 	s.NoError(err)
 	s.T().Logf(" \n reserve assets: %+v \n", reserveAssets)

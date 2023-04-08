@@ -25,7 +25,7 @@ func (gs GenesisState) Validate() error {
 		}
 		pair := p.Pair.String()
 		if _, exists := markets[pair]; exists {
-			return fmt.Errorf("duplicate vpool: %s", pair)
+			return fmt.Errorf("duplicate market: %s", pair)
 		}
 		markets[pair] = struct{}{}
 	}

@@ -28,7 +28,7 @@ func initAppMarkets(
 	perpammKeeper := &nibiruApp.PerpAmmKeeper
 	queryServer := keeper.NewQuerier(*perpKeeper)
 
-	t.Log("initialize vpool and pair")
+	t.Log("initialize market and pair")
 	assert.NoError(t, perpammKeeper.CreatePool(
 		ctx,
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD),

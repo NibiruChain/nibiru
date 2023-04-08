@@ -46,17 +46,17 @@ func CmdCreatePoolProposal() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create-pool [proposal-json] --deposit=[deposit]",
 		Args:  cobra.ExactArgs(1),
-		Short: "Submit a proposal to create a new vpool",
+		Short: "Submit a proposal to create a new market",
 		Example: strings.TrimSpace(fmt.Sprintf(`
 			Example: 
 			$ %s tx gov submit-proposal create-pool <path/to/proposal.json> --deposit="1000unibi" --from=<key_or_address> 
 			`, version.AppName)),
 		Long: strings.TrimSpace(
-			`Submits a proposal to create a new vpool, which in turn create a new x/perp market
+			`Submits a proposal to create a new market, which in turn create a new x/perp market
 
 			A proposal.json for 'CreatePoolProposal' contains:
 			{
-			  "title": "Create vpool for ETH:USDT",
+			  "title": "Create market for ETH:USDT",
 			  "description": "I wanna get liquidated on ETH:USDT",
 			  "pair": "ETH:USDT",
 			  "trade_limit_ratio": "0.2",
@@ -120,18 +120,18 @@ func CmdEditPoolConfigProposal() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "edit-pool-cfg [proposal-json] --deposit=[deposit]",
 		Args:  cobra.ExactArgs(1),
-		Short: "Submit a proposal to edit the vpool config",
+		Short: "Submit a proposal to edit the market config",
 		Example: strings.TrimSpace(fmt.Sprintf(`
 			Example: 
 			$ %s tx gov submit-proposal edit-pool-cfg <path/to/proposal.json> --deposit="1000unibi" --from=<key_or_address> 
 			`, version.AppName)),
 		Long: strings.TrimSpace(
-			`Submits a proposal to edit a vpool's config, it's parameters that 
+			`Submits a proposal to edit a market's config, it's parameters that 
 			aren't based on the reserves (e.g. max leverage, maintenance margin ratio).
 
 			A proposal.json for 'EditPoolConfigProposal' contains:
 			{
-			  "title": "Edit vpool config for NIBI:NUSD",
+			  "title": "Edit market config for NIBI:NUSD",
 			  "description": "I want to take 100x leverage on my NIBI",
 			  "pair": "unibi:unusd",
 			  "config": {
@@ -200,7 +200,7 @@ func CmdEditSwapInvariantsProposal() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "edit-invariant [proposal-json] --deposit=[deposit]",
 		Args:  cobra.ExactArgs(1),
-		Short: "Submit a proposal to edit the vpool config",
+		Short: "Submit a proposal to edit the market config",
 		Example: strings.TrimSpace(fmt.Sprintf(`
 			Example: 
 			$ %s tx gov submit-proposal edit-invariant <path/to/proposal.json> --deposit="1000unibi" --from=<key_or_address> 

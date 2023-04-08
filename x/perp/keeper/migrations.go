@@ -14,7 +14,7 @@ func From2To3(perpKeeper Keeper, perpammKeeper types.PerpAmmKeeper) module.Migra
 	return func(ctx sdk.Context) error {
 		k, ok := perpammKeeper.(perpammkeeper.Keeper)
 		if !ok {
-			panic("vpool keeper is not perpammkeeper.Keeper")
+			panic("market keeper is not perpammkeeper.Keeper")
 		}
 
 		iterator := k.Pools.Iterate(ctx, collections.Range[asset.Pair]{}).Values()

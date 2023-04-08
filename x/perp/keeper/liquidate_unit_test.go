@@ -108,12 +108,12 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
-			t.Log("mock vpool keeper")
-			vpool := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+			t.Log("mock market keeper")
+			market := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			mocks.mockPerpAmmKeeper.EXPECT().
 				GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).
 				Times(2).
-				Return(vpool, nil)
+				Return(market, nil)
 			mocks.mockPerpAmmKeeper.EXPECT().
 				ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(true).Times(1)
 			mocks.mockPerpAmmKeeper.EXPECT().
@@ -135,14 +135,14 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 				Return(tc.newPositionNotional, nil)
 			mocks.mockPerpAmmKeeper.EXPECT().
 				GetBaseAssetPrice(
-					vpool,
+					market,
 					perpammtypes.Direction_LONG,
 					sdk.OneDec(),
 				).
 				Return(tc.newPositionNotional, nil).Times(3)
 			mocks.mockPerpAmmKeeper.EXPECT().
 				GetBaseAssetPrice(
-					vpool,
+					market,
 					perpammtypes.Direction_LONG,
 					tc.exchangedSize,
 				).
@@ -150,13 +150,13 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 			mocks.mockPerpAmmKeeper.EXPECT().
 				SwapQuoteForBase(
 					ctx,
-					vpool,
+					market,
 					perpammtypes.Direction_SHORT,
 					/* quoteAmt */ tc.exchangedNotional,
 					/* baseLimit */ sdk.ZeroDec(),
 					/* skipFluctuationLimitCheck */ true,
 				).
-				Return(vpool, tc.exchangedSize, nil)
+				Return(market, tc.exchangedSize, nil)
 
 			t.Log("mock account keeper")
 			mocks.mockAccountKeeper.EXPECT().
@@ -286,11 +286,11 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
-			t.Log("mock vpool keeper")
-			vpool := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+			t.Log("mock market keeper")
+			market := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			mocks.mockPerpAmmKeeper.EXPECT().
 				GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Times(2).
-				Return(vpool, nil)
+				Return(market, nil)
 			mocks.mockPerpAmmKeeper.EXPECT().
 				ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(true)
 			mocks.mockPerpAmmKeeper.EXPECT().
@@ -311,7 +311,7 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 				Return(tc.newPositionNotional, nil)
 			mocks.mockPerpAmmKeeper.EXPECT().
 				GetBaseAssetPrice(
-					vpool,
+					market,
 					perpammtypes.Direction_LONG,
 					tc.initialPositionSize,
 				).
@@ -319,13 +319,13 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 			mocks.mockPerpAmmKeeper.EXPECT().
 				SwapBaseForQuote(
 					ctx,
-					vpool,
+					market,
 					perpammtypes.Direction_LONG,
 					/* baseAmt */ tc.initialPositionSize,
 					/* quoteLimit */ sdk.ZeroDec(),
 					/* skipFluctuationLimitCheck */ true,
 				).
-				Return(vpool, tc.newPositionNotional, nil)
+				Return(market, tc.newPositionNotional, nil)
 
 			t.Log("mock account keeper")
 			mocks.mockAccountKeeper.EXPECT().
@@ -460,11 +460,11 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
-			t.Log("mock vpool keeper")
-			vpool := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+			t.Log("mock market keeper")
+			market := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			mocks.mockPerpAmmKeeper.EXPECT().
 				GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Times(2).
-				Return(vpool, nil)
+				Return(market, nil)
 			mocks.mockPerpAmmKeeper.EXPECT().
 				ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(true)
 			mocks.mockPerpAmmKeeper.EXPECT().
@@ -485,7 +485,7 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 				Return(tc.newPositionNotional, nil)
 			mocks.mockPerpAmmKeeper.EXPECT().
 				GetBaseAssetPrice(
-					vpool,
+					market,
 					perpammtypes.Direction_LONG,
 					tc.initialPositionSize,
 				).
@@ -493,13 +493,13 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 			mocks.mockPerpAmmKeeper.EXPECT().
 				SwapBaseForQuote(
 					ctx,
-					vpool,
+					market,
 					perpammtypes.Direction_LONG,
 					/* baseAmt */ tc.initialPositionSize,
 					/* quoteLimit */ sdk.ZeroDec(),
 					/* skipFluctuationLimitCheck */ true,
 				).
-				Return(vpool, tc.newPositionNotional, nil)
+				Return(market, tc.newPositionNotional, nil)
 
 			t.Log("mock account keeper")
 			mocks.mockAccountKeeper.EXPECT().
@@ -593,7 +593,7 @@ func TestDistributeLiquidateRewards(t *testing.T) {
 			},
 		},
 		{
-			name: "vpool does not exist - error",
+			name: "market does not exist - error",
 			test: func() {
 				perpKeeper, mocks, ctx := getKeeper(t)
 				liquidator := testutilevents.AccAddress()
@@ -942,13 +942,13 @@ func TestKeeper_ExecuteFullLiquidation(t *testing.T) {
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
-			t.Log("mock vpool")
-			vpool := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
-			mocks.mockPerpAmmKeeper.EXPECT().GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(vpool, nil)
+			t.Log("mock market")
+			market := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+			mocks.mockPerpAmmKeeper.EXPECT().GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(market, nil)
 			mocks.mockPerpAmmKeeper.EXPECT().ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).AnyTimes().Return(true)
 			mocks.mockPerpAmmKeeper.EXPECT().
 				GetBaseAssetPrice(
-					vpool,
+					market,
 					baseAssetDirection,
 					/*baseAssetAmount=*/ tc.initialPositionSize.Abs(),
 				).
@@ -956,12 +956,12 @@ func TestKeeper_ExecuteFullLiquidation(t *testing.T) {
 			mocks.mockPerpAmmKeeper.EXPECT().
 				SwapBaseForQuote(
 					ctx,
-					vpool,
+					market,
 					baseAssetDirection,
 					/*baseAssetAmount=*/ tc.initialPositionSize.Abs(),
 					/*quoteAssetAssetLimit=*/ sdk.ZeroDec(),
 					/* skipFluctuationLimitCheck */ true,
-				).Return(vpool /*quoteAssetAmount=*/, tc.baseAssetPriceInQuote, nil)
+				).Return(market /*quoteAssetAmount=*/, tc.baseAssetPriceInQuote, nil)
 			mocks.mockPerpAmmKeeper.EXPECT().
 				GetMarkPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).
 				Return(sdk.OneDec(), nil)
@@ -994,7 +994,7 @@ func TestKeeper_ExecuteFullLiquidation(t *testing.T) {
 			assert.EqualValues(t,
 				tc.expectedExchangedNotionalValue,
 				positionResp.ExchangedNotionalValue) // amount of quote exchanged
-			// Initial position size is sold back to to vpool
+			// Initial position size is sold back to to market
 			assert.EqualValues(t, tc.initialPositionSize.Neg(), positionResp.ExchangedPositionSize)
 			// ( oldMargin + unrealizedPnL - fundingPayment ) * -1
 			assert.EqualValues(t, tc.expectedMarginToVault, positionResp.MarginToVault)
@@ -1234,15 +1234,15 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
-			t.Log("mock vpool")
-			vpool := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+			t.Log("mock market")
+			market := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			mocks.mockPerpAmmKeeper.EXPECT().
 				GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).
-				Return(vpool, nil)
+				Return(market, nil)
 			mocks.mockPerpAmmKeeper.EXPECT().ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).AnyTimes().Return(true)
 			mocks.mockPerpAmmKeeper.EXPECT().
 				GetBaseAssetPrice(
-					vpool,
+					market,
 					baseAssetDirection,
 					/*baseAssetAmount=*/ tc.initialPositionSize.Mul(tc.partialLiquidationRatio),
 				).
@@ -1250,7 +1250,7 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 
 			mocks.mockPerpAmmKeeper.EXPECT().
 				GetBaseAssetPrice(
-					vpool,
+					market,
 					baseAssetDirection,
 					/*baseAssetAmount=*/ tc.initialPositionSize.Abs(),
 				).
@@ -1260,22 +1260,22 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 				mocks.mockPerpAmmKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						vpool,
+						market,
 						perpammtypes.Direction_LONG,
 						/*baseAssetAmount=*/ tc.baseAssetPriceInQuote.Mul(tc.partialLiquidationRatio),
 						/*quoteAssetAssetLimit=*/ sdk.ZeroDec(),
 						/* skipFluctuationLimitCheck */ true,
-					).Return(vpool /*quoteAssetAmount=*/, tc.baseAssetPriceInQuote.Mul(tc.partialLiquidationRatio), nil)
+					).Return(market /*quoteAssetAmount=*/, tc.baseAssetPriceInQuote.Mul(tc.partialLiquidationRatio), nil)
 			} else {
 				mocks.mockPerpAmmKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						vpool,
+						market,
 						perpammtypes.Direction_SHORT,
 						/*baseAssetAmount=*/ tc.baseAssetPriceInQuote.Mul(tc.partialLiquidationRatio),
 						/*quoteAssetAssetLimit=*/ sdk.ZeroDec(),
 						/* skipFluctuationLimitCheck */ true,
-					).Return(vpool /*quoteAssetAmount=*/, tc.baseAssetPriceInQuote.Mul(tc.partialLiquidationRatio), nil)
+					).Return(market /*quoteAssetAmount=*/, tc.baseAssetPriceInQuote.Mul(tc.partialLiquidationRatio), nil)
 			}
 
 			mocks.mockPerpAmmKeeper.EXPECT().
@@ -1310,7 +1310,7 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 			assert.EqualValues(t,
 				tc.expectedExchangedNotionalValue,
 				positionResp.ExchangedNotionalValue) // amount of quote exchanged
-			// Initial position size that is liquidated to be is sold back to to vpool
+			// Initial position size that is liquidated to be is sold back to to market
 			if tc.initialPositionSize.IsNegative() {
 				assert.EqualValues(t, tc.baseAssetPriceInQuote.Mul(tc.partialLiquidationRatio), positionResp.ExchangedPositionSize)
 			} else {

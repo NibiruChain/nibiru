@@ -23,7 +23,7 @@ func TestQueryReserveAssets(t *testing.T) {
 	)
 	queryServer := NewQuerier(perpammKeeper)
 
-	t.Log("initialize vpool")
+	t.Log("initialize market")
 	pool := types.Market{
 		Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
@@ -58,7 +58,7 @@ func TestQueryAllPools(t *testing.T) {
 	ctx = ctx.WithBlockHeight(1).WithBlockTime(time.Now())
 	queryServer := NewQuerier(perpammKeeper)
 
-	t.Log("initialize vpool")
+	t.Log("initialize market")
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	pool := &types.Market{
 		Pair:              pair,

@@ -45,7 +45,7 @@ var flagsAddMarketGenesis = map[string]struct {
 	FlagMaxOracleSpreadRatio:   {"max-oracle-spread-ratio", "0.1", "max oracle spread ratio"},
 }
 
-// AddMarketGenesisCmd returns add-vpool-genesis
+// AddMarketGenesisCmd returns add-market-genesis
 func AddMarketGenesisCmd(defaultNodeHome string) *cobra.Command {
 	usageExampleTail := strings.Join([]string{
 		"pair", "base-asset-reserve", "quote-asset-reserve", "trade-limit-ratio",
@@ -64,7 +64,7 @@ func AddMarketGenesisCmd(defaultNodeHome string) *cobra.Command {
 		return fs, []string{"pair", "base-amt", "quote-amt"}
 	}
 	cmd := &cobra.Command{
-		Use:   fmt.Sprintf("add-genesis-vpool [%s]", usageExampleTail),
+		Use:   fmt.Sprintf("add-genesis-perp-market [%s]", usageExampleTail),
 		Short: "Add vPools to genesis.json",
 		Long:  `Add vPools to genesis.json.`,
 		Args:  cobra.ExactArgs(0),
@@ -91,7 +91,7 @@ func AddMarketGenesisCmd(defaultNodeHome string) *cobra.Command {
 
 			vPoolGenStateBz, err := clientCtx.Codec.MarshalJSON(vPoolGenState)
 			if err != nil {
-				return fmt.Errorf("failed to marshal vpool genesis state: %w", err)
+				return fmt.Errorf("failed to marshal market genesis state: %w", err)
 			}
 
 			appState[types.ModuleName] = vPoolGenStateBz
@@ -119,7 +119,7 @@ func AddMarketGenesisCmd(defaultNodeHome string) *cobra.Command {
 }
 
 func newMarketFromAddMarketGenesisFlags(flagSet *flag.FlagSet,
-) (vpool types.Market, err error) {
+) (market types.Market, err error) {
 	var flagErrors = []error{}
 	pairStr, err := flagSet.GetString(FlagPair)
 	flagErrors = append(flagErrors, err)
@@ -147,7 +147,7 @@ func newMarketFromAddMarketGenesisFlags(flagSet *flag.FlagSet,
 
 	for _, err := range flagErrors { // for brevity's sake
 		if err != nil {
-			return vpool, err
+			return market, err
 		}
 	}
 
@@ -189,7 +189,7 @@ func newMarketFromAddMarketGenesisFlags(flagSet *flag.FlagSet,
 		return types.Market{}, err
 	}
 
-	vpool = types.Market{
+	market = types.Market{
 		Pair:              pair,
 		QuoteAssetReserve: quoteAsset,
 		BaseAssetReserve:  baseAsset,
@@ -201,10 +201,10 @@ func newMarketFromAddMarketGenesisFlags(flagSet *flag.FlagSet,
 			MaxLeverage:            maxLeverage,
 		},
 	}
-	vpool, err = vpool.InitLiqDepth()
+	market, err = market.InitLiqDepth()
 	if err != nil {
 		return
 	}
 
-	return vpool, vpool.Validate()
+	return market, market.Validate()
 }

@@ -13,7 +13,7 @@ import (
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 )
 
-// CreateVPoolAction creates a vpool
+// CreateVPoolAction creates a market
 type CreateVPoolAction struct {
 	Pair asset.Pair
 
@@ -47,11 +47,11 @@ func (c CreateVPoolAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context,
 	return ctx, nil
 }
 
-// CreateBaseMarket creates a base vpool with:
+// CreateBaseMarket creates a base market with:
 // - pair: ubtc:uusdc
 // - quote asset reserve: 1000
 // - base asset reserve: 100
-// - vpool config: default
+// - market config: default
 func CreateBaseMarket() CreateVPoolAction {
 	return CreateVPoolAction{
 		Pair:              asset.NewPair(denoms.BTC, denoms.USDC),
@@ -67,7 +67,7 @@ func CreateBaseMarket() CreateVPoolAction {
 	}
 }
 
-// CreateCustomMarket creates a vpool with custom parameters
+// CreateCustomMarket creates a market with custom parameters
 func CreateCustomMarket(
 	pair asset.Pair,
 	quoteAssetReserve, baseAssetReserve sdk.Dec,

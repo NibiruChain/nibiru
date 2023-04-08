@@ -21,7 +21,7 @@ import (
 
 var testModuleBasicManager = module.NewBasicManager(genutil.AppModuleBasic{})
 
-// Tests "add-genesis-vpool", a command that adds a vpool to genesis.json
+// Tests "add-genesis-perp-market", a command that adds a market to genesis.json
 func TestAddMarketGenesisCmd(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -96,7 +96,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			expectError:   true,
 		},
 		{
-			name:          "valid vpool pair",
+			name:          "valid market pair",
 			pairName:      "token0:token1",
 			baseAmt:       "100",
 			quoteAmt:      "100",

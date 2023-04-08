@@ -24,7 +24,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 		test func()
 	}{
 		{
-			name: "get - no positions set raises vpool not found error",
+			name: "get - no positions set raises market not found error",
 			test: func() {
 				nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 
@@ -44,7 +44,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				trader := testutil.AccAddress()
 				pair := asset.MustNewPair("osmo:nusd")
 
-				t.Log("Set vpool defined by pair on PerpAmmKeeper")
+				t.Log("Set market defined by pair on PerpAmmKeeper")
 				perpammKeeper := &nibiruApp.PerpAmmKeeper
 				assert.NoError(t, perpammKeeper.CreatePool(
 					ctx,
@@ -63,7 +63,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				))
 				require.True(t, perpammKeeper.ExistsPool(ctx, pair))
 
-				t.Log("Set vpool defined by pair on PerpKeeper")
+				t.Log("Set market defined by pair on PerpKeeper")
 				keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 					Pair:                            pair,
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -99,7 +99,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				trader := testutil.AccAddress()
 				pair := asset.MustNewPair("osmo:nusd")
 
-				t.Log("Set vpool defined by pair on PerpAmmKeeper")
+				t.Log("Set market defined by pair on PerpAmmKeeper")
 				perpammKeeper := &nibiruApp.PerpAmmKeeper
 				assert.NoError(t, perpammKeeper.CreatePool(
 					ctx,
@@ -118,7 +118,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				))
 				require.True(t, perpammKeeper.ExistsPool(ctx, pair))
 
-				t.Log("Set vpool defined by pair on PerpKeeper")
+				t.Log("Set market defined by pair on PerpKeeper")
 				keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 					Pair:                            pair,
 					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.75"),

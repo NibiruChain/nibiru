@@ -23,13 +23,13 @@ func MarketShouldBeEqual(pair asset.Pair, checkers ...MarketChecker) action.Acti
 }
 
 func (v marketShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
-	vpool, err := app.PerpAmmKeeper.GetPool(ctx, v.pair)
+	market, err := app.PerpAmmKeeper.GetPool(ctx, v.pair)
 	if err != nil {
 		return ctx, err
 	}
 
 	for _, checker := range v.checkers {
-		if err := checker(vpool); err != nil {
+		if err := checker(market); err != nil {
 			return ctx, err
 		}
 	}
@@ -41,10 +41,10 @@ func (v marketShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Contex
 
 // VPool_BiasShouldBeEqualTo checks if the bias is equal to the expected bias
 func VPool_BiasShouldBeEqualTo(bias sdk.Dec) MarketChecker {
-	return func(vpool types.Market) error {
-		if vpool.Bias.Equal(bias) {
+	return func(market types.Market) error {
+		if market.Bias.Equal(bias) {
 			return nil
 		}
-		return fmt.Errorf("expected bias %s, got %s", bias, vpool.Bias)
+		return fmt.Errorf("expected bias %s, got %s", bias, market.Bias)
 	}
 }

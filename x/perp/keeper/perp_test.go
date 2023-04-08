@@ -27,7 +27,7 @@ func TestKeeperClosePosition(t *testing.T) {
 		ctx = ctx.WithBlockTime(time.Now())
 		pair := asset.MustNewPair("xxx:yyy")
 
-		t.Log("Set vpool defined by pair on PerpAmmKeeper")
+		t.Log("Set market defined by pair on PerpAmmKeeper")
 		perpammKeeper := &nibiruApp.PerpAmmKeeper
 		require.NoError(t, perpammKeeper.CreatePool(
 			ctx,
@@ -46,7 +46,7 @@ func TestKeeperClosePosition(t *testing.T) {
 		))
 		require.True(t, perpammKeeper.ExistsPool(ctx, pair))
 
-		t.Log("Set vpool defined by pair on PerpKeeper")
+		t.Log("Set market defined by pair on PerpKeeper")
 		keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 			Pair:                            pair,
 			LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.2"),

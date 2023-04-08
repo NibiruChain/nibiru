@@ -67,14 +67,14 @@ func TestMarket_NewPool(t *testing.T) {
 					_ = NewMarket(tc.args)
 				})
 			} else {
-				vpool := NewMarket(tc.args)
-				assert.EqualValues(t, tc.args.Pair, vpool.Pair)
-				assert.EqualValues(t, tc.args.BaseReserves, vpool.BaseAssetReserve)
-				assert.EqualValues(t, tc.args.QuoteReserves, vpool.QuoteAssetReserve)
+				market := NewMarket(tc.args)
+				assert.EqualValues(t, tc.args.Pair, market.Pair)
+				assert.EqualValues(t, tc.args.BaseReserves, market.BaseAssetReserve)
+				assert.EqualValues(t, tc.args.QuoteReserves, market.QuoteAssetReserve)
 
 				sqrtDepth, err := common.SqrtDec(tc.args.BaseReserves.Mul(tc.args.QuoteReserves))
 				assert.NoError(t, err)
-				assert.EqualValues(t, sqrtDepth, vpool.SqrtDepth)
+				assert.EqualValues(t, sqrtDepth, market.SqrtDepth)
 
 				var config MarketConfig
 				if tc.args.Config == nil {
@@ -82,7 +82,7 @@ func TestMarket_NewPool(t *testing.T) {
 				} else {
 					config = *tc.args.Config
 				}
-				assert.EqualValues(t, config, vpool.Config)
+				assert.EqualValues(t, config, market.Config)
 			}
 		})
 	}
@@ -754,12 +754,12 @@ func TestMarket_IsOverFluctuationLimit(t *testing.T) {
 func TestMarket_ToSnapshot(t *testing.T) {
 	tests := []struct {
 		name       string
-		vpool      Market
+		market     Market
 		expectFail bool
 	}{
 		{
 			name: "happy path",
-			vpool: Market{
+			market: Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				BaseAssetReserve:  sdk.NewDec(10),
 				QuoteAssetReserve: sdk.NewDec(10_000),
@@ -768,7 +768,7 @@ func TestMarket_ToSnapshot(t *testing.T) {
 		},
 		{
 			name: "err invalid base",
-			vpool: Market{
+			market: Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				BaseAssetReserve:  sdk.Dec{},
 				QuoteAssetReserve: sdk.NewDec(500),
@@ -777,7 +777,7 @@ func TestMarket_ToSnapshot(t *testing.T) {
 		},
 		{
 			name: "err invalid quote",
-			vpool: Market{
+			market: Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				BaseAssetReserve:  sdk.NewDec(500),
 				QuoteAssetReserve: sdk.Dec{},
@@ -786,7 +786,7 @@ func TestMarket_ToSnapshot(t *testing.T) {
 		},
 		{
 			name: "err negative quote",
-			vpool: Market{
+			market: Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				BaseAssetReserve:  sdk.NewDec(500),
 				QuoteAssetReserve: sdk.NewDec(-500),
@@ -795,7 +795,7 @@ func TestMarket_ToSnapshot(t *testing.T) {
 		},
 		{
 			name: "err negative base",
-			vpool: Market{
+			market: Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				BaseAssetReserve:  sdk.NewDec(-500),
 				QuoteAssetReserve: sdk.NewDec(500),
@@ -810,13 +810,13 @@ func TestMarket_ToSnapshot(t *testing.T) {
 			ctx := testutil.BlankContext(StoreKey)
 			if tc.expectFail {
 				require.Panics(t, func() {
-					_ = tc.vpool.ToSnapshot(ctx)
+					_ = tc.market.ToSnapshot(ctx)
 				})
 			} else {
-				snapshot := tc.vpool.ToSnapshot(ctx)
-				assert.EqualValues(t, tc.vpool.Pair, snapshot.Pair)
-				assert.EqualValues(t, tc.vpool.BaseAssetReserve, snapshot.BaseAssetReserve)
-				assert.EqualValues(t, tc.vpool.QuoteAssetReserve, snapshot.QuoteAssetReserve)
+				snapshot := tc.market.ToSnapshot(ctx)
+				assert.EqualValues(t, tc.market.Pair, snapshot.Pair)
+				assert.EqualValues(t, tc.market.BaseAssetReserve, snapshot.BaseAssetReserve)
+				assert.EqualValues(t, tc.market.QuoteAssetReserve, snapshot.QuoteAssetReserve)
 				assert.EqualValues(t, ctx.BlockTime().UnixMilli(), snapshot.TimestampMs)
 			}
 		})
@@ -824,15 +824,15 @@ func TestMarket_ToSnapshot(t *testing.T) {
 }
 
 func TestDefaultMarketConfig(t *testing.T) {
-	vpoolCfg := DefaultMarketConfig()
-	err := vpoolCfg.Validate()
+	marketCfg := DefaultMarketConfig()
+	err := marketCfg.Validate()
 	require.NoError(t, err)
 }
 
 func TestMarketConfigWith(t *testing.T) {
-	vpoolCfg := DefaultMarketConfig()
+	marketCfg := DefaultMarketConfig()
 
-	vpoolCfgUpdates := MarketConfig{
+	marketCfgUpdates := MarketConfig{
 		TradeLimitRatio:        sdk.NewDec(12),
 		FluctuationLimitRatio:  sdk.NewDec(34),
 		MaxOracleSpreadRatio:   sdk.NewDec(56),
@@ -844,29 +844,29 @@ func TestMarketConfigWith(t *testing.T) {
 
 	testCases := testutil.FunctionTestCases{
 		{Name: "WithTradeLimitRatio", Test: func() {
-			assert.NotEqualValues(t, vpoolCfgUpdates.TradeLimitRatio, vpoolCfg.TradeLimitRatio)
-			newMarketCfg = *vpoolCfg.WithTradeLimitRatio(vpoolCfgUpdates.TradeLimitRatio)
-			assert.EqualValues(t, vpoolCfgUpdates.TradeLimitRatio, newMarketCfg.TradeLimitRatio)
+			assert.NotEqualValues(t, marketCfgUpdates.TradeLimitRatio, marketCfg.TradeLimitRatio)
+			newMarketCfg = *marketCfg.WithTradeLimitRatio(marketCfgUpdates.TradeLimitRatio)
+			assert.EqualValues(t, marketCfgUpdates.TradeLimitRatio, newMarketCfg.TradeLimitRatio)
 		}},
 		{Name: "WithFluctuationLimitRatio", Test: func() {
-			assert.NotEqualValues(t, vpoolCfgUpdates.FluctuationLimitRatio, vpoolCfg.FluctuationLimitRatio)
-			newMarketCfg = *vpoolCfg.WithFluctuationLimitRatio(vpoolCfgUpdates.FluctuationLimitRatio)
-			assert.EqualValues(t, vpoolCfgUpdates.FluctuationLimitRatio, newMarketCfg.FluctuationLimitRatio)
+			assert.NotEqualValues(t, marketCfgUpdates.FluctuationLimitRatio, marketCfg.FluctuationLimitRatio)
+			newMarketCfg = *marketCfg.WithFluctuationLimitRatio(marketCfgUpdates.FluctuationLimitRatio)
+			assert.EqualValues(t, marketCfgUpdates.FluctuationLimitRatio, newMarketCfg.FluctuationLimitRatio)
 		}},
 		{Name: "WithMaxOracleSpreadRatio", Test: func() {
-			assert.NotEqualValues(t, vpoolCfgUpdates.MaxOracleSpreadRatio, vpoolCfg.MaxOracleSpreadRatio)
-			newMarketCfg = *vpoolCfg.WithMaxOracleSpreadRatio(vpoolCfgUpdates.MaxOracleSpreadRatio)
-			assert.EqualValues(t, vpoolCfgUpdates.MaxOracleSpreadRatio, newMarketCfg.MaxOracleSpreadRatio)
+			assert.NotEqualValues(t, marketCfgUpdates.MaxOracleSpreadRatio, marketCfg.MaxOracleSpreadRatio)
+			newMarketCfg = *marketCfg.WithMaxOracleSpreadRatio(marketCfgUpdates.MaxOracleSpreadRatio)
+			assert.EqualValues(t, marketCfgUpdates.MaxOracleSpreadRatio, newMarketCfg.MaxOracleSpreadRatio)
 		}},
 		{Name: "WithMaintenanceMarginRatio", Test: func() {
-			assert.NotEqualValues(t, vpoolCfgUpdates.MaintenanceMarginRatio, vpoolCfg.MaintenanceMarginRatio)
-			newMarketCfg = *vpoolCfg.WithMaintenanceMarginRatio(vpoolCfgUpdates.MaintenanceMarginRatio)
-			assert.EqualValues(t, vpoolCfgUpdates.MaintenanceMarginRatio, newMarketCfg.MaintenanceMarginRatio)
+			assert.NotEqualValues(t, marketCfgUpdates.MaintenanceMarginRatio, marketCfg.MaintenanceMarginRatio)
+			newMarketCfg = *marketCfg.WithMaintenanceMarginRatio(marketCfgUpdates.MaintenanceMarginRatio)
+			assert.EqualValues(t, marketCfgUpdates.MaintenanceMarginRatio, newMarketCfg.MaintenanceMarginRatio)
 		}},
 		{Name: "WithMaxLeverage", Test: func() {
-			assert.NotEqualValues(t, vpoolCfgUpdates.MaxLeverage, vpoolCfg.MaxLeverage)
-			newMarketCfg = *vpoolCfg.WithMaxLeverage(vpoolCfgUpdates.MaxLeverage)
-			assert.EqualValues(t, vpoolCfgUpdates.MaxLeverage, newMarketCfg.MaxLeverage)
+			assert.NotEqualValues(t, marketCfgUpdates.MaxLeverage, marketCfg.MaxLeverage)
+			newMarketCfg = *marketCfg.WithMaxLeverage(marketCfgUpdates.MaxLeverage)
+			assert.EqualValues(t, marketCfgUpdates.MaxLeverage, newMarketCfg.MaxLeverage)
 		}},
 	}
 

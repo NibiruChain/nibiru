@@ -28,7 +28,7 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 type CreatePoolProposal struct {
 	Title       string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
 	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
-	// pair represents the pair of the vpool.
+	// pair represents the pair of the market.
 	Pair github_com_NibiruChain_nibiru_x_common_asset.Pair `protobuf:"bytes,3,opt,name=pair,proto3,customtype=github.com/NibiruChain/nibiru/x/common/asset.Pair" json:"pair"`
 	// quote_asset_reserve is the amount of quote asset the pool will be
 	// initialized with.

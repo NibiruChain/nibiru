@@ -47,8 +47,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	encodingConfig := app.MakeTestEncodingConfig()
 	genesisState := genesis.NewTestGenesisState()
-	vpoolGenesis := perpammtypes.DefaultGenesis()
-	vpoolGenesis.Markets = []perpammtypes.Market{
+	marketGenesis := perpammtypes.DefaultGenesis()
+	marketGenesis.Markets = []perpammtypes.Market{
 		{
 			Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 			BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
@@ -63,7 +63,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			},
 		},
 	}
-	genesisState[perpammtypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(vpoolGenesis)
+	genesisState[perpammtypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(marketGenesis)
 
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)

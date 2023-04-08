@@ -403,7 +403,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			traderAddr := testutil.AccAddress()
 			exchangedSize := tc.expectedSize
 
-			t.Log("initialize vpool")
+			t.Log("initialize market")
 			assert.NoError(t, nibiruApp.PerpAmmKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -496,7 +496,7 @@ func TestOpenPositionError(t *testing.T) {
 		name        string
 		traderFunds sdk.Coins
 
-		// vpool params
+		// market params
 		poolTradeLimitRatio sdk.Dec
 
 		initialPosition *perptypes.Position
@@ -657,7 +657,7 @@ func TestOpenPositionError(t *testing.T) {
 			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 			traderAddr := testutil.AccAddress()
 
-			t.Log("initialize vpool")
+			t.Log("initialize market")
 			assert.NoError(t, nibiruApp.PerpAmmKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -723,13 +723,13 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 			},
 		},
 		{
-			name: "open pos - vpool not set on the perp PairMetadata ",
+			name: "open pos - market not set on the perp PairMetadata ",
 			test: func() {
 				t.Log("Setup Nibiru app, pair, and trader")
 				nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 				pair := asset.MustNewPair("xxx:yyy")
 
-				t.Log("Set vpool defined by pair on PerpAmmKeeper")
+				t.Log("Set market defined by pair on PerpAmmKeeper")
 				perpammKeeper := &nibiruApp.PerpAmmKeeper
 				assert.NoError(t, nibiruApp.PerpAmmKeeper.CreatePool(
 					ctx,

@@ -25,7 +25,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 	quoteReserve := sdk.NewDec(10e12).Add(simtypes.RandomDecAmount(simState.Rand, sdk.NewDec(10e12)))
 	baseReserve := sdk.NewDec(10e12).Add(simtypes.RandomDecAmount(simState.Rand, sdk.NewDec(10e12)))
 	sqrtDepth := common.MustSqrtDec(quoteReserve.Mul(baseReserve))
-	vpoolGenesis := types.GenesisState{
+	marketGenesis := types.GenesisState{
 		Markets: []types.Market{
 			{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -43,10 +43,10 @@ func RandomizedGenState(simState *module.SimulationState) {
 		},
 	}
 
-	vpoolGenesisBytes, err := json.MarshalIndent(&vpoolGenesis, "", " ")
+	marketGenesisBytes, err := json.MarshalIndent(&marketGenesis, "", " ")
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("Selected randomly generated markets:\n%s\n", vpoolGenesisBytes)
-	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(&vpoolGenesis)
+	fmt.Printf("Selected randomly generated markets:\n%s\n", marketGenesisBytes)
+	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(&marketGenesis)
 }

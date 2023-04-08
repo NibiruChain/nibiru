@@ -141,10 +141,10 @@ func TestGetBaseAssetPrice(t *testing.T) {
 				sdk.OneDec(),
 			))
 
-			vpool, err := perpammKeeper.GetPool(ctx, tc.pair)
+			market, err := perpammKeeper.GetPool(ctx, tc.pair)
 			require.NoError(t, err)
 
-			quoteAmount, err := perpammKeeper.GetBaseAssetPrice(vpool, tc.direction, tc.baseAmount)
+			quoteAmount, err := perpammKeeper.GetBaseAssetPrice(market, tc.direction, tc.baseAmount)
 			if tc.expectedErr != nil {
 				require.ErrorIs(t, err, tc.expectedErr,
 					"expected error: %w, got: %w", tc.expectedErr, err)

@@ -82,12 +82,12 @@ func (q queryServer) BaseAssetPrice(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	vpool, err := q.k.GetPool(ctx, req.Pair)
+	market, err := q.k.GetPool(ctx, req.Pair)
 	if err != nil {
 		return nil, types.ErrPairNotSupported
 	}
 	priceInQuoteDenom, err := q.k.GetBaseAssetPrice(
-		vpool,
+		market,
 		req.Direction,
 		req.BaseAssetAmount,
 	)

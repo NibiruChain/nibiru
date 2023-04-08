@@ -31,7 +31,7 @@ func (k Keeper) Liquidate(
 	pair asset.Pair,
 	trader sdk.AccAddress,
 ) (liquidatorFee sdk.Coin, perpEcosystemFundFee sdk.Coin, err error) {
-	vpool, err := k.PerpAmmKeeper.GetPool(ctx, pair)
+	market, err := k.PerpAmmKeeper.GetPool(ctx, pair)
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, types.ErrPairNotFound
 	}
@@ -59,7 +59,7 @@ func (k Keeper) Liquidate(
 
 	marginRatio, err := k.GetMarginRatio(
 		ctx,
-		vpool,
+		market,
 		position,
 		types.MarginCalculationPriceOption_MAX_PNL,
 	)
@@ -73,7 +73,7 @@ func (k Keeper) Liquidate(
 	}
 	if isOverSpreadLimit {
 		marginRatioBasedOnOracle, err := k.GetMarginRatio(
-			ctx, vpool, position, types.MarginCalculationPriceOption_INDEX)
+			ctx, market, position, types.MarginCalculationPriceOption_INDEX)
 		if err != nil {
 			return liquidatorFee, perpEcosystemFundFee, err
 		}
@@ -99,7 +99,7 @@ func (k Keeper) Liquidate(
 	}
 
 	marginRatioBasedOnSpot, err := k.GetMarginRatio(
-		ctx, vpool, position, types.MarginCalculationPriceOption_SPOT)
+		ctx, market, position, types.MarginCalculationPriceOption_SPOT)
 	if err != nil {
 		return
 	}
@@ -145,7 +145,7 @@ func (k Keeper) ExecuteFullLiquidation(
 ) (liquidationResp types.LiquidateResp, err error) {
 	params := k.GetParams(ctx)
 
-	vpool, err := k.PerpAmmKeeper.GetPool(ctx, position.Pair)
+	market, err := k.PerpAmmKeeper.GetPool(ctx, position.Pair)
 	if err != nil {
 		return types.LiquidateResp{}, types.ErrPairNotFound
 	}
@@ -157,7 +157,7 @@ func (k Keeper) ExecuteFullLiquidation(
 
 	_, positionResp, err := k.closePositionEntirely(
 		ctx,
-		vpool,
+		market,
 		/* currentPosition */ *position,
 		/* quoteAssetAmountLimit */ sdk.ZeroDec(),
 		/* skipFluctuationLimitCheck */ true,
@@ -297,7 +297,7 @@ func (k Keeper) ExecutePartialLiquidation(
 ) (types.LiquidateResp, error) {
 	params := k.GetParams(ctx)
 
-	vpool, err := k.PerpAmmKeeper.GetPool(ctx, currentPosition.Pair)
+	market, err := k.PerpAmmKeeper.GetPool(ctx, currentPosition.Pair)
 	if err != nil {
 		return types.LiquidateResp{}, types.ErrPairNotFound
 	}
@@ -315,7 +315,7 @@ func (k Keeper) ExecutePartialLiquidation(
 	}
 
 	partiallyLiquidatedPositionNotional, err := k.PerpAmmKeeper.GetBaseAssetPrice(
-		vpool,
+		market,
 		baseAssetDir,
 		/* abs= */ currentPosition.Size_.Mul(params.PartialLiquidationRatio),
 	)
@@ -325,7 +325,7 @@ func (k Keeper) ExecutePartialLiquidation(
 
 	_, positionResp, err := k.decreasePosition(
 		/* ctx */ ctx,
-		vpool,
+		market,
 		/* currentPosition */ *currentPosition,
 		/* quoteAssetAmount */ partiallyLiquidatedPositionNotional,
 		/* baseAmtLimit */ sdk.ZeroDec(),

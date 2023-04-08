@@ -49,7 +49,7 @@ func TestGenesisState_Validate(t *testing.T) {
 			},
 			wantErr: false,
 		},
-		"invalid vpool": {
+		"invalid market": {
 			genesis: &GenesisState{
 				Markets: []Market{
 					{
@@ -82,7 +82,7 @@ func TestGenesisState_Validate(t *testing.T) {
 			},
 			wantErr: true,
 		},
-		"duplicate vpool": {
+		"duplicate market": {
 			genesis: &GenesisState{
 				Markets: []Market{
 					{

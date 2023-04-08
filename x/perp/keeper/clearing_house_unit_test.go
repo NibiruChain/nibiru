@@ -112,16 +112,16 @@ func TestSwapQuoteAssetForBase(t *testing.T) {
 		{
 			name: "long position - buy",
 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
-				vpool := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+				market := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 				mocks.mockPerpAmmKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						vpool,
+						market,
 						perpammtypes.Direction_LONG,
 						/*quoteAmount=*/ sdk.NewDec(10),
 						/*baseLimit=*/ sdk.NewDec(1),
 						/* skipFluctuationLimitCheck */ false,
-					).Return(vpool, sdk.NewDec(5), nil)
+					).Return(market, sdk.NewDec(5), nil)
 			},
 			side:               perpammtypes.Direction_LONG,
 			expectedBaseAmount: sdk.NewDec(5),
@@ -129,16 +129,16 @@ func TestSwapQuoteAssetForBase(t *testing.T) {
 		{
 			name: "short position - sell",
 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
-				vpool := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+				market := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 				mocks.mockPerpAmmKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						vpool,
+						market,
 						perpammtypes.Direction_SHORT,
 						/*quoteAmount=*/ sdk.NewDec(10),
 						/*baseLimit=*/ sdk.NewDec(1),
 						/* skipFluctuationLimitCheck */ false,
-					).Return(vpool, sdk.NewDec(5), nil)
+					).Return(market, sdk.NewDec(5), nil)
 			},
 			side:               perpammtypes.Direction_SHORT,
 			expectedBaseAmount: sdk.NewDec(-5),
@@ -152,11 +152,11 @@ func TestSwapQuoteAssetForBase(t *testing.T) {
 
 			tc.setMocks(ctx, mocks)
 
-			vpool := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+			market := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 
 			_, baseAmount, err := perpKeeper.swapQuoteForBase(
 				ctx,
-				vpool,
+				market,
 				tc.side,
 				sdk.NewDec(10),
 				sdk.NewDec(1),
@@ -192,23 +192,23 @@ func TestIncreasePosition(t *testing.T) {
 				BlockNumber:                     0,
 			},
 			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
-				t.Log("mock vpool")
-				vpool := perpammtypes.Market{
+				t.Log("mock market")
+				market := perpammtypes.Market{
 					Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				}
 				mocks.mockPerpAmmKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						vpool,
+						market,
 						/*quoteAssetDirection=*/ perpammtypes.Direction_LONG,
 						/*quoteAssetAmount=*/ sdk.NewDec(100),
 						/*baseAssetLimit=*/ sdk.NewDec(50),
 						/* skipFluctuationLimitCheck */ false,
-					).Return(vpool /*baseAssetAmount=*/, sdk.NewDec(50), nil)
+					).Return(market /*baseAssetAmount=*/, sdk.NewDec(50), nil)
 
 				mocks.mockPerpAmmKeeper.EXPECT().
 					GetBaseAssetPrice(
-						vpool,
+						market,
 						perpammtypes.Direction_LONG,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -269,23 +269,23 @@ func TestIncreasePosition(t *testing.T) {
 				BlockNumber:                     0,
 			},
 			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
-				t.Log("mock vpool")
-				vpool := perpammtypes.Market{
+				t.Log("mock market")
+				market := perpammtypes.Market{
 					Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				}
 				mocks.mockPerpAmmKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						vpool,
+						market,
 						/*quoteAssetDirection=*/ perpammtypes.Direction_LONG,
 						/*quoteAssetAmount=*/ sdk.NewDec(100),
 						/*baseAssetLimit=*/ sdk.NewDec(101),
 						/* skipFluctuationLimitCheck */ false,
-					).Return(vpool /*baseAssetAmount=*/, sdk.NewDec(101), nil)
+					).Return(market /*baseAssetAmount=*/, sdk.NewDec(101), nil)
 
 				mocks.mockPerpAmmKeeper.EXPECT().
 					GetBaseAssetPrice(
-						vpool,
+						market,
 						perpammtypes.Direction_LONG,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -347,23 +347,23 @@ func TestIncreasePosition(t *testing.T) {
 				BlockNumber:                     0,
 			},
 			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
-				t.Log("mock vpool")
-				vpool := perpammtypes.Market{
+				t.Log("mock market")
+				market := perpammtypes.Market{
 					Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				}
 				mocks.mockPerpAmmKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						vpool,
+						market,
 						/*quoteAssetDirection=*/ perpammtypes.Direction_LONG,
 						/*quoteAssetAmount=*/ sdk.NewDec(100),
 						/*baseAssetLimit=*/ sdk.NewDec(110),
 						/* skipFluctuationLimitCheck */ false,
-					).Return(vpool /*baseAssetAmount=*/, sdk.NewDec(110), nil)
+					).Return(market /*baseAssetAmount=*/, sdk.NewDec(110), nil)
 
 				mocks.mockPerpAmmKeeper.EXPECT().
 					GetBaseAssetPrice(
-						vpool,
+						market,
 						perpammtypes.Direction_LONG,
 						/*baseAssetAmount=*/ sdk.NewDec(110),
 					).
@@ -423,23 +423,23 @@ func TestIncreasePosition(t *testing.T) {
 				BlockNumber:                     0,
 			},
 			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
-				t.Log("mock vpool")
-				vpool := perpammtypes.Market{
+				t.Log("mock market")
+				market := perpammtypes.Market{
 					Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				}
 				mocks.mockPerpAmmKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						vpool,
+						market,
 						/*quoteAssetDirection=*/ perpammtypes.Direction_SHORT,
 						/*quoteAssetAmount=*/ sdk.NewDec(100),
 						/*baseAssetLimit=*/ sdk.NewDec(200),
 						/* skipFluctuationLimitCheck */ false,
-					).Return(vpool /*baseAssetAmount=*/, sdk.NewDec(200), nil)
+					).Return(market /*baseAssetAmount=*/, sdk.NewDec(200), nil)
 
 				mocks.mockPerpAmmKeeper.EXPECT().
 					GetBaseAssetPrice(
-						vpool,
+						market,
 						perpammtypes.Direction_SHORT,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -499,23 +499,23 @@ func TestIncreasePosition(t *testing.T) {
 				BlockNumber:                     0,
 			},
 			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
-				t.Log("mock vpool")
-				vpool := perpammtypes.Market{
+				t.Log("mock market")
+				market := perpammtypes.Market{
 					Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				}
 				mocks.mockPerpAmmKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						vpool,
+						market,
 						/*quoteAssetDirection=*/ perpammtypes.Direction_SHORT,
 						/*quoteAssetAmount=*/ sdk.NewDec(100),
 						/*baseAssetLimit=*/ sdk.NewDec(99),
 						/* skipFluctuationLimitCheck */ false,
-					).Return(vpool /*baseAssetAmount=*/, sdk.NewDec(99), nil)
+					).Return(market /*baseAssetAmount=*/, sdk.NewDec(99), nil)
 
 				mocks.mockPerpAmmKeeper.EXPECT().
 					GetBaseAssetPrice(
-						vpool,
+						market,
 						perpammtypes.Direction_SHORT,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -578,23 +578,23 @@ func TestIncreasePosition(t *testing.T) {
 				BlockNumber:                     0,
 			},
 			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
-				t.Log("mock vpool")
-				vpool := perpammtypes.Market{
+				t.Log("mock market")
+				market := perpammtypes.Market{
 					Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				}
 				mocks.mockPerpAmmKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						vpool,
+						market,
 						/*quoteAssetDirection=*/ perpammtypes.Direction_SHORT,
 						/*quoteAssetAmount=*/ sdk.NewDec(105),
 						/*baseAssetLimit=*/ sdk.NewDec(100),
 						/* skipFluctuationLimitCheck */ false,
-					).Return(vpool /*baseAssetAmount=*/, sdk.NewDec(100), nil)
+					).Return(market /*baseAssetAmount=*/, sdk.NewDec(100), nil)
 
 				mocks.mockPerpAmmKeeper.EXPECT().
 					GetBaseAssetPrice(
-						vpool,
+						market,
 						perpammtypes.Direction_SHORT,
 						/*baseAssetAmount=*/ sdk.NewDec(100),
 					).
@@ -843,13 +843,13 @@ func TestClosePositionEntirely(t *testing.T) {
 			t.Log("set up initial position")
 			SetPosition(perpKeeper, ctx, tc.initialPosition)
 
-			t.Log("mock vpool")
-			vpool := perpammtypes.Market{
+			t.Log("mock market")
+			market := perpammtypes.Market{
 				Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			}
 			mocks.mockPerpAmmKeeper.EXPECT().
 				GetBaseAssetPrice(
-					vpool,
+					market,
 					tc.direction,
 					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
 				).
@@ -858,12 +858,12 @@ func TestClosePositionEntirely(t *testing.T) {
 			mocks.mockPerpAmmKeeper.EXPECT().
 				SwapBaseForQuote(
 					ctx,
-					vpool,
+					market,
 					/*quoteAssetDirection=*/ tc.direction,
 					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
 					/*quoteAssetLimit=*/ tc.quoteAssetLimit,
 					/* skipFluctuationLimitCheck */ false,
-				).Return(vpool /*quoteAssetAmount=*/, tc.newPositionNotional, nil)
+				).Return(market /*quoteAssetAmount=*/, tc.newPositionNotional, nil)
 
 			t.Log("set up pair metadata and last cumulative funding rate")
 			SetPairMetadata(perpKeeper, ctx, tc.pairMetadata)
@@ -872,7 +872,7 @@ func TestClosePositionEntirely(t *testing.T) {
 
 			_, resp, err := perpKeeper.closePositionEntirely(
 				ctx,
-				vpool,
+				market,
 				tc.initialPosition,
 				/*quoteAssetLimit=*/ tc.quoteAssetLimit, // NUSD
 				/* skipFluctuationLimitCheck */ false,
@@ -880,7 +880,7 @@ func TestClosePositionEntirely(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.EqualValues(t, tc.newPositionNotional, resp.ExchangedNotionalValue)
-			assert.EqualValues(t, tc.initialPosition.Size_.Neg(), resp.ExchangedPositionSize) // sold back to vpool
+			assert.EqualValues(t, tc.initialPosition.Size_.Neg(), resp.ExchangedPositionSize) // sold back to market
 			assert.EqualValues(t, tc.expectedFundingPayment, resp.FundingPayment)
 			assert.EqualValues(t, tc.expectedBadDebt, resp.BadDebt)
 			assert.EqualValues(t, tc.expectedRealizedPnl, resp.RealizedPnl)
@@ -1143,11 +1143,11 @@ func TestDecreasePosition(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			perpKeeper, mocks, ctx := getKeeper(t)
 
-			t.Log("mock vpool")
-			vpool := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+			t.Log("mock market")
+			market := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			mocks.mockPerpAmmKeeper.EXPECT().
 				GetBaseAssetPrice(
-					vpool,
+					market,
 					tc.baseAssetDir,
 					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
 				).
@@ -1156,12 +1156,12 @@ func TestDecreasePosition(t *testing.T) {
 			mocks.mockPerpAmmKeeper.EXPECT().
 				SwapQuoteForBase(
 					ctx,
-					vpool,
+					market,
 					/*quoteAssetDirection=*/ tc.quoteAssetDir,
 					/*quoteAssetAmount=*/ tc.quoteAmountToDecrease,
 					/*baseAssetLimit=*/ tc.exchangedBaseAmount.Abs(),
 					/* skipFluctuationLimitCheck */ false,
-				).Return(vpool /*baseAssetAmount=*/, tc.baseAssetLimit, nil)
+				).Return(market /*baseAssetAmount=*/, tc.baseAssetLimit, nil)
 
 			t.Log("set up pair metadata and last cumulative funding rate")
 			SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
@@ -1543,11 +1543,11 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 			}
 			SetPosition(perpKeeper, ctx, currentPosition)
 
-			t.Log("mock vpool")
-			vpool := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+			t.Log("mock market")
+			market := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			mocks.mockPerpAmmKeeper.EXPECT().
 				GetBaseAssetPrice(
-					vpool,
+					market,
 					tc.mockBaseDir,
 					/*baseAssetAmount=*/ currentPosition.Size_.Abs(),
 				).
@@ -1556,23 +1556,23 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 			mocks.mockPerpAmmKeeper.EXPECT().
 				SwapBaseForQuote(
 					ctx,
-					vpool,
+					market,
 					tc.mockBaseDir,
 					/*baseAssetAmount=*/ currentPosition.Size_.Abs(),
 					/*quoteAssetLimit=*/ sdk.ZeroDec(),
 					/* skipFluctuationLimitCheck */ false,
-				).Return(vpool /*quoteAssetAmount=*/, tc.mockQuoteAmount, nil)
+				).Return(market /*quoteAssetAmount=*/, tc.mockQuoteAmount, nil)
 
 			if tc.expectedErr == nil {
 				mocks.mockPerpAmmKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						vpool,
+						market,
 						/*quoteAssetDirection=*/ tc.mockQuoteDir,
 						/*quoteAssetAmount=*/ tc.inputQuoteAmount.Mul(tc.inputLeverage).Sub(tc.mockQuoteAmount),
 						/*baseAssetLimit=*/ sdk.MaxDec(tc.inputBaseAssetLimit.Sub(currentPosition.Size_.Abs()), sdk.ZeroDec()),
 						/* skipFluctuationLimitCheck */ false,
-					).Return(vpool /*baseAssetAmount=*/, tc.mockBaseAmount, nil)
+					).Return(market /*baseAssetAmount=*/, tc.mockBaseAmount, nil)
 			}
 
 			t.Log("set up pair metadata and last cumulative funding rate")
@@ -1829,14 +1829,14 @@ func TestClosePosition(t *testing.T) {
 			params.EcosystemFundFeeRatio = sdk.ZeroDec()
 			perpKeeper.SetParams(ctx, params)
 
-			t.Log("mock vpool keeper")
-			vpool := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+			t.Log("mock market keeper")
+			market := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			mocks.mockPerpAmmKeeper.EXPECT().
 				GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).
-				Return(vpool, nil)
+				Return(market, nil)
 			mocks.mockPerpAmmKeeper.EXPECT().
 				GetBaseAssetPrice(
-					vpool,
+					market,
 					tc.baseAssetDir,
 					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
 				).
@@ -1845,12 +1845,12 @@ func TestClosePosition(t *testing.T) {
 			mocks.mockPerpAmmKeeper.EXPECT().
 				SwapBaseForQuote(
 					ctx,
-					vpool,
+					market,
 					/*baseAssetDirection=*/ tc.baseAssetDir,
 					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
 					/*quoteAssetLimit=*/ sdk.ZeroDec(),
 					/* skipFluctuationLimitCheck */ false,
-				).Return(vpool /*quoteAssetAmount=*/, tc.newPositionNotional, nil)
+				).Return(market /*quoteAssetAmount=*/, tc.newPositionNotional, nil)
 
 			mocks.mockPerpAmmKeeper.EXPECT().
 				GetMarkPrice(
@@ -1995,15 +1995,15 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 			t.Log("set params")
 			perpKeeper.SetParams(ctx, types.DefaultParams())
 
-			t.Log("mock vpool keeper")
-			vpool := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+			t.Log("mock market keeper")
+			market := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			mocks.mockPerpAmmKeeper.EXPECT().
 				GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).
-				Return(vpool, nil)
+				Return(market, nil)
 
 			mocks.mockPerpAmmKeeper.EXPECT().
 				GetBaseAssetPrice(
-					vpool,
+					market,
 					tc.baseAssetDir,
 					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
 				).
@@ -2013,12 +2013,12 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 			mocks.mockPerpAmmKeeper.EXPECT().
 				SwapBaseForQuote(
 					ctx,
-					vpool,
+					market,
 					/*baseAssetDirection=*/ tc.baseAssetDir,
 					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
 					/*quoteAssetLimit=*/ sdk.ZeroDec(),
 					/* skipFluctuationLimitCheck */ false,
-				).Return(vpool /*quoteAssetAmount=*/, tc.newPositionNotional, nil)
+				).Return(market /*quoteAssetAmount=*/, tc.newPositionNotional, nil)
 
 			t.Log("set up pair metadata and last cumulative funding rate")
 			SetPairMetadata(perpKeeper, ctx, types.PairMetadata{

@@ -77,7 +77,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 			traderAddr := testutil.AccAddress()
 
-			t.Log("create vpool")
+			t.Log("create market")
 			assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -200,7 +200,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 			traderAddr := testutil.AccAddress()
 
-			t.Log("create vpool")
+			t.Log("create market")
 			assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -289,7 +289,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 			ctx = ctx.WithBlockTime(time.Now())
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
-			t.Log("create vpool")
+			t.Log("create market")
 			assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 				/* ctx */ ctx,
 				/* pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -377,7 +377,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
-			t.Log("create vpool")
+			t.Log("create market")
 
 			assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 				ctx,
@@ -450,7 +450,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	notAtRiskTrader := testutil.AccAddress()
 	atRiskTrader2 := testutil.AccAddress()
 
-	t.Log("create vpool")
+	t.Log("create market")
 	assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 		/* ctx */ ctx,
 		/* pair */ pair,
@@ -562,7 +562,7 @@ func TestMsgServerMultiLiquidate_NotAuthorized(t *testing.T) {
 
 	atRiskTrader1 := testutil.AccAddress()
 
-	t.Log("create vpool")
+	t.Log("create market")
 	assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 		/* ctx */ ctx,
 		/* pair */ pair,
@@ -635,7 +635,7 @@ func TestMsgServerMultiLiquidate_AllFailed(t *testing.T) {
 
 	notAtRiskTrader := testutil.AccAddress()
 
-	t.Log("create vpool")
+	t.Log("create market")
 	assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 		/* ctx */ ctx,
 		/* pair */ pair,

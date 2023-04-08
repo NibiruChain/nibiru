@@ -52,7 +52,7 @@ type OracleKeeper interface {
 type PerpAmmKeeper interface {
 	SwapBaseForQuote(
 		ctx sdk.Context,
-		vpool perpammtypes.Market,
+		market perpammtypes.Market,
 		dir perpammtypes.Direction,
 		baseAssetAmount sdk.Dec,
 		quoteAmountLimit sdk.Dec,
@@ -61,7 +61,7 @@ type PerpAmmKeeper interface {
 
 	SwapQuoteForBase(
 		ctx sdk.Context,
-		vpool perpammtypes.Market,
+		market perpammtypes.Market,
 		dir perpammtypes.Direction,
 		quoteAssetAmount sdk.Dec,
 		baseAmountLimit sdk.Dec,
@@ -77,7 +77,7 @@ type PerpAmmKeeper interface {
 	) (quoteAssetAmount sdk.Dec, err error)
 
 	GetBaseAssetPrice(
-		vpool perpammtypes.Market,
+		market perpammtypes.Market,
 		direction perpammtypes.Direction,
 		baseAssetAmount sdk.Dec,
 	) (quoteAssetAmount sdk.Dec, err error)

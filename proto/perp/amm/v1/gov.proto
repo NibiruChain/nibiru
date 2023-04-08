@@ -11,7 +11,7 @@ message CreatePoolProposal {
   string title = 1;
   string description = 2;
 
-  // pair represents the pair of the vpool.
+  // pair represents the pair of the market.
   string pair = 3 [ 
     (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
