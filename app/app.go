@@ -125,8 +125,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/stablecoin"
 	stablecoinkeeper "github.com/NibiruChain/nibiru/x/stablecoin/keeper"
 	stablecointypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
-	"github.com/NibiruChain/nibiru/x/util"
-	utiltypes "github.com/NibiruChain/nibiru/x/util/types"
 	"github.com/NibiruChain/nibiru/x/vpool"
 )
 
@@ -185,7 +183,6 @@ var (
 		stablecoin.AppModuleBasic{},
 		perp.AppModuleBasic{},
 		vpool.AppModuleBasic{},
-		util.AppModule{},
 		wasm.AppModuleBasic{},
 		ibcfee.AppModuleBasic{},
 	)
@@ -648,7 +645,6 @@ func NewNibiruApp(
 	vpoolModule := vpool.NewAppModule(
 		appCodec, app.VpoolKeeper, app.OracleKeeper,
 	)
-	utilModule := util.NewAppModule(app.BankKeeper)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
@@ -679,7 +675,6 @@ func NewNibiruApp(
 		epochsModule,
 		vpoolModule,
 		perpModule,
-		utilModule,
 
 		// ibc
 		evidence.NewAppModule(app.evidenceKeeper),
@@ -719,7 +714,6 @@ func NewNibiruApp(
 		stablecointypes.ModuleName,
 		vpooltypes.ModuleName,
 		perptypes.ModuleName,
-		utiltypes.ModuleName,
 		// ibc modules
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
@@ -750,7 +744,6 @@ func NewNibiruApp(
 		oracletypes.ModuleName,
 		vpooltypes.ModuleName,
 		perptypes.ModuleName,
-		utiltypes.ModuleName,
 		// ibc
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
@@ -787,7 +780,6 @@ func NewNibiruApp(
 		oracletypes.ModuleName,
 		vpooltypes.ModuleName,
 		perptypes.ModuleName,
-		utiltypes.ModuleName,
 		// ibc
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
