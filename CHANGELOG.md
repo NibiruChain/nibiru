@@ -83,6 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Features
 
 * [#1187](https://github.com/NibiruChain/nibiru/pull/1187) - feat(oracle): default vote threshold and min voters
+* [#1276](https://github.com/NibiruChain/nibiru/pull/1276) - feat: add ewma function
 
 ### API Breaking
 
