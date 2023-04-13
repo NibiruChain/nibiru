@@ -202,7 +202,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 					dir = sdk.OneDec().Neg()
 				}
 
-				assert.EqualValuesf(t, dir.Mul(tc.expectedBaseAmount), market.Bias, "base amount mismatch")
+				assert.EqualValuesf(t, dir.Mul(tc.expectedBaseAmount), market.Bias, "bias amount mismatch")
 
 				t.Log("assert market")
 				pool, err := perpammKeeper.Pools.Get(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
@@ -237,7 +237,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 			skipFluctuationLimitCheck: false,
 
 			expectedQuoteReserve:     sdk.NewDec(10 * common.TO_MICRO),
-			expectedBaseReserve:      sdk.NewDec(5 * common.TO_MICRO),
+			expectedBaseReserve:      sdk.NewDec(10 * common.TO_MICRO),
 			expectedQuoteAssetAmount: sdk.ZeroDec(),
 		},
 		{
@@ -245,12 +245,12 @@ func TestSwapBaseForQuote(t *testing.T) {
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_LONG,
 			baseAmt:                   sdk.NewDec(100_000),
-			quoteLimit:                sdk.NewDec(196078),
+			quoteLimit:                sdk.NewDec(198_000),
 			skipFluctuationLimitCheck: false,
 
-			expectedQuoteReserve:     sdk.MustNewDecFromStr("9803921.568627450980392157"),
-			expectedBaseReserve:      sdk.NewDec(5_100_000),
-			expectedQuoteAssetAmount: sdk.MustNewDecFromStr("196078.431372549019607843"),
+			expectedQuoteReserve:     sdk.MustNewDecFromStr("9900990.099009900990099010"),
+			expectedBaseReserve:      sdk.NewDec(10_100_000),
+			expectedQuoteAssetAmount: sdk.MustNewDecFromStr("198019.801980198019801980"),
 		},
 		{
 			name:                      "remove base asset",
@@ -260,16 +260,16 @@ func TestSwapBaseForQuote(t *testing.T) {
 			quoteLimit:                sdk.NewDec(204_082),
 			skipFluctuationLimitCheck: false,
 
-			expectedQuoteReserve:     sdk.MustNewDecFromStr("10204081.632653061224489796"),
-			expectedBaseReserve:      sdk.NewDec(4_900_000),
-			expectedQuoteAssetAmount: sdk.MustNewDecFromStr("204081.632653061224489796"),
+			expectedQuoteReserve:     sdk.MustNewDecFromStr("10101010.101010101010101010"),
+			expectedBaseReserve:      sdk.NewDec(9_900_000),
+			expectedQuoteAssetAmount: sdk.MustNewDecFromStr("202020.202020202020202020"),
 		},
 		{
 			name:                      "quote amount less than quote limit in Long",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_LONG,
 			baseAmt:                   sdk.NewDec(100_000),
-			quoteLimit:                sdk.NewDec(196079),
+			quoteLimit:                sdk.NewDec(198_079),
 			skipFluctuationLimitCheck: false,
 
 			expectedErr: types.ErrAssetFailsUserLimit,
@@ -279,7 +279,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_SHORT,
 			baseAmt:                   sdk.NewDec(100_000),
-			quoteLimit:                sdk.NewDec(204_081),
+			quoteLimit:                sdk.NewDec(201_081),
 			skipFluctuationLimitCheck: false,
 
 			expectedErr: types.ErrAssetFailsUserLimit,
@@ -288,17 +288,17 @@ func TestSwapBaseForQuote(t *testing.T) {
 			name:                      "over trading limit when removing base",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_SHORT,
-			baseAmt:                   sdk.NewDec(4_500_001),
+			baseAmt:                   sdk.NewDec(10_500_001),
 			quoteLimit:                sdk.ZeroDec(),
 			skipFluctuationLimitCheck: false,
 
-			expectedErr: types.ErrOverTradingLimit,
+			expectedErr: types.ErrBaseReserveAtZero,
 		},
 		{
 			name:                      "over trading limit when adding base",
 			pair:                      asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			direction:                 types.Direction_LONG,
-			baseAmt:                   sdk.NewDec(4_500_001),
+			baseAmt:                   sdk.NewDec(10_500_001),
 			quoteLimit:                sdk.ZeroDec(),
 			skipFluctuationLimitCheck: false,
 
@@ -332,9 +332,9 @@ func TestSwapBaseForQuote(t *testing.T) {
 			quoteLimit:                sdk.NewDec(1_666_666),
 			skipFluctuationLimitCheck: true,
 
-			expectedQuoteReserve:     sdk.MustNewDecFromStr("8333333.333333333333333333"),
-			expectedBaseReserve:      sdk.NewDec(6 * common.TO_MICRO),
-			expectedQuoteAssetAmount: sdk.MustNewDecFromStr("1666666.666666666666666667"),
+			expectedQuoteReserve:     sdk.MustNewDecFromStr("9090909.090909090909090909"),
+			expectedBaseReserve:      sdk.NewDec(11 * common.TO_MICRO),
+			expectedQuoteAssetAmount: sdk.MustNewDecFromStr("1818181.818181818181818182"),
 		},
 		{
 			name:                      "over fluctuation limit allowed on remove",
@@ -344,9 +344,9 @@ func TestSwapBaseForQuote(t *testing.T) {
 			quoteLimit:                sdk.NewDec(2_500_001),
 			skipFluctuationLimitCheck: true,
 
-			expectedQuoteReserve:     sdk.NewDec(12_500_000),
-			expectedBaseReserve:      sdk.NewDec(4 * common.TO_MICRO),
-			expectedQuoteAssetAmount: sdk.NewDec(2_500_000),
+			expectedQuoteReserve:     sdk.MustNewDecFromStr("11111111.111111111111111111"),
+			expectedBaseReserve:      sdk.NewDec(9 * common.TO_MICRO),
+			expectedQuoteAssetAmount: sdk.MustNewDecFromStr("2222222.222222222222222222"),
 		},
 	}
 
@@ -363,7 +363,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				/* quoteAssetReserve */ sdk.NewDec(10*common.TO_MICRO), // 10 tokens
-				/* baseAssetReserve */ sdk.NewDec(5*common.TO_MICRO), // 5 tokens
+				/* baseAssetReserve */ sdk.NewDec(10*common.TO_MICRO), // 5 tokens
 				types.MarketConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
@@ -372,7 +372,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
 				sdk.ZeroDec(),
-				sdk.OneDec(),
+				sdk.NewDec(2),
 			))
 
 			market, err := perpammKeeper.GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
@@ -394,6 +394,13 @@ func TestSwapBaseForQuote(t *testing.T) {
 					"expected %s; got %s", tc.expectedQuoteAssetAmount.String(), quoteAssetAmount.String())
 
 				t.Log("assert pool")
+				market, _ = perpammKeeper.GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+				dir := sdk.OneDec()
+				if tc.direction == types.Direction_LONG {
+					dir = sdk.OneDec().Neg()
+				}
+				assert.EqualValuesf(t, dir.Mul(tc.baseAmt), market.Bias, "bias amount mismatch")
+
 				pool, err := perpammKeeper.Pools.Get(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedQuoteReserve, pool.QuoteAssetReserve)

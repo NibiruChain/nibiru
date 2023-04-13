@@ -85,6 +85,9 @@ func (k Keeper) SwapBaseForQuote(
 		return market, sdk.Dec{}, err
 	}
 
+	quoteDelta := quoteAmtAbs.Neg().MulInt64(dir.ToMultiplier())
+	quoteAmtAbs = quoteAmtAbs.Mul(market.PegMultiplier)
+
 	if err := market.HasEnoughReservesForTrade(quoteAmtAbs, baseAmtAbs); err != nil {
 		return market, sdk.Dec{}, err
 	}
@@ -93,7 +96,6 @@ func (k Keeper) SwapBaseForQuote(
 		return market, sdk.Dec{}, err
 	}
 
-	quoteDelta := quoteAmtAbs.Neg().MulInt64(dir.ToMultiplier())
 	baseAmt = baseAmtAbs.MulInt64(dir.ToMultiplier())
 
 	market.Bias = market.Bias.Add(baseAmt.Neg())
@@ -102,8 +104,6 @@ func (k Keeper) SwapBaseForQuote(
 	if err != nil {
 		return market, sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
-
-	quoteAmtAbs = quoteAmtAbs.Mul(market.PegMultiplier)
 
 	return updatedMarket, quoteAmtAbs, err
 }
