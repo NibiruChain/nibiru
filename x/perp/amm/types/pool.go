@@ -34,17 +34,17 @@ func (market *Market) GetBaseAmountByQuoteAmount(
 		return sdk.ZeroDec(), nil
 	}
 
-	invariant := market.QuoteAssetReserve.Mul(market.BaseAssetReserve) // x * y = k
+	phi := market.SqrtDepth
+	phi_squared := phi.Mul(phi)
 
-	quoteReservesAfter := market.QuoteAssetReserve.Add(quoteDelta)
-	if quoteReservesAfter.LTE(sdk.ZeroDec()) {
-		return sdk.Dec{}, ErrQuoteReserveAtZero
+	if phi_squared.Quo(phi.Add(market.Bias)).Add(quoteDelta).LTE(sdk.ZeroDec()) {
+		return sdk.Dec{}, ErrQuoteReserveAtZero.Wrapf(
+			"base assets reserves below zero after trying to swap %s quote assets",
+			quoteDelta.String(),
+		)
 	}
 
-	baseReservesAfter := invariant.Quo(quoteReservesAfter)
-	baseOutAbs = baseReservesAfter.Sub(market.BaseAssetReserve).Abs()
-
-	return baseOutAbs, nil
+	return phi.Add(market.Bias).Sub(phi_squared.Quo(phi_squared.Quo(phi.Add(market.Bias)).Add(quoteDelta))).Abs(), nil
 }
 
 /*
@@ -67,20 +67,17 @@ func (market *Market) GetQuoteAmountByBaseAmount(
 		return sdk.ZeroDec(), nil
 	}
 
-	invariant := market.QuoteAssetReserve.Mul(market.BaseAssetReserve) // x * y = k
+	phi := market.SqrtDepth
+	phi_squared := phi.Mul(phi)
 
-	baseReservesAfter := market.BaseAssetReserve.Add(baseDelta)
-	if baseReservesAfter.LTE(sdk.ZeroDec()) {
+	if phi.Add(market.Bias).Add(baseDelta).LTE(sdk.ZeroDec()) {
 		return sdk.Dec{}, ErrBaseReserveAtZero.Wrapf(
-			"base assets below zero after trying to swap %s base assets",
+			"base assets reserves below zero after trying to swap %s base assets",
 			baseDelta.String(),
 		)
 	}
 
-	quoteReservesAfter := invariant.Quo(baseReservesAfter)
-	quoteOutAbs = quoteReservesAfter.Sub(market.QuoteAssetReserve).Abs()
-
-	return quoteOutAbs, nil
+	return phi_squared.Quo(phi.Add(market.Bias)).Sub(phi_squared.Quo(phi.Add(market.Bias).Add(baseDelta))).Abs(), nil
 }
 
 // GetMarkPrice returns the price of the asset.
@@ -90,7 +87,7 @@ func (market Market) GetMarkPrice() sdk.Dec {
 		return sdk.ZeroDec()
 	}
 
-	return market.QuoteAssetReserve.Quo(market.BaseAssetReserve)
+	return market.QuoteAssetReserve.Quo(market.BaseAssetReserve).Mul(market.PegMultiplier)
 }
 
 // AddToQuoteAssetReserve adds 'amount' to the quote asset reserves
@@ -128,7 +125,7 @@ func NewMarket(args ArgsNewMarket) Market {
 		QuoteAssetReserve: args.QuoteReserves,
 		Config:            config,
 		SqrtDepth:         common.MustSqrtDec(args.QuoteReserves.Mul(args.BaseReserves)),
-		Bias:              args.Bias,
+		Bias:              sdk.ZeroDec(),
 		PegMultiplier:     args.PegMultiplier,
 	}
 }
@@ -381,6 +378,7 @@ func (market Market) ToSnapshot(ctx sdk.Context) ReserveSnapshot {
 		market.Pair,
 		market.BaseAssetReserve,
 		market.QuoteAssetReserve,
+		market.PegMultiplier,
 		ctx.BlockTime(),
 	)
 	if err := snapshot.Validate(); err != nil {

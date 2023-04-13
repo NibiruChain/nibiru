@@ -80,6 +80,7 @@ func TestGetSnapshotPrice(t *testing.T) {
 				tc.pair,
 				tc.baseAssetReserve,
 				tc.quoteAssetReserve,
+				sdk.NewDec(1),
 				time.Now(),
 			)
 

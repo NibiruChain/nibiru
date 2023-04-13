@@ -272,6 +272,7 @@ func TestGetQuoteAmountByBaseAmount(t *testing.T) {
 				QuoteAssetReserve: tc.quoteAssetReserve,
 				BaseAssetReserve:  tc.baseAssetReserve,
 				SqrtDepth:         common.MustSqrtDec(tc.quoteAssetReserve.Mul(tc.baseAssetReserve)),
+				Bias:              sdk.ZeroDec(),
 				Config: MarketConfig{
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),

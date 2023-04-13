@@ -103,6 +103,8 @@ func (k Keeper) SwapBaseForQuote(
 		return market, sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
+	quoteAmtAbs = quoteAmtAbs.Mul(market.PegMultiplier)
+
 	return updatedMarket, quoteAmtAbs, err
 }
 
@@ -174,7 +176,7 @@ func (k Keeper) SwapQuoteForBase(
 	}
 
 	// check trade limit ratio on quote in either direction
-	quoteAmtAbs := quoteAmt.Abs()
+	quoteAmtAbs := quoteAmt.Quo(market.PegMultiplier).Abs()
 	baseAmtAbs, err = market.GetBaseAmountByQuoteAmount(
 		quoteAmtAbs.MulInt64(dir.ToMultiplier()))
 	if err != nil {

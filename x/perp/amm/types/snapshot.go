@@ -12,12 +12,14 @@ import (
 func NewReserveSnapshot(
 	pair asset.Pair,
 	baseAssetReserve, quoteAssetReserve sdk.Dec,
+	pegMultiplier sdk.Dec,
 	blockTime time.Time,
 ) ReserveSnapshot {
 	return ReserveSnapshot{
 		Pair:              pair,
 		BaseAssetReserve:  baseAssetReserve,
 		QuoteAssetReserve: quoteAssetReserve,
+		PegMultiplier:     pegMultiplier,
 		TimestampMs:       blockTime.UnixMilli(),
 	}
 }
@@ -39,6 +41,10 @@ func (s ReserveSnapshot) Validate() error {
 
 	if s.QuoteAssetReserve.IsNegative() {
 		return fmt.Errorf("quote asset reserve from snapshot cannot be negative: %d", s.QuoteAssetReserve)
+	}
+
+	if s.PegMultiplier.IsNegative() {
+		return fmt.Errorf("peg multiplier from snapshot cannot be negative: %d", s.PegMultiplier)
 	}
 
 	// -62135596800000 in Unix milliseconds is equivalent to "0001-01-01 00:00:00 +0000 UTC".
@@ -73,5 +79,5 @@ func (s ReserveSnapshot) getMarkPrice() sdk.Dec {
 		return sdk.ZeroDec()
 	}
 
-	return s.QuoteAssetReserve.Quo(s.BaseAssetReserve)
+	return s.QuoteAssetReserve.Quo(s.BaseAssetReserve).Mul(s.PegMultiplier)
 }
