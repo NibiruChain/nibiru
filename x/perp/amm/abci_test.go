@@ -45,6 +45,7 @@ func TestSnapshotUpdates(t *testing.T) {
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		sdk.NewDec(1_000),
 		sdk.NewDec(1_000),
+		sdk.OneDec(),
 		ctx.BlockTime(),
 	)
 
@@ -72,6 +73,7 @@ func TestSnapshotUpdates(t *testing.T) {
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		sdk.NewDec(800),   // ← x + dxAmm
 		sdk.NewDec(1_250), // ← y + dyAMM
+		sdk.OneDec(),
 		ctx.BlockTime(),
 	)
 
