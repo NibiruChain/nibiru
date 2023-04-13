@@ -480,7 +480,6 @@ func TestGetMarkets(t *testing.T) {
 	}))
 }
 
-// TODO
 func TestCheckFluctuationLimitRatio(t *testing.T) {
 	tests := []struct {
 		name              string
@@ -493,29 +492,28 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 			name: "uses latest snapshot - does not result in error",
 			pool: types.Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				QuoteAssetReserve: sdk.NewDec(1002),
-				BaseAssetReserve:  sdk.OneDec(),
-				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1_002)),
+				QuoteAssetReserve: sdk.NewDec(1_000),
+				BaseAssetReserve:  sdk.NewDec(1_000),
+				PegMultiplier:     sdk.OneDec(),
+
 				Config: types.MarketConfig{
-					TradeLimitRatio:        sdk.OneDec(),
-					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
-					MaxOracleSpreadRatio:   sdk.OneDec(),
-					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+					FluctuationLimitRatio: sdk.MustNewDecFromStr("0.001"),
 				},
 			},
 			existingSnapshots: []types.ReserveSnapshot{
 				{
 					Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					QuoteAssetReserve: sdk.NewDec(1000),
-					BaseAssetReserve:  sdk.OneDec(),
+					QuoteAssetReserve: sdk.NewDec(1_000),
+					BaseAssetReserve:  sdk.NewDec(1_000),
 					TimestampMs:       0,
+					PegMultiplier:     sdk.OneDec(),
 				},
 				{
 					Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					QuoteAssetReserve: sdk.NewDec(1002),
-					BaseAssetReserve:  sdk.OneDec(),
+					QuoteAssetReserve: sdk.NewDec(1_000),
+					BaseAssetReserve:  sdk.NewDec(1_000),
 					TimestampMs:       1,
+					PegMultiplier:     sdk.OneDec(),
 				},
 			},
 			expectedErr: nil,
@@ -524,23 +522,28 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 			name: "uses previous snapshot - results in error",
 			pool: types.Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				QuoteAssetReserve: sdk.NewDec(1002),
-				BaseAssetReserve:  sdk.OneDec(),
-				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1_002)),
+				QuoteAssetReserve: sdk.NewDec(1_100),
+				BaseAssetReserve:  sdk.NewDec(900),
+				PegMultiplier:     sdk.OneDec(),
+
 				Config: types.MarketConfig{
-					TradeLimitRatio:        sdk.OneDec(),
-					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
-					MaxOracleSpreadRatio:   sdk.OneDec(),
-					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+					FluctuationLimitRatio: sdk.MustNewDecFromStr("0.001"),
 				},
 			},
 			existingSnapshots: []types.ReserveSnapshot{
 				{
 					Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					QuoteAssetReserve: sdk.NewDec(1000),
-					BaseAssetReserve:  sdk.OneDec(),
+					QuoteAssetReserve: sdk.NewDec(1_000),
+					BaseAssetReserve:  sdk.NewDec(1_000),
 					TimestampMs:       0,
+					PegMultiplier:     sdk.OneDec(),
+				},
+				{
+					Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					QuoteAssetReserve: sdk.NewDec(1_000),
+					BaseAssetReserve:  sdk.NewDec(1_000),
+					TimestampMs:       1,
+					PegMultiplier:     sdk.OneDec(),
 				},
 			},
 			expectedErr: types.ErrOverFluctuationLimit,
@@ -549,23 +552,21 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 			name: "only one snapshot - no error",
 			pool: types.Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				QuoteAssetReserve: sdk.NewDec(1000),
-				BaseAssetReserve:  sdk.OneDec(),
-				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1_000)),
+				QuoteAssetReserve: sdk.NewDec(1_000),
+				BaseAssetReserve:  sdk.NewDec(1_000),
+				PegMultiplier:     sdk.OneDec(),
+
 				Config: types.MarketConfig{
-					TradeLimitRatio:        sdk.OneDec(),
-					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
-					MaxOracleSpreadRatio:   sdk.OneDec(),
-					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+					FluctuationLimitRatio: sdk.MustNewDecFromStr("0.001"),
 				},
 			},
 			existingSnapshots: []types.ReserveSnapshot{
 				{
 					Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					QuoteAssetReserve: sdk.NewDec(1000),
-					BaseAssetReserve:  sdk.OneDec(),
+					QuoteAssetReserve: sdk.NewDec(1_000),
+					BaseAssetReserve:  sdk.NewDec(1_000),
 					TimestampMs:       0,
+					PegMultiplier:     sdk.OneDec(),
 				},
 			},
 			expectedErr: nil,
@@ -574,72 +575,65 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 			name: "zero fluctuation limit - no error",
 			pool: types.Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				QuoteAssetReserve: sdk.NewDec(2000),
-				BaseAssetReserve:  sdk.OneDec(),
-				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(2_000)),
+				QuoteAssetReserve: sdk.NewDec(1_100),
+				BaseAssetReserve:  sdk.NewDec(900),
+				PegMultiplier:     sdk.OneDec(),
+
 				Config: types.MarketConfig{
-					TradeLimitRatio:        sdk.OneDec(),
-					FluctuationLimitRatio:  sdk.ZeroDec(),
-					MaxOracleSpreadRatio:   sdk.OneDec(),
-					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+					FluctuationLimitRatio: sdk.ZeroDec(),
 				},
 			},
 			existingSnapshots: []types.ReserveSnapshot{
 				{
 					Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					QuoteAssetReserve: sdk.NewDec(1000),
-					BaseAssetReserve:  sdk.OneDec(),
+					QuoteAssetReserve: sdk.NewDec(1_000),
+					BaseAssetReserve:  sdk.NewDec(1_000),
 					TimestampMs:       0,
+					PegMultiplier:     sdk.OneDec(),
 				},
 				{
 					Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					QuoteAssetReserve: sdk.NewDec(1002),
-					BaseAssetReserve:  sdk.OneDec(),
+					QuoteAssetReserve: sdk.NewDec(1_000),
+					BaseAssetReserve:  sdk.NewDec(1_000),
 					TimestampMs:       1,
+					PegMultiplier:     sdk.OneDec(),
 				},
 			},
 			expectedErr: nil,
 		},
 		{
-			name: "multiple pools - no overlap",
+			name: "uses latest snapshot - does not result in error",
 			pool: types.Market{
 				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				QuoteAssetReserve: sdk.NewDec(1000),
-				BaseAssetReserve:  sdk.OneDec(),
-				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1_000)),
+				QuoteAssetReserve: sdk.NewDec(1_000),
+				BaseAssetReserve:  sdk.NewDec(1_000),
+				PegMultiplier:     sdk.OneDec(),
+
 				Config: types.MarketConfig{
-					TradeLimitRatio:        sdk.OneDec(),
-					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
-					MaxOracleSpreadRatio:   sdk.OneDec(),
-					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-					MaxLeverage:            sdk.MustNewDecFromStr("15"),
+					FluctuationLimitRatio: sdk.MustNewDecFromStr("0.001"),
 				},
 			},
 			existingSnapshots: []types.ReserveSnapshot{
 				{
-					Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					QuoteAssetReserve: sdk.NewDec(1000),
-					BaseAssetReserve:  sdk.OneDec(),
+					Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
+					QuoteAssetReserve: sdk.NewDec(5_000),
+					BaseAssetReserve:  sdk.NewDec(1_000),
 					TimestampMs:       0,
+					PegMultiplier:     sdk.OneDec(),
+				},
+				{
+					Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					QuoteAssetReserve: sdk.NewDec(1_000),
+					BaseAssetReserve:  sdk.NewDec(1_000),
+					TimestampMs:       0,
+					PegMultiplier:     sdk.OneDec(),
 				},
 				{
 					Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-					QuoteAssetReserve: sdk.NewDec(2000),
-					BaseAssetReserve:  sdk.OneDec(),
-					TimestampMs:       0,
-				},
-				{
-					Pair:              asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
-					QuoteAssetReserve: sdk.NewDec(2000),
-					BaseAssetReserve:  sdk.OneDec(),
-					TimestampMs:       0,
-				},
-				{
-					Pair:              asset.Registry.Pair(denoms.USDC, denoms.NUSD),
-					QuoteAssetReserve: sdk.OneDec(),
-					BaseAssetReserve:  sdk.OneDec(),
-					TimestampMs:       0,
+					QuoteAssetReserve: sdk.NewDec(5_000),
+					BaseAssetReserve:  sdk.NewDec(1_000),
+					TimestampMs:       1,
+					PegMultiplier:     sdk.OneDec(),
 				},
 			},
 			expectedErr: nil,
