@@ -69,6 +69,9 @@ func getPriceWithSnapshot(
 			},
 		}
 		price, err = pool.GetBaseAmountByQuoteAmount(snapshotPriceOpts.assetAmount.MulInt64(snapshotPriceOpts.direction.ToMultiplier()))
+		if err != nil {
+			return
+		}
 		price = price.Mul(pool.PegMultiplier)
 		return
 
@@ -92,6 +95,9 @@ func getPriceWithSnapshot(
 		price, err = pool.GetQuoteAmountByBaseAmount(
 			snapshotPriceOpts.assetAmount.MulInt64(snapshotPriceOpts.direction.ToMultiplier()),
 		)
+		if err != nil {
+			return
+		}
 		price = price.Quo(pool.PegMultiplier)
 		return
 	}

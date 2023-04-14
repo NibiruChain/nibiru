@@ -257,71 +257,68 @@ func TestCalcTwap(t *testing.T) {
 		expectedPrice      sdk.Dec
 		expectedErr        error
 	}{
-		// snapshot quote asset reserve at t = 0: 100
-		// snapshot base asset reserve at t = 0: 1
-		// expected price: ((95/10 * (35 - 30) + 85/10 * (30 - 20) + 90/10 * (20 - 10) + 100/1 * (10 - 5)) / (5 + 10 + 10 + 5)
-		{
-			name: "spot price twap calc, t=[5,35]",
-			pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			reserveSnapshots: []types.ReserveSnapshot{
-				types.NewReserveSnapshot(
-					/* Pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					/* Base asset reserve */ sdk.NewDec(10),
-					/* Quote asset reserve */ sdk.NewDec(90),
-					/* Peg multiplier*/ sdk.NewDec(9),
-					/* Bias */ sdk.ZeroDec(),
-					time.UnixMilli(10),
-				),
-				types.NewReserveSnapshot(
-					/* Pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					/* Base asset reserve */ sdk.NewDec(10),
-					/* Quote asset reserve */ sdk.NewDec(85),
-					/* Peg multiplier*/ sdk.NewDec(9),
-					/* Bias */ sdk.ZeroDec(),
-					time.UnixMilli(20),
-				),
-				types.NewReserveSnapshot(
-					/* Pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					/* Base asset reserve */ sdk.NewDec(10),
-					/* Quote asset reserve */ sdk.NewDec(95),
-					/* Peg multiplier*/ sdk.NewDec(9),
-					/* Bias */ sdk.ZeroDec(),
-					time.UnixMilli(30),
-				),
-			},
-			currentBlockTime:   time.UnixMilli(35),
-			currentBlockHeight: 3,
-			lookbackInterval:   30 * time.Millisecond,
-			twapCalcOption:     types.TwapCalcOption_SPOT,
-			expectedPrice:      sdk.MustNewDecFromStr("24.083333333333333333"),
-		},
-
-		// expected price: (95/10 * (30 - 30) + 85/10 * (30 - 20) + 90/10 * (20 - 10)) / (10 + 10)
+		// Same price at 9 for 20 blocks
 		{
 			name: "spot price twap calc, t=[10,30]",
 			pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			reserveSnapshots: []types.ReserveSnapshot{
 				types.NewReserveSnapshot(
 					/* Pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					/* Base asset reserve */ sdk.NewDec(10),
-					/* Quote asset reserve */ sdk.NewDec(90),
+					/* Base asset reserve */ sdk.NewDec(100),
+					/* Quote asset reserve */ sdk.NewDec(100),
 					/* Peg multiplier*/ sdk.NewDec(9),
 					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(10),
 				),
 				types.NewReserveSnapshot(
 					/* Pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					/* Base asset reserve */ sdk.NewDec(10),
-					/* Quote asset reserve */ sdk.NewDec(85),
+					/* Base asset reserve */ sdk.NewDec(100),
+					/* Quote asset reserve */ sdk.NewDec(100),
 					/* Peg multiplier*/ sdk.NewDec(9),
 					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(20),
 				),
 				types.NewReserveSnapshot(
 					/* Pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					/* Base asset reserve */ sdk.NewDec(10),
-					/* Quote asset reserve */ sdk.NewDec(95),
+					/* Base asset reserve */ sdk.NewDec(100),
+					/* Quote asset reserve */ sdk.NewDec(100),
 					/* Peg multiplier*/ sdk.NewDec(9),
+					/* Bias */ sdk.ZeroDec(),
+					time.UnixMilli(30),
+				),
+			},
+			currentBlockTime:   time.UnixMilli(30),
+			currentBlockHeight: 3,
+			lookbackInterval:   20 * time.Millisecond,
+			twapCalcOption:     types.TwapCalcOption_SPOT,
+			expectedPrice:      sdk.MustNewDecFromStr("9"),
+		},
+		// expected price: (9.5 * (30 - 30) + 8.5 * (30 - 20) + 9 * (20 - 10)) / (10 + 10)
+		{
+			name: "spot price twap calc, t=[10,30]",
+			pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+			reserveSnapshots: []types.ReserveSnapshot{
+				types.NewReserveSnapshot(
+					/* Pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					/* Base asset reserve */ sdk.NewDec(100),
+					/* Quote asset reserve */ sdk.NewDec(100),
+					/* Peg multiplier*/ sdk.NewDec(9),
+					/* Bias */ sdk.ZeroDec(),
+					time.UnixMilli(10),
+				),
+				types.NewReserveSnapshot(
+					/* Pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					/* Base asset reserve */ sdk.NewDec(100),
+					/* Quote asset reserve */ sdk.NewDec(100),
+					/* Peg multiplier*/ sdk.MustNewDecFromStr("8.5"),
+					/* Bias */ sdk.ZeroDec(),
+					time.UnixMilli(20),
+				),
+				types.NewReserveSnapshot(
+					/* Pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					/* Base asset reserve */ sdk.NewDec(100),
+					/* Quote asset reserve */ sdk.NewDec(100),
+					/* Peg multiplier*/ sdk.MustNewDecFromStr("9.5"),
 					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(30),
 				),
@@ -332,33 +329,32 @@ func TestCalcTwap(t *testing.T) {
 			twapCalcOption:     types.TwapCalcOption_SPOT,
 			expectedPrice:      sdk.MustNewDecFromStr("8.75"),
 		},
-
 		// expected price: (95/10 * (35 - 30) + 85/10 * (30 - 20) + 90/10 * (20 - 11)) / (5 + 10 + 9)
 		{
-			name: "spot price twap calc, t=[11,35]",
+			name: "spot price twap calc, t=[10,30]",
 			pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			reserveSnapshots: []types.ReserveSnapshot{
 				types.NewReserveSnapshot(
 					/* Pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					/* Base asset reserve */ sdk.NewDec(10),
-					/* Quote asset reserve */ sdk.NewDec(90),
+					/* Base asset reserve */ sdk.NewDec(100),
+					/* Quote asset reserve */ sdk.NewDec(100),
 					/* Peg multiplier*/ sdk.NewDec(9),
 					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(10),
 				),
 				types.NewReserveSnapshot(
 					/* Pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					/* Base asset reserve */ sdk.NewDec(10),
-					/* Quote asset reserve */ sdk.NewDec(85),
-					/* Peg multiplier*/ sdk.NewDec(9),
+					/* Base asset reserve */ sdk.NewDec(100),
+					/* Quote asset reserve */ sdk.NewDec(100),
+					/* Peg multiplier*/ sdk.MustNewDecFromStr("8.5"),
 					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(20),
 				),
 				types.NewReserveSnapshot(
 					/* Pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					/* Base asset reserve */ sdk.NewDec(10),
-					/* Quote asset reserve */ sdk.NewDec(95),
-					/* Peg multiplier*/ sdk.NewDec(9),
+					/* Base asset reserve */ sdk.NewDec(100),
+					/* Quote asset reserve */ sdk.NewDec(100),
+					/* Peg multiplier*/ sdk.MustNewDecFromStr("9.5"),
 					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(30),
 				),
@@ -370,9 +366,9 @@ func TestCalcTwap(t *testing.T) {
 			expectedPrice:      sdk.MustNewDecFromStr("8.895833333333333333"),
 		},
 
-		// base asset reserve at t = 0: 1
+		// base asset reserve at t = 0: 100
 		// quote asset reserve at t = 0: 100
-		// expected price: 100/1
+		// expected price: 1
 		{
 			name:               "spot price twap calc, t=[0,0]",
 			pair:               asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -381,29 +377,27 @@ func TestCalcTwap(t *testing.T) {
 			currentBlockHeight: 1,
 			lookbackInterval:   0 * time.Millisecond,
 			twapCalcOption:     types.TwapCalcOption_SPOT,
-			expectedPrice:      sdk.NewDec(100),
+			expectedPrice:      sdk.OneDec(),
 		},
 
-		// k: 30 * 100 = 300
-		// asset amount : 10
-		// expected price: ((7.5 - 300/(40 + 10)) * (30 - 20) + (10 - 300/(30 + 10)) * (20 - 10)) / (10 + 10)
+		// expected price: (95/10 * (35 - 30) + 85/10 * (30 - 20) + 90/10 * (20 - 11)) / (5 + 10 + 9)
 		{
 			name: "quote asset swap twap calc, add to pool, t=[10,30]",
 			pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			reserveSnapshots: []types.ReserveSnapshot{
 				types.NewReserveSnapshot(
 					/* Pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					/* Base asset reserve */ sdk.NewDec(10),
-					/* Quote asset reserve */ sdk.NewDec(30),
-					/* Peg multiplier*/ sdk.NewDec(9),
+					/* Base asset reserve */ sdk.NewDec(1_000),
+					/* Quote asset reserve */ sdk.NewDec(1_000),
+					/* Peg multiplier*/ sdk.NewDec(3),
 					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(10),
 				),
 				types.NewReserveSnapshot(
 					/* Pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					/* Base asset reserve */ sdk.MustNewDecFromStr("7.5"),
-					/* Quote asset reserve */ sdk.NewDec(40),
-					/* Peg multiplier*/ sdk.NewDec(9),
+					/* Base asset reserve */ sdk.NewDec(1_000),
+					/* Quote asset reserve */ sdk.NewDec(1_000),
+					/* Peg multiplier*/ sdk.NewDec(5),
 					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(20),
 				),
@@ -413,30 +407,28 @@ func TestCalcTwap(t *testing.T) {
 			lookbackInterval:   20 * time.Millisecond,
 			twapCalcOption:     types.TwapCalcOption_QUOTE_ASSET_SWAP,
 			direction:          types.Direction_LONG,
-			assetAmount:        sdk.NewDec(10),
-			expectedPrice:      sdk.NewDec(2),
+			assetAmount:        sdk.NewDec(5),
+			expectedPrice:      sdk.MustNewDecFromStr("19.900497512437810944"), // ~ 5 base at a twap price of 4
 		},
 
-		// k: 60 * 100 = 600
-		// asset amount: 10
-		// expected price: ((12 - 600/(50 - 10)) * (30 - 20) + (10 - 600/(60 - 10)) * (20 - 10)) / (10 + 10)
+		// expected price: (95/10 * (35 - 30) + 85/10 * (30 - 20) + 90/10 * (20 - 11)) / (5 + 10 + 9)
 		{
 			name: "quote asset swap twap calc, remove from pool, t=[10,30]",
 			pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			reserveSnapshots: []types.ReserveSnapshot{
 				types.NewReserveSnapshot(
 					/* Pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					/* Base asset reserve */ sdk.NewDec(10),
-					/* Quote asset reserve */ sdk.NewDec(60),
-					/* Peg multiplier*/ sdk.NewDec(9),
+					/* Base asset reserve */ sdk.NewDec(1_000),
+					/* Quote asset reserve */ sdk.NewDec(1_000),
+					/* Peg multiplier*/ sdk.NewDec(3),
 					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(10),
 				),
 				types.NewReserveSnapshot(
 					/* Pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					/* Base asset reserve */ sdk.NewDec(12),
-					/* Quote asset reserve */ sdk.NewDec(50),
-					/* Peg multiplier*/ sdk.NewDec(9),
+					/* Base asset reserve */ sdk.NewDec(1_000),
+					/* Quote asset reserve */ sdk.NewDec(1_000),
+					/* Peg multiplier*/ sdk.NewDec(5),
 					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(20),
 				),
@@ -446,9 +438,10 @@ func TestCalcTwap(t *testing.T) {
 			lookbackInterval:   20 * time.Millisecond,
 			twapCalcOption:     types.TwapCalcOption_QUOTE_ASSET_SWAP,
 			direction:          types.Direction_SHORT,
-			assetAmount:        sdk.NewDec(10),
-			expectedPrice:      sdk.MustNewDecFromStr("2.5"),
+			assetAmount:        sdk.NewDec(5),
+			expectedPrice:      sdk.MustNewDecFromStr("20.100502512562814072"), // ~ 5 base at a twap price of 4
 		},
+
 		{
 			name: "Error: quote asset reserve = asset amount",
 			pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -456,7 +449,7 @@ func TestCalcTwap(t *testing.T) {
 				types.NewReserveSnapshot(
 					/* Pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 					/* Base asset reserve */ sdk.NewDec(10),
-					/* Quote asset reserve */ sdk.NewDec(20),
+					/* Quote asset reserve */ sdk.NewDec(10),
 					/* Peg multiplier*/ sdk.NewDec(9),
 					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(20),
@@ -480,17 +473,17 @@ func TestCalcTwap(t *testing.T) {
 			reserveSnapshots: []types.ReserveSnapshot{
 				types.NewReserveSnapshot(
 					/* Pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					/* Base asset reserve */ sdk.NewDec(10),
-					/* Quote asset reserve */ sdk.NewDec(60),
-					/* Peg multiplier*/ sdk.NewDec(9),
+					/* Base asset reserve */ sdk.NewDec(1_000),
+					/* Quote asset reserve */ sdk.NewDec(1_000),
+					/* Peg multiplier*/ sdk.NewDec(6),
 					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(10),
 				),
 				types.NewReserveSnapshot(
 					/* Pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					/* Base asset reserve */ sdk.NewDec(20),
-					/* Quote asset reserve */ sdk.NewDec(30),
-					/* Peg multiplier*/ sdk.NewDec(9),
+					/* Base asset reserve */ sdk.NewDec(1_000),
+					/* Quote asset reserve */ sdk.NewDec(1_000),
+					/* Peg multiplier*/ sdk.MustNewDecFromStr("1.5"),
 					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(20),
 				),
@@ -501,7 +494,7 @@ func TestCalcTwap(t *testing.T) {
 			twapCalcOption:     types.TwapCalcOption_BASE_ASSET_SWAP,
 			direction:          types.Direction_LONG,
 			assetAmount:        sdk.NewDec(10),
-			expectedPrice:      sdk.NewDec(20),
+			expectedPrice:      sdk.MustNewDecFromStr("4.125412541254125412"),
 		},
 
 		// k: 60 * 100 = 600
@@ -513,17 +506,17 @@ func TestCalcTwap(t *testing.T) {
 			reserveSnapshots: []types.ReserveSnapshot{
 				types.NewReserveSnapshot(
 					/* Pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					/* Base asset reserve */ sdk.NewDec(10),
-					/* Quote asset reserve */ sdk.NewDec(60),
-					/* Peg multiplier*/ sdk.NewDec(9),
+					/* Base asset reserve */ sdk.NewDec(1_000),
+					/* Quote asset reserve */ sdk.NewDec(1_000),
+					/* Peg multiplier*/ sdk.NewDec(6),
 					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(10),
 				),
 				types.NewReserveSnapshot(
 					/* Pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					/* Base asset reserve */ sdk.NewDec(8),
-					/* Quote asset reserve */ sdk.NewDec(75),
-					/* Peg multiplier*/ sdk.NewDec(9),
+					/* Base asset reserve */ sdk.NewDec(1_000),
+					/* Quote asset reserve */ sdk.NewDec(1_000),
+					/* Peg multiplier*/ sdk.MustNewDecFromStr("9.375"),
 					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(20),
 				),
@@ -534,7 +527,7 @@ func TestCalcTwap(t *testing.T) {
 			twapCalcOption:     types.TwapCalcOption_BASE_ASSET_SWAP,
 			direction:          types.Direction_SHORT,
 			assetAmount:        sdk.NewDec(2),
-			expectedPrice:      sdk.NewDec(20),
+			expectedPrice:      sdk.MustNewDecFromStr("0.273881095524382097"),
 		},
 		{
 			name: "Error: base asset reserve = asset amount",
@@ -543,7 +536,7 @@ func TestCalcTwap(t *testing.T) {
 				types.NewReserveSnapshot(
 					/* Pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 					/* Base asset reserve */ sdk.NewDec(10),
-					/* Quote asset reserve */ sdk.NewDec(60),
+					/* Quote asset reserve */ sdk.NewDec(10),
 					/* Peg multiplier*/ sdk.NewDec(9),
 					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(20),
@@ -570,8 +563,8 @@ func TestCalcTwap(t *testing.T) {
 			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				tc.pair,
-				/*quoteAssetReserve=*/ sdk.OneDec(),
-				/*baseAssetReserve=*/ sdk.OneDec(),
+				/* Base asset reserve */ sdk.NewDec(100),
+				/* Quote asset reserve */ sdk.NewDec(100),
 				*types.DefaultMarketConfig().WithMaxLeverage(sdk.NewDec(15)),
 				sdk.ZeroDec(),
 				sdk.OneDec(),
@@ -580,7 +573,7 @@ func TestCalcTwap(t *testing.T) {
 			t.Log("throw in another market pair to ensure key iteration doesn't overlap")
 			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
-				tc.pair,
+				asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 				/*quoteAssetReserve=*/ sdk.NewDec(100),
 				/*baseAssetReserve=*/ sdk.OneDec(),
 				*types.DefaultMarketConfig().WithMaxLeverage(sdk.NewDec(15)),
