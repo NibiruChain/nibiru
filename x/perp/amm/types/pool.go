@@ -379,6 +379,7 @@ func (market Market) ToSnapshot(ctx sdk.Context) ReserveSnapshot {
 		market.BaseAssetReserve,
 		market.QuoteAssetReserve,
 		market.PegMultiplier,
+		market.Bias,
 		ctx.BlockTime(),
 	)
 	if err := snapshot.Validate(); err != nil {

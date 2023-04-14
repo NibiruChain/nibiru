@@ -746,6 +746,7 @@ func TestMarket_IsOverFluctuationLimit(t *testing.T) {
 				sdk.OneDec(),
 				sdk.NewDec(1000),
 				sdk.OneDec(),
+				sdk.ZeroDec(),
 				time.Now(),
 			)
 			assert.EqualValues(t, tc.isOverLimit, tc.pool.IsOverFluctuationLimitInRelationWithSnapshot(snapshot))

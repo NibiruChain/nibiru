@@ -81,6 +81,7 @@ func TestGetSnapshotPrice(t *testing.T) {
 				tc.baseAssetReserve,
 				tc.quoteAssetReserve,
 				sdk.NewDec(1),
+				sdk.ZeroDec(),
 				time.Now(),
 			)
 

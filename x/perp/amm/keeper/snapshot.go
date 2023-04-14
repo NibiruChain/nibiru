@@ -58,6 +58,8 @@ func getPriceWithSnapshot(
 			QuoteAssetReserve: snapshot.QuoteAssetReserve,
 			BaseAssetReserve:  snapshot.BaseAssetReserve,
 			SqrtDepth:         common.MustSqrtDec(snapshot.QuoteAssetReserve.Mul(snapshot.BaseAssetReserve)),
+			PegMultiplier:     snapshot.PegMultiplier,
+			Bias:              snapshot.Bias,
 			Config: types.MarketConfig{
 				FluctuationLimitRatio:  sdk.ZeroDec(), // unused
 				MaintenanceMarginRatio: sdk.ZeroDec(), // unused
@@ -74,6 +76,9 @@ func getPriceWithSnapshot(
 			QuoteAssetReserve: snapshot.QuoteAssetReserve,
 			BaseAssetReserve:  snapshot.BaseAssetReserve,
 			SqrtDepth:         common.MustSqrtDec(snapshot.QuoteAssetReserve.Mul(snapshot.BaseAssetReserve)),
+			PegMultiplier:     snapshot.PegMultiplier,
+			Bias:              snapshot.Bias,
+
 			Config: types.MarketConfig{
 				FluctuationLimitRatio:  sdk.ZeroDec(), // unused
 				MaintenanceMarginRatio: sdk.ZeroDec(), // unused
