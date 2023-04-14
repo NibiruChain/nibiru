@@ -44,6 +44,7 @@ func (market *Market) GetBaseAmountByQuoteAmount(
 		)
 	}
 
+	// Δb = φ + B - φ² / (φ² / (φ + B) + Δq)
 	return phi.Add(market.Bias).Sub(phi_squared.Quo(phi_squared.Quo(phi.Add(market.Bias)).Add(quoteDelta))).Abs(), nil
 }
 
@@ -77,6 +78,7 @@ func (market *Market) GetQuoteAmountByBaseAmount(
 		)
 	}
 
+	// Δq = φ² / (φ + B) - φ² / (φ + B + Δb)
 	return phi_squared.Quo(phi.Add(market.Bias)).Sub(phi_squared.Quo(phi.Add(market.Bias).Add(baseDelta))).Abs(), nil
 }
 

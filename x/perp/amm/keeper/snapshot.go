@@ -50,7 +50,7 @@ func getPriceWithSnapshot(
 ) (price sdk.Dec, err error) {
 	switch snapshotPriceOpts.twapCalcOption {
 	case types.TwapCalcOption_SPOT:
-		return snapshot.QuoteAssetReserve.Quo(snapshot.BaseAssetReserve), nil
+		return snapshot.QuoteAssetReserve.Quo(snapshot.BaseAssetReserve).Mul(snapshot.PegMultiplier), nil
 
 	case types.TwapCalcOption_QUOTE_ASSET_SWAP:
 		pool := &types.Market{
@@ -68,7 +68,9 @@ func getPriceWithSnapshot(
 				TradeLimitRatio:        sdk.ZeroDec(), // unused
 			},
 		}
-		return pool.GetBaseAmountByQuoteAmount(snapshotPriceOpts.assetAmount.MulInt64(snapshotPriceOpts.direction.ToMultiplier()))
+		price, err = pool.GetBaseAmountByQuoteAmount(snapshotPriceOpts.assetAmount.MulInt64(snapshotPriceOpts.direction.ToMultiplier()))
+		price = price.Mul(pool.PegMultiplier)
+		return
 
 	case types.TwapCalcOption_BASE_ASSET_SWAP:
 		pool := &types.Market{
@@ -87,9 +89,11 @@ func getPriceWithSnapshot(
 				TradeLimitRatio:        sdk.ZeroDec(), // unused
 			},
 		}
-		return pool.GetQuoteAmountByBaseAmount(
+		price, err = pool.GetQuoteAmountByBaseAmount(
 			snapshotPriceOpts.assetAmount.MulInt64(snapshotPriceOpts.direction.ToMultiplier()),
 		)
+		price = price.Quo(pool.PegMultiplier)
+		return
 	}
 
 	return sdk.ZeroDec(), nil
