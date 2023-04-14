@@ -15,13 +15,13 @@ import (
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
 	for _, vp := range genState.Markets {
 		if err := k.CreatePool(
-			ctx,
-			vp.Pair,
-			vp.QuoteAssetReserve,
-			vp.BaseAssetReserve,
-			vp.Config,
-			vp.Bias,
-			vp.PegMultiplier,
+			/* ctx */ ctx,
+			/* pair */ vp.Pair,
+			/* quoteAssetReserve */ vp.QuoteAssetReserve,
+			/* baseAssetReserve */ vp.BaseAssetReserve,
+			/* config */ vp.Config,
+			/* bias */ vp.Bias,
+			/* pegMultiplier */ vp.PegMultiplier,
 		); err != nil {
 			panic(err)
 		}

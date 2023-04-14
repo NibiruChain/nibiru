@@ -127,7 +127,7 @@ func NewMarket(args ArgsNewMarket) Market {
 		QuoteAssetReserve: args.QuoteReserves,
 		Config:            config,
 		SqrtDepth:         common.MustSqrtDec(args.QuoteReserves.Mul(args.BaseReserves)),
-		Bias:              sdk.ZeroDec(),
+		Bias:              args.Bias,
 		PegMultiplier:     args.PegMultiplier,
 	}
 }
