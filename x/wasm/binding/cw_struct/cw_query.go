@@ -8,18 +8,18 @@ import (
 // contracts (Rust). It specifies which queries can be called into the
 // Nibiru bindings, and describes their JSON schema for connecting app ⇔ Wasm.
 type BindingQuery struct {
-	Reserves        *Reserves
-	AllMarkets      *AllMarkets
-	BasePrice       *BasePrice
-	Positions       *Positions
-	Position        *Position
-	PremiumFraction *PremiumFraction
-	Metrics         *Metrics
-	ModuleAccounts  *ModuleAccounts
-	PerpParams      *PerpParams
+	Reserves        *ReservesRequest
+	AllMarkets      *AllMarketsRequest
+	BasePrice       *BasePriceRequest
+	Positions       *PositionsRequest
+	Position        *PositionRequest
+	PremiumFraction *PremiumFractionRequest
+	Metrics         *MetricsRequest
+	ModuleAccounts  *ModuleAccountsRequest
+	PerpParams      *PerpParamsRequest
 }
 
-type Reserves struct {
+type ReservesRequest struct {
 	Pair string `json:"pair"`
 }
 
@@ -30,7 +30,7 @@ type ReservesResponse struct {
 	QuoteReserve sdk.Dec `json:"quote_reserve"`
 }
 
-type AllMarkets struct {
+type AllMarketsRequest struct {
 }
 
 type AllMarketsResponse struct {
@@ -60,31 +60,47 @@ type MarketConfig struct {
 	MaxLeverage            sdk.Dec `json:"max_leverage"`
 }
 
-type BasePrice struct {
+type BasePriceRequest struct {
 	Pair       string  `json:"pair"`
 	IsLong     bool    `json:"is_long"`
 	BaseAmount sdk.Int `json:"base_amount"`
 }
 
-type Positions struct {
+type BasePriceResponse struct {
+	BaseAmount  sdk.Int `json:"base_amount"`
+	QuoteAmount sdk.Int `json:"quote_amount"`
+	IsLong      bool    `json:"is_long"`
+}
+
+type PositionsRequest struct {
 	Trader string `json:"trader"`
 }
 
-type Position struct {
+// TODO impl
+type PositionsResponse struct {
+	Trader string `json:"trader"`
+}
+
+type PositionRequest struct {
 	Trader string `json:"trader"`
 	Pair   string `json:"pair"`
 }
 
-type PremiumFraction struct {
+// TODO impl
+type PositionResponse struct {
+	Trader string `json:"trader"`
+}
+
+type PremiumFractionRequest struct {
 	Pair string `json:"pair"`
 }
 
-type Metrics struct {
+type MetricsRequest struct {
 	Pair string `json:"pair"`
 }
 
-type ModuleAccounts struct {
+type ModuleAccountsRequest struct {
 }
 
-type PerpParams struct {
+type PerpParamsRequest struct {
 }

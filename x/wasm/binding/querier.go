@@ -2,12 +2,17 @@ package binding
 
 import (
 	"encoding/json"
+	"fmt"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
+
+func ErrorMarshalResponse(resp any) string {
+	return fmt.Sprintf("failed to JSON marshal response: %v", resp)
+}
 
 // CustomQuerier returns a function that is an implementation of custom querier mechanism for specific messages
 func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessage) ([]byte, error) {
@@ -27,7 +32,7 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 			}
 			bz, err := json.Marshal(cwResp)
 			if err != nil {
-				return nil, sdkerrors.Wrapf(err, "failed to JSON marshal response: %v", cwResp)
+				return nil, sdkerrors.Wrapf(err, ErrorMarshalResponse(cwResp))
 			}
 			return bz, nil
 		case wasmContractQuery.Reserves != nil:
@@ -39,7 +44,7 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 			}
 			bz, err := json.Marshal(cwResp)
 			if err != nil {
-				return nil, sdkerrors.Wrapf(err, "failed to JSON marshal response: %v", cwResp)
+				return nil, sdkerrors.Wrapf(err, ErrorMarshalResponse(cwResp))
 			}
 			return bz, nil
 		// TODO implement

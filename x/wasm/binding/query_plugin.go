@@ -25,13 +25,17 @@ func NewQueryPlugin(perp *perpkeeper.Keeper, perpAmm *perpammkeeper.Keeper) *Que
 	}
 }
 
+// ----------------------------------------------------------------------
+// PerpExtension
+// ----------------------------------------------------------------------
+
 type PerpExtension struct {
 	perp    perptypes.QueryServer
 	perpAmm perpammtypes.QueryServer
 }
 
 func (perpExt *PerpExtension) Reserves(
-	ctx sdk.Context, cwReq *cw_struct.Reserves,
+	ctx sdk.Context, cwReq *cw_struct.ReservesRequest,
 ) (*cw_struct.ReservesResponse, error) {
 	pair := asset.Pair(cwReq.Pair)
 	sdkReq := &perpammtypes.QueryReserveAssetsRequest{
