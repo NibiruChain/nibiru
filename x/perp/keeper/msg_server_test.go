@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/assert"
@@ -222,7 +221,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			})
 
 			t.Log("fund vault")
-			require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, tc.vaultFunds))
+			require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, tc.vaultFunds))
 
 			if tc.initialPosition != nil {
 				t.Log("create position")
@@ -409,7 +408,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                     1,
 			})
-			require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(tc.pair.QuoteDenom(), 1))))
+			require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(tc.pair.QuoteDenom(), 1))))
 
 			resp, err := msgServer.ClosePosition(sdk.WrapSDKContext(ctx), &types.MsgClosePosition{
 				Sender: tc.traderAddr.String(),
@@ -506,7 +505,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	keeper.SetPosition(app.PerpKeeper, ctx, notAtRiskPosition)
 	keeper.SetPosition(app.PerpKeeper, ctx, atRiskPosition2)
 
-	require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
+	require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
 
 	setLiquidator(ctx, app.PerpKeeper, liquidator)
 	resp, err := msgServer.MultiLiquidate(sdk.WrapSDKContext(ctx), &types.MsgMultiLiquidate{
@@ -598,7 +597,7 @@ func TestMsgServerMultiLiquidate_NotAuthorized(t *testing.T) {
 	}
 	keeper.SetPosition(app.PerpKeeper, ctx, atRiskPosition1)
 
-	require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
+	require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
 
 	resp, err := msgServer.MultiLiquidate(sdk.WrapSDKContext(ctx), &types.MsgMultiLiquidate{
 		Sender: liquidator.String(),
@@ -671,7 +670,7 @@ func TestMsgServerMultiLiquidate_AllFailed(t *testing.T) {
 	}
 	keeper.SetPosition(app.PerpKeeper, ctx, notAtRiskPosition)
 
-	require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
+	require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
 
 	setLiquidator(ctx, app.PerpKeeper, liquidator)
 	resp, err := msgServer.MultiLiquidate(sdk.WrapSDKContext(ctx), &types.MsgMultiLiquidate{
