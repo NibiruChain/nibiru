@@ -13,20 +13,16 @@ message GenesisState {
   Params params = 1 [ (gogoproto.nullable) = false ];
   // period is the amount of past periods, based on the epochs per period param
   uint64 period = 2;
-  // epoch_identifier for inflation, e.g. "day"
-  string epoch_identifier = 3;
-  // epochs_per_period is the number of epochs after which inflation is
-  // recalculated, e.g. 365
-  int64 epochs_per_period = 4;
   // skipped_epochs is the number of epochs that have passed while inflation is
   // disabled
-  uint64 skipped_epochs = 5;
+  uint64 skipped_epochs = 3;
 }
 
 // Params holds parameters for the inflation module.
 message Params {
-  // mint_denom specifies the type of coin to mint
-  string mint_denom = 1;
+  // inflation_enabled is the parameter that enables inflation and halts
+  // increasing the skipped_epochs
+  bool inflation_enabled = 1;
   // exponential_calculation takes in the variables to calculate exponential
   // inflation
   ExponentialCalculation exponential_calculation = 2
@@ -34,7 +30,7 @@ message Params {
   // inflation_distribution of the minted denom
   InflationDistribution inflation_distribution = 3
       [ (gogoproto.nullable) = false ];
-  // enable_inflation is the parameter that enables inflation and halts
-  // increasing the skipped_epochs
-  bool enable_inflation = 4;
+  // epochs_per_period is the number of epochs that must pass before a new
+  // period is created
+  uint64 epochs_per_period = 4;
 }

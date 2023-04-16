@@ -6,28 +6,24 @@ import "gogoproto/gogo.proto";
 option go_package = "github.com/NibiruChain/nibiru/x/inflation/types";
 
 // InflationDistribution defines the distribution in which inflation is
-// allocated through minting on each epoch (staking, incentives, community). It
-// excludes the team vesting distribution, as this is minted once at genesis.
-// The initial InflationDistribution can be calculated from the Evmos Token
-// Model like this:
-// mintDistribution1 = distribution1 / (1 - teamVestingDistribution)
-// 0.5333333         = 40%           / (1 - 25%)
+// allocated through minting on each epoch (staking, community, strategic). It
+// excludes the team vesting distribution.
 message InflationDistribution {
-  // staking_rewards defines the proportion of the minted minted_denom that is
+  // staking_rewards defines the proportion of the minted_denom that is
   // to be allocated as staking rewards
   string staking_rewards = 1 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  // usage_incentives defines the proportion of the minted minted_denom that is
-  // to be allocated to the incentives module address
-  string usage_incentives = 2 [
+  // community_pool defines the proportion of the minted_denom that is to
+  // be allocated to the community pool
+  string community_pool = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  // community_pool defines the proportion of the minted minted_denom that is to
-  // be allocated to the community pool
-  string community_pool = 3 [
+  // strategic_reserves defines the proportion of the minted_denom that
+  // is to be allocated to the strategic reserves module address
+  string strategic_reserves = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
@@ -35,9 +31,8 @@ message InflationDistribution {
 
 // ExponentialCalculation holds factors to calculate exponential inflation on
 // each period. Calculation reference:
-// periodProvision = exponentialDecay       *  bondingIncentive
-// f(x)            = (a * (1 - r) ^ x + c)  *  (1 + max_variance - bondedRatio *
-// (max_variance / bonding_target))
+// periodProvision = exponentialDecay
+// f(x)            = a * (1 - r) ^ x + c
 message ExponentialCalculation {
   // a defines the initial value
   string a = 1 [
@@ -51,16 +46,6 @@ message ExponentialCalculation {
   ];
   // c defines the parameter for long term inflation
   string c = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-  // bonding_target
-  string bonding_target = 4 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-  // max_variance
-  string max_variance = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
