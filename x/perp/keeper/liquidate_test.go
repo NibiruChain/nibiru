@@ -123,7 +123,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 
 			t.Log("Fund trader account with sufficient quote")
 			var err error
-			err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, traderAddr,
+			err = testapp.FundAccount(nibiruApp.BankKeeper, ctx, traderAddr,
 				sdk.NewCoins(tc.traderFunds))
 			require.NoError(t, err)
 
@@ -304,7 +304,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 
 			t.Log("Fund trader account with sufficient quote")
 			var err error
-			err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, traderAddr,
+			err = testapp.FundAccount(nibiruApp.BankKeeper, ctx, traderAddr,
 				sdk.NewCoins(tc.traderFunds))
 			require.NoError(t, err)
 

@@ -99,7 +99,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 			})
 
 			t.Log("fund trader")
-			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, traderAddr, tc.traderFunds))
+			require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, traderAddr, tc.traderFunds))
 
 			if tc.initialPosition != nil {
 				t.Log("create position")
@@ -313,7 +313,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 			traderAddr, err := sdk.AccAddressFromBech32(tc.sender)
 			if err == nil {
 				t.Log("fund trader")
-				require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, traderAddr, tc.traderFunds))
+				require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, traderAddr, tc.traderFunds))
 			}
 
 			t.Log("increment block height and time for TWAP calculation")
@@ -730,7 +730,7 @@ func TestMsgServerDonateToEcosystemFund(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
-			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, tc.sender, tc.initialFunds))
+			require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, tc.sender, tc.initialFunds))
 
 			resp, err := msgServer.DonateToEcosystemFund(sdk.WrapSDKContext(ctx), &types.MsgDonateToEcosystemFund{
 				Sender:   tc.sender.String(),
