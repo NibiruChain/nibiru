@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -22,6 +23,10 @@ func (k Keeper) CreatePool(
 	bias sdk.Dec,
 	pegMultiplier sdk.Dec,
 ) error {
+	if !quoteAssetReserve.Equal(baseAssetReserve) {
+		return fmt.Errorf("quote asset reserve %s must be equal to base asset reserve %s", quoteAssetReserve, baseAssetReserve)
+	}
+
 	market := types.NewMarket(types.ArgsNewMarket{
 		Pair:          pair,
 		BaseReserves:  baseAssetReserve,
