@@ -55,8 +55,10 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		{
 			Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
-			QuoteAssetReserve: sdk.NewDec(60_000 * common.TO_MICRO),
-			SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 60_000 * common.TO_MICRO * common.TO_MICRO)),
+			QuoteAssetReserve: sdk.NewDec(10 * common.TO_MICRO),
+			SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 10 * common.TO_MICRO * common.TO_MICRO)),
+			Bias:              sdk.ZeroDec(),
+			PegMultiplier:     sdk.NewDec(6_000),
 			Config: perpammtypes.MarketConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 				FluctuationLimitRatio:  sdk.OneDec(),
@@ -68,8 +70,10 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		{
 			Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 			BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
-			QuoteAssetReserve: sdk.NewDec(60_000 * common.TO_MICRO),
-			SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 60_000 * common.TO_MICRO * common.TO_MICRO)),
+			QuoteAssetReserve: sdk.NewDec(10 * common.TO_MICRO),
+			SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 10 * common.TO_MICRO * common.TO_MICRO)),
+			Bias:              sdk.ZeroDec(),
+			PegMultiplier:     sdk.NewDec(6_000),
 			Config: perpammtypes.MarketConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
@@ -81,8 +85,10 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		{
 			Pair:              asset.Registry.Pair(denoms.ATOM, denoms.NUSD),
 			BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
-			QuoteAssetReserve: sdk.NewDec(60_000 * common.TO_MICRO),
-			SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 60_000 * common.TO_MICRO * common.TO_MICRO)),
+			QuoteAssetReserve: sdk.NewDec(10 * common.TO_MICRO),
+			SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 10 * common.TO_MICRO * common.TO_MICRO)),
+			Bias:              sdk.ZeroDec(),
+			PegMultiplier:     sdk.NewDec(6_000),
 			Config: perpammtypes.MarketConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
@@ -94,8 +100,10 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		{
 			Pair:              asset.Registry.Pair(denoms.OSMO, denoms.NUSD),
 			BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
-			QuoteAssetReserve: sdk.NewDec(60_000 * common.TO_MICRO),
-			SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 60_000 * common.TO_MICRO * common.TO_MICRO)),
+			QuoteAssetReserve: sdk.NewDec(10 * common.TO_MICRO),
+			SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 10 * common.TO_MICRO * common.TO_MICRO)),
+			Bias:              sdk.ZeroDec(),
+			PegMultiplier:     sdk.NewDec(6_000),
 			Config: perpammtypes.MarketConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
