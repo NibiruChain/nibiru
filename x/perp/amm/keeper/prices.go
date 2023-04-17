@@ -59,37 +59,12 @@ func (k Keeper) GetBaseAssetPrice(
 	dir types.Direction,
 	baseAssetAmount sdk.Dec,
 ) (quoteAmount sdk.Dec, err error) {
-	return amm.GetQuoteAmountByBaseAmount(baseAssetAmount.MulInt64(dir.ToMultiplier()))
-}
-
-/*
-GetQuoteAssetPrice
-Returns the amount of base assets required to achieve a move of quoteAmount in a direction.
-e.g. if removing <quoteAmount> quote assets from the pool, returns the amount of base assets do so.
-
-args:
-  - ctx: cosmos-sdk context
-  - pair: the trading token pair
-  - dir: add or remove
-  - quoteAmountAbs: the amount of quote asset
-
-ret:
-  - baseAssetAmount: the amount of base assets required to make the desired swap
-  - err: error
-*/
-func (k Keeper) GetQuoteAssetPrice(
-	ctx sdk.Context,
-	pair asset.Pair,
-	dir types.Direction,
-	quoteAmountAbs sdk.Dec,
-) (baseAssetAmount sdk.Dec, err error) {
-	pool, err := k.Pools.Get(ctx, pair)
+	quoteAmount, err = amm.GetQuoteAmountByBaseAmount(baseAssetAmount.MulInt64(dir.ToMultiplier()))
 	if err != nil {
-		return sdk.ZeroDec(), err
+		return
 	}
-
-	dirMult := dir.ToMultiplier()
-	return pool.GetBaseAmountByQuoteAmount(quoteAmountAbs.MulInt64(dirMult))
+	quoteAmount = quoteAmount.Mul(amm.PegMultiplier)
+	return
 }
 
 /*

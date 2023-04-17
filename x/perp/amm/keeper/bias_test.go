@@ -55,7 +55,7 @@ func TestBiasChangeOnMarket(t *testing.T) {
 			).
 			Then(
 				ammassertion.MarketShouldBeEqual(pairBtcUsdc,
-					ammassertion.Market_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("9999.999900000001000000")), // Bias equal to PositionSize
+					ammassertion.Market_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("-9999.999900000001000000")), // Bias equal to PositionSize
 				),
 				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("9999.999900000001000000"))),
 			),
@@ -75,7 +75,7 @@ func TestBiasChangeOnMarket(t *testing.T) {
 			).
 			Then(
 				ammassertion.MarketShouldBeEqual(pairBtcUsdc,
-					ammassertion.Market_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("19999.999600000008000000")), // Bias equal to PositionSize
+					ammassertion.Market_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("-19999.999600000008000000")), // Bias equal to PositionSize
 				),
 				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("19999.999600000008000000"))),
 			),
@@ -92,7 +92,7 @@ func TestBiasChangeOnMarket(t *testing.T) {
 			).
 			Then(
 				ammassertion.MarketShouldBeEqual(pairBtcUsdc,
-					ammassertion.Market_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("-10000.000100000001000000")), // Bias equal to PositionSize
+					ammassertion.Market_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("10000.000100000001000000")), // Bias equal to PositionSize
 				),
 				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("-10000.000100000001000000"))),
 			),
@@ -112,7 +112,7 @@ func TestBiasChangeOnMarket(t *testing.T) {
 			).
 			Then(
 				ammassertion.MarketShouldBeEqual(pairBtcUsdc,
-					ammassertion.Market_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("-20000.000400000008000000")), // Bias equal to PositionSize
+					ammassertion.Market_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("20000.000400000008000000")), // Bias equal to PositionSize
 				),
 				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("-20000.000400000008000000"))),
 			),
@@ -150,7 +150,7 @@ func TestBiasChangeOnMarket(t *testing.T) {
 			).
 			Then(
 				ammassertion.MarketShouldBeEqual(pairBtcUsdc,
-					ammassertion.Market_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("8999.999919000000729000")), // Bias equal to PositionSize
+					ammassertion.Market_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("-8999.999919000000729000")), // Bias equal to PositionSize
 				),
 				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("8999.999919000000729000"))),
 			),

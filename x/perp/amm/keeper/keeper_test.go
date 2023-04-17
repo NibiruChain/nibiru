@@ -198,7 +198,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 				market, _ = perpammKeeper.GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 
 				dir := sdk.OneDec()
-				if tc.direction == types.Direction_SHORT {
+				if tc.direction == types.Direction_LONG {
 					dir = sdk.OneDec().Neg()
 				}
 
@@ -396,7 +396,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 				t.Log("assert pool")
 				market, _ = perpammKeeper.GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 				dir := sdk.OneDec()
-				if tc.direction == types.Direction_LONG {
+				if tc.direction == types.Direction_SHORT {
 					dir = sdk.OneDec().Neg()
 				}
 				assert.EqualValuesf(t, dir.Mul(tc.baseAmt), market.Bias, "bias amount mismatch")

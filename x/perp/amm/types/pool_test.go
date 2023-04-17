@@ -305,6 +305,8 @@ func TestIncreaseDecreaseReserves(t *testing.T) {
 		Pair:          pair,
 		QuoteReserves: sdk.NewDec(1 * common.TO_MICRO),
 		BaseReserves:  sdk.NewDec(1 * common.TO_MICRO),
+		Bias:          sdk.ZeroDec(),
+		PegMultiplier: sdk.OneDec(),
 		Config: &MarketConfig{
 			FluctuationLimitRatio:  sdk.OneDec(),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -323,11 +325,11 @@ func TestIncreaseDecreaseReserves(t *testing.T) {
 	require.Equal(t, sdk.NewDec(1*common.TO_MICRO), pool.QuoteAssetReserve)
 
 	t.Log("decrease base asset reserve")
-	pool.AddToBaseAssetReserve(sdk.NewDec(-100))
+	pool.AddToBaseAssetReserveAndBias(sdk.NewDec(-100))
 	require.Equal(t, sdk.NewDec(999_900), pool.BaseAssetReserve)
 
 	t.Log("increase base asset reserve")
-	pool.AddToBaseAssetReserve(sdk.NewDec(100))
+	pool.AddToBaseAssetReserveAndBias(sdk.NewDec(100))
 	require.Equal(t, sdk.NewDec(1*common.TO_MICRO), pool.BaseAssetReserve)
 }
 

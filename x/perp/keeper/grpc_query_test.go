@@ -20,7 +20,7 @@ import (
 )
 
 func initAppMarkets(
-	t *testing.T, quoteAssetReserve sdk.Dec, baseAssetReserve sdk.Dec,
+	t *testing.T, quoteAssetReserve, baseAssetReserve, pegMultiplier sdk.Dec,
 ) (sdk.Context, *app.NibiruApp, types.QueryServer) {
 	t.Log("initialize app and keeper")
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
@@ -42,7 +42,7 @@ func initAppMarkets(
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
 		sdk.ZeroDec(),
-		sdk.OneDec(),
+		pegMultiplier,
 	))
 	keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 		Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -96,6 +96,7 @@ func TestQueryPosition(t *testing.T) {
 
 		quoteAssetReserve sdk.Dec
 		baseAssetReserve  sdk.Dec
+		pegMultiplier     sdk.Dec
 
 		expectedPositionNotional sdk.Dec
 		expectedUnrealizedPnl    sdk.Dec
@@ -112,11 +113,12 @@ func TestQueryPosition(t *testing.T) {
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
 			quoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
-			baseAssetReserve:  sdk.NewDec(500_000),
+			baseAssetReserve:  sdk.NewDec(1 * common.TO_MICRO),
+			pegMultiplier:     sdk.NewDec(2),
 
-			expectedPositionNotional: sdk.MustNewDecFromStr("19.999600007999840003"),
-			expectedUnrealizedPnl:    sdk.MustNewDecFromStr("9.999600007999840003"),
-			expectedMarginRatio:      sdk.MustNewDecFromStr("0.549991"),
+			expectedPositionNotional: sdk.MustNewDecFromStr("19.999800001999980000"),
+			expectedUnrealizedPnl:    sdk.MustNewDecFromStr("9.999800001999980000"),
+			expectedMarginRatio:      sdk.MustNewDecFromStr("0.549995500000000000"),
 		},
 		{
 			name: "negative PnL, positive margin ratio",
@@ -130,6 +132,7 @@ func TestQueryPosition(t *testing.T) {
 			},
 			quoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
 			baseAssetReserve:  sdk.NewDec(1 * common.TO_MICRO),
+			pegMultiplier:     sdk.OneDec(),
 
 			expectedPositionNotional: sdk.MustNewDecFromStr("9.99990000099999"),
 			expectedUnrealizedPnl:    sdk.MustNewDecFromStr("-0.00009999900001"),
@@ -145,8 +148,9 @@ func TestQueryPosition(t *testing.T) {
 				BlockNumber:                     1,
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
-			quoteAssetReserve: sdk.NewDec(500_000),
+			quoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
 			baseAssetReserve:  sdk.NewDec(1 * common.TO_MICRO),
+			pegMultiplier:     sdk.MustNewDecFromStr("0.5"),
 
 			expectedPositionNotional: sdk.MustNewDecFromStr("4.999950000499995"),
 			expectedUnrealizedPnl:    sdk.MustNewDecFromStr("-5.000049999500005"),
@@ -162,7 +166,7 @@ func TestQueryPosition(t *testing.T) {
 			tc.initialPosition.TraderAddress = traderAddr.String()
 
 			t.Log("initialize app and keeper")
-			ctx, app, queryServer := initAppMarkets(t, tc.quoteAssetReserve, tc.baseAssetReserve)
+			ctx, app, queryServer := initAppMarkets(t, tc.quoteAssetReserve, tc.baseAssetReserve, tc.pegMultiplier)
 
 			t.Log("initialize position")
 			keeper.SetPosition(app.PerpKeeper, ctx, *tc.initialPosition)
@@ -231,6 +235,7 @@ func TestQueryPositions(t *testing.T) {
 				t,
 				/* quoteReserve */ sdk.NewDec(100_000),
 				/* baseReserve */ sdk.NewDec(100_000),
+				/* pegMultiplier */ sdk.OneDec(),
 			)
 
 			t.Log("initialize position")
@@ -308,7 +313,7 @@ func TestQueryCumulativePremiumFraction(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Log("initialize app and keeper")
-			ctx, app, queryServer := initAppMarkets(t, sdk.NewDec(481_000), sdk.NewDec(1_000))
+			ctx, app, queryServer := initAppMarkets(t, sdk.NewDec(481_000), sdk.NewDec(1_000), sdk.OneDec())
 
 			t.Log("set index price")
 			app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdk.OneDec())
@@ -489,6 +494,7 @@ func TestQueryMetrics(t *testing.T) {
 				t,
 				/* quoteReserve */ sdk.NewDec(100_000),
 				/* baseReserve */ sdk.NewDec(100_000),
+				sdk.OneDec(),
 			)
 			t.Log("call OnSwapEnd hook")
 			for _, position := range tc.Positions {
