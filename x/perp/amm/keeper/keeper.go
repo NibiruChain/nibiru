@@ -98,8 +98,6 @@ func (k Keeper) SwapBaseForQuote(
 
 	baseAmt = baseAmtAbs.MulInt64(dir.ToMultiplier())
 
-	market.Bias = market.Bias.Add(baseAmt.Neg())
-
 	updatedMarket, err = k.executeSwap(ctx, market, quoteDelta, baseAmt, skipFluctuationLimitCheck)
 	if err != nil {
 		return market, sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
@@ -193,8 +191,6 @@ func (k Keeper) SwapQuoteForBase(
 
 	quoteAmt = quoteAmtAbs.MulInt64(dir.ToMultiplier())
 	baseDelta := baseAmtAbs.Neg().MulInt64(dir.ToMultiplier())
-
-	market.Bias = market.Bias.Add(baseAmtAbs.MulInt64(dir.ToMultiplier()))
 
 	updatedMarket, err = k.executeSwap(ctx, market, quoteAmt, baseDelta, skipFluctuationLimitCheck)
 	if err != nil {

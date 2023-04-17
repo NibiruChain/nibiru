@@ -200,6 +200,8 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 				Pair:          pair,
 				QuoteReserves: tc.quoteAssetReserve,
 				BaseReserves:  tc.baseAssetReserve,
+				PegMultiplier: sdk.OneDec(),
+				Bias:          sdk.ZeroDec(),
 				Config: &MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),

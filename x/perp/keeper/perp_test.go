@@ -33,7 +33,7 @@ func TestKeeperClosePosition(t *testing.T) {
 			ctx,
 			pair,
 			/*quoteAssetReserve*/ sdk.NewDec(10*common.TO_MICRO),
-			/*baseAssetReserve*/ sdk.NewDec(5*common.TO_MICRO),
+			/*baseAssetReserve*/ sdk.NewDec(10*common.TO_MICRO),
 			perpammtypes.MarketConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
@@ -63,7 +63,7 @@ func TestKeeperClosePosition(t *testing.T) {
 
 		aliceSide := perpammtypes.Direction_LONG
 		aliceQuote := sdk.NewInt(60)
-		aliceLeverage := sdk.NewDec(10)
+		aliceLeverage := sdk.NewDec(5)
 		aliceBaseLimit := sdk.NewDec(150)
 
 		nibiruApp.OracleKeeper.SetPrice(ctx, pair, sdk.NewDec(20))
