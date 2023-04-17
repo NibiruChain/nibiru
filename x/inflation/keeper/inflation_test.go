@@ -4,18 +4,18 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	types "github.com/NibiruChain/nibiru/x/inflation/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	types "github.com/NibiruChain/nibiru/x/inflation/types"
 )
 
 func TestMintAndAllocateInflation(t *testing.T) {
-
 	testCases := []struct {
 		name                    string
 		mintCoin                sdk.Coin

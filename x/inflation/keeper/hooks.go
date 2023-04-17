@@ -3,12 +3,13 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
-	"github.com/NibiruChain/nibiru/x/inflation/types"
 	"github.com/armon/go-metrics"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/common/denoms"
+	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
+	"github.com/NibiruChain/nibiru/x/inflation/types"
 )
 
 // BeforeEpochStart: noop, We don't need to do anything here

@@ -133,15 +133,6 @@ func validateBool(i interface{}) error {
 	return nil
 }
 
-func validateInt64(i interface{}) error {
-	_, ok := i.(int64)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	return nil
-}
-
 func validateUint64(i interface{}) error {
 	_, ok := i.(uint64)
 	if !ok {

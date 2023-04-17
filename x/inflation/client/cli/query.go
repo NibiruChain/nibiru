@@ -6,9 +6,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/NibiruChain/nibiru/x/inflation/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+
+	"github.com/NibiruChain/nibiru/x/inflation/types"
 )
 
 // GetQueryCmd returns the cli query commands for the inflation module.
