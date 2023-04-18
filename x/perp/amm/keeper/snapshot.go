@@ -72,7 +72,7 @@ func getPriceWithSnapshot(
 		if err != nil {
 			return
 		}
-		price = price.Quo(pool.PegMultiplier)
+		price = price.Mul(pool.PegMultiplier)
 		return
 
 	case types.TwapCalcOption_BASE_ASSET_SWAP:
@@ -98,7 +98,7 @@ func getPriceWithSnapshot(
 		if err != nil {
 			return
 		}
-		price = price.Mul(pool.PegMultiplier)
+		price = price.Quo(pool.PegMultiplier)
 		return
 	}
 
