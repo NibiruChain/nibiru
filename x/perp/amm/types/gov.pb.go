@@ -32,10 +32,10 @@ type CreatePoolProposal struct {
 	Pair github_com_NibiruChain_nibiru_x_common_asset.Pair `protobuf:"bytes,3,opt,name=pair,proto3,customtype=github.com/NibiruChain/nibiru/x/common/asset.Pair" json:"pair"`
 	// quote_asset_reserve is the amount of quote asset the pool will be
 	// initialized with.
-	QuoteAssetReserve github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,5,opt,name=quote_asset_reserve,json=quoteAssetReserve,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"quote_asset_reserve"`
+	QuoteReserve github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,5,opt,name=quote_asset_reserve,json=quoteReserve,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"quote_asset_reserve"`
 	// base_asset_reserve is the amount of base asset the pool will be
 	// initialized with.
-	BaseAssetReserve github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,6,opt,name=base_asset_reserve,json=baseAssetReserve,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"base_asset_reserve"`
+	BaseReserve github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,6,opt,name=base_asset_reserve,json=baseReserve,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"base_asset_reserve"`
 	Config           MarketConfig                           `protobuf:"bytes,7,opt,name=config,proto3" json:"config"`
 	// peg multiplier is the peg factor for the pool.
 	PegMultiplier github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,8,opt,name=peg_multiplier,json=pegMultiplier,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"peg_multiplier"`
@@ -352,9 +352,9 @@ func (m *CreatePoolProposal) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i--
 	dAtA[i] = 0x3a
 	{
-		size := m.BaseAssetReserve.Size()
+		size := m.BaseReserve.Size()
 		i -= size
-		if _, err := m.BaseAssetReserve.MarshalTo(dAtA[i:]); err != nil {
+		if _, err := m.BaseReserve.MarshalTo(dAtA[i:]); err != nil {
 			return 0, err
 		}
 		i = encodeVarintGov(dAtA, i, uint64(size))
@@ -362,9 +362,9 @@ func (m *CreatePoolProposal) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i--
 	dAtA[i] = 0x32
 	{
-		size := m.QuoteAssetReserve.Size()
+		size := m.QuoteReserve.Size()
 		i -= size
-		if _, err := m.QuoteAssetReserve.MarshalTo(dAtA[i:]); err != nil {
+		if _, err := m.QuoteReserve.MarshalTo(dAtA[i:]); err != nil {
 			return 0, err
 		}
 		i = encodeVarintGov(dAtA, i, uint64(size))
@@ -576,9 +576,9 @@ func (m *CreatePoolProposal) Size() (n int) {
 	}
 	l = m.Pair.Size()
 	n += 1 + l + sovGov(uint64(l))
-	l = m.QuoteAssetReserve.Size()
+	l = m.QuoteReserve.Size()
 	n += 1 + l + sovGov(uint64(l))
-	l = m.BaseAssetReserve.Size()
+	l = m.BaseReserve.Size()
 	n += 1 + l + sovGov(uint64(l))
 	l = m.Config.Size()
 	n += 1 + l + sovGov(uint64(l))
@@ -779,7 +779,7 @@ func (m *CreatePoolProposal) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 5:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field QuoteAssetReserve", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field QuoteReserve", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -807,13 +807,13 @@ func (m *CreatePoolProposal) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.QuoteAssetReserve.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.QuoteReserve.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
 		case 6:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field BaseAssetReserve", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field BaseReserve", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -841,7 +841,7 @@ func (m *CreatePoolProposal) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.BaseAssetReserve.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.BaseReserve.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

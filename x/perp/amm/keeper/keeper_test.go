@@ -165,8 +165,8 @@ func TestSwapQuoteForBase(t *testing.T) {
 			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				/* quoteAssetReserve */ sdk.NewDec(10*common.TO_MICRO), // 10 tokens
-				/* baseAssetReserve */ sdk.NewDec(10*common.TO_MICRO), // 10 tokens
+				/* quoteReserve */ sdk.NewDec(10*common.TO_MICRO), // 10 tokens
+				/* baseReserve */ sdk.NewDec(10*common.TO_MICRO), // 10 tokens
 				types.MarketConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
@@ -207,8 +207,8 @@ func TestSwapQuoteForBase(t *testing.T) {
 				t.Log("assert market")
 				pool, err := perpammKeeper.Pools.Get(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 				require.NoError(t, err)
-				assert.EqualValuesf(t, tc.expectedQuoteReserve, pool.QuoteAssetReserve, "pool quote asset reserve mismatch")
-				assert.EqualValuesf(t, tc.expectedBaseReserve, pool.BaseAssetReserve, "pool base asset reserve mismatch")
+				assert.EqualValuesf(t, tc.expectedQuoteReserve, pool.QuoteReserve, "pool quote asset reserve mismatch")
+				assert.EqualValuesf(t, tc.expectedBaseReserve, pool.BaseReserve, "pool base asset reserve mismatch")
 			}
 		})
 	}
@@ -362,8 +362,8 @@ func TestSwapBaseForQuote(t *testing.T) {
 			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				/* quoteAssetReserve */ sdk.NewDec(10*common.TO_MICRO), // 10 tokens
-				/* baseAssetReserve */ sdk.NewDec(10*common.TO_MICRO), // 5 tokens
+				/* quoteReserve */ sdk.NewDec(10*common.TO_MICRO), // 10 tokens
+				/* baseReserve */ sdk.NewDec(10*common.TO_MICRO), // 5 tokens
 				types.MarketConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
@@ -403,8 +403,8 @@ func TestSwapBaseForQuote(t *testing.T) {
 
 				pool, err := perpammKeeper.Pools.Get(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 				require.NoError(t, err)
-				assert.Equal(t, tc.expectedQuoteReserve, pool.QuoteAssetReserve)
-				assert.Equal(t, tc.expectedBaseReserve, pool.BaseAssetReserve)
+				assert.Equal(t, tc.expectedQuoteReserve, pool.QuoteReserve)
+				assert.Equal(t, tc.expectedBaseReserve, pool.BaseReserve)
 			}
 		})
 	}
@@ -491,10 +491,10 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 		{
 			name: "uses latest snapshot - does not result in error",
 			pool: types.Market{
-				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				QuoteAssetReserve: sdk.NewDec(1_000),
-				BaseAssetReserve:  sdk.NewDec(1_000),
-				PegMultiplier:     sdk.OneDec(),
+				Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				QuoteReserve:  sdk.NewDec(1_000),
+				BaseReserve:   sdk.NewDec(1_000),
+				PegMultiplier: sdk.OneDec(),
 
 				Config: types.MarketConfig{
 					FluctuationLimitRatio: sdk.MustNewDecFromStr("0.001"),
@@ -502,18 +502,18 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 			},
 			existingSnapshots: []types.ReserveSnapshot{
 				{
-					Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					QuoteAssetReserve: sdk.NewDec(1_000),
-					BaseAssetReserve:  sdk.NewDec(1_000),
-					TimestampMs:       0,
-					PegMultiplier:     sdk.OneDec(),
+					Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					QuoteReserve:  sdk.NewDec(1_000),
+					BaseReserve:   sdk.NewDec(1_000),
+					TimestampMs:   0,
+					PegMultiplier: sdk.OneDec(),
 				},
 				{
-					Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					QuoteAssetReserve: sdk.NewDec(1_000),
-					BaseAssetReserve:  sdk.NewDec(1_000),
-					TimestampMs:       1,
-					PegMultiplier:     sdk.OneDec(),
+					Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					QuoteReserve:  sdk.NewDec(1_000),
+					BaseReserve:   sdk.NewDec(1_000),
+					TimestampMs:   1,
+					PegMultiplier: sdk.OneDec(),
 				},
 			},
 			expectedErr: nil,
@@ -521,10 +521,10 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 		{
 			name: "uses previous snapshot - results in error",
 			pool: types.Market{
-				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				QuoteAssetReserve: sdk.NewDec(1_100),
-				BaseAssetReserve:  sdk.NewDec(900),
-				PegMultiplier:     sdk.OneDec(),
+				Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				QuoteReserve:  sdk.NewDec(1_100),
+				BaseReserve:   sdk.NewDec(900),
+				PegMultiplier: sdk.OneDec(),
 
 				Config: types.MarketConfig{
 					FluctuationLimitRatio: sdk.MustNewDecFromStr("0.001"),
@@ -532,18 +532,18 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 			},
 			existingSnapshots: []types.ReserveSnapshot{
 				{
-					Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					QuoteAssetReserve: sdk.NewDec(1_000),
-					BaseAssetReserve:  sdk.NewDec(1_000),
-					TimestampMs:       0,
-					PegMultiplier:     sdk.OneDec(),
+					Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					QuoteReserve:  sdk.NewDec(1_000),
+					BaseReserve:   sdk.NewDec(1_000),
+					TimestampMs:   0,
+					PegMultiplier: sdk.OneDec(),
 				},
 				{
-					Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					QuoteAssetReserve: sdk.NewDec(1_000),
-					BaseAssetReserve:  sdk.NewDec(1_000),
-					TimestampMs:       1,
-					PegMultiplier:     sdk.OneDec(),
+					Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					QuoteReserve:  sdk.NewDec(1_000),
+					BaseReserve:   sdk.NewDec(1_000),
+					TimestampMs:   1,
+					PegMultiplier: sdk.OneDec(),
 				},
 			},
 			expectedErr: types.ErrOverFluctuationLimit,
@@ -551,10 +551,10 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 		{
 			name: "only one snapshot - no error",
 			pool: types.Market{
-				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				QuoteAssetReserve: sdk.NewDec(1_000),
-				BaseAssetReserve:  sdk.NewDec(1_000),
-				PegMultiplier:     sdk.OneDec(),
+				Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				QuoteReserve:  sdk.NewDec(1_000),
+				BaseReserve:   sdk.NewDec(1_000),
+				PegMultiplier: sdk.OneDec(),
 
 				Config: types.MarketConfig{
 					FluctuationLimitRatio: sdk.MustNewDecFromStr("0.001"),
@@ -562,11 +562,11 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 			},
 			existingSnapshots: []types.ReserveSnapshot{
 				{
-					Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					QuoteAssetReserve: sdk.NewDec(1_000),
-					BaseAssetReserve:  sdk.NewDec(1_000),
-					TimestampMs:       0,
-					PegMultiplier:     sdk.OneDec(),
+					Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					QuoteReserve:  sdk.NewDec(1_000),
+					BaseReserve:   sdk.NewDec(1_000),
+					TimestampMs:   0,
+					PegMultiplier: sdk.OneDec(),
 				},
 			},
 			expectedErr: nil,
@@ -574,10 +574,10 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 		{
 			name: "zero fluctuation limit - no error",
 			pool: types.Market{
-				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				QuoteAssetReserve: sdk.NewDec(1_100),
-				BaseAssetReserve:  sdk.NewDec(900),
-				PegMultiplier:     sdk.OneDec(),
+				Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				QuoteReserve:  sdk.NewDec(1_100),
+				BaseReserve:   sdk.NewDec(900),
+				PegMultiplier: sdk.OneDec(),
 
 				Config: types.MarketConfig{
 					FluctuationLimitRatio: sdk.ZeroDec(),
@@ -585,18 +585,18 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 			},
 			existingSnapshots: []types.ReserveSnapshot{
 				{
-					Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					QuoteAssetReserve: sdk.NewDec(1_000),
-					BaseAssetReserve:  sdk.NewDec(1_000),
-					TimestampMs:       0,
-					PegMultiplier:     sdk.OneDec(),
+					Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					QuoteReserve:  sdk.NewDec(1_000),
+					BaseReserve:   sdk.NewDec(1_000),
+					TimestampMs:   0,
+					PegMultiplier: sdk.OneDec(),
 				},
 				{
-					Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					QuoteAssetReserve: sdk.NewDec(1_000),
-					BaseAssetReserve:  sdk.NewDec(1_000),
-					TimestampMs:       1,
-					PegMultiplier:     sdk.OneDec(),
+					Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					QuoteReserve:  sdk.NewDec(1_000),
+					BaseReserve:   sdk.NewDec(1_000),
+					TimestampMs:   1,
+					PegMultiplier: sdk.OneDec(),
 				},
 			},
 			expectedErr: nil,
@@ -604,10 +604,10 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 		{
 			name: "uses latest snapshot - does not result in error",
 			pool: types.Market{
-				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				QuoteAssetReserve: sdk.NewDec(1_000),
-				BaseAssetReserve:  sdk.NewDec(1_000),
-				PegMultiplier:     sdk.OneDec(),
+				Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				QuoteReserve:  sdk.NewDec(1_000),
+				BaseReserve:   sdk.NewDec(1_000),
+				PegMultiplier: sdk.OneDec(),
 
 				Config: types.MarketConfig{
 					FluctuationLimitRatio: sdk.MustNewDecFromStr("0.001"),
@@ -615,25 +615,25 @@ func TestCheckFluctuationLimitRatio(t *testing.T) {
 			},
 			existingSnapshots: []types.ReserveSnapshot{
 				{
-					Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-					QuoteAssetReserve: sdk.NewDec(5_000),
-					BaseAssetReserve:  sdk.NewDec(1_000),
-					TimestampMs:       0,
-					PegMultiplier:     sdk.OneDec(),
+					Pair:          asset.Registry.Pair(denoms.ETH, denoms.NUSD),
+					QuoteReserve:  sdk.NewDec(5_000),
+					BaseReserve:   sdk.NewDec(1_000),
+					TimestampMs:   0,
+					PegMultiplier: sdk.OneDec(),
 				},
 				{
-					Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					QuoteAssetReserve: sdk.NewDec(1_000),
-					BaseAssetReserve:  sdk.NewDec(1_000),
-					TimestampMs:       0,
-					PegMultiplier:     sdk.OneDec(),
+					Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					QuoteReserve:  sdk.NewDec(1_000),
+					BaseReserve:   sdk.NewDec(1_000),
+					TimestampMs:   0,
+					PegMultiplier: sdk.OneDec(),
 				},
 				{
-					Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-					QuoteAssetReserve: sdk.NewDec(5_000),
-					BaseAssetReserve:  sdk.NewDec(1_000),
-					TimestampMs:       1,
-					PegMultiplier:     sdk.OneDec(),
+					Pair:          asset.Registry.Pair(denoms.ETH, denoms.NUSD),
+					QuoteReserve:  sdk.NewDec(5_000),
+					BaseReserve:   sdk.NewDec(1_000),
+					TimestampMs:   1,
+					PegMultiplier: sdk.OneDec(),
 				},
 			},
 			expectedErr: nil,
@@ -681,10 +681,10 @@ func TestGetMaintenanceMarginRatio(t *testing.T) {
 		{
 			name: "zero fluctuation limit ratio",
 			pool: types.Market{
-				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				QuoteAssetReserve: sdk.OneDec(),
-				BaseAssetReserve:  sdk.OneDec(),
-				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1)),
+				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				QuoteReserve: sdk.OneDec(),
+				BaseReserve:  sdk.OneDec(),
+				SqrtDepth:    common.MustSqrtDec(sdk.NewDec(1)),
 				Config: *types.DefaultMarketConfig().
 					WithMaintenanceMarginRatio(sdk.MustNewDecFromStr("0.9876")),
 			},
@@ -693,10 +693,10 @@ func TestGetMaintenanceMarginRatio(t *testing.T) {
 		{
 			name: "zero fluctuation limit ratio",
 			pool: types.Market{
-				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				QuoteAssetReserve: sdk.OneDec(),
-				BaseAssetReserve:  sdk.OneDec(),
-				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1)),
+				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				QuoteReserve: sdk.OneDec(),
+				BaseReserve:  sdk.OneDec(),
+				SqrtDepth:    common.MustSqrtDec(sdk.NewDec(1)),
 				Config: *types.DefaultMarketConfig().
 					WithMaintenanceMarginRatio(sdk.MustNewDecFromStr("0.4242")),
 			},

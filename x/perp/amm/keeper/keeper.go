@@ -111,8 +111,8 @@ func (k Keeper) executeSwap(
 	skipFluctuationLimitCheck bool,
 ) (newMarket types.Market, err error) {
 	// -------------------- Update reserves
-	market.AddToBaseAssetReserveAndBias(baseDelta)
-	market.AddToQuoteAssetReserve(quoteDelta)
+	market.AddToBaseReserveAndBias(baseDelta)
+	market.AddToQuoteReserve(quoteDelta)
 
 	if err = k.updatePool(ctx, market, skipFluctuationLimitCheck); err != nil {
 		return newMarket, fmt.Errorf("error updating reserve: %w", err)

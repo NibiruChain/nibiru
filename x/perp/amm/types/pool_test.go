@@ -69,8 +69,8 @@ func TestMarket_NewPool(t *testing.T) {
 			} else {
 				market := NewMarket(tc.args)
 				assert.EqualValues(t, tc.args.Pair, market.Pair)
-				assert.EqualValues(t, tc.args.BaseReserves, market.BaseAssetReserve)
-				assert.EqualValues(t, tc.args.QuoteReserves, market.QuoteAssetReserve)
+				assert.EqualValues(t, tc.args.BaseReserves, market.BaseReserve)
+				assert.EqualValues(t, tc.args.QuoteReserves, market.QuoteReserve)
 
 				sqrtDepth, err := common.SqrtDec(tc.args.BaseReserves.Mul(tc.args.QuoteReserves))
 				assert.NoError(t, err)
@@ -92,10 +92,10 @@ func TestPoolHasEnoughQuoteReserve(t *testing.T) {
 	pair := asset.MustNewPair("BTC:NUSD")
 
 	pool := &Market{
-		Pair:              pair,
-		QuoteAssetReserve: sdk.NewDec(10 * common.TO_MICRO),
-		BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
-		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 10 * common.TO_MICRO)),
+		Pair:         pair,
+		QuoteReserve: sdk.NewDec(10 * common.TO_MICRO),
+		BaseReserve:  sdk.NewDec(10 * common.TO_MICRO),
+		SqrtDepth:    common.MustSqrtDec(sdk.NewDec(10 * 10 * common.TO_MICRO)),
 		Config: MarketConfig{
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
@@ -119,10 +119,10 @@ func TestSetMarginRatioAndLeverage(t *testing.T) {
 	pair := asset.MustNewPair("BTC:NUSD")
 
 	pool := &Market{
-		Pair:              pair,
-		QuoteAssetReserve: sdk.NewDec(10 * common.TO_MICRO),
-		BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
-		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 10 * common.TO_MICRO)),
+		Pair:         pair,
+		QuoteReserve: sdk.NewDec(10 * common.TO_MICRO),
+		BaseReserve:  sdk.NewDec(10 * common.TO_MICRO),
+		SqrtDepth:    common.MustSqrtDec(sdk.NewDec(10 * 10 * common.TO_MICRO)),
 		Config: MarketConfig{
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.42"),
@@ -141,53 +141,53 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 
 	tests := []struct {
 		name               string
-		baseAssetReserve   sdk.Dec
-		quoteAssetReserve  sdk.Dec
+		baseReserve        sdk.Dec
+		quoteReserve       sdk.Dec
 		quoteIn            sdk.Dec
 		expectedBaseAmount sdk.Dec
 		expectedErr        error
 	}{
 		{
 			name:               "quote amount zero",
-			baseAssetReserve:   sdk.NewDec(1000),
-			quoteAssetReserve:  sdk.NewDec(1000),
+			baseReserve:        sdk.NewDec(1000),
+			quoteReserve:       sdk.NewDec(1000),
 			quoteIn:            sdk.ZeroDec(),
 			expectedBaseAmount: sdk.ZeroDec(),
 		},
 		{
-			name:              "simple add quote to pool",
-			baseAssetReserve:  sdk.NewDec(1000),
-			quoteAssetReserve: sdk.NewDec(1000), // swapInvariant = 1000 * 1000
-			quoteIn:           sdk.NewDec(500),  // quoteReserves = 1000 + 500
+			name:         "simple add quote to pool",
+			baseReserve:  sdk.NewDec(1000),
+			quoteReserve: sdk.NewDec(1000), // swapInvariant = 1000 * 1000
+			quoteIn:      sdk.NewDec(500),  // quoteReserves = 1000 + 500
 			// swapInvariant / quoteReserves - baseReserves = 333.33
 			expectedBaseAmount: sdk.MustNewDecFromStr("333.333333333333333333"),
 		},
 		{
-			name:              "simple remove quote from pool",
-			baseAssetReserve:  sdk.NewDec(1000),
-			quoteAssetReserve: sdk.NewDec(1000), // swapInvariant = 1000 * 1000
-			quoteIn:           sdk.NewDec(-500), // quoteReserves = 1000 - 500
+			name:         "simple remove quote from pool",
+			baseReserve:  sdk.NewDec(1000),
+			quoteReserve: sdk.NewDec(1000), // swapInvariant = 1000 * 1000
+			quoteIn:      sdk.NewDec(-500), // quoteReserves = 1000 - 500
 			// swapInvariant / quoteReserves - baseReserves = 1000
 			expectedBaseAmount: sdk.NewDec(1000),
 		},
 		{
-			name:              "too much quote removed results in error",
-			baseAssetReserve:  sdk.NewDec(1000),
-			quoteAssetReserve: sdk.NewDec(1000),  // swapInvariant = 1000 * 1000
-			quoteIn:           sdk.NewDec(-1000), // quoteReserves = 1000 - 1000
-			expectedErr:       ErrQuoteReserveAtZero,
+			name:         "too much quote removed results in error",
+			baseReserve:  sdk.NewDec(1000),
+			quoteReserve: sdk.NewDec(1000),  // swapInvariant = 1000 * 1000
+			quoteIn:      sdk.NewDec(-1000), // quoteReserves = 1000 - 1000
+			expectedErr:  ErrQuoteReserveAtZero,
 		},
 		{
-			name:              "attempt to remove more than the quote reserves",
-			baseAssetReserve:  sdk.NewDec(1000),
-			quoteAssetReserve: sdk.NewDec(1000),
-			quoteIn:           sdk.NewDec(-9999),
-			expectedErr:       ErrQuoteReserveAtZero,
+			name:         "attempt to remove more than the quote reserves",
+			baseReserve:  sdk.NewDec(1000),
+			quoteReserve: sdk.NewDec(1000),
+			quoteIn:      sdk.NewDec(-9999),
+			expectedErr:  ErrQuoteReserveAtZero,
 		},
 		{
 			name:               "add large amount to the quote reserves",
-			baseAssetReserve:   sdk.NewDec(1000),
-			quoteAssetReserve:  sdk.NewDec(1000),        // swapInvariant = 1000 * 1000
+			baseReserve:        sdk.NewDec(1000),
+			quoteReserve:       sdk.NewDec(1000),        // swapInvariant = 1000 * 1000
 			quoteIn:            sdk.NewDec(999_555_999), // quoteReserves = 1000 + 999_555_999
 			expectedBaseAmount: sdk.MustNewDecFromStr("999.998999556802663137"),
 		},
@@ -198,8 +198,8 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			pool := NewMarket(ArgsNewMarket{
 				Pair:          pair,
-				QuoteReserves: tc.quoteAssetReserve,
-				BaseReserves:  tc.baseAssetReserve,
+				QuoteReserves: tc.quoteReserve,
+				BaseReserves:  tc.baseReserve,
 				PegMultiplier: sdk.OneDec(),
 				Bias:          sdk.ZeroDec(),
 				Config: &MarketConfig{
@@ -230,39 +230,39 @@ func TestGetQuoteAmountByBaseAmount(t *testing.T) {
 
 	tests := []struct {
 		name                string
-		baseAssetReserve    sdk.Dec
-		quoteAssetReserve   sdk.Dec
+		baseReserve         sdk.Dec
+		quoteReserve        sdk.Dec
 		baseIn              sdk.Dec
 		expectedQuoteAmount sdk.Dec
 		expectedErr         error
 	}{
 		{
 			name:                "base amount zero",
-			baseAssetReserve:    sdk.NewDec(1000),
-			quoteAssetReserve:   sdk.NewDec(1000),
+			baseReserve:         sdk.NewDec(1000),
+			quoteReserve:        sdk.NewDec(1000),
 			baseIn:              sdk.ZeroDec(),
 			expectedQuoteAmount: sdk.ZeroDec(),
 		},
 		{
 			name:                "simple add base to pool",
-			baseAssetReserve:    sdk.NewDec(1000),
-			quoteAssetReserve:   sdk.NewDec(1000),
+			baseReserve:         sdk.NewDec(1000),
+			quoteReserve:        sdk.NewDec(1000),
 			baseIn:              sdk.NewDec(500),
 			expectedQuoteAmount: sdk.MustNewDecFromStr("333.333333333333333333"),
 		},
 		{
 			name:                "simple remove base from pool",
-			baseAssetReserve:    sdk.NewDec(1000),
-			quoteAssetReserve:   sdk.NewDec(1000),
+			baseReserve:         sdk.NewDec(1000),
+			quoteReserve:        sdk.NewDec(1000),
 			baseIn:              sdk.NewDec(-500),
 			expectedQuoteAmount: sdk.NewDec(1000),
 		},
 		{
-			name:              "too much base removed results in error",
-			baseAssetReserve:  sdk.NewDec(1000),
-			quoteAssetReserve: sdk.NewDec(1000),
-			baseIn:            sdk.NewDec(-1000),
-			expectedErr:       ErrBaseReserveAtZero,
+			name:         "too much base removed results in error",
+			baseReserve:  sdk.NewDec(1000),
+			quoteReserve: sdk.NewDec(1000),
+			baseIn:       sdk.NewDec(-1000),
+			expectedErr:  ErrBaseReserveAtZero,
 		},
 	}
 
@@ -270,11 +270,11 @@ func TestGetQuoteAmountByBaseAmount(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			pool := &Market{
-				Pair:              pair,
-				QuoteAssetReserve: tc.quoteAssetReserve,
-				BaseAssetReserve:  tc.baseAssetReserve,
-				SqrtDepth:         common.MustSqrtDec(tc.quoteAssetReserve.Mul(tc.baseAssetReserve)),
-				Bias:              sdk.ZeroDec(),
+				Pair:         pair,
+				QuoteReserve: tc.quoteReserve,
+				BaseReserve:  tc.baseReserve,
+				SqrtDepth:    common.MustSqrtDec(tc.quoteReserve.Mul(tc.baseReserve)),
+				Bias:         sdk.ZeroDec(),
 				Config: MarketConfig{
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -317,20 +317,20 @@ func TestIncreaseDecreaseReserves(t *testing.T) {
 	})
 
 	t.Log("decrease quote asset reserve")
-	pool.AddToQuoteAssetReserve(sdk.NewDec(-100))
-	require.Equal(t, sdk.NewDec(999_900), pool.QuoteAssetReserve)
+	pool.AddToQuoteReserve(sdk.NewDec(-100))
+	require.Equal(t, sdk.NewDec(999_900), pool.QuoteReserve)
 
 	t.Log("increase quote asset reserve")
-	pool.AddToQuoteAssetReserve(sdk.NewDec(100))
-	require.Equal(t, sdk.NewDec(1*common.TO_MICRO), pool.QuoteAssetReserve)
+	pool.AddToQuoteReserve(sdk.NewDec(100))
+	require.Equal(t, sdk.NewDec(1*common.TO_MICRO), pool.QuoteReserve)
 
 	t.Log("decrease base asset reserve")
-	pool.AddToBaseAssetReserveAndBias(sdk.NewDec(-100))
-	require.Equal(t, sdk.NewDec(999_900), pool.BaseAssetReserve)
+	pool.AddToBaseReserveAndBias(sdk.NewDec(-100))
+	require.Equal(t, sdk.NewDec(999_900), pool.BaseReserve)
 
 	t.Log("increase base asset reserve")
-	pool.AddToBaseAssetReserveAndBias(sdk.NewDec(100))
-	require.Equal(t, sdk.NewDec(1*common.TO_MICRO), pool.BaseAssetReserve)
+	pool.AddToBaseReserveAndBias(sdk.NewDec(100))
+	require.Equal(t, sdk.NewDec(1*common.TO_MICRO), pool.BaseReserve)
 }
 
 func TestPool_Validate(t *testing.T) {
@@ -342,10 +342,10 @@ func TestPool_Validate(t *testing.T) {
 	cases := map[string]test{
 		"invalid pair": {
 			m: &Market{
-				Pair:              "",
-				BaseAssetReserve:  sdk.OneDec(),
-				QuoteAssetReserve: sdk.OneDec(),
-				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1)),
+				Pair:         "",
+				BaseReserve:  sdk.OneDec(),
+				QuoteReserve: sdk.OneDec(),
+				SqrtDepth:    common.MustSqrtDec(sdk.NewDec(1)),
 				Config: MarketConfig{
 					TradeLimitRatio:        sdk.NewDec(-1),
 					FluctuationLimitRatio:  sdk.OneDec(),
@@ -359,10 +359,10 @@ func TestPool_Validate(t *testing.T) {
 
 		"invalid trade limit ratio < 0": {
 			m: &Market{
-				Pair:              asset.MustNewPair("btc:usd"),
-				BaseAssetReserve:  sdk.OneDec(),
-				QuoteAssetReserve: sdk.OneDec(),
-				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1)),
+				Pair:         asset.MustNewPair("btc:usd"),
+				BaseReserve:  sdk.OneDec(),
+				QuoteReserve: sdk.OneDec(),
+				SqrtDepth:    common.MustSqrtDec(sdk.NewDec(1)),
 				Config: MarketConfig{
 					TradeLimitRatio:        sdk.NewDec(-1),
 					FluctuationLimitRatio:  sdk.OneDec(),
@@ -376,10 +376,10 @@ func TestPool_Validate(t *testing.T) {
 
 		"invalid trade limit ratio > 1": {
 			m: &Market{
-				Pair:              asset.MustNewPair("btc:usd"),
-				BaseAssetReserve:  sdk.OneDec(),
-				QuoteAssetReserve: sdk.OneDec(),
-				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1)),
+				Pair:         asset.MustNewPair("btc:usd"),
+				BaseReserve:  sdk.OneDec(),
+				QuoteReserve: sdk.OneDec(),
+				SqrtDepth:    common.MustSqrtDec(sdk.NewDec(1)),
 				Config: MarketConfig{
 					TradeLimitRatio:        sdk.NewDec(2),
 					FluctuationLimitRatio:  sdk.OneDec(),
@@ -393,10 +393,10 @@ func TestPool_Validate(t *testing.T) {
 
 		"quote asset reserve 0": {
 			m: &Market{
-				Pair:              asset.MustNewPair("btc:usd"),
-				BaseAssetReserve:  sdk.NewDec(999),
-				QuoteAssetReserve: sdk.ZeroDec(),
-				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(999)),
+				Pair:         asset.MustNewPair("btc:usd"),
+				BaseReserve:  sdk.NewDec(999),
+				QuoteReserve: sdk.ZeroDec(),
+				SqrtDepth:    common.MustSqrtDec(sdk.NewDec(999)),
 				Config: MarketConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
 					FluctuationLimitRatio:  sdk.OneDec(),
@@ -410,10 +410,10 @@ func TestPool_Validate(t *testing.T) {
 
 		"base asset reserve 0": {
 			m: &Market{
-				Pair:              asset.MustNewPair("btc:usd"),
-				QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
-				BaseAssetReserve:  sdk.ZeroDec(),
-				SqrtDepth:         sdk.ZeroDec(),
+				Pair:         asset.MustNewPair("btc:usd"),
+				QuoteReserve: sdk.NewDec(1 * common.TO_MICRO),
+				BaseReserve:  sdk.ZeroDec(),
+				SqrtDepth:    sdk.ZeroDec(),
 				Config: MarketConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
 					FluctuationLimitRatio:  sdk.OneDec(),
@@ -427,10 +427,10 @@ func TestPool_Validate(t *testing.T) {
 
 		"fluctuation < 0": {
 			m: &Market{
-				Pair:              asset.MustNewPair("btc:usd"),
-				QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
-				BaseAssetReserve:  sdk.NewDec(1 * common.TO_MICRO),
-				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1 * common.TO_MICRO * common.TO_MICRO)),
+				Pair:         asset.MustNewPair("btc:usd"),
+				QuoteReserve: sdk.NewDec(1 * common.TO_MICRO),
+				BaseReserve:  sdk.NewDec(1 * common.TO_MICRO),
+				SqrtDepth:    common.MustSqrtDec(sdk.NewDec(1 * common.TO_MICRO * common.TO_MICRO)),
 				Config: MarketConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
 					FluctuationLimitRatio:  sdk.NewDec(-1),
@@ -444,10 +444,10 @@ func TestPool_Validate(t *testing.T) {
 
 		"fluctuation > 1": {
 			m: &Market{
-				Pair:              asset.MustNewPair("btc:usd"),
-				QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
-				BaseAssetReserve:  sdk.NewDec(1 * common.TO_MICRO),
-				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1 * common.TO_MICRO * common.TO_MICRO)),
+				Pair:         asset.MustNewPair("btc:usd"),
+				QuoteReserve: sdk.NewDec(1 * common.TO_MICRO),
+				BaseReserve:  sdk.NewDec(1 * common.TO_MICRO),
+				SqrtDepth:    common.MustSqrtDec(sdk.NewDec(1 * common.TO_MICRO * common.TO_MICRO)),
 				Config: MarketConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
 					FluctuationLimitRatio:  sdk.NewDec(2),
@@ -461,10 +461,10 @@ func TestPool_Validate(t *testing.T) {
 
 		"max oracle spread ratio < 0": {
 			m: &Market{
-				Pair:              asset.MustNewPair("btc:usd"),
-				QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
-				BaseAssetReserve:  sdk.NewDec(1 * common.TO_MICRO),
-				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1 * common.TO_MICRO * common.TO_MICRO)),
+				Pair:         asset.MustNewPair("btc:usd"),
+				QuoteReserve: sdk.NewDec(1 * common.TO_MICRO),
+				BaseReserve:  sdk.NewDec(1 * common.TO_MICRO),
+				SqrtDepth:    common.MustSqrtDec(sdk.NewDec(1 * common.TO_MICRO * common.TO_MICRO)),
 				Config: MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
 					MaintenanceMarginRatio: sdk.OneDec(),
@@ -478,10 +478,10 @@ func TestPool_Validate(t *testing.T) {
 
 		"max oracle spread ratio > 1": {
 			m: &Market{
-				Pair:              asset.MustNewPair("btc:usd"),
-				QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
-				BaseAssetReserve:  sdk.NewDec(1 * common.TO_MICRO),
-				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1 * common.TO_MICRO * common.TO_MICRO)),
+				Pair:         asset.MustNewPair("btc:usd"),
+				QuoteReserve: sdk.NewDec(1 * common.TO_MICRO),
+				BaseReserve:  sdk.NewDec(1 * common.TO_MICRO),
+				SqrtDepth:    common.MustSqrtDec(sdk.NewDec(1 * common.TO_MICRO * common.TO_MICRO)),
 				Config: MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
 					MaintenanceMarginRatio: sdk.OneDec(),
@@ -503,19 +503,19 @@ func TestPool_Validate(t *testing.T) {
 					MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.10"),
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
 				},
-				QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
-				BaseAssetReserve:  sdk.NewDec(1 * common.TO_MICRO),
-				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1 * common.TO_MICRO * common.TO_MICRO)),
+				QuoteReserve: sdk.NewDec(1 * common.TO_MICRO),
+				BaseReserve:  sdk.NewDec(1 * common.TO_MICRO),
+				SqrtDepth:    common.MustSqrtDec(sdk.NewDec(1 * common.TO_MICRO * common.TO_MICRO)),
 			},
 			expectErr: true,
 		},
 
 		"maintenance ratio > 1": {
 			m: &Market{
-				Pair:              asset.MustNewPair("btc:usd"),
-				QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
-				BaseAssetReserve:  sdk.NewDec(1 * common.TO_MICRO),
-				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1 * common.TO_MICRO * common.TO_MICRO)),
+				Pair:         asset.MustNewPair("btc:usd"),
+				QuoteReserve: sdk.NewDec(1 * common.TO_MICRO),
+				BaseReserve:  sdk.NewDec(1 * common.TO_MICRO),
+				SqrtDepth:    common.MustSqrtDec(sdk.NewDec(1 * common.TO_MICRO * common.TO_MICRO)),
 				Config: MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
 					MaintenanceMarginRatio: sdk.NewDec(2),
@@ -529,10 +529,10 @@ func TestPool_Validate(t *testing.T) {
 
 		"max leverage < 0": {
 			m: &Market{
-				Pair:              asset.MustNewPair("btc:usd"),
-				QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
-				BaseAssetReserve:  sdk.NewDec(1 * common.TO_MICRO),
-				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1 * common.TO_MICRO * common.TO_MICRO)),
+				Pair:         asset.MustNewPair("btc:usd"),
+				QuoteReserve: sdk.NewDec(1 * common.TO_MICRO),
+				BaseReserve:  sdk.NewDec(1 * common.TO_MICRO),
+				SqrtDepth:    common.MustSqrtDec(sdk.NewDec(1 * common.TO_MICRO * common.TO_MICRO)),
 				Config: MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.10"),
@@ -546,10 +546,10 @@ func TestPool_Validate(t *testing.T) {
 
 		"max leverage too high for maintenance margin ratio": {
 			m: &Market{
-				Pair:              asset.MustNewPair("btc:usd"),
-				QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
-				BaseAssetReserve:  sdk.NewDec(1 * common.TO_MICRO),
-				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1 * common.TO_MICRO * common.TO_MICRO)),
+				Pair:         asset.MustNewPair("btc:usd"),
+				QuoteReserve: sdk.NewDec(1 * common.TO_MICRO),
+				BaseReserve:  sdk.NewDec(1 * common.TO_MICRO),
+				SqrtDepth:    common.MustSqrtDec(sdk.NewDec(1 * common.TO_MICRO * common.TO_MICRO)),
 				Config: MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.10"), // Equivalent to 10 leverage
@@ -563,10 +563,10 @@ func TestPool_Validate(t *testing.T) {
 
 		"success": {
 			m: &Market{
-				Pair:              asset.MustNewPair("btc:usd"),
-				QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
-				BaseAssetReserve:  sdk.NewDec(1 * common.TO_MICRO),
-				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(1 * common.TO_MICRO * common.TO_MICRO)),
+				Pair:         asset.MustNewPair("btc:usd"),
+				QuoteReserve: sdk.NewDec(1 * common.TO_MICRO),
+				BaseReserve:  sdk.NewDec(1 * common.TO_MICRO),
+				SqrtDepth:    common.MustSqrtDec(sdk.NewDec(1 * common.TO_MICRO * common.TO_MICRO)),
 				Config: MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -601,45 +601,45 @@ func TestMarket_GetMarkPrice(t *testing.T) {
 		{
 			"happy path",
 			Market{
-				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				BaseAssetReserve:  sdk.MustNewDecFromStr("10"),
-				QuoteAssetReserve: sdk.MustNewDecFromStr("10000"),
+				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				BaseReserve:  sdk.MustNewDecFromStr("10"),
+				QuoteReserve: sdk.MustNewDecFromStr("10000"),
 			},
 			sdk.MustNewDecFromStr("1000"),
 		},
 		{
 			"nil base",
 			Market{
-				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				BaseAssetReserve:  sdk.Dec{},
-				QuoteAssetReserve: sdk.MustNewDecFromStr("10000"),
+				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				BaseReserve:  sdk.Dec{},
+				QuoteReserve: sdk.MustNewDecFromStr("10000"),
 			},
 			sdk.ZeroDec(),
 		},
 		{
 			"zero base",
 			Market{
-				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				BaseAssetReserve:  sdk.ZeroDec(),
-				QuoteAssetReserve: sdk.MustNewDecFromStr("10000"),
+				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				BaseReserve:  sdk.ZeroDec(),
+				QuoteReserve: sdk.MustNewDecFromStr("10000"),
 			},
 			sdk.ZeroDec(),
 		},
 		{
 			"nil quote",
 			Market{
-				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				BaseAssetReserve:  sdk.MustNewDecFromStr("10"),
-				QuoteAssetReserve: sdk.Dec{},
+				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				BaseReserve:  sdk.MustNewDecFromStr("10"),
+				QuoteReserve: sdk.Dec{},
 			},
 			sdk.ZeroDec(),
 		},
 		{
 			"zero quote",
 			Market{
-				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				BaseAssetReserve:  sdk.MustNewDecFromStr("10"),
-				QuoteAssetReserve: sdk.ZeroDec(),
+				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				BaseReserve:  sdk.MustNewDecFromStr("10"),
+				QuoteReserve: sdk.ZeroDec(),
 			},
 			sdk.ZeroDec(),
 		},
@@ -663,9 +663,9 @@ func TestMarket_IsOverFluctuationLimit(t *testing.T) {
 		{
 			name: "zero fluctuation limit ratio",
 			pool: Market{
-				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				QuoteAssetReserve: sdk.OneDec(),
-				BaseAssetReserve:  sdk.OneDec(),
+				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				QuoteReserve: sdk.OneDec(),
+				BaseReserve:  sdk.OneDec(),
 				Config: MarketConfig{
 					FluctuationLimitRatio:  sdk.ZeroDec(),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -679,9 +679,9 @@ func TestMarket_IsOverFluctuationLimit(t *testing.T) {
 		{
 			name: "lower limit of fluctuation limit",
 			pool: Market{
-				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				QuoteAssetReserve: sdk.NewDec(999),
-				BaseAssetReserve:  sdk.OneDec(),
+				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				QuoteReserve: sdk.NewDec(999),
+				BaseReserve:  sdk.OneDec(),
 				Config: MarketConfig{
 					FluctuationLimitRatio:  sdk.ZeroDec(),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -695,9 +695,9 @@ func TestMarket_IsOverFluctuationLimit(t *testing.T) {
 		{
 			name: "upper limit of fluctuation limit",
 			pool: Market{
-				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				QuoteAssetReserve: sdk.NewDec(1001),
-				BaseAssetReserve:  sdk.OneDec(),
+				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				QuoteReserve: sdk.NewDec(1001),
+				BaseReserve:  sdk.OneDec(),
 				Config: MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -711,9 +711,9 @@ func TestMarket_IsOverFluctuationLimit(t *testing.T) {
 		{
 			name: "under fluctuation limit",
 			pool: Market{
-				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				QuoteAssetReserve: sdk.NewDec(998),
-				BaseAssetReserve:  sdk.OneDec(),
+				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				QuoteReserve: sdk.NewDec(998),
+				BaseReserve:  sdk.OneDec(),
 				Config: MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -727,9 +727,9 @@ func TestMarket_IsOverFluctuationLimit(t *testing.T) {
 		{
 			name: "over fluctuation limit",
 			pool: Market{
-				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				QuoteAssetReserve: sdk.NewDec(1002),
-				BaseAssetReserve:  sdk.OneDec(),
+				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				QuoteReserve: sdk.NewDec(1002),
+				BaseReserve:  sdk.OneDec(),
 				Config: MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.001"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -767,45 +767,45 @@ func TestMarket_ToSnapshot(t *testing.T) {
 		{
 			name: "happy path",
 			market: Market{
-				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				BaseAssetReserve:  sdk.NewDec(10),
-				QuoteAssetReserve: sdk.NewDec(10_000),
+				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				BaseReserve:  sdk.NewDec(10),
+				QuoteReserve: sdk.NewDec(10_000),
 			},
 			expectFail: false,
 		},
 		{
 			name: "err invalid base",
 			market: Market{
-				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				BaseAssetReserve:  sdk.Dec{},
-				QuoteAssetReserve: sdk.NewDec(500),
+				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				BaseReserve:  sdk.Dec{},
+				QuoteReserve: sdk.NewDec(500),
 			},
 			expectFail: true,
 		},
 		{
 			name: "err invalid quote",
 			market: Market{
-				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				BaseAssetReserve:  sdk.NewDec(500),
-				QuoteAssetReserve: sdk.Dec{},
+				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				BaseReserve:  sdk.NewDec(500),
+				QuoteReserve: sdk.Dec{},
 			},
 			expectFail: true,
 		},
 		{
 			name: "err negative quote",
 			market: Market{
-				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				BaseAssetReserve:  sdk.NewDec(500),
-				QuoteAssetReserve: sdk.NewDec(-500),
+				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				BaseReserve:  sdk.NewDec(500),
+				QuoteReserve: sdk.NewDec(-500),
 			},
 			expectFail: true,
 		},
 		{
 			name: "err negative base",
 			market: Market{
-				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				BaseAssetReserve:  sdk.NewDec(-500),
-				QuoteAssetReserve: sdk.NewDec(500),
+				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				BaseReserve:  sdk.NewDec(-500),
+				QuoteReserve: sdk.NewDec(500),
 			},
 			expectFail: true,
 		},
@@ -822,8 +822,8 @@ func TestMarket_ToSnapshot(t *testing.T) {
 			} else {
 				snapshot := tc.market.ToSnapshot(ctx)
 				assert.EqualValues(t, tc.market.Pair, snapshot.Pair)
-				assert.EqualValues(t, tc.market.BaseAssetReserve, snapshot.BaseAssetReserve)
-				assert.EqualValues(t, tc.market.QuoteAssetReserve, snapshot.QuoteAssetReserve)
+				assert.EqualValues(t, tc.market.BaseReserve, snapshot.BaseReserve)
+				assert.EqualValues(t, tc.market.QuoteReserve, snapshot.QuoteReserve)
 				assert.EqualValues(t, ctx.BlockTime().UnixMilli(), snapshot.TimestampMs)
 			}
 		})

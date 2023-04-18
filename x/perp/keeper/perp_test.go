@@ -32,8 +32,8 @@ func TestKeeperClosePosition(t *testing.T) {
 		require.NoError(t, perpammKeeper.CreatePool(
 			ctx,
 			pair,
-			/*quoteAssetReserve*/ sdk.NewDec(10*common.TO_MICRO),
-			/*baseAssetReserve*/ sdk.NewDec(10*common.TO_MICRO),
+			/*quoteReserve*/ sdk.NewDec(10*common.TO_MICRO),
+			/*baseReserve*/ sdk.NewDec(10*common.TO_MICRO),
 			perpammtypes.MarketConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),

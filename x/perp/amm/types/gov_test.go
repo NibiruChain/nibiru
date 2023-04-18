@@ -37,11 +37,11 @@ func TestCreatePoolProposal_ValidateBasic(t *testing.T) {
 
 		"success": {
 			proposal: &CreatePoolProposal{
-				Title:             "add proposal",
-				Description:       "some weird description",
-				Pair:              "valid:pair",
-				QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
-				BaseAssetReserve:  sdk.NewDec(1 * common.TO_MICRO),
+				Title:        "add proposal",
+				Description:  "some weird description",
+				Pair:         "valid:pair",
+				QuoteReserve: sdk.NewDec(1 * common.TO_MICRO),
+				BaseReserve:  sdk.NewDec(1 * common.TO_MICRO),
 				Config: MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.10"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),

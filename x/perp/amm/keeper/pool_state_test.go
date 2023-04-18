@@ -44,10 +44,10 @@ func TestCreatePool(t *testing.T) {
 func TestEditPoolConfig(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	marketStart := types.Market{
-		Pair:              pair,
-		QuoteAssetReserve: sdk.NewDec(10 * common.TO_MICRO),
-		BaseAssetReserve:  sdk.NewDec(5 * common.TO_MICRO),
-		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(5 * 10 * common.TO_MICRO * common.TO_MICRO)),
+		Pair:         pair,
+		QuoteReserve: sdk.NewDec(10 * common.TO_MICRO),
+		BaseReserve:  sdk.NewDec(5 * common.TO_MICRO),
+		SqrtDepth:    common.MustSqrtDec(sdk.NewDec(5 * 10 * common.TO_MICRO * common.TO_MICRO)),
 		Config: types.MarketConfig{
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -62,8 +62,8 @@ func TestEditPoolConfig(t *testing.T) {
 		assert.NoError(t, perpammKeeper.CreatePool(
 			ctx,
 			asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			marketStart.QuoteAssetReserve,
-			marketStart.BaseAssetReserve,
+			marketStart.QuoteReserve,
+			marketStart.BaseReserve,
 			marketStart.Config,
 			sdk.ZeroDec(),
 			sdk.OneDec(),
@@ -163,9 +163,9 @@ func TestGetPoolPrices_SetupErrors(t *testing.T) {
 			name: "market with reserves that don't make sense",
 			test: func(t *testing.T) {
 				market := types.Market{
-					Pair:              asset.MustNewPair("uatom:unibi"),
-					BaseAssetReserve:  sdk.NewDec(999),
-					QuoteAssetReserve: sdk.NewDec(-400),
+					Pair:         asset.MustNewPair("uatom:unibi"),
+					BaseReserve:  sdk.NewDec(999),
+					QuoteReserve: sdk.NewDec(-400),
 				}
 				perpammKeeper, _, ctx := getKeeper(t)
 				perpammKeeper.Pools.Insert(ctx, market.Pair, market)
@@ -194,10 +194,10 @@ func TestGetPoolPrices(t *testing.T) {
 		{
 			name: "happy path - market + pricefeed active",
 			market: types.Market{
-				Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-				QuoteAssetReserve: sdk.NewDec(3 * common.TO_MICRO), // 3e6
-				BaseAssetReserve:  sdk.NewDec(1_000),               // 1e3
-				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(3_000 * common.TO_MICRO)),
+				Pair:         asset.Registry.Pair(denoms.ETH, denoms.NUSD),
+				QuoteReserve: sdk.NewDec(3 * common.TO_MICRO), // 3e6
+				BaseReserve:  sdk.NewDec(1_000),               // 1e3
+				SqrtDepth:    common.MustSqrtDec(sdk.NewDec(3_000 * common.TO_MICRO)),
 				Config: types.MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -220,10 +220,10 @@ func TestGetPoolPrices(t *testing.T) {
 		{
 			name: "happy path - market active, but no index price",
 			market: types.Market{
-				Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-				QuoteAssetReserve: sdk.NewDec(3 * common.TO_MICRO), // 3e6
-				BaseAssetReserve:  sdk.NewDec(1_000),               // 1e3
-				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(3_000 * common.TO_MICRO)),
+				Pair:         asset.Registry.Pair(denoms.ETH, denoms.NUSD),
+				QuoteReserve: sdk.NewDec(3 * common.TO_MICRO), // 3e6
+				BaseReserve:  sdk.NewDec(1_000),               // 1e3
+				SqrtDepth:    common.MustSqrtDec(sdk.NewDec(3_000 * common.TO_MICRO)),
 				Config: types.MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -247,10 +247,10 @@ func TestGetPoolPrices(t *testing.T) {
 		{
 			name: "market doesn't exist",
 			market: types.Market{
-				Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-				QuoteAssetReserve: sdk.NewDec(3 * common.TO_MICRO), // 3e6
-				BaseAssetReserve:  sdk.NewDec(1_000),               // 1e3
-				SqrtDepth:         common.MustSqrtDec(sdk.NewDec(3_000 * common.TO_MICRO)),
+				Pair:         asset.Registry.Pair(denoms.ETH, denoms.NUSD),
+				QuoteReserve: sdk.NewDec(3 * common.TO_MICRO), // 3e6
+				BaseReserve:  sdk.NewDec(1_000),               // 1e3
+				SqrtDepth:    common.MustSqrtDec(sdk.NewDec(3_000 * common.TO_MICRO)),
 				Config: types.MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -274,8 +274,8 @@ func TestGetPoolPrices(t *testing.T) {
 				assert.NoError(t, perpammKeeper.CreatePool(
 					ctx,
 					tc.market.Pair,
-					tc.market.QuoteAssetReserve,
-					tc.market.BaseAssetReserve,
+					tc.market.QuoteReserve,
+					tc.market.BaseReserve,
 					tc.market.Config,
 					sdk.ZeroDec(),
 					sdk.OneDec(),
@@ -305,10 +305,10 @@ func TestGetPoolPrices(t *testing.T) {
 func TestEditSwapInvariant(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.NIBI, denoms.NUSD)
 	marketStart := types.Market{
-		Pair:              pair,
-		QuoteAssetReserve: sdk.NewDec(10 * common.TO_MICRO),
-		BaseAssetReserve:  sdk.NewDec(5 * common.TO_MICRO),
-		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(5 * 10 * common.TO_MICRO * common.TO_MICRO)),
+		Pair:         pair,
+		QuoteReserve: sdk.NewDec(10 * common.TO_MICRO),
+		BaseReserve:  sdk.NewDec(5 * common.TO_MICRO),
+		SqrtDepth:    common.MustSqrtDec(sdk.NewDec(5 * 10 * common.TO_MICRO * common.TO_MICRO)),
 		Config: types.MarketConfig{
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -323,8 +323,8 @@ func TestEditSwapInvariant(t *testing.T) {
 		assert.NoError(t, perpammKeeper.CreatePool(
 			ctx,
 			pair,
-			marketStart.QuoteAssetReserve,
-			marketStart.BaseAssetReserve,
+			marketStart.QuoteReserve,
+			marketStart.BaseReserve,
 			marketStart.Config,
 			sdk.ZeroDec(),
 			sdk.OneDec(),
@@ -350,40 +350,40 @@ func TestEditSwapInvariant(t *testing.T) {
 			name:                    "happy reserves increase 2x",
 			swapInvariantMultiplier: sdk.NewDec(4),
 			newReserves: Reserves{
-				Base:  marketStart.BaseAssetReserve.MulInt64(2),
-				Quote: marketStart.QuoteAssetReserve.MulInt64(2)},
+				Base:  marketStart.BaseReserve.MulInt64(2),
+				Quote: marketStart.QuoteReserve.MulInt64(2)},
 			shouldErr: false,
 		},
 		{
 			name:                    "happy no change",
 			swapInvariantMultiplier: sdk.NewDec(1),
 			newReserves: Reserves{
-				Base:  marketStart.BaseAssetReserve,
-				Quote: marketStart.QuoteAssetReserve},
+				Base:  marketStart.BaseReserve,
+				Quote: marketStart.QuoteReserve},
 			shouldErr: false,
 		},
 		{
 			name:                    "happy reserves increase 500x",
 			swapInvariantMultiplier: sdk.NewDec(250_000), // 500**2
 			newReserves: Reserves{
-				Base:  marketStart.BaseAssetReserve.MulInt64(500),
-				Quote: marketStart.QuoteAssetReserve.MulInt64(500)},
+				Base:  marketStart.BaseReserve.MulInt64(500),
+				Quote: marketStart.QuoteReserve.MulInt64(500)},
 			shouldErr: false,
 		},
 		{
 			name:                    "happy reserves shrink 2x",
 			swapInvariantMultiplier: sdk.MustNewDecFromStr("0.25"), // (1/2)**2
 			newReserves: Reserves{
-				Base:  marketStart.BaseAssetReserve.QuoInt64(2),
-				Quote: marketStart.QuoteAssetReserve.QuoInt64(2)},
+				Base:  marketStart.BaseReserve.QuoInt64(2),
+				Quote: marketStart.QuoteReserve.QuoInt64(2)},
 			shouldErr: false,
 		},
 		{
 			name:                    "happy reserves shrink 100x",
 			swapInvariantMultiplier: sdk.MustNewDecFromStr("0.0001"), // (1/100)**2
 			newReserves: Reserves{
-				Base:  marketStart.BaseAssetReserve.QuoInt64(100),
-				Quote: marketStart.QuoteAssetReserve.QuoInt64(100)},
+				Base:  marketStart.BaseReserve.QuoInt64(100),
+				Quote: marketStart.QuoteReserve.QuoInt64(100)},
 			shouldErr: false,
 		},
 		{
@@ -416,8 +416,8 @@ func TestEditSwapInvariant(t *testing.T) {
 				assert.Error(t, err)
 				market, err := perpammKeeper.Pools.Get(ctx, pair)
 				assert.NoError(t, err)
-				assert.EqualValues(t, marketStart.BaseAssetReserve, market.BaseAssetReserve)
-				assert.EqualValues(t, marketStart.QuoteAssetReserve, market.QuoteAssetReserve)
+				assert.EqualValues(t, marketStart.BaseReserve, market.BaseReserve)
+				assert.EqualValues(t, marketStart.QuoteReserve, market.QuoteReserve)
 			} else if tc.shouldPanic {
 				require.Panics(t, func() {
 					err := perpammKeeper.EditSwapInvariant(ctx,
@@ -435,8 +435,8 @@ func TestEditSwapInvariant(t *testing.T) {
 				require.NoError(t, err)
 				market, err := perpammKeeper.Pools.Get(ctx, pair)
 				assert.NoError(t, err)
-				assert.EqualValues(t, tc.newReserves.Base, market.BaseAssetReserve)
-				assert.EqualValues(t, tc.newReserves.Quote, market.QuoteAssetReserve)
+				assert.EqualValues(t, tc.newReserves.Base, market.BaseReserve)
+				assert.EqualValues(t, tc.newReserves.Quote, market.QuoteReserve)
 			}
 		})
 	}

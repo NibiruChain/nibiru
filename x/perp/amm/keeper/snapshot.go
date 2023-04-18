@@ -50,16 +50,16 @@ func getPriceWithSnapshot(
 ) (price sdk.Dec, err error) {
 	switch snapshotPriceOpts.twapCalcOption {
 	case types.TwapCalcOption_SPOT:
-		return snapshot.QuoteAssetReserve.Quo(snapshot.BaseAssetReserve).Mul(snapshot.PegMultiplier), nil
+		return snapshot.QuoteReserve.Quo(snapshot.BaseReserve).Mul(snapshot.PegMultiplier), nil
 
 	case types.TwapCalcOption_QUOTE_ASSET_SWAP:
 		pool := &types.Market{
-			Pair:              snapshotPriceOpts.pair,
-			QuoteAssetReserve: snapshot.QuoteAssetReserve,
-			BaseAssetReserve:  snapshot.BaseAssetReserve,
-			SqrtDepth:         common.MustSqrtDec(snapshot.QuoteAssetReserve.Mul(snapshot.BaseAssetReserve)),
-			PegMultiplier:     snapshot.PegMultiplier,
-			Bias:              snapshot.Bias,
+			Pair:          snapshotPriceOpts.pair,
+			QuoteReserve:  snapshot.QuoteReserve,
+			BaseReserve:   snapshot.BaseReserve,
+			SqrtDepth:     common.MustSqrtDec(snapshot.QuoteReserve.Mul(snapshot.BaseReserve)),
+			PegMultiplier: snapshot.PegMultiplier,
+			Bias:          snapshot.Bias,
 			Config: types.MarketConfig{
 				FluctuationLimitRatio:  sdk.ZeroDec(), // unused
 				MaintenanceMarginRatio: sdk.ZeroDec(), // unused
@@ -68,21 +68,20 @@ func getPriceWithSnapshot(
 				TradeLimitRatio:        sdk.ZeroDec(), // unused
 			},
 		}
-		price, err = pool.GetBaseAmountByQuoteAmount(snapshotPriceOpts.assetAmount.MulInt64(snapshotPriceOpts.direction.ToMultiplier()))
+		price, err = pool.GetBaseAmountByQuoteAmount(snapshotPriceOpts.assetAmount.Quo(pool.PegMultiplier).MulInt64(snapshotPriceOpts.direction.ToMultiplier()))
 		if err != nil {
 			return
 		}
-		price = price.Mul(pool.PegMultiplier)
 		return
 
 	case types.TwapCalcOption_BASE_ASSET_SWAP:
 		pool := &types.Market{
-			Pair:              snapshotPriceOpts.pair,
-			QuoteAssetReserve: snapshot.QuoteAssetReserve,
-			BaseAssetReserve:  snapshot.BaseAssetReserve,
-			SqrtDepth:         common.MustSqrtDec(snapshot.QuoteAssetReserve.Mul(snapshot.BaseAssetReserve)),
-			PegMultiplier:     snapshot.PegMultiplier,
-			Bias:              snapshot.Bias,
+			Pair:          snapshotPriceOpts.pair,
+			QuoteReserve:  snapshot.QuoteReserve,
+			BaseReserve:   snapshot.BaseReserve,
+			SqrtDepth:     common.MustSqrtDec(snapshot.QuoteReserve.Mul(snapshot.BaseReserve)),
+			PegMultiplier: snapshot.PegMultiplier,
+			Bias:          snapshot.Bias,
 
 			Config: types.MarketConfig{
 				FluctuationLimitRatio:  sdk.ZeroDec(), // unused
@@ -98,7 +97,7 @@ func getPriceWithSnapshot(
 		if err != nil {
 			return
 		}
-		price = price.Quo(pool.PegMultiplier)
+		price = price.Mul(pool.PegMultiplier)
 		return
 	}
 

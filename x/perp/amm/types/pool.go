@@ -84,24 +84,24 @@ func (market *Market) GetQuoteAmountByBaseAmount(
 
 // GetMarkPrice returns the price of the asset.
 func (market Market) GetMarkPrice() sdk.Dec {
-	if market.BaseAssetReserve.IsNil() || market.BaseAssetReserve.IsZero() ||
-		market.QuoteAssetReserve.IsNil() || market.QuoteAssetReserve.IsZero() {
+	if market.BaseReserve.IsNil() || market.BaseReserve.IsZero() ||
+		market.QuoteReserve.IsNil() || market.QuoteReserve.IsZero() {
 		return sdk.ZeroDec()
 	}
 
-	return market.QuoteAssetReserve.Quo(market.BaseAssetReserve).Mul(market.PegMultiplier)
+	return market.QuoteReserve.Quo(market.BaseReserve).Mul(market.PegMultiplier)
 }
 
-// AddToQuoteAssetReserve adds 'amount' to the quote asset reserves
+// AddToQuoteReserve adds 'amount' to the quote asset reserves
 // The 'amount' is not assumed to be positive.
-func (market *Market) AddToQuoteAssetReserve(amount sdk.Dec) {
-	market.QuoteAssetReserve = market.QuoteAssetReserve.Add(amount)
+func (market *Market) AddToQuoteReserve(amount sdk.Dec) {
+	market.QuoteReserve = market.QuoteReserve.Add(amount)
 }
 
-// AddToBaseAssetReserveAndBias adds 'amount' to the base asset reserves
+// AddToBaseReserveAndBias adds 'amount' to the base asset reserves
 // The 'amount' is not assumed to be positive.
-func (market *Market) AddToBaseAssetReserveAndBias(amount sdk.Dec) {
-	market.BaseAssetReserve = market.BaseAssetReserve.Add(amount)
+func (market *Market) AddToBaseReserveAndBias(amount sdk.Dec) {
+	market.BaseReserve = market.BaseReserve.Add(amount)
 	market.Bias = market.Bias.Add(amount)
 }
 
@@ -123,18 +123,18 @@ func NewMarket(args ArgsNewMarket) Market {
 	}
 
 	return Market{
-		Pair:              args.Pair,
-		BaseAssetReserve:  args.BaseReserves,
-		QuoteAssetReserve: args.QuoteReserves,
-		Config:            config,
-		SqrtDepth:         common.MustSqrtDec(args.QuoteReserves.Mul(args.BaseReserves)),
-		Bias:              args.Bias,
-		PegMultiplier:     args.PegMultiplier,
+		Pair:          args.Pair,
+		BaseReserve:   args.BaseReserves,
+		QuoteReserve:  args.QuoteReserves,
+		Config:        config,
+		SqrtDepth:     common.MustSqrtDec(args.QuoteReserves.Mul(args.BaseReserves)),
+		Bias:          args.Bias,
+		PegMultiplier: args.PegMultiplier,
 	}
 }
 
 func (market *Market) ComputeSqrtDepth() (sqrtDepth sdk.Dec, err error) {
-	liqDepth := market.QuoteAssetReserve.Mul(market.BaseAssetReserve)
+	liqDepth := market.QuoteReserve.Mul(market.BaseReserve)
 	return common.SqrtDec(liqDepth)
 }
 
@@ -154,8 +154,8 @@ func (market *Market) InitLiqDepth() (Market, error) {
 func (pool *Market) String() string {
 	elems := []string{
 		fmt.Sprintf("pair: %s", pool.Pair),
-		fmt.Sprintf("base_reserves: %s", pool.BaseAssetReserve),
-		fmt.Sprintf("quote_reserves: %s", pool.QuoteAssetReserve),
+		fmt.Sprintf("base_reserves: %s", pool.BaseReserve),
+		fmt.Sprintf("quote_reserves: %s", pool.QuoteReserve),
 		fmt.Sprintf("sqrt_depth: %s", pool.SqrtDepth),
 		fmt.Sprintf("config: %s", &pool.Config),
 	}
@@ -279,13 +279,13 @@ func (market *Market) Validate() error {
 // HasEnoughQuoteReserve returns true if there is enough quote reserve based on
 // quoteReserve * tradeLimitRatio
 func (market *Market) HasEnoughQuoteReserve(quoteAmount sdk.Dec) bool {
-	return market.QuoteAssetReserve.Mul(market.Config.TradeLimitRatio).GTE(quoteAmount.Abs())
+	return market.QuoteReserve.Mul(market.Config.TradeLimitRatio).GTE(quoteAmount.Abs())
 }
 
 // HasEnoughBaseReserve returns true if there is enough base reserve based on
 // baseReserve * tradeLimitRatio
 func (market *Market) HasEnoughBaseReserve(baseAmount sdk.Dec) bool {
-	return market.BaseAssetReserve.Mul(market.Config.TradeLimitRatio).GTE(baseAmount.Abs())
+	return market.BaseReserve.Mul(market.Config.TradeLimitRatio).GTE(baseAmount.Abs())
 }
 
 func (market *Market) HasEnoughReservesForTrade(
@@ -305,7 +305,7 @@ func (market *Market) HasEnoughReservesForTrade(
 
 // ValidateReserves checks that reserves are positive.
 func (market *Market) ValidateReserves() error {
-	if !market.QuoteAssetReserve.IsPositive() || !market.BaseAssetReserve.IsPositive() {
+	if !market.QuoteReserve.IsPositive() || !market.BaseReserve.IsPositive() {
 		return ErrNonPositiveReserves.Wrap("pool: " + market.String())
 	} else {
 		return nil
@@ -379,8 +379,8 @@ func (market Market) IsOverSpreadLimit(indexPrice sdk.Dec) bool {
 func (market Market) ToSnapshot(ctx sdk.Context) ReserveSnapshot {
 	snapshot := NewReserveSnapshot(
 		market.Pair,
-		market.BaseAssetReserve,
-		market.QuoteAssetReserve,
+		market.BaseReserve,
+		market.QuoteReserve,
 		market.PegMultiplier,
 		market.Bias,
 		ctx.BlockTime(),

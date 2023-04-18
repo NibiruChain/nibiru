@@ -95,9 +95,9 @@ type Market struct {
 	// always BASE:QUOTE, e.g. BTC:NUSD or ETH:NUSD
 	Pair github_com_NibiruChain_nibiru_x_common_asset.Pair `protobuf:"bytes,1,opt,name=pair,proto3,customtype=github.com/NibiruChain/nibiru/x/common/asset.Pair" json:"pair"`
 	// base asset is the crypto asset, e.g. BTC or ETH
-	BaseAssetReserve github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=base_asset_reserve,json=baseAssetReserve,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"base_asset_reserve"`
+	BaseReserve github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=base_asset_reserve,json=baseReserve,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"base_asset_reserve"`
 	// quote asset is usually stablecoin, in our case NUSD
-	QuoteAssetReserve github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,opt,name=quote_asset_reserve,json=quoteAssetReserve,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"quote_asset_reserve"`
+	QuoteReserve github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,opt,name=quote_asset_reserve,json=quoteReserve,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"quote_asset_reserve"`
 	Config            MarketConfig                           `protobuf:"bytes,4,opt,name=config,proto3" json:"config"`
 	// The square root of the liquidity depth. Liquidity depth is the product of
 	// the reserves.
@@ -247,9 +247,9 @@ func (m *CurrentTWAP) GetPairID() string {
 // a snapshot of the perp.amm's reserves at a given point in time
 type ReserveSnapshot struct {
 	Pair             github_com_NibiruChain_nibiru_x_common_asset.Pair `protobuf:"bytes,5,opt,name=pair,proto3,customtype=github.com/NibiruChain/nibiru/x/common/asset.Pair" json:"pair"`
-	BaseAssetReserve github_com_cosmos_cosmos_sdk_types.Dec            `protobuf:"bytes,1,opt,name=base_asset_reserve,json=baseAssetReserve,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"base_asset_reserve"`
+	BaseReserve github_com_cosmos_cosmos_sdk_types.Dec            `protobuf:"bytes,1,opt,name=base_asset_reserve,json=baseReserve,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"base_asset_reserve"`
 	// quote asset is usually the margin asset, e.g. NUSD
-	QuoteAssetReserve github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=quote_asset_reserve,json=quoteAssetReserve,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"quote_asset_reserve"`
+	QuoteReserve github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=quote_asset_reserve,json=quoteReserve,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"quote_asset_reserve"`
 	// milliseconds since unix epoch
 	TimestampMs int64 `protobuf:"varint,4,opt,name=timestamp_ms,json=timestampMs,proto3" json:"timestamp_ms,omitempty"`
 	// peg multiplier is needed to compute mark price in the snapshot
@@ -305,7 +305,7 @@ type PoolPrices struct {
 	// Pair identifier for the two assets. Always in format 'base:quote'
 	Pair github_com_NibiruChain_nibiru_x_common_asset.Pair `protobuf:"bytes,9,opt,name=pair,proto3,customtype=github.com/NibiruChain/nibiru/x/common/asset.Pair" json:"pair"`
 	// MarkPrice is the instantaneous price of the perp.
-	// Equivalent to quoteAssetReserve / baseAssetReserve.
+	// Equivalent to quoteReserve / baseReserve.
 	MarkPrice github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,10,opt,name=mark_price,json=markPrice,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"mark_price"`
 	// IndexPrice is the price of the "underlying" for the perp
 	IndexPrice string `protobuf:"bytes,11,opt,name=index_price,json=indexPrice,proto3" json:"index_price,omitempty"`
@@ -506,9 +506,9 @@ func (m *Market) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i--
 	dAtA[i] = 0x22
 	{
-		size := m.QuoteAssetReserve.Size()
+		size := m.QuoteReserve.Size()
 		i -= size
-		if _, err := m.QuoteAssetReserve.MarshalTo(dAtA[i:]); err != nil {
+		if _, err := m.QuoteReserve.MarshalTo(dAtA[i:]); err != nil {
 			return 0, err
 		}
 		i = encodeVarintState(dAtA, i, uint64(size))
@@ -516,9 +516,9 @@ func (m *Market) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i--
 	dAtA[i] = 0x1a
 	{
-		size := m.BaseAssetReserve.Size()
+		size := m.BaseReserve.Size()
 		i -= size
-		if _, err := m.BaseAssetReserve.MarshalTo(dAtA[i:]); err != nil {
+		if _, err := m.BaseReserve.MarshalTo(dAtA[i:]); err != nil {
 			return 0, err
 		}
 		i = encodeVarintState(dAtA, i, uint64(size))
@@ -727,9 +727,9 @@ func (m *ReserveSnapshot) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		dAtA[i] = 0x20
 	}
 	{
-		size := m.QuoteAssetReserve.Size()
+		size := m.QuoteReserve.Size()
 		i -= size
-		if _, err := m.QuoteAssetReserve.MarshalTo(dAtA[i:]); err != nil {
+		if _, err := m.QuoteReserve.MarshalTo(dAtA[i:]); err != nil {
 			return 0, err
 		}
 		i = encodeVarintState(dAtA, i, uint64(size))
@@ -737,9 +737,9 @@ func (m *ReserveSnapshot) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i--
 	dAtA[i] = 0x12
 	{
-		size := m.BaseAssetReserve.Size()
+		size := m.BaseReserve.Size()
 		i -= size
-		if _, err := m.BaseAssetReserve.MarshalTo(dAtA[i:]); err != nil {
+		if _, err := m.BaseReserve.MarshalTo(dAtA[i:]); err != nil {
 			return 0, err
 		}
 		i = encodeVarintState(dAtA, i, uint64(size))
@@ -840,9 +840,9 @@ func (m *Market) Size() (n int) {
 	_ = l
 	l = m.Pair.Size()
 	n += 1 + l + sovState(uint64(l))
-	l = m.BaseAssetReserve.Size()
+	l = m.BaseReserve.Size()
 	n += 1 + l + sovState(uint64(l))
-	l = m.QuoteAssetReserve.Size()
+	l = m.QuoteReserve.Size()
 	n += 1 + l + sovState(uint64(l))
 	l = m.Config.Size()
 	n += 1 + l + sovState(uint64(l))
@@ -899,9 +899,9 @@ func (m *ReserveSnapshot) Size() (n int) {
 	}
 	var l int
 	_ = l
-	l = m.BaseAssetReserve.Size()
+	l = m.BaseReserve.Size()
 	n += 1 + l + sovState(uint64(l))
-	l = m.QuoteAssetReserve.Size()
+	l = m.QuoteReserve.Size()
 	n += 1 + l + sovState(uint64(l))
 	if m.TimestampMs != 0 {
 		n += 1 + sovState(uint64(m.TimestampMs))
@@ -1012,7 +1012,7 @@ func (m *Market) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field BaseAssetReserve", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field BaseReserve", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1040,13 +1040,13 @@ func (m *Market) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.BaseAssetReserve.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.BaseReserve.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field QuoteAssetReserve", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field QuoteReserve", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1074,7 +1074,7 @@ func (m *Market) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.QuoteAssetReserve.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.QuoteReserve.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -1669,7 +1669,7 @@ func (m *ReserveSnapshot) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field BaseAssetReserve", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field BaseReserve", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1697,13 +1697,13 @@ func (m *ReserveSnapshot) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.BaseAssetReserve.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.BaseReserve.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field QuoteAssetReserve", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field QuoteReserve", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1731,7 +1731,7 @@ func (m *ReserveSnapshot) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.QuoteAssetReserve.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.QuoteReserve.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

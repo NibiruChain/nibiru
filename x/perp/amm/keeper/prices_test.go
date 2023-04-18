@@ -19,25 +19,25 @@ import (
 
 func TestGetMarkPrice(t *testing.T) {
 	tests := []struct {
-		name              string
-		pair              asset.Pair
-		quoteAssetReserve sdk.Dec
-		baseAssetReserve  sdk.Dec
-		expectedPrice     sdk.Dec
+		name          string
+		pair          asset.Pair
+		quoteReserve  sdk.Dec
+		baseReserve   sdk.Dec
+		expectedPrice sdk.Dec
 	}{
 		{
-			name:              "correctly fetch underlying price",
-			pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			quoteAssetReserve: sdk.NewDec(40_000),
-			baseAssetReserve:  sdk.NewDec(1),
-			expectedPrice:     sdk.NewDec(40000),
+			name:          "correctly fetch underlying price",
+			pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+			quoteReserve:  sdk.NewDec(40_000),
+			baseReserve:   sdk.NewDec(1),
+			expectedPrice: sdk.NewDec(40000),
 		},
 		{
-			name:              "complex price",
-			pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			quoteAssetReserve: sdk.NewDec(2_489_723_947),
-			baseAssetReserve:  sdk.NewDec(34_597_234),
-			expectedPrice:     sdk.MustNewDecFromStr("71.963092396345904415"),
+			name:          "complex price",
+			pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+			quoteReserve:  sdk.NewDec(2_489_723_947),
+			baseReserve:   sdk.NewDec(34_597_234),
+			expectedPrice: sdk.MustNewDecFromStr("71.963092396345904415"),
 		},
 	}
 
@@ -50,8 +50,8 @@ func TestGetMarkPrice(t *testing.T) {
 			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				tc.pair,
-				tc.quoteAssetReserve,
-				tc.baseAssetReserve,
+				tc.quoteReserve,
+				tc.baseReserve,
 				types.MarketConfig{
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -74,8 +74,8 @@ func TestGetBaseAssetPrice(t *testing.T) {
 	tests := []struct {
 		name                string
 		pair                asset.Pair
-		quoteAssetReserve   sdk.Dec
-		baseAssetReserve    sdk.Dec
+		quoteReserve        sdk.Dec
+		baseReserve         sdk.Dec
 		baseAmount          sdk.Dec
 		direction           types.Direction
 		expectedQuoteAmount sdk.Dec
@@ -84,8 +84,8 @@ func TestGetBaseAssetPrice(t *testing.T) {
 		{
 			name:                "zero base asset means zero price",
 			pair:                asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			quoteAssetReserve:   sdk.NewDec(40_000),
-			baseAssetReserve:    sdk.NewDec(10_000),
+			quoteReserve:        sdk.NewDec(40_000),
+			baseReserve:         sdk.NewDec(10_000),
 			baseAmount:          sdk.ZeroDec(),
 			direction:           types.Direction_LONG,
 			expectedQuoteAmount: sdk.ZeroDec(),
@@ -93,8 +93,8 @@ func TestGetBaseAssetPrice(t *testing.T) {
 		{
 			name:                "simple add base to pool",
 			pair:                asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			baseAssetReserve:    sdk.NewDec(1000),
-			quoteAssetReserve:   sdk.NewDec(1000),
+			baseReserve:         sdk.NewDec(1000),
+			quoteReserve:        sdk.NewDec(1000),
 			baseAmount:          sdk.MustNewDecFromStr("500"),
 			direction:           types.Direction_LONG,
 			expectedQuoteAmount: sdk.MustNewDecFromStr("333.333333333333333333"), // rounds down
@@ -102,20 +102,20 @@ func TestGetBaseAssetPrice(t *testing.T) {
 		{
 			name:                "simple remove base from pool",
 			pair:                asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			baseAssetReserve:    sdk.NewDec(1000),
-			quoteAssetReserve:   sdk.NewDec(1000),
+			baseReserve:         sdk.NewDec(1000),
+			quoteReserve:        sdk.NewDec(1000),
 			baseAmount:          sdk.MustNewDecFromStr("500"),
 			direction:           types.Direction_SHORT,
 			expectedQuoteAmount: sdk.MustNewDecFromStr("1000"),
 		},
 		{
-			name:              "too much base removed results in error",
-			pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			baseAssetReserve:  sdk.NewDec(1000),
-			quoteAssetReserve: sdk.NewDec(1000),
-			baseAmount:        sdk.MustNewDecFromStr("1000"),
-			direction:         types.Direction_SHORT,
-			expectedErr:       types.ErrBaseReserveAtZero,
+			name:         "too much base removed results in error",
+			pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+			baseReserve:  sdk.NewDec(1000),
+			quoteReserve: sdk.NewDec(1000),
+			baseAmount:   sdk.MustNewDecFromStr("1000"),
+			direction:    types.Direction_SHORT,
+			expectedErr:  types.ErrBaseReserveAtZero,
 		},
 	}
 
@@ -128,8 +128,8 @@ func TestGetBaseAssetPrice(t *testing.T) {
 			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				tc.pair,
-				tc.quoteAssetReserve,
-				tc.baseAssetReserve,
+				tc.quoteReserve,
+				tc.baseReserve,
 				types.MarketConfig{
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -323,7 +323,7 @@ func TestCalcTwap(t *testing.T) {
 			twapCalcOption:     types.TwapCalcOption_QUOTE_ASSET_SWAP,
 			direction:          types.Direction_LONG,
 			assetAmount:        sdk.NewDec(5),
-			expectedPrice:      sdk.MustNewDecFromStr("19.900497512437810944"), // ~ 5 base at a twap price of 4
+			expectedPrice:      sdk.MustNewDecFromStr("1.331447254908153411"), // ~ 5 base at a twap price of 4
 		},
 
 		// expected price: (95/10 * (35 - 30) + 85/10 * (30 - 20) + 90/10 * (20 - 11)) / (5 + 10 + 9)
@@ -354,7 +354,7 @@ func TestCalcTwap(t *testing.T) {
 			twapCalcOption:     types.TwapCalcOption_QUOTE_ASSET_SWAP,
 			direction:          types.Direction_SHORT,
 			assetAmount:        sdk.NewDec(5),
-			expectedPrice:      sdk.MustNewDecFromStr("20.100502512562814072"), // ~ 5 base at a twap price of 4
+			expectedPrice:      sdk.MustNewDecFromStr("1.335225041402003005"), // ~ 5 base at a twap price of 4
 		},
 
 		{
@@ -365,7 +365,7 @@ func TestCalcTwap(t *testing.T) {
 					/* Pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 					/* Base asset reserve */ sdk.NewDec(10),
 					/* Quote asset reserve */ sdk.NewDec(10),
-					/* Peg multiplier*/ sdk.NewDec(9),
+					/* Peg multiplier*/ sdk.NewDec(2),
 					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(20),
 				),
@@ -409,7 +409,7 @@ func TestCalcTwap(t *testing.T) {
 			twapCalcOption:     types.TwapCalcOption_BASE_ASSET_SWAP,
 			direction:          types.Direction_LONG,
 			assetAmount:        sdk.NewDec(10),
-			expectedPrice:      sdk.MustNewDecFromStr("4.125412541254125412"),
+			expectedPrice:      sdk.MustNewDecFromStr("37.128712871287128712"),
 		},
 
 		// k: 60 * 100 = 600
@@ -442,7 +442,7 @@ func TestCalcTwap(t *testing.T) {
 			twapCalcOption:     types.TwapCalcOption_BASE_ASSET_SWAP,
 			direction:          types.Direction_SHORT,
 			assetAmount:        sdk.NewDec(2),
-			expectedPrice:      sdk.MustNewDecFromStr("0.273881095524382097"),
+			expectedPrice:      sdk.MustNewDecFromStr("15.405811623246492984"),
 		},
 		{
 			name: "Error: base asset reserve = asset amount",
@@ -489,8 +489,8 @@ func TestCalcTwap(t *testing.T) {
 			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-				/*quoteAssetReserve=*/ sdk.NewDec(100),
-				/*baseAssetReserve=*/ sdk.OneDec(),
+				/*quoteReserve=*/ sdk.NewDec(100),
+				/*baseReserve=*/ sdk.NewDec(100),
 				*types.DefaultMarketConfig().WithMaxLeverage(sdk.NewDec(15)),
 				sdk.ZeroDec(),
 				sdk.OneDec(),
@@ -500,8 +500,8 @@ func TestCalcTwap(t *testing.T) {
 				ctx = ctx.WithBlockTime(time.UnixMilli(snapshot.TimestampMs))
 				snapshot := types.NewReserveSnapshot(
 					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					snapshot.BaseAssetReserve,
-					snapshot.QuoteAssetReserve,
+					snapshot.BaseReserve,
+					snapshot.QuoteReserve,
 					snapshot.PegMultiplier,
 					snapshot.Bias,
 					ctx.BlockTime(),

@@ -172,7 +172,7 @@ message PoolPrices {
   ];
 
   // MarkPrice is the instantaneous price of the perp.
-  // Equivalent to quoteAssetReserve / baseAssetReserve.
+  // Equivalent to quoteReserve / baseReserve.
   string mark_price = 10 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false

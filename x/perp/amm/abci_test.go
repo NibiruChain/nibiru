@@ -33,16 +33,16 @@ func TestSnapshotUpdates(t *testing.T) {
 	require.NoError(t, perpammKeeper.CreatePool(
 		/* ctx */ ctx,
 		/* pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-		/* quoteAssetReserve */ sdk.NewDec(1_000),
-		/* baseAssetReserve */ sdk.NewDec(1_000),
+		/* quoteReserve */ sdk.NewDec(1_000),
+		/* baseReserve */ sdk.NewDec(1_000),
 		/* config */ *types.DefaultMarketConfig().WithTradeLimitRatio(sdk.OneDec()).WithFluctuationLimitRatio(sdk.OneDec()),
 		/* bias */ sdk.ZeroDec(),
 		/* pegMultiplier */ sdk.OneDec(),
 	))
 	expectedSnapshot := types.NewReserveSnapshot(
 		/* pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-		/* baseAssetReserve */ sdk.NewDec(1_000),
-		/* quoteAssetReserve */ sdk.NewDec(1_000),
+		/* baseReserve */ sdk.NewDec(1_000),
+		/* quoteReserve */ sdk.NewDec(1_000),
 		/* pegMultiplier */ sdk.OneDec(),
 		/* bias */ sdk.ZeroDec(),
 		/* blockTime */ ctx.BlockTime(),
@@ -88,9 +88,9 @@ func TestSnapshotUpdates(t *testing.T) {
 
 	testutil.RequireContainsTypedEvent(t, ctx, &types.ReserveSnapshotSavedEvent{
 		Pair:           expectedSnapshot.Pair,
-		QuoteReserve:   expectedSnapshot.QuoteAssetReserve,
-		BaseReserve:    expectedSnapshot.BaseAssetReserve,
-		MarkPrice:      snapshot.QuoteAssetReserve.Quo(snapshot.BaseAssetReserve).Mul(snapshot.PegMultiplier),
+		QuoteReserve:   expectedSnapshot.QuoteReserve,
+		BaseReserve:    expectedSnapshot.BaseReserve,
+		MarkPrice:      snapshot.QuoteReserve.Quo(snapshot.BaseReserve).Mul(snapshot.PegMultiplier),
 		BlockHeight:    ctxAtSnapshot.BlockHeight(),
 		BlockTimestamp: ctxAtSnapshot.BlockTime(),
 	})

@@ -36,12 +36,12 @@ func TestIntegrationTestSuite(t *testing.T) {
 
 var START_MARKETS = map[asset.Pair]perpammtypes.Market{
 	asset.Registry.Pair(denoms.ETH, denoms.NUSD): {
-		Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-		BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
-		QuoteAssetReserve: sdk.NewDec(10 * common.TO_MICRO),
-		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * common.TO_MICRO * 10 * common.TO_MICRO)),
-		PegMultiplier:     sdk.NewDec(6_000),
-		Bias:              sdk.ZeroDec(),
+		Pair:          asset.Registry.Pair(denoms.ETH, denoms.NUSD),
+		BaseReserve:   sdk.NewDec(10 * common.TO_MICRO),
+		QuoteReserve:  sdk.NewDec(10 * common.TO_MICRO),
+		SqrtDepth:     common.MustSqrtDec(sdk.NewDec(10 * common.TO_MICRO * 10 * common.TO_MICRO)),
+		PegMultiplier: sdk.NewDec(6_000),
+		Bias:          sdk.ZeroDec(),
 
 		Config: perpammtypes.MarketConfig{
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
@@ -52,12 +52,12 @@ var START_MARKETS = map[asset.Pair]perpammtypes.Market{
 		},
 	},
 	asset.Registry.Pair(denoms.NIBI, denoms.NUSD): {
-		Pair:              asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
-		BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
-		QuoteAssetReserve: sdk.NewDec(10 * common.TO_MICRO),
-		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * common.TO_MICRO * 10 * common.TO_MICRO)),
-		PegMultiplier:     sdk.NewDec(10),
-		Bias:              sdk.ZeroDec(),
+		Pair:          asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
+		BaseReserve:   sdk.NewDec(10 * common.TO_MICRO),
+		QuoteReserve:  sdk.NewDec(10 * common.TO_MICRO),
+		SqrtDepth:     common.MustSqrtDec(sdk.NewDec(10 * common.TO_MICRO * 10 * common.TO_MICRO)),
+		PegMultiplier: sdk.NewDec(10),
+		Bias:          sdk.ZeroDec(),
 		Config: perpammtypes.MarketConfig{
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
@@ -112,11 +112,11 @@ func (s *IntegrationTestSuite) TestCmdCreatePoolProposal() {
 	s.T().Log("load example proposal json as bytes")
 	// ----------------------------------------------------------------------
 	proposal := &perpammtypes.CreatePoolProposal{
-		Title:             "Create ETH:USD pool",
-		Description:       "Creates an ETH:USD pool",
-		Pair:              "ETH:USD",
-		QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
-		BaseAssetReserve:  sdk.NewDec(1 * common.TO_MICRO),
+		Title:        "Create ETH:USD pool",
+		Description:  "Creates an ETH:USD pool",
+		Pair:         "ETH:USD",
+		QuoteReserve: sdk.NewDec(1 * common.TO_MICRO),
+		BaseReserve:  sdk.NewDec(1 * common.TO_MICRO),
 		Config: perpammtypes.MarketConfig{
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.05"),
@@ -161,13 +161,13 @@ func (s *IntegrationTestSuite) TestCmdCreatePoolProposal() {
 	for _, pool := range marketsQueryResp.Markets {
 		if pool.Pair.Equal(proposal.Pair) {
 			s.EqualValues(perpammtypes.Market{
-				Pair:              proposal.Pair,
-				BaseAssetReserve:  proposal.BaseAssetReserve,
-				QuoteAssetReserve: proposal.QuoteAssetReserve,
-				SqrtDepth:         common.MustSqrtDec(proposal.BaseAssetReserve.Mul(proposal.QuoteAssetReserve)),
-				Config:            proposal.Config,
-				Bias:              sdk.ZeroDec(),
-				PegMultiplier:     sdk.OneDec(),
+				Pair:          proposal.Pair,
+				BaseReserve:   proposal.BaseReserve,
+				QuoteReserve:  proposal.QuoteReserve,
+				SqrtDepth:     common.MustSqrtDec(proposal.BaseReserve.Mul(proposal.QuoteReserve)),
+				Config:        proposal.Config,
+				Bias:          sdk.ZeroDec(),
+				PegMultiplier: sdk.OneDec(),
 			}, pool)
 			found = true
 		}
@@ -181,8 +181,8 @@ func (s *IntegrationTestSuite) TestGetPrices() {
 	s.T().Log("check market balances")
 	reserveAssets, err := testutilcli.QueryMarketReserveAssets(val.ClientCtx, asset.Registry.Pair(denoms.ETH, denoms.NUSD))
 	s.NoError(err)
-	s.EqualValues(sdk.MustNewDecFromStr("10000000"), reserveAssets.BaseAssetReserve)
-	s.EqualValues(sdk.MustNewDecFromStr("10000000"), reserveAssets.QuoteAssetReserve)
+	s.EqualValues(sdk.MustNewDecFromStr("10000000"), reserveAssets.BaseReserve)
+	s.EqualValues(sdk.MustNewDecFromStr("10000000"), reserveAssets.QuoteReserve)
 
 	s.T().Log("check prices")
 	priceInfo, err := testutilcli.QueryBaseAssetPrice(val.ClientCtx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), "add", "100")
@@ -246,13 +246,13 @@ func (s *IntegrationTestSuite) TestCmdEditPoolConfigProposal() {
 	for _, market := range marketsQueryResp.Markets {
 		if market.Pair.Equal(proposal.Pair) {
 			s.EqualValues(perpammtypes.Market{
-				Pair:              proposal.Pair,
-				BaseAssetReserve:  startMarket.BaseAssetReserve,
-				QuoteAssetReserve: startMarket.QuoteAssetReserve,
-				SqrtDepth:         startMarket.SqrtDepth,
-				Config:            proposal.Config,
-				Bias:              sdk.ZeroDec(),
-				PegMultiplier:     sdk.ZeroDec(),
+				Pair:          proposal.Pair,
+				BaseReserve:   startMarket.BaseReserve,
+				QuoteReserve:  startMarket.QuoteReserve,
+				SqrtDepth:     startMarket.SqrtDepth,
+				Config:        proposal.Config,
+				Bias:          sdk.ZeroDec(),
+				PegMultiplier: sdk.ZeroDec(),
 			}, market)
 			found = true
 		}
@@ -333,12 +333,12 @@ func (s *IntegrationTestSuite) TestCmdEditSwapInvariantsProposal() {
 
 			// get market after proposal
 			marketAfter := perpammtypes.Market{
-				Pair:              proposalPair,
-				BaseAssetReserve:  marketBefore.BaseAssetReserve.Mul(multiplierToSqrtDepth),
-				QuoteAssetReserve: marketBefore.QuoteAssetReserve.Mul(multiplierToSqrtDepth),
-				Config:            marketBefore.Config,
-				Bias:              sdk.ZeroDec(),
-				PegMultiplier:     sdk.ZeroDec(),
+				Pair:          proposalPair,
+				BaseReserve:   marketBefore.BaseReserve.Mul(multiplierToSqrtDepth),
+				QuoteReserve:  marketBefore.QuoteReserve.Mul(multiplierToSqrtDepth),
+				Config:        marketBefore.Config,
+				Bias:          sdk.ZeroDec(),
+				PegMultiplier: sdk.ZeroDec(),
 			}
 			sqrtDepthAfter, err := marketAfter.ComputeSqrtDepth()
 			s.Require().NoError(err)

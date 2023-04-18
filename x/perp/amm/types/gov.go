@@ -47,12 +47,12 @@ func (proposal *CreatePoolProposal) ValidateBasic() error {
 	}
 
 	pool := &Market{
-		Pair:              proposal.Pair,
-		BaseAssetReserve:  proposal.BaseAssetReserve,
-		QuoteAssetReserve: proposal.QuoteAssetReserve,
-		Config:            proposal.Config,
-		PegMultiplier:     proposal.PegMultiplier,
-		Bias:              sdk.ZeroDec(),
+		Pair:          proposal.Pair,
+		BaseReserve:   proposal.BaseReserve,
+		QuoteReserve:  proposal.QuoteReserve,
+		Config:        proposal.Config,
+		PegMultiplier: proposal.PegMultiplier,
+		Bias:          sdk.ZeroDec(),
 	}
 	sqrtDepth, err := pool.ComputeSqrtDepth()
 	if err != nil {

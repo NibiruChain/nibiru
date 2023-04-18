@@ -17,8 +17,8 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 		if err := k.CreatePool(
 			/* ctx */ ctx,
 			/* pair */ vp.Pair,
-			/* quoteAssetReserve */ vp.QuoteAssetReserve,
-			/* baseAssetReserve */ vp.BaseAssetReserve,
+			/* quoteReserve */ vp.QuoteReserve,
+			/* baseReserve */ vp.BaseReserve,
 			/* config */ vp.Config,
 			/* bias */ vp.Bias,
 			/* pegMultiplier */ vp.PegMultiplier,

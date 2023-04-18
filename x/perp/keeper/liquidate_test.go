@@ -89,8 +89,8 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				tokenPair,
-				/* quoteAssetReserves */ sdk.NewDec(10*common.TO_MICRO),
-				/* baseAssetReserves */ sdk.NewDec(5*common.TO_MICRO),
+				/* quoteReserves */ sdk.NewDec(10*common.TO_MICRO),
+				/* baseReserves */ sdk.NewDec(5*common.TO_MICRO),
 				perpammtypes.MarketConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					FluctuationLimitRatio:  sdk.OneDec(),
@@ -269,8 +269,8 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				tokenPair,
-				/* quoteAssetReserves */ sdk.NewDec(10_000*common.TO_MICRO*common.TO_MICRO),
-				/* baseAssetReserves */ sdk.NewDec(10_000*common.TO_MICRO*common.TO_MICRO),
+				/* quoteReserves */ sdk.NewDec(10_000*common.TO_MICRO*common.TO_MICRO),
+				/* baseReserves */ sdk.NewDec(10_000*common.TO_MICRO*common.TO_MICRO),
 				perpammtypes.MarketConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					FluctuationLimitRatio:  sdk.OneDec(),
@@ -444,8 +444,8 @@ func TestMultiLiquidate(t *testing.T) {
 			assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 				/* ctx */ ctx,
 				/* pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
-				/* baseAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
+				/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO),
+				/* baseReserve */ sdk.NewDec(1*common.TO_MICRO),
 				perpammtypes.MarketConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.OneDec(),

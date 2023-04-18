@@ -190,9 +190,9 @@ func newMarketFromAddMarketGenesisFlags(flagSet *flag.FlagSet,
 	}
 
 	market = types.Market{
-		Pair:              pair,
-		QuoteAssetReserve: quoteAsset,
-		BaseAssetReserve:  baseAsset,
+		Pair:         pair,
+		QuoteReserve: quoteAsset,
+		BaseReserve:  baseAsset,
 		Config: types.MarketConfig{
 			TradeLimitRatio:        tradeLimit,
 			FluctuationLimitRatio:  fluctuationLimitRatio,

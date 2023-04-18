@@ -16,8 +16,8 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 	for _, pool := range k.Pools.Iterate(ctx, collections.Range[asset.Pair]{}).Values() {
 		snapshot := types.NewReserveSnapshot(
 			pool.Pair,
-			pool.BaseAssetReserve,
-			pool.QuoteAssetReserve,
+			pool.BaseReserve,
+			pool.QuoteReserve,
 			pool.PegMultiplier,
 			pool.Bias,
 			ctx.BlockTime(),
@@ -26,9 +26,9 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 
 		_ = ctx.EventManager().EmitTypedEvent(&types.ReserveSnapshotSavedEvent{
 			Pair:           snapshot.Pair,
-			QuoteReserve:   snapshot.QuoteAssetReserve,
-			BaseReserve:    snapshot.BaseAssetReserve,
-			MarkPrice:      snapshot.QuoteAssetReserve.Quo(snapshot.BaseAssetReserve),
+			QuoteReserve:   snapshot.QuoteReserve,
+			BaseReserve:    snapshot.BaseReserve,
+			MarkPrice:      snapshot.QuoteReserve.Quo(snapshot.BaseReserve),
 			BlockHeight:    ctx.BlockHeight(),
 			BlockTimestamp: ctx.BlockTime(),
 		})

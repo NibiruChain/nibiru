@@ -39,8 +39,8 @@ func (q queryServer) ReserveAssets(
 	}
 
 	return &types.QueryReserveAssetsResponse{
-		BaseAssetReserve:  pool.BaseAssetReserve,
-		QuoteAssetReserve: pool.QuoteAssetReserve,
+		BaseReserve:  pool.BaseReserve,
+		QuoteReserve: pool.QuoteReserve,
 	}, nil
 }
 

@@ -53,12 +53,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	marketGenesis := perpammtypes.DefaultGenesis()
 	marketGenesis.Markets = []perpammtypes.Market{
 		{
-			Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
-			QuoteAssetReserve: sdk.NewDec(10 * common.TO_MICRO),
-			SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 10 * common.TO_MICRO * common.TO_MICRO)),
-			Bias:              sdk.ZeroDec(),
-			PegMultiplier:     sdk.NewDec(6_000),
+			Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+			BaseReserve:   sdk.NewDec(10 * common.TO_MICRO),
+			QuoteReserve:  sdk.NewDec(10 * common.TO_MICRO),
+			SqrtDepth:     common.MustSqrtDec(sdk.NewDec(10 * 10 * common.TO_MICRO * common.TO_MICRO)),
+			Bias:          sdk.ZeroDec(),
+			PegMultiplier: sdk.NewDec(6_000),
 			Config: perpammtypes.MarketConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 				FluctuationLimitRatio:  sdk.OneDec(),
@@ -68,12 +68,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			},
 		},
 		{
-			Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-			BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
-			QuoteAssetReserve: sdk.NewDec(10 * common.TO_MICRO),
-			SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 10 * common.TO_MICRO * common.TO_MICRO)),
-			Bias:              sdk.ZeroDec(),
-			PegMultiplier:     sdk.NewDec(6_000),
+			Pair:          asset.Registry.Pair(denoms.ETH, denoms.NUSD),
+			BaseReserve:   sdk.NewDec(10 * common.TO_MICRO),
+			QuoteReserve:  sdk.NewDec(10 * common.TO_MICRO),
+			SqrtDepth:     common.MustSqrtDec(sdk.NewDec(10 * 10 * common.TO_MICRO * common.TO_MICRO)),
+			Bias:          sdk.ZeroDec(),
+			PegMultiplier: sdk.NewDec(6_000),
 			Config: perpammtypes.MarketConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
@@ -83,12 +83,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			},
 		},
 		{
-			Pair:              asset.Registry.Pair(denoms.ATOM, denoms.NUSD),
-			BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
-			QuoteAssetReserve: sdk.NewDec(10 * common.TO_MICRO),
-			SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 10 * common.TO_MICRO * common.TO_MICRO)),
-			Bias:              sdk.ZeroDec(),
-			PegMultiplier:     sdk.NewDec(6_000),
+			Pair:          asset.Registry.Pair(denoms.ATOM, denoms.NUSD),
+			BaseReserve:   sdk.NewDec(10 * common.TO_MICRO),
+			QuoteReserve:  sdk.NewDec(10 * common.TO_MICRO),
+			SqrtDepth:     common.MustSqrtDec(sdk.NewDec(10 * 10 * common.TO_MICRO * common.TO_MICRO)),
+			Bias:          sdk.ZeroDec(),
+			PegMultiplier: sdk.NewDec(6_000),
 			Config: perpammtypes.MarketConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
@@ -98,12 +98,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			},
 		},
 		{
-			Pair:              asset.Registry.Pair(denoms.OSMO, denoms.NUSD),
-			BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
-			QuoteAssetReserve: sdk.NewDec(10 * common.TO_MICRO),
-			SqrtDepth:         common.MustSqrtDec(sdk.NewDec(10 * 10 * common.TO_MICRO * common.TO_MICRO)),
-			Bias:              sdk.ZeroDec(),
-			PegMultiplier:     sdk.NewDec(6_000),
+			Pair:          asset.Registry.Pair(denoms.OSMO, denoms.NUSD),
+			BaseReserve:   sdk.NewDec(10 * common.TO_MICRO),
+			QuoteReserve:  sdk.NewDec(10 * common.TO_MICRO),
+			SqrtDepth:     common.MustSqrtDec(sdk.NewDec(10 * 10 * common.TO_MICRO * common.TO_MICRO)),
+			Bias:          sdk.ZeroDec(),
+			PegMultiplier: sdk.NewDec(6_000),
 			Config: perpammtypes.MarketConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
@@ -278,8 +278,8 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	reserveAssets, err := testutilcli.QueryMarketReserveAssets(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 	s.T().Logf("reserve assets: %+v", reserveAssets)
 	s.NoError(err)
-	s.EqualValues(sdk.NewDec(10*common.TO_MICRO), reserveAssets.BaseAssetReserve)
-	s.EqualValues(sdk.NewDec(10*common.TO_MICRO), reserveAssets.QuoteAssetReserve)
+	s.EqualValues(sdk.NewDec(10*common.TO_MICRO), reserveAssets.BaseReserve)
+	s.EqualValues(sdk.NewDec(10*common.TO_MICRO), reserveAssets.QuoteReserve)
 
 	s.T().Log("A. check trader has no existing positions")
 	_, err = testutilcli.QueryPosition(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
@@ -300,8 +300,8 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	reserveAssets, err = testutilcli.QueryMarketReserveAssets(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 	s.T().Logf("reserve assets: %+v", reserveAssets)
 	s.NoError(err)
-	s.EqualValues(sdk.MustNewDecFromStr("9999833.336111064815586407"), reserveAssets.BaseAssetReserve)
-	s.EqualValues(sdk.MustNewDecFromStr("10000166.666666666666666667"), reserveAssets.QuoteAssetReserve)
+	s.EqualValues(sdk.MustNewDecFromStr("9999833.336111064815586407"), reserveAssets.BaseReserve)
+	s.EqualValues(sdk.MustNewDecFromStr("10000166.666666666666666667"), reserveAssets.QuoteReserve)
 
 	s.T().Log("B. check trader position")
 	queryResp, err := testutilcli.QueryPosition(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
@@ -356,8 +356,8 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	reserveAssets, err = testutilcli.QueryMarketReserveAssets(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 	s.NoError(err)
 	s.T().Logf(" \n reserve assets: %+v \n", reserveAssets)
-	s.EqualValues(sdk.MustNewDecFromStr("9999500.041663750215262154"), reserveAssets.BaseAssetReserve)
-	s.EqualValues(sdk.MustNewDecFromStr("10000499.983333333333333333"), reserveAssets.QuoteAssetReserve)
+	s.EqualValues(sdk.MustNewDecFromStr("9999500.041663750215262154"), reserveAssets.BaseReserve)
+	s.EqualValues(sdk.MustNewDecFromStr("10000499.983333333333333333"), reserveAssets.QuoteReserve)
 
 	s.T().Log("D. Check trader position")
 	queryResp, err = testutilcli.QueryPosition(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
