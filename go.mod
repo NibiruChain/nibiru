@@ -140,3 +140,5 @@ replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alp
 replace github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.7.0
 
 replace github.com/CosmWasm/wasmvm v1.1.1 => github.com/NibiruChain/wasmvm v1.1.2
+
+replace github.com/cosmos/gorocksdb v1.2.0 => github.com/NibiruChain/gorocksdb v1.2.1
