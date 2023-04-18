@@ -23,7 +23,7 @@ BUILDDIR ?= $(CURDIR)/build
 export GO111MODULE = on
 
 # process build tags
-build_tags = netgo
+build_tags = netgo rocksdb
 build_tags += $(BUILD_TAGS)
 build_tags := $(strip $(build_tags))
 
@@ -38,7 +38,8 @@ ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=nibiru \
 		  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
 		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
 		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)" \
-			-X github.com/tendermint/tendermint/version.TMCoreSemVer=$(TM_VERSION)
+		  -X github.com/tendermint/tendermint/version.TMCoreSemVer=$(TM_VERSION) \
+		  -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb -w -s
 ldflags += $(LDFLAGS)
 ldflags := $(strip $(ldflags))
 
