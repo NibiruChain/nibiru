@@ -51,6 +51,8 @@ func (proposal *CreatePoolProposal) ValidateBasic() error {
 		BaseAssetReserve:  proposal.BaseAssetReserve,
 		QuoteAssetReserve: proposal.QuoteAssetReserve,
 		Config:            proposal.Config,
+		PegMultiplier:     proposal.PegMultiplier,
+		Bias:              sdk.ZeroDec(),
 	}
 	sqrtDepth, err := pool.ComputeSqrtDepth()
 	if err != nil {
