@@ -80,7 +80,7 @@ func (k Keeper) SwapBaseForQuote(
 	}
 
 	baseAmtAbs := baseAmt.Abs()
-	quoteReserveAbs, err := market.GetQuoteAmountByBaseAmount(baseAmtAbs.MulInt64(dir.ToMultiplier()))
+	quoteReserveAbs, err := market.GetQuoteReserveByBase(baseAmtAbs.MulInt64(dir.ToMultiplier()))
 	if err != nil {
 		return market, sdk.Dec{}, err
 	}

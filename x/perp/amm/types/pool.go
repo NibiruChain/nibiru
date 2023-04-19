@@ -64,7 +64,7 @@ func (market *Market) GetBaseAmountByQuoteAmount(
 }
 
 /*
-GetQuoteAmountByBaseAmount returns the amount of quote asset you will get out
+GetQuoteReserveByBase returns the amount of quote asset you will get out
 by giving a specified amount of base asset
 
 args:
@@ -76,7 +76,7 @@ ret:
     always an absolute value
   - err: error
 */
-func (market *Market) GetQuoteAmountByBaseAmount(
+func (market *Market) GetQuoteReserveByBase(
 	baseDelta sdk.Dec,
 ) (quoteOutAbs sdk.Dec, err error) {
 	if baseDelta.IsZero() {
