@@ -17,8 +17,8 @@ import (
 type CreateMarketAction struct {
 	Pair asset.Pair
 
-	QuoteAssetReserve sdk.Dec
-	BaseAssetReserve  sdk.Dec
+	QuoteReserve sdk.Dec
+	BaseReserve  sdk.Dec
 
 	MarketConfig perpammtypes.MarketConfig
 
@@ -29,8 +29,8 @@ func (c CreateMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context
 	err := app.PerpAmmKeeper.CreatePool(
 		ctx,
 		c.Pair,
-		c.QuoteAssetReserve,
-		c.BaseAssetReserve,
+		c.QuoteReserve,
+		c.BaseReserve,
 		c.MarketConfig,
 		c.Bias,
 		sdk.OneDec(),
@@ -54,9 +54,9 @@ func (c CreateMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context
 // - market config: default
 func CreateBaseMarket() CreateMarketAction {
 	return CreateMarketAction{
-		Pair:              asset.NewPair(denoms.BTC, denoms.USDC),
-		QuoteAssetReserve: sdk.NewDec(1000e6),
-		BaseAssetReserve:  sdk.NewDec(100e6),
+		Pair:         asset.NewPair(denoms.BTC, denoms.USDC),
+		QuoteReserve: sdk.NewDec(1000e6),
+		BaseReserve:  sdk.NewDec(100e6),
 		MarketConfig: perpammtypes.MarketConfig{
 			TradeLimitRatio:        sdk.MustNewDecFromStr("1"),
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("1"),
@@ -70,15 +70,15 @@ func CreateBaseMarket() CreateMarketAction {
 // CreateCustomMarket creates a market with custom parameters
 func CreateCustomMarket(
 	pair asset.Pair,
-	quoteAssetReserve, baseAssetReserve sdk.Dec,
+	quoteReserve, baseReserve sdk.Dec,
 	marketConfig perpammtypes.MarketConfig,
 	bias sdk.Dec,
 ) action.Action {
 	return CreateMarketAction{
-		Pair:              pair,
-		QuoteAssetReserve: quoteAssetReserve,
-		BaseAssetReserve:  baseAssetReserve,
-		MarketConfig:      marketConfig,
-		Bias:              bias,
+		Pair:         pair,
+		QuoteReserve: quoteReserve,
+		BaseReserve:  baseReserve,
+		MarketConfig: marketConfig,
+		Bias:         bias,
 	}
 }

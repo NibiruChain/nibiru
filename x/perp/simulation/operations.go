@@ -106,10 +106,7 @@ func SimulateMsgOpenPosition(ak types.AccountKeeper, bk types.BankKeeper, k keep
 				CoinsSpentInMsg: spentCoins,
 			},
 		)
-		if err != nil {
-			fmt.Println(spendableCoins)
-			fmt.Println(quoteAmt)
-		}
+
 		return opMsg, futureOps, common.CombineErrors(err, errFundAccount)
 	}
 }
@@ -120,8 +117,8 @@ func checkIsOverFluctation(
 	quoteDelta := openNotional
 	baseDelta, _ := pool.GetBaseAmountByQuoteAmount(quoteDelta.Abs().MulInt64(direction.ToMultiplier()))
 	snapshot, _ := k.PerpAmmKeeper.GetLastSnapshot(ctx, pool)
-	currentPrice := snapshot.QuoteAssetReserve.Quo(snapshot.BaseAssetReserve)
-	newPrice := pool.QuoteAssetReserve.Add(quoteDelta).Quo(pool.BaseAssetReserve.Sub(baseDelta))
+	currentPrice := snapshot.QuoteReserve.Quo(snapshot.BaseReserve)
+	newPrice := pool.QuoteReserve.Add(quoteDelta).Quo(pool.BaseReserve.Sub(baseDelta))
 
 	fluctuationLimitRatio := pool.Config.FluctuationLimitRatio
 	snapshotUpperLimit := currentPrice.Mul(sdk.OneDec().Add(fluctuationLimitRatio))
@@ -139,12 +136,12 @@ Fluctuation limit ratio:
 
 	Considering a xy=k pool, the price evolution for a swap of quote=q can be written as:
 
-		price_evolution = (1 + q/quoteAssetReserve) ** 2
+		price_evolution = (1 + q/quoteReserve) ** 2
 
 	which means that the trade will be under the fluctuation limit l if:
 
 			abs(price_evolution - 1) <= l
-	<=>		sqrt(1-l) * quoteAssetReserve < q < sqrt(l+1) * quoteAssetReserve
+	<=>		sqrt(1-l) * quoteReserve < q < sqrt(l+1) * quoteReserve
 
 	In our case we only care about the right part since q is always positive (short/long would be the sign).
 
@@ -153,15 +150,15 @@ Trade limit ratio:
 
 	The maximum quote amount considering the trade limit ratio is set at:
 
-	 	q <= QuoteAssetReserve * tl
+	 	q <= QuoteReserve * tl
 
 		with tl the trade limit ratio.
 */
 func getMaxQuoteForPool(pool pooltypes.Market) sdk.Dec {
 	ratioFloat := math.Sqrt(pool.Config.FluctuationLimitRatio.Add(sdk.OneDec()).MustFloat64())
-	maxQuoteFluctationLimit := sdk.MustNewDecFromStr(fmt.Sprintf("%f", ratioFloat)).Mul(pool.QuoteAssetReserve)
+	maxQuoteFluctationLimit := sdk.MustNewDecFromStr(fmt.Sprintf("%f", ratioFloat)).Mul(pool.QuoteReserve)
 
-	maxQuoteTradeLimit := pool.QuoteAssetReserve.Mul(pool.Config.TradeLimitRatio)
+	maxQuoteTradeLimit := pool.QuoteReserve.Mul(pool.Config.TradeLimitRatio)
 
 	return sdk.MinDec(maxQuoteTradeLimit, maxQuoteFluctationLimit)
 }

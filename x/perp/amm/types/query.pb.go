@@ -71,9 +71,9 @@ var xxx_messageInfo_QueryReserveAssetsRequest proto.InternalMessageInfo
 
 type QueryReserveAssetsResponse struct {
 	// base asset is the crypto asset, e.g. BTC or ETH
-	BaseAssetReserve github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,1,opt,name=base_asset_reserve,json=baseAssetReserve,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"base_asset_reserve"`
+	BaseReserve github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,1,opt,name=base_asset_reserve,json=baseReserve,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"base_asset_reserve"`
 	// quote asset is usually stablecoin, in our case NUSD
-	QuoteAssetReserve github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=quote_asset_reserve,json=quoteAssetReserve,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"quote_asset_reserve"`
+	QuoteReserve github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=quote_asset_reserve,json=quoteReserve,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"quote_asset_reserve"`
 }
 
 func (m *QueryReserveAssetsResponse) Reset()         { *m = QueryReserveAssetsResponse{} }
@@ -547,9 +547,9 @@ func (m *QueryReserveAssetsResponse) MarshalToSizedBuffer(dAtA []byte) (int, err
 	var l int
 	_ = l
 	{
-		size := m.QuoteAssetReserve.Size()
+		size := m.QuoteReserve.Size()
 		i -= size
-		if _, err := m.QuoteAssetReserve.MarshalTo(dAtA[i:]); err != nil {
+		if _, err := m.QuoteReserve.MarshalTo(dAtA[i:]); err != nil {
 			return 0, err
 		}
 		i = encodeVarintQuery(dAtA, i, uint64(size))
@@ -557,9 +557,9 @@ func (m *QueryReserveAssetsResponse) MarshalToSizedBuffer(dAtA []byte) (int, err
 	i--
 	dAtA[i] = 0x12
 	{
-		size := m.BaseAssetReserve.Size()
+		size := m.BaseReserve.Size()
 		i -= size
-		if _, err := m.BaseAssetReserve.MarshalTo(dAtA[i:]); err != nil {
+		if _, err := m.BaseReserve.MarshalTo(dAtA[i:]); err != nil {
 			return 0, err
 		}
 		i = encodeVarintQuery(dAtA, i, uint64(size))
@@ -752,9 +752,9 @@ func (m *QueryReserveAssetsResponse) Size() (n int) {
 	}
 	var l int
 	_ = l
-	l = m.BaseAssetReserve.Size()
+	l = m.BaseReserve.Size()
 	n += 1 + l + sovQuery(uint64(l))
-	l = m.QuoteAssetReserve.Size()
+	l = m.QuoteReserve.Size()
 	n += 1 + l + sovQuery(uint64(l))
 	return n
 }
@@ -937,7 +937,7 @@ func (m *QueryReserveAssetsResponse) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field BaseAssetReserve", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field BaseReserve", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -965,13 +965,13 @@ func (m *QueryReserveAssetsResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.BaseAssetReserve.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.BaseReserve.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field QuoteAssetReserve", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field QuoteReserve", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -999,7 +999,7 @@ func (m *QueryReserveAssetsResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.QuoteAssetReserve.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.QuoteReserve.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

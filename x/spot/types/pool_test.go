@@ -538,7 +538,6 @@ func TestExitPoolError(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			_, _, err := tc.pool.ExitPool(sdk.OneInt())
-			fmt.Println(err)
 			require.Error(t, err)
 			expectedErrorMsg := fmt.Sprintf("not enough pool shares to withdraw - please provide at least %v shares", tc.pool.MinSharesInForTokensOut())
 			require.Contains(t, err.Error(), expectedErrorMsg)
