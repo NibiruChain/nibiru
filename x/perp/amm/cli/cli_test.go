@@ -253,7 +253,7 @@ func (s *IntegrationTestSuite) TestCmdEditPoolConfigProposal() {
 				SqrtDepth:     startMarket.SqrtDepth,
 				Config:        proposal.Config,
 				Bias:          sdk.ZeroDec(),
-				PegMultiplier: sdk.ZeroDec(),
+				PegMultiplier: sdk.NewDec(6000),
 			}, market)
 			found = true
 		}
@@ -339,7 +339,7 @@ func (s *IntegrationTestSuite) TestCmdEditSwapInvariantsProposal() {
 				QuoteReserve:  marketBefore.QuoteReserve.Mul(multiplierToSqrtDepth),
 				Config:        marketBefore.Config,
 				Bias:          sdk.ZeroDec(),
-				PegMultiplier: sdk.ZeroDec(),
+				PegMultiplier: sdk.NewDec(10),
 			}
 			sqrtDepthAfter, err := marketAfter.ComputeSqrtDepth()
 			s.Require().NoError(err)

@@ -60,7 +60,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			Bias:          sdk.ZeroDec(),
 			PegMultiplier: sdk.NewDec(6_000),
 			Config: perpammtypes.MarketConfig{
-				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
+				TradeLimitRatio:        sdk.MustNewDecFromStr("1"),
 				FluctuationLimitRatio:  sdk.OneDec(),
 				MaxOracleSpreadRatio:   sdk.OneDec(),
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -75,7 +75,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			Bias:          sdk.ZeroDec(),
 			PegMultiplier: sdk.NewDec(6_000),
 			Config: perpammtypes.MarketConfig{
-				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
+				TradeLimitRatio:        sdk.MustNewDecFromStr("1"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
 				MaxOracleSpreadRatio:   sdk.OneDec(),
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -90,7 +90,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			Bias:          sdk.ZeroDec(),
 			PegMultiplier: sdk.NewDec(6_000),
 			Config: perpammtypes.MarketConfig{
-				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
+				TradeLimitRatio:        sdk.MustNewDecFromStr("1"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
 				MaxOracleSpreadRatio:   sdk.OneDec(),
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -217,8 +217,8 @@ func (s *IntegrationTestSuite) TestMultiLiquidate() {
 	_, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[4], []string{
 		"sell",
 		asset.Registry.Pair(denoms.ATOM, denoms.NUSD).String(),
-		"15",     // Leverage
-		"900000", // Quote asset amount
+		"15",       // Leverage
+		"90000000", // Quote asset amount
 		"0",
 	})
 	s.NoError(err)
@@ -226,8 +226,8 @@ func (s *IntegrationTestSuite) TestMultiLiquidate() {
 	_, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[5], []string{
 		"sell",
 		asset.Registry.Pair(denoms.OSMO, denoms.NUSD).String(),
-		"15",     // Leverage
-		"900000", // Quote asset amount
+		"15",       // Leverage
+		"90000000", // Quote asset amount
 		"0",
 	})
 	s.Require().NoError(err)

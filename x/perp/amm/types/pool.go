@@ -312,6 +312,9 @@ func (market *Market) HasEnoughBaseReserve(baseAmount sdk.Dec) bool {
 func (market *Market) HasEnoughReservesForTrade(
 	quoteAmtAbs sdk.Dec, baseAmtAbs sdk.Dec,
 ) (err error) {
+	fmt.Println("quoteAmtAbs", quoteAmtAbs)
+	fmt.Println("market.QuoteReserve", market.QuoteReserve)
+	fmt.Println("market.Config.TradeLimitRatio", market.Config.TradeLimitRatio)
 	if !market.HasEnoughQuoteReserve(quoteAmtAbs) {
 		return ErrOverTradingLimit.Wrapf(
 			"quote amount %s is over trading limit", quoteAmtAbs)

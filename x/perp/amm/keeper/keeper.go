@@ -70,7 +70,7 @@ func (k Keeper) SwapBaseForQuote(
 	baseAmt sdk.Dec,
 	quoteLimit sdk.Dec,
 	skipFluctuationLimitCheck bool,
-) (updatedMarket types.Market, quoteAmtAbs sdk.Dec, err error) {
+) (updatedMarket types.Market, quoteAssetAmtAbs sdk.Dec, err error) {
 	if baseAmt.IsZero() {
 		return market, sdk.ZeroDec(), nil
 	}
@@ -80,17 +80,17 @@ func (k Keeper) SwapBaseForQuote(
 	}
 
 	baseAmtAbs := baseAmt.Abs()
-	quoteAmtAbs, err = market.GetQuoteAmountByBaseAmount(baseAmtAbs.MulInt64(dir.ToMultiplier()))
+	quoteReserveAbs, err := market.GetQuoteAmountByBaseAmount(baseAmtAbs.MulInt64(dir.ToMultiplier()))
 	if err != nil {
 		return market, sdk.Dec{}, err
 	}
 
-	quoteDelta := quoteAmtAbs.Neg().MulInt64(dir.ToMultiplier())
-	quoteAssetAmtAbs := market.FromQuoteReserveToAsset(quoteAmtAbs)
+	quoteDelta := quoteReserveAbs.Neg().MulInt64(dir.ToMultiplier())
 
-	if err := market.HasEnoughReservesForTrade(quoteAssetAmtAbs, baseAmtAbs); err != nil {
+	if err := market.HasEnoughReservesForTrade(quoteReserveAbs, baseAmtAbs); err != nil {
 		return market, sdk.Dec{}, err
 	}
+	quoteAssetAmtAbs = market.FromQuoteReserveToAsset(quoteReserveAbs)
 
 	if err := checkIfLimitIsViolated(quoteLimit, quoteAssetAmtAbs, dir); err != nil {
 		return market, sdk.Dec{}, err
