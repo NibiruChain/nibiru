@@ -73,7 +73,7 @@ func TestSnapshotUpdates(t *testing.T) {
 		sdk.NewDec(800),   // ← x + dxAmm
 		sdk.NewDec(1_250), // ← y + dyAMM
 		sdk.OneDec(),
-		sdk.NewDec(-200),
+		sdk.NewDec(200),
 		ctx.BlockTime(),
 	)
 
