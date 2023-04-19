@@ -240,7 +240,6 @@ func (k Keeper) increasePosition(
 ) (updatedMarket perpammtypes.Market, positionResp *types.PositionResp, err error) {
 	positionResp = &types.PositionResp{}
 
-	fmt.Println("increasedNotional: ", increasedNotional.String())
 	updatedMarket, positionResp.ExchangedPositionSize, err = k.swapQuoteForBase(
 		ctx,
 		market,
@@ -249,7 +248,6 @@ func (k Keeper) increasePosition(
 		baseAmtLimit,
 		/* skipFluctuationLimitCheck */ false,
 	)
-	fmt.Println("positionResp.ExchangedPositionSize: ", positionResp.ExchangedPositionSize.String())
 	if err != nil {
 		return perpammtypes.Market{}, nil, err
 	}
@@ -291,8 +289,6 @@ func (k Keeper) increasePosition(
 		LatestCumulativePremiumFraction: remaining.LatestCumulativePremiumFraction,
 		BlockNumber:                     ctx.BlockHeight(),
 	}
-
-	fmt.Println(positionResp.String())
 
 	return updatedMarket, positionResp, nil
 }

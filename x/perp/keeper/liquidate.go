@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/collections"
@@ -322,14 +320,6 @@ func (k Keeper) ExecutePartialLiquidation(
 		/* abs= */ currentPosition.Size_.Mul(params.PartialLiquidationRatio),
 	)
 
-	fmt.Println("-------------------------------------------------------------")
-	fmt.Println("-------------------------------------------------------------")
-	fmt.Println("currentPosition.Size_", currentPosition.Size_)
-	fmt.Println("params.PartialLiquidationRatio", params.PartialLiquidationRatio)
-	fmt.Println("partiallyLiquidatedPositionNotional", partiallyLiquidatedPositionNotional)
-	fmt.Println("-------------------------------------------------------------")
-	fmt.Println("-------------------------------------------------------------")
-
 	if err != nil {
 		return types.LiquidateResp{}, err
 	}
@@ -342,7 +332,6 @@ func (k Keeper) ExecutePartialLiquidation(
 		/* baseAmtLimit */ sdk.ZeroDec(),
 		/* skipFluctuationLimitCheck */ true,
 	)
-	fmt.Println(positionResp.String())
 	if err != nil {
 		return types.LiquidateResp{}, err
 	}
