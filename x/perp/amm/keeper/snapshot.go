@@ -68,7 +68,9 @@ func getPriceWithSnapshot(
 				TradeLimitRatio:        sdk.ZeroDec(), // unused
 			},
 		}
-		price, err = pool.GetBaseAmountByQuoteAmount(snapshotPriceOpts.assetAmount.Quo(pool.PegMultiplier).MulInt64(snapshotPriceOpts.direction.ToMultiplier()))
+		quoteReserve := pool.FromQuoteAssetToReserve(snapshotPriceOpts.assetAmount)
+
+		price, err = pool.GetBaseAmountByQuoteAmount(quoteReserve.MulInt64(snapshotPriceOpts.direction.ToMultiplier()))
 		if err != nil {
 			return
 		}
@@ -91,14 +93,14 @@ func getPriceWithSnapshot(
 				TradeLimitRatio:        sdk.ZeroDec(), // unused
 			},
 		}
-		price, err = pool.GetQuoteAmountByBaseAmount(
+		quoteReserveOut, err := pool.GetQuoteAmountByBaseAmount(
 			snapshotPriceOpts.assetAmount.MulInt64(snapshotPriceOpts.direction.ToMultiplier()),
 		)
 		if err != nil {
-			return
+			return sdk.ZeroDec(), err
 		}
-		price = price.Mul(pool.PegMultiplier)
-		return
+		price = pool.FromQuoteReserveToAsset(quoteReserveOut)
+		return price, nil
 	}
 
 	return sdk.ZeroDec(), nil

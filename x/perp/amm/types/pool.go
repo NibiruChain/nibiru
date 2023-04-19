@@ -15,6 +15,22 @@ import (
 // ----------------------------------------------------------------------------
 
 /*
+FromQuoteAssetToReserve returns the amount of quote reserve equivalent to the
+amount of quote asset given
+*/
+func (market *Market) FromQuoteAssetToReserve(quoteAsset sdk.Dec) sdk.Dec {
+	return quoteAsset.Quo(market.PegMultiplier)
+}
+
+/*
+FromQuoteReserveToAsset returns the amount of quote asset equivalent to the
+amount of quote reserve given
+*/
+func (market *Market) FromQuoteReserveToAsset(quoteReserve sdk.Dec) sdk.Dec {
+	return quoteReserve.Mul(market.PegMultiplier)
+}
+
+/*
 GetBaseAmountByQuoteAmount returns the amount of base asset you will get out
 by giving a specified amount of quote asset
 

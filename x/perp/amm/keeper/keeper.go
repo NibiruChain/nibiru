@@ -86,13 +86,13 @@ func (k Keeper) SwapBaseForQuote(
 	}
 
 	quoteDelta := quoteAmtAbs.Neg().MulInt64(dir.ToMultiplier())
-	quoteAmtAbs = quoteAmtAbs.Mul(market.PegMultiplier)
+	quoteAssetAmtAbs := market.FromQuoteReserveToAsset(quoteAmtAbs)
 
-	if err := market.HasEnoughReservesForTrade(quoteAmtAbs, baseAmtAbs); err != nil {
+	if err := market.HasEnoughReservesForTrade(quoteAssetAmtAbs, baseAmtAbs); err != nil {
 		return market, sdk.Dec{}, err
 	}
 
-	if err := checkIfLimitIsViolated(quoteLimit, quoteAmtAbs, dir); err != nil {
+	if err := checkIfLimitIsViolated(quoteLimit, quoteAssetAmtAbs, dir); err != nil {
 		return market, sdk.Dec{}, err
 	}
 
@@ -103,7 +103,7 @@ func (k Keeper) SwapBaseForQuote(
 		return market, sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
-	return updatedMarket, quoteAmtAbs, err
+	return updatedMarket, quoteAssetAmtAbs, err
 }
 
 func (k Keeper) executeSwap(
@@ -174,14 +174,14 @@ func (k Keeper) SwapQuoteForBase(
 	}
 
 	// check trade limit ratio on quote in either direction
-	quoteAmtAbs := quoteAmt.Quo(market.PegMultiplier).Abs()
+	quoteResrveAbs := market.FromQuoteAssetToReserve(quoteAmt).Abs()
 	baseAmtAbs, err = market.GetBaseAmountByQuoteAmount(
-		quoteAmtAbs.MulInt64(dir.ToMultiplier()))
+		quoteResrveAbs.MulInt64(dir.ToMultiplier()))
 	if err != nil {
 		return types.Market{}, sdk.Dec{}, err
 	}
 
-	if err := market.HasEnoughReservesForTrade(quoteAmtAbs, baseAmtAbs); err != nil {
+	if err := market.HasEnoughReservesForTrade(quoteResrveAbs, baseAmtAbs); err != nil {
 		return types.Market{}, sdk.Dec{}, err
 	}
 
@@ -189,7 +189,7 @@ func (k Keeper) SwapQuoteForBase(
 		return types.Market{}, sdk.Dec{}, err
 	}
 
-	quoteAmt = quoteAmtAbs.MulInt64(dir.ToMultiplier())
+	quoteAmt = quoteResrveAbs.MulInt64(dir.ToMultiplier())
 	baseDelta := baseAmtAbs.Neg().MulInt64(dir.ToMultiplier())
 
 	updatedMarket, err = k.executeSwap(ctx, market, quoteAmt, baseDelta, skipFluctuationLimitCheck)
