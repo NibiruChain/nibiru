@@ -44,10 +44,11 @@ func TestCreatePool(t *testing.T) {
 func TestEditPoolConfig(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	marketStart := types.Market{
-		Pair:         pair,
-		QuoteReserve: sdk.NewDec(10 * common.TO_MICRO),
-		BaseReserve:  sdk.NewDec(5 * common.TO_MICRO),
-		SqrtDepth:    common.MustSqrtDec(sdk.NewDec(5 * 10 * common.TO_MICRO * common.TO_MICRO)),
+		Pair:          pair,
+		QuoteReserve:  sdk.NewDec(10 * common.TO_MICRO),
+		BaseReserve:   sdk.NewDec(5 * common.TO_MICRO),
+		PegMultiplier: sdk.NewDec(1),
+		SqrtDepth:     common.MustSqrtDec(sdk.NewDec(5 * 10 * common.TO_MICRO * common.TO_MICRO)),
 		Config: types.MarketConfig{
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -305,10 +306,11 @@ func TestGetPoolPrices(t *testing.T) {
 func TestEditSwapInvariant(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.NIBI, denoms.NUSD)
 	marketStart := types.Market{
-		Pair:         pair,
-		QuoteReserve: sdk.NewDec(10 * common.TO_MICRO),
-		BaseReserve:  sdk.NewDec(5 * common.TO_MICRO),
-		SqrtDepth:    common.MustSqrtDec(sdk.NewDec(5 * 10 * common.TO_MICRO * common.TO_MICRO)),
+		Pair:          pair,
+		QuoteReserve:  sdk.NewDec(10 * common.TO_MICRO),
+		BaseReserve:   sdk.NewDec(5 * common.TO_MICRO),
+		SqrtDepth:     common.MustSqrtDec(sdk.NewDec(5 * 10 * common.TO_MICRO * common.TO_MICRO)),
+		PegMultiplier: sdk.OneDec(),
 		Config: types.MarketConfig{
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),

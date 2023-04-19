@@ -59,11 +59,12 @@ func (k Keeper) EditPoolConfig(
 	}
 
 	newMarket := types.Market{
-		Pair:         market.Pair,
-		BaseReserve:  market.BaseReserve,
-		QuoteReserve: market.QuoteReserve,
-		SqrtDepth:    market.SqrtDepth,
-		Config:       config, // main change is here
+		Pair:          market.Pair,
+		BaseReserve:   market.BaseReserve,
+		QuoteReserve:  market.QuoteReserve,
+		SqrtDepth:     market.SqrtDepth,
+		PegMultiplier: market.PegMultiplier,
+		Config:        config, // main change is here
 	}
 	if err := newMarket.Validate(); err != nil {
 		return err
@@ -112,11 +113,12 @@ func (k Keeper) EditSwapInvariant(
 	newSqrtDepth := common.MustSqrtDec(newBaseAmount.Mul(newQuoteAmount))
 
 	newMarket := types.Market{
-		Pair:         market.Pair,
-		BaseReserve:  newBaseAmount,
-		QuoteReserve: newQuoteAmount,
-		SqrtDepth:    newSqrtDepth,
-		Config:       market.Config,
+		Pair:          market.Pair,
+		BaseReserve:   newBaseAmount,
+		QuoteReserve:  newQuoteAmount,
+		SqrtDepth:     newSqrtDepth,
+		PegMultiplier: market.PegMultiplier,
+		Config:        market.Config,
 	}
 	if err := newMarket.Validate(); err != nil {
 		return err

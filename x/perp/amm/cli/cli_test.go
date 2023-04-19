@@ -112,11 +112,12 @@ func (s *IntegrationTestSuite) TestCmdCreatePoolProposal() {
 	s.T().Log("load example proposal json as bytes")
 	// ----------------------------------------------------------------------
 	proposal := &perpammtypes.CreatePoolProposal{
-		Title:        "Create ETH:USD pool",
-		Description:  "Creates an ETH:USD pool",
-		Pair:         "ETH:USD",
-		QuoteReserve: sdk.NewDec(1 * common.TO_MICRO),
-		BaseReserve:  sdk.NewDec(1 * common.TO_MICRO),
+		Title:         "Create ETH:USD pool",
+		Description:   "Creates an ETH:USD pool",
+		Pair:          "ETH:USD",
+		QuoteReserve:  sdk.NewDec(1 * common.TO_MICRO),
+		BaseReserve:   sdk.NewDec(1 * common.TO_MICRO),
+		PegMultiplier: sdk.OneDec(),
 		Config: perpammtypes.MarketConfig{
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.10"),
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.05"),

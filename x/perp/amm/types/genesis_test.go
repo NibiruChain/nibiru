@@ -20,10 +20,11 @@ func TestGenesisState_Validate(t *testing.T) {
 			genesis: &GenesisState{
 				Markets: []Market{
 					{
-						Pair:         asset.MustNewPair("btc:usd"),
-						BaseReserve:  sdk.NewDec(100_000),
-						QuoteReserve: sdk.NewDec(100_000),
-						SqrtDepth:    common.MustSqrtDec(sdk.NewDec(1e10)),
+						Pair:          asset.MustNewPair("btc:usd"),
+						BaseReserve:   sdk.NewDec(100_000),
+						QuoteReserve:  sdk.NewDec(100_000),
+						SqrtDepth:     common.MustSqrtDec(sdk.NewDec(1e10)),
+						PegMultiplier: sdk.OneDec(),
 						Config: MarketConfig{
 							FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.5"),
 							MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.05"),
@@ -33,10 +34,11 @@ func TestGenesisState_Validate(t *testing.T) {
 						},
 					},
 					{
-						Pair:         asset.MustNewPair("eth:usd"),
-						BaseReserve:  sdk.NewDec(100_000),
-						QuoteReserve: sdk.NewDec(100_000),
-						SqrtDepth:    common.MustSqrtDec(sdk.NewDec(1e10)),
+						Pair:          asset.MustNewPair("eth:usd"),
+						BaseReserve:   sdk.NewDec(100_000),
+						QuoteReserve:  sdk.NewDec(100_000),
+						SqrtDepth:     common.MustSqrtDec(sdk.NewDec(1e10)),
+						PegMultiplier: sdk.OneDec(),
 						Config: MarketConfig{
 							FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.5"),
 							MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.05"),
@@ -53,10 +55,11 @@ func TestGenesisState_Validate(t *testing.T) {
 			genesis: &GenesisState{
 				Markets: []Market{
 					{
-						Pair:         asset.MustNewPair("btc:usd"),
-						BaseReserve:  sdk.NewDec(100_000),
-						QuoteReserve: sdk.NewDec(100_000),
-						SqrtDepth:    common.MustSqrtDec(sdk.NewDec(1e10)),
+						Pair:          asset.MustNewPair("btc:usd"),
+						BaseReserve:   sdk.NewDec(100_000),
+						QuoteReserve:  sdk.NewDec(100_000),
+						SqrtDepth:     common.MustSqrtDec(sdk.NewDec(1e10)),
+						PegMultiplier: sdk.OneDec(),
 						Config: MarketConfig{
 							FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.5"),
 							MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.05"),
@@ -66,10 +69,11 @@ func TestGenesisState_Validate(t *testing.T) {
 						},
 					},
 					{
-						Pair:         asset.MustNewPair("invalid:usd"),
-						BaseReserve:  sdk.NewDec(100_000),
-						QuoteReserve: sdk.NewDec(100_000),
-						SqrtDepth:    common.MustSqrtDec(sdk.NewDec(1e10)),
+						Pair:          asset.MustNewPair("invalid:usd"),
+						BaseReserve:   sdk.NewDec(100_000),
+						QuoteReserve:  sdk.NewDec(100_000),
+						SqrtDepth:     common.MustSqrtDec(sdk.NewDec(1e10)),
+						PegMultiplier: sdk.OneDec(),
 						Config: MarketConfig{
 							FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.5"),
 							MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.5"),
@@ -86,10 +90,11 @@ func TestGenesisState_Validate(t *testing.T) {
 			genesis: &GenesisState{
 				Markets: []Market{
 					{
-						Pair:         asset.MustNewPair("btc:usd"),
-						BaseReserve:  sdk.NewDec(100_000),
-						QuoteReserve: sdk.NewDec(100_000),
-						SqrtDepth:    common.MustSqrtDec(sdk.NewDec(1e10)),
+						Pair:          asset.MustNewPair("btc:usd"),
+						BaseReserve:   sdk.NewDec(100_000),
+						QuoteReserve:  sdk.NewDec(100_000),
+						PegMultiplier: sdk.OneDec(),
+						SqrtDepth:     common.MustSqrtDec(sdk.NewDec(1e10)),
 						Config: MarketConfig{
 							FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.5"),
 							MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.05"),
@@ -99,10 +104,11 @@ func TestGenesisState_Validate(t *testing.T) {
 						},
 					},
 					{
-						Pair:         asset.MustNewPair("eth:usd"),
-						BaseReserve:  sdk.NewDec(100_000),
-						QuoteReserve: sdk.NewDec(100_000),
-						SqrtDepth:    common.MustSqrtDec(sdk.NewDec(1e10)),
+						Pair:          asset.MustNewPair("eth:usd"),
+						BaseReserve:   sdk.NewDec(100_000),
+						QuoteReserve:  sdk.NewDec(100_000),
+						PegMultiplier: sdk.OneDec(),
+						SqrtDepth:     common.MustSqrtDec(sdk.NewDec(1e10)),
 						Config: MarketConfig{
 							FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.5"),
 							MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.05"),
@@ -112,10 +118,11 @@ func TestGenesisState_Validate(t *testing.T) {
 						},
 					},
 					{
-						Pair:         asset.MustNewPair("eth:usd"),
-						BaseReserve:  sdk.NewDec(100_000),
-						QuoteReserve: sdk.NewDec(100_000),
-						SqrtDepth:    common.MustSqrtDec(sdk.NewDec(1e10)),
+						Pair:          asset.MustNewPair("eth:usd"),
+						BaseReserve:   sdk.NewDec(100_000),
+						QuoteReserve:  sdk.NewDec(100_000),
+						PegMultiplier: sdk.OneDec(),
+						SqrtDepth:     common.MustSqrtDec(sdk.NewDec(1e10)),
 						Config: MarketConfig{
 							FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.5"),
 							MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.05"),
