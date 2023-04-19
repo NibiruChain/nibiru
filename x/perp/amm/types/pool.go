@@ -119,7 +119,7 @@ func (market *Market) AddToQuoteReserve(amount sdk.Dec) {
 // The 'amount' is not assumed to be positive.
 func (market *Market) AddToBaseReserveAndBias(amount sdk.Dec) {
 	market.BaseReserve = market.BaseReserve.Add(amount)
-	market.Bias = market.Bias.Add(amount)
+	market.Bias = market.Bias.Sub(amount) // Bias is the opposite of what the trader get
 }
 
 type ArgsNewMarket struct {
