@@ -86,6 +86,7 @@ func (q queryServer) BaseAssetPrice(
 	if err != nil {
 		return nil, types.ErrPairNotSupported
 	}
+
 	priceInQuoteDenom, err := q.k.GetBaseAssetPrice(
 		market,
 		req.Direction,

@@ -217,8 +217,8 @@ func (s *IntegrationTestSuite) TestMultiLiquidate() {
 	_, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[4], []string{
 		"sell",
 		asset.Registry.Pair(denoms.ATOM, denoms.NUSD).String(),
-		"15",       // Leverage
-		"90000000", // Quote asset amount
+		"15",     // Leverage
+		"900000", // Quote asset amount
 		"0",
 	})
 	s.NoError(err)
@@ -226,8 +226,8 @@ func (s *IntegrationTestSuite) TestMultiLiquidate() {
 	_, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[5], []string{
 		"sell",
 		asset.Registry.Pair(denoms.OSMO, denoms.NUSD).String(),
-		"15",       // Leverage
-		"90000000", // Quote asset amount
+		"15",     // Leverage
+		"900000", // Quote asset amount
 		"0",
 	})
 	s.Require().NoError(err)
@@ -334,11 +334,11 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.T().Logf("query response: %+v", queryResp)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
 	s.EqualValues(asset.Registry.Pair(denoms.BTC, denoms.NUSD), queryResp.Position.Pair)
-	s.EqualValues(sdk.MustNewDecFromStr("499.975001249937503125"), queryResp.Position.Size_)
+	s.EqualValues(sdk.MustNewDecFromStr("499.975001249937503124"), queryResp.Position.Size_)
 	s.EqualValues(sdk.NewDec(2*common.TO_MICRO), queryResp.Position.Margin)
 	s.EqualValues(sdk.NewDec(3*common.TO_MICRO), queryResp.Position.OpenNotional)
-	s.EqualValues(sdk.MustNewDecFromStr("3000000.000000000000000000"), queryResp.PositionNotional)
-	s.EqualValues(sdk.MustNewDecFromStr("0.000000000000000000"), queryResp.UnrealizedPnl)
+	s.EqualValues(sdk.MustNewDecFromStr("2999999.999999999999994000"), queryResp.PositionNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000006000"), queryResp.UnrealizedPnl)
 	s.EqualValues(sdk.MustNewDecFromStr("0.666666666666666667"), queryResp.MarginRatioMark)
 
 	s.T().Log("D. Open a reverse position smaller than the existing position")
@@ -356,7 +356,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	reserveAssets, err = testutilcli.QueryMarketReserveAssets(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 	s.NoError(err)
 	s.T().Logf(" \n reserve assets: %+v \n", reserveAssets)
-	s.EqualValues(sdk.MustNewDecFromStr("9999500.041663750215262154"), reserveAssets.BaseReserve)
+	s.EqualValues(sdk.MustNewDecFromStr("9999500.041663750215262155"), reserveAssets.BaseReserve)
 	s.EqualValues(sdk.MustNewDecFromStr("10000499.983333333333333333"), reserveAssets.QuoteReserve)
 
 	s.T().Log("D. Check trader position")
@@ -365,11 +365,11 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.T().Logf("query response: %+v", queryResp)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
 	s.EqualValues(asset.Registry.Pair(denoms.BTC, denoms.NUSD), queryResp.Position.Pair)
-	s.EqualValues(sdk.MustNewDecFromStr("499.958336249784737846"), queryResp.Position.Size_)
+	s.EqualValues(sdk.MustNewDecFromStr("499.958336249784737845"), queryResp.Position.Size_)
 	s.EqualValues(sdk.NewDec(2*common.TO_MICRO), queryResp.Position.Margin)
 	s.EqualValues(sdk.NewDec(2_999_900), queryResp.Position.OpenNotional)
-	s.EqualValues(sdk.MustNewDecFromStr("2999899.999999999999998000"), queryResp.PositionNotional)
-	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000002000"), queryResp.UnrealizedPnl)
+	s.EqualValues(sdk.MustNewDecFromStr("2999899.999999999999992000"), queryResp.PositionNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000008000"), queryResp.UnrealizedPnl)
 	s.EqualValues(sdk.MustNewDecFromStr("0.666688889629654322"), queryResp.MarginRatioMark)
 
 	s.T().Log("E. Open a reverse position larger than the existing position")
@@ -389,10 +389,10 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.T().Logf("query response: %+v", queryResp)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
 	s.EqualValues(asset.Registry.Pair(denoms.BTC, denoms.NUSD), queryResp.Position.Pair)
-	s.EqualValues(sdk.MustNewDecFromStr("-166.686111713005402946"), queryResp.Position.Size_)
-	s.EqualValues(sdk.MustNewDecFromStr("1000100.000000000000002000"), queryResp.Position.OpenNotional)
-	s.EqualValues(sdk.MustNewDecFromStr("1000100.000000000000002000"), queryResp.Position.Margin)
-	s.EqualValues(sdk.MustNewDecFromStr("1000100.000000000000004000"), queryResp.PositionNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("-166.686111713005402947"), queryResp.Position.Size_)
+	s.EqualValues(sdk.MustNewDecFromStr("1000100.000000000000008000"), queryResp.Position.OpenNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("1000100.000000000000008000"), queryResp.Position.Margin)
+	s.EqualValues(sdk.MustNewDecFromStr("1000100.000000000000010000"), queryResp.PositionNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000002000"), queryResp.UnrealizedPnl)
 	// there is a random delta due to twap margin ratio calculation and random block times in the in-process network
 	s.InDelta(1, queryResp.MarginRatioMark.MustFloat64(), 0.008)

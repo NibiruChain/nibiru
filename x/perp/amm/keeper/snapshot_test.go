@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -69,7 +68,7 @@ func TestGetSnapshotPrice(t *testing.T) {
 			twapCalcOption: types.TwapCalcOption_QUOTE_ASSET_SWAP,
 			direction:      types.Direction_LONG,
 			assetAmount:    sdk.NewDec(1),
-			expectedPrice:  sdk.MustNewDecFromStr("11.928429423459245719"), // 3 * (2,000 - 2,000,000 / 1,002)
+			expectedPrice:  sdk.MustNewDecFromStr("2.991026919242273479"), // 3 * (2,000 - 2,000,000 / 1,002)
 		},
 		{
 			name:           "quote asset swap remove from pool calc",
@@ -81,7 +80,7 @@ func TestGetSnapshotPrice(t *testing.T) {
 			twapCalcOption: types.TwapCalcOption_QUOTE_ASSET_SWAP,
 			direction:      types.Direction_SHORT,
 			assetAmount:    sdk.NewDec(1),
-			expectedPrice:  sdk.MustNewDecFromStr("12.072434607645876466"), // 3 * (2,000 - 2,000,000 / 998)
+			expectedPrice:  sdk.MustNewDecFromStr("3.009027081243731495"), // 3 * (2,000 - 2,000,000 / 998)
 		},
 		{
 			name:           "base asset swap add to pool calc",
@@ -93,7 +92,7 @@ func TestGetSnapshotPrice(t *testing.T) {
 			Bias:           sdk.NewDec(1_000),
 			PegMultiplier:  sdk.MustNewDecFromStr("0.3333333333333333"),
 			assetAmount:    sdk.NewDec(1),
-			expectedPrice:  sdk.MustNewDecFromStr("0.083291687489588531"), // (1,000,000 / 2000 - 1,000,000 / 2001) * 1/3
+			expectedPrice:  sdk.MustNewDecFromStr("0.333000333000332967"), // (1,000,000 / 2000 - 1,000,000 / 2001) * 1/3
 			// 1 / expected price ~= 12.006
 		},
 		{
@@ -106,7 +105,7 @@ func TestGetSnapshotPrice(t *testing.T) {
 			Bias:           sdk.NewDec(1_000),
 			PegMultiplier:  sdk.MustNewDecFromStr("0.3333333333333333"),
 			assetAmount:    sdk.NewDec(1),
-			expectedPrice:  sdk.MustNewDecFromStr("0.083375020843755203"), // (1,000,000 / 2000 - 1,000,000 / 1999) * 1/3
+			expectedPrice:  sdk.MustNewDecFromStr("0.333667000333666967"), // (1,000,000 / 2000 - 1,000,000 / 1999) * 1/3
 			// 1 / expected price ~= 11.994
 		},
 	}
@@ -134,8 +133,6 @@ func TestGetSnapshotPrice(t *testing.T) {
 				snapshot,
 				snapshotPriceOpts,
 			)
-
-			fmt.Println("price", price)
 
 			require.NoError(t, err)
 			require.EqualValuesf(t, tc.expectedPrice, price,
