@@ -28,6 +28,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 		pairName      string
 		baseAmt       string
 		quoteAmt      string
+		pegMultiplier string
 		tradeLimit    string
 		flucLimit     string
 		maxOracle     string
@@ -40,6 +41,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			pairName:      "",
 			baseAmt:       "1",
 			quoteAmt:      "1",
+			pegMultiplier: "1",
 			tradeLimit:    "1",
 			flucLimit:     "1",
 			maxOracle:     "1",
@@ -52,6 +54,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			pairName:      "token0:token1:token2",
 			baseAmt:       "1",
 			quoteAmt:      "1",
+			pegMultiplier: "1",
 			tradeLimit:    "1",
 			flucLimit:     "1",
 			maxOracle:     "1",
@@ -64,6 +67,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			pairName:      "token0:token1",
 			baseAmt:       "1",
 			quoteAmt:      "1",
+			pegMultiplier: "1",
 			tradeLimit:    "test",
 			flucLimit:     "1",
 			maxOracle:     "1",
@@ -76,6 +80,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			pairName:      "token0:token1",
 			baseAmt:       "",
 			quoteAmt:      "1",
+			pegMultiplier: "1",
 			tradeLimit:    "1",
 			flucLimit:     "1",
 			maxOracle:     "1",
@@ -88,6 +93,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			pairName:      "token0:token1",
 			baseAmt:       "100",
 			quoteAmt:      "100",
+			pegMultiplier: "1",
 			tradeLimit:    "0.1",
 			flucLimit:     "0.1",
 			maxOracle:     "0.1",
@@ -96,10 +102,37 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			expectError:   true,
 		},
 		{
+			name:          "peg multiplier cannot be zero",
+			pairName:      "token0:token1",
+			baseAmt:       "100",
+			quoteAmt:      "100",
+			pegMultiplier: "0",
+			tradeLimit:    "0.1",
+			flucLimit:     "0.1",
+			maxOracle:     "0.1",
+			maintainRatio: "0.1",
+			maxLeverage:   "1",
+			expectError:   true,
+		},
+		{
+			name:          "peg multiplier cannot be negative",
+			pairName:      "token0:token1",
+			baseAmt:       "100",
+			quoteAmt:      "100",
+			pegMultiplier: "-1",
+			tradeLimit:    "0.1",
+			flucLimit:     "0.1",
+			maxOracle:     "0.1",
+			maintainRatio: "0.1",
+			maxLeverage:   "1",
+			expectError:   true,
+		},
+		{
 			name:          "valid market pair",
 			pairName:      "token0:token1",
 			baseAmt:       "100",
 			quoteAmt:      "100",
+			pegMultiplier: "1",
 			tradeLimit:    "0.1",
 			flucLimit:     "0.1",
 			maxOracle:     "0.1",
@@ -134,6 +167,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 				fmt.Sprintf("--%s=%s", cli.FlagPair, tc.pairName),
 				fmt.Sprintf("--%s=%s", cli.FlagBaseAmt, tc.baseAmt),
 				fmt.Sprintf("--%s=%s", cli.FlagQuoteAmt, tc.quoteAmt),
+				fmt.Sprintf("--%s=%s", cli.FlagPegMultiplier, tc.pegMultiplier),
 				fmt.Sprintf("--%s=%s", cli.FlagTradeLim, tc.tradeLimit),
 				fmt.Sprintf("--%s=%s", cli.FlagFluctLim, tc.flucLimit),
 				fmt.Sprintf("--%s=%s", cli.FlagMaxOracleSpreadRatio, tc.maxOracle),

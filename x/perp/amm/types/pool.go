@@ -286,6 +286,10 @@ func (market *Market) Validate() error {
 		return err
 	}
 
+	if market.PegMultiplier.LTE(sdk.ZeroDec()) {
+		return fmt.Errorf("peg multiplier must be > 0")
+	}
+
 	if err := market.Config.Validate(); err != nil {
 		return err
 	}
