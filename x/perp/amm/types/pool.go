@@ -34,18 +34,17 @@ func (market *Market) GetBaseAmountByQuoteAmount(
 		return sdk.ZeroDec(), nil
 	}
 
-	phi := market.SqrtDepth
-	phi_squared := phi.Mul(phi)
+	invariant := market.QuoteReserve.Mul(market.BaseReserve) // x * y = k
 
-	if phi_squared.Quo(phi.Add(market.Bias)).Add(quoteDelta).LTE(sdk.ZeroDec()) {
-		return sdk.Dec{}, ErrQuoteReserveAtZero.Wrapf(
-			"base assets reserves below zero after trying to swap %s quote assets",
-			quoteDelta.String(),
-		)
+	quoteReservesAfter := market.QuoteReserve.Add(quoteDelta)
+	if quoteReservesAfter.LTE(sdk.ZeroDec()) {
+		return sdk.Dec{}, ErrQuoteReserveAtZero
 	}
 
-	// Δb = φ + B - φ² / (φ² / (φ + B) + Δq)
-	return phi.Add(market.Bias).Sub(phi_squared.Quo(phi_squared.Quo(phi.Add(market.Bias)).Add(quoteDelta))).Abs(), nil
+	baseReservesAfter := invariant.Quo(quoteReservesAfter)
+	baseOutAbs = baseReservesAfter.Sub(market.BaseReserve).Abs()
+
+	return baseOutAbs, nil
 }
 
 /*
@@ -68,18 +67,20 @@ func (market *Market) GetQuoteAmountByBaseAmount(
 		return sdk.ZeroDec(), nil
 	}
 
-	phi := market.SqrtDepth
-	phi_squared := phi.Mul(phi)
+	invariant := market.QuoteReserve.Mul(market.BaseReserve) // x * y = k
 
-	if phi.Add(market.Bias).Add(baseDelta).LTE(sdk.ZeroDec()) {
+	baseReservesAfter := market.BaseReserve.Add(baseDelta)
+	if baseReservesAfter.LTE(sdk.ZeroDec()) {
 		return sdk.Dec{}, ErrBaseReserveAtZero.Wrapf(
-			"base assets reserves below zero after trying to swap %s base assets",
+			"base assets below zero after trying to swap %s base assets",
 			baseDelta.String(),
 		)
 	}
 
-	// Δq = φ² / (φ + B) - φ² / (φ + B + Δb)
-	return phi_squared.Quo(phi.Add(market.Bias)).Sub(phi_squared.Quo(phi.Add(market.Bias).Add(baseDelta))).Abs(), nil
+	quoteReservesAfter := invariant.Quo(baseReservesAfter)
+	quoteOutAbs = quoteReservesAfter.Sub(market.QuoteReserve).Abs()
+
+	return quoteOutAbs, nil
 }
 
 // GetMarkPrice returns the price of the asset.

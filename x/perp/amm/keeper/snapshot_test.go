@@ -52,24 +52,24 @@ func TestGetSnapshotPrice(t *testing.T) {
 			pair:           asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			quoteReserve:   sdk.NewDec(1_000),
 			baseReserve:    sdk.NewDec(1_000),
-			PegMultiplier:  sdk.NewDec(3),
+			PegMultiplier:  sdk.MustNewDecFromStr("0.3333333333333333"),
 			Bias:           sdk.ZeroDec(),
 			twapCalcOption: types.TwapCalcOption_QUOTE_ASSET_SWAP,
 			direction:      types.Direction_LONG,
 			assetAmount:    sdk.NewDec(1),
-			expectedPrice:  sdk.MustNewDecFromStr("2.997002997002997003"), //almost 3
+			expectedPrice:  sdk.MustNewDecFromStr("2.991026919242273479"), //almost 3
 		},
 		{
 			name:           "quote asset swap add to pool calc with bias",
 			pair:           asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			quoteReserve:   sdk.NewDec(1_000),
 			baseReserve:    sdk.NewDec(1_000),
-			PegMultiplier:  sdk.NewDec(3),
+			PegMultiplier:  sdk.MustNewDecFromStr("0.3333333333333333"),
 			Bias:           sdk.NewDec(1_000),
 			twapCalcOption: types.TwapCalcOption_QUOTE_ASSET_SWAP,
 			direction:      types.Direction_LONG,
 			assetAmount:    sdk.NewDec(1),
-			expectedPrice:  sdk.MustNewDecFromStr("11.976047904191616765"), // 3 * (2,000 - 2,000,000 / 1,002)
+			expectedPrice:  sdk.MustNewDecFromStr("11.928429423459245719"), // 3 * (2,000 - 2,000,000 / 1,002)
 		},
 		{
 			name:           "quote asset swap remove from pool calc",
@@ -77,11 +77,11 @@ func TestGetSnapshotPrice(t *testing.T) {
 			quoteReserve:   sdk.NewDec(1_000),
 			baseReserve:    sdk.NewDec(1_000),
 			Bias:           sdk.NewDec(1_000),
-			PegMultiplier:  sdk.NewDec(3),
+			PegMultiplier:  sdk.MustNewDecFromStr("0.3333333333333333"),
 			twapCalcOption: types.TwapCalcOption_QUOTE_ASSET_SWAP,
 			direction:      types.Direction_SHORT,
 			assetAmount:    sdk.NewDec(1),
-			expectedPrice:  sdk.MustNewDecFromStr("12.024048096192384771"), // 3 * (2,000 - 2,000,000 / 998)
+			expectedPrice:  sdk.MustNewDecFromStr("12.072434607645876466"), // 3 * (2,000 - 2,000,000 / 998)
 		},
 		{
 			name:           "base asset swap add to pool calc",
@@ -91,9 +91,9 @@ func TestGetSnapshotPrice(t *testing.T) {
 			twapCalcOption: types.TwapCalcOption_BASE_ASSET_SWAP,
 			direction:      types.Direction_LONG,
 			Bias:           sdk.NewDec(1_000),
-			PegMultiplier:  sdk.NewDec(3),
+			PegMultiplier:  sdk.MustNewDecFromStr("0.3333333333333333"),
 			assetAmount:    sdk.NewDec(1),
-			expectedPrice:  sdk.MustNewDecFromStr("0.083291687489588539"), // (1,000,000 / 2000 - 1,000,000 / 2001) * 1/3
+			expectedPrice:  sdk.MustNewDecFromStr("0.083291687489588531"), // (1,000,000 / 2000 - 1,000,000 / 2001) * 1/3
 			// 1 / expected price ~= 12.006
 		},
 		{
@@ -104,9 +104,9 @@ func TestGetSnapshotPrice(t *testing.T) {
 			twapCalcOption: types.TwapCalcOption_BASE_ASSET_SWAP,
 			direction:      types.Direction_SHORT,
 			Bias:           sdk.NewDec(1_000),
-			PegMultiplier:  sdk.NewDec(3),
+			PegMultiplier:  sdk.MustNewDecFromStr("0.3333333333333333"),
 			assetAmount:    sdk.NewDec(1),
-			expectedPrice:  sdk.MustNewDecFromStr("0.083375020843755211"), // (1,000,000 / 2000 - 1,000,000 / 1999) * 1/3
+			expectedPrice:  sdk.MustNewDecFromStr("0.083375020843755203"), // (1,000,000 / 2000 - 1,000,000 / 1999) * 1/3
 			// 1 / expected price ~= 11.994
 		},
 	}
