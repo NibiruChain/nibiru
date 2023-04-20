@@ -64,7 +64,7 @@ func (market *Market) GetBaseAmountByQuoteAmount(
 }
 
 /*
-GetQuoteAmountByBaseAmount returns the amount of quote asset you will get out
+GetQuoteReserveByBase returns the amount of quote asset you will get out
 by giving a specified amount of base asset
 
 args:
@@ -76,7 +76,7 @@ ret:
     always an absolute value
   - err: error
 */
-func (market *Market) GetQuoteAmountByBaseAmount(
+func (market *Market) GetQuoteReserveByBase(
 	baseDelta sdk.Dec,
 ) (quoteOutAbs sdk.Dec, err error) {
 	if baseDelta.IsZero() {
@@ -119,7 +119,7 @@ func (market *Market) AddToQuoteReserve(amount sdk.Dec) {
 // The 'amount' is not assumed to be positive.
 func (market *Market) AddToBaseReserveAndBias(amount sdk.Dec) {
 	market.BaseReserve = market.BaseReserve.Add(amount)
-	market.Bias = market.Bias.Add(amount)
+	market.Bias = market.Bias.Sub(amount) // Bias is the opposite of what the trader get
 }
 
 type ArgsNewMarket struct {

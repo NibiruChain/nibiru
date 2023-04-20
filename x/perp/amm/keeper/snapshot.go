@@ -93,7 +93,7 @@ func getPriceWithSnapshot(
 				TradeLimitRatio:        sdk.ZeroDec(), // unused
 			},
 		}
-		quoteReserveOut, err := pool.GetQuoteAmountByBaseAmount(
+		quoteReserveOut, err := pool.GetQuoteReserveByBase(
 			snapshotPriceOpts.assetAmount.MulInt64(snapshotPriceOpts.direction.ToMultiplier()),
 		)
 		if err != nil {

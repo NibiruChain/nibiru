@@ -225,7 +225,7 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 	}
 }
 
-func TestGetQuoteAmountByBaseAmount(t *testing.T) {
+func TestGetQuoteReserveByBase(t *testing.T) {
 	pair := asset.MustNewPair("BTC:NUSD")
 
 	tests := []struct {
@@ -284,7 +284,7 @@ func TestGetQuoteAmountByBaseAmount(t *testing.T) {
 				},
 			}
 
-			amount, err := pool.GetQuoteAmountByBaseAmount(tc.baseIn)
+			amount, err := pool.GetQuoteReserveByBase(tc.baseIn)
 			if tc.expectedErr != nil {
 				require.ErrorIs(t, err, tc.expectedErr,
 					"expected error: %w, got: %w", tc.expectedErr, err)
