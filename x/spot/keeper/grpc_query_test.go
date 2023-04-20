@@ -3,7 +3,6 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
@@ -314,7 +313,7 @@ func TestQueryNumPools(t *testing.T) {
 			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 			sender := testutil.AccAddress()
 			// need funds to create pools
-			require.NoError(t, simapp.FundAccount(
+			require.NoError(t, testapp.FundAccount(
 				app.BankKeeper,
 				ctx,
 				sender,
