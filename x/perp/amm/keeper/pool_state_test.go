@@ -38,6 +38,10 @@ func TestCreatePool(t *testing.T) {
 
 	notExist := perpammKeeper.ExistsPool(ctx, "BTC:OTHER")
 	require.False(t, notExist)
+
+	pool, err := perpammKeeper.GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+	require.NoError(t, err)
+	require.Equal(t, sdk.ZeroDec(), pool.Bias)
 }
 
 func TestCreatePool_Errors(t *testing.T) {
