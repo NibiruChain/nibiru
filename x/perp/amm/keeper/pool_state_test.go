@@ -30,7 +30,6 @@ func TestCreatePool(t *testing.T) {
 			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 		},
-		sdk.ZeroDec(),
 		sdk.NewDec(2),
 	))
 
@@ -57,7 +56,6 @@ func TestCreatePool_Errors(t *testing.T) {
 			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 		},
-		sdk.ZeroDec(),
 		sdk.NewDec(2),
 	), "quote asset reserve 10000000.000000000000000000 must be equal to base asset reserve 5000000.000000000000000000")
 }
@@ -87,7 +85,6 @@ func TestEditPoolConfig(t *testing.T) {
 			marketStart.QuoteReserve,
 			marketStart.BaseReserve,
 			marketStart.Config,
-			sdk.ZeroDec(),
 			sdk.OneDec(),
 		))
 		exists := perpammKeeper.ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
@@ -301,7 +298,6 @@ func TestGetPoolPrices(t *testing.T) {
 					tc.market.QuoteReserve,
 					tc.market.BaseReserve,
 					tc.market.Config,
-					sdk.ZeroDec(),
 					tc.market.PegMultiplier,
 				))
 			}
@@ -351,7 +347,6 @@ func TestEditSwapInvariant(t *testing.T) {
 			marketStart.QuoteReserve,
 			marketStart.BaseReserve,
 			marketStart.Config,
-			sdk.ZeroDec(),
 			sdk.OneDec(),
 		))
 		exists := perpammKeeper.ExistsPool(ctx, pair)

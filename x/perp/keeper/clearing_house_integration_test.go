@@ -39,7 +39,7 @@ func createInitMarket() Action {
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			MaxOracleSpreadRatio:   sdk.OneDec(), // 100%,
 			TradeLimitRatio:        sdk.OneDec(),
-		}, sdk.ZeroDec())
+		})
 }
 
 func TestOpenPosition(t *testing.T) {
@@ -416,7 +416,6 @@ func TestOpenPositionSuccess(t *testing.T) {
 					MaxOracleSpreadRatio:   sdk.OneDec(), // 100%,
 					TradeLimitRatio:        sdk.OneDec(),
 				},
-				sdk.ZeroDec(),
 				sdk.OneDec(),
 			))
 			keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, perptypes.PairMetadata{
@@ -672,7 +671,6 @@ func TestOpenPositionError(t *testing.T) {
 					MaxOracleSpreadRatio:   sdk.OneDec(), // 100%,
 					TradeLimitRatio:        tc.poolTradeLimitRatio,
 				},
-				sdk.ZeroDec(),
 				sdk.OneDec(),
 			))
 			keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, perptypes.PairMetadata{
@@ -743,7 +741,6 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 						MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"), // 100%,
 						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					},
-					sdk.ZeroDec(),
 					sdk.NewDec(2),
 				))
 

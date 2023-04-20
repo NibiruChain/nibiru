@@ -41,7 +41,6 @@ func initAppMarkets(
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
-		sdk.ZeroDec(),
 		pegMultiplier,
 	))
 	keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
@@ -60,7 +59,6 @@ func initAppMarkets(
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
-		sdk.ZeroDec(),
 		sdk.OneDec(),
 	))
 	keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
@@ -79,7 +77,6 @@ func initAppMarkets(
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
-		sdk.ZeroDec(),
 		sdk.OneDec(),
 	))
 	keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{

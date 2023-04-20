@@ -36,7 +36,6 @@ func TestSnapshotUpdates(t *testing.T) {
 		/* quoteReserve */ sdk.NewDec(1_000),
 		/* baseReserve */ sdk.NewDec(1_000),
 		/* config */ *types.DefaultMarketConfig().WithTradeLimitRatio(sdk.OneDec()).WithFluctuationLimitRatio(sdk.OneDec()),
-		/* bias */ sdk.ZeroDec(),
 		/* pegMultiplier */ sdk.OneDec(),
 	))
 	expectedSnapshot := types.NewReserveSnapshot(

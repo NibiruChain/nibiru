@@ -98,7 +98,6 @@ func TestExecuteFullLiquidation(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-				sdk.ZeroDec(),
 				sdk.NewDec(2),
 			))
 			require.True(t, perpammKeeper.ExistsPool(ctx, tokenPair))
@@ -278,7 +277,6 @@ func TestExecutePartialLiquidation(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-				sdk.ZeroDec(),
 				sdk.NewDec(2),
 			))
 			require.True(t, perpammKeeper.ExistsPool(ctx, tokenPair))
@@ -453,7 +451,6 @@ func TestMultiLiquidate(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-				sdk.ZeroDec(),
 				sdk.OneDec(),
 			))
 
