@@ -41,6 +41,27 @@ func TestCreatePool(t *testing.T) {
 	require.False(t, notExist)
 }
 
+func TestCreatePool_Errors(t *testing.T) {
+	t.Log("different quote and base reserves should fail")
+	perpammKeeper, _, ctx := getKeeper(t)
+
+	require.ErrorContains(t, perpammKeeper.CreatePool(
+		ctx,
+		/* pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+		/* quote */ sdk.NewDec(10*common.TO_MICRO), // 10 tokens
+		/* base */ sdk.NewDec(5*common.TO_MICRO), // 5 tokens
+		types.MarketConfig{
+			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
+			TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
+		},
+		sdk.ZeroDec(),
+		sdk.NewDec(2),
+	), "quote asset reserve 10000000.000000000000000000 must be equal to base asset reserve 5000000.000000000000000000")
+}
+
 func TestEditPoolConfig(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	marketStart := types.Market{

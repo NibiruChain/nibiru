@@ -21,7 +21,7 @@ func TestGenesis(t *testing.T) {
 			Pair:         asset.MustNewPair("BTC:NUSD"),
 			BaseReserve:  sdk.NewDec(1 * common.TO_MICRO), // 1
 			QuoteReserve: sdk.NewDec(1 * common.TO_MICRO), // 30,000
-			SqrtDepth:    common.MustSqrtDec(sdk.NewDec(30_000 * common.TO_MICRO * common.TO_MICRO)),
+			SqrtDepth:    common.MustSqrtDec(sdk.NewDec(common.TO_MICRO * common.TO_MICRO)),
 			Config: types.MarketConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.88"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.20"),
@@ -36,7 +36,7 @@ func TestGenesis(t *testing.T) {
 			Pair:         asset.MustNewPair("ETH:NUSD"),
 			BaseReserve:  sdk.NewDec(2 * common.TO_MICRO), // 2
 			QuoteReserve: sdk.NewDec(2 * common.TO_MICRO), // 60,000
-			SqrtDepth:    common.MustSqrtDec(sdk.NewDec(2 * 60_000 * common.TO_MICRO * common.TO_MICRO)),
+			SqrtDepth:    common.MustSqrtDec(sdk.NewDec(2 * 2 * common.TO_MICRO * common.TO_MICRO)),
 			Config: types.MarketConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.77"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
