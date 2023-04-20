@@ -9,7 +9,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 
-	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
@@ -281,7 +280,7 @@ func TestCreatePool(t *testing.T) {
 				tc.creatorAddr = ed25519.GenPrivKey().PubKey().Address().Bytes()
 			}
 			if tc.senderInitialFunds != nil {
-				require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, tc.creatorAddr, tc.senderInitialFunds))
+				require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, tc.creatorAddr, tc.senderInitialFunds))
 			}
 
 			msgCreatePool := types.MsgCreatePool{
@@ -415,7 +414,7 @@ func TestCreateExitJoinPool(t *testing.T) {
 				tc.creatorAddr = ed25519.GenPrivKey().PubKey().Address().Bytes()
 			}
 			if tc.senderInitialFunds != nil {
-				require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, tc.creatorAddr, tc.senderInitialFunds))
+				require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, tc.creatorAddr, tc.senderInitialFunds))
 			}
 
 			msgCreatePool := types.MsgCreatePool{
@@ -676,7 +675,7 @@ func TestMsgServerJoinPool(t *testing.T) {
 			app.SpotKeeper.SetPool(ctx, tc.initialPool)
 
 			joinerAddr := testutil.AccAddress()
-			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, joinerAddr, tc.joinerInitialFunds))
+			require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, joinerAddr, tc.joinerInitialFunds))
 
 			msgServer := keeper.NewMsgServerImpl(app.SpotKeeper)
 			resp, err := msgServer.JoinPool(
@@ -895,9 +894,9 @@ func TestMsgServerExitPool(t *testing.T) {
 			app.SpotKeeper.SetPool(ctx, tc.initialPool)
 
 			sender := testutil.AccAddress()
-			require.NoError(t, simapp.FundAccount(
+			require.NoError(t, testapp.FundAccount(
 				app.BankKeeper, ctx, sender, tc.joinerInitialFunds))
-			require.NoError(t, simapp.FundAccount(
+			require.NoError(t, testapp.FundAccount(
 				app.BankKeeper, ctx, tc.initialPool.GetAddress(), tc.poolFundsToAdd))
 
 			msgServer := keeper.NewMsgServerImpl(app.SpotKeeper)
@@ -1241,7 +1240,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			tc.initialPool.Address = poolAddr.String()
 			tc.expectedFinalPool.Address = poolAddr.String()
 			require.NoError(t,
-				simapp.FundAccount(
+				testapp.FundAccount(
 					app.BankKeeper,
 					ctx,
 					poolAddr,
@@ -1252,7 +1251,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 
 			// fund user account
 			sender := testutil.AccAddress()
-			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, sender, tc.userInitialFunds))
+			require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, sender, tc.userInitialFunds))
 
 			// swap assets
 			resp, err := msgServer.SwapAssets(

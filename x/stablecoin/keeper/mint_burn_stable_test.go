@@ -3,7 +3,6 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/assert"
@@ -147,7 +146,7 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			nibiruApp.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.USDC, denoms.NUSD), tc.collPrice)
 
 			// Fund account
-			require.NoError(t, simapp.FundAccount(nibiruApp.BankKeeper, ctx, acc, tc.accFunds))
+			require.NoError(t, testapp.FundAccount(nibiruApp.BankKeeper, ctx, acc, tc.accFunds))
 
 			// Mint NUSD -> Response contains Stable (sdk.Coin)
 			goCtx := sdk.WrapSDKContext(ctx)
@@ -304,7 +303,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			nibiruApp.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.USDC, denoms.NUSD), tc.collPrice)
 
 			// Fund account
-			require.NoError(t, simapp.FundAccount(nibiruApp.BankKeeper, ctx, acc, tc.accFunds))
+			require.NoError(t, testapp.FundAccount(nibiruApp.BankKeeper, ctx, acc, tc.accFunds))
 
 			// Mint NUSD -> Response contains Stable (sdk.Coin)
 			goCtx := sdk.WrapSDKContext(ctx)
@@ -452,7 +451,7 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 
 			// Add collaterals to the module
 			require.NoError(t, nibiruApp.BankKeeper.MintCoins(ctx, types.ModuleName, tc.moduleFunds))
-			require.NoError(t, simapp.FundAccount(nibiruApp.BankKeeper, ctx, acc, tc.accFunds))
+			require.NoError(t, testapp.FundAccount(nibiruApp.BankKeeper, ctx, acc, tc.accFunds))
 
 			// Burn NUSD -> Response contains GOV and COLL
 			goCtx := sdk.WrapSDKContext(ctx)
@@ -573,7 +572,7 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 
 			// Add collaterals to the module
 			require.NoError(t, nibiruApp.BankKeeper.MintCoins(ctx, types.ModuleName, tc.moduleFunds))
-			require.NoError(t, simapp.FundAccount(nibiruApp.BankKeeper, ctx, acc, tc.accFunds))
+			require.NoError(t, testapp.FundAccount(nibiruApp.BankKeeper, ctx, acc, tc.accFunds))
 
 			// Burn NUSD -> Response contains GOV and COLL
 			goCtx := sdk.WrapSDKContext(ctx)

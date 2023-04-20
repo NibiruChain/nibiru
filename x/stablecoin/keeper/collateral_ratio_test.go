@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -710,7 +709,7 @@ func TestRecollateralize(t *testing.T) {
 			if tc.expectedPass {
 				require.NoError(t, err)
 			}
-			err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, caller, tc.accFunds)
+			err = testapp.FundAccount(nibiruApp.BankKeeper, ctx, caller, tc.accFunds)
 			if tc.expectedPass {
 				require.NoError(t, err)
 			}
@@ -1082,7 +1081,7 @@ func TestBuyback(t *testing.T) {
 			if tc.expectedPass {
 				require.NoError(t, err)
 			}
-			err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, caller, tc.accFunds)
+			err = testapp.FundAccount(nibiruApp.BankKeeper, ctx, caller, tc.accFunds)
 			if tc.expectedPass {
 				require.NoError(t, err)
 			}

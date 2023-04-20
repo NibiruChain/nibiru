@@ -9,7 +9,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 
-	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -234,7 +233,7 @@ func TestNewPool(t *testing.T) {
 
 	userAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address().Bytes())
 
-	err := simapp.FundAccount(app.BankKeeper, ctx, userAddr, sdk.NewCoins(
+	err := testapp.FundAccount(app.BankKeeper, ctx, userAddr, sdk.NewCoins(
 		sdk.NewCoin("uatom", sdk.NewInt(1000)),
 		sdk.NewCoin("uosmo", sdk.NewInt(1000)),
 		poolCreationFeeCoin,
@@ -301,7 +300,7 @@ func TestNewPoolNotEnoughFunds(t *testing.T) {
 
 	userAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address().Bytes())
 
-	err := simapp.FundAccount(app.BankKeeper, ctx, userAddr, sdk.NewCoins(
+	err := testapp.FundAccount(app.BankKeeper, ctx, userAddr, sdk.NewCoins(
 		sdk.NewCoin("uatom", sdk.NewInt(1000)),
 		sdk.NewCoin("uosmo", sdk.NewInt(1000)),
 		sdk.NewCoin("unibi", sdk.NewInt(999*common.TO_MICRO)),
@@ -428,7 +427,7 @@ func TestNewPoolDups(t *testing.T) {
 	require.NoError(t, err)
 
 	poolCreationFeeCoin := sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 1))
-	err = simapp.FundAccount(app.BankKeeper, ctx, userAddr, sdk.NewCoins(
+	err = testapp.FundAccount(app.BankKeeper, ctx, userAddr, sdk.NewCoins(
 		sdk.NewCoin(denoms.NIBI, sdk.NewInt(1000)),
 		sdk.NewCoin("bar", sdk.NewInt(1000)),
 		sdk.NewCoin("foo", sdk.NewInt(1000)),
@@ -586,7 +585,7 @@ func TestJoinPool(t *testing.T) {
 			app.SpotKeeper.SetPool(ctx, tc.initialPool)
 
 			joinerAddr := testutil.AccAddress()
-			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, joinerAddr, tc.joinerInitialFunds))
+			require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, joinerAddr, tc.joinerInitialFunds))
 
 			pool, numSharesOut, remCoins, err := app.SpotKeeper.JoinPool(ctx, joinerAddr, 1, tc.tokensIn, false)
 			require.NoError(t, err)
@@ -745,7 +744,7 @@ func TestJoinPoolAllAssets(t *testing.T) {
 			app.SpotKeeper.SetPool(ctx, tc.initialPool)
 
 			joinerAddr := testutil.AccAddress()
-			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, joinerAddr, tc.joinerInitialFunds))
+			require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, joinerAddr, tc.joinerInitialFunds))
 
 			pool, numSharesOut, remCoins, err := app.SpotKeeper.JoinPool(ctx, joinerAddr, 1, tc.tokensIn, true)
 			require.NoError(t, err)
@@ -858,8 +857,8 @@ func TestExitPool(t *testing.T) {
 			app.SpotKeeper.SetPool(ctx, tc.initialPool)
 
 			sender := testutil.AccAddress()
-			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, sender, tc.joinerInitialFunds))
-			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, tc.initialPool.GetAddress(), tc.initialPoolFunds))
+			require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, sender, tc.joinerInitialFunds))
+			require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, tc.initialPool.GetAddress(), tc.initialPoolFunds))
 
 			tokensOut, err := app.SpotKeeper.ExitPool(ctx, sender, 1, tc.poolSharesIn)
 			require.NoError(t, err)

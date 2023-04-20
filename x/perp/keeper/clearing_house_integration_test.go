@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/assert"
@@ -425,7 +424,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			})
 
 			t.Log("initialize trader funds")
-			require.NoError(t, simapp.FundAccount(nibiruApp.BankKeeper, ctx, traderAddr, tc.traderFunds))
+			require.NoError(t, testapp.FundAccount(nibiruApp.BankKeeper, ctx, traderAddr, tc.traderFunds))
 
 			if tc.initialPosition != nil {
 				t.Log("set initial position")
@@ -681,7 +680,7 @@ func TestOpenPositionError(t *testing.T) {
 			})
 
 			t.Log("initialize trader funds")
-			require.NoError(t, simapp.FundAccount(nibiruApp.BankKeeper, ctx, traderAddr, tc.traderFunds))
+			require.NoError(t, testapp.FundAccount(nibiruApp.BankKeeper, ctx, traderAddr, tc.traderFunds))
 
 			if tc.initialPosition != nil {
 				t.Log("set initial position")

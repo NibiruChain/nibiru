@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/app/ante"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
@@ -214,7 +214,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 			tx, err := suite.CreateTestTx(privs, accNums, accSeqs, suite.ctx.ChainID())
 			suite.Require().NoError(err)
 
-			err = simapp.FundAccount(suite.app.BankKeeper, suite.ctx, addr, sdk.NewCoins(sdk.NewInt64Coin(app.BondDenom, 1000)))
+			err = testapp.FundAccount(suite.app.BankKeeper, suite.ctx, addr, sdk.NewCoins(sdk.NewInt64Coin(app.BondDenom, 1000)))
 			if err != nil {
 				return
 			}
