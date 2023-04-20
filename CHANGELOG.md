@@ -131,6 +131,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1188](https://github.com/NibiruChain/nibiru/pull/1188) - fix(spot): remove A precision and clean up borked logic
 * [#1190](https://github.com/NibiruChain/nibiru/pull/1190) - ci(release): fix TM_VERSION not being set on releases
 * [#1218](https://github.com/NibiruChain/nibiru/pull/1218) - ci(release): Publish chaosnet image when tagging a release
+* [#1283](https://github.com/NibiruChain/nibiru/pull/1283) - chore(deps): bump github.com/prometheus/client_golang from 1.14.0 to 1.15.0
 
 ### Bug Fixes
 
