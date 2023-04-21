@@ -398,6 +398,8 @@ func (market Market) IsOverSpreadLimit(indexPrice sdk.Dec) bool {
 }
 
 func (market Market) ToSnapshot(ctx sdk.Context) ReserveSnapshot {
+	fmt.Println("Create shnaps")
+	fmt.Println(market.String())
 	snapshot := NewReserveSnapshot(
 		market.Pair,
 		market.BaseReserve,

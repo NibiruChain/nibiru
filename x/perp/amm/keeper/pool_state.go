@@ -40,6 +40,8 @@ func (k Keeper) CreatePool(
 	if err != nil {
 		return err
 	}
+	fmt.Println("in the create pool")
+	fmt.Println(market)
 
 	return common.TryCatch(func() {
 		k.Pools.Insert(ctx, pair, market)
