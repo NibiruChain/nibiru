@@ -41,6 +41,27 @@ func TestCreatePool(t *testing.T) {
 	require.False(t, notExist)
 }
 
+func TestCreatePool_Errors(t *testing.T) {
+	t.Log("different quote and base reserves should fail")
+	perpammKeeper, _, ctx := getKeeper(t)
+
+	require.ErrorContains(t, perpammKeeper.CreatePool(
+		ctx,
+		/* pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+		/* quote */ sdk.NewDec(10*common.TO_MICRO), // 10 tokens
+		/* base */ sdk.NewDec(5*common.TO_MICRO), // 5 tokens
+		types.MarketConfig{
+			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
+			TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
+		},
+		sdk.ZeroDec(),
+		sdk.NewDec(2),
+	), "quote asset reserve 10000000.000000000000000000 must be equal to base asset reserve 5000000.000000000000000000")
+}
+
 func TestEditPoolConfig(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	marketStart := types.Market{
@@ -223,8 +244,8 @@ func TestGetPoolPrices(t *testing.T) {
 			name: "happy path - market active, but no index price",
 			market: types.Market{
 				Pair:         asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-				QuoteReserve: sdk.NewDec(3 * common.TO_MICRO), // 3e6
-				BaseReserve:  sdk.NewDec(1_000),               // 1e3
+				QuoteReserve: sdk.NewDec(1_000),
+				BaseReserve:  sdk.NewDec(1_000),
 				SqrtDepth:    common.MustSqrtDec(sdk.NewDec(3_000 * common.TO_MICRO)),
 				Config: types.MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.30"),
@@ -233,6 +254,7 @@ func TestGetPoolPrices(t *testing.T) {
 					MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.30"),
 					TradeLimitRatio:        sdk.OneDec(),
 				},
+				PegMultiplier: sdk.NewDec(3_000),
 			},
 			shouldCreateMarket: true,
 			mockIndexPrice:     sdk.OneDec().Neg(),
@@ -242,7 +264,7 @@ func TestGetPoolPrices(t *testing.T) {
 				MarkPrice:     sdk.NewDec(3_000),
 				TwapMark:      sdk.NewDec(3_000).String(),
 				IndexPrice:    sdk.OneDec().Neg().String(),
-				SwapInvariant: sdk.NewInt(3_000 * common.TO_MICRO), // 1e3 * 3e6 = 3e9
+				SwapInvariant: sdk.NewInt(1_000 * 1_000),
 				BlockNumber:   2,
 			},
 		},
@@ -280,7 +302,7 @@ func TestGetPoolPrices(t *testing.T) {
 					tc.market.BaseReserve,
 					tc.market.Config,
 					sdk.ZeroDec(),
-					sdk.OneDec(),
+					tc.market.PegMultiplier,
 				))
 			}
 
@@ -308,10 +330,10 @@ func TestEditSwapInvariant(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.NIBI, denoms.NUSD)
 	marketStart := types.Market{
 		Pair:          pair,
-		QuoteReserve:  sdk.NewDec(10 * common.TO_MICRO),
+		QuoteReserve:  sdk.NewDec(5 * common.TO_MICRO),
 		BaseReserve:   sdk.NewDec(5 * common.TO_MICRO),
 		SqrtDepth:     common.MustSqrtDec(sdk.NewDec(5 * 10 * common.TO_MICRO * common.TO_MICRO)),
-		PegMultiplier: sdk.OneDec(),
+		PegMultiplier: sdk.NewDec(2),
 		Config: types.MarketConfig{
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),

@@ -88,7 +88,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				tokenPair,
-				/* quoteReserves */ sdk.NewDec(10*common.TO_MICRO),
+				/* quoteReserves */ sdk.NewDec(5*common.TO_MICRO),
 				/* baseReserves */ sdk.NewDec(5*common.TO_MICRO),
 				perpammtypes.MarketConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
@@ -98,7 +98,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
 				sdk.ZeroDec(),
-				sdk.OneDec(),
+				sdk.NewDec(2),
 			))
 			require.True(t, perpammKeeper.ExistsPool(ctx, tokenPair))
 

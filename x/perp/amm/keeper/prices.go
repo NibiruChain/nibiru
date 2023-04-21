@@ -59,12 +59,12 @@ func (k Keeper) GetBaseAssetPrice(
 	amm types.Market,
 	dir types.Direction,
 	baseAssetAmount sdk.Dec,
-) (quoteAmount sdk.Dec, err error) {
-	quoteAmount, err = amm.GetQuoteAmountByBaseAmount(baseAssetAmount.MulInt64(dir.ToMultiplier()))
+) (quoteAsset sdk.Dec, err error) {
+	quoteReserve, err := amm.GetQuoteReserveByBase(baseAssetAmount.MulInt64(dir.ToMultiplier()))
 	if err != nil {
 		return
 	}
-	quoteAmount = quoteAmount.Mul(amm.PegMultiplier)
+	quoteAsset = amm.FromQuoteReserveToAsset(quoteReserve)
 	return
 }
 
