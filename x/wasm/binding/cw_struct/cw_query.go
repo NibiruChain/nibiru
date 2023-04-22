@@ -7,16 +7,19 @@ import (
 // BindingQuery corresponds to the BindingQuery enum in CosmWasm binding
 // contracts (Rust). It specifies which queries can be called into the
 // Nibiru bindings, and describes their JSON schema for connecting app ⇔ Wasm.
+//
+// ### Note
+// 1. The JSON field names must match the ones on the smart contract
 type BindingQuery struct {
-	Reserves        *ReservesRequest
-	AllMarkets      *AllMarketsRequest
-	BasePrice       *BasePriceRequest
-	Positions       *PositionsRequest
-	Position        *PositionRequest
-	PremiumFraction *PremiumFractionRequest
-	Metrics         *MetricsRequest
-	ModuleAccounts  *ModuleAccountsRequest
-	PerpParams      *PerpParamsRequest
+	Reserves        *ReservesRequest        `json:"reserves,omitempty"`
+	AllMarkets      *AllMarketsRequest      `json:"all_markets,omitempty"`
+	BasePrice       *BasePriceRequest       `json:"base_price,omitempty"`
+	Positions       *PositionsRequest       `json:"positions,omitempty"`
+	Position        *PositionRequest        `json:"position,omitempty"`
+	PremiumFraction *PremiumFractionRequest `json:"premium_fraction,omitempty"`
+	Metrics         *MetricsRequest         `json:"metrics,omitempty"`
+	ModuleAccounts  *ModuleAccountsRequest  `json:"module_accounts,omitempty"`
+	PerpParams      *PerpParamsRequest      `json:"module_params,omitempty"`
 }
 
 type ReservesRequest struct {
