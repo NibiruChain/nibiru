@@ -6,14 +6,15 @@ import (
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/wasmbin"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
 // StoreContract submits Wasm bytecode for storage on the chain.
@@ -74,7 +75,6 @@ var ContractMap = make(map[wasmbin.WasmKey]sdk.AccAddress)
 func SetupAllContracts(
 	t *testing.T, sender sdk.AccAddress, nibiru *app.NibiruApp, ctx sdk.Context,
 ) (*app.NibiruApp, sdk.Context) {
-
 	wasmKey := wasmbin.WasmKeyPerpBinding
 	codeId := StoreContract(t, wasmKey, ctx, nibiru, sender)
 	deposit := sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(1)))
@@ -93,8 +93,6 @@ func TestSetupContracts(t *testing.T) {
 		Time:    time.Now().UTC(),
 	})
 	coins := sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(10)))
-	testapp.FundAccount(
-		nibiru.BankKeeper, ctx, sender, coins,
-	)
+	require.NoError(t, testapp.FundAccount(nibiru.BankKeeper, ctx, sender, coins))
 	_, _ = SetupAllContracts(t, sender, nibiru, ctx)
 }

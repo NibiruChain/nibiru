@@ -5,6 +5,11 @@ import (
 	"testing"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/stretchr/testify/suite"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -14,10 +19,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/wasmbin"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/stretchr/testify/suite"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 )
@@ -99,7 +100,6 @@ type ExampleFields struct {
 }
 
 func (s *QuerierTestSuite) GetHappyFields() ExampleFields {
-
 	fields := ExampleFields{
 		Pair:   asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
 		Trader: sdk.AccAddress([]byte("trader")),
@@ -153,9 +153,7 @@ func (s *QuerierTestSuite) SetupSuite() {
 		sdk.NewCoin(denoms.NIBI, sdk.NewInt(1_000)),
 		sdk.NewCoin(denoms.NUSD, sdk.NewInt(420)),
 	)
-	testapp.FundAccount(
-		nibiru.BankKeeper, ctx, sender, coins,
-	)
+	s.NoError(testapp.FundAccount(nibiru.BankKeeper, ctx, sender, coins))
 
 	nibiru, ctx = SetupAllContracts(s.T(), sender, nibiru, ctx)
 	s.nibiru = nibiru
