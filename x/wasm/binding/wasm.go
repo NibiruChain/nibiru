@@ -10,7 +10,6 @@ import (
 func RegisterWasmOptions(
 	perp *perpkeeper.Keeper,
 	perpAmm *perpammkeeper.Keeper,
-
 ) []wasm.Option {
 	// Custom querier
 	wasmQueryPlugin := NewQueryPlugin(perp, perpAmm)

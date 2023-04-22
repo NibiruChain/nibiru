@@ -2,7 +2,6 @@ package binding
 
 import (
 	"encoding/json"
-	"fmt"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
@@ -10,11 +9,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-func ErrorMarshalResponse(resp any) string {
-	return fmt.Sprintf("failed to JSON marshal response: %v", resp)
-}
-
-// CustomQuerier returns a function that is an implementation of custom querier mechanism for specific messages
+// CustomQuerier returns a function that is an implementation of the custom
+// querier mechanism for specific messages
 func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessage) ([]byte, error) {
 	return func(ctx sdk.Context, request json.RawMessage) ([]byte, error) {
 		var wasmContractQuery cw_struct.BindingQuery
