@@ -8,7 +8,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 
-	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
@@ -57,7 +56,7 @@ func TestCheckBalances(t *testing.T) {
 
 			// fund user account
 			sender := testutil.AccAddress()
-			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, sender, tc.userInitialFunds))
+			require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, sender, tc.userInitialFunds))
 
 			// swap assets
 			err := app.SpotKeeper.CheckEnoughBalances(ctx, tc.coinsToSpend, sender)

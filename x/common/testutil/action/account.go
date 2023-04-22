@@ -2,9 +2,9 @@ package action
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 
 	"github.com/NibiruChain/nibiru/app"
+	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
 )
 
 type fundAccount struct {
@@ -17,12 +17,12 @@ func FundAccount(account sdk.AccAddress, amount sdk.Coins) Action {
 }
 
 func (c fundAccount) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
-	err := app.BankKeeper.MintCoins(ctx, minttypes.ModuleName, c.Amount)
+	err := app.BankKeeper.MintCoins(ctx, inflationtypes.ModuleName, c.Amount)
 	if err != nil {
 		return ctx, err
 	}
 
-	err = app.BankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, c.Account, c.Amount)
+	err = app.BankKeeper.SendCoinsFromModuleToAccount(ctx, inflationtypes.ModuleName, c.Account, c.Amount)
 	if err != nil {
 		return ctx, err
 	}
