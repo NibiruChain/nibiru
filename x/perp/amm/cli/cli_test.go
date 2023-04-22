@@ -18,7 +18,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
-	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/NibiruChain/nibiru/x/perp/amm/cli"
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 )
@@ -34,35 +33,6 @@ func TestIntegrationTestSuite(t *testing.T) {
 	suite.Run(t, new(IntegrationTestSuite))
 }
 
-var START_MARKETS = map[asset.Pair]perpammtypes.Market{
-	asset.Registry.Pair(denoms.ETH, denoms.NUSD): {
-		Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-		BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
-		QuoteAssetReserve: sdk.NewDec(60_000 * common.TO_MICRO),
-		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(600_000 * common.TO_MICRO * common.TO_MICRO)),
-		Config: perpammtypes.MarketConfig{
-			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
-			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
-			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.2"),
-			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-			MaxLeverage:            sdk.MustNewDecFromStr("15"),
-		},
-	},
-	asset.Registry.Pair(denoms.NIBI, denoms.NUSD): {
-		Pair:              asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
-		BaseAssetReserve:  sdk.NewDec(500_000),
-		QuoteAssetReserve: sdk.NewDec(5 * common.TO_MICRO),
-		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(5 * 500_000 * common.TO_MICRO)),
-		Config: perpammtypes.MarketConfig{
-			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
-			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
-			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.2"),
-			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.04"),
-			MaxLeverage:            sdk.MustNewDecFromStr("20"),
-		},
-	},
-}
-
 func (s *IntegrationTestSuite) SetupSuite() {
 	if testing.Short() {
 		s.T().Skip("skipping integration test suite")
@@ -72,23 +42,9 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	app.SetPrefixes(app.AccountAddressPrefix)
 
-	encodingConfig := app.MakeTestEncodingConfig()
 	genesisState := genesis.NewTestGenesisState()
-	marketGenesis := perpammtypes.DefaultGenesis()
-	marketGenesis.Markets = []perpammtypes.Market{
-		START_MARKETS[asset.Registry.Pair(denoms.ETH, denoms.NUSD)],
-		START_MARKETS[asset.Registry.Pair(denoms.NIBI, denoms.NUSD)],
-	}
-
-	oracleGenesis := oracletypes.DefaultGenesisState()
-	oracleGenesis.ExchangeRates = []oracletypes.ExchangeRateTuple{
-		{Pair: asset.Registry.Pair(denoms.ETH, denoms.NUSD), ExchangeRate: sdk.NewDec(1_000)},
-		{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: sdk.NewDec(10)},
-	}
-	oracleGenesis.Params.VotePeriod = 1_000
-
-	genesisState[perpammtypes.ModuleName] = encodingConfig.Marshaler.
-		MustMarshalJSON(marketGenesis)
+	genesisState = genesis.AddPerpGenesis(genesisState)
+	genesisState = genesis.AddOracleGenesis(genesisState)
 
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
@@ -192,7 +148,7 @@ func (s *IntegrationTestSuite) TestCmdEditPoolConfigProposal() {
 	// ----------------------------------------------------------------------
 	s.T().Log("load example proposal json as bytes")
 	// ----------------------------------------------------------------------
-	startMarket := START_MARKETS[asset.Registry.Pair(denoms.ETH, denoms.NUSD)]
+	startMarket := genesis.START_MARKETS[asset.Registry.Pair(denoms.ETH, denoms.NUSD)]
 	proposal := &perpammtypes.EditPoolConfigProposal{
 		Title:       "NIP-3: Edit config of the ueth:unusd market",
 		Description: "enables higher max leverage on ueth:unusd",
@@ -261,7 +217,7 @@ func (s *IntegrationTestSuite) TestCmdEditSwapInvariantsProposal() {
 	// ----------------------------------------------------------------------
 	s.T().Log("load example proposal json as bytes")
 	// ----------------------------------------------------------------------
-	startMarket := START_MARKETS[asset.Registry.Pair(denoms.NIBI, denoms.NUSD)]
+	startMarket := genesis.START_MARKETS[asset.Registry.Pair(denoms.NIBI, denoms.NUSD)]
 	proposal := &perpammtypes.EditSwapInvariantsProposal{
 		Title:       "NIP-4: Change the swap invariant for NIBI.",
 		Description: "increase swap invariant for many virtual pools",
