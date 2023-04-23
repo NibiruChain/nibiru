@@ -55,11 +55,12 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 			}
 			return bz, nil
 		case wasmContractQuery.Reserves != nil:
-			cwResp, err := qp.Perp.Reserves(ctx, wasmContractQuery.Reserves)
+			cwReq := wasmContractQuery.Reserves
+			cwResp, err := qp.Perp.Reserves(ctx, cwReq)
 			if err != nil {
 				return nil, sdkerrors.Wrapf(err,
 					"failed to query: perp reserves: request: %v",
-					wasmContractQuery.AllMarkets)
+					wasmContractQuery.Reserves)
 			}
 			bz, err := json.Marshal(cwResp)
 			if err != nil {
@@ -68,8 +69,19 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 			return bz, nil
 		// TODO implement
 		// TODO test
-		// case wasmContractQuery.BasePrice != nil:
-		// 	return bz, nil
+		case wasmContractQuery.BasePrice != nil:
+			cwReq := wasmContractQuery.BasePrice
+			cwResp, err := qp.Perp.BasePrice(ctx, cwReq)
+			if err != nil {
+				return nil, sdkerrors.Wrapf(err,
+					"failed to query: perp all markets: request: %v",
+					cwReq)
+			}
+			bz, err := json.Marshal(cwResp)
+			if err != nil {
+				return nil, sdkerrors.Wrapf(err, ErrorMarshalResponse(cwResp))
+			}
+			return bz, nil
 		// TODO implement
 		// TODO test
 		// case wasmContractQuery.Positions != nil:
@@ -166,5 +178,38 @@ func (perpExt *PerpExtension) AllMarkets(
 
 	return &cw_struct.AllMarketsResponse{
 		MarketMap: marketMap,
+	}, err
+}
+
+func (perpExt *PerpExtension) BasePrice(
+	ctx sdk.Context, cwReq *cw_struct.BasePriceRequest,
+) (*cw_struct.BasePriceResponse, error) {
+	pair, err := asset.TryNewPair(cwReq.Pair)
+	if err != nil {
+		return nil, err
+	}
+
+	var direction perpammtypes.Direction
+	if cwReq.IsLong {
+		direction = perpammtypes.Direction_LONG
+	} else {
+		direction = perpammtypes.Direction_SHORT
+	}
+
+	sdkReq := &perpammtypes.QueryBaseAssetPriceRequest{
+		Pair:            pair,
+		Direction:       direction,
+		BaseAssetAmount: cwReq.BaseAmount.ToDec(),
+	}
+	goCtx := sdk.WrapSDKContext(ctx)
+	sdkResp, err := perpExt.perpAmm.BaseAssetPrice(goCtx, sdkReq)
+	if err != nil {
+		return nil, err
+	}
+	return &cw_struct.BasePriceResponse{
+		Pair:        pair.String(),
+		BaseAmount:  cwReq.BaseAmount.ToDec(),
+		QuoteAmount: sdkResp.PriceInQuoteDenom,
+		IsLong:      cwReq.IsLong,
 	}, err
 }

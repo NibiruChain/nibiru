@@ -2,6 +2,7 @@ package binding_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -41,16 +42,14 @@ func DoCustomBindingQuery(
 	contract sdk.AccAddress,
 	bindingRequest cw_struct.BindingQuery,
 	responsePointer interface{},
-) error {
+) (contractRespBz []byte, err error) {
 	// Parse query type compatible with wasm vm
 	reqJsonBz, err := json.Marshal(bindingRequest)
 	if err != nil {
-		return err
+		return contractRespBz, err
 	}
 
 	// Query the smart contract
-	var contractRespBz []byte
-
 	var originalError error
 	if err := common.TryCatch(func() {
 		// The WasmVM tends to panic pretty easily with "Wasmer runtimer error".
@@ -64,20 +63,22 @@ func DoCustomBindingQuery(
 			contractRespBz = bz
 		}
 	})(); err != nil {
-		return errors.Wrapf(err, "contractRespBz: %s", contractRespBz)
+		return contractRespBz, errors.Wrapf(
+			err, "contractRespBz: %s", contractRespBz)
 	}
 
 	if originalError != nil {
-		return originalError // the error raised if the WasmVM doesn't panic
+		return contractRespBz, originalError // the error raised if the WasmVM doesn't panic
 	}
 
 	// Parse the response data into the response pointer
 	err = json.Unmarshal(contractRespBz, responsePointer)
 	if err != nil {
-		return errors.Wrapf(err, "responsePointer: %s", responsePointer)
+		return contractRespBz, errors.Wrapf(
+			err, "responsePointer: %s", responsePointer)
 	}
 
-	return nil
+	return contractRespBz, nil
 }
 
 type QuerierTestSuite struct {
@@ -180,7 +181,7 @@ func (s *QuerierTestSuite) TestQueryReserves() {
 			bindingResp := new(cw_struct.ReservesResponse)
 
 			if testCase.wasmError {
-				err := DoCustomBindingQuery(
+				_, err := DoCustomBindingQuery(
 					s.ctx, s.nibiru, s.contractPerp,
 					bindingQuery, bindingResp,
 				)
@@ -189,10 +190,10 @@ func (s *QuerierTestSuite) TestQueryReserves() {
 				return
 			}
 
-			s.Require().NoError(
-				DoCustomBindingQuery(
-					s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
-				))
+			_, err := DoCustomBindingQuery(
+				s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
+			)
+			s.Require().NoError(err)
 
 			wantPair := asset.MustNewPair(pairStr)
 			s.Assert().EqualValues(bindingResp.Pair, wantPair)
@@ -204,4 +205,58 @@ func (s *QuerierTestSuite) TestQueryReserves() {
 				genesis.START_MARKETS[wantPair].QuoteAssetReserve.String())
 		})
 	}
+}
+
+func (s *QuerierTestSuite) TestQueryAllMarkets() {
+	bindingQuery := cw_struct.BindingQuery{
+		AllMarkets: &cw_struct.AllMarketsRequest{},
+	}
+	bindingResp := new(cw_struct.AllMarketsResponse)
+
+	fmt.Printf("\nDEBUG-UD GetAllPools(ctx): %s", s.nibiru.PerpAmmKeeper.GetAllPools(s.ctx))
+
+	respBz, err := DoCustomBindingQuery(
+		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
+	)
+	fmt.Printf("\nDEBUG-UD bindingQuery: %v", bindingQuery)
+	fmt.Printf("\nDEBUG-UD respBz: %s", respBz)
+	fmt.Printf("\nDEBUG-UD bindingResp: %v", bindingResp.MarketMap)
+	s.Require().NoError(err)
+
+	for pair, market := range genesis.START_MARKETS {
+		cwMarket := bindingResp.MarketMap[pair.String()]
+		s.Assert().EqualValues(market.BaseAssetReserve, cwMarket.BaseReserve)
+		s.Assert().EqualValues(market.QuoteAssetReserve, cwMarket.QuoteReserve)
+		s.Assert().EqualValues(market.QuoteAssetReserve, cwMarket.QuoteReserve)
+		s.Assert().EqualValues(market.SqrtDepth, cwMarket.SqrtDepth)
+		s.Assert().EqualValues(
+			market.BaseAssetReserve.Mul(market.QuoteAssetReserve),
+			cwMarket.Depth)
+		s.Assert().EqualValues(market.Bias, cwMarket.Bias)
+		s.Assert().EqualValues(market.PegMultiplier, cwMarket.PegMult)
+		s.Assert().EqualValues(market.GetMarkPrice(), cwMarket.MarkPrice)
+		s.Assert().EqualValues(s.ctx.BlockHeight(), cwMarket.BlockNumber)
+	}
+}
+
+func (s *QuerierTestSuite) TestQueryBasePrice() {
+	cwReq := &cw_struct.BasePriceRequest{
+		Pair:       s.fields.Pair,
+		IsLong:     true,
+		BaseAmount: sdk.NewInt(69_420),
+	}
+	bindingQuery := cw_struct.BindingQuery{
+		BasePrice: cwReq,
+	}
+	bindingResp := new(cw_struct.BasePriceResponse)
+
+	respBz, err := DoCustomBindingQuery(
+		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
+	)
+	s.Require().NoErrorf(err, "resp bytes: %s", respBz)
+
+	s.Assert().EqualValues(cwReq.Pair, bindingResp.Pair)
+	s.Assert().EqualValues(cwReq.IsLong, bindingResp.IsLong)
+	s.Assert().EqualValues(cwReq.BaseAmount.ToDec(), bindingResp.BaseAmount)
+	s.Assert().True(bindingResp.QuoteAmount.GT(sdk.ZeroDec()))
 }
