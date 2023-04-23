@@ -9,6 +9,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 )
 
 var (
@@ -18,6 +19,8 @@ var (
 func AddPerpGenesis(gen app.GenesisState) app.GenesisState {
 	gen[perpammtypes.ModuleName] = TEST_ENCODING_CONFIG.Marshaler.
 		MustMarshalJSON(PerpAmmGenesis())
+	gen[perptypes.ModuleName] = TEST_ENCODING_CONFIG.Marshaler.
+		MustMarshalJSON(PerpGenesis())
 	return gen
 }
 
@@ -33,6 +36,8 @@ var START_MARKETS = map[asset.Pair]perpammtypes.Market{
 		BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
 		QuoteAssetReserve: sdk.NewDec(60_000 * common.TO_MICRO),
 		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(600_000 * common.TO_MICRO * common.TO_MICRO)),
+		Bias:              sdk.ZeroDec(),
+		PegMultiplier:     sdk.OneDec(),
 		Config: perpammtypes.MarketConfig{
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
@@ -46,6 +51,8 @@ var START_MARKETS = map[asset.Pair]perpammtypes.Market{
 		BaseAssetReserve:  sdk.NewDec(500_000),
 		QuoteAssetReserve: sdk.NewDec(5 * common.TO_MICRO),
 		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(5 * 500_000 * common.TO_MICRO)),
+		Bias:              sdk.ZeroDec(),
+		PegMultiplier:     sdk.OneDec(),
 		Config: perpammtypes.MarketConfig{
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
@@ -54,6 +61,22 @@ var START_MARKETS = map[asset.Pair]perpammtypes.Market{
 			MaxLeverage:            sdk.MustNewDecFromStr("20"),
 		},
 	},
+}
+
+func PerpGenesis() *perptypes.GenesisState {
+	gen := perptypes.DefaultGenesis()
+	var pairMetadata []perptypes.PairMetadata
+	for pair := range START_MARKETS {
+		pairMetadata = append(
+			pairMetadata,
+			perptypes.PairMetadata{
+				Pair:                            pair,
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+			},
+		)
+	}
+	gen.PairMetadata = pairMetadata
+	return gen
 }
 
 func PerpAmmGenesis() *perpammtypes.GenesisState {
