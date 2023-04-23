@@ -302,3 +302,33 @@ func (s *TestSuiteQuerier) TestQueryPremiumFraction() {
 		"estimated_next_cpf: %s",
 		bindingResp.EstimatedNextCPF)
 }
+
+func (s *TestSuiteQuerier) TestQueryMetrics() {
+	cwReq := &cw_struct.MetricsRequest{
+		Pair: s.fields.Pair,
+	}
+
+	bindingQuery := cw_struct.BindingQuery{
+		Metrics: cwReq,
+	}
+	bindingResp := new(cw_struct.MetricsResponse)
+
+	respBz, err := DoCustomBindingQuery(
+		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
+	)
+	s.Require().NoErrorf(err, "resp bytes: %s", respBz)
+}
+
+func (s *TestSuiteQuerier) TestQueryPerpParams() {
+	cwReq := &cw_struct.PerpParamsRequest{}
+
+	bindingQuery := cw_struct.BindingQuery{
+		PerpParams: cwReq,
+	}
+	bindingResp := new(cw_struct.PerpParamsResponse)
+
+	respBz, err := DoCustomBindingQuery(
+		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
+	)
+	s.Require().NoErrorf(err, "resp bytes: %s", respBz)
+}

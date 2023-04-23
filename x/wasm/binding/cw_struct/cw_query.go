@@ -1,6 +1,8 @@
 package cw_struct
 
 import (
+	"time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -181,5 +183,30 @@ type Metrics struct {
 type ModuleAccountsRequest struct {
 }
 
+type ModuleAccountWithBalance struct {
+	Name    string         `json:"name"`
+	Addr    sdk.AccAddress `json:"addr"`
+	Balance []sdk.Coin     `json:"balance"`
+}
+
+type ModuleAccountsResponse struct {
+	ModuleAccounts map[string]ModuleAccountWithBalance `json:"module_accounts"`
+}
+
 type PerpParamsRequest struct {
+}
+
+type PerpParamsResponse struct {
+	ModuleParams PerpParams `json:"module_params"`
+}
+
+type PerpParams struct {
+	Stopped                 bool          `json:"stopped"`
+	FeePoolFeeRatio         sdk.Dec       `json:"fee_pool_fee_ratio"`
+	EcosystemFundFeeRatio   sdk.Dec       `json:"ecosystem_fund_fee_ratio"`
+	LiquidationFeeRatio     sdk.Dec       `json:"liquidation_fee_ratio"`
+	PartialLiquidationRatio sdk.Dec       `json:"partial_liquidation_ratio"`
+	FundingRateInterval     string        `json:"funding_rate_interval"`
+	TwapLookbackWindow      time.Duration `json:"twap_lookback_window"`
+	WhitelistedLiquidators  []string      `json:"whitelisted_liquidators"`
 }

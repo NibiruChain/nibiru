@@ -229,3 +229,15 @@ func (s *TestSuitePerpExt) TestMetrics_Sad() {
 	cwResp, err := s.queryPlugin.Perp.Metrics(s.ctx, cwReq)
 	s.Errorf(err, "cwResp: %s", cwResp)
 }
+
+func (s *TestSuitePerpExt) TestModuleAccounts() {
+	cwReq := &cw_struct.ModuleAccountsRequest{}
+	cwResp, err := s.queryPlugin.Perp.ModuleAccounts(s.ctx, cwReq)
+	s.NoErrorf(err, "\ncwResp: %s", cwResp)
+}
+
+func (s *TestSuitePerpExt) TestModuleParams() {
+	cwReq := &cw_struct.PerpParamsRequest{}
+	cwResp, err := s.queryPlugin.Perp.ModuleParams(s.ctx, cwReq)
+	s.NoErrorf(err, "\ncwResp: %s", cwResp)
+}

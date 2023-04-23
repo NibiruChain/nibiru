@@ -2,6 +2,7 @@ package binding
 
 import (
 	"encoding/json"
+	"errors"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -32,6 +33,21 @@ func NewQueryPlugin(perp *perpkeeper.Keeper, perpAmm *perpammkeeper.Keeper) *Que
 	}
 }
 
+func (qp *QueryPlugin) ToBinary(
+	cwResp any, err error, cwReq any,
+) ([]byte, error) {
+	if err != nil {
+		return nil, sdkerrors.Wrapf(err,
+			"failed to query: perp all markets: request: %v",
+			cwReq)
+	}
+	bz, err := json.Marshal(cwResp)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(err, ErrorMarshalResponse(cwResp))
+	}
+	return bz, nil
+}
+
 // CustomQuerier returns a function that is an implementation of the custom
 // querier mechanism for specific messages
 func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessage) ([]byte, error) {
@@ -42,47 +58,22 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 		}
 
 		switch {
+		// TODO test
 		case wasmContractQuery.AllMarkets != nil:
+			cwReq := wasmContractQuery.AllMarkets
 			cwResp, err := qp.Perp.AllMarkets(ctx)
-			if err != nil {
-				return nil, sdkerrors.Wrapf(err,
-					"failed to query: perp all markets: request: %v",
-					wasmContractQuery.AllMarkets)
-			}
-			bz, err := json.Marshal(cwResp)
-			if err != nil {
-				return nil, sdkerrors.Wrapf(err, ErrorMarshalResponse(cwResp))
-			}
-			return bz, nil
+			return qp.ToBinary(cwResp, err, cwReq)
 
 		// TODO test
 		case wasmContractQuery.Reserves != nil:
 			cwReq := wasmContractQuery.Reserves
 			cwResp, err := qp.Perp.Reserves(ctx, cwReq)
-			if err != nil {
-				return nil, sdkerrors.Wrapf(err,
-					"failed to query: perp reserves: request: %v",
-					wasmContractQuery.Reserves)
-			}
-			bz, err := json.Marshal(cwResp)
-			if err != nil {
-				return nil, sdkerrors.Wrapf(err, ErrorMarshalResponse(cwResp))
-			}
-			return bz, nil
+			return qp.ToBinary(cwResp, err, cwReq)
 
 		case wasmContractQuery.BasePrice != nil:
 			cwReq := wasmContractQuery.BasePrice
 			cwResp, err := qp.Perp.BasePrice(ctx, cwReq)
-			if err != nil {
-				return nil, sdkerrors.Wrapf(err,
-					"failed to query: perp all markets: request: %v",
-					cwReq)
-			}
-			bz, err := json.Marshal(cwResp)
-			if err != nil {
-				return nil, sdkerrors.Wrapf(err, ErrorMarshalResponse(cwResp))
-			}
-			return bz, nil
+			return qp.ToBinary(cwResp, err, cwReq)
 
 		// TODO implement
 		// TODO test
@@ -93,33 +84,31 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 		// case wasmContractQuery.Position != nil:
 		// 	return bz, nil
 
-		// TODO implement
 		// TODO test
 		case wasmContractQuery.PremiumFraction != nil:
 			cwReq := wasmContractQuery.PremiumFraction
 			cwResp, err := qp.Perp.PremiumFraction(ctx, cwReq)
-			if err != nil {
-				return nil, sdkerrors.Wrapf(err,
-					"failed to query: perp all markets: request: %v",
-					cwReq)
-			}
-			bz, err := json.Marshal(cwResp)
-			if err != nil {
-				return nil, sdkerrors.Wrapf(err, ErrorMarshalResponse(cwResp))
-			}
-			return bz, nil
+			return qp.ToBinary(cwResp, err, wasmContractQuery.AllMarkets)
+
 		// TODO implement
 		// TODO test
-		// case wasmContractQuery.Metrics != nil:
-		// 	return bz, nil
-		// TODO implement
+		case wasmContractQuery.Metrics != nil:
+			cwReq := wasmContractQuery.Metrics
+			cwResp, err := qp.Perp.Metrics(ctx, cwReq)
+			return qp.ToBinary(cwResp, err, cwReq)
+
 		// TODO test
-		// case wasmContractQuery.ModuleAccounts != nil:
-		// 	return bz, nil
-		// TODO implement
+		case wasmContractQuery.ModuleAccounts != nil:
+			cwReq := wasmContractQuery.ModuleAccounts
+			cwResp, err := qp.Perp.ModuleAccounts(ctx, cwReq)
+			return qp.ToBinary(cwResp, err, cwReq)
+
 		// TODO test
-		// case wasmContractQuery.PerpParams != nil:
-		// 	return bz, nil
+		case wasmContractQuery.PerpParams != nil:
+			cwReq := wasmContractQuery.PerpParams
+			cwResp, err := qp.Perp.ModuleParams(ctx, cwReq)
+			return qp.ToBinary(cwResp, err, cwReq)
+
 		default:
 			return nil, wasmvmtypes.UnsupportedRequest{Kind: "unknown nibiru query variant"}
 		}
@@ -276,6 +265,66 @@ func (perpExt *PerpExtension) Metrics(
 			VolumeQuote: sdkResp.Metrics.VolumeQuote,
 			VolumeBase:  sdkResp.Metrics.VolumeBase,
 			BlockNumber: ctx.BlockHeight(),
+		},
+	}, err
+}
+
+func (perpExt *PerpExtension) ModuleAccounts(
+	ctx sdk.Context, cwReq *cw_struct.ModuleAccountsRequest,
+) (*cw_struct.ModuleAccountsResponse, error) {
+	if cwReq == nil {
+		return nil, errors.New("nil request")
+	}
+	sdkReq := &perptypes.QueryModuleAccountsRequest{}
+	goCtx := sdk.WrapSDKContext(ctx)
+	sdkResp, err := perpExt.perp.ModuleAccounts(goCtx, sdkReq)
+	if err != nil {
+		return nil, err
+	}
+
+	moduleAccounts := make(map[string]cw_struct.ModuleAccountWithBalance)
+	for _, acc := range sdkResp.Accounts {
+		addr, err := sdk.AccAddressFromBech32(acc.Address)
+		if err != nil {
+			return nil, err
+		}
+		moduleAccounts[acc.Name] = cw_struct.ModuleAccountWithBalance{
+			Name:    acc.Name,
+			Addr:    addr,
+			Balance: acc.Balance,
+		}
+	}
+
+	return &cw_struct.ModuleAccountsResponse{
+		ModuleAccounts: moduleAccounts,
+	}, err
+}
+
+func (perpExt *PerpExtension) ModuleParams(
+	ctx sdk.Context, cwReq *cw_struct.PerpParamsRequest,
+) (*cw_struct.PerpParamsResponse, error) {
+	if cwReq == nil {
+		return nil, errors.New("nil request")
+	}
+	sdkReq := &perptypes.QueryParamsRequest{}
+	goCtx := sdk.WrapSDKContext(ctx)
+	sdkResp, err := perpExt.perp.Params(goCtx, sdkReq)
+	if err != nil {
+		return nil, err
+	}
+
+	params := sdkResp.Params
+
+	return &cw_struct.PerpParamsResponse{
+		ModuleParams: cw_struct.PerpParams{
+			Stopped:                 params.Stopped,
+			FeePoolFeeRatio:         params.FeePoolFeeRatio,
+			EcosystemFundFeeRatio:   params.EcosystemFundFeeRatio,
+			LiquidationFeeRatio:     params.LiquidationFeeRatio,
+			PartialLiquidationRatio: params.PartialLiquidationRatio,
+			FundingRateInterval:     params.FundingRateInterval,
+			TwapLookbackWindow:      params.TwapLookbackWindow,
+			WhitelistedLiquidators:  params.WhitelistedLiquidators,
 		},
 	}, err
 }
