@@ -54,6 +54,8 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 				return nil, sdkerrors.Wrapf(err, ErrorMarshalResponse(cwResp))
 			}
 			return bz, nil
+
+		// TODO test
 		case wasmContractQuery.Reserves != nil:
 			cwReq := wasmContractQuery.Reserves
 			cwResp, err := qp.Perp.Reserves(ctx, cwReq)
@@ -67,8 +69,7 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 				return nil, sdkerrors.Wrapf(err, ErrorMarshalResponse(cwResp))
 			}
 			return bz, nil
-		// TODO implement
-		// TODO test
+
 		case wasmContractQuery.BasePrice != nil:
 			cwReq := wasmContractQuery.BasePrice
 			cwResp, err := qp.Perp.BasePrice(ctx, cwReq)
@@ -82,6 +83,7 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 				return nil, sdkerrors.Wrapf(err, ErrorMarshalResponse(cwResp))
 			}
 			return bz, nil
+
 		// TODO implement
 		// TODO test
 		// case wasmContractQuery.Positions != nil:
@@ -90,10 +92,22 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 		// TODO test
 		// case wasmContractQuery.Position != nil:
 		// 	return bz, nil
+
 		// TODO implement
 		// TODO test
-		// case wasmContractQuery.PremiumFraction != nil:
-		// 	return bz, nil
+		case wasmContractQuery.PremiumFraction != nil:
+			cwReq := wasmContractQuery.PremiumFraction
+			cwResp, err := qp.Perp.PremiumFraction(ctx, cwReq)
+			if err != nil {
+				return nil, sdkerrors.Wrapf(err,
+					"failed to query: perp all markets: request: %v",
+					cwReq)
+			}
+			bz, err := json.Marshal(cwResp)
+			if err != nil {
+				return nil, sdkerrors.Wrapf(err, ErrorMarshalResponse(cwResp))
+			}
+			return bz, nil
 		// TODO implement
 		// TODO test
 		// case wasmContractQuery.Metrics != nil:
@@ -162,7 +176,7 @@ func (perpExt *PerpExtension) AllMarkets(
 			Depth:        pbPrice.SwapInvariant,
 			Bias:         pbMarket.Bias,
 			PegMult:      pbMarket.PegMultiplier,
-			Config: cw_struct.MarketConfig{
+			Config: &cw_struct.MarketConfig{
 				TradeLimitRatio:        pbMarket.Config.TradeLimitRatio,
 				FluctLimitRatio:        pbMarket.Config.FluctuationLimitRatio,
 				MaxOracleSpreadRatio:   pbMarket.Config.MaxOracleSpreadRatio,
@@ -211,5 +225,57 @@ func (perpExt *PerpExtension) BasePrice(
 		BaseAmount:  cwReq.BaseAmount.ToDec(),
 		QuoteAmount: sdkResp.PriceInQuoteDenom,
 		IsLong:      cwReq.IsLong,
+	}, err
+}
+
+func (perpExt *PerpExtension) PremiumFraction(
+	ctx sdk.Context, cwReq *cw_struct.PremiumFractionRequest,
+) (*cw_struct.PremiumFractionResponse, error) {
+	pair, err := asset.TryNewPair(cwReq.Pair)
+	if err != nil {
+		return nil, err
+	}
+
+	sdkReq := &perptypes.QueryCumulativePremiumFractionRequest{
+		Pair: pair,
+	}
+	goCtx := sdk.WrapSDKContext(ctx)
+	sdkResp, err := perpExt.perp.CumulativePremiumFraction(goCtx, sdkReq)
+	if err != nil {
+		return nil, err
+	}
+
+	return &cw_struct.PremiumFractionResponse{
+		Pair:             pair.String(),
+		CPF:              sdkResp.CumulativePremiumFraction,
+		EstimatedNextCPF: sdkResp.EstimatedNextCumulativePremiumFraction,
+	}, err
+}
+
+func (perpExt *PerpExtension) Metrics(
+	ctx sdk.Context, cwReq *cw_struct.MetricsRequest,
+) (*cw_struct.MetricsResponse, error) {
+	pair, err := asset.TryNewPair(cwReq.Pair)
+	if err != nil {
+		return nil, err
+	}
+
+	sdkReq := &perptypes.QueryMetricsRequest{
+		Pair: pair,
+	}
+	goCtx := sdk.WrapSDKContext(ctx)
+	sdkResp, err := perpExt.perp.Metrics(goCtx, sdkReq)
+	if err != nil {
+		return nil, err
+	}
+
+	return &cw_struct.MetricsResponse{
+		Metrics: cw_struct.Metrics{
+			Pair:        sdkResp.Metrics.Pair.String(),
+			NetSize:     sdkResp.Metrics.NetSize,
+			VolumeQuote: sdkResp.Metrics.VolumeQuote,
+			VolumeBase:  sdkResp.Metrics.VolumeBase,
+			BlockNumber: ctx.BlockHeight(),
+		},
 	}, err
 }

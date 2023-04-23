@@ -15,13 +15,8 @@ func TestExpectedBytecodeExists(t *testing.T) {
 		wasmbin.WasmKeyPerpBinding,
 	}
 
-	testCases := make(map[wasmbin.WasmKey]string)
 	for _, wasmKey := range wasmKeys {
-		var testName string = wasmbin.WasmBzMap[wasmKey]
-		testCases[wasmKey] = testName
-	}
-
-	for wasmKey, testName := range testCases {
+		testName := wasmbin.WasmBzMap[wasmKey]
 		t.Run(testName, func(t *testing.T) {
 			pathToWasmbin := wasmbin.GetPackageDir(t)
 			pathToWasmBytecode := wasmKey.ToPath(pathToWasmbin)
