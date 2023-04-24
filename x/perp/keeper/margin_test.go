@@ -76,7 +76,6 @@ func TestAddMarginSuccess(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-				sdk.ZeroDec(),
 				sdk.NewDec(2),
 			))
 			require.True(t, perpammKeeper.ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)))
@@ -148,7 +147,6 @@ func TestRemoveMargin(t *testing.T) {
 						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 						MaxLeverage:            sdk.MustNewDecFromStr("15"),
 					},
-					sdk.ZeroDec(),
 					sdk.OneDec(),
 				))
 
@@ -184,7 +182,6 @@ func TestRemoveMargin(t *testing.T) {
 						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 						MaxLeverage:            sdk.MustNewDecFromStr("15"),
 					},
-					sdk.ZeroDec(),
 					sdk.OneDec(),
 				))
 				require.True(t, perpammKeeper.ExistsPool(ctx, pair))

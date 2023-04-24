@@ -62,7 +62,6 @@ func TestGetMarkPrice(t *testing.T) {
 					MaxOracleSpreadRatio:   sdk.OneDec(),
 					TradeLimitRatio:        sdk.OneDec(),
 				},
-				sdk.ZeroDec(),
 				tc.pegMultiplier,
 			))
 
@@ -145,7 +144,6 @@ func TestGetBaseAssetPrice(t *testing.T) {
 					MaxOracleSpreadRatio:   sdk.OneDec(),
 					TradeLimitRatio:        sdk.OneDec(),
 				},
-				sdk.ZeroDec(),
 				tc.pegMultiplier,
 			))
 
@@ -489,7 +487,6 @@ func TestCalcTwap(t *testing.T) {
 				/* Base asset reserve */ sdk.NewDec(100),
 				/* Quote asset reserve */ sdk.NewDec(100),
 				*types.DefaultMarketConfig().WithMaxLeverage(sdk.NewDec(15)),
-				sdk.ZeroDec(),
 				sdk.OneDec(),
 			))
 
@@ -500,7 +497,6 @@ func TestCalcTwap(t *testing.T) {
 				/*quoteReserve=*/ sdk.NewDec(100),
 				/*baseReserve=*/ sdk.NewDec(100),
 				*types.DefaultMarketConfig().WithMaxLeverage(sdk.NewDec(15)),
-				sdk.ZeroDec(),
 				sdk.OneDec(),
 			))
 

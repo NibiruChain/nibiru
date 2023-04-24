@@ -21,8 +21,6 @@ type CreateMarketAction struct {
 	BaseReserve  sdk.Dec
 
 	MarketConfig perpammtypes.MarketConfig
-
-	Bias sdk.Dec
 }
 
 func (c CreateMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
@@ -32,7 +30,6 @@ func (c CreateMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context
 		c.QuoteReserve,
 		c.BaseReserve,
 		c.MarketConfig,
-		c.Bias,
 		sdk.OneDec(),
 	)
 	if err != nil {
@@ -72,13 +69,11 @@ func CreateCustomMarket(
 	pair asset.Pair,
 	quoteReserve, baseReserve sdk.Dec,
 	marketConfig perpammtypes.MarketConfig,
-	bias sdk.Dec,
 ) action.Action {
 	return CreateMarketAction{
 		Pair:         pair,
 		QuoteReserve: quoteReserve,
 		BaseReserve:  baseReserve,
 		MarketConfig: marketConfig,
-		Bias:         bias,
 	}
 }
