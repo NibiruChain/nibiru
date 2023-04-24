@@ -415,10 +415,10 @@ func TestGetMarkets(t *testing.T) {
 		mock.NewMockOracleKeeper(gomock.NewController(t)),
 	)
 
-	assert.NoError(t, perpammKeeper.CreatePool(
+	require.NoError(t, perpammKeeper.CreatePool(
 		ctx,
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-		sdk.NewDec(10*common.TO_MICRO),
+		sdk.NewDec(5*common.TO_MICRO),
 		sdk.NewDec(5*common.TO_MICRO),
 		types.MarketConfig{
 			TradeLimitRatio:        sdk.OneDec(),
@@ -428,12 +428,12 @@ func TestGetMarkets(t *testing.T) {
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
 		sdk.ZeroDec(),
-		sdk.OneDec(),
+		sdk.NewDec(2),
 	))
-	assert.NoError(t, perpammKeeper.CreatePool(
+	require.NoError(t, perpammKeeper.CreatePool(
 		ctx,
 		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-		sdk.NewDec(5*common.TO_MICRO),
+		sdk.NewDec(10*common.TO_MICRO),
 		sdk.NewDec(10*common.TO_MICRO),
 		types.MarketConfig{
 			TradeLimitRatio:        sdk.OneDec(),
@@ -443,7 +443,7 @@ func TestGetMarkets(t *testing.T) {
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
 		sdk.ZeroDec(),
-		sdk.OneDec(),
+		sdk.MustNewDecFromStr("0.5"),
 	))
 
 	pools := perpammKeeper.Pools.Iterate(ctx, collections.Range[asset.Pair]{}).Values()
@@ -453,20 +453,6 @@ func TestGetMarkets(t *testing.T) {
 	require.EqualValues(t, pools[0], types.NewMarket(types.ArgsNewMarket{
 		Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		BaseReserves:  sdk.NewDec(5 * common.TO_MICRO),
-		QuoteReserves: sdk.NewDec(10 * common.TO_MICRO),
-		Config: &types.MarketConfig{
-			TradeLimitRatio:        sdk.OneDec(),
-			FluctuationLimitRatio:  sdk.OneDec(),
-			MaxOracleSpreadRatio:   sdk.OneDec(),
-			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-			MaxLeverage:            sdk.MustNewDecFromStr("15"),
-		},
-		Bias:          sdk.ZeroDec(),
-		PegMultiplier: sdk.OneDec(),
-	}))
-	require.EqualValues(t, pools[1], types.NewMarket(types.ArgsNewMarket{
-		Pair:          asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-		BaseReserves:  sdk.NewDec(10 * common.TO_MICRO),
 		QuoteReserves: sdk.NewDec(5 * common.TO_MICRO),
 		Config: &types.MarketConfig{
 			TradeLimitRatio:        sdk.OneDec(),
@@ -476,7 +462,21 @@ func TestGetMarkets(t *testing.T) {
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
 		Bias:          sdk.ZeroDec(),
-		PegMultiplier: sdk.OneDec(),
+		PegMultiplier: sdk.NewDec(2),
+	}))
+	require.EqualValues(t, pools[1], types.NewMarket(types.ArgsNewMarket{
+		Pair:          asset.Registry.Pair(denoms.ETH, denoms.NUSD),
+		BaseReserves:  sdk.NewDec(10 * common.TO_MICRO),
+		QuoteReserves: sdk.NewDec(10 * common.TO_MICRO),
+		Config: &types.MarketConfig{
+			TradeLimitRatio:        sdk.OneDec(),
+			FluctuationLimitRatio:  sdk.OneDec(),
+			MaxOracleSpreadRatio:   sdk.OneDec(),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
+		},
+		Bias:          sdk.ZeroDec(),
+		PegMultiplier: sdk.MustNewDecFromStr("0.5"),
 	}))
 }
 

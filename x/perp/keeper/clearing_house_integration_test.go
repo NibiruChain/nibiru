@@ -730,11 +730,11 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 
 				t.Log("Set market defined by pair on PerpAmmKeeper")
 				perpammKeeper := &nibiruApp.PerpAmmKeeper
-				assert.NoError(t, nibiruApp.PerpAmmKeeper.CreatePool(
+				require.NoError(t, nibiruApp.PerpAmmKeeper.CreatePool(
 					ctx,
 					pair,
-					sdk.NewDec(10*common.TO_MICRO), //
-					sdk.NewDec(5*common.TO_MICRO),  // 5 tokens
+					sdk.NewDec(5*common.TO_MICRO), //
+					sdk.NewDec(5*common.TO_MICRO), // 5 tokens
 					perpammtypes.MarketConfig{
 						FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -743,7 +743,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					},
 					sdk.ZeroDec(),
-					sdk.OneDec(),
+					sdk.NewDec(2),
 				))
 
 				require.True(t, perpammKeeper.ExistsPool(ctx, pair))

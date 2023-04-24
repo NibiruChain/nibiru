@@ -313,7 +313,7 @@ func TestQueryCumulativePremiumFraction(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Log("initialize app and keeper")
-			ctx, app, queryServer := initAppMarkets(t, sdk.NewDec(481_000), sdk.NewDec(1_000), sdk.OneDec())
+			ctx, app, queryServer := initAppMarkets(t, sdk.NewDec(1_000), sdk.NewDec(1_000), sdk.NewDec(481))
 
 			t.Log("set index price")
 			app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdk.OneDec())

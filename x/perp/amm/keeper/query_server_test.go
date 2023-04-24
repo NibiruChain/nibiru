@@ -62,8 +62,8 @@ func TestQueryAllPools(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	pool := &types.Market{
 		Pair:         pair,
-		QuoteReserve: sdk.NewDec(1 * common.TO_MICRO),
 		BaseReserve:  sdk.NewDec(1000),
+		QuoteReserve: sdk.NewDec(1000),
 		Config: types.MarketConfig{
 			FluctuationLimitRatio:  sdk.ZeroDec(),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -73,7 +73,7 @@ func TestQueryAllPools(t *testing.T) {
 		},
 	}
 	assert.NoError(t, perpammKeeper.CreatePool(
-		ctx, pair, pool.QuoteReserve, pool.BaseReserve, pool.Config, sdk.ZeroDec(), sdk.OneDec()))
+		ctx, pair, pool.QuoteReserve, pool.BaseReserve, pool.Config, sdk.ZeroDec(), sdk.NewDec(1000)))
 
 	t.Log("query reserve assets and prices for the pair")
 	ctx = ctx.WithBlockHeight(2).WithBlockTime(time.Now().Add(5 * time.Second))
@@ -93,7 +93,7 @@ func TestQueryAllPools(t *testing.T) {
 		MarkPrice:     markPriceWanted,
 		IndexPrice:    indexPrice.String(),
 		TwapMark:      markPriceWanted.String(),
-		SwapInvariant: sdk.NewInt(1_000 * common.TO_MICRO),
+		SwapInvariant: sdk.NewInt(1_000 * 1_000),
 		BlockNumber:   2,
 	}
 	require.NoError(t, err)

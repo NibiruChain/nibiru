@@ -23,20 +23,23 @@ func TestGetMarkPrice(t *testing.T) {
 		pair          asset.Pair
 		quoteReserve  sdk.Dec
 		baseReserve   sdk.Dec
+		pegMultiplier sdk.Dec
 		expectedPrice sdk.Dec
 	}{
 		{
 			name:          "correctly fetch underlying price",
 			pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			quoteReserve:  sdk.NewDec(40_000),
+			quoteReserve:  sdk.NewDec(1),
 			baseReserve:   sdk.NewDec(1),
+			pegMultiplier: sdk.NewDec(40_000),
 			expectedPrice: sdk.NewDec(40000),
 		},
 		{
 			name:          "complex price",
 			pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			quoteReserve:  sdk.NewDec(2_489_723_947),
+			quoteReserve:  sdk.NewDec(34_597_234),
 			baseReserve:   sdk.NewDec(34_597_234),
+			pegMultiplier: sdk.MustNewDecFromStr("71.963092396345904415"),
 			expectedPrice: sdk.MustNewDecFromStr("71.963092396345904415"),
 		},
 	}
@@ -47,7 +50,7 @@ func TestGetMarkPrice(t *testing.T) {
 			perpammKeeper, ctx := PerpAmmKeeper(t,
 				mock.NewMockOracleKeeper(gomock.NewController(t)))
 
-			assert.NoError(t, perpammKeeper.CreatePool(
+			require.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				tc.pair,
 				tc.quoteReserve,
@@ -60,7 +63,7 @@ func TestGetMarkPrice(t *testing.T) {
 					TradeLimitRatio:        sdk.OneDec(),
 				},
 				sdk.ZeroDec(),
-				sdk.OneDec(),
+				tc.pegMultiplier,
 			))
 
 			price, err := perpammKeeper.GetMarkPrice(ctx, tc.pair)
@@ -77,6 +80,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 		quoteReserve        sdk.Dec
 		baseReserve         sdk.Dec
 		baseAmount          sdk.Dec
+		pegMultiplier       sdk.Dec
 		direction           types.Direction
 		expectedQuoteAmount sdk.Dec
 		expectedErr         error
@@ -84,9 +88,10 @@ func TestGetBaseAssetPrice(t *testing.T) {
 		{
 			name:                "zero base asset means zero price",
 			pair:                asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			quoteReserve:        sdk.NewDec(40_000),
+			quoteReserve:        sdk.NewDec(10_000),
 			baseReserve:         sdk.NewDec(10_000),
 			baseAmount:          sdk.ZeroDec(),
+			pegMultiplier:       sdk.NewDec(4),
 			direction:           types.Direction_LONG,
 			expectedQuoteAmount: sdk.ZeroDec(),
 		},
@@ -96,6 +101,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 			baseReserve:         sdk.NewDec(1000),
 			quoteReserve:        sdk.NewDec(1000),
 			baseAmount:          sdk.MustNewDecFromStr("500"),
+			pegMultiplier:       sdk.OneDec(),
 			direction:           types.Direction_LONG,
 			expectedQuoteAmount: sdk.MustNewDecFromStr("333.333333333333333333"), // rounds down
 		},
@@ -105,17 +111,19 @@ func TestGetBaseAssetPrice(t *testing.T) {
 			baseReserve:         sdk.NewDec(1000),
 			quoteReserve:        sdk.NewDec(1000),
 			baseAmount:          sdk.MustNewDecFromStr("500"),
+			pegMultiplier:       sdk.OneDec(),
 			direction:           types.Direction_SHORT,
 			expectedQuoteAmount: sdk.MustNewDecFromStr("1000"),
 		},
 		{
-			name:         "too much base removed results in error",
-			pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			baseReserve:  sdk.NewDec(1000),
-			quoteReserve: sdk.NewDec(1000),
-			baseAmount:   sdk.MustNewDecFromStr("1000"),
-			direction:    types.Direction_SHORT,
-			expectedErr:  types.ErrBaseReserveAtZero,
+			name:          "too much base removed results in error",
+			pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+			baseReserve:   sdk.NewDec(1000),
+			quoteReserve:  sdk.NewDec(1000),
+			pegMultiplier: sdk.OneDec(),
+			baseAmount:    sdk.MustNewDecFromStr("1000"),
+			direction:     types.Direction_SHORT,
+			expectedErr:   types.ErrBaseReserveAtZero,
 		},
 	}
 
@@ -138,7 +146,7 @@ func TestGetBaseAssetPrice(t *testing.T) {
 					TradeLimitRatio:        sdk.OneDec(),
 				},
 				sdk.ZeroDec(),
-				sdk.OneDec(),
+				tc.pegMultiplier,
 			))
 
 			market, err := perpammKeeper.GetPool(ctx, tc.pair)

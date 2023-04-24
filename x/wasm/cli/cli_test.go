@@ -52,9 +52,9 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		{
 			Pair:          asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 			BaseReserve:   sdk.NewDec(10 * common.TO_MICRO),
-			QuoteReserve:  sdk.NewDec(60_000 * common.TO_MICRO),
+			QuoteReserve:  sdk.NewDec(10 * common.TO_MICRO),
 			SqrtDepth:     common.MustSqrtDec(sdk.NewDec(10 * 60_000 * common.TO_MICRO * common.TO_MICRO)),
-			PegMultiplier: sdk.OneDec(),
+			PegMultiplier: sdk.NewDec(6000),
 			Config: perpammtypes.MarketConfig{
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
