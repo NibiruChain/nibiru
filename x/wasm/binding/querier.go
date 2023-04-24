@@ -3,7 +3,6 @@ package binding
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -59,7 +58,6 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 		}
 
 		switch {
-
 		case wasmContractQuery.AllMarkets != nil:
 			cwReq := wasmContractQuery.AllMarkets
 			cwResp, err := qp.Perp.AllMarkets(ctx)
@@ -311,14 +309,11 @@ func (perpExt *PerpExtension) ModuleParams(
 
 	params := sdkResp.Params
 
-	fmt.Printf("\nDEBUG-UD params lookback: %v", params.TwapLookbackWindow)
 	lookback := sdk.NewInt(int64(params.TwapLookbackWindow.Seconds()))
-	fmt.Printf("\nDEBUG-UD lookback: %v", lookback)
 
 	liquidators := []string{}
-	for _, liq := range params.WhitelistedLiquidators {
-		liquidators = append(liquidators, liq)
-	}
+	liquidators = append(liquidators, params.WhitelistedLiquidators...)
+
 	return &cw_struct.PerpParamsResponse{
 		ModuleParams: cw_struct.PerpParams{
 			Stopped:                 params.Stopped,

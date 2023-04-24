@@ -2,14 +2,14 @@ package cw_struct_test
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
-	"github.com/stretchr/testify/suite"
 )
 
 type TestSuiteJsonMarshalQuery struct {
@@ -34,7 +34,6 @@ func (s *TestSuiteJsonMarshalQuery) SetupSuite() {
 }
 
 func (s *TestSuiteJsonMarshalQuery) TestQueries() {
-
 	testCaseMap := map[string]any{
 		"all_markets":      new(cw_struct.AllMarketsResponse),
 		"reserves":         new(cw_struct.ReservesResponse),
@@ -52,10 +51,7 @@ func (s *TestSuiteJsonMarshalQuery) TestQueries() {
 			err := json.Unmarshal(s.fileJson[name], cwRespPtr)
 			s.Assert().NoErrorf(err, "name: %v", name)
 			jsonBz, err := json.Marshal(cwRespPtr)
-			fmt.Printf("\n\nDEBUG-UD test name: %v", name)
-			fmt.Printf("\nDEBUG-UD cwRespPtr: %v", cwRespPtr)
-			fmt.Printf("\nDEBUG-UD jsonBz: %s", jsonBz)
-			s.NoError(err)
+			s.NoErrorf(err, "jsonBz: %s", jsonBz)
 		})
 	}
 }
