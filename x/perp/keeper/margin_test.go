@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/NibiruChain/collections"
-	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -56,7 +55,7 @@ func TestAddMarginSuccess(t *testing.T) {
 			traderAddr := sdk.MustAccAddressFromBech32(tc.initialPosition.TraderAddress)
 
 			t.Log("add trader funds")
-			require.NoError(t, simapp.FundAccount(
+			require.NoError(t, testapp.FundAccount(
 				nibiruApp.BankKeeper,
 				ctx,
 				traderAddr,
@@ -198,7 +197,7 @@ func TestRemoveMargin(t *testing.T) {
 					WithBlockTime(time.Now().Add(time.Minute))
 
 				t.Log("Fund trader account with sufficient quote")
-				require.NoError(t, simapp.FundAccount(nibiruApp.BankKeeper, ctx, traderAddr,
+				require.NoError(t, testapp.FundAccount(nibiruApp.BankKeeper, ctx, traderAddr,
 					sdk.NewCoins(sdk.NewInt64Coin("yyy", 60))),
 				)
 

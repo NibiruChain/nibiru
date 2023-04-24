@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/NibiruChain/collections"
-	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -122,7 +121,7 @@ func TestExecuteFullLiquidation(t *testing.T) {
 
 			t.Log("Fund trader account with sufficient quote")
 			var err error
-			err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, traderAddr,
+			err = testapp.FundAccount(nibiruApp.BankKeeper, ctx, traderAddr,
 				sdk.NewCoins(tc.traderFunds))
 			require.NoError(t, err)
 
@@ -138,9 +137,9 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			t.Log("Artificially populate Vault and PerpEF to prevent bankKeeper errors")
 			startingModuleFunds := sdk.NewCoins(sdk.NewInt64Coin(
 				tokenPair.QuoteDenom(), 1*common.TO_MICRO))
-			assert.NoError(t, simapp.FundModuleAccount(
+			assert.NoError(t, testapp.FundModuleAccount(
 				nibiruApp.BankKeeper, ctx, types.VaultModuleAccount, startingModuleFunds))
-			assert.NoError(t, simapp.FundModuleAccount(
+			assert.NoError(t, testapp.FundModuleAccount(
 				nibiruApp.BankKeeper, ctx, types.PerpEFModuleAccount, startingModuleFunds))
 
 			t.Log("Liquidate the (entire) position")
@@ -302,7 +301,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 
 			t.Log("Fund trader account with sufficient quote")
 			var err error
-			err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, traderAddr,
+			err = testapp.FundAccount(nibiruApp.BankKeeper, ctx, traderAddr,
 				sdk.NewCoins(tc.traderFunds))
 			require.NoError(t, err)
 
@@ -318,9 +317,9 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			t.Log("Artificially populate Vault and PerpEF to prevent bankKeeper errors")
 			startingModuleFunds := sdk.NewCoins(sdk.NewInt64Coin(
 				tokenPair.QuoteDenom(), 1*common.TO_MICRO))
-			assert.NoError(t, simapp.FundModuleAccount(
+			assert.NoError(t, testapp.FundModuleAccount(
 				nibiruApp.BankKeeper, ctx, types.VaultModuleAccount, startingModuleFunds))
-			assert.NoError(t, simapp.FundModuleAccount(
+			assert.NoError(t, testapp.FundModuleAccount(
 				nibiruApp.BankKeeper, ctx, types.PerpEFModuleAccount, startingModuleFunds))
 
 			t.Log("Liquidate the (partial) position")
@@ -468,7 +467,7 @@ func TestMultiLiquidate(t *testing.T) {
 			liquidations := make([]*types.MsgMultiLiquidate_Liquidation, len(tc.positions))
 			for i, pos := range tc.positions {
 				keeper.SetPosition(app.PerpKeeper, ctx, pos)
-				require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pos.Pair.QuoteDenom(), 1))))
+				require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pos.Pair.QuoteDenom(), 1))))
 
 				liquidations[i] = &types.MsgMultiLiquidate_Liquidation{
 					Pair:   pos.Pair,
