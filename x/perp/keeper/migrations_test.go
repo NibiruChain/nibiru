@@ -110,10 +110,10 @@ func TestFrom2To3(t *testing.T) {
 			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 
 			market := types.Market{
-				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				BaseAssetReserve:  sdk.MustNewDecFromStr("10000000"),
-				QuoteAssetReserve: sdk.MustNewDecFromStr("20000000"),
-				Bias:              sdk.ZeroDec(),
+				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				BaseReserve:  sdk.MustNewDecFromStr("10000000"),
+				QuoteReserve: sdk.MustNewDecFromStr("20000000"),
+				Bias:         sdk.ZeroDec(),
 			}
 			app.PerpAmmKeeper.Pools.Insert(ctx, market.Pair, market)
 

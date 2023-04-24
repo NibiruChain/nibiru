@@ -53,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1229](https://github.com/NibiruChain/nibiru/pull/1229) - feat: upgrade ibc to v4.2.0 and wasm v0.30.0
 * [#1254](https://github.com/NibiruChain/nibiru/pull/1254) - feat: add bias field into vpool
 * [#1255](https://github.com/NibiruChain/nibiru/pull/1255) - feat: add peg multiplier field into vpool, which for now defaults to 1
+* [#1255](https://github.com/NibiruChain/nibiru/pull/1281) - feat: add peg multiplier to the pricing logic
 
 ### Improvements
 
@@ -86,6 +87,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * [#1187](https://github.com/NibiruChain/nibiru/pull/1187) - feat(oracle): default vote threshold and min voters
 * [#1276](https://github.com/NibiruChain/nibiru/pull/1276) - feat: add ewma function
+* [#1284](https://github.com/NibiruChain/nibiru/pull/1284) - feat: fails if base and quote reserves are not equal on CreatePool
+* [#1286](https://github.com/NibiruChain/nibiru/pull/1286) - feat: bias is zero when creating pool
 
 ### API Breaking
 

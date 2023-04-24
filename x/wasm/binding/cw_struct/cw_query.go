@@ -82,8 +82,8 @@ func (m Market) ToAppMarket() (appMarket perpammtypes.Market, err error) {
 }
 
 func NewMarket(appMarket perpammtypes.Market, indexPrice, twapMark string, blockNumber int64) Market {
-	base := appMarket.BaseAssetReserve
-	quote := appMarket.QuoteAssetReserve
+	base := appMarket.BaseReserve
+	quote := appMarket.QuoteReserve
 	return Market{
 		Pair:         appMarket.Pair.String(),
 		BaseReserve:  base,

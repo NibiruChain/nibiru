@@ -32,12 +32,12 @@ func AddOracleGenesis(gen app.GenesisState) app.GenesisState {
 
 var START_MARKETS = map[asset.Pair]perpammtypes.Market{
 	asset.Registry.Pair(denoms.ETH, denoms.NUSD): {
-		Pair:              asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-		BaseAssetReserve:  sdk.NewDec(10 * common.TO_MICRO),
-		QuoteAssetReserve: sdk.NewDec(60_000 * common.TO_MICRO),
-		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(600_000 * common.TO_MICRO * common.TO_MICRO)),
-		Bias:              sdk.ZeroDec(),
-		PegMultiplier:     sdk.OneDec(),
+		Pair:          asset.Registry.Pair(denoms.ETH, denoms.NUSD),
+		BaseReserve:   sdk.NewDec(10 * common.TO_MICRO),
+		QuoteReserve:  sdk.NewDec(10 * common.TO_MICRO),
+		SqrtDepth:     common.MustSqrtDec(sdk.NewDec(10 * common.TO_MICRO * 10 * common.TO_MICRO)),
+		PegMultiplier: sdk.NewDec(6_000),
+		Bias:          sdk.ZeroDec(),
 		Config: perpammtypes.MarketConfig{
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
@@ -47,12 +47,12 @@ var START_MARKETS = map[asset.Pair]perpammtypes.Market{
 		},
 	},
 	asset.Registry.Pair(denoms.NIBI, denoms.NUSD): {
-		Pair:              asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
-		BaseAssetReserve:  sdk.NewDec(500_000),
-		QuoteAssetReserve: sdk.NewDec(5 * common.TO_MICRO),
-		SqrtDepth:         common.MustSqrtDec(sdk.NewDec(5 * 500_000 * common.TO_MICRO)),
-		Bias:              sdk.ZeroDec(),
-		PegMultiplier:     sdk.OneDec(),
+		Pair:          asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
+		BaseReserve:   sdk.NewDec(10 * common.TO_MICRO),
+		QuoteReserve:  sdk.NewDec(10 * common.TO_MICRO),
+		SqrtDepth:     common.MustSqrtDec(sdk.NewDec(10 * common.TO_MICRO * 10 * common.TO_MICRO)),
+		PegMultiplier: sdk.NewDec(10),
+		Bias:          sdk.ZeroDec(),
 		Config: perpammtypes.MarketConfig{
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),

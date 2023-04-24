@@ -83,13 +83,6 @@ type PerpAmmKeeper interface {
 		baseAssetAmount sdk.Dec,
 	) (quoteAssetAmount sdk.Dec, err error)
 
-	GetQuoteAssetPrice(
-		ctx sdk.Context,
-		pair asset.Pair,
-		dir perpammtypes.Direction,
-		quoteAmount sdk.Dec,
-	) (baseAssetAmount sdk.Dec, err error)
-
 	GetMarkPrice(
 		ctx sdk.Context,
 		pair asset.Pair,

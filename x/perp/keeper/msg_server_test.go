@@ -89,7 +89,6 @@ func TestMsgServerAddMargin(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-				sdk.ZeroDec(),
 				sdk.OneDec(),
 			))
 			keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
@@ -212,7 +211,6 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-				sdk.ZeroDec(),
 				sdk.OneDec(),
 			))
 			keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
@@ -292,8 +290,8 @@ func TestMsgServerOpenPosition(t *testing.T) {
 			assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 				/* ctx */ ctx,
 				/* pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
-				/* baseAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
+				/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO),
+				/* baseReserve */ sdk.NewDec(1*common.TO_MICRO),
 				perpammtypes.MarketConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.OneDec(),
@@ -301,7 +299,6 @@ func TestMsgServerOpenPosition(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-				sdk.ZeroDec(),
 				sdk.OneDec(),
 			))
 			keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
@@ -381,8 +378,8 @@ func TestMsgServerClosePosition(t *testing.T) {
 			assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
-				/* baseAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
+				/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO),
+				/* baseReserve */ sdk.NewDec(1*common.TO_MICRO),
 				perpammtypes.MarketConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.OneDec(),
@@ -390,7 +387,6 @@ func TestMsgServerClosePosition(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-				sdk.ZeroDec(),
 				sdk.OneDec(),
 			))
 			keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
@@ -453,8 +449,8 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 		/* ctx */ ctx,
 		/* pair */ pair,
-		/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
-		/* baseAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
+		/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO),
+		/* baseReserve */ sdk.NewDec(1*common.TO_MICRO),
 		perpammtypes.MarketConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),
@@ -462,7 +458,6 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
-		sdk.ZeroDec(),
 		sdk.OneDec(),
 	))
 	keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
@@ -565,8 +560,8 @@ func TestMsgServerMultiLiquidate_NotAuthorized(t *testing.T) {
 	assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 		/* ctx */ ctx,
 		/* pair */ pair,
-		/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
-		/* baseAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
+		/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO),
+		/* baseReserve */ sdk.NewDec(1*common.TO_MICRO),
 		perpammtypes.MarketConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),
@@ -574,7 +569,6 @@ func TestMsgServerMultiLiquidate_NotAuthorized(t *testing.T) {
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
-		sdk.ZeroDec(),
 		sdk.OneDec(),
 	))
 	keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
@@ -638,8 +632,8 @@ func TestMsgServerMultiLiquidate_AllFailed(t *testing.T) {
 	assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 		/* ctx */ ctx,
 		/* pair */ pair,
-		/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
-		/* baseAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
+		/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO),
+		/* baseReserve */ sdk.NewDec(1*common.TO_MICRO),
 		perpammtypes.MarketConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),
@@ -647,7 +641,6 @@ func TestMsgServerMultiLiquidate_AllFailed(t *testing.T) {
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
-		sdk.ZeroDec(),
 		sdk.OneDec(),
 	))
 	keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{

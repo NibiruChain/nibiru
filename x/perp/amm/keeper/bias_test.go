@@ -32,8 +32,7 @@ func createInitMarket() Action {
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			MaxOracleSpreadRatio:   sdk.OneDec(), // 100%,
 			TradeLimitRatio:        sdk.OneDec(),
-		},
-		sdk.ZeroDec())
+		})
 }
 
 func TestBiasChangeOnMarket(t *testing.T) {

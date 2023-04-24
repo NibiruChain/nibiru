@@ -135,8 +135,8 @@ func (perpExt *PerpExtension) Reserves(
 	}
 	return &cw_struct.ReservesResponse{
 		Pair:         pair.String(),
-		BaseReserve:  sdkResp.BaseAssetReserve,
-		QuoteReserve: sdkResp.QuoteAssetReserve,
+		BaseReserve:  sdkResp.BaseReserve,
+		QuoteReserve: sdkResp.QuoteReserve,
 	}, err
 }
 
@@ -156,8 +156,8 @@ func (perpExt *PerpExtension) AllMarkets(
 		key := pbMarket.Pair.String()
 		marketMap[key] = cw_struct.Market{
 			Pair:         key,
-			BaseReserve:  pbMarket.BaseAssetReserve,
-			QuoteReserve: pbMarket.QuoteAssetReserve,
+			BaseReserve:  pbMarket.BaseReserve,
+			QuoteReserve: pbMarket.QuoteReserve,
 			SqrtDepth:    pbMarket.SqrtDepth,
 			Depth:        pbPrice.SwapInvariant,
 			Bias:         pbMarket.Bias,

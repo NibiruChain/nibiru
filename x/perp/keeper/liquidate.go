@@ -319,6 +319,7 @@ func (k Keeper) ExecutePartialLiquidation(
 		baseAssetDir,
 		/* abs= */ currentPosition.Size_.Mul(params.PartialLiquidationRatio),
 	)
+
 	if err != nil {
 		return types.LiquidateResp{}, err
 	}

@@ -203,10 +203,10 @@ func (s *TestSuiteQuerier) TestQueryReserves() {
 			s.Assert().EqualValues(bindingResp.Pair, wantPair)
 			s.Assert().EqualValues(
 				bindingResp.BaseReserve.String(),
-				genesis.START_MARKETS[wantPair].BaseAssetReserve.String())
+				genesis.START_MARKETS[wantPair].BaseReserve.String())
 			s.Assert().EqualValues(
 				bindingResp.QuoteReserve.String(),
-				genesis.START_MARKETS[wantPair].QuoteAssetReserve.String())
+				genesis.START_MARKETS[wantPair].QuoteReserve.String())
 		})
 	}
 }
@@ -225,12 +225,12 @@ func (s *TestSuiteQuerier) TestQueryAllMarkets() {
 
 	for pair, market := range genesis.START_MARKETS {
 		cwMarket := bindingResp.MarketMap[pair.String()]
-		s.Assert().EqualValues(market.BaseAssetReserve, cwMarket.BaseReserve)
-		s.Assert().EqualValues(market.QuoteAssetReserve, cwMarket.QuoteReserve)
-		s.Assert().EqualValues(market.QuoteAssetReserve, cwMarket.QuoteReserve)
+		s.Assert().EqualValues(market.BaseReserve, cwMarket.BaseReserve)
+		s.Assert().EqualValues(market.QuoteReserve, cwMarket.QuoteReserve)
+		s.Assert().EqualValues(market.QuoteReserve, cwMarket.QuoteReserve)
 		s.Assert().EqualValues(market.SqrtDepth, cwMarket.SqrtDepth)
 		s.Assert().EqualValues(
-			market.BaseAssetReserve.Mul(market.QuoteAssetReserve).String(),
+			market.BaseReserve.Mul(market.QuoteReserve).String(),
 			cwMarket.Depth.ToDec().String())
 		s.Assert().EqualValues(market.Bias, cwMarket.Bias)
 		s.Assert().EqualValues(market.PegMultiplier.String(), cwMarket.PegMult.String())

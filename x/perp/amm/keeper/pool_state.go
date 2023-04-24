@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,18 +17,21 @@ import (
 func (k Keeper) CreatePool(
 	ctx sdk.Context,
 	pair asset.Pair,
-	quoteAssetReserve sdk.Dec,
-	baseAssetReserve sdk.Dec,
+	quoteReserve sdk.Dec,
+	baseReserve sdk.Dec,
 	config types.MarketConfig,
-	bias sdk.Dec,
 	pegMultiplier sdk.Dec,
 ) error {
+	if !quoteReserve.Equal(baseReserve) {
+		return fmt.Errorf("quote asset reserve %s must be equal to base asset reserve %s", quoteReserve, baseReserve)
+	}
+
 	market := types.NewMarket(types.ArgsNewMarket{
 		Pair:          pair,
-		BaseReserves:  baseAssetReserve,
-		QuoteReserves: quoteAssetReserve,
+		BaseReserves:  baseReserve,
+		QuoteReserves: quoteReserve,
 		Config:        &config,
-		Bias:          bias,
+		Bias:          sdk.ZeroDec(),
 		PegMultiplier: pegMultiplier,
 	})
 
@@ -59,11 +63,12 @@ func (k Keeper) EditPoolConfig(
 	}
 
 	newMarket := types.Market{
-		Pair:              market.Pair,
-		BaseAssetReserve:  market.BaseAssetReserve,
-		QuoteAssetReserve: market.QuoteAssetReserve,
-		SqrtDepth:         market.SqrtDepth,
-		Config:            config, // main change is here
+		Pair:          market.Pair,
+		BaseReserve:   market.BaseReserve,
+		QuoteReserve:  market.QuoteReserve,
+		SqrtDepth:     market.SqrtDepth,
+		PegMultiplier: market.PegMultiplier,
+		Config:        config, // main change is here
 	}
 	if err := newMarket.Validate(); err != nil {
 		return err
@@ -96,7 +101,7 @@ func (k Keeper) EditSwapInvariant(
 	// k = x * y
 	// newK = (cx) * (cy) = c^2 xy = c^2 k
 	// newPrice = (c y) / (c x) = y / x = price | unchanged price
-	swapInvariant := market.BaseAssetReserve.Mul(market.QuoteAssetReserve)
+	swapInvariant := market.BaseReserve.Mul(market.QuoteReserve)
 	newSwapInvariant := swapInvariant.Mul(swapInvariantMap.Multiplier)
 
 	// Change the swap invariant while holding price constant.
@@ -107,16 +112,17 @@ func (k Keeper) EditSwapInvariant(
 		return err
 	}
 
-	newBaseAmount := c.Mul(market.BaseAssetReserve)
-	newQuoteAmount := c.Mul(market.QuoteAssetReserve)
+	newBaseAmount := c.Mul(market.BaseReserve)
+	newQuoteAmount := c.Mul(market.QuoteReserve)
 	newSqrtDepth := common.MustSqrtDec(newBaseAmount.Mul(newQuoteAmount))
 
 	newMarket := types.Market{
-		Pair:              market.Pair,
-		BaseAssetReserve:  newBaseAmount,
-		QuoteAssetReserve: newQuoteAmount,
-		SqrtDepth:         newSqrtDepth,
-		Config:            market.Config,
+		Pair:          market.Pair,
+		BaseReserve:   newBaseAmount,
+		QuoteReserve:  newQuoteAmount,
+		SqrtDepth:     newSqrtDepth,
+		PegMultiplier: market.PegMultiplier,
+		Config:        market.Config,
 	}
 	if err := newMarket.Validate(); err != nil {
 		return err
@@ -204,10 +210,10 @@ func (k Keeper) GetPoolPrices(
 
 	return types.PoolPrices{
 		Pair:          pool.Pair,
-		MarkPrice:     pool.QuoteAssetReserve.Quo(pool.BaseAssetReserve),
+		MarkPrice:     pool.QuoteReserve.Quo(pool.BaseReserve).Mul(pool.PegMultiplier),
 		TwapMark:      twapMark.String(),
 		IndexPrice:    indexPrice.String(),
-		SwapInvariant: pool.BaseAssetReserve.Mul(pool.QuoteAssetReserve).RoundInt(),
+		SwapInvariant: pool.BaseReserve.Mul(pool.QuoteReserve).RoundInt(),
 		BlockNumber:   ctx.BlockHeight(),
 	}, nil
 }

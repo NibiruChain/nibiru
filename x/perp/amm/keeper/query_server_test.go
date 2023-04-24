@@ -25,9 +25,9 @@ func TestQueryReserveAssets(t *testing.T) {
 
 	t.Log("initialize market")
 	pool := types.Market{
-		Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-		QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
-		BaseAssetReserve:  sdk.NewDec(1000),
+		Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+		QuoteReserve: sdk.NewDec(1 * common.TO_MICRO),
+		BaseReserve:  sdk.NewDec(1000),
 		Config: types.MarketConfig{
 			FluctuationLimitRatio:  sdk.ZeroDec(),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -48,8 +48,8 @@ func TestQueryReserveAssets(t *testing.T) {
 
 	t.Log("assert reserve assets")
 	require.NoError(t, err)
-	assert.EqualValues(t, pool.QuoteAssetReserve, resp.QuoteAssetReserve)
-	assert.EqualValues(t, pool.BaseAssetReserve, resp.BaseAssetReserve)
+	assert.EqualValues(t, pool.QuoteReserve, resp.QuoteReserve)
+	assert.EqualValues(t, pool.BaseReserve, resp.BaseReserve)
 }
 
 func TestQueryAllPools(t *testing.T) {
@@ -61,9 +61,9 @@ func TestQueryAllPools(t *testing.T) {
 	t.Log("initialize market")
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	pool := &types.Market{
-		Pair:              pair,
-		QuoteAssetReserve: sdk.NewDec(1 * common.TO_MICRO),
-		BaseAssetReserve:  sdk.NewDec(1000),
+		Pair:         pair,
+		BaseReserve:  sdk.NewDec(1000),
+		QuoteReserve: sdk.NewDec(1000),
 		Config: types.MarketConfig{
 			FluctuationLimitRatio:  sdk.ZeroDec(),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -73,7 +73,13 @@ func TestQueryAllPools(t *testing.T) {
 		},
 	}
 	assert.NoError(t, perpammKeeper.CreatePool(
-		ctx, pair, pool.QuoteAssetReserve, pool.BaseAssetReserve, pool.Config, sdk.ZeroDec(), sdk.OneDec()))
+		ctx,
+		pair,
+		pool.QuoteReserve,
+		pool.BaseReserve,
+		pool.Config,
+		sdk.NewDec(1000),
+	))
 
 	t.Log("query reserve assets and prices for the pair")
 	ctx = ctx.WithBlockHeight(2).WithBlockTime(time.Now().Add(5 * time.Second))
@@ -93,7 +99,7 @@ func TestQueryAllPools(t *testing.T) {
 		MarkPrice:     markPriceWanted,
 		IndexPrice:    indexPrice.String(),
 		TwapMark:      markPriceWanted.String(),
-		SwapInvariant: sdk.NewInt(1_000 * common.TO_MICRO),
+		SwapInvariant: sdk.NewInt(1_000 * 1_000),
 		BlockNumber:   2,
 	}
 	require.NoError(t, err)
