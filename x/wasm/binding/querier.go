@@ -73,10 +73,13 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 			cwResp, err := qp.Perp.BasePrice(ctx, cwReq)
 			return qp.ToBinary(cwResp, err, cwReq)
 
+		// NOTE Implement these when the execute message bindings go
+
 		// TODO implement
 		// TODO test
 		// case wasmContractQuery.Positions != nil:
 		// 	return bz, nil
+
 		// TODO implement
 		// TODO test
 		// case wasmContractQuery.Position != nil:
