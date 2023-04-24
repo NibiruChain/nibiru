@@ -174,7 +174,6 @@ func TestSwapQuoteForBase(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-				/* bias */ sdk.ZeroDec(),
 				sdk.MustNewDecFromStr("2"),
 			))
 			market, err := perpammKeeper.GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
@@ -371,7 +370,6 @@ func TestSwapBaseForQuote(t *testing.T) {
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
-				sdk.ZeroDec(),
 				sdk.NewDec(2),
 			))
 
@@ -427,7 +425,6 @@ func TestGetMarkets(t *testing.T) {
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
-		sdk.ZeroDec(),
 		sdk.NewDec(2),
 	))
 	require.NoError(t, perpammKeeper.CreatePool(
@@ -442,7 +439,6 @@ func TestGetMarkets(t *testing.T) {
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
-		sdk.ZeroDec(),
 		sdk.MustNewDecFromStr("0.5"),
 	))
 

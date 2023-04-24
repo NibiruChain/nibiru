@@ -20,7 +20,6 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			/* quoteReserve */ vp.QuoteReserve,
 			/* baseReserve */ vp.BaseReserve,
 			/* config */ vp.Config,
-			/* bias */ vp.Bias,
 			/* pegMultiplier */ vp.PegMultiplier,
 		); err != nil {
 			panic(err)

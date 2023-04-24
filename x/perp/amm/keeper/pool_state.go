@@ -20,7 +20,6 @@ func (k Keeper) CreatePool(
 	quoteReserve sdk.Dec,
 	baseReserve sdk.Dec,
 	config types.MarketConfig,
-	bias sdk.Dec,
 	pegMultiplier sdk.Dec,
 ) error {
 	if !quoteReserve.Equal(baseReserve) {
@@ -32,7 +31,7 @@ func (k Keeper) CreatePool(
 		BaseReserves:  baseReserve,
 		QuoteReserves: quoteReserve,
 		Config:        &config,
-		Bias:          bias,
+		Bias:          sdk.ZeroDec(),
 		PegMultiplier: pegMultiplier,
 	})
 
