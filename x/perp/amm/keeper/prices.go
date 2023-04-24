@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/NibiruChain/collections"
@@ -181,8 +180,6 @@ func (k Keeper) calcTwap(
 		return sdk.OneDec().Neg(), types.ErrNoValidTWAP
 	}
 
-	fmt.Println(snapshots)
-
 	return calcTwap(ctx, snapshots, lowerLimitTimestampMs, twapCalcOption, direction, assetAmount)
 }
 
@@ -216,8 +213,6 @@ func calcTwap(ctx sdk.Context, snapshots []types.ReserveSnapshot, lowerLimitTime
 				assetAmount:    assetAmt,
 			},
 		)
-		fmt.Println(s.String())
-		fmt.Println(sPrice)
 		if err != nil {
 			return sdk.Dec{}, err
 		}
