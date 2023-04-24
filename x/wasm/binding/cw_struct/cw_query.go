@@ -1,8 +1,6 @@
 package cw_struct
 
 import (
-	"time"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -56,7 +54,7 @@ type Market struct {
 	MarkPrice    sdk.Dec       `json:"mark_price"`
 	IndexPrice   string        `json:"index_price"`
 	TwapMark     string        `json:"twap_mark"`
-	BlockNumber  int64         `json:"block_number"`
+	BlockNumber  sdk.Int       `json:"block_number"`
 }
 
 // Converts the JSON market, which comes in from Rust, to its corresponding
@@ -98,7 +96,7 @@ func NewMarket(appMarket perpammtypes.Market, indexPrice, twapMark string, block
 		MarkPrice:    appMarket.GetMarkPrice(),
 		IndexPrice:   indexPrice,
 		TwapMark:     twapMark,
-		BlockNumber:  blockNumber,
+		BlockNumber:  sdk.NewInt(blockNumber),
 	}
 }
 
@@ -177,7 +175,7 @@ type Metrics struct {
 	NetSize     sdk.Dec `json:"net_size"`
 	VolumeQuote sdk.Dec `json:"volume_quote"`
 	VolumeBase  sdk.Dec `json:"volume_base"`
-	BlockNumber int64   `json:"block_number"`
+	BlockNumber sdk.Int `json:"block_number"`
 }
 
 type ModuleAccountsRequest struct {
@@ -201,12 +199,12 @@ type PerpParamsResponse struct {
 }
 
 type PerpParams struct {
-	Stopped                 bool          `json:"stopped"`
-	FeePoolFeeRatio         sdk.Dec       `json:"fee_pool_fee_ratio"`
-	EcosystemFundFeeRatio   sdk.Dec       `json:"ecosystem_fund_fee_ratio"`
-	LiquidationFeeRatio     sdk.Dec       `json:"liquidation_fee_ratio"`
-	PartialLiquidationRatio sdk.Dec       `json:"partial_liquidation_ratio"`
-	FundingRateInterval     string        `json:"funding_rate_interval"`
-	TwapLookbackWindow      time.Duration `json:"twap_lookback_window"`
-	WhitelistedLiquidators  []string      `json:"whitelisted_liquidators"`
+	Stopped                 bool     `json:"stopped"`
+	FeePoolFeeRatio         sdk.Dec  `json:"fee_pool_fee_ratio"`
+	EcosystemFundFeeRatio   sdk.Dec  `json:"ecosystem_fund_fee_ratio"`
+	LiquidationFeeRatio     sdk.Dec  `json:"liquidation_fee_ratio"`
+	PartialLiquidationRatio sdk.Dec  `json:"partial_liquidation_ratio"`
+	FundingRateInterval     string   `json:"funding_rate_interval"`
+	TwapLookbackWindow      sdk.Int  `json:"twap_lookback_window"`
+	WhitelistedLiquidators  []string `json:"whitelisted_liquidators"`
 }

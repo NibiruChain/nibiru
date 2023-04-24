@@ -3,6 +3,7 @@ package binding
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -58,13 +59,12 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 		}
 
 		switch {
-		// TODO test
+
 		case wasmContractQuery.AllMarkets != nil:
 			cwReq := wasmContractQuery.AllMarkets
 			cwResp, err := qp.Perp.AllMarkets(ctx)
 			return qp.ToBinary(cwResp, err, cwReq)
 
-		// TODO test
 		case wasmContractQuery.Reserves != nil:
 			cwReq := wasmContractQuery.Reserves
 			cwResp, err := qp.Perp.Reserves(ctx, cwReq)
@@ -84,20 +84,16 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 		// case wasmContractQuery.Position != nil:
 		// 	return bz, nil
 
-		// TODO test
 		case wasmContractQuery.PremiumFraction != nil:
 			cwReq := wasmContractQuery.PremiumFraction
 			cwResp, err := qp.Perp.PremiumFraction(ctx, cwReq)
-			return qp.ToBinary(cwResp, err, wasmContractQuery.AllMarkets)
+			return qp.ToBinary(cwResp, err, cwReq)
 
-		// TODO implement
-		// TODO test
 		case wasmContractQuery.Metrics != nil:
 			cwReq := wasmContractQuery.Metrics
 			cwResp, err := qp.Perp.Metrics(ctx, cwReq)
 			return qp.ToBinary(cwResp, err, cwReq)
 
-		// TODO test
 		case wasmContractQuery.ModuleAccounts != nil:
 			cwReq := wasmContractQuery.ModuleAccounts
 			cwResp, err := qp.Perp.ModuleAccounts(ctx, cwReq)
@@ -175,7 +171,7 @@ func (perpExt *PerpExtension) AllMarkets(
 			MarkPrice:   pbPrice.MarkPrice,
 			IndexPrice:  pbPrice.IndexPrice,
 			TwapMark:    pbPrice.TwapMark,
-			BlockNumber: ctx.BlockHeight(),
+			BlockNumber: sdk.NewInt(ctx.BlockHeight()),
 		}
 	}
 
@@ -264,7 +260,7 @@ func (perpExt *PerpExtension) Metrics(
 			NetSize:     sdkResp.Metrics.NetSize,
 			VolumeQuote: sdkResp.Metrics.VolumeQuote,
 			VolumeBase:  sdkResp.Metrics.VolumeBase,
-			BlockNumber: ctx.BlockHeight(),
+			BlockNumber: sdk.NewInt(ctx.BlockHeight()),
 		},
 	}, err
 }
@@ -315,6 +311,14 @@ func (perpExt *PerpExtension) ModuleParams(
 
 	params := sdkResp.Params
 
+	fmt.Printf("\nDEBUG-UD params lookback: %v", params.TwapLookbackWindow)
+	lookback := sdk.NewInt(int64(params.TwapLookbackWindow.Seconds()))
+	fmt.Printf("\nDEBUG-UD lookback: %v", lookback)
+
+	liquidators := []string{}
+	for _, liq := range params.WhitelistedLiquidators {
+		liquidators = append(liquidators, liq)
+	}
 	return &cw_struct.PerpParamsResponse{
 		ModuleParams: cw_struct.PerpParams{
 			Stopped:                 params.Stopped,
@@ -323,8 +327,8 @@ func (perpExt *PerpExtension) ModuleParams(
 			LiquidationFeeRatio:     params.LiquidationFeeRatio,
 			PartialLiquidationRatio: params.PartialLiquidationRatio,
 			FundingRateInterval:     params.FundingRateInterval,
-			TwapLookbackWindow:      params.TwapLookbackWindow,
-			WhitelistedLiquidators:  params.WhitelistedLiquidators,
+			TwapLookbackWindow:      lookback,
+			WhitelistedLiquidators:  liquidators,
 		},
 	}, err
 }

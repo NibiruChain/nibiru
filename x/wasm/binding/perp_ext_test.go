@@ -169,12 +169,18 @@ func (s *TestSuitePerpExt) TestAllMarkets() {
 	marketMap := make(CwMarketMap)
 	for pair, appMarket := range genesis.START_MARKETS {
 		rate := s.ratesMap[pair]
-		marketMap[pair] = cw_struct.NewMarket(
+		cwMarket := cw_struct.NewMarket(
 			appMarket,
 			rate.String(),
 			appMarket.GetMarkPrice().String(),
 			s.ctx.BlockHeight(),
 		)
+		marketMap[pair] = cwMarket
+
+		// Test the ToAppMarket fn
+		gotAppMarket, err := cwMarket.ToAppMarket()
+		s.Assert().NoError(err)
+		s.Assert().EqualValues(appMarket, gotAppMarket)
 	}
 
 	testCases := map[string]struct {
@@ -240,4 +246,11 @@ func (s *TestSuitePerpExt) TestModuleParams() {
 	cwReq := &cw_struct.PerpParamsRequest{}
 	cwResp, err := s.queryPlugin.Perp.ModuleParams(s.ctx, cwReq)
 	s.NoErrorf(err, "\ncwResp: %s", cwResp)
+
+	jsonBz, err := json.Marshal(cwResp)
+	s.NoErrorf(err, "jsonBz: %s", jsonBz)
+
+	freshCwResp := new(cw_struct.PerpParamsResponse)
+	err = json.Unmarshal(jsonBz, freshCwResp)
+	s.NoErrorf(err, "freshCwResp: %s", freshCwResp)
 }
