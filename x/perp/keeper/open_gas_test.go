@@ -37,15 +37,7 @@ func TestOpenGasConsumed(t *testing.T) {
 					sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec(),
 				),
 			).Then(
-<<<<<<< HEAD
-<<<<<<< HEAD
-			assertion.GasConsumedShouldBe(153542),
-=======
-			assertion.GasConsumedShouldBe(152675),
->>>>>>> origin/master
-=======
-			assertion.GasConsumedShouldBe(153509),
->>>>>>> 1e3ea13cb668f9424ae2ed227117e8776ee17bb2
+			assertion.GasConsumedShouldBe(153539),
 		),
 	}
 
