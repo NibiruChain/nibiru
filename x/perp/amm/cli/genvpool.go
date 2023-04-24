@@ -23,6 +23,7 @@ const (
 	FlagPair                   = "pair"
 	FlagBaseAmt                = "base-amt"
 	FlagQuoteAmt               = "quote-amt"
+	FlagPegMultiplier          = "peg-multiplier"
 	FlagTradeLim               = "trade-lim"
 	FlagFluctLim               = "fluct-lim"
 	FlagMaintenenceMarginRatio = "mmr"
@@ -38,6 +39,7 @@ var flagsAddMarketGenesis = map[string]struct {
 	FlagPair:                   {"pair", "", "trading pair identifier of the form 'base:quote'. E.g., ueth:unusd"},
 	FlagBaseAmt:                {"base-amt", "", "amount of base asset reserves"},
 	FlagQuoteAmt:               {"quote-amt", "", "amount of quote asset reserves"},
+	FlagPegMultiplier:          {"peg-multiplier", "", "the peg multiplier for the pool"},
 	FlagTradeLim:               {"trade-lim", "0.1", "percentage applied to reserves in order not to over trade"},
 	FlagFluctLim:               {"fluct-lim", "0.1", "percentage that a single open or close position can alter the reserves"},
 	FlagMaintenenceMarginRatio: {"mmr", "0.0625", "maintenance margin ratio"},
@@ -130,6 +132,9 @@ func newMarketFromAddMarketGenesisFlags(flagSet *flag.FlagSet,
 	quoteAmtStr, err := flagSet.GetString(FlagQuoteAmt)
 	flagErrors = append(flagErrors, err)
 
+	pegMultiplierStr, err := flagSet.GetString(FlagPegMultiplier)
+	flagErrors = append(flagErrors, err)
+
 	tradeLimStr, err := flagSet.GetString(FlagTradeLim)
 	flagErrors = append(flagErrors, err)
 
@@ -189,10 +194,17 @@ func newMarketFromAddMarketGenesisFlags(flagSet *flag.FlagSet,
 		return types.Market{}, err
 	}
 
+	pegMultiplier, err := sdk.NewDecFromStr(pegMultiplierStr)
+	if err != nil {
+		return types.Market{}, err
+	}
+
 	market = types.Market{
-		Pair:              pair,
-		QuoteAssetReserve: quoteAsset,
-		BaseAssetReserve:  baseAsset,
+		Pair:          pair,
+		QuoteReserve:  quoteAsset,
+		BaseReserve:   baseAsset,
+		Bias:          sdk.ZeroDec(),
+		PegMultiplier: pegMultiplier,
 		Config: types.MarketConfig{
 			TradeLimitRatio:        tradeLimit,
 			FluctuationLimitRatio:  fluctuationLimitRatio,

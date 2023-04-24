@@ -33,6 +33,13 @@ message CreatePoolProposal {
   MarketConfig config = 7 [
     (gogoproto.nullable) = false
   ];
+
+  // peg multiplier is the peg factor for the pool.
+  string peg_multiplier = 8 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
 }
 
 message EditPoolConfigProposal {

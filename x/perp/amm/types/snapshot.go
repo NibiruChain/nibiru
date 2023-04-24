@@ -11,14 +11,18 @@ import (
 
 func NewReserveSnapshot(
 	pair asset.Pair,
-	baseAssetReserve, quoteAssetReserve sdk.Dec,
+	baseReserve, quoteReserve sdk.Dec,
+	pegMultiplier sdk.Dec,
+	bias sdk.Dec,
 	blockTime time.Time,
 ) ReserveSnapshot {
 	return ReserveSnapshot{
-		Pair:              pair,
-		BaseAssetReserve:  baseAssetReserve,
-		QuoteAssetReserve: quoteAssetReserve,
-		TimestampMs:       blockTime.UnixMilli(),
+		Pair:          pair,
+		BaseReserve:   baseReserve,
+		QuoteReserve:  quoteReserve,
+		PegMultiplier: pegMultiplier,
+		Bias:          bias,
+		TimestampMs:   blockTime.UnixMilli(),
 	}
 }
 
@@ -28,17 +32,21 @@ func (s ReserveSnapshot) Validate() error {
 		return err
 	}
 
-	if (s.BaseAssetReserve.String() == "<nil>") || (s.QuoteAssetReserve.String() == "<nil>") {
+	if (s.BaseReserve.String() == "<nil>") || (s.QuoteReserve.String() == "<nil>") {
 		// prevents panics from usage of 'new(Dec)' or 'sdk.Dec{}'
 		return fmt.Errorf("nil dec value in snapshot. snapshot: %v", s.String())
 	}
 
-	if s.BaseAssetReserve.IsNegative() {
-		return fmt.Errorf("base asset reserve from snapshot cannot be negative: %d", s.BaseAssetReserve)
+	if s.BaseReserve.IsNegative() {
+		return fmt.Errorf("base asset reserve from snapshot cannot be negative: %d", s.BaseReserve)
 	}
 
-	if s.QuoteAssetReserve.IsNegative() {
-		return fmt.Errorf("quote asset reserve from snapshot cannot be negative: %d", s.QuoteAssetReserve)
+	if s.QuoteReserve.IsNegative() {
+		return fmt.Errorf("quote asset reserve from snapshot cannot be negative: %d", s.QuoteReserve)
+	}
+
+	if s.PegMultiplier.IsNegative() {
+		return fmt.Errorf("peg multiplier from snapshot cannot be negative: %d", s.PegMultiplier)
 	}
 
 	// -62135596800000 in Unix milliseconds is equivalent to "0001-01-01 00:00:00 +0000 UTC".
@@ -68,10 +76,10 @@ func (s ReserveSnapshot) GetLowerMarkPriceFluctuationLimit(fluctuationLimitRatio
 // getMarkPrice returns the price of the mark price at the moment of the snapshot.
 // It is the equivalent of getMarkPrice from Market
 func (s ReserveSnapshot) getMarkPrice() sdk.Dec {
-	if s.BaseAssetReserve.IsNil() || s.BaseAssetReserve.IsZero() ||
-		s.QuoteAssetReserve.IsNil() || s.QuoteAssetReserve.IsZero() {
+	if s.BaseReserve.IsNil() || s.BaseReserve.IsZero() ||
+		s.QuoteReserve.IsNil() || s.QuoteReserve.IsZero() {
 		return sdk.ZeroDec()
 	}
 
-	return s.QuoteAssetReserve.Quo(s.BaseAssetReserve)
+	return s.QuoteReserve.Quo(s.BaseReserve).Mul(s.PegMultiplier)
 }

@@ -28,10 +28,10 @@ func RandomizedGenState(simState *module.SimulationState) {
 	marketGenesis := types.GenesisState{
 		Markets: []types.Market{
 			{
-				Pair:              asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				QuoteAssetReserve: quoteReserve,
-				BaseAssetReserve:  baseReserve,
-				SqrtDepth:         sqrtDepth,
+				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				QuoteReserve: quoteReserve,
+				BaseReserve:  baseReserve,
+				SqrtDepth:    sqrtDepth,
 				Config: types.MarketConfig{
 					FluctuationLimitRatio:  sdk.MaxDec(smallDec, simtypes.RandomDecAmount(simState.Rand, sdk.OneDec())),
 					MaintenanceMarginRatio: maintenanceMarginRatio,

@@ -145,7 +145,19 @@ message ReserveSnapshot {
   ];
 
   // milliseconds since unix epoch
-  int64 timestamp_ms = 3;
+  int64 timestamp_ms = 4;
+
+  // peg multiplier is needed to compute mark price in the snapshot
+  string peg_multiplier = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // needs bias for twap calculation
+  string bias = 7 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // PoolPrices is a simple structure that displays a snapshot of the mark and
@@ -160,7 +172,7 @@ message PoolPrices {
   ];
 
   // MarkPrice is the instantaneous price of the perp.
-  // Equivalent to quoteAssetReserve / baseAssetReserve.
+  // Equivalent to quoteReserve / baseReserve.
   string mark_price = 10 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false

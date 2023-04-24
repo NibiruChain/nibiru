@@ -423,21 +423,6 @@ func (mr *MockPerpAmmKeeperMockRecorder) GetPool(arg0, arg1 interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPool", reflect.TypeOf((*MockPerpAmmKeeper)(nil).GetPool), arg0, arg1)
 }
 
-// GetQuoteAssetPrice mocks base method.
-func (m *MockPerpAmmKeeper) GetQuoteAssetPrice(arg0 types1.Context, arg1 asset.Pair, arg2 types0.Direction, arg3 types1.Dec) (types1.Dec, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetQuoteAssetPrice", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].(types1.Dec)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetQuoteAssetPrice indicates an expected call of GetQuoteAssetPrice.
-func (mr *MockPerpAmmKeeperMockRecorder) GetQuoteAssetPrice(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetQuoteAssetPrice", reflect.TypeOf((*MockPerpAmmKeeper)(nil).GetQuoteAssetPrice), arg0, arg1, arg2, arg3)
-}
-
 // GetSettlementPrice mocks base method.
 func (m *MockPerpAmmKeeper) GetSettlementPrice(arg0 types1.Context, arg1 asset.Pair) (types1.Dec, error) {
 	m.ctrl.T.Helper()
