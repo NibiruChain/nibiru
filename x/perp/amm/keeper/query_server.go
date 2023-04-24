@@ -39,8 +39,8 @@ func (q queryServer) ReserveAssets(
 	}
 
 	return &types.QueryReserveAssetsResponse{
-		BaseAssetReserve:  pool.BaseAssetReserve,
-		QuoteAssetReserve: pool.QuoteAssetReserve,
+		BaseReserve:  pool.BaseReserve,
+		QuoteReserve: pool.QuoteReserve,
 	}, nil
 }
 
@@ -86,6 +86,7 @@ func (q queryServer) BaseAssetPrice(
 	if err != nil {
 		return nil, types.ErrPairNotSupported
 	}
+
 	priceInQuoteDenom, err := q.k.GetBaseAssetPrice(
 		market,
 		req.Direction,

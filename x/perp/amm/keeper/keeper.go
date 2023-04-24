@@ -70,7 +70,7 @@ func (k Keeper) SwapBaseForQuote(
 	baseAmt sdk.Dec,
 	quoteLimit sdk.Dec,
 	skipFluctuationLimitCheck bool,
-) (updatedMarket types.Market, quoteAmtAbs sdk.Dec, err error) {
+) (updatedMarket types.Market, quoteAssetAmtAbs sdk.Dec, err error) {
 	if baseAmt.IsZero() {
 		return market, sdk.ZeroDec(), nil
 	}
@@ -80,30 +80,30 @@ func (k Keeper) SwapBaseForQuote(
 	}
 
 	baseAmtAbs := baseAmt.Abs()
-	quoteAmtAbs, err = market.GetQuoteAmountByBaseAmount(baseAmtAbs.MulInt64(dir.ToMultiplier()))
+	quoteReserveAbs, err := market.GetQuoteReserveByBase(baseAmtAbs.MulInt64(dir.ToMultiplier()))
 	if err != nil {
 		return market, sdk.Dec{}, err
 	}
 
-	if err := market.HasEnoughReservesForTrade(quoteAmtAbs, baseAmtAbs); err != nil {
+	quoteDelta := quoteReserveAbs.Neg().MulInt64(dir.ToMultiplier())
+
+	if err := market.HasEnoughReservesForTrade(quoteReserveAbs, baseAmtAbs); err != nil {
+		return market, sdk.Dec{}, err
+	}
+	quoteAssetAmtAbs = market.FromQuoteReserveToAsset(quoteReserveAbs)
+
+	if err := checkIfLimitIsViolated(quoteLimit, quoteAssetAmtAbs, dir); err != nil {
 		return market, sdk.Dec{}, err
 	}
 
-	if err := checkIfLimitIsViolated(quoteLimit, quoteAmtAbs, dir); err != nil {
-		return market, sdk.Dec{}, err
-	}
-
-	quoteDelta := quoteAmtAbs.Neg().MulInt64(dir.ToMultiplier())
 	baseAmt = baseAmtAbs.MulInt64(dir.ToMultiplier())
-
-	market.Bias = market.Bias.Add(baseAmt.Neg())
 
 	updatedMarket, err = k.executeSwap(ctx, market, quoteDelta, baseAmt, skipFluctuationLimitCheck)
 	if err != nil {
 		return market, sdk.Dec{}, fmt.Errorf("error updating reserve: %w", err)
 	}
 
-	return updatedMarket, quoteAmtAbs, err
+	return updatedMarket, quoteAssetAmtAbs, err
 }
 
 func (k Keeper) executeSwap(
@@ -111,8 +111,8 @@ func (k Keeper) executeSwap(
 	skipFluctuationLimitCheck bool,
 ) (newMarket types.Market, err error) {
 	// -------------------- Update reserves
-	market.AddToBaseAssetReserve(baseDelta)
-	market.AddToQuoteAssetReserve(quoteDelta)
+	market.AddToBaseReserveAndBias(baseDelta)
+	market.AddToQuoteReserve(quoteDelta)
 
 	if err = k.updatePool(ctx, market, skipFluctuationLimitCheck); err != nil {
 		return newMarket, fmt.Errorf("error updating reserve: %w", err)
@@ -174,14 +174,14 @@ func (k Keeper) SwapQuoteForBase(
 	}
 
 	// check trade limit ratio on quote in either direction
-	quoteAmtAbs := quoteAmt.Abs()
+	quoteResrveAbs := market.FromQuoteAssetToReserve(quoteAmt).Abs()
 	baseAmtAbs, err = market.GetBaseAmountByQuoteAmount(
-		quoteAmtAbs.MulInt64(dir.ToMultiplier()))
+		quoteResrveAbs.MulInt64(dir.ToMultiplier()))
 	if err != nil {
 		return types.Market{}, sdk.Dec{}, err
 	}
 
-	if err := market.HasEnoughReservesForTrade(quoteAmtAbs, baseAmtAbs); err != nil {
+	if err := market.HasEnoughReservesForTrade(quoteResrveAbs, baseAmtAbs); err != nil {
 		return types.Market{}, sdk.Dec{}, err
 	}
 
@@ -189,10 +189,8 @@ func (k Keeper) SwapQuoteForBase(
 		return types.Market{}, sdk.Dec{}, err
 	}
 
-	quoteAmt = quoteAmtAbs.MulInt64(dir.ToMultiplier())
+	quoteAmt = quoteResrveAbs.MulInt64(dir.ToMultiplier())
 	baseDelta := baseAmtAbs.Neg().MulInt64(dir.ToMultiplier())
-
-	market.Bias = market.Bias.Add(baseAmtAbs.MulInt64(dir.ToMultiplier()))
 
 	updatedMarket, err = k.executeSwap(ctx, market, quoteAmt, baseDelta, skipFluctuationLimitCheck)
 	if err != nil {

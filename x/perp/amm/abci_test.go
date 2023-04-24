@@ -31,21 +31,21 @@ func TestSnapshotUpdates(t *testing.T) {
 	ctx = ctx.WithBlockTime(time.Date(2015, 10, 21, 0, 0, 0, 0, time.UTC)).WithBlockHeight(1)
 
 	require.NoError(t, perpammKeeper.CreatePool(
-		ctx,
-		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-		sdk.NewDec(1_000),
-		sdk.NewDec(1_000),
-		*types.DefaultMarketConfig().
-			WithTradeLimitRatio(sdk.OneDec()).
-			WithFluctuationLimitRatio(sdk.OneDec()),
-		sdk.ZeroDec(),
-		sdk.OneDec(),
+		/* ctx */ ctx,
+		/* pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+		/* quoteReserve */ sdk.NewDec(1_000),
+		/* baseReserve */ sdk.NewDec(1_000),
+		/* config */ *types.DefaultMarketConfig().WithTradeLimitRatio(sdk.OneDec()).WithFluctuationLimitRatio(sdk.OneDec()),
+		/* bias */ sdk.ZeroDec(),
+		/* pegMultiplier */ sdk.OneDec(),
 	))
 	expectedSnapshot := types.NewReserveSnapshot(
-		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-		sdk.NewDec(1_000),
-		sdk.NewDec(1_000),
-		ctx.BlockTime(),
+		/* pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+		/* baseReserve */ sdk.NewDec(1_000),
+		/* quoteReserve */ sdk.NewDec(1_000),
+		/* pegMultiplier */ sdk.OneDec(),
+		/* bias */ sdk.ZeroDec(),
+		/* blockTime */ ctx.BlockTime(),
 	)
 
 	t.Log("run one block of 5 seconds")
@@ -72,6 +72,8 @@ func TestSnapshotUpdates(t *testing.T) {
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		sdk.NewDec(800),   // ← x + dxAmm
 		sdk.NewDec(1_250), // ← y + dyAMM
+		sdk.OneDec(),
+		sdk.NewDec(200),
 		ctx.BlockTime(),
 	)
 
@@ -86,9 +88,9 @@ func TestSnapshotUpdates(t *testing.T) {
 
 	testutil.RequireContainsTypedEvent(t, ctx, &types.ReserveSnapshotSavedEvent{
 		Pair:           expectedSnapshot.Pair,
-		QuoteReserve:   expectedSnapshot.QuoteAssetReserve,
-		BaseReserve:    expectedSnapshot.BaseAssetReserve,
-		MarkPrice:      snapshot.QuoteAssetReserve.Quo(snapshot.BaseAssetReserve),
+		QuoteReserve:   expectedSnapshot.QuoteReserve,
+		BaseReserve:    expectedSnapshot.BaseReserve,
+		MarkPrice:      snapshot.QuoteReserve.Quo(snapshot.BaseReserve).Mul(snapshot.PegMultiplier),
 		BlockHeight:    ctxAtSnapshot.BlockHeight(),
 		BlockTimestamp: ctxAtSnapshot.BlockTime(),
 	})

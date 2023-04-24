@@ -88,8 +88,8 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				tokenPair,
-				/* quoteAssetReserves */ sdk.NewDec(10*common.TO_MICRO),
-				/* baseAssetReserves */ sdk.NewDec(5*common.TO_MICRO),
+				/* quoteReserves */ sdk.NewDec(10*common.TO_MICRO),
+				/* baseReserves */ sdk.NewDec(5*common.TO_MICRO),
 				perpammtypes.MarketConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					FluctuationLimitRatio:  sdk.OneDec(),
@@ -219,8 +219,8 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			traderFunds:    sdk.NewInt64Coin("yyy", 50_100),
 			/* expectedPositionSize =  */
 			// 24_999.9999999875000000001 * 0.6
-			expectedPositionSize:    sdk.MustNewDecFromStr("14999.999999925000000001"),
-			expectedMarginRemaining: sdk.MustNewDecFromStr("47999.999999994000000000"), // approx 2k less but slippage
+			expectedPositionSize:    sdk.MustNewDecFromStr("14999.999999962500000000"),
+			expectedMarginRemaining: sdk.MustNewDecFromStr("47999.999999997000000000"), // approx 2k less but slippage
 
 			// feeToLiquidator
 			//   = positionResp.ExchangedNotionalValue * 0.4 * liquidationFee / 2
@@ -243,8 +243,8 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			// This tx fee is split 50/50 bw the PerpEF and Treasury.
 			// exchangedQuote * 20 bps = 100
 
-			expectedPositionSize:    sdk.MustNewDecFromStr("-15000.000000115000000001"), // ~-25k * 0.6
-			expectedMarginRemaining: sdk.MustNewDecFromStr("48000.000000014000000000"),  // approx 2k less but slippage
+			expectedPositionSize:    sdk.MustNewDecFromStr("-15000.000000057500000000"), // ~-25k * 0.6
+			expectedMarginRemaining: sdk.MustNewDecFromStr("48000.000000007000000000"),  // approx 2k less but slippage
 
 			// feeToLiquidator
 			//   = positionResp.ExchangedNotionalValue * 0.4 * liquidationFee / 2
@@ -268,8 +268,8 @@ func TestExecutePartialLiquidation(t *testing.T) {
 			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				tokenPair,
-				/* quoteAssetReserves */ sdk.NewDec(10_000*common.TO_MICRO*common.TO_MICRO),
-				/* baseAssetReserves */ sdk.NewDec(5_000*common.TO_MICRO*common.TO_MICRO),
+				/* quoteReserves */ sdk.NewDec(10_000*common.TO_MICRO*common.TO_MICRO),
+				/* baseReserves */ sdk.NewDec(10_000*common.TO_MICRO*common.TO_MICRO),
 				perpammtypes.MarketConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					FluctuationLimitRatio:  sdk.OneDec(),
@@ -278,7 +278,7 @@ func TestExecutePartialLiquidation(t *testing.T) {
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
 				sdk.ZeroDec(),
-				sdk.OneDec(),
+				sdk.NewDec(2),
 			))
 			require.True(t, perpammKeeper.ExistsPool(ctx, tokenPair))
 
@@ -443,8 +443,8 @@ func TestMultiLiquidate(t *testing.T) {
 			assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 				/* ctx */ ctx,
 				/* pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				/* quoteAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
-				/* baseAssetReserve */ sdk.NewDec(1*common.TO_MICRO),
+				/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO),
+				/* baseReserve */ sdk.NewDec(1*common.TO_MICRO),
 				perpammtypes.MarketConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.OneDec(),
