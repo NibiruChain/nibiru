@@ -67,8 +67,8 @@ func TestAddMarginSuccess(t *testing.T) {
 			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				sdk.NewDec(10*common.TO_MICRO), // 10 tokens
-				sdk.NewDec(5*common.TO_MICRO),  // 5 tokens
+				sdk.NewDec(5*common.TO_MICRO), // 10 tokens
+				sdk.NewDec(5*common.TO_MICRO), // 5 tokens
 				perpammtypes.MarketConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"), // 0.1 ratio
@@ -77,7 +77,7 @@ func TestAddMarginSuccess(t *testing.T) {
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
 				sdk.ZeroDec(),
-				sdk.OneDec(),
+				sdk.NewDec(2),
 			))
 			require.True(t, perpammKeeper.ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)))
 
