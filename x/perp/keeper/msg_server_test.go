@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/assert"
@@ -98,7 +97,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 			})
 
 			t.Log("fund trader")
-			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, traderAddr, tc.traderFunds))
+			require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, traderAddr, tc.traderFunds))
 
 			if tc.initialPosition != nil {
 				t.Log("create position")
@@ -220,7 +219,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			})
 
 			t.Log("fund vault")
-			require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, tc.vaultFunds))
+			require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, tc.vaultFunds))
 
 			if tc.initialPosition != nil {
 				t.Log("create position")
@@ -310,7 +309,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 			traderAddr, err := sdk.AccAddressFromBech32(tc.sender)
 			if err == nil {
 				t.Log("fund trader")
-				require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, traderAddr, tc.traderFunds))
+				require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, traderAddr, tc.traderFunds))
 			}
 
 			t.Log("increment block height and time for TWAP calculation")
@@ -405,7 +404,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                     1,
 			})
-			require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(tc.pair.QuoteDenom(), 1))))
+			require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(tc.pair.QuoteDenom(), 1))))
 
 			resp, err := msgServer.ClosePosition(sdk.WrapSDKContext(ctx), &types.MsgClosePosition{
 				Sender: tc.traderAddr.String(),
@@ -501,7 +500,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	keeper.SetPosition(app.PerpKeeper, ctx, notAtRiskPosition)
 	keeper.SetPosition(app.PerpKeeper, ctx, atRiskPosition2)
 
-	require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
+	require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
 
 	setLiquidator(ctx, app.PerpKeeper, liquidator)
 	resp, err := msgServer.MultiLiquidate(sdk.WrapSDKContext(ctx), &types.MsgMultiLiquidate{
@@ -592,7 +591,7 @@ func TestMsgServerMultiLiquidate_NotAuthorized(t *testing.T) {
 	}
 	keeper.SetPosition(app.PerpKeeper, ctx, atRiskPosition1)
 
-	require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
+	require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
 
 	resp, err := msgServer.MultiLiquidate(sdk.WrapSDKContext(ctx), &types.MsgMultiLiquidate{
 		Sender: liquidator.String(),
@@ -664,7 +663,7 @@ func TestMsgServerMultiLiquidate_AllFailed(t *testing.T) {
 	}
 	keeper.SetPosition(app.PerpKeeper, ctx, notAtRiskPosition)
 
-	require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
+	require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
 
 	setLiquidator(ctx, app.PerpKeeper, liquidator)
 	resp, err := msgServer.MultiLiquidate(sdk.WrapSDKContext(ctx), &types.MsgMultiLiquidate{
@@ -723,7 +722,7 @@ func TestMsgServerDonateToEcosystemFund(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
-			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, tc.sender, tc.initialFunds))
+			require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, tc.sender, tc.initialFunds))
 
 			resp, err := msgServer.DonateToEcosystemFund(sdk.WrapSDKContext(ctx), &types.MsgDonateToEcosystemFund{
 				Sender:   tc.sender.String(),

@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Breaking
 
+* [#1282](https://github.com/NibiruChain/nibiru/pull/1282) - feat(inflation)!: add inflation module
 * [#1270](https://github.com/NibiruChain/nibiru/pull/1270) - refactor(proto)!: lint protos and standardize versioning
 * [#1271](https://github.com/NibiruChain/nibiru/pull/1271) - refactor(perp)!: vpool → perp/amm #2 | imports and renames
 * [#1269](https://github.com/NibiruChain/nibiru/pull/1269) - refactor(perp)!: merge x/util with x/perp
@@ -134,6 +135,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1188](https://github.com/NibiruChain/nibiru/pull/1188) - fix(spot): remove A precision and clean up borked logic
 * [#1190](https://github.com/NibiruChain/nibiru/pull/1190) - ci(release): fix TM_VERSION not being set on releases
 * [#1218](https://github.com/NibiruChain/nibiru/pull/1218) - ci(release): Publish chaosnet image when tagging a release
+* [#1283](https://github.com/NibiruChain/nibiru/pull/1283) - chore(deps): bump github.com/prometheus/client_golang from 1.14.0 to 1.15.0
 
 ### Bug Fixes
 

@@ -6,7 +6,6 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
@@ -56,7 +55,7 @@ func TestKeeperClosePosition(t *testing.T) {
 		ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(ctx.BlockTime().Add(time.Minute))
 
 		alice := testutil.AccAddress()
-		err := simapp.FundAccount(nibiruApp.BankKeeper, ctx, alice,
+		err := testapp.FundAccount(nibiruApp.BankKeeper, ctx, alice,
 			sdk.NewCoins(sdk.NewInt64Coin("yyy", 300)))
 		require.NoError(t, err)
 
@@ -78,7 +77,7 @@ func TestKeeperClosePosition(t *testing.T) {
 			LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.3"),
 		})
 		bob := testutil.AccAddress()
-		err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, bob,
+		err = testapp.FundAccount(nibiruApp.BankKeeper, ctx, bob,
 			sdk.NewCoins(sdk.NewInt64Coin("yyy", 62)))
 		require.NoError(t, err)
 
