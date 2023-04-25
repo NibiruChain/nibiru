@@ -35,6 +35,13 @@ func (k Keeper) CreatePool(
 		PegMultiplier: pegMultiplier,
 	})
 
+	if !baseReserve.Equal(market.SqrtDepth) {
+		return fmt.Errorf(
+			"base asset reserve %s must be equal to sqrt depth %s on pool creation",
+			baseReserve, market.SqrtDepth,
+		)
+	}
+
 	err := market.Validate()
 	if err != nil {
 		return err
