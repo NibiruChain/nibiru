@@ -175,3 +175,31 @@ message Position {
   // last block number this position was updated
   string last_updated_block_number = 7;
 }
+
+// Stores perp metrics for each pair
+message Metrics {
+  // Pair identifier for the two assets. Always in format 'base:quote'
+  string pair = 1 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+
+  // Sum of all active position sizes for the pair.
+  string net_size = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // Total notional volume for the pair.
+  string volumeQuote = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // Total size volume for the pair.
+  string volumeBase = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
