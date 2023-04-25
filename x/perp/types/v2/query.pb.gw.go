@@ -502,17 +502,17 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 }
 
 var (
-	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "perp", "params"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"nibiru", "perp", "v2", "params"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_QueryPosition_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "perp", "position"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_QueryPosition_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"nibiru", "perp", "v2", "position"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_QueryPositions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "perp", "positions"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_QueryPositions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"nibiru", "perp", "v2", "positions"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_CumulativePremiumFraction_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "perp", "cumulative_premium_fraction"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_CumulativePremiumFraction_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"nibiru", "perp", "v2", "cumulative_premium_fraction"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_Metrics_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "perp", "metrics"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Metrics_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"nibiru", "perp", "v2", "metrics"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_ModuleAccounts_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "util", "module_accounts"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_ModuleAccounts_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"nibiru", "perp", "v2", "module_accounts"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (

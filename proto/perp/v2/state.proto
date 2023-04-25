@@ -114,6 +114,9 @@ message Market {
 
   // the list of addresses allowed to liquidate a position.
   repeated string whitelisted_liquidators = 14;
+
+  // the amount of collateral already credited from the ecosystem fund
+  cosmos.base.v1beta1.Coin prepaid_bad_debt = 15;
 }
 
 message AMM {

@@ -538,17 +538,17 @@ func RegisterMsgHandlerClient(ctx context.Context, mux *runtime.ServeMux, client
 }
 
 var (
-	pattern_Msg_RemoveMargin_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "perp", "remove_margin"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Msg_RemoveMargin_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"nibiru", "perp", "v2", "remove_margin"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Msg_AddMargin_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "perp", "add_margin"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Msg_AddMargin_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"nibiru", "perp", "v2", "add_margin"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Msg_MultiLiquidate_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "perp", "multiliquidate"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Msg_MultiLiquidate_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"nibiru", "perp", "v2", "multiliquidate"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Msg_OpenPosition_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "perp", "open_position"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Msg_OpenPosition_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"nibiru", "perp", "v2", "open_position"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Msg_ClosePosition_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "perp", "close_position"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Msg_ClosePosition_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"nibiru", "perp", "v2", "close_position"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Msg_DonateToEcosystemFund_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"nibiru", "perp", "donate_to_ecosystem_fund"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Msg_DonateToEcosystemFund_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"nibiru", "perp", "v2", "donate_to_ecosystem_fund"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (
