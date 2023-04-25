@@ -14,28 +14,28 @@ option go_package = "github.com/NibiruChain/nibiru/x/perp/types/v2";
 service Msg {
 
   rpc RemoveMargin(MsgRemoveMargin) returns (MsgRemoveMarginResponse) {
-    option (google.api.http).post = "/nibiru/perp/remove_margin";
+    option (google.api.http).post = "/nibiru/perp/v2/remove_margin";
   }
 
   rpc AddMargin(MsgAddMargin) returns (MsgAddMarginResponse) {
-    option (google.api.http).post = "/nibiru/perp/add_margin";
+    option (google.api.http).post = "/nibiru/perp/v2/add_margin";
   }
 
   rpc MultiLiquidate(MsgMultiLiquidate) returns (MsgMultiLiquidateResponse) {
-    option (google.api.http).post = "/nibiru/perp/multiliquidate";
+    option (google.api.http).post = "/nibiru/perp/v2/multiliquidate";
   }
 
   rpc OpenPosition(MsgOpenPosition) returns (MsgOpenPositionResponse) {
-    option (google.api.http).post = "/nibiru/perp/open_position";
+    option (google.api.http).post = "/nibiru/perp/v2/open_position";
   }
 
   rpc ClosePosition(MsgClosePosition) returns (MsgClosePositionResponse) {
-    option (google.api.http).post = "/nibiru/perp/close_position";
+    option (google.api.http).post = "/nibiru/perp/v2/close_position";
   }
 
   rpc DonateToEcosystemFund(MsgDonateToEcosystemFund)
       returns (MsgDonateToEcosystemFundResponse) {
-    option (google.api.http).post = "/nibiru/perp/donate_to_ecosystem_fund";
+    option (google.api.http).post = "/nibiru/perp/v2/donate_to_ecosystem_fund";
   }
 }
 

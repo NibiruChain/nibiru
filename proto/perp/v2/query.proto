@@ -13,32 +13,33 @@ option go_package = "github.com/NibiruChain/nibiru/x/perp/types/v2";
 service Query {
   // Parameters queries the parameters of the x/perp module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/nibiru/perp/params";
+    option (google.api.http).get = "/nibiru/perp/v2/params";
   }
 
   rpc QueryPosition(QueryPositionRequest) returns (QueryPositionResponse) {
-    option (google.api.http).get = "/nibiru/perp/position";
+    option (google.api.http).get = "/nibiru/perp/v2/position";
   }
 
   rpc QueryPositions(QueryPositionsRequest) returns (QueryPositionsResponse) {
-    option (google.api.http).get = "/nibiru/perp/positions";
+    option (google.api.http).get = "/nibiru/perp/v2/positions";
   }
 
   // Queries the latest cumulative premium fraction and the estimated next
   // cumulative premium fraction.
   rpc CumulativePremiumFraction(QueryCumulativePremiumFractionRequest)
       returns (QueryCumulativePremiumFractionResponse) {
-    option (google.api.http).get = "/nibiru/perp/cumulative_premium_fraction";
+    option (google.api.http).get =
+        "/nibiru/perp/v2/cumulative_premium_fraction";
   }
 
   rpc Metrics(QueryMetricsRequest) returns (QueryMetricsResponse) {
-    option (google.api.http).get = "/nibiru/perp/metrics";
+    option (google.api.http).get = "/nibiru/perp/v2/metrics";
   }
 
   // Queries the reserve assets in a given pool, identified by a token pair.
   rpc ModuleAccounts(QueryModuleAccountsRequest)
       returns (QueryModuleAccountsResponse) {
-    option (google.api.http).get = "/nibiru/util/module_accounts";
+    option (google.api.http).get = "/nibiru/perp/v2/module_accounts";
   }
 }
 
