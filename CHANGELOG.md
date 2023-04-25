@@ -77,6 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1231](https://github.com/NibiruChain/nibiru/pull/1231) - chore(deps): bump github.com/cosmos/ibc-go/v4 from 4.2.0 to 4.3.0 #1231
 * [#1256](https://github.com/NibiruChain/nibiru/pull/1256) - chore(deps): bump github.com/spf13/cobra from 1.6.1 to 1.7.0
 * [#1289](https://github.com/NibiruChain/nibiru/pull/1289) - feat: SqrtDepth equal to base reserves when pool creation
+* [#1290](https://github.com/NibiruChain/nibiru/pull/1290) - refactor: fix quote/base reserve naming convention
 
 ### Bug Fixes
 
