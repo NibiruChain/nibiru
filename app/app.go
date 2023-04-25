@@ -126,6 +126,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/stablecoin"
 	stablecoinkeeper "github.com/NibiruChain/nibiru/x/stablecoin/keeper"
 	stablecointypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
+	wasmbinding "github.com/NibiruChain/nibiru/x/wasm/binding"
 )
 
 const (
@@ -246,7 +247,7 @@ type NibiruApp struct {
 	slashingKeeper   slashingkeeper.Keeper
 	/* DistrKeeper is the keeper of the distribution store */
 	DistrKeeper    distrkeeper.Keeper
-	govKeeper      govkeeper.Keeper
+	GovKeeper      govkeeper.Keeper
 	crisisKeeper   crisiskeeper.Keeper
 	upgradeKeeper  upgradekeeper.Keeper
 	paramsKeeper   paramskeeper.Keeper
@@ -288,7 +289,7 @@ type NibiruApp struct {
 	InflationKeeper  inflationkeeper.Keeper
 
 	// WASM keepers
-	wasmKeeper       wasm.Keeper
+	WasmKeeper       wasm.Keeper
 	scopedWasmKeeper capabilitykeeper.ScopedKeeper
 
 	// the module manager
@@ -311,11 +312,17 @@ func init() {
 }
 
 // GetWasmOpts build wasm options
-func GetWasmOpts(appOpts servertypes.AppOptions) []wasm.Option {
+func GetWasmOpts(nibiru NibiruApp, appOpts servertypes.AppOptions) []wasm.Option {
 	var wasmOpts []wasm.Option
 	if cast.ToBool(appOpts.Get("telemetry.enabled")) {
 		wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
 	}
+
+	// Add the bindings to the app's set of []wasm.Option.
+	wasmOpts = append(wasmOpts, wasmbinding.RegisterWasmOptions(
+		&nibiru.PerpKeeper,
+		&nibiru.PerpAmmKeeper,
+	)...)
 
 	return wasmOpts
 }
@@ -519,8 +526,14 @@ func NewNibiruApp(
 
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks
+	//
+	// NOTE: This keeper depends on all of pointers to the the Keepers to which
+	// it binds. Thus, it must be instantiated after those keepers have been
+	// assigned.
+	// For example, if there are bindings for the x/perp module, then the app
+	// passed to GetWasmOpts must already have a non-nil PerpKeeper.
 	supportedFeatures := "iterator,staking,stargate"
-	app.wasmKeeper = wasm.NewKeeper(
+	app.WasmKeeper = wasm.NewKeeper(
 		appCodec,
 		keys[wasm.StoreKey],
 		app.GetSubspace(wasm.ModuleName),
@@ -537,7 +550,7 @@ func NewNibiruApp(
 		wasmDir,
 		wasmConfig,
 		supportedFeatures,
-		GetWasmOpts(appOpts)...,
+		GetWasmOpts(*app, appOpts)...,
 	)
 
 	// register the proposal types
@@ -617,7 +630,7 @@ func NewNibiruApp(
 	   No more routes can be added. */
 	app.ibcKeeper.SetRouter(ibcRouter)
 
-	app.govKeeper = govkeeper.NewKeeper(
+	app.GovKeeper = govkeeper.NewKeeper(
 		appCodec, keys[govtypes.StoreKey], app.GetSubspace(govtypes.ModuleName),
 		app.AccountKeeper, app.BankKeeper, &app.stakingKeeper, govRouter,
 	)
@@ -663,7 +676,7 @@ func NewNibiruApp(
 		capability.NewAppModule(appCodec, *app.capabilityKeeper),
 		crisis.NewAppModule(&app.crisisKeeper, skipGenesisInvariants),
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
-		gov.NewAppModule(appCodec, app.govKeeper, app.AccountKeeper, app.BankKeeper),
+		gov.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper),
 		slashing.NewAppModule(appCodec, app.slashingKeeper, app.AccountKeeper, app.BankKeeper, app.stakingKeeper),
 		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.stakingKeeper),
 		staking.NewAppModule(appCodec, app.stakingKeeper, app.AccountKeeper, app.BankKeeper),
@@ -686,7 +699,7 @@ func NewNibiruApp(
 		ibctransfer.NewAppModule(app.transferKeeper),
 		ibcfee.NewAppModule(app.ibcFeeKeeper),
 
-		wasm.NewAppModule(appCodec, &app.wasmKeeper, app.stakingKeeper, app.AccountKeeper, app.BankKeeper),
+		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.stakingKeeper, app.AccountKeeper, app.BankKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -816,7 +829,7 @@ func NewNibiruApp(
 		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts),
 		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
-		gov.NewAppModule(appCodec, app.govKeeper, app.AccountKeeper, app.BankKeeper),
+		gov.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper),
 		staking.NewAppModule(appCodec, app.stakingKeeper, app.AccountKeeper, app.BankKeeper),
 		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.stakingKeeper),
 		slashing.NewAppModule(appCodec, app.slashingKeeper, app.AccountKeeper, app.BankKeeper, app.stakingKeeper),
