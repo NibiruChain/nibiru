@@ -5,6 +5,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/app"
@@ -12,18 +14,18 @@ import (
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 )
 
-type TestSuiteJsonMarshalQuery struct {
+type TestSuiteBindingJsonTypes struct {
 	suite.Suite
 	fileJson map[string]json.RawMessage
 }
 
-func TestSuiteJsonMarshalQuery_RunAll(t *testing.T) {
-	suite.Run(t, new(TestSuiteJsonMarshalQuery))
+func TestSuiteBindingJsonTypes_RunAll(t *testing.T) {
+	suite.Run(t, new(TestSuiteBindingJsonTypes))
 }
 
-func (s *TestSuiteJsonMarshalQuery) SetupSuite() {
+func (s *TestSuiteBindingJsonTypes) SetupSuite() {
 	app.SetPrefixes("nibi")
-	file, err := os.Open("query_responses.json")
+	file, err := os.Open("query_resp.json")
 	s.NoError(err)
 	defer file.Close()
 
@@ -33,7 +35,7 @@ func (s *TestSuiteJsonMarshalQuery) SetupSuite() {
 	s.fileJson = fileJson
 }
 
-func (s *TestSuiteJsonMarshalQuery) TestQueries() {
+func (s *TestSuiteBindingJsonTypes) TestQueries() {
 	testCaseMap := map[string]any{
 		"all_markets":      new(cw_struct.AllMarketsResponse),
 		"reserves":         new(cw_struct.ReservesResponse),
@@ -56,7 +58,7 @@ func (s *TestSuiteJsonMarshalQuery) TestQueries() {
 	}
 }
 
-func (s *TestSuiteJsonMarshalQuery) TestToAppMarket() {
+func (s *TestSuiteBindingJsonTypes) TestToAppMarket() {
 	var lastCwMarket cw_struct.Market
 	for _, appMarket := range genesis.START_MARKETS {
 		dummyBlockHeight := int64(1)
@@ -80,4 +82,37 @@ func (s *TestSuiteJsonMarshalQuery) TestToAppMarket() {
 	sadCwMarket.Pair = "fxs:ust:xxx-yyy!!!"
 	_, err := sadCwMarket.ToAppMarket()
 	s.Error(err)
+}
+
+func getFileJson(t *testing.T) (fileJson map[string]json.RawMessage) {
+	file, err := os.Open("execute_msg.json")
+	require.NoError(t, err)
+	defer file.Close()
+
+	err = json.NewDecoder(file).Decode(&fileJson)
+	require.NoError(t, err)
+	return fileJson
+}
+
+func (s *TestSuiteBindingJsonTypes) TestExecuteMsgs() {
+	t := s.T()
+	var fileJson map[string]json.RawMessage = getFileJson(t)
+
+	testCaseMap := map[string]any{
+		"open_position":            new(cw_struct.OpenPosition),
+		"close_position":           new(cw_struct.ClosePosition),
+		"add_margin":               new(cw_struct.AddMargin),
+		"remove_margin":            new(cw_struct.RemoveMargin),
+		"multi_liquidate":          new(cw_struct.MultiLiquidate),
+		"donate_to_insurance_fund": new(cw_struct.DonateToInsuranceFund),
+	}
+
+	for name, cwExecuteMsgPtr := range testCaseMap {
+		t.Run(name, func(t *testing.T) {
+			err := json.Unmarshal(fileJson[name], cwExecuteMsgPtr)
+			assert.NoErrorf(t, err, "name: %v", name)
+			jsonBz, err := json.Marshal(cwExecuteMsgPtr)
+			assert.NoErrorf(t, err, "jsonBz: %s", jsonBz)
+		})
+	}
 }
