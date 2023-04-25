@@ -18,7 +18,4 @@ message GenesisState {
   repeated AMM amms = 3 [ (gogoproto.nullable) = false ];
 
   repeated Position positions = 4 [ (gogoproto.nullable) = false ];
-
-  repeated cosmos.base.v1beta1.Coin prepaid_bad_debt = 5
-      [ (gogoproto.nullable) = false ];
 }
