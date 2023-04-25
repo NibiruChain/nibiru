@@ -196,7 +196,7 @@ message Position {
   ];
 
   // last block number this position was updated
-  uint64 last_updated_block_number = 7;
+  int64 last_updated_block_number = 7;
 }
 
 // Stores perp metrics for each pair
