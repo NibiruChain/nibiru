@@ -2,6 +2,12 @@ package cw_struct
 
 import sdk "github.com/cosmos/cosmos-sdk/types"
 
+// BindingMsg corresponds to the 'ExecuteMsg' enum in the CosmWasm binding
+// contracts (Rust). It specifies which wasm execute messages can be called with
+// Nibiru bindings and specifies the JSON schema that connects app ⇔ Wasm.
+//
+// See:
+// - https://github.com/NibiruChain/cw-nibiru/blob/90df123f8d32d47b5b280ec6ae7dde0f9dbf2787/contracts/bindings-perp/src/msg.rs
 type BindingMsg struct {
 	OpenPosition          *OpenPosition          `json:"open_position,omitempty"`
 	ClosePosition         *ClosePosition         `json:"close_position,omitempty"`

@@ -312,7 +312,7 @@ func init() {
 }
 
 // GetWasmOpts build wasm options
-func GetWasmOpts(nibiru *NibiruApp, appOpts servertypes.AppOptions) []wasm.Option {
+func GetWasmOpts(nibiru NibiruApp, appOpts servertypes.AppOptions) []wasm.Option {
 	var wasmOpts []wasm.Option
 	if cast.ToBool(appOpts.Get("telemetry.enabled")) {
 		wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
@@ -550,7 +550,7 @@ func NewNibiruApp(
 		wasmDir,
 		wasmConfig,
 		supportedFeatures,
-		GetWasmOpts(app, appOpts)...,
+		GetWasmOpts(*app, appOpts)...,
 	)
 
 	// register the proposal types

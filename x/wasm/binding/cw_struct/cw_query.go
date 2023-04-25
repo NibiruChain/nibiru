@@ -7,12 +7,20 @@ import (
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 )
 
-// BindingQuery corresponds to the BindingQuery enum in CosmWasm binding
-// contracts (Rust). It specifies which queries can be called into the
-// Nibiru bindings, and describes their JSON schema for connecting app ⇔ Wasm.
+// BindingQuery corresponds to the NibiruQuery enum in CosmWasm binding
+// contracts (Rust). It specifies which queries can be called with
+// Nibiru bindings and specifies the JSON schema that connects app ⇔ Wasm.
 //
 // ### Note
-// 1. The JSON field names must match the ones on the smart contract
+//  1. The JSON field names must match the ones on the smart contract
+//  2. You use a pointer so that each field can be nil, which will be missing in
+//     the input or output json. What's actually sent from the contract will be an
+//     instance of the parent type, but the message body will be on one of these
+//     nullable fields.
+//     This is part of the reason we need the "omitempty" struct tags
+//
+// See:
+// - https://github.com/NibiruChain/cw-nibiru/blob/90df123f8d32d47b5b280ec6ae7dde0f9dbf2787/contracts/bindings-perp/src/query.rs
 type BindingQuery struct {
 	Reserves        *ReservesRequest        `json:"reserves,omitempty"`
 	AllMarkets      *AllMarketsRequest      `json:"all_markets,omitempty"`
