@@ -23,7 +23,7 @@ func TestSuiteJsonMarshalQuery_RunAll(t *testing.T) {
 
 func (s *TestSuiteJsonMarshalQuery) SetupSuite() {
 	app.SetPrefixes("nibi")
-	file, err := os.Open("queries.json")
+	file, err := os.Open("query_responses.json")
 	s.NoError(err)
 	defer file.Close()
 
