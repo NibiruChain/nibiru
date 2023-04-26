@@ -20,13 +20,13 @@ import (
 )
 
 type QueryPlugin struct {
-	Perp *PerpExtension
+	Perp *PerpQuerier
 }
 
 // NewQueryPlugin returns a pointer to a new QueryPlugin
 func NewQueryPlugin(perp *perpkeeper.Keeper, perpAmm *perpammkeeper.Keeper) *QueryPlugin {
 	return &QueryPlugin{
-		Perp: &PerpExtension{
+		Perp: &PerpQuerier{
 			perp:    perpkeeper.NewQuerier(*perp),
 			perpAmm: perpammkeeper.NewQuerier(*perpAmm),
 		},
@@ -43,7 +43,7 @@ func (qp *QueryPlugin) ToBinary(
 	}
 	bz, err := json.Marshal(cwResp)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(err, ErrorMarshalResponse(cwResp))
+		return nil, sdkerrors.Wrapf(err, "failed to JSON marshal response: %v", cwResp)
 	}
 	return bz, nil
 }
@@ -113,15 +113,15 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 }
 
 // ----------------------------------------------------------------------
-// PerpExtension
+// PerpQuerier
 // ----------------------------------------------------------------------
 
-type PerpExtension struct {
+type PerpQuerier struct {
 	perp    perptypes.QueryServer
 	perpAmm perpammtypes.QueryServer
 }
 
-func (perpExt *PerpExtension) Reserves(
+func (perpExt *PerpQuerier) Reserves(
 	ctx sdk.Context, cwReq *cw_struct.ReservesRequest,
 ) (*cw_struct.ReservesResponse, error) {
 	pair := asset.Pair(cwReq.Pair)
@@ -140,7 +140,7 @@ func (perpExt *PerpExtension) Reserves(
 	}, err
 }
 
-func (perpExt *PerpExtension) AllMarkets(
+func (perpExt *PerpQuerier) AllMarkets(
 	ctx sdk.Context,
 ) (*cw_struct.AllMarketsResponse, error) {
 	sdkReq := &perpammtypes.QueryAllPoolsRequest{}
@@ -181,7 +181,7 @@ func (perpExt *PerpExtension) AllMarkets(
 	}, err
 }
 
-func (perpExt *PerpExtension) BasePrice(
+func (perpExt *PerpQuerier) BasePrice(
 	ctx sdk.Context, cwReq *cw_struct.BasePriceRequest,
 ) (*cw_struct.BasePriceResponse, error) {
 	pair, err := asset.TryNewPair(cwReq.Pair)
@@ -214,7 +214,7 @@ func (perpExt *PerpExtension) BasePrice(
 	}, err
 }
 
-func (perpExt *PerpExtension) PremiumFraction(
+func (perpExt *PerpQuerier) PremiumFraction(
 	ctx sdk.Context, cwReq *cw_struct.PremiumFractionRequest,
 ) (*cw_struct.PremiumFractionResponse, error) {
 	pair, err := asset.TryNewPair(cwReq.Pair)
@@ -238,7 +238,7 @@ func (perpExt *PerpExtension) PremiumFraction(
 	}, err
 }
 
-func (perpExt *PerpExtension) Metrics(
+func (perpExt *PerpQuerier) Metrics(
 	ctx sdk.Context, cwReq *cw_struct.MetricsRequest,
 ) (*cw_struct.MetricsResponse, error) {
 	pair, err := asset.TryNewPair(cwReq.Pair)
@@ -266,7 +266,7 @@ func (perpExt *PerpExtension) Metrics(
 	}, err
 }
 
-func (perpExt *PerpExtension) ModuleAccounts(
+func (perpExt *PerpQuerier) ModuleAccounts(
 	ctx sdk.Context, cwReq *cw_struct.ModuleAccountsRequest,
 ) (*cw_struct.ModuleAccountsResponse, error) {
 	if cwReq == nil {
@@ -297,7 +297,7 @@ func (perpExt *PerpExtension) ModuleAccounts(
 	}, err
 }
 
-func (perpExt *PerpExtension) ModuleParams(
+func (perpExt *PerpQuerier) ModuleParams(
 	ctx sdk.Context, cwReq *cw_struct.PerpParamsRequest,
 ) (*cw_struct.PerpParamsResponse, error) {
 	if cwReq == nil {

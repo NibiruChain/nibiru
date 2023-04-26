@@ -79,7 +79,7 @@ func (s *TestSuiteBindingJsonTypes) TestToAppMarket() {
 
 	// Test failure case
 	sadCwMarket := lastCwMarket
-	sadCwMarket.Pair = "fxs:ust:xxx-yyy!!!"
+	sadCwMarket.Pair = "ftt:ust:xxx-yyy!!!"
 	_, err := sadCwMarket.ToAppMarket()
 	s.Error(err)
 }
