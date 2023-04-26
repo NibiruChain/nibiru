@@ -15,10 +15,10 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	pooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
+	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
 const defaultWeight = 100
@@ -63,20 +63,20 @@ func SimulateMsgOpenPosition(ak types.AccountKeeper, bk types.BankKeeper, k keep
 		leverage := simtypes.RandomDecAmount(r, pool.Config.MaxLeverage.Sub(sdk.OneDec())).Add(sdk.OneDec()) // between [1, MaxLeverage]
 		openNotional := leverage.MulInt(quoteAmt)
 
-		var side perpammtypes.Direction
+		var side v2types.Direction
 		var direction pooltypes.Direction
 		if r.Float32() < .5 {
-			side = perpammtypes.Direction_LONG
+			side = v2types.Direction_LONG
 			direction = pooltypes.Direction_LONG
 		} else {
-			side = perpammtypes.Direction_SHORT
+			side = v2types.Direction_SHORT
 			direction = pooltypes.Direction_SHORT
 		}
 
 		feesAmt := openNotional.Mul(sdk.MustNewDecFromStr("0.002")).Ceil().TruncateInt()
 		spentCoins := sdk.NewCoins(sdk.NewCoin(denoms.NUSD, quoteAmt.Add(feesAmt)))
 
-		msg := &types.MsgOpenPosition{
+		msg := &v2types.MsgOpenPosition{
 			Sender:               simAccount.Address.String(),
 			Pair:                 asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			Side:                 side,

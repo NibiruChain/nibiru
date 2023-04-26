@@ -119,7 +119,9 @@ import (
 	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
+	perpkeeperv2 "github.com/NibiruChain/nibiru/x/perp/keeper/v2"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
+	perptypesv2 "github.com/NibiruChain/nibiru/x/perp/types/v2"
 	"github.com/NibiruChain/nibiru/x/spot"
 	spotkeeper "github.com/NibiruChain/nibiru/x/spot/keeper"
 	spottypes "github.com/NibiruChain/nibiru/x/spot/types"
@@ -283,6 +285,7 @@ type NibiruApp struct {
 	EpochsKeeper     epochskeeper.Keeper
 	PerpKeeper       perpkeeper.Keeper
 	PerpAmmKeeper    perpammkeeper.Keeper
+	PerpKeeperV2     perpkeeperv2.Keeper
 	SpotKeeper       spotkeeper.Keeper
 	OracleKeeper     oraclekeeper.Keeper
 	StablecoinKeeper stablecoinkeeper.Keeper
@@ -485,6 +488,12 @@ func NewNibiruApp(
 	app.PerpKeeper = perpkeeper.NewKeeper(
 		appCodec, keys[perptypes.StoreKey],
 		app.GetSubspace(perptypes.ModuleName),
+		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.PerpAmmKeeper, app.EpochsKeeper,
+	)
+
+	app.PerpKeeperV2 = perpkeeperv2.NewKeeper(
+		appCodec, keys[perptypesv2.StoreKey],
+		app.GetSubspace(perptypesv2.ModuleName),
 		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.PerpAmmKeeper, app.EpochsKeeper,
 	)
 

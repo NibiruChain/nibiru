@@ -5,8 +5,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-
-	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
 const (
@@ -31,7 +29,7 @@ func init() {
 // CreatePoolProposal
 
 func (proposal *CreatePoolProposal) ProposalRoute() string {
-	return types.RouterKey
+	return "perp"
 }
 
 func (proposal *CreatePoolProposal) ProposalType() string {
@@ -64,7 +62,7 @@ func (proposal *CreatePoolProposal) ValidateBasic() error {
 // EditPoolConfigProposal
 
 func (proposal *EditPoolConfigProposal) ProposalRoute() string {
-	return types.RouterKey
+	return "perp"
 }
 
 func (proposal *EditPoolConfigProposal) ProposalType() string {
@@ -97,7 +95,7 @@ func (proposal *EditPoolConfigProposal) ValidateBasic() error {
 // EditSwapInvariantsProposal
 
 func (proposal *EditSwapInvariantsProposal) ProposalRoute() string {
-	return types.RouterKey
+	return "perp"
 }
 
 func (proposal *EditSwapInvariantsProposal) ProposalType() string {

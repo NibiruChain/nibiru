@@ -12,8 +12,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/types"
+	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
 func GetTxCmd() *cobra.Command {
@@ -105,12 +105,12 @@ func OpenPositionCmd() *cobra.Command {
 				return err
 			}
 
-			var side perpammtypes.Direction
+			var side v2types.Direction
 			switch args[0] {
 			case "buy":
-				side = perpammtypes.Direction_LONG
+				side = v2types.Direction_LONG
 			case "sell":
-				side = perpammtypes.Direction_SHORT
+				side = v2types.Direction_SHORT
 			default:
 				return fmt.Errorf("invalid side: %s", args[0])
 			}
@@ -129,7 +129,7 @@ func OpenPositionCmd() *cobra.Command {
 
 			baseAmtLimit := sdk.MustNewDecFromStr(args[4])
 
-			msg := &types.MsgOpenPosition{
+			msg := &v2types.MsgOpenPosition{
 				Sender:               clientCtx.GetFromAddress().String(),
 				Pair:                 assetPair,
 				Side:                 side,
