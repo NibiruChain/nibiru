@@ -116,7 +116,8 @@ message Market {
   repeated string whitelisted_liquidators = 14;
 
   // the amount of collateral already credited from the ecosystem fund
-  cosmos.base.v1beta1.Coin prepaid_bad_debt = 15;
+  cosmos.base.v1beta1.Coin prepaid_bad_debt = 15
+      [ (gogoproto.nullable) = false ];
 }
 
 message AMM {
