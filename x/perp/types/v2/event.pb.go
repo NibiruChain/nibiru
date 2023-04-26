@@ -629,8 +629,8 @@ func (m *ReserveSnapshotSavedEvent) GetBlockTimestamp() time.Time {
 }
 
 // A swap on the perp.amm represented by 'pair'.
-// Amounts are negative or positive base on the perspective of the pool, i.e.
-// a negative quote means the trader has gained quote and the perp.amm lost
+// Amounts are negative or positive base on the perspective of the user, i.e.
+// a negative quote means the trader has lost quote and the perp.amm has gained
 // quote.
 type SwapEvent struct {
 	Pair github_com_NibiruChain_nibiru_x_common_asset.Pair `protobuf:"bytes,1,opt,name=pair,proto3,customtype=github.com/NibiruChain/nibiru/x/common/asset.Pair" json:"pair"`
