@@ -161,11 +161,11 @@ func (m *EditPoolConfigProposal) GetConfig() MarketConfig {
 type EditSwapInvariantsProposal struct {
 	Title       string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
 	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
-	// Map from pair ID to a multiple on the swap invariant. For example, a proposal containing
-	// "swap_invariant_maps": [{ "uatom:unusd": "5" }, { "uosmo:unusd": "0.9" }]
-	// would mutliply the swap invariant of the ATOM and OSMO trading pairs by
-	// 5 and 0.9 respectively. The price at which k changes is the instantaneous
-	// mark price at the time of the proposal's execution.
+	// Map from pair ID to a multiple on the swap invariant. For example, a
+	// proposal containing "swap_invariant_maps": [{ "uatom:unusd": "5" }, {
+	// "uosmo:unusd": "0.9" }] would mutliply the swap invariant of the ATOM and
+	// OSMO trading pairs by 5 and 0.9 respectively. The price at which k changes
+	// is the instantaneous mark price at the time of the proposal's execution.
 	SwapInvariantMaps []EditSwapInvariantsProposal_SwapInvariantMultiple `protobuf:"bytes,5,rep,name=swap_invariant_maps,json=swapInvariantMaps,proto3" json:"swap_invariant_maps"`
 }
 
@@ -223,7 +223,8 @@ func (m *EditSwapInvariantsProposal) GetSwapInvariantMaps() []EditSwapInvariants
 	return nil
 }
 
-// A map between a trading pair and a desired multiplier for its swap invariant.
+// A map between a trading pair and a desired multiplier for its swap
+// invariant.
 type EditSwapInvariantsProposal_SwapInvariantMultiple struct {
 	// Pair is a string identifier for an asset pair.
 	Pair github_com_NibiruChain_nibiru_x_common_asset.Pair `protobuf:"bytes,3,opt,name=pair,proto3,customtype=github.com/NibiruChain/nibiru/x/common/asset.Pair" json:"pair"`

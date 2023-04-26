@@ -12,7 +12,8 @@ option go_package = "github.com/NibiruChain/nibiru/x/perp/amm/types";
 service Query {
 
   // Queries the reserve assets in a given pool, identified by a token pair.
-  rpc ReserveAssets(QueryReserveAssetsRequest) returns (QueryReserveAssetsResponse) {
+  rpc ReserveAssets(QueryReserveAssetsRequest)
+      returns (QueryReserveAssetsResponse) {
     option (google.api.http).get = "/nibiru/perp/amm/reserve_assets";
   }
 
@@ -22,64 +23,66 @@ service Query {
   }
 
   // Queries prices
-  rpc BaseAssetPrice(QueryBaseAssetPriceRequest) returns (QueryBaseAssetPriceResponse) {
+  rpc BaseAssetPrice(QueryBaseAssetPriceRequest)
+      returns (QueryBaseAssetPriceResponse) {
     option (google.api.http).get = "/nibiru/perp/amm/base_asset_price";
-  }  
-  
+  }
 }
 
 // ---------------------------------------- QueryReserveAssets
 
 message QueryReserveAssetsRequest {
-    // always BASE:QUOTE, e.g. BTC:NUSD or ETH:NUSD
-    string pair = 1 [ 
-      (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
-      (gogoproto.nullable) = false
-    ];
+  // always BASE:QUOTE, e.g. BTC:NUSD or ETH:NUSD
+  string pair = 1 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
 }
 
 message QueryReserveAssetsResponse {
   // base asset is the crypto asset, e.g. BTC or ETH
   string base_reserve = 1 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
-    (gogoproto.nullable) = false];
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
   // quote asset is usually stablecoin, in our case NUSD
   string quote_reserve = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
-    (gogoproto.nullable) = false];
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // ---------------------------------------- QueryAllPools
 
-message QueryAllPoolsRequest { }
+message QueryAllPoolsRequest {}
 
 message QueryAllPoolsResponse {
-  repeated Market markets = 1 [
-    (gogoproto.nullable) = false
-  ];
-  repeated PoolPrices prices = 2 [
-    (gogoproto.nullable) = false
-  ];
+  repeated Market markets = 1 [ (gogoproto.nullable) = false ];
+  repeated PoolPrices prices = 2 [ (gogoproto.nullable) = false ];
 }
 
 // ---------------------------------------- BaseAssetPrice
 
 message QueryBaseAssetPriceRequest {
-  string pair = 1 [ 
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+  string pair = 1 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
-  
+
   Direction direction = 2;
   // base asset is the crypto asset, e.g. BTC or ETH
   string base_asset_amount = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
-    (gogoproto.nullable) = false];
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 }
 
 message QueryBaseAssetPriceResponse {
   string price_in_quote_denom = 1 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
-    (gogoproto.nullable) = false];
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 }

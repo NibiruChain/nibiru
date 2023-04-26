@@ -338,8 +338,8 @@ message PegMultiplierUpdate{
   ];  
 
   // Cost of repeg
-  cosmos.base.v1beta1.Coin cost = 3 [
-    (gogoproto.moretags) = "yaml:\"cost\"",
+  string cost = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
 }
