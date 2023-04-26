@@ -3,14 +3,19 @@ package keeper
 import (
 	"fmt"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // EditPoolPegMultiplier edits the peg multiplier of an amm pool after making sure there's enough money in the perp
 // EF fund to pay for the repeg. These funds get send to the vault to pay for trader's new net margin.
-func (k Keeper) EditPoolPegMultiplier(ctx sdk.Context, pair asset.Pair, pegMultiplier sdk.Dec) (err error) {
+func (k Keeper) EditPoolPegMultiplier(ctx sdk.Context, sender sdk.AccAddress, pair asset.Pair, pegMultiplier sdk.Dec) (err error) {
+	if !k.isWhitelisted(ctx, sender) {
+		return fmt.Errorf("user is not whitelisted to update peg multiplier")
+	}
+
 	// Get the pool
 	pool, err := k.PerpAmmKeeper.GetPool(ctx, pair)
 	if nil != err {
@@ -54,7 +59,7 @@ func (k Keeper) EditPoolPegMultiplier(ctx sdk.Context, pair asset.Pair, pegMulti
 				sdk.NewCoin(pair.QuoteDenom(), costInt.Neg()),
 			),
 		)
-		if err != nil {
+		if err != nil { // nolint:staticcheck
 			// if there's no money in margin to pay for the repeg, we still repeg. It's surprising if it's
 			// happening on mainnet, but it's not a problem.
 			// It means there's bad debt in the system, and it's preventing to pay for the repeg down. But the bad debt
