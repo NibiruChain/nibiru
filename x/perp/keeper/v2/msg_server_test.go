@@ -167,7 +167,7 @@ package keeper_test
 // 			initialPosition: &v2types.Position{
 // 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 // 				Size_:                           sdk.OneDec(),
-// 				Margin:                          sdk.NewDec(1 * common.TO_MICRO),
+// 				Margin:                          sdk.NewDec(1e6),
 // 				OpenNotional:                    sdk.OneDec(),
 // 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 // 				LastUpdatedBlockNumber:          1,
@@ -181,7 +181,7 @@ package keeper_test
 // 			initialPosition: &v2types.Position{
 // 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 // 				Size_:                           sdk.OneDec(),
-// 				Margin:                          sdk.NewDec(1 * common.TO_MICRO),
+// 				Margin:                          sdk.NewDec(1e6),
 // 				OpenNotional:                    sdk.OneDec(),
 // 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 // 				LastUpdatedBlockNumber:          1,

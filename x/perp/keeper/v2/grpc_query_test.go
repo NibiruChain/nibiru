@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
@@ -109,8 +108,8 @@ func TestQueryPosition(t *testing.T) {
 				LastUpdatedBlockNumber:          1,
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
-			quoteReserve:  sdk.NewDec(1 * common.TO_MICRO),
-			baseReserve:   sdk.NewDec(1 * common.TO_MICRO),
+			quoteReserve:  sdk.NewDec(1e6),
+			baseReserve:   sdk.NewDec(1e6),
 			pegMultiplier: sdk.NewDec(2),
 
 			expectedPositionNotional: sdk.MustNewDecFromStr("19.999800001999980000"),
@@ -127,8 +126,8 @@ func TestQueryPosition(t *testing.T) {
 				LastUpdatedBlockNumber:          1,
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
-			quoteReserve:  sdk.NewDec(1 * common.TO_MICRO),
-			baseReserve:   sdk.NewDec(1 * common.TO_MICRO),
+			quoteReserve:  sdk.NewDec(1e6),
+			baseReserve:   sdk.NewDec(1e6),
 			pegMultiplier: sdk.OneDec(),
 
 			expectedPositionNotional: sdk.MustNewDecFromStr("9.99990000099999"),
@@ -145,8 +144,8 @@ func TestQueryPosition(t *testing.T) {
 				LastUpdatedBlockNumber:          1,
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
-			quoteReserve:  sdk.NewDec(1 * common.TO_MICRO),
-			baseReserve:   sdk.NewDec(1 * common.TO_MICRO),
+			quoteReserve:  sdk.NewDec(1e6),
+			baseReserve:   sdk.NewDec(1e6),
 			pegMultiplier: sdk.MustNewDecFromStr("0.5"),
 
 			expectedPositionNotional: sdk.MustNewDecFromStr("4.999950000499995"),
@@ -496,11 +495,18 @@ func TestQueryMetrics(t *testing.T) {
 			t.Log("call OnSwapEnd hook")
 			for _, position := range tc.Positions {
 				// Detect position decrease
+				dir := v2types.Direction_DIRECTION_UNSPECIFIED
+				if position.Size_.IsPositive() {
+					dir = v2types.Direction_LONG
+				} else if position.Size_.IsNegative() {
+					dir = v2types.Direction_SHORT
+				}
 				app.PerpKeeperV2.OnSwapEnd(
 					ctx,
 					*mock.TestAMM(),
 					position.OpenNotional,
 					position.Size_,
+					dir,
 				)
 			}
 

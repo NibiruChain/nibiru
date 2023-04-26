@@ -249,14 +249,13 @@ func (k Keeper) increasePosition(
 ) (updatedAMM *v2types.AMM, positionResp *v2types.PositionResp, err error) {
 	positionResp = &v2types.PositionResp{}
 
-	updatedAMM, baseAssetDeltaAbs, err := k.swapQuoteAsset(
+	updatedAMM, baseAssetDeltaAbs, err := k.SwapQuoteAsset(
 		ctx,
 		market,
 		amm,
 		side,
 		increasedNotional,
 		baseAmtLimit,
-		/* skipFluctuationLimitCheck */ false,
 	)
 	if err != nil {
 		return nil, nil, err
@@ -413,14 +412,13 @@ func (k Keeper) decreasePosition(
 		return nil, nil, err
 	}
 
-	updatedAMM, baseAssetDeltaAbs, err := k.swapQuoteAsset(
+	updatedAMM, baseAssetDeltaAbs, err := k.SwapQuoteAsset(
 		ctx,
 		market,
 		amm,
 		dir,
 		decreasedNotional,
 		baseAmtLimit,
-		skipFluctuationLimitCheck,
 	)
 	if err != nil {
 		return nil, nil, err
@@ -664,14 +662,13 @@ func (k Keeper) closePositionEntirely(
 	} else {
 		sideToTake = v2types.Direction_LONG
 	}
-	updatedAMM, exchangedNotionalValue, err := k.swapBaseAsset(
+	updatedAMM, exchangedNotionalValue, err := k.SwapBaseAsset(
 		ctx,
 		market,
 		amm,
 		sideToTake,
 		currentPosition.Size_.Abs(),
 		quoteAssetAmountLimit,
-		skipFluctuationLimitCheck,
 	)
 	if err != nil {
 		return nil, nil, err

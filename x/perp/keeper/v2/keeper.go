@@ -327,9 +327,9 @@ func getPriceWithSnapshot(
 	return sdk.ZeroDec(), nil
 }
 
-// checkIfLimitIsViolated checks if the limit is violated by the amount.
+// checkUserLimits checks if the limit is violated by the amount.
 // returns error if it does
-func checkIfLimitIsViolated(limit, amount sdk.Dec, dir v2types.Direction) error {
+func checkUserLimits(limit, amount sdk.Dec, dir v2types.Direction) error {
 	if limit.IsZero() {
 		return nil
 	}

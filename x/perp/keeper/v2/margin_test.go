@@ -162,8 +162,8 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("Set market defined by pair on PerpAmmKeeper")
 				// perpammKeeper := &nibiruApp.PerpAmmKeeper
-				// quoteReserves := sdk.NewDec(1 * common.TO_MICRO)
-				// baseReserves := sdk.NewDec(1 * common.TO_MICRO)
+				// quoteReserves := sdk.NewDec(1e6)
+				// baseReserves := sdk.NewDec(1e6)
 				// assert.NoError(t, perpammKeeper.CreatePool(
 				// 	ctx,
 				// 	pair,

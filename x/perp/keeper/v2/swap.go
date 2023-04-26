@@ -23,17 +23,16 @@ ret:
   - baseAssetAmount: the amount of base asset swapped
   - err: error
 */
-func (k Keeper) swapQuoteAsset(
+func (k Keeper) SwapQuoteAsset(
 	ctx sdk.Context,
 	market v2types.Market,
 	amm v2types.AMM,
 	dir v2types.Direction,
 	quoteAssetAmt sdk.Dec,
 	baseAssetLimit sdk.Dec,
-	skipFluctuationLimitCheck bool,
 ) (updatedAMM *v2types.AMM, baseAssetDelta sdk.Dec, err error) {
-	if quoteAssetAmt.LTE(sdk.ZeroDec()) {
-		return nil, sdk.ZeroDec(), v2types.ErrInvalidAmount.Wrap("quote asset amount must be positive")
+	if !quoteAssetAmt.IsPositive() {
+		return &amm, sdk.ZeroDec(), nil
 	}
 
 	if _, err = k.OracleKeeper.GetExchangeRate(ctx, amm.Pair); err != nil {
@@ -45,13 +44,13 @@ func (k Keeper) swapQuoteAsset(
 		return nil, sdk.Dec{}, err
 	}
 
-	if err := checkIfLimitIsViolated(baseAssetLimit, baseAssetDelta, dir); err != nil {
+	if err := checkUserLimits(baseAssetLimit, baseAssetDelta, dir); err != nil {
 		return nil, sdk.Dec{}, err
 	}
 
 	k.AMMs.Insert(ctx, amm.Pair, *updatedAMM)
 
-	k.OnSwapEnd(ctx, *updatedAMM, quoteAssetAmt, baseAssetDelta)
+	k.OnSwapEnd(ctx, *updatedAMM, quoteAssetAmt, baseAssetDelta, dir)
 
 	return updatedAMM, baseAssetDelta, nil
 }
@@ -73,17 +72,16 @@ ret:
   - quoteAssetAmount: the amount of quote asset swapped
   - err: error
 */
-func (k Keeper) swapBaseAsset(
+func (k Keeper) SwapBaseAsset(
 	ctx sdk.Context,
 	market v2types.Market,
 	amm v2types.AMM,
 	dir v2types.Direction,
 	baseAssetAmt sdk.Dec,
 	quoteAssetLimit sdk.Dec,
-	skipFluctuationLimitCheck bool,
 ) (updatedAMM *v2types.AMM, quoteAssetDelta sdk.Dec, err error) {
 	if baseAssetAmt.IsZero() {
-		return nil, sdk.ZeroDec(), nil
+		return &amm, sdk.ZeroDec(), nil
 	}
 
 	if _, err = k.OracleKeeper.GetExchangeRate(ctx, amm.Pair); err != nil {
@@ -95,13 +93,13 @@ func (k Keeper) swapBaseAsset(
 		return nil, sdk.Dec{}, err
 	}
 
-	if err := checkIfLimitIsViolated(quoteAssetLimit, quoteAssetDelta, dir); err != nil {
+	if err := checkUserLimits(quoteAssetLimit, quoteAssetDelta, dir); err != nil {
 		return nil, sdk.Dec{}, err
 	}
 
 	k.AMMs.Insert(ctx, amm.Pair, *updatedAMM)
 
-	k.OnSwapEnd(ctx, *updatedAMM, quoteAssetDelta, baseAssetAmt)
+	k.OnSwapEnd(ctx, *updatedAMM, quoteAssetDelta, baseAssetAmt, dir)
 
 	return updatedAMM, quoteAssetDelta, err
 }
@@ -112,6 +110,7 @@ func (k Keeper) OnSwapEnd(
 	amm v2types.AMM,
 	quoteAssetAmt sdk.Dec,
 	baseAssetAmt sdk.Dec,
+	dir v2types.Direction,
 ) {
 	// Update Metrics
 	metrics := k.Metrics.GetOr(ctx, amm.Pair, v2types.Metrics{
@@ -120,9 +119,14 @@ func (k Keeper) OnSwapEnd(
 		VolumeQuote: sdk.ZeroDec(),
 		VolumeBase:  sdk.ZeroDec(),
 	})
-	metrics.NetSize = metrics.NetSize.Add(baseAssetAmt)
+	if dir == v2types.Direction_LONG {
+		metrics.NetSize = metrics.NetSize.Add(baseAssetAmt)
+	} else if dir == v2types.Direction_SHORT {
+		metrics.NetSize = metrics.NetSize.Sub(baseAssetAmt)
+	}
 	metrics.VolumeBase = metrics.VolumeBase.Add(baseAssetAmt.Abs())
 	metrics.VolumeQuote = metrics.VolumeQuote.Add(quoteAssetAmt.Abs())
+
 	k.Metrics.Insert(ctx, amm.Pair, metrics)
 
 	// -------------------- Emit events
