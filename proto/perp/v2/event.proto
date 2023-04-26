@@ -307,13 +307,13 @@ message MetricsEvent {
   ];
 
   // Total notional volume for the pair.
-  string volumeQuote = 3 [
+  string volume_quote = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
   // Total size volume for the pair.
-  string volumeBase = 4 [
+  string volume_base = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
@@ -356,8 +356,8 @@ message ReserveSnapshotSavedEvent {
 }
 
 // A swap on the perp.amm represented by 'pair'.
-// Amounts are negative or positive base on the perspective of the pool, i.e.
-// a negative quote means the trader has gained quote and the perp.amm lost
+// Amounts are negative or positive base on the perspective of the user, i.e.
+// a negative quote means the trader has lost quote and the perp.amm has gained
 // quote.
 message SwapEvent {
   string pair = 1 [
@@ -367,13 +367,13 @@ message SwapEvent {
   ];
 
   // delta in the quote reserves of the perp.amm
-  string quote_amount = 2 [
+  string quote_reserve = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
   // delta in the base reserves of the perp.amm
-  string base_amount = 3 [
+  string base_reserve = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
