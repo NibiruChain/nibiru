@@ -12,7 +12,6 @@ import (
 	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
@@ -24,7 +23,6 @@ import (
 	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion/v2"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
@@ -36,8 +34,8 @@ func createInitMarket() Action {
 			Pair:                            pairBtcUsdc,
 			Enabled:                         true,
 			LatestCumulativePremiumFraction: sdk.ZeroDec(),
-			ExchangeFeeRatio:                sdk.MustNewDecFromStr("0.0005"),
-			EcosystemFundFeeRatio:           sdk.MustNewDecFromStr("0.0005"),
+			ExchangeFeeRatio:                sdk.MustNewDecFromStr("0.001"),
+			EcosystemFundFeeRatio:           sdk.MustNewDecFromStr("0.001"),
 			LiquidationFeeRatio:             sdk.MustNewDecFromStr("0.005"),
 			PartialLiquidationRatio:         sdk.MustNewDecFromStr("0.5"),
 			FundingRateEpochId:              "30min",
@@ -46,8 +44,16 @@ func createInitMarket() Action {
 			PrepaidBadDebt:                  sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
 			PriceFluctuationLimitRatio:      sdk.MustNewDecFromStr("0.1"),
 			MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.0625"),
-			MaxLeverage:                     sdk.MustNewDecFromStr("15"),
+			MaxLeverage:                     sdk.NewDec(10),
 			MaxOracleSpreadRatio:            sdk.OneDec(), // 100%,
+		},
+		v2types.AMM{
+			Pair:            pairBtcUsdc,
+			BaseReserve:     sdk.NewDec(1e12),
+			QuoteReserve:    sdk.NewDec(1e12),
+			SqrtDepth:       sdk.NewDec(1e12),
+			PriceMultiplier: sdk.OneDec(),
+			Bias:            sdk.ZeroDec(),
 		})
 }
 
@@ -97,7 +103,7 @@ func TestOpenPosition(t *testing.T) {
 					LastUpdatedBlockNumber:          1,
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				})),
-				PositionChangedEventShouldBeEqual(&perptypes.PositionChangedEvent{
+				PositionChangedEventShouldBeEqual(&v2types.PositionChangedEvent{
 					Pair:               pairBtcUsdc,
 					TraderAddress:      alice.String(),
 					Margin:             sdk.NewCoin(denoms.USDC, sdk.NewDec(1000).TruncateInt()),
@@ -108,7 +114,6 @@ func TestOpenPosition(t *testing.T) {
 					RealizedPnl:        sdk.ZeroDec(),
 					UnrealizedPnlAfter: sdk.ZeroDec(),
 					BadDebt:            sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
-					MarkPrice:          sdk.MustNewDecFromStr("1.0000000200000001"),
 					FundingPayment:     sdk.ZeroDec(),
 					TransactionFee:     sdk.NewCoin(denoms.USDC, sdk.NewInt(20)),
 					BlockHeight:        1,
@@ -146,7 +151,7 @@ func TestOpenPosition(t *testing.T) {
 				OpenPositionResp_PositionNotionalShouldBeEqual(sdk.MustNewDecFromStr("20000.000199999998000000")),
 			),
 		).Then(
-			PositionChangedEventShouldBeEqual(&perptypes.PositionChangedEvent{
+			PositionChangedEventShouldBeEqual(&v2types.PositionChangedEvent{
 				Pair:               pairBtcUsdc,
 				TraderAddress:      alice.String(),
 				Margin:             sdk.NewCoin(denoms.USDC, sdk.NewDec(2000).TruncateInt()),
@@ -157,7 +162,6 @@ func TestOpenPosition(t *testing.T) {
 				RealizedPnl:        sdk.ZeroDec(),
 				UnrealizedPnlAfter: sdk.MustNewDecFromStr("0.000199999998000000"),
 				BadDebt:            sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
-				MarkPrice:          sdk.MustNewDecFromStr("1.000000040000000400"),
 				FundingPayment:     sdk.ZeroDec(),
 				TransactionFee:     sdk.NewCoin(denoms.USDC, sdk.NewInt(20)),
 				BlockHeight:        2,
@@ -281,7 +285,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 		},
 		{
 			name:                     "new long position just under fluctuation limit",
-			traderFunds:              sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1*common.TO_MICRO*common.TO_MICRO)),
+			traderFunds:              sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1e12)),
 			initialPosition:          nil,
 			side:                     v2types.Direction_LONG,
 			margin:                   sdk.NewInt(47_619_047_619),
@@ -387,7 +391,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 		},
 		{
 			name:                     "new short position just under fluctuation limit",
-			traderFunds:              sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1*common.TO_MICRO*common.TO_MICRO)),
+			traderFunds:              sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1e12)),
 			initialPosition:          nil,
 			side:                     v2types.Direction_SHORT,
 			margin:                   sdk.NewInt(47_619_047_619),
@@ -407,45 +411,31 @@ func TestOpenPositionSuccess(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			t.Log("Setup Nibiru app and constants")
-			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
+			t.Log("setup app")
+			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 			traderAddr := testutil.AccAddress()
 			exchangedSize := tc.expectedSize
 
 			t.Log("initialize market")
 			market := mock.TestMarket()
-			nibiruApp.PerpKeeperV2.Markets.Insert(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), *market)
-			// assert.NoError(t, nibiruApp.PerpAmmKeeper.CreatePool(
-			// 	ctx,
-			// 	asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			// 	/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO*common.TO_MICRO),
-			// 	/* baseReserve */ sdk.NewDec(1*common.TO_MICRO*common.TO_MICRO),
-			// 	v2types.MarketConfig{
-			// 		FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
-			// 		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-			// 		MaxLeverage:            sdk.MustNewDecFromStr("15"),
-			// 		MaxOracleSpreadRatio:   sdk.OneDec(), // 100%,
-			// 		TradeLimitRatio:        sdk.OneDec(),
-			// 	},
-			// 	sdk.OneDec(),
-			// ))
-			// keeper.SetPairMetadata(nibiruApp.PerpKeeperV2, ctx, perptypes.PairMetadata{
-			// 	Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			// 	LatestCumulativePremiumFraction: sdk.ZeroDec(),
-			// })
-
-			t.Log("initialize trader funds")
-			require.NoError(t, testapp.FundAccount(nibiruApp.BankKeeper, ctx, traderAddr, tc.traderFunds))
+			app.PerpKeeperV2.Markets.Insert(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), *market)
+			amm := mock.TestAMM()
+			app.PerpKeeperV2.AMMs.Insert(ctx, amm.Pair, *amm)
+			app.PerpKeeperV2.ReserveSnapshots.Insert(ctx, collections.Join(amm.Pair, ctx.BlockTime()), v2types.ReserveSnapshot{
+				Amm:         *amm,
+				TimestampMs: ctx.BlockTime().UnixMilli(),
+			})
+			require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, traderAddr, tc.traderFunds))
 
 			if tc.initialPosition != nil {
 				t.Log("set initial position")
 				tc.initialPosition.TraderAddress = traderAddr.String()
-				nibiruApp.PerpKeeperV2.Positions.Insert(ctx, collections.Join(tc.initialPosition.Pair, traderAddr), *tc.initialPosition)
+				app.PerpKeeperV2.Positions.Insert(ctx, collections.Join(tc.initialPosition.Pair, traderAddr), *tc.initialPosition)
 				exchangedSize = exchangedSize.Sub(tc.initialPosition.Size_)
 			}
 
 			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(ctx.BlockTime().Add(time.Second * 5))
-			resp, err := nibiruApp.PerpKeeperV2.OpenPosition(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), tc.side, traderAddr, tc.margin, tc.leverage, tc.baseLimit)
+			resp, err := app.PerpKeeperV2.OpenPosition(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), tc.side, traderAddr, tc.margin, tc.leverage, tc.baseLimit)
 			require.NoError(t, err)
 
 			t.Log("assert position response")
@@ -466,7 +456,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			require.EqualValues(t, tc.expectedPositionNotional, resp.PositionNotional)
 
 			t.Log("assert position in state")
-			position, err := nibiruApp.PerpKeeperV2.Positions.Get(ctx, collections.Join(asset.Registry.Pair(denoms.BTC, denoms.NUSD), traderAddr))
+			position, err := app.PerpKeeperV2.Positions.Get(ctx, collections.Join(asset.Registry.Pair(denoms.BTC, denoms.NUSD), traderAddr))
 			require.NoError(t, err)
 			require.EqualValues(t, asset.Registry.Pair(denoms.BTC, denoms.NUSD), position.Pair)
 			require.EqualValues(t, traderAddr.String(), position.TraderAddress)
@@ -505,9 +495,6 @@ func TestOpenPositionError(t *testing.T) {
 		name        string
 		traderFunds sdk.Coins
 
-		// market params
-		poolTradeLimitRatio sdk.Dec
-
 		initialPosition *v2types.Position
 
 		// position arguments
@@ -519,20 +506,18 @@ func TestOpenPositionError(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			name:                "not enough trader funds",
-			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 999)),
-			poolTradeLimitRatio: sdk.OneDec(),
-			initialPosition:     nil,
-			side:                v2types.Direction_LONG,
-			margin:              sdk.NewInt(1000),
-			leverage:            sdk.NewDec(10),
-			baseLimit:           sdk.ZeroDec(),
-			expectedErr:         sdkerrors.ErrInsufficientFunds,
+			name:            "not enough trader funds",
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 999)),
+			initialPosition: nil,
+			side:            v2types.Direction_LONG,
+			margin:          sdk.NewInt(1000),
+			leverage:        sdk.NewDec(10),
+			baseLimit:       sdk.ZeroDec(),
+			expectedErr:     sdkerrors.ErrInsufficientFunds,
 		},
 		{
-			name:                "position has bad debt",
-			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 999)),
-			poolTradeLimitRatio: sdk.OneDec(),
+			name:        "position has bad debt",
+			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 999)),
 			initialPosition: &v2types.Position{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.OneDec(),
@@ -545,159 +530,115 @@ func TestOpenPositionError(t *testing.T) {
 			margin:      sdk.NewInt(1),
 			leverage:    sdk.OneDec(),
 			baseLimit:   sdk.ZeroDec(),
-			expectedErr: perptypes.ErrMarginRatioTooLow,
+			expectedErr: v2types.ErrMarginRatioTooLow,
 		},
 		{
-			name:                "new long position not over base limit",
-			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1020)),
-			poolTradeLimitRatio: sdk.OneDec(),
-			initialPosition:     nil,
-			side:                v2types.Direction_LONG,
-			margin:              sdk.NewInt(1000),
-			leverage:            sdk.NewDec(10),
-			baseLimit:           sdk.NewDec(10_000),
-			expectedErr:         v2types.ErrAssetFailsUserLimit,
+			name:            "new long position not over base limit",
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1020)),
+			initialPosition: nil,
+			side:            v2types.Direction_LONG,
+			margin:          sdk.NewInt(1000),
+			leverage:        sdk.NewDec(10),
+			baseLimit:       sdk.NewDec(10_000),
+			expectedErr:     v2types.ErrAssetFailsUserLimit,
 		},
 		{
-			name:                "new short position not under base limit",
-			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1020)),
-			poolTradeLimitRatio: sdk.OneDec(),
-			initialPosition:     nil,
-			side:                v2types.Direction_SHORT,
-			margin:              sdk.NewInt(1000),
-			leverage:            sdk.NewDec(10),
-			baseLimit:           sdk.NewDec(10_000),
-			expectedErr:         v2types.ErrAssetFailsUserLimit,
+			name:            "new short position not under base limit",
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1020)),
+			initialPosition: nil,
+			side:            v2types.Direction_SHORT,
+			margin:          sdk.NewInt(1000),
+			leverage:        sdk.NewDec(10),
+			baseLimit:       sdk.NewDec(10_000),
+			expectedErr:     v2types.ErrAssetFailsUserLimit,
 		},
 		{
-			name:                "quote asset amount is zero",
-			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1020)),
-			poolTradeLimitRatio: sdk.OneDec(),
-			initialPosition:     nil,
-			side:                v2types.Direction_SHORT,
-			margin:              sdk.NewInt(0),
-			leverage:            sdk.NewDec(10),
-			baseLimit:           sdk.NewDec(10_000),
-			expectedErr:         perptypes.ErrQuoteAmountIsZero,
+			name:            "quote asset amount is zero",
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1020)),
+			initialPosition: nil,
+			side:            v2types.Direction_SHORT,
+			margin:          sdk.NewInt(0),
+			leverage:        sdk.NewDec(10),
+			baseLimit:       sdk.NewDec(10_000),
+			expectedErr:     v2types.ErrQuoteAmountIsZero,
 		},
 		{
-			name:                "leverage amount is zero",
-			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1020)),
-			poolTradeLimitRatio: sdk.OneDec(),
-			initialPosition:     nil,
-			side:                v2types.Direction_SHORT,
-			margin:              sdk.NewInt(1000),
-			leverage:            sdk.NewDec(0),
-			baseLimit:           sdk.NewDec(10_000),
-			expectedErr:         perptypes.ErrLeverageIsZero,
+			name:            "leverage amount is zero",
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1020)),
+			initialPosition: nil,
+			side:            v2types.Direction_SHORT,
+			margin:          sdk.NewInt(1000),
+			leverage:        sdk.NewDec(0),
+			baseLimit:       sdk.NewDec(10_000),
+			expectedErr:     v2types.ErrLeverageIsZero,
 		},
 		{
-			name:                "leverage amount is too high - SELL",
-			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1020)),
-			poolTradeLimitRatio: sdk.OneDec(),
-			initialPosition:     nil,
-			side:                v2types.Direction_SHORT,
-			margin:              sdk.NewInt(100),
-			leverage:            sdk.NewDec(100),
-			baseLimit:           sdk.NewDec(11_000),
-			expectedErr:         perptypes.ErrLeverageIsTooHigh,
+			name:            "leverage amount is too high - SELL",
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1020)),
+			initialPosition: nil,
+			side:            v2types.Direction_SHORT,
+			margin:          sdk.NewInt(100),
+			leverage:        sdk.NewDec(100),
+			baseLimit:       sdk.NewDec(11_000),
+			expectedErr:     v2types.ErrLeverageIsTooHigh,
 		},
 		{
-			name:                "leverage amount is too high - BUY",
-			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1020)),
-			poolTradeLimitRatio: sdk.OneDec(),
-			initialPosition:     nil,
-			side:                v2types.Direction_LONG,
-			margin:              sdk.NewInt(100),
-			leverage:            sdk.NewDec(16),
-			baseLimit:           sdk.NewDec(0),
-			expectedErr:         perptypes.ErrLeverageIsTooHigh,
+			name:            "leverage amount is too high - BUY",
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1020)),
+			initialPosition: nil,
+			side:            v2types.Direction_LONG,
+			margin:          sdk.NewInt(100),
+			leverage:        sdk.NewDec(16),
+			baseLimit:       sdk.NewDec(0),
+			expectedErr:     v2types.ErrLeverageIsTooHigh,
 		},
 		{
-			name:                "new long position over fluctuation limit",
-			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1*common.TO_MICRO*common.TO_MICRO)),
-			poolTradeLimitRatio: sdk.OneDec(),
-			initialPosition:     nil,
-			side:                v2types.Direction_LONG,
-			margin:              sdk.NewInt(100_000 * common.TO_MICRO),
-			leverage:            sdk.OneDec(),
-			baseLimit:           sdk.ZeroDec(),
-			expectedErr:         v2types.ErrOverFluctuationLimit,
+			name:            "new long position over fluctuation limit",
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1e12)),
+			initialPosition: nil,
+			side:            v2types.Direction_LONG,
+			margin:          sdk.NewInt(100_000e6),
+			leverage:        sdk.OneDec(),
+			baseLimit:       sdk.ZeroDec(),
+			expectedErr:     v2types.ErrOverFluctuationLimit,
 		},
 		{
-			name:                "new short position over fluctuation limit",
-			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1*common.TO_MICRO*common.TO_MICRO)),
-			poolTradeLimitRatio: sdk.OneDec(),
-			initialPosition:     nil,
-			side:                v2types.Direction_SHORT,
-			margin:              sdk.NewInt(100_000 * common.TO_MICRO),
-			leverage:            sdk.OneDec(),
-			baseLimit:           sdk.ZeroDec(),
-			expectedErr:         v2types.ErrOverFluctuationLimit,
-		},
-		{
-			name:                "new long position over trade limit",
-			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 10_000*common.TO_MICRO)),
-			poolTradeLimitRatio: sdk.MustNewDecFromStr("0.01"),
-			initialPosition:     nil,
-			side:                v2types.Direction_LONG,
-			margin:              sdk.NewInt(100_000 * common.TO_MICRO),
-			leverage:            sdk.OneDec(),
-			baseLimit:           sdk.ZeroDec(),
-			expectedErr:         v2types.ErrOverTradingLimit,
-		},
-		{
-			name:                "new short position over trade limit",
-			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 10_000*common.TO_MICRO)),
-			poolTradeLimitRatio: sdk.MustNewDecFromStr("0.01"),
-			initialPosition:     nil,
-			side:                v2types.Direction_SHORT,
-			margin:              sdk.NewInt(100_000 * common.TO_MICRO),
-			leverage:            sdk.OneDec(),
-			baseLimit:           sdk.ZeroDec(),
-			expectedErr:         v2types.ErrOverTradingLimit,
+			name:            "new short position over fluctuation limit",
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1e12)),
+			initialPosition: nil,
+			side:            v2types.Direction_SHORT,
+			margin:          sdk.NewInt(100_000e6),
+			leverage:        sdk.OneDec(),
+			baseLimit:       sdk.ZeroDec(),
+			expectedErr:     v2types.ErrOverFluctuationLimit,
 		},
 	}
 
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 			traderAddr := testutil.AccAddress()
 
 			t.Log("initialize market")
-			// assert.NoError(t, nibiruApp.PerpAmmKeeper.CreatePool(
-			// 	ctx,
-			// 	asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			// 	/* tradeLimitRatio */
-			// 	/* quoteReserve */
-			// 	sdk.NewDec(1*common.TO_MICRO*common.TO_MICRO),
-			// 	/* baseReserve */ sdk.NewDec(1*common.TO_MICRO*common.TO_MICRO),
-			// 	v2types.MarketConfig{
-			// 		FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
-			// 		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-			// 		MaxLeverage:            sdk.MustNewDecFromStr("15"),
-			// 		MaxOracleSpreadRatio:   sdk.OneDec(), // 100%,
-			// 		TradeLimitRatio:        tc.poolTradeLimitRatio,
-			// 	},
-			// 	sdk.OneDec(),
-			// ))
-			// keeper.SetPairMetadata(nibiruApp.PerpKeeperV2, ctx, perptypes.PairMetadata{
-			// 	Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			// 	LatestCumulativePremiumFraction: sdk.ZeroDec(),
-			// })
-
-			t.Log("initialize trader funds")
-			require.NoError(t, testapp.FundAccount(nibiruApp.BankKeeper, ctx, traderAddr, tc.traderFunds))
+			market := mock.TestMarket()
+			app.PerpKeeperV2.Markets.Insert(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), *market)
+			amm := mock.TestAMM()
+			app.PerpKeeperV2.AMMs.Insert(ctx, amm.Pair, *amm)
+			app.PerpKeeperV2.ReserveSnapshots.Insert(ctx, collections.Join(amm.Pair, ctx.BlockTime()), v2types.ReserveSnapshot{
+				Amm:         *amm,
+				TimestampMs: ctx.BlockTime().UnixMilli(),
+			})
+			require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, traderAddr, tc.traderFunds))
 
 			if tc.initialPosition != nil {
 				t.Log("set initial position")
 				tc.initialPosition.TraderAddress = traderAddr.String()
-				nibiruApp.PerpKeeperV2.Positions.Insert(ctx, collections.Join(tc.initialPosition.Pair, traderAddr), *tc.initialPosition)
+				app.PerpKeeperV2.Positions.Insert(ctx, collections.Join(tc.initialPosition.Pair, traderAddr), *tc.initialPosition)
 			}
 
 			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(ctx.BlockTime().Add(time.Second * 5))
-			resp, err := nibiruApp.PerpKeeperV2.OpenPosition(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), tc.side, traderAddr, tc.margin, tc.leverage, tc.baseLimit)
+			resp, err := app.PerpKeeperV2.OpenPosition(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), tc.side, traderAddr, tc.margin, tc.leverage, tc.baseLimit)
 			require.ErrorContains(t, err, tc.expectedErr.Error())
 			require.Nil(t, resp)
 		})
@@ -705,74 +646,20 @@ func TestOpenPositionError(t *testing.T) {
 }
 
 func TestOpenPositionInvalidPair(t *testing.T) {
-	testCases := []struct {
-		name string
-		test func()
-	}{
-		{
-			name: "open pos - uninitialized pool raised pair not supported error",
-			test: func() {
-				t.Log("Setup Nibiru app, pair, and trader without a perpamm.")
-				nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
-				pair := asset.MustNewPair("xxx:yyy")
+	t.Log("Setup Nibiru app, pair, and trader without a perpamm.")
+	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+	pair := asset.MustNewPair("xxx:yyy")
+	trader := testutil.AccAddress()
 
-				trader := testutil.AccAddress()
-
-				t.Log("open a position on invalid 'pair'")
-				side := v2types.Direction_LONG
-				quote := sdk.NewInt(60)
-				leverage := sdk.NewDec(10)
-				baseLimit := sdk.NewDec(150)
-				resp, err := nibiruApp.PerpKeeperV2.OpenPosition(
-					ctx, pair, side, trader, quote, leverage, baseLimit)
-				require.ErrorContains(t, err, perptypes.ErrPairNotFound.Error())
-				require.Nil(t, resp)
-			},
-		},
-		{
-			name: "open pos - market not set on the perp PairMetadata ",
-			test: func() {
-				t.Log("Setup Nibiru app, pair, and trader")
-				nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
-				pair := asset.MustNewPair("xxx:yyy")
-
-				t.Log("Set market defined by pair on PerpAmmKeeper")
-				// perpammKeeper := &nibiruApp.PerpAmmKeeper
-				// require.NoError(t, nibiruApp.PerpAmmKeeper.CreatePool(
-				// 	ctx,
-				// 	pair,
-				// 	sdk.NewDec(5*common.TO_MICRO), //
-				// 	sdk.NewDec(5*common.TO_MICRO), // 5 tokens
-				// 	v2types.MarketConfig{
-				// 		FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
-				// 		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-				// 		MaxLeverage:            sdk.MustNewDecFromStr("15"),
-				// 		MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"), // 100%,
-				// 		TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
-				// 	},
-				// 	sdk.NewDec(2),
-				// ))
-
-				t.Log("Attempt to open long position (expected unsuccessful)")
-				trader := testutil.AccAddress()
-				side := v2types.Direction_LONG
-				quote := sdk.NewInt(60)
-				leverage := sdk.NewDec(10)
-				baseLimit := sdk.NewDec(150)
-				resp, err := nibiruApp.PerpKeeperV2.OpenPosition(
-					ctx, pair, side, trader, quote, leverage, baseLimit)
-				require.ErrorIs(t, err, collections.ErrNotFound)
-				require.Nil(t, resp)
-			},
-		},
-	}
-
-	for _, testCase := range testCases {
-		tc := testCase
-		t.Run(tc.name, func(t *testing.T) {
-			tc.test()
-		})
-	}
+	t.Log("open a position on invalid 'pair'")
+	side := v2types.Direction_LONG
+	quote := sdk.NewInt(60)
+	leverage := sdk.NewDec(10)
+	baseLimit := sdk.NewDec(150)
+	resp, err := app.PerpKeeperV2.OpenPosition(
+		ctx, pair, side, trader, quote, leverage, baseLimit)
+	require.ErrorContains(t, err, v2types.ErrPairNotFound.Error())
+	require.Nil(t, resp)
 }
 
 func TestClosePosition(t *testing.T) {

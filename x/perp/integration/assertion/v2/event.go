@@ -9,11 +9,11 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
-	"github.com/NibiruChain/nibiru/x/perp/types"
+	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
 type positionChangedEventShouldBeEqual struct {
-	ExpectedEvent *types.PositionChangedEvent
+	ExpectedEvent *v2types.PositionChangedEvent
 }
 
 func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
@@ -29,7 +29,7 @@ func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context)
 			return ctx, err
 		}
 
-		theEvent, ok := typedEvent.(*types.PositionChangedEvent)
+		theEvent, ok := typedEvent.(*v2types.PositionChangedEvent)
 		if !ok {
 			return ctx, fmt.Errorf("expected event is not of type PositionChangedEvent")
 		}
@@ -78,10 +78,6 @@ func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context)
 			return ctx, fmt.Errorf("expected bad debt %s, got %s", p.ExpectedEvent.BadDebt, theEvent.BadDebt)
 		}
 
-		if !theEvent.MarkPrice.Equal(p.ExpectedEvent.MarkPrice) {
-			return ctx, fmt.Errorf("expected mark price %s, got %s", p.ExpectedEvent.MarkPrice, theEvent.MarkPrice)
-		}
-
 		if !theEvent.FundingPayment.Equal(p.ExpectedEvent.FundingPayment) {
 			return ctx, fmt.Errorf("expected funding payment %s, got %s", p.ExpectedEvent.FundingPayment, theEvent.FundingPayment)
 		}
@@ -100,7 +96,7 @@ func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context)
 
 // PositionChangedEventShouldBeEqual checks that the position changed event is equal to the expected event.
 func PositionChangedEventShouldBeEqual(
-	expectedEvent *types.PositionChangedEvent,
+	expectedEvent *v2types.PositionChangedEvent,
 ) action.Action {
 	return positionChangedEventShouldBeEqual{
 		ExpectedEvent: expectedEvent,

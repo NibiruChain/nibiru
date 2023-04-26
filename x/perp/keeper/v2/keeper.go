@@ -366,7 +366,7 @@ args:
 ret:
   - err: error if any
 */
-func (k Keeper) checkFluctuationLimitRatio(ctx sdk.Context, market v2types.Market, amm v2types.AMM) error {
+func (k Keeper) checkPriceFluctuationLimitRatio(ctx sdk.Context, market v2types.Market, amm v2types.AMM) error {
 	if market.PriceFluctuationLimitRatio.IsZero() {
 		// early return to avoid expensive state operations
 		return nil

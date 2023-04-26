@@ -156,6 +156,12 @@ func (k Keeper) afterPositionUpdate(
 		}
 	}
 
+	// check price fluctuation
+	err = k.checkPriceFluctuationLimitRatio(ctx, market, amm)
+	if err != nil {
+		return err
+	}
+
 	// transfer trader <=> vault
 	marginToVault := positionResp.MarginToVault.RoundInt()
 	switch {

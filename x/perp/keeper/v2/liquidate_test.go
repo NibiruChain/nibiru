@@ -256,8 +256,8 @@ package keeper_test
 // 			// assert.NoError(t, perpammKeeper.CreatePool(
 // 			// 	ctx,
 // 			// 	tokenPair,
-// 			// 	/* quoteReserves */ sdk.NewDec(10_000*common.TO_MICRO*common.TO_MICRO),
-// 			// 	/* baseReserves */ sdk.NewDec(10_000*common.TO_MICRO*common.TO_MICRO),
+// 			// 	/* quoteReserves */ sdk.NewDec(10_000e12),
+// 			// 	/* baseReserves */ sdk.NewDec(10_000e12),
 // 			// 	v2types.MarketConfig{
 // 			// 		TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 // 			// 		FluctuationLimitRatio:  sdk.OneDec(),

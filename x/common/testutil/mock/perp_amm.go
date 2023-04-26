@@ -11,9 +11,9 @@ import (
 func TestAMM() *v2types.AMM {
 	return &v2types.AMM{
 		Pair:            asset.NewPair(denoms.BTC, denoms.NUSD),
-		BaseReserve:     sdk.NewDec(10e12),
-		QuoteReserve:    sdk.NewDec(10e12),
-		SqrtDepth:       sdk.NewDec(10e12),
+		BaseReserve:     sdk.NewDec(1e12),
+		QuoteReserve:    sdk.NewDec(1e12),
+		SqrtDepth:       sdk.NewDec(1e12),
 		PriceMultiplier: sdk.OneDec(),
 		Bias:            sdk.ZeroDec(),
 	}
