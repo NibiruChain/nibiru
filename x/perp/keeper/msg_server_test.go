@@ -747,3 +747,73 @@ func TestMsgServerDonateToEcosystemFund(t *testing.T) {
 		})
 	}
 }
+
+func TestMsgServerRepeg(t *testing.T) {
+	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+	ctx = ctx.WithBlockTime(time.Now())
+	msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
+
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	repegger := testutil.AccAddress()
+	traderAccount := testutil.AccAddress()
+
+	t.Log("create market")
+	assert.NoError(t, app.PerpAmmKeeper.CreatePool(
+		/* ctx */ ctx,
+		/* pair */ pair,
+		/* quoteReserve */ sdk.NewDec(100),
+		/* baseReserve */ sdk.NewDec(100),
+		perpammtypes.MarketConfig{
+			TradeLimitRatio:        sdk.OneDec(),
+			FluctuationLimitRatio:  sdk.OneDec(),
+			MaxOracleSpreadRatio:   sdk.OneDec(),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:            sdk.MustNewDecFromStr("15"),
+		},
+		/* pegMultiplier */ sdk.OneDec(),
+	))
+	keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
+		Pair:                            pair,
+		LatestCumulativePremiumFraction: sdk.ZeroDec(),
+	})
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
+
+	t.Log("create positions")
+	require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, traderAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(25)))))
+	_, err := msgServer.OpenPosition(sdk.WrapSDKContext(ctx), &types.MsgOpenPosition{
+		Sender:               traderAccount.String(),
+		Pair:                 pair,
+		Side:                 perpammtypes.Direction_LONG,
+		Leverage:             sdk.OneDec(),
+		QuoteAssetAmount:     sdk.NewInt(25),
+		BaseAssetAmountLimit: sdk.ZeroInt(),
+	})
+	require.NoError(t, err)
+
+	require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 25))))
+
+	_, err = msgServer.EditPoolPegMultiplier(sdk.WrapSDKContext(ctx), &types.MsgEditPoolPegMultiplier{
+		Sender:        repegger.String(),
+		Pair:          pair,
+		PegMultiplier: sdk.NewDec(2),
+	})
+	require.NoError(t, err)
+
+	assert.EqualValues(t,
+		sdk.NewInt(50),
+		app.BankKeeper.GetBalance(
+			ctx,
+			app.AccountKeeper.GetModuleAddress(types.VaultModuleAccount),
+			denoms.NUSD,
+		).Amount,
+	)
+
+	assert.EqualValues(t,
+		sdk.NewInt(0),
+		app.BankKeeper.GetBalance(
+			ctx,
+			app.AccountKeeper.GetModuleAddress(types.PerpEFModuleAccount),
+			denoms.NUSD,
+		).Amount,
+	)
+}
