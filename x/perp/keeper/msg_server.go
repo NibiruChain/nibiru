@@ -112,3 +112,11 @@ func (m msgServer) DonateToEcosystemFund(ctx context.Context, msg *types.MsgDona
 
 	return &types.MsgDonateToEcosystemFundResponse{}, nil
 }
+
+func (m msgServer) EditPoolPegMultiplier(ctx context.Context, msg *types.MsgEditPoolPegMultiplier) (*types.MsgEditPoolPegMultiplierResponse, error) {
+	if err := m.k.EditPoolPegMultiplier(sdk.UnwrapSDKContext(ctx), msg.Pair, msg.PegMultiplier); err != nil {
+		return nil, err
+	}
+
+	return &types.MsgEditPoolPegMultiplierResponse{}, nil
+}

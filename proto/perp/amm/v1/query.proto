@@ -40,12 +40,12 @@ message QueryReserveAssetsRequest {
 
 message QueryReserveAssetsResponse {
   // base asset is the crypto asset, e.g. BTC or ETH
-  string base_asset_reserve = 1 [
+  string base_reserve = 1 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
     (gogoproto.nullable) = false];
 
   // quote asset is usually stablecoin, in our case NUSD
-  string quote_asset_reserve = 2 [
+  string quote_reserve = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", 
     (gogoproto.nullable) = false];
 }

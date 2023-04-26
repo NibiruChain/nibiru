@@ -17,15 +17,15 @@ message CreatePoolProposal {
     (gogoproto.nullable) = false
   ];
 
-  // quote_asset_reserve is the amount of quote asset the pool will be 
+  // quote_reserve is the amount of quote asset the pool will be 
   // initialized with.
-  string quote_asset_reserve = 5 [
+  string quote_reserve = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  // base_asset_reserve is the amount of base asset the pool will be 
+  // base_reserve is the amount of base asset the pool will be 
   // initialized with.
-  string base_asset_reserve = 6 [
+  string base_reserve = 6 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];

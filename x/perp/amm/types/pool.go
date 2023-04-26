@@ -64,6 +64,33 @@ func (market *Market) GetBaseAmountByQuoteAmount(
 }
 
 /*
+GetRepegCost provides the cost of re-pegging the pool to a new candidate peg multiplier.
+*/
+func (market *Market) GetRepegCost(pegCandidate sdk.Dec) (cost sdk.Dec, err error) {
+	if market.Bias.IsZero() {
+		cost = sdk.ZeroDec()
+		return
+	}
+
+	biasInQuoteReserve, err := market.GetQuoteReserveByBase(market.Bias)
+	if err != nil {
+		return
+	}
+
+	cost = biasInQuoteReserve.Mul(pegCandidate.Sub(market.PegMultiplier))
+
+	return
+}
+
+/*
+UpdatePeg updates the peg multiplier of the market
+*/
+func (market *Market) UpdatePeg(newPeg sdk.Dec) (err error) {
+	market.PegMultiplier = newPeg
+	return market.Validate()
+}
+
+/*
 GetQuoteReserveByBase returns the amount of quote asset you will get out
 by giving a specified amount of base asset
 
@@ -78,7 +105,7 @@ ret:
 */
 func (market *Market) GetQuoteReserveByBase(
 	baseDelta sdk.Dec,
-) (quoteOutAbs sdk.Dec, err error) {
+) (quoteOut sdk.Dec, err error) {
 	if baseDelta.IsZero() {
 		return sdk.ZeroDec(), nil
 	}
@@ -94,9 +121,9 @@ func (market *Market) GetQuoteReserveByBase(
 	}
 
 	quoteReservesAfter := invariant.Quo(baseReservesAfter)
-	quoteOutAbs = quoteReservesAfter.Sub(market.QuoteReserve).Abs()
+	quoteOut = quoteReservesAfter.Sub(market.QuoteReserve).Neg()
 
-	return quoteOutAbs, nil
+	return quoteOut, nil
 }
 
 // GetMarkPrice returns the price of the asset.
@@ -287,7 +314,7 @@ func (market *Market) Validate() error {
 	}
 
 	if market.PegMultiplier.LTE(sdk.ZeroDec()) {
-		return fmt.Errorf("peg multiplier must be > 0")
+		return ErrNonPositivePegMultiplier
 	}
 
 	if err := market.Config.Validate(); err != nil {
@@ -344,6 +371,7 @@ func (market *Market) ValidateLiquidityDepth() error {
 		return ErrLiquidityDepth.Wrap(
 			"liq depth must be positive. pool: " + market.String())
 	} else if !market.SqrtDepth.Sub(computedSqrtDepth).Abs().LTE(sdk.NewDec(1)) {
+		fmt.Println(market.SqrtDepth, computedSqrtDepth)
 		return ErrLiquidityDepth.Wrap(
 			"computed sqrt and current sqrt are mismatched. pool: " + market.String())
 	} else {

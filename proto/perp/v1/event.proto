@@ -323,3 +323,23 @@ message MetricsEvent {
   // The block time in unix milliseconds at which metrics were generated.
   int64 block_time_ms = 6;
 }
+
+message PegMultiplierUpdate{
+  string pair = 1 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+
+  // New repeg multiplier
+  string new_peg = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];  
+
+  // Cost of repeg
+  cosmos.base.v1beta1.Coin cost = 3 [
+    (gogoproto.moretags) = "yaml:\"cost\"",
+    (gogoproto.nullable) = false
+  ];
+}

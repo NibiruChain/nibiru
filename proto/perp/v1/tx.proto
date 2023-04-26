@@ -38,6 +38,11 @@ service Msg {
       returns (MsgDonateToEcosystemFundResponse) {
     option (google.api.http).post = "/nibiru/perp/donate_to_ecosystem_fund";
   }
+
+  rpc EditPoolPegMultiplier(MsgEditPoolPegMultiplier)
+      returns (MsgEditPoolPegMultiplierResponse) {
+    option (google.api.http).post = "/nibiru/perp/edit_pool_peg_multiplier";
+  }  
 }
 
 // -------------------------- RemoveMargin --------------------------
@@ -264,3 +269,22 @@ message MsgDonateToEcosystemFund {
 }
 
 message MsgDonateToEcosystemFundResponse {}
+
+
+// -------------------------- EditPoolPegMultiplier --------------------------
+
+message MsgEditPoolPegMultiplier {
+  string pair = 1 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+
+  // The new peg for the pool
+  string peg_multiplier = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];    
+}
+
+message MsgEditPoolPegMultiplierResponse {}

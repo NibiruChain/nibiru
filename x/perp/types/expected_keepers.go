@@ -42,6 +42,7 @@ type BankKeeper interface {
 	) error
 	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 	GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
+	GetModuleAccountBalance(ctx sdk.Context, moduleName string, denom string) sdk.Coin
 }
 
 type OracleKeeper interface {
@@ -100,6 +101,7 @@ type PerpAmmKeeper interface {
 	IsOverSpreadLimit(ctx sdk.Context, pair asset.Pair) (bool, error)
 	GetMaintenanceMarginRatio(ctx sdk.Context, pair asset.Pair) (sdk.Dec, error)
 	ExistsPool(ctx sdk.Context, pair asset.Pair) bool
+	EditPoolPegMultiplier(ctx sdk.Context, pair asset.Pair, pegMultiplier sdk.Dec) error
 	GetSettlementPrice(ctx sdk.Context, pair asset.Pair) (sdk.Dec, error)
 	GetLastSnapshot(ctx sdk.Context, pool perpammtypes.Market) (perpammtypes.ReserveSnapshot, error)
 }
