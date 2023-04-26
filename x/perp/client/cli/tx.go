@@ -32,6 +32,7 @@ func GetTxCmd() *cobra.Command {
 		ClosePositionCmd(),
 		MultiLiquidateCmd(),
 		DonateToEcosystemFundCmd(),
+		EditPegMultiplierCmd(),
 	)
 
 	return txCmd
@@ -301,6 +302,49 @@ func DonateToEcosystemFundCmd() *cobra.Command {
 			msg := &types.MsgDonateToEcosystemFund{
 				Sender:   clientCtx.GetFromAddress().String(),
 				Donation: donation,
+			}
+			if err = msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func EditPegMultiplierCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "repeg [pair] [multiplier]",
+		Short: "Repeg the pair price multiplier to the given multiplier",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`
+			$ %s tx perp repeg ubtc:unusd 30000
+			`, version.AppName),
+		),
+		Args: cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+			parts := strings.Split(args[0], ":")
+			if len(parts) != 2 {
+				return fmt.Errorf("invalid pair format: %s", args[0])
+			}
+
+			pair, err := asset.TryNewPair(fmt.Sprintf("%s:%s", parts[0], parts[1]))
+			if err != nil {
+				return err
+			}
+
+			msg := &types.MsgEditPoolPegMultiplier{
+				Sender:        clientCtx.GetFromAddress().String(),
+				Pair:          pair,
+				PegMultiplier: sdk.MustNewDecFromStr(args[1]),
 			}
 			if err = msg.ValidateBasic(); err != nil {
 				return err

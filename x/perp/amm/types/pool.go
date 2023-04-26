@@ -79,6 +79,10 @@ func (market *Market) GetRepegCost(pegCandidate sdk.Dec) (cost sdk.Dec, err erro
 
 	cost = biasInQuoteReserve.Mul(pegCandidate.Sub(market.PegMultiplier))
 
+	if market.Bias.IsNegative() {
+		cost = cost.Neg()
+	}
+
 	return
 }
 
@@ -105,7 +109,7 @@ ret:
 */
 func (market *Market) GetQuoteReserveByBase(
 	baseDelta sdk.Dec,
-) (quoteOut sdk.Dec, err error) {
+) (quoteOutAbs sdk.Dec, err error) {
 	if baseDelta.IsZero() {
 		return sdk.ZeroDec(), nil
 	}
@@ -121,9 +125,9 @@ func (market *Market) GetQuoteReserveByBase(
 	}
 
 	quoteReservesAfter := invariant.Quo(baseReservesAfter)
-	quoteOut = quoteReservesAfter.Sub(market.QuoteReserve).Neg()
+	quoteOutAbs = quoteReservesAfter.Sub(market.QuoteReserve).Neg().Abs()
 
-	return quoteOut, nil
+	return quoteOutAbs, nil
 }
 
 // GetMarkPrice returns the price of the asset.

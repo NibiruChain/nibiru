@@ -96,7 +96,7 @@ func TestEditPoolPegMultiplier(t *testing.T) {
 				}
 			}
 
-			err := perpKeeper.EditPoolPegMultiplier(ctx, pair, tc.newPeg)
+			err := perpKeeper.EditPoolPegMultiplier(ctx, sdk.AccAddress{}, pair, tc.newPeg)
 
 			if tc.expectedErr != nil {
 				require.EqualError(t, err, tc.expectedErr.Error())

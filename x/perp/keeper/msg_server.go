@@ -114,7 +114,7 @@ func (m msgServer) DonateToEcosystemFund(ctx context.Context, msg *types.MsgDona
 }
 
 func (m msgServer) EditPoolPegMultiplier(ctx context.Context, msg *types.MsgEditPoolPegMultiplier) (*types.MsgEditPoolPegMultiplierResponse, error) {
-	if err := m.k.EditPoolPegMultiplier(sdk.UnwrapSDKContext(ctx), msg.Pair, msg.PegMultiplier); err != nil {
+	if err := m.k.EditPoolPegMultiplier(sdk.UnwrapSDKContext(ctx), sdk.MustAccAddressFromBech32(msg.Sender), msg.Pair, msg.PegMultiplier); err != nil {
 		return nil, err
 	}
 
