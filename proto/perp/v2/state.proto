@@ -228,4 +228,9 @@ message Metrics {
 }
 
 // a snapshot of the perp.amm's reserves at a given point in time
-message ReserveSnapshot { AMM amm = 1 [ (gogoproto.nullable) = false ]; }
+message ReserveSnapshot {
+  AMM amm = 1 [ (gogoproto.nullable) = false ];
+
+  // milliseconds since unix epoch
+  int64 timestamp_ms = 2;
+}
