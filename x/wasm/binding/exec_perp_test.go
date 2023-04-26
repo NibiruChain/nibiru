@@ -4,6 +4,10 @@ import (
 	"testing"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/suite"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
@@ -12,9 +16,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/wasm/binding"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/wasmbin"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/suite"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 )
@@ -75,14 +76,13 @@ func (s *TestSuitePerpExecutor) TestOpenAddRemoveClose() {
 	pair := asset.MustNewPair(s.happyFields.Pair)
 	margin := sdk.NewCoin(denoms.NUSD, sdk.NewInt(69))
 
-	steps := []error{
+	for _, err := range []error{
 		s.DoOpenPositionTest(pair),
 		s.DoAddMarginTest(pair, margin),
 		s.DoRemoveMarginTest(pair, margin),
 		s.DoClosePositionTest(pair),
-	}
-	for _, step := range steps {
-		s.NoError(step)
+	} {
+		s.NoError(err)
 	}
 }
 
@@ -135,10 +135,19 @@ func (s *TestSuitePerpExecutor) DoClosePositionTest(pair asset.Pair) error {
 }
 
 func (s *TestSuitePerpExecutor) TestSadPaths_Nil() {
-	s.exec.OpenPosition(nil, s.ctx)
-	s.exec.AddMargin(nil, s.ctx)
-	s.exec.RemoveMargin(nil, s.ctx)
-	s.exec.ClosePosition(nil, s.ctx)
+	var err error
+
+	_, err = s.exec.OpenPosition(nil, s.ctx)
+	s.Error(err)
+
+	_, err = s.exec.AddMargin(nil, s.ctx)
+	s.Error(err)
+
+	_, err = s.exec.RemoveMargin(nil, s.ctx)
+	s.Error(err)
+
+	_, err = s.exec.ClosePosition(nil, s.ctx)
+	s.Error(err)
 }
 
 func (s *TestSuitePerpExecutor) TestSadPaths_InvalidPair() {
@@ -146,14 +155,12 @@ func (s *TestSuitePerpExecutor) TestSadPaths_InvalidPair() {
 	pair := sadPair
 	margin := sdk.NewCoin(denoms.NUSD, sdk.NewInt(69))
 
-	steps := []error{
+	for _, err := range []error{
 		s.DoOpenPositionTest(pair),
 		s.DoAddMarginTest(pair, margin),
 		s.DoRemoveMarginTest(pair, margin),
 		s.DoClosePositionTest(pair),
+	} {
+		s.Error(err)
 	}
-	for _, step := range steps {
-		s.Error(step)
-	}
-
 }

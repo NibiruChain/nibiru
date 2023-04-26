@@ -24,7 +24,7 @@ func TestSuiteBindingJsonTypes_RunAll(t *testing.T) {
 }
 
 func (s *TestSuiteBindingJsonTypes) SetupSuite() {
-	app.SetPrefixes("nibi")
+	app.SetPrefixes(app.AccountAddressPrefix)
 	file, err := os.Open("query_resp.json")
 	s.NoError(err)
 	defer file.Close()

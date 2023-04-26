@@ -121,19 +121,12 @@ func GetHappyFields() ExampleFields {
 	return fields
 }
 
-func (s *TestSuiteQuerier) SetupPerpGenesis() app.GenesisState {
-	genesisState := genesis.NewTestGenesisState()
-	genesisState = genesis.AddOracleGenesis(genesisState)
-	genesisState = genesis.AddPerpGenesis(genesisState)
-	return genesisState
-}
-
 func (s *TestSuiteQuerier) SetupSuite() {
 	s.fields = GetHappyFields()
 	sender := testutil.AccAddress()
 	s.contractDeployer = sender
 
-	genesisState := s.SetupPerpGenesis()
+	genesisState := SetupPerpGenesis()
 	nibiru := testapp.NewNibiruTestApp(genesisState)
 	ctx := nibiru.NewContext(false, tmproto.Header{
 		Height:  1,

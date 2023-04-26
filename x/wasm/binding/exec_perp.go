@@ -2,12 +2,13 @@ package binding
 
 import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type IExecutorPerp interface {

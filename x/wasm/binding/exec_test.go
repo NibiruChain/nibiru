@@ -11,6 +11,7 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 
 	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
@@ -46,6 +47,13 @@ func DoCustomBindingExecute(
 		Execute(ctx, contract, sender, jsonCwMsg, funds)
 }
 
+func (s *TestSuiteExecutor) ExecuteAgainstContract(
+	contract sdk.AccAddress, execMsg cw_struct.BindingMsg,
+) (contractRespBz []byte, err error) {
+	return DoCustomBindingExecute(
+		s.ctx, s.nibiru, s.contractPerp, s.contractDeployer, execMsg, sdk.Coins{})
+}
+
 type TestSuiteExecutor struct {
 	suite.Suite
 
@@ -54,9 +62,11 @@ type TestSuiteExecutor struct {
 	contractDeployer sdk.AccAddress
 
 	contractPerp sdk.AccAddress
+	happyFields  ExampleFields
 }
 
 func (s *TestSuiteExecutor) SetupSuite() {
+	s.happyFields = GetHappyFields()
 	sender := testutil.AccAddress()
 	s.contractDeployer = sender
 
@@ -69,8 +79,9 @@ func (s *TestSuiteExecutor) SetupSuite() {
 	})
 	coins := sdk.NewCoins(
 		sdk.NewCoin(denoms.NIBI, sdk.NewInt(1_000)),
-		sdk.NewCoin(denoms.NUSD, sdk.NewInt(420)),
+		sdk.NewCoin(denoms.NUSD, sdk.NewInt(420*69)),
 	)
+
 	s.NoError(testapp.FundAccount(nibiru.BankKeeper, ctx, sender, coins))
 
 	nibiru, ctx = SetupAllContracts(s.T(), sender, nibiru, ctx)
@@ -83,4 +94,56 @@ func (s *TestSuiteExecutor) SetupSuite() {
 
 func (s *TestSuiteExecutor) OnSetupEnd() {
 	SetExchangeRates(s.Suite, s.nibiru, s.ctx)
+}
+
+func (s *TestSuiteExecutor) TestOpenAddRemoveClose() {
+	pair := asset.MustNewPair(s.happyFields.Pair)
+	margin := sdk.NewCoin(denoms.NUSD, sdk.NewInt(69))
+	sender := s.contractDeployer.String()
+
+	// TestOpenPosition (integration - real contract, real app)
+	execMsg := cw_struct.BindingMsg{
+		OpenPosition: &cw_struct.OpenPosition{
+			Sender:          sender,
+			Pair:            s.happyFields.Pair,
+			IsLong:          true,
+			QuoteAmount:     sdk.NewInt(420),
+			Leverage:        sdk.NewDec(5),
+			BaseAmountLimit: sdk.NewInt(0),
+		},
+	}
+	contractRespBz, err := s.ExecuteAgainstContract(s.contractPerp, execMsg)
+	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
+
+	// TestAddMargin (integration - real contract, real app)
+	execMsg = cw_struct.BindingMsg{
+		AddMargin: &cw_struct.AddMargin{
+			Sender: sender,
+			Pair:   pair.String(),
+			Margin: margin,
+		},
+	}
+	contractRespBz, err = s.ExecuteAgainstContract(s.contractPerp, execMsg)
+	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
+
+	// TestRemoveMargin (integration - real contract, real app)
+	execMsg = cw_struct.BindingMsg{
+		RemoveMargin: &cw_struct.RemoveMargin{
+			Sender: sender,
+			Pair:   pair.String(),
+			Margin: margin,
+		},
+	}
+	contractRespBz, err = s.ExecuteAgainstContract(s.contractPerp, execMsg)
+	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
+
+	// TestClosePosition (integration - real contract, real app)
+	execMsg = cw_struct.BindingMsg{
+		ClosePosition: &cw_struct.ClosePosition{
+			Sender: sender,
+			Pair:   pair.String(),
+		},
+	}
+	contractRespBz, err = s.ExecuteAgainstContract(s.contractPerp, execMsg)
+	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
 }

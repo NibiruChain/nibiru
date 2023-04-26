@@ -22,6 +22,7 @@ import (
 // See:
 // - https://github.com/NibiruChain/cw-nibiru/blob/90df123f8d32d47b5b280ec6ae7dde0f9dbf2787/contracts/bindings-perp/src/query.rs
 type BindingQuery struct {
+	// bindings-perp NibiruQuery enum types
 	Reserves        *ReservesRequest        `json:"reserves,omitempty"`
 	AllMarkets      *AllMarketsRequest      `json:"all_markets,omitempty"`
 	BasePrice       *BasePriceRequest       `json:"base_price,omitempty"`

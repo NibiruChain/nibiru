@@ -8,6 +8,7 @@ import (
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 )
@@ -21,6 +22,20 @@ type CustomWasmExecutor struct {
 	Perp IExecutorPerp
 }
 
+// BindingExecuteMsgWrapper is a n override of CosmosMsg::Custom
+// (json.RawMessage), which corresponds to `BindingExecuteMsgWrapper` in
+// the bindings-perp.rs contract.
+type BindingExecuteMsgWrapper struct {
+	// Routes here refer to groups of modules on Nibiru. The idea here is to add
+	// information on which module or group of modules a particular execute message
+	// belongs to. For example, the perp bindings have route "perp".
+	Route *string `json:"route,omitempty"`
+	// ExecuteMsg is a json struct for ExecuteMsg::{
+	//   OpenPosition, ClosePosition, AddMargin, RemoveMargin, ...} from the
+	//   bindings smart contracts.
+	ExecuteMsg *cw_struct.BindingMsg `json:"msg,omitempty"`
+}
+
 // DispatchMsg encodes the wasmVM message and dispatches it.
 func (messenger *CustomWasmExecutor) DispatchMsg(
 	ctx sdk.Context,
@@ -28,30 +43,28 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 	contractIBCPortID string,
 	wasmMsg wasmvmtypes.CosmosMsg,
 ) (events []sdk.Event, data [][]byte, err error) {
-
 	// If the "Custom" field is set, we handle a BindingMsg.
 	if wasmMsg.Custom != nil {
-
-		var contractExecuteMsg cw_struct.BindingMsg
+		var contractExecuteMsg BindingExecuteMsgWrapper
 		if err := json.Unmarshal(wasmMsg.Custom, &contractExecuteMsg); err != nil {
 			return events, data, sdkerrors.Wrapf(err, "wasmMsg: %s", wasmMsg.Custom)
 		}
 
 		switch {
-		case contractExecuteMsg.OpenPosition != nil:
-			cwMsg := contractExecuteMsg.OpenPosition
+		case contractExecuteMsg.ExecuteMsg.OpenPosition != nil:
+			cwMsg := contractExecuteMsg.ExecuteMsg.OpenPosition
 			_, err = messenger.Perp.OpenPosition(cwMsg, ctx)
 			return events, data, err
-		case contractExecuteMsg.ClosePosition != nil:
-			cwMsg := contractExecuteMsg.ClosePosition
+		case contractExecuteMsg.ExecuteMsg.ClosePosition != nil:
+			cwMsg := contractExecuteMsg.ExecuteMsg.ClosePosition
 			_, err = messenger.Perp.ClosePosition(cwMsg, ctx)
 			return events, data, err
-		case contractExecuteMsg.AddMargin != nil:
-			cwMsg := contractExecuteMsg.AddMargin
+		case contractExecuteMsg.ExecuteMsg.AddMargin != nil:
+			cwMsg := contractExecuteMsg.ExecuteMsg.AddMargin
 			_, err = messenger.Perp.AddMargin(cwMsg, ctx)
 			return events, data, err
-		case contractExecuteMsg.RemoveMargin != nil:
-			cwMsg := contractExecuteMsg.RemoveMargin
+		case contractExecuteMsg.ExecuteMsg.RemoveMargin != nil:
+			cwMsg := contractExecuteMsg.ExecuteMsg.RemoveMargin
 			_, err = messenger.Perp.RemoveMargin(cwMsg, ctx)
 			return events, data, err
 		default:
