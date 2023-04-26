@@ -9,12 +9,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	keeper "github.com/NibiruChain/nibiru/x/perp/keeper/v2"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
@@ -64,29 +63,21 @@ func TestAddMarginSuccess(t *testing.T) {
 			))
 
 			t.Log("create market")
-			perpammKeeper := &nibiruApp.PerpAmmKeeper
-			assert.NoError(t, perpammKeeper.CreatePool(
-				ctx,
-				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				sdk.NewDec(5*common.TO_MICRO), // 10 tokens
-				sdk.NewDec(5*common.TO_MICRO), // 5 tokens
-				perpammtypes.MarketConfig{
-					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
-					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"), // 0.1 ratio
-					MaxOracleSpreadRatio:   sdk.OneDec(),
-					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-					MaxLeverage:            sdk.MustNewDecFromStr("15"),
-				},
-				sdk.NewDec(2),
-			))
-			require.True(t, perpammKeeper.ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)))
-
-			t.Log("set pair metadata")
-			keeper.SetPairMetadata(nibiruApp.PerpKeeperV2, ctx, types.PairMetadata{
-				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				LatestCumulativePremiumFraction: tc.latestCumulativePremiumFraction,
-			},
-			)
+			nibiruApp.PerpKeeperV2.Markets.Insert(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), *mock.TestMarket())
+			// assert.NoError(t, perpammKeeper.CreatePool(
+			// 	ctx,
+			// 	asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+			// 	sdk.NewDec(5*common.TO_MICRO), // 10 tokens
+			// 	sdk.NewDec(5*common.TO_MICRO), // 5 tokens
+			// 	v2types.MarketConfig{
+			// 		TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
+			// 		FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"), // 0.1 ratio
+			// 		MaxOracleSpreadRatio:   sdk.OneDec(),
+			// 		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+			// 		MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			// 	},
+			// 	sdk.NewDec(2),
+			// ))
 
 			t.Log("establish initial position")
 			keeper.SetPosition(nibiruApp.PerpKeeperV2, ctx, tc.initialPosition)
@@ -134,25 +125,27 @@ func TestRemoveMargin(t *testing.T) {
 				pair := asset.MustNewPair("osmo:nusd")
 
 				t.Log("Setup market defined by pair")
-				perpammKeeper := &nibiruApp.PerpAmmKeeper
-				perpKeeper := &nibiruApp.PerpKeeperV2
-				assert.NoError(t, perpammKeeper.CreatePool(
-					ctx,
-					pair,
-					/* y */ sdk.NewDec(1*common.TO_MICRO), //
-					/* x */ sdk.NewDec(1*common.TO_MICRO), //
-					perpammtypes.MarketConfig{
-						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
-						FluctuationLimitRatio:  sdk.OneDec(),
-						MaxOracleSpreadRatio:   sdk.OneDec(),
-						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-						MaxLeverage:            sdk.MustNewDecFromStr("15"),
-					},
-					sdk.OneDec(),
-				))
+				nibiruApp.PerpKeeperV2.Markets.Insert(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), *mock.TestMarket())
+
+				// perpammKeeper := &nibiruApp.PerpAmmKeeper
+				// perpKeeper := &nibiruApp.PerpKeeperV2
+				// assert.NoError(t, perpammKeeper.CreatePool(
+				// 	ctx,
+				// 	pair,
+				// 	/* y */ sdk.NewDec(1*common.TO_MICRO), //
+				// 	/* x */ sdk.NewDec(1*common.TO_MICRO), //
+				// 	v2types.MarketConfig{
+				// 		TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
+				// 		FluctuationLimitRatio:  sdk.OneDec(),
+				// 		MaxOracleSpreadRatio:   sdk.OneDec(),
+				// 		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+				// 		MaxLeverage:            sdk.MustNewDecFromStr("15"),
+				// 	},
+				// 	sdk.OneDec(),
+				// ))
 
 				removeAmt := sdk.NewInt(5)
-				_, _, _, err := perpKeeper.RemoveMargin(ctx, pair, trader, sdk.Coin{Denom: pair.QuoteDenom(), Amount: removeAmt})
+				_, _, _, err := nibiruApp.PerpKeeperV2.RemoveMargin(ctx, pair, trader, sdk.Coin{Denom: pair.QuoteDenom(), Amount: removeAmt})
 
 				require.Error(t, err)
 				require.ErrorContains(t, err, collections.ErrNotFound.Error())
@@ -168,30 +161,24 @@ func TestRemoveMargin(t *testing.T) {
 				pair := asset.MustNewPair("xxx:yyy")
 
 				t.Log("Set market defined by pair on PerpAmmKeeper")
-				perpammKeeper := &nibiruApp.PerpAmmKeeper
-				quoteReserves := sdk.NewDec(1 * common.TO_MICRO)
-				baseReserves := sdk.NewDec(1 * common.TO_MICRO)
-				assert.NoError(t, perpammKeeper.CreatePool(
-					ctx,
-					pair,
-					/* y */ quoteReserves,
-					/* x */ baseReserves,
-					perpammtypes.MarketConfig{
-						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
-						FluctuationLimitRatio:  sdk.OneDec(),
-						MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.4"),
-						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-						MaxLeverage:            sdk.MustNewDecFromStr("15"),
-					},
-					sdk.OneDec(),
-				))
-				require.True(t, perpammKeeper.ExistsPool(ctx, pair))
-
-				t.Log("Set market defined by pair on PerpKeeper")
-				keeper.SetPairMetadata(nibiruApp.PerpKeeperV2, ctx, types.PairMetadata{
-					Pair:                            pair,
-					LatestCumulativePremiumFraction: sdk.ZeroDec(),
-				})
+				// perpammKeeper := &nibiruApp.PerpAmmKeeper
+				// quoteReserves := sdk.NewDec(1 * common.TO_MICRO)
+				// baseReserves := sdk.NewDec(1 * common.TO_MICRO)
+				// assert.NoError(t, perpammKeeper.CreatePool(
+				// 	ctx,
+				// 	pair,
+				// 	/* y */ quoteReserves,
+				// 	/* x */ baseReserves,
+				// 	v2types.MarketConfig{
+				// 		TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
+				// 		FluctuationLimitRatio:  sdk.OneDec(),
+				// 		MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.4"),
+				// 		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+				// 		MaxLeverage:            sdk.MustNewDecFromStr("15"),
+				// 	},
+				// 	sdk.OneDec(),
+				// ))
+				nibiruApp.PerpKeeperV2.Markets.Insert(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), *mock.TestMarket())
 
 				t.Log("increment block height and time for twap calculation")
 				ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).

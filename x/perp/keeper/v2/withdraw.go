@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"github.com/NibiruChain/nibiru/x/perp/types"
+	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -23,7 +24,7 @@ we have already withdrawn from the EF, we don't need to withdraw more from the E
 */
 func (k Keeper) Withdraw(
 	ctx sdk.Context,
-	denom string,
+	market v2types.Market,
 	receiver sdk.AccAddress,
 	amountToWithdraw sdk.Int,
 ) (err error) {
@@ -34,7 +35,7 @@ func (k Keeper) Withdraw(
 	vaultQuoteBalance := k.BankKeeper.GetBalance(
 		ctx,
 		k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount),
-		denom,
+		market.Pair.QuoteDenom(),
 	)
 	if vaultQuoteBalance.Amount.LT(amountToWithdraw) {
 		// if withdraw amount is larger than entire balance of vault
@@ -42,13 +43,14 @@ func (k Keeper) Withdraw(
 		// and the balance of entire vault is not enough
 		// need money from PerpEF to pay first, and record this prepaidBadDebt
 		shortage := amountToWithdraw.Sub(vaultQuoteBalance.Amount)
-		k.IncrementPrepaidBadDebt(ctx, denom, shortage)
+		k.IncrementPrepaidBadDebt(ctx, market, shortage)
+
 		if err := k.BankKeeper.SendCoinsFromModuleToModule(
 			ctx,
 			types.PerpEFModuleAccount,
 			types.VaultModuleAccount,
 			sdk.NewCoins(
-				sdk.NewCoin(denom, shortage),
+				sdk.NewCoin(market.Pair.QuoteDenom(), shortage),
 			),
 		); err != nil {
 			return err
@@ -61,7 +63,7 @@ func (k Keeper) Withdraw(
 		/* from */ types.VaultModuleAccount,
 		/* to */ receiver,
 		sdk.NewCoins(
-			sdk.NewCoin(denom, amountToWithdraw),
+			sdk.NewCoin(market.Pair.QuoteDenom(), amountToWithdraw),
 		),
 	)
 }
@@ -74,32 +76,23 @@ vault contains, so we "credit" ourselves with prepaid bad debt.
 then, when bad debt is actually realized (by closing underwater positions), we
 can consume the credit we have built before withdrawing more from the ecosystem fund.
 */
-func (k Keeper) realizeBadDebt(ctx sdk.Context, denom string, badDebtToRealize sdk.Int) (
+func (k Keeper) realizeBadDebt(ctx sdk.Context, market v2types.Market, badDebtToRealize sdk.Int) (
 	err error,
 ) {
-	prepaidBadDebtBalance := k.PrepaidBadDebt.GetOr(ctx, denom, types.PrepaidBadDebt{
-		Denom:  denom,
-		Amount: sdk.ZeroInt(),
-	}).Amount
-
-	if prepaidBadDebtBalance.GTE(badDebtToRealize) {
-		// prepaidBadDebtBalance > totalBadDebt
-		k.DecrementPrepaidBadDebt(ctx, denom, badDebtToRealize)
+	if market.PrepaidBadDebt.Amount.GTE(badDebtToRealize) {
+		// prepaidBadDebtBalance > badDebtToRealize
+		k.DecrementPrepaidBadDebt(ctx, market, badDebtToRealize)
 	} else {
-		// totalBadDebt > prepaidBadDebtBalance
-
-		k.PrepaidBadDebt.Insert(ctx, denom, types.PrepaidBadDebt{
-			Denom:  denom,
-			Amount: sdk.ZeroInt(),
-		})
+		// badDebtToRealize > prepaidBadDebtBalance
+		k.ZeroPrepaidBadDebt(ctx, market)
 
 		return k.BankKeeper.SendCoinsFromModuleToModule(ctx,
 			/*from=*/ types.PerpEFModuleAccount,
 			/*to=*/ types.VaultModuleAccount,
 			sdk.NewCoins(
 				sdk.NewCoin(
-					denom,
-					badDebtToRealize.Sub(prepaidBadDebtBalance),
+					market.Pair.QuoteDenom(),
+					badDebtToRealize.Sub(market.PrepaidBadDebt.Amount),
 				),
 			),
 		)
@@ -109,38 +102,22 @@ func (k Keeper) realizeBadDebt(ctx sdk.Context, denom string, badDebtToRealize s
 }
 
 // IncrementPrepaidBadDebt increases the bad debt for the provided denom.
-// And returns the newest bad-debt amount.
-// If no prepaid bad debt for the given denom was recorded before
-// then it is set using the provided amount and the provided amount is returned.
-func (k Keeper) IncrementPrepaidBadDebt(ctx sdk.Context, denom string, amount sdk.Int) sdk.Int {
-	current := k.PrepaidBadDebt.GetOr(ctx, denom, types.PrepaidBadDebt{
-		Denom:  denom,
-		Amount: sdk.ZeroInt(),
-	})
+func (k Keeper) IncrementPrepaidBadDebt(ctx sdk.Context, market v2types.Market, amount sdk.Int) error {
+	market.PrepaidBadDebt.Amount = market.PrepaidBadDebt.Amount.Add(amount)
+	k.Markets.Insert(ctx, market.Pair, market)
+	return nil
+}
 
-	newBadDebt := current.Amount.Add(amount)
-	k.PrepaidBadDebt.Insert(ctx, denom, types.PrepaidBadDebt{
-		Denom:  denom,
-		Amount: newBadDebt,
-	})
-
-	return newBadDebt
+// Zeroes out the prepaid bad debt
+func (k Keeper) ZeroPrepaidBadDebt(ctx sdk.Context, market v2types.Market) error {
+	market.PrepaidBadDebt.Amount = sdk.ZeroInt()
+	k.Markets.Insert(ctx, market.Pair, market)
+	return nil
 }
 
 // DecrementPrepaidBadDebt decrements the amount of bad debt prepaid by denom.
-// // The lowest it can be decremented to is zero. Trying to decrement a prepaid bad
-// // debt balance to below zero will clip it at zero.
-func (k Keeper) DecrementPrepaidBadDebt(ctx sdk.Context, denom string, amount sdk.Int) sdk.Int {
-	current := k.PrepaidBadDebt.GetOr(ctx, denom, types.PrepaidBadDebt{
-		Denom:  denom,
-		Amount: sdk.ZeroInt(),
-	})
-
-	newBadDebt := sdk.MaxInt(current.Amount.Sub(amount), sdk.ZeroInt())
-
-	k.PrepaidBadDebt.Insert(ctx, denom, types.PrepaidBadDebt{
-		Denom:  denom,
-		Amount: newBadDebt,
-	})
-	return newBadDebt
+func (k Keeper) DecrementPrepaidBadDebt(ctx sdk.Context, market v2types.Market, amount sdk.Int) error {
+	market.PrepaidBadDebt.Amount = market.PrepaidBadDebt.Amount.Sub(amount)
+	k.Markets.Insert(ctx, market.Pair, market)
+	return nil
 }

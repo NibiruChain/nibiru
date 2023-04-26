@@ -58,7 +58,7 @@ type PositionResp struct {
 	Position *Position
 	// The amount of quote assets exchanged.
 	ExchangedNotionalValue sdk.Dec
-	// The amount of base assets exchanged.
+	// The amount of base assets exchanged. Signed, positive represents long and negative represents short from the user's perspective.
 	ExchangedPositionSize sdk.Dec
 	// The amount of bad debt accrued during this position change.
 	// Measured in absolute value of quote units.

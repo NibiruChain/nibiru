@@ -39,11 +39,15 @@ func (q queryServer) QueryPositions(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	pools := q.k.PerpAmmKeeper.GetAllPools(ctx)
-	var positions []*v2types.QueryPositionResponse
+	markets := q.k.Markets.Iterate(ctx, collections.Range[asset.Pair]{}).Values()
 
-	for _, pool := range pools {
-		position, err := q.position(ctx, pool.Pair, traderAddr)
+	var positions []*v2types.QueryPositionResponse
+	for _, market := range markets {
+		amm, err := q.k.AMMs.Get(ctx, market.Pair)
+		if err != nil {
+			return nil, err
+		}
+		position, err := q.position(ctx, market.Pair, traderAddr, market, amm)
 		if err == nil {
 			positions = append(positions, position)
 		}
@@ -67,30 +71,35 @@ func (q queryServer) QueryPosition(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	return q.position(ctx, req.Pair, traderAddr)
+	market, err := q.k.Markets.Get(ctx, req.Pair)
+	if err != nil {
+		return nil, err
+	}
+
+	amm, err := q.k.AMMs.Get(ctx, req.Pair)
+	if err != nil {
+		return nil, err
+	}
+
+	return q.position(ctx, req.Pair, traderAddr, market, amm)
 }
 
-func (q queryServer) position(ctx sdk.Context, pair asset.Pair, trader sdk.AccAddress) (*v2types.QueryPositionResponse, error) {
+func (q queryServer) position(ctx sdk.Context, pair asset.Pair, trader sdk.AccAddress, market v2types.Market, amm v2types.AMM) (*v2types.QueryPositionResponse, error) {
 	position, err := q.k.Positions.Get(ctx, collections.Join(pair, trader))
 	if err != nil {
 		return nil, err
 	}
 
-	market, err := q.k.PerpAmmKeeper.GetPool(ctx, pair)
-	if err != nil {
-		return nil, types.ErrPairNotFound
-	}
-
-	positionNotional, unrealizedPnl, err := q.k.getPositionNotionalAndUnrealizedPnL(ctx, market, position, types.PnLCalcOption_SPOT_PRICE)
+	positionNotional, unrealizedPnl, err := q.k.getPositionNotionalAndUnrealizedPnL(ctx, market, amm, position, types.PnLCalcOption_SPOT_PRICE)
 	if err != nil {
 		return nil, err
 	}
 
-	marginRatioMark, err := q.k.GetMarginRatio(ctx, market, position, types.MarginCalculationPriceOption_MAX_PNL)
+	marginRatioMark, err := q.k.GetMarginRatio(ctx, market, amm, position, types.MarginCalculationPriceOption_MAX_PNL)
 	if err != nil {
 		return nil, err
 	}
-	marginRatioIndex, err := q.k.GetMarginRatio(ctx, market, position, types.MarginCalculationPriceOption_INDEX)
+	marginRatioIndex, err := q.k.GetMarginRatio(ctx, market, amm, position, types.MarginCalculationPriceOption_INDEX)
 	if err != nil {
 		// The index portion of the query fails silently as not to distrupt all
 		// position queries when oracles aren't posting prices.
@@ -127,16 +136,12 @@ func (q queryServer) CumulativePremiumFraction(
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	pairMetadata, err := q.k.PairsMetadata.Get(ctx, req.Pair)
+	market, err := q.k.Markets.Get(ctx, req.Pair)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "could not find pair: %s", req.Pair)
 	}
 
-	if !q.k.PerpAmmKeeper.ExistsPool(ctx, pairMetadata.Pair) {
-		return nil, status.Errorf(codes.NotFound, "could not find pair: %s", req.Pair)
-	}
-
-	indexTWAP, err := q.k.OracleKeeper.GetExchangeRateTwap(ctx, pairMetadata.Pair)
+	indexTWAP, err := q.k.OracleKeeper.GetExchangeRateTwap(ctx, req.Pair)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "failed to fetch twap index price for pair: %s", req.Pair)
 	}
@@ -144,12 +149,7 @@ func (q queryServer) CumulativePremiumFraction(
 		return nil, status.Errorf(codes.FailedPrecondition, "twap index price for pair: %s is zero", req.Pair)
 	}
 
-	m, err := q.k.Markets.Get(ctx, pairMetadata.Pair)
-	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "failed to fetch market for pair: %s", req.Pair)
-	}
-
-	markTwap, err := q.k.PerpAmmKeeper.GetMarkPriceTWAP(ctx, pairMetadata.Pair, m.TwapLookbackWindow)
+	markTwap, err := q.k.GetMarkPriceTWAP(ctx, req.Pair, market.TwapLookbackWindow)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "failed to fetch twap mark price for pair: %s", req.Pair)
 	}
@@ -157,13 +157,13 @@ func (q queryServer) CumulativePremiumFraction(
 		return nil, status.Errorf(codes.FailedPrecondition, "twap mark price for pair: %s is zero", req.Pair)
 	}
 
-	epochInfo := q.k.EpochKeeper.GetEpochInfo(ctx, m.FundingRateEpochId)
+	epochInfo := q.k.EpochKeeper.GetEpochInfo(ctx, market.FundingRateEpochId)
 	intervalsPerDay := (24 * time.Hour) / epochInfo.Duration
 	premiumFraction := markTwap.Sub(indexTWAP).QuoInt64(int64(intervalsPerDay))
 
 	return &v2types.QueryCumulativePremiumFractionResponse{
-		CumulativePremiumFraction:              pairMetadata.LatestCumulativePremiumFraction,
-		EstimatedNextCumulativePremiumFraction: pairMetadata.LatestCumulativePremiumFraction.Add(premiumFraction),
+		CumulativePremiumFraction:              market.LatestCumulativePremiumFraction,
+		EstimatedNextCumulativePremiumFraction: market.LatestCumulativePremiumFraction.Add(premiumFraction),
 	}, nil
 }
 
@@ -175,9 +175,6 @@ func (q queryServer) Metrics(
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if !q.k.PerpAmmKeeper.ExistsPool(ctx, req.Pair) {
-		return nil, status.Errorf(codes.InvalidArgument, "pool not found: %s", req.Pair)
-	}
 	metrics := q.k.Metrics.GetOr(ctx, req.Pair, v2types.Metrics{
 		Pair:        req.Pair,
 		NetSize:     sdk.NewDec(0),

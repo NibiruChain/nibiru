@@ -13,8 +13,8 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	keeper "github.com/NibiruChain/nibiru/x/perp/keeper/v2"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
@@ -26,64 +26,63 @@ func initAppMarkets(
 	t.Log("initialize app and keeper")
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 	perpKeeper := &nibiruApp.PerpKeeperV2
-	perpammKeeper := &nibiruApp.PerpAmmKeeper
 	queryServer := keeper.NewQuerier(*perpKeeper)
 
 	t.Log("initialize market and pair")
-	assert.NoError(t, perpammKeeper.CreatePool(
-		ctx,
-		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-		quoteReserve,
-		baseReserve,
-		perpammtypes.MarketConfig{
-			TradeLimitRatio:        sdk.OneDec(),
-			FluctuationLimitRatio:  sdk.OneDec(),
-			MaxOracleSpreadRatio:   sdk.OneDec(),
-			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-			MaxLeverage:            sdk.MustNewDecFromStr("15"),
-		},
-		pegMultiplier,
-	))
-	keeper.SetPairMetadata(nibiruApp.PerpKeeperV2, ctx, types.PairMetadata{
-		Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-		LatestCumulativePremiumFraction: sdk.ZeroDec(),
-	})
-	assert.NoError(t, perpammKeeper.CreatePool(
-		ctx,
-		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-		/* quoteReserve */ sdk.MustNewDecFromStr("100000"),
-		/* baseReserve */ sdk.MustNewDecFromStr("100000"),
-		perpammtypes.MarketConfig{
-			TradeLimitRatio:        sdk.OneDec(),
-			FluctuationLimitRatio:  sdk.OneDec(),
-			MaxOracleSpreadRatio:   sdk.OneDec(),
-			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-			MaxLeverage:            sdk.MustNewDecFromStr("15"),
-		},
-		sdk.OneDec(),
-	))
-	keeper.SetPairMetadata(nibiruApp.PerpKeeperV2, ctx, types.PairMetadata{
-		Pair:                            asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-		LatestCumulativePremiumFraction: sdk.ZeroDec(),
-	})
-	assert.NoError(t, perpammKeeper.CreatePool(
-		ctx,
-		asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
-		/* quoteReserve */ sdk.MustNewDecFromStr("100000"),
-		/* baseReserve */ sdk.MustNewDecFromStr("100000"),
-		perpammtypes.MarketConfig{
-			TradeLimitRatio:        sdk.OneDec(),
-			FluctuationLimitRatio:  sdk.OneDec(),
-			MaxOracleSpreadRatio:   sdk.OneDec(),
-			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-			MaxLeverage:            sdk.MustNewDecFromStr("15"),
-		},
-		sdk.OneDec(),
-	))
-	keeper.SetPairMetadata(nibiruApp.PerpKeeperV2, ctx, types.PairMetadata{
-		Pair:                            asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
-		LatestCumulativePremiumFraction: sdk.ZeroDec(),
-	})
+	// assert.NoError(t, perpammKeeper.CreatePool(
+	// 	ctx,
+	// 	asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+	// 	quoteReserve,
+	// 	baseReserve,
+	// 	v2types.MarketConfig{
+	// 		TradeLimitRatio:        sdk.OneDec(),
+	// 		FluctuationLimitRatio:  sdk.OneDec(),
+	// 		MaxOracleSpreadRatio:   sdk.OneDec(),
+	// 		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+	// 		MaxLeverage:            sdk.MustNewDecFromStr("15"),
+	// 	},
+	// 	pegMultiplier,
+	// ))
+	// keeper.SetPairMetadata(nibiruApp.PerpKeeperV2, ctx, types.PairMetadata{
+	// 	Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+	// 	LatestCumulativePremiumFraction: sdk.ZeroDec(),
+	// })
+	// assert.NoError(t, perpammKeeper.CreatePool(
+	// 	ctx,
+	// 	asset.Registry.Pair(denoms.ETH, denoms.NUSD),
+	// 	/* quoteReserve */ sdk.MustNewDecFromStr("100000"),
+	// 	/* baseReserve */ sdk.MustNewDecFromStr("100000"),
+	// 	v2types.MarketConfig{
+	// 		TradeLimitRatio:        sdk.OneDec(),
+	// 		FluctuationLimitRatio:  sdk.OneDec(),
+	// 		MaxOracleSpreadRatio:   sdk.OneDec(),
+	// 		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+	// 		MaxLeverage:            sdk.MustNewDecFromStr("15"),
+	// 	},
+	// 	sdk.OneDec(),
+	// ))
+	// keeper.SetPairMetadata(nibiruApp.PerpKeeperV2, ctx, types.PairMetadata{
+	// 	Pair:                            asset.Registry.Pair(denoms.ETH, denoms.NUSD),
+	// 	LatestCumulativePremiumFraction: sdk.ZeroDec(),
+	// })
+	// assert.NoError(t, perpammKeeper.CreatePool(
+	// 	ctx,
+	// 	asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
+	// 	/* quoteReserve */ sdk.MustNewDecFromStr("100000"),
+	// 	/* baseReserve */ sdk.MustNewDecFromStr("100000"),
+	// 	v2types.MarketConfig{
+	// 		TradeLimitRatio:        sdk.OneDec(),
+	// 		FluctuationLimitRatio:  sdk.OneDec(),
+	// 		MaxOracleSpreadRatio:   sdk.OneDec(),
+	// 		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+	// 		MaxLeverage:            sdk.MustNewDecFromStr("15"),
+	// 	},
+	// 	sdk.OneDec(),
+	// ))
+	// keeper.SetPairMetadata(nibiruApp.PerpKeeperV2, ctx, types.PairMetadata{
+	// 	Pair:                            asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
+	// 	LatestCumulativePremiumFraction: sdk.ZeroDec(),
+	// })
 	return ctx, nibiruApp, queryServer
 }
 
@@ -499,7 +498,7 @@ func TestQueryMetrics(t *testing.T) {
 				// Detect position decrease
 				app.PerpKeeperV2.OnSwapEnd(
 					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					*mock.TestAMM(),
 					position.OpenNotional,
 					position.Size_,
 				)

@@ -18,12 +18,10 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmdb "github.com/tendermint/tm-db"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
@@ -76,13 +74,10 @@ func getKeeper(t *testing.T) (Keeper, mockedDependencies, sdk.Context) {
 		mockedAccountKeeper,
 		mockedBankKeeper,
 		mockedOracleKeeper,
-		mockedPerpAmmKeeper,
 		mockedEpochKeeper,
 	)
 
 	ctx := sdk.NewContext(commitMultiStore, tmproto.Header{}, false, log.NewNopLogger())
-
-	k.SetParams(ctx, types.DefaultParams())
 
 	return k, mockedDependencies{
 		mockAccountKeeper: mockedAccountKeeper,
@@ -103,79 +98,12 @@ func initParamsKeeper(
 	return paramsKeeper
 }
 
-func TestSwapQuoteAssetForBase(t *testing.T) {
-	tests := []struct {
-		name               string
-		setMocks           func(ctx sdk.Context, mocks mockedDependencies)
-		side               v2types.Direction
-		expectedBaseAmount sdk.Dec
-	}{
-		{
-			name: "long position - buy",
-			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
-				market := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
-				mocks.mockPerpAmmKeeper.EXPECT().
-					SwapQuoteForBase(
-						ctx,
-						market,
-						v2types.Direction_LONG,
-						/*quoteAmount=*/ sdk.NewDec(10),
-						/*baseLimit=*/ sdk.NewDec(1),
-						/* skipFluctuationLimitCheck */ false,
-					).Return(market, sdk.NewDec(5), nil)
-			},
-			side:               v2types.Direction_LONG,
-			expectedBaseAmount: sdk.NewDec(5),
-		},
-		{
-			name: "short position - sell",
-			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
-				market := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
-				mocks.mockPerpAmmKeeper.EXPECT().
-					SwapQuoteForBase(
-						ctx,
-						market,
-						v2types.Direction_SHORT,
-						/*quoteAmount=*/ sdk.NewDec(10),
-						/*baseLimit=*/ sdk.NewDec(1),
-						/* skipFluctuationLimitCheck */ false,
-					).Return(market, sdk.NewDec(5), nil)
-			},
-			side:               v2types.Direction_SHORT,
-			expectedBaseAmount: sdk.NewDec(-5),
-		},
-	}
-
-	for _, tc := range tests {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			perpKeeper, mocks, ctx := getKeeper(t)
-
-			tc.setMocks(ctx, mocks)
-
-			market := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
-
-			_, baseAmount, err := perpKeeper.swapQuoteForBase(
-				ctx,
-				market,
-				tc.side,
-				sdk.NewDec(10),
-				sdk.NewDec(1),
-				false,
-			)
-
-			require.NoError(t, err)
-			assert.EqualValues(t, tc.expectedBaseAmount, baseAmount)
-		})
-	}
-}
-
 func TestIncreasePosition(t *testing.T) {
 	tests := []struct {
 		name         string
 		initPosition v2types.Position
 		given        func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper)
-		when         func(ctx sdk.Context, perpKeeper Keeper, initPosition v2types.Position) (perpammtypes.Market, *v2types.PositionResp, error)
+		when         func(ctx sdk.Context, perpKeeper Keeper, initPosition v2types.Position) (*v2types.AMM, *v2types.PositionResp, error)
 		then         func(t *testing.T, ctx sdk.Context, initPosition v2types.Position, resp *v2types.PositionResp, err error)
 	}{
 		{
@@ -194,7 +122,7 @@ func TestIncreasePosition(t *testing.T) {
 			},
 			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
 				t.Log("mock market")
-				market := perpammtypes.Market{
+				market := v2types.Market{
 					Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				}
 				mocks.mockPerpAmmKeeper.EXPECT().
@@ -216,18 +144,19 @@ func TestIncreasePosition(t *testing.T) {
 					Return( /*quoteAssetAmount=*/ sdk.NewDec(200), nil)
 
 				t.Log("set up pair metadata and last cumulative funding rate")
-				SetPairMetadata(perpKeeper, ctx,
-					types.PairMetadata{
-						Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-						LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
-					},
-				)
+				// SetPairMetadata(perpKeeper, ctx,
+				// 	types.PairMetadata{
+				// 		Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				// 		LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
+				// 	},
+				// )
 			},
-			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition v2types.Position) (perpammtypes.Market, *v2types.PositionResp, error) {
+			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition v2types.Position) (*v2types.AMM, *v2types.PositionResp, error) {
 				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
 				return perpKeeper.increasePosition(
 					ctx,
-					perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
+					v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
+					*mock.TestAMM(),
 					initPosition,
 					v2types.Direction_LONG,
 					/*openNotional=*/ sdk.NewDec(100), // NUSD
@@ -271,7 +200,7 @@ func TestIncreasePosition(t *testing.T) {
 			},
 			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
 				t.Log("mock market")
-				market := perpammtypes.Market{
+				market := v2types.Market{
 					Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				}
 				mocks.mockPerpAmmKeeper.EXPECT().
@@ -293,16 +222,17 @@ func TestIncreasePosition(t *testing.T) {
 					Return( /*quoteAssetAmount=*/ sdk.NewDec(99), nil)
 
 				t.Log("set up pair metadata and last cumulative funding rate")
-				SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
-					Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
-				})
+				// SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
+				// 	Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				// 	LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
+				// })
 			},
-			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition v2types.Position) (perpammtypes.Market, *v2types.PositionResp, error) {
+			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition v2types.Position) (*v2types.AMM, *v2types.PositionResp, error) {
 				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
 				return perpKeeper.increasePosition(
 					ctx,
-					perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
+					v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
+					*mock.TestAMM(),
 					initPosition,
 					v2types.Direction_LONG,
 					/*openNotional=*/ sdk.NewDec(100), // NUSD
@@ -349,7 +279,7 @@ func TestIncreasePosition(t *testing.T) {
 			},
 			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
 				t.Log("mock market")
-				market := perpammtypes.Market{
+				market := v2types.Market{
 					Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				}
 				mocks.mockPerpAmmKeeper.EXPECT().
@@ -371,16 +301,17 @@ func TestIncreasePosition(t *testing.T) {
 					Return( /*quoteAssetAmount=*/ sdk.NewDec(100), nil)
 
 				t.Log("set up pair metadata and last cumulative funding rate")
-				SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
-					Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.2"),
-				})
+				// SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
+				// 	Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				// 	LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.2"),
+				// })
 			},
-			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition v2types.Position) (perpammtypes.Market, *v2types.PositionResp, error) {
+			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition v2types.Position) (*v2types.AMM, *v2types.PositionResp, error) {
 				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
 				return perpKeeper.increasePosition(
 					ctx,
-					perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
+					v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
+					*mock.TestAMM(),
 					initPosition,
 					v2types.Direction_LONG,
 					/*openNotional=*/ sdk.NewDec(100), // NUSD
@@ -425,7 +356,7 @@ func TestIncreasePosition(t *testing.T) {
 			},
 			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
 				t.Log("mock market")
-				market := perpammtypes.Market{
+				market := v2types.Market{
 					Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				}
 				mocks.mockPerpAmmKeeper.EXPECT().
@@ -447,16 +378,17 @@ func TestIncreasePosition(t *testing.T) {
 					Return( /*quoteAssetAmount=*/ sdk.NewDec(50), nil)
 
 				t.Log("set up pair metadata and last cumulative funding rate")
-				SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
-					Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
-				})
+				// SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
+				// 	Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				// 	LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
+				// })
 			},
-			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition v2types.Position) (perpammtypes.Market, *v2types.PositionResp, error) {
+			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition v2types.Position) (*v2types.AMM, *v2types.PositionResp, error) {
 				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
 				return perpKeeper.increasePosition(
 					ctx,
-					perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
+					v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
+					*mock.TestAMM(),
 					initPosition,
 					v2types.Direction_SHORT,
 					/*openNotional=*/ sdk.NewDec(100), // NUSD
@@ -501,7 +433,7 @@ func TestIncreasePosition(t *testing.T) {
 			},
 			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
 				t.Log("mock market")
-				market := perpammtypes.Market{
+				market := v2types.Market{
 					Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				}
 				mocks.mockPerpAmmKeeper.EXPECT().
@@ -523,16 +455,17 @@ func TestIncreasePosition(t *testing.T) {
 					Return( /*quoteAssetAmount=*/ sdk.NewDec(101), nil)
 
 				t.Log("set up pair metadata and last cumulative funding rate")
-				SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
-					Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
-				})
+				// SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
+				// 	Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				// 	LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
+				// })
 			},
-			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition v2types.Position) (perpammtypes.Market, *v2types.PositionResp, error) {
+			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition v2types.Position) (*v2types.AMM, *v2types.PositionResp, error) {
 				t.Log("Increase position with 10 NUSD margin and 10x leverage.")
 				return perpKeeper.increasePosition(
 					ctx,
-					perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
+					v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
+					*mock.TestAMM(),
 					initPosition,
 					v2types.Direction_SHORT,
 					/*openNotional=*/ sdk.NewDec(100), // NUSD
@@ -580,7 +513,7 @@ func TestIncreasePosition(t *testing.T) {
 			},
 			given: func(ctx sdk.Context, mocks mockedDependencies, perpKeeper Keeper) {
 				t.Log("mock market")
-				market := perpammtypes.Market{
+				market := v2types.Market{
 					Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				}
 				mocks.mockPerpAmmKeeper.EXPECT().
@@ -602,16 +535,17 @@ func TestIncreasePosition(t *testing.T) {
 					Return( /*quoteAssetAmount=*/ sdk.NewDec(105), nil)
 
 				t.Log("set up pair metadata and last cumulative funding rate")
-				SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
-					Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("-0.3"),
-				})
+				// SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
+				// 	Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				// 	LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("-0.3"),
+				// })
 			},
-			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition v2types.Position) (perpammtypes.Market, *v2types.PositionResp, error) {
+			when: func(ctx sdk.Context, perpKeeper Keeper, initPosition v2types.Position) (*v2types.AMM, *v2types.PositionResp, error) {
 				t.Log("Increase position with 10.5 NUSD margin and 10x leverage.")
 				return perpKeeper.increasePosition(
 					ctx,
-					perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
+					v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
+					*mock.TestAMM(),
 					initPosition,
 					v2types.Direction_SHORT,
 					/*openNotional=*/ sdk.NewDec(105), // NUSD
@@ -845,7 +779,7 @@ func TestClosePositionEntirely(t *testing.T) {
 			SetPosition(perpKeeper, ctx, tc.initialPosition)
 
 			t.Log("mock market")
-			market := perpammtypes.Market{
+			market := v2types.Market{
 				Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			}
 			mocks.mockPerpAmmKeeper.EXPECT().
@@ -867,13 +801,14 @@ func TestClosePositionEntirely(t *testing.T) {
 				).Return(market /*quoteAssetAmount=*/, tc.newPositionNotional, nil)
 
 			t.Log("set up pair metadata and last cumulative funding rate")
-			SetPairMetadata(perpKeeper, ctx, tc.pairMetadata)
+			// SetPairMetadata(perpKeeper, ctx, tc.pairMetadata)
 
 			t.Log("close position")
 
 			_, resp, err := perpKeeper.closePositionEntirely(
 				ctx,
 				market,
+				*mock.TestAMM(),
 				tc.initialPosition,
 				/*quoteAssetLimit=*/ tc.quoteAssetLimit, // NUSD
 				/* skipFluctuationLimitCheck */ false,
@@ -1145,7 +1080,7 @@ func TestDecreasePosition(t *testing.T) {
 			perpKeeper, mocks, ctx := getKeeper(t)
 
 			t.Log("mock market")
-			market := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+			market := v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			mocks.mockPerpAmmKeeper.EXPECT().
 				GetBaseAssetPrice(
 					market,
@@ -1165,15 +1100,16 @@ func TestDecreasePosition(t *testing.T) {
 				).Return(market /*baseAssetAmount=*/, tc.baseAssetLimit, nil)
 
 			t.Log("set up pair metadata and last cumulative funding rate")
-			SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
-				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
-			})
+			// SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
+			// 	Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+			// 	LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
+			// })
 
 			t.Log("decrease position")
 			_, resp, err := perpKeeper.decreasePosition(
 				ctx,
-				perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
+				v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
+				*mock.TestAMM(),
 				tc.initialPosition,
 				/*openNotional=*/ tc.quoteAmountToDecrease, // NUSD
 				/*baseLimit=*/ tc.baseAssetLimit, // BTC
@@ -1545,7 +1481,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 			SetPosition(perpKeeper, ctx, currentPosition)
 
 			t.Log("mock market")
-			market := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+			market := v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			mocks.mockPerpAmmKeeper.EXPECT().
 				GetBaseAssetPrice(
 					market,
@@ -1577,15 +1513,16 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 			}
 
 			t.Log("set up pair metadata and last cumulative funding rate")
-			SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
-				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
-			})
+			// SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
+			// 	Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+			// 	LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
+			// })
 
 			t.Log("close position and open reverse")
 			_, resp, err := perpKeeper.closeAndOpenReversePosition(
 				ctx,
-				perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
+				v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
+				*mock.TestAMM(),
 				currentPosition,
 				/*quoteAssetAmount=*/ tc.inputQuoteAmount, // NUSD
 				/*leverage=*/ tc.inputLeverage,
@@ -1625,11 +1562,10 @@ func TestTransferFee(t *testing.T) {
 	) {
 		perpKeeper, mocks, ctx := getKeeper(t)
 		pair = asset.MustNewPair("btc:usdc")
-		perpKeeper.SetParams(ctx, types.DefaultParams())
-		metadata := &types.PairMetadata{
-			Pair: pair,
-		}
-		SetPairMetadata(perpKeeper, ctx, *metadata)
+		// metadata := &types.PairMetadata{
+		// 	Pair: pair,
+		// }
+		// SetPairMetadata(perpKeeper, ctx, *metadata)
 		trader = testutilevents.AccAddress()
 		positionNotional = sdk.NewDec(5_000)
 		return perpKeeper, mocks, ctx, pair, trader, positionNotional
@@ -1693,240 +1629,6 @@ func TestTransferFee(t *testing.T) {
 		})
 }
 
-func TestClosePosition(t *testing.T) {
-	tests := []struct {
-		name string
-
-		initialPosition     v2types.Position
-		baseAssetDir        v2types.Direction
-		newPositionNotional sdk.Dec
-
-		expectedFundingPayment sdk.Dec
-		expectedBadDebt        sdk.Dec
-		expectedRealizedPnl    sdk.Dec
-		expectedMarginToVault  sdk.Dec
-	}{
-		{
-			name: "long position, positive PnL",
-			// user bought in at 100 BTC for 10 NUSD at 10x leverage (1 BTC = 1 NUSD)
-			// notional value is 100 NUSD
-			// BTC doubles in value, now its price is 1 BTC = 2 NUSD
-			// user has position notional value of 200 NUSD and unrealized PnL of +100 NUSD
-			// user closes position
-			// user ends up with realized PnL of +100 NUSD, unrealized PnL after of 0 NUSD,
-			//   position notional value of 0 NUSD
-			initialPosition: v2types.Position{
-				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				Size_:                           sdk.NewDec(100), // 100 BTC
-				Margin:                          sdk.NewDec(10),  // 10 NUSD
-				OpenNotional:                    sdk.NewDec(100), // 100 NUSD
-				LatestCumulativePremiumFraction: sdk.ZeroDec(),
-				LastUpdatedBlockNumber:          0,
-			},
-			baseAssetDir:        v2types.Direction_LONG,
-			newPositionNotional: sdk.NewDec(200),
-
-			expectedBadDebt:        sdk.ZeroDec(),
-			expectedFundingPayment: sdk.NewDec(2),
-			expectedRealizedPnl:    sdk.NewDec(100),
-			expectedMarginToVault:  sdk.NewDec(-108),
-		},
-		{
-			name: "close long position, negative PnL",
-			// user bought in at 105 BTC for 10.5 NUSD at 10x leverage (1 BTC = 1 NUSD)
-			//   position and open notional value is 105 NUSD
-			// BTC drops in value, now its price is 1.05 BTC = 1 NUSD
-			// user has position notional value of 100 NUSD and unrealized PnL of -5 NUSD
-			// user closes position
-			// user ends up with realized PnL of -5 NUSD, unrealized PnL of 0 NUSD,
-			//   position notional value of 0 NUSD
-			initialPosition: v2types.Position{
-				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				Size_:                           sdk.NewDec(105),               // 105 BTC
-				Margin:                          sdk.MustNewDecFromStr("10.5"), // 10.5 NUSD
-				OpenNotional:                    sdk.NewDec(105),               // 105 NUSD
-				LatestCumulativePremiumFraction: sdk.ZeroDec(),
-				LastUpdatedBlockNumber:          0,
-			},
-			baseAssetDir:        v2types.Direction_LONG,
-			newPositionNotional: sdk.NewDec(100),
-
-			expectedBadDebt:        sdk.ZeroDec(),
-			expectedFundingPayment: sdk.MustNewDecFromStr("2.1"),
-			expectedRealizedPnl:    sdk.NewDec(-5),
-			expectedMarginToVault:  sdk.MustNewDecFromStr("-3.4"), // 10.5(old) + (-5)(realized PnL) - (2.1)(funding payment)
-		},
-
-		/*==========================SHORT POSITIONS===========================*/
-		{
-			name: "close short position, positive PnL",
-			// user bought in at 105 BTC for 10.5 NUSD at 10x leverage (1 BTC = 1 NUSD)
-			// position and open notional value is 105 NUSD
-			// BTC drops in value, now its price is 1.05 BTC = 1 NUSD
-			// user has position notional value of 100 NUSD and unrealized PnL of 5 NUSD
-			// user closes position
-			// user ends up with realized PnL of 5 NUSD, unrealized PnL of 0 NUSD,
-			//   position notional value of 0 NUSD
-			initialPosition: v2types.Position{
-				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				Size_:                           sdk.NewDec(-105),              // -105 BTC
-				Margin:                          sdk.MustNewDecFromStr("10.5"), // 10.5 NUSD
-				OpenNotional:                    sdk.NewDec(105),               // 105 NUSD
-				LatestCumulativePremiumFraction: sdk.ZeroDec(),
-				LastUpdatedBlockNumber:          0,
-			},
-			baseAssetDir:        v2types.Direction_SHORT,
-			newPositionNotional: sdk.NewDec(100),
-
-			expectedBadDebt:        sdk.ZeroDec(),
-			expectedFundingPayment: sdk.MustNewDecFromStr("-2.1"),
-			expectedRealizedPnl:    sdk.NewDec(5),
-			expectedMarginToVault:  sdk.MustNewDecFromStr("-17.6"), // old(10.5) + (5)(realizedPnL) - (-2.1)(fundingPayment)
-		},
-		{
-			name: "decrease short position, negative PnL",
-			// user bought in at 100 BTC for 10 NUSD at 10x leverage (1 BTC = 1 NUSD)
-			// position and open notional value is 100 NUSD
-			// BTC increases in value, now its price is 1 BTC = 1.05 NUSD
-			// user has position notional value of 105 NUSD and unrealized PnL of -5 NUSD
-			// user closes their position
-			// user ends up with realized PnL of -5 NUSD, unrealized PnL of 0 NUSD
-			//   position notional value of 0 NUSD
-			initialPosition: v2types.Position{
-				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				Size_:                           sdk.NewDec(-100), // -100 BTC
-				Margin:                          sdk.NewDec(10),   // 10 NUSD
-				OpenNotional:                    sdk.NewDec(100),  // 100 NUSD
-				LatestCumulativePremiumFraction: sdk.ZeroDec(),
-				LastUpdatedBlockNumber:          0,
-			},
-			baseAssetDir:        v2types.Direction_SHORT,
-			newPositionNotional: sdk.NewDec(105),
-
-			expectedBadDebt:        sdk.ZeroDec(),
-			expectedFundingPayment: sdk.NewDec(-2),
-			expectedRealizedPnl:    sdk.NewDec(-5),
-			expectedMarginToVault:  sdk.NewDec(-7), // old(10) + (-0.25)(realizedPnL) - (-2)(fundingPayment)
-		},
-	}
-
-	for _, tc := range tests {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			perpKeeper, mocks, ctx := getKeeper(t)
-			traderAddr, err := sdk.AccAddressFromBech32(tc.initialPosition.TraderAddress)
-			require.NoError(t, err)
-
-			t.Log("set position")
-			SetPosition(perpKeeper, ctx, tc.initialPosition)
-
-			t.Log("mock market keeper")
-			market := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
-			mocks.mockPerpAmmKeeper.EXPECT().
-				GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).
-				Return(market, nil)
-			mocks.mockPerpAmmKeeper.EXPECT().
-				GetBaseAssetPrice(
-					market,
-					tc.baseAssetDir,
-					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
-				).
-				Return( /*quoteAssetAmount=*/ tc.newPositionNotional, nil)
-
-			mocks.mockPerpAmmKeeper.EXPECT().
-				SwapBaseForQuote(
-					ctx,
-					market,
-					/*baseAssetDirection=*/ tc.baseAssetDir,
-					/*baseAssetAmount=*/ tc.initialPosition.Size_.Abs(),
-					/*quoteAssetLimit=*/ sdk.ZeroDec(),
-					/* skipFluctuationLimitCheck */ false,
-				).Return(market /*quoteAssetAmount=*/, tc.newPositionNotional, nil)
-
-			mocks.mockPerpAmmKeeper.EXPECT().
-				GetMarkPrice(
-					ctx,
-					tc.initialPosition.Pair,
-				).Return(
-				tc.newPositionNotional.Quo(tc.initialPosition.Size_.Abs()),
-				nil,
-			)
-
-			t.Log("mock bank keeper")
-			t.Logf("expecting sending: %s", sdk.NewCoin(tc.initialPosition.Pair.QuoteDenom(), tc.expectedMarginToVault.RoundInt().Abs()))
-			mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToAccount(
-				ctx,
-				types.VaultModuleAccount,
-				traderAddr,
-				sdk.NewCoins(
-					sdk.NewCoin(
-						/* NUSD */ tc.initialPosition.Pair.QuoteDenom(),
-						tc.expectedMarginToVault.RoundInt().Abs(),
-					),
-				),
-			).Return(nil)
-
-			mocks.mockBankKeeper.EXPECT().GetBalance(ctx, sdk.AccAddress{0x1, 0x2, 0x3}, tc.initialPosition.Pair.QuoteDenom()).
-				Return(sdk.NewCoin("NUSD", sdk.NewInt(100000*common.TO_MICRO)))
-			mocks.mockAccountKeeper.EXPECT().GetModuleAddress(types.VaultModuleAccount).
-				Return(sdk.AccAddress{0x1, 0x2, 0x3})
-
-			t.Log("set up pair metadata and last cumulative funding rate")
-			SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
-				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
-			})
-
-			t.Log("close position")
-			resp, err := perpKeeper.ClosePosition(
-				ctx,
-				tc.initialPosition.Pair,
-				traderAddr,
-			)
-
-			require.NoError(t, err)
-			assert.EqualValues(t, tc.newPositionNotional, resp.ExchangedNotionalValue)
-			assert.EqualValues(t, tc.expectedBadDebt, resp.BadDebt)
-			assert.EqualValues(t, tc.initialPosition.Size_.Neg(), resp.ExchangedPositionSize)
-			assert.EqualValues(t, tc.expectedFundingPayment, resp.FundingPayment)
-			assert.EqualValues(t, tc.expectedRealizedPnl, resp.RealizedPnl)
-			assert.EqualValues(t, tc.expectedMarginToVault, resp.MarginToVault)
-			assert.EqualValues(t, sdk.ZeroDec(), resp.PositionNotional)   // always zero
-			assert.EqualValues(t, sdk.ZeroDec(), resp.UnrealizedPnlAfter) // always zero
-
-			assert.EqualValues(t, tc.initialPosition.TraderAddress, resp.Position.TraderAddress)
-			assert.EqualValues(t, tc.initialPosition.Pair, resp.Position.Pair)
-			assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Margin)       // alwayz zero
-			assert.EqualValues(t, sdk.ZeroDec(), resp.Position.OpenNotional) // always zero
-			assert.EqualValues(t, sdk.ZeroDec(), resp.Position.Size_)        // always zero
-			assert.EqualValues(t, sdk.MustNewDecFromStr("0.02"), resp.Position.LatestCumulativePremiumFraction)
-			assert.EqualValues(t, ctx.BlockHeight(), resp.Position.LastUpdatedBlockNumber)
-
-			testutilevents.RequireHasTypedEvent(t, ctx, &v2types.PositionChangedEvent{
-				Pair:               tc.initialPosition.Pair,
-				TraderAddress:      tc.initialPosition.TraderAddress,
-				Margin:             sdk.NewInt64Coin(tc.initialPosition.Pair.QuoteDenom(), 0),
-				PositionNotional:   sdk.ZeroDec(),
-				ExchangedNotional:  tc.newPositionNotional,
-				ExchangedSize:      tc.initialPosition.Size_.Neg(),
-				PositionSize:       sdk.ZeroDec(),
-				RealizedPnl:        tc.expectedRealizedPnl,
-				UnrealizedPnlAfter: sdk.ZeroDec(),
-				BadDebt:            sdk.NewCoin(asset.Registry.Pair(denoms.BTC, denoms.NUSD).QuoteDenom(), sdk.ZeroInt()),
-				MarkPrice:          tc.newPositionNotional.Quo(tc.initialPosition.Size_.Abs()),
-				FundingPayment:     sdk.MustNewDecFromStr("0.02").Mul(tc.initialPosition.Size_),
-				TransactionFee:     sdk.NewInt64Coin(tc.initialPosition.Pair.QuoteDenom(), 0),
-				BlockHeight:        ctx.BlockHeight(),
-				BlockTimeMs:        ctx.BlockTime().UnixMilli(),
-			})
-		})
-	}
-}
-
 func TestClosePositionWithBadDebt(t *testing.T) {
 	tests := []struct {
 		name string
@@ -1988,10 +1690,9 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 			SetPosition(perpKeeper, ctx, tc.initialPosition)
 
 			t.Log("set params")
-			perpKeeper.SetParams(ctx, types.DefaultParams())
 
 			t.Log("mock market keeper")
-			market := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+			market := v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 			mocks.mockPerpAmmKeeper.EXPECT().
 				GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).
 				Return(market, nil)
@@ -2016,10 +1717,10 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 				).Return(market /*quoteAssetAmount=*/, tc.newPositionNotional, nil)
 
 			t.Log("set up pair metadata and last cumulative funding rate")
-			SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
-				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
-			})
+			// SetPairMetadata(perpKeeper, ctx, types.PairMetadata{
+			// 	Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+			// 	LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.02"),
+			// })
 
 			t.Log("close position")
 			resp, err := perpKeeper.ClosePosition(

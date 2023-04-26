@@ -1,7 +1,7 @@
 package v2
 
 const (
-	ModuleName           = "perp"
+	ModuleName           = "v2perp"
 	VaultModuleAccount   = "vault"
 	PerpEFModuleAccount  = "perp_ef"
 	FeePoolModuleAccount = "fee_pool"

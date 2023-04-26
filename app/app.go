@@ -379,6 +379,7 @@ func NewNibiruApp(
 		epochstypes.StoreKey,
 		perptypes.StoreKey,
 		perpammtypes.StoreKey,
+		perptypesv2.StoreKey,
 		inflationtypes.StoreKey,
 		wasm.StoreKey,
 	)
@@ -494,7 +495,7 @@ func NewNibiruApp(
 	app.PerpKeeperV2 = perpkeeperv2.NewKeeper(
 		appCodec, keys[perptypesv2.StoreKey],
 		app.GetSubspace(perptypesv2.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.PerpAmmKeeper, app.EpochsKeeper,
+		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.EpochsKeeper,
 	)
 
 	app.InflationKeeper = inflationkeeper.NewKeeper(
@@ -1102,6 +1103,7 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(epochstypes.ModuleName)
 	paramsKeeper.Subspace(stablecointypes.ModuleName)
 	paramsKeeper.Subspace(perptypes.ModuleName)
+	paramsKeeper.Subspace(perptypesv2.ModuleName)
 	paramsKeeper.Subspace(inflationtypes.ModuleName)
 	// ibc params keepers
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)

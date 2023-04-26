@@ -1,162 +1,166 @@
-package keeper_test
+package keeper
 
 import (
 	"testing"
 
-	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
-	keeper "github.com/NibiruChain/nibiru/x/perp/keeper/v2"
-	"github.com/NibiruChain/nibiru/x/perp/types"
+	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
-func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
+func TestCalcFreeCollateralSuccess(t *testing.T) {
 	testCases := []struct {
 		name string
-		test func()
+
+		positionSize           sdk.Dec
+		marketDirection        v2types.Direction
+		positionNotional       sdk.Dec
+		expectedFreeCollateral sdk.Dec
 	}{
 		{
-			name: "get - no positions set raises market not found error",
-			test: func() {
-				nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
-
-				marginDelta := sdk.OneDec()
-				_, err := nibiruApp.PerpKeeperV2.CalcRemainMarginWithFundingPayment(
-					ctx, v2types.Position{
-						Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
-					}, marginDelta)
-				require.ErrorIs(t, err, collections.ErrNotFound)
-			},
+			name:                   "long position, zero PnL",
+			positionSize:           sdk.OneDec(),
+			marketDirection:        v2types.Direction_LONG,
+			positionNotional:       sdk.NewDec(1000),
+			expectedFreeCollateral: sdk.MustNewDecFromStr("37.5"),
 		},
 		{
-			name: "signedRemainMargin negative bc of marginDelta",
-			test: func() {
-				t.Log("Setup Nibiru app, pair, and trader")
-				nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
-				trader := testutil.AccAddress()
-				pair := asset.MustNewPair("osmo:nusd")
-
-				t.Log("Set market defined by pair on PerpAmmKeeper")
-				perpammKeeper := &nibiruApp.PerpAmmKeeper
-				assert.NoError(t, perpammKeeper.CreatePool(
-					ctx,
-					pair,
-					/* y */ sdk.NewDec(1*common.TO_MICRO), //
-					/* x */ sdk.NewDec(1*common.TO_MICRO), //
-					perpammtypes.MarketConfig{
-						FluctuationLimitRatio:  sdk.MustNewDecFromStr("1.0"),
-						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-						MaxLeverage:            sdk.MustNewDecFromStr("15"),
-						MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("1.0"), // 100%,
-						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
-					},
-					sdk.OneDec(),
-				))
-				require.True(t, perpammKeeper.ExistsPool(ctx, pair))
-
-				t.Log("Set market defined by pair on PerpKeeper")
-				keeper.SetPairMetadata(nibiruApp.PerpKeeperV2, ctx, types.PairMetadata{
-					Pair:                            pair,
-					LatestCumulativePremiumFraction: sdk.ZeroDec(),
-				})
-
-				pos := &v2types.Position{
-					TraderAddress:                   trader.String(),
-					Pair:                            pair,
-					Margin:                          sdk.NewDec(100),
-					Size_:                           sdk.NewDec(200),
-					LatestCumulativePremiumFraction: sdk.ZeroDec(),
-				}
-
-				marginDelta := sdk.NewDec(-300)
-				remaining, err := nibiruApp.PerpKeeperV2.CalcRemainMarginWithFundingPayment(
-					ctx, *pos, marginDelta)
-				require.NoError(t, err)
-				// signedRemainMargin
-				//   = marginDelta - fPayment + pos.Margin
-				//   = -300 - 0 + 100 = -200
-				// ∴ remaining.badDebt = signedRemainMargin.Abs() = 200
-				require.True(t, sdk.NewDec(200).Equal(remaining.BadDebt))
-				require.True(t, sdk.NewDec(0).Equal(remaining.FundingPayment))
-				require.True(t, sdk.NewDec(0).Equal(remaining.Margin))
-				require.EqualValues(t, sdk.ZeroDec(), remaining.LatestCumulativePremiumFraction)
-			},
+			name:                   "long position, positive PnL",
+			positionSize:           sdk.OneDec(),
+			marketDirection:        v2types.Direction_LONG,
+			positionNotional:       sdk.NewDec(1100),
+			expectedFreeCollateral: sdk.MustNewDecFromStr("31.25"),
 		},
 		{
-			name: "large fPayment lowers pos value by half",
-			test: func() {
-				t.Log("Setup Nibiru app, pair, and trader")
-				nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
-				trader := testutil.AccAddress()
-				pair := asset.MustNewPair("osmo:nusd")
-
-				t.Log("Set market defined by pair on PerpAmmKeeper")
-				perpammKeeper := &nibiruApp.PerpAmmKeeper
-				assert.NoError(t, perpammKeeper.CreatePool(
-					ctx,
-					pair,
-					/* y */ sdk.NewDec(1*common.TO_MICRO), //
-					/* x */ sdk.NewDec(1*common.TO_MICRO), //
-					perpammtypes.MarketConfig{
-						FluctuationLimitRatio:  sdk.MustNewDecFromStr("1.0"),
-						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-						MaxLeverage:            sdk.MustNewDecFromStr("15"),
-						MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("1.0"), // 100%,
-						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
-					},
-					sdk.OneDec(),
-				))
-				require.True(t, perpammKeeper.ExistsPool(ctx, pair))
-
-				t.Log("Set market defined by pair on PerpKeeper")
-				keeper.SetPairMetadata(nibiruApp.PerpKeeperV2, ctx, types.PairMetadata{
-					Pair:                            pair,
-					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.75"),
-				})
-
-				pos := &v2types.Position{
-					TraderAddress:                   trader.String(),
-					Pair:                            pair,
-					Margin:                          sdk.NewDec(100),
-					Size_:                           sdk.NewDec(200),
-					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.5"),
-				}
-
-				marginDelta := sdk.NewDec(0)
-				remaining, err := nibiruApp.PerpKeeperV2.CalcRemainMarginWithFundingPayment(
-					ctx, *pos, marginDelta)
-				require.NoError(t, err)
-				require.EqualValues(t, sdk.MustNewDecFromStr("0.75"), remaining.LatestCumulativePremiumFraction)
-				// FPayment
-				//   = (remaining.LatestCPF - pos.LatestCumulativePremiumFraction)
-				//      * pos.Size_
-				//   = (0.75 - 0.5) * 200
-				//   = 50
-				require.True(t, sdk.NewDec(50).Equal(remaining.FundingPayment))
-				// signedRemainMargin
-				//   = marginDelta - fPayment + pos.Margin
-				//   = 0 - 50 + 100 = 50
-				// ∴ remaining.BadDebt = 0
-				// ∴ remaining.Margin = 50
-				require.True(t, sdk.NewDec(0).Equal(remaining.BadDebt))
-				require.True(t, sdk.NewDec(50).Equal(remaining.Margin))
-			},
+			name:                   "long position, negative PnL",
+			marketDirection:        v2types.Direction_LONG,
+			positionSize:           sdk.OneDec(),
+			positionNotional:       sdk.NewDec(970),
+			expectedFreeCollateral: sdk.MustNewDecFromStr("9.375"),
+		},
+		{
+			name:                   "long position, huge negative PnL",
+			marketDirection:        v2types.Direction_LONG,
+			positionSize:           sdk.OneDec(),
+			positionNotional:       sdk.NewDec(900),
+			expectedFreeCollateral: sdk.MustNewDecFromStr("-56.25"),
+		},
+		{
+			name:                   "short position, zero PnL",
+			positionSize:           sdk.OneDec().Neg(),
+			marketDirection:        v2types.Direction_SHORT,
+			positionNotional:       sdk.NewDec(1000),
+			expectedFreeCollateral: sdk.MustNewDecFromStr("37.5"),
+		},
+		{
+			name:                   "short position, positive PnL",
+			positionSize:           sdk.OneDec().Neg(),
+			marketDirection:        v2types.Direction_SHORT,
+			positionNotional:       sdk.NewDec(900),
+			expectedFreeCollateral: sdk.MustNewDecFromStr("43.75"),
+		},
+		{
+			name:                   "short position, negative PnL",
+			positionSize:           sdk.OneDec().Neg(),
+			marketDirection:        v2types.Direction_SHORT,
+			positionNotional:       sdk.NewDec(1030),
+			expectedFreeCollateral: sdk.MustNewDecFromStr("5.625"),
+		},
+		{
+			name:                   "short position, huge negative PnL",
+			positionSize:           sdk.OneDec().Neg(),
+			marketDirection:        v2types.Direction_SHORT,
+			positionNotional:       sdk.NewDec(1100),
+			expectedFreeCollateral: sdk.MustNewDecFromStr("-68.75"),
 		},
 	}
 
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			tc.test()
+			k, _, ctx := getKeeper(t)
+
+			market := v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+			amm := v2types.AMM{}
+			pos := v2types.Position{
+				TraderAddress:                   testutil.AccAddress().String(),
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				Size_:                           tc.positionSize,
+				Margin:                          sdk.NewDec(100),
+				OpenNotional:                    sdk.NewDec(1000),
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				LastUpdatedBlockNumber:          1,
+			}
+
+			freeCollateral, err := k.calcFreeCollateral(ctx, market, amm, pos)
+
+			require.NoError(t, err)
+			assert.EqualValues(t, tc.expectedFreeCollateral, freeCollateral)
+		})
+	}
+}
+
+func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
+	testCases := []struct {
+		name        string
+		position    v2types.Position
+		marginDelta sdk.Dec
+		market      *v2types.Market
+
+		expectedMargin         sdk.Dec
+		expectedBadDebt        sdk.Dec
+		expectedFundingPayment sdk.Dec
+	}{
+		{
+			name: "signedRemainMargin negative bc of marginDelta",
+			position: v2types.Position{
+				TraderAddress:                   testutil.AccAddress().String(),
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				Size_:                           sdk.NewDec(1),
+				Margin:                          sdk.NewDec(100),
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+			},
+			marginDelta: sdk.NewDec(-300),
+			market:      mock.TestMarket(),
+
+			expectedMargin:         sdk.ZeroDec(),
+			expectedBadDebt:        sdk.NewDec(200),
+			expectedFundingPayment: sdk.ZeroDec(),
+		},
+		{
+			name: "large fPayment lowers pos value by half",
+			position: v2types.Position{
+				TraderAddress:                   testutil.AccAddress().String(),
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				Size_:                           sdk.NewDec(200),
+				Margin:                          sdk.NewDec(100),
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+			},
+			marginDelta: sdk.ZeroDec(),
+			market:      mock.TestMarket().WithLatestCumulativePremiumFraction(sdk.MustNewDecFromStr("0.25")),
+
+			expectedMargin:         sdk.NewDec(50),
+			expectedBadDebt:        sdk.ZeroDec(),
+			expectedFundingPayment: sdk.NewDec(50),
+		},
+	}
+
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			tc := tc
+
+			remaining, err := CalcRemainMarginWithFundingPayment(tc.position, tc.marginDelta, *tc.market)
+			require.NoError(t, err)
+			assert.EqualValues(t, tc.expectedMargin, remaining.Margin)
+			assert.EqualValues(t, tc.expectedBadDebt, remaining.BadDebt)
+			assert.EqualValues(t, tc.expectedFundingPayment, remaining.FundingPayment)
 		})
 	}
 }

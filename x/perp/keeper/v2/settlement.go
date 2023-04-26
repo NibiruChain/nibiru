@@ -17,22 +17,27 @@ func (k Keeper) SettlePosition(
 	// Validate trader address
 	traderAddr, err := sdk.AccAddressFromBech32(currentPosition.TraderAddress)
 	if err != nil {
-		return sdk.NewCoins(), nil
+		return sdk.NewCoins(), err
 	}
 
 	if currentPosition.Size_.IsZero() {
 		return sdk.NewCoins(), nil
 	}
 
-	err = k.Positions.Delete(ctx, collections.Join(currentPosition.Pair, traderAddr))
+	market, err := k.Markets.Get(ctx, currentPosition.Pair)
 	if err != nil {
-		return sdk.NewCoins(), nil
+		return sdk.NewCoins(), err
 	}
 
 	// run calculations on settled values
-	settlementPrice, err := k.PerpAmmKeeper.GetSettlementPrice(ctx, currentPosition.Pair)
+	settlementPrice, err := k.GetMarkPriceTWAP(ctx, currentPosition.Pair, market.TwapLookbackWindow)
 	if err != nil {
-		return sdk.NewCoins(), nil
+		return sdk.NewCoins(), err
+	}
+
+	err = k.Positions.Delete(ctx, collections.Join(currentPosition.Pair, traderAddr))
+	if err != nil {
+		return sdk.NewCoins(), err
 	}
 
 	settledValue := sdk.ZeroDec()

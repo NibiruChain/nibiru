@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	ProposalTypeCreatePool         = "CreatePool"
-	ProposalTypeEditPoolConfig     = "EditPoolConfig"
-	ProposalTypeEditSwapInvariants = "EditSwapInvariants"
+	ProposalTypeCreatePool         = "CreatePoolV2"
+	ProposalTypeEditPoolConfig     = "EditPoolConfigV2"
+	ProposalTypeEditSwapInvariants = "EditSwapInvariantsV2"
 )
 
 var _ govtypes.Content = &CreatePoolProposal{}
@@ -19,11 +19,11 @@ var _ govtypes.Content = &EditSwapInvariantsProposal{}
 
 func init() {
 	govtypes.RegisterProposalType(ProposalTypeCreatePool)
-	govtypes.RegisterProposalTypeCodec(&CreatePoolProposal{}, "nibiru/CreatePoolProposal")
+	govtypes.RegisterProposalTypeCodec(&CreatePoolProposal{}, "nibiru/CreatePoolProposalV2")
 	govtypes.RegisterProposalType(ProposalTypeEditPoolConfig)
-	govtypes.RegisterProposalTypeCodec(&EditPoolConfigProposal{}, "nibiru/EditPoolConfigProposal")
+	govtypes.RegisterProposalTypeCodec(&EditPoolConfigProposal{}, "nibiru/EditPoolConfigProposalV2")
 	govtypes.RegisterProposalType(ProposalTypeEditSwapInvariants)
-	govtypes.RegisterProposalTypeCodec(&EditSwapInvariantsProposal{}, "nibiru/EditSwapInvariantsProposal")
+	govtypes.RegisterProposalTypeCodec(&EditSwapInvariantsProposal{}, "nibiru/EditSwapInvariantsProposalV2")
 }
 
 // CreatePoolProposal

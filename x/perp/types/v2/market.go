@@ -3,6 +3,7 @@ package v2
 import (
 	fmt "fmt"
 
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -48,4 +49,103 @@ func (market *Market) Validate() error {
 	}
 
 	return nil
+}
+
+/*
+IsOverFluctuationLimitInRelationWithSnapshot compares the updated pool's spot price with the current spot price.
+
+If the fluctuation limit ratio is zero, then the fluctuation limit check is skipped.
+
+args:
+  - pool: the updated market
+  - snapshot: the snapshot to compare against
+
+ret:
+  - bool: true if the fluctuation limit is violated. false otherwise
+*/
+func (market Market) IsOverFluctuationLimitInRelationWithSnapshot(amm AMM, snapshot ReserveSnapshot) bool {
+	if market.PriceFluctuationLimitRatio.IsZero() {
+		return false
+	}
+
+	markPrice := amm.MarkPrice()
+	snapshotUpperLimit := snapshot.upperLimit(market.PriceFluctuationLimitRatio)
+	snapshotLowerLimit := snapshot.lowerLimit(market.PriceFluctuationLimitRatio)
+
+	if markPrice.GT(snapshotUpperLimit) || markPrice.LT(snapshotLowerLimit) {
+		return true
+	}
+
+	return false
+}
+
+/*
+IsOverSpreadLimit compares the current mark price of the market
+to the underlying's index price.
+It panics if you provide it with a pair that doesn't exist in the state.
+
+args:
+  - indexPrice: the index price we want to compare.
+
+ret:
+  - bool: whether or not the price has deviated from the oracle price beyond a spread ratio
+*/
+func (market Market) IsOverSpreadLimit(amm AMM, indexPrice sdk.Dec) bool {
+	return amm.MarkPrice().Sub(indexPrice).
+		Quo(indexPrice).Abs().GTE(market.MaxOracleSpreadRatio)
+}
+
+func (market *Market) WithPriceFluctuationLimitRatio(value sdk.Dec) *Market {
+	market.PriceFluctuationLimitRatio = value
+	return market
+}
+
+func (market *Market) WithMaxOracleSpreadRatio(value sdk.Dec) *Market {
+	market.MaxOracleSpreadRatio = value
+	return market
+}
+
+func (market *Market) WithMaintenanceMarginRatio(value sdk.Dec) *Market {
+	market.MaintenanceMarginRatio = value
+	return market
+}
+
+func (market *Market) WithMaxLeverage(value sdk.Dec) *Market {
+	market.MaxLeverage = value
+	return market
+}
+
+func (market *Market) WithEcosystemFee(value sdk.Dec) *Market {
+	market.EcosystemFundFeeRatio = value
+	return market
+}
+
+func (market *Market) WithExchangeFee(value sdk.Dec) *Market {
+	market.ExchangeFeeRatio = value
+	return market
+}
+
+func (market *Market) WithLiquidationFee(value sdk.Dec) *Market {
+	market.LiquidationFeeRatio = value
+	return market
+}
+
+func (market *Market) WithPartialLiquidationRatio(value sdk.Dec) *Market {
+	market.PartialLiquidationRatio = value
+	return market
+}
+
+func (market *Market) WithFundingRateEpochId(value string) *Market {
+	market.FundingRateEpochId = value
+	return market
+}
+
+func (market *Market) WithPair(value asset.Pair) *Market {
+	market.Pair = value
+	return market
+}
+
+func (market *Market) WithLatestCumulativePremiumFraction(value sdk.Dec) *Market {
+	market.LatestCumulativePremiumFraction = value
+	return market
 }

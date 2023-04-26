@@ -3,12 +3,9 @@ package keeper
 import (
 	"fmt"
 
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
-	"github.com/NibiruChain/nibiru/x/perp/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/perp/types"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
@@ -27,38 +24,30 @@ type RemainingMarginWithFundingPayment struct {
 		(vPrice) and index price (average price on major exchanges).
 	*/
 	FundingPayment sdk.Dec
-
-	/* LatestCumulativePremiumFraction: latest cumulative funding rate from state. Units are (margin units)/(position units). */
-	LatestCumulativePremiumFraction sdk.Dec
 }
 
 func (r RemainingMarginWithFundingPayment) String() string {
 	return fmt.Sprintf(
-		"RemainingMarginWithFundingPayment{Margin: %s, FundingPayment: %s, PrepaidBadDebt: %s, LatestCumulativePremiumFraction: %s}",
-		r.Margin, r.FundingPayment, r.BadDebt, r.LatestCumulativePremiumFraction,
+		"RemainingMarginWithFundingPayment{Margin: %s, FundingPayment: %s, PrepaidBadDebt: %s}",
+		r.Margin, r.FundingPayment, r.BadDebt,
 	)
 }
 
-func (k Keeper) CalcRemainMarginWithFundingPayment(
-	ctx sdk.Context,
+// CalcRemainMarginWithFundingPayment calculates the remaining margin after a margin delta is applied.
+func CalcRemainMarginWithFundingPayment(
 	currentPosition v2types.Position,
-	marginDelta sdk.Dec,
+	marginDeltaSigned sdk.Dec,
+	market v2types.Market,
 ) (remaining RemainingMarginWithFundingPayment, err error) {
-	remaining.LatestCumulativePremiumFraction, err = k.
-		getLatestCumulativePremiumFraction(ctx, currentPosition.Pair)
-	if err != nil {
-		return remaining, err
-	}
-
 	if currentPosition.Size_.IsZero() {
 		remaining.FundingPayment = sdk.ZeroDec()
 	} else {
-		remaining.FundingPayment = (remaining.LatestCumulativePremiumFraction.
+		remaining.FundingPayment = (market.LatestCumulativePremiumFraction.
 			Sub(currentPosition.LatestCumulativePremiumFraction)).
 			Mul(currentPosition.Size_)
 	}
 
-	remainingMargin := currentPosition.Margin.Add(marginDelta).Sub(remaining.FundingPayment)
+	remainingMargin := currentPosition.Margin.Add(marginDeltaSigned).Sub(remaining.FundingPayment)
 
 	if remainingMargin.IsNegative() {
 		// the remaining margin is negative, liquidators didn't do their job
@@ -89,47 +78,20 @@ position without making it go underwater.
 - err: error
 */
 func (k Keeper) calcFreeCollateral(
-	ctx sdk.Context, market perpammtypes.Market, pos v2types.Position,
+	ctx sdk.Context, market v2types.Market, amm v2types.AMM, pos v2types.Position,
 ) (freeCollateral sdk.Dec, err error) {
-	if err = pos.Pair.Validate(); err != nil {
-		return
-	}
-
 	positionNotional, unrealizedPnL, err := k.
-		GetPreferencePositionNotionalAndUnrealizedPnL(
+		getPositionNotionalAndUnrealizedPnL(
 			ctx,
 			market,
+			amm,
 			pos,
-			types.PnLPreferenceOption_MIN,
+			types.PnLCalcOption_SPOT_PRICE,
 		)
 	if err != nil {
 		return
 	}
 	remainingMargin := sdk.MinDec(pos.Margin, pos.Margin.Add(unrealizedPnL))
-
-	maintenanceMarginRatio, err := k.PerpAmmKeeper.GetMaintenanceMarginRatio(ctx, pos.Pair)
-	if err != nil {
-		return
-	}
-	maintenanceMarginRequirement := positionNotional.Mul(maintenanceMarginRatio)
-
+	maintenanceMarginRequirement := positionNotional.Mul(market.MaintenanceMarginRatio)
 	return remainingMargin.Sub(maintenanceMarginRequirement), nil
-}
-
-// getLatestCumulativePremiumFraction returns the last cumulative funding rate recorded for the
-// specific pair.
-func (k Keeper) getLatestCumulativePremiumFraction(
-	ctx sdk.Context, pair asset.Pair,
-) (sdk.Dec, error) {
-	pairMetadata, err := k.PairsMetadata.Get(ctx, pair)
-	if err != nil {
-		k.Logger(ctx).Error(
-			err.Error(),
-			"pair",
-			pair,
-		)
-		return sdk.Dec{}, err
-	}
-	// this should never fail
-	return pairMetadata.LatestCumulativePremiumFraction, nil
 }

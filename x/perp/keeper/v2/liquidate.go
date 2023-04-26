@@ -6,7 +6,6 @@ import (
 	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
@@ -32,11 +31,7 @@ func (k Keeper) Liquidate(
 	pair asset.Pair,
 	trader sdk.AccAddress,
 ) (liquidatorFee sdk.Coin, perpEcosystemFundFee sdk.Coin, err error) {
-	market, err := k.PerpAmmKeeper.GetPool(ctx, pair)
-	if err != nil {
-		return sdk.Coin{}, sdk.Coin{}, types.ErrPairNotFound
-	}
-
+	market, err := k.Markets.Get(ctx, pair)
 	if err != nil {
 		_ = ctx.EventManager().EmitTypedEvent(&types.LiquidationFailedEvent{ // nolint:errcheck
 			Pair:       pair,
@@ -44,7 +39,18 @@ func (k Keeper) Liquidate(
 			Liquidator: liquidator.String(),
 			Reason:     types.LiquidationFailedEvent_NONEXISTENT_PAIR,
 		})
-		return
+		return sdk.Coin{}, sdk.Coin{}, types.ErrPairNotFound
+	}
+
+	amm, err := k.AMMs.Get(ctx, pair)
+	if err != nil {
+		_ = ctx.EventManager().EmitTypedEvent(&types.LiquidationFailedEvent{ // nolint:errcheck
+			Pair:       pair,
+			Trader:     trader.String(),
+			Liquidator: liquidator.String(),
+			Reason:     types.LiquidationFailedEvent_NONEXISTENT_PAIR,
+		})
+		return sdk.Coin{}, sdk.Coin{}, types.ErrPairNotFound
 	}
 
 	position, err := k.Positions.Get(ctx, collections.Join(pair, trader))
@@ -61,6 +67,7 @@ func (k Keeper) Liquidate(
 	marginRatio, err := k.GetMarginRatio(
 		ctx,
 		market,
+		amm,
 		position,
 		types.MarginCalculationPriceOption_MAX_PNL,
 	)
@@ -68,13 +75,15 @@ func (k Keeper) Liquidate(
 		return
 	}
 
-	isOverSpreadLimit, err := k.PerpAmmKeeper.IsOverSpreadLimit(ctx, pair)
+	isOverSpreadLimit, err := k.IsOverSpreadLimit(ctx, market, amm)
 	if err != nil {
 		return
 	}
+
 	if isOverSpreadLimit {
 		marginRatioBasedOnOracle, err := k.GetMarginRatio(
-			ctx, market, position, types.MarginCalculationPriceOption_INDEX)
+			ctx, market, amm, position, types.MarginCalculationPriceOption_INDEX)
+
 		if err != nil {
 			return liquidatorFee, perpEcosystemFundFee, err
 		}
@@ -82,13 +91,8 @@ func (k Keeper) Liquidate(
 		marginRatio = sdk.MaxDec(marginRatio, marginRatioBasedOnOracle)
 	}
 
-	params := k.GetParams(ctx)
+	err = validateMarginRatio(marginRatio, market.MaintenanceMarginRatio, false)
 
-	maintenanceMarginRatio, err := k.PerpAmmKeeper.GetMaintenanceMarginRatio(ctx, pair)
-	if err != nil {
-		return
-	}
-	err = validateMarginRatio(marginRatio, maintenanceMarginRatio, false)
 	if err != nil {
 		_ = ctx.EventManager().EmitTypedEvent(&types.LiquidationFailedEvent{ // nolint:errcheck
 			Pair:       pair,
@@ -100,16 +104,16 @@ func (k Keeper) Liquidate(
 	}
 
 	marginRatioBasedOnSpot, err := k.GetMarginRatio(
-		ctx, market, position, types.MarginCalculationPriceOption_SPOT)
+		ctx, market, amm, position, types.MarginCalculationPriceOption_SPOT)
 	if err != nil {
 		return
 	}
 
 	var liquidationResponse v2types.LiquidateResp
-	if marginRatioBasedOnSpot.GTE(params.LiquidationFeeRatio) {
-		liquidationResponse, err = k.ExecutePartialLiquidation(ctx, liquidator, &position)
+	if marginRatioBasedOnSpot.GTE(market.LiquidationFeeRatio) {
+		liquidationResponse, err = k.ExecutePartialLiquidation(ctx, market, amm, liquidator, &position)
 	} else {
-		liquidationResponse, err = k.ExecuteFullLiquidation(ctx, liquidator, &position)
+		liquidationResponse, err = k.ExecuteFullLiquidation(ctx, market, amm, liquidator, &position)
 	}
 	if err != nil {
 		return
@@ -142,15 +146,8 @@ ret:
   - err: error
 */
 func (k Keeper) ExecuteFullLiquidation(
-	ctx sdk.Context, liquidator sdk.AccAddress, position *v2types.Position,
+	ctx sdk.Context, market v2types.Market, amm v2types.AMM, liquidator sdk.AccAddress, position *v2types.Position,
 ) (liquidationResp v2types.LiquidateResp, err error) {
-	params := k.GetParams(ctx)
-
-	market, err := k.PerpAmmKeeper.GetPool(ctx, position.Pair)
-	if err != nil {
-		return v2types.LiquidateResp{}, types.ErrPairNotFound
-	}
-
 	traderAddr, err := sdk.AccAddressFromBech32(position.TraderAddress)
 	if err != nil {
 		return v2types.LiquidateResp{}, err
@@ -159,6 +156,7 @@ func (k Keeper) ExecuteFullLiquidation(
 	_, positionResp, err := k.closePositionEntirely(
 		ctx,
 		market,
+		amm,
 		/* currentPosition */ *position,
 		/* quoteAssetAmountLimit */ sdk.ZeroDec(),
 		/* skipFluctuationLimitCheck */ true,
@@ -169,7 +167,7 @@ func (k Keeper) ExecuteFullLiquidation(
 
 	remainMargin := positionResp.MarginToVault.Abs()
 
-	feeToLiquidator := params.LiquidationFeeRatio.
+	feeToLiquidator := market.LiquidationFeeRatio.
 		Mul(positionResp.ExchangedNotionalValue).
 		QuoInt64(2)
 	totalBadDebt := positionResp.BadDebt
@@ -187,7 +185,7 @@ func (k Keeper) ExecuteFullLiquidation(
 	if totalBadDebt.IsPositive() {
 		if err = k.realizeBadDebt(
 			ctx,
-			position.Pair.QuoteDenom(),
+			market,
 			totalBadDebt.RoundInt(),
 		); err != nil {
 			return v2types.LiquidateResp{}, err
@@ -206,12 +204,7 @@ func (k Keeper) ExecuteFullLiquidation(
 		Liquidator:             liquidator.String(),
 		PositionResp:           positionResp,
 	}
-	err = k.distributeLiquidateRewards(ctx, liquidationResp)
-	if err != nil {
-		return v2types.LiquidateResp{}, err
-	}
-
-	markPrice, err := k.PerpAmmKeeper.GetMarkPrice(ctx, position.Pair)
+	err = k.distributeLiquidateRewards(ctx, market, liquidationResp)
 	if err != nil {
 		return v2types.LiquidateResp{}, err
 	}
@@ -229,7 +222,7 @@ func (k Keeper) ExecuteFullLiquidation(
 		PositionNotional:      liquidationResp.PositionResp.PositionNotional,
 		PositionSize:          liquidationResp.PositionResp.Position.Size_,
 		UnrealizedPnl:         liquidationResp.PositionResp.UnrealizedPnlAfter,
-		MarkPrice:             markPrice,
+		MarkPrice:             amm.MarkPrice(),
 		BlockHeight:           ctx.BlockHeight(),
 		BlockTimeMs:           ctx.BlockTime().UnixMilli(),
 	})
@@ -238,7 +231,7 @@ func (k Keeper) ExecuteFullLiquidation(
 }
 
 func (k Keeper) distributeLiquidateRewards(
-	ctx sdk.Context, liquidateResp v2types.LiquidateResp) (err error) {
+	ctx sdk.Context, market v2types.Market, liquidateResp v2types.LiquidateResp) (err error) {
 	// --------------------------------------------------------------
 	//  Preliminary validations
 	// --------------------------------------------------------------
@@ -283,7 +276,7 @@ func (k Keeper) distributeLiquidateRewards(
 	// Transfer fee from vault to liquidator
 	feeToLiquidator := liquidateResp.FeeToLiquidator
 	if feeToLiquidator.IsPositive() {
-		err = k.Withdraw(ctx, pair.QuoteDenom(), liquidator, feeToLiquidator)
+		err = k.Withdraw(ctx, market, liquidator, feeToLiquidator)
 		if err != nil {
 			return err
 		}
@@ -294,42 +287,32 @@ func (k Keeper) distributeLiquidateRewards(
 
 // ExecutePartialLiquidation partially liquidates a position
 func (k Keeper) ExecutePartialLiquidation(
-	ctx sdk.Context, liquidator sdk.AccAddress, currentPosition *v2types.Position,
+	ctx sdk.Context, market v2types.Market, amm v2types.AMM, liquidator sdk.AccAddress, currentPosition *v2types.Position,
 ) (v2types.LiquidateResp, error) {
-	params := k.GetParams(ctx)
-
-	market, err := k.PerpAmmKeeper.GetPool(ctx, currentPosition.Pair)
-	if err != nil {
-		return v2types.LiquidateResp{}, types.ErrPairNotFound
-	}
-
 	traderAddr, err := sdk.AccAddressFromBech32(currentPosition.TraderAddress)
 	if err != nil {
 		return v2types.LiquidateResp{}, err
 	}
 
-	var baseAssetDir perpammtypes.Direction
+	var dir v2types.Direction
 	if currentPosition.Size_.IsPositive() {
-		baseAssetDir = perpammtypes.Direction_LONG
+		dir = v2types.Direction_SHORT
 	} else {
-		baseAssetDir = perpammtypes.Direction_SHORT
+		dir = v2types.Direction_LONG
 	}
 
-	partiallyLiquidatedPositionNotional, err := k.PerpAmmKeeper.GetBaseAssetPrice(
-		market,
-		baseAssetDir,
-		/* abs= */ currentPosition.Size_.Mul(params.PartialLiquidationRatio),
-	)
-
+	quoteReserveDelta, err := amm.GetQuoteReserveAmt(currentPosition.Size_.Mul(market.PartialLiquidationRatio), dir)
 	if err != nil {
 		return v2types.LiquidateResp{}, err
 	}
+	quoteAssetDelta := amm.FromQuoteReserveToAsset(quoteReserveDelta)
 
 	_, positionResp, err := k.decreasePosition(
 		/* ctx */ ctx,
 		market,
+		amm,
 		/* currentPosition */ *currentPosition,
-		/* quoteAssetAmount */ partiallyLiquidatedPositionNotional,
+		/* quoteAssetAmount */ quoteAssetDelta,
 		/* baseAmtLimit */ sdk.ZeroDec(),
 		/* skipFluctuationLimitCheck */ true,
 	)
@@ -338,10 +321,8 @@ func (k Keeper) ExecutePartialLiquidation(
 	}
 
 	// Remove the liquidation fee from the margin of the position
-	liquidationFeeAmount := positionResp.ExchangedNotionalValue.
-		Mul(params.LiquidationFeeRatio)
-	positionResp.Position.Margin = positionResp.Position.Margin.
-		Sub(liquidationFeeAmount)
+	liquidationFeeAmount := quoteAssetDelta.Mul(market.LiquidationFeeRatio)
+	positionResp.Position.Margin = positionResp.Position.Margin.Sub(liquidationFeeAmount)
 	k.Positions.Insert(ctx, collections.Join(positionResp.Position.Pair, traderAddr), *positionResp.Position)
 
 	// Compute splits for the liquidation fee
@@ -355,12 +336,7 @@ func (k Keeper) ExecutePartialLiquidation(
 		Liquidator:             liquidator.String(),
 		PositionResp:           positionResp,
 	}
-	err = k.distributeLiquidateRewards(ctx, liquidationResponse)
-	if err != nil {
-		return v2types.LiquidateResp{}, err
-	}
-
-	markPrice, err := k.PerpAmmKeeper.GetMarkPrice(ctx, currentPosition.Pair)
+	err = k.distributeLiquidateRewards(ctx, market, liquidationResponse)
 	if err != nil {
 		return v2types.LiquidateResp{}, err
 	}
@@ -378,7 +354,7 @@ func (k Keeper) ExecutePartialLiquidation(
 		PositionNotional:      liquidationResponse.PositionResp.PositionNotional,
 		PositionSize:          liquidationResponse.PositionResp.Position.Size_,
 		UnrealizedPnl:         liquidationResponse.PositionResp.UnrealizedPnlAfter,
-		MarkPrice:             markPrice,
+		MarkPrice:             amm.MarkPrice(),
 		BlockHeight:           ctx.BlockHeight(),
 		BlockTimeMs:           ctx.BlockTime().UnixMilli(),
 	})
@@ -389,14 +365,28 @@ func (k Keeper) ExecutePartialLiquidation(
 func (k Keeper) MultiLiquidate(
 	ctx sdk.Context, liquidator sdk.AccAddress, liquidationRequests []*v2types.MsgMultiLiquidate_Liquidation,
 ) ([]*v2types.MsgMultiLiquidateResponse_LiquidationResponse, error) {
-	if !k.isWhitelistedLiquidator(ctx, liquidator) {
-		return nil, types.ErrUnauthorized.Wrapf("%s is not a whitelisted liquidator", liquidator.String())
-	}
-
 	resp := make([]*v2types.MsgMultiLiquidateResponse_LiquidationResponse, len(liquidationRequests))
 
 	var allFailed bool = true
+
 	for i, req := range liquidationRequests {
+		market, err := k.Markets.Get(ctx, req.Pair)
+		if err != nil {
+			resp[i] = &v2types.MsgMultiLiquidateResponse_LiquidationResponse{
+				Success: false,
+				Error:   err.Error(),
+			}
+			continue
+		}
+
+		if !k.isWhitelistedLiquidator(ctx, market, liquidator) {
+			resp[i] = &v2types.MsgMultiLiquidateResponse_LiquidationResponse{
+				Success: false,
+				Error:   "liquidator is not whitelisted",
+			}
+			continue
+		}
+
 		traderAddr := sdk.MustAccAddressFromBech32(req.Trader)
 		cachedCtx, commit := ctx.CacheContext()
 		liquidatorFee, perpEfFee, err := k.Liquidate(cachedCtx, liquidator, req.Pair, traderAddr)
@@ -426,11 +416,10 @@ func (k Keeper) MultiLiquidate(
 	return resp, nil
 }
 
-func (k Keeper) isWhitelistedLiquidator(ctx sdk.Context, addr sdk.AccAddress) bool {
+func (k Keeper) isWhitelistedLiquidator(ctx sdk.Context, market v2types.Market, addr sdk.AccAddress) bool {
 	addrStr := addr.String()
-	params := k.GetParams(ctx)
-	// TODO(k-yang): look into an O(1) lookup data structure here
-	for _, whitelisted := range params.WhitelistedLiquidators {
+	// TODO(k-yang): use an O(1) lookup data structure here
+	for _, whitelisted := range market.WhitelistedLiquidators {
 		if addrStr == whitelisted {
 			return true
 		}
