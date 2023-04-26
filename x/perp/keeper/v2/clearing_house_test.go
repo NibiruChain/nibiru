@@ -698,11 +698,11 @@ func TestClosePosition(t *testing.T) {
 			newPriceMultiplier: sdk.NewDec(2),
 			newLatestCPF:       sdk.MustNewDecFromStr("0.02"),
 
-			expectedExchangedNotionalValue: sdk.MustNewDecFromStr("199.999999998"),
+			expectedExchangedNotionalValue: sdk.MustNewDecFromStr("199.999999980000000002"),
 			expectedBadDebt:                sdk.ZeroDec(),
 			expectedFundingPayment:         sdk.NewDec(2),
-			expectedRealizedPnl:            sdk.MustNewDecFromStr("99.999999998"),
-			expectedMarginToVault:          sdk.MustNewDecFromStr("-107.999999998"),
+			expectedRealizedPnl:            sdk.MustNewDecFromStr("99.999999980000000002"),
+			expectedMarginToVault:          sdk.MustNewDecFromStr("-107.999999980000000002"),
 		},
 		{
 			name: "close long position, negative PnL",
@@ -727,9 +727,9 @@ func TestClosePosition(t *testing.T) {
 
 			expectedBadDebt:                sdk.ZeroDec(),
 			expectedFundingPayment:         sdk.NewDec(2),
-			expectedRealizedPnl:            sdk.MustNewDecFromStr("-5.00000000095"),
-			expectedMarginToVault:          sdk.MustNewDecFromStr("-2.99999999905"), // 10(old) + (-5)(realized PnL) - (2)(funding payment)
-			expectedExchangedNotionalValue: sdk.MustNewDecFromStr("94.99999999905"),
+			expectedRealizedPnl:            sdk.MustNewDecFromStr("-5.000000009499999999"),
+			expectedMarginToVault:          sdk.MustNewDecFromStr("-2.999999990500000001"), // 10(old) + (-5)(realized PnL) - (2)(funding payment)
+			expectedExchangedNotionalValue: sdk.MustNewDecFromStr("94.999999990500000001"),
 		},
 
 		/*==========================SHORT POSITIONS===========================*/
@@ -756,9 +756,9 @@ func TestClosePosition(t *testing.T) {
 
 			expectedBadDebt:                sdk.ZeroDec(),
 			expectedFundingPayment:         sdk.NewDec(-2),
-			expectedRealizedPnl:            sdk.MustNewDecFromStr("4.99999999905"),
-			expectedMarginToVault:          sdk.MustNewDecFromStr("-16.99999999905"), // old(10) + (5)(realizedPnL) - (-2)(fundingPayment)
-			expectedExchangedNotionalValue: sdk.MustNewDecFromStr("95.00000000095"),
+			expectedRealizedPnl:            sdk.MustNewDecFromStr("4.999999990499999999"),
+			expectedMarginToVault:          sdk.MustNewDecFromStr("-16.999999990499999999"), // old(10) + (5)(realizedPnL) - (-2)(fundingPayment)
+			expectedExchangedNotionalValue: sdk.MustNewDecFromStr("95.000000009500000001"),
 		},
 		{
 			name: "decrease short position, negative PnL",
@@ -783,9 +783,9 @@ func TestClosePosition(t *testing.T) {
 
 			expectedBadDebt:                sdk.ZeroDec(),
 			expectedFundingPayment:         sdk.NewDec(-2),
-			expectedRealizedPnl:            sdk.MustNewDecFromStr("-5.00000000105"),
-			expectedMarginToVault:          sdk.MustNewDecFromStr("-6.99999999895"), // old(10) + (-5)(realizedPnL) - (-2)(fundingPayment)
-			expectedExchangedNotionalValue: sdk.MustNewDecFromStr("105.00000000105"),
+			expectedRealizedPnl:            sdk.MustNewDecFromStr("-5.000000010500000001"),
+			expectedMarginToVault:          sdk.MustNewDecFromStr("-6.999999989499999999"), // old(10) + (-5)(realizedPnL) - (-2)(fundingPayment)
+			expectedExchangedNotionalValue: sdk.MustNewDecFromStr("105.000000010500000001"),
 		},
 	}
 
@@ -795,10 +795,17 @@ func TestClosePosition(t *testing.T) {
 			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 			traderAddr := sdk.MustAccAddressFromBech32(tc.initialPosition.TraderAddress)
 
-			app.PerpKeeperV2.Markets.Insert(ctx, tc.initialPosition.Pair, *mock.TestMarket().WithLatestCumulativePremiumFraction(tc.newLatestCPF))
-			app.PerpKeeperV2.AMMs.Insert(ctx, tc.initialPosition.Pair, *mock.TestAMM().WithPriceMultiplier(tc.newPriceMultiplier))
+			market := mock.TestMarket().WithLatestCumulativePremiumFraction(tc.newLatestCPF)
+			amm := mock.TestAMM().WithPriceMultiplier(tc.newPriceMultiplier)
+			app.PerpKeeperV2.Markets.Insert(ctx, tc.initialPosition.Pair, *market)
+			app.PerpKeeperV2.AMMs.Insert(ctx, tc.initialPosition.Pair, *amm)
+			app.PerpKeeperV2.ReserveSnapshots.Insert(ctx, collections.Join(tc.initialPosition.Pair, ctx.BlockTime()), v2types.ReserveSnapshot{
+				Amm:         *amm,
+				TimestampMs: ctx.BlockTime().UnixMilli(),
+			})
 			app.PerpKeeperV2.Positions.Insert(ctx, collections.Join(tc.initialPosition.Pair, traderAddr), tc.initialPosition)
-			testapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1e12)))
+			testapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1e18)))
+			testapp.FundModuleAccount(app.BankKeeper, ctx, types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1e18)))
 
 			t.Log("close position")
 			resp, err := app.PerpKeeperV2.ClosePosition(
