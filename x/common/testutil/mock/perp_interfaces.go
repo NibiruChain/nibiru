@@ -290,6 +290,20 @@ func (m *MockPerpAmmKeeper) EXPECT() *MockPerpAmmKeeperMockRecorder {
 	return m.recorder
 }
 
+// EditPoolPegMultiplier mocks base method.
+func (m *MockPerpAmmKeeper) EditPoolPegMultiplier(arg0 types1.Context, arg1 asset.Pair, arg2 types1.Dec) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EditPoolPegMultiplier", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// EditPoolPegMultiplier indicates an expected call of EditPoolPegMultiplier.
+func (mr *MockPerpAmmKeeperMockRecorder) EditPoolPegMultiplier(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EditPoolPegMultiplier", reflect.TypeOf((*MockPerpAmmKeeper)(nil).EditPoolPegMultiplier), arg0, arg1, arg2)
+}
+
 // ExistsPool mocks base method.
 func (m *MockPerpAmmKeeper) ExistsPool(arg0 types1.Context, arg1 asset.Pair) bool {
 	m.ctrl.T.Helper()
