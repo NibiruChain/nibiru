@@ -1,0 +1,228 @@
+syntax = "proto3";
+
+package nibiru.perp.v2;
+
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos_proto/cosmos.proto";
+import "google/protobuf/duration.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/x/perp/types/v2";
+
+enum Direction {
+  DIRECTION_UNSPECIFIED = 0;
+  LONG = 1;
+  SHORT = 2;
+}
+
+// Enumerates different options of calculating twap.
+enum TwapCalcOption {
+  TWAP_CALC_OPTION_UNSPECIFIED = 0;
+
+  // Spot price from quote asset reserve / base asset reserve
+  SPOT = 1;
+
+  // Swapping with quote assets, output denominated in base assets
+  QUOTE_ASSET_SWAP = 2;
+
+  // Swapping with base assets, output denominated in quote assets
+  BASE_ASSET_SWAP = 3;
+}
+
+message Params {}
+
+message Market {
+  // the trading pair represented by this market
+  // always BASE:QUOTE, e.g. BTC:NUSD or ETH:NUSD
+  string pair = 1 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+
+  // whether or not the market is enabled
+  bool enabled = 2;
+
+  // percentage that a single open or close position can alter the reserve
+  // amounts
+  string price_fluctuation_limit_ratio = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // the max price difference from the oracle that this market can tolerate
+  string max_oracle_spread_ratio = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // the minimum margin ratio which a user must maintain on this market
+  string maintenance_margin_ratio = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // the maximum leverage a user is able to be taken on this market
+  string max_leverage = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // Latest cumulative premium fraction for a given pair.
+  // Calculated once per funding rate interval.
+  // A premium fraction is the difference between mark and index, divided by the
+  // number of payments per day. (mark - index) / # payments in a day
+  string latest_cumulative_premium_fraction = 7 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // the percentage of the notional given to the exchange when trading
+  string exchange_fee_ratio = 8 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // the percentage of the notional transferred to the ecosystem fund when
+  // trading
+  string ecosystem_fund_fee_ratio = 9 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // the percentage of liquidated position that will be
+  // given to out as a reward. Half of the liquidation fee is given to the
+  // liquidator, and the other half is given to the ecosystem fund.
+  string liquidation_fee_ratio = 10 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // the portion of the position size we try to liquidate if the available
+  // margin is higher than liquidation fee
+  string partial_liquidation_ratio = 11 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // specifies the interval on which the funding rate is updated
+  string funding_rate_epoch_id = 12;
+
+  // amount of time to look back for TWAP calculations
+  google.protobuf.Duration twap_lookback_window = 13
+      [ (gogoproto.nullable) = false, (gogoproto.stdduration) = true ];
+
+  // the list of addresses allowed to liquidate a position.
+  repeated string whitelisted_liquidators = 14;
+
+  // the amount of collateral already credited from the ecosystem fund
+  cosmos.base.v1beta1.Coin prepaid_bad_debt = 15;
+}
+
+message AMM {
+  // identifies the market this AMM belongs to
+  string pair = 1 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+
+  // the amount of base reserves this AMM has
+  string base_reserve = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // the amount of quote reserves this AMM has
+  string quote_reserve = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // sqrt(k)
+  string sqrt_depth = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // the price multiplier of the dynamic AMM
+  string price_multiplier = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // Bias refers to the net long-short bias of the market. The bias of a pool
+  // is equivalent to the sum of all base reserve changes since its creation.
+  string bias = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message Position {
+  // address identifies the address owner of this position
+  string trader_address = 1;
+
+  // pair identifies the pair associated with this position
+  string pair = 2 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+
+  // the position size
+  string size = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // amount of margin remaining in the position
+  string margin = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // value of position in quote assets when opened
+  string open_notional = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // The most recent cumulative premium fraction this position has.
+  // Used to calculate the next funding payment.
+  string latest_cumulative_premium_fraction = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // last block number this position was updated
+  int64 last_updated_block_number = 7;
+}
+
+// Stores perp metrics for each pair
+message Metrics {
+  // Pair identifier for the two assets. Always in format 'base:quote'
+  string pair = 1 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+
+  // Sum of all active position sizes for the pair.
+  string net_size = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // Total notional volume for the pair.
+  string volumeQuote = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // Total size volume for the pair.
+  string volumeBase = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
