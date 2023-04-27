@@ -908,3 +908,80 @@ func TestMarketConfigWith(t *testing.T) {
 
 	testutil.RunFunctionTests(t, testCases)
 }
+
+func TestGetRepegCost(t *testing.T) {
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	tests := []struct {
+		name string
+
+		initialMarket Market
+		newPeg        sdk.Dec
+
+		expectedCost sdk.Dec
+		shouldErr    bool
+	}{
+		{name: "zero bias -> zero cost",
+			initialMarket: Market{
+				Pair:          pair,
+				BaseReserve:   sdk.NewDec(100),
+				QuoteReserve:  sdk.NewDec(100),
+				PegMultiplier: sdk.OneDec(),
+				Bias:          sdk.ZeroDec(),
+			},
+			newPeg:       sdk.NewDec(3),
+			expectedCost: sdk.ZeroDec(),
+			shouldErr:    false,
+		},
+		{name: "same peg -> zero cost",
+			initialMarket: Market{
+				Pair:          pair,
+				BaseReserve:   sdk.NewDec(100),
+				QuoteReserve:  sdk.NewDec(100),
+				PegMultiplier: sdk.OneDec(),
+				Bias:          sdk.NewDec(20),
+			},
+			newPeg:       sdk.OneDec(),
+			expectedCost: sdk.ZeroDec(),
+			shouldErr:    false,
+		},
+		{name: "new peg -> simple math",
+			initialMarket: Market{
+				Pair:          pair,
+				BaseReserve:   sdk.NewDec(100),
+				QuoteReserve:  sdk.NewDec(100),
+				PegMultiplier: sdk.OneDec(),
+				Bias:          sdk.NewDec(25), // Bias in quote should be 20
+			},
+			newPeg:       sdk.NewDec(2),
+			expectedCost: sdk.NewDec(20), // 20 * (2 - 1)
+			shouldErr:    false,
+		},
+		{name: "new peg -> simple math but negative bias",
+			initialMarket: Market{
+				Pair:          pair,
+				BaseReserve:   sdk.NewDec(100),
+				QuoteReserve:  sdk.NewDec(100),
+				PegMultiplier: sdk.OneDec(),
+				Bias:          sdk.NewDec(-20), // Bias in quote should be -20
+			},
+			newPeg:       sdk.NewDec(2),
+			expectedCost: sdk.NewDec(-25), // -20 * (2 - 1)
+			shouldErr:    false,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			market := tc.initialMarket
+
+			cost, err := market.GetRepegCost(tc.newPeg)
+			if tc.shouldErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				assert.EqualValues(t, tc.expectedCost, cost)
+			}
+		})
+	}
+}
