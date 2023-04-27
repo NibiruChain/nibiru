@@ -350,38 +350,7 @@ func NewNibiruApp(
 	bApp.SetVersion(version.Version)
 	bApp.SetInterfaceRegistry(interfaceRegistry)
 
-	keys := sdk.NewKVStoreKeys(
-		authtypes.StoreKey,
-		banktypes.StoreKey,
-		stakingtypes.StoreKey,
-		distrtypes.StoreKey,
-		slashingtypes.StoreKey,
-		govtypes.StoreKey,
-		paramstypes.StoreKey,
-		upgradetypes.StoreKey,
-		feegrant.StoreKey,
-		evidencetypes.StoreKey,
-		capabilitytypes.StoreKey,
-		authzkeeper.StoreKey,
-
-		// ibc keys
-		ibchost.StoreKey,
-		ibctransfertypes.StoreKey,
-		ibcfeetypes.StoreKey,
-
-		// nibiru x/ keys
-		spottypes.StoreKey,
-		stablecointypes.StoreKey,
-		oracletypes.StoreKey,
-		epochstypes.StoreKey,
-		perptypes.StoreKey,
-		perpammtypes.StoreKey,
-		inflationtypes.StoreKey,
-		wasm.StoreKey,
-	)
-	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
-	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey, stablecointypes.MemStoreKey)
-
+	keys, tkeys, memKeys := StoreKeys()
 	app := &NibiruApp{
 		BaseApp:           bApp,
 		legacyAmino:       legacyAmino,

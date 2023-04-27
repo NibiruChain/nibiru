@@ -1,0 +1,368 @@
+package app
+
+import (
+	"path/filepath"
+
+	ibcmock "github.com/cosmos/ibc-go/v4/testing/mock"
+
+	"github.com/CosmWasm/wasmd/x/wasm"
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
+	"github.com/cosmos/cosmos-sdk/codec"
+	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
+	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	crisiskeeper "github.com/cosmos/cosmos-sdk/x/crisis/keeper"
+	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
+	distr "github.com/cosmos/cosmos-sdk/x/distribution"
+	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	evidencekeeper "github.com/cosmos/cosmos-sdk/x/evidence/keeper"
+	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
+	"github.com/cosmos/cosmos-sdk/x/feegrant"
+	feegrantkeeper "github.com/cosmos/cosmos-sdk/x/feegrant/keeper"
+	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/cosmos/cosmos-sdk/x/params"
+	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
+	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
+	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/cosmos/cosmos-sdk/x/upgrade"
+	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	ibcfee "github.com/cosmos/ibc-go/v4/modules/apps/29-fee"
+	ibcfeekeeper "github.com/cosmos/ibc-go/v4/modules/apps/29-fee/keeper"
+	ibcfeetypes "github.com/cosmos/ibc-go/v4/modules/apps/29-fee/types"
+	ibctransfer "github.com/cosmos/ibc-go/v4/modules/apps/transfer"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v4/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
+	ibcclient "github.com/cosmos/ibc-go/v4/modules/core/02-client"
+	ibcclienttypes "github.com/cosmos/ibc-go/v4/modules/core/02-client/types"
+	porttypes "github.com/cosmos/ibc-go/v4/modules/core/05-port/types"
+	ibchost "github.com/cosmos/ibc-go/v4/modules/core/24-host"
+	ibckeeper "github.com/cosmos/ibc-go/v4/modules/core/keeper"
+
+	epochskeeper "github.com/NibiruChain/nibiru/x/epochs/keeper"
+	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
+	inflationkeeper "github.com/NibiruChain/nibiru/x/inflation/keeper"
+	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
+	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
+	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
+	perpamm "github.com/NibiruChain/nibiru/x/perp/amm"
+	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
+	spotkeeper "github.com/NibiruChain/nibiru/x/spot/keeper"
+	spottypes "github.com/NibiruChain/nibiru/x/spot/types"
+	stablecoinkeeper "github.com/NibiruChain/nibiru/x/stablecoin/keeper"
+	stablecointypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
+)
+
+func StoreKeys() (
+	keys map[string]*sdk.KVStoreKey,
+	tkeys map[string]*sdk.TransientStoreKey,
+	memKeys map[string]*sdk.MemoryStoreKey,
+) {
+	keys = sdk.NewKVStoreKeys(
+		authtypes.StoreKey,
+		banktypes.StoreKey,
+		stakingtypes.StoreKey,
+		distrtypes.StoreKey,
+		slashingtypes.StoreKey,
+		govtypes.StoreKey,
+		paramstypes.StoreKey,
+		upgradetypes.StoreKey,
+		feegrant.StoreKey,
+		evidencetypes.StoreKey,
+		capabilitytypes.StoreKey,
+		authzkeeper.StoreKey,
+
+		// ibc keys
+		ibchost.StoreKey,
+		ibctransfertypes.StoreKey,
+		ibcfeetypes.StoreKey,
+
+		// nibiru x/ keys
+		spottypes.StoreKey,
+		stablecointypes.StoreKey,
+		oracletypes.StoreKey,
+		epochstypes.StoreKey,
+		perptypes.StoreKey,
+		perpammtypes.StoreKey,
+		inflationtypes.StoreKey,
+		wasm.StoreKey,
+	)
+	tkeys = sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
+	memKeys = sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey, stablecointypes.MemStoreKey)
+	return keys, tkeys, memKeys
+}
+
+func (app *NibiruApp) InitKeepers(
+	skipUpgradeHeights map[int64]bool,
+	homePath string,
+	appOpts servertypes.AppOptions,
+) {
+	var appCodec codec.Codec = app.appCodec
+	var legacyAmino *codec.LegacyAmino = app.legacyAmino
+	var bApp *baseapp.BaseApp = app.BaseApp
+
+	keys := app.keys
+	tkeys := app.tkeys
+	memKeys := app.memKeys
+
+	app.paramsKeeper = initParamsKeeper(
+		appCodec, legacyAmino, keys[paramstypes.StoreKey],
+		tkeys[paramstypes.TStoreKey],
+	)
+
+	// set the BaseApp's parameter store
+	bApp.SetParamStore(app.paramsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramskeeper.ConsensusParamsKeyTable()))
+
+	/* Add capabilityKeeper and ScopeToModule for the ibc module
+	   This allows authentication of object-capability permissions for each of
+	   the IBC channels.
+	*/
+	app.capabilityKeeper = capabilitykeeper.NewKeeper(appCodec, keys[capabilitytypes.StoreKey], memKeys[capabilitytypes.MemStoreKey])
+	app.scopedIBCKeeper = app.capabilityKeeper.ScopeToModule(ibchost.ModuleName)
+	scopedFeeMockKeeper := app.capabilityKeeper.ScopeToModule(MockFeePort)
+	app.scopedTransferKeeper = app.capabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
+
+	// NOTE: the IBC mock keeper and application module is used only for testing core IBC. Do
+	// not replicate if you do not need to test core IBC or light clients.
+	_ = app.capabilityKeeper.ScopeToModule(ibcmock.ModuleName)
+
+	// seal capability keeper after scoping modules
+	//app.capabilityKeeper.Seal()
+
+	// add keepers
+	app.AccountKeeper = authkeeper.NewAccountKeeper(
+		appCodec, keys[authtypes.StoreKey], app.GetSubspace(authtypes.ModuleName), authtypes.ProtoBaseAccount, maccPerms,
+	)
+	app.BankKeeper = bankkeeper.NewBaseKeeper(
+		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.ModuleAccountAddrs(),
+	)
+	stakingKeeper := stakingkeeper.NewKeeper(
+		appCodec, keys[stakingtypes.StoreKey], app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName),
+	)
+	app.DistrKeeper = distrkeeper.NewKeeper(
+		appCodec, keys[distrtypes.StoreKey], app.GetSubspace(distrtypes.ModuleName), app.AccountKeeper, app.BankKeeper,
+		&stakingKeeper, authtypes.FeeCollectorName, app.ModuleAccountAddrs(),
+	)
+	app.slashingKeeper = slashingkeeper.NewKeeper(
+		appCodec, keys[slashingtypes.StoreKey], &stakingKeeper, app.GetSubspace(slashingtypes.ModuleName),
+	)
+
+	invCheckPeriod := app.invCheckPeriod
+	app.crisisKeeper = crisiskeeper.NewKeeper(
+		app.GetSubspace(crisistypes.ModuleName), invCheckPeriod, app.BankKeeper, authtypes.FeeCollectorName,
+	)
+
+	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(appCodec, keys[feegrant.StoreKey], app.AccountKeeper)
+
+	/*upgradeKeeper must be created before ibcKeeper. */
+	app.upgradeKeeper = upgradekeeper.NewKeeper(
+		skipUpgradeHeights,
+		keys[upgradetypes.StoreKey],
+		appCodec,
+		homePath,
+		app.BaseApp)
+
+	// register the staking hooks
+	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
+	app.stakingKeeper = *stakingKeeper.SetHooks(
+		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.slashingKeeper.Hooks()),
+	)
+
+	app.authzKeeper = authzkeeper.NewKeeper(keys[authzkeeper.StoreKey], appCodec, app.BaseApp.MsgServiceRouter())
+
+	// ---------------------------------- Nibiru Chain x/ keepers
+
+	app.SpotKeeper = spotkeeper.NewKeeper(
+		appCodec, keys[spottypes.StoreKey], app.GetSubspace(spottypes.ModuleName),
+		app.AccountKeeper, app.BankKeeper, app.DistrKeeper)
+
+	app.OracleKeeper = oraclekeeper.NewKeeper(appCodec, keys[oracletypes.StoreKey], app.GetSubspace(oracletypes.ModuleName),
+		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.stakingKeeper, distrtypes.ModuleName,
+	)
+
+	app.StablecoinKeeper = stablecoinkeeper.NewKeeper(
+		appCodec, keys[stablecointypes.StoreKey], memKeys[stablecointypes.MemStoreKey],
+		app.GetSubspace(stablecointypes.ModuleName),
+		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.SpotKeeper,
+	)
+
+	app.PerpAmmKeeper = perpammkeeper.NewKeeper(
+		appCodec,
+		keys[perpammtypes.StoreKey],
+		app.OracleKeeper,
+	)
+
+	app.EpochsKeeper = epochskeeper.NewKeeper(
+		appCodec, keys[epochstypes.StoreKey],
+	)
+
+	app.PerpKeeper = perpkeeper.NewKeeper(
+		appCodec, keys[perptypes.StoreKey],
+		app.GetSubspace(perptypes.ModuleName),
+		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.PerpAmmKeeper, app.EpochsKeeper,
+	)
+
+	app.InflationKeeper = inflationkeeper.NewKeeper(
+		appCodec, keys[inflationtypes.StoreKey], app.GetSubspace(inflationtypes.ModuleName),
+		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.stakingKeeper, authtypes.FeeCollectorName,
+	)
+
+	app.EpochsKeeper.SetHooks(
+		epochstypes.NewMultiEpochHooks(app.StablecoinKeeper.Hooks(), app.PerpKeeper.Hooks(), app.InflationKeeper.Hooks()),
+	)
+
+	// ---------------------------------- IBC keepers
+
+	app.ibcKeeper = ibckeeper.NewKeeper(
+		appCodec,
+		keys[ibchost.StoreKey],
+		app.GetSubspace(ibchost.ModuleName),
+		app.stakingKeeper,
+		app.upgradeKeeper,
+		app.scopedIBCKeeper,
+	)
+
+	// IBC Fee Module keeper
+	app.ibcFeeKeeper = ibcfeekeeper.NewKeeper(
+		appCodec, keys[ibcfeetypes.StoreKey], app.GetSubspace(ibcfeetypes.ModuleName),
+		app.ibcKeeper.ChannelKeeper, // may be replaced with IBC middleware
+		app.ibcKeeper.ChannelKeeper,
+		&app.ibcKeeper.PortKeeper, app.AccountKeeper, app.BankKeeper,
+	)
+
+	scopedWasmKeeper := app.capabilityKeeper.ScopeToModule(wasm.ModuleName)
+
+	wasmDir := filepath.Join(homePath, "data")
+	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
+	if err != nil {
+		panic("error while reading wasm config: " + err.Error())
+	}
+
+	// The last arguments can contain custom message handlers, and custom query handlers,
+	// if we want to allow any custom callbacks
+	//
+	// NOTE: This keeper depends on all of pointers to the the Keepers to which
+	// it binds. Thus, it must be instantiated after those keepers have been
+	// assigned.
+	// For example, if there are bindings for the x/perp module, then the app
+	// passed to GetWasmOpts must already have a non-nil PerpKeeper.
+	supportedFeatures := "iterator,staking,stargate"
+	app.WasmKeeper = wasm.NewKeeper(
+		appCodec,
+		keys[wasm.StoreKey],
+		app.GetSubspace(wasm.ModuleName),
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.stakingKeeper,
+		app.DistrKeeper,
+		app.ibcKeeper.ChannelKeeper,
+		&app.ibcKeeper.PortKeeper,
+		scopedWasmKeeper,
+		app.transferKeeper,
+		app.MsgServiceRouter(),
+		app.GRPCQueryRouter(),
+		wasmDir,
+		wasmConfig,
+		supportedFeatures,
+		GetWasmOpts(*app, appOpts)...,
+	)
+
+	// register the proposal types
+
+	govRouter := govtypes.NewRouter()
+	govRouter.
+		AddRoute(govtypes.RouterKey, govtypes.ProposalHandler).
+		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.paramsKeeper)).
+		AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.DistrKeeper)).
+		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.upgradeKeeper)).
+		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.ibcKeeper.ClientKeeper)).
+		AddRoute(perpammtypes.RouterKey, perpamm.NewMarketProposalHandler(app.PerpAmmKeeper))
+
+	// Create evidence keeper.
+	// This keeper automatically includes an evidence router.
+	app.evidenceKeeper = *evidencekeeper.NewKeeper(
+		appCodec, keys[evidencetypes.StoreKey], &app.stakingKeeper,
+		app.slashingKeeper,
+	)
+
+	/* Create IBC module and a static IBC router */
+	ibcRouter := porttypes.NewRouter()
+
+	app.transferKeeper = ibctransferkeeper.NewKeeper(
+		appCodec,
+		keys[ibctransfertypes.StoreKey],
+		/* paramSubspace */ app.GetSubspace(ibctransfertypes.ModuleName),
+		/* ibctransfertypes.ICS4Wrapper */ app.ibcFeeKeeper,
+		/* ibctransfertypes.ChannelKeeper */ app.ibcKeeper.ChannelKeeper,
+		/* ibctransfertypes.PortKeeper */ &app.ibcKeeper.PortKeeper,
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.scopedTransferKeeper,
+	)
+
+	// Mock Module setup for testing IBC and also acts as the interchain accounts authentication module
+	// NOTE: the IBC mock keeper and application module is used only for testing core IBC. Do
+	// not replicate if you do not need to test core IBC or light clients.
+	mockModule := ibcmock.NewAppModule(&app.ibcKeeper.PortKeeper)
+
+	// Create Transfer Stack
+	// SendPacket, since it is originating from the application to core IBC:
+	// transferKeeper.SendPacket -> fee.SendPacket -> channel.SendPacket
+
+	// RecvPacket, message that originates from core IBC and goes down to app, the flow is the other way
+	// channel.RecvPacket -> fee.OnRecvPacket -> transfer.OnRecvPacket
+
+	// transfer stack contains (from top to bottom):
+	// - IBC Fee Middleware
+	// - Transfer
+
+	// create IBC module from bottom to top of stack
+	var transferStack porttypes.IBCModule
+	transferStack = ibctransfer.NewIBCModule(app.transferKeeper)
+	transferStack = ibcfee.NewIBCMiddleware(transferStack, app.ibcFeeKeeper)
+
+	// Add transfer stack to IBC Router
+	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferStack)
+
+	// Create Mock IBC Fee module stack for testing
+	// SendPacket, since it is originating from the application to core IBC:
+	// mockModule.SendPacket -> fee.SendPacket -> channel.SendPacket
+
+	// OnRecvPacket, message that originates from core IBC and goes down to app, the flow is the otherway
+	// channel.RecvPacket -> fee.OnRecvPacket -> mockModule.OnRecvPacket
+
+	// OnAcknowledgementPacket as this is where fee's are paid out
+	// mockModule.OnAcknowledgementPacket -> fee.OnAcknowledgementPacket -> channel.OnAcknowledgementPacket
+
+	// create fee wrapped mock module
+	feeMockModule := ibcmock.NewIBCModule(&mockModule, ibcmock.NewMockIBCApp(MockFeePort, scopedFeeMockKeeper))
+	app.FeeMockModule = feeMockModule
+	feeWithMockModule := ibcfee.NewIBCMiddleware(feeMockModule, app.ibcFeeKeeper)
+	ibcRouter.AddRoute(MockFeePort, feeWithMockModule)
+
+	/* SetRouter finalizes all routes by sealing the router.
+	   No more routes can be added. */
+	app.ibcKeeper.SetRouter(ibcRouter)
+
+	app.GovKeeper = govkeeper.NewKeeper(
+		appCodec, keys[govtypes.StoreKey], app.GetSubspace(govtypes.ModuleName),
+		app.AccountKeeper, app.BankKeeper, &app.stakingKeeper, govRouter,
+	)
+
+}
