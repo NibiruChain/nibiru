@@ -18,6 +18,9 @@ import (
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
+	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+	"github.com/cosmos/cosmos-sdk/x/authz"
+	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
@@ -471,4 +474,91 @@ func (app *NibiruApp) AppModules(
 
 		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.stakingKeeper, app.AccountKeeper, app.BankKeeper),
 	}
+}
+
+// OrderedModuleNames: Module names ordered for the begin and end block hooks
+func OrderedModuleNames() []string {
+
+	return []string{
+		// --------------------------------------------------------------------
+		// Cosmos-SDK modules
+		//
+		// NOTE (InitGenesis requirement): Capability module must occur
+		//   first so that it can initialize any capabilities, allowing other
+		//   modules that want to create or claim capabilities afterwards in
+		//   "InitChain" safely.
+		// NOTE (BeginBlocker requirement): Capability module's beginblocker
+		//   must come before any modules using capabilities (e.g. IBC)
+		capabilitytypes.ModuleName,
+		authtypes.ModuleName,
+		banktypes.ModuleName,
+		// NOTE (BeginBlocker requirement): During begin block, x/slashing must
+		//   come after x/distribution so that there won't be anything left over
+		//   in the validator pool. This makes sure that "CanWithdrawInvariant"
+		//   remains invariant.
+		distrtypes.ModuleName,
+		// NOTE (BeginBlocker requirement): staking module is required if
+		//   HistoricalEntries param > 0
+		stakingtypes.ModuleName,
+		slashingtypes.ModuleName,
+		crisistypes.ModuleName,
+		govtypes.ModuleName,
+		genutiltypes.ModuleName,
+		// NOTE (SetOrderInitGenesis requirement): genutils must occur after
+		//   staking so that pools will be properly initialized with tokens from
+		//   genesis accounts.
+		evidencetypes.ModuleName,
+		authz.ModuleName,
+		feegrant.ModuleName,
+		paramstypes.ModuleName,
+		upgradetypes.ModuleName,
+		vestingtypes.ModuleName,
+
+		// --------------------------------------------------------------------
+		// Native x/ Modules
+		epochstypes.ModuleName,
+		stablecointypes.ModuleName,
+		spottypes.ModuleName,
+		oracletypes.ModuleName,
+		perpammtypes.ModuleName,
+		perptypes.ModuleName,
+		inflationtypes.ModuleName,
+
+		// --------------------------------------------------------------------
+		// IBC modules
+		ibchost.ModuleName,
+		ibctransfertypes.ModuleName,
+		ibcfeetypes.ModuleName,
+
+		// --------------------------------------------------------------------
+		// CosmWasm
+		wasm.ModuleName,
+	}
+}
+
+// NOTE: Any module instantiated in the module manager that is later modified
+// must be passed by reference here.
+func (app *NibiruApp) InitModuleManager(
+	encodingConfig simappparams.EncodingConfig,
+	skipGenesisInvariants bool,
+) {
+
+	app.mm = module.NewManager(
+		app.AppModules(encodingConfig, skipGenesisInvariants)...,
+	)
+
+	// Init module orders for hooks and genesis
+	moduleNames := OrderedModuleNames()
+	app.mm.SetOrderBeginBlockers(moduleNames...)
+	app.mm.SetOrderEndBlockers(moduleNames...)
+	app.mm.SetOrderInitGenesis(moduleNames...)
+
+	// Uncomment if you want to set a custom migration order here.
+	// app.mm.SetOrderMigrations(custom order)
+
+	app.mm.RegisterInvariants(&app.crisisKeeper)
+	app.mm.RegisterRoutes(app.Router(), app.QueryRouter(), encodingConfig.Amino)
+	app.configurator = module.NewConfigurator(
+		app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
+	app.mm.RegisterServices(app.configurator)
 }
