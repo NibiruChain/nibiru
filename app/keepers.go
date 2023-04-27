@@ -478,7 +478,6 @@ func (app *NibiruApp) AppModules(
 
 // OrderedModuleNames: Module names ordered for the begin and end block hooks
 func OrderedModuleNames() []string {
-
 	return []string{
 		// --------------------------------------------------------------------
 		// Cosmos-SDK modules
@@ -542,7 +541,6 @@ func (app *NibiruApp) InitModuleManager(
 	encodingConfig simappparams.EncodingConfig,
 	skipGenesisInvariants bool,
 ) {
-
 	app.mm = module.NewManager(
 		app.AppModules(encodingConfig, skipGenesisInvariants)...,
 	)
@@ -561,4 +559,35 @@ func (app *NibiruApp) InitModuleManager(
 	app.configurator = module.NewConfigurator(
 		app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
 	app.mm.RegisterServices(app.configurator)
+}
+
+func (app *NibiruApp) InitSimulationManager(
+	appCodec codec.Codec,
+) {
+	// create the simulation manager and define the order of the modules for deterministic simulations
+	//
+	// NOTE: this is not required apps that don't use the simulator for fuzz testing
+	// transactions
+	epochsModule := epochs.NewAppModule(appCodec, app.EpochsKeeper)
+	app.sm = module.NewSimulationManager(
+		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts),
+		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
+		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
+		gov.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper),
+		staking.NewAppModule(appCodec, app.stakingKeeper, app.AccountKeeper, app.BankKeeper),
+		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.stakingKeeper),
+		slashing.NewAppModule(appCodec, app.slashingKeeper, app.AccountKeeper, app.BankKeeper, app.stakingKeeper),
+		params.NewAppModule(app.paramsKeeper),
+		authzmodule.NewAppModule(appCodec, app.authzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
+		// native x/
+		epochsModule,
+		// ibc
+		capability.NewAppModule(appCodec, *app.capabilityKeeper),
+		evidence.NewAppModule(app.evidenceKeeper),
+		ibc.NewAppModule(app.ibcKeeper),
+		ibctransfer.NewAppModule(app.transferKeeper),
+		ibcfee.NewAppModule(app.ibcFeeKeeper),
+	)
+
+	app.sm.RegisterStoreDecoders()
 }

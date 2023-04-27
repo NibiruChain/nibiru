@@ -11,9 +11,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/suite"
+
 	"github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
-	"github.com/stretchr/testify/suite"
 )
 
 func TestIntegrationTestSuite_RunAll(t *testing.T) {
