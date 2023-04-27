@@ -58,6 +58,32 @@ func (k Keeper) CreatePool(
 	})()
 }
 
+func (k Keeper) EditPoolPegMultiplier(
+	ctx sdk.Context,
+	pair asset.Pair,
+	newPeg sdk.Dec,
+) error {
+	// Grab current pool from state
+	market, err := k.Pools.Get(ctx, pair)
+	if err != nil {
+		return err
+	}
+
+	market.PegMultiplier = newPeg
+	if err := market.Validate(); err != nil {
+		return err
+	}
+
+	err = k.updatePool(
+		ctx,
+		market,
+		/*skipFluctuationLimitCheck*/ true)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (k Keeper) EditPoolConfig(
 	ctx sdk.Context,
 	pair asset.Pair,
