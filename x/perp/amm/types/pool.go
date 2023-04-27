@@ -67,6 +67,11 @@ func (market *Market) GetBaseAmountByQuoteAmount(
 GetRepegCost provides the cost of re-pegging the pool to a new candidate peg multiplier.
 */
 func (market *Market) GetRepegCost(pegCandidate sdk.Dec) (cost sdk.Dec, err error) {
+	if !pegCandidate.IsPositive() {
+		err = ErrNonPositivePegMultiplier
+		return
+	}
+
 	if market.Bias.IsZero() {
 		cost = sdk.ZeroDec()
 		return
@@ -84,14 +89,6 @@ func (market *Market) GetRepegCost(pegCandidate sdk.Dec) (cost sdk.Dec, err erro
 	}
 
 	return
-}
-
-/*
-UpdatePeg updates the peg multiplier of the market
-*/
-func (market *Market) UpdatePeg(newPeg sdk.Dec) (err error) {
-	market.PegMultiplier = newPeg
-	return market.Validate()
 }
 
 /*

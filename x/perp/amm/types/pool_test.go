@@ -985,27 +985,3 @@ func TestGetRepegCost(t *testing.T) {
 		})
 	}
 }
-
-func TestUpdatePeg(t *testing.T) {
-	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
-	market := Market{
-		Pair:          pair,
-		BaseReserve:   sdk.NewDec(100),
-		QuoteReserve:  sdk.NewDec(100),
-		PegMultiplier: sdk.OneDec(),
-		Bias:          sdk.NewDec(-20), // Bias in quote should be -20
-		Config:        *DefaultMarketConfig(),
-		SqrtDepth:     sdk.NewDec(100),
-	}
-
-	err := market.UpdatePeg(sdk.ZeroDec())
-	require.ErrorIs(t, err, ErrNonPositivePegMultiplier)
-
-	err = market.UpdatePeg(sdk.NewDec(-1))
-	require.ErrorIs(t, err, ErrNonPositivePegMultiplier)
-
-	err = market.UpdatePeg(sdk.NewDec(2))
-	require.NoError(t, err)
-
-	require.EqualValues(t, sdk.NewDec(2), market.PegMultiplier)
-}

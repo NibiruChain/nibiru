@@ -30,12 +30,6 @@ func (k Keeper) EditPoolPegMultiplier(ctx sdk.Context, sender sdk.AccAddress, pa
 
 	costInt := cost.Ceil().TruncateInt()
 
-	// Do the re-peg
-	err = pool.UpdatePeg(pegMultiplier)
-	if err != nil {
-		return
-	}
-
 	if costInt.IsPositive() {
 		// Positive cost, send from perp EF to vault
 		err = k.BankKeeper.SendCoinsFromModuleToModule(
@@ -47,7 +41,7 @@ func (k Keeper) EditPoolPegMultiplier(ctx sdk.Context, sender sdk.AccAddress, pa
 			),
 		)
 		if err != nil {
-			return fmt.Errorf("not enough fund to pay for repeg")
+			return types.ErrNotEnoughFundToPayRepeg
 		}
 	} else if costInt.IsNegative() {
 		// Negative cost, send from margin vault to perp ef.
@@ -65,6 +59,12 @@ func (k Keeper) EditPoolPegMultiplier(ctx sdk.Context, sender sdk.AccAddress, pa
 			// It means there's bad debt in the system, and it's preventing to pay for the repeg down. But the bad debt
 			// end up being paid up by the perp EF anyway.
 		}
+	}
+
+	// Do the re-peg
+	err = k.PerpAmmKeeper.EditPoolPegMultiplier(ctx, pair, pegMultiplier)
+	if err != nil {
+		return
 	}
 
 	_ = ctx.EventManager().EmitTypedEvent(&types.PegMultiplierUpdate{ // nolint:errcheck
