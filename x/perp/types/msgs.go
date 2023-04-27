@@ -213,30 +213,3 @@ func (m MsgDonateToEcosystemFund) GetSigners() []sdk.AccAddress {
 	}
 	return []sdk.AccAddress{signer}
 }
-
-// MsgEditPoolPegMultiplier
-
-func (m MsgEditPoolPegMultiplier) Route() string { return RouterKey }
-func (m MsgEditPoolPegMultiplier) Type() string  { return "donate_to_ef_msg" }
-
-func (m MsgEditPoolPegMultiplier) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender address (%s)", err)
-	}
-	if m.PegMultiplier.IsNil() || m.PegMultiplier.IsNegative() {
-		return fmt.Errorf("invalid peg multiplier amount")
-	}
-	return nil
-}
-
-func (m MsgEditPoolPegMultiplier) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
-}
-
-func (m MsgEditPoolPegMultiplier) GetSigners() []sdk.AccAddress {
-	signer, err := sdk.AccAddressFromBech32(m.Sender)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{signer}
-}
