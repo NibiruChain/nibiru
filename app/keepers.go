@@ -5,7 +5,6 @@ import (
 
 	ibcmock "github.com/cosmos/ibc-go/v4/testing/mock"
 
-	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -67,9 +66,12 @@ import (
 	spottypes "github.com/NibiruChain/nibiru/x/spot/types"
 	stablecoinkeeper "github.com/NibiruChain/nibiru/x/stablecoin/keeper"
 	stablecointypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
+
+	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-func StoreKeys() (
+func GetStoreKeys() (
 	keys map[string]*sdk.KVStoreKey,
 	tkeys map[string]*sdk.TransientStoreKey,
 	memKeys map[string]*sdk.MemoryStoreKey,
@@ -112,7 +114,7 @@ func (app *NibiruApp) InitKeepers(
 	skipUpgradeHeights map[int64]bool,
 	homePath string,
 	appOpts servertypes.AppOptions,
-) {
+) (wasmConfig wasmtypes.WasmConfig, scopedWasmKeeper capabilitykeeper.ScopedKeeper) {
 	var appCodec codec.Codec = app.appCodec
 	var legacyAmino *codec.LegacyAmino = app.legacyAmino
 	var bApp *baseapp.BaseApp = app.BaseApp
@@ -246,7 +248,7 @@ func (app *NibiruApp) InitKeepers(
 		&app.ibcKeeper.PortKeeper, app.AccountKeeper, app.BankKeeper,
 	)
 
-	scopedWasmKeeper := app.capabilityKeeper.ScopeToModule(wasm.ModuleName)
+	scopedWasmKeeper = app.capabilityKeeper.ScopeToModule(wasm.ModuleName)
 
 	wasmDir := filepath.Join(homePath, "data")
 	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
@@ -365,4 +367,5 @@ func (app *NibiruApp) InitKeepers(
 		app.AccountKeeper, app.BankKeeper, &app.stakingKeeper, govRouter,
 	)
 
+	return wasmConfig, scopedWasmKeeper
 }
