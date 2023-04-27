@@ -372,9 +372,8 @@ func (market *Market) ValidateLiquidityDepth() error {
 		return ErrLiquidityDepth.Wrap(
 			"liq depth must be positive. pool: " + market.String())
 	} else if !market.SqrtDepth.Sub(computedSqrtDepth).Abs().LTE(sdk.NewDec(1)) {
-		fmt.Println(market.SqrtDepth, computedSqrtDepth)
-		return ErrLiquidityDepth.Wrap(
-			"computed sqrt and current sqrt are mismatched. pool: " + market.String())
+		return fmt.Errorf("%w: market: '%s': computed sqrt is '%s': current sqrt is '%s'",
+			err, market, computedSqrtDepth, market.SqrtDepth)
 	} else {
 		return nil
 	}
