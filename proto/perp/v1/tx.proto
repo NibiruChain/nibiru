@@ -38,6 +38,7 @@ service Msg {
       returns (MsgDonateToEcosystemFundResponse) {
     option (google.api.http).post = "/nibiru/perp/donate_to_ecosystem_fund";
   }
+
 }
 
 // -------------------------- RemoveMargin --------------------------
@@ -264,3 +265,4 @@ message MsgDonateToEcosystemFund {
 }
 
 message MsgDonateToEcosystemFundResponse {}
+

@@ -159,6 +159,92 @@ func TestEditPoolConfig(t *testing.T) {
 	}
 }
 
+func TestEditPoolPegMultiplier(t *testing.T) {
+	testCases := []struct {
+		name             string
+		market           types.Market
+		newPegMultiplier sdk.Dec
+
+		expectedPegMultiplier sdk.Dec
+		expectedError         error
+	}{
+		{
+			name: "happy path",
+			market: types.Market{
+				Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				QuoteReserve:  sdk.NewDec(5 * common.TO_MICRO),
+				BaseReserve:   sdk.NewDec(5 * common.TO_MICRO),
+				PegMultiplier: sdk.NewDec(2),
+				SqrtDepth:     common.MustSqrtDec(sdk.NewDec(5 * 10 * common.TO_MICRO * common.TO_MICRO)),
+				Config:        *types.DefaultMarketConfig(),
+			},
+			newPegMultiplier: sdk.NewDec(3),
+
+			expectedPegMultiplier: sdk.NewDec(3),
+			expectedError:         nil,
+		},
+		{
+			name: "error - peg multiplier is null",
+			market: types.Market{
+				Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				QuoteReserve:  sdk.NewDec(5 * common.TO_MICRO),
+				BaseReserve:   sdk.NewDec(5 * common.TO_MICRO),
+				PegMultiplier: sdk.NewDec(2),
+				SqrtDepth:     common.MustSqrtDec(sdk.NewDec(5 * 10 * common.TO_MICRO * common.TO_MICRO)),
+				Config:        *types.DefaultMarketConfig(),
+			},
+			newPegMultiplier: sdk.NewDec(0),
+
+			expectedError: types.ErrNonPositivePegMultiplier,
+		},
+		{
+			name: "error - peg multiplier is negative",
+			market: types.Market{
+				Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				QuoteReserve:  sdk.NewDec(5 * common.TO_MICRO),
+				BaseReserve:   sdk.NewDec(5 * common.TO_MICRO),
+				PegMultiplier: sdk.NewDec(2),
+				SqrtDepth:     common.MustSqrtDec(sdk.NewDec(5 * 10 * common.TO_MICRO * common.TO_MICRO)),
+				Config:        *types.DefaultMarketConfig(),
+			},
+			newPegMultiplier: sdk.NewDec(-1),
+
+			expectedError: types.ErrNonPositivePegMultiplier,
+		},
+	}
+
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			perpammKeeper, _, ctx := getKeeper(t)
+
+			ctx = ctx.WithBlockHeight(1)
+
+			assert.NoError(t, perpammKeeper.CreatePool(
+				ctx,
+				tc.market.Pair,
+				tc.market.QuoteReserve,
+				tc.market.BaseReserve,
+				tc.market.Config,
+				tc.market.PegMultiplier,
+			))
+
+			ctx = ctx.WithBlockHeight(2)
+
+			err := perpammKeeper.EditPoolPegMultiplier(ctx, tc.market.Pair, tc.newPegMultiplier)
+			assert.Equal(t, tc.expectedError, err)
+
+			market, _ := perpammKeeper.Pools.Get(ctx, tc.market.Pair)
+
+			if tc.expectedError != nil {
+				assert.EqualValues(t, tc.market.PegMultiplier, market.PegMultiplier)
+			} else {
+				assert.EqualValues(t, tc.expectedPegMultiplier, market.PegMultiplier)
+			}
+		})
+	}
+}
+
 func TestGetPoolPrices_SetupErrors(t *testing.T) {
 	testCases := []struct {
 		name string
