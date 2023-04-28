@@ -84,29 +84,22 @@ message PositionChangedEvent {
   // Bad debt is negative net margin past the liquidation point of a position.
   cosmos.base.v1beta1.Coin bad_debt = 11 [ (gogoproto.nullable) = false ];
 
-  // Mark price, synonymous with mark price in this context, is the quotient of
-  // the quote reserves and base reserves
-  string mark_price = 12 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-
   /* A funding payment made or received by the trader on the current position.
   'fundingPayment' is positive if 'owner' is the sender and negative if 'owner'
   is the receiver of the payment. Its magnitude is abs(vSize * fundingRate).
   Funding payments act to converge the mark price (vPrice) and index price
   (average price on major exchanges).
     */
-  string funding_payment = 13 [
+  string funding_payment = 12 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
   // The block number at which this position was changed.
-  int64 block_height = 14;
+  int64 block_height = 13;
 
   // The block time in unix milliseconds at which this position was changed.
-  int64 block_time_ms = 15;
+  int64 block_time_ms = 14;
 }
 
 // Emitted when a position is liquidated.
@@ -307,13 +300,13 @@ message MetricsEvent {
   ];
 
   // Total notional volume for the pair.
-  string volumeQuote = 3 [
+  string volume_quote = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
   // Total size volume for the pair.
-  string volumeBase = 4 [
+  string volume_base = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
@@ -356,8 +349,8 @@ message ReserveSnapshotSavedEvent {
 }
 
 // A swap on the perp.amm represented by 'pair'.
-// Amounts are negative or positive base on the perspective of the pool, i.e.
-// a negative quote means the trader has gained quote and the perp.amm lost
+// Amounts are negative or positive base on the perspective of the user, i.e.
+// a negative quote means the trader has lost quote and the perp.amm has gained
 // quote.
 message SwapEvent {
   string pair = 1 [
@@ -367,13 +360,13 @@ message SwapEvent {
   ];
 
   // delta in the quote reserves of the perp.amm
-  string quote_amount = 2 [
+  string quote_reserve = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
   // delta in the base reserves of the perp.amm
-  string base_amount = 3 [
+  string base_reserve = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
