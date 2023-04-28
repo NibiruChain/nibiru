@@ -45,9 +45,7 @@ func ZeroPosition(ctx sdk.Context, tokenPair asset.Pair, traderAddr sdk.AccAddre
 }
 
 func (l *LiquidateResp) Validate() error {
-	nilFieldError := fmt.Errorf(
-		`invalid liquidationOutput: %v,
-				must not have nil fields`, l.String())
+	nilFieldError := fmt.Errorf("invalid liquidationOutput, must not have nil fields")
 
 	// nil sdk.Int check
 	for _, field := range []sdk.Int{
