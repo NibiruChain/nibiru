@@ -90,10 +90,11 @@ func (q queryServer) position(ctx sdk.Context, pair asset.Pair, trader sdk.AccAd
 		return nil, err
 	}
 
-	positionNotional, unrealizedPnl, err := q.k.getPositionNotionalAndUnrealizedPnL(ctx, market, amm, position, types.PnLCalcOption_SPOT_PRICE)
+	positionNotional, err := PositionNotionalSpot(amm, position)
 	if err != nil {
 		return nil, err
 	}
+	unrealizedPnl := UnrealizedPnl(position, positionNotional)
 
 	marginRatioMark, err := q.k.GetMarginRatio(ctx, market, amm, position, types.MarginCalculationPriceOption_MAX_PNL)
 	if err != nil {
@@ -148,7 +149,7 @@ func (q queryServer) CumulativePremiumFraction(
 		return nil, status.Errorf(codes.FailedPrecondition, "twap index price for pair: %s is zero", req.Pair)
 	}
 
-	markTwap, err := q.k.GetMarkPriceTWAP(ctx, req.Pair, market.TwapLookbackWindow)
+	markTwap, err := q.k.MarkPriceTWAP(ctx, req.Pair, market.TwapLookbackWindow)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "failed to fetch twap mark price for pair: %s", req.Pair)
 	}

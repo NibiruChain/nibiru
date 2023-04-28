@@ -30,7 +30,7 @@ func (k Keeper) SettlePosition(
 	}
 
 	// run calculations on settled values
-	settlementPrice, err := k.GetMarkPriceTWAP(ctx, currentPosition.Pair, market.TwapLookbackWindow)
+	settlementPrice, err := k.MarkPriceTWAP(ctx, currentPosition.Pair, market.TwapLookbackWindow)
 	if err != nil {
 		return sdk.NewCoins(), err
 	}

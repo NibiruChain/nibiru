@@ -5,17 +5,16 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/perp/types"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
 type RemainingMarginWithFundingPayment struct {
-	// Margin: amount of quote token (y) backing the position.
-	Margin sdk.Dec
+	// MarginAbs: amount of quote token (y) backing the position.
+	MarginAbs sdk.Dec
 
-	/* BadDebt: Bad debt (margin units) cleared by the PerpEF during the tx.
+	/* BadDebtAbs: Bad debt (margin units) cleared by the PerpEF during the tx.
 	   Bad debt is negative net margin past the liquidation point of a position. */
-	BadDebt sdk.Dec
+	BadDebtAbs sdk.Dec
 
 	/* FundingPayment: A funding payment (margin units) made or received by the trader on
 	    the current position. 'fundingPayment' is positive if 'owner' is the sender
@@ -29,7 +28,7 @@ type RemainingMarginWithFundingPayment struct {
 func (r RemainingMarginWithFundingPayment) String() string {
 	return fmt.Sprintf(
 		"RemainingMarginWithFundingPayment{Margin: %s, FundingPayment: %s, PrepaidBadDebt: %s}",
-		r.Margin, r.FundingPayment, r.BadDebt,
+		r.MarginAbs, r.FundingPayment, r.BadDebtAbs,
 	)
 }
 
@@ -52,11 +51,11 @@ func CalcRemainMarginWithFundingPayment(
 	if remainingMargin.IsNegative() {
 		// the remaining margin is negative, liquidators didn't do their job
 		// and we have negative margin that must come out of the ecosystem fund
-		remaining.BadDebt = remainingMargin.Abs()
-		remaining.Margin = sdk.ZeroDec()
+		remaining.BadDebtAbs = remainingMargin.Abs()
+		remaining.MarginAbs = sdk.ZeroDec()
 	} else {
-		remaining.Margin = remainingMargin.Abs()
-		remaining.BadDebt = sdk.ZeroDec()
+		remaining.MarginAbs = remainingMargin.Abs()
+		remaining.BadDebtAbs = sdk.ZeroDec()
 	}
 
 	return remaining, err
@@ -78,20 +77,23 @@ position without making it go underwater.
 - err: error
 */
 func (k Keeper) calcFreeCollateral(
-	ctx sdk.Context, market v2types.Market, amm v2types.AMM, pos v2types.Position,
-) (freeCollateral sdk.Dec, err error) {
-	positionNotional, unrealizedPnL, err := k.
-		getPositionNotionalAndUnrealizedPnL(
-			ctx,
-			market,
-			amm,
-			pos,
-			types.PnLCalcOption_SPOT_PRICE,
-		)
+	ctx sdk.Context, market v2types.Market, amm v2types.AMM, position v2types.Position,
+) (freeCollateralSigned sdk.Dec, err error) {
+	spotNotional, err := PositionNotionalSpot(amm, position)
 	if err != nil {
-		return
+		return sdk.Dec{}, err
 	}
-	remainingMargin := sdk.MinDec(pos.Margin, pos.Margin.Add(unrealizedPnL))
-	maintenanceMarginRequirement := positionNotional.Mul(market.MaintenanceMarginRatio)
-	return remainingMargin.Sub(maintenanceMarginRequirement), nil
+	twapNotional, err := k.PositionNotionalTWAP(ctx, market, amm, position)
+	if err != nil {
+		return sdk.Dec{}, err
+	}
+	positionNotional := sdk.MinDec(spotNotional, twapNotional)
+	unrealizedPnlSigned := UnrealizedPnl(position, positionNotional)
+
+	maintenanceMarginRequirementAbs := positionNotional.Mul(market.MaintenanceMarginRatio)
+
+	// account for negative unrealizedPnl
+	remainingMarginSigned := sdk.MinDec(position.Margin, position.Margin.Add(unrealizedPnlSigned))
+
+	return remainingMarginSigned.Sub(maintenanceMarginRequirementAbs), nil
 }

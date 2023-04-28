@@ -10,7 +10,7 @@ import (
 )
 
 /*
-GetMarkPriceTWAP
+MarkPriceTWAP
 Returns the twap of the spot price (y/x).
 
 args:
@@ -24,7 +24,7 @@ ret:
   - quoteAssetAmount: the amount of quote asset to make the desired move, as sdk.Dec
   - err: error
 */
-func (k Keeper) GetMarkPriceTWAP(
+func (k Keeper) MarkPriceTWAP(
 	ctx sdk.Context,
 	pair asset.Pair,
 	lookbackInterval time.Duration,
@@ -40,7 +40,7 @@ func (k Keeper) GetMarkPriceTWAP(
 }
 
 /*
-GetBaseAssetTWAP
+BaseAssetTWAP
 Returns the amount of quote assets required to achieve a move of baseAssetAmount in a direction,
 based on historical snapshots.
 e.g. if removing <baseAssetAmount> base assets from the pool, returns the amount of quote assets do so.
@@ -56,7 +56,7 @@ ret:
   - quoteAssetAmount: the amount of quote asset to make the desired move, as sdk.Dec
   - err: error
 */
-func (k Keeper) GetBaseAssetTWAP(
+func (k Keeper) BaseAssetTWAP(
 	ctx sdk.Context,
 	pair asset.Pair,
 	direction v2types.Direction,

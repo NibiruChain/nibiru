@@ -158,8 +158,8 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 
 			remaining, err := CalcRemainMarginWithFundingPayment(tc.position, tc.marginDelta, *tc.market)
 			require.NoError(t, err)
-			assert.EqualValues(t, tc.expectedMargin, remaining.Margin)
-			assert.EqualValues(t, tc.expectedBadDebt, remaining.BadDebt)
+			assert.EqualValues(t, tc.expectedMargin, remaining.MarginAbs)
+			assert.EqualValues(t, tc.expectedBadDebt, remaining.BadDebtAbs)
 			assert.EqualValues(t, tc.expectedFundingPayment, remaining.FundingPayment)
 		})
 	}

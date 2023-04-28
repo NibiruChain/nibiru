@@ -31,7 +31,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64)
 			continue
 		}
 
-		markTwap, err := k.GetMarkPriceTWAP(ctx, market.Pair, market.TwapLookbackWindow)
+		markTwap, err := k.MarkPriceTWAP(ctx, market.Pair, market.TwapLookbackWindow)
 		if err != nil {
 			ctx.Logger().Error("failed to fetch twap mark price", "market.Pair", market.Pair, "error", err)
 			continue

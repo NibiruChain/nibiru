@@ -271,16 +271,11 @@ func (k Keeper) increasePosition(
 		return nil, nil, err
 	}
 
-	positionNotional, unrealizedPnL, err := k.getPositionNotionalAndUnrealizedPnL(
-		ctx,
-		market,
-		*updatedAMM,
-		currentPosition,
-		types.PnLCalcOption_SPOT_PRICE,
-	)
+	positionNotional, err := PositionNotionalSpot(amm, currentPosition)
 	if err != nil {
 		return nil, nil, err
 	}
+	unrealizedPnl := UnrealizedPnl(currentPosition, positionNotional)
 
 	if side == v2types.Direction_LONG {
 		positionResp.ExchangedPositionSize = baseAssetDeltaAbs
@@ -290,16 +285,16 @@ func (k Keeper) increasePosition(
 
 	positionResp.ExchangedNotionalValue = increasedNotional
 	positionResp.PositionNotional = positionNotional.Add(increasedNotional)
-	positionResp.UnrealizedPnlAfter = unrealizedPnL
+	positionResp.UnrealizedPnlAfter = unrealizedPnl
 	positionResp.RealizedPnl = sdk.ZeroDec()
 	positionResp.MarginToVault = marginDeltaAbs
 	positionResp.FundingPayment = remaining.FundingPayment
-	positionResp.BadDebt = remaining.BadDebt
+	positionResp.BadDebt = remaining.BadDebtAbs
 	positionResp.Position = &v2types.Position{
 		TraderAddress:                   currentPosition.TraderAddress,
 		Pair:                            currentPosition.Pair,
 		Size_:                           currentPosition.Size_.Add(positionResp.ExchangedPositionSize),
-		Margin:                          remaining.Margin,
+		Margin:                          remaining.MarginAbs,
 		OpenNotional:                    currentPosition.OpenNotional.Add(increasedNotional),
 		LatestCumulativePremiumFraction: market.LatestCumulativePremiumFraction,
 		LastUpdatedBlockNumber:          ctx.BlockHeight(),
@@ -319,13 +314,7 @@ func (k Keeper) openReversePosition(
 	baseAmtLimit sdk.Dec,
 ) (updatedAMM *v2types.AMM, positionResp *v2types.PositionResp, err error) {
 	notionalToDecreaseBy := leverage.Mul(quoteAssetAmount)
-	currentPositionNotional, _, err := k.getPositionNotionalAndUnrealizedPnL(
-		ctx,
-		market,
-		amm,
-		currentPosition,
-		types.PnLCalcOption_SPOT_PRICE,
-	)
+	currentPositionNotional, err := PositionNotionalSpot(amm, currentPosition)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -400,17 +389,11 @@ func (k Keeper) decreasePosition(
 		MarginToVault: sdk.ZeroDec(),
 	}
 
-	currentPositionNotional, currentUnrealizedPnL, err := k.
-		getPositionNotionalAndUnrealizedPnL(
-			ctx,
-			market,
-			amm,
-			currentPosition,
-			types.PnLCalcOption_SPOT_PRICE,
-		)
+	currentPositionNotional, err := PositionNotionalSpot(amm, currentPosition)
 	if err != nil {
 		return nil, nil, err
 	}
+	currentUnrealizedPnl := UnrealizedPnl(currentPosition, currentPositionNotional)
 
 	updatedAMM, baseAssetDeltaAbs, err := k.SwapQuoteAsset(
 		ctx,
@@ -430,7 +413,7 @@ func (k Keeper) decreasePosition(
 		positionResp.ExchangedPositionSize = baseAssetDeltaAbs.Neg()
 	}
 
-	positionResp.RealizedPnl = currentUnrealizedPnL.Mul(
+	positionResp.RealizedPnl = currentUnrealizedPnl.Mul(
 		positionResp.ExchangedPositionSize.Abs().
 			Quo(currentPosition.Size_.Abs()),
 	)
@@ -444,9 +427,9 @@ func (k Keeper) decreasePosition(
 		return nil, nil, err
 	}
 
-	positionResp.BadDebt = remaining.BadDebt
+	positionResp.BadDebt = remaining.BadDebtAbs
 	positionResp.FundingPayment = remaining.FundingPayment
-	positionResp.UnrealizedPnlAfter = currentUnrealizedPnL.Sub(positionResp.RealizedPnl)
+	positionResp.UnrealizedPnlAfter = currentUnrealizedPnl.Sub(positionResp.RealizedPnl)
 	positionResp.ExchangedNotionalValue = decreasedNotional
 	positionResp.PositionNotional = currentPositionNotional.Sub(decreasedNotional)
 
@@ -469,7 +452,7 @@ func (k Keeper) decreasePosition(
 		TraderAddress:                   currentPosition.TraderAddress,
 		Pair:                            currentPosition.Pair,
 		Size_:                           currentPosition.Size_.Add(positionResp.ExchangedPositionSize),
-		Margin:                          remaining.Margin,
+		Margin:                          remaining.MarginAbs,
 		OpenNotional:                    remainOpenNotional,
 		LatestCumulativePremiumFraction: market.LatestCumulativePremiumFraction,
 		LastUpdatedBlockNumber:          ctx.BlockHeight(),
@@ -632,28 +615,23 @@ func (k Keeper) closePositionEntirely(
 	}
 
 	// calculate unrealized PnL
-	_, unrealizedPnL, err := k.getPositionNotionalAndUnrealizedPnL(
-		ctx,
-		market,
-		amm,
-		currentPosition,
-		types.PnLCalcOption_SPOT_PRICE,
-	)
+	positionNotional, err := PositionNotionalSpot(amm, currentPosition)
 	if err != nil {
 		return nil, nil, err
 	}
+	unrealizedPnl := UnrealizedPnl(currentPosition, positionNotional)
 
-	positionResp.RealizedPnl = unrealizedPnL
+	positionResp.RealizedPnl = unrealizedPnl
 	// calculate remaining margin with funding payment
 	remaining, err := CalcRemainMarginWithFundingPayment(
-		currentPosition, unrealizedPnL, market)
+		currentPosition, unrealizedPnl, market)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	positionResp.BadDebt = remaining.BadDebt
+	positionResp.BadDebt = remaining.BadDebtAbs
 	positionResp.FundingPayment = remaining.FundingPayment
-	positionResp.MarginToVault = remaining.Margin.Neg()
+	positionResp.MarginToVault = remaining.MarginAbs.Neg()
 
 	var sideToTake v2types.Direction
 	// flipped since we are going against the current position

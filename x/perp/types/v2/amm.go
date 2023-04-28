@@ -114,7 +114,7 @@ func (amm *AMM) GetBaseReserveAmt(
 func (amm *AMM) GetQuoteReserveAmt(
 	baseReserveAmt sdk.Dec,
 	dir Direction,
-) (quoteReserveDelta sdk.Dec, err error) {
+) (quoteReserveDeltaAbs sdk.Dec, err error) {
 	if baseReserveAmt.LTE(sdk.ZeroDec()) {
 		return sdk.ZeroDec(), nil
 	}
@@ -136,9 +136,9 @@ func (amm *AMM) GetQuoteReserveAmt(
 	}
 
 	quoteReservesAfter := invariant.Quo(baseReservesAfter)
-	quoteReserveDelta = quoteReservesAfter.Sub(amm.QuoteReserve).Abs()
+	quoteReserveDeltaAbs = quoteReservesAfter.Sub(amm.QuoteReserve).Abs()
 
-	return quoteReserveDelta, nil
+	return quoteReserveDeltaAbs, nil
 }
 
 /*
