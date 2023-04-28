@@ -1,20 +1,24 @@
-//go:build norace
-// +build norace
-
+// Alteration of [network/network_test.go](https://github.com/cosmos/cosmos-sdk/blob/v0.45.15/testutil/network/network_test.go)
 package cli_test
 
 import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/testutil/network"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/NibiruChain/nibiru/x/common/testutil/cli"
+	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 )
+
+func TestIntegrationTestSuite_RunAll(t *testing.T) {
+	suite.Run(t, new(IntegrationTestSuite))
+}
 
 type IntegrationTestSuite struct {
 	suite.Suite
 
-	network *network.Network
+	network *cli.Network
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
@@ -29,7 +33,10 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.T().Log("setting up integration test suite")
 
-	s.network = network.New(s.T(), network.DefaultConfig())
+	s.network = cli.NewNetwork(
+		s.T(),
+		cli.BuildNetworkConfig(genesis.NewTestGenesisState()),
+	)
 	s.Require().NotNil(s.network)
 
 	_, err := s.network.WaitForHeight(1)
@@ -42,10 +49,16 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 }
 
 func (s *IntegrationTestSuite) TestNetwork_Liveness() {
-	h, err := s.network.WaitForHeightWithTimeout(10, time.Minute)
-	s.Require().NoError(err, "expected to reach 10 blocks; got %d", h)
+	height, err := s.network.WaitForHeightWithTimeout(4, time.Minute)
+	s.Require().NoError(err, "expected to reach 4 blocks; got %d", height)
 }
 
-func TestIntegrationTestSuite(t *testing.T) {
-	suite.Run(t, new(IntegrationTestSuite))
+func (s *IntegrationTestSuite) TestNetwork_LatestHeight() {
+	height, err := s.network.LatestHeight()
+	s.NoError(err)
+	s.Positive(height)
+
+	sadNetwork := new(cli.Network)
+	_, err = sadNetwork.LatestHeight()
+	s.Error(err)
 }
