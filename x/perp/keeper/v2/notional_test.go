@@ -509,6 +509,59 @@ func TestPositionNotionalOracle(t *testing.T) {
 	}
 }
 
+func TestUnrealizedPnl(t *testing.T) {
+	tests := []struct {
+		name                  string
+		position              v2types.Position
+		positionNotional      sdk.Dec
+		expectedUnrealizedPnl sdk.Dec
+	}{
+		{
+			name: "long position positive pnl",
+			position: v2types.Position{
+				Size_:        sdk.NewDec(10),
+				OpenNotional: sdk.NewDec(10),
+			},
+			positionNotional:      sdk.NewDec(15),
+			expectedUnrealizedPnl: sdk.NewDec(5),
+		},
+		{
+			name: "long position negative pnl",
+			position: v2types.Position{
+				Size_:        sdk.NewDec(10),
+				OpenNotional: sdk.NewDec(10),
+			},
+			positionNotional:      sdk.NewDec(5),
+			expectedUnrealizedPnl: sdk.NewDec(-5),
+		},
+		{
+			name: "short position positive pnl",
+			position: v2types.Position{
+				Size_:        sdk.NewDec(-10),
+				OpenNotional: sdk.NewDec(10),
+			},
+			positionNotional:      sdk.NewDec(5),
+			expectedUnrealizedPnl: sdk.NewDec(5),
+		},
+		{
+			name: "short position negative pnl",
+			position: v2types.Position{
+				Size_:        sdk.NewDec(-10),
+				OpenNotional: sdk.NewDec(10),
+			},
+			positionNotional:      sdk.NewDec(15),
+			expectedUnrealizedPnl: sdk.NewDec(-5),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			assert.EqualValues(t, tc.expectedUnrealizedPnl, keeper.UnrealizedPnl(tc.position, tc.positionNotional))
+		})
+	}
+}
+
 // func TestGetPreferencePositionNotionalAndUnrealizedPnL(t *testing.T) {
 // 	// all tests are assumed long positions with positive pnl for ease of calculation
 // 	// short positions and negative pnl are implicitly correct because of
