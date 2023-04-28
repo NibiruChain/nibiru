@@ -1,11 +1,5 @@
-package cli_test
-
 // Alteration of [network/network_test.go](https://github.com/cosmos/cosmos-sdk/blob/v0.45.15/testutil/network/network_test.go)
-//
-// ```go
-// //go:build norace
-// // +build norace
-// ````
+package cli_test
 
 import (
 	"testing"
