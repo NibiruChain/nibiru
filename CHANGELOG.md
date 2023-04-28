@@ -55,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1255](https://github.com/NibiruChain/nibiru/pull/1255) - feat: add peg multiplier field into vpool, which for now defaults to 1
 * [#1281](https://github.com/NibiruChain/nibiru/pull/1281) - feat: add peg multiplier to the pricing logic
 * [#1291](https://github.com/NibiruChain/nibiru/pull/1291) - refactor(perp)!: add perp v2 state protos
+* [#1296](https://github.com/NibiruChain/nibiru/pull/1296) - refactor(perp)!: update perp v2 state protos
 
 ### Improvements
 
