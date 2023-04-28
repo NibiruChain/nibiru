@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
+	"github.com/NibiruChain/collections"
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
@@ -30,7 +31,7 @@ type TestSuitePerpExecutor struct {
 	nibiru           *app.NibiruApp
 	ctx              sdk.Context
 	contractDeployer sdk.AccAddress
-	exec             binding.IExecutorPerp
+	exec             *binding.ExecutorPerp
 
 	contractPerp sdk.AccAddress
 	ratesMap     map[asset.Pair]sdk.Dec
@@ -97,6 +98,12 @@ func (s *TestSuitePerpExecutor) DoOpenPositionTest(pair asset.Pair) error {
 	}
 
 	_, err := s.exec.OpenPosition(cwMsg, s.ctx)
+	if err != nil {
+		return err
+	}
+	_, err = s.exec.Perp.Positions.Get(
+		s.ctx, collections.Join(pair, s.contractDeployer),
+	)
 	return err
 }
 

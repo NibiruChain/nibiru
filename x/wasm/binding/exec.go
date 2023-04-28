@@ -19,7 +19,7 @@ var _ wasmkeeper.Messenger = (*CustomWasmExecutor)(nil)
 // own custom `DispatchMsg` for CosmWasm execute calls on Nibiru.
 type CustomWasmExecutor struct {
 	Wasm wasmkeeper.Messenger
-	Perp IExecutorPerp
+	Perp *ExecutorPerp
 }
 
 // BindingExecuteMsgWrapper is a n override of CosmosMsg::Custom

@@ -11,23 +11,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 )
 
-type IExecutorPerp interface {
-	OpenPosition(cwMsg *cw_struct.OpenPosition, ctx sdk.Context) (
-		sdkResp *perptypes.MsgOpenPositionResponse, err error,
-	)
-	ClosePosition(cwMsg *cw_struct.ClosePosition, ctx sdk.Context) (
-		sdkResp *perptypes.MsgClosePositionResponse, err error,
-	)
-	AddMargin(cwMsg *cw_struct.AddMargin, ctx sdk.Context) (
-		sdkResp *perptypes.MsgAddMarginResponse, err error,
-	)
-	RemoveMargin(cwMsg *cw_struct.RemoveMargin, ctx sdk.Context) (
-		sdkResp *perptypes.MsgRemoveMarginResponse, err error,
-	)
-}
-
-var _ IExecutorPerp = (*ExecutorPerp)(nil)
-
 type ExecutorPerp struct {
 	Perp perpkeeper.Keeper
 }
