@@ -458,6 +458,57 @@ func TestPositionNotionalTWAP(t *testing.T) {
 	}
 }
 
+func TestPositionNotionalOracle(t *testing.T) {
+	tests := []struct {
+		name             string
+		position         v2types.Position
+		oraclePrice      sdk.Dec
+		expectedNotional sdk.Dec
+	}{
+		{
+			name: "long position",
+			position: v2types.Position{
+				Size_: sdk.NewDec(10),
+				Pair:  asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+			},
+			oraclePrice:      sdk.NewDec(9),
+			expectedNotional: sdk.NewDec(90),
+		},
+		{
+			name: "short position",
+			position: v2types.Position{
+				Size_: sdk.NewDec(-10),
+				Pair:  asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+			},
+			oraclePrice:      sdk.NewDec(9),
+			expectedNotional: sdk.NewDec(90),
+		},
+		{
+			name: "zero position",
+			position: v2types.Position{
+				Size_: sdk.ZeroDec(),
+				Pair:  asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+			},
+			oraclePrice:      sdk.NewDec(9),
+			expectedNotional: sdk.ZeroDec(),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			app, ctx := testapp.NewNibiruTestAppAndContext(true)
+
+			app.OracleKeeper.SetPrice(ctx, tc.position.Pair, tc.oraclePrice)
+
+			notional, err := app.PerpKeeperV2.PositionNotionalOracle(ctx, tc.position)
+
+			require.Nil(t, err)
+			assert.EqualValues(t, tc.expectedNotional, notional)
+		})
+	}
+}
+
 // func TestGetPreferencePositionNotionalAndUnrealizedPnL(t *testing.T) {
 // 	// all tests are assumed long positions with positive pnl for ease of calculation
 // 	// short positions and negative pnl are implicitly correct because of
