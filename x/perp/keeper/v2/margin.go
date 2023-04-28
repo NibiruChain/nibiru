@@ -182,8 +182,7 @@ func (k Keeper) RemoveMargin(
 }
 
 // Returns the margin ratio based on spot price.
-func (k Keeper) GetSpotMarginRatio(
-	ctx sdk.Context,
+func GetSpotMarginRatio(
 	position v2types.Position,
 	positionNotional sdk.Dec,
 	marketLatestCumulativePremiumFraction sdk.Dec,

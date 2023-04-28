@@ -379,8 +379,7 @@ func TestGetSpotMarginRatio(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruTestAppAndContext(true)
-			marginRatio, err := app.PerpKeeperV2.GetSpotMarginRatio(ctx, tc.position, tc.positionNotional, tc.latestCPF)
+			marginRatio, err := keeper.GetSpotMarginRatio(tc.position, tc.positionNotional, tc.latestCPF)
 
 			require.NoError(t, err)
 			assert.EqualValues(t, tc.expectedMarginRatio, marginRatio)

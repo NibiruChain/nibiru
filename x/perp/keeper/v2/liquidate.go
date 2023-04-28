@@ -92,13 +92,13 @@ func (k Keeper) Liquidate(
 		return
 	}
 
-	marginRatioBasedOnSpot, err := k.GetSpotMarginRatio(ctx, position, positionNotional, market.LatestCumulativePremiumFraction)
+	spotMarginRatio, err := GetSpotMarginRatio(position, positionNotional, market.LatestCumulativePremiumFraction)
 	if err != nil {
 		return
 	}
 
 	var liquidationResponse v2types.LiquidateResp
-	if marginRatioBasedOnSpot.GTE(market.LiquidationFeeRatio) {
+	if spotMarginRatio.GTE(market.LiquidationFeeRatio) {
 		liquidationResponse, err = k.ExecutePartialLiquidation(ctx, market, amm, liquidator, &position)
 	} else {
 		liquidationResponse, err = k.ExecuteFullLiquidation(ctx, market, amm, liquidator, &position)
