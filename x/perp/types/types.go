@@ -29,6 +29,7 @@ var (
 	ErrLeverageIsTooHigh                 = sdkerrors.Register(ModuleName, 8, "leverage cannot be higher than market parameter")
 	ErrUnauthorized                      = sdkerrors.Register(ModuleName, 9, "operation not authorized")
 	ErrAllLiquidationsFailed             = sdkerrors.Register(ModuleName, 10, "all liquidations failed")
+	ErrNotEnoughFundToPayRepeg           = sdkerrors.Register(ModuleName, 11, "not enough fund in perp EF to pay for repeg")
 )
 
 func ZeroPosition(ctx sdk.Context, tokenPair asset.Pair, traderAddr sdk.AccAddress) Position {
@@ -44,9 +45,7 @@ func ZeroPosition(ctx sdk.Context, tokenPair asset.Pair, traderAddr sdk.AccAddre
 }
 
 func (l *LiquidateResp) Validate() error {
-	nilFieldError := fmt.Errorf(
-		`invalid liquidationOutput: %v,
-				must not have nil fields`, l.String())
+	nilFieldError := fmt.Errorf("invalid liquidationOutput, must not have nil fields")
 
 	// nil sdk.Int check
 	for _, field := range []sdk.Int{
