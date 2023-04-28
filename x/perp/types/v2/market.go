@@ -15,10 +15,6 @@ func (market *Market) Validate() error {
 		return fmt.Errorf("fluctuation limit ratio must be 0 <= ratio <= 1")
 	}
 
-	if !isPercent(market.MaxOracleSpreadRatio) {
-		return fmt.Errorf("max oracle spread ratio must be 0 <= ratio <= 1")
-	}
-
 	if !isPercent(market.MaintenanceMarginRatio) {
 		return fmt.Errorf("maintenance margin ratio ratio must be 0 <= ratio <= 1")
 	}
