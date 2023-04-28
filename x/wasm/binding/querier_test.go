@@ -185,18 +185,13 @@ func (s *TestSuiteQuerier) TestQueryReserves() {
 			}
 			bindingResp := new(cw_struct.ReservesResponse)
 
-			if testCase.wasmError {
-				_, err := DoCustomBindingQuery(
-					s.ctx, s.nibiru, s.contractPerp,
-					bindingQuery, bindingResp,
-				)
-				s.Assert().Contains(err.Error(), "query wasm contract failed")
-				return
-			}
-
 			_, err := DoCustomBindingQuery(
 				s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
 			)
+			if testCase.wasmError {
+				s.Assert().Contains(err.Error(), "query wasm contract failed")
+				return
+			}
 			s.Require().NoError(err)
 
 			wantPair := asset.MustNewPair(pairStr)

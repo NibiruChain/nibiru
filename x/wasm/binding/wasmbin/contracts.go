@@ -13,14 +13,14 @@ const (
 	// WasmKeyEpochsBinding // for example...
 )
 
-// Returns a relative file path to compile Wasm bytecode. Wasm bytecode refers
+// ToPath Returns a relative file path to compile Wasm bytecode. Wasm bytecode refers
 // to compiled WebAssembly binary format that can be executed on the Wasm VM.
 func (wasmKey WasmKey) ToPath(pathToWasmbin string) string {
 	wasmFileName := WasmBzMap[wasmKey]
 	return strings.Join([]string{pathToWasmbin, wasmFileName}, "/")
 }
 
-// Returns the Wasm bytecode corresponding to the WasmKey. This can be stored
+// ToByteCode Returns the Wasm bytecode corresponding to the WasmKey. This can be stored
 // directly with the WasmKeeper.
 func (wasmKey WasmKey) ToByteCode(pathToWasmbin string) (wasmBytecode []byte, err error) {
 	return os.ReadFile(wasmKey.ToPath(pathToWasmbin))
