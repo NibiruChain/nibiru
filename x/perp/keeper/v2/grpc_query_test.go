@@ -503,7 +503,7 @@ func TestQueryMetrics(t *testing.T) {
 				}
 				app.PerpKeeperV2.OnSwapEnd(
 					ctx,
-					*mock.TestAMM(),
+					*mock.TestAMMDefault(),
 					position.OpenNotional,
 					position.Size_,
 					dir,

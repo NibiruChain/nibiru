@@ -419,7 +419,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			t.Log("initialize market")
 			market := mock.TestMarket()
 			app.PerpKeeperV2.Markets.Insert(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), *market)
-			amm := mock.TestAMM()
+			amm := mock.TestAMMDefault()
 			app.PerpKeeperV2.AMMs.Insert(ctx, amm.Pair, *amm)
 			app.PerpKeeperV2.ReserveSnapshots.Insert(ctx, collections.Join(amm.Pair, ctx.BlockTime()), v2types.ReserveSnapshot{
 				Amm:         *amm,
@@ -623,7 +623,7 @@ func TestOpenPositionError(t *testing.T) {
 			t.Log("initialize market")
 			market := mock.TestMarket()
 			app.PerpKeeperV2.Markets.Insert(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), *market)
-			amm := mock.TestAMM()
+			amm := mock.TestAMMDefault()
 			app.PerpKeeperV2.AMMs.Insert(ctx, amm.Pair, *amm)
 			app.PerpKeeperV2.ReserveSnapshots.Insert(ctx, collections.Join(amm.Pair, ctx.BlockTime()), v2types.ReserveSnapshot{
 				Amm:         *amm,
@@ -796,7 +796,7 @@ func TestClosePosition(t *testing.T) {
 			traderAddr := sdk.MustAccAddressFromBech32(tc.initialPosition.TraderAddress)
 
 			market := mock.TestMarket().WithLatestCumulativePremiumFraction(tc.newLatestCPF)
-			amm := mock.TestAMM().WithPriceMultiplier(tc.newPriceMultiplier)
+			amm := mock.TestAMMDefault().WithPriceMultiplier(tc.newPriceMultiplier)
 			app.PerpKeeperV2.Markets.Insert(ctx, tc.initialPosition.Pair, *market)
 			app.PerpKeeperV2.AMMs.Insert(ctx, tc.initialPosition.Pair, *amm)
 			app.PerpKeeperV2.ReserveSnapshots.Insert(ctx, collections.Join(tc.initialPosition.Pair, ctx.BlockTime()), v2types.ReserveSnapshot{

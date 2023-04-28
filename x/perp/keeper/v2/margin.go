@@ -186,7 +186,11 @@ func (k Keeper) RemoveMargin(
 
 // GetMarginRatio calculates the MarginRatio from a Position
 func (k Keeper) GetMarginRatio(
-	ctx sdk.Context, market v2types.Market, amm v2types.AMM, position v2types.Position, priceOption types.MarginCalculationPriceOption,
+	ctx sdk.Context,
+	market v2types.Market,
+	amm v2types.AMM,
+	position v2types.Position,
+	priceOption types.MarginCalculationPriceOption,
 ) (marginRatio sdk.Dec, err error) {
 	if position.Size_.IsZero() {
 		return sdk.Dec{}, types.ErrPositionZero
@@ -229,8 +233,7 @@ func (k Keeper) GetMarginRatio(
 	}
 	if positionNotional.IsZero() {
 		// NOTE causes division by zero in margin ratio calculation
-		return sdk.Dec{},
-			fmt.Errorf("margin ratio doesn't make sense with zero position notional")
+		return sdk.Dec{}, fmt.Errorf("margin ratio doesn't make sense with zero position notional")
 	}
 
 	remaining, err := CalcRemainMarginWithFundingPayment(
@@ -242,17 +245,8 @@ func (k Keeper) GetMarginRatio(
 		return sdk.Dec{}, err
 	}
 
-	marginRatio = remaining.Margin.Sub(remaining.BadDebt).
-		Quo(positionNotional)
+	marginRatio = remaining.Margin.Sub(remaining.BadDebt).Quo(positionNotional)
 	return marginRatio, nil
-}
-
-func (k Keeper) requireMarket(ctx sdk.Context, pair asset.Pair) (err error) {
-	_, err = k.Markets.Get(ctx, pair)
-	if err != nil {
-		return types.ErrPairNotFound.Wrap(pair.String())
-	}
-	return nil
 }
 
 /*
@@ -328,7 +322,6 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 			/*lookbackInterval=*/ market.TwapLookbackWindow,
 		)
 		if err != nil {
-			k.Logger(ctx).Error(err.Error(), "calc_option", pnlCalcOption.String())
 			return sdk.ZeroDec(), sdk.ZeroDec(), err
 		}
 	case types.PnLCalcOption_SPOT_PRICE:
@@ -341,7 +334,6 @@ func (k Keeper) getPositionNotionalAndUnrealizedPnL(
 	case types.PnLCalcOption_ORACLE:
 		oraclePrice, err := k.OracleKeeper.GetExchangeRate(ctx, position.Pair)
 		if err != nil {
-			k.Logger(ctx).Error(err.Error(), "calc_option", pnlCalcOption.String())
 			return sdk.ZeroDec(), sdk.ZeroDec(), err
 		}
 		positionNotional = oraclePrice.Mul(sizeAbs)
@@ -396,13 +388,6 @@ func (k Keeper) GetPreferencePositionNotionalAndUnrealizedPnL(
 		types.PnLCalcOption_SPOT_PRICE,
 	)
 	if err != nil {
-		k.Logger(ctx).Error(
-			err.Error(),
-			"calc_option",
-			types.PnLCalcOption_SPOT_PRICE.String(),
-			"preference_option",
-			pnLPreferenceOption.String(),
-		)
 		return sdk.Dec{}, sdk.Dec{}, err
 	}
 
@@ -414,13 +399,6 @@ func (k Keeper) GetPreferencePositionNotionalAndUnrealizedPnL(
 		types.PnLCalcOption_TWAP,
 	)
 	if err != nil {
-		k.Logger(ctx).Error(
-			err.Error(),
-			"calc_option",
-			types.PnLCalcOption_TWAP.String(),
-			"preference_option",
-			pnLPreferenceOption.String(),
-		)
 		return sdk.Dec{}, sdk.Dec{}, err
 	}
 

@@ -84,7 +84,7 @@ func TestGetMarginRatio_Errors(t *testing.T) {
 
 				_, err := k.GetMarginRatio(
 					ctx, *mock.TestMarket(),
-					*mock.TestAMM(),
+					*mock.TestAMMDefault(),
 					v2types.Position{Size_: sdk.ZeroDec()},
 					types.MarginCalculationPriceOption_MAX_PNL,
 				)
@@ -162,7 +162,7 @@ func TestGetMarginRatio(t *testing.T) {
 				Return(tc.newPrice, nil)
 
 			marginRatio, err := perpKeeper.GetMarginRatio(
-				ctx, market, *mock.TestAMM(), tc.position, types.MarginCalculationPriceOption_MAX_PNL,
+				ctx, market, *mock.TestAMMDefault(), tc.position, types.MarginCalculationPriceOption_MAX_PNL,
 			)
 
 			require.NoError(t, err)
@@ -917,7 +917,7 @@ func TestGetPositionNotionalAndUnrealizedPnl(t *testing.T) {
 				getPositionNotionalAndUnrealizedPnL(
 					ctx,
 					market,
-					*mock.TestAMM(),
+					*mock.TestAMMDefault(),
 					tc.initialPosition,
 					tc.pnlCalcOption,
 				)
@@ -1091,7 +1091,7 @@ func TestGetPreferencePositionNotionalAndUnrealizedPnL(t *testing.T) {
 				GetPreferencePositionNotionalAndUnrealizedPnL(
 					ctx,
 					market,
-					*mock.TestAMM(),
+					*mock.TestAMMDefault(),
 					tc.initPosition,
 					tc.pnlPreferenceOption,
 				)

@@ -103,7 +103,6 @@ func (q queryServer) position(ctx sdk.Context, pair asset.Pair, trader sdk.AccAd
 	if err != nil {
 		// The index portion of the query fails silently as not to distrupt all
 		// position queries when oracles aren't posting prices.
-		q.k.Logger(ctx).Error(err.Error())
 		marginRatioIndex = sdk.Dec{}
 	}
 

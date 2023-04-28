@@ -28,7 +28,7 @@ func TestSwapQuoteAsset(t *testing.T) {
 			quoteAssetAmt:  sdk.NewDec(0),
 			baseAssetLimit: sdk.NewDec(10),
 
-			expectedAMM: mock.TestAMM().
+			expectedAMM: mock.TestAMMDefault().
 				WithPriceMultiplier(sdk.NewDec(2)),
 			expectedBaseAssetDelta: sdk.ZeroDec(),
 		},
@@ -38,7 +38,7 @@ func TestSwapQuoteAsset(t *testing.T) {
 			quoteAssetAmt:  sdk.NewDec(100_000),
 			baseAssetLimit: sdk.NewDec(49999),
 
-			expectedAMM: mock.TestAMM().
+			expectedAMM: mock.TestAMMDefault().
 				WithQuoteReserve(sdk.NewDec(1_000_000_050_000)).
 				WithBaseReserve(sdk.MustNewDecFromStr("999999950000.002499999875000006")).
 				WithPriceMultiplier(sdk.NewDec(2)).
@@ -51,7 +51,7 @@ func TestSwapQuoteAsset(t *testing.T) {
 			quoteAssetAmt:  sdk.NewDec(100_000),
 			baseAssetLimit: sdk.NewDec(50_001),
 
-			expectedAMM: mock.TestAMM().
+			expectedAMM: mock.TestAMMDefault().
 				WithQuoteReserve(sdk.NewDec(999_999_950_000)).
 				WithBaseReserve(sdk.MustNewDecFromStr("1000000050000.002500000125000006")).
 				WithPriceMultiplier(sdk.NewDec(2)).
@@ -89,7 +89,7 @@ func TestSwapQuoteAsset(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 			market := mock.TestMarket()
-			amm := mock.TestAMM().WithPriceMultiplier(sdk.NewDec(2))
+			amm := mock.TestAMMDefault().WithPriceMultiplier(sdk.NewDec(2))
 			app.OracleKeeper.SetPrice(ctx, market.Pair, sdk.NewDec(2))
 
 			updatedAMM, baseAmt, err := app.PerpKeeperV2.SwapQuoteAsset(
@@ -132,7 +132,7 @@ func TestSwapBaseAsset(t *testing.T) {
 			baseAssetAmt:    sdk.ZeroDec(),
 			quoteAssetLimit: sdk.ZeroDec(),
 
-			expectedAMM: mock.TestAMM().
+			expectedAMM: mock.TestAMMDefault().
 				WithPriceMultiplier(sdk.NewDec(2)),
 			expectedQuoteAssetDelta: sdk.ZeroDec(),
 		},
@@ -142,7 +142,7 @@ func TestSwapBaseAsset(t *testing.T) {
 			baseAssetAmt:    sdk.NewDec(100_000),
 			quoteAssetLimit: sdk.NewDec(200_000),
 
-			expectedAMM: mock.TestAMM().
+			expectedAMM: mock.TestAMMDefault().
 				WithBaseReserve(sdk.NewDec(999999900000)).
 				WithQuoteReserve(sdk.MustNewDecFromStr("1000000100000.010000001000000100")).
 				WithPriceMultiplier(sdk.NewDec((2))).
@@ -156,7 +156,7 @@ func TestSwapBaseAsset(t *testing.T) {
 			quoteAssetLimit: sdk.NewDec(200_000),
 
 			expectedQuoteAssetDelta: sdk.MustNewDecFromStr("199999.980000001999999800"),
-			expectedAMM: mock.TestAMM().
+			expectedAMM: mock.TestAMMDefault().
 				WithBaseReserve(sdk.NewDec(1000000100000)).
 				WithQuoteReserve(sdk.MustNewDecFromStr("999999900000.009999999000000100")).
 				WithPriceMultiplier(sdk.NewDec((2))).
@@ -193,7 +193,7 @@ func TestSwapBaseAsset(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 			market := mock.TestMarket()
-			amm := mock.TestAMM().WithPriceMultiplier(sdk.NewDec(2))
+			amm := mock.TestAMMDefault().WithPriceMultiplier(sdk.NewDec(2))
 			app.OracleKeeper.SetPrice(ctx, market.Pair, sdk.NewDec(2))
 
 			updatedAMM, quoteAssetAmount, err := app.PerpKeeperV2.SwapBaseAsset(

@@ -156,7 +156,7 @@ func TestIncreasePosition(t *testing.T) {
 				return perpKeeper.increasePosition(
 					ctx,
 					v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
-					*mock.TestAMM(),
+					*mock.TestAMMDefault(),
 					initPosition,
 					v2types.Direction_LONG,
 					/*openNotional=*/ sdk.NewDec(100), // NUSD
@@ -232,7 +232,7 @@ func TestIncreasePosition(t *testing.T) {
 				return perpKeeper.increasePosition(
 					ctx,
 					v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
-					*mock.TestAMM(),
+					*mock.TestAMMDefault(),
 					initPosition,
 					v2types.Direction_LONG,
 					/*openNotional=*/ sdk.NewDec(100), // NUSD
@@ -311,7 +311,7 @@ func TestIncreasePosition(t *testing.T) {
 				return perpKeeper.increasePosition(
 					ctx,
 					v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
-					*mock.TestAMM(),
+					*mock.TestAMMDefault(),
 					initPosition,
 					v2types.Direction_LONG,
 					/*openNotional=*/ sdk.NewDec(100), // NUSD
@@ -388,7 +388,7 @@ func TestIncreasePosition(t *testing.T) {
 				return perpKeeper.increasePosition(
 					ctx,
 					v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
-					*mock.TestAMM(),
+					*mock.TestAMMDefault(),
 					initPosition,
 					v2types.Direction_SHORT,
 					/*openNotional=*/ sdk.NewDec(100), // NUSD
@@ -465,7 +465,7 @@ func TestIncreasePosition(t *testing.T) {
 				return perpKeeper.increasePosition(
 					ctx,
 					v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
-					*mock.TestAMM(),
+					*mock.TestAMMDefault(),
 					initPosition,
 					v2types.Direction_SHORT,
 					/*openNotional=*/ sdk.NewDec(100), // NUSD
@@ -545,7 +545,7 @@ func TestIncreasePosition(t *testing.T) {
 				return perpKeeper.increasePosition(
 					ctx,
 					v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
-					*mock.TestAMM(),
+					*mock.TestAMMDefault(),
 					initPosition,
 					v2types.Direction_SHORT,
 					/*openNotional=*/ sdk.NewDec(105), // NUSD
@@ -808,7 +808,7 @@ func TestClosePositionEntirely(t *testing.T) {
 			_, resp, err := perpKeeper.closePositionEntirely(
 				ctx,
 				market,
-				*mock.TestAMM(),
+				*mock.TestAMMDefault(),
 				tc.initialPosition,
 				/*quoteAssetLimit=*/ tc.quoteAssetLimit, // NUSD
 				/* skipFluctuationLimitCheck */ false,
@@ -1109,7 +1109,7 @@ func TestDecreasePosition(t *testing.T) {
 			_, resp, err := perpKeeper.decreasePosition(
 				ctx,
 				v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
-				*mock.TestAMM(),
+				*mock.TestAMMDefault(),
 				tc.initialPosition,
 				/*openNotional=*/ tc.quoteAmountToDecrease, // NUSD
 				/*baseLimit=*/ tc.baseAssetLimit, // BTC
@@ -1522,7 +1522,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 			_, resp, err := perpKeeper.closeAndOpenReversePosition(
 				ctx,
 				v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)},
-				*mock.TestAMM(),
+				*mock.TestAMMDefault(),
 				currentPosition,
 				/*quoteAssetAmount=*/ tc.inputQuoteAmount, // NUSD
 				/*leverage=*/ tc.inputLeverage,

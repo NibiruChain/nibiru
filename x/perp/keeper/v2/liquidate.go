@@ -248,12 +248,6 @@ func (k Keeper) distributeLiquidateRewards(
 	}
 
 	// validate pair
-	pair := liquidateResp.PositionResp.Position.Pair
-	err = k.requireMarket(ctx, pair)
-	if err != nil {
-		return err
-	}
-
 	// --------------------------------------------------------------
 	// Distribution of rewards
 	// --------------------------------------------------------------
@@ -261,8 +255,7 @@ func (k Keeper) distributeLiquidateRewards(
 	// Transfer fee from vault to PerpEF
 	feeToPerpEF := liquidateResp.FeeToPerpEcosystemFund
 	if feeToPerpEF.IsPositive() {
-		coinToPerpEF := sdk.NewCoin(
-			pair.QuoteDenom(), feeToPerpEF)
+		coinToPerpEF := sdk.NewCoin(market.Pair.QuoteDenom(), feeToPerpEF)
 		if err = k.BankKeeper.SendCoinsFromModuleToModule(
 			ctx,
 			/* from */ types.VaultModuleAccount,
