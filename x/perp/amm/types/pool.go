@@ -64,6 +64,34 @@ func (market *Market) GetBaseAmountByQuoteAmount(
 }
 
 /*
+GetRepegCost provides the cost of re-pegging the pool to a new candidate peg multiplier.
+*/
+func (market *Market) GetRepegCost(pegCandidate sdk.Dec) (cost sdk.Dec, err error) {
+	if !pegCandidate.IsPositive() {
+		err = ErrNonPositivePegMultiplier
+		return
+	}
+
+	if market.Bias.IsZero() {
+		cost = sdk.ZeroDec()
+		return
+	}
+
+	biasInQuoteReserve, err := market.GetQuoteReserveByBase(market.Bias)
+	if err != nil {
+		return
+	}
+
+	cost = biasInQuoteReserve.Mul(pegCandidate.Sub(market.PegMultiplier))
+
+	if market.Bias.IsNegative() {
+		cost = cost.Neg()
+	}
+
+	return
+}
+
+/*
 GetQuoteReserveByBase returns the amount of quote asset you will get out
 by giving a specified amount of base asset
 
@@ -94,7 +122,7 @@ func (market *Market) GetQuoteReserveByBase(
 	}
 
 	quoteReservesAfter := invariant.Quo(baseReservesAfter)
-	quoteOutAbs = quoteReservesAfter.Sub(market.QuoteReserve).Abs()
+	quoteOutAbs = quoteReservesAfter.Sub(market.QuoteReserve).Neg().Abs()
 
 	return quoteOutAbs, nil
 }
@@ -287,7 +315,7 @@ func (market *Market) Validate() error {
 	}
 
 	if market.PegMultiplier.LTE(sdk.ZeroDec()) {
-		return fmt.Errorf("peg multiplier must be > 0")
+		return ErrNonPositivePegMultiplier
 	}
 
 	if err := market.Config.Validate(); err != nil {
@@ -344,8 +372,8 @@ func (market *Market) ValidateLiquidityDepth() error {
 		return ErrLiquidityDepth.Wrap(
 			"liq depth must be positive. pool: " + market.String())
 	} else if !market.SqrtDepth.Sub(computedSqrtDepth).Abs().LTE(sdk.NewDec(1)) {
-		return ErrLiquidityDepth.Wrap(
-			"computed sqrt and current sqrt are mismatched. pool: " + market.String())
+		return fmt.Errorf("%w: market: '%s': computed sqrt is '%s': current sqrt is '%s'",
+			err, market, computedSqrtDepth, market.SqrtDepth)
 	} else {
 		return nil
 	}
