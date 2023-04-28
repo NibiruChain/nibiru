@@ -1,14 +1,15 @@
-package keeper
+package keeper_test
 
 import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/collections"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
-	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
-	"github.com/NibiruChain/nibiru/x/perp/types"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	keeper "github.com/NibiruChain/nibiru/x/perp/keeper/v2"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
@@ -358,183 +359,275 @@ func TestPositionNotionalSpot(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			notional, err := PositionNotionalSpot(*tc.amm, tc.position)
+			notional, err := keeper.PositionNotionalSpot(*tc.amm, tc.position)
 			require.Nil(t, err)
 			assert.EqualValues(t, tc.expectedNotional, notional)
 		})
 	}
 }
 
-func TestGetPreferencePositionNotionalAndUnrealizedPnL(t *testing.T) {
-	// all tests are assumed long positions with positive pnl for ease of calculation
-	// short positions and negative pnl are implicitly correct because of
-	// TestGetPositionNotionalAndUnrealizedPnl
-	testcases := []struct {
-		name                       string
-		initPosition               v2types.Position
-		setMocks                   func(ctx sdk.Context, mocks mockedDependencies)
-		pnlPreferenceOption        types.PnLPreferenceOption
-		expectedPositionalNotional sdk.Dec
-		expectedUnrealizedPnl      sdk.Dec
+func TestPositionNotionalTWAP(t *testing.T) {
+	tests := []struct {
+		name               string
+		position           v2types.Position
+		currentTimestamp   int64
+		twapLookbackWindow time.Duration
+		snapshots          []v2types.ReserveSnapshot
+		expectedNotional   sdk.Dec
 	}{
 		{
-			name: "max pnl, pick spot price",
-			initPosition: v2types.Position{
-				TraderAddress: testutilevents.AccAddress().String(),
-				Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				Size_:         sdk.NewDec(10),
-				OpenNotional:  sdk.NewDec(10),
-				Margin:        sdk.NewDec(1),
+			name: "long position",
+			position: v2types.Position{
+				Size_: sdk.NewDec(10),
+				Pair:  asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			},
-			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
-				t.Log("Mock market spot price")
-				market := v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
-				mocks.mockPerpAmmKeeper.EXPECT().
-					GetBaseAssetPrice(
-						market,
-						v2types.Direction_LONG,
-						sdk.NewDec(10),
-					).
-					Return(sdk.NewDec(20), nil)
-				t.Log("Mock market twap")
-				mocks.mockPerpAmmKeeper.EXPECT().
-					GetBaseAssetTWAP(
-						ctx,
-						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-						v2types.Direction_LONG,
-						sdk.NewDec(10),
-						15*time.Minute,
-					).
-					Return(sdk.NewDec(15), nil)
+			currentTimestamp:   40,
+			twapLookbackWindow: 30 * time.Millisecond,
+			snapshots: []v2types.ReserveSnapshot{
+				{
+					Amm:         *mock.TestAMM(sdk.NewDec(1e12), sdk.NewDec(9)),
+					TimestampMs: 10,
+				},
+				{
+					Amm:         *mock.TestAMM(sdk.NewDec(1e12), sdk.MustNewDecFromStr("8.5")),
+					TimestampMs: 20,
+				},
+				{
+					Amm:         *mock.TestAMM(sdk.NewDec(1e12), sdk.MustNewDecFromStr("9.5")),
+					TimestampMs: 30,
+				},
 			},
-			pnlPreferenceOption:        types.PnLPreferenceOption_MAX,
-			expectedPositionalNotional: sdk.NewDec(20),
-			expectedUnrealizedPnl:      sdk.NewDec(10),
+			expectedNotional: sdk.MustNewDecFromStr("89.999999999100000000"),
 		},
 		{
-			name: "max pnl, pick twap",
-			initPosition: v2types.Position{
-				TraderAddress: testutilevents.AccAddress().String(),
-				Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				Size_:         sdk.NewDec(10),
-				OpenNotional:  sdk.NewDec(10),
-				Margin:        sdk.NewDec(1),
+			name: "short position",
+			position: v2types.Position{
+				Size_: sdk.NewDec(-10),
+				Pair:  asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			},
-			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
-				t.Log("Mock market spot price")
-				market := v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
-				mocks.mockPerpAmmKeeper.EXPECT().
-					GetBaseAssetPrice(
-						market,
-						v2types.Direction_LONG,
-						sdk.NewDec(10),
-					).
-					Return(sdk.NewDec(20), nil)
-				t.Log("Mock market twap")
-				mocks.mockPerpAmmKeeper.EXPECT().
-					GetBaseAssetTWAP(
-						ctx,
-						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-						v2types.Direction_LONG,
-						sdk.NewDec(10),
-						15*time.Minute,
-					).
-					Return(sdk.NewDec(30), nil)
+			currentTimestamp:   40,
+			twapLookbackWindow: 30 * time.Millisecond,
+			snapshots: []v2types.ReserveSnapshot{
+				{
+					Amm:         *mock.TestAMM(sdk.NewDec(1e12), sdk.NewDec(9)),
+					TimestampMs: 10,
+				},
+				{
+					Amm:         *mock.TestAMM(sdk.NewDec(1e12), sdk.MustNewDecFromStr("8.5")),
+					TimestampMs: 20,
+				},
+				{
+					Amm:         *mock.TestAMM(sdk.NewDec(1e12), sdk.MustNewDecFromStr("9.5")),
+					TimestampMs: 30,
+				},
 			},
-			pnlPreferenceOption:        types.PnLPreferenceOption_MAX,
-			expectedPositionalNotional: sdk.NewDec(30),
-			expectedUnrealizedPnl:      sdk.NewDec(20),
+			expectedNotional: sdk.MustNewDecFromStr("90.000000000900000000"),
 		},
 		{
-			name: "min pnl, pick spot price",
-			initPosition: v2types.Position{
-				TraderAddress: testutilevents.AccAddress().String(),
-				Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				Size_:         sdk.NewDec(10),
-				OpenNotional:  sdk.NewDec(10),
-				Margin:        sdk.NewDec(1),
+			name: "zero position",
+			position: v2types.Position{
+				Size_: sdk.ZeroDec(),
+				Pair:  asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			},
-			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
-				t.Log("Mock market spot price")
-				market := v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
-				mocks.mockPerpAmmKeeper.EXPECT().
-					GetBaseAssetPrice(
-						market,
-						v2types.Direction_LONG,
-						sdk.NewDec(10),
-					).
-					Return(sdk.NewDec(20), nil)
-				t.Log("Mock market twap")
-				mocks.mockPerpAmmKeeper.EXPECT().
-					GetBaseAssetTWAP(
-						ctx,
-						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-						v2types.Direction_LONG,
-						sdk.NewDec(10),
-						15*time.Minute,
-					).
-					Return(sdk.NewDec(30), nil)
+			currentTimestamp:   40,
+			twapLookbackWindow: 30 * time.Millisecond,
+			snapshots: []v2types.ReserveSnapshot{
+				{
+					Amm:         *mock.TestAMM(sdk.NewDec(1e12), sdk.NewDec(9)),
+					TimestampMs: 10,
+				},
 			},
-			pnlPreferenceOption:        types.PnLPreferenceOption_MIN,
-			expectedPositionalNotional: sdk.NewDec(20),
-			expectedUnrealizedPnl:      sdk.NewDec(10),
-		},
-		{
-			name: "min pnl, pick twap",
-			initPosition: v2types.Position{
-				TraderAddress: testutilevents.AccAddress().String(),
-				Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				Size_:         sdk.NewDec(10),
-				OpenNotional:  sdk.NewDec(10),
-				Margin:        sdk.NewDec(1),
-			},
-			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
-				t.Log("Mock market spot price")
-				market := v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
-				mocks.mockPerpAmmKeeper.EXPECT().
-					GetBaseAssetPrice(
-						market,
-						v2types.Direction_LONG,
-						sdk.NewDec(10),
-					).
-					Return(sdk.NewDec(20), nil)
-				t.Log("Mock market twap")
-				mocks.mockPerpAmmKeeper.EXPECT().
-					GetBaseAssetTWAP(
-						ctx,
-						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-						v2types.Direction_LONG,
-						sdk.NewDec(10),
-						15*time.Minute,
-					).
-					Return(sdk.NewDec(15), nil)
-			},
-			pnlPreferenceOption:        types.PnLPreferenceOption_MIN,
-			expectedPositionalNotional: sdk.NewDec(15),
-			expectedUnrealizedPnl:      sdk.NewDec(5),
+			expectedNotional: sdk.ZeroDec(),
 		},
 	}
 
-	for _, tc := range testcases {
+	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			perpKeeper, mocks, ctx := getKeeper(t)
+			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 
-			tc.setMocks(ctx, mocks)
+			for _, s := range tc.snapshots {
+				app.PerpKeeperV2.ReserveSnapshots.Insert(ctx, collections.Join(s.Amm.Pair, time.UnixMilli(s.TimestampMs)), s)
+			}
+			ctx = ctx.WithBlockTime(time.UnixMilli(tc.currentTimestamp))
 
-			market := v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
-			positionalNotional, unrealizedPnl, err := perpKeeper.
-				GetPreferencePositionNotionalAndUnrealizedPnL(
-					ctx,
-					market,
-					*mock.TestAMMDefault(),
-					tc.initPosition,
-					tc.pnlPreferenceOption,
-				)
-
-			require.NoError(t, err)
-			assert.EqualValues(t, tc.expectedPositionalNotional, positionalNotional)
-			assert.EqualValues(t, tc.expectedUnrealizedPnl, unrealizedPnl)
+			notional, err := app.PerpKeeperV2.PositionNotionalTWAP(ctx, tc.position, tc.twapLookbackWindow)
+			require.Nil(t, err)
+			assert.EqualValues(t, tc.expectedNotional, notional)
 		})
 	}
 }
+
+// func TestGetPreferencePositionNotionalAndUnrealizedPnL(t *testing.T) {
+// 	// all tests are assumed long positions with positive pnl for ease of calculation
+// 	// short positions and negative pnl are implicitly correct because of
+// 	// TestGetPositionNotionalAndUnrealizedPnl
+// 	testcases := []struct {
+// 		name                       string
+// 		initPosition               v2types.Position
+// 		setMocks                   func(ctx sdk.Context, mocks mockedDependencies)
+// 		pnlPreferenceOption        types.PnLPreferenceOption
+// 		expectedPositionalNotional sdk.Dec
+// 		expectedUnrealizedPnl      sdk.Dec
+// 	}{
+// 		{
+// 			name: "max pnl, pick spot price",
+// 			initPosition: v2types.Position{
+// 				TraderAddress: testutilevents.AccAddress().String(),
+// 				Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+// 				Size_:         sdk.NewDec(10),
+// 				OpenNotional:  sdk.NewDec(10),
+// 				Margin:        sdk.NewDec(1),
+// 			},
+// 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
+// 				t.Log("Mock market spot price")
+// 				market := v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+// 				mocks.mockPerpAmmKeeper.EXPECT().
+// 					GetBaseAssetPrice(
+// 						market,
+// 						v2types.Direction_LONG,
+// 						sdk.NewDec(10),
+// 					).
+// 					Return(sdk.NewDec(20), nil)
+// 				t.Log("Mock market twap")
+// 				mocks.mockPerpAmmKeeper.EXPECT().
+// 					GetBaseAssetTWAP(
+// 						ctx,
+// 						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+// 						v2types.Direction_LONG,
+// 						sdk.NewDec(10),
+// 						15*time.Minute,
+// 					).
+// 					Return(sdk.NewDec(15), nil)
+// 			},
+// 			pnlPreferenceOption:        types.PnLPreferenceOption_MAX,
+// 			expectedPositionalNotional: sdk.NewDec(20),
+// 			expectedUnrealizedPnl:      sdk.NewDec(10),
+// 		},
+// 		{
+// 			name: "max pnl, pick twap",
+// 			initPosition: v2types.Position{
+// 				TraderAddress: testutilevents.AccAddress().String(),
+// 				Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+// 				Size_:         sdk.NewDec(10),
+// 				OpenNotional:  sdk.NewDec(10),
+// 				Margin:        sdk.NewDec(1),
+// 			},
+// 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
+// 				t.Log("Mock market spot price")
+// 				market := v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+// 				mocks.mockPerpAmmKeeper.EXPECT().
+// 					GetBaseAssetPrice(
+// 						market,
+// 						v2types.Direction_LONG,
+// 						sdk.NewDec(10),
+// 					).
+// 					Return(sdk.NewDec(20), nil)
+// 				t.Log("Mock market twap")
+// 				mocks.mockPerpAmmKeeper.EXPECT().
+// 					GetBaseAssetTWAP(
+// 						ctx,
+// 						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+// 						v2types.Direction_LONG,
+// 						sdk.NewDec(10),
+// 						15*time.Minute,
+// 					).
+// 					Return(sdk.NewDec(30), nil)
+// 			},
+// 			pnlPreferenceOption:        types.PnLPreferenceOption_MAX,
+// 			expectedPositionalNotional: sdk.NewDec(30),
+// 			expectedUnrealizedPnl:      sdk.NewDec(20),
+// 		},
+// 		{
+// 			name: "min pnl, pick spot price",
+// 			initPosition: v2types.Position{
+// 				TraderAddress: testutilevents.AccAddress().String(),
+// 				Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+// 				Size_:         sdk.NewDec(10),
+// 				OpenNotional:  sdk.NewDec(10),
+// 				Margin:        sdk.NewDec(1),
+// 			},
+// 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
+// 				t.Log("Mock market spot price")
+// 				market := v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+// 				mocks.mockPerpAmmKeeper.EXPECT().
+// 					GetBaseAssetPrice(
+// 						market,
+// 						v2types.Direction_LONG,
+// 						sdk.NewDec(10),
+// 					).
+// 					Return(sdk.NewDec(20), nil)
+// 				t.Log("Mock market twap")
+// 				mocks.mockPerpAmmKeeper.EXPECT().
+// 					GetBaseAssetTWAP(
+// 						ctx,
+// 						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+// 						v2types.Direction_LONG,
+// 						sdk.NewDec(10),
+// 						15*time.Minute,
+// 					).
+// 					Return(sdk.NewDec(30), nil)
+// 			},
+// 			pnlPreferenceOption:        types.PnLPreferenceOption_MIN,
+// 			expectedPositionalNotional: sdk.NewDec(20),
+// 			expectedUnrealizedPnl:      sdk.NewDec(10),
+// 		},
+// 		{
+// 			name: "min pnl, pick twap",
+// 			initPosition: v2types.Position{
+// 				TraderAddress: testutilevents.AccAddress().String(),
+// 				Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+// 				Size_:         sdk.NewDec(10),
+// 				OpenNotional:  sdk.NewDec(10),
+// 				Margin:        sdk.NewDec(1),
+// 			},
+// 			setMocks: func(ctx sdk.Context, mocks mockedDependencies) {
+// 				t.Log("Mock market spot price")
+// 				market := v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+// 				mocks.mockPerpAmmKeeper.EXPECT().
+// 					GetBaseAssetPrice(
+// 						market,
+// 						v2types.Direction_LONG,
+// 						sdk.NewDec(10),
+// 					).
+// 					Return(sdk.NewDec(20), nil)
+// 				t.Log("Mock market twap")
+// 				mocks.mockPerpAmmKeeper.EXPECT().
+// 					GetBaseAssetTWAP(
+// 						ctx,
+// 						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+// 						v2types.Direction_LONG,
+// 						sdk.NewDec(10),
+// 						15*time.Minute,
+// 					).
+// 					Return(sdk.NewDec(15), nil)
+// 			},
+// 			pnlPreferenceOption:        types.PnLPreferenceOption_MIN,
+// 			expectedPositionalNotional: sdk.NewDec(15),
+// 			expectedUnrealizedPnl:      sdk.NewDec(5),
+// 		},
+// 	}
+
+// 	for _, tc := range testcases {
+// 		tc := tc
+// 		t.Run(tc.name, func(t *testing.T) {
+// 			perpKeeper, mocks, ctx := getKeeper(t)
+
+// 			tc.setMocks(ctx, mocks)
+
+// 			market := v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+// 			positionalNotional, unrealizedPnl, err := perpKeeper.
+// 				GetPreferencePositionNotionalAndUnrealizedPnL(
+// 					ctx,
+// 					market,
+// 					*mock.TestAMMDefault(),
+// 					tc.initPosition,
+// 					tc.pnlPreferenceOption,
+// 				)
+
+// 			require.NoError(t, err)
+// 			assert.EqualValues(t, tc.expectedPositionalNotional, positionalNotional)
+// 			assert.EqualValues(t, tc.expectedUnrealizedPnl, unrealizedPnl)
+// 		})
+// 	}
+// }

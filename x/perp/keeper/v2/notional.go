@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
@@ -28,9 +29,9 @@ func PositionNotionalSpot(amm v2types.AMM, position v2types.Position) (positionN
 
 // PositionNotionalTWAP returns the position's notional value based on the TWAP price.
 func (k Keeper) PositionNotionalTWAP(ctx sdk.Context,
-	market v2types.Market,
-	amm v2types.AMM,
-	position v2types.Position) (positionNotional sdk.Dec, err error) {
+	position v2types.Position,
+	twapLookbackWindow time.Duration,
+) (positionNotional sdk.Dec, err error) {
 	// we want to know the price if the user closes their position
 	// e.g. if the user has positive size, we want to short
 	var dir v2types.Direction
@@ -45,7 +46,7 @@ func (k Keeper) PositionNotionalTWAP(ctx sdk.Context,
 		position.Pair,
 		dir,
 		position.Size_.Abs(),
-		/*lookbackInterval=*/ market.TwapLookbackWindow,
+		/*lookbackInterval=*/ twapLookbackWindow,
 	)
 }
 
@@ -59,7 +60,6 @@ func (k Keeper) PositionNotionalOracle(
 		return sdk.Dec{}, err
 	}
 	return oraclePrice.Mul(position.Size_.Abs()), nil
-
 }
 
 // UnrealizedPnl calculates the unrealized profits and losses (PnL) of a position.
@@ -101,7 +101,7 @@ func (k Keeper) GetPreferencePositionNotionalAndUnrealizedPnL(
 	}
 	spotPricePnl := UnrealizedPnl(position, spotPositionNotional)
 
-	twapPositionNotional, err := k.PositionNotionalTWAP(ctx, market, amm, position)
+	twapPositionNotional, err := k.PositionNotionalTWAP(ctx, position, market.TwapLookbackWindow)
 	if err != nil {
 		return sdk.Dec{}, sdk.Dec{}, err
 	}

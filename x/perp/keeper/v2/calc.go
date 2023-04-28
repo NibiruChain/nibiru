@@ -83,7 +83,7 @@ func (k Keeper) calcFreeCollateral(
 	if err != nil {
 		return sdk.Dec{}, err
 	}
-	twapNotional, err := k.PositionNotionalTWAP(ctx, market, amm, position)
+	twapNotional, err := k.PositionNotionalTWAP(ctx, position, market.TwapLookbackWindow)
 	if err != nil {
 		return sdk.Dec{}, err
 	}
