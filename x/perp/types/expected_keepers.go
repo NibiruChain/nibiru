@@ -102,6 +102,8 @@ type PerpAmmKeeper interface {
 	ExistsPool(ctx sdk.Context, pair asset.Pair) bool
 	GetSettlementPrice(ctx sdk.Context, pair asset.Pair) (sdk.Dec, error)
 	GetLastSnapshot(ctx sdk.Context, pool perpammtypes.Market) (perpammtypes.ReserveSnapshot, error)
+
+	EditPoolPegMultiplier(ctx sdk.Context, pair asset.Pair, pegMultiplier sdk.Dec) error
 }
 
 type EpochKeeper interface {
