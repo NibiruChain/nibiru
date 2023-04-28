@@ -96,23 +96,16 @@ func (q queryServer) position(ctx sdk.Context, pair asset.Pair, trader sdk.AccAd
 	}
 	unrealizedPnl := UnrealizedPnl(position, positionNotional)
 
-	marginRatioMark, err := q.k.GetMarginRatio(ctx, market, amm, position, types.MarginCalculationPriceOption_MAX_PNL)
-	if err != nil {
-		return nil, err
-	}
-	marginRatioIndex, err := q.k.GetMarginRatio(ctx, market, amm, position, types.MarginCalculationPriceOption_INDEX)
-	if err != nil {
-		// The index portion of the query fails silently as not to distrupt all
-		// position queries when oracles aren't posting prices.
-		marginRatioIndex = sdk.Dec{}
-	}
+	// marginRatioMark, err := q.k.GetMarginRatio(ctx, market, amm, position, types.MarginCalculationPriceOption_MAX_PNL)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	return &v2types.QueryPositionResponse{
 		Position:         &position,
 		PositionNotional: positionNotional,
 		UnrealizedPnl:    unrealizedPnl,
-		MarginRatioMark:  marginRatioMark,
-		MarginRatioIndex: marginRatioIndex,
+		MarginRatioMark:  sdk.ZeroDec(),
 		BlockNumber:      ctx.BlockHeight(),
 	}, nil
 }

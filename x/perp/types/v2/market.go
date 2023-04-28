@@ -75,29 +75,8 @@ func (market Market) IsOverFluctuationLimitInRelationWithSnapshot(amm AMM, snaps
 	return false
 }
 
-/*
-IsOverSpreadLimit compares the current mark price of the market
-to the underlying's index price.
-It panics if you provide it with a pair that doesn't exist in the state.
-
-args:
-  - indexPrice: the index price we want to compare.
-
-ret:
-  - bool: whether or not the price has deviated from the oracle price beyond a spread ratio
-*/
-func (market Market) IsOverSpreadLimit(amm AMM, indexPrice sdk.Dec) bool {
-	return amm.MarkPrice().Sub(indexPrice).
-		Quo(indexPrice).Abs().GTE(market.MaxOracleSpreadRatio)
-}
-
 func (market *Market) WithPriceFluctuationLimitRatio(value sdk.Dec) *Market {
 	market.PriceFluctuationLimitRatio = value
-	return market
-}
-
-func (market *Market) WithMaxOracleSpreadRatio(value sdk.Dec) *Market {
-	market.MaxOracleSpreadRatio = value
 	return market
 }
 

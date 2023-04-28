@@ -108,8 +108,8 @@ func (k Keeper) SwapBaseAsset(
 func (k Keeper) OnSwapEnd(
 	ctx sdk.Context,
 	amm v2types.AMM,
-	quoteAssetAmt sdk.Dec,
-	baseAssetAmt sdk.Dec,
+	quoteAssetAmtAbs sdk.Dec,
+	baseAssetAmtAbs sdk.Dec,
 	dir v2types.Direction,
 ) {
 	// Update Metrics
@@ -119,13 +119,14 @@ func (k Keeper) OnSwapEnd(
 		VolumeQuote: sdk.ZeroDec(),
 		VolumeBase:  sdk.ZeroDec(),
 	})
+
 	if dir == v2types.Direction_LONG {
-		metrics.NetSize = metrics.NetSize.Add(baseAssetAmt)
+		metrics.NetSize = metrics.NetSize.Add(baseAssetAmtAbs)
 	} else if dir == v2types.Direction_SHORT {
-		metrics.NetSize = metrics.NetSize.Sub(baseAssetAmt)
+		metrics.NetSize = metrics.NetSize.Sub(baseAssetAmtAbs)
 	}
-	metrics.VolumeBase = metrics.VolumeBase.Add(baseAssetAmt.Abs())
-	metrics.VolumeQuote = metrics.VolumeQuote.Add(quoteAssetAmt.Abs())
+	metrics.VolumeBase = metrics.VolumeBase.Add(baseAssetAmtAbs)
+	metrics.VolumeQuote = metrics.VolumeQuote.Add(quoteAssetAmtAbs)
 
 	k.Metrics.Insert(ctx, amm.Pair, metrics)
 

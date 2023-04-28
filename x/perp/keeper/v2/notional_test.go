@@ -53,7 +53,7 @@ func TestPositionNotionalSpot(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			notional, err := keeper.PositionNotionalSpot(*tc.amm, tc.position)
-			require.Nil(t, err)
+			require.NoError(t, err)
 			assert.EqualValues(t, tc.expectedNotional, notional)
 		})
 	}
@@ -145,7 +145,7 @@ func TestPositionNotionalTWAP(t *testing.T) {
 			ctx = ctx.WithBlockTime(time.UnixMilli(tc.currentTimestamp))
 
 			notional, err := app.PerpKeeperV2.PositionNotionalTWAP(ctx, tc.position, tc.twapLookbackWindow)
-			require.Nil(t, err)
+			require.NoError(t, err)
 			assert.EqualValues(t, tc.expectedNotional, notional)
 		})
 	}
@@ -196,7 +196,7 @@ func TestPositionNotionalOracle(t *testing.T) {
 
 			notional, err := app.PerpKeeperV2.PositionNotionalOracle(ctx, tc.position)
 
-			require.Nil(t, err)
+			require.NoError(t, err)
 			assert.EqualValues(t, tc.expectedNotional, notional)
 		})
 	}

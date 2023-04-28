@@ -139,12 +139,12 @@ func (k Keeper) afterPositionUpdate(
 	}
 
 	if !positionResp.Position.Size_.IsZero() {
-		marginRatio, err := k.GetMarginRatio(
+		marginRatio, err := k.GetMaxMarginRatio(
 			ctx,
-			market,
 			amm,
 			*positionResp.Position,
-			types.MarginCalculationPriceOption_MAX_PNL,
+			market.TwapLookbackWindow,
+			market.LatestCumulativePremiumFraction,
 		)
 		if err != nil {
 			return err
@@ -262,14 +262,11 @@ func (k Keeper) increasePosition(
 	}
 
 	marginDeltaAbs := increasedNotional.Quo(leverage)
-	remaining, err := CalcRemainMarginWithFundingPayment(
+	remaining := CalcRemainMarginWithFundingPayment(
 		currentPosition,
 		marginDeltaAbs,
-		market,
+		market.LatestCumulativePremiumFraction,
 	)
-	if err != nil {
-		return nil, nil, err
-	}
 
 	positionNotional, err := PositionNotionalSpot(amm, currentPosition)
 	if err != nil {
@@ -418,14 +415,11 @@ func (k Keeper) decreasePosition(
 			Quo(currentPosition.Size_.Abs()),
 	)
 
-	remaining, err := CalcRemainMarginWithFundingPayment(
+	remaining := CalcRemainMarginWithFundingPayment(
 		currentPosition,
 		positionResp.RealizedPnl,
-		market,
+		market.LatestCumulativePremiumFraction,
 	)
-	if err != nil {
-		return nil, nil, err
-	}
 
 	positionResp.BadDebt = remaining.BadDebtAbs
 	positionResp.FundingPayment = remaining.FundingPayment
@@ -623,11 +617,8 @@ func (k Keeper) closePositionEntirely(
 
 	positionResp.RealizedPnl = unrealizedPnl
 	// calculate remaining margin with funding payment
-	remaining, err := CalcRemainMarginWithFundingPayment(
-		currentPosition, unrealizedPnl, market)
-	if err != nil {
-		return nil, nil, err
-	}
+	remaining := CalcRemainMarginWithFundingPayment(
+		currentPosition, unrealizedPnl, market.LatestCumulativePremiumFraction)
 
 	positionResp.BadDebt = remaining.BadDebtAbs
 	positionResp.FundingPayment = remaining.FundingPayment

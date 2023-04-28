@@ -32,19 +32,16 @@ func (r RemainingMarginWithFundingPayment) String() string {
 	)
 }
 
-// CalcRemainMarginWithFundingPayment calculates the remaining margin after a margin delta is applied.
+// CalcRemainMarginWithFundingPayment calculates the remaining margin after a margin delta and funding payment are applied.
+// If the remaining margin is negative, the position has bad debt.
 func CalcRemainMarginWithFundingPayment(
 	currentPosition v2types.Position,
 	marginDeltaSigned sdk.Dec,
-	market v2types.Market,
-) (remaining RemainingMarginWithFundingPayment, err error) {
-	if currentPosition.Size_.IsZero() {
-		remaining.FundingPayment = sdk.ZeroDec()
-	} else {
-		remaining.FundingPayment = (market.LatestCumulativePremiumFraction.
-			Sub(currentPosition.LatestCumulativePremiumFraction)).
-			Mul(currentPosition.Size_)
-	}
+	marketLatestCumulativePremumFraction sdk.Dec,
+) (remaining RemainingMarginWithFundingPayment) {
+	remaining.FundingPayment = (marketLatestCumulativePremumFraction.
+		Sub(currentPosition.LatestCumulativePremiumFraction)).
+		Mul(currentPosition.Size_)
 
 	remainingMargin := currentPosition.Margin.Add(marginDeltaSigned).Sub(remaining.FundingPayment)
 
@@ -58,7 +55,7 @@ func CalcRemainMarginWithFundingPayment(
 		remaining.BadDebtAbs = sdk.ZeroDec()
 	}
 
-	return remaining, err
+	return remaining
 }
 
 /*

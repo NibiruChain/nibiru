@@ -64,31 +64,15 @@ func (k Keeper) Liquidate(
 		return
 	}
 
-	marginRatio, err := k.GetMarginRatio(
+	marginRatio, err := k.GetMaxMarginRatio(
 		ctx,
-		market,
 		amm,
 		position,
-		types.MarginCalculationPriceOption_MAX_PNL,
+		market.TwapLookbackWindow,
+		market.LatestCumulativePremiumFraction,
 	)
 	if err != nil {
 		return
-	}
-
-	isOverSpreadLimit, err := k.IsOverSpreadLimit(ctx, market, amm)
-	if err != nil {
-		return
-	}
-
-	if isOverSpreadLimit {
-		marginRatioBasedOnOracle, err := k.GetMarginRatio(
-			ctx, market, amm, position, types.MarginCalculationPriceOption_INDEX)
-
-		if err != nil {
-			return liquidatorFee, perpEcosystemFundFee, err
-		}
-
-		marginRatio = sdk.MaxDec(marginRatio, marginRatioBasedOnOracle)
 	}
 
 	err = validateMarginRatio(marginRatio, market.MaintenanceMarginRatio, false)
@@ -103,8 +87,12 @@ func (k Keeper) Liquidate(
 		return
 	}
 
-	marginRatioBasedOnSpot, err := k.GetMarginRatio(
-		ctx, market, amm, position, types.MarginCalculationPriceOption_SPOT)
+	positionNotional, err := PositionNotionalSpot(amm, position)
+	if err != nil {
+		return
+	}
+
+	marginRatioBasedOnSpot, err := k.GetSpotMarginRatio(ctx, position, positionNotional, market.LatestCumulativePremiumFraction)
 	if err != nil {
 		return
 	}

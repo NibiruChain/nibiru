@@ -174,25 +174,3 @@ func (k Keeper) GetLastSnapshot(ctx sdk.Context, pair asset.Pair) (v2types.Reser
 
 	return it.Value(), nil
 }
-
-/*
-IsOverSpreadLimit compares the current spot price of the market (given by pair) to the underlying's index price (given by an oracle).
-It panics if you provide it with a pair that doesn't exist in the state.
-
-args:
-  - ctx: the cosmos-sdk context
-  - pair: the asset pair
-
-ret:
-  - bool: whether the price has deviated from the oracle price beyond a spread ratio
-*/
-func (k Keeper) IsOverSpreadLimit(ctx sdk.Context, market v2types.Market, amm v2types.AMM) (bool, error) {
-	indexPrice, err := k.OracleKeeper.GetExchangeRate(ctx, amm.Pair)
-	if err != nil {
-		return false, err
-	}
-
-	priceDeltaAbs := amm.MarkPrice().Sub(indexPrice).Abs()
-
-	return priceDeltaAbs.Quo(indexPrice).GTE(market.MaxOracleSpreadRatio), nil
-}

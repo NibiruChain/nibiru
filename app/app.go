@@ -125,6 +125,7 @@ import (
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
 	perpkeeperv2 "github.com/NibiruChain/nibiru/x/perp/keeper/v2"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
+	perptypesv2 "github.com/NibiruChain/nibiru/x/perp/types/v2"
 
 	"github.com/NibiruChain/nibiru/x/spot"
 	spotkeeper "github.com/NibiruChain/nibiru/x/spot/keeper"

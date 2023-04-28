@@ -10,7 +10,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
@@ -108,10 +107,10 @@ func TestCalcFreeCollateralSuccess(t *testing.T) {
 
 func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 	testCases := []struct {
-		name        string
-		position    v2types.Position
-		marginDelta sdk.Dec
-		market      *v2types.Market
+		name            string
+		position        v2types.Position
+		marginDelta     sdk.Dec
+		marketLatestCPF sdk.Dec
 
 		expectedMargin         sdk.Dec
 		expectedBadDebt        sdk.Dec
@@ -126,8 +125,8 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				Margin:                          sdk.NewDec(100),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
-			marginDelta: sdk.NewDec(-300),
-			market:      mock.TestMarket(),
+			marginDelta:     sdk.NewDec(-300),
+			marketLatestCPF: sdk.ZeroDec(),
 
 			expectedMargin:         sdk.ZeroDec(),
 			expectedBadDebt:        sdk.NewDec(200),
@@ -142,8 +141,8 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 				Margin:                          sdk.NewDec(100),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
-			marginDelta: sdk.ZeroDec(),
-			market:      mock.TestMarket().WithLatestCumulativePremiumFraction(sdk.MustNewDecFromStr("0.25")),
+			marginDelta:     sdk.ZeroDec(),
+			marketLatestCPF: sdk.MustNewDecFromStr("0.25"),
 
 			expectedMargin:         sdk.NewDec(50),
 			expectedBadDebt:        sdk.ZeroDec(),
@@ -156,8 +155,7 @@ func TestCalcRemainMarginWithFundingPayment(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc := tc
 
-			remaining, err := CalcRemainMarginWithFundingPayment(tc.position, tc.marginDelta, *tc.market)
-			require.NoError(t, err)
+			remaining := CalcRemainMarginWithFundingPayment(tc.position, tc.marginDelta, tc.marketLatestCPF)
 			assert.EqualValues(t, tc.expectedMargin, remaining.MarginAbs)
 			assert.EqualValues(t, tc.expectedBadDebt, remaining.BadDebtAbs)
 			assert.EqualValues(t, tc.expectedFundingPayment, remaining.FundingPayment)

@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/NibiruChain/collections"
 
@@ -35,10 +36,7 @@ func (k Keeper) AddMargin(
 		return nil, err
 	}
 
-	remainingMargin, err := CalcRemainMarginWithFundingPayment(position, margin.Amount.ToDec(), market)
-	if err != nil {
-		return nil, err
-	}
+	remainingMargin := CalcRemainMarginWithFundingPayment(position, margin.Amount.ToDec(), market.LatestCumulativePremiumFraction)
 
 	if !remainingMargin.BadDebtAbs.IsZero() {
 		return nil, fmt.Errorf("failed to add margin; position has bad debt; consider adding more margin")
@@ -131,10 +129,7 @@ func (k Keeper) RemoveMargin(
 	}
 
 	marginDelta := margin.Amount.Neg()
-	remainingMargin, err := CalcRemainMarginWithFundingPayment(position, marginDelta.ToDec(), market)
-	if err != nil {
-		return sdk.Coin{}, sdk.Dec{}, v2types.Position{}, err
-	}
+	remainingMargin := CalcRemainMarginWithFundingPayment(position, marginDelta.ToDec(), market.LatestCumulativePremiumFraction)
 	if !remainingMargin.BadDebtAbs.IsZero() {
 		return sdk.Coin{}, sdk.Dec{}, v2types.Position{}, types.ErrFailedRemoveMarginCanCauseBadDebt
 	}
@@ -186,60 +181,59 @@ func (k Keeper) RemoveMargin(
 	return margin, remainingMargin.FundingPayment, position, nil
 }
 
-// GetMarginRatio calculates the MarginRatio from a Position
-func (k Keeper) GetMarginRatio(
+// Returns the margin ratio based on spot price.
+func (k Keeper) GetSpotMarginRatio(
 	ctx sdk.Context,
-	market v2types.Market,
-	amm v2types.AMM,
 	position v2types.Position,
-	priceOption types.MarginCalculationPriceOption,
-) (marginRatio sdk.Dec, err error) {
-	if position.Size_.IsZero() {
-		return sdk.Dec{}, types.ErrPositionZero
+	positionNotional sdk.Dec,
+	marketLatestCumulativePremiumFraction sdk.Dec,
+) (sdk.Dec, error) {
+	if position.Size_.IsZero() || positionNotional.IsZero() {
+		return sdk.ZeroDec(), nil
 	}
 
-	var positionNotional sdk.Dec
-	switch priceOption {
-	case types.MarginCalculationPriceOption_MAX_PNL:
-		// retrives the max PnL based on spot and oracle
-		spotNotional, err := PositionNotionalSpot(amm, position)
-		if err != nil {
-			return sdk.Dec{}, err
-		}
-		twapNotional, err := k.PositionNotionalTWAP(ctx, position, market.TwapLookbackWindow)
-		if err != nil {
-			return sdk.Dec{}, err
-		}
-		positionNotional = sdk.MaxDec(spotNotional, twapNotional)
-	case types.MarginCalculationPriceOption_INDEX:
-		positionNotional, err = k.PositionNotionalOracle(ctx, position)
-		if err != nil {
-			return sdk.Dec{}, err
-		}
-
-	case types.MarginCalculationPriceOption_SPOT:
-		positionNotional, err = PositionNotionalSpot(amm, position)
-		if err != nil {
-			return sdk.Dec{}, err
-		}
-	}
-
-	if positionNotional.IsZero() {
-		// NOTE causes division by zero in margin ratio calculation
-		return sdk.Dec{}, fmt.Errorf("margin ratio doesn't make sense with zero position notional")
-	}
-
-	remaining, err := CalcRemainMarginWithFundingPayment(
+	remaining := CalcRemainMarginWithFundingPayment(
 		/* oldPosition */ position,
 		/* marginDelta */ UnrealizedPnl(position, positionNotional),
-		market,
+		marketLatestCumulativePremiumFraction,
 	)
+
+	return remaining.MarginAbs.Sub(remaining.BadDebtAbs).Quo(positionNotional), nil
+}
+
+// Returns the margin ratio based on the max of twap price and spot price
+func (k Keeper) GetMaxMarginRatio(
+	ctx sdk.Context,
+	amm v2types.AMM,
+	position v2types.Position,
+	twapLookbackWindow time.Duration,
+	latestCumulativePremiumFraction sdk.Dec,
+) (marginRatio sdk.Dec, err error) {
+	if position.Size_.IsZero() {
+		return sdk.ZeroDec(), nil
+	}
+
+	spotNotional, err := PositionNotionalSpot(amm, position)
 	if err != nil {
 		return sdk.Dec{}, err
 	}
+	twapNotional, err := k.PositionNotionalTWAP(ctx, position, twapLookbackWindow)
+	if err != nil {
+		return sdk.Dec{}, err
+	}
+	positionNotional := sdk.MaxDec(spotNotional, twapNotional)
 
-	marginRatio = remaining.MarginAbs.Sub(remaining.BadDebtAbs).Quo(positionNotional)
-	return marginRatio, nil
+	if positionNotional.IsZero() {
+		return sdk.ZeroDec(), nil
+	}
+
+	remaining := CalcRemainMarginWithFundingPayment(
+		/* oldPosition */ position,
+		/* marginDelta */ UnrealizedPnl(position, positionNotional),
+		latestCumulativePremiumFraction,
+	)
+
+	return remaining.MarginAbs.Sub(remaining.BadDebtAbs).Quo(positionNotional), nil
 }
 
 /*

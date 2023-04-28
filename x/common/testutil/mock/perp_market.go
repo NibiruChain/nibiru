@@ -15,7 +15,6 @@ func TestMarket() *v2types.Market {
 		Pair:                            asset.NewPair(denoms.BTC, denoms.NUSD),
 		Enabled:                         true,
 		PriceFluctuationLimitRatio:      sdk.MustNewDecFromStr("0.1"),
-		MaxOracleSpreadRatio:            sdk.MustNewDecFromStr("0.1"),
 		MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.0625"),
 		MaxLeverage:                     sdk.MustNewDecFromStr("10"),
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),

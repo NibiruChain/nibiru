@@ -45,7 +45,6 @@ func createInitMarket() Action {
 			PriceFluctuationLimitRatio:      sdk.MustNewDecFromStr("0.1"),
 			MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:                     sdk.NewDec(10),
-			MaxOracleSpreadRatio:            sdk.OneDec(), // 100%,
 		},
 		v2types.AMM{
 			Pair:            pairBtcUsdc,
