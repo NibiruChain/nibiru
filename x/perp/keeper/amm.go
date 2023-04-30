@@ -83,5 +83,6 @@ func (k Keeper) EditPoolPegMultiplier(
 
 func (k Keeper) isWhitelisted(ctx sdk.Context, addr sdk.AccAddress) bool {
 	// TODO(realu): connect that to the admin role in smart contract
+	// See https://www.notion.so/nibiru/Nibi-Perps-Admin-ADR-ad38991fffd34e7798618731be0fa922?pvs=4
 	return true
 }

@@ -58,5 +58,11 @@
         "amount": "100"
       }
     }
+  },
+  "peg_shift": {
+    "peg_shift": {
+      "pair": "ETH:USD",
+      "peg_mult": "420"
+    }
   }
 }
