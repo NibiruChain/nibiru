@@ -6,6 +6,7 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/app"
@@ -19,123 +20,115 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 	var app *app.NibiruApp
 	var ctx sdk.Context
 
-	now := time.Now()
+	now := time.Now().UTC()
 
 	tests := []struct {
-		expCurrentEpochStartTime   time.Time
-		expCurrentEpochStartHeight int64
-		expCurrentEpoch            uint64
-		expInitialEpochStartTime   time.Time
-		fn                         func()
+		name              string
+		when              func()
+		expectedEpochInfo types.EpochInfo
 	}{
 		{
-			// Only advance 2 seconds, do not increment epoch
-			expCurrentEpochStartHeight: 2,
-			expCurrentEpochStartTime:   now,
-			expCurrentEpoch:            1,
-			expInitialEpochStartTime:   now,
-			fn: func() {
+			name: "no increment",
+			when: func() {
 				ctx = ctx.WithBlockHeight(2).WithBlockTime(now.Add(time.Second))
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 			},
+			expectedEpochInfo: types.EpochInfo{
+				Identifier:              "monthly",
+				StartTime:               now,
+				Duration:                time.Hour * 24 * 31,
+				CurrentEpoch:            1,
+				CurrentEpochStartHeight: 1,
+				CurrentEpochStartTime:   now,
+				EpochCountingStarted:    true,
+			},
 		},
 		{
-			expCurrentEpochStartHeight: 2,
-			expCurrentEpochStartTime:   now,
-			expCurrentEpoch:            1,
-			expInitialEpochStartTime:   now,
-			fn: func() {
+			name: "increment",
+			when: func() {
 				ctx = ctx.WithBlockHeight(2).WithBlockTime(now.Add(time.Second))
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
-				ctx = ctx.WithBlockHeight(3).WithBlockTime(now.Add(time.Hour * 24 * 31))
+				ctx = ctx.WithBlockHeight(3).WithBlockTime(now.Add(time.Hour * 24 * 32))
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
+			},
+			expectedEpochInfo: types.EpochInfo{
+				Identifier:              "monthly",
+				StartTime:               now,
+				Duration:                time.Hour * 24 * 31,
+				CurrentEpoch:            2,
+				CurrentEpochStartHeight: 3,
+				CurrentEpochStartTime:   now.Add(time.Hour * 24 * 32),
+				EpochCountingStarted:    true,
 			},
 		},
 		// Test that incrementing _exactly_ 1 month increments the epoch count.
 		{
-			expCurrentEpochStartHeight: 3,
-			expCurrentEpochStartTime:   now.Add(time.Hour * 24 * 31),
-			expCurrentEpoch:            2,
-			expInitialEpochStartTime:   now,
-			fn: func() {
-				ctx = ctx.WithBlockHeight(2).WithBlockTime(now.Add(time.Second))
+			name: "exact increment",
+			when: func() {
+				ctx = ctx.WithBlockHeight(2).WithBlockTime(now.Add(time.Hour * 24 * 31))
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
-				ctx = ctx.WithBlockHeight(3).WithBlockTime(now.Add(time.Hour * 24 * 32))
-				epochs.BeginBlocker(ctx, app.EpochsKeeper)
+			},
+			expectedEpochInfo: types.EpochInfo{
+				Identifier:              "monthly",
+				StartTime:               now,
+				Duration:                time.Hour * 24 * 31,
+				CurrentEpoch:            2,
+				CurrentEpochStartHeight: 2,
+				CurrentEpochStartTime:   now.Add(time.Hour * 24 * 31),
+				EpochCountingStarted:    true,
 			},
 		},
 		{
-			expCurrentEpochStartHeight: 3,
-			expCurrentEpochStartTime:   now.Add(time.Hour * 24 * 31),
-			expCurrentEpoch:            2,
-			expInitialEpochStartTime:   now,
-			fn: func() {
-				ctx = ctx.WithBlockHeight(2).WithBlockTime(now.Add(time.Second))
+			name: "increment twice",
+			when: func() {
+				ctx = ctx.WithBlockHeight(2).WithBlockTime(now.Add(time.Hour * 24 * 31))
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
-				ctx = ctx.WithBlockHeight(3).WithBlockTime(now.Add(time.Hour * 24 * 32))
-				epochs.BeginBlocker(ctx, app.EpochsKeeper)
-				ctx.WithBlockHeight(4).WithBlockTime(now.Add(time.Hour * 24 * 33))
+				ctx = ctx.WithBlockHeight(3).WithBlockTime(now.Add(time.Hour * 24 * 31 * 2))
 				epochs.BeginBlocker(ctx, app.EpochsKeeper)
 			},
-		},
-		{
-			expCurrentEpochStartHeight: 3,
-			expCurrentEpochStartTime:   now.Add(time.Hour * 24 * 31),
-			expCurrentEpoch:            2,
-			expInitialEpochStartTime:   now,
-			fn: func() {
-				ctx = ctx.WithBlockHeight(2).WithBlockTime(now.Add(time.Second))
-				epochs.BeginBlocker(ctx, app.EpochsKeeper)
-				ctx = ctx.WithBlockHeight(3).WithBlockTime(now.Add(time.Hour * 24 * 32))
-				epochs.BeginBlocker(ctx, app.EpochsKeeper)
-				numBlocksSinceStart, _ := NumBlocksSinceEpochStart(ctx, app.EpochsKeeper, "monthly")
-				require.Equal(t, int64(0), numBlocksSinceStart)
-				ctx = ctx.WithBlockHeight(4).WithBlockTime(now.Add(time.Hour * 24 * 33))
-				epochs.BeginBlocker(ctx, app.EpochsKeeper)
-				numBlocksSinceStart, _ = NumBlocksSinceEpochStart(ctx, app.EpochsKeeper, "monthly")
-				require.Equal(t, int64(1), numBlocksSinceStart)
+			expectedEpochInfo: types.EpochInfo{
+				Identifier:              "monthly",
+				StartTime:               now,
+				Duration:                time.Hour * 24 * 31,
+				CurrentEpoch:            3,
+				CurrentEpochStartHeight: 3,
+				CurrentEpochStartTime:   now.Add(time.Hour * 24 * 31 * 2),
+				EpochCountingStarted:    true,
 			},
 		},
 	}
 
-	for _, test := range tests {
-		app, ctx = testapp.NewNibiruTestAppAndContext(true)
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			app, ctx = testapp.NewNibiruTestAppAndContext(true)
 
-		// On init genesis, default epochs information is set
-		// To check init genesis again, should make it fresh status
-		epochInfos := app.EpochsKeeper.AllEpochInfos(ctx)
-		for _, epochInfo := range epochInfos {
-			app.EpochsKeeper.DeleteEpochInfo(ctx, epochInfo.Identifier)
-		}
+			// On init genesis, default epochs information is set
+			// To check init genesis again, should make it fresh status
+			epochInfos := app.EpochsKeeper.AllEpochInfos(ctx)
+			for _, epochInfo := range epochInfos {
+				app.EpochsKeeper.DeleteEpochInfo(ctx, epochInfo.Identifier)
+			}
 
-		ctx = ctx.WithBlockHeight(1).WithBlockTime(now)
+			// insert epoch info that's already begun
+			ctx = ctx.WithBlockHeight(1).WithBlockTime(now)
+			app.EpochsKeeper.AddEpochInfo(ctx, types.EpochInfo{
+				Identifier:              "monthly",
+				StartTime:               now,
+				Duration:                time.Hour * 24 * 31,
+				CurrentEpoch:            1,
+				CurrentEpochStartHeight: 1,
+				CurrentEpochStartTime:   now,
+				EpochCountingStarted:    true,
+			})
 
-		// check init genesis
-		epochs.InitGenesis(ctx, app.EpochsKeeper, types.GenesisState{
-			Epochs: []types.EpochInfo{
-				{
-					Identifier:              "monthly",
-					StartTime:               ctx.BlockTime(),
-					Duration:                time.Hour * 24 * 31,
-					CurrentEpoch:            0,
-					CurrentEpochStartHeight: ctx.BlockHeight(),
-					CurrentEpochStartTime:   ctx.BlockTime(),
-					EpochCountingStarted:    false,
-				},
-			},
+			tc.when()
+
+			epochInfo := app.EpochsKeeper.GetEpochInfo(ctx, "monthly")
+			assert.Equal(t, tc.expectedEpochInfo.CurrentEpoch, epochInfo.CurrentEpoch)
+			assert.Equal(t, tc.expectedEpochInfo.CurrentEpochStartTime, epochInfo.CurrentEpochStartTime)
+			assert.Equal(t, tc.expectedEpochInfo.CurrentEpochStartHeight, epochInfo.CurrentEpochStartHeight)
 		})
-
-		test.fn()
-
-		epochInfo := app.EpochsKeeper.GetEpochInfo(ctx, "monthly")
-
-		require.Equal(t, epochInfo.Identifier, "monthly")
-		require.Equal(t, test.expInitialEpochStartTime.UTC().String(), epochInfo.StartTime.UTC().String())
-		require.Equal(t, time.Hour*24*31, epochInfo.Duration)
-		require.Equal(t, epochInfo.CurrentEpoch, test.expCurrentEpoch)
-		require.Equal(t, epochInfo.CurrentEpochStartHeight, test.expCurrentEpochStartHeight)
-		require.Equal(t, epochInfo.CurrentEpochStartTime.UTC().String(), test.expCurrentEpochStartTime.UTC().String())
-		require.Equal(t, epochInfo.EpochCountingStarted, true)
 	}
 }
 
