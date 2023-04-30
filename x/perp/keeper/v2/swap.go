@@ -6,6 +6,32 @@ import (
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
+// checkUserLimits checks if the limit is violated by the amount.
+// returns error if it does
+func checkUserLimits(limit, amount sdk.Dec, dir v2types.Direction) error {
+	if limit.IsZero() {
+		return nil
+	}
+
+	if dir == v2types.Direction_LONG && amount.LT(limit) {
+		return v2types.ErrAssetFailsUserLimit.Wrapf(
+			"amount (%s) is less than selected limit (%s)",
+			amount.String(),
+			limit.String(),
+		)
+	}
+
+	if dir == v2types.Direction_SHORT && amount.GT(limit) {
+		return v2types.ErrAssetFailsUserLimit.Wrapf(
+			"amount (%s) is greater than selected limit (%s)",
+			amount.String(),
+			limit.String(),
+		)
+	}
+
+	return nil
+}
+
 /*
 Trades quoteAssets in exchange for baseAssets.
 The quote asset is a stablecoin like NUSD.
@@ -33,10 +59,6 @@ func (k Keeper) SwapQuoteAsset(
 ) (updatedAMM *v2types.AMM, baseAssetDelta sdk.Dec, err error) {
 	if !quoteAssetAmt.IsPositive() {
 		return &amm, sdk.ZeroDec(), nil
-	}
-
-	if _, err = k.OracleKeeper.GetExchangeRate(ctx, amm.Pair); err != nil {
-		return nil, sdk.Dec{}, v2types.ErrNoValidPrice.Wrapf("%s", amm.Pair)
 	}
 
 	updatedAMM, baseAssetDelta, err = amm.SwapQuoteAsset(quoteAssetAmt, dir)

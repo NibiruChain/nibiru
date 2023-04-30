@@ -14,13 +14,13 @@ type liquidatePosition struct {
 	Pair       asset.Pair
 }
 
-func (l liquidatePosition) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+func (l liquidatePosition) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	_, _, err := app.PerpKeeperV2.Liquidate(ctx, l.Liquidator, l.Pair, l.Account)
 	if err != nil {
-		return ctx, err
+		return ctx, err, true
 	}
 
-	return ctx, nil
+	return ctx, nil, true
 }
 
 func LiquidatePosition(liquidator, account sdk.AccAddress, pair asset.Pair) action.Action {
@@ -35,10 +35,10 @@ type setLiquidator struct {
 	Account sdk.AccAddress
 }
 
-func (s setLiquidator) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+func (s setLiquidator) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	// TODO(k-yang): set liquidator on v2types.Market object
 
-	return ctx, nil
+	return ctx, nil, true
 }
 
 func SetLiquidator(account sdk.AccAddress) action.Action {

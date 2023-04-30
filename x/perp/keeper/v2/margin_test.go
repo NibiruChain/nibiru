@@ -14,12 +14,12 @@ import (
 	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	keeper "github.com/NibiruChain/nibiru/x/perp/keeper/v2"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
 func TestAddMarginSuccess(t *testing.T) {
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	tests := []struct {
 		name                            string
 		marginToAdd                     sdk.Coin
@@ -51,19 +51,19 @@ func TestAddMarginSuccess(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 			traderAddr := sdk.MustAccAddressFromBech32(tc.initialPosition.TraderAddress)
 
 			t.Log("add trader funds")
 			require.NoError(t, testapp.FundAccount(
-				nibiruApp.BankKeeper,
+				app.BankKeeper,
 				ctx,
 				traderAddr,
 				sdk.NewCoins(tc.marginToAdd),
 			))
 
 			t.Log("create market")
-			nibiruApp.PerpKeeperV2.Markets.Insert(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), *mock.TestMarket())
+			app.PerpKeeperV2.Markets.Insert(ctx, pair, *mock.TestMarket())
 			// assert.NoError(t, perpammKeeper.CreatePool(
 			// 	ctx,
 			// 	asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -80,9 +80,10 @@ func TestAddMarginSuccess(t *testing.T) {
 			// ))
 
 			t.Log("establish initial position")
-			keeper.SetPosition(nibiruApp.PerpKeeperV2, ctx, tc.initialPosition)
+			// keeper.SetPosition(app.PerpKeeperV2, ctx, tc.initialPosition)
+			// app.PerpKeeperV2.Positions.Insert(ctx, collections.Join(tc.initialPosition.Pair))
 
-			resp, err := nibiruApp.PerpKeeperV2.AddMargin(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), traderAddr, tc.marginToAdd)
+			resp, err := app.PerpKeeperV2.AddMargin(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), traderAddr, tc.marginToAdd)
 			require.NoError(t, err)
 			assert.EqualValues(t, tc.expectedFundingPayment, resp.FundingPayment)
 			assert.EqualValues(t, tc.expectedMargin, resp.Position.Margin)

@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/collections"
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
@@ -165,7 +166,7 @@ func TestQueryPosition(t *testing.T) {
 			ctx, app, queryServer := initAppMarkets(t, tc.quoteReserve, tc.baseReserve, tc.pegMultiplier)
 
 			t.Log("initialize position")
-			keeper.SetPosition(app.PerpKeeperV2, ctx, *tc.initialPosition)
+			app.PerpKeeperV2.Positions.Insert(ctx, collections.Join(tc.initialPosition.Pair, traderAddr), *tc.initialPosition)
 
 			t.Log("query position")
 			ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second))
@@ -238,7 +239,7 @@ func TestQueryPositions(t *testing.T) {
 			for _, position := range tc.Positions {
 				currentPosition := position
 				currentPosition.TraderAddress = traderAddr.String()
-				keeper.SetPosition(app.PerpKeeperV2, ctx, *currentPosition)
+				app.PerpKeeperV2.Positions.Insert(ctx, collections.Join(currentPosition.Pair, traderAddr), *currentPosition)
 			}
 
 			t.Log("query position")

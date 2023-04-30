@@ -11,10 +11,10 @@ type changeLiquidationFeeRatio struct {
 	LiquidationFeeRatio sdk.Dec
 }
 
-func (c changeLiquidationFeeRatio) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+func (c changeLiquidationFeeRatio) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	// TODO(k-yang): implement
 
-	return ctx, nil
+	return ctx, nil, true
 }
 
 func ChangeLiquidationFeeRatio(liquidationFeeRatio sdk.Dec) action.Action {

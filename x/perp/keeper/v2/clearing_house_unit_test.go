@@ -776,7 +776,7 @@ func TestClosePositionEntirely(t *testing.T) {
 			perpKeeper, mocks, ctx := getKeeper(t)
 
 			t.Log("set up initial position")
-			SetPosition(perpKeeper, ctx, tc.initialPosition)
+			// SetPosition(perpKeeper, ctx, tc.initialPosition)
 
 			t.Log("mock market")
 			market := v2types.Market{
@@ -1478,7 +1478,7 @@ func TestCloseAndOpenReversePosition(t *testing.T) {
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				LastUpdatedBlockNumber:          0,
 			}
-			SetPosition(perpKeeper, ctx, currentPosition)
+			// SetPosition(perpKeeper, ctx, currentPosition)
 
 			t.Log("mock market")
 			market := v2types.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
@@ -1687,7 +1687,7 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Log("set position")
-			SetPosition(perpKeeper, ctx, tc.initialPosition)
+			// SetPosition(perpKeeper, ctx, tc.initialPosition)
 
 			t.Log("set params")
 

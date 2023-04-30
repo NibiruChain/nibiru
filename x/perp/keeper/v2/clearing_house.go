@@ -3,6 +3,7 @@ package keeper
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -616,8 +617,14 @@ func (k Keeper) closePositionEntirely(
 	fundingPayment := FundingPayment(currentPosition, market.LatestCumulativePremiumFraction)
 	remainingMargin := currentPosition.Margin.Add(unrealizedPnl).Sub(fundingPayment)
 
-	positionResp.BadDebt = sdk.MinDec(sdk.ZeroDec(), remainingMargin).Abs()
-	positionResp.MarginToVault = sdk.MaxDec(sdk.ZeroDec(), remainingMargin)
+	if remainingMargin.IsPositive() {
+		positionResp.BadDebt = sdk.ZeroDec()
+		positionResp.MarginToVault = remainingMargin.Neg()
+	} else {
+		positionResp.BadDebt = remainingMargin.Abs()
+		positionResp.MarginToVault = sdk.ZeroDec()
+	}
+
 	positionResp.FundingPayment = fundingPayment
 
 	var sideToTake v2types.Direction
@@ -762,4 +769,36 @@ func (k Keeper) transferFee(
 	}
 
 	return feeToFeePool.Add(feeToEcosystemFund), nil
+}
+
+/*
+Check's that a pool that we're about to save to state does not violate the fluctuation limit.
+Always tries to check against a snapshot from a previous block. If one doesn't exist, then it just uses the current snapshot.
+This should run prior to updating the snapshot, otherwise it will compare the currently updated market to itself.
+
+args:
+  - ctx: the cosmos-sdk context
+  - pool: the updated market
+
+ret:
+  - err: error if any
+*/
+func (k Keeper) checkPriceFluctuationLimitRatio(ctx sdk.Context, market v2types.Market, amm v2types.AMM) error {
+	if market.PriceFluctuationLimitRatio.IsZero() {
+		// early return to avoid expensive state operations
+		return nil
+	}
+
+	it := k.ReserveSnapshots.Iterate(ctx, collections.PairRange[asset.Pair, time.Time]{}.Prefix(amm.Pair).Descending())
+	defer it.Close()
+
+	if !it.Valid() {
+		return fmt.Errorf("error getting last snapshot number for pair %s", amm.Pair)
+	}
+
+	if market.IsOverFluctuationLimitInRelationWithSnapshot(amm, it.Value()) {
+		return v2types.ErrOverFluctuationLimit
+	}
+
+	return nil
 }

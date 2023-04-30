@@ -16,7 +16,7 @@ type CreateMarketAction struct {
 	AMM    v2types.AMM
 }
 
-func (c CreateMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+func (c CreateMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	app.PerpKeeperV2.Markets.Insert(ctx, c.Market.Pair, c.Market)
 	app.PerpKeeperV2.AMMs.Insert(ctx, c.AMM.Pair, c.AMM)
 
@@ -25,7 +25,7 @@ func (c CreateMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context
 		TimestampMs: ctx.BlockTime().UnixMilli(),
 	})
 
-	return ctx, nil
+	return ctx, nil, true
 }
 
 // CreateCustomMarket creates a market with custom parameters

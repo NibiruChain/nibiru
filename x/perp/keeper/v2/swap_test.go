@@ -90,7 +90,6 @@ func TestSwapQuoteAsset(t *testing.T) {
 			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 			market := mock.TestMarket()
 			amm := mock.TestAMMDefault().WithPriceMultiplier(sdk.NewDec(2))
-			app.OracleKeeper.SetPrice(ctx, market.Pair, sdk.NewDec(2))
 
 			updatedAMM, baseAmt, err := app.PerpKeeperV2.SwapQuoteAsset(
 				ctx,
