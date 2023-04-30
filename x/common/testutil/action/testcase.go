@@ -63,12 +63,12 @@ func (t *TestSuite) WithTestCases(testCase ...TestCase) *TestSuite {
 
 func (t *TestSuite) Run() {
 	for _, testCase := range t.testCases {
-		nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
+		app, ctx := testapp.NewNibiruTestAppAndContext(true)
 		var err error
 		var isMandatory bool
 
 		for _, action := range testCase.given {
-			ctx, err, isMandatory = action.Do(nibiruApp, ctx)
+			ctx, err, isMandatory = action.Do(app, ctx)
 			if isMandatory {
 				require.NoError(t.t, err, "failed to execute given action: %s", testCase.Name)
 			} else {
@@ -77,7 +77,7 @@ func (t *TestSuite) Run() {
 		}
 
 		for _, action := range testCase.when {
-			ctx, err, isMandatory = action.Do(nibiruApp, ctx)
+			ctx, err, isMandatory = action.Do(app, ctx)
 			if isMandatory {
 				require.NoError(t.t, err, "failed to execute when action: %s", testCase.Name)
 			} else {
@@ -86,7 +86,7 @@ func (t *TestSuite) Run() {
 		}
 
 		for _, action := range testCase.then {
-			ctx, err, isMandatory = action.Do(nibiruApp, ctx)
+			ctx, err, isMandatory = action.Do(app, ctx)
 			if isMandatory {
 				require.NoError(t.t, err, "failed to execute then action: %s", testCase.Name)
 			} else {

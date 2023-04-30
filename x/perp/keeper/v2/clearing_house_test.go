@@ -18,6 +18,7 @@ import (
 	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
 	. "github.com/NibiruChain/nibiru/x/oracle/integration_test/action"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/action/v2"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion/v2"
@@ -36,7 +37,7 @@ func createInitMarket(pair asset.Pair) Action {
 			EcosystemFundFeeRatio:           sdk.MustNewDecFromStr("0.001"),
 			LiquidationFeeRatio:             sdk.MustNewDecFromStr("0.005"),
 			PartialLiquidationRatio:         sdk.MustNewDecFromStr("0.5"),
-			FundingRateEpochId:              "30min",
+			FundingRateEpochId:              epochstypes.ThirtyMinuteEpochID,
 			TwapLookbackWindow:              time.Minute * 30,
 			WhitelistedLiquidators:          []string{},
 			PrepaidBadDebt:                  sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
@@ -65,7 +66,7 @@ func TestOpenPosition(t *testing.T) {
 				createInitMarket(PairBtcUsdc),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetPairPrice(PairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
+				SetOraclePrice(PairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
 			).
 			When(
@@ -123,7 +124,7 @@ func TestOpenPosition(t *testing.T) {
 				createInitMarket(PairBtcUsdc),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				SetPairPrice(PairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
+				SetOraclePrice(PairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2040)))),
 				OpenPosition(alice, PairBtcUsdc, v2types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
@@ -174,7 +175,7 @@ func TestOpenPosition(t *testing.T) {
 				createInitMarket(PairBtcUsdc),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				SetPairPrice(PairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
+				SetOraclePrice(PairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1030)))),
 				OpenPosition(alice, PairBtcUsdc, v2types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
@@ -226,7 +227,7 @@ func TestOpenPosition(t *testing.T) {
 				createInitMarket(PairBtcUsdc),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				SetPairPrice(PairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
+				SetOraclePrice(PairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(4080)))),
 				OpenPosition(alice, PairBtcUsdc, v2types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
@@ -278,7 +279,7 @@ func TestOpenPosition(t *testing.T) {
 				createInitMarket(PairBtcUsdc),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetPairPrice(PairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
+				SetOraclePrice(PairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(47_714_285_715)))),
 			).
 			When(
@@ -336,7 +337,7 @@ func TestOpenPosition(t *testing.T) {
 				createInitMarket(PairBtcUsdc),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetPairPrice(PairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
+				SetOraclePrice(PairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
 			).
 			When(
@@ -396,7 +397,7 @@ func TestOpenPosition(t *testing.T) {
 				createInitMarket(PairBtcUsdc),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				SetPairPrice(PairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
+				SetOraclePrice(PairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2040)))),
 				OpenPosition(alice, PairBtcUsdc, v2types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
@@ -447,7 +448,7 @@ func TestOpenPosition(t *testing.T) {
 				createInitMarket(PairBtcUsdc),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				SetPairPrice(PairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
+				SetOraclePrice(PairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1030)))),
 				OpenPosition(alice, PairBtcUsdc, v2types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
@@ -499,7 +500,7 @@ func TestOpenPosition(t *testing.T) {
 				createInitMarket(PairBtcUsdc),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				SetPairPrice(PairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
+				SetOraclePrice(PairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(4080)))),
 				OpenPosition(alice, PairBtcUsdc, v2types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
@@ -551,7 +552,7 @@ func TestOpenPosition(t *testing.T) {
 				createInitMarket(PairBtcUsdc),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetPairPrice(PairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
+				SetOraclePrice(PairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(47_714_285_715)))),
 			).
 			When(

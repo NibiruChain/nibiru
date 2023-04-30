@@ -28,7 +28,7 @@ func TestOpenGasConsumed(t *testing.T) {
 				createInitMarket(PairBtcUsdc),
 				SetBlockTime(time.Now()),
 				SetBlockNumber(1),
-				SetPairPrice(PairBtcUsdc, sdk.NewDec(10000)),
+				SetOraclePrice(PairBtcUsdc, sdk.NewDec(10000)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
 			).
 			When(

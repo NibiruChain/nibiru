@@ -73,16 +73,50 @@ func (m moveToNextBlock) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, e
 	app.EndBlock(types.RequestEndBlock{})
 	app.Commit()
 
+	newHeader := tmproto.Header{
+		Height: ctx.BlockHeight() + 1,
+		Time:   ctx.BlockTime().Add(time.Second * 5),
+	}
+
 	app.BeginBlock(types.RequestBeginBlock{
-		Header: tmproto.Header{Height: ctx.BlockHeight() + 1},
+		Header: newHeader,
 	})
 
 	return app.NewContext(
 		false,
-		tmproto.Header{Height: ctx.BlockHeight() + 1},
-	).WithBlockTime(ctx.BlockTime().Add(time.Second * 5)), nil, true
+		newHeader,
+	).WithBlockTime(newHeader.Time), nil, true
 }
 
 func MoveToNextBlock() Action {
 	return moveToNextBlock{}
+}
+
+type moveToNextBlockWithDuration struct {
+	blockDuration time.Duration
+}
+
+func (m moveToNextBlockWithDuration) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	app.EndBlock(types.RequestEndBlock{Height: ctx.BlockHeight()})
+	app.Commit()
+
+	newHeader := tmproto.Header{
+		Height: ctx.BlockHeight() + 1,
+		Time:   ctx.BlockTime().Add(m.blockDuration),
+	}
+
+	app.BeginBlock(types.RequestBeginBlock{
+		Header: newHeader,
+	})
+
+	return app.NewContext(
+		false,
+		newHeader,
+	).WithBlockTime(ctx.BlockTime().Add(m.blockDuration)), nil, true
+}
+
+func MoveToNextBlockWithDuration(blockDuration time.Duration) Action {
+	return moveToNextBlockWithDuration{
+		blockDuration: blockDuration,
+	}
 }

@@ -22,7 +22,7 @@ func TestMarket() *v2types.Market {
 		EcosystemFundFeeRatio:           sdk.MustNewDecFromStr("0.0010"),
 		LiquidationFeeRatio:             sdk.MustNewDecFromStr("0.0005"),
 		PartialLiquidationRatio:         sdk.MustNewDecFromStr("0.5"),
-		FundingRateEpochId:              "30min",
+		FundingRateEpochId:              "30 min",
 		TwapLookbackWindow:              time.Minute * 30,
 		WhitelistedLiquidators:          nil,
 		PrepaidBadDebt:                  sdk.NewInt64Coin(denoms.NUSD, 0),
