@@ -3,6 +3,7 @@ package action
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/app"
@@ -12,7 +13,7 @@ import (
 )
 
 type Action interface {
-	Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error)
+	Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool)
 }
 
 type TestCases []TestCase
@@ -64,20 +65,33 @@ func (t *TestSuite) Run() {
 	for _, testCase := range t.testCases {
 		nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 		var err error
+		var isMandatory bool
 
 		for _, action := range testCase.given {
-			ctx, err = action.Do(nibiruApp, ctx)
-			require.NoError(t.t, err, "failed to execute given action: %s", testCase.Name)
+			ctx, err, isMandatory = action.Do(nibiruApp, ctx)
+			if isMandatory {
+				require.NoError(t.t, err, "failed to execute given action: %s", testCase.Name)
+			} else {
+				assert.NoError(t.t, err, "failed to execute given action: %s", testCase.Name)
+			}
 		}
 
 		for _, action := range testCase.when {
-			ctx, err = action.Do(nibiruApp, ctx)
-			require.NoError(t.t, err, "failed to execute when action: %s", testCase.Name)
+			ctx, err, isMandatory = action.Do(nibiruApp, ctx)
+			if isMandatory {
+				require.NoError(t.t, err, "failed to execute when action: %s", testCase.Name)
+			} else {
+				assert.NoError(t.t, err, "failed to execute when action: %s", testCase.Name)
+			}
 		}
 
 		for _, action := range testCase.then {
-			ctx, err = action.Do(nibiruApp, ctx)
-			require.NoError(t.t, err, "failed to execute then action: %s", testCase.Name)
+			ctx, err, isMandatory = action.Do(nibiruApp, ctx)
+			if isMandatory {
+				require.NoError(t.t, err, "failed to execute then action: %s", testCase.Name)
+			} else {
+				assert.NoError(t.t, err, "failed to execute then action: %s", testCase.Name)
+			}
 		}
 	}
 }
