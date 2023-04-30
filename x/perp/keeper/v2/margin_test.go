@@ -11,90 +11,108 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
+	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	. "github.com/NibiruChain/nibiru/x/oracle/integration_test/action"
+	. "github.com/NibiruChain/nibiru/x/perp/integration/action/v2"
+	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion/v2"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
-func TestAddMarginSuccess(t *testing.T) {
-	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
-	tests := []struct {
-		name                            string
-		marginToAdd                     sdk.Coin
-		latestCumulativePremiumFraction sdk.Dec
-		initialPosition                 v2types.Position
+func TestAddMargin(t *testing.T) {
+	alice := testutil.AccAddress()
+	PairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.USDC)
+	startBlockTime := time.Now()
 
-		expectedMargin         sdk.Dec
-		expectedFundingPayment sdk.Dec
-	}{
-		{
-			name:                            "add margin",
-			marginToAdd:                     sdk.NewInt64Coin(denoms.NUSD, 100),
-			latestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.001"),
-			initialPosition: v2types.Position{
-				TraderAddress:                   testutilevents.AccAddress().String(),
-				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				Size_:                           sdk.NewDec(1_000),
-				Margin:                          sdk.NewDec(100),
-				OpenNotional:                    sdk.NewDec(500),
-				LatestCumulativePremiumFraction: sdk.ZeroDec(),
-				LastUpdatedBlockNumber:          1,
-			},
+	tc := TestCases{
+		TC("existing long position, add margin").
+			Given(
+				createInitMarket(PairBtcUsdc),
+				SetBlockNumber(1),
+				SetBlockTime(startBlockTime),
+				SetPairPrice(PairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2020)))),
+				OpenPosition(alice, PairBtcUsdc, v2types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+			).
+			When(
+				MoveToNextBlock(),
+				AddMargin(alice, PairBtcUsdc, sdk.NewInt(1000)),
+			).
+			Then(
+				PositionShouldBeEqual(alice, PairBtcUsdc, Position_PositionShouldBeEqualTo(v2types.Position{
+					Pair:                            PairBtcUsdc,
+					TraderAddress:                   alice.String(),
+					Size_:                           sdk.MustNewDecFromStr("9999.999900000001000000"),
+					Margin:                          sdk.NewDec(2000),
+					OpenNotional:                    sdk.NewDec(10000),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+					LastUpdatedBlockNumber:          2,
+				})),
+				PositionChangedEventShouldBeEqual(&v2types.PositionChangedEvent{
+					Pair:               PairBtcUsdc,
+					TraderAddress:      alice.String(),
+					Margin:             sdk.NewCoin(denoms.USDC, sdk.NewInt(2000)),
+					PositionNotional:   sdk.NewDec(10_000),
+					ExchangedNotional:  sdk.ZeroDec(),
+					ExchangedSize:      sdk.ZeroDec(),
+					PositionSize:       sdk.MustNewDecFromStr("9999.999900000001000000"),
+					RealizedPnl:        sdk.ZeroDec(),
+					UnrealizedPnlAfter: sdk.ZeroDec(),
+					BadDebt:            sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+					FundingPayment:     sdk.ZeroDec(),
+					TransactionFee:     sdk.NewCoin(denoms.USDC, sdk.NewInt(20)), // 20 bps
+					BlockHeight:        2,
+					BlockTimeMs:        startBlockTime.Add(time.Second*5).UnixNano() / 1e6,
+				}),
+			),
 
-			expectedMargin:         sdk.NewDec(199),
-			expectedFundingPayment: sdk.NewDec(1),
-		},
+		TC("existing short position, add margin").
+			Given(
+				createInitMarket(PairBtcUsdc),
+				SetBlockNumber(1),
+				SetBlockTime(startBlockTime),
+				SetPairPrice(PairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2020)))),
+				OpenPosition(alice, PairBtcUsdc, v2types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+			).
+			When(
+				MoveToNextBlock(),
+				AddMargin(alice, PairBtcUsdc, sdk.NewInt(1000)),
+			).
+			Then(
+				PositionShouldBeEqual(alice, PairBtcUsdc, Position_PositionShouldBeEqualTo(v2types.Position{
+					Pair:                            PairBtcUsdc,
+					TraderAddress:                   alice.String(),
+					Size_:                           sdk.MustNewDecFromStr("-10000.000100000001000000"),
+					Margin:                          sdk.NewDec(2000),
+					OpenNotional:                    sdk.NewDec(10000),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+					LastUpdatedBlockNumber:          2,
+				})),
+				PositionChangedEventShouldBeEqual(&v2types.PositionChangedEvent{
+					Pair:               PairBtcUsdc,
+					TraderAddress:      alice.String(),
+					Margin:             sdk.NewCoin(denoms.USDC, sdk.NewInt(2000)),
+					PositionNotional:   sdk.NewDec(10_000),
+					ExchangedNotional:  sdk.ZeroDec(),
+					ExchangedSize:      sdk.ZeroDec(),
+					PositionSize:       sdk.MustNewDecFromStr("-10000.000100000001000000"),
+					RealizedPnl:        sdk.ZeroDec(),
+					UnrealizedPnlAfter: sdk.ZeroDec(),
+					BadDebt:            sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+					FundingPayment:     sdk.ZeroDec(),
+					TransactionFee:     sdk.NewCoin(denoms.USDC, sdk.NewInt(20)), // 20 bps
+					BlockHeight:        2,
+					BlockTimeMs:        startBlockTime.Add(time.Second*5).UnixNano() / 1e6,
+				}),
+			),
 	}
 
-	for _, tc := range tests {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruTestAppAndContext(true)
-			traderAddr := sdk.MustAccAddressFromBech32(tc.initialPosition.TraderAddress)
-
-			t.Log("add trader funds")
-			require.NoError(t, testapp.FundAccount(
-				app.BankKeeper,
-				ctx,
-				traderAddr,
-				sdk.NewCoins(tc.marginToAdd),
-			))
-
-			t.Log("create market")
-			app.PerpKeeperV2.Markets.Insert(ctx, pair, *mock.TestMarket())
-			// assert.NoError(t, perpammKeeper.CreatePool(
-			// 	ctx,
-			// 	asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			// 	sdk.NewDec(5*common.TO_MICRO), // 10 tokens
-			// 	sdk.NewDec(5*common.TO_MICRO), // 5 tokens
-			// 	v2types.MarketConfig{
-			// 		TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
-			// 		FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"), // 0.1 ratio
-			// 		MaxOracleSpreadRatio:   sdk.OneDec(),
-			// 		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-			// 		MaxLeverage:            sdk.MustNewDecFromStr("15"),
-			// 	},
-			// 	sdk.NewDec(2),
-			// ))
-
-			t.Log("establish initial position")
-			// keeper.SetPosition(app.PerpKeeperV2, ctx, tc.initialPosition)
-			// app.PerpKeeperV2.Positions.Insert(ctx, collections.Join(tc.initialPosition.Pair))
-
-			resp, err := app.PerpKeeperV2.AddMargin(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), traderAddr, tc.marginToAdd)
-			require.NoError(t, err)
-			assert.EqualValues(t, tc.expectedFundingPayment, resp.FundingPayment)
-			assert.EqualValues(t, tc.expectedMargin, resp.Position.Margin)
-			assert.EqualValues(t, tc.initialPosition.OpenNotional, resp.Position.OpenNotional)
-			assert.EqualValues(t, tc.initialPosition.Size_, resp.Position.Size_)
-			assert.EqualValues(t, traderAddr.String(), resp.Position.TraderAddress)
-			assert.EqualValues(t, asset.Registry.Pair(denoms.BTC, denoms.NUSD), resp.Position.Pair)
-			assert.EqualValues(t, tc.latestCumulativePremiumFraction, resp.Position.LatestCumulativePremiumFraction)
-			assert.EqualValues(t, ctx.BlockHeight(), resp.Position.LastUpdatedBlockNumber)
-		})
-	}
+	NewTestSuite(t).WithTestCases(tc...).Run()
 }
 
 func TestRemoveMargin(t *testing.T) {
@@ -112,7 +130,7 @@ func TestRemoveMargin(t *testing.T) {
 				trader := testutilevents.AccAddress()
 				pair := asset.MustNewPair("osmo:nusd")
 
-				_, _, _, err := nibiruApp.PerpKeeperV2.RemoveMargin(ctx, pair, trader, sdk.Coin{Denom: denoms.NUSD, Amount: removeAmt})
+				_, _, _, err := nibiruApp.PerpKeeperV2.RemoveMargin(ctx, pair, trader, sdk.Coin{Denom: denoms.USDC, Amount: removeAmt})
 				require.Error(t, err)
 				require.ErrorContains(t, err, types.ErrPairNotFound.Error())
 			},
@@ -126,7 +144,7 @@ func TestRemoveMargin(t *testing.T) {
 				pair := asset.MustNewPair("osmo:nusd")
 
 				t.Log("Setup market defined by pair")
-				nibiruApp.PerpKeeperV2.Markets.Insert(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), *mock.TestMarket())
+				nibiruApp.PerpKeeperV2.Markets.Insert(ctx, asset.Registry.Pair(denoms.BTC, denoms.USDC), *mock.TestMarket())
 
 				// perpammKeeper := &nibiruApp.PerpAmmKeeper
 				// perpKeeper := &nibiruApp.PerpKeeperV2
@@ -179,7 +197,7 @@ func TestRemoveMargin(t *testing.T) {
 				// 	},
 				// 	sdk.OneDec(),
 				// ))
-				nibiruApp.PerpKeeperV2.Markets.Insert(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), *mock.TestMarket())
+				nibiruApp.PerpKeeperV2.Markets.Insert(ctx, asset.Registry.Pair(denoms.BTC, denoms.USDC), *mock.TestMarket())
 
 				t.Log("increment block height and time for twap calculation")
 				ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).

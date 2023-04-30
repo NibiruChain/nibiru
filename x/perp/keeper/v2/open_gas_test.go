@@ -20,20 +20,20 @@ func TestOpenGasConsumed(t *testing.T) {
 	ts := NewTestSuite(t)
 
 	alice := testutil.AccAddress()
-	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.USDC)
+	PairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.USDC)
 
 	testCases := TestCases{
 		TC("open position gas consumed").
 			Given(
-				createInitMarket(pairBtcUsdc),
+				createInitMarket(PairBtcUsdc),
 				SetBlockTime(time.Now()),
 				SetBlockNumber(1),
-				SetPairPrice(pairBtcUsdc, sdk.NewDec(10000)),
+				SetPairPrice(PairBtcUsdc, sdk.NewDec(10000)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
 			).
 			When(
 				OpenPosition(
-					alice, pairBtcUsdc, v2types.Direction_LONG,
+					alice, PairBtcUsdc, v2types.Direction_LONG,
 					sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec(),
 				),
 			).Then(
