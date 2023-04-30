@@ -24,25 +24,7 @@ func (m msgServer) RemoveMargin(ctx context.Context, msg *v2types.MsgRemoveMargi
 ) (*v2types.MsgRemoveMarginResponse, error) {
 	// These fields should have already been validated by MsgRemoveMargin.ValidateBasic() prior to being sent to the msgServer.
 	traderAddr := sdk.MustAccAddressFromBech32(msg.Sender)
-
-	marginOut, fundingPayment, position, err := m.k.RemoveMargin(sdk.UnwrapSDKContext(ctx), msg.Pair, traderAddr, msg.Margin)
-	if err != nil {
-		return nil, err
-	}
-
-	return &v2types.MsgRemoveMarginResponse{
-		MarginOut:      marginOut,
-		FundingPayment: fundingPayment,
-		Position: &v2types.Position{
-			TraderAddress:                   position.TraderAddress,
-			Pair:                            position.Pair,
-			Size_:                           position.Size_,
-			Margin:                          position.Margin,
-			OpenNotional:                    position.OpenNotional,
-			LatestCumulativePremiumFraction: position.LatestCumulativePremiumFraction,
-			LastUpdatedBlockNumber:          position.LastUpdatedBlockNumber,
-		},
-	}, nil
+	return m.k.RemoveMargin(sdk.UnwrapSDKContext(ctx), msg.Pair, traderAddr, msg.Margin)
 }
 
 func (m msgServer) AddMargin(ctx context.Context, msg *v2types.MsgAddMargin,

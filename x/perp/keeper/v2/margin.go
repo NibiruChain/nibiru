@@ -111,35 +111,36 @@ ret:
 */
 func (k Keeper) RemoveMargin(
 	ctx sdk.Context, pair asset.Pair, traderAddr sdk.AccAddress, marginToRemove sdk.Coin,
-) (marginRemoved sdk.Coin, fundingPayment sdk.Dec, position v2types.Position, err error) {
+) (res *v2types.MsgRemoveMarginResponse, err error) {
 	// fetch objects from state
 	market, err := k.Markets.Get(ctx, pair)
 	if err != nil {
-		return sdk.Coin{}, sdk.Dec{}, v2types.Position{}, types.ErrPairNotFound
+		return nil, types.ErrPairNotFound
 	}
 
 	amm, err := k.AMMs.Get(ctx, pair)
 	if err != nil {
-		return sdk.Coin{}, sdk.Dec{}, v2types.Position{}, types.ErrPairNotFound
+		return nil, types.ErrPairNotFound
 	}
 
-	position, err = k.Positions.Get(ctx, collections.Join(pair, traderAddr))
+	position, err := k.Positions.Get(ctx, collections.Join(pair, traderAddr))
 	if err != nil {
-		return sdk.Coin{}, sdk.Dec{}, v2types.Position{}, err
+		return nil, err
 	}
 
 	// ensure we have enough free collateral
-	fundingPayment = FundingPayment(position, market.LatestCumulativePremiumFraction)
-
 	spotNotional, err := PositionNotionalSpot(amm, position)
 	if err != nil {
-		return sdk.Coin{}, sdk.Dec{}, v2types.Position{}, err
+		return nil, err
 	}
 	twapNotional, err := k.PositionNotionalTWAP(ctx, position, market.TwapLookbackWindow)
 	if err != nil {
-		return sdk.Coin{}, sdk.Dec{}, v2types.Position{}, err
+		return nil, err
 	}
 	minPositionNotional := sdk.MinDec(spotNotional, twapNotional)
+
+	// account for funding payment
+	fundingPayment := FundingPayment(position, market.LatestCumulativePremiumFraction)
 	remainingMargin := position.Margin.Sub(fundingPayment)
 
 	// account for negative PnL
@@ -149,11 +150,11 @@ func (k Keeper) RemoveMargin(
 	}
 
 	if remainingMargin.LT(marginToRemove.Amount.ToDec()) {
-		return sdk.Coin{}, sdk.Dec{}, v2types.Position{}, fmt.Errorf("not enough free collateral")
+		return nil, fmt.Errorf("not enough free collateral")
 	}
 
 	if err = k.Withdraw(ctx, market, traderAddr, marginToRemove.Amount); err != nil {
-		return sdk.Coin{}, sdk.Dec{}, v2types.Position{}, err
+		return nil, err
 	}
 
 	// apply funding payment and remove margin
@@ -181,8 +182,11 @@ func (k Keeper) RemoveMargin(
 			BlockTimeMs:        ctx.BlockTime().UnixMilli(),
 		},
 	); err != nil {
-		return sdk.Coin{}, sdk.Dec{}, v2types.Position{}, err
+		return nil, err
 	}
 
-	return marginToRemove, fundingPayment, position, nil
+	return &v2types.MsgRemoveMarginResponse{
+		FundingPayment: fundingPayment,
+		Position:       &position,
+	}, nil
 }
