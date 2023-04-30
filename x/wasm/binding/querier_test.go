@@ -19,20 +19,10 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/wasmbin"
-
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 )
 
 func TestSuiteQuerier_RunAll(t *testing.T) {
 	suite.Run(t, new(TestSuiteQuerier))
-}
-
-type WasmRequest struct {
-	Request wasmvmtypes.QueryRequest `json:"request"`
-}
-
-type WasmResponse struct {
-	Data []byte `json:"data"`
 }
 
 func DoCustomBindingQuery(
@@ -131,19 +121,12 @@ func GetHappyFields() ExampleFields {
 	return fields
 }
 
-func (s *TestSuiteQuerier) SetupPerpGenesis() app.GenesisState {
-	genesisState := genesis.NewTestGenesisState()
-	genesisState = genesis.AddOracleGenesis(genesisState)
-	genesisState = genesis.AddPerpGenesis(genesisState)
-	return genesisState
-}
-
 func (s *TestSuiteQuerier) SetupSuite() {
 	s.fields = GetHappyFields()
 	sender := testutil.AccAddress()
 	s.contractDeployer = sender
 
-	genesisState := s.SetupPerpGenesis()
+	genesisState := SetupPerpGenesis()
 	nibiru := testapp.NewNibiruTestApp(genesisState)
 	ctx := nibiru.NewContext(false, tmproto.Header{
 		Height:  1,
@@ -174,7 +157,7 @@ func (s *TestSuiteQuerier) TestQueryReserves() {
 		wasmError bool
 	}{
 		"happy":                   {pairStr: s.fields.Pair, wasmError: false},
-		"sad - non existent pair": {pairStr: "fxs:ust", wasmError: true},
+		"sad - non existent pair": {pairStr: "ftt:ust", wasmError: true},
 	}
 
 	for name, testCase := range testCases {
