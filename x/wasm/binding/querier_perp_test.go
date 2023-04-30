@@ -22,8 +22,8 @@ import (
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
-func TestSuitePerpExt_RunAll(t *testing.T) {
-	suite.Run(t, new(TestSuitePerpExt))
+func TestSuitePerpQuerier_RunAll(t *testing.T) {
+	suite.Run(t, new(TestSuitePerpQuerier))
 }
 
 func SetExchangeRates(
@@ -58,7 +58,7 @@ func SetExchangeRates(
 // # Test Setup
 // ————————————————————————————————————————————————————————————————————————————
 
-type TestSuitePerpExt struct {
+type TestSuitePerpQuerier struct {
 	suite.Suite
 
 	nibiru           *app.NibiruApp
@@ -71,19 +71,19 @@ type TestSuitePerpExt struct {
 	ratesMap     map[asset.Pair]sdk.Dec
 }
 
-func (s *TestSuitePerpExt) SetupPerpGenesis() app.GenesisState {
+func SetupPerpGenesis() app.GenesisState {
 	genesisState := genesis.NewTestGenesisState()
 	genesisState = genesis.AddPerpGenesis(genesisState)
 	genesisState = genesis.AddOracleGenesis(genesisState)
 	return genesisState
 }
 
-func (s *TestSuitePerpExt) SetupSuite() {
+func (s *TestSuitePerpQuerier) SetupSuite() {
 	s.fields = GetHappyFields()
 	sender := testutil.AccAddress()
 	s.contractDeployer = sender
 
-	genesisState := s.SetupPerpGenesis()
+	genesisState := SetupPerpGenesis()
 	nibiru := testapp.NewNibiruTestApp(genesisState)
 	ctx := nibiru.NewContext(false, tmproto.Header{
 		Height:  1,
@@ -108,7 +108,7 @@ func (s *TestSuitePerpExt) SetupSuite() {
 	s.OnSetupEnd()
 }
 
-func (s *TestSuitePerpExt) OnSetupEnd() {
+func (s *TestSuitePerpQuerier) OnSetupEnd() {
 	s.ratesMap = SetExchangeRates(s.Suite, s.nibiru, s.ctx)
 }
 
@@ -117,13 +117,12 @@ func (s *TestSuitePerpExt) OnSetupEnd() {
 //
 // - TestPremiumFraction
 // - TestAllMarkets
-// - TestMetricsHappy
-// - TestMetricsSad
-// - TestMetricsSad
-// - TestMetricsSad
+// - TestMetrics
+// - TestModuleAccounts
+// - TestModuleParams
 // ————————————————————————————————————————————————————————————————————————————
 
-func (s *TestSuitePerpExt) TestPremiumFraction() {
+func (s *TestSuitePerpQuerier) TestPremiumFraction() {
 	testCases := map[string]struct {
 		cwReq     *cw_struct.PremiumFractionRequest
 		cwResp    *cw_struct.PremiumFractionResponse
@@ -163,7 +162,7 @@ func (s *TestSuitePerpExt) TestPremiumFraction() {
 	}
 }
 
-func (s *TestSuitePerpExt) TestAllMarkets() {
+func (s *TestSuitePerpQuerier) TestAllMarkets() {
 	type CwMarketMap map[asset.Pair]cw_struct.Market
 
 	marketMap := make(CwMarketMap)
@@ -222,27 +221,27 @@ func (s *TestSuitePerpExt) TestAllMarkets() {
 	}
 }
 
-func (s *TestSuitePerpExt) TestMetrics_Happy() {
+func (s *TestSuitePerpQuerier) TestMetrics() {
+	// happy case
 	for pair := range genesis.START_MARKETS {
 		cwReq := &cw_struct.MetricsRequest{Pair: pair.String()}
 		cwResp, err := s.queryPlugin.Perp.Metrics(s.ctx, cwReq)
 		s.NoErrorf(err, "cwResp: %s", cwResp)
 	}
-}
 
-func (s *TestSuitePerpExt) TestMetrics_Sad() {
-	cwReq := &cw_struct.MetricsRequest{Pair: "fxs:ust"}
+	// sad case
+	cwReq := &cw_struct.MetricsRequest{Pair: "ftt:ust"}
 	cwResp, err := s.queryPlugin.Perp.Metrics(s.ctx, cwReq)
 	s.Errorf(err, "cwResp: %s", cwResp)
 }
 
-func (s *TestSuitePerpExt) TestModuleAccounts() {
+func (s *TestSuitePerpQuerier) TestModuleAccounts() {
 	cwReq := &cw_struct.ModuleAccountsRequest{}
 	cwResp, err := s.queryPlugin.Perp.ModuleAccounts(s.ctx, cwReq)
 	s.NoErrorf(err, "\ncwResp: %s", cwResp)
 }
 
-func (s *TestSuitePerpExt) TestModuleParams() {
+func (s *TestSuitePerpQuerier) TestModuleParams() {
 	cwReq := &cw_struct.PerpParamsRequest{}
 	cwResp, err := s.queryPlugin.Perp.ModuleParams(s.ctx, cwReq)
 	s.NoErrorf(err, "\ncwResp: %s", cwResp)
