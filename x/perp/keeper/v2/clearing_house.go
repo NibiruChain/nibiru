@@ -129,9 +129,8 @@ func (k Keeper) afterPositionUpdate(
 	traderAddr sdk.AccAddress,
 	positionResp v2types.PositionResp,
 ) (err error) {
-	pair := market.Pair
 	if !positionResp.Position.Size_.IsZero() {
-		k.Positions.Insert(ctx, collections.Join(pair, traderAddr), *positionResp.Position)
+		k.Positions.Insert(ctx, collections.Join(market.Pair, traderAddr), *positionResp.Position)
 	}
 
 	if !positionResp.BadDebt.IsZero() {
@@ -139,19 +138,22 @@ func (k Keeper) afterPositionUpdate(
 	}
 
 	if !positionResp.Position.Size_.IsZero() {
-		marginRatio, err := k.GetMaxMarginRatio(
-			ctx,
-			amm,
-			*positionResp.Position,
-			market.TwapLookbackWindow,
-			market.LatestCumulativePremiumFraction,
-		)
+		spotNotional, err := PositionNotionalSpot(amm, *positionResp.Position)
+		if err != nil {
+			return err
+		}
+		twapNotional, err := k.PositionNotionalTWAP(ctx, *positionResp.Position, market.TwapLookbackWindow)
+		if err != nil {
+			return err
+		}
+		positionNotional := sdk.MaxDec(spotNotional, twapNotional)
+
+		marginRatio, err := MarginRatio(*positionResp.Position, positionNotional, market.LatestCumulativePremiumFraction)
 		if err != nil {
 			return err
 		}
 
-		maintenanceMarginRatio := market.MaintenanceMarginRatio
-		if err = validateMarginRatio(marginRatio, maintenanceMarginRatio, true); err != nil {
+		if marginRatio.LT(market.MaintenanceMarginRatio) {
 			return types.ErrMarginRatioTooLow
 		}
 	}
@@ -166,7 +168,7 @@ func (k Keeper) afterPositionUpdate(
 	marginToVault := positionResp.MarginToVault.RoundInt()
 	switch {
 	case marginToVault.IsPositive():
-		coinToSend := sdk.NewCoin(pair.QuoteDenom(), marginToVault)
+		coinToSend := sdk.NewCoin(market.Pair.QuoteDenom(), marginToVault)
 		if err = k.BankKeeper.SendCoinsFromAccountToModule(
 			ctx, traderAddr, types.VaultModuleAccount, sdk.NewCoins(coinToSend)); err != nil {
 			return err
@@ -177,7 +179,7 @@ func (k Keeper) afterPositionUpdate(
 		}
 	}
 
-	transferredFee, err := k.transferFee(ctx, pair, traderAddr, positionResp.ExchangedNotionalValue)
+	transferredFee, err := k.transferFee(ctx, market.Pair, traderAddr, positionResp.ExchangedNotionalValue)
 	if err != nil {
 		return err
 	}
@@ -194,16 +196,16 @@ func (k Keeper) afterPositionUpdate(
 
 	return ctx.EventManager().EmitTypedEvent(&v2types.PositionChangedEvent{
 		TraderAddress:      traderAddr.String(),
-		Pair:               pair,
-		Margin:             sdk.NewCoin(pair.QuoteDenom(), positionResp.Position.Margin.RoundInt()),
+		Pair:               market.Pair,
+		Margin:             sdk.NewCoin(market.Pair.QuoteDenom(), positionResp.Position.Margin.RoundInt()),
 		PositionNotional:   positionNotional,
 		ExchangedNotional:  positionResp.ExchangedNotionalValue,
 		ExchangedSize:      positionResp.ExchangedPositionSize,
-		TransactionFee:     sdk.NewCoin(pair.QuoteDenom(), transferredFee),
+		TransactionFee:     sdk.NewCoin(market.Pair.QuoteDenom(), transferredFee),
 		PositionSize:       positionResp.Position.Size_,
 		RealizedPnl:        positionResp.RealizedPnl,
 		UnrealizedPnlAfter: positionResp.UnrealizedPnlAfter,
-		BadDebt:            sdk.NewCoin(pair.QuoteDenom(), positionResp.BadDebt.RoundInt()),
+		BadDebt:            sdk.NewCoin(market.Pair.QuoteDenom(), positionResp.BadDebt.RoundInt()),
 		FundingPayment:     positionResp.FundingPayment,
 		BlockHeight:        ctx.BlockHeight(),
 		BlockTimeMs:        ctx.BlockTime().UnixMilli(),
@@ -261,12 +263,9 @@ func (k Keeper) increasePosition(
 		return nil, nil, err
 	}
 
-	marginDeltaAbs := increasedNotional.Quo(leverage)
-	remaining := CalcRemainMarginWithFundingPayment(
-		currentPosition,
-		marginDeltaAbs,
-		market.LatestCumulativePremiumFraction,
-	)
+	marginDelta := increasedNotional.Quo(leverage)
+	fundingPayment := FundingPayment(currentPosition, market.LatestCumulativePremiumFraction)
+	remainingMarginSigned := currentPosition.Margin.Add(marginDelta).Sub(fundingPayment)
 
 	positionNotional, err := PositionNotionalSpot(amm, currentPosition)
 	if err != nil {
@@ -284,14 +283,14 @@ func (k Keeper) increasePosition(
 	positionResp.PositionNotional = positionNotional.Add(increasedNotional)
 	positionResp.UnrealizedPnlAfter = unrealizedPnl
 	positionResp.RealizedPnl = sdk.ZeroDec()
-	positionResp.MarginToVault = marginDeltaAbs
-	positionResp.FundingPayment = remaining.FundingPayment
-	positionResp.BadDebt = remaining.BadDebtAbs
+	positionResp.MarginToVault = marginDelta
+	positionResp.FundingPayment = fundingPayment
+	positionResp.BadDebt = sdk.MinDec(sdk.ZeroDec(), remainingMarginSigned).Abs()
 	positionResp.Position = &v2types.Position{
 		TraderAddress:                   currentPosition.TraderAddress,
 		Pair:                            currentPosition.Pair,
 		Size_:                           currentPosition.Size_.Add(positionResp.ExchangedPositionSize),
-		Margin:                          remaining.MarginAbs,
+		Margin:                          sdk.MaxDec(sdk.ZeroDec(), remainingMarginSigned).Abs(),
 		OpenNotional:                    currentPosition.OpenNotional.Add(increasedNotional),
 		LatestCumulativePremiumFraction: market.LatestCumulativePremiumFraction,
 		LastUpdatedBlockNumber:          ctx.BlockHeight(),
@@ -415,14 +414,11 @@ func (k Keeper) decreasePosition(
 			Quo(currentPosition.Size_.Abs()),
 	)
 
-	remaining := CalcRemainMarginWithFundingPayment(
-		currentPosition,
-		positionResp.RealizedPnl,
-		market.LatestCumulativePremiumFraction,
-	)
+	fundingPayment := FundingPayment(currentPosition, market.LatestCumulativePremiumFraction)
+	remainingMargin := currentPosition.Margin.Add(positionResp.RealizedPnl).Sub(fundingPayment)
 
-	positionResp.BadDebt = remaining.BadDebtAbs
-	positionResp.FundingPayment = remaining.FundingPayment
+	positionResp.BadDebt = sdk.MinDec(sdk.ZeroDec(), remainingMargin).Abs()
+	positionResp.FundingPayment = fundingPayment
 	positionResp.UnrealizedPnlAfter = currentUnrealizedPnl.Sub(positionResp.RealizedPnl)
 	positionResp.ExchangedNotionalValue = decreasedNotional
 	positionResp.PositionNotional = currentPositionNotional.Sub(decreasedNotional)
@@ -446,7 +442,7 @@ func (k Keeper) decreasePosition(
 		TraderAddress:                   currentPosition.TraderAddress,
 		Pair:                            currentPosition.Pair,
 		Size_:                           currentPosition.Size_.Add(positionResp.ExchangedPositionSize),
-		Margin:                          remaining.MarginAbs,
+		Margin:                          sdk.MaxDec(sdk.ZeroDec(), remainingMargin).Abs(),
 		OpenNotional:                    remainOpenNotional,
 		LatestCumulativePremiumFraction: market.LatestCumulativePremiumFraction,
 		LastUpdatedBlockNumber:          ctx.BlockHeight(),
@@ -617,12 +613,12 @@ func (k Keeper) closePositionEntirely(
 
 	positionResp.RealizedPnl = unrealizedPnl
 	// calculate remaining margin with funding payment
-	remaining := CalcRemainMarginWithFundingPayment(
-		currentPosition, unrealizedPnl, market.LatestCumulativePremiumFraction)
+	fundingPayment := FundingPayment(currentPosition, market.LatestCumulativePremiumFraction)
+	remainingMargin := currentPosition.Margin.Add(unrealizedPnl).Sub(fundingPayment)
 
-	positionResp.BadDebt = remaining.BadDebtAbs
-	positionResp.FundingPayment = remaining.FundingPayment
-	positionResp.MarginToVault = remaining.MarginAbs.Neg()
+	positionResp.BadDebt = sdk.MinDec(sdk.ZeroDec(), remainingMargin).Abs()
+	positionResp.MarginToVault = sdk.MaxDec(sdk.ZeroDec(), remainingMargin)
+	positionResp.FundingPayment = fundingPayment
 
 	var sideToTake v2types.Direction
 	// flipped since we are going against the current position

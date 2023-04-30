@@ -45,6 +45,8 @@ func (k Keeper) Withdraw(
 		shortage := amountToWithdraw.Sub(vaultQuoteBalance.Amount)
 		k.IncrementPrepaidBadDebt(ctx, market, shortage)
 
+		// TODO(k-yang): emit event for prepaid bad debt
+
 		if err := k.BankKeeper.SendCoinsFromModuleToModule(
 			ctx,
 			types.PerpEFModuleAccount,

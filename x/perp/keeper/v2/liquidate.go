@@ -30,7 +30,7 @@ func (k Keeper) Liquidate(
 	liquidator sdk.AccAddress,
 	pair asset.Pair,
 	trader sdk.AccAddress,
-) (liquidatorFee sdk.Coin, perpEcosystemFundFee sdk.Coin, err error) {
+) (liquidatorFee sdk.Coin, ecosystemFundFee sdk.Coin, err error) {
 	market, err := k.Markets.Get(ctx, pair)
 	if err != nil {
 		_ = ctx.EventManager().EmitTypedEvent(&types.LiquidationFailedEvent{ // nolint:errcheck
@@ -64,20 +64,19 @@ func (k Keeper) Liquidate(
 		return
 	}
 
-	marginRatio, err := k.GetMaxMarginRatio(
-		ctx,
-		amm,
-		position,
-		market.TwapLookbackWindow,
-		market.LatestCumulativePremiumFraction,
-	)
+	spotNotional, err := PositionNotionalSpot(amm, position)
 	if err != nil {
 		return
 	}
-
-	err = validateMarginRatio(marginRatio, market.MaintenanceMarginRatio, false)
-
+	twapNotional, err := k.PositionNotionalTWAP(ctx, position, market.TwapLookbackWindow)
 	if err != nil {
+		return
+	}
+	maxPositionNotional := sdk.MaxDec(spotNotional, twapNotional)
+
+	marginRatio, err := MarginRatio(position, maxPositionNotional, market.LatestCumulativePremiumFraction)
+
+	if marginRatio.LT(market.MaintenanceMarginRatio) {
 		_ = ctx.EventManager().EmitTypedEvent(&types.LiquidationFailedEvent{ // nolint:errcheck
 			Pair:       pair,
 			Trader:     trader.String(),
@@ -87,12 +86,7 @@ func (k Keeper) Liquidate(
 		return
 	}
 
-	positionNotional, err := PositionNotionalSpot(amm, position)
-	if err != nil {
-		return
-	}
-
-	spotMarginRatio, err := GetSpotMarginRatio(position, positionNotional, market.LatestCumulativePremiumFraction)
+	spotMarginRatio, err := MarginRatio(position, spotNotional, market.LatestCumulativePremiumFraction)
 	if err != nil {
 		return
 	}
@@ -112,12 +106,12 @@ func (k Keeper) Liquidate(
 		liquidationResponse.FeeToLiquidator,
 	)
 
-	perpEcosystemFundFee = sdk.NewCoin(
+	ecosystemFundFee = sdk.NewCoin(
 		pair.QuoteDenom(),
 		liquidationResponse.FeeToPerpEcosystemFund,
 	)
 
-	return liquidatorFee, perpEcosystemFundFee, nil
+	return liquidatorFee, ecosystemFundFee, nil
 }
 
 /*

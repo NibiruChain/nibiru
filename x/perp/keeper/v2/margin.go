@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/NibiruChain/collections"
 
@@ -19,7 +18,7 @@ import (
 to it. Adding margin increases the margin ratio of the corresponding position.
 */
 func (k Keeper) AddMargin(
-	ctx sdk.Context, pair asset.Pair, traderAddr sdk.AccAddress, margin sdk.Coin,
+	ctx sdk.Context, pair asset.Pair, traderAddr sdk.AccAddress, marginToAdd sdk.Coin,
 ) (res *v2types.MsgAddMarginResponse, err error) {
 	market, err := k.Markets.Get(ctx, pair)
 	if err != nil {
@@ -36,9 +35,10 @@ func (k Keeper) AddMargin(
 		return nil, err
 	}
 
-	remainingMargin := CalcRemainMarginWithFundingPayment(position, margin.Amount.ToDec(), market.LatestCumulativePremiumFraction)
+	fundingPayment := FundingPayment(position, market.LatestCumulativePremiumFraction)
+	remainingMargin := position.Margin.Sub(fundingPayment).Add(marginToAdd.Amount.ToDec())
 
-	if !remainingMargin.BadDebtAbs.IsZero() {
+	if remainingMargin.IsNegative() {
 		return nil, fmt.Errorf("failed to add margin; position has bad debt; consider adding more margin")
 	}
 
@@ -46,12 +46,13 @@ func (k Keeper) AddMargin(
 		ctx,
 		/* from */ traderAddr,
 		/* to */ types.VaultModuleAccount,
-		/* amount */ sdk.NewCoins(margin),
+		/* amount */ sdk.NewCoins(marginToAdd),
 	); err != nil {
 		return nil, err
 	}
 
-	position.Margin = remainingMargin.MarginAbs
+	// apply funding payment and add margin
+	position.Margin = remainingMargin
 	position.LatestCumulativePremiumFraction = market.LatestCumulativePremiumFraction
 	position.LastUpdatedBlockNumber = ctx.BlockHeight()
 	k.Positions.Insert(ctx, collections.Join(position.Pair, traderAddr), position)
@@ -60,7 +61,6 @@ func (k Keeper) AddMargin(
 	if err != nil {
 		return nil, err
 	}
-	unrealizedPnl := UnrealizedPnl(position, positionNotional)
 
 	if err = ctx.EventManager().EmitTypedEvent(
 		&types.PositionChangedEvent{
@@ -73,9 +73,9 @@ func (k Keeper) AddMargin(
 			TransactionFee:     sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
 			PositionSize:       position.Size_,
 			RealizedPnl:        sdk.ZeroDec(), // always zero when adding margin
-			UnrealizedPnlAfter: unrealizedPnl,
-			BadDebt:            sdk.NewCoin(pair.QuoteDenom(), remainingMargin.BadDebtAbs.RoundInt()), // always zero when adding margin
-			FundingPayment:     remainingMargin.FundingPayment,
+			UnrealizedPnlAfter: UnrealizedPnl(position, positionNotional),
+			BadDebt:            sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
+			FundingPayment:     fundingPayment,
 			MarkPrice:          amm.MarkPrice(),
 			BlockHeight:        ctx.BlockHeight(),
 			BlockTimeMs:        ctx.BlockTime().UnixMilli(),
@@ -85,7 +85,7 @@ func (k Keeper) AddMargin(
 	}
 
 	return &v2types.MsgAddMarginResponse{
-		FundingPayment: remainingMargin.FundingPayment,
+		FundingPayment: fundingPayment,
 		Position:       &position,
 	}, nil
 }
@@ -110,8 +110,9 @@ ret:
   - err: error if any
 */
 func (k Keeper) RemoveMargin(
-	ctx sdk.Context, pair asset.Pair, traderAddr sdk.AccAddress, margin sdk.Coin,
-) (marginOut sdk.Coin, fundingPayment sdk.Dec, position v2types.Position, err error) {
+	ctx sdk.Context, pair asset.Pair, traderAddr sdk.AccAddress, marginToRemove sdk.Coin,
+) (marginRemoved sdk.Coin, fundingPayment sdk.Dec, position v2types.Position, err error) {
+	// fetch objects from state
 	market, err := k.Markets.Get(ctx, pair)
 	if err != nil {
 		return sdk.Coin{}, sdk.Dec{}, v2types.Position{}, types.ErrPairNotFound
@@ -122,54 +123,59 @@ func (k Keeper) RemoveMargin(
 		return sdk.Coin{}, sdk.Dec{}, v2types.Position{}, types.ErrPairNotFound
 	}
 
-	// ------------- RemoveMargin -------------
 	position, err = k.Positions.Get(ctx, collections.Join(pair, traderAddr))
 	if err != nil {
 		return sdk.Coin{}, sdk.Dec{}, v2types.Position{}, err
 	}
 
-	marginDelta := margin.Amount.Neg()
-	remainingMargin := CalcRemainMarginWithFundingPayment(position, marginDelta.ToDec(), market.LatestCumulativePremiumFraction)
-	if !remainingMargin.BadDebtAbs.IsZero() {
-		return sdk.Coin{}, sdk.Dec{}, v2types.Position{}, types.ErrFailedRemoveMarginCanCauseBadDebt
-	}
+	// ensure we have enough free collateral
+	fundingPayment = FundingPayment(position, market.LatestCumulativePremiumFraction)
 
-	position.Margin = remainingMargin.MarginAbs
-	position.LatestCumulativePremiumFraction = market.LatestCumulativePremiumFraction
-
-	freeCollateral, err := k.calcFreeCollateral(ctx, market, amm, position)
+	spotNotional, err := PositionNotionalSpot(amm, position)
 	if err != nil {
 		return sdk.Coin{}, sdk.Dec{}, v2types.Position{}, err
-	} else if !freeCollateral.IsPositive() {
+	}
+	twapNotional, err := k.PositionNotionalTWAP(ctx, position, market.TwapLookbackWindow)
+	if err != nil {
+		return sdk.Coin{}, sdk.Dec{}, v2types.Position{}, err
+	}
+	minPositionNotional := sdk.MinDec(spotNotional, twapNotional)
+	remainingMargin := position.Margin.Sub(fundingPayment)
+
+	// account for negative PnL
+	unrealizedPnl := UnrealizedPnl(position, minPositionNotional)
+	if unrealizedPnl.IsNegative() {
+		remainingMargin = remainingMargin.Add(unrealizedPnl)
+	}
+
+	if remainingMargin.LT(marginToRemove.Amount.ToDec()) {
 		return sdk.Coin{}, sdk.Dec{}, v2types.Position{}, fmt.Errorf("not enough free collateral")
 	}
 
+	if err = k.Withdraw(ctx, market, traderAddr, marginToRemove.Amount); err != nil {
+		return sdk.Coin{}, sdk.Dec{}, v2types.Position{}, err
+	}
+
+	// apply funding payment and remove margin
+	position.Margin = position.Margin.Sub(fundingPayment).Sub(marginToRemove.Amount.ToDec())
+	position.LatestCumulativePremiumFraction = market.LatestCumulativePremiumFraction
+	position.LastUpdatedBlockNumber = ctx.BlockHeight()
 	k.Positions.Insert(ctx, collections.Join(position.Pair, traderAddr), position)
-
-	positionNotional, err := PositionNotionalSpot(amm, position)
-	if err != nil {
-		return sdk.Coin{}, sdk.Dec{}, v2types.Position{}, err
-	}
-	unrealizedPnl := UnrealizedPnl(position, positionNotional)
-
-	if err = k.Withdraw(ctx, market, traderAddr, margin.Amount); err != nil {
-		return sdk.Coin{}, sdk.Dec{}, v2types.Position{}, err
-	}
 
 	if err = ctx.EventManager().EmitTypedEvent(
 		&types.PositionChangedEvent{
 			Pair:               pair,
 			TraderAddress:      traderAddr.String(),
 			Margin:             sdk.NewCoin(pair.QuoteDenom(), position.Margin.RoundInt()),
-			PositionNotional:   positionNotional,
+			PositionNotional:   spotNotional,
 			ExchangedNotional:  sdk.ZeroDec(),                                 // always zero when removing margin
 			ExchangedSize:      sdk.ZeroDec(),                                 // always zero when removing margin
 			TransactionFee:     sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when removing margin
 			PositionSize:       position.Size_,
 			RealizedPnl:        sdk.ZeroDec(), // always zero when removing margin
-			UnrealizedPnlAfter: unrealizedPnl,
-			BadDebt:            sdk.NewCoin(pair.QuoteDenom(), remainingMargin.BadDebtAbs.RoundInt()), // always zero when removing margin
-			FundingPayment:     remainingMargin.FundingPayment,
+			UnrealizedPnlAfter: UnrealizedPnl(position, spotNotional),
+			BadDebt:            sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when removing margin
+			FundingPayment:     fundingPayment,
 			MarkPrice:          amm.MarkPrice(),
 			BlockHeight:        ctx.BlockHeight(),
 			BlockTimeMs:        ctx.BlockTime().UnixMilli(),
@@ -178,86 +184,5 @@ func (k Keeper) RemoveMargin(
 		return sdk.Coin{}, sdk.Dec{}, v2types.Position{}, err
 	}
 
-	return margin, remainingMargin.FundingPayment, position, nil
-}
-
-// Returns the margin ratio based on spot price.
-func GetSpotMarginRatio(
-	position v2types.Position,
-	positionNotional sdk.Dec,
-	marketLatestCumulativePremiumFraction sdk.Dec,
-) (sdk.Dec, error) {
-	if position.Size_.IsZero() || positionNotional.IsZero() {
-		return sdk.ZeroDec(), nil
-	}
-
-	remaining := CalcRemainMarginWithFundingPayment(
-		/* oldPosition */ position,
-		/* marginDelta */ UnrealizedPnl(position, positionNotional),
-		marketLatestCumulativePremiumFraction,
-	)
-
-	return remaining.MarginAbs.Sub(remaining.BadDebtAbs).Quo(positionNotional), nil
-}
-
-// Returns the margin ratio based on the max of twap price and spot price
-func (k Keeper) GetMaxMarginRatio(
-	ctx sdk.Context,
-	amm v2types.AMM,
-	position v2types.Position,
-	twapLookbackWindow time.Duration,
-	latestCumulativePremiumFraction sdk.Dec,
-) (marginRatio sdk.Dec, err error) {
-	if position.Size_.IsZero() {
-		return sdk.ZeroDec(), nil
-	}
-
-	spotNotional, err := PositionNotionalSpot(amm, position)
-	if err != nil {
-		return sdk.Dec{}, err
-	}
-	twapNotional, err := k.PositionNotionalTWAP(ctx, position, twapLookbackWindow)
-	if err != nil {
-		return sdk.Dec{}, err
-	}
-	positionNotional := sdk.MaxDec(spotNotional, twapNotional)
-
-	if positionNotional.IsZero() {
-		return sdk.ZeroDec(), nil
-	}
-
-	remaining := CalcRemainMarginWithFundingPayment(
-		/* oldPosition */ position,
-		/* marginDelta */ UnrealizedPnl(position, positionNotional),
-		latestCumulativePremiumFraction,
-	)
-
-	return remaining.MarginAbs.Sub(remaining.BadDebtAbs).Quo(positionNotional), nil
-}
-
-/*
-validateMarginRatio checks if the marginRatio corresponding to the margin
-backing a position is above or below the 'threshold'.
-If 'largerThanOrEqualTo' is true, 'marginRatio' must be >= 'threshold'.
-
-Args:
-  - marginRatio: Ratio of the value of the margin and corresponding position(s).
-    marginRatio is defined as (margin + unrealizedPnL) / notional
-  - threshold: Specifies the threshold value that 'marginRatio' must meet.
-    largerThanOrEqualTo: Specifies whether 'marginRatio' should be larger or
-    smaller than 'threshold'.
-*/
-func validateMarginRatio(marginRatio, threshold sdk.Dec, largerThanOrEqualTo bool) error {
-	if largerThanOrEqualTo {
-		if !marginRatio.GTE(threshold) {
-			return fmt.Errorf("%w: marginRatio: %s, threshold: %s",
-				types.ErrMarginRatioTooLow, marginRatio, threshold)
-		}
-	} else {
-		if !marginRatio.LT(threshold) {
-			return fmt.Errorf("%w: marginRatio: %s, threshold: %s",
-				types.ErrMarginRatioTooHigh, marginRatio, threshold)
-		}
-	}
-	return nil
+	return marginToRemove, fundingPayment, position, nil
 }

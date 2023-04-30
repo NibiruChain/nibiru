@@ -1,96 +1,83 @@
 package keeper
 
 import (
-	"fmt"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"time"
 
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-type RemainingMarginWithFundingPayment struct {
-	// MarginAbs: amount of quote token (y) backing the position.
-	MarginAbs sdk.Dec
+// PositionNotionalSpot returns the position's notional value based on the spot price.
+func PositionNotionalSpot(amm v2types.AMM, position v2types.Position) (positionNotional sdk.Dec, err error) {
+	// we want to know the price if the user closes their position
+	// e.g. if the user has positive size, we want to short
+	var dir v2types.Direction
+	if position.Size_.IsPositive() {
+		dir = v2types.Direction_SHORT
+	} else {
+		dir = v2types.Direction_LONG
+	}
 
-	/* BadDebtAbs: Bad debt (margin units) cleared by the PerpEF during the tx.
-	   Bad debt is negative net margin past the liquidation point of a position. */
-	BadDebtAbs sdk.Dec
-
-	/* FundingPayment: A funding payment (margin units) made or received by the trader on
-	    the current position. 'fundingPayment' is positive if 'owner' is the sender
-		and negative if 'owner' is the receiver of the payment. Its magnitude is
-		abs(vSize * fundingRate). Funding payments act to converge the mark price
-		(vPrice) and index price (average price on major exchanges).
-	*/
-	FundingPayment sdk.Dec
+	quoteReserve, err := amm.GetQuoteReserveAmt(position.Size_.Abs(), dir)
+	if err != nil {
+		return sdk.Dec{}, err
+	}
+	return amm.FromQuoteReserveToAsset(quoteReserve), nil
 }
 
-func (r RemainingMarginWithFundingPayment) String() string {
-	return fmt.Sprintf(
-		"RemainingMarginWithFundingPayment{Margin: %s, FundingPayment: %s, PrepaidBadDebt: %s}",
-		r.MarginAbs, r.FundingPayment, r.BadDebtAbs,
+// PositionNotionalTWAP returns the position's notional value based on the TWAP price.
+func (k Keeper) PositionNotionalTWAP(ctx sdk.Context,
+	position v2types.Position,
+	twapLookbackWindow time.Duration,
+) (positionNotional sdk.Dec, err error) {
+	// we want to know the price if the user closes their position
+	// e.g. if the user has positive size, we want to short
+	var dir v2types.Direction
+	if position.Size_.IsPositive() {
+		dir = v2types.Direction_SHORT
+	} else {
+		dir = v2types.Direction_LONG
+	}
+
+	return k.BaseAssetTWAP(
+		ctx,
+		position.Pair,
+		dir,
+		position.Size_.Abs(),
+		/*lookbackInterval=*/ twapLookbackWindow,
 	)
 }
 
-// CalcRemainMarginWithFundingPayment calculates the remaining margin after a margin delta and funding payment are applied.
-// If the remaining margin is negative, the position has bad debt.
-func CalcRemainMarginWithFundingPayment(
-	currentPosition v2types.Position,
-	marginDeltaSigned sdk.Dec,
-	marketLatestCumulativePremumFraction sdk.Dec,
-) (remaining RemainingMarginWithFundingPayment) {
-	remaining.FundingPayment = (marketLatestCumulativePremumFraction.
-		Sub(currentPosition.LatestCumulativePremiumFraction)).
-		Mul(currentPosition.Size_)
-
-	remainingMargin := currentPosition.Margin.Add(marginDeltaSigned).Sub(remaining.FundingPayment)
-
-	if remainingMargin.IsNegative() {
-		// the remaining margin is negative, liquidators didn't do their job
-		// and we have negative margin that must come out of the ecosystem fund
-		remaining.BadDebtAbs = remainingMargin.Abs()
-		remaining.MarginAbs = sdk.ZeroDec()
+// UnrealizedPnl calculates the unrealized profits and losses (PnL) of a position.
+func UnrealizedPnl(position v2types.Position, positionNotional sdk.Dec) (unrealizedPnlSigned sdk.Dec) {
+	if position.Size_.IsPositive() {
+		// LONG
+		return positionNotional.Sub(position.OpenNotional)
 	} else {
-		remaining.MarginAbs = remainingMargin.Abs()
-		remaining.BadDebtAbs = sdk.ZeroDec()
+		// SHORT
+		return position.OpenNotional.Sub(positionNotional)
 	}
-
-	return remaining
 }
 
-/*
-	calcFreeCollateral computes the amount of collateral backing the position that can
-
-be removed without giving the position bad debt. Factors in the unrealized PnL when
-calculating free collateral.
-
-Args:
-- ctx: Carries information about the current state of the SDK application.
-- pos: position for which to compute free collateral.
-
-Returns:
-- freeCollateral: Amount of collateral (margin) that can be removed from the
-position without making it go underwater.
-- err: error
-*/
-func (k Keeper) calcFreeCollateral(
-	ctx sdk.Context, market v2types.Market, amm v2types.AMM, position v2types.Position,
-) (freeCollateralSigned sdk.Dec, err error) {
-	spotNotional, err := PositionNotionalSpot(amm, position)
-	if err != nil {
-		return sdk.Dec{}, err
+// Given a position and it's notional value, returns the margin ratio.
+func MarginRatio(
+	position v2types.Position,
+	positionNotional sdk.Dec,
+	marketLatestCumulativePremiumFraction sdk.Dec,
+) (sdk.Dec, error) {
+	if position.Size_.IsZero() || positionNotional.IsZero() {
+		return sdk.ZeroDec(), nil
 	}
-	twapNotional, err := k.PositionNotionalTWAP(ctx, position, market.TwapLookbackWindow)
-	if err != nil {
-		return sdk.Dec{}, err
-	}
-	positionNotional := sdk.MinDec(spotNotional, twapNotional)
-	unrealizedPnlSigned := UnrealizedPnl(position, positionNotional)
 
-	maintenanceMarginRequirementAbs := positionNotional.Mul(market.MaintenanceMarginRatio)
+	unrealizedPnl := UnrealizedPnl(position, positionNotional)
+	fundingPayment := FundingPayment(position, marketLatestCumulativePremiumFraction)
+	remainingMargin := position.Margin.Add(unrealizedPnl).Sub(fundingPayment)
 
-	// account for negative unrealizedPnl
-	remainingMarginSigned := sdk.MinDec(position.Margin, position.Margin.Add(unrealizedPnlSigned))
+	return remainingMargin.Quo(positionNotional), nil
+}
 
-	return remainingMarginSigned.Sub(maintenanceMarginRequirementAbs), nil
+func FundingPayment(position v2types.Position, marketLatestCumulativePremiumFraction sdk.Dec) sdk.Dec {
+	return marketLatestCumulativePremiumFraction.
+		Sub(position.LatestCumulativePremiumFraction).
+		Mul(position.Size_)
 }
