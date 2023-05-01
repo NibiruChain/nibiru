@@ -168,44 +168,6 @@ func (s *TestSuiteQuerier) OnSetupEnd() {
 	SetExchangeRates(s.Suite, s.nibiru, s.ctx)
 }
 
-func (s *TestSuiteQuerier) TestQueryReserves() {
-	testCases := map[string]struct {
-		pairStr   string
-		wasmError bool
-	}{
-		"happy":                   {pairStr: s.fields.Pair, wasmError: false},
-		"sad - non existent pair": {pairStr: "fxs:ust", wasmError: true},
-	}
-
-	for name, testCase := range testCases {
-		s.T().Run(name, func(t *testing.T) {
-			pairStr := testCase.pairStr
-			bindingQuery := cw_struct.BindingQuery{
-				Reserves: &cw_struct.ReservesRequest{Pair: pairStr},
-			}
-			bindingResp := new(cw_struct.ReservesResponse)
-
-			_, err := DoCustomBindingQuery(
-				s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
-			)
-			if testCase.wasmError {
-				s.Assert().Contains(err.Error(), "query wasm contract failed")
-				return
-			}
-			s.Require().NoError(err)
-
-			wantPair := asset.MustNewPair(pairStr)
-			s.Assert().EqualValues(bindingResp.Pair, wantPair)
-			s.Assert().EqualValues(
-				bindingResp.BaseReserve.String(),
-				genesis.START_MARKETS[wantPair].BaseReserve.String())
-			s.Assert().EqualValues(
-				bindingResp.QuoteReserve.String(),
-				genesis.START_MARKETS[wantPair].QuoteReserve.String())
-		})
-	}
-}
-
 // Integration test for BindingQuery::AllMarkets against real contract
 func (s *TestSuiteQuerier) TestQueryAllMarkets() {
 	bindingQuery := cw_struct.BindingQuery{
@@ -232,36 +194,6 @@ func (s *TestSuiteQuerier) TestQueryAllMarkets() {
 		s.Assert().EqualValues(market.GetMarkPrice().String(), cwMarket.MarkPrice.String())
 		s.Assert().EqualValues(s.ctx.BlockHeight(), cwMarket.BlockNumber.Int64())
 	}
-}
-
-func (s *TestSuiteQuerier) TestQueryBasePrice() {
-	cwReq := &cw_struct.BasePriceRequest{
-		Pair:       s.fields.Pair,
-		IsLong:     true,
-		BaseAmount: sdk.NewInt(69_420),
-	}
-	bindingQuery := cw_struct.BindingQuery{
-		BasePrice: cwReq,
-	}
-	bindingResp := new(cw_struct.BasePriceResponse)
-
-	respBz, err := DoCustomBindingQuery(
-		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
-	)
-	s.Require().NoErrorf(err, "resp bytes: %s", respBz)
-
-	s.Assert().EqualValues(cwReq.Pair, bindingResp.Pair)
-	s.Assert().EqualValues(cwReq.IsLong, bindingResp.IsLong)
-	s.Assert().EqualValues(cwReq.BaseAmount.ToDec(), bindingResp.BaseAmount)
-	s.Assert().True(bindingResp.QuoteAmount.GT(sdk.ZeroDec()))
-
-	cwReqBz, err := json.Marshal(cwReq)
-	s.T().Logf("cwReq: %s", cwReqBz)
-	s.NoError(err)
-
-	cwRespBz, err := json.Marshal(bindingResp)
-	s.T().Logf("cwResp: %s", cwRespBz)
-	s.NoError(err)
 }
 
 func (s *TestSuiteQuerier) TestQueryPremiumFraction() {
@@ -306,6 +238,20 @@ func (s *TestSuiteQuerier) TestQueryMetrics() {
 	s.Require().NoErrorf(err, "resp bytes: %s", respBz)
 }
 
+func (s *TestSuiteQuerier) TestQueryPerpModuleAccounts() {
+	cwReq := &cw_struct.ModuleAccountsRequest{}
+
+	bindingQuery := cw_struct.BindingQuery{
+		ModuleAccounts: cwReq,
+	}
+	bindingResp := new(cw_struct.ModuleAccountsResponse)
+
+	respBz, err := DoCustomBindingQuery(
+		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
+	)
+	s.Require().NoErrorf(err, "resp bytes: %s", respBz)
+}
+
 func (s *TestSuiteQuerier) TestQueryPerpParams() {
 	cwReq := &cw_struct.PerpParamsRequest{}
 
@@ -320,16 +266,74 @@ func (s *TestSuiteQuerier) TestQueryPerpParams() {
 	s.Require().NoErrorf(err, "resp bytes: %s", respBz)
 }
 
-func (s *TestSuiteQuerier) TestQueryPerpModuleAccounts() {
-	cwReq := &cw_struct.ModuleAccountsRequest{}
+func (s *TestSuiteQuerier) TestQueryPerpPosition() {
 
-	bindingQuery := cw_struct.BindingQuery{
-		ModuleAccounts: cwReq,
+}
+
+func (s *TestSuiteQuerier) TestQueryBasePrice() {
+	cwReq := &cw_struct.BasePriceRequest{
+		Pair:       s.fields.Pair,
+		IsLong:     true,
+		BaseAmount: sdk.NewInt(69_420),
 	}
-	bindingResp := new(cw_struct.ModuleAccountsResponse)
+	bindingQuery := cw_struct.BindingQuery{
+		BasePrice: cwReq,
+	}
+	bindingResp := new(cw_struct.BasePriceResponse)
 
 	respBz, err := DoCustomBindingQuery(
 		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
 	)
 	s.Require().NoErrorf(err, "resp bytes: %s", respBz)
+
+	s.Assert().EqualValues(cwReq.Pair, bindingResp.Pair)
+	s.Assert().EqualValues(cwReq.IsLong, bindingResp.IsLong)
+	s.Assert().EqualValues(cwReq.BaseAmount.ToDec(), bindingResp.BaseAmount)
+	s.Assert().True(bindingResp.QuoteAmount.GT(sdk.ZeroDec()))
+
+	cwReqBz, err := json.Marshal(cwReq)
+	s.T().Logf("cwReq: %s", cwReqBz)
+	s.NoError(err)
+
+	cwRespBz, err := json.Marshal(bindingResp)
+	s.T().Logf("cwResp: %s", cwRespBz)
+	s.NoError(err)
+}
+
+func (s *TestSuiteQuerier) TestQueryReserves() {
+	testCases := map[string]struct {
+		pairStr   string
+		wasmError bool
+	}{
+		"happy":                   {pairStr: s.fields.Pair, wasmError: false},
+		"sad - non existent pair": {pairStr: "fxs:ust", wasmError: true},
+	}
+
+	for name, testCase := range testCases {
+		s.T().Run(name, func(t *testing.T) {
+			pairStr := testCase.pairStr
+			bindingQuery := cw_struct.BindingQuery{
+				Reserves: &cw_struct.ReservesRequest{Pair: pairStr},
+			}
+			bindingResp := new(cw_struct.ReservesResponse)
+
+			_, err := DoCustomBindingQuery(
+				s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
+			)
+			if testCase.wasmError {
+				s.Assert().Contains(err.Error(), "query wasm contract failed")
+				return
+			}
+			s.Require().NoError(err)
+
+			wantPair := asset.MustNewPair(pairStr)
+			s.Assert().EqualValues(bindingResp.Pair, wantPair)
+			s.Assert().EqualValues(
+				bindingResp.BaseReserve.String(),
+				genesis.START_MARKETS[wantPair].BaseReserve.String())
+			s.Assert().EqualValues(
+				bindingResp.QuoteReserve.String(),
+				genesis.START_MARKETS[wantPair].QuoteReserve.String())
+		})
+	}
 }
