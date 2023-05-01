@@ -9,6 +9,9 @@ import "google/protobuf/duration.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/perp/types/v2";
 
+// The direction that the user is trading in
+// LONG means the user is going long the base asset (e.g. buy BTC)
+// SHORT means the user is shorting the base asset (e.g. sell BTC)
 enum Direction {
   DIRECTION_UNSPECIFIED = 0;
   LONG = 1;

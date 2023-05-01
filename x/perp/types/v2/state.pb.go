@@ -31,6 +31,9 @@ var _ = time.Kitchen
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// The direction that the user is trading in
+// LONG means the user is going long the base asset (e.g. buy BTC)
+// SHORT means the user is shorting the base asset (e.g. sell BTC)
 type Direction int32
 
 const (
