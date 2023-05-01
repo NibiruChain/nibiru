@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package nibiru.sudo.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/x/sudo/pb";
+
+message Sudoers {
+  // Root: The "root" user.
+  string root = 1;
+  
+  // Contracts: The set of contracts with elevated permissions.
+  repeated string contracts = 2;
+}
+
+// GenesisState defines the perp module's genesis state.
+message GenesisState {
+  Sudoers sudoers = 1 [(gogoproto.nullable) = false ]; 
+}
+

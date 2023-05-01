@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package nibiru.sudo.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+
+
+option go_package = "github.com/NibiruChain/nibiru/x/sudo/pb";
+
+// Msg defines the x/sudo Msg service.
+service Msg {
+
+  rpc EditSudoers(MsgEditSudoers) returns (MsgEditSudoersResponse) {
+    option (google.api.http).post = "/nibiru/sudo/edit_sudoers";
+  }
+}
+
+// -------------------------- EditSudoers --------------------------
+
+/* MsgEditSudoers: Msg to update the "Sudoers" state. */
+message MsgEditSudoers {
+  // TODO 
+  string action = 1; 
+
+  repeated string contracts = 2;
+
+  string sender = 3;
+}
+
+// MsgEditSudoersResponse indicates the successful execution of MsgEditSudeors.
+message MsgEditSudoersResponse {
+}
