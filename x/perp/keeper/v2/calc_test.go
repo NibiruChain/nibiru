@@ -4,16 +4,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/collections"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	keeper "github.com/NibiruChain/nibiru/x/perp/keeper/v2"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
+	. "github.com/NibiruChain/nibiru/x/perp/integration/action/v2"
+	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion/v2"
 )
 
 func TestPositionNotionalSpot(t *testing.T) {
@@ -60,95 +63,78 @@ func TestPositionNotionalSpot(t *testing.T) {
 }
 
 func TestPositionNotionalTWAP(t *testing.T) {
-	tests := []struct {
-		name               string
-		position           v2types.Position
-		currentTimestamp   int64
-		twapLookbackWindow time.Duration
-		snapshots          []v2types.ReserveSnapshot
-		expectedNotional   sdk.Dec
-	}{
-		{
-			name: "long position",
-			position: v2types.Position{
-				Size_: sdk.NewDec(10),
-				Pair:  asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			},
-			currentTimestamp:   40,
-			twapLookbackWindow: 30 * time.Millisecond,
-			snapshots: []v2types.ReserveSnapshot{
-				{
-					Amm:         *mock.TestAMM(sdk.NewDec(1e12), sdk.NewDec(9)),
-					TimestampMs: 10,
-				},
-				{
-					Amm:         *mock.TestAMM(sdk.NewDec(1e12), sdk.MustNewDecFromStr("8.5")),
-					TimestampMs: 20,
-				},
-				{
-					Amm:         *mock.TestAMM(sdk.NewDec(1e12), sdk.MustNewDecFromStr("9.5")),
-					TimestampMs: 30,
-				},
-			},
-			expectedNotional: sdk.MustNewDecFromStr("89.999999999100000000"),
-		},
-		{
-			name: "short position",
-			position: v2types.Position{
-				Size_: sdk.NewDec(-10),
-				Pair:  asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			},
-			currentTimestamp:   40,
-			twapLookbackWindow: 30 * time.Millisecond,
-			snapshots: []v2types.ReserveSnapshot{
-				{
-					Amm:         *mock.TestAMM(sdk.NewDec(1e12), sdk.NewDec(9)),
-					TimestampMs: 10,
-				},
-				{
-					Amm:         *mock.TestAMM(sdk.NewDec(1e12), sdk.MustNewDecFromStr("8.5")),
-					TimestampMs: 20,
-				},
-				{
-					Amm:         *mock.TestAMM(sdk.NewDec(1e12), sdk.MustNewDecFromStr("9.5")),
-					TimestampMs: 30,
-				},
-			},
-			expectedNotional: sdk.MustNewDecFromStr("90.000000000900000000"),
-		},
-		{
-			name: "zero position",
-			position: v2types.Position{
-				Size_: sdk.ZeroDec(),
-				Pair:  asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			},
-			currentTimestamp:   40,
-			twapLookbackWindow: 30 * time.Millisecond,
-			snapshots: []v2types.ReserveSnapshot{
-				{
-					Amm:         *mock.TestAMM(sdk.NewDec(1e12), sdk.NewDec(9)),
-					TimestampMs: 10,
-				},
-			},
-			expectedNotional: sdk.ZeroDec(),
-		},
+	alice := testutil.AccAddress()
+	pair := asset.Registry.Pair(denoms.BTC, denoms.USDC)
+	startTime := time.Now()
+
+	tc := TestCases{
+		TC("long position").
+			Given(
+				SetBlockTime(startTime),
+				SetBlockNumber(1),
+				CreateCustomMarket(pair),
+				InsertPosition(WithSize(sdk.NewDec(10)), WithTrader(alice)),
+				InsertReserveSnapshot(pair, startTime, WithPriceMultiplier(sdk.NewDec(9))),
+				InsertReserveSnapshot(pair, startTime.Add(10*time.Second), WithPriceMultiplier(sdk.MustNewDecFromStr("8.5"))),
+				InsertReserveSnapshot(pair, startTime.Add(20*time.Second), WithPriceMultiplier(sdk.MustNewDecFromStr("9.5"))),
+			).
+			When(
+				MoveToNextBlockWithDuration(30 * time.Second),
+			).
+			Then(
+				PositionNotionalTWAPShouldBeEqualTo(pair, alice, 30*time.Second, sdk.MustNewDecFromStr("89.999999999100000000")),
+			),
+
+		TC("short position").
+			Given(
+				SetBlockTime(startTime),
+				SetBlockNumber(1),
+				CreateCustomMarket(pair),
+				InsertPosition(WithSize(sdk.NewDec(-10)), WithTrader(alice)),
+				InsertReserveSnapshot(pair, startTime, WithPriceMultiplier(sdk.NewDec(9))),
+				InsertReserveSnapshot(pair, startTime.Add(10*time.Second), WithPriceMultiplier(sdk.MustNewDecFromStr("8.5"))),
+				InsertReserveSnapshot(pair, startTime.Add(20*time.Second), WithPriceMultiplier(sdk.MustNewDecFromStr("9.5"))),
+			).
+			When(
+				MoveToNextBlockWithDuration(30 * time.Second),
+			).
+			Then(
+				PositionNotionalTWAPShouldBeEqualTo(pair, alice, 30*time.Second, sdk.MustNewDecFromStr("90.000000000900000000")),
+			),
+
+		TC("zero position").
+			Given(
+				SetBlockTime(startTime),
+				SetBlockNumber(1),
+				CreateCustomMarket(pair),
+				InsertPosition(WithSize(sdk.ZeroDec()), WithTrader(alice)),
+				InsertReserveSnapshot(pair, startTime, WithPriceMultiplier(sdk.NewDec(9))),
+				InsertReserveSnapshot(pair, startTime.Add(10*time.Second), WithPriceMultiplier(sdk.MustNewDecFromStr("8.5"))),
+				InsertReserveSnapshot(pair, startTime.Add(20*time.Second), WithPriceMultiplier(sdk.MustNewDecFromStr("9.5"))),
+			).
+			When(
+				MoveToNextBlockWithDuration(30 * time.Second),
+			).
+			Then(
+				PositionNotionalTWAPShouldBeEqualTo(pair, alice, 30*time.Second, sdk.ZeroDec()),
+			),
+
+		TC("single snapshot").
+			Given(
+				SetBlockTime(startTime),
+				SetBlockNumber(1),
+				CreateCustomMarket(pair),
+			).
+			When(
+				InsertPosition(WithSize(sdk.NewDec(100)), WithTrader(alice)),
+				InsertReserveSnapshot(pair, startTime, WithPriceMultiplier(sdk.NewDec(9))),
+			).
+			Then(
+				PositionNotionalTWAPShouldBeEqualTo(pair, alice, 30*time.Second, sdk.MustNewDecFromStr("899.999999910000000009")),
+			),
 	}
 
-	for _, tc := range tests {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruTestAppAndContext(true)
-
-			for _, s := range tc.snapshots {
-				app.PerpKeeperV2.ReserveSnapshots.Insert(ctx, collections.Join(s.Amm.Pair, time.UnixMilli(s.TimestampMs)), s)
-			}
-			ctx = ctx.WithBlockTime(time.UnixMilli(tc.currentTimestamp))
-
-			notional, err := app.PerpKeeperV2.PositionNotionalTWAP(ctx, tc.position, tc.twapLookbackWindow)
-			require.NoError(t, err)
-			assert.EqualValues(t, tc.expectedNotional, notional)
-		})
-	}
+	NewTestSuite(t).WithTestCases(tc...).Run()
 }
 
 func TestUnrealizedPnl(t *testing.T) {
