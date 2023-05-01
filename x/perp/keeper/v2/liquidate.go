@@ -11,7 +11,7 @@ import (
 )
 
 /*
-	Liquidate allows to liquidate the trader position if the margin is below the
+	liquidate allows to liquidate the trader position if the margin is below the
 
 required margin maintenance ratio.
 
@@ -25,7 +25,7 @@ ret:
   - perpEcosystemFundFee: the amount of coins given to the ecosystem fund
   - err: error
 */
-func (k Keeper) Liquidate(
+func (k Keeper) liquidate(
 	ctx sdk.Context,
 	liquidator sdk.AccAddress,
 	pair asset.Pair,
@@ -93,9 +93,9 @@ func (k Keeper) Liquidate(
 
 	var liquidationResponse v2types.LiquidateResp
 	if spotMarginRatio.GTE(market.LiquidationFeeRatio) {
-		liquidationResponse, err = k.ExecutePartialLiquidation(ctx, market, amm, liquidator, &position)
+		liquidationResponse, err = k.executePartialLiquidation(ctx, market, amm, liquidator, &position)
 	} else {
-		liquidationResponse, err = k.ExecuteFullLiquidation(ctx, market, amm, liquidator, &position)
+		liquidationResponse, err = k.executeFullLiquidation(ctx, market, amm, liquidator, &position)
 	}
 	if err != nil {
 		return
@@ -115,7 +115,7 @@ func (k Keeper) Liquidate(
 }
 
 /*
-ExecuteFullLiquidation Fully liquidates a position. It is assumed that the margin ratio has already been
+executeFullLiquidation Fully liquidates a position. It is assumed that the margin ratio has already been
 checked prior to calling this method.
 
 args:
@@ -127,7 +127,7 @@ ret:
   - liquidationResp: a response object containing the results of the liquidation
   - err: error
 */
-func (k Keeper) ExecuteFullLiquidation(
+func (k Keeper) executeFullLiquidation(
 	ctx sdk.Context, market v2types.Market, amm v2types.AMM, liquidator sdk.AccAddress, position *v2types.Position,
 ) (liquidationResp v2types.LiquidateResp, err error) {
 	traderAddr, err := sdk.AccAddressFromBech32(position.TraderAddress)
@@ -260,8 +260,8 @@ func (k Keeper) distributeLiquidateRewards(
 	return nil
 }
 
-// ExecutePartialLiquidation partially liquidates a position
-func (k Keeper) ExecutePartialLiquidation(
+// executePartialLiquidation partially liquidates a position
+func (k Keeper) executePartialLiquidation(
 	ctx sdk.Context, market v2types.Market, amm v2types.AMM, liquidator sdk.AccAddress, currentPosition *v2types.Position,
 ) (v2types.LiquidateResp, error) {
 	traderAddr, err := sdk.AccAddressFromBech32(currentPosition.TraderAddress)
@@ -347,7 +347,7 @@ func (k Keeper) MultiLiquidate(
 	for i, req := range liquidationRequests {
 		traderAddr := sdk.MustAccAddressFromBech32(req.Trader)
 		cachedCtx, commit := ctx.CacheContext()
-		liquidatorFee, perpEfFee, err := k.Liquidate(cachedCtx, liquidator, req.Pair, traderAddr)
+		liquidatorFee, perpEfFee, err := k.liquidate(cachedCtx, liquidator, req.Pair, traderAddr)
 
 		if err != nil {
 			resp[i] = &v2types.MsgMultiLiquidateResponse_LiquidationResponse{
