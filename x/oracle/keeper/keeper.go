@@ -176,9 +176,9 @@ func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair asset.Pair) (price sdk
 		ctx,
 		collections.PairRange[asset.Pair, time.Time]{}.
 			Prefix(pair).
-			StartExclusive(
+			StartInclusive(
 				ctx.BlockTime().Add(-1*k.GetParams(ctx).TwapLookbackWindow)).
-			EndInclusive(
+			EndExclusive(
 				ctx.BlockTime()),
 	).Values()
 
