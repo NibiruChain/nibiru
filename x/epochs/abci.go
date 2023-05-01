@@ -24,12 +24,12 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
 		}
 
 		epochInfo.CurrentEpochStartHeight = ctx.BlockHeight()
+		epochInfo.CurrentEpochStartTime = ctx.BlockTime()
 
 		logger := k.Logger(ctx)
 		if !epochInfo.EpochCountingStarted {
 			epochInfo.EpochCountingStarted = true
 			epochInfo.CurrentEpoch = 1
-			epochInfo.CurrentEpochStartTime = epochInfo.StartTime
 			logger.Info(fmt.Sprintf("Starting new epoch with identifier %s epoch number %d", epochInfo.Identifier, epochInfo.CurrentEpoch))
 		} else {
 			err := ctx.EventManager().EmitTypedEvent(&types.EventEpochEnd{EpochNumber: epochInfo.CurrentEpoch})
@@ -38,7 +38,6 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
 			}
 			k.AfterEpochEnd(ctx, epochInfo.Identifier, epochInfo.CurrentEpoch)
 			epochInfo.CurrentEpoch += 1
-			epochInfo.CurrentEpochStartTime = epochInfo.CurrentEpochStartTime.Add(epochInfo.Duration)
 			logger.Info(fmt.Sprintf("Starting epoch with identifier %s epoch number %d", epochInfo.Identifier, epochInfo.CurrentEpoch))
 		}
 
@@ -69,5 +68,5 @@ func shouldEpochStart(epochInfo types.EpochInfo, ctx sdk.Context) bool {
 
 	epochEndTime := epochInfo.CurrentEpochStartTime.Add(epochInfo.Duration)
 
-	return ctx.BlockTime().After(epochEndTime)
+	return ctx.BlockTime().After(epochEndTime) || ctx.BlockTime().Equal(epochEndTime)
 }
