@@ -58,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1291](https://github.com/NibiruChain/nibiru/pull/1291) - refactor(perp)!: add perp v2 state protos
 * [#1296](https://github.com/NibiruChain/nibiru/pull/1296) - refactor(perp)!: update perp v2 state protos
 * [#1298](https://github.com/NibiruChain/nibiru/pull/1298) - refactor(perp)!: remove `MaxOracleSpreadRatio` from Perpv2
+* [#1302](https://github.com/NibiruChain/nibiru/pull/1302) - refactor(oracle)!: price snapshot start time inclusive
 
 ### Improvements
 
