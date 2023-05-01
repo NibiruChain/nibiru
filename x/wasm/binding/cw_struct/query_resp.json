@@ -36,22 +36,41 @@
   },
   "position": {
     "position": {
-      "trader_addr": "nibi1kqg3q3v8pjd3epktg9h0azwk56j5v5r5lu5eq2",
+      "trader_addr": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
       "pair": "ETH:USD",
-      "size": "0",
-      "margin": "0",
-      "open_notional": "0",
+      "size": "420",
+      "margin": "420",
+      "open_notional": "420",
       "latest_cpf": "0",
-      "block_number": "0"
+      "block_number": "1"
     },
-    "notional": "0",
-    "upnl": "0",
+    "notional": "420",
+    "upnl": "69",
     "margin_ratio_mark": "0",
     "margin_ratio_index": "0",
     "block_number": "0"
   },
   "positions": {
-    "positions": {}
+    "positions": {
+      "ETH:USD": {
+        "trader_addr": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
+        "pair": "ETH:USD",
+        "size": "420",
+        "margin": "420",
+        "open_notional": "420",
+        "latest_cpf": "0",
+        "block_number": "1"
+      },
+      "BTC:USD": {
+        "trader_addr": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
+        "pair": "BTC:USD",
+        "size": "420",
+        "margin": "420",
+        "open_notional": "420",
+        "latest_cpf": "0",
+        "block_number": "1"
+      }
+    }
   },
   "module_params": {
     "module_params": {
@@ -63,8 +82,8 @@
       "funding_rate_interval": "1h",
       "twap_lookback_window": "3600",
       "whitelisted_liquidators": [
-        "nibi1ah8gqrtjllhc5ld4rxgl4uglvwl93ag0sh6e6v",
-        "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"
+        "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
+        "nibi1ah8gqrtjllhc5ld4rxgl4uglvwl93ag0sh6e6v"
       ]
     }
   },
