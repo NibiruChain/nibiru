@@ -112,7 +112,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 
 			// insert epoch info that's already begun
 			ctx = ctx.WithBlockHeight(1).WithBlockTime(now)
-			app.EpochsKeeper.AddEpochInfo(ctx, types.EpochInfo{
+			_ = app.EpochsKeeper.AddEpochInfo(ctx, types.EpochInfo{
 				Identifier:              "monthly",
 				StartTime:               now,
 				Duration:                time.Hour * 24 * 31,
