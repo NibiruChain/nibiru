@@ -136,6 +136,7 @@ func (k Keeper) RemoveMargin(
 
 	position.Margin = remainingMargin.Margin
 	position.LatestCumulativePremiumFraction = remainingMargin.LatestCumulativePremiumFraction
+	position.BlockNumber = ctx.BlockHeight()
 
 	freeCollateral, err := k.calcFreeCollateral(ctx, market, position)
 	if err != nil {
