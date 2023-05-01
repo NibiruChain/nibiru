@@ -73,12 +73,9 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 			cwResp, err := qp.Perp.BasePrice(ctx, cwReq)
 			return qp.ToBinary(cwResp, err, cwReq)
 
-		// NOTE Implement these when the execute message bindings go
-
-		// TODO implement
-		// TODO test
-		// case wasmContractQuery.Positions != nil:
-		// 	return bz, nil
+		case wasmContractQuery.Positions != nil:
+			cwReq := wasmContractQuery.Positions
+			return bz, nil
 
 		// TODO implement
 		// TODO test
@@ -179,6 +176,23 @@ func (perpExt *PerpExtension) AllMarkets(
 	return &cw_struct.AllMarketsResponse{
 		MarketMap: marketMap,
 	}, err
+}
+
+func (perpExt *PerpExtension) Positions(
+	ctx sdk.Context,
+	cwReq *cw_struct.PositionsRequest,
+) (*cw_struct.PositionsResponse, error) {
+	queryRequest := &perptypes.QueryPositionsRequest{
+		Trader: cwReq.Trader,
+	}
+
+	goCtx := sdk.WrapSDKContext(ctx)
+	positions, err := perpExt.perp.QueryPositions(goCtx, queryRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	positionsResponse := cw_struct.PositionsResponse{}
 }
 
 func (perpExt *PerpExtension) BasePrice(

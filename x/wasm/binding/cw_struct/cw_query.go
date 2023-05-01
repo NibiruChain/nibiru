@@ -145,9 +145,8 @@ type PositionsRequest struct {
 	Trader string `json:"trader"`
 }
 
-// TODO impl
 type PositionsResponse struct {
-	Trader string `json:"trader"`
+	Positions []PositionResponse `json:"positions"`
 }
 
 type PositionRequest struct {

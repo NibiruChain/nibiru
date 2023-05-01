@@ -266,8 +266,20 @@ func (s *TestSuiteQuerier) TestQueryPerpParams() {
 	s.Require().NoErrorf(err, "resp bytes: %s", respBz)
 }
 
-func (s *TestSuiteQuerier) TestQueryPerpPosition() {
+func (s *TestSuiteQuerier) TestQueryPerpPositions() {
+	cwReq := &cw_struct.PositionsRequest{
+		Trader: s.fields.Trader.String(),
+	}
 
+	bindingQuery := cw_struct.BindingQuery{
+		Positions: cwReq,
+	}
+	bindingResp := new(cw_struct.PositionsResponse)
+
+	respBz, err := DoCustomBindingQuery(
+		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
+	)
+	s.Require().NoErrorf(err, "resp bytes: %s", respBz)
 }
 
 func (s *TestSuiteQuerier) TestQueryBasePrice() {
