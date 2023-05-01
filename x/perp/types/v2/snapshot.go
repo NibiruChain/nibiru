@@ -3,28 +3,7 @@ package v2
 import (
 	fmt "fmt"
 	time "time"
-
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
-
-func NewReserveSnapshot(
-	pair asset.Pair,
-	baseReserve, quoteReserve sdk.Dec,
-	pegMultiplier sdk.Dec,
-	bias sdk.Dec,
-	blockTime time.Time,
-) ReserveSnapshot {
-	return ReserveSnapshot{
-		Amm: AMM{
-			Pair:            pair,
-			BaseReserve:     baseReserve,
-			QuoteReserve:    quoteReserve,
-			PriceMultiplier: pegMultiplier,
-			Bias:            bias,
-		},
-	}
-}
 
 func (s ReserveSnapshot) Validate() error {
 	err := s.Amm.Pair.Validate()
@@ -61,20 +40,4 @@ func (s ReserveSnapshot) Validate() error {
 	}
 
 	return nil
-}
-
-// upperLimit returns the maximum limit price based on the fluctuationLimitRatio
-func (s ReserveSnapshot) upperLimit(fluctuationLimitRatio sdk.Dec) sdk.Dec {
-	return s.markPrice().Mul(sdk.OneDec().Add(fluctuationLimitRatio))
-}
-
-// lowerLimit returns the minimum limit price based on the fluctuationLimitRatio
-func (s ReserveSnapshot) lowerLimit(fluctuationLimitRatio sdk.Dec) sdk.Dec {
-	return s.markPrice().Mul(sdk.OneDec().Sub(fluctuationLimitRatio))
-}
-
-// markPrice returns the price of the mark price at the moment of the snapshot.
-// It is the equivalent of markPrice from Market
-func (s ReserveSnapshot) markPrice() sdk.Dec {
-	return s.Amm.MarkPrice()
 }

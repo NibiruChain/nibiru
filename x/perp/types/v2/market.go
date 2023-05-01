@@ -47,34 +47,6 @@ func (market *Market) Validate() error {
 	return nil
 }
 
-/*
-IsOverFluctuationLimitInRelationWithSnapshot compares the updated pool's spot price with the current spot price.
-
-If the fluctuation limit ratio is zero, then the fluctuation limit check is skipped.
-
-args:
-  - pool: the updated market
-  - snapshot: the snapshot to compare against
-
-ret:
-  - bool: true if the fluctuation limit is violated. false otherwise
-*/
-func (market Market) IsOverFluctuationLimitInRelationWithSnapshot(amm AMM, snapshot ReserveSnapshot) bool {
-	if market.PriceFluctuationLimitRatio.IsZero() {
-		return false
-	}
-
-	markPrice := amm.MarkPrice()
-	snapshotUpperLimit := snapshot.upperLimit(market.PriceFluctuationLimitRatio)
-	snapshotLowerLimit := snapshot.lowerLimit(market.PriceFluctuationLimitRatio)
-
-	if markPrice.GT(snapshotUpperLimit) || markPrice.LT(snapshotLowerLimit) {
-		return true
-	}
-
-	return false
-}
-
 func (market *Market) WithPriceFluctuationLimitRatio(value sdk.Dec) *Market {
 	market.PriceFluctuationLimitRatio = value
 	return market

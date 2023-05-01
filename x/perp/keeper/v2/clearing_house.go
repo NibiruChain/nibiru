@@ -796,7 +796,11 @@ func (k Keeper) checkPriceFluctuationLimitRatio(ctx sdk.Context, market v2types.
 		return fmt.Errorf("error getting last snapshot number for pair %s", amm.Pair)
 	}
 
-	if market.IsOverFluctuationLimitInRelationWithSnapshot(amm, it.Value()) {
+	markPrice := amm.MarkPrice()
+	snapshotUpperLimit := markPrice.Mul(sdk.OneDec().Add(market.PriceFluctuationLimitRatio))
+	snapshotLowerLimit := markPrice.Mul(sdk.OneDec().Sub(market.PriceFluctuationLimitRatio))
+
+	if markPrice.GT(snapshotUpperLimit) || markPrice.LT(snapshotLowerLimit) {
 		return v2types.ErrOverFluctuationLimit
 	}
 

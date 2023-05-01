@@ -225,21 +225,6 @@ func (amm *AMM) ValidateLiquidityDepth() error {
 	}
 }
 
-func (amm AMM) ToSnapshot(ctx sdk.Context) ReserveSnapshot {
-	snapshot := NewReserveSnapshot(
-		amm.Pair,
-		amm.BaseReserve,
-		amm.QuoteReserve,
-		amm.PriceMultiplier,
-		amm.Bias,
-		ctx.BlockTime(),
-	)
-	if err := snapshot.Validate(); err != nil {
-		panic(err)
-	}
-	return snapshot
-}
-
 func (amm *AMM) WithBaseReserve(baseReserve sdk.Dec) *AMM {
 	amm.BaseReserve = baseReserve
 	return amm
