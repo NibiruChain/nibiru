@@ -47,7 +47,7 @@ func PositionShouldBeEqual(
 	}
 }
 
-// PositionChekers
+// PositionCheckers
 
 // Position_PositionShouldBeEqualTo checks if the position is equal to the expected position
 func Position_PositionShouldBeEqualTo(expectedPosition v2types.Position) PositionChecker {

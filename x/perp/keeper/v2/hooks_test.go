@@ -9,11 +9,8 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
-
-	// . "github.com/NibiruChain/nibiru/x/common/testutil/assertion"
 	. "github.com/NibiruChain/nibiru/x/oracle/integration_test/action"
-
-	// . "github.com/NibiruChain/nibiru/x/perp/integration/action/v2"
+	. "github.com/NibiruChain/nibiru/x/perp/integration/action/v2"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion/v2"
 )
 
@@ -24,7 +21,7 @@ func TestAfterEpochEnd(t *testing.T) {
 	tc := TestCases{
 		TC("index > mark").
 			Given(
-				createInitMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcUsdc),
 				SetBlockTime(startTime),
 				InsertPriceSnapshot(pairBtcUsdc, startTime.Add(15*time.Minute), sdk.MustNewDecFromStr("5.8")),
 			).
@@ -32,12 +29,12 @@ func TestAfterEpochEnd(t *testing.T) {
 				MoveToNextBlockWithDuration(30 * time.Minute),
 			).
 			Then(
-				MarketLatestCPFShouldBeEqual(pairBtcUsdc, sdk.MustNewDecFromStr("-0.1")),
+				MarketShouldBeEqual(pairBtcUsdc, MarketLatestCPFShouldBeEqualTo(sdk.MustNewDecFromStr("-0.1"))),
 			),
 
 		TC("index < mark").
 			Given(
-				createInitMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcUsdc),
 				SetBlockTime(startTime),
 				InsertPriceSnapshot(pairBtcUsdc, startTime.Add(15*time.Minute), sdk.MustNewDecFromStr("0.52")),
 			).
@@ -45,12 +42,12 @@ func TestAfterEpochEnd(t *testing.T) {
 				MoveToNextBlockWithDuration(30 * time.Minute),
 			).
 			Then(
-				MarketLatestCPFShouldBeEqual(pairBtcUsdc, sdk.MustNewDecFromStr("0.01")),
+				MarketShouldBeEqual(pairBtcUsdc, MarketLatestCPFShouldBeEqualTo(sdk.MustNewDecFromStr("0.01"))),
 			),
 
 		TC("index == mark").
 			Given(
-				createInitMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcUsdc),
 				SetBlockTime(startTime),
 				InsertPriceSnapshot(pairBtcUsdc, startTime.Add(15*time.Minute), sdk.OneDec()),
 			).
@@ -58,7 +55,7 @@ func TestAfterEpochEnd(t *testing.T) {
 				MoveToNextBlockWithDuration(30 * time.Minute),
 			).
 			Then(
-				MarketLatestCPFShouldBeEqual(pairBtcUsdc, sdk.ZeroDec()),
+				MarketShouldBeEqual(pairBtcUsdc, MarketLatestCPFShouldBeEqualTo(sdk.ZeroDec())),
 			),
 	}
 

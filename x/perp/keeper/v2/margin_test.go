@@ -26,7 +26,7 @@ func TestAddMargin(t *testing.T) {
 	tc := TestCases{
 		TC("existing long position, add margin").
 			Given(
-				createInitMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcUsdc),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
@@ -70,7 +70,7 @@ func TestAddMargin(t *testing.T) {
 
 		TC("existing short position, add margin").
 			Given(
-				createInitMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcUsdc),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
@@ -124,7 +124,7 @@ func TestRemoveMargin(t *testing.T) {
 	tc := TestCases{
 		TC("existing long position, remove margin").
 			Given(
-				createInitMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcUsdc),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
@@ -168,7 +168,7 @@ func TestRemoveMargin(t *testing.T) {
 
 		TC("existing short position, remove margin").
 			Given(
-				createInitMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcUsdc),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),

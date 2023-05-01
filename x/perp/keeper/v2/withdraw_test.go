@@ -1,187 +1,95 @@
-package keeper
+package keeper_test
 
-// import (
-// 	"testing"
+import (
+	"testing"
+	"time"
 
-// 	"github.com/NibiruChain/nibiru/x/common/testutil"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
-// 	sdk "github.com/cosmos/cosmos-sdk/types"
-// 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-// 	"github.com/stretchr/testify/assert"
-// 	"github.com/stretchr/testify/require"
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
+	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
+	. "github.com/NibiruChain/nibiru/x/common/testutil/assertion"
+	. "github.com/NibiruChain/nibiru/x/perp/integration/action/v2"
+	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion/v2"
+	"github.com/NibiruChain/nibiru/x/perp/types"
+)
 
-// 	"github.com/NibiruChain/nibiru/x/perp/types"
-// )
+func TestWithdraw(t *testing.T) {
+	alice := testutil.AccAddress()
+	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.USDC)
+	startBlockTime := time.Now()
 
-// func TestWithdraw(t *testing.T) {
-// 	tests := []struct {
-// 		name                  string
-// 		initialVaultBalance   int64
-// 		initialPrepaidBadDebt int64
-// 		amountToWithdraw      int64
+	tc := TestCases{
+		TC("successful withdraw, no bad debt").
+			Given(
+				SetBlockNumber(1),
+				SetBlockTime(startBlockTime),
+				CreateCustomMarket(pairBtcUsdc),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1000)))),
+			).
+			When(
+				Withdraw(pairBtcUsdc, alice, sdk.NewInt(1000)),
+			).
+			Then(
+				BalanceEqual(alice, denoms.USDC, sdk.NewInt(1000)),
+				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.ZeroInt()),
+				MarketShouldBeEqual(pairBtcUsdc, MarketPrepaidBadDebtShouldBeEqualTo(sdk.ZeroInt())),
+			),
 
-// 		expectedPerpEFWithdrawal    int64
-// 		expectedFinalPrepaidBadDebt int64
-// 	}{
-// 		{
-// 			name:                  "no bad debt",
-// 			initialVaultBalance:   100,
-// 			initialPrepaidBadDebt: 0,
+		TC("successful withdraw, some bad debt").
+			Given(
+				SetBlockNumber(1),
+				SetBlockTime(startBlockTime),
+				CreateCustomMarket(pairBtcUsdc),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(500)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(500)))),
+			).
+			When(
+				Withdraw(pairBtcUsdc, alice, sdk.NewInt(1000)),
+			).
+			Then(
+				BalanceEqual(alice, denoms.USDC, sdk.NewInt(1000)),
+				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.ZeroInt()),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.ZeroInt()),
+				MarketShouldBeEqual(pairBtcUsdc, MarketPrepaidBadDebtShouldBeEqualTo(sdk.NewInt(500))),
+			),
 
-// 			amountToWithdraw: 10,
+		TC("successful withdraw, all bad debt").
+			Given(
+				SetBlockNumber(1),
+				SetBlockTime(startBlockTime),
+				CreateCustomMarket(pairBtcUsdc),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1000)))),
+			).
+			When(
+				Withdraw(pairBtcUsdc, alice, sdk.NewInt(1000)),
+			).
+			Then(
+				BalanceEqual(alice, denoms.USDC, sdk.NewInt(1000)),
+				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.ZeroInt()),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.ZeroInt()),
+				MarketShouldBeEqual(pairBtcUsdc, MarketPrepaidBadDebtShouldBeEqualTo(sdk.NewInt(1000))),
+			),
 
-// 			expectedPerpEFWithdrawal:    0,
-// 			expectedFinalPrepaidBadDebt: 0,
-// 		},
-// 		{
-// 			name:                  "creates prepaid bad debt",
-// 			initialVaultBalance:   9,
-// 			initialPrepaidBadDebt: 0,
+		TC("successful withdraw, existing bad debt").
+			Given(
+				SetBlockNumber(1),
+				SetBlockTime(startBlockTime),
+				CreateCustomMarket(pairBtcUsdc, WithPrepaidBadDebt(sdk.NewInt(1000))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1000)))),
+			).
+			When(
+				Withdraw(pairBtcUsdc, alice, sdk.NewInt(1000)),
+			).
+			Then(
+				BalanceEqual(alice, denoms.USDC, sdk.NewInt(1000)),
+				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.ZeroInt()),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.ZeroInt()),
+				MarketShouldBeEqual(pairBtcUsdc, MarketPrepaidBadDebtShouldBeEqualTo(sdk.NewInt(2000))),
+			),
+	}
 
-// 			amountToWithdraw: 10,
-
-// 			expectedPerpEFWithdrawal:    1,
-// 			expectedFinalPrepaidBadDebt: 1,
-// 		},
-// 		{
-// 			name:                  "increases existing prepaid bad debt",
-// 			initialVaultBalance:   9,
-// 			initialPrepaidBadDebt: 1,
-
-// 			amountToWithdraw: 10,
-
-// 			expectedPerpEFWithdrawal:    1,
-// 			expectedFinalPrepaidBadDebt: 2,
-// 		},
-// 	}
-
-// 	for _, tc := range tests {
-// 		tc := tc
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			t.Log("initialize variables")
-// 			_, mocks, ctx := getKeeper(t)
-// 			receiver := testutil.AccAddress()
-// 			denom := "NUSD"
-
-// 			t.Log("mock account keeper")
-// 			vaultAddr := authtypes.NewModuleAddress(types.VaultModuleAccount)
-// 			mocks.mockAccountKeeper.EXPECT().GetModuleAddress(
-// 				types.VaultModuleAccount).
-// 				Return(vaultAddr)
-
-// 			t.Log("mock bank keeper")
-// 			mocks.mockBankKeeper.EXPECT().GetBalance(ctx, vaultAddr, denom).
-// 				Return(sdk.NewInt64Coin(denom, tc.initialVaultBalance))
-// 			mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToAccount(
-// 				ctx, types.VaultModuleAccount, receiver,
-// 				sdk.NewCoins(sdk.NewInt64Coin(denom, tc.amountToWithdraw)),
-// 			).Return(nil)
-// 			if tc.expectedPerpEFWithdrawal > 0 {
-// 				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToModule(
-// 					ctx, types.PerpEFModuleAccount, types.VaultModuleAccount,
-// 					sdk.NewCoins(sdk.NewInt64Coin(denom, tc.expectedPerpEFWithdrawal)),
-// 				).Return(nil)
-// 			}
-
-// 			t.Log("initial prepaid bad debt")
-// 			// perpKeeper.PrepaidBadDebt.Insert(ctx, denom, types.PrepaidBadDebt{Denom: denom, Amount: sdk.NewInt(tc.initialPrepaidBadDebt)})
-
-// 			t.Log("execute withdrawal")
-// 			// err := perpKeeper.Withdraw(ctx, denom, receiver, sdk.NewInt(tc.amountToWithdraw))
-// 			// require.NoError(t, err)
-
-// 			t.Log("assert new prepaid bad debt")
-// 			// prepaidBadDebt, err := perpKeeper.PrepaidBadDebt.Get(ctx, denom)
-// 			// require.NoError(t, err)
-// 			// assert.EqualValues(t, tc.expectedFinalPrepaidBadDebt, prepaidBadDebt.Amount.Int64())
-// 		})
-// 	}
-// }
-
-// func TestRealizeBadDebt(t *testing.T) {
-// 	tests := []struct {
-// 		name                  string
-// 		initialPrepaidBadDebt int64
-
-// 		badDebtToRealize int64
-
-// 		expectedPerpEFWithdrawal    int64
-// 		expectedFinalPrepaidBadDebt int64
-// 	}{
-// 		{
-// 			name:                  "prepaid bad debt completely covers bad debt to realize",
-// 			initialPrepaidBadDebt: 10,
-
-// 			badDebtToRealize: 5,
-
-// 			expectedPerpEFWithdrawal:    0,
-// 			expectedFinalPrepaidBadDebt: 5,
-// 		},
-// 		{
-// 			name:                  "prepaid bad debt exactly covers bad debt to realize",
-// 			initialPrepaidBadDebt: 10,
-
-// 			badDebtToRealize: 10,
-
-// 			expectedPerpEFWithdrawal:    0,
-// 			expectedFinalPrepaidBadDebt: 0,
-// 		},
-// 		{
-// 			name:                  "requires perpEF withdrawal",
-// 			initialPrepaidBadDebt: 5,
-
-// 			badDebtToRealize: 10,
-
-// 			expectedPerpEFWithdrawal:    5,
-// 			expectedFinalPrepaidBadDebt: 0,
-// 		},
-// 	}
-
-// 	for _, tc := range tests {
-// 		tc := tc
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			t.Log("initialize variables")
-// 			perpKeeper, mocks, ctx := getKeeper(t)
-// 			denom := "NUSD"
-
-// 			if tc.expectedPerpEFWithdrawal > 0 {
-// 				t.Log("mock bank keeper")
-// 				mocks.mockBankKeeper.EXPECT().SendCoinsFromModuleToModule(
-// 					ctx, types.PerpEFModuleAccount, types.VaultModuleAccount,
-// 					sdk.NewCoins(sdk.NewInt64Coin(denom, tc.expectedPerpEFWithdrawal)),
-// 				).Return(nil)
-// 			}
-
-// 			t.Log("initial prepaid bad debt")
-// 			perpKeeper.PrepaidBadDebt.Insert(ctx, denom, types.PrepaidBadDebt{
-// 				Denom:  denom,
-// 				Amount: sdk.NewInt(tc.initialPrepaidBadDebt),
-// 			})
-
-// 			t.Log("execute withdrawal")
-// 			err := perpKeeper.realizeBadDebt(ctx, denom, sdk.NewInt(tc.badDebtToRealize))
-// 			require.NoError(t, err)
-
-// 			t.Log("assert new prepaid bad debt")
-// 			prepaidBadDebt, err := perpKeeper.PrepaidBadDebt.Get(ctx, denom)
-// 			require.NoError(t, err)
-// 			assert.EqualValues(t, tc.expectedFinalPrepaidBadDebt, prepaidBadDebt.Amount.Int64())
-// 		})
-// 	}
-// }
-
-// func TestIncrementDecrementBadDebt(t *testing.T) {
-// 	k, _, ctx := getKeeper(t)
-// 	// increment on non-existing prepaid bad debt
-// 	bd := k.IncrementPrepaidBadDebt(ctx, "unibi", sdk.NewInt(1000))
-// 	require.Equal(t, sdk.NewInt(1000), bd)
-// 	// increment on existing
-// 	bd = k.IncrementPrepaidBadDebt(ctx, "unibi", sdk.NewInt(1000))
-// 	require.Equal(t, sdk.NewInt(2000), bd)
-// 	// decrement
-// 	bd = k.DecrementPrepaidBadDebt(ctx, "unibi", sdk.NewInt(1000))
-// 	require.Equal(t, sdk.NewInt(1000), bd)
-// 	// decrement below zero
-// 	bd = k.DecrementPrepaidBadDebt(ctx, "unibi", sdk.NewInt(2000))
-// 	require.Equal(t, sdk.ZeroInt(), bd)
-// }
+	NewTestSuite(t).WithTestCases(tc...).Run()
+}
