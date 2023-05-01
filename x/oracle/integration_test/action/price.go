@@ -24,10 +24,10 @@ type setPairPrice struct {
 	Price sdk.Dec
 }
 
-func (s setPairPrice) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+func (s setPairPrice) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	app.OracleKeeper.SetPrice(ctx, s.Pair, s.Price)
 
-	return ctx, nil
+	return ctx, nil, true
 }
 
 func InsertPriceSnapshot(pair asset.Pair, time time.Time, price sdk.Dec) action.Action {

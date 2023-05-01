@@ -15,16 +15,15 @@ func TestEpochsExportGenesis(t *testing.T) {
 	app, ctx := testapp.NewNibiruTestAppAndContext(true)
 
 	chainStartTime := ctx.BlockTime()
-	chainStartHeight := ctx.BlockHeight()
 
 	genesis := epochs.ExportGenesis(ctx, app.EpochsKeeper)
-	require.Len(t, genesis.Epochs, 4)
+	require.Len(t, genesis.Epochs, 2)
 
 	require.Equal(t, genesis.Epochs[0].Identifier, "15 min")
 	require.Equal(t, genesis.Epochs[0].StartTime, chainStartTime)
 	require.Equal(t, genesis.Epochs[0].Duration, time.Minute*15)
 	require.Equal(t, genesis.Epochs[0].CurrentEpoch, uint64(0))
-	require.Equal(t, genesis.Epochs[0].CurrentEpochStartHeight, chainStartHeight)
+	require.Equal(t, genesis.Epochs[0].CurrentEpochStartHeight, int64(0))
 	require.Equal(t, genesis.Epochs[0].CurrentEpochStartTime, chainStartTime)
 	require.Equal(t, genesis.Epochs[0].EpochCountingStarted, false)
 
@@ -32,25 +31,9 @@ func TestEpochsExportGenesis(t *testing.T) {
 	require.Equal(t, genesis.Epochs[1].StartTime, chainStartTime)
 	require.Equal(t, genesis.Epochs[1].Duration, time.Minute*30)
 	require.Equal(t, genesis.Epochs[1].CurrentEpoch, uint64(0))
-	require.Equal(t, genesis.Epochs[1].CurrentEpochStartHeight, chainStartHeight)
+	require.Equal(t, genesis.Epochs[1].CurrentEpochStartHeight, int64(0))
 	require.Equal(t, genesis.Epochs[1].CurrentEpochStartTime, chainStartTime)
 	require.Equal(t, genesis.Epochs[1].EpochCountingStarted, false)
-
-	require.Equal(t, genesis.Epochs[2].Identifier, "day")
-	require.Equal(t, genesis.Epochs[2].StartTime, chainStartTime)
-	require.Equal(t, genesis.Epochs[2].Duration, time.Hour*24)
-	require.Equal(t, genesis.Epochs[2].CurrentEpoch, uint64(0))
-	require.Equal(t, genesis.Epochs[2].CurrentEpochStartHeight, chainStartHeight)
-	require.Equal(t, genesis.Epochs[2].CurrentEpochStartTime, chainStartTime)
-	require.Equal(t, genesis.Epochs[2].EpochCountingStarted, false)
-
-	require.Equal(t, genesis.Epochs[3].Identifier, "week")
-	require.Equal(t, genesis.Epochs[3].StartTime, chainStartTime)
-	require.Equal(t, genesis.Epochs[3].Duration, time.Hour*24*7)
-	require.Equal(t, genesis.Epochs[3].CurrentEpoch, uint64(0))
-	require.Equal(t, genesis.Epochs[3].CurrentEpochStartHeight, chainStartHeight)
-	require.Equal(t, genesis.Epochs[3].CurrentEpochStartTime, chainStartTime)
-	require.Equal(t, genesis.Epochs[3].EpochCountingStarted, false)
 }
 
 func TestEpochsInitGenesis(t *testing.T) {

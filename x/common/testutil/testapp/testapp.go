@@ -19,16 +19,6 @@ import (
 	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
 )
 
-func NewNibiruTestAppWithContext(appGenesis app.GenesisState) (*app.NibiruApp, sdk.Context) {
-	newNibiruApp := NewNibiruTestApp(appGenesis)
-	ctx := newNibiruApp.NewContext(false, tmproto.Header{})
-
-	newNibiruApp.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdk.NewDec(20000))
-	newNibiruApp.OracleKeeper.SetPrice(ctx, "xxx:yyy", sdk.NewDec(20000))
-
-	return newNibiruApp, ctx
-}
-
 // NewNibiruTestAppAndContext creates an 'app.NibiruApp' instance with an in-memory
 // 'tmdb.MemDB' and fresh 'sdk.Context'.
 func NewNibiruTestAppAndContext(shouldUseDefaultGenesis bool) (*app.NibiruApp, sdk.Context) {
@@ -38,7 +28,15 @@ func NewNibiruTestAppAndContext(shouldUseDefaultGenesis bool) (*app.NibiruApp, s
 		appGenesis = app.NewDefaultGenesisState(encoding.Marshaler)
 	}
 
-	return NewNibiruTestAppWithContext(appGenesis)
+	app := NewNibiruTestApp(appGenesis)
+	ctx := app.NewContext(false, tmproto.Header{
+		Height: 1,
+	})
+
+	app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdk.NewDec(20000))
+	app.OracleKeeper.SetPrice(ctx, "xxx:yyy", sdk.NewDec(20000))
+
+	return app, ctx
 }
 
 // NewNibiruTestApp initializes a chain with the given genesis state to
@@ -56,7 +54,7 @@ func NewNibiruTestApp(gen app.GenesisState) *app.NibiruApp {
 
 	encoding := app.MakeTestEncodingConfig()
 
-	nibiruApp := app.NewNibiruApp(
+	app := app.NewNibiruApp(
 		logger,
 		db,
 		/*traceStore=*/ nil,
@@ -73,12 +71,12 @@ func NewNibiruTestApp(gen app.GenesisState) *app.NibiruApp {
 		panic(err)
 	}
 
-	nibiruApp.InitChain(abci.RequestInitChain{
+	app.InitChain(abci.RequestInitChain{
 		ConsensusParams: simapp.DefaultConsensusParams,
 		AppStateBytes:   stateBytes,
 	})
 
-	return nibiruApp
+	return app
 }
 
 // FundAccount is a utility function that funds an account by minting and

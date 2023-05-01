@@ -17,10 +17,10 @@ type BalanceEqualAction struct {
 	Amount  sdk.Coins
 }
 
-func (b BalanceEqualAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+func (b BalanceEqualAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	acc := app.AccountKeeper.GetAccount(ctx, b.Account)
 	if acc == nil {
-		return ctx, fmt.Errorf("account %s not found", b.Account.String())
+		return ctx, fmt.Errorf("account %s not found", b.Account.String()), true
 	}
 
 	coins := app.BankKeeper.GetAllBalances(ctx, b.Account)
@@ -30,8 +30,8 @@ func (b BalanceEqualAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context
 			b.Account.String(),
 			b.Amount.String(),
 			coins.String(),
-		)
+		), true
 	}
 
-	return ctx, nil
+	return ctx, nil, true
 }
