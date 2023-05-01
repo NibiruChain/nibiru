@@ -101,6 +101,11 @@ func TestQueryExchangeRateTwap(t *testing.T) {
 			TimestampMs: input.Ctx.BlockTime().UnixMilli()},
 	)
 
+	ctx = sdk.WrapSDKContext(input.Ctx.
+		WithBlockTime(input.Ctx.BlockTime().Add(time.Second)).
+		WithBlockHeight(input.Ctx.BlockHeight() + 1),
+	)
+
 	_, err := querier.ExchangeRateTwap(ctx, &types.QueryExchangeRateRequest{Pair: asset.Registry.Pair(denoms.ETH, denoms.NUSD)})
 	require.Error(t, err)
 
