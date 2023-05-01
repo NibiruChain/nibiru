@@ -18,6 +18,20 @@ enum Direction {
   SHORT = 2;
 }
 
+// Enumerates different options of calculating twap.
+enum TwapCalcOption {
+  TWAP_CALC_OPTION_UNSPECIFIED = 0;
+
+  // Spot price from quote asset reserve / base asset reserve
+  SPOT = 1;
+
+  // Swapping with quote assets, output denominated in base assets
+  QUOTE_ASSET_SWAP = 2;
+
+  // Swapping with base assets, output denominated in quote assets
+  BASE_ASSET_SWAP = 3;
+}
+
 message Params {}
 
 message Market {
