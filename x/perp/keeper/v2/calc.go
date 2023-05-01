@@ -39,9 +39,10 @@ func (k Keeper) PositionNotionalTWAP(ctx sdk.Context,
 		dir = v2types.Direction_LONG
 	}
 
-	return k.BaseAssetTWAP(
+	return k.CalcTwap(
 		ctx,
 		position.Pair,
+		v2types.TwapCalcOption_BASE_ASSET_SWAP,
 		dir,
 		position.Size_.Abs(),
 		/*lookbackInterval=*/ twapLookbackWindow,

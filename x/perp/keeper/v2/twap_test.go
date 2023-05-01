@@ -4,17 +4,104 @@ import (
 	"testing"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+
 	"github.com/NibiruChain/collections"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
+	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	. "github.com/NibiruChain/nibiru/x/perp/integration/action/v2"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
 )
 
 func TestCalcTwap(t *testing.T) {
+	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.USDC)
+	startTime := time.Now()
+
+	tc := TestCases{
+		TC("spot twap").
+			Given(
+				CreateCustomMarket(pairBtcUsdc),
+				SetBlockTime(startTime),
+				InsertReserveSnapshot(pairBtcUsdc, startTime, WithPriceMultiplier(sdk.NewDec(9))),
+				InsertReserveSnapshot(pairBtcUsdc, startTime.Add(10*time.Second), WithPriceMultiplier(sdk.NewDec(10))),
+				InsertReserveSnapshot(pairBtcUsdc, startTime.Add(20*time.Second), WithPriceMultiplier(sdk.NewDec(11))),
+			).
+			When(
+				MoveToNextBlockWithDuration(30 * time.Second),
+			).
+			Then(
+				CalcTwap(pairBtcUsdc, v2types.TwapCalcOption_SPOT, v2types.Direction_DIRECTION_UNSPECIFIED, sdk.ZeroDec(), 30*time.Second, sdk.NewDec(10)),
+			),
+
+		TC("base asset twap, long").
+			Given(
+				CreateCustomMarket(pairBtcUsdc),
+				SetBlockTime(startTime),
+				InsertReserveSnapshot(pairBtcUsdc, startTime, WithPriceMultiplier(sdk.NewDec(9))),
+				InsertReserveSnapshot(pairBtcUsdc, startTime.Add(10*time.Second), WithPriceMultiplier(sdk.NewDec(10))),
+				InsertReserveSnapshot(pairBtcUsdc, startTime.Add(20*time.Second), WithPriceMultiplier(sdk.NewDec(11))),
+			).
+			When(
+				MoveToNextBlockWithDuration(30 * time.Second),
+			).
+			Then(
+				CalcTwap(pairBtcUsdc, v2types.TwapCalcOption_BASE_ASSET_SWAP, v2types.Direction_LONG, sdk.NewDec(5), 30*time.Second, sdk.MustNewDecFromStr("50.000000000250000000")),
+			),
+
+		TC("base asset twap, short").
+			Given(
+				CreateCustomMarket(pairBtcUsdc),
+				SetBlockTime(startTime),
+				InsertReserveSnapshot(pairBtcUsdc, startTime, WithPriceMultiplier(sdk.NewDec(9))),
+				InsertReserveSnapshot(pairBtcUsdc, startTime.Add(10*time.Second), WithPriceMultiplier(sdk.NewDec(10))),
+				InsertReserveSnapshot(pairBtcUsdc, startTime.Add(20*time.Second), WithPriceMultiplier(sdk.NewDec(11))),
+			).
+			When(
+				MoveToNextBlockWithDuration(30 * time.Second),
+			).
+			Then(
+				CalcTwap(pairBtcUsdc, v2types.TwapCalcOption_BASE_ASSET_SWAP, v2types.Direction_SHORT, sdk.NewDec(5), 30*time.Second, sdk.MustNewDecFromStr("49.999999999750000000")),
+			),
+
+		TC("quote asset twap, long").
+			Given(
+				CreateCustomMarket(pairBtcUsdc),
+				SetBlockTime(startTime),
+				InsertReserveSnapshot(pairBtcUsdc, startTime, WithPriceMultiplier(sdk.NewDec(9))),
+				InsertReserveSnapshot(pairBtcUsdc, startTime.Add(10*time.Second), WithPriceMultiplier(sdk.NewDec(10))),
+				InsertReserveSnapshot(pairBtcUsdc, startTime.Add(20*time.Second), WithPriceMultiplier(sdk.NewDec(11))),
+			).
+			When(
+				MoveToNextBlockWithDuration(30 * time.Second),
+			).
+			Then(
+				CalcTwap(pairBtcUsdc, v2types.TwapCalcOption_QUOTE_ASSET_SWAP, v2types.Direction_LONG, sdk.NewDec(5), 30*time.Second, sdk.MustNewDecFromStr("0.503367003366748282")),
+			),
+
+		TC("quote asset twap, short").
+			Given(
+				CreateCustomMarket(pairBtcUsdc),
+				SetBlockTime(startTime),
+				InsertReserveSnapshot(pairBtcUsdc, startTime, WithPriceMultiplier(sdk.NewDec(9))),
+				InsertReserveSnapshot(pairBtcUsdc, startTime.Add(10*time.Second), WithPriceMultiplier(sdk.NewDec(10))),
+				InsertReserveSnapshot(pairBtcUsdc, startTime.Add(20*time.Second), WithPriceMultiplier(sdk.NewDec(11))),
+			).
+			When(
+				MoveToNextBlockWithDuration(30 * time.Second),
+			).
+			Then(
+				CalcTwap(pairBtcUsdc, v2types.TwapCalcOption_QUOTE_ASSET_SWAP, v2types.Direction_SHORT, sdk.NewDec(5), 30*time.Second, sdk.MustNewDecFromStr("0.503367003367258451")),
+			),
+	}
+
+	NewTestSuite(t).WithTestCases(tc...).Run()
+}
+
+func TestCalcTwapExtended(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 
 	tests := []struct {

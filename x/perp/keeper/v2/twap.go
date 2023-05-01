@@ -10,70 +10,6 @@ import (
 )
 
 /*
-MarkPriceTWAP
-Returns the twap of the spot price (y/x).
-
-args:
-  - ctx: cosmos-sdk context
-  - pair: the token pair
-  - direction: add or remove
-  - baseAssetAmount: amount of base asset to add or remove
-  - lookbackInterval: how far back to calculate TWAP
-
-ret:
-  - quoteAssetAmount: the amount of quote asset to make the desired move, as sdk.Dec
-  - err: error
-*/
-func (k Keeper) MarkPriceTWAP(
-	ctx sdk.Context,
-	pair asset.Pair,
-	lookbackInterval time.Duration,
-) (quoteAssetAmount sdk.Dec, err error) {
-	return k.CalcTwap(
-		ctx,
-		pair,
-		v2types.TwapCalcOption_SPOT,
-		v2types.Direction_DIRECTION_UNSPECIFIED, // unused
-		sdk.ZeroDec(),                           // unused
-		lookbackInterval,
-	)
-}
-
-/*
-BaseAssetTWAP
-Returns the amount of quote assets required to achieve a move of baseAssetAmount in a direction,
-based on historical snapshots.
-e.g. if removing <baseAssetAmount> base assets from the pool, returns the amount of quote assets do so.
-
-args:
-  - ctx: cosmos-sdk context
-  - pair: the token pair
-  - direction: add or remove
-  - baseAssetAmount: amount of base asset to add or remove
-  - lookbackInterval: how far back to calculate TWAP
-
-ret:
-  - quoteAssetAmount: the amount of quote asset to make the desired move, as sdk.Dec
-  - err: error
-*/
-func (k Keeper) BaseAssetTWAP(
-	ctx sdk.Context,
-	pair asset.Pair,
-	direction v2types.Direction,
-	baseAssetAmount sdk.Dec,
-	lookbackInterval time.Duration,
-) (quoteAssetAmount sdk.Dec, err error) {
-	return k.CalcTwap(
-		ctx,
-		pair,
-		v2types.TwapCalcOption_BASE_ASSET_SWAP,
-		direction,
-		baseAssetAmount,
-		lookbackInterval,
-	)
-}
-
-/*
 Gets the time-weighted average price from [ ctx.BlockTime() - interval, ctx.BlockTime() )
 Note the open-ended right bracket.
 
@@ -94,12 +30,14 @@ func (k Keeper) CalcTwap(
 	pair asset.Pair,
 	twapCalcOption v2types.TwapCalcOption,
 	direction v2types.Direction,
-	assetAmount sdk.Dec,
+	assetAmt sdk.Dec,
 	lookbackInterval time.Duration,
 ) (price sdk.Dec, err error) {
 	// earliest timestamp we'll look back until
 	lowerLimitTimestampMs := ctx.BlockTime().Add(-1 * lookbackInterval).UnixMilli()
 
+	// fetch snapshots from state
+	var snapshots []v2types.ReserveSnapshot
 	iter := k.ReserveSnapshots.Iterate(
 		ctx,
 		collections.PairRange[asset.Pair, time.Time]{}.
@@ -108,8 +46,6 @@ func (k Keeper) CalcTwap(
 			Descending(),
 	)
 	defer iter.Close()
-
-	var snapshots []v2types.ReserveSnapshot
 	for ; iter.Valid(); iter.Next() {
 		s := iter.Value()
 		snapshots = append(snapshots, s)
@@ -122,58 +58,54 @@ func (k Keeper) CalcTwap(
 		return sdk.OneDec().Neg(), v2types.ErrNoValidTWAP
 	}
 
-	return calcTwap(ctx, snapshots, lowerLimitTimestampMs, twapCalcOption, direction, assetAmount)
-}
-
-// calcTwap walks through a slice of PriceSnapshots and tallies up the prices weighted by the amount of time they were active for.
-// Callers of this function should already check if the snapshot slice is empty. Passing an empty snapshot slice will result in a panic.
-func calcTwap(ctx sdk.Context, snapshots []v2types.ReserveSnapshot, lowerLimitTimestampMs int64, twapCalcOption v2types.TwapCalcOption, direction v2types.Direction, assetAmt sdk.Dec) (sdk.Dec, error) {
 	// circuit-breaker when there's only one snapshot to process
 	if len(snapshots) == 1 {
 		return getPriceWithSnapshot(
 			snapshots[0],
-			snapshotPriceOptions{
-				pair:           snapshots[0].Amm.Pair,
+			snapshotPriceOps{
 				twapCalcOption: twapCalcOption,
 				direction:      direction,
-				assetAmount:    assetAmt,
+				assetAmt:       assetAmt,
 			},
 		)
 	}
 
+	// else, iterate over all snapshots and calculate TWAP
 	prevTimestampMs := ctx.BlockTime().UnixMilli()
 	cumulativePrice := sdk.ZeroDec()
 	cumulativePeriodMs := int64(0)
 
-	for _, s := range snapshots {
-		sPrice, err := getPriceWithSnapshot(
-			s,
-			snapshotPriceOptions{
-				pair:           s.Amm.Pair,
+	for _, snapshot := range snapshots {
+		price, err := getPriceWithSnapshot(
+			snapshot,
+			snapshotPriceOps{
 				twapCalcOption: twapCalcOption,
 				direction:      direction,
-				assetAmount:    assetAmt,
+				assetAmt:       assetAmt,
 			},
 		)
 		if err != nil {
 			return sdk.Dec{}, err
 		}
+
 		var timeElapsedMs int64
-		if s.TimestampMs <= lowerLimitTimestampMs {
+		if snapshot.TimestampMs <= lowerLimitTimestampMs {
 			// if we're at a snapshot below lowerLimitTimestamp, then consider that price as starting from the lower limit timestamp
 			timeElapsedMs = prevTimestampMs - lowerLimitTimestampMs
 		} else {
-			timeElapsedMs = prevTimestampMs - s.TimestampMs
+			timeElapsedMs = prevTimestampMs - snapshot.TimestampMs
 		}
-		cumulativePrice = cumulativePrice.Add(sPrice.MulInt64(timeElapsedMs))
+
+		cumulativePrice = cumulativePrice.Add(price.MulInt64(timeElapsedMs))
 		cumulativePeriodMs += timeElapsedMs
-		if s.TimestampMs <= lowerLimitTimestampMs {
+
+		if snapshot.TimestampMs <= lowerLimitTimestampMs {
 			break
 		}
-		prevTimestampMs = s.TimestampMs
+		prevTimestampMs = snapshot.TimestampMs
 	}
-	twap := cumulativePrice.QuoInt64(cumulativePeriodMs)
-	return twap, nil
+
+	return cumulativePrice.QuoInt64(cumulativePeriodMs), nil
 }
 
 /*
@@ -184,14 +116,10 @@ SPOT: spot price
 QUOTE_ASSET_SWAP: price when swapping y amount of quote assets
 BASE_ASSET_SWAP: price when swapping x amount of base assets
 */
-type snapshotPriceOptions struct {
-	// required
-	pair           asset.Pair
+type snapshotPriceOps struct {
 	twapCalcOption v2types.TwapCalcOption
-
-	// required only if twapCalcOption == QUOTE_ASSET_SWAP or BASE_ASSET_SWAP
-	direction   v2types.Direction
-	assetAmount sdk.Dec
+	direction      v2types.Direction
+	assetAmt       sdk.Dec
 }
 
 /*
@@ -214,20 +142,20 @@ ret:
 */
 func getPriceWithSnapshot(
 	snapshot v2types.ReserveSnapshot,
-	snapshotPriceOpts snapshotPriceOptions,
+	opts snapshotPriceOps,
 ) (price sdk.Dec, err error) {
-	switch snapshotPriceOpts.twapCalcOption {
+	switch opts.twapCalcOption {
 	case v2types.TwapCalcOption_SPOT:
 		return snapshot.Amm.QuoteReserve.Mul(snapshot.Amm.PriceMultiplier).Quo(snapshot.Amm.BaseReserve), nil
 
 	case v2types.TwapCalcOption_QUOTE_ASSET_SWAP:
-		quoteReserve := snapshot.Amm.FromQuoteAssetToReserve(snapshotPriceOpts.assetAmount)
-		return snapshot.Amm.GetBaseReserveAmt(quoteReserve, snapshotPriceOpts.direction)
+		quoteReserve := snapshot.Amm.FromQuoteAssetToReserve(opts.assetAmt)
+		return snapshot.Amm.GetBaseReserveAmt(quoteReserve, opts.direction)
 
 	case v2types.TwapCalcOption_BASE_ASSET_SWAP:
-		quoteReserve, err := snapshot.Amm.GetQuoteReserveAmt(snapshotPriceOpts.assetAmount, snapshotPriceOpts.direction)
+		quoteReserve, err := snapshot.Amm.GetQuoteReserveAmt(opts.assetAmt, opts.direction)
 		if err != nil {
-			return sdk.ZeroDec(), err
+			return sdk.Dec{}, err
 		}
 		return snapshot.Amm.FromQuoteReserveToAsset(quoteReserve), nil
 	}

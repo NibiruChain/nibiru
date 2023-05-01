@@ -30,21 +30,21 @@ func (s setPairPrice) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, erro
 	return ctx, nil, true
 }
 
-func InsertPriceSnapshot(pair asset.Pair, time time.Time, price sdk.Dec) action.Action {
-	return &insertPriceSnapshot{
+func InsertOraclePriceSnapshot(pair asset.Pair, time time.Time, price sdk.Dec) action.Action {
+	return &insertOraclePriceSnapshot{
 		Pair:  pair,
 		Time:  time,
 		Price: price,
 	}
 }
 
-type insertPriceSnapshot struct {
+type insertOraclePriceSnapshot struct {
 	Pair  asset.Pair
 	Time  time.Time
 	Price sdk.Dec
 }
 
-func (s insertPriceSnapshot) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (s insertOraclePriceSnapshot) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	app.OracleKeeper.PriceSnapshots.Insert(ctx, collections.Join(s.Pair, s.Time), types.PriceSnapshot{
 		Pair:        s.Pair,
 		Price:       s.Price,

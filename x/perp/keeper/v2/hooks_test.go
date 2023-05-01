@@ -23,7 +23,7 @@ func TestAfterEpochEnd(t *testing.T) {
 			Given(
 				CreateCustomMarket(pairBtcUsdc),
 				SetBlockTime(startTime),
-				InsertPriceSnapshot(pairBtcUsdc, startTime.Add(15*time.Minute), sdk.MustNewDecFromStr("5.8")),
+				InsertOraclePriceSnapshot(pairBtcUsdc, startTime.Add(15*time.Minute), sdk.MustNewDecFromStr("5.8")),
 			).
 			When(
 				MoveToNextBlockWithDuration(30 * time.Minute),
@@ -36,7 +36,7 @@ func TestAfterEpochEnd(t *testing.T) {
 			Given(
 				CreateCustomMarket(pairBtcUsdc),
 				SetBlockTime(startTime),
-				InsertPriceSnapshot(pairBtcUsdc, startTime.Add(15*time.Minute), sdk.MustNewDecFromStr("0.52")),
+				InsertOraclePriceSnapshot(pairBtcUsdc, startTime.Add(15*time.Minute), sdk.MustNewDecFromStr("0.52")),
 			).
 			When(
 				MoveToNextBlockWithDuration(30 * time.Minute),
@@ -49,7 +49,7 @@ func TestAfterEpochEnd(t *testing.T) {
 			Given(
 				CreateCustomMarket(pairBtcUsdc),
 				SetBlockTime(startTime),
-				InsertPriceSnapshot(pairBtcUsdc, startTime.Add(15*time.Minute), sdk.OneDec()),
+				InsertOraclePriceSnapshot(pairBtcUsdc, startTime.Add(15*time.Minute), sdk.OneDec()),
 			).
 			When(
 				MoveToNextBlockWithDuration(30 * time.Minute),

@@ -29,8 +29,8 @@ func (k Keeper) SettlePosition(
 		return sdk.NewCoins(), err
 	}
 
-	// run calculations on settled values
-	settlementPrice, err := k.MarkPriceTWAP(ctx, currentPosition.Pair, market.TwapLookbackWindow)
+	// run calculations on mark twap
+	settlementPrice, err := k.CalcTwap(ctx, currentPosition.Pair, v2types.TwapCalcOption_SPOT, v2types.Direction_DIRECTION_UNSPECIFIED, sdk.ZeroDec(), market.TwapLookbackWindow)
 	if err != nil {
 		return sdk.NewCoins(), err
 	}
