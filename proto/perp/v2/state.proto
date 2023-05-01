@@ -106,11 +106,8 @@ message Market {
   google.protobuf.Duration twap_lookback_window = 12
       [ (gogoproto.nullable) = false, (gogoproto.stdduration) = true ];
 
-  // the list of addresses allowed to liquidate a position.
-  repeated string whitelisted_liquidators = 13;
-
   // the amount of collateral already credited from the ecosystem fund
-  cosmos.base.v1beta1.Coin prepaid_bad_debt = 14
+  cosmos.base.v1beta1.Coin prepaid_bad_debt = 13
       [ (gogoproto.nullable) = false ];
 }
 
