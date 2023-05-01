@@ -29,7 +29,6 @@ type Keeper struct {
 	Markets          collections.Map[asset.Pair, v2types.Market]
 	AMMs             collections.Map[asset.Pair, v2types.AMM]
 	Positions        collections.Map[collections.Pair[asset.Pair, sdk.AccAddress], v2types.Position]
-	Metrics          collections.Map[asset.Pair, v2types.Metrics]
 	ReserveSnapshots collections.Map[collections.Pair[asset.Pair, time.Time], v2types.ReserveSnapshot]
 }
 
@@ -77,9 +76,8 @@ func NewKeeper(
 			collections.PairKeyEncoder(asset.PairKeyEncoder, collections.AccAddressKeyEncoder),
 			collections.ProtoValueEncoder[v2types.Position](cdc),
 		),
-		Metrics: collections.NewMap(storeKey, 3, asset.PairKeyEncoder, collections.ProtoValueEncoder[v2types.Metrics](cdc)),
 		ReserveSnapshots: collections.NewMap(
-			storeKey, 4,
+			storeKey, 3,
 			collections.PairKeyEncoder(asset.PairKeyEncoder, collections.TimeKeyEncoder),
 			collections.ProtoValueEncoder[v2types.ReserveSnapshot](cdc),
 		),

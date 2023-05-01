@@ -9,6 +9,9 @@ import "google/protobuf/duration.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/perp/types/v2";
 
+// The direction that the user is trading in
+// LONG means the user is going long the base asset (e.g. buy BTC)
+// SHORT means the user is shorting the base asset (e.g. sell BTC)
 enum Direction {
   DIRECTION_UNSPECIFIED = 0;
   LONG = 1;
@@ -106,11 +109,8 @@ message Market {
   google.protobuf.Duration twap_lookback_window = 12
       [ (gogoproto.nullable) = false, (gogoproto.stdduration) = true ];
 
-  // the list of addresses allowed to liquidate a position.
-  repeated string whitelisted_liquidators = 13;
-
   // the amount of collateral already credited from the ecosystem fund
-  cosmos.base.v1beta1.Coin prepaid_bad_debt = 14
+  cosmos.base.v1beta1.Coin prepaid_bad_debt = 13
       [ (gogoproto.nullable) = false ];
 }
 
@@ -192,34 +192,6 @@ message Position {
 
   // last block number this position was updated
   int64 last_updated_block_number = 7;
-}
-
-// Stores perp metrics for each pair
-message Metrics {
-  // Pair identifier for the two assets. Always in format 'base:quote'
-  string pair = 1 [
-    (gogoproto.customtype) =
-        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
-    (gogoproto.nullable) = false
-  ];
-
-  // Sum of all active position sizes for the pair.
-  string net_size = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-
-  // Total notional volume for the pair.
-  string volumeQuote = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-
-  // Total size volume for the pair.
-  string volumeBase = 4 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
 }
 
 // a snapshot of the perp.amm's reserves at a given point in time

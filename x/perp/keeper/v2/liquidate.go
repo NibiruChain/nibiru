@@ -345,23 +345,6 @@ func (k Keeper) MultiLiquidate(
 	var allFailed bool = true
 
 	for i, req := range liquidationRequests {
-		market, err := k.Markets.Get(ctx, req.Pair)
-		if err != nil {
-			resp[i] = &v2types.MsgMultiLiquidateResponse_LiquidationResponse{
-				Success: false,
-				Error:   err.Error(),
-			}
-			continue
-		}
-
-		if !k.isWhitelistedLiquidator(ctx, market, liquidator) {
-			resp[i] = &v2types.MsgMultiLiquidateResponse_LiquidationResponse{
-				Success: false,
-				Error:   "liquidator is not whitelisted",
-			}
-			continue
-		}
-
 		traderAddr := sdk.MustAccAddressFromBech32(req.Trader)
 		cachedCtx, commit := ctx.CacheContext()
 		liquidatorFee, perpEfFee, err := k.Liquidate(cachedCtx, liquidator, req.Pair, traderAddr)
@@ -389,15 +372,4 @@ func (k Keeper) MultiLiquidate(
 	}
 
 	return resp, nil
-}
-
-func (k Keeper) isWhitelistedLiquidator(ctx sdk.Context, market v2types.Market, addr sdk.AccAddress) bool {
-	addrStr := addr.String()
-	// TODO(k-yang): use an O(1) lookup data structure here
-	for _, whitelisted := range market.WhitelistedLiquidators {
-		if addrStr == whitelisted {
-			return true
-		}
-	}
-	return false
 }

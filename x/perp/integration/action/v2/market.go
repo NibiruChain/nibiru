@@ -45,7 +45,6 @@ func CreateCustomMarket(pair asset.Pair, marketModifiers ...marketModifier) acti
 		PartialLiquidationRatio:         sdk.MustNewDecFromStr("0.5000"),
 		FundingRateEpochId:              epochstypes.ThirtyMinuteEpochID,
 		TwapLookbackWindow:              time.Minute * 30,
-		WhitelistedLiquidators:          []string{},
 		PrepaidBadDebt:                  sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
 		PriceFluctuationLimitRatio:      sdk.MustNewDecFromStr("0.1000"),
 		MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.0625"),
@@ -75,11 +74,5 @@ type marketModifier func(market *v2types.Market)
 func WithPrepaidBadDebt(amount sdk.Int) marketModifier {
 	return func(market *v2types.Market) {
 		market.PrepaidBadDebt = sdk.NewCoin(market.Pair.QuoteDenom(), amount)
-	}
-}
-
-func WithLiquidator(liquidator sdk.AccAddress) marketModifier {
-	return func(market *v2types.Market) {
-		market.WhitelistedLiquidators = append(market.WhitelistedLiquidators, liquidator.String())
 	}
 }

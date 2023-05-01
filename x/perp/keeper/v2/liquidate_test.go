@@ -522,7 +522,7 @@ func TestMultiLiquidate(t *testing.T) {
 			Given(
 				SetBlockNumber(1),
 				SetBlockTime(startTime),
-				CreateCustomMarket(pairBtcUsdc, WithLiquidator(liquidator)),
+				CreateCustomMarket(pairBtcUsdc),
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10400))),
 				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
 			).
@@ -555,7 +555,7 @@ func TestMultiLiquidate(t *testing.T) {
 			Given(
 				SetBlockNumber(1),
 				SetBlockTime(startTime),
-				CreateCustomMarket(pairBtcUsdc, WithLiquidator(liquidator)),
+				CreateCustomMarket(pairBtcUsdc),
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10600))),
 				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
 			).
@@ -573,7 +573,7 @@ func TestMultiLiquidate(t *testing.T) {
 			Given(
 				SetBlockNumber(1),
 				SetBlockTime(startTime),
-				CreateCustomMarket(pairBtcUsdc, WithLiquidator(liquidator)),
+				CreateCustomMarket(pairBtcUsdc),
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(100)), WithMargin(sdk.NewDec(10)), WithOpenNotional(sdk.NewDec(100))),
 				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 10))),
 			).

@@ -19,19 +19,6 @@ import (
 	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
 )
 
-func NewNibiruTestAppWithContext(appGenesis app.GenesisState) (*app.NibiruApp, sdk.Context) {
-	app := NewNibiruTestApp(appGenesis)
-	ctx := app.NewContext(false, tmproto.Header{
-		Height: 1,
-	})
-	// app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: 1}})
-
-	app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdk.NewDec(20000))
-	app.OracleKeeper.SetPrice(ctx, "xxx:yyy", sdk.NewDec(20000))
-
-	return app, ctx
-}
-
 // NewNibiruTestAppAndContext creates an 'app.NibiruApp' instance with an in-memory
 // 'tmdb.MemDB' and fresh 'sdk.Context'.
 func NewNibiruTestAppAndContext(shouldUseDefaultGenesis bool) (*app.NibiruApp, sdk.Context) {
@@ -41,7 +28,15 @@ func NewNibiruTestAppAndContext(shouldUseDefaultGenesis bool) (*app.NibiruApp, s
 		appGenesis = app.NewDefaultGenesisState(encoding.Marshaler)
 	}
 
-	return NewNibiruTestAppWithContext(appGenesis)
+	app := NewNibiruTestApp(appGenesis)
+	ctx := app.NewContext(false, tmproto.Header{
+		Height: 1,
+	})
+
+	app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdk.NewDec(20000))
+	app.OracleKeeper.SetPrice(ctx, "xxx:yyy", sdk.NewDec(20000))
+
+	return app, ctx
 }
 
 // NewNibiruTestApp initializes a chain with the given genesis state to

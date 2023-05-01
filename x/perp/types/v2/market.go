@@ -146,19 +146,6 @@ func MarketsAreEqual(expected, actual *Market) error {
 		return fmt.Errorf("expected market twap lookback window %s, got %s", expected.TwapLookbackWindow, actual.TwapLookbackWindow)
 	}
 
-	for _, l := range expected.WhitelistedLiquidators {
-		found := false
-		for _, a := range actual.WhitelistedLiquidators {
-			if l == a {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return fmt.Errorf("expected market whitelisted liquidators %s, got %s", expected.WhitelistedLiquidators, actual.WhitelistedLiquidators)
-		}
-	}
-
 	if !expected.LatestCumulativePremiumFraction.Equal(actual.LatestCumulativePremiumFraction) {
 		return fmt.Errorf(
 			"expected market latest cumulative premium fraction %s, got %s",

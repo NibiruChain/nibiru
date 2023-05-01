@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"time"
 
 	"github.com/NibiruChain/collections"
 
@@ -118,63 +117,6 @@ func (q queryServer) Params(
 	}
 
 	return &v2types.QueryParamsResponse{Params: v2types.DefaultParams()}, nil
-}
-
-func (q queryServer) CumulativePremiumFraction(
-	goCtx context.Context,
-	req *v2types.QueryCumulativePremiumFractionRequest,
-) (*v2types.QueryCumulativePremiumFractionResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	market, err := q.k.Markets.Get(ctx, req.Pair)
-	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "could not find pair: %s", req.Pair)
-	}
-
-	indexTWAP, err := q.k.OracleKeeper.GetExchangeRateTwap(ctx, req.Pair)
-	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "failed to fetch twap index price for pair: %s", req.Pair)
-	}
-	if indexTWAP.IsZero() {
-		return nil, status.Errorf(codes.FailedPrecondition, "twap index price for pair: %s is zero", req.Pair)
-	}
-
-	markTwap, err := q.k.MarkPriceTWAP(ctx, req.Pair, market.TwapLookbackWindow)
-	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "failed to fetch twap mark price for pair: %s", req.Pair)
-	}
-	if markTwap.IsZero() {
-		return nil, status.Errorf(codes.FailedPrecondition, "twap mark price for pair: %s is zero", req.Pair)
-	}
-
-	epochInfo := q.k.EpochKeeper.GetEpochInfo(ctx, market.FundingRateEpochId)
-	intervalsPerDay := (24 * time.Hour) / epochInfo.Duration
-	premiumFraction := markTwap.Sub(indexTWAP).QuoInt64(int64(intervalsPerDay))
-
-	return &v2types.QueryCumulativePremiumFractionResponse{
-		CumulativePremiumFraction:              market.LatestCumulativePremiumFraction,
-		EstimatedNextCumulativePremiumFraction: market.LatestCumulativePremiumFraction.Add(premiumFraction),
-	}, nil
-}
-
-func (q queryServer) Metrics(
-	goCtx context.Context, req *v2types.QueryMetricsRequest,
-) (*v2types.QueryMetricsResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	metrics := q.k.Metrics.GetOr(ctx, req.Pair, v2types.Metrics{
-		Pair:        req.Pair,
-		NetSize:     sdk.NewDec(0),
-		VolumeQuote: sdk.NewDec(0),
-		VolumeBase:  sdk.NewDec(0),
-	})
-	return &v2types.QueryMetricsResponse{Metrics: metrics}, nil
 }
 
 func (q queryServer) ModuleAccounts(

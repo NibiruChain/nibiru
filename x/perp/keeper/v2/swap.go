@@ -72,8 +72,6 @@ func (k Keeper) SwapQuoteAsset(
 
 	k.AMMs.Insert(ctx, amm.Pair, *updatedAMM)
 
-	k.OnSwapEnd(ctx, *updatedAMM, quoteAssetAmt, baseAssetDelta, dir)
-
 	return updatedAMM, baseAssetDelta, nil
 }
 
@@ -117,48 +115,5 @@ func (k Keeper) SwapBaseAsset(
 
 	k.AMMs.Insert(ctx, amm.Pair, *updatedAMM)
 
-	k.OnSwapEnd(ctx, *updatedAMM, quoteAssetDelta, baseAssetAmt, dir)
-
 	return updatedAMM, quoteAssetDelta, err
-}
-
-// OnSwapEnd recalculates perp metrics for a particular pair.
-func (k Keeper) OnSwapEnd(
-	ctx sdk.Context,
-	amm v2types.AMM,
-	quoteAssetAmtAbs sdk.Dec,
-	baseAssetAmtAbs sdk.Dec,
-	dir v2types.Direction,
-) {
-	// Update Metrics
-	metrics := k.Metrics.GetOr(ctx, amm.Pair, v2types.Metrics{
-		Pair:        amm.Pair,
-		NetSize:     sdk.ZeroDec(),
-		VolumeQuote: sdk.ZeroDec(),
-		VolumeBase:  sdk.ZeroDec(),
-	})
-
-	if dir == v2types.Direction_LONG {
-		metrics.NetSize = metrics.NetSize.Add(baseAssetAmtAbs)
-	} else if dir == v2types.Direction_SHORT {
-		metrics.NetSize = metrics.NetSize.Sub(baseAssetAmtAbs)
-	}
-	metrics.VolumeBase = metrics.VolumeBase.Add(baseAssetAmtAbs)
-	metrics.VolumeQuote = metrics.VolumeQuote.Add(quoteAssetAmtAbs)
-
-	k.Metrics.Insert(ctx, amm.Pair, metrics)
-
-	// -------------------- Emit events
-	_ = ctx.EventManager().EmitTypedEvent(&v2types.MarkPriceChangedEvent{
-		Pair:           amm.Pair,
-		Price:          amm.MarkPrice(),
-		BlockTimestamp: ctx.BlockTime(),
-	})
-
-	// TODO(k-yang): fix swap event values
-	// _ = ctx.EventManager().EmitTypedEvent(&v2types.SwapEvent{
-	// 	Pair:        amm.Pair,
-	// 	QuoteAmount: quoteAssetAmt,
-	// 	BaseAmount:  baseAssetAmt,
-	// })
 }

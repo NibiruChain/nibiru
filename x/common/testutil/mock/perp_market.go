@@ -24,7 +24,6 @@ func TestMarket() *v2types.Market {
 		PartialLiquidationRatio:         sdk.MustNewDecFromStr("0.5"),
 		FundingRateEpochId:              "30 min",
 		TwapLookbackWindow:              time.Minute * 30,
-		WhitelistedLiquidators:          nil,
 		PrepaidBadDebt:                  sdk.NewInt64Coin(denoms.NUSD, 0),
 	}
 }
