@@ -20,6 +20,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/wasm/binding/wasmbin"
 
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 )
 
 func TestSuitePerpQuerier_RunAll(t *testing.T) {
@@ -120,6 +121,7 @@ func (s *TestSuitePerpQuerier) OnSetupEnd() {
 // - TestMetrics
 // - TestModuleAccounts
 // - TestModuleParams
+// - TestPosition
 // ————————————————————————————————————————————————————————————————————————————
 
 func (s *TestSuitePerpQuerier) TestPremiumFraction() {
@@ -252,4 +254,50 @@ func (s *TestSuitePerpQuerier) TestModuleParams() {
 	freshCwResp := new(cw_struct.PerpParamsResponse)
 	err = json.Unmarshal(jsonBz, freshCwResp)
 	s.NoErrorf(err, "freshCwResp: %s", freshCwResp)
+}
+
+func (s *TestSuitePerpQuerier) TestPosition() {
+	trader := s.contractDeployer
+	pair := genesis.PerpAmmGenesis().Markets[0].Pair
+	margin := sdk.NewInt(69)
+	leverage := sdk.NewDec(5)
+	baseAmtLimit := sdk.ZeroDec()
+
+	s.T().Log("Request should error since the trader hasn't yet opened a position")
+	cwReq := &cw_struct.PositionRequest{
+		Trader: trader.String(),
+		Pair:   pair.String(),
+	}
+	cwResp, err := s.queryPlugin.Perp.Position(s.ctx, cwReq)
+	s.Errorf(err, "\ncwResp: %s", cwResp)
+
+	s.T().Log("Open a position")
+	resp, err := s.nibiru.PerpKeeper.OpenPosition(
+		s.ctx, pair, perpammtypes.Direction_LONG,
+		trader, margin, leverage, baseAmtLimit,
+	)
+	s.NoError(err)
+
+	s.T().Log("Successfully query position")
+	cwResp, err = s.queryPlugin.Perp.Position(s.ctx, cwReq)
+	s.NoErrorf(err, "\ncwResp: %s", cwResp)
+
+	// Verify that the response marshals to JSON
+	jsonBz, err := json.Marshal(cwResp)
+	s.NoErrorf(err, "jsonBz: %s", jsonBz)
+	// and unmarshals from JSON
+	freshCwResp := new(cw_struct.PositionResponse)
+	err = json.Unmarshal(jsonBz, freshCwResp)
+	s.NoErrorf(err, "freshCwResp: %s", freshCwResp)
+	s.Assert().EqualValues(resp.ExchangedNotionalValue, leverage.MulInt(margin))
+	s.Assert().EqualValues(cwResp.Position.OpenNotional, leverage.MulInt(margin))
+	s.Assert().EqualValues(cwResp.Position.Margin, margin.ToDec())
+
+	s.T().Log("fail due to invalid pair")
+	cwReq = &cw_struct.PositionRequest{
+		Trader: trader.String(),
+		Pair:   "ftt:ust:xyz",
+	}
+	cwResp, err = s.queryPlugin.Perp.Position(s.ctx, cwReq)
+	s.Errorf(err, "\ncwResp: %s", cwResp)
 }
