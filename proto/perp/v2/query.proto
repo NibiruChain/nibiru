@@ -32,10 +32,6 @@ service Query {
         "/nibiru/perp/v2/cumulative_premium_fraction";
   }
 
-  rpc Metrics(QueryMetricsRequest) returns (QueryMetricsResponse) {
-    option (google.api.http).get = "/nibiru/perp/v2/metrics";
-  }
-
   // Queries the reserve assets in a given pool, identified by a token pair.
   rpc ModuleAccounts(QueryModuleAccountsRequest)
       returns (QueryModuleAccountsResponse) {
@@ -132,22 +128,6 @@ message QueryCumulativePremiumFractionResponse {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-}
-
-// ---------------------------------------- Metrics
-
-message QueryMetricsRequest {
-  // the pair to query for
-  string pair = 1 [
-    (gogoproto.customtype) =
-        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
-    (gogoproto.nullable) = false
-  ];
-}
-
-message QueryMetricsResponse {
-  // list of perp metrics
-  Metrics metrics = 1 [ (gogoproto.nullable) = false ];
 }
 
 // ----------------------------------------
