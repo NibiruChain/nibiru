@@ -112,8 +112,22 @@ func (s *TestSuitePerpExecutor) DoOpenPositionTest(pair asset.Pair) error {
 		return err
 	}
 
-	// Verify position exists with CustomQuerier
+	// Verify position exists with CustomQuerier - multi-position
 	bindingQuery := cw_struct.BindingQuery{
+		Positions: &cw_struct.PositionsRequest{
+			Trader: s.contractDeployer.String(),
+		},
+	}
+	bindingRespMulti := new(cw_struct.PositionsRequest)
+	_, err = DoCustomBindingQuery(
+		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingRespMulti,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Verify position exists with CustomQuerier - single position
+	bindingQuery = cw_struct.BindingQuery{
 		Position: &cw_struct.PositionRequest{
 			Trader: s.contractDeployer.String(),
 			Pair:   pair.String(),

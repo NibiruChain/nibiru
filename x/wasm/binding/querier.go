@@ -73,12 +73,10 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 			cwResp, err := qp.Perp.BasePrice(ctx, cwReq)
 			return qp.ToBinary(cwResp, err, cwReq)
 
-		// NOTE Implement these when the execute message bindings go
-
-		// TODO implement
-		// TODO test
-		// case wasmContractQuery.Positions != nil:
-		// 	return bz, nil
+		case wasmContractQuery.Positions != nil:
+			cwReq := wasmContractQuery.Positions
+			cwResp, err := qp.Perp.Positions(ctx, cwReq)
+			return qp.ToBinary(cwResp, err, cwReq)
 
 		case wasmContractQuery.Position != nil:
 			cwReq := wasmContractQuery.Position
@@ -360,5 +358,37 @@ func (perpExt *PerpQuerier) Position(
 		Margin_ratio_mark:  sdkResp.MarginRatioMark,
 		Margin_ratio_index: sdkResp.MarginRatioIndex,
 		Block_number:       sdk.NewInt(sdkResp.BlockNumber),
+	}, err
+}
+
+func (perpExt *PerpQuerier) Positions(
+	ctx sdk.Context, cwReq *cw_struct.PositionsRequest,
+) (*cw_struct.PositionsResponse, error) {
+	sdkReq := &perptypes.QueryPositionsRequest{
+		Trader: cwReq.Trader,
+	}
+	goCtx := sdk.WrapSDKContext(ctx)
+	sdkResp, err := perpExt.perp.QueryPositions(goCtx, sdkReq)
+	if err != nil {
+		return nil, err
+	}
+
+	positionMap := make(map[string]cw_struct.Position)
+	for _, posResp := range sdkResp.Positions {
+		pair := posResp.Position.Pair.String()
+		pos := posResp.Position
+		positionMap[pair] = cw_struct.Position{
+			TraderAddr:   pos.TraderAddress,
+			Pair:         pair,
+			Size:         pos.Size_,
+			Margin:       pos.Margin,
+			OpenNotional: pos.OpenNotional,
+			LatestCPF:    pos.LatestCumulativePremiumFraction,
+			BlockNumber:  sdk.NewInt(pos.BlockNumber),
+		}
+	}
+
+	return &cw_struct.PositionsResponse{
+		Positions: positionMap,
 	}, err
 }

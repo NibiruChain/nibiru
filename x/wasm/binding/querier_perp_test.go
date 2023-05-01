@@ -300,4 +300,16 @@ func (s *TestSuitePerpQuerier) TestPosition() {
 	}
 	cwResp, err = s.queryPlugin.Perp.Position(s.ctx, cwReq)
 	s.Errorf(err, "\ncwResp: %s", cwResp)
+
+	s.T().Log("test multiple positions query")
+	s.DoPositionsTest(trader)
+}
+
+func (s *TestSuitePerpQuerier) DoPositionsTest(trader sdk.AccAddress) {
+	s.T().Log("test multiple positions query")
+	cwReq := &cw_struct.PositionsRequest{
+		Trader: trader.String(),
+	}
+	cwResp, err := s.queryPlugin.Perp.Positions(s.ctx, cwReq)
+	s.NoErrorf(err, "\ncwResp: %s", cwResp)
 }
