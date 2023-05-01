@@ -103,9 +103,27 @@ func (s *TestSuitePerpExecutor) DoOpenPositionTest(pair asset.Pair) error {
 	if err != nil {
 		return err
 	}
+
+	// Verify position exists with PerpKeeper
 	_, err = s.exec.Perp.Positions.Get(
 		s.ctx, collections.Join(pair, s.contractDeployer),
 	)
+	if err != nil {
+		return err
+	}
+
+	// Verify position exists with CustomQuerier
+	bindingQuery := cw_struct.BindingQuery{
+		Position: &cw_struct.PositionRequest{
+			Trader: s.contractDeployer.String(),
+			Pair:   pair.String(),
+		},
+	}
+	bindingResp := new(cw_struct.PositionRequest)
+	_, err = DoCustomBindingQuery(
+		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
+	)
+
 	return err
 }
 
