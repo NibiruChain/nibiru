@@ -11,12 +11,12 @@ type changeLiquidationFeeRatio struct {
 	LiquidationFeeRatio sdk.Dec
 }
 
-func (c changeLiquidationFeeRatio) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+func (c changeLiquidationFeeRatio) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	params := app.PerpKeeper.GetParams(ctx)
 	params.LiquidationFeeRatio = c.LiquidationFeeRatio
 	app.PerpKeeper.SetParams(ctx, params)
 
-	return ctx, nil
+	return ctx, nil, true
 }
 
 func ChangeLiquidationFeeRatio(liquidationFeeRatio sdk.Dec) action.Action {

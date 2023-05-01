@@ -13,15 +13,15 @@ type changeMaintenanceMarginRatio struct {
 	Pair                   asset.Pair
 }
 
-func (c changeMaintenanceMarginRatio) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+func (c changeMaintenanceMarginRatio) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	pool, err := app.PerpAmmKeeper.GetPool(ctx, c.Pair)
 	if err != nil {
-		return ctx, err
+		return ctx, err, true
 	}
 
 	pool.Config.MaintenanceMarginRatio = c.MaintenanceMarginRatio
 	app.PerpAmmKeeper.Pools.Insert(ctx, c.Pair, pool)
-	return ctx, err
+	return ctx, err, true
 }
 
 func ChangeMaintenanceMarginRatio(pair asset.Pair, maintenanceMarginRatio sdk.Dec) action.Action {

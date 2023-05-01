@@ -21,19 +21,19 @@ type positionShouldBeEqual struct {
 	PositionCheckers []PositionChecker
 }
 
-func (p positionShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+func (p positionShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	position, err := app.PerpKeeper.Positions.Get(ctx, collections.Join(p.Pair, p.Account))
 	if err != nil {
-		return ctx, err
+		return ctx, err, false
 	}
 
 	for _, checker := range p.PositionCheckers {
 		if err := checker(position); err != nil {
-			return ctx, err
+			return ctx, err, false
 		}
 	}
 
-	return ctx, nil
+	return ctx, nil, false
 }
 
 func PositionShouldBeEqual(
@@ -75,13 +75,13 @@ type positionShouldNotExist struct {
 	Pair    asset.Pair
 }
 
-func (p positionShouldNotExist) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+func (p positionShouldNotExist) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	_, err := app.PerpKeeper.Positions.Get(ctx, collections.Join(p.Pair, p.Account))
 	if err == nil {
-		return ctx, fmt.Errorf("position should not exist")
+		return ctx, fmt.Errorf("position should not exist"), false
 	}
 
-	return ctx, nil
+	return ctx, nil, false
 }
 
 func PositionShouldNotExist(account sdk.AccAddress, pair asset.Pair) action.Action {

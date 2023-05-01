@@ -22,19 +22,19 @@ func MarketShouldBeEqual(pair asset.Pair, checkers ...MarketChecker) action.Acti
 	return &marketShouldBeEqual{pair: pair, checkers: checkers}
 }
 
-func (v marketShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+func (v marketShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	market, err := app.PerpAmmKeeper.GetPool(ctx, v.pair)
 	if err != nil {
-		return ctx, err
+		return ctx, err, false
 	}
 
 	for _, checker := range v.checkers {
 		if err := checker(market); err != nil {
-			return ctx, err
+			return ctx, err, false
 		}
 	}
 
-	return ctx, nil
+	return ctx, nil, false
 }
 
 // MarketCheckers

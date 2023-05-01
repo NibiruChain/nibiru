@@ -13,13 +13,13 @@ type gasConsumedShouldBe struct {
 	gasConsumed uint64
 }
 
-func (g gasConsumedShouldBe) Do(_ *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+func (g gasConsumedShouldBe) Do(_ *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	gasUsed := ctx.GasMeter().GasConsumed()
 	if g.gasConsumed != gasUsed {
-		return ctx, fmt.Errorf("gas consumed should be %d, but got %d", g.gasConsumed, gasUsed)
+		return ctx, fmt.Errorf("gas consumed should be %d, but got %d", g.gasConsumed, gasUsed), true
 	}
 
-	return ctx, nil
+	return ctx, nil, true
 }
 
 func GasConsumedShouldBe(gasConsumed uint64) action.Action {

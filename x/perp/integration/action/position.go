@@ -49,25 +49,25 @@ type openPositionAction struct {
 	CheckResponse []OpenPositionResponseChecker
 }
 
-func (o openPositionAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+func (o openPositionAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	resp, err := app.PerpKeeper.OpenPosition(
 		ctx, o.Pair, o.Side, o.Account,
 		o.Margin, o.Leverage, o.BaseLimit,
 	)
 	if err != nil {
-		return ctx, err
+		return ctx, err, true
 	}
 
 	if o.CheckResponse != nil {
 		for _, check := range o.CheckResponse {
 			err = check(resp)
 			if err != nil {
-				return ctx, err
+				return ctx, err, false
 			}
 		}
 	}
 
-	return ctx, nil
+	return ctx, nil, true
 }
 
 // Open Position Response Checkers
@@ -178,13 +178,13 @@ type closePositionAction struct {
 	Pair    asset.Pair
 }
 
-func (c closePositionAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+func (c closePositionAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	_, err := app.PerpKeeper.ClosePosition(ctx, c.Pair, c.Account)
 	if err != nil {
-		return ctx, err
+		return ctx, err, true
 	}
 
-	return ctx, nil
+	return ctx, nil, true
 }
 
 // ClosePosition closes a position for the given account and pair.

@@ -23,7 +23,7 @@ type CreateMarketAction struct {
 	MarketConfig perpammtypes.MarketConfig
 }
 
-func (c CreateMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+func (c CreateMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	err := app.PerpAmmKeeper.CreatePool(
 		ctx,
 		c.Pair,
@@ -33,7 +33,7 @@ func (c CreateMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context
 		sdk.OneDec(),
 	)
 	if err != nil {
-		return ctx, err
+		return ctx, err, true
 	}
 
 	keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
@@ -41,7 +41,7 @@ func (c CreateMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 	})
 
-	return ctx, nil
+	return ctx, nil, true
 }
 
 // CreateBaseMarket creates a base market with:
