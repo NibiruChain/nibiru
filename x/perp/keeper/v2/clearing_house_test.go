@@ -37,7 +37,7 @@ func TestOpenPosition(t *testing.T) {
 				CreateCustomMarket(pairBtcUsdc),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
+				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
 			).
 			When(
@@ -92,10 +92,10 @@ func TestOpenPosition(t *testing.T) {
 
 		TC("existing long position, go more long").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
+				CreateCustomMarket(pairBtcUsdc),
+				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2040)))),
 				OpenPosition(alice, pairBtcUsdc, v2types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
@@ -146,7 +146,7 @@ func TestOpenPosition(t *testing.T) {
 				CreateCustomMarket(pairBtcUsdc),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
+				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1030)))),
 				OpenPosition(alice, pairBtcUsdc, v2types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
@@ -198,7 +198,7 @@ func TestOpenPosition(t *testing.T) {
 				CreateCustomMarket(pairBtcUsdc),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
+				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(4080)))),
 				OpenPosition(alice, pairBtcUsdc, v2types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
@@ -250,7 +250,7 @@ func TestOpenPosition(t *testing.T) {
 				CreateCustomMarket(pairBtcUsdc),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
+				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(47_714_285_715)))),
 			).
 			When(
@@ -308,7 +308,7 @@ func TestOpenPosition(t *testing.T) {
 				CreateCustomMarket(pairBtcUsdc),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
+				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
 			).
 			When(
@@ -368,7 +368,7 @@ func TestOpenPosition(t *testing.T) {
 				CreateCustomMarket(pairBtcUsdc),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
+				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2040)))),
 				OpenPosition(alice, pairBtcUsdc, v2types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
@@ -419,7 +419,7 @@ func TestOpenPosition(t *testing.T) {
 				CreateCustomMarket(pairBtcUsdc),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
+				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1030)))),
 				OpenPosition(alice, pairBtcUsdc, v2types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
@@ -471,7 +471,7 @@ func TestOpenPosition(t *testing.T) {
 				CreateCustomMarket(pairBtcUsdc),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
+				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(4080)))),
 				OpenPosition(alice, pairBtcUsdc, v2types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
@@ -523,7 +523,7 @@ func TestOpenPosition(t *testing.T) {
 				CreateCustomMarket(pairBtcUsdc),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
+				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(47_714_285_715)))),
 			).
 			When(

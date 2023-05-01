@@ -39,15 +39,15 @@ func CreateCustomMarket(pair asset.Pair, marketModifiers ...marketModifier) acti
 		Pair:                            pair,
 		Enabled:                         true,
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
-		ExchangeFeeRatio:                sdk.MustNewDecFromStr("0.001"),
-		EcosystemFundFeeRatio:           sdk.MustNewDecFromStr("0.001"),
-		LiquidationFeeRatio:             sdk.MustNewDecFromStr("0.005"),
-		PartialLiquidationRatio:         sdk.MustNewDecFromStr("0.5"),
+		ExchangeFeeRatio:                sdk.MustNewDecFromStr("0.0010"),
+		EcosystemFundFeeRatio:           sdk.MustNewDecFromStr("0.0010"),
+		LiquidationFeeRatio:             sdk.MustNewDecFromStr("0.0500"),
+		PartialLiquidationRatio:         sdk.MustNewDecFromStr("0.5000"),
 		FundingRateEpochId:              epochstypes.ThirtyMinuteEpochID,
 		TwapLookbackWindow:              time.Minute * 30,
 		WhitelistedLiquidators:          []string{},
 		PrepaidBadDebt:                  sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
-		PriceFluctuationLimitRatio:      sdk.MustNewDecFromStr("0.1"),
+		PriceFluctuationLimitRatio:      sdk.MustNewDecFromStr("0.1000"),
 		MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.0625"),
 		MaxLeverage:                     sdk.NewDec(10),
 	}
@@ -75,5 +75,11 @@ type marketModifier func(market *v2types.Market)
 func WithPrepaidBadDebt(amount sdk.Int) marketModifier {
 	return func(market *v2types.Market) {
 		market.PrepaidBadDebt = sdk.NewCoin(market.Pair.QuoteDenom(), amount)
+	}
+}
+
+func WithLiquidator(liquidator sdk.AccAddress) marketModifier {
+	return func(market *v2types.Market) {
+		market.WhitelistedLiquidators = append(market.WhitelistedLiquidators, liquidator.String())
 	}
 }

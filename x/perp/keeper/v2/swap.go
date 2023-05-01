@@ -106,10 +106,6 @@ func (k Keeper) SwapBaseAsset(
 		return &amm, sdk.ZeroDec(), nil
 	}
 
-	if _, err = k.OracleKeeper.GetExchangeRate(ctx, amm.Pair); err != nil {
-		return nil, sdk.Dec{}, v2types.ErrNoValidPrice.Wrapf("%s", amm.Pair)
-	}
-
 	updatedAMM, quoteAssetDelta, err = amm.SwapBaseAsset(baseAssetAmt, dir)
 	if err != nil {
 		return nil, sdk.Dec{}, err

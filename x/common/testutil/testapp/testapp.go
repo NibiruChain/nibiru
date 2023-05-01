@@ -24,7 +24,7 @@ func NewNibiruTestAppWithContext(appGenesis app.GenesisState) (*app.NibiruApp, s
 	ctx := app.NewContext(false, tmproto.Header{
 		Height: 1,
 	})
-	app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: 1}})
+	// app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: 1}})
 
 	app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdk.NewDec(20000))
 	app.OracleKeeper.SetPrice(ctx, "xxx:yyy", sdk.NewDec(20000))

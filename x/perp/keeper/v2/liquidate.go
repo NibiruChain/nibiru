@@ -76,7 +76,7 @@ func (k Keeper) Liquidate(
 
 	marginRatio, err := MarginRatio(position, maxPositionNotional, market.LatestCumulativePremiumFraction)
 
-	if marginRatio.LT(market.MaintenanceMarginRatio) {
+	if marginRatio.GTE(market.MaintenanceMarginRatio) {
 		_ = ctx.EventManager().EmitTypedEvent(&types.LiquidationFailedEvent{ // nolint:errcheck
 			Pair:       pair,
 			Trader:     trader.String(),

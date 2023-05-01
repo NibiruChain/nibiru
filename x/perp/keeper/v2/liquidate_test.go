@@ -1,5 +1,21 @@
 package keeper_test
 
+import (
+	"testing"
+	"time"
+
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
+	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
+	. "github.com/NibiruChain/nibiru/x/common/testutil/assertion"
+	. "github.com/NibiruChain/nibiru/x/perp/integration/action/v2"
+	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion/v2"
+	"github.com/NibiruChain/nibiru/x/perp/types"
+	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
+
 // import (
 // 	"testing"
 // 	"time"
@@ -368,6 +384,7 @@ package keeper_test
 // 		})
 // 	}
 // }
+
 // func TestMultiLiquidate(t *testing.T) {
 // 	tests := []struct {
 // 		name string
@@ -493,3 +510,114 @@ package keeper_test
 // 		})
 // 	}
 // }
+
+func TestMultiLiquidate(t *testing.T) {
+	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.USDC)
+	alice := testutil.AccAddress()
+	liquidator := testutil.AccAddress()
+	startTime := time.Now()
+
+	tc := TestCases{
+		TC("partial liquidation").
+			Given(
+				SetBlockNumber(1),
+				SetBlockTime(startTime),
+				CreateCustomMarket(pairBtcUsdc, WithLiquidator(liquidator)),
+				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10400))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
+			).
+			When(
+				MoveToNextBlock(),
+				MultiLiquidate(liquidator,
+					PairTraderTuple{Pair: pairBtcUsdc, Trader: alice},
+				),
+			).
+			Then(
+				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(750)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(125)),
+				BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(125)),
+				PositionShouldBeEqual(alice, pairBtcUsdc,
+					Position_PositionShouldBeEqualTo(
+						v2types.Position{
+							Pair:                            pairBtcUsdc,
+							TraderAddress:                   alice.String(),
+							Size_:                           sdk.NewDec(5000),
+							Margin:                          sdk.MustNewDecFromStr("549.999951250000493750"),
+							OpenNotional:                    sdk.MustNewDecFromStr("5199.999975000000375000"),
+							LatestCumulativePremiumFraction: sdk.ZeroDec(),
+							LastUpdatedBlockNumber:          2,
+						},
+					),
+				),
+			),
+
+		TC("full liquidation").
+			Given(
+				SetBlockNumber(1),
+				SetBlockTime(startTime),
+				CreateCustomMarket(pairBtcUsdc, WithLiquidator(liquidator)),
+				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10600))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
+			).
+			When(
+				MoveToNextBlock(),
+				MultiLiquidate(liquidator,
+					PairTraderTuple{Pair: pairBtcUsdc, Trader: alice},
+				),
+			).
+			Then(
+				PositionShouldNotExist(alice, pairBtcUsdc),
+			),
+
+		TC("healthy position").
+			Given(
+				SetBlockNumber(1),
+				SetBlockTime(startTime),
+				CreateCustomMarket(pairBtcUsdc, WithLiquidator(liquidator)),
+				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(100)), WithMargin(sdk.NewDec(10)), WithOpenNotional(sdk.NewDec(100))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 10))),
+			).
+			When(
+				MoveToNextBlock(),
+				MultiLiquidate(liquidator,
+					PairTraderTuple{Pair: pairBtcUsdc, Trader: alice},
+				),
+			).
+			Then(
+				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(10)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.ZeroInt()),
+				BalanceEqual(liquidator, denoms.USDC, sdk.ZeroInt()),
+				PositionShouldBeEqual(alice, pairBtcUsdc,
+					Position_PositionShouldBeEqualTo(
+						v2types.Position{
+							Pair:                            pairBtcUsdc,
+							TraderAddress:                   alice.String(),
+							Size_:                           sdk.NewDec(100),
+							Margin:                          sdk.NewDec(10),
+							OpenNotional:                    sdk.NewDec(100),
+							LatestCumulativePremiumFraction: sdk.ZeroDec(),
+							LastUpdatedBlockNumber:          0,
+						},
+					),
+				),
+			),
+
+		// TC("liquidator not whitelisted").
+		// 	Given(
+		// SetBlockNumber(1),
+		// SetBlockTime(startTime),
+		// 		CreateCustomMarket(pairBtcUsdc),
+		// 		InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(100)), WithMargin(sdk.NewDec(10)), WithOpenNotional(sdk.NewDec(106))),
+		// 	).
+		// 	When(
+		// 		MultiLiquidate(liquidator,
+		// 			PairTraderTuple{Pair: pairBtcUsdc, Trader: alice},
+		// 		),
+		// 	).
+		// 	Then(
+		// 		PositionShouldBeEqual(alice, pairBtcUsdc),
+		// 	),
+	}
+
+	NewTestSuite(t).WithTestCases(tc...).Run()
+}
