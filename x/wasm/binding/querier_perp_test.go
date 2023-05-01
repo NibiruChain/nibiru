@@ -302,14 +302,23 @@ func (s *TestSuitePerpQuerier) TestPosition() {
 	s.Errorf(err, "\ncwResp: %s", cwResp)
 
 	s.T().Log("test multiple positions query")
-	s.DoPositionsTest(trader)
+	positionResponses := []cw_struct.PositionResponse{*freshCwResp}
+	s.DoPositionsTest(trader, positionResponses)
 }
 
-func (s *TestSuitePerpQuerier) DoPositionsTest(trader sdk.AccAddress) {
+func (s *TestSuitePerpQuerier) DoPositionsTest(
+	trader sdk.AccAddress, responses []cw_struct.PositionResponse,
+) {
 	s.T().Log("test multiple positions query")
 	cwReq := &cw_struct.PositionsRequest{
 		Trader: trader.String(),
 	}
 	cwResp, err := s.queryPlugin.Perp.Positions(s.ctx, cwReq)
 	s.NoErrorf(err, "\ncwResp: %s", cwResp)
+
+	for _, resp := range responses {
+		pair := resp.Position.Pair
+		pos := cwResp.Positions[pair]
+		s.Assert().EqualValues(resp.Position, pos)
+	}
 }
