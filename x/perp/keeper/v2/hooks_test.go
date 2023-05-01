@@ -29,7 +29,7 @@ func TestAfterEpochEnd(t *testing.T) {
 				MoveToNextBlockWithDuration(30 * time.Minute),
 			).
 			Then(
-				MarketShouldBeEqual(pairBtcUsdc, MarketLatestCPFShouldBeEqualTo(sdk.MustNewDecFromStr("-0.1"))),
+				MarketShouldBeEqual(pairBtcUsdc, Market_LatestCPFShouldBeEqualTo(sdk.MustNewDecFromStr("-0.1"))),
 			),
 
 		TC("index < mark").
@@ -42,7 +42,7 @@ func TestAfterEpochEnd(t *testing.T) {
 				MoveToNextBlockWithDuration(30 * time.Minute),
 			).
 			Then(
-				MarketShouldBeEqual(pairBtcUsdc, MarketLatestCPFShouldBeEqualTo(sdk.MustNewDecFromStr("0.01"))),
+				MarketShouldBeEqual(pairBtcUsdc, Market_LatestCPFShouldBeEqualTo(sdk.MustNewDecFromStr("0.01"))),
 			),
 
 		TC("index == mark").
@@ -55,7 +55,7 @@ func TestAfterEpochEnd(t *testing.T) {
 				MoveToNextBlockWithDuration(30 * time.Minute),
 			).
 			Then(
-				MarketShouldBeEqual(pairBtcUsdc, MarketLatestCPFShouldBeEqualTo(sdk.ZeroDec())),
+				MarketShouldBeEqual(pairBtcUsdc, Market_LatestCPFShouldBeEqualTo(sdk.ZeroDec())),
 			),
 	}
 

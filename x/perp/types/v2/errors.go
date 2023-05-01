@@ -28,4 +28,5 @@ var (
 	ErrLeverageIsTooHigh                 = sdkerrors.Register(ModuleName, 20, "leverage cannot be higher than market parameter")
 	ErrUnauthorized                      = sdkerrors.Register(ModuleName, 21, "operation not authorized")
 	ErrAllLiquidationsFailed             = sdkerrors.Register(ModuleName, 22, "all liquidations failed")
+	ErrPositionHealthy                   = sdkerrors.Register(ModuleName, 23, "position is healthy")
 )

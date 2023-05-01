@@ -38,7 +38,7 @@ func MarketShouldBeEqual(pair asset.Pair, marketCheckers ...MarketChecker) marke
 	}
 }
 
-func MarketLatestCPFShouldBeEqualTo(expectedCPF sdk.Dec) MarketChecker {
+func Market_LatestCPFShouldBeEqualTo(expectedCPF sdk.Dec) MarketChecker {
 	return func(market v2types.Market) error {
 		if !market.LatestCumulativePremiumFraction.Equal(expectedCPF) {
 			return fmt.Errorf("expected latest cumulative premium fraction to be %s, got %s", expectedCPF, market.LatestCumulativePremiumFraction)
@@ -47,7 +47,7 @@ func MarketLatestCPFShouldBeEqualTo(expectedCPF sdk.Dec) MarketChecker {
 	}
 }
 
-func MarketPrepaidBadDebtShouldBeEqualTo(expectedAmount sdk.Int) MarketChecker {
+func Market_PrepaidBadDebtShouldBeEqualTo(expectedAmount sdk.Int) MarketChecker {
 	return func(market v2types.Market) error {
 		expectedBadDebt := sdk.NewCoin(market.Pair.QuoteDenom(), expectedAmount)
 		if !market.PrepaidBadDebt.Equal(expectedBadDebt) {

@@ -35,7 +35,7 @@ func TestWithdraw(t *testing.T) {
 			Then(
 				BalanceEqual(alice, denoms.USDC, sdk.NewInt(1000)),
 				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.ZeroInt()),
-				MarketShouldBeEqual(pairBtcUsdc, MarketPrepaidBadDebtShouldBeEqualTo(sdk.ZeroInt())),
+				MarketShouldBeEqual(pairBtcUsdc, Market_PrepaidBadDebtShouldBeEqualTo(sdk.ZeroInt())),
 			),
 
 		TC("successful withdraw, some bad debt").
@@ -53,7 +53,7 @@ func TestWithdraw(t *testing.T) {
 				BalanceEqual(alice, denoms.USDC, sdk.NewInt(1000)),
 				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.ZeroInt()),
 				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.ZeroInt()),
-				MarketShouldBeEqual(pairBtcUsdc, MarketPrepaidBadDebtShouldBeEqualTo(sdk.NewInt(500))),
+				MarketShouldBeEqual(pairBtcUsdc, Market_PrepaidBadDebtShouldBeEqualTo(sdk.NewInt(500))),
 			),
 
 		TC("successful withdraw, all bad debt").
@@ -70,7 +70,7 @@ func TestWithdraw(t *testing.T) {
 				BalanceEqual(alice, denoms.USDC, sdk.NewInt(1000)),
 				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.ZeroInt()),
 				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.ZeroInt()),
-				MarketShouldBeEqual(pairBtcUsdc, MarketPrepaidBadDebtShouldBeEqualTo(sdk.NewInt(1000))),
+				MarketShouldBeEqual(pairBtcUsdc, Market_PrepaidBadDebtShouldBeEqualTo(sdk.NewInt(1000))),
 			),
 
 		TC("successful withdraw, existing bad debt").
@@ -87,7 +87,7 @@ func TestWithdraw(t *testing.T) {
 				BalanceEqual(alice, denoms.USDC, sdk.NewInt(1000)),
 				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.ZeroInt()),
 				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.ZeroInt()),
-				MarketShouldBeEqual(pairBtcUsdc, MarketPrepaidBadDebtShouldBeEqualTo(sdk.NewInt(2000))),
+				MarketShouldBeEqual(pairBtcUsdc, Market_PrepaidBadDebtShouldBeEqualTo(sdk.NewInt(2000))),
 			),
 	}
 
