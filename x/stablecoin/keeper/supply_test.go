@@ -22,14 +22,14 @@ func TestKeeper_GetStableMarketCap(t *testing.T) {
 
 	// We set some supply
 	err := k.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(
-		sdk.NewInt64Coin(denoms.NUSD, 1*common.Precision),
+		sdk.NewInt64Coin(denoms.NUSD, 1*common.TO_MICRO),
 	))
 	require.NoError(t, err)
 
 	// We set some supply
 	marketCap := k.GetStableMarketCap(ctx)
 
-	require.Equal(t, sdk.NewInt(1*common.Precision), marketCap)
+	require.Equal(t, sdk.NewInt(1*common.TO_MICRO), marketCap)
 }
 
 func TestKeeper_GetGovMarketCap(t *testing.T) {
@@ -44,11 +44,11 @@ func TestKeeper_GetGovMarketCap(t *testing.T) {
 	}
 	poolAssets := []spottypes.PoolAsset{
 		{
-			Token:  sdk.NewInt64Coin(denoms.NIBI, 2*common.Precision),
+			Token:  sdk.NewInt64Coin(denoms.NIBI, 2*common.TO_MICRO),
 			Weight: sdk.NewInt(100),
 		},
 		{
-			Token:  sdk.NewInt64Coin(denoms.NUSD, 1*common.Precision),
+			Token:  sdk.NewInt64Coin(denoms.NUSD, 1*common.TO_MICRO),
 			Weight: sdk.NewInt(100),
 		},
 	}
@@ -59,14 +59,14 @@ func TestKeeper_GetGovMarketCap(t *testing.T) {
 
 	// We set some supply
 	err = keeper.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(
-		sdk.NewInt64Coin(denoms.NIBI, 1*common.Precision),
+		sdk.NewInt64Coin(denoms.NIBI, 1*common.TO_MICRO),
 	))
 	require.NoError(t, err)
 
 	marketCap, err := keeper.GetGovMarketCap(ctx)
 	require.NoError(t, err)
 
-	require.Equal(t, sdk.NewInt(2*common.Precision), marketCap) // 1 * 10^6 * 2 (price of gov token)
+	require.Equal(t, sdk.NewInt(2*common.TO_MICRO), marketCap) // 1 * 10^6 * 2 (price of gov token)
 }
 
 func TestKeeper_GetLiquidityRatio_AndBands(t *testing.T) {
@@ -81,11 +81,11 @@ func TestKeeper_GetLiquidityRatio_AndBands(t *testing.T) {
 	}
 	poolAssets := []spottypes.PoolAsset{
 		{
-			Token:  sdk.NewInt64Coin(denoms.NIBI, 2*common.Precision),
+			Token:  sdk.NewInt64Coin(denoms.NIBI, 2*common.TO_MICRO),
 			Weight: sdk.NewInt(100),
 		},
 		{
-			Token:  sdk.NewInt64Coin(denoms.NUSD, 1*common.Precision),
+			Token:  sdk.NewInt64Coin(denoms.NUSD, 1*common.TO_MICRO),
 			Weight: sdk.NewInt(100),
 		},
 	}
@@ -96,12 +96,12 @@ func TestKeeper_GetLiquidityRatio_AndBands(t *testing.T) {
 
 	// We set some supply
 	err = keeper.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(
-		sdk.NewInt64Coin(denoms.NIBI, 1*common.Precision),
+		sdk.NewInt64Coin(denoms.NIBI, 1*common.TO_MICRO),
 	))
 	require.NoError(t, err)
 
 	err = keeper.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(
-		sdk.NewInt64Coin(denoms.NUSD, 1*common.Precision),
+		sdk.NewInt64Coin(denoms.NUSD, 1*common.TO_MICRO),
 	))
 	require.NoError(t, err)
 

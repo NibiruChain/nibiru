@@ -7,7 +7,7 @@ The test network utilizes SimApp as the ABCI application and uses all the module
 defined in the Cosmos SDK. An in-process test network can be configured with any
 number of validators as well as account funds and even custom genesis state.
 
-When creating a test network, a series of Validator objects are returned. Each
+when creating a test network, a series of Validator objects are returned. Each
 Validator object has useful information such as their address and public key. A
 Validator will also provide its RPC, P2P, and API addresses that can be useful
 for integration testing. In addition, a Tendermint local RPC client is also provided

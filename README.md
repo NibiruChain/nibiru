@@ -1,45 +1,59 @@
 # Nibiru Chain          <!-- omit in toc -->
 
-<!--  
-<p align="center">
- <img src="./nibiru-logo.svg" width="300"> 
-</p>
-<h1 align="center">Nibiru Protocol</h1>
--->
-
-[![Nibiru Test workflow][go-unit-tests-badge]][go-unit-tests-workflow]
-[![Nibiru Test workflow][go-integration-tests-badge]][go-integration-tests-workflow]
 [![Go Reference](https://pkg.go.dev/badge/github.com/NibiruChain/nibiru.svg)](https://pkg.go.dev/github.com/NibiruChain/nibiru)
+[![Nibiru Test workflow][badge-go-linter]][workflow-go-linter]
+[![Nibiru Test workflow][badge-go-releaser]][workflow-go-releaser]
 [![GitHub][license-badge]](https://github.com/NibiruChain/nibiru/blob/master/LICENSE.md)
-[<img align="right" alt="Personal Website" width="22px" src="https://raw.githubusercontent.com/iconic/open-iconic/master/svg/globe.svg" />][nibiru-website]
-[<img align="right" alt="Nibiru Discord" width="22px" src="https://cdn.jsdelivr.net/npm/simple-icons@v3/icons/discord.svg" />][nibiru-discord]
-[<img align="right" alt="Nibiru Medium Blog" width="22px" src="https://cdn.jsdelivr.net/npm/simple-icons@3.13.0/icons/medium.svg" />][nibiru-medium]
-<!-- [<img align="right" alt="Nibiru Telegram" width="22px" src="https://cdn.jsdelivr.net/npm/simple-icons@3.13.0/icons/telegram.svg" />][nibiru-telegram] -->
+[![Discord Badge](https://dcbadge.vercel.app/api/server/nibirufi?style=flat)](https://discord.gg/nibirufi)
 
-**Nibiru Chain** is a proof-of-stake blockchain and member of a family of interconnected blockchains that comprise the Cosmos Ecosystem. Nibiru powers three main decentralized applications:
+**Nibiru Chain** is a proof-of-stake blockchain that unifies leveraged derivatives trading, spot trading, staking, and bonded liquidity provision into a seamless user experience, enabling users of over 40 blockchains to trade with leverage using a suite of composable decentralized applications.
 
-- **Nibi-Perps** - Perpetuals Exchange: On the perps exchange, users can take leveraged exposure and trade on a plethora of assets: completely on-chain, completely non-custodially, and with minimal gas fees.
-- **Nibi-Swap** - Spot AMM: An automated market maker for multichain assets. This application gives users access to swaps, pools, and bonded liquidity gauges.
-- **NUSD Stablecoin**: Nibiru employs a two-token economic model, where NIBI is the governance and utility token for the protocol and NUSD is a capital-efficient, partially collateralized algorithmic stablecoin created by the protocol.
+## Components of Nibiru
 
-Nibiru is built with the [Cosmos-SDK][cosmos-sdk-repo], accurately prices assets using a system of decentralized oracles, and communicates with other Cosmos layer-1 chains using the [Inter-Blockchain Communication (IBC)](https://github.com/cosmos/ibc) protocol.  
+- **CosmWasm Smart Contracts**: Rust-based, [WebAssembly (WASM) smart contracts](https://book.cosmwasm.com/) built for the Cosmos Ecosystem. 
+- **Nibi-Perps**: A perpetual futures exchange where users can take leveraged exposure and trade on a plethora of assets — completely on-chain, completely non-custodially, and with minimal gas fees.
+- **Oracle Module**: Nibiru accurately prices assets using a native, system of decentralized oracles, and communicates with other Cosmos layer-1 chains using the Inter-Blockchain Communication (IBC) (opens new window)protocol.
+- **Nibi-Swap**: An automated market maker protocol for multichain assets. This application gives users access to swaps, pools, and bonded liquidity gauges.
+- **NUSD Stablecoin**: Nibiru powers a two-token economic model, where NIBI is the staking and utility token for the protocol and NUSD is a capital-efficient, partially collateralized stablecoin for the protocol.
+
+## Modules
+
+| Module |  Description |
+| --- | --- | 
+| [common][code-x-common] | Holds helper and utility functions to be utilized by other `x/` modules. |
+| [epochs][code-x-epochs] | Often in the SDK, we would like to run certain code every-so often. The purpose of `epochs` module is to allow other modules to set that they would like to be signaled once every period. So another module can specify it wants to execute code once a week, starting at UTC-time = x. `epochs` creates a generalized epoch interface to other modules so that they can easily be signalled upon such events. |
+| [oracle][code-x-oracle] | Handles the posting of an up-to-date and accurate feed of exchange rates from the validators. | 
+| [perp][code-x-perp] | Powers the Nibi-Perps exchange. This module enables traders to open long and short leveraged positions and houses all of the PnL calculation and liquidation logic. |
+| [spot][code-x-spot] | Responsible for creating, joining, and exiting liquidity pools. It also allows users to swap between two assets in an existing pool. It's a fully functional AMM. |
+| [stablecoin][code-x-stablecoin] | Resonsible for handling mint and redeem transactions with NUSD. |
+| [wasm][code-x-wasm] | Implements the execution environment for [WebAssembly (WASM) smart contracts](https://book.cosmwasm.com/). |
+
+[code-x-common]: https://github.com/NibiruChain/nibiru/tree/master/x/common
+[code-x-epochs]: https://github.com/NibiruChain/nibiru/tree/master/x/epochs
+[code-x-oracle]: https://github.com/NibiruChain/nibiru/tree/master/x/oracle
+[code-x-perp]: https://github.com/NibiruChain/nibiru/tree/master/x/perp
+[code-x-spot]: https://github.com/NibiruChain/nibiru/tree/master/x/spot
+[code-x-stablecoin]: https://github.com/NibiruChain/nibiru/tree/master/x/stablecoin
+[code-x-wasm]: https://github.com/NibiruChain/nibiru/tree/master/x/wasm
+
+Nibiru is built with the [Cosmos-SDK][cosmos-sdk-repo] on [Tendermint Core](https://tendermint.com/core/) consensus, accurately prices assets using a system of decentralized oracles, and communicates with other Cosmos layer-1 chains using the [Inter-Blockchain Communication (IBC)](https://github.com/cosmos/ibc) protocol.  
 
 ## ⚙️ — Documentation
 
-Conceptual and technical documentation can be found in the [Nibiru docs](https://docs.nibiru.fi). Each module also contains a detailed specification in its "spec" directory (e.g. [`x/stablecoin/spec`](https://github.com/NibiruChain/nibiru/tree/master/x/stablecoin/spec)).
+Conceptual and technical documentation can be found in the [Nibiru docs](https://docs.nibiru.fi). Detailed module-specific documentation is included in the top-level README (`x/module/README.md)`.
 
 ## 💬 — Community
 
-If you have questions or concerns, feel free to connect with a developer or community member in the [Nibiru discord][nibiru-discord]. We also have active communities on Twitter and Telegram.
+If you have questions or concerns, feel free to connect with a developer or community member in the [Nibiru discord][social-discord]. We also have active communities on Twitter and Telegram.
 
 <!-- Markdown versions of the social badges 
-[![description][discord-badge]][nibiru-discord] 
-[![description][twitter-badge]][nibiru-twitter] 
-[![description][telegram-badge]][nibiru-telegram]
+[![description][discord-badge]][social-discord] 
+[![description][twitter-badge]][social-twitter] 
+[![description][telegram-badge]][social-telegram]
 -->
 
-<p style="text-align:right">
-<a href="https://discord.com/invite/pgArXgAxDD"><img src="https://img.shields.io/badge/Discord-7289DA?&logo=discord&logoColor=white" alt="Discord" height="22"/></a>
+<p style="display: flex; gap: 24px; justify-content: center; text-align:center">
+<a href="https://discord.gg/nibiruchain"><img src="https://img.shields.io/badge/Discord-7289DA?&logo=discord&logoColor=white" alt="Discord" height="22"/></a>
 <a href="https://twitter.com/NibiruChain"><img src="https://img.shields.io/badge/Twitter-1DA1F2?&logo=twitter&logoColor=white" alt="Tweet" height="22"/></a>
 <a href="example.com"><img src="https://img.shields.io/badge/Telegram-2CA5E0?&logo=telegram&logoColor=white" alt="Telegram" height="22"/></a>
 </p>
@@ -101,28 +115,25 @@ make localnet-start
 
 ## License
 
-Copyright © Nibi, Inc. All rights reserved.
-
 Licensed under the [MIT License](./LICENSE.md).
 
-[nibiru-medium]: https://blog.nibiru.fi
-<!-- [nibiru-telegram]: example.com -->
-[nibiru-website]: https://docs.nibiru.fi
 [license-badge]: https://img.shields.io/badge/License-MIT-blue.svg
 [cosmos-sdk-repo]: https://github.com/cosmos/cosmos-sdk
-[go-unit-tests-badge]: https://github.com/NibiruChain/nibiru/actions/workflows/unit-tests.yml/badge.svg
-[go-unit-tests-workflow]: https://github.com/NibiruChain/nibiru/actions/workflows/go.yml
-[go-integration-tests-badge]: https://github.com/NibiruChain/nibiru/actions/workflows/integration-tests.yml/badge.svg
-[go-integration-tests-workflow]: https://github.com/NibiruChain/nibiru/actions/workflows/go.yml
-[nibiru-twitter]: https://twitter.com/NibiruChain
-[nibiru-discord]: https://discord.com/invite/pgArXgAxDD
+[badge-go-linter]: https://github.com/NibiruChain/nibiru/actions/workflows/golangci-lint.yml/badge.svg?query=branch%3Amaster
+[workflow-go-linter]: https://github.com/NibiruChain/nibiru/actions/workflows/golangci-lint.yml?query=branch%3Amaster
+[badge-go-releaser]: https://github.com/NibiruChain/nibiru/actions/workflows/goreleaser.yml/badge.svg?query=branch%3Amaster
+[workflow-go-releaser]: https://github.com/NibiruChain/nibiru/actions/workflows/goreleaser.yml?query=branch%3Amaster
+
+[social-twitter]: https://twitter.com/NibiruChain
+[social-discord]: https://discord.gg/nibirufi
+[social-telegram]: https://t.me/nibiruchain
 
 [discord-badge]: https://img.shields.io/badge/Discord-7289DA?&logo=discord&logoColor=white
 [twitter-badge]: https://img.shields.io/badge/Twitter-1DA1F2?&logo=twitter&logoColor=white
 [telegram-badge]: https://img.shields.io/badge/Telegram-2CA5E0?&logo=telegram&logoColor=white
 
 <!--
-[![Twitter Follow](https://img.shields.io/twitter/follow/nibiru_platform.svg?label=Follow&style=social)][nibiru-twitter]
+[![Twitter Follow](https://img.shields.io/twitter/follow/nibiru_platform.svg?label=Follow&style=social)][social-twitter]
 
 [![version](https://img.shields.io/github/tag/nibiru-labs/nibiru.svg)](https://github.com/NibiruChain/nibiru/releases/latest)
 
@@ -130,5 +141,5 @@ Licensed under the [MIT License](./LICENSE.md).
 
 [![API Reference](https://godoc.org/github.com/NibiruChain/nibiru?status.svg)](https://godoc.org/github.com/NibiruChain/nibiru)
 
-[![Discord Chat](https://img.shields.io/discord/704389840614981673.svg)][nibiru-discord]
+[![Discord Chat](https://img.shields.io/discord/704389840614981673.svg)][social-discord]
 -->

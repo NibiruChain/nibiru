@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/assert"
@@ -18,9 +17,9 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 func TestMsgServerAddMargin(t *testing.T) {
@@ -77,19 +76,20 @@ func TestMsgServerAddMargin(t *testing.T) {
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 			traderAddr := testutil.AccAddress()
 
-			t.Log("create vpool")
-			assert.NoError(t, app.VpoolKeeper.CreatePool(
+			t.Log("create market")
+			assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				/* quoteReserve */ sdk.NewDec(1*common.Precision),
-				/* baseReserve */ sdk.NewDec(1*common.Precision),
-				vpooltypes.VpoolConfig{
+				/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO),
+				/* baseReserve */ sdk.NewDec(1*common.TO_MICRO),
+				perpammtypes.MarketConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaxOracleSpreadRatio:   sdk.OneDec(),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
+				sdk.OneDec(),
 			))
 			keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -97,7 +97,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 			})
 
 			t.Log("fund trader")
-			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, traderAddr, tc.traderFunds))
+			require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, traderAddr, tc.traderFunds))
 
 			if tc.initialPosition != nil {
 				t.Log("create position")
@@ -167,7 +167,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			initialPosition: &types.Position{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.OneDec(),
-				Margin:                          sdk.NewDec(1 * common.Precision),
+				Margin:                          sdk.NewDec(1 * common.TO_MICRO),
 				OpenNotional:                    sdk.OneDec(),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                     1,
@@ -181,7 +181,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			initialPosition: &types.Position{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.OneDec(),
-				Margin:                          sdk.NewDec(1 * common.Precision),
+				Margin:                          sdk.NewDec(1 * common.TO_MICRO),
 				OpenNotional:                    sdk.OneDec(),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                     1,
@@ -198,19 +198,20 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 			traderAddr := testutil.AccAddress()
 
-			t.Log("create vpool")
-			assert.NoError(t, app.VpoolKeeper.CreatePool(
+			t.Log("create market")
+			assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				/* quoteReserve */ sdk.NewDec(1*common.Precision),
-				/* baseReserve */ sdk.NewDec(1*common.Precision),
-				vpooltypes.VpoolConfig{
+				/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO),
+				/* baseReserve */ sdk.NewDec(1*common.TO_MICRO),
+				perpammtypes.MarketConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaxOracleSpreadRatio:   sdk.OneDec(),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
+				sdk.OneDec(),
 			))
 			keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -218,7 +219,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			})
 
 			t.Log("fund vault")
-			require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, tc.vaultFunds))
+			require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, tc.vaultFunds))
 
 			if tc.initialPosition != nil {
 				t.Log("create position")
@@ -285,19 +286,20 @@ func TestMsgServerOpenPosition(t *testing.T) {
 			ctx = ctx.WithBlockTime(time.Now())
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
-			t.Log("create vpool")
-			assert.NoError(t, app.VpoolKeeper.CreatePool(
+			t.Log("create market")
+			assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 				/* ctx */ ctx,
 				/* pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
-				/* baseAssetReserve */ sdk.NewDec(1*common.Precision),
-				vpooltypes.VpoolConfig{
+				/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO),
+				/* baseReserve */ sdk.NewDec(1*common.TO_MICRO),
+				perpammtypes.MarketConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaxOracleSpreadRatio:   sdk.OneDec(),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
+				sdk.OneDec(),
 			))
 			keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -307,7 +309,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 			traderAddr, err := sdk.AccAddressFromBech32(tc.sender)
 			if err == nil {
 				t.Log("fund trader")
-				require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, traderAddr, tc.traderFunds))
+				require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, traderAddr, tc.traderFunds))
 			}
 
 			t.Log("increment block height and time for TWAP calculation")
@@ -317,7 +319,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 			resp, err := msgServer.OpenPosition(sdk.WrapSDKContext(ctx), &types.MsgOpenPosition{
 				Sender:               tc.sender,
 				Pair:                 tc.pair,
-				Side:                 types.Side_BUY,
+				Side:                 perpammtypes.Direction_LONG,
 				QuoteAssetAmount:     sdk.NewInt(1000),
 				Leverage:             sdk.NewDec(10),
 				BaseAssetAmountLimit: sdk.ZeroInt(),
@@ -371,20 +373,21 @@ func TestMsgServerClosePosition(t *testing.T) {
 			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
 
-			t.Log("create vpool")
+			t.Log("create market")
 
-			assert.NoError(t, app.VpoolKeeper.CreatePool(
+			assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
-				/* baseAssetReserve */ sdk.NewDec(1*common.Precision),
-				vpooltypes.VpoolConfig{
+				/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO),
+				/* baseReserve */ sdk.NewDec(1*common.TO_MICRO),
+				perpammtypes.MarketConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaxOracleSpreadRatio:   sdk.OneDec(),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
+				sdk.OneDec(),
 			))
 			keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -401,7 +404,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				BlockNumber:                     1,
 			})
-			require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(tc.pair.QuoteDenom(), 1))))
+			require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(tc.pair.QuoteDenom(), 1))))
 
 			resp, err := msgServer.ClosePosition(sdk.WrapSDKContext(ctx), &types.MsgClosePosition{
 				Sender: tc.traderAddr.String(),
@@ -442,19 +445,20 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	notAtRiskTrader := testutil.AccAddress()
 	atRiskTrader2 := testutil.AccAddress()
 
-	t.Log("create vpool")
-	assert.NoError(t, app.VpoolKeeper.CreatePool(
+	t.Log("create market")
+	assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 		/* ctx */ ctx,
 		/* pair */ pair,
-		/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
-		/* baseAssetReserve */ sdk.NewDec(1*common.Precision),
-		vpooltypes.VpoolConfig{
+		/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO),
+		/* baseReserve */ sdk.NewDec(1*common.TO_MICRO),
+		perpammtypes.MarketConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),
 			MaxOracleSpreadRatio:   sdk.OneDec(),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
+		sdk.OneDec(),
 	))
 	keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 		Pair:                            pair,
@@ -496,7 +500,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	keeper.SetPosition(app.PerpKeeper, ctx, notAtRiskPosition)
 	keeper.SetPosition(app.PerpKeeper, ctx, atRiskPosition2)
 
-	require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
+	require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
 
 	setLiquidator(ctx, app.PerpKeeper, liquidator)
 	resp, err := msgServer.MultiLiquidate(sdk.WrapSDKContext(ctx), &types.MsgMultiLiquidate{
@@ -552,19 +556,20 @@ func TestMsgServerMultiLiquidate_NotAuthorized(t *testing.T) {
 
 	atRiskTrader1 := testutil.AccAddress()
 
-	t.Log("create vpool")
-	assert.NoError(t, app.VpoolKeeper.CreatePool(
+	t.Log("create market")
+	assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 		/* ctx */ ctx,
 		/* pair */ pair,
-		/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
-		/* baseAssetReserve */ sdk.NewDec(1*common.Precision),
-		vpooltypes.VpoolConfig{
+		/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO),
+		/* baseReserve */ sdk.NewDec(1*common.TO_MICRO),
+		perpammtypes.MarketConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),
 			MaxOracleSpreadRatio:   sdk.OneDec(),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
+		sdk.OneDec(),
 	))
 	keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 		Pair:                            pair,
@@ -586,7 +591,7 @@ func TestMsgServerMultiLiquidate_NotAuthorized(t *testing.T) {
 	}
 	keeper.SetPosition(app.PerpKeeper, ctx, atRiskPosition1)
 
-	require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
+	require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
 
 	resp, err := msgServer.MultiLiquidate(sdk.WrapSDKContext(ctx), &types.MsgMultiLiquidate{
 		Sender: liquidator.String(),
@@ -623,19 +628,20 @@ func TestMsgServerMultiLiquidate_AllFailed(t *testing.T) {
 
 	notAtRiskTrader := testutil.AccAddress()
 
-	t.Log("create vpool")
-	assert.NoError(t, app.VpoolKeeper.CreatePool(
+	t.Log("create market")
+	assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 		/* ctx */ ctx,
 		/* pair */ pair,
-		/* quoteAssetReserve */ sdk.NewDec(1*common.Precision),
-		/* baseAssetReserve */ sdk.NewDec(1*common.Precision),
-		vpooltypes.VpoolConfig{
+		/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO),
+		/* baseReserve */ sdk.NewDec(1*common.TO_MICRO),
+		perpammtypes.MarketConfig{
 			TradeLimitRatio:        sdk.OneDec(),
 			FluctuationLimitRatio:  sdk.OneDec(),
 			MaxOracleSpreadRatio:   sdk.OneDec(),
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
+		sdk.OneDec(),
 	))
 	keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
 		Pair:                            pair,
@@ -657,7 +663,7 @@ func TestMsgServerMultiLiquidate_AllFailed(t *testing.T) {
 	}
 	keeper.SetPosition(app.PerpKeeper, ctx, notAtRiskPosition)
 
-	require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
+	require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
 
 	setLiquidator(ctx, app.PerpKeeper, liquidator)
 	resp, err := msgServer.MultiLiquidate(sdk.WrapSDKContext(ctx), &types.MsgMultiLiquidate{
@@ -716,7 +722,7 @@ func TestMsgServerDonateToEcosystemFund(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeper)
-			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, tc.sender, tc.initialFunds))
+			require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, tc.sender, tc.initialFunds))
 
 			resp, err := msgServer.DonateToEcosystemFund(sdk.WrapSDKContext(ctx), &types.MsgDonateToEcosystemFund{
 				Sender:   tc.sender.String(),

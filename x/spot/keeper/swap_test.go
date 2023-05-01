@@ -3,7 +3,6 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
@@ -264,7 +263,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 			tc.initialPool.Address = poolAddr.String()
 			tc.expectedFinalPool.Address = poolAddr.String()
 			require.NoError(t,
-				simapp.FundAccount(
+				testapp.FundAccount(
 					app.BankKeeper,
 					ctx,
 					poolAddr,
@@ -275,7 +274,7 @@ func TestSwapExactAmountIn(t *testing.T) {
 
 			// fund user account
 			sender := testutil.AccAddress()
-			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, sender, tc.userInitialFunds))
+			require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, sender, tc.userInitialFunds))
 
 			// swap assets
 			tokenOut, err := app.SpotKeeper.SwapExactAmountIn(ctx, sender, tc.initialPool.Id, tc.tokenIn, tc.tokenOutDenom)
@@ -356,7 +355,7 @@ func TestDoubleSwapExactAmountIn(t *testing.T) {
 			tc.initialPool.Address = poolAddr.String()
 			tc.expectedFinalPool.Address = poolAddr.String()
 			require.NoError(t,
-				simapp.FundAccount(
+				testapp.FundAccount(
 					app.BankKeeper,
 					ctx,
 					poolAddr,
@@ -367,7 +366,7 @@ func TestDoubleSwapExactAmountIn(t *testing.T) {
 
 			// fund user account
 			sender := testutil.AccAddress()
-			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, sender, tc.userInitialFunds))
+			require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, sender, tc.userInitialFunds))
 
 			// swap assets
 			for i, tokenIn := range tc.tokenIns {

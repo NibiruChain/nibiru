@@ -9,7 +9,7 @@ import (
 )
 
 /*
-Given a pool, find the poolAsset with a given denom.
+given a pool, find the poolAsset with a given denom.
 
 args:
   - poolAssets: all of the pool's assets. Must be sorted.

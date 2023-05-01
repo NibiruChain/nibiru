@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/NibiruChain/collections"
-	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,9 +14,9 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 func TestAddMarginSuccess(t *testing.T) {
@@ -56,29 +55,30 @@ func TestAddMarginSuccess(t *testing.T) {
 			traderAddr := sdk.MustAccAddressFromBech32(tc.initialPosition.TraderAddress)
 
 			t.Log("add trader funds")
-			require.NoError(t, simapp.FundAccount(
+			require.NoError(t, testapp.FundAccount(
 				nibiruApp.BankKeeper,
 				ctx,
 				traderAddr,
 				sdk.NewCoins(tc.marginToAdd),
 			))
 
-			t.Log("create vpool")
-			vpoolKeeper := &nibiruApp.VpoolKeeper
-			assert.NoError(t, vpoolKeeper.CreatePool(
+			t.Log("create market")
+			perpammKeeper := &nibiruApp.PerpAmmKeeper
+			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				sdk.NewDec(10*common.Precision), // 10 tokens
-				sdk.NewDec(5*common.Precision),  // 5 tokens
-				vpooltypes.VpoolConfig{
+				sdk.NewDec(5*common.TO_MICRO), // 10 tokens
+				sdk.NewDec(5*common.TO_MICRO), // 5 tokens
+				perpammtypes.MarketConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"), // 0.1 ratio
 					MaxOracleSpreadRatio:   sdk.OneDec(),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
 				},
+				sdk.NewDec(2),
 			))
-			require.True(t, vpoolKeeper.ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)))
+			require.True(t, perpammKeeper.ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)))
 
 			t.Log("set pair metadata")
 			keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
@@ -111,7 +111,7 @@ func TestRemoveMargin(t *testing.T) {
 	}{
 
 		{
-			name: "vpool doesn't exit - fail",
+			name: "market doesn't exit - fail",
 			test: func() {
 				removeAmt := sdk.NewInt(5)
 
@@ -132,21 +132,22 @@ func TestRemoveMargin(t *testing.T) {
 				trader := testutilevents.AccAddress()
 				pair := asset.MustNewPair("osmo:nusd")
 
-				t.Log("Setup vpool defined by pair")
-				vpoolKeeper := &nibiruApp.VpoolKeeper
+				t.Log("Setup market defined by pair")
+				perpammKeeper := &nibiruApp.PerpAmmKeeper
 				perpKeeper := &nibiruApp.PerpKeeper
-				assert.NoError(t, vpoolKeeper.CreatePool(
+				assert.NoError(t, perpammKeeper.CreatePool(
 					ctx,
 					pair,
-					/* y */ sdk.NewDec(1*common.Precision), //
-					/* x */ sdk.NewDec(1*common.Precision), //
-					vpooltypes.VpoolConfig{
+					/* y */ sdk.NewDec(1*common.TO_MICRO), //
+					/* x */ sdk.NewDec(1*common.TO_MICRO), //
+					perpammtypes.MarketConfig{
 						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 						FluctuationLimitRatio:  sdk.OneDec(),
 						MaxOracleSpreadRatio:   sdk.OneDec(),
 						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 						MaxLeverage:            sdk.MustNewDecFromStr("15"),
 					},
+					sdk.OneDec(),
 				))
 
 				removeAmt := sdk.NewInt(5)
@@ -165,26 +166,27 @@ func TestRemoveMargin(t *testing.T) {
 				traderAddr := testutilevents.AccAddress()
 				pair := asset.MustNewPair("xxx:yyy")
 
-				t.Log("Set vpool defined by pair on VpoolKeeper")
-				vpoolKeeper := &nibiruApp.VpoolKeeper
-				quoteReserves := sdk.NewDec(1 * common.Precision)
-				baseReserves := sdk.NewDec(1 * common.Precision)
-				assert.NoError(t, vpoolKeeper.CreatePool(
+				t.Log("Set market defined by pair on PerpAmmKeeper")
+				perpammKeeper := &nibiruApp.PerpAmmKeeper
+				quoteReserves := sdk.NewDec(1 * common.TO_MICRO)
+				baseReserves := sdk.NewDec(1 * common.TO_MICRO)
+				assert.NoError(t, perpammKeeper.CreatePool(
 					ctx,
 					pair,
 					/* y */ quoteReserves,
 					/* x */ baseReserves,
-					vpooltypes.VpoolConfig{
+					perpammtypes.MarketConfig{
 						TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 						FluctuationLimitRatio:  sdk.OneDec(),
 						MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.4"),
 						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 						MaxLeverage:            sdk.MustNewDecFromStr("15"),
 					},
+					sdk.OneDec(),
 				))
-				require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
+				require.True(t, perpammKeeper.ExistsPool(ctx, pair))
 
-				t.Log("Set vpool defined by pair on PerpKeeper")
+				t.Log("Set market defined by pair on PerpKeeper")
 				keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 					Pair:                            pair,
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -195,13 +197,13 @@ func TestRemoveMargin(t *testing.T) {
 					WithBlockTime(time.Now().Add(time.Minute))
 
 				t.Log("Fund trader account with sufficient quote")
-				require.NoError(t, simapp.FundAccount(nibiruApp.BankKeeper, ctx, traderAddr,
+				require.NoError(t, testapp.FundAccount(nibiruApp.BankKeeper, ctx, traderAddr,
 					sdk.NewCoins(sdk.NewInt64Coin("yyy", 60))),
 				)
 
 				t.Log("Open long position with 5x leverage")
 				perpKeeper := nibiruApp.PerpKeeper
-				side := types.Side_BUY
+				side := perpammtypes.Direction_LONG
 				quote := sdk.NewInt(60)
 				leverage := sdk.NewDec(5)
 				baseLimit := sdk.ZeroDec()

@@ -26,8 +26,10 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// - `balancer`: Balancer are pools defined by the equation xy=k, extended by the weighs introduced by Balancer.
-// - `stableswap`: Stableswap pools are defined by a combination of constant-product and constant-sum pool
+// - `balancer`: Balancer are pools defined by the equation xy=k, extended by
+// the weighs introduced by Balancer.
+// - `stableswap`: Stableswap pools are defined by a combination of
+// constant-product and constant-sum pool
 type PoolType int32
 
 const (
@@ -57,10 +59,11 @@ func (PoolType) EnumDescriptor() ([]byte, []int) {
 type PoolParams struct {
 	SwapFee github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,1,opt,name=swap_fee,json=swapFee,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"swap_fee" yaml:"swap_fee"`
 	ExitFee github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=exit_fee,json=exitFee,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"exit_fee" yaml:"exit_fee"`
-	// Amplification Parameter (A): Larger value of A make the curve better resemble a straight
-	// line in the center (when pool is near balance).  Highly volatile assets should use a lower value, while assets that
-	// are closer together may be best with a higher value.
-	// This is only used if the pool_type is set to 1 (stableswap)
+	// Amplification Parameter (A): Larger value of A make the curve better
+	// resemble a straight line in the center (when pool is near balance).  Highly
+	// volatile assets should use a lower value, while assets that are closer
+	// together may be best with a higher value. This is only used if the
+	// pool_type is set to 1 (stableswap)
 	A        github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,3,opt,name=A,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"A" yaml:"amplification"`
 	PoolType PoolType                               `protobuf:"varint,4,opt,name=pool_type,json=poolType,proto3,enum=nibiru.spot.v1.PoolType" json:"pool_type,omitempty" yaml:"pool_type"`
 }

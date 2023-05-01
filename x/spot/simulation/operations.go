@@ -125,7 +125,7 @@ func SimulateMsgSwap(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keepe
 			TokenOutDenom: denomOut,
 		}
 		pool, _ := k.FetchPool(ctx, poolId)
-		_, err := pool.CalcOutAmtGivenIn(tokenIn, denomOut, false)
+		_, _, err := pool.CalcOutAmtGivenIn(tokenIn, denomOut, false)
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "pool imbalanced and not enough swap amount"), nil, nil
 		}
@@ -256,7 +256,7 @@ func SimulateExitPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keep
 		if err != nil {
 			return opMsg, futureOp, err
 		}
-		tokensOut, err := pool.TokensOutFromPoolSharesIn(shareTokensIn.Amount)
+		tokensOut, _, err := pool.TokensOutFromPoolSharesIn(shareTokensIn.Amount)
 		if err != nil {
 			return opMsg, futureOp, err
 		}
@@ -361,9 +361,9 @@ func genPoolAssets(
 }
 
 // fundAccountWithTokens fund the account with some gov, coll and stable denom.
-// When simulation for stablecoin is done, we should consider only funding with stable.
+// when simulation for stablecoin is done, we should consider only funding with stable.
 func fundAccountWithTokens(ctx sdk.Context, address sdk.AccAddress, bk types.BankKeeper) {
-	million := 1 * common.Precision
+	million := 1 * common.TO_MICRO
 	newTokens := sdk.NewCoins(
 		sdk.NewCoin(denoms.NIBI, sdk.NewInt(int64(10*million))),
 		sdk.NewCoin(denoms.USDC, sdk.NewInt(int64(10*million))),

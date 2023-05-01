@@ -40,9 +40,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Breaking
+
+* [#1292](https://github.com/NibiruChain/nibiru/pull/1292) - feat(wasm): Add module bindings for execute calls in x/perp: OpenPosition, ClosePosition, AddMargin, RemoveMargin.
+* [#1287](https://github.com/NibiruChain/nibiru/pull/1287) - feat(wasm): Add module bindings for custom queries in x/perp: Reserves, AllMarkets, BasePrice, PremiumFraction, Metrics, PerpParams, PerpModuleAccounts
+* [#1282](https://github.com/NibiruChain/nibiru/pull/1282) - feat(inflation)!: add inflation module
+* [#1270](https://github.com/NibiruChain/nibiru/pull/1270) - refactor(proto)!: lint protos and standardize versioning
+* [#1271](https://github.com/NibiruChain/nibiru/pull/1271) - refactor(perp)!: vpool → perp/amm #2 | imports and renames
+* [#1269](https://github.com/NibiruChain/nibiru/pull/1269) - refactor(perp)!: merge x/util with x/perp
+* [#1267](https://github.com/NibiruChain/nibiru/pull/1267) - refactor(perp)!: vpool → perp/amm #1 | Moves types, keeper, and cli
+* [#1243](https://github.com/NibiruChain/nibiru/pull/1243) - feat(vpool): sqrt of liquidity depth tracked on pool
+* [#1220](https://github.com/NibiruChain/nibiru/pull/1220) - feat: reduce gas fees when posting price
+* [#1229](https://github.com/NibiruChain/nibiru/pull/1229) - feat: upgrade ibc to v4.2.0 and wasm v0.30.0
+* [#1254](https://github.com/NibiruChain/nibiru/pull/1254) - feat: add bias field into vpool
+* [#1255](https://github.com/NibiruChain/nibiru/pull/1255) - feat: add peg multiplier field into vpool, which for now defaults to 1
+* [#1281](https://github.com/NibiruChain/nibiru/pull/1281) - feat: add peg multiplier to the pricing logic
+* [#1291](https://github.com/NibiruChain/nibiru/pull/1291) - refactor(perp)!: add perp v2 state protos
+* [#1296](https://github.com/NibiruChain/nibiru/pull/1296) - refactor(perp)!: update perp v2 state protos
+* [#1298](https://github.com/NibiruChain/nibiru/pull/1298) - refactor(perp)!: remove `MaxOracleSpreadRatio` from Perpv2
+* [#1301](https://github.com/NibiruChain/nibiru/pull/1301) - fix(epochs)!: correct epoch start time
+
+### Improvements
+
+* [#1295](https://github.com/NibiruChain/nibiru/pull/1295) - refactor(app): Organize keepers, store keys, and module manager initialization in app.go
+* [#1248](https://github.com/NibiruChain/nibiru/pull/1248) - refactor(common): Combine x/testutil and x/common/testutil.
+* [#1245](https://github.com/NibiruChain/nibiru/pull/1245) - fix(localnet.sh): force localnet.sh to work even if Coingecko is down
+* [#1230](https://github.com/NibiruChain/nibiru/pull/1230) - chore(deps): Bump github.com/holiman/uint256 from 1.2.1 to 1.2.2
+* [#1240](https://github.com/NibiruChain/nibiru/pull/1240) - ci: Test `make proto-gen` when the proto gen scripts or .proto files change
+* [#1199](https://github.com/NibiruChain/nibiru/pull/1199) - chore(deps): bump golang.org/x/net from 0.4.0 to 0.7.0
+* [#1211](https://github.com/NibiruChain/nibiru/pull/1211) - chore(deps): Bump github.com/stretchr/testify from 1.8.1 to 1.8.2
+* [#1203](https://github.com/NibiruChain/nibiru/pull/1203) - ci: make chaosnet pull nibiru image if --build is not specified
+* [#1197](https://github.com/NibiruChain/nibiru/pull/1197) - feat: add fees into events in spot module.
+  * add `fees` field into `EventPoolCreated` event.
+  * add `fees` field into `EventPoolExited` event.
+  * add `fee` field into `EventAssetsSwapped` event.
+* [#1222](https://github.com/NibiruChain/nibiru/pull/1222) - chore(deps): bump google.golang.org/protobuf from 1.28.2-0.20220831092852-f930b1dc76e8 to 1.29.0
+* [#1223](https://github.com/NibiruChain/nibiru/pull/1223) - chore(deps): bump github.com/golang/protobuf from 1.5.2 to 1.5.3
+* [#1205](https://github.com/NibiruChain/nibiru/pull/1205) - test: first testing framework skeleton and example
+* [#1228](https://github.com/NibiruChain/nibiru/pull/1228) - feat: update github.com/CosmWasm/wasmd 0.29.2
+* [#1244](https://github.com/NibiruChain/nibiru/pull/1244) - feat: add typed event for oracle post price
+* [#1237](https://github.com/NibiruChain/nibiru/pull/1237) - feat: reduce gas on openposition
+* [#1231](https://github.com/NibiruChain/nibiru/pull/1231) - chore(deps): bump github.com/cosmos/ibc-go/v4 from 4.2.0 to 4.3.0 #1231
+* [#1256](https://github.com/NibiruChain/nibiru/pull/1256) - chore(deps): bump github.com/spf13/cobra from 1.6.1 to 1.7.0
+* [#1289](https://github.com/NibiruChain/nibiru/pull/1289) - feat: SqrtDepth equal to base reserves when pool creation
+* [#1290](https://github.com/NibiruChain/nibiru/pull/1290) - refactor: fix quote/base reserve naming convention
+
+### Bug Fixes
+
+* [#1210](https://github.com/NibiruChain/nibiru/pull/1210) - fix(ci): fix docker push workflow
+
+## [v0.19.2](https://github.com/NibiruChain/nibiru/releases/tag/v0.19.2) - 2023-02-24
+
 ### Features
 
 * [#1187](https://github.com/NibiruChain/nibiru/pull/1187) - feat(oracle): default vote threshold and min voters
+* [#1276](https://github.com/NibiruChain/nibiru/pull/1276) - feat: add ewma function
+* [#1284](https://github.com/NibiruChain/nibiru/pull/1284) - feat: fails if base and quote reserves are not equal on CreatePool
+* [#1286](https://github.com/NibiruChain/nibiru/pull/1286) - feat: bias is zero when creating pool
 
 ### API Breaking
 
@@ -89,6 +143,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1089](https://github.com/NibiruChain/nibiru/pull/1089) - refactor(deps): Bump [github.com/holiman/uint256](https://github.com/holiman/uint256) from 1.1.1 to 1.2.1 (syntax changes)
 * [#1188](https://github.com/NibiruChain/nibiru/pull/1188) - fix(spot): remove A precision and clean up borked logic
 * [#1190](https://github.com/NibiruChain/nibiru/pull/1190) - ci(release): fix TM_VERSION not being set on releases
+* [#1218](https://github.com/NibiruChain/nibiru/pull/1218) - ci(release): Publish chaosnet image when tagging a release
+* [#1283](https://github.com/NibiruChain/nibiru/pull/1283) - chore(deps): bump github.com/prometheus/client_golang from 1.14.0 to 1.15.0
 
 ### Bug Fixes
 
@@ -96,6 +152,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1126](https://github.com/NibiruChain/nibiru/pull/1126) - test(oracle): stop the tyrannical behavior of TestFuzz_PickReferencePair
 * [#1131](https://github.com/NibiruChain/nibiru/pull/1131) - fix(oracle): use correct distribution module account
 * [#1151](https://github.com/NibiruChain/nibiru/pull/1151) - fix(dex): fix swap calculation for stableswap pools
+* [#1210](https://github.com/NibiruChain/nibiru/pull/1210) - fix(ci): fix docker push workflow
+* [#1212](https://github.com/NibiruChain/nibiru/pull/1212) - fix(spot): gracefully handle join spot pool with wrong tokens denom
+* [#1219](https://github.com/NibiruChain/nibiru/pull/1219) - fix(ci): use chaosnet image on chaosnet docker compose
 
 ## [v0.16.3](https://github.com/NibiruChain/nibiru/releases/tag/v0.16.3)
 
@@ -160,7 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1086](https://github.com/NibiruChain/nibiru/pull/1086) - refactor(perp)!: Removed unused field, `LiquidationPenalty`, from `PositionChangedEvent`
 * [#1093](https://github.com/NibiruChain/nibiru/pull/1093) - simulation(dex): add simulation tests for stableswap pools
 * [#1091](https://github.com/NibiruChain/nibiru/pull/1091) - refactor: Use common.Precision instead of 1_000_000 in the codebase
-* [#1109](https://github.com/NibiruChain/nibiru/pull/1109) - refactor(vpool)!: Condense swap SwapXForY and SwapYForX events into SwapOnVpoolEvent
+* [#1109](https://github.com/NibiruChain/nibiru/pull/1109) - refactor(vpool)!: Condense swap SwapXForY and SwapYForX events into SwapEvent
 
 ### Bug Fixes
 

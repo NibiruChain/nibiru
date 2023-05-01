@@ -7,6 +7,7 @@ import (
 	"github.com/NibiruChain/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -37,7 +38,7 @@ func (q queryServer) QueryPositions(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	pools := q.k.VpoolKeeper.GetAllPools(ctx)
+	pools := q.k.PerpAmmKeeper.GetAllPools(ctx)
 	var positions []*types.QueryPositionResponse
 
 	for _, pool := range pools {
@@ -74,16 +75,21 @@ func (q queryServer) position(ctx sdk.Context, pair asset.Pair, trader sdk.AccAd
 		return nil, err
 	}
 
-	positionNotional, unrealizedPnl, err := q.k.getPositionNotionalAndUnrealizedPnL(ctx, position, types.PnLCalcOption_SPOT_PRICE)
+	market, err := q.k.PerpAmmKeeper.GetPool(ctx, pair)
+	if err != nil {
+		return nil, types.ErrPairNotFound
+	}
+
+	positionNotional, unrealizedPnl, err := q.k.getPositionNotionalAndUnrealizedPnL(ctx, market, position, types.PnLCalcOption_SPOT_PRICE)
 	if err != nil {
 		return nil, err
 	}
 
-	marginRatioMark, err := q.k.GetMarginRatio(ctx, position, types.MarginCalculationPriceOption_MAX_PNL)
+	marginRatioMark, err := q.k.GetMarginRatio(ctx, market, position, types.MarginCalculationPriceOption_MAX_PNL)
 	if err != nil {
 		return nil, err
 	}
-	marginRatioIndex, err := q.k.GetMarginRatio(ctx, position, types.MarginCalculationPriceOption_INDEX)
+	marginRatioIndex, err := q.k.GetMarginRatio(ctx, market, position, types.MarginCalculationPriceOption_INDEX)
 	if err != nil {
 		// The index portion of the query fails silently as not to distrupt all
 		// position queries when oracles aren't posting prices.
@@ -126,7 +132,7 @@ func (q queryServer) CumulativePremiumFraction(
 		return nil, status.Errorf(codes.NotFound, "could not find pair: %s", req.Pair)
 	}
 
-	if !q.k.VpoolKeeper.ExistsPool(ctx, pairMetadata.Pair) {
+	if !q.k.PerpAmmKeeper.ExistsPool(ctx, pairMetadata.Pair) {
 		return nil, status.Errorf(codes.NotFound, "could not find pair: %s", req.Pair)
 	}
 
@@ -138,7 +144,7 @@ func (q queryServer) CumulativePremiumFraction(
 		return nil, status.Errorf(codes.FailedPrecondition, "twap index price for pair: %s is zero", req.Pair)
 	}
 
-	markTwap, err := q.k.VpoolKeeper.GetMarkPriceTWAP(ctx, pairMetadata.Pair, q.k.GetParams(ctx).TwapLookbackWindow)
+	markTwap, err := q.k.PerpAmmKeeper.GetMarkPriceTWAP(ctx, pairMetadata.Pair, q.k.GetParams(ctx).TwapLookbackWindow)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "failed to fetch twap mark price for pair: %s", req.Pair)
 	}
@@ -164,7 +170,7 @@ func (q queryServer) Metrics(
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if !q.k.VpoolKeeper.ExistsPool(ctx, req.Pair) {
+	if !q.k.PerpAmmKeeper.ExistsPool(ctx, req.Pair) {
 		return nil, status.Errorf(codes.InvalidArgument, "pool not found: %s", req.Pair)
 	}
 	metrics := q.k.Metrics.GetOr(ctx, req.Pair, types.Metrics{
@@ -174,4 +180,26 @@ func (q queryServer) Metrics(
 		VolumeBase:  sdk.NewDec(0),
 	})
 	return &types.QueryMetricsResponse{Metrics: metrics}, nil
+}
+
+func (q queryServer) ModuleAccounts(
+	ctx context.Context, _ *types.QueryModuleAccountsRequest,
+) (*types.QueryModuleAccountsResponse, error) {
+	sdkContext := sdk.UnwrapSDKContext(ctx)
+
+	var moduleAccountsWithBalances []types.AccountWithBalance
+	for _, acc := range types.ModuleAccounts {
+		account := authtypes.NewModuleAddress(acc)
+
+		balances := q.k.BankKeeper.GetAllBalances(sdkContext, account)
+
+		accWithBalance := types.AccountWithBalance{
+			Name:    acc,
+			Address: account.String(),
+			Balance: balances,
+		}
+		moduleAccountsWithBalances = append(moduleAccountsWithBalances, accWithBalance)
+	}
+
+	return &types.QueryModuleAccountsResponse{Accounts: moduleAccountsWithBalances}, nil
 }

@@ -115,6 +115,14 @@ func NewExchangeRateTupleFromString(s string) (ExchangeRateTuple, error) {
 // ExchangeRateTuples - array of ExchangeRateTuple
 type ExchangeRateTuples []ExchangeRateTuple
 
+func (tuples ExchangeRateTuples) ToMap() (exchangeRateMap map[asset.Pair]sdk.Dec) {
+	exchangeRateMap = make(map[asset.Pair]sdk.Dec)
+	for _, tuple := range tuples {
+		exchangeRateMap[tuple.Pair] = tuple.ExchangeRate
+	}
+	return exchangeRateMap
+}
+
 // String implements fmt.Stringer interface
 func (tuples ExchangeRateTuples) String() string {
 	out, _ := yaml.Marshal(tuples)

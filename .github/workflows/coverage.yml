@@ -1,10 +1,13 @@
-name: Test Coverage
+name: Daily Test Report
 
 on:
-  pull_request:
+  workflow_call:
+  workflow_dispatch: # Runs on manual calls
+  schedule: 
+    - cron: "0 0 * * *" # Runs automatically every day
 
 jobs:
-  unit-tests:
+  test-coverage:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

@@ -16,8 +16,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 func TestLiquidateIntoPartialLiquidation(t *testing.T) {
@@ -108,52 +108,55 @@ func TestLiquidateIntoPartialLiquidation(t *testing.T) {
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
-			t.Log("mock vpool keeper")
-			mocks.mockVpoolKeeper.EXPECT().
-				ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(true).Times(2)
-			mocks.mockVpoolKeeper.EXPECT().
+			t.Log("mock market keeper")
+			market := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+			mocks.mockPerpAmmKeeper.EXPECT().
+				GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).
+				Times(2).
+				Return(market, nil)
+			mocks.mockPerpAmmKeeper.EXPECT().
+				ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(true).Times(1)
+			mocks.mockPerpAmmKeeper.EXPECT().
 				GetMaintenanceMarginRatio(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).
 				Return(sdk.MustNewDecFromStr("0.0625"), nil)
 
-			mocks.mockVpoolKeeper.EXPECT().IsOverSpreadLimit(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(false, nil)
+			mocks.mockPerpAmmKeeper.EXPECT().IsOverSpreadLimit(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(false, nil)
 			markPrice := tc.newPositionNotional.Quo(tc.initialPositionSize)
-			mocks.mockVpoolKeeper.EXPECT().GetMarkPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(markPrice, nil)
+			mocks.mockPerpAmmKeeper.EXPECT().GetMarkPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(markPrice, nil)
 
-			mocks.mockVpoolKeeper.EXPECT().
+			mocks.mockPerpAmmKeeper.EXPECT().
 				GetBaseAssetTWAP(
 					ctx,
 					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					vpooltypes.Direction_ADD_TO_POOL,
+					perpammtypes.Direction_LONG,
 					sdk.OneDec(),
 					15*time.Minute,
 				).
 				Return(tc.newPositionNotional, nil)
-			mocks.mockVpoolKeeper.EXPECT().
+			mocks.mockPerpAmmKeeper.EXPECT().
 				GetBaseAssetPrice(
-					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					vpooltypes.Direction_ADD_TO_POOL,
+					market,
+					perpammtypes.Direction_LONG,
 					sdk.OneDec(),
 				).
 				Return(tc.newPositionNotional, nil).Times(3)
-			mocks.mockVpoolKeeper.EXPECT().
+			mocks.mockPerpAmmKeeper.EXPECT().
 				GetBaseAssetPrice(
-					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					vpooltypes.Direction_ADD_TO_POOL,
+					market,
+					perpammtypes.Direction_LONG,
 					tc.exchangedSize,
 				).
 				Return(tc.exchangedNotional, nil)
-			mocks.mockVpoolKeeper.EXPECT().
+			mocks.mockPerpAmmKeeper.EXPECT().
 				SwapQuoteForBase(
 					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					vpooltypes.Direction_REMOVE_FROM_POOL,
+					market,
+					perpammtypes.Direction_SHORT,
 					/* quoteAmt */ tc.exchangedNotional,
 					/* baseLimit */ sdk.ZeroDec(),
 					/* skipFluctuationLimitCheck */ true,
 				).
-				Return(tc.exchangedSize, nil)
+				Return(market, tc.exchangedSize, nil)
 
 			t.Log("mock account keeper")
 			mocks.mockAccountKeeper.EXPECT().
@@ -283,43 +286,46 @@ func TestLiquidateIntoFullLiquidation(t *testing.T) {
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
-			t.Log("mock vpool keeper")
-			mocks.mockVpoolKeeper.EXPECT().
-				ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(true).Times(2)
-			mocks.mockVpoolKeeper.EXPECT().
+			t.Log("mock market keeper")
+			market := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+			mocks.mockPerpAmmKeeper.EXPECT().
+				GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Times(2).
+				Return(market, nil)
+			mocks.mockPerpAmmKeeper.EXPECT().
+				ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(true)
+			mocks.mockPerpAmmKeeper.EXPECT().
 				GetMaintenanceMarginRatio(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).
 				Return(sdk.MustNewDecFromStr("0.0625"), nil)
-			mocks.mockVpoolKeeper.EXPECT().IsOverSpreadLimit(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(false, nil)
+			mocks.mockPerpAmmKeeper.EXPECT().IsOverSpreadLimit(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(false, nil)
 			markPrice := tc.newPositionNotional.Quo(tc.initialPositionSize)
-			mocks.mockVpoolKeeper.EXPECT().GetMarkPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(markPrice, nil)
+			mocks.mockPerpAmmKeeper.EXPECT().GetMarkPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(markPrice, nil)
 
-			mocks.mockVpoolKeeper.EXPECT().
+			mocks.mockPerpAmmKeeper.EXPECT().
 				GetBaseAssetTWAP(
 					ctx,
 					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					vpooltypes.Direction_ADD_TO_POOL,
+					perpammtypes.Direction_LONG,
 					tc.initialPositionSize,
 					15*time.Minute,
 				).
 				Return(tc.newPositionNotional, nil)
-			mocks.mockVpoolKeeper.EXPECT().
+			mocks.mockPerpAmmKeeper.EXPECT().
 				GetBaseAssetPrice(
-					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					vpooltypes.Direction_ADD_TO_POOL,
+					market,
+					perpammtypes.Direction_LONG,
 					tc.initialPositionSize,
 				).
 				Return(tc.newPositionNotional, nil).Times(3)
-			mocks.mockVpoolKeeper.EXPECT().
+			mocks.mockPerpAmmKeeper.EXPECT().
 				SwapBaseForQuote(
 					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					vpooltypes.Direction_ADD_TO_POOL,
+					market,
+					perpammtypes.Direction_LONG,
 					/* baseAmt */ tc.initialPositionSize,
 					/* quoteLimit */ sdk.ZeroDec(),
 					/* skipFluctuationLimitCheck */ true,
 				).
-				Return(tc.newPositionNotional, nil)
+				Return(market, tc.newPositionNotional, nil)
 
 			t.Log("mock account keeper")
 			mocks.mockAccountKeeper.EXPECT().
@@ -454,43 +460,46 @@ func TestLiquidateIntoFullLiquidationWithBadDebt(t *testing.T) {
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
-			t.Log("mock vpool keeper")
-			mocks.mockVpoolKeeper.EXPECT().
-				ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(true).Times(2)
-			mocks.mockVpoolKeeper.EXPECT().
+			t.Log("mock market keeper")
+			market := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+			mocks.mockPerpAmmKeeper.EXPECT().
+				GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Times(2).
+				Return(market, nil)
+			mocks.mockPerpAmmKeeper.EXPECT().
+				ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(true)
+			mocks.mockPerpAmmKeeper.EXPECT().
 				GetMaintenanceMarginRatio(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).
 				Return(sdk.MustNewDecFromStr("0.0625"), nil)
-			mocks.mockVpoolKeeper.EXPECT().IsOverSpreadLimit(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(false, nil)
+			mocks.mockPerpAmmKeeper.EXPECT().IsOverSpreadLimit(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(false, nil)
 			markPrice := tc.newPositionNotional.Quo(tc.initialPositionSize)
-			mocks.mockVpoolKeeper.EXPECT().GetMarkPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(markPrice, nil)
+			mocks.mockPerpAmmKeeper.EXPECT().GetMarkPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(markPrice, nil)
 
-			mocks.mockVpoolKeeper.EXPECT().
+			mocks.mockPerpAmmKeeper.EXPECT().
 				GetBaseAssetTWAP(
 					ctx,
 					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					vpooltypes.Direction_ADD_TO_POOL,
+					perpammtypes.Direction_LONG,
 					tc.initialPositionSize,
 					15*time.Minute,
 				).
 				Return(tc.newPositionNotional, nil)
-			mocks.mockVpoolKeeper.EXPECT().
+			mocks.mockPerpAmmKeeper.EXPECT().
 				GetBaseAssetPrice(
-					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					vpooltypes.Direction_ADD_TO_POOL,
+					market,
+					perpammtypes.Direction_LONG,
 					tc.initialPositionSize,
 				).
 				Return(tc.newPositionNotional, nil).Times(3)
-			mocks.mockVpoolKeeper.EXPECT().
+			mocks.mockPerpAmmKeeper.EXPECT().
 				SwapBaseForQuote(
 					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-					vpooltypes.Direction_ADD_TO_POOL,
+					market,
+					perpammtypes.Direction_LONG,
 					/* baseAmt */ tc.initialPositionSize,
 					/* quoteLimit */ sdk.ZeroDec(),
 					/* skipFluctuationLimitCheck */ true,
 				).
-				Return(tc.newPositionNotional, nil)
+				Return(market, tc.newPositionNotional, nil)
 
 			t.Log("mock account keeper")
 			mocks.mockAccountKeeper.EXPECT().
@@ -584,11 +593,11 @@ func TestDistributeLiquidateRewards(t *testing.T) {
 			},
 		},
 		{
-			name: "vpool does not exist - error",
+			name: "market does not exist - error",
 			test: func() {
 				perpKeeper, mocks, ctx := getKeeper(t)
 				liquidator := testutilevents.AccAddress()
-				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(false)
+				mocks.mockPerpAmmKeeper.EXPECT().ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(false)
 
 				err := perpKeeper.distributeLiquidateRewards(ctx,
 					types.LiquidateResp{
@@ -613,7 +622,7 @@ func TestDistributeLiquidateRewards(t *testing.T) {
 				perpKeeper, mocks, ctx := getKeeper(t)
 				liquidator := testutilevents.AccAddress()
 
-				mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(true)
+				mocks.mockPerpAmmKeeper.EXPECT().ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(true)
 
 				mocks.mockAccountKeeper.
 					EXPECT().GetModuleAddress(types.VaultModuleAccount).
@@ -893,9 +902,9 @@ func TestKeeper_ExecuteFullLiquidation(t *testing.T) {
 			perpKeeper, mocks, ctx := getKeeper(t)
 			liquidatorAddr := testutilevents.AccAddress()
 			traderAddr := testutilevents.AccAddress()
-			baseAssetDirection := vpooltypes.Direction_ADD_TO_POOL
+			baseAssetDirection := perpammtypes.Direction_LONG
 			if tc.initialPositionSize.IsNegative() {
-				baseAssetDirection = vpooltypes.Direction_REMOVE_FROM_POOL
+				baseAssetDirection = perpammtypes.Direction_SHORT
 			}
 
 			t.Log("mock bank keeper")
@@ -933,26 +942,27 @@ func TestKeeper_ExecuteFullLiquidation(t *testing.T) {
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
-			t.Log("mock vpool")
-			mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).AnyTimes().Return(true)
-			mocks.mockVpoolKeeper.EXPECT().
+			t.Log("mock market")
+			market := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+			mocks.mockPerpAmmKeeper.EXPECT().GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).Return(market, nil)
+			mocks.mockPerpAmmKeeper.EXPECT().ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).AnyTimes().Return(true)
+			mocks.mockPerpAmmKeeper.EXPECT().
 				GetBaseAssetPrice(
-					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					market,
 					baseAssetDirection,
 					/*baseAssetAmount=*/ tc.initialPositionSize.Abs(),
 				).
 				Return( /*quoteAssetAmount=*/ tc.baseAssetPriceInQuote, nil)
-			mocks.mockVpoolKeeper.EXPECT().
+			mocks.mockPerpAmmKeeper.EXPECT().
 				SwapBaseForQuote(
 					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					market,
 					baseAssetDirection,
 					/*baseAssetAmount=*/ tc.initialPositionSize.Abs(),
 					/*quoteAssetAssetLimit=*/ sdk.ZeroDec(),
 					/* skipFluctuationLimitCheck */ true,
-				).Return( /*quoteAssetAmount=*/ tc.baseAssetPriceInQuote, nil)
-			mocks.mockVpoolKeeper.EXPECT().
+				).Return(market /*quoteAssetAmount=*/, tc.baseAssetPriceInQuote, nil)
+			mocks.mockPerpAmmKeeper.EXPECT().
 				GetMarkPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).
 				Return(sdk.OneDec(), nil)
 
@@ -984,7 +994,7 @@ func TestKeeper_ExecuteFullLiquidation(t *testing.T) {
 			assert.EqualValues(t,
 				tc.expectedExchangedNotionalValue,
 				positionResp.ExchangedNotionalValue) // amount of quote exchanged
-			// Initial position size is sold back to to vpool
+			// Initial position size is sold back to to market
 			assert.EqualValues(t, tc.initialPositionSize.Neg(), positionResp.ExchangedPositionSize)
 			// ( oldMargin + unrealizedPnL - fundingPayment ) * -1
 			assert.EqualValues(t, tc.expectedMarginToVault, positionResp.MarginToVault)
@@ -1188,9 +1198,9 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 			perpKeeper, mocks, ctx := getKeeper(t)
 			liquidatorAddr := testutilevents.AccAddress()
 			traderAddr := testutilevents.AccAddress()
-			baseAssetDirection := vpooltypes.Direction_ADD_TO_POOL
+			baseAssetDirection := perpammtypes.Direction_LONG
 			if tc.initialPositionSize.IsNegative() {
-				baseAssetDirection = vpooltypes.Direction_REMOVE_FROM_POOL
+				baseAssetDirection = perpammtypes.Direction_SHORT
 			}
 
 			t.Log("mock bank keeper")
@@ -1224,49 +1234,51 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
 
-			t.Log("mock vpool")
-			mocks.mockVpoolKeeper.EXPECT().ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).AnyTimes().Return(true)
-			mocks.mockVpoolKeeper.EXPECT().
+			t.Log("mock market")
+			market := perpammtypes.Market{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
+			mocks.mockPerpAmmKeeper.EXPECT().
+				GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).
+				Return(market, nil)
+			mocks.mockPerpAmmKeeper.EXPECT().ExistsPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).AnyTimes().Return(true)
+			mocks.mockPerpAmmKeeper.EXPECT().
 				GetBaseAssetPrice(
-					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					market,
 					baseAssetDirection,
 					/*baseAssetAmount=*/ tc.initialPositionSize.Mul(tc.partialLiquidationRatio),
 				).
 				Return( /*quoteAssetAmount=*/ tc.baseAssetPriceInQuote.Mul(tc.partialLiquidationRatio), nil)
 
-			mocks.mockVpoolKeeper.EXPECT().
+			mocks.mockPerpAmmKeeper.EXPECT().
 				GetBaseAssetPrice(
-					ctx,
-					asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+					market,
 					baseAssetDirection,
 					/*baseAssetAmount=*/ tc.initialPositionSize.Abs(),
 				).
 				Return( /*quoteAssetAmount=*/ tc.baseAssetPriceInQuote, nil)
 
 			if tc.initialPositionSize.IsNegative() {
-				mocks.mockVpoolKeeper.EXPECT().
+				mocks.mockPerpAmmKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-						vpooltypes.Direction_ADD_TO_POOL,
+						market,
+						perpammtypes.Direction_LONG,
 						/*baseAssetAmount=*/ tc.baseAssetPriceInQuote.Mul(tc.partialLiquidationRatio),
 						/*quoteAssetAssetLimit=*/ sdk.ZeroDec(),
 						/* skipFluctuationLimitCheck */ true,
-					).Return( /*quoteAssetAmount=*/ tc.baseAssetPriceInQuote.Mul(tc.partialLiquidationRatio), nil)
+					).Return(market /*quoteAssetAmount=*/, tc.baseAssetPriceInQuote.Mul(tc.partialLiquidationRatio), nil)
 			} else {
-				mocks.mockVpoolKeeper.EXPECT().
+				mocks.mockPerpAmmKeeper.EXPECT().
 					SwapQuoteForBase(
 						ctx,
-						asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-						vpooltypes.Direction_REMOVE_FROM_POOL,
+						market,
+						perpammtypes.Direction_SHORT,
 						/*baseAssetAmount=*/ tc.baseAssetPriceInQuote.Mul(tc.partialLiquidationRatio),
 						/*quoteAssetAssetLimit=*/ sdk.ZeroDec(),
 						/* skipFluctuationLimitCheck */ true,
-					).Return( /*quoteAssetAmount=*/ tc.baseAssetPriceInQuote.Mul(tc.partialLiquidationRatio), nil)
+					).Return(market /*quoteAssetAmount=*/, tc.baseAssetPriceInQuote.Mul(tc.partialLiquidationRatio), nil)
 			}
 
-			mocks.mockVpoolKeeper.EXPECT().
+			mocks.mockPerpAmmKeeper.EXPECT().
 				GetMarkPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)).
 				Return(sdk.OneDec(), nil)
 
@@ -1298,7 +1310,7 @@ func TestKeeper_ExecutePartialLiquidation(t *testing.T) {
 			assert.EqualValues(t,
 				tc.expectedExchangedNotionalValue,
 				positionResp.ExchangedNotionalValue) // amount of quote exchanged
-			// Initial position size that is liquidated to be is sold back to to vpool
+			// Initial position size that is liquidated to be is sold back to to market
 			if tc.initialPositionSize.IsNegative() {
 				assert.EqualValues(t, tc.baseAssetPriceInQuote.Mul(tc.partialLiquidationRatio), positionResp.ExchangedPositionSize)
 			} else {

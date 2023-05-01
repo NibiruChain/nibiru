@@ -24,12 +24,12 @@ stablecoin mints and burns.
 
 // GetCollRatio queries the 'collRatio'.
 func (k *Keeper) GetCollRatio(ctx sdk.Context) (collRatio sdk.Dec) {
-	return sdk.NewDec(k.GetParams(ctx).CollRatio).QuoInt64(1 * common.Precision)
+	return sdk.NewDec(k.GetParams(ctx).CollRatio).QuoInt64(1 * common.TO_MICRO)
 }
 
 /*
 SetCollRatio manually sets the 'collRatio'. This method is mainly used for
-testing. When the chain is live, the collateral ratio cannot be manually set, only
+testing. when the chain is live, the collateral ratio cannot be manually set, only
 adjusted by a fixed amount (e.g. 0.25%).
 */
 func (k *Keeper) SetCollRatio(ctx sdk.Context, collRatio sdk.Dec) (err error) {
@@ -42,7 +42,7 @@ func (k *Keeper) SetCollRatio(ctx sdk.Context, collRatio sdk.Dec) (err error) {
 	}
 
 	params := k.GetParams(ctx)
-	million := sdk.NewDec(1 * common.Precision)
+	million := sdk.NewDec(1 * common.TO_MICRO)
 	collRatioInt := collRatio.Mul(million).RoundInt().Int64()
 
 	params.CollRatio = collRatioInt

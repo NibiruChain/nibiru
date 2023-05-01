@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package nibiru.perp.amm.v1;
+
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/x/perp/amm/types";
+
+message ReserveSnapshotSavedEvent {
+  string pair = 1 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+
+  string quote_reserve = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  string base_reserve = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // MarkPrice at the end of the block. 
+  // (instantaneous) markPrice := quoteReserve / baseReserve 
+  string mark_price = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  int64 block_height = 5;
+     
+  google.protobuf.Timestamp block_timestamp = 6 [
+      (gogoproto.stdtime) = true,
+      (gogoproto.nullable) = false
+    ];
+}
+
+// A swap on the perp.amm represented by 'pair'. 
+// Amounts are negative or positive base on the perspective of the pool, i.e.
+// a negative quote means the trader has gained quote and the perp.amm lost quote. 
+message SwapEvent {
+  string pair = 1 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+
+  // delta in the quote reserves of the perp.amm
+  string quote_amount = 2 [
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+        (gogoproto.nullable) = false
+    ];
+
+  // delta in the base reserves of the perp.amm
+  string base_amount = 3 [
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+        (gogoproto.nullable) = false
+    ];
+}
+
+message MarkPriceChangedEvent {
+  string pair = 1 [ 
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+  
+  string price = 2 [
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+        (gogoproto.nullable) = false
+    ];
+
+  google.protobuf.Timestamp block_timestamp = 3 [
+      (gogoproto.stdtime) = true,
+      (gogoproto.nullable) = false
+    ];
+}

@@ -19,7 +19,7 @@ closes their position, realizing their profits.
 There is a counter party short position with really negative PnL, but
 their position hasn't been closed/liquidated yet.
 We must pay the long trader first, which results in funds being taken from the EF.
-When the short position is closed, it also realizes some bad debt but because
+when the short position is closed, it also realizes some bad debt but because
 we have already withdrawn from the EF, we don't need to withdraw more from the EF.
 */
 func (k Keeper) Withdraw(
@@ -72,7 +72,7 @@ Realizes the bad debt by first decrementing it from the prepaid bad debt.
 Prepaid bad debt accrues when more coins are withdrawn from the vault than the
 vault contains, so we "credit" ourselves with prepaid bad debt.
 
-Then, when bad debt is actually realized (by closing underwater positions), we
+then, when bad debt is actually realized (by closing underwater positions), we
 can consume the credit we have built before withdrawing more from the ecosystem fund.
 */
 func (k Keeper) realizeBadDebt(ctx sdk.Context, denom string, badDebtToRealize sdk.Int) (

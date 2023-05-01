@@ -8,8 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/CosmWasm/wasmd/x/wasm"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	ibcmock "github.com/cosmos/ibc-go/v4/testing/mock"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
@@ -27,71 +27,74 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
+
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authrest "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
 	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
-	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
-	"github.com/cosmos/cosmos-sdk/x/authz"
+
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
-	"github.com/cosmos/cosmos-sdk/x/bank"
+
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
 	"github.com/cosmos/cosmos-sdk/x/capability"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	crisiskeeper "github.com/cosmos/cosmos-sdk/x/crisis/keeper"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
+
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	distrclient "github.com/cosmos/cosmos-sdk/x/distribution/client"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+
 	"github.com/cosmos/cosmos-sdk/x/evidence"
 	evidencekeeper "github.com/cosmos/cosmos-sdk/x/evidence/keeper"
-	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
-	"github.com/cosmos/cosmos-sdk/x/feegrant"
+
 	feegrantkeeper "github.com/cosmos/cosmos-sdk/x/feegrant/keeper"
 	feegrantmodule "github.com/cosmos/cosmos-sdk/x/feegrant/module"
+
 	"github.com/cosmos/cosmos-sdk/x/genutil"
-	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	"github.com/cosmos/cosmos-sdk/x/gov"
+
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/cosmos/cosmos-sdk/x/mint"
-	mintkeeper "github.com/cosmos/cosmos-sdk/x/mint/keeper"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
+
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
+
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	ibctransfer "github.com/cosmos/ibc-go/v3/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
-	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v3/modules/core"
-	ibcclient "github.com/cosmos/ibc-go/v3/modules/core/02-client"
-	ibcclientclient "github.com/cosmos/ibc-go/v3/modules/core/02-client/client"
-	ibcclienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
-	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
-	ibchost "github.com/cosmos/ibc-go/v3/modules/core/24-host"
-	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
-	ibctesting "github.com/cosmos/ibc-go/v3/testing"
+
+	ibcfee "github.com/cosmos/ibc-go/v4/modules/apps/29-fee"
+	ibcfeekeeper "github.com/cosmos/ibc-go/v4/modules/apps/29-fee/keeper"
+	ibcfeetypes "github.com/cosmos/ibc-go/v4/modules/apps/29-fee/types"
+	ibctransfer "github.com/cosmos/ibc-go/v4/modules/apps/transfer"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v4/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/v4/modules/core"
+	ibcclientclient "github.com/cosmos/ibc-go/v4/modules/core/02-client/client"
+	ibchost "github.com/cosmos/ibc-go/v4/modules/core/24-host"
+	ibckeeper "github.com/cosmos/ibc-go/v4/modules/core/keeper"
+	ibctesting "github.com/cosmos/ibc-go/v4/testing"
+
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rakyll/statik/fs"
@@ -102,34 +105,50 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/NibiruChain/nibiru/x/common"
+
 	"github.com/NibiruChain/nibiru/x/epochs"
 	epochskeeper "github.com/NibiruChain/nibiru/x/epochs/keeper"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
+
+	"github.com/NibiruChain/nibiru/x/inflation"
+	inflationkeeper "github.com/NibiruChain/nibiru/x/inflation/keeper"
+	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
+
 	oracle "github.com/NibiruChain/nibiru/x/oracle"
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
+
 	"github.com/NibiruChain/nibiru/x/perp"
+	perpamm "github.com/NibiruChain/nibiru/x/perp/amm"
+	perpammcli "github.com/NibiruChain/nibiru/x/perp/amm/cli"
+	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
+
 	"github.com/NibiruChain/nibiru/x/spot"
 	spotkeeper "github.com/NibiruChain/nibiru/x/spot/keeper"
 	spottypes "github.com/NibiruChain/nibiru/x/spot/types"
+
 	"github.com/NibiruChain/nibiru/x/stablecoin"
 	stablecoinkeeper "github.com/NibiruChain/nibiru/x/stablecoin/keeper"
 	stablecointypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
-	"github.com/NibiruChain/nibiru/x/util"
-	utiltypes "github.com/NibiruChain/nibiru/x/util/types"
-	"github.com/NibiruChain/nibiru/x/vpool"
-	vpoolcli "github.com/NibiruChain/nibiru/x/vpool/client/cli"
-	vpoolkeeper "github.com/NibiruChain/nibiru/x/vpool/keeper"
-	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
+
+	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+
+	wasmbinding "github.com/NibiruChain/nibiru/x/wasm/binding"
 )
 
 const (
 	AccountAddressPrefix = "nibi"
-	AppName              = "Nibiru"
+	appName              = "Nibiru"
 	BondDenom            = "unibi"
 	DisplayDenom         = "NIBI"
+)
+
+// IBC application testing ports
+const (
+	MockFeePort string = ibcmock.ModuleName + ibcfeetypes.ModuleName
 )
 
 var (
@@ -145,15 +164,14 @@ var (
 		BankModule{},
 		capability.AppModuleBasic{},
 		StakingModule{},
-		MintModule{},
 		distr.AppModuleBasic{},
 		NewGovModuleBasic(
 			paramsclient.ProposalHandler,
 			distrclient.ProposalHandler,
 			upgradeclient.ProposalHandler,
 			upgradeclient.CancelProposalHandler,
-			vpoolcli.CreatePoolProposalHandler,
-			vpoolcli.EditPoolConfigProposalHandler,
+			perpammcli.CreatePoolProposalHandler,
+			perpammcli.EditPoolConfigProposalHandler,
 			ibcclientclient.UpdateClientProposalHandler,
 			ibcclientclient.UpgradeProposalHandler,
 		),
@@ -174,22 +192,24 @@ var (
 		epochs.AppModuleBasic{},
 		stablecoin.AppModuleBasic{},
 		perp.AppModuleBasic{},
-		vpool.AppModuleBasic{},
-		util.AppModule{},
+		perpamm.AppModuleBasic{},
+		inflation.AppModuleBasic{},
 		wasm.AppModuleBasic{},
+		ibcfee.AppModuleBasic{},
 	)
 
 	// module account permissions
 	maccPerms = map[string][]string{
 		authtypes.FeeCollectorName:            nil,
 		distrtypes.ModuleName:                 nil,
-		minttypes.ModuleName:                  {authtypes.Minter},
+		inflationtypes.ModuleName:             {authtypes.Minter},
 		stakingtypes.BondedPoolName:           {authtypes.Burner, authtypes.Staking},
 		stakingtypes.NotBondedPoolName:        {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:                   {authtypes.Burner},
 		spottypes.ModuleName:                  {authtypes.Minter, authtypes.Burner},
 		oracletypes.ModuleName:                {},
 		ibctransfertypes.ModuleName:           {authtypes.Minter, authtypes.Burner},
+		ibcfeetypes.ModuleName:                nil,
 		stablecointypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
 		perptypes.ModuleName:                  {authtypes.Minter, authtypes.Burner},
 		perptypes.VaultModuleAccount:          {},
@@ -235,10 +255,9 @@ type NibiruApp struct {
 	capabilityKeeper *capabilitykeeper.Keeper
 	stakingKeeper    stakingkeeper.Keeper
 	slashingKeeper   slashingkeeper.Keeper
-	mintKeeper       mintkeeper.Keeper
-	/* distrKeeper is the keeper of the distribution store */
-	distrKeeper    distrkeeper.Keeper
-	govKeeper      govkeeper.Keeper
+	/* DistrKeeper is the keeper of the distribution store */
+	DistrKeeper    distrkeeper.Keeper
+	GovKeeper      govkeeper.Keeper
 	crisisKeeper   crisiskeeper.Keeper
 	upgradeKeeper  upgradekeeper.Keeper
 	paramsKeeper   paramskeeper.Keeper
@@ -252,29 +271,36 @@ type NibiruApp struct {
 	   and query handling for the evidence module. It is required to set up
 	   the IBC light client misbehavior evidence route. */
 	evidenceKeeper evidencekeeper.Keeper
+
 	/* ibcKeeper defines each ICS keeper for IBC. ibcKeeper must be a pointer in
 	   the app, so we can SetRouter on it correctly. */
-	ibcKeeper *ibckeeper.Keeper
+	ibcKeeper    *ibckeeper.Keeper
+	ibcFeeKeeper ibcfeekeeper.Keeper
 	/* transferKeeper is for cross-chain fungible token transfers. */
 	transferKeeper ibctransferkeeper.Keeper
 
 	// make scoped keepers public for test purposes
-	scopedIBCKeeper      capabilitykeeper.ScopedKeeper
-	scopedTransferKeeper capabilitykeeper.ScopedKeeper
+	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
+	ScopedTransferKeeper capabilitykeeper.ScopedKeeper
+
+	// make IBC modules public for test purposes
+	// these modules are never directly routed to by the IBC Router
+	FeeMockModule ibcmock.IBCModule
 
 	// ---------------
 	// Nibiru keepers
 	// ---------------
 	EpochsKeeper     epochskeeper.Keeper
 	PerpKeeper       perpkeeper.Keeper
-	VpoolKeeper      vpoolkeeper.Keeper
+	PerpAmmKeeper    perpammkeeper.Keeper
 	SpotKeeper       spotkeeper.Keeper
 	OracleKeeper     oraclekeeper.Keeper
 	StablecoinKeeper stablecoinkeeper.Keeper
+	InflationKeeper  inflationkeeper.Keeper
 
 	// WASM keepers
-	wasmKeeper       wasm.Keeper
-	scopedWasmKeeper capabilitykeeper.ScopedKeeper
+	WasmKeeper       wasm.Keeper
+	ScopedWasmKeeper capabilitykeeper.ScopedKeeper
 
 	// the module manager
 	mm *module.Manager
@@ -296,11 +322,17 @@ func init() {
 }
 
 // GetWasmOpts build wasm options
-func GetWasmOpts(appOpts servertypes.AppOptions) []wasm.Option {
+func GetWasmOpts(nibiru NibiruApp, appOpts servertypes.AppOptions) []wasm.Option {
 	var wasmOpts []wasm.Option
 	if cast.ToBool(appOpts.Get("telemetry.enabled")) {
 		wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
 	}
+
+	// Add the bindings to the app's set of []wasm.Option.
+	wasmOpts = append(wasmOpts, wasmbinding.RegisterWasmOptions(
+		&nibiru.PerpKeeper,
+		&nibiru.PerpAmmKeeper,
+	)...)
 
 	return wasmOpts
 }
@@ -323,44 +355,12 @@ func NewNibiruApp(
 	interfaceRegistry := encodingConfig.InterfaceRegistry
 
 	bApp := baseapp.NewBaseApp(
-		AppName, logger, db, encodingConfig.TxConfig.TxDecoder(), baseAppOptions...)
+		appName, logger, db, encodingConfig.TxConfig.TxDecoder(), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	bApp.SetVersion(version.Version)
 	bApp.SetInterfaceRegistry(interfaceRegistry)
 
-	keys := sdk.NewKVStoreKeys(
-		authtypes.StoreKey,
-		banktypes.StoreKey,
-		stakingtypes.StoreKey,
-		minttypes.StoreKey,
-		distrtypes.StoreKey,
-		slashingtypes.StoreKey,
-		govtypes.StoreKey,
-		paramstypes.StoreKey,
-		upgradetypes.StoreKey,
-		feegrant.StoreKey,
-		evidencetypes.StoreKey,
-		capabilitytypes.StoreKey,
-		authzkeeper.StoreKey,
-		// ibc keys
-		ibchost.StoreKey,
-		ibctransfertypes.StoreKey,
-		// nibiru x/ keys
-		spottypes.StoreKey,
-		stablecointypes.StoreKey,
-		oracletypes.StoreKey,
-		epochstypes.StoreKey,
-		perptypes.StoreKey,
-		vpooltypes.StoreKey,
-		wasm.StoreKey,
-	)
-	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
-
-	memKeys := sdk.NewMemoryStoreKeys(
-		capabilitytypes.MemStoreKey,
-		stablecointypes.MemStoreKey,
-	)
-
+	keys, tkeys, memKeys := GetStoreKeys()
 	app := &NibiruApp{
 		BaseApp:           bApp,
 		legacyAmino:       legacyAmino,
@@ -372,370 +372,19 @@ func NewNibiruApp(
 		memKeys:           memKeys,
 	}
 
-	app.paramsKeeper = initParamsKeeper(
-		appCodec, legacyAmino, keys[paramstypes.StoreKey],
-		tkeys[paramstypes.TStoreKey],
-	)
-
-	// set the BaseApp's parameter store
-	bApp.SetParamStore(app.paramsKeeper.Subspace(baseapp.Paramspace).
-		WithKeyTable(paramskeeper.ConsensusParamsKeyTable()))
-
-	/* Add capabilityKeeper and ScopeToModule for the ibc module
-	   This allows authentication of object-capability permissions for each of
-	   the IBC channels.
-	*/
-	app.capabilityKeeper = capabilitykeeper.NewKeeper(
-		appCodec, keys[capabilitytypes.StoreKey], memKeys[capabilitytypes.MemStoreKey])
-	app.scopedIBCKeeper = app.capabilityKeeper.ScopeToModule(ibchost.ModuleName)
-	app.scopedTransferKeeper = app.capabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
-
-	// add keepers
-	app.AccountKeeper = authkeeper.NewAccountKeeper(
-		appCodec, keys[authtypes.StoreKey], app.GetSubspace(authtypes.ModuleName), authtypes.ProtoBaseAccount, maccPerms,
-	)
-	app.BankKeeper = bankkeeper.NewBaseKeeper(
-		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.ModuleAccountAddrs(),
-	)
-	stakingKeeper := stakingkeeper.NewKeeper(
-		appCodec, keys[stakingtypes.StoreKey], app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName),
-	)
-	app.mintKeeper = mintkeeper.NewKeeper(
-		appCodec, keys[minttypes.StoreKey], app.GetSubspace(minttypes.ModuleName), &stakingKeeper,
-		app.AccountKeeper, app.BankKeeper, authtypes.FeeCollectorName,
-	)
-	app.distrKeeper = distrkeeper.NewKeeper(
-		appCodec, keys[distrtypes.StoreKey], app.GetSubspace(distrtypes.ModuleName), app.AccountKeeper, app.BankKeeper,
-		&stakingKeeper, authtypes.FeeCollectorName, app.ModuleAccountAddrs(),
-	)
-	app.slashingKeeper = slashingkeeper.NewKeeper(
-		appCodec, keys[slashingtypes.StoreKey], &stakingKeeper, app.GetSubspace(slashingtypes.ModuleName),
-	)
-	app.crisisKeeper = crisiskeeper.NewKeeper(
-		app.GetSubspace(crisistypes.ModuleName), invCheckPeriod, app.BankKeeper, authtypes.FeeCollectorName,
-	)
-
-	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(appCodec, keys[feegrant.StoreKey], app.AccountKeeper)
-
-	/*upgradeKeeper must be created before ibcKeeper. */
-	app.upgradeKeeper = upgradekeeper.NewKeeper(
-		skipUpgradeHeights,
-		keys[upgradetypes.StoreKey],
-		appCodec,
-		homePath,
-		app.BaseApp)
-
-	// register the staking hooks
-	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
-	app.stakingKeeper = *stakingKeeper.SetHooks(
-		stakingtypes.NewMultiStakingHooks(app.distrKeeper.Hooks(), app.slashingKeeper.Hooks()),
-	)
-
-	app.authzKeeper = authzkeeper.NewKeeper(keys[authzkeeper.StoreKey], appCodec, app.BaseApp.MsgServiceRouter())
-
-	// ---------------------------------- Nibiru Chain x/ keepers
-
-	app.SpotKeeper = spotkeeper.NewKeeper(
-		appCodec, keys[spottypes.StoreKey], app.GetSubspace(spottypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.distrKeeper)
-
-	app.OracleKeeper = oraclekeeper.NewKeeper(appCodec, keys[oracletypes.StoreKey], app.GetSubspace(oracletypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.distrKeeper, app.stakingKeeper, distrtypes.ModuleName,
-	)
-
-	app.StablecoinKeeper = stablecoinkeeper.NewKeeper(
-		appCodec, keys[stablecointypes.StoreKey], memKeys[stablecointypes.MemStoreKey],
-		app.GetSubspace(stablecointypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.SpotKeeper,
-	)
-
-	app.VpoolKeeper = vpoolkeeper.NewKeeper(
-		appCodec,
-		keys[vpooltypes.StoreKey],
-		app.OracleKeeper,
-	)
-
-	app.EpochsKeeper = epochskeeper.NewKeeper(
-		appCodec, keys[epochstypes.StoreKey],
-	)
-
-	app.PerpKeeper = perpkeeper.NewKeeper(
-		appCodec, keys[perptypes.StoreKey],
-		app.GetSubspace(perptypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.VpoolKeeper, app.EpochsKeeper,
-	)
-
-	app.EpochsKeeper.SetHooks(
-		epochstypes.NewMultiEpochHooks(app.StablecoinKeeper.Hooks(), app.PerpKeeper.Hooks()),
-	)
-
-	// ---------------------------------- IBC keepers
-
-	app.ibcKeeper = ibckeeper.NewKeeper(
-		appCodec,
-		keys[ibchost.StoreKey],
-		app.GetSubspace(ibchost.ModuleName),
-		app.stakingKeeper,
-		app.upgradeKeeper,
-		app.scopedIBCKeeper,
-	)
-
-	scopedWasmKeeper := app.capabilityKeeper.ScopeToModule(wasm.ModuleName)
-
-	wasmDir := filepath.Join(homePath, "data")
-	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
-	if err != nil {
-		panic("error while reading wasm config: " + err.Error())
-	}
-
-	// The last arguments can contain custom message handlers, and custom query handlers,
-	// if we want to allow any custom callbacks
-	supportedFeatures := "iterator,staking,stargate"
-	app.wasmKeeper = wasm.NewKeeper(
-		appCodec,
-		keys[wasm.StoreKey],
-		app.GetSubspace(wasm.ModuleName),
-		app.AccountKeeper,
-		app.BankKeeper,
-		app.stakingKeeper,
-		app.distrKeeper,
-		app.ibcKeeper.ChannelKeeper,
-		&app.ibcKeeper.PortKeeper,
-		scopedWasmKeeper,
-		app.transferKeeper,
-		app.MsgServiceRouter(),
-		app.GRPCQueryRouter(),
-		wasmDir,
-		wasmConfig,
-		supportedFeatures,
-		GetWasmOpts(appOpts)...,
-	)
-
-	// register the proposal types
-
-	govRouter := govtypes.NewRouter()
-	govRouter.
-		AddRoute(govtypes.RouterKey, govtypes.ProposalHandler).
-		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.paramsKeeper)).
-		AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.distrKeeper)).
-		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.upgradeKeeper)).
-		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.ibcKeeper.ClientKeeper)).
-		AddRoute(vpooltypes.RouterKey, vpool.NewVpoolProposalHandler(app.VpoolKeeper))
-
-	app.transferKeeper = ibctransferkeeper.NewKeeper(
-		appCodec,
-		keys[ibctransfertypes.StoreKey],
-		/* paramSubspace */ app.GetSubspace(ibctransfertypes.ModuleName),
-		/* ibctransfertypes.ICS4Wrapper */ app.ibcKeeper.ChannelKeeper,
-		/* ibctransfertypes.ChannelKeeper */ app.ibcKeeper.ChannelKeeper,
-		/* ibctransfertypes.PortKeeper */ &app.ibcKeeper.PortKeeper,
-		app.AccountKeeper,
-		app.BankKeeper,
-		app.scopedTransferKeeper,
-	)
-	transferModule := ibctransfer.NewAppModule(app.transferKeeper)
-	transferIBCModule := ibctransfer.NewIBCModule(app.transferKeeper)
-
-	// Create evidence keeper.
-	// This keeper automatically includes an evidence router.
-	app.evidenceKeeper = *evidencekeeper.NewKeeper(
-		appCodec, keys[evidencetypes.StoreKey], &app.stakingKeeper,
-		app.slashingKeeper,
-	)
-
-	/* Create IBC module and a static IBC router */
-	ibcRouter := porttypes.NewRouter()
-	/* Add an ibc-transfer module route, then set it and seal it. */
-	ibcRouter.
-		AddRoute(
-			/* module    */ ibctransfertypes.ModuleName,
-			/* ibcModule */ transferIBCModule).
-		AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.wasmKeeper, app.ibcKeeper.ChannelKeeper))
-
-	/* SetRouter finalizes all routes by sealing the router.
-	   No more routes can be added. */
-	app.ibcKeeper.SetRouter(ibcRouter)
-
-	app.govKeeper = govkeeper.NewKeeper(
-		appCodec, keys[govtypes.StoreKey], app.GetSubspace(govtypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, &app.stakingKeeper, govRouter,
-	)
+	wasmConfig := app.InitKeepers(skipUpgradeHeights, homePath, appOpts)
 
 	// -------------------------- Module Options --------------------------
-
-	/****  Module Options ****/
 
 	// NOTE: we may consider parsing `appOpts` inside module constructors. For the moment
 	// we prefer to be more strict in what arguments the modules expect.
 	var skipGenesisInvariants = cast.ToBool(
 		appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
-	spotModule := spot.NewAppModule(
-		appCodec, app.SpotKeeper, app.AccountKeeper, app.BankKeeper)
-	oracleModule := oracle.NewAppModule(appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper)
-	epochsModule := epochs.NewAppModule(appCodec, app.EpochsKeeper)
-	stablecoinModule := stablecoin.NewAppModule(
-		appCodec, app.StablecoinKeeper, app.AccountKeeper, app.BankKeeper,
-		nil,
-	)
-	perpModule := perp.NewAppModule(
-		appCodec, app.PerpKeeper, app.AccountKeeper, app.BankKeeper,
-		app.OracleKeeper,
-	)
-	vpoolModule := vpool.NewAppModule(
-		appCodec, app.VpoolKeeper, app.OracleKeeper,
-	)
-	utilModule := util.NewAppModule(app.BankKeeper)
+	app.InitModuleManager(encodingConfig, skipGenesisInvariants)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
-	app.mm = module.NewManager(
-		genutil.NewAppModule(
-			app.AccountKeeper, app.stakingKeeper, app.BaseApp.DeliverTx,
-			encodingConfig.TxConfig,
-		),
-		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts),
-		vesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
-		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
-		capability.NewAppModule(appCodec, *app.capabilityKeeper),
-		crisis.NewAppModule(&app.crisisKeeper, skipGenesisInvariants),
-		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
-		gov.NewAppModule(appCodec, app.govKeeper, app.AccountKeeper, app.BankKeeper),
-		mint.NewAppModule(appCodec, app.mintKeeper, app.AccountKeeper),
-		slashing.NewAppModule(appCodec, app.slashingKeeper, app.AccountKeeper, app.BankKeeper, app.stakingKeeper),
-		distr.NewAppModule(appCodec, app.distrKeeper, app.AccountKeeper, app.BankKeeper, app.stakingKeeper),
-		staking.NewAppModule(appCodec, app.stakingKeeper, app.AccountKeeper, app.BankKeeper),
-		upgrade.NewAppModule(app.upgradeKeeper),
-		params.NewAppModule(app.paramsKeeper),
-		authzmodule.NewAppModule(appCodec, app.authzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
-
-		// native x/
-		spotModule,
-		stablecoinModule,
-		oracleModule,
-		epochsModule,
-		vpoolModule,
-		perpModule,
-		utilModule,
-
-		// ibc
-		evidence.NewAppModule(app.evidenceKeeper),
-		ibc.NewAppModule(app.ibcKeeper),
-		transferModule,
-
-		wasm.NewAppModule(appCodec, &app.wasmKeeper, app.stakingKeeper, app.AccountKeeper, app.BankKeeper),
-	)
-
-	// During begin block slashing happens after distr.BeginBlocker so that
-	// there is nothing left over in the validator fee pool, so as to keep the
-	// CanWithdrawInvariant invariant.
-	// NOTE: staking module is required if HistoricalEntries param > 0
-	// NOTE: capability module's beginblocker must come before any modules using capabilities (e.g. IBC)
-	app.mm.SetOrderBeginBlockers(
-		upgradetypes.ModuleName,
-		capabilitytypes.ModuleName,
-		minttypes.ModuleName,
-		distrtypes.ModuleName,
-		slashingtypes.ModuleName,
-		evidencetypes.ModuleName,
-		authtypes.ModuleName,
-		banktypes.ModuleName,
-		govtypes.ModuleName,
-		crisistypes.ModuleName,
-		genutiltypes.ModuleName,
-		authz.ModuleName,
-		feegrant.ModuleName,
-		paramstypes.ModuleName,
-		vestingtypes.ModuleName,
-		stakingtypes.ModuleName,
-		// native x/
-		spottypes.ModuleName,
-		oracletypes.ModuleName,
-		epochstypes.ModuleName,
-		stablecointypes.ModuleName,
-		vpooltypes.ModuleName,
-		perptypes.ModuleName,
-		utiltypes.ModuleName,
-		// ibc modules
-		ibchost.ModuleName,
-		ibctransfertypes.ModuleName,
-		wasm.ModuleName,
-	)
-	app.mm.SetOrderEndBlockers(
-		crisistypes.ModuleName,
-		govtypes.ModuleName,
-		stakingtypes.ModuleName,
-		capabilitytypes.ModuleName,
-		authtypes.ModuleName,
-		banktypes.ModuleName,
-		distrtypes.ModuleName,
-		slashingtypes.ModuleName,
-		minttypes.ModuleName,
-		genutiltypes.ModuleName,
-		evidencetypes.ModuleName,
-		authz.ModuleName,
-		feegrant.ModuleName,
-		paramstypes.ModuleName,
-		upgradetypes.ModuleName,
-		vestingtypes.ModuleName,
-		// native x/
-		epochstypes.ModuleName,
-		stablecointypes.ModuleName,
-		spottypes.ModuleName,
-		oracletypes.ModuleName,
-		vpooltypes.ModuleName,
-		perptypes.ModuleName,
-		utiltypes.ModuleName,
-		// ibc
-		ibchost.ModuleName,
-		ibctransfertypes.ModuleName,
-		wasm.ModuleName,
-	)
-
-	// NOTE: The genutils module must occur after staking so that pools are
-	// properly initialized with tokens from genesis accounts.
-	// NOTE: Capability module must occur first so that it can initialize any capabilities
-	// so that other modules that want to create or claim capabilities afterwards in InitChain
-	// can do so safely.
-	app.mm.SetOrderInitGenesis(
-		capabilitytypes.ModuleName,
-		authtypes.ModuleName,
-		banktypes.ModuleName,
-		distrtypes.ModuleName,
-		stakingtypes.ModuleName,
-		slashingtypes.ModuleName,
-		govtypes.ModuleName,
-		minttypes.ModuleName,
-		crisistypes.ModuleName,
-		genutiltypes.ModuleName,
-		evidencetypes.ModuleName,
-		authz.ModuleName,
-		feegrant.ModuleName,
-		paramstypes.ModuleName,
-		upgradetypes.ModuleName,
-		vestingtypes.ModuleName,
-		// native x/
-		epochstypes.ModuleName,
-		stablecointypes.ModuleName,
-		spottypes.ModuleName,
-		oracletypes.ModuleName,
-		vpooltypes.ModuleName,
-		perptypes.ModuleName,
-		utiltypes.ModuleName,
-		// ibc
-		ibchost.ModuleName,
-		ibctransfertypes.ModuleName,
-		wasm.ModuleName,
-	)
-
-	// Uncomment if you want to set a custom migration order here.
-	// app.mm.SetOrderMigrations(custom order)
-
-	app.mm.RegisterInvariants(&app.crisisKeeper)
-	app.mm.RegisterRoutes(app.Router(), app.QueryRouter(), encodingConfig.Amino)
-	app.configurator = module.NewConfigurator(
-		app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
-	app.mm.RegisterServices(app.configurator)
 
 	app.upgradeKeeper.SetUpgradeHandler("v0.10.0", func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 		// no-op
@@ -745,31 +394,7 @@ func NewNibiruApp(
 	// add test gRPC service for testing gRPC queries in isolation
 	testdata.RegisterQueryServer(app.GRPCQueryRouter(), testdata.QueryImpl{})
 
-	// create the simulation manager and define the order of the modules for deterministic simulations
-	//
-	// NOTE: this is not required apps that don't use the simulator for fuzz testing
-	// transactions
-	app.sm = module.NewSimulationManager(
-		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts),
-		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
-		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
-		gov.NewAppModule(appCodec, app.govKeeper, app.AccountKeeper, app.BankKeeper),
-		mint.NewAppModule(appCodec, app.mintKeeper, app.AccountKeeper),
-		staking.NewAppModule(appCodec, app.stakingKeeper, app.AccountKeeper, app.BankKeeper),
-		distr.NewAppModule(appCodec, app.distrKeeper, app.AccountKeeper, app.BankKeeper, app.stakingKeeper),
-		slashing.NewAppModule(appCodec, app.slashingKeeper, app.AccountKeeper, app.BankKeeper, app.stakingKeeper),
-		params.NewAppModule(app.paramsKeeper),
-		authzmodule.NewAppModule(appCodec, app.authzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
-		// native x/
-		epochsModule,
-		// ibc
-		capability.NewAppModule(appCodec, *app.capabilityKeeper),
-		evidence.NewAppModule(app.evidenceKeeper),
-		ibc.NewAppModule(app.ibcKeeper),
-		transferModule,
-	)
-
-	app.sm.RegisterStoreDecoders()
+	app.InitSimulationManager(app.appCodec)
 
 	// initialize stores
 	app.MountKVStores(keys)
@@ -791,7 +416,6 @@ func NewNibiruApp(
 		TxCounterStoreKey: keys[wasm.StoreKey],
 		WasmConfig:        wasmConfig,
 	})
-
 	if err != nil {
 		panic(fmt.Errorf("failed to create sdk.AnteHandler: %s", err))
 	}
@@ -820,8 +444,6 @@ func NewNibiruApp(
 		*/
 		app.capabilityKeeper.Seal()
 	}
-
-	app.scopedWasmKeeper = scopedWasmKeeper
 
 	return app
 }
@@ -974,7 +596,7 @@ func (app *NibiruApp) GetIBCKeeper() *ibckeeper.Keeper {
 }
 
 func (app *NibiruApp) GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper {
-	return app.scopedIBCKeeper
+	return app.ScopedIBCKeeper
 }
 
 /* EncodingConfig specifies the concrete encoding types to use for a given app.
@@ -999,7 +621,7 @@ func RegisterSwaggerAPI(ctx client.Context, rtr *mux.Router) {
 	rtr.PathPrefix("/swagger/").Handler(http.StripPrefix("/swagger/", staticServer))
 }
 
-// initParamsKeeper init params vpoolkeeper and its subspaces
+// initParamsKeeper init params perpammkeeper and its subspaces
 func initParamsKeeper(
 	appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key,
 	tkey storetypes.StoreKey) paramskeeper.Keeper {
@@ -1008,7 +630,6 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(authtypes.ModuleName)
 	paramsKeeper.Subspace(banktypes.ModuleName)
 	paramsKeeper.Subspace(stakingtypes.ModuleName)
-	paramsKeeper.Subspace(minttypes.ModuleName)
 	paramsKeeper.Subspace(distrtypes.ModuleName)
 	paramsKeeper.Subspace(slashingtypes.ModuleName)
 	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable())
@@ -1019,6 +640,7 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(epochstypes.ModuleName)
 	paramsKeeper.Subspace(stablecointypes.ModuleName)
 	paramsKeeper.Subspace(perptypes.ModuleName)
+	paramsKeeper.Subspace(inflationtypes.ModuleName)
 	// ibc params keepers
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)

@@ -7,6 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -15,28 +16,30 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
+	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
 )
 
 // NewNibiruTestAppAndContext creates an 'app.NibiruApp' instance with an in-memory
 // 'tmdb.MemDB' and fresh 'sdk.Context'.
 func NewNibiruTestAppAndContext(shouldUseDefaultGenesis bool) (*app.NibiruApp, sdk.Context) {
-	encoding := simapp.MakeTestEncodingConfig()
+	encoding := app.MakeTestEncodingConfig()
 	var appGenesis app.GenesisState
 	if shouldUseDefaultGenesis {
 		appGenesis = app.NewDefaultGenesisState(encoding.Marshaler)
 	}
 
-	newNibiruApp := NewNibiruTestApp(appGenesis)
-	ctx := newNibiruApp.NewContext(false, tmproto.Header{})
+	app := NewNibiruTestApp(appGenesis)
+	ctx := app.NewContext(false, tmproto.Header{
+		Height: 1,
+	})
 
-	newNibiruApp.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdk.NewDec(20000))
-	// newNibiruApp.OracleKeeper.SetPrice(ctx, asset.AssetRegistry.Pair(denoms.NIBI, denoms.NUSD), sdk.NewDec(10))
-	newNibiruApp.OracleKeeper.SetPrice(ctx, "xxx:yyy", sdk.NewDec(20000))
+	app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdk.NewDec(20000))
+	app.OracleKeeper.SetPrice(ctx, "xxx:yyy", sdk.NewDec(20000))
 
-	return newNibiruApp, ctx
+	return app, ctx
 }
 
-// newNibiruTestApp initializes a chain with the given genesis state to
+// NewNibiruTestApp initializes a chain with the given genesis state to
 // creates an application instance ('app.NibiruApp'). This app uses an
 // in-memory database ('tmdb.MemDB') and has logging disabled.
 func NewNibiruTestApp(gen app.GenesisState) *app.NibiruApp {
@@ -51,7 +54,7 @@ func NewNibiruTestApp(gen app.GenesisState) *app.NibiruApp {
 
 	encoding := app.MakeTestEncodingConfig()
 
-	nibiruApp := app.NewNibiruApp(
+	app := app.NewNibiruApp(
 		logger,
 		db,
 		/*traceStore=*/ nil,
@@ -68,10 +71,32 @@ func NewNibiruTestApp(gen app.GenesisState) *app.NibiruApp {
 		panic(err)
 	}
 
-	nibiruApp.InitChain(abci.RequestInitChain{
+	app.InitChain(abci.RequestInitChain{
 		ConsensusParams: simapp.DefaultConsensusParams,
 		AppStateBytes:   stateBytes,
 	})
 
-	return nibiruApp
+	return app
+}
+
+// FundAccount is a utility function that funds an account by minting and
+// sending the coins to the address. This should be used for testing purposes
+// only!
+func FundAccount(bankKeeper bankkeeper.Keeper, ctx sdk.Context, addr sdk.AccAddress, amounts sdk.Coins) error {
+	if err := bankKeeper.MintCoins(ctx, inflationtypes.ModuleName, amounts); err != nil {
+		return err
+	}
+
+	return bankKeeper.SendCoinsFromModuleToAccount(ctx, inflationtypes.ModuleName, addr, amounts)
+}
+
+// FundModuleAccount is a utility function that funds a module account by
+// minting and sending the coins to the address. This should be used for testing
+// purposes only!
+func FundModuleAccount(bankKeeper bankkeeper.Keeper, ctx sdk.Context, recipientMod string, amounts sdk.Coins) error {
+	if err := bankKeeper.MintCoins(ctx, inflationtypes.ModuleName, amounts); err != nil {
+		return err
+	}
+
+	return bankKeeper.SendCoinsFromModuleToModule(ctx, inflationtypes.ModuleName, recipientMod, amounts)
 }

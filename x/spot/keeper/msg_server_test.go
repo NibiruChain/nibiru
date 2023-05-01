@@ -9,7 +9,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 
-	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
@@ -281,7 +280,7 @@ func TestCreatePool(t *testing.T) {
 				tc.creatorAddr = ed25519.GenPrivKey().PubKey().Address().Bytes()
 			}
 			if tc.senderInitialFunds != nil {
-				require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, tc.creatorAddr, tc.senderInitialFunds))
+				require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, tc.creatorAddr, tc.senderInitialFunds))
 			}
 
 			msgCreatePool := types.MsgCreatePool{
@@ -302,6 +301,7 @@ func TestCreatePool(t *testing.T) {
 				testutil.RequireHasTypedEvent(t, ctx, &types.EventPoolCreated{
 					Creator: tc.creatorAddr.String(),
 					PoolId:  1,
+					Fees:    sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 1e9)),
 				})
 			}
 		})
@@ -414,7 +414,7 @@ func TestCreateExitJoinPool(t *testing.T) {
 				tc.creatorAddr = ed25519.GenPrivKey().PubKey().Address().Bytes()
 			}
 			if tc.senderInitialFunds != nil {
-				require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, tc.creatorAddr, tc.senderInitialFunds))
+				require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, tc.creatorAddr, tc.senderInitialFunds))
 			}
 
 			msgCreatePool := types.MsgCreatePool{
@@ -428,6 +428,7 @@ func TestCreateExitJoinPool(t *testing.T) {
 			testutil.RequireHasTypedEvent(t, ctx, &types.EventPoolCreated{
 				Creator: tc.creatorAddr.String(),
 				PoolId:  1,
+				Fees:    sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 1e9)),
 			})
 
 			poolShares := app.BankKeeper.GetBalance(ctx, tc.creatorAddr, "nibiru/pool/1")
@@ -674,7 +675,7 @@ func TestMsgServerJoinPool(t *testing.T) {
 			app.SpotKeeper.SetPool(ctx, tc.initialPool)
 
 			joinerAddr := testutil.AccAddress()
-			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, joinerAddr, tc.joinerInitialFunds))
+			require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, joinerAddr, tc.joinerInitialFunds))
 
 			msgServer := keeper.NewMsgServerImpl(app.SpotKeeper)
 			resp, err := msgServer.JoinPool(
@@ -712,6 +713,7 @@ func TestMsgServerExitPool(t *testing.T) {
 		expectedTokensOut        sdk.Coins
 		expectedJoinerFinalFunds sdk.Coins
 		expectedFinalPool        types.Pool
+		expectedFees             sdk.Coins
 	}{
 		{
 			name: "exit all pool shares",
@@ -748,6 +750,10 @@ func TestMsgServerExitPool(t *testing.T) {
 					sdk.NewInt64Coin(denoms.NUSD, 1),
 				),
 				/*shares=*/ 0,
+			),
+			expectedFees: sdk.NewCoins(
+				sdk.NewInt64Coin(denoms.NIBI, 1),
+				sdk.NewInt64Coin(denoms.NUSD, 1),
 			),
 		},
 		{
@@ -787,6 +793,10 @@ func TestMsgServerExitPool(t *testing.T) {
 				),
 				/*shares=*/ 50,
 			),
+			expectedFees: sdk.NewCoins(
+				sdk.NewInt64Coin(denoms.NIBI, 1),
+				sdk.NewInt64Coin(denoms.NUSD, 1),
+			),
 		},
 		{
 			name: "exit all pool shares - StablePool",
@@ -823,6 +833,10 @@ func TestMsgServerExitPool(t *testing.T) {
 					sdk.NewInt64Coin(denoms.NUSD, 1),
 				),
 				/*shares=*/ 0,
+			),
+			expectedFees: sdk.NewCoins(
+				sdk.NewInt64Coin(denoms.NIBI, 0),
+				sdk.NewInt64Coin(denoms.NUSD, 0),
 			),
 		},
 		{
@@ -862,6 +876,10 @@ func TestMsgServerExitPool(t *testing.T) {
 				),
 				/*shares=*/ 50,
 			),
+			expectedFees: sdk.NewCoins(
+				sdk.NewInt64Coin(denoms.NIBI, 0),
+				sdk.NewInt64Coin(denoms.NUSD, 0),
+			),
 		},
 	}
 
@@ -876,9 +894,9 @@ func TestMsgServerExitPool(t *testing.T) {
 			app.SpotKeeper.SetPool(ctx, tc.initialPool)
 
 			sender := testutil.AccAddress()
-			require.NoError(t, simapp.FundAccount(
+			require.NoError(t, testapp.FundAccount(
 				app.BankKeeper, ctx, sender, tc.joinerInitialFunds))
-			require.NoError(t, simapp.FundAccount(
+			require.NoError(t, testapp.FundAccount(
 				app.BankKeeper, ctx, tc.initialPool.GetAddress(), tc.poolFundsToAdd))
 
 			msgServer := keeper.NewMsgServerImpl(app.SpotKeeper)
@@ -903,6 +921,7 @@ func TestMsgServerExitPool(t *testing.T) {
 				PoolId:       1,
 				PoolSharesIn: tc.poolSharesIn,
 				TokensOut:    resp.TokensOut,
+				Fees:         tc.expectedFees,
 			}
 
 			testutil.RequireHasTypedEvent(t, ctx, expectedEvent)
@@ -1221,7 +1240,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 			tc.initialPool.Address = poolAddr.String()
 			tc.expectedFinalPool.Address = poolAddr.String()
 			require.NoError(t,
-				simapp.FundAccount(
+				testapp.FundAccount(
 					app.BankKeeper,
 					ctx,
 					poolAddr,
@@ -1232,7 +1251,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 
 			// fund user account
 			sender := testutil.AccAddress()
-			require.NoError(t, simapp.FundAccount(app.BankKeeper, ctx, sender, tc.userInitialFunds))
+			require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, sender, tc.userInitialFunds))
 
 			// swap assets
 			resp, err := msgServer.SwapAssets(
@@ -1257,6 +1276,7 @@ func TestMsgServerSwapAssets(t *testing.T) {
 					PoolId:   1,
 					TokenIn:  tc.tokenIn,
 					TokenOut: tc.expectedTokenOut,
+					Fee:      sdk.NewInt64Coin("unibi", 0),
 				})
 			}
 

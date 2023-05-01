@@ -181,8 +181,8 @@ add_genesis_param() {
 
 echo_info "Configuring genesis params"
 
-add_genesis_vpools_with_coingecko_prices() {
-  local temp_json_fname="tmp_vpool_prices.json"
+add_genesis_perp_markets_with_coingecko_prices() {
+  local temp_json_fname="tmp_market_prices.json"
   curl -X 'GET' \
     'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum&vs_currencies=usd' \
     -H 'accept: application/json' \
@@ -194,40 +194,46 @@ add_genesis_vpools_with_coingecko_prices() {
   local faucet_nusd_amt=100
   local quote_amt=$(($num_users * $faucet_nusd_amt * $M))
 
-  price_btc=$(cat tmp_vpool_prices.json | jq -r '.bitcoin.usd')
+  price_btc=$(cat tmp_market_prices.json | jq -r '.bitcoin.usd')
   price_btc=${price_btc%.*}
+  if [ -z "$price_btc" ]; then
+    return 1
+  fi
   base_amt_btc=$(($quote_amt / $price_btc))
 
-  price_eth=$(cat tmp_vpool_prices.json | jq -r '.ethereum.usd')
+  price_eth=$(cat tmp_market_prices.json | jq -r '.ethereum.usd')
   price_eth=${price_eth%.*}
+  if [ -z "$price_eth" ]; then
+    return 1
+  fi
   base_amt_eth=$(($quote_amt / $price_eth))
 
-  nibid add-genesis-vpool --pair=ubtc:unusd --base-amt=$base_amt_btc --quote-amt=$quote_amt --max-leverage=12
-  nibid add-genesis-vpool --pair=ueth:unusd --base-amt=$base_amt_eth --quote-amt=$quote_amt --max-leverage=20 --mmr=0.04
+  nibid add-genesis-perp-market --pair=ubtc:unusd --base-amt=$base_amt_btc --quote-amt=$quote_amt --max-leverage=12
+  nibid add-genesis-perp-market --pair=ueth:unusd --base-amt=$base_amt_eth --quote-amt=$quote_amt --max-leverage=20 --mmr=0.04
 
-  echo 'tmp_vpool_prices: '
+  echo 'tmp_market_prices: '
   cat $temp_json_fname | jq .
   rm -f $temp_json_fname
 }
 
-add_genesis_vpools_default() {
-  # nibid add-genesis-vpool [pair] [base-asset-reserve] [quote-asset-reserve] [trade-limit-ratio] [fluctuation-limit-ratio] [maxOracle-spread-ratio] [maintenance-margin-ratio] [max-leverage]
+add_genesis_perp_markets_default() {
+  # nibid add-genesis-perp-market [pair] [base-asset-reserve] [quote-asset-reserve] [trade-limit-ratio] [fluctuation-limit-ratio] [maxOracle-spread-ratio] [maintenance-margin-ratio] [max-leverage]
   local KILO="000"
   local MEGA="000000"
   local quote_amt=10$KILO$MEGA
   local base_amt_btc=$(($quote_amt / 16500))
   local base_amt_eth=$(($quote_amt / 1200))
-  nibid add-genesis-vpool --pair=ubtc:unusd --base-amt=$base_amt_btc --quote-amt=$quote_amt --max-leverage=12
-  nibid add-genesis-vpool --pair=ueth:unusd --base-amt=$base_amt_eth --quote-amt=$quote_amt --max-leverage=20 --mmr=0.04
+  nibid add-genesis-perp-market --pair=ubtc:unusd --base-amt=$base_amt_btc --quote-amt=$quote_amt --max-leverage=12
+  nibid add-genesis-perp-market --pair=ueth:unusd --base-amt=$base_amt_eth --quote-amt=$quote_amt --max-leverage=20 --mmr=0.04
 }
 
-# x/vpool
-if add_genesis_vpools_with_coingecko_prices; then
-  echo_success "set vpools with coingecko prices"
-elif add_genesis_vpools_default; then
-  echo_success "set vpools with defaults"
+# x/perp/amm
+if add_genesis_perp_markets_with_coingecko_prices; then
+  echo_success "set perp markets with coingecko prices"
+elif add_genesis_perp_markets_default; then
+  echo_success "set perp markets with defaults"
 else
-  echo_error "failed to set genesis vpools"
+  echo_error "failed to set genesis perp markets"
 fi
 
 # x/perp

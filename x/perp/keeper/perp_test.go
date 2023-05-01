@@ -6,7 +6,6 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
@@ -14,9 +13,9 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/types"
-	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
 )
 
 func TestKeeperClosePosition(t *testing.T) {
@@ -27,24 +26,25 @@ func TestKeeperClosePosition(t *testing.T) {
 		ctx = ctx.WithBlockTime(time.Now())
 		pair := asset.MustNewPair("xxx:yyy")
 
-		t.Log("Set vpool defined by pair on VpoolKeeper")
-		vpoolKeeper := &nibiruApp.VpoolKeeper
-		require.NoError(t, vpoolKeeper.CreatePool(
+		t.Log("Set market defined by pair on PerpAmmKeeper")
+		perpammKeeper := &nibiruApp.PerpAmmKeeper
+		require.NoError(t, perpammKeeper.CreatePool(
 			ctx,
 			pair,
-			/*quoteAssetReserve*/ sdk.NewDec(10*common.Precision),
-			/*baseAssetReserve*/ sdk.NewDec(5*common.Precision),
-			vpooltypes.VpoolConfig{
+			/*quoteReserve*/ sdk.NewDec(10*common.TO_MICRO),
+			/*baseReserve*/ sdk.NewDec(10*common.TO_MICRO),
+			perpammtypes.MarketConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.1"),
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
+			sdk.OneDec(),
 		))
-		require.True(t, vpoolKeeper.ExistsPool(ctx, pair))
+		require.True(t, perpammKeeper.ExistsPool(ctx, pair))
 
-		t.Log("Set vpool defined by pair on PerpKeeper")
+		t.Log("Set market defined by pair on PerpKeeper")
 		keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 			Pair:                            pair,
 			LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.2"),
@@ -55,13 +55,13 @@ func TestKeeperClosePosition(t *testing.T) {
 		ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(ctx.BlockTime().Add(time.Minute))
 
 		alice := testutil.AccAddress()
-		err := simapp.FundAccount(nibiruApp.BankKeeper, ctx, alice,
+		err := testapp.FundAccount(nibiruApp.BankKeeper, ctx, alice,
 			sdk.NewCoins(sdk.NewInt64Coin("yyy", 300)))
 		require.NoError(t, err)
 
-		aliceSide := types.Side_BUY
+		aliceSide := perpammtypes.Direction_LONG
 		aliceQuote := sdk.NewInt(60)
-		aliceLeverage := sdk.NewDec(10)
+		aliceLeverage := sdk.NewDec(5)
 		aliceBaseLimit := sdk.NewDec(150)
 
 		nibiruApp.OracleKeeper.SetPrice(ctx, pair, sdk.NewDec(20))
@@ -77,11 +77,11 @@ func TestKeeperClosePosition(t *testing.T) {
 			LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.3"),
 		})
 		bob := testutil.AccAddress()
-		err = simapp.FundAccount(nibiruApp.BankKeeper, ctx, bob,
+		err = testapp.FundAccount(nibiruApp.BankKeeper, ctx, bob,
 			sdk.NewCoins(sdk.NewInt64Coin("yyy", 62)))
 		require.NoError(t, err)
 
-		bobSide := types.Side_BUY
+		bobSide := perpammtypes.Direction_LONG
 		bobQuote := sdk.NewInt(60)
 		bobLeverage := sdk.NewDec(10)
 		bobBaseLimit := sdk.NewDec(150)

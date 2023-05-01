@@ -3,6 +3,8 @@ package keeper
 import (
 	"fmt"
 
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -86,19 +88,16 @@ position without making it go underwater.
 - err: error
 */
 func (k Keeper) calcFreeCollateral(
-	ctx sdk.Context, pos types.Position,
+	ctx sdk.Context, market perpammtypes.Market, pos types.Position,
 ) (freeCollateral sdk.Dec, err error) {
 	if err = pos.Pair.Validate(); err != nil {
-		return
-	}
-
-	if err = k.requireVpool(ctx, pos.Pair); err != nil {
 		return
 	}
 
 	positionNotional, unrealizedPnL, err := k.
 		GetPreferencePositionNotionalAndUnrealizedPnL(
 			ctx,
+			market,
 			pos,
 			types.PnLPreferenceOption_MIN,
 		)
@@ -107,7 +106,7 @@ func (k Keeper) calcFreeCollateral(
 	}
 	remainingMargin := sdk.MinDec(pos.Margin, pos.Margin.Add(unrealizedPnL))
 
-	maintenanceMarginRatio, err := k.VpoolKeeper.GetMaintenanceMarginRatio(ctx, pos.Pair)
+	maintenanceMarginRatio, err := k.PerpAmmKeeper.GetMaintenanceMarginRatio(ctx, pos.Pair)
 	if err != nil {
 		return
 	}

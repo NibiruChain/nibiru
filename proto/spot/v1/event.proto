@@ -10,26 +10,32 @@ option go_package = "github.com/NibiruChain/nibiru/x/spot/types";
 message EventPoolJoined {
   string address = 1;
   uint64 pool_id = 2;
-  repeated cosmos.base.v1beta1.Coin tokens_in = 3 [(gogoproto.nullable) = false];
-  cosmos.base.v1beta1.Coin pool_shares_out = 4 [(gogoproto.nullable) = false];
-  repeated cosmos.base.v1beta1.Coin rem_coins = 5 [(gogoproto.nullable) = false];
+  repeated cosmos.base.v1beta1.Coin tokens_in = 3
+      [ (gogoproto.nullable) = false ];
+  cosmos.base.v1beta1.Coin pool_shares_out = 4 [ (gogoproto.nullable) = false ];
+  repeated cosmos.base.v1beta1.Coin rem_coins = 5
+      [ (gogoproto.nullable) = false ];
 }
 
 message EventPoolCreated {
   string creator = 1;
   uint64 pool_id = 2;
+  repeated cosmos.base.v1beta1.Coin fees = 3 [ (gogoproto.nullable) = false ];
 }
 
 message EventPoolExited {
   string address = 1;
   uint64 pool_id = 2;
-  cosmos.base.v1beta1.Coin pool_shares_in = 3 [(gogoproto.nullable) = false];
-  repeated cosmos.base.v1beta1.Coin tokens_out = 4 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin pool_shares_in = 3 [ (gogoproto.nullable) = false ];
+  repeated cosmos.base.v1beta1.Coin tokens_out = 4
+      [ (gogoproto.nullable) = false ];
+  repeated cosmos.base.v1beta1.Coin fees = 5 [ (gogoproto.nullable) = false ];
 }
 
 message EventAssetsSwapped {
   string address = 1;
   uint64 pool_id = 2;
-  cosmos.base.v1beta1.Coin token_in = 3 [(gogoproto.nullable) = false];
-  cosmos.base.v1beta1.Coin token_out = 4 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin token_in = 3 [ (gogoproto.nullable) = false ];
+  cosmos.base.v1beta1.Coin token_out = 4 [ (gogoproto.nullable) = false ];
+  cosmos.base.v1beta1.Coin fee = 5 [ (gogoproto.nullable) = false ];
 }

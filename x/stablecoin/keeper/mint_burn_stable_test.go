@@ -3,7 +3,6 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/assert"
@@ -81,7 +80,7 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			accFunds: accFundsAmt,
 			msgMint: types.MsgMintStable{
 				Creator: testutil.AccAddress().String(),
-				Stable:  sdk.NewCoin(denoms.NUSD, sdk.NewInt(1*common.Precision)),
+				Stable:  sdk.NewCoin(denoms.NUSD, sdk.NewInt(1*common.TO_MICRO)),
 			},
 			govPrice:               sdk.MustNewDecFromStr("10"),
 			collPrice:              sdk.MustNewDecFromStr("1"),
@@ -93,10 +92,10 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			accFunds: accFundsAmt,
 			msgMint: types.MsgMintStable{
 				Creator: testutil.AccAddress().String(),
-				Stable:  sdk.NewCoin(denoms.NUSD, sdk.NewInt(1*common.Precision)),
+				Stable:  sdk.NewCoin(denoms.NUSD, sdk.NewInt(1*common.TO_MICRO)),
 			},
 			msgResponse: types.MsgMintStableResponse{
-				Stable:    sdk.NewCoin(denoms.NUSD, sdk.NewInt(1*common.Precision)),
+				Stable:    sdk.NewCoin(denoms.NUSD, sdk.NewInt(1*common.TO_MICRO)),
 				UsedCoins: sdk.NewCoins(accFundsCollAmount, accFundsGovAmount),
 				FeesPayed: sdk.NewCoins(neededCollFees, neededGovFees),
 			},
@@ -104,7 +103,7 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			collPrice:  sdk.MustNewDecFromStr("1"),
 			supplyNIBI: sdk.NewCoin(denoms.NIBI, sdk.NewInt(10)),
 			// 10_000 - 20 (neededAmt - fees) - 10 (0.5 of fees from EFund are burned)
-			supplyNUSD:             sdk.NewCoin(denoms.NUSD, sdk.NewInt(1*common.Precision)),
+			supplyNUSD:             sdk.NewCoin(denoms.NUSD, sdk.NewInt(1*common.TO_MICRO)),
 			err:                    nil,
 			isCollateralRatioValid: true,
 		},
@@ -147,7 +146,7 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			nibiruApp.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.USDC, denoms.NUSD), tc.collPrice)
 
 			// Fund account
-			require.NoError(t, simapp.FundAccount(nibiruApp.BankKeeper, ctx, acc, tc.accFunds))
+			require.NoError(t, testapp.FundAccount(nibiruApp.BankKeeper, ctx, acc, tc.accFunds))
 
 			// Mint NUSD -> Response contains Stable (sdk.Coin)
 			goCtx := sdk.WrapSDKContext(ctx)
@@ -304,7 +303,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			nibiruApp.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.USDC, denoms.NUSD), tc.collPrice)
 
 			// Fund account
-			require.NoError(t, simapp.FundAccount(nibiruApp.BankKeeper, ctx, acc, tc.accFunds))
+			require.NoError(t, testapp.FundAccount(nibiruApp.BankKeeper, ctx, acc, tc.accFunds))
 
 			// Mint NUSD -> Response contains Stable (sdk.Coin)
 			goCtx := sdk.WrapSDKContext(ctx)
@@ -394,10 +393,10 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.MustNewDecFromStr("1"),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(denoms.NUSD, 1000*common.Precision),
+				sdk.NewInt64Coin(denoms.NUSD, 1000*common.TO_MICRO),
 			),
 			moduleFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(denoms.USDC, 100*common.Precision),
+				sdk.NewInt64Coin(denoms.USDC, 100*common.TO_MICRO),
 			),
 			msgBurn: types.MsgBurnStable{
 				Creator: testutil.AccAddress().String(),
@@ -452,7 +451,7 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 
 			// Add collaterals to the module
 			require.NoError(t, nibiruApp.BankKeeper.MintCoins(ctx, types.ModuleName, tc.moduleFunds))
-			require.NoError(t, simapp.FundAccount(nibiruApp.BankKeeper, ctx, acc, tc.accFunds))
+			require.NoError(t, testapp.FundAccount(nibiruApp.BankKeeper, ctx, acc, tc.accFunds))
 
 			// Burn NUSD -> Response contains GOV and COLL
 			goCtx := sdk.WrapSDKContext(ctx)
@@ -493,14 +492,14 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.MustNewDecFromStr("1"),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(denoms.NUSD, 1_000*common.Precision),
+				sdk.NewInt64Coin(denoms.NUSD, 1_000*common.TO_MICRO),
 			),
 			moduleFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(denoms.USDC, 100*common.Precision),
+				sdk.NewInt64Coin(denoms.USDC, 100*common.TO_MICRO),
 			),
 			msgBurn: types.MsgBurnStable{
 				Creator: testutil.AccAddress().String(),
-				Stable:  sdk.NewInt64Coin(denoms.NUSD, 10*common.Precision),
+				Stable:  sdk.NewInt64Coin(denoms.NUSD, 10*common.TO_MICRO),
 			},
 			ecosystemFund:          sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 9000)),
 			treasuryFund:           sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 9000), sdk.NewInt64Coin(denoms.NIBI, 100)),
@@ -513,25 +512,25 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.MustNewDecFromStr("1"),
 			accFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(denoms.NUSD, 1_000*common.Precision),
+				sdk.NewInt64Coin(denoms.NUSD, 1_000*common.TO_MICRO),
 			),
 			moduleFunds: sdk.NewCoins(
-				sdk.NewInt64Coin(denoms.USDC, 100*common.Precision),
+				sdk.NewInt64Coin(denoms.USDC, 100*common.TO_MICRO),
 			),
 			msgBurn: types.MsgBurnStable{
 				Creator: testutil.AccAddress().String(),
-				Stable:  sdk.NewInt64Coin(denoms.NUSD, 10*common.Precision),
+				Stable:  sdk.NewInt64Coin(denoms.NUSD, 10*common.TO_MICRO),
 			},
 			msgResponse: types.MsgBurnStableResponse{
-				Gov:        sdk.NewInt64Coin(denoms.NIBI, 100_000-200),               // amount - fees 0,02%
-				Collateral: sdk.NewInt64Coin(denoms.USDC, 9*common.Precision-18_000), // amount - fees 0,02%
+				Gov:        sdk.NewInt64Coin(denoms.NIBI, 100_000-200),              // amount - fees 0,02%
+				Collateral: sdk.NewInt64Coin(denoms.USDC, 9*common.TO_MICRO-18_000), // amount - fees 0,02%
 				FeesPayed: sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 200),
 					sdk.NewInt64Coin(denoms.USDC, 18_000),
 				),
 			},
 			supplyNIBI:             sdk.NewCoin(denoms.NIBI, sdk.NewInt(100_000-100)), // nibiru minus 0.5 of fees burned (the part that goes to EF)
-			supplyNUSD:             sdk.NewCoin(denoms.NUSD, sdk.NewInt(1_000*common.Precision-10*common.Precision)),
+			supplyNUSD:             sdk.NewCoin(denoms.NUSD, sdk.NewInt(1_000*common.TO_MICRO-10*common.TO_MICRO)),
 			ecosystemFund:          sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 9000)),
 			treasuryFund:           sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 9000), sdk.NewInt64Coin(denoms.NIBI, 100)),
 			expectedPass:           true,
@@ -573,7 +572,7 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 
 			// Add collaterals to the module
 			require.NoError(t, nibiruApp.BankKeeper.MintCoins(ctx, types.ModuleName, tc.moduleFunds))
-			require.NoError(t, simapp.FundAccount(nibiruApp.BankKeeper, ctx, acc, tc.accFunds))
+			require.NoError(t, testapp.FundAccount(nibiruApp.BankKeeper, ctx, acc, tc.accFunds))
 
 			// Burn NUSD -> Response contains GOV and COLL
 			goCtx := sdk.WrapSDKContext(ctx)

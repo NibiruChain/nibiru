@@ -2,22 +2,22 @@ package app
 
 import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/auth/ante"
-	ibcante "github.com/cosmos/ibc-go/v3/modules/core/ante"
-	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
+	sdkante "github.com/cosmos/cosmos-sdk/x/auth/ante"
+	ibcante "github.com/cosmos/ibc-go/v4/modules/core/ante"
+	ibckeeper "github.com/cosmos/ibc-go/v4/modules/core/keeper"
 
-	feeante "github.com/NibiruChain/nibiru/app/antedecorators/fee"
+	"github.com/NibiruChain/nibiru/app/ante"
 )
 
 type AnteHandlerOptions struct {
-	ante.HandlerOptions
+	sdkante.HandlerOptions
 	IBCKeeper *ibckeeper.Keeper
 
 	TxCounterStoreKey sdk.StoreKey
-	WasmConfig        wasmTypes.WasmConfig
+	WasmConfig        wasmtypes.WasmConfig
 }
 
 /*
@@ -36,29 +36,30 @@ func NewAnteHandler(options AnteHandlerOptions) (sdk.AnteHandler, error) {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "sign mode handler is required for ante builder")
 	}
 	if options.SigGasConsumer == nil {
-		options.SigGasConsumer = ante.DefaultSigVerificationGasConsumer
+		options.SigGasConsumer = sdkante.DefaultSigVerificationGasConsumer
 	}
 	if options.IBCKeeper == nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "ibc keeper is required for AnteHandler")
 	}
 
 	anteDecorators := []sdk.AnteDecorator{
-		ante.NewSetUpContextDecorator(),
+		sdkante.NewSetUpContextDecorator(),
 		wasmkeeper.NewLimitSimulationGasDecorator(options.WasmConfig.SimulationGasLimit),
 		wasmkeeper.NewCountTXDecorator(options.TxCounterStoreKey),
-		ante.NewRejectExtensionOptionsDecorator(),
-		ante.NewMempoolFeeDecorator(),
-		ante.NewValidateBasicDecorator(),
-		ante.NewTxTimeoutHeightDecorator(),
-		ante.NewValidateMemoDecorator(options.AccountKeeper),
-		ante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
-		feeante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper), // Replace fee ante from cosmos auth with a custom one.
+		sdkante.NewRejectExtensionOptionsDecorator(),
+		sdkante.NewMempoolFeeDecorator(),
+		sdkante.NewValidateBasicDecorator(),
+		sdkante.NewTxTimeoutHeightDecorator(),
+		sdkante.NewValidateMemoDecorator(options.AccountKeeper),
+		ante.NewPostPriceFixedPriceDecorator(),
+		sdkante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
+		sdkante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper), // Replace fee ante from cosmos auth with a custom one.
 		// SetPubKeyDecorator must be called before all signature verification decorators
-		ante.NewSetPubKeyDecorator(options.AccountKeeper),
-		ante.NewValidateSigCountDecorator(options.AccountKeeper),
-		ante.NewSigGasConsumeDecorator(options.AccountKeeper, options.SigGasConsumer),
-		ante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
-		ante.NewIncrementSequenceDecorator(options.AccountKeeper),
+		sdkante.NewSetPubKeyDecorator(options.AccountKeeper),
+		sdkante.NewValidateSigCountDecorator(options.AccountKeeper),
+		sdkante.NewSigGasConsumeDecorator(options.AccountKeeper, options.SigGasConsumer),
+		sdkante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
+		sdkante.NewIncrementSequenceDecorator(options.AccountKeeper),
 		ibcante.NewAnteDecorator(options.IBCKeeper),
 	}
 

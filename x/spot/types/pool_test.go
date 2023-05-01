@@ -69,6 +69,32 @@ func TestGetAddress(t *testing.T) {
 	}
 }
 
+func TestMinSharesInForTokensOut(t *testing.T) {
+	poolAccountAddr := testutil.AccAddress()
+	poolParams := PoolParams{
+		PoolType: PoolType_BALANCER,
+		SwapFee:  sdk.NewDecWithPrec(3, 2),
+		ExitFee:  sdk.NewDecWithPrec(3, 2),
+	}
+	poolAssets := []PoolAsset{
+		{
+			Token:  sdk.NewInt64Coin("foo", 123124124124),
+			Weight: sdk.NewInt(1),
+		},
+		{
+			Token:  sdk.NewInt64Coin("bar", 13224112312124124),
+			Weight: sdk.NewInt(1),
+		},
+	}
+
+	pool, err := NewPool(1 /*=poold*/, poolAccountAddr, poolParams, poolAssets)
+	require.NoError(t, err)
+
+	tokenOut, _, err := pool.TokensOutFromPoolSharesIn(pool.MinSharesInForTokensOut())
+	require.NoError(t, err)
+	require.True(t, tokenOut.IsValid())
+}
+
 func TestNewPool(t *testing.T) {
 	poolAccountAddr := testutil.AccAddress()
 	poolParams := PoolParams{
@@ -229,7 +255,7 @@ func TestJoinPoolHappyPath(t *testing.T) {
 						Token: sdk.NewInt64Coin("bbb", 1_403_945),
 					},
 				},
-				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1*common.Precision),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1*common.TO_MICRO),
 				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: PoolType_BALANCER},
 			},
 			tokensIn: sdk.NewCoins(
@@ -264,7 +290,7 @@ func TestJoinPoolHappyPath(t *testing.T) {
 						Token: sdk.NewInt64Coin("bbb", 1_403_945),
 					},
 				},
-				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1*common.Precision),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1*common.TO_MICRO),
 				PoolParams:  PoolParams{A: sdk.NewInt(100), PoolType: PoolType_STABLESWAP},
 			},
 			tokensIn: sdk.NewCoins(
@@ -398,7 +424,7 @@ func TestJoinPoolAllTokens(t *testing.T) {
 						Weight: sdk.NewInt(1 << 30),
 					},
 				},
-				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1*common.Precision),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1*common.TO_MICRO),
 				TotalWeight: sdk.NewInt(2 << 30),
 				PoolParams:  PoolParams{PoolType: PoolType_BALANCER, SwapFee: sdk.ZeroDec()},
 			},
@@ -437,7 +463,7 @@ func TestJoinPoolAllTokens(t *testing.T) {
 						Weight: sdk.NewInt(1 << 30),
 					},
 				},
-				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1*common.Precision),
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 1*common.TO_MICRO),
 				TotalWeight: sdk.NewInt(2 << 30),
 				PoolParams:  PoolParams{PoolType: PoolType_BALANCER, SwapFee: sdk.ZeroDec()},
 			},
@@ -474,6 +500,54 @@ func TestJoinPoolAllTokens(t *testing.T) {
 	}
 }
 
+func TestExitPoolError(t *testing.T) {
+	for _, tc := range []struct {
+		name                    string
+		pool                    Pool
+		exitingShares           sdk.Coin
+		expectedCoins           sdk.Coins
+		expectedRemainingShares sdk.Coin
+		expectedExitedCoins     sdk.Coins
+	}{
+		{
+			name: "all coins withdrawn, no exit fee",
+			pool: Pool{
+				PoolAssets: []PoolAsset{
+					{
+						Token: sdk.NewInt64Coin("aaa", 1000000),
+					},
+					{
+						Token: sdk.NewInt64Coin("bbb", 2000000),
+					},
+				},
+				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 10000000000000),
+				PoolParams: PoolParams{
+					PoolType: PoolType_BALANCER,
+					ExitFee:  sdk.ZeroDec(),
+				},
+			},
+			exitingShares:           sdk.NewInt64Coin("nibiru/pool/1", 100),
+			expectedRemainingShares: sdk.NewInt64Coin("nibiru/pool/1", 0),
+			expectedCoins:           nil,
+			expectedExitedCoins: sdk.NewCoins(
+				sdk.NewInt64Coin("aaa", 100),
+				sdk.NewInt64Coin("bbb", 200),
+			),
+		},
+	} {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			_, _, err := tc.pool.ExitPool(sdk.OneInt())
+			require.Error(t, err)
+			expectedErrorMsg := fmt.Sprintf("not enough pool shares to withdraw - please provide at least %v shares", tc.pool.MinSharesInForTokensOut())
+			require.Contains(t, err.Error(), expectedErrorMsg)
+
+			_, _, err = tc.pool.ExitPool(tc.pool.MinSharesInForTokensOut())
+			require.NoError(t, err)
+		})
+	}
+}
+
 func TestExitPoolHappyPath(t *testing.T) {
 	for _, tc := range []struct {
 		name                    string
@@ -482,6 +556,7 @@ func TestExitPoolHappyPath(t *testing.T) {
 		expectedCoins           sdk.Coins
 		expectedRemainingShares sdk.Coin
 		expectedExitedCoins     sdk.Coins
+		expectedFees            sdk.Coins
 	}{
 		{
 			name: "all coins withdrawn, no exit fee",
@@ -506,6 +581,10 @@ func TestExitPoolHappyPath(t *testing.T) {
 			expectedExitedCoins: sdk.NewCoins(
 				sdk.NewInt64Coin("aaa", 100),
 				sdk.NewInt64Coin("bbb", 200),
+			),
+			expectedFees: sdk.NewCoins(
+				sdk.NewCoin("aaa", sdk.ZeroInt()),
+				sdk.NewCoin("bbb", sdk.ZeroInt()),
 			),
 		},
 		{
@@ -532,6 +611,10 @@ func TestExitPoolHappyPath(t *testing.T) {
 				sdk.NewInt64Coin("bbb", 100),
 			),
 			expectedExitedCoins: sdk.NewCoins(
+				sdk.NewInt64Coin("aaa", 50),
+				sdk.NewInt64Coin("bbb", 100),
+			),
+			expectedFees: sdk.NewCoins(
 				sdk.NewInt64Coin("aaa", 50),
 				sdk.NewInt64Coin("bbb", 100),
 			),
@@ -563,6 +646,10 @@ func TestExitPoolHappyPath(t *testing.T) {
 				sdk.NewInt64Coin("aaa", 50),
 				sdk.NewInt64Coin("bbb", 100),
 			),
+			expectedFees: sdk.NewCoins(
+				sdk.NewCoin("aaa", sdk.ZeroInt()),
+				sdk.NewCoin("bbb", sdk.ZeroInt()),
+			),
 		},
 		{
 			name: "some coins withdrawn, exit fee",
@@ -588,6 +675,10 @@ func TestExitPoolHappyPath(t *testing.T) {
 				sdk.NewInt64Coin("bbb", 150),
 			),
 			expectedExitedCoins: sdk.NewCoins(
+				sdk.NewInt64Coin("aaa", 25),
+				sdk.NewInt64Coin("bbb", 50),
+			),
+			expectedFees: sdk.NewCoins(
 				sdk.NewInt64Coin("aaa", 25),
 				sdk.NewInt64Coin("bbb", 50),
 			),
@@ -619,11 +710,15 @@ func TestExitPoolHappyPath(t *testing.T) {
 				sdk.NewInt64Coin("aaa", 1_097_889),
 				sdk.NewInt64Coin("bbb", 2_078_245),
 			),
+			expectedFees: sdk.NewCoins(
+				sdk.NewInt64Coin("aaa", 3304),
+				sdk.NewInt64Coin("bbb", 6253),
+			),
 		},
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			exitedCoins, err := tc.pool.ExitPool(tc.exitingShares.Amount)
+			exitedCoins, fees, err := tc.pool.ExitPool(tc.exitingShares.Amount)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedCoins, tc.pool.PoolBalances())
 			// Comparing zero initialized sdk.Int with zero value sdk.Int leads to different results
@@ -633,6 +728,7 @@ func TestExitPoolHappyPath(t *testing.T) {
 				require.Equal(t, tc.expectedRemainingShares, tc.pool.TotalShares)
 			}
 			require.Equal(t, tc.expectedExitedCoins, exitedCoins)
+			require.Equal(t, tc.expectedFees, fees)
 		})
 	}
 }
@@ -749,10 +845,10 @@ func TestGetD(t *testing.T) {
 			name: "Compute D - 2 assets, A big, high values - tested against Curve contracts code..",
 			poolAssets: []PoolAsset{
 				{
-					Token: sdk.NewInt64Coin("aaa", 200*common.Precision),
+					Token: sdk.NewInt64Coin("aaa", 200*common.TO_MICRO),
 				},
 				{
-					Token: sdk.NewInt64Coin("bbb", 100*common.Precision),
+					Token: sdk.NewInt64Coin("bbb", 100*common.TO_MICRO),
 				},
 			},
 			amplificationParameter: sdk.NewInt(4000),

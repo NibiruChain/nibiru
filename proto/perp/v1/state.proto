@@ -9,12 +9,6 @@ import "google/protobuf/duration.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/perp/types";
 
-enum Side {
-  SIDE_UNSPECIFIED = 0;
-  BUY = 1;
-  SELL = 2;
-}
-
 enum PnLCalcOption {
   PNL_CALC_OPTION_UNSPECIFIED = 0;
   SPOT_PRICE = 1;
@@ -89,8 +83,9 @@ message Position {
   string trader_address = 1;
 
   // pair identifies the pair associated with this position
-  string pair = 2 [ 
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+  string pair = 2 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 
@@ -125,15 +120,16 @@ message Position {
 }
 
 message PairMetadata {
-  string pair = 1 [ 
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+  string pair = 1 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 
   // Latest cumulative premium fraction for a given pair.
   // Calculated once per funding rate interval.
-  // A premium fraction is the difference between mark and index, divided by the number of payments per day.
-  // (mark - index) / # payments in a day
+  // A premium fraction is the difference between mark and index, divided by the
+  // number of payments per day. (mark - index) / # payments in a day
   string latest_cumulative_premium_fraction = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
@@ -149,94 +145,13 @@ message PrepaidBadDebt {
   ];
 }
 
-message PositionResp {
-  Position position = 1;
-
-  // The amount of quote assets exchanged.
-  string exchanged_notional_value = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-
-  // The amount of base assets exchanged.
-  string exchanged_position_size = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-
-  // The amount of bad debt accrued during this position change.
-  // Measured in absolute value of quote units.
-  // If greater than zero, then the position change event will likely fail.
-  string bad_debt = 4 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-
-  // The funding payment applied on this position change.
-  string funding_payment = 5 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-
-  // The amount of PnL realized on this position changed, measured in quote
-  // units.
-  string realized_pnl = 6 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-
-  // The unrealized PnL in the position after the position change.
-  string unrealized_pnl_after = 7 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-
-  // The amount of margin the trader has to give to the vault.
-  // A negative value means the vault pays the trader.
-  string margin_to_vault = 8 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-
-  // The position's notional value after the position change, measured in quote
-  // units.
-  string position_notional = 9 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-}
-
-message LiquidateResp {
-  // Amount of bad debt created by the liquidation event
-  string bad_debt = 1 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
-  ];
-
-  // Fee paid to the liquidator
-  string fee_to_liquidator = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
-  ];
-
-  // Fee paid to the Perp EF fund
-  string fee_to_perp_ecosystem_fund = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
-  ];
-
-  // Address of the liquidator
-  string liquidator = 4;
-
-  // Position response from the close or open reverse position
-  PositionResp position_resp = 5;
-}
-
-// PoolMetrics is a structure that displays a snapshot of perp metrics for each pair.
+// PoolMetrics is a structure that displays a snapshot of perp metrics for each
+// pair.
 message Metrics {
   // Pair identifier for the two assets. Always in format 'base:quote'
-  string pair = 1 [ 
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+  string pair = 1 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
 

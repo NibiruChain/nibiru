@@ -1,6 +1,6 @@
 package types
 
-//go:generate  mockgen -destination=../../common/testutil/mock/perp_interfaces.go -package=mock github.com/NibiruChain/nibiru/x/perp/types AccountKeeper,BankKeeper,OracleKeeper,VpoolKeeper,EpochKeeper
+//go:generate  mockgen -destination=../../common/testutil/mock/perp_interfaces.go -package=mock github.com/NibiruChain/nibiru/x/perp/types AccountKeeper,BankKeeper,OracleKeeper,PerpAmmKeeper,EpochKeeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,7 +12,7 @@ import (
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	vpooltypes "github.com/NibiruChain/nibiru/x/vpool/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 )
 
 // ----------------------------------------------------------
@@ -41,6 +41,7 @@ type BankKeeper interface {
 		amt sdk.Coins,
 	) error
 	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
+	GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
 }
 
 type OracleKeeper interface {
@@ -49,46 +50,38 @@ type OracleKeeper interface {
 	SetPrice(ctx sdk.Context, pair asset.Pair, price sdk.Dec)
 }
 
-type VpoolKeeper interface {
+type PerpAmmKeeper interface {
 	SwapBaseForQuote(
 		ctx sdk.Context,
-		pair asset.Pair,
-		dir vpooltypes.Direction,
+		market perpammtypes.Market,
+		dir perpammtypes.Direction,
 		baseAssetAmount sdk.Dec,
 		quoteAmountLimit sdk.Dec,
 		skipFluctuationLimitCheck bool,
-	) (sdk.Dec, error)
+	) (perpammtypes.Market, sdk.Dec, error)
 
 	SwapQuoteForBase(
 		ctx sdk.Context,
-		pair asset.Pair,
-		dir vpooltypes.Direction,
+		market perpammtypes.Market,
+		dir perpammtypes.Direction,
 		quoteAssetAmount sdk.Dec,
 		baseAmountLimit sdk.Dec,
 		skipFluctuationLimitCheck bool,
-	) (sdk.Dec, error)
+	) (perpammtypes.Market, sdk.Dec, error)
 
 	GetBaseAssetTWAP(
 		ctx sdk.Context,
 		pair asset.Pair,
-		direction vpooltypes.Direction,
+		direction perpammtypes.Direction,
 		baseAssetAmount sdk.Dec,
 		lookbackInterval time.Duration,
 	) (quoteAssetAmount sdk.Dec, err error)
 
 	GetBaseAssetPrice(
-		ctx sdk.Context,
-		pair asset.Pair,
-		direction vpooltypes.Direction,
+		market perpammtypes.Market,
+		direction perpammtypes.Direction,
 		baseAssetAmount sdk.Dec,
 	) (quoteAssetAmount sdk.Dec, err error)
-
-	GetQuoteAssetPrice(
-		ctx sdk.Context,
-		pair asset.Pair,
-		dir vpooltypes.Direction,
-		quoteAmount sdk.Dec,
-	) (baseAssetAmount sdk.Dec, err error)
 
 	GetMarkPrice(
 		ctx sdk.Context,
@@ -101,14 +94,16 @@ type VpoolKeeper interface {
 		lookbackInterval time.Duration,
 	) (quoteAssetAmount sdk.Dec, err error)
 
-	GetAllPools(ctx sdk.Context) []vpooltypes.Vpool
+	GetAllPools(ctx sdk.Context) []perpammtypes.Market
+	GetPool(ctx sdk.Context, pair asset.Pair) (perpammtypes.Market, error)
 
 	IsOverSpreadLimit(ctx sdk.Context, pair asset.Pair) (bool, error)
 	GetMaintenanceMarginRatio(ctx sdk.Context, pair asset.Pair) (sdk.Dec, error)
-	GetMaxLeverage(ctx sdk.Context, pair asset.Pair) (sdk.Dec, error)
 	ExistsPool(ctx sdk.Context, pair asset.Pair) bool
 	GetSettlementPrice(ctx sdk.Context, pair asset.Pair) (sdk.Dec, error)
-	GetLastSnapshot(ctx sdk.Context, pool vpooltypes.Vpool) (vpooltypes.ReserveSnapshot, error)
+	GetLastSnapshot(ctx sdk.Context, pool perpammtypes.Market) (perpammtypes.ReserveSnapshot, error)
+
+	EditPoolPegMultiplier(ctx sdk.Context, pair asset.Pair, pegMultiplier sdk.Dec) error
 }
 
 type EpochKeeper interface {
