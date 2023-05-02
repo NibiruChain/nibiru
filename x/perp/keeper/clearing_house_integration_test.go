@@ -52,7 +52,7 @@ func TestOpenPosition(t *testing.T) {
 				createInitMarket(),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetPairPrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
+				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
 			).
 			When(
@@ -110,7 +110,7 @@ func TestOpenPosition(t *testing.T) {
 			createInitMarket(),
 			SetBlockNumber(1),
 			SetBlockTime(startBlockTime),
-			SetPairPrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
+			SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
 			FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2040)))),
 			OpenPosition(alice, pairBtcUsdc, perpammtypes.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 		).When(
