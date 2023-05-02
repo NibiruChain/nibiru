@@ -17,7 +17,7 @@ message Sudoers {
   repeated string contracts = 2;
 }
 
-// GenesisState defines the perp module's genesis state.
+// GenesisState defines the module's genesis state.
 message GenesisState {
   Sudoers sudoers = 1 [(gogoproto.nullable) = false ]; 
 }

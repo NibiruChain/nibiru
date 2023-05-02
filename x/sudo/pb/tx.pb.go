@@ -31,10 +31,14 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // MsgEditSudoers: Msg to update the "Sudoers" state.
 type MsgEditSudoers struct {
-	// TODO
-	Action    string   `protobuf:"bytes,1,opt,name=action,proto3" json:"action,omitempty"`
+	// Action: identifier for the type of edit that will take place. Using this
+	//   action field prevents us from needing to create several similar message
+	//   types.
+	Action string `protobuf:"bytes,1,opt,name=action,proto3" json:"action,omitempty"`
+	// Contracts: An input payload.
 	Contracts []string `protobuf:"bytes,2,rep,name=contracts,proto3" json:"contracts,omitempty"`
-	Sender    string   `protobuf:"bytes,3,opt,name=sender,proto3" json:"sender,omitempty"`
+	// Sender: Address for the signer of the transaction.
+	Sender string `protobuf:"bytes,3,opt,name=sender,proto3" json:"sender,omitempty"`
 }
 
 func (m *MsgEditSudoers) Reset()         { *m = MsgEditSudoers{} }
@@ -170,6 +174,7 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
+	// EditSudoers updates the "Sudoers" state
 	EditSudoers(ctx context.Context, in *MsgEditSudoers, opts ...grpc.CallOption) (*MsgEditSudoersResponse, error)
 }
 
@@ -192,6 +197,7 @@ func (c *msgClient) EditSudoers(ctx context.Context, in *MsgEditSudoers, opts ..
 
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
+	// EditSudoers updates the "Sudoers" state
 	EditSudoers(context.Context, *MsgEditSudoers) (*MsgEditSudoersResponse, error)
 }
 

@@ -77,7 +77,7 @@ func (m *Sudoers) GetContracts() []string {
 	return nil
 }
 
-// GenesisState defines the perp module's genesis state.
+// GenesisState defines the module's genesis state.
 type GenesisState struct {
 	Sudoers Sudoers `protobuf:"bytes,1,opt,name=sudoers,proto3" json:"sudoers"`
 }

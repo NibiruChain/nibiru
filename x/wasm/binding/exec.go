@@ -30,9 +30,10 @@ type CustomWasmExecutor struct {
 // (json.RawMessage), which corresponds to `BindingExecuteMsgWrapper` in
 // the bindings-perp.rs contract.
 type BindingExecuteMsgWrapper struct {
-	// Routes here refer to groups of modules on Nibiru. The idea here is to add
-	// information on which module or group of modules a particular execute message
-	// belongs to. For example, the perp bindings have route "perp".
+	// Routes here refer to groups of modules on Nibiru. The idea behind setting
+	// routes alongside the messae payload is to add information on which module
+	// or group of modules a particular execute message belongs to.
+	// For example, the perp bindings have route "perp".
 	Route *string `json:"route,omitempty"`
 	// ExecuteMsg is a json struct for ExecuteMsg::{
 	//   OpenPosition, ClosePosition, AddMargin, RemoveMargin, ...} from the
@@ -103,6 +104,9 @@ func CustomExecuteMsgHandler(
 	}
 }
 
+// CheckPermissions: Checks if a contract is contained within the set of sudo
+// contracts defined in the x/sudo module. These smart contracts are able to
+// execute certain permissioned functions.
 // See https://www.notion.so/nibiru/Nibi-Perps-Admin-ADR-ad38991fffd34e7798618731be0fa922?pvs=4
 func (messenger *CustomWasmExecutor) CheckPermissions(
 	contract sdk.AccAddress, ctx sdk.Context,
