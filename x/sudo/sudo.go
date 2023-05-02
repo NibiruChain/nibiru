@@ -175,7 +175,6 @@ func (k Keeper) AddContracts(
 // RemoveContracts
 // ————————————————————————————————————————————————————————————————————————————
 
-// TODO test
 func (k Keeper) RemoveContracts(
 	goCtx context.Context, msg *pb.MsgEditSudoers,
 ) (msgResp *pb.MsgEditSudoersResponse, err error) {
