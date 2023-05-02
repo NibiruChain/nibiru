@@ -87,7 +87,6 @@ func TestQueryExchangeRates(t *testing.T) {
 
 func TestQueryExchangeRateTwap(t *testing.T) {
 	input := CreateTestFixture(t)
-	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := sdk.NewDec(1700)
@@ -101,7 +100,7 @@ func TestQueryExchangeRateTwap(t *testing.T) {
 			TimestampMs: input.Ctx.BlockTime().UnixMilli()},
 	)
 
-	ctx = sdk.WrapSDKContext(input.Ctx.
+	ctx := sdk.WrapSDKContext(input.Ctx.
 		WithBlockTime(input.Ctx.BlockTime().Add(time.Second)).
 		WithBlockHeight(input.Ctx.BlockHeight() + 1),
 	)
