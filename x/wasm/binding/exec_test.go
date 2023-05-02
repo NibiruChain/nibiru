@@ -147,3 +147,15 @@ func (s *TestSuiteExecutor) TestOpenAddRemoveClose() {
 	contractRespBz, err = s.ExecuteAgainstContract(s.contractPerp, execMsg)
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
 }
+
+func (s *TestSuiteExecutor) TestPegShift() {
+	pair := asset.MustNewPair(s.happyFields.Pair)
+	execMsg := cw_struct.BindingMsg{
+		PegShift: &cw_struct.PegShift{
+			Pair:    pair.String(),
+			PegMult: sdk.NewDec(420),
+		},
+	}
+	contractRespBz, err := s.ExecuteAgainstContract(s.contractPerp, execMsg)
+	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
+}

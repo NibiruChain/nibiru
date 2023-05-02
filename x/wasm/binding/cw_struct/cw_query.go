@@ -146,9 +146,18 @@ type PositionsRequest struct {
 	Trader string `json:"trader"`
 }
 
-// TODO impl
+type Position struct {
+	TraderAddr   string  `json:"trader_addr"`
+	Pair         string  `json:"pair"`
+	Size         sdk.Dec `json:"size"`
+	Margin       sdk.Dec `json:"margin"`
+	OpenNotional sdk.Dec `json:"open_notional"`
+	LatestCPF    sdk.Dec `json:"latest_cpf"`
+	BlockNumber  sdk.Int `json:"block_number"`
+}
+
 type PositionsResponse struct {
-	Trader string `json:"trader"`
+	Positions map[string]Position `json:"positions"`
 }
 
 type PositionRequest struct {
@@ -156,9 +165,13 @@ type PositionRequest struct {
 	Pair   string `json:"pair"`
 }
 
-// TODO impl
 type PositionResponse struct {
-	Trader string `json:"trader"`
+	Position           Position `json:"position"`
+	Notional           sdk.Dec  `json:"notional"`
+	Upnl               sdk.Dec  `json:"upnl"`
+	Margin_ratio_mark  sdk.Dec  `json:"margin_ratio_mark"`
+	Margin_ratio_index sdk.Dec  `json:"margin_ratio_index"`
+	Block_number       sdk.Int  `json:"block_number"`
 }
 
 type PremiumFractionRequest struct {

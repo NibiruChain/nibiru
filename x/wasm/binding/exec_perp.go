@@ -123,3 +123,23 @@ func (exec *ExecutorPerp) RemoveMargin(
 	goCtx := sdk.WrapSDKContext(ctx)
 	return exec.MsgServer().RemoveMargin(goCtx, sdkMsg)
 }
+
+func (exec *ExecutorPerp) PegShift(
+	cwMsg *cw_struct.PegShift, contractAddr sdk.AccAddress, ctx sdk.Context,
+) (err error) {
+	if cwMsg == nil {
+		return wasmvmtypes.InvalidRequest{Err: "null peg shift msg"}
+	}
+
+	pair, err := asset.TryNewPair(cwMsg.Pair)
+	if err != nil {
+		return err
+	}
+
+	return exec.Perp.EditPoolPegMultiplier(
+		ctx,
+		contractAddr,
+		pair,
+		cwMsg.PegMult,
+	)
+}

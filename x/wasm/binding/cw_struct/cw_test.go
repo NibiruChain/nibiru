@@ -105,6 +105,7 @@ func (s *TestSuiteBindingJsonTypes) TestExecuteMsgs() {
 		"remove_margin":            new(cw_struct.RemoveMargin),
 		"multi_liquidate":          new(cw_struct.MultiLiquidate),
 		"donate_to_insurance_fund": new(cw_struct.DonateToInsuranceFund),
+		"peg_shift":                new(cw_struct.PegShift),
 	}
 
 	for name, cwExecuteMsgPtr := range testCaseMap {
