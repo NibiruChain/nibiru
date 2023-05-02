@@ -43,12 +43,12 @@ func TestFeederDelegation(t *testing.T) {
 
 	// Case 2.2: Normal Vote - without delegation
 	voteMsg := types.NewMsgAggregateExchangeRateVote(salt, exchangeRateStr, Addrs[0], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx.WithBlockHeight(1)), voteMsg)
+	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx.WithBlockHeight(2)), voteMsg)
 	require.NoError(t, err)
 
 	// Case 2.3: Normal Vote - with delegation fails
 	voteMsg = types.NewMsgAggregateExchangeRateVote(salt, exchangeRateStr, Addrs[1], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx.WithBlockHeight(1)), voteMsg)
+	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx.WithBlockHeight(2)), voteMsg)
 	require.Error(t, err)
 
 	// Case 3: Normal MsgDelegateFeedConsent succeeds
@@ -68,12 +68,12 @@ func TestFeederDelegation(t *testing.T) {
 
 	// Case 4.3: Normal Vote - without delegation fails
 	voteMsg = types.NewMsgAggregateExchangeRateVote(salt, exchangeRateStr, Addrs[2], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx.WithBlockHeight(1)), voteMsg)
+	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx.WithBlockHeight(2)), voteMsg)
 	require.Error(t, err)
 
 	// Case 4.4: Normal Vote - with delegation succeeds
 	voteMsg = types.NewMsgAggregateExchangeRateVote(salt, exchangeRateStr, Addrs[1], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx.WithBlockHeight(1)), voteMsg)
+	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx.WithBlockHeight(2)), voteMsg)
 	require.NoError(t, err)
 }
 
@@ -163,13 +163,13 @@ func TestAggregatePrevoteVote(t *testing.T) {
 	require.Error(t, err)
 
 	// Invalid reveal period
-	input.Ctx = input.Ctx.WithBlockHeight(2)
+	input.Ctx = input.Ctx.WithBlockHeight(3)
 	aggregateExchangeRateVoteMsg = types.NewMsgAggregateExchangeRateVote(salt, exchangeRatesStr, Addrs[0], ValAddrs[0])
 	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx), aggregateExchangeRateVoteMsg)
 	require.Error(t, err)
 
 	// Other exchange rate with valid real period
-	input.Ctx = input.Ctx.WithBlockHeight(1)
+	input.Ctx = input.Ctx.WithBlockHeight(2)
 	aggregateExchangeRateVoteMsg = types.NewMsgAggregateExchangeRateVote(salt, otherExchangeRateStr, Addrs[0], ValAddrs[0])
 	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx), aggregateExchangeRateVoteMsg)
 	require.Error(t, err)
@@ -185,7 +185,7 @@ func TestAggregatePrevoteVote(t *testing.T) {
 	require.Error(t, err)
 
 	// Valid exchange rate reveal submission
-	input.Ctx = input.Ctx.WithBlockHeight(1)
+	input.Ctx = input.Ctx.WithBlockHeight(2)
 	aggregateExchangeRateVoteMsg = types.NewMsgAggregateExchangeRateVote(salt, exchangeRatesStr, Addrs[0], ValAddrs[0])
 	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx), aggregateExchangeRateVoteMsg)
 	require.NoError(t, err)
