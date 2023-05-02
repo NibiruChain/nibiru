@@ -44,12 +44,12 @@ type insertPriceSnapshot struct {
 	Price sdk.Dec
 }
 
-func (s insertPriceSnapshot) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+func (s insertPriceSnapshot) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	app.OracleKeeper.PriceSnapshots.Insert(ctx, collections.Join(s.Pair, s.Time), types.PriceSnapshot{
 		Pair:        s.Pair,
 		Price:       s.Price,
 		TimestampMs: s.Time.UnixMilli(),
 	})
 
-	return ctx, nil
+	return ctx, nil, true
 }

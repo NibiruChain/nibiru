@@ -25,7 +25,7 @@ func TestOracleTallyTiming(t *testing.T) {
 	params := input.OracleKeeper.GetParams(input.Ctx)
 	params.VotePeriod = 10 // set vote period to 10 for now, for convenience
 	input.OracleKeeper.SetParams(input.Ctx, params)
-	require.Equal(t, 0, int(input.Ctx.BlockHeight()))
+	require.Equal(t, 1, int(input.Ctx.BlockHeight()))
 
 	EndBlocker(input.Ctx, input.OracleKeeper)
 	_, err := input.OracleKeeper.ExchangeRates.Get(input.Ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
