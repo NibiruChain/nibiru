@@ -22,8 +22,10 @@ import (
 
 // Ensure the interface is properly implemented at compile time
 var (
-	_ module.AppModule      = AppModule{}
-	_ module.AppModuleBasic = AppModuleBasic{}
+	_          module.AppModule      = AppModule{}
+	_          module.AppModuleBasic = AppModuleBasic{}
+	ModuleName                       = pb.ModuleName
+	StoreKey                         = pb.StoreKey
 )
 
 // ----------------------------------------------------------------------------
