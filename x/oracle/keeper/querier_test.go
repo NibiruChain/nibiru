@@ -87,7 +87,6 @@ func TestQueryExchangeRates(t *testing.T) {
 
 func TestQueryExchangeRateTwap(t *testing.T) {
 	input := CreateTestFixture(t)
-	ctx := sdk.WrapSDKContext(input.Ctx)
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := sdk.NewDec(1700)
@@ -99,6 +98,11 @@ func TestQueryExchangeRateTwap(t *testing.T) {
 			Pair:        asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 			Price:       rate,
 			TimestampMs: input.Ctx.BlockTime().UnixMilli()},
+	)
+
+	ctx := sdk.WrapSDKContext(input.Ctx.
+		WithBlockTime(input.Ctx.BlockTime().Add(time.Second)).
+		WithBlockHeight(input.Ctx.BlockHeight() + 1),
 	)
 
 	_, err := querier.ExchangeRateTwap(ctx, &types.QueryExchangeRateRequest{Pair: asset.Registry.Pair(denoms.ETH, denoms.NUSD)})
