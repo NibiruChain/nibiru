@@ -318,168 +318,6 @@ func (m *QueryPositionResponse) GetBlockNumber() int64 {
 	return 0
 }
 
-type QueryCumulativePremiumFractionRequest struct {
-	// the pair to query for
-	Pair github_com_NibiruChain_nibiru_x_common_asset.Pair `protobuf:"bytes,1,opt,name=pair,proto3,customtype=github.com/NibiruChain/nibiru/x/common/asset.Pair" json:"pair"`
-}
-
-func (m *QueryCumulativePremiumFractionRequest) Reset()         { *m = QueryCumulativePremiumFractionRequest{} }
-func (m *QueryCumulativePremiumFractionRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryCumulativePremiumFractionRequest) ProtoMessage()    {}
-func (*QueryCumulativePremiumFractionRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_743095c3c29da624, []int{6}
-}
-func (m *QueryCumulativePremiumFractionRequest) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryCumulativePremiumFractionRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryCumulativePremiumFractionRequest.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryCumulativePremiumFractionRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryCumulativePremiumFractionRequest.Merge(m, src)
-}
-func (m *QueryCumulativePremiumFractionRequest) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryCumulativePremiumFractionRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryCumulativePremiumFractionRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryCumulativePremiumFractionRequest proto.InternalMessageInfo
-
-type QueryCumulativePremiumFractionResponse struct {
-	// The latest cumulative premium fraction.
-	CumulativePremiumFraction              github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,1,opt,name=cumulative_premium_fraction,json=cumulativePremiumFraction,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"cumulative_premium_fraction"`
-	EstimatedNextCumulativePremiumFraction github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=estimated_next_cumulative_premium_fraction,json=estimatedNextCumulativePremiumFraction,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"estimated_next_cumulative_premium_fraction"`
-}
-
-func (m *QueryCumulativePremiumFractionResponse) Reset() {
-	*m = QueryCumulativePremiumFractionResponse{}
-}
-func (m *QueryCumulativePremiumFractionResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryCumulativePremiumFractionResponse) ProtoMessage()    {}
-func (*QueryCumulativePremiumFractionResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_743095c3c29da624, []int{7}
-}
-func (m *QueryCumulativePremiumFractionResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryCumulativePremiumFractionResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryCumulativePremiumFractionResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryCumulativePremiumFractionResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryCumulativePremiumFractionResponse.Merge(m, src)
-}
-func (m *QueryCumulativePremiumFractionResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryCumulativePremiumFractionResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryCumulativePremiumFractionResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryCumulativePremiumFractionResponse proto.InternalMessageInfo
-
-type QueryMetricsRequest struct {
-	// the pair to query for
-	Pair github_com_NibiruChain_nibiru_x_common_asset.Pair `protobuf:"bytes,1,opt,name=pair,proto3,customtype=github.com/NibiruChain/nibiru/x/common/asset.Pair" json:"pair"`
-}
-
-func (m *QueryMetricsRequest) Reset()         { *m = QueryMetricsRequest{} }
-func (m *QueryMetricsRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryMetricsRequest) ProtoMessage()    {}
-func (*QueryMetricsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_743095c3c29da624, []int{8}
-}
-func (m *QueryMetricsRequest) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryMetricsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryMetricsRequest.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryMetricsRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryMetricsRequest.Merge(m, src)
-}
-func (m *QueryMetricsRequest) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryMetricsRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryMetricsRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryMetricsRequest proto.InternalMessageInfo
-
-type QueryMetricsResponse struct {
-	// list of perp metrics
-	Metrics Metrics `protobuf:"bytes,1,opt,name=metrics,proto3" json:"metrics"`
-}
-
-func (m *QueryMetricsResponse) Reset()         { *m = QueryMetricsResponse{} }
-func (m *QueryMetricsResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryMetricsResponse) ProtoMessage()    {}
-func (*QueryMetricsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_743095c3c29da624, []int{9}
-}
-func (m *QueryMetricsResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryMetricsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryMetricsResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryMetricsResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryMetricsResponse.Merge(m, src)
-}
-func (m *QueryMetricsResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryMetricsResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryMetricsResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryMetricsResponse proto.InternalMessageInfo
-
-func (m *QueryMetricsResponse) GetMetrics() Metrics {
-	if m != nil {
-		return m.Metrics
-	}
-	return Metrics{}
-}
-
 type QueryModuleAccountsRequest struct {
 }
 
@@ -487,7 +325,7 @@ func (m *QueryModuleAccountsRequest) Reset()         { *m = QueryModuleAccountsR
 func (m *QueryModuleAccountsRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryModuleAccountsRequest) ProtoMessage()    {}
 func (*QueryModuleAccountsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_743095c3c29da624, []int{10}
+	return fileDescriptor_743095c3c29da624, []int{6}
 }
 func (m *QueryModuleAccountsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -524,7 +362,7 @@ func (m *QueryModuleAccountsResponse) Reset()         { *m = QueryModuleAccounts
 func (m *QueryModuleAccountsResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryModuleAccountsResponse) ProtoMessage()    {}
 func (*QueryModuleAccountsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_743095c3c29da624, []int{11}
+	return fileDescriptor_743095c3c29da624, []int{7}
 }
 func (m *QueryModuleAccountsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -570,7 +408,7 @@ func (m *AccountWithBalance) Reset()         { *m = AccountWithBalance{} }
 func (m *AccountWithBalance) String() string { return proto.CompactTextString(m) }
 func (*AccountWithBalance) ProtoMessage()    {}
 func (*AccountWithBalance) Descriptor() ([]byte, []int) {
-	return fileDescriptor_743095c3c29da624, []int{12}
+	return fileDescriptor_743095c3c29da624, []int{8}
 }
 func (m *AccountWithBalance) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -627,10 +465,6 @@ func init() {
 	proto.RegisterType((*QueryPositionsResponse)(nil), "nibiru.perp.v2.QueryPositionsResponse")
 	proto.RegisterType((*QueryPositionRequest)(nil), "nibiru.perp.v2.QueryPositionRequest")
 	proto.RegisterType((*QueryPositionResponse)(nil), "nibiru.perp.v2.QueryPositionResponse")
-	proto.RegisterType((*QueryCumulativePremiumFractionRequest)(nil), "nibiru.perp.v2.QueryCumulativePremiumFractionRequest")
-	proto.RegisterType((*QueryCumulativePremiumFractionResponse)(nil), "nibiru.perp.v2.QueryCumulativePremiumFractionResponse")
-	proto.RegisterType((*QueryMetricsRequest)(nil), "nibiru.perp.v2.QueryMetricsRequest")
-	proto.RegisterType((*QueryMetricsResponse)(nil), "nibiru.perp.v2.QueryMetricsResponse")
 	proto.RegisterType((*QueryModuleAccountsRequest)(nil), "nibiru.perp.v2.QueryModuleAccountsRequest")
 	proto.RegisterType((*QueryModuleAccountsResponse)(nil), "nibiru.perp.v2.QueryModuleAccountsResponse")
 	proto.RegisterType((*AccountWithBalance)(nil), "nibiru.perp.v2.AccountWithBalance")
@@ -639,68 +473,56 @@ func init() {
 func init() { proto.RegisterFile("perp/v2/query.proto", fileDescriptor_743095c3c29da624) }
 
 var fileDescriptor_743095c3c29da624 = []byte{
-	// 965 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x56, 0x4f, 0x6f, 0x1b, 0x45,
-	0x14, 0xcf, 0xc6, 0xa9, 0xdd, 0x4e, 0x68, 0xa0, 0xd3, 0x90, 0xae, 0x9d, 0xca, 0x4e, 0x96, 0x36,
-	0x44, 0xad, 0xb2, 0x4b, 0x5c, 0xfe, 0x88, 0x23, 0x4e, 0x05, 0x42, 0x28, 0x21, 0xac, 0x84, 0x90,
-	0x0a, 0x68, 0x35, 0xde, 0x1d, 0x9c, 0x51, 0x76, 0x67, 0x36, 0x33, 0xb3, 0x56, 0x8a, 0x04, 0x87,
-	0x1e, 0x39, 0x21, 0xf8, 0x0c, 0x1c, 0xe0, 0x4b, 0x70, 0xed, 0x05, 0xa9, 0x12, 0x17, 0xc4, 0x21,
-	0xa0, 0x84, 0x0f, 0x82, 0x76, 0x66, 0xd6, 0xf5, 0x3a, 0x8e, 0x9d, 0x5a, 0xea, 0xc9, 0xbb, 0x6f,
-	0xde, 0xfb, 0xfd, 0x7e, 0xf3, 0xf6, 0xfd, 0x31, 0xb8, 0x99, 0x62, 0x9e, 0x7a, 0xfd, 0xb6, 0x77,
-	0x94, 0x61, 0xfe, 0xd8, 0x4d, 0x39, 0x93, 0x0c, 0x2e, 0x51, 0xd2, 0x25, 0x3c, 0x73, 0xf3, 0x33,
-	0xb7, 0xdf, 0x6e, 0x2c, 0xf7, 0x58, 0x8f, 0xa9, 0x23, 0x2f, 0x7f, 0xd2, 0x5e, 0x8d, 0xdb, 0x3d,
-	0xc6, 0x7a, 0x31, 0xf6, 0x50, 0x4a, 0x3c, 0x44, 0x29, 0x93, 0x48, 0x12, 0x46, 0x85, 0x39, 0x1d,
-	0x00, 0x0b, 0x89, 0x24, 0x36, 0xc6, 0x66, 0xc8, 0x44, 0xc2, 0x84, 0xd7, 0x45, 0x02, 0x7b, 0xfd,
-	0xed, 0x2e, 0x96, 0x68, 0xdb, 0x0b, 0x19, 0xa1, 0xfa, 0xdc, 0x59, 0x06, 0xf0, 0xb3, 0x5c, 0xc7,
-	0x3e, 0xe2, 0x28, 0x11, 0x3e, 0x3e, 0xca, 0xb0, 0x90, 0xce, 0x27, 0xe0, 0x66, 0xc9, 0x2a, 0x52,
-	0x46, 0x05, 0x86, 0x6f, 0x83, 0x6a, 0xaa, 0x2c, 0xb6, 0xb5, 0x66, 0x6d, 0x2e, 0xb6, 0x57, 0xdc,
-	0xb2, 0x6c, 0x57, 0xfb, 0x77, 0x16, 0x9e, 0x9e, 0xb4, 0xe6, 0x7c, 0xe3, 0xeb, 0x78, 0xe0, 0x75,
-	0x0d, 0xc6, 0x04, 0x51, 0x7a, 0x0d, 0x0b, 0x5c, 0x01, 0x55, 0xc9, 0x51, 0x84, 0xb9, 0x82, 0xbb,
-	0xe6, 0x9b, 0x37, 0xe7, 0x6b, 0xb0, 0x32, 0x1a, 0x60, 0x04, 0xec, 0x80, 0x6b, 0x69, 0x61, 0xb4,
-	0xad, 0xb5, 0xca, 0xe6, 0x62, 0xfb, 0xee, 0xa8, 0x86, 0x52, 0x68, 0x11, 0xe9, 0x3f, 0x8f, 0x73,
-	0xbe, 0x03, 0xcb, 0x23, 0x3e, 0x5a, 0xce, 0x2e, 0x58, 0x48, 0x11, 0x31, 0x62, 0x3a, 0xef, 0xe7,
-	0x77, 0xf8, 0xfb, 0xa4, 0xb5, 0xdd, 0x23, 0xf2, 0x20, 0xeb, 0xba, 0x21, 0x4b, 0xbc, 0x3d, 0xc5,
-	0xb4, 0x73, 0x80, 0x08, 0xf5, 0x34, 0xab, 0x77, 0xec, 0x85, 0x2c, 0x49, 0x18, 0xf5, 0x90, 0x10,
-	0x58, 0xba, 0xfb, 0x88, 0x70, 0x5f, 0xc1, 0x0c, 0xdd, 0x6e, 0xbe, 0x74, 0xbb, 0x93, 0xca, 0x48,
-	0x3e, 0x86, 0xd2, 0x7b, 0xb5, 0x50, 0x69, 0x12, 0x6c, 0x9f, 0x4b, 0x70, 0x11, 0x33, 0xf0, 0x84,
-	0x5f, 0x82, 0x1b, 0xc5, 0x73, 0x40, 0x59, 0xfe, 0x83, 0x62, 0x4d, 0xd9, 0x71, 0xcd, 0x1d, 0x36,
-	0x86, 0xee, 0x60, 0xea, 0x41, 0xff, 0x6c, 0x89, 0xe8, 0xd0, 0x93, 0x8f, 0x53, 0x2c, 0xdc, 0x87,
-	0x38, 0xf4, 0x5f, 0x2b, 0x80, 0xf6, 0x0c, 0x0e, 0xfc, 0x1c, 0x2c, 0x65, 0x94, 0x63, 0x14, 0x93,
-	0x6f, 0x71, 0x14, 0xa4, 0x34, 0xb6, 0x2b, 0x33, 0x21, 0x5f, 0x7f, 0x8e, 0xb2, 0x4f, 0x63, 0xf8,
-	0x08, 0xdc, 0x48, 0x10, 0xef, 0x11, 0x1a, 0xf0, 0xbc, 0x84, 0x83, 0x04, 0xf1, 0x43, 0x7b, 0x61,
-	0x26, 0xe4, 0x57, 0x35, 0x90, 0x9f, 0xe3, 0xec, 0x22, 0x7e, 0x08, 0xbf, 0x02, 0xb0, 0x84, 0x4d,
-	0x68, 0x84, 0x8f, 0xed, 0x2b, 0xb3, 0x25, 0x64, 0x08, 0xfc, 0xe3, 0x1c, 0x07, 0xae, 0x83, 0x57,
-	0xba, 0x31, 0x0b, 0x0f, 0x03, 0x9a, 0x25, 0x5d, 0xcc, 0xed, 0xda, 0x9a, 0xb5, 0x59, 0xf1, 0x17,
-	0x95, 0x6d, 0x4f, 0x99, 0x9c, 0x3e, 0xb8, 0xab, 0xbe, 0xef, 0x4e, 0x96, 0x64, 0x31, 0x92, 0xa4,
-	0x8f, 0xf7, 0x39, 0x4e, 0x48, 0x96, 0x7c, 0xc8, 0x51, 0xf8, 0xf2, 0x0a, 0xce, 0xf9, 0x65, 0x1e,
-	0x6c, 0x4c, 0x23, 0x36, 0x95, 0x46, 0xc1, 0x6a, 0x38, 0x70, 0x0a, 0x52, 0xed, 0x15, 0x7c, 0x63,
-	0xdc, 0x8c, 0xa0, 0x17, 0x4d, 0x56, 0x3d, 0xbc, 0x88, 0x17, 0xfe, 0x60, 0x81, 0x7b, 0x58, 0x48,
-	0x92, 0x20, 0x89, 0xa3, 0x80, 0xe2, 0x63, 0x19, 0x4c, 0xe2, 0x9f, 0xad, 0x7a, 0x37, 0x06, 0x0c,
-	0x7b, 0xf8, 0x58, 0x5e, 0x98, 0x04, 0x27, 0x32, 0xc3, 0x6d, 0x17, 0x4b, 0x4e, 0x42, 0xf1, 0x92,
-	0xbe, 0xc6, 0xa7, 0x66, 0xca, 0x0c, 0x58, 0x4c, 0xea, 0xdf, 0x03, 0xb5, 0x44, 0x9b, 0x4c, 0x8f,
-	0xdf, 0x1a, 0xed, 0x71, 0x13, 0x61, 0xa6, 0x68, 0xe1, 0xed, 0xdc, 0x06, 0x0d, 0x0d, 0xc8, 0xa2,
-	0x2c, 0xc6, 0x1f, 0x84, 0x21, 0xcb, 0xa8, 0x1c, 0x4c, 0xec, 0x10, 0xac, 0x8e, 0x3d, 0x35, 0xac,
-	0x0f, 0xc1, 0x55, 0x64, 0x6c, 0x66, 0x6e, 0x3a, 0xa3, 0xb4, 0x26, 0xe6, 0x0b, 0x22, 0x0f, 0x3a,
-	0x28, 0x46, 0x34, 0xc4, 0x46, 0xc1, 0x20, 0xd2, 0xf9, 0xd5, 0x02, 0xf0, 0xbc, 0x1b, 0x84, 0x60,
-	0x81, 0xa2, 0x04, 0x9b, 0x29, 0xae, 0x9e, 0xa1, 0x0d, 0x6a, 0x28, 0x8a, 0x38, 0x16, 0xc2, 0x8c,
-	0xbf, 0xe2, 0x15, 0x62, 0x50, 0xeb, 0xea, 0x40, 0xbb, 0xa2, 0x94, 0xd4, 0x5d, 0xfd, 0x39, 0xdd,
-	0x7c, 0x47, 0xb9, 0x66, 0x47, 0xb9, 0x3b, 0x8c, 0xd0, 0xce, 0x5b, 0xb9, 0x80, 0xdf, 0xfe, 0x69,
-	0x6d, 0x5e, 0xa2, 0x04, 0xf2, 0x00, 0xe1, 0x17, 0xd8, 0xed, 0x3f, 0xaa, 0xe0, 0x8a, 0xca, 0x08,
-	0x3c, 0x02, 0x55, 0xbd, 0x97, 0xa0, 0x33, 0x7e, 0x57, 0x0c, 0xaf, 0xbe, 0xc6, 0x1b, 0x13, 0x7d,
-	0x74, 0x3a, 0x9d, 0xe6, 0x93, 0x3f, 0xff, 0xfb, 0x79, 0xde, 0x86, 0x2b, 0x45, 0x1d, 0x14, 0xab,
-	0x57, 0xaf, 0x3c, 0xf8, 0x3d, 0xb8, 0x5e, 0x1a, 0xf1, 0xf0, 0xce, 0x94, 0x2d, 0xa5, 0xb9, 0x2f,
-	0xb7, 0xcb, 0x9c, 0x35, 0xc5, 0xde, 0x80, 0xf6, 0x39, 0xf6, 0x82, 0xee, 0x89, 0x05, 0x96, 0xca,
-	0x2b, 0x14, 0x4e, 0xc6, 0x1e, 0x5c, 0x7f, 0x63, 0x9a, 0x9b, 0xd1, 0xb0, 0xae, 0x34, 0xac, 0xc2,
-	0xfa, 0x45, 0x1a, 0x04, 0xfc, 0xdd, 0x02, 0xf5, 0x0b, 0xbb, 0x10, 0xbe, 0x33, 0x96, 0x68, 0xda,
-	0xcc, 0x6c, 0xbc, 0xfb, 0xa2, 0x61, 0x46, 0xef, 0x03, 0xa5, 0x77, 0x0b, 0xde, 0x1f, 0xd5, 0x3b,
-	0x61, 0x0e, 0xc1, 0x0c, 0xd4, 0x4c, 0x33, 0xc2, 0xf1, 0x65, 0x51, 0x1e, 0x21, 0x8d, 0x3b, 0x93,
-	0x9d, 0x8c, 0x94, 0x96, 0x92, 0x52, 0x87, 0xb7, 0x46, 0xa5, 0x98, 0x4e, 0x87, 0x3f, 0x59, 0x60,
-	0xa9, 0xdc, 0xc7, 0xf0, 0xde, 0x78, 0xe4, 0x71, 0xa3, 0xa0, 0x71, 0xff, 0x52, 0xbe, 0x46, 0xcc,
-	0x9b, 0x4a, 0xcc, 0x3a, 0x6c, 0x9d, 0x13, 0xa3, 0xfc, 0x83, 0xa2, 0xf7, 0x3b, 0x1f, 0x3d, 0x3d,
-	0x6d, 0x5a, 0xcf, 0x4e, 0x9b, 0xd6, 0xbf, 0xa7, 0x4d, 0xeb, 0xc7, 0xb3, 0xe6, 0xdc, 0xb3, 0xb3,
-	0xe6, 0xdc, 0x5f, 0x67, 0xcd, 0xb9, 0x47, 0x5b, 0xd3, 0x46, 0xa4, 0x82, 0x54, 0x4d, 0xea, 0xf5,
-	0xdb, 0xdd, 0xaa, 0xfa, 0xe3, 0xf9, 0xe0, 0xff, 0x00, 0x00, 0x00, 0xff, 0xff, 0x4f, 0x04, 0x83,
-	0xc2, 0x08, 0x0b, 0x00, 0x00,
+	// 779 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x55, 0xcd, 0x4e, 0xdb, 0x4a,
+	0x14, 0x8e, 0x49, 0x08, 0x30, 0x5c, 0x72, 0x2f, 0x03, 0x37, 0x32, 0x01, 0x39, 0xc1, 0xf7, 0x96,
+	0x46, 0xad, 0xf0, 0x94, 0xb4, 0x9b, 0x2e, 0x1b, 0x90, 0xaa, 0xaa, 0x02, 0x51, 0x4b, 0x55, 0x25,
+	0xda, 0x2a, 0x1a, 0x3b, 0xa3, 0x60, 0xc5, 0x9e, 0x31, 0x1e, 0x3b, 0x82, 0x4a, 0xed, 0x82, 0x27,
+	0xa8, 0xda, 0xbe, 0x44, 0xfb, 0x24, 0x2c, 0x91, 0xba, 0xa9, 0xba, 0xa0, 0x15, 0xf4, 0x41, 0x2a,
+	0x8f, 0xc7, 0x21, 0x0e, 0x29, 0x20, 0x56, 0xb6, 0xcf, 0xcf, 0x77, 0xbe, 0x73, 0x72, 0xce, 0x17,
+	0x30, 0xe7, 0x93, 0xc0, 0x47, 0xbd, 0x06, 0xda, 0x8b, 0x48, 0x70, 0x60, 0xf8, 0x01, 0x0b, 0x19,
+	0x2c, 0x51, 0xc7, 0x72, 0x82, 0xc8, 0x88, 0x7d, 0x46, 0xaf, 0x51, 0x99, 0xef, 0xb0, 0x0e, 0x13,
+	0x2e, 0x14, 0xbf, 0x25, 0x51, 0x95, 0xa5, 0x0e, 0x63, 0x1d, 0x97, 0x20, 0xec, 0x3b, 0x08, 0x53,
+	0xca, 0x42, 0x1c, 0x3a, 0x8c, 0x72, 0xe9, 0xed, 0x03, 0xf3, 0x10, 0x87, 0x44, 0x1a, 0x35, 0x9b,
+	0x71, 0x8f, 0x71, 0x64, 0x61, 0x4e, 0x50, 0x6f, 0xcd, 0x22, 0x21, 0x5e, 0x43, 0x36, 0x73, 0x68,
+	0xe2, 0xd7, 0xe7, 0x01, 0x7c, 0x16, 0xf3, 0xd8, 0xc6, 0x01, 0xf6, 0xb8, 0x49, 0xf6, 0x22, 0xc2,
+	0x43, 0xfd, 0x29, 0x98, 0xcb, 0x58, 0xb9, 0xcf, 0x28, 0x27, 0xf0, 0x01, 0x28, 0xfa, 0xc2, 0xa2,
+	0x2a, 0x35, 0xa5, 0x3e, 0xdd, 0x28, 0x1b, 0x59, 0xda, 0x46, 0x12, 0xdf, 0x2c, 0x1c, 0x9d, 0x54,
+	0x73, 0xa6, 0x8c, 0xd5, 0x11, 0xf8, 0x37, 0x01, 0x63, 0xdc, 0x11, 0x7c, 0x65, 0x15, 0x58, 0x06,
+	0xc5, 0x30, 0xc0, 0x6d, 0x12, 0x08, 0xb8, 0x29, 0x53, 0x7e, 0xe9, 0xaf, 0x41, 0x79, 0x38, 0x41,
+	0x12, 0x58, 0x07, 0x53, 0x7e, 0x6a, 0x54, 0x95, 0x5a, 0xbe, 0x3e, 0xdd, 0xb8, 0x35, 0xcc, 0x21,
+	0x93, 0x9a, 0x66, 0x9a, 0xe7, 0x79, 0xfa, 0x5b, 0x30, 0x3f, 0x14, 0x93, 0xd0, 0xd9, 0x04, 0x05,
+	0x1f, 0x3b, 0x92, 0x4c, 0xf3, 0x61, 0xdc, 0xc3, 0xf7, 0x93, 0xea, 0x5a, 0xc7, 0x09, 0x77, 0x23,
+	0xcb, 0xb0, 0x99, 0x87, 0xb6, 0x44, 0xa5, 0xf5, 0x5d, 0xec, 0x50, 0x94, 0x54, 0x45, 0xfb, 0xc8,
+	0x66, 0x9e, 0xc7, 0x28, 0xc2, 0x9c, 0x93, 0xd0, 0xd8, 0xc6, 0x4e, 0x60, 0x0a, 0x98, 0x81, 0xee,
+	0xc6, 0x32, 0xdd, 0x9d, 0xe4, 0x87, 0xe6, 0x31, 0x30, 0xde, 0xc9, 0x94, 0xa5, 0x1c, 0xb0, 0x7a,
+	0x61, 0xc0, 0x69, 0x4e, 0x3f, 0x12, 0xbe, 0x04, 0xb3, 0xe9, 0x7b, 0x8b, 0xb2, 0xf8, 0x81, 0xdd,
+	0xa4, 0x64, 0xd3, 0x90, 0x3d, 0xac, 0x0c, 0xf4, 0x20, 0xf7, 0x21, 0x79, 0xac, 0xf2, 0x76, 0x17,
+	0x85, 0x07, 0x3e, 0xe1, 0xc6, 0x06, 0xb1, 0xcd, 0x7f, 0x52, 0xa0, 0x2d, 0x89, 0x03, 0x9f, 0x83,
+	0x52, 0x44, 0x03, 0x82, 0x5d, 0xe7, 0x0d, 0x69, 0xb7, 0x7c, 0xea, 0xaa, 0xf9, 0x1b, 0x21, 0xcf,
+	0x9c, 0xa3, 0x6c, 0x53, 0x17, 0xee, 0x80, 0x59, 0x0f, 0x07, 0x1d, 0x87, 0xb6, 0x82, 0x78, 0x85,
+	0x5b, 0x1e, 0x0e, 0xba, 0x6a, 0xe1, 0x46, 0xc8, 0x7f, 0x27, 0x40, 0x66, 0x8c, 0xb3, 0x89, 0x83,
+	0x2e, 0x7c, 0x05, 0x60, 0x06, 0xdb, 0xa1, 0x6d, 0xb2, 0xaf, 0x8e, 0xdf, 0x6c, 0x20, 0x03, 0xe0,
+	0x4f, 0x62, 0x1c, 0xb8, 0x0c, 0xfe, 0xb2, 0x5c, 0x66, 0x77, 0x5b, 0x34, 0xf2, 0x2c, 0x12, 0xa8,
+	0x13, 0x35, 0xa5, 0x9e, 0x37, 0xa7, 0x85, 0x6d, 0x4b, 0x98, 0xf4, 0x25, 0x50, 0x11, 0xbf, 0xef,
+	0x26, 0x6b, 0x47, 0x2e, 0x79, 0x64, 0xdb, 0x2c, 0xa2, 0x61, 0xff, 0xb4, 0x6c, 0xb0, 0x38, 0xd2,
+	0x2b, 0x77, 0x60, 0x03, 0x4c, 0x62, 0x69, 0x93, 0x0b, 0xae, 0x0f, 0xef, 0x80, 0xcc, 0x79, 0xe1,
+	0x84, 0xbb, 0x4d, 0xec, 0x62, 0x6a, 0x13, 0x79, 0x70, 0xfd, 0x4c, 0xfd, 0xb3, 0x02, 0xe0, 0xc5,
+	0x30, 0x08, 0x41, 0x81, 0x62, 0x8f, 0xc8, 0x73, 0x13, 0xef, 0x50, 0x05, 0x13, 0xb8, 0xdd, 0x0e,
+	0x08, 0xe7, 0x72, 0x4f, 0xd3, 0x4f, 0x48, 0xc0, 0x84, 0x95, 0x24, 0xaa, 0x79, 0xc1, 0x64, 0xc1,
+	0x48, 0x86, 0x64, 0xc4, 0x62, 0x62, 0x48, 0x31, 0x31, 0xd6, 0x99, 0x43, 0x9b, 0xf7, 0x62, 0x02,
+	0x5f, 0x7e, 0x54, 0xeb, 0xd7, 0x18, 0x6c, 0x9c, 0xc0, 0xcd, 0x14, 0xbb, 0xf1, 0xa9, 0x00, 0xc6,
+	0xc5, 0x44, 0xe0, 0x1e, 0x28, 0x26, 0x02, 0x02, 0xf5, 0xd1, 0x47, 0x3d, 0xa8, 0x51, 0x95, 0xff,
+	0x2e, 0x8d, 0x49, 0xc6, 0xa9, 0x6b, 0x87, 0x5f, 0x7f, 0x7d, 0x1c, 0x53, 0x61, 0x39, 0xbd, 0xd7,
+	0x54, 0x23, 0x13, 0x6d, 0x82, 0xef, 0xc0, 0x4c, 0xe6, 0x16, 0xe1, 0xff, 0x57, 0xc8, 0x49, 0x52,
+	0xfb, 0x7a, 0xa2, 0xa3, 0xd7, 0x44, 0xf5, 0x0a, 0x54, 0x2f, 0x54, 0x4f, 0xcb, 0x1d, 0x2a, 0xa0,
+	0x94, 0xd5, 0x3a, 0x78, 0x39, 0x76, 0xbf, 0xfd, 0x95, 0xab, 0xc2, 0x24, 0x87, 0x65, 0xc1, 0x61,
+	0x11, 0x2e, 0xfc, 0x89, 0x03, 0x87, 0x1f, 0x14, 0x50, 0xca, 0xae, 0x23, 0xbc, 0x33, 0x12, 0x7d,
+	0xe4, 0x46, 0x57, 0xee, 0x5e, 0x2b, 0x56, 0xd2, 0xb9, 0x2d, 0xe8, 0x2c, 0xc3, 0xea, 0x30, 0x1d,
+	0x4f, 0xc4, 0xb7, 0xd2, 0x15, 0x6e, 0x3e, 0x3e, 0x3a, 0xd5, 0x94, 0xe3, 0x53, 0x4d, 0xf9, 0x79,
+	0xaa, 0x29, 0xef, 0xcf, 0xb4, 0xdc, 0xf1, 0x99, 0x96, 0xfb, 0x76, 0xa6, 0xe5, 0x76, 0x56, 0xaf,
+	0x52, 0x64, 0x01, 0x29, 0x76, 0x0d, 0xf5, 0x1a, 0x56, 0x51, 0xfc, 0xd1, 0xdd, 0xff, 0x1d, 0x00,
+	0x00, 0xff, 0xff, 0xa8, 0xd0, 0x52, 0x59, 0x78, 0x07, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -719,10 +541,6 @@ type QueryClient interface {
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
 	QueryPosition(ctx context.Context, in *QueryPositionRequest, opts ...grpc.CallOption) (*QueryPositionResponse, error)
 	QueryPositions(ctx context.Context, in *QueryPositionsRequest, opts ...grpc.CallOption) (*QueryPositionsResponse, error)
-	// Queries the latest cumulative premium fraction and the estimated next
-	// cumulative premium fraction.
-	CumulativePremiumFraction(ctx context.Context, in *QueryCumulativePremiumFractionRequest, opts ...grpc.CallOption) (*QueryCumulativePremiumFractionResponse, error)
-	Metrics(ctx context.Context, in *QueryMetricsRequest, opts ...grpc.CallOption) (*QueryMetricsResponse, error)
 	// Queries the reserve assets in a given pool, identified by a token pair.
 	ModuleAccounts(ctx context.Context, in *QueryModuleAccountsRequest, opts ...grpc.CallOption) (*QueryModuleAccountsResponse, error)
 }
@@ -762,24 +580,6 @@ func (c *queryClient) QueryPositions(ctx context.Context, in *QueryPositionsRequ
 	return out, nil
 }
 
-func (c *queryClient) CumulativePremiumFraction(ctx context.Context, in *QueryCumulativePremiumFractionRequest, opts ...grpc.CallOption) (*QueryCumulativePremiumFractionResponse, error) {
-	out := new(QueryCumulativePremiumFractionResponse)
-	err := c.cc.Invoke(ctx, "/nibiru.perp.v2.Query/CumulativePremiumFraction", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *queryClient) Metrics(ctx context.Context, in *QueryMetricsRequest, opts ...grpc.CallOption) (*QueryMetricsResponse, error) {
-	out := new(QueryMetricsResponse)
-	err := c.cc.Invoke(ctx, "/nibiru.perp.v2.Query/Metrics", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *queryClient) ModuleAccounts(ctx context.Context, in *QueryModuleAccountsRequest, opts ...grpc.CallOption) (*QueryModuleAccountsResponse, error) {
 	out := new(QueryModuleAccountsResponse)
 	err := c.cc.Invoke(ctx, "/nibiru.perp.v2.Query/ModuleAccounts", in, out, opts...)
@@ -795,10 +595,6 @@ type QueryServer interface {
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
 	QueryPosition(context.Context, *QueryPositionRequest) (*QueryPositionResponse, error)
 	QueryPositions(context.Context, *QueryPositionsRequest) (*QueryPositionsResponse, error)
-	// Queries the latest cumulative premium fraction and the estimated next
-	// cumulative premium fraction.
-	CumulativePremiumFraction(context.Context, *QueryCumulativePremiumFractionRequest) (*QueryCumulativePremiumFractionResponse, error)
-	Metrics(context.Context, *QueryMetricsRequest) (*QueryMetricsResponse, error)
 	// Queries the reserve assets in a given pool, identified by a token pair.
 	ModuleAccounts(context.Context, *QueryModuleAccountsRequest) (*QueryModuleAccountsResponse, error)
 }
@@ -815,12 +611,6 @@ func (*UnimplementedQueryServer) QueryPosition(ctx context.Context, req *QueryPo
 }
 func (*UnimplementedQueryServer) QueryPositions(ctx context.Context, req *QueryPositionsRequest) (*QueryPositionsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method QueryPositions not implemented")
-}
-func (*UnimplementedQueryServer) CumulativePremiumFraction(ctx context.Context, req *QueryCumulativePremiumFractionRequest) (*QueryCumulativePremiumFractionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CumulativePremiumFraction not implemented")
-}
-func (*UnimplementedQueryServer) Metrics(ctx context.Context, req *QueryMetricsRequest) (*QueryMetricsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Metrics not implemented")
 }
 func (*UnimplementedQueryServer) ModuleAccounts(ctx context.Context, req *QueryModuleAccountsRequest) (*QueryModuleAccountsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ModuleAccounts not implemented")
@@ -884,42 +674,6 @@ func _Query_QueryPositions_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_CumulativePremiumFraction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryCumulativePremiumFractionRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(QueryServer).CumulativePremiumFraction(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/nibiru.perp.v2.Query/CumulativePremiumFraction",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).CumulativePremiumFraction(ctx, req.(*QueryCumulativePremiumFractionRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Query_Metrics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryMetricsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(QueryServer).Metrics(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/nibiru.perp.v2.Query/Metrics",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).Metrics(ctx, req.(*QueryMetricsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _Query_ModuleAccounts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(QueryModuleAccountsRequest)
 	if err := dec(in); err != nil {
@@ -953,14 +707,6 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "QueryPositions",
 			Handler:    _Query_QueryPositions_Handler,
-		},
-		{
-			MethodName: "CumulativePremiumFraction",
-			Handler:    _Query_CumulativePremiumFraction_Handler,
-		},
-		{
-			MethodName: "Metrics",
-			Handler:    _Query_Metrics_Handler,
 		},
 		{
 			MethodName: "ModuleAccounts",
@@ -1214,148 +960,6 @@ func (m *QueryPositionResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryCumulativePremiumFractionRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryCumulativePremiumFractionRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryCumulativePremiumFractionRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	{
-		size := m.Pair.Size()
-		i -= size
-		if _, err := m.Pair.MarshalTo(dAtA[i:]); err != nil {
-			return 0, err
-		}
-		i = encodeVarintQuery(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0xa
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryCumulativePremiumFractionResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryCumulativePremiumFractionResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryCumulativePremiumFractionResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	{
-		size := m.EstimatedNextCumulativePremiumFraction.Size()
-		i -= size
-		if _, err := m.EstimatedNextCumulativePremiumFraction.MarshalTo(dAtA[i:]); err != nil {
-			return 0, err
-		}
-		i = encodeVarintQuery(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0x12
-	{
-		size := m.CumulativePremiumFraction.Size()
-		i -= size
-		if _, err := m.CumulativePremiumFraction.MarshalTo(dAtA[i:]); err != nil {
-			return 0, err
-		}
-		i = encodeVarintQuery(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0xa
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryMetricsRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryMetricsRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryMetricsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	{
-		size := m.Pair.Size()
-		i -= size
-		if _, err := m.Pair.MarshalTo(dAtA[i:]); err != nil {
-			return 0, err
-		}
-		i = encodeVarintQuery(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0xa
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryMetricsResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryMetricsResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryMetricsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	{
-		size, err := m.Metrics.MarshalToSizedBuffer(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = encodeVarintQuery(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0xa
-	return len(dAtA) - i, nil
-}
-
 func (m *QueryModuleAccountsRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -1562,52 +1166,6 @@ func (m *QueryPositionResponse) Size() (n int) {
 	if m.BlockNumber != 0 {
 		n += 1 + sovQuery(uint64(m.BlockNumber))
 	}
-	return n
-}
-
-func (m *QueryCumulativePremiumFractionRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = m.Pair.Size()
-	n += 1 + l + sovQuery(uint64(l))
-	return n
-}
-
-func (m *QueryCumulativePremiumFractionResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = m.CumulativePremiumFraction.Size()
-	n += 1 + l + sovQuery(uint64(l))
-	l = m.EstimatedNextCumulativePremiumFraction.Size()
-	n += 1 + l + sovQuery(uint64(l))
-	return n
-}
-
-func (m *QueryMetricsRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = m.Pair.Size()
-	n += 1 + l + sovQuery(uint64(l))
-	return n
-}
-
-func (m *QueryMetricsResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = m.Metrics.Size()
-	n += 1 + l + sovQuery(uint64(l))
 	return n
 }
 
@@ -2299,375 +1857,6 @@ func (m *QueryPositionResponse) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryCumulativePremiumFractionRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryCumulativePremiumFractionRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryCumulativePremiumFractionRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Pair", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := m.Pair.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryCumulativePremiumFractionResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryCumulativePremiumFractionResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryCumulativePremiumFractionResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field CumulativePremiumFraction", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := m.CumulativePremiumFraction.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field EstimatedNextCumulativePremiumFraction", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := m.EstimatedNextCumulativePremiumFraction.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryMetricsRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryMetricsRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryMetricsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Pair", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := m.Pair.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryMetricsResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryMetricsResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryMetricsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Metrics", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := m.Metrics.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipQuery(dAtA[iNdEx:])
