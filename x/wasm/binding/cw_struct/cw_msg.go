@@ -17,6 +17,7 @@ type BindingMsg struct {
 	RemoveMargin          *RemoveMargin          `json:"remove_margin,omitempty"`
 	DonateToInsuranceFund *DonateToInsuranceFund `json:"donate_to_insurance_fund,omitempty"` // TODO
 	PegShift              *PegShift              `json:"peg_shift,omitempty"`
+	SwapInvariantMultiply *SwapInvariantMultiply `json:"swap_invariant_multiply,omitempty"`
 }
 
 type OpenPosition struct {
@@ -58,6 +59,11 @@ type RemoveMargin struct {
 type PegShift struct {
 	Pair    string  `json:"pair"`
 	PegMult sdk.Dec `json:"peg_mult"`
+}
+
+type SwapInvariantMultiply struct {
+	Pair                    string  `json:"pair"`
+	SwapInvariantMultiplier sdk.Dec `json:"swap_invariant_mult"`
 }
 
 type DonateToInsuranceFund struct {

@@ -92,6 +92,76 @@ func (market *Market) GetRepegCost(pegCandidate sdk.Dec) (cost sdk.Dec, err erro
 }
 
 /*
+GetSwapInvariantUpdateCost returns the cost of updating the invariant of the pool
+*/
+func (market *Market) GetSwapInvariantUpdateCost(swapInvariantMultiplier sdk.Dec) (cost sdk.Dec, err error) {
+	if market.Bias.IsZero() {
+		cost = sdk.ZeroDec()
+		return
+	}
+
+	previousBiasInQuoteReserve, err := market.GetQuoteReserveByBase(market.Bias)
+	if err != nil {
+		return
+	}
+
+	newMarket, err := market.UpdateSwapInvariant(swapInvariantMultiplier)
+	if err != nil {
+		return
+	}
+
+	newBiasInQuoteReserve, err := newMarket.GetQuoteReserveByBase(market.Bias)
+	if err != nil {
+		return
+	}
+
+	cost = market.FromQuoteReserveToAsset(newBiasInQuoteReserve.Sub(previousBiasInQuoteReserve))
+
+	if swapInvariantMultiplier.IsNegative() {
+		cost = cost.Neg()
+	}
+
+	return
+}
+
+/* UpdateSwapInvariant creates a new market object with an updated swap invariant */
+func (market Market) UpdateSwapInvariant(swapInvariantMultiplier sdk.Dec) (newMarket Market, err error) {
+	if !swapInvariantMultiplier.IsPositive() {
+		err = ErrNonPositiveSwapInvariantMutliplier
+		return
+	}
+
+	// k = x * y
+	// newK = (cx) * (cy) = c^2 xy = c^2 k
+	// newPrice = (c y) / (c x) = y / x = price | unchanged price
+	swapInvariant := market.BaseReserve.Mul(market.QuoteReserve)
+	newSwapInvariant := swapInvariant.Mul(swapInvariantMultiplier)
+
+	// Change the swap invariant while holding price constant.
+	// Multiplying by the same factor to both of the reserves won't affect price.
+	cSquared := newSwapInvariant.Quo(swapInvariant)
+	c, err := common.SqrtDec(cSquared)
+	if err != nil {
+		return
+	}
+
+	newBaseAmount := c.Mul(market.BaseReserve)
+	newQuoteAmount := c.Mul(market.QuoteReserve)
+	newSqrtDepth := common.MustSqrtDec(newBaseAmount.Mul(newQuoteAmount))
+
+	newMarket = Market{
+		Pair:          market.Pair,
+		BaseReserve:   newBaseAmount,
+		QuoteReserve:  newQuoteAmount,
+		SqrtDepth:     newSqrtDepth,
+		PegMultiplier: market.PegMultiplier,
+		Config:        market.Config,
+	}
+	err = newMarket.Validate()
+	return
+}
+
+/*
 GetQuoteReserveByBase returns the amount of quote asset you will get out
 by giving a specified amount of base asset
 

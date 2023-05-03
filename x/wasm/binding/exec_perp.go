@@ -143,3 +143,23 @@ func (exec *ExecutorPerp) PegShift(
 		cwMsg.PegMult,
 	)
 }
+
+func (exec *ExecutorPerp) SwapInvariantMultiply(
+	cwMsg *cw_struct.SwapInvariantMultiply, contractAddr sdk.AccAddress, ctx sdk.Context,
+) (err error) {
+	if cwMsg == nil {
+		return wasmvmtypes.InvalidRequest{Err: "null pool swap invariant multiplier msg"}
+	}
+
+	pair, err := asset.TryNewPair(cwMsg.Pair)
+	if err != nil {
+		return err
+	}
+
+	return exec.Perp.EditPoolSwapInvariant(
+		ctx,
+		contractAddr,
+		pair,
+		cwMsg.SwapInvariantMultiplier,
+	)
+}

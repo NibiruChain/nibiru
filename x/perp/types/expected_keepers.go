@@ -104,6 +104,7 @@ type PerpAmmKeeper interface {
 	GetLastSnapshot(ctx sdk.Context, pool perpammtypes.Market) (perpammtypes.ReserveSnapshot, error)
 
 	EditPoolPegMultiplier(ctx sdk.Context, pair asset.Pair, pegMultiplier sdk.Dec) error
+	EditSwapInvariant(ctx sdk.Context, pair asset.Pair, multiplier sdk.Dec) error
 }
 
 type EpochKeeper interface {

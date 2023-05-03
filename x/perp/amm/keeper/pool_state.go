@@ -119,45 +119,17 @@ func (k Keeper) EditPoolConfig(
 
 func (k Keeper) EditSwapInvariant(
 	ctx sdk.Context,
-	swapInvariantMap types.EditSwapInvariantsProposal_SwapInvariantMultiple,
+	pair asset.Pair,
+	swapInvariantMultiplier sdk.Dec,
 ) error {
-	if err := swapInvariantMap.Validate(); err != nil {
-		return err
-	}
-
 	// Grab current pool from state
-	market, err := k.Pools.Get(ctx, swapInvariantMap.Pair)
+	market, err := k.Pools.Get(ctx, pair)
 	if err != nil {
 		return err
 	}
 
-	// k = x * y
-	// newK = (cx) * (cy) = c^2 xy = c^2 k
-	// newPrice = (c y) / (c x) = y / x = price | unchanged price
-	swapInvariant := market.BaseReserve.Mul(market.QuoteReserve)
-	newSwapInvariant := swapInvariant.Mul(swapInvariantMap.Multiplier)
-
-	// Change the swap invariant while holding price constant.
-	// Multiplying by the same factor to both of the reserves won't affect price.
-	cSquared := newSwapInvariant.Quo(swapInvariant)
-	c, err := common.SqrtDec(cSquared)
+	newMarket, err := market.UpdateSwapInvariant(swapInvariantMultiplier)
 	if err != nil {
-		return err
-	}
-
-	newBaseAmount := c.Mul(market.BaseReserve)
-	newQuoteAmount := c.Mul(market.QuoteReserve)
-	newSqrtDepth := common.MustSqrtDec(newBaseAmount.Mul(newQuoteAmount))
-
-	newMarket := types.Market{
-		Pair:          market.Pair,
-		BaseReserve:   newBaseAmount,
-		QuoteReserve:  newQuoteAmount,
-		SqrtDepth:     newSqrtDepth,
-		PegMultiplier: market.PegMultiplier,
-		Config:        market.Config,
-	}
-	if err := newMarket.Validate(); err != nil {
 		return err
 	}
 

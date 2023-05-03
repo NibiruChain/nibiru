@@ -518,10 +518,7 @@ func TestEditSwapInvariant(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			perpammKeeper, ctx := setupTest()
 			if tc.shouldErr {
-				err := perpammKeeper.EditSwapInvariant(ctx,
-					types.EditSwapInvariantsProposal_SwapInvariantMultiple{
-						Pair: pair, Multiplier: tc.swapInvariantMultiplier,
-					})
+				err := perpammKeeper.EditSwapInvariant(ctx, pair, tc.swapInvariantMultiplier)
 				// We expect the initial config if the change fails
 				assert.Error(t, err)
 				market, err := perpammKeeper.Pools.Get(ctx, pair)
@@ -530,17 +527,11 @@ func TestEditSwapInvariant(t *testing.T) {
 				assert.EqualValues(t, marketStart.QuoteReserve, market.QuoteReserve)
 			} else if tc.shouldPanic {
 				require.Panics(t, func() {
-					err := perpammKeeper.EditSwapInvariant(ctx,
-						types.EditSwapInvariantsProposal_SwapInvariantMultiple{
-							Pair: pair, Multiplier: tc.swapInvariantMultiplier,
-						})
+					err := perpammKeeper.EditSwapInvariant(ctx, pair, tc.swapInvariantMultiplier)
 					require.Error(t, err)
 				})
 			} else {
-				err := perpammKeeper.EditSwapInvariant(ctx,
-					types.EditSwapInvariantsProposal_SwapInvariantMultiple{
-						Pair: pair, Multiplier: tc.swapInvariantMultiplier,
-					})
+				err := perpammKeeper.EditSwapInvariant(ctx, pair, tc.swapInvariantMultiplier)
 				// We expect the new config if the change succeeds
 				require.NoError(t, err)
 				market, err := perpammKeeper.Pools.Get(ctx, pair)

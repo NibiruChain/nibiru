@@ -186,6 +186,17 @@ func (s *TestSuitePerpExecutor) DoPegShiftTest(pair asset.Pair) error {
 	return err
 }
 
+func (s *TestSuitePerpExecutor) DoSwapInvariantMultiplyTest(pair asset.Pair) error {
+	contractAddr := s.contractPerp
+	cwMsg := &cw_struct.SwapInvariantMultiply{
+		Pair:                    pair.String(),
+		SwapInvariantMultiplier: sdk.NewDec(420),
+	}
+
+	err := s.exec.SwapInvariantMultiply(cwMsg, contractAddr, s.ctx)
+	return err
+}
+
 func (s *TestSuitePerpExecutor) TestSadPaths_Nil() {
 	var err error
 
@@ -204,6 +215,10 @@ func (s *TestSuitePerpExecutor) TestSadPaths_Nil() {
 	err = s.exec.PegShift(
 		nil, sdk.AccAddress([]byte("contract")), s.ctx)
 	s.Error(err)
+
+	err = s.exec.SwapInvariantMultiply(
+		nil, sdk.AccAddress([]byte("contract")), s.ctx)
+	s.Error(err)
 }
 
 func (s *TestSuitePerpExecutor) TestSadPaths_InvalidPair() {
@@ -217,6 +232,7 @@ func (s *TestSuitePerpExecutor) TestSadPaths_InvalidPair() {
 		s.DoRemoveMarginTest(pair, margin),
 		s.DoClosePositionTest(pair),
 		s.DoPegShiftTest(pair),
+		s.DoSwapInvariantMultiplyTest(pair),
 	} {
 		s.Error(err)
 	}
