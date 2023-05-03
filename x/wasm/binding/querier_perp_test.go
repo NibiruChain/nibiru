@@ -92,8 +92,8 @@ func (s *TestSuitePerpQuerier) SetupSuite() {
 		Time:    time.Now().UTC(),
 	})
 	coins := sdk.NewCoins(
-		sdk.NewCoin(denoms.NIBI, sdk.NewInt(1_000)),
-		sdk.NewCoin(denoms.NUSD, sdk.NewInt(420)),
+		sdk.NewCoin(denoms.NIBI, sdk.NewInt(10_000_000)),
+		sdk.NewCoin(denoms.NUSD, sdk.NewInt(1_420_000)),
 	)
 	s.NoError(testapp.FundAccount(nibiru.BankKeeper, ctx, sender, coins))
 
@@ -259,7 +259,7 @@ func (s *TestSuitePerpQuerier) TestModuleParams() {
 func (s *TestSuitePerpQuerier) TestPosition() {
 	trader := s.contractDeployer
 	pair := genesis.PerpAmmGenesis().Markets[0].Pair
-	margin := sdk.NewInt(69)
+	margin := sdk.NewInt(1_000_000)
 	leverage := sdk.NewDec(5)
 	baseAmtLimit := sdk.ZeroDec()
 
