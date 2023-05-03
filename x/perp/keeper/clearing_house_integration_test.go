@@ -519,6 +519,16 @@ func TestOpenPositionError(t *testing.T) {
 			expectedErr:         sdkerrors.ErrInsufficientFunds,
 		},
 		{
+			name:                "minimum position of 1 USD",
+			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1_000)),
+			poolTradeLimitRatio: sdk.OneDec(),
+			side:                perpammtypes.Direction_LONG,
+			margin:              sdk.NewInt(1_000),
+			leverage:            sdk.NewDec(10),
+			baseLimit:           sdk.ZeroDec(),
+			expectedErr:         perptypes.ErrQuoteAmountIsTooSmall,
+		},
+		{
 			name:                "position has bad debt",
 			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 999)),
 			poolTradeLimitRatio: sdk.OneDec(),
