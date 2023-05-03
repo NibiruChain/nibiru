@@ -180,10 +180,6 @@ func NewMarket(args ArgsNewMarket) Market {
 }
 
 func (market *Market) ComputeSqrtDepth() (sqrtDepth sdk.Dec, err error) {
-	bitlen := 315
-	maxValue := new(big.Int).Lsh(big.NewInt(1), uint(bitlen)) // 2^bitlen
-	maxValue.Sub(maxValue, big.NewInt(1))                     // 2^bitlen - 1
-
 	mul := new(big.Int).Mul(market.BaseReserve.BigInt(), market.BaseReserve.BigInt())
 
 	chopped := common.ChopPrecisionAndRound(mul)
