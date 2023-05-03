@@ -252,7 +252,7 @@ func (k Keeper) increasePosition(
 ) (updatedAMM *v2types.AMM, positionResp *v2types.PositionResp, err error) {
 	positionResp = &v2types.PositionResp{}
 
-	updatedAMM, baseAssetDeltaAbs, err := k.SwapQuoteAsset(
+	baseAssetDeltaAbs, err := k.SwapQuoteAsset(
 		ctx,
 		market,
 		amm,
@@ -392,7 +392,7 @@ func (k Keeper) decreasePosition(
 	}
 	currentUnrealizedPnl := UnrealizedPnl(currentPosition, currentPositionNotional)
 
-	updatedAMM, baseAssetDeltaAbs, err := k.SwapQuoteAsset(
+	baseAssetDeltaAbs, err := k.SwapQuoteAsset(
 		ctx,
 		market,
 		amm,
@@ -634,7 +634,7 @@ func (k Keeper) closePositionEntirely(
 	} else {
 		sideToTake = v2types.Direction_LONG
 	}
-	updatedAMM, exchangedNotionalValue, err := k.SwapBaseAsset(
+	exchangedNotionalValue, err := k.SwapBaseAsset(
 		ctx,
 		market,
 		amm,

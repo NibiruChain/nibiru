@@ -138,7 +138,7 @@ func CreateTestFixture(t *testing.T) TestFixture {
 
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
-	ctx := sdk.NewContext(ms, tmproto.Header{Time: time.Now().UTC()}, false, log.NewNopLogger())
+	ctx := sdk.NewContext(ms, tmproto.Header{Time: time.Now().UTC(), Height: 1}, false, log.NewNopLogger())
 	encodingConfig := MakeEncodingConfig(t)
 	appCodec, legacyAmino := encodingConfig.Marshaler, encodingConfig.Amino
 

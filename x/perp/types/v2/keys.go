@@ -11,7 +11,7 @@ var (
 	// StoreKey defines the primary module store key.
 	StoreKey = ModuleName
 
-	MemStoreKey = "mem_perp"
+	MemStoreKey = "mem_v2perp"
 
 	// RouterKey is the message route for perp.
 	RouterKey = ModuleName
