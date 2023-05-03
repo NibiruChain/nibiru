@@ -731,8 +731,8 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 				require.NoError(t, nibiruApp.PerpAmmKeeper.CreatePool(
 					ctx,
 					pair,
-					sdk.NewDec(5*common.TO_MICRO), //
-					sdk.NewDec(5*common.TO_MICRO), // 5 tokens
+					sdk.NewDec(500*common.TO_MICRO), //
+					sdk.NewDec(500*common.TO_MICRO), // 5 tokens
 					perpammtypes.MarketConfig{
 						FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 						MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -748,9 +748,9 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 				t.Log("Attempt to open long position (expected unsuccessful)")
 				trader := testutil.AccAddress()
 				side := perpammtypes.Direction_LONG
-				quote := sdk.NewInt(60)
+				quote := sdk.NewInt(1_000_000)
 				leverage := sdk.NewDec(10)
-				baseLimit := sdk.NewDec(150)
+				baseLimit := sdk.NewDec(0)
 				resp, err := nibiruApp.PerpKeeper.OpenPosition(
 					ctx, pair, side, trader, quote, leverage, baseLimit)
 				require.ErrorIs(t, err, collections.ErrNotFound)
