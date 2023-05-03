@@ -56,23 +56,23 @@ func (k Keeper) SwapQuoteAsset(
 	dir v2types.Direction,
 	quoteAssetAmt sdk.Dec,
 	baseAssetLimit sdk.Dec,
-) (baseAssetDelta sdk.Dec, err error) {
+) (updatedAMM *v2types.AMM, baseAssetDelta sdk.Dec, err error) {
 	if !quoteAssetAmt.IsPositive() {
-		return sdk.ZeroDec(), nil
+		return &amm, sdk.ZeroDec(), nil
 	}
 
 	baseAssetDelta, err = amm.SwapQuoteAsset(quoteAssetAmt, dir)
 	if err != nil {
-		return sdk.Dec{}, err
+		return nil, sdk.Dec{}, err
 	}
 
 	if err := checkUserLimits(baseAssetLimit, baseAssetDelta, dir); err != nil {
-		return sdk.Dec{}, err
+		return nil, sdk.Dec{}, err
 	}
 
 	k.AMMs.Insert(ctx, amm.Pair, amm)
 
-	return baseAssetDelta, nil
+	return &amm, baseAssetDelta, nil
 }
 
 /*
@@ -99,21 +99,21 @@ func (k Keeper) SwapBaseAsset(
 	dir v2types.Direction,
 	baseAssetAmt sdk.Dec,
 	quoteAssetLimit sdk.Dec,
-) (quoteAssetDelta sdk.Dec, err error) {
+) (updatedAMM *v2types.AMM, quoteAssetDelta sdk.Dec, err error) {
 	if baseAssetAmt.IsZero() {
-		return sdk.ZeroDec(), nil
+		return &amm, sdk.ZeroDec(), nil
 	}
 
 	quoteAssetDelta, err = amm.SwapBaseAsset(baseAssetAmt, dir)
 	if err != nil {
-		return sdk.Dec{}, err
+		return nil, sdk.Dec{}, err
 	}
 
 	if err := checkUserLimits(quoteAssetLimit, quoteAssetDelta, dir); err != nil {
-		return sdk.Dec{}, err
+		return nil, sdk.Dec{}, err
 	}
 
 	k.AMMs.Insert(ctx, amm.Pair, amm)
 
-	return quoteAssetDelta, err
+	return &amm, quoteAssetDelta, err
 }

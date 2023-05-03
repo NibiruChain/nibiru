@@ -251,8 +251,11 @@ func (k Keeper) increasePosition(
 	leverage sdk.Dec,
 ) (updatedAMM *v2types.AMM, positionResp *v2types.PositionResp, err error) {
 	positionResp = &v2types.PositionResp{}
+	marginDelta := increasedNotional.Quo(leverage)
+	fundingPayment := FundingPayment(currentPosition, market.LatestCumulativePremiumFraction)
+	remainingMarginSigned := currentPosition.Margin.Add(marginDelta).Sub(fundingPayment)
 
-	baseAssetDeltaAbs, err := k.SwapQuoteAsset(
+	updatedAMM, baseAssetDeltaAbs, err := k.SwapQuoteAsset(
 		ctx,
 		market,
 		amm,
@@ -264,25 +267,19 @@ func (k Keeper) increasePosition(
 		return nil, nil, err
 	}
 
-	marginDelta := increasedNotional.Quo(leverage)
-	fundingPayment := FundingPayment(currentPosition, market.LatestCumulativePremiumFraction)
-	remainingMarginSigned := currentPosition.Margin.Add(marginDelta).Sub(fundingPayment)
-
-	positionNotional, err := PositionNotionalSpot(amm, currentPosition)
-	if err != nil {
-		return nil, nil, err
-	}
-	unrealizedPnl := UnrealizedPnl(currentPosition, positionNotional)
-
 	if side == v2types.Direction_LONG {
 		positionResp.ExchangedPositionSize = baseAssetDeltaAbs
 	} else if side == v2types.Direction_SHORT {
 		positionResp.ExchangedPositionSize = baseAssetDeltaAbs.Neg()
 	}
 
+	positionNotional, err := PositionNotionalSpot(amm, currentPosition)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	positionResp.ExchangedNotionalValue = increasedNotional
 	positionResp.PositionNotional = positionNotional.Add(increasedNotional)
-	positionResp.UnrealizedPnlAfter = unrealizedPnl
 	positionResp.RealizedPnl = sdk.ZeroDec()
 	positionResp.MarginToVault = marginDelta
 	positionResp.FundingPayment = fundingPayment
@@ -296,6 +293,7 @@ func (k Keeper) increasePosition(
 		LatestCumulativePremiumFraction: market.LatestCumulativePremiumFraction,
 		LastUpdatedBlockNumber:          ctx.BlockHeight(),
 	}
+	positionResp.UnrealizedPnlAfter = UnrealizedPnl(*positionResp.Position, positionResp.PositionNotional)
 
 	return updatedAMM, positionResp, nil
 }
@@ -392,7 +390,7 @@ func (k Keeper) decreasePosition(
 	}
 	currentUnrealizedPnl := UnrealizedPnl(currentPosition, currentPositionNotional)
 
-	baseAssetDeltaAbs, err := k.SwapQuoteAsset(
+	updatedAMM, baseAssetDeltaAbs, err := k.SwapQuoteAsset(
 		ctx,
 		market,
 		amm,
@@ -634,7 +632,7 @@ func (k Keeper) closePositionEntirely(
 	} else {
 		sideToTake = v2types.Direction_LONG
 	}
-	exchangedNotionalValue, err := k.SwapBaseAsset(
+	updatedAMM, exchangedNotionalValue, err := k.SwapBaseAsset(
 		ctx,
 		market,
 		amm,

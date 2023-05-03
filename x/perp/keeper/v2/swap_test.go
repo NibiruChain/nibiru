@@ -91,7 +91,7 @@ func TestSwapQuoteAsset(t *testing.T) {
 			market := mock.TestMarket()
 			amm := mock.TestAMMDefault().WithPriceMultiplier(sdk.NewDec(2))
 
-			baseAmt, err := app.PerpKeeperV2.SwapQuoteAsset(
+			updatedAMM, baseAmt, err := app.PerpKeeperV2.SwapQuoteAsset(
 				ctx,
 				*market,
 				*amm,
@@ -106,9 +106,8 @@ func TestSwapQuoteAsset(t *testing.T) {
 				require.NoError(t, err)
 				assert.EqualValuesf(t, tc.expectedBaseAssetDelta, baseAmt, "base amount mismatch")
 
-				t.Log("assert market")
 				require.NoError(t, err)
-				assert.Equal(t, *tc.expectedAMM, *amm)
+				assert.Equal(t, *tc.expectedAMM, *updatedAMM)
 			}
 		})
 	}
@@ -193,9 +192,8 @@ func TestSwapBaseAsset(t *testing.T) {
 			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 			market := mock.TestMarket()
 			amm := mock.TestAMMDefault().WithPriceMultiplier(sdk.NewDec(2))
-			app.OracleKeeper.SetPrice(ctx, market.Pair, sdk.NewDec(2))
 
-			quoteAssetAmount, err := app.PerpKeeperV2.SwapBaseAsset(
+			updatedAMM, quoteAssetAmount, err := app.PerpKeeperV2.SwapBaseAsset(
 				ctx,
 				*market,
 				*amm,
@@ -211,7 +209,7 @@ func TestSwapBaseAsset(t *testing.T) {
 				assert.EqualValuesf(t, tc.expectedQuoteAssetDelta, quoteAssetAmount,
 					"expected %s; got %s", tc.expectedQuoteAssetDelta.String(), quoteAssetAmount.String())
 
-				assert.Equal(t, *tc.expectedAMM, *amm)
+				assert.Equal(t, *tc.expectedAMM, *updatedAMM)
 			}
 		})
 	}
