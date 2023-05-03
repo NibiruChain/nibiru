@@ -19,4 +19,5 @@ var (
 		"liquidity depth must be positive and equal to the square of the reserves")
 	ErrNonPositivePegMultiplier           = sdkerrors.Register(ModuleName, 12, "peg multiplier must be > 0")
 	ErrNonPositiveSwapInvariantMutliplier = sdkerrors.Register(ModuleName, 13, "swap multiplier must be > 0")
+	ErrNilSwapInvariantMutliplier         = sdkerrors.Register(ModuleName, 14, "swap multiplier must be not nil")
 )

@@ -64,5 +64,11 @@
       "pair": "ETH:USD",
       "peg_mult": "420"
     }
+  },
+  "swap_invariant_multiply": {
+    "swap_invariant_multiply": {
+      "pair": "ETH:USD",
+      "swap_invariant_mult": "2"
+    }
   }
 }

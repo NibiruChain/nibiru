@@ -126,6 +126,11 @@ func (market *Market) GetSwapInvariantUpdateCost(swapInvariantMultiplier sdk.Dec
 
 /* UpdateSwapInvariant creates a new market object with an updated swap invariant */
 func (market Market) UpdateSwapInvariant(swapInvariantMultiplier sdk.Dec) (newMarket Market, err error) {
+	if swapInvariantMultiplier.IsNil() {
+		err = ErrNilSwapInvariantMutliplier
+		return
+	}
+
 	if !swapInvariantMultiplier.IsPositive() {
 		err = ErrNonPositiveSwapInvariantMutliplier
 		return
