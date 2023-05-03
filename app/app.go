@@ -123,7 +123,9 @@ import (
 	perpammcli "github.com/NibiruChain/nibiru/x/perp/amm/cli"
 	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
+	perpkeeperv2 "github.com/NibiruChain/nibiru/x/perp/keeper/v2"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
+	perptypesv2 "github.com/NibiruChain/nibiru/x/perp/types/v2"
 
 	"github.com/NibiruChain/nibiru/x/spot"
 	spotkeeper "github.com/NibiruChain/nibiru/x/spot/keeper"
@@ -293,6 +295,7 @@ type NibiruApp struct {
 	EpochsKeeper     epochskeeper.Keeper
 	PerpKeeper       perpkeeper.Keeper
 	PerpAmmKeeper    perpammkeeper.Keeper
+	PerpKeeperV2     perpkeeperv2.Keeper
 	SpotKeeper       spotkeeper.Keeper
 	OracleKeeper     oraclekeeper.Keeper
 	StablecoinKeeper stablecoinkeeper.Keeper
@@ -640,6 +643,7 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(epochstypes.ModuleName)
 	paramsKeeper.Subspace(stablecointypes.ModuleName)
 	paramsKeeper.Subspace(perptypes.ModuleName)
+	paramsKeeper.Subspace(perptypesv2.ModuleName)
 	paramsKeeper.Subspace(inflationtypes.ModuleName)
 	// ibc params keepers
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
