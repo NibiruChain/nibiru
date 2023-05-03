@@ -11,7 +11,12 @@ import (
 
 // EditPoolPegMultiplier edits the peg multiplier of an amm pool after making sure there's enough money in the perp
 // EF fund to pay for the repeg. These funds get send to the vault to pay for trader's new net margin.
-func (k Keeper) EditPoolPegMultiplier(ctx sdk.Context, sender sdk.AccAddress, pair asset.Pair, pegMultiplier sdk.Dec) (err error) {
+func (k Keeper) EditPoolPegMultiplier(
+	ctx sdk.Context,
+	sender sdk.AccAddress,
+	pair asset.Pair,
+	pegMultiplier sdk.Dec,
+) (err error) {
 	if !k.isWhitelisted(ctx, sender) {
 		return fmt.Errorf("address is not whitelisted to update peg multiplier: %s", sender)
 	}
@@ -78,5 +83,6 @@ func (k Keeper) EditPoolPegMultiplier(ctx sdk.Context, sender sdk.AccAddress, pa
 
 func (k Keeper) isWhitelisted(ctx sdk.Context, addr sdk.AccAddress) bool {
 	// TODO(realu): connect that to the admin role in smart contract
+	// See https://www.notion.so/nibiru/Nibi-Perps-Admin-ADR-ad38991fffd34e7798618731be0fa922?pvs=4
 	return true
 }
