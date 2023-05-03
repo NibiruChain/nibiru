@@ -198,18 +198,18 @@ func (s *IntegrationTestSuite) TestMultiLiquidate() {
 	_, err := testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[2], []string{
 		"buy",
 		asset.Registry.Pair(denoms.ATOM, denoms.NUSD).String(),
-		"15",    // Leverage
-		"90000", // Quote asset amount
-		"0",     // Base asset limit
+		"15",      // Leverage
+		"9000000", // Quote asset amount
+		"0",       // Base asset limit
 	})
 	s.Require().NoError(err)
 
 	_, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[3], []string{
 		"buy",
 		asset.Registry.Pair(denoms.OSMO, denoms.NUSD).String(),
-		"15",    // Leverage
-		"90000", // Quote asset amount
-		"0",     // Base asset limit
+		"15",      // Leverage
+		"9000000", // Quote asset amount
+		"0",       // Base asset limit
 	})
 	s.NoError(err)
 
@@ -290,7 +290,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 		"buy",
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 		/* leverage */ "1",
-		/* quoteAmt */ "1000000", // 10^6 uNUSD
+		/* quoteAmt */ "2000000", // 2*10^6 uNUSD
 		/* baseAssetLimit */ "1"},
 	)
 	s.NoError(err)
@@ -300,8 +300,8 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	reserveAssets, err = testutilcli.QueryMarketReserveAssets(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 	s.T().Logf("reserve assets: %+v", reserveAssets)
 	s.NoError(err)
-	s.EqualValues(sdk.MustNewDecFromStr("9999833.336111064815586407"), reserveAssets.BaseReserve)
-	s.EqualValues(sdk.MustNewDecFromStr("10000166.666666666666666667"), reserveAssets.QuoteReserve)
+	s.EqualValues(sdk.MustNewDecFromStr("9999666.677777407419752675"), reserveAssets.BaseReserve)
+	s.EqualValues(sdk.MustNewDecFromStr("10000333.333333333333333333"), reserveAssets.QuoteReserve)
 
 	s.T().Log("B. check trader position")
 	queryResp, err := testutilcli.QueryPosition(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
@@ -309,11 +309,11 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.T().Logf("query response: %+v", queryResp)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
 	s.EqualValues(asset.Registry.Pair(denoms.BTC, denoms.NUSD), queryResp.Position.Pair)
-	s.EqualValues(sdk.MustNewDecFromStr("166.663888935184413593"), queryResp.Position.Size_)
-	s.EqualValues(sdk.NewDec(1*common.TO_MICRO), queryResp.Position.Margin)
-	s.EqualValues(sdk.NewDec(1*common.TO_MICRO), queryResp.Position.OpenNotional)
-	s.EqualValues(sdk.MustNewDecFromStr("1000000.000000000000002000"), queryResp.PositionNotional)
-	s.EqualValues(sdk.MustNewDecFromStr("0.000000000000002000"), queryResp.UnrealizedPnl)
+	s.EqualValues(sdk.MustNewDecFromStr("333.322222592580247325"), queryResp.Position.Size_)
+	s.EqualValues(sdk.NewDec(2*common.TO_MICRO), queryResp.Position.Margin)
+	s.EqualValues(sdk.NewDec(2*common.TO_MICRO), queryResp.Position.OpenNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("1999999.999999999999998000"), queryResp.PositionNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000002000"), queryResp.UnrealizedPnl)
 	s.EqualValues(sdk.NewDec(1), queryResp.MarginRatioMark)
 	s.EqualValues(sdk.NewDec(1), queryResp.MarginRatioIndex)
 
@@ -322,7 +322,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 		"buy",
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 		/* leverage */ "2",
-		/* quoteAmt */ "1000000", // 10^6 uNUSD
+		/* quoteAmt */ "2000000", // 2*10^6 uNUSD
 		/* baseAmtLimit */ "0",
 	})
 	s.NoError(err)
@@ -334,11 +334,11 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.T().Logf("query response: %+v", queryResp)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
 	s.EqualValues(asset.Registry.Pair(denoms.BTC, denoms.NUSD), queryResp.Position.Pair)
-	s.EqualValues(sdk.MustNewDecFromStr("499.975001249937503124"), queryResp.Position.Size_)
-	s.EqualValues(sdk.NewDec(2*common.TO_MICRO), queryResp.Position.Margin)
-	s.EqualValues(sdk.NewDec(3*common.TO_MICRO), queryResp.Position.OpenNotional)
-	s.EqualValues(sdk.MustNewDecFromStr("2999999.999999999999994000"), queryResp.PositionNotional)
-	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000006000"), queryResp.UnrealizedPnl)
+	s.EqualValues(sdk.MustNewDecFromStr("999.900009999000099990"), queryResp.Position.Size_)
+	s.EqualValues(sdk.NewDec(4*common.TO_MICRO), queryResp.Position.Margin)
+	s.EqualValues(sdk.NewDec(6*common.TO_MICRO), queryResp.Position.OpenNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("6000000.000000000000000000"), queryResp.PositionNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("0.000000000000000000"), queryResp.UnrealizedPnl)
 	s.EqualValues(sdk.MustNewDecFromStr("0.666666666666666667"), queryResp.MarginRatioMark)
 
 	s.T().Log("D. Open a reverse position smaller than the existing position")
@@ -346,8 +346,8 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 		"sell",
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 		/* leverage */ "1",
-		/* quoteAmt */ "100", // 100 uNUSD
-		/* baseAssetLimit */ "1",
+		/* quoteAmt */ "1000000", // 100 uNUSD
+		/* baseAssetLimit */ "0",
 	})
 	s.NoError(err)
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
@@ -356,8 +356,8 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	reserveAssets, err = testutilcli.QueryMarketReserveAssets(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 	s.NoError(err)
 	s.T().Logf(" \n reserve assets: %+v \n", reserveAssets)
-	s.EqualValues(sdk.MustNewDecFromStr("9999500.041663750215262155"), reserveAssets.BaseReserve)
-	s.EqualValues(sdk.MustNewDecFromStr("10000499.983333333333333333"), reserveAssets.QuoteReserve)
+	s.EqualValues(sdk.MustNewDecFromStr("9999166.736105324556286976"), reserveAssets.BaseReserve)
+	s.EqualValues(sdk.MustNewDecFromStr("10000833.333333333333333333"), reserveAssets.QuoteReserve)
 
 	s.T().Log("D. Check trader position")
 	queryResp, err = testutilcli.QueryPosition(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
@@ -365,19 +365,19 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.T().Logf("query response: %+v", queryResp)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
 	s.EqualValues(asset.Registry.Pair(denoms.BTC, denoms.NUSD), queryResp.Position.Pair)
-	s.EqualValues(sdk.MustNewDecFromStr("499.958336249784737845"), queryResp.Position.Size_)
-	s.EqualValues(sdk.NewDec(2*common.TO_MICRO), queryResp.Position.Margin)
-	s.EqualValues(sdk.NewDec(2_999_900), queryResp.Position.OpenNotional)
-	s.EqualValues(sdk.MustNewDecFromStr("2999899.999999999999992000"), queryResp.PositionNotional)
-	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000008000"), queryResp.UnrealizedPnl)
-	s.EqualValues(sdk.MustNewDecFromStr("0.666688889629654322"), queryResp.MarginRatioMark)
+	s.EqualValues(sdk.MustNewDecFromStr("833.263894675443713024"), queryResp.Position.Size_)
+	s.EqualValues(sdk.NewDec(4*common.TO_MICRO), queryResp.Position.Margin)
+	s.EqualValues(sdk.NewDec(5_000_000), queryResp.Position.OpenNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("4999999.999999999999998000"), queryResp.PositionNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000002000"), queryResp.UnrealizedPnl)
+	s.EqualValues(sdk.MustNewDecFromStr("0.800000000000000000"), queryResp.MarginRatioMark)
 
 	s.T().Log("E. Open a reverse position larger than the existing position")
 	txResp, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), user, []string{
 		"sell",
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 		/* leverage */ "1",
-		/* quoteAmt */ "4000000", // 4*10^6 uNUSD
+		/* quoteAmt */ "8000000", // 8*10^6 uNUSD
 		/* baseAssetLimit */ "0",
 	})
 	s.NoError(err)
@@ -389,11 +389,11 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.T().Logf("query response: %+v", queryResp)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
 	s.EqualValues(asset.Registry.Pair(denoms.BTC, denoms.NUSD), queryResp.Position.Pair)
-	s.EqualValues(sdk.MustNewDecFromStr("-166.686111713005402947"), queryResp.Position.Size_)
-	s.EqualValues(sdk.MustNewDecFromStr("1000100.000000000000008000"), queryResp.Position.OpenNotional)
-	s.EqualValues(sdk.MustNewDecFromStr("1000100.000000000000008000"), queryResp.Position.Margin)
-	s.EqualValues(sdk.MustNewDecFromStr("1000100.000000000000010000"), queryResp.PositionNotional)
-	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000002000"), queryResp.UnrealizedPnl)
+	s.EqualValues(sdk.MustNewDecFromStr("-500.025001250062503125"), queryResp.Position.Size_)
+	s.EqualValues(sdk.MustNewDecFromStr("3000000.000000000000002000"), queryResp.Position.OpenNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("3000000.000000000000002000"), queryResp.Position.Margin)
+	s.EqualValues(sdk.MustNewDecFromStr("3000000.000000000000000000"), queryResp.PositionNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("0.000000000000002000"), queryResp.UnrealizedPnl)
 	// there is a random delta due to twap margin ratio calculation and random block times in the in-process network
 	s.InDelta(1, queryResp.MarginRatioMark.MustFloat64(), 0.008)
 
@@ -445,8 +445,8 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 	_, err := testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[0], []string{
 		"buy",
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
-		"10", // Leverage
-		"10", // Quote asset amount
+		"10",      // Leverage
+		"1000000", // Quote asset amount
 		"0",
 	})
 	s.NoError(err)
@@ -455,7 +455,7 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 	s.T().Log("removing margin on user 0....")
 	_, err = testutilcli.ExecTx(s.network, cli.RemoveMarginCmd(), s.users[0], []string{
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
-		fmt.Sprintf("%s%s", "100", denoms.NUSD),
+		fmt.Sprintf("%s%s", "10000000", denoms.NUSD),
 	})
 	s.Contains(err.Error(), perptypes.ErrFailedRemoveMarginCanCauseBadDebt.Error())
 
@@ -474,8 +474,8 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 	txResp, err := testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[1], []string{
 		"buy",
 		asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
-		"10",    // Leverage
-		"10000", // Quote asset amount
+		"10",      // Leverage
+		"1000000", // Quote asset amount
 		"0.0000001",
 	})
 	s.Require().NoError(err)
@@ -493,7 +493,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 				fmt.Sprintf("10000%s", denoms.NUSD),
 			},
 			expectedCode:   0,
-			expectedMargin: sdk.NewDec(20_000),
+			expectedMargin: sdk.NewDec(1_010_000),
 		},
 		{
 			name: "FAIL: position not found",

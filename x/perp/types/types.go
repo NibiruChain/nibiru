@@ -30,6 +30,7 @@ var (
 	ErrUnauthorized                      = sdkerrors.Register(ModuleName, 9, "operation not authorized")
 	ErrAllLiquidationsFailed             = sdkerrors.Register(ModuleName, 10, "all liquidations failed")
 	ErrNotEnoughFundToPayRepeg           = sdkerrors.Register(ModuleName, 11, "not enough fund in perp EF to pay for repeg")
+	ErrQuoteAmountIsTooSmall             = sdkerrors.Register(ModuleName, 12, "quote amount should be bigger than 1000000")
 )
 
 func ZeroPosition(ctx sdk.Context, tokenPair asset.Pair, traderAddr sdk.AccAddress) Position {

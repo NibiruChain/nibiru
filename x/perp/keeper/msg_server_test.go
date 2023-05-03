@@ -272,7 +272,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 		},
 		{
 			name:        "success",
-			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1020)),
+			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1_020_000)),
 			pair:        asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			sender:      testutil.AccAddress().String(),
 			expectedErr: nil,
@@ -290,8 +290,8 @@ func TestMsgServerOpenPosition(t *testing.T) {
 			assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 				/* ctx */ ctx,
 				/* pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO),
-				/* baseReserve */ sdk.NewDec(1*common.TO_MICRO),
+				/* quoteReserve */ sdk.NewDec(500*common.TO_MICRO),
+				/* baseReserve */ sdk.NewDec(500*common.TO_MICRO),
 				perpammtypes.MarketConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.OneDec(),
@@ -320,7 +320,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 				Sender:               tc.sender,
 				Pair:                 tc.pair,
 				Side:                 perpammtypes.Direction_LONG,
-				QuoteAssetAmount:     sdk.NewInt(1000),
+				QuoteAssetAmount:     sdk.NewInt(1_000_000),
 				Leverage:             sdk.NewDec(10),
 				BaseAssetAmountLimit: sdk.ZeroInt(),
 			})
@@ -333,18 +333,18 @@ func TestMsgServerOpenPosition(t *testing.T) {
 				require.NotNil(t, resp)
 				assert.EqualValues(t, tc.pair, resp.Position.Pair.String())
 				assert.EqualValues(t, tc.sender, resp.Position.TraderAddress)
-				assert.EqualValues(t, sdk.MustNewDecFromStr("9900.990099009900990099"), resp.Position.Size_)
-				assert.EqualValues(t, sdk.NewDec(1000), resp.Position.Margin)
-				assert.EqualValues(t, sdk.NewDec(10_000), resp.Position.OpenNotional)
+				assert.EqualValues(t, sdk.MustNewDecFromStr("9803921.568627450980392157"), resp.Position.Size_)
+				assert.EqualValues(t, sdk.NewDec(1_000_000), resp.Position.Margin)
+				assert.EqualValues(t, sdk.NewDec(10_000_000), resp.Position.OpenNotional)
 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.BlockNumber)
 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.LatestCumulativePremiumFraction)
-				assert.EqualValues(t, sdk.NewDec(10_000), resp.ExchangedNotionalValue)
-				assert.EqualValues(t, sdk.MustNewDecFromStr("9900.990099009900990099"), resp.ExchangedPositionSize)
+				assert.EqualValues(t, sdk.NewDec(10_000_000), resp.ExchangedNotionalValue)
+				assert.EqualValues(t, sdk.MustNewDecFromStr("9803921.568627450980392157"), resp.ExchangedPositionSize)
 				assert.EqualValues(t, sdk.ZeroDec(), resp.FundingPayment)
 				assert.EqualValues(t, sdk.ZeroDec(), resp.RealizedPnl)
 				assert.EqualValues(t, sdk.ZeroDec(), resp.UnrealizedPnlAfter)
-				assert.EqualValues(t, sdk.NewDec(1000), resp.MarginToVault)
-				assert.EqualValues(t, sdk.NewDec(10_000), resp.PositionNotional)
+				assert.EqualValues(t, sdk.NewDec(1_000_000), resp.MarginToVault)
+				assert.EqualValues(t, sdk.NewDec(10_000_000), resp.PositionNotional)
 			}
 		})
 	}

@@ -168,8 +168,8 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("Set market defined by pair on PerpAmmKeeper")
 				perpammKeeper := &nibiruApp.PerpAmmKeeper
-				quoteReserves := sdk.NewDec(1 * common.TO_MICRO)
-				baseReserves := sdk.NewDec(1 * common.TO_MICRO)
+				quoteReserves := sdk.NewDec(5000 * common.TO_MICRO)
+				baseReserves := sdk.NewDec(5000 * common.TO_MICRO)
 				assert.NoError(t, perpammKeeper.CreatePool(
 					ctx,
 					pair,
@@ -198,20 +198,20 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("Fund trader account with sufficient quote")
 				require.NoError(t, testapp.FundAccount(nibiruApp.BankKeeper, ctx, traderAddr,
-					sdk.NewCoins(sdk.NewInt64Coin("yyy", 60))),
+					sdk.NewCoins(sdk.NewInt64Coin("yyy", 60_600_000))),
 				)
 
 				t.Log("Open long position with 5x leverage")
 				perpKeeper := nibiruApp.PerpKeeper
 				side := perpammtypes.Direction_LONG
-				quote := sdk.NewInt(60)
+				quote := sdk.NewInt(60_000_000)
 				leverage := sdk.NewDec(5)
 				baseLimit := sdk.ZeroDec()
 				_, err := perpKeeper.OpenPosition(ctx, pair, side, traderAddr, quote, leverage, baseLimit)
 				require.NoError(t, err)
 
 				t.Log("Attempt to remove 10% of the position")
-				removeAmt := sdk.NewInt(6)
+				removeAmt := sdk.NewInt(6_000_000)
 
 				t.Log("'RemoveMargin' from the position")
 				marginOut, fundingPayment, position, err := perpKeeper.RemoveMargin(ctx, pair, traderAddr, sdk.Coin{Denom: pair.QuoteDenom(), Amount: removeAmt})
@@ -220,9 +220,9 @@ func TestRemoveMargin(t *testing.T) {
 				assert.EqualValues(t, sdk.ZeroDec(), fundingPayment)
 				assert.EqualValues(t, pair, position.Pair)
 				assert.EqualValues(t, traderAddr.String(), position.TraderAddress)
-				assert.EqualValues(t, sdk.NewDec(54), position.Margin)
-				assert.EqualValues(t, sdk.NewDec(300), position.OpenNotional)
-				assert.EqualValues(t, sdk.MustNewDecFromStr("299.910026991902429271"), position.Size_)
+				assert.EqualValues(t, sdk.NewDec(54_000_000), position.Margin)
+				assert.EqualValues(t, sdk.NewDec(300_000_000), position.OpenNotional)
+				assert.EqualValues(t, sdk.MustNewDecFromStr("283018867.924528301886792453"), position.Size_)
 				assert.EqualValues(t, ctx.BlockHeight(), ctx.BlockHeight())
 				assert.EqualValues(t, sdk.ZeroDec(), position.LatestCumulativePremiumFraction)
 
@@ -231,17 +231,17 @@ func TestRemoveMargin(t *testing.T) {
 					&types.PositionChangedEvent{
 						Pair:               pair,
 						TraderAddress:      traderAddr.String(),
-						Margin:             sdk.NewInt64Coin(pair.QuoteDenom(), 54),
-						PositionNotional:   sdk.NewDec(300),
+						Margin:             sdk.NewInt64Coin(pair.QuoteDenom(), 54000000),
+						PositionNotional:   sdk.NewDec(300_000_000),
 						ExchangedNotional:  sdk.ZeroDec(),                                 // always zero when removing margin
 						ExchangedSize:      sdk.ZeroDec(),                                 // always zero when removing margin
 						TransactionFee:     sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when removing margin
-						PositionSize:       sdk.MustNewDecFromStr("299.910026991902429271"),
+						PositionSize:       sdk.MustNewDecFromStr("283018867.924528301886792453"),
 						RealizedPnl:        sdk.ZeroDec(), // always zero when removing margin
 						UnrealizedPnlAfter: sdk.ZeroDec(),
 						BadDebt:            sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
 						FundingPayment:     sdk.ZeroDec(),
-						MarkPrice:          sdk.MustNewDecFromStr("1.00060009"),
+						MarkPrice:          sdk.MustNewDecFromStr("1.1236"),
 						BlockHeight:        ctx.BlockHeight(),
 						BlockTimeMs:        ctx.BlockTime().UnixMilli(),
 					},

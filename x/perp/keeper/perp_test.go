@@ -31,8 +31,8 @@ func TestKeeperClosePosition(t *testing.T) {
 		require.NoError(t, perpammKeeper.CreatePool(
 			ctx,
 			pair,
-			/*quoteReserve*/ sdk.NewDec(10*common.TO_MICRO),
-			/*baseReserve*/ sdk.NewDec(10*common.TO_MICRO),
+			/*quoteReserve*/ sdk.NewDec(5000*common.TO_MICRO),
+			/*baseReserve*/ sdk.NewDec(5000*common.TO_MICRO),
 			perpammtypes.MarketConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
@@ -56,11 +56,11 @@ func TestKeeperClosePosition(t *testing.T) {
 
 		alice := testutil.AccAddress()
 		err := testapp.FundAccount(nibiruApp.BankKeeper, ctx, alice,
-			sdk.NewCoins(sdk.NewInt64Coin("yyy", 300)))
+			sdk.NewCoins(sdk.NewInt64Coin("yyy", 12_060_000)))
 		require.NoError(t, err)
 
 		aliceSide := perpammtypes.Direction_LONG
-		aliceQuote := sdk.NewInt(60)
+		aliceQuote := sdk.NewInt(6_000_000)
 		aliceLeverage := sdk.NewDec(5)
 		aliceBaseLimit := sdk.NewDec(150)
 
@@ -78,11 +78,11 @@ func TestKeeperClosePosition(t *testing.T) {
 		})
 		bob := testutil.AccAddress()
 		err = testapp.FundAccount(nibiruApp.BankKeeper, ctx, bob,
-			sdk.NewCoins(sdk.NewInt64Coin("yyy", 62)))
+			sdk.NewCoins(sdk.NewInt64Coin("yyy", 6_600_000)))
 		require.NoError(t, err)
 
 		bobSide := perpammtypes.Direction_LONG
-		bobQuote := sdk.NewInt(60)
+		bobQuote := sdk.NewInt(6_000_000)
 		bobLeverage := sdk.NewDec(10)
 		bobBaseLimit := sdk.NewDec(150)
 

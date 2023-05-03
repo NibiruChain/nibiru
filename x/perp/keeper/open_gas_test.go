@@ -29,15 +29,15 @@ func TestOpenGasConsumed(t *testing.T) {
 				SetBlockTime(time.Now()),
 				SetBlockNumber(1),
 				SetOraclePrice(pairBtcUsdc, sdk.NewDec(10000)),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020_000)))),
 			).
 			When(
 				OpenPosition(
 					alice, pairBtcUsdc, perpammtypes.Direction_LONG,
-					sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec(),
+					sdk.NewInt(1_000_000), sdk.NewDec(10), sdk.ZeroDec(),
 				),
 			).Then(
-			assertion.GasConsumedShouldBe(153539),
+			assertion.GasConsumedShouldBe(154934),
 		),
 	}
 

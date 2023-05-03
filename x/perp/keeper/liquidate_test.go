@@ -40,39 +40,39 @@ func TestExecuteFullLiquidation(t *testing.T) {
 	testCases := map[string]test{
 		"happy path - Buy": {
 			positionSide:   perpammtypes.Direction_LONG,
-			quoteAmount:    sdk.NewInt(50_000),
+			quoteAmount:    sdk.NewInt(5_000_000),
 			leverage:       sdk.OneDec(),
 			baseAssetLimit: sdk.ZeroDec(),
 			liquidationFee: sdk.MustNewDecFromStr("0.1"),
 			// There's a 20 bps tx fee on open position.
 			// This tx fee is split 50/50 bw the PerpEF and Treasury.
 			// txFee = exchangedQuote * 20 bps = 100
-			traderFunds: sdk.NewInt64Coin("NUSD", 50_100),
+			traderFunds: sdk.NewInt64Coin("NUSD", 5_010_000),
 			// feeToLiquidator
 			//   = positionResp.ExchangedNotionalValue * liquidationFee / 2
-			//   = 50_000 * 0.1 / 2 = 2500
-			expectedLiquidatorBalance: sdk.NewInt64Coin("NUSD", 2_500),
+			//   = 5_000_000 * 0.1 / 2 = 250_000
+			expectedLiquidatorBalance: sdk.NewInt64Coin("NUSD", 250_000),
 			// startingBalance = 1* common.TO_MICRO
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
-			expectedPerpEFBalance: sdk.NewInt64Coin("NUSD", 1_047_550),
+			expectedPerpEFBalance: sdk.NewInt64Coin("NUSD", 5755000),
 		},
 		"happy path - Sell": {
 			positionSide: perpammtypes.Direction_SHORT,
-			quoteAmount:  sdk.NewInt(50_000),
+			quoteAmount:  sdk.NewInt(5_000_000),
 			// There's a 20 bps tx fee on open position.
 			// This tx fee is split 50/50 bw the PerpEF and Treasury.
 			// txFee = exchangedQuote * 20 bps = 100
-			traderFunds:    sdk.NewInt64Coin("NUSD", 50_100),
+			traderFunds:    sdk.NewInt64Coin("NUSD", 5_010_000),
 			leverage:       sdk.OneDec(),
 			baseAssetLimit: sdk.ZeroDec(),
 			liquidationFee: sdk.MustNewDecFromStr("0.123123"),
 			// feeToLiquidator
 			//   = positionResp.ExchangedNotionalValue * liquidationFee / 2
 			//   = 50_000 * 0.123123 / 2 = 3078.025 → 3078
-			expectedLiquidatorBalance: sdk.NewInt64Coin("NUSD", 3078),
+			expectedLiquidatorBalance: sdk.NewInt64Coin("NUSD", 307_808),
 			// startingBalance = 1* common.TO_MICRO
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
-			expectedPerpEFBalance: sdk.NewInt64Coin("NUSD", 1_046_972),
+			expectedPerpEFBalance: sdk.NewInt64Coin("NUSD", 5_697_192),
 		},
 	}
 
@@ -88,8 +88,8 @@ func TestExecuteFullLiquidation(t *testing.T) {
 			assert.NoError(t, perpammKeeper.CreatePool(
 				ctx,
 				tokenPair,
-				/* quoteReserves */ sdk.NewDec(5*common.TO_MICRO),
-				/* baseReserves */ sdk.NewDec(5*common.TO_MICRO),
+				/* quoteReserves */ sdk.NewDec(500*common.TO_MICRO),
+				/* baseReserves */ sdk.NewDec(500*common.TO_MICRO),
 				perpammtypes.MarketConfig{
 					TradeLimitRatio:        sdk.MustNewDecFromStr("0.9"),
 					FluctuationLimitRatio:  sdk.OneDec(),
@@ -211,48 +211,48 @@ func TestExecutePartialLiquidation(t *testing.T) {
 		{
 			name:           "happy path - Buy",
 			side:           perpammtypes.Direction_LONG,
-			quote:          sdk.NewInt(50_000),
+			quote:          sdk.NewInt(5_000_000),
 			leverage:       sdk.OneDec(),
 			baseLimit:      sdk.ZeroDec(),
 			liquidationFee: sdk.MustNewDecFromStr("0.1"),
-			traderFunds:    sdk.NewInt64Coin("yyy", 50_100),
+			traderFunds:    sdk.NewInt64Coin("yyy", 5_010_000),
 			/* expectedPositionSize =  */
 			// 24_999.9999999875000000001 * 0.6
-			expectedPositionSize:    sdk.MustNewDecFromStr("14999.999999962500000000"),
-			expectedMarginRemaining: sdk.MustNewDecFromStr("47999.999999997000000000"), // approx 2k less but slippage
+			expectedPositionSize:    sdk.MustNewDecFromStr("1499999.999625000000093750"),
+			expectedMarginRemaining: sdk.MustNewDecFromStr("4799999.999970000000003000"), // approx 2k less but slippage
 
 			// feeToLiquidator
 			//   = positionResp.ExchangedNotionalValue * 0.4 * liquidationFee / 2
 			//   = 50_000 * 0.4 * 0.1 / 2 = 1_000
-			expectedLiquidatorBalance: sdk.NewInt64Coin("yyy", 1_000),
+			expectedLiquidatorBalance: sdk.NewInt64Coin("yyy", 100_000),
 
 			// startingBalance = 1* common.TO_MICRO
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
-			expectedPerpEFBalance: sdk.NewInt64Coin("yyy", 1_001_050),
+			expectedPerpEFBalance: sdk.NewInt64Coin("yyy", 1_105_000),
 		},
 		{
 			name:           "happy path - Sell",
 			side:           perpammtypes.Direction_SHORT,
-			quote:          sdk.NewInt(50_000),
+			quote:          sdk.NewInt(5_000_000),
 			leverage:       sdk.OneDec(),
 			baseLimit:      sdk.ZeroDec(),
 			liquidationFee: sdk.MustNewDecFromStr("0.1"),
-			traderFunds:    sdk.NewInt64Coin("yyy", 50_100),
+			traderFunds:    sdk.NewInt64Coin("yyy", 5_010_000),
 			// There's a 20 bps tx fee on open position.
 			// This tx fee is split 50/50 bw the PerpEF and Treasury.
 			// exchangedQuote * 20 bps = 100
 
-			expectedPositionSize:    sdk.MustNewDecFromStr("-15000.000000057500000000"), // ~-25k * 0.6
-			expectedMarginRemaining: sdk.MustNewDecFromStr("48000.000000007000000000"),  // approx 2k less but slippage
+			expectedPositionSize:    sdk.MustNewDecFromStr("-1500000.000575000000103750"), // ~-25k * 0.6
+			expectedMarginRemaining: sdk.MustNewDecFromStr("4800000.000069999999993000"),  // approx 2k less but slippage
 
 			// feeToLiquidator
 			//   = positionResp.ExchangedNotionalValue * 0.4 * liquidationFee / 2
 			//   = 50_000 * 0.4 * 0.1 / 2 = 1_000
-			expectedLiquidatorBalance: sdk.NewInt64Coin("yyy", 1_000),
+			expectedLiquidatorBalance: sdk.NewInt64Coin("yyy", 100_000),
 
 			// startingBalance = 1* common.TO_MICRO
 			// perpEFBalance = startingBalance + openPositionDelta + liquidateDelta
-			expectedPerpEFBalance: sdk.NewInt64Coin("yyy", 1_001_050),
+			expectedPerpEFBalance: sdk.NewInt64Coin("yyy", 1_105_000),
 		},
 	}
 
