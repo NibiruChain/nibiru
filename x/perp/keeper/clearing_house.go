@@ -3,6 +3,7 @@ package keeper
 import (
 	"errors"
 	"fmt"
+
 	"github.com/NibiruChain/nibiru/x/common"
 
 	"github.com/NibiruChain/collections"
