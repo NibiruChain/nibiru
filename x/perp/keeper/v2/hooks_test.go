@@ -9,6 +9,8 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
+	. "github.com/NibiruChain/nibiru/x/epochs/integration/action"
+	epochtypes "github.com/NibiruChain/nibiru/x/epochs/types"
 	. "github.com/NibiruChain/nibiru/x/oracle/integration_test/action"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/action/v2"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion/v2"
@@ -24,6 +26,7 @@ func TestAfterEpochEnd(t *testing.T) {
 				CreateCustomMarket(pairBtcUsdc),
 				SetBlockTime(startTime),
 				InsertOraclePriceSnapshot(pairBtcUsdc, startTime.Add(15*time.Minute), sdk.MustNewDecFromStr("5.8")),
+				StartEpoch(epochtypes.ThirtyMinuteEpochID),
 			).
 			When(
 				MoveToNextBlockWithDuration(30 * time.Minute),
@@ -37,6 +40,7 @@ func TestAfterEpochEnd(t *testing.T) {
 				CreateCustomMarket(pairBtcUsdc),
 				SetBlockTime(startTime),
 				InsertOraclePriceSnapshot(pairBtcUsdc, startTime.Add(15*time.Minute), sdk.MustNewDecFromStr("0.52")),
+				StartEpoch(epochtypes.ThirtyMinuteEpochID),
 			).
 			When(
 				MoveToNextBlockWithDuration(30 * time.Minute),
@@ -50,6 +54,7 @@ func TestAfterEpochEnd(t *testing.T) {
 				CreateCustomMarket(pairBtcUsdc),
 				SetBlockTime(startTime),
 				InsertOraclePriceSnapshot(pairBtcUsdc, startTime.Add(15*time.Minute), sdk.OneDec()),
+				StartEpoch(epochtypes.ThirtyMinuteEpochID),
 			).
 			When(
 				MoveToNextBlockWithDuration(30 * time.Minute),

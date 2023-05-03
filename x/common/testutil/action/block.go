@@ -112,11 +112,40 @@ func (m moveToNextBlockWithDuration) Do(app *app.NibiruApp, ctx sdk.Context) (sd
 	return app.NewContext(
 		false,
 		newHeader,
-	).WithBlockTime(ctx.BlockTime().Add(m.blockDuration)), nil, true
+	).WithBlockTime(newHeader.Time), nil, true
 }
 
 func MoveToNextBlockWithDuration(blockDuration time.Duration) Action {
 	return moveToNextBlockWithDuration{
 		blockDuration: blockDuration,
+	}
+}
+
+type moveToNextBlockWithTime struct {
+	blockTime time.Time
+}
+
+func (m moveToNextBlockWithTime) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	app.EndBlock(types.RequestEndBlock{Height: ctx.BlockHeight()})
+	app.Commit()
+
+	newHeader := tmproto.Header{
+		Height: ctx.BlockHeight() + 1,
+		Time:   m.blockTime,
+	}
+
+	app.BeginBlock(types.RequestBeginBlock{
+		Header: newHeader,
+	})
+
+	return app.NewContext(
+		false,
+		newHeader,
+	).WithBlockTime(newHeader.Time), nil, true
+}
+
+func MoveToNextBlockWithTime(blockTime time.Time) Action {
+	return moveToNextBlockWithTime{
+		blockTime: blockTime,
 	}
 }
