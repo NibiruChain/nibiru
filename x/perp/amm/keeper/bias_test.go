@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	integrationaction "github.com/NibiruChain/nibiru/x/perp/amm/integration/action"
-	ammassertion "github.com/NibiruChain/nibiru/x/perp/amm/integration/assertion"
+	. "github.com/NibiruChain/nibiru/x/perp/amm/integration/action"
+	. "github.com/NibiruChain/nibiru/x/perp/amm/integration/assertion"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -47,16 +47,16 @@ func TestBiasChangeOnMarket(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1200000)))),
 			).
 			When(
-				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			Then(
-				ammassertion.MarketShouldBeEqual(pairBtcUsdc,
-					ammassertion.Market_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("9999.999900000001000000")), // Bias equal to PositionSize
+				MarketShouldBeEqual(pairBtcUsdc,
+					Market_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("9999900.000999990000099999")), // Bias equal to PositionSize
 				),
-				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("9999.999900000001000000"))),
+				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("9999900.000999990000099999"))),
 			),
 
 		TC("additional long position").
@@ -65,18 +65,18 @@ func TestBiasChangeOnMarket(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2040)))),
-				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2200000)))),
+				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000000), sdk.NewDec(10), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
 			When(
-				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			Then(
-				ammassertion.MarketShouldBeEqual(pairBtcUsdc,
-					ammassertion.Market_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("19999.999600000008000000")), // Bias equal to PositionSize
+				MarketShouldBeEqual(pairBtcUsdc,
+					Market_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("19999600.007999840003199936")), // Bias equal to PositionSize
 				),
-				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("19999.999600000008000000"))),
+				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("19999600.007999840003199936"))),
 			),
 		TC("simple open short position").
 			Given(
@@ -84,16 +84,16 @@ func TestBiasChangeOnMarket(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1200000)))),
 			).
 			When(
-				OpenPosition(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				OpenPosition(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			Then(
-				ammassertion.MarketShouldBeEqual(pairBtcUsdc,
-					ammassertion.Market_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("-10000.000100000001000000")), // Bias equal to PositionSize
+				MarketShouldBeEqual(pairBtcUsdc,
+					Market_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("-10000100.001000010000100001")), // Bias equal to PositionSize
 				),
-				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("-10000.000100000001000000"))),
+				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("-10000100.001000010000100001"))),
 			),
 
 		TC("additional short position").
@@ -102,18 +102,18 @@ func TestBiasChangeOnMarket(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2040)))),
-				OpenPosition(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2200000)))),
+				OpenPosition(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000000), sdk.NewDec(10), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
 			When(
-				OpenPosition(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				OpenPosition(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			Then(
-				ammassertion.MarketShouldBeEqual(pairBtcUsdc,
-					ammassertion.Market_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("-20000.000400000008000000")), // Bias equal to PositionSize
+				MarketShouldBeEqual(pairBtcUsdc,
+					Market_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("-20000400.008000160003200064")), // Bias equal to PositionSize
 				),
-				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("-20000.000400000008000000"))),
+				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("-20000400.008000160003200064"))),
 			),
 		TC("open long position and close it").
 			Given(
@@ -121,16 +121,16 @@ func TestBiasChangeOnMarket(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2040)))),
-				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2200000)))),
+				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000000), sdk.NewDec(10), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
 			When(
 				ClosePosition(alice, pairBtcUsdc),
 			).
 			Then(
-				ammassertion.MarketShouldBeEqual(pairBtcUsdc,
-					ammassertion.Market_BiasShouldBeEqualTo(sdk.ZeroDec()), // Bias equal to PositionSize
+				MarketShouldBeEqual(pairBtcUsdc,
+					Market_BiasShouldBeEqualTo(sdk.ZeroDec()), // Bias equal to PositionSize
 				),
 				PositionShouldNotExist(alice, pairBtcUsdc),
 			),
@@ -140,18 +140,18 @@ func TestBiasChangeOnMarket(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2040)))),
-				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(12200000)))),
+				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(10000000), sdk.NewDec(10), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
 			When(
-				OpenPosition(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(100), sdk.NewDec(10), sdk.ZeroDec()),
+				OpenPosition(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			Then(
-				ammassertion.MarketShouldBeEqual(pairBtcUsdc,
-					ammassertion.Market_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("8999.999919000000729000")), // Bias equal to PositionSize
+				MarketShouldBeEqual(pairBtcUsdc,
+					Market_BiasShouldBeEqualTo(sdk.MustNewDecFromStr("89991900.728934395904368607")), // Bias equal to PositionSize
 				),
-				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("8999.999919000000729000"))),
+				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("89991900.728934395904368607"))),
 			),
 
 		TC("2 positions, one long, one short with same amount should set Bias to 0").
@@ -160,19 +160,19 @@ func TestBiasChangeOnMarket(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
-				FundAccount(bob, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1200000)))),
+				FundAccount(bob, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1200000)))),
 			).
 			When(
-				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
-				OpenPosition(bob, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000000), sdk.NewDec(10), sdk.ZeroDec()),
+				OpenPosition(bob, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			Then(
-				ammassertion.MarketShouldBeEqual(pairBtcUsdc,
-					ammassertion.Market_BiasShouldBeEqualTo(sdk.ZeroDec()), // Bias equal to PositionSize
+				MarketShouldBeEqual(pairBtcUsdc,
+					Market_BiasShouldBeEqualTo(sdk.ZeroDec()), // Bias equal to PositionSize
 				),
-				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("9999.999900000001000000"))),
-				PositionShouldBeEqual(bob, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("-9999.999900000001000000"))),
+				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("9999900.000999990000099999"))),
+				PositionShouldBeEqual(bob, pairBtcUsdc, Position_PositionSizeShouldBeEqualTo(sdk.MustNewDecFromStr("-9999900.000999990000099999"))),
 			),
 
 		TC("Open long position and liquidate").
@@ -182,18 +182,18 @@ func TestBiasChangeOnMarket(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
-				FundAccount(bob, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
-				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1200000)))),
+				FundAccount(bob, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1200000)))),
+				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000000), sdk.NewDec(10), sdk.ZeroDec()),
 				MoveToNextBlock(),
-				integrationaction.ChangeMaintenanceMarginRatio(pairBtcUsdc, sdk.MustNewDecFromStr("0.2")),
+				ChangeMaintenanceMarginRatio(pairBtcUsdc, sdk.MustNewDecFromStr("0.2")),
 				ChangeLiquidationFeeRatio(sdk.MustNewDecFromStr("0.2")),
 			).
 			When(
 				LiquidatePosition(bob, alice, pairBtcUsdc),
 			).Then(
-			ammassertion.MarketShouldBeEqual(pairBtcUsdc,
-				ammassertion.Market_BiasShouldBeEqualTo(sdk.ZeroDec()), // Bias equal to PositionSize
+			MarketShouldBeEqual(pairBtcUsdc,
+				Market_BiasShouldBeEqualTo(sdk.ZeroDec()), // Bias equal to PositionSize
 			),
 			PositionShouldNotExist(alice, pairBtcUsdc),
 		),
