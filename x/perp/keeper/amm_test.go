@@ -38,55 +38,55 @@ func TestMsgServerRepeg(t *testing.T) {
 			name: "happy path - we pay the vault with perp ef",
 
 			initialPegMultiplier: sdk.OneDec(),
-			initialBiasInQuote:   sdk.NewInt(25),
+			initialBiasInQuote:   sdk.NewInt(2500000),
 
 			newPegMultiplier: sdk.NewDec(2),
 
-			initialPerpEFFunds: sdk.NewCoins(sdk.NewInt64Coin("unusd", 25)),
+			initialPerpEFFunds: sdk.NewCoins(sdk.NewInt64Coin("unusd", 2500000)),
 
-			expectedUnusdPerpEFFunds: sdk.ZeroInt(),
-			expectedUnusdVaultFunds:  sdk.NewInt(50), // 25 margin + 25 repeg
+			expectedUnusdPerpEFFunds: sdk.NewInt(2500),
+			expectedUnusdVaultFunds:  sdk.NewInt(5000000), // 2500000 margin + 2500000 repeg
 		},
 		{
 			name: "not happy path - we pay the vault with perp ef but not enough money",
 
 			initialPegMultiplier: sdk.OneDec(),
-			initialBiasInQuote:   sdk.NewInt(25),
+			initialBiasInQuote:   sdk.NewInt(2500000),
 
 			newPegMultiplier: sdk.NewDec(2),
 
-			initialPerpEFFunds: sdk.NewCoins(sdk.NewInt64Coin("unusd", 24)),
+			initialPerpEFFunds: sdk.NewCoins(sdk.NewInt64Coin("unusd", 2400000)),
 
 			expectedErr: types.ErrNotEnoughFundToPayAction,
 
-			expectedUnusdPerpEFFunds: sdk.NewInt(24),
-			expectedUnusdVaultFunds:  sdk.NewInt(25),
+			expectedUnusdPerpEFFunds: sdk.NewInt(2402500),
+			expectedUnusdVaultFunds:  sdk.NewInt(2500000),
 		},
 		{
 			name: "happy path - we pay the perp ef with vault",
 
 			initialPegMultiplier: sdk.OneDec(),
-			initialBiasInQuote:   sdk.NewInt(-25),
+			initialBiasInQuote:   sdk.NewInt(-2500000),
 
 			newPegMultiplier: sdk.NewDec(2),
 
 			initialVaultFunds: sdk.NewCoins(sdk.NewInt64Coin("unusd", 25)),
 
-			expectedUnusdPerpEFFunds: sdk.NewInt(25),
+			expectedUnusdPerpEFFunds: sdk.NewInt(2502500),
 			expectedUnusdVaultFunds:  sdk.NewInt(25),
 		},
 		{
 			name: "happy path - we pay the perp ef with vault but not enough money",
 
 			initialPegMultiplier: sdk.OneDec(),
-			initialBiasInQuote:   sdk.NewInt(-25),
+			initialBiasInQuote:   sdk.NewInt(-2500000),
 
 			newPegMultiplier: sdk.NewDec(50),
 
-			initialVaultFunds: sdk.NewCoins(sdk.NewInt64Coin("unusd", 24)),
+			initialVaultFunds: sdk.NewCoins(sdk.NewInt64Coin("unusd", 2400000)),
 
-			expectedUnusdPerpEFFunds: sdk.ZeroInt(),
-			expectedUnusdVaultFunds:  sdk.NewInt(49), // 24 + 25
+			expectedUnusdPerpEFFunds: sdk.NewInt(2500),
+			expectedUnusdVaultFunds:  sdk.NewInt(4900000), // 24 + 25
 		},
 	}
 
@@ -103,8 +103,8 @@ func TestMsgServerRepeg(t *testing.T) {
 			assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 				/* ctx */ ctx,
 				/* pair */ pair,
-				/* quoteReserve */ sdk.NewDec(100),
-				/* baseReserve */ sdk.NewDec(100),
+				/* quoteReserve */ sdk.NewDec(10000000),
+				/* baseReserve */ sdk.NewDec(10000000),
 				perpammtypes.MarketConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.OneDec(),
@@ -121,7 +121,10 @@ func TestMsgServerRepeg(t *testing.T) {
 			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
 
 			t.Log("create positions")
-			require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, traderAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, tc.initialBiasInQuote.Abs()))))
+			require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, traderAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, tc.initialBiasInQuote.Abs().Add(sdk.NewInt(25000))))))
+
+			//balance := app.BankKeeper.GetBalance(ctx, traderAccount, denoms.NUSD)
+			//require.Equal(t, tc.initialBiasInQuote.Abs(), balance.Amount)
 
 			dir := perpammtypes.Direction_DIRECTION_UNSPECIFIED
 			if tc.initialBiasInQuote.IsPositive() {

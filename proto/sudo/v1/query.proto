@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package nibiru.sudo.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+
+import "sudo/v1/state.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/x/sudo/pb";
+
+// Query defines the gRPC querier service.
+service Query {
+  rpc QuerySudoers(QuerySudoersRequest) returns (QuerySudoersResponse) {
+    option (google.api.http).get = "/nibiru/sudo/sudoers";
+  }
+}
+
+message QuerySudoersRequest {
+}
+
+// QuerySudoersResponse indicates the successful execution of MsgEditSudeors.
+message QuerySudoersResponse {
+  Sudoers sudoers = 1 [(gogoproto.nullable) = false];
+}
