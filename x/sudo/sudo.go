@@ -55,13 +55,16 @@ var _ pb.MsgServer = Keeper{}
 func (k Keeper) EditSudoers(
 	goCtx context.Context, msg *pb.MsgEditSudoers,
 ) (*pb.MsgEditSudoersResponse, error) {
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
 	switch msg.Action {
 	case ROOT_ACTION.AddContracts:
 		return k.AddContracts(goCtx, msg)
 	case ROOT_ACTION.RemoveContracts:
 		return k.RemoveContracts(goCtx, msg)
 	default:
-		return nil, msg.ValidateBasic()
+		return nil, fmt.Errorf("invalid action type specified on msg: %s", msg)
 	}
 }
 
@@ -137,11 +140,6 @@ func (k Keeper) AddContracts(
 ) (msgResp *pb.MsgEditSudoersResponse, err error) {
 	if msg.Action != ROOT_ACTION.AddContracts {
 		err = fmt.Errorf("invalid action type %s for msg add contracts", msg.Action)
-		return
-	}
-
-	err = msg.ValidateBasic()
-	if err != nil {
 		return
 	}
 
