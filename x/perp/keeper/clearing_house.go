@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/NibiruChain/nibiru/x/common"
+
 	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -102,6 +104,10 @@ func (k Keeper) OpenPosition(
 func (k Keeper) checkOpenPositionRequirements(market perpammtypes.Market, quoteAssetAmount sdk.Int, leverage sdk.Dec) error {
 	if quoteAssetAmount.IsZero() {
 		return types.ErrQuoteAmountIsZero
+	}
+
+	if quoteAssetAmount.LT(sdk.NewInt(common.TO_MICRO)) {
+		return types.ErrQuoteAmountIsTooSmall
 	}
 
 	if leverage.IsZero() {
