@@ -52,8 +52,8 @@ func (s *TestSuitePerpExecutor) SetupSuite() {
 		Time:    time.Now().UTC(),
 	})
 	coins := sdk.NewCoins(
-		sdk.NewCoin(denoms.NIBI, sdk.NewInt(1_000)),
-		sdk.NewCoin(denoms.NUSD, sdk.NewInt(420*69)),
+		sdk.NewCoin(denoms.NIBI, sdk.NewInt(1_000_000)),
+		sdk.NewCoin(denoms.NUSD, sdk.NewInt(420_000*69)),
 	)
 	s.NoError(testapp.FundAccount(nibiru.BankKeeper, ctx, sender, coins))
 
@@ -83,6 +83,7 @@ func (s *TestSuitePerpExecutor) TestOpenAddRemoveClose() {
 		s.DoAddMarginTest(pair, margin),
 		s.DoRemoveMarginTest(pair, margin),
 		s.DoClosePositionTest(pair),
+		s.DoPegShiftTest(pair),
 	} {
 		s.NoError(err)
 	}
@@ -93,7 +94,7 @@ func (s *TestSuitePerpExecutor) DoOpenPositionTest(pair asset.Pair) error {
 		Sender:          s.contractDeployer.String(),
 		Pair:            pair.String(),
 		IsLong:          false,
-		QuoteAmount:     sdk.NewInt(420),
+		QuoteAmount:     sdk.NewInt(4_200_000),
 		Leverage:        sdk.NewDec(5),
 		BaseAmountLimit: sdk.NewInt(0),
 	}
@@ -102,9 +103,41 @@ func (s *TestSuitePerpExecutor) DoOpenPositionTest(pair asset.Pair) error {
 	if err != nil {
 		return err
 	}
+
+	// Verify position exists with PerpKeeper
 	_, err = s.exec.Perp.Positions.Get(
 		s.ctx, collections.Join(pair, s.contractDeployer),
 	)
+	if err != nil {
+		return err
+	}
+
+	// Verify position exists with CustomQuerier - multi-position
+	bindingQuery := cw_struct.BindingQuery{
+		Positions: &cw_struct.PositionsRequest{
+			Trader: s.contractDeployer.String(),
+		},
+	}
+	bindingRespMulti := new(cw_struct.PositionsRequest)
+	_, err = DoCustomBindingQuery(
+		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingRespMulti,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Verify position exists with CustomQuerier - single position
+	bindingQuery = cw_struct.BindingQuery{
+		Position: &cw_struct.PositionRequest{
+			Trader: s.contractDeployer.String(),
+			Pair:   pair.String(),
+		},
+	}
+	bindingResp := new(cw_struct.PositionRequest)
+	_, err = DoCustomBindingQuery(
+		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
+	)
+
 	return err
 }
 
@@ -142,6 +175,17 @@ func (s *TestSuitePerpExecutor) DoClosePositionTest(pair asset.Pair) error {
 	return err
 }
 
+func (s *TestSuitePerpExecutor) DoPegShiftTest(pair asset.Pair) error {
+	contractAddr := s.contractPerp
+	cwMsg := &cw_struct.PegShift{
+		Pair:    pair.String(),
+		PegMult: sdk.NewDec(420),
+	}
+
+	err := s.exec.PegShift(cwMsg, contractAddr, s.ctx)
+	return err
+}
+
 func (s *TestSuitePerpExecutor) TestSadPaths_Nil() {
 	var err error
 
@@ -156,6 +200,10 @@ func (s *TestSuitePerpExecutor) TestSadPaths_Nil() {
 
 	_, err = s.exec.ClosePosition(nil, s.ctx)
 	s.Error(err)
+
+	err = s.exec.PegShift(
+		nil, sdk.AccAddress([]byte("contract")), s.ctx)
+	s.Error(err)
 }
 
 func (s *TestSuitePerpExecutor) TestSadPaths_InvalidPair() {
@@ -168,6 +216,7 @@ func (s *TestSuitePerpExecutor) TestSadPaths_InvalidPair() {
 		s.DoAddMarginTest(pair, margin),
 		s.DoRemoveMarginTest(pair, margin),
 		s.DoClosePositionTest(pair),
+		s.DoPegShiftTest(pair),
 	} {
 		s.Error(err)
 	}
