@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"github.com/NibiruChain/collections"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -10,18 +11,20 @@ import (
 	"github.com/NibiruChain/nibiru/x/epochs/types"
 )
 
-type (
-	Keeper struct {
-		cdc      codec.Codec
-		storeKey sdk.StoreKey
-		hooks    types.EpochHooks
-	}
-)
+type Keeper struct {
+	cdc      codec.Codec
+	storeKey sdk.StoreKey
+	hooks    types.EpochHooks
+
+	Epochs collections.Map[string, types.EpochInfo]
+}
 
 func NewKeeper(cdc codec.Codec, storeKey sdk.StoreKey) Keeper {
 	return Keeper{
 		cdc:      cdc,
 		storeKey: storeKey,
+
+		Epochs: collections.NewMap[string, types.EpochInfo](storeKey, 1, collections.StringKeyEncoder, collections.ProtoValueEncoder[types.EpochInfo](cdc)),
 	}
 }
 

@@ -1,36 +1,35 @@
 package keeper
 
 import (
+	"errors"
 	"fmt"
+	"github.com/NibiruChain/collections"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/gogo/protobuf/proto"
-
 	"github.com/NibiruChain/nibiru/x/epochs/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // GetEpochInfo returns epoch info by identifier.
 func (k Keeper) GetEpochInfo(ctx sdk.Context, identifier string) types.EpochInfo {
-	epoch := types.EpochInfo{}
-	store := ctx.KVStore(k.storeKey)
-	b := store.Get(append(types.KeyPrefixEpoch, []byte(identifier)...))
-	if b == nil {
-		return epoch
-	}
-	err := proto.Unmarshal(b, &epoch)
+	epoch, err := k.Epochs.Get(ctx, identifier)
 	if err != nil {
 		panic(err)
 	}
+
 	return epoch
 }
 
 // EpochExists checks if the epoch exists
 func (k Keeper) EpochExists(ctx sdk.Context, identifier string) bool {
-	store := ctx.KVStore(k.storeKey)
-	b := store.Get(append(types.KeyPrefixEpoch, []byte(identifier)...))
+	_, err := k.Epochs.Get(ctx, identifier)
+	if errors.Is(err, collections.ErrNotFound) {
+		return false
+	} else if err != nil {
+		panic(err)
+	}
 
-	return b != nil
+	return true
 }
 
 // AddEpochInfo adds a new epoch info. Will return an error if the epoch fails validation,
@@ -59,35 +58,27 @@ func (k Keeper) AddEpochInfo(ctx sdk.Context, epoch types.EpochInfo) error {
 
 // UpsertEpochInfo inserts the epoch if does not exist, and overwrites it if it does.
 func (k Keeper) UpsertEpochInfo(ctx sdk.Context, epoch types.EpochInfo) {
-	store := ctx.KVStore(k.storeKey)
-	value, err := proto.Marshal(&epoch)
-	if err != nil {
-		panic(err)
-	}
-	store.Set(append(types.KeyPrefixEpoch, []byte(epoch.Identifier)...), value)
+	k.Epochs.Insert(ctx, epoch.Identifier, epoch)
 }
 
 // DeleteEpochInfo delete epoch info.
 func (k Keeper) DeleteEpochInfo(ctx sdk.Context, identifier string) {
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(append(types.KeyPrefixEpoch, []byte(identifier)...))
+	err := k.Epochs.Delete(ctx, identifier)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // IterateEpochInfo iterate through epochs.
-func (k Keeper) IterateEpochInfo(ctx sdk.Context, fn func(index int64, epochInfo types.EpochInfo) (stop bool)) {
-	store := ctx.KVStore(k.storeKey)
-
-	iterator := sdk.KVStorePrefixIterator(store, types.KeyPrefixEpoch)
-	defer iterator.Close()
-
+func (k Keeper) IterateEpochInfo(
+	ctx sdk.Context,
+	fn func(index int64, epochInfo types.EpochInfo) (stop bool),
+) {
+	iterate := k.Epochs.Iterate(ctx, collections.Range[string]{})
 	i := int64(0)
 
-	for ; iterator.Valid(); iterator.Next() {
-		epoch := types.EpochInfo{}
-		err := proto.Unmarshal(iterator.Value(), &epoch)
-		if err != nil {
-			panic(err)
-		}
+	for ; iterate.Valid(); iterate.Next() {
+		epoch := iterate.Value()
 		stop := fn(i, epoch)
 
 		if stop {
