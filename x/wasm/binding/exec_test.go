@@ -156,6 +156,18 @@ func (s *TestSuiteExecutor) TestPegShift() {
 			PegMult: sdk.NewDec(420),
 		},
 	}
+
+	// Executing with permission should succeed
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{s.contractPerp.String()}, s.ctx,
+	)
 	contractRespBz, err := s.ExecuteAgainstContract(s.contractPerp, execMsg)
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
+
+	// Executing without permission should fail
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{}, s.ctx,
+	)
+	contractRespBz, err = s.ExecuteAgainstContract(s.contractPerp, execMsg)
+	s.Errorf(err, "contractRespBz: %s", contractRespBz)
 }

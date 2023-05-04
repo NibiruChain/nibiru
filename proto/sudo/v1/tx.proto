@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package nibiru.sudo.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+
+
+option go_package = "github.com/NibiruChain/nibiru/x/sudo/pb";
+
+// Msg defines the x/sudo module's Msg service. Protobuf `Msg` services are 
+// called from `BaseApp` instances during `DeliverTx`. The `Msg` service will be 
+// responsible for processing `sdk.Msg` requests.
+service Msg {
+
+  // EditSudoers updates the "Sudoers" state
+  rpc EditSudoers(MsgEditSudoers) returns (MsgEditSudoersResponse) {
+    option (google.api.http).post = "/nibiru/sudo/edit_sudoers";
+  }
+}
+
+// -------------------------- EditSudoers --------------------------
+
+/* MsgEditSudoers: Msg to update the "Sudoers" state. */
+message MsgEditSudoers {
+  // Action: identifier for the type of edit that will take place. Using this 
+  //   action field prevents us from needing to create several similar message 
+  //   types.
+  string action = 1; 
+
+  // Contracts: An input payload. 
+  repeated string contracts = 2;
+
+  // Sender: Address for the signer of the transaction.
+  string sender = 3;
+}
+
+// MsgEditSudoersResponse indicates the successful execution of MsgEditSudeors.
+message MsgEditSudoersResponse {
+}

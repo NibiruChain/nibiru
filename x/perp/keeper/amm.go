@@ -1,26 +1,21 @@
 package keeper
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/perp/types"
 )
 
-// EditPoolPegMultiplier edits the peg multiplier of an amm pool after making sure there's enough money in the perp
-// EF fund to pay for the repeg. These funds get send to the vault to pay for trader's new net margin.
+// EditPoolPegMultiplier edits the peg multiplier of an amm pool after making
+// sure there's enough money in the perp EF fund to pay for the repeg. These
+// funds get send to the vault to pay for trader's new net margin.
 func (k Keeper) EditPoolPegMultiplier(
 	ctx sdk.Context,
 	sender sdk.AccAddress,
 	pair asset.Pair,
 	pegMultiplier sdk.Dec,
 ) (err error) {
-	if !k.isWhitelisted(ctx, sender) {
-		return fmt.Errorf("address is not whitelisted to update peg multiplier: %s", sender)
-	}
-
 	// Get the pool
 	pool, err := k.PerpAmmKeeper.GetPool(ctx, pair)
 	if nil != err {
@@ -79,10 +74,4 @@ func (k Keeper) EditPoolPegMultiplier(
 	})
 
 	return
-}
-
-func (k Keeper) isWhitelisted(ctx sdk.Context, addr sdk.AccAddress) bool {
-	// TODO(realu): connect that to the admin role in smart contract
-	// See https://www.notion.so/nibiru/Nibi-Perps-Admin-ADR-ad38991fffd34e7798618731be0fa922?pvs=4
-	return true
 }
