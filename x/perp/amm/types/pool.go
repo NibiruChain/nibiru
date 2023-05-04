@@ -95,31 +95,32 @@ func (market *Market) GetRepegCost(pegCandidate sdk.Dec) (cost sdk.Dec, err erro
 GetSwapInvariantUpdateCost returns the cost of updating the invariant of the pool
 */
 func (market *Market) GetSwapInvariantUpdateCost(swapInvariantMultiplier sdk.Dec) (cost sdk.Dec, err error) {
-	if market.Bias.IsZero() {
-		cost = sdk.ZeroDec()
-		return
-	}
+	panic("not implemented")
+	// if market.Bias.IsZero() {
+	// 	cost = sdk.ZeroDec()
+	// 	return
+	// }
 
-	previousBiasInQuoteReserve, err := market.GetQuoteReserveByBase(market.Bias)
-	if err != nil {
-		return
-	}
+	// previousBiasInQuoteReserve, err := market.GetQuoteReserveByBase(market.Bias)
+	// if err != nil {
+	// 	return
+	// }
 
-	newMarket, err := market.UpdateSwapInvariant(swapInvariantMultiplier)
-	if err != nil {
-		return
-	}
+	// newMarket, err := market.UpdateSwapInvariant(swapInvariantMultiplier)
+	// if err != nil {
+	// 	return
+	// }
 
-	newBiasInQuoteReserve, err := newMarket.GetQuoteReserveByBase(market.Bias)
-	if err != nil {
-		return
-	}
+	// newBiasInQuoteReserve, err := newMarket.GetQuoteReserveByBase(market.Bias)
+	// if err != nil {
+	// 	return
+	// }
 
-	cost = market.FromQuoteReserveToAsset(newBiasInQuoteReserve.Sub(previousBiasInQuoteReserve))
+	// cost = market.FromQuoteReserveToAsset(newBiasInQuoteReserve.Sub(previousBiasInQuoteReserve))
 
-	if swapInvariantMultiplier.IsNegative() {
-		cost = cost.Neg()
-	}
+	// if swapInvariantMultiplier.IsNegative() {
+	// 	cost = cost.Neg()
+	// }
 
 	return
 }
