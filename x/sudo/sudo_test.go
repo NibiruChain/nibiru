@@ -210,7 +210,7 @@ func TestSudo_FromPbSudoers(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			out := sudo.Sudoers{}.FromPbSudoers(tc.in)
+			out := sudo.Sudoers{}.FromPb(tc.in)
 			assert.EqualValues(t, tc.out.Contracts, out.Contracts)
 			assert.EqualValues(t, tc.out.Root, out.Root)
 
@@ -224,7 +224,6 @@ func TestSudo_FromPbSudoers(t *testing.T) {
 
 func TestKeeper_AddContracts(t *testing.T) {
 	root := "nibi1ggpg3vluy09qmfkgwsgkumhmmv2z44rdafn6qa"
-	// root := "nibi1ggpg3vluy09qmfkgwsgkumhmmv2z44rd2vhrfw"
 	exampleAddrs := []string{
 		"nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
 		"nibi1ah8gqrtjllhc5ld4rxgl4uglvwl93ag0sh6e6v",

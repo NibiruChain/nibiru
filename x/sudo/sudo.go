@@ -2,7 +2,6 @@ package sudo
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"github.com/NibiruChain/collections"
@@ -92,27 +91,26 @@ type Sudoers struct {
 	Contracts set.Set[string] `json:"contracts"`
 }
 
-func (sudo Sudoers) FromPbSudoers(pbSudoers pb.Sudoers) Sudoers {
+func (sudo Sudoers) String() string {
+	return sudo.ToPb().String()
+}
+
+func (sudo Sudoers) ToPb() pb.Sudoers {
+	return pb.Sudoers{
+		Root:      sudo.Root,
+		Contracts: sudo.Contracts.ToSlice(),
+	}
+}
+
+func (sudo Sudoers) FromPb(pbSudoers pb.Sudoers) Sudoers {
 	return Sudoers{
 		Root:      pbSudoers.Root,
 		Contracts: set.New[string](pbSudoers.Contracts...),
 	}
 }
 
-func (sudo Sudoers) String() string {
-	jsonBz, _ := sudo.MarshalJSON()
-	return string(jsonBz)
-}
-
-func (sudo Sudoers) MarshalJSON() ([]byte, error) {
-	return json.Marshal(sudo)
-}
-
 func SudoersToPb(sudo Sudoers) pb.Sudoers {
-	return pb.Sudoers{
-		Root:      sudo.Root,
-		Contracts: sudo.Contracts.ToSlice(),
-	}
+	return sudo.ToPb()
 }
 
 // ————————————————————————————————————————————————————————————————————————————
@@ -149,7 +147,7 @@ func (k Keeper) AddContracts(
 	if err != nil {
 		return
 	}
-	sudoersBefore := Sudoers{}.FromPbSudoers(pbSudoersBefore)
+	sudoersBefore := Sudoers{}.FromPb(pbSudoersBefore)
 	err = k.SenderHasPermission(msg.Sender, sudoersBefore.Root)
 	if err != nil {
 		return
@@ -191,7 +189,7 @@ func (k Keeper) RemoveContracts(
 	if err != nil {
 		return
 	}
-	sudoers := Sudoers{}.FromPbSudoers(pbSudoers)
+	sudoers := Sudoers{}.FromPb(pbSudoers)
 	err = k.SenderHasPermission(msg.Sender, sudoers.Root)
 	if err != nil {
 		return
