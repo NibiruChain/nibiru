@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Breaking
 
+* [#1307](https://github.com/NibiruChain/nibiru/pull/1307) - feat(sudo): Create the x/sudo module + integration tests
 * [#1299](https://github.com/NibiruChain/nibiru/pull/1299) - feat(wasm): Add peg shift bindings
 * [#1292](https://github.com/NibiruChain/nibiru/pull/1292) - feat(wasm): Add module bindings for execute calls in x/perp: OpenPosition, ClosePosition, AddMargin, RemoveMargin.
 * [#1287](https://github.com/NibiruChain/nibiru/pull/1287) - feat(wasm): Add module bindings for custom queries in x/perp: Reserves, AllMarkets, BasePrice, PremiumFraction, Metrics, PerpParams, PerpModuleAccounts
@@ -63,6 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1301](https://github.com/NibiruChain/nibiru/pull/1301) - fix(epochs)!: correct epoch start time
 * [#1305](https://github.com/NibiruChain/nibiru/pull/1305) - refactor(perp!): Remove unnecessary protos
 * [#1306](https://github.com/NibiruChain/nibiru/pull/1306) - feat(perp): complete perp v2 types
+* [#1309](https://github.com/NibiruChain/nibiru/pull/1309) - feat: minimum swap amount set to $1
 
 ### Improvements
 
