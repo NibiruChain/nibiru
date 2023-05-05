@@ -14,6 +14,7 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/common/set"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
@@ -180,8 +181,15 @@ func (s *IntegrationSuite) TestCmdEditSudoers() {
 	s.Run("query state after add_contracts", func() {
 		state, err := testutilcli.QuerySudoers(val.ClientCtx)
 		s.NoError(err)
-		s.Equal(s.root.addr.String(), state.Sudoers.Root)
-		s.Equal(contracts, state.Sudoers.Contracts)
+
+		gotRoot := state.Sudoers.Root
+		s.Equal(s.root.addr.String(), gotRoot)
+
+		gotContracts := set.New(state.Sudoers.Contracts...)
+		s.Equal(len(contracts), gotContracts.Len())
+		for _, contract := range contracts {
+			gotContracts.Has(contract)
+		}
 	})
 
 	s.Run("remove_contracts", func() {
@@ -202,10 +210,16 @@ func (s *IntegrationSuite) TestCmdEditSudoers() {
 	s.Run("query state after remove_contracts", func() {
 		state, err := testutilcli.QuerySudoers(val.ClientCtx)
 		s.NoError(err)
-		s.Equal(s.root.addr.String(), state.Sudoers.Root)
+
+		gotRoot := state.Sudoers.Root
+		s.Equal(s.root.addr.String(), gotRoot)
+
 		wantContracts := []string{contracts[0], contracts[2]}
-		gotContracts := state.Sudoers.Contracts
-		s.Equal(wantContracts, gotContracts)
+		gotContracts := set.New(state.Sudoers.Contracts...)
+		s.Equal(len(wantContracts), gotContracts.Len())
+		for _, contract := range wantContracts {
+			gotContracts.Has(contract)
+		}
 	})
 }
 
