@@ -60,6 +60,11 @@ type PegShift struct {
 	PegMult sdk.Dec `json:"peg_mult"`
 }
 
+type DepthShift struct {
+	Pair      string  `json:"pair"`
+	DepthMult sdk.Dec `json:"depth_mult"`
+}
+
 type DonateToInsuranceFund struct {
 	Sender   string   `json:"sender"`
 	Donation sdk.Coin `json:"donation"`

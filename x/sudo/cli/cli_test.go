@@ -188,7 +188,7 @@ func (s *IntegrationSuite) TestCmdEditSudoers() {
 		gotContracts := set.New(state.Sudoers.Contracts...)
 		s.Equal(len(contracts), gotContracts.Len())
 		for _, contract := range contracts {
-			gotContracts.Has(contract)
+			s.True(gotContracts.Has(contract))
 		}
 	})
 
@@ -218,7 +218,7 @@ func (s *IntegrationSuite) TestCmdEditSudoers() {
 		gotContracts := set.New(state.Sudoers.Contracts...)
 		s.Equal(len(wantContracts), gotContracts.Len())
 		for _, contract := range wantContracts {
-			gotContracts.Has(contract)
+			s.True(gotContracts.Has(contract))
 		}
 	})
 }
