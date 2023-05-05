@@ -4,6 +4,8 @@ import (
 	"math/rand"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,16 +15,52 @@ import (
 	tmdb "github.com/tendermint/tm-db"
 )
 
-// AccAddress Returns a sample account address (sdk.AccAddress)
+// AccAddress returns a sample address (sdk.AccAddress) created using secp256k1.
 // Note that AccAddress().String() can be used to get a string representation.
 func AccAddress() sdk.AccAddress {
+	_, accAddr := PrivKey()
+	return accAddr
+}
+
+// PrivKey returns a private key and corresponding on-chain address.
+func PrivKey() (*secp256k1.PrivKey, sdk.AccAddress) {
+	privKey := secp256k1.GenPrivKey()
+	pubKey := privKey.PubKey()
+	addr := pubKey.Address()
+	return privKey, sdk.AccAddress(addr)
+}
+
+// PrivKeyAddressPairs generates (deterministically) a total of n private keys and addresses.
+func PrivKeyAddressPairs(n int) (keys []cryptotypes.PrivKey, addrs []sdk.AccAddress) {
+	r := rand.New(rand.NewSource(12345)) // make the generation deterministic
+	keys = make([]cryptotypes.PrivKey, n)
+	addrs = make([]sdk.AccAddress, n)
+	for i := 0; i < n; i++ {
+		secret := make([]byte, 32)
+		_, err := r.Read(secret)
+		if err != nil {
+			panic("Could not read randomness")
+		}
+		keys[i] = secp256k1.GenPrivKeyFromSecret(secret)
+		addrs[i] = sdk.AccAddress(keys[i].PubKey().Address())
+	}
+	return
+}
+
+// Ed25519 functions as a wrapper class implementing the "AccAddress" and
+// "PrivKeyAddressPairs" methods using ed25519.
+var Ed25519 ed25519Algo = ed25519Algo{}
+
+type ed25519Algo struct{}
+
+func (algo ed25519Algo) AccAddress() sdk.AccAddress {
 	pk := ed25519.GenPrivKey().PubKey()
 	addr := pk.Address()
 	return sdk.AccAddress(addr)
 }
 
 // PrivKeyAddressPairs generates (deterministically) a total of n private keys and addresses.
-func PrivKeyAddressPairs(n int) (keys []cryptotypes.PrivKey, addrs []sdk.AccAddress) {
+func (algo ed25519Algo) PrivKeyAddressPairs(n int) (keys []cryptotypes.PrivKey, addrs []sdk.AccAddress) {
 	r := rand.New(rand.NewSource(12345)) // make the generation deterministic
 	keys = make([]cryptotypes.PrivKey, n)
 	addrs = make([]sdk.AccAddress, n)
