@@ -8,8 +8,9 @@ import (
 	"github.com/NibiruChain/nibiru/x/sudo"
 	sudotypes "github.com/NibiruChain/nibiru/x/sudo/pb"
 
-	"github.com/NibiruChain/nibiru/x/common/testutil"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 )
 
 func AddSudoGenesis(gen app.GenesisState) (

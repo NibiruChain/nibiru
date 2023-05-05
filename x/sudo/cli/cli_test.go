@@ -6,6 +6,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gogo/protobuf/jsonpb"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
@@ -14,10 +19,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/x/sudo/cli"
 	"github.com/NibiruChain/nibiru/x/sudo/pb"
-	"github.com/gogo/protobuf/jsonpb"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 
 	"github.com/cosmos/cosmos-sdk/crypto"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
