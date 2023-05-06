@@ -8,6 +8,28 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+const (
+	// number of decimal places
+	Precision = 18
+
+	// bits required to represent the above precision
+	// Ceiling[Log2[10^Precision - 1]]
+	DecimalPrecisionBits = 60
+
+	// decimalTruncateBits is the minimum number of bits removed
+	// by a truncate operation. It is equal to
+	// Floor[Log2[10^Precision - 1]].
+	decimalTruncateBits = DecimalPrecisionBits - 1
+	maxBitLen           = 256
+	MaxDecBitLen        = maxBitLen + decimalTruncateBits
+)
+
+var (
+	precisionReuse = new(big.Int).Exp(big.NewInt(10), big.NewInt(Precision), nil)
+	fivePrecision  = new(big.Int).Quo(precisionReuse, big.NewInt(2))
+	oneInt         = big.NewInt(1)
+)
+
 // MustSqrtDec computes the square root of the input decimal using its
 // underlying big.Int. The big.Int.Sqrt method is part of the standard library,
 // thoroughly tested, works at seemingly unbound precision (e.g. for numbers as
@@ -86,4 +108,49 @@ func calcPrecisionMultiplier(prec int64) *big.Int {
 	zerosToAdd := PRECISION_SQRT - prec
 	multiplier := new(big.Int).Exp(tenInt, big.NewInt(zerosToAdd), nil)
 	return multiplier
+}
+
+//     ____
+//  __|    |__   "chop 'em
+//       ` \     round!"
+// ___||  ~  _     -bankers
+// |         |      __
+// |       | |   __|__|__
+// |_____:  /   | $$$    |
+//              |________|
+
+// Remove a Precision amount of rightmost digits and perform bankers rounding
+// on the remainder (gaussian rounding) on the digits which have been removed.
+//
+// Mutates the input. Use the non-mutative version if that is undesired
+func ChopPrecisionAndRound(d *big.Int) *big.Int {
+	// remove the negative and add it back when returning
+	if d.Sign() == -1 {
+		// make d positive, compute chopped value, and then un-mutate d
+		d = d.Neg(d)
+		d = ChopPrecisionAndRound(d)
+		d = d.Neg(d)
+		return d
+	}
+
+	// get the truncated quotient and remainder
+	quo, rem := d, big.NewInt(0)
+	quo, rem = quo.QuoRem(d, precisionReuse, rem)
+
+	if rem.Sign() == 0 { // remainder is zero
+		return quo
+	}
+
+	switch rem.Cmp(fivePrecision) {
+	case -1:
+		return quo
+	case 1:
+		return quo.Add(quo, oneInt)
+	default: // bankers rounding must take place
+		// always round to an even number
+		if quo.Bit(0) == 0 {
+			return quo
+		}
+		return quo.Add(quo, oneInt)
+	}
 }
