@@ -4,33 +4,33 @@ env:
   - CGO_ENABLED=1
 
 builds:
-  - id: darwin
-    main: ./cmd/nibid
-    binary: nibid
-    goos:
-      - darwin
-    goarch:
-      - amd64
-      - arm64
-    env:
-      - CC=o64-clang
-    flags:
-      - -mod=readonly
-      - -trimpath
-    ldflags:
-      - -s -w -X main.commit={{.Commit}} -X main.date={{ .CommitDate }} -X github.com/cosmos/cosmos-sdk/version.Name=nibiru -X github.com/cosmos/cosmos-sdk/version.AppName=nibid -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }} -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }} -X github.com/tendermint/tendermint/version.TMCoreSemVer={{ .Env.TM_VERSION }}
-      - -linkmode=external
-    tags:
-      - netgo
-      - osusergo
-      - ledger
-      - static_build
-      - static_wasm
-    overrides:
-      - goos: darwin
-        goarch: arm64
-        env:
-          - CC=oa64-clang
+  # - id: darwin
+  #   main: ./cmd/nibid
+  #   binary: nibid
+  #   goos:
+  #     - darwin
+  #   goarch:
+  #     - amd64
+  #     - arm64
+  #   env:
+  #     - CC=o64-clang
+  #   flags:
+  #     - -mod=readonly
+  #     - -trimpath
+  #   ldflags:
+  #     - -s -w -X main.commit={{.Commit}} -X main.date={{ .CommitDate }} -X github.com/cosmos/cosmos-sdk/version.Name=nibiru -X github.com/cosmos/cosmos-sdk/version.AppName=nibid -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }} -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }} -X github.com/tendermint/tendermint/version.TMCoreSemVer={{ .Env.TM_VERSION }}
+  #     - -linkmode=external
+  #   tags:
+  #     - netgo
+  #     - osusergo
+  #     - ledger
+  #     - static_build
+  #     - static_wasm
+  #   overrides:
+  #     - goos: darwin
+  #       goarch: arm64
+  #       env:
+  #         - CC=oa64-clang
 
   - id: linux
     main: ./cmd/nibid
@@ -39,31 +39,40 @@ builds:
       pre:
         - wget https://github.com/CosmWasm/wasmvm/releases/download/v1.1.1/libwasmvm_muslc.x86_64.a -O /usr/lib/x86_64-linux-gnu/libwasmvm_muslc.a
         - wget https://github.com/CosmWasm/wasmvm/releases/download/v1.1.1/libwasmvm_muslc.aarch64.a -O /usr/lib/aarch64-linux-gnu/libwasmvm_muslc.a
+        - wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/librocksdb_8.1.1.x86_64.a.tar.gz -O /usr/lib/x86_64-linux-gnu/librocksdb_8.1.1.x86_64.a.tar.gz
+        - tar -xf /usr/lib/x86_64-linux-gnu/librocksdb_8.1.1.x86_64.a.tar.gz -C /usr/lib/x86_64-linux-gnu/
+        - wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/include.8.1.1.tar.gz -O /usr/include/include.8.1.1.tar.gz
+        - tar -xf /usr/include/include.8.1.1.tar.gz -C /usr/include/
     goos:
       - linux
     goarch:
       - amd64
-      - arm64
+      # - arm64
     env:
       - CC=x86_64-linux-gnu-gcc
     flags:
       - -mod=readonly
       - -trimpath
     ldflags:
-      - -s -w -X main.commit={{.Commit}} -X main.date={{ .CommitDate }} -X github.com/cosmos/cosmos-sdk/version.Name=nibiru -X github.com/cosmos/cosmos-sdk/version.AppName=nibid -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }} -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }} -X github.com/tendermint/tendermint/version.TMCoreSemVer={{ .Env.TM_VERSION }}
+      - -s -w 
+      - -X github.com/cosmos/cosmos-sdk/version.Name=nibiru 
+      - -X github.com/cosmos/cosmos-sdk/version.AppName=nibid 
+      - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }} 
+      - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }} 
+      - -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb
       - -linkmode=external
-      - -extldflags '-Wl,-z,muldefs -static -lm'
+      - -extldflags '-Wl,-z,muldefs -lm -lrocksdb'
     tags:
       - netgo
       - osusergo
       - ledger
       - muslc
-      - static_build
-    overrides:
-      - goos: linux
-        goarch: arm64
-        env:
-          - CC=aarch64-linux-gnu-gcc
+      - rocksdb
+    # overrides:
+    #   - goos: linux
+    #     goarch: arm64
+    #     env:
+    #       - CC=aarch64-linux-gnu-gcc
 
 universal_binaries:
   - id: darwin

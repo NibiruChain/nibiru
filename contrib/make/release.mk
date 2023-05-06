@@ -15,6 +15,5 @@ release:
 		-w /go/src/$(PACKAGE_NAME) \
 		-e CGO_ENABLED=1 \
 		-e TM_VERSION=$(shell go list -m github.com/tendermint/tendermint | sed 's:.* ::') \
-		-e GITHUB_TOKEN=${GITHUB_TOKEN} \
 		goreleaser/goreleaser-cross:${GOLANG_CROSS_VERSION} \
-		release --rm-dist
+		build --rm-dist --debug --skip-validate
