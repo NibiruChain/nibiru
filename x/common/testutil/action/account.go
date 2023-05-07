@@ -29,3 +29,26 @@ func (c fundAccount) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error
 
 	return ctx, nil, true
 }
+
+type fundModule struct {
+	Module string
+	Amount sdk.Coins
+}
+
+func FundModule(module string, amount sdk.Coins) Action {
+	return fundModule{Module: module, Amount: amount}
+}
+
+func (c fundModule) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	err := app.BankKeeper.MintCoins(ctx, inflationtypes.ModuleName, c.Amount)
+	if err != nil {
+		return ctx, err, true
+	}
+
+	err = app.BankKeeper.SendCoinsFromModuleToModule(ctx, inflationtypes.ModuleName, c.Module, c.Amount)
+	if err != nil {
+		return ctx, err, true
+	}
+
+	return ctx, nil, true
+}

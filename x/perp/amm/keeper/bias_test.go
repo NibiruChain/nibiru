@@ -15,7 +15,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
-	. "github.com/NibiruChain/nibiru/x/oracle/integration_test/action"
+	. "github.com/NibiruChain/nibiru/x/oracle/integration/action"
 	"github.com/NibiruChain/nibiru/x/perp/amm/types"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/action"
 )
