@@ -87,6 +87,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/epochs"
 	epochskeeper "github.com/NibiruChain/nibiru/x/epochs/keeper"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
+	"github.com/NibiruChain/nibiru/x/sudo"
 
 	"github.com/NibiruChain/nibiru/x/inflation"
 	inflationkeeper "github.com/NibiruChain/nibiru/x/inflation/keeper"
@@ -150,6 +151,7 @@ func GetStoreKeys() (
 		v2perptypes.StoreKey,
 		perpammtypes.StoreKey,
 		inflationtypes.StoreKey,
+		sudo.StoreKey,
 		wasm.StoreKey,
 	)
 	tkeys = sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -272,6 +274,10 @@ func (app *NibiruApp) InitKeepers(
 	app.InflationKeeper = inflationkeeper.NewKeeper(
 		appCodec, keys[inflationtypes.StoreKey], app.GetSubspace(inflationtypes.ModuleName),
 		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.stakingKeeper, authtypes.FeeCollectorName,
+	)
+
+	app.SudoKeeper = sudo.NewKeeper(
+		appCodec, keys[sudo.StoreKey],
 	)
 
 	app.EpochsKeeper.SetHooks(
@@ -442,6 +448,7 @@ func (app *NibiruApp) AppModules(
 	inflationModule := inflation.NewAppModule(
 		app.InflationKeeper, app.AccountKeeper, app.stakingKeeper,
 	)
+	sudoModule := sudo.NewAppModule(appCodec, app.SudoKeeper)
 
 	return []module.AppModule{
 		genutil.NewAppModule(
@@ -470,6 +477,7 @@ func (app *NibiruApp) AppModules(
 		perpAmmModule,
 		perpModule,
 		inflationModule,
+		sudoModule,
 
 		// ibc
 		evidence.NewAppModule(app.evidenceKeeper),
@@ -528,6 +536,7 @@ func OrderedModuleNames() []string {
 		perptypes.ModuleName,
 		v2perptypes.ModuleName,
 		inflationtypes.ModuleName,
+		sudo.ModuleName,
 
 		// --------------------------------------------------------------------
 		// IBC modules

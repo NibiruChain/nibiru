@@ -29,4 +29,5 @@ var (
 	ErrUnauthorized                      = sdkerrors.Register(ModuleName, 21, "operation not authorized")
 	ErrAllLiquidationsFailed             = sdkerrors.Register(ModuleName, 22, "all liquidations failed")
 	ErrPositionHealthy                   = sdkerrors.Register(ModuleName, 23, "position is healthy")
+	ErrLiquidityDepthOverflow            = sdkerrors.Register(ModuleName, 24, "liquidty depth overflow")
 )

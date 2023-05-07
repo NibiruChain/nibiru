@@ -78,8 +78,8 @@ func (s *TestSuiteExecutor) SetupSuite() {
 		Time:    time.Now().UTC(),
 	})
 	coins := sdk.NewCoins(
-		sdk.NewCoin(denoms.NIBI, sdk.NewInt(1_000)),
-		sdk.NewCoin(denoms.NUSD, sdk.NewInt(420*69)),
+		sdk.NewCoin(denoms.NIBI, sdk.NewInt(10_000_000)),
+		sdk.NewCoin(denoms.NUSD, sdk.NewInt(420_000*69)),
 	)
 
 	s.NoError(testapp.FundAccount(nibiru.BankKeeper, ctx, sender, coins))
@@ -107,7 +107,7 @@ func (s *TestSuiteExecutor) TestOpenAddRemoveClose() {
 			Sender:          sender,
 			Pair:            s.happyFields.Pair,
 			IsLong:          true,
-			QuoteAmount:     sdk.NewInt(420),
+			QuoteAmount:     sdk.NewInt(4_200_000),
 			Leverage:        sdk.NewDec(5),
 			BaseAmountLimit: sdk.NewInt(0),
 		},
@@ -156,6 +156,18 @@ func (s *TestSuiteExecutor) TestPegShift() {
 			PegMult: sdk.NewDec(420),
 		},
 	}
+
+	// Executing with permission should succeed
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{s.contractPerp.String()}, s.ctx,
+	)
 	contractRespBz, err := s.ExecuteAgainstContract(s.contractPerp, execMsg)
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
+
+	// Executing without permission should fail
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{}, s.ctx,
+	)
+	contractRespBz, err = s.ExecuteAgainstContract(s.contractPerp, execMsg)
+	s.Errorf(err, "contractRespBz: %s", contractRespBz)
 }

@@ -2,6 +2,7 @@ package v2
 
 import (
 	fmt "fmt"
+	"math/big"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -133,34 +134,36 @@ func (amm AMM) MarkPrice() sdk.Dec {
 }
 
 // Returns the sqrt k of the reserves
-func (amm *AMM) ComputeSqrtDepth() (sqrtDepth sdk.Dec, err error) {
+func (amm AMM) ComputeSqrtDepth() (sqrtDepth sdk.Dec, err error) {
+	mul := new(big.Int).Mul(amm.BaseReserve.BigInt(), amm.BaseReserve.BigInt())
+
+	chopped := common.ChopPrecisionAndRound(mul)
+	if chopped.BitLen() > common.MaxDecBitLen {
+		return sdk.Dec{}, ErrLiquidityDepthOverflow
+	}
+
 	liqDepth := amm.QuoteReserve.Mul(amm.BaseReserve)
 	return common.SqrtDec(liqDepth)
 }
 
-func (amm *AMM) WithBaseReserve(baseReserve sdk.Dec) *AMM {
+func (amm *AMM) WithBaseReserve(baseReserve sdk.Dec) {
 	amm.BaseReserve = baseReserve
-	return amm
 }
 
-func (amm *AMM) WithQuoteReserve(quoteReserve sdk.Dec) *AMM {
+func (amm *AMM) WithQuoteReserve(quoteReserve sdk.Dec) {
 	amm.QuoteReserve = quoteReserve
-	return amm
 }
 
-func (amm *AMM) WithPriceMultiplier(priceMultiplier sdk.Dec) *AMM {
+func (amm *AMM) WithPriceMultiplier(priceMultiplier sdk.Dec) {
 	amm.PriceMultiplier = priceMultiplier
-	return amm
 }
 
-func (amm *AMM) WithBias(bias sdk.Dec) *AMM {
+func (amm *AMM) WithBias(bias sdk.Dec) {
 	amm.Bias = bias
-	return amm
 }
 
-func (amm *AMM) WithSqrtDepth(sqrtDepth sdk.Dec) *AMM {
+func (amm *AMM) WithSqrtDepth(sqrtDepth sdk.Dec) {
 	amm.SqrtDepth = sqrtDepth
-	return amm
 }
 
 func (amm *AMM) SwapQuoteAsset(quoteAssetAmt sdk.Dec, dir Direction) (baseAssetDeltaAbs sdk.Dec, err error) {
