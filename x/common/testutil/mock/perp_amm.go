@@ -1,10 +1,11 @@
 package mock
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	asset "github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // default market with sensible values for tests

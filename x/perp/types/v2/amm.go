@@ -4,8 +4,9 @@ import (
 	fmt "fmt"
 	"math/big"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/common"
 )
 
 func (amm AMM) Validate() error {
