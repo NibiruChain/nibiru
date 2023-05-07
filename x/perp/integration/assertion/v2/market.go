@@ -3,11 +3,10 @@ package assertion
 import (
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type MarketChecker func(resp v2types.Market) error

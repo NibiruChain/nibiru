@@ -17,7 +17,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	. "github.com/NibiruChain/nibiru/x/oracle/integration_test/action"
+	. "github.com/NibiruChain/nibiru/x/oracle/integration/action"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/action"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"

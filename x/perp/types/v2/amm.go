@@ -4,9 +4,8 @@ import (
 	fmt "fmt"
 	"math/big"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/NibiruChain/nibiru/x/common"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func (amm AMM) Validate() error {
@@ -147,24 +146,29 @@ func (amm AMM) ComputeSqrtDepth() (sqrtDepth sdk.Dec, err error) {
 	return common.SqrtDec(liqDepth)
 }
 
-func (amm *AMM) WithBaseReserve(baseReserve sdk.Dec) {
+func (amm *AMM) WithBaseReserve(baseReserve sdk.Dec) *AMM {
 	amm.BaseReserve = baseReserve
+	return amm
 }
 
-func (amm *AMM) WithQuoteReserve(quoteReserve sdk.Dec) {
+func (amm *AMM) WithQuoteReserve(quoteReserve sdk.Dec) *AMM {
 	amm.QuoteReserve = quoteReserve
+	return amm
 }
 
-func (amm *AMM) WithPriceMultiplier(priceMultiplier sdk.Dec) {
+func (amm *AMM) WithPriceMultiplier(priceMultiplier sdk.Dec) *AMM {
 	amm.PriceMultiplier = priceMultiplier
+	return amm
 }
 
-func (amm *AMM) WithBias(bias sdk.Dec) {
+func (amm *AMM) WithBias(bias sdk.Dec) *AMM {
 	amm.Bias = bias
+	return amm
 }
 
-func (amm *AMM) WithSqrtDepth(sqrtDepth sdk.Dec) {
+func (amm *AMM) WithSqrtDepth(sqrtDepth sdk.Dec) *AMM {
 	amm.SqrtDepth = sqrtDepth
+	return amm
 }
 
 func (amm *AMM) SwapQuoteAsset(quoteAssetAmt sdk.Dec, dir Direction) (baseAssetDeltaAbs sdk.Dec, err error) {
