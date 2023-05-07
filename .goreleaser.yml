@@ -10,46 +10,55 @@ builds:
   #   goos:
   #     - darwin
   #   goarch:
-  #     - amd64
   #     - arm64
   #   env:
-  #     - CC=o64-clang
+  #     - CC=oa64-clang
+  #     - PKG_CONFIG_SYSROOT_DIR=/sysroot/darwin/arm64
+  #     - CGO_CFLAGS="--sysroot=/sysroot/darwin/arm64 -I/sysroot/darwin/arm64/opt/homebrew/Cellar/rocksdb/8.1.1/include -L/sysroot/darwin/arm64/opt/homebrew/Cellar/snappy/1.1.10/include -L/sysroot/darwin/arm64/opt/homebrew/Cellar/lz4/1.9.4/include -L/sysroot/darwin/arm64/opt/homebrew/Cellar/zstd/1.5.5/include"
+  #     - CGO_LDFLAGS="--sysroot=/sysroot/darwin/arm64 -L/sysroot/darwin/arm64/opt/homebrew/Cellar/rocksdb/8.1.1/lib -L/sysroot/darwin/arm64/opt/homebrew/Cellar/snappy/1.1.10/lib -L/sysroot/darwin/arm64/opt/homebrew/Cellar/lz4/1.9.4/lib -L/sysroot/darwin/arm64/opt/homebrew/Cellar/zstd/1.5.5/lib"
   #   flags:
   #     - -mod=readonly
   #     - -trimpath
   #   ldflags:
-  #     - -s -w -X main.commit={{.Commit}} -X main.date={{ .CommitDate }} -X github.com/cosmos/cosmos-sdk/version.Name=nibiru -X github.com/cosmos/cosmos-sdk/version.AppName=nibid -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }} -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }} -X github.com/tendermint/tendermint/version.TMCoreSemVer={{ .Env.TM_VERSION }}
+  #     - -s -w 
+  #     - -X github.com/cosmos/cosmos-sdk/version.Name=nibiru 
+  #     - -X github.com/cosmos/cosmos-sdk/version.AppName=nibid 
+  #     - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }} 
+  #     - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }} 
   #     - -linkmode=external
+  #     - -extldflags '-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy -llz4 -lzstd -lpthread'
   #   tags:
   #     - netgo
   #     - osusergo
   #     - ledger
   #     - static_build
   #     - static_wasm
-  #   overrides:
-  #     - goos: darwin
-  #       goarch: arm64
-  #       env:
-  #         - CC=oa64-clang
+  #     - rocksdb
 
   - id: linux
     main: ./cmd/nibid
     binary: nibid
     hooks:
       pre:
-        - wget https://github.com/CosmWasm/wasmvm/releases/download/v1.1.1/libwasmvm_muslc.x86_64.a -O /usr/lib/x86_64-linux-gnu/libwasmvm_muslc.a
-        - wget https://github.com/CosmWasm/wasmvm/releases/download/v1.1.1/libwasmvm_muslc.aarch64.a -O /usr/lib/aarch64-linux-gnu/libwasmvm_muslc.a
-        - wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/librocksdb_8.1.1.x86_64.a.tar.gz -O /usr/lib/x86_64-linux-gnu/librocksdb_8.1.1.x86_64.a.tar.gz
-        - tar -xf /usr/lib/x86_64-linux-gnu/librocksdb_8.1.1.x86_64.a.tar.gz -C /usr/lib/x86_64-linux-gnu/
-        - wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/include.8.1.1.tar.gz -O /usr/include/include.8.1.1.tar.gz
-        - tar -xf /usr/include/include.8.1.1.tar.gz -C /usr/include/
+        - wget https://github.com/CosmWasm/wasmvm/releases/download/v1.1.1/libwasmvm_muslc.x86_64.a -O /sysroot/linux/amd64/usr/lib/x86_64-linux-gnu/libwasmvm_muslc.a
+        - wget https://github.com/CosmWasm/wasmvm/releases/download/v1.1.1/libwasmvm_muslc.aarch64.a -O /sysroot/linux/arm64/usr/lib/aarch64-linux-gnu/libwasmvm_muslc.a
+        - wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/librocksdb_8.1.1.x86_64.a.tar.gz -O /sysroot/linux/amd64/usr/lib/x86_64-linux-gnu/librocksdb_8.1.1.x86_64.a.tar.gz
+        - tar -xf /sysroot/linux/amd64/usr/lib/x86_64-linux-gnu/librocksdb_8.1.1.x86_64.a.tar.gz -C /sysroot/linux/amd64/usr/lib/x86_64-linux-gnu/
+        - wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.3.0/librocksdb_8.3.0.aarch64.a.tar.gz -O /sysroot/linux/arm64/usr/lib/aarch64-linux-gnu/librocksdb_8.3.0.aarch64.a.tar.gz
+        - tar -xf /sysroot/linux/arm64/usr/lib/aarch64-linux-gnu/librocksdb_8.3.0.aarch64.a -C /sysroot/linux/arm64/usr/lib/aarch64-linux-gnu/
+        - cp /sysroot/linux/amd64/usr/lib/x86_64-linux-gnu/libm-2.31.a /usr/lib/x86_64-linux-gnu/libm-2.31.a # HACK: not sure why goreleaser-cross doesn't pick these up from the sysroot, but manually copying them works
+        - cp /sysroot/linux/amd64/usr/lib/x86_64-linux-gnu/libmvec.a /usr/lib/x86_64-linux-gnu/libmvec.a # HACK: not sure why goreleaser-cross doesn't pick these up from the sysroot, but manually copying them
     goos:
       - linux
     goarch:
       - amd64
-      # - arm64
+      - arm64
     env:
       - CC=x86_64-linux-gnu-gcc
+      - CGO_CFLAGS=--sysroot=/sysroot/linux/amd64
+      - CGO_LDFLAGS=--sysroot=/sysroot/linux/amd64
+      - PKG_CONFIG_SYSROOT_DIR=/sysroot/linux/amd64
+      - PKG_CONFIG_PATH=/sysroot/linux/amd64/usr/lib/x86_64-linux-gnu/pkgconfig:/sysroot/linux/amd64/usr/lib/pkgconfig
     flags:
       - -mod=readonly
       - -trimpath
@@ -61,18 +70,22 @@ builds:
       - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }} 
       - -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb
       - -linkmode=external
-      - -extldflags '-Wl,-z,muldefs -lm -lrocksdb'
+      - -extldflags '-Wl,-z,muldefs -static -lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy -llz4 -lzstd -lpthread'
     tags:
       - netgo
       - osusergo
       - ledger
       - muslc
       - rocksdb
-    # overrides:
-    #   - goos: linux
-    #     goarch: arm64
-    #     env:
-    #       - CC=aarch64-linux-gnu-gcc
+    overrides:
+      - goos: linux
+        goarch: arm64
+        env:
+          - CC=aarch64-linux-gnu-gcc
+          - CGO_CFLAGS=--sysroot=/sysroot/linux/arm64
+          - CGO_LDFLAGS=--sysroot=/sysroot/linux/arm64
+          - PKG_CONFIG_SYSROOT_DIR=/sysroot/linux/arm64
+          - PKG_CONFIG_PATH=/sysroot/linux/arm64/usr/lib/aarch64-linux-gnu/pkgconfig:/sysroot/linux/arm64/usr/lib/pkgconfig
 
-universal_binaries:
-  - id: darwin
+# universal_binaries:
+#   - id: darwin
