@@ -29,7 +29,7 @@ func PrivKey() (*secp256k1.PrivKey, sdk.AccAddress) {
 	return privKey, sdk.AccAddress(addr)
 }
 
-// PrivKeyAddressPairs generates (deterministically) a total of n private keys 
+// PrivKeyAddressPairs generates (deterministically) a total of n private keys
 // and addresses.
 func PrivKeyAddressPairs(n int) (keys []cryptotypes.PrivKey, addrs []sdk.AccAddress) {
 	r := rand.New(rand.NewSource(12345)) // make the generation deterministic
