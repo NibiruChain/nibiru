@@ -7,8 +7,7 @@
         "quote_reserve": "69",
         "sqrt_depth": "69",
         "depth": "4761",
-        "total_long": "420",
-        "total_short": "420",
+        "bias": "420",
         "peg_mult": "420",
         "config": {
           "trade_limit_ratio": "420",
@@ -53,18 +52,18 @@
   },
   "positions": {
     "positions": {
-      "ETH:USD": {
+      "BTC:USD": {
         "trader_addr": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
-        "pair": "ETH:USD",
+        "pair": "BTC:USD",
         "size": "420",
         "margin": "420",
         "open_notional": "420",
         "latest_cpf": "0",
         "block_number": "1"
       },
-      "BTC:USD": {
+      "ETH:USD": {
         "trader_addr": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
-        "pair": "BTC:USD",
+        "pair": "ETH:USD",
         "size": "420",
         "margin": "420",
         "open_notional": "420",
@@ -83,8 +82,8 @@
       "funding_rate_interval": "1h",
       "twap_lookback_window": "3600",
       "whitelisted_liquidators": [
-        "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
-        "nibi1ah8gqrtjllhc5ld4rxgl4uglvwl93ag0sh6e6v"
+        "nibi1ah8gqrtjllhc5ld4rxgl4uglvwl93ag0sh6e6v",
+        "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"
       ]
     }
   },

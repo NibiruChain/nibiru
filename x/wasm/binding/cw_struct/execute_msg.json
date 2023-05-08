@@ -65,10 +65,10 @@
       "peg_mult": "420"
     }
   },
-  "swap_invariant_multiply": {
-    "swap_invariant_multiply": {
+  "depth_shift": {
+    "depth_shift": {
       "pair": "ETH:USD",
-      "swap_invariant_mult": "2"
+      "depth_mult": "420"
     }
   }
 }
