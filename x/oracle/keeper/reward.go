@@ -87,7 +87,7 @@ func (k Keeper) GatherRewardsForVotePeriod(ctx sdk.Context, pair asset.Pair) sdk
 		}
 		coins = coins.Add(pairReward.Coins...)
 
-		// Decrease the remaining vote periods of the PairRward.
+		// Decrease the remaining vote periods of the PairReward.
 		pairReward.VotePeriods -= 1
 		if pairReward.VotePeriods == 0 {
 			// If the distribution period count drops to 0: the reward instance is removed.

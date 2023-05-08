@@ -3,11 +3,13 @@ package keeper
 import (
 	"errors"
 	"fmt"
-	"github.com/NibiruChain/collections"
 	"time"
 
-	"github.com/NibiruChain/nibiru/x/epochs/types"
+	"github.com/NibiruChain/collections"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/epochs/types"
 )
 
 // GetEpochInfo returns epoch info by identifier.
