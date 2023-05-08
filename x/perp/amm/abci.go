@@ -19,7 +19,8 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 			pool.BaseReserve,
 			pool.QuoteReserve,
 			pool.PegMultiplier,
-			pool.Bias,
+			pool.TotalLong,
+			pool.TotalShort,
 			ctx.BlockTime(),
 		)
 		k.ReserveSnapshots.Insert(ctx, collections.Join(pool.Pair, ctx.BlockTime()), snapshot)

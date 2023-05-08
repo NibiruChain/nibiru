@@ -31,6 +31,14 @@ func (market *Market) FromQuoteReserveToAsset(quoteReserve sdk.Dec) sdk.Dec {
 }
 
 /*
+GetBias returns the bias of the market in the base asset. It's the net amount of base assets for longs minus the net
+amount of base assets for shorts.
+*/
+func (market *Market) GetBias() (bias sdk.Dec) {
+	return market.TotalLong.Sub(market.TotalShort)
+}
+
+/*
 GetBaseAmountByQuoteAmount returns the amount of base asset you will get out
 by giving a specified amount of quote asset
 
@@ -72,19 +80,21 @@ func (market *Market) GetRepegCost(pegCandidate sdk.Dec) (cost sdk.Dec, err erro
 		return
 	}
 
-	if market.Bias.IsZero() {
+	bias := market.GetBias()
+
+	if bias.IsZero() {
 		cost = sdk.ZeroDec()
 		return
 	}
 
-	biasInQuoteReserve, err := market.GetQuoteReserveByBase(market.Bias)
+	biasInQuoteReserve, err := market.GetQuoteReserveByBase(bias)
 	if err != nil {
 		return
 	}
 
 	cost = biasInQuoteReserve.Mul(pegCandidate.Sub(market.PegMultiplier))
 
-	if market.Bias.IsNegative() {
+	if bias.IsNegative() {
 		cost = cost.Neg()
 	}
 
@@ -219,11 +229,16 @@ func (market *Market) AddToQuoteReserve(amount sdk.Dec) {
 	market.QuoteReserve = market.QuoteReserve.Add(amount)
 }
 
-// AddToBaseReserveAndBias adds 'amount' to the base asset reserves
+// AddToBaseReserveAndTotalLongShort adds 'amount' to the base asset reserves
 // The 'amount' is not assumed to be positive.
-func (market *Market) AddToBaseReserveAndBias(amount sdk.Dec) {
+func (market *Market) AddToBaseReserveAndTotalLongShort(amount sdk.Dec) {
+	if amount.IsPositive() {
+		market.TotalLong = market.TotalLong.Add(amount)
+	} else if amount.IsNegative() {
+		market.TotalShort = market.TotalShort.Add(amount)
+	}
+
 	market.BaseReserve = market.BaseReserve.Add(amount)
-	market.Bias = market.Bias.Sub(amount) // Bias is the opposite of what the trader get
 }
 
 type ArgsNewMarket struct {
@@ -231,7 +246,8 @@ type ArgsNewMarket struct {
 	BaseReserves  sdk.Dec
 	QuoteReserves sdk.Dec
 	Config        *MarketConfig
-	Bias          sdk.Dec
+	TotalLong     sdk.Dec
+	TotalShort    sdk.Dec
 	PegMultiplier sdk.Dec
 }
 
@@ -249,7 +265,8 @@ func NewMarket(args ArgsNewMarket) Market {
 		QuoteReserve:  args.QuoteReserves,
 		Config:        config,
 		SqrtDepth:     common.MustSqrtDec(args.QuoteReserves.Mul(args.BaseReserves)),
-		Bias:          args.Bias,
+		TotalLong:     args.TotalLong,
+		TotalShort:    args.TotalShort,
 		PegMultiplier: args.PegMultiplier,
 	}
 }
@@ -507,7 +524,6 @@ func (market Market) ToSnapshot(ctx sdk.Context) ReserveSnapshot {
 		market.BaseReserve,
 		market.QuoteReserve,
 		market.PegMultiplier,
-		market.Bias,
 		ctx.BlockTime(),
 	)
 	if err := snapshot.Validate(); err != nil {

@@ -41,7 +41,7 @@ func TestCreatePool(t *testing.T) {
 
 	pool, err := perpammKeeper.GetPool(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 	require.NoError(t, err)
-	require.Equal(t, sdk.ZeroDec(), pool.Bias)
+	require.Equal(t, sdk.ZeroDec(), pool.GetBias())
 }
 
 func TestCreatePool_Errors(t *testing.T) {

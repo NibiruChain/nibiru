@@ -31,7 +31,8 @@ func (k Keeper) CreatePool(
 		BaseReserves:  baseReserve,
 		QuoteReserves: quoteReserve,
 		Config:        &config,
-		Bias:          sdk.ZeroDec(),
+		TotalLong:     sdk.ZeroDec(),
+		TotalShort:    sdk.ZeroDec(),
 		PegMultiplier: pegMultiplier,
 	})
 

@@ -104,7 +104,8 @@ func GetHappyFields() ExampleFields {
 		QuoteReserve: fields.Dec,
 		SqrtDepth:    fields.Dec,
 		Depth:        fields.Int,
-		Bias:         fields.Dec,
+		TotalLong:    fields.Dec,
+		TotalShort:   fields.Dec,
 		PegMult:      fields.Dec,
 		Config: &cw_struct.MarketConfig{
 			TradeLimitRatio:        fields.Dec,
@@ -215,7 +216,8 @@ func (s *TestSuiteQuerier) TestQueryAllMarkets() {
 		s.Assert().EqualValues(
 			market.BaseReserve.Mul(market.QuoteReserve).String(),
 			cwMarket.Depth.ToDec().String())
-		s.Assert().EqualValues(market.Bias, cwMarket.Bias)
+		s.Assert().EqualValues(market.TotalLong, cwMarket.TotalLong)
+		s.Assert().EqualValues(market.TotalShort, cwMarket.TotalShort)
 		s.Assert().EqualValues(market.PegMultiplier.String(), cwMarket.PegMult.String())
 		s.Assert().EqualValues(market.GetMarkPrice().String(), cwMarket.MarkPrice.String())
 		s.Assert().EqualValues(s.ctx.BlockHeight(), cwMarket.BlockNumber.Int64())

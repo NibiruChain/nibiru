@@ -43,7 +43,8 @@ func TestSnapshotUpdates(t *testing.T) {
 		/* baseReserve */ sdk.NewDec(1_000),
 		/* quoteReserve */ sdk.NewDec(1_000),
 		/* pegMultiplier */ sdk.OneDec(),
-		/* bias */ sdk.ZeroDec(),
+		/* totalLong */ sdk.ZeroDec(),
+		/* totalShort */ sdk.ZeroDec(),
 		/* blockTime */ ctx.BlockTime(),
 	)
 

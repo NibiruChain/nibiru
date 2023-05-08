@@ -113,13 +113,15 @@ func TestFrom2To3(t *testing.T) {
 				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				BaseReserve:  sdk.MustNewDecFromStr("10000000"),
 				QuoteReserve: sdk.MustNewDecFromStr("20000000"),
-				Bias:         sdk.ZeroDec(),
+				TotalLong:    sdk.ZeroDec(),
+				TotalShort:   sdk.ZeroDec(),
 			}
 			app.PerpAmmKeeper.Pools.Insert(ctx, market.Pair, market)
 
 			savedPool, err := app.PerpAmmKeeper.Pools.Get(ctx, market.Pair)
 			require.NoError(t, err)
-			require.Equal(t, sdk.ZeroDec(), savedPool.Bias)
+			require.Equal(t, sdk.ZeroDec(), savedPool.TotalLong)
+			require.Equal(t, sdk.ZeroDec(), savedPool.TotalShort)
 			require.Equal(t, sdk.ZeroDec(), savedPool.PegMultiplier)
 
 			for _, pos := range tc.positions {
@@ -136,7 +138,7 @@ func TestFrom2To3(t *testing.T) {
 
 			savedPool, err = app.PerpAmmKeeper.Pools.Get(ctx, market.Pair)
 			require.NoError(t, err)
-			require.Equal(t, tc.expectedBias, savedPool.Bias)
+			require.Equal(t, tc.expectedBias, savedPool.GetBias())
 			require.Equal(t, sdk.OneDec(), savedPool.PegMultiplier)
 		})
 	}
