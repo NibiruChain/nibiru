@@ -8,7 +8,11 @@ updates:
   - package-ecosystem: "gomod" # See documentation for possible values
     directory: "/" # Location of package manifests
     schedule:
-      interval: "weekly"
+      interval: daily
     labels:
       - "dependencies"
       - "dependabot"
+  - package-ecosystem: "github-actions" # checks for updates to the actions
+    directory: "/"
+    schedule:
+      interval: daily
