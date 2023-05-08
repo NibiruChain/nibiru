@@ -33,6 +33,7 @@ jobs:
       - name: unpack release
         run: |
           tar -xzf *linux_amd64.tar.gz
+          mv nibid-* nibid
 
       - name: launch localnet
         run: |
