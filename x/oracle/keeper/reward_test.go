@@ -71,7 +71,7 @@ func TestKeeperRewardsDistributionMultiVotePeriods(t *testing.T) {
 func TestAllocateRewardsForUnlistedPair(t *testing.T) {
 	fixture, _ := Setup(t)
 
-	assert.Error(t, fixture.OracleKeeper.AllocatePairRewards(
+	assert.Error(t, fixture.OracleKeeper.AllocateRewards(
 		fixture.Ctx,
 		faucetAccountName,
 		asset.Registry.Pair("foo", "bar"), // pair doesn't exist

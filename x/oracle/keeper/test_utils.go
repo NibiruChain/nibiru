@@ -267,7 +267,7 @@ func FundAccount(input TestFixture, addr sdk.AccAddress, amounts sdk.Coins) erro
 
 func AllocateRewards(t *testing.T, input TestFixture, pair asset.Pair, rewards sdk.Coins, votePeriods uint64) {
 	require.NoError(t, input.BankKeeper.MintCoins(input.Ctx, faucetAccountName, rewards))
-	require.NoError(t, input.OracleKeeper.AllocatePairRewards(input.Ctx, faucetAccountName, pair, rewards, votePeriods))
+	require.NoError(t, input.OracleKeeper.AllocateRewards(input.Ctx, faucetAccountName, pair, rewards, votePeriods))
 }
 
 var (

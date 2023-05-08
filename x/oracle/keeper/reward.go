@@ -10,7 +10,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
-func (k Keeper) AllocatePairRewards(ctx sdk.Context, funderModule string, pair asset.Pair, totalCoins sdk.Coins, votePeriods uint64) error {
+func (k Keeper) AllocateRewards(ctx sdk.Context, funderModule string, pair asset.Pair, totalCoins sdk.Coins, votePeriods uint64) error {
 	if !k.WhitelistedPairs.Has(ctx, pair) {
 		return types.ErrUnknownPair.Wrap(pair.String())
 	}
