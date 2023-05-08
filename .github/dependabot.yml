@@ -12,7 +12,8 @@ updates:
     labels:
       - "dependencies"
       - "dependabot"
-  - package-ecosystem: "github-actions" # checks for updates to the actions
+  # checks for updates to the actions dependencies
+  - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: daily
