@@ -189,24 +189,22 @@ add_genesis_perp_markets_with_coingecko_prices() {
 
   local num_users=24000
   local faucet_nusd_amt=100
-  local quote_amt=$(($num_users * $faucet_nusd_amt * $M))
+  local reserve_amt=$(($num_users * $faucet_nusd_amt * $M))
 
   price_btc=$(cat tmp_market_prices.json | jq -r '.bitcoin.usd')
   price_btc=${price_btc%.*}
   if [ -z "$price_btc" ]; then
     return 1
   fi
-  base_amt_btc=$(($quote_amt / $price_btc))
 
   price_eth=$(cat tmp_market_prices.json | jq -r '.ethereum.usd')
   price_eth=${price_eth%.*}
   if [ -z "$price_eth" ]; then
     return 1
   fi
-  base_amt_eth=$(($quote_amt / $price_eth))
 
-  nibid add-genesis-perp-market --pair=ubtc:unusd --base-amt=$base_amt_btc --quote-amt=$quote_amt --max-leverage=12
-  nibid add-genesis-perp-market --pair=ueth:unusd --base-amt=$base_amt_eth --quote-amt=$quote_amt --max-leverage=20 --mmr=0.04
+  nibid add-genesis-perp-market --pair=ubtc:unusd --base-amt=$reserve_amt --quote-amt=$reserve_amt --max-leverage=12 --peg-multiplier=$price_btc
+  nibid add-genesis-perp-market --pair=ueth:unusd --base-amt=$reserve_amt --quote-amt=$reserve_amt --max-leverage=20 --mmr=0.04 --peg-multiplier=$price_eth
 
   echo 'tmp_market_prices: '
   cat $temp_json_fname | jq .
@@ -214,14 +212,12 @@ add_genesis_perp_markets_with_coingecko_prices() {
 }
 
 add_genesis_perp_markets_default() {
-  # nibid add-genesis-perp-market [pair] [base-asset-reserve] [quote-asset-reserve] [trade-limit-ratio] [fluctuation-limit-ratio] [maxOracle-spread-ratio] [maintenance-margin-ratio] [max-leverage]
+  # nibid add-genesis-perp-market [pair] [base-asset-reserve] [quote-asset-reserve] [trade-limit-ratio] [fluctuation-limit-ratio] [maxOracle-spread-ratio] [maintenance-margin-ratio] [max-leverage] [peg-multiplier]
   local KILO="000"
   local MEGA="000000"
-  local quote_amt=10$KILO$MEGA
-  local base_amt_btc=$(($quote_amt / 16500))
-  local base_amt_eth=$(($quote_amt / 1200))
-  nibid add-genesis-perp-market --pair=ubtc:unusd --base-amt=$base_amt_btc --quote-amt=$quote_amt --max-leverage=12
-  nibid add-genesis-perp-market --pair=ueth:unusd --base-amt=$base_amt_eth --quote-amt=$quote_amt --max-leverage=20 --mmr=0.04
+  local reserve_amt=10$KILO$MEGA
+  nibid add-genesis-perp-market --pair=ubtc:unusd --base-amt=$reserve_amt --quote-amt=$reserve_amt --max-leverage=12 --peg-multiplier=16500
+  nibid add-genesis-perp-market --pair=ueth:unusd --base-amt=$reserve_amt --quote-amt=$reserve_amt --max-leverage=20 --mmr=0.04 --peg-multiplier=1200
 }
 
 # x/perp/amm
