@@ -12,7 +12,7 @@ updates:
     labels:
       - "dependencies"
       - "dependabot"
-  # checks for updates to the actions dependencies
+  # checks for updates to the GHA dependencies
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
