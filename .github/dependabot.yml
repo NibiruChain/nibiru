@@ -11,4 +11,4 @@ updates:
       interval: "weekly"
     labels:
       - "dependencies"
-      - "skip-changelog"
+      - "dependabot"

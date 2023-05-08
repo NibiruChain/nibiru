@@ -1,0 +1,22 @@
+name: "Automatically update changelog with dependabot"
+on: 
+  pull_request:
+
+jobs:
+  changelog-update:
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.labels.*.name, 'dependabot')
+    steps: 
+      - uses: actions/checkout@v3
+        with:
+          # to avoid checking out the repo in a detached state
+          ref: ${{ github.head_ref }}
+      # Helps keep your repository up-to-date when Dependabot updates your dependencies.
+      - uses: dangoslen/dependabot-changelog-helper@v3
+        with:
+          activationLabel: 'dependabot'
+          changelogPath: './CHANGELOG.md'
+
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "Updated changelog - dependabot"
