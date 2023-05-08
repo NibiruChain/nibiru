@@ -201,39 +201,39 @@ func TestMsgServerUpdateSwapInvariant(t *testing.T) {
 		{
 			name: "happy path - we pay the vault with perp ef",
 
-			initialBiasInQuote: sdk.NewInt(25),
+			initialBiasInQuote: sdk.NewInt(25_000_000),
 
-			swapInvariantMultiplier: sdk.NewDec(2), // Cost would be 2
+			swapInvariantMultiplier: sdk.NewDec(2), // Cost would be 1_555_591
 
-			initialPerpEFFunds: sdk.NewCoins(sdk.NewInt64Coin("unusd", 25)),
+			initialPerpEFFunds: sdk.NewCoins(sdk.NewInt64Coin("unusd", 25_000_000)),
 
-			expectedUnusdPerpEFFunds: sdk.NewInt(23),
-			expectedUnusdVaultFunds:  sdk.NewInt(27),
+			expectedUnusdPerpEFFunds: sdk.NewInt(25_000_000 - 1_555_591 + 25_000),
+			expectedUnusdVaultFunds:  sdk.NewInt(25_000_000 + 1_555_591),
 		},
 		{
 			name: "not happy path - we pay the vault with perp ef but not enough money",
 
-			initialBiasInQuote: sdk.NewInt(25),
+			initialBiasInQuote: sdk.NewInt(25_000_000),
 
 			swapInvariantMultiplier: sdk.NewDec(2), // Cost would be 2
 			expectedErr:             types.ErrNotEnoughFundToPayAction,
 
-			initialPerpEFFunds: sdk.NewCoins(sdk.NewInt64Coin("unusd", 1)),
+			initialPerpEFFunds: sdk.NewCoins(sdk.NewInt64Coin("unusd", 1_000_000)),
 
-			expectedUnusdPerpEFFunds: sdk.NewInt(1),
-			expectedUnusdVaultFunds:  sdk.NewInt(25),
+			expectedUnusdPerpEFFunds: sdk.NewInt(1_000_000 + 25_000),
+			expectedUnusdVaultFunds:  sdk.NewInt(25_000_000),
 		},
 		{
 			name: "happy path - we pay the perp ef with vault",
 
-			initialBiasInQuote: sdk.NewInt(25),
+			initialBiasInQuote: sdk.NewInt(25_000_000),
 
-			swapInvariantMultiplier: sdk.MustNewDecFromStr("0.5"), // Cost would be 1
+			swapInvariantMultiplier: sdk.MustNewDecFromStr("0.5"), // Cost would be -1_912_621
 
-			initialPerpEFFunds: sdk.NewCoins(sdk.NewInt64Coin("unusd", 25)),
+			initialPerpEFFunds: sdk.NewCoins(sdk.NewInt64Coin("unusd", 25_000_000)),
 
-			expectedUnusdPerpEFFunds: sdk.NewInt(26),
-			expectedUnusdVaultFunds:  sdk.NewInt(24),
+			expectedUnusdPerpEFFunds: sdk.NewInt(25_000_000 + 25_000 + 1_912_621),
+			expectedUnusdVaultFunds:  sdk.NewInt(25_000_000 - 1_912_621),
 		},
 	}
 
@@ -250,8 +250,8 @@ func TestMsgServerUpdateSwapInvariant(t *testing.T) {
 			assert.NoError(t, app.PerpAmmKeeper.CreatePool(
 				/* ctx */ ctx,
 				/* pair */ pair,
-				/* quoteReserve */ sdk.NewDec(100),
-				/* baseReserve */ sdk.NewDec(100),
+				/* quoteReserve */ sdk.NewDec(100_000_000),
+				/* baseReserve */ sdk.NewDec(100_000_000),
 				perpammtypes.MarketConfig{
 					TradeLimitRatio:        sdk.OneDec(),
 					FluctuationLimitRatio:  sdk.OneDec(),
@@ -268,7 +268,7 @@ func TestMsgServerUpdateSwapInvariant(t *testing.T) {
 			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
 
 			t.Log("create positions")
-			require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, traderAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, tc.initialBiasInQuote.Abs()))))
+			require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, traderAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, tc.initialBiasInQuote.Abs().Add(sdk.NewInt(50000))))))
 
 			dir := perpammtypes.Direction_DIRECTION_UNSPECIFIED
 			if tc.initialBiasInQuote.IsPositive() {
@@ -299,7 +299,7 @@ func TestMsgServerUpdateSwapInvariant(t *testing.T) {
 			require.Equal(t, tc.expectedErr, err)
 
 			pool, _ := app.PerpAmmKeeper.GetPool(ctx, pair)
-			previousSwapInvariant := sdk.NewDec(10_000)
+			previousSwapInvariant := sdk.NewDec(10_000_000_000_000_000)
 			newSwapInvariant := pool.SqrtDepth.Mul(pool.SqrtDepth)
 
 			if tc.expectedErr != nil {
@@ -309,7 +309,7 @@ func TestMsgServerUpdateSwapInvariant(t *testing.T) {
 
 				require.True(
 					t,
-					approxNewSwapInvariant.Sub(newSwapInvariant).Abs().LT(sdk.MustNewDecFromStr("0.0001")),
+					approxNewSwapInvariant.Quo(newSwapInvariant).Sub(sdk.OneDec()).Abs().LT(sdk.MustNewDecFromStr("0.0001")),
 				)
 			}
 

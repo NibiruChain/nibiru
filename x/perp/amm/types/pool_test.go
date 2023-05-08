@@ -954,7 +954,7 @@ func TestGetRepegCost(t *testing.T) {
 				BaseReserve:   sdk.NewDec(100),
 				QuoteReserve:  sdk.NewDec(100),
 				PegMultiplier: sdk.OneDec(),
-				TotalLong:     sdk.ZeroDec(),
+				TotalLong:     sdk.NewDec(25),
 				TotalShort:    sdk.ZeroDec(),
 			},
 			newPeg:       sdk.NewDec(2),
@@ -968,7 +968,7 @@ func TestGetRepegCost(t *testing.T) {
 				QuoteReserve:  sdk.NewDec(100),
 				PegMultiplier: sdk.OneDec(),
 				TotalLong:     sdk.ZeroDec(),
-				TotalShort:    sdk.ZeroDec(),
+				TotalShort:    sdk.NewDec(20),
 			},
 			newPeg:       sdk.NewDec(2),
 			expectedCost: sdk.NewDec(-25), // -20 * (2 - 1)
