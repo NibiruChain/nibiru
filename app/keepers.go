@@ -102,8 +102,10 @@ import (
 	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
+	v2perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper/v2"
 
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
+	v2perptypes "github.com/NibiruChain/nibiru/x/perp/types/v2"
 	"github.com/NibiruChain/nibiru/x/spot"
 	spotkeeper "github.com/NibiruChain/nibiru/x/spot/keeper"
 	spottypes "github.com/NibiruChain/nibiru/x/spot/types"
@@ -146,6 +148,7 @@ func GetStoreKeys() (
 		oracletypes.StoreKey,
 		epochstypes.StoreKey,
 		perptypes.StoreKey,
+		v2perptypes.StoreKey,
 		perpammtypes.StoreKey,
 		inflationtypes.StoreKey,
 		sudo.StoreKey,
@@ -265,6 +268,8 @@ func (app *NibiruApp) InitKeepers(
 		app.GetSubspace(perptypes.ModuleName),
 		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.PerpAmmKeeper, app.EpochsKeeper,
 	)
+
+	app.PerpKeeperV2 = v2perpkeeper.NewKeeper(appCodec, keys[v2perptypes.StoreKey], app.GetSubspace(v2perptypes.ModuleName), app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.EpochsKeeper)
 
 	app.InflationKeeper = inflationkeeper.NewKeeper(
 		appCodec, keys[inflationtypes.StoreKey], app.GetSubspace(inflationtypes.ModuleName),
@@ -529,6 +534,7 @@ func OrderedModuleNames() []string {
 		oracletypes.ModuleName,
 		perpammtypes.ModuleName,
 		perptypes.ModuleName,
+		v2perptypes.ModuleName,
 		inflationtypes.ModuleName,
 		sudo.ModuleName,
 
