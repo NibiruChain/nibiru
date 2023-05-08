@@ -30,7 +30,8 @@ func PrivKey() (*secp256k1.PrivKey, sdk.AccAddress) {
 	return privKey, sdk.AccAddress(addr)
 }
 
-// PrivKeyAddressPairs generates (deterministically) a total of n private keys and addresses.
+// PrivKeyAddressPairs generates (deterministically) a total of n private keys 
+// and addresses.
 func PrivKeyAddressPairs(n int) (keys []cryptotypes.PrivKey, addrs []sdk.AccAddress) {
 	r := rand.New(rand.NewSource(12345)) // make the generation deterministic
 	keys = make([]cryptotypes.PrivKey, n)
@@ -42,35 +43,6 @@ func PrivKeyAddressPairs(n int) (keys []cryptotypes.PrivKey, addrs []sdk.AccAddr
 			panic("Could not read randomness")
 		}
 		keys[i] = secp256k1.GenPrivKeyFromSecret(secret)
-		addrs[i] = sdk.AccAddress(keys[i].PubKey().Address())
-	}
-	return
-}
-
-// Ed25519 functions as a wrapper class implementing the "AccAddress" and
-// "PrivKeyAddressPairs" methods using ed25519.
-var Ed25519 ed25519Algo = ed25519Algo{}
-
-type ed25519Algo struct{}
-
-func (algo ed25519Algo) AccAddress() sdk.AccAddress {
-	pk := ed25519.GenPrivKey().PubKey()
-	addr := pk.Address()
-	return sdk.AccAddress(addr)
-}
-
-// PrivKeyAddressPairs generates (deterministically) a total of n private keys and addresses.
-func (algo ed25519Algo) PrivKeyAddressPairs(n int) (keys []cryptotypes.PrivKey, addrs []sdk.AccAddress) {
-	r := rand.New(rand.NewSource(12345)) // make the generation deterministic
-	keys = make([]cryptotypes.PrivKey, n)
-	addrs = make([]sdk.AccAddress, n)
-	for i := 0; i < n; i++ {
-		secret := make([]byte, 32)
-		_, err := r.Read(secret)
-		if err != nil {
-			panic("Could not read randomness")
-		}
-		keys[i] = ed25519.GenPrivKeyFromSecret(secret)
 		addrs[i] = sdk.AccAddress(keys[i].PubKey().Address())
 	}
 	return
