@@ -6,7 +6,7 @@ require (
 	github.com/CosmWasm/wasmd v0.30.0
 	github.com/CosmWasm/wasmvm v1.1.1
 	github.com/NibiruChain/collections v0.1.1
-	github.com/armon/go-metrics v0.4.0
+	github.com/armon/go-metrics v0.4.1
 	github.com/cosmos/cosmos-sdk v0.45.12
 	github.com/cosmos/go-bip39 v1.0.0
 	github.com/cosmos/ibc-go/v4 v4.3.0
