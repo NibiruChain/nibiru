@@ -3,13 +3,12 @@ package oracle_test
 import (
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/oracle"
 	"github.com/NibiruChain/nibiru/x/oracle/keeper"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestExportInitGenesis(t *testing.T) {
