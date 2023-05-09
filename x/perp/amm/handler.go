@@ -83,7 +83,10 @@ func handleProposalEditSwapInvariants(
 		return err
 	}
 	for _, swapInvariantMap := range proposal.SwapInvariantMaps {
-		err := k.EditSwapInvariant(ctx, swapInvariantMap)
+		if err := swapInvariantMap.Validate(); err != nil {
+			return err
+		}
+		_, err := k.EditSwapInvariant(ctx, swapInvariantMap.Pair, swapInvariantMap.Multiplier)
 		if err != nil {
 			return err
 		}

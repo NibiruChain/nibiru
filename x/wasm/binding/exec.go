@@ -79,6 +79,10 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 			cwMsg := contractExecuteMsg.ExecuteMsg.PegShift
 			err = messenger.Perp.PegShift(cwMsg, contractAddr, ctx)
 			return events, data, err
+		case contractExecuteMsg.ExecuteMsg.DepthShift != nil:
+			cwMsg := contractExecuteMsg.ExecuteMsg.DepthShift
+			err = messenger.Perp.DepthShift(cwMsg, contractAddr, ctx)
+			return events, data, err
 		default:
 			err = wasmvmtypes.InvalidRequest{
 				Err:     "invalid bindings request",

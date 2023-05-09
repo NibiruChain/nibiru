@@ -19,14 +19,20 @@ func From2To3(perpKeeper Keeper, perpammKeeper types.PerpAmmKeeper) module.Migra
 
 		iterator := k.Pools.Iterate(ctx, collections.Range[asset.Pair]{}).Values()
 		for _, pool := range iterator {
-			sumBias := sdk.ZeroDec()
+			sumLong := sdk.ZeroDec()
+			sumShort := sdk.ZeroDec()
 
 			positions := perpKeeper.Positions.Iterate(ctx, collections.PairRange[asset.Pair, sdk.AccAddress]{}).Values()
 			for _, position := range positions {
-				sumBias = sumBias.Add(position.Size_)
+				if position.Size_.IsPositive() {
+					sumLong = sumLong.Add(position.Size_)
+				} else {
+					sumShort = sumShort.Add(position.Size_.Neg())
+				}
 			}
 
-			pool.Bias = sumBias
+			pool.TotalLong = sumLong
+			pool.TotalShort = sumShort
 			pool.PegMultiplier = sdk.OneDec()
 			k.Pools.Insert(ctx, pool.Pair, pool)
 		}

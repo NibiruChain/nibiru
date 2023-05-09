@@ -157,7 +157,8 @@ func (perpExt *PerpQuerier) AllMarkets(
 			QuoteReserve: pbMarket.QuoteReserve,
 			SqrtDepth:    pbMarket.SqrtDepth,
 			Depth:        pbPrice.SwapInvariant,
-			Bias:         pbMarket.Bias,
+			TotalLong:    pbMarket.TotalLong,
+			TotalShort:   pbMarket.TotalShort,
 			PegMult:      pbMarket.PegMultiplier,
 			Config: &cw_struct.MarketConfig{
 				TradeLimitRatio:        pbMarket.Config.TradeLimitRatio,

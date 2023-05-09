@@ -32,6 +32,14 @@ func (market *Market) FromQuoteReserveToAsset(quoteReserve sdk.Dec) sdk.Dec {
 }
 
 /*
+GetBias returns the bias of the market in the base asset. It's the net amount of base assets for longs minus the net
+amount of base assets for shorts.
+*/
+func (market *Market) GetBias() (bias sdk.Dec) {
+	return market.TotalLong.Sub(market.TotalShort)
+}
+
+/*
 GetBaseAmountByQuoteAmount returns the amount of base asset you will get out
 by giving a specified amount of quote asset
 
@@ -73,22 +81,108 @@ func (market *Market) GetRepegCost(pegCandidate sdk.Dec) (cost sdk.Dec, err erro
 		return
 	}
 
-	if market.Bias.IsZero() {
+	bias := market.GetBias()
+
+	if bias.IsZero() {
 		cost = sdk.ZeroDec()
 		return
 	}
 
-	biasInQuoteReserve, err := market.GetQuoteReserveByBase(market.Bias)
+	biasInQuoteReserve, err := market.GetQuoteReserveByBase(bias)
 	if err != nil {
 		return
 	}
 
 	cost = biasInQuoteReserve.Mul(pegCandidate.Sub(market.PegMultiplier))
 
-	if market.Bias.IsNegative() {
+	if bias.IsNegative() {
 		cost = cost.Neg()
 	}
 
+	return
+}
+
+/*
+GetSwapInvariantUpdateCost returns the cost of updating the invariant of the pool
+*/
+func (market *Market) GetSwapInvariantUpdateCost(swapInvariantMultiplier sdk.Dec) (cost sdk.Dec, err error) {
+	quoteReserveBefore, err := market.getMarketQuoteReserveValue()
+	if err != nil {
+		return
+	}
+
+	newMarket, err := market.UpdateSwapInvariant(swapInvariantMultiplier)
+	if err != nil {
+		return
+	}
+
+	quoteReserveAfter, err := newMarket.getMarketQuoteReserveValue()
+	if err != nil {
+		return
+	}
+
+	cost = market.FromQuoteReserveToAsset(quoteReserveAfter.Sub(quoteReserveBefore))
+	return
+}
+
+/*
+getMarketQuoteReserveValue returns the total value of the quote reserve in the market between short and long (sum of
+open notional values)
+*/
+func (market *Market) getMarketQuoteReserveValue() (quoteReserve sdk.Dec, err error) {
+	longQuoteReserve, err := market.GetQuoteReserveByBase(market.TotalLong)
+	if err != nil {
+		return
+	}
+	shortQuoteReserve, err := market.GetQuoteReserveByBase(market.TotalShort)
+	if err != nil {
+		return
+	}
+
+	return longQuoteReserve.Add(shortQuoteReserve), nil
+}
+
+/* UpdateSwapInvariant creates a new market object with an updated swap invariant */
+func (market Market) UpdateSwapInvariant(swapInvariantMultiplier sdk.Dec) (newMarket Market, err error) {
+	if swapInvariantMultiplier.IsNil() {
+		err = ErrNilSwapInvariantMutliplier
+		return
+	}
+
+	if !swapInvariantMultiplier.IsPositive() {
+		err = ErrNonPositiveSwapInvariantMutliplier
+		return
+	}
+
+	// k = x * y
+	// newK = (cx) * (cy) = c^2 xy = c^2 k
+	// newPrice = (c y) / (c x) = y / x = price | unchanged price
+	swapInvariant := market.BaseReserve.Mul(market.QuoteReserve)
+	newSwapInvariant := swapInvariant.Mul(swapInvariantMultiplier)
+
+	// Change the swap invariant while holding price constant.
+	// Multiplying by the same factor to both of the reserves won't affect price.
+	cSquared := newSwapInvariant.Quo(swapInvariant)
+	c, err := common.SqrtDec(cSquared)
+	if err != nil {
+		return
+	}
+
+	newBaseAmount := c.Mul(market.BaseReserve)
+	newQuoteAmount := c.Mul(market.QuoteReserve)
+	newSqrtDepth := common.MustSqrtDec(newBaseAmount.Mul(newQuoteAmount))
+
+	newMarket = Market{
+		Pair:          market.Pair,
+		BaseReserve:   newBaseAmount,
+		QuoteReserve:  newQuoteAmount,
+		SqrtDepth:     newSqrtDepth,
+		PegMultiplier: market.PegMultiplier,
+		Config:        market.Config,
+		TotalLong:     market.TotalLong,
+		TotalShort:    market.TotalShort,
+	}
+	err = newMarket.Validate()
 	return
 }
 
@@ -144,11 +238,16 @@ func (market *Market) AddToQuoteReserve(amount sdk.Dec) {
 	market.QuoteReserve = market.QuoteReserve.Add(amount)
 }
 
-// AddToBaseReserveAndBias adds 'amount' to the base asset reserves
+// AddToBaseReserveAndTotalLongShort adds 'amount' to the base asset reserves
 // The 'amount' is not assumed to be positive.
-func (market *Market) AddToBaseReserveAndBias(amount sdk.Dec) {
+func (market *Market) AddToBaseReserveAndTotalLongShort(amount sdk.Dec) {
+	if amount.IsPositive() {
+		market.TotalShort = market.TotalShort.Add(amount)
+	} else if amount.IsNegative() {
+		market.TotalLong = market.TotalLong.Add(amount.Neg())
+	}
+
 	market.BaseReserve = market.BaseReserve.Add(amount)
-	market.Bias = market.Bias.Sub(amount) // Bias is the opposite of what the trader get
 }
 
 type ArgsNewMarket struct {
@@ -156,7 +255,8 @@ type ArgsNewMarket struct {
 	BaseReserves  sdk.Dec
 	QuoteReserves sdk.Dec
 	Config        *MarketConfig
-	Bias          sdk.Dec
+	TotalLong     sdk.Dec
+	TotalShort    sdk.Dec
 	PegMultiplier sdk.Dec
 }
 
@@ -174,7 +274,8 @@ func NewMarket(args ArgsNewMarket) Market {
 		QuoteReserve:  args.QuoteReserves,
 		Config:        config,
 		SqrtDepth:     common.MustSqrtDec(args.QuoteReserves.Mul(args.BaseReserves)),
-		Bias:          args.Bias,
+		TotalLong:     args.TotalLong,
+		TotalShort:    args.TotalShort,
 		PegMultiplier: args.PegMultiplier,
 	}
 }
@@ -440,7 +541,6 @@ func (market Market) ToSnapshot(ctx sdk.Context) ReserveSnapshot {
 		market.BaseReserve,
 		market.QuoteReserve,
 		market.PegMultiplier,
-		market.Bias,
 		ctx.BlockTime(),
 	)
 	if err := snapshot.Validate(); err != nil {

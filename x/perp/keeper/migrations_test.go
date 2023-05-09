@@ -22,9 +22,10 @@ func TestFrom2To3(t *testing.T) {
 	pairBtcUsd := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 
 	testCases := []struct {
-		name         string
-		positions    []perptypes.Position
-		expectedBias sdk.Dec
+		name               string
+		positions          []perptypes.Position
+		expectedTotalLong  sdk.Dec
+		expectedTotalShort sdk.Dec
 	}{
 		{
 			"one position long",
@@ -36,6 +37,7 @@ func TestFrom2To3(t *testing.T) {
 				},
 			},
 			sdk.MustNewDecFromStr("10000000"),
+			sdk.ZeroDec(),
 		},
 		{
 			"two long positions",
@@ -52,6 +54,7 @@ func TestFrom2To3(t *testing.T) {
 				},
 			},
 			sdk.MustNewDecFromStr("20000000"),
+			sdk.ZeroDec(),
 		},
 		{
 			"one long position and one short position: long bigger than short",
@@ -67,6 +70,7 @@ func TestFrom2To3(t *testing.T) {
 					Size_:         sdk.MustNewDecFromStr("-5000000"),
 				},
 			},
+			sdk.MustNewDecFromStr("10000000"),
 			sdk.MustNewDecFromStr("5000000"),
 		},
 		{
@@ -83,7 +87,8 @@ func TestFrom2To3(t *testing.T) {
 					Size_:         sdk.MustNewDecFromStr("-25000000"),
 				},
 			},
-			sdk.MustNewDecFromStr("-15000000"),
+			sdk.MustNewDecFromStr("10000000"),
+			sdk.MustNewDecFromStr("25000000"),
 		},
 		{
 			"one long position and one short position: equal long and short",
@@ -99,7 +104,8 @@ func TestFrom2To3(t *testing.T) {
 					Size_:         sdk.MustNewDecFromStr("-10000000"),
 				},
 			},
-			sdk.ZeroDec(),
+			sdk.MustNewDecFromStr("10000000"),
+			sdk.MustNewDecFromStr("10000000"),
 		},
 	}
 
@@ -113,13 +119,15 @@ func TestFrom2To3(t *testing.T) {
 				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				BaseReserve:  sdk.MustNewDecFromStr("10000000"),
 				QuoteReserve: sdk.MustNewDecFromStr("20000000"),
-				Bias:         sdk.ZeroDec(),
+				TotalLong:    sdk.ZeroDec(),
+				TotalShort:   sdk.ZeroDec(),
 			}
 			app.PerpAmmKeeper.Pools.Insert(ctx, market.Pair, market)
 
 			savedPool, err := app.PerpAmmKeeper.Pools.Get(ctx, market.Pair)
 			require.NoError(t, err)
-			require.Equal(t, sdk.ZeroDec(), savedPool.Bias)
+			require.Equal(t, sdk.ZeroDec(), savedPool.TotalLong)
+			require.Equal(t, sdk.ZeroDec(), savedPool.TotalShort)
 			require.Equal(t, sdk.ZeroDec(), savedPool.PegMultiplier)
 
 			for _, pos := range tc.positions {
@@ -136,7 +144,8 @@ func TestFrom2To3(t *testing.T) {
 
 			savedPool, err = app.PerpAmmKeeper.Pools.Get(ctx, market.Pair)
 			require.NoError(t, err)
-			require.Equal(t, tc.expectedBias, savedPool.Bias)
+			require.Equal(t, tc.expectedTotalLong, savedPool.TotalLong)
+			require.Equal(t, tc.expectedTotalShort, savedPool.TotalShort)
 			require.Equal(t, sdk.OneDec(), savedPool.PegMultiplier)
 		})
 	}

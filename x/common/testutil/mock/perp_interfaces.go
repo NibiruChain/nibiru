@@ -304,6 +304,21 @@ func (mr *MockPerpAmmKeeperMockRecorder) EditPoolPegMultiplier(arg0, arg1, arg2 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EditPoolPegMultiplier", reflect.TypeOf((*MockPerpAmmKeeper)(nil).EditPoolPegMultiplier), arg0, arg1, arg2)
 }
 
+// EditSwapInvariant mocks base method.
+func (m *MockPerpAmmKeeper) EditSwapInvariant(arg0 types1.Context, arg1 asset.Pair, arg2 types1.Dec) (types0.Market, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EditSwapInvariant", arg0, arg1, arg2)
+	ret0, _ := ret[0].(types0.Market)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EditSwapInvariant indicates an expected call of EditSwapInvariant.
+func (mr *MockPerpAmmKeeperMockRecorder) EditSwapInvariant(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EditSwapInvariant", reflect.TypeOf((*MockPerpAmmKeeper)(nil).EditSwapInvariant), arg0, arg1, arg2)
+}
+
 // ExistsPool mocks base method.
 func (m *MockPerpAmmKeeper) ExistsPool(arg0 types1.Context, arg1 asset.Pair) bool {
 	m.ctrl.T.Helper()

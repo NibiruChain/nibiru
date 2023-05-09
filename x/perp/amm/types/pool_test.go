@@ -201,7 +201,8 @@ func TestGetBaseAmountByQuoteAmount(t *testing.T) {
 				QuoteReserves: tc.quoteReserve,
 				BaseReserves:  tc.baseReserve,
 				PegMultiplier: sdk.OneDec(),
-				Bias:          sdk.ZeroDec(),
+				TotalLong:     sdk.ZeroDec(),
+				TotalShort:    sdk.ZeroDec(),
 				Config: &MarketConfig{
 					FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.1"),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -274,7 +275,8 @@ func TestGetQuoteReserveByBase(t *testing.T) {
 				QuoteReserve: tc.quoteReserve,
 				BaseReserve:  tc.baseReserve,
 				SqrtDepth:    common.MustSqrtDec(tc.quoteReserve.Mul(tc.baseReserve)),
-				Bias:         sdk.ZeroDec(),
+				TotalLong:    sdk.ZeroDec(),
+				TotalShort:   sdk.ZeroDec(),
 				Config: MarketConfig{
 					FluctuationLimitRatio:  sdk.OneDec(),
 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
@@ -305,7 +307,8 @@ func TestIncreaseDecreaseReserves(t *testing.T) {
 		Pair:          pair,
 		QuoteReserves: sdk.NewDec(1 * common.TO_MICRO),
 		BaseReserves:  sdk.NewDec(1 * common.TO_MICRO),
-		Bias:          sdk.ZeroDec(),
+		TotalLong:     sdk.ZeroDec(),
+		TotalShort:    sdk.ZeroDec(),
 		PegMultiplier: sdk.OneDec(),
 		Config: &MarketConfig{
 			FluctuationLimitRatio:  sdk.OneDec(),
@@ -325,11 +328,11 @@ func TestIncreaseDecreaseReserves(t *testing.T) {
 	require.Equal(t, sdk.NewDec(1*common.TO_MICRO), pool.QuoteReserve)
 
 	t.Log("decrease base asset reserve")
-	pool.AddToBaseReserveAndBias(sdk.NewDec(-100))
+	pool.AddToBaseReserveAndTotalLongShort(sdk.NewDec(-100))
 	require.Equal(t, sdk.NewDec(999_900), pool.BaseReserve)
 
 	t.Log("increase base asset reserve")
-	pool.AddToBaseReserveAndBias(sdk.NewDec(100))
+	pool.AddToBaseReserveAndTotalLongShort(sdk.NewDec(100))
 	require.Equal(t, sdk.NewDec(1*common.TO_MICRO), pool.BaseReserve)
 }
 
@@ -774,7 +777,6 @@ func TestMarket_IsOverFluctuationLimit(t *testing.T) {
 				sdk.OneDec(),
 				sdk.NewDec(1000),
 				sdk.OneDec(),
-				sdk.ZeroDec(),
 				time.Now(),
 			)
 			assert.EqualValues(t, tc.isOverLimit, tc.pool.IsOverFluctuationLimitInRelationWithSnapshot(snapshot))
@@ -926,7 +928,8 @@ func TestGetRepegCost(t *testing.T) {
 				BaseReserve:   sdk.NewDec(100),
 				QuoteReserve:  sdk.NewDec(100),
 				PegMultiplier: sdk.OneDec(),
-				Bias:          sdk.ZeroDec(),
+				TotalLong:     sdk.ZeroDec(),
+				TotalShort:    sdk.ZeroDec(),
 			},
 			newPeg:       sdk.NewDec(3),
 			expectedCost: sdk.ZeroDec(),
@@ -938,7 +941,8 @@ func TestGetRepegCost(t *testing.T) {
 				BaseReserve:   sdk.NewDec(100),
 				QuoteReserve:  sdk.NewDec(100),
 				PegMultiplier: sdk.OneDec(),
-				Bias:          sdk.NewDec(20),
+				TotalLong:     sdk.ZeroDec(),
+				TotalShort:    sdk.ZeroDec(),
 			},
 			newPeg:       sdk.OneDec(),
 			expectedCost: sdk.ZeroDec(),
@@ -950,7 +954,8 @@ func TestGetRepegCost(t *testing.T) {
 				BaseReserve:   sdk.NewDec(100),
 				QuoteReserve:  sdk.NewDec(100),
 				PegMultiplier: sdk.OneDec(),
-				Bias:          sdk.NewDec(25), // Bias in quote should be 20
+				TotalLong:     sdk.NewDec(25),
+				TotalShort:    sdk.ZeroDec(),
 			},
 			newPeg:       sdk.NewDec(2),
 			expectedCost: sdk.NewDec(20), // 20 * (2 - 1)
@@ -962,7 +967,8 @@ func TestGetRepegCost(t *testing.T) {
 				BaseReserve:   sdk.NewDec(100),
 				QuoteReserve:  sdk.NewDec(100),
 				PegMultiplier: sdk.OneDec(),
-				Bias:          sdk.NewDec(-20), // Bias in quote should be -20
+				TotalLong:     sdk.ZeroDec(),
+				TotalShort:    sdk.NewDec(20),
 			},
 			newPeg:       sdk.NewDec(2),
 			expectedCost: sdk.NewDec(-25), // -20 * (2 - 1)

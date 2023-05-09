@@ -343,3 +343,29 @@ message PegMultiplierUpdate{
     (gogoproto.nullable) = false
   ];
 }
+
+message SwapInvariantUpdate{
+  string pair = 1 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+
+  // New swap invariant
+  string new_swap_invariant = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];  
+
+  // swpa invariant multiplier
+  string swap_invariant_multiplier = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];    
+
+  // Cost of update
+  string cost = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}

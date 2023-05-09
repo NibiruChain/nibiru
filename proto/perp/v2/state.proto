@@ -146,12 +146,17 @@ message AMM {
     (gogoproto.nullable) = false
   ];
 
-  // Bias refers to the net long-short bias of the market. The bias of a pool
-  // is equivalent to the sum of all base reserve changes since its creation.
-  string bias = 6 [
+  // Total long refers to the sum of long open notional in base.
+  string total_long = 6 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
-  ];
+  ];  
+
+  // Total short refers to the sum of short open notional in base.
+  string total_short = 7 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];  
 }
 
 message Position {

@@ -201,7 +201,7 @@ func TestSwapQuoteForBase(t *testing.T) {
 					dir = sdk.OneDec().Neg()
 				}
 
-				assert.EqualValuesf(t, dir.Mul(tc.expectedBaseAmount), market.Bias, "bias amount mismatch")
+				assert.EqualValuesf(t, dir.Mul(tc.expectedBaseAmount), market.GetBias(), "bias amount mismatch")
 
 				t.Log("assert market")
 				pool, err := perpammKeeper.Pools.Get(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
@@ -397,7 +397,7 @@ func TestSwapBaseForQuote(t *testing.T) {
 				if tc.direction == types.Direction_LONG {
 					dir = sdk.OneDec().Neg()
 				}
-				assert.EqualValuesf(t, dir.Mul(tc.baseAmt), market.Bias, "bias amount mismatch")
+				assert.EqualValuesf(t, dir.Mul(tc.baseAmt), market.GetBias(), "bias amount mismatch")
 
 				pool, err := perpammKeeper.Pools.Get(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 				require.NoError(t, err)
@@ -457,7 +457,8 @@ func TestGetMarkets(t *testing.T) {
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
-		Bias:          sdk.ZeroDec(),
+		TotalLong:     sdk.ZeroDec(),
+		TotalShort:    sdk.ZeroDec(),
 		PegMultiplier: sdk.NewDec(2),
 	}))
 	require.EqualValues(t, pools[1], types.NewMarket(types.ArgsNewMarket{
@@ -471,7 +472,8 @@ func TestGetMarkets(t *testing.T) {
 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
 		},
-		Bias:          sdk.ZeroDec(),
+		TotalLong:     sdk.ZeroDec(),
+		TotalShort:    sdk.ZeroDec(),
 		PegMultiplier: sdk.MustNewDecFromStr("0.5"),
 	}))
 }
