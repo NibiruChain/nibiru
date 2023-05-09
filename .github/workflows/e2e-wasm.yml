@@ -25,7 +25,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: download release
-        uses: robinraju/release-downloader@v1.6
+        uses: robinraju/release-downloader@v1.8
         with:
           tag: ${{ steps.latest_release.outputs.release }}
           fileName: "*linux_amd64.tar.gz"
