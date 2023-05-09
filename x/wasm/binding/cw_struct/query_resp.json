@@ -7,7 +7,8 @@
         "quote_reserve": "69",
         "sqrt_depth": "69",
         "depth": "4761",
-        "bias": "420",
+        "total_long": "420",
+        "total_short": "69",
         "peg_mult": "420",
         "config": {
           "trade_limit_ratio": "420",

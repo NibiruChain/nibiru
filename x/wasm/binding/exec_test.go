@@ -172,12 +172,12 @@ func (s *TestSuiteExecutor) TestPegShift() {
 	s.Errorf(err, "contractRespBz: %s", contractRespBz)
 }
 
-func (s *TestSuiteExecutor) TestSwapInvariantMultiply() {
+func (s *TestSuiteExecutor) TestDepthShift() {
 	pair := asset.MustNewPair(s.happyFields.Pair)
 	execMsg := cw_struct.BindingMsg{
-		SwapInvariantMultiply: &cw_struct.SwapInvariantMultiply{
-			Pair:                    pair.String(),
-			SwapInvariantMultiplier: sdk.NewDec(2),
+		DepthShift: &cw_struct.DepthShift{
+			Pair:      pair.String(),
+			DepthMult: sdk.NewDec(2),
 		},
 	}
 	contractRespBz, err := s.ExecuteAgainstContract(s.contractPerp, execMsg)

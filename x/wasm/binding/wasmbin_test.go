@@ -1,6 +1,7 @@
 package binding_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -16,6 +17,45 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/wasmbin"
 )
+
+// TestSetupContracts acts as an integration test by storing and instantiating
+// each production smart contract is expected to interact with x/wasm/binding.
+func TestSetupContracts(t *testing.T) {
+	sender := testutil.AccAddress()
+	nibiru, _ := testapp.NewNibiruTestAppAndContext(true)
+	ctx := nibiru.NewContext(false, tmproto.Header{
+		Height:  1,
+		ChainID: "nibiru-wasmnet-1",
+		Time:    time.Now().UTC(),
+	})
+	coins := sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(10)))
+	require.NoError(t, testapp.FundAccount(nibiru.BankKeeper, ctx, sender, coins))
+	_, _ = SetupAllContracts(t, sender, nibiru, ctx)
+}
+
+// ContractMap is a map from WasmKey to contract address
+type ContractMapType = map[wasmbin.WasmKey]sdk.AccAddress
+
+var ContractMap = make(map[wasmbin.WasmKey]sdk.AccAddress)
+
+// SetupAllContracts stores and instantiates all of wasm binding contracts.
+func SetupAllContracts(
+	t *testing.T, sender sdk.AccAddress, nibiru *app.NibiruApp, ctx sdk.Context,
+) (*app.NibiruApp, sdk.Context) {
+
+	wasmKey := wasmbin.WasmKeyPerpBinding
+	codeId := StoreContract(t, wasmKey, ctx, nibiru, sender)
+	deposit := sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(1)))
+	contract := Instantiate.PerpBindingContract(t, ctx, nibiru, codeId, sender, deposit)
+	ContractMap[wasmKey] = contract
+
+	wasmKey = wasmbin.WasmKeyShifter
+	codeId = StoreContract(t, wasmKey, ctx, nibiru, sender)
+	contract = Instantiate.ShifterContract(t, ctx, nibiru, codeId, sender, deposit)
+	ContractMap[wasmKey] = contract
+
+	return nibiru, ctx
+}
 
 // StoreContract submits Wasm bytecode for storage on the chain.
 func StoreContract(
@@ -55,7 +95,13 @@ func InstantiateContract(
 	return contractAddr
 }
 
-func InstantiatePerpBindingContract(
+// Instantiate is a empty struct type with conventience functions for
+// instantiating specific smart contracts.
+var Instantiate = inst{}
+
+type inst struct{}
+
+func (i inst) PerpBindingContract(
 	t *testing.T, ctx sdk.Context, nibiru *app.NibiruApp, codeId uint64,
 	sender sdk.AccAddress, deposit sdk.Coins,
 ) (contractAddr sdk.AccAddress) {
@@ -66,33 +112,14 @@ func InstantiatePerpBindingContract(
 	)
 }
 
-// ContractMap is a map from WasmKey to contract address
-type ContractMapType = map[wasmbin.WasmKey]sdk.AccAddress
-
-var ContractMap = make(map[wasmbin.WasmKey]sdk.AccAddress)
-
-// SetupAllContracts stores and instantiates all of wasm binding contracts.
-func SetupAllContracts(
-	t *testing.T, sender sdk.AccAddress, nibiru *app.NibiruApp, ctx sdk.Context,
-) (*app.NibiruApp, sdk.Context) {
-	wasmKey := wasmbin.WasmKeyPerpBinding
-	codeId := StoreContract(t, wasmKey, ctx, nibiru, sender)
-	deposit := sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(1)))
-	contract := InstantiatePerpBindingContract(t, ctx, nibiru, codeId, sender, deposit)
-	ContractMap[wasmKey] = contract
-
-	return nibiru, ctx
-}
-
-func TestSetupContracts(t *testing.T) {
-	sender := testutil.AccAddress()
-	nibiru, _ := testapp.NewNibiruTestAppAndContext(true)
-	ctx := nibiru.NewContext(false, tmproto.Header{
-		Height:  1,
-		ChainID: "nibiru-wasmnet-1",
-		Time:    time.Now().UTC(),
-	})
-	coins := sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(10)))
-	require.NoError(t, testapp.FundAccount(nibiru.BankKeeper, ctx, sender, coins))
-	_, _ = SetupAllContracts(t, sender, nibiru, ctx)
+// Instantiates the shifter contract with the sender set as the admin.
+func (i inst) ShifterContract(
+	t *testing.T, ctx sdk.Context, nibiru *app.NibiruApp, codeId uint64,
+	sender sdk.AccAddress, deposit sdk.Coins,
+) (contractAddr sdk.AccAddress) {
+	initMsg := []byte(fmt.Sprintf(`{ "admin": "%s"}`, sender))
+	label := "contract for calling peg shift and depth shift in x/perp"
+	return InstantiateContract(
+		t, ctx, nibiru, codeId, initMsg, sender, label, deposit,
+	)
 }

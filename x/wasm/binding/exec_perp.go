@@ -144,8 +144,8 @@ func (exec *ExecutorPerp) PegShift(
 	)
 }
 
-func (exec *ExecutorPerp) SwapInvariantMultiply(
-	cwMsg *cw_struct.SwapInvariantMultiply, contractAddr sdk.AccAddress, ctx sdk.Context,
+func (exec *ExecutorPerp) DepthShift(
+	cwMsg *cw_struct.DepthShift, contractAddr sdk.AccAddress, ctx sdk.Context,
 ) (err error) {
 	if cwMsg == nil {
 		return wasmvmtypes.InvalidRequest{Err: "null pool swap invariant multiplier msg"}
@@ -160,6 +160,6 @@ func (exec *ExecutorPerp) SwapInvariantMultiply(
 		ctx,
 		contractAddr,
 		pair,
-		cwMsg.SwapInvariantMultiplier,
+		cwMsg.DepthMult,
 	)
 }
