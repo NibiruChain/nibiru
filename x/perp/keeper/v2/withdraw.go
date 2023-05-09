@@ -1,27 +1,35 @@
 package keeper
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/x/perp/types"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-/*
-Withdraws coins from the vault to the receiver.
-If the total amount of coins to withdraw is greater than the vault's amount, then
-withdraw the shortage from the PerpEF and mark it as prepaid bad debt.
-
-Prepaid bad debt will count towards realized bad debt from negative PnL positions
-when those are closed/liquidated.
-
-An example of this happening is when a long position has really high PnL and
-closes their position, realizing their profits.
-There is a counter party short position with really negative PnL, but
-their position hasn't been closed/liquidated yet.
-We must pay the long trader first, which results in funds being taken from the EF.
-when the short position is closed, it also realizes some bad debt but because
-we have already withdrawn from the EF, we don't need to withdraw more from the EF.
-*/
+// Withdraws coins from the vault to the receiver.
+// If the total amount of coins to withdraw is greater than the vault's amount, then
+// withdraw the shortage from the PerpEF and mark it as prepaid bad debt.
+//
+// Prepaid bad debt will count towards realized bad debt from negative PnL positions
+// when those are closed/liquidated.
+//
+// An example of this happening is when a long position has really high PnL and
+// closes their position, realizing their profits.
+// There is a counter party short position with really negative PnL, but
+// their position hasn't been closed/liquidated yet.
+// We must pay the long trader first, which results in funds being taken from the EF.
+// when the short position is closed, it also realizes some bad debt but because
+// we have already withdrawn from the EF, we don't need to withdraw more from the EF.
+//
+// args:
+// - ctx: context
+// - market: the perp market
+// - receiver: the receiver of the coins
+// - amountToWithdraw: amount of coins to withdraw
+//
+// returns:
+// - error: error
 func (k Keeper) Withdraw(
 	ctx sdk.Context,
 	market v2types.Market,
@@ -70,56 +78,20 @@ func (k Keeper) Withdraw(
 	)
 }
 
-/*
-Realizes the bad debt by first decrementing it from the prepaid bad debt.
-Prepaid bad debt accrues when more coins are withdrawn from the vault than the
-vault contains, so we "credit" ourselves with prepaid bad debt.
-
-then, when bad debt is actually realized (by closing underwater positions), we
-can consume the credit we have built before withdrawing more from the ecosystem fund.
-*/
-func (k Keeper) realizeBadDebt(ctx sdk.Context, market v2types.Market, badDebtToRealize sdk.Int) (
-	err error,
-) {
-	if market.PrepaidBadDebt.Amount.GTE(badDebtToRealize) {
-		// prepaidBadDebtBalance > badDebtToRealize
-		k.DecrementPrepaidBadDebt(ctx, market, badDebtToRealize)
-	} else {
-		// badDebtToRealize > prepaidBadDebtBalance
-		k.ZeroPrepaidBadDebt(ctx, market)
-
-		return k.BankKeeper.SendCoinsFromModuleToModule(ctx,
-			/*from=*/ types.PerpEFModuleAccount,
-			/*to=*/ types.VaultModuleAccount,
-			sdk.NewCoins(
-				sdk.NewCoin(
-					market.Pair.QuoteDenom(),
-					badDebtToRealize.Sub(market.PrepaidBadDebt.Amount),
-				),
-			),
-		)
-	}
-
-	return nil
-}
-
 // IncrementPrepaidBadDebt increases the bad debt for the provided denom.
-func (k Keeper) IncrementPrepaidBadDebt(ctx sdk.Context, market v2types.Market, amount sdk.Int) error {
+func (k Keeper) IncrementPrepaidBadDebt(ctx sdk.Context, market v2types.Market, amount sdk.Int) {
 	market.PrepaidBadDebt.Amount = market.PrepaidBadDebt.Amount.Add(amount)
 	k.Markets.Insert(ctx, market.Pair, market)
-	return nil
 }
 
 // Zeroes out the prepaid bad debt
-func (k Keeper) ZeroPrepaidBadDebt(ctx sdk.Context, market v2types.Market) error {
+func (k Keeper) ZeroPrepaidBadDebt(ctx sdk.Context, market v2types.Market) {
 	market.PrepaidBadDebt.Amount = sdk.ZeroInt()
 	k.Markets.Insert(ctx, market.Pair, market)
-	return nil
 }
 
 // DecrementPrepaidBadDebt decrements the amount of bad debt prepaid by denom.
-func (k Keeper) DecrementPrepaidBadDebt(ctx sdk.Context, market v2types.Market, amount sdk.Int) error {
+func (k Keeper) DecrementPrepaidBadDebt(ctx sdk.Context, market v2types.Market, amount sdk.Int) {
 	market.PrepaidBadDebt.Amount = market.PrepaidBadDebt.Amount.Sub(amount)
 	k.Markets.Insert(ctx, market.Pair, market)
-	return nil
 }
