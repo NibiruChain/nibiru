@@ -16,7 +16,6 @@ jobs:
       # This step updates adds a line to the  "## Unreleased" section
       - uses: dangoslen/dependabot-changelog-helper@v3
         with:
-          version: 'Unreleased'
           activationLabel: 'dependabot'
           changelogPath: './CHANGELOG.md'
 
