@@ -65,11 +65,21 @@ func (amm AMM) FromQuoteReserveToAsset(quoteReserve sdk.Dec) sdk.Dec {
 	return quoteReserve.Mul(amm.PriceMultiplier)
 }
 
-// returns the amount of base reserve equivalent to the amount of quote reserve swapped
+// Returns the amount of base reserve equivalent to the amount of base asset given
+//
+// args:
+// - quoteReserveAmt: the amount of quote reserve before the trade, must be positive
+// - dir: the direction of the trade
+//
+// returns:
+// - baseReserveDelta: the amount of base reserve after the trade
+// - err: error
+//
+// NOTE: baseReserveDelta is always positive
 func (amm AMM) GetBaseReserveAmt(
 	quoteReserveAmt sdk.Dec,
 	dir Direction,
-) (baseReserveDeltaAbs sdk.Dec, err error) {
+) (baseReserveDelta sdk.Dec, err error) {
 	if quoteReserveAmt.LTE(sdk.ZeroDec()) {
 		return sdk.ZeroDec(), nil
 	}
@@ -88,16 +98,26 @@ func (amm AMM) GetBaseReserveAmt(
 	}
 
 	baseReservesAfter := invariant.Quo(quoteReservesAfter)
-	baseReserveDeltaAbs = baseReservesAfter.Sub(amm.BaseReserve).Abs()
+	baseReserveDelta = baseReservesAfter.Sub(amm.BaseReserve).Abs()
 
-	return baseReserveDeltaAbs, nil
+	return baseReserveDelta, nil
 }
 
 // returns the amount of quote reserve equivalent to the amount of base asset given
+//
+// args:
+// - baseReserveAmt: the amount of base reserve before the trade, must be positive
+// - dir: the direction of the trade
+//
+// returns:
+// - quoteReserveDelta: the amount of quote reserve after the trade
+// - err: error
+//
+// NOTE: quoteReserveDelta is always positive
 func (amm AMM) GetQuoteReserveAmt(
 	baseReserveAmt sdk.Dec,
 	dir Direction,
-) (quoteReserveDeltaAbs sdk.Dec, err error) {
+) (quoteReserveDelta sdk.Dec, err error) {
 	if baseReserveAmt.LTE(sdk.ZeroDec()) {
 		return sdk.ZeroDec(), nil
 	}
@@ -119,9 +139,9 @@ func (amm AMM) GetQuoteReserveAmt(
 	}
 
 	quoteReservesAfter := invariant.Quo(baseReservesAfter)
-	quoteReserveDeltaAbs = quoteReservesAfter.Sub(amm.QuoteReserve).Abs()
+	quoteReserveDelta = quoteReservesAfter.Sub(amm.QuoteReserve).Abs()
 
-	return quoteReserveDeltaAbs, nil
+	return quoteReserveDelta, nil
 }
 
 // Returns the instantaneous mark price of the trading pair
@@ -177,41 +197,63 @@ func (amm *AMM) WithSqrtDepth(sqrtDepth sdk.Dec) *AMM {
 	return amm
 }
 
-func (amm *AMM) SwapQuoteAsset(quoteAssetAmt sdk.Dec, dir Direction) (baseAssetDeltaAbs sdk.Dec, err error) {
+// SwapQuoteAsset swaps base asset for quote asset
+//
+// args:
+// - quoteAssetAmt: amount of base asset to swap, must be positive
+// - dir: direction the user takes
+//
+// returns:
+// - baseAssetDelta: amount of base asset received
+// - err: error
+//
+// NOTE: baseAssetDelta is always positive
+func (amm *AMM) SwapQuoteAsset(quoteAssetAmt sdk.Dec, dir Direction) (baseAssetDelta sdk.Dec, err error) {
 	quoteReserveAmt := amm.FromQuoteAssetToReserve(quoteAssetAmt)
-	baseReserveDeltaAbs, err := amm.GetBaseReserveAmt(quoteReserveAmt, dir)
+	baseReserveDelta, err := amm.GetBaseReserveAmt(quoteReserveAmt, dir)
 	if err != nil {
 		return sdk.Dec{}, err
 	}
 
 	if dir == Direction_LONG {
 		amm.QuoteReserve = amm.QuoteReserve.Add(quoteReserveAmt)
-		amm.BaseReserve = amm.BaseReserve.Sub(baseReserveDeltaAbs)
-		amm.TotalLong = amm.TotalLong.Add(baseReserveDeltaAbs)
+		amm.BaseReserve = amm.BaseReserve.Sub(baseReserveDelta)
+		amm.TotalLong = amm.TotalLong.Add(baseReserveDelta)
 	} else if dir == Direction_SHORT {
 		amm.QuoteReserve = amm.QuoteReserve.Sub(quoteReserveAmt)
-		amm.BaseReserve = amm.BaseReserve.Add(baseReserveDeltaAbs)
-		amm.TotalShort = amm.TotalShort.Add(baseReserveDeltaAbs)
+		amm.BaseReserve = amm.BaseReserve.Add(baseReserveDelta)
+		amm.TotalShort = amm.TotalShort.Add(baseReserveDelta)
 	}
 
-	return baseReserveDeltaAbs, nil
+	return baseReserveDelta, nil
 }
 
-func (amm *AMM) SwapBaseAsset(baseAssetAmt sdk.Dec, dir Direction) (quoteAssetDeltaAbs sdk.Dec, err error) {
-	quoteReserveDeltaAbs, err := amm.GetQuoteReserveAmt(baseAssetAmt, dir)
+// SwapBaseAsset swaps base asset for quote asset
+//
+// args:
+//   - baseAssetAmt: amount of base asset to swap
+//   - dir: direction of swap
+//
+// returns:
+//   - quoteAssetDelta: amount of quote asset received
+//   - err: error if any
+//
+// Note: quoteAssetDelta is always positive
+func (amm *AMM) SwapBaseAsset(baseAssetAmt sdk.Dec, dir Direction) (quoteAssetDelta sdk.Dec, err error) {
+	quoteReserveDelta, err := amm.GetQuoteReserveAmt(baseAssetAmt, dir)
 	if err != nil {
 		return sdk.Dec{}, err
 	}
 
 	if dir == Direction_LONG {
-		amm.QuoteReserve = amm.QuoteReserve.Add(quoteReserveDeltaAbs)
+		amm.QuoteReserve = amm.QuoteReserve.Add(quoteReserveDelta)
 		amm.BaseReserve = amm.BaseReserve.Sub(baseAssetAmt)
 		amm.TotalLong = amm.TotalLong.Add(baseAssetAmt)
 	} else if dir == Direction_SHORT {
-		amm.QuoteReserve = amm.QuoteReserve.Sub(quoteReserveDeltaAbs)
+		amm.QuoteReserve = amm.QuoteReserve.Sub(quoteReserveDelta)
 		amm.BaseReserve = amm.BaseReserve.Add(baseAssetAmt)
 		amm.TotalShort = amm.TotalShort.Add(baseAssetAmt)
 	}
 
-	return amm.FromQuoteReserveToAsset(quoteReserveDeltaAbs), nil
+	return amm.FromQuoteReserveToAsset(quoteReserveDelta), nil
 }
