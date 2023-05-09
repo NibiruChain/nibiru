@@ -57,7 +57,8 @@ type Market struct {
 	QuoteReserve sdk.Dec       `json:"quote_reserve"`
 	SqrtDepth    sdk.Dec       `json:"sqrt_depth"`
 	Depth        sdk.Int       `json:"depth"`
-	Bias         sdk.Dec       `json:"bias"`
+	TotalLong    sdk.Dec       `json:"total_long"`
+	TotalShort   sdk.Dec       `json:"total_short"`
 	PegMult      sdk.Dec       `json:"peg_mult"`
 	Config       *MarketConfig `json:"config,omitempty"`
 	MarkPrice    sdk.Dec       `json:"mark_price"`
@@ -85,7 +86,8 @@ func (m Market) ToAppMarket() (appMarket perpammtypes.Market, err error) {
 			MaintenanceMarginRatio: config.MaintenanceMarginRatio,
 			MaxLeverage:            config.MaxLeverage,
 		},
-		Bias:          m.Bias,
+		TotalLong:     m.TotalLong,
+		TotalShort:    m.TotalShort,
 		PegMultiplier: m.PegMult,
 	}), nil
 }
@@ -99,7 +101,8 @@ func NewMarket(appMarket perpammtypes.Market, indexPrice, twapMark string, block
 		QuoteReserve: quote,
 		SqrtDepth:    appMarket.SqrtDepth,
 		Depth:        base.Mul(quote).RoundInt(),
-		Bias:         appMarket.Bias,
+		TotalLong:    appMarket.TotalLong,
+		TotalShort:   appMarket.TotalShort,
 		PegMult:      appMarket.PegMultiplier,
 		Config:       NewMarketConfig(appMarket.Config),
 		MarkPrice:    appMarket.GetMarkPrice(),
