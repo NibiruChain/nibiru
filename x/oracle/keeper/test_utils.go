@@ -6,7 +6,6 @@ import (
 
 	"time"
 
-	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -265,9 +264,9 @@ func FundAccount(input TestFixture, addr sdk.AccAddress, amounts sdk.Coins) erro
 	return input.BankKeeper.SendCoinsFromModuleToAccount(input.Ctx, faucetAccountName, addr, amounts)
 }
 
-func AllocateRewards(t *testing.T, input TestFixture, pair asset.Pair, rewards sdk.Coins, votePeriods uint64) {
+func AllocateRewards(t *testing.T, input TestFixture, rewards sdk.Coins, votePeriods uint64) {
 	require.NoError(t, input.BankKeeper.MintCoins(input.Ctx, faucetAccountName, rewards))
-	require.NoError(t, input.OracleKeeper.AllocateRewards(input.Ctx, faucetAccountName, pair, rewards, votePeriods))
+	require.NoError(t, input.OracleKeeper.AllocateRewards(input.Ctx, faucetAccountName, rewards, votePeriods))
 }
 
 var (

@@ -41,7 +41,7 @@ type Keeper struct {
 	// PriceSnapshots maps types.PriceSnapshot to the asset.Pair of the snapshot and the creation timestamp as keys.Uint64Key.
 	PriceSnapshots   collections.Map[collections.Pair[asset.Pair, time.Time], types.PriceSnapshot]
 	WhitelistedPairs collections.KeySet[asset.Pair]
-	PairRewards      collections.IndexedMap[uint64, types.PairReward, PairRewardsIndexes]
+	PairRewards      collections.Map[uint64, types.PairReward]
 	PairRewardsID    collections.Sequence
 }
 
@@ -85,14 +85,9 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
 		Prevotes:          collections.NewMap(storeKey, 4, collections.ValAddressKeyEncoder, collections.ProtoValueEncoder[types.AggregateExchangeRatePrevote](cdc)),
 		Votes:             collections.NewMap(storeKey, 5, collections.ValAddressKeyEncoder, collections.ProtoValueEncoder[types.AggregateExchangeRateVote](cdc)),
 		WhitelistedPairs:  collections.NewKeySet(storeKey, 6, asset.PairKeyEncoder),
-		PairRewards: collections.NewIndexedMap(
+		PairRewards: collections.NewMap(
 			storeKey, 7,
-			collections.Uint64KeyEncoder, collections.ProtoValueEncoder[types.PairReward](cdc),
-			PairRewardsIndexes{
-				RewardsByPair: collections.NewMultiIndex(storeKey, 8, asset.PairKeyEncoder, collections.Uint64KeyEncoder, func(v types.PairReward) asset.Pair {
-					return v.Pair
-				}),
-			}),
+			collections.Uint64KeyEncoder, collections.ProtoValueEncoder[types.PairReward](cdc)),
 		PairRewardsID: collections.NewSequence(storeKey, 9),
 	}
 }

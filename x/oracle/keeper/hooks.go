@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/epochs/types"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -43,7 +41,6 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64) 
 		err = h.k.AllocateRewards(
 			ctx,
 			perptypes.FeePoolModuleAccount,
-			asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			totalValidatorFees,
 			1,
 		)
