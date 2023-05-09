@@ -19,13 +19,13 @@ jobs:
           fetch-depth: 0
       - name: Download release
         id: latest_release
-        uses: pozetroninc/github-action-get-latest-release@v0.6.0
+        uses: pozetroninc/github-action-get-latest-release@v0.7.0
         with:
           repository: ${{ github.repository }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: download release
-        uses: robinraju/release-downloader@v1.6
+        uses: robinraju/release-downloader@v1.8
         with:
           tag: ${{ steps.latest_release.outputs.release }}
           fileName: "*linux_amd64.tar.gz"
