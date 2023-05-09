@@ -29,7 +29,8 @@ func TestGenesis(t *testing.T) {
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
-			Bias:          sdk.ZeroDec(),
+			TotalLong:     sdk.ZeroDec(),
+			TotalShort:    sdk.ZeroDec(),
 			PegMultiplier: sdk.NewDec(30_000),
 		},
 		{
@@ -44,7 +45,8 @@ func TestGenesis(t *testing.T) {
 				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:            sdk.MustNewDecFromStr("15"),
 			},
-			Bias:          sdk.NewDec(0),
+			TotalLong:     sdk.NewDec(0),
+			TotalShort:    sdk.NewDec(0),
 			PegMultiplier: sdk.MustNewDecFromStr("60000"),
 		},
 	}

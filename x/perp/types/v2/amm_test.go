@@ -19,7 +19,8 @@ func TestSwapBaseAsset(t *testing.T) {
 		expectedQuoteAssetDelta sdk.Dec
 		expectedBaseReserve     sdk.Dec
 		expectedQuoteReserve    sdk.Dec
-		expectedBias            sdk.Dec
+		expectedTotalLong       sdk.Dec
+		expectedTotalShort      sdk.Dec
 		expectedMarkPrice       sdk.Dec
 		expectedErr             error
 	}{
@@ -30,7 +31,8 @@ func TestSwapBaseAsset(t *testing.T) {
 			expectedQuoteAssetDelta: sdk.MustNewDecFromStr("111111111111.111111111111111111"),
 			expectedBaseReserve:     sdk.NewDec(900000000000),
 			expectedQuoteReserve:    sdk.MustNewDecFromStr("1111111111111.111111111111111111"),
-			expectedBias:            sdk.NewDec(100000000000),
+			expectedTotalLong:       sdk.NewDec(100000000000),
+			expectedTotalShort:      sdk.ZeroDec(),
 			expectedMarkPrice:       sdk.MustNewDecFromStr("1.234567901234567901"),
 		},
 		{
@@ -40,7 +42,8 @@ func TestSwapBaseAsset(t *testing.T) {
 			expectedQuoteAssetDelta: sdk.MustNewDecFromStr("90909090909.090909090909090909"),
 			expectedBaseReserve:     sdk.NewDec(1100000000000),
 			expectedQuoteReserve:    sdk.MustNewDecFromStr("909090909090.909090909090909091"),
-			expectedBias:            sdk.NewDec(-100000000000),
+			expectedTotalLong:       sdk.ZeroDec(),
+			expectedTotalShort:      sdk.NewDec(100000000000),
 			expectedMarkPrice:       sdk.MustNewDecFromStr("0.826446280991735537"),
 		},
 		{
@@ -50,7 +53,8 @@ func TestSwapBaseAsset(t *testing.T) {
 			expectedQuoteAssetDelta: sdk.ZeroDec(),
 			expectedBaseReserve:     sdk.NewDec(1e12),
 			expectedQuoteReserve:    sdk.NewDec(1e12),
-			expectedBias:            sdk.ZeroDec(),
+			expectedTotalLong:       sdk.ZeroDec(),
+			expectedTotalShort:      sdk.ZeroDec(),
 			expectedMarkPrice:       sdk.OneDec(),
 		},
 		{
@@ -60,7 +64,8 @@ func TestSwapBaseAsset(t *testing.T) {
 			expectedQuoteAssetDelta: sdk.ZeroDec(),
 			expectedBaseReserve:     sdk.NewDec(1e12),
 			expectedQuoteReserve:    sdk.NewDec(1e12),
-			expectedBias:            sdk.ZeroDec(),
+			expectedTotalLong:       sdk.ZeroDec(),
+			expectedTotalShort:      sdk.ZeroDec(),
 			expectedMarkPrice:       sdk.OneDec(),
 		},
 		{
@@ -89,7 +94,8 @@ func TestSwapBaseAsset(t *testing.T) {
 					QuoteReserve:    tc.expectedQuoteReserve,
 					SqrtDepth:       amm.SqrtDepth,
 					PriceMultiplier: amm.PriceMultiplier,
-					Bias:            tc.expectedBias,
+					TotalLong:       tc.expectedTotalLong,
+					TotalShort:      tc.expectedTotalShort,
 				}, *amm)
 				assert.Equal(t, tc.expectedMarkPrice, amm.MarkPrice())
 			}
@@ -105,7 +111,8 @@ func TestSwapQuoteAsset(t *testing.T) {
 		expectedBaseAssetDelta sdk.Dec
 		expectedBaseReserve    sdk.Dec
 		expectedQuoteReserve   sdk.Dec
-		expectedBias           sdk.Dec
+		expectedTotalLong      sdk.Dec
+		expectedTotalShort     sdk.Dec
 		expectedMarkPrice      sdk.Dec
 		expectedErr            error
 	}{
@@ -116,7 +123,8 @@ func TestSwapQuoteAsset(t *testing.T) {
 			expectedBaseAssetDelta: sdk.MustNewDecFromStr("47619047619.047619047619047619"),
 			expectedBaseReserve:    sdk.MustNewDecFromStr("952380952380.952380952380952381"),
 			expectedQuoteReserve:   sdk.NewDec(1050000000000),
-			expectedBias:           sdk.MustNewDecFromStr("47619047619.047619047619047619"),
+			expectedTotalLong:      sdk.MustNewDecFromStr("47619047619.047619047619047619"),
+			expectedTotalShort:     sdk.ZeroDec(),
 			expectedMarkPrice:      sdk.MustNewDecFromStr("2.205"),
 		},
 		{
@@ -126,7 +134,8 @@ func TestSwapQuoteAsset(t *testing.T) {
 			expectedBaseAssetDelta: sdk.MustNewDecFromStr("52631578947.368421052631578947"),
 			expectedBaseReserve:    sdk.MustNewDecFromStr("1052631578947.368421052631578947"),
 			expectedQuoteReserve:   sdk.NewDec(950000000000),
-			expectedBias:           sdk.MustNewDecFromStr("-52631578947.368421052631578947"),
+			expectedTotalLong:      sdk.ZeroDec(),
+			expectedTotalShort:     sdk.MustNewDecFromStr("52631578947.368421052631578947"),
 			expectedMarkPrice:      sdk.MustNewDecFromStr("1.805"),
 		},
 		{
@@ -136,7 +145,8 @@ func TestSwapQuoteAsset(t *testing.T) {
 			expectedBaseAssetDelta: sdk.ZeroDec(),
 			expectedBaseReserve:    sdk.NewDec(1e12),
 			expectedQuoteReserve:   sdk.NewDec(1e12),
-			expectedBias:           sdk.ZeroDec(),
+			expectedTotalLong:      sdk.ZeroDec(),
+			expectedTotalShort:     sdk.ZeroDec(),
 			expectedMarkPrice:      sdk.NewDec(2),
 		},
 		{
@@ -146,7 +156,8 @@ func TestSwapQuoteAsset(t *testing.T) {
 			expectedBaseAssetDelta: sdk.ZeroDec(),
 			expectedBaseReserve:    sdk.NewDec(1e12),
 			expectedQuoteReserve:   sdk.NewDec(1e12),
-			expectedBias:           sdk.ZeroDec(),
+			expectedTotalLong:      sdk.ZeroDec(),
+			expectedTotalShort:     sdk.ZeroDec(),
 			expectedMarkPrice:      sdk.NewDec(2),
 		},
 		{
@@ -175,7 +186,8 @@ func TestSwapQuoteAsset(t *testing.T) {
 					QuoteReserve:    tc.expectedQuoteReserve,
 					SqrtDepth:       amm.SqrtDepth,
 					PriceMultiplier: amm.PriceMultiplier,
-					Bias:            tc.expectedBias,
+					TotalLong:       tc.expectedTotalLong,
+					TotalShort:      tc.expectedTotalShort,
 				}, *amm)
 				assert.Equal(t, tc.expectedMarkPrice, amm.MarkPrice())
 			}

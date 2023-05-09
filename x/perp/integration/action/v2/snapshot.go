@@ -26,7 +26,8 @@ func (i insertReserveSnapshot) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Cont
 		QuoteReserve:    sdk.ZeroDec(),
 		SqrtDepth:       sdk.ZeroDec(),
 		PriceMultiplier: sdk.ZeroDec(),
-		Bias:            sdk.ZeroDec(),
+		TotalLong:       sdk.ZeroDec(),
+		TotalShort:      sdk.ZeroDec(),
 	})
 
 	for _, modifier := range i.modifiers {

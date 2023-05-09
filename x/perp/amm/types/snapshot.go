@@ -13,7 +13,6 @@ func NewReserveSnapshot(
 	pair asset.Pair,
 	baseReserve, quoteReserve sdk.Dec,
 	pegMultiplier sdk.Dec,
-	bias sdk.Dec,
 	blockTime time.Time,
 ) ReserveSnapshot {
 	return ReserveSnapshot{
@@ -21,7 +20,6 @@ func NewReserveSnapshot(
 		BaseReserve:   baseReserve,
 		QuoteReserve:  quoteReserve,
 		PegMultiplier: pegMultiplier,
-		Bias:          bias,
 		TimestampMs:   blockTime.UnixMilli(),
 	}
 }
