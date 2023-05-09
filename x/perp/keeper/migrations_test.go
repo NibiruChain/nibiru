@@ -11,9 +11,9 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	"github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
+	"github.com/NibiruChain/nibiru/x/perp/types/v1"
 )
 
 func TestFrom2To3(t *testing.T) {
@@ -23,13 +23,13 @@ func TestFrom2To3(t *testing.T) {
 
 	testCases := []struct {
 		name               string
-		positions          []perptypes.Position
+		positions          []types.Position
 		expectedTotalLong  sdk.Dec
 		expectedTotalShort sdk.Dec
 	}{
 		{
 			"one position long",
-			[]perptypes.Position{
+			[]types.Position{
 				{
 					TraderAddress: alice.String(),
 					Pair:          pairBtcUsd,
@@ -41,7 +41,7 @@ func TestFrom2To3(t *testing.T) {
 		},
 		{
 			"two long positions",
-			[]perptypes.Position{
+			[]types.Position{
 				{
 					TraderAddress: alice.String(),
 					Pair:          pairBtcUsd,
@@ -58,7 +58,7 @@ func TestFrom2To3(t *testing.T) {
 		},
 		{
 			"one long position and one short position: long bigger than short",
-			[]perptypes.Position{
+			[]types.Position{
 				{
 					TraderAddress: alice.String(),
 					Pair:          pairBtcUsd,
@@ -75,7 +75,7 @@ func TestFrom2To3(t *testing.T) {
 		},
 		{
 			"one long position and one short position: short bigger than long",
-			[]perptypes.Position{
+			[]types.Position{
 				{
 					TraderAddress: alice.String(),
 					Pair:          pairBtcUsd,
@@ -92,7 +92,7 @@ func TestFrom2To3(t *testing.T) {
 		},
 		{
 			"one long position and one short position: equal long and short",
-			[]perptypes.Position{
+			[]types.Position{
 				{
 					TraderAddress: alice.String(),
 					Pair:          pairBtcUsd,
@@ -115,7 +115,7 @@ func TestFrom2To3(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 
-			market := types.Market{
+			market := perpammtypes.Market{
 				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				BaseReserve:  sdk.MustNewDecFromStr("10000000"),
 				QuoteReserve: sdk.MustNewDecFromStr("20000000"),

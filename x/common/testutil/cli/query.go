@@ -16,7 +16,7 @@ import (
 	perpammcli "github.com/NibiruChain/nibiru/x/perp/amm/cli"
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	perpcli "github.com/NibiruChain/nibiru/x/perp/client/cli"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
+	"github.com/NibiruChain/nibiru/x/perp/types/v1"
 	sudocli "github.com/NibiruChain/nibiru/x/sudo/cli"
 	sudotypes "github.com/NibiruChain/nibiru/x/sudo/pb"
 )
@@ -101,16 +101,16 @@ func QueryBaseAssetPrice(clientCtx client.Context, pair asset.Pair, direction st
 	return &queryResp, nil
 }
 
-func QueryPosition(ctx client.Context, pair asset.Pair, trader sdk.AccAddress) (*perptypes.QueryPositionResponse, error) {
-	var queryResp perptypes.QueryPositionResponse
+func QueryPosition(ctx client.Context, pair asset.Pair, trader sdk.AccAddress) (*types.QueryPositionResponse, error) {
+	var queryResp types.QueryPositionResponse
 	if err := ExecQuery(ctx, perpcli.CmdQueryPosition(), []string{trader.String(), pair.String()}, &queryResp); err != nil {
 		return nil, err
 	}
 	return &queryResp, nil
 }
 
-func QueryCumulativePremiumFraction(clientCtx client.Context, pair asset.Pair) (*perptypes.QueryCumulativePremiumFractionResponse, error) {
-	var queryResp perptypes.QueryCumulativePremiumFractionResponse
+func QueryCumulativePremiumFraction(clientCtx client.Context, pair asset.Pair) (*types.QueryCumulativePremiumFractionResponse, error) {
+	var queryResp types.QueryCumulativePremiumFractionResponse
 	if err := ExecQuery(clientCtx, perpcli.CmdQueryCumulativePremiumFraction(), []string{pair.String()}, &queryResp); err != nil {
 		return nil, err
 	}

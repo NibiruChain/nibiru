@@ -21,7 +21,7 @@ import (
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/client/cli"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
 )
 
 type IntegrationTestSuite struct {

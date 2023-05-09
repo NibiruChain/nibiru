@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	epochtypes "github.com/NibiruChain/nibiru/x/epochs/types"
-	"github.com/NibiruChain/nibiru/x/perp/types"
+	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
 )
 
 func TestEndOfEpochTwapCalculation(t *testing.T) {

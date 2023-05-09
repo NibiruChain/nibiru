@@ -12,7 +12,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
-	keeper "github.com/NibiruChain/nibiru/x/perp/keeper/v2"
+	"github.com/NibiruChain/nibiru/x/perp/keeper/v2"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 
 	. "github.com/NibiruChain/nibiru/x/common/testutil/action"

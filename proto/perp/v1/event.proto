@@ -7,7 +7,7 @@ import "google/api/annotations.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "perp/v1/state.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/perp/types";
+option go_package = "github.com/NibiruChain/nibiru/x/perp/types/v1;types";
 
 // Emitted when a position changes.
 // TODO: Is there a way to split this into different events without creating too
@@ -324,7 +324,7 @@ message MetricsEvent {
   int64 block_time_ms = 6;
 }
 
-message PegMultiplierUpdate{
+message PegMultiplierUpdate {
   string pair = 1 [
     (gogoproto.customtype) =
         "github.com/NibiruChain/nibiru/x/common/asset.Pair",
@@ -335,7 +335,7 @@ message PegMultiplierUpdate{
   string new_peg = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
-  ];  
+  ];
 
   // Cost of repeg
   string cost = 3 [
@@ -344,7 +344,7 @@ message PegMultiplierUpdate{
   ];
 }
 
-message SwapInvariantUpdate{
+message SwapInvariantUpdate {
   string pair = 1 [
     (gogoproto.customtype) =
         "github.com/NibiruChain/nibiru/x/common/asset.Pair",
@@ -355,13 +355,13 @@ message SwapInvariantUpdate{
   string new_swap_invariant = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
-  ];  
+  ];
 
   // swpa invariant multiplier
   string swap_invariant_multiplier = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
-  ];    
+  ];
 
   // Cost of update
   string cost = 4 [

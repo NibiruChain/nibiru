@@ -18,7 +18,7 @@ import (
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	pooltypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
-	"github.com/NibiruChain/nibiru/x/perp/types"
+	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
 )
 
 const defaultWeight = 100

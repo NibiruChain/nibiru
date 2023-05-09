@@ -7,7 +7,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
-	"github.com/NibiruChain/nibiru/x/perp/types"
+	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
 )
 
 func From2To3(perpKeeper Keeper, perpammKeeper types.PerpAmmKeeper) module.MigrationHandler {
