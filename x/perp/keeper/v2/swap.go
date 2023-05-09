@@ -33,8 +33,7 @@ func checkUserLimits(limit, amount sdk.Dec, dir v2types.Direction) error {
 }
 
 // SwapQuoteAsset trades quoteAssets in exchange for baseAssets.
-// The base asset is a crypto asset like BTC.
-// The quote asset is a stablecoin like NUSD.
+// Updates the AMM reserves and persists it to state.
 //
 // args:
 //   - ctx: cosmos-sdk context
@@ -77,8 +76,7 @@ func (k Keeper) SwapQuoteAsset(
 }
 
 // SwapBaseAsset trades baseAssets in exchange for quoteAssets.
-// The base asset is a crypto asset like BTC.
-// The quote asset is a stablecoin like NUSD.
+// Updates the AMM reserves and persists it to state.
 //
 // args:
 //   - ctx: cosmos-sdk context
