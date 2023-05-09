@@ -167,7 +167,7 @@ func (amm *AMM) WithTotalLong(totalLong sdk.Dec) *AMM {
 	return amm
 }
 
-func (amm *AMM) WithBias(totalShort sdk.Dec) *AMM {
+func (amm *AMM) WithTotalShort(totalShort sdk.Dec) *AMM {
 	amm.TotalShort = totalShort
 	return amm
 }
