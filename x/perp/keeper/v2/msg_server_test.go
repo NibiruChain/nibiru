@@ -219,7 +219,7 @@ package keeper_test
 // 			})
 
 // 			t.Log("fund vault")
-// 			require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, tc.vaultFunds))
+// 			require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, v2types.VaultModuleAccount, tc.vaultFunds))
 
 // 			if tc.initialPosition != nil {
 // 				t.Log("create position")
@@ -404,7 +404,7 @@ package keeper_test
 // 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 // 				LastUpdatedBlockNumber:          1,
 // 			})
-// 			require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(tc.pair.QuoteDenom(), 1))))
+// 			require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(tc.pair.QuoteDenom(), 1))))
 
 // 			resp, err := msgServer.ClosePosition(sdk.WrapSDKContext(ctx), &v2types.MsgClosePosition{
 // 				Sender: tc.traderAddr.String(),
@@ -500,7 +500,7 @@ package keeper_test
 // 	keeper.SetPosition(app.PerpKeeperV2, ctx, notAtRiskPosition)
 // 	keeper.SetPosition(app.PerpKeeperV2, ctx, atRiskPosition2)
 
-// 	require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
+// 	require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
 
 // 	setLiquidator(ctx, app.PerpKeeperV2, liquidator)
 // 	resp, err := msgServer.MultiLiquidate(sdk.WrapSDKContext(ctx), &v2types.MsgMultiLiquidate{
@@ -591,7 +591,7 @@ package keeper_test
 // 	}
 // 	keeper.SetPosition(app.PerpKeeperV2, ctx, atRiskPosition1)
 
-// 	require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
+// 	require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
 
 // 	resp, err := msgServer.MultiLiquidate(sdk.WrapSDKContext(ctx), &v2types.MsgMultiLiquidate{
 // 		Sender: liquidator.String(),
@@ -663,7 +663,7 @@ package keeper_test
 // 	}
 // 	keeper.SetPosition(app.PerpKeeperV2, ctx, notAtRiskPosition)
 
-// 	require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
+// 	require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
 
 // 	setLiquidator(ctx, app.PerpKeeperV2, liquidator)
 // 	resp, err := msgServer.MultiLiquidate(sdk.WrapSDKContext(ctx), &v2types.MsgMultiLiquidate{
@@ -739,7 +739,7 @@ package keeper_test
 // 					tc.donation,
 // 					app.BankKeeper.GetBalance(
 // 						ctx,
-// 						app.AccountKeeper.GetModuleAddress(types.PerpEFModuleAccount),
+// 						app.AccountKeeper.GetModuleAddress(v2types.PerpEFModuleAccount),
 // 						denoms.NUSD,
 // 					),
 // 				)

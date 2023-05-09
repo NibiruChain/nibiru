@@ -5,7 +5,7 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/x/perp/types"
+	"github.com/NibiruChain/nibiru/x/perp/types/v1"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
@@ -64,7 +64,7 @@ func (k Keeper) SettlePosition(
 		}
 		err = k.BankKeeper.SendCoinsFromModuleToAccount( // NOTE(mercilex): withdraw is not applied here
 			ctx,
-			types.VaultModuleAccount,
+			v2types.VaultModuleAccount,
 			traderAddr,
 			transferredCoins,
 		)

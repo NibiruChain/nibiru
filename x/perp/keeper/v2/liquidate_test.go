@@ -11,7 +11,6 @@ import (
 	. "github.com/NibiruChain/nibiru/x/common/testutil/assertion"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/action/v2"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion/v2"
-	"github.com/NibiruChain/nibiru/x/perp/types"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -34,7 +33,7 @@ func TestMultiLiquidate(t *testing.T) {
 				SetBlockTime(startTime),
 				CreateCustomMarket(pairBtcUsdc),
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10400))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
+				FundModule(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -43,8 +42,8 @@ func TestMultiLiquidate(t *testing.T) {
 				),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(750)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(125)),
+				ModuleBalanceEqual(v2types.VaultModuleAccount, denoms.USDC, sdk.NewInt(750)),
+				ModuleBalanceEqual(v2types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(125)),
 				BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(125)),
 				PositionShouldBeEqual(alice, pairBtcUsdc,
 					Position_PositionShouldBeEqualTo(
@@ -67,7 +66,7 @@ func TestMultiLiquidate(t *testing.T) {
 				SetBlockTime(startTime),
 				CreateCustomMarket(pairBtcUsdc),
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10600))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
+				FundModule(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -76,8 +75,8 @@ func TestMultiLiquidate(t *testing.T) {
 				),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(600)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(150)),
+				ModuleBalanceEqual(v2types.VaultModuleAccount, denoms.USDC, sdk.NewInt(600)),
+				ModuleBalanceEqual(v2types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(150)),
 				BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(250)),
 				PositionShouldNotExist(alice, pairBtcUsdc),
 			),
@@ -88,8 +87,8 @@ func TestMultiLiquidate(t *testing.T) {
 				SetBlockTime(startTime),
 				CreateCustomMarket(pairBtcUsdc),
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10800))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 50))),
+				FundModule(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
+				FundModule(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 50))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -98,8 +97,8 @@ func TestMultiLiquidate(t *testing.T) {
 				),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(800)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.ZeroInt()),
+				ModuleBalanceEqual(v2types.VaultModuleAccount, denoms.USDC, sdk.NewInt(800)),
+				ModuleBalanceEqual(v2types.PerpEFModuleAccount, denoms.USDC, sdk.ZeroInt()),
 				BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(250)),
 				PositionShouldNotExist(alice, pairBtcUsdc),
 			),
@@ -110,7 +109,7 @@ func TestMultiLiquidate(t *testing.T) {
 				SetBlockTime(startTime),
 				CreateCustomMarket(pairBtcUsdc, WithPrepaidBadDebt(sdk.NewInt(50))),
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10800))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
+				FundModule(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -119,8 +118,8 @@ func TestMultiLiquidate(t *testing.T) {
 				),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(750)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.ZeroInt()),
+				ModuleBalanceEqual(v2types.VaultModuleAccount, denoms.USDC, sdk.NewInt(750)),
+				ModuleBalanceEqual(v2types.PerpEFModuleAccount, denoms.USDC, sdk.ZeroInt()),
 				BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(250)),
 				PositionShouldNotExist(alice, pairBtcUsdc),
 				MarketShouldBeEqual(pairBtcUsdc, Market_PrepaidBadDebtShouldBeEqualTo(sdk.ZeroInt())),
@@ -132,7 +131,7 @@ func TestMultiLiquidate(t *testing.T) {
 				SetBlockTime(startTime),
 				CreateCustomMarket(pairBtcUsdc),
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(100)), WithMargin(sdk.NewDec(10)), WithOpenNotional(sdk.NewDec(100))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 10))),
+				FundModule(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 10))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -141,8 +140,8 @@ func TestMultiLiquidate(t *testing.T) {
 				),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(10)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.ZeroInt()),
+				ModuleBalanceEqual(v2types.VaultModuleAccount, denoms.USDC, sdk.NewInt(10)),
+				ModuleBalanceEqual(v2types.PerpEFModuleAccount, denoms.USDC, sdk.ZeroInt()),
 				BalanceEqual(liquidator, denoms.USDC, sdk.ZeroInt()),
 				PositionShouldBeEqual(alice, pairBtcUsdc,
 					Position_PositionShouldBeEqualTo(
@@ -169,7 +168,7 @@ func TestMultiLiquidate(t *testing.T) {
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10400))),  // partial
 				InsertPosition(WithTrader(alice), WithPair(pairEthUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10600))),  // full
 				InsertPosition(WithTrader(alice), WithPair(pairAtomUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10000))), // healthy
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 3000))),
+				FundModule(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 3000))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -182,8 +181,8 @@ func TestMultiLiquidate(t *testing.T) {
 				),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(2350)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(275)),
+				ModuleBalanceEqual(v2types.VaultModuleAccount, denoms.USDC, sdk.NewInt(2350)),
+				ModuleBalanceEqual(v2types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(275)),
 				BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(375)),
 				PositionShouldBeEqual(alice, pairBtcUsdc,
 					Position_PositionShouldBeEqualTo(

@@ -6,7 +6,7 @@ import (
 	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/perp/types"
+	"github.com/NibiruChain/nibiru/x/perp/types/v1"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
@@ -349,8 +349,8 @@ func (k Keeper) distributeLiquidateRewards(
 		coinToPerpEF := sdk.NewCoin(market.Pair.QuoteDenom(), feeToPerpEF)
 		if err = k.BankKeeper.SendCoinsFromModuleToModule(
 			ctx,
-			/* from */ types.VaultModuleAccount,
-			/* to */ types.PerpEFModuleAccount,
+			/* from */ v2types.VaultModuleAccount,
+			/* to */ v2types.PerpEFModuleAccount,
 			sdk.NewCoins(coinToPerpEF),
 		); err != nil {
 			return err

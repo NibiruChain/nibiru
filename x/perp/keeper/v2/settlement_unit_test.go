@@ -27,7 +27,7 @@ package keeper
 
 // 		dep.mockBankKeeper.EXPECT().
 // 			SendCoinsFromModuleToAccount(
-// 				ctx, types.VaultModuleAccount, traderAddr,
+// 				ctx, v2types.VaultModuleAccount, traderAddr,
 // 				sdk.NewCoins(sdk.NewCoin("UST", sdk.NewInt(100))),
 // 			).
 // 			Return(error(nil))
@@ -61,7 +61,7 @@ package keeper
 
 // 		dep.mockBankKeeper.EXPECT().
 // 			SendCoinsFromModuleToAccount(
-// 				ctx, types.VaultModuleAccount, traderAddr, sdk.NewCoins(sdk.NewCoin("UST", sdk.NewInt(99_100)))).
+// 				ctx, v2types.VaultModuleAccount, traderAddr, sdk.NewCoins(sdk.NewCoin("UST", sdk.NewInt(99_100)))).
 // 			Return(error(nil))
 
 // 		// this means that the user

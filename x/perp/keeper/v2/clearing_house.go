@@ -9,7 +9,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/perp/types"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
@@ -38,12 +37,12 @@ func (k Keeper) OpenPosition(
 ) (positionResp *v2types.PositionResp, err error) {
 	market, err := k.Markets.Get(ctx, pair)
 	if err != nil {
-		return nil, types.ErrPairNotFound
+		return nil, v2types.ErrPairNotFound
 	}
 
 	amm, err := k.AMMs.Get(ctx, pair)
 	if err != nil {
-		return nil, types.ErrPairNotFound
+		return nil, v2types.ErrPairNotFound
 	}
 
 	err = checkOpenPositionRequirements(market, quoteAssetAmt, leverage)
@@ -114,15 +113,15 @@ func (k Keeper) OpenPosition(
 // - error: if any of the requirements is not met
 func checkOpenPositionRequirements(market v2types.Market, quoteAssetAmt sdk.Int, leverage sdk.Dec) error {
 	if quoteAssetAmt.IsZero() {
-		return types.ErrQuoteAmountIsZero
+		return v2types.ErrQuoteAmountIsZero
 	}
 
 	if leverage.IsZero() {
-		return types.ErrLeverageIsZero
+		return v2types.ErrLeverageIsZero
 	}
 
 	if leverage.GT(market.MaxLeverage) {
-		return types.ErrLeverageIsTooHigh
+		return v2types.ErrLeverageIsTooHigh
 	}
 
 	return nil
@@ -157,7 +156,7 @@ func (k Keeper) afterPositionUpdate(
 
 		marginRatio := MarginRatio(*positionResp.Position, positionNotional, market.LatestCumulativePremiumFraction)
 		if marginRatio.LT(market.MaintenanceMarginRatio) {
-			return types.ErrMarginRatioTooLow
+			return v2types.ErrMarginRatioTooLow
 		}
 	}
 
@@ -173,7 +172,7 @@ func (k Keeper) afterPositionUpdate(
 	case marginToVault.IsPositive():
 		coinToSend := sdk.NewCoin(market.Pair.QuoteDenom(), marginToVault)
 		if err = k.BankKeeper.SendCoinsFromAccountToModule(
-			ctx, traderAddr, types.VaultModuleAccount, sdk.NewCoins(coinToSend)); err != nil {
+			ctx, traderAddr, v2types.VaultModuleAccount, sdk.NewCoins(coinToSend)); err != nil {
 			return err
 		}
 	case marginToVault.IsNegative():
@@ -703,7 +702,7 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.A
 
 	market, err := k.Markets.Get(ctx, pair)
 	if err != nil {
-		return nil, types.ErrPairNotFound
+		return nil, v2types.ErrPairNotFound
 	}
 
 	amm, err := k.AMMs.Get(ctx, pair)
@@ -767,7 +766,7 @@ func (k Keeper) transferFee(
 		if err = k.BankKeeper.SendCoinsFromAccountToModule(
 			ctx,
 			/* from */ trader,
-			/* to */ types.FeePoolModuleAccount,
+			/* to */ v2types.FeePoolModuleAccount,
 			/* coins */ sdk.NewCoins(
 				sdk.NewCoin(
 					pair.QuoteDenom(),
@@ -784,7 +783,7 @@ func (k Keeper) transferFee(
 		if err = k.BankKeeper.SendCoinsFromAccountToModule(
 			ctx,
 			/* from */ trader,
-			/* to */ types.PerpEFModuleAccount,
+			/* to */ v2types.PerpEFModuleAccount,
 			/* coins */ sdk.NewCoins(
 				sdk.NewCoin(
 					pair.QuoteDenom(),

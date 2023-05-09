@@ -3,7 +3,6 @@ package keeper
 import (
 	"context"
 
-	"github.com/NibiruChain/nibiru/x/perp/types"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -94,7 +93,7 @@ func (m msgServer) DonateToEcosystemFund(ctx context.Context, msg *v2types.MsgDo
 	if err := m.k.BankKeeper.SendCoinsFromAccountToModule(
 		sdk.UnwrapSDKContext(ctx),
 		sdk.MustAccAddressFromBech32(msg.Sender),
-		types.PerpEFModuleAccount,
+		v2types.PerpEFModuleAccount,
 		sdk.NewCoins(msg.Donation),
 	); err != nil {
 		return nil, err

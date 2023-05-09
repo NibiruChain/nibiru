@@ -9,7 +9,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
-	"github.com/NibiruChain/nibiru/x/perp/types"
+	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
 	v2 "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 

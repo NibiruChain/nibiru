@@ -8,7 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/perp/types"
+	"github.com/NibiruChain/nibiru/x/perp/types/v1"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
@@ -45,7 +45,7 @@ func (k Keeper) AddMargin(
 	if err = k.BankKeeper.SendCoinsFromAccountToModule(
 		ctx,
 		/* from */ traderAddr,
-		/* to */ types.VaultModuleAccount,
+		/* to */ v2types.VaultModuleAccount,
 		/* amount */ sdk.NewCoins(marginToAdd),
 	); err != nil {
 		return nil, err

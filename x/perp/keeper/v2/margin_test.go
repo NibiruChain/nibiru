@@ -14,7 +14,7 @@ import (
 	. "github.com/NibiruChain/nibiru/x/oracle/integration/action"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/action/v2"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion/v2"
-	"github.com/NibiruChain/nibiru/x/perp/types"
+	"github.com/NibiruChain/nibiru/x/perp/types/v1"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
@@ -64,7 +64,7 @@ func TestAddMargin(t *testing.T) {
 					BlockTimeMs:        startBlockTime.Add(time.Second*5).UnixNano() / 1e6,
 				}),
 				BalanceEqual(alice, denoms.USDC, sdk.ZeroInt()),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(10)),
+				ModuleBalanceEqual(v2types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(10)),
 				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.NewInt(10)),
 			),
 
@@ -108,7 +108,7 @@ func TestAddMargin(t *testing.T) {
 					BlockTimeMs:        startBlockTime.Add(time.Second*5).UnixNano() / 1e6,
 				}),
 				BalanceEqual(alice, denoms.USDC, sdk.ZeroInt()),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(10)),
+				ModuleBalanceEqual(v2types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(10)),
 				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.NewInt(10)),
 			),
 	}
@@ -162,7 +162,7 @@ func TestRemoveMargin(t *testing.T) {
 					BlockTimeMs:        startBlockTime.Add(time.Second*5).UnixNano() / 1e6,
 				}),
 				BalanceEqual(alice, denoms.USDC, sdk.NewInt(500)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(1)),
+				ModuleBalanceEqual(v2types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(1)),
 				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.NewInt(1)),
 			),
 
@@ -206,7 +206,7 @@ func TestRemoveMargin(t *testing.T) {
 					BlockTimeMs:        startBlockTime.Add(time.Second*5).UnixNano() / 1e6,
 				}),
 				BalanceEqual(alice, denoms.USDC, sdk.NewInt(500)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(1)),
+				ModuleBalanceEqual(v2types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(1)),
 				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.NewInt(1)),
 			),
 	}

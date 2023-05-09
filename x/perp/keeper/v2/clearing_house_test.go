@@ -21,7 +21,6 @@ import (
 	. "github.com/NibiruChain/nibiru/x/oracle/integration/action"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/action/v2"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion/v2"
-	"github.com/NibiruChain/nibiru/x/perp/types"
 
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
@@ -894,8 +893,8 @@ func TestClosePosition(t *testing.T) {
 				TimestampMs: ctx.BlockTime().UnixMilli(),
 			})
 			app.PerpKeeperV2.Positions.Insert(ctx, collections.Join(tc.initialPosition.Pair, traderAddr), tc.initialPosition)
-			testapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1e18)))
-			testapp.FundModuleAccount(app.BankKeeper, ctx, types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1e18)))
+			testapp.FundModuleAccount(app.BankKeeper, ctx, v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1e18)))
+			testapp.FundModuleAccount(app.BankKeeper, ctx, v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1e18)))
 
 			t.Log("close position")
 			resp, err := app.PerpKeeperV2.ClosePosition(
