@@ -7,22 +7,29 @@ import (
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
-/*
-Withdraws coins from the vault to the receiver.
-If the total amount of coins to withdraw is greater than the vault's amount, then
-withdraw the shortage from the PerpEF and mark it as prepaid bad debt.
-
-Prepaid bad debt will count towards realized bad debt from negative PnL positions
-when those are closed/liquidated.
-
-An example of this happening is when a long position has really high PnL and
-closes their position, realizing their profits.
-There is a counter party short position with really negative PnL, but
-their position hasn't been closed/liquidated yet.
-We must pay the long trader first, which results in funds being taken from the EF.
-when the short position is closed, it also realizes some bad debt but because
-we have already withdrawn from the EF, we don't need to withdraw more from the EF.
-*/
+// Withdraws coins from the vault to the receiver.
+// If the total amount of coins to withdraw is greater than the vault's amount, then
+// withdraw the shortage from the PerpEF and mark it as prepaid bad debt.
+//
+// Prepaid bad debt will count towards realized bad debt from negative PnL positions
+// when those are closed/liquidated.
+//
+// An example of this happening is when a long position has really high PnL and
+// closes their position, realizing their profits.
+// There is a counter party short position with really negative PnL, but
+// their position hasn't been closed/liquidated yet.
+// We must pay the long trader first, which results in funds being taken from the EF.
+// when the short position is closed, it also realizes some bad debt but because
+// we have already withdrawn from the EF, we don't need to withdraw more from the EF.
+//
+// args:
+// - ctx: context
+// - market: the perp market
+// - receiver: the receiver of the coins
+// - amountToWithdraw: amount of coins to withdraw
+//
+// returns:
+// - error: error
 func (k Keeper) Withdraw(
 	ctx sdk.Context,
 	market v2types.Market,
