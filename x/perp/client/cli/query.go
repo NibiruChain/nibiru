@@ -10,7 +10,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	perpammcli "github.com/NibiruChain/nibiru/x/perp/amm/cli"
-	"github.com/NibiruChain/nibiru/x/perp/types"
+	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
 )
 
 // GetQueryCmd returns the cli query commands for this module
