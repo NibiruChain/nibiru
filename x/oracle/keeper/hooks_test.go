@@ -5,7 +5,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/epochs/types"
 	"github.com/NibiruChain/nibiru/x/oracle/keeper"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
-	types2 "github.com/NibiruChain/nibiru/x/perp/types"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -44,7 +44,7 @@ func TestHooks_AfterEpochEnd(t *testing.T) {
 
 			h := keeper.NewHooks(app.OracleKeeper, app.AccountKeeper, app.BankKeeper)
 
-			err := testapp.FundModuleAccount(app.BankKeeper, ctx, types2.FeePoolModuleAccount, tt.initialFunds)
+			err := testapp.FundModuleAccount(app.BankKeeper, ctx, perptypes.FeePoolModuleAccount, tt.initialFunds)
 			require.NoError(t, err)
 
 			h.AfterEpochEnd(ctx, tt.epochIdentifier, 0)
@@ -52,6 +52,10 @@ func TestHooks_AfterEpochEnd(t *testing.T) {
 			account := app.AccountKeeper.GetModuleAccount(ctx, oracletypes.ModuleName)
 			balances := app.BankKeeper.GetAllBalances(ctx, account.GetAddress())
 			require.True(t, tt.expectedOracleBalances.IsEqual(balances))
+
+			account = app.AccountKeeper.GetModuleAccount(ctx, perptypes.PerpEFModuleAccount)
+			balances = app.BankKeeper.GetAllBalances(ctx, account.GetAddress())
+			require.True(t, tt.expectedEFBalances.IsEqual(balances))
 		})
 	}
 }
