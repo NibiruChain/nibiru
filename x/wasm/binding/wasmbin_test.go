@@ -42,7 +42,6 @@ var ContractMap = make(map[wasmbin.WasmKey]sdk.AccAddress)
 func SetupAllContracts(
 	t *testing.T, sender sdk.AccAddress, nibiru *app.NibiruApp, ctx sdk.Context,
 ) (*app.NibiruApp, sdk.Context) {
-
 	wasmKey := wasmbin.WasmKeyPerpBinding
 	codeId := StoreContract(t, wasmKey, ctx, nibiru, sender)
 	deposit := sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(1)))
