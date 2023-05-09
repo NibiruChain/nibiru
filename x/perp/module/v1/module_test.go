@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	"github.com/NibiruChain/nibiru/x/perp/types"
+	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
 )
 
 // TestModuleAccounts verifies that all x/perp module accounts are connected

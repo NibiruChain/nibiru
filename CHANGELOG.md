@@ -106,6 +106,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1319](https://github.com/NibiruChain/nibiru/pull/1319) - test: add integration test actions
 * [#1329](https://github.com/NibiruChain/nibiru/pull/1329) - feat(perp): add PerpKeeperV2 withdraw methods
 * [#1328](https://github.com/NibiruChain/nibiru/pull/1328) - feat(perp): add PerpKeeperV2 swap methods
+* [#1331](https://github.com/NibiruChain/nibiru/pull/1331) - refactor(perp): create perp v1 type package and module package
 
 ### Bug Fixes
 
