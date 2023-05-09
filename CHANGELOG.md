@@ -38,10 +38,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [Unreleased]
+
+### Dependencies
+- Bump `robinraju/release-downloader` from 1.6 to 1.8 (#1326)
 
 ### Breaking
-
 * [#1317](https://github.com/NibiruChain/nibiru/pull/1317) - feat(sudo): Implement and test CLI commands for tx and queries. 
 * [#1307](https://github.com/NibiruChain/nibiru/pull/1307) - feat(sudo): Create the x/sudo module + integration tests
 * [#1299](https://github.com/NibiruChain/nibiru/pull/1299) - feat(wasm): Add peg shift bindings
