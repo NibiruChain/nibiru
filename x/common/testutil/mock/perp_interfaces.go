@@ -305,11 +305,12 @@ func (mr *MockPerpAmmKeeperMockRecorder) EditPoolPegMultiplier(arg0, arg1, arg2 
 }
 
 // EditSwapInvariant mocks base method.
-func (m *MockPerpAmmKeeper) EditSwapInvariant(arg0 types1.Context, arg1 asset.Pair, arg2 types1.Dec) error {
+func (m *MockPerpAmmKeeper) EditSwapInvariant(arg0 types1.Context, arg1 asset.Pair, arg2 types1.Dec) (types0.Market, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "EditSwapInvariant", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(types0.Market)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // EditSwapInvariant indicates an expected call of EditSwapInvariant.

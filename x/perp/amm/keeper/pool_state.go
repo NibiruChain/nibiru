@@ -122,16 +122,16 @@ func (k Keeper) EditSwapInvariant(
 	ctx sdk.Context,
 	pair asset.Pair,
 	swapInvariantMultiplier sdk.Dec,
-) error {
+) (newMarket types.Market, err error) {
 	// Grab current pool from state
 	market, err := k.Pools.Get(ctx, pair)
 	if err != nil {
-		return err
+		return
 	}
 
-	newMarket, err := market.UpdateSwapInvariant(swapInvariantMultiplier)
+	newMarket, err = market.UpdateSwapInvariant(swapInvariantMultiplier)
 	if err != nil {
-		return err
+		return
 	}
 
 	err = k.updatePool(
@@ -139,9 +139,9 @@ func (k Keeper) EditSwapInvariant(
 		newMarket,
 		/*skipFluctuationLimitCheck*/ true)
 	if err != nil {
-		return err
+		return
 	}
-	return nil
+	return newMarket, err
 }
 
 /*

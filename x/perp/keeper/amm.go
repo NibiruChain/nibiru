@@ -69,14 +69,8 @@ func (k Keeper) EditPoolSwapInvariant(ctx sdk.Context, sender sdk.AccAddress, pa
 	}
 
 	// Do the swap invariant update
-	err = k.PerpAmmKeeper.EditSwapInvariant(ctx, pair, multiplier)
+	pool, err = k.PerpAmmKeeper.EditSwapInvariant(ctx, pair, multiplier)
 	if err != nil {
-		return
-	}
-
-	// Get the pool
-	pool, err = k.PerpAmmKeeper.GetPool(ctx, pair)
-	if nil != err {
 		return
 	}
 
