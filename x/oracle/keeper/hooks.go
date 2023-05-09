@@ -1,19 +1,30 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/nibiru/x/epochs/types"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
+	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+
+	"github.com/NibiruChain/nibiru/x/epochs/types"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 )
 
 var _ types.EpochHooks = Hooks{}
 
+// Return the wrapper struct
+func (k Keeper) Hooks() Hooks {
+	return Hooks{
+		k,
+		k.AccountKeeper,
+		k.bankKeeper,
+	}
+}
+
 type Hooks struct {
 	k             Keeper
-	accountKeeper keeper.AccountKeeper
-	bankKeeper    bankkeeper.Keeper
+	accountKeeper oracletypes.AccountKeeper
+	bankKeeper    oracletypes.BankKeeper
 }
 
 func NewHooks(k Keeper, accountKeeper keeper.AccountKeeper, bankKeeper bankkeeper.Keeper) *Hooks {
