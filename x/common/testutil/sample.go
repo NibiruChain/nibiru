@@ -3,7 +3,8 @@ package testutil
 import (
 	"math/rand"
 
-	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,15 +14,23 @@ import (
 	tmdb "github.com/tendermint/tm-db"
 )
 
-// AccAddress Returns a sample account address (sdk.AccAddress)
+// AccAddress returns a sample address (sdk.AccAddress) created using secp256k1.
 // Note that AccAddress().String() can be used to get a string representation.
 func AccAddress() sdk.AccAddress {
-	pk := ed25519.GenPrivKey().PubKey()
-	addr := pk.Address()
-	return sdk.AccAddress(addr)
+	_, accAddr := PrivKey()
+	return accAddr
 }
 
-// PrivKeyAddressPairs generates (deterministically) a total of n private keys and addresses.
+// PrivKey returns a private key and corresponding on-chain address.
+func PrivKey() (*secp256k1.PrivKey, sdk.AccAddress) {
+	privKey := secp256k1.GenPrivKey()
+	pubKey := privKey.PubKey()
+	addr := pubKey.Address()
+	return privKey, sdk.AccAddress(addr)
+}
+
+// PrivKeyAddressPairs generates (deterministically) a total of n private keys
+// and addresses.
 func PrivKeyAddressPairs(n int) (keys []cryptotypes.PrivKey, addrs []sdk.AccAddress) {
 	r := rand.New(rand.NewSource(12345)) // make the generation deterministic
 	keys = make([]cryptotypes.PrivKey, n)
@@ -32,7 +41,7 @@ func PrivKeyAddressPairs(n int) (keys []cryptotypes.PrivKey, addrs []sdk.AccAddr
 		if err != nil {
 			panic("Could not read randomness")
 		}
-		keys[i] = ed25519.GenPrivKeyFromSecret(secret)
+		keys[i] = secp256k1.GenPrivKeyFromSecret(secret)
 		addrs[i] = sdk.AccAddress(keys[i].PubKey().Address())
 	}
 	return
