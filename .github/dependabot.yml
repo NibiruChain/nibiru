@@ -8,7 +8,12 @@ updates:
   - package-ecosystem: "gomod" # See documentation for possible values
     directory: "/" # Location of package manifests
     schedule:
-      interval: "weekly"
+      interval: daily
     labels:
       - "dependencies"
-      - "skip-changelog"
+      - "dependabot"
+  # checks for updates to the GHA dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: daily
