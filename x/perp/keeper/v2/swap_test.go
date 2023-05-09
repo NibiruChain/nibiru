@@ -145,7 +145,7 @@ func TestSwapBaseAsset(t *testing.T) {
 				WithBaseReserve(sdk.NewDec(999999900000)).
 				WithQuoteReserve(sdk.MustNewDecFromStr("1000000100000.010000001000000100")).
 				WithPriceMultiplier(sdk.NewDec((2))).
-				WithTotalShort(sdk.NewDec(100_000)),
+				WithTotalLong(sdk.NewDec(100_000)),
 			expectedQuoteAssetDelta: sdk.MustNewDecFromStr("200000.020000002000000200"),
 		},
 		{
@@ -159,7 +159,7 @@ func TestSwapBaseAsset(t *testing.T) {
 				WithBaseReserve(sdk.NewDec(1000000100000)).
 				WithQuoteReserve(sdk.MustNewDecFromStr("999999900000.009999999000000100")).
 				WithPriceMultiplier(sdk.NewDec((2))).
-				WithTotalShort(sdk.NewDec(-100_000)),
+				WithTotalShort(sdk.NewDec(100_000)),
 		},
 		{
 			name:            "quote asset amt less than quote limit in Long",
