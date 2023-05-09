@@ -182,9 +182,7 @@ func TestQueryPosition(t *testing.T) {
 
 			assert.Equal(t, tc.expectedPositionNotional, resp.PositionNotional)
 			assert.Equal(t, tc.expectedUnrealizedPnl, resp.UnrealizedPnl)
-			assert.Equal(t, tc.expectedMarginRatio, resp.MarginRatioMark)
-			// assert.Equal(t, tc.expectedMarginRatioIndex, resp.MarginRatioIndex)
-			// TODO https://github.com/NibiruChain/nibiru/issues/809
+			assert.Equal(t, tc.expectedMarginRatio, resp.MarginRatio)
 		})
 	}
 }

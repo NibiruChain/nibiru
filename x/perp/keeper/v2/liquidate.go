@@ -70,7 +70,7 @@ func (k Keeper) liquidate(
 ) (liquidatorFee sdk.Coin, ecosystemFundFee sdk.Coin, err error) {
 	market, err := k.Markets.Get(ctx, pair)
 	if err != nil {
-		_ = ctx.EventManager().EmitTypedEvent(&v2types.LiquidationFailedEvent{ // nolint:errcheck
+		_ = ctx.EventManager().EmitTypedEvent(&v2types.LiquidationFailedEvent{
 			Pair:       pair,
 			Trader:     trader.String(),
 			Liquidator: liquidator.String(),
@@ -81,7 +81,7 @@ func (k Keeper) liquidate(
 
 	amm, err := k.AMMs.Get(ctx, pair)
 	if err != nil {
-		_ = ctx.EventManager().EmitTypedEvent(&v2types.LiquidationFailedEvent{ // nolint:errcheck
+		_ = ctx.EventManager().EmitTypedEvent(&v2types.LiquidationFailedEvent{
 			Pair:       pair,
 			Trader:     trader.String(),
 			Liquidator: liquidator.String(),
@@ -92,7 +92,7 @@ func (k Keeper) liquidate(
 
 	position, err := k.Positions.Get(ctx, collections.Join(pair, trader))
 	if err != nil {
-		_ = ctx.EventManager().EmitTypedEvent(&v2types.LiquidationFailedEvent{ // nolint:errcheck
+		_ = ctx.EventManager().EmitTypedEvent(&v2types.LiquidationFailedEvent{
 			Pair:       pair,
 			Trader:     trader.String(),
 			Liquidator: liquidator.String(),
@@ -111,10 +111,9 @@ func (k Keeper) liquidate(
 	}
 	maxPositionNotional := sdk.MaxDec(spotNotional, twapNotional)
 
-	marginRatio, err := MarginRatio(position, maxPositionNotional, market.LatestCumulativePremiumFraction)
-
+	marginRatio := MarginRatio(position, maxPositionNotional, market.LatestCumulativePremiumFraction)
 	if marginRatio.GTE(market.MaintenanceMarginRatio) {
-		_ = ctx.EventManager().EmitTypedEvent(&v2types.LiquidationFailedEvent{ // nolint:errcheck
+		_ = ctx.EventManager().EmitTypedEvent(&v2types.LiquidationFailedEvent{
 			Pair:       pair,
 			Trader:     trader.String(),
 			Liquidator: liquidator.String(),
@@ -123,11 +122,7 @@ func (k Keeper) liquidate(
 		return sdk.Coin{}, sdk.Coin{}, v2types.ErrPositionHealthy
 	}
 
-	spotMarginRatio, err := MarginRatio(position, spotNotional, market.LatestCumulativePremiumFraction)
-	if err != nil {
-		return
-	}
-
+	spotMarginRatio := MarginRatio(position, spotNotional, market.LatestCumulativePremiumFraction)
 	var liquidationResponse v2types.LiquidateResp
 	if spotMarginRatio.GTE(market.LiquidationFeeRatio) {
 		liquidationResponse, err = k.executePartialLiquidation(ctx, market, amm, liquidator, &position)

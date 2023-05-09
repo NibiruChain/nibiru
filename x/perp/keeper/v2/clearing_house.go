@@ -155,11 +155,7 @@ func (k Keeper) afterPositionUpdate(
 		}
 		positionNotional := sdk.MaxDec(spotNotional, twapNotional)
 
-		marginRatio, err := MarginRatio(*positionResp.Position, positionNotional, market.LatestCumulativePremiumFraction)
-		if err != nil {
-			return err
-		}
-
+		marginRatio := MarginRatio(*positionResp.Position, positionNotional, market.LatestCumulativePremiumFraction)
 		if marginRatio.LT(market.MaintenanceMarginRatio) {
 			return types.ErrMarginRatioTooLow
 		}

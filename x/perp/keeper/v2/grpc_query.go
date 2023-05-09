@@ -104,8 +104,7 @@ func (q queryServer) position(ctx sdk.Context, pair asset.Pair, trader sdk.AccAd
 		Position:         &position,
 		PositionNotional: positionNotional,
 		UnrealizedPnl:    unrealizedPnl,
-		MarginRatioMark:  sdk.ZeroDec(),
-		BlockNumber:      ctx.BlockHeight(),
+		MarginRatio:      MarginRatio(position, positionNotional, market.LatestCumulativePremiumFraction),
 	}, nil
 }
 
