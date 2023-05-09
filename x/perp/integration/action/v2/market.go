@@ -61,7 +61,8 @@ func CreateCustomMarket(pair asset.Pair, marketModifiers ...marketModifier) acti
 		QuoteReserve:    sdk.NewDec(1e12),
 		SqrtDepth:       sdk.NewDec(1e12),
 		PriceMultiplier: sdk.OneDec(),
-		Bias:            sdk.ZeroDec(),
+		TotalLong:       sdk.ZeroDec(),
+		TotalShort:      sdk.ZeroDec(),
 	}
 
 	return CreateMarketAction{

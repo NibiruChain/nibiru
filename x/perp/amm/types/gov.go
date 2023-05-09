@@ -52,7 +52,8 @@ func (proposal *CreatePoolProposal) ValidateBasic() error {
 		QuoteReserve:  proposal.QuoteReserve,
 		Config:        proposal.Config,
 		PegMultiplier: proposal.PegMultiplier,
-		Bias:          sdk.ZeroDec(),
+		TotalLong:     sdk.ZeroDec(),
+		TotalShort:    sdk.ZeroDec(),
 	}
 	sqrtDepth, err := pool.ComputeSqrtDepth()
 	if err != nil {

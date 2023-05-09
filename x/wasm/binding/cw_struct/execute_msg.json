@@ -64,5 +64,11 @@
       "pair": "ETH:USD",
       "peg_mult": "420"
     }
+  },
+  "depth_shift": {
+    "depth_shift": {
+      "pair": "ETH:USD",
+      "depth_mult": "420"
+    }
   }
 }

@@ -4,9 +4,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/app"
+
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
+
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
@@ -37,7 +39,8 @@ var START_MARKETS = map[asset.Pair]perpammtypes.Market{
 		QuoteReserve:  sdk.NewDec(10 * common.TO_MICRO),
 		SqrtDepth:     common.MustSqrtDec(sdk.NewDec(10 * common.TO_MICRO * 10 * common.TO_MICRO)),
 		PegMultiplier: sdk.NewDec(6_000),
-		Bias:          sdk.ZeroDec(),
+		TotalLong:     sdk.ZeroDec(),
+		TotalShort:    sdk.ZeroDec(),
 		Config: perpammtypes.MarketConfig{
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
@@ -52,7 +55,8 @@ var START_MARKETS = map[asset.Pair]perpammtypes.Market{
 		QuoteReserve:  sdk.NewDec(10 * common.TO_MICRO),
 		SqrtDepth:     common.MustSqrtDec(sdk.NewDec(10 * common.TO_MICRO * 10 * common.TO_MICRO)),
 		PegMultiplier: sdk.NewDec(10),
-		Bias:          sdk.ZeroDec(),
+		TotalLong:     sdk.ZeroDec(),
+		TotalShort:    sdk.ZeroDec(),
 		Config: perpammtypes.MarketConfig{
 			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
 			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
