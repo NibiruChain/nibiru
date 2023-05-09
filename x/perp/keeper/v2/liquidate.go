@@ -76,7 +76,7 @@ func (k Keeper) liquidate(
 			Liquidator: liquidator.String(),
 			Reason:     v2types.LiquidationFailedEvent_NONEXISTENT_PAIR,
 		})
-		return sdk.Coin{}, sdk.Coin{}, types.ErrPairNotFound
+		return sdk.Coin{}, sdk.Coin{}, v2types.ErrPairNotFound
 	}
 
 	amm, err := k.AMMs.Get(ctx, pair)
@@ -87,7 +87,7 @@ func (k Keeper) liquidate(
 			Liquidator: liquidator.String(),
 			Reason:     v2types.LiquidationFailedEvent_NONEXISTENT_PAIR,
 		})
-		return sdk.Coin{}, sdk.Coin{}, types.ErrPairNotFound
+		return sdk.Coin{}, sdk.Coin{}, v2types.ErrPairNotFound
 	}
 
 	position, err := k.Positions.Get(ctx, collections.Join(pair, trader))
