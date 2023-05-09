@@ -51,6 +51,7 @@ func NewHandler(k Keeper) sdk.Handler {
 // Ensure the interface is properly implemented at compile time
 var _ pb.MsgServer = Keeper{}
 
+// EditSudoers adds or removes sudo contracts from state.
 func (k Keeper) EditSudoers(
 	goCtx context.Context, msg *pb.MsgEditSudoers,
 ) (*pb.MsgEditSudoersResponse, error) {
