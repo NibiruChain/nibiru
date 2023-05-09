@@ -3,12 +3,13 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
 func TestSwapQuoteAsset(t *testing.T) {
