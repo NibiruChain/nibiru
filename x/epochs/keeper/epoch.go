@@ -53,14 +53,9 @@ func (k Keeper) AddEpochInfo(ctx sdk.Context, epoch types.EpochInfo) error {
 
 	epoch.CurrentEpochStartHeight = ctx.BlockHeight()
 
-	k.UpsertEpochInfo(ctx, epoch)
+	k.Epochs.Insert(ctx, epoch.Identifier, epoch)
 
 	return nil
-}
-
-// UpsertEpochInfo inserts the epoch if does not exist, and overwrites it if it does.
-func (k Keeper) UpsertEpochInfo(ctx sdk.Context, epoch types.EpochInfo) {
-	k.Epochs.Insert(ctx, epoch.Identifier, epoch)
 }
 
 // DeleteEpochInfo delete epoch info.

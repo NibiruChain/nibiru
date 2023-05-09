@@ -49,7 +49,7 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
 		if err != nil {
 			panic(err)
 		}
-		k.UpsertEpochInfo(ctx, epochInfo)
+		k.Epochs.Insert(ctx, epochInfo.Identifier, epochInfo)
 		k.BeforeEpochStart(ctx, epochInfo.Identifier, epochInfo.CurrentEpoch)
 
 		return false
