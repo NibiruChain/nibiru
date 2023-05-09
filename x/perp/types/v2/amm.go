@@ -147,28 +147,34 @@ func (amm AMM) ComputeSqrtDepth() (sqrtDepth sdk.Dec, err error) {
 	return common.SqrtDec(liqDepth)
 }
 
-func (amm *AMM) WithBaseReserve(baseReserve sdk.Dec) {
+func (amm *AMM) WithBaseReserve(baseReserve sdk.Dec) *AMM {
 	amm.BaseReserve = baseReserve
+	return amm
 }
 
-func (amm *AMM) WithQuoteReserve(quoteReserve sdk.Dec) {
+func (amm *AMM) WithQuoteReserve(quoteReserve sdk.Dec) *AMM {
 	amm.QuoteReserve = quoteReserve
+	return amm
 }
 
-func (amm *AMM) WithPriceMultiplier(priceMultiplier sdk.Dec) {
+func (amm *AMM) WithPriceMultiplier(priceMultiplier sdk.Dec) *AMM {
 	amm.PriceMultiplier = priceMultiplier
+	return amm
 }
 
-func (amm *AMM) WithTotalLong(totalLong sdk.Dec) {
+func (amm *AMM) WithTotalLong(totalLong sdk.Dec) *AMM {
 	amm.TotalLong = totalLong
+	return amm
 }
 
-func (amm *AMM) WithBias(totalShort sdk.Dec) {
+func (amm *AMM) WithBias(totalShort sdk.Dec) *AMM {
 	amm.TotalShort = totalShort
+	return amm
 }
 
-func (amm *AMM) WithSqrtDepth(sqrtDepth sdk.Dec) {
+func (amm *AMM) WithSqrtDepth(sqrtDepth sdk.Dec) *AMM {
 	amm.SqrtDepth = sqrtDepth
+	return amm
 }
 
 func (amm *AMM) SwapQuoteAsset(quoteAssetAmt sdk.Dec, dir Direction) (baseAssetDeltaAbs sdk.Dec, err error) {
