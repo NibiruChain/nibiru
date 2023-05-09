@@ -3,12 +3,13 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
 func TestSwapQuoteAsset(t *testing.T) {
@@ -42,7 +43,7 @@ func TestSwapQuoteAsset(t *testing.T) {
 				WithQuoteReserve(sdk.NewDec(1_000_000_050_000)).
 				WithBaseReserve(sdk.MustNewDecFromStr("999999950000.002499999875000006")).
 				WithPriceMultiplier(sdk.NewDec(2)).
-				WithBias(sdk.MustNewDecFromStr("49999.997500000124999994")),
+				WithTotalLong(sdk.MustNewDecFromStr("49999.997500000124999994")),
 			expectedBaseAssetDelta: sdk.MustNewDecFromStr("49999.997500000124999994"),
 		},
 		{
@@ -55,7 +56,7 @@ func TestSwapQuoteAsset(t *testing.T) {
 				WithQuoteReserve(sdk.NewDec(999_999_950_000)).
 				WithBaseReserve(sdk.MustNewDecFromStr("1000000050000.002500000125000006")).
 				WithPriceMultiplier(sdk.NewDec(2)).
-				WithBias(sdk.MustNewDecFromStr("-50000.002500000125000006")),
+				WithTotalShort(sdk.MustNewDecFromStr("50000.002500000125000006")),
 			expectedBaseAssetDelta: sdk.MustNewDecFromStr("50000.002500000125000006"),
 		},
 		{
@@ -144,7 +145,7 @@ func TestSwapBaseAsset(t *testing.T) {
 				WithBaseReserve(sdk.NewDec(999999900000)).
 				WithQuoteReserve(sdk.MustNewDecFromStr("1000000100000.010000001000000100")).
 				WithPriceMultiplier(sdk.NewDec((2))).
-				WithBias(sdk.NewDec(100_000)),
+				WithTotalLong(sdk.NewDec(100_000)),
 			expectedQuoteAssetDelta: sdk.MustNewDecFromStr("200000.020000002000000200"),
 		},
 		{
@@ -158,7 +159,7 @@ func TestSwapBaseAsset(t *testing.T) {
 				WithBaseReserve(sdk.NewDec(1000000100000)).
 				WithQuoteReserve(sdk.MustNewDecFromStr("999999900000.009999999000000100")).
 				WithPriceMultiplier(sdk.NewDec((2))).
-				WithBias(sdk.NewDec(-100_000)),
+				WithTotalShort(sdk.NewDec(100_000)),
 		},
 		{
 			name:            "quote asset amt less than quote limit in Long",

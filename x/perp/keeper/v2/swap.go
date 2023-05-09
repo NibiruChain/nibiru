@@ -32,23 +32,23 @@ func checkUserLimits(limit, amount sdk.Dec, dir v2types.Direction) error {
 	return nil
 }
 
-/*
-Trades quoteAssets in exchange for baseAssets.
-The quote asset is a stablecoin like NUSD.
-The base asset is a crypto asset like BTC or ETH.
-
-args:
-  - ctx: cosmos-sdk context
-  - pair: a token pair like BTC:NUSD
-  - dir: either add or remove from pool
-  - quoteAssetAmount: the amount of quote asset being traded
-  - baseAmountLimit: a limiter to ensure the trader doesn't get screwed by slippage
-  - skipFluctuationLimitCheck: whether or not to check if the swapped amount is over the fluctuation limit. Currently unused.
-
-ret:
-  - baseAssetAmount: the amount of base asset swapped
-  - err: error
-*/
+// SwapQuoteAsset trades quoteAssets in exchange for baseAssets.
+// Updates the AMM reserves and persists it to state.
+//
+// args:
+//   - ctx: cosmos-sdk context
+//   - market: a market like BTC:NUSD
+//   - amm: the reserves of the AMM
+//   - dir: the direction the user takes
+//   - quoteAssetAmt: the amount of quote assets to swap, must be positive
+//   - baseAssetLimit: the limit of base assets to swap
+//
+// returns:
+//   - updatedAMM: the updated amm
+//   - baseAssetDelta: the amount of base assets swapped
+//   - err: error if any
+//
+// NOTE: the baseAssetDelta is always positive
 func (k Keeper) SwapQuoteAsset(
 	ctx sdk.Context,
 	market v2types.Market,
@@ -75,23 +75,23 @@ func (k Keeper) SwapQuoteAsset(
 	return &amm, baseAssetDelta, nil
 }
 
-/*
-Trades baseAssets in exchange for quoteAssets.
-The base asset is a crypto asset like BTC.
-The quote asset is a stablecoin like NUSD.
-
-args:
-  - ctx: cosmos-sdk context
-  - pair: a token pair like BTC:NUSD
-  - dir: either add or remove from pool
-  - baseAssetAmount: the amount of quote asset being traded
-  - quoteAmountLimit: a limiter to ensure the trader doesn't get screwed by slippage
-  - skipFluctuationLimitCheck: whether or not to skip the fluctuation limit check
-
-ret:
-  - quoteAssetAmount: the amount of quote asset swapped
-  - err: error
-*/
+// SwapBaseAsset trades baseAssets in exchange for quoteAssets.
+// Updates the AMM reserves and persists it to state.
+//
+// args:
+//   - ctx: cosmos-sdk context
+//   - market: a market like BTC:NUSD
+//   - amm: the reserves of the AMM
+//   - dir: the direction the user takes
+//   - baseAssetAmt: the amount of base assets to swap, must be positive
+//   - quoteAssetLimit: the limit of quote assets to swap
+//
+// returns:
+//   - updatedAMM: the updated amm
+//   - quoteAssetDelta: the amount of quote assets swapped
+//   - err: error if any
+//
+// NOTE: the quoteAssetDelta is always positive
 func (k Keeper) SwapBaseAsset(
 	ctx sdk.Context,
 	market v2types.Market,
