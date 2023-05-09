@@ -13,26 +13,24 @@ import (
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
-/*
-OpenPosition opens a position on the selected pair.
-
-args:
-  - ctx: cosmos-sdk context
-  - pair: the pair where the position will be opened
-  - side: whether the position in the BUY or SELL direction
-  - traderAddr: the address of the trader who opens the position
-  - quoteAssetAmount: the amount of quote asset
-  - leverage: the amount of leverage to take, as sdk.Dec
-  - baseAmtLimit: the limit on the base asset amount to make sure the trader doesn't get screwed, in base asset units
-
-ret:
-  - positionResp: contains the result of the open position and the new position
-  - err: error
-*/
+// OpenPosition opens a position on the selected pair.
+//
+// args:
+//   - ctx: cosmos-sdk context
+//   - pair: pair to open position on
+//   - dir: direction the user is taking
+//   - traderAddr: address of the trader
+//   - quoteAssetAmt: amount of quote asset to open position with
+//   - leverage: leverage to open position with
+//   - baseAmtLimit: minimum base asset amount to open position with
+//
+// ret:
+//   - positionResp: contains the result of the open position and the new position
+//   - err: error
 func (k Keeper) OpenPosition(
 	ctx sdk.Context,
 	pair asset.Pair,
-	side v2types.Direction,
+	dir v2types.Direction,
 	traderAddr sdk.AccAddress,
 	quoteAssetAmt sdk.Int,
 	leverage sdk.Dec,
@@ -48,7 +46,7 @@ func (k Keeper) OpenPosition(
 		return nil, types.ErrPairNotFound
 	}
 
-	err = k.checkOpenPositionRequirements(market, quoteAssetAmt, leverage)
+	err = checkOpenPositionRequirements(market, quoteAssetAmt, leverage)
 	if err != nil {
 		return nil, err
 	}
@@ -61,8 +59,8 @@ func (k Keeper) OpenPosition(
 		return nil, err
 	}
 
-	sameSideLong := position.Size_.IsPositive() && side == v2types.Direction_LONG
-	sameSideShort := position.Size_.IsNegative() && side == v2types.Direction_SHORT
+	sameSideLong := position.Size_.IsPositive() && dir == v2types.Direction_LONG
+	sameSideShort := position.Size_.IsNegative() && dir == v2types.Direction_SHORT
 
 	var updatedAMM *v2types.AMM
 	var openSideMatchesPosition = sameSideLong || sameSideShort
@@ -72,7 +70,7 @@ func (k Keeper) OpenPosition(
 			market,
 			amm,
 			position,
-			side,
+			dir,
 			/* openNotional */ leverage.MulInt(quoteAssetAmt),
 			/* minPositionSize */ baseAmtLimit,
 			/* leverage */ leverage)
@@ -106,7 +104,15 @@ func (k Keeper) OpenPosition(
 // - Checks that quote asset is not zero.
 // - Checks that leverage is not zero.
 // - Checks that leverage is below requirement.
-func (k Keeper) checkOpenPositionRequirements(market v2types.Market, quoteAssetAmt sdk.Int, leverage sdk.Dec) error {
+//
+// args:
+// - market: the market where the position will be opened
+// - quoteAssetAmt: the amount of quote asset
+// - leverage: the amount of leverage to take, as sdk.Dec
+//
+// returns:
+// - error: if any of the requirements is not met
+func checkOpenPositionRequirements(market v2types.Market, quoteAssetAmt sdk.Int, leverage sdk.Dec) error {
 	if quoteAssetAmt.IsZero() {
 		return types.ErrQuoteAmountIsZero
 	}
@@ -213,39 +219,40 @@ func (k Keeper) afterPositionUpdate(
 	})
 }
 
-/*
-increases a position by increasedNotional amount in margin units.
-Calculates the amount of margin required given the leverage parameter.
-Recalculates the remaining margin after applying a funding payment.
-Does not realize PnL.
-
-For example, a long position with position notional value of 150 NUSD and unrealized PnL of 50 NUSD
-could increase their position by 30 NUSD using 10x leverage.
-This would be:
-  - 3 NUSD as margin requirement
-  - new open notional value of 130 NUSD
-  - new position notional value of 150 NUSD
-  - unrealized PnL remains unchanged at 50 NUSD
-  - remaining margin is calculated by applying the funding payment
-
-args:
-  - ctx: cosmos-sdk context
-  - currentPosition: the current position
-  - side: whether the position is increasing in the BUY or SELL direction
-  - increasedNotional: the notional value to increase the position by, in margin units
-  - baseAmtLimit: the limit on the base asset amount to make sure the trader doesn't get screwed, in base asset units
-  - leverage: the amount of leverage to take, as sdk.Dec
-
-ret:
-  - positionResp: contains the result of the increase position and the new position
-  - err: error
-*/
+// increases a position by increasedNotional amount in margin units.
+// Calculates the amount of margin required given the leverage parameter.
+// Recalculates the remaining margin after applying a funding payment.
+// Does not realize PnL.
+//
+// For example, a long position with position notional value of 150 NUSD and unrealized PnL of 50 NUSD
+// could increase their position by 30 NUSD using 10x leverage.
+// This would be:
+//   - 3 NUSD as margin requirement
+//   - new open notional value of 130 NUSD
+//   - new position notional value of 150 NUSD
+//   - unrealized PnL remains unchanged at 50 NUSD
+//   - remaining margin is calculated by applying the funding payment
+//
+// args:
+//   - ctx: sdk.Context
+//   - market: the perp market
+//   - amm: the amm reserves
+//   - currentPosition: the current position
+//   - dir: the direction the user is taking
+//   - increasedNotional: the amount of notional the user is increasing by
+//   - baseAmtLimit: the user-specified limit on the base reserves
+//   - leverage: the leverage the user is taking
+//
+// returns:
+//   - updatedAMM: the updated AMM reserves
+//   - positionResp: updated position information
+//   - err: error
 func (k Keeper) increasePosition(
 	ctx sdk.Context,
 	market v2types.Market,
 	amm v2types.AMM,
 	currentPosition v2types.Position,
-	side v2types.Direction,
+	dir v2types.Direction,
 	increasedNotional sdk.Dec,
 	baseAmtLimit sdk.Dec,
 	leverage sdk.Dec,
@@ -259,7 +266,7 @@ func (k Keeper) increasePosition(
 		ctx,
 		market,
 		amm,
-		side,
+		dir,
 		increasedNotional,
 		baseAmtLimit,
 	)
@@ -267,9 +274,9 @@ func (k Keeper) increasePosition(
 		return nil, nil, err
 	}
 
-	if side == v2types.Direction_LONG {
+	if dir == v2types.Direction_LONG {
 		positionResp.ExchangedPositionSize = baseAssetDeltaAbs
-	} else if side == v2types.Direction_SHORT {
+	} else if dir == v2types.Direction_SHORT {
 		positionResp.ExchangedPositionSize = baseAssetDeltaAbs.Neg()
 	}
 
@@ -298,7 +305,23 @@ func (k Keeper) increasePosition(
 	return updatedAMM, positionResp, nil
 }
 
-// TODO test: openReversePosition | https://github.com/NibiruChain/nibiru/issues/299
+// decreases a position by decreasedNotional amount in margin units.
+// Calculates the amount of margin required given the leverage parameter.
+// Recalculates the remaining margin after applying a funding payment.
+//
+// args:
+//   - ctx: sdk.Context
+//   - market: the perp market
+//   - amm: the amm reserves
+//   - currentPosition: the current position
+//   - decreasedNotional: the amount of notional the user is decreasing by
+//   - baseAmtLimit: the user-specified limit on the base reserves
+//   - skipFluctuationLimitCheck: whether to skip the fluctuation limit check
+//
+// returns:
+//   - updatedAMM: the updated AMM reserves
+//   - positionResp: updated position information
+//   - err: error
 func (k Keeper) openReversePosition(
 	ctx sdk.Context,
 	market v2types.Market,
@@ -339,27 +362,28 @@ func (k Keeper) openReversePosition(
 	}
 }
 
-/*
-Decreases a position by decreasedNotional amount in margin units.
-Realizes PnL and calculates remaining margin after applying a funding payment.
-
-For example, a long position with position notional value of 150 NUSD and PnL of 50 NUSD
-could decrease their position by 30 NUSD. This would realize a PnL of 10 NUSD (50NUSD * 30/150)
-and update their margin (old margin + realized PnL - funding payment).
-Their new position notional value would be 120 NUSD and their position size would
-shrink by 20%.
-
-args:
-  - ctx: cosmos-sdk context
-  - currentPosition: the current position
-  - decreasedNotional: the notional value to decrease the position by, in margin units
-  - baseAmtLimit: the limit on the base asset amount to make sure the trader doesn't get screwed, in base asset units
-  - skipFluctuationLimitCheck: whether or not the position change can go over the fluctuation limit
-
-ret:
-  - positionResp: contains the result of the decrease position and the new position
-  - err: error
-*/
+// Decreases a position by decreasedNotional amount in margin units.
+// Realizes PnL and calculates remaining margin after applying a funding payment.
+//
+// For example, a long position with position notional value of 150 NUSD and PnL of 50 NUSD
+// could decrease their position by 30 NUSD. This would realize a PnL of 10 NUSD (50NUSD * 30/150)
+// and update their margin (old margin + realized PnL - funding payment).
+// Their new position notional value would be 120 NUSD and their position size would
+// shrink by 20%.
+//
+// args:
+//   - ctx: cosmos-sdk context
+//   - market: the perp market
+//   - amm: the amm reserves
+//   - currentPosition: the current position
+//   - decreasedNotional: the amount of notional the user is decreasing by
+//   - baseAmtLimit: the user-specified limit on the base reserves
+//   - skipFluctuationLimitCheck: whether to skip the fluctuation limit check
+//
+// returns:
+//   - updatedAMM: the updated AMM reserves
+//   - positionResp: updated position information
+//   - err: error
 func (k Keeper) decreasePosition(
 	ctx sdk.Context,
 	market v2types.Market,
@@ -450,24 +474,24 @@ func (k Keeper) decreasePosition(
 	return updatedAMM, positionResp, nil
 }
 
-/*
-Closes a position and realizes PnL and funding payments.
-Opens a position in the opposite direction if there is notional value remaining.
-Errors out if the provided notional value is not greater than the existing position's notional value.
-Errors out if there is bad debt.
-
-args:
-  - ctx: cosmos-sdk context
-  - existingPosition: current position
-  - quoteAssetAmount: the amount of notional value to move by. Must be greater than the existingPosition's notional value.
-  - leverage: the amount of leverage to take
-  - baseAmtLimit: limit on the base asset movement to ensure trader doesn't get screwed
-  - skipFluctuationLimitCheck: whether or not to skip the fluctuation limit check
-
-ret:
-  - positionResp: response object containing information about the position change
-  - err: error
-*/
+// Closes a position and realizes PnL and funding payments.
+// Opens a position in the opposite direction if there is notional value remaining.
+// Errors out if the provided notional value is not greater than the existing position's notional value.
+// Errors out if there is bad debt.
+//
+// args:
+//   - ctx: cosmos-sdk context
+//   - market: the perp market
+//   - amm: the amm reserves
+//   - existingPosition: the existing position
+//   - quoteAssetAmount: the amount of quote asset to close
+//   - leverage: the leverage to open the new position with
+//   - baseAmtLimit: the user-specified limit on the base reserves
+//
+// returns:
+//   - updatedAMM: the updated AMM reserves
+//   - positionResp: updated position information
+//   - err: error
 func (k Keeper) closeAndOpenReversePosition(
 	ctx sdk.Context,
 	market v2types.Market,
@@ -566,20 +590,21 @@ func (k Keeper) closeAndOpenReversePosition(
 	return updatedAMM, positionResp, nil
 }
 
-/*
-Closes a position and realizes PnL and funding payments.
-Does not error out if there is bad debt, that is for callers to decide.
-
-args:
-  - ctx: cosmos-sdk context
-  - currentPosition: current position
-  - quoteAssetAmountLimit: a limit on quote asset to ensure trader doesn't get screwed
-  - skipFluctuationLimitCheck: whether or not to skip the fluctuation limit check
-
-ret:
-  - positionResp: response object containing information about the position change
-  - err: error
-*/
+// Closes a position and realizes PnL and funding payments.
+// Does not error out if there is bad debt, that is for callers to decide.
+//
+// args:
+//   - ctx: cosmos-sdk context
+//   - market: the perp market
+//   - amm: the amm reserves
+//   - currentPosition: the existing position
+//   - quoteAssetAmountLimit: the user-specified limit on the quote asset reserves
+//   - skipFluctuationLimitCheck: whether to skip the fluctuation check
+//
+// returns:
+//   - updatedAMM: updated AMM reserves
+//   - positionResp: response object containing information about the position change
+//   - err: error
 func (k Keeper) closePositionEntirely(
 	ctx sdk.Context,
 	market v2types.Market,
@@ -663,19 +688,17 @@ func (k Keeper) closePositionEntirely(
 	return updatedAMM, positionResp, nil
 }
 
-/*
-ClosePosition closes a position entirely and transfers the remaining margin back to the user.
-Errors if the position has bad debt.
-
-args:
-  - ctx: the cosmos-sdk context
-  - pair: the trading pair
-  - traderAddr: the trader's address
-
-ret:
-  - positionResp: the response containing the updated position and applied funding payment, bad debt, PnL
-  - err: error if any
-*/
+// ClosePosition closes a position entirely and transfers the remaining margin back to the user.
+// Errors if the position has bad debt.
+//
+// args:
+//   - ctx: the cosmos-sdk context
+//   - pair: the pair of the position
+//   - traderAddr: the address of the trader
+//
+// returns:
+//   - positionResp: response object containing information about the position change
+//   - err: error if any
 func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.AccAddress) (*v2types.PositionResp, error) {
 	position, err := k.Positions.Get(ctx, collections.Join(pair, traderAddr))
 	if err != nil {
@@ -721,6 +744,17 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.A
 	return positionResp, nil
 }
 
+// transfers the fee to the exchange fee pool
+//
+// args:
+// - ctx: the cosmos-sdk context
+// - pair: the trading pair
+// - trader: the trader's address
+// - positionNotional: the position's notional value
+//
+// returns:
+// - fees: the fees to be transferred
+// - err: error if any
 func (k Keeper) transferFee(
 	ctx sdk.Context,
 	pair asset.Pair,
@@ -769,18 +803,15 @@ func (k Keeper) transferFee(
 	return feeToFeePool.Add(feeToEcosystemFund), nil
 }
 
-/*
-Check's that a pool that we're about to save to state does not violate the fluctuation limit.
-Always tries to check against a snapshot from a previous block. If one doesn't exist, then it just uses the current snapshot.
-This should run prior to updating the snapshot, otherwise it will compare the currently updated market to itself.
-
-args:
-  - ctx: the cosmos-sdk context
-  - pool: the updated market
-
-ret:
-  - err: error if any
-*/
+// checks that the mark price of the pool does not violate the fluctuation limit
+//
+// args:
+//   - ctx: the cosmos-sdk context
+//   - market: the perp market
+//   - amm: the amm reserves
+//
+// returns:
+//   - err: error if any
 func (k Keeper) checkPriceFluctuationLimitRatio(ctx sdk.Context, market v2types.Market, amm v2types.AMM) error {
 	if market.PriceFluctuationLimitRatio.IsZero() {
 		// early return to avoid expensive state operations
