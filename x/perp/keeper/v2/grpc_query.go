@@ -115,7 +115,7 @@ func (q queryServer) Params(
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	return &v2types.QueryParamsResponse{Params: v2types.DefaultParams()}, nil
+	return &v2types.QueryParamsResponse{Params: q.k.GetParams(sdk.UnwrapSDKContext(goCtx))}, nil
 }
 
 func (q queryServer) ModuleAccounts(
