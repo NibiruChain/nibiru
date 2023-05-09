@@ -25,7 +25,7 @@
 | [oracle][code-x-oracle] | Handles the posting of an up-to-date and accurate feed of exchange rates from the validators. | 
 | [perp][code-x-perp] | Powers the Nibi-Perps exchange. This module enables traders to open long and short leveraged positions and houses all of the PnL calculation and liquidation logic. |
 | [spot][code-x-spot] | Responsible for creating, joining, and exiting liquidity pools. It also allows users to swap between two assets in an existing pool. It's a fully functional AMM. |
-| [stablecoin][code-x-stablecoin] | Resonsible for handling mint and redeem transactions with NUSD. |
+| [stablecoin][code-x-stablecoin] | Responsible for handling mint and redeem transactions with NUSD. |
 | [wasm][code-x-wasm] | Implements the execution environment for [WebAssembly (WASM) smart contracts](https://book.cosmwasm.com/). |
 
 [code-x-common]: https://github.com/NibiruChain/nibiru/tree/master/x/common

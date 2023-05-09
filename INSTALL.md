@@ -80,7 +80,7 @@ A. If after steps 1-4 you don't have the `nibid` command, your go/bin directory 
 export PATH=$PATH:$(go env GOPATH)/bin
 ```
 
-B. New commands you've made on the `nibid` doesn't show up. Your `nibid` probably just isn't updated again after the code changes, to recompile nibid run `make install` in the root
+B. New commands you've made on the `nibid` don't show up. Your `nibid` probably just isn't updated again after the code changes, to recompile nibid run `make install` in the root
 
 ## Contributing
 
