@@ -18,7 +18,7 @@ func (k Keeper) AllocateRewards(ctx sdk.Context, funderModule string, totalCoins
 	}
 
 	id := k.PairRewardsID.Next(ctx)
-	k.PairRewards.Insert(ctx, id, types.Reward{
+	k.PairRewards.Insert(ctx, id, types.Rewards{
 		Id:          id,
 		VotePeriods: votePeriods,
 		Coins:       votePeriodCoins,

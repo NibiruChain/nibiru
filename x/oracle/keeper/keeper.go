@@ -41,17 +41,17 @@ type Keeper struct {
 	// PriceSnapshots maps types.PriceSnapshot to the asset.Pair of the snapshot and the creation timestamp as keys.Uint64Key.
 	PriceSnapshots   collections.Map[collections.Pair[asset.Pair, time.Time], types.PriceSnapshot]
 	WhitelistedPairs collections.KeySet[asset.Pair]
-	PairRewards      collections.Map[uint64, types.Reward]
+	PairRewards      collections.Map[uint64, types.Rewards]
 	PairRewardsID    collections.Sequence
 }
 
 type PairRewardsIndexes struct {
 	// RewardsByPair is the index that maps rewards associated with specific pairs.
-	RewardsByPair collections.MultiIndex[asset.Pair, uint64, types.Reward]
+	RewardsByPair collections.MultiIndex[asset.Pair, uint64, types.Rewards]
 }
 
-func (p PairRewardsIndexes) IndexerList() []collections.Indexer[uint64, types.Reward] {
-	return []collections.Indexer[uint64, types.Reward]{p.RewardsByPair}
+func (p PairRewardsIndexes) IndexerList() []collections.Indexer[uint64, types.Rewards] {
+	return []collections.Indexer[uint64, types.Rewards]{p.RewardsByPair}
 }
 
 // NewKeeper constructs a new keeper for oracle
@@ -87,7 +87,7 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
 		WhitelistedPairs:  collections.NewKeySet(storeKey, 6, asset.PairKeyEncoder),
 		PairRewards: collections.NewMap(
 			storeKey, 7,
-			collections.Uint64KeyEncoder, collections.ProtoValueEncoder[types.Reward](cdc)),
+			collections.Uint64KeyEncoder, collections.ProtoValueEncoder[types.Rewards](cdc)),
 		PairRewardsID: collections.NewSequence(storeKey, 9),
 	}
 }

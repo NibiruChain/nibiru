@@ -122,9 +122,9 @@ message ExchangeRateTuple {
   ];
 }
 
-// Reward defines a credit object towards validators
+// Rewards defines a credit object towards validators
 // which provide prices faithfully for different pairs.
-message Reward {
+message Rewards {
   // id uniquely identifies the rewards instance of the pair
   uint64 id = 2;
   // vote_periods defines the vote periods left in which rewards will be
