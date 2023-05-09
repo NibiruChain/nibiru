@@ -95,3 +95,36 @@ func (k Keeper) DecrementPrepaidBadDebt(ctx sdk.Context, market v2types.Market, 
 	market.PrepaidBadDebt.Amount = market.PrepaidBadDebt.Amount.Sub(amount)
 	k.Markets.Insert(ctx, market.Pair, market)
 }
+
+/*
+Realizes the bad debt by first decrementing it from the prepaid bad debt.
+Prepaid bad debt accrues when more coins are withdrawn from the vault than the
+vault contains, so we "credit" ourselves with prepaid bad debt.
+
+then, when bad debt is actually realized (by closing underwater positions), we
+can consume the credit we have built before withdrawing more from the ecosystem fund.
+*/
+func (k Keeper) realizeBadDebt(ctx sdk.Context, market v2types.Market, badDebtToRealize sdk.Int) (
+	err error,
+) {
+	if market.PrepaidBadDebt.Amount.GTE(badDebtToRealize) {
+		// prepaidBadDebtBalance > badDebtToRealize
+		k.DecrementPrepaidBadDebt(ctx, market, badDebtToRealize)
+	} else {
+		// badDebtToRealize > prepaidBadDebtBalance
+		k.ZeroPrepaidBadDebt(ctx, market)
+
+		return k.BankKeeper.SendCoinsFromModuleToModule(ctx,
+			/*from=*/ types.PerpEFModuleAccount,
+			/*to=*/ types.VaultModuleAccount,
+			sdk.NewCoins(
+				sdk.NewCoin(
+					market.Pair.QuoteDenom(),
+					badDebtToRealize.Sub(market.PrepaidBadDebt.Amount),
+				),
+			),
+		)
+	}
+
+	return nil
+}
