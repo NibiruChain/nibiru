@@ -38,10 +38,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [Unreleased]
+
+### Dependencies
+- Bump `robinraju/release-downloader` from 1.6 to 1.8 (#1326)
 
 ### Breaking
-
+* [#1317](https://github.com/NibiruChain/nibiru/pull/1317) - feat(sudo): Implement and test CLI commands for tx and queries. 
 * [#1307](https://github.com/NibiruChain/nibiru/pull/1307) - feat(sudo): Create the x/sudo module + integration tests
 * [#1299](https://github.com/NibiruChain/nibiru/pull/1299) - feat(wasm): Add peg shift bindings
 * [#1292](https://github.com/NibiruChain/nibiru/pull/1292) - feat(wasm): Add module bindings for execute calls in x/perp: OpenPosition, ClosePosition, AddMargin, RemoveMargin.
@@ -69,8 +72,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Improvements
 
-* [#1321](https://github.com/NibiruChain/nibiru/pull/1321) - build(deps): bump github.com/prometheus/client_golang from 1.15.0 to 1.15.1
+* [#1317](https://github.com/NibiruChain/nibiru/pull/1317) - feat(testutil): Use secp256k1 algo for private key generation in common/testutil.
 * [#1322](https://gitub.com/NibiruChain/nibiru/pull/1322) - build(deps): Bumps github.com/armon/go-metrics from 0.4.0 to 0.4.1.
+* [#1321](https://github.com/NibiruChain/nibiru/pull/1321) - build(deps): bump github.com/prometheus/client_golang from 1.15.0 to 1.15.1
 * [#1295](https://github.com/NibiruChain/nibiru/pull/1295) - refactor(app): Organize keepers, store keys, and module manager initialization in app.go
 * [#1248](https://github.com/NibiruChain/nibiru/pull/1248) - refactor(common): Combine x/testutil and x/common/testutil.
 * [#1245](https://github.com/NibiruChain/nibiru/pull/1245) - fix(localnet.sh): force localnet.sh to work even if Coingecko is down
@@ -95,6 +99,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1290](https://github.com/NibiruChain/nibiru/pull/1290) - refactor: fix quote/base reserve naming convention
 * [#1311](https://github.com/NibiruChain/nibiru/pull/1311) - feat(perp): add PerpKeeperV2
 * [#1308](https://github.com/NibiruChain/nibiru/pull/1308) - feat(perp): ensure there's no int overflow in liq depth calculation
+* [#1311](https://github.com/NibiruChain/nibiru/pull/1311) - feat(perp): add Calc and Twap methods
 * [#1319](https://github.com/NibiruChain/nibiru/pull/1319) - test: add integration test actions
 
 ### Bug Fixes
