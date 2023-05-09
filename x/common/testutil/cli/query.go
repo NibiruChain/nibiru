@@ -17,6 +17,8 @@ import (
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	perpcli "github.com/NibiruChain/nibiru/x/perp/client/cli"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
+	sudocli "github.com/NibiruChain/nibiru/x/sudo/cli"
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/pb"
 )
 
 // ExecQueryOption defines a type which customizes a CLI query operation.
@@ -110,6 +112,19 @@ func QueryPosition(ctx client.Context, pair asset.Pair, trader sdk.AccAddress) (
 func QueryCumulativePremiumFraction(clientCtx client.Context, pair asset.Pair) (*perptypes.QueryCumulativePremiumFractionResponse, error) {
 	var queryResp perptypes.QueryCumulativePremiumFractionResponse
 	if err := ExecQuery(clientCtx, perpcli.CmdQueryCumulativePremiumFraction(), []string{pair.String()}, &queryResp); err != nil {
+		return nil, err
+	}
+	return &queryResp, nil
+}
+
+func QuerySudoers(clientCtx client.Context) (*sudotypes.QuerySudoersResponse, error) {
+	var queryResp sudotypes.QuerySudoersResponse
+	if err := ExecQuery(
+		clientCtx,
+		sudocli.CmdQuerySudoers(),
+		[]string{},
+		&queryResp,
+	); err != nil {
 		return nil, err
 	}
 	return &queryResp, nil

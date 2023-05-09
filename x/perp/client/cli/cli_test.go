@@ -57,7 +57,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			BaseReserve:   sdk.NewDec(10 * common.TO_MICRO),
 			QuoteReserve:  sdk.NewDec(10 * common.TO_MICRO),
 			SqrtDepth:     common.MustSqrtDec(sdk.NewDec(10 * 10 * common.TO_MICRO * common.TO_MICRO)),
-			Bias:          sdk.ZeroDec(),
+			TotalLong:     sdk.ZeroDec(),
+			TotalShort:    sdk.ZeroDec(),
 			PegMultiplier: sdk.NewDec(6_000),
 			Config: perpammtypes.MarketConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("1"),
@@ -72,7 +73,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			BaseReserve:   sdk.NewDec(10 * common.TO_MICRO),
 			QuoteReserve:  sdk.NewDec(10 * common.TO_MICRO),
 			SqrtDepth:     common.MustSqrtDec(sdk.NewDec(10 * 10 * common.TO_MICRO * common.TO_MICRO)),
-			Bias:          sdk.ZeroDec(),
+			TotalLong:     sdk.ZeroDec(),
+			TotalShort:    sdk.ZeroDec(),
 			PegMultiplier: sdk.NewDec(6_000),
 			Config: perpammtypes.MarketConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("1"),
@@ -87,7 +89,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			BaseReserve:   sdk.NewDec(10 * common.TO_MICRO),
 			QuoteReserve:  sdk.NewDec(10 * common.TO_MICRO),
 			SqrtDepth:     common.MustSqrtDec(sdk.NewDec(10 * 10 * common.TO_MICRO * common.TO_MICRO)),
-			Bias:          sdk.ZeroDec(),
+			TotalLong:     sdk.ZeroDec(),
+			TotalShort:    sdk.ZeroDec(),
 			PegMultiplier: sdk.NewDec(6_000),
 			Config: perpammtypes.MarketConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("1"),
@@ -102,7 +105,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			BaseReserve:   sdk.NewDec(10 * common.TO_MICRO),
 			QuoteReserve:  sdk.NewDec(10 * common.TO_MICRO),
 			SqrtDepth:     common.MustSqrtDec(sdk.NewDec(10 * 10 * common.TO_MICRO * common.TO_MICRO)),
-			Bias:          sdk.ZeroDec(),
+			TotalLong:     sdk.ZeroDec(),
+			TotalShort:    sdk.ZeroDec(),
 			PegMultiplier: sdk.NewDec(6_000),
 			Config: perpammtypes.MarketConfig{
 				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),

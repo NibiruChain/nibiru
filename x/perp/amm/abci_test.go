@@ -43,7 +43,6 @@ func TestSnapshotUpdates(t *testing.T) {
 		/* baseReserve */ sdk.NewDec(1_000),
 		/* quoteReserve */ sdk.NewDec(1_000),
 		/* pegMultiplier */ sdk.OneDec(),
-		/* bias */ sdk.ZeroDec(),
 		/* blockTime */ ctx.BlockTime(),
 	)
 
@@ -72,7 +71,6 @@ func TestSnapshotUpdates(t *testing.T) {
 		sdk.NewDec(800),   // ← x + dxAmm
 		sdk.NewDec(1_250), // ← y + dyAMM
 		sdk.OneDec(),
-		sdk.NewDec(200),
 		ctx.BlockTime(),
 	)
 

@@ -171,3 +171,15 @@ func (s *TestSuiteExecutor) TestPegShift() {
 	contractRespBz, err = s.ExecuteAgainstContract(s.contractPerp, execMsg)
 	s.Errorf(err, "contractRespBz: %s", contractRespBz)
 }
+
+func (s *TestSuiteExecutor) TestDepthShift() {
+	pair := asset.MustNewPair(s.happyFields.Pair)
+	execMsg := cw_struct.BindingMsg{
+		DepthShift: &cw_struct.DepthShift{
+			Pair:      pair.String(),
+			DepthMult: sdk.NewDec(2),
+		},
+	}
+	contractRespBz, err := s.ExecuteAgainstContract(s.contractPerp, execMsg)
+	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
+}
