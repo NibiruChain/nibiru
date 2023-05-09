@@ -13,7 +13,7 @@ import (
 	. "github.com/NibiruChain/nibiru/x/common/testutil/assertion"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/action/v2"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion/v2"
-	"github.com/NibiruChain/nibiru/x/perp/types"
+	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
 )
 
 func TestWithdraw(t *testing.T) {

@@ -13,7 +13,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
 
 	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"

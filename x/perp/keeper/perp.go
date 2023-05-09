@@ -5,7 +5,7 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/x/perp/types"
+	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
 )
 
 // SettlePosition settles a trader position

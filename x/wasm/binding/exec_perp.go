@@ -7,7 +7,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
+	"github.com/NibiruChain/nibiru/x/perp/types/v1"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 )
 
@@ -15,14 +15,14 @@ type ExecutorPerp struct {
 	Perp perpkeeper.Keeper
 }
 
-func (exec *ExecutorPerp) MsgServer() perptypes.MsgServer {
+func (exec *ExecutorPerp) MsgServer() types.MsgServer {
 	return perpkeeper.NewMsgServerImpl(exec.Perp)
 }
 
 func (exec *ExecutorPerp) OpenPosition(
 	cwMsg *cw_struct.OpenPosition, ctx sdk.Context,
 ) (
-	sdkResp *perptypes.MsgOpenPositionResponse, err error,
+	sdkResp *types.MsgOpenPositionResponse, err error,
 ) {
 	if cwMsg == nil {
 		return sdkResp, wasmvmtypes.InvalidRequest{Err: "null open position msg"}
@@ -40,7 +40,7 @@ func (exec *ExecutorPerp) OpenPosition(
 		side = perpammtypes.Direction_SHORT
 	}
 
-	sdkMsg := &perptypes.MsgOpenPosition{
+	sdkMsg := &types.MsgOpenPosition{
 		Sender:               cwMsg.Sender,
 		Pair:                 pair,
 		Side:                 side,
@@ -56,7 +56,7 @@ func (exec *ExecutorPerp) OpenPosition(
 func (exec *ExecutorPerp) ClosePosition(
 	cwMsg *cw_struct.ClosePosition, ctx sdk.Context,
 ) (
-	sdkResp *perptypes.MsgClosePositionResponse, err error,
+	sdkResp *types.MsgClosePositionResponse, err error,
 ) {
 	if cwMsg == nil {
 		return sdkResp, wasmvmtypes.InvalidRequest{Err: "null close position msg"}
@@ -67,7 +67,7 @@ func (exec *ExecutorPerp) ClosePosition(
 		return sdkResp, err
 	}
 
-	sdkMsg := &perptypes.MsgClosePosition{
+	sdkMsg := &types.MsgClosePosition{
 		Sender: cwMsg.Sender,
 		Pair:   pair,
 	}
@@ -79,7 +79,7 @@ func (exec *ExecutorPerp) ClosePosition(
 func (exec *ExecutorPerp) AddMargin(
 	cwMsg *cw_struct.AddMargin, ctx sdk.Context,
 ) (
-	sdkResp *perptypes.MsgAddMarginResponse, err error,
+	sdkResp *types.MsgAddMarginResponse, err error,
 ) {
 	if cwMsg == nil {
 		return sdkResp, wasmvmtypes.InvalidRequest{Err: "null add margin msg"}
@@ -90,7 +90,7 @@ func (exec *ExecutorPerp) AddMargin(
 		return sdkResp, err
 	}
 
-	sdkMsg := &perptypes.MsgAddMargin{
+	sdkMsg := &types.MsgAddMargin{
 		Sender: cwMsg.Sender,
 		Pair:   pair,
 		Margin: cwMsg.Margin,
@@ -103,7 +103,7 @@ func (exec *ExecutorPerp) AddMargin(
 func (exec *ExecutorPerp) RemoveMargin(
 	cwMsg *cw_struct.RemoveMargin, ctx sdk.Context,
 ) (
-	sdkResp *perptypes.MsgRemoveMarginResponse, err error,
+	sdkResp *types.MsgRemoveMarginResponse, err error,
 ) {
 	if cwMsg == nil {
 		return sdkResp, wasmvmtypes.InvalidRequest{Err: "null remove margin msg"}
@@ -114,7 +114,7 @@ func (exec *ExecutorPerp) RemoveMargin(
 		return sdkResp, err
 	}
 
-	sdkMsg := &perptypes.MsgRemoveMargin{
+	sdkMsg := &types.MsgRemoveMargin{
 		Sender: cwMsg.Sender,
 		Pair:   pair,
 		Margin: cwMsg.Margin,

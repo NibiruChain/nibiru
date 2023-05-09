@@ -118,13 +118,13 @@ import (
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 
-	"github.com/NibiruChain/nibiru/x/perp"
 	perpamm "github.com/NibiruChain/nibiru/x/perp/amm"
 	perpammcli "github.com/NibiruChain/nibiru/x/perp/amm/cli"
 	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
 	perpkeeperv2 "github.com/NibiruChain/nibiru/x/perp/keeper/v2"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
+	perp "github.com/NibiruChain/nibiru/x/perp/module/v1"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
 	perptypesv2 "github.com/NibiruChain/nibiru/x/perp/types/v2"
 
 	"github.com/NibiruChain/nibiru/x/spot"

@@ -11,7 +11,7 @@ import (
 
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
+	"github.com/NibiruChain/nibiru/x/perp/types/v1"
 )
 
 var (
@@ -21,7 +21,7 @@ var (
 func AddPerpGenesis(gen app.GenesisState) app.GenesisState {
 	gen[perpammtypes.ModuleName] = TEST_ENCODING_CONFIG.Marshaler.
 		MustMarshalJSON(PerpAmmGenesis())
-	gen[perptypes.ModuleName] = TEST_ENCODING_CONFIG.Marshaler.
+	gen[types.ModuleName] = TEST_ENCODING_CONFIG.Marshaler.
 		MustMarshalJSON(PerpGenesis())
 	return gen
 }
@@ -67,13 +67,13 @@ var START_MARKETS = map[asset.Pair]perpammtypes.Market{
 	},
 }
 
-func PerpGenesis() *perptypes.GenesisState {
-	gen := perptypes.DefaultGenesis()
-	var pairMetadata []perptypes.PairMetadata
+func PerpGenesis() *types.GenesisState {
+	gen := types.DefaultGenesis()
+	var pairMetadata []types.PairMetadata
 	for pair := range START_MARKETS {
 		pairMetadata = append(
 			pairMetadata,
-			perptypes.PairMetadata{
+			types.PairMetadata{
 				Pair:                            pair,
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
