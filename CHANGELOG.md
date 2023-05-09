@@ -38,10 +38,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [Unreleased]
+
+### Dependencies
+- Bump `robinraju/release-downloader` from 1.6 to 1.8 (#1326)
+- Bump `pozetroninc/github-action-get-latest-release` from 0.6.0 to 0.7.0 (#1325)
+- Bump `technote-space/get-diff-action` from 4 to 6 (#1327)
+- Bump `actions/setup-go` from 3 to 4 (#1324)
 
 ### Breaking
-
 * [#1317](https://github.com/NibiruChain/nibiru/pull/1317) - feat(sudo): Implement and test CLI commands for tx and queries. 
 * [#1307](https://github.com/NibiruChain/nibiru/pull/1307) - feat(sudo): Create the x/sudo module + integration tests
 * [#1299](https://github.com/NibiruChain/nibiru/pull/1299) - feat(wasm): Add peg shift bindings
@@ -98,7 +103,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1290](https://github.com/NibiruChain/nibiru/pull/1290) - refactor: fix quote/base reserve naming convention
 * [#1311](https://github.com/NibiruChain/nibiru/pull/1311) - feat(perp): add PerpKeeperV2
 * [#1308](https://github.com/NibiruChain/nibiru/pull/1308) - feat(perp): ensure there's no int overflow in liq depth calculation
+* [#1311](https://github.com/NibiruChain/nibiru/pull/1311) - feat(perp): add Calc and Twap methods
 * [#1319](https://github.com/NibiruChain/nibiru/pull/1319) - test: add integration test actions
+* [#1328](https://github.com/NibiruChain/nibiru/pull/1328) - feat(perp): add PerpKeeperV2 swap methods
 
 ### Bug Fixes
 
