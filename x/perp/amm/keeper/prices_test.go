@@ -188,7 +188,6 @@ func TestCalcTwap(t *testing.T) {
 					/* Base asset reserve */ sdk.NewDec(100),
 					/* Quote asset reserve */ sdk.NewDec(100),
 					/* Peg multiplier*/ sdk.NewDec(9),
-					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(10),
 				),
 				types.NewReserveSnapshot(
@@ -196,7 +195,6 @@ func TestCalcTwap(t *testing.T) {
 					/* Base asset reserve */ sdk.NewDec(100),
 					/* Quote asset reserve */ sdk.NewDec(100),
 					/* Peg multiplier*/ sdk.NewDec(9),
-					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(20),
 				),
 				types.NewReserveSnapshot(
@@ -204,7 +202,6 @@ func TestCalcTwap(t *testing.T) {
 					/* Base asset reserve */ sdk.NewDec(100),
 					/* Quote asset reserve */ sdk.NewDec(100),
 					/* Peg multiplier*/ sdk.NewDec(9),
-					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(30),
 				),
 			},
@@ -224,7 +221,6 @@ func TestCalcTwap(t *testing.T) {
 					/* Base asset reserve */ sdk.NewDec(100),
 					/* Quote asset reserve */ sdk.NewDec(100),
 					/* Peg multiplier*/ sdk.NewDec(9),
-					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(10),
 				),
 				types.NewReserveSnapshot(
@@ -232,7 +228,6 @@ func TestCalcTwap(t *testing.T) {
 					/* Base asset reserve */ sdk.NewDec(100),
 					/* Quote asset reserve */ sdk.NewDec(100),
 					/* Peg multiplier*/ sdk.MustNewDecFromStr("8.5"),
-					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(20),
 				),
 				types.NewReserveSnapshot(
@@ -240,7 +235,6 @@ func TestCalcTwap(t *testing.T) {
 					/* Base asset reserve */ sdk.NewDec(100),
 					/* Quote asset reserve */ sdk.NewDec(100),
 					/* Peg multiplier*/ sdk.MustNewDecFromStr("9.5"),
-					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(30),
 				),
 			},
@@ -260,7 +254,6 @@ func TestCalcTwap(t *testing.T) {
 					/* Base asset reserve */ sdk.NewDec(100),
 					/* Quote asset reserve */ sdk.NewDec(100),
 					/* Peg multiplier*/ sdk.NewDec(9),
-					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(10),
 				),
 				types.NewReserveSnapshot(
@@ -268,7 +261,6 @@ func TestCalcTwap(t *testing.T) {
 					/* Base asset reserve */ sdk.NewDec(100),
 					/* Quote asset reserve */ sdk.NewDec(100),
 					/* Peg multiplier*/ sdk.MustNewDecFromStr("8.5"),
-					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(20),
 				),
 				types.NewReserveSnapshot(
@@ -276,7 +268,6 @@ func TestCalcTwap(t *testing.T) {
 					/* Base asset reserve */ sdk.NewDec(100),
 					/* Quote asset reserve */ sdk.NewDec(100),
 					/* Peg multiplier*/ sdk.MustNewDecFromStr("9.5"),
-					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(30),
 				),
 			},
@@ -311,7 +302,6 @@ func TestCalcTwap(t *testing.T) {
 					/* Base asset reserve */ sdk.NewDec(1_000),
 					/* Quote asset reserve */ sdk.NewDec(1_000),
 					/* Peg multiplier*/ sdk.NewDec(3),
-					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(10),
 				),
 				types.NewReserveSnapshot(
@@ -319,7 +309,6 @@ func TestCalcTwap(t *testing.T) {
 					/* Base asset reserve */ sdk.NewDec(1_000),
 					/* Quote asset reserve */ sdk.NewDec(1_000),
 					/* Peg multiplier*/ sdk.NewDec(5),
-					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(20),
 				),
 			},
@@ -342,7 +331,6 @@ func TestCalcTwap(t *testing.T) {
 					/* Base asset reserve */ sdk.NewDec(1_000),
 					/* Quote asset reserve */ sdk.NewDec(1_000),
 					/* Peg multiplier*/ sdk.NewDec(3),
-					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(10),
 				),
 				types.NewReserveSnapshot(
@@ -350,7 +338,6 @@ func TestCalcTwap(t *testing.T) {
 					/* Base asset reserve */ sdk.NewDec(1_000),
 					/* Quote asset reserve */ sdk.NewDec(1_000),
 					/* Peg multiplier*/ sdk.NewDec(5),
-					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(20),
 				),
 			},
@@ -372,7 +359,6 @@ func TestCalcTwap(t *testing.T) {
 					/* Base asset reserve */ sdk.NewDec(10),
 					/* Quote asset reserve */ sdk.NewDec(10),
 					/* Peg multiplier*/ sdk.NewDec(2),
-					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(20),
 				),
 			},
@@ -397,7 +383,6 @@ func TestCalcTwap(t *testing.T) {
 					/* Base asset reserve */ sdk.NewDec(1_000),
 					/* Quote asset reserve */ sdk.NewDec(1_000),
 					/* Peg multiplier*/ sdk.NewDec(6),
-					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(10),
 				),
 				types.NewReserveSnapshot(
@@ -405,7 +390,6 @@ func TestCalcTwap(t *testing.T) {
 					/* Base asset reserve */ sdk.NewDec(1_000),
 					/* Quote asset reserve */ sdk.NewDec(1_000),
 					/* Peg multiplier*/ sdk.MustNewDecFromStr("1.5"),
-					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(20),
 				),
 			},
@@ -430,7 +414,6 @@ func TestCalcTwap(t *testing.T) {
 					/* Base asset reserve */ sdk.NewDec(1_000),
 					/* Quote asset reserve */ sdk.NewDec(1_000),
 					/* Peg multiplier*/ sdk.NewDec(6),
-					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(10),
 				),
 				types.NewReserveSnapshot(
@@ -438,7 +421,6 @@ func TestCalcTwap(t *testing.T) {
 					/* Base asset reserve */ sdk.NewDec(1_000),
 					/* Quote asset reserve */ sdk.NewDec(1_000),
 					/* Peg multiplier*/ sdk.MustNewDecFromStr("9.375"),
-					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(20),
 				),
 			},
@@ -459,7 +441,6 @@ func TestCalcTwap(t *testing.T) {
 					/* Base asset reserve */ sdk.NewDec(10),
 					/* Quote asset reserve */ sdk.NewDec(10),
 					/* Peg multiplier*/ sdk.NewDec(9),
-					/* Bias */ sdk.ZeroDec(),
 					time.UnixMilli(20),
 				),
 			},
@@ -507,7 +488,6 @@ func TestCalcTwap(t *testing.T) {
 					snapshot.BaseReserve,
 					snapshot.QuoteReserve,
 					snapshot.PegMultiplier,
-					snapshot.Bias,
 					ctx.BlockTime(),
 				)
 				perpammKeeper.ReserveSnapshots.Insert(ctx, collections.Join(snapshot.Pair, time.UnixMilli(snapshot.TimestampMs)), snapshot)
