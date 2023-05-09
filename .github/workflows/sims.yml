@@ -25,7 +25,7 @@ jobs:
     needs: [install-runsim]
     steps:
       - uses: actions/checkout@v3
-      - uses: technote-space/get-diff-action@v4
+      - uses: technote-space/get-diff-action@v6
         with:
           SUFFIX_FILTER: |
             **/**.go
