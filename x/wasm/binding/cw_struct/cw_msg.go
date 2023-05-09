@@ -17,6 +17,7 @@ type BindingMsg struct {
 	RemoveMargin          *RemoveMargin          `json:"remove_margin,omitempty"`
 	DonateToInsuranceFund *DonateToInsuranceFund `json:"donate_to_insurance_fund,omitempty"` // TODO
 	PegShift              *PegShift              `json:"peg_shift,omitempty"`
+	DepthShift            *DepthShift            `json:"depth_shift,omitempty"`
 }
 
 type OpenPosition struct {

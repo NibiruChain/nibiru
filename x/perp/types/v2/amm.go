@@ -159,8 +159,12 @@ func (amm *AMM) WithPriceMultiplier(priceMultiplier sdk.Dec) {
 	amm.PriceMultiplier = priceMultiplier
 }
 
-func (amm *AMM) WithBias(bias sdk.Dec) {
-	amm.Bias = bias
+func (amm *AMM) WithTotalLong(totalLong sdk.Dec) {
+	amm.TotalLong = totalLong
+}
+
+func (amm *AMM) WithBias(totalShort sdk.Dec) {
+	amm.TotalShort = totalShort
 }
 
 func (amm *AMM) WithSqrtDepth(sqrtDepth sdk.Dec) {
@@ -177,11 +181,11 @@ func (amm *AMM) SwapQuoteAsset(quoteAssetAmt sdk.Dec, dir Direction) (baseAssetD
 	if dir == Direction_LONG {
 		amm.QuoteReserve = amm.QuoteReserve.Add(quoteReserveAmt)
 		amm.BaseReserve = amm.BaseReserve.Sub(baseReserveDeltaAbs)
-		amm.Bias = amm.Bias.Add(baseReserveDeltaAbs)
+		amm.TotalLong = amm.TotalLong.Add(baseReserveDeltaAbs)
 	} else if dir == Direction_SHORT {
 		amm.QuoteReserve = amm.QuoteReserve.Sub(quoteReserveAmt)
 		amm.BaseReserve = amm.BaseReserve.Add(baseReserveDeltaAbs)
-		amm.Bias = amm.Bias.Sub(baseReserveDeltaAbs)
+		amm.TotalShort = amm.TotalShort.Add(baseReserveDeltaAbs)
 	}
 
 	return baseReserveDeltaAbs, nil
@@ -196,11 +200,11 @@ func (amm *AMM) SwapBaseAsset(baseAssetAmt sdk.Dec, dir Direction) (quoteAssetDe
 	if dir == Direction_LONG {
 		amm.QuoteReserve = amm.QuoteReserve.Add(quoteReserveDeltaAbs)
 		amm.BaseReserve = amm.BaseReserve.Sub(baseAssetAmt)
-		amm.Bias = amm.Bias.Add(baseAssetAmt)
+		amm.TotalLong = amm.TotalLong.Add(baseAssetAmt)
 	} else if dir == Direction_SHORT {
 		amm.QuoteReserve = amm.QuoteReserve.Sub(quoteReserveDeltaAbs)
 		amm.BaseReserve = amm.BaseReserve.Add(baseAssetAmt)
-		amm.Bias = amm.Bias.Sub(baseAssetAmt)
+		amm.TotalShort = amm.TotalShort.Add(baseAssetAmt)
 	}
 
 	return amm.FromQuoteReserveToAsset(quoteReserveDeltaAbs), nil
