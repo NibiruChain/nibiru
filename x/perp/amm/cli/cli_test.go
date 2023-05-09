@@ -122,7 +122,8 @@ func (s *IntegrationTestSuite) TestCmdCreatePoolProposal() {
 				QuoteReserve:  proposal.QuoteReserve,
 				SqrtDepth:     common.MustSqrtDec(proposal.BaseReserve.Mul(proposal.QuoteReserve)),
 				Config:        proposal.Config,
-				Bias:          sdk.ZeroDec(),
+				TotalLong:     sdk.ZeroDec(),
+				TotalShort:    sdk.ZeroDec(),
 				PegMultiplier: sdk.OneDec(),
 			}, pool)
 			found = true
@@ -207,7 +208,8 @@ func (s *IntegrationTestSuite) TestCmdEditPoolConfigProposal() {
 				QuoteReserve:  startMarket.QuoteReserve,
 				SqrtDepth:     startMarket.SqrtDepth,
 				Config:        proposal.Config,
-				Bias:          sdk.ZeroDec(),
+				TotalLong:     sdk.ZeroDec(),
+				TotalShort:    sdk.ZeroDec(),
 				PegMultiplier: sdk.NewDec(6000),
 			}, market)
 			found = true
@@ -293,7 +295,8 @@ func (s *IntegrationTestSuite) TestCmdEditSwapInvariantsProposal() {
 				BaseReserve:   marketBefore.BaseReserve.Mul(multiplierToSqrtDepth),
 				QuoteReserve:  marketBefore.QuoteReserve.Mul(multiplierToSqrtDepth),
 				Config:        marketBefore.Config,
-				Bias:          sdk.ZeroDec(),
+				TotalLong:     sdk.ZeroDec(),
+				TotalShort:    sdk.ZeroDec(),
 				PegMultiplier: sdk.NewDec(10),
 			}
 			sqrtDepthAfter, err := marketAfter.ComputeSqrtDepth()

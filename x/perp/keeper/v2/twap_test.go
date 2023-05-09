@@ -14,6 +14,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/action/v2"
+	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion/v2"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
@@ -34,7 +35,7 @@ func TestCalcTwap(t *testing.T) {
 				MoveToNextBlockWithDuration(30 * time.Second),
 			).
 			Then(
-				CalcTwap(pairBtcUsdc, v2types.TwapCalcOption_SPOT, v2types.Direction_DIRECTION_UNSPECIFIED, sdk.ZeroDec(), 30*time.Second, sdk.NewDec(10)),
+				TwapShouldBe(pairBtcUsdc, v2types.TwapCalcOption_SPOT, v2types.Direction_DIRECTION_UNSPECIFIED, sdk.ZeroDec(), 30*time.Second, sdk.NewDec(10)),
 			),
 
 		TC("base asset twap, long").
@@ -49,7 +50,7 @@ func TestCalcTwap(t *testing.T) {
 				MoveToNextBlockWithDuration(30 * time.Second),
 			).
 			Then(
-				CalcTwap(pairBtcUsdc, v2types.TwapCalcOption_BASE_ASSET_SWAP, v2types.Direction_LONG, sdk.NewDec(5), 30*time.Second, sdk.MustNewDecFromStr("50.000000000250000000")),
+				TwapShouldBe(pairBtcUsdc, v2types.TwapCalcOption_BASE_ASSET_SWAP, v2types.Direction_LONG, sdk.NewDec(5), 30*time.Second, sdk.MustNewDecFromStr("50.000000000250000000")),
 			),
 
 		TC("base asset twap, short").
@@ -64,7 +65,7 @@ func TestCalcTwap(t *testing.T) {
 				MoveToNextBlockWithDuration(30 * time.Second),
 			).
 			Then(
-				CalcTwap(pairBtcUsdc, v2types.TwapCalcOption_BASE_ASSET_SWAP, v2types.Direction_SHORT, sdk.NewDec(5), 30*time.Second, sdk.MustNewDecFromStr("49.999999999750000000")),
+				TwapShouldBe(pairBtcUsdc, v2types.TwapCalcOption_BASE_ASSET_SWAP, v2types.Direction_SHORT, sdk.NewDec(5), 30*time.Second, sdk.MustNewDecFromStr("49.999999999750000000")),
 			),
 
 		TC("quote asset twap, long").
@@ -79,7 +80,7 @@ func TestCalcTwap(t *testing.T) {
 				MoveToNextBlockWithDuration(30 * time.Second),
 			).
 			Then(
-				CalcTwap(pairBtcUsdc, v2types.TwapCalcOption_QUOTE_ASSET_SWAP, v2types.Direction_LONG, sdk.NewDec(5), 30*time.Second, sdk.MustNewDecFromStr("0.503367003366748282")),
+				TwapShouldBe(pairBtcUsdc, v2types.TwapCalcOption_QUOTE_ASSET_SWAP, v2types.Direction_LONG, sdk.NewDec(5), 30*time.Second, sdk.MustNewDecFromStr("0.503367003366748282")),
 			),
 
 		TC("quote asset twap, short").
@@ -94,7 +95,7 @@ func TestCalcTwap(t *testing.T) {
 				MoveToNextBlockWithDuration(30 * time.Second),
 			).
 			Then(
-				CalcTwap(pairBtcUsdc, v2types.TwapCalcOption_QUOTE_ASSET_SWAP, v2types.Direction_SHORT, sdk.NewDec(5), 30*time.Second, sdk.MustNewDecFromStr("0.503367003367258451")),
+				TwapShouldBe(pairBtcUsdc, v2types.TwapCalcOption_QUOTE_ASSET_SWAP, v2types.Direction_SHORT, sdk.NewDec(5), 30*time.Second, sdk.MustNewDecFromStr("0.503367003367258451")),
 			),
 	}
 

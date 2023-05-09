@@ -15,7 +15,8 @@ func TestAMMDefault() *v2types.AMM {
 		QuoteReserve:    sdk.NewDec(1e12),
 		SqrtDepth:       sdk.NewDec(1e12),
 		PriceMultiplier: sdk.OneDec(),
-		Bias:            sdk.ZeroDec(),
+		TotalLong:       sdk.ZeroDec(),
+		TotalShort:      sdk.ZeroDec(),
 	}
 }
 
@@ -27,6 +28,7 @@ func TestAMM(sqrtK sdk.Dec, priceMultiplier sdk.Dec) *v2types.AMM {
 		QuoteReserve:    sqrtK,
 		SqrtDepth:       sqrtK,
 		PriceMultiplier: priceMultiplier,
-		Bias:            sdk.ZeroDec(),
+		TotalLong:       sdk.ZeroDec(),
+		TotalShort:      sdk.ZeroDec(),
 	}
 }
