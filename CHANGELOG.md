@@ -63,11 +63,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1302](https://github.com/NibiruChain/nibiru/pull/1302) - refactor(oracle)!: price snapshot start time inclusive
 * [#1301](https://github.com/NibiruChain/nibiru/pull/1301) - fix(epochs)!: correct epoch start time
 * [#1305](https://github.com/NibiruChain/nibiru/pull/1305) - refactor(perp!): Remove unnecessary protos
+* [#1312](https://github.com/NibiruChain/nibiru/pull/1312) - feat(wasm): wire depth shift handler to the wasm router
+* [#1306](https://github.com/NibiruChain/nibiru/pull/1306) - feat(perp): complete perp v2 types
 * [#1309](https://github.com/NibiruChain/nibiru/pull/1309) - feat: minimum swap amount set to $1
 * [#1315](https://github.com/NibiruChain/nibiru/pull/1315) - feat: oracle rewards distribution every week
 
 ### Improvements
 
+* [#1321](https://github.com/NibiruChain/nibiru/pull/1321) - build(deps): bump github.com/prometheus/client_golang from 1.15.0 to 1.15.1
+* [#1322](https://gitub.com/NibiruChain/nibiru/pull/1322) - build(deps): Bumps github.com/armon/go-metrics from 0.4.0 to 0.4.1.
 * [#1295](https://github.com/NibiruChain/nibiru/pull/1295) - refactor(app): Organize keepers, store keys, and module manager initialization in app.go
 * [#1248](https://github.com/NibiruChain/nibiru/pull/1248) - refactor(common): Combine x/testutil and x/common/testutil.
 * [#1245](https://github.com/NibiruChain/nibiru/pull/1245) - fix(localnet.sh): force localnet.sh to work even if Coingecko is down
@@ -90,6 +94,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1256](https://github.com/NibiruChain/nibiru/pull/1256) - chore(deps): bump github.com/spf13/cobra from 1.6.1 to 1.7.0
 * [#1289](https://github.com/NibiruChain/nibiru/pull/1289) - feat: SqrtDepth equal to base reserves when pool creation
 * [#1290](https://github.com/NibiruChain/nibiru/pull/1290) - refactor: fix quote/base reserve naming convention
+* [#1311](https://github.com/NibiruChain/nibiru/pull/1311) - feat(perp): add PerpKeeperV2
+* [#1308](https://github.com/NibiruChain/nibiru/pull/1308) - feat(perp): ensure there's no int overflow in liq depth calculation
+* [#1319](https://github.com/NibiruChain/nibiru/pull/1319) - test: add integration test actions
 
 ### Bug Fixes
 
