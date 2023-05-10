@@ -34,12 +34,14 @@ func NewHooks(k Keeper, accountKeeper keeper.AccountKeeper, bankKeeper bankkeepe
 
 func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64) {
 	if epochIdentifier == types.WeekEpochID {
+		params := h.k.GetParams(ctx)
+
 		account := h.accountKeeper.GetModuleAccount(ctx, perptypes.FeePoolModuleAccount)
 		totalValidatorFees, totalRest := sdk.Coins{}, sdk.Coins{}
 
 		balances := h.bankKeeper.GetAllBalances(ctx, account.GetAddress())
 		for _, balance := range balances {
-			validatorFees := balance.Amount.ToDec().Mul(sdk.MustNewDecFromStr("0.05")).TruncateInt()
+			validatorFees := balance.Amount.ToDec().Mul(params.ValidatorFeeRatio).TruncateInt()
 			rest := balance.Amount.Sub(validatorFees)
 			totalValidatorFees = append(totalValidatorFees, sdk.NewCoin(balance.Denom, validatorFees))
 			totalRest = append(totalRest, sdk.NewCoin(balance.Denom, rest))

@@ -3,7 +3,6 @@ package keeper
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -35,11 +34,7 @@ func (q Querier) EpochInfos(c context.Context, _ *types.QueryEpochsInfoRequest) 
 func (q Querier) CurrentEpoch(c context.Context, req *types.QueryCurrentEpochRequest) (*types.QueryCurrentEpochResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	info, err := q.Keeper.Epochs.Get(ctx, req.Identifier)
-	if err != nil {
-		return nil, fmt.Errorf("epoch with identifier %s not found", req.Identifier)
-	}
-
+	info := q.Keeper.GetEpochInfo(ctx, req.Identifier)
 	if info.Identifier != req.Identifier {
 		return nil, errors.New("not available identifier")
 	}

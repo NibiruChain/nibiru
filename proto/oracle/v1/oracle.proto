@@ -70,6 +70,13 @@ message Params {
   // The minimum number of voters (i.e. oracle validators) per pair for it to be
   // considered a passing ballot. Recommended at least 4.
   uint64 min_voters = 9 [ (gogoproto.moretags) = "yaml:\"min_voters\"" ];
+
+  // The validator fee ratio that is given to validators every epoch.
+  string validator_fee_ratio = 10 [
+    (gogoproto.moretags) = "yaml:\"validator_fee_ratio\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // Struct for aggregate prevoting on the ExchangeRateVote.
