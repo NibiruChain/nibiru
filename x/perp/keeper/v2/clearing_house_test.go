@@ -9,7 +9,6 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
@@ -20,7 +19,6 @@ import (
 )
 
 func TestClosePosition(t *testing.T) {
-	app.SetPrefixes(app.AccountAddressPrefix)
 	tests := []struct {
 		name string
 
