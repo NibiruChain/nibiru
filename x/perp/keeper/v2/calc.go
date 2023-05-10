@@ -66,16 +66,16 @@ func MarginRatio(
 	position v2types.Position,
 	positionNotional sdk.Dec,
 	marketLatestCumulativePremiumFraction sdk.Dec,
-) (sdk.Dec, error) {
+) sdk.Dec {
 	if position.Size_.IsZero() || positionNotional.IsZero() {
-		return sdk.ZeroDec(), nil
+		return sdk.ZeroDec()
 	}
 
 	unrealizedPnl := UnrealizedPnl(position, positionNotional)
 	fundingPayment := FundingPayment(position, marketLatestCumulativePremiumFraction)
 	remainingMargin := position.Margin.Add(unrealizedPnl).Sub(fundingPayment)
 
-	return remainingMargin.Quo(positionNotional), nil
+	return remainingMargin.Quo(positionNotional)
 }
 
 func FundingPayment(position v2types.Position, marketLatestCumulativePremiumFraction sdk.Dec) sdk.Dec {
