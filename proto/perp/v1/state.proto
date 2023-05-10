@@ -7,7 +7,7 @@ import "cosmos/base/v1beta1/coin.proto";
 import "cosmos_proto/cosmos.proto";
 import "google/protobuf/duration.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/perp/types";
+option go_package = "github.com/NibiruChain/nibiru/x/perp/types/v1;types";
 
 enum PnLCalcOption {
   PNL_CALC_OPTION_UNSPECIFIED = 0;

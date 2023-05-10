@@ -11,7 +11,7 @@ import (
 
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
 )
 
 var (

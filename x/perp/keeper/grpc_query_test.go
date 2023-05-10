@@ -16,7 +16,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
-	"github.com/NibiruChain/nibiru/x/perp/types"
+	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
 )
 
 func initAppMarkets(

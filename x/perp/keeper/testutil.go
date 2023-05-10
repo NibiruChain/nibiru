@@ -4,7 +4,7 @@ import (
 	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/perp/types"
+	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
 )
 
 func SetPosition(k Keeper, ctx sdk.Context, pos types.Position) {

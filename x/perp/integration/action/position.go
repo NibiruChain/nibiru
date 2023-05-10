@@ -9,7 +9,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
-	"github.com/NibiruChain/nibiru/x/perp/types"
+	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
 )
 
 // OpenPosition opens a position with the given parameters.
