@@ -11,6 +11,13 @@ import (
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
+var (
+	// Temporary - avoids static check error for unused functions
+	_ = Keeper.transferFee
+	_ = checkOpenPositionRequirements
+	_ = Keeper.checkPriceFluctuationLimitRatio
+)
+
 // checkOpenPositionRequirements checks the minimum requirements to open a position.
 //
 // - Checks that quote asset is not zero.
