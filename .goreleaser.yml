@@ -4,36 +4,45 @@ env:
   - CGO_ENABLED=1
 
 builds:
-  # - id: darwin
-  #   main: ./cmd/nibid
-  #   binary: nibid
-  #   goos:
-  #     - darwin
-  #   goarch:
-  #     - arm64
-  #   env:
-  #     - CC=oa64-clang
-  #     - PKG_CONFIG_SYSROOT_DIR=/sysroot/darwin/arm64
-  #     - CGO_CFLAGS="--sysroot=/sysroot/darwin/arm64 -I/sysroot/darwin/arm64/opt/homebrew/Cellar/rocksdb/8.1.1/include -L/sysroot/darwin/arm64/opt/homebrew/Cellar/snappy/1.1.10/include -L/sysroot/darwin/arm64/opt/homebrew/Cellar/lz4/1.9.4/include -L/sysroot/darwin/arm64/opt/homebrew/Cellar/zstd/1.5.5/include"
-  #     - CGO_LDFLAGS="--sysroot=/sysroot/darwin/arm64 -L/sysroot/darwin/arm64/opt/homebrew/Cellar/rocksdb/8.1.1/lib -L/sysroot/darwin/arm64/opt/homebrew/Cellar/snappy/1.1.10/lib -L/sysroot/darwin/arm64/opt/homebrew/Cellar/lz4/1.9.4/lib -L/sysroot/darwin/arm64/opt/homebrew/Cellar/zstd/1.5.5/lib"
-  #   flags:
-  #     - -mod=readonly
-  #     - -trimpath
-  #   ldflags:
-  #     - -s -w 
-  #     - -X github.com/cosmos/cosmos-sdk/version.Name=nibiru 
-  #     - -X github.com/cosmos/cosmos-sdk/version.AppName=nibid 
-  #     - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }} 
-  #     - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }} 
-  #     - -linkmode=external
-  #     - -extldflags '-lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy -llz4 -lzstd -lpthread'
-  #   tags:
-  #     - netgo
-  #     - osusergo
-  #     - ledger
-  #     - static_build
-  #     - static_wasm
-  #     - rocksdb
+  - id: darwin
+    main: ./cmd/nibid
+    binary: nibid
+    hooks:
+      pre:
+        - wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/include.8.1.1.tar.gz -O /root/include.8.1.1.tar.gz
+        - tar -xf /root/include.8.1.1.tar.gz -C /osxcross/target/SDK/MacOSX12.0.sdk/usr/include/
+        - wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/librocksdb_darwin_8.1.1.tar.gz -O /root/librocksdb_darwin_8.1.1.tar.gz
+        - tar -xf /root/librocksdb_darwin_8.1.1.tar.gz -C /osxcross/target/SDK/MacOSX12.0.sdk/usr/lib/
+    goos:
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - CC=o64-clang
+    flags:
+      - -mod=readonly
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X github.com/cosmos/cosmos-sdk/version.Name=nibiru
+      - -X github.com/cosmos/cosmos-sdk/version.AppName=nibid
+      - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
+      - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
+      - -linkmode=external
+      - -extldflags '-lrocksdb -lz -lbz2'
+    tags:
+      - netgo
+      - osusergo
+      - ledger
+      - static
+      - static_wasm
+      - rocksdb
+    overrides:
+      - goos: darwin
+        goarch: arm64
+        env:
+          - CC=oa64-clang
 
   - id: linux
     main: ./cmd/nibid
@@ -63,11 +72,11 @@ builds:
       - -mod=readonly
       - -trimpath
     ldflags:
-      - -s -w 
-      - -X github.com/cosmos/cosmos-sdk/version.Name=nibiru 
-      - -X github.com/cosmos/cosmos-sdk/version.AppName=nibid 
-      - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }} 
-      - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }} 
+      - -s -w
+      - -X github.com/cosmos/cosmos-sdk/version.Name=nibiru
+      - -X github.com/cosmos/cosmos-sdk/version.AppName=nibid
+      - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
+      - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
       - -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb
       - -linkmode=external
       - -extldflags '-Wl,-z,muldefs -static -lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy -llz4 -lzstd -lpthread'
