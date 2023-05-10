@@ -21,7 +21,7 @@ import (
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/action"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion"
-	"github.com/NibiruChain/nibiru/x/perp/keeper"
+	"github.com/NibiruChain/nibiru/x/perp/keeper/v1"
 	"github.com/NibiruChain/nibiru/x/perp/types/v1"
 )
 
