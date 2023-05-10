@@ -71,12 +71,12 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 	}
 
 	for _, pr := range data.PairRewards {
-		keeper.PairRewards.Insert(ctx, pr.Id, pr)
+		keeper.Rewards.Insert(ctx, pr.Id, pr)
 	}
 
 	// set last ID based on the last pair reward
 	if len(data.PairRewards) != 0 {
-		keeper.PairRewardsID.Set(ctx, data.PairRewards[len(data.PairRewards)-1].Id)
+		keeper.RewardsID.Set(ctx, data.PairRewards[len(data.PairRewards)-1].Id)
 	}
 	keeper.SetParams(ctx, data.Params)
 
@@ -123,6 +123,6 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 		keeper.Prevotes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).Values(),
 		keeper.Votes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).Values(),
 		pairs,
-		keeper.PairRewards.Iterate(ctx, collections.Range[uint64]{}).Values(),
+		keeper.Rewards.Iterate(ctx, collections.Range[uint64]{}).Values(),
 	)
 }

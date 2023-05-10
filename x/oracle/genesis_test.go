@@ -21,7 +21,7 @@ func TestExportInitGenesis(t *testing.T) {
 	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, "pair1:pair1")
 	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, "pair2:pair2")
 	input.OracleKeeper.MissCounters.Insert(input.Ctx, keeper.ValAddrs[0], 10)
-	input.OracleKeeper.PairRewards.Insert(input.Ctx, 0, types.Rewards{
+	input.OracleKeeper.Rewards.Insert(input.Ctx, 0, types.Rewards{
 		Id:          0,
 		VotePeriods: 100,
 		Coins:       sdk.NewCoins(sdk.NewInt64Coin("test", 1000)),

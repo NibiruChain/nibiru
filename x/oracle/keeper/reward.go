@@ -17,8 +17,8 @@ func (k Keeper) AllocateRewards(ctx sdk.Context, funderModule string, totalCoins
 		votePeriodCoins[i] = newCoin
 	}
 
-	id := k.PairRewardsID.Next(ctx)
-	k.PairRewards.Insert(ctx, id, types.Rewards{
+	id := k.RewardsID.Next(ctx)
+	k.Rewards.Insert(ctx, id, types.Rewards{
 		Id:          id,
 		VotePeriods: votePeriods,
 		Coins:       votePeriodCoins,
@@ -65,8 +65,8 @@ func (k Keeper) rewardBallotWinners(
 func (k Keeper) GatherRewardsForVotePeriod(ctx sdk.Context) sdk.Coins {
 	coins := sdk.NewCoins()
 	// iterate over
-	for _, rewardId := range k.PairRewards.Iterate(ctx, collections.Range[uint64]{}).Keys() {
-		pairReward, err := k.PairRewards.Get(ctx, rewardId)
+	for _, rewardId := range k.Rewards.Iterate(ctx, collections.Range[uint64]{}).Keys() {
+		pairReward, err := k.Rewards.Get(ctx, rewardId)
 		if err != nil {
 			panic(fmt.Sprintf("[oracle] Failed to get reward %s", err.Error()))
 		}
@@ -76,12 +76,12 @@ func (k Keeper) GatherRewardsForVotePeriod(ctx sdk.Context) sdk.Coins {
 		pairReward.VotePeriods -= 1
 		if pairReward.VotePeriods == 0 {
 			// If the distribution period count drops to 0: the reward instance is removed.
-			err := k.PairRewards.Delete(ctx, rewardId)
+			err := k.Rewards.Delete(ctx, rewardId)
 			if err != nil {
 				panic(fmt.Sprintf("[oracle] Failed to delete pair reward %s", err.Error()))
 			}
 		} else {
-			k.PairRewards.Insert(ctx, rewardId, pairReward)
+			k.Rewards.Insert(ctx, rewardId, pairReward)
 		}
 	}
 

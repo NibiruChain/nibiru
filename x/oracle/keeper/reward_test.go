@@ -65,5 +65,5 @@ func TestKeeperRewardsDistributionMultiVotePeriods(t *testing.T) {
 	require.True(t, fixture.OracleKeeper.GatherRewardsForVotePeriod(fixture.Ctx).IsZero())
 
 	// assert that there are no rewards instances
-	require.Empty(t, fixture.OracleKeeper.PairRewards.Iterate(fixture.Ctx, collections.Range[uint64]{}).Keys())
+	require.Empty(t, fixture.OracleKeeper.Rewards.Iterate(fixture.Ctx, collections.Range[uint64]{}).Keys())
 }
