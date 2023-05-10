@@ -43,12 +43,7 @@ func NewNibiruTestAppAndContext(shouldUseDefaultGenesis bool) (*app.NibiruApp, s
 // creates an application instance ('app.NibiruApp'). This app uses an
 // in-memory database ('tmdb.MemDB') and has logging disabled.
 func NewNibiruTestApp(gen app.GenesisState) *app.NibiruApp {
-	userHomeDir, err := os.MkdirTemp("", "nibid-test-*")
-	if err != nil {
-		panic(err)
-	}
-	defer os.RemoveAll(userHomeDir)
-
+	userHomeDir := os.TempDir()
 	nodeHome := filepath.Join(userHomeDir, ".nibid")
 	db := tmdb.NewMemDB()
 	logger := log.NewNopLogger()
