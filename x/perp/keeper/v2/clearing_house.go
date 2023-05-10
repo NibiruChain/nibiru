@@ -11,6 +11,9 @@ import (
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
+// TODO(k-yang): remove when we add OpenPosition
+var _ = checkOpenPositionRequirements
+
 // checkOpenPositionRequirements checks the minimum requirements to open a position.
 //
 // - Checks that quote asset is not zero.
