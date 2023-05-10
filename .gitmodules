@@ -1,3 +1,0 @@
-[submodule "goreleaser-sysroot"]
-	path = goreleaser-sysroot
-	url = https://github.com/NibiruChain/goreleaser-sysroot
