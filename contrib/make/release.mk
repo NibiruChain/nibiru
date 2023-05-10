@@ -3,7 +3,7 @@
 ###############################################################################
 
 PACKAGE_NAME		  := github.com/NibiruChain/nibiru
-GOLANG_CROSS_VERSION  ?= v1.19.4
+GOLANG_CROSS_VERSION  ?= v1.19.5
 
 release:
 	docker run \
@@ -14,5 +14,6 @@ release:
 		-v "$(CURDIR)/goreleaser-sysroot":/sysroot \
 		-w /go/src/$(PACKAGE_NAME) \
 		-e CGO_ENABLED=1 \
+		-e GITHUB_TOKEN=${GITHUB_TOKEN} \
 		goreleaser/goreleaser-cross:${GOLANG_CROSS_VERSION} \
-		build --rm-dist --debug --skip-validate
+		release --rm-dist

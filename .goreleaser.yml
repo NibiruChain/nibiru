@@ -44,8 +44,8 @@ builds:
         - wget https://github.com/CosmWasm/wasmvm/releases/download/v1.1.1/libwasmvm_muslc.aarch64.a -O /sysroot/linux/arm64/usr/lib/aarch64-linux-gnu/libwasmvm_muslc.a
         - wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/librocksdb_8.1.1.x86_64.a.tar.gz -O /sysroot/linux/amd64/usr/lib/x86_64-linux-gnu/librocksdb_8.1.1.x86_64.a.tar.gz
         - tar -xf /sysroot/linux/amd64/usr/lib/x86_64-linux-gnu/librocksdb_8.1.1.x86_64.a.tar.gz -C /sysroot/linux/amd64/usr/lib/x86_64-linux-gnu/
-        - wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.3.0/librocksdb_8.3.0.aarch64.a.tar.gz -O /sysroot/linux/arm64/usr/lib/aarch64-linux-gnu/librocksdb_8.3.0.aarch64.a.tar.gz
-        - tar -xf /sysroot/linux/arm64/usr/lib/aarch64-linux-gnu/librocksdb_8.3.0.aarch64.a -C /sysroot/linux/arm64/usr/lib/aarch64-linux-gnu/
+        - wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.3.0/librocksdb_8.3.0.arm64.a.tar.gz -O /sysroot/linux/arm64/usr/lib/aarch64-linux-gnu/librocksdb_8.3.0.arm64.a.tar.gz
+        - tar -xf /sysroot/linux/arm64/usr/lib/aarch64-linux-gnu/librocksdb_8.3.0.arm64.a.tar.gz -C /sysroot/linux/arm64/usr/lib/aarch64-linux-gnu/
         - cp /sysroot/linux/amd64/usr/lib/x86_64-linux-gnu/libm-2.31.a /usr/lib/x86_64-linux-gnu/libm-2.31.a # HACK: not sure why goreleaser-cross doesn't pick these up from the sysroot, but manually copying them works
         - cp /sysroot/linux/amd64/usr/lib/x86_64-linux-gnu/libmvec.a /usr/lib/x86_64-linux-gnu/libmvec.a # HACK: not sure why goreleaser-cross doesn't pick these up from the sysroot, but manually copying them
     goos:
