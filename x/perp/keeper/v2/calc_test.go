@@ -324,10 +324,7 @@ func TestMarginRatio(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			marginRatio, err := keeper.MarginRatio(tc.position, tc.positionNotional, tc.latestCPF)
-
-			require.NoError(t, err)
-			assert.EqualValues(t, tc.expectedMarginRatio, marginRatio)
+			assert.EqualValues(t, tc.expectedMarginRatio, keeper.MarginRatio(tc.position, tc.positionNotional, tc.latestCPF))
 		})
 	}
 }
