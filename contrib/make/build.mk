@@ -59,11 +59,6 @@ build install: go.sum $(BUILDDIR)/
 $(BUILDDIR)/:
 	mkdir -p $(BUILDDIR)/
 
-# build for linux architecture
-build-linux: go.sum
-	docker build -f contrib/docker/linux.Dockerfile -t nibiru-builder .
-	docker run --rm -it -v `pwd`:/nibiru nibiru-builder
-
 go.sum: go.mod
 	@echo "--> Ensure dependencies have not been modified"
 	@go mod verify
