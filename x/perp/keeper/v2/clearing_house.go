@@ -761,8 +761,8 @@ func (k Keeper) transferFee(
 		return sdk.Int{}, err
 	}
 
-	feeToFeePool := m.ExchangeFeeRatio.Mul(positionNotional).RoundInt()
-	if feeToFeePool.IsPositive() {
+	feeToExchangeFeePool := m.ExchangeFeeRatio.Mul(positionNotional).RoundInt()
+	if feeToExchangeFeePool.IsPositive() {
 		if err = k.BankKeeper.SendCoinsFromAccountToModule(
 			ctx,
 			/* from */ trader,
@@ -770,7 +770,7 @@ func (k Keeper) transferFee(
 			/* coins */ sdk.NewCoins(
 				sdk.NewCoin(
 					pair.QuoteDenom(),
-					feeToFeePool,
+					feeToExchangeFeePool,
 				),
 			),
 		); err != nil {
@@ -795,7 +795,7 @@ func (k Keeper) transferFee(
 		}
 	}
 
-	return feeToFeePool.Add(feeToEcosystemFund), nil
+	return feeToExchangeFeePool.Add(feeToEcosystemFund), nil
 }
 
 // checks that the mark price of the pool does not violate the fluctuation limit
