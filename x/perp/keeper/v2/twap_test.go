@@ -331,7 +331,6 @@ func TestCalcTwapExtended(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 
-			t.Log("create initial market and amm")
 			app.PerpKeeperV2.Markets.Insert(ctx, pair, *mock.TestMarket())
 			app.PerpKeeperV2.AMMs.Insert(ctx, pair, *mock.TestAMMDefault())
 			app.PerpKeeperV2.ReserveSnapshots.Insert(ctx, collections.Join(pair, time.UnixMilli(0)), v2types.ReserveSnapshot{
@@ -339,7 +338,6 @@ func TestCalcTwapExtended(t *testing.T) {
 				TimestampMs: 0,
 			})
 
-			t.Log("inserting snapshots")
 			for _, snapshot := range tc.reserveSnapshots {
 				ctx = ctx.WithBlockTime(time.UnixMilli(snapshot.TimestampMs))
 				app.PerpKeeperV2.ReserveSnapshots.Insert(ctx, collections.Join(snapshot.Amm.Pair, time.UnixMilli(snapshot.TimestampMs)), snapshot)

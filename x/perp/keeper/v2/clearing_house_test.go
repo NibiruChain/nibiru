@@ -11,7 +11,6 @@ import (
 
 	"github.com/NibiruChain/collections"
 
-	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
@@ -27,7 +26,7 @@ import (
 
 func TestOpenPosition(t *testing.T) {
 	alice := testutil.AccAddress()
-	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.USDC)
+	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	startBlockTime := time.Now()
 
 	tc := TestCases{
@@ -37,7 +36,7 @@ func TestOpenPosition(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1020)))),
 			).
 			When(
 				OpenPosition(alice, pairBtcUsdc, v2types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec(),
@@ -74,16 +73,16 @@ func TestOpenPosition(t *testing.T) {
 				PositionChangedEventShouldBeEqual(&v2types.PositionChangedEvent{
 					Pair:               pairBtcUsdc,
 					TraderAddress:      alice.String(),
-					Margin:             sdk.NewCoin(denoms.USDC, sdk.NewInt(1000)),
+					Margin:             sdk.NewCoin(denoms.NUSD, sdk.NewInt(1000)),
 					PositionNotional:   sdk.NewDec(10_000),
 					ExchangedNotional:  sdk.NewDec(1000 * 10),
 					ExchangedSize:      sdk.MustNewDecFromStr("9999.999900000001"),
 					PositionSize:       sdk.MustNewDecFromStr("9999.999900000001"),
 					RealizedPnl:        sdk.ZeroDec(),
 					UnrealizedPnlAfter: sdk.ZeroDec(),
-					BadDebt:            sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+					BadDebt:            sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
 					FundingPayment:     sdk.ZeroDec(),
-					TransactionFee:     sdk.NewCoin(denoms.USDC, sdk.NewInt(20)),
+					TransactionFee:     sdk.NewCoin(denoms.NUSD, sdk.NewInt(20)),
 					BlockHeight:        1,
 					BlockTimeMs:        startBlockTime.UnixNano() / 1e6,
 				}),
@@ -95,7 +94,7 @@ func TestOpenPosition(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				CreateCustomMarket(pairBtcUsdc),
 				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2040)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(2040)))),
 				OpenPosition(alice, pairBtcUsdc, v2types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			When(
@@ -125,16 +124,16 @@ func TestOpenPosition(t *testing.T) {
 				PositionChangedEventShouldBeEqual(&v2types.PositionChangedEvent{
 					Pair:               pairBtcUsdc,
 					TraderAddress:      alice.String(),
-					Margin:             sdk.NewCoin(denoms.USDC, sdk.NewInt(2000)),
+					Margin:             sdk.NewCoin(denoms.NUSD, sdk.NewInt(2000)),
 					PositionNotional:   sdk.NewDec(20_000),
 					ExchangedNotional:  sdk.NewDec(10_000),
 					ExchangedSize:      sdk.MustNewDecFromStr("9999.999700000007000000"),
 					PositionSize:       sdk.MustNewDecFromStr("19999.999600000008000000"),
 					RealizedPnl:        sdk.ZeroDec(),
 					UnrealizedPnlAfter: sdk.ZeroDec(),
-					BadDebt:            sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+					BadDebt:            sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
 					FundingPayment:     sdk.ZeroDec(),
-					TransactionFee:     sdk.NewCoin(denoms.USDC, sdk.NewInt(20)), // 20 bps
+					TransactionFee:     sdk.NewCoin(denoms.NUSD, sdk.NewInt(20)), // 20 bps
 					BlockHeight:        2,
 					BlockTimeMs:        startBlockTime.Add(time.Second*5).UnixNano() / 1e6,
 				}),
@@ -146,7 +145,7 @@ func TestOpenPosition(t *testing.T) {
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1030)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1030)))),
 				OpenPosition(alice, pairBtcUsdc, v2types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			When(
@@ -177,16 +176,16 @@ func TestOpenPosition(t *testing.T) {
 				PositionChangedEventShouldBeEqual(&v2types.PositionChangedEvent{
 					Pair:               pairBtcUsdc,
 					TraderAddress:      alice.String(),
-					Margin:             sdk.NewCoin(denoms.USDC, sdk.NewInt(1000)),
+					Margin:             sdk.NewCoin(denoms.NUSD, sdk.NewInt(1000)),
 					PositionNotional:   sdk.NewDec(5000),
 					ExchangedNotional:  sdk.NewDec(5000),
 					ExchangedSize:      sdk.MustNewDecFromStr("-4999.999925000000875000"),
 					PositionSize:       sdk.MustNewDecFromStr("4999.999975000000125000"),
 					RealizedPnl:        sdk.ZeroDec(),
 					UnrealizedPnlAfter: sdk.ZeroDec(),
-					BadDebt:            sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+					BadDebt:            sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
 					FundingPayment:     sdk.ZeroDec(),
-					TransactionFee:     sdk.NewCoin(denoms.USDC, sdk.NewInt(10)), // 20 bps
+					TransactionFee:     sdk.NewCoin(denoms.NUSD, sdk.NewInt(10)), // 20 bps
 					BlockHeight:        2,
 					BlockTimeMs:        startBlockTime.Add(time.Second*5).UnixNano() / 1e6,
 				}),
@@ -198,7 +197,7 @@ func TestOpenPosition(t *testing.T) {
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(4080)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(4080)))),
 				OpenPosition(alice, pairBtcUsdc, v2types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			When(
@@ -229,16 +228,16 @@ func TestOpenPosition(t *testing.T) {
 				PositionChangedEventShouldBeEqual(&v2types.PositionChangedEvent{
 					Pair:               pairBtcUsdc,
 					TraderAddress:      alice.String(),
-					Margin:             sdk.NewCoin(denoms.USDC, sdk.NewInt(2000)),
+					Margin:             sdk.NewCoin(denoms.NUSD, sdk.NewInt(2000)),
 					PositionNotional:   sdk.NewDec(20000),
 					ExchangedNotional:  sdk.NewDec(30000),
 					ExchangedSize:      sdk.MustNewDecFromStr("-30000.000300000009000000"),
 					PositionSize:       sdk.MustNewDecFromStr("-20000.000400000008000000"),
 					RealizedPnl:        sdk.ZeroDec(),
 					UnrealizedPnlAfter: sdk.ZeroDec(),
-					BadDebt:            sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+					BadDebt:            sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
 					FundingPayment:     sdk.ZeroDec(),
-					TransactionFee:     sdk.NewCoin(denoms.USDC, sdk.NewInt(60)), // 20 bps
+					TransactionFee:     sdk.NewCoin(denoms.NUSD, sdk.NewInt(60)), // 20 bps
 					BlockHeight:        2,
 					BlockTimeMs:        startBlockTime.Add(time.Second*5).UnixNano() / 1e6,
 				}),
@@ -250,7 +249,7 @@ func TestOpenPosition(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(47_714_285_715)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(47_714_285_715)))),
 			).
 			When(
 				OpenPosition(alice, pairBtcUsdc, v2types.Direction_LONG, sdk.NewInt(47_619_047_619), sdk.OneDec(), sdk.ZeroDec(),
@@ -287,16 +286,16 @@ func TestOpenPosition(t *testing.T) {
 				PositionChangedEventShouldBeEqual(&v2types.PositionChangedEvent{
 					Pair:               pairBtcUsdc,
 					TraderAddress:      alice.String(),
-					Margin:             sdk.NewCoin(denoms.USDC, sdk.NewInt(47_619_047_619)),
+					Margin:             sdk.NewCoin(denoms.NUSD, sdk.NewInt(47_619_047_619)),
 					PositionNotional:   sdk.NewDec(47_619_047_619),
 					ExchangedNotional:  sdk.NewDec(47_619_047_619),
 					ExchangedSize:      sdk.MustNewDecFromStr("45454545454.502066115702477367"),
 					PositionSize:       sdk.MustNewDecFromStr("45454545454.502066115702477367"),
 					RealizedPnl:        sdk.ZeroDec(),
 					UnrealizedPnlAfter: sdk.ZeroDec(),
-					BadDebt:            sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+					BadDebt:            sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
 					FundingPayment:     sdk.ZeroDec(),
-					TransactionFee:     sdk.NewCoin(denoms.USDC, sdk.NewInt(95_238_096)),
+					TransactionFee:     sdk.NewCoin(denoms.NUSD, sdk.NewInt(95_238_096)),
 					BlockHeight:        1,
 					BlockTimeMs:        startBlockTime.UnixNano() / 1e6,
 				}),
@@ -308,7 +307,7 @@ func TestOpenPosition(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1020)))),
 			).
 			When(
 				OpenPosition(alice, pairBtcUsdc, v2types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec(),
@@ -347,16 +346,16 @@ func TestOpenPosition(t *testing.T) {
 				PositionChangedEventShouldBeEqual(&v2types.PositionChangedEvent{
 					Pair:               pairBtcUsdc,
 					TraderAddress:      alice.String(),
-					Margin:             sdk.NewCoin(denoms.USDC, sdk.NewInt(1000)),
+					Margin:             sdk.NewCoin(denoms.NUSD, sdk.NewInt(1000)),
 					PositionNotional:   sdk.NewDec(10_000),
 					ExchangedNotional:  sdk.NewDec(1000 * 10),
 					ExchangedSize:      sdk.MustNewDecFromStr("-10000.000100000001000000"),
 					PositionSize:       sdk.MustNewDecFromStr("-10000.000100000001000000"),
 					RealizedPnl:        sdk.ZeroDec(),
 					UnrealizedPnlAfter: sdk.ZeroDec(),
-					BadDebt:            sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+					BadDebt:            sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
 					FundingPayment:     sdk.ZeroDec(),
-					TransactionFee:     sdk.NewCoin(denoms.USDC, sdk.NewInt(20)),
+					TransactionFee:     sdk.NewCoin(denoms.NUSD, sdk.NewInt(20)),
 					BlockHeight:        1,
 					BlockTimeMs:        startBlockTime.UnixNano() / 1e6,
 				}),
@@ -368,7 +367,7 @@ func TestOpenPosition(t *testing.T) {
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2040)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(2040)))),
 				OpenPosition(alice, pairBtcUsdc, v2types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			When(
@@ -398,16 +397,16 @@ func TestOpenPosition(t *testing.T) {
 				PositionChangedEventShouldBeEqual(&v2types.PositionChangedEvent{
 					Pair:               pairBtcUsdc,
 					TraderAddress:      alice.String(),
-					Margin:             sdk.NewCoin(denoms.USDC, sdk.NewInt(2000)),
+					Margin:             sdk.NewCoin(denoms.NUSD, sdk.NewInt(2000)),
 					PositionNotional:   sdk.NewDec(20_000),
 					ExchangedNotional:  sdk.NewDec(10_000),
 					ExchangedSize:      sdk.MustNewDecFromStr("-10000.000300000007000000"),
 					PositionSize:       sdk.MustNewDecFromStr("-20000.000400000008000000"),
 					RealizedPnl:        sdk.ZeroDec(),
 					UnrealizedPnlAfter: sdk.ZeroDec(),
-					BadDebt:            sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+					BadDebt:            sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
 					FundingPayment:     sdk.ZeroDec(),
-					TransactionFee:     sdk.NewCoin(denoms.USDC, sdk.NewInt(20)), // 20 bps
+					TransactionFee:     sdk.NewCoin(denoms.NUSD, sdk.NewInt(20)), // 20 bps
 					BlockHeight:        2,
 					BlockTimeMs:        startBlockTime.Add(time.Second*5).UnixNano() / 1e6,
 				}),
@@ -419,7 +418,7 @@ func TestOpenPosition(t *testing.T) {
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1030)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1030)))),
 				OpenPosition(alice, pairBtcUsdc, v2types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			When(
@@ -450,16 +449,16 @@ func TestOpenPosition(t *testing.T) {
 				PositionChangedEventShouldBeEqual(&v2types.PositionChangedEvent{
 					Pair:               pairBtcUsdc,
 					TraderAddress:      alice.String(),
-					Margin:             sdk.NewCoin(denoms.USDC, sdk.NewInt(1000)),
+					Margin:             sdk.NewCoin(denoms.NUSD, sdk.NewInt(1000)),
 					PositionNotional:   sdk.NewDec(5000),
 					ExchangedNotional:  sdk.NewDec(5000),
 					ExchangedSize:      sdk.MustNewDecFromStr("5000.000075000000875000"),
 					PositionSize:       sdk.MustNewDecFromStr("-5000.000025000000125000"),
 					RealizedPnl:        sdk.ZeroDec(),
 					UnrealizedPnlAfter: sdk.ZeroDec(),
-					BadDebt:            sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+					BadDebt:            sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
 					FundingPayment:     sdk.ZeroDec(),
-					TransactionFee:     sdk.NewCoin(denoms.USDC, sdk.NewInt(10)), // 20 bps
+					TransactionFee:     sdk.NewCoin(denoms.NUSD, sdk.NewInt(10)), // 20 bps
 					BlockHeight:        2,
 					BlockTimeMs:        startBlockTime.Add(time.Second*5).UnixNano() / 1e6,
 				}),
@@ -471,7 +470,7 @@ func TestOpenPosition(t *testing.T) {
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(4080)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(4080)))),
 				OpenPosition(alice, pairBtcUsdc, v2types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			When(
@@ -502,16 +501,16 @@ func TestOpenPosition(t *testing.T) {
 				PositionChangedEventShouldBeEqual(&v2types.PositionChangedEvent{
 					Pair:               pairBtcUsdc,
 					TraderAddress:      alice.String(),
-					Margin:             sdk.NewCoin(denoms.USDC, sdk.NewInt(2000)),
+					Margin:             sdk.NewCoin(denoms.NUSD, sdk.NewInt(2000)),
 					PositionNotional:   sdk.NewDec(20000),
 					ExchangedNotional:  sdk.NewDec(30000),
 					ExchangedSize:      sdk.MustNewDecFromStr("29999.999700000009000000"),
 					PositionSize:       sdk.MustNewDecFromStr("19999.999600000008000000"),
 					RealizedPnl:        sdk.ZeroDec(),
 					UnrealizedPnlAfter: sdk.ZeroDec(),
-					BadDebt:            sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+					BadDebt:            sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
 					FundingPayment:     sdk.ZeroDec(),
-					TransactionFee:     sdk.NewCoin(denoms.USDC, sdk.NewInt(60)), // 20 bps
+					TransactionFee:     sdk.NewCoin(denoms.NUSD, sdk.NewInt(60)), // 20 bps
 					BlockHeight:        2,
 					BlockTimeMs:        startBlockTime.Add(time.Second*5).UnixNano() / 1e6,
 				}),
@@ -523,7 +522,7 @@ func TestOpenPosition(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(47_714_285_715)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(47_714_285_715)))),
 			).
 			When(
 				OpenPosition(alice, pairBtcUsdc, v2types.Direction_SHORT, sdk.NewInt(47_619_047_619), sdk.OneDec(), sdk.ZeroDec(),
@@ -560,16 +559,16 @@ func TestOpenPosition(t *testing.T) {
 				PositionChangedEventShouldBeEqual(&v2types.PositionChangedEvent{
 					Pair:               pairBtcUsdc,
 					TraderAddress:      alice.String(),
-					Margin:             sdk.NewCoin(denoms.USDC, sdk.NewInt(47_619_047_619)),
+					Margin:             sdk.NewCoin(denoms.NUSD, sdk.NewInt(47_619_047_619)),
 					PositionNotional:   sdk.NewDec(47_619_047_619),
 					ExchangedNotional:  sdk.NewDec(47_619_047_619),
 					ExchangedSize:      sdk.MustNewDecFromStr("-49999999999.947500000000002625"),
 					PositionSize:       sdk.MustNewDecFromStr("-49999999999.947500000000002625"),
 					RealizedPnl:        sdk.ZeroDec(),
 					UnrealizedPnlAfter: sdk.ZeroDec(),
-					BadDebt:            sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+					BadDebt:            sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
 					FundingPayment:     sdk.ZeroDec(),
-					TransactionFee:     sdk.NewCoin(denoms.USDC, sdk.NewInt(95_238_096)),
+					TransactionFee:     sdk.NewCoin(denoms.NUSD, sdk.NewInt(95_238_096)),
 					BlockHeight:        1,
 					BlockTimeMs:        startBlockTime.UnixNano() / 1e6,
 				}),
@@ -596,7 +595,7 @@ func TestOpenPositionError(t *testing.T) {
 	}{
 		{
 			name:            "not enough trader funds",
-			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 999)),
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 999)),
 			initialPosition: nil,
 			side:            v2types.Direction_LONG,
 			margin:          sdk.NewInt(1000),
@@ -606,9 +605,9 @@ func TestOpenPositionError(t *testing.T) {
 		},
 		{
 			name:        "position has bad debt",
-			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 999)),
+			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 999)),
 			initialPosition: &v2types.Position{
-				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.USDC),
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.OneDec(),
 				Margin:                          sdk.NewDec(1000),
 				OpenNotional:                    sdk.NewDec(10_000),
@@ -623,7 +622,7 @@ func TestOpenPositionError(t *testing.T) {
 		},
 		{
 			name:            "new long position not over base limit",
-			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1020)),
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1020)),
 			initialPosition: nil,
 			side:            v2types.Direction_LONG,
 			margin:          sdk.NewInt(1000),
@@ -633,7 +632,7 @@ func TestOpenPositionError(t *testing.T) {
 		},
 		{
 			name:            "new short position not under base limit",
-			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1020)),
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1020)),
 			initialPosition: nil,
 			side:            v2types.Direction_SHORT,
 			margin:          sdk.NewInt(1000),
@@ -643,7 +642,7 @@ func TestOpenPositionError(t *testing.T) {
 		},
 		{
 			name:            "quote asset amount is zero",
-			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1020)),
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1020)),
 			initialPosition: nil,
 			side:            v2types.Direction_SHORT,
 			margin:          sdk.NewInt(0),
@@ -653,7 +652,7 @@ func TestOpenPositionError(t *testing.T) {
 		},
 		{
 			name:            "leverage amount is zero",
-			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1020)),
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1020)),
 			initialPosition: nil,
 			side:            v2types.Direction_SHORT,
 			margin:          sdk.NewInt(1000),
@@ -663,7 +662,7 @@ func TestOpenPositionError(t *testing.T) {
 		},
 		{
 			name:            "leverage amount is too high - SELL",
-			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1020)),
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1020)),
 			initialPosition: nil,
 			side:            v2types.Direction_SHORT,
 			margin:          sdk.NewInt(100),
@@ -673,7 +672,7 @@ func TestOpenPositionError(t *testing.T) {
 		},
 		{
 			name:            "leverage amount is too high - BUY",
-			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1020)),
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1020)),
 			initialPosition: nil,
 			side:            v2types.Direction_LONG,
 			margin:          sdk.NewInt(100),
@@ -683,7 +682,7 @@ func TestOpenPositionError(t *testing.T) {
 		},
 		{
 			name:            "new long position over fluctuation limit",
-			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1e12)),
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1e12)),
 			initialPosition: nil,
 			side:            v2types.Direction_LONG,
 			margin:          sdk.NewInt(100_000e6),
@@ -693,7 +692,7 @@ func TestOpenPositionError(t *testing.T) {
 		},
 		{
 			name:            "new short position over fluctuation limit",
-			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1e12)),
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1e12)),
 			initialPosition: nil,
 			side:            v2types.Direction_SHORT,
 			margin:          sdk.NewInt(100_000e6),
@@ -709,9 +708,8 @@ func TestOpenPositionError(t *testing.T) {
 			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 			traderAddr := testutil.AccAddress()
 
-			t.Log("initialize market")
 			market := mock.TestMarket()
-			app.PerpKeeperV2.Markets.Insert(ctx, asset.Registry.Pair(denoms.BTC, denoms.USDC), *market)
+			app.PerpKeeperV2.Markets.Insert(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), *market)
 			amm := mock.TestAMMDefault()
 			app.PerpKeeperV2.AMMs.Insert(ctx, amm.Pair, *amm)
 			app.PerpKeeperV2.ReserveSnapshots.Insert(ctx, collections.Join(amm.Pair, ctx.BlockTime()), v2types.ReserveSnapshot{
@@ -721,13 +719,12 @@ func TestOpenPositionError(t *testing.T) {
 			require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, traderAddr, tc.traderFunds))
 
 			if tc.initialPosition != nil {
-				t.Log("set initial position")
 				tc.initialPosition.TraderAddress = traderAddr.String()
 				app.PerpKeeperV2.Positions.Insert(ctx, collections.Join(tc.initialPosition.Pair, traderAddr), *tc.initialPosition)
 			}
 
 			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(ctx.BlockTime().Add(time.Second * 5))
-			resp, err := app.PerpKeeperV2.OpenPosition(ctx, asset.Registry.Pair(denoms.BTC, denoms.USDC), tc.side, traderAddr, tc.margin, tc.leverage, tc.baseLimit)
+			resp, err := app.PerpKeeperV2.OpenPosition(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), tc.side, traderAddr, tc.margin, tc.leverage, tc.baseLimit)
 			require.ErrorContains(t, err, tc.expectedErr.Error())
 			require.Nil(t, resp)
 		})
@@ -735,12 +732,10 @@ func TestOpenPositionError(t *testing.T) {
 }
 
 func TestOpenPositionInvalidPair(t *testing.T) {
-	t.Log("Setup Nibiru app, pair, and trader without a perpamm.")
 	app, ctx := testapp.NewNibiruTestAppAndContext(true)
 	pair := asset.MustNewPair("xxx:yyy")
 	trader := testutil.AccAddress()
 
-	t.Log("open a position on invalid 'pair'")
 	side := v2types.Direction_LONG
 	quote := sdk.NewInt(60)
 	leverage := sdk.NewDec(10)
@@ -752,7 +747,6 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 }
 
 func TestClosePosition(t *testing.T) {
-	app.SetPrefixes(app.AccountAddressPrefix)
 	tests := []struct {
 		name string
 
@@ -777,7 +771,7 @@ func TestClosePosition(t *testing.T) {
 			//   position notional value of 0 NUSD
 			initialPosition: v2types.Position{
 				TraderAddress:                   testutil.AccAddress().String(),
-				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.USDC),
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(100), // 100 BTC
 				Margin:                          sdk.NewDec(10),  // 10 NUSD
 				OpenNotional:                    sdk.NewDec(100), // 100 NUSD
@@ -804,7 +798,7 @@ func TestClosePosition(t *testing.T) {
 			//   position notional value of 0 NUSD
 			initialPosition: v2types.Position{
 				TraderAddress:                   testutil.AccAddress().String(),
-				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.USDC),
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(100),
 				Margin:                          sdk.NewDec(10),
 				OpenNotional:                    sdk.NewDec(100),
@@ -833,7 +827,7 @@ func TestClosePosition(t *testing.T) {
 			//   position notional value of 0 NUSD
 			initialPosition: v2types.Position{
 				TraderAddress:                   testutil.AccAddress().String(),
-				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.USDC),
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(-100),
 				Margin:                          sdk.NewDec(10),
 				OpenNotional:                    sdk.NewDec(100),
@@ -860,7 +854,7 @@ func TestClosePosition(t *testing.T) {
 			//   position notional value of 0 NUSD
 			initialPosition: v2types.Position{
 				TraderAddress:                   testutil.AccAddress().String(),
-				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.USDC),
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(-100), // -100 BTC
 				Margin:                          sdk.NewDec(10),   // 10 NUSD
 				OpenNotional:                    sdk.NewDec(100),  // 100 NUSD
@@ -893,10 +887,9 @@ func TestClosePosition(t *testing.T) {
 				TimestampMs: ctx.BlockTime().UnixMilli(),
 			})
 			app.PerpKeeperV2.Positions.Insert(ctx, collections.Join(tc.initialPosition.Pair, traderAddr), tc.initialPosition)
-			testapp.FundModuleAccount(app.BankKeeper, ctx, v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1e18)))
-			testapp.FundModuleAccount(app.BankKeeper, ctx, v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1e18)))
+			testapp.FundModuleAccount(app.BankKeeper, ctx, v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1e18)))
+			testapp.FundModuleAccount(app.BankKeeper, ctx, v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1e18)))
 
-			t.Log("close position")
 			resp, err := app.PerpKeeperV2.ClosePosition(
 				ctx,
 				tc.initialPosition.Pair,
@@ -927,16 +920,16 @@ func TestClosePosition(t *testing.T) {
 			testutil.RequireHasTypedEvent(t, ctx, &v2types.PositionChangedEvent{
 				Pair:               tc.initialPosition.Pair,
 				TraderAddress:      tc.initialPosition.TraderAddress,
-				Margin:             sdk.NewInt64Coin(denoms.USDC, 0),
+				Margin:             sdk.NewInt64Coin(denoms.NUSD, 0),
 				PositionNotional:   sdk.ZeroDec(),
 				ExchangedNotional:  tc.expectedExchangedNotionalValue,
 				ExchangedSize:      tc.initialPosition.Size_.Neg(),
 				PositionSize:       sdk.ZeroDec(),
 				RealizedPnl:        tc.expectedRealizedPnl,
 				UnrealizedPnlAfter: sdk.ZeroDec(),
-				BadDebt:            sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+				BadDebt:            sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
 				FundingPayment:     tc.expectedFundingPayment,
-				TransactionFee:     sdk.NewInt64Coin(denoms.USDC, 0),
+				TransactionFee:     sdk.NewInt64Coin(denoms.NUSD, 0),
 				BlockHeight:        ctx.BlockHeight(),
 				BlockTimeMs:        ctx.BlockTime().UnixMilli(),
 			})

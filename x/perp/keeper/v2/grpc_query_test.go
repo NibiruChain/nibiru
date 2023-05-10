@@ -13,75 +13,31 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	keeper "github.com/NibiruChain/nibiru/x/perp/keeper/v2"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
 func initAppMarkets(
-	t *testing.T, quoteReserve, baseReserve, pegMultiplier sdk.Dec,
+	t *testing.T, sqrtReserve, priceMultiplier sdk.Dec,
 ) (sdk.Context, *app.NibiruApp, v2types.QueryServer) {
 	t.Log("initialize app and keeper")
-	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
-	perpKeeper := &nibiruApp.PerpKeeperV2
-	queryServer := keeper.NewQuerier(*perpKeeper)
+	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+	queryServer := keeper.NewQuerier(app.PerpKeeperV2)
 
 	t.Log("initialize market and pair")
-	// assert.NoError(t, perpammKeeper.CreatePool(
-	// 	ctx,
-	// 	asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-	// 	quoteReserve,
-	// 	baseReserve,
-	// 	v2types.MarketConfig{
-	// 		TradeLimitRatio:        sdk.OneDec(),
-	// 		FluctuationLimitRatio:  sdk.OneDec(),
-	// 		MaxOracleSpreadRatio:   sdk.OneDec(),
-	// 		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-	// 		MaxLeverage:            sdk.MustNewDecFromStr("15"),
-	// 	},
-	// 	pegMultiplier,
-	// ))
-	// keeper.SetPairMetadata(nibiruApp.PerpKeeperV2, ctx, types.PairMetadata{
-	// 	Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-	// 	LatestCumulativePremiumFraction: sdk.ZeroDec(),
-	// })
-	// assert.NoError(t, perpammKeeper.CreatePool(
-	// 	ctx,
-	// 	asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-	// 	/* quoteReserve */ sdk.MustNewDecFromStr("100000"),
-	// 	/* baseReserve */ sdk.MustNewDecFromStr("100000"),
-	// 	v2types.MarketConfig{
-	// 		TradeLimitRatio:        sdk.OneDec(),
-	// 		FluctuationLimitRatio:  sdk.OneDec(),
-	// 		MaxOracleSpreadRatio:   sdk.OneDec(),
-	// 		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-	// 		MaxLeverage:            sdk.MustNewDecFromStr("15"),
-	// 	},
-	// 	sdk.OneDec(),
-	// ))
-	// keeper.SetPairMetadata(nibiruApp.PerpKeeperV2, ctx, types.PairMetadata{
-	// 	Pair:                            asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-	// 	LatestCumulativePremiumFraction: sdk.ZeroDec(),
-	// })
-	// assert.NoError(t, perpammKeeper.CreatePool(
-	// 	ctx,
-	// 	asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
-	// 	/* quoteReserve */ sdk.MustNewDecFromStr("100000"),
-	// 	/* baseReserve */ sdk.MustNewDecFromStr("100000"),
-	// 	v2types.MarketConfig{
-	// 		TradeLimitRatio:        sdk.OneDec(),
-	// 		FluctuationLimitRatio:  sdk.OneDec(),
-	// 		MaxOracleSpreadRatio:   sdk.OneDec(),
-	// 		MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-	// 		MaxLeverage:            sdk.MustNewDecFromStr("15"),
-	// 	},
-	// 	sdk.OneDec(),
-	// ))
-	// keeper.SetPairMetadata(nibiruApp.PerpKeeperV2, ctx, types.PairMetadata{
-	// 	Pair:                            asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
-	// 	LatestCumulativePremiumFraction: sdk.ZeroDec(),
-	// })
-	return ctx, nibiruApp, queryServer
+	market := mock.TestMarket()
+	amm := mock.TestAMM(sqrtReserve, priceMultiplier)
+	app.PerpKeeperV2.Markets.Insert(ctx, market.Pair, *market)
+	app.PerpKeeperV2.AMMs.Insert(ctx, amm.Pair, *amm)
+
+	market = mock.TestMarket().WithPair(asset.Registry.Pair(denoms.ETH, denoms.NUSD))
+	amm = mock.TestAMM(sqrtReserve, priceMultiplier).WithPair(asset.Registry.Pair(denoms.ETH, denoms.NUSD))
+	app.PerpKeeperV2.Markets.Insert(ctx, market.Pair, *market)
+	app.PerpKeeperV2.AMMs.Insert(ctx, amm.Pair, *amm)
+
+	return ctx, app, queryServer
 }
 
 func TestQueryPosition(t *testing.T) {
@@ -89,9 +45,8 @@ func TestQueryPosition(t *testing.T) {
 		name            string
 		initialPosition *v2types.Position
 
-		quoteReserve  sdk.Dec
-		baseReserve   sdk.Dec
-		pegMultiplier sdk.Dec
+		sqrtDepth       sdk.Dec
+		priceMultiplier sdk.Dec
 
 		expectedPositionNotional sdk.Dec
 		expectedUnrealizedPnl    sdk.Dec
@@ -107,9 +62,8 @@ func TestQueryPosition(t *testing.T) {
 				LastUpdatedBlockNumber:          1,
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
-			quoteReserve:  sdk.NewDec(1e6),
-			baseReserve:   sdk.NewDec(1e6),
-			pegMultiplier: sdk.NewDec(2),
+			sqrtDepth:       sdk.NewDec(1e6),
+			priceMultiplier: sdk.NewDec(2),
 
 			expectedPositionNotional: sdk.MustNewDecFromStr("19.999800001999980000"),
 			expectedUnrealizedPnl:    sdk.MustNewDecFromStr("9.999800001999980000"),
@@ -125,9 +79,8 @@ func TestQueryPosition(t *testing.T) {
 				LastUpdatedBlockNumber:          1,
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
-			quoteReserve:  sdk.NewDec(1e6),
-			baseReserve:   sdk.NewDec(1e6),
-			pegMultiplier: sdk.OneDec(),
+			sqrtDepth:       sdk.NewDec(1e6),
+			priceMultiplier: sdk.OneDec(),
 
 			expectedPositionNotional: sdk.MustNewDecFromStr("9.99990000099999"),
 			expectedUnrealizedPnl:    sdk.MustNewDecFromStr("-0.00009999900001"),
@@ -143,9 +96,8 @@ func TestQueryPosition(t *testing.T) {
 				LastUpdatedBlockNumber:          1,
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			},
-			quoteReserve:  sdk.NewDec(1e6),
-			baseReserve:   sdk.NewDec(1e6),
-			pegMultiplier: sdk.MustNewDecFromStr("0.5"),
+			sqrtDepth:       sdk.NewDec(1e6),
+			priceMultiplier: sdk.MustNewDecFromStr("0.5"),
 
 			expectedPositionNotional: sdk.MustNewDecFromStr("4.999950000499995"),
 			expectedUnrealizedPnl:    sdk.MustNewDecFromStr("-5.000049999500005"),
@@ -161,7 +113,7 @@ func TestQueryPosition(t *testing.T) {
 			tc.initialPosition.TraderAddress = traderAddr.String()
 
 			t.Log("initialize app and keeper")
-			ctx, app, queryServer := initAppMarkets(t, tc.quoteReserve, tc.baseReserve, tc.pegMultiplier)
+			ctx, app, queryServer := initAppMarkets(t, tc.sqrtDepth, tc.priceMultiplier)
 
 			t.Log("initialize position")
 			app.PerpKeeperV2.Positions.Insert(ctx, collections.Join(tc.initialPosition.Pair, traderAddr), *tc.initialPosition)
@@ -222,13 +174,12 @@ func TestQueryPositions(t *testing.T) {
 			traderAddr := testutil.AccAddress()
 
 			tc.Positions[0].TraderAddress = traderAddr.String()
-			tc.Positions[0].TraderAddress = traderAddr.String()
+			tc.Positions[1].TraderAddress = traderAddr.String()
 
 			ctx, app, queryServer := initAppMarkets(
 				t,
-				/* quoteReserve */ sdk.NewDec(100_000),
-				/* baseReserve */ sdk.NewDec(100_000),
-				/* pegMultiplier */ sdk.OneDec(),
+				sdk.NewDec(100_000),
+				sdk.OneDec(),
 			)
 
 			t.Log("initialize position")

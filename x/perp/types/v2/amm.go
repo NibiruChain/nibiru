@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -255,4 +256,9 @@ func (amm *AMM) SwapBaseAsset(baseAssetAmt sdk.Dec, dir Direction) (quoteAssetDe
 	}
 
 	return amm.FromQuoteReserveToAsset(quoteReserveDelta), nil
+}
+
+func (amm *AMM) WithPair(pair asset.Pair) *AMM {
+	amm.Pair = pair
+	return amm
 }
