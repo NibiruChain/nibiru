@@ -12,16 +12,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/epochs/types"
 )
 
-// GetEpochInfo returns epoch info by identifier.
-func (k Keeper) GetEpochInfo(ctx sdk.Context, identifier string) types.EpochInfo {
-	epoch, err := k.Epochs.Get(ctx, identifier)
-	if err != nil {
-		panic(err)
-	}
-
-	return epoch
-}
-
 // EpochExists checks if the epoch exists
 func (k Keeper) EpochExists(ctx sdk.Context, identifier string) bool {
 	_, err := k.Epochs.Get(ctx, identifier)
