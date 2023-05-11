@@ -12,7 +12,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
-	keeper "github.com/NibiruChain/nibiru/x/perp/keeper/v2"
+	"github.com/NibiruChain/nibiru/x/perp/keeper/v2"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 
 	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
@@ -324,10 +324,7 @@ func TestMarginRatio(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			marginRatio, err := keeper.MarginRatio(tc.position, tc.positionNotional, tc.latestCPF)
-
-			require.NoError(t, err)
-			assert.EqualValues(t, tc.expectedMarginRatio, marginRatio)
+			assert.EqualValues(t, tc.expectedMarginRatio, keeper.MarginRatio(tc.position, tc.positionNotional, tc.latestCPF))
 		})
 	}
 }

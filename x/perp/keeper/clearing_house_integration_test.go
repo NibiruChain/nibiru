@@ -18,12 +18,11 @@ import (
 	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	. "github.com/NibiruChain/nibiru/x/oracle/integration/action"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/action"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion"
 	"github.com/NibiruChain/nibiru/x/perp/keeper"
-
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
+	"github.com/NibiruChain/nibiru/x/perp/types/v1"
 )
 
 func createInitMarket() Action {
@@ -58,7 +57,7 @@ func TestOpenPosition(t *testing.T) {
 			When(
 				OpenPosition(alice, pairBtcUsdc, perpammtypes.Direction_LONG, sdk.NewInt(1_000_000), sdk.NewDec(10), sdk.ZeroDec(),
 					OpenPositionResp_PositionShouldBeEqual(
-						perptypes.Position{
+						types.Position{
 							Pair:                            pairBtcUsdc,
 							TraderAddress:                   alice.String(),
 							Margin:                          sdk.NewDec(1_000_000),
@@ -78,7 +77,7 @@ func TestOpenPosition(t *testing.T) {
 				),
 			).
 			Then(
-				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionShouldBeEqualTo(perptypes.Position{
+				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionShouldBeEqualTo(types.Position{
 					Pair:                            pairBtcUsdc,
 					TraderAddress:                   alice.String(),
 					Margin:                          sdk.NewDec(1_000_000),
@@ -87,7 +86,7 @@ func TestOpenPosition(t *testing.T) {
 					BlockNumber:                     1,
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				})),
-				PositionChangedEventShouldBeEqual(&perptypes.PositionChangedEvent{
+				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
 					Pair:               pairBtcUsdc,
 					TraderAddress:      alice.String(),
 					Margin:             sdk.NewCoin(denoms.USDC, sdk.NewDec(1000000).TruncateInt()),
@@ -117,7 +116,7 @@ func TestOpenPosition(t *testing.T) {
 			MoveToNextBlock(),
 			OpenPosition(alice, pairBtcUsdc, perpammtypes.Direction_LONG, sdk.NewInt(1000000), sdk.NewDec(10), sdk.ZeroDec(),
 				OpenPositionResp_PositionShouldBeEqual(
-					perptypes.Position{
+					types.Position{
 						Pair:                            pairBtcUsdc,
 						TraderAddress:                   alice.String(),
 						Margin:                          sdk.NewDec(2_000_000),
@@ -136,7 +135,7 @@ func TestOpenPosition(t *testing.T) {
 				OpenPositionResp_PositionNotionalShouldBeEqual(sdk.MustNewDecFromStr("20000199.998000000000399992")),
 			),
 		).Then(
-			PositionChangedEventShouldBeEqual(&perptypes.PositionChangedEvent{
+			PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
 				Pair:               pairBtcUsdc,
 				TraderAddress:      alice.String(),
 				Margin:             sdk.NewCoin(denoms.USDC, sdk.NewDec(2_000_000).TruncateInt()),
@@ -164,7 +163,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 		name        string
 		traderFunds sdk.Coins
 
-		initialPosition *perptypes.Position
+		initialPosition *types.Position
 
 		side      perpammtypes.Direction
 		margin    sdk.Int
@@ -200,7 +199,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 		{
 			name:        "existing long position, go more long",
 			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1_200_000)),
-			initialPosition: &perptypes.Position{
+			initialPosition: &types.Position{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(10_000),
 				Margin:                          sdk.NewDec(1000),
@@ -224,7 +223,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 		{
 			name:        "existing long position, decrease a bit",
 			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1_000_000)),
-			initialPosition: &perptypes.Position{
+			initialPosition: &types.Position{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(20_000_000),
 				Margin:                          sdk.NewDec(2_000_000),
@@ -248,7 +247,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 		{
 			name:        "existing long position, decrease a lot",
 			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1_200_000)),
-			initialPosition: &perptypes.Position{
+			initialPosition: &types.Position{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(10_000_000),
 				Margin:                          sdk.NewDec(1_000_000),
@@ -306,7 +305,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 		{
 			name:        "existing short position, go more short",
 			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1_200_000)),
-			initialPosition: &perptypes.Position{
+			initialPosition: &types.Position{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(-10_000),
 				Margin:                          sdk.NewDec(1000),
@@ -330,7 +329,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 		{
 			name:        "existing short position, decrease a bit",
 			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1_200_000)),
-			initialPosition: &perptypes.Position{
+			initialPosition: &types.Position{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(-20_000_000),
 				Margin:                          sdk.NewDec(2_000_000),
@@ -354,7 +353,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 		{
 			name:        "existing short position, decrease a lot",
 			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1_200_000)),
-			initialPosition: &perptypes.Position{
+			initialPosition: &types.Position{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.NewDec(-10_000_000),
 				Margin:                          sdk.NewDec(1_000_000),
@@ -417,7 +416,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 				},
 				sdk.OneDec(),
 			))
-			keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, perptypes.PairMetadata{
+			keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
@@ -468,7 +467,7 @@ func TestOpenPositionSuccess(t *testing.T) {
 			feePoolFee := nibiruApp.PerpKeeper.GetParams(ctx).FeePoolFeeRatio.Mul(exchangedNotional).RoundInt()
 			ecosystemFundFee := nibiruApp.PerpKeeper.GetParams(ctx).EcosystemFundFeeRatio.Mul(exchangedNotional).RoundInt()
 
-			testutil.RequireHasTypedEvent(t, ctx, &perptypes.PositionChangedEvent{
+			testutil.RequireHasTypedEvent(t, ctx, &types.PositionChangedEvent{
 				Pair:               asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				TraderAddress:      traderAddr.String(),
 				Margin:             sdk.NewCoin(denoms.NUSD, tc.expectedMargin.RoundInt()),
@@ -497,7 +496,7 @@ func TestOpenPositionError(t *testing.T) {
 		// market params
 		poolTradeLimitRatio sdk.Dec
 
-		initialPosition *perptypes.Position
+		initialPosition *types.Position
 
 		// position arguments
 		side      perpammtypes.Direction
@@ -526,13 +525,13 @@ func TestOpenPositionError(t *testing.T) {
 			margin:              sdk.NewInt(1_000),
 			leverage:            sdk.NewDec(10),
 			baseLimit:           sdk.ZeroDec(),
-			expectedErr:         perptypes.ErrQuoteAmountIsTooSmall,
+			expectedErr:         types.ErrQuoteAmountIsTooSmall,
 		},
 		{
 			name:                "position has bad debt",
 			traderFunds:         sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 999)),
 			poolTradeLimitRatio: sdk.OneDec(),
-			initialPosition: &perptypes.Position{
+			initialPosition: &types.Position{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.OneDec(),
 				Margin:                          sdk.NewDec(1_000_000),
@@ -544,7 +543,7 @@ func TestOpenPositionError(t *testing.T) {
 			margin:      sdk.NewInt(1_000_000),
 			leverage:    sdk.OneDec(),
 			baseLimit:   sdk.ZeroDec(),
-			expectedErr: perptypes.ErrMarginRatioTooLow,
+			expectedErr: types.ErrMarginRatioTooLow,
 		},
 		{
 			name:                "new long position not over base limit",
@@ -577,7 +576,7 @@ func TestOpenPositionError(t *testing.T) {
 			margin:              sdk.NewInt(0),
 			leverage:            sdk.NewDec(10),
 			baseLimit:           sdk.NewDec(10_000),
-			expectedErr:         perptypes.ErrQuoteAmountIsZero,
+			expectedErr:         types.ErrQuoteAmountIsZero,
 		},
 		{
 			name:                "leverage amount is zero",
@@ -588,7 +587,7 @@ func TestOpenPositionError(t *testing.T) {
 			margin:              sdk.NewInt(1_000_000),
 			leverage:            sdk.NewDec(0),
 			baseLimit:           sdk.NewDec(10_000_000),
-			expectedErr:         perptypes.ErrLeverageIsZero,
+			expectedErr:         types.ErrLeverageIsZero,
 		},
 		{
 			name:                "leverage amount is too high - SELL",
@@ -599,7 +598,7 @@ func TestOpenPositionError(t *testing.T) {
 			margin:              sdk.NewInt(1_000_000),
 			leverage:            sdk.NewDec(100),
 			baseLimit:           sdk.NewDec(11_000_000),
-			expectedErr:         perptypes.ErrLeverageIsTooHigh,
+			expectedErr:         types.ErrLeverageIsTooHigh,
 		},
 		{
 			name:                "leverage amount is too high - BUY",
@@ -610,7 +609,7 @@ func TestOpenPositionError(t *testing.T) {
 			margin:              sdk.NewInt(1_000_000),
 			leverage:            sdk.NewDec(16),
 			baseLimit:           sdk.NewDec(0),
-			expectedErr:         perptypes.ErrLeverageIsTooHigh,
+			expectedErr:         types.ErrLeverageIsTooHigh,
 		},
 		{
 			name:                "new long position over fluctuation limit",
@@ -682,7 +681,7 @@ func TestOpenPositionError(t *testing.T) {
 				},
 				sdk.OneDec(),
 			))
-			keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, perptypes.PairMetadata{
+			keeper.SetPairMetadata(nibiruApp.PerpKeeper, ctx, types.PairMetadata{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
 			})
@@ -725,7 +724,7 @@ func TestOpenPositionInvalidPair(t *testing.T) {
 				baseLimit := sdk.NewDec(150)
 				resp, err := nibiruApp.PerpKeeper.OpenPosition(
 					ctx, pair, side, trader, quote, leverage, baseLimit)
-				require.ErrorContains(t, err, perptypes.ErrPairNotFound.Error())
+				require.ErrorContains(t, err, types.ErrPairNotFound.Error())
 				require.Nil(t, resp)
 			},
 		},

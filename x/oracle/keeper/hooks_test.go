@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -10,7 +11,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/epochs/types"
 	"github.com/NibiruChain/nibiru/x/oracle/keeper"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types"
 )
 
 func TestHooks_AfterEpochEnd(t *testing.T) {

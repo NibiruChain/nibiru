@@ -10,40 +10,35 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
 	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
+	v2 "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNumber uint64) {
 }
 
 func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64) {
-	params := k.GetParams(ctx)
-	if epochIdentifier != params.FundingRateInterval || params.Stopped {
-		return
-	}
-
-	for _, pairMetadata := range k.PairsMetadata.Iterate(ctx, collections.Range[asset.Pair]{}).Values() {
-		if !k.PerpAmmKeeper.ExistsPool(ctx, pairMetadata.Pair) {
-			ctx.Logger().Error("no pool for pair found", "pairMetadata.Pair", pairMetadata.Pair)
-			continue
+	for _, market := range k.Markets.Iterate(ctx, collections.Range[asset.Pair]{}).Values() {
+		if !market.Enabled || epochIdentifier != market.FundingRateEpochId {
+			return
 		}
 
-		indexTWAP, err := k.OracleKeeper.GetExchangeRateTwap(ctx, pairMetadata.Pair)
+		indexTWAP, err := k.OracleKeeper.GetExchangeRateTwap(ctx, market.Pair)
 		if err != nil {
-			ctx.Logger().Error("failed to fetch twap index price", "pairMetadata.Pair", pairMetadata.Pair, "error", err)
+			ctx.Logger().Error("failed to fetch twap index price", "market.Pair", market.Pair, "error", err)
 			continue
 		}
 		if indexTWAP.IsZero() {
-			ctx.Logger().Error("index price is zero", "pairMetadata.Pair", pairMetadata.Pair)
+			ctx.Logger().Error("index price is zero", "market.Pair", market.Pair)
 			continue
 		}
 
-		markTwap, err := k.PerpAmmKeeper.GetMarkPriceTWAP(ctx, pairMetadata.Pair, params.TwapLookbackWindow)
+		markTwap, err := k.CalcTwap(ctx, market.Pair, v2.TwapCalcOption_SPOT, v2.Direction_DIRECTION_UNSPECIFIED, sdk.ZeroDec(), market.TwapLookbackWindow)
 		if err != nil {
-			ctx.Logger().Error("failed to fetch twap mark price", "pairMetadata.Pair", pairMetadata.Pair, "error", err)
+			ctx.Logger().Error("failed to fetch twap mark price", "market.Pair", market.Pair, "error", err)
 			continue
 		}
 		if markTwap.IsZero() {
-			ctx.Logger().Error("mark price is zero", "pairMetadata.Pair", pairMetadata.Pair)
+			ctx.Logger().Error("mark price is zero", "market.Pair", market.Pair)
 			continue
 		}
 
@@ -52,23 +47,19 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64)
 		// See https://www.notion.so/nibiru/Funding-Payments-5032d0f8ed164096808354296d43e1fa for an explanation of these terms.
 		premiumFraction := markTwap.Sub(indexTWAP).QuoInt64(int64(intervalsPerDay))
 
-		// If there is a previous cumulative funding rate, add onto that one. Otherwise, the funding rate is the first cumulative funding rate.
-		pairMetadata.LatestCumulativePremiumFraction = pairMetadata.LatestCumulativePremiumFraction.Add(premiumFraction)
-		k.PairsMetadata.Insert(ctx, pairMetadata.Pair, pairMetadata)
+		market.LatestCumulativePremiumFraction = market.LatestCumulativePremiumFraction.Add(premiumFraction)
+		k.Markets.Insert(ctx, market.Pair, market)
 
-		if err = ctx.EventManager().EmitTypedEvent(&types.FundingRateChangedEvent{
-			Pair:                      pairMetadata.Pair,
+		_ = ctx.EventManager().EmitTypedEvent(&types.FundingRateChangedEvent{
+			Pair:                      market.Pair,
 			MarkPrice:                 markTwap,
 			IndexPrice:                indexTWAP,
 			LatestFundingRate:         premiumFraction.Quo(indexTWAP),
 			LatestPremiumFraction:     premiumFraction,
-			CumulativePremiumFraction: pairMetadata.LatestCumulativePremiumFraction,
+			CumulativePremiumFraction: market.LatestCumulativePremiumFraction,
 			BlockHeight:               ctx.BlockHeight(),
 			BlockTimeMs:               ctx.BlockTime().UnixMilli(),
-		}); err != nil {
-			ctx.Logger().Error("failed to emit FundingRateChangedEvent", "pairMetadata.Pair", pairMetadata.Pair, "error", err)
-			continue
-		}
+		})
 	}
 }
 
