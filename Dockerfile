@@ -14,14 +14,14 @@ RUN apt-get update && \
 ARG TARGETARCH
 RUN if [ "${TARGETARCH}" = "arm64" ]; then \
   wget https://github.com/CosmWasm/wasmvm/releases/download/v1.2.0/libwasmvm_muslc.aarch64.a -O /usr/lib/aarch64-linux-gnu/libwasmvm_muslc.a; \
-  wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.3.0/librocksdb_8.3.0.arm64.a.tar.gz -O /usr/lib/aarch64-linux-gnu/librocksdb_8.3.0.arm64.a.tar.gz; \
-  tar -xf /usr/lib/aarch64-linux-gnu/librocksdb_8.3.0.arm64.a.tar.gz -C /usr/lib/aarch64-linux-gnu/; \
-  wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.3.0/include.tar.gz -O /usr/include/rocksdb.tar.gz; \
+  wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/librocksdb_8.1.1_linux_arm64.tar.gz -O /usr/lib/aarch64-linux-gnu/librocksdb_8.1.1_linux_arm64.tar.gz; \
+  tar -xf /usr/lib/aarch64-linux-gnu/librocksdb_8.1.1_linux_arm64.tar.gz -C /usr/lib/aarch64-linux-gnu/; \
+  wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/include.8.1.1.tar.gz -O /usr/include/rocksdb.tar.gz; \
   tar -xf /usr/include/rocksdb.tar.gz -C /usr/include/; \
   else \
   wget https://github.com/CosmWasm/wasmvm/releases/download/v1.2.0/libwasmvm_muslc.x86_64.a -O /usr/lib/x86_64-linux-gnu/libwasmvm_muslc.a; \
-  wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/librocksdb_8.1.1.x86_64.a.tar.gz -O /usr/lib/x86_64-linux-gnu/librocksdb_8.1.1.x86_64.a.tar.gz; \
-  tar -xf /usr/lib/x86_64-linux-gnu/librocksdb_8.1.1.x86_64.a.tar.gz -C /usr/lib/x86_64-linux-gnu/; \
+  wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/librocksdb_8.1.1_linux_amd64.tar.gz -O /usr/lib/x86_64-linux-gnu/librocksdb_8.1.1_linux_amd64.tar.gz; \
+  tar -xf /usr/lib/x86_64-linux-gnu/librocksdb_8.1.1_linux_amd64.tar.gz -C /usr/lib/x86_64-linux-gnu/; \
   wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/include.8.1.1.tar.gz -O /usr/include/rocksdb.tar.gz; \
   tar -xf /usr/include/rocksdb.tar.gz -C /usr/include/; \
   fi
