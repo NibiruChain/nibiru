@@ -2,6 +2,7 @@
 package keeper
 
 import (
+	"fmt"
 	"testing"
 
 	"time"
@@ -225,7 +226,6 @@ func CreateTestFixture(t *testing.T) TestFixture {
 	keeper := NewKeeper(
 		appCodec,
 		keyOracle,
-		paramsKeeper.Subspace(types.ModuleName),
 		accountKeeper,
 		bankKeeper,
 		distrKeeper,
@@ -234,11 +234,12 @@ func CreateTestFixture(t *testing.T) TestFixture {
 	)
 
 	defaults := types.DefaultParams()
-	keeper.SetParams(ctx, defaults)
 
 	for _, pair := range defaults.Whitelist {
 		keeper.WhitelistedPairs.Insert(ctx, pair)
 	}
+
+	keeper.Params.Set(ctx, defaults)
 
 	return TestFixture{ctx, legacyAmino, accountKeeper, bankKeeper, keeper, stakingKeeper, distrKeeper}
 }
@@ -277,10 +278,17 @@ var (
 
 func Setup(t *testing.T) (TestFixture, types.MsgServer) {
 	fixture := CreateTestFixture(t)
-	params := fixture.OracleKeeper.GetParams(fixture.Ctx)
+
+	params, _ := fixture.OracleKeeper.Params.Get(fixture.Ctx)
+
 	params.VotePeriod = 1
 	params.SlashWindow = 100
-	fixture.OracleKeeper.SetParams(fixture.Ctx, params)
+	fixture.OracleKeeper.Params.Set(fixture.Ctx, params)
+
+	params, _ = fixture.OracleKeeper.Params.Get(fixture.Ctx)
+	fmt.Println("-----------------------------------")
+	fmt.Println(params)
+
 	h := NewMsgServerImpl(fixture.OracleKeeper)
 
 	sh := staking.NewHandler(fixture.StakingKeeper)

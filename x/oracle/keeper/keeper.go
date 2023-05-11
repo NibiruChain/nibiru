@@ -32,6 +32,7 @@ type Keeper struct {
 
 	distrModuleName string
 
+	Params            collections.Item[types.Params]
 	ExchangeRates     collections.Map[asset.Pair, sdk.Dec]
 	FeederDelegations collections.Map[sdk.ValAddress, sdk.AccAddress]
 	MissCounters      collections.Map[sdk.ValAddress, uint64]
@@ -56,7 +57,7 @@ func (p PairRewardsIndexes) IndexerList() []collections.Indexer[uint64, types.Pa
 
 // NewKeeper constructs a new keeper for oracle
 func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
-	paramspace paramstypes.Subspace, accountKeeper types.AccountKeeper,
+	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper, distrKeeper types.DistributionKeeper,
 	stakingKeeper types.StakingKeeper, distrName string) Keeper {
 	// ensure oracle module account is set
@@ -64,20 +65,15 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
 		panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
 	}
 
-	// set KeyTable if it has not already been set
-	if !paramspace.HasKeyTable() {
-		paramspace = paramspace.WithKeyTable(types.ParamKeyTable())
-	}
-
 	return Keeper{
 		cdc:               cdc,
 		storeKey:          storeKey,
-		paramSpace:        paramspace,
 		AccountKeeper:     accountKeeper,
 		bankKeeper:        bankKeeper,
 		distrKeeper:       distrKeeper,
 		StakingKeeper:     stakingKeeper,
 		distrModuleName:   distrName,
+		Params:            collections.NewItem(storeKey, 11, collections.ProtoValueEncoder[types.Params](cdc)),
 		ExchangeRates:     collections.NewMap(storeKey, 1, asset.PairKeyEncoder, collections.DecValueEncoder),
 		PriceSnapshots:    collections.NewMap(storeKey, 10, collections.PairKeyEncoder(asset.PairKeyEncoder, collections.TimeKeyEncoder), collections.ProtoValueEncoder[types.PriceSnapshot](cdc)),
 		FeederDelegations: collections.NewMap(storeKey, 2, collections.ValAddressKeyEncoder, collections.AccAddressValueEncoder),
@@ -142,7 +138,12 @@ func (k Keeper) calcTwap(ctx sdk.Context, snapshots []types.PriceSnapshot) (pric
 	} else if len(snapshots) == 1 {
 		return snapshots[0].Price, nil
 	}
-	twapLookBack := k.GetParams(ctx).TwapLookbackWindow.Milliseconds()
+	params, err := k.Params.Get(ctx)
+	if err != nil {
+		return
+	}
+
+	twapLookBack := params.TwapLookbackWindow.Milliseconds()
 	firstTimeStamp := ctx.BlockTime().UnixMilli() - twapLookBack
 	cumulativePrice := sdk.ZeroDec()
 
@@ -172,12 +173,17 @@ func (k Keeper) calcTwap(ctx sdk.Context, snapshots []types.PriceSnapshot) (pric
 }
 
 func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair asset.Pair) (price sdk.Dec, err error) {
+	params, err := k.Params.Get(ctx)
+	if err != nil {
+		return
+	}
+
 	snapshots := k.PriceSnapshots.Iterate(
 		ctx,
 		collections.PairRange[asset.Pair, time.Time]{}.
 			Prefix(pair).
 			StartInclusive(
-				ctx.BlockTime().Add(-1*k.GetParams(ctx).TwapLookbackWindow)).
+				ctx.BlockTime().Add(-1*params.TwapLookbackWindow)).
 			EndInclusive(
 				ctx.BlockTime()),
 	).Values()
