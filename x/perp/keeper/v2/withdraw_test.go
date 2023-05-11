@@ -14,6 +14,7 @@ import (
 	. "github.com/NibiruChain/nibiru/x/perp/integration/action/v2"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion/v2"
 	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
+	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
 func TestWithdraw(t *testing.T) {
@@ -27,7 +28,7 @@ func TestWithdraw(t *testing.T) {
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				CreateCustomMarket(pairBtcUsdc),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1000)))),
+				FundModule(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1000)))),
 			).
 			When(
 				Withdraw(pairBtcUsdc, alice, sdk.NewInt(1000)),
@@ -43,8 +44,8 @@ func TestWithdraw(t *testing.T) {
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				CreateCustomMarket(pairBtcUsdc),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(500)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(500)))),
+				FundModule(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(500)))),
+				FundModule(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(500)))),
 			).
 			When(
 				Withdraw(pairBtcUsdc, alice, sdk.NewInt(1000)),
@@ -61,7 +62,7 @@ func TestWithdraw(t *testing.T) {
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				CreateCustomMarket(pairBtcUsdc),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1000)))),
+				FundModule(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1000)))),
 			).
 			When(
 				Withdraw(pairBtcUsdc, alice, sdk.NewInt(1000)),
@@ -78,7 +79,7 @@ func TestWithdraw(t *testing.T) {
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				CreateCustomMarket(pairBtcUsdc, WithPrepaidBadDebt(sdk.NewInt(1000))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1000)))),
+				FundModule(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1000)))),
 			).
 			When(
 				Withdraw(pairBtcUsdc, alice, sdk.NewInt(1000)),
