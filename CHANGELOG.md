@@ -40,6 +40,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [v0.19.3]
+
+### Features
+
+* [#1304](https://github.com/NibiruChain/nibiru/pull/1304) - feat: rocksdb embedded database
+
 ## [v0.19.2](https://github.com/NibiruChain/nibiru/releases/tag/v0.19.2) - 2023-02-24
 
 ### Features
