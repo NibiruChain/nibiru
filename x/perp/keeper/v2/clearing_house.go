@@ -98,120 +98,6 @@ func (k Keeper) OpenPosition(
 	return positionResp, nil
 }
 
-// checkOpenPositionRequirements checks the minimum requirements to open a position.
-//
-// - Checks that quote asset is not zero.
-// - Checks that leverage is not zero.
-// - Checks that leverage is below requirement.
-//
-// args:
-// - market: the market where the position will be opened
-// - quoteAssetAmt: the amount of quote asset
-// - leverage: the amount of leverage to take, as sdk.Dec
-//
-// returns:
-// - error: if any of the requirements is not met
-func checkOpenPositionRequirements(market v2types.Market, quoteAssetAmt sdk.Int, leverage sdk.Dec) error {
-	if quoteAssetAmt.IsZero() {
-		return v2types.ErrQuoteAmountIsZero
-	}
-
-	if leverage.IsZero() {
-		return v2types.ErrLeverageIsZero
-	}
-
-	if leverage.GT(market.MaxLeverage) {
-		return v2types.ErrLeverageIsTooHigh
-	}
-
-	return nil
-}
-
-// afterPositionUpdate is called when a position has been updated.
-func (k Keeper) afterPositionUpdate(
-	ctx sdk.Context,
-	market v2types.Market,
-	amm v2types.AMM,
-	traderAddr sdk.AccAddress,
-	positionResp v2types.PositionResp,
-) (err error) {
-	// check bad debt
-	if !positionResp.BadDebt.IsZero() {
-		return fmt.Errorf("bad debt must be zero to prevent attacker from leveraging it")
-	}
-
-	// check price fluctuation
-	if err := k.checkPriceFluctuationLimitRatio(ctx, market, amm); err != nil {
-		return err
-	}
-
-	if !positionResp.Position.Size_.IsZero() {
-		k.Positions.Insert(ctx, collections.Join(market.Pair, traderAddr), *positionResp.Position)
-
-		spotNotional, err := PositionNotionalSpot(amm, *positionResp.Position)
-		if err != nil {
-			return err
-		}
-		twapNotional, err := k.PositionNotionalTWAP(ctx, *positionResp.Position, market.TwapLookbackWindow)
-		if err != nil {
-			return err
-		}
-		positionNotional := sdk.MaxDec(spotNotional, twapNotional)
-
-		marginRatio := MarginRatio(*positionResp.Position, positionNotional, market.LatestCumulativePremiumFraction)
-		if marginRatio.LT(market.MaintenanceMarginRatio) {
-			return v2types.ErrMarginRatioTooLow
-		}
-	}
-
-	// transfer trader <=> vault
-	marginToVault := positionResp.MarginToVault.RoundInt()
-	switch {
-	case marginToVault.IsPositive():
-		coinToSend := sdk.NewCoin(market.Pair.QuoteDenom(), marginToVault)
-		if err = k.BankKeeper.SendCoinsFromAccountToModule(
-			ctx, traderAddr, v2types.VaultModuleAccount, sdk.NewCoins(coinToSend)); err != nil {
-			return err
-		}
-	case marginToVault.IsNegative():
-		if err = k.Withdraw(ctx, market, traderAddr, marginToVault.Abs()); err != nil {
-			return err
-		}
-	}
-
-	transferredFee, err := k.transferFee(ctx, market.Pair, traderAddr, positionResp.ExchangedNotionalValue)
-	if err != nil {
-		return err
-	}
-
-	// calculate positionNotional (it's different depends on long or short side)
-	// long: unrealizedPnl = positionNotional - openNotional => positionNotional = openNotional + unrealizedPnl
-	// short: unrealizedPnl = openNotional - positionNotional => positionNotional = openNotional - unrealizedPnl
-	positionNotional := sdk.ZeroDec()
-	if positionResp.Position.Size_.IsPositive() {
-		positionNotional = positionResp.Position.OpenNotional.Add(positionResp.UnrealizedPnlAfter)
-	} else if positionResp.Position.Size_.IsNegative() {
-		positionNotional = positionResp.Position.OpenNotional.Sub(positionResp.UnrealizedPnlAfter)
-	}
-
-	return ctx.EventManager().EmitTypedEvent(&v2types.PositionChangedEvent{
-		TraderAddress:      traderAddr.String(),
-		Pair:               market.Pair,
-		Margin:             sdk.NewCoin(market.Pair.QuoteDenom(), positionResp.Position.Margin.RoundInt()),
-		PositionNotional:   positionNotional,
-		ExchangedNotional:  positionResp.ExchangedNotionalValue,
-		ExchangedSize:      positionResp.ExchangedPositionSize,
-		TransactionFee:     sdk.NewCoin(market.Pair.QuoteDenom(), transferredFee),
-		PositionSize:       positionResp.Position.Size_,
-		RealizedPnl:        positionResp.RealizedPnl,
-		UnrealizedPnlAfter: positionResp.UnrealizedPnlAfter,
-		BadDebt:            sdk.NewCoin(market.Pair.QuoteDenom(), positionResp.BadDebt.RoundInt()),
-		FundingPayment:     positionResp.FundingPayment,
-		BlockHeight:        ctx.BlockHeight(),
-		BlockTimeMs:        ctx.BlockTime().UnixMilli(),
-	})
-}
-
 // increases a position by increasedNotional amount in margin units.
 // Calculates the amount of margin required given the leverage parameter.
 // Recalculates the remaining margin after applying a funding payment.
@@ -580,6 +466,120 @@ func (k Keeper) closeAndOpenReversePosition(
 	}
 
 	return updatedAMM, positionResp, nil
+}
+
+// checkOpenPositionRequirements checks the minimum requirements to open a position.
+//
+// - Checks that quote asset is not zero.
+// - Checks that leverage is not zero.
+// - Checks that leverage is below requirement.
+//
+// args:
+// - market: the market where the position will be opened
+// - quoteAssetAmt: the amount of quote asset
+// - leverage: the amount of leverage to take, as sdk.Dec
+//
+// returns:
+// - error: if any of the requirements is not met
+func checkOpenPositionRequirements(market v2types.Market, quoteAssetAmt sdk.Int, leverage sdk.Dec) error {
+	if quoteAssetAmt.IsZero() {
+		return v2types.ErrQuoteAmountIsZero
+	}
+
+	if leverage.IsZero() {
+		return v2types.ErrLeverageIsZero
+	}
+
+	if leverage.GT(market.MaxLeverage) {
+		return v2types.ErrLeverageIsTooHigh
+	}
+
+	return nil
+}
+
+// afterPositionUpdate is called when a position has been updated.
+func (k Keeper) afterPositionUpdate(
+	ctx sdk.Context,
+	market v2types.Market,
+	amm v2types.AMM,
+	traderAddr sdk.AccAddress,
+	positionResp v2types.PositionResp,
+) (err error) {
+	// check bad debt
+	if !positionResp.BadDebt.IsZero() {
+		return fmt.Errorf("bad debt must be zero to prevent attacker from leveraging it")
+	}
+
+	// check price fluctuation
+	if err := k.checkPriceFluctuationLimitRatio(ctx, market, amm); err != nil {
+		return err
+	}
+
+	if !positionResp.Position.Size_.IsZero() {
+		k.Positions.Insert(ctx, collections.Join(market.Pair, traderAddr), *positionResp.Position)
+
+		spotNotional, err := PositionNotionalSpot(amm, *positionResp.Position)
+		if err != nil {
+			return err
+		}
+		twapNotional, err := k.PositionNotionalTWAP(ctx, *positionResp.Position, market.TwapLookbackWindow)
+		if err != nil {
+			return err
+		}
+		positionNotional := sdk.MaxDec(spotNotional, twapNotional)
+
+		marginRatio := MarginRatio(*positionResp.Position, positionNotional, market.LatestCumulativePremiumFraction)
+		if marginRatio.LT(market.MaintenanceMarginRatio) {
+			return v2types.ErrMarginRatioTooLow
+		}
+	}
+
+	// transfer trader <=> vault
+	marginToVault := positionResp.MarginToVault.RoundInt()
+	switch {
+	case marginToVault.IsPositive():
+		coinToSend := sdk.NewCoin(market.Pair.QuoteDenom(), marginToVault)
+		if err = k.BankKeeper.SendCoinsFromAccountToModule(
+			ctx, traderAddr, v2types.VaultModuleAccount, sdk.NewCoins(coinToSend)); err != nil {
+			return err
+		}
+	case marginToVault.IsNegative():
+		if err = k.Withdraw(ctx, market, traderAddr, marginToVault.Abs()); err != nil {
+			return err
+		}
+	}
+
+	transferredFee, err := k.transferFee(ctx, market.Pair, traderAddr, positionResp.ExchangedNotionalValue)
+	if err != nil {
+		return err
+	}
+
+	// calculate positionNotional (it's different depends on long or short side)
+	// long: unrealizedPnl = positionNotional - openNotional => positionNotional = openNotional + unrealizedPnl
+	// short: unrealizedPnl = openNotional - positionNotional => positionNotional = openNotional - unrealizedPnl
+	positionNotional := sdk.ZeroDec()
+	if positionResp.Position.Size_.IsPositive() {
+		positionNotional = positionResp.Position.OpenNotional.Add(positionResp.UnrealizedPnlAfter)
+	} else if positionResp.Position.Size_.IsNegative() {
+		positionNotional = positionResp.Position.OpenNotional.Sub(positionResp.UnrealizedPnlAfter)
+	}
+
+	return ctx.EventManager().EmitTypedEvent(&v2types.PositionChangedEvent{
+		TraderAddress:      traderAddr.String(),
+		Pair:               market.Pair,
+		Margin:             sdk.NewCoin(market.Pair.QuoteDenom(), positionResp.Position.Margin.RoundInt()),
+		PositionNotional:   positionNotional,
+		ExchangedNotional:  positionResp.ExchangedNotionalValue,
+		ExchangedSize:      positionResp.ExchangedPositionSize,
+		TransactionFee:     sdk.NewCoin(market.Pair.QuoteDenom(), transferredFee),
+		PositionSize:       positionResp.Position.Size_,
+		RealizedPnl:        positionResp.RealizedPnl,
+		UnrealizedPnlAfter: positionResp.UnrealizedPnlAfter,
+		BadDebt:            sdk.NewCoin(market.Pair.QuoteDenom(), positionResp.BadDebt.RoundInt()),
+		FundingPayment:     positionResp.FundingPayment,
+		BlockHeight:        ctx.BlockHeight(),
+		BlockTimeMs:        ctx.BlockTime().UnixMilli(),
+	})
 }
 
 // transfers the fee to the exchange fee pool
