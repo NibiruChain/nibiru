@@ -27,14 +27,17 @@ jobs:
       - name: download release
         uses: robinraju/release-downloader@v1.8
         with:
-        #   tag: ${{ steps.latest_release.outputs.release }}
+          # uses latest (including drafts)
+          # tag: ${{ steps.latest_release.outputs.release }} 
+          # uses latest (excluding drafts) as tagged by GitHub
           latest: true
           fileName: "*linux_amd64.tar.gz"
 
       - name: unpack release
         run: |
           tar -xzf *linux_amd64.tar.gz
-          mv nibid-* nibid
+          rm nibid*.gz
+          mv nibid* nibid || true
 
       - name: launch localnet
         run: |
