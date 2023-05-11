@@ -45,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `pozetroninc/github-action-get-latest-release` from 0.6.0 to 0.7.0 (#1325)
 - Bump `technote-space/get-diff-action` from 4 to 6 (#1327)
 - Bump `actions/setup-go` from 3 to 4 (#1324)
+- Bump `github.com/docker/distribution` from 2.8.1+incompatible to 2.8.2+incompatible (#1339)
 
 ### Breaking
 * [#1317](https://github.com/NibiruChain/nibiru/pull/1317) - feat(sudo): Implement and test CLI commands for tx and queries. 
