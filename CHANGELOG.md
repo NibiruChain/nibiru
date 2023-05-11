@@ -68,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1298](https://github.com/NibiruChain/nibiru/pull/1298) - refactor(perp)!: remove `MaxOracleSpreadRatio` from Perpv2
 * [#1302](https://github.com/NibiruChain/nibiru/pull/1302) - refactor(oracle)!: price snapshot start time inclusive
 * [#1301](https://github.com/NibiruChain/nibiru/pull/1301) - fix(epochs)!: correct epoch start time
+* [#1304](https://github.com/NibiruChain/nibiru/pull/1304) - feat: db backend - rocksdb
 * [#1305](https://github.com/NibiruChain/nibiru/pull/1305) - refactor(perp!): Remove unnecessary protos
 * [#1312](https://github.com/NibiruChain/nibiru/pull/1312) - feat(wasm): wire depth shift handler to the wasm router
 * [#1306](https://github.com/NibiruChain/nibiru/pull/1306) - feat(perp): complete perp v2 types
@@ -110,6 +111,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1331](https://github.com/NibiruChain/nibiru/pull/1331) - refactor(perp): create perp v1 type package and module package
 * [#1333](https://github.com/NibiruChain/nibiru/pull/1333) - feat(perp): add basic clearing house functions
 * [#1332](https://github.com/NibiruChain/nibiru/pull/1332) - feat(perp): add hooks to update funding rate
+* [#1335](https://github.com/NibiruChain/nibiru/pull/1335) - refactor(perp): move remaining perpv1 files to v1 directory
 
 ### Bug Fixes
 
