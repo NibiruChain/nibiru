@@ -17,7 +17,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/perp"
 	"github.com/NibiruChain/nibiru/x/perp/client/cli"
-	"github.com/NibiruChain/nibiru/x/perp/keeper"
+	"github.com/NibiruChain/nibiru/x/perp/keeper/v1"
 	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
 )
 

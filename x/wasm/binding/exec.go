@@ -11,7 +11,7 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
 	"github.com/NibiruChain/nibiru/x/common/set"
-	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
+	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper/v1"
 	"github.com/NibiruChain/nibiru/x/sudo"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 )

@@ -6,7 +6,7 @@ import (
 
 	. "github.com/NibiruChain/nibiru/x/perp/amm/integration/action"
 	. "github.com/NibiruChain/nibiru/x/perp/amm/integration/assertion"
-	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion"
+	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion/v1"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -17,7 +17,7 @@ import (
 	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
 	. "github.com/NibiruChain/nibiru/x/oracle/integration/action"
 	"github.com/NibiruChain/nibiru/x/perp/amm/types"
-	. "github.com/NibiruChain/nibiru/x/perp/integration/action"
+	. "github.com/NibiruChain/nibiru/x/perp/integration/action/v1"
 )
 
 func createInitMarket() Action {
