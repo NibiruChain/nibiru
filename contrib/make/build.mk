@@ -23,7 +23,7 @@ BUILDDIR ?= $(CURDIR)/build
 export GO111MODULE = on
 
 # process build tags
-build_tags = netgo
+build_tags = netgo osusergo rocksdb
 build_tags += $(BUILD_TAGS)
 build_tags := $(strip $(build_tags))
 
@@ -38,7 +38,9 @@ ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=nibiru \
 		  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
 		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
 		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)" \
-			-X github.com/tendermint/tendermint/version.TMCoreSemVer=$(TM_VERSION)
+		  -X github.com/tendermint/tendermint/version.TMCoreSemVer=$(TM_VERSION) \
+		  -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb \
+			-w -s
 ldflags += $(LDFLAGS)
 ldflags := $(strip $(ldflags))
 
@@ -56,11 +58,6 @@ build install: go.sum $(BUILDDIR)/
 # ensure build directory exists
 $(BUILDDIR)/:
 	mkdir -p $(BUILDDIR)/
-
-# build for linux architecture
-build-linux: go.sum
-	docker build -f contrib/docker/linux.Dockerfile -t nibiru-builder .
-	docker run --rm -it -v `pwd`:/nibiru nibiru-builder
 
 go.sum: go.mod
 	@echo "--> Ensure dependencies have not been modified"
