@@ -15,7 +15,7 @@ func NewGenesisState(
 	aggregateExchangeRatePrevotes []AggregateExchangeRatePrevote,
 	aggregateExchangeRateVotes []AggregateExchangeRateVote,
 	pairs []asset.Pair,
-	pairRewards []PairReward,
+	rewards []Rewards,
 ) *GenesisState {
 	return &GenesisState{
 		Params:                        params,
@@ -25,7 +25,7 @@ func NewGenesisState(
 		AggregateExchangeRatePrevotes: aggregateExchangeRatePrevotes,
 		AggregateExchangeRateVotes:    aggregateExchangeRateVotes,
 		Pairs:                         pairs,
-		PairRewards:                   pairRewards,
+		Rewards:                       rewards,
 	}
 }
 
@@ -39,7 +39,7 @@ func DefaultGenesisState() *GenesisState {
 		[]AggregateExchangeRatePrevote{},
 		[]AggregateExchangeRateVote{},
 		[]asset.Pair{},
-		[]PairReward{})
+		[]Rewards{})
 }
 
 // ValidateGenesis validates the oracle genesis state

@@ -13,8 +13,7 @@ import (
 )
 
 // BeforeEpochStart: noop, We don't need to do anything here
-func (k Keeper) BeforeEpochStart(_ sdk.Context, _ string, _ uint64) {
-}
+func (k Keeper) BeforeEpochStart(_ sdk.Context, _ string, _ uint64) {}
 
 // AfterEpochEnd mints and allocates coins at the end of each epoch end
 func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumber uint64) {
