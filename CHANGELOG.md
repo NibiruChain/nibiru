@@ -40,13 +40,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-## [v0.19.4]
+## [v0.19.3]
 
 ### Bug Fixes
 
 * [#1337](https://github.com/NibiruChain/nibiru/pull/1337) - fix: Dockerfile with rocksdb
-
-## [v0.19.3]
 
 ### Features
 
