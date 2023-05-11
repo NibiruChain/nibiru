@@ -133,10 +133,10 @@ message ExchangeRateTuple {
 // which provide prices faithfully for different pairs.
 message Rewards {
   // id uniquely identifies the rewards instance of the pair
-  uint64 id = 2;
+  uint64 id = 1;
   // vote_periods defines the vote periods left in which rewards will be
   // distributed.
-  uint64 vote_periods = 3;
+  uint64 vote_periods = 2;
   // Coins defines the amount of coins to distribute in a single vote period.
-  repeated cosmos.base.v1beta1.Coin coins = 4 [ (gogoproto.nullable) = false ];
+  repeated cosmos.base.v1beta1.Coin coins = 3 [ (gogoproto.nullable) = false ];
 }
