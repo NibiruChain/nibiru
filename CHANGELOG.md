@@ -73,6 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1312](https://github.com/NibiruChain/nibiru/pull/1312) - feat(wasm): wire depth shift handler to the wasm router
 * [#1306](https://github.com/NibiruChain/nibiru/pull/1306) - feat(perp): complete perp v2 types
 * [#1309](https://github.com/NibiruChain/nibiru/pull/1309) - feat: minimum swap amount set to $1
+* [#1315](https://github.com/NibiruChain/nibiru/pull/1315) - feat: oracle rewards distribution every week
 
 ### Improvements
 

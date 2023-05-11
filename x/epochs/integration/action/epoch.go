@@ -19,7 +19,7 @@ func (s startEpoch) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error,
 	epochInfo.CurrentEpochStartTime = ctx.BlockTime()
 	epochInfo.StartTime = ctx.BlockTime()
 
-	app.EpochsKeeper.UpsertEpochInfo(ctx, epochInfo)
+	app.EpochsKeeper.Epochs.Insert(ctx, epochInfo.Identifier, epochInfo)
 
 	return ctx, nil, false
 }
