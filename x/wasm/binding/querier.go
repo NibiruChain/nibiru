@@ -11,7 +11,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
-	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
+	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper/v1"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 )

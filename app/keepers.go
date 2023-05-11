@@ -100,7 +100,7 @@ import (
 	perpamm "github.com/NibiruChain/nibiru/x/perp/amm"
 	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
-	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
+	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper/v1"
 	v2perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper/v2"
 	perp "github.com/NibiruChain/nibiru/x/perp/module/v1"
 
@@ -281,7 +281,13 @@ func (app *NibiruApp) InitKeepers(
 	)
 
 	app.EpochsKeeper.SetHooks(
-		epochstypes.NewMultiEpochHooks(app.StablecoinKeeper.Hooks(), app.PerpKeeper.Hooks(), app.PerpKeeperV2.Hooks(), app.InflationKeeper.Hooks()),
+		epochstypes.NewMultiEpochHooks(
+			app.StablecoinKeeper.Hooks(),
+			app.PerpKeeper.Hooks(),
+			app.PerpKeeperV2.Hooks(),
+			app.InflationKeeper.Hooks(),
+			app.OracleKeeper.Hooks(),
+		),
 	)
 
 	// ---------------------------------- IBC keepers
