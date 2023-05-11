@@ -27,7 +27,8 @@ jobs:
       - name: download release
         uses: robinraju/release-downloader@v1.8
         with:
-          tag: ${{ steps.latest_release.outputs.release }}
+        #   tag: ${{ steps.latest_release.outputs.release }}
+          latest: true
           fileName: "*linux_amd64.tar.gz"
 
       - name: unpack release
