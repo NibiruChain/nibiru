@@ -27,6 +27,7 @@ func TestParams(t *testing.T) {
 	slashFraction := sdk.NewDecWithPrec(1, 2)
 	slashWindow := uint64(1000)
 	minValidPerWindow := sdk.NewDecWithPrec(1, 4)
+	minFeeRatio := sdk.NewDecWithPrec(1, 2)
 	whitelist := []asset.Pair{
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
@@ -42,7 +43,9 @@ func TestParams(t *testing.T) {
 		SlashFraction:     slashFraction,
 		SlashWindow:       slashWindow,
 		MinValidPerWindow: minValidPerWindow,
+		ValidatorFeeRatio: minFeeRatio,
 	}
+
 	input.OracleKeeper.SetParams(input.Ctx, newParams)
 
 	storedParams := input.OracleKeeper.GetParams(input.Ctx)

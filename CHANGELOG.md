@@ -73,6 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1312](https://github.com/NibiruChain/nibiru/pull/1312) - feat(wasm): wire depth shift handler to the wasm router
 * [#1306](https://github.com/NibiruChain/nibiru/pull/1306) - feat(perp): complete perp v2 types
 * [#1309](https://github.com/NibiruChain/nibiru/pull/1309) - feat: minimum swap amount set to $1
+* [#1315](https://github.com/NibiruChain/nibiru/pull/1315) - feat: oracle rewards distribution every week
 
 ### Improvements
 
@@ -110,10 +111,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1331](https://github.com/NibiruChain/nibiru/pull/1331) - refactor(perp): create perp v1 type package and module package
 * [#1333](https://github.com/NibiruChain/nibiru/pull/1333) - feat(perp): add basic clearing house functions
 * [#1332](https://github.com/NibiruChain/nibiru/pull/1332) - feat(perp): add hooks to update funding rate
+* [#1334](https://github.com/NibiruChain/nibiru/pull/1334) - feat(perp): add PerpKeeperV2 `ClosePosition`
+* [#1335](https://github.com/NibiruChain/nibiru/pull/1335) - refactor(perp): move remaining perpv1 files to v1 directory
 
 ### Bug Fixes
 
 * [#1210](https://github.com/NibiruChain/nibiru/pull/1210) - fix(ci): fix docker push workflow
+* [#1337](https://github.com/NibiruChain/nibiru/pull/1337) - fix(ci): fix dockerfile with rocksdb
 
 ## [v0.19.2](https://github.com/NibiruChain/nibiru/releases/tag/v0.19.2) - 2023-02-24
 

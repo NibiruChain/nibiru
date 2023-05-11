@@ -317,8 +317,8 @@ func TestOracleExchangeRate(t *testing.T) {
 	ethNusdRewards := sdk.NewInt64Coin("ETHREWARD", 1*common.TO_MICRO)
 	nibiNusdRewards := sdk.NewInt64Coin("NIBIREWARD", 1*common.TO_MICRO)
 
-	AllocateRewards(t, input, asset.Registry.Pair(denoms.ETH, denoms.NUSD), sdk.NewCoins(ethNusdRewards), 1)
-	AllocateRewards(t, input, asset.Registry.Pair(denoms.NIBI, denoms.NUSD), sdk.NewCoins(nibiNusdRewards), 1)
+	AllocateRewards(t, input, sdk.NewCoins(ethNusdRewards), 1)
+	AllocateRewards(t, input, sdk.NewCoins(nibiNusdRewards), 1)
 
 	input.OracleKeeper.UpdateExchangeRates(input.Ctx)
 

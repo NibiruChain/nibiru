@@ -173,7 +173,6 @@ func (k Keeper) executeFullLiquidation(
 		amm,
 		/* currentPosition */ *position,
 		/* quoteAssetAmountLimit */ sdk.ZeroDec(),
-		/* skipFluctuationLimitCheck */ true,
 	)
 	if err != nil {
 		return v2types.LiquidateResp{}, err

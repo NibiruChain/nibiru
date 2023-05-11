@@ -3,8 +3,9 @@ package keeper
 import (
 	"testing"
 
+	"github.com/NibiruChain/collections"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -29,7 +30,7 @@ func TestKeeperRewardsDistributionMultiVotePeriods(t *testing.T) {
 	valPeriodicRewards := sdk.NewDecCoinsFromCoins(rewards).
 		QuoDec(sdk.NewDec(int64(periods))).
 		QuoDec(sdk.NewDec(int64(validators)))
-	AllocateRewards(t, fixture, asset.Registry.Pair(denoms.NIBI, denoms.NUSD), sdk.NewCoins(rewards), periods)
+	AllocateRewards(t, fixture, sdk.NewCoins(rewards), periods)
 
 	for i := uint64(1); i <= periods; i++ {
 		for valIndex := 0; valIndex < validators; valIndex++ {
@@ -44,7 +45,6 @@ func TestKeeperRewardsDistributionMultiVotePeriods(t *testing.T) {
 			}, valIndex)
 		}
 
-		// input.Ctx = input.Ctx.WithBlockHeight(input.Ctx.BlockHeight() + 1)
 		fixture.OracleKeeper.UpdateExchangeRates(fixture.Ctx)
 
 		for valIndex := 0; valIndex < validators; valIndex++ {
@@ -61,21 +61,9 @@ func TestKeeperRewardsDistributionMultiVotePeriods(t *testing.T) {
 		fixture.Ctx = fixture.Ctx.WithBlockHeight(fixture.Ctx.BlockHeight() + int64(votePeriod))
 	}
 
-	// assert there are no rewards for pair
-	require.True(t, fixture.OracleKeeper.GatherRewardsForVotePeriod(fixture.Ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD)).IsZero())
+	// assert there are no rewards
+	require.True(t, fixture.OracleKeeper.GatherRewardsForVotePeriod(fixture.Ctx).IsZero())
 
 	// assert that there are no rewards instances
-	require.Empty(t, fixture.OracleKeeper.PairRewards.Indexes.RewardsByPair.ExactMatch(fixture.Ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD)).PrimaryKeys())
-}
-
-func TestAllocateRewardsForUnlistedPair(t *testing.T) {
-	fixture, _ := Setup(t)
-
-	assert.Error(t, fixture.OracleKeeper.AllocatePairRewards(
-		fixture.Ctx,
-		faucetAccountName,
-		asset.Registry.Pair("foo", "bar"), // pair doesn't exist
-		sdk.NewCoins(sdk.NewInt64Coin("reward", 1*common.TO_MICRO)),
-		1,
-	))
+	require.Empty(t, fixture.OracleKeeper.Rewards.Iterate(fixture.Ctx, collections.Range[uint64]{}).Keys())
 }

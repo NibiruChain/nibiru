@@ -5,7 +5,7 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 
 	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
-	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
+	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper/v1"
 	"github.com/NibiruChain/nibiru/x/sudo"
 )
 

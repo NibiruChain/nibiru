@@ -1,7 +1,6 @@
 package epochs_test
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -12,7 +11,6 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/epochs"
-	"github.com/NibiruChain/nibiru/x/epochs/keeper"
 	"github.com/NibiruChain/nibiru/x/epochs/types"
 )
 
@@ -230,16 +228,4 @@ func TestLegacyEpochSerialization(t *testing.T) {
 	epochInfo := app.EpochsKeeper.GetEpochInfo(ctx, "monthly")
 
 	require.NotEqual(t, epochInfo.CurrentEpochStartHeight, int64(0))
-}
-
-// NumBlocksSinceEpochStart returns the number of blocks since the epoch started.
-// if the epoch started on block N, then calling this during block N (after BeforeEpochStart)
-// would return 0.
-// Calling it any point in block N+1 (assuming the epoch doesn't increment) would return 1.
-func NumBlocksSinceEpochStart(ctx sdk.Context, k keeper.Keeper, identifier string) (int64, error) {
-	epoch := k.GetEpochInfo(ctx, identifier)
-	if (epoch == types.EpochInfo{}) {
-		return 0, fmt.Errorf("epoch with identifier %s not found", identifier)
-	}
-	return ctx.BlockHeight() - epoch.CurrentEpochStartHeight, nil
 }

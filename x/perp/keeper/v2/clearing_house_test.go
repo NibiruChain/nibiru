@@ -887,8 +887,8 @@ func TestClosePosition(t *testing.T) {
 				TimestampMs: ctx.BlockTime().UnixMilli(),
 			})
 			app.PerpKeeperV2.Positions.Insert(ctx, collections.Join(tc.initialPosition.Pair, traderAddr), tc.initialPosition)
-			testapp.FundModuleAccount(app.BankKeeper, ctx, v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1e18)))
-			testapp.FundModuleAccount(app.BankKeeper, ctx, v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1e18)))
+			require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1e18))))
+			require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1e18))))
 
 			resp, err := app.PerpKeeperV2.ClosePosition(
 				ctx,
