@@ -7,6 +7,12 @@ builds:
   - id: darwin
     main: ./cmd/nibid
     binary: nibid
+    hooks:
+      pre:
+        - wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/include.8.1.1.tar.gz -O /root/include.8.1.1.tar.gz
+        - tar -xf /root/include.8.1.1.tar.gz -C /osxcross/target/SDK/MacOSX12.0.sdk/usr/include/
+        - wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/librocksdb_8.1.1_darwin_all.tar.gz -O /root/librocksdb_8.1.1_darwin_all.tar.gz
+        - tar -xf /root/librocksdb_8.1.1_darwin_all.tar.gz -C /osxcross/target/SDK/MacOSX12.0.sdk/usr/lib/
     goos:
       - darwin
     goarch:
@@ -18,14 +24,20 @@ builds:
       - -mod=readonly
       - -trimpath
     ldflags:
-      - -s -w -X main.commit={{.Commit}} -X main.date={{ .CommitDate }} -X github.com/cosmos/cosmos-sdk/version.Name=nibiru -X github.com/cosmos/cosmos-sdk/version.AppName=nibid -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }} -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }} -X github.com/tendermint/tendermint/version.TMCoreSemVer={{ .Env.TM_VERSION }}
+      - -s -w
+      - -X github.com/cosmos/cosmos-sdk/version.Name=nibiru
+      - -X github.com/cosmos/cosmos-sdk/version.AppName=nibid
+      - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
+      - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
       - -linkmode=external
+      - -extldflags '-lrocksdb -lz -lbz2'
     tags:
       - netgo
       - osusergo
       - ledger
-      - static_build
+      - static
       - static_wasm
+      - rocksdb
     overrides:
       - goos: darwin
         goarch: arm64
@@ -37,8 +49,14 @@ builds:
     binary: nibid
     hooks:
       pre:
+        - wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/include.8.1.1.tar.gz -O /root/include.8.1.1.tar.gz
+        - tar -xf /root/include.8.1.1.tar.gz -C /usr/include/
         - wget https://github.com/CosmWasm/wasmvm/releases/download/v1.1.1/libwasmvm_muslc.x86_64.a -O /usr/lib/x86_64-linux-gnu/libwasmvm_muslc.a
         - wget https://github.com/CosmWasm/wasmvm/releases/download/v1.1.1/libwasmvm_muslc.aarch64.a -O /usr/lib/aarch64-linux-gnu/libwasmvm_muslc.a
+        - wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/librocksdb_8.1.1_linux_amd64.tar.gz -O /root/librocksdb_8.1.1_linux_amd64.tar.gz
+        - tar -xf /root/librocksdb_8.1.1_linux_amd64.tar.gz -C /usr/lib/x86_64-linux-gnu/
+        - wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/librocksdb_8.1.1_linux_arm64.tar.gz -O /root/librocksdb_8.1.1_linux_arm64.tar.gz
+        - tar -xf /root/librocksdb_8.1.1_linux_arm64.tar.gz -C /usr/lib/aarch64-linux-gnu/
     goos:
       - linux
     goarch:
@@ -50,15 +68,21 @@ builds:
       - -mod=readonly
       - -trimpath
     ldflags:
-      - -s -w -X main.commit={{.Commit}} -X main.date={{ .CommitDate }} -X github.com/cosmos/cosmos-sdk/version.Name=nibiru -X github.com/cosmos/cosmos-sdk/version.AppName=nibid -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }} -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }} -X github.com/tendermint/tendermint/version.TMCoreSemVer={{ .Env.TM_VERSION }}
+      - -s -w
+      - -X github.com/cosmos/cosmos-sdk/version.Name=nibiru
+      - -X github.com/cosmos/cosmos-sdk/version.AppName=nibid
+      - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
+      - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
+      - -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb
       - -linkmode=external
-      - -extldflags '-Wl,-z,muldefs -static -lm'
+      - -extldflags '-Wl,-z,muldefs -static -lm -lrocksdb -lstdc++ -lpthread'
     tags:
       - netgo
       - osusergo
       - ledger
       - muslc
-      - static_build
+      - rocksdb
+      - static
     overrides:
       - goos: linux
         goarch: arm64
