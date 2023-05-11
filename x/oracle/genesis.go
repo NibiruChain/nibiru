@@ -70,13 +70,13 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 		}
 	}
 
-	for _, pr := range data.PairRewards {
+	for _, pr := range data.Rewards {
 		keeper.Rewards.Insert(ctx, pr.Id, pr)
 	}
 
 	// set last ID based on the last pair reward
-	if len(data.PairRewards) != 0 {
-		keeper.RewardsID.Set(ctx, data.PairRewards[len(data.PairRewards)-1].Id)
+	if len(data.Rewards) != 0 {
+		keeper.RewardsID.Set(ctx, data.Rewards[len(data.Rewards)-1].Id)
 	}
 	keeper.SetParams(ctx, data.Params)
 

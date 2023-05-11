@@ -39,8 +39,8 @@ func (k Keeper) rewardBallotWinners(
 	}
 
 	var totalRewards sdk.DecCoins
-	pairRewards := k.GatherRewardsForVotePeriod(ctx)
-	totalRewards = totalRewards.Add(sdk.NewDecCoinsFromCoins(pairRewards...)...)
+	rewards := k.GatherRewardsForVotePeriod(ctx)
+	totalRewards = totalRewards.Add(sdk.NewDecCoinsFromCoins(rewards...)...)
 
 	var distributedRewards sdk.Coins
 	for _, validatorPerformance := range validatorPerformances {

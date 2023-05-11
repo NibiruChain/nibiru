@@ -1,8 +1,9 @@
 package keeper_test
 
 import (
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
 	"testing"
+
+	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"

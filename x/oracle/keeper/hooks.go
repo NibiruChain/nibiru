@@ -1,10 +1,11 @@
 package keeper
 
 import (
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+
+	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
 
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 

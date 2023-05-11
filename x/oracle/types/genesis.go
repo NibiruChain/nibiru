@@ -15,7 +15,7 @@ func NewGenesisState(
 	aggregateExchangeRatePrevotes []AggregateExchangeRatePrevote,
 	aggregateExchangeRateVotes []AggregateExchangeRateVote,
 	pairs []asset.Pair,
-	pairRewards []Rewards,
+	rewards []Rewards,
 ) *GenesisState {
 	return &GenesisState{
 		Params:                        params,
@@ -25,7 +25,7 @@ func NewGenesisState(
 		AggregateExchangeRatePrevotes: aggregateExchangeRatePrevotes,
 		AggregateExchangeRateVotes:    aggregateExchangeRateVotes,
 		Pairs:                         pairs,
-		PairRewards:                   pairRewards,
+		Rewards:                       rewards,
 	}
 }
 
