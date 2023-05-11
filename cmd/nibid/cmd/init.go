@@ -9,6 +9,7 @@ import (
 	"time"
 
 	tmcfg "github.com/tendermint/tendermint/config"
+	db "github.com/tendermint/tm-db"
 
 	"github.com/cosmos/go-bip39"
 	"github.com/pkg/errors"
@@ -76,6 +77,8 @@ func overwriteTendermintConfig(cfg *tmcfg.Config) {
 	consensus.TimeoutPrecommit = ms(1_000)
 	consensus.TimeoutPrecommitDelta = ms(500)
 	consensus.TimeoutCommit = ms(1_000)
+
+	cfg.DBBackend = string(db.RocksDBBackend)
 }
 
 // InitCmd returns a command that initializes all files needed for Tendermint
