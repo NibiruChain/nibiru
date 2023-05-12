@@ -1,8 +1,9 @@
 package cw_struct
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"time"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // BindingMsg corresponds to the 'ExecuteMsg' enum in the CosmWasm binding

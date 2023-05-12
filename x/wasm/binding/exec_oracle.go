@@ -2,11 +2,13 @@ package binding
 
 import (
 	"fmt"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type ExecutorOracle struct {

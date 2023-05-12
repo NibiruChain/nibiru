@@ -3,6 +3,7 @@ package binding
 import (
 	"encoding/json"
 	"fmt"
+
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -58,6 +59,7 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 		}
 
 		switch {
+		// Perp module
 		case contractExecuteMsg.ExecuteMsg.OpenPosition != nil:
 			cwMsg := contractExecuteMsg.ExecuteMsg.OpenPosition
 			_, err = messenger.Perp.OpenPosition(cwMsg, ctx)
@@ -85,9 +87,13 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 			cwMsg := contractExecuteMsg.ExecuteMsg.DepthShift
 			err = messenger.Perp.DepthShift(cwMsg, contractAddr, ctx)
 			return events, data, err
+
+		// Oracle module
 		case contractExecuteMsg.ExecuteMsg.OracleParams != nil:
 			cwMsg := contractExecuteMsg.ExecuteMsg.OracleParams
-			messenger.Oracle.SetOracleParams(cwMsg, ctx)
+			err = messenger.Oracle.SetOracleParams(cwMsg, ctx)
+			return events, data, err
+
 		default:
 			err = wasmvmtypes.InvalidRequest{
 				Err:     "invalid bindings request",
@@ -115,7 +121,7 @@ func CustomExecuteMsgHandler(
 	}
 }
 
-// CheckPermissions: Checks if a contract is contained within the set of sudo
+// CheckPermissions Checks if a contract is contained within the set of sudo
 // contracts defined in the x/sudo module. These smart contracts are able to
 // execute certain permissioned functions.
 // See https://www.notion.so/nibiru/Nibi-Perps-Admin-ADR-ad38991fffd34e7798618731be0fa922?pvs=4
