@@ -21,11 +21,11 @@ type QueryPlugin struct {
 }
 
 // NewQueryPlugin returns a pointer to a new QueryPlugin
-func NewQueryPlugin(perp *perpkeeper.Keeper, perpAmm *perpammkeeper.Keeper) *QueryPlugin {
+func NewQueryPlugin(perp perpkeeper.Keeper, perpAmm perpammkeeper.Keeper) *QueryPlugin {
 	return &QueryPlugin{
 		Perp: &PerpQuerier{
-			perp:    perpkeeper.NewQuerier(*perp),
-			perpAmm: perpammkeeper.NewQuerier(*perpAmm),
+			perp:    perpkeeper.NewQuerier(perp),
+			perpAmm: perpammkeeper.NewQuerier(perpAmm),
 		},
 	}
 }

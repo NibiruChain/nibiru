@@ -3,6 +3,7 @@ package binding
 import (
 	"encoding/json"
 	"fmt"
+	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -84,9 +85,9 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 			cwMsg := contractExecuteMsg.ExecuteMsg.DepthShift
 			err = messenger.Perp.DepthShift(cwMsg, contractAddr, ctx)
 			return events, data, err
-		//case contractExecuteMsg.ExecuteMsg.OracleParams != nil:
-		//	cwMsg := contractExecuteMsg.ExecuteMsg.OracleParams
-		//	messenger
+		case contractExecuteMsg.ExecuteMsg.OracleParams != nil:
+			cwMsg := contractExecuteMsg.ExecuteMsg.OracleParams
+			messenger.Oracle.SetOracleParams(cwMsg, ctx)
 		default:
 			err = wasmvmtypes.InvalidRequest{
 				Err:     "invalid bindings request",
@@ -102,12 +103,14 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 func CustomExecuteMsgHandler(
 	perp perpkeeper.Keeper,
 	sudoKeeper sudo.Keeper,
+	oracleKeeper oraclekeeper.Keeper,
 ) func(wasmkeeper.Messenger) wasmkeeper.Messenger {
 	return func(originalWasmMessenger wasmkeeper.Messenger) wasmkeeper.Messenger {
 		return &CustomWasmExecutor{
-			Wasm: originalWasmMessenger,
-			Perp: ExecutorPerp{Perp: perp},
-			Sudo: sudoKeeper,
+			Wasm:   originalWasmMessenger,
+			Perp:   ExecutorPerp{Perp: perp},
+			Sudo:   sudoKeeper,
+			Oracle: ExecutorOracle{Oracle: oracleKeeper},
 		}
 	}
 }

@@ -3,6 +3,7 @@ package binding
 import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 
 	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper/v1"
@@ -10,9 +11,10 @@ import (
 )
 
 func RegisterWasmOptions(
-	perp *perpkeeper.Keeper,
-	perpAmm *perpammkeeper.Keeper,
-	sudoKeeper *sudo.Keeper,
+	perp perpkeeper.Keeper,
+	perpAmm perpammkeeper.Keeper,
+	sudoKeeper sudo.Keeper,
+	oracleKeeper oraclekeeper.Keeper,
 ) []wasm.Option {
 	// Custom querier
 	wasmQueryPlugin := NewQueryPlugin(perp, perpAmm)
@@ -21,7 +23,7 @@ func RegisterWasmOptions(
 	})
 
 	wasmExecuteOption := wasmkeeper.WithMessageHandlerDecorator(
-		CustomExecuteMsgHandler(*perp, *sudoKeeper),
+		CustomExecuteMsgHandler(perp, sudoKeeper, oracleKeeper),
 	)
 
 	return []wasm.Option{wasmQueryOption, wasmExecuteOption}
