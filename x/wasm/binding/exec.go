@@ -21,9 +21,10 @@ var _ wasmkeeper.Messenger = (*CustomWasmExecutor)(nil)
 // CustomWasmExecutor is an extension of wasm/keeper.Messenger with its
 // own custom `DispatchMsg` for CosmWasm execute calls on Nibiru.
 type CustomWasmExecutor struct {
-	Wasm wasmkeeper.Messenger
-	Perp *ExecutorPerp
-	Sudo *sudo.Keeper
+	Wasm   wasmkeeper.Messenger
+	Perp   ExecutorPerp
+	Sudo   sudo.Keeper
+	Oracle ExecutorOracle
 }
 
 // BindingExecuteMsgWrapper is a n override of CosmosMsg::Custom
@@ -83,6 +84,9 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 			cwMsg := contractExecuteMsg.ExecuteMsg.DepthShift
 			err = messenger.Perp.DepthShift(cwMsg, contractAddr, ctx)
 			return events, data, err
+		//case contractExecuteMsg.ExecuteMsg.OracleParams != nil:
+		//	cwMsg := contractExecuteMsg.ExecuteMsg.OracleParams
+		//	messenger
 		default:
 			err = wasmvmtypes.InvalidRequest{
 				Err:     "invalid bindings request",
@@ -102,8 +106,8 @@ func CustomExecuteMsgHandler(
 	return func(originalWasmMessenger wasmkeeper.Messenger) wasmkeeper.Messenger {
 		return &CustomWasmExecutor{
 			Wasm: originalWasmMessenger,
-			Perp: &ExecutorPerp{Perp: perp},
-			Sudo: &sudoKeeper,
+			Perp: ExecutorPerp{Perp: perp},
+			Sudo: sudoKeeper,
 		}
 	}
 }

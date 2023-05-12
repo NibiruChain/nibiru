@@ -7,6 +7,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// UpdateParams updates the oracle parameters
+func (k Keeper) UpdateParams(ctx sdk.Context, params types.Params) {
+	k.Params.Set(ctx, params)
+}
+
 // VotePeriod returns the number of blocks during which voting takes place.
 func (k Keeper) VotePeriod(ctx sdk.Context) (res uint64) {
 	params, _ := k.Params.Get(ctx)
@@ -44,12 +49,6 @@ func (k Keeper) RewardBand(ctx sdk.Context) (res sdk.Dec) {
 func (k Keeper) Whitelist(ctx sdk.Context) (res []asset.Pair) {
 	params, _ := k.Params.Get(ctx)
 	return params.Whitelist
-}
-
-// SetWhitelist store new whitelist to param store
-// this function is only for test purpose
-func (k Keeper) SetWhitelist(ctx sdk.Context, whitelist []asset.Pair) {
-	k.paramSpace.Set(ctx, types.KeyWhitelist, whitelist)
 }
 
 // SlashFraction returns oracle voting penalty rate
