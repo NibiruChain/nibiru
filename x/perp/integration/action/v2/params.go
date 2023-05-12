@@ -38,7 +38,10 @@ func ChangeEnableParameter(pair asset.Pair, enable bool) action.Action {
 }
 
 func (c changeEnableParameter) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	app.PerpKeeperV2.ChangeMarketEnabledParameter(ctx, c.Pair, c.Enable)
+	err := app.PerpKeeperV2.ChangeMarketEnabledParameter(ctx, c.Pair, c.Enable)
+	if err != nil {
+		return ctx, err, true
+	}
 
 	return ctx, nil, true
 }
