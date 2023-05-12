@@ -16,7 +16,6 @@ func RegisterWasmOptions(
 	sudoKeeper sudo.Keeper,
 	oracleKeeper oraclekeeper.Keeper,
 ) []wasm.Option {
-	// Custom querier
 	wasmQueryPlugin := NewQueryPlugin(perp, perpAmm)
 	wasmQueryOption := wasmkeeper.WithQueryPlugins(&wasmkeeper.QueryPlugins{
 		Custom: CustomQuerier(wasmQueryPlugin),

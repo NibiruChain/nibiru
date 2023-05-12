@@ -21,8 +21,8 @@ type QueryPlugin struct {
 }
 
 // NewQueryPlugin returns a pointer to a new QueryPlugin
-func NewQueryPlugin(perp perpkeeper.Keeper, perpAmm perpammkeeper.Keeper) *QueryPlugin {
-	return &QueryPlugin{
+func NewQueryPlugin(perp perpkeeper.Keeper, perpAmm perpammkeeper.Keeper) QueryPlugin {
+	return QueryPlugin{
 		Perp: &PerpQuerier{
 			perp:    perpkeeper.NewQuerier(perp),
 			perpAmm: perpammkeeper.NewQuerier(perpAmm),
@@ -47,7 +47,7 @@ func (qp *QueryPlugin) ToBinary(
 
 // CustomQuerier returns a function that is an implementation of the custom
 // querier mechanism for specific messages
-func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessage) ([]byte, error) {
+func CustomQuerier(qp QueryPlugin) func(ctx sdk.Context, request json.RawMessage) ([]byte, error) {
 	return func(ctx sdk.Context, request json.RawMessage) ([]byte, error) {
 		var wasmContractQuery cw_struct.BindingQuery
 		if err := json.Unmarshal(request, &wasmContractQuery); err != nil {
