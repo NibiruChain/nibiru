@@ -59,6 +59,18 @@ func TestParamsEqual(t *testing.T) {
 	err = p10.Validate()
 	require.Error(t, err)
 
+	// oracle fee ratio > 1
+	p12 := types.DefaultParams()
+	p12.ValidatorFeeRatio = sdk.NewDec(2)
+	err = p12.Validate()
+	require.Error(t, err)
+
+	// oracle fee ratio < 0
+	p13 := types.DefaultParams()
+	p13.ValidatorFeeRatio = sdk.NewDec(-1)
+	err = p13.Validate()
+	require.Error(t, err)
+
 	p11 := types.DefaultParams()
 	require.NotNil(t, p11.String())
 }
