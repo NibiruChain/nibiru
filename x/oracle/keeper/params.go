@@ -19,7 +19,7 @@ func (k Keeper) VoteThreshold(ctx sdk.Context) (res sdk.Dec) {
 	return params.VoteThreshold
 }
 
-// VoteThreshold returns the minimum percentage of votes that must be received for a ballot to pass.
+// MinVoters returns the minimum percentage of votes that must be received for a ballot to pass.
 func (k Keeper) MinVoters(ctx sdk.Context) (res uint64) {
 	params, _ := k.Params.Get(ctx)
 	return params.MinVoters

@@ -10,7 +10,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
 // Parameter keys
@@ -75,8 +74,6 @@ var (
 	DefaultValidatorFeeRatio  = sdk.MustNewDecFromStr("0.05")   // 1%
 )
 
-var _ paramstypes.ParamSet = &Params{}
-
 // DefaultParams creates default oracle module parameters
 func DefaultParams() Params {
 	return Params{
@@ -90,28 +87,6 @@ func DefaultParams() Params {
 		MinValidPerWindow:  DefaultMinValidPerWindow,
 		TwapLookbackWindow: DefaultTwapLookbackWindow,
 		ValidatorFeeRatio:  DefaultValidatorFeeRatio,
-	}
-}
-
-// ParamKeyTable returns the parameter key table.
-func ParamKeyTable() paramstypes.KeyTable {
-	return paramstypes.NewKeyTable().RegisterParamSet(&Params{})
-}
-
-// ParamSetPairs implements the ParamSet interface and returns all the key/value pairs
-// pairs of oracle module's parameters.
-func (p *Params) ParamSetPairs() paramstypes.ParamSetPairs {
-	return paramstypes.ParamSetPairs{
-		paramstypes.NewParamSetPair(KeyVotePeriod, &p.VotePeriod, validateVotePeriod),
-		paramstypes.NewParamSetPair(KeyVoteThreshold, &p.VoteThreshold, validateVoteThreshold),
-		paramstypes.NewParamSetPair(KeyMinVoters, &p.MinVoters, validateMinVoters),
-		paramstypes.NewParamSetPair(KeyRewardBand, &p.RewardBand, validateRewardBand),
-		paramstypes.NewParamSetPair(KeyWhitelist, &p.Whitelist, validateWhitelist),
-		paramstypes.NewParamSetPair(KeySlashFraction, &p.SlashFraction, validateSlashFraction),
-		paramstypes.NewParamSetPair(KeySlashWindow, &p.SlashWindow, validateSlashWindow),
-		paramstypes.NewParamSetPair(KeyMinValidPerWindow, &p.MinValidPerWindow, validateMinValidPerWindow),
-		paramstypes.NewParamSetPair(KeyTwapLookbackWindow, &p.TwapLookbackWindow, validateTwapLookbackWindow),
-		paramstypes.NewParamSetPair(KeyValidatorFeeRatio, &p.ValidatorFeeRatio, validateValidatorFeeRatio),
 	}
 }
 
@@ -160,155 +135,5 @@ func (p Params) Validate() error {
 			return fmt.Errorf("oracle parameter Whitelist Pair invalid format: %w", err)
 		}
 	}
-	return nil
-}
-
-func validateVotePeriod(i interface{}) error {
-	v, ok := i.(uint64)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	if v == 0 {
-		return fmt.Errorf("vote period must be positive: %d", v)
-	}
-
-	return nil
-}
-
-func validateMinVoters(i interface{}) error {
-	v, ok := i.(uint64)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	if v == 0 {
-		return fmt.Errorf("min voters must be positive: %d", v)
-	}
-
-	return nil
-}
-
-func validateVoteThreshold(i interface{}) error {
-	v, ok := i.(sdk.Dec)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	if v.LT(sdk.NewDecWithPrec(33, 2)) {
-		return fmt.Errorf("vote threshold must be bigger than 33%%: %s", v)
-	}
-
-	if v.GT(sdk.OneDec()) {
-		return fmt.Errorf("vote threshold too large: %s", v)
-	}
-
-	return nil
-}
-
-func validateRewardBand(i interface{}) error {
-	v, ok := i.(sdk.Dec)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	if v.IsNegative() {
-		return fmt.Errorf("reward band must be positive: %s", v)
-	}
-
-	if v.GT(sdk.OneDec()) {
-		return fmt.Errorf("reward band is too large: %s", v)
-	}
-
-	return nil
-}
-
-func validateWhitelist(i interface{}) error {
-	v, ok := i.([]asset.Pair)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	for _, d := range v {
-		if err := d.Validate(); err != nil {
-			return fmt.Errorf("oracle parameter Whitelist Pair invalid format: %w", err)
-		}
-	}
-
-	return nil
-}
-
-func validateSlashFraction(i interface{}) error {
-	v, ok := i.(sdk.Dec)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	if v.IsNegative() {
-		return fmt.Errorf("slash fraction must be positive: %s", v)
-	}
-
-	if v.GT(sdk.OneDec()) {
-		return fmt.Errorf("slash fraction is too large: %s", v)
-	}
-
-	return nil
-}
-
-func validateSlashWindow(i interface{}) error {
-	v, ok := i.(uint64)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	if v == 0 {
-		return fmt.Errorf("slash window must be positive: %d", v)
-	}
-
-	return nil
-}
-
-func validateMinValidPerWindow(i interface{}) error {
-	v, ok := i.(sdk.Dec)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	if v.IsNegative() {
-		return fmt.Errorf("min valid per window must be positive: %s", v)
-	}
-
-	if v.GT(sdk.OneDec()) {
-		return fmt.Errorf("min valid per window is too large: %s", v)
-	}
-
-	return nil
-}
-
-func validateTwapLookbackWindow(i interface{}) error {
-	v, ok := i.(time.Duration)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-	if v < 0 {
-		return fmt.Errorf("look back twap duration should be positive: %s", v)
-	}
-	return nil
-}
-
-func validateValidatorFeeRatio(i interface{}) error {
-	v, ok := i.(sdk.Dec)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	if v.IsNegative() {
-		return fmt.Errorf("min validator fee ratio be positive: %s", v)
-	}
-
-	if v.GT(sdk.OneDec()) {
-		return fmt.Errorf("min validator fee ratio is too large: %s", v)
-	}
-
 	return nil
 }
