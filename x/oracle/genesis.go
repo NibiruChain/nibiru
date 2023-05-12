@@ -78,7 +78,7 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 	if len(data.Rewards) != 0 {
 		keeper.RewardsID.Set(ctx, data.Rewards[len(data.Rewards)-1].Id)
 	}
-	keeper.SetParams(ctx, data.Params)
+	keeper.Params.Set(ctx, data.Params)
 
 	// check if the module account exists
 	moduleAcc := keeper.AccountKeeper.GetModuleAccount(ctx, types.ModuleName)
@@ -91,7 +91,8 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 // to a genesis file, which can be imported again
 // with InitGenesis
 func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
-	params := keeper.GetParams(ctx)
+	params, _ := keeper.Params.Get(ctx)
+
 	feederDelegations := []types.FeederDelegation{}
 	for _, kv := range keeper.FeederDelegations.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {
 		feederDelegations = append(feederDelegations, types.FeederDelegation{

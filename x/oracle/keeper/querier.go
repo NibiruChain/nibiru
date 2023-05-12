@@ -30,7 +30,11 @@ var _ types.QueryServer = querier{}
 func (q querier) Params(c context.Context, _ *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	var params types.Params
-	q.paramSpace.GetParamSet(ctx, &params)
+
+	params, err := q.Keeper.Params.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	return &types.QueryParamsResponse{Params: params}, nil
 }
