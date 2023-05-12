@@ -14,6 +14,7 @@ import (
 func TestExportInitGenesis(t *testing.T) {
 	input := keeper.CreateTestFixture(t)
 
+	input.OracleKeeper.Params.Set(input.Ctx, types.DefaultParams())
 	input.OracleKeeper.FeederDelegations.Insert(input.Ctx, keeper.ValAddrs[0], keeper.Addrs[1])
 	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, "pair1:pair2", sdk.NewDec(123))
 	input.OracleKeeper.Prevotes.Insert(input.Ctx, keeper.ValAddrs[0], types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash{123}, keeper.ValAddrs[0], uint64(2)))
