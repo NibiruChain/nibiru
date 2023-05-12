@@ -116,6 +116,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1332](https://github.com/NibiruChain/nibiru/pull/1332) - feat(perp): add hooks to update funding rate
 * [#1334](https://github.com/NibiruChain/nibiru/pull/1334) - feat(perp): add PerpKeeperV2 `ClosePosition`
 * [#1335](https://github.com/NibiruChain/nibiru/pull/1335) - refactor(perp): move remaining perpv1 files to v1 directory
+* [#1338](https://github.com/NibiruChain/nibiru/pull/1338) - feat(perp): V2 OpenPosition
 
 ### Bug Fixes
 
