@@ -175,9 +175,11 @@ func TestOracleTally(t *testing.T) {
 
 func TestOracleRewardBand(t *testing.T) {
 	fixture, msgServer := Setup(t)
-	params := fixture.OracleKeeper.GetParams(fixture.Ctx)
+	params, err := fixture.OracleKeeper.Params.Get(fixture.Ctx)
+	require.NoError(t, err)
+
 	params.Whitelist = []asset.Pair{asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}
-	fixture.OracleKeeper.SetParams(fixture.Ctx, params)
+	fixture.OracleKeeper.Params.Set(fixture.Ctx, params)
 
 	// clear pairs to reset vote targets
 	for _, p := range fixture.OracleKeeper.WhitelistedPairs.Iterate(fixture.Ctx, collections.Range[asset.Pair]{}).Keys() {
@@ -357,7 +359,8 @@ func TestOracleRandomPrices(t *testing.T) {
 
 func TestWhitelistedPairs(t *testing.T) {
 	fixture, msgServer := Setup(t)
-	params := fixture.OracleKeeper.GetParams(fixture.Ctx)
+	params, err := fixture.OracleKeeper.Params.Get(fixture.Ctx)
+	require.NoError(t, err)
 
 	for _, p := range fixture.OracleKeeper.WhitelistedPairs.Iterate(fixture.Ctx, collections.Range[asset.Pair]{}).Keys() {
 		fixture.OracleKeeper.WhitelistedPairs.Delete(fixture.Ctx, p)
@@ -372,7 +375,7 @@ func TestWhitelistedPairs(t *testing.T) {
 
 	// add btc:nusd for next vote period
 	params.Whitelist = []asset.Pair{asset.Registry.Pair(denoms.NIBI, denoms.NUSD), asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
-	fixture.OracleKeeper.SetParams(fixture.Ctx, params)
+	fixture.OracleKeeper.Params.Set(fixture.Ctx, params)
 	fixture.OracleKeeper.UpdateExchangeRates(fixture.Ctx)
 
 	// no missing current
@@ -392,7 +395,7 @@ func TestWhitelistedPairs(t *testing.T) {
 
 	// delete btc:nusd for next vote period
 	params.Whitelist = []asset.Pair{asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}
-	fixture.OracleKeeper.SetParams(fixture.Ctx, params)
+	fixture.OracleKeeper.Params.Set(fixture.Ctx, params)
 	fixture.OracleKeeper.UpdateExchangeRates(fixture.Ctx)
 
 	assert.Equal(t, uint64(1), fixture.OracleKeeper.MissCounters.GetOr(fixture.Ctx, ValAddrs[0], 0))

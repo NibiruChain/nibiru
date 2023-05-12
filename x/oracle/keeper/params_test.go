@@ -15,8 +15,9 @@ func TestParams(t *testing.T) {
 	input := CreateTestFixture(t)
 
 	// Test default params setting
-	input.OracleKeeper.SetParams(input.Ctx, types.DefaultParams())
-	params := input.OracleKeeper.GetParams(input.Ctx)
+	input.OracleKeeper.Params.Set(input.Ctx, types.DefaultParams())
+	params, err := input.OracleKeeper.Params.Get(input.Ctx)
+	require.NoError(t, err)
 	require.NotNil(t, params)
 
 	// Test custom params setting
@@ -45,10 +46,10 @@ func TestParams(t *testing.T) {
 		MinValidPerWindow: minValidPerWindow,
 		ValidatorFeeRatio: minFeeRatio,
 	}
+	input.OracleKeeper.Params.Set(input.Ctx, newParams)
 
-	input.OracleKeeper.SetParams(input.Ctx, newParams)
-
-	storedParams := input.OracleKeeper.GetParams(input.Ctx)
+	storedParams, err := input.OracleKeeper.Params.Get(input.Ctx)
+	require.NoError(t, err)
 	require.NotNil(t, storedParams)
 	require.Equal(t, storedParams, newParams)
 }

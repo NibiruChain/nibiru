@@ -147,7 +147,7 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	}
 	params := otypes.DefaultParams()
 	params.TwapLookbackWindow = 1 * time.Hour
-	app.OracleKeeper.SetParams(ctx, params)
+	app.OracleKeeper.Params.Set(ctx, params)
 	app.OracleKeeper.SetPrice(ctx, pairs[0], sdk.MustNewDecFromStr("0.9"))
 
 	require.NoError(t, app.StablecoinKeeper.SetCollRatio(ctx, sdk.MustNewDecFromStr("0.8")))
