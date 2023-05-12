@@ -2,7 +2,6 @@
 package keeper
 
 import (
-	"fmt"
 	"testing"
 
 	"time"
@@ -285,8 +284,6 @@ func Setup(t *testing.T) (TestFixture, types.MsgServer) {
 	fixture.OracleKeeper.Params.Set(fixture.Ctx, params)
 
 	params, _ = fixture.OracleKeeper.Params.Get(fixture.Ctx)
-	fmt.Println("-----------------------------------")
-	fmt.Println(params)
 
 	h := NewMsgServerImpl(fixture.OracleKeeper)
 
