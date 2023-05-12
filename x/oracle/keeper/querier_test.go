@@ -24,7 +24,10 @@ func TestQueryParams(t *testing.T) {
 	res, err := querier.Params(ctx, &types.QueryParamsRequest{})
 	require.NoError(t, err)
 
-	require.Equal(t, input.OracleKeeper.GetParams(input.Ctx), res.Params)
+	params, err := input.OracleKeeper.Params.Get(input.Ctx)
+	require.NoError(t, err)
+
+	require.Equal(t, params, res.Params)
 }
 
 func TestQueryExchangeRate(t *testing.T) {
@@ -178,7 +181,7 @@ func TestCalcTwap(t *testing.T) {
 				ValidatorFeeRatio:  types.DefaultValidatorFeeRatio,
 			}
 
-			input.OracleKeeper.SetParams(ctx, newParams)
+			input.OracleKeeper.Params.Set(ctx, newParams)
 			ctx = ctx.WithBlockTime(time.UnixMilli(0))
 			for _, reserve := range tc.priceSnapshots {
 				ctx = ctx.WithBlockTime(time.UnixMilli(reserve.TimestampMs))

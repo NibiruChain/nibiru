@@ -35,7 +35,10 @@ func NewHooks(k Keeper, accountKeeper keeper.AccountKeeper, bankKeeper bankkeepe
 
 func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64) {
 	if epochIdentifier == types.WeekEpochID {
-		params := h.k.GetParams(ctx)
+		params, err := h.k.Params.Get(ctx)
+		if err != nil {
+			panic(err)
+		}
 
 		account := h.accountKeeper.GetModuleAccount(ctx, perptypes.FeePoolModuleAccount)
 		totalValidatorFees, totalRest := sdk.Coins{}, sdk.Coins{}
@@ -48,7 +51,7 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64) 
 			totalRest = append(totalRest, sdk.NewCoin(balance.Denom, rest))
 		}
 
-		err := h.bankKeeper.SendCoinsFromModuleToModule(ctx, perptypes.FeePoolModuleAccount, perptypes.PerpEFModuleAccount, totalRest)
+		err = h.bankKeeper.SendCoinsFromModuleToModule(ctx, perptypes.FeePoolModuleAccount, perptypes.PerpEFModuleAccount, totalRest)
 		if err != nil {
 			panic(err)
 		}
