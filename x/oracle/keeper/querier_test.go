@@ -178,6 +178,7 @@ func TestCalcTwap(t *testing.T) {
 				SlashWindow:        types.DefaultSlashWindow,
 				MinValidPerWindow:  types.DefaultMinValidPerWindow,
 				TwapLookbackWindow: tc.lookbackInterval,
+				ValidatorFeeRatio:  types.DefaultValidatorFeeRatio,
 			}
 
 			input.OracleKeeper.Params.Set(ctx, newParams)

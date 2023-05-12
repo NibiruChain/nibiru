@@ -24,6 +24,7 @@ var (
 	KeySlashWindow        = []byte("SlashWindow")
 	KeyMinValidPerWindow  = []byte("MinValidPerWindow")
 	KeyTwapLookbackWindow = []byte("TwapLookbackWindow")
+	KeyValidatorFeeRatio  = []byte("ValidatorFeeRatio")
 )
 
 // Default parameter values
@@ -71,6 +72,7 @@ var (
 	DefaultSlashFraction      = sdk.NewDecWithPrec(1, 4)        // 0.01%
 	DefaultMinValidPerWindow  = sdk.NewDecWithPrec(5, 2)        // 5%
 	DefaultTwapLookbackWindow = time.Duration(15 * time.Minute) // 15 minutes
+	DefaultValidatorFeeRatio  = sdk.MustNewDecFromStr("0.05")   // 1%
 )
 
 var _ paramstypes.ParamSet = &Params{}
@@ -87,6 +89,7 @@ func DefaultParams() Params {
 		SlashWindow:        DefaultSlashWindow,
 		MinValidPerWindow:  DefaultMinValidPerWindow,
 		TwapLookbackWindow: DefaultTwapLookbackWindow,
+		ValidatorFeeRatio:  DefaultValidatorFeeRatio,
 	}
 }
 
@@ -108,6 +111,7 @@ func (p *Params) ParamSetPairs() paramstypes.ParamSetPairs {
 		paramstypes.NewParamSetPair(KeySlashWindow, &p.SlashWindow, validateSlashWindow),
 		paramstypes.NewParamSetPair(KeyMinValidPerWindow, &p.MinValidPerWindow, validateMinValidPerWindow),
 		paramstypes.NewParamSetPair(KeyTwapLookbackWindow, &p.TwapLookbackWindow, validateTwapLookbackWindow),
+		paramstypes.NewParamSetPair(KeyValidatorFeeRatio, &p.ValidatorFeeRatio, validateValidatorFeeRatio),
 	}
 }
 
@@ -145,6 +149,10 @@ func (p Params) Validate() error {
 
 	if p.MinValidPerWindow.GT(sdk.OneDec()) || p.MinValidPerWindow.IsNegative() {
 		return fmt.Errorf("oracle parameter MinValidPerWindow must be between [0, 1]")
+	}
+
+	if p.ValidatorFeeRatio.GT(sdk.OneDec()) || p.ValidatorFeeRatio.IsNegative() {
+		return fmt.Errorf("oracle parameter ValidatorFeeRatio must be between [0, 1]")
 	}
 
 	for _, pair := range p.Whitelist {
@@ -285,5 +293,22 @@ func validateTwapLookbackWindow(i interface{}) error {
 	if v < 0 {
 		return fmt.Errorf("look back twap duration should be positive: %s", v)
 	}
+	return nil
+}
+
+func validateValidatorFeeRatio(i interface{}) error {
+	v, ok := i.(sdk.Dec)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v.IsNegative() {
+		return fmt.Errorf("min validator fee ratio be positive: %s", v)
+	}
+
+	if v.GT(sdk.OneDec()) {
+		return fmt.Errorf("min validator fee ratio is too large: %s", v)
+	}
+
 	return nil
 }
