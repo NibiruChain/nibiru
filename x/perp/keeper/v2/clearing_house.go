@@ -40,6 +40,10 @@ func (k Keeper) OpenPosition(
 		return nil, v2types.ErrPairNotFound
 	}
 
+	if !market.Enabled {
+		return nil, v2types.ErrMarketNotEnabled
+	}
+
 	amm, err := k.AMMs.Get(ctx, pair)
 	if err != nil {
 		return nil, v2types.ErrPairNotFound
