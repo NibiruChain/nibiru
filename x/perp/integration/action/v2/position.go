@@ -273,3 +273,59 @@ func WithLastUpdatedBlockNumber(lastUpdatedBlockNumber int64) positionModifier {
 		position.LastUpdatedBlockNumber = lastUpdatedBlockNumber
 	}
 }
+
+// OpenPositionExpectingFail opens a position with the given parameters expecting it to fail.
+//
+// responseCheckers are optional functions that can be used to check expected response.
+func OpenPositionExpectingFail(
+	account sdk.AccAddress,
+	pair asset.Pair,
+	side v2types.Direction,
+	margin sdk.Int,
+	leverage sdk.Dec,
+	baseLimit sdk.Dec,
+	responseCheckers ...OpenPositionResponseChecker,
+) action.Action {
+	return &openPositionActionExpectingFail{
+		Account:   account,
+		Pair:      pair,
+		Side:      side,
+		Margin:    margin,
+		Leverage:  leverage,
+		BaseLimit: baseLimit,
+
+		CheckResponse: responseCheckers,
+	}
+}
+
+type openPositionActionExpectingFail struct {
+	Account   sdk.AccAddress
+	Pair      asset.Pair
+	Side      v2types.Direction
+	Margin    sdk.Int
+	Leverage  sdk.Dec
+	BaseLimit sdk.Dec
+
+	CheckResponse []OpenPositionResponseChecker
+}
+
+func (o openPositionActionExpectingFail) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	resp, err := app.PerpKeeperV2.OpenPosition(
+		ctx, o.Pair, o.Side, o.Account,
+		o.Margin, o.Leverage, o.BaseLimit,
+	)
+	if err == nil {
+		return ctx, fmt.Errorf("expected error, got nil"), true
+	}
+
+	if o.CheckResponse != nil {
+		for _, check := range o.CheckResponse {
+			err = check(resp)
+			if err != nil {
+				return ctx, err, false
+			}
+		}
+	}
+
+	return ctx, nil, true
+}

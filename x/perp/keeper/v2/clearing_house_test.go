@@ -578,6 +578,63 @@ func TestOpenPosition(t *testing.T) {
 	NewTestSuite(t).WithTestCases(tc...).Run()
 }
 
+func TestMarketEnabled(t *testing.T) {
+	alice := testutil.AccAddress()
+	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	startBlockTime := time.Now()
+
+	tc := TestCases{
+		TC("new long position, can close position after market is not enabled").
+			Given(
+				CreateCustomMarket(pairBtcUsdc),
+				SetBlockTime(startBlockTime),
+				SetBlockNumber(1),
+				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(47_714_285_715)))),
+				OpenPosition(alice, pairBtcUsdc, v2types.Direction_SHORT, sdk.NewInt(47_619_047_619), sdk.OneDec(), sdk.ZeroDec()),
+				ChangeEnableParameter(pairBtcUsdc, false),
+			).
+			When(
+				ClosePosition(alice, pairBtcUsdc),
+			).
+			Then(
+				PositionShouldNotExist(alice, pairBtcUsdc),
+			),
+		TC("new long position, can not open new position after market is not enabled").
+			Given(
+				CreateCustomMarket(pairBtcUsdc),
+				SetBlockTime(startBlockTime),
+				SetBlockNumber(1),
+				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(47_714_285_715)))),
+				ChangeEnableParameter(pairBtcUsdc, false),
+			).
+			When(
+				OpenPositionExpectingFail(alice, pairBtcUsdc, v2types.Direction_SHORT, sdk.NewInt(47_619_047_619), sdk.OneDec(), sdk.ZeroDec()),
+			).
+			Then(
+				PositionShouldNotExist(alice, pairBtcUsdc),
+			),
+		TC("existing long position, can not open new one but can close").
+			Given(
+				CreateCustomMarket(pairBtcUsdc),
+				SetBlockTime(startBlockTime),
+				SetBlockNumber(1),
+				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(47_714_285_715)))),
+				OpenPosition(alice, pairBtcUsdc, v2types.Direction_SHORT, sdk.NewInt(50_000), sdk.OneDec(), sdk.ZeroDec()),
+				ChangeEnableParameter(pairBtcUsdc, false),
+			).
+			When(
+				OpenPositionExpectingFail(alice, pairBtcUsdc, v2types.Direction_SHORT, sdk.NewInt(47_619_047_619), sdk.OneDec(), sdk.ZeroDec()),
+				ClosePosition(alice, pairBtcUsdc),
+			).
+			Then(
+				PositionShouldNotExist(alice, pairBtcUsdc),
+			)}
+	NewTestSuite(t).WithTestCases(tc...).Run()
+}
+
 func TestOpenPositionError(t *testing.T) {
 	testCases := []struct {
 		name        string
