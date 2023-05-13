@@ -118,6 +118,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1334](https://github.com/NibiruChain/nibiru/pull/1334) - feat(perp): add PerpKeeperV2 `ClosePosition`
 * [#1335](https://github.com/NibiruChain/nibiru/pull/1335) - refactor(perp): move remaining perpv1 files to v1 directory
 * [#1338](https://github.com/NibiruChain/nibiru/pull/1338) - feat(perp): V2 OpenPosition
+* [#1345](https://github.com/NibiruChain/nibiru/pull/1345) - feat(perp): PerpV2 QueryServer
 
 ### Bug Fixes
 
