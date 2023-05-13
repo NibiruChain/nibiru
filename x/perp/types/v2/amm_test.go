@@ -7,6 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	v2 "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
@@ -190,6 +192,89 @@ func TestSwapQuoteAsset(t *testing.T) {
 					TotalShort:      tc.expectedTotalShort,
 				}, *amm)
 				assert.Equal(t, tc.expectedMarkPrice, amm.MarkPrice())
+			}
+		})
+	}
+}
+
+func TestRepegCost(t *testing.T) {
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	tests := []struct {
+		name string
+
+		amm                v2.AMM
+		newPriceMultiplier sdk.Dec
+
+		expectedCost sdk.Dec
+		shouldErr    bool
+	}{
+		{
+			name: "zero bias -> zero cost",
+			amm: v2.AMM{
+				Pair:            pair,
+				BaseReserve:     sdk.NewDec(100),
+				QuoteReserve:    sdk.NewDec(100),
+				PriceMultiplier: sdk.OneDec(),
+				TotalLong:       sdk.ZeroDec(),
+				TotalShort:      sdk.ZeroDec(),
+			},
+			newPriceMultiplier: sdk.NewDec(3),
+			expectedCost:       sdk.ZeroDec(),
+			shouldErr:          false,
+		},
+		{
+			name: "same peg -> zero cost",
+			amm: v2.AMM{
+				Pair:            pair,
+				BaseReserve:     sdk.NewDec(100),
+				QuoteReserve:    sdk.NewDec(100),
+				PriceMultiplier: sdk.OneDec(),
+				TotalLong:       sdk.ZeroDec(),
+				TotalShort:      sdk.ZeroDec(),
+			},
+			newPriceMultiplier: sdk.OneDec(),
+			expectedCost:       sdk.ZeroDec(),
+			shouldErr:          false,
+		},
+		{
+			name: "new peg -> simple math",
+			amm: v2.AMM{
+				Pair:            pair,
+				BaseReserve:     sdk.NewDec(100),
+				QuoteReserve:    sdk.NewDec(100),
+				PriceMultiplier: sdk.OneDec(),
+				TotalLong:       sdk.NewDec(25),
+				TotalShort:      sdk.ZeroDec(),
+			},
+			newPriceMultiplier: sdk.NewDec(2),
+			expectedCost:       sdk.NewDec(20), // 20 * (2 - 1)
+			shouldErr:          false,
+		},
+		{
+			name: "new peg -> simple math but negative bias",
+			amm: v2.AMM{
+				Pair:            pair,
+				BaseReserve:     sdk.NewDec(100),
+				QuoteReserve:    sdk.NewDec(100),
+				PriceMultiplier: sdk.OneDec(),
+				TotalLong:       sdk.ZeroDec(),
+				TotalShort:      sdk.NewDec(20),
+			},
+			newPriceMultiplier: sdk.NewDec(2),
+			expectedCost:       sdk.NewDec(-25), // -20 * (2 - 1)
+			shouldErr:          false,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			cost, err := tc.amm.GetRepegCost(tc.newPriceMultiplier)
+			if tc.shouldErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				assert.EqualValues(t, tc.expectedCost, cost)
 			}
 		})
 	}

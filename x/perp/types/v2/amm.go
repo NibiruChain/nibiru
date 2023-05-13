@@ -106,7 +106,7 @@ func (amm AMM) GetBaseReserveAmt(
 // returns the amount of quote reserve equivalent to the amount of base asset given
 //
 // args:
-// - baseReserveAmt: the amount of base reserve before the trade, must be positive
+// - baseReserveAmt: the amount of base reserves to trade, must be positive
 // - dir: the direction of the trade
 //
 // returns:
@@ -231,7 +231,7 @@ func (amm *AMM) SwapQuoteAsset(quoteAssetAmt sdk.Dec, dir Direction) (baseAssetD
 // SwapBaseAsset swaps base asset for quote asset
 //
 // args:
-//   - baseAssetAmt: amount of base asset to swap
+//   - baseAssetAmt: amount of base asset to swap, must be positive
 //   - dir: direction of swap
 //
 // returns:
@@ -261,4 +261,128 @@ func (amm *AMM) SwapBaseAsset(baseAssetAmt sdk.Dec, dir Direction) (quoteAssetDe
 func (amm *AMM) WithPair(pair asset.Pair) *AMM {
 	amm.Pair = pair
 	return amm
+}
+
+/*
+GetBias returns the bias of the market in the base asset. It's the net amount of base assets for longs minus the net
+amount of base assets for shorts.
+*/
+func (amm *AMM) GetBias() (bias sdk.Dec) {
+	return amm.TotalLong.Sub(amm.TotalShort)
+}
+
+/*
+GetRepegCost provides the cost of re-pegging the pool to a new candidate peg multiplier.
+*/
+func (amm AMM) GetRepegCost(newPriceMultiplier sdk.Dec) (cost sdk.Dec, err error) {
+	if !newPriceMultiplier.IsPositive() {
+		return sdk.Dec{}, ErrNonPositivePegMultiplier
+	}
+
+	bias := amm.GetBias()
+
+	if bias.IsZero() {
+		return sdk.ZeroDec(), nil
+	}
+
+	var dir Direction
+	if bias.IsPositive() {
+		dir = Direction_SHORT
+	} else {
+		dir = Direction_LONG
+	}
+
+	biasInQuoteReserve, err := amm.SwapBaseAsset(bias.Abs(), dir)
+	if err != nil {
+		return
+	}
+
+	cost = biasInQuoteReserve.Mul(newPriceMultiplier.Sub(amm.PriceMultiplier))
+
+	if bias.IsNegative() {
+		cost = cost.Neg()
+	}
+
+	return cost, nil
+}
+
+/*
+GetSwapInvariantUpdateCost returns the cost of updating the invariant of the pool
+*/
+func (amm *AMM) GetSwapInvariantUpdateCost(swapInvariantMultiplier sdk.Dec) (cost sdk.Dec, err error) {
+	quoteReserveBefore, err := amm.getMarketQuoteReserveValue()
+	if err != nil {
+		return
+	}
+
+	newMarket, err := amm.UpdateSwapInvariant(swapInvariantMultiplier)
+	if err != nil {
+		return
+	}
+
+	quoteReserveAfter, err := newMarket.getMarketQuoteReserveValue()
+	if err != nil {
+		return
+	}
+
+	cost = amm.FromQuoteReserveToAsset(quoteReserveAfter.Sub(quoteReserveBefore))
+	return
+}
+
+/* UpdateSwapInvariant creates a new market object with an updated swap invariant */
+func (amm AMM) UpdateSwapInvariant(swapInvariantMultiplier sdk.Dec) (newAMM AMM, err error) {
+	if swapInvariantMultiplier.IsNil() {
+		return AMM{}, ErrNilSwapInvariantMutliplier
+	}
+
+	if !swapInvariantMultiplier.IsPositive() {
+		return AMM{}, ErrNonPositiveSwapInvariantMutliplier
+	}
+
+	// k = x * y
+	// newK = (cx) * (cy) = c^2 xy = c^2 k
+	// newPrice = (c y) / (c x) = y / x = price | unchanged price
+	swapInvariant := amm.BaseReserve.Mul(amm.QuoteReserve)
+	newSwapInvariant := swapInvariant.Mul(swapInvariantMultiplier)
+
+	// Change the swap invariant while holding price constant.
+	// Multiplying by the same factor to both of the reserves won't affect price.
+	cSquared := newSwapInvariant.Quo(swapInvariant)
+	c, err := common.SqrtDec(cSquared)
+	if err != nil {
+		return
+	}
+
+	newBaseAmount := c.Mul(amm.BaseReserve)
+	newQuoteAmount := c.Mul(amm.QuoteReserve)
+	newSqrtDepth := common.MustSqrtDec(newBaseAmount.Mul(newQuoteAmount))
+
+	newAMM = AMM{
+		Pair:            amm.Pair,
+		BaseReserve:     newBaseAmount,
+		QuoteReserve:    newQuoteAmount,
+		SqrtDepth:       newSqrtDepth,
+		TotalLong:       amm.TotalLong,
+		TotalShort:      amm.TotalShort,
+		PriceMultiplier: amm.PriceMultiplier,
+	}
+
+	return newAMM, newAMM.Validate()
+}
+
+/*
+getMarketQuoteReserveValue returns the total value of the quote reserve in the market between short and long (sum of
+open notional values)
+*/
+func (amm *AMM) getMarketQuoteReserveValue() (quoteReserve sdk.Dec, err error) {
+	longQuoteReserve, err := amm.SwapBaseAsset(amm.TotalLong, Direction_SHORT)
+	if err != nil {
+		return sdk.Dec{}, err
+	}
+	shortQuoteReserve, err := amm.SwapBaseAsset(amm.TotalShort, Direction_SHORT)
+	if err != nil {
+		return sdk.Dec{}, err
+	}
+
+	return longQuoteReserve.Add(shortQuoteReserve), nil
 }
