@@ -243,7 +243,7 @@ func (app *NibiruApp) InitKeepers(
 		appCodec, keys[spottypes.StoreKey], app.GetSubspace(spottypes.ModuleName),
 		app.AccountKeeper, app.BankKeeper, app.DistrKeeper)
 
-	app.OracleKeeper = oraclekeeper.NewKeeper(appCodec, keys[oracletypes.StoreKey], app.GetSubspace(oracletypes.ModuleName),
+	app.OracleKeeper = oraclekeeper.NewKeeper(appCodec, keys[oracletypes.StoreKey],
 		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.stakingKeeper, distrtypes.ModuleName,
 	)
 

@@ -80,6 +80,9 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 			err = messenger.Perp.PegShift(cwMsg, contractAddr, ctx)
 			return events, data, err
 		case contractExecuteMsg.ExecuteMsg.DepthShift != nil:
+			if err := messenger.CheckPermissions(contractAddr, ctx); err != nil {
+				return events, data, err
+			}
 			cwMsg := contractExecuteMsg.ExecuteMsg.DepthShift
 			err = messenger.Perp.DepthShift(cwMsg, contractAddr, ctx)
 			return events, data, err
