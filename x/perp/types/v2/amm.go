@@ -309,8 +309,8 @@ func (amm AMM) GetRepegCost(newPriceMultiplier sdk.Dec) (cost sdk.Dec, err error
 /*
 GetSwapInvariantUpdateCost returns the cost of updating the invariant of the pool
 */
-func (amm *AMM) GetSwapInvariantUpdateCost(swapInvariantMultiplier sdk.Dec) (cost sdk.Dec, err error) {
-	quoteReserveBefore, err := amm.getMarketQuoteReserveValue()
+func (amm AMM) GetSwapInvariantUpdateCost(swapInvariantMultiplier sdk.Dec) (cost sdk.Dec, err error) {
+	quoteReserveBefore, err := amm.GetMarketTotalQuoteReserves()
 	if err != nil {
 		return
 	}
@@ -320,7 +320,7 @@ func (amm *AMM) GetSwapInvariantUpdateCost(swapInvariantMultiplier sdk.Dec) (cos
 		return
 	}
 
-	quoteReserveAfter, err := newMarket.getMarketQuoteReserveValue()
+	quoteReserveAfter, err := newMarket.GetMarketTotalQuoteReserves()
 	if err != nil {
 		return
 	}
@@ -371,15 +371,15 @@ func (amm AMM) UpdateSwapInvariant(swapInvariantMultiplier sdk.Dec) (newAMM AMM,
 }
 
 /*
-getMarketQuoteReserveValue returns the total value of the quote reserve in the market between short and long (sum of
+GetMarketTotalQuoteReserves returns the total value of the quote reserve in the market between short and long (sum of
 open notional values)
 */
-func (amm *AMM) getMarketQuoteReserveValue() (quoteReserve sdk.Dec, err error) {
-	longQuoteReserve, err := amm.SwapBaseAsset(amm.TotalLong, Direction_SHORT)
+func (amm AMM) GetMarketTotalQuoteReserves() (totalQuoteReserve sdk.Dec, err error) {
+	longQuoteReserve, err := amm.GetQuoteReserveAmt(amm.TotalLong, Direction_SHORT)
 	if err != nil {
 		return sdk.Dec{}, err
 	}
-	shortQuoteReserve, err := amm.SwapBaseAsset(amm.TotalShort, Direction_SHORT)
+	shortQuoteReserve, err := amm.GetQuoteReserveAmt(amm.TotalShort, Direction_LONG)
 	if err != nil {
 		return sdk.Dec{}, err
 	}

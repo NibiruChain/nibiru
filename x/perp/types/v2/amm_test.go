@@ -197,6 +197,26 @@ func TestSwapQuoteAsset(t *testing.T) {
 	}
 }
 
+// baseReserves := base reserves if no one is trading
+// bias := totalLong (bias) + totalShort (bias) := the net size of all positions together
+// In the test cases you see,
+// one is repegging bias of +25 with cost of 20,
+// and the other has bias -20 with cost of -25
+// The reason for this is that swapping in different directions actually results in different amounts.
+// Here's the case named "new peg -> simple math":
+// Given:
+// y = 100, x = 100, bias = 25, peg = 1
+// Do Repeg(peg=2)
+// To get rid of the bias, we swap it away and see what that is in quote units:
+// dy = k / (x + dx)  - y, where dx = bias
+// dy = 100^2 / (100 + 25) - 100  = -20
+// Here's the case named "new peg -> simple math but negative bias":
+// Given:
+// y = 100, x =100, bias = -20, peg=1
+// Do Repeg(peg=2)
+// To get rid of the bias, we swap it away and see what that is in quote units:
+// dy = k / (x + dx)  - y, where dx = bias
+// dy = 100^2 / (100 - 20) - 100  = +25
 func TestRepegCost(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	tests := []struct {
@@ -276,6 +296,79 @@ func TestRepegCost(t *testing.T) {
 				require.NoError(t, err)
 				assert.EqualValues(t, tc.expectedCost, cost)
 			}
+		})
+	}
+}
+
+func TestGetMarketTotalQuoteReserves(t *testing.T) {
+	tests := []struct {
+		name                 string
+		amm                  v2.AMM
+		expectedQuoteReserve sdk.Dec
+	}{
+		{
+			name: "zero reserves",
+			amm: v2.AMM{
+				BaseReserve:     sdk.ZeroDec(),
+				QuoteReserve:    sdk.ZeroDec(),
+				TotalLong:       sdk.ZeroDec(),
+				TotalShort:      sdk.ZeroDec(),
+				PriceMultiplier: sdk.OneDec(),
+			},
+			expectedQuoteReserve: sdk.ZeroDec(),
+		},
+		{
+			name: "zero bias",
+			amm: v2.AMM{
+				BaseReserve:     sdk.NewDec(1e12),
+				QuoteReserve:    sdk.NewDec(1e12),
+				TotalLong:       sdk.ZeroDec(),
+				TotalShort:      sdk.ZeroDec(),
+				PriceMultiplier: sdk.OneDec(),
+			},
+			expectedQuoteReserve: sdk.ZeroDec(),
+		},
+		{
+			name: "long only bias",
+			amm: v2.AMM{
+				BaseReserve:     sdk.NewDec(1e12),
+				QuoteReserve:    sdk.NewDec(1e12),
+				TotalLong:       sdk.OneDec(),
+				TotalShort:      sdk.ZeroDec(),
+				PriceMultiplier: sdk.OneDec(),
+			},
+			expectedQuoteReserve: sdk.MustNewDecFromStr("0.999999999999"),
+		},
+		{
+			name: "short only bias",
+			amm: v2.AMM{
+				BaseReserve:     sdk.NewDec(1e12),
+				QuoteReserve:    sdk.NewDec(1e12),
+				TotalLong:       sdk.ZeroDec(),
+				TotalShort:      sdk.OneDec(),
+				PriceMultiplier: sdk.OneDec(),
+			},
+			expectedQuoteReserve: sdk.MustNewDecFromStr("1.000000000001"),
+		},
+		{
+			name: "long and short bias",
+			amm: v2.AMM{
+				BaseReserve:     sdk.NewDec(1e12),
+				QuoteReserve:    sdk.NewDec(1e12),
+				TotalLong:       sdk.NewDec(1234),
+				TotalShort:      sdk.NewDec(4321),
+				PriceMultiplier: sdk.OneDec(),
+			},
+			expectedQuoteReserve: sdk.MustNewDecFromStr("5555.000017148285082557"),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			quoteReserves, err := tc.amm.GetMarketTotalQuoteReserves()
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedQuoteReserve, quoteReserves)
 		})
 	}
 }
