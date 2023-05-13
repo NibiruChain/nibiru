@@ -70,8 +70,12 @@ $(TEMPDIR)/:
 rocksdblib: $(TEMPDIR)/
 	mkdir -p $(TEMPDIR)/include
 	mkdir -p $(TEMPDIR)/lib
+ifeq (",$(wildcard $(TEMPDIR)/include/rocksdb)")
 	wget https://github.com/NibiruChain/gorocksdb/releases/download/v$(ROCKSDB_VERSION)/include.$(ROCKSDB_VERSION).tar.gz -O - | tar -xz -C $(TEMPDIR)/include/
+endif
+ifeq (",$(wildcard $(TEMPDIR)/lib/librocksdb.a)")
 	wget https://github.com/NibiruChain/gorocksdb/releases/download/v$(ROCKSDB_VERSION)/librocksdb_$(ROCKSDB_VERSION)_$(OS_NAME)_$(ARCH_NAME).tar.gz -O - | tar -xz -C $(TEMPDIR)/lib/
+endif
 
 # command for make build and make install
 build: BUILDARGS=-o $(BUILDDIR)/
