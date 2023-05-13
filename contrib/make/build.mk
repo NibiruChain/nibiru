@@ -33,7 +33,7 @@ TEMPDIR ?= $(CURDIR)/temp
 export GO111MODULE = on
 
 # process build tags
-build_tags = netgo osusergo
+build_tags = netgo osusergo rocksdb
 build_tags += $(BUILD_TAGS)
 build_tags := $(strip $(build_tags))
 
@@ -57,7 +57,7 @@ ldflags := $(strip $(ldflags))
 
 BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
 CGO_CFLAGS  := -I$(TEMPDIR)/include
-CGO_LDFLAGS := -L$(TEMPDIR)/lib
+CGO_LDFLAGS := -L$(TEMPDIR)/lib -lrocksdb -lz -lbz2
 
 ###############################################################################
 ###                                  Build                                  ###
