@@ -289,86 +289,13 @@ func TestRepegCost(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			cost, err := tc.amm.GetRepegCost(tc.newPriceMultiplier)
+			cost, err := tc.amm.CalcRepegCost(tc.newPriceMultiplier)
 			if tc.shouldErr {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
 				assert.EqualValues(t, tc.expectedCost, cost)
 			}
-		})
-	}
-}
-
-func TestGetMarketTotalQuoteReserves(t *testing.T) {
-	tests := []struct {
-		name                 string
-		amm                  v2.AMM
-		expectedQuoteReserve sdk.Dec
-	}{
-		{
-			name: "zero reserves",
-			amm: v2.AMM{
-				BaseReserve:     sdk.ZeroDec(),
-				QuoteReserve:    sdk.ZeroDec(),
-				TotalLong:       sdk.ZeroDec(),
-				TotalShort:      sdk.ZeroDec(),
-				PriceMultiplier: sdk.OneDec(),
-			},
-			expectedQuoteReserve: sdk.ZeroDec(),
-		},
-		{
-			name: "zero bias",
-			amm: v2.AMM{
-				BaseReserve:     sdk.NewDec(1e12),
-				QuoteReserve:    sdk.NewDec(1e12),
-				TotalLong:       sdk.ZeroDec(),
-				TotalShort:      sdk.ZeroDec(),
-				PriceMultiplier: sdk.OneDec(),
-			},
-			expectedQuoteReserve: sdk.ZeroDec(),
-		},
-		{
-			name: "long only bias",
-			amm: v2.AMM{
-				BaseReserve:     sdk.NewDec(1e12),
-				QuoteReserve:    sdk.NewDec(1e12),
-				TotalLong:       sdk.OneDec(),
-				TotalShort:      sdk.ZeroDec(),
-				PriceMultiplier: sdk.OneDec(),
-			},
-			expectedQuoteReserve: sdk.MustNewDecFromStr("0.999999999999"),
-		},
-		{
-			name: "short only bias",
-			amm: v2.AMM{
-				BaseReserve:     sdk.NewDec(1e12),
-				QuoteReserve:    sdk.NewDec(1e12),
-				TotalLong:       sdk.ZeroDec(),
-				TotalShort:      sdk.OneDec(),
-				PriceMultiplier: sdk.OneDec(),
-			},
-			expectedQuoteReserve: sdk.MustNewDecFromStr("1.000000000001"),
-		},
-		{
-			name: "long and short bias",
-			amm: v2.AMM{
-				BaseReserve:     sdk.NewDec(1e12),
-				QuoteReserve:    sdk.NewDec(1e12),
-				TotalLong:       sdk.NewDec(1234),
-				TotalShort:      sdk.NewDec(4321),
-				PriceMultiplier: sdk.OneDec(),
-			},
-			expectedQuoteReserve: sdk.MustNewDecFromStr("5555.000017148285082557"),
-		},
-	}
-
-	for _, tc := range tests {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			quoteReserves, err := tc.amm.GetMarketTotalQuoteReserves()
-			require.NoError(t, err)
-			assert.Equal(t, tc.expectedQuoteReserve, quoteReserves)
 		})
 	}
 }
@@ -442,7 +369,7 @@ func TestGetSwapInvariantUpdateCost(t *testing.T) {
 		amm        v2.AMM
 		multiplier sdk.Dec
 
-		expectedCost sdk.Dec
+		expectedCost sdk.Int
 	}{
 		{
 			name: "zero cost - due to single multiplier",
@@ -455,7 +382,7 @@ func TestGetSwapInvariantUpdateCost(t *testing.T) {
 				TotalShort:      sdk.NewDec(50),
 			},
 			multiplier:   sdk.OneDec(),
-			expectedCost: sdk.ZeroDec(),
+			expectedCost: sdk.ZeroInt(),
 		},
 
 		{
@@ -469,7 +396,7 @@ func TestGetSwapInvariantUpdateCost(t *testing.T) {
 				TotalShort:      sdk.ZeroDec(),
 			},
 			multiplier:   sdk.NewDec(100),
-			expectedCost: sdk.ZeroDec(),
+			expectedCost: sdk.ZeroInt(),
 		},
 
 		{
@@ -483,7 +410,7 @@ func TestGetSwapInvariantUpdateCost(t *testing.T) {
 				TotalShort:      sdk.ZeroDec(),
 			},
 			multiplier:   sdk.NewDec(100),
-			expectedCost: sdk.MustNewDecFromStr("0.810081008100810081"),
+			expectedCost: sdk.NewInt(1),
 		},
 
 		{
@@ -497,7 +424,7 @@ func TestGetSwapInvariantUpdateCost(t *testing.T) {
 				TotalShort:      sdk.ZeroDec(),
 			},
 			multiplier:   sdk.MustNewDecFromStr("0.01"),
-			expectedCost: sdk.MustNewDecFromStr("-0.810081008100810081"),
+			expectedCost: sdk.ZeroInt(),
 		},
 
 		{
@@ -511,7 +438,7 @@ func TestGetSwapInvariantUpdateCost(t *testing.T) {
 				TotalShort:      sdk.NewDec(10),
 			},
 			multiplier:   sdk.NewDec(100),
-			expectedCost: sdk.MustNewDecFromStr("1.010101010101010101"),
+			expectedCost: sdk.NewInt(2),
 		},
 
 		{
@@ -525,14 +452,14 @@ func TestGetSwapInvariantUpdateCost(t *testing.T) {
 				TotalShort:      sdk.NewDec(10),
 			},
 			multiplier:   sdk.MustNewDecFromStr("0.01"),
-			expectedCost: sdk.MustNewDecFromStr("-1.010101010101010101"),
+			expectedCost: sdk.NewInt(-1),
 		},
 	}
 
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			cost, err := tc.amm.GetSwapInvariantUpdateCost(tc.multiplier)
+			cost, err := tc.amm.CalcUpdateSwapInvariantCost(tc.multiplier)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedCost, cost)
 		})
