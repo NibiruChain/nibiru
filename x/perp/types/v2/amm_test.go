@@ -372,3 +372,66 @@ func TestGetMarketTotalQuoteReserves(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateSwapInvariant(t *testing.T) {
+	tests := []struct {
+		name       string
+		amm        v2.AMM
+		multiplier sdk.Dec
+
+		expectedBaseReserve  sdk.Dec
+		expectedQuoteReserve sdk.Dec
+		expectedSqrtDepth    sdk.Dec
+	}{
+		{
+			name: "one multiplier",
+			amm: v2.AMM{
+				BaseReserve:     sdk.NewDec(100),
+				QuoteReserve:    sdk.NewDec(100),
+				SqrtDepth:       sdk.NewDec(100),
+				PriceMultiplier: sdk.OneDec(),
+			},
+			multiplier:           sdk.OneDec(),
+			expectedBaseReserve:  sdk.NewDec(100),
+			expectedQuoteReserve: sdk.NewDec(100),
+			expectedSqrtDepth:    sdk.NewDec(100),
+		},
+		{
+			name: "four multiplier",
+			amm: v2.AMM{
+				BaseReserve:     sdk.NewDec(100),
+				QuoteReserve:    sdk.NewDec(100),
+				SqrtDepth:       sdk.NewDec(100),
+				PriceMultiplier: sdk.OneDec(),
+			},
+			multiplier:           sdk.NewDec(4),
+			expectedBaseReserve:  sdk.NewDec(200),
+			expectedQuoteReserve: sdk.NewDec(200),
+			expectedSqrtDepth:    sdk.NewDec(200),
+		},
+		{
+			name: "quarter multiplier",
+			amm: v2.AMM{
+				BaseReserve:     sdk.NewDec(100),
+				QuoteReserve:    sdk.NewDec(100),
+				SqrtDepth:       sdk.NewDec(100),
+				PriceMultiplier: sdk.OneDec(),
+			},
+			multiplier:           sdk.MustNewDecFromStr("0.25"),
+			expectedBaseReserve:  sdk.NewDec(50),
+			expectedQuoteReserve: sdk.NewDec(50),
+			expectedSqrtDepth:    sdk.NewDec(50),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.amm.UpdateSwapInvariant(tc.multiplier)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedBaseReserve, tc.amm.BaseReserve)
+			assert.Equal(t, tc.expectedQuoteReserve, tc.amm.QuoteReserve)
+			assert.Equal(t, tc.expectedSqrtDepth, tc.amm.SqrtDepth)
+		})
+	}
+}
