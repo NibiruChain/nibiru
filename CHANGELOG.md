@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `github.com/docker/distribution` from 2.8.1+incompatible to 2.8.2+incompatible (#1339)
 
 ### Breaking
+* [#xxx](https://github.com/NibiruChain/nibiru/pull/xxx) - build: Upgrade wasmd (v0.31), tendermint, and Cosmos-SDK (v0.45.14) dependencies
 * [#1317](https://github.com/NibiruChain/nibiru/pull/1317) - feat(sudo): Implement and test CLI commands for tx and queries. 
 * [#1307](https://github.com/NibiruChain/nibiru/pull/1307) - feat(sudo): Create the x/sudo module + integration tests
 * [#1299](https://github.com/NibiruChain/nibiru/pull/1299) - feat(wasm): Add peg shift bindings
