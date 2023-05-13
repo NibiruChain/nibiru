@@ -13,8 +13,10 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
+	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	. "github.com/NibiruChain/nibiru/x/perp/integration/action/v2"
 	keeper "github.com/NibiruChain/nibiru/x/perp/keeper/v2"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
@@ -38,105 +40,6 @@ func initAppMarkets(
 	app.PerpKeeperV2.AMMs.Insert(ctx, amm.Pair, *amm)
 
 	return ctx, app, queryServer
-}
-
-func TestQueryPosition(t *testing.T) {
-	tests := []struct {
-		name            string
-		initialPosition *v2types.Position
-
-		sqrtDepth       sdk.Dec
-		priceMultiplier sdk.Dec
-
-		expectedPositionNotional sdk.Dec
-		expectedUnrealizedPnl    sdk.Dec
-		expectedMarginRatio      sdk.Dec
-	}{
-		{
-			name: "positive PnL",
-			initialPosition: &v2types.Position{
-				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				Size_:                           sdk.NewDec(10),
-				OpenNotional:                    sdk.NewDec(10),
-				Margin:                          sdk.NewDec(1),
-				LastUpdatedBlockNumber:          1,
-				LatestCumulativePremiumFraction: sdk.ZeroDec(),
-			},
-			sqrtDepth:       sdk.NewDec(1e6),
-			priceMultiplier: sdk.NewDec(2),
-
-			expectedPositionNotional: sdk.MustNewDecFromStr("19.999800001999980000"),
-			expectedUnrealizedPnl:    sdk.MustNewDecFromStr("9.999800001999980000"),
-			expectedMarginRatio:      sdk.MustNewDecFromStr("0.549995500000000000"),
-		},
-		{
-			name: "negative PnL, positive margin ratio",
-			initialPosition: &v2types.Position{
-				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				Size_:                           sdk.NewDec(10),
-				OpenNotional:                    sdk.NewDec(10),
-				Margin:                          sdk.NewDec(1),
-				LastUpdatedBlockNumber:          1,
-				LatestCumulativePremiumFraction: sdk.ZeroDec(),
-			},
-			sqrtDepth:       sdk.NewDec(1e6),
-			priceMultiplier: sdk.OneDec(),
-
-			expectedPositionNotional: sdk.MustNewDecFromStr("9.99990000099999"),
-			expectedUnrealizedPnl:    sdk.MustNewDecFromStr("-0.00009999900001"),
-			expectedMarginRatio:      sdk.MustNewDecFromStr("0.099991"),
-		},
-		{
-			name: "negative PnL, negative margin ratio",
-			initialPosition: &v2types.Position{
-				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				Size_:                           sdk.NewDec(10),
-				OpenNotional:                    sdk.NewDec(10),
-				Margin:                          sdk.NewDec(1),
-				LastUpdatedBlockNumber:          1,
-				LatestCumulativePremiumFraction: sdk.ZeroDec(),
-			},
-			sqrtDepth:       sdk.NewDec(1e6),
-			priceMultiplier: sdk.MustNewDecFromStr("0.5"),
-
-			expectedPositionNotional: sdk.MustNewDecFromStr("4.999950000499995"),
-			expectedUnrealizedPnl:    sdk.MustNewDecFromStr("-5.000049999500005"),
-			expectedMarginRatio:      sdk.MustNewDecFromStr("-0.800018"),
-		},
-	}
-
-	for _, tc := range tests {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			t.Log("initialize trader address")
-			traderAddr := testutil.AccAddress()
-			tc.initialPosition.TraderAddress = traderAddr.String()
-
-			t.Log("initialize app and keeper")
-			ctx, app, queryServer := initAppMarkets(t, tc.sqrtDepth, tc.priceMultiplier)
-
-			t.Log("initialize position")
-			app.PerpKeeperV2.Positions.Insert(ctx, collections.Join(tc.initialPosition.Pair, traderAddr), *tc.initialPosition)
-
-			t.Log("query position")
-			ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second))
-			resp, err := queryServer.QueryPosition(
-				sdk.WrapSDKContext(ctx),
-				&v2types.QueryPositionRequest{
-					Trader: traderAddr.String(),
-					Pair:   asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-				},
-			)
-			require.NoError(t, err)
-
-			t.Log("assert response")
-			assert.EqualValues(t, tc.initialPosition, resp.Position)
-
-			assert.Equal(t, tc.expectedPositionNotional, resp.PositionNotional)
-			assert.Equal(t, tc.expectedUnrealizedPnl, resp.UnrealizedPnl)
-			assert.Equal(t, tc.expectedMarginRatio, resp.MarginRatio)
-		})
-	}
 }
 
 func TestQueryPositions(t *testing.T) {
@@ -203,4 +106,112 @@ func TestQueryPositions(t *testing.T) {
 			assert.Equal(t, len(tc.Positions), len(resp.Positions))
 		})
 	}
+}
+
+func TestQueryPosition(t *testing.T) {
+	alice := testutil.AccAddress()
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+
+	tc := TestCases{
+		TC("positive PnL").
+			Given(
+				CreateCustomMarket(
+					pair,
+					WithPricePeg(sdk.NewDec(2)),
+				),
+			).
+			When(
+				InsertPosition(
+					WithPair(pair),
+					WithTrader(alice),
+					WithMargin(sdk.NewDec(1)),
+					WithSize(sdk.NewDec(10)),
+					WithOpenNotional(sdk.NewDec(10)),
+				),
+			).
+			Then(
+				QueryPosition(pair, alice,
+					QueryPosition_PositionEquals(v2types.Position{
+						Pair:                            pair,
+						TraderAddress:                   alice.String(),
+						Size_:                           sdk.NewDec(10),
+						Margin:                          sdk.NewDec(1),
+						OpenNotional:                    sdk.NewDec(10),
+						LatestCumulativePremiumFraction: sdk.ZeroDec(),
+						LastUpdatedBlockNumber:          0,
+					}),
+					QueryPosition_PositionNotionalEquals(sdk.MustNewDecFromStr("19.9999999998")),
+					QueryPosition_UnrealizedPnlEquals(sdk.MustNewDecFromStr("9.9999999998")),
+					QueryPosition_MarginRatioEquals(sdk.MustNewDecFromStr("0.5499999999955")),
+				),
+			),
+
+		TC("negative PnL, positive margin ratio").
+			Given(
+				CreateCustomMarket(
+					pair,
+					WithPricePeg(sdk.NewDec(1)),
+				),
+			).
+			When(
+				InsertPosition(
+					WithPair(pair),
+					WithTrader(alice),
+					WithMargin(sdk.NewDec(1)),
+					WithSize(sdk.NewDec(10)),
+					WithOpenNotional(sdk.NewDec(10)),
+				),
+			).
+			Then(
+				QueryPosition(pair, alice,
+					QueryPosition_PositionEquals(v2types.Position{
+						Pair:                            pair,
+						TraderAddress:                   alice.String(),
+						Size_:                           sdk.NewDec(10),
+						Margin:                          sdk.NewDec(1),
+						OpenNotional:                    sdk.NewDec(10),
+						LatestCumulativePremiumFraction: sdk.ZeroDec(),
+						LastUpdatedBlockNumber:          0,
+					}),
+					QueryPosition_PositionNotionalEquals(sdk.MustNewDecFromStr("9.9999999999")),
+					QueryPosition_UnrealizedPnlEquals(sdk.MustNewDecFromStr("-0.0000000001")),
+					QueryPosition_MarginRatioEquals(sdk.MustNewDecFromStr("0.099999999991")),
+				),
+			),
+
+		TC("negative PnL, negative margin ratio").
+			Given(
+				CreateCustomMarket(
+					pair,
+					WithPricePeg(sdk.MustNewDecFromStr("0.5")),
+				),
+			).
+			When(
+				InsertPosition(
+					WithPair(pair),
+					WithTrader(alice),
+					WithMargin(sdk.NewDec(1)),
+					WithSize(sdk.NewDec(10)),
+					WithOpenNotional(sdk.NewDec(10)),
+				),
+			).
+			Then(
+				QueryPosition(pair, alice,
+					QueryPosition_PositionEquals(v2types.Position{
+						Pair:                            pair,
+						TraderAddress:                   alice.String(),
+						Size_:                           sdk.NewDec(10),
+						Margin:                          sdk.NewDec(1),
+						OpenNotional:                    sdk.NewDec(10),
+						LatestCumulativePremiumFraction: sdk.ZeroDec(),
+						LastUpdatedBlockNumber:          0,
+					}),
+					QueryPosition_PositionNotionalEquals(sdk.MustNewDecFromStr("4.99999999995")),
+					QueryPosition_UnrealizedPnlEquals(sdk.MustNewDecFromStr("-5.00000000005")),
+					QueryPosition_MarginRatioEquals(sdk.MustNewDecFromStr("-0.800000000018")),
+				),
+			),
+	}
+
+	NewTestSuite(t).WithTestCases(tc...).Run()
 }

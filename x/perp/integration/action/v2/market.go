@@ -50,9 +50,6 @@ func CreateCustomMarket(pair asset.Pair, marketModifiers ...marketModifier) acti
 		MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.0625"),
 		MaxLeverage:                     sdk.NewDec(10),
 	}
-	for _, modifier := range marketModifiers {
-		modifier(&market)
-	}
 
 	amm := v2types.AMM{
 		Pair:            pair,
@@ -64,16 +61,26 @@ func CreateCustomMarket(pair asset.Pair, marketModifiers ...marketModifier) acti
 		TotalShort:      sdk.ZeroDec(),
 	}
 
+	for _, modifier := range marketModifiers {
+		modifier(&market, &amm)
+	}
+
 	return CreateMarketAction{
 		Market: market,
 		AMM:    amm,
 	}
 }
 
-type marketModifier func(market *v2types.Market)
+type marketModifier func(market *v2types.Market, amm *v2types.AMM)
 
 func WithPrepaidBadDebt(amount sdk.Int) marketModifier {
-	return func(market *v2types.Market) {
+	return func(market *v2types.Market, amm *v2types.AMM) {
 		market.PrepaidBadDebt = sdk.NewCoin(market.Pair.QuoteDenom(), amount)
+	}
+}
+
+func WithPricePeg(multiplier sdk.Dec) marketModifier {
+	return func(market *v2types.Market, amm *v2types.AMM) {
+		amm.PriceMultiplier = multiplier
 	}
 }

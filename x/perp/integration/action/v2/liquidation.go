@@ -71,8 +71,3 @@ func MultiLiquidate(liquidator sdk.AccAddress, shouldAllFail bool, pairTraderTup
 		shouldAllFail:    shouldAllFail,
 	}
 }
-
-type multiLiquidateAllShouldFail struct {
-	pairTraderTuples []PairTraderTuple
-	liquidator       sdk.AccAddress
-}
