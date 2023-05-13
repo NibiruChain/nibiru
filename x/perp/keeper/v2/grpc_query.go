@@ -40,7 +40,7 @@ func (q queryServer) QueryPositions(
 
 	markets := q.k.Markets.Iterate(ctx, collections.Range[asset.Pair]{}).Values()
 
-	var positions []*v2types.QueryPositionResponse
+	var positions []v2types.QueryPositionResponse
 	for _, market := range markets {
 		amm, err := q.k.AMMs.Get(ctx, market.Pair)
 		if err != nil {
@@ -80,18 +80,19 @@ func (q queryServer) QueryPosition(
 		return nil, err
 	}
 
-	return q.position(ctx, req.Pair, traderAddr, market, amm)
+	resp, err := q.position(ctx, req.Pair, traderAddr, market, amm)
+	return &resp, err
 }
 
-func (q queryServer) position(ctx sdk.Context, pair asset.Pair, trader sdk.AccAddress, market v2types.Market, amm v2types.AMM) (*v2types.QueryPositionResponse, error) {
+func (q queryServer) position(ctx sdk.Context, pair asset.Pair, trader sdk.AccAddress, market v2types.Market, amm v2types.AMM) (v2types.QueryPositionResponse, error) {
 	position, err := q.k.Positions.Get(ctx, collections.Join(pair, trader))
 	if err != nil {
-		return nil, err
+		return v2types.QueryPositionResponse{}, err
 	}
 
 	positionNotional, err := PositionNotionalSpot(amm, position)
 	if err != nil {
-		return nil, err
+		return v2types.QueryPositionResponse{}, err
 	}
 	unrealizedPnl := UnrealizedPnl(position, positionNotional)
 
@@ -100,8 +101,8 @@ func (q queryServer) position(ctx sdk.Context, pair asset.Pair, trader sdk.AccAd
 	// 	return nil, err
 	// }
 
-	return &v2types.QueryPositionResponse{
-		Position:         &position,
+	return v2types.QueryPositionResponse{
+		Position:         position,
 		PositionNotional: positionNotional,
 		UnrealizedPnl:    unrealizedPnl,
 		MarginRatio:      MarginRatio(position, positionNotional, market.LatestCumulativePremiumFraction),

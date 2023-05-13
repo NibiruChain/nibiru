@@ -45,7 +45,9 @@ message QueryParamsResponse {
 // ---------------------------------------- Positions
 message QueryPositionsRequest { string trader = 1; }
 
-message QueryPositionsResponse { repeated QueryPositionResponse positions = 1; }
+message QueryPositionsResponse {
+  repeated QueryPositionResponse positions = 1 [ (gogoproto.nullable) = false ];
+}
 
 // ---------------------------------------- Position
 
@@ -63,7 +65,7 @@ message QueryPositionRequest {
 
 message QueryPositionResponse {
   // The position as it exists in the blockchain state
-  Position position = 1;
+  Position position = 1 [ (gogoproto.nullable) = false ];
 
   // The position's current notional value, if it were to be entirely closed (in
   // margin units).

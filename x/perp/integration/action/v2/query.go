@@ -14,7 +14,7 @@ import (
 type queryPosition struct {
 	pair             asset.Pair
 	traderAddress    sdk.AccAddress
-	responseCheckers []queryPositionChecker
+	responseCheckers []QueryPositionChecker
 }
 
 func (q queryPosition) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
@@ -29,8 +29,7 @@ func (q queryPosition) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, err
 	}
 
 	for _, checker := range q.responseCheckers {
-		err := checker(resp)
-		if err != nil {
+		if err := checker(*resp); err != nil {
 			return ctx, err, false
 		}
 	}
@@ -38,7 +37,7 @@ func (q queryPosition) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, err
 	return ctx, nil, false
 }
 
-func QueryPosition(pair asset.Pair, traderAddress sdk.AccAddress, responseCheckers ...queryPositionChecker) action.Action {
+func QueryPosition(pair asset.Pair, traderAddress sdk.AccAddress, responseCheckers ...QueryPositionChecker) action.Action {
 	return queryPosition{
 		pair:             pair,
 		traderAddress:    traderAddress,
@@ -46,16 +45,16 @@ func QueryPosition(pair asset.Pair, traderAddress sdk.AccAddress, responseChecke
 	}
 }
 
-type queryPositionChecker func(resp *v2types.QueryPositionResponse) error
+type QueryPositionChecker func(resp v2types.QueryPositionResponse) error
 
-func QueryPosition_PositionEquals(expected v2types.Position) queryPositionChecker {
-	return func(resp *v2types.QueryPositionResponse) error {
-		return v2types.PositionsAreEqual(&expected, resp.Position)
+func QueryPosition_PositionEquals(expected v2types.Position) QueryPositionChecker {
+	return func(resp v2types.QueryPositionResponse) error {
+		return v2types.PositionsAreEqual(&expected, &resp.Position)
 	}
 }
 
-func QueryPosition_PositionNotionalEquals(expected sdk.Dec) queryPositionChecker {
-	return func(resp *v2types.QueryPositionResponse) error {
+func QueryPosition_PositionNotionalEquals(expected sdk.Dec) QueryPositionChecker {
+	return func(resp v2types.QueryPositionResponse) error {
 		if !expected.Equal(resp.PositionNotional) {
 			return fmt.Errorf("expected position notional %s, got %s", expected, resp.PositionNotional)
 		}
@@ -63,8 +62,8 @@ func QueryPosition_PositionNotionalEquals(expected sdk.Dec) queryPositionChecker
 	}
 }
 
-func QueryPosition_UnrealizedPnlEquals(expected sdk.Dec) queryPositionChecker {
-	return func(resp *v2types.QueryPositionResponse) error {
+func QueryPosition_UnrealizedPnlEquals(expected sdk.Dec) QueryPositionChecker {
+	return func(resp v2types.QueryPositionResponse) error {
 		if !expected.Equal(resp.UnrealizedPnl) {
 			return fmt.Errorf("expected unrealized pnl %s, got %s", expected, resp.UnrealizedPnl)
 		}
@@ -72,11 +71,45 @@ func QueryPosition_UnrealizedPnlEquals(expected sdk.Dec) queryPositionChecker {
 	}
 }
 
-func QueryPosition_MarginRatioEquals(expected sdk.Dec) queryPositionChecker {
-	return func(resp *v2types.QueryPositionResponse) error {
+func QueryPosition_MarginRatioEquals(expected sdk.Dec) QueryPositionChecker {
+	return func(resp v2types.QueryPositionResponse) error {
 		if !expected.Equal(resp.MarginRatio) {
 			return fmt.Errorf("expected margin ratio %s, got %s", expected, resp.MarginRatio)
 		}
 		return nil
+	}
+}
+
+type queryAllPositions struct {
+	traderAddress       sdk.AccAddress
+	allResponseCheckers [][]QueryPositionChecker
+}
+
+func (q queryAllPositions) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	queryServer := keeper.NewQuerier(app.PerpKeeperV2)
+
+	resp, err := queryServer.QueryPositions(sdk.WrapSDKContext(ctx), &v2types.QueryPositionsRequest{
+		Trader: q.traderAddress.String(),
+	})
+	if err != nil {
+		return ctx, err, false
+	}
+
+	for i, positionCheckers := range q.allResponseCheckers {
+		for _, checker := range positionCheckers {
+			if err := checker(resp.Positions[i]); err != nil {
+				return ctx, err, false
+			}
+		}
+
+	}
+
+	return ctx, nil, false
+}
+
+func QueryPositions(traderAddress sdk.AccAddress, responseCheckers ...[]QueryPositionChecker) action.Action {
+	return queryAllPositions{
+		traderAddress:       traderAddress,
+		allResponseCheckers: responseCheckers,
 	}
 }
