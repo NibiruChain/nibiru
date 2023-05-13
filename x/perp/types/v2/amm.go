@@ -297,13 +297,13 @@ func (amm AMM) CalcRepegCost(newPriceMultiplier sdk.Dec) (cost sdk.Int, err erro
 		return
 	}
 
-	cost = biasInQuoteReserve.Mul(newPriceMultiplier.Sub(amm.PriceMultiplier)).Ceil().TruncateInt()
+	costDec := biasInQuoteReserve.Mul(newPriceMultiplier.Sub(amm.PriceMultiplier))
 
 	if bias.IsNegative() {
-		cost = cost.Neg()
+		costDec = costDec.Neg()
 	}
 
-	return cost, nil
+	return costDec.Ceil().TruncateInt(), nil
 }
 
 /*
@@ -357,7 +357,6 @@ func (amm AMM) CalcUpdateSwapInvariantCost(swapInvariantMultiplier sdk.Dec) (cos
 
 // UpdateSwapInvariant updates the swap invariant of the amm
 func (amm *AMM) UpdateSwapInvariant(swapInvariantMultiplier sdk.Dec) (err error) {
-
 	// k = x * y
 	// newK = (cx) * (cy) = c^2 xy = c^2 k
 	// newPrice = (c y) / (c x) = y / x = price | unchanged price

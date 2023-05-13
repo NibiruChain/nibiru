@@ -13,13 +13,17 @@ import (
 // funds get send to the vault to pay for trader's new net margin.
 func (k Keeper) EditPriceMultiplier(
 	ctx sdk.Context,
-	sender sdk.AccAddress,
 	pair asset.Pair,
 	newPriceMultiplier sdk.Dec,
 ) (err error) {
 	amm, err := k.AMMs.Get(ctx, pair)
 	if err != nil {
 		return err
+	}
+
+	if newPriceMultiplier.Equal(amm.PriceMultiplier) {
+		// same price multiplier, no-op
+		return nil
 	}
 
 	// Compute cost of re-pegging the pool

@@ -84,3 +84,32 @@ func WithPricePeg(multiplier sdk.Dec) marketModifier {
 		amm.PriceMultiplier = multiplier
 	}
 }
+
+func WithTotalLong(amount sdk.Dec) marketModifier {
+	return func(market *v2types.Market, amm *v2types.AMM) {
+		amm.TotalLong = amount
+	}
+}
+
+func WithTotalShort(amount sdk.Dec) marketModifier {
+	return func(market *v2types.Market, amm *v2types.AMM) {
+		amm.TotalShort = amount
+	}
+}
+
+type editPriceMultiplier struct {
+	pair       asset.Pair
+	multiplier sdk.Dec
+}
+
+func (e editPriceMultiplier) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	err := app.PerpKeeperV2.EditPriceMultiplier(ctx, e.pair, e.multiplier)
+	return ctx, err, true
+}
+
+func EditPriceMultiplier(pair asset.Pair, multiplier sdk.Dec) action.Action {
+	return editPriceMultiplier{
+		pair:       pair,
+		multiplier: multiplier,
+	}
+}

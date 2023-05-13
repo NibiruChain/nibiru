@@ -11,10 +11,13 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
+	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	. "github.com/NibiruChain/nibiru/x/perp/integration/action/v2"
 	"github.com/NibiruChain/nibiru/x/perp/keeper/v1"
 	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
+	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
 func TestMsgServerRepeg(t *testing.T) {
@@ -332,4 +335,96 @@ func TestMsgServerUpdateSwapInvariant(t *testing.T) {
 			)
 		})
 	}
+}
+
+func TestEditPriceMultipler(t *testing.T) {
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+
+	tests := TestCases{
+		TC("same price multiplier").
+			Given(
+				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(1000)), WithTotalShort(sdk.NewDec(500))),
+				FundModule(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+				FundModule(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+			).
+			When(
+				EditPriceMultiplier(pair, sdk.OneDec()),
+			).
+			Then(
+				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+			),
+
+		TC("net bias zero").
+			Given(
+				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(1000)), WithTotalShort(sdk.NewDec(1000))),
+				FundModule(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+				FundModule(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+			).
+			When(
+				EditPriceMultiplier(pair, sdk.NewDec(10)),
+			).
+			Then(
+				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+			),
+
+		TC("long bias, increase price multiplier").
+			Given(
+				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(1000)), WithTotalShort(sdk.NewDec(500))),
+				FundModule(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+				FundModule(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+			).
+			When(
+				EditPriceMultiplier(pair, sdk.NewDec(10)),
+			).
+			Then(
+				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1004500)))),
+				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(995500)))),
+			),
+
+		TC("long bias, decrease price multiplier").
+			Given(
+				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(1000)), WithTotalShort(sdk.NewDec(500))),
+				FundModule(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+				FundModule(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+			).
+			When(
+				EditPriceMultiplier(pair, sdk.MustNewDecFromStr("0.25")),
+			).
+			Then(
+				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(999626)))),
+				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1000374)))),
+			),
+
+		TC("short bias, increase price multiplier").
+			Given(
+				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(500)), WithTotalShort(sdk.NewDec(1000))),
+				FundModule(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+				FundModule(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+			).
+			When(
+				EditPriceMultiplier(pair, sdk.NewDec(10)),
+			).
+			Then(
+				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(995500)))),
+				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1004500)))),
+			),
+
+		TC("short bias, decrease price multiplier").
+			Given(
+				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(500)), WithTotalShort(sdk.NewDec(1000))),
+				FundModule(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+				FundModule(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+			).
+			When(
+				EditPriceMultiplier(pair, sdk.MustNewDecFromStr("0.25")),
+			).
+			Then(
+				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1000376)))),
+				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(999624)))),
+			),
+	}
+
+	NewTestSuite(t).WithTestCases(tests...).Run()
 }

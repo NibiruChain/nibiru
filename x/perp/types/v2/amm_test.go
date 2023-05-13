@@ -225,7 +225,7 @@ func TestRepegCost(t *testing.T) {
 		amm                v2.AMM
 		newPriceMultiplier sdk.Dec
 
-		expectedCost sdk.Dec
+		expectedCost sdk.Int
 		shouldErr    bool
 	}{
 		{
@@ -239,7 +239,7 @@ func TestRepegCost(t *testing.T) {
 				TotalShort:      sdk.ZeroDec(),
 			},
 			newPriceMultiplier: sdk.NewDec(3),
-			expectedCost:       sdk.ZeroDec(),
+			expectedCost:       sdk.ZeroInt(),
 			shouldErr:          false,
 		},
 		{
@@ -253,11 +253,11 @@ func TestRepegCost(t *testing.T) {
 				TotalShort:      sdk.ZeroDec(),
 			},
 			newPriceMultiplier: sdk.OneDec(),
-			expectedCost:       sdk.ZeroDec(),
+			expectedCost:       sdk.ZeroInt(),
 			shouldErr:          false,
 		},
 		{
-			name: "new peg -> simple math",
+			name: "new peg -> net long and increase price multiplier",
 			amm: v2.AMM{
 				Pair:            pair,
 				BaseReserve:     sdk.NewDec(100),
@@ -267,11 +267,11 @@ func TestRepegCost(t *testing.T) {
 				TotalShort:      sdk.ZeroDec(),
 			},
 			newPriceMultiplier: sdk.NewDec(2),
-			expectedCost:       sdk.NewDec(20), // 20 * (2 - 1)
+			expectedCost:       sdk.NewInt(20),
 			shouldErr:          false,
 		},
 		{
-			name: "new peg -> simple math but negative bias",
+			name: "new peg -> net short and increase price multiplier",
 			amm: v2.AMM{
 				Pair:            pair,
 				BaseReserve:     sdk.NewDec(100),
@@ -281,7 +281,49 @@ func TestRepegCost(t *testing.T) {
 				TotalShort:      sdk.NewDec(20),
 			},
 			newPriceMultiplier: sdk.NewDec(2),
-			expectedCost:       sdk.NewDec(-25), // -20 * (2 - 1)
+			expectedCost:       sdk.NewInt(-25),
+			shouldErr:          false,
+		},
+		{
+			name: "new peg -> net long and decrease price multiplier",
+			amm: v2.AMM{
+				Pair:            pair,
+				BaseReserve:     sdk.NewDec(100),
+				QuoteReserve:    sdk.NewDec(100),
+				PriceMultiplier: sdk.OneDec(),
+				TotalLong:       sdk.NewDec(25),
+				TotalShort:      sdk.ZeroDec(),
+			},
+			newPriceMultiplier: sdk.MustNewDecFromStr("0.5"),
+			expectedCost:       sdk.NewInt(-10),
+			shouldErr:          false,
+		},
+		{
+			name: "new peg -> net short and decrease price multiplier",
+			amm: v2.AMM{
+				Pair:            pair,
+				BaseReserve:     sdk.NewDec(100),
+				QuoteReserve:    sdk.NewDec(100),
+				PriceMultiplier: sdk.OneDec(),
+				TotalLong:       sdk.ZeroDec(),
+				TotalShort:      sdk.NewDec(20),
+			},
+			newPriceMultiplier: sdk.MustNewDecFromStr("0.5"),
+			expectedCost:       sdk.NewInt(13),
+			shouldErr:          false,
+		},
+		{
+			name: "new peg -> negative bias big numbers",
+			amm: v2.AMM{
+				Pair:            pair,
+				BaseReserve:     sdk.NewDec(1e12),
+				QuoteReserve:    sdk.NewDec(1e12),
+				PriceMultiplier: sdk.OneDec(),
+				TotalLong:       sdk.NewDec(500),
+				TotalShort:      sdk.NewDec(1000),
+			},
+			newPriceMultiplier: sdk.NewDec(10),
+			expectedCost:       sdk.NewInt(-4500),
 			shouldErr:          false,
 		},
 	}
