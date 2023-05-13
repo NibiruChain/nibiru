@@ -45,7 +45,9 @@ message QueryParamsResponse {
 // ---------------------------------------- Positions
 message QueryPositionsRequest { string trader = 1; }
 
-message QueryPositionsResponse { repeated QueryPositionResponse positions = 1; }
+message QueryPositionsResponse {
+  repeated QueryPositionResponse positions = 1 [ (gogoproto.nullable) = false ];
+}
 
 // ---------------------------------------- Position
 
@@ -63,7 +65,7 @@ message QueryPositionRequest {
 
 message QueryPositionResponse {
   // The position as it exists in the blockchain state
-  Position position = 1;
+  Position position = 1 [ (gogoproto.nullable) = false ];
 
   // The position's current notional value, if it were to be entirely closed (in
   // margin units).
@@ -78,24 +80,11 @@ message QueryPositionResponse {
     (gogoproto.nullable) = false
   ];
 
-  // margin ratio of the position based on the mark price, mark TWAP. The higher
-  // value of the possible margin ratios (TWAP and instantaneous) is taken to be
-  // 'marginRatioMark'. Calculated from margin, unrealized PnL, and position
-  // notional.
-  string margin_ratio_mark = 4 [
+  // margin ratio of the position based on the spot price
+  string margin_ratio = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-
-  // margin ratio of the position based on the index price. Calculated from
-  // margin, unrealized PnL, and position notional.
-  string margin_ratio_index = 5 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-
-  // BlockNumber is current block number at the time of query.
-  int64 block_number = 7;
 }
 
 // ----------------------------------------
