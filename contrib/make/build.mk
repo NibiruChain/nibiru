@@ -57,7 +57,10 @@ ldflags := $(strip $(ldflags))
 
 BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
 CGO_CFLAGS  := -I$(TEMPDIR)/include
-CGO_LDFLAGS := -L$(TEMPDIR)/lib -lrocksdb -lz -lbz2
+CGO_LDFLAGS := -L$(TEMPDIR)/lib -lrocksdb
+ifeq ($(OS_NAME),darwin)
+	CGO_LDFLAGS += -lz -lbz2
+endif
 
 ###############################################################################
 ###                                  Build                                  ###
