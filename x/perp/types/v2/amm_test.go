@@ -435,3 +435,106 @@ func TestUpdateSwapInvariant(t *testing.T) {
 		})
 	}
 }
+
+func TestGetSwapInvariantUpdateCost(t *testing.T) {
+	tests := []struct {
+		name       string
+		amm        v2.AMM
+		multiplier sdk.Dec
+
+		expectedCost sdk.Dec
+	}{
+		{
+			name: "zero cost - due to single multiplier",
+			amm: v2.AMM{
+				BaseReserve:     sdk.NewDec(100),
+				QuoteReserve:    sdk.NewDec(100),
+				SqrtDepth:       sdk.NewDec(100),
+				PriceMultiplier: sdk.OneDec(),
+				TotalLong:       sdk.NewDec(50),
+				TotalShort:      sdk.NewDec(50),
+			},
+			multiplier:   sdk.OneDec(),
+			expectedCost: sdk.ZeroDec(),
+		},
+
+		{
+			name: "zero cost - due to zero bias",
+			amm: v2.AMM{
+				BaseReserve:     sdk.NewDec(100),
+				QuoteReserve:    sdk.NewDec(100),
+				SqrtDepth:       sdk.NewDec(100),
+				PriceMultiplier: sdk.OneDec(),
+				TotalLong:       sdk.ZeroDec(),
+				TotalShort:      sdk.ZeroDec(),
+			},
+			multiplier:   sdk.NewDec(100),
+			expectedCost: sdk.ZeroDec(),
+		},
+
+		{
+			name: "long bias, increase swap invariant",
+			amm: v2.AMM{
+				BaseReserve:     sdk.NewDec(100),
+				QuoteReserve:    sdk.NewDec(100),
+				SqrtDepth:       sdk.NewDec(100),
+				PriceMultiplier: sdk.OneDec(),
+				TotalLong:       sdk.NewDec(10),
+				TotalShort:      sdk.ZeroDec(),
+			},
+			multiplier:   sdk.NewDec(100),
+			expectedCost: sdk.MustNewDecFromStr("0.810081008100810081"),
+		},
+
+		{
+			name: "long bias, decrease swap invariant",
+			amm: v2.AMM{
+				BaseReserve:     sdk.NewDec(1000),
+				QuoteReserve:    sdk.NewDec(1000),
+				SqrtDepth:       sdk.NewDec(1000),
+				PriceMultiplier: sdk.OneDec(),
+				TotalLong:       sdk.NewDec(10),
+				TotalShort:      sdk.ZeroDec(),
+			},
+			multiplier:   sdk.MustNewDecFromStr("0.01"),
+			expectedCost: sdk.MustNewDecFromStr("-0.810081008100810081"),
+		},
+
+		{
+			name: "short bias, increase swap invariant",
+			amm: v2.AMM{
+				BaseReserve:     sdk.NewDec(100),
+				QuoteReserve:    sdk.NewDec(100),
+				SqrtDepth:       sdk.NewDec(100),
+				PriceMultiplier: sdk.OneDec(),
+				TotalLong:       sdk.ZeroDec(),
+				TotalShort:      sdk.NewDec(10),
+			},
+			multiplier:   sdk.NewDec(100),
+			expectedCost: sdk.MustNewDecFromStr("1.010101010101010101"),
+		},
+
+		{
+			name: "short bias, decrease swap invariant",
+			amm: v2.AMM{
+				BaseReserve:     sdk.NewDec(1000),
+				QuoteReserve:    sdk.NewDec(1000),
+				SqrtDepth:       sdk.NewDec(1000),
+				PriceMultiplier: sdk.OneDec(),
+				TotalLong:       sdk.ZeroDec(),
+				TotalShort:      sdk.NewDec(10),
+			},
+			multiplier:   sdk.MustNewDecFromStr("0.01"),
+			expectedCost: sdk.MustNewDecFromStr("-1.010101010101010101"),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			cost, err := tc.amm.GetSwapInvariantUpdateCost(tc.multiplier)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedCost, cost)
+		})
+	}
+}

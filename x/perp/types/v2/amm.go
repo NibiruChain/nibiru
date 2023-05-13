@@ -292,7 +292,7 @@ func (amm AMM) GetRepegCost(newPriceMultiplier sdk.Dec) (cost sdk.Dec, err error
 		dir = Direction_LONG
 	}
 
-	biasInQuoteReserve, err := amm.SwapBaseAsset(bias.Abs(), dir)
+	biasInQuoteReserve, err := amm.GetQuoteReserveAmt(bias.Abs(), dir)
 	if err != nil {
 		return
 	}
@@ -310,9 +310,22 @@ func (amm AMM) GetRepegCost(newPriceMultiplier sdk.Dec) (cost sdk.Dec, err error
 GetSwapInvariantUpdateCost returns the cost of updating the invariant of the pool
 */
 func (amm AMM) GetSwapInvariantUpdateCost(swapInvariantMultiplier sdk.Dec) (cost sdk.Dec, err error) {
-	quoteReserveBefore, err := amm.GetMarketTotalQuoteReserves()
+	bias := amm.GetBias()
+
+	if bias.IsZero() {
+		return sdk.ZeroDec(), nil
+	}
+
+	var dir Direction
+	if bias.IsPositive() {
+		dir = Direction_SHORT
+	} else {
+		dir = Direction_LONG
+	}
+
+	quoteReserveBefore, err := amm.GetQuoteReserveAmt(bias.Abs(), dir)
 	if err != nil {
-		return sdk.Dec{}, err
+		return
 	}
 
 	err = amm.UpdateSwapInvariant(swapInvariantMultiplier)
@@ -320,12 +333,18 @@ func (amm AMM) GetSwapInvariantUpdateCost(swapInvariantMultiplier sdk.Dec) (cost
 		return sdk.Dec{}, err
 	}
 
-	quoteReserveAfter, err := amm.GetMarketTotalQuoteReserves()
+	quoteReserveAfter, err := amm.GetQuoteReserveAmt(bias.Abs(), dir)
 	if err != nil {
 		return sdk.Dec{}, err
 	}
 
-	return amm.FromQuoteReserveToAsset(quoteReserveAfter.Sub(quoteReserveBefore)), nil
+	cost = amm.FromQuoteReserveToAsset(quoteReserveAfter.Sub(quoteReserveBefore))
+
+	if bias.IsNegative() {
+		cost = cost.Neg()
+	}
+
+	return cost, nil
 }
 
 /* UpdateSwapInvariant creates a new market object with an updated swap invariant */
