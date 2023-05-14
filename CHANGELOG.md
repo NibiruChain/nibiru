@@ -41,13 +41,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Dependencies
+
 - Bump `robinraju/release-downloader` from 1.6 to 1.8 (#1326)
 - Bump `pozetroninc/github-action-get-latest-release` from 0.6.0 to 0.7.0 (#1325)
 - Bump `technote-space/get-diff-action` from 4 to 6 (#1327)
 - Bump `actions/setup-go` from 3 to 4 (#1324)
 - Bump `github.com/docker/distribution` from 2.8.1+incompatible to 2.8.2+incompatible (#1339)
+- Bump `github.com/CosmWasm/wasmvm` from 1.2.1 to 1.2.3 (#1354)
 
 ### Breaking
+
+* [#1346](https://github.com/NibiruChain/nibiru/pull/1346) - build: Upgrade wasmvm (v1.2.1), tendermint (v0.34.26), and Cosmos-SDK (v0.45.14) dependencies
 * [#1317](https://github.com/NibiruChain/nibiru/pull/1317) - feat(sudo): Implement and test CLI commands for tx and queries. 
 * [#1307](https://github.com/NibiruChain/nibiru/pull/1307) - feat(sudo): Create the x/sudo module + integration tests
 * [#1299](https://github.com/NibiruChain/nibiru/pull/1299) - feat(wasm): Add peg shift bindings
@@ -119,6 +123,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1335](https://github.com/NibiruChain/nibiru/pull/1335) - refactor(perp): move remaining perpv1 files to v1 directory
 * [#1338](https://github.com/NibiruChain/nibiru/pull/1338) - feat(perp): V2 OpenPosition
 * [#1344](https://github.com/NibiruChain/nibiru/pull/1344) - feat(perp): PerpKeeperV2 `AddMargin` and `RemoveMargin`
+* [#1345](https://github.com/NibiruChain/nibiru/pull/1345) - feat(perp): PerpV2 QueryServer
+* [#1343](https://github.com/NibiruChain/nibiru/pull/1343) - feat(perp): add PerpKeeperV2 `MultiLiquidate`
+* [#1350](https://github.com/NibiruChain/nibiru/pull/1350) - feat(perp): `EditPriceMultiplier` and `EditSwapInvariant`
 
 ### Bug Fixes
 
