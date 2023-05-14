@@ -8,16 +8,16 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 )
 
-func AllBalancesEqual(account sdk.AccAddress, amount sdk.Coins) *allBalancesEqualAction {
-	return &allBalancesEqualAction{Account: account, Amount: amount}
+func AllBalancesEqual(account sdk.AccAddress, amount sdk.Coins) *allBalancesEqual {
+	return &allBalancesEqual{Account: account, Amount: amount}
 }
 
-type allBalancesEqualAction struct {
+type allBalancesEqual struct {
 	Account sdk.AccAddress
 	Amount  sdk.Coins
 }
 
-func (b allBalancesEqualAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (b allBalancesEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	coins := app.BankKeeper.GetAllBalances(ctx, b.Account)
 	if !coins.IsEqual(b.Amount) {
 		return ctx, fmt.Errorf(
@@ -31,17 +31,17 @@ func (b allBalancesEqualAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Con
 	return ctx, nil, false
 }
 
-func BalanceEqual(account sdk.AccAddress, denom string, amount sdk.Int) *balanceEqualAction {
-	return &balanceEqualAction{Account: account, Denom: denom, Amount: amount}
+func BalanceEqual(account sdk.AccAddress, denom string, amount sdk.Int) *balanceEqual {
+	return &balanceEqual{Account: account, Denom: denom, Amount: amount}
 }
 
-type balanceEqualAction struct {
+type balanceEqual struct {
 	Account sdk.AccAddress
 	Denom   string
 	Amount  sdk.Int
 }
 
-func (b balanceEqualAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (b balanceEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	coin := app.BankKeeper.GetBalance(ctx, b.Account, b.Denom)
 	if !coin.Amount.Equal(b.Amount) {
 		return ctx, fmt.Errorf(
@@ -55,17 +55,17 @@ func (b balanceEqualAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context
 	return ctx, nil, false
 }
 
-func ModuleBalanceEqual(moduleName string, denom string, amount sdk.Int) *moduleBalanceAction {
-	return &moduleBalanceAction{ModuleName: moduleName, Denom: denom, Amount: amount}
+func ModuleBalanceEqual(moduleName string, denom string, amount sdk.Int) *moduleBalanceEqual {
+	return &moduleBalanceEqual{ModuleName: moduleName, Denom: denom, Amount: amount}
 }
 
-type moduleBalanceAction struct {
+type moduleBalanceEqual struct {
 	ModuleName string
 	Denom      string
 	Amount     sdk.Int
 }
 
-func (b moduleBalanceAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (b moduleBalanceEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	coin := app.BankKeeper.GetBalance(ctx, app.AccountKeeper.GetModuleAddress(b.ModuleName), b.Denom)
 	if !coin.Amount.Equal(b.Amount) {
 		return ctx, fmt.Errorf(
