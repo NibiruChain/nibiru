@@ -9,6 +9,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
+	. "github.com/NibiruChain/nibiru/x/common/testutil/assertion"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/action/v2"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion/v2"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
@@ -247,184 +248,6 @@ import (
 // 	}
 // }
 
-// func TestMsgServerOpenPositionOld(t *testing.T) {
-// 	tests := []struct {
-// 		name        string
-// 		traderFunds sdk.Coins
-// 		pair        asset.Pair
-// 		sender      string
-// 		expectedErr error
-// 	}{
-// 		{
-// 			name:        "trader not enough funds",
-// 			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 999)),
-// 			pair:        asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-// 			sender:      testutil.AccAddress().String(),
-// 			expectedErr: sdkerrors.ErrInsufficientFunds,
-// 		},
-// 		{
-// 			name:        "success",
-// 			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1020)),
-// 			pair:        asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-// 			sender:      testutil.AccAddress().String(),
-// 			expectedErr: nil,
-// 		},
-// 	}
-
-// 	for _, tc := range tests {
-// 		tc := tc
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			app, ctx := testapp.NewNibiruTestAppAndContext(true)
-// 			ctx = ctx.WithBlockTime(time.Now())
-// 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
-
-// 			t.Log("create market")
-// 			assert.NoError(t, app.PerpAmmKeeper.CreatePool(
-// 				/* ctx */ ctx,
-// 				/* pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-// 				/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO),
-// 				/* baseReserve */ sdk.NewDec(1*common.TO_MICRO),
-// 				v2types.MarketConfig{
-// 					TradeLimitRatio:        sdk.OneDec(),
-// 					FluctuationLimitRatio:  sdk.OneDec(),
-// 					MaxOracleSpreadRatio:   sdk.OneDec(),
-// 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-// 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
-// 				},
-// 				sdk.OneDec(),
-// 			))
-// 			keeper.SetPairMetadata(app.PerpKeeperV2, ctx, types.PairMetadata{
-// 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-// 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
-// 			})
-
-// 			traderAddr, err := sdk.AccAddressFromBech32(tc.sender)
-// 			if err == nil {
-// 				t.Log("fund trader")
-// 				require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, traderAddr, tc.traderFunds))
-// 			}
-
-// 			t.Log("increment block height and time for TWAP calculation")
-// 			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).
-// 				WithBlockTime(time.Now().Add(time.Minute))
-
-// 			resp, err := msgServer.OpenPosition(sdk.WrapSDKContext(ctx), &v2types.MsgOpenPosition{
-// 				Sender:               tc.sender,
-// 				Pair:                 tc.pair,
-// 				Side:                 v2types.Direction_LONG,
-// 				QuoteAssetAmount:     sdk.NewInt(1000),
-// 				Leverage:             sdk.NewDec(10),
-// 				BaseAssetAmountLimit: sdk.ZeroInt(),
-// 			})
-
-// 			if tc.expectedErr != nil {
-// 				require.ErrorContains(t, err, tc.expectedErr.Error())
-// 				require.Nil(t, resp)
-// 			} else {
-// 				require.NoError(t, err)
-// 				require.NotNil(t, resp)
-// 				assert.EqualValues(t, tc.pair, resp.Position.Pair.String())
-// 				assert.EqualValues(t, tc.sender, resp.Position.TraderAddress)
-// 				assert.EqualValues(t, sdk.MustNewDecFromStr("9900.990099009900990099"), resp.Position.Size_)
-// 				assert.EqualValues(t, sdk.NewDec(1000), resp.Position.Margin)
-// 				assert.EqualValues(t, sdk.NewDec(10_000), resp.Position.OpenNotional)
-// 				assert.EqualValues(t, ctx.BlockHeight(), resp.Position.LastUpdatedBlockNumber)
-// 				assert.EqualValues(t, sdk.ZeroDec(), resp.Position.LatestCumulativePremiumFraction)
-// 				assert.EqualValues(t, sdk.NewDec(10_000), resp.ExchangedNotionalValue)
-// 				assert.EqualValues(t, sdk.MustNewDecFromStr("9900.990099009900990099"), resp.ExchangedPositionSize)
-// 				assert.EqualValues(t, sdk.ZeroDec(), resp.FundingPayment)
-// 				assert.EqualValues(t, sdk.ZeroDec(), resp.RealizedPnl)
-// 				assert.EqualValues(t, sdk.ZeroDec(), resp.UnrealizedPnlAfter)
-// 				assert.EqualValues(t, sdk.NewDec(1000), resp.MarginToVault)
-// 				assert.EqualValues(t, sdk.NewDec(10_000), resp.PositionNotional)
-// 			}
-// 		})
-// 	}
-// }
-
-// func TestMsgServerClosePosition(t *testing.T) {
-// 	tests := []struct {
-// 		name string
-
-// 		pair       asset.Pair
-// 		traderAddr sdk.AccAddress
-
-// 		expectedErr error
-// 	}{
-// 		{
-// 			name:        "success",
-// 			pair:        asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-// 			traderAddr:  testutil.AccAddress(),
-// 			expectedErr: nil,
-// 		},
-// 	}
-
-// 	for _, tc := range tests {
-// 		tc := tc
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			app, ctx := testapp.NewNibiruTestAppAndContext(true)
-// 			msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
-
-// 			t.Log("create market")
-
-// 			assert.NoError(t, app.PerpAmmKeeper.CreatePool(
-// 				ctx,
-// 				asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-// 				/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO),
-// 				/* baseReserve */ sdk.NewDec(1*common.TO_MICRO),
-// 				v2types.MarketConfig{
-// 					TradeLimitRatio:        sdk.OneDec(),
-// 					FluctuationLimitRatio:  sdk.OneDec(),
-// 					MaxOracleSpreadRatio:   sdk.OneDec(),
-// 					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-// 					MaxLeverage:            sdk.MustNewDecFromStr("15"),
-// 				},
-// 				sdk.OneDec(),
-// 			))
-// 			keeper.SetPairMetadata(app.PerpKeeperV2, ctx, types.PairMetadata{
-// 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-// 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
-// 			})
-
-// 			t.Log("create position")
-// 			keeper.SetPosition(app.PerpKeeperV2, ctx, v2types.Position{
-// 				TraderAddress:                   tc.traderAddr.String(),
-// 				Pair:                            tc.pair,
-// 				Size_:                           sdk.OneDec(),
-// 				Margin:                          sdk.OneDec(),
-// 				OpenNotional:                    sdk.OneDec(),
-// 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
-// 				LastUpdatedBlockNumber:          1,
-// 			})
-// 			require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(tc.pair.QuoteDenom(), 1))))
-
-// 			resp, err := msgServer.ClosePosition(sdk.WrapSDKContext(ctx), &v2types.MsgClosePosition{
-// 				Sender: tc.traderAddr.String(),
-// 				Pair:   tc.pair,
-// 			})
-
-// 			if tc.expectedErr != nil {
-// 				require.ErrorContains(t, err, tc.expectedErr.Error())
-// 				require.Nil(t, resp)
-// 			} else {
-// 				require.NoError(t, err)
-// 				require.NotNil(t, resp)
-// 				assert.EqualValues(t, sdk.MustNewDecFromStr("0.999999000000999999"), resp.ExchangedNotionalValue)
-// 				assert.EqualValues(t, sdk.NewDec(-1), resp.ExchangedPositionSize)
-// 				assert.EqualValues(t, sdk.ZeroDec(), resp.FundingPayment)
-// 				assert.EqualValues(t, sdk.MustNewDecFromStr("0.999999000000999999"), resp.MarginToTrader)
-// 				assert.EqualValues(t, sdk.MustNewDecFromStr("-0.000000999999000001"), resp.RealizedPnl)
-// 			}
-// 		})
-// 	}
-// }
-
-// func setLiquidator(ctx sdk.Context, perpKeeper keeper.Keeper, liquidator sdk.AccAddress) {
-// 	p := perpKeeper.GetParams(ctx)
-// 	p.WhitelistedLiquidators = []string{liquidator.String()}
-// 	perpKeeper.SetParams(ctx, p)
-// }
-
 // func TestMsgServerMultiLiquidate(t *testing.T) {
 // 	app, ctx := testapp.NewNibiruTestAppAndContext(true)
 // 	ctx = ctx.WithBlockTime(time.Now())
@@ -538,151 +361,6 @@ import (
 // 	assertLiquidated(atRiskPosition2)
 // }
 
-// func TestMsgServerMultiLiquidate_NotAuthorized(t *testing.T) {
-// 	app, ctx := testapp.NewNibiruTestAppAndContext(true)
-// 	ctx = ctx.WithBlockTime(time.Now())
-// 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
-
-// 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
-// 	liquidator := testutil.AccAddress()
-
-// 	atRiskTrader1 := testutil.AccAddress()
-
-// 	t.Log("create market")
-// 	assert.NoError(t, app.PerpAmmKeeper.CreatePool(
-// 		/* ctx */ ctx,
-// 		/* pair */ pair,
-// 		/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO),
-// 		/* baseReserve */ sdk.NewDec(1*common.TO_MICRO),
-// 		v2types.MarketConfig{
-// 			TradeLimitRatio:        sdk.OneDec(),
-// 			FluctuationLimitRatio:  sdk.OneDec(),
-// 			MaxOracleSpreadRatio:   sdk.OneDec(),
-// 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-// 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
-// 		},
-// 		sdk.OneDec(),
-// 	))
-// 	keeper.SetPairMetadata(app.PerpKeeperV2, ctx, types.PairMetadata{
-// 		Pair:                            pair,
-// 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
-// 	})
-// 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
-
-// 	t.Log("set oracle price")
-// 	app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdk.OneDec())
-
-// 	t.Log("create positions")
-// 	atRiskPosition1 := v2types.Position{
-// 		TraderAddress:                   atRiskTrader1.String(),
-// 		Pair:                            pair,
-// 		Size_:                           sdk.OneDec(),
-// 		Margin:                          sdk.OneDec(),
-// 		OpenNotional:                    sdk.NewDec(2),
-// 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
-// 	}
-// 	keeper.SetPosition(app.PerpKeeperV2, ctx, atRiskPosition1)
-
-// 	require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
-
-// 	resp, err := msgServer.MultiLiquidate(sdk.WrapSDKContext(ctx), &v2types.MsgMultiLiquidate{
-// 		Sender: liquidator.String(),
-// 		Liquidations: []*v2types.MsgMultiLiquidate_Liquidation{
-// 			{
-// 				Pair:   pair,
-// 				Trader: atRiskTrader1.String(),
-// 			},
-// 		},
-// 	})
-// 	assert.Nil(t, resp)
-// 	require.ErrorIs(t, err, types.ErrUnauthorized)
-
-// 	// NOTE: we don't care about checking if liquidations math is correct. This is the duty of keeper.Liquidate
-// 	// what we care about is that the first and third liquidations made some modifications at state
-// 	// and events levels, whilst the second (which failed) didn't.
-
-// 	assertNotLiquidated := func(old v2types.Position) {
-// 		position, err := app.PerpKeeperV2.Positions.Get(ctx, collections.Join(old.Pair, sdk.MustAccAddressFromBech32(old.TraderAddress)))
-// 		require.NoError(t, err)
-// 		assert.Equal(t, old, position)
-// 	}
-
-// 	assertNotLiquidated(atRiskPosition1)
-// }
-
-// func TestMsgServerMultiLiquidate_AllFailed(t *testing.T) {
-// 	app, ctx := testapp.NewNibiruTestAppAndContext(true)
-// 	ctx = ctx.WithBlockTime(time.Now())
-// 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
-
-// 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
-// 	liquidator := testutil.AccAddress()
-
-// 	notAtRiskTrader := testutil.AccAddress()
-
-// 	t.Log("create market")
-// 	assert.NoError(t, app.PerpAmmKeeper.CreatePool(
-// 		/* ctx */ ctx,
-// 		/* pair */ pair,
-// 		/* quoteReserve */ sdk.NewDec(1*common.TO_MICRO),
-// 		/* baseReserve */ sdk.NewDec(1*common.TO_MICRO),
-// 		v2types.MarketConfig{
-// 			TradeLimitRatio:        sdk.OneDec(),
-// 			FluctuationLimitRatio:  sdk.OneDec(),
-// 			MaxOracleSpreadRatio:   sdk.OneDec(),
-// 			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-// 			MaxLeverage:            sdk.MustNewDecFromStr("15"),
-// 		},
-// 		sdk.OneDec(),
-// 	))
-// 	keeper.SetPairMetadata(app.PerpKeeperV2, ctx, types.PairMetadata{
-// 		Pair:                            pair,
-// 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
-// 	})
-// 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
-
-// 	t.Log("set oracle price")
-// 	app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdk.OneDec())
-
-// 	t.Log("create positions")
-// 	notAtRiskPosition := v2types.Position{
-// 		TraderAddress:                   notAtRiskTrader.String(),
-// 		Pair:                            pair,
-// 		Size_:                           sdk.OneDec(),
-// 		Margin:                          sdk.OneDec(),
-// 		OpenNotional:                    sdk.OneDec(),
-// 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
-// 	}
-// 	keeper.SetPosition(app.PerpKeeperV2, ctx, notAtRiskPosition)
-
-// 	require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(pair.QuoteDenom(), 2))))
-
-// 	setLiquidator(ctx, app.PerpKeeperV2, liquidator)
-// 	resp, err := msgServer.MultiLiquidate(sdk.WrapSDKContext(ctx), &v2types.MsgMultiLiquidate{
-// 		Sender: liquidator.String(),
-// 		Liquidations: []*v2types.MsgMultiLiquidate_Liquidation{
-// 			{
-// 				Pair:   pair,
-// 				Trader: notAtRiskTrader.String(),
-// 			},
-// 		},
-// 	})
-// 	assert.Nil(t, resp)
-// 	require.ErrorIs(t, err, types.ErrAllLiquidationsFailed)
-
-// 	// NOTE: we don't care about checking if liquidations math is correct. This is the duty of keeper.Liquidate
-// 	// what we care about is that the first and third liquidations made some modifications at state
-// 	// and events levels, whilst the second (which failed) didn't.
-
-// 	assertNotLiquidated := func(old v2types.Position) {
-// 		position, err := app.PerpKeeperV2.Positions.Get(ctx, collections.Join(old.Pair, sdk.MustAccAddressFromBech32(old.TraderAddress)))
-// 		require.NoError(t, err)
-// 		assert.Equal(t, old, position)
-// 	}
-
-// 	assertNotLiquidated(notAtRiskPosition)
-// }
-
 // func TestMsgServerDonateToEcosystemFund(t *testing.T) {
 // 	tests := []struct {
 // 		name string
@@ -754,16 +432,18 @@ func TestMsgServerOpenPosition(t *testing.T) {
 				MsgServerOpenPosition(alice, pair, v2types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroInt()),
 			).
 			Then(
-				PositionShouldBeEqual(alice, pair, Position_PositionShouldBeEqualTo(v2types.Position{
-					TraderAddress:                   alice.String(),
-					Pair:                            pair,
-					Size_:                           sdk.MustNewDecFromStr("0.999999999999"),
-					Margin:                          sdk.NewDec(1),
-					OpenNotional:                    sdk.NewDec(1),
-					LatestCumulativePremiumFraction: sdk.ZeroDec(),
-					LastUpdatedBlockNumber:          1,
-				}),
+				PositionShouldBeEqual(alice, pair,
+					Position_PositionShouldBeEqualTo(v2types.Position{
+						TraderAddress:                   alice.String(),
+						Pair:                            pair,
+						Size_:                           sdk.MustNewDecFromStr("0.999999999999"),
+						Margin:                          sdk.NewDec(1),
+						OpenNotional:                    sdk.NewDec(1),
+						LatestCumulativePremiumFraction: sdk.ZeroDec(),
+						LastUpdatedBlockNumber:          1,
+					}),
 				),
+				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(98)),
 			),
 
 		TC("open short position").
@@ -786,6 +466,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 						LastUpdatedBlockNumber:          1,
 					}),
 				),
+				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(98)),
 			),
 	}
 
@@ -809,6 +490,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 			).
 			Then(
 				PositionShouldNotExist(alice, pair),
+				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(99)),
 			),
 
 		TC("close short position").
@@ -823,6 +505,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 			).
 			Then(
 				PositionShouldNotExist(alice, pair),
+				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(99)),
 			),
 	}
 
@@ -856,6 +539,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 						LastUpdatedBlockNumber:          2,
 					}),
 				),
+				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(97)),
 			),
 	}
 
@@ -889,6 +573,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 						LastUpdatedBlockNumber:          2,
 					}),
 				),
+				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(98)),
 			),
 	}
 

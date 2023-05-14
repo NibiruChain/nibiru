@@ -358,6 +358,9 @@ func (amm AMM) CalcUpdateSwapInvariantCost(newSwapInvariant sdk.Dec) (sdk.Int, e
 	}
 
 	marketValueAfter, err := amm.GetMarketValue()
+	if err != nil {
+		return sdk.Int{}, err
+	}
 
 	cost := marketValueAfter.Sub(marketValueBefore)
 

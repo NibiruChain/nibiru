@@ -8,6 +8,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
+	. "github.com/NibiruChain/nibiru/x/common/testutil/assertion"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/action/v2"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion/v2"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
@@ -27,8 +28,8 @@ func TestEditPriceMultipler(t *testing.T) {
 				EditPriceMultiplier(pair, sdk.OneDec()),
 			).
 			Then(
-				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
-				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+				ModuleBalanceEqual(v2types.VaultModuleAccount, denoms.NUSD, sdk.NewInt(1e6)),
+				ModuleBalanceEqual(v2types.PerpEFModuleAccount, denoms.NUSD, sdk.NewInt(1e6)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e12)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e12)),
@@ -47,8 +48,8 @@ func TestEditPriceMultipler(t *testing.T) {
 				EditPriceMultiplier(pair, sdk.NewDec(10)),
 			).
 			Then(
-				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
-				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+				ModuleBalanceEqual(v2types.VaultModuleAccount, denoms.NUSD, sdk.NewInt(1e6)),
+				ModuleBalanceEqual(v2types.PerpEFModuleAccount, denoms.NUSD, sdk.NewInt(1e6)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e12)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e12)),
@@ -67,8 +68,8 @@ func TestEditPriceMultipler(t *testing.T) {
 				EditPriceMultiplier(pair, sdk.NewDec(10)),
 			).
 			Then(
-				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1004500)))),
-				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(995500)))),
+				ModuleBalanceEqual(v2types.VaultModuleAccount, denoms.NUSD, sdk.NewInt(1004500)),
+				ModuleBalanceEqual(v2types.PerpEFModuleAccount, denoms.NUSD, sdk.NewInt(995500)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e12)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e12)),
@@ -87,8 +88,8 @@ func TestEditPriceMultipler(t *testing.T) {
 				EditPriceMultiplier(pair, sdk.MustNewDecFromStr("0.25")),
 			).
 			Then(
-				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(999626)))),
-				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1000374)))),
+				ModuleBalanceEqual(v2types.VaultModuleAccount, denoms.NUSD, sdk.NewInt(999626)),
+				ModuleBalanceEqual(v2types.PerpEFModuleAccount, denoms.NUSD, sdk.NewInt(1000374)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e12)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e12)),
@@ -107,8 +108,8 @@ func TestEditPriceMultipler(t *testing.T) {
 				EditPriceMultiplier(pair, sdk.NewDec(10)),
 			).
 			Then(
-				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(995500)))),
-				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1004500)))),
+				ModuleBalanceEqual(v2types.VaultModuleAccount, denoms.NUSD, sdk.NewInt(995500)),
+				ModuleBalanceEqual(v2types.PerpEFModuleAccount, denoms.NUSD, sdk.NewInt(1004500)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e12)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e12)),
@@ -127,8 +128,8 @@ func TestEditPriceMultipler(t *testing.T) {
 				EditPriceMultiplier(pair, sdk.MustNewDecFromStr("0.25")),
 			).
 			Then(
-				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1000376)))),
-				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(999624)))),
+				ModuleBalanceEqual(v2types.VaultModuleAccount, denoms.NUSD, sdk.NewInt(1000376)),
+				ModuleBalanceEqual(v2types.PerpEFModuleAccount, denoms.NUSD, sdk.NewInt(999624)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e12)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e12)),
@@ -159,8 +160,8 @@ func TestEditSwapInvariant(t *testing.T) {
 				EditSwapInvariant(pair, sdk.NewDec(1e12)),
 			).
 			Then(
-				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
-				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+				ModuleBalanceEqual(v2types.VaultModuleAccount, denoms.NUSD, sdk.NewInt(1e6)),
+				ModuleBalanceEqual(v2types.PerpEFModuleAccount, denoms.NUSD, sdk.NewInt(1e6)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e6)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e6)),
@@ -183,8 +184,8 @@ func TestEditSwapInvariant(t *testing.T) {
 				EditSwapInvariant(pair, sdk.NewDec(1e18)),
 			).
 			Then(
-				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
-				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+				ModuleBalanceEqual(v2types.VaultModuleAccount, denoms.NUSD, sdk.NewInt(1e6)),
+				ModuleBalanceEqual(v2types.PerpEFModuleAccount, denoms.NUSD, sdk.NewInt(1e6)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e9)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e9)),
@@ -203,8 +204,8 @@ func TestEditSwapInvariant(t *testing.T) {
 				EditSwapInvariant(pair, sdk.NewDec(1e14)),
 			).
 			Then(
-				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1008101)))),
-				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(991899)))),
+				ModuleBalanceEqual(v2types.VaultModuleAccount, denoms.NUSD, sdk.NewInt(1008101)),
+				ModuleBalanceEqual(v2types.PerpEFModuleAccount, denoms.NUSD, sdk.NewInt(991899)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e7)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e7)),
@@ -223,8 +224,8 @@ func TestEditSwapInvariant(t *testing.T) {
 				EditSwapInvariant(pair, sdk.NewDec(1e6)),
 			).
 			Then(
-				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(999991)))),
-				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1000009)))),
+				ModuleBalanceEqual(v2types.VaultModuleAccount, denoms.NUSD, sdk.NewInt(999991)),
+				ModuleBalanceEqual(v2types.PerpEFModuleAccount, denoms.NUSD, sdk.NewInt(1000009)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e3)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e3)),
@@ -243,8 +244,8 @@ func TestEditSwapInvariant(t *testing.T) {
 				EditSwapInvariant(pair, sdk.NewDec(1e14)),
 			).
 			Then(
-				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1010102)))),
-				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(989898)))),
+				ModuleBalanceEqual(v2types.VaultModuleAccount, denoms.NUSD, sdk.NewInt(1010102)),
+				ModuleBalanceEqual(v2types.PerpEFModuleAccount, denoms.NUSD, sdk.NewInt(989898)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e7)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e7)),
@@ -263,8 +264,8 @@ func TestEditSwapInvariant(t *testing.T) {
 				EditSwapInvariant(pair, sdk.NewDec(1e6)),
 			).
 			Then(
-				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(999989)))),
-				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1000011)))),
+				ModuleBalanceEqual(v2types.VaultModuleAccount, denoms.NUSD, sdk.NewInt(999989)),
+				ModuleBalanceEqual(v2types.PerpEFModuleAccount, denoms.NUSD, sdk.NewInt(1000011)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e3)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e3)),
