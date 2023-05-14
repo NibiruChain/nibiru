@@ -1,9 +1,5 @@
 package v2
 
-import (
-	"fmt"
-)
-
 // DefaultGenesis returns the default Capability genesis state
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
@@ -22,21 +18,21 @@ func (gs GenesisState) Validate() error {
 		return err
 	}
 
-	for i, pos := range gs.Positions {
+	for _, pos := range gs.Positions {
 		if err := pos.Validate(); err != nil {
-			return fmt.Errorf("malformed genesis position %s at index %d: %w", &pos, i, err)
+			return err
 		}
 	}
 
-	for i, m := range gs.Markets {
+	for _, m := range gs.Markets {
 		if err := m.Validate(); err != nil {
-			return fmt.Errorf("malformed pair metadata %s at index %d: %w", m, i, err)
+			return err
 		}
 	}
 
-	for i, m := range gs.Amms {
+	for _, m := range gs.Amms {
 		if err := m.Validate(); err != nil {
-			return fmt.Errorf("malformed prepaid bad debt %s at index %d: %w", m, i, err)
+			return err
 		}
 	}
 
