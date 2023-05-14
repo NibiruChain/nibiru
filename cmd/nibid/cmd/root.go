@@ -148,7 +148,6 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 		perpammcli.AddMarketGenesisCmd(app.DefaultNodeHome),
 		tmcli.NewCompletionCmd(rootCmd, true),
 		testnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
-		AddGenesisWasmMsgCmd(app.DefaultNodeHome),
 		debug.Cmd(),
 		config.Cmd(),
 	)
