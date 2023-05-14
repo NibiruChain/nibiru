@@ -1,6 +1,7 @@
 package action
 
 import (
+	"errors"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -19,50 +20,47 @@ import (
 //
 // responseCheckers are optional functions that can be used to check expected response.
 func OpenPosition(
-	account sdk.AccAddress,
+	trader sdk.AccAddress,
 	pair asset.Pair,
-	side v2types.Direction,
+	dir v2types.Direction,
 	margin sdk.Int,
 	leverage sdk.Dec,
-	baseLimit sdk.Dec,
+	baseAssetLimit sdk.Dec,
 	responseCheckers ...OpenPositionResponseChecker,
 ) action.Action {
 	return &openPositionAction{
-		Account:   account,
-		Pair:      pair,
-		Side:      side,
-		Margin:    margin,
-		Leverage:  leverage,
-		BaseLimit: baseLimit,
-
-		CheckResponse: responseCheckers,
+		trader:           trader,
+		pair:             pair,
+		dir:              dir,
+		margin:           margin,
+		leverage:         leverage,
+		baseAssetLimit:   baseAssetLimit,
+		responseCheckers: responseCheckers,
 	}
 }
 
-type OpenPositionResponseChecker func(resp *v2types.PositionResp) error
-
 type openPositionAction struct {
-	Account   sdk.AccAddress
-	Pair      asset.Pair
-	Side      v2types.Direction
-	Margin    sdk.Int
-	Leverage  sdk.Dec
-	BaseLimit sdk.Dec
+	trader         sdk.AccAddress
+	pair           asset.Pair
+	dir            v2types.Direction
+	margin         sdk.Int
+	leverage       sdk.Dec
+	baseAssetLimit sdk.Dec
 
-	CheckResponse []OpenPositionResponseChecker
+	responseCheckers []OpenPositionResponseChecker
 }
 
 func (o openPositionAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	resp, err := app.PerpKeeperV2.OpenPosition(
-		ctx, o.Pair, o.Side, o.Account,
-		o.Margin, o.Leverage, o.BaseLimit,
+		ctx, o.pair, o.dir, o.trader,
+		o.margin, o.leverage, o.baseAssetLimit,
 	)
 	if err != nil {
 		return ctx, err, true
 	}
 
-	if o.CheckResponse != nil {
-		for _, check := range o.CheckResponse {
+	if o.responseCheckers != nil {
+		for _, check := range o.responseCheckers {
 			err = check(resp)
 			if err != nil {
 				return ctx, err, false
@@ -73,7 +71,51 @@ func (o openPositionAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context
 	return ctx, nil, true
 }
 
+type openPositionFailsAction struct {
+	trader         sdk.AccAddress
+	pair           asset.Pair
+	dir            v2types.Direction
+	margin         sdk.Int
+	leverage       sdk.Dec
+	baseAssetLimit sdk.Dec
+	expectedErr    error
+}
+
+func (o openPositionFailsAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	_, err := app.PerpKeeperV2.OpenPosition(
+		ctx, o.pair, o.dir, o.trader,
+		o.margin, o.leverage, o.baseAssetLimit,
+	)
+
+	if !errors.Is(err, o.expectedErr) {
+		return ctx, fmt.Errorf("expected error %s, got %s", o.expectedErr, err), true
+	}
+
+	return ctx, nil, true
+}
+
+func OpenPositionFails(
+	trader sdk.AccAddress,
+	pair asset.Pair,
+	dir v2types.Direction,
+	margin sdk.Int,
+	leverage sdk.Dec,
+	baseAssetLimit sdk.Dec,
+	expectedErr error,
+) action.Action {
+	return &openPositionFailsAction{
+		trader:         trader,
+		pair:           pair,
+		dir:            dir,
+		margin:         margin,
+		leverage:       leverage,
+		baseAssetLimit: baseAssetLimit,
+		expectedErr:    expectedErr,
+	}
+}
+
 // Open Position Response Checkers
+type OpenPositionResponseChecker func(resp *v2types.PositionResp) error
 
 // OpenPositionResp_PositionShouldBeEqual checks that the position included in the response is equal to the expected position response.
 func OpenPositionResp_PositionShouldBeEqual(expected v2types.Position) OpenPositionResponseChecker {

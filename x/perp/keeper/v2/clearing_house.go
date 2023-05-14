@@ -520,8 +520,6 @@ func (k Keeper) afterPositionUpdate(
 	}
 
 	if !positionResp.Position.Size_.IsZero() {
-		k.Positions.Insert(ctx, collections.Join(market.Pair, traderAddr), *positionResp.Position)
-
 		spotNotional, err := PositionNotionalSpot(amm, *positionResp.Position)
 		if err != nil {
 			return err
@@ -557,6 +555,8 @@ func (k Keeper) afterPositionUpdate(
 	if err != nil {
 		return err
 	}
+
+	k.Positions.Insert(ctx, collections.Join(market.Pair, traderAddr), *positionResp.Position)
 
 	// calculate positionNotional (it's different depends on long or short side)
 	// long: unrealizedPnl = positionNotional - openNotional => positionNotional = openNotional + unrealizedPnl

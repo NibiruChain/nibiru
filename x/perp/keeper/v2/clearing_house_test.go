@@ -516,7 +516,7 @@ func TestOpenPosition(t *testing.T) {
 				}),
 			),
 
-		TC("new long position just under fluctuation limit").
+		TC("new short position just under fluctuation limit").
 			Given(
 				CreateCustomMarket(pairBtcUsdc),
 				SetBlockTime(startBlockTime),
@@ -572,6 +572,40 @@ func TestOpenPosition(t *testing.T) {
 					BlockHeight:        1,
 					BlockTimeMs:        startBlockTime.UnixNano() / 1e6,
 				}),
+			),
+
+		TC("new short position over fluctuation limit").
+			Given(
+				CreateCustomMarket(pairBtcUsdc),
+				SetBlockTime(startBlockTime),
+				SetBlockNumber(1),
+				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(57_834_485_715)))),
+			).
+			When(
+				OpenPositionFails(
+					alice, pairBtcUsdc, v2types.Direction_SHORT, sdk.NewInt(57_719_047_619), sdk.OneDec(), sdk.ZeroDec(),
+					v2types.ErrOverFluctuationLimit),
+			).
+			Then(
+				PositionShouldNotExist(alice, pairBtcUsdc),
+			),
+
+		TC("insufficient funds").
+			Given(
+				CreateCustomMarket(pairBtcUsdc),
+				SetBlockTime(startBlockTime),
+				SetBlockNumber(1),
+				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(99)))),
+			).
+			When(
+				OpenPositionFails(
+					alice, pairBtcUsdc, v2types.Direction_LONG, sdk.NewInt(100), sdk.OneDec(), sdk.ZeroDec(),
+					sdkerrors.ErrInsufficientFunds),
+			).
+			Then(
+				PositionShouldNotExist(alice, pairBtcUsdc),
 			),
 	}
 
