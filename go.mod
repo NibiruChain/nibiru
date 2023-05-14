@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/CosmWasm/wasmd v0.31.0
-	github.com/CosmWasm/wasmvm v1.2.1
+	github.com/CosmWasm/wasmvm v1.2.3
 	github.com/NibiruChain/collections v0.1.1
 	github.com/armon/go-metrics v0.4.1
 	github.com/cosmos/cosmos-sdk v0.45.14
