@@ -3,6 +3,7 @@ package action
 import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
 	"github.com/NibiruChain/nibiru/x/perp/keeper/v2"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
@@ -138,5 +139,31 @@ func MsgServerRemoveMargin(
 		pair:          pair,
 		traderAddress: traderAddress,
 		amount:        amount,
+	}
+}
+
+type msgServerDonateToPerpEf struct {
+	sender sdk.AccAddress
+	amount sdk.Int
+}
+
+func (m msgServerDonateToPerpEf) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
+
+	_, err := msgServer.DonateToEcosystemFund(sdk.WrapSDKContext(ctx), &v2types.MsgDonateToEcosystemFund{
+		Sender:   m.sender.String(),
+		Donation: sdk.NewCoin(denoms.NUSD, m.amount),
+	})
+
+	return ctx, err, true
+}
+
+func MsgServerDonateToPerpEf(
+	traderAddress sdk.AccAddress,
+	amount sdk.Int,
+) action.Action {
+	return msgServerDonateToPerpEf{
+		sender: traderAddress,
+		amount: amount,
 	}
 }

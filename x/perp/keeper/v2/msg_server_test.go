@@ -443,7 +443,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 						LastUpdatedBlockNumber:          1,
 					}),
 				),
-				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(98)),
+				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(99)),
 			),
 
 		TC("open short position").
@@ -466,7 +466,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 						LastUpdatedBlockNumber:          1,
 					}),
 				),
-				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(98)),
+				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(99)),
 			),
 	}
 
@@ -490,7 +490,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 			).
 			Then(
 				PositionShouldNotExist(alice, pair),
-				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(99)),
+				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(100)),
 			),
 
 		TC("close short position").
@@ -505,7 +505,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 			).
 			Then(
 				PositionShouldNotExist(alice, pair),
-				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(99)),
+				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(100)),
 			),
 	}
 
@@ -539,7 +539,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 						LastUpdatedBlockNumber:          2,
 					}),
 				),
-				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(97)),
+				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(98)),
 			),
 	}
 
@@ -573,7 +573,27 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 						LastUpdatedBlockNumber:          2,
 					}),
 				),
-				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(98)),
+				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(99)),
+			),
+	}
+
+	NewTestSuite(t).WithTestCases(tests...).Run()
+}
+
+func TestMsgServerDonateToPerpEf(t *testing.T) {
+	alice := testutil.AccAddress()
+
+	tests := TestCases{
+		TC("success").
+			Given(
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
+			).
+			When(
+				MsgServerDonateToPerpEf(alice, sdk.NewInt(50)),
+			).
+			Then(
+				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(50)),
+				ModuleBalanceEqual(v2types.PerpEFModuleAccount, denoms.NUSD, sdk.NewInt(50)),
 			),
 	}
 
