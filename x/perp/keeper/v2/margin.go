@@ -39,7 +39,7 @@ func (k Keeper) AddMargin(
 	remainingMargin := position.Margin.Sub(fundingPayment).Add(marginToAdd.Amount.ToDec())
 
 	if remainingMargin.IsNegative() {
-		return nil, fmt.Errorf("failed to add margin; position has bad debt; consider adding more margin")
+		return nil, fmt.Errorf("failed to add margin; resultant position would still have bad debt; consider adding more margin")
 	}
 
 	if err = k.BankKeeper.SendCoinsFromAccountToModule(
