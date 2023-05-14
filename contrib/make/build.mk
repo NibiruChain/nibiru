@@ -33,7 +33,7 @@ TEMPDIR ?= $(CURDIR)/temp
 export GO111MODULE = on
 
 # process build tags
-build_tags = netgo osusergo
+build_tags = netgo osusergo rocksdb
 build_tags += $(BUILD_TAGS)
 build_tags := $(strip $(build_tags))
 
@@ -57,7 +57,10 @@ ldflags := $(strip $(ldflags))
 
 BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
 CGO_CFLAGS  := -I$(TEMPDIR)/include
-CGO_LDFLAGS := -L$(TEMPDIR)/lib
+CGO_LDFLAGS := -L$(TEMPDIR)/lib -lrocksdb
+ifeq ($(OS_NAME),darwin)
+	CGO_LDFLAGS += -lz -lbz2
+endif
 
 ###############################################################################
 ###                                  Build                                  ###
@@ -70,8 +73,12 @@ $(TEMPDIR)/:
 rocksdblib: $(TEMPDIR)/
 	mkdir -p $(TEMPDIR)/include
 	mkdir -p $(TEMPDIR)/lib
+ifeq (",$(wildcard $(TEMPDIR)/include/rocksdb)")
 	wget https://github.com/NibiruChain/gorocksdb/releases/download/v$(ROCKSDB_VERSION)/include.$(ROCKSDB_VERSION).tar.gz -O - | tar -xz -C $(TEMPDIR)/include/
+endif
+ifeq (",$(wildcard $(TEMPDIR)/lib/librocksdb.a)")
 	wget https://github.com/NibiruChain/gorocksdb/releases/download/v$(ROCKSDB_VERSION)/librocksdb_$(ROCKSDB_VERSION)_$(OS_NAME)_$(ARCH_NAME).tar.gz -O - | tar -xz -C $(TEMPDIR)/lib/
+endif
 
 # command for make build and make install
 build: BUILDARGS=-o $(BUILDDIR)/
