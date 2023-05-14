@@ -113,3 +113,20 @@ func EditPriceMultiplier(pair asset.Pair, multiplier sdk.Dec) action.Action {
 		multiplier: multiplier,
 	}
 }
+
+type editSwapInvariant struct {
+	pair       asset.Pair
+	multiplier sdk.Dec
+}
+
+func (e editSwapInvariant) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	err := app.PerpKeeperV2.EditSwapInvariant(ctx, e.pair, e.multiplier)
+	return ctx, err, true
+}
+
+func EditSwapInvariant(pair asset.Pair, multiplier sdk.Dec) action.Action {
+	return editSwapInvariant{
+		pair:       pair,
+		multiplier: multiplier,
+	}
+}

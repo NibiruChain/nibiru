@@ -306,22 +306,14 @@ func (amm AMM) CalcRepegCost(newPriceMultiplier sdk.Dec) (cost sdk.Int, err erro
 	return costDec.Ceil().TruncateInt(), nil
 }
 
-/*
-CalcUpdateSwapInvariantCost returns the cost of updating the invariant of the pool
-*/
-func (amm AMM) CalcUpdateSwapInvariantCost(swapInvariantMultiplier sdk.Dec) (cost sdk.Int, err error) {
-	if swapInvariantMultiplier.IsNil() {
-		return sdk.Int{}, ErrNilSwapInvariantMutliplier
-	}
-
-	if !swapInvariantMultiplier.IsPositive() {
-		return sdk.Int{}, ErrNonPositiveSwapInvariantMutliplier
-	}
-
+// returns the amount of quote assets the amm has to pay out if all longs and shorts close out their positions
+// positive value means the amm has to pay out quote assets
+// negative value means the amm has to receive quote assets
+func (amm AMM) GetMarketValue() (sdk.Dec, error) {
 	bias := amm.Bias()
 
 	if bias.IsZero() {
-		return sdk.ZeroInt(), nil
+		return sdk.ZeroDec(), nil
 	}
 
 	var dir Direction
@@ -331,43 +323,60 @@ func (amm AMM) CalcUpdateSwapInvariantCost(swapInvariantMultiplier sdk.Dec) (cos
 		dir = Direction_LONG
 	}
 
-	quoteReserveBefore, err := amm.GetQuoteReserveAmt(bias.Abs(), dir)
+	marketValueInReserves, err := amm.GetQuoteReserveAmt(bias.Abs(), dir)
 	if err != nil {
-		return
+		return sdk.Dec{}, err
 	}
-
-	err = amm.UpdateSwapInvariant(swapInvariantMultiplier)
-	if err != nil {
-		return sdk.Int{}, err
-	}
-
-	quoteReserveAfter, err := amm.GetQuoteReserveAmt(bias.Abs(), dir)
-	if err != nil {
-		return sdk.Int{}, err
-	}
-
-	costDec := amm.FromQuoteReserveToAsset(quoteReserveAfter.Sub(quoteReserveBefore))
 
 	if bias.IsNegative() {
-		costDec = costDec.Neg()
+		marketValueInReserves = marketValueInReserves.Neg()
 	}
 
-	return costDec.Ceil().TruncateInt(), nil
+	return amm.FromQuoteReserveToAsset(marketValueInReserves), nil
+}
+
+/*
+CalcUpdateSwapInvariantCost returns the cost of updating the invariant of the pool
+*/
+func (amm AMM) CalcUpdateSwapInvariantCost(newSwapInvariant sdk.Dec) (sdk.Int, error) {
+	if newSwapInvariant.IsNil() {
+		return sdk.Int{}, ErrNilSwapInvariantMutliplier
+	}
+
+	if !newSwapInvariant.IsPositive() {
+		return sdk.Int{}, ErrNonPositiveSwapInvariantMutliplier
+	}
+
+	marketValueBefore, err := amm.GetMarketValue()
+	if err != nil {
+		return sdk.Int{}, err
+	}
+
+	err = amm.UpdateSwapInvariant(newSwapInvariant)
+	if err != nil {
+		return sdk.Int{}, err
+	}
+
+	marketValueAfter, err := amm.GetMarketValue()
+
+	cost := marketValueAfter.Sub(marketValueBefore)
+
+	return cost.Ceil().TruncateInt(), nil
 }
 
 // UpdateSwapInvariant updates the swap invariant of the amm
-func (amm *AMM) UpdateSwapInvariant(swapInvariantMultiplier sdk.Dec) (err error) {
+func (amm *AMM) UpdateSwapInvariant(newSwapInvariant sdk.Dec) (err error) {
 	// k = x * y
 	// newK = (cx) * (cy) = c^2 xy = c^2 k
 	// newPrice = (c y) / (c x) = y / x = price | unchanged price
-	newSwapInvariant := amm.BaseReserve.Mul(amm.QuoteReserve).Mul(swapInvariantMultiplier)
-	amm.SqrtDepth = common.MustSqrtDec(newSwapInvariant)
+	newSqrtDepth := common.MustSqrtDec(newSwapInvariant)
+	multiplier := newSqrtDepth.Quo(amm.SqrtDepth)
 
 	// Change the swap invariant while holding price constant.
 	// Multiplying by the same factor to both of the reserves won't affect price.
-	c := common.MustSqrtDec(swapInvariantMultiplier)
-	amm.BaseReserve = c.Mul(amm.BaseReserve)
-	amm.QuoteReserve = c.Mul(amm.QuoteReserve)
+	amm.SqrtDepth = newSqrtDepth
+	amm.BaseReserve = amm.BaseReserve.Mul(multiplier)
+	amm.QuoteReserve = amm.QuoteReserve.Mul(multiplier)
 
 	return amm.Validate()
 }

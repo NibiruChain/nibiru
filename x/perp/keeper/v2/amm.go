@@ -49,7 +49,7 @@ func (k Keeper) EditPriceMultiplier(
 // EditSwapInvariant edits the swap invariant of an amm pool after making
 // sure there's enough money in the perp EF fund to pay for the repeg. These
 // funds get send to the vault to pay for trader's new net margin.
-func (k Keeper) EditSwapInvariant(ctx sdk.Context, sender sdk.AccAddress, pair asset.Pair, multiplier sdk.Dec) (err error) {
+func (k Keeper) EditSwapInvariant(ctx sdk.Context, pair asset.Pair, multiplier sdk.Dec) (err error) {
 	// Get the pool
 	amm, err := k.AMMs.Get(ctx, pair)
 	if err != nil {

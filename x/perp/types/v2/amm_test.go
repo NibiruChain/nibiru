@@ -405,105 +405,197 @@ func TestUpdateSwapInvariant(t *testing.T) {
 	}
 }
 
-func TestGetSwapInvariantUpdateCost(t *testing.T) {
+// test cases shown at https://docs.google.com/spreadsheets/d/1kH7i0OGM4K2kwnovHc05E3f-VCdF7xDjSdYnnxRZxsM/edit?usp=sharing
+func TestCalcUpdateSwapInvariantCost(t *testing.T) {
 	tests := []struct {
-		name       string
-		amm        v2.AMM
-		multiplier sdk.Dec
+		name             string
+		amm              v2.AMM
+		newSwapInvariant sdk.Dec
 
 		expectedCost sdk.Int
 	}{
 		{
-			name: "zero cost - due to single multiplier",
+			name: "zero cost - same swap invariant",
 			amm: v2.AMM{
-				BaseReserve:     sdk.NewDec(100),
-				QuoteReserve:    sdk.NewDec(100),
-				SqrtDepth:       sdk.NewDec(100),
+				BaseReserve:     sdk.NewDec(1e6),
+				QuoteReserve:    sdk.NewDec(1e6),
+				SqrtDepth:       sdk.NewDec(1e6),
 				PriceMultiplier: sdk.OneDec(),
 				TotalLong:       sdk.NewDec(50),
 				TotalShort:      sdk.NewDec(50),
 			},
-			multiplier:   sdk.OneDec(),
-			expectedCost: sdk.ZeroInt(),
+			newSwapInvariant: sdk.NewDec(1e12),
+			expectedCost:     sdk.ZeroInt(),
 		},
 
 		{
-			name: "zero cost - due to zero bias",
+			name: "zero cost - zero bias",
 			amm: v2.AMM{
-				BaseReserve:     sdk.NewDec(100),
-				QuoteReserve:    sdk.NewDec(100),
-				SqrtDepth:       sdk.NewDec(100),
+				BaseReserve:     sdk.NewDec(1e6),
+				QuoteReserve:    sdk.NewDec(1e6),
+				SqrtDepth:       sdk.NewDec(1e6),
 				PriceMultiplier: sdk.OneDec(),
 				TotalLong:       sdk.ZeroDec(),
 				TotalShort:      sdk.ZeroDec(),
 			},
-			multiplier:   sdk.NewDec(100),
-			expectedCost: sdk.ZeroInt(),
+			newSwapInvariant: sdk.NewDec(1e18),
+			expectedCost:     sdk.ZeroInt(),
 		},
 
 		{
 			name: "long bias, increase swap invariant",
 			amm: v2.AMM{
-				BaseReserve:     sdk.NewDec(100),
-				QuoteReserve:    sdk.NewDec(100),
-				SqrtDepth:       sdk.NewDec(100),
+				BaseReserve:     sdk.NewDec(1e6),
+				QuoteReserve:    sdk.NewDec(1e6),
+				SqrtDepth:       sdk.NewDec(1e6),
 				PriceMultiplier: sdk.OneDec(),
-				TotalLong:       sdk.NewDec(10),
+				TotalLong:       sdk.NewDec(1e5),
 				TotalShort:      sdk.ZeroDec(),
 			},
-			multiplier:   sdk.NewDec(100),
-			expectedCost: sdk.NewInt(1),
+			newSwapInvariant: sdk.NewDec(1e14),
+			expectedCost:     sdk.NewInt(8101),
 		},
 
 		{
 			name: "long bias, decrease swap invariant",
 			amm: v2.AMM{
-				BaseReserve:     sdk.NewDec(1000),
-				QuoteReserve:    sdk.NewDec(1000),
-				SqrtDepth:       sdk.NewDec(1000),
+				BaseReserve:     sdk.NewDec(1e6),
+				QuoteReserve:    sdk.NewDec(1e6),
+				SqrtDepth:       sdk.NewDec(1e6),
 				PriceMultiplier: sdk.OneDec(),
-				TotalLong:       sdk.NewDec(10),
+				TotalLong:       sdk.NewDec(1e2),
 				TotalShort:      sdk.ZeroDec(),
 			},
-			multiplier:   sdk.MustNewDecFromStr("0.01"),
-			expectedCost: sdk.ZeroInt(),
+			newSwapInvariant: sdk.NewDec(1e6),
+			expectedCost:     sdk.NewInt(-9),
 		},
 
 		{
 			name: "short bias, increase swap invariant",
 			amm: v2.AMM{
-				BaseReserve:     sdk.NewDec(100),
-				QuoteReserve:    sdk.NewDec(100),
-				SqrtDepth:       sdk.NewDec(100),
+				BaseReserve:     sdk.NewDec(1e6),
+				QuoteReserve:    sdk.NewDec(1e6),
+				SqrtDepth:       sdk.NewDec(1e6),
 				PriceMultiplier: sdk.OneDec(),
 				TotalLong:       sdk.ZeroDec(),
-				TotalShort:      sdk.NewDec(10),
+				TotalShort:      sdk.NewDec(1e5),
 			},
-			multiplier:   sdk.NewDec(100),
-			expectedCost: sdk.NewInt(2),
+			newSwapInvariant: sdk.NewDec(1e14),
+			expectedCost:     sdk.NewInt(10102),
 		},
 
 		{
 			name: "short bias, decrease swap invariant",
 			amm: v2.AMM{
-				BaseReserve:     sdk.NewDec(1000),
-				QuoteReserve:    sdk.NewDec(1000),
-				SqrtDepth:       sdk.NewDec(1000),
+				BaseReserve:     sdk.NewDec(1e6),
+				QuoteReserve:    sdk.NewDec(1e6),
+				SqrtDepth:       sdk.NewDec(1e6),
 				PriceMultiplier: sdk.OneDec(),
 				TotalLong:       sdk.ZeroDec(),
-				TotalShort:      sdk.NewDec(10),
+				TotalShort:      sdk.NewDec(1e2),
 			},
-			multiplier:   sdk.MustNewDecFromStr("0.01"),
-			expectedCost: sdk.NewInt(-1),
+			newSwapInvariant: sdk.NewDec(1e6),
+			expectedCost:     sdk.NewInt(-11),
 		},
 	}
 
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			cost, err := tc.amm.CalcUpdateSwapInvariantCost(tc.multiplier)
+			cost, err := tc.amm.CalcUpdateSwapInvariantCost(tc.newSwapInvariant)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedCost, cost)
+		})
+	}
+}
+
+func TestGetMarketValue(t *testing.T) {
+	tests := []struct {
+		name                string
+		amm                 v2.AMM
+		expectedMarketValue sdk.Dec
+	}{
+		{
+			name: "zero market value",
+			amm: v2.AMM{
+				BaseReserve:     sdk.NewDec(1e6),
+				QuoteReserve:    sdk.NewDec(1e6),
+				SqrtDepth:       sdk.NewDec(1e6),
+				PriceMultiplier: sdk.OneDec(),
+				TotalLong:       sdk.ZeroDec(),
+				TotalShort:      sdk.ZeroDec(),
+			},
+			expectedMarketValue: sdk.ZeroDec(),
+		},
+		{
+			name: "long only",
+			amm: v2.AMM{
+				BaseReserve:     sdk.NewDec(1e6),
+				QuoteReserve:    sdk.NewDec(1e6),
+				SqrtDepth:       sdk.NewDec(1e6),
+				PriceMultiplier: sdk.OneDec(),
+				TotalLong:       sdk.NewDec(1e5),
+				TotalShort:      sdk.ZeroDec(),
+			},
+			expectedMarketValue: sdk.MustNewDecFromStr("90909.090909090909090909"),
+		},
+		{
+			name: "short only",
+			amm: v2.AMM{
+				BaseReserve:     sdk.NewDec(1e6),
+				QuoteReserve:    sdk.NewDec(1e6),
+				SqrtDepth:       sdk.NewDec(1e6),
+				PriceMultiplier: sdk.OneDec(),
+				TotalLong:       sdk.ZeroDec(),
+				TotalShort:      sdk.NewDec(1e5),
+			},
+			expectedMarketValue: sdk.MustNewDecFromStr("-111111.111111111111111111"),
+		},
+		{
+			name: "long and short cancel each other out",
+			amm: v2.AMM{
+				BaseReserve:     sdk.NewDec(1e6),
+				QuoteReserve:    sdk.NewDec(1e6),
+				SqrtDepth:       sdk.NewDec(1e6),
+				PriceMultiplier: sdk.OneDec(),
+				TotalLong:       sdk.NewDec(1e5),
+				TotalShort:      sdk.NewDec(1e5),
+			},
+			expectedMarketValue: sdk.ZeroDec(),
+		},
+		{
+			name: "net long",
+			amm: v2.AMM{
+				BaseReserve:     sdk.NewDec(1e6),
+				QuoteReserve:    sdk.NewDec(1e6),
+				SqrtDepth:       sdk.NewDec(1e6),
+				PriceMultiplier: sdk.OneDec(),
+				TotalLong:       sdk.NewDec(2e5),
+				TotalShort:      sdk.NewDec(1e5),
+			},
+			expectedMarketValue: sdk.MustNewDecFromStr("90909.090909090909090909"),
+		},
+		{
+			name: "net short",
+			amm: v2.AMM{
+				BaseReserve:     sdk.NewDec(1e6),
+				QuoteReserve:    sdk.NewDec(1e6),
+				SqrtDepth:       sdk.NewDec(1e6),
+				PriceMultiplier: sdk.OneDec(),
+				TotalLong:       sdk.NewDec(1e5),
+				TotalShort:      sdk.NewDec(2e5),
+			},
+			expectedMarketValue: sdk.MustNewDecFromStr("-111111.111111111111111111"),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			marketValue, err := tc.amm.GetMarketValue()
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.expectedMarketValue, marketValue)
 		})
 	}
 }

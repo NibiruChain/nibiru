@@ -428,3 +428,95 @@ func TestEditPriceMultipler(t *testing.T) {
 
 	NewTestSuite(t).WithTestCases(tests...).Run()
 }
+
+func TestEditSwapInvariant(t *testing.T) {
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+
+	tests := TestCases{
+		TC("same swap invariant").
+			Given(
+				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(1000)), WithTotalShort(sdk.NewDec(500))),
+				FundModule(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+				FundModule(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+			).
+			When(
+				EditSwapInvariant(pair, sdk.OneDec()),
+			).
+			Then(
+				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+			),
+
+		TC("net bias zero").
+			Given(
+				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(1000)), WithTotalShort(sdk.NewDec(1000))),
+				FundModule(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+				FundModule(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+			).
+			When(
+				EditSwapInvariant(pair, sdk.NewDec(400)),
+			).
+			Then(
+				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+			),
+
+		TC("long bias, increase swap invariant").
+			Given(
+				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(1e8)), WithTotalShort(sdk.NewDec(5e7))),
+				FundModule(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+				FundModule(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+			).
+			When(
+				EditSwapInvariant(pair, sdk.NewDec(400)),
+			).
+			Then(
+				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1002375)))),
+				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(997625)))),
+			),
+
+		TC("long bias, decrease swap invariant").
+			Given(
+				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(1e8)), WithTotalShort(sdk.NewDec(5e7))),
+				FundModule(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+				FundModule(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+			).
+			When(
+				EditSwapInvariant(pair, sdk.MustNewDecFromStr("0.0025")),
+			).
+			Then(
+				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(952550)))),
+				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1047450)))),
+			),
+
+		TC("short bias, increase swap invariant").
+			Given(
+				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(5e7)), WithTotalShort(sdk.NewDec(1e8))),
+				FundModule(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+				FundModule(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+			).
+			When(
+				EditSwapInvariant(pair, sdk.NewDec(400)),
+			).
+			Then(
+				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(995500)))),
+				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1004500)))),
+			),
+
+		TC("short bias, decrease swap invariant").
+			Given(
+				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(5e7)), WithTotalShort(sdk.NewDec(1e8))),
+				FundModule(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+				FundModule(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+			).
+			When(
+				EditSwapInvariant(pair, sdk.MustNewDecFromStr("0.0025")),
+			).
+			Then(
+				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1000376)))),
+				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(999624)))),
+			),
+	}
+
+	NewTestSuite(t).WithTestCases(tests...).Run()
+}

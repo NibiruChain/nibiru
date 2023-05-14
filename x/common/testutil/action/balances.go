@@ -30,10 +30,10 @@ func (b balanceShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Conte
 			b.Account.String(),
 			b.Amount.String(),
 			coins.String(),
-		), true
+		), false
 	}
 
-	return ctx, nil, true
+	return ctx, nil, false
 }
 
 type moduleBalanceShouldBeEqual struct {
@@ -51,10 +51,10 @@ func (b moduleBalanceShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk
 			b.Module,
 			b.Amount.String(),
 			coins.String(),
-		), true
+		), false
 	}
 
-	return ctx, nil, true
+	return ctx, nil, false
 }
 
 func ModuleBalanceShouldBeEqual(module string, amount sdk.Coins) *moduleBalanceShouldBeEqual {
