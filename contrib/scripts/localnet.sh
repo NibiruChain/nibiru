@@ -253,4 +253,4 @@ add_genesis_param '.app_state.oracle.exchange_rates[1].exchange_rate = "2000"'
 
 # Start the network
 echo_info "Starting $CHAIN_ID in $CHAIN_DIR..."
-$BINARY start --db_backend goleveldb
+$BINARY start
