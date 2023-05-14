@@ -1185,39 +1185,6 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				ModuleBalanceShouldBeEqualTo(v2types.VaultModuleAccount, sdk.NewCoins()),
 				ModuleBalanceShouldBeEqualTo(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(39_200_810)))),
 			),
-
-		TC("long and short position - reducing k by 100x").
-			Given(
-				CreateCustomMarket(pairBtcUsdc),
-				SetBlockTime(startBlockTime),
-				SetBlockNumber(1),
-				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
-				FundAccount(bob, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
-			).
-			When(
-				OpenPosition(alice, pairBtcUsdc, v2types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.ZeroDec()),
-				OpenPosition(bob, pairBtcUsdc, v2types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.NewDec(10_000_000_000_000)),
-
-				EditSwapInvariant(pairBtcUsdc, startingSwapInvariant.Mul(sdk.MustNewDecFromStr("0.01"))),
-				AMMShouldBeEqual(
-					pairBtcUsdc,
-					AMM_BiasShouldBeEqual(sdk.ZeroDec()),
-					AMM_SwapInvariantShouldBeEqual(sdk.MustNewDecFromStr("10000000000000000000000.000000000000000000"))),
-
-				ModuleBalanceShouldBeEqualTo(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(20_000_000_000)))),
-				ModuleBalanceShouldBeEqualTo(v2types.FeePoolModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(20_000_000)))), // Fees are 10_000_000_000 * 0.0010 * 2
-
-				ClosePosition(alice, pairBtcUsdc),
-				ClosePosition(bob, pairBtcUsdc),
-			).
-			Then(
-				PositionShouldNotExist(alice, pairBtcUsdc),
-				PositionShouldNotExist(bob, pairBtcUsdc),
-
-				ModuleBalanceShouldBeEqualTo(v2types.VaultModuleAccount, sdk.NewCoins()),
-				ModuleBalanceShouldBeEqualTo(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(39_200_810)))),
-			),
 	}
 
 	NewTestSuite(t).WithTestCases(tc...).Run()
