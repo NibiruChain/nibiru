@@ -497,6 +497,62 @@ func TestCalcUpdateSwapInvariantCost(t *testing.T) {
 			newSwapInvariant: sdk.NewDec(1e6),
 			expectedCost:     sdk.NewInt(-11),
 		},
+
+		{
+			name: "net long bias, increase swap invariant",
+			amm: v2.AMM{
+				BaseReserve:     sdk.NewDec(1e6),
+				QuoteReserve:    sdk.NewDec(1e6),
+				SqrtDepth:       sdk.NewDec(1e6),
+				PriceMultiplier: sdk.OneDec(),
+				TotalLong:       sdk.NewDec(2e5),
+				TotalShort:      sdk.NewDec(1e5),
+			},
+			newSwapInvariant: sdk.NewDec(1e14),
+			expectedCost:     sdk.NewInt(8101),
+		},
+
+		{
+			name: "net long bias, decrease swap invariant",
+			amm: v2.AMM{
+				BaseReserve:     sdk.NewDec(1e6),
+				QuoteReserve:    sdk.NewDec(1e6),
+				SqrtDepth:       sdk.NewDec(1e6),
+				PriceMultiplier: sdk.OneDec(),
+				TotalLong:       sdk.NewDec(2e2),
+				TotalShort:      sdk.NewDec(1e2),
+			},
+			newSwapInvariant: sdk.NewDec(1e6),
+			expectedCost:     sdk.NewInt(-9),
+		},
+
+		{
+			name: "net short bias, increase swap invariant",
+			amm: v2.AMM{
+				BaseReserve:     sdk.NewDec(1e6),
+				QuoteReserve:    sdk.NewDec(1e6),
+				SqrtDepth:       sdk.NewDec(1e6),
+				PriceMultiplier: sdk.OneDec(),
+				TotalLong:       sdk.NewDec(1e5),
+				TotalShort:      sdk.NewDec(2e5),
+			},
+			newSwapInvariant: sdk.NewDec(1e14),
+			expectedCost:     sdk.NewInt(10102),
+		},
+
+		{
+			name: "net short bias, decrease swap invariant",
+			amm: v2.AMM{
+				BaseReserve:     sdk.NewDec(1e6),
+				QuoteReserve:    sdk.NewDec(1e6),
+				SqrtDepth:       sdk.NewDec(1e6),
+				PriceMultiplier: sdk.OneDec(),
+				TotalLong:       sdk.NewDec(1e2),
+				TotalShort:      sdk.NewDec(2e2),
+			},
+			newSwapInvariant: sdk.NewDec(1e6),
+			expectedCost:     sdk.NewInt(-11),
+		},
 	}
 
 	for _, tc := range tests {
