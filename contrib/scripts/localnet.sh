@@ -68,9 +68,6 @@ fi
 echo_info "Removing previous chain data from $CHAIN_DIR..."
 rm -rf $CHAIN_DIR
 
-# Rocksdb somehow doesn't create required folder metadata.db
-mkdir -p $HOME/.nibid/data/snapshots/metadata.db
-
 # Add directory for chain, exit if error
 if ! mkdir -p $CHAIN_DIR 2>/dev/null; then
   echo_error "Failed to create chain folder. Aborting..."
@@ -256,4 +253,4 @@ add_genesis_param '.app_state.oracle.exchange_rates[1].exchange_rate = "2000"'
 
 # Start the network
 echo_info "Starting $CHAIN_ID in $CHAIN_DIR..."
-$BINARY start --db_backend rocksdb
+$BINARY start --db_backend goleveldb

@@ -3,12 +3,13 @@ package action
 import (
 	"fmt"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
 	"github.com/NibiruChain/nibiru/x/perp/keeper/v2"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type queryPosition struct {
@@ -101,7 +102,6 @@ func (q queryAllPositions) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context,
 				return ctx, err, false
 			}
 		}
-
 	}
 
 	return ctx, nil, false

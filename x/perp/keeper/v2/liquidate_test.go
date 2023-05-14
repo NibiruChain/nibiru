@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
@@ -12,7 +14,6 @@ import (
 	. "github.com/NibiruChain/nibiru/x/perp/integration/action/v2"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion/v2"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestMultiLiquidate(t *testing.T) {
