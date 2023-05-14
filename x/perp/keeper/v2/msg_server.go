@@ -3,8 +3,9 @@ package keeper
 import (
 	"context"
 
-	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
 type msgServer struct {
