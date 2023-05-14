@@ -4,9 +4,9 @@ import (
 	fmt "fmt"
 	"math/big"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func (amm AMM) Validate() error {
@@ -106,7 +106,7 @@ func (amm AMM) GetBaseReserveAmt(
 // returns the amount of quote reserve equivalent to the amount of base asset given
 //
 // args:
-// - baseReserveAmt: the amount of base reserve before the trade, must be positive
+// - baseReserveAmt: the amount of base reserves to trade, must be positive
 // - dir: the direction of the trade
 //
 // returns:
@@ -231,7 +231,7 @@ func (amm *AMM) SwapQuoteAsset(quoteAssetAmt sdk.Dec, dir Direction) (baseAssetD
 // SwapBaseAsset swaps base asset for quote asset
 //
 // args:
-//   - baseAssetAmt: amount of base asset to swap
+//   - baseAssetAmt: amount of base asset to swap, must be positive
 //   - dir: direction of swap
 //
 // returns:
@@ -256,4 +256,127 @@ func (amm *AMM) SwapBaseAsset(baseAssetAmt sdk.Dec, dir Direction) (quoteAssetDe
 	}
 
 	return amm.FromQuoteReserveToAsset(quoteReserveDelta), nil
+}
+
+func (amm *AMM) WithPair(pair asset.Pair) *AMM {
+	amm.Pair = pair
+	return amm
+}
+
+/*
+Bias returns the bias of the market in the base asset. It's the net amount of base assets for longs minus the net
+amount of base assets for shorts.
+*/
+func (amm *AMM) Bias() (bias sdk.Dec) {
+	return amm.TotalLong.Sub(amm.TotalShort)
+}
+
+/*
+CalcRepegCost provides the cost of re-pegging the pool to a new candidate peg multiplier.
+*/
+func (amm AMM) CalcRepegCost(newPriceMultiplier sdk.Dec) (cost sdk.Int, err error) {
+	if !newPriceMultiplier.IsPositive() {
+		return sdk.Int{}, ErrNonPositivePegMultiplier
+	}
+
+	bias := amm.Bias()
+
+	if bias.IsZero() {
+		return sdk.ZeroInt(), nil
+	}
+
+	var dir Direction
+	if bias.IsPositive() {
+		dir = Direction_SHORT
+	} else {
+		dir = Direction_LONG
+	}
+
+	biasInQuoteReserve, err := amm.GetQuoteReserveAmt(bias.Abs(), dir)
+	if err != nil {
+		return
+	}
+
+	costDec := biasInQuoteReserve.Mul(newPriceMultiplier.Sub(amm.PriceMultiplier))
+
+	if bias.IsNegative() {
+		costDec = costDec.Neg()
+	}
+
+	return costDec.Ceil().TruncateInt(), nil
+}
+
+// returns the amount of quote assets the amm has to pay out if all longs and shorts close out their positions
+// positive value means the amm has to pay out quote assets
+// negative value means the amm has to receive quote assets
+func (amm AMM) GetMarketValue() (sdk.Dec, error) {
+	bias := amm.Bias()
+
+	if bias.IsZero() {
+		return sdk.ZeroDec(), nil
+	}
+
+	var dir Direction
+	if bias.IsPositive() {
+		dir = Direction_SHORT
+	} else {
+		dir = Direction_LONG
+	}
+
+	marketValueInReserves, err := amm.GetQuoteReserveAmt(bias.Abs(), dir)
+	if err != nil {
+		return sdk.Dec{}, err
+	}
+
+	if bias.IsNegative() {
+		marketValueInReserves = marketValueInReserves.Neg()
+	}
+
+	return amm.FromQuoteReserveToAsset(marketValueInReserves), nil
+}
+
+/*
+CalcUpdateSwapInvariantCost returns the cost of updating the invariant of the pool
+*/
+func (amm AMM) CalcUpdateSwapInvariantCost(newSwapInvariant sdk.Dec) (sdk.Int, error) {
+	if newSwapInvariant.IsNil() {
+		return sdk.Int{}, ErrNilSwapInvariantMutliplier
+	}
+
+	if !newSwapInvariant.IsPositive() {
+		return sdk.Int{}, ErrNonPositiveSwapInvariantMutliplier
+	}
+
+	marketValueBefore, err := amm.GetMarketValue()
+	if err != nil {
+		return sdk.Int{}, err
+	}
+
+	err = amm.UpdateSwapInvariant(newSwapInvariant)
+	if err != nil {
+		return sdk.Int{}, err
+	}
+
+	marketValueAfter, err := amm.GetMarketValue()
+
+	cost := marketValueAfter.Sub(marketValueBefore)
+
+	return cost.Ceil().TruncateInt(), nil
+}
+
+// UpdateSwapInvariant updates the swap invariant of the amm
+func (amm *AMM) UpdateSwapInvariant(newSwapInvariant sdk.Dec) (err error) {
+	// k = x * y
+	// newK = (cx) * (cy) = c^2 xy = c^2 k
+	// newPrice = (c y) / (c x) = y / x = price | unchanged price
+	newSqrtDepth := common.MustSqrtDec(newSwapInvariant)
+	multiplier := newSqrtDepth.Quo(amm.SqrtDepth)
+
+	// Change the swap invariant while holding price constant.
+	// Multiplying by the same factor to both of the reserves won't affect price.
+	amm.SqrtDepth = newSqrtDepth
+	amm.BaseReserve = amm.BaseReserve.Mul(multiplier)
+	amm.QuoteReserve = amm.QuoteReserve.Mul(multiplier)
+
+	return amm.Validate()
 }
