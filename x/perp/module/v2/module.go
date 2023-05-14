@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/NibiruChain/nibiru/x/perp/client/cli"
+	"github.com/NibiruChain/nibiru/x/perp/client/cli/v2"
 	"github.com/NibiruChain/nibiru/x/perp/keeper/v2"
 	types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )

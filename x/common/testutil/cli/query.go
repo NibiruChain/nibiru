@@ -15,7 +15,7 @@ import (
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	perpammcli "github.com/NibiruChain/nibiru/x/perp/amm/cli"
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
-	perpcli "github.com/NibiruChain/nibiru/x/perp/client/cli"
+	perpcli "github.com/NibiruChain/nibiru/x/perp/client/cli/v1"
 	"github.com/NibiruChain/nibiru/x/perp/types/v1"
 	sudocli "github.com/NibiruChain/nibiru/x/sudo/cli"
 	sudotypes "github.com/NibiruChain/nibiru/x/sudo/pb"
