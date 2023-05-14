@@ -16,8 +16,8 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/NibiruChain/nibiru/x/perp/client/cli"
-	"github.com/NibiruChain/nibiru/x/perp/keeper/v1"
-	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
+	"github.com/NibiruChain/nibiru/x/perp/keeper/v2"
+	types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
 // type check to ensure the interface is properly implemented
@@ -148,15 +148,6 @@ func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sd
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQuerier(am.keeper))
 	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
-
-	err := cfg.RegisterMigration(types.ModuleName, 1, func(ctx sdk.Context) error { return nil }) // From 1 to 2
-	if err != nil {
-		panic(fmt.Errorf("failed to register migration: %w", err))
-	}
-	err = cfg.RegisterMigration(types.ModuleName, 2, keeper.From2To3(am.keeper, am.keeper.PerpAmmKeeper)) // From 2 to 3
-	if err != nil {
-		panic(fmt.Errorf("failed to register migration: %w", err))
-	}
 }
 
 // RegisterInvariants registers the capability module's invariants.
@@ -195,6 +186,5 @@ func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 // EndBlock executes all ABCI EndBlock logic respective to the capability module. It
 // returns no validator updates.
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
-	EndBlocker(ctx, am.keeper)
 	return []abci.ValidatorUpdate{}
 }
