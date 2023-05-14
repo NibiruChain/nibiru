@@ -993,3 +993,76 @@ func TestClosePosition(t *testing.T) {
 		})
 	}
 }
+
+func TestCaseWhenNoFunding(t *testing.T) {
+	alice := testutil.AccAddress()
+	bob := testutil.AccAddress()
+	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	startBlockTime := time.Now()
+
+	startingSwapInvariant := sdk.NewDec(1000000000000).Mul(sdk.NewDec(1000000000000))
+
+	tc := TestCases{
+		TC("only long position - no change to swap invariant").
+			Given(
+				CreateCustomMarket(pairBtcUsdc),
+				SetBlockTime(startBlockTime),
+				SetBlockNumber(1),
+				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1020)))),
+				FundModule(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100000)))),
+			).
+			When(
+				OpenPosition(alice, pairBtcUsdc, v2types.Direction_LONG, sdk.NewInt(10), sdk.NewDec(1), sdk.ZeroDec()),
+				ClosePosition(alice, pairBtcUsdc),
+			).
+			Then(
+				PositionShouldNotExist(alice, pairBtcUsdc),
+			),
+		TC("only long position").
+			Given(
+				CreateCustomMarket(pairBtcUsdc),
+				SetBlockTime(startBlockTime),
+				SetBlockNumber(1),
+				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1020)))),
+				FundModule(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1)))),
+			).
+			When(
+				OpenPosition(alice, pairBtcUsdc, v2types.Direction_LONG, sdk.NewInt(10), sdk.NewDec(1), sdk.ZeroDec()),
+				EditSwapInvariant(pairBtcUsdc, startingSwapInvariant.MulInt64(10)),
+				ClosePosition(alice, pairBtcUsdc),
+			).
+			Then(
+				PositionShouldNotExist(alice, pairBtcUsdc),
+			),
+		TC("long and short position").
+			Given(
+				CreateCustomMarket(pairBtcUsdc),
+				SetBlockTime(startBlockTime),
+				SetBlockNumber(1),
+				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1020)))),
+				FundAccount(bob, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1020)))),
+			).
+			When(
+				OpenPosition(alice, pairBtcUsdc, v2types.Direction_LONG, sdk.NewInt(10_000), sdk.NewDec(1), sdk.ZeroDec()),
+				OpenPosition(bob, pairBtcUsdc, v2types.Direction_SHORT, sdk.NewInt(10_000), sdk.NewDec(1), sdk.NewDec(100000)),
+
+				EditSwapInvariant(pairBtcUsdc, startingSwapInvariant.MulInt64(10)),
+				AMMShouldBeEqual(
+					pairBtcUsdc,
+					AMM_BiasShouldBeEqual(sdk.ZeroDec()),
+					AMM_SwapInvariantShouldBeEqual(sdk.MustNewDecFromStr("10000000000000000000006997.839444766224000000"))),
+
+				ClosePosition(alice, pairBtcUsdc),
+				ClosePosition(bob, pairBtcUsdc),
+			).
+			Then(
+				PositionShouldNotExist(alice, pairBtcUsdc),
+				PositionShouldNotExist(bob, pairBtcUsdc),
+			),
+	}
+
+	NewTestSuite(t).WithTestCases(tc...).Run()
+}
