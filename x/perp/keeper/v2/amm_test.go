@@ -2,340 +2,16 @@ package keeper_test
 
 import (
 	"testing"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
 	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/action/v2"
-	"github.com/NibiruChain/nibiru/x/perp/keeper/v1"
-	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
+	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion/v2"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
-
-func TestMsgServerRepeg(t *testing.T) {
-	tests := []struct {
-		name string
-
-		initialPegMultiplier sdk.Dec
-		initialBiasInQuote   sdk.Int
-
-		newPegMultiplier sdk.Dec
-
-		initialPerpEFFunds sdk.Coins
-		initialVaultFunds  sdk.Coins
-
-		expectedErr error
-
-		expectedUnusdPerpEFFunds sdk.Int
-		expectedUnusdVaultFunds  sdk.Int
-	}{
-		{
-			name: "happy path - we pay the vault with perp ef",
-
-			initialPegMultiplier: sdk.OneDec(),
-			initialBiasInQuote:   sdk.NewInt(2500000),
-
-			newPegMultiplier: sdk.NewDec(2),
-
-			initialPerpEFFunds: sdk.NewCoins(sdk.NewInt64Coin("unusd", 2500000)),
-
-			expectedUnusdPerpEFFunds: sdk.NewInt(2500),
-			expectedUnusdVaultFunds:  sdk.NewInt(5000000), // 2500000 margin + 2500000 repeg
-		},
-		{
-			name: "not happy path - we pay the vault with perp ef but not enough money",
-
-			initialPegMultiplier: sdk.OneDec(),
-			initialBiasInQuote:   sdk.NewInt(2500000),
-
-			newPegMultiplier: sdk.NewDec(2),
-
-			initialPerpEFFunds: sdk.NewCoins(sdk.NewInt64Coin("unusd", 2400000)),
-
-			expectedErr: types.ErrNotEnoughFundToPayAction,
-
-			expectedUnusdPerpEFFunds: sdk.NewInt(2402500),
-			expectedUnusdVaultFunds:  sdk.NewInt(2500000),
-		},
-		{
-			name: "happy path - we pay the perp ef with vault",
-
-			initialPegMultiplier: sdk.OneDec(),
-			initialBiasInQuote:   sdk.NewInt(-2500000),
-
-			newPegMultiplier: sdk.NewDec(2),
-
-			initialVaultFunds: sdk.NewCoins(sdk.NewInt64Coin("unusd", 25)),
-
-			expectedUnusdPerpEFFunds: sdk.NewInt(2502500),
-			expectedUnusdVaultFunds:  sdk.NewInt(25),
-		},
-		{
-			name: "happy path - we pay the perp ef with vault but not enough money",
-
-			initialPegMultiplier: sdk.OneDec(),
-			initialBiasInQuote:   sdk.NewInt(-2500000),
-
-			newPegMultiplier: sdk.NewDec(50),
-
-			initialVaultFunds: sdk.NewCoins(sdk.NewInt64Coin("unusd", 2400000)),
-
-			expectedUnusdPerpEFFunds: sdk.NewInt(2500),
-			expectedUnusdVaultFunds:  sdk.NewInt(4900000), // 24 + 25
-		},
-	}
-
-	for _, tc := range tests {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruTestAppAndContext(true)
-			ctx = ctx.WithBlockTime(time.Now())
-
-			pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
-			traderAccount := testutil.AccAddress()
-
-			t.Log("create market")
-			assert.NoError(t, app.PerpAmmKeeper.CreatePool(
-				/* ctx */ ctx,
-				/* pair */ pair,
-				/* quoteReserve */ sdk.NewDec(10000000),
-				/* baseReserve */ sdk.NewDec(10000000),
-				perpammtypes.MarketConfig{
-					TradeLimitRatio:        sdk.OneDec(),
-					FluctuationLimitRatio:  sdk.OneDec(),
-					MaxOracleSpreadRatio:   sdk.OneDec(),
-					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-					MaxLeverage:            sdk.MustNewDecFromStr("15"),
-				},
-				/* pegMultiplier */ tc.initialPegMultiplier,
-			))
-			keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
-				Pair:                            pair,
-				LatestCumulativePremiumFraction: sdk.ZeroDec(),
-			})
-			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
-
-			t.Log("create positions")
-			require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, traderAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, tc.initialBiasInQuote.Abs().Add(sdk.NewInt(25000))))))
-
-			//balance := app.BankKeeper.GetBalance(ctx, traderAccount, denoms.NUSD)
-			//require.Equal(t, tc.initialBiasInQuote.Abs(), balance.Amount)
-
-			dir := perpammtypes.Direction_DIRECTION_UNSPECIFIED
-			if tc.initialBiasInQuote.IsPositive() {
-				dir = perpammtypes.Direction_LONG
-			} else if tc.initialBiasInQuote.IsNegative() {
-				dir = perpammtypes.Direction_SHORT
-			}
-
-			_, err := app.PerpKeeper.OpenPosition(
-				/* ctx */ ctx,
-				/* pair */ pair,
-				/* side */ dir,
-				/* traderAddr */ traderAccount,
-				/* quoteAssetAmount */ tc.initialBiasInQuote.Abs(),
-				/* leverage */ sdk.OneDec(),
-				/* baseAmtLimit */ sdk.ZeroDec(),
-			)
-			require.NoError(t, err)
-
-			if tc.initialPerpEFFunds != nil {
-				require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, types.PerpEFModuleAccount, tc.initialPerpEFFunds))
-			}
-			if tc.initialVaultFunds != nil {
-				require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, tc.initialVaultFunds))
-			}
-
-			err = app.PerpKeeper.EditPoolPegMultiplier(ctx, sdk.AccAddress{}, pair, tc.newPegMultiplier)
-			require.Equal(t, tc.expectedErr, err)
-
-			pool, _ := app.PerpAmmKeeper.GetPool(ctx, pair)
-			if tc.expectedErr != nil {
-				require.Equal(t, tc.initialPegMultiplier, pool.PegMultiplier)
-			} else {
-				require.Equal(t, tc.newPegMultiplier, pool.PegMultiplier)
-			}
-
-			assert.EqualValues(t,
-				tc.expectedUnusdVaultFunds,
-				app.BankKeeper.GetBalance(
-					ctx,
-					app.AccountKeeper.GetModuleAddress(types.VaultModuleAccount),
-					denoms.NUSD,
-				).Amount,
-			)
-
-			assert.EqualValues(t,
-				tc.expectedUnusdPerpEFFunds,
-				app.BankKeeper.GetBalance(
-					ctx,
-					app.AccountKeeper.GetModuleAddress(types.PerpEFModuleAccount),
-					denoms.NUSD,
-				).Amount,
-			)
-		})
-	}
-}
-
-func TestMsgServerUpdateSwapInvariant(t *testing.T) {
-	tests := []struct {
-		name string
-
-		initialBiasInQuote sdk.Int
-
-		swapInvariantMultiplier sdk.Dec
-
-		initialPerpEFFunds sdk.Coins
-		initialVaultFunds  sdk.Coins
-
-		expectedErr error
-
-		expectedUnusdPerpEFFunds sdk.Int
-		expectedUnusdVaultFunds  sdk.Int
-	}{
-		{
-			name: "happy path - we pay the vault with perp ef",
-
-			initialBiasInQuote: sdk.NewInt(25_000_000),
-
-			swapInvariantMultiplier: sdk.NewDec(2), // Cost would be 1_555_591
-
-			initialPerpEFFunds: sdk.NewCoins(sdk.NewInt64Coin("unusd", 25_000_000)),
-
-			expectedUnusdPerpEFFunds: sdk.NewInt(25_000_000 - 1_555_591 + 25_000),
-			expectedUnusdVaultFunds:  sdk.NewInt(25_000_000 + 1_555_591),
-		},
-		{
-			name: "not happy path - we pay the vault with perp ef but not enough money",
-
-			initialBiasInQuote: sdk.NewInt(25_000_000),
-
-			swapInvariantMultiplier: sdk.NewDec(2), // Cost would be 2
-			expectedErr:             types.ErrNotEnoughFundToPayAction,
-
-			initialPerpEFFunds: sdk.NewCoins(sdk.NewInt64Coin("unusd", 1_000_000)),
-
-			expectedUnusdPerpEFFunds: sdk.NewInt(1_000_000 + 25_000),
-			expectedUnusdVaultFunds:  sdk.NewInt(25_000_000),
-		},
-		{
-			name: "happy path - we pay the perp ef with vault",
-
-			initialBiasInQuote: sdk.NewInt(25_000_000),
-
-			swapInvariantMultiplier: sdk.MustNewDecFromStr("0.5"), // Cost would be -1_912_621
-
-			initialPerpEFFunds: sdk.NewCoins(sdk.NewInt64Coin("unusd", 25_000_000)),
-
-			expectedUnusdPerpEFFunds: sdk.NewInt(25_000_000 + 25_000 + 1_912_621),
-			expectedUnusdVaultFunds:  sdk.NewInt(25_000_000 - 1_912_621),
-		},
-	}
-
-	for _, tc := range tests {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruTestAppAndContext(true)
-			ctx = ctx.WithBlockTime(time.Now())
-
-			pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
-			traderAccount := testutil.AccAddress()
-
-			t.Log("create market")
-			assert.NoError(t, app.PerpAmmKeeper.CreatePool(
-				/* ctx */ ctx,
-				/* pair */ pair,
-				/* quoteReserve */ sdk.NewDec(100_000_000),
-				/* baseReserve */ sdk.NewDec(100_000_000),
-				perpammtypes.MarketConfig{
-					TradeLimitRatio:        sdk.OneDec(),
-					FluctuationLimitRatio:  sdk.OneDec(),
-					MaxOracleSpreadRatio:   sdk.OneDec(),
-					MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-					MaxLeverage:            sdk.MustNewDecFromStr("15"),
-				},
-				/* pegMultiplier */ sdk.OneDec(),
-			))
-			keeper.SetPairMetadata(app.PerpKeeper, ctx, types.PairMetadata{
-				Pair:                            pair,
-				LatestCumulativePremiumFraction: sdk.ZeroDec(),
-			})
-			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(time.Now().Add(time.Minute))
-
-			t.Log("create positions")
-			require.NoError(t, testapp.FundAccount(app.BankKeeper, ctx, traderAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, tc.initialBiasInQuote.Abs().Add(sdk.NewInt(50000))))))
-
-			dir := perpammtypes.Direction_DIRECTION_UNSPECIFIED
-			if tc.initialBiasInQuote.IsPositive() {
-				dir = perpammtypes.Direction_LONG
-			} else if tc.initialBiasInQuote.IsNegative() {
-				dir = perpammtypes.Direction_SHORT
-			}
-
-			_, err := app.PerpKeeper.OpenPosition(
-				/* ctx */ ctx,
-				/* pair */ pair,
-				/* side */ dir,
-				/* traderAddr */ traderAccount,
-				/* quoteAssetAmount */ tc.initialBiasInQuote.Abs(),
-				/* leverage */ sdk.OneDec(),
-				/* baseAmtLimit */ sdk.ZeroDec(),
-			)
-			require.NoError(t, err)
-
-			if tc.initialPerpEFFunds != nil {
-				require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, types.PerpEFModuleAccount, tc.initialPerpEFFunds))
-			}
-			if tc.initialVaultFunds != nil {
-				require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, tc.initialVaultFunds))
-			}
-
-			err = app.PerpKeeper.EditPoolSwapInvariant(ctx, sdk.AccAddress{}, pair, tc.swapInvariantMultiplier)
-			require.Equal(t, tc.expectedErr, err)
-
-			pool, _ := app.PerpAmmKeeper.GetPool(ctx, pair)
-			previousSwapInvariant := sdk.NewDec(10_000_000_000_000_000)
-			newSwapInvariant := pool.SqrtDepth.Mul(pool.SqrtDepth)
-
-			if tc.expectedErr != nil {
-				require.Equal(t, previousSwapInvariant, newSwapInvariant)
-			} else {
-				approxNewSwapInvariant := previousSwapInvariant.Mul(tc.swapInvariantMultiplier)
-
-				require.True(
-					t,
-					approxNewSwapInvariant.Quo(newSwapInvariant).Sub(sdk.OneDec()).Abs().LT(sdk.MustNewDecFromStr("0.0001")),
-				)
-			}
-
-			assert.EqualValues(t,
-				tc.expectedUnusdVaultFunds,
-				app.BankKeeper.GetBalance(
-					ctx,
-					app.AccountKeeper.GetModuleAddress(types.VaultModuleAccount),
-					denoms.NUSD,
-				).Amount,
-			)
-
-			assert.EqualValues(t,
-				tc.expectedUnusdPerpEFFunds,
-				app.BankKeeper.GetBalance(
-					ctx,
-					app.AccountKeeper.GetModuleAddress(types.PerpEFModuleAccount),
-					denoms.NUSD,
-				).Amount,
-			)
-		})
-	}
-}
 
 func TestEditPriceMultipler(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
@@ -353,6 +29,12 @@ func TestEditPriceMultipler(t *testing.T) {
 			Then(
 				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+				AMMShouldBeEqual(pair,
+					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e12)),
+					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e12)),
+					AMM_QuoteReserveShouldBeEqual(sdk.NewDec(1e12)),
+					AMM_PriceMultiplierShouldBeEqual(sdk.OneDec()),
+				),
 			),
 
 		TC("net bias zero").
@@ -367,6 +49,12 @@ func TestEditPriceMultipler(t *testing.T) {
 			Then(
 				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+				AMMShouldBeEqual(pair,
+					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e12)),
+					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e12)),
+					AMM_QuoteReserveShouldBeEqual(sdk.NewDec(1e12)),
+					AMM_PriceMultiplierShouldBeEqual(sdk.NewDec(10)),
+				),
 			),
 
 		TC("long bias, increase price multiplier").
@@ -381,6 +69,12 @@ func TestEditPriceMultipler(t *testing.T) {
 			Then(
 				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1004500)))),
 				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(995500)))),
+				AMMShouldBeEqual(pair,
+					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e12)),
+					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e12)),
+					AMM_QuoteReserveShouldBeEqual(sdk.NewDec(1e12)),
+					AMM_PriceMultiplierShouldBeEqual(sdk.NewDec(10)),
+				),
 			),
 
 		TC("long bias, decrease price multiplier").
@@ -395,6 +89,12 @@ func TestEditPriceMultipler(t *testing.T) {
 			Then(
 				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(999626)))),
 				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1000374)))),
+				AMMShouldBeEqual(pair,
+					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e12)),
+					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e12)),
+					AMM_QuoteReserveShouldBeEqual(sdk.NewDec(1e12)),
+					AMM_PriceMultiplierShouldBeEqual(sdk.MustNewDecFromStr("0.25")),
+				),
 			),
 
 		TC("short bias, increase price multiplier").
@@ -409,6 +109,12 @@ func TestEditPriceMultipler(t *testing.T) {
 			Then(
 				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(995500)))),
 				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1004500)))),
+				AMMShouldBeEqual(pair,
+					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e12)),
+					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e12)),
+					AMM_QuoteReserveShouldBeEqual(sdk.NewDec(1e12)),
+					AMM_PriceMultiplierShouldBeEqual(sdk.NewDec(10)),
+				),
 			),
 
 		TC("short bias, decrease price multiplier").
@@ -423,6 +129,12 @@ func TestEditPriceMultipler(t *testing.T) {
 			Then(
 				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1000376)))),
 				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(999624)))),
+				AMMShouldBeEqual(pair,
+					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e12)),
+					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e12)),
+					AMM_QuoteReserveShouldBeEqual(sdk.NewDec(1e12)),
+					AMM_PriceMultiplierShouldBeEqual(sdk.MustNewDecFromStr("0.25")),
+				),
 			),
 	}
 
@@ -435,86 +147,130 @@ func TestEditSwapInvariant(t *testing.T) {
 	tests := TestCases{
 		TC("same swap invariant").
 			Given(
-				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(1000)), WithTotalShort(sdk.NewDec(500))),
+				CreateCustomMarket(pair,
+					WithTotalLong(sdk.NewDec(1000)),
+					WithTotalShort(sdk.NewDec(500)),
+					WithSqrtDepth(sdk.NewDec(1e6)),
+				),
 				FundModule(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 				FundModule(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditSwapInvariant(pair, sdk.OneDec()),
+				EditSwapInvariant(pair, sdk.NewDec(1e12)),
 			).
 			Then(
 				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+				AMMShouldBeEqual(pair,
+					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e6)),
+					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e6)),
+					AMM_QuoteReserveShouldBeEqual(sdk.NewDec(1e6)),
+					AMM_PriceMultiplierShouldBeEqual(sdk.OneDec()),
+				),
 			),
 
 		TC("net bias zero").
 			Given(
-				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(1000)), WithTotalShort(sdk.NewDec(1000))),
+				CreateCustomMarket(pair,
+					WithTotalLong(sdk.NewDec(1000)),
+					WithTotalShort(sdk.NewDec(1000)),
+					WithSqrtDepth(sdk.NewDec(1e6)),
+				),
 				FundModule(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 				FundModule(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditSwapInvariant(pair, sdk.NewDec(400)),
+				EditSwapInvariant(pair, sdk.NewDec(1e18)),
 			).
 			Then(
 				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+				AMMShouldBeEqual(pair,
+					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e9)),
+					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e9)),
+					AMM_QuoteReserveShouldBeEqual(sdk.NewDec(1e9)),
+					AMM_PriceMultiplierShouldBeEqual(sdk.OneDec()),
+				),
 			),
 
 		TC("long bias, increase swap invariant").
 			Given(
-				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(1e8)), WithTotalShort(sdk.NewDec(5e7))),
+				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(1e5)), WithSqrtDepth(sdk.NewDec(1e6))),
 				FundModule(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 				FundModule(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditSwapInvariant(pair, sdk.NewDec(400)),
+				EditSwapInvariant(pair, sdk.NewDec(1e14)),
 			).
 			Then(
-				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1002375)))),
-				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(997625)))),
+				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1008101)))),
+				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(991899)))),
+				AMMShouldBeEqual(pair,
+					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e7)),
+					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e7)),
+					AMM_QuoteReserveShouldBeEqual(sdk.NewDec(1e7)),
+					AMM_PriceMultiplierShouldBeEqual(sdk.OneDec()),
+				),
 			),
 
 		TC("long bias, decrease swap invariant").
 			Given(
-				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(1e8)), WithTotalShort(sdk.NewDec(5e7))),
+				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(1e2)), WithSqrtDepth(sdk.NewDec(1e6))),
 				FundModule(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 				FundModule(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditSwapInvariant(pair, sdk.MustNewDecFromStr("0.0025")),
+				EditSwapInvariant(pair, sdk.NewDec(1e6)),
 			).
 			Then(
-				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(952550)))),
-				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1047450)))),
+				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(999991)))),
+				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1000009)))),
+				AMMShouldBeEqual(pair,
+					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e3)),
+					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e3)),
+					AMM_QuoteReserveShouldBeEqual(sdk.NewDec(1e3)),
+					AMM_PriceMultiplierShouldBeEqual(sdk.OneDec()),
+				),
 			),
 
 		TC("short bias, increase swap invariant").
 			Given(
-				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(5e7)), WithTotalShort(sdk.NewDec(1e8))),
+				CreateCustomMarket(pair, WithTotalShort(sdk.NewDec(1e5)), WithSqrtDepth(sdk.NewDec(1e6))),
 				FundModule(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 				FundModule(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditSwapInvariant(pair, sdk.NewDec(400)),
+				EditSwapInvariant(pair, sdk.NewDec(1e14)),
 			).
 			Then(
-				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(995500)))),
-				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1004500)))),
+				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1010102)))),
+				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(989898)))),
+				AMMShouldBeEqual(pair,
+					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e7)),
+					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e7)),
+					AMM_QuoteReserveShouldBeEqual(sdk.NewDec(1e7)),
+					AMM_PriceMultiplierShouldBeEqual(sdk.OneDec()),
+				),
 			),
 
 		TC("short bias, decrease swap invariant").
 			Given(
-				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(5e7)), WithTotalShort(sdk.NewDec(1e8))),
+				CreateCustomMarket(pair, WithTotalShort(sdk.NewDec(1e2)), WithSqrtDepth(sdk.NewDec(1e6))),
 				FundModule(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 				FundModule(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditSwapInvariant(pair, sdk.MustNewDecFromStr("0.0025")),
+				EditSwapInvariant(pair, sdk.NewDec(1e6)),
 			).
 			Then(
-				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1000376)))),
-				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(999624)))),
+				ModuleBalanceShouldBeEqual(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(999989)))),
+				ModuleBalanceShouldBeEqual(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1000011)))),
+				AMMShouldBeEqual(pair,
+					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e3)),
+					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e3)),
+					AMM_QuoteReserveShouldBeEqual(sdk.NewDec(1e3)),
+					AMM_PriceMultiplierShouldBeEqual(sdk.OneDec()),
+				),
 			),
 	}
 

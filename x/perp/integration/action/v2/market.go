@@ -15,13 +15,13 @@ import (
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
-// CreateMarketAction creates a market
-type CreateMarketAction struct {
+// createMarketAction creates a market
+type createMarketAction struct {
 	Market v2types.Market
 	AMM    v2types.AMM
 }
 
-func (c CreateMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (c createMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	app.PerpKeeperV2.Markets.Insert(ctx, c.Market.Pair, c.Market)
 	app.PerpKeeperV2.AMMs.Insert(ctx, c.AMM.Pair, c.AMM)
 
@@ -65,7 +65,7 @@ func CreateCustomMarket(pair asset.Pair, marketModifiers ...marketModifier) acti
 		modifier(&market, &amm)
 	}
 
-	return CreateMarketAction{
+	return createMarketAction{
 		Market: market,
 		AMM:    amm,
 	}
@@ -94,6 +94,14 @@ func WithTotalLong(amount sdk.Dec) marketModifier {
 func WithTotalShort(amount sdk.Dec) marketModifier {
 	return func(market *v2types.Market, amm *v2types.AMM) {
 		amm.TotalShort = amount
+	}
+}
+
+func WithSqrtDepth(amount sdk.Dec) marketModifier {
+	return func(market *v2types.Market, amm *v2types.AMM) {
+		amm.SqrtDepth = amount
+		amm.BaseReserve = amount
+		amm.QuoteReserve = amount
 	}
 }
 
