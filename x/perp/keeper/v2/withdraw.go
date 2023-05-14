@@ -3,7 +3,6 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
@@ -42,7 +41,7 @@ func (k Keeper) Withdraw(
 
 	vaultQuoteBalance := k.BankKeeper.GetBalance(
 		ctx,
-		k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount),
+		k.AccountKeeper.GetModuleAddress(v2types.VaultModuleAccount),
 		market.Pair.QuoteDenom(),
 	)
 	if vaultQuoteBalance.Amount.LT(amountToWithdraw) {
@@ -57,8 +56,8 @@ func (k Keeper) Withdraw(
 
 		if err := k.BankKeeper.SendCoinsFromModuleToModule(
 			ctx,
-			types.PerpEFModuleAccount,
-			types.VaultModuleAccount,
+			v2types.PerpEFModuleAccount,
+			v2types.VaultModuleAccount,
 			sdk.NewCoins(
 				sdk.NewCoin(market.Pair.QuoteDenom(), shortage),
 			),
@@ -70,7 +69,7 @@ func (k Keeper) Withdraw(
 	// Transfer from Vault to receiver
 	return k.BankKeeper.SendCoinsFromModuleToAccount(
 		ctx,
-		/* from */ types.VaultModuleAccount,
+		/* from */ v2types.VaultModuleAccount,
 		/* to */ receiver,
 		sdk.NewCoins(
 			sdk.NewCoin(market.Pair.QuoteDenom(), amountToWithdraw),
@@ -94,4 +93,37 @@ func (k Keeper) ZeroPrepaidBadDebt(ctx sdk.Context, market v2types.Market) {
 func (k Keeper) DecrementPrepaidBadDebt(ctx sdk.Context, market v2types.Market, amount sdk.Int) {
 	market.PrepaidBadDebt.Amount = market.PrepaidBadDebt.Amount.Sub(amount)
 	k.Markets.Insert(ctx, market.Pair, market)
+}
+
+/*
+Realizes the bad debt by first decrementing it from the prepaid bad debt.
+Prepaid bad debt accrues when more coins are withdrawn from the vault than the
+vault contains, so we "credit" ourselves with prepaid bad debt.
+
+then, when bad debt is actually realized (by closing underwater positions), we
+can consume the credit we have built before withdrawing more from the ecosystem fund.
+*/
+func (k Keeper) realizeBadDebt(ctx sdk.Context, market v2types.Market, badDebtToRealize sdk.Int) (
+	err error,
+) {
+	if market.PrepaidBadDebt.Amount.GTE(badDebtToRealize) {
+		// prepaidBadDebtBalance > badDebtToRealize
+		k.DecrementPrepaidBadDebt(ctx, market, badDebtToRealize)
+	} else {
+		// badDebtToRealize > prepaidBadDebtBalance
+		k.ZeroPrepaidBadDebt(ctx, market)
+
+		return k.BankKeeper.SendCoinsFromModuleToModule(ctx,
+			/*from=*/ v2types.PerpEFModuleAccount,
+			/*to=*/ v2types.VaultModuleAccount,
+			sdk.NewCoins(
+				sdk.NewCoin(
+					market.Pair.QuoteDenom(),
+					badDebtToRealize.Sub(market.PrepaidBadDebt.Amount),
+				),
+			),
+		)
+	}
+
+	return nil
 }
