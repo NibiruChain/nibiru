@@ -1,26 +1,18 @@
 package keeper_test
 
-// import (
-// 	"fmt"
-// 	"testing"
-// 	"time"
+import (
+	"testing"
 
-// 	sdk "github.com/cosmos/cosmos-sdk/types"
-// 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-// 	"github.com/stretchr/testify/assert"
-// 	"github.com/stretchr/testify/require"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
-// 	"github.com/NibiruChain/collections"
-
-// 	"github.com/NibiruChain/nibiru/x/common"
-// 	"github.com/NibiruChain/nibiru/x/common/asset"
-// 	"github.com/NibiruChain/nibiru/x/common/denoms"
-// 	"github.com/NibiruChain/nibiru/x/common/testutil"
-// 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-// 	keeper "github.com/NibiruChain/nibiru/x/perp/keeper/v2"
-// 	"github.com/NibiruChain/nibiru/x/perp/types"
-// 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
-// )
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
+	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
+	. "github.com/NibiruChain/nibiru/x/perp/integration/action/v2"
+	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion/v2"
+	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
+)
 
 // func TestMsgServerAddMargin(t *testing.T) {
 // 	tests := []struct {
@@ -255,7 +247,7 @@ package keeper_test
 // 	}
 // }
 
-// func TestMsgServerOpenPosition(t *testing.T) {
+// func TestMsgServerOpenPositionOld(t *testing.T) {
 // 	tests := []struct {
 // 		name        string
 // 		traderFunds sdk.Coins
@@ -747,3 +739,158 @@ package keeper_test
 // 		})
 // 	}
 // }
+
+func TestMsgServerOpenPosition(t *testing.T) {
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	alice := testutil.AccAddress()
+
+	tests := TestCases{
+		TC("open long position").
+			Given(
+				CreateCustomMarket(pair),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
+			).
+			When(
+				MsgServerOpenPosition(alice, pair, v2types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroInt()),
+			).
+			Then(
+				PositionShouldBeEqual(alice, pair, Position_PositionShouldBeEqualTo(v2types.Position{
+					TraderAddress:                   alice.String(),
+					Pair:                            pair,
+					Size_:                           sdk.MustNewDecFromStr("0.999999999999"),
+					Margin:                          sdk.NewDec(1),
+					OpenNotional:                    sdk.NewDec(1),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+					LastUpdatedBlockNumber:          1,
+				}),
+				),
+			),
+
+		TC("open short position").
+			Given(
+				CreateCustomMarket(pair),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
+			).
+			When(
+				MsgServerOpenPosition(alice, pair, v2types.Direction_SHORT, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroInt()),
+			).
+			Then(
+				PositionShouldBeEqual(alice, pair,
+					Position_PositionShouldBeEqualTo(v2types.Position{
+						TraderAddress:                   alice.String(),
+						Pair:                            pair,
+						Size_:                           sdk.MustNewDecFromStr("-1.000000000001"),
+						Margin:                          sdk.NewDec(1),
+						OpenNotional:                    sdk.NewDec(1),
+						LatestCumulativePremiumFraction: sdk.ZeroDec(),
+						LastUpdatedBlockNumber:          1,
+					}),
+				),
+			),
+	}
+
+	NewTestSuite(t).WithTestCases(tests...).Run()
+}
+
+func TestMsgServerClosePosition(t *testing.T) {
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	alice := testutil.AccAddress()
+
+	tests := TestCases{
+		TC("close long position").
+			Given(
+				CreateCustomMarket(pair),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
+				OpenPosition(alice, pair, v2types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroDec()),
+				MoveToNextBlock(),
+			).
+			When(
+				MsgServerClosePosition(alice, pair),
+			).
+			Then(
+				PositionShouldNotExist(alice, pair),
+			),
+
+		TC("close short position").
+			Given(
+				CreateCustomMarket(pair),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
+				OpenPosition(alice, pair, v2types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroDec()),
+				MoveToNextBlock(),
+			).
+			When(
+				MsgServerClosePosition(alice, pair),
+			).
+			Then(
+				PositionShouldNotExist(alice, pair),
+			),
+	}
+
+	NewTestSuite(t).WithTestCases(tests...).Run()
+}
+
+func TestMsgServerAddMargin(t *testing.T) {
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	alice := testutil.AccAddress()
+
+	tests := TestCases{
+		TC("add margin").
+			Given(
+				CreateCustomMarket(pair),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
+				OpenPosition(alice, pair, v2types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroDec()),
+				MoveToNextBlock(),
+			).
+			When(
+				MsgServerAddMargin(alice, pair, sdk.NewInt(1)),
+			).
+			Then(
+				PositionShouldBeEqual(alice, pair,
+					Position_PositionShouldBeEqualTo(v2types.Position{
+						TraderAddress:                   alice.String(),
+						Pair:                            pair,
+						Size_:                           sdk.MustNewDecFromStr("0.999999999999"),
+						Margin:                          sdk.NewDec(2),
+						OpenNotional:                    sdk.NewDec(1),
+						LatestCumulativePremiumFraction: sdk.ZeroDec(),
+						LastUpdatedBlockNumber:          2,
+					}),
+				),
+			),
+	}
+
+	NewTestSuite(t).WithTestCases(tests...).Run()
+}
+
+func TestMsgServerRemoveMargin(t *testing.T) {
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	alice := testutil.AccAddress()
+
+	tests := TestCases{
+		TC("add margin").
+			Given(
+				CreateCustomMarket(pair),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
+				OpenPosition(alice, pair, v2types.Direction_LONG, sdk.NewInt(2), sdk.NewDec(1), sdk.ZeroDec()),
+				MoveToNextBlock(),
+			).
+			When(
+				MsgServerRemoveMargin(alice, pair, sdk.NewInt(1)),
+			).
+			Then(
+				PositionShouldBeEqual(alice, pair,
+					Position_PositionShouldBeEqualTo(v2types.Position{
+						TraderAddress:                   alice.String(),
+						Pair:                            pair,
+						Size_:                           sdk.MustNewDecFromStr("1.999999999996"),
+						Margin:                          sdk.NewDec(1),
+						OpenNotional:                    sdk.NewDec(2),
+						LatestCumulativePremiumFraction: sdk.ZeroDec(),
+						LastUpdatedBlockNumber:          2,
+					}),
+				),
+			),
+	}
+
+	NewTestSuite(t).WithTestCases(tests...).Run()
+}

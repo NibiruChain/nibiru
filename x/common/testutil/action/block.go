@@ -85,7 +85,7 @@ func (m moveToNextBlock) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, e
 	return app.NewContext(
 		false,
 		newHeader,
-	).WithBlockTime(newHeader.Time), nil, true
+	), nil, true
 }
 
 func MoveToNextBlock() Action {

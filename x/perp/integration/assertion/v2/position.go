@@ -70,6 +70,24 @@ func Position_PositionSizeShouldBeEqualTo(expectedSize sdk.Dec) PositionChecker 
 	}
 }
 
+func Position_PositionMarginShouldBeEqualTo(expectedMargin sdk.Dec) PositionChecker {
+	return func(position v2types.Position) error {
+		if position.Margin.Equal(expectedMargin) {
+			return nil
+		}
+		return fmt.Errorf("expected position margin %s, got %s", expectedMargin, position.Margin.String())
+	}
+}
+
+func Position_PositionOpenNotionalShouldBeEqualTo(expectedOpenNotional sdk.Dec) PositionChecker {
+	return func(position v2types.Position) error {
+		if position.OpenNotional.Equal(expectedOpenNotional) {
+			return nil
+		}
+		return fmt.Errorf("expected position open notional %s, got %s", expectedOpenNotional, position.OpenNotional.String())
+	}
+}
+
 type positionShouldNotExist struct {
 	Account sdk.AccAddress
 	Pair    asset.Pair
