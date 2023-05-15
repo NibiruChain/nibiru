@@ -65,6 +65,7 @@ func (s *TestSuiteOracleExecutor) TestExecuteOracleParams() {
 		VotePeriod: &period,
 	}
 
+	// Vote Period
 	params, err := s.nibiru.OracleKeeper.Params.Get(s.ctx)
 	s.Require().NoError(err)
 	s.Require().Equal(uint64(1_000), params.VotePeriod)
@@ -75,4 +76,122 @@ func (s *TestSuiteOracleExecutor) TestExecuteOracleParams() {
 	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
 	s.Require().NoError(err)
 	s.Require().Equal(uint64(1234), params.VotePeriod)
+
+	// Vote Threshold
+	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(sdk.OneDec().Quo(sdk.NewDec(3)), params.VoteThreshold)
+
+	threshold := sdk.MustNewDecFromStr("0.4")
+	cwMsg = &cw_struct.EditOracleParams{
+		VoteThreshold: &threshold,
+	}
+
+	err = s.exec.SetOracleParams(cwMsg, s.ctx)
+	s.Require().NoError(err)
+
+	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(threshold, params.VoteThreshold)
+
+	// Reward Band
+	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(sdk.NewDecWithPrec(2, 2), params.RewardBand)
+
+	band := sdk.MustNewDecFromStr("0.5")
+	cwMsg = &cw_struct.EditOracleParams{
+		RewardBand: &band,
+	}
+
+	err = s.exec.SetOracleParams(cwMsg, s.ctx)
+	s.Require().NoError(err)
+
+	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(band, params.RewardBand)
+
+	// White List
+	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(14, len(params.Whitelist))
+
+	whitelist := []string{"aave:usdc", "sol:usdc"}
+	cwMsg = &cw_struct.EditOracleParams{
+		Whitelist: whitelist,
+	}
+	err = s.exec.SetOracleParams(cwMsg, s.ctx)
+	s.Require().NoError(err)
+
+	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(2, len(params.Whitelist))
+
+	// Slash Fraction
+	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(sdk.NewDecWithPrec(1, 4), params.SlashFraction)
+
+	slashFraction := sdk.MustNewDecFromStr("0.5")
+	cwMsg = &cw_struct.EditOracleParams{
+		SlashFraction: &slashFraction,
+	}
+
+	err = s.exec.SetOracleParams(cwMsg, s.ctx)
+	s.Require().NoError(err)
+
+	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(slashFraction, params.SlashFraction)
+
+	// Slash Window
+	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(604800), params.SlashWindow)
+
+	slashWindow := sdk.NewInt(2)
+	cwMsg = &cw_struct.EditOracleParams{
+		SlashWindow: &slashWindow,
+	}
+
+	err = s.exec.SetOracleParams(cwMsg, s.ctx)
+	s.Require().NoError(err)
+
+	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(slashWindow.Uint64(), params.SlashWindow)
+
+	// Min valid per window
+	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(sdk.NewDecWithPrec(5, 2), params.MinValidPerWindow)
+
+	minValidPerWindow := sdk.MustNewDecFromStr("0.5")
+	cwMsg = &cw_struct.EditOracleParams{
+		MinValidPerWindow: &minValidPerWindow,
+	}
+
+	err = s.exec.SetOracleParams(cwMsg, s.ctx)
+	s.Require().NoError(err)
+
+	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(minValidPerWindow, params.MinValidPerWindow)
+
+	// Twap lookback window
+	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(time.Minute*15, params.TwapLookbackWindow)
+
+	twapLookbackWindow := sdk.NewInt(int64(time.Second * 30))
+	cwMsg = &cw_struct.EditOracleParams{
+		TwapLookbackWindow: &twapLookbackWindow,
+	}
+
+	err = s.exec.SetOracleParams(cwMsg, s.ctx)
+	s.Require().NoError(err)
+
+	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(time.Duration(twapLookbackWindow.Int64()), params.TwapLookbackWindow)
 }
