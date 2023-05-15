@@ -57,6 +57,7 @@ func TestAdmin_WithdrawFromInsuranceFund(t *testing.T) {
 					amountToFund.String(),
 					nibiru.BankKeeper.GetBalance(ctx, admin, denoms.NUSD).Amount.String(),
 				)
+				expectBalance(sdk.ZeroInt(), t, nibiru, ctx)
 			},
 		},
 		{
