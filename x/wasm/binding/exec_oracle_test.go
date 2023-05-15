@@ -7,6 +7,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/wasm/binding"
+	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/wasmbin"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
@@ -58,15 +59,17 @@ func (s *TestSuiteOracleExecutor) SetupSuite() {
 	}
 }
 
-//func (s *TestSuiteOracleExecutor) TestExecuteOracleParams() {
-//	period := uint64(1234)
-//	cwMsg := cw_struct.BindingMsg{
-//		OracleParams: &cw_struct.OracleParams{
-//			VotePeriod: &period,
-//		},
-//	}
-//
-//	bz, err := DoCustomBindingExecute(s.ctx, &s.nibiru, s.contract, s.contractDeployer, cwMsg, sdk.Coins{})
-//	s.NoError(err)
-//	s.NotNil(bz)
-//}
+func (s *TestSuiteOracleExecutor) TestExecuteOracleParams() {
+	period := sdk.NewInt(1234)
+	cwMsg := cw_struct.BindingMsg{
+		OracleParams: &cw_struct.OracleParams{
+			OracleParams: cw_struct.OracleParamPayload{
+				VotePeriod: &period,
+			},
+		},
+	}
+
+	bz, err := DoCustomBindingExecute(s.ctx, &s.nibiru, s.contract, s.contractDeployer, cwMsg, sdk.Coins{})
+	s.NoError(err)
+	s.NotNil(bz)
+}

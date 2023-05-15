@@ -2,6 +2,7 @@ package binding
 
 import (
 	"fmt"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -29,9 +30,10 @@ func (o ExecutorOracle) SetOracleParams(msg *cw_struct.OracleParams, ctx sdk.Con
 
 // mergeOracleParams takes the oracle params from the wasm msg and merges them into the existing params
 // keeping any existing values if not set in the wasm msg
-func mergeOracleParams(msg *cw_struct.OracleParams, oracleParams oracletypes.Params) oracletypes.Params {
+func mergeOracleParams(msgWasm *cw_struct.OracleParams, oracleParams oracletypes.Params) oracletypes.Params {
+	msg := msgWasm.OracleParams
 	if msg.VotePeriod != nil {
-		oracleParams.VotePeriod = *msg.VotePeriod
+		oracleParams.VotePeriod = msg.VotePeriod.Uint64()
 	}
 
 	if msg.VoteThreshold != nil {
@@ -56,7 +58,7 @@ func mergeOracleParams(msg *cw_struct.OracleParams, oracleParams oracletypes.Par
 	}
 
 	if msg.SlashWindow != nil {
-		oracleParams.SlashWindow = *msg.SlashWindow
+		oracleParams.SlashWindow = msg.SlashWindow.Uint64()
 	}
 
 	if msg.MinValidPerWindow != nil {
@@ -64,11 +66,11 @@ func mergeOracleParams(msg *cw_struct.OracleParams, oracleParams oracletypes.Par
 	}
 
 	if msg.TwapLookbackWindow != nil {
-		oracleParams.TwapLookbackWindow = *msg.TwapLookbackWindow
+		oracleParams.TwapLookbackWindow = time.Second * time.Duration(msg.TwapLookbackWindow.Int64())
 	}
 
 	if msg.MinVoters != nil {
-		oracleParams.MinVoters = *msg.MinVoters
+		oracleParams.MinVoters = msg.MinVoters.Uint64()
 	}
 
 	if msg.ValidatorFeeRatio != nil {

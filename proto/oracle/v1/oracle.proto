@@ -14,6 +14,7 @@ message Params {
 
   // VotePeriod defines the number of blocks during which voting takes place.
   uint64 vote_period = 1 [ (gogoproto.moretags) = "yaml:\"vote_period\"" ];
+
   // VoteThreshold specifies the minimum proportion of votes that must be
   // received for a ballot to pass.
   string vote_threshold = 2 [

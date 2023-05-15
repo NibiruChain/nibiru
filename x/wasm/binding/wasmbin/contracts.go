@@ -11,6 +11,7 @@ type WasmKey int
 const (
 	WasmKeyPerpBinding WasmKey = iota
 	WasmKeyShifter
+	WasmKeyController
 	// WasmKeyEpochsBinding // for example...
 )
 
@@ -31,4 +32,5 @@ func (wasmKey WasmKey) ToByteCode(pathToWasmbin string) (wasmBytecode []byte, er
 var WasmBzMap = map[WasmKey]string{
 	WasmKeyPerpBinding: "bindings_perp.wasm",
 	WasmKeyShifter:     "shifter.wasm",
+	WasmKeyController:  "controller.wasm",
 }

@@ -1,8 +1,6 @@
 package cw_struct
 
 import (
-	"time"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -77,15 +75,19 @@ type DonateToInsuranceFund struct {
 	Donation sdk.Coin `json:"donation"`
 }
 
+type OracleParamPayload struct {
+	VotePeriod         *sdk.Int `json:"vote_period,omitempty"`
+	VoteThreshold      *sdk.Dec `json:"vote_threshold,omitempty"`
+	RewardBand         *sdk.Dec `json:"reward_band,omitempty"`
+	Whitelist          []string `json:"whitelist,omitempty"`
+	SlashFraction      *sdk.Dec `json:"slash_fraction,omitempty"`
+	SlashWindow        *sdk.Int `json:"slash_window,omitempty"`
+	MinValidPerWindow  *sdk.Dec `json:"min_valid_per_window,omitempty"`
+	TwapLookbackWindow *sdk.Int `json:"twap_lookback_window,omitempty"`
+	MinVoters          *sdk.Int `json:"min_voters,omitempty"`
+	ValidatorFeeRatio  *sdk.Dec `json:"validator_fee_ratio,omitempty"`
+}
+
 type OracleParams struct {
-	VotePeriod         *uint64        `json:"vote_period,omitempty"`
-	VoteThreshold      *sdk.Dec       `json:"vote_threshold,omitempty"`
-	RewardBand         *sdk.Dec       `json:"reward_band,omitempty"`
-	Whitelist          []string       `json:"whitelist,omitempty"`
-	SlashFraction      *sdk.Dec       `json:"slash_fraction,omitempty"`
-	SlashWindow        *uint64        `json:"slash_window,omitempty"`
-	MinValidPerWindow  *sdk.Dec       `json:"min_valid_per_window,omitempty"`
-	TwapLookbackWindow *time.Duration `json:"twap_lookback_window,omitempty"`
-	MinVoters          *uint64        `json:"min_voters,omitempty"`
-	ValidatorFeeRatio  *sdk.Dec       `json:"validator_fee_ratio,omitempty"`
+	OracleParams OracleParamPayload `json:"oracle_params,omitempty"`
 }

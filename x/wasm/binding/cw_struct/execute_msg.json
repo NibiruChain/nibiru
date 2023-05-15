@@ -70,5 +70,12 @@
       "pair": "ETH:USD",
       "depth_mult": "420"
     }
+  },
+  "oracle_params": {
+    "oracle_params": {
+      "oracle_params": {
+        "vote_period": "12345"
+      }
+    }
   }
 }

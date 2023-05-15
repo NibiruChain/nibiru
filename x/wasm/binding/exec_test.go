@@ -59,8 +59,9 @@ type TestSuiteExecutor struct {
 	ctx              sdk.Context
 	contractDeployer sdk.AccAddress
 
-	contractPerp sdk.AccAddress
-	happyFields  ExampleFields
+	contractPerp       sdk.AccAddress
+	contractController sdk.AccAddress
+	happyFields        ExampleFields
 }
 
 func (s *TestSuiteExecutor) SetupSuite() {
@@ -87,6 +88,7 @@ func (s *TestSuiteExecutor) SetupSuite() {
 	s.ctx = ctx
 
 	s.contractPerp = ContractMap[wasmbin.WasmKeyPerpBinding]
+	s.contractController = ContractMap[wasmbin.WasmKeyController]
 	s.OnSetupEnd()
 }
 
@@ -147,10 +149,12 @@ func (s *TestSuiteExecutor) TestOpenAddRemoveClose() {
 }
 
 func (s *TestSuiteExecutor) TestOracleParams() {
-	theVotePeriod := uint64(1234)
+	theVotePeriod := sdk.NewInt(1234)
 	execMsg := cw_struct.BindingMsg{
 		OracleParams: &cw_struct.OracleParams{
-			VotePeriod: &theVotePeriod,
+			OracleParams: cw_struct.OracleParamPayload{
+				VotePeriod: &theVotePeriod,
+			},
 		},
 	}
 
