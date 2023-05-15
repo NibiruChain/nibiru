@@ -47,9 +47,11 @@ func DoCustomBindingExecute(
 		Execute(ctx, contract, sender, jsonCwMsg, funds)
 }
 
-func (s *TestSuiteExecutor) ExecuteAgainstContract(execMsg cw_struct.BindingMsg) (contractRespBz []byte, err error) {
+func (s *TestSuiteExecutor) ExecuteAgainstContract(
+	contract sdk.AccAddress, execMsg cw_struct.BindingMsg,
+) (contractRespBz []byte, err error) {
 	return DoCustomBindingExecute(
-		s.ctx, s.nibiru, s.contractPerp, s.contractDeployer, execMsg, sdk.Coins{})
+		s.ctx, s.nibiru, contract, s.contractDeployer, execMsg, sdk.Coins{})
 }
 
 type TestSuiteExecutor struct {
@@ -61,6 +63,7 @@ type TestSuiteExecutor struct {
 
 	contractPerp       sdk.AccAddress
 	contractController sdk.AccAddress
+	contractShifter    sdk.AccAddress
 	happyFields        ExampleFields
 }
 
@@ -89,6 +92,9 @@ func (s *TestSuiteExecutor) SetupSuite() {
 
 	s.contractPerp = ContractMap[wasmbin.WasmKeyPerpBinding]
 	s.contractController = ContractMap[wasmbin.WasmKeyController]
+	s.contractShifter = ContractMap[wasmbin.WasmKeyShifter]
+	s.T().Logf("contract bindings-perp: %s", s.contractPerp)
+	s.T().Logf("contract shifter: %s", s.contractShifter)
 	s.OnSetupEnd()
 }
 
@@ -112,7 +118,7 @@ func (s *TestSuiteExecutor) TestOpenAddRemoveClose() {
 			BaseAmountLimit: sdk.NewInt(0),
 		},
 	}
-	contractRespBz, err := s.ExecuteAgainstContract(execMsg)
+	contractRespBz, err := s.ExecuteAgainstContract(s.contractPerp, execMsg)
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
 
 	// TestAddMargin (integration - real contract, real app)
@@ -123,7 +129,7 @@ func (s *TestSuiteExecutor) TestOpenAddRemoveClose() {
 			Margin: margin,
 		},
 	}
-	contractRespBz, err = s.ExecuteAgainstContract(execMsg)
+	contractRespBz, err = s.ExecuteAgainstContract(s.contractPerp, execMsg)
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
 
 	// TestRemoveMargin (integration - real contract, real app)
@@ -134,7 +140,7 @@ func (s *TestSuiteExecutor) TestOpenAddRemoveClose() {
 			Margin: margin,
 		},
 	}
-	contractRespBz, err = s.ExecuteAgainstContract(execMsg)
+	contractRespBz, err = s.ExecuteAgainstContract(s.contractPerp, execMsg)
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
 
 	// TestClosePosition (integration - real contract, real app)
@@ -144,7 +150,7 @@ func (s *TestSuiteExecutor) TestOpenAddRemoveClose() {
 			Pair:   pair.String(),
 		},
 	}
-	contractRespBz, err = s.ExecuteAgainstContract(execMsg)
+	contractRespBz, err = s.ExecuteAgainstContract(s.contractPerp, execMsg)
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
 }
 
@@ -158,7 +164,7 @@ func (s *TestSuiteExecutor) TestOracleParams() {
 		},
 	}
 
-	contractRespBz, err := s.ExecuteAgainstContract(execMsg)
+	contractRespBz, err := s.ExecuteAgainstContract(s.contractController, execMsg)
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
 }
 
@@ -171,19 +177,29 @@ func (s *TestSuiteExecutor) TestPegShift() {
 		},
 	}
 
-	// Executing with permission should succeed
+	s.T().Log("Executing with permission should succeed")
+	contract := s.contractShifter
 	s.nibiru.SudoKeeper.SetSudoContracts(
-		[]string{s.contractPerp.String()}, s.ctx,
+		[]string{contract.String()}, s.ctx,
 	)
-	contractRespBz, err := s.ExecuteAgainstContract(execMsg)
+	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
 
-	// Executing without permission should fail
+	s.T().Log("Executing without permission should fail")
 	s.nibiru.SudoKeeper.SetSudoContracts(
 		[]string{}, s.ctx,
 	)
-	contractRespBz, err = s.ExecuteAgainstContract(execMsg)
+	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
 	s.Errorf(err, "contractRespBz: %s", contractRespBz)
+
+	s.T().Log("Executing the wrong contract should fail")
+	contract = s.contractPerp
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{contract.String()}, s.ctx,
+	)
+	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
+	s.Errorf(err, "contractRespBz: %s", contractRespBz)
+	s.Contains(err.Error(), "Error parsing into type")
 }
 
 func (s *TestSuiteExecutor) TestDepthShift() {
@@ -194,6 +210,28 @@ func (s *TestSuiteExecutor) TestDepthShift() {
 			DepthMult: sdk.NewDec(2),
 		},
 	}
-	contractRespBz, err := s.ExecuteAgainstContract(execMsg)
+
+	s.T().Log("Executing with permission should succeed")
+	contract := s.contractShifter
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{contract.String()}, s.ctx,
+	)
+	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
+
+	s.T().Log("Executing without permission should fail")
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{}, s.ctx,
+	)
+	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
+	s.Errorf(err, "contractRespBz: %s", contractRespBz)
+
+	s.T().Log("Executing the wrong contract should fail")
+	contract = s.contractPerp
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{contract.String()}, s.ctx,
+	)
+	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
+	s.Errorf(err, "contractRespBz: %s", contractRespBz)
+	s.Contains(err.Error(), "Error parsing into type")
 }
