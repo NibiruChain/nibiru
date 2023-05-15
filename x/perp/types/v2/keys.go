@@ -2,9 +2,9 @@ package v2
 
 const (
 	ModuleName           = "v2perp"
-	VaultModuleAccount   = "vault"
-	PerpEFModuleAccount  = "perp_ef"
-	FeePoolModuleAccount = "fee_pool"
+	VaultModuleAccount   = "perp_v2_vault"
+	PerpEFModuleAccount  = "perp_v2_ef"
+	FeePoolModuleAccount = "perp_v2_fee_pool"
 )
 
 var (

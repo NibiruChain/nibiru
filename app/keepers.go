@@ -3,8 +3,33 @@ package app
 import (
 	"path/filepath"
 
-	ibcmock "github.com/cosmos/ibc-go/v4/testing/mock"
-
+	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/NibiruChain/nibiru/x/epochs"
+	epochskeeper "github.com/NibiruChain/nibiru/x/epochs/keeper"
+	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
+	"github.com/NibiruChain/nibiru/x/inflation"
+	inflationkeeper "github.com/NibiruChain/nibiru/x/inflation/keeper"
+	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
+	oracle "github.com/NibiruChain/nibiru/x/oracle"
+	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
+	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
+	perpamm "github.com/NibiruChain/nibiru/x/perp/amm"
+	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper/v1"
+	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/keeper/v2"
+	perp "github.com/NibiruChain/nibiru/x/perp/module/v1"
+	perpv2 "github.com/NibiruChain/nibiru/x/perp/module/v2"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
+	perpv2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
+	"github.com/NibiruChain/nibiru/x/spot"
+	spotkeeper "github.com/NibiruChain/nibiru/x/spot/keeper"
+	spottypes "github.com/NibiruChain/nibiru/x/spot/types"
+	"github.com/NibiruChain/nibiru/x/stablecoin"
+	stablecoinkeeper "github.com/NibiruChain/nibiru/x/stablecoin/keeper"
+	stablecointypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
+	"github.com/NibiruChain/nibiru/x/sudo"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -12,7 +37,6 @@ import (
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
@@ -20,57 +44,44 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
-	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
 	"github.com/cosmos/cosmos-sdk/x/bank"
-
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-
 	"github.com/cosmos/cosmos-sdk/x/capability"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	crisiskeeper "github.com/cosmos/cosmos-sdk/x/crisis/keeper"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
-
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-
 	"github.com/cosmos/cosmos-sdk/x/evidence"
 	evidencekeeper "github.com/cosmos/cosmos-sdk/x/evidence/keeper"
 	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
-
 	"github.com/cosmos/cosmos-sdk/x/feegrant"
 	feegrantkeeper "github.com/cosmos/cosmos-sdk/x/feegrant/keeper"
 	feegrantmodule "github.com/cosmos/cosmos-sdk/x/feegrant/module"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
-
+	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
-
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
-
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-
 	ibcfee "github.com/cosmos/ibc-go/v4/modules/apps/29-fee"
 	ibcfeekeeper "github.com/cosmos/ibc-go/v4/modules/apps/29-fee/keeper"
 	ibcfeetypes "github.com/cosmos/ibc-go/v4/modules/apps/29-fee/types"
@@ -83,39 +94,7 @@ import (
 	porttypes "github.com/cosmos/ibc-go/v4/modules/core/05-port/types"
 	ibchost "github.com/cosmos/ibc-go/v4/modules/core/24-host"
 	ibckeeper "github.com/cosmos/ibc-go/v4/modules/core/keeper"
-
-	"github.com/NibiruChain/nibiru/x/epochs"
-	epochskeeper "github.com/NibiruChain/nibiru/x/epochs/keeper"
-	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
-	"github.com/NibiruChain/nibiru/x/sudo"
-
-	"github.com/NibiruChain/nibiru/x/inflation"
-	inflationkeeper "github.com/NibiruChain/nibiru/x/inflation/keeper"
-	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
-
-	oracle "github.com/NibiruChain/nibiru/x/oracle"
-	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
-	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
-
-	perpamm "github.com/NibiruChain/nibiru/x/perp/amm"
-	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
-	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper/v1"
-	v2perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper/v2"
-	perp "github.com/NibiruChain/nibiru/x/perp/module/v1"
-
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
-	v2perptypes "github.com/NibiruChain/nibiru/x/perp/types/v2"
-	"github.com/NibiruChain/nibiru/x/spot"
-	spotkeeper "github.com/NibiruChain/nibiru/x/spot/keeper"
-	spottypes "github.com/NibiruChain/nibiru/x/spot/types"
-
-	"github.com/NibiruChain/nibiru/x/stablecoin"
-	stablecoinkeeper "github.com/NibiruChain/nibiru/x/stablecoin/keeper"
-	stablecointypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
-
-	"github.com/CosmWasm/wasmd/x/wasm"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	ibcmock "github.com/cosmos/ibc-go/v4/testing/mock"
 )
 
 func GetStoreKeys() (
@@ -148,7 +127,7 @@ func GetStoreKeys() (
 		oracletypes.StoreKey,
 		epochstypes.StoreKey,
 		perptypes.StoreKey,
-		v2perptypes.StoreKey,
+		perpv2types.StoreKey,
 		perpammtypes.StoreKey,
 		inflationtypes.StoreKey,
 		sudo.StoreKey,
@@ -269,7 +248,10 @@ func (app *NibiruApp) InitKeepers(
 		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.PerpAmmKeeper, app.EpochsKeeper,
 	)
 
-	app.PerpKeeperV2 = v2perpkeeper.NewKeeper(appCodec, keys[v2perptypes.StoreKey], app.GetSubspace(v2perptypes.ModuleName), app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.EpochsKeeper)
+	app.PerpKeeperV2 = perpv2keeper.NewKeeper(
+		appCodec, keys[perpv2types.StoreKey], app.GetSubspace(perpv2types.ModuleName),
+		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.EpochsKeeper,
+	)
 
 	app.InflationKeeper = inflationkeeper.NewKeeper(
 		appCodec, keys[inflationtypes.StoreKey], app.GetSubspace(inflationtypes.ModuleName),
@@ -451,6 +433,9 @@ func (app *NibiruApp) AppModules(
 	perpAmmModule := perpamm.NewAppModule(
 		appCodec, app.PerpAmmKeeper, app.OracleKeeper,
 	)
+	perpv2Module := perpv2.NewAppModule(
+		appCodec, app.PerpKeeperV2, app.AccountKeeper, app.BankKeeper, app.OracleKeeper,
+	)
 	inflationModule := inflation.NewAppModule(
 		app.InflationKeeper, app.AccountKeeper, app.stakingKeeper,
 	)
@@ -484,6 +469,7 @@ func (app *NibiruApp) AppModules(
 		perpModule,
 		inflationModule,
 		sudoModule,
+		perpv2Module,
 
 		// ibc
 		evidence.NewAppModule(app.evidenceKeeper),
@@ -540,7 +526,7 @@ func OrderedModuleNames() []string {
 		oracletypes.ModuleName,
 		perpammtypes.ModuleName,
 		perptypes.ModuleName,
-		v2perptypes.ModuleName,
+		perpv2types.ModuleName,
 		inflationtypes.ModuleName,
 		sudo.ModuleName,
 
