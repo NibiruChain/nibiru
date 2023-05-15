@@ -85,7 +85,7 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 			return events, data, err
 		case contractExecuteMsg.ExecuteMsg.DepthShift != nil:
 			cwMsg := contractExecuteMsg.ExecuteMsg.DepthShift
-			err = messenger.Perp.DepthShift(cwMsg, contractAddr, ctx)
+			err = messenger.Perp.DepthShift(cwMsg, ctx)
 			return events, data, err
 
 		// Oracle module

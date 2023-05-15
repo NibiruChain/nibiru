@@ -47,9 +47,7 @@ func DoCustomBindingExecute(
 		Execute(ctx, contract, sender, jsonCwMsg, funds)
 }
 
-func (s *TestSuiteExecutor) ExecuteAgainstContract(
-	contract sdk.AccAddress, execMsg cw_struct.BindingMsg,
-) (contractRespBz []byte, err error) {
+func (s *TestSuiteExecutor) ExecuteAgainstContract(execMsg cw_struct.BindingMsg) (contractRespBz []byte, err error) {
 	return DoCustomBindingExecute(
 		s.ctx, s.nibiru, s.contractPerp, s.contractDeployer, execMsg, sdk.Coins{})
 }
@@ -112,7 +110,7 @@ func (s *TestSuiteExecutor) TestOpenAddRemoveClose() {
 			BaseAmountLimit: sdk.NewInt(0),
 		},
 	}
-	contractRespBz, err := s.ExecuteAgainstContract(s.contractPerp, execMsg)
+	contractRespBz, err := s.ExecuteAgainstContract(execMsg)
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
 
 	// TestAddMargin (integration - real contract, real app)
@@ -123,7 +121,7 @@ func (s *TestSuiteExecutor) TestOpenAddRemoveClose() {
 			Margin: margin,
 		},
 	}
-	contractRespBz, err = s.ExecuteAgainstContract(s.contractPerp, execMsg)
+	contractRespBz, err = s.ExecuteAgainstContract(execMsg)
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
 
 	// TestRemoveMargin (integration - real contract, real app)
@@ -134,7 +132,7 @@ func (s *TestSuiteExecutor) TestOpenAddRemoveClose() {
 			Margin: margin,
 		},
 	}
-	contractRespBz, err = s.ExecuteAgainstContract(s.contractPerp, execMsg)
+	contractRespBz, err = s.ExecuteAgainstContract(execMsg)
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
 
 	// TestClosePosition (integration - real contract, real app)
@@ -144,7 +142,7 @@ func (s *TestSuiteExecutor) TestOpenAddRemoveClose() {
 			Pair:   pair.String(),
 		},
 	}
-	contractRespBz, err = s.ExecuteAgainstContract(s.contractPerp, execMsg)
+	contractRespBz, err = s.ExecuteAgainstContract(execMsg)
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
 }
 
@@ -161,14 +159,14 @@ func (s *TestSuiteExecutor) TestPegShift() {
 	s.nibiru.SudoKeeper.SetSudoContracts(
 		[]string{s.contractPerp.String()}, s.ctx,
 	)
-	contractRespBz, err := s.ExecuteAgainstContract(s.contractPerp, execMsg)
+	contractRespBz, err := s.ExecuteAgainstContract(execMsg)
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
 
 	// Executing without permission should fail
 	s.nibiru.SudoKeeper.SetSudoContracts(
 		[]string{}, s.ctx,
 	)
-	contractRespBz, err = s.ExecuteAgainstContract(s.contractPerp, execMsg)
+	contractRespBz, err = s.ExecuteAgainstContract(execMsg)
 	s.Errorf(err, "contractRespBz: %s", contractRespBz)
 }
 
@@ -180,6 +178,6 @@ func (s *TestSuiteExecutor) TestDepthShift() {
 			DepthMult: sdk.NewDec(2),
 		},
 	}
-	contractRespBz, err := s.ExecuteAgainstContract(s.contractPerp, execMsg)
+	contractRespBz, err := s.ExecuteAgainstContract(execMsg)
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
 }
