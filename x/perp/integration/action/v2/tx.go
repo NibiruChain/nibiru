@@ -167,3 +167,36 @@ func MsgServerDonateToPerpEf(
 		amount: amount,
 	}
 }
+
+type msgServerMultiLiquidate struct {
+	pairTraderTuples []PairTraderTuple
+	liquidator       sdk.AccAddress
+	shouldAllFail    bool
+}
+
+func (m msgServerMultiLiquidate) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
+
+	liquidateMsgs := make([]*v2types.MsgMultiLiquidate_Liquidation, len(m.pairTraderTuples))
+	for i, pairTraderTuple := range m.pairTraderTuples {
+		liquidateMsgs[i] = &v2types.MsgMultiLiquidate_Liquidation{
+			Pair:   pairTraderTuple.Pair,
+			Trader: pairTraderTuple.Trader.String(),
+		}
+	}
+
+	_, err := msgServer.MultiLiquidate(sdk.WrapSDKContext(ctx), &v2types.MsgMultiLiquidate{
+		Sender:       m.liquidator.String(),
+		Liquidations: liquidateMsgs,
+	})
+
+	return ctx, err, m.shouldAllFail
+}
+
+func MsgServerMultiLiquidate(liquidator sdk.AccAddress, shouldAllFail bool, pairTraderTuples ...PairTraderTuple) action.Action {
+	return msgServerMultiLiquidate{
+		pairTraderTuples: pairTraderTuples,
+		liquidator:       liquidator,
+		shouldAllFail:    shouldAllFail,
+	}
+}

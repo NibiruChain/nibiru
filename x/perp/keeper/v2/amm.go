@@ -82,16 +82,21 @@ func (k Keeper) EditSwapInvariant(ctx sdk.Context, pair asset.Pair, multiplier s
 func (k Keeper) handleMarketUpdateCost(ctx sdk.Context, pair asset.Pair, cost sdk.Int) (err error) {
 	if cost.IsPositive() {
 		// Positive cost, send from perp EF to vault
+		costCoin := sdk.NewCoins(
+			sdk.NewCoin(pair.QuoteDenom(), cost),
+		)
 		err = k.BankKeeper.SendCoinsFromModuleToModule(
 			ctx,
 			v2types.PerpEFModuleAccount,
 			v2types.VaultModuleAccount,
-			sdk.NewCoins(
-				sdk.NewCoin(pair.QuoteDenom(), cost),
-			),
+			costCoin,
 		)
 		if err != nil {
-			return types.ErrNotEnoughFundToPayAction
+			return types.ErrNotEnoughFundToPayAction.Wrapf(
+				"not enough fund in perp ef to pay for repeg, need %s got %s",
+				costCoin.String(),
+				k.BankKeeper.GetBalance(ctx, k.AccountKeeper.GetModuleAddress(v2types.PerpEFModuleAccount), pair.QuoteDenom()).String(),
+			)
 		}
 	} else if cost.IsNegative() {
 		// Negative cost, send from margin vault to perp ef.

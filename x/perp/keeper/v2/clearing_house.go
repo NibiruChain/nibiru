@@ -520,8 +520,6 @@ func (k Keeper) afterPositionUpdate(
 	}
 
 	if !positionResp.Position.Size_.IsZero() {
-		k.Positions.Insert(ctx, collections.Join(market.Pair, traderAddr), *positionResp.Position)
-
 		spotNotional, err := PositionNotionalSpot(amm, *positionResp.Position)
 		if err != nil {
 			return err
@@ -556,6 +554,10 @@ func (k Keeper) afterPositionUpdate(
 	transferredFee, err := k.transferFee(ctx, market.Pair, traderAddr, positionResp.ExchangedNotionalValue)
 	if err != nil {
 		return err
+	}
+
+	if !positionResp.Position.Size_.IsZero() {
+		k.Positions.Insert(ctx, collections.Join(market.Pair, traderAddr), *positionResp.Position)
 	}
 
 	// calculate positionNotional (it's different depends on long or short side)
@@ -672,7 +674,8 @@ func (k Keeper) checkPriceFluctuationLimitRatio(ctx sdk.Context, market v2types.
 	snapshotLowerLimit := snapshotMarkPrice.Mul(sdk.OneDec().Sub(market.PriceFluctuationLimitRatio))
 
 	if amm.MarkPrice().GT(snapshotUpperLimit) || amm.MarkPrice().LT(snapshotLowerLimit) {
-		return v2types.ErrOverFluctuationLimit
+		return v2types.ErrOverFluctuationLimit.Wrapf("candidate mark price %s is not within the fluctuation limit [%s, %s]",
+			amm.MarkPrice(), snapshotLowerLimit, snapshotUpperLimit)
 	}
 
 	return nil

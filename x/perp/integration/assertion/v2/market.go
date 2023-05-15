@@ -114,10 +114,29 @@ func AMM_SqrtDepthShouldBeEqual(expectedSqrtDepth sdk.Dec) AMMChecker {
 	}
 }
 
+func AMM_SwapInvariantShouldBeEqual(expectedSwapInvariant sdk.Dec) AMMChecker {
+	return func(amm v2types.AMM) error {
+		swapInvariant := amm.BaseReserve.Mul(amm.QuoteReserve)
+		if !swapInvariant.Equal(expectedSwapInvariant) {
+			return fmt.Errorf("expected swap invariant to be %s, got %s", expectedSwapInvariant, swapInvariant)
+		}
+		return nil
+	}
+}
+
 func AMM_PriceMultiplierShouldBeEqual(expectedPriceMultiplier sdk.Dec) AMMChecker {
 	return func(amm v2types.AMM) error {
 		if !amm.PriceMultiplier.Equal(expectedPriceMultiplier) {
 			return fmt.Errorf("expected price multiplier to be %s, got %s", expectedPriceMultiplier, amm.PriceMultiplier)
+		}
+		return nil
+	}
+}
+
+func AMM_BiasShouldBeEqual(expectedBias sdk.Dec) AMMChecker {
+	return func(amm v2types.AMM) error {
+		if !amm.Bias().Equal(expectedBias) {
+			return fmt.Errorf("expected bias to be %s, got %s", expectedBias, amm.Bias())
 		}
 		return nil
 	}
