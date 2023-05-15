@@ -76,5 +76,11 @@
       "amount": "420",
       "to": "nibi1ah8gqrtjllhc5ld4rxgl4uglvwl93ag0sh6e6v"
     }
+  },
+  "set_market_enabled": {
+    "set_market_enabled": {
+      "pair": "ETH:USD",
+      "enabled": true
+    }
   }
 }

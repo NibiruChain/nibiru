@@ -19,6 +19,7 @@ type BindingMsg struct {
 	InsuranceFundWithdraw *InsuranceFundWithdraw `json:"insurance_fund_withdraw,omitempty"`
 	PegShift              *PegShift              `json:"peg_shift,omitempty"`
 	DepthShift            *DepthShift            `json:"depth_shift,omitempty"`
+	SetMarketEnabled      *SetMarketEnabled      `json:"set_market_enabled,omitempty"`
 }
 
 type OpenPosition struct {
@@ -75,4 +76,9 @@ type DonateToInsuranceFund struct {
 type InsuranceFundWithdraw struct {
 	Amount sdk.Int `json:"amount"`
 	To     string  `json:"to"`
+}
+
+type SetMarketEnabled struct {
+	Pair    string `json:"pair"`
+	Enabled bool   `json:"enabled"`
 }
