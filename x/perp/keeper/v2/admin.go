@@ -19,7 +19,6 @@ AdminWithdrawFromInsuranceFund // TODO docs
 func (k admin) WithdrawFromInsuranceFund(
 	ctx sdk.Context, amount sdk.Int, to sdk.AccAddress,
 ) (err error) {
-
 	coinToSend := sdk.NewCoin(denoms.NUSD, amount)
 	if err = k.BankKeeper.SendCoinsFromModuleToAccount(
 		ctx,

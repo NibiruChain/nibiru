@@ -5,16 +5,16 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestAdmin_WithdrawFromInsuranceFund(t *testing.T) {
-
 	expectBalance := func(
 		want sdk.Int, t *testing.T, nibiru *app.NibiruApp, ctx sdk.Context,
 	) {
