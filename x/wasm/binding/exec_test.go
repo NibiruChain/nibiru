@@ -157,7 +157,7 @@ func (s *TestSuiteExecutor) TestOpenAddRemoveClose() {
 func (s *TestSuiteExecutor) TestOracleParams() {
 	theVotePeriod := sdk.NewInt(1234)
 	execMsg := cw_struct.BindingMsg{
-		OracleParams: &cw_struct.OracleParams{
+		EditOracleParams: &cw_struct.EditOracleParams{
 			OracleParams: cw_struct.OracleParamPayload{
 				VotePeriod: &theVotePeriod,
 			},

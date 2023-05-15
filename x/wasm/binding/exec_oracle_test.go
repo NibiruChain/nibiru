@@ -62,7 +62,7 @@ func (s *TestSuiteOracleExecutor) SetupSuite() {
 func (s *TestSuiteOracleExecutor) TestExecuteOracleParams() {
 	period := sdk.NewInt(1234)
 	cwMsg := cw_struct.BindingMsg{
-		OracleParams: &cw_struct.OracleParams{
+		EditOracleParams: &cw_struct.EditOracleParams{
 			OracleParams: cw_struct.OracleParamPayload{
 				VotePeriod: &period,
 			},

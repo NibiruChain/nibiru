@@ -21,7 +21,7 @@ type BindingMsg struct {
 	PegShift              *PegShift              `json:"peg_shift,omitempty"`
 	DepthShift            *DepthShift            `json:"depth_shift,omitempty"`
 
-	OracleParams *OracleParams `json:"oracle_params,omitempty"`
+	EditOracleParams *EditOracleParams `json:"edit_oracle_params,omitempty"`
 }
 
 type OpenPosition struct {
@@ -75,7 +75,7 @@ type DonateToInsuranceFund struct {
 	Donation sdk.Coin `json:"donation"`
 }
 
-type OracleParamPayload struct {
+type EditOracleParams struct {
 	VotePeriod         *sdk.Int `json:"vote_period,omitempty"`
 	VoteThreshold      *sdk.Dec `json:"vote_threshold,omitempty"`
 	RewardBand         *sdk.Dec `json:"reward_band,omitempty"`
@@ -86,8 +86,4 @@ type OracleParamPayload struct {
 	TwapLookbackWindow *sdk.Int `json:"twap_lookback_window,omitempty"`
 	MinVoters          *sdk.Int `json:"min_voters,omitempty"`
 	ValidatorFeeRatio  *sdk.Dec `json:"validator_fee_ratio,omitempty"`
-}
-
-type OracleParams struct {
-	OracleParams OracleParamPayload `json:"oracle_params,omitempty"`
 }

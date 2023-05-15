@@ -16,7 +16,7 @@ type ExecutorOracle struct {
 	Oracle oraclekeeper.Keeper
 }
 
-func (o ExecutorOracle) SetOracleParams(msg *cw_struct.OracleParams, ctx sdk.Context) error {
+func (o ExecutorOracle) SetOracleParams(msg *cw_struct.EditOracleParams, ctx sdk.Context) error {
 	params, err := o.Oracle.Params.Get(ctx)
 	if err != nil {
 		return fmt.Errorf("get oracle params error: %s", err.Error())
@@ -30,8 +30,7 @@ func (o ExecutorOracle) SetOracleParams(msg *cw_struct.OracleParams, ctx sdk.Con
 
 // mergeOracleParams takes the oracle params from the wasm msg and merges them into the existing params
 // keeping any existing values if not set in the wasm msg
-func mergeOracleParams(msgWasm *cw_struct.OracleParams, oracleParams oracletypes.Params) oracletypes.Params {
-	msg := msgWasm.OracleParams
+func mergeOracleParams(msg *cw_struct.EditOracleParams, oracleParams oracletypes.Params) oracletypes.Params {
 	if msg.VotePeriod != nil {
 		oracleParams.VotePeriod = msg.VotePeriod.Uint64()
 	}
