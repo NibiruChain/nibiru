@@ -87,6 +87,8 @@ func (s *TestSuitePerpExecutor) TestOpenAddRemoveClose() {
 		s.DoClosePositionTest(pair),
 		s.DoPegShiftTest(pair),
 		s.DoInsuranceFundWithdrawTest(sdk.NewInt(69), s.contractDeployer),
+		s.DoSetMarketEnabledTest(pair, false),
+		s.DoSetMarketEnabledTest(pair, true),
 	} {
 		s.NoError(err)
 	}
@@ -217,6 +219,24 @@ func (s *TestSuitePerpExecutor) DoInsuranceFundWithdrawTest(
 	s.NoError(err)
 
 	err = s.exec.InsuranceFundWithdraw(cwMsg, s.ctx)
+	return err
+}
+
+func (s *TestSuitePerpExecutor) DoSetMarketEnabledTest(
+	pair asset.Pair, enabled bool,
+) error {
+	cwMsg := &cw_struct.SetMarketEnabled{
+		Pair:    pair.String(),
+		Enabled: enabled,
+	}
+	err := s.exec.SetMarketEnabled(cwMsg, s.ctx)
+	if err != nil {
+		return err
+	}
+
+	market, err := s.nibiru.PerpKeeperV2.Markets.Get(s.ctx, pair)
+	s.NoError(err)
+	s.Equal(enabled, market.Enabled)
 	return err
 }
 
