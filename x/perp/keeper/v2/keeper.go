@@ -98,14 +98,3 @@ func (k Keeper) GetParams(ctx sdk.Context) (params v2types.Params) {
 func (k Keeper) SetParams(ctx sdk.Context, params v2types.Params) {
 	k.ParamSubspace.SetParamSet(ctx, &params)
 }
-
-// ChangeMarketEnabledParameter change the market enabled parameter
-func (k Keeper) ChangeMarketEnabledParameter(ctx sdk.Context, pair asset.Pair, enabled bool) (err error) {
-	market, err := k.Markets.Get(ctx, pair)
-	if err != nil {
-		return
-	}
-	market.Enabled = enabled
-	k.Markets.Insert(ctx, pair, market)
-	return
-}

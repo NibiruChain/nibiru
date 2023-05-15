@@ -12,7 +12,7 @@ type changeLiquidationFeeRatio struct {
 	LiquidationFeeRatio sdk.Dec
 }
 
-type changeEnableParameter struct {
+type setMarketEnabled struct {
 	Enable bool
 	Pair   asset.Pair
 }
@@ -30,15 +30,15 @@ func ChangeLiquidationFeeRatio(liquidationFeeRatio sdk.Dec) action.Action {
 }
 
 // Enable market
-func ChangeEnableParameter(pair asset.Pair, enable bool) action.Action {
-	return changeEnableParameter{
+func SetMarketEnabled(pair asset.Pair, enable bool) action.Action {
+	return setMarketEnabled{
 		Enable: enable,
 		Pair:   pair,
 	}
 }
 
-func (c changeEnableParameter) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	err := app.PerpKeeperV2.ChangeMarketEnabledParameter(ctx, c.Pair, c.Enable)
+func (c setMarketEnabled) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	err := app.PerpKeeperV2.Admin().SetMarketEnabled(ctx, c.Pair, c.Enable)
 	if err != nil {
 		return ctx, err, true
 	}

@@ -626,7 +626,7 @@ func TestMarketEnabled(t *testing.T) {
 				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(47_714_285_715)))),
 				OpenPosition(alice, pairBtcUsdc, v2types.Direction_SHORT, sdk.NewInt(47_619_047_619), sdk.OneDec(), sdk.ZeroDec()),
-				ChangeEnableParameter(pairBtcUsdc, false),
+				SetMarketEnabled(pairBtcUsdc, false),
 			).
 			When(
 				ClosePosition(alice, pairBtcUsdc),
@@ -641,7 +641,7 @@ func TestMarketEnabled(t *testing.T) {
 				SetBlockNumber(1),
 				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(47_714_285_715)))),
-				ChangeEnableParameter(pairBtcUsdc, false),
+				SetMarketEnabled(pairBtcUsdc, false),
 			).
 			When(
 				OpenPositionExpectingFail(alice, pairBtcUsdc, v2types.Direction_SHORT, sdk.NewInt(47_619_047_619), sdk.OneDec(), sdk.ZeroDec()),
@@ -657,7 +657,7 @@ func TestMarketEnabled(t *testing.T) {
 				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(47_714_285_715)))),
 				OpenPosition(alice, pairBtcUsdc, v2types.Direction_SHORT, sdk.NewInt(50_000), sdk.OneDec(), sdk.ZeroDec()),
-				ChangeEnableParameter(pairBtcUsdc, false),
+				SetMarketEnabled(pairBtcUsdc, false),
 			).
 			When(
 				OpenPositionExpectingFail(alice, pairBtcUsdc, v2types.Direction_SHORT, sdk.NewInt(47_619_047_619), sdk.OneDec(), sdk.ZeroDec()),
