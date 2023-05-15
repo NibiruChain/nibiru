@@ -18,8 +18,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/wasm/binding"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/wasmbin"
-
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 )
 
 func TestSuitePerpExecutor_RunAll(t *testing.T) {
@@ -61,7 +59,6 @@ func (s *TestSuitePerpExecutor) SetupSuite() {
 	s.nibiru = nibiru
 	s.ctx = ctx
 
-	wasmkeeper.NewMsgServerImpl(wasmkeeper.NewDefaultPermissionKeeper(nibiru.WasmKeeper))
 	s.contractPerp = ContractMap[wasmbin.WasmKeyPerpBinding]
 	s.exec = &binding.ExecutorPerp{
 		Perp: nibiru.PerpKeeper,

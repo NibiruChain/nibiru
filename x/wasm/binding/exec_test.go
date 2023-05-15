@@ -146,6 +146,18 @@ func (s *TestSuiteExecutor) TestOpenAddRemoveClose() {
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
 }
 
+func (s *TestSuiteExecutor) TestOracleParams() {
+	theVotePeriod := uint64(1234)
+	execMsg := cw_struct.BindingMsg{
+		OracleParams: &cw_struct.OracleParams{
+			VotePeriod: &theVotePeriod,
+		},
+	}
+
+	contractRespBz, err := s.ExecuteAgainstContract(execMsg)
+	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
+}
+
 func (s *TestSuiteExecutor) TestPegShift() {
 	pair := asset.MustNewPair(s.happyFields.Pair)
 	execMsg := cw_struct.BindingMsg{
