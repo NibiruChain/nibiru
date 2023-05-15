@@ -93,6 +93,9 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 
 		// Oracle module
 		case contractExecuteMsg.ExecuteMsg.EditOracleParams != nil:
+			if err := messenger.CheckPermissions(contractAddr, ctx); err != nil {
+				return events, data, err
+			}
 			cwMsg := contractExecuteMsg.ExecuteMsg.EditOracleParams
 			err = messenger.Oracle.SetOracleParams(cwMsg, ctx)
 			return events, data, err

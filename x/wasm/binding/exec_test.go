@@ -166,12 +166,25 @@ func (s *TestSuiteExecutor) TestOracleParams() {
 	s.Require().NoError(err)
 	s.Require().Equal(uint64(1_000), params.VotePeriod)
 
+	s.T().Log("Executing with permission should succeed")
+	contract := s.contractController
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{contract.String()}, s.ctx,
+	)
+
 	contractRespBz, err := s.ExecuteAgainstContract(s.contractController, execMsg)
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
 
 	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
 	s.Require().NoError(err)
-	s.Require().Equal(uint64(1_000), params.VotePeriod)
+	s.Require().Equal(uint64(1_234), params.VotePeriod)
+
+	s.T().Log("Executing without permission should fail")
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{}, s.ctx,
+	)
+	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
+	s.Errorf(err, "contractRespBz: %s", contractRespBz)
 }
 
 func (s *TestSuiteExecutor) TestPegShift() {

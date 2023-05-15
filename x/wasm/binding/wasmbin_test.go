@@ -33,9 +33,6 @@ func TestSetupContracts(t *testing.T) {
 	_, _ = SetupAllContracts(t, sender, nibiru, ctx)
 }
 
-// ContractMap is a map from WasmKey to contract address
-type ContractMapType = map[wasmbin.WasmKey]sdk.AccAddress
-
 var ContractMap = make(map[wasmbin.WasmKey]sdk.AccAddress)
 
 // SetupAllContracts stores and instantiates all of wasm binding contracts.
