@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `actions/setup-go` from 3 to 4 (#1324)
 - Bump `github.com/docker/distribution` from 2.8.1+incompatible to 2.8.2+incompatible (#1339)
 - Bump `github.com/CosmWasm/wasmvm` from 1.2.1 to 1.2.3 (#1354)
+- Bump `github.com/cosmos/cosmos-sdk` from 0.45.14 to 0.45.16 (#1353)
 
 ### Breaking
 
