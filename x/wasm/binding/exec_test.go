@@ -158,14 +158,20 @@ func (s *TestSuiteExecutor) TestOracleParams() {
 	theVotePeriod := sdk.NewInt(1234)
 	execMsg := cw_struct.BindingMsg{
 		EditOracleParams: &cw_struct.EditOracleParams{
-			OracleParams: cw_struct.OracleParamPayload{
-				VotePeriod: &theVotePeriod,
-			},
+			VotePeriod: &theVotePeriod,
 		},
 	}
 
+	params, err := s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(1_000), params.VotePeriod)
+
 	contractRespBz, err := s.ExecuteAgainstContract(s.contractController, execMsg)
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
+
+	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(1_000), params.VotePeriod)
 }
 
 func (s *TestSuiteExecutor) TestPegShift() {

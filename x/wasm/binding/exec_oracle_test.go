@@ -53,7 +53,7 @@ func (s *TestSuiteOracleExecutor) SetupSuite() {
 	s.ctx = ctx
 
 	wasmkeeper.NewMsgServerImpl(wasmkeeper.NewDefaultPermissionKeeper(nibiru.WasmKeeper))
-	s.contract = ContractMap[wasmbin.WasmKeyPerpBinding]
+	s.contract = ContractMap[wasmbin.WasmKeyController]
 	s.exec = binding.ExecutorOracle{
 		Oracle: nibiru.OracleKeeper,
 	}
@@ -61,15 +61,18 @@ func (s *TestSuiteOracleExecutor) SetupSuite() {
 
 func (s *TestSuiteOracleExecutor) TestExecuteOracleParams() {
 	period := sdk.NewInt(1234)
-	cwMsg := cw_struct.BindingMsg{
-		EditOracleParams: &cw_struct.EditOracleParams{
-			OracleParams: cw_struct.OracleParamPayload{
-				VotePeriod: &period,
-			},
-		},
+	cwMsg := &cw_struct.EditOracleParams{
+		VotePeriod: &period,
 	}
 
-	bz, err := DoCustomBindingExecute(s.ctx, &s.nibiru, s.contract, s.contractDeployer, cwMsg, sdk.Coins{})
-	s.NoError(err)
-	s.NotNil(bz)
+	params, err := s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(1_000), params.VotePeriod)
+
+	err = s.exec.SetOracleParams(cwMsg, s.ctx)
+	s.Require().NoError(err)
+
+	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(1234), params.VotePeriod)
 }
