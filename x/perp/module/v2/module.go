@@ -15,7 +15,6 @@ import (
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/NibiruChain/nibiru/x/perp/client/cli/v2"
 	"github.com/NibiruChain/nibiru/x/perp/keeper/v2"
 	types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
@@ -87,12 +86,14 @@ func (AppModuleBasic) RegisterGRPCGatewayRoutes(
 
 // GetTxCmd returns the capability module's root tx command.
 func (a AppModuleBasic) GetTxCmd() *cobra.Command {
-	return cli.GetTxCmd()
+	// return cli.GetTxCmd()
+	return nil
 }
 
 // GetQueryCmd returns the capability module's root query command.
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
-	return cli.GetQueryCmd()
+	// return cli.GetQueryCmd()
+	return nil
 }
 
 // ----------------------------------------------------------------------------
