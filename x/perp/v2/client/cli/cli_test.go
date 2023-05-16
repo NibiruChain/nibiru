@@ -20,7 +20,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/NibiruChain/nibiru/x/perp/v2/client/cli"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 type IntegrationTestSuite struct {
@@ -30,13 +30,6 @@ type IntegrationTestSuite struct {
 	network    *testutilcli.Network
 	users      []sdk.AccAddress
 	liquidator sdk.AccAddress
-}
-
-func setupAppGenesis() app.GenesisState {
-	genState := genesis.NewTestGenesisState()
-	genState = genesis.AddPerpGenesis(genState)
-	genState = genesis.AddOracleGenesis(genState)
-	return genState
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
@@ -55,7 +48,9 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	// setup market
 	encodingConfig := app.MakeTestEncodingConfig()
-	genesisState := setupAppGenesis()
+	genState := genesis.NewTestGenesisState()
+	genState = genesis.AddPerpV2Genesis(genState)
+	genState = genesis.AddOracleGenesis(genState)
 
 	oracleGenesis := oracletypes.DefaultGenesisState()
 	oracleGenesis.Params.Whitelist = []asset.Pair{
@@ -71,9 +66,9 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		{Pair: asset.Registry.Pair(denoms.ATOM, denoms.NUSD), ExchangeRate: sdk.NewDec(6_000)},
 		{Pair: asset.Registry.Pair(denoms.OSMO, denoms.NUSD), ExchangeRate: sdk.NewDec(6_000)},
 	}
-	genesisState[oracletypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(oracleGenesis)
+	genState[oracletypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(oracleGenesis)
 
-	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
+	s.cfg = testutilcli.BuildNetworkConfig(genState)
 	s.cfg.NumValidators = 1
 	s.cfg.Mnemonics = []string{"satisfy december text daring wheat vanish save viable holiday rural vessel shuffle dice skate promote fade badge federal sail during lend fever balance give"}
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
@@ -87,7 +82,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		s.NoError(
 			testutilcli.FillWalletFromValidator(newUser,
 				sdk.NewCoins(
-					sdk.NewInt64Coin(denoms.NIBI, 10*common.TO_MICRO),
+					sdk.NewInt64Coin(denoms.NIBI, 10e6),
 					sdk.NewInt64Coin(denoms.USDC, 1e3*common.TO_MICRO),
 					sdk.NewInt64Coin(denoms.NUSD, 5e3*common.TO_MICRO),
 				),
@@ -130,7 +125,7 @@ func (s *IntegrationTestSuite) TestMultiLiquidate() {
 		"9000000", // Quote asset amount
 		"0",       // Base asset limit
 	})
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	s.T().Log("opening counter positions")
 	_, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[4], []string{
@@ -140,7 +135,7 @@ func (s *IntegrationTestSuite) TestMultiLiquidate() {
 		"90000000", // Quote asset amount
 		"0",
 	})
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	_, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[5], []string{
 		"sell",
@@ -199,8 +194,8 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.T().Log("A. check market balances")
 	ammMarketDuo, err := testutilcli.QueryMarketV2(val.ClientCtx, pair)
 	s.Require().NoError(err)
-	s.EqualValues(sdk.NewDec(10*common.TO_MICRO), ammMarketDuo.Amm.BaseReserve)
-	s.EqualValues(sdk.NewDec(10*common.TO_MICRO), ammMarketDuo.Amm.QuoteReserve)
+	s.EqualValues(sdk.NewDec(10e6), ammMarketDuo.Amm.BaseReserve)
+	s.EqualValues(sdk.NewDec(10e6), ammMarketDuo.Amm.QuoteReserve)
 
 	s.T().Log("A. check trader has no existing positions")
 	_, err = testutilcli.QueryPosition(
@@ -227,7 +222,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.MustNewDecFromStr("10000333.333333333333333333"), ammMarketDuo.Amm.QuoteReserve)
 
 	s.T().Log("B. check trader position")
-	queryResp, err := testutilcli.QueryPosition(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
+	queryResp, err := testutilcli.QueryPositionV2(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
 	s.NoError(err)
 	s.T().Logf("query response: %+v", queryResp)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
@@ -237,8 +232,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.NewDec(2*common.TO_MICRO), queryResp.Position.OpenNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("1999999.999999999999998000"), queryResp.PositionNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000002000"), queryResp.UnrealizedPnl)
-	s.EqualValues(sdk.NewDec(1), queryResp.MarginRatioMark)
-	s.EqualValues(sdk.NewDec(1), queryResp.MarginRatioIndex)
+	s.EqualValues(sdk.NewDec(1), queryResp.MarginRatio)
 
 	s.T().Log("C. open position with 2x leverage and zero baseAmtLimit")
 	txResp, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), user, []string{
@@ -252,7 +246,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
 	s.T().Log("C. check trader position")
-	queryResp, err = testutilcli.QueryPosition(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
+	queryResp, err = testutilcli.QueryPositionV2(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
 	s.NoError(err)
 	s.T().Logf("query response: %+v", queryResp)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
@@ -262,7 +256,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.NewDec(6*common.TO_MICRO), queryResp.Position.OpenNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("6000000.000000000000000000"), queryResp.PositionNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("0.000000000000000000"), queryResp.UnrealizedPnl)
-	s.EqualValues(sdk.MustNewDecFromStr("0.666666666666666667"), queryResp.MarginRatioMark)
+	s.EqualValues(sdk.MustNewDecFromStr("0.666666666666666667"), queryResp.MarginRatio)
 
 	s.T().Log("D. Open a reverse position smaller than the existing position")
 	txResp, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), user, []string{
@@ -284,7 +278,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.MustNewDecFromStr("10000833.333333333333333333"), ammMarketDuo.Amm.QuoteReserve)
 
 	s.T().Log("D. Check trader position")
-	queryResp, err = testutilcli.QueryPosition(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
+	queryResp, err = testutilcli.QueryPositionV2(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
 	s.NoError(err)
 	s.T().Logf("query response: %+v", queryResp)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
@@ -294,7 +288,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.NewDec(5_000_000), queryResp.Position.OpenNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("4999999.999999999999998000"), queryResp.PositionNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000002000"), queryResp.UnrealizedPnl)
-	s.EqualValues(sdk.MustNewDecFromStr("0.800000000000000000"), queryResp.MarginRatioMark)
+	s.EqualValues(sdk.MustNewDecFromStr("0.800000000000000000"), queryResp.MarginRatio)
 
 	s.T().Log("E. Open a reverse position larger than the existing position")
 	txResp, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), user, []string{
@@ -308,7 +302,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
 	s.T().Log("E. Check trader position")
-	queryResp, err = testutilcli.QueryPosition(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
+	queryResp, err = testutilcli.QueryPositionV2(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
 	s.NoError(err)
 	s.T().Logf("query response: %+v", queryResp)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
@@ -319,7 +313,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.MustNewDecFromStr("3000000.000000000000000000"), queryResp.PositionNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("0.000000000000002000"), queryResp.UnrealizedPnl)
 	// there is a random delta due to twap margin ratio calculation and random block times in the in-process network
-	s.InDelta(1, queryResp.MarginRatioMark.MustFloat64(), 0.008)
+	s.InDelta(1, queryResp.MarginRatio.MustFloat64(), 0.008)
 
 	s.T().Log("F. Close position")
 	txResp, err = testutilcli.ExecTx(s.network, cli.ClosePositionCmd(), user, []string{
@@ -329,7 +323,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
 	s.T().Log("F. check trader position")
-	queryResp, err = testutilcli.QueryPosition(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
+	queryResp, err = testutilcli.QueryPositionV2(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
 	s.Error(err)
 	s.T().Logf("query response: %+v", queryResp)
 
@@ -353,15 +347,6 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 	s.Contains(err.Error(), collections.ErrNotFound.Error())
 }
 
-func (s *IntegrationTestSuite) TestQueryCumulativePremiumFractions() {
-	val := s.network.Validators[0]
-
-	s.T().Log("get cumulative funding payments")
-	queryResp, err := testutilcli.QueryCumulativePremiumFraction(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
-	s.NoError(err)
-	s.EqualValues(sdk.NewDec(2), queryResp.CumulativePremiumFraction)
-}
-
 // user[0] opens a position and removes margin to trigger bad debt
 func (s *IntegrationTestSuite) TestRemoveMargin() {
 	// Open a position with first user
@@ -381,7 +366,7 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 		fmt.Sprintf("%s%s", "10000000", denoms.NUSD),
 	})
-	s.Contains(err.Error(), perptypes.ErrFailedRemoveMarginCanCauseBadDebt.Error())
+	s.Contains(err.Error(), types.ErrFailedRemoveMarginCanCauseBadDebt.Error())
 
 	s.T().Log("removing margin on user 0....")
 	_, err = testutilcli.ExecTx(s.network, cli.RemoveMarginCmd(), s.users[0], []string{
@@ -438,7 +423,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 
 			if tc.expectedCode == 0 {
 				// query trader position
-				queryResp, err := testutilcli.QueryPosition(s.network.Validators[0].ClientCtx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), s.users[1])
+				queryResp, err := testutilcli.QueryPositionV2(s.network.Validators[0].ClientCtx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), s.users[1])
 				s.NoError(err)
 				s.EqualValues(tc.expectedMargin, queryResp.Position.Margin)
 			}
