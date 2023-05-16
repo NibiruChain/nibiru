@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	perpammcli "github.com/NibiruChain/nibiru/x/perp/amm/cli"
+	perpammcli "github.com/NibiruChain/nibiru/x/perp/v1/amm/cli"
 	types "github.com/NibiruChain/nibiru/x/perp/v1/types"
 )
 

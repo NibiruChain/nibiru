@@ -7,7 +7,7 @@ import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/perp/amm/types";
+option go_package = "github.com/NibiruChain/nibiru/x/perp/v1/amm/types";
 
 message ReserveSnapshotSavedEvent {
   string pair = 1 [ 

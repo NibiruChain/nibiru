@@ -84,9 +84,9 @@ import (
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 
-	perpamm "github.com/NibiruChain/nibiru/x/perp/amm"
-	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpamm "github.com/NibiruChain/nibiru/x/perp/v1/amm"
+	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/v1/amm/keeper"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/v1/amm/types"
 
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/v1/keeper"
 	perp "github.com/NibiruChain/nibiru/x/perp/v1/module"

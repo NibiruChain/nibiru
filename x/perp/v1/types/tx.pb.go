@@ -7,7 +7,7 @@ import (
 	context "context"
 	fmt "fmt"
 	github_com_NibiruChain_nibiru_x_common_asset "github.com/NibiruChain/nibiru/x/common/asset"
-	types1 "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	types1 "github.com/NibiruChain/nibiru/x/perp/v1/amm/types"
 	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/gogo/protobuf/gogoproto"

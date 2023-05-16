@@ -14,7 +14,7 @@ import (
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/v1/amm/types"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/v1/types"
 	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )

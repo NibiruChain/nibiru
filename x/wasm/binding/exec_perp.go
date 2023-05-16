@@ -5,7 +5,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/v1/amm/types"
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/v1/keeper"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/v1/types"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"

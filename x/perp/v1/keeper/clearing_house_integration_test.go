@@ -18,9 +18,9 @@ import (
 	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	. "github.com/NibiruChain/nibiru/x/oracle/integration/action"
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/action/v1"
 	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion/v1"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/v1/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/v1/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/v1/types"
 )

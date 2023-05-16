@@ -14,7 +14,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/v1/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/v1/keeper"
 	types "github.com/NibiruChain/nibiru/x/perp/v1/types"
 )

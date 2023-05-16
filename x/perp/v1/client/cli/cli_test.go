@@ -19,7 +19,7 @@ import (
 	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/v1/amm/types"
 	"github.com/NibiruChain/nibiru/x/perp/v1/client/cli"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/v1/types"
 )

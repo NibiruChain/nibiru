@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
+	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/v1/amm/keeper"
 	types "github.com/NibiruChain/nibiru/x/perp/v1/types"
 )
 
