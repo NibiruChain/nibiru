@@ -2,17 +2,17 @@ package v2
 
 const (
 	// temp names until we remove perp v1
-	ModuleName           = "v2perp"
-	VaultModuleAccount   = "v2vault"
-	PerpEFModuleAccount  = "v2perp_ef"
-	FeePoolModuleAccount = "v2fee_pool"
+	ModuleName           = "perp"
+	VaultModuleAccount   = "vault"
+	PerpEFModuleAccount  = "perp_ef"
+	FeePoolModuleAccount = "fee_pool"
 )
 
 var (
 	// StoreKey defines the primary module store key.
 	StoreKey = ModuleName
 
-	MemStoreKey = "mem_v2perp"
+	MemStoreKey = "mem_" + ModuleName
 
 	// RouterKey is the message route for perp.
 	RouterKey = ModuleName

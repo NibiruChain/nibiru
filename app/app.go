@@ -228,9 +228,9 @@ var (
 		common.TreasuryPoolModuleAccount:      {},
 		wasm.ModuleName:                       {},
 		perptypesv2.ModuleName:                {},
-		// perptypesv2.VaultModuleAccount:        {},
-		// perptypesv2.PerpEFModuleAccount:       {},
-		// perptypesv2.FeePoolModuleAccount:      {},
+		perptypesv2.VaultModuleAccount:        {},
+		perptypesv2.PerpEFModuleAccount:       {},
+		perptypesv2.FeePoolModuleAccount:      {},
 	}
 )
 

@@ -11,10 +11,10 @@ import (
 )
 
 const (
-	ModuleName           = "perp"
-	VaultModuleAccount   = "vault"
-	PerpEFModuleAccount  = "perp_ef"
-	FeePoolModuleAccount = "fee_pool"
+	ModuleName           = "v1_perp"
+	VaultModuleAccount   = "v1_vault"
+	PerpEFModuleAccount  = "v1_perp_ef"
+	FeePoolModuleAccount = "v1_fee_pool"
 )
 
 // x/perp module sentinel errors
