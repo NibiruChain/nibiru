@@ -1,7 +1,5 @@
 package v2
 
-//go:generate  mockgen -destination=../../common/testutil/mock/perp_interfaces.go -package=mock github.com/NibiruChain/nibiru/x/perp/types AccountKeeper,BankKeeper,OracleKeeper,PerpAmmKeeper,EpochKeeper
-
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 

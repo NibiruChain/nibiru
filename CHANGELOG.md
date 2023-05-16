@@ -51,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Breaking
 
+* [#1356](https://github.com/NibiruChain/nibiru/pull/1356) - build: Regress wasmvm (v1.1.1), tendermint (v0.34.24), and Cosmos-SDK (v0.45.14) dependencies
 * [#1346](https://github.com/NibiruChain/nibiru/pull/1346) - build: Upgrade wasmvm (v1.2.1), tendermint (v0.34.26), and Cosmos-SDK (v0.45.14) dependencies
 * [#1317](https://github.com/NibiruChain/nibiru/pull/1317) - feat(sudo): Implement and test CLI commands for tx and queries. 
 * [#1307](https://github.com/NibiruChain/nibiru/pull/1307) - feat(sudo): Create the x/sudo module + integration tests
@@ -127,6 +128,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1343](https://github.com/NibiruChain/nibiru/pull/1343) - feat(perp): add PerpKeeperV2 `MultiLiquidate`
 * [#1352](https://github.com/NibiruChain/nibiru/pull/1352) - feat(perp): add PerpKeeperV2 `MsgServer`
 * [#1350](https://github.com/NibiruChain/nibiru/pull/1350) - feat(perp): `EditPriceMultiplier` and `EditSwapInvariant`
+* [#1361](https://github.com/NibiruChain/nibiru/pull/1361) - feat(perp): add `PerpV2` module
 
 ### Bug Fixes
 

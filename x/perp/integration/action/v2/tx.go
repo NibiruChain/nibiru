@@ -1,13 +1,14 @@
 package action
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
 	"github.com/NibiruChain/nibiru/x/perp/keeper/v2"
 	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type msgServerOpenPosition struct {

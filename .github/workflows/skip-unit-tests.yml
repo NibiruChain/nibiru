@@ -14,4 +14,12 @@ jobs:
     steps:
       - name: skip-tests
         run: |
-          echo "unit-tests.yml skipped since Golang files were not changed."
+          echo "job: unit-tests was skipped since Golang files were not changed."
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: skip-build
+        run: |
+          echo "job: build was skipped since Golang files were not changed."
+
