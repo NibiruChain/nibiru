@@ -16,8 +16,9 @@ import (
 	perpammcli "github.com/NibiruChain/nibiru/x/perp/v1/amm/cli"
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/v1/amm/types"
 	perpcli "github.com/NibiruChain/nibiru/x/perp/v1/client/cli"
-
-	"github.com/NibiruChain/nibiru/x/perp/v1/types"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/v1/types"
+	perpv2cli "github.com/NibiruChain/nibiru/x/perp/v2/client/cli"
+	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 	sudocli "github.com/NibiruChain/nibiru/x/sudo/cli"
 	sudotypes "github.com/NibiruChain/nibiru/x/sudo/pb"
 )
@@ -98,15 +99,15 @@ func QueryMarketsV2(
 
 func QueryMarketV2(
 	clientCtx client.Context, pair asset.Pair,
-) (*perpv2types.AmmMarketDuo, error) {
+) (*perpv2types.AmmMarket, error) {
 	queryResp, err := QueryMarketsV2(clientCtx)
 	if err != nil {
 		return nil, err
 	}
 
-	ammMarket := new(perpv2types.AmmMarketDuo)
+	ammMarket := new(perpv2types.AmmMarket)
 	found := false
-	for _, duo := range queryResp.Duos {
+	for _, duo := range queryResp.AmmMarkets {
 		if duo.Amm.Pair == pair {
 			*ammMarket = duo
 			found = true
