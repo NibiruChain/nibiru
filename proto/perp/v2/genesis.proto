@@ -18,4 +18,7 @@ message GenesisState {
   repeated AMM amms = 3 [ (gogoproto.nullable) = false ];
 
   repeated Position positions = 4 [ (gogoproto.nullable) = false ];
+
+  repeated ReserveSnapshot reserve_snapshots = 5
+      [ (gogoproto.nullable) = false ];
 }

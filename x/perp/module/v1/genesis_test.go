@@ -15,7 +15,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	"github.com/NibiruChain/nibiru/x/perp"
+	perp "github.com/NibiruChain/nibiru/x/perp/module/v1"
 	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
 )
 
