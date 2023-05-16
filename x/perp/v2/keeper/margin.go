@@ -150,7 +150,9 @@ func (k Keeper) RemoveMargin(
 	}
 
 	if remainingMargin.LT(marginToRemove.Amount.ToDec()) {
-		return nil, fmt.Errorf("not enough free collateral")
+		return nil, types.ErrFailedRemoveMarginCanCauseBadDebt.Wrapf(
+			"not enough free collateral to remove margin; remainingMargin %s, marginToRemove %s", remainingMargin, marginToRemove,
+		)
 	}
 
 	if err = k.Withdraw(ctx, market, traderAddr, marginToRemove.Amount); err != nil {

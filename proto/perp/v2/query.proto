@@ -24,9 +24,14 @@ service Query {
       returns (QueryModuleAccountsResponse) {
     option (google.api.http).get = "/nibiru/perp/v2/module_accounts";
   }
+
+  rpc QueryMarkets(QueryMarketsRequest) returns (QueryMarketsResponse) {
+    option (google.api.http).get = "/nibiru/perp/v2/markets";
+  }
 }
 
 // ---------------------------------------- Positions
+
 message QueryPositionsRequest { string trader = 1; }
 
 message QueryPositionsResponse {
@@ -71,7 +76,7 @@ message QueryPositionResponse {
   ];
 }
 
-// ----------------------------------------
+// ---------------------------------------- QueryModuleAccounts
 
 message QueryModuleAccountsRequest {}
 

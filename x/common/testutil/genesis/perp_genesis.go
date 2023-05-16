@@ -28,8 +28,103 @@ func AddPerpGenesis(gen app.GenesisState) app.GenesisState {
 		MustMarshalJSON(PerpAmmGenesis())
 	gen[perptypes.ModuleName] = TEST_ENCODING_CONFIG.Marshaler.
 		MustMarshalJSON(PerpGenesis())
+	return gen
+}
+
+func AddPerpV2Genesis(gen app.GenesisState) app.GenesisState {
+	extraMarkets := map[asset.Pair]perpammtypes.Market{
+		asset.Registry.Pair(denoms.BTC, denoms.NUSD): {
+			Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+			BaseReserve:   sdk.NewDec(10e6),
+			QuoteReserve:  sdk.NewDec(10e6),
+			SqrtDepth:     sdk.NewDec(10e6),
+			PegMultiplier: sdk.NewDec(6_000),
+			TotalLong:     sdk.ZeroDec(),
+			TotalShort:    sdk.ZeroDec(),
+			Config: perpammtypes.MarketConfig{
+				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
+				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
+				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.2"),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.04"),
+				MaxLeverage:            sdk.MustNewDecFromStr("20"),
+			},
+		},
+		asset.Registry.Pair(denoms.ATOM, denoms.NUSD): {
+			Pair:          asset.Registry.Pair(denoms.ATOM, denoms.NUSD),
+			BaseReserve:   sdk.NewDec(10 * common.TO_MICRO),
+			QuoteReserve:  sdk.NewDec(10 * common.TO_MICRO),
+			SqrtDepth:     common.MustSqrtDec(sdk.NewDec(10 * common.TO_MICRO)),
+			TotalLong:     sdk.ZeroDec(),
+			TotalShort:    sdk.ZeroDec(),
+			PegMultiplier: sdk.NewDec(6_000),
+			Config: perpammtypes.MarketConfig{
+				TradeLimitRatio:        sdk.MustNewDecFromStr("1"),
+				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
+				MaxOracleSpreadRatio:   sdk.OneDec(),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			},
+		},
+		asset.Registry.Pair(denoms.OSMO, denoms.NUSD): {
+			Pair:          asset.Registry.Pair(denoms.OSMO, denoms.NUSD),
+			BaseReserve:   sdk.NewDec(10 * common.TO_MICRO),
+			QuoteReserve:  sdk.NewDec(10 * common.TO_MICRO),
+			SqrtDepth:     common.MustSqrtDec(sdk.NewDec(10 * common.TO_MICRO)),
+			TotalLong:     sdk.ZeroDec(),
+			TotalShort:    sdk.ZeroDec(),
+			PegMultiplier: sdk.NewDec(6_000),
+			Config: perpammtypes.MarketConfig{
+				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
+				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
+				MaxOracleSpreadRatio:   sdk.OneDec(),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
+				MaxLeverage:            sdk.MustNewDecFromStr("15"),
+			},
+		},
+	}
+	for pair, market := range START_MARKETS {
+		extraMarkets[pair] = market
+	}
+
+	var marketsv2 []perpv2types.Market
+	var ammsv2 []perpv2types.AMM
+	defaultParams := perptypes.DefaultParams()
+	for pair, market := range extraMarkets {
+		marketsv2 = append(marketsv2, perpv2types.Market{
+			Pair:                            pair,
+			Enabled:                         true,
+			PriceFluctuationLimitRatio:      market.Config.FluctuationLimitRatio,
+			MaintenanceMarginRatio:          market.Config.MaintenanceMarginRatio,
+			MaxLeverage:                     market.Config.MaxLeverage,
+			LatestCumulativePremiumFraction: sdk.ZeroDec(),
+			ExchangeFeeRatio:                defaultParams.FeePoolFeeRatio,
+			EcosystemFundFeeRatio:           defaultParams.EcosystemFundFeeRatio,
+			LiquidationFeeRatio:             defaultParams.LiquidationFeeRatio,
+			PartialLiquidationRatio:         defaultParams.PartialLiquidationRatio,
+			FundingRateEpochId:              epochstypes.ThirtyMinuteEpochID,
+			TwapLookbackWindow:              time.Minute * 30,
+			PrepaidBadDebt:                  sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()),
+		})
+		ammsv2 = append(ammsv2, perpv2types.AMM{
+			Pair:            pair,
+			BaseReserve:     market.BaseReserve,
+			QuoteReserve:    market.QuoteReserve,
+			SqrtDepth:       market.SqrtDepth,
+			PriceMultiplier: market.PegMultiplier,
+			TotalLong:       market.TotalLong,
+			TotalShort:      market.TotalShort,
+		})
+	}
+
+	perpV2Gen := &perpv2types.GenesisState{
+		Markets:          marketsv2,
+		Amms:             ammsv2,
+		Positions:        []perpv2types.Position{},
+		ReserveSnapshots: []perpv2types.ReserveSnapshot{},
+	}
+
 	gen[perpv2types.ModuleName] = TEST_ENCODING_CONFIG.Marshaler.
-		MustMarshalJSON(PerpV2Genesis())
+		MustMarshalJSON(perpV2Gen)
 	return gen
 }
 
