@@ -13,7 +13,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	perp "github.com/NibiruChain/nibiru/x/perp/module/v2"
+	perp "github.com/NibiruChain/nibiru/x/perp/v2/module"
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 

@@ -91,8 +91,8 @@ import (
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/v1/keeper"
 	perp "github.com/NibiruChain/nibiru/x/perp/v1/module"
 
-	perpv2 "github.com/NibiruChain/nibiru/x/perp/module/v2"
 	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
+	perpv2 "github.com/NibiruChain/nibiru/x/perp/v2/module"
 	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 
 	perptypes "github.com/NibiruChain/nibiru/x/perp/v1/types"
