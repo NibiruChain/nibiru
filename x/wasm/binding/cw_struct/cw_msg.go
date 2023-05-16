@@ -1,6 +1,8 @@
 package cw_struct
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
 
 // BindingMsg corresponds to the 'ExecuteMsg' enum in the CosmWasm binding
 // contracts (Rust). It specifies which wasm execute messages can be called with
@@ -19,6 +21,8 @@ type BindingMsg struct {
 	InsuranceFundWithdraw *InsuranceFundWithdraw `json:"insurance_fund_withdraw,omitempty"`
 	PegShift              *PegShift              `json:"peg_shift,omitempty"`
 	DepthShift            *DepthShift            `json:"depth_shift,omitempty"`
+
+	EditOracleParams *EditOracleParams `json:"edit_oracle_params,omitempty"`
 }
 
 type OpenPosition struct {
@@ -70,6 +74,19 @@ type DepthShift struct {
 type DonateToInsuranceFund struct {
 	Sender   string   `json:"sender"`
 	Donation sdk.Coin `json:"donation"`
+}
+
+type EditOracleParams struct {
+	VotePeriod         *sdk.Int `json:"vote_period,omitempty"`
+	VoteThreshold      *sdk.Dec `json:"vote_threshold,omitempty"`
+	RewardBand         *sdk.Dec `json:"reward_band,omitempty"`
+	Whitelist          []string `json:"whitelist,omitempty"`
+	SlashFraction      *sdk.Dec `json:"slash_fraction,omitempty"`
+	SlashWindow        *sdk.Int `json:"slash_window,omitempty"`
+	MinValidPerWindow  *sdk.Dec `json:"min_valid_per_window,omitempty"`
+	TwapLookbackWindow *sdk.Int `json:"twap_lookback_window,omitempty"`
+	MinVoters          *sdk.Int `json:"min_voters,omitempty"`
+	ValidatorFeeRatio  *sdk.Dec `json:"validator_fee_ratio,omitempty"`
 }
 
 type InsuranceFundWithdraw struct {

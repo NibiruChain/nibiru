@@ -266,5 +266,6 @@ func OracleGenesis() *oracletypes.GenesisState {
 		{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: sdk.NewDec(10)},
 	}
 	oracleGenesis.Params.VotePeriod = 1_000
+
 	return oracleGenesis
 }

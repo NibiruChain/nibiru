@@ -96,7 +96,7 @@ func getFileJson(t *testing.T) (fileJson map[string]json.RawMessage) {
 
 func (s *TestSuiteBindingJsonTypes) TestExecuteMsgs() {
 	t := s.T()
-	var fileJson map[string]json.RawMessage = getFileJson(t)
+	var fileJson = getFileJson(t)
 
 	testCaseMap := map[string]any{
 		"open_position":            new(cw_struct.OpenPosition),
@@ -107,6 +107,7 @@ func (s *TestSuiteBindingJsonTypes) TestExecuteMsgs() {
 		"donate_to_insurance_fund": new(cw_struct.DonateToInsuranceFund),
 		"peg_shift":                new(cw_struct.PegShift),
 		"depth_shift":              new(cw_struct.DepthShift),
+		"oracle_params":            new(cw_struct.EditOracleParams),
 		"insurance_fund_withdraw":  new(cw_struct.InsuranceFundWithdraw),
 	}
 
