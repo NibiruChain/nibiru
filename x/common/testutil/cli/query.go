@@ -16,8 +16,7 @@ import (
 	perpammcli "github.com/NibiruChain/nibiru/x/perp/v1/amm/cli"
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/v1/amm/types"
 	perpcli "github.com/NibiruChain/nibiru/x/perp/v1/client/cli"
-
-	"github.com/NibiruChain/nibiru/x/perp/v1/types"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/v1/types"
 	perpv2cli "github.com/NibiruChain/nibiru/x/perp/v2/client/cli"
 	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 	sudocli "github.com/NibiruChain/nibiru/x/sudo/cli"
@@ -142,16 +141,24 @@ func QueryBaseAssetPrice(clientCtx client.Context, pair asset.Pair, direction st
 	return &queryResp, nil
 }
 
-func QueryPosition(ctx client.Context, pair asset.Pair, trader sdk.AccAddress) (*types.QueryPositionResponse, error) {
-	var queryResp types.QueryPositionResponse
+func QueryPosition(ctx client.Context, pair asset.Pair, trader sdk.AccAddress) (*perptypes.QueryPositionResponse, error) {
+	var queryResp perptypes.QueryPositionResponse
 	if err := ExecQuery(ctx, perpcli.CmdQueryPosition(), []string{trader.String(), pair.String()}, &queryResp); err != nil {
 		return nil, err
 	}
 	return &queryResp, nil
 }
 
-func QueryCumulativePremiumFraction(clientCtx client.Context, pair asset.Pair) (*types.QueryCumulativePremiumFractionResponse, error) {
-	var queryResp types.QueryCumulativePremiumFractionResponse
+func QueryPositionV2(ctx client.Context, pair asset.Pair, trader sdk.AccAddress) (*perpv2types.QueryPositionResponse, error) {
+	var queryResp perpv2types.QueryPositionResponse
+	if err := ExecQuery(ctx, perpv2cli.CmdQueryPosition(), []string{trader.String(), pair.String()}, &queryResp); err != nil {
+		return nil, err
+	}
+	return &queryResp, nil
+}
+
+func QueryCumulativePremiumFraction(clientCtx client.Context, pair asset.Pair) (*perptypes.QueryCumulativePremiumFractionResponse, error) {
+	var queryResp perptypes.QueryCumulativePremiumFractionResponse
 	if err := ExecQuery(clientCtx, perpcli.CmdQueryCumulativePremiumFraction(), []string{pair.String()}, &queryResp); err != nil {
 		return nil, err
 	}
