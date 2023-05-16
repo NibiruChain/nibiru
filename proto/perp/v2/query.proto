@@ -7,7 +7,7 @@ import "google/api/annotations.proto";
 import "perp/v2/state.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/perp/types/v2";
+option go_package = "github.com/NibiruChain/nibiru/x/perp/v2/types";
 
 // Query defines the gRPC querier service.
 service Query {
