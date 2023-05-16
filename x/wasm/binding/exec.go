@@ -14,6 +14,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/set"
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper/v1"
+	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/keeper/v2"
 	"github.com/NibiruChain/nibiru/x/sudo"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 )
@@ -90,6 +91,13 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 			cwMsg := contractExecuteMsg.ExecuteMsg.DepthShift
 			err = messenger.Perp.DepthShift(cwMsg, ctx)
 			return events, data, err
+		case contractExecuteMsg.ExecuteMsg.InsuranceFundWithdraw != nil:
+			if err := messenger.CheckPermissions(contractAddr, ctx); err != nil {
+				return events, data, err
+			}
+			cwMsg := contractExecuteMsg.ExecuteMsg.InsuranceFundWithdraw
+			err = messenger.Perp.InsuranceFundWithdraw(cwMsg, ctx)
+			return events, data, err
 
 		// Oracle module
 		case contractExecuteMsg.ExecuteMsg.EditOracleParams != nil:
@@ -114,13 +122,14 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 
 func CustomExecuteMsgHandler(
 	perp perpkeeper.Keeper,
+	perpv2 perpv2keeper.Keeper,
 	sudoKeeper sudo.Keeper,
 	oracleKeeper oraclekeeper.Keeper,
 ) func(wasmkeeper.Messenger) wasmkeeper.Messenger {
 	return func(originalWasmMessenger wasmkeeper.Messenger) wasmkeeper.Messenger {
 		return &CustomWasmExecutor{
 			Wasm:   originalWasmMessenger,
-			Perp:   ExecutorPerp{Perp: perp},
+			Perp:   ExecutorPerp{Perp: perp, PerpV2: perpv2},
 			Sudo:   sudoKeeper,
 			Oracle: ExecutorOracle{Oracle: oracleKeeper},
 		}

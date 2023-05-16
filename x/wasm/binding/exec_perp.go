@@ -7,12 +7,14 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper/v1"
+	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/keeper/v2"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 )
 
 type ExecutorPerp struct {
-	Perp perpkeeper.Keeper
+	Perp   perpkeeper.Keeper
+	PerpV2 perpv2keeper.Keeper
 }
 
 func (exec *ExecutorPerp) MsgServer() perptypes.MsgServer {
@@ -128,7 +130,7 @@ func (exec *ExecutorPerp) PegShift(
 	cwMsg *cw_struct.PegShift, contractAddr sdk.AccAddress, ctx sdk.Context,
 ) (err error) {
 	if cwMsg == nil {
-		return wasmvmtypes.InvalidRequest{Err: "null peg shift msg"}
+		return wasmvmtypes.InvalidRequest{Err: "null msg"}
 	}
 
 	pair, err := asset.TryNewPair(cwMsg.Pair)
@@ -146,7 +148,7 @@ func (exec *ExecutorPerp) PegShift(
 
 func (exec *ExecutorPerp) DepthShift(cwMsg *cw_struct.DepthShift, ctx sdk.Context) (err error) {
 	if cwMsg == nil {
-		return wasmvmtypes.InvalidRequest{Err: "null pool swap invariant multiplier msg"}
+		return wasmvmtypes.InvalidRequest{Err: "null msg"}
 	}
 
 	pair, err := asset.TryNewPair(cwMsg.Pair)
@@ -155,4 +157,23 @@ func (exec *ExecutorPerp) DepthShift(cwMsg *cw_struct.DepthShift, ctx sdk.Contex
 	}
 
 	return exec.Perp.EditPoolSwapInvariant(ctx, pair, cwMsg.DepthMult)
+}
+
+func (exec *ExecutorPerp) InsuranceFundWithdraw(
+	cwMsg *cw_struct.InsuranceFundWithdraw, ctx sdk.Context,
+) (err error) {
+	if cwMsg == nil {
+		return wasmvmtypes.InvalidRequest{Err: "null msg"}
+	}
+
+	to, err := sdk.AccAddressFromBech32(cwMsg.To)
+	if err != nil {
+		return err
+	}
+
+	return exec.PerpV2.Admin().WithdrawFromInsuranceFund(
+		ctx,
+		cwMsg.Amount,
+		to,
+	)
 }

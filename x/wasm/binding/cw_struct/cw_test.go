@@ -108,6 +108,7 @@ func (s *TestSuiteBindingJsonTypes) TestExecuteMsgs() {
 		"peg_shift":                new(cw_struct.PegShift),
 		"depth_shift":              new(cw_struct.DepthShift),
 		"oracle_params":            new(cw_struct.EditOracleParams),
+		"insurance_fund_withdraw":  new(cw_struct.InsuranceFundWithdraw),
 	}
 
 	for name, cwExecuteMsgPtr := range testCaseMap {

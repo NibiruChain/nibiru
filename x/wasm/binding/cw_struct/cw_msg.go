@@ -18,6 +18,7 @@ type BindingMsg struct {
 	AddMargin             *AddMargin             `json:"add_margin,omitempty"`
 	RemoveMargin          *RemoveMargin          `json:"remove_margin,omitempty"`
 	DonateToInsuranceFund *DonateToInsuranceFund `json:"donate_to_insurance_fund,omitempty"` // TODO
+	InsuranceFundWithdraw *InsuranceFundWithdraw `json:"insurance_fund_withdraw,omitempty"`
 	PegShift              *PegShift              `json:"peg_shift,omitempty"`
 	DepthShift            *DepthShift            `json:"depth_shift,omitempty"`
 
@@ -86,4 +87,9 @@ type EditOracleParams struct {
 	TwapLookbackWindow *sdk.Int `json:"twap_lookback_window,omitempty"`
 	MinVoters          *sdk.Int `json:"min_voters,omitempty"`
 	ValidatorFeeRatio  *sdk.Dec `json:"validator_fee_ratio,omitempty"`
+}
+
+type InsuranceFundWithdraw struct {
+	Amount sdk.Int `json:"amount"`
+	To     string  `json:"to"`
 }

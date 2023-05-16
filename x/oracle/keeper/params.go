@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/oracle/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
