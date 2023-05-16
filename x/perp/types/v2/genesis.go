@@ -3,7 +3,6 @@ package v2
 // DefaultGenesis returns the default Capability genesis state
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
-		Params:           DefaultParams(),
 		Markets:          []Market{},
 		Amms:             []AMM{},
 		Positions:        []Position{},
@@ -14,15 +13,6 @@ func DefaultGenesis() *GenesisState {
 // Validate performs basic genesis state validation returning an error upon any
 // failure.
 func (gs GenesisState) Validate() error {
-	if err := gs.Params.Validate(); err != nil {
-		return err
-	}
-
-	for _, pos := range gs.Positions {
-		if err := pos.Validate(); err != nil {
-			return err
-		}
-	}
 
 	for _, m := range gs.Markets {
 		if err := m.Validate(); err != nil {
@@ -32,6 +22,12 @@ func (gs GenesisState) Validate() error {
 
 	for _, m := range gs.Amms {
 		if err := m.Validate(); err != nil {
+			return err
+		}
+	}
+
+	for _, pos := range gs.Positions {
+		if err := pos.Validate(); err != nil {
 			return err
 		}
 	}
