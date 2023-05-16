@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -22,9 +24,10 @@ var _ wasmkeeper.Messenger = (*CustomWasmExecutor)(nil)
 // CustomWasmExecutor is an extension of wasm/keeper.Messenger with its
 // own custom `DispatchMsg` for CosmWasm execute calls on Nibiru.
 type CustomWasmExecutor struct {
-	Wasm wasmkeeper.Messenger
-	Perp *ExecutorPerp
-	Sudo *sudo.Keeper
+	Wasm   wasmkeeper.Messenger
+	Perp   ExecutorPerp
+	Sudo   sudo.Keeper
+	Oracle ExecutorOracle
 }
 
 // BindingExecuteMsgWrapper is a n override of CosmosMsg::Custom
@@ -57,6 +60,7 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 		}
 
 		switch {
+		// Perp module
 		case contractExecuteMsg.ExecuteMsg.OpenPosition != nil:
 			cwMsg := contractExecuteMsg.ExecuteMsg.OpenPosition
 			_, err = messenger.Perp.OpenPosition(cwMsg, ctx)
@@ -85,7 +89,7 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 				return events, data, err
 			}
 			cwMsg := contractExecuteMsg.ExecuteMsg.DepthShift
-			err = messenger.Perp.DepthShift(cwMsg, contractAddr, ctx)
+			err = messenger.Perp.DepthShift(cwMsg, ctx)
 			return events, data, err
 		case contractExecuteMsg.ExecuteMsg.InsuranceFundWithdraw != nil:
 			if err := messenger.CheckPermissions(contractAddr, ctx); err != nil {
@@ -94,6 +98,16 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 			cwMsg := contractExecuteMsg.ExecuteMsg.InsuranceFundWithdraw
 			err = messenger.Perp.InsuranceFundWithdraw(cwMsg, ctx)
 			return events, data, err
+
+		// Oracle module
+		case contractExecuteMsg.ExecuteMsg.EditOracleParams != nil:
+			if err := messenger.CheckPermissions(contractAddr, ctx); err != nil {
+				return events, data, err
+			}
+			cwMsg := contractExecuteMsg.ExecuteMsg.EditOracleParams
+			err = messenger.Oracle.SetOracleParams(cwMsg, ctx)
+			return events, data, err
+
 		default:
 			err = wasmvmtypes.InvalidRequest{
 				Err:     "invalid bindings request",
@@ -110,17 +124,19 @@ func CustomExecuteMsgHandler(
 	perp perpkeeper.Keeper,
 	perpv2 perpv2keeper.Keeper,
 	sudoKeeper sudo.Keeper,
+	oracleKeeper oraclekeeper.Keeper,
 ) func(wasmkeeper.Messenger) wasmkeeper.Messenger {
 	return func(originalWasmMessenger wasmkeeper.Messenger) wasmkeeper.Messenger {
 		return &CustomWasmExecutor{
-			Wasm: originalWasmMessenger,
-			Perp: &ExecutorPerp{Perp: perp, PerpV2: perpv2},
-			Sudo: &sudoKeeper,
+			Wasm:   originalWasmMessenger,
+			Perp:   ExecutorPerp{Perp: perp, PerpV2: perpv2},
+			Sudo:   sudoKeeper,
+			Oracle: ExecutorOracle{Oracle: oracleKeeper},
 		}
 	}
 }
 
-// CheckPermissions: Checks if a contract is contained within the set of sudo
+// CheckPermissions Checks if a contract is contained within the set of sudo
 // contracts defined in the x/sudo module. These smart contracts are able to
 // execute certain permissioned functions.
 // See https://www.notion.so/nibiru/Nibi-Perps-Admin-ADR-ad38991fffd34e7798618731be0fa922?pvs=4

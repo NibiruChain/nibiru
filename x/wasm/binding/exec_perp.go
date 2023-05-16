@@ -146,9 +146,7 @@ func (exec *ExecutorPerp) PegShift(
 	)
 }
 
-func (exec *ExecutorPerp) DepthShift(
-	cwMsg *cw_struct.DepthShift, contractAddr sdk.AccAddress, ctx sdk.Context,
-) (err error) {
+func (exec *ExecutorPerp) DepthShift(cwMsg *cw_struct.DepthShift, ctx sdk.Context) (err error) {
 	if cwMsg == nil {
 		return wasmvmtypes.InvalidRequest{Err: "null msg"}
 	}
@@ -158,12 +156,7 @@ func (exec *ExecutorPerp) DepthShift(
 		return err
 	}
 
-	return exec.Perp.EditPoolSwapInvariant(
-		ctx,
-		contractAddr,
-		pair,
-		cwMsg.DepthMult,
-	)
+	return exec.Perp.EditPoolSwapInvariant(ctx, pair, cwMsg.DepthMult)
 }
 
 func (exec *ExecutorPerp) InsuranceFundWithdraw(

@@ -295,7 +295,7 @@ func TestMsgServerUpdateSwapInvariant(t *testing.T) {
 				require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, tc.initialVaultFunds))
 			}
 
-			err = app.PerpKeeper.EditPoolSwapInvariant(ctx, sdk.AccAddress{}, pair, tc.swapInvariantMultiplier)
+			err = app.PerpKeeper.EditPoolSwapInvariant(ctx, pair, tc.swapInvariantMultiplier)
 			require.Equal(t, tc.expectedErr, err)
 
 			pool, _ := app.PerpAmmKeeper.GetPool(ctx, pair)
