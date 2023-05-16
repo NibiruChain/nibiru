@@ -125,7 +125,7 @@ func AddOracleGenesis(gen app.GenesisState) app.GenesisState {
 
 var START_MARKETS = map[asset.Pair]perpammtypes.Market{
 	asset.Registry.Pair(denoms.BTC, denoms.NUSD): {
-		Pair:          asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
+		Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		BaseReserve:   sdk.NewDec(10e6),
 		QuoteReserve:  sdk.NewDec(10e6),
 		SqrtDepth:     sdk.NewDec(10e6),
@@ -191,7 +191,7 @@ func PerpGenesis() *perptypes.GenesisState {
 }
 
 func PerpV2Genesis() *perpv2types.GenesisState {
-	markets := make(map[asset.Pair]perpammtypes.Market)
+	markets := START_MARKETS
 
 	extraMarkets := map[asset.Pair]perpammtypes.Market{
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD): {
