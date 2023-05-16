@@ -13,10 +13,11 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	oraclecli "github.com/NibiruChain/nibiru/x/oracle/client/cli"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
-	perpammcli "github.com/NibiruChain/nibiru/x/perp/amm/cli"
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
-	perpcli "github.com/NibiruChain/nibiru/x/perp/client/cli"
-	"github.com/NibiruChain/nibiru/x/perp/types/v1"
+	perpammcli "github.com/NibiruChain/nibiru/x/perp/v1/amm/cli"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/v1/amm/types"
+	perpcli "github.com/NibiruChain/nibiru/x/perp/v1/client/cli"
+
+	"github.com/NibiruChain/nibiru/x/perp/v1/types"
 	sudocli "github.com/NibiruChain/nibiru/x/sudo/cli"
 	sudotypes "github.com/NibiruChain/nibiru/x/sudo/pb"
 )

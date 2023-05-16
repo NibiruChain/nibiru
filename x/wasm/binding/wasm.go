@@ -6,9 +6,9 @@ import (
 
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 
-	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
-	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper/v1"
-	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/keeper/v2"
+	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/v1/amm/keeper"
+	perpkeeper "github.com/NibiruChain/nibiru/x/perp/v1/keeper"
+	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	"github.com/NibiruChain/nibiru/x/sudo"
 )
 

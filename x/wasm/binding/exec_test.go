@@ -15,7 +15,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	perpv2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
+	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
