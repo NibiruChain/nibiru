@@ -14,6 +14,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -61,9 +62,10 @@ type TestSuiteExecutor struct {
 	ctx              sdk.Context
 	contractDeployer sdk.AccAddress
 
-	contractPerp    sdk.AccAddress
-	contractShifter sdk.AccAddress
-	happyFields     ExampleFields
+	contractPerp       sdk.AccAddress
+	contractShifter    sdk.AccAddress
+	contractController sdk.AccAddress
+	happyFields        ExampleFields
 }
 
 func (s *TestSuiteExecutor) SetupSuite() {
@@ -91,6 +93,7 @@ func (s *TestSuiteExecutor) SetupSuite() {
 
 	s.contractPerp = ContractMap[wasmbin.WasmKeyPerpBinding]
 	s.contractShifter = ContractMap[wasmbin.WasmKeyShifter]
+	s.contractController = ContractMap[wasmbin.WasmKeyController]
 	s.T().Logf("contract bindings-perp: %s", s.contractPerp)
 	s.T().Logf("contract shifter: %s", s.contractShifter)
 	s.OnSetupEnd()
@@ -209,6 +212,55 @@ func (s *TestSuiteExecutor) TestDepthShift() {
 	)
 	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
 	s.Errorf(err, "contractRespBz: %s", contractRespBz)
+
+	s.T().Log("Executing the wrong contract should fail")
+	contract = s.contractPerp
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{contract.String()}, s.ctx,
+	)
+	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
+	s.Errorf(err, "contractRespBz: %s", contractRespBz)
+	s.Contains(err.Error(), "Error parsing into type")
+}
+
+func (s *TestSuiteExecutor) TestInsuranceFundWithdraw() {
+	admin := s.contractDeployer.String()
+	amtToWithdraw := sdk.NewInt(69)
+	execMsg := cw_struct.BindingMsg{
+		InsuranceFundWithdraw: &cw_struct.InsuranceFundWithdraw{
+			Amount: amtToWithdraw,
+			To:     admin,
+		},
+	}
+
+	s.T().Log("Executing should fail since the IF doesn't have funds")
+	contract := s.contractController
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{contract.String()}, s.ctx,
+	)
+	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
+	s.Errorf(err, "contractRespBz: %s", contractRespBz)
+
+	s.T().Log("Executing without permission should fail")
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{}, s.ctx,
+	)
+	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
+	s.Errorf(err, "contractRespBz: %s", contractRespBz)
+
+	s.T().Log("Executing should work when the IF has funds")
+	err = testapp.FundModuleAccount(
+		s.nibiru.BankKeeper,
+		s.ctx,
+		perpv2types.PerpEFModuleAccount,
+		sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(420))),
+	)
+	s.NoError(err)
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{contract.String()}, s.ctx,
+	)
+	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
+	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
 
 	s.T().Log("Executing the wrong contract should fail")
 	contract = s.contractPerp

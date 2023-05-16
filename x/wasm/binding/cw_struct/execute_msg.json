@@ -70,5 +70,11 @@
       "pair": "ETH:USD",
       "depth_mult": "420"
     }
+  },
+  "insurance_fund_withdraw": {
+    "insurance_fund_withdraw": {
+      "amount": "420",
+      "to": "nibi1ah8gqrtjllhc5ld4rxgl4uglvwl93ag0sh6e6v"
+    }
   }
 }

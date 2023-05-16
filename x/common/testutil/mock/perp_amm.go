@@ -5,7 +5,7 @@ import (
 
 	asset "github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
-	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
+	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 // default market with sensible values for tests
