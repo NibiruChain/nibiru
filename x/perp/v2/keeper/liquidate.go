@@ -109,9 +109,16 @@ func (k Keeper) liquidate(
 	if err != nil {
 		return
 	}
-	maxPositionNotional := sdk.MaxDec(spotNotional, twapNotional)
 
-	marginRatio := MarginRatio(position, maxPositionNotional, market.LatestCumulativePremiumFraction)
+	// give the user the preferred position notional
+	var preferredPositionNotional sdk.Dec
+	if position.Size_.IsPositive() {
+		preferredPositionNotional = sdk.MaxDec(spotNotional, twapNotional)
+	} else {
+		preferredPositionNotional = sdk.MinDec(spotNotional, twapNotional)
+	}
+
+	marginRatio := MarginRatio(position, preferredPositionNotional, market.LatestCumulativePremiumFraction)
 	if marginRatio.GTE(market.MaintenanceMarginRatio) {
 		_ = ctx.EventManager().EmitTypedEvent(&v2types.LiquidationFailedEvent{
 			Pair:       pair,

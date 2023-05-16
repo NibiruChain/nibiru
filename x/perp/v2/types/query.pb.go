@@ -32,7 +32,6 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// ---------------------------------------- Positions
 type QueryPositionsRequest struct {
 	Trader string `protobuf:"bytes,1,opt,name=trader,proto3" json:"trader,omitempty"`
 }
@@ -574,6 +573,7 @@ type QueryClient interface {
 	QueryPositions(ctx context.Context, in *QueryPositionsRequest, opts ...grpc.CallOption) (*QueryPositionsResponse, error)
 	// Queries the reserve assets in a given pool, identified by a token pair.
 	ModuleAccounts(ctx context.Context, in *QueryModuleAccountsRequest, opts ...grpc.CallOption) (*QueryModuleAccountsResponse, error)
+	QueryMarkets(ctx context.Context, in *QueryMarketsRequest, opts ...grpc.CallOption) (*QueryMarketsResponse, error)
 }
 
 type queryClient struct {
@@ -611,12 +611,22 @@ func (c *queryClient) ModuleAccounts(ctx context.Context, in *QueryModuleAccount
 	return out, nil
 }
 
+func (c *queryClient) QueryMarkets(ctx context.Context, in *QueryMarketsRequest, opts ...grpc.CallOption) (*QueryMarketsResponse, error) {
+	out := new(QueryMarketsResponse)
+	err := c.cc.Invoke(ctx, "/nibiru.perp.v2.Query/QueryMarkets", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 type QueryServer interface {
 	QueryPosition(context.Context, *QueryPositionRequest) (*QueryPositionResponse, error)
 	QueryPositions(context.Context, *QueryPositionsRequest) (*QueryPositionsResponse, error)
 	// Queries the reserve assets in a given pool, identified by a token pair.
 	ModuleAccounts(context.Context, *QueryModuleAccountsRequest) (*QueryModuleAccountsResponse, error)
+	QueryMarkets(context.Context, *QueryMarketsRequest) (*QueryMarketsResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -631,6 +641,9 @@ func (*UnimplementedQueryServer) QueryPositions(ctx context.Context, req *QueryP
 }
 func (*UnimplementedQueryServer) ModuleAccounts(ctx context.Context, req *QueryModuleAccountsRequest) (*QueryModuleAccountsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ModuleAccounts not implemented")
+}
+func (*UnimplementedQueryServer) QueryMarkets(ctx context.Context, req *QueryMarketsRequest) (*QueryMarketsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryMarkets not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -691,6 +704,24 @@ func _Query_ModuleAccounts_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_QueryMarkets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryMarketsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).QueryMarkets(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/nibiru.perp.v2.Query/QueryMarkets",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).QueryMarkets(ctx, req.(*QueryMarketsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "nibiru.perp.v2.Query",
 	HandlerType: (*QueryServer)(nil),
@@ -706,6 +737,10 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ModuleAccounts",
 			Handler:    _Query_ModuleAccounts_Handler,
+		},
+		{
+			MethodName: "QueryMarkets",
+			Handler:    _Query_QueryMarkets_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
