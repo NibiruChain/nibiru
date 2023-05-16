@@ -32,8 +32,6 @@ enum TwapCalcOption {
   BASE_ASSET_SWAP = 3;
 }
 
-message Params {}
-
 message Market {
   // the trading pair represented by this market
   // always BASE:QUOTE, e.g. BTC:NUSD or ETH:NUSD

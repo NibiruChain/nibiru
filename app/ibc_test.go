@@ -176,7 +176,3 @@ func (suite *IBCTestSuite) TestHandleMsgTransfer() {
 	balance = chainCApp.BankKeeper.GetBalance(suite.chainC.GetContext(), suite.chainC.SenderAccount.GetAddress(), voucherDenomTrace.IBCDenom())
 	suite.Require().Zero(balance.Amount.Int64())
 }
-
-func (suite *IBCTestSuite) TestConsensusAfterClientUpgrade() {
-	// TODO test: https://github.com/NibiruChain/nibiru/issues/581
-}

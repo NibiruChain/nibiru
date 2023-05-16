@@ -10,13 +10,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 )
 
-const (
-	ModuleName           = "perp"
-	VaultModuleAccount   = "vault"
-	PerpEFModuleAccount  = "perp_ef"
-	FeePoolModuleAccount = "fee_pool"
-)
-
 // x/perp module sentinel errors
 var (
 	ErrMarginRatioTooHigh                = sdkerrors.Register(ModuleName, 1, "margin ratio is too healthy to liquidate")

@@ -7,16 +7,18 @@ import (
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/app/ante"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
 func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
-	priv1, _, addr := testdata.KeyTestPubAddr()
+	priv1, addr := testutil.PrivKey()
 
 	tests := []struct {
 		name        string
@@ -192,7 +194,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 					Amount:      sdk.NewCoins(sdk.NewInt64Coin(app.BondDenom, 200)),
 				},
 			},
-			expectedGas: 56814,
+			expectedGas: 65951,
 			expectedErr: nil,
 		},
 	}
@@ -208,24 +210,49 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 			gasLimit := testdata.NewTestGasLimit()
 			suite.txBuilder.SetFeeAmount(feeAmount)
 			suite.txBuilder.SetGasLimit(gasLimit)
-			suite.Require().NoError(suite.txBuilder.SetMsgs(tc.messages...))
+			suite.txBuilder.SetMemo("some memo")
+
+			suite.NoError(suite.txBuilder.SetMsgs(tc.messages...))
 
 			privs, accNums, accSeqs := []cryptotypes.PrivKey{priv1}, []uint64{11}, []uint64{0}
 			tx, err := suite.CreateTestTx(privs, accNums, accSeqs, suite.ctx.ChainID())
+			suite.NoErrorf(err, "tx: %v", tx)
+			suite.NoError(tx.ValidateBasic())
+			suite.ValidateTx(tx, suite.T())
+
+			err = testapp.FundAccount(
+				suite.app.BankKeeper, suite.ctx, addr,
+				sdk.NewCoins(sdk.NewInt64Coin(app.BondDenom, 1000)),
+			)
 			suite.Require().NoError(err)
 
-			err = testapp.FundAccount(suite.app.BankKeeper, suite.ctx, addr, sdk.NewCoins(sdk.NewInt64Coin(app.BondDenom, 1000)))
-			if err != nil {
-				return
-			}
-
-			suite.ctx, err = suite.anteHandler(suite.ctx, tx, false)
+			suite.ctx, err = suite.anteHandler(
+				suite.ctx,
+				tx,
+				/*simulate*/ true,
+			)
 			if tc.expectedErr != nil {
-				suite.Require().Contains(err.Error(), tc.expectedErr.Error())
+				suite.Error(err)
+				suite.Contains(err.Error(), tc.expectedErr.Error())
 			} else {
-				suite.Require().NoError(err)
+				suite.NoError(err)
 			}
-			suite.Require().Equal(tc.expectedGas, suite.ctx.GasMeter().GasConsumed())
+			want := sdk.NewInt(int64(tc.expectedGas))
+			got := sdk.NewInt(int64(suite.ctx.GasMeter().GasConsumed()))
+			suite.Equal(want.String(), got.String())
 		})
 	}
+}
+
+func (s *AnteTestSuite) ValidateTx(tx signing.Tx, t *testing.T) {
+	memoTx, ok := tx.(sdk.TxWithMemo)
+	if !ok {
+		s.Fail(sdkerrors.Wrap(sdkerrors.ErrTxDecode, "invalid transaction type").Error(), "memoTx: %t", memoTx)
+	}
+
+	params := s.app.AccountKeeper.GetParams(s.ctx)
+	s.EqualValues(256, params.MaxMemoCharacters)
+
+	memoLen := len(memoTx.GetMemo())
+	s.True(memoLen < int(params.MaxMemoCharacters))
 }
