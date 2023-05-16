@@ -75,5 +75,10 @@ type GenesisState map[string]json.RawMessage
 
 // NewDefaultGenesisState generates the default state for the application.
 func NewDefaultGenesisState(cdc codec.JSONCodec) GenesisState {
-	return ModuleBasics.DefaultGenesis(cdc)
+	gen := ModuleBasics.DefaultGenesis(cdc)
+
+	authGenesis := new(authtypes.GenesisState)
+	cdc.MustUnmarshalJSON(gen[authtypes.ModuleName], authGenesis)
+
+	return gen
 }

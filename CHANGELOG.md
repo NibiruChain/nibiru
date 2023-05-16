@@ -129,6 +129,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1343](https://github.com/NibiruChain/nibiru/pull/1343) - feat(perp): add PerpKeeperV2 `MultiLiquidate`
 * [#1352](https://github.com/NibiruChain/nibiru/pull/1352) - feat(perp): add PerpKeeperV2 `MsgServer`
 * [#1350](https://github.com/NibiruChain/nibiru/pull/1350) - feat(perp): `EditPriceMultiplier` and `EditSwapInvariant`
+* [#1361](https://github.com/NibiruChain/nibiru/pull/1361) - feat(perp): add `PerpV2` module
+* [#1363](https://github.com/NibiruChain/nibiru/pull/1363) - feat(perp): wire `PerpV2` module
 
 ### Bug Fixes
 

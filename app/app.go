@@ -124,6 +124,7 @@ import (
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper/v1"
 	perpkeeperv2 "github.com/NibiruChain/nibiru/x/perp/keeper/v2"
 	perp "github.com/NibiruChain/nibiru/x/perp/module/v1"
+	perpv2 "github.com/NibiruChain/nibiru/x/perp/module/v2"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
 	perptypesv2 "github.com/NibiruChain/nibiru/x/perp/types/v2"
 
@@ -197,6 +198,7 @@ var (
 		stablecoin.AppModuleBasic{},
 		perp.AppModuleBasic{},
 		perpamm.AppModuleBasic{},
+		perpv2.AppModuleBasic{},
 		inflation.AppModuleBasic{},
 		sudo.AppModuleBasic{},
 		wasm.AppModuleBasic{},
@@ -214,9 +216,13 @@ var (
 		spottypes.ModuleName:                  {authtypes.Minter, authtypes.Burner},
 		oracletypes.ModuleName:                {},
 		ibctransfertypes.ModuleName:           {authtypes.Minter, authtypes.Burner},
-		ibcfeetypes.ModuleName:                nil,
+		ibcfeetypes.ModuleName:                {},
 		stablecointypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
-		perptypes.ModuleName:                  {authtypes.Minter, authtypes.Burner},
+		perptypesv2.ModuleName:                {},
+		perptypesv2.VaultModuleAccount:        {},
+		perptypesv2.PerpEFModuleAccount:       {},
+		perptypesv2.FeePoolModuleAccount:      {},
+		perptypes.ModuleName:                  {},
 		perptypes.VaultModuleAccount:          {},
 		perptypes.PerpEFModuleAccount:         {},
 		perptypes.FeePoolModuleAccount:        {},
@@ -542,7 +548,10 @@ func (app *NibiruApp) GetMemKey(storeKey string) *storetypes.MemoryStoreKey {
 //
 // NOTE: This is solely to be used for testing purposes.
 func (app *NibiruApp) GetSubspace(moduleName string) paramstypes.Subspace {
-	subspace, _ := app.paramsKeeper.GetSubspace(moduleName)
+	subspace, ok := app.paramsKeeper.GetSubspace(moduleName)
+	if !ok {
+		panic(fmt.Errorf("failed to get subspace for module: %s", moduleName))
+	}
 	return subspace
 }
 
@@ -644,17 +653,16 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(slashingtypes.ModuleName)
 	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable())
 	paramsKeeper.Subspace(crisistypes.ModuleName)
-	// Native params keepers
+	// Nibiru core params keepers | x/
 	paramsKeeper.Subspace(spottypes.ModuleName)
-	paramsKeeper.Subspace(oracletypes.ModuleName)
 	paramsKeeper.Subspace(epochstypes.ModuleName)
 	paramsKeeper.Subspace(stablecointypes.ModuleName)
 	paramsKeeper.Subspace(perptypes.ModuleName)
-	paramsKeeper.Subspace(perptypesv2.ModuleName)
 	paramsKeeper.Subspace(inflationtypes.ModuleName)
 	// ibc params keepers
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
+	paramsKeeper.Subspace(ibcfeetypes.ModuleName)
 	// wasm params keepers
 	paramsKeeper.Subspace(wasm.ModuleName)
 
