@@ -8,7 +8,7 @@ import "cosmos/base/v1beta1/coin.proto";
 import "perp/v2/state.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/perp/v2/types;types";
+option go_package = "github.com/NibiruChain/nibiru/x/perp/v2/types";
 
 // Emitted when a position changes.
 // TODO: Is there a way to split this into different events without creating too

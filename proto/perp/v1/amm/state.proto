@@ -64,13 +64,13 @@ message Market {
   string total_long = 6 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
-  ];  
+  ];
 
   // Total short refers to the sum of short open notional in base.
   string total_short = 7 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
-  ]; 
+  ];
 
   // TD docs. For now, leave this as 1 until the feature PR.
   string peg_multiplier = 8 [
