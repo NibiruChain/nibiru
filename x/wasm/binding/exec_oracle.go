@@ -2,9 +2,8 @@ package binding
 
 import (
 	"fmt"
-	"time"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"time"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
@@ -65,7 +64,7 @@ func mergeOracleParams(msg *cw_struct.EditOracleParams, oracleParams oracletypes
 	}
 
 	if msg.TwapLookbackWindow != nil {
-		oracleParams.TwapLookbackWindow = time.Second * time.Duration(msg.TwapLookbackWindow.Int64())
+		oracleParams.TwapLookbackWindow = time.Duration(msg.TwapLookbackWindow.Int64())
 	}
 
 	if msg.MinVoters != nil {

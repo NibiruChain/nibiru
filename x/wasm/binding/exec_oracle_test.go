@@ -194,4 +194,38 @@ func (s *TestSuiteOracleExecutor) TestExecuteOracleParams() {
 	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
 	s.Require().NoError(err)
 	s.Require().Equal(time.Duration(twapLookbackWindow.Int64()), params.TwapLookbackWindow)
+
+	// Min Voters
+	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(4), params.MinVoters)
+
+	minVoters := sdk.NewInt(2)
+	cwMsg = &cw_struct.EditOracleParams{
+		MinVoters: &minVoters,
+	}
+
+	err = s.exec.SetOracleParams(cwMsg, s.ctx)
+	s.Require().NoError(err)
+
+	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(minVoters.Uint64(), params.MinVoters)
+
+	// Validator Fee Ratio
+	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(sdk.NewDecWithPrec(5, 2), params.ValidatorFeeRatio)
+
+	validatorFeeRatio := sdk.MustNewDecFromStr("0.7")
+	cwMsg = &cw_struct.EditOracleParams{
+		ValidatorFeeRatio: &validatorFeeRatio,
+	}
+
+	err = s.exec.SetOracleParams(cwMsg, s.ctx)
+	s.Require().NoError(err)
+
+	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(validatorFeeRatio, params.ValidatorFeeRatio)
 }
