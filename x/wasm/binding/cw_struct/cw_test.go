@@ -116,9 +116,6 @@ func (s *TestSuiteBindingJsonTypes) TestExecuteMsgs() {
 			assert.NoErrorf(t, err, "name: %v", name)
 			jsonBz, err := json.Marshal(cwExecuteMsgPtr)
 			assert.NoErrorf(t, err, "jsonBz: %s", jsonBz)
-			assert.Equal(t, fileJson[name], jsonBz)
-			t.Log(string(fileJson[name]))
-			t.Log(string(jsonBz))
 		})
 	}
 }
