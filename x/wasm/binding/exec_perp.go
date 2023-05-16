@@ -6,8 +6,8 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
-	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper/v1"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
+	perpkeeper "github.com/NibiruChain/nibiru/x/perp/v1/keeper"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/v1/types"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 )
 
