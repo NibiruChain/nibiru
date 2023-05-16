@@ -2,9 +2,15 @@ package keeper
 
 import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/oracle/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
+
+// UpdateParams updates the oracle parameters
+func (k Keeper) UpdateParams(ctx sdk.Context, params types.Params) {
+	k.Params.Set(ctx, params)
+}
 
 // VotePeriod returns the number of blocks during which voting takes place.
 func (k Keeper) VotePeriod(ctx sdk.Context) (res uint64) {
@@ -18,7 +24,7 @@ func (k Keeper) VoteThreshold(ctx sdk.Context) (res sdk.Dec) {
 	return params.VoteThreshold
 }
 
-// VoteThreshold returns the minimum percentage of votes that must be received for a ballot to pass.
+// MinVoters returns the minimum percentage of votes that must be received for a ballot to pass.
 func (k Keeper) MinVoters(ctx sdk.Context) (res uint64) {
 	params, _ := k.Params.Get(ctx)
 	return params.MinVoters

@@ -49,7 +49,7 @@ func (k Keeper) EditPoolPegMultiplier(
 	return
 }
 
-func (k Keeper) EditPoolSwapInvariant(ctx sdk.Context, sender sdk.AccAddress, pair asset.Pair, multiplier sdk.Dec) (err error) {
+func (k Keeper) EditPoolSwapInvariant(ctx sdk.Context, pair asset.Pair, multiplier sdk.Dec) (err error) {
 	// Get the pool
 	pool, err := k.PerpAmmKeeper.GetPool(ctx, pair)
 	if nil != err {

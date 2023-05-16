@@ -76,5 +76,10 @@
       "amount": "420",
       "to": "nibi1ah8gqrtjllhc5ld4rxgl4uglvwl93ag0sh6e6v"
     }
+  },
+  "oracle_params": {
+    "edit_oracle_params": {
+      "vote_period": "12345"
+    }
   }
 }

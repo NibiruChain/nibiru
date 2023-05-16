@@ -19,8 +19,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/wasm/binding"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/wasmbin"
-
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 )
 
 func TestSuitePerpExecutor_RunAll(t *testing.T) {
@@ -62,7 +60,7 @@ func (s *TestSuitePerpExecutor) SetupSuite() {
 	s.nibiru = nibiru
 	s.ctx = ctx
 
-	wasmkeeper.NewMsgServerImpl(wasmkeeper.NewDefaultPermissionKeeper(nibiru.WasmKeeper))
+	s.contractPerp = ContractMap[wasmbin.WasmKeyPerpBinding]
 	s.exec = &binding.ExecutorPerp{
 		Perp:   nibiru.PerpKeeper,
 		PerpV2: nibiru.PerpKeeperV2,
@@ -190,13 +188,12 @@ func (s *TestSuitePerpExecutor) DoPegShiftTest(pair asset.Pair) error {
 }
 
 func (s *TestSuitePerpExecutor) DoDepthShiftTest(pair asset.Pair) error {
-	contractAddr := s.contractPerp
 	cwMsg := &cw_struct.DepthShift{
 		Pair:      pair.String(),
 		DepthMult: sdk.NewDec(420),
 	}
 
-	err := s.exec.DepthShift(cwMsg, contractAddr, s.ctx)
+	err := s.exec.DepthShift(cwMsg, s.ctx)
 	return err
 }
 
@@ -239,8 +236,7 @@ func (s *TestSuitePerpExecutor) TestSadPaths_Nil() {
 		nil, sdk.AccAddress([]byte("contract")), s.ctx)
 	s.Error(err)
 
-	err = s.exec.DepthShift(
-		nil, sdk.AccAddress([]byte("contract")), s.ctx)
+	err = s.exec.DepthShift(nil, s.ctx)
 	s.Error(err)
 
 	err = s.exec.InsuranceFundWithdraw(nil, s.ctx)

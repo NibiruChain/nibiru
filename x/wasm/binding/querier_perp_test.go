@@ -102,9 +102,9 @@ func (s *TestSuitePerpQuerier) SetupSuite() {
 	s.ctx = ctx
 
 	s.contractPerp = ContractMap[wasmbin.WasmKeyPerpBinding]
-	s.queryPlugin = *binding.NewQueryPlugin(
-		&nibiru.PerpKeeper,
-		&nibiru.PerpAmmKeeper,
+	s.queryPlugin = binding.NewQueryPlugin(
+		nibiru.PerpKeeper,
+		nibiru.PerpAmmKeeper,
 	)
 	s.OnSetupEnd()
 }
