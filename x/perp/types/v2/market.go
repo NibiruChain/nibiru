@@ -3,8 +3,9 @@ package v2
 import (
 	fmt "fmt"
 
-	"github.com/NibiruChain/nibiru/x/common/asset"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/common/asset"
 )
 
 func isPercent(v sdk.Dec) bool {
