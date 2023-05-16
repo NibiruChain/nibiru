@@ -28,15 +28,27 @@ func AddPerpGenesis(gen app.GenesisState) app.GenesisState {
 		MustMarshalJSON(PerpAmmGenesis())
 	gen[perptypes.ModuleName] = TEST_ENCODING_CONFIG.Marshaler.
 		MustMarshalJSON(PerpGenesis())
-	gen[perpv2types.ModuleName] = TEST_ENCODING_CONFIG.Marshaler.
-		MustMarshalJSON(PerpV2Genesis())
 	return gen
 }
 
 func AddPerpV2Genesis(gen app.GenesisState) app.GenesisState {
-	markets := START_MARKETS
-
 	extraMarkets := map[asset.Pair]perpammtypes.Market{
+		asset.Registry.Pair(denoms.BTC, denoms.NUSD): {
+			Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+			BaseReserve:   sdk.NewDec(10e6),
+			QuoteReserve:  sdk.NewDec(10e6),
+			SqrtDepth:     sdk.NewDec(10e6),
+			PegMultiplier: sdk.NewDec(6_000),
+			TotalLong:     sdk.ZeroDec(),
+			TotalShort:    sdk.ZeroDec(),
+			Config: perpammtypes.MarketConfig{
+				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
+				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
+				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.2"),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.04"),
+				MaxLeverage:            sdk.MustNewDecFromStr("20"),
+			},
+		},
 		asset.Registry.Pair(denoms.ATOM, denoms.NUSD): {
 			Pair:          asset.Registry.Pair(denoms.ATOM, denoms.NUSD),
 			BaseReserve:   sdk.NewDec(10 * common.TO_MICRO),
@@ -70,15 +82,14 @@ func AddPerpV2Genesis(gen app.GenesisState) app.GenesisState {
 			},
 		},
 	}
-
-	for pair, market := range extraMarkets {
-		markets[pair] = market
+	for pair, market := range START_MARKETS {
+		extraMarkets[pair] = market
 	}
 
 	var marketsv2 []perpv2types.Market
 	var ammsv2 []perpv2types.AMM
 	defaultParams := perptypes.DefaultParams()
-	for pair, market := range markets {
+	for pair, market := range extraMarkets {
 		marketsv2 = append(marketsv2, perpv2types.Market{
 			Pair:                            pair,
 			Enabled:                         true,
@@ -124,27 +135,11 @@ func AddOracleGenesis(gen app.GenesisState) app.GenesisState {
 }
 
 var START_MARKETS = map[asset.Pair]perpammtypes.Market{
-	asset.Registry.Pair(denoms.BTC, denoms.NUSD): {
-		Pair:          asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-		BaseReserve:   sdk.NewDec(10e6),
-		QuoteReserve:  sdk.NewDec(10e6),
-		SqrtDepth:     sdk.NewDec(10e6),
-		PegMultiplier: sdk.NewDec(6_000),
-		TotalLong:     sdk.ZeroDec(),
-		TotalShort:    sdk.ZeroDec(),
-		Config: perpammtypes.MarketConfig{
-			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
-			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
-			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.2"),
-			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.04"),
-			MaxLeverage:            sdk.MustNewDecFromStr("20"),
-		},
-	},
 	asset.Registry.Pair(denoms.ETH, denoms.NUSD): {
 		Pair:          asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-		BaseReserve:   sdk.NewDec(10e6),
-		QuoteReserve:  sdk.NewDec(10e6),
-		SqrtDepth:     sdk.NewDec(10e6),
+		BaseReserve:   sdk.NewDec(10 * common.TO_MICRO),
+		QuoteReserve:  sdk.NewDec(10 * common.TO_MICRO),
+		SqrtDepth:     common.MustSqrtDec(sdk.NewDec(10 * common.TO_MICRO * 10 * common.TO_MICRO)),
 		PegMultiplier: sdk.NewDec(6_000),
 		TotalLong:     sdk.ZeroDec(),
 		TotalShort:    sdk.ZeroDec(),
@@ -158,9 +153,9 @@ var START_MARKETS = map[asset.Pair]perpammtypes.Market{
 	},
 	asset.Registry.Pair(denoms.NIBI, denoms.NUSD): {
 		Pair:          asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
-		BaseReserve:   sdk.NewDec(10e6),
-		QuoteReserve:  sdk.NewDec(10e6),
-		SqrtDepth:     sdk.NewDec(10e6),
+		BaseReserve:   sdk.NewDec(10 * common.TO_MICRO),
+		QuoteReserve:  sdk.NewDec(10 * common.TO_MICRO),
+		SqrtDepth:     common.MustSqrtDec(sdk.NewDec(10 * common.TO_MICRO * 10 * common.TO_MICRO)),
 		PegMultiplier: sdk.NewDec(10),
 		TotalLong:     sdk.ZeroDec(),
 		TotalShort:    sdk.ZeroDec(),
@@ -191,7 +186,7 @@ func PerpGenesis() *perptypes.GenesisState {
 }
 
 func PerpV2Genesis() *perpv2types.GenesisState {
-	markets := START_MARKETS
+	markets := make(map[asset.Pair]perpammtypes.Market)
 
 	extraMarkets := map[asset.Pair]perpammtypes.Market{
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD): {
