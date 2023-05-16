@@ -1,6 +1,7 @@
 package cw_struct_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"testing"
@@ -98,25 +99,38 @@ func (s *TestSuiteBindingJsonTypes) TestExecuteMsgs() {
 	t := s.T()
 	var fileJson = getFileJson(t)
 
-	testCaseMap := map[string]any{
-		"open_position":            new(cw_struct.OpenPosition),
-		"close_position":           new(cw_struct.ClosePosition),
-		"add_margin":               new(cw_struct.AddMargin),
-		"remove_margin":            new(cw_struct.RemoveMargin),
-		"multi_liquidate":          new(cw_struct.MultiLiquidate),
-		"donate_to_insurance_fund": new(cw_struct.DonateToInsuranceFund),
-		"peg_shift":                new(cw_struct.PegShift),
-		"depth_shift":              new(cw_struct.DepthShift),
-		"oracle_params":            new(cw_struct.EditOracleParams),
-		"insurance_fund_withdraw":  new(cw_struct.InsuranceFundWithdraw),
+	testCaseMap := []string{
+		"open_position",
+		"close_position",
+		"add_margin",
+		"remove_margin",
+		"donate_to_insurance_fund",
+		"peg_shift",
+		"depth_shift",
+		"oracle_params",
+		"insurance_fund_withdraw",
 	}
 
-	for name, cwExecuteMsgPtr := range testCaseMap {
+	for _, name := range testCaseMap {
 		t.Run(name, func(t *testing.T) {
-			err := json.Unmarshal(fileJson[name], cwExecuteMsgPtr)
+			var bindingMsg cw_struct.BindingMsg
+			err := json.Unmarshal(fileJson[name], &bindingMsg)
 			assert.NoErrorf(t, err, "name: %v", name)
-			jsonBz, err := json.Marshal(cwExecuteMsgPtr)
+
+			jsonBz, err := json.Marshal(bindingMsg)
 			assert.NoErrorf(t, err, "jsonBz: %s", jsonBz)
+
+			compactJsonBz := new(bytes.Buffer)
+			err = json.Compact(compactJsonBz, jsonBz)
+			require.NoError(t, err)
+
+			// File is compacted, so we need to compact the bytes before comparing
+			fileBytes, err := fileJson[name].MarshalJSON()
+			compactFileBytes := new(bytes.Buffer)
+			err = json.Compact(compactFileBytes, fileBytes)
+			require.NoError(t, err)
+
+			require.Equal(t, compactFileBytes.Bytes(), compactJsonBz.Bytes())
 		})
 	}
 }
