@@ -37,16 +37,16 @@ func (k Keeper) OpenPosition(
 ) (positionResp *v2types.PositionResp, err error) {
 	market, err := k.Markets.Get(ctx, pair)
 	if err != nil {
-		return nil, v2types.ErrPairNotFound
+		return nil, fmt.Errorf("%w: %s", v2types.ErrPairNotFound, pair)
 	}
 
 	if !market.Enabled {
-		return nil, v2types.ErrMarketNotEnabled
+		return nil, fmt.Errorf("%w: %s", v2types.ErrMarketNotEnabled, pair)
 	}
 
 	amm, err := k.AMMs.Get(ctx, pair)
 	if err != nil {
-		return nil, v2types.ErrPairNotFound
+		return nil, fmt.Errorf("%w: %s", v2types.ErrPairNotFound, pair)
 	}
 
 	err = checkOpenPositionRequirements(market, quoteAssetAmt, leverage)
@@ -700,12 +700,12 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.A
 
 	market, err := k.Markets.Get(ctx, pair)
 	if err != nil {
-		return nil, v2types.ErrPairNotFound
+		return nil, fmt.Errorf("%w: %s", v2types.ErrPairNotFound, pair)
 	}
 
 	amm, err := k.AMMs.Get(ctx, pair)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %s", v2types.ErrPairNotFound, pair)
 	}
 
 	updatedAMM, positionResp, err := k.closePositionEntirely(

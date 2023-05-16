@@ -535,15 +535,17 @@ func (s *IntegrationTestSuite) TestDonateToEcosystemFund() {
 	s.NoError(s.network.WaitForNextBlock())
 
 	resp := new(sdk.Coin)
-	s.NoError(
+	moduleAddr := "nibi1kc9nqyefjm79tj3clv5h2lzz7xsy9dc0dalf80"
+	s.NoErrorf(
 		testutilcli.ExecQuery(
 			s.network.Validators[0].ClientCtx,
 			bankcli.GetBalancesCmd(),
-			[]string{"nibi1trh2mamq64u4g042zfeevvjk4cukrthvppfnc7", "--denom", "unusd"}, // nibi1trh2mamq64u4g042zfeevvjk4cukrthvppfnc7 is the perp_ef module account address
+			[]string{moduleAddr, "--denom", "unusd"}, // nibi1trh2mamq64u4g042zfeevvjk4cukrthvppfnc7 is the perp_ef module account address
 			resp,
 		),
+		"out.RawLog: %s", out.RawLog,
 	)
-	s.Require().EqualValues(sdk.NewInt64Coin("unusd", 100), *resp)
+	s.Require().EqualValuesf(sdk.NewInt64Coin("unusd", 100), *resp, "out.RawLog: %s", out.RawLog)
 }
 
 func TestIntegrationTestSuite(t *testing.T) {

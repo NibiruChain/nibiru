@@ -25,7 +25,6 @@ func GetQueryCmd() *cobra.Command {
 	}
 
 	cmds := []*cobra.Command{
-		CmdQueryParams(),
 		CmdQueryPosition(),
 		CmdQueryPositions(),
 		CmdQueryModuleAccounts(),
@@ -35,35 +34,6 @@ func GetQueryCmd() *cobra.Command {
 	}
 
 	return moduleQueryCmd
-}
-
-func CmdQueryParams() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "params",
-		Short: "shows the parameters of the x/perp module",
-		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientQueryContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			queryClient := types.NewQueryClient(clientCtx)
-
-			res, err := queryClient.Params(
-				cmd.Context(), &types.QueryParamsRequest{},
-			)
-			if err != nil {
-				return err
-			}
-
-			return clientCtx.PrintProto(res)
-		},
-	}
-
-	flags.AddQueryFlagsToCmd(cmd)
-
-	return cmd
 }
 
 // sample token-pair: btc:nusd

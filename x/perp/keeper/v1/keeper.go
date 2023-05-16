@@ -46,7 +46,7 @@ func NewKeeper(
 ) Keeper {
 	// Ensure that the module account is set.
 	if moduleAcc := accountKeeper.GetModuleAddress(types.ModuleName); moduleAcc == nil {
-		panic("The x/perp module account has not been set")
+		panic(fmt.Sprintf(`The "%s" module account has not been set`, types.ModuleName))
 	}
 
 	// Set param.types.'KeyTable' if it has not already been set

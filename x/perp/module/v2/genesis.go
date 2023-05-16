@@ -15,7 +15,9 @@ import (
 // InitGenesis initializes the capability module's state from a provided genesis
 // state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
-	k.SetParams(ctx, genState.Params)
+	if err := genState.Validate(); err != nil {
+		panic(err)
+	}
 
 	for _, m := range genState.Markets {
 		k.Markets.Insert(ctx, m.Pair, m)
@@ -26,11 +28,19 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	}
 
 	for _, p := range genState.Positions {
-		k.Positions.Insert(ctx, collections.Join(p.Pair, sdk.MustAccAddressFromBech32(p.TraderAddress)), p)
+		k.Positions.Insert(
+			ctx,
+			collections.Join(p.Pair, sdk.MustAccAddressFromBech32(p.TraderAddress)),
+			p,
+		)
 	}
 
 	for _, p := range genState.ReserveSnapshots {
-		k.ReserveSnapshots.Insert(ctx, collections.Join(p.Amm.Pair, time.UnixMilli(p.TimestampMs)), p)
+		k.ReserveSnapshots.Insert(
+			ctx,
+			collections.Join(p.Amm.Pair, time.UnixMilli(p.TimestampMs)),
+			p,
+		)
 	}
 }
 
@@ -38,7 +48,6 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis := new(types.GenesisState)
 
-	genesis.Params = k.GetParams(ctx)
 	genesis.Markets = k.Markets.Iterate(ctx, collections.Range[asset.Pair]{}).Values()
 	genesis.Amms = k.AMMs.Iterate(ctx, collections.Range[asset.Pair]{}).Values()
 	genesis.Positions = k.Positions.Iterate(ctx, collections.PairRange[asset.Pair, sdk.AccAddress]{}).Values()

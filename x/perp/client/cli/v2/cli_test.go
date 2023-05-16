@@ -18,7 +18,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
-	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/NibiruChain/nibiru/x/perp/client/cli/v2"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v2"
@@ -31,6 +30,13 @@ type IntegrationTestSuite struct {
 	network    *testutilcli.Network
 	users      []sdk.AccAddress
 	liquidator sdk.AccAddress
+}
+
+func setupAppGenesis() app.GenesisState {
+	genState := genesis.NewTestGenesisState()
+	genState = genesis.AddPerpGenesis(genState)
+	genState = genesis.AddOracleGenesis(genState)
+	return genState
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
@@ -46,18 +52,10 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.T().Log("setting up integration test suite")
 
 	app.SetPrefixes(app.AccountAddressPrefix)
-	encodingConfig := app.MakeTestEncodingConfig()
-	genesisState := genesis.NewTestGenesisState()
 
 	// setup market
-	perpGenesis := perptypes.DefaultGenesis()
-	perpGenesis.Markets = []perptypes.Market{
-		*mock.TestMarket().
-			WithPriceFluctuationLimitRatio(sdk.OneDec()).
-			WithMaintenanceMarginRatio(sdk.MustNewDecFromStr("0.0625")).
-			WithMaxLeverage(sdk.NewDec(10)),
-	}
-	genesisState[perptypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(perpGenesis)
+	encodingConfig := app.MakeTestEncodingConfig()
+	genesisState := setupAppGenesis()
 
 	oracleGenesis := oracletypes.DefaultGenesisState()
 	oracleGenesis.Params.Whitelist = []asset.Pair{
@@ -191,19 +189,25 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	val := s.network.Validators[0]
 	user := s.users[0]
 
-	exchangeRate, err := testutilcli.QueryOracleExchangeRate(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+	exchangeRate, err := testutilcli.QueryOracleExchangeRate(
+		val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+	)
 	s.T().Logf("0. current exchange rate is: %+v", exchangeRate)
 	s.NoError(err)
 
 	s.T().Log("A. check market balances")
-	reserveAssets, err := testutilcli.QueryMarketReserveAssets(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+	reserveAssets, err := testutilcli.QueryMarketReserveAssets(
+		val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+	)
 	s.T().Logf("reserve assets: %+v", reserveAssets)
 	s.NoError(err)
 	s.EqualValues(sdk.NewDec(10*common.TO_MICRO), reserveAssets.BaseReserve)
 	s.EqualValues(sdk.NewDec(10*common.TO_MICRO), reserveAssets.QuoteReserve)
 
 	s.T().Log("A. check trader has no existing positions")
-	_, err = testutilcli.QueryPosition(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
+	_, err = testutilcli.QueryPosition(
+		val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user,
+	)
 	s.Error(err)
 
 	s.T().Log("B. open position")

@@ -22,12 +22,12 @@ func (k Keeper) AddMargin(
 ) (res *v2types.MsgAddMarginResponse, err error) {
 	market, err := k.Markets.Get(ctx, pair)
 	if err != nil {
-		return nil, types.ErrPairNotFound
+		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
 	}
 
 	amm, err := k.AMMs.Get(ctx, pair)
 	if err != nil {
-		return nil, types.ErrPairNotFound
+		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
 	}
 
 	position, err := k.Positions.Get(ctx, collections.Join(pair, traderAddr))
@@ -115,12 +115,12 @@ func (k Keeper) RemoveMargin(
 	// fetch objects from state
 	market, err := k.Markets.Get(ctx, pair)
 	if err != nil {
-		return nil, types.ErrPairNotFound
+		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
 	}
 
 	amm, err := k.AMMs.Get(ctx, pair)
 	if err != nil {
-		return nil, types.ErrPairNotFound
+		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
 	}
 
 	position, err := k.Positions.Get(ctx, collections.Join(pair, traderAddr))

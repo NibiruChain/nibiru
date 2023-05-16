@@ -3,33 +3,8 @@ package app
 import (
 	"path/filepath"
 
-	"github.com/CosmWasm/wasmd/x/wasm"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	"github.com/NibiruChain/nibiru/x/epochs"
-	epochskeeper "github.com/NibiruChain/nibiru/x/epochs/keeper"
-	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
-	"github.com/NibiruChain/nibiru/x/inflation"
-	inflationkeeper "github.com/NibiruChain/nibiru/x/inflation/keeper"
-	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
-	oracle "github.com/NibiruChain/nibiru/x/oracle"
-	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
-	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
-	perpamm "github.com/NibiruChain/nibiru/x/perp/amm"
-	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
-	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper/v1"
-	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/keeper/v2"
-	perp "github.com/NibiruChain/nibiru/x/perp/module/v1"
-	perpv2 "github.com/NibiruChain/nibiru/x/perp/module/v2"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
-	perpv2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
-	"github.com/NibiruChain/nibiru/x/spot"
-	spotkeeper "github.com/NibiruChain/nibiru/x/spot/keeper"
-	spottypes "github.com/NibiruChain/nibiru/x/spot/types"
-	"github.com/NibiruChain/nibiru/x/stablecoin"
-	stablecoinkeeper "github.com/NibiruChain/nibiru/x/stablecoin/keeper"
-	stablecointypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
-	"github.com/NibiruChain/nibiru/x/sudo"
+	ibcmock "github.com/cosmos/ibc-go/v4/testing/mock"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -94,7 +69,43 @@ import (
 	porttypes "github.com/cosmos/ibc-go/v4/modules/core/05-port/types"
 	ibchost "github.com/cosmos/ibc-go/v4/modules/core/24-host"
 	ibckeeper "github.com/cosmos/ibc-go/v4/modules/core/keeper"
-	ibcmock "github.com/cosmos/ibc-go/v4/testing/mock"
+
+	"github.com/NibiruChain/nibiru/x/epochs"
+	epochskeeper "github.com/NibiruChain/nibiru/x/epochs/keeper"
+	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
+
+	"github.com/NibiruChain/nibiru/x/sudo"
+
+	"github.com/NibiruChain/nibiru/x/inflation"
+	inflationkeeper "github.com/NibiruChain/nibiru/x/inflation/keeper"
+	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
+
+	oracle "github.com/NibiruChain/nibiru/x/oracle"
+	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
+	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
+
+	perpamm "github.com/NibiruChain/nibiru/x/perp/amm"
+	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+
+	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper/v1"
+	perp "github.com/NibiruChain/nibiru/x/perp/module/v1"
+
+	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/keeper/v2"
+	perpv2 "github.com/NibiruChain/nibiru/x/perp/module/v2"
+	perpv2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
+
+	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
+	"github.com/NibiruChain/nibiru/x/spot"
+	spotkeeper "github.com/NibiruChain/nibiru/x/spot/keeper"
+	spottypes "github.com/NibiruChain/nibiru/x/spot/types"
+
+	"github.com/NibiruChain/nibiru/x/stablecoin"
+	stablecoinkeeper "github.com/NibiruChain/nibiru/x/stablecoin/keeper"
+	stablecointypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
+
+	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func GetStoreKeys() (
@@ -249,7 +260,7 @@ func (app *NibiruApp) InitKeepers(
 	)
 
 	app.PerpKeeperV2 = perpv2keeper.NewKeeper(
-		appCodec, keys[perpv2types.StoreKey], app.GetSubspace(perpv2types.ModuleName),
+		appCodec, keys[perpv2types.StoreKey],
 		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.EpochsKeeper,
 	)
 
@@ -265,8 +276,8 @@ func (app *NibiruApp) InitKeepers(
 	app.EpochsKeeper.SetHooks(
 		epochstypes.NewMultiEpochHooks(
 			app.StablecoinKeeper.Hooks(),
-			app.PerpKeeper.Hooks(),
 			app.PerpKeeperV2.Hooks(),
+			app.PerpKeeper.Hooks(),
 			app.InflationKeeper.Hooks(),
 			app.OracleKeeper.Hooks(),
 		),
@@ -467,6 +478,7 @@ func (app *NibiruApp) AppModules(
 		epochsModule,
 		perpAmmModule,
 		perpModule,
+		perpv2Module,
 		inflationModule,
 		sudoModule,
 		perpv2Module,

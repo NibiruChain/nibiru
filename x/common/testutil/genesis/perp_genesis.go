@@ -1,6 +1,8 @@
 package genesis
 
 import (
+	"time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/app"
@@ -9,9 +11,12 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 
+	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
+
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
+	perpv2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 )
 
 var (
@@ -23,6 +28,8 @@ func AddPerpGenesis(gen app.GenesisState) app.GenesisState {
 		MustMarshalJSON(PerpAmmGenesis())
 	gen[perptypes.ModuleName] = TEST_ENCODING_CONFIG.Marshaler.
 		MustMarshalJSON(PerpGenesis())
+	gen[perpv2types.ModuleName] = TEST_ENCODING_CONFIG.Marshaler.
+		MustMarshalJSON(PerpV2Genesis())
 	return gen
 }
 
@@ -80,6 +87,46 @@ func PerpGenesis() *perptypes.GenesisState {
 		)
 	}
 	gen.PairMetadata = pairMetadata
+	return gen
+}
+
+func PerpV2Genesis() *perpv2types.GenesisState {
+	var markets []perpv2types.Market
+	var amms []perpv2types.AMM
+	defaultParams := perptypes.DefaultParams()
+	for pair, market := range START_MARKETS {
+		markets = append(markets, perpv2types.Market{
+			Pair:                            pair,
+			Enabled:                         true,
+			PriceFluctuationLimitRatio:      market.Config.FluctuationLimitRatio,
+			MaintenanceMarginRatio:          market.Config.MaintenanceMarginRatio,
+			MaxLeverage:                     market.Config.MaxLeverage,
+			LatestCumulativePremiumFraction: sdk.ZeroDec(),
+			ExchangeFeeRatio:                defaultParams.FeePoolFeeRatio,
+			EcosystemFundFeeRatio:           defaultParams.EcosystemFundFeeRatio,
+			LiquidationFeeRatio:             defaultParams.LiquidationFeeRatio,
+			PartialLiquidationRatio:         defaultParams.PartialLiquidationRatio,
+			FundingRateEpochId:              epochstypes.ThirtyMinuteEpochID,
+			TwapLookbackWindow:              time.Minute * 30,
+			PrepaidBadDebt:                  sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+		})
+		amms = append(amms, perpv2types.AMM{
+			Pair:            pair,
+			BaseReserve:     market.BaseReserve,
+			QuoteReserve:    market.QuoteReserve,
+			SqrtDepth:       market.SqrtDepth,
+			PriceMultiplier: market.PegMultiplier,
+			TotalLong:       market.TotalLong,
+			TotalShort:      market.TotalShort,
+		})
+	}
+
+	gen := &perpv2types.GenesisState{
+		Markets:          markets,
+		Amms:             amms,
+		Positions:        []perpv2types.Position{},
+		ReserveSnapshots: []perpv2types.ReserveSnapshot{},
+	}
 	return gen
 }
 

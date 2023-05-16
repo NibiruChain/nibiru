@@ -8,7 +8,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/libs/math"
@@ -21,9 +20,8 @@ import (
 
 // Keeper of the oracle store
 type Keeper struct {
-	cdc        codec.BinaryCodec
-	storeKey   sdk.StoreKey
-	paramSpace paramstypes.Subspace
+	cdc      codec.BinaryCodec
+	storeKey sdk.StoreKey
 
 	AccountKeeper types.AccountKeeper
 	bankKeeper    types.BankKeeper
