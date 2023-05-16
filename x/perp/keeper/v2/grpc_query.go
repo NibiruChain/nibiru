@@ -109,16 +109,6 @@ func (q queryServer) position(ctx sdk.Context, pair asset.Pair, trader sdk.AccAd
 	}, nil
 }
 
-func (q queryServer) Params(
-	goCtx context.Context, req *v2types.QueryParamsRequest,
-) (*v2types.QueryParamsResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-
-	return &v2types.QueryParamsResponse{Params: q.k.GetParams(sdk.UnwrapSDKContext(goCtx))}, nil
-}
-
 func (q queryServer) ModuleAccounts(
 	ctx context.Context, _ *v2types.QueryModuleAccountsRequest,
 ) (*v2types.QueryModuleAccountsResponse, error) {

@@ -8,7 +8,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -17,9 +16,8 @@ import (
 )
 
 type Keeper struct {
-	cdc           codec.BinaryCodec
-	storeKey      sdk.StoreKey
-	ParamSubspace paramtypes.Subspace
+	cdc      codec.BinaryCodec
+	storeKey sdk.StoreKey
 
 	BankKeeper    types.BankKeeper
 	AccountKeeper types.AccountKeeper
@@ -36,7 +34,6 @@ type Keeper struct {
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey sdk.StoreKey,
-	paramSubspace paramtypes.Subspace,
 
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
@@ -48,36 +45,30 @@ func NewKeeper(
 		panic("The x/perp module account has not been set")
 	}
 
-	// Set param.types.'KeyTable' if it has not already been set
-	if !paramSubspace.HasKeyTable() {
-		paramSubspace = paramSubspace.WithKeyTable(types.ParamKeyTable())
-	}
-
 	return Keeper{
 		cdc:           cdc,
 		storeKey:      storeKey,
-		ParamSubspace: paramSubspace,
 		BankKeeper:    bankKeeper,
 		AccountKeeper: accountKeeper,
 		OracleKeeper:  oracleKeeper,
 		EpochKeeper:   epochKeeper,
 		Markets: collections.NewMap(
-			storeKey, 0,
+			storeKey, 11,
 			asset.PairKeyEncoder,
 			collections.ProtoValueEncoder[v2types.Market](cdc),
 		),
 		AMMs: collections.NewMap(
-			storeKey, 1,
+			storeKey, 12,
 			asset.PairKeyEncoder,
 			collections.ProtoValueEncoder[v2types.AMM](cdc),
 		),
 		Positions: collections.NewMap(
-			storeKey, 2,
+			storeKey, 13,
 			collections.PairKeyEncoder(asset.PairKeyEncoder, collections.AccAddressKeyEncoder),
 			collections.ProtoValueEncoder[v2types.Position](cdc),
 		),
 		ReserveSnapshots: collections.NewMap(
-			storeKey, 3,
+			storeKey, 14,
 			collections.PairKeyEncoder(asset.PairKeyEncoder, collections.TimeKeyEncoder),
 			collections.ProtoValueEncoder[v2types.ReserveSnapshot](cdc),
 		),
@@ -86,17 +77,6 @@ func NewKeeper(
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", v2types.ModuleName))
-}
-
-// GetParams get all parameters as v2types.Params
-func (k Keeper) GetParams(ctx sdk.Context) (params v2types.Params) {
-	k.ParamSubspace.GetParamSet(ctx, &params)
-	return params
-}
-
-// SetParams set the params
-func (k Keeper) SetParams(ctx sdk.Context, params v2types.Params) {
-	k.ParamSubspace.SetParamSet(ctx, &params)
 }
 
 // ChangeMarketEnabledParameter change the market enabled parameter

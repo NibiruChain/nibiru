@@ -91,7 +91,10 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 // to a genesis file, which can be imported again
 // with InitGenesis
 func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
-	params, _ := keeper.Params.Get(ctx)
+	params, err := keeper.Params.Get(ctx)
+	if err != nil {
+		panic(err)
+	}
 
 	feederDelegations := []types.FeederDelegation{}
 	for _, kv := range keeper.FeederDelegations.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {
@@ -117,7 +120,8 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 	var pairs []asset.Pair
 	pairs = append(pairs, keeper.WhitelistedPairs.Iterate(ctx, collections.Range[asset.Pair]{}).Keys()...)
 
-	return types.NewGenesisState(params,
+	return types.NewGenesisState(
+		params,
 		exchangeRates,
 		feederDelegations,
 		missCounters,

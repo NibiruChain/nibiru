@@ -2,10 +2,10 @@ package ante_test
 
 import (
 	"testing"
-
-	feeante "github.com/NibiruChain/nibiru/app/ante"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	ibcante "github.com/cosmos/ibc-go/v4/modules/core/ante"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -16,7 +16,11 @@ import (
 	xauthsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/stretchr/testify/suite"
 
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+
 	"github.com/NibiruChain/nibiru/app"
+	feeante "github.com/NibiruChain/nibiru/app/ante"
+	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 )
 
@@ -33,19 +37,31 @@ type AnteTestSuite struct {
 
 // SetupTest setups a new test, with new app, context, and anteHandler.
 func (suite *AnteTestSuite) SetupTest() {
-	suite.app, suite.ctx = testapp.NewNibiruTestAppAndContext(true)
-	suite.ctx = suite.ctx.WithBlockHeight(1).WithChainID("test-chain-id")
+	// Set up base app and ctx
+	encodingConfig := genesis.TEST_ENCODING_CONFIG
+	suite.app = testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encodingConfig.Marshaler))
+	chainId := "test-chain-id"
+	ctx := suite.app.NewContext(true, tmproto.Header{
+		Height:  1,
+		ChainID: chainId,
+		Time:    time.Now().UTC(),
+	})
+	suite.ctx = ctx
 
-	// Set up TxConfig.
-	encodingConfig := app.MakeTestEncodingConfig()
-
+	// Set up TxConfig
 	suite.clientCtx = client.Context{}.
 		WithTxConfig(encodingConfig.TxConfig).
-		WithChainID("test-chain-id")
+		WithChainID(chainId).
+		WithLegacyAmino(encodingConfig.Amino)
+
+	suite.app.AccountKeeper.SetParams(ctx, authtypes.DefaultParams())
+	params := suite.app.AccountKeeper.GetParams(ctx)
+	suite.Require().NoError(params.Validate())
 
 	anteDecorators := []sdk.AnteDecorator{
 		ante.NewSetUpContextDecorator(),
 		ante.NewRejectExtensionOptionsDecorator(),
+		ante.NewValidateBasicDecorator(),
 		ante.NewMempoolFeeDecorator(),
 		ante.NewValidateBasicDecorator(),
 		ante.NewTxTimeoutHeightDecorator(),
@@ -53,6 +69,7 @@ func (suite *AnteTestSuite) SetupTest() {
 		feeante.NewPostPriceFixedPriceDecorator(),
 		ante.NewConsumeGasForTxSizeDecorator(suite.app.AccountKeeper),
 		ante.NewDeductFeeDecorator(suite.app.AccountKeeper, suite.app.BankKeeper, suite.app.FeeGrantKeeper), // Replace fee ante from cosmos auth with a custom one.
+
 		// SetPubKeyDecorator must be called before all signature verification decorators
 		ante.NewSetPubKeyDecorator(suite.app.AccountKeeper),
 		ante.NewValidateSigCountDecorator(suite.app.AccountKeeper),
@@ -81,6 +98,9 @@ func (suite *AnteTestSuite) CreateTestTx(privs []cryptotypes.PrivKey, accNums []
 		}
 
 		sigsV2 = append(sigsV2, sigV2)
+		acc := suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx, sdk.AccAddress(priv.PubKey().Address()))
+		err := acc.SetAccountNumber(uint64(i) + 100)
+		suite.Require().NoError(err)
 	}
 	err := suite.txBuilder.SetSignatures(sigsV2...)
 	if err != nil {
