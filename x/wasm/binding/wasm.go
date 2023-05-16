@@ -6,12 +6,14 @@ import (
 
 	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/v1/amm/keeper"
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/v1/keeper"
+	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	"github.com/NibiruChain/nibiru/x/sudo"
 )
 
 func RegisterWasmOptions(
 	perp *perpkeeper.Keeper,
 	perpAmm *perpammkeeper.Keeper,
+	perpv2 *perpv2keeper.Keeper,
 	sudoKeeper *sudo.Keeper,
 ) []wasm.Option {
 	// Custom querier
@@ -21,7 +23,7 @@ func RegisterWasmOptions(
 	})
 
 	wasmExecuteOption := wasmkeeper.WithMessageHandlerDecorator(
-		CustomExecuteMsgHandler(*perp, *sudoKeeper),
+		CustomExecuteMsgHandler(*perp, *perpv2, *sudoKeeper),
 	)
 
 	return []wasm.Option{wasmQueryOption, wasmExecuteOption}

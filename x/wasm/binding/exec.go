@@ -12,6 +12,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/set"
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/v1/keeper"
+	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	"github.com/NibiruChain/nibiru/x/sudo"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 )
@@ -86,6 +87,13 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 			cwMsg := contractExecuteMsg.ExecuteMsg.DepthShift
 			err = messenger.Perp.DepthShift(cwMsg, contractAddr, ctx)
 			return events, data, err
+		case contractExecuteMsg.ExecuteMsg.InsuranceFundWithdraw != nil:
+			if err := messenger.CheckPermissions(contractAddr, ctx); err != nil {
+				return events, data, err
+			}
+			cwMsg := contractExecuteMsg.ExecuteMsg.InsuranceFundWithdraw
+			err = messenger.Perp.InsuranceFundWithdraw(cwMsg, ctx)
+			return events, data, err
 		default:
 			err = wasmvmtypes.InvalidRequest{
 				Err:     "invalid bindings request",
@@ -100,12 +108,13 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 
 func CustomExecuteMsgHandler(
 	perp perpkeeper.Keeper,
+	perpv2 perpv2keeper.Keeper,
 	sudoKeeper sudo.Keeper,
 ) func(wasmkeeper.Messenger) wasmkeeper.Messenger {
 	return func(originalWasmMessenger wasmkeeper.Messenger) wasmkeeper.Messenger {
 		return &CustomWasmExecutor{
 			Wasm: originalWasmMessenger,
-			Perp: &ExecutorPerp{Perp: perp},
+			Perp: &ExecutorPerp{Perp: perp, PerpV2: perpv2},
 			Sudo: &sudoKeeper,
 		}
 	}
