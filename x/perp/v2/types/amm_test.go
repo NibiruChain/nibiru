@@ -10,7 +10,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
-	v2 "github.com/NibiruChain/nibiru/x/perp/types/v2"
+	v2 "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 func TestSwapBaseAsset(t *testing.T) {

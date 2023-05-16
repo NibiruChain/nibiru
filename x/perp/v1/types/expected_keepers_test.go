@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
+	types "github.com/NibiruChain/nibiru/x/perp/v1/types"
 )
 
 /*
