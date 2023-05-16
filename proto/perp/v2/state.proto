@@ -7,7 +7,7 @@ import "cosmos/base/v1beta1/coin.proto";
 import "cosmos_proto/cosmos.proto";
 import "google/protobuf/duration.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/perp/types/v2";
+option go_package = "github.com/NibiruChain/nibiru/x/perp/v2/types;types";
 
 // The direction that the user is trading in
 // LONG means the user is going long the base asset (e.g. buy BTC)

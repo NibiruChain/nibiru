@@ -1,0 +1,12 @@
+syntax = "proto3";
+package nibiru.perp.v1.amm;
+
+import "gogoproto/gogo.proto";
+import "perp/v1/amm/state.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/x/perp/v1/amm/types";
+
+// GenesisState defines the perp.amm module's genesis state.
+message GenesisState {
+  repeated Market markets = 1 [(gogoproto.nullable) = false];
+}
