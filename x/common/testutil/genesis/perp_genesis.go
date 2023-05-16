@@ -72,6 +72,22 @@ var START_MARKETS = map[asset.Pair]perpammtypes.Market{
 			MaxLeverage:            sdk.MustNewDecFromStr("20"),
 		},
 	},
+	asset.Registry.Pair(denoms.BTC, denoms.NUSD): {
+		Pair:          asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
+		BaseReserve:   sdk.NewDec(10 * common.TO_MICRO),
+		QuoteReserve:  sdk.NewDec(10 * common.TO_MICRO),
+		SqrtDepth:     common.MustSqrtDec(sdk.NewDec(10 * common.TO_MICRO * 10 * common.TO_MICRO)),
+		PegMultiplier: sdk.NewDec(10),
+		TotalLong:     sdk.ZeroDec(),
+		TotalShort:    sdk.ZeroDec(),
+		Config: perpammtypes.MarketConfig{
+			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
+			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
+			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.2"),
+			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.04"),
+			MaxLeverage:            sdk.MustNewDecFromStr("20"),
+		},
+	},
 }
 
 func PerpGenesis() *perptypes.GenesisState {
@@ -135,6 +151,7 @@ func PerpAmmGenesis() *perpammtypes.GenesisState {
 	perpAmmGenesis.Markets = []perpammtypes.Market{
 		START_MARKETS[asset.Registry.Pair(denoms.ETH, denoms.NUSD)],
 		START_MARKETS[asset.Registry.Pair(denoms.NIBI, denoms.NUSD)],
+		START_MARKETS[asset.Registry.Pair(denoms.BTC, denoms.NUSD)],
 	}
 	return perpAmmGenesis
 }

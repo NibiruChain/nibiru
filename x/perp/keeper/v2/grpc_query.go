@@ -130,3 +130,26 @@ func (q queryServer) ModuleAccounts(
 
 	return &v2types.QueryModuleAccountsResponse{Accounts: moduleAccountsWithBalances}, nil
 }
+
+func (q queryServer) QueryMarkets(
+	goCtx context.Context, _ *v2types.QueryMarketsRequest,
+) (*v2types.QueryMarketsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	var duos []v2types.AmmMarketDuo
+	markets := q.k.Markets.Iterate(ctx, collections.Range[asset.Pair]{}).Values()
+	for _, market := range markets {
+		pair := market.Pair
+		amm, err := q.k.AMMs.Get(ctx, pair)
+		if err != nil {
+			return nil, err
+		}
+		duo := v2types.AmmMarketDuo{
+			Amm:    amm,
+			Market: market,
+		}
+		duos = append(duos, duo)
+	}
+
+	return &v2types.QueryMarketsResponse{Duos: duos}, nil
+}

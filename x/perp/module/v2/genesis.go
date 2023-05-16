@@ -24,21 +24,23 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	}
 
 	for _, a := range genState.Amms {
-		k.AMMs.Insert(ctx, a.Pair, a)
+		pair := a.Pair
+		k.AMMs.Insert(ctx, pair, a)
+		timestampMs := ctx.BlockTime().UnixMilli()
+		k.ReserveSnapshots.Insert(
+			ctx,
+			collections.Join(pair, time.UnixMilli(timestampMs)),
+			types.ReserveSnapshot{
+				Amm:         a,
+				TimestampMs: timestampMs,
+			},
+		)
 	}
 
 	for _, p := range genState.Positions {
 		k.Positions.Insert(
 			ctx,
 			collections.Join(p.Pair, sdk.MustAccAddressFromBech32(p.TraderAddress)),
-			p,
-		)
-	}
-
-	for _, p := range genState.ReserveSnapshots {
-		k.ReserveSnapshots.Insert(
-			ctx,
-			collections.Join(p.Amm.Pair, time.UnixMilli(p.TimestampMs)),
 			p,
 		)
 	}

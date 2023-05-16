@@ -16,7 +16,10 @@ import (
 	perpammcli "github.com/NibiruChain/nibiru/x/perp/amm/cli"
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	perpcli "github.com/NibiruChain/nibiru/x/perp/client/cli/v1"
+
+	perpv2cli "github.com/NibiruChain/nibiru/x/perp/client/cli/v2"
 	"github.com/NibiruChain/nibiru/x/perp/types/v1"
+	perpv2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
 	sudocli "github.com/NibiruChain/nibiru/x/sudo/cli"
 	sudotypes "github.com/NibiruChain/nibiru/x/sudo/pb"
 )
@@ -83,6 +86,44 @@ func QueryMarketReserveAssets(clientCtx client.Context, pair asset.Pair,
 		return nil, err
 	}
 	return &queryResp, nil
+}
+
+func QueryMarketsV2(
+	clientCtx client.Context,
+) (*perpv2types.QueryMarketsResponse, error) {
+	queryResp := new(perpv2types.QueryMarketsResponse)
+	if err := ExecQuery(clientCtx, perpv2cli.CmdQueryMarkets(), []string{}, queryResp); err != nil {
+		return nil, err
+	}
+	return queryResp, nil
+}
+
+func QueryMarketV2(
+	clientCtx client.Context, pair asset.Pair,
+) (*perpv2types.AmmMarketDuo, error) {
+	queryResp, err := QueryMarketsV2(clientCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	ammMarket := new(perpv2types.AmmMarketDuo)
+	found := false
+	for _, duo := range queryResp.Duos {
+		if duo.Amm.Pair == pair {
+			*ammMarket = duo
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		jsonBz := clientCtx.Codec.MustMarshalJSON(queryResp)
+
+		return nil, fmt.Errorf(
+			`expected market "%s" in response\nqueryResp: %s`,
+			pair, jsonBz)
+	}
+	return ammMarket, nil
 }
 
 func QueryOracleExchangeRate(clientCtx client.Context, pair asset.Pair) (*oracletypes.QueryExchangeRateResponse, error) {

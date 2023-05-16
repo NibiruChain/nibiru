@@ -28,6 +28,7 @@ func GetQueryCmd() *cobra.Command {
 		CmdQueryPosition(),
 		CmdQueryPositions(),
 		CmdQueryModuleAccounts(),
+		CmdQueryMarkets(),
 	}
 	for _, cmd := range cmds {
 		moduleQueryCmd.AddCommand(cmd)
@@ -129,6 +130,33 @@ func CmdQueryModuleAccounts() *cobra.Command {
 			queryClient := types.NewQueryClient(clientCtx)
 
 			res, err := queryClient.ModuleAccounts(cmd.Context(), &types.QueryModuleAccountsRequest{})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdQueryMarkets() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "markets",
+		Short: "query all market info",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.QueryMarkets(cmd.Context(), &types.QueryMarketsRequest{})
 			if err != nil {
 				return err
 			}

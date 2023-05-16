@@ -189,20 +189,18 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	val := s.network.Validators[0]
 	user := s.users[0]
 
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	exchangeRate, err := testutilcli.QueryOracleExchangeRate(
-		val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+		val.ClientCtx, pair,
 	)
 	s.T().Logf("0. current exchange rate is: %+v", exchangeRate)
 	s.NoError(err)
 
 	s.T().Log("A. check market balances")
-	reserveAssets, err := testutilcli.QueryMarketReserveAssets(
-		val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-	)
-	s.T().Logf("reserve assets: %+v", reserveAssets)
-	s.NoError(err)
-	s.EqualValues(sdk.NewDec(10*common.TO_MICRO), reserveAssets.BaseReserve)
-	s.EqualValues(sdk.NewDec(10*common.TO_MICRO), reserveAssets.QuoteReserve)
+	ammMarketDuo, err := testutilcli.QueryMarketV2(val.ClientCtx, pair)
+	s.Require().NoError(err)
+	s.EqualValues(sdk.NewDec(10*common.TO_MICRO), ammMarketDuo.Amm.BaseReserve)
+	s.EqualValues(sdk.NewDec(10*common.TO_MICRO), ammMarketDuo.Amm.QuoteReserve)
 
 	s.T().Log("A. check trader has no existing positions")
 	_, err = testutilcli.QueryPosition(
@@ -222,11 +220,11 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
 	s.T().Log("B. check market balance after open position")
-	reserveAssets, err = testutilcli.QueryMarketReserveAssets(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
-	s.T().Logf("reserve assets: %+v", reserveAssets)
-	s.NoError(err)
-	s.EqualValues(sdk.MustNewDecFromStr("9999666.677777407419752675"), reserveAssets.BaseReserve)
-	s.EqualValues(sdk.MustNewDecFromStr("10000333.333333333333333333"), reserveAssets.QuoteReserve)
+	ammMarketDuo, err = testutilcli.QueryMarketV2(val.ClientCtx, pair)
+	s.Require().NoError(err)
+	s.T().Logf("ammMarketDuo: %s", ammMarketDuo.String())
+	s.EqualValues(sdk.MustNewDecFromStr("9999666.677777407419752675"), ammMarketDuo.Amm.BaseReserve)
+	s.EqualValues(sdk.MustNewDecFromStr("10000333.333333333333333333"), ammMarketDuo.Amm.QuoteReserve)
 
 	s.T().Log("B. check trader position")
 	queryResp, err := testutilcli.QueryPosition(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
@@ -278,11 +276,12 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
 
 	s.T().Log("D. Check market after opening reverse position")
-	reserveAssets, err = testutilcli.QueryMarketReserveAssets(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
-	s.NoError(err)
-	s.T().Logf(" \n reserve assets: %+v \n", reserveAssets)
-	s.EqualValues(sdk.MustNewDecFromStr("9999166.736105324556286976"), reserveAssets.BaseReserve)
-	s.EqualValues(sdk.MustNewDecFromStr("10000833.333333333333333333"), reserveAssets.QuoteReserve)
+
+	ammMarketDuo, err = testutilcli.QueryMarketV2(val.ClientCtx, pair)
+	s.Require().NoError(err)
+	s.T().Logf("ammMarketDuo: %s", ammMarketDuo.String())
+	s.EqualValues(sdk.MustNewDecFromStr("9999166.736105324556286976"), ammMarketDuo.Amm.BaseReserve)
+	s.EqualValues(sdk.MustNewDecFromStr("10000833.333333333333333333"), ammMarketDuo.Amm.QuoteReserve)
 
 	s.T().Log("D. Check trader position")
 	queryResp, err = testutilcli.QueryPosition(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
