@@ -1,0 +1,195 @@
+syntax = "proto3";
+
+package nibiru.perp.v1.amm;
+
+option go_package = "github.com/NibiruChain/nibiru/x/perp/v1/amm/types";
+
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+
+enum Direction {
+  DIRECTION_UNSPECIFIED = 0;
+  LONG = 1;
+  SHORT = 2;
+}
+
+// Enumerates different options of calculating twap.
+enum TwapCalcOption {
+  TWAP_CALC_OPTION_UNSPECIFIED = 0;
+
+  // Spot price from quote asset reserve / base asset reserve
+  SPOT = 1;
+
+  // Swapping with quote assets, output denominated in base assets
+  QUOTE_ASSET_SWAP = 2;
+
+  // Swapping with base assets, output denominated in quote assets
+  BASE_ASSET_SWAP = 3;
+}
+
+// A virtual pool used only for price discovery of perpetual futures contracts.
+// No real liquidity exists in this pool.
+message Market {
+  option (gogoproto.goproto_stringer) = false;
+
+  // always BASE:QUOTE, e.g. BTC:NUSD or ETH:NUSD
+  string pair = 1 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+
+  // base asset is the crypto asset, e.g. BTC or ETH
+  string base_reserve = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // quote asset is usually stablecoin, in our case NUSD
+  string quote_reserve = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  MarketConfig config = 4 [ (gogoproto.nullable) = false ];
+
+  // The square root of the liquidity depth. Liquidity depth is the product of
+  // the reserves.
+  string sqrt_depth = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // Total long refers to the sum of long open notional in base.
+  string total_long = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];  
+
+  // Total short refers to the sum of short open notional in base.
+  string total_short = 7 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ]; 
+
+  // TD docs. For now, leave this as 1 until the feature PR.
+  string peg_multiplier = 8 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message MarketConfig {
+  // ratio applied to reserves in order not to over trade
+  string trade_limit_ratio = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // percentage that a single open or close position can alter the reserve
+  // amounts
+  string fluctuation_limit_ratio = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // max_oracle_spread_ratio
+  string max_oracle_spread_ratio = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // maintenance_margin_ratio
+  string maintenance_margin_ratio = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // max_leverage
+  string max_leverage = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// CurrentTWAP states defines the numerator and denominator for the TWAP
+// calculation
+message CurrentTWAP {
+  string pair_id = 1 [ (gogoproto.customname) = "PairID" ];
+  string numerator = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  string denominator = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  string price = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// a snapshot of the perp.amm's reserves at a given point in time
+message ReserveSnapshot {
+  string pair = 5 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+
+  string base_reserve = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // quote asset is usually the margin asset, e.g. NUSD
+  string quote_reserve = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // milliseconds since unix epoch
+  int64 timestamp_ms = 4;
+
+  // peg multiplier is needed to compute mark price in the snapshot
+  string peg_multiplier = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// PoolPrices is a simple structure that displays a snapshot of the mark and
+// index prices for an asset. Empty strings for the indexPrice or twapMark
+// fields indicate that the price is currently unavailable.
+message PoolPrices {
+  // Pair identifier for the two assets. Always in format 'base:quote'
+  string pair = 9 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+
+  // MarkPrice is the instantaneous price of the perp.
+  // Equivalent to quoteReserve / baseReserve.
+  string mark_price = 10 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // IndexPrice is the price of the "underlying" for the perp
+  string index_price = 11;
+
+  // TwapMark is the time-weighted average (mark) price.
+  string twap_mark = 12;
+
+  // SwapInvariant is the product of the reserves, commonly referred to as "k".
+  string swap_invariant = 13 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.moretags) = "yaml:\"swap_invariant\"",
+    (gogoproto.nullable) = false
+  ];
+
+  // The block number corresponding to each price
+  int64 block_number = 14;
+}

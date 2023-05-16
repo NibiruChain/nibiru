@@ -14,9 +14,9 @@ import (
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
-	perpv2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/v1/amm/types"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/v1/types"
+	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 var (
@@ -72,22 +72,6 @@ var START_MARKETS = map[asset.Pair]perpammtypes.Market{
 			MaxLeverage:            sdk.MustNewDecFromStr("20"),
 		},
 	},
-	asset.Registry.Pair(denoms.BTC, denoms.NUSD): {
-		Pair:          asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
-		BaseReserve:   sdk.NewDec(10 * common.TO_MICRO),
-		QuoteReserve:  sdk.NewDec(10 * common.TO_MICRO),
-		SqrtDepth:     common.MustSqrtDec(sdk.NewDec(10 * common.TO_MICRO * 10 * common.TO_MICRO)),
-		PegMultiplier: sdk.NewDec(10),
-		TotalLong:     sdk.ZeroDec(),
-		TotalShort:    sdk.ZeroDec(),
-		Config: perpammtypes.MarketConfig{
-			TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
-			FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
-			MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.2"),
-			MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.04"),
-			MaxLeverage:            sdk.MustNewDecFromStr("20"),
-		},
-	},
 }
 
 func PerpGenesis() *perptypes.GenesisState {
@@ -107,11 +91,37 @@ func PerpGenesis() *perptypes.GenesisState {
 }
 
 func PerpV2Genesis() *perpv2types.GenesisState {
-	var markets []perpv2types.Market
-	var amms []perpv2types.AMM
+
+	markets := make(map[asset.Pair]perpammtypes.Market)
+
+	extraMarkets := map[asset.Pair]perpammtypes.Market{
+		asset.Registry.Pair(denoms.BTC, denoms.NUSD): {
+			Pair:          asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
+			BaseReserve:   sdk.NewDec(10 * common.TO_MICRO),
+			QuoteReserve:  sdk.NewDec(10 * common.TO_MICRO),
+			SqrtDepth:     common.MustSqrtDec(sdk.NewDec(10 * common.TO_MICRO * 10 * common.TO_MICRO)),
+			PegMultiplier: sdk.NewDec(10),
+			TotalLong:     sdk.ZeroDec(),
+			TotalShort:    sdk.ZeroDec(),
+			Config: perpammtypes.MarketConfig{
+				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
+				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
+				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.2"),
+				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.04"),
+				MaxLeverage:            sdk.MustNewDecFromStr("20"),
+			},
+		},
+	}
+
+	for pair, market := range extraMarkets {
+		markets[pair] = market
+	}
+
+	var marketsv2 []perpv2types.Market
+	var ammsv2 []perpv2types.AMM
 	defaultParams := perptypes.DefaultParams()
-	for pair, market := range START_MARKETS {
-		markets = append(markets, perpv2types.Market{
+	for pair, market := range markets {
+		marketsv2 = append(marketsv2, perpv2types.Market{
 			Pair:                            pair,
 			Enabled:                         true,
 			PriceFluctuationLimitRatio:      market.Config.FluctuationLimitRatio,
@@ -126,7 +136,7 @@ func PerpV2Genesis() *perpv2types.GenesisState {
 			TwapLookbackWindow:              time.Minute * 30,
 			PrepaidBadDebt:                  sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
 		})
-		amms = append(amms, perpv2types.AMM{
+		ammsv2 = append(ammsv2, perpv2types.AMM{
 			Pair:            pair,
 			BaseReserve:     market.BaseReserve,
 			QuoteReserve:    market.QuoteReserve,
@@ -138,8 +148,8 @@ func PerpV2Genesis() *perpv2types.GenesisState {
 	}
 
 	gen := &perpv2types.GenesisState{
-		Markets:          markets,
-		Amms:             amms,
+		Markets:          marketsv2,
+		Amms:             ammsv2,
 		Positions:        []perpv2types.Position{},
 		ReserveSnapshots: []perpv2types.ReserveSnapshot{},
 	}
@@ -151,7 +161,6 @@ func PerpAmmGenesis() *perpammtypes.GenesisState {
 	perpAmmGenesis.Markets = []perpammtypes.Market{
 		START_MARKETS[asset.Registry.Pair(denoms.ETH, denoms.NUSD)],
 		START_MARKETS[asset.Registry.Pair(denoms.NIBI, denoms.NUSD)],
-		START_MARKETS[asset.Registry.Pair(denoms.BTC, denoms.NUSD)],
 	}
 	return perpAmmGenesis
 }
