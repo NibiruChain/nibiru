@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	types "github.com/NibiruChain/nibiru/x/perp/types/v2"
+	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 func GetTxCmd() *cobra.Command {

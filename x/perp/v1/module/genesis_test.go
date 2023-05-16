@@ -15,8 +15,8 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	perp "github.com/NibiruChain/nibiru/x/perp/module/v1"
-	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
+	perp "github.com/NibiruChain/nibiru/x/perp/v1/module"
+	types "github.com/NibiruChain/nibiru/x/perp/v1/types"
 )
 
 func TestGenesis(t *testing.T) {

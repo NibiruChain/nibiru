@@ -20,7 +20,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/NibiruChain/nibiru/x/perp/client/cli/v2"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v2"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 type IntegrationTestSuite struct {

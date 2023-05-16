@@ -7,7 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
-	"github.com/NibiruChain/nibiru/x/perp/simulation"
+	"github.com/NibiruChain/nibiru/x/perp/v1/simulation"
 )
 
 // GenerateGenesisState creates a default GenState of the module
