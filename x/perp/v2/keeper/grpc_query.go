@@ -136,7 +136,7 @@ func (q queryServer) QueryMarkets(
 ) (*v2types.QueryMarketsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	var duos []v2types.AmmMarketDuo
+	var ammMarkets []v2types.AmmMarket
 	markets := q.k.Markets.Iterate(ctx, collections.Range[asset.Pair]{}).Values()
 	for _, market := range markets {
 		pair := market.Pair
@@ -144,12 +144,12 @@ func (q queryServer) QueryMarkets(
 		if err != nil {
 			return nil, err
 		}
-		duo := v2types.AmmMarketDuo{
+		duo := v2types.AmmMarket{
 			Amm:    amm,
 			Market: market,
 		}
-		duos = append(duos, duo)
+		ammMarkets = append(ammMarkets, duo)
 	}
 
-	return &v2types.QueryMarketsResponse{Duos: duos}, nil
+	return &v2types.QueryMarketsResponse{AmmMarkets: ammMarkets}, nil
 }
