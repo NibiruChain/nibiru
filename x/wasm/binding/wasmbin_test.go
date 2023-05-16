@@ -53,6 +53,11 @@ func SetupAllContracts(
 	contract = Instantiate.ShifterContract(t, ctx, nibiru, codeId, sender, deposit)
 	ContractMap[wasmKey] = contract
 
+	wasmKey = wasmbin.WasmKeyController
+	codeId = StoreContract(t, wasmKey, ctx, nibiru, sender)
+	contract = Instantiate.ControllerContract(t, ctx, nibiru, codeId, sender, deposit)
+	ContractMap[wasmKey] = contract
+
 	return nibiru, ctx
 }
 
@@ -118,6 +123,18 @@ func (i inst) ShifterContract(
 ) (contractAddr sdk.AccAddress) {
 	initMsg := []byte(fmt.Sprintf(`{ "admin": "%s"}`, sender))
 	label := "contract for calling peg shift and depth shift in x/perp"
+	return InstantiateContract(
+		t, ctx, nibiru, codeId, initMsg, sender, label, deposit,
+	)
+}
+
+// Instantiates the controller contract with the sender set as the admin.
+func (i inst) ControllerContract(
+	t *testing.T, ctx sdk.Context, nibiru *app.NibiruApp, codeId uint64,
+	sender sdk.AccAddress, deposit sdk.Coins,
+) (contractAddr sdk.AccAddress) {
+	initMsg := []byte(fmt.Sprintf(`{ "admin": "%s"}`, sender))
+	label := "contract for admin functions"
 	return InstantiateContract(
 		t, ctx, nibiru, codeId, initMsg, sender, label, deposit,
 	)

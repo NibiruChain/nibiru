@@ -346,6 +346,7 @@ func GetWasmOpts(nibiru NibiruApp, appOpts servertypes.AppOptions) []wasm.Option
 	wasmOpts = append(wasmOpts, wasmbinding.RegisterWasmOptions(
 		&nibiru.PerpKeeper,
 		&nibiru.PerpAmmKeeper,
+		&nibiru.PerpKeeperV2,
 		&nibiru.SudoKeeper,
 	)...)
 
