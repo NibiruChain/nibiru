@@ -15,7 +15,7 @@ import (
 func RegisterWasmOptions(
 	perp perpkeeper.Keeper,
 	perpAmm perpammkeeper.Keeper,
-	perpv2 *perpv2keeper.Keeper,
+	perpv2 perpv2keeper.Keeper,
 	sudoKeeper sudo.Keeper,
 	oracleKeeper oraclekeeper.Keeper,
 ) []wasm.Option {
@@ -25,7 +25,7 @@ func RegisterWasmOptions(
 	})
 
 	wasmExecuteOption := wasmkeeper.WithMessageHandlerDecorator(
-		CustomExecuteMsgHandler(perp, *perpv2, sudoKeeper, oracleKeeper),
+		CustomExecuteMsgHandler(perp, perpv2, sudoKeeper, oracleKeeper),
 	)
 
 	return []wasm.Option{wasmQueryOption, wasmExecuteOption}

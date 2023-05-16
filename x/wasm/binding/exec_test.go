@@ -65,7 +65,6 @@ type TestSuiteExecutor struct {
 	contractPerp       sdk.AccAddress
 	contractController sdk.AccAddress
 	contractShifter    sdk.AccAddress
-	contractController sdk.AccAddress
 	happyFields        ExampleFields
 }
 
