@@ -7,7 +7,7 @@ import "cosmos/base/v1beta1/coin.proto";
 import "cosmos_proto/cosmos.proto";
 import "google/protobuf/duration.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/perp/types/v2";
+option go_package = "github.com/NibiruChain/nibiru/x/perp/v2/types";
 
 // The direction that the user is trading in
 // LONG means the user is going long the base asset (e.g. buy BTC)
@@ -148,13 +148,13 @@ message AMM {
   string total_long = 6 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
-  ];  
+  ];
 
   // Total short refers to the sum of short open notional in base.
   string total_short = 7 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
-  ];  
+  ];
 }
 
 message Position {

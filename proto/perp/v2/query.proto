@@ -7,7 +7,7 @@ import "google/api/annotations.proto";
 import "perp/v2/state.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/perp/types/v2";
+option go_package = "github.com/NibiruChain/nibiru/x/perp/v2/types";
 
 // Query defines the gRPC querier service.
 service Query {
@@ -87,4 +87,15 @@ message AccountWithBalance {
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
+}
+
+message AmmMarket {
+  Market market = 1 [ (gogoproto.nullable) = false ];
+  AMM amm = 2 [ (gogoproto.nullable) = false ];
+}
+
+message QueryMarketsRequest {}
+
+message QueryMarketsResponse {
+  repeated AmmMarket amm_markets = 1 [ (gogoproto.nullable) = false ];
 }

@@ -15,7 +15,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	perpv2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
+	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 	"github.com/NibiruChain/nibiru/x/wasm/binding"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/wasmbin"

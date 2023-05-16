@@ -131,6 +131,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1350](https://github.com/NibiruChain/nibiru/pull/1350) - feat(perp): `EditPriceMultiplier` and `EditSwapInvariant`
 * [#1361](https://github.com/NibiruChain/nibiru/pull/1361) - feat(perp): add `PerpV2` module
 * [#1363](https://github.com/NibiruChain/nibiru/pull/1363) - feat(perp): wire `PerpV2` module
+* [#1365](https://github.com/NibiruChain/nibiru/pull/1365) - refactor(perp): split `perp` module into v1/ and v2/
 
 ### Bug Fixes
 
