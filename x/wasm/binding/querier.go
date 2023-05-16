@@ -9,10 +9,10 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
-	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper/v1"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
+	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/v1/amm/keeper"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/v1/amm/types"
+	perpkeeper "github.com/NibiruChain/nibiru/x/perp/v1/keeper"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/v1/types"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 )
 

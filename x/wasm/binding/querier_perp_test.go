@@ -20,7 +20,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/wasm/binding/wasmbin"
 
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/v1/amm/types"
 )
 
 func TestSuitePerpQuerier_RunAll(t *testing.T) {

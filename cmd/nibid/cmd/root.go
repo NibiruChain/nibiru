@@ -33,7 +33,7 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/NibiruChain/nibiru/app"
-	perpammcli "github.com/NibiruChain/nibiru/x/perp/amm/cli"
+	perpammcli "github.com/NibiruChain/nibiru/x/perp/v1/amm/cli"
 )
 
 // NewRootCmd creates a new root command for nibid. It is called once in the
