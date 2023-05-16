@@ -124,6 +124,7 @@ import (
 	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper/v1"
 	perpkeeperv2 "github.com/NibiruChain/nibiru/x/perp/keeper/v2"
 	perp "github.com/NibiruChain/nibiru/x/perp/module/v1"
+	perpv2 "github.com/NibiruChain/nibiru/x/perp/module/v2"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
 	perptypesv2 "github.com/NibiruChain/nibiru/x/perp/types/v2"
 
@@ -197,6 +198,7 @@ var (
 		stablecoin.AppModuleBasic{},
 		perp.AppModuleBasic{},
 		perpamm.AppModuleBasic{},
+		perpv2.AppModuleBasic{},
 		inflation.AppModuleBasic{},
 		sudo.AppModuleBasic{},
 		wasm.AppModuleBasic{},
@@ -216,7 +218,7 @@ var (
 		ibctransfertypes.ModuleName:           {authtypes.Minter, authtypes.Burner},
 		ibcfeetypes.ModuleName:                nil,
 		stablecointypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
-		perptypes.ModuleName:                  {authtypes.Minter, authtypes.Burner},
+		perptypes.ModuleName:                  {},
 		perptypes.VaultModuleAccount:          {},
 		perptypes.PerpEFModuleAccount:         {},
 		perptypes.FeePoolModuleAccount:        {},
@@ -225,6 +227,10 @@ var (
 		sudo.ModuleName:                       {},
 		common.TreasuryPoolModuleAccount:      {},
 		wasm.ModuleName:                       {},
+		perptypesv2.ModuleName:                {},
+		// perptypesv2.VaultModuleAccount:        {},
+		// perptypesv2.PerpEFModuleAccount:       {},
+		// perptypesv2.FeePoolModuleAccount:      {},
 	}
 )
 
