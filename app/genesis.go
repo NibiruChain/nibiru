@@ -2,7 +2,6 @@ package app
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"os"
 
@@ -80,7 +79,6 @@ func NewDefaultGenesisState(cdc codec.JSONCodec) GenesisState {
 
 	authGenesis := new(authtypes.GenesisState)
 	cdc.MustUnmarshalJSON(gen[authtypes.ModuleName], authGenesis)
-	fmt.Printf("\nDEBUG-UD authGenesis: %s", authGenesis)
 
 	return gen
 }
