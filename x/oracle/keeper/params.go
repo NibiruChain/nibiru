@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/oracle/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -44,12 +43,6 @@ func (k Keeper) RewardBand(ctx sdk.Context) (res sdk.Dec) {
 func (k Keeper) Whitelist(ctx sdk.Context) (res []asset.Pair) {
 	params, _ := k.Params.Get(ctx)
 	return params.Whitelist
-}
-
-// SetWhitelist store new whitelist to param store
-// this function is only for test purpose
-func (k Keeper) SetWhitelist(ctx sdk.Context, whitelist []asset.Pair) {
-	k.paramSpace.Set(ctx, types.KeyWhitelist, whitelist)
 }
 
 // SlashFraction returns oracle voting penalty rate
