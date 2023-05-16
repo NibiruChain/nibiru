@@ -528,9 +528,14 @@ func (k Keeper) afterPositionUpdate(
 		if err != nil {
 			return err
 		}
-		positionNotional := sdk.MaxDec(spotNotional, twapNotional)
+		var preferredPositionNotional sdk.Dec
+		if positionResp.Position.Size_.IsPositive() {
+			preferredPositionNotional = sdk.MaxDec(spotNotional, twapNotional)
+		} else {
+			preferredPositionNotional = sdk.MinDec(spotNotional, twapNotional)
+		}
 
-		marginRatio := MarginRatio(*positionResp.Position, positionNotional, market.LatestCumulativePremiumFraction)
+		marginRatio := MarginRatio(*positionResp.Position, preferredPositionNotional, market.LatestCumulativePremiumFraction)
 		if marginRatio.LT(market.MaintenanceMarginRatio) {
 			return v2types.ErrMarginRatioTooLow
 		}
