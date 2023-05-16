@@ -1,6 +1,7 @@
 package v2
 
 const (
+	// temp names until we remove perp v1
 	ModuleName           = "v2perp"
 	VaultModuleAccount   = "v2vault"
 	PerpEFModuleAccount  = "v2perp_ef"
