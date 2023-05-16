@@ -270,7 +270,10 @@ func (app *NibiruApp) InitKeepers(
 		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.PerpAmmKeeper, app.EpochsKeeper,
 	)
 
-	app.PerpKeeperV2 = v2perpkeeper.NewKeeper(appCodec, keys[v2perptypes.StoreKey], app.GetSubspace(v2perptypes.ModuleName), app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.EpochsKeeper)
+	app.PerpKeeperV2 = v2perpkeeper.NewKeeper(
+		appCodec, keys[v2perptypes.StoreKey],
+		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.EpochsKeeper,
+	)
 
 	app.InflationKeeper = inflationkeeper.NewKeeper(
 		appCodec, keys[inflationtypes.StoreKey], app.GetSubspace(inflationtypes.ModuleName),
@@ -284,8 +287,8 @@ func (app *NibiruApp) InitKeepers(
 	app.EpochsKeeper.SetHooks(
 		epochstypes.NewMultiEpochHooks(
 			app.StablecoinKeeper.Hooks(),
-			app.PerpKeeper.Hooks(),
 			app.PerpKeeperV2.Hooks(),
+			app.PerpKeeper.Hooks(),
 			app.InflationKeeper.Hooks(),
 			app.OracleKeeper.Hooks(),
 		),

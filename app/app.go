@@ -216,8 +216,12 @@ var (
 		spottypes.ModuleName:                  {authtypes.Minter, authtypes.Burner},
 		oracletypes.ModuleName:                {},
 		ibctransfertypes.ModuleName:           {authtypes.Minter, authtypes.Burner},
-		ibcfeetypes.ModuleName:                nil,
+		ibcfeetypes.ModuleName:                {},
 		stablecointypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
+		perptypesv2.ModuleName:                {},
+		perptypesv2.VaultModuleAccount:        {},
+		perptypesv2.PerpEFModuleAccount:       {},
+		perptypesv2.FeePoolModuleAccount:      {},
 		perptypes.ModuleName:                  {},
 		perptypes.VaultModuleAccount:          {},
 		perptypes.PerpEFModuleAccount:         {},
@@ -227,10 +231,6 @@ var (
 		sudo.ModuleName:                       {},
 		common.TreasuryPoolModuleAccount:      {},
 		wasm.ModuleName:                       {},
-		perptypesv2.ModuleName:                {},
-		perptypesv2.VaultModuleAccount:        {},
-		perptypesv2.PerpEFModuleAccount:       {},
-		perptypesv2.FeePoolModuleAccount:      {},
 	}
 )
 
@@ -547,7 +547,10 @@ func (app *NibiruApp) GetMemKey(storeKey string) *storetypes.MemoryStoreKey {
 //
 // NOTE: This is solely to be used for testing purposes.
 func (app *NibiruApp) GetSubspace(moduleName string) paramstypes.Subspace {
-	subspace, _ := app.paramsKeeper.GetSubspace(moduleName)
+	subspace, ok := app.paramsKeeper.GetSubspace(moduleName)
+	if !ok {
+		panic(fmt.Errorf("failed to get subspace for module: %s", moduleName))
+	}
 	return subspace
 }
 
@@ -649,17 +652,18 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(slashingtypes.ModuleName)
 	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable())
 	paramsKeeper.Subspace(crisistypes.ModuleName)
-	// Native params keepers
+	// Nibiru core params keepers | x/
 	paramsKeeper.Subspace(spottypes.ModuleName)
-	paramsKeeper.Subspace(oracletypes.ModuleName)
+	// paramsKeeper.Subspace(oracletypes.ModuleName)
 	paramsKeeper.Subspace(epochstypes.ModuleName)
 	paramsKeeper.Subspace(stablecointypes.ModuleName)
 	paramsKeeper.Subspace(perptypes.ModuleName)
-	paramsKeeper.Subspace(perptypesv2.ModuleName)
+	// paramsKeeper.Subspace(perptypesv2.ModuleName)
 	paramsKeeper.Subspace(inflationtypes.ModuleName)
 	// ibc params keepers
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
+	paramsKeeper.Subspace(ibcfeetypes.ModuleName)
 	// wasm params keepers
 	paramsKeeper.Subspace(wasm.ModuleName)
 

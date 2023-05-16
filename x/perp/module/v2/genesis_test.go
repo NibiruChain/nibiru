@@ -23,7 +23,6 @@ type TestCase struct {
 }
 
 func TestGenesis(t *testing.T) {
-
 	testCases := []TestCase{
 		{
 			name:      "empty positions genesis",
@@ -57,7 +56,6 @@ func TestGenesis(t *testing.T) {
 			RunTestGenesis(t, tc)
 		})
 	}
-
 }
 
 func RunTestGenesis(t *testing.T, tc TestCase) {

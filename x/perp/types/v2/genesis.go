@@ -13,7 +13,6 @@ func DefaultGenesis() *GenesisState {
 // Validate performs basic genesis state validation returning an error upon any
 // failure.
 func (gs GenesisState) Validate() error {
-
 	for _, m := range gs.Markets {
 		if err := m.Validate(); err != nil {
 			return err
