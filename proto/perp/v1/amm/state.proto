@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package nibiru.perp.amm.v1;
+package nibiru.perp.v1.amm;
 
 option go_package = "github.com/NibiruChain/nibiru/x/perp/v1/amm/types";
 

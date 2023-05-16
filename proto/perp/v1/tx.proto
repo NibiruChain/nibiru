@@ -135,7 +135,7 @@ message MsgOpenPosition {
     (gogoproto.nullable) = false
   ];
 
-  nibiru.perp.amm.v1.Direction side = 3;
+  nibiru.perp.v1.amm.Direction side = 3;
 
   string quote_asset_amount = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",

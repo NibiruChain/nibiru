@@ -2,11 +2,11 @@
 // source: perp/v2/query.proto
 
 /*
-Package v2 is a reverse proxy.
+Package types is a reverse proxy.
 
 It translates gRPC into RESTful JSON APIs.
 */
-package v2
+package types
 
 import (
 	"context"

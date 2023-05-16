@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package nibiru.perp.amm.v1;
+package nibiru.perp.v1.amm;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";

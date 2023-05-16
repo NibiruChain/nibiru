@@ -1,4 +1,4 @@
-package v2
+package types
 
 // DefaultGenesis returns the default Capability genesis state
 func DefaultGenesis() *GenesisState {
