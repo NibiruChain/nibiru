@@ -120,17 +120,22 @@ func (s *TestSuiteBindingJsonTypes) TestExecuteMsgs() {
 			jsonBz, err := json.Marshal(bindingMsg)
 			assert.NoErrorf(t, err, "jsonBz: %s", jsonBz)
 
-			compactJsonBz := new(bytes.Buffer)
-			err = json.Compact(compactJsonBz, jsonBz)
+			// Json files are not compacted, so we need to compact them before comparing
+			compactJsonBz, err := compactJsonData(jsonBz)
 			require.NoError(t, err)
 
-			// File is compacted, so we need to compact the bytes before comparing
 			fileBytes, err := fileJson[name].MarshalJSON()
-			compactFileBytes := new(bytes.Buffer)
-			err = json.Compact(compactFileBytes, fileBytes)
+			require.NoError(t, err)
+			compactFileBytes, err := compactJsonData(fileBytes)
 			require.NoError(t, err)
 
 			require.Equal(t, compactFileBytes.Bytes(), compactJsonBz.Bytes())
 		})
 	}
+}
+
+func compactJsonData(data []byte) (*bytes.Buffer, error) {
+	compactData := new(bytes.Buffer)
+	err := json.Compact(compactData, data)
+	return compactData, err
 }
