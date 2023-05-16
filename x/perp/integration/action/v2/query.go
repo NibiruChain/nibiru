@@ -8,8 +8,8 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
-	"github.com/NibiruChain/nibiru/x/perp/keeper/v2"
-	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
+	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
+	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 type queryPosition struct {

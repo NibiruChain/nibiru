@@ -17,8 +17,8 @@ import (
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 	perpcli "github.com/NibiruChain/nibiru/x/perp/v1/client/cli"
 
-	perpv2cli "github.com/NibiruChain/nibiru/x/perp/client/cli/v2"
 	"github.com/NibiruChain/nibiru/x/perp/v1/types"
+	perpv2cli "github.com/NibiruChain/nibiru/x/perp/v2/client/cli"
 	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 	sudocli "github.com/NibiruChain/nibiru/x/sudo/cli"
 	sudotypes "github.com/NibiruChain/nibiru/x/sudo/pb"

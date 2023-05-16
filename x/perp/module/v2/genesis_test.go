@@ -14,7 +14,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	perp "github.com/NibiruChain/nibiru/x/perp/module/v2"
-	types "github.com/NibiruChain/nibiru/x/perp/types/v2"
+	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 type TestCase struct {

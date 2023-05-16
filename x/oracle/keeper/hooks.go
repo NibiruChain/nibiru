@@ -5,7 +5,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/v1/types"
 
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 

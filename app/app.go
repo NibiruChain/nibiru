@@ -121,12 +121,13 @@ import (
 	perpamm "github.com/NibiruChain/nibiru/x/perp/amm"
 	perpammcli "github.com/NibiruChain/nibiru/x/perp/amm/cli"
 	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
-	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper/v1"
-	perpkeeperv2 "github.com/NibiruChain/nibiru/x/perp/keeper/v2"
-	perp "github.com/NibiruChain/nibiru/x/perp/module/v1"
 	perpv2 "github.com/NibiruChain/nibiru/x/perp/module/v2"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
-	perptypesv2 "github.com/NibiruChain/nibiru/x/perp/types/v2"
+	perpkeeperv2 "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
+	perptypesv2 "github.com/NibiruChain/nibiru/x/perp/v2/types"
+
+	perpkeeper "github.com/NibiruChain/nibiru/x/perp/v1/keeper"
+	perp "github.com/NibiruChain/nibiru/x/perp/v1/module"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/v1/types"
 
 	"github.com/NibiruChain/nibiru/x/spot"
 	spotkeeper "github.com/NibiruChain/nibiru/x/spot/keeper"

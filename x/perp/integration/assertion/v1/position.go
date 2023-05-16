@@ -9,7 +9,7 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
-	types "github.com/NibiruChain/nibiru/x/perp/types/v1"
+	types "github.com/NibiruChain/nibiru/x/perp/v1/types"
 )
 
 type PositionChecker func(resp types.Position) error

@@ -13,7 +13,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
-	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
+	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 // OpenPosition opens a position with the given parameters.

@@ -7,7 +7,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
+	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 type MarketChecker func(resp v2types.Market) error

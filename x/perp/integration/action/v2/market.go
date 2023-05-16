@@ -13,7 +13,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
-	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
+	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 // createMarketAction creates a market

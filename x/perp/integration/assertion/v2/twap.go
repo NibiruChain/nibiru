@@ -9,7 +9,7 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
-	v2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
+	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 type twalShouldBe struct {

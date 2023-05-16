@@ -88,14 +88,14 @@ import (
 	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
 
-	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper/v1"
-	perp "github.com/NibiruChain/nibiru/x/perp/module/v1"
+	perpkeeper "github.com/NibiruChain/nibiru/x/perp/v1/keeper"
+	perp "github.com/NibiruChain/nibiru/x/perp/v1/module"
 
-	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/keeper/v2"
 	perpv2 "github.com/NibiruChain/nibiru/x/perp/module/v2"
-	perpv2types "github.com/NibiruChain/nibiru/x/perp/types/v2"
+	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
+	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/v1/types"
 	"github.com/NibiruChain/nibiru/x/spot"
 	spotkeeper "github.com/NibiruChain/nibiru/x/spot/keeper"
 	spottypes "github.com/NibiruChain/nibiru/x/spot/types"
