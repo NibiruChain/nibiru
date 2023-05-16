@@ -2,8 +2,9 @@ package binding
 
 import (
 	"fmt"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"time"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"

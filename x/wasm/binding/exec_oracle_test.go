@@ -1,7 +1,14 @@
 package binding_test
 
 import (
+	"testing"
+	"time"
+
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/suite"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
@@ -9,11 +16,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/wasm/binding"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/wasmbin"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/suite"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	"testing"
-	"time"
 )
 
 func TestSuiteOracleExecutor_RunAll(t *testing.T) {
