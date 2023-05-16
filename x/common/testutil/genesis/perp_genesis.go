@@ -91,7 +91,6 @@ func PerpGenesis() *perptypes.GenesisState {
 }
 
 func PerpV2Genesis() *perpv2types.GenesisState {
-
 	markets := make(map[asset.Pair]perpammtypes.Market)
 
 	extraMarkets := map[asset.Pair]perpammtypes.Market{
