@@ -12,8 +12,8 @@ import (
 	. "github.com/NibiruChain/nibiru/x/epochs/integration/action"
 	epochtypes "github.com/NibiruChain/nibiru/x/epochs/types"
 	. "github.com/NibiruChain/nibiru/x/oracle/integration/action"
-	. "github.com/NibiruChain/nibiru/x/perp/integration/action/v2"
-	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion/v2"
+	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
+	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
 )
 
 func TestAfterEpochEnd(t *testing.T) {

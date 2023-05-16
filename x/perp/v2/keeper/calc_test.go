@@ -16,8 +16,8 @@ import (
 	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 
 	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
-	. "github.com/NibiruChain/nibiru/x/perp/integration/action/v2"
-	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion/v2"
+	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
+	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
 )
 
 func TestPositionNotionalSpot(t *testing.T) {

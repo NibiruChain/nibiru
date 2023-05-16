@@ -12,8 +12,8 @@ import (
 	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
 	"github.com/NibiruChain/nibiru/x/common/testutil/assertion"
 	. "github.com/NibiruChain/nibiru/x/oracle/integration/action"
-	. "github.com/NibiruChain/nibiru/x/perp/integration/action/v1"
 	perpammtypes "github.com/NibiruChain/nibiru/x/perp/v1/amm/types"
+	. "github.com/NibiruChain/nibiru/x/perp/v1/integration/action"
 )
 
 func TestOpenGasConsumed(t *testing.T) {

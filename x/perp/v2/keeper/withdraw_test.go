@@ -11,9 +11,9 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
 	. "github.com/NibiruChain/nibiru/x/common/testutil/assertion"
-	. "github.com/NibiruChain/nibiru/x/perp/integration/action/v2"
-	. "github.com/NibiruChain/nibiru/x/perp/integration/assertion/v2"
 	types "github.com/NibiruChain/nibiru/x/perp/v1/types"
+	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
+	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
 	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
