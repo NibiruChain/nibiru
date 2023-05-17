@@ -8,7 +8,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/libs/math"
@@ -21,9 +20,8 @@ import (
 
 // Keeper of the oracle store
 type Keeper struct {
-	cdc        codec.BinaryCodec
-	storeKey   sdk.StoreKey
-	paramSpace paramstypes.Subspace
+	cdc      codec.BinaryCodec
+	storeKey sdk.StoreKey
 
 	AccountKeeper types.AccountKeeper
 	bankKeeper    types.BankKeeper
@@ -32,6 +30,7 @@ type Keeper struct {
 
 	distrModuleName string
 
+	Params            collections.Item[types.Params]
 	ExchangeRates     collections.Map[asset.Pair, sdk.Dec]
 	FeederDelegations collections.Map[sdk.ValAddress, sdk.AccAddress]
 	MissCounters      collections.Map[sdk.ValAddress, uint64]
@@ -41,22 +40,13 @@ type Keeper struct {
 	// PriceSnapshots maps types.PriceSnapshot to the asset.Pair of the snapshot and the creation timestamp as keys.Uint64Key.
 	PriceSnapshots   collections.Map[collections.Pair[asset.Pair, time.Time], types.PriceSnapshot]
 	WhitelistedPairs collections.KeySet[asset.Pair]
-	PairRewards      collections.IndexedMap[uint64, types.PairReward, PairRewardsIndexes]
-	PairRewardsID    collections.Sequence
-}
-
-type PairRewardsIndexes struct {
-	// RewardsByPair is the index that maps rewards associated with specific pairs.
-	RewardsByPair collections.MultiIndex[asset.Pair, uint64, types.PairReward]
-}
-
-func (p PairRewardsIndexes) IndexerList() []collections.Indexer[uint64, types.PairReward] {
-	return []collections.Indexer[uint64, types.PairReward]{p.RewardsByPair}
+	Rewards          collections.Map[uint64, types.Rewards]
+	RewardsID        collections.Sequence
 }
 
 // NewKeeper constructs a new keeper for oracle
 func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
-	paramspace paramstypes.Subspace, accountKeeper types.AccountKeeper,
+	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper, distrKeeper types.DistributionKeeper,
 	stakingKeeper types.StakingKeeper, distrName string) Keeper {
 	// ensure oracle module account is set
@@ -64,20 +54,15 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
 		panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
 	}
 
-	// set KeyTable if it has not already been set
-	if !paramspace.HasKeyTable() {
-		paramspace = paramspace.WithKeyTable(types.ParamKeyTable())
-	}
-
 	return Keeper{
 		cdc:               cdc,
 		storeKey:          storeKey,
-		paramSpace:        paramspace,
 		AccountKeeper:     accountKeeper,
 		bankKeeper:        bankKeeper,
 		distrKeeper:       distrKeeper,
 		StakingKeeper:     stakingKeeper,
 		distrModuleName:   distrName,
+		Params:            collections.NewItem(storeKey, 11, collections.ProtoValueEncoder[types.Params](cdc)),
 		ExchangeRates:     collections.NewMap(storeKey, 1, asset.PairKeyEncoder, collections.DecValueEncoder),
 		PriceSnapshots:    collections.NewMap(storeKey, 10, collections.PairKeyEncoder(asset.PairKeyEncoder, collections.TimeKeyEncoder), collections.ProtoValueEncoder[types.PriceSnapshot](cdc)),
 		FeederDelegations: collections.NewMap(storeKey, 2, collections.ValAddressKeyEncoder, collections.AccAddressValueEncoder),
@@ -85,15 +70,10 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
 		Prevotes:          collections.NewMap(storeKey, 4, collections.ValAddressKeyEncoder, collections.ProtoValueEncoder[types.AggregateExchangeRatePrevote](cdc)),
 		Votes:             collections.NewMap(storeKey, 5, collections.ValAddressKeyEncoder, collections.ProtoValueEncoder[types.AggregateExchangeRateVote](cdc)),
 		WhitelistedPairs:  collections.NewKeySet(storeKey, 6, asset.PairKeyEncoder),
-		PairRewards: collections.NewIndexedMap(
+		Rewards: collections.NewMap(
 			storeKey, 7,
-			collections.Uint64KeyEncoder, collections.ProtoValueEncoder[types.PairReward](cdc),
-			PairRewardsIndexes{
-				RewardsByPair: collections.NewMultiIndex(storeKey, 8, asset.PairKeyEncoder, collections.Uint64KeyEncoder, func(v types.PairReward) asset.Pair {
-					return v.Pair
-				}),
-			}),
-		PairRewardsID: collections.NewSequence(storeKey, 9),
+			collections.Uint64KeyEncoder, collections.ProtoValueEncoder[types.Rewards](cdc)),
+		RewardsID: collections.NewSequence(storeKey, 9),
 	}
 }
 
@@ -142,7 +122,12 @@ func (k Keeper) calcTwap(ctx sdk.Context, snapshots []types.PriceSnapshot) (pric
 	} else if len(snapshots) == 1 {
 		return snapshots[0].Price, nil
 	}
-	twapLookBack := k.GetParams(ctx).TwapLookbackWindow.Milliseconds()
+	params, err := k.Params.Get(ctx)
+	if err != nil {
+		return
+	}
+
+	twapLookBack := params.TwapLookbackWindow.Milliseconds()
 	firstTimeStamp := ctx.BlockTime().UnixMilli() - twapLookBack
 	cumulativePrice := sdk.ZeroDec()
 
@@ -172,12 +157,17 @@ func (k Keeper) calcTwap(ctx sdk.Context, snapshots []types.PriceSnapshot) (pric
 }
 
 func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair asset.Pair) (price sdk.Dec, err error) {
+	params, err := k.Params.Get(ctx)
+	if err != nil {
+		return
+	}
+
 	snapshots := k.PriceSnapshots.Iterate(
 		ctx,
 		collections.PairRange[asset.Pair, time.Time]{}.
 			Prefix(pair).
 			StartInclusive(
-				ctx.BlockTime().Add(-1*k.GetParams(ctx).TwapLookbackWindow)).
+				ctx.BlockTime().Add(-1*params.TwapLookbackWindow)).
 			EndInclusive(
 				ctx.BlockTime()),
 	).Values()

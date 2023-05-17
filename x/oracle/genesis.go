@@ -70,15 +70,15 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 		}
 	}
 
-	for _, pr := range data.PairRewards {
-		keeper.PairRewards.Insert(ctx, pr.Id, pr)
+	for _, pr := range data.Rewards {
+		keeper.Rewards.Insert(ctx, pr.Id, pr)
 	}
 
 	// set last ID based on the last pair reward
-	if len(data.PairRewards) != 0 {
-		keeper.PairRewardsID.Set(ctx, data.PairRewards[len(data.PairRewards)-1].Id)
+	if len(data.Rewards) != 0 {
+		keeper.RewardsID.Set(ctx, data.Rewards[len(data.Rewards)-1].Id)
 	}
-	keeper.SetParams(ctx, data.Params)
+	keeper.Params.Set(ctx, data.Params)
 
 	// check if the module account exists
 	moduleAcc := keeper.AccountKeeper.GetModuleAccount(ctx, types.ModuleName)
@@ -91,7 +91,11 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 // to a genesis file, which can be imported again
 // with InitGenesis
 func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
-	params := keeper.GetParams(ctx)
+	params, err := keeper.Params.Get(ctx)
+	if err != nil {
+		panic(err)
+	}
+
 	feederDelegations := []types.FeederDelegation{}
 	for _, kv := range keeper.FeederDelegations.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {
 		feederDelegations = append(feederDelegations, types.FeederDelegation{
@@ -116,13 +120,14 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 	var pairs []asset.Pair
 	pairs = append(pairs, keeper.WhitelistedPairs.Iterate(ctx, collections.Range[asset.Pair]{}).Keys()...)
 
-	return types.NewGenesisState(params,
+	return types.NewGenesisState(
+		params,
 		exchangeRates,
 		feederDelegations,
 		missCounters,
 		keeper.Prevotes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).Values(),
 		keeper.Votes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).Values(),
 		pairs,
-		keeper.PairRewards.Iterate(ctx, collections.Range[uint64]{}).Values(),
+		keeper.Rewards.Iterate(ctx, collections.Range[uint64]{}).Values(),
 	)
 }

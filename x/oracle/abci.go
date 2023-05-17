@@ -14,7 +14,10 @@ import (
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
 
-	params := k.GetParams(ctx)
+	params, err := k.Params.Get(ctx)
+	if err != nil {
+		return
+	}
 	if types.IsPeriodLastBlock(ctx, params.VotePeriod) {
 		k.UpdateExchangeRates(ctx)
 	}

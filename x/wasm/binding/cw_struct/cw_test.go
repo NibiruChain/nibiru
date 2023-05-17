@@ -1,6 +1,7 @@
 package cw_struct_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"testing"
@@ -96,25 +97,55 @@ func getFileJson(t *testing.T) (fileJson map[string]json.RawMessage) {
 
 func (s *TestSuiteBindingJsonTypes) TestExecuteMsgs() {
 	t := s.T()
-	var fileJson map[string]json.RawMessage = getFileJson(t)
+	var fileJson = getFileJson(t)
 
-	testCaseMap := map[string]any{
-		"open_position":            new(cw_struct.OpenPosition),
-		"close_position":           new(cw_struct.ClosePosition),
-		"add_margin":               new(cw_struct.AddMargin),
-		"remove_margin":            new(cw_struct.RemoveMargin),
-		"multi_liquidate":          new(cw_struct.MultiLiquidate),
-		"donate_to_insurance_fund": new(cw_struct.DonateToInsuranceFund),
-		"peg_shift":                new(cw_struct.PegShift),
-		"depth_shift":              new(cw_struct.DepthShift),
+	testCaseMap := []string{
+		"open_position",
+		"close_position",
+		"add_margin",
+		"remove_margin",
+		"donate_to_insurance_fund",
+		"peg_shift",
+		"depth_shift",
+		"edit_oracle_params",
+		"set_market_enabled",
+		"insurance_fund_withdraw",
 	}
 
-	for name, cwExecuteMsgPtr := range testCaseMap {
+	for _, name := range testCaseMap {
 		t.Run(name, func(t *testing.T) {
-			err := json.Unmarshal(fileJson[name], cwExecuteMsgPtr)
+			var bindingMsg cw_struct.BindingMsg
+			err := json.Unmarshal(fileJson[name], &bindingMsg)
 			assert.NoErrorf(t, err, "name: %v", name)
-			jsonBz, err := json.Marshal(cwExecuteMsgPtr)
+
+			jsonBz, err := json.Marshal(bindingMsg)
 			assert.NoErrorf(t, err, "jsonBz: %s", jsonBz)
+
+			// Json files are not compacted, so we need to compact them before comparing
+			compactJsonBz, err := compactJsonData(jsonBz)
+			require.NoError(t, err)
+
+			fileBytes, err := fileJson[name].MarshalJSON()
+			require.NoError(t, err)
+			compactFileBytes, err := compactJsonData(fileBytes)
+			require.NoError(t, err)
+
+			var reconsitutedBindingMsg cw_struct.BindingMsg
+			err = json.Unmarshal(compactFileBytes.Bytes(), &reconsitutedBindingMsg)
+			require.NoError(t, err)
+
+			compactFileStr := compactFileBytes.String()
+			compactJsonStr := compactJsonBz.String()
+			require.EqualValuesf(
+				t, bindingMsg, reconsitutedBindingMsg,
+				"compactFileStr: %s\ncompactJsonStr: ", compactFileStr, compactJsonStr,
+			)
 		})
 	}
+}
+
+func compactJsonData(data []byte) (*bytes.Buffer, error) {
+	compactData := new(bytes.Buffer)
+	err := json.Compact(compactData, data)
+	return compactData, err
 }

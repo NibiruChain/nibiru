@@ -14,6 +14,7 @@ message Params {
 
   // VotePeriod defines the number of blocks during which voting takes place.
   uint64 vote_period = 1 [ (gogoproto.moretags) = "yaml:\"vote_period\"" ];
+
   // VoteThreshold specifies the minimum proportion of votes that must be
   // received for a ballot to pass.
   string vote_threshold = 2 [
@@ -70,6 +71,13 @@ message Params {
   // The minimum number of voters (i.e. oracle validators) per pair for it to be
   // considered a passing ballot. Recommended at least 4.
   uint64 min_voters = 9 [ (gogoproto.moretags) = "yaml:\"min_voters\"" ];
+
+  // The validator fee ratio that is given to validators every epoch.
+  string validator_fee_ratio = 10 [
+    (gogoproto.moretags) = "yaml:\"validator_fee_ratio\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // Struct for aggregate prevoting on the ExchangeRateVote.
@@ -122,21 +130,14 @@ message ExchangeRateTuple {
   ];
 }
 
-// PairReward defines a credit object towards validators
+// Rewards defines a credit object towards validators
 // which provide prices faithfully for different pairs.
-message PairReward {
-  // pair defines the pair for which we incentivize validator to provide prices
-  // for.
-  string pair = 1 [
-    (gogoproto.customtype) =
-        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
-    (gogoproto.nullable) = false
-  ];
+message Rewards {
   // id uniquely identifies the rewards instance of the pair
-  uint64 id = 2;
+  uint64 id = 1;
   // vote_periods defines the vote periods left in which rewards will be
   // distributed.
-  uint64 vote_periods = 3;
+  uint64 vote_periods = 2;
   // Coins defines the amount of coins to distribute in a single vote period.
-  repeated cosmos.base.v1beta1.Coin coins = 4 [ (gogoproto.nullable) = false ];
+  repeated cosmos.base.v1beta1.Coin coins = 3 [ (gogoproto.nullable) = false ];
 }

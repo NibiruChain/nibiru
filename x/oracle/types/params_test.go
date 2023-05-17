@@ -1,13 +1,11 @@
 package types_test
 
 import (
-	"bytes"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
@@ -61,38 +59,18 @@ func TestParamsEqual(t *testing.T) {
 	err = p10.Validate()
 	require.Error(t, err)
 
-	p11 := types.DefaultParams()
-	require.NotNil(t, p11.ParamSetPairs())
-	require.NotNil(t, p11.String())
-}
+	// oracle fee ratio > 1
+	p12 := types.DefaultParams()
+	p12.ValidatorFeeRatio = sdk.NewDec(2)
+	err = p12.Validate()
+	require.Error(t, err)
 
-func TestValidate(t *testing.T) {
-	p1 := types.DefaultParams()
-	pairs := p1.ParamSetPairs()
-	for _, pair := range pairs {
-		switch {
-		case bytes.Equal(types.KeyVotePeriod, pair.Key) ||
-			bytes.Equal(types.KeySlashWindow, pair.Key) ||
-			bytes.Equal(types.KeyMinVoters, pair.Key):
-			require.NoError(t, pair.ValidatorFn(uint64(1)))
-			require.Error(t, pair.ValidatorFn("invalid"))
-			require.Error(t, pair.ValidatorFn(uint64(0)))
-		case bytes.Equal(types.KeyVoteThreshold, pair.Key):
-			require.NoError(t, pair.ValidatorFn(sdk.NewDecWithPrec(33, 2)))
-			require.Error(t, pair.ValidatorFn("invalid"))
-			require.Error(t, pair.ValidatorFn(sdk.NewDecWithPrec(32, 2)))
-			require.Error(t, pair.ValidatorFn(sdk.NewDecWithPrec(101, 2)))
-		case bytes.Equal(types.KeyRewardBand, pair.Key) ||
-			bytes.Equal(types.KeySlashFraction, pair.Key) ||
-			bytes.Equal(types.KeyMinValidPerWindow, pair.Key):
-			require.NoError(t, pair.ValidatorFn(sdk.NewDecWithPrec(7, 2)))
-			require.Error(t, pair.ValidatorFn("invalid"))
-			require.Error(t, pair.ValidatorFn(sdk.NewDecWithPrec(-1, 2)))
-			require.Error(t, pair.ValidatorFn(sdk.NewDecWithPrec(101, 2)))
-		case bytes.Equal(types.KeyWhitelist, pair.Key):
-			require.NoError(t, pair.ValidatorFn([]asset.Pair{"BTC:USDT"}))
-			require.Error(t, pair.ValidatorFn("invalid"))
-			require.Error(t, pair.ValidatorFn([]asset.Pair{""}))
-		}
-	}
+	// oracle fee ratio < 0
+	p13 := types.DefaultParams()
+	p13.ValidatorFeeRatio = sdk.NewDec(-1)
+	err = p13.Validate()
+	require.Error(t, err)
+
+	p11 := types.DefaultParams()
+	require.NotNil(t, p11.String())
 }

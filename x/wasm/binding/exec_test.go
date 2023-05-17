@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/x/oracle/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
@@ -13,7 +15,9 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -51,7 +55,7 @@ func (s *TestSuiteExecutor) ExecuteAgainstContract(
 	contract sdk.AccAddress, execMsg cw_struct.BindingMsg,
 ) (contractRespBz []byte, err error) {
 	return DoCustomBindingExecute(
-		s.ctx, s.nibiru, s.contractPerp, s.contractDeployer, execMsg, sdk.Coins{})
+		s.ctx, s.nibiru, contract, s.contractDeployer, execMsg, sdk.Coins{})
 }
 
 type TestSuiteExecutor struct {
@@ -61,8 +65,10 @@ type TestSuiteExecutor struct {
 	ctx              sdk.Context
 	contractDeployer sdk.AccAddress
 
-	contractPerp sdk.AccAddress
-	happyFields  ExampleFields
+	contractPerp       sdk.AccAddress
+	contractController sdk.AccAddress
+	contractShifter    sdk.AccAddress
+	happyFields        ExampleFields
 }
 
 func (s *TestSuiteExecutor) SetupSuite() {
@@ -89,6 +95,11 @@ func (s *TestSuiteExecutor) SetupSuite() {
 	s.ctx = ctx
 
 	s.contractPerp = ContractMap[wasmbin.WasmKeyPerpBinding]
+	s.contractController = ContractMap[wasmbin.WasmKeyController]
+	s.contractShifter = ContractMap[wasmbin.WasmKeyShifter]
+	s.contractController = ContractMap[wasmbin.WasmKeyController]
+	s.T().Logf("contract bindings-perp: %s", s.contractPerp)
+	s.T().Logf("contract shifter: %s", s.contractShifter)
 	s.OnSetupEnd()
 }
 
@@ -148,6 +159,183 @@ func (s *TestSuiteExecutor) TestOpenAddRemoveClose() {
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
 }
 
+func (s *TestSuiteExecutor) TestOracleParams() {
+	defaultParams := types.DefaultParams()
+	defaultParams.VotePeriod = 1_000
+	theVotePeriod := sdk.NewInt(1234)
+	execMsg := cw_struct.BindingMsg{
+		EditOracleParams: &cw_struct.EditOracleParams{
+			VotePeriod: &theVotePeriod,
+		},
+	}
+
+	params, err := s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(defaultParams, params)
+
+	s.T().Log("Executing without permission should fail")
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{}, s.ctx,
+	)
+	contractRespBz, err := s.ExecuteAgainstContract(s.contractController, execMsg)
+	s.Errorf(err, "contractRespBz: %s", contractRespBz)
+
+	s.T().Log("Executing with permission should succeed")
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{s.contractController.String()}, s.ctx,
+	)
+
+	// VotePeriod should be updated
+	theVotePeriod = sdk.NewInt(1234)
+	execMsg = cw_struct.BindingMsg{
+		EditOracleParams: &cw_struct.EditOracleParams{
+			VotePeriod: &theVotePeriod,
+		},
+	}
+
+	contractRespBz, err = s.ExecuteAgainstContract(s.contractController, execMsg)
+	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
+
+	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(1_234), params.VotePeriod)
+
+	// VoteThreshold should be updated
+	theVoteThreshold := sdk.NewDecWithPrec(1, 1)
+	execMsg = cw_struct.BindingMsg{
+		EditOracleParams: &cw_struct.EditOracleParams{
+			VoteThreshold: &theVoteThreshold,
+		},
+	}
+
+	contractRespBz, err = s.ExecuteAgainstContract(s.contractController, execMsg)
+	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
+
+	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(theVoteThreshold, params.VoteThreshold)
+
+	// RewardBand should be updated
+	theRewardBand := sdk.NewDecWithPrec(1, 1)
+	execMsg = cw_struct.BindingMsg{
+		EditOracleParams: &cw_struct.EditOracleParams{
+			RewardBand: &theRewardBand,
+		},
+	}
+
+	contractRespBz, err = s.ExecuteAgainstContract(s.contractController, execMsg)
+	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
+
+	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(theRewardBand, params.RewardBand)
+
+	// Whitelist should be updated
+	theWhitelist := []string{"BTC:USDC"}
+	execMsg = cw_struct.BindingMsg{
+		EditOracleParams: &cw_struct.EditOracleParams{
+			Whitelist: theWhitelist,
+		},
+	}
+
+	contractRespBz, err = s.ExecuteAgainstContract(s.contractController, execMsg)
+	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
+
+	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal([]asset.Pair{asset.NewPair("BTC", "USDC")}, params.Whitelist)
+
+	// SlashFraction should be updated
+	theSlashFraction := sdk.NewDecWithPrec(1, 4)
+	execMsg = cw_struct.BindingMsg{
+		EditOracleParams: &cw_struct.EditOracleParams{
+			SlashFraction: &theSlashFraction,
+		},
+	}
+
+	contractRespBz, err = s.ExecuteAgainstContract(s.contractController, execMsg)
+	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
+
+	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(theSlashFraction, params.SlashFraction)
+
+	// SlashWindow should be updated
+	theSlashWindow := sdk.NewInt(1234)
+	execMsg = cw_struct.BindingMsg{
+		EditOracleParams: &cw_struct.EditOracleParams{
+			SlashWindow: &theSlashWindow,
+		},
+	}
+
+	contractRespBz, err = s.ExecuteAgainstContract(s.contractController, execMsg)
+	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
+
+	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(1234), params.SlashWindow)
+
+	// MinValidPerWindow should be updated
+	theMinValidPerWindow := sdk.NewDecWithPrec(1, 4)
+	execMsg = cw_struct.BindingMsg{
+		EditOracleParams: &cw_struct.EditOracleParams{
+			MinValidPerWindow: &theMinValidPerWindow,
+		},
+	}
+
+	contractRespBz, err = s.ExecuteAgainstContract(s.contractController, execMsg)
+	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
+
+	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(theMinValidPerWindow, params.MinValidPerWindow)
+
+	// TwapLookback should be updated
+	theTwapLookback := sdk.NewInt(1234)
+	execMsg = cw_struct.BindingMsg{
+		EditOracleParams: &cw_struct.EditOracleParams{
+			TwapLookbackWindow: &theTwapLookback,
+		},
+	}
+
+	contractRespBz, err = s.ExecuteAgainstContract(s.contractController, execMsg)
+	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
+
+	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(time.Duration(1234), params.TwapLookbackWindow)
+
+	// MinVoters should be updated
+	theMinVoters := sdk.NewInt(1234)
+	execMsg = cw_struct.BindingMsg{
+		EditOracleParams: &cw_struct.EditOracleParams{
+			MinVoters: &theMinVoters,
+		},
+	}
+
+	contractRespBz, err = s.ExecuteAgainstContract(s.contractController, execMsg)
+	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
+
+	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(1234), params.MinVoters)
+
+	// Validator Fee Ratio should be updated
+	theValidatorFeeRatio := sdk.NewDecWithPrec(1, 4)
+	execMsg = cw_struct.BindingMsg{
+		EditOracleParams: &cw_struct.EditOracleParams{
+			ValidatorFeeRatio: &theValidatorFeeRatio,
+		},
+	}
+
+	contractRespBz, err = s.ExecuteAgainstContract(s.contractController, execMsg)
+	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
+
+	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(theValidatorFeeRatio, params.ValidatorFeeRatio)
+}
+
 func (s *TestSuiteExecutor) TestPegShift() {
 	pair := asset.MustNewPair(s.happyFields.Pair)
 	execMsg := cw_struct.BindingMsg{
@@ -157,19 +345,29 @@ func (s *TestSuiteExecutor) TestPegShift() {
 		},
 	}
 
-	// Executing with permission should succeed
+	s.T().Log("Executing with permission should succeed")
+	contract := s.contractShifter
 	s.nibiru.SudoKeeper.SetSudoContracts(
-		[]string{s.contractPerp.String()}, s.ctx,
+		[]string{contract.String()}, s.ctx,
 	)
-	contractRespBz, err := s.ExecuteAgainstContract(s.contractPerp, execMsg)
+	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
 
-	// Executing without permission should fail
+	s.T().Log("Executing without permission should fail")
 	s.nibiru.SudoKeeper.SetSudoContracts(
 		[]string{}, s.ctx,
 	)
-	contractRespBz, err = s.ExecuteAgainstContract(s.contractPerp, execMsg)
+	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
 	s.Errorf(err, "contractRespBz: %s", contractRespBz)
+
+	s.T().Log("Executing the wrong contract should fail")
+	contract = s.contractPerp
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{contract.String()}, s.ctx,
+	)
+	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
+	s.Errorf(err, "contractRespBz: %s", contractRespBz)
+	s.Contains(err.Error(), "Error parsing into type")
 }
 
 func (s *TestSuiteExecutor) TestDepthShift() {
@@ -180,6 +378,120 @@ func (s *TestSuiteExecutor) TestDepthShift() {
 			DepthMult: sdk.NewDec(2),
 		},
 	}
-	contractRespBz, err := s.ExecuteAgainstContract(s.contractPerp, execMsg)
+
+	s.T().Log("Executing with permission should succeed")
+	contract := s.contractShifter
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{contract.String()}, s.ctx,
+	)
+	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
+
+	s.T().Log("Executing without permission should fail")
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{}, s.ctx,
+	)
+	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
+	s.Errorf(err, "contractRespBz: %s", contractRespBz)
+
+	s.T().Log("Executing the wrong contract should fail")
+	contract = s.contractPerp
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{contract.String()}, s.ctx,
+	)
+	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
+	s.Errorf(err, "contractRespBz: %s", contractRespBz)
+	s.Contains(err.Error(), "Error parsing into type")
+}
+
+func (s *TestSuiteExecutor) TestInsuranceFundWithdraw() {
+	admin := s.contractDeployer.String()
+	amtToWithdraw := sdk.NewInt(69)
+	execMsg := cw_struct.BindingMsg{
+		InsuranceFundWithdraw: &cw_struct.InsuranceFundWithdraw{
+			Amount: amtToWithdraw,
+			To:     admin,
+		},
+	}
+
+	s.T().Log("Executing should fail since the IF doesn't have funds")
+	contract := s.contractController
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{contract.String()}, s.ctx,
+	)
+	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
+	s.Errorf(err, "contractRespBz: %s", contractRespBz)
+
+	s.T().Log("Executing without permission should fail")
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{}, s.ctx,
+	)
+	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
+	s.Errorf(err, "contractRespBz: %s", contractRespBz)
+
+	s.T().Log("Executing should work when the IF has funds")
+	err = testapp.FundModuleAccount(
+		s.nibiru.BankKeeper,
+		s.ctx,
+		perpv2types.PerpEFModuleAccount,
+		sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(420))),
+	)
+	s.NoError(err)
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{contract.String()}, s.ctx,
+	)
+	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
+	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
+
+	s.T().Log("Executing the wrong contract should fail")
+	contract = s.contractPerp
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{contract.String()}, s.ctx,
+	)
+	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
+	s.Errorf(err, "contractRespBz: %s", contractRespBz)
+	s.Contains(err.Error(), "Error parsing into type")
+}
+
+func (s *TestSuiteExecutor) TestSetMarketEnabled() {
+	// admin := s.contractDeployer.String()
+	perpv2Genesis := genesis.PerpV2Genesis()
+	contract := s.contractController
+	var execMsg cw_struct.BindingMsg
+
+	for testIdx, market := range perpv2Genesis.Markets {
+		execMsg = cw_struct.BindingMsg{
+			SetMarketEnabled: &cw_struct.SetMarketEnabled{
+				Pair:    market.Pair.String(),
+				Enabled: !market.Enabled,
+			},
+		}
+
+		s.T().Logf("Execute - happy %v: market: %s", testIdx, market.Pair)
+		s.nibiru.SudoKeeper.SetSudoContracts(
+			[]string{contract.String()}, s.ctx,
+		)
+		contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
+		s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
+
+		marketAfter, err := s.nibiru.PerpKeeperV2.Markets.Get(s.ctx, market.Pair)
+		s.NoError(err)
+		s.Equal(!market.Enabled, marketAfter.Enabled)
+	}
+
+	s.T().Log("Executing without permission should fail")
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{}, s.ctx,
+	)
+	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
+	s.Errorf(err, "contractRespBz: %s", contractRespBz)
+
+	s.T().Log("Executing the wrong contract should fail")
+	contract = s.contractPerp
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{contract.String()}, s.ctx,
+	)
+	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
+	s.Errorf(err, "contractRespBz: %s", contractRespBz)
+	s.Contains(err.Error(), "Error parsing into type")
 }

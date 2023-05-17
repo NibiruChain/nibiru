@@ -20,7 +20,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/wasm/binding/wasmbin"
 
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/v1/amm/types"
 )
 
 func TestSuitePerpQuerier_RunAll(t *testing.T) {
@@ -76,6 +76,7 @@ func SetupPerpGenesis() app.GenesisState {
 	genesisState := genesis.NewTestGenesisState()
 	genesisState = genesis.AddPerpGenesis(genesisState)
 	genesisState = genesis.AddOracleGenesis(genesisState)
+	genesisState = genesis.AddPerpV2Genesis(genesisState)
 	return genesisState
 }
 
@@ -102,9 +103,9 @@ func (s *TestSuitePerpQuerier) SetupSuite() {
 	s.ctx = ctx
 
 	s.contractPerp = ContractMap[wasmbin.WasmKeyPerpBinding]
-	s.queryPlugin = *binding.NewQueryPlugin(
-		&nibiru.PerpKeeper,
-		&nibiru.PerpAmmKeeper,
+	s.queryPlugin = binding.NewQueryPlugin(
+		nibiru.PerpKeeper,
+		nibiru.PerpAmmKeeper,
 	)
 	s.OnSetupEnd()
 }

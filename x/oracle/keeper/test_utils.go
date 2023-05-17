@@ -6,7 +6,6 @@ import (
 
 	"time"
 
-	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -225,7 +224,6 @@ func CreateTestFixture(t *testing.T) TestFixture {
 	keeper := NewKeeper(
 		appCodec,
 		keyOracle,
-		paramsKeeper.Subspace(types.ModuleName),
 		accountKeeper,
 		bankKeeper,
 		distrKeeper,
@@ -234,11 +232,12 @@ func CreateTestFixture(t *testing.T) TestFixture {
 	)
 
 	defaults := types.DefaultParams()
-	keeper.SetParams(ctx, defaults)
 
 	for _, pair := range defaults.Whitelist {
 		keeper.WhitelistedPairs.Insert(ctx, pair)
 	}
+
+	keeper.Params.Set(ctx, defaults)
 
 	return TestFixture{ctx, legacyAmino, accountKeeper, bankKeeper, keeper, stakingKeeper, distrKeeper}
 }
@@ -265,9 +264,9 @@ func FundAccount(input TestFixture, addr sdk.AccAddress, amounts sdk.Coins) erro
 	return input.BankKeeper.SendCoinsFromModuleToAccount(input.Ctx, faucetAccountName, addr, amounts)
 }
 
-func AllocateRewards(t *testing.T, input TestFixture, pair asset.Pair, rewards sdk.Coins, votePeriods uint64) {
+func AllocateRewards(t *testing.T, input TestFixture, rewards sdk.Coins, votePeriods uint64) {
 	require.NoError(t, input.BankKeeper.MintCoins(input.Ctx, faucetAccountName, rewards))
-	require.NoError(t, input.OracleKeeper.AllocatePairRewards(input.Ctx, faucetAccountName, pair, rewards, votePeriods))
+	require.NoError(t, input.OracleKeeper.AllocateRewards(input.Ctx, faucetAccountName, rewards, votePeriods))
 }
 
 var (
@@ -277,10 +276,15 @@ var (
 
 func Setup(t *testing.T) (TestFixture, types.MsgServer) {
 	fixture := CreateTestFixture(t)
-	params := fixture.OracleKeeper.GetParams(fixture.Ctx)
+
+	params, _ := fixture.OracleKeeper.Params.Get(fixture.Ctx)
+
 	params.VotePeriod = 1
 	params.SlashWindow = 100
-	fixture.OracleKeeper.SetParams(fixture.Ctx, params)
+	fixture.OracleKeeper.Params.Set(fixture.Ctx, params)
+
+	params, _ = fixture.OracleKeeper.Params.Get(fixture.Ctx)
+
 	h := NewMsgServerImpl(fixture.OracleKeeper)
 
 	sh := staking.NewHandler(fixture.StakingKeeper)

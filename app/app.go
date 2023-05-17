@@ -118,14 +118,16 @@ import (
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 
-	perpamm "github.com/NibiruChain/nibiru/x/perp/amm"
-	perpammcli "github.com/NibiruChain/nibiru/x/perp/amm/cli"
-	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
-	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
-	perpkeeperv2 "github.com/NibiruChain/nibiru/x/perp/keeper/v2"
-	perp "github.com/NibiruChain/nibiru/x/perp/module/v1"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
-	perptypesv2 "github.com/NibiruChain/nibiru/x/perp/types/v2"
+	perpamm "github.com/NibiruChain/nibiru/x/perp/v1/amm"
+	perpammcli "github.com/NibiruChain/nibiru/x/perp/v1/amm/cli"
+	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/v1/amm/keeper"
+	perpkeeperv2 "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
+	perpv2 "github.com/NibiruChain/nibiru/x/perp/v2/module"
+	perptypesv2 "github.com/NibiruChain/nibiru/x/perp/v2/types"
+
+	perpkeeper "github.com/NibiruChain/nibiru/x/perp/v1/keeper"
+	perp "github.com/NibiruChain/nibiru/x/perp/v1/module"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/v1/types"
 
 	"github.com/NibiruChain/nibiru/x/spot"
 	spotkeeper "github.com/NibiruChain/nibiru/x/spot/keeper"
@@ -197,6 +199,7 @@ var (
 		stablecoin.AppModuleBasic{},
 		perp.AppModuleBasic{},
 		perpamm.AppModuleBasic{},
+		perpv2.AppModuleBasic{},
 		inflation.AppModuleBasic{},
 		sudo.AppModuleBasic{},
 		wasm.AppModuleBasic{},
@@ -205,21 +208,28 @@ var (
 
 	// module account permissions
 	maccPerms = map[string][]string{
-		authtypes.FeeCollectorName:            nil,
-		distrtypes.ModuleName:                 nil,
-		inflationtypes.ModuleName:             {authtypes.Minter},
-		stakingtypes.BondedPoolName:           {authtypes.Burner, authtypes.Staking},
-		stakingtypes.NotBondedPoolName:        {authtypes.Burner, authtypes.Staking},
-		govtypes.ModuleName:                   {authtypes.Burner},
-		spottypes.ModuleName:                  {authtypes.Minter, authtypes.Burner},
-		oracletypes.ModuleName:                {},
-		ibctransfertypes.ModuleName:           {authtypes.Minter, authtypes.Burner},
-		ibcfeetypes.ModuleName:                nil,
-		stablecointypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
-		perptypes.ModuleName:                  {authtypes.Minter, authtypes.Burner},
-		perptypes.VaultModuleAccount:          {},
-		perptypes.PerpEFModuleAccount:         {},
-		perptypes.FeePoolModuleAccount:        {},
+		authtypes.FeeCollectorName:     nil,
+		distrtypes.ModuleName:          nil,
+		inflationtypes.ModuleName:      {authtypes.Minter},
+		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
+		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
+		govtypes.ModuleName:            {authtypes.Burner},
+		spottypes.ModuleName:           {authtypes.Minter, authtypes.Burner},
+		oracletypes.ModuleName:         {},
+		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
+		ibcfeetypes.ModuleName:         {},
+		stablecointypes.ModuleName:     {authtypes.Minter, authtypes.Burner},
+
+		perptypes.ModuleName:           {},
+		perptypes.VaultModuleAccount:   {},
+		perptypes.PerpEFModuleAccount:  {},
+		perptypes.FeePoolModuleAccount: {},
+
+		perptypesv2.ModuleName:           {},
+		perptypesv2.VaultModuleAccount:   {},
+		perptypesv2.PerpEFModuleAccount:  {},
+		perptypesv2.FeePoolModuleAccount: {},
+
 		epochstypes.ModuleName:                {},
 		stablecointypes.StableEFModuleAccount: {authtypes.Burner},
 		sudo.ModuleName:                       {},
@@ -338,9 +348,11 @@ func GetWasmOpts(nibiru NibiruApp, appOpts servertypes.AppOptions) []wasm.Option
 
 	// Add the bindings to the app's set of []wasm.Option.
 	wasmOpts = append(wasmOpts, wasmbinding.RegisterWasmOptions(
-		&nibiru.PerpKeeper,
-		&nibiru.PerpAmmKeeper,
-		&nibiru.SudoKeeper,
+		nibiru.PerpKeeper,
+		nibiru.PerpAmmKeeper,
+		nibiru.PerpKeeperV2,
+		nibiru.SudoKeeper,
+		nibiru.OracleKeeper,
 	)...)
 
 	return wasmOpts
@@ -541,7 +553,10 @@ func (app *NibiruApp) GetMemKey(storeKey string) *storetypes.MemoryStoreKey {
 //
 // NOTE: This is solely to be used for testing purposes.
 func (app *NibiruApp) GetSubspace(moduleName string) paramstypes.Subspace {
-	subspace, _ := app.paramsKeeper.GetSubspace(moduleName)
+	subspace, ok := app.paramsKeeper.GetSubspace(moduleName)
+	if !ok {
+		panic(fmt.Errorf("failed to get subspace for module: %s", moduleName))
+	}
 	return subspace
 }
 
@@ -643,17 +658,16 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(slashingtypes.ModuleName)
 	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable())
 	paramsKeeper.Subspace(crisistypes.ModuleName)
-	// Native params keepers
+	// Nibiru core params keepers | x/
 	paramsKeeper.Subspace(spottypes.ModuleName)
-	paramsKeeper.Subspace(oracletypes.ModuleName)
 	paramsKeeper.Subspace(epochstypes.ModuleName)
 	paramsKeeper.Subspace(stablecointypes.ModuleName)
 	paramsKeeper.Subspace(perptypes.ModuleName)
-	paramsKeeper.Subspace(perptypesv2.ModuleName)
 	paramsKeeper.Subspace(inflationtypes.ModuleName)
 	// ibc params keepers
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
+	paramsKeeper.Subspace(ibcfeetypes.ModuleName)
 	// wasm params keepers
 	paramsKeeper.Subspace(wasm.ModuleName)
 

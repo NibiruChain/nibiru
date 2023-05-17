@@ -7,15 +7,16 @@ import "google/api/annotations.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "perp/v2/state.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/perp/types/v2";
+option go_package = "github.com/NibiruChain/nibiru/x/perp/v2/types";
 
 // GenesisState defines the perp module's genesis state.
 message GenesisState {
-  Params params = 1 [ (gogoproto.nullable) = false ];
-
   repeated Market markets = 2 [ (gogoproto.nullable) = false ];
 
   repeated AMM amms = 3 [ (gogoproto.nullable) = false ];
 
   repeated Position positions = 4 [ (gogoproto.nullable) = false ];
+
+  repeated ReserveSnapshot reserve_snapshots = 5
+      [ (gogoproto.nullable) = false ];
 }

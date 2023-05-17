@@ -15,11 +15,10 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 	"github.com/NibiruChain/nibiru/x/wasm/binding"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/wasmbin"
-
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 )
 
 func TestSuitePerpExecutor_RunAll(t *testing.T) {
@@ -61,15 +60,16 @@ func (s *TestSuitePerpExecutor) SetupSuite() {
 	s.nibiru = nibiru
 	s.ctx = ctx
 
-	wasmkeeper.NewMsgServerImpl(wasmkeeper.NewDefaultPermissionKeeper(nibiru.WasmKeeper))
 	s.contractPerp = ContractMap[wasmbin.WasmKeyPerpBinding]
 	s.exec = &binding.ExecutorPerp{
-		Perp: nibiru.PerpKeeper,
+		Perp:   nibiru.PerpKeeper,
+		PerpV2: nibiru.PerpKeeperV2,
 	}
 	s.OnSetupEnd()
 }
 
 func (s *TestSuitePerpExecutor) OnSetupEnd() {
+	s.contractPerp = ContractMap[wasmbin.WasmKeyPerpBinding]
 	s.ratesMap = SetExchangeRates(s.Suite, s.nibiru, s.ctx)
 }
 
@@ -84,6 +84,7 @@ func (s *TestSuitePerpExecutor) TestOpenAddRemoveClose() {
 		s.DoRemoveMarginTest(pair, margin),
 		s.DoClosePositionTest(pair),
 		s.DoPegShiftTest(pair),
+		s.DoInsuranceFundWithdrawTest(sdk.NewInt(69), s.contractDeployer),
 	} {
 		s.NoError(err)
 	}
@@ -187,13 +188,32 @@ func (s *TestSuitePerpExecutor) DoPegShiftTest(pair asset.Pair) error {
 }
 
 func (s *TestSuitePerpExecutor) DoDepthShiftTest(pair asset.Pair) error {
-	contractAddr := s.contractPerp
 	cwMsg := &cw_struct.DepthShift{
 		Pair:      pair.String(),
 		DepthMult: sdk.NewDec(420),
 	}
 
-	err := s.exec.DepthShift(cwMsg, contractAddr, s.ctx)
+	err := s.exec.DepthShift(cwMsg, s.ctx)
+	return err
+}
+
+func (s *TestSuitePerpExecutor) DoInsuranceFundWithdrawTest(
+	amt sdk.Int, to sdk.AccAddress,
+) error {
+	cwMsg := &cw_struct.InsuranceFundWithdraw{
+		Amount: amt,
+		To:     to.String(),
+	}
+
+	err := testapp.FundModuleAccount(
+		s.nibiru.BankKeeper,
+		s.ctx,
+		perpv2types.PerpEFModuleAccount,
+		sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(420))),
+	)
+	s.NoError(err)
+
+	err = s.exec.InsuranceFundWithdraw(cwMsg, s.ctx)
 	return err
 }
 
@@ -216,8 +236,35 @@ func (s *TestSuitePerpExecutor) TestSadPaths_Nil() {
 		nil, sdk.AccAddress([]byte("contract")), s.ctx)
 	s.Error(err)
 
-	err = s.exec.DepthShift(
-		nil, sdk.AccAddress([]byte("contract")), s.ctx)
+	err = s.exec.DepthShift(nil, s.ctx)
+	s.Error(err)
+
+	err = s.exec.InsuranceFundWithdraw(nil, s.ctx)
+	s.Error(err)
+}
+
+func (s *TestSuitePerpExecutor) DoSetMarketEnabledTest(
+	pair asset.Pair, enabled bool,
+) error {
+	cwMsg := &cw_struct.SetMarketEnabled{
+		Pair:    pair.String(),
+		Enabled: enabled,
+	}
+	err := s.exec.SetMarketEnabled(cwMsg, s.ctx)
+	if err != nil {
+		return err
+	}
+
+	market, err := s.nibiru.PerpKeeperV2.Markets.Get(s.ctx, pair)
+	s.NoError(err)
+	s.Equal(enabled, market.Enabled)
+	return err
+}
+
+func (s *TestSuitePerpExecutor) TestSadPath_InsuranceFundWithdraw() {
+	fundsToWithdraw := sdk.NewCoin(denoms.NUSD, sdk.NewInt(69_000))
+
+	err := s.DoInsuranceFundWithdrawTest(fundsToWithdraw.Amount, s.contractDeployer)
 	s.Error(err)
 }
 
@@ -233,6 +280,8 @@ func (s *TestSuitePerpExecutor) TestSadPaths_InvalidPair() {
 		s.DoClosePositionTest(pair),
 		s.DoPegShiftTest(pair),
 		s.DoDepthShiftTest(pair),
+		s.DoSetMarketEnabledTest(pair, true),
+		s.DoSetMarketEnabledTest(pair, false),
 	} {
 		s.Error(err)
 	}
