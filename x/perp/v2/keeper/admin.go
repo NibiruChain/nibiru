@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -64,4 +66,43 @@ func (k admin) SetMarketEnabled(
 	market.Enabled = enabled
 	k.Markets.Insert(ctx, pair, market)
 	return
+}
+
+// CreatePool creates a pool for a specific pair.
+func (k Keeper) CreatePool(
+	ctx sdk.Context,
+	pair asset.Pair,
+	market v2types.Market,
+	amm v2types.AMM,
+) error {
+	if !amm.QuoteReserve.Equal(amm.BaseReserve) {
+		return fmt.Errorf("quote asset reserve %s must be equal to base asset reserve %s", amm.QuoteReserve, amm.BaseReserve)
+	}
+
+	if !amm.BaseReserve.Equal(amm.SqrtDepth) {
+		return fmt.Errorf(
+			"base asset reserve %s must be equal to sqrt depth %s on pool creation",
+			amm.BaseReserve, amm.SqrtDepth,
+		)
+	}
+
+	_, err := k.Markets.Get(ctx, pair)
+	if err == nil {
+		return fmt.Errorf("market %s already exists", pair)
+	}
+
+	err = market.Validate()
+	if err != nil {
+		return err
+	}
+
+	err = amm.Validate()
+	if err != nil {
+		return err
+	}
+
+	k.Markets.Insert(ctx, pair, market)
+	k.AMMs.Insert(ctx, pair, amm)
+
+	return nil
 }

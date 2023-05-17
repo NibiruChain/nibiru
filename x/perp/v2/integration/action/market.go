@@ -139,3 +139,22 @@ func EditSwapInvariant(pair asset.Pair, multiplier sdk.Dec) action.Action {
 		multiplier: multiplier,
 	}
 }
+
+type createPool struct {
+	pair   asset.Pair
+	market v2types.Market
+	amm    v2types.AMM
+}
+
+func (c createPool) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	err := app.PerpKeeperV2.CreatePool(ctx, c.pair, c.market, c.amm)
+	return ctx, err, true
+}
+
+func CreatePool(pair asset.Pair, market v2types.Market, amm v2types.AMM) action.Action {
+	return createPool{
+		pair:   pair,
+		market: market,
+		amm:    amm,
+	}
+}
