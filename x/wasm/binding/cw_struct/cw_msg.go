@@ -12,9 +12,9 @@ import (
 // - https://github.com/NibiruChain/cw-nibiru/blob/90df123f8d32d47b5b280ec6ae7dde0f9dbf2787/contracts/bindings-perp/src/msg.rs
 type BindingMsg struct {
 	// bindings-perp ExecuteMsg enum types
-	OpenPosition          *OpenPosition          `json:"open_position,omitempty"`
-	ClosePosition         *ClosePosition         `json:"close_position,omitempty"`
-	MultiLiquidate        *MultiLiquidate        `json:"multi_liquidate,omitempty"` // TODO
+	OpenPosition  *OpenPosition  `json:"open_position,omitempty"`
+	ClosePosition *ClosePosition `json:"close_position,omitempty"`
+	//MultiLiquidate        *MultiLiquidate        `json:"multi_liquidate,omitempty"` // TODO
 	AddMargin             *AddMargin             `json:"add_margin,omitempty"`
 	RemoveMargin          *RemoveMargin          `json:"remove_margin,omitempty"`
 	DonateToInsuranceFund *DonateToInsuranceFund `json:"donate_to_insurance_fund,omitempty"` // TODO
@@ -40,7 +40,6 @@ type ClosePosition struct {
 }
 
 type MultiLiquidate struct {
-	Sender       string            `json:"sender"`
 	Liquidations []LiquidationArgs `json:"liquidations"`
 }
 
