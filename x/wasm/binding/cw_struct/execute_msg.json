@@ -5,7 +5,7 @@
       "pair": "ETH:USD",
       "is_long": true,
       "quote_amount": "100",
-      "leverage": "5",
+      "leverage": "5.000000000000000000",
       "base_amount_limit": "1000"
     }
   },
@@ -62,13 +62,13 @@
   "peg_shift": {
     "peg_shift": {
       "pair": "ETH:USD",
-      "peg_mult": "420"
+      "peg_mult": "420.000000000000000000"
     }
   },
   "depth_shift": {
     "depth_shift": {
       "pair": "ETH:USD",
-      "depth_mult": "420"
+      "depth_mult": "420.000000000000000000"
     }
   },
   "insurance_fund_withdraw": {
