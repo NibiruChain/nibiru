@@ -5,7 +5,7 @@
       "pair": "ETH:USD",
       "is_long": true,
       "quote_amount": "100",
-      "leverage": "5.000000000000000000",
+      "leverage": "5",
       "base_amount_limit": "1000"
     }
   },
@@ -62,19 +62,13 @@
   "peg_shift": {
     "peg_shift": {
       "pair": "ETH:USD",
-      "peg_mult": "420.000000000000000000"
+      "peg_mult": "420"
     }
   },
   "depth_shift": {
     "depth_shift": {
       "pair": "ETH:USD",
-      "depth_mult": "420.000000000000000000"
-    }
-  },
-  "set_market_enabled": {
-    "set_market_enabled": {
-      "pair": "ETH:USD",
-      "depth_mult": true
+      "depth_mult": "420"
     }
   },
   "insurance_fund_withdraw": {
@@ -83,9 +77,27 @@
       "to": "nibi1ah8gqrtjllhc5ld4rxgl4uglvwl93ag0sh6e6v"
     }
   },
-  "oracle_params": {
+  "set_market_enabled": {
+    "set_market_enabled": {
+      "pair": "ETH:USD",
+      "enabled": true
+    }
+  },
+  "edit_oracle_params": {
     "edit_oracle_params": {
-      "vote_period": "12345"
+      "vote_period": "420",
+      "vote_threshold": "420",
+      "reward_band": "420",
+      "whitelist": [
+        "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
+        "nibi1ah8gqrtjllhc5ld4rxgl4uglvwl93ag0sh6e6v"
+      ],
+      "slash_fraction": "420",
+      "slash_window": "420",
+      "min_valid_per_window": "420",
+      "twap_lookback_window": "420",
+      "min_voters": "420",
+      "validator_fee_ratio": "420"
     }
   }
 }
