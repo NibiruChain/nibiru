@@ -108,6 +108,7 @@ func (s *TestSuiteBindingJsonTypes) TestExecuteMsgs() {
 		"peg_shift",
 		"depth_shift",
 		"oracle_params",
+		"set_market_enabled",
 		"insurance_fund_withdraw",
 	}
 

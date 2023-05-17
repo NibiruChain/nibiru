@@ -71,6 +71,12 @@
       "depth_mult": "420.000000000000000000"
     }
   },
+  "set_market_enabled": {
+    "set_market_enabled": {
+      "pair": "ETH:USD",
+      "depth_mult": true
+    }
+  },
   "insurance_fund_withdraw": {
     "insurance_fund_withdraw": {
       "amount": "420",

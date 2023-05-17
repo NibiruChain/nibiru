@@ -177,3 +177,18 @@ func (exec *ExecutorPerp) InsuranceFundWithdraw(
 		to,
 	)
 }
+
+func (exec *ExecutorPerp) SetMarketEnabled(
+	cwMsg *cw_struct.SetMarketEnabled, ctx sdk.Context,
+) (err error) {
+	if cwMsg == nil {
+		return wasmvmtypes.InvalidRequest{Err: "null msg"}
+	}
+
+	pair, err := asset.TryNewPair(cwMsg.Pair)
+	if err != nil {
+		return err
+	}
+
+	return exec.PerpV2.Admin().SetMarketEnabled(ctx, pair, cwMsg.Enabled)
+}
