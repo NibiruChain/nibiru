@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
+	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
 
@@ -100,6 +101,34 @@ func TestEnableMarket(t *testing.T) {
 			).
 			Then(
 				MarketShouldBeEqual(pair, Market_EnableShouldBeEqualTo(true)),
+			),
+	}
+
+	NewTestSuite(t).WithTestCases(tests...).Run()
+}
+
+func TestCreatePool(t *testing.T) {
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+
+	tests := TestCases{
+		TC("create pool").
+			Given().
+			When(
+				CreatePool(pair, *mock.TestMarket(), *mock.TestAMMDefault()),
+			).
+			Then(
+				MarketShouldBeEqual(pair,
+					Market_EnableShouldBeEqualTo(true),
+					Market_PrepaidBadDebtShouldBeEqualTo(sdk.ZeroInt()),
+					Market_LatestCPFShouldBeEqualTo(sdk.ZeroDec()),
+				),
+				AMMShouldBeEqual(pair,
+					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e12)),
+					AMM_QuoteReserveShouldBeEqual(sdk.NewDec(1e12)),
+					AMM_BiasShouldBeEqual(sdk.ZeroDec()),
+					AMM_PriceMultiplierShouldBeEqual(sdk.OneDec()),
+					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e12)),
+				),
 			),
 	}
 
