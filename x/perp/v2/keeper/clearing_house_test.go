@@ -1,9 +1,10 @@
 package keeper_test
 
 import (
-	"github.com/NibiruChain/nibiru/x/common/testutil/assertion"
 	"testing"
 	"time"
+
+	"github.com/NibiruChain/nibiru/x/common/testutil/assertion"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -1041,7 +1042,14 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 				SetBlockNumber(1),
 				SetBlockTime(startTime),
 				CreateCustomMarket(pairBtcUsdc),
-				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10800))),
+
+				InsertPosition(
+					WithTrader(alice),
+					WithPair(pairBtcUsdc),
+					WithSize(sdk.NewDec(10000)),
+					WithMargin(sdk.NewDec(750)),
+					WithOpenNotional(sdk.NewDec(10800))),
+
 				FundModule(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
 				FundModule(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 50))),
 			).
@@ -1050,10 +1058,9 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 				ClosePosition(alice, pairBtcUsdc),
 			).
 			Then(
-				assertion.ModuleBalanceEqual(v2types.VaultModuleAccount, denoms.USDC, sdk.NewInt(800)),
-				assertion.ModuleBalanceEqual(v2types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(50)),
-				//assertion.BalanceEqual(alice, denoms.USDC, sdk.NewInt(250)),
 				PositionShouldNotExist(alice, pairBtcUsdc),
+				assertion.ModuleBalanceEqual(v2types.VaultModuleAccount, denoms.USDC, sdk.NewInt(1050)), // 1000 + 50 from perp ef
+				assertion.ModuleBalanceEqual(v2types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(0)),
 			),
 
 		//TC("realizes bad debt").
