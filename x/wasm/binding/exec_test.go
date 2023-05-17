@@ -456,44 +456,42 @@ func (s *TestSuiteExecutor) TestInsuranceFundWithdraw() {
 func (s *TestSuiteExecutor) TestSetMarketEnabled() {
 	// admin := s.contractDeployer.String()
 	perpv2Genesis := genesis.PerpV2Genesis()
-	market := perpv2Genesis.Markets[0]
+	contract := s.contractController
+	var execMsg cw_struct.BindingMsg
 
-	execMsg := cw_struct.BindingMsg{
-		SetMarketEnabled: &cw_struct.SetMarketEnabled{
-			Pair:    market.Pair.String(),
-			Enabled: !market.Enabled,
-		},
+	for testIdx, market := range perpv2Genesis.Markets {
+		execMsg = cw_struct.BindingMsg{
+			SetMarketEnabled: &cw_struct.SetMarketEnabled{
+				Pair:    market.Pair.String(),
+				Enabled: !market.Enabled,
+			},
+		}
+
+		s.T().Logf("Execute - happy %v: market: %s", testIdx, market.Pair)
+		s.nibiru.SudoKeeper.SetSudoContracts(
+			[]string{contract.String()}, s.ctx,
+		)
+		contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
+		s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
+
+		marketAfter, err := s.nibiru.PerpKeeperV2.Markets.Get(s.ctx, market.Pair)
+		s.NoError(err)
+		s.Equal(!market.Enabled, marketAfter.Enabled)
 	}
 
-	s.T().Log("Execute - happy")
-	contract := s.contractController
+	s.T().Log("Executing without permission should fail")
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{}, s.ctx,
+	)
+	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
+	s.Errorf(err, "contractRespBz: %s", contractRespBz)
+
+	s.T().Log("Executing the wrong contract should fail")
+	contract = s.contractPerp
 	s.nibiru.SudoKeeper.SetSudoContracts(
 		[]string{contract.String()}, s.ctx,
 	)
-	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
-	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
-
-	// s.T().Log("Executing should fail since the IF doesn't have funds")
-	// contract := s.contractController
-	// s.nibiru.SudoKeeper.SetSudoContracts(
-	// 	[]string{contract.String()}, s.ctx,
-	// )
-	// contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
-	// s.Errorf(err, "contractRespBz: %s", contractRespBz)
-
-	// s.T().Log("Executing without permission should fail")
-	// s.nibiru.SudoKeeper.SetSudoContracts(
-	// 	[]string{}, s.ctx,
-	// )
-	// contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
-	// s.Errorf(err, "contractRespBz: %s", contractRespBz)
-
-	// s.T().Log("Executing the wrong contract should fail")
-	// contract = s.contractPerp
-	// s.nibiru.SudoKeeper.SetSudoContracts(
-	// 	[]string{contract.String()}, s.ctx,
-	// )
-	// contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
-	// s.Errorf(err, "contractRespBz: %s", contractRespBz)
-	// s.Contains(err.Error(), "Error parsing into type")
+	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
+	s.Errorf(err, "contractRespBz: %s", contractRespBz)
+	s.Contains(err.Error(), "Error parsing into type")
 }
