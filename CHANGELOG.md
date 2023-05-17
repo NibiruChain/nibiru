@@ -137,6 +137,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1365](https://github.com/NibiruChain/nibiru/pull/1365) - refactor(perp): split `perp` module into v1/ and v2/
 * [#1366](https://github.com/NibiruChain/nibiru/pull/1366) - feat: fix bindings test in cw_test
 * [#1362](https://github.com/NibiruChain/nibiru/pull/1362) - feat(perp): add `perpv2` cli
+* [#1369](https://github.com/NibiruChain/nibiru/pull/1369) - refactor(oracle): divert rewards from `perpv2` instead of `perpv1`
 
 ### Bug Fixes
 
