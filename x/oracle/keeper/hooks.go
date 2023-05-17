@@ -1,12 +1,13 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/nibiru/x/epochs/types"
-	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+
+	"github.com/NibiruChain/nibiru/x/epochs/types"
+	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 var _ types.EpochHooks = Hooks{}
