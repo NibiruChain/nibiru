@@ -732,6 +732,8 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.A
 		); err != nil {
 			return nil, err
 		}
+
+		return positionResp, nil
 	}
 
 	if err = k.afterPositionUpdate(
