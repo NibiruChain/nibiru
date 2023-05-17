@@ -725,7 +725,13 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.A
 	}
 
 	if positionResp.BadDebt.IsPositive() {
-		return nil, fmt.Errorf("underwater position")
+		if err = k.realizeBadDebt(
+			ctx,
+			market,
+			positionResp.BadDebt.RoundInt(),
+		); err != nil {
+			return nil, err
+		}
 	}
 
 	if err = k.afterPositionUpdate(
