@@ -20,9 +20,9 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 
 	k.countVotesAndUpdateExchangeRates(ctx, pairBallotsMap, validatorPerformances)
 	k.registerMissedVotes(ctx, whitelistedPairs, validatorPerformances)
-	k.rewardBallotWinners(ctx, whitelistedPairs, validatorPerformances)
+	k.rewardBallotWinners(ctx, validatorPerformances)
 
-	params := k.GetParams(ctx)
+	params, _ := k.Params.Get(ctx)
 	k.clearVotesAndPreVotes(ctx, params.VotePeriod)
 	k.updateWhitelist(ctx, params.Whitelist, whitelistedPairs)
 }

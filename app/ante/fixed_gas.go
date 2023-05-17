@@ -9,6 +9,8 @@ import (
 
 const OracleMessageGas = 500
 
+var _ sdk.AnteDecorator = EnsureSinglePostPriceMessageDecorator{}
+
 // EnsureSinglePostPriceMessageDecorator ensures that there is only one oracle vote message in the transaction
 // and sets the gas meter to a fixed value.
 type EnsureSinglePostPriceMessageDecorator struct {
@@ -26,7 +28,9 @@ func (gd EnsureSinglePostPriceMessageDecorator) AnteHandle(
 ) (newCtx sdk.Context, err error) {
 	hasOracleVoteMsg := false
 	hasOraclePreVoteMsg := false
-	for _, msg := range tx.GetMsgs() {
+
+	msgs := tx.GetMsgs()
+	for _, msg := range msgs {
 		switch msg.(type) {
 		case *oracletypes.MsgAggregateExchangeRatePrevote:
 			hasOraclePreVoteMsg = true
@@ -36,13 +40,13 @@ func (gd EnsureSinglePostPriceMessageDecorator) AnteHandle(
 	}
 
 	if hasOracleVoteMsg && hasOraclePreVoteMsg {
-		if len(tx.GetMsgs()) > 2 {
+		if len(msgs) > 2 {
 			return ctx, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "a transaction cannot have more than a single oracle vote and prevote message")
 		}
 
 		ctx = ctx.WithGasMeter(NewFixedGasMeter(OracleMessageGas))
 	} else if hasOraclePreVoteMsg || hasOracleVoteMsg {
-		if len(tx.GetMsgs()) > 1 {
+		if len(msgs) > 1 {
 			return ctx, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than those two messages")
 		}
 

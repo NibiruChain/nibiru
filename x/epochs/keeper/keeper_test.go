@@ -23,17 +23,19 @@ func TestUpsertEpochInfo_HappyPath(t *testing.T) {
 		EpochCountingStarted:    false,
 	}
 
-	nibiruApp.EpochsKeeper.UpsertEpochInfo(ctx, epochInfo)
+	nibiruApp.EpochsKeeper.Epochs.Insert(ctx, epochInfo.Identifier, epochInfo)
+
 	epochInfoSaved := nibiruApp.EpochsKeeper.GetEpochInfo(ctx, "monthly")
 	require.Equal(t, epochInfo, epochInfoSaved)
 
 	allEpochs := nibiruApp.EpochsKeeper.AllEpochInfos(ctx)
 
-	require.Len(t, allEpochs, 3)
+	require.Len(t, allEpochs, 4)
 	// Epochs are ordered in alphabetical order
 	require.Equal(t, "15 min", allEpochs[0].Identifier)
 	require.Equal(t, "30 min", allEpochs[1].Identifier)
 	require.Equal(t, "monthly", allEpochs[2].Identifier)
+	require.Equal(t, "week", allEpochs[3].Identifier)
 }
 
 func TestEpochExists(t *testing.T) {
@@ -47,7 +49,7 @@ func TestEpochExists(t *testing.T) {
 		CurrentEpochStartTime: time.Time{},
 		EpochCountingStarted:  false,
 	}
-	nibiruApp.EpochsKeeper.UpsertEpochInfo(ctx, epochInfo)
+	nibiruApp.EpochsKeeper.Epochs.Insert(ctx, epochInfo.Identifier, epochInfo)
 
 	require.True(t, nibiruApp.EpochsKeeper.EpochExists(ctx, "monthly"))
 	require.False(t, nibiruApp.EpochsKeeper.EpochExists(ctx, "unexisting-epoch"))

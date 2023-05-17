@@ -3,27 +3,22 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/NibiruChain/collections"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/set"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
-func (k Keeper) AllocatePairRewards(ctx sdk.Context, funderModule string, pair asset.Pair, totalCoins sdk.Coins, votePeriods uint64) error {
-	if !k.WhitelistedPairs.Has(ctx, pair) {
-		return types.ErrUnknownPair.Wrap(pair.String())
-	}
-
+func (k Keeper) AllocateRewards(ctx sdk.Context, funderModule string, totalCoins sdk.Coins, votePeriods uint64) error {
 	votePeriodCoins := make(sdk.Coins, len(totalCoins))
 	for i, coin := range totalCoins {
 		newCoin := sdk.NewCoin(coin.Denom, coin.Amount.QuoRaw(int64(votePeriods)))
 		votePeriodCoins[i] = newCoin
 	}
 
-	id := k.PairRewardsID.Next(ctx)
-	k.PairRewards.Insert(ctx, id, types.PairReward{
-		Pair:        pair,
+	id := k.RewardsID.Next(ctx)
+	k.Rewards.Insert(ctx, id, types.Rewards{
 		Id:          id,
 		VotePeriods: votePeriods,
 		Coins:       votePeriodCoins,
@@ -36,7 +31,6 @@ func (k Keeper) AllocatePairRewards(ctx sdk.Context, funderModule string, pair a
 // oracle reward pool to the oracle voters that voted faithfully.
 func (k Keeper) rewardBallotWinners(
 	ctx sdk.Context,
-	whitelistedPairs set.Set[asset.Pair],
 	validatorPerformances types.ValidatorPerformances,
 ) {
 	totalRewardWeight := validatorPerformances.GetTotalRewardWeight()
@@ -45,17 +39,9 @@ func (k Keeper) rewardBallotWinners(
 	}
 
 	var totalRewards sdk.DecCoins
-	for pair := range whitelistedPairs {
-		pairRewards := k.GatherRewardsForVotePeriod(ctx, pair)
+	rewards := k.GatherRewardsForVotePeriod(ctx)
+	totalRewards = totalRewards.Add(sdk.NewDecCoinsFromCoins(rewards...)...)
 
-		if pairRewards.IsZero() {
-			continue
-		}
-
-		totalRewards = totalRewards.Add(sdk.NewDecCoinsFromCoins(pairRewards...)...)
-	}
-
-	// Dole out rewards
 	var distributedRewards sdk.Coins
 	for _, validatorPerformance := range validatorPerformances {
 		validator := k.StakingKeeper.Validator(ctx, validatorPerformance.ValAddress)
@@ -63,7 +49,6 @@ func (k Keeper) rewardBallotWinners(
 			continue
 		}
 
-		// Reflects contribution
 		rewardPortion, _ := totalRewards.MulDec(sdk.NewDec(validatorPerformance.RewardWeight).QuoInt64(totalRewardWeight)).TruncateDecimal()
 		k.distrKeeper.AllocateTokensToValidator(ctx, validator, sdk.NewDecCoinsFromCoins(rewardPortion...))
 		distributedRewards = distributedRewards.Add(rewardPortion...)
@@ -77,26 +62,26 @@ func (k Keeper) rewardBallotWinners(
 }
 
 // GatherRewardsForVotePeriod retrieves the pair rewards for the provided pair and current vote period.
-func (k Keeper) GatherRewardsForVotePeriod(ctx sdk.Context, pair asset.Pair) sdk.Coins {
+func (k Keeper) GatherRewardsForVotePeriod(ctx sdk.Context) sdk.Coins {
 	coins := sdk.NewCoins()
 	// iterate over
-	for _, rewardId := range k.PairRewards.Indexes.RewardsByPair.ExactMatch(ctx, pair).PrimaryKeys() {
-		pairReward, err := k.PairRewards.Get(ctx, rewardId)
+	for _, rewardId := range k.Rewards.Iterate(ctx, collections.Range[uint64]{}).Keys() {
+		pairReward, err := k.Rewards.Get(ctx, rewardId)
 		if err != nil {
-			panic(fmt.Sprintf("[oracle] Failed to get pair reward %s", err.Error()))
+			panic(fmt.Sprintf("[oracle] Failed to get reward %s", err.Error()))
 		}
 		coins = coins.Add(pairReward.Coins...)
 
-		// Decrease the remaining vote periods of the PairRward.
+		// Decrease the remaining vote periods of the PairReward.
 		pairReward.VotePeriods -= 1
 		if pairReward.VotePeriods == 0 {
 			// If the distribution period count drops to 0: the reward instance is removed.
-			err := k.PairRewards.Delete(ctx, rewardId)
+			err := k.Rewards.Delete(ctx, rewardId)
 			if err != nil {
 				panic(fmt.Sprintf("[oracle] Failed to delete pair reward %s", err.Error()))
 			}
 		} else {
-			k.PairRewards.Insert(ctx, rewardId, pairReward)
+			k.Rewards.Insert(ctx, rewardId, pairReward)
 		}
 	}
 

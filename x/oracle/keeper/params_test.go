@@ -15,8 +15,9 @@ func TestParams(t *testing.T) {
 	input := CreateTestFixture(t)
 
 	// Test default params setting
-	input.OracleKeeper.SetParams(input.Ctx, types.DefaultParams())
-	params := input.OracleKeeper.GetParams(input.Ctx)
+	input.OracleKeeper.Params.Set(input.Ctx, types.DefaultParams())
+	params, err := input.OracleKeeper.Params.Get(input.Ctx)
+	require.NoError(t, err)
 	require.NotNil(t, params)
 
 	// Test custom params setting
@@ -27,6 +28,7 @@ func TestParams(t *testing.T) {
 	slashFraction := sdk.NewDecWithPrec(1, 2)
 	slashWindow := uint64(1000)
 	minValidPerWindow := sdk.NewDecWithPrec(1, 4)
+	minFeeRatio := sdk.NewDecWithPrec(1, 2)
 	whitelist := []asset.Pair{
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
@@ -42,10 +44,12 @@ func TestParams(t *testing.T) {
 		SlashFraction:     slashFraction,
 		SlashWindow:       slashWindow,
 		MinValidPerWindow: minValidPerWindow,
+		ValidatorFeeRatio: minFeeRatio,
 	}
-	input.OracleKeeper.SetParams(input.Ctx, newParams)
+	input.OracleKeeper.Params.Set(input.Ctx, newParams)
 
-	storedParams := input.OracleKeeper.GetParams(input.Ctx)
+	storedParams, err := input.OracleKeeper.Params.Get(input.Ctx)
+	require.NoError(t, err)
 	require.NotNil(t, storedParams)
 	require.Equal(t, storedParams, newParams)
 }

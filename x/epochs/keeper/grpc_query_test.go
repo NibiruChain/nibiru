@@ -26,7 +26,7 @@ func TestQueryEpochInfos(t *testing.T) {
 	// Invalid param
 	epochInfosResponse, err := queryClient.EpochInfos(gocontext.Background(), &types.QueryEpochsInfoRequest{})
 	require.NoError(t, err)
-	require.Len(t, epochInfosResponse.Epochs, 2)
+	require.Len(t, epochInfosResponse.Epochs, 3)
 
 	// check if EpochInfos are correct
 	require.Equal(t, epochInfosResponse.Epochs[0].Identifier, "15 min")

@@ -80,7 +80,10 @@ func (ms msgServer) AggregateExchangeRateVote(goCtx context.Context, msg *types.
 		return nil, err
 	}
 
-	params := ms.GetParams(ctx)
+	params, err := ms.Keeper.Params.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	// An aggergate prevote is required to get an aggregate vote.
 	aggregatePrevote, err := ms.Keeper.Prevotes.Get(ctx, valAddr)

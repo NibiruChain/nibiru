@@ -7,15 +7,10 @@ import "google/api/annotations.proto";
 import "perp/v2/state.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/perp/types/v2";
+option go_package = "github.com/NibiruChain/nibiru/x/perp/v2/types";
 
 // Query defines the gRPC querier service.
 service Query {
-  // Parameters queries the parameters of the x/perp module.
-  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/nibiru/perp/v2/params";
-  }
-
   rpc QueryPosition(QueryPositionRequest) returns (QueryPositionResponse) {
     option (google.api.http).get = "/nibiru/perp/v2/position";
   }
@@ -29,23 +24,19 @@ service Query {
       returns (QueryModuleAccountsResponse) {
     option (google.api.http).get = "/nibiru/perp/v2/module_accounts";
   }
-}
 
-// ---------------------------------------- Params
-
-// QueryParamsRequest is request type for the Query/Params RPC method.
-message QueryParamsRequest {}
-
-// QueryParamsResponse is response type for the Query/Params RPC method.
-message QueryParamsResponse {
-  // params holds all the parameters of this module.
-  Params params = 1 [ (gogoproto.nullable) = false ];
+  rpc QueryMarkets(QueryMarketsRequest) returns (QueryMarketsResponse) {
+    option (google.api.http).get = "/nibiru/perp/v2/markets";
+  }
 }
 
 // ---------------------------------------- Positions
+
 message QueryPositionsRequest { string trader = 1; }
 
-message QueryPositionsResponse { repeated QueryPositionResponse positions = 1; }
+message QueryPositionsResponse {
+  repeated QueryPositionResponse positions = 1 [ (gogoproto.nullable) = false ];
+}
 
 // ---------------------------------------- Position
 
@@ -63,7 +54,7 @@ message QueryPositionRequest {
 
 message QueryPositionResponse {
   // The position as it exists in the blockchain state
-  Position position = 1;
+  Position position = 1 [ (gogoproto.nullable) = false ];
 
   // The position's current notional value, if it were to be entirely closed (in
   // margin units).
@@ -78,27 +69,14 @@ message QueryPositionResponse {
     (gogoproto.nullable) = false
   ];
 
-  // margin ratio of the position based on the mark price, mark TWAP. The higher
-  // value of the possible margin ratios (TWAP and instantaneous) is taken to be
-  // 'marginRatioMark'. Calculated from margin, unrealized PnL, and position
-  // notional.
-  string margin_ratio_mark = 4 [
+  // margin ratio of the position based on the spot price
+  string margin_ratio = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-
-  // margin ratio of the position based on the index price. Calculated from
-  // margin, unrealized PnL, and position notional.
-  string margin_ratio_index = 5 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-
-  // BlockNumber is current block number at the time of query.
-  int64 block_number = 7;
 }
 
-// ----------------------------------------
+// ---------------------------------------- QueryModuleAccounts
 
 message QueryModuleAccountsRequest {}
 
@@ -114,4 +92,15 @@ message AccountWithBalance {
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
+}
+
+message AmmMarket {
+  Market market = 1 [ (gogoproto.nullable) = false ];
+  AMM amm = 2 [ (gogoproto.nullable) = false ];
+}
+
+message QueryMarketsRequest {}
+
+message QueryMarketsResponse {
+  repeated AmmMarket amm_markets = 1 [ (gogoproto.nullable) = false ];
 }

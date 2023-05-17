@@ -9,10 +9,10 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/amm/keeper"
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
-	perpkeeper "github.com/NibiruChain/nibiru/x/perp/keeper"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/types/v1"
+	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/v1/amm/keeper"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/v1/amm/types"
+	perpkeeper "github.com/NibiruChain/nibiru/x/perp/v1/keeper"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/v1/types"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 )
 
@@ -21,11 +21,11 @@ type QueryPlugin struct {
 }
 
 // NewQueryPlugin returns a pointer to a new QueryPlugin
-func NewQueryPlugin(perp *perpkeeper.Keeper, perpAmm *perpammkeeper.Keeper) *QueryPlugin {
-	return &QueryPlugin{
+func NewQueryPlugin(perp perpkeeper.Keeper, perpAmm perpammkeeper.Keeper) QueryPlugin {
+	return QueryPlugin{
 		Perp: &PerpQuerier{
-			perp:    perpkeeper.NewQuerier(*perp),
-			perpAmm: perpammkeeper.NewQuerier(*perpAmm),
+			perp:    perpkeeper.NewQuerier(perp),
+			perpAmm: perpammkeeper.NewQuerier(perpAmm),
 		},
 	}
 }
@@ -47,7 +47,7 @@ func (qp *QueryPlugin) ToBinary(
 
 // CustomQuerier returns a function that is an implementation of the custom
 // querier mechanism for specific messages
-func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessage) ([]byte, error) {
+func CustomQuerier(qp QueryPlugin) func(ctx sdk.Context, request json.RawMessage) ([]byte, error) {
 	return func(ctx sdk.Context, request json.RawMessage) ([]byte, error) {
 		var wasmContractQuery cw_struct.BindingQuery
 		if err := json.Unmarshal(request, &wasmContractQuery); err != nil {

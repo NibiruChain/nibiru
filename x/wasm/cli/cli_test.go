@@ -19,7 +19,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/amm/types"
+	perpammtypes "github.com/NibiruChain/nibiru/x/perp/v1/amm/types"
 )
 
 // commonArgs is args for CLI test commands.
