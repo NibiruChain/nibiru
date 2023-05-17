@@ -2,9 +2,10 @@ package binding_test
 
 import (
 	"encoding/json"
-	"github.com/NibiruChain/nibiru/x/oracle/types"
 	"testing"
 	"time"
+
+	"github.com/NibiruChain/nibiru/x/oracle/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
@@ -14,6 +15,7 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
@@ -449,4 +451,49 @@ func (s *TestSuiteExecutor) TestInsuranceFundWithdraw() {
 	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
 	s.Errorf(err, "contractRespBz: %s", contractRespBz)
 	s.Contains(err.Error(), "Error parsing into type")
+}
+
+func (s *TestSuiteExecutor) TestSetMarketEnabled() {
+	// admin := s.contractDeployer.String()
+	perpv2Genesis := genesis.PerpV2Genesis()
+	market := perpv2Genesis.Markets[0]
+
+	execMsg := cw_struct.BindingMsg{
+		SetMarketEnabled: &cw_struct.SetMarketEnabled{
+			Pair:    market.Pair.String(),
+			Enabled: !market.Enabled,
+		},
+	}
+
+	s.T().Log("Execute - happy")
+	contract := s.contractController
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{contract.String()}, s.ctx,
+	)
+	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
+	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
+
+	// s.T().Log("Executing should fail since the IF doesn't have funds")
+	// contract := s.contractController
+	// s.nibiru.SudoKeeper.SetSudoContracts(
+	// 	[]string{contract.String()}, s.ctx,
+	// )
+	// contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
+	// s.Errorf(err, "contractRespBz: %s", contractRespBz)
+
+	// s.T().Log("Executing without permission should fail")
+	// s.nibiru.SudoKeeper.SetSudoContracts(
+	// 	[]string{}, s.ctx,
+	// )
+	// contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
+	// s.Errorf(err, "contractRespBz: %s", contractRespBz)
+
+	// s.T().Log("Executing the wrong contract should fail")
+	// contract = s.contractPerp
+	// s.nibiru.SudoKeeper.SetSudoContracts(
+	// 	[]string{contract.String()}, s.ctx,
+	// )
+	// contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
+	// s.Errorf(err, "contractRespBz: %s", contractRespBz)
+	// s.Contains(err.Error(), "Error parsing into type")
 }
