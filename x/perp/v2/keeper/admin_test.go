@@ -7,7 +7,12 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
+	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
+	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
+
 	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
@@ -77,4 +82,26 @@ func TestAdmin_WithdrawFromInsuranceFund(t *testing.T) {
 	}
 
 	testutil.RunFunctionTests(t, testCases)
+}
+
+func TestEnableMarket(t *testing.T) {
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+
+	tests := TestCases{
+		TC("true -> false").
+			Given(
+				CreateCustomMarket(pair),
+				MarketShouldBeEqual(pair, Market_EnableShouldBeEqualTo(true)),
+			).
+			When(
+				SetMarketEnabled(pair, false),
+				MarketShouldBeEqual(pair, Market_EnableShouldBeEqualTo(false)),
+				SetMarketEnabled(pair, true),
+			).
+			Then(
+				MarketShouldBeEqual(pair, Market_EnableShouldBeEqualTo(true)),
+			),
+	}
+
+	NewTestSuite(t).WithTestCases(tests...).Run()
 }

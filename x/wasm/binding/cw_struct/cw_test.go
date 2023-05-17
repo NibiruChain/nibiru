@@ -107,7 +107,8 @@ func (s *TestSuiteBindingJsonTypes) TestExecuteMsgs() {
 		"donate_to_insurance_fund",
 		"peg_shift",
 		"depth_shift",
-		"oracle_params",
+		"edit_oracle_params",
+		"set_market_enabled",
 		"insurance_fund_withdraw",
 	}
 
@@ -129,7 +130,16 @@ func (s *TestSuiteBindingJsonTypes) TestExecuteMsgs() {
 			compactFileBytes, err := compactJsonData(fileBytes)
 			require.NoError(t, err)
 
-			require.Equal(t, compactFileBytes.Bytes(), compactJsonBz.Bytes())
+			var reconsitutedBindingMsg cw_struct.BindingMsg
+			err = json.Unmarshal(compactFileBytes.Bytes(), &reconsitutedBindingMsg)
+			require.NoError(t, err)
+
+			compactFileStr := compactFileBytes.String()
+			compactJsonStr := compactJsonBz.String()
+			require.EqualValuesf(
+				t, bindingMsg, reconsitutedBindingMsg,
+				"compactFileStr: %s\ncompactJsonStr: ", compactFileStr, compactJsonStr,
+			)
 		})
 	}
 }

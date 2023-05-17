@@ -84,6 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1336](https://github.com/NibiruChain/nibiru/pull/1336) - feat: move oracle params out of params subspace and onto the keeper
 * [#1315](https://github.com/NibiruChain/nibiru/pull/1315) - feat: oracle rewards distribution every week
 * [#1342](https://github.com/NibiruChain/nibiru/pull/1342) - feat(perp): market not enabled can only be used to close out existing positions
+* [#1367](https://github.com/NibiruChain/nibiru/pull/1367) - feat: wire enable market to wasm
 
 ### Improvements
 

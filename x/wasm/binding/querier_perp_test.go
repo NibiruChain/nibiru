@@ -76,6 +76,7 @@ func SetupPerpGenesis() app.GenesisState {
 	genesisState := genesis.NewTestGenesisState()
 	genesisState = genesis.AddPerpGenesis(genesisState)
 	genesisState = genesis.AddOracleGenesis(genesisState)
+	genesisState = genesis.AddPerpV2Genesis(genesisState)
 	return genesisState
 }
 

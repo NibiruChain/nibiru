@@ -3,6 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
@@ -51,4 +52,16 @@ func (k admin) WithdrawFromInsuranceFund(
 		sdk.NewAttribute("funds", coinToSend.String()),
 	))
 	return nil
+}
+
+func (k admin) SetMarketEnabled(
+	ctx sdk.Context, pair asset.Pair, enabled bool,
+) (err error) {
+	market, err := k.Markets.Get(ctx, pair)
+	if err != nil {
+		return
+	}
+	market.Enabled = enabled
+	k.Markets.Insert(ctx, pair, market)
+	return
 }
