@@ -58,6 +58,15 @@ func Market_PrepaidBadDebtShouldBeEqualTo(expectedAmount sdk.Int) MarketChecker 
 	}
 }
 
+func Market_EnableShouldBeEqualTo(expectedEnabled bool) MarketChecker {
+	return func(market v2types.Market) error {
+		if market.Enabled != expectedEnabled {
+			return fmt.Errorf("expected enabled to be %t, got %t", expectedEnabled, market.Enabled)
+		}
+		return nil
+	}
+}
+
 type ammShouldBeEqual struct {
 	Pair     asset.Pair
 	Checkers []AMMChecker
