@@ -32,7 +32,7 @@ func TestSnapshotUpdates(t *testing.T) {
 
 	ctx = ctx.WithBlockTime(time.Date(2015, 10, 21, 0, 0, 0, 0, time.UTC)).WithBlockHeight(1)
 
-	require.NoError(t, app.PerpKeeperV2.CreateMarket(
+	require.NoError(t, app.PerpKeeperV2.Admin().CreateMarket(
 		/* ctx */ ctx, keeper.ArgsCreateMarket{
 			Pair:            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 			PriceMultiplier: initialAmm.PriceMultiplier,

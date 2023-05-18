@@ -77,6 +77,8 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 			cwMsg := contractExecuteMsg.ExecuteMsg.RemoveMargin
 			_, err = messenger.Perp.RemoveMargin(cwMsg, ctx)
 			return events, data, err
+
+		// Perp module | shifter
 		case contractExecuteMsg.ExecuteMsg.PegShift != nil:
 			if err := messenger.CheckPermissions(contractAddr, ctx); err != nil {
 				return events, data, err
@@ -91,6 +93,16 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 			cwMsg := contractExecuteMsg.ExecuteMsg.DepthShift
 			err = messenger.Perp.DepthShift(cwMsg, ctx)
 			return events, data, err
+
+		// Perp module | controller
+		case contractExecuteMsg.ExecuteMsg.CreateMarket != nil:
+			if err := messenger.CheckPermissions(contractAddr, ctx); err != nil {
+				return events, data, err
+			}
+			cwMsg := contractExecuteMsg.ExecuteMsg.CreateMarket
+			err = messenger.Perp.CreateMarket(cwMsg, ctx)
+			return events, data, err
+
 		case contractExecuteMsg.ExecuteMsg.InsuranceFundWithdraw != nil:
 			if err := messenger.CheckPermissions(contractAddr, ctx); err != nil {
 				return events, data, err

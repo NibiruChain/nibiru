@@ -129,7 +129,7 @@ type createPool struct {
 }
 
 func (c createPool) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	err := app.PerpKeeperV2.CreateMarket(ctx, keeper.ArgsCreateMarket{
+	err := app.PerpKeeperV2.Admin().CreateMarket(ctx, keeper.ArgsCreateMarket{
 		Pair:            c.pair,
 		PriceMultiplier: c.amm.PriceMultiplier,
 		SqrtDepth:       c.amm.SqrtDepth,

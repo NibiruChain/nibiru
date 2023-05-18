@@ -76,7 +76,7 @@ type ArgsCreateMarket struct {
 }
 
 // CreateMarket creates a pool for a specific pair.
-func (k Keeper) CreateMarket(
+func (k admin) CreateMarket(
 	ctx sdk.Context,
 	args ArgsCreateMarket,
 ) error {
