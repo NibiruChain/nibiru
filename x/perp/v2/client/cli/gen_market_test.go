@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/perp/v2/client/cli"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -16,6 +15,8 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/log"
+
+	"github.com/NibiruChain/nibiru/x/perp/v2/client/cli"
 )
 
 var testModuleBasicManager = module.NewBasicManager(genutil.AppModuleBasic{})
