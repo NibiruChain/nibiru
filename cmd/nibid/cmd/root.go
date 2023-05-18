@@ -33,7 +33,7 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/NibiruChain/nibiru/app"
-	perpammcli "github.com/NibiruChain/nibiru/x/perp/v1/amm/cli"
+	perpv2cli "github.com/NibiruChain/nibiru/x/perp/v2/client/cli"
 )
 
 // NewRootCmd creates a new root command for nibid. It is called once in the
@@ -145,7 +145,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 		genutilcli.GenTxCmd(app.ModuleBasics, encodingConfig.TxConfig, banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome),
 		genutilcli.ValidateGenesisCmd(app.ModuleBasics),
 		AddGenesisAccountCmd(app.DefaultNodeHome),
-		perpammcli.AddMarketGenesisCmd(app.DefaultNodeHome),
+		perpv2cli.AddMarketGenesisCmd(app.DefaultNodeHome),
 		tmcli.NewCompletionCmd(rootCmd, true),
 		testnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
 		debug.Cmd(),
