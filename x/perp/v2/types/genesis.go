@@ -1,5 +1,11 @@
 package types
 
+import (
+	"encoding/json"
+
+	"github.com/cosmos/cosmos-sdk/codec"
+)
+
 // DefaultGenesis returns the default Capability genesis state
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
@@ -32,4 +38,14 @@ func (gs GenesisState) Validate() error {
 	}
 
 	return nil
+}
+
+func GetGenesisStateFromAppState(cdc codec.JSONCodec, appState map[string]json.RawMessage) *GenesisState {
+	var genesisState GenesisState
+
+	if appState[ModuleName] != nil {
+		cdc.MustUnmarshalJSON(appState[ModuleName], &genesisState)
+	}
+
+	return &genesisState
 }
