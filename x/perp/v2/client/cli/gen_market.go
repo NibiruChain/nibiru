@@ -3,7 +3,6 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	flag "github.com/spf13/pflag"
@@ -53,17 +52,8 @@ func getCmdFlagSet() (fs *flag.FlagSet, reqFlags []string) {
 
 // AddMarketGenesisCmd returns add-market-genesis
 func AddMarketGenesisCmd(defaultNodeHome string) *cobra.Command {
-	usageExampleTail := strings.Join([]string{
-		"pair",
-		"sqrt-depth",
-		"price-multiplier",
-		"price-fluct-lim",
-		"maintenance-margin-ratio",
-		"max-leverage",
-	}, "] [")
-
 	cmd := &cobra.Command{
-		Use:   fmt.Sprintf("add-genesis-perp-market [%s]", usageExampleTail),
+		Use:   "add-genesis-perp-market",
 		Short: "Add perp markets to genesis.json",
 		Long:  `Add perp markets to genesis.json.`,
 		Args:  cobra.ExactArgs(0),
@@ -107,7 +97,6 @@ func AddMarketGenesisCmd(defaultNodeHome string) *cobra.Command {
 	}
 
 	cmd.Flags().String(flags.FlagHome, defaultNodeHome, "The application home directory")
-	flags.AddQueryFlagsToCmd(cmd)
 
 	flagSet, requiredFlags := getCmdFlagSet()
 	cmd.Flags().AddFlagSet(flagSet)
