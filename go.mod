@@ -160,3 +160,5 @@ replace github.com/CosmWasm/wasmvm v1.1.1 => github.com/NibiruChain/wasmvm v1.1.
 replace github.com/cosmos/gorocksdb v1.2.0 => github.com/NibiruChain/gorocksdb v1.2.1
 
 replace github.com/tendermint/tendermint => github.com/cometbft/cometbft v0.34.27
+
+replace github.com/linxGnu/grocksdb => github.com/linxGnu/grocksdb v1.6.22
