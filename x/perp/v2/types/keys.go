@@ -1,10 +1,10 @@
 package types
 
 const (
-	ModuleName           = "perp"
-	VaultModuleAccount   = "vault"
-	PerpEFModuleAccount  = "perp_ef"
-	FeePoolModuleAccount = "fee_pool"
+	ModuleName           = "v2perp"
+	VaultModuleAccount   = "v2vault"
+	PerpEFModuleAccount  = "v2perp_ef"
+	FeePoolModuleAccount = "v2fee_pool"
 )
 
 var (
