@@ -122,7 +122,7 @@ func (k Keeper) RemoveMargin(
 		return sdk.Coin{}, sdk.Dec{}, types.Position{}, types.ErrPairNotFound
 	}
 	if margin.Denom != market.Pair.QuoteDenom() {
-		err = fmt.Errorf("invalid margin denom: %s", margin.Denom)
+		err = fmt.Errorf("invalid margin denom: %s expected %s for market %s", margin.Denom, market.Pair.QuoteDenom(), market.Pair)
 		return
 	}
 

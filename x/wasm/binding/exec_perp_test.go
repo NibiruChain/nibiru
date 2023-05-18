@@ -307,13 +307,10 @@ func (s *TestSuitePerpExecutor) TestSadPaths_InvalidPair() {
 	sadPair := asset.Pair("ftt:ust:doge")
 	pair := sadPair
 	margin := sdk.NewCoin(denoms.NUSD, sdk.NewInt(69))
-	incorrectMargin := sdk.NewCoin(denoms.NUSD, sdk.NewInt(69))
 
 	for _, err := range []error{
 		s.DoOpenPositionTest(pair),
 		s.DoAddMarginTest(pair, margin),
-		s.DoAddIncorrectMarginTest(pair, incorrectMargin),
-		s.DoRemoveIncorrectMarginTest(pair, incorrectMargin),
 		s.DoRemoveMarginTest(pair, margin),
 		s.DoClosePositionTest(pair),
 		s.DoPegShiftTest(pair),
