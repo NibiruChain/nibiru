@@ -3,6 +3,7 @@ package binding
 import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	"github.com/NibiruChain/nibiru/x/sudo"

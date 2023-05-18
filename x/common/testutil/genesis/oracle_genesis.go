@@ -1,11 +1,12 @@
 package genesis
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func AddOracleGenesis(gen app.GenesisState) app.GenesisState {
