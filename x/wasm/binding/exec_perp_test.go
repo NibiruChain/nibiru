@@ -64,7 +64,6 @@ func (s *TestSuitePerpExecutor) SetupSuite() {
 
 	s.contractPerp = ContractMap[wasmbin.WasmKeyPerpBinding]
 	s.exec = &binding.ExecutorPerp{
-		Perp:   nibiru.PerpKeeper,
 		PerpV2: nibiru.PerpKeeperV2,
 	}
 	s.OnSetupEnd()
@@ -111,7 +110,7 @@ func (s *TestSuitePerpExecutor) DoOpenPositionTest(pair asset.Pair) error {
 	}
 
 	// Verify position exists with PerpKeeper
-	_, err = s.exec.Perp.Positions.Get(
+	_, err = s.exec.PerpV2.Positions.Get(
 		s.ctx, collections.Join(pair, s.contractDeployer),
 	)
 	if err != nil {

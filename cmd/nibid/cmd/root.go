@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/NibiruChain/nibiru/app"
+	perpv2cli "github.com/NibiruChain/nibiru/x/perp/v2/client/cli"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
@@ -31,9 +33,6 @@ import (
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
-
-	"github.com/NibiruChain/nibiru/app"
-	perpv2cli "github.com/NibiruChain/nibiru/x/perp/v2/client/cli"
 )
 
 // NewRootCmd creates a new root command for nibid. It is called once in the

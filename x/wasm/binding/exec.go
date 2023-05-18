@@ -4,19 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 
-	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-
 	"github.com/NibiruChain/nibiru/x/common/set"
-	perpkeeper "github.com/NibiruChain/nibiru/x/perp/v1/keeper"
+	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	"github.com/NibiruChain/nibiru/x/sudo"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 var _ wasmkeeper.Messenger = (*CustomWasmExecutor)(nil)
@@ -128,7 +124,6 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 }
 
 func CustomExecuteMsgHandler(
-	perp perpkeeper.Keeper,
 	perpv2 perpv2keeper.Keeper,
 	sudoKeeper sudo.Keeper,
 	oracleKeeper oraclekeeper.Keeper,
@@ -136,7 +131,7 @@ func CustomExecuteMsgHandler(
 	return func(originalWasmMessenger wasmkeeper.Messenger) wasmkeeper.Messenger {
 		return &CustomWasmExecutor{
 			Wasm:   originalWasmMessenger,
-			Perp:   ExecutorPerp{Perp: perp, PerpV2: perpv2},
+			Perp:   ExecutorPerp{PerpV2: perpv2},
 			Sudo:   sudoKeeper,
 			Oracle: ExecutorOracle{Oracle: oracleKeeper},
 		}

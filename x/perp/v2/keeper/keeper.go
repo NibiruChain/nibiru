@@ -11,7 +11,6 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	types "github.com/NibiruChain/nibiru/x/perp/v1/types"
 	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
@@ -19,10 +18,10 @@ type Keeper struct {
 	cdc      codec.BinaryCodec
 	storeKey sdk.StoreKey
 
-	BankKeeper    types.BankKeeper
-	AccountKeeper types.AccountKeeper
-	OracleKeeper  types.OracleKeeper
-	EpochKeeper   types.EpochKeeper
+	BankKeeper    v2types.BankKeeper
+	AccountKeeper v2types.AccountKeeper
+	OracleKeeper  v2types.OracleKeeper
+	EpochKeeper   v2types.EpochKeeper
 
 	Markets          collections.Map[asset.Pair, v2types.Market]
 	AMMs             collections.Map[asset.Pair, v2types.AMM]
@@ -35,13 +34,13 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey sdk.StoreKey,
 
-	accountKeeper types.AccountKeeper,
-	bankKeeper types.BankKeeper,
-	oracleKeeper types.OracleKeeper,
-	epochKeeper types.EpochKeeper,
+	accountKeeper v2types.AccountKeeper,
+	bankKeeper v2types.BankKeeper,
+	oracleKeeper v2types.OracleKeeper,
+	epochKeeper v2types.EpochKeeper,
 ) Keeper {
 	// Ensure that the module account is set.
-	if moduleAcc := accountKeeper.GetModuleAddress(types.ModuleName); moduleAcc == nil {
+	if moduleAcc := accountKeeper.GetModuleAddress(v2types.ModuleName); moduleAcc == nil {
 		panic("The x/perp module account has not been set")
 	}
 

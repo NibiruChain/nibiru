@@ -1,10 +1,12 @@
 package action
 
 import (
+	"errors"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/collections"
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
@@ -111,5 +113,31 @@ func QueryPositions(traderAddress sdk.AccAddress, responseCheckers ...[]QueryPos
 	return queryAllPositions{
 		traderAddress:       traderAddress,
 		allResponseCheckers: responseCheckers,
+	}
+}
+
+type queryPositionNotFound struct {
+	pair          asset.Pair
+	traderAddress sdk.AccAddress
+}
+
+func (q queryPositionNotFound) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	queryServer := keeper.NewQuerier(app.PerpKeeperV2)
+
+	_, err := queryServer.QueryPosition(sdk.WrapSDKContext(ctx), &v2types.QueryPositionRequest{
+		Pair:   q.pair,
+		Trader: q.traderAddress.String(),
+	})
+	if !errors.Is(err, collections.ErrNotFound) {
+		return ctx, fmt.Errorf("expected position not found, but found a position for pair %s, trader %s", q.pair, q.traderAddress), false
+	}
+
+	return ctx, nil, false
+}
+
+func QueryPositionNotFound(pair asset.Pair, traderAddress sdk.AccAddress) action.Action {
+	return queryPositionNotFound{
+		pair:          pair,
+		traderAddress: traderAddress,
 	}
 }

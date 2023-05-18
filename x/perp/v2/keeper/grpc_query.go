@@ -11,7 +11,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	types "github.com/NibiruChain/nibiru/x/perp/v1/types"
 	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
@@ -115,7 +114,7 @@ func (q queryServer) ModuleAccounts(
 	sdkContext := sdk.UnwrapSDKContext(ctx)
 
 	var moduleAccountsWithBalances []v2types.AccountWithBalance
-	for _, acc := range types.ModuleAccounts {
+	for _, acc := range v2types.ModuleAccounts {
 		account := authtypes.NewModuleAddress(acc)
 
 		balances := q.k.BankKeeper.GetAllBalances(sdkContext, account)
