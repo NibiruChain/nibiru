@@ -29,6 +29,9 @@ func (k Keeper) AddMargin(
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
 	}
+	if marginToAdd.Denom != amm.Pair.QuoteDenom() {
+		return nil, fmt.Errorf("invalid margin denom: %s", marginToAdd.Denom)
+	}
 
 	position, err := k.Positions.Get(ctx, collections.Join(pair, traderAddr))
 	if err != nil {
@@ -121,6 +124,9 @@ func (k Keeper) RemoveMargin(
 	amm, err := k.AMMs.Get(ctx, pair)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
+	}
+	if marginToRemove.Denom != amm.Pair.QuoteDenom() {
+		return nil, fmt.Errorf("invalid margin denom: %s", marginToRemove.Denom)
 	}
 
 	position, err := k.Positions.Get(ctx, collections.Join(pair, traderAddr))
