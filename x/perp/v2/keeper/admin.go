@@ -68,40 +68,53 @@ func (k admin) SetMarketEnabled(
 	return
 }
 
-// CreatePool creates a pool for a specific pair.
-func (k Keeper) CreatePool(
+type ArgsCreateMarket struct {
+	Pair            asset.Pair
+	PriceMultiplier sdk.Dec
+	SqrtDepth       sdk.Dec
+	Market          *v2types.Market // pointer makes it optional
+}
+
+// CreateMarket creates a pool for a specific pair.
+func (k Keeper) CreateMarket(
 	ctx sdk.Context,
-	pair asset.Pair,
-	market v2types.Market,
-	amm v2types.AMM,
+	args ArgsCreateMarket,
 ) error {
-	if !amm.QuoteReserve.Equal(amm.BaseReserve) {
-		return fmt.Errorf("quote asset reserve %s must be equal to base asset reserve %s", amm.QuoteReserve, amm.BaseReserve)
-	}
-
-	if !amm.BaseReserve.Equal(amm.SqrtDepth) {
-		return fmt.Errorf(
-			"base asset reserve %s must be equal to sqrt depth %s on pool creation",
-			amm.BaseReserve, amm.SqrtDepth,
-		)
-	}
-
+	pair := args.Pair
 	_, err := k.Markets.Get(ctx, pair)
 	if err == nil {
 		return fmt.Errorf("market %s already exists", pair)
 	}
 
-	err = market.Validate()
-	if err != nil {
+	// init market
+	sqrtDepth := args.SqrtDepth
+	quoteReserve := sqrtDepth
+	baseReserve := sqrtDepth
+	var market *v2types.Market
+	if args.Market == nil {
+		*market = v2types.DefaultMarket(pair)
+	} else {
+		market = args.Market
+	}
+	if err := market.Validate(); err != nil {
 		return err
 	}
 
-	err = amm.Validate()
-	if err != nil {
+	// init amm
+	amm := v2types.AMM{
+		Pair:            pair,
+		BaseReserve:     baseReserve,
+		QuoteReserve:    quoteReserve,
+		SqrtDepth:       sqrtDepth,
+		PriceMultiplier: args.PriceMultiplier,
+		TotalLong:       sdk.ZeroDec(),
+		TotalShort:      sdk.ZeroDec(),
+	}
+	if err := amm.Validate(); err != nil {
 		return err
 	}
 
-	k.Markets.Insert(ctx, pair, market)
+	k.Markets.Insert(ctx, pair, *market)
 	k.AMMs.Insert(ctx, pair, amm)
 
 	return nil

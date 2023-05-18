@@ -13,6 +13,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	perp "github.com/NibiruChain/nibiru/x/perp/v2/module"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
@@ -31,11 +32,13 @@ func TestSnapshotUpdates(t *testing.T) {
 
 	ctx = ctx.WithBlockTime(time.Date(2015, 10, 21, 0, 0, 0, 0, time.UTC)).WithBlockHeight(1)
 
-	require.NoError(t, app.PerpKeeperV2.CreatePool(
-		/* ctx */ ctx,
-		/* pair */ asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-		/* market */ initialMarket,
-		/* amm */ initialAmm,
+	require.NoError(t, app.PerpKeeperV2.CreateMarket(
+		/* ctx */ ctx, keeper.ArgsCreateMarket{
+			Pair:            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+			PriceMultiplier: initialAmm.PriceMultiplier,
+			SqrtDepth:       initialAmm.SqrtDepth,
+			Market:          &initialMarket,
+		},
 	))
 
 	expectedSnapshot := types.ReserveSnapshot{

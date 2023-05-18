@@ -1,5 +1,15 @@
 package types
 
+import (
+	"time"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
+	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
+)
+
 // DefaultGenesis returns the default Capability genesis state
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
@@ -32,4 +42,22 @@ func (gs GenesisState) Validate() error {
 	}
 
 	return nil
+}
+
+func DefaultMarket(pair asset.Pair) Market {
+	return Market{
+		Pair:                            pair,
+		Enabled:                         true,
+		LatestCumulativePremiumFraction: sdk.ZeroDec(),
+		ExchangeFeeRatio:                sdk.MustNewDecFromStr("0.0010"),
+		EcosystemFundFeeRatio:           sdk.MustNewDecFromStr("0.0010"),
+		LiquidationFeeRatio:             sdk.MustNewDecFromStr("0.0500"),
+		PartialLiquidationRatio:         sdk.MustNewDecFromStr("0.5000"),
+		FundingRateEpochId:              epochstypes.ThirtyMinuteEpochID,
+		TwapLookbackWindow:              time.Minute * 30,
+		PrepaidBadDebt:                  sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+		PriceFluctuationLimitRatio:      sdk.MustNewDecFromStr("0.1000"),
+		MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.0625"),
+		MaxLeverage:                     sdk.NewDec(10),
+	}
 }
