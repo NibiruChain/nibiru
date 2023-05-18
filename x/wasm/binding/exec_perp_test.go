@@ -1,6 +1,7 @@
 package binding_test
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -53,6 +54,7 @@ func (s *TestSuitePerpExecutor) SetupSuite() {
 	coins := sdk.NewCoins(
 		sdk.NewCoin(denoms.NIBI, sdk.NewInt(1_000_000)),
 		sdk.NewCoin(denoms.NUSD, sdk.NewInt(420_000*69)),
+		sdk.NewCoin(denoms.USDT, sdk.NewInt(420_000*69)),
 	)
 	s.NoError(testapp.FundAccount(nibiru.BankKeeper, ctx, sender, coins))
 
@@ -77,10 +79,13 @@ func (s *TestSuitePerpExecutor) OnSetupEnd() {
 func (s *TestSuitePerpExecutor) TestOpenAddRemoveClose() {
 	pair := asset.MustNewPair(s.happyFields.Pair)
 	margin := sdk.NewCoin(denoms.NUSD, sdk.NewInt(69))
+	incorrectMargin := sdk.NewCoin(denoms.USDT, sdk.NewInt(69))
 
 	for _, err := range []error{
 		s.DoOpenPositionTest(pair),
 		s.DoAddMarginTest(pair, margin),
+		s.DoAddIncorrectMarginTest(pair, incorrectMargin),
+		s.DoRemoveIncorrectMarginTest(pair, incorrectMargin),
 		s.DoRemoveMarginTest(pair, margin),
 		s.DoClosePositionTest(pair),
 		s.DoPegShiftTest(pair),
@@ -152,6 +157,36 @@ func (s *TestSuitePerpExecutor) DoAddMarginTest(
 
 	_, err := s.exec.AddMargin(cwMsg, s.ctx)
 	return err
+}
+
+func (s *TestSuitePerpExecutor) DoAddIncorrectMarginTest(
+	pair asset.Pair, margin sdk.Coin) error {
+	cwMsg := &cw_struct.AddMargin{
+		Sender: s.contractDeployer.String(),
+		Pair:   pair.String(),
+		Margin: margin,
+	}
+
+	_, err := s.exec.AddMargin(cwMsg, s.ctx)
+	if err == nil {
+		return errors.New("incorrect margin type should have failed")
+	}
+	return nil
+}
+
+func (s *TestSuitePerpExecutor) DoRemoveIncorrectMarginTest(
+	pair asset.Pair, margin sdk.Coin) error {
+	cwMsg := &cw_struct.RemoveMargin{
+		Sender: s.contractDeployer.String(),
+		Pair:   pair.String(),
+		Margin: margin,
+	}
+
+	_, err := s.exec.RemoveMargin(cwMsg, s.ctx)
+	if err == nil {
+		return errors.New("incorrect margin type should have failed")
+	}
+	return nil
 }
 
 func (s *TestSuitePerpExecutor) DoRemoveMarginTest(
@@ -272,10 +307,13 @@ func (s *TestSuitePerpExecutor) TestSadPaths_InvalidPair() {
 	sadPair := asset.Pair("ftt:ust:doge")
 	pair := sadPair
 	margin := sdk.NewCoin(denoms.NUSD, sdk.NewInt(69))
+	incorrectMargin := sdk.NewCoin(denoms.NUSD, sdk.NewInt(69))
 
 	for _, err := range []error{
 		s.DoOpenPositionTest(pair),
 		s.DoAddMarginTest(pair, margin),
+		s.DoAddIncorrectMarginTest(pair, incorrectMargin),
+		s.DoRemoveIncorrectMarginTest(pair, incorrectMargin),
 		s.DoRemoveMarginTest(pair, margin),
 		s.DoClosePositionTest(pair),
 		s.DoPegShiftTest(pair),
