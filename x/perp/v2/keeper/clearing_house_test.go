@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/x/common/testutil/assertion"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/assert"
@@ -1026,6 +1028,43 @@ func TestClosePosition(t *testing.T) {
 			})
 		})
 	}
+}
+
+func TestClosePositionWithBadDebt(t *testing.T) {
+	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.USDC)
+
+	alice := testutil.AccAddress()
+	startTime := time.Now()
+
+	tc := TestCases{
+		TC("close position with bad debt").
+			Given(
+				SetBlockNumber(1),
+				SetBlockTime(startTime),
+				CreateCustomMarket(pairBtcUsdc),
+
+				InsertPosition(
+					WithTrader(alice),
+					WithPair(pairBtcUsdc),
+					WithSize(sdk.NewDec(10000)),
+					WithMargin(sdk.NewDec(750)),
+					WithOpenNotional(sdk.NewDec(10800))),
+
+				FundModule(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
+				FundModule(v2types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 50))),
+			).
+			When(
+				MoveToNextBlock(),
+				ClosePosition(alice, pairBtcUsdc),
+			).
+			Then(
+				PositionShouldNotExist(alice, pairBtcUsdc),
+				assertion.ModuleBalanceEqual(v2types.VaultModuleAccount, denoms.USDC, sdk.NewInt(1050)), // 1000 + 50 from perp ef
+				assertion.ModuleBalanceEqual(v2types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(0)),
+			),
+	}
+
+	NewTestSuite(t).WithTestCases(tc...).Run()
 }
 
 func TestUpdateSwapInvariant(t *testing.T) {
