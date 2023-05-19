@@ -495,3 +495,45 @@ func (s *TestSuiteExecutor) TestSetMarketEnabled() {
 	s.Errorf(err, "contractRespBz: %s", contractRespBz)
 	s.Contains(err.Error(), "Error parsing into type")
 }
+
+func (s *TestSuiteExecutor) TestCreateMarket() {
+	contract := s.contractController
+	pair := asset.MustNewPair("bloop:blam")
+	execMsg := cw_struct.BindingMsg{
+		CreateMarket: &cw_struct.CreateMarket{
+			Pair:         pair.String(),
+			PegMult:      sdk.NewDec(420),
+			SqrtDepth:    sdk.NewDec(1_000),
+			MarketParams: nil,
+		},
+	}
+
+	s.T().Logf("Execute - happy: market: %s", pair)
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{contract.String()}, s.ctx,
+	)
+	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
+	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
+
+	market, err := s.nibiru.PerpKeeperV2.Markets.Get(s.ctx, pair)
+	s.NoError(err)
+	s.NoError(market.Validate())
+	s.True(market.Enabled)
+	s.EqualValues(pair, market.Pair)
+
+	s.T().Log("Executing without permission should fail")
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{}, s.ctx,
+	)
+	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
+	s.Errorf(err, "contractRespBz: %s", contractRespBz)
+
+	s.T().Log("Executing the wrong contract should fail")
+	contract = s.contractPerp
+	s.nibiru.SudoKeeper.SetSudoContracts(
+		[]string{contract.String()}, s.ctx,
+	)
+	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
+	s.Errorf(err, "contractRespBz: %s", contractRespBz)
+	s.Contains(err.Error(), "Error parsing into type")
+}
