@@ -59,20 +59,32 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 		switch {
 		// Perp module
 		case contractExecuteMsg.ExecuteMsg.OpenPosition != nil:
+			if err := messenger.CheckPermissions(contractAddr, ctx); err != nil {
+				return events, data, err
+			}
 			cwMsg := contractExecuteMsg.ExecuteMsg.OpenPosition
-			_, err = messenger.Perp.OpenPosition(cwMsg, ctx)
+			_, err = messenger.Perp.OpenPosition(cwMsg, contractAddr, ctx)
 			return events, data, err
 		case contractExecuteMsg.ExecuteMsg.ClosePosition != nil:
+			if err := messenger.CheckPermissions(contractAddr, ctx); err != nil {
+				return events, data, err
+			}
 			cwMsg := contractExecuteMsg.ExecuteMsg.ClosePosition
-			_, err = messenger.Perp.ClosePosition(cwMsg, ctx)
+			_, err = messenger.Perp.ClosePosition(cwMsg, contractAddr, ctx)
 			return events, data, err
 		case contractExecuteMsg.ExecuteMsg.AddMargin != nil:
+			if err := messenger.CheckPermissions(contractAddr, ctx); err != nil {
+				return events, data, err
+			}
 			cwMsg := contractExecuteMsg.ExecuteMsg.AddMargin
-			_, err = messenger.Perp.AddMargin(cwMsg, ctx)
+			_, err = messenger.Perp.AddMargin(cwMsg, contractAddr, ctx)
 			return events, data, err
 		case contractExecuteMsg.ExecuteMsg.RemoveMargin != nil:
+			if err := messenger.CheckPermissions(contractAddr, ctx); err != nil {
+				return events, data, err
+			}
 			cwMsg := contractExecuteMsg.ExecuteMsg.RemoveMargin
-			_, err = messenger.Perp.RemoveMargin(cwMsg, ctx)
+			_, err = messenger.Perp.RemoveMargin(cwMsg, contractAddr, ctx)
 			return events, data, err
 
 		// Perp module | shifter
