@@ -84,18 +84,10 @@ import (
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 
-	perpamm "github.com/NibiruChain/nibiru/x/perp/v1/amm"
-	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/v1/amm/keeper"
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/v1/amm/types"
-
-	perpkeeper "github.com/NibiruChain/nibiru/x/perp/v1/keeper"
-	perp "github.com/NibiruChain/nibiru/x/perp/v1/module"
-
 	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	perpv2 "github.com/NibiruChain/nibiru/x/perp/v2/module"
 	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 
-	perptypes "github.com/NibiruChain/nibiru/x/perp/v1/types"
 	"github.com/NibiruChain/nibiru/x/spot"
 	spotkeeper "github.com/NibiruChain/nibiru/x/spot/keeper"
 	spottypes "github.com/NibiruChain/nibiru/x/spot/types"
@@ -137,9 +129,7 @@ func GetStoreKeys() (
 		stablecointypes.StoreKey,
 		oracletypes.StoreKey,
 		epochstypes.StoreKey,
-		perptypes.StoreKey,
 		perpv2types.StoreKey,
-		perpammtypes.StoreKey,
 		inflationtypes.StoreKey,
 		sudo.StoreKey,
 		wasm.StoreKey,
@@ -243,20 +233,8 @@ func (app *NibiruApp) InitKeepers(
 		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.SpotKeeper,
 	)
 
-	app.PerpAmmKeeper = perpammkeeper.NewKeeper(
-		appCodec,
-		keys[perpammtypes.StoreKey],
-		app.OracleKeeper,
-	)
-
 	app.EpochsKeeper = epochskeeper.NewKeeper(
 		appCodec, keys[epochstypes.StoreKey],
-	)
-
-	app.PerpKeeper = perpkeeper.NewKeeper(
-		appCodec, keys[perptypes.StoreKey],
-		app.GetSubspace(perptypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.PerpAmmKeeper, app.EpochsKeeper,
 	)
 
 	app.PerpKeeperV2 = perpv2keeper.NewKeeper(
@@ -277,7 +255,6 @@ func (app *NibiruApp) InitKeepers(
 		epochstypes.NewMultiEpochHooks(
 			app.StablecoinKeeper.Hooks(),
 			app.PerpKeeperV2.Hooks(),
-			app.PerpKeeper.Hooks(),
 			app.InflationKeeper.Hooks(),
 			app.OracleKeeper.Hooks(),
 		),
@@ -347,8 +324,7 @@ func (app *NibiruApp) InitKeepers(
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.paramsKeeper)).
 		AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.DistrKeeper)).
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.upgradeKeeper)).
-		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.ibcKeeper.ClientKeeper)).
-		AddRoute(perpammtypes.RouterKey, perpamm.NewMarketProposalHandler(app.PerpAmmKeeper))
+		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.ibcKeeper.ClientKeeper))
 
 	// Create evidence keeper.
 	// This keeper automatically includes an evidence router.
@@ -437,13 +413,6 @@ func (app *NibiruApp) AppModules(
 		appCodec, app.StablecoinKeeper, app.AccountKeeper, app.BankKeeper,
 		nil,
 	)
-	perpModule := perp.NewAppModule(
-		appCodec, app.PerpKeeper, app.AccountKeeper, app.BankKeeper,
-		app.OracleKeeper,
-	)
-	perpAmmModule := perpamm.NewAppModule(
-		appCodec, app.PerpAmmKeeper, app.OracleKeeper,
-	)
 	perpv2Module := perpv2.NewAppModule(
 		appCodec, app.PerpKeeperV2, app.AccountKeeper, app.BankKeeper, app.OracleKeeper,
 	)
@@ -476,8 +445,6 @@ func (app *NibiruApp) AppModules(
 		stablecoinModule,
 		oracleModule,
 		epochsModule,
-		perpAmmModule,
-		perpModule,
 		perpv2Module,
 		inflationModule,
 		sudoModule,
@@ -536,8 +503,6 @@ func OrderedModuleNames() []string {
 		stablecointypes.ModuleName,
 		spottypes.ModuleName,
 		oracletypes.ModuleName,
-		perpammtypes.ModuleName,
-		perptypes.ModuleName,
 		perpv2types.ModuleName,
 		inflationtypes.ModuleName,
 		sudo.ModuleName,

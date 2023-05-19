@@ -61,19 +61,20 @@ func (s *TestSuiteBindingJsonTypes) TestQueries() {
 
 func (s *TestSuiteBindingJsonTypes) TestToAppMarket() {
 	var lastCwMarket cw_struct.Market
-	for _, appMarket := range genesis.START_MARKETS {
+	for _, ammMarket := range genesis.START_MARKETS {
 		dummyBlockHeight := int64(1)
 		cwMarket := cw_struct.NewMarket(
-			appMarket,
+			ammMarket.Market,
+			ammMarket.Amm,
 			"index price",
-			appMarket.GetMarkPrice().String(),
+			ammMarket.Amm.MarkPrice().String(),
 			dummyBlockHeight,
 		)
 
 		// Test the ToAppMarket fn
 		gotAppMarket, err := cwMarket.ToAppMarket()
 		s.Assert().NoError(err)
-		s.Assert().EqualValues(appMarket, gotAppMarket)
+		s.Assert().EqualValues(ammMarket.Market, gotAppMarket)
 
 		lastCwMarket = cwMarket
 	}
