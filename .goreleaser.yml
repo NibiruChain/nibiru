@@ -39,6 +39,7 @@ builds:
       - static
       - static_wasm
       - rocksdb
+      - grocksdb_no_link
     overrides:
       - goos: darwin
         goarch: arm64
@@ -83,6 +84,7 @@ builds:
       - ledger
       - muslc
       - rocksdb
+      - grocksdb_no_link
       - static
     overrides:
       - goos: linux
