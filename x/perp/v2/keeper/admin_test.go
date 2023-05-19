@@ -107,14 +107,14 @@ func TestEnableMarket(t *testing.T) {
 	NewTestSuite(t).WithTestCases(tests...).Run()
 }
 
-func TestCreatePool(t *testing.T) {
+func TestCreateMarket(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 
 	tests := TestCases{
 		TC("create pool").
 			Given().
 			When(
-				CreatePool(pair, *mock.TestMarket(), *mock.TestAMMDefault()),
+				CreateMarket(pair, *mock.TestMarket(), *mock.TestAMMDefault()),
 			).
 			Then(
 				MarketShouldBeEqual(pair,

@@ -99,5 +99,13 @@
       "min_voters": "420",
       "validator_fee_ratio": "420"
     }
+  },
+  "create_market": {
+    "create_market": {
+      "pair": "ETH:USD",
+      "peg_mult": "420",
+      "sqrt_depth": "420",
+      "market_params": null
+    }
   }
 }
