@@ -444,7 +444,7 @@ func (s *IntegrationTestSuite) TestDonateToEcosystemFund() {
 		testutilcli.ExecQuery(
 			s.network.Validators[0].ClientCtx,
 			bankcli.GetBalancesCmd(),
-			[]string{"nibi1trh2mamq64u4g042zfeevvjk4cukrthvppfnc7", "--denom", "unusd"}, // nibi1trh2mamq64u4g042zfeevvjk4cukrthvppfnc7 is the perp_ef module account address
+			[]string{"nibi1hx8s48gr5f385letde09fwxk9kltyejy77d6e9", "--denom", "unusd"}, // nibi1hx8s48gr5f385letde09fwxk9kltyejy77d6e9 is the v2perp_ef module account address
 			resp,
 		),
 	)

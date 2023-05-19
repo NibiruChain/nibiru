@@ -5,9 +5,13 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"encoding/json"
+
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
+
+	"github.com/cosmos/cosmos-sdk/codec"
 )
 
 // DefaultGenesis returns the default Capability genesis state
@@ -60,4 +64,14 @@ func DefaultMarket(pair asset.Pair) Market {
 		MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.0625"),
 		MaxLeverage:                     sdk.NewDec(10),
 	}
+}
+
+func GetGenesisStateFromAppState(cdc codec.JSONCodec, appState map[string]json.RawMessage) *GenesisState {
+	var genesisState GenesisState
+
+	if appState[ModuleName] != nil {
+		cdc.MustUnmarshalJSON(appState[ModuleName], &genesisState)
+	}
+
+	return &genesisState
 }

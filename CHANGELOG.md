@@ -140,11 +140,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1362](https://github.com/NibiruChain/nibiru/pull/1362) - feat(perp): add `perpv2` cli
 * [#1369](https://github.com/NibiruChain/nibiru/pull/1369) - refactor(oracle): divert rewards from `perpv2` instead of `perpv1`
 * [#1370](https://github.com/NibiruChain/nibiru/pull/1370) - feat(perp): `perpv2` `CreatePool` method
+* [#1371](https://github.com/NibiruChain/nibiru/pull/1371) - feat: realize bad debt when a user tries to close his position
+* [#1373](https://github.com/NibiruChain/nibiru/pull/1373) - feat(perp): `perpv2` `add-genesis-perp-market` CLI command
 
 ### Bug Fixes
 
 * [#1210](https://github.com/NibiruChain/nibiru/pull/1210) - fix(ci): fix docker push workflow
 * [#1337](https://github.com/NibiruChain/nibiru/pull/1337) - fix(ci): fix dockerfile with rocksdb
+* [#1379](https://github.com/NibiruChain/nibiru/pull/1379) - feat(perp): check for denom in add/remove margin
 
 ## [v0.19.2](https://github.com/NibiruChain/nibiru/releases/tag/v0.19.2) - 2023-02-24
 

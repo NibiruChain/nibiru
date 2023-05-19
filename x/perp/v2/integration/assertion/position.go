@@ -26,7 +26,6 @@ func (p positionShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Cont
 	if err != nil {
 		return ctx, err, false
 	}
-
 	for _, checker := range p.PositionCheckers {
 		if err := checker(position); err != nil {
 			return ctx, err, false

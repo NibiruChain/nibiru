@@ -6,11 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
@@ -188,7 +189,7 @@ func TestRemoveMargin(t *testing.T) {
 
 				t.Log("Build msg that specifies an impossible margin removal (too high)")
 				traderAddr := testutilevents.AccAddress()
-				pair := asset.NewPair("osmo", "nusd")
+				pair := asset.NewPair("osmo", "unusd")
 
 				mocks.mockPerpAmmKeeper.EXPECT().GetPool(ctx, pair).Return(perpammtypes.Market{Pair: pair}, nil)
 
@@ -221,7 +222,7 @@ func TestRemoveMargin(t *testing.T) {
 				perpKeeper, mocks, ctx := getKeeper(t)
 
 				traderAddr := testutilevents.AccAddress()
-				pair := asset.MustNewPair("osmo:nusd")
+				pair := asset.MustNewPair("osmo:unusd")
 				marginToWithdraw := sdk.NewInt64Coin(pair.QuoteDenom(), 100)
 
 				t.Log("mock market keeper")
@@ -289,7 +290,7 @@ func TestRemoveMargin(t *testing.T) {
 				perpKeeper, mocks, ctx := getKeeper(t)
 
 				traderAddr := testutilevents.AccAddress()
-				pair := asset.MustNewPair("osmo:nusd")
+				pair := asset.MustNewPair("osmo:unusd")
 				marginToWithdraw := sdk.NewInt64Coin(pair.QuoteDenom(), 100)
 
 				t.Log("mock market keeper")
@@ -385,7 +386,7 @@ func TestRemoveMargin(t *testing.T) {
 				perpKeeper, mocks, ctx := getKeeper(t)
 
 				traderAddr := testutilevents.AccAddress()
-				pair := asset.MustNewPair("osmo:nusd")
+				pair := asset.MustNewPair("osmo:unusd")
 				marginToWithdraw := sdk.NewInt64Coin(pair.QuoteDenom(), 100)
 
 				t.Log("mock market keeper")
