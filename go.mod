@@ -161,4 +161,5 @@ replace github.com/cosmos/gorocksdb v1.2.0 => github.com/NibiruChain/gorocksdb v
 
 replace github.com/tendermint/tendermint => github.com/cometbft/cometbft v0.34.27
 
+// latest version of grocksdb fails to build https://github.com/linxGnu/grocksdb/issues/85
 replace github.com/linxGnu/grocksdb => github.com/linxGnu/grocksdb v1.6.22
