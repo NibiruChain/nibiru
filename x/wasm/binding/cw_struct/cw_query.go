@@ -1,10 +1,13 @@
 package cw_struct
 
 import (
+	"time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/v1/amm/types"
+	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
+	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 // BindingQuery corresponds to the NibiruQuery enum in CosmWasm binding
@@ -68,47 +71,49 @@ type Market struct {
 }
 
 // Converts the JSON market, which comes in from Rust, to its corresponding
-// protobuf (Golang) type in the app: perpammtypes.Market.
-func (m Market) ToAppMarket() (appMarket perpammtypes.Market, err error) {
+// protobuf (Golang) type in the app: perpv2types.Market.
+func (m Market) ToAppMarket() (appMarket perpv2types.Market, err error) {
 	config := m.Config
 	pair, err := asset.TryNewPair(m.Pair)
 	if err != nil {
 		return appMarket, err
 	}
-	return perpammtypes.NewMarket(perpammtypes.ArgsNewMarket{
-		Pair:          pair,
-		BaseReserves:  m.BaseReserve,
-		QuoteReserves: m.QuoteReserve,
-		Config: &perpammtypes.MarketConfig{
-			TradeLimitRatio:        config.TradeLimitRatio,
-			FluctuationLimitRatio:  config.FluctLimitRatio,
-			MaxOracleSpreadRatio:   config.MaxOracleSpreadRatio,
-			MaintenanceMarginRatio: config.MaintenanceMarginRatio,
-			MaxLeverage:            config.MaxLeverage,
-		},
-		TotalLong:     m.TotalLong,
-		TotalShort:    m.TotalShort,
-		PegMultiplier: m.PegMult,
-	}), nil
+	return perpv2types.Market{
+		Pair:                            pair,
+		Enabled:                         true,
+		PriceFluctuationLimitRatio:      config.FluctLimitRatio,
+		MaintenanceMarginRatio:          config.MaintenanceMarginRatio,
+		MaxLeverage:                     config.MaxLeverage,
+		LatestCumulativePremiumFraction: sdk.ZeroDec(),
+		ExchangeFeeRatio:                sdk.MustNewDecFromStr("0.0010"),
+		EcosystemFundFeeRatio:           sdk.MustNewDecFromStr("0.0010"),
+		LiquidationFeeRatio:             sdk.MustNewDecFromStr("0.0500"),
+		PartialLiquidationRatio:         sdk.MustNewDecFromStr("0.5"),
+		FundingRateEpochId:              epochstypes.ThirtyMinuteEpochID,
+		TwapLookbackWindow:              30 * time.Minute,
+		PrepaidBadDebt:                  sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()),
+	}, nil
 }
 
-func NewMarket(appMarket perpammtypes.Market, indexPrice, twapMark string, blockNumber int64) Market {
-	base := appMarket.BaseReserve
-	quote := appMarket.QuoteReserve
+func NewMarket(appMarket perpv2types.Market, appAmm perpv2types.AMM, indexPrice, twapMark string, blockNumber int64) Market {
 	return Market{
 		Pair:         appMarket.Pair.String(),
-		BaseReserve:  base,
-		QuoteReserve: quote,
-		SqrtDepth:    appMarket.SqrtDepth,
-		Depth:        base.Mul(quote).RoundInt(),
-		TotalLong:    appMarket.TotalLong,
-		TotalShort:   appMarket.TotalShort,
-		PegMult:      appMarket.PegMultiplier,
-		Config:       NewMarketConfig(appMarket.Config),
-		MarkPrice:    appMarket.GetMarkPrice(),
-		IndexPrice:   indexPrice,
-		TwapMark:     twapMark,
-		BlockNumber:  sdk.NewInt(blockNumber),
+		BaseReserve:  appAmm.BaseReserve,
+		QuoteReserve: appAmm.QuoteReserve,
+		SqrtDepth:    appAmm.SqrtDepth,
+		// Depth:        base.Mul(quote).RoundInt(),
+		TotalLong:  appAmm.TotalLong,
+		TotalShort: appAmm.TotalShort,
+		PegMult:    appAmm.PriceMultiplier,
+		Config: &MarketConfig{
+			FluctLimitRatio:        appMarket.PriceFluctuationLimitRatio,
+			MaintenanceMarginRatio: appMarket.MaintenanceMarginRatio,
+			MaxLeverage:            appMarket.MaxLeverage,
+		},
+		MarkPrice:   appAmm.MarkPrice(),
+		IndexPrice:  indexPrice,
+		TwapMark:    twapMark,
+		BlockNumber: sdk.NewInt(blockNumber),
 	}
 }
 
@@ -118,18 +123,6 @@ type MarketConfig struct {
 	MaxOracleSpreadRatio   sdk.Dec `json:"max_oracle_spread_ratio"`
 	MaintenanceMarginRatio sdk.Dec `json:"maintenance_margin_ratio"`
 	MaxLeverage            sdk.Dec `json:"max_leverage"`
-}
-
-func NewMarketConfig(
-	appMarketConfig perpammtypes.MarketConfig,
-) *MarketConfig {
-	return &MarketConfig{
-		TradeLimitRatio:        appMarketConfig.TradeLimitRatio,
-		FluctLimitRatio:        appMarketConfig.FluctuationLimitRatio,
-		MaxOracleSpreadRatio:   appMarketConfig.MaxOracleSpreadRatio,
-		MaintenanceMarginRatio: appMarketConfig.MaintenanceMarginRatio,
-		MaxLeverage:            appMarketConfig.MaxLeverage,
-	}
 }
 
 type BasePriceRequest struct {

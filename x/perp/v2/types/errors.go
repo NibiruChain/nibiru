@@ -34,4 +34,5 @@ var (
 	ErrNonPositivePegMultiplier           = sdkerrors.Register(ModuleName, 26, "peg multiplier must be > 0")
 	ErrNonPositiveSwapInvariantMutliplier = sdkerrors.Register(ModuleName, 27, "swap multiplier must be > 0")
 	ErrNilSwapInvariantMutliplier         = sdkerrors.Register(ModuleName, 28, "swap multiplier must be not nil")
+	ErrNotEnoughFundToPayAction           = sdkerrors.Register(ModuleName, 29, "not enough fund in perp EF to pay for action")
 )

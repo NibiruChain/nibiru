@@ -13,7 +13,7 @@ import (
 	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
-func TestQueryPosition(t *testing.T) {
+func TestQueryPositions(t *testing.T) {
 	alice := testutil.AccAddress()
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	pair2 := asset.Registry.Pair(denoms.ETH, denoms.NUSD)
@@ -203,7 +203,7 @@ func TestQueryPosition(t *testing.T) {
 	NewTestSuite(t).WithTestCases(tc...).Run()
 }
 
-func TestQueryPositions(t *testing.T) {
+func TestQueryPosition(t *testing.T) {
 	alice := testutil.AccAddress()
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 
@@ -305,6 +305,18 @@ func TestQueryPositions(t *testing.T) {
 					QueryPosition_UnrealizedPnlEquals(sdk.MustNewDecFromStr("-5.00000000005")),
 					QueryPosition_MarginRatioEquals(sdk.MustNewDecFromStr("-0.800000000018")),
 				),
+			),
+
+		TC("non existent position").
+			Given(
+				CreateCustomMarket(
+					pair,
+					WithPricePeg(sdk.NewDec(2)),
+				),
+			).
+			When().
+			Then(
+				QueryPositionNotFound(pair, alice),
 			),
 	}
 

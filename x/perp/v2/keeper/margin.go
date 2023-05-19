@@ -8,7 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/perp/v1/types"
+	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
@@ -79,7 +79,6 @@ func (k Keeper) AddMargin(
 			UnrealizedPnlAfter: UnrealizedPnl(position, positionNotional),
 			BadDebt:            sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
 			FundingPayment:     fundingPayment,
-			MarkPrice:          amm.MarkPrice(),
 			BlockHeight:        ctx.BlockHeight(),
 			BlockTimeMs:        ctx.BlockTime().UnixMilli(),
 		},
@@ -185,7 +184,6 @@ func (k Keeper) RemoveMargin(
 			UnrealizedPnlAfter: UnrealizedPnl(position, spotNotional),
 			BadDebt:            sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when removing margin
 			FundingPayment:     fundingPayment,
-			MarkPrice:          amm.MarkPrice(),
 			BlockHeight:        ctx.BlockHeight(),
 			BlockTimeMs:        ctx.BlockTime().UnixMilli(),
 		},

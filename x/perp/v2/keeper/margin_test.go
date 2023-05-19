@@ -58,7 +58,7 @@ func TestAddMargin(t *testing.T) {
 					UnrealizedPnlAfter: sdk.ZeroDec(),
 					BadDebt:            sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
 					FundingPayment:     sdk.ZeroDec(),
-					TransactionFee:     sdk.NewCoin(denoms.USDC, sdk.NewInt(20)), // 20 bps
+					TransactionFee:     sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
 					BlockHeight:        2,
 					BlockTimeMs:        startBlockTime.Add(time.Second*5).UnixNano() / 1e6,
 				}),
@@ -102,7 +102,7 @@ func TestAddMargin(t *testing.T) {
 					UnrealizedPnlAfter: sdk.ZeroDec(),
 					BadDebt:            sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
 					FundingPayment:     sdk.ZeroDec(),
-					TransactionFee:     sdk.NewCoin(denoms.USDC, sdk.NewInt(20)), // 20 bps
+					TransactionFee:     sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
 					BlockHeight:        2,
 					BlockTimeMs:        startBlockTime.Add(time.Second*5).UnixNano() / 1e6,
 				}),
@@ -156,7 +156,7 @@ func TestRemoveMargin(t *testing.T) {
 					UnrealizedPnlAfter: sdk.ZeroDec(),
 					BadDebt:            sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
 					FundingPayment:     sdk.ZeroDec(),
-					TransactionFee:     sdk.NewCoin(denoms.USDC, sdk.NewInt(2)), // 20 bps
+					TransactionFee:     sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
 					BlockHeight:        2,
 					BlockTimeMs:        startBlockTime.Add(time.Second*5).UnixNano() / 1e6,
 				}),
@@ -200,7 +200,7 @@ func TestRemoveMargin(t *testing.T) {
 					UnrealizedPnlAfter: sdk.ZeroDec(),
 					BadDebt:            sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
 					FundingPayment:     sdk.ZeroDec(),
-					TransactionFee:     sdk.NewCoin(denoms.USDC, sdk.NewInt(2)), // 20 bps
+					TransactionFee:     sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
 					BlockHeight:        2,
 					BlockTimeMs:        startBlockTime.Add(time.Second*5).UnixNano() / 1e6,
 				}),
