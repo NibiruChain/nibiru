@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmcli "github.com/CosmWasm/wasmd/x/wasm/client/cli"
@@ -19,7 +20,8 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/v1/amm/types"
+	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
+	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 // commonArgs is args for CLI test commands.
@@ -47,24 +49,36 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	encodingConfig := app.MakeTestEncodingConfig()
 	genesisState := genesis.NewTestGenesisState()
-	marketGenesis := perpammtypes.DefaultGenesis()
-	marketGenesis.Markets = []perpammtypes.Market{
+	perpv2Gen := perpv2types.DefaultGenesis()
+	perpv2Gen.Markets = []perpv2types.Market{
 		{
-			Pair:          asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-			BaseReserve:   sdk.NewDec(10 * common.TO_MICRO),
-			QuoteReserve:  sdk.NewDec(10 * common.TO_MICRO),
-			SqrtDepth:     common.MustSqrtDec(sdk.NewDec(10 * 60_000 * common.TO_MICRO * common.TO_MICRO)),
-			PegMultiplier: sdk.NewDec(6000),
-			Config: perpammtypes.MarketConfig{
-				FluctuationLimitRatio:  sdk.MustNewDecFromStr("0.2"),
-				MaintenanceMarginRatio: sdk.MustNewDecFromStr("0.0625"),
-				MaxLeverage:            sdk.MustNewDecFromStr("15"),
-				MaxOracleSpreadRatio:   sdk.MustNewDecFromStr("0.2"),
-				TradeLimitRatio:        sdk.MustNewDecFromStr("0.8"),
-			},
+			Pair:                            asset.Registry.Pair(denoms.ETH, denoms.NUSD),
+			Enabled:                         true,
+			PriceFluctuationLimitRatio:      sdk.MustNewDecFromStr("0.2"),
+			MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.0625"),
+			MaxLeverage:                     sdk.MustNewDecFromStr("15"),
+			LatestCumulativePremiumFraction: sdk.ZeroDec(),
+			ExchangeFeeRatio:                sdk.MustNewDecFromStr("0.0005"),
+			EcosystemFundFeeRatio:           sdk.MustNewDecFromStr("0.0005"),
+			LiquidationFeeRatio:             sdk.MustNewDecFromStr("0.001"),
+			PartialLiquidationRatio:         sdk.MustNewDecFromStr("0.5"),
+			FundingRateEpochId:              epochstypes.ThirtyMinuteEpochID,
+			TwapLookbackWindow:              30 * time.Minute,
+			PrepaidBadDebt:                  sdk.NewCoin(denoms.NUSD, sdk.NewInt(0)),
 		},
 	}
-	genesisState[perpammtypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(marketGenesis)
+	perpv2Gen.Amms = []perpv2types.AMM{
+		{
+			Pair:            asset.Registry.Pair(denoms.ETH, denoms.NUSD),
+			BaseReserve:     sdk.NewDec(10 * common.TO_MICRO),
+			QuoteReserve:    sdk.NewDec(10 * common.TO_MICRO),
+			SqrtDepth:       common.MustSqrtDec(sdk.NewDec(10 * 10 * common.TO_MICRO * common.TO_MICRO)),
+			PriceMultiplier: sdk.NewDec(6000),
+			TotalLong:       sdk.ZeroDec(),
+			TotalShort:      sdk.ZeroDec(),
+		},
+	}
+	genesisState[perpv2types.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(perpv2Gen)
 
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)

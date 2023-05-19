@@ -5,26 +5,23 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/v1/amm/types"
-	perpkeeper "github.com/NibiruChain/nibiru/x/perp/v1/keeper"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/v1/types"
 	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
+	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 )
 
 type ExecutorPerp struct {
-	Perp   perpkeeper.Keeper
 	PerpV2 perpv2keeper.Keeper
 }
 
-func (exec *ExecutorPerp) MsgServer() perptypes.MsgServer {
-	return perpkeeper.NewMsgServerImpl(exec.Perp)
+func (exec *ExecutorPerp) MsgServer() perpv2types.MsgServer {
+	return perpv2keeper.NewMsgServerImpl(exec.PerpV2)
 }
 
 func (exec *ExecutorPerp) OpenPosition(
 	cwMsg *cw_struct.OpenPosition, ctx sdk.Context,
 ) (
-	sdkResp *perptypes.MsgOpenPositionResponse, err error,
+	sdkResp *perpv2types.MsgOpenPositionResponse, err error,
 ) {
 	if cwMsg == nil {
 		return sdkResp, wasmvmtypes.InvalidRequest{Err: "null open position msg"}
@@ -35,14 +32,14 @@ func (exec *ExecutorPerp) OpenPosition(
 		return sdkResp, err
 	}
 
-	var side perpammtypes.Direction
+	var side perpv2types.Direction
 	if cwMsg.IsLong {
-		side = perpammtypes.Direction_LONG
+		side = perpv2types.Direction_LONG
 	} else {
-		side = perpammtypes.Direction_SHORT
+		side = perpv2types.Direction_SHORT
 	}
 
-	sdkMsg := &perptypes.MsgOpenPosition{
+	sdkMsg := &perpv2types.MsgOpenPosition{
 		Sender:               cwMsg.Sender,
 		Pair:                 pair,
 		Side:                 side,
@@ -58,7 +55,7 @@ func (exec *ExecutorPerp) OpenPosition(
 func (exec *ExecutorPerp) ClosePosition(
 	cwMsg *cw_struct.ClosePosition, ctx sdk.Context,
 ) (
-	sdkResp *perptypes.MsgClosePositionResponse, err error,
+	sdkResp *perpv2types.MsgClosePositionResponse, err error,
 ) {
 	if cwMsg == nil {
 		return sdkResp, wasmvmtypes.InvalidRequest{Err: "null close position msg"}
@@ -69,7 +66,7 @@ func (exec *ExecutorPerp) ClosePosition(
 		return sdkResp, err
 	}
 
-	sdkMsg := &perptypes.MsgClosePosition{
+	sdkMsg := &perpv2types.MsgClosePosition{
 		Sender: cwMsg.Sender,
 		Pair:   pair,
 	}
@@ -81,7 +78,7 @@ func (exec *ExecutorPerp) ClosePosition(
 func (exec *ExecutorPerp) AddMargin(
 	cwMsg *cw_struct.AddMargin, ctx sdk.Context,
 ) (
-	sdkResp *perptypes.MsgAddMarginResponse, err error,
+	sdkResp *perpv2types.MsgAddMarginResponse, err error,
 ) {
 	if cwMsg == nil {
 		return sdkResp, wasmvmtypes.InvalidRequest{Err: "null add margin msg"}
@@ -92,7 +89,7 @@ func (exec *ExecutorPerp) AddMargin(
 		return sdkResp, err
 	}
 
-	sdkMsg := &perptypes.MsgAddMargin{
+	sdkMsg := &perpv2types.MsgAddMargin{
 		Sender: cwMsg.Sender,
 		Pair:   pair,
 		Margin: cwMsg.Margin,
@@ -105,7 +102,7 @@ func (exec *ExecutorPerp) AddMargin(
 func (exec *ExecutorPerp) RemoveMargin(
 	cwMsg *cw_struct.RemoveMargin, ctx sdk.Context,
 ) (
-	sdkResp *perptypes.MsgRemoveMarginResponse, err error,
+	sdkResp *perpv2types.MsgRemoveMarginResponse, err error,
 ) {
 	if cwMsg == nil {
 		return sdkResp, wasmvmtypes.InvalidRequest{Err: "null remove margin msg"}
@@ -116,7 +113,7 @@ func (exec *ExecutorPerp) RemoveMargin(
 		return sdkResp, err
 	}
 
-	sdkMsg := &perptypes.MsgRemoveMargin{
+	sdkMsg := &perpv2types.MsgRemoveMargin{
 		Sender: cwMsg.Sender,
 		Pair:   pair,
 		Margin: cwMsg.Margin,
@@ -138,9 +135,9 @@ func (exec *ExecutorPerp) PegShift(
 		return err
 	}
 
-	return exec.Perp.EditPoolPegMultiplier(
+	return exec.PerpV2.EditPriceMultiplier(
 		ctx,
-		contractAddr,
+		// contractAddr,
 		pair,
 		cwMsg.PegMult,
 	)
@@ -156,7 +153,7 @@ func (exec *ExecutorPerp) DepthShift(cwMsg *cw_struct.DepthShift, ctx sdk.Contex
 		return err
 	}
 
-	return exec.Perp.EditPoolSwapInvariant(ctx, pair, cwMsg.DepthMult)
+	return exec.PerpV2.EditSwapInvariant(ctx, pair, cwMsg.DepthMult)
 }
 
 func (exec *ExecutorPerp) InsuranceFundWithdraw(

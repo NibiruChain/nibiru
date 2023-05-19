@@ -4,7 +4,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	types "github.com/NibiruChain/nibiru/x/perp/v1/types"
 	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
@@ -92,7 +91,7 @@ func (k Keeper) handleMarketUpdateCost(ctx sdk.Context, pair asset.Pair, cost sd
 			costCoin,
 		)
 		if err != nil {
-			return types.ErrNotEnoughFundToPayAction.Wrapf(
+			return v2types.ErrNotEnoughFundToPayAction.Wrapf(
 				"not enough fund in perp ef to pay for repeg, need %s got %s",
 				costCoin.String(),
 				k.BankKeeper.GetBalance(ctx, k.AccountKeeper.GetModuleAddress(v2types.PerpEFModuleAccount), pair.QuoteDenom()).String(),

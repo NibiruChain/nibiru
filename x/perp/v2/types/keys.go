@@ -1,5 +1,7 @@
 package types
 
+import "github.com/NibiruChain/nibiru/x/common"
+
 const (
 	ModuleName           = "v2perp"
 	VaultModuleAccount   = "v2vault"
@@ -19,3 +21,11 @@ var (
 	// QuerierRoute defines the module's query routing key.
 	QuerierRoute = ModuleName
 )
+
+var ModuleAccounts = []string{
+	ModuleName,
+	PerpEFModuleAccount,
+	VaultModuleAccount,
+	FeePoolModuleAccount,
+	common.TreasuryPoolModuleAccount,
+}
