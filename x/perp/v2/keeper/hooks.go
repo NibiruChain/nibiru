@@ -9,8 +9,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
-	types "github.com/NibiruChain/nibiru/x/perp/v1/types"
-	v2 "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNumber uint64) {
@@ -32,7 +31,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64)
 			continue
 		}
 
-		markTwap, err := k.CalcTwap(ctx, market.Pair, v2.TwapCalcOption_SPOT, v2.Direction_DIRECTION_UNSPECIFIED, sdk.ZeroDec(), market.TwapLookbackWindow)
+		markTwap, err := k.CalcTwap(ctx, market.Pair, types.TwapCalcOption_SPOT, types.Direction_DIRECTION_UNSPECIFIED, sdk.ZeroDec(), market.TwapLookbackWindow)
 		if err != nil {
 			ctx.Logger().Error("failed to fetch twap mark price", "market.Pair", market.Pair, "error", err)
 			continue

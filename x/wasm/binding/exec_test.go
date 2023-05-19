@@ -118,7 +118,7 @@ func (s *TestSuiteExecutor) TestOpenAddRemoveClose() {
 			Sender:          sender,
 			Pair:            s.happyFields.Pair,
 			IsLong:          true,
-			QuoteAmount:     sdk.NewInt(4_200_000),
+			QuoteAmount:     sdk.NewInt(42),
 			Leverage:        sdk.NewDec(5),
 			BaseAmountLimit: sdk.NewInt(0),
 		},

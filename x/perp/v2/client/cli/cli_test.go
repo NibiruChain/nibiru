@@ -160,10 +160,10 @@ func (s *IntegrationTestSuite) TestMultiLiquidate() {
 	s.Require().NoError(err)
 
 	s.T().Log("check trader position")
-	_, err = testutilcli.QueryPosition(s.network.Validators[0].ClientCtx, asset.Registry.Pair(denoms.ATOM, denoms.NUSD), s.users[2])
+	_, err = testutilcli.QueryPositionV2(s.network.Validators[0].ClientCtx, asset.Registry.Pair(denoms.ATOM, denoms.NUSD), s.users[2])
 	s.Require().Error(err)
 
-	_, err = testutilcli.QueryPosition(s.network.Validators[0].ClientCtx, asset.Registry.Pair(denoms.OSMO, denoms.NUSD), s.users[3])
+	_, err = testutilcli.QueryPositionV2(s.network.Validators[0].ClientCtx, asset.Registry.Pair(denoms.OSMO, denoms.NUSD), s.users[3])
 	s.Require().Error(err)
 
 	s.T().Log("closing positions")
@@ -198,7 +198,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.NewDec(10e6), ammMarketDuo.Amm.QuoteReserve)
 
 	s.T().Log("A. check trader has no existing positions")
-	_, err = testutilcli.QueryPosition(
+	_, err = testutilcli.QueryPositionV2(
 		val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user,
 	)
 	s.Error(err)
@@ -337,7 +337,7 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 	user := s.users[0]
 
 	// verify trader has no position (empty)
-	_, err := testutilcli.QueryPosition(val.ClientCtx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), user)
+	_, err := testutilcli.QueryPositionV2(val.ClientCtx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), user)
 	s.Error(err, "no position found")
 
 	// close position should produce error
