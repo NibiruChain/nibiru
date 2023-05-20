@@ -64,7 +64,6 @@ func (s *TestSuitePerpExecutor) SetupSuite() {
 
 	s.contractPerp = ContractMap[wasmbin.WasmKeyPerpBinding]
 	s.exec = &binding.ExecutorPerp{
-		Perp:   nibiru.PerpKeeper,
 		PerpV2: nibiru.PerpKeeperV2,
 	}
 	s.OnSetupEnd()
@@ -90,6 +89,7 @@ func (s *TestSuitePerpExecutor) TestOpenAddRemoveClose() {
 		s.DoClosePositionTest(pair),
 		s.DoPegShiftTest(pair),
 		s.DoInsuranceFundWithdrawTest(sdk.NewInt(69), s.contractDeployer),
+		s.DoCreateMarketTest(asset.MustNewPair("ufoo:ubar")),
 	} {
 		s.NoError(err)
 	}
@@ -111,7 +111,7 @@ func (s *TestSuitePerpExecutor) DoOpenPositionTest(pair asset.Pair) error {
 	}
 
 	// Verify position exists with PerpKeeper
-	_, err = s.exec.Perp.Positions.Get(
+	_, err = s.exec.PerpV2.Positions.Get(
 		s.ctx, collections.Join(pair, s.contractDeployer),
 	)
 	if err != nil {
@@ -248,8 +248,18 @@ func (s *TestSuitePerpExecutor) DoInsuranceFundWithdrawTest(
 	)
 	s.NoError(err)
 
-	err = s.exec.InsuranceFundWithdraw(cwMsg, s.ctx)
-	return err
+	return s.exec.InsuranceFundWithdraw(cwMsg, s.ctx)
+}
+
+func (s *TestSuitePerpExecutor) DoCreateMarketTest(pair asset.Pair) error {
+	cwMsg := &cw_struct.CreateMarket{
+		Pair:         pair.String(),
+		PegMult:      sdk.NewDec(2_500),
+		SqrtDepth:    sdk.NewDec(1_000),
+		MarketParams: nil,
+	}
+
+	return s.exec.CreateMarket(cwMsg, s.ctx)
 }
 
 func (s *TestSuitePerpExecutor) TestSadPaths_Nil() {
@@ -317,6 +327,7 @@ func (s *TestSuitePerpExecutor) TestSadPaths_InvalidPair() {
 		s.DoDepthShiftTest(pair),
 		s.DoSetMarketEnabledTest(pair, true),
 		s.DoSetMarketEnabledTest(pair, false),
+		s.DoCreateMarketTest(pair),
 	} {
 		s.Error(err)
 	}

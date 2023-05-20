@@ -118,16 +118,9 @@ import (
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 
-	perpamm "github.com/NibiruChain/nibiru/x/perp/v1/amm"
-	perpammcli "github.com/NibiruChain/nibiru/x/perp/v1/amm/cli"
-	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/v1/amm/keeper"
 	perpkeeperv2 "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	perpv2 "github.com/NibiruChain/nibiru/x/perp/v2/module"
 	perptypesv2 "github.com/NibiruChain/nibiru/x/perp/v2/types"
-
-	perpkeeper "github.com/NibiruChain/nibiru/x/perp/v1/keeper"
-	perp "github.com/NibiruChain/nibiru/x/perp/v1/module"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/v1/types"
 
 	"github.com/NibiruChain/nibiru/x/spot"
 	spotkeeper "github.com/NibiruChain/nibiru/x/spot/keeper"
@@ -176,8 +169,6 @@ var (
 			distrclient.ProposalHandler,
 			upgradeclient.ProposalHandler,
 			upgradeclient.CancelProposalHandler,
-			perpammcli.CreatePoolProposalHandler,
-			perpammcli.EditPoolConfigProposalHandler,
 			ibcclientclient.UpdateClientProposalHandler,
 			ibcclientclient.UpgradeProposalHandler,
 		),
@@ -197,8 +188,6 @@ var (
 		oracle.AppModuleBasic{},
 		epochs.AppModuleBasic{},
 		stablecoin.AppModuleBasic{},
-		perp.AppModuleBasic{},
-		perpamm.AppModuleBasic{},
 		perpv2.AppModuleBasic{},
 		inflation.AppModuleBasic{},
 		sudo.AppModuleBasic{},
@@ -219,11 +208,6 @@ var (
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		ibcfeetypes.ModuleName:         {},
 		stablecointypes.ModuleName:     {authtypes.Minter, authtypes.Burner},
-
-		perptypes.ModuleName:           {},
-		perptypes.VaultModuleAccount:   {},
-		perptypes.PerpEFModuleAccount:  {},
-		perptypes.FeePoolModuleAccount: {},
 
 		perptypesv2.ModuleName:           {},
 		perptypesv2.VaultModuleAccount:   {},
@@ -307,8 +291,6 @@ type NibiruApp struct {
 	// Nibiru keepers
 	// ---------------
 	EpochsKeeper     epochskeeper.Keeper
-	PerpKeeper       perpkeeper.Keeper
-	PerpAmmKeeper    perpammkeeper.Keeper
 	PerpKeeperV2     perpkeeperv2.Keeper
 	SpotKeeper       spotkeeper.Keeper
 	OracleKeeper     oraclekeeper.Keeper
@@ -348,8 +330,6 @@ func GetWasmOpts(nibiru NibiruApp, appOpts servertypes.AppOptions) []wasm.Option
 
 	// Add the bindings to the app's set of []wasm.Option.
 	wasmOpts = append(wasmOpts, wasmbinding.RegisterWasmOptions(
-		nibiru.PerpKeeper,
-		nibiru.PerpAmmKeeper,
 		nibiru.PerpKeeperV2,
 		nibiru.SudoKeeper,
 		nibiru.OracleKeeper,
@@ -662,7 +642,6 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(spottypes.ModuleName)
 	paramsKeeper.Subspace(epochstypes.ModuleName)
 	paramsKeeper.Subspace(stablecointypes.ModuleName)
-	paramsKeeper.Subspace(perptypes.ModuleName)
 	paramsKeeper.Subspace(inflationtypes.ModuleName)
 	// ibc params keepers
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)

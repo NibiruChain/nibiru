@@ -3,16 +3,15 @@ package binding
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	perpammkeeper "github.com/NibiruChain/nibiru/x/perp/v1/amm/keeper"
-	perpammtypes "github.com/NibiruChain/nibiru/x/perp/v1/amm/types"
-	perpkeeper "github.com/NibiruChain/nibiru/x/perp/v1/keeper"
-	perptypes "github.com/NibiruChain/nibiru/x/perp/v1/types"
+	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
+	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 )
 
@@ -21,11 +20,10 @@ type QueryPlugin struct {
 }
 
 // NewQueryPlugin returns a pointer to a new QueryPlugin
-func NewQueryPlugin(perp perpkeeper.Keeper, perpAmm perpammkeeper.Keeper) QueryPlugin {
+func NewQueryPlugin(perp perpv2keeper.Keeper) QueryPlugin {
 	return QueryPlugin{
 		Perp: &PerpQuerier{
-			perp:    perpkeeper.NewQuerier(perp),
-			perpAmm: perpammkeeper.NewQuerier(perpAmm),
+			perp: perpv2keeper.NewQuerier(perp),
 		},
 	}
 }
@@ -111,62 +109,66 @@ func CustomQuerier(qp QueryPlugin) func(ctx sdk.Context, request json.RawMessage
 // ----------------------------------------------------------------------
 
 type PerpQuerier struct {
-	perp    perptypes.QueryServer
-	perpAmm perpammtypes.QueryServer
+	perp perpv2types.QueryServer
 }
 
 func (perpExt *PerpQuerier) Reserves(
 	ctx sdk.Context, cwReq *cw_struct.ReservesRequest,
 ) (*cw_struct.ReservesResponse, error) {
 	pair := asset.Pair(cwReq.Pair)
-	sdkReq := &perpammtypes.QueryReserveAssetsRequest{
-		Pair: pair,
-	}
+	sdkReq := &perpv2types.QueryMarketsRequest{}
 	goCtx := sdk.WrapSDKContext(ctx)
-	sdkResp, err := perpExt.perpAmm.ReserveAssets(goCtx, sdkReq)
+	sdkResp, err := perpExt.perp.QueryMarkets(goCtx, sdkReq)
 	if err != nil {
 		return nil, err
 	}
-	return &cw_struct.ReservesResponse{
-		Pair:         pair.String(),
-		BaseReserve:  sdkResp.BaseReserve,
-		QuoteReserve: sdkResp.QuoteReserve,
-	}, err
+
+	for _, market := range sdkResp.AmmMarkets {
+		if market.Amm.Pair.Equal(pair) {
+			return &cw_struct.ReservesResponse{
+				Pair:         pair.String(),
+				BaseReserve:  market.Amm.BaseReserve,
+				QuoteReserve: market.Amm.QuoteReserve,
+			}, err
+		}
+	}
+
+	return nil, fmt.Errorf("market not found for pair %s", pair)
 }
 
 func (perpExt *PerpQuerier) AllMarkets(
 	ctx sdk.Context,
 ) (*cw_struct.AllMarketsResponse, error) {
-	sdkReq := &perpammtypes.QueryAllPoolsRequest{}
+	sdkReq := &perpv2types.QueryMarketsRequest{}
 	goCtx := sdk.WrapSDKContext(ctx)
-	sdkResp, err := perpExt.perpAmm.AllPools(goCtx, sdkReq)
+	sdkResp, err := perpExt.perp.QueryMarkets(goCtx, sdkReq)
 	if err != nil {
 		return nil, err
 	}
 
 	marketMap := make(map[string]cw_struct.Market)
-	for idx, pbMarket := range sdkResp.Markets {
-		pbPrice := sdkResp.Prices[idx]
-		key := pbMarket.Pair.String()
+	for _, pbMarket := range sdkResp.AmmMarkets {
+		// pbPrice := sdkResp.Prices[idx]
+		key := pbMarket.Amm.Pair.String()
 		marketMap[key] = cw_struct.Market{
 			Pair:         key,
-			BaseReserve:  pbMarket.BaseReserve,
-			QuoteReserve: pbMarket.QuoteReserve,
-			SqrtDepth:    pbMarket.SqrtDepth,
-			Depth:        pbPrice.SwapInvariant,
-			TotalLong:    pbMarket.TotalLong,
-			TotalShort:   pbMarket.TotalShort,
-			PegMult:      pbMarket.PegMultiplier,
+			BaseReserve:  pbMarket.Amm.BaseReserve,
+			QuoteReserve: pbMarket.Amm.QuoteReserve,
+			SqrtDepth:    pbMarket.Amm.SqrtDepth,
+			// Depth:        pbPrice.SwapInvariant,
+			TotalLong:  pbMarket.Amm.TotalLong,
+			TotalShort: pbMarket.Amm.TotalShort,
+			PegMult:    pbMarket.Amm.PriceMultiplier,
 			Config: &cw_struct.MarketConfig{
-				TradeLimitRatio:        pbMarket.Config.TradeLimitRatio,
-				FluctLimitRatio:        pbMarket.Config.FluctuationLimitRatio,
-				MaxOracleSpreadRatio:   pbMarket.Config.MaxOracleSpreadRatio,
-				MaintenanceMarginRatio: pbMarket.Config.MaintenanceMarginRatio,
-				MaxLeverage:            pbMarket.Config.MaxLeverage,
+				// TradeLimitRatio:        pbMarket.Config.TradeLimitRatio,
+				FluctLimitRatio: pbMarket.Market.PriceFluctuationLimitRatio,
+				// MaxOracleSpreadRatio:   pbMarket.Config.MaxOracleSpreadRatio,
+				MaintenanceMarginRatio: pbMarket.Market.MaintenanceMarginRatio,
+				MaxLeverage:            pbMarket.Market.MaxLeverage,
 			},
-			MarkPrice:   pbPrice.MarkPrice,
-			IndexPrice:  pbPrice.IndexPrice,
-			TwapMark:    pbPrice.TwapMark,
+			MarkPrice: pbMarket.Amm.MarkPrice(),
+			// IndexPrice:  pbPrice.IndexPrice,
+			// TwapMark:    pbPrice.TwapMark,
 			BlockNumber: sdk.NewInt(ctx.BlockHeight()),
 		}
 	}
@@ -179,86 +181,19 @@ func (perpExt *PerpQuerier) AllMarkets(
 func (perpExt *PerpQuerier) BasePrice(
 	ctx sdk.Context, cwReq *cw_struct.BasePriceRequest,
 ) (*cw_struct.BasePriceResponse, error) {
-	pair, err := asset.TryNewPair(cwReq.Pair)
-	if err != nil {
-		return nil, err
-	}
-
-	var direction perpammtypes.Direction
-	if cwReq.IsLong {
-		direction = perpammtypes.Direction_LONG
-	} else {
-		direction = perpammtypes.Direction_SHORT
-	}
-
-	sdkReq := &perpammtypes.QueryBaseAssetPriceRequest{
-		Pair:            pair,
-		Direction:       direction,
-		BaseAssetAmount: cwReq.BaseAmount.ToDec(),
-	}
-	goCtx := sdk.WrapSDKContext(ctx)
-	sdkResp, err := perpExt.perpAmm.BaseAssetPrice(goCtx, sdkReq)
-	if err != nil {
-		return nil, err
-	}
-	return &cw_struct.BasePriceResponse{
-		Pair:        pair.String(),
-		BaseAmount:  cwReq.BaseAmount.ToDec(),
-		QuoteAmount: sdkResp.PriceInQuoteDenom,
-		IsLong:      cwReq.IsLong,
-	}, err
+	return nil, fmt.Errorf("not implemented")
 }
 
 func (perpExt *PerpQuerier) PremiumFraction(
 	ctx sdk.Context, cwReq *cw_struct.PremiumFractionRequest,
 ) (*cw_struct.PremiumFractionResponse, error) {
-	pair, err := asset.TryNewPair(cwReq.Pair)
-	if err != nil {
-		return nil, err
-	}
-
-	sdkReq := &perptypes.QueryCumulativePremiumFractionRequest{
-		Pair: pair,
-	}
-	goCtx := sdk.WrapSDKContext(ctx)
-	sdkResp, err := perpExt.perp.CumulativePremiumFraction(goCtx, sdkReq)
-	if err != nil {
-		return nil, err
-	}
-
-	return &cw_struct.PremiumFractionResponse{
-		Pair:             pair.String(),
-		CPF:              sdkResp.CumulativePremiumFraction,
-		EstimatedNextCPF: sdkResp.EstimatedNextCumulativePremiumFraction,
-	}, err
+	return nil, fmt.Errorf("not implemented")
 }
 
 func (perpExt *PerpQuerier) Metrics(
 	ctx sdk.Context, cwReq *cw_struct.MetricsRequest,
 ) (*cw_struct.MetricsResponse, error) {
-	pair, err := asset.TryNewPair(cwReq.Pair)
-	if err != nil {
-		return nil, err
-	}
-
-	sdkReq := &perptypes.QueryMetricsRequest{
-		Pair: pair,
-	}
-	goCtx := sdk.WrapSDKContext(ctx)
-	sdkResp, err := perpExt.perp.Metrics(goCtx, sdkReq)
-	if err != nil {
-		return nil, err
-	}
-
-	return &cw_struct.MetricsResponse{
-		Metrics: cw_struct.Metrics{
-			Pair:        sdkResp.Metrics.Pair.String(),
-			NetSize:     sdkResp.Metrics.NetSize,
-			VolumeQuote: sdkResp.Metrics.VolumeQuote,
-			VolumeBase:  sdkResp.Metrics.VolumeBase,
-			BlockNumber: sdk.NewInt(ctx.BlockHeight()),
-		},
-	}, err
+	return nil, fmt.Errorf("not implemented")
 }
 
 func (perpExt *PerpQuerier) ModuleAccounts(
@@ -267,7 +202,8 @@ func (perpExt *PerpQuerier) ModuleAccounts(
 	if cwReq == nil {
 		return nil, errors.New("nil request")
 	}
-	sdkReq := &perptypes.QueryModuleAccountsRequest{}
+
+	sdkReq := &perpv2types.QueryModuleAccountsRequest{}
 	goCtx := sdk.WrapSDKContext(ctx)
 	sdkResp, err := perpExt.perp.ModuleAccounts(goCtx, sdkReq)
 	if err != nil {
@@ -295,35 +231,7 @@ func (perpExt *PerpQuerier) ModuleAccounts(
 func (perpExt *PerpQuerier) ModuleParams(
 	ctx sdk.Context, cwReq *cw_struct.PerpParamsRequest,
 ) (*cw_struct.PerpParamsResponse, error) {
-	if cwReq == nil {
-		return nil, errors.New("nil request")
-	}
-	sdkReq := &perptypes.QueryParamsRequest{}
-	goCtx := sdk.WrapSDKContext(ctx)
-	sdkResp, err := perpExt.perp.Params(goCtx, sdkReq)
-	if err != nil {
-		return nil, err
-	}
-
-	params := sdkResp.Params
-
-	lookback := sdk.NewInt(int64(params.TwapLookbackWindow.Seconds()))
-
-	liquidators := []string{}
-	liquidators = append(liquidators, params.WhitelistedLiquidators...)
-
-	return &cw_struct.PerpParamsResponse{
-		ModuleParams: cw_struct.PerpParams{
-			Stopped:                 params.Stopped,
-			FeePoolFeeRatio:         params.FeePoolFeeRatio,
-			EcosystemFundFeeRatio:   params.EcosystemFundFeeRatio,
-			LiquidationFeeRatio:     params.LiquidationFeeRatio,
-			PartialLiquidationRatio: params.PartialLiquidationRatio,
-			FundingRateInterval:     params.FundingRateInterval,
-			TwapLookbackWindow:      lookback,
-			WhitelistedLiquidators:  liquidators,
-		},
-	}, err
+	return nil, fmt.Errorf("not implemented")
 }
 
 func (perpExt *PerpQuerier) Position(
@@ -333,7 +241,7 @@ func (perpExt *PerpQuerier) Position(
 	if err != nil {
 		return nil, err
 	}
-	sdkReq := &perptypes.QueryPositionRequest{
+	sdkReq := &perpv2types.QueryPositionRequest{
 		Pair:   pair,
 		Trader: cwReq.Trader,
 	}
@@ -350,19 +258,19 @@ func (perpExt *PerpQuerier) Position(
 			Margin:       sdkResp.Position.Margin,
 			OpenNotional: sdkResp.Position.OpenNotional,
 			LatestCPF:    sdkResp.Position.LatestCumulativePremiumFraction,
-			BlockNumber:  sdk.NewInt(sdkResp.Position.BlockNumber)},
-		Notional:           sdkResp.PositionNotional,
-		Upnl:               sdkResp.UnrealizedPnl,
-		Margin_ratio_mark:  sdkResp.MarginRatioMark,
-		Margin_ratio_index: sdkResp.MarginRatioIndex,
-		Block_number:       sdk.NewInt(sdkResp.BlockNumber),
+			BlockNumber:  sdk.NewInt(sdkResp.Position.LastUpdatedBlockNumber)},
+		Notional:          sdkResp.PositionNotional,
+		Upnl:              sdkResp.UnrealizedPnl,
+		Margin_ratio_mark: sdkResp.MarginRatio,
+		// Margin_ratio_index: sdkResp.MarginRatioIndex,
+		Block_number: sdk.NewInt(sdkResp.Position.LastUpdatedBlockNumber),
 	}, err
 }
 
 func (perpExt *PerpQuerier) Positions(
 	ctx sdk.Context, cwReq *cw_struct.PositionsRequest,
 ) (*cw_struct.PositionsResponse, error) {
-	sdkReq := &perptypes.QueryPositionsRequest{
+	sdkReq := &perpv2types.QueryPositionsRequest{
 		Trader: cwReq.Trader,
 	}
 	goCtx := sdk.WrapSDKContext(ctx)
@@ -382,7 +290,7 @@ func (perpExt *PerpQuerier) Positions(
 			Margin:       pos.Margin,
 			OpenNotional: pos.OpenNotional,
 			LatestCPF:    pos.LatestCumulativePremiumFraction,
-			BlockNumber:  sdk.NewInt(pos.BlockNumber),
+			BlockNumber:  sdk.NewInt(pos.LastUpdatedBlockNumber),
 		}
 	}
 
