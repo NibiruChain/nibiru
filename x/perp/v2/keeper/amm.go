@@ -78,33 +78,33 @@ func (k Keeper) EditSwapInvariant(ctx sdk.Context, pair asset.Pair, multiplier s
 	return
 }
 
-func (k Keeper) handleMarketUpdateCost(ctx sdk.Context, pair asset.Pair, cost sdk.Int) (err error) {
-	if cost.IsPositive() {
+func (k Keeper) handleMarketUpdateCost(ctx sdk.Context, pair asset.Pair, costAmt sdk.Int) (err error) {
+	if costAmt.IsPositive() {
 		// Positive cost, send from perp EF to vault
-		costCoin := sdk.NewCoins(
-			sdk.NewCoin(pair.QuoteDenom(), cost),
+		cost := sdk.NewCoins(
+			sdk.NewCoin(pair.QuoteDenom(), costAmt),
 		)
 		err = k.BankKeeper.SendCoinsFromModuleToModule(
 			ctx,
 			types.PerpEFModuleAccount,
 			types.VaultModuleAccount,
-			costCoin,
+			cost,
 		)
 		if err != nil {
 			return types.ErrNotEnoughFundToPayAction.Wrapf(
 				"not enough fund in perp ef to pay for repeg, need %s got %s",
-				costCoin.String(),
+				cost.String(),
 				k.BankKeeper.GetBalance(ctx, k.AccountKeeper.GetModuleAddress(types.PerpEFModuleAccount), pair.QuoteDenom()).String(),
 			)
 		}
-	} else if cost.IsNegative() {
+	} else if costAmt.IsNegative() {
 		// Negative cost, send from margin vault to perp ef.
 		err = k.BankKeeper.SendCoinsFromModuleToModule(
 			ctx,
 			types.VaultModuleAccount,
 			types.PerpEFModuleAccount,
 			sdk.NewCoins(
-				sdk.NewCoin(pair.QuoteDenom(), cost.Neg()),
+				sdk.NewCoin(pair.QuoteDenom(), costAmt.Neg()),
 			),
 		)
 		if err != nil { // nolint:staticcheck
