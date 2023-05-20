@@ -1,18 +1,15 @@
 package action
 
 import (
-	"time"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
 
 	"github.com/NibiruChain/nibiru/app"
-	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
+	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
@@ -36,22 +33,7 @@ func (c createMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context
 
 // CreateCustomMarket creates a market with custom parameters
 func CreateCustomMarket(pair asset.Pair, marketModifiers ...marketModifier) action.Action {
-	market := v2types.Market{
-		Pair:                            pair,
-		Enabled:                         true,
-		LatestCumulativePremiumFraction: sdk.ZeroDec(),
-		ExchangeFeeRatio:                sdk.MustNewDecFromStr("0.0010"),
-		EcosystemFundFeeRatio:           sdk.MustNewDecFromStr("0.0010"),
-		LiquidationFeeRatio:             sdk.MustNewDecFromStr("0.0500"),
-		PartialLiquidationRatio:         sdk.MustNewDecFromStr("0.5000"),
-		FundingRateEpochId:              epochstypes.ThirtyMinuteEpochID,
-		TwapLookbackWindow:              time.Minute * 30,
-		PrepaidBadDebt:                  sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
-		PriceFluctuationLimitRatio:      sdk.MustNewDecFromStr("0.1000"),
-		MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.0625"),
-		MaxLeverage:                     sdk.NewDec(10),
-	}
-
+	market := v2types.DefaultMarket(pair)
 	amm := v2types.AMM{
 		Pair:            pair,
 		BaseReserve:     sdk.NewDec(1e12),
@@ -147,11 +129,16 @@ type createPool struct {
 }
 
 func (c createPool) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	err := app.PerpKeeperV2.CreatePool(ctx, c.pair, c.market, c.amm)
+	err := app.PerpKeeperV2.Admin().CreateMarket(ctx, keeper.ArgsCreateMarket{
+		Pair:            c.pair,
+		PriceMultiplier: c.amm.PriceMultiplier,
+		SqrtDepth:       c.amm.SqrtDepth,
+		Market:          &c.market,
+	})
 	return ctx, err, true
 }
 
-func CreatePool(pair asset.Pair, market v2types.Market, amm v2types.AMM) action.Action {
+func CreateMarket(pair asset.Pair, market v2types.Market, amm v2types.AMM) action.Action {
 	return createPool{
 		pair:   pair,
 		market: market,
