@@ -120,7 +120,7 @@ type OpenPositionResponseChecker func(resp *types.PositionResp) error
 // OpenPositionResp_PositionShouldBeEqual checks that the position included in the response is equal to the expected position response.
 func OpenPositionResp_PositionShouldBeEqual(expected types.Position) OpenPositionResponseChecker {
 	return func(actual *types.PositionResp) error {
-		if err := types.PositionsAreEqual(&expected, actual.Position); err != nil {
+		if err := types.PositionsAreEqual(&expected, &actual.Position); err != nil {
 			return err
 		}
 

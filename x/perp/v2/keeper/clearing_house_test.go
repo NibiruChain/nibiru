@@ -1035,7 +1035,7 @@ func TestClosePosition(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Equal(t, types.PositionResp{
-				Position: &types.Position{
+				Position: types.Position{
 					TraderAddress:                   tc.initialPosition.TraderAddress,
 					Pair:                            tc.initialPosition.Pair,
 					Size_:                           sdk.ZeroDec(),

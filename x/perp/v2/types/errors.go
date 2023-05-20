@@ -21,7 +21,7 @@ var (
 	ErrMarginRatioTooHigh                 = sdkerrors.Register(ModuleName, 13, "margin ratio is too healthy to liquidate")
 	ErrPairNotFound                       = sdkerrors.Register(ModuleName, 14, "pair doesn't have live market")
 	ErrPositionZero                       = sdkerrors.Register(ModuleName, 15, "position is zero")
-	ErrFailedRemoveMarginCanCauseBadDebt  = sdkerrors.Register(ModuleName, 16, "failed to remove margin; position would have bad debt if removed")
+	ErrBadDebt                            = sdkerrors.Register(ModuleName, 16, "failed to remove margin; position would have bad debt if removed")
 	ErrInputQuoteAmtNegative              = sdkerrors.Register(ModuleName, 17, "quote amount cannot be zero")
 	ErrUserLeverageNegative               = sdkerrors.Register(ModuleName, 18, "leverage cannot be zero")
 	ErrMarginRatioTooLow                  = sdkerrors.Register(ModuleName, 19, "margin ratio did not meet maintenance margin ratio")

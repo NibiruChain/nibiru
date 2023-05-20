@@ -174,7 +174,7 @@ func (k Keeper) increasePosition(
 	positionResp.MarginToVault = marginIncrease
 	positionResp.FundingPayment = fundingPayment
 	positionResp.BadDebt = sdk.MinDec(sdk.ZeroDec(), remainingMargin).Abs()
-	positionResp.Position = &types.Position{
+	positionResp.Position = types.Position{
 		TraderAddress:                   currentPosition.TraderAddress,
 		Pair:                            currentPosition.Pair,
 		Size_:                           currentPosition.Size_.Add(positionResp.ExchangedPositionSize),
@@ -183,7 +183,7 @@ func (k Keeper) increasePosition(
 		LatestCumulativePremiumFraction: market.LatestCumulativePremiumFraction,
 		LastUpdatedBlockNumber:          ctx.BlockHeight(),
 	}
-	positionResp.UnrealizedPnlAfter = UnrealizedPnl(*positionResp.Position, positionResp.PositionNotional)
+	positionResp.UnrealizedPnlAfter = UnrealizedPnl(positionResp.Position, positionResp.PositionNotional)
 
 	return updatedAMM, positionResp, nil
 }
@@ -344,7 +344,7 @@ func (k Keeper) decreasePosition(
 		return nil, nil, fmt.Errorf("value of open notional < 0")
 	}
 
-	positionResp.Position = &types.Position{
+	positionResp.Position = types.Position{
 		TraderAddress:                   currentPosition.TraderAddress,
 		Pair:                            currentPosition.Pair,
 		Size_:                           currentPosition.Size_.Add(positionResp.ExchangedPositionSize),
@@ -520,11 +520,11 @@ func (k Keeper) afterPositionUpdate(
 	}
 
 	if !positionResp.Position.Size_.IsZero() {
-		spotNotional, err := PositionNotionalSpot(amm, *positionResp.Position)
+		spotNotional, err := PositionNotionalSpot(amm, positionResp.Position)
 		if err != nil {
 			return err
 		}
-		twapNotional, err := k.PositionNotionalTWAP(ctx, *positionResp.Position, market.TwapLookbackWindow)
+		twapNotional, err := k.PositionNotionalTWAP(ctx, positionResp.Position, market.TwapLookbackWindow)
 		if err != nil {
 			return err
 		}
@@ -535,7 +535,7 @@ func (k Keeper) afterPositionUpdate(
 			preferredPositionNotional = sdk.MinDec(spotNotional, twapNotional)
 		}
 
-		marginRatio := MarginRatio(*positionResp.Position, preferredPositionNotional, market.LatestCumulativePremiumFraction)
+		marginRatio := MarginRatio(positionResp.Position, preferredPositionNotional, market.LatestCumulativePremiumFraction)
 		if marginRatio.LT(market.MaintenanceMarginRatio) {
 			return types.ErrMarginRatioTooLow
 		}
@@ -562,7 +562,7 @@ func (k Keeper) afterPositionUpdate(
 	}
 
 	if !positionResp.Position.Size_.IsZero() {
-		k.Positions.Insert(ctx, collections.Join(market.Pair, traderAddr), *positionResp.Position)
+		k.Positions.Insert(ctx, collections.Join(market.Pair, traderAddr), positionResp.Position)
 	}
 
 	// calculate positionNotional (it's different depends on long or short side)
@@ -828,7 +828,7 @@ func (k Keeper) closePositionEntirely(
 	}
 
 	positionResp.ExchangedNotionalValue = exchangedNotionalValue
-	positionResp.Position = &types.Position{
+	positionResp.Position = types.Position{
 		TraderAddress:                   currentPosition.TraderAddress,
 		Pair:                            currentPosition.Pair,
 		Size_:                           sdk.ZeroDec(),

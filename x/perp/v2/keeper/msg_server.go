@@ -52,7 +52,7 @@ func (m msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPositio
 	}
 
 	return &types.MsgOpenPositionResponse{
-		Position:               positionResp.Position,
+		Position:               &positionResp.Position,
 		ExchangedNotionalValue: positionResp.ExchangedNotionalValue,
 		ExchangedPositionSize:  positionResp.ExchangedPositionSize,
 		FundingPayment:         positionResp.FundingPayment,

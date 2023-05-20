@@ -11,11 +11,18 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
-/*
-	AddMargin deleverages an existing position by adding margin (collateral)
-
-to it. Adding margin increases the margin ratio of the corresponding position.
-*/
+// AddMargin adds margin to an existing position, effectively deleveraging it.
+// Adding margin increases the margin ratio of the corresponding position.
+//
+// args:
+//   - ctx: the cosmos-sdk context
+//   - pair: the asset pair
+//   - traderAddr: the trader's address
+//   - marginToAdd: the amount of margin to add. Must be positive.
+//
+// ret:
+//   - res: the response
+//   - err: error if any
 func (k Keeper) AddMargin(
 	ctx sdk.Context, pair asset.Pair, traderAddr sdk.AccAddress, marginToAdd sdk.Coin,
 ) (res *types.MsgAddMarginResponse, err error) {
@@ -23,11 +30,11 @@ func (k Keeper) AddMargin(
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
 	}
-
 	amm, err := k.AMMs.Get(ctx, pair)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
 	}
+
 	if marginToAdd.Denom != amm.Pair.QuoteDenom() {
 		return nil, fmt.Errorf("invalid margin denom: %s", marginToAdd.Denom)
 	}
@@ -38,10 +45,10 @@ func (k Keeper) AddMargin(
 	}
 
 	fundingPayment := FundingPayment(position, market.LatestCumulativePremiumFraction)
-	remainingMargin := position.Margin.Sub(fundingPayment).Add(marginToAdd.Amount.ToDec())
+	remainingMargin := position.Margin.Add(marginToAdd.Amount.ToDec()).Sub(fundingPayment)
 
 	if remainingMargin.IsNegative() {
-		return nil, fmt.Errorf("failed to add margin; resultant position would still have bad debt; consider adding more margin")
+		return nil, types.ErrBadDebt.Wrapf("applying funding payment would result in negative remaining margin: %s", remainingMargin)
 	}
 
 	if err = k.BankKeeper.SendCoinsFromAccountToModule(
@@ -154,7 +161,7 @@ func (k Keeper) RemoveMargin(
 	}
 
 	if remainingMargin.LT(marginToRemove.Amount.ToDec()) {
-		return nil, types.ErrFailedRemoveMarginCanCauseBadDebt.Wrapf(
+		return nil, types.ErrBadDebt.Wrapf(
 			"not enough free collateral to remove margin; remainingMargin %s, marginToRemove %s", remainingMargin, marginToRemove,
 		)
 	}
