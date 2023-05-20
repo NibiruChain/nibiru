@@ -66,23 +66,23 @@ func (amm AMM) FromQuoteReserveToAsset(quoteReserve sdk.Dec) sdk.Dec {
 	return quoteReserve.Mul(amm.PriceMultiplier)
 }
 
-// Returns the amount of base reserve equivalent to the amount of base asset given
+// Returns the amount of base reserve equivalent to the amount of quote reserve given
 //
 // args:
 // - quoteReserveAmt: the amount of quote reserve before the trade, must be positive
 // - dir: the direction of the trade
 //
 // returns:
-// - baseReserveDelta: the amount of base reserve after the trade
+// - baseReserveDelta: the amount of base reserve after the trade, unsigned
 // - err: error
 //
 // NOTE: baseReserveDelta is always positive
 func (amm AMM) GetBaseReserveAmt(
-	quoteReserveAmt sdk.Dec,
+	quoteReserveAmt sdk.Dec, // unsigned
 	dir Direction,
 ) (baseReserveDelta sdk.Dec, err error) {
-	if quoteReserveAmt.LTE(sdk.ZeroDec()) {
-		return sdk.ZeroDec(), nil
+	if !quoteReserveAmt.IsPositive() {
+		return sdk.ZeroDec(), ErrInputQuoteAmtNegative
 	}
 
 	invariant := amm.QuoteReserve.Mul(amm.BaseReserve) // x * y = k
@@ -94,7 +94,7 @@ func (amm AMM) GetBaseReserveAmt(
 		quoteReservesAfter = amm.QuoteReserve.Sub(quoteReserveAmt)
 	}
 
-	if quoteReservesAfter.LTE(sdk.ZeroDec()) {
+	if !quoteReservesAfter.IsPositive() {
 		return sdk.Dec{}, ErrQuoteReserveAtZero
 	}
 
@@ -209,7 +209,10 @@ func (amm *AMM) WithSqrtDepth(sqrtDepth sdk.Dec) *AMM {
 // - err: error
 //
 // NOTE: baseAssetDelta is always positive
-func (amm *AMM) SwapQuoteAsset(quoteAssetAmt sdk.Dec, dir Direction) (baseAssetDelta sdk.Dec, err error) {
+func (amm *AMM) SwapQuoteAsset(
+	quoteAssetAmt sdk.Dec, // unsigned
+	dir Direction,
+) (baseAssetDelta sdk.Dec, err error) {
 	quoteReserveAmt := amm.FromQuoteAssetToReserve(quoteAssetAmt)
 	baseReserveDelta, err := amm.GetBaseReserveAmt(quoteReserveAmt, dir)
 	if err != nil {

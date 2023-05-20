@@ -7,12 +7,12 @@ import (
 
 	asset "github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
-	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 // default market with sensible values for tests
-func TestMarket() *v2types.Market {
-	return &v2types.Market{
+func TestMarket() *types.Market {
+	return &types.Market{
 		Pair:                            asset.NewPair(denoms.BTC, denoms.NUSD),
 		Enabled:                         true,
 		PriceFluctuationLimitRatio:      sdk.MustNewDecFromStr("0.1"),

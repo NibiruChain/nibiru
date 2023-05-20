@@ -9,7 +9,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
-	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 /*
@@ -19,7 +18,7 @@ to it. Adding margin increases the margin ratio of the corresponding position.
 */
 func (k Keeper) AddMargin(
 	ctx sdk.Context, pair asset.Pair, traderAddr sdk.AccAddress, marginToAdd sdk.Coin,
-) (res *v2types.MsgAddMarginResponse, err error) {
+) (res *types.MsgAddMarginResponse, err error) {
 	market, err := k.Markets.Get(ctx, pair)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
@@ -48,7 +47,7 @@ func (k Keeper) AddMargin(
 	if err = k.BankKeeper.SendCoinsFromAccountToModule(
 		ctx,
 		/* from */ traderAddr,
-		/* to */ v2types.VaultModuleAccount,
+		/* to */ types.VaultModuleAccount,
 		/* amount */ sdk.NewCoins(marginToAdd),
 	); err != nil {
 		return nil, err
@@ -86,7 +85,7 @@ func (k Keeper) AddMargin(
 		return nil, err
 	}
 
-	return &v2types.MsgAddMarginResponse{
+	return &types.MsgAddMarginResponse{
 		FundingPayment: fundingPayment,
 		Position:       &position,
 	}, nil
@@ -113,7 +112,7 @@ ret:
 */
 func (k Keeper) RemoveMargin(
 	ctx sdk.Context, pair asset.Pair, traderAddr sdk.AccAddress, marginToRemove sdk.Coin,
-) (res *v2types.MsgRemoveMarginResponse, err error) {
+) (res *types.MsgRemoveMarginResponse, err error) {
 	// fetch objects from state
 	market, err := k.Markets.Get(ctx, pair)
 	if err != nil {
@@ -191,7 +190,7 @@ func (k Keeper) RemoveMargin(
 		return nil, err
 	}
 
-	return &v2types.MsgRemoveMarginResponse{
+	return &types.MsgRemoveMarginResponse{
 		FundingPayment: fundingPayment,
 		Position:       &position,
 	}, nil

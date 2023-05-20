@@ -11,22 +11,22 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 type queryServer struct {
 	k Keeper
 }
 
-func NewQuerier(k Keeper) v2types.QueryServer {
+func NewQuerier(k Keeper) types.QueryServer {
 	return queryServer{k: k}
 }
 
-var _ v2types.QueryServer = queryServer{}
+var _ types.QueryServer = queryServer{}
 
 func (q queryServer) QueryPositions(
-	goCtx context.Context, req *v2types.QueryPositionsRequest,
-) (*v2types.QueryPositionsResponse, error) {
+	goCtx context.Context, req *types.QueryPositionsRequest,
+) (*types.QueryPositionsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -39,7 +39,7 @@ func (q queryServer) QueryPositions(
 
 	markets := q.k.Markets.Iterate(ctx, collections.Range[asset.Pair]{}).Values()
 
-	var positions []v2types.QueryPositionResponse
+	var positions []types.QueryPositionResponse
 	for _, market := range markets {
 		amm, err := q.k.AMMs.Get(ctx, market.Pair)
 		if err != nil {
@@ -51,14 +51,14 @@ func (q queryServer) QueryPositions(
 		}
 	}
 
-	return &v2types.QueryPositionsResponse{
+	return &types.QueryPositionsResponse{
 		Positions: positions,
 	}, nil
 }
 
 func (q queryServer) QueryPosition(
-	goCtx context.Context, req *v2types.QueryPositionRequest,
-) (*v2types.QueryPositionResponse, error) {
+	goCtx context.Context, req *types.QueryPositionRequest,
+) (*types.QueryPositionResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -83,15 +83,15 @@ func (q queryServer) QueryPosition(
 	return &resp, err
 }
 
-func (q queryServer) position(ctx sdk.Context, pair asset.Pair, trader sdk.AccAddress, market v2types.Market, amm v2types.AMM) (v2types.QueryPositionResponse, error) {
+func (q queryServer) position(ctx sdk.Context, pair asset.Pair, trader sdk.AccAddress, market types.Market, amm types.AMM) (types.QueryPositionResponse, error) {
 	position, err := q.k.Positions.Get(ctx, collections.Join(pair, trader))
 	if err != nil {
-		return v2types.QueryPositionResponse{}, err
+		return types.QueryPositionResponse{}, err
 	}
 
 	positionNotional, err := PositionNotionalSpot(amm, position)
 	if err != nil {
-		return v2types.QueryPositionResponse{}, err
+		return types.QueryPositionResponse{}, err
 	}
 	unrealizedPnl := UnrealizedPnl(position, positionNotional)
 
@@ -100,7 +100,7 @@ func (q queryServer) position(ctx sdk.Context, pair asset.Pair, trader sdk.AccAd
 	// 	return nil, err
 	// }
 
-	return v2types.QueryPositionResponse{
+	return types.QueryPositionResponse{
 		Position:         position,
 		PositionNotional: positionNotional,
 		UnrealizedPnl:    unrealizedPnl,
@@ -109,17 +109,17 @@ func (q queryServer) position(ctx sdk.Context, pair asset.Pair, trader sdk.AccAd
 }
 
 func (q queryServer) ModuleAccounts(
-	ctx context.Context, _ *v2types.QueryModuleAccountsRequest,
-) (*v2types.QueryModuleAccountsResponse, error) {
+	ctx context.Context, _ *types.QueryModuleAccountsRequest,
+) (*types.QueryModuleAccountsResponse, error) {
 	sdkContext := sdk.UnwrapSDKContext(ctx)
 
-	var moduleAccountsWithBalances []v2types.AccountWithBalance
-	for _, acc := range v2types.ModuleAccounts {
+	var moduleAccountsWithBalances []types.AccountWithBalance
+	for _, acc := range types.ModuleAccounts {
 		account := authtypes.NewModuleAddress(acc)
 
 		balances := q.k.BankKeeper.GetAllBalances(sdkContext, account)
 
-		accWithBalance := v2types.AccountWithBalance{
+		accWithBalance := types.AccountWithBalance{
 			Name:    acc,
 			Address: account.String(),
 			Balance: balances,
@@ -127,15 +127,15 @@ func (q queryServer) ModuleAccounts(
 		moduleAccountsWithBalances = append(moduleAccountsWithBalances, accWithBalance)
 	}
 
-	return &v2types.QueryModuleAccountsResponse{Accounts: moduleAccountsWithBalances}, nil
+	return &types.QueryModuleAccountsResponse{Accounts: moduleAccountsWithBalances}, nil
 }
 
 func (q queryServer) QueryMarkets(
-	goCtx context.Context, _ *v2types.QueryMarketsRequest,
-) (*v2types.QueryMarketsResponse, error) {
+	goCtx context.Context, _ *types.QueryMarketsRequest,
+) (*types.QueryMarketsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	var ammMarkets []v2types.AmmMarket
+	var ammMarkets []types.AmmMarket
 	markets := q.k.Markets.Iterate(ctx, collections.Range[asset.Pair]{}).Values()
 	for _, market := range markets {
 		pair := market.Pair
@@ -143,12 +143,12 @@ func (q queryServer) QueryMarkets(
 		if err != nil {
 			return nil, err
 		}
-		duo := v2types.AmmMarket{
+		duo := types.AmmMarket{
 			Amm:    amm,
 			Market: market,
 		}
 		ammMarkets = append(ammMarkets, duo)
 	}
 
-	return &v2types.QueryMarketsResponse{AmmMarkets: ammMarkets}, nil
+	return &types.QueryMarketsResponse{AmmMarkets: ammMarkets}, nil
 }

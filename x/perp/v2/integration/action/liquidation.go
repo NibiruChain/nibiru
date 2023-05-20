@@ -8,7 +8,7 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
-	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 type PairTraderTuple struct {
@@ -24,10 +24,10 @@ type multiLiquidate struct {
 }
 
 func (m multiLiquidate) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	liquidationRequests := make([]*v2types.MsgMultiLiquidate_Liquidation, len(m.pairTraderTuples))
+	liquidationRequests := make([]*types.MsgMultiLiquidate_Liquidation, len(m.pairTraderTuples))
 
 	for i, pairTraderTuple := range m.pairTraderTuples {
-		liquidationRequests[i] = &v2types.MsgMultiLiquidate_Liquidation{
+		liquidationRequests[i] = &types.MsgMultiLiquidate_Liquidation{
 			Pair:   pairTraderTuple.Pair,
 			Trader: pairTraderTuple.Trader.String(),
 		}

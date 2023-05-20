@@ -4,7 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 // EditPriceMultiplier edits the peg multiplier of an amm pool after making
@@ -86,23 +86,23 @@ func (k Keeper) handleMarketUpdateCost(ctx sdk.Context, pair asset.Pair, cost sd
 		)
 		err = k.BankKeeper.SendCoinsFromModuleToModule(
 			ctx,
-			v2types.PerpEFModuleAccount,
-			v2types.VaultModuleAccount,
+			types.PerpEFModuleAccount,
+			types.VaultModuleAccount,
 			costCoin,
 		)
 		if err != nil {
-			return v2types.ErrNotEnoughFundToPayAction.Wrapf(
+			return types.ErrNotEnoughFundToPayAction.Wrapf(
 				"not enough fund in perp ef to pay for repeg, need %s got %s",
 				costCoin.String(),
-				k.BankKeeper.GetBalance(ctx, k.AccountKeeper.GetModuleAddress(v2types.PerpEFModuleAccount), pair.QuoteDenom()).String(),
+				k.BankKeeper.GetBalance(ctx, k.AccountKeeper.GetModuleAddress(types.PerpEFModuleAccount), pair.QuoteDenom()).String(),
 			)
 		}
 	} else if cost.IsNegative() {
 		// Negative cost, send from margin vault to perp ef.
 		err = k.BankKeeper.SendCoinsFromModuleToModule(
 			ctx,
-			v2types.VaultModuleAccount,
-			v2types.PerpEFModuleAccount,
+			types.VaultModuleAccount,
+			types.PerpEFModuleAccount,
 			sdk.NewCoins(
 				sdk.NewCoin(pair.QuoteDenom(), cost.Neg()),
 			),
