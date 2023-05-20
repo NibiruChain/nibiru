@@ -27,7 +27,7 @@ func TestSwapQuoteAsset(t *testing.T) {
 			name:           "quote amount == 0",
 			direction:      types.Direction_LONG,
 			quoteAssetAmt:  sdk.NewDec(0),
-			baseAssetLimit: sdk.NewDec(10),
+			baseAssetLimit: sdk.NewDec(0),
 
 			expectedAMM: mock.TestAMMDefault().
 				WithPriceMultiplier(sdk.NewDec(2)),
