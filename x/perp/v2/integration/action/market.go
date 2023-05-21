@@ -10,20 +10,20 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
-	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 // createMarketAction creates a market
 type createMarketAction struct {
-	Market v2types.Market
-	AMM    v2types.AMM
+	Market types.Market
+	AMM    types.AMM
 }
 
 func (c createMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	app.PerpKeeperV2.Markets.Insert(ctx, c.Market.Pair, c.Market)
 	app.PerpKeeperV2.AMMs.Insert(ctx, c.AMM.Pair, c.AMM)
 
-	app.PerpKeeperV2.ReserveSnapshots.Insert(ctx, collections.Join(c.AMM.Pair, ctx.BlockTime()), v2types.ReserveSnapshot{
+	app.PerpKeeperV2.ReserveSnapshots.Insert(ctx, collections.Join(c.AMM.Pair, ctx.BlockTime()), types.ReserveSnapshot{
 		Amm:         c.AMM,
 		TimestampMs: ctx.BlockTime().UnixMilli(),
 	})
@@ -33,8 +33,8 @@ func (c createMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context
 
 // CreateCustomMarket creates a market with custom parameters
 func CreateCustomMarket(pair asset.Pair, marketModifiers ...marketModifier) action.Action {
-	market := v2types.DefaultMarket(pair)
-	amm := v2types.AMM{
+	market := types.DefaultMarket(pair)
+	amm := types.AMM{
 		Pair:            pair,
 		BaseReserve:     sdk.NewDec(1e12),
 		QuoteReserve:    sdk.NewDec(1e12),
@@ -54,34 +54,34 @@ func CreateCustomMarket(pair asset.Pair, marketModifiers ...marketModifier) acti
 	}
 }
 
-type marketModifier func(market *v2types.Market, amm *v2types.AMM)
+type marketModifier func(market *types.Market, amm *types.AMM)
 
 func WithPrepaidBadDebt(amount sdk.Int) marketModifier {
-	return func(market *v2types.Market, amm *v2types.AMM) {
+	return func(market *types.Market, amm *types.AMM) {
 		market.PrepaidBadDebt = sdk.NewCoin(market.Pair.QuoteDenom(), amount)
 	}
 }
 
 func WithPricePeg(multiplier sdk.Dec) marketModifier {
-	return func(market *v2types.Market, amm *v2types.AMM) {
+	return func(market *types.Market, amm *types.AMM) {
 		amm.PriceMultiplier = multiplier
 	}
 }
 
 func WithTotalLong(amount sdk.Dec) marketModifier {
-	return func(market *v2types.Market, amm *v2types.AMM) {
+	return func(market *types.Market, amm *types.AMM) {
 		amm.TotalLong = amount
 	}
 }
 
 func WithTotalShort(amount sdk.Dec) marketModifier {
-	return func(market *v2types.Market, amm *v2types.AMM) {
+	return func(market *types.Market, amm *types.AMM) {
 		amm.TotalShort = amount
 	}
 }
 
 func WithSqrtDepth(amount sdk.Dec) marketModifier {
-	return func(market *v2types.Market, amm *v2types.AMM) {
+	return func(market *types.Market, amm *types.AMM) {
 		amm.SqrtDepth = amount
 		amm.BaseReserve = amount
 		amm.QuoteReserve = amount
@@ -124,8 +124,8 @@ func EditSwapInvariant(pair asset.Pair, multiplier sdk.Dec) action.Action {
 
 type createPool struct {
 	pair   asset.Pair
-	market v2types.Market
-	amm    v2types.AMM
+	market types.Market
+	amm    types.AMM
 }
 
 func (c createPool) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
@@ -138,7 +138,7 @@ func (c createPool) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error,
 	return ctx, err, true
 }
 
-func CreateMarket(pair asset.Pair, market v2types.Market, amm v2types.AMM) action.Action {
+func CreateMarket(pair asset.Pair, market types.Market, amm types.AMM) action.Action {
 	return createPool{
 		pair:   pair,
 		market: market,

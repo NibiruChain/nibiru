@@ -3,7 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 // Withdraws coins from the vault to the receiver.
@@ -31,7 +31,7 @@ import (
 // - error: error
 func (k Keeper) Withdraw(
 	ctx sdk.Context,
-	market v2types.Market,
+	market types.Market,
 	receiver sdk.AccAddress,
 	amountToWithdraw sdk.Int,
 ) (err error) {
@@ -41,7 +41,7 @@ func (k Keeper) Withdraw(
 
 	vaultQuoteBalance := k.BankKeeper.GetBalance(
 		ctx,
-		k.AccountKeeper.GetModuleAddress(v2types.VaultModuleAccount),
+		k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount),
 		market.Pair.QuoteDenom(),
 	)
 	if vaultQuoteBalance.Amount.LT(amountToWithdraw) {
@@ -56,8 +56,8 @@ func (k Keeper) Withdraw(
 
 		if err := k.BankKeeper.SendCoinsFromModuleToModule(
 			ctx,
-			v2types.PerpEFModuleAccount,
-			v2types.VaultModuleAccount,
+			types.PerpEFModuleAccount,
+			types.VaultModuleAccount,
 			sdk.NewCoins(
 				sdk.NewCoin(market.Pair.QuoteDenom(), shortage),
 			),
@@ -69,7 +69,7 @@ func (k Keeper) Withdraw(
 	// Transfer from Vault to receiver
 	return k.BankKeeper.SendCoinsFromModuleToAccount(
 		ctx,
-		/* from */ v2types.VaultModuleAccount,
+		/* from */ types.VaultModuleAccount,
 		/* to */ receiver,
 		sdk.NewCoins(
 			sdk.NewCoin(market.Pair.QuoteDenom(), amountToWithdraw),
@@ -78,19 +78,19 @@ func (k Keeper) Withdraw(
 }
 
 // IncrementPrepaidBadDebt increases the bad debt for the provided denom.
-func (k Keeper) IncrementPrepaidBadDebt(ctx sdk.Context, market v2types.Market, amount sdk.Int) {
+func (k Keeper) IncrementPrepaidBadDebt(ctx sdk.Context, market types.Market, amount sdk.Int) {
 	market.PrepaidBadDebt.Amount = market.PrepaidBadDebt.Amount.Add(amount)
 	k.Markets.Insert(ctx, market.Pair, market)
 }
 
 // Zeroes out the prepaid bad debt
-func (k Keeper) ZeroPrepaidBadDebt(ctx sdk.Context, market v2types.Market) {
+func (k Keeper) ZeroPrepaidBadDebt(ctx sdk.Context, market types.Market) {
 	market.PrepaidBadDebt.Amount = sdk.ZeroInt()
 	k.Markets.Insert(ctx, market.Pair, market)
 }
 
 // DecrementPrepaidBadDebt decrements the amount of bad debt prepaid by denom.
-func (k Keeper) DecrementPrepaidBadDebt(ctx sdk.Context, market v2types.Market, amount sdk.Int) {
+func (k Keeper) DecrementPrepaidBadDebt(ctx sdk.Context, market types.Market, amount sdk.Int) {
 	market.PrepaidBadDebt.Amount = market.PrepaidBadDebt.Amount.Sub(amount)
 	k.Markets.Insert(ctx, market.Pair, market)
 }
@@ -103,7 +103,7 @@ vault contains, so we "credit" ourselves with prepaid bad debt.
 then, when bad debt is actually realized (by closing underwater positions), we
 can consume the credit we have built before withdrawing more from the ecosystem fund.
 */
-func (k Keeper) realizeBadDebt(ctx sdk.Context, market v2types.Market, badDebtToRealize sdk.Int) (
+func (k Keeper) realizeBadDebt(ctx sdk.Context, market types.Market, badDebtToRealize sdk.Int) (
 	err error,
 ) {
 	if market.PrepaidBadDebt.Amount.GTE(badDebtToRealize) {
@@ -114,8 +114,8 @@ func (k Keeper) realizeBadDebt(ctx sdk.Context, market v2types.Market, badDebtTo
 		k.ZeroPrepaidBadDebt(ctx, market)
 
 		return k.BankKeeper.SendCoinsFromModuleToModule(ctx,
-			/*from=*/ v2types.PerpEFModuleAccount,
-			/*to=*/ v2types.VaultModuleAccount,
+			/*from=*/ types.PerpEFModuleAccount,
+			/*to=*/ types.VaultModuleAccount,
 			sdk.NewCoins(
 				sdk.NewCoin(
 					market.Pair.QuoteDenom(),

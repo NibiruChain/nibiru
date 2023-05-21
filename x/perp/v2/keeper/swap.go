@@ -3,26 +3,26 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 // checkUserLimits checks if the limit is violated by the amount.
 // returns error if it does
-func checkUserLimits(limit, amount sdk.Dec, dir v2types.Direction) error {
+func checkUserLimits(limit, amount sdk.Dec, dir types.Direction) error {
 	if limit.IsZero() {
 		return nil
 	}
 
-	if dir == v2types.Direction_LONG && amount.LT(limit) {
-		return v2types.ErrAssetFailsUserLimit.Wrapf(
+	if dir == types.Direction_LONG && amount.LT(limit) {
+		return types.ErrAssetFailsUserLimit.Wrapf(
 			"amount (%s) is less than selected limit (%s)",
 			amount.String(),
 			limit.String(),
 		)
 	}
 
-	if dir == v2types.Direction_SHORT && amount.GT(limit) {
-		return v2types.ErrAssetFailsUserLimit.Wrapf(
+	if dir == types.Direction_SHORT && amount.GT(limit) {
+		return types.ErrAssetFailsUserLimit.Wrapf(
 			"amount (%s) is greater than selected limit (%s)",
 			amount.String(),
 			limit.String(),
@@ -45,22 +45,18 @@ func checkUserLimits(limit, amount sdk.Dec, dir v2types.Direction) error {
 //
 // returns:
 //   - updatedAMM: the updated amm
-//   - baseAssetDelta: the amount of base assets swapped
+//   - baseAssetDelta: the amount of base assets swapped, unsigned
 //   - err: error if any
 //
 // NOTE: the baseAssetDelta is always positive
 func (k Keeper) SwapQuoteAsset(
 	ctx sdk.Context,
-	market v2types.Market,
-	amm v2types.AMM,
-	dir v2types.Direction,
-	quoteAssetAmt sdk.Dec,
-	baseAssetLimit sdk.Dec,
-) (updatedAMM *v2types.AMM, baseAssetDelta sdk.Dec, err error) {
-	if !quoteAssetAmt.IsPositive() {
-		return &amm, sdk.ZeroDec(), nil
-	}
-
+	market types.Market,
+	amm types.AMM,
+	dir types.Direction,
+	quoteAssetAmt sdk.Dec, // unsigned
+	baseAssetLimit sdk.Dec, // unsigned
+) (updatedAMM *types.AMM, baseAssetDelta sdk.Dec, err error) {
 	baseAssetDelta, err = amm.SwapQuoteAsset(quoteAssetAmt, dir)
 	if err != nil {
 		return nil, sdk.Dec{}, err
@@ -94,12 +90,12 @@ func (k Keeper) SwapQuoteAsset(
 // NOTE: the quoteAssetDelta is always positive
 func (k Keeper) SwapBaseAsset(
 	ctx sdk.Context,
-	market v2types.Market,
-	amm v2types.AMM,
-	dir v2types.Direction,
+	market types.Market,
+	amm types.AMM,
+	dir types.Direction,
 	baseAssetAmt sdk.Dec,
 	quoteAssetLimit sdk.Dec,
-) (updatedAMM *v2types.AMM, quoteAssetDelta sdk.Dec, err error) {
+) (updatedAMM *types.AMM, quoteAssetDelta sdk.Dec, err error) {
 	if baseAssetAmt.IsZero() {
 		return &amm, sdk.ZeroDec(), nil
 	}

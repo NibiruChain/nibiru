@@ -9,13 +9,13 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
-	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 type twalShouldBe struct {
 	pair               asset.Pair
-	twapCalcOpt        v2types.TwapCalcOption
-	dir                v2types.Direction
+	twapCalcOpt        types.TwapCalcOption
+	dir                types.Direction
 	assetAmt           sdk.Dec
 	twapLookbackWindow time.Duration
 
@@ -35,7 +35,7 @@ func (c twalShouldBe) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, erro
 	return ctx, nil, false
 }
 
-func TwapShouldBe(pair asset.Pair, twapCalcOpt v2types.TwapCalcOption, dir v2types.Direction, assetAmt sdk.Dec, twapLookbackWindow time.Duration, expectedTwap sdk.Dec) action.Action {
+func TwapShouldBe(pair asset.Pair, twapCalcOpt types.TwapCalcOption, dir types.Direction, assetAmt sdk.Dec, twapLookbackWindow time.Duration, expectedTwap sdk.Dec) action.Action {
 	return twalShouldBe{
 		pair:               pair,
 		twapCalcOpt:        twapCalcOpt,

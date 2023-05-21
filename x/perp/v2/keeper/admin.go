@@ -7,7 +7,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
-	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 // Admin is syntactic sugar to separate admin calls off from the other Keeper
@@ -42,7 +42,7 @@ func (k admin) WithdrawFromInsuranceFund(
 	coinToSend := sdk.NewCoin(denoms.NUSD, amount)
 	if err = k.BankKeeper.SendCoinsFromModuleToAccount(
 		ctx,
-		/* from */ v2types.PerpEFModuleAccount,
+		/* from */ types.PerpEFModuleAccount,
 		/* to */ to,
 		/* amount */ sdk.NewCoins(coinToSend),
 	); err != nil {
@@ -72,7 +72,7 @@ type ArgsCreateMarket struct {
 	Pair            asset.Pair
 	PriceMultiplier sdk.Dec
 	SqrtDepth       sdk.Dec
-	Market          *v2types.Market // pointer makes it optional
+	Market          *types.Market // pointer makes it optional
 }
 
 // CreateMarket creates a pool for a specific pair.
@@ -90,9 +90,9 @@ func (k admin) CreateMarket(
 	sqrtDepth := args.SqrtDepth
 	quoteReserve := sqrtDepth
 	baseReserve := sqrtDepth
-	var market *v2types.Market
+	var market *types.Market
 	if args.Market == nil {
-		*market = v2types.DefaultMarket(pair)
+		*market = types.DefaultMarket(pair)
 	} else {
 		market = args.Market
 	}
@@ -101,7 +101,7 @@ func (k admin) CreateMarket(
 	}
 
 	// init amm
-	amm := v2types.AMM{
+	amm := types.AMM{
 		Pair:            pair,
 		BaseReserve:     baseReserve,
 		QuoteReserve:    quoteReserve,

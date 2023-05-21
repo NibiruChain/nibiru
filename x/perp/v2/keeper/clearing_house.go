@@ -9,7 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 // OpenPosition opens a position on the selected pair.
@@ -29,24 +29,24 @@ import (
 func (k Keeper) OpenPosition(
 	ctx sdk.Context,
 	pair asset.Pair,
-	dir v2types.Direction,
+	dir types.Direction,
 	traderAddr sdk.AccAddress,
 	quoteAssetAmt sdk.Int,
 	leverage sdk.Dec,
 	baseAmtLimit sdk.Dec,
-) (positionResp *v2types.PositionResp, err error) {
+) (positionResp *types.PositionResp, err error) {
 	market, err := k.Markets.Get(ctx, pair)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", v2types.ErrPairNotFound, pair)
+		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
 	}
 
 	if !market.Enabled {
-		return nil, fmt.Errorf("%w: %s", v2types.ErrMarketNotEnabled, pair)
+		return nil, fmt.Errorf("%w: %s", types.ErrMarketNotEnabled, pair)
 	}
 
 	amm, err := k.AMMs.Get(ctx, pair)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", v2types.ErrPairNotFound, pair)
+		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
 	}
 
 	err = checkOpenPositionRequirements(market, quoteAssetAmt, leverage)
@@ -57,15 +57,15 @@ func (k Keeper) OpenPosition(
 	position, err := k.Positions.Get(ctx, collections.Join(pair, traderAddr))
 	isNewPosition := errors.Is(err, collections.ErrNotFound)
 	if isNewPosition {
-		position = v2types.ZeroPosition(ctx, pair, traderAddr)
+		position = types.ZeroPosition(ctx, pair, traderAddr)
 	} else if err != nil && !isNewPosition {
 		return nil, err
 	}
 
-	sameSideLong := position.Size_.IsPositive() && dir == v2types.Direction_LONG
-	sameSideShort := position.Size_.IsNegative() && dir == v2types.Direction_SHORT
+	sameSideLong := position.Size_.IsPositive() && dir == types.Direction_LONG
+	sameSideShort := position.Size_.IsNegative() && dir == types.Direction_SHORT
 
-	var updatedAMM *v2types.AMM
+	var updatedAMM *types.AMM
 	var openSideMatchesPosition = sameSideLong || sameSideShort
 	if isNewPosition || openSideMatchesPosition {
 		updatedAMM, positionResp, err = k.increasePosition(
@@ -122,7 +122,7 @@ func (k Keeper) OpenPosition(
 //   - amm: the amm reserves
 //   - currentPosition: the current position
 //   - dir: the direction the user is taking
-//   - increasedNotional: the amount of notional the user is increasing by
+//   - increasedNotional: the amount of notional the user is increasing by, must be positive
 //   - baseAmtLimit: the user-specified limit on the base reserves
 //   - leverage: the leverage the user is taking
 //
@@ -132,18 +132,18 @@ func (k Keeper) OpenPosition(
 //   - err: error
 func (k Keeper) increasePosition(
 	ctx sdk.Context,
-	market v2types.Market,
-	amm v2types.AMM,
-	currentPosition v2types.Position,
-	dir v2types.Direction,
-	increasedNotional sdk.Dec,
-	baseAmtLimit sdk.Dec,
-	leverage sdk.Dec,
-) (updatedAMM *v2types.AMM, positionResp *v2types.PositionResp, err error) {
-	positionResp = &v2types.PositionResp{}
-	marginDelta := increasedNotional.Quo(leverage)
-	fundingPayment := FundingPayment(currentPosition, market.LatestCumulativePremiumFraction)
-	remainingMarginSigned := currentPosition.Margin.Add(marginDelta).Sub(fundingPayment)
+	market types.Market,
+	amm types.AMM,
+	currentPosition types.Position,
+	dir types.Direction,
+	increasedNotional sdk.Dec, // unsigned
+	baseAmtLimit sdk.Dec, // unsigned
+	leverage sdk.Dec, // unsigned
+) (updatedAMM *types.AMM, positionResp *types.PositionResp, err error) {
+	positionResp = &types.PositionResp{}
+	marginIncrease := increasedNotional.Quo(leverage)
+	fundingPayment := FundingPayment(currentPosition, market.LatestCumulativePremiumFraction) // signed
+	remainingMargin := currentPosition.Margin.Add(marginIncrease).Sub(fundingPayment)         // signed
 
 	updatedAMM, baseAssetDeltaAbs, err := k.SwapQuoteAsset(
 		ctx,
@@ -157,9 +157,9 @@ func (k Keeper) increasePosition(
 		return nil, nil, err
 	}
 
-	if dir == v2types.Direction_LONG {
+	if dir == types.Direction_LONG {
 		positionResp.ExchangedPositionSize = baseAssetDeltaAbs
-	} else if dir == v2types.Direction_SHORT {
+	} else if dir == types.Direction_SHORT {
 		positionResp.ExchangedPositionSize = baseAssetDeltaAbs.Neg()
 	}
 
@@ -171,19 +171,19 @@ func (k Keeper) increasePosition(
 	positionResp.ExchangedNotionalValue = increasedNotional
 	positionResp.PositionNotional = positionNotional.Add(increasedNotional)
 	positionResp.RealizedPnl = sdk.ZeroDec()
-	positionResp.MarginToVault = marginDelta
+	positionResp.MarginToVault = marginIncrease
 	positionResp.FundingPayment = fundingPayment
-	positionResp.BadDebt = sdk.MinDec(sdk.ZeroDec(), remainingMarginSigned).Abs()
-	positionResp.Position = &v2types.Position{
+	positionResp.BadDebt = sdk.MinDec(sdk.ZeroDec(), remainingMargin).Abs()
+	positionResp.Position = types.Position{
 		TraderAddress:                   currentPosition.TraderAddress,
 		Pair:                            currentPosition.Pair,
 		Size_:                           currentPosition.Size_.Add(positionResp.ExchangedPositionSize),
-		Margin:                          sdk.MaxDec(sdk.ZeroDec(), remainingMarginSigned).Abs(),
+		Margin:                          sdk.MaxDec(sdk.ZeroDec(), remainingMargin).Abs(),
 		OpenNotional:                    currentPosition.OpenNotional.Add(increasedNotional),
 		LatestCumulativePremiumFraction: market.LatestCumulativePremiumFraction,
 		LastUpdatedBlockNumber:          ctx.BlockHeight(),
 	}
-	positionResp.UnrealizedPnlAfter = UnrealizedPnl(*positionResp.Position, positionResp.PositionNotional)
+	positionResp.UnrealizedPnlAfter = UnrealizedPnl(positionResp.Position, positionResp.PositionNotional)
 
 	return updatedAMM, positionResp, nil
 }
@@ -207,13 +207,13 @@ func (k Keeper) increasePosition(
 //   - err: error
 func (k Keeper) openReversePosition(
 	ctx sdk.Context,
-	market v2types.Market,
-	amm v2types.AMM,
-	currentPosition v2types.Position,
+	market types.Market,
+	amm types.AMM,
+	currentPosition types.Position,
 	quoteAssetAmount sdk.Dec,
 	leverage sdk.Dec,
 	baseAmtLimit sdk.Dec,
-) (updatedAMM *v2types.AMM, positionResp *v2types.PositionResp, err error) {
+) (updatedAMM *types.AMM, positionResp *types.PositionResp, err error) {
 	notionalToDecreaseBy := leverage.Mul(quoteAssetAmount)
 	currentPositionNotional, err := PositionNotionalSpot(amm, currentPosition)
 	if err != nil {
@@ -269,25 +269,25 @@ func (k Keeper) openReversePosition(
 //   - err: error
 func (k Keeper) decreasePosition(
 	ctx sdk.Context,
-	market v2types.Market,
-	amm v2types.AMM,
-	currentPosition v2types.Position,
+	market types.Market,
+	amm types.AMM,
+	currentPosition types.Position,
 	decreasedNotional sdk.Dec,
 	baseAmtLimit sdk.Dec,
 	skipFluctuationLimitCheck bool,
-) (updatedAMM *v2types.AMM, positionResp *v2types.PositionResp, err error) {
+) (updatedAMM *types.AMM, positionResp *types.PositionResp, err error) {
 	if currentPosition.Size_.IsZero() {
 		return nil, nil, fmt.Errorf("current position size is zero, nothing to decrease")
 	}
 
-	var dir v2types.Direction
+	var dir types.Direction
 	if currentPosition.Size_.IsPositive() {
-		dir = v2types.Direction_SHORT
+		dir = types.Direction_SHORT
 	} else {
-		dir = v2types.Direction_LONG
+		dir = types.Direction_LONG
 	}
 
-	positionResp = &v2types.PositionResp{
+	positionResp = &types.PositionResp{
 		MarginToVault: sdk.ZeroDec(),
 	}
 
@@ -309,7 +309,7 @@ func (k Keeper) decreasePosition(
 		return nil, nil, err
 	}
 
-	if dir == v2types.Direction_LONG {
+	if dir == types.Direction_LONG {
 		positionResp.ExchangedPositionSize = baseAssetDeltaAbs
 	} else {
 		positionResp.ExchangedPositionSize = baseAssetDeltaAbs.Neg()
@@ -344,7 +344,7 @@ func (k Keeper) decreasePosition(
 		return nil, nil, fmt.Errorf("value of open notional < 0")
 	}
 
-	positionResp.Position = &v2types.Position{
+	positionResp.Position = types.Position{
 		TraderAddress:                   currentPosition.TraderAddress,
 		Pair:                            currentPosition.Pair,
 		Size_:                           currentPosition.Size_.Add(positionResp.ExchangedPositionSize),
@@ -377,13 +377,13 @@ func (k Keeper) decreasePosition(
 //   - err: error
 func (k Keeper) closeAndOpenReversePosition(
 	ctx sdk.Context,
-	market v2types.Market,
-	amm v2types.AMM,
-	existingPosition v2types.Position,
+	market types.Market,
+	amm types.AMM,
+	existingPosition types.Position,
 	quoteAssetAmount sdk.Dec,
 	leverage sdk.Dec,
 	baseAmtLimit sdk.Dec,
-) (updatedAMM *v2types.AMM, positionResp *v2types.PositionResp, err error) {
+) (updatedAMM *types.AMM, positionResp *types.PositionResp, err error) {
 	trader, err := sdk.AccAddressFromBech32(existingPosition.TraderAddress)
 	if err != nil {
 		return nil, nil, err
@@ -408,7 +408,7 @@ func (k Keeper) closeAndOpenReversePosition(
 	remainingReverseNotionalValue := reverseNotionalValue.Sub(
 		closePositionResp.ExchangedNotionalValue)
 
-	var increasePositionResp *v2types.PositionResp
+	var increasePositionResp *types.PositionResp
 	if remainingReverseNotionalValue.IsNegative() {
 		// should never happen as this should also be checked in the caller
 		return nil, nil, fmt.Errorf(
@@ -426,15 +426,15 @@ func (k Keeper) closeAndOpenReversePosition(
 			)
 		}
 
-		var sideToTake v2types.Direction
+		var sideToTake types.Direction
 		// flipped since we are going against the current position
 		if existingPosition.Size_.IsPositive() {
-			sideToTake = v2types.Direction_SHORT
+			sideToTake = types.Direction_SHORT
 		} else {
-			sideToTake = v2types.Direction_LONG
+			sideToTake = types.Direction_LONG
 		}
 
-		newPosition := v2types.ZeroPosition(
+		newPosition := types.ZeroPosition(
 			ctx,
 			existingPosition.Pair,
 			trader,
@@ -453,7 +453,7 @@ func (k Keeper) closeAndOpenReversePosition(
 			return nil, nil, err
 		}
 
-		positionResp = &v2types.PositionResp{
+		positionResp = &types.PositionResp{
 			Position:               increasePositionResp.Position,
 			PositionNotional:       increasePositionResp.PositionNotional,
 			ExchangedNotionalValue: closePositionResp.ExchangedNotionalValue.Add(increasePositionResp.ExchangedNotionalValue),
@@ -485,17 +485,17 @@ func (k Keeper) closeAndOpenReversePosition(
 //
 // returns:
 // - error: if any of the requirements is not met
-func checkOpenPositionRequirements(market v2types.Market, quoteAssetAmt sdk.Int, leverage sdk.Dec) error {
-	if quoteAssetAmt.IsZero() {
-		return v2types.ErrQuoteAmountIsZero
+func checkOpenPositionRequirements(market types.Market, quoteAssetAmt sdk.Int, userLeverage sdk.Dec) error {
+	if !quoteAssetAmt.IsPositive() {
+		return types.ErrInputQuoteAmtNegative
 	}
 
-	if leverage.IsZero() {
-		return v2types.ErrLeverageIsZero
+	if !userLeverage.IsPositive() {
+		return types.ErrUserLeverageNegative
 	}
 
-	if leverage.GT(market.MaxLeverage) {
-		return v2types.ErrLeverageIsTooHigh
+	if userLeverage.GT(market.MaxLeverage) {
+		return types.ErrLeverageIsTooHigh
 	}
 
 	return nil
@@ -504,10 +504,10 @@ func checkOpenPositionRequirements(market v2types.Market, quoteAssetAmt sdk.Int,
 // afterPositionUpdate is called when a position has been updated.
 func (k Keeper) afterPositionUpdate(
 	ctx sdk.Context,
-	market v2types.Market,
-	amm v2types.AMM,
+	market types.Market,
+	amm types.AMM,
 	traderAddr sdk.AccAddress,
-	positionResp v2types.PositionResp,
+	positionResp types.PositionResp,
 ) (err error) {
 	// check bad debt
 	if !positionResp.BadDebt.IsZero() {
@@ -520,11 +520,11 @@ func (k Keeper) afterPositionUpdate(
 	}
 
 	if !positionResp.Position.Size_.IsZero() {
-		spotNotional, err := PositionNotionalSpot(amm, *positionResp.Position)
+		spotNotional, err := PositionNotionalSpot(amm, positionResp.Position)
 		if err != nil {
 			return err
 		}
-		twapNotional, err := k.PositionNotionalTWAP(ctx, *positionResp.Position, market.TwapLookbackWindow)
+		twapNotional, err := k.PositionNotionalTWAP(ctx, positionResp.Position, market.TwapLookbackWindow)
 		if err != nil {
 			return err
 		}
@@ -535,9 +535,9 @@ func (k Keeper) afterPositionUpdate(
 			preferredPositionNotional = sdk.MinDec(spotNotional, twapNotional)
 		}
 
-		marginRatio := MarginRatio(*positionResp.Position, preferredPositionNotional, market.LatestCumulativePremiumFraction)
+		marginRatio := MarginRatio(positionResp.Position, preferredPositionNotional, market.LatestCumulativePremiumFraction)
 		if marginRatio.LT(market.MaintenanceMarginRatio) {
-			return v2types.ErrMarginRatioTooLow
+			return types.ErrMarginRatioTooLow
 		}
 	}
 
@@ -547,7 +547,7 @@ func (k Keeper) afterPositionUpdate(
 	case marginToVault.IsPositive():
 		coinToSend := sdk.NewCoin(market.Pair.QuoteDenom(), marginToVault)
 		if err = k.BankKeeper.SendCoinsFromAccountToModule(
-			ctx, traderAddr, v2types.VaultModuleAccount, sdk.NewCoins(coinToSend)); err != nil {
+			ctx, traderAddr, types.VaultModuleAccount, sdk.NewCoins(coinToSend)); err != nil {
 			return err
 		}
 	case marginToVault.IsNegative():
@@ -562,7 +562,7 @@ func (k Keeper) afterPositionUpdate(
 	}
 
 	if !positionResp.Position.Size_.IsZero() {
-		k.Positions.Insert(ctx, collections.Join(market.Pair, traderAddr), *positionResp.Position)
+		k.Positions.Insert(ctx, collections.Join(market.Pair, traderAddr), positionResp.Position)
 	}
 
 	// calculate positionNotional (it's different depends on long or short side)
@@ -575,7 +575,7 @@ func (k Keeper) afterPositionUpdate(
 		positionNotional = positionResp.Position.OpenNotional.Sub(positionResp.UnrealizedPnlAfter)
 	}
 
-	return ctx.EventManager().EmitTypedEvent(&v2types.PositionChangedEvent{
+	return ctx.EventManager().EmitTypedEvent(&types.PositionChangedEvent{
 		TraderAddress:      traderAddr.String(),
 		Pair:               market.Pair,
 		Margin:             sdk.NewCoin(market.Pair.QuoteDenom(), positionResp.Position.Margin.RoundInt()),
@@ -620,7 +620,7 @@ func (k Keeper) transferFee(
 		if err = k.BankKeeper.SendCoinsFromAccountToModule(
 			ctx,
 			/* from */ trader,
-			/* to */ v2types.FeePoolModuleAccount,
+			/* to */ types.FeePoolModuleAccount,
 			/* coins */ sdk.NewCoins(
 				sdk.NewCoin(
 					pair.QuoteDenom(),
@@ -637,7 +637,7 @@ func (k Keeper) transferFee(
 		if err = k.BankKeeper.SendCoinsFromAccountToModule(
 			ctx,
 			/* from */ trader,
-			/* to */ v2types.PerpEFModuleAccount,
+			/* to */ types.PerpEFModuleAccount,
 			/* coins */ sdk.NewCoins(
 				sdk.NewCoin(
 					pair.QuoteDenom(),
@@ -661,7 +661,7 @@ func (k Keeper) transferFee(
 //
 // returns:
 //   - err: error if any
-func (k Keeper) checkPriceFluctuationLimitRatio(ctx sdk.Context, market v2types.Market, amm v2types.AMM) error {
+func (k Keeper) checkPriceFluctuationLimitRatio(ctx sdk.Context, market types.Market, amm types.AMM) error {
 	if market.PriceFluctuationLimitRatio.IsZero() {
 		// early return to avoid expensive state operations
 		return nil
@@ -679,7 +679,7 @@ func (k Keeper) checkPriceFluctuationLimitRatio(ctx sdk.Context, market v2types.
 	snapshotLowerLimit := snapshotMarkPrice.Mul(sdk.OneDec().Sub(market.PriceFluctuationLimitRatio))
 
 	if amm.MarkPrice().GT(snapshotUpperLimit) || amm.MarkPrice().LT(snapshotLowerLimit) {
-		return v2types.ErrOverFluctuationLimit.Wrapf("candidate mark price %s is not within the fluctuation limit [%s, %s]",
+		return types.ErrOverFluctuationLimit.Wrapf("candidate mark price %s is not within the fluctuation limit [%s, %s]",
 			amm.MarkPrice(), snapshotLowerLimit, snapshotUpperLimit)
 	}
 
@@ -697,7 +697,7 @@ func (k Keeper) checkPriceFluctuationLimitRatio(ctx sdk.Context, market v2types.
 // returns:
 //   - positionResp: response object containing information about the position change
 //   - err: error if any
-func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.AccAddress) (*v2types.PositionResp, error) {
+func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.AccAddress) (*types.PositionResp, error) {
 	position, err := k.Positions.Get(ctx, collections.Join(pair, traderAddr))
 	if err != nil {
 		return nil, err
@@ -705,12 +705,12 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.A
 
 	market, err := k.Markets.Get(ctx, pair)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", v2types.ErrPairNotFound, pair)
+		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
 	}
 
 	amm, err := k.AMMs.Get(ctx, pair)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", v2types.ErrPairNotFound, pair)
+		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
 	}
 
 	updatedAMM, positionResp, err := k.closePositionEntirely(
@@ -766,11 +766,11 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.A
 //   - err: error
 func (k Keeper) closePositionEntirely(
 	ctx sdk.Context,
-	market v2types.Market,
-	amm v2types.AMM,
-	currentPosition v2types.Position,
+	market types.Market,
+	amm types.AMM,
+	currentPosition types.Position,
 	quoteAssetAmountLimit sdk.Dec,
-) (updatedAMM *v2types.AMM, positionResp *v2types.PositionResp, err error) {
+) (updatedAMM *types.AMM, positionResp *types.PositionResp, err error) {
 	if currentPosition.Size_.IsZero() {
 		return nil, nil, fmt.Errorf("zero position size")
 	}
@@ -780,7 +780,7 @@ func (k Keeper) closePositionEntirely(
 		return nil, nil, err
 	}
 
-	positionResp = &v2types.PositionResp{
+	positionResp = &types.PositionResp{
 		UnrealizedPnlAfter:    sdk.ZeroDec(),
 		ExchangedPositionSize: currentPosition.Size_.Neg(),
 		PositionNotional:      sdk.ZeroDec(),
@@ -808,12 +808,12 @@ func (k Keeper) closePositionEntirely(
 
 	positionResp.FundingPayment = fundingPayment
 
-	var sideToTake v2types.Direction
+	var sideToTake types.Direction
 	// flipped since we are going against the current position
 	if currentPosition.Size_.IsPositive() {
-		sideToTake = v2types.Direction_SHORT
+		sideToTake = types.Direction_SHORT
 	} else {
-		sideToTake = v2types.Direction_LONG
+		sideToTake = types.Direction_LONG
 	}
 	updatedAMM, exchangedNotionalValue, err := k.SwapBaseAsset(
 		ctx,
@@ -828,7 +828,7 @@ func (k Keeper) closePositionEntirely(
 	}
 
 	positionResp.ExchangedNotionalValue = exchangedNotionalValue
-	positionResp.Position = &v2types.Position{
+	positionResp.Position = types.Position{
 		TraderAddress:                   currentPosition.TraderAddress,
 		Pair:                            currentPosition.Pair,
 		Size_:                           sdk.ZeroDec(),

@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 /*
@@ -29,8 +29,8 @@ ret:
 func (k Keeper) CalcTwap(
 	ctx sdk.Context,
 	pair asset.Pair,
-	twapCalcOption v2types.TwapCalcOption,
-	direction v2types.Direction,
+	twapCalcOption types.TwapCalcOption,
+	direction types.Direction,
 	assetAmt sdk.Dec,
 	lookbackInterval time.Duration,
 ) (price sdk.Dec, err error) {
@@ -38,7 +38,7 @@ func (k Keeper) CalcTwap(
 	lowerLimitTimestampMs := ctx.BlockTime().Add(-1 * lookbackInterval).UnixMilli()
 
 	// fetch snapshots from state
-	var snapshots []v2types.ReserveSnapshot
+	var snapshots []types.ReserveSnapshot
 	iter := k.ReserveSnapshots.Iterate(
 		ctx,
 		collections.PairRange[asset.Pair, time.Time]{}.
@@ -56,7 +56,7 @@ func (k Keeper) CalcTwap(
 	}
 
 	if len(snapshots) == 0 {
-		return sdk.OneDec().Neg(), v2types.ErrNoValidTWAP
+		return sdk.OneDec().Neg(), types.ErrNoValidTWAP
 	}
 
 	// circuit-breaker when there's only one snapshot to process
@@ -118,8 +118,8 @@ QUOTE_ASSET_SWAP: price when swapping y amount of quote assets
 BASE_ASSET_SWAP: price when swapping x amount of base assets
 */
 type snapshotPriceOps struct {
-	twapCalcOption v2types.TwapCalcOption
-	direction      v2types.Direction
+	twapCalcOption types.TwapCalcOption
+	direction      types.Direction
 	assetAmt       sdk.Dec
 }
 
@@ -142,18 +142,18 @@ ret:
   - err: error
 */
 func getPriceWithSnapshot(
-	snapshot v2types.ReserveSnapshot,
+	snapshot types.ReserveSnapshot,
 	opts snapshotPriceOps,
 ) (price sdk.Dec, err error) {
 	switch opts.twapCalcOption {
-	case v2types.TwapCalcOption_SPOT:
+	case types.TwapCalcOption_SPOT:
 		return snapshot.Amm.QuoteReserve.Mul(snapshot.Amm.PriceMultiplier).Quo(snapshot.Amm.BaseReserve), nil
 
-	case v2types.TwapCalcOption_QUOTE_ASSET_SWAP:
+	case types.TwapCalcOption_QUOTE_ASSET_SWAP:
 		quoteReserve := snapshot.Amm.FromQuoteAssetToReserve(opts.assetAmt)
 		return snapshot.Amm.GetBaseReserveAmt(quoteReserve, opts.direction)
 
-	case v2types.TwapCalcOption_BASE_ASSET_SWAP:
+	case types.TwapCalcOption_BASE_ASSET_SWAP:
 		quoteReserve, err := snapshot.Amm.GetQuoteReserveAmt(opts.assetAmt, opts.direction)
 		if err != nil {
 			return sdk.Dec{}, err

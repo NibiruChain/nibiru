@@ -366,7 +366,7 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 		fmt.Sprintf("%s%s", "10000000", denoms.NUSD),
 	})
-	s.Contains(err.Error(), types.ErrFailedRemoveMarginCanCauseBadDebt.Error())
+	s.Contains(err.Error(), types.ErrBadDebt.Error())
 
 	s.T().Log("removing margin on user 0....")
 	_, err = testutilcli.ExecTx(s.network, cli.RemoveMarginCmd(), s.users[0], []string{

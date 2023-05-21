@@ -8,13 +8,13 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
 	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
-	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 type msgServerOpenPosition struct {
 	pair              asset.Pair
 	traderAddress     sdk.AccAddress
-	dir               v2types.Direction
+	dir               types.Direction
 	quoteAssetAmt     sdk.Int
 	leverage          sdk.Dec
 	baseAssetAmtLimit sdk.Int
@@ -24,7 +24,7 @@ func (m msgServerOpenPosition) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Cont
 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
 
 	// don't need to check response because it's already checked in clearing_house tests
-	_, err := msgServer.OpenPosition(sdk.WrapSDKContext(ctx), &v2types.MsgOpenPosition{
+	_, err := msgServer.OpenPosition(sdk.WrapSDKContext(ctx), &types.MsgOpenPosition{
 		Pair:                 m.pair,
 		Sender:               m.traderAddress.String(),
 		Side:                 m.dir,
@@ -39,7 +39,7 @@ func (m msgServerOpenPosition) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Cont
 func MsgServerOpenPosition(
 	traderAddress sdk.AccAddress,
 	pair asset.Pair,
-	dir v2types.Direction,
+	dir types.Direction,
 	quoteAssetAmt sdk.Int,
 	leverage sdk.Dec,
 	baseAssetAmtLimit sdk.Int,
@@ -63,7 +63,7 @@ func (m msgServerClosePosition) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Con
 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
 
 	// don't need to check response because it's already checked in clearing_house tests
-	_, err := msgServer.ClosePosition(sdk.WrapSDKContext(ctx), &v2types.MsgClosePosition{
+	_, err := msgServer.ClosePosition(sdk.WrapSDKContext(ctx), &types.MsgClosePosition{
 		Pair:   m.pair,
 		Sender: m.traderAddress.String(),
 	})
@@ -91,7 +91,7 @@ func (m msgServerAddmargin) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context
 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
 
 	// don't need to check response because it's already checked in clearing_house tests
-	_, err := msgServer.AddMargin(sdk.WrapSDKContext(ctx), &v2types.MsgAddMargin{
+	_, err := msgServer.AddMargin(sdk.WrapSDKContext(ctx), &types.MsgAddMargin{
 		Pair:   m.pair,
 		Sender: m.traderAddress.String(),
 		Margin: sdk.NewCoin(m.pair.QuoteDenom(), m.amount),
@@ -122,7 +122,7 @@ func (m msgServerRemoveMargin) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Cont
 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
 
 	// don't need to check response because it's already checked in clearing_house tests
-	_, err := msgServer.RemoveMargin(sdk.WrapSDKContext(ctx), &v2types.MsgRemoveMargin{
+	_, err := msgServer.RemoveMargin(sdk.WrapSDKContext(ctx), &types.MsgRemoveMargin{
 		Pair:   m.pair,
 		Sender: m.traderAddress.String(),
 		Margin: sdk.NewCoin(m.pair.QuoteDenom(), m.amount),
@@ -151,7 +151,7 @@ type msgServerDonateToPerpEf struct {
 func (m msgServerDonateToPerpEf) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
 
-	_, err := msgServer.DonateToEcosystemFund(sdk.WrapSDKContext(ctx), &v2types.MsgDonateToEcosystemFund{
+	_, err := msgServer.DonateToEcosystemFund(sdk.WrapSDKContext(ctx), &types.MsgDonateToEcosystemFund{
 		Sender:   m.sender.String(),
 		Donation: sdk.NewCoin(denoms.NUSD, m.amount),
 	})
@@ -178,15 +178,15 @@ type msgServerMultiLiquidate struct {
 func (m msgServerMultiLiquidate) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
 
-	liquidateMsgs := make([]*v2types.MsgMultiLiquidate_Liquidation, len(m.pairTraderTuples))
+	liquidateMsgs := make([]*types.MsgMultiLiquidate_Liquidation, len(m.pairTraderTuples))
 	for i, pairTraderTuple := range m.pairTraderTuples {
-		liquidateMsgs[i] = &v2types.MsgMultiLiquidate_Liquidation{
+		liquidateMsgs[i] = &types.MsgMultiLiquidate_Liquidation{
 			Pair:   pairTraderTuple.Pair,
 			Trader: pairTraderTuple.Trader.String(),
 		}
 	}
 
-	_, err := msgServer.MultiLiquidate(sdk.WrapSDKContext(ctx), &v2types.MsgMultiLiquidate{
+	_, err := msgServer.MultiLiquidate(sdk.WrapSDKContext(ctx), &types.MsgMultiLiquidate{
 		Sender:       m.liquidator.String(),
 		Liquidations: liquidateMsgs,
 	})
