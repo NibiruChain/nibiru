@@ -2,14 +2,12 @@ package binding
 
 import (
 	"encoding/json"
-	"fmt"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/NibiruChain/nibiru/x/common/set"
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	"github.com/NibiruChain/nibiru/x/sudo"
@@ -59,28 +57,28 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 		switch {
 		// Perp module
 		case contractExecuteMsg.ExecuteMsg.OpenPosition != nil:
-			if err := messenger.CheckPermissions(contractAddr, ctx); err != nil {
+			if err := messenger.Sudo.CheckPermissions(contractAddr, ctx); err != nil {
 				return events, data, err
 			}
 			cwMsg := contractExecuteMsg.ExecuteMsg.OpenPosition
 			_, err = messenger.Perp.OpenPosition(cwMsg, contractAddr, ctx)
 			return events, data, err
 		case contractExecuteMsg.ExecuteMsg.ClosePosition != nil:
-			if err := messenger.CheckPermissions(contractAddr, ctx); err != nil {
+			if err := messenger.Sudo.CheckPermissions(contractAddr, ctx); err != nil {
 				return events, data, err
 			}
 			cwMsg := contractExecuteMsg.ExecuteMsg.ClosePosition
 			_, err = messenger.Perp.ClosePosition(cwMsg, contractAddr, ctx)
 			return events, data, err
 		case contractExecuteMsg.ExecuteMsg.AddMargin != nil:
-			if err := messenger.CheckPermissions(contractAddr, ctx); err != nil {
+			if err := messenger.Sudo.CheckPermissions(contractAddr, ctx); err != nil {
 				return events, data, err
 			}
 			cwMsg := contractExecuteMsg.ExecuteMsg.AddMargin
 			_, err = messenger.Perp.AddMargin(cwMsg, contractAddr, ctx)
 			return events, data, err
 		case contractExecuteMsg.ExecuteMsg.RemoveMargin != nil:
-			if err := messenger.CheckPermissions(contractAddr, ctx); err != nil {
+			if err := messenger.Sudo.CheckPermissions(contractAddr, ctx); err != nil {
 				return events, data, err
 			}
 			cwMsg := contractExecuteMsg.ExecuteMsg.RemoveMargin
@@ -89,14 +87,14 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 
 		// Perp module | shifter
 		case contractExecuteMsg.ExecuteMsg.PegShift != nil:
-			if err := messenger.CheckPermissions(contractAddr, ctx); err != nil {
+			if err := messenger.Sudo.CheckPermissions(contractAddr, ctx); err != nil {
 				return events, data, err
 			}
 			cwMsg := contractExecuteMsg.ExecuteMsg.PegShift
 			err = messenger.Perp.PegShift(cwMsg, contractAddr, ctx)
 			return events, data, err
 		case contractExecuteMsg.ExecuteMsg.DepthShift != nil:
-			if err := messenger.CheckPermissions(contractAddr, ctx); err != nil {
+			if err := messenger.Sudo.CheckPermissions(contractAddr, ctx); err != nil {
 				return events, data, err
 			}
 			cwMsg := contractExecuteMsg.ExecuteMsg.DepthShift
@@ -105,7 +103,7 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 
 		// Perp module | controller
 		case contractExecuteMsg.ExecuteMsg.CreateMarket != nil:
-			if err := messenger.CheckPermissions(contractAddr, ctx); err != nil {
+			if err := messenger.Sudo.CheckPermissions(contractAddr, ctx); err != nil {
 				return events, data, err
 			}
 			cwMsg := contractExecuteMsg.ExecuteMsg.CreateMarket
@@ -113,14 +111,14 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 			return events, data, err
 
 		case contractExecuteMsg.ExecuteMsg.InsuranceFundWithdraw != nil:
-			if err := messenger.CheckPermissions(contractAddr, ctx); err != nil {
+			if err := messenger.Sudo.CheckPermissions(contractAddr, ctx); err != nil {
 				return events, data, err
 			}
 			cwMsg := contractExecuteMsg.ExecuteMsg.InsuranceFundWithdraw
 			err = messenger.Perp.InsuranceFundWithdraw(cwMsg, ctx)
 			return events, data, err
 		case contractExecuteMsg.ExecuteMsg.SetMarketEnabled != nil:
-			if err := messenger.CheckPermissions(contractAddr, ctx); err != nil {
+			if err := messenger.Sudo.CheckPermissions(contractAddr, ctx); err != nil {
 				return events, data, err
 			}
 			cwMsg := contractExecuteMsg.ExecuteMsg.SetMarketEnabled
@@ -129,7 +127,7 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 
 		// Oracle module
 		case contractExecuteMsg.ExecuteMsg.EditOracleParams != nil:
-			if err := messenger.CheckPermissions(contractAddr, ctx); err != nil {
+			if err := messenger.Sudo.CheckPermissions(contractAddr, ctx); err != nil {
 				return events, data, err
 			}
 			cwMsg := contractExecuteMsg.ExecuteMsg.EditOracleParams
@@ -161,25 +159,4 @@ func CustomExecuteMsgHandler(
 			Oracle: ExecutorOracle{Oracle: oracleKeeper},
 		}
 	}
-}
-
-// CheckPermissions Checks if a contract is contained within the set of sudo
-// contracts defined in the x/sudo module. These smart contracts are able to
-// execute certain permissioned functions.
-// See https://www.notion.so/nibiru/Nibi-Perps-Admin-ADR-ad38991fffd34e7798618731be0fa922?pvs=4
-func (messenger *CustomWasmExecutor) CheckPermissions(
-	contract sdk.AccAddress, ctx sdk.Context,
-) error {
-	contracts, err := messenger.Sudo.GetSudoContracts(ctx)
-	if err != nil {
-		return err
-	}
-	hasPermission := set.New(contracts...).Has(contract.String())
-	if !hasPermission {
-		return fmt.Errorf(
-			"insufficient permissions on smart contract: %s. The sudo contracts are: %s",
-			contract, contracts,
-		)
-	}
-	return nil
 }
