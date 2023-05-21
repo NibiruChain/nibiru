@@ -215,13 +215,37 @@ func (sudo *Sudoers) RemoveContracts(contracts []string) {
 }
 
 // ————————————————————————————————————————————————————————————————————————————
-// Setters - for use in tests
+// Helper Functions
 // ————————————————————————————————————————————————————————————————————————————
+
+// CheckPermissions Checks if a contract is contained within the set of sudo
+// contracts defined in the x/sudo module. These smart contracts are able to
+// execute certain permissioned functions.
+func (k Keeper) CheckPermissions(
+	contract sdk.AccAddress, ctx sdk.Context,
+) error {
+	contracts, err := k.GetSudoContracts(ctx)
+	if err != nil {
+		return err
+	}
+	hasPermission := set.New(contracts...).Has(contract.String())
+	if !hasPermission {
+		return fmt.Errorf(
+			"insufficient permissions on smart contract: %s. The sudo contracts are: %s",
+			contract, contracts,
+		)
+	}
+	return nil
+}
 
 func (k Keeper) GetSudoContracts(ctx sdk.Context) (contracts []string, err error) {
 	state, err := k.Sudoers.Get(ctx)
 	return state.Contracts, err
 }
+
+// ————————————————————————————————————————————————————————————————————————————
+// Setters - for use in tests
+// ————————————————————————————————————————————————————————————————————————————
 
 // SetSudoContracts overwrites the state. This function is a convenience
 // function for testing with permissioned contracts in other modules..

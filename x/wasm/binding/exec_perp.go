@@ -21,7 +21,7 @@ func (exec *ExecutorPerp) MsgServer() perpv2types.MsgServer {
 }
 
 func (exec *ExecutorPerp) OpenPosition(
-	cwMsg *cw_struct.OpenPosition, ctx sdk.Context,
+	cwMsg *cw_struct.OpenPosition, sender sdk.AccAddress, ctx sdk.Context,
 ) (
 	sdkResp *perpv2types.MsgOpenPositionResponse, err error,
 ) {
@@ -42,7 +42,7 @@ func (exec *ExecutorPerp) OpenPosition(
 	}
 
 	sdkMsg := &perpv2types.MsgOpenPosition{
-		Sender:               cwMsg.Sender,
+		Sender:               sender.String(),
 		Pair:                 pair,
 		Side:                 side,
 		QuoteAssetAmount:     cwMsg.QuoteAmount,
@@ -55,7 +55,7 @@ func (exec *ExecutorPerp) OpenPosition(
 }
 
 func (exec *ExecutorPerp) ClosePosition(
-	cwMsg *cw_struct.ClosePosition, ctx sdk.Context,
+	cwMsg *cw_struct.ClosePosition, sender sdk.AccAddress, ctx sdk.Context,
 ) (
 	sdkResp *perpv2types.MsgClosePositionResponse, err error,
 ) {
@@ -69,7 +69,7 @@ func (exec *ExecutorPerp) ClosePosition(
 	}
 
 	sdkMsg := &perpv2types.MsgClosePosition{
-		Sender: cwMsg.Sender,
+		Sender: sender.String(),
 		Pair:   pair,
 	}
 
@@ -78,7 +78,7 @@ func (exec *ExecutorPerp) ClosePosition(
 }
 
 func (exec *ExecutorPerp) AddMargin(
-	cwMsg *cw_struct.AddMargin, ctx sdk.Context,
+	cwMsg *cw_struct.AddMargin, sender sdk.AccAddress, ctx sdk.Context,
 ) (
 	sdkResp *perpv2types.MsgAddMarginResponse, err error,
 ) {
@@ -92,7 +92,7 @@ func (exec *ExecutorPerp) AddMargin(
 	}
 
 	sdkMsg := &perpv2types.MsgAddMargin{
-		Sender: cwMsg.Sender,
+		Sender: sender.String(),
 		Pair:   pair,
 		Margin: cwMsg.Margin,
 	}
@@ -102,7 +102,7 @@ func (exec *ExecutorPerp) AddMargin(
 }
 
 func (exec *ExecutorPerp) RemoveMargin(
-	cwMsg *cw_struct.RemoveMargin, ctx sdk.Context,
+	cwMsg *cw_struct.RemoveMargin, sender sdk.AccAddress, ctx sdk.Context,
 ) (
 	sdkResp *perpv2types.MsgRemoveMarginResponse, err error,
 ) {
@@ -116,7 +116,7 @@ func (exec *ExecutorPerp) RemoveMargin(
 	}
 
 	sdkMsg := &perpv2types.MsgRemoveMargin{
-		Sender: cwMsg.Sender,
+		Sender: sender.String(),
 		Pair:   pair,
 		Margin: cwMsg.Margin,
 	}

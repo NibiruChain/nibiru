@@ -28,7 +28,6 @@ type BindingMsg struct {
 }
 
 type OpenPosition struct {
-	Sender          string  `json:"sender"`
 	Pair            string  `json:"pair"`
 	IsLong          bool    `json:"is_long"`
 	QuoteAmount     sdk.Int `json:"quote_amount"`
@@ -37,8 +36,7 @@ type OpenPosition struct {
 }
 
 type ClosePosition struct {
-	Sender string `json:"sender"`
-	Pair   string `json:"pair"`
+	Pair string `json:"pair"`
 }
 
 type MultiLiquidate struct {
@@ -51,13 +49,11 @@ type LiquidationArgs struct {
 }
 
 type AddMargin struct {
-	Sender string   `json:"sender"`
 	Pair   string   `json:"pair"`
 	Margin sdk.Coin `json:"margin"`
 }
 
 type RemoveMargin struct {
-	Sender string   `json:"sender"`
 	Pair   string   `json:"pair"`
 	Margin sdk.Coin `json:"margin"`
 }
