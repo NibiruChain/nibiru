@@ -61,11 +61,14 @@ func (s *TestSuitePerpExecutor) SetupSuite() {
 	nibiru, ctx = SetupAllContracts(s.T(), sender, nibiru, ctx)
 	s.nibiru = nibiru
 	s.ctx = ctx
+	s.NoError(testapp.FundAccount(nibiru.BankKeeper, ctx, s.contractPerp, coins))
 
 	s.contractPerp = ContractMap[wasmbin.WasmKeyPerpBinding]
 	s.exec = &binding.ExecutorPerp{
 		PerpV2: nibiru.PerpKeeperV2,
 	}
+	s.NoError(testapp.FundAccount(nibiru.BankKeeper, ctx, s.contractPerp, coins))
+
 	s.OnSetupEnd()
 }
 
@@ -97,7 +100,6 @@ func (s *TestSuitePerpExecutor) TestOpenAddRemoveClose() {
 
 func (s *TestSuitePerpExecutor) DoOpenPositionTest(pair asset.Pair) error {
 	cwMsg := &cw_struct.OpenPosition{
-		Sender:          s.contractDeployer.String(),
 		Pair:            pair.String(),
 		IsLong:          false,
 		QuoteAmount:     sdk.NewInt(4_200_000),
@@ -105,14 +107,14 @@ func (s *TestSuitePerpExecutor) DoOpenPositionTest(pair asset.Pair) error {
 		BaseAmountLimit: sdk.NewInt(0),
 	}
 
-	_, err := s.exec.OpenPosition(cwMsg, s.ctx)
+	_, err := s.exec.OpenPosition(cwMsg, s.contractPerp, s.ctx)
 	if err != nil {
 		return err
 	}
 
 	// Verify position exists with PerpKeeper
 	_, err = s.exec.PerpV2.Positions.Get(
-		s.ctx, collections.Join(pair, s.contractDeployer),
+		s.ctx, collections.Join(pair, s.contractPerp),
 	)
 	if err != nil {
 		return err
@@ -121,7 +123,7 @@ func (s *TestSuitePerpExecutor) DoOpenPositionTest(pair asset.Pair) error {
 	// Verify position exists with CustomQuerier - multi-position
 	bindingQuery := cw_struct.BindingQuery{
 		Positions: &cw_struct.PositionsRequest{
-			Trader: s.contractDeployer.String(),
+			Trader: s.contractPerp.String(),
 		},
 	}
 	bindingRespMulti := new(cw_struct.PositionsRequest)
@@ -135,7 +137,7 @@ func (s *TestSuitePerpExecutor) DoOpenPositionTest(pair asset.Pair) error {
 	// Verify position exists with CustomQuerier - single position
 	bindingQuery = cw_struct.BindingQuery{
 		Position: &cw_struct.PositionRequest{
-			Trader: s.contractDeployer.String(),
+			Trader: s.contractPerp.String(),
 			Pair:   pair.String(),
 		},
 	}
@@ -150,24 +152,22 @@ func (s *TestSuitePerpExecutor) DoOpenPositionTest(pair asset.Pair) error {
 func (s *TestSuitePerpExecutor) DoAddMarginTest(
 	pair asset.Pair, margin sdk.Coin) error {
 	cwMsg := &cw_struct.AddMargin{
-		Sender: s.contractDeployer.String(),
 		Pair:   pair.String(),
 		Margin: margin,
 	}
 
-	_, err := s.exec.AddMargin(cwMsg, s.ctx)
+	_, err := s.exec.AddMargin(cwMsg, s.contractPerp, s.ctx)
 	return err
 }
 
 func (s *TestSuitePerpExecutor) DoAddIncorrectMarginTest(
 	pair asset.Pair, margin sdk.Coin) error {
 	cwMsg := &cw_struct.AddMargin{
-		Sender: s.contractDeployer.String(),
 		Pair:   pair.String(),
 		Margin: margin,
 	}
 
-	_, err := s.exec.AddMargin(cwMsg, s.ctx)
+	_, err := s.exec.AddMargin(cwMsg, s.contractPerp, s.ctx)
 	if err == nil {
 		return errors.New("incorrect margin type should have failed")
 	}
@@ -177,12 +177,11 @@ func (s *TestSuitePerpExecutor) DoAddIncorrectMarginTest(
 func (s *TestSuitePerpExecutor) DoRemoveIncorrectMarginTest(
 	pair asset.Pair, margin sdk.Coin) error {
 	cwMsg := &cw_struct.RemoveMargin{
-		Sender: s.contractDeployer.String(),
 		Pair:   pair.String(),
 		Margin: margin,
 	}
 
-	_, err := s.exec.RemoveMargin(cwMsg, s.ctx)
+	_, err := s.exec.RemoveMargin(cwMsg, s.contractPerp, s.ctx)
 	if err == nil {
 		return errors.New("incorrect margin type should have failed")
 	}
@@ -192,22 +191,20 @@ func (s *TestSuitePerpExecutor) DoRemoveIncorrectMarginTest(
 func (s *TestSuitePerpExecutor) DoRemoveMarginTest(
 	pair asset.Pair, margin sdk.Coin) error {
 	cwMsg := &cw_struct.RemoveMargin{
-		Sender: s.contractDeployer.String(),
 		Pair:   pair.String(),
 		Margin: margin,
 	}
 
-	_, err := s.exec.RemoveMargin(cwMsg, s.ctx)
+	_, err := s.exec.RemoveMargin(cwMsg, s.contractPerp, s.ctx)
 	return err
 }
 
 func (s *TestSuitePerpExecutor) DoClosePositionTest(pair asset.Pair) error {
 	cwMsg := &cw_struct.ClosePosition{
-		Sender: s.contractDeployer.String(),
-		Pair:   pair.String(),
+		Pair: pair.String(),
 	}
 
-	_, err := s.exec.ClosePosition(cwMsg, s.ctx)
+	_, err := s.exec.ClosePosition(cwMsg, s.contractPerp, s.ctx)
 	return err
 }
 
@@ -265,16 +262,16 @@ func (s *TestSuitePerpExecutor) DoCreateMarketTest(pair asset.Pair) error {
 func (s *TestSuitePerpExecutor) TestSadPaths_Nil() {
 	var err error
 
-	_, err = s.exec.OpenPosition(nil, s.ctx)
+	_, err = s.exec.OpenPosition(nil, nil, s.ctx)
 	s.Error(err)
 
-	_, err = s.exec.AddMargin(nil, s.ctx)
+	_, err = s.exec.AddMargin(nil, nil, s.ctx)
 	s.Error(err)
 
-	_, err = s.exec.RemoveMargin(nil, s.ctx)
+	_, err = s.exec.RemoveMargin(nil, nil, s.ctx)
 	s.Error(err)
 
-	_, err = s.exec.ClosePosition(nil, s.ctx)
+	_, err = s.exec.ClosePosition(nil, nil, s.ctx)
 	s.Error(err)
 
 	err = s.exec.PegShift(
