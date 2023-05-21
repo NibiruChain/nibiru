@@ -9,7 +9,7 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
-	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 type insertReserveSnapshot struct {
@@ -20,7 +20,7 @@ type insertReserveSnapshot struct {
 }
 
 func (i insertReserveSnapshot) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	amm := app.PerpKeeperV2.AMMs.GetOr(ctx, i.pair, v2types.AMM{
+	amm := app.PerpKeeperV2.AMMs.GetOr(ctx, i.pair, types.AMM{
 		Pair:            i.pair,
 		BaseReserve:     sdk.ZeroDec(),
 		QuoteReserve:    sdk.ZeroDec(),
@@ -34,7 +34,7 @@ func (i insertReserveSnapshot) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Cont
 		modifier(&amm)
 	}
 
-	app.PerpKeeperV2.ReserveSnapshots.Insert(ctx, collections.Join(i.pair, i.time), v2types.ReserveSnapshot{
+	app.PerpKeeperV2.ReserveSnapshots.Insert(ctx, collections.Join(i.pair, i.time), types.ReserveSnapshot{
 		TimestampMs: i.time.UnixMilli(),
 		Amm:         amm,
 	})
@@ -50,10 +50,10 @@ func InsertReserveSnapshot(pair asset.Pair, time time.Time, modifiers ...reserve
 	}
 }
 
-type reserveSnapshotModifier func(amm *v2types.AMM)
+type reserveSnapshotModifier func(amm *types.AMM)
 
 func WithPriceMultiplier(multiplier sdk.Dec) reserveSnapshotModifier {
-	return func(amm *v2types.AMM) {
+	return func(amm *types.AMM) {
 		amm.PriceMultiplier = multiplier
 	}
 }

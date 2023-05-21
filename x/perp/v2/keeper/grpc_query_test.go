@@ -10,7 +10,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
-	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 func TestQueryPositions(t *testing.T) {
@@ -49,7 +49,7 @@ func TestQueryPositions(t *testing.T) {
 			Then(
 				QueryPositions(alice,
 					[]QueryPositionChecker{
-						QueryPosition_PositionEquals(v2types.Position{
+						QueryPosition_PositionEquals(types.Position{
 							Pair:                            pair,
 							TraderAddress:                   alice.String(),
 							Size_:                           sdk.NewDec(10),
@@ -63,7 +63,7 @@ func TestQueryPositions(t *testing.T) {
 						QueryPosition_MarginRatioEquals(sdk.MustNewDecFromStr("0.5499999999955")),
 					},
 					[]QueryPositionChecker{
-						QueryPosition_PositionEquals(v2types.Position{
+						QueryPosition_PositionEquals(types.Position{
 							Pair:                            pair2,
 							TraderAddress:                   alice.String(),
 							Size_:                           sdk.NewDec(10),
@@ -109,7 +109,7 @@ func TestQueryPositions(t *testing.T) {
 			Then(
 				QueryPositions(alice,
 					[]QueryPositionChecker{
-						QueryPosition_PositionEquals(v2types.Position{
+						QueryPosition_PositionEquals(types.Position{
 							Pair:                            pair,
 							TraderAddress:                   alice.String(),
 							Size_:                           sdk.NewDec(10),
@@ -123,7 +123,7 @@ func TestQueryPositions(t *testing.T) {
 						QueryPosition_MarginRatioEquals(sdk.MustNewDecFromStr("0.099999999991")),
 					},
 					[]QueryPositionChecker{
-						QueryPosition_PositionEquals(v2types.Position{
+						QueryPosition_PositionEquals(types.Position{
 							Pair:                            pair2,
 							TraderAddress:                   alice.String(),
 							Size_:                           sdk.NewDec(10),
@@ -169,7 +169,7 @@ func TestQueryPositions(t *testing.T) {
 			Then(
 				QueryPositions(alice,
 					[]QueryPositionChecker{
-						QueryPosition_PositionEquals(v2types.Position{
+						QueryPosition_PositionEquals(types.Position{
 							Pair:                            pair,
 							TraderAddress:                   alice.String(),
 							Size_:                           sdk.NewDec(10),
@@ -183,7 +183,7 @@ func TestQueryPositions(t *testing.T) {
 						QueryPosition_MarginRatioEquals(sdk.MustNewDecFromStr("-0.800000000018")),
 					},
 					[]QueryPositionChecker{
-						QueryPosition_PositionEquals(v2types.Position{
+						QueryPosition_PositionEquals(types.Position{
 							Pair:                            pair2,
 							TraderAddress:                   alice.String(),
 							Size_:                           sdk.NewDec(10),
@@ -226,7 +226,7 @@ func TestQueryPosition(t *testing.T) {
 			).
 			Then(
 				QueryPosition(pair, alice,
-					QueryPosition_PositionEquals(v2types.Position{
+					QueryPosition_PositionEquals(types.Position{
 						Pair:                            pair,
 						TraderAddress:                   alice.String(),
 						Size_:                           sdk.NewDec(10),
@@ -259,7 +259,7 @@ func TestQueryPosition(t *testing.T) {
 			).
 			Then(
 				QueryPosition(pair, alice,
-					QueryPosition_PositionEquals(v2types.Position{
+					QueryPosition_PositionEquals(types.Position{
 						Pair:                            pair,
 						TraderAddress:                   alice.String(),
 						Size_:                           sdk.NewDec(10),
@@ -292,7 +292,7 @@ func TestQueryPosition(t *testing.T) {
 			).
 			Then(
 				QueryPosition(pair, alice,
-					QueryPosition_PositionEquals(v2types.Position{
+					QueryPosition_PositionEquals(types.Position{
 						Pair:                            pair,
 						TraderAddress:                   alice.String(),
 						Size_:                           sdk.NewDec(10),

@@ -17,14 +17,14 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 func TestAdmin_WithdrawFromInsuranceFund(t *testing.T) {
 	expectBalance := func(
 		want sdk.Int, t *testing.T, nibiru *app.NibiruApp, ctx sdk.Context,
 	) {
-		insuranceFund := nibiru.AccountKeeper.GetModuleAddress(v2types.PerpEFModuleAccount)
+		insuranceFund := nibiru.AccountKeeper.GetModuleAddress(types.PerpEFModuleAccount)
 		balances := nibiru.BankKeeper.GetAllBalances(ctx, insuranceFund)
 		got := balances.AmountOf(denoms.NUSD)
 		require.EqualValues(t, want.String(), got.String())
@@ -39,7 +39,7 @@ func TestAdmin_WithdrawFromInsuranceFund(t *testing.T) {
 	fundModule := func(t *testing.T, amount sdk.Int, ctx sdk.Context, nibiru *app.NibiruApp) {
 		coins := sdk.NewCoins(sdk.NewCoin(denoms.NUSD, amount))
 		err := testapp.FundModuleAccount(
-			nibiru.BankKeeper, ctx, v2types.PerpEFModuleAccount,
+			nibiru.BankKeeper, ctx, types.PerpEFModuleAccount,
 			coins,
 		)
 		require.NoError(t, err)

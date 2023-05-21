@@ -7,10 +7,10 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
-type MarketChecker func(resp v2types.Market) error
+type MarketChecker func(resp types.Market) error
 
 type marketShouldBeEqual struct {
 	Pair     asset.Pair
@@ -40,7 +40,7 @@ func MarketShouldBeEqual(pair asset.Pair, marketCheckers ...MarketChecker) marke
 }
 
 func Market_LatestCPFShouldBeEqualTo(expectedCPF sdk.Dec) MarketChecker {
-	return func(market v2types.Market) error {
+	return func(market types.Market) error {
 		if !market.LatestCumulativePremiumFraction.Equal(expectedCPF) {
 			return fmt.Errorf("expected latest cumulative premium fraction to be %s, got %s", expectedCPF, market.LatestCumulativePremiumFraction)
 		}
@@ -49,7 +49,7 @@ func Market_LatestCPFShouldBeEqualTo(expectedCPF sdk.Dec) MarketChecker {
 }
 
 func Market_PrepaidBadDebtShouldBeEqualTo(expectedAmount sdk.Int) MarketChecker {
-	return func(market v2types.Market) error {
+	return func(market types.Market) error {
 		expectedBadDebt := sdk.NewCoin(market.Pair.QuoteDenom(), expectedAmount)
 		if !market.PrepaidBadDebt.Equal(expectedBadDebt) {
 			return fmt.Errorf("expected prepaid bad debt to be %s, got %s", expectedBadDebt, market.PrepaidBadDebt)
@@ -59,7 +59,7 @@ func Market_PrepaidBadDebtShouldBeEqualTo(expectedAmount sdk.Int) MarketChecker 
 }
 
 func Market_EnableShouldBeEqualTo(expectedEnabled bool) MarketChecker {
-	return func(market v2types.Market) error {
+	return func(market types.Market) error {
 		if market.Enabled != expectedEnabled {
 			return fmt.Errorf("expected enabled to be %t, got %t", expectedEnabled, market.Enabled)
 		}
@@ -72,7 +72,7 @@ type ammShouldBeEqual struct {
 	Checkers []AMMChecker
 }
 
-type AMMChecker func(amm v2types.AMM) error
+type AMMChecker func(amm types.AMM) error
 
 func (a ammShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	amm, err := app.PerpKeeperV2.AMMs.Get(ctx, a.Pair)
@@ -97,7 +97,7 @@ func AMMShouldBeEqual(pair asset.Pair, ammCheckers ...AMMChecker) ammShouldBeEqu
 }
 
 func AMM_BaseReserveShouldBeEqual(expectedBaseReserve sdk.Dec) AMMChecker {
-	return func(amm v2types.AMM) error {
+	return func(amm types.AMM) error {
 		if !amm.BaseReserve.Equal(expectedBaseReserve) {
 			return fmt.Errorf("expected base reserve to be %s, got %s", expectedBaseReserve, amm.BaseReserve)
 		}
@@ -106,7 +106,7 @@ func AMM_BaseReserveShouldBeEqual(expectedBaseReserve sdk.Dec) AMMChecker {
 }
 
 func AMM_QuoteReserveShouldBeEqual(expectedQuoteReserve sdk.Dec) AMMChecker {
-	return func(amm v2types.AMM) error {
+	return func(amm types.AMM) error {
 		if !amm.QuoteReserve.Equal(expectedQuoteReserve) {
 			return fmt.Errorf("expected quote reserve to be %s, got %s", expectedQuoteReserve, amm.QuoteReserve)
 		}
@@ -115,7 +115,7 @@ func AMM_QuoteReserveShouldBeEqual(expectedQuoteReserve sdk.Dec) AMMChecker {
 }
 
 func AMM_SqrtDepthShouldBeEqual(expectedSqrtDepth sdk.Dec) AMMChecker {
-	return func(amm v2types.AMM) error {
+	return func(amm types.AMM) error {
 		if !amm.SqrtDepth.Equal(expectedSqrtDepth) {
 			return fmt.Errorf("expected sqrt depth to be %s, got %s", expectedSqrtDepth, amm.SqrtDepth)
 		}
@@ -124,7 +124,7 @@ func AMM_SqrtDepthShouldBeEqual(expectedSqrtDepth sdk.Dec) AMMChecker {
 }
 
 func AMM_SwapInvariantShouldBeEqual(expectedSwapInvariant sdk.Dec) AMMChecker {
-	return func(amm v2types.AMM) error {
+	return func(amm types.AMM) error {
 		swapInvariant := amm.BaseReserve.Mul(amm.QuoteReserve)
 		if !swapInvariant.Equal(expectedSwapInvariant) {
 			return fmt.Errorf("expected swap invariant to be %s, got %s", expectedSwapInvariant, swapInvariant)
@@ -134,7 +134,7 @@ func AMM_SwapInvariantShouldBeEqual(expectedSwapInvariant sdk.Dec) AMMChecker {
 }
 
 func AMM_PriceMultiplierShouldBeEqual(expectedPriceMultiplier sdk.Dec) AMMChecker {
-	return func(amm v2types.AMM) error {
+	return func(amm types.AMM) error {
 		if !amm.PriceMultiplier.Equal(expectedPriceMultiplier) {
 			return fmt.Errorf("expected price multiplier to be %s, got %s", expectedPriceMultiplier, amm.PriceMultiplier)
 		}
@@ -143,7 +143,7 @@ func AMM_PriceMultiplierShouldBeEqual(expectedPriceMultiplier sdk.Dec) AMMChecke
 }
 
 func AMM_BiasShouldBeEqual(expectedBias sdk.Dec) AMMChecker {
-	return func(amm v2types.AMM) error {
+	return func(amm types.AMM) error {
 		if !amm.Bias().Equal(expectedBias) {
 			return fmt.Errorf("expected bias to be %s, got %s", expectedBias, amm.Bias())
 		}

@@ -5,18 +5,18 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 // PositionNotionalSpot returns the position's notional value based on the spot price.
-func PositionNotionalSpot(amm v2types.AMM, position v2types.Position) (positionNotional sdk.Dec, err error) {
+func PositionNotionalSpot(amm types.AMM, position types.Position) (positionNotional sdk.Dec, err error) {
 	// we want to know the price if the user closes their position
 	// e.g. if the user has positive size, we want to short
-	var dir v2types.Direction
+	var dir types.Direction
 	if position.Size_.IsPositive() {
-		dir = v2types.Direction_SHORT
+		dir = types.Direction_SHORT
 	} else {
-		dir = v2types.Direction_LONG
+		dir = types.Direction_LONG
 	}
 
 	quoteReserve, err := amm.GetQuoteReserveAmt(position.Size_.Abs(), dir)
@@ -28,22 +28,22 @@ func PositionNotionalSpot(amm v2types.AMM, position v2types.Position) (positionN
 
 // PositionNotionalTWAP returns the position's notional value based on the TWAP price.
 func (k Keeper) PositionNotionalTWAP(ctx sdk.Context,
-	position v2types.Position,
+	position types.Position,
 	twapLookbackWindow time.Duration,
 ) (positionNotional sdk.Dec, err error) {
 	// we want to know the price if the user closes their position
 	// e.g. if the user has positive size, we want to short
-	var dir v2types.Direction
+	var dir types.Direction
 	if position.Size_.IsPositive() {
-		dir = v2types.Direction_SHORT
+		dir = types.Direction_SHORT
 	} else {
-		dir = v2types.Direction_LONG
+		dir = types.Direction_LONG
 	}
 
 	return k.CalcTwap(
 		ctx,
 		position.Pair,
-		v2types.TwapCalcOption_BASE_ASSET_SWAP,
+		types.TwapCalcOption_BASE_ASSET_SWAP,
 		dir,
 		position.Size_.Abs(),
 		/*lookbackInterval=*/ twapLookbackWindow,
@@ -51,7 +51,7 @@ func (k Keeper) PositionNotionalTWAP(ctx sdk.Context,
 }
 
 // UnrealizedPnl calculates the unrealized profits and losses (PnL) of a position.
-func UnrealizedPnl(position v2types.Position, positionNotional sdk.Dec) (unrealizedPnlSigned sdk.Dec) {
+func UnrealizedPnl(position types.Position, positionNotional sdk.Dec) (unrealizedPnlSigned sdk.Dec) {
 	if position.Size_.IsPositive() {
 		// LONG
 		return positionNotional.Sub(position.OpenNotional)
@@ -63,7 +63,7 @@ func UnrealizedPnl(position v2types.Position, positionNotional sdk.Dec) (unreali
 
 // Given a position and it's notional value, returns the margin ratio.
 func MarginRatio(
-	position v2types.Position,
+	position types.Position,
 	positionNotional sdk.Dec,
 	marketLatestCumulativePremiumFraction sdk.Dec,
 ) sdk.Dec {
@@ -78,7 +78,15 @@ func MarginRatio(
 	return remainingMargin.Quo(positionNotional)
 }
 
-func FundingPayment(position v2types.Position, marketLatestCumulativePremiumFraction sdk.Dec) sdk.Dec {
+// FundingPayment calculates the funding payment of a position.
+//
+// args:
+//   - position: the position to calculate funding payment for
+//   - marketLatestCumulativePremiumFraction: the latest cumulative premium fraction of the market
+//
+// returns:
+//   - fundingPayment: the funding payment of the position, signed
+func FundingPayment(position types.Position, marketLatestCumulativePremiumFraction sdk.Dec) sdk.Dec {
 	return marketLatestCumulativePremiumFraction.
 		Sub(position.LatestCumulativePremiumFraction).
 		Mul(position.Size_)

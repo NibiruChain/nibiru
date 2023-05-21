@@ -12,7 +12,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
 	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
-	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 type queryPosition struct {
@@ -24,7 +24,7 @@ type queryPosition struct {
 func (q queryPosition) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	queryServer := keeper.NewQuerier(app.PerpKeeperV2)
 
-	resp, err := queryServer.QueryPosition(sdk.WrapSDKContext(ctx), &v2types.QueryPositionRequest{
+	resp, err := queryServer.QueryPosition(sdk.WrapSDKContext(ctx), &types.QueryPositionRequest{
 		Pair:   q.pair,
 		Trader: q.traderAddress.String(),
 	})
@@ -49,16 +49,16 @@ func QueryPosition(pair asset.Pair, traderAddress sdk.AccAddress, responseChecke
 	}
 }
 
-type QueryPositionChecker func(resp v2types.QueryPositionResponse) error
+type QueryPositionChecker func(resp types.QueryPositionResponse) error
 
-func QueryPosition_PositionEquals(expected v2types.Position) QueryPositionChecker {
-	return func(resp v2types.QueryPositionResponse) error {
-		return v2types.PositionsAreEqual(&expected, &resp.Position)
+func QueryPosition_PositionEquals(expected types.Position) QueryPositionChecker {
+	return func(resp types.QueryPositionResponse) error {
+		return types.PositionsAreEqual(&expected, &resp.Position)
 	}
 }
 
 func QueryPosition_PositionNotionalEquals(expected sdk.Dec) QueryPositionChecker {
-	return func(resp v2types.QueryPositionResponse) error {
+	return func(resp types.QueryPositionResponse) error {
 		if !expected.Equal(resp.PositionNotional) {
 			return fmt.Errorf("expected position notional %s, got %s", expected, resp.PositionNotional)
 		}
@@ -67,7 +67,7 @@ func QueryPosition_PositionNotionalEquals(expected sdk.Dec) QueryPositionChecker
 }
 
 func QueryPosition_UnrealizedPnlEquals(expected sdk.Dec) QueryPositionChecker {
-	return func(resp v2types.QueryPositionResponse) error {
+	return func(resp types.QueryPositionResponse) error {
 		if !expected.Equal(resp.UnrealizedPnl) {
 			return fmt.Errorf("expected unrealized pnl %s, got %s", expected, resp.UnrealizedPnl)
 		}
@@ -76,7 +76,7 @@ func QueryPosition_UnrealizedPnlEquals(expected sdk.Dec) QueryPositionChecker {
 }
 
 func QueryPosition_MarginRatioEquals(expected sdk.Dec) QueryPositionChecker {
-	return func(resp v2types.QueryPositionResponse) error {
+	return func(resp types.QueryPositionResponse) error {
 		if !expected.Equal(resp.MarginRatio) {
 			return fmt.Errorf("expected margin ratio %s, got %s", expected, resp.MarginRatio)
 		}
@@ -92,7 +92,7 @@ type queryAllPositions struct {
 func (q queryAllPositions) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	queryServer := keeper.NewQuerier(app.PerpKeeperV2)
 
-	resp, err := queryServer.QueryPositions(sdk.WrapSDKContext(ctx), &v2types.QueryPositionsRequest{
+	resp, err := queryServer.QueryPositions(sdk.WrapSDKContext(ctx), &types.QueryPositionsRequest{
 		Trader: q.traderAddress.String(),
 	})
 	if err != nil {
@@ -125,7 +125,7 @@ type queryPositionNotFound struct {
 func (q queryPositionNotFound) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	queryServer := keeper.NewQuerier(app.PerpKeeperV2)
 
-	_, err := queryServer.QueryPosition(sdk.WrapSDKContext(ctx), &v2types.QueryPositionRequest{
+	_, err := queryServer.QueryPosition(sdk.WrapSDKContext(ctx), &types.QueryPositionRequest{
 		Pair:   q.pair,
 		Trader: q.traderAddress.String(),
 	})

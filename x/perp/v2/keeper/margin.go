@@ -9,26 +9,32 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
-	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
-/*
-	AddMargin deleverages an existing position by adding margin (collateral)
-
-to it. Adding margin increases the margin ratio of the corresponding position.
-*/
+// AddMargin adds margin to an existing position, effectively deleveraging it.
+// Adding margin increases the margin ratio of the corresponding position.
+//
+// args:
+//   - ctx: the cosmos-sdk context
+//   - pair: the asset pair
+//   - traderAddr: the trader's address
+//   - marginToAdd: the amount of margin to add. Must be positive.
+//
+// ret:
+//   - res: the response
+//   - err: error if any
 func (k Keeper) AddMargin(
 	ctx sdk.Context, pair asset.Pair, traderAddr sdk.AccAddress, marginToAdd sdk.Coin,
-) (res *v2types.MsgAddMarginResponse, err error) {
+) (res *types.MsgAddMarginResponse, err error) {
 	market, err := k.Markets.Get(ctx, pair)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
 	}
-
 	amm, err := k.AMMs.Get(ctx, pair)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
 	}
+
 	if marginToAdd.Denom != amm.Pair.QuoteDenom() {
 		return nil, fmt.Errorf("invalid margin denom: %s", marginToAdd.Denom)
 	}
@@ -39,16 +45,16 @@ func (k Keeper) AddMargin(
 	}
 
 	fundingPayment := FundingPayment(position, market.LatestCumulativePremiumFraction)
-	remainingMargin := position.Margin.Sub(fundingPayment).Add(marginToAdd.Amount.ToDec())
+	remainingMargin := position.Margin.Add(marginToAdd.Amount.ToDec()).Sub(fundingPayment)
 
 	if remainingMargin.IsNegative() {
-		return nil, fmt.Errorf("failed to add margin; resultant position would still have bad debt; consider adding more margin")
+		return nil, types.ErrBadDebt.Wrapf("applying funding payment would result in negative remaining margin: %s", remainingMargin)
 	}
 
 	if err = k.BankKeeper.SendCoinsFromAccountToModule(
 		ctx,
 		/* from */ traderAddr,
-		/* to */ v2types.VaultModuleAccount,
+		/* to */ types.VaultModuleAccount,
 		/* amount */ sdk.NewCoins(marginToAdd),
 	); err != nil {
 		return nil, err
@@ -86,7 +92,7 @@ func (k Keeper) AddMargin(
 		return nil, err
 	}
 
-	return &v2types.MsgAddMarginResponse{
+	return &types.MsgAddMarginResponse{
 		FundingPayment: fundingPayment,
 		Position:       &position,
 	}, nil
@@ -113,7 +119,7 @@ ret:
 */
 func (k Keeper) RemoveMargin(
 	ctx sdk.Context, pair asset.Pair, traderAddr sdk.AccAddress, marginToRemove sdk.Coin,
-) (res *v2types.MsgRemoveMarginResponse, err error) {
+) (res *types.MsgRemoveMarginResponse, err error) {
 	// fetch objects from state
 	market, err := k.Markets.Get(ctx, pair)
 	if err != nil {
@@ -155,7 +161,7 @@ func (k Keeper) RemoveMargin(
 	}
 
 	if remainingMargin.LT(marginToRemove.Amount.ToDec()) {
-		return nil, types.ErrFailedRemoveMarginCanCauseBadDebt.Wrapf(
+		return nil, types.ErrBadDebt.Wrapf(
 			"not enough free collateral to remove margin; remainingMargin %s, marginToRemove %s", remainingMargin, marginToRemove,
 		)
 	}
@@ -191,7 +197,7 @@ func (k Keeper) RemoveMargin(
 		return nil, err
 	}
 
-	return &v2types.MsgRemoveMarginResponse{
+	return &types.MsgRemoveMarginResponse{
 		FundingPayment: fundingPayment,
 		Position:       &position,
 	}, nil
