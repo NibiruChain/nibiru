@@ -57,7 +57,7 @@ ldflags := $(strip $(ldflags))
 
 BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
 CGO_CFLAGS  := -I$(TEMPDIR)/include
-CGO_LDFLAGS := -Wl,-z,muldefs -L$(TEMPDIR)/lib -lrocksdb
+CGO_LDFLAGS := -L$(TEMPDIR)/lib
 ifeq ($(OS_NAME),darwin)
 	CGO_LDFLAGS += -lz -lbz2
 endif
@@ -71,8 +71,8 @@ $(TEMPDIR)/:
 
 # download required libs
 rocksdblib: $(TEMPDIR)/
-	mkdir -p $(TEMPDIR)/include
-	mkdir -p $(TEMPDIR)/lib
+	@mkdir -p $(TEMPDIR)/include
+	@mkdir -p $(TEMPDIR)/lib
 ifeq (",$(wildcard $(TEMPDIR)/include/rocksdb)")
 	wget https://github.com/NibiruChain/gorocksdb/releases/download/v$(ROCKSDB_VERSION)/include.$(ROCKSDB_VERSION).tar.gz -O - | tar -xz -C $(TEMPDIR)/include/
 endif
