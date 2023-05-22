@@ -33,7 +33,7 @@ TEMPDIR ?= $(CURDIR)/temp
 export GO111MODULE = on
 
 # process build tags
-build_tags = netgo osusergo rocksdb
+build_tags = netgo osusergo rocksdb grocksdb_no_link
 build_tags += $(BUILD_TAGS)
 build_tags := $(strip $(build_tags))
 
@@ -71,8 +71,8 @@ $(TEMPDIR)/:
 
 # download required libs
 rocksdblib: $(TEMPDIR)/
-	mkdir -p $(TEMPDIR)/include
-	mkdir -p $(TEMPDIR)/lib
+	@mkdir -p $(TEMPDIR)/include
+	@mkdir -p $(TEMPDIR)/lib
 ifeq (",$(wildcard $(TEMPDIR)/include/rocksdb)")
 	wget https://github.com/NibiruChain/gorocksdb/releases/download/v$(ROCKSDB_VERSION)/include.$(ROCKSDB_VERSION).tar.gz -O - | tar -xz -C $(TEMPDIR)/include/
 endif

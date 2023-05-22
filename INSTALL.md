@@ -104,3 +104,20 @@ nibid query --help
 nibid tx --help
 nibid query perp --help
 ```
+
+
+## Troubleshotting
+
+### Error when running `make install` on MacOS
+
+If you get an error like this when running `make install` on MacOS:
+
+```
+/bin/sh: wget: command not found
+```
+
+You can fix it by installing `wget` with Homebrew:
+
+```
+brew install wget
+```
