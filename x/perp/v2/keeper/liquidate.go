@@ -287,7 +287,7 @@ func (k Keeper) executePartialLiquidation(
 	// Remove the liquidation fee from the margin of the position
 	liquidationFeeAmount := quoteAssetDelta.Mul(market.LiquidationFeeRatio)
 	positionResp.Position.Margin = positionResp.Position.Margin.Sub(liquidationFeeAmount)
-	k.Positions.Insert(ctx, collections.Join(positionResp.Position.Pair, traderAddr), *positionResp.Position)
+	k.Positions.Insert(ctx, collections.Join(positionResp.Position.Pair, traderAddr), positionResp.Position)
 
 	// Compute splits for the liquidation fee
 	feeToLiquidator := liquidationFeeAmount.QuoInt64(2)

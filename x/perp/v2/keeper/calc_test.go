@@ -13,7 +13,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
-	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 
 	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
@@ -23,14 +23,14 @@ import (
 func TestPositionNotionalSpot(t *testing.T) {
 	tests := []struct {
 		name             string
-		amm              *v2types.AMM
-		position         v2types.Position
+		amm              *types.AMM
+		position         types.Position
 		expectedNotional sdk.Dec
 	}{
 		{
 			name: "long position",
 			amm:  mock.TestAMM(sdk.NewDec(1_000), sdk.NewDec(2)),
-			position: v2types.Position{
+			position: types.Position{
 				Size_: sdk.NewDec(10),
 			},
 			expectedNotional: sdk.MustNewDecFromStr("19.801980198019801980"),
@@ -38,7 +38,7 @@ func TestPositionNotionalSpot(t *testing.T) {
 		{
 			name: "short position",
 			amm:  mock.TestAMM(sdk.NewDec(1_000), sdk.NewDec(2)),
-			position: v2types.Position{
+			position: types.Position{
 				Size_: sdk.NewDec(-10),
 			},
 			expectedNotional: sdk.MustNewDecFromStr("20.202020202020202020"),
@@ -46,7 +46,7 @@ func TestPositionNotionalSpot(t *testing.T) {
 		{
 			name: "zero position",
 			amm:  mock.TestAMM(sdk.NewDec(1_000), sdk.NewDec(2)),
-			position: v2types.Position{
+			position: types.Position{
 				Size_: sdk.ZeroDec(),
 			},
 			expectedNotional: sdk.ZeroDec(),
@@ -141,13 +141,13 @@ func TestPositionNotionalTWAP(t *testing.T) {
 func TestUnrealizedPnl(t *testing.T) {
 	tests := []struct {
 		name                  string
-		position              v2types.Position
+		position              types.Position
 		positionNotional      sdk.Dec
 		expectedUnrealizedPnl sdk.Dec
 	}{
 		{
 			name: "long position positive pnl",
-			position: v2types.Position{
+			position: types.Position{
 				Size_:        sdk.NewDec(10),
 				OpenNotional: sdk.NewDec(10),
 			},
@@ -156,7 +156,7 @@ func TestUnrealizedPnl(t *testing.T) {
 		},
 		{
 			name: "long position negative pnl",
-			position: v2types.Position{
+			position: types.Position{
 				Size_:        sdk.NewDec(10),
 				OpenNotional: sdk.NewDec(10),
 			},
@@ -165,7 +165,7 @@ func TestUnrealizedPnl(t *testing.T) {
 		},
 		{
 			name: "short position positive pnl",
-			position: v2types.Position{
+			position: types.Position{
 				Size_:        sdk.NewDec(-10),
 				OpenNotional: sdk.NewDec(10),
 			},
@@ -174,7 +174,7 @@ func TestUnrealizedPnl(t *testing.T) {
 		},
 		{
 			name: "short position negative pnl",
-			position: v2types.Position{
+			position: types.Position{
 				Size_:        sdk.NewDec(-10),
 				OpenNotional: sdk.NewDec(10),
 			},
@@ -194,14 +194,14 @@ func TestUnrealizedPnl(t *testing.T) {
 func TestMarginRatio(t *testing.T) {
 	tests := []struct {
 		name                string
-		position            v2types.Position
+		position            types.Position
 		positionNotional    sdk.Dec
 		latestCPF           sdk.Dec
 		expectedMarginRatio sdk.Dec
 	}{
 		{
 			name: "long position, no change",
-			position: v2types.Position{
+			position: types.Position{
 				Margin:                          sdk.NewDec(100),
 				Size_:                           sdk.OneDec(),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -213,7 +213,7 @@ func TestMarginRatio(t *testing.T) {
 		},
 		{
 			name: "long position, positive PnL, positive cumulative premium fraction",
-			position: v2types.Position{
+			position: types.Position{
 				Margin:                          sdk.NewDec(100),
 				Size_:                           sdk.OneDec(),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -225,7 +225,7 @@ func TestMarginRatio(t *testing.T) {
 		},
 		{
 			name: "long position, positive PnL, negative cumulative premium fraction",
-			position: v2types.Position{
+			position: types.Position{
 				Margin:                          sdk.NewDec(100),
 				Size_:                           sdk.OneDec(),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -237,7 +237,7 @@ func TestMarginRatio(t *testing.T) {
 		},
 		{
 			name: "long position, negative PnL, positive cumulative premium fraction",
-			position: v2types.Position{
+			position: types.Position{
 				Margin:                          sdk.NewDec(100),
 				Size_:                           sdk.OneDec(),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -249,7 +249,7 @@ func TestMarginRatio(t *testing.T) {
 		},
 		{
 			name: "long position, negative PnL, negative cumulative premium fraction",
-			position: v2types.Position{
+			position: types.Position{
 				Margin:                          sdk.NewDec(100),
 				Size_:                           sdk.OneDec(),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -261,7 +261,7 @@ func TestMarginRatio(t *testing.T) {
 		},
 		{
 			name: "short position, no change",
-			position: v2types.Position{
+			position: types.Position{
 				Margin:                          sdk.NewDec(100),
 				Size_:                           sdk.NewDec(-1),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -273,7 +273,7 @@ func TestMarginRatio(t *testing.T) {
 		},
 		{
 			name: "short position, positive PnL, positive cumulative premium fraction",
-			position: v2types.Position{
+			position: types.Position{
 				Margin:                          sdk.NewDec(100),
 				Size_:                           sdk.NewDec(-1),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -285,7 +285,7 @@ func TestMarginRatio(t *testing.T) {
 		},
 		{
 			name: "short position, positive PnL, negative cumulative premium fraction",
-			position: v2types.Position{
+			position: types.Position{
 				Margin:                          sdk.NewDec(100),
 				Size_:                           sdk.NewDec(-1),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -297,7 +297,7 @@ func TestMarginRatio(t *testing.T) {
 		},
 		{
 			name: "short position, negative PnL, positive cumulative premium fraction",
-			position: v2types.Position{
+			position: types.Position{
 				Margin:                          sdk.NewDec(100),
 				Size_:                           sdk.NewDec(-1),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -309,7 +309,7 @@ func TestMarginRatio(t *testing.T) {
 		},
 		{
 			name: "short position, negative PnL, negative cumulative premium fraction",
-			position: v2types.Position{
+			position: types.Position{
 				Margin:                          sdk.NewDec(100),
 				Size_:                           sdk.NewDec(-1),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -332,13 +332,13 @@ func TestMarginRatio(t *testing.T) {
 func TestFundingPayment(t *testing.T) {
 	tests := []struct {
 		name                   string
-		position               v2types.Position
+		position               types.Position
 		marketLatestCPF        sdk.Dec
 		expectedFundingPayment sdk.Dec
 	}{
 		{
 			name: "long position, positive cumulative premium fraction",
-			position: v2types.Position{
+			position: types.Position{
 				Size_:                           sdk.NewDec(10),
 				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.001"),
 			},
@@ -347,7 +347,7 @@ func TestFundingPayment(t *testing.T) {
 		},
 		{
 			name: "long position, negative cumulative premium fraction",
-			position: v2types.Position{
+			position: types.Position{
 				Size_:                           sdk.NewDec(10),
 				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.002"),
 			},
@@ -356,7 +356,7 @@ func TestFundingPayment(t *testing.T) {
 		},
 		{
 			name: "short position, positive cumulative premium fraction",
-			position: v2types.Position{
+			position: types.Position{
 				Size_:                           sdk.NewDec(-10),
 				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.002"),
 			},
@@ -365,7 +365,7 @@ func TestFundingPayment(t *testing.T) {
 		},
 		{
 			name: "short position, negative cumulative premium fraction",
-			position: v2types.Position{
+			position: types.Position{
 				Size_:                           sdk.NewDec(-10),
 				LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.001"),
 			},

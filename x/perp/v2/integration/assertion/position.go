@@ -9,10 +9,10 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
-	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
-type PositionChecker func(resp v2types.Position) error
+type PositionChecker func(resp types.Position) error
 
 type positionShouldBeEqual struct {
 	Account sdk.AccAddress
@@ -49,9 +49,9 @@ func PositionShouldBeEqual(
 // PositionCheckers
 
 // Position_PositionShouldBeEqualTo checks if the position is equal to the expected position
-func Position_PositionShouldBeEqualTo(expectedPosition v2types.Position) PositionChecker {
-	return func(position v2types.Position) error {
-		if err := v2types.PositionsAreEqual(&expectedPosition, &position); err != nil {
+func Position_PositionShouldBeEqualTo(expectedPosition types.Position) PositionChecker {
+	return func(position types.Position) error {
+		if err := types.PositionsAreEqual(&expectedPosition, &position); err != nil {
 			return err
 		}
 
@@ -61,7 +61,7 @@ func Position_PositionShouldBeEqualTo(expectedPosition v2types.Position) Positio
 
 // Position_PositionSizeShouldBeEqualTo checks if the position size is equal to the expected position size
 func Position_PositionSizeShouldBeEqualTo(expectedSize sdk.Dec) PositionChecker {
-	return func(position v2types.Position) error {
+	return func(position types.Position) error {
 		if position.Size_.Equal(expectedSize) {
 			return nil
 		}

@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
+	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
@@ -174,9 +175,9 @@ func newMarketFromFlags(flagSet *flag.FlagSet,
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 		ExchangeFeeRatio:                sdk.MustNewDecFromStr("0.0010"),
 		EcosystemFundFeeRatio:           sdk.MustNewDecFromStr("0.0010"),
-		LiquidationFeeRatio:             sdk.MustNewDecFromStr("0.0005"),
+		LiquidationFeeRatio:             sdk.MustNewDecFromStr("0.0500"),
 		PartialLiquidationRatio:         sdk.MustNewDecFromStr("0.5"),
-		FundingRateEpochId:              "30 min",
+		FundingRateEpochId:              epochstypes.ThirtyMinuteEpochID,
 		TwapLookbackWindow:              time.Minute * 30,
 		PrepaidBadDebt:                  sdk.NewInt64Coin(pair.QuoteDenom(), 0),
 	}

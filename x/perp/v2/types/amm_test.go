@@ -10,14 +10,14 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
-	v2 "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 func TestSwapBaseAsset(t *testing.T) {
 	tests := []struct {
 		name                    string
 		baseAssetAmt            sdk.Dec
-		dir                     v2.Direction
+		dir                     types.Direction
 		expectedQuoteAssetDelta sdk.Dec
 		expectedBaseReserve     sdk.Dec
 		expectedQuoteReserve    sdk.Dec
@@ -29,7 +29,7 @@ func TestSwapBaseAsset(t *testing.T) {
 		{
 			name:                    "long base asset",
 			baseAssetAmt:            sdk.NewDec(1e11),
-			dir:                     v2.Direction_LONG,
+			dir:                     types.Direction_LONG,
 			expectedQuoteAssetDelta: sdk.MustNewDecFromStr("111111111111.111111111111111111"),
 			expectedBaseReserve:     sdk.NewDec(900000000000),
 			expectedQuoteReserve:    sdk.MustNewDecFromStr("1111111111111.111111111111111111"),
@@ -40,7 +40,7 @@ func TestSwapBaseAsset(t *testing.T) {
 		{
 			name:                    "short base asset",
 			baseAssetAmt:            sdk.NewDec(1e11),
-			dir:                     v2.Direction_SHORT,
+			dir:                     types.Direction_SHORT,
 			expectedQuoteAssetDelta: sdk.MustNewDecFromStr("90909090909.090909090909090909"),
 			expectedBaseReserve:     sdk.NewDec(1100000000000),
 			expectedQuoteReserve:    sdk.MustNewDecFromStr("909090909090.909090909090909091"),
@@ -51,7 +51,7 @@ func TestSwapBaseAsset(t *testing.T) {
 		{
 			name:                    "long zero base asset",
 			baseAssetAmt:            sdk.ZeroDec(),
-			dir:                     v2.Direction_LONG,
+			dir:                     types.Direction_LONG,
 			expectedQuoteAssetDelta: sdk.ZeroDec(),
 			expectedBaseReserve:     sdk.NewDec(1e12),
 			expectedQuoteReserve:    sdk.NewDec(1e12),
@@ -62,7 +62,7 @@ func TestSwapBaseAsset(t *testing.T) {
 		{
 			name:                    "short zero base asset",
 			baseAssetAmt:            sdk.ZeroDec(),
-			dir:                     v2.Direction_SHORT,
+			dir:                     types.Direction_SHORT,
 			expectedQuoteAssetDelta: sdk.ZeroDec(),
 			expectedBaseReserve:     sdk.NewDec(1e12),
 			expectedQuoteReserve:    sdk.NewDec(1e12),
@@ -73,8 +73,8 @@ func TestSwapBaseAsset(t *testing.T) {
 		{
 			name:         "not enough base in reserves",
 			baseAssetAmt: sdk.NewDec(1e13),
-			dir:          v2.Direction_LONG,
-			expectedErr:  v2.ErrBaseReserveAtZero,
+			dir:          types.Direction_LONG,
+			expectedErr:  types.ErrBaseReserveAtZero,
 		},
 	}
 
@@ -90,7 +90,7 @@ func TestSwapBaseAsset(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedQuoteAssetDelta, quoteAssetDelta)
-				assert.Equal(t, v2.AMM{
+				assert.Equal(t, types.AMM{
 					Pair:            amm.Pair,
 					BaseReserve:     tc.expectedBaseReserve,
 					QuoteReserve:    tc.expectedQuoteReserve,
@@ -109,7 +109,7 @@ func TestSwapQuoteAsset(t *testing.T) {
 	tests := []struct {
 		name                   string
 		quoteAssetAmt          sdk.Dec
-		dir                    v2.Direction
+		dir                    types.Direction
 		expectedBaseAssetDelta sdk.Dec
 		expectedBaseReserve    sdk.Dec
 		expectedQuoteReserve   sdk.Dec
@@ -121,7 +121,7 @@ func TestSwapQuoteAsset(t *testing.T) {
 		{
 			name:                   "long quote asset",
 			quoteAssetAmt:          sdk.NewDec(1e11),
-			dir:                    v2.Direction_LONG,
+			dir:                    types.Direction_LONG,
 			expectedBaseAssetDelta: sdk.MustNewDecFromStr("47619047619.047619047619047619"),
 			expectedBaseReserve:    sdk.MustNewDecFromStr("952380952380.952380952380952381"),
 			expectedQuoteReserve:   sdk.NewDec(1050000000000),
@@ -132,7 +132,7 @@ func TestSwapQuoteAsset(t *testing.T) {
 		{
 			name:                   "short base asset",
 			quoteAssetAmt:          sdk.NewDec(1e11),
-			dir:                    v2.Direction_SHORT,
+			dir:                    types.Direction_SHORT,
 			expectedBaseAssetDelta: sdk.MustNewDecFromStr("52631578947.368421052631578947"),
 			expectedBaseReserve:    sdk.MustNewDecFromStr("1052631578947.368421052631578947"),
 			expectedQuoteReserve:   sdk.NewDec(950000000000),
@@ -143,7 +143,7 @@ func TestSwapQuoteAsset(t *testing.T) {
 		{
 			name:                   "long zero base asset",
 			quoteAssetAmt:          sdk.ZeroDec(),
-			dir:                    v2.Direction_LONG,
+			dir:                    types.Direction_LONG,
 			expectedBaseAssetDelta: sdk.ZeroDec(),
 			expectedBaseReserve:    sdk.NewDec(1e12),
 			expectedQuoteReserve:   sdk.NewDec(1e12),
@@ -152,9 +152,9 @@ func TestSwapQuoteAsset(t *testing.T) {
 			expectedMarkPrice:      sdk.NewDec(2),
 		},
 		{
-			name:                   "long zero base asset",
+			name:                   "short zero base asset",
 			quoteAssetAmt:          sdk.ZeroDec(),
-			dir:                    v2.Direction_SHORT,
+			dir:                    types.Direction_SHORT,
 			expectedBaseAssetDelta: sdk.ZeroDec(),
 			expectedBaseReserve:    sdk.NewDec(1e12),
 			expectedQuoteReserve:   sdk.NewDec(1e12),
@@ -165,8 +165,14 @@ func TestSwapQuoteAsset(t *testing.T) {
 		{
 			name:          "not enough base in reserves",
 			quoteAssetAmt: sdk.NewDec(1e13),
-			dir:           v2.Direction_SHORT,
-			expectedErr:   v2.ErrQuoteReserveAtZero,
+			dir:           types.Direction_SHORT,
+			expectedErr:   types.ErrQuoteReserveAtZero,
+		},
+		{
+			name:          "negative quote asset amt",
+			quoteAssetAmt: sdk.NewDec(-1),
+			dir:           types.Direction_SHORT,
+			expectedErr:   types.ErrInputQuoteAmtNegative,
 		},
 	}
 
@@ -182,7 +188,7 @@ func TestSwapQuoteAsset(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedBaseAssetDelta, quoteAssetDelta)
-				assert.Equal(t, v2.AMM{
+				assert.Equal(t, types.AMM{
 					Pair:            amm.Pair,
 					BaseReserve:     tc.expectedBaseReserve,
 					QuoteReserve:    tc.expectedQuoteReserve,
@@ -222,7 +228,7 @@ func TestRepegCost(t *testing.T) {
 	tests := []struct {
 		name string
 
-		amm                v2.AMM
+		amm                types.AMM
 		newPriceMultiplier sdk.Dec
 
 		expectedCost sdk.Int
@@ -230,7 +236,7 @@ func TestRepegCost(t *testing.T) {
 	}{
 		{
 			name: "zero bias -> zero cost",
-			amm: v2.AMM{
+			amm: types.AMM{
 				Pair:            pair,
 				BaseReserve:     sdk.NewDec(100),
 				QuoteReserve:    sdk.NewDec(100),
@@ -244,7 +250,7 @@ func TestRepegCost(t *testing.T) {
 		},
 		{
 			name: "same peg -> zero cost",
-			amm: v2.AMM{
+			amm: types.AMM{
 				Pair:            pair,
 				BaseReserve:     sdk.NewDec(100),
 				QuoteReserve:    sdk.NewDec(100),
@@ -258,7 +264,7 @@ func TestRepegCost(t *testing.T) {
 		},
 		{
 			name: "new peg -> net long and increase price multiplier",
-			amm: v2.AMM{
+			amm: types.AMM{
 				Pair:            pair,
 				BaseReserve:     sdk.NewDec(100),
 				QuoteReserve:    sdk.NewDec(100),
@@ -272,7 +278,7 @@ func TestRepegCost(t *testing.T) {
 		},
 		{
 			name: "new peg -> net short and increase price multiplier",
-			amm: v2.AMM{
+			amm: types.AMM{
 				Pair:            pair,
 				BaseReserve:     sdk.NewDec(100),
 				QuoteReserve:    sdk.NewDec(100),
@@ -286,7 +292,7 @@ func TestRepegCost(t *testing.T) {
 		},
 		{
 			name: "new peg -> net long and decrease price multiplier",
-			amm: v2.AMM{
+			amm: types.AMM{
 				Pair:            pair,
 				BaseReserve:     sdk.NewDec(100),
 				QuoteReserve:    sdk.NewDec(100),
@@ -300,7 +306,7 @@ func TestRepegCost(t *testing.T) {
 		},
 		{
 			name: "new peg -> net short and decrease price multiplier",
-			amm: v2.AMM{
+			amm: types.AMM{
 				Pair:            pair,
 				BaseReserve:     sdk.NewDec(100),
 				QuoteReserve:    sdk.NewDec(100),
@@ -314,7 +320,7 @@ func TestRepegCost(t *testing.T) {
 		},
 		{
 			name: "new peg -> negative bias big numbers",
-			amm: v2.AMM{
+			amm: types.AMM{
 				Pair:            pair,
 				BaseReserve:     sdk.NewDec(1e12),
 				QuoteReserve:    sdk.NewDec(1e12),
@@ -345,7 +351,7 @@ func TestRepegCost(t *testing.T) {
 func TestUpdateSwapInvariant(t *testing.T) {
 	tests := []struct {
 		name             string
-		amm              v2.AMM
+		amm              types.AMM
 		newSwapInvariant sdk.Dec
 
 		expectedBaseReserve  sdk.Dec
@@ -354,7 +360,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 	}{
 		{
 			name: "same invariant",
-			amm: v2.AMM{
+			amm: types.AMM{
 				BaseReserve:     sdk.NewDec(1e6),
 				QuoteReserve:    sdk.NewDec(1e6),
 				SqrtDepth:       sdk.NewDec(1e6),
@@ -367,7 +373,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 		},
 		{
 			name: "higher invariant",
-			amm: v2.AMM{
+			amm: types.AMM{
 				BaseReserve:     sdk.NewDec(1e6),
 				QuoteReserve:    sdk.NewDec(1e6),
 				SqrtDepth:       sdk.NewDec(1e6),
@@ -380,7 +386,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 		},
 		{
 			name: "smaller invariant",
-			amm: v2.AMM{
+			amm: types.AMM{
 				BaseReserve:     sdk.NewDec(1e6),
 				QuoteReserve:    sdk.NewDec(1e6),
 				SqrtDepth:       sdk.NewDec(1e6),
@@ -409,14 +415,15 @@ func TestUpdateSwapInvariant(t *testing.T) {
 func TestCalcUpdateSwapInvariantCost(t *testing.T) {
 	tests := []struct {
 		name             string
-		amm              v2.AMM
+		amm              types.AMM
 		newSwapInvariant sdk.Dec
 
 		expectedCost sdk.Int
+		expectedErr  error
 	}{
 		{
 			name: "zero cost - same swap invariant",
-			amm: v2.AMM{
+			amm: types.AMM{
 				BaseReserve:     sdk.NewDec(1e6),
 				QuoteReserve:    sdk.NewDec(1e6),
 				SqrtDepth:       sdk.NewDec(1e6),
@@ -430,7 +437,7 @@ func TestCalcUpdateSwapInvariantCost(t *testing.T) {
 
 		{
 			name: "zero cost - zero bias",
-			amm: v2.AMM{
+			amm: types.AMM{
 				BaseReserve:     sdk.NewDec(1e6),
 				QuoteReserve:    sdk.NewDec(1e6),
 				SqrtDepth:       sdk.NewDec(1e6),
@@ -444,7 +451,7 @@ func TestCalcUpdateSwapInvariantCost(t *testing.T) {
 
 		{
 			name: "long bias, increase swap invariant",
-			amm: v2.AMM{
+			amm: types.AMM{
 				BaseReserve:     sdk.NewDec(1e6),
 				QuoteReserve:    sdk.NewDec(1e6),
 				SqrtDepth:       sdk.NewDec(1e6),
@@ -458,7 +465,7 @@ func TestCalcUpdateSwapInvariantCost(t *testing.T) {
 
 		{
 			name: "long bias, decrease swap invariant",
-			amm: v2.AMM{
+			amm: types.AMM{
 				BaseReserve:     sdk.NewDec(1e6),
 				QuoteReserve:    sdk.NewDec(1e6),
 				SqrtDepth:       sdk.NewDec(1e6),
@@ -472,7 +479,7 @@ func TestCalcUpdateSwapInvariantCost(t *testing.T) {
 
 		{
 			name: "short bias, increase swap invariant",
-			amm: v2.AMM{
+			amm: types.AMM{
 				BaseReserve:     sdk.NewDec(1e6),
 				QuoteReserve:    sdk.NewDec(1e6),
 				SqrtDepth:       sdk.NewDec(1e6),
@@ -486,7 +493,7 @@ func TestCalcUpdateSwapInvariantCost(t *testing.T) {
 
 		{
 			name: "short bias, decrease swap invariant",
-			amm: v2.AMM{
+			amm: types.AMM{
 				BaseReserve:     sdk.NewDec(1e6),
 				QuoteReserve:    sdk.NewDec(1e6),
 				SqrtDepth:       sdk.NewDec(1e6),
@@ -500,7 +507,7 @@ func TestCalcUpdateSwapInvariantCost(t *testing.T) {
 
 		{
 			name: "net long bias, increase swap invariant",
-			amm: v2.AMM{
+			amm: types.AMM{
 				BaseReserve:     sdk.NewDec(1e6),
 				QuoteReserve:    sdk.NewDec(1e6),
 				SqrtDepth:       sdk.NewDec(1e6),
@@ -514,7 +521,7 @@ func TestCalcUpdateSwapInvariantCost(t *testing.T) {
 
 		{
 			name: "net long bias, decrease swap invariant",
-			amm: v2.AMM{
+			amm: types.AMM{
 				BaseReserve:     sdk.NewDec(1e6),
 				QuoteReserve:    sdk.NewDec(1e6),
 				SqrtDepth:       sdk.NewDec(1e6),
@@ -528,7 +535,7 @@ func TestCalcUpdateSwapInvariantCost(t *testing.T) {
 
 		{
 			name: "net short bias, increase swap invariant",
-			amm: v2.AMM{
+			amm: types.AMM{
 				BaseReserve:     sdk.NewDec(1e6),
 				QuoteReserve:    sdk.NewDec(1e6),
 				SqrtDepth:       sdk.NewDec(1e6),
@@ -542,7 +549,7 @@ func TestCalcUpdateSwapInvariantCost(t *testing.T) {
 
 		{
 			name: "net short bias, decrease swap invariant",
-			amm: v2.AMM{
+			amm: types.AMM{
 				BaseReserve:     sdk.NewDec(1e6),
 				QuoteReserve:    sdk.NewDec(1e6),
 				SqrtDepth:       sdk.NewDec(1e6),
@@ -553,14 +560,46 @@ func TestCalcUpdateSwapInvariantCost(t *testing.T) {
 			newSwapInvariant: sdk.NewDec(1e6),
 			expectedCost:     sdk.NewInt(-11),
 		},
+
+		{
+			name: "new swap invariant is nil",
+			amm: types.AMM{
+				BaseReserve:     sdk.NewDec(1e6),
+				QuoteReserve:    sdk.NewDec(1e6),
+				SqrtDepth:       sdk.NewDec(1e6),
+				PriceMultiplier: sdk.OneDec(),
+				TotalLong:       sdk.ZeroDec(),
+				TotalShort:      sdk.ZeroDec(),
+			},
+			newSwapInvariant: sdk.Dec{},
+			expectedErr:      types.ErrNilSwapInvariant,
+		},
+
+		{
+			name: "new swap invariant is negative",
+			amm: types.AMM{
+				BaseReserve:     sdk.NewDec(1e6),
+				QuoteReserve:    sdk.NewDec(1e6),
+				SqrtDepth:       sdk.NewDec(1e6),
+				PriceMultiplier: sdk.OneDec(),
+				TotalLong:       sdk.ZeroDec(),
+				TotalShort:      sdk.ZeroDec(),
+			},
+			newSwapInvariant: sdk.NewDec(-1),
+			expectedErr:      types.ErrNegativeSwapInvariant,
+		},
 	}
 
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			cost, err := tc.amm.CalcUpdateSwapInvariantCost(tc.newSwapInvariant)
-			require.NoError(t, err)
-			assert.Equal(t, tc.expectedCost, cost)
+			if tc.expectedErr != nil {
+				require.ErrorIs(t, err, tc.expectedErr)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedCost, cost)
+			}
 		})
 	}
 }
@@ -568,12 +607,12 @@ func TestCalcUpdateSwapInvariantCost(t *testing.T) {
 func TestGetMarketValue(t *testing.T) {
 	tests := []struct {
 		name                string
-		amm                 v2.AMM
+		amm                 types.AMM
 		expectedMarketValue sdk.Dec
 	}{
 		{
 			name: "zero market value",
-			amm: v2.AMM{
+			amm: types.AMM{
 				BaseReserve:     sdk.NewDec(1e6),
 				QuoteReserve:    sdk.NewDec(1e6),
 				SqrtDepth:       sdk.NewDec(1e6),
@@ -585,7 +624,7 @@ func TestGetMarketValue(t *testing.T) {
 		},
 		{
 			name: "long only",
-			amm: v2.AMM{
+			amm: types.AMM{
 				BaseReserve:     sdk.NewDec(1e6),
 				QuoteReserve:    sdk.NewDec(1e6),
 				SqrtDepth:       sdk.NewDec(1e6),
@@ -597,7 +636,7 @@ func TestGetMarketValue(t *testing.T) {
 		},
 		{
 			name: "short only",
-			amm: v2.AMM{
+			amm: types.AMM{
 				BaseReserve:     sdk.NewDec(1e6),
 				QuoteReserve:    sdk.NewDec(1e6),
 				SqrtDepth:       sdk.NewDec(1e6),
@@ -609,7 +648,7 @@ func TestGetMarketValue(t *testing.T) {
 		},
 		{
 			name: "long and short cancel each other out",
-			amm: v2.AMM{
+			amm: types.AMM{
 				BaseReserve:     sdk.NewDec(1e6),
 				QuoteReserve:    sdk.NewDec(1e6),
 				SqrtDepth:       sdk.NewDec(1e6),
@@ -621,7 +660,7 @@ func TestGetMarketValue(t *testing.T) {
 		},
 		{
 			name: "net long",
-			amm: v2.AMM{
+			amm: types.AMM{
 				BaseReserve:     sdk.NewDec(1e6),
 				QuoteReserve:    sdk.NewDec(1e6),
 				SqrtDepth:       sdk.NewDec(1e6),
@@ -633,7 +672,7 @@ func TestGetMarketValue(t *testing.T) {
 		},
 		{
 			name: "net short",
-			amm: v2.AMM{
+			amm: types.AMM{
 				BaseReserve:     sdk.NewDec(1e6),
 				QuoteReserve:    sdk.NewDec(1e6),
 				SqrtDepth:       sdk.NewDec(1e6),

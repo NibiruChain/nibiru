@@ -9,11 +9,11 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
-	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 type positionChangedEventShouldBeEqual struct {
-	ExpectedEvent *v2types.PositionChangedEvent
+	ExpectedEvent *types.PositionChangedEvent
 }
 
 func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
@@ -29,7 +29,7 @@ func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context)
 			return ctx, err, false
 		}
 
-		theEvent, ok := typedEvent.(*v2types.PositionChangedEvent)
+		theEvent, ok := typedEvent.(*types.PositionChangedEvent)
 		if !ok {
 			return ctx, fmt.Errorf("expected event is not of type PositionChangedEvent"), false
 		}
@@ -96,7 +96,7 @@ func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context)
 
 // PositionChangedEventShouldBeEqual checks that the position changed event is equal to the expected event.
 func PositionChangedEventShouldBeEqual(
-	expectedEvent *v2types.PositionChangedEvent,
+	expectedEvent *types.PositionChangedEvent,
 ) action.Action {
 	return positionChangedEventShouldBeEqual{
 		ExpectedEvent: expectedEvent,

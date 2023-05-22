@@ -13,7 +13,7 @@ import (
 	. "github.com/NibiruChain/nibiru/x/common/testutil/assertion"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
-	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 func TestMsgServerOpenPosition(t *testing.T) {
@@ -27,11 +27,11 @@ func TestMsgServerOpenPosition(t *testing.T) {
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
 			).
 			When(
-				MsgServerOpenPosition(alice, pair, v2types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroInt()),
+				MsgServerOpenPosition(alice, pair, types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroInt()),
 			).
 			Then(
 				PositionShouldBeEqual(alice, pair,
-					Position_PositionShouldBeEqualTo(v2types.Position{
+					Position_PositionShouldBeEqualTo(types.Position{
 						TraderAddress:                   alice.String(),
 						Pair:                            pair,
 						Size_:                           sdk.MustNewDecFromStr("0.999999999999"),
@@ -50,11 +50,11 @@ func TestMsgServerOpenPosition(t *testing.T) {
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
 			).
 			When(
-				MsgServerOpenPosition(alice, pair, v2types.Direction_SHORT, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroInt()),
+				MsgServerOpenPosition(alice, pair, types.Direction_SHORT, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroInt()),
 			).
 			Then(
 				PositionShouldBeEqual(alice, pair,
-					Position_PositionShouldBeEqualTo(v2types.Position{
+					Position_PositionShouldBeEqualTo(types.Position{
 						TraderAddress:                   alice.String(),
 						Pair:                            pair,
 						Size_:                           sdk.MustNewDecFromStr("-1.000000000001"),
@@ -80,7 +80,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 			Given(
 				CreateCustomMarket(pair),
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
-				OpenPosition(alice, pair, v2types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroDec()),
+				OpenPosition(alice, pair, types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
 			When(
@@ -95,7 +95,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 			Given(
 				CreateCustomMarket(pair),
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
-				OpenPosition(alice, pair, v2types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroDec()),
+				OpenPosition(alice, pair, types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
 			When(
@@ -119,7 +119,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 			Given(
 				CreateCustomMarket(pair),
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
-				OpenPosition(alice, pair, v2types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroDec()),
+				OpenPosition(alice, pair, types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
 			When(
@@ -127,7 +127,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 			).
 			Then(
 				PositionShouldBeEqual(alice, pair,
-					Position_PositionShouldBeEqualTo(v2types.Position{
+					Position_PositionShouldBeEqualTo(types.Position{
 						TraderAddress:                   alice.String(),
 						Pair:                            pair,
 						Size_:                           sdk.MustNewDecFromStr("0.999999999999"),
@@ -153,7 +153,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			Given(
 				CreateCustomMarket(pair),
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
-				OpenPosition(alice, pair, v2types.Direction_LONG, sdk.NewInt(2), sdk.NewDec(1), sdk.ZeroDec()),
+				OpenPosition(alice, pair, types.Direction_LONG, sdk.NewInt(2), sdk.NewDec(1), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
 			When(
@@ -161,7 +161,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			).
 			Then(
 				PositionShouldBeEqual(alice, pair,
-					Position_PositionShouldBeEqualTo(v2types.Position{
+					Position_PositionShouldBeEqualTo(types.Position{
 						TraderAddress:                   alice.String(),
 						Pair:                            pair,
 						Size_:                           sdk.MustNewDecFromStr("1.999999999996"),
@@ -191,7 +191,7 @@ func TestMsgServerDonateToPerpEf(t *testing.T) {
 			).
 			Then(
 				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(50)),
-				ModuleBalanceEqual(v2types.PerpEFModuleAccount, denoms.NUSD, sdk.NewInt(50)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.NUSD, sdk.NewInt(50)),
 			),
 	}
 
@@ -211,7 +211,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 				SetBlockTime(startTime),
 				CreateCustomMarket(pairBtcUsdc),
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10400))),
-				FundModule(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -220,12 +220,12 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 				),
 			).
 			Then(
-				ModuleBalanceEqual(v2types.VaultModuleAccount, denoms.USDC, sdk.NewInt(750)),
-				ModuleBalanceEqual(v2types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(125)),
+				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(750)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(125)),
 				BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(125)),
 				PositionShouldBeEqual(alice, pairBtcUsdc,
 					Position_PositionShouldBeEqualTo(
-						v2types.Position{
+						types.Position{
 							Pair:                            pairBtcUsdc,
 							TraderAddress:                   alice.String(),
 							Size_:                           sdk.NewDec(5000),
@@ -244,7 +244,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 				SetBlockTime(startTime),
 				CreateCustomMarket(pairBtcUsdc),
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10600))),
-				FundModule(v2types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -253,8 +253,8 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 				),
 			).
 			Then(
-				ModuleBalanceEqual(v2types.VaultModuleAccount, denoms.USDC, sdk.NewInt(600)),
-				ModuleBalanceEqual(v2types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(150)),
+				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(600)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(150)),
 				BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(250)),
 				PositionShouldNotExist(alice, pairBtcUsdc),
 			),

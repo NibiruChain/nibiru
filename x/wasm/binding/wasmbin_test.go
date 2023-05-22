@@ -66,13 +66,13 @@ func SetupAllContracts(
 // StoreContract submits Wasm bytecode for storage on the chain.
 func StoreContract(
 	t *testing.T,
-	contractWasm wasmbin.WasmKey,
+	wasmKey wasmbin.WasmKey,
 	ctx sdk.Context,
 	nibiru *app.NibiruApp,
 	sender sdk.AccAddress,
 ) (codeId uint64) {
 	pathToWasmBin := wasmbin.GetPackageDir(t) + "/wasmbin"
-	wasmBytecode, err := contractWasm.ToByteCode(pathToWasmBin)
+	wasmBytecode, err := wasmKey.ToByteCode(pathToWasmBin)
 	require.NoError(t, err)
 
 	// The "Create" fn is private on the nibiru.WasmKeeper. By placing it as the

@@ -9,25 +9,25 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	v2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 func TestSwapQuoteAsset(t *testing.T) {
 	tests := []struct {
 		name           string
-		direction      v2types.Direction
+		direction      types.Direction
 		quoteAssetAmt  sdk.Dec
 		baseAssetLimit sdk.Dec
 
 		expectedBaseAssetDelta sdk.Dec
-		expectedAMM            *v2types.AMM
+		expectedAMM            *types.AMM
 		expectedErr            error
 	}{
 		{
 			name:           "quote amount == 0",
-			direction:      v2types.Direction_LONG,
+			direction:      types.Direction_LONG,
 			quoteAssetAmt:  sdk.NewDec(0),
-			baseAssetLimit: sdk.NewDec(10),
+			baseAssetLimit: sdk.NewDec(0),
 
 			expectedAMM: mock.TestAMMDefault().
 				WithPriceMultiplier(sdk.NewDec(2)),
@@ -35,7 +35,7 @@ func TestSwapQuoteAsset(t *testing.T) {
 		},
 		{
 			name:           "normal swap add",
-			direction:      v2types.Direction_LONG,
+			direction:      types.Direction_LONG,
 			quoteAssetAmt:  sdk.NewDec(100_000),
 			baseAssetLimit: sdk.NewDec(49999),
 
@@ -48,7 +48,7 @@ func TestSwapQuoteAsset(t *testing.T) {
 		},
 		{
 			name:           "normal swap remove",
-			direction:      v2types.Direction_SHORT,
+			direction:      types.Direction_SHORT,
 			quoteAssetAmt:  sdk.NewDec(100_000),
 			baseAssetLimit: sdk.NewDec(50_001),
 
@@ -61,27 +61,27 @@ func TestSwapQuoteAsset(t *testing.T) {
 		},
 		{
 			name:           "base amount less than base limit in Long",
-			direction:      v2types.Direction_LONG,
+			direction:      types.Direction_LONG,
 			quoteAssetAmt:  sdk.NewDec(500_000),
 			baseAssetLimit: sdk.NewDec(454_500),
 
-			expectedErr: v2types.ErrAssetFailsUserLimit,
+			expectedErr: types.ErrAssetFailsUserLimit,
 		},
 		{
 			name:           "base amount more than base limit in Short",
-			direction:      v2types.Direction_SHORT,
+			direction:      types.Direction_SHORT,
 			quoteAssetAmt:  sdk.NewDec(1e6),
 			baseAssetLimit: sdk.NewDec(454_500),
 
-			expectedErr: v2types.ErrAssetFailsUserLimit,
+			expectedErr: types.ErrAssetFailsUserLimit,
 		},
 		{
 			name:           "over reserve amount when removing quote",
-			direction:      v2types.Direction_SHORT,
+			direction:      types.Direction_SHORT,
 			quoteAssetAmt:  sdk.NewDec(2e12 + 1),
 			baseAssetLimit: sdk.ZeroDec(),
 
-			expectedErr: v2types.ErrQuoteReserveAtZero,
+			expectedErr: types.ErrQuoteReserveAtZero,
 		},
 	}
 
@@ -117,17 +117,17 @@ func TestSwapQuoteAsset(t *testing.T) {
 func TestSwapBaseAsset(t *testing.T) {
 	tests := []struct {
 		name            string
-		direction       v2types.Direction
+		direction       types.Direction
 		baseAssetAmt    sdk.Dec
 		quoteAssetLimit sdk.Dec
 
-		expectedAMM             *v2types.AMM
+		expectedAMM             *types.AMM
 		expectedQuoteAssetDelta sdk.Dec
 		expectedErr             error
 	}{
 		{
 			name:            "zero base asset swap",
-			direction:       v2types.Direction_LONG,
+			direction:       types.Direction_LONG,
 			baseAssetAmt:    sdk.ZeroDec(),
 			quoteAssetLimit: sdk.ZeroDec(),
 
@@ -137,7 +137,7 @@ func TestSwapBaseAsset(t *testing.T) {
 		},
 		{
 			name:            "go long",
-			direction:       v2types.Direction_LONG,
+			direction:       types.Direction_LONG,
 			baseAssetAmt:    sdk.NewDec(100_000),
 			quoteAssetLimit: sdk.NewDec(200_000),
 
@@ -150,7 +150,7 @@ func TestSwapBaseAsset(t *testing.T) {
 		},
 		{
 			name:            "go short",
-			direction:       v2types.Direction_SHORT,
+			direction:       types.Direction_SHORT,
 			baseAssetAmt:    sdk.NewDec(100_000),
 			quoteAssetLimit: sdk.NewDec(200_000),
 
@@ -163,27 +163,27 @@ func TestSwapBaseAsset(t *testing.T) {
 		},
 		{
 			name:            "quote asset amt less than quote limit in Long",
-			direction:       v2types.Direction_LONG,
+			direction:       types.Direction_LONG,
 			baseAssetAmt:    sdk.NewDec(100_000),
 			quoteAssetLimit: sdk.NewDec(200_001),
 
-			expectedErr: v2types.ErrAssetFailsUserLimit,
+			expectedErr: types.ErrAssetFailsUserLimit,
 		},
 		{
 			name:            "quote amount more than quote limit in Short",
-			direction:       v2types.Direction_SHORT,
+			direction:       types.Direction_SHORT,
 			baseAssetAmt:    sdk.NewDec(100_000),
 			quoteAssetLimit: sdk.NewDec(199_999),
 
-			expectedErr: v2types.ErrAssetFailsUserLimit,
+			expectedErr: types.ErrAssetFailsUserLimit,
 		},
 		{
 			name:            "over reserve amount when removing base",
-			direction:       v2types.Direction_LONG,
+			direction:       types.Direction_LONG,
 			baseAssetAmt:    sdk.NewDec(1e12 + 1),
 			quoteAssetLimit: sdk.ZeroDec(),
 
-			expectedErr: v2types.ErrBaseReserveAtZero,
+			expectedErr: types.ErrBaseReserveAtZero,
 		},
 	}
 

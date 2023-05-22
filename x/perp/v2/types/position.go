@@ -56,7 +56,7 @@ func PositionsAreEqual(expected, actual *Position) error {
 }
 
 type PositionResp struct {
-	Position *Position
+	Position Position
 	// The amount of quote assets exchanged.
 	ExchangedNotionalValue sdk.Dec
 	// The amount of base assets exchanged. Signed, positive represents long and negative represents short from the user's perspective.
