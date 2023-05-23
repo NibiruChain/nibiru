@@ -134,7 +134,7 @@ func (pool *Pool) AddTokensToPool(tokensIn sdk.Coins) (
 	}
 
 	tokensIn.Sort()
-	if err := pool.incrementBalances(numShares, tokensIn.Sub(remCoins)); err != nil {
+	if err := pool.incrementBalances(numShares, tokensIn.Sub(remCoins...)); err != nil {
 		return sdk.ZeroInt(), sdk.Coins{}, err
 	}
 
