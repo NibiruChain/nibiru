@@ -3,6 +3,7 @@ package app
 import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	sdkante "github.com/cosmos/cosmos-sdk/x/auth/ante"
@@ -16,7 +17,7 @@ type AnteHandlerOptions struct {
 	sdkante.HandlerOptions
 	IBCKeeper *ibckeeper.Keeper
 
-	TxCounterStoreKey sdk.StoreKey
+	TxCounterStoreKey types.StoreKey
 	WasmConfig        wasmtypes.WasmConfig
 }
 
@@ -46,14 +47,13 @@ func NewAnteHandler(options AnteHandlerOptions) (sdk.AnteHandler, error) {
 		sdkante.NewSetUpContextDecorator(),
 		wasmkeeper.NewLimitSimulationGasDecorator(options.WasmConfig.SimulationGasLimit),
 		wasmkeeper.NewCountTXDecorator(options.TxCounterStoreKey),
-		sdkante.NewRejectExtensionOptionsDecorator(),
-		sdkante.NewMempoolFeeDecorator(),
+		sdkante.NewExtensionOptionsDecorator(nil),
 		sdkante.NewValidateBasicDecorator(),
 		sdkante.NewTxTimeoutHeightDecorator(),
 		sdkante.NewValidateMemoDecorator(options.AccountKeeper),
 		ante.NewPostPriceFixedPriceDecorator(),
 		sdkante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
-		sdkante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper), // Replace fee ante from cosmos auth with a custom one.
+		sdkante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper, nil), // Replace fee ante from cosmos auth with a custom one.
 		// SetPubKeyDecorator must be called before all signature verification decorators
 		sdkante.NewSetPubKeyDecorator(options.AccountKeeper),
 		sdkante.NewValidateSigCountDecorator(options.AccountKeeper),

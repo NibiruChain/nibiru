@@ -7,7 +7,7 @@ require (
 	github.com/CosmWasm/wasmvm v1.1.1
 	github.com/NibiruChain/collections v0.1.1
 	github.com/armon/go-metrics v0.4.1
-	github.com/cosmos/cosmos-sdk v0.45.16
+	github.com/cosmos/cosmos-sdk v0.46.9
 	github.com/cosmos/go-bip39 v1.0.0
 	github.com/cosmos/ibc-go/v4 v4.3.0
 	github.com/gogo/protobuf v1.3.3
@@ -26,8 +26,6 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.15.0
 	github.com/stretchr/testify v1.8.3
-	github.com/tendermint/tendermint v0.34.27
-	github.com/tendermint/tm-db v0.6.7
 	google.golang.org/genproto v0.0.0-20230125152338-dcaf20b6aeaa
 	google.golang.org/grpc v1.53.0
 	google.golang.org/protobuf v1.30.0
@@ -157,3 +155,5 @@ replace github.com/cosmos/gorocksdb v1.2.0 => github.com/NibiruChain/gorocksdb v
 replace github.com/linxGnu/grocksdb => github.com/NibiruChain/grocksdb v0.0.0-20230522141059-38c21249c0aa
 
 replace github.com/tendermint/tendermint => github.com/cometbft/cometbft v0.34.27
+
+replace github.com/CosmWasm/wasmd => github.com/notional-labs/wasmd v0.30.0-sdk469.5

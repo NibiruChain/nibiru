@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/cosmos/cosmos-sdk/store/types"
 	"path/filepath"
 
 	ibcmock "github.com/cosmos/ibc-go/v4/testing/mock"
@@ -101,9 +102,9 @@ import (
 )
 
 func GetStoreKeys() (
-	keys map[string]*sdk.KVStoreKey,
-	tkeys map[string]*sdk.TransientStoreKey,
-	memKeys map[string]*sdk.MemoryStoreKey,
+	keys map[string]*types.KVStoreKey,
+	tkeys map[string]*types.TransientStoreKey,
+	memKeys map[string]*types.MemoryStoreKey,
 ) {
 	keys = sdk.NewKVStoreKeys(
 		authtypes.StoreKey,
@@ -144,9 +145,9 @@ func (app *NibiruApp) InitKeepers(
 	homePath string,
 	appOpts servertypes.AppOptions,
 ) (wasmConfig wasmtypes.WasmConfig) {
-	var appCodec codec.Codec = app.appCodec
-	var legacyAmino *codec.LegacyAmino = app.legacyAmino
-	var bApp *baseapp.BaseApp = app.BaseApp
+	var appCodec = app.appCodec
+	var legacyAmino = app.legacyAmino
+	var bApp = app.BaseApp
 
 	keys := app.keys
 	tkeys := app.tkeys
