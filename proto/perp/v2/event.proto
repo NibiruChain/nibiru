@@ -235,3 +235,14 @@ message LiquidationFailedEvent {
   // Reason for the liquidation failure.
   LiquidationFailedReason reason = 4;
 }
+
+// This event is emitted when the amm is updated, which can be triggered by
+// the following events:
+//
+// - swap
+// - edit price multiplier
+// - edit depth
+message AmmUpdatedEvent {
+  // the final state of the AMM
+  AMM final_amm = 1 [ (gogoproto.nullable) = false ];
+}

@@ -575,15 +575,22 @@ func (k Keeper) afterPositionUpdate(
 		positionNotional = positionResp.Position.OpenNotional.Sub(positionResp.UnrealizedPnlAfter)
 	}
 
-	return ctx.EventManager().EmitTypedEvent(&types.PositionChangedEvent{
-		FinalPosition:    positionResp.Position,
-		PositionNotional: positionNotional,
-		TransactionFee:   sdk.NewCoin(market.Pair.QuoteDenom(), transferredFee),
-		RealizedPnl:      positionResp.RealizedPnl,
-		BadDebt:          sdk.NewCoin(market.Pair.QuoteDenom(), positionResp.BadDebt.RoundInt()),
-		FundingPayment:   positionResp.FundingPayment,
-		BlockHeight:      ctx.BlockHeight(),
-	})
+	_ = ctx.EventManager().EmitTypedEvents(
+		&types.PositionChangedEvent{
+			FinalPosition:    positionResp.Position,
+			PositionNotional: positionNotional,
+			TransactionFee:   sdk.NewCoin(market.Pair.QuoteDenom(), transferredFee),
+			RealizedPnl:      positionResp.RealizedPnl,
+			BadDebt:          sdk.NewCoin(market.Pair.QuoteDenom(), positionResp.BadDebt.RoundInt()),
+			FundingPayment:   positionResp.FundingPayment,
+			BlockHeight:      ctx.BlockHeight(),
+		},
+		&types.AmmUpdatedEvent{
+			FinalAmm: amm,
+		},
+	)
+
+	return nil
 }
 
 // transfers the fee to the exchange fee pool
