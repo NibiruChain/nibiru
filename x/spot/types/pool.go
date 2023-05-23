@@ -3,8 +3,8 @@ package types
 import (
 	sdkmath "cosmossdk.io/math"
 	"errors"
-	fmt "fmt"
-	math "math"
+	"fmt"
+	"math"
 
 	"github.com/holiman/uint256"
 
