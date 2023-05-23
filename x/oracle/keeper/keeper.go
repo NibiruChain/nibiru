@@ -3,6 +3,7 @@ package keeper
 import (
 	"errors"
 	"fmt"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -21,7 +22,7 @@ import (
 // Keeper of the oracle store
 type Keeper struct {
 	cdc      codec.BinaryCodec
-	storeKey sdk.StoreKey
+	storeKey storetypes.StoreKey
 
 	AccountKeeper types.AccountKeeper
 	bankKeeper    types.BankKeeper
@@ -45,7 +46,7 @@ type Keeper struct {
 }
 
 // NewKeeper constructs a new keeper for oracle
-func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
+func NewKeeper(cdc codec.BinaryCodec, storeKey storetypes.StoreKey,
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper, distrKeeper types.DistributionKeeper,
 	stakingKeeper types.StakingKeeper, distrName string) Keeper {

@@ -3,6 +3,7 @@ package sudo
 import (
 	"context"
 	"fmt"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
 	"github.com/NibiruChain/collections"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -20,7 +21,7 @@ type Keeper struct {
 
 func NewKeeper(
 	cdc codec.BinaryCodec,
-	storeKey sdk.StoreKey,
+	storeKey storetypes.StoreKey,
 ) Keeper {
 	return Keeper{
 		Sudoers: collections.NewItem(storeKey, 1, SudoersValueEncoder(cdc)),

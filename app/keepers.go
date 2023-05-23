@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/cosmos/cosmos-sdk/store/types"
+	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"path/filepath"
 
 	ibcmock "github.com/cosmos/ibc-go/v6/testing/mock"
@@ -290,10 +291,12 @@ func (app *NibiruApp) InitKeepers(
 
 	// IBC Fee Module keeper
 	app.ibcFeeKeeper = ibcfeekeeper.NewKeeper(
-		appCodec, keys[ibcfeetypes.StoreKey], app.GetSubspace(ibcfeetypes.ModuleName),
+		appCodec, keys[ibcfeetypes.StoreKey],
 		app.ibcKeeper.ChannelKeeper, // may be replaced with IBC middleware
 		app.ibcKeeper.ChannelKeeper,
-		&app.ibcKeeper.PortKeeper, app.AccountKeeper, app.BankKeeper,
+		&app.ibcKeeper.PortKeeper,
+		app.AccountKeeper,
+		app.BankKeeper,
 	)
 
 	app.ScopedWasmKeeper = app.capabilityKeeper.ScopeToModule(wasm.ModuleName)
@@ -335,9 +338,9 @@ func (app *NibiruApp) InitKeepers(
 
 	// register the proposal types
 
-	govRouter := govtypes.NewRouter()
+	govRouter := v1beta1.NewRouter()
 	govRouter.
-		AddRoute(govtypes.RouterKey, govtypes.ProposalHandler).
+		AddRoute(govtypes.RouterKey, v1beta1.ProposalHandler).
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.paramsKeeper)).
 		AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.DistrKeeper)).
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.upgradeKeeper)).
@@ -411,7 +414,9 @@ func (app *NibiruApp) InitKeepers(
 
 	app.GovKeeper = govkeeper.NewKeeper(
 		appCodec, keys[govtypes.StoreKey], app.GetSubspace(govtypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, &app.stakingKeeper, govRouter,
+		app.AccountKeeper, app.BankKeeper,
+		&app.stakingKeeper, govRouter,
+		app.Router(), app.GetTxConfig(),
 	)
 
 	return wasmConfig
