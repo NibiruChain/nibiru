@@ -576,20 +576,13 @@ func (k Keeper) afterPositionUpdate(
 	}
 
 	return ctx.EventManager().EmitTypedEvent(&types.PositionChangedEvent{
-		TraderAddress:      traderAddr.String(),
-		Pair:               market.Pair,
-		Margin:             sdk.NewCoin(market.Pair.QuoteDenom(), positionResp.Position.Margin.RoundInt()),
-		PositionNotional:   positionNotional,
-		ExchangedNotional:  positionResp.ExchangedNotionalValue,
-		ExchangedSize:      positionResp.ExchangedPositionSize,
-		TransactionFee:     sdk.NewCoin(market.Pair.QuoteDenom(), transferredFee),
-		PositionSize:       positionResp.Position.Size_,
-		RealizedPnl:        positionResp.RealizedPnl,
-		UnrealizedPnlAfter: positionResp.UnrealizedPnlAfter,
-		BadDebt:            sdk.NewCoin(market.Pair.QuoteDenom(), positionResp.BadDebt.RoundInt()),
-		FundingPayment:     positionResp.FundingPayment,
-		BlockHeight:        ctx.BlockHeight(),
-		BlockTimeMs:        ctx.BlockTime().UnixMilli(),
+		FinalPosition:    positionResp.Position,
+		PositionNotional: positionNotional,
+		TransactionFee:   sdk.NewCoin(market.Pair.QuoteDenom(), transferredFee),
+		RealizedPnl:      positionResp.RealizedPnl,
+		BadDebt:          sdk.NewCoin(market.Pair.QuoteDenom(), positionResp.BadDebt.RoundInt()),
+		FundingPayment:   positionResp.FundingPayment,
+		BlockHeight:      ctx.BlockHeight(),
 	})
 }
 
