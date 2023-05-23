@@ -403,20 +403,26 @@ func (app *NibiruApp) InitKeepers(
 	// mockModule.OnAcknowledgementPacket -> fee.OnAcknowledgementPacket -> channel.OnAcknowledgementPacket
 
 	// create fee wrapped mock module
-	feeMockModule := ibcmock.NewIBCModule(&mockModule, ibcmock.NewMockIBCApp(MockFeePort, scopedFeeMockKeeper))
-	app.FeeMockModule = feeMockModule
-	feeWithMockModule := ibcfee.NewIBCMiddleware(feeMockModule, app.ibcFeeKeeper)
-	ibcRouter.AddRoute(MockFeePort, feeWithMockModule)
+	//feeMockModule := ibcmock.NewIBCModule(&mockModule, ibcmock.NewMockIBCApp(MockFeePort, scopedFeeMockKeeper))
+	//app.FeeMockModule = feeMockModule
+	//feeWithMockModule := ibcfee.NewIBCMiddleware(feeMockModule, app.ibcFeeKeeper)
+	//ibcRouter.AddRoute(MockFeePort, feeWithMockModule)
 
 	/* SetRouter finalizes all routes by sealing the router.
 	   No more routes can be added. */
 	app.ibcKeeper.SetRouter(ibcRouter)
 
+	govConfig := govtypes.DefaultConfig()
 	app.GovKeeper = govkeeper.NewKeeper(
-		appCodec, keys[govtypes.StoreKey], app.GetSubspace(govtypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper,
-		&app.stakingKeeper, govRouter,
-		app.Router(), app.GetTxConfig(),
+		appCodec,
+		keys[govtypes.StoreKey],
+		app.GetSubspace(govtypes.ModuleName),
+		app.AccountKeeper,
+		app.BankKeeper,
+		&app.stakingKeeper,
+		govRouter,
+		app.MsgServiceRouter(),
+		govConfig,
 	)
 
 	return wasmConfig

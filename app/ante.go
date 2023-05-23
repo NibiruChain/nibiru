@@ -63,7 +63,7 @@ func NewAnteHandler(options AnteHandlerOptions) (sdk.AnteHandler, error) {
 		sdkante.NewSigGasConsumeDecorator(options.AccountKeeper, options.SigGasConsumer),
 		sdkante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
 		sdkante.NewIncrementSequenceDecorator(options.AccountKeeper),
-		ibcante.NewAnteDecorator(options.IBCKeeper),
+		ibcante.NewRedundantRelayDecorator(options.IBCKeeper),
 	}
 
 	return sdk.ChainAnteDecorators(anteDecorators...), nil

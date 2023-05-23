@@ -3,6 +3,8 @@ package cw_struct
 import (
 	"time"
 
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -162,12 +164,12 @@ type PositionRequest struct {
 }
 
 type PositionResponse struct {
-	Position           Position `json:"position"`
-	Notional           sdk.Dec  `json:"notional"`
-	Upnl               sdk.Dec  `json:"upnl"`
-	Margin_ratio_mark  sdk.Dec  `json:"margin_ratio_mark"`
-	Margin_ratio_index sdk.Dec  `json:"margin_ratio_index"`
-	Block_number       sdk.Int  `json:"block_number"`
+	Position           Position    `json:"position"`
+	Notional           sdk.Dec     `json:"notional"`
+	Upnl               sdk.Dec     `json:"upnl"`
+	Margin_ratio_mark  sdk.Dec     `json:"margin_ratio_mark"`
+	Margin_ratio_index sdk.Dec     `json:"margin_ratio_index"`
+	Block_number       sdkmath.Int `json:"block_number"`
 }
 
 type PremiumFractionRequest struct {
@@ -189,11 +191,11 @@ type MetricsResponse struct {
 }
 
 type Metrics struct {
-	Pair        string  `json:"pair"`
-	NetSize     sdk.Dec `json:"net_size"`
-	VolumeQuote sdk.Dec `json:"volume_quote"`
-	VolumeBase  sdk.Dec `json:"volume_base"`
-	BlockNumber sdk.Int `json:"block_number"`
+	Pair        string            `json:"pair"`
+	NetSize     sdkmath.LegacyDec `json:"net_size"`
+	VolumeQuote sdkmath.LegacyDec `json:"volume_quote"`
+	VolumeBase  sdkmath.LegacyDec `json:"volume_base"`
+	BlockNumber sdkmath.Int       `json:"block_number"`
 }
 
 type ModuleAccountsRequest struct {
@@ -217,12 +219,12 @@ type PerpParamsResponse struct {
 }
 
 type PerpParams struct {
-	Stopped                 bool     `json:"stopped"`
-	FeePoolFeeRatio         sdk.Dec  `json:"fee_pool_fee_ratio"`
-	EcosystemFundFeeRatio   sdk.Dec  `json:"ecosystem_fund_fee_ratio"`
-	LiquidationFeeRatio     sdk.Dec  `json:"liquidation_fee_ratio"`
-	PartialLiquidationRatio sdk.Dec  `json:"partial_liquidation_ratio"`
-	FundingRateInterval     string   `json:"funding_rate_interval"`
-	TwapLookbackWindow      sdk.Int  `json:"twap_lookback_window"`
-	WhitelistedLiquidators  []string `json:"whitelisted_liquidators"`
+	Stopped                 bool              `json:"stopped"`
+	FeePoolFeeRatio         sdkmath.LegacyDec `json:"fee_pool_fee_ratio"`
+	EcosystemFundFeeRatio   sdkmath.LegacyDec `json:"ecosystem_fund_fee_ratio"`
+	LiquidationFeeRatio     sdkmath.LegacyDec `json:"liquidation_fee_ratio"`
+	PartialLiquidationRatio sdkmath.LegacyDec `json:"partial_liquidation_ratio"`
+	FundingRateInterval     string            `json:"funding_rate_interval"`
+	TwapLookbackWindow      sdkmath.Int       `json:"twap_lookback_window"`
+	WhitelistedLiquidators  []string          `json:"whitelisted_liquidators"`
 }

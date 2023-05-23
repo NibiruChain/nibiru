@@ -296,18 +296,18 @@ func Setup(t *testing.T) (TestFixture, types.MsgServer) {
 
 	h := NewMsgServerImpl(fixture.OracleKeeper)
 
-	sh := staking.NewHandler(fixture.StakingKeeper)
+	sh := stakingkeeper.NewMsgServerImpl(fixture.StakingKeeper)
 
 	// Validator created
-	_, err := sh(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[0], ValPubKeys[0], stakingAmt))
+	_, err := sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[0], ValPubKeys[0], stakingAmt))
 	require.NoError(t, err)
-	_, err = sh(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[1], ValPubKeys[1], stakingAmt))
+	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[1], ValPubKeys[1], stakingAmt))
 	require.NoError(t, err)
-	_, err = sh(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[2], ValPubKeys[2], stakingAmt))
+	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[2], ValPubKeys[2], stakingAmt))
 	require.NoError(t, err)
-	_, err = sh(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[3], ValPubKeys[3], stakingAmt))
+	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[3], ValPubKeys[3], stakingAmt))
 	require.NoError(t, err)
-	_, err = sh(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[4], ValPubKeys[4], stakingAmt))
+	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[4], ValPubKeys[4], stakingAmt))
 	require.NoError(t, err)
 	staking.EndBlocker(fixture.Ctx, fixture.StakingKeeper)
 
