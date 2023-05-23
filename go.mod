@@ -148,15 +148,12 @@ require (
 	nhooyr.io/websocket v1.8.6 // indirect
 )
 
-// latest grpc doesn't work with with our modified proto compiler, so we need to enforce
-// the following version across all dependencies.
-replace google.golang.org/grpc => google.golang.org/grpc v1.33.2
-
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
 replace github.com/CosmWasm/wasmvm v1.1.1 => github.com/NibiruChain/wasmvm v1.1.2
 
 replace github.com/cosmos/gorocksdb v1.2.0 => github.com/NibiruChain/gorocksdb v1.2.1
+
 replace github.com/linxGnu/grocksdb => github.com/NibiruChain/grocksdb v0.0.0-20230522141059-38c21249c0aa
 
 replace github.com/tendermint/tendermint => github.com/cometbft/cometbft v0.34.27
