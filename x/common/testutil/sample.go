@@ -1,8 +1,9 @@
 package testutil
 
 import (
-	"github.com/cosmos/cosmos-sdk/store/types"
 	"math/rand"
+
+	"github.com/cosmos/cosmos-sdk/store/types"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 

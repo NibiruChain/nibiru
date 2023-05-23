@@ -1,6 +1,7 @@
 package types
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"errors"
 	fmt "fmt"
 	math "math"
@@ -116,7 +117,7 @@ ret:
   - err: error if any
 */
 func (pool *Pool) AddTokensToPool(tokensIn sdk.Coins) (
-	numShares sdk.Int, remCoins sdk.Coins, err error,
+	numShares sdkmath.Int, remCoins sdk.Coins, err error,
 ) {
 	if pool.TotalShares.Amount.IsZero() {
 		// Mint the initial 100.000000000000000000 pool share tokens to the sender

@@ -287,6 +287,7 @@ github.com/btcsuite/btcd v0.20.1-beta/go.mod h1:wVuoA8VJLEcwgqHBwHmzLRazpKxTv13P
 github.com/btcsuite/btcd v0.21.0-beta.0.20201114000516-e9c7a5ac6401/go.mod h1:Sv4JPQ3/M+teHz9Bo5jBpkNcP0x6r7rdihlNL/7tTAs=
 github.com/btcsuite/btcd v0.22.1 h1:CnwP9LM/M9xuRrGSCGeMVs9iv09uMqwsVX7EeIpgV2c=
 github.com/btcsuite/btcd v0.22.1/go.mod h1:wqgTSL29+50LRkmOVknEdmt8ZojIzhuWvgu/iptuN7Y=
+github.com/btcsuite/btcd v0.22.2 h1:vBZ+lGGd1XubpOWO67ITJpAEsICWhA0YzqkcpkgNBfo=
 github.com/btcsuite/btcd/btcec/v2 v2.1.2/go.mod h1:ctjw4H1kknNJmRN4iP1R7bTQ+v3GJkZBd6mui8ZsAZE=
 github.com/btcsuite/btcd/btcec/v2 v2.3.2 h1:5n0X6hX0Zk+6omWcihdYvdAlGf2DfasC0GMf7DClJ3U=
 github.com/btcsuite/btcd/btcec/v2 v2.3.2/go.mod h1:zYzJ8etWJQIv1Ogk7OzpWjowwOdXY1W/17j2MW85J04=
@@ -366,6 +367,8 @@ github.com/cosmos/btcutil v1.0.5 h1:t+ZFcX77LpKtDBhjucvnOH8C2l2ioGsBNEQ3jef8xFk=
 github.com/cosmos/btcutil v1.0.5/go.mod h1:IyB7iuqZMJlthe2tkIFL33xPyzbFYP0XVdS8P5lUPis=
 github.com/cosmos/cosmos-proto v1.0.0-beta.1 h1:iDL5qh++NoXxG8hSy93FdYJut4XfgbShIocllGaXx/0=
 github.com/cosmos/cosmos-proto v1.0.0-beta.1/go.mod h1:8k2GNZghi5sDRFw/scPL8gMSowT1vDA+5ouxL8GjaUE=
+github.com/cosmos/cosmos-sdk v0.45.12 h1:Z0kOOjOfHP+loO42KZZo3Y+PAZsoYycyiSckVXzwOm4=
+github.com/cosmos/cosmos-sdk v0.45.12/go.mod h1:ZAdIs09zttoA3aSwQCTK9gecOThUVNnzBSVj3DiS6UY=
 github.com/cosmos/cosmos-sdk v0.46.9 h1:s19zY5vX0kjV2eJOzR0Y3P6EqgtgpwMdPmXM05TQsXM=
 github.com/cosmos/cosmos-sdk v0.46.9/go.mod h1:ZFL/yjcIZq67H8FiWoLCnnaChkXnbRRYEEhGrFq8fzE=
 github.com/cosmos/go-bip39 v0.0.0-20180819234021-555e2067c45d/go.mod h1:tSxLoYXyBmiFeKpvmq4dzayMdCjCnu8uqmCysIGBT2Y=
@@ -754,6 +757,7 @@ github.com/jedisct1/go-minisign v0.0.0-20190909160543-45766022959e/go.mod h1:G1C
 github.com/jessevdk/go-flags v0.0.0-20141203071132-1679536dcc89/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
 github.com/jessevdk/go-flags v1.4.0/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
 github.com/jhump/protoreflect v1.12.1-0.20220721211354-060cc04fc18b h1:izTof8BKh/nE1wrKOrloNA5q4odOarjf+Xpe+4qow98=
+github.com/jhump/protoreflect v1.13.1-0.20220928232736-101791cb1b4c h1:XImQJfpJLmGEEd8ll5yPVyL/aEvmgGHW4WYTyNseLOM=
 github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af/go.mod h1:Nht3zPeWKUH0NzdCt2Blrr5ys8VGpn0CEB0cQHVjt7k=
 github.com/jmespath/go-jmespath v0.4.0 h1:BEgLn5cpjn8UN1mAw4NjwDrS35OdebyEtFe+9YPoQUg=
 github.com/jmespath/go-jmespath v0.4.0/go.mod h1:T8mJZnbsbmF+m6zOOFylbeCJqk5+pHWvzYPziyZiYoo=

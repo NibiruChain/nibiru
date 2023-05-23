@@ -3,13 +3,11 @@ module github.com/NibiruChain/nibiru
 go 1.19
 
 require (
-	github.com/CosmWasm/wasmd v0.30.0
 	github.com/CosmWasm/wasmvm v1.1.2
 	github.com/NibiruChain/collections v0.1.1
 	github.com/armon/go-metrics v0.4.1
-	github.com/cosmos/cosmos-sdk v0.46.9
+	github.com/cosmos/cosmos-sdk v0.45.12
 	github.com/cosmos/go-bip39 v1.0.0
-	github.com/cosmos/ibc-go/v6 v6.1.0
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.5.3
