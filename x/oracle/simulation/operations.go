@@ -119,7 +119,7 @@ func SimulateMsgAggregateExchangeRatePrevote(ak types.AccountKeeper, bk types.Ba
 		msg := types.NewMsgAggregateExchangeRatePrevote(voteHash, feederAddr, address)
 
 		txGen := simappparams.MakeTestEncodingConfig().TxConfig
-		tx, err := helpers.GenTx(
+		tx, err := simulation.GenAndDeliverTx(
 			txGen,
 			[]sdk.Msg{msg},
 			fees,

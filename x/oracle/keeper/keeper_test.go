@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,13 +16,13 @@ func TestValidateFeeder(t *testing.T) {
 	addr, val := ValAddrs[0], ValPubKeys[0]
 	addr1, val1 := ValAddrs[1], ValPubKeys[1]
 	amt := sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)
-	sh := staking.NewHandler(input.StakingKeeper)
+	sh := stakingkeeper.NewMsgServerImpl(input.StakingKeeper)
 	ctx := input.Ctx
 
 	// Create 2 validators.
-	_, err := sh(ctx, NewTestMsgCreateValidator(addr, val, amt))
+	_, err := sh.CreateValidator(ctx, NewTestMsgCreateValidator(addr, val, amt))
 	require.NoError(t, err)
-	_, err = sh(ctx, NewTestMsgCreateValidator(addr1, val1, amt))
+	_, err = sh.CreateValidator(ctx, NewTestMsgCreateValidator(addr1, val1, amt))
 	require.NoError(t, err)
 	staking.EndBlocker(ctx, input.StakingKeeper)
 

@@ -39,7 +39,7 @@ func (k Keeper) GetGovMarketCap(ctx sdk.Context) (sdk.Int, error) {
 
 	nibiSupply := k.GetSupplyNIBI(ctx)
 
-	return nibiSupply.Amount.ToDec().Mul(price).RoundInt(), nil
+	return sdk.NewDecFromInt(nibiSupply.Amount).Mul(price).RoundInt(), nil
 }
 
 // GetLiquidityRatio returns the liquidity ratio defined as govMarketCap / stableMarketCap
@@ -54,7 +54,7 @@ func (k Keeper) GetLiquidityRatio(ctx sdk.Context) (sdk.Dec, error) {
 		return sdk.Dec{}, fmt.Errorf("stable maket cap is equal to zero")
 	}
 
-	return govMarketCap.ToDec().Quo(stableMarketCap.ToDec()), nil
+	return sdk.NewDecFromInt(govMarketCap).Quo(sdk.NewDecFromInt(stableMarketCap)), nil
 }
 
 func (k Keeper) GetLiquidityRatioBands(ctx sdk.Context) (

@@ -3,6 +3,7 @@ package keeper
 import (
 	"errors"
 	"fmt"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,7 +19,7 @@ import (
 type (
 	Keeper struct {
 		cdc        codec.BinaryCodec
-		storeKey   sdk.StoreKey
+		storeKey   storetypes.StoreKey
 		paramstore paramtypes.Subspace
 
 		accountKeeper types.AccountKeeper
@@ -44,7 +45,7 @@ ret
 */
 func NewKeeper(
 	cdc codec.BinaryCodec,
-	storeKey sdk.StoreKey,
+	storeKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
@@ -475,7 +476,7 @@ func (k Keeper) JoinPool(
 		return types.Pool{}, sdk.Coin{}, sdk.Coins{}, err
 	}
 
-	tokensConsumed := tokensIn.Sub(remCoins)
+	tokensConsumed := tokensIn.Sub(remCoins...)
 
 	// take coins from joiner to pool
 	if err = k.bankKeeper.SendCoins(

@@ -37,7 +37,7 @@ func (pool Pool) numSharesOutFromTokensIn(tokensIn sdk.Coins) (
 
 		one := sdk.OneDec()
 
-		joinShare := tokensIn[0].Amount.ToDec().Mul(one.Sub(pool.PoolParams.SwapFee.Quo(sdk.NewDec(2)))).QuoInt(
+		joinShare := sdk.NewDecFromInt(tokensIn[0].Amount).Mul(one.Sub(pool.PoolParams.SwapFee.Quo(sdk.NewDec(2)))).QuoInt(
 			poolLiquidity.AmountOfNoDenomValidation(tokensIn[0].Denom),
 		).Add(one)
 
@@ -51,7 +51,7 @@ func (pool Pool) numSharesOutFromTokensIn(tokensIn sdk.Coins) (
 	}
 
 	for i, coin := range tokensIn {
-		shareRatio := coin.Amount.ToDec().QuoInt(
+		shareRatio := sdk.NewDecFromInt(coin.Amount).QuoInt(
 			poolLiquidity.AmountOfNoDenomValidation(coin.Denom),
 		)
 		if shareRatio.LT(minShareRatio) {
@@ -175,7 +175,7 @@ func (pool Pool) TokensOutFromPoolSharesIn(numSharesIn sdk.Int) (
 		return nil, nil, errors.New("num shares in must be greater than zero")
 	}
 
-	shareRatio := numSharesIn.ToDec().QuoInt(pool.TotalShares.Amount)
+	shareRatio := sdk.NewDecFromInt(numSharesIn).QuoInt(pool.TotalShares.Amount)
 	if shareRatio.IsZero() {
 		return nil, nil, errors.New("share ratio must be greater than zero")
 	}
@@ -208,7 +208,7 @@ func (pool Pool) MinSharesInForTokensOut() (minShares sdk.Int) {
 	minShares = sdk.ZeroInt()
 
 	for _, coin := range poolLiquidity {
-		shareRatio := sdk.MustNewDecFromStr("2").Quo(coin.Amount.ToDec()).Quo(sdk.OneDec().Sub(pool.PoolParams.ExitFee))
+		shareRatio := sdk.MustNewDecFromStr("2").Quo(sdk.NewDecFromInt(coin.Amount).Quo(sdk.OneDec().Sub(pool.PoolParams.ExitFee)))
 
 		shares := shareRatio.MulInt(pool.TotalShares.Amount).TruncateInt()
 

@@ -16,7 +16,7 @@ import (
 func NeededGovAmtGivenColl(
 	collAmt sdk.Int, priceGov sdk.Dec, priceColl sdk.Dec,
 	collRatio sdk.Dec) (neededGovAmt sdk.Int, mintableStableAmt sdk.Int) {
-	collUSD := collAmt.ToDec().Mul(priceColl)
+	collUSD := sdk.NewDecFromInt(collAmt).Mul(priceColl)
 	neededGovUSD := (collUSD.Quo(collRatio)).Sub(collUSD)
 
 	neededGovAmt = neededGovUSD.Quo(priceGov).TruncateInt()

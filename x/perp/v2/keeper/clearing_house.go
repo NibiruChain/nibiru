@@ -81,12 +81,13 @@ func (k Keeper) OpenPosition(
 			return nil, err
 		}
 	} else {
+		quoteAssetAmtToDec := sdk.NewDecFromInt(quoteAssetAmt)
 		updatedAMM, positionResp, err = k.openReversePosition(
 			ctx,
 			market,
 			amm,
 			position,
-			/* quoteAssetAmount */ quoteAssetAmt.ToDec(),
+			/* quoteAssetAmount */ quoteAssetAmtToDec,
 			/* leverage */ leverage,
 			/* baseAmtLimit */ baseAmtLimit,
 		)

@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"time"
 
 	"github.com/NibiruChain/collections"
@@ -16,7 +17,7 @@ import (
 
 type Keeper struct {
 	cdc      codec.BinaryCodec
-	storeKey sdk.StoreKey
+	storeKey storetypes.StoreKey
 
 	BankKeeper    types.BankKeeper
 	AccountKeeper types.AccountKeeper
@@ -32,7 +33,7 @@ type Keeper struct {
 // NewKeeper Creates a new x/perp Keeper instance.
 func NewKeeper(
 	cdc codec.BinaryCodec,
-	storeKey sdk.StoreKey,
+	storeKey storetypes.StoreKey,
 
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,

@@ -38,14 +38,14 @@ func (pool Pool) CalcOutAmtGivenIn(tokenIn sdk.Coin, tokenOutDenom string, noFee
 
 	var tokenAmountInAfterFee sdk.Dec
 	if noFee {
-		tokenAmountInAfterFee = tokenIn.Amount.ToDec()
+		tokenAmountInAfterFee = sdk.NewDecFromInt(tokenIn.Amount)
 	} else {
-		tokenAmountInAfterFee = tokenIn.Amount.ToDec().Mul(sdk.OneDec().Sub(pool.PoolParams.SwapFee))
+		tokenAmountInAfterFee = sdk.NewDecFromInt(tokenIn.Amount).Mul(sdk.OneDec().Sub(pool.PoolParams.SwapFee))
 	}
-	feeAmount := tokenIn.Amount.ToDec().Sub(tokenAmountInAfterFee)
+	feeAmount := sdk.NewDecFromInt(tokenIn.Amount).Sub(tokenAmountInAfterFee)
 	fee = sdk.NewCoin(tokenIn.Denom, feeAmount.TruncateInt())
 
-	poolTokenInBalance := poolAssetIn.Token.Amount.ToDec()
+	poolTokenInBalance := sdk.NewDecFromInt(poolAssetIn.Token.Amount)
 	poolTokenInBalancePostSwap := poolTokenInBalance.Add(tokenAmountInAfterFee)
 
 	// deduct swapfee on the in asset
@@ -61,9 +61,9 @@ func (pool Pool) CalcOutAmtGivenIn(tokenIn sdk.Coin, tokenOutDenom string, noFee
 		tokenAmountOut = math.SolveConstantProductInvariant(
 			/*xPrior=*/ poolTokenInBalance,
 			/*xAfter=*/ poolTokenInBalancePostSwap,
-			/*xWeight=*/ poolAssetIn.Weight.ToDec(),
-			/*yPrior=*/ poolAssetOut.Token.Amount.ToDec(),
-			/*yWeight=*/ poolAssetOut.Weight.ToDec(),
+			/*xWeight=*/ sdk.NewDecFromInt(poolAssetIn.Weight),
+			/*yPrior=*/ sdk.NewDecFromInt(poolAssetOut.Token.Amount),
+			/*yWeight=*/ sdk.NewDecFromInt(poolAssetOut.Weight),
 		).TruncateInt()
 	}
 
@@ -137,15 +137,15 @@ func (pool Pool) CalcInAmtGivenOutBalancer(tokenOut sdk.Coin, tokenInDenom strin
 	}
 
 	// assuming the user wishes to withdraw 'tokenOut', the balance of 'tokenOut' post swap will be lower
-	poolTokenOutBalance := poolAssetOut.Token.Amount.ToDec()
-	poolTokenOutBalancePostSwap := poolTokenOutBalance.Sub(tokenOut.Amount.ToDec())
+	poolTokenOutBalance := sdk.NewDecFromInt(poolAssetOut.Token.Amount)
+	poolTokenOutBalancePostSwap := poolTokenOutBalance.Sub(sdk.NewDecFromInt(tokenOut.Amount))
 	// (x_0)(y_0) = (x_0 + in)(y_0 - out)
 	tokenAmountIn := math.SolveConstantProductInvariant(
 		/*xPrior=*/ poolTokenOutBalance,
 		/*xAfter=*/ poolTokenOutBalancePostSwap,
-		/*xWeight=*/ poolAssetOut.Weight.ToDec(),
-		/*yPrior=*/ poolAssetIn.Token.Amount.ToDec(),
-		/*yWeight=*/ poolAssetIn.Weight.ToDec(),
+		/*xWeight=*/ sdk.NewDecFromInt(poolAssetOut.Weight),
+		/*yPrior=*/ sdk.NewDecFromInt(poolAssetIn.Token.Amount),
+		/*yWeight=*/ sdk.NewDecFromInt(poolAssetIn.Weight),
 	).Neg()
 
 	// We deduct a swap fee on the input asset. The swap happens by following the invariant curve on the input * (1 - swap fee)
