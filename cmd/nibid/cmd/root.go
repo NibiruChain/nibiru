@@ -3,6 +3,8 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	snapshotoptions "github.com/cosmos/cosmos-sdk/snapshots/types"
+	tmcfg "github.com/tendermint/tendermint/config"
 	"io"
 	"os"
 	"path/filepath"
@@ -41,7 +43,7 @@ import (
 func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 	encodingConfig := app.MakeTestEncodingConfig()
 	initClientCtx := client.Context{}.
-		WithCodec(encodingConfig.Marshaler).
+		WithCodec(encodingConfig.Codec).
 		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
 		WithTxConfig(encodingConfig.TxConfig).
 		WithLegacyAmino(encodingConfig.Amino).
@@ -80,7 +82,11 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 			customAppTemplate, customAppConfig := initAppConfig()
 
 			return server.InterceptConfigsPreRunHandler(
-				cmd, customAppTemplate, customAppConfig)
+				cmd,
+				customAppTemplate,
+				customAppConfig,
+				tmcfg.DefaultConfig(),
+			)
 		},
 	}
 
@@ -166,7 +172,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 	// add rosetta
 	rootCmd.AddCommand(
 		server.RosettaCommand(
-			encodingConfig.InterfaceRegistry, encodingConfig.Marshaler))
+			encodingConfig.InterfaceRegistry, encodingConfig.Codec))
 }
 
 // Implements the servertypes.ModuleInitFlags interface
@@ -263,6 +269,11 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		panic(err)
 	}
 
+	snapshotOptions := snapshotoptions.NewSnapshotOptions(
+		cast.ToUint64(appOpts.Get(server.FlagStateSyncSnapshotInterval)),
+		cast.ToUint32(appOpts.Get(server.FlagStateSyncSnapshotKeepRecent)),
+	)
+
 	return app.NewNibiruApp(
 		logger, db, traceStore, true, skipUpgradeHeights,
 		homeDir,
@@ -277,9 +288,7 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		baseapp.SetInterBlockCache(cache),
 		baseapp.SetTrace(cast.ToBool(appOpts.Get(server.FlagTrace))),
 		baseapp.SetIndexEvents(cast.ToStringSlice(appOpts.Get(server.FlagIndexEvents))),
-		baseapp.SetSnapshotStore(snapshotStore),
-		baseapp.SetSnapshotInterval(cast.ToUint64(appOpts.Get(server.FlagStateSyncSnapshotInterval))),
-		baseapp.SetSnapshotKeepRecent(cast.ToUint32(appOpts.Get(server.FlagStateSyncSnapshotKeepRecent))),
+		baseapp.SetSnapshot(snapshotStore, snapshotOptions),
 	)
 }
 

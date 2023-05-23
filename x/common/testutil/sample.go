@@ -1,6 +1,7 @@
 package testutil
 
 import (
+	"github.com/cosmos/cosmos-sdk/store/types"
 	"math/rand"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -51,7 +52,7 @@ func BlankContext(storeKeyName string) sdk.Context {
 	storeKey := sdk.NewKVStoreKey(storeKeyName)
 	db := tmdb.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db)
-	stateStore.MountStoreWithDB(storeKey, sdk.StoreTypeIAVL, db)
+	stateStore.MountStoreWithDB(storeKey, types.StoreTypeIAVL, db)
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())
 	return ctx
 }
