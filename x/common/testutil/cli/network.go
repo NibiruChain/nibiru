@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/pruning/types"
 	"net/http"
 	"net/url"
 	"os"
@@ -28,7 +29,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/api"
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -131,7 +131,7 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 	encCfg := app.MakeTestEncodingConfig()
 
 	return Config{
-		Codec:             encCfg.Marshaler,
+		Codec:             encCfg.Codec,
 		TxConfig:          encCfg.TxConfig,
 		LegacyAmino:       encCfg.Amino,
 		InterfaceRegistry: encCfg.InterfaceRegistry,
@@ -153,7 +153,7 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 			sdk.NewCoin(denoms.NIBI, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
 			sdk.NewCoin(denoms.USDC, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
 		),
-		PruningStrategy: storetypes.PruningOptionNothing,
+		PruningStrategy: types.PruningOptionNothing,
 		CleanupDir:      true,
 		SigningAlgo:     string(hd.Secp256k1Type),
 		KeyringOptions:  []keyring.Option{},
@@ -270,7 +270,8 @@ func NewNetwork(t *testing.T, cfg Config) *Network {
 		nodeIDs[i] = nodeID
 		valPubKeys[i] = pubKey
 
-		kb, err := keyring.New(sdk.KeyringServiceName(), keyring.BackendTest, clientDir, buf, cfg.KeyringOptions...)
+		config := app.MakeTestEncodingConfig()
+		kb, err := keyring.New(sdk.KeyringServiceName(), keyring.BackendTest, clientDir, buf, config.Codec, cfg.KeyringOptions...)
 		require.NoError(t, err)
 
 		keyringAlgos, _ := kb.SupportedAlgorithms()
@@ -518,7 +519,7 @@ func (n *Network) Cleanup() {
 	n.T.Log("finished cleaning up test network")
 }
 
-func (n *Network) keyBaseAndInfoForAddr(addr sdk.AccAddress) (keyring.Keyring, keyring.Info) {
+func (n *Network) keyBaseAndInfoForAddr(addr sdk.AccAddress) (keyring.Keyring, *keyring.Record) {
 	for _, v := range n.Validators {
 		info, err := v.ClientCtx.Keyring.KeyByAddress(addr)
 		if err == nil {

@@ -106,7 +106,7 @@ func startInProcess(cfg Config, val *Validator) error {
 	}
 
 	if val.AppConfig.GRPC.Enable {
-		grpcSrv, err := servergrpc.StartGRPCServer(val.ClientCtx, app, val.AppConfig.GRPC.Address)
+		grpcSrv, err := servergrpc.StartGRPCServer(val.ClientCtx, app, val.AppConfig.GRPC)
 		if err != nil {
 			return err
 		}
@@ -276,5 +276,9 @@ func NewAccount(network *Network, uid string) sdk.AccAddress {
 		panic(err)
 	}
 
-	return sdk.AccAddress(info.GetPubKey().Address())
+	addr, err := info.GetAddress()
+	if err != nil {
+		panic(err)
+	}
+	return addr
 }

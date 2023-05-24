@@ -25,7 +25,7 @@ func NewNibiruTestAppAndContext(shouldUseDefaultGenesis bool) (*app.NibiruApp, s
 	encoding := app.MakeTestEncodingConfig()
 	var appGenesis app.GenesisState
 	if shouldUseDefaultGenesis {
-		appGenesis = app.NewDefaultGenesisState(encoding.Marshaler)
+		appGenesis = app.NewDefaultGenesisState(encoding.Codec)
 	}
 
 	app := NewNibiruTestApp(appGenesis)

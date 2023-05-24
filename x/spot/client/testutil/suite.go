@@ -874,5 +874,8 @@ func (s *IntegrationTestSuite) NewAccount(uid string) (addr sdk.AccAddress) {
 	)
 	s.Require().NoError(err)
 
-	return sdk.AccAddress(info.GetPubKey().Address())
+	address, err := info.GetAddress()
+	s.Require().NoError(err)
+
+	return address
 }

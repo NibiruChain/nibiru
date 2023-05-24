@@ -78,7 +78,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			TotalShort:      sdk.ZeroDec(),
 		},
 	}
-	genesisState[perpv2types.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(perpv2Gen)
+	genesisState[perpv2types.ModuleName] = encodingConfig.Codec.MustMarshalJSON(perpv2Gen)
 
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
 	s.network = testutilcli.NewNetwork(s.T(), s.cfg)

@@ -33,7 +33,7 @@ func SetupNibiruTestingApp() (
 
 	// Create genesis state
 	encCdc := app.MakeTestEncodingConfig()
-	genesisState := app.NewDefaultGenesisState(encCdc.Marshaler)
+	genesisState := app.NewDefaultGenesisState(encCdc.Codec)
 
 	return nibiruApp, genesisState
 }
@@ -97,7 +97,16 @@ func (suite *IBCTestSuite) TestHandleMsgTransfer() {
 	coinToSendToB := sdk.NewCoin(sdk.DefaultBondDenom, amount)
 
 	// send from chainA to chainB
-	msg := transfertypes.NewMsgTransfer(path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID, coinToSendToB, suite.chainA.SenderAccount.GetAddress().String(), suite.chainB.SenderAccount.GetAddress().String(), timeoutHeight, 0)
+	msg := transfertypes.NewMsgTransfer(
+		path.EndpointA.ChannelConfig.PortID,
+		path.EndpointA.ChannelID,
+		coinToSendToB,
+		suite.chainA.SenderAccount.GetAddress().String(),
+		suite.chainB.SenderAccount.GetAddress().String(),
+		timeoutHeight,
+		0,
+		"",
+	)
 	res, err := suite.chainA.SendMsgs(msg)
 	suite.Require().NoError(err) // message committed
 
@@ -126,7 +135,16 @@ func (suite *IBCTestSuite) TestHandleMsgTransfer() {
 	suite.coordinator.Setup(pathBtoC)
 
 	// send from chainB to chainC
-	msg = transfertypes.NewMsgTransfer(pathBtoC.EndpointA.ChannelConfig.PortID, pathBtoC.EndpointA.ChannelID, coinSentFromAToB, suite.chainB.SenderAccount.GetAddress().String(), suite.chainC.SenderAccount.GetAddress().String(), timeoutHeight, 0)
+	msg = transfertypes.NewMsgTransfer(
+		pathBtoC.EndpointA.ChannelConfig.PortID,
+		pathBtoC.EndpointA.ChannelID,
+		coinSentFromAToB,
+		suite.chainB.SenderAccount.GetAddress().String(),
+		suite.chainC.SenderAccount.GetAddress().String(),
+		timeoutHeight,
+		0,
+		"",
+	)
 	res, err = suite.chainB.SendMsgs(msg)
 	suite.Require().NoError(err) // message committed
 
@@ -152,7 +170,16 @@ func (suite *IBCTestSuite) TestHandleMsgTransfer() {
 	suite.Require().Zero(balance.Amount.Int64())
 
 	// send from chainC back to chainB
-	msg = transfertypes.NewMsgTransfer(pathBtoC.EndpointB.ChannelConfig.PortID, pathBtoC.EndpointB.ChannelID, coinSentFromBToC, suite.chainC.SenderAccount.GetAddress().String(), suite.chainB.SenderAccount.GetAddress().String(), timeoutHeight, 0)
+	msg = transfertypes.NewMsgTransfer(
+		pathBtoC.EndpointB.ChannelConfig.PortID,
+		pathBtoC.EndpointB.ChannelID,
+		coinSentFromBToC,
+		suite.chainC.SenderAccount.GetAddress().String(),
+		suite.chainB.SenderAccount.GetAddress().String(),
+		timeoutHeight,
+		0,
+		"",
+	)
 	res, err = suite.chainC.SendMsgs(msg)
 	suite.Require().NoError(err) // message committed
 

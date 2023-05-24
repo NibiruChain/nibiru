@@ -39,7 +39,7 @@ type AnteTestSuite struct {
 func (suite *AnteTestSuite) SetupTest() {
 	// Set up base app and ctx
 	encodingConfig := genesis.TEST_ENCODING_CONFIG
-	suite.app = testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encodingConfig.Marshaler))
+	suite.app = testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encodingConfig.Codec))
 	chainId := "test-chain-id"
 	ctx := suite.app.NewContext(true, tmproto.Header{
 		Height:  1,

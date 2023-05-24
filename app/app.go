@@ -3,6 +3,8 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+	ibctesting "github.com/cosmos/ibc-go/v6/testing"
+	"github.com/cosmos/ibc-go/v6/testing/types"
 	"io"
 	"net/http"
 	"os"
@@ -222,7 +224,7 @@ var (
 var (
 	_ simapp.App              = (*NibiruApp)(nil)
 	_ servertypes.Application = (*NibiruApp)(nil)
-	//_ ibctesting.TestingApp   = (*NibiruApp)(nil)
+	_ ibctesting.TestingApp   = (*NibiruApp)(nil)
 )
 
 // NibiruApp extends an ABCI application, but with most of its parameters exported.
@@ -589,7 +591,7 @@ func (app *NibiruApp) GetBaseApp() *baseapp.BaseApp {
 	return app.BaseApp
 }
 
-func (app *NibiruApp) GetStakingKeeper() stakingkeeper.Keeper {
+func (app *NibiruApp) GetStakingKeeper() types.StakingKeeper {
 	return app.stakingKeeper
 }
 

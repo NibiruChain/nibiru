@@ -146,10 +146,10 @@ func WhitelistGenesisAssets(state app.GenesisState, assets []string) app.Genesis
 	jsonState := state[types.ModuleName]
 
 	var genesis types.GenesisState
-	encConfig.Marshaler.MustUnmarshalJSON(jsonState, &genesis)
+	encConfig.Codec.MustUnmarshalJSON(jsonState, &genesis)
 	genesis.Params.WhitelistedAsset = assets
 
-	json, _ := encConfig.Marshaler.MarshalJSON(&genesis)
+	json, _ := encConfig.Codec.MarshalJSON(&genesis)
 	state[types.ModuleName] = json
 
 	return state

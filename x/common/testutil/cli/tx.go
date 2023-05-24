@@ -136,7 +136,7 @@ func (n *Network) SendTx(addr sdk.AccAddress, msgs ...sdk.Msg) (*sdk.TxResponse,
 		WithAccountNumber(acc.GetAccountNumber()).
 		WithSequence(acc.GetSequence())
 
-	err = tx.Sign(txFactory, info.GetName(), txBuilder, true)
+	err = tx.Sign(txFactory, info.Name, txBuilder, true)
 	require.NoError(n.T, err)
 
 	txBytes, err := cfg.TxConfig.TxEncoder()(txBuilder.GetTx())
