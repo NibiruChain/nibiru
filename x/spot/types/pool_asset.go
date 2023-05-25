@@ -1,9 +1,10 @@
 package types
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"errors"
 	fmt "fmt"
+
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

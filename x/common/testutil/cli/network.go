@@ -3,7 +3,6 @@ package cli
 import (
 	"bufio"
 	"context"
-	sdkmath "cosmossdk.io/math"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,6 +13,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/pruning/types"
 

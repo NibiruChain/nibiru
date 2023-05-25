@@ -1,8 +1,9 @@
 package keeper_test
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"testing"
+
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/stretchr/testify/require"
 
@@ -37,7 +38,7 @@ func TestAdmin_WithdrawFromInsuranceFund(t *testing.T) {
 		return nibiru, ctx
 	}
 
-	fundModule := func(t *testing.T, amount sdk.Int, ctx sdk.Context, nibiru *app.NibiruApp) {
+	fundModule := func(t *testing.T, amount sdkmath.Int, ctx sdk.Context, nibiru *app.NibiruApp) {
 		coins := sdk.NewCoins(sdk.NewCoin(denoms.NUSD, amount))
 		err := testapp.FundModuleAccount(
 			nibiru.BankKeeper, ctx, types.PerpEFModuleAccount,

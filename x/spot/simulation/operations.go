@@ -1,11 +1,12 @@
 package simulation
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"fmt"
 	"math/rand"
 	"strings"
 	"time"
+
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/simapp"

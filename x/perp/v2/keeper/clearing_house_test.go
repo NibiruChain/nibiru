@@ -1,9 +1,10 @@
 package keeper_test
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"testing"
 	"time"
+
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/NibiruChain/nibiru/x/common/testutil/assertion"
 

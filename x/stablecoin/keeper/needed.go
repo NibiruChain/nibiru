@@ -5,7 +5,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// Computes the amount of NIBI needed to mint NUSD given some COLL amount.
+// NeededGovAmtGivenColl Computes the amount of NIBI needed to mint NUSD given some COLL amount.
 // Args:
 //
 //	collAmt sdk.Int: Amount of COLL given.
@@ -25,7 +25,7 @@ func NeededGovAmtGivenColl(
 	return neededGovAmt, mintableStableAmt
 }
 
-// Computes the amount of COLL needed to mint NUSD given some NIBI amount.
+// NeededCollAmtGivenGov Computes the amount of COLL needed to mint NUSD given some NIBI amount.
 // Args:
 //
 //	govAmt sdk.Int: Amount of  NIBI given.
@@ -36,7 +36,7 @@ func NeededGovAmtGivenColl(
 //	mintableStableAmt sdk.Int: Amount of NUSD that can be minted.
 func NeededCollAmtGivenGov(
 	govAmt sdkmath.Int, priceGov sdk.Dec, priceColl sdk.Dec,
-	collRatio sdk.Dec) (neededCollAmt sdk.Int, mintableStableAmt sdk.Int) {
+	collRatio sdk.Dec) (neededCollAmt sdkmath.Int, mintableStableAmt sdkmath.Int) {
 	govUSD := sdk.NewDecFromInt(govAmt).Mul(priceGov)
 	govRatio := sdk.NewDec(1).Sub(collRatio)
 	neededCollUSD := collRatio.Quo(govRatio).Mul(govUSD)

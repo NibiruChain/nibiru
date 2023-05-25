@@ -1,10 +1,11 @@
 package binding_test
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"encoding/json"
 	"testing"
 	"time"
+
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/errors"

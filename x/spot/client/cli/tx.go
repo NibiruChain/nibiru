@@ -1,11 +1,12 @@
 package cli
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
+
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"

@@ -1,10 +1,11 @@
 package keeper
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"errors"
 	"fmt"
 	"time"
+
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"

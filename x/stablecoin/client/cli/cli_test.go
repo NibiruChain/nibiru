@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -98,7 +100,7 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 		name string
 		args []string
 
-		expectedStable sdk.Int
+		expectedStable sdkmath.Int
 		expectErr      bool
 		respType       proto.Message
 		expectedCode   uint32
@@ -175,9 +177,9 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 		name string
 		args []string
 
-		expectedStable   sdk.Int
-		expectedColl     sdk.Int
-		expectedGov      sdk.Int
+		expectedStable   sdkmath.Int
+		expectedColl     sdkmath.Int
+		expectedGov      sdkmath.Int
 		expectedTreasury sdk.Coins
 		expectedEf       sdk.Coins
 		expectErr        bool

@@ -1,8 +1,9 @@
 package types
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"testing"
+
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -370,7 +371,7 @@ func TestUpdateLiquidityInvalidInput(t *testing.T) {
 	for _, tc := range []struct {
 		name         string
 		pool         Pool
-		numShares    sdk.Int
+		numShares    sdkmath.Int
 		newLiquidity sdk.Coins
 	}{
 		{

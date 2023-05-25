@@ -1,8 +1,9 @@
 package keeper
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"sort"
+
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 

@@ -15,7 +15,7 @@ type StakingKeeper interface {
 	Jail(sdk.Context, sdk.ConsAddress)                                         // jail a validator
 	ValidatorsPowerStoreIterator(ctx sdk.Context) sdk.Iterator                 // an iterator for the current validator power store
 	MaxValidators(sdk.Context) uint32                                          // MaxValidators returns the maximum amount of bonded validators
-	PowerReduction(ctx sdk.Context) (res sdk.Int)
+	PowerReduction(ctx sdk.Context) (res sdkmath.Int)
 }
 
 // DistributionKeeper is expected keeper for distribution module

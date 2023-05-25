@@ -61,7 +61,7 @@ type Market struct {
 	BaseReserve  sdk.Dec       `json:"base_reserve"`
 	QuoteReserve sdk.Dec       `json:"quote_reserve"`
 	SqrtDepth    sdk.Dec       `json:"sqrt_depth"`
-	Depth        sdk.Int       `json:"depth"`
+	Depth        sdkmath.Int   `json:"depth"`
 	TotalLong    sdk.Dec       `json:"total_long"`
 	TotalShort   sdk.Dec       `json:"total_short"`
 	PegMult      sdk.Dec       `json:"peg_mult"`

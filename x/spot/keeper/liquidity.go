@@ -3,8 +3,9 @@ package keeper
 // Everything to do with total liquidity in the spot and liquidity of specific coin denoms.
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"fmt"
+
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"

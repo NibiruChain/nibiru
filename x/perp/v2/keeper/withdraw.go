@@ -79,7 +79,7 @@ func (k Keeper) Withdraw(
 }
 
 // IncrementPrepaidBadDebt increases the bad debt for the provided denom.
-func (k Keeper) IncrementPrepaidBadDebt(ctx sdk.Context, market types.Market, amount sdk.Int) {
+func (k Keeper) IncrementPrepaidBadDebt(ctx sdk.Context, market types.Market, amount sdkmath.Int) {
 	market.PrepaidBadDebt.Amount = market.PrepaidBadDebt.Amount.Add(amount)
 	k.Markets.Insert(ctx, market.Pair, market)
 }

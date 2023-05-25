@@ -1,9 +1,10 @@
 package keeper_test
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"fmt"
 	"testing"
+
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
