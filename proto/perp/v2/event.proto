@@ -11,78 +11,31 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/NibiruChain/nibiru/x/perp/v2/types";
 
 // Emitted when a position changes.
-// TODO: Is there a way to split this into different events without creating too
-// much complexity?
 message PositionChangedEvent {
-  // identifier of the corresponding virtual pool for the position
-  string pair = 1 [
-    (gogoproto.customtype) =
-        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
-    (gogoproto.nullable) = false
-  ];
+  Position final_position = 1 [ (gogoproto.nullable) = false ];
 
-  // owner of the position.
-  string trader_address = 2;
-
-  // Amount of collateral (quote units) backing the position after the change.
-  cosmos.base.v1beta1.Coin margin = 3 [
-    (gogoproto.moretags) = "yaml:\"margin\"",
-    (gogoproto.nullable) = false
-  ];
-
-  // Position notional (quote units) after the change. In general,
+  // Position notional (in quote units) after the change. In general,
   // 'notional = baseAmount * priceQuotePerBase', where size is the baseAmount.
-  string position_notional = 4 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-
-  // Exchanged size is the magnitude of the change to position size (base
-  // units). The size is a signed quantity expressing how much exposure a
-  // position has in base units of the pair.
-  string exchanged_size = 5 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-
-  /**
-   * Exchanged notional is the value of the exchanged size in quote units.
-   * exchangedNotional = posBefore.OpenNotional + (direction * realizedPnl),
-   * where 'posBefore' is the position before the change, and
-   * direction is 1 if posBefore.Size > 0 or -1 if posBefore.Size < 0,
-   */
-  string exchanged_notional = 6 [
+  string position_notional = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
   // Transaction fee paid. A "taker" fee.
-  cosmos.base.v1beta1.Coin transaction_fee = 7 [
+  cosmos.base.v1beta1.Coin transaction_fee = 3 [
     (gogoproto.moretags) = "yaml:\"transaction_fee\"",
     (gogoproto.nullable) = false
   ];
 
-  // Position size after the change.
-  string position_size = 8 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-
   // realize profits and losses after the change
-  string realized_pnl = 9 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-
-  // unrealized profits and losses after the change
-  string unrealized_pnl_after = 10 [
+  string realized_pnl = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
   // Amount of bad debt cleared by the PerpEF during the change.
   // Bad debt is negative net margin past the liquidation point of a position.
-  cosmos.base.v1beta1.Coin bad_debt = 11 [ (gogoproto.nullable) = false ];
+  cosmos.base.v1beta1.Coin bad_debt = 5 [ (gogoproto.nullable) = false ];
 
   /* A funding payment made or received by the trader on the current position.
   'fundingPayment' is positive if 'owner' is the sender and negative if 'owner'
@@ -90,16 +43,13 @@ message PositionChangedEvent {
   Funding payments act to converge the mark price (vPrice) and index price
   (average price on major exchanges).
     */
-  string funding_payment = 12 [
+  string funding_payment = 6 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
   // The block number at which this position was changed.
-  int64 block_height = 13;
-
-  // The block time in unix milliseconds at which this position was changed.
-  int64 block_time_ms = 14;
+  int64 block_height = 7;
 }
 
 // Emitted when a position is liquidated.
@@ -284,4 +234,15 @@ message LiquidationFailedEvent {
   }
   // Reason for the liquidation failure.
   LiquidationFailedReason reason = 4;
+}
+
+// This event is emitted when the amm is updated, which can be triggered by
+// the following events:
+//
+// - swap
+// - edit price multiplier
+// - edit depth
+message AmmUpdatedEvent {
+  // the final state of the AMM
+  AMM final_amm = 1 [ (gogoproto.nullable) = false ];
 }
