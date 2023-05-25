@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -14,8 +15,8 @@ import (
 //	neededGovAmt sdk.Int: Amount of NIBI needed.
 //	mintableStableAmt sdk.Int: Amount of NUSD that can be minted.
 func NeededGovAmtGivenColl(
-	collAmt sdk.Int, priceGov sdk.Dec, priceColl sdk.Dec,
-	collRatio sdk.Dec) (neededGovAmt sdk.Int, mintableStableAmt sdk.Int) {
+	collAmt sdkmath.Int, priceGov sdk.Dec, priceColl sdk.Dec,
+	collRatio sdk.Dec) (neededGovAmt sdkmath.Int, mintableStableAmt sdkmath.Int) {
 	collUSD := sdk.NewDecFromInt(collAmt).Mul(priceColl)
 	neededGovUSD := (collUSD.Quo(collRatio)).Sub(collUSD)
 
@@ -34,7 +35,7 @@ func NeededGovAmtGivenColl(
 //	neededCollAmt sdk.Int: Amount of COLL needed.
 //	mintableStableAmt sdk.Int: Amount of NUSD that can be minted.
 func NeededCollAmtGivenGov(
-	govAmt sdk.Int, priceGov sdk.Dec, priceColl sdk.Dec,
+	govAmt sdkmath.Int, priceGov sdk.Dec, priceColl sdk.Dec,
 	collRatio sdk.Dec) (neededCollAmt sdk.Int, mintableStableAmt sdk.Int) {
 	govUSD := sdk.NewDecFromInt(govAmt).Mul(priceGov)
 	govRatio := sdk.NewDec(1).Sub(collRatio)

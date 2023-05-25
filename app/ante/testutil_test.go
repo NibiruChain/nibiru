@@ -60,15 +60,14 @@ func (suite *AnteTestSuite) SetupTest() {
 
 	anteDecorators := []sdk.AnteDecorator{
 		ante.NewSetUpContextDecorator(),
-		ante.NewRejectExtensionOptionsDecorator(),
+		ante.NewExtensionOptionsDecorator(nil),
 		ante.NewValidateBasicDecorator(),
-		ante.NewMempoolFeeDecorator(),
 		ante.NewValidateBasicDecorator(),
 		ante.NewTxTimeoutHeightDecorator(),
 		ante.NewValidateMemoDecorator(suite.app.AccountKeeper),
 		feeante.NewPostPriceFixedPriceDecorator(),
 		ante.NewConsumeGasForTxSizeDecorator(suite.app.AccountKeeper),
-		ante.NewDeductFeeDecorator(suite.app.AccountKeeper, suite.app.BankKeeper, suite.app.FeeGrantKeeper), // Replace fee ante from cosmos auth with a custom one.
+		ante.NewDeductFeeDecorator(suite.app.AccountKeeper, suite.app.BankKeeper, suite.app.FeeGrantKeeper, nil), // Replace fee ante from cosmos auth with a custom one.
 
 		// SetPubKeyDecorator must be called before all signature verification decorators
 		ante.NewSetPubKeyDecorator(suite.app.AccountKeeper),
@@ -76,7 +75,7 @@ func (suite *AnteTestSuite) SetupTest() {
 		ante.NewSigGasConsumeDecorator(suite.app.AccountKeeper, ante.DefaultSigVerificationGasConsumer),
 		ante.NewSigVerificationDecorator(suite.app.AccountKeeper, encodingConfig.TxConfig.SignModeHandler()),
 		ante.NewIncrementSequenceDecorator(suite.app.AccountKeeper),
-		ibcante.NewAnteDecorator(suite.app.GetIBCKeeper()),
+		ibcante.NewRedundantRelayDecorator(suite.app.GetIBCKeeper()),
 	}
 
 	suite.anteHandler = sdk.ChainAnteDecorators(anteDecorators...)

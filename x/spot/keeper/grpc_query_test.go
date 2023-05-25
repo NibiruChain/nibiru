@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -677,7 +678,7 @@ func TestQueryEstimateJoinExactAmountIn(t *testing.T) {
 		name                  string
 		existingPool          types.Pool
 		tokensIn              sdk.Coins
-		expectedPoolSharesOut sdk.Int
+		expectedPoolSharesOut sdkmath.Int
 		expectedRemCoins      sdk.Coins
 	}{
 		{
@@ -744,7 +745,7 @@ func TestQueryEstimateExitExactAmountIn(t *testing.T) {
 	tests := []struct {
 		name              string
 		existingPool      types.Pool
-		poolSharesIn      sdk.Int
+		poolSharesIn      sdkmath.Int
 		expectedTokensOut sdk.Coins
 	}{
 		{

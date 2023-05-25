@@ -1,6 +1,7 @@
 package cw_struct
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -28,11 +29,11 @@ type BindingMsg struct {
 }
 
 type OpenPosition struct {
-	Pair            string  `json:"pair"`
-	IsLong          bool    `json:"is_long"`
-	QuoteAmount     sdk.Int `json:"quote_amount"`
-	Leverage        sdk.Dec `json:"leverage"`
-	BaseAmountLimit sdk.Int `json:"base_amount_limit"`
+	Pair            string      `json:"pair"`
+	IsLong          bool        `json:"is_long"`
+	QuoteAmount     sdkmath.Int `json:"quote_amount"`
+	Leverage        sdk.Dec     `json:"leverage"`
+	BaseAmountLimit sdkmath.Int `json:"base_amount_limit"`
 }
 
 type ClosePosition struct {
@@ -74,21 +75,21 @@ type DonateToInsuranceFund struct {
 }
 
 type EditOracleParams struct {
-	VotePeriod         *sdk.Int `json:"vote_period,omitempty"`
-	VoteThreshold      *sdk.Dec `json:"vote_threshold,omitempty"`
-	RewardBand         *sdk.Dec `json:"reward_band,omitempty"`
-	Whitelist          []string `json:"whitelist,omitempty"`
-	SlashFraction      *sdk.Dec `json:"slash_fraction,omitempty"`
-	SlashWindow        *sdk.Int `json:"slash_window,omitempty"`
-	MinValidPerWindow  *sdk.Dec `json:"min_valid_per_window,omitempty"`
-	TwapLookbackWindow *sdk.Int `json:"twap_lookback_window,omitempty"`
-	MinVoters          *sdk.Int `json:"min_voters,omitempty"`
-	ValidatorFeeRatio  *sdk.Dec `json:"validator_fee_ratio,omitempty"`
+	VotePeriod         *sdkmath.Int `json:"vote_period,omitempty"`
+	VoteThreshold      *sdk.Dec     `json:"vote_threshold,omitempty"`
+	RewardBand         *sdk.Dec     `json:"reward_band,omitempty"`
+	Whitelist          []string     `json:"whitelist,omitempty"`
+	SlashFraction      *sdk.Dec     `json:"slash_fraction,omitempty"`
+	SlashWindow        *sdkmath.Int `json:"slash_window,omitempty"`
+	MinValidPerWindow  *sdk.Dec     `json:"min_valid_per_window,omitempty"`
+	TwapLookbackWindow *sdkmath.Int `json:"twap_lookback_window,omitempty"`
+	MinVoters          *sdkmath.Int `json:"min_voters,omitempty"`
+	ValidatorFeeRatio  *sdk.Dec     `json:"validator_fee_ratio,omitempty"`
 }
 
 type InsuranceFundWithdraw struct {
-	Amount sdk.Int `json:"amount"`
-	To     string  `json:"to"`
+	Amount sdkmath.Int `json:"amount"`
+	To     string      `json:"to"`
 }
 
 type SetMarketEnabled struct {
@@ -133,5 +134,5 @@ type MarketParams struct {
 	// specifies the interval on which the funding rate is updated
 	FundingRateEpochId string `json:"funding_rate_epoch_id,omitempty"`
 	// amount of time to look back for TWAP calculations
-	TwapLookbackWindow sdk.Int `json:"twap_lookback_window"`
+	TwapLookbackWindow sdkmath.Int `json:"twap_lookback_window"`
 }

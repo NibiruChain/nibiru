@@ -3,11 +3,12 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	snapshotoptions "github.com/cosmos/cosmos-sdk/snapshots/types"
-	tmcfg "github.com/tendermint/tendermint/config"
 	"io"
 	"os"
 	"path/filepath"
+
+	snapshotoptions "github.com/cosmos/cosmos-sdk/snapshots/types"
+	tmcfg "github.com/tendermint/tendermint/config"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -260,7 +261,7 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		panic(fmt.Errorf("failed to create snapshots directory: %w", err))
 	}
 
-	snapshotDB, err := sdk.NewLevelDB("metadata", snapshotDir)
+	snapshotDB, err := dbm.NewDB("metadata", dbm.GoLevelDBBackend, snapshotDir)
 	if err != nil {
 		panic(err)
 	}

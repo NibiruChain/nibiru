@@ -2,8 +2,9 @@ package keeper
 
 import (
 	"fmt"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"time"
+
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
 	"github.com/NibiruChain/collections"
 

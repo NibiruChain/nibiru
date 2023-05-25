@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -22,7 +23,7 @@ import (
 
 func TestAdmin_WithdrawFromInsuranceFund(t *testing.T) {
 	expectBalance := func(
-		want sdk.Int, t *testing.T, nibiru *app.NibiruApp, ctx sdk.Context,
+		want sdkmath.Int, t *testing.T, nibiru *app.NibiruApp, ctx sdk.Context,
 	) {
 		insuranceFund := nibiru.AccountKeeper.GetModuleAddress(types.PerpEFModuleAccount)
 		balances := nibiru.BankKeeper.GetAllBalances(ctx, insuranceFund)

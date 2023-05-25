@@ -1,6 +1,7 @@
 package action
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/app"
@@ -15,9 +16,9 @@ type msgServerOpenPosition struct {
 	pair              asset.Pair
 	traderAddress     sdk.AccAddress
 	dir               types.Direction
-	quoteAssetAmt     sdk.Int
+	quoteAssetAmt     sdkmath.Int
 	leverage          sdk.Dec
-	baseAssetAmtLimit sdk.Int
+	baseAssetAmtLimit sdkmath.Int
 }
 
 func (m msgServerOpenPosition) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
@@ -40,9 +41,9 @@ func MsgServerOpenPosition(
 	traderAddress sdk.AccAddress,
 	pair asset.Pair,
 	dir types.Direction,
-	quoteAssetAmt sdk.Int,
+	quoteAssetAmt sdkmath.Int,
 	leverage sdk.Dec,
-	baseAssetAmtLimit sdk.Int,
+	baseAssetAmtLimit sdkmath.Int,
 ) action.Action {
 	return msgServerOpenPosition{
 		pair:              pair,
@@ -84,7 +85,7 @@ func MsgServerClosePosition(
 type msgServerAddmargin struct {
 	pair          asset.Pair
 	traderAddress sdk.AccAddress
-	amount        sdk.Int
+	amount        sdkmath.Int
 }
 
 func (m msgServerAddmargin) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
@@ -103,7 +104,7 @@ func (m msgServerAddmargin) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context
 func MsgServerAddMargin(
 	traderAddress sdk.AccAddress,
 	pair asset.Pair,
-	amount sdk.Int,
+	amount sdkmath.Int,
 ) action.Action {
 	return msgServerAddmargin{
 		pair:          pair,
@@ -115,7 +116,7 @@ func MsgServerAddMargin(
 type msgServerRemoveMargin struct {
 	pair          asset.Pair
 	traderAddress sdk.AccAddress
-	amount        sdk.Int
+	amount        sdkmath.Int
 }
 
 func (m msgServerRemoveMargin) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
@@ -134,7 +135,7 @@ func (m msgServerRemoveMargin) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Cont
 func MsgServerRemoveMargin(
 	traderAddress sdk.AccAddress,
 	pair asset.Pair,
-	amount sdk.Int,
+	amount sdkmath.Int,
 ) action.Action {
 	return msgServerRemoveMargin{
 		pair:          pair,
@@ -145,7 +146,7 @@ func MsgServerRemoveMargin(
 
 type msgServerDonateToPerpEf struct {
 	sender sdk.AccAddress
-	amount sdk.Int
+	amount sdkmath.Int
 }
 
 func (m msgServerDonateToPerpEf) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
@@ -161,7 +162,7 @@ func (m msgServerDonateToPerpEf) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Co
 
 func MsgServerDonateToPerpEf(
 	traderAddress sdk.AccAddress,
-	amount sdk.Int,
+	amount sdkmath.Int,
 ) action.Action {
 	return msgServerDonateToPerpEf{
 		sender: traderAddress,

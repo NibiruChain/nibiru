@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"fmt"
 	"testing"
 
@@ -71,7 +72,7 @@ func TestMintAndAllocateInflation(t *testing.T) {
 func TestGetCirculatingSupplyAndInflationRate(t *testing.T) {
 	testCases := []struct {
 		name             string
-		supply           sdk.Int
+		supply           sdkmath.Int
 		malleate         func(nibiruApp *app.NibiruApp, ctx sdk.Context)
 		expInflationRate sdk.Dec
 	}{

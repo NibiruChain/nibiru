@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"testing"
 	"time"
 
@@ -739,7 +740,7 @@ func TestOpenPositionError(t *testing.T) {
 
 		// position arguments
 		side      types.Direction
-		margin    sdk.Int
+		margin    sdkmath.Int
 		leverage  sdk.Dec
 		baseLimit sdk.Dec
 

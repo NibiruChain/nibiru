@@ -3,10 +3,10 @@ package cli
 import (
 	"bufio"
 	"context"
+	sdkmath "cosmossdk.io/math"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/pruning/types"
 	"net/http"
 	"net/url"
 	"os"
@@ -14,6 +14,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/cosmos/cosmos-sdk/pruning/types"
 
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
@@ -71,9 +73,9 @@ type Config struct {
 	Mnemonics        []string                   // custom user-provided validator operator mnemonics
 	BondDenom        string                     // the staking bond denomination
 	MinGasPrices     string                     // the minimum gas prices each validator will accept
-	AccountTokens    sdk.Int                    // the amount of unique validator tokens (e.g. 1000node0)
-	StakingTokens    sdk.Int                    // the amount of tokens each validator has available to stake
-	BondedTokens     sdk.Int                    // the amount of tokens each validator stakes
+	AccountTokens    sdkmath.Int                // the amount of unique validator tokens (e.g. 1000node0)
+	StakingTokens    sdkmath.Int                // the amount of tokens each validator has available to stake
+	BondedTokens     sdkmath.Int                // the amount of tokens each validator stakes
 	StartingTokens   sdk.Coins                  // Additional tokens to be added to the starting block to validators
 	PruningStrategy  string                     // the pruning strategy each validator will have
 	EnableLogging    bool                       // enable Tendermint logging to STDOUT

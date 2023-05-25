@@ -1,6 +1,7 @@
 package types
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -76,7 +77,7 @@ func TestSubtractPoolAssetBalance(t *testing.T) {
 		name          string
 		pool          Pool
 		tokenDenom    string
-		subAmt        sdk.Int
+		subAmt        sdkmath.Int
 		expectedCoins sdk.Coins
 	}{
 		{

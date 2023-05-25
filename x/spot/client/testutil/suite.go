@@ -1,6 +1,7 @@
 package testutil
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"fmt"
 	"testing"
 
@@ -376,8 +377,8 @@ func (s *IntegrationTestSuite) TestNewExitPoolCmd() {
 		expectErr          bool
 		respType           proto.Message
 		expectedCode       uint32
-		expectedunibi      sdk.Int
-		expectedOtherToken sdk.Int
+		expectedunibi      sdkmath.Int
+		expectedOtherToken sdkmath.Int
 	}{
 		{
 			name:               "exit pool from invalid pool",
@@ -490,8 +491,8 @@ func (s *IntegrationTestSuite) TestNewExitStablePoolCmd() {
 		expectErr          bool
 		respType           proto.Message
 		expectedCode       uint32
-		expectedunibi      sdk.Int
-		expectedOtherToken sdk.Int
+		expectedunibi      sdkmath.Int
+		expectedOtherToken sdkmath.Int
 	}{
 		{
 			name:               "exit pool from invalid pool",

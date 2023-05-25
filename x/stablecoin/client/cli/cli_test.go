@@ -51,7 +51,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	stableGen := stabletypes.DefaultGenesis()
 	stableGen.Params.IsCollateralRatioValid = true
 	stableGen.ModuleAccountBalance = sdk.NewCoin(denoms.USDC, sdk.NewInt(10000*common.TO_MICRO))
-	genesisState[stabletypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(stableGen)
+	genesisState[stabletypes.ModuleName] = encodingConfig.Codec.MustMarshalJSON(stableGen)
 
 	oracleGenesis := oracletypes.DefaultGenesisState()
 	oracleGenesis.ExchangeRates = []oracletypes.ExchangeRateTuple{
@@ -60,7 +60,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	}
 	oracleGenesis.Params.VotePeriod = 1_000
 
-	genesisState[oracletypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(oracleGenesis)
+	genesisState[oracletypes.ModuleName] = encodingConfig.Codec.MustMarshalJSON(oracleGenesis)
 
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
 

@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -22,19 +23,19 @@ func (k Keeper) GetSupplyNIBI(
 	return k.BankKeeper.GetSupply(ctx, denoms.NIBI)
 }
 
-func (k Keeper) GetStableMarketCap(ctx sdk.Context) sdk.Int {
+func (k Keeper) GetStableMarketCap(ctx sdk.Context) sdkmath.Int {
 	return k.GetSupplyNUSD(ctx).Amount
 }
 
-func (k Keeper) GetGovMarketCap(ctx sdk.Context) (sdk.Int, error) {
+func (k Keeper) GetGovMarketCap(ctx sdk.Context) (sdkmath.Int, error) {
 	pool, err := k.SpotKeeper.FetchPoolFromPair(ctx, denoms.NIBI, denoms.NUSD)
 	if err != nil {
-		return sdk.Int{}, err
+		return sdkmath.Int{}, err
 	}
 
 	price, err := pool.CalcSpotPrice(denoms.NIBI, denoms.NUSD)
 	if err != nil {
-		return sdk.Int{}, err
+		return sdkmath.Int{}, err
 	}
 
 	nibiSupply := k.GetSupplyNIBI(ctx)

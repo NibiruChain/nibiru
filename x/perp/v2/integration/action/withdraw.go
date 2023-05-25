@@ -1,6 +1,7 @@
 package action
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/app"
@@ -10,7 +11,7 @@ import (
 
 type withdraw struct {
 	Account sdk.AccAddress
-	Amount  sdk.Int
+	Amount  sdkmath.Int
 	Pair    asset.Pair
 }
 
@@ -24,7 +25,7 @@ func (w withdraw) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, b
 	return ctx, err, true
 }
 
-func Withdraw(pair asset.Pair, account sdk.AccAddress, amount sdk.Int) action.Action {
+func Withdraw(pair asset.Pair, account sdk.AccAddress, amount sdkmath.Int) action.Action {
 	return withdraw{
 		Account: account,
 		Amount:  amount,

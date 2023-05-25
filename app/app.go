@@ -3,12 +3,13 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	ibctesting "github.com/cosmos/ibc-go/v6/testing"
-	"github.com/cosmos/ibc-go/v6/testing/types"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+
+	ibctesting "github.com/cosmos/ibc-go/v6/testing"
+	"github.com/cosmos/ibc-go/v6/testing/types"
 
 	ibcmock "github.com/cosmos/ibc-go/v6/testing/mock"
 

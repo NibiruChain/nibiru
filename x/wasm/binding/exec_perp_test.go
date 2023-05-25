@@ -1,6 +1,7 @@
 package binding_test
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"errors"
 	"testing"
 	"time"
@@ -230,7 +231,7 @@ func (s *TestSuitePerpExecutor) DoDepthShiftTest(pair asset.Pair) error {
 }
 
 func (s *TestSuitePerpExecutor) DoInsuranceFundWithdrawTest(
-	amt sdk.Int, to sdk.AccAddress,
+	amt sdkmath.Int, to sdk.AccAddress,
 ) error {
 	cwMsg := &cw_struct.InsuranceFundWithdraw{
 		Amount: amt,

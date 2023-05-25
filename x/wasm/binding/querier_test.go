@@ -1,6 +1,7 @@
 package binding_test
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"encoding/json"
 	"testing"
 	"time"
@@ -86,7 +87,7 @@ type ExampleFields struct {
 	Pair   string
 	Trader sdk.AccAddress
 	Dec    sdk.Dec
-	Int    sdk.Int
+	Int    sdkmath.Int
 	Market cw_struct.Market
 }
 

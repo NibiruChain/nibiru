@@ -1,8 +1,9 @@
 package keeper
 
 import (
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	"testing"
+
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"

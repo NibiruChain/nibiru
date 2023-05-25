@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"errors"
 	"fmt"
 	"time"
@@ -31,7 +32,7 @@ func (k Keeper) OpenPosition(
 	pair asset.Pair,
 	dir types.Direction,
 	traderAddr sdk.AccAddress,
-	quoteAssetAmt sdk.Int,
+	quoteAssetAmt sdkmath.Int,
 	leverage sdk.Dec,
 	baseAmtLimit sdk.Dec,
 ) (positionResp *types.PositionResp, err error) {
@@ -486,7 +487,7 @@ func (k Keeper) closeAndOpenReversePosition(
 //
 // returns:
 // - error: if any of the requirements is not met
-func checkOpenPositionRequirements(market types.Market, quoteAssetAmt sdk.Int, userLeverage sdk.Dec) error {
+func checkOpenPositionRequirements(market types.Market, quoteAssetAmt sdkmath.Int, userLeverage sdk.Dec) error {
 	if !quoteAssetAmt.IsPositive() {
 		return types.ErrInputQuoteAmtNegative
 	}
@@ -610,10 +611,10 @@ func (k Keeper) transferFee(
 	pair asset.Pair,
 	trader sdk.AccAddress,
 	positionNotional sdk.Dec,
-) (fees sdk.Int, err error) {
+) (fees sdkmath.Int, err error) {
 	m, err := k.Markets.Get(ctx, pair)
 	if err != nil {
-		return sdk.Int{}, err
+		return sdkmath.Int{}, err
 	}
 
 	feeToExchangeFeePool := m.ExchangeFeeRatio.Mul(positionNotional).RoundInt()
@@ -629,7 +630,7 @@ func (k Keeper) transferFee(
 				),
 			),
 		); err != nil {
-			return sdk.Int{}, err
+			return sdkmath.Int{}, err
 		}
 	}
 
@@ -646,7 +647,7 @@ func (k Keeper) transferFee(
 				),
 			),
 		); err != nil {
-			return sdk.Int{}, err
+			return sdkmath.Int{}, err
 		}
 	}
 

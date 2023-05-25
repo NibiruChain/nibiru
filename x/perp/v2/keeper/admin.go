@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -37,7 +38,7 @@ Args:
 - to: Recipient address
 */
 func (k admin) WithdrawFromInsuranceFund(
-	ctx sdk.Context, amount sdk.Int, to sdk.AccAddress,
+	ctx sdk.Context, amount sdkmath.Int, to sdk.AccAddress,
 ) (err error) {
 	coinToSend := sdk.NewCoin(denoms.NUSD, amount)
 	if err = k.BankKeeper.SendCoinsFromModuleToAccount(

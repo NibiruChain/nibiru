@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/denoms"
@@ -96,7 +97,7 @@ func (k Keeper) GetProportions(
 
 // GetCirculatingSupply returns the bank supply of the mintDenom excluding the
 // team allocation in the first year
-func (k Keeper) GetCirculatingSupply(ctx sdk.Context, mintDenom string) sdk.Int {
+func (k Keeper) GetCirculatingSupply(ctx sdk.Context, mintDenom string) sdkmath.Int {
 	return k.bankKeeper.GetSupply(ctx, mintDenom).Amount
 }
 

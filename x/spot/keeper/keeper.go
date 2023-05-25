@@ -1,8 +1,10 @@
 package keeper
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"errors"
 	"fmt"
+
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -241,7 +243,7 @@ ret:
 
 	err: returns an error if something errored out
 */
-func (k Keeper) mintPoolShareToAccount(ctx sdk.Context, poolId uint64, recipientAddr sdk.AccAddress, amountPoolShares sdk.Int) (err error) {
+func (k Keeper) mintPoolShareToAccount(ctx sdk.Context, poolId uint64, recipientAddr sdk.AccAddress, amountPoolShares sdkmath.Int) (err error) {
 	newCoins := sdk.Coins{
 		sdk.NewCoin(types.GetPoolShareBaseDenom(poolId), amountPoolShares),
 	}
@@ -466,7 +468,7 @@ func (k Keeper) JoinPool(
 
 	poolAddr := pool.GetAddress()
 
-	var numShares sdk.Int
+	var numShares sdkmath.Int
 	if !shouldSwap || pool.PoolParams.PoolType == types.PoolType_STABLESWAP {
 		numShares, remCoins, err = pool.AddTokensToPool(tokensIn)
 	} else {

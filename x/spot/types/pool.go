@@ -1,10 +1,11 @@
 package types
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"errors"
 	"fmt"
 	"math"
+
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/holiman/uint256"
 
@@ -156,7 +157,7 @@ ret:
   - err: error if any
 */
 func (pool *Pool) AddAllTokensToPool(tokensIn sdk.Coins) (
-	numShares sdk.Int, remCoins sdk.Coins, err error,
+	numShares sdkmath.Int, remCoins sdk.Coins, err error,
 ) {
 	if pool.PoolParams.PoolType == PoolType_STABLESWAP {
 		err = ErrInvalidPoolType
@@ -202,7 +203,7 @@ from the pool and modifies the pool. Accounts for an exit fee, if any, on the po
 args:
   - exitingShares: the number of pool shares to exit from the pool
 */
-func (pool *Pool) ExitPool(exitingShares sdk.Int) (
+func (pool *Pool) ExitPool(exitingShares sdkmath.Int) (
 	exitedCoins sdk.Coins, fees sdk.Coins, err error,
 ) {
 	if exitingShares.GT(pool.TotalShares.Amount) {
@@ -388,12 +389,12 @@ func (pool Pool) getIJforSwap(denomIn, denomOut string) (i int, j int, err error
 	return i, j, nil
 }
 
-func MustSdkIntToUint256(num sdk.Int) *uint256.Int {
+func MustSdkIntToUint256(num sdkmath.Int) *uint256.Int {
 	return uint256.NewInt(uint64(num.Int64()))
 }
 
 // Calculate the amount of token out
-func (pool Pool) Exchange(tokenIn sdk.Coin, tokenOutDenom string) (dy sdk.Int, err error) {
+func (pool Pool) Exchange(tokenIn sdk.Coin, tokenOutDenom string) (dy sdkmath.Int, err error) {
 	_, poolAssetIn, err := pool.getPoolAssetAndIndex(tokenIn.Denom)
 	if err != nil {
 		return
@@ -420,7 +421,7 @@ func (pool Pool) Exchange(tokenIn sdk.Coin, tokenOutDenom string) (dy sdk.Int, e
 // x_1**2 + x1 * (sum' - (A*n**n - 1) * D / (A * n**n)) = D ** (n+1)/(n ** (2 * n) * prod' * A)
 // x_1**2 + b*x_1 = c
 // x_1 = (x_1**2 + c) / (2*x_1 + b - D)
-func (pool Pool) SolveStableswapInvariant(tokenIn sdk.Coin, tokenOutDenom string) (yAmount sdk.Int, err error) {
+func (pool Pool) SolveStableswapInvariant(tokenIn sdk.Coin, tokenOutDenom string) (yAmount sdkmath.Int, err error) {
 	A := pool.getA()
 	D, err := pool.GetD(pool.PoolAssets)
 	if err != nil {

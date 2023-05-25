@@ -1,6 +1,7 @@
 package types
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,7 +14,7 @@ func TestMaximalSharesFromExactRatioJoin(t *testing.T) {
 		poolAssets        []PoolAsset
 		existingShares    int64
 		tokensIn          sdk.Coins
-		expectedNumShares sdk.Int
+		expectedNumShares sdkmath.Int
 		expectedRemCoins  sdk.Coins
 	}{
 		{
@@ -136,7 +137,7 @@ func TestTokensOutFromExactSharesHappyPath(t *testing.T) {
 	for _, tc := range []struct {
 		name              string
 		pool              Pool
-		numSharesIn       sdk.Int
+		numSharesIn       sdkmath.Int
 		expectedTokensOut sdk.Coins
 		expectedFees      sdk.Coins
 	}{
@@ -276,7 +277,7 @@ func TestTokensOutFromExactSharesErrors(t *testing.T) {
 	for _, tc := range []struct {
 		name        string
 		pool        Pool
-		numSharesIn sdk.Int
+		numSharesIn sdkmath.Int
 	}{
 		{
 			name: "zero pool shares",
@@ -321,9 +322,9 @@ func TestUpdateLiquidityHappyPath(t *testing.T) {
 	for _, tc := range []struct {
 		name                  string
 		pool                  Pool
-		numShares             sdk.Int
+		numShares             sdkmath.Int
 		newLiquidity          sdk.Coins
-		expectedNumShares     sdk.Int
+		expectedNumShares     sdkmath.Int
 		expectedNewPoolAssets []PoolAsset
 	}{
 		{
@@ -413,8 +414,8 @@ func TestNumSharesOutStableswap(t *testing.T) {
 		poolAssets        []PoolAsset
 		existingShares    int64
 		tokensIn          sdk.Coins
-		expectedNumShares sdk.Int
-		A                 sdk.Int
+		expectedNumShares sdkmath.Int
+		A                 sdkmath.Int
 		expectedError     error
 	}{
 		{

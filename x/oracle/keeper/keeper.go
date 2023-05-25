@@ -3,8 +3,9 @@ package keeper
 import (
 	"errors"
 	"fmt"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"time"
+
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"

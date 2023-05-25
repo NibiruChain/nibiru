@@ -1,6 +1,7 @@
 package cli
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -300,7 +301,7 @@ Where pool.json contains:
 				return types.ErrInvalidCreatePoolArgs
 			}
 
-			var amplification sdk.Int
+			var amplification sdkmath.Int
 			if poolType == types.PoolType_STABLESWAP {
 				amplification, err = pool.AmplificationInt()
 				if err != nil {

@@ -1,6 +1,7 @@
 package types
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -50,7 +51,7 @@ func (pool Pool) CalcOutAmtGivenIn(tokenIn sdk.Coin, tokenOutDenom string, noFee
 
 	// deduct swapfee on the in asset
 	// delta balanceOut is positive(tokens inside the pool decreases)
-	var tokenAmountOut sdk.Int
+	var tokenAmountOut sdkmath.Int
 	if pool.PoolParams.PoolType == PoolType_STABLESWAP {
 		tokenAmountOut, err = pool.Exchange(sdk.NewCoin(tokenIn.Denom, tokenAmountInAfterFee.TruncateInt()), tokenOutDenom)
 

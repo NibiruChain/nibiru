@@ -1,7 +1,6 @@
 package types
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"encoding/csv"
 	"encoding/json"
 	fmt "fmt"
@@ -9,6 +8,8 @@ import (
 	"os"
 	"strconv"
 	"testing"
+
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
@@ -140,7 +141,7 @@ func TestJoinPoolHappyPath(t *testing.T) {
 		name              string
 		pool              Pool
 		tokensIn          sdk.Coins
-		expectedNumShares sdk.Int
+		expectedNumShares sdkmath.Int
 		expectedRemCoins  sdk.Coins
 		expectedPool      Pool
 	}{
@@ -330,7 +331,7 @@ func TestJoinPoolAllTokens(t *testing.T) {
 		name              string
 		pool              Pool
 		tokensIn          sdk.Coins
-		expectedNumShares sdk.Int
+		expectedNumShares sdkmath.Int
 		expectedRemCoins  sdk.Coins
 		expectedPool      Pool
 	}{
@@ -793,7 +794,7 @@ func TestGetD(t *testing.T) {
 	for _, tc := range []struct {
 		name                   string
 		poolAssets             []PoolAsset
-		amplificationParameter sdk.Int
+		amplificationParameter sdkmath.Int
 		expectedErr            error
 		expectedD              uint64
 	}{
@@ -873,11 +874,11 @@ func TestGetD(t *testing.T) {
 
 type TestCaseDy struct {
 	balance       []uint64
-	amplification sdk.Int
+	amplification sdkmath.Int
 	send          int
 	receive       int
-	dx            sdk.Int
-	expectedDy    sdk.Int
+	dx            sdkmath.Int
+	expectedDy    sdkmath.Int
 }
 
 /*

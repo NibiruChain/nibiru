@@ -1,6 +1,7 @@
 package assertion
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -48,7 +49,7 @@ func Market_LatestCPFShouldBeEqualTo(expectedCPF sdk.Dec) MarketChecker {
 	}
 }
 
-func Market_PrepaidBadDebtShouldBeEqualTo(expectedAmount sdk.Int) MarketChecker {
+func Market_PrepaidBadDebtShouldBeEqualTo(expectedAmount sdkmath.Int) MarketChecker {
 	return func(market types.Market) error {
 		expectedBadDebt := sdk.NewCoin(market.Pair.QuoteDenom(), expectedAmount)
 		if !market.PrepaidBadDebt.Equal(expectedBadDebt) {

@@ -69,7 +69,7 @@ type Market struct {
 	MarkPrice    sdk.Dec       `json:"mark_price"`
 	IndexPrice   string        `json:"index_price"`
 	TwapMark     string        `json:"twap_mark"`
-	BlockNumber  sdk.Int       `json:"block_number"`
+	BlockNumber  sdkmath.Int   `json:"block_number"`
 }
 
 // Converts the JSON market, which comes in from Rust, to its corresponding
@@ -128,9 +128,9 @@ type MarketConfig struct {
 }
 
 type BasePriceRequest struct {
-	Pair       string  `json:"pair"`
-	IsLong     bool    `json:"is_long"`
-	BaseAmount sdk.Int `json:"base_amount"`
+	Pair       string      `json:"pair"`
+	IsLong     bool        `json:"is_long"`
+	BaseAmount sdkmath.Int `json:"base_amount"`
 }
 
 type BasePriceResponse struct {
@@ -145,13 +145,13 @@ type PositionsRequest struct {
 }
 
 type Position struct {
-	TraderAddr   string  `json:"trader_addr"`
-	Pair         string  `json:"pair"`
-	Size         sdk.Dec `json:"size"`
-	Margin       sdk.Dec `json:"margin"`
-	OpenNotional sdk.Dec `json:"open_notional"`
-	LatestCPF    sdk.Dec `json:"latest_cpf"`
-	BlockNumber  sdk.Int `json:"block_number"`
+	TraderAddr   string      `json:"trader_addr"`
+	Pair         string      `json:"pair"`
+	Size         sdk.Dec     `json:"size"`
+	Margin       sdk.Dec     `json:"margin"`
+	OpenNotional sdk.Dec     `json:"open_notional"`
+	LatestCPF    sdk.Dec     `json:"latest_cpf"`
+	BlockNumber  sdkmath.Int `json:"block_number"`
 }
 
 type PositionsResponse struct {

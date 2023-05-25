@@ -1,9 +1,10 @@
 package app
 
 import (
+	"path/filepath"
+
 	"github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
-	"path/filepath"
 
 	ibcmock "github.com/cosmos/ibc-go/v6/testing/mock"
 

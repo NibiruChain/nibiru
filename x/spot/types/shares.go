@@ -24,7 +24,7 @@ ret:
   - err: error if any
 */
 func (pool Pool) numSharesOutFromTokensIn(tokensIn sdk.Coins) (
-	numShares sdk.Int, remCoins sdk.Coins, err error,
+	numShares sdkmath.Int, remCoins sdk.Coins, err error,
 ) {
 	coinShareRatios := make([]sdk.Dec, len(tokensIn))
 	minShareRatio := sdk.MaxSortableDec
@@ -113,7 +113,7 @@ ret:
   - err: error if any
 */
 func (pool Pool) numSharesOutFromTokensInStableSwap(tokensIn sdk.Coins) (
-	numShares sdk.Int, err error,
+	numShares sdkmath.Int, err error,
 ) {
 	tokenSupply := pool.TotalShares.Amount
 
@@ -168,7 +168,7 @@ ret:
   - fees: the fees collected
   - err: error if any
 */
-func (pool Pool) TokensOutFromPoolSharesIn(numSharesIn sdk.Int) (
+func (pool Pool) TokensOutFromPoolSharesIn(numSharesIn sdkmath.Int) (
 	tokensOut sdk.Coins, fees sdk.Coins, err error,
 ) {
 	if numSharesIn.IsZero() {
@@ -202,7 +202,7 @@ func (pool Pool) TokensOutFromPoolSharesIn(numSharesIn sdk.Int) (
 /*
 Compute the minimum number of shares a user need to provide to get at least one u-token
 */
-func (pool Pool) MinSharesInForTokensOut() (minShares sdk.Int) {
+func (pool Pool) MinSharesInForTokensOut() (minShares sdkmath.Int) {
 	poolLiquidity := pool.PoolBalances()
 
 	minShares = sdk.ZeroInt()

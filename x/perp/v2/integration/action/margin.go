@@ -1,6 +1,7 @@
 package action
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/app"
@@ -12,7 +13,7 @@ import (
 func AddMargin(
 	account sdk.AccAddress,
 	pair asset.Pair,
-	margin sdk.Int,
+	margin sdkmath.Int,
 ) action.Action {
 	return &addMarginAction{
 		Account: account,
@@ -24,7 +25,7 @@ func AddMargin(
 type addMarginAction struct {
 	Account sdk.AccAddress
 	Pair    asset.Pair
-	Margin  sdk.Int
+	Margin  sdkmath.Int
 }
 
 func (a addMarginAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
@@ -41,7 +42,7 @@ func (a addMarginAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, e
 func RemoveMargin(
 	account sdk.AccAddress,
 	pair asset.Pair,
-	margin sdk.Int,
+	margin sdkmath.Int,
 ) action.Action {
 	return &removeMarginAction{
 		Account: account,
@@ -53,7 +54,7 @@ func RemoveMargin(
 type removeMarginAction struct {
 	Account sdk.AccAddress
 	Pair    asset.Pair
-	Margin  sdk.Int
+	Margin  sdkmath.Int
 }
 
 func (a removeMarginAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {

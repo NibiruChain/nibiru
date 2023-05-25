@@ -1,9 +1,10 @@
 package keeper
 
 import (
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	"sort"
 	"testing"
+
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
 	"github.com/NibiruChain/collections"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"

@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -72,7 +73,7 @@ func (k Keeper) clearVotesAndPreVotes(ctx sdk.Context, votePeriod uint64) {
 }
 
 // isPassingVoteThreshold ballot is passing the threshold amount of voting power
-func isPassingVoteThreshold(ballots types.ExchangeRateBallots, thresholdVotingPower sdk.Int, minVoters uint64) bool {
+func isPassingVoteThreshold(ballots types.ExchangeRateBallots, thresholdVotingPower sdkmath.Int, minVoters uint64) bool {
 	ballotPower := sdk.NewInt(ballots.Power())
 	if ballotPower.IsZero() {
 		return false
