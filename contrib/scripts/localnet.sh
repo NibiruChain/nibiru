@@ -195,7 +195,18 @@ add_genesis_perp_markets_with_coingecko_prices() {
   if [ -z "$price_btc" ]; then
     return 1
   fi
+
+  check_fail() {
+    if [ $? -eq 0 ]; then
+      echo_success "Command \"$*\" executed successfully."
+    else
+      echo_error "Command \"$*\" failed."
+      exit 1
+    fi 
+  }
+
   nibid add-genesis-perp-market --pair=ubtc:unusd --sqrt-depth=$reserve_amt --price-multiplier=$price_btc
+  check_fail nibid add-genesis-perp-market
 
   price_eth=$(cat tmp_market_prices.json | jq -r '.ethereum.usd')
   price_eth=${price_eth%.*}
@@ -204,6 +215,7 @@ add_genesis_perp_markets_with_coingecko_prices() {
   fi
 
   nibid add-genesis-perp-market --pair=ueth:unusd --sqrt-depth=$reserve_amt --price-multiplier=$price_eth
+  check_fail nibid add-genesis-perp-market
 
   echo 'tmp_market_prices: '
   cat $temp_json_fname | jq .
@@ -215,6 +227,7 @@ if add_genesis_perp_markets_with_coingecko_prices; then
   echo_success "set perp markets with coingecko prices"
 else
   echo_error "failed to set genesis perp markets"
+  exit 1
 fi
 
 # hack for localnet since we don't have a pricefeeder yet

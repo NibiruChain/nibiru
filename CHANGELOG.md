@@ -93,6 +93,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Improvements
 
+* [#xxx](https://github.com/NibiruChain/nibiru/pull/xxx) - fix(localnet.sh): Fix genesis market initialization + add force exits on failure
 * [#1340](https://github.com/NibiruChain/nibiru/pull/1340) - feat(wasm): Enforce x/sudo contract permission checks on the shifter contract + integration tests
 * [#1317](https://github.com/NibiruChain/nibiru/pull/1317) - feat(testutil): Use secp256k1 algo for private key generation in common/testutil.
 * [#1322](https://gitub.com/NibiruChain/nibiru/pull/1322) - build(deps): Bumps github.com/armon/go-metrics from 0.4.0 to 0.4.1.
