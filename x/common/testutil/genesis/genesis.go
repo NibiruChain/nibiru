@@ -1,14 +1,14 @@
 package genesis
 
 import (
+	"github.com/NibiruChain/nibiru/x/common/denoms"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	gov "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
 )
 
 /*

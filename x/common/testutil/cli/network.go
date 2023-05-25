@@ -175,21 +175,21 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 		InterfaceRegistry: encCfg.InterfaceRegistry,
 		AccountRetriever:  authtypes.AccountRetriever{},
 		AppConstructor: func(val Validator) servertypes.Application {
-			return testapp.NewNibiruTestApp(appGenesis)
+			return testapp.NewNibiruTestApp(val.Ctx.Config.RootDir, appGenesis)
 		},
-		GenesisState:  appGenesis,
-		TimeoutCommit: time.Second / 2,
-		ChainID:       "chain-" + tmrand.NewRand().Str(6),
-		NumValidators: 1,
-		BondDenom:     denoms.NIBI,
-		MinGasPrices:  fmt.Sprintf("0.000006%s", denoms.NIBI),
-		AccountTokens: sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
-		StakingTokens: sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),
-		BondedTokens:  sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
+		GenesisState:   appGenesis,
+		TimeoutCommit:  time.Second / 2,
+		ChainID:        "chain-" + tmrand.NewRand().Str(6),
+		NumValidators:  1,
+		BondDenom:      denoms.NIBI,
+		MinGasPrices:   fmt.Sprintf("0.000006%s", denoms.NIBI),
+		AccountTokens:  sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
+		StakingTokens:  sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),
+		BondedTokens:   sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
 		StartingTokens: sdk.NewCoins(
-			sdk.NewCoin(denoms.NUSD, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
-			sdk.NewCoin(denoms.NIBI, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
-			sdk.NewCoin(denoms.USDC, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
+		//sdk.NewCoin(denoms.NUSD, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
+		//sdk.NewCoin(denoms.NIBI, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
+		//sdk.NewCoin(denoms.USDC, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
 		),
 		PruningStrategy: types.PruningOptionNothing,
 		CleanupDir:      true,
@@ -198,7 +198,7 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 	}
 }
 
-// NewNetwork creates a new Network for integration tests.
+// New creates a new Network for integration tests.
 func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 	// only one caller/test can create and use a network at a time
 	l.Log("acquiring test network lock")

@@ -64,9 +64,10 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	genesisState[oracletypes.ModuleName] = encodingConfig.Codec.MustMarshalJSON(oracleGenesis)
 
-	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
+	homeDir := s.T().TempDir()
+	s.cfg = testutilcli.BuildNetworkConfig(homeDir, genesisState)
 
-	network, err := testutilcli.New(s.T(), s.T().TempDir(), s.cfg)
+	network, err := testutilcli.New(s.T(), homeDir, s.cfg)
 	s.Require().NoError(err)
 
 	s.network = network

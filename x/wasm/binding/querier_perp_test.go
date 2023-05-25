@@ -84,7 +84,7 @@ func (s *TestSuitePerpQuerier) SetupSuite() {
 	s.contractDeployer = sender
 
 	genesisState := SetupPerpGenesis()
-	nibiru := testapp.NewNibiruTestApp(genesisState)
+	nibiru := testapp.NewNibiruTestApp(s.T().TempDir(), genesisState)
 	ctx := nibiru.NewContext(false, tmproto.Header{
 		Height:  1,
 		ChainID: "nibiru-wasmnet-1",

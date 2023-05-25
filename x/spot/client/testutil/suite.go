@@ -25,12 +25,13 @@ import (
 type IntegrationTestSuite struct {
 	suite.Suite
 
+	homeDir string
 	cfg     testutilcli.Config
 	network *testutilcli.Network
 }
 
-func NewIntegrationTestSuite(cfg testutilcli.Config) *IntegrationTestSuite {
-	return &IntegrationTestSuite{cfg: cfg}
+func NewIntegrationTestSuite(homeDir string, cfg testutilcli.Config) *IntegrationTestSuite {
+	return &IntegrationTestSuite{homeDir: homeDir, cfg: cfg}
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
@@ -47,7 +48,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	network, err := testutilcli.New(
 		s.T(),
-		s.T().TempDir(),
+		s.homeDir,
 		s.cfg,
 	)
 	s.Require().NoError(err)
