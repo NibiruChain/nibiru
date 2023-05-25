@@ -3,8 +3,10 @@ package keeper
 import (
 	"context"
 
+	"github.com/cosmos/cosmos-sdk/types/errors"
+
+	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/NibiruChain/nibiru/x/oracle/types"
@@ -103,7 +105,7 @@ func (ms msgServer) AggregateExchangeRateVote(goCtx context.Context, msg *types.
 	// Slice of (Pair, ExchangeRate) tuples.
 	exchangeRateTuples, err := types.ParseExchangeRateTuples(msg.ExchangeRates)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, err.Error())
+		return nil, sdkerrors.Wrap(errors.ErrInvalidCoins, err.Error())
 	}
 
 	// Check all pairs are in the vote target

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	sdkerrors "cosmossdk.io/errors"
 	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 var (

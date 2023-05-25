@@ -3,10 +3,12 @@ package ante_test
 import (
 	"testing"
 
+	"github.com/cosmos/cosmos-sdk/types/errors"
+
+	sdkerrors "cosmossdk.io/errors"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
 
@@ -66,7 +68,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 				},
 			},
 			expectedGas: 5402,
-			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than those two messages"),
+			expectedErr: sdkerrors.Wrap(errors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than those two messages"),
 		},
 		{
 			name: "Two messages in a transaction, one of them is an oracle vote message should fail (with MsgAggregateExchangeRatePrevote) permutation 2",
@@ -83,7 +85,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 				},
 			},
 			expectedGas: 5402,
-			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than those two messages"),
+			expectedErr: sdkerrors.Wrap(errors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than those two messages"),
 		},
 		{
 			name: "Two messages in a transaction, one of them is an oracle vote message should fail (with MsgAggregateExchangeRateVote)",
@@ -101,7 +103,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 				},
 			},
 			expectedGas: 5402,
-			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than those two messages"),
+			expectedErr: sdkerrors.Wrap(errors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than those two messages"),
 		},
 		{
 			name: "Two messages in a transaction, one of them is an oracle vote message should fail (with MsgAggregateExchangeRateVote) permutation 2",
@@ -119,7 +121,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 				},
 			},
 			expectedGas: 5402,
-			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than those two messages"),
+			expectedErr: sdkerrors.Wrap(errors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than those two messages"),
 		},
 		{
 			name: "Two messages in a transaction, one is oracle vote, the other oracle pre vote: should work with fixed price",
@@ -178,7 +180,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 				},
 			},
 			expectedGas: 5402,
-			expectedErr: sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "a transaction cannot have more than a single oracle vote and prevote message"),
+			expectedErr: sdkerrors.Wrap(errors.ErrInvalidRequest, "a transaction cannot have more than a single oracle vote and prevote message"),
 		},
 		{
 			name: "Other two messages",
@@ -247,7 +249,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 func (s *AnteTestSuite) ValidateTx(tx signing.Tx, t *testing.T) {
 	memoTx, ok := tx.(sdk.TxWithMemo)
 	if !ok {
-		s.Fail(sdkerrors.Wrap(sdkerrors.ErrTxDecode, "invalid transaction type").Error(), "memoTx: %t", memoTx)
+		s.Fail(sdkerrors.Wrap(errors.ErrTxDecode, "invalid transaction type").Error(), "memoTx: %t", memoTx)
 	}
 
 	params := s.app.AccountKeeper.GetParams(s.ctx)

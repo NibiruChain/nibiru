@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
+	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/suite"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
@@ -54,7 +54,7 @@ func DoCustomBindingQuery(
 			contractRespBz = bz
 		}
 	})(); err != nil {
-		return contractRespBz, errors.Wrapf(
+		return contractRespBz, sdkerrors.Wrapf(
 			err, "contractRespBz: %s", contractRespBz)
 	}
 
@@ -66,7 +66,7 @@ func DoCustomBindingQuery(
 	// Parse the response data into the response pointer
 	err = json.Unmarshal(contractRespBz, responsePointer)
 	if err != nil {
-		return contractRespBz, errors.Wrapf(
+		return contractRespBz, sdkerrors.Wrapf(
 			err, "responsePointer: %s", responsePointer)
 	}
 

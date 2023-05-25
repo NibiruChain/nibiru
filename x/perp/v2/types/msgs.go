@@ -3,8 +3,10 @@ package types
 import (
 	"fmt"
 
+	"github.com/cosmos/cosmos-sdk/types/errors"
+
+	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 var _ sdk.Msg = &MsgRemoveMargin{}
@@ -165,7 +167,7 @@ func (m MsgClosePosition) Type() string  { return "close_position_msg" }
 
 func (m MsgClosePosition) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender address (%s)", err)
+		return sdkerrors.Wrapf(errors.ErrInvalidAddress, "invalid sender address (%s)", err)
 	}
 	if err := m.Pair.Validate(); err != nil {
 		return err
@@ -192,7 +194,7 @@ func (m MsgDonateToEcosystemFund) Type() string  { return "donate_to_ef_msg" }
 
 func (m MsgDonateToEcosystemFund) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender address (%s)", err)
+		return sdkerrors.Wrapf(errors.ErrInvalidAddress, "invalid sender address (%s)", err)
 	}
 	if m.Donation.IsNil() || m.Donation.IsNegative() {
 		return fmt.Errorf("invalid donation amount: %s", m.Donation.String())

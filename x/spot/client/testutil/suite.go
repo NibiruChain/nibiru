@@ -831,7 +831,7 @@ func (s *IntegrationTestSuite) TestSwapStableAssets() {
 /***************************** Convenience Methods ****************************/
 
 /*
-Adds tokens from val[0] to a recipient address.
+FundAccount Adds tokens from val[0] to a recipient address.
 
 args:
   - recipient: the recipient address
@@ -855,7 +855,7 @@ func (s *IntegrationTestSuite) FundAccount(recipient sdk.Address, tokens sdk.Coi
 }
 
 /*
-Creates a new account and returns the address.
+NewAccount Creates a new account and returns the address.
 
 args:
   - uid: a unique identifier to ensure duplicate accounts are not created
