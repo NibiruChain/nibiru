@@ -81,7 +81,10 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	genesisState[perpv2types.ModuleName] = encodingConfig.Codec.MustMarshalJSON(perpv2Gen)
 
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
-	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
+	network, err := testutilcli.New(s.T(), s.T().TempDir(), s.cfg)
+	s.Require().NoError(err)
+
+	s.network = network
 	s.Require().NoError(s.network.WaitForNextBlock())
 }
 

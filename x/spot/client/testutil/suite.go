@@ -45,8 +45,15 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.T().Log("setting up integration test suite")
 
-	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
-	_, err := s.network.WaitForHeight(1)
+	network, err := testutilcli.New(
+		s.T(),
+		s.T().TempDir(),
+		s.cfg,
+	)
+	s.Require().NoError(err)
+
+	s.network = network
+	_, err = s.network.WaitForHeight(1)
 	s.NoError(err)
 }
 

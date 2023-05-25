@@ -71,7 +71,14 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.cfg = testutilcli.BuildNetworkConfig(genState)
 	s.cfg.NumValidators = 1
 	s.cfg.Mnemonics = []string{"satisfy december text daring wheat vanish save viable holiday rural vessel shuffle dice skate promote fade badge federal sail during lend fever balance give"}
-	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
+	network, err := testutilcli.New(
+		s.T(),
+		s.T().TempDir(),
+		s.cfg,
+	)
+	s.Require().NoError(err)
+	s.network = network
+
 	s.NoError(s.network.WaitForNextBlock())
 
 	val := s.network.Validators[0]

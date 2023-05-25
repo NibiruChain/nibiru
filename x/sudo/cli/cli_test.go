@@ -111,7 +111,10 @@ func (s *IntegrationSuite) SetupSuite() {
 		passphrase: "secure-password",
 	}
 	s.cfg = testutilcli.BuildNetworkConfig(genState)
-	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
+	network, err := testutilcli.New(s.T(), s.T().TempDir(), s.cfg)
+	s.Require().NoError(err)
+
+	s.network = network
 	s.FundRoot(s.root)
 	s.AddRootToKeyring(s.root)
 }
