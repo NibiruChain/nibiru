@@ -73,20 +73,13 @@ func (k Keeper) AddMargin(
 
 	if err = ctx.EventManager().EmitTypedEvent(
 		&types.PositionChangedEvent{
-			Pair:               pair,
-			TraderAddress:      traderAddr.String(),
-			Margin:             sdk.NewCoin(pair.QuoteDenom(), position.Margin.RoundInt()),
-			PositionNotional:   positionNotional,
-			ExchangedNotional:  sdk.ZeroDec(),                                 // always zero when adding margin
-			ExchangedSize:      sdk.ZeroDec(),                                 // always zero when adding margin
-			TransactionFee:     sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
-			PositionSize:       position.Size_,
-			RealizedPnl:        sdk.ZeroDec(), // always zero when adding margin
-			UnrealizedPnlAfter: UnrealizedPnl(position, positionNotional),
-			BadDebt:            sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
-			FundingPayment:     fundingPayment,
-			BlockHeight:        ctx.BlockHeight(),
-			BlockTimeMs:        ctx.BlockTime().UnixMilli(),
+			FinalPosition:    position,
+			PositionNotional: positionNotional,
+			TransactionFee:   sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
+			RealizedPnl:      sdk.ZeroDec(),                                 // always zero when adding margin
+			BadDebt:          sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
+			FundingPayment:   fundingPayment,
+			BlockHeight:      ctx.BlockHeight(),
 		},
 	); err != nil {
 		return nil, err
@@ -178,20 +171,13 @@ func (k Keeper) RemoveMargin(
 
 	if err = ctx.EventManager().EmitTypedEvent(
 		&types.PositionChangedEvent{
-			Pair:               pair,
-			TraderAddress:      traderAddr.String(),
-			Margin:             sdk.NewCoin(pair.QuoteDenom(), position.Margin.RoundInt()),
-			PositionNotional:   spotNotional,
-			ExchangedNotional:  sdk.ZeroDec(),                                 // always zero when removing margin
-			ExchangedSize:      sdk.ZeroDec(),                                 // always zero when removing margin
-			TransactionFee:     sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when removing margin
-			PositionSize:       position.Size_,
-			RealizedPnl:        sdk.ZeroDec(), // always zero when removing margin
-			UnrealizedPnlAfter: UnrealizedPnl(position, spotNotional),
-			BadDebt:            sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when removing margin
-			FundingPayment:     fundingPayment,
-			BlockHeight:        ctx.BlockHeight(),
-			BlockTimeMs:        ctx.BlockTime().UnixMilli(),
+			FinalPosition:    position,
+			PositionNotional: spotNotional,
+			TransactionFee:   sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when removing margin
+			RealizedPnl:      sdk.ZeroDec(),                                 // always zero when removing margin
+			BadDebt:          sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when removing margin
+			FundingPayment:   fundingPayment,
+			BlockHeight:      ctx.BlockHeight(),
 		},
 	); err != nil {
 		return nil, err
