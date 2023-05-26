@@ -3,6 +3,8 @@ package types_test
 import (
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -231,7 +233,7 @@ func TestRepegCost(t *testing.T) {
 		amm                types.AMM
 		newPriceMultiplier sdk.Dec
 
-		expectedCost sdk.Int
+		expectedCost sdkmath.Int
 		shouldErr    bool
 	}{
 		{
@@ -418,7 +420,7 @@ func TestCalcUpdateSwapInvariantCost(t *testing.T) {
 		amm              types.AMM
 		newSwapInvariant sdk.Dec
 
-		expectedCost sdk.Int
+		expectedCost sdkmath.Int
 		expectedErr  error
 	}{
 		{

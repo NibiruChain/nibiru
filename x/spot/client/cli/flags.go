@@ -3,6 +3,8 @@ package cli
 import (
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	flag "github.com/spf13/pflag"
 
@@ -74,10 +76,10 @@ func FlagSetSwapAssets() *flag.FlagSet {
 	return fs
 }
 
-func (cpi createPoolInputs) AmplificationInt() (sdk.Int, error) {
+func (cpi createPoolInputs) AmplificationInt() (sdkmath.Int, error) {
 	amplificationInt, ok := sdk.NewIntFromString(cpi.Amplification)
 	if !ok {
-		return sdk.Int{}, fmt.Errorf(
+		return sdkmath.Int{}, fmt.Errorf(
 			"%w: %v", types.ErrAmplificationIntable, cpi.Amplification)
 	}
 	return amplificationInt, nil

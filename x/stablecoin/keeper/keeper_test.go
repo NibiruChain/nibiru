@@ -57,15 +57,3 @@ func TestGetAndSetParams(t *testing.T) {
 		})
 	}
 }
-
-func TestGetAndSetParams_Errors(t *testing.T) {
-	t.Run("Calling Get without setting causes a panic", func(t *testing.T) {
-		nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(false)
-		stableKeeper := nibiruApp.StablecoinKeeper
-
-		require.Panics(
-			t,
-			func() { stableKeeper.GetParams(ctx) },
-		)
-	})
-}

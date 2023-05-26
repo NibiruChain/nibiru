@@ -3,6 +3,8 @@ package keeper_test
 import (
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
@@ -285,7 +287,7 @@ func TestNewPool(t *testing.T) {
 			},
 		},
 		TotalWeight: sdk.NewInt(2 << 30),
-		TotalShares: sdk.NewCoin("nibiru/pool/1", sdk.NewIntWithDecimal(100, 18)),
+		TotalShares: sdk.NewCoin("nibiru/pool/1", sdkmath.NewIntWithDecimal(100, 18)),
 	}, retrievedPool)
 }
 

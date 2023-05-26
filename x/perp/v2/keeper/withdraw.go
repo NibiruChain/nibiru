@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
@@ -33,7 +34,7 @@ func (k Keeper) Withdraw(
 	ctx sdk.Context,
 	market types.Market,
 	receiver sdk.AccAddress,
-	amountToWithdraw sdk.Int,
+	amountToWithdraw sdkmath.Int,
 ) (err error) {
 	if !amountToWithdraw.IsPositive() {
 		return nil
@@ -78,7 +79,7 @@ func (k Keeper) Withdraw(
 }
 
 // IncrementPrepaidBadDebt increases the bad debt for the provided denom.
-func (k Keeper) IncrementPrepaidBadDebt(ctx sdk.Context, market types.Market, amount sdk.Int) {
+func (k Keeper) IncrementPrepaidBadDebt(ctx sdk.Context, market types.Market, amount sdkmath.Int) {
 	market.PrepaidBadDebt.Amount = market.PrepaidBadDebt.Amount.Add(amount)
 	k.Markets.Insert(ctx, market.Pair, market)
 }
@@ -90,7 +91,7 @@ func (k Keeper) ZeroPrepaidBadDebt(ctx sdk.Context, market types.Market) {
 }
 
 // DecrementPrepaidBadDebt decrements the amount of bad debt prepaid by denom.
-func (k Keeper) DecrementPrepaidBadDebt(ctx sdk.Context, market types.Market, amount sdk.Int) {
+func (k Keeper) DecrementPrepaidBadDebt(ctx sdk.Context, market types.Market, amount sdkmath.Int) {
 	market.PrepaidBadDebt.Amount = market.PrepaidBadDebt.Amount.Sub(amount)
 	k.Markets.Insert(ctx, market.Pair, market)
 }
@@ -103,7 +104,7 @@ vault contains, so we "credit" ourselves with prepaid bad debt.
 then, when bad debt is actually realized (by closing underwater positions), we
 can consume the credit we have built before withdrawing more from the ecosystem fund.
 */
-func (k Keeper) realizeBadDebt(ctx sdk.Context, market types.Market, badDebtToRealize sdk.Int) (
+func (k Keeper) realizeBadDebt(ctx sdk.Context, market types.Market, badDebtToRealize sdkmath.Int) (
 	err error,
 ) {
 	if market.PrepaidBadDebt.Amount.GTE(badDebtToRealize) {

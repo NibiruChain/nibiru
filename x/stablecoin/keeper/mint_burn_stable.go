@@ -8,8 +8,8 @@ package keeper
 import (
 	"context"
 
+	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -100,10 +100,10 @@ func (k Keeper) calcNeededGovAndFees(
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
 
-	neededGovUSD := stable.Amount.ToDec().Mul(govRatio)
+	neededGovUSD := sdk.NewDecFromInt(stable.Amount).Mul(govRatio)
 	neededGovAmt := neededGovUSD.Quo(priceGov).TruncateInt()
 	neededGov := sdk.NewCoin(denoms.NIBI, neededGovAmt)
-	govFeeAmt := neededGovAmt.ToDec().Mul(feeRatio).RoundInt()
+	govFeeAmt := sdk.NewDecFromInt(neededGovAmt).Mul(feeRatio).RoundInt()
 	govFee := sdk.NewCoin(denoms.NIBI, govFeeAmt)
 
 	return neededGov, govFee, nil
@@ -122,10 +122,10 @@ func (k Keeper) calcNeededCollateralAndFees(
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
 
-	neededCollUSD := stable.Amount.ToDec().Mul(collRatio)
+	neededCollUSD := sdk.NewDecFromInt(stable.Amount).Mul(collRatio)
 	neededCollAmt := neededCollUSD.Quo(priceColl).TruncateInt()
 	neededColl := sdk.NewCoin(denoms.USDC, neededCollAmt)
-	collFeeAmt := neededCollAmt.ToDec().Mul(feeRatio).RoundInt()
+	collFeeAmt := sdk.NewDecFromInt(neededCollAmt).Mul(feeRatio).RoundInt()
 	collFee := sdk.NewCoin(denoms.USDC, collFeeAmt)
 
 	return neededColl, collFee, nil
@@ -251,7 +251,7 @@ func (k Keeper) splitAndSendFeesToEfAndTreasury(
 	efCoins := sdk.Coins{}
 	treasuryCoins := sdk.Coins{}
 	for _, c := range coins {
-		amountEf := c.Amount.ToDec().Mul(efFeeRatio).TruncateInt()
+		amountEf := sdk.NewDecFromInt(c.Amount).Mul(efFeeRatio).TruncateInt()
 		amountTreasury := c.Amount.Sub(amountEf)
 
 		if c.Denom == denoms.NIBI {

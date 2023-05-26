@@ -11,7 +11,7 @@ import (
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	"github.com/cosmos/cosmos-sdk/x/mint"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
@@ -108,6 +108,6 @@ func (GovModule) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 
 func NewGovModuleBasic(proposalHandlers ...govclient.ProposalHandler) GovModule {
 	return GovModule{
-		gov.NewAppModuleBasic(proposalHandlers...),
+		gov.NewAppModuleBasic(proposalHandlers),
 	}
 }

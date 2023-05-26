@@ -4,10 +4,13 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+
+	"github.com/NibiruChain/nibiru/x/common/denoms"
+
+	gov "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
 )
 
 /*
@@ -18,15 +21,15 @@ identifier strings to raw json messages.
 */
 func NewTestGenesisState() app.GenesisState {
 	encodingConfig := app.MakeTestEncodingConfig()
-	codec := encodingConfig.Marshaler
+	codec := encodingConfig.Codec
 	genState := app.NewDefaultGenesisState(codec)
 
 	// Set short voting period to allow fast gov proposals in tests
 	var govGenState govtypes.GenesisState
-	codec.MustUnmarshalJSON(genState[govtypes.ModuleName], &govGenState)
-	govGenState.VotingParams.VotingPeriod = time.Second * 20
+	codec.MustUnmarshalJSON(genState[gov.ModuleName], &govGenState)
+	*govGenState.VotingParams.VotingPeriod = time.Second * 20
 	govGenState.DepositParams.MinDeposit = sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 1_000_000)) // min deposit of 1 NIBI
-	genState[govtypes.ModuleName] = codec.MustMarshalJSON(&govGenState)
+	genState[gov.ModuleName] = codec.MustMarshalJSON(&govGenState)
 
 	return genState
 }

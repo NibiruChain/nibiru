@@ -146,10 +146,10 @@ func WhitelistGenesisAssets(state app.GenesisState, assets []string) app.Genesis
 	jsonState := state[types.ModuleName]
 
 	var genesis types.GenesisState
-	encConfig.Marshaler.MustUnmarshalJSON(jsonState, &genesis)
+	encConfig.Codec.MustUnmarshalJSON(jsonState, &genesis)
 	genesis.Params.WhitelistedAsset = assets
 
-	json, _ := encConfig.Marshaler.MarshalJSON(&genesis)
+	json, _ := encConfig.Codec.MarshalJSON(&genesis)
 	state[types.ModuleName] = json
 
 	return state
@@ -174,12 +174,12 @@ func ExtractPoolIDFromCreatePoolResponse(codec codec.Codec, out testutil.BufferW
 		return 0, err
 	}
 
-	if len(respData.Data) < 1 {
+	if len(respData.MsgResponses) < 1 {
 		return 0, fmt.Errorf("invalid response")
 	}
 
 	var createPoolResponse types.MsgCreatePoolResponse
-	err = codec.Unmarshal(respData.Data[0].Data, &createPoolResponse)
+	err = codec.Unmarshal(respData.MsgResponses[0].Value, &createPoolResponse)
 	if err != nil {
 		return 0, err
 	}

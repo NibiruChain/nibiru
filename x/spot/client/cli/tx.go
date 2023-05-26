@@ -6,6 +6,8 @@ import (
 	"os"
 	"strings"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -300,7 +302,7 @@ Where pool.json contains:
 				return types.ErrInvalidCreatePoolArgs
 			}
 
-			var amplification sdk.Int
+			var amplification sdkmath.Int
 			if poolType == types.PoolType_STABLESWAP {
 				amplification, err = pool.AmplificationInt()
 				if err != nil {

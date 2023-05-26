@@ -148,7 +148,7 @@ func TestCalcOutAmtGivenIn(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.Equal(t, tc.expectedTokenOut, tokenOut)
-				require.Equal(t, tc.expectedFee, fee)
+				require.True(t, tc.expectedFee.Equal(fee))
 			}
 		})
 	}

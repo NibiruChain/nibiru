@@ -3,6 +3,7 @@ package ante
 import (
 	"fmt"
 
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -26,6 +27,10 @@ func (g *fixedGasMeter) GasConsumedToLimit() types.Gas {
 }
 
 func (g *fixedGasMeter) Limit() types.Gas {
+	return g.consumed
+}
+
+func (g *fixedGasMeter) GasRemaining() storetypes.Gas {
 	return g.consumed
 }
 

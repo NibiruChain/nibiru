@@ -3,6 +3,8 @@ package keeper_test
 import (
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
@@ -677,7 +679,7 @@ func TestQueryEstimateJoinExactAmountIn(t *testing.T) {
 		name                  string
 		existingPool          types.Pool
 		tokensIn              sdk.Coins
-		expectedPoolSharesOut sdk.Int
+		expectedPoolSharesOut sdkmath.Int
 		expectedRemCoins      sdk.Coins
 	}{
 		{
@@ -744,7 +746,7 @@ func TestQueryEstimateExitExactAmountIn(t *testing.T) {
 	tests := []struct {
 		name              string
 		existingPool      types.Pool
-		poolSharesIn      sdk.Int
+		poolSharesIn      sdkmath.Int
 		expectedTokensOut sdk.Coins
 	}{
 		{

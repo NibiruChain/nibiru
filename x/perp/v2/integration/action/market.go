@@ -1,6 +1,7 @@
 package action
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/collections"
@@ -56,7 +57,7 @@ func CreateCustomMarket(pair asset.Pair, marketModifiers ...marketModifier) acti
 
 type marketModifier func(market *types.Market, amm *types.AMM)
 
-func WithPrepaidBadDebt(amount sdk.Int) marketModifier {
+func WithPrepaidBadDebt(amount sdkmath.Int) marketModifier {
 	return func(market *types.Market, amm *types.AMM) {
 		market.PrepaidBadDebt = sdk.NewCoin(market.Pair.QuoteDenom(), amount)
 	}

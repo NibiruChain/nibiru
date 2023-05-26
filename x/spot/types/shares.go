@@ -3,6 +3,7 @@ package types
 import (
 	"errors"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -23,7 +24,7 @@ ret:
   - err: error if any
 */
 func (pool Pool) numSharesOutFromTokensIn(tokensIn sdk.Coins) (
-	numShares sdk.Int, remCoins sdk.Coins, err error,
+	numShares sdkmath.Int, remCoins sdk.Coins, err error,
 ) {
 	coinShareRatios := make([]sdk.Dec, len(tokensIn))
 	minShareRatio := sdk.MaxSortableDec
@@ -36,7 +37,7 @@ func (pool Pool) numSharesOutFromTokensIn(tokensIn sdk.Coins) (
 
 		one := sdk.OneDec()
 
-		joinShare := tokensIn[0].Amount.ToDec().Mul(one.Sub(pool.PoolParams.SwapFee.Quo(sdk.NewDec(2)))).QuoInt(
+		joinShare := sdk.NewDecFromInt(tokensIn[0].Amount).Mul(one.Sub(pool.PoolParams.SwapFee.Quo(sdk.NewDec(2)))).QuoInt(
 			poolLiquidity.AmountOfNoDenomValidation(tokensIn[0].Denom),
 		).Add(one)
 
@@ -50,7 +51,7 @@ func (pool Pool) numSharesOutFromTokensIn(tokensIn sdk.Coins) (
 	}
 
 	for i, coin := range tokensIn {
-		shareRatio := coin.Amount.ToDec().QuoInt(
+		shareRatio := sdk.NewDecFromInt(coin.Amount).QuoInt(
 			poolLiquidity.AmountOfNoDenomValidation(coin.Denom),
 		)
 		if shareRatio.LT(minShareRatio) {
@@ -112,7 +113,7 @@ ret:
   - err: error if any
 */
 func (pool Pool) numSharesOutFromTokensInStableSwap(tokensIn sdk.Coins) (
-	numShares sdk.Int, err error,
+	numShares sdkmath.Int, err error,
 ) {
 	tokenSupply := pool.TotalShares.Amount
 
@@ -167,14 +168,14 @@ ret:
   - fees: the fees collected
   - err: error if any
 */
-func (pool Pool) TokensOutFromPoolSharesIn(numSharesIn sdk.Int) (
+func (pool Pool) TokensOutFromPoolSharesIn(numSharesIn sdkmath.Int) (
 	tokensOut sdk.Coins, fees sdk.Coins, err error,
 ) {
 	if numSharesIn.IsZero() {
 		return nil, nil, errors.New("num shares in must be greater than zero")
 	}
 
-	shareRatio := numSharesIn.ToDec().QuoInt(pool.TotalShares.Amount)
+	shareRatio := sdk.NewDecFromInt(numSharesIn).QuoInt(pool.TotalShares.Amount)
 	if shareRatio.IsZero() {
 		return nil, nil, errors.New("share ratio must be greater than zero")
 	}
@@ -201,13 +202,13 @@ func (pool Pool) TokensOutFromPoolSharesIn(numSharesIn sdk.Int) (
 /*
 Compute the minimum number of shares a user need to provide to get at least one u-token
 */
-func (pool Pool) MinSharesInForTokensOut() (minShares sdk.Int) {
+func (pool Pool) MinSharesInForTokensOut() (minShares sdkmath.Int) {
 	poolLiquidity := pool.PoolBalances()
 
 	minShares = sdk.ZeroInt()
 
 	for _, coin := range poolLiquidity {
-		shareRatio := sdk.MustNewDecFromStr("2").Quo(coin.Amount.ToDec()).Quo(sdk.OneDec().Sub(pool.PoolParams.ExitFee))
+		shareRatio := sdk.MustNewDecFromStr("2").Quo(sdk.NewDecFromInt(coin.Amount).Quo(sdk.OneDec().Sub(pool.PoolParams.ExitFee)))
 
 		shares := shareRatio.MulInt(pool.TotalShares.Amount).TruncateInt()
 
@@ -225,7 +226,7 @@ args:
   - numShares: the number of LP shares to increment
   - newLiquidity: the new tokens to deposit into the pool
 */
-func (pool *Pool) incrementBalances(numShares sdk.Int, newLiquidity sdk.Coins) (
+func (pool *Pool) incrementBalances(numShares sdkmath.Int, newLiquidity sdk.Coins) (
 	err error,
 ) {
 	for _, coin := range newLiquidity {

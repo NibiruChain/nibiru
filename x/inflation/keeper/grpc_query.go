@@ -64,7 +64,8 @@ func (k Keeper) CirculatingSupply(
 	ctx := sdk.UnwrapSDKContext(c)
 
 	circulatingSupply := k.GetCirculatingSupply(ctx, denoms.NIBI)
-	coin := sdk.NewDecCoinFromDec(denoms.NIBI, circulatingSupply.ToDec())
+	circulatingToDec := sdk.NewDecFromInt(circulatingSupply)
+	coin := sdk.NewDecCoinFromDec(denoms.NIBI, circulatingToDec)
 
 	return &types.QueryCirculatingSupplyResponse{CirculatingSupply: coin}, nil
 }

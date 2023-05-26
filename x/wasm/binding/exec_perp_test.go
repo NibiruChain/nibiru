@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -61,9 +63,9 @@ func (s *TestSuitePerpExecutor) SetupSuite() {
 	nibiru, ctx = SetupAllContracts(s.T(), sender, nibiru, ctx)
 	s.nibiru = nibiru
 	s.ctx = ctx
-	s.NoError(testapp.FundAccount(nibiru.BankKeeper, ctx, s.contractPerp, coins))
-
 	s.contractPerp = ContractMap[wasmbin.WasmKeyPerpBinding]
+
+	s.NoError(testapp.FundAccount(nibiru.BankKeeper, ctx, s.contractPerp, coins))
 	s.exec = &binding.ExecutorPerp{
 		PerpV2: nibiru.PerpKeeperV2,
 	}
@@ -230,7 +232,7 @@ func (s *TestSuitePerpExecutor) DoDepthShiftTest(pair asset.Pair) error {
 }
 
 func (s *TestSuitePerpExecutor) DoInsuranceFundWithdrawTest(
-	amt sdk.Int, to sdk.AccAddress,
+	amt sdkmath.Int, to sdk.AccAddress,
 ) error {
 	cwMsg := &cw_struct.InsuranceFundWithdraw{
 		Amount: amt,

@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/collections"
@@ -23,7 +25,7 @@ func OpenPosition(
 	trader sdk.AccAddress,
 	pair asset.Pair,
 	dir types.Direction,
-	margin sdk.Int,
+	margin sdkmath.Int,
 	leverage sdk.Dec,
 	baseAssetLimit sdk.Dec,
 	responseCheckers ...OpenPositionResponseChecker,
@@ -43,7 +45,7 @@ type openPositionAction struct {
 	trader         sdk.AccAddress
 	pair           asset.Pair
 	dir            types.Direction
-	margin         sdk.Int
+	margin         sdkmath.Int
 	leverage       sdk.Dec
 	baseAssetLimit sdk.Dec
 
@@ -75,7 +77,7 @@ type openPositionFailsAction struct {
 	trader         sdk.AccAddress
 	pair           asset.Pair
 	dir            types.Direction
-	margin         sdk.Int
+	margin         sdkmath.Int
 	leverage       sdk.Dec
 	baseAssetLimit sdk.Dec
 	expectedErr    error
@@ -98,7 +100,7 @@ func OpenPositionFails(
 	trader sdk.AccAddress,
 	pair asset.Pair,
 	dir types.Direction,
-	margin sdk.Int,
+	margin sdkmath.Int,
 	leverage sdk.Dec,
 	baseAssetLimit sdk.Dec,
 	expectedErr error,

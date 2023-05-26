@@ -10,7 +10,7 @@ import (
 )
 
 func AddOracleGenesis(gen app.GenesisState) app.GenesisState {
-	gen[oracletypes.ModuleName] = TEST_ENCODING_CONFIG.Marshaler.
+	gen[oracletypes.ModuleName] = TEST_ENCODING_CONFIG.Codec.
 		MustMarshalJSON(OracleGenesis())
 	return gen
 }

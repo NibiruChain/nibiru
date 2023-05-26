@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/assert"
@@ -71,7 +73,7 @@ func TestMintAndAllocateInflation(t *testing.T) {
 func TestGetCirculatingSupplyAndInflationRate(t *testing.T) {
 	testCases := []struct {
 		name             string
-		supply           sdk.Int
+		supply           sdkmath.Int
 		malleate         func(nibiruApp *app.NibiruApp, ctx sdk.Context)
 		expInflationRate sdk.Dec
 	}{

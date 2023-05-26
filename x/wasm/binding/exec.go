@@ -3,10 +3,10 @@ package binding
 import (
 	"encoding/json"
 
+	sdkerrors "cosmossdk.io/errors"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"

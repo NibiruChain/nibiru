@@ -33,13 +33,15 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.T().Log("setting up integration test suite")
 
-	s.network = cli.NewNetwork(
+	network, err := cli.New(
 		s.T(),
+		s.T().TempDir(),
 		cli.BuildNetworkConfig(genesis.NewTestGenesisState()),
 	)
-	s.Require().NotNil(s.network)
+	s.Require().NoError(err)
+	s.network = network
 
-	_, err := s.network.WaitForHeight(1)
+	_, err = s.network.WaitForHeight(1)
 	s.Require().NoError(err)
 }
 

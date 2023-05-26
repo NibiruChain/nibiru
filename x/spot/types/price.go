@@ -15,8 +15,8 @@ func (pool Pool) CalcSpotPrice(tokenIn, tokenOut string) (sdk.Dec, error) {
 		return sdk.Dec{}, err
 	}
 
-	weightedBalanceIn := poolAssetIn.Token.Amount.ToDec().Quo(poolAssetIn.Weight.ToDec())
-	weightedBalanceOut := poolAssetOut.Token.Amount.ToDec().Quo(poolAssetOut.Weight.ToDec())
+	weightedBalanceIn := sdk.NewDecFromInt(poolAssetIn.Token.Amount).Quo(sdk.NewDecFromInt(poolAssetIn.Weight))
+	weightedBalanceOut := sdk.NewDecFromInt(poolAssetOut.Token.Amount).Quo(sdk.NewDecFromInt(poolAssetOut.Weight))
 
 	return weightedBalanceIn.Quo(weightedBalanceOut), nil
 }

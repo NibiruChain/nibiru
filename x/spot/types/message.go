@@ -1,8 +1,9 @@
 package types
 
 import (
+	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 const TypeMsgExitPool = "exit_pool"
@@ -44,7 +45,7 @@ func (msg *MsgExitPool) GetSignBytes() []byte {
 func (msg *MsgExitPool) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
+		return sdkerrors.Wrapf(errors.ErrInvalidAddress, "invalid address (%s)", err)
 	}
 	return nil
 }
@@ -84,7 +85,7 @@ func (msg *MsgJoinPool) GetSignBytes() []byte {
 func (msg *MsgJoinPool) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+		return sdkerrors.Wrapf(errors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
 	return nil
 }
@@ -124,7 +125,7 @@ func (msg *MsgSwapAssets) GetSignBytes() []byte {
 func (msg *MsgSwapAssets) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+		return sdkerrors.Wrapf(errors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
 
 	if msg.PoolId == 0 {
@@ -176,7 +177,7 @@ func (msg *MsgCreatePool) GetSignBytes() []byte {
 func (msg *MsgCreatePool) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+		return sdkerrors.Wrapf(errors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
 
 	if len(msg.PoolAssets) < MinPoolAssets {
