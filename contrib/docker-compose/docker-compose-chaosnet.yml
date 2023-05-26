@@ -4,7 +4,7 @@ services:
   nibiru:
     build:
       context: ../.. # nibiru project folder
-      dockerfile: ./contrib/docker/chaosnet.Dockerfile # relative to context directory (i.e. nibiru project folder)
+      dockerfile: ./contrib/docker/localnet.Dockerfile # relative to context directory (i.e. nibiru project folder)
       args:
         MNEMONIC: guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host
     ports:
