@@ -91,7 +91,7 @@ func TestAppStateDeterminism(t *testing.T) {
 
 		for j := 0; j < numTimesToRunPerSeed; j++ {
 			db := dbm.NewMemDB()
-			app := testapp.NewNibiruTestApp(os.TempDir(), app.NewDefaultGenesisState(encoding.Codec))
+			app := testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encoding.Codec))
 
 			fmt.Printf(
 				"running non-determinism simulation; seed %d: %d/%d, attempt: %d/%d\n",

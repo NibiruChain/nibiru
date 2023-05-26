@@ -111,7 +111,7 @@ func (s *IntegrationSuite) SetupSuite() {
 		passphrase: "secure-password",
 	}
 	homeDir := s.T().TempDir()
-	s.cfg = testutilcli.BuildNetworkConfig(homeDir, genState)
+	s.cfg = testutilcli.BuildNetworkConfig(genState)
 	network, err := testutilcli.New(s.T(), homeDir, s.cfg)
 	s.Require().NoError(err)
 

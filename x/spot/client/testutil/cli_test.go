@@ -33,7 +33,7 @@ func TestIntegrationTestSuite(t *testing.T) {
 	)
 
 	homeDir := t.TempDir()
-	cfg := testutilcli.BuildNetworkConfig(homeDir, genesisState)
+	cfg := testutilcli.BuildNetworkConfig(genesisState)
 	cfg.StartingTokens = sdk.NewCoins(
 		sdk.NewInt64Coin(denoms.NIBI, 2e12), // for pool creation fee and more for tx fees
 	)
