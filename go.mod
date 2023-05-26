@@ -7,7 +7,7 @@ require (
 	cosmossdk.io/math v1.0.0-beta.6
 	github.com/CosmWasm/wasmd v0.0.0-00010101000000-000000000000
 	github.com/CosmWasm/wasmvm v1.1.2
-	github.com/NibiruChain/collections v0.1.2-0.20230523165337-2b7da2e4d4dc
+	github.com/NibiruChain/collections v0.2.0
 	github.com/armon/go-metrics v0.4.1
 	github.com/cosmos/cosmos-sdk v0.46.12
 	github.com/cosmos/go-bip39 v1.0.0

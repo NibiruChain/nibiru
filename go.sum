@@ -219,8 +219,8 @@ github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3
 github.com/DataDog/zstd v1.5.0/go.mod h1:g4AWEaM3yOg3HYfnJ3YIawPnVdXJh9QME85blwSAmyw=
 github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible/go.mod h1:r7JcOSlj0wfOMncg0iLm8Leh48TZaKVeNIfJntJ2wa0=
 github.com/Microsoft/go-winio v0.6.0 h1:slsWYD/zyx7lCXoZVlvQrj0hPTM1HI4+v1sIda2yDvg=
-github.com/NibiruChain/collections v0.1.2-0.20230523165337-2b7da2e4d4dc h1:6KpS3tswkdkd6rT3W0Voy7CNqWHnAtOu4xHjZaWWBq8=
-github.com/NibiruChain/collections v0.1.2-0.20230523165337-2b7da2e4d4dc/go.mod h1:snXaZBfCrPRvm1jrsMKT6bKvT/5AIXThSmPfoR/Xk00=
+github.com/NibiruChain/collections v0.2.0 h1:5Zcw8l6+lvC9PNWU63v43KwpJUecsF3d54ZVxr9+xPE=
+github.com/NibiruChain/collections v0.2.0/go.mod h1:snXaZBfCrPRvm1jrsMKT6bKvT/5AIXThSmPfoR/Xk00=
 github.com/NibiruChain/gorocksdb v1.2.1 h1:IXiXU+gHOgs4k04Q8IsBT26+lFv2yFVcSuMewuuimIU=
 github.com/NibiruChain/gorocksdb v1.2.1/go.mod h1:aaKvKItm514hKfNJpUJXnnOWeBnk2GL4+Qw9NHizILw=
 github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 h1:TngWCqHvy9oXAN6lEVMRuU21PR1EtLVZJmdB18Gu3Rw=
