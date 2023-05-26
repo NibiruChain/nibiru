@@ -17,6 +17,10 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
+func init() {
+	useNibiAccPrefix()
+}
+
 func setup() (*app.NibiruApp, sdk.Context) {
 	genState := app.NewDefaultGenesisState(app.MakeTestEncodingConfig().Codec)
 	nibiru := testapp.NewNibiruTestApp(genState)
@@ -39,11 +43,6 @@ func useNibiAccPrefix() {
 	config.SetBech32PrefixForAccount(accountAddressPrefix, accountPubKeyPrefix)
 	config.SetBech32PrefixForValidator(validatorAddressPrefix, validatorPubKeyPrefix)
 	config.SetBech32PrefixForConsensusNode(consNodeAddressPrefix, consNodePubKeyPrefix)
-}
-
-func setupWithPrefix() (*app.NibiruApp, sdk.Context) {
-	useNibiAccPrefix()
-	return setup()
 }
 
 func TestGenesis(t *testing.T) {
@@ -169,7 +168,7 @@ func TestSudo_AddContracts(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			_, _ = setupWithPrefix()
+			_, _ = setup()
 			root := testutil.AccAddress().String()
 			sudoers := sudo.Sudoers{
 				Root:      root,
@@ -310,7 +309,7 @@ func TestKeeper_AddContracts(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			nibiru, ctx := setupWithPrefix()
+			nibiru, ctx := setup()
 			k := nibiru.SudoKeeper
 
 			t.Log("Set starting contracts state")
@@ -439,7 +438,7 @@ func TestKeeper_RemoveContracts(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			nibiru, ctx := setupWithPrefix()
+			nibiru, ctx := setup()
 			k := nibiru.SudoKeeper
 
 			t.Log("Set starting contracts state")

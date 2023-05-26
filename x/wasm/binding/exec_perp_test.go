@@ -63,9 +63,9 @@ func (s *TestSuitePerpExecutor) SetupSuite() {
 	nibiru, ctx = SetupAllContracts(s.T(), sender, nibiru, ctx)
 	s.nibiru = nibiru
 	s.ctx = ctx
-	s.NoError(testapp.FundAccount(nibiru.BankKeeper, ctx, s.contractPerp, coins))
-
 	s.contractPerp = ContractMap[wasmbin.WasmKeyPerpBinding]
+
+	s.NoError(testapp.FundAccount(nibiru.BankKeeper, ctx, s.contractPerp, coins))
 	s.exec = &binding.ExecutorPerp{
 		PerpV2: nibiru.PerpKeeperV2,
 	}

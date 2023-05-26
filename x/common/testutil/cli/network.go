@@ -6,10 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/simapp"
-	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
-	dbm "github.com/tendermint/tm-db"
 	"net/http"
 	"net/url"
 	"os"
@@ -19,6 +15,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/simapp"
+	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
+	dbm "github.com/tendermint/tm-db"
+
 	"github.com/cosmos/cosmos-sdk/testutil"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
@@ -27,7 +28,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/pruning/types"
 
-	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -48,6 +48,8 @@ import (
 	"github.com/tendermint/tendermint/node"
 	tmclient "github.com/tendermint/tendermint/rpc/client"
 	"google.golang.org/grpc"
+
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 
 	"github.com/NibiruChain/nibiru/app"
 )

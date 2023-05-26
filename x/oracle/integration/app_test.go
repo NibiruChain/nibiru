@@ -120,7 +120,6 @@ func (s *IntegrationTestSuite) sendPrevotes(prices []map[asset.Pair]sdk.Dec) []s
 }
 
 func (s *IntegrationTestSuite) sendVotes(rates []string) {
-
 	for i, val := range s.network.Validators {
 		_, err := s.network.SendTx(val.Address, &types.MsgAggregateExchangeRateVote{
 			Salt:          "1",

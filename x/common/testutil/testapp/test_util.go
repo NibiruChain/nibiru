@@ -1,7 +1,8 @@
 package testapp
 
 import (
-	nibiruapp "github.com/NibiruChain/nibiru/app"
+	"time"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
@@ -12,7 +13,8 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	tmtypes "github.com/tendermint/tendermint/types"
-	"time"
+
+	nibiruapp "github.com/NibiruChain/nibiru/app"
 )
 
 // GenesisStateWithSingleValidator initializes GenesisState with a single validator and genesis accounts
@@ -85,7 +87,6 @@ func genesisStateWithValSet(
 		}
 		validators = append(validators, validator)
 		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress(), val.Address.Bytes(), sdk.OneDec()))
-
 	}
 	// set validators and delegations
 	stakingGenesis := stakingtypes.NewGenesisState(stakingtypes.DefaultParams(), validators, delegations)
