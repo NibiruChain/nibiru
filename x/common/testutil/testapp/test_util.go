@@ -1,4 +1,4 @@
-package simapp
+package testapp
 
 import (
 	nibiruapp "github.com/NibiruChain/nibiru/app"

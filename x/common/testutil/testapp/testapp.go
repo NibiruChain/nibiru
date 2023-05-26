@@ -2,7 +2,6 @@ package testapp
 
 import (
 	"encoding/json"
-	simapp2 "github.com/NibiruChain/nibiru/simapp"
 	"os"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
@@ -60,7 +59,7 @@ func NewNibiruTestApp(gen app.GenesisState) *app.NibiruApp {
 		/*appOpts=*/ simapp.EmptyAppOptions{},
 	)
 
-	gen, err := simapp2.GenesisStateWithSingleValidator(encoding.Codec, gen)
+	gen, err := GenesisStateWithSingleValidator(encoding.Codec, gen)
 	if err != nil {
 		panic(err)
 	}
