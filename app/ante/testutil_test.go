@@ -1,7 +1,6 @@
 package ante_test
 
 import (
-	"os"
 	"testing"
 	"time"
 
@@ -40,7 +39,7 @@ type AnteTestSuite struct {
 func (suite *AnteTestSuite) SetupTest() {
 	// Set up base app and ctx
 	encodingConfig := genesis.TEST_ENCODING_CONFIG
-	suite.app = testapp.NewNibiruTestApp(os.TempDir(), app.NewDefaultGenesisState(encodingConfig.Codec))
+	suite.app = testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encodingConfig.Codec))
 	chainId := "test-chain-id"
 	ctx := suite.app.NewContext(true, tmproto.Header{
 		Height:  1,

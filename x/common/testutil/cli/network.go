@@ -6,9 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/testutil"
-	"github.com/rs/zerolog"
-	"github.com/spf13/cobra"
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/simapp"
+	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
+	dbm "github.com/tendermint/tm-db"
 	"net/http"
 	"net/url"
 	"os"
@@ -18,13 +19,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/testutil"
+	"github.com/rs/zerolog"
+	"github.com/spf13/cobra"
+
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/pruning/types"
 
 	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -164,6 +167,19 @@ func NewCLILogger(cmd *cobra.Command) CLILogger {
 	return CLILogger{cmd}
 }
 
+// NewAppConstructor returns a new simapp AppConstructor
+func NewAppConstructor(encodingCfg simappparams.EncodingConfig) AppConstructor {
+	return func(val Validator) servertypes.Application {
+		return app.NewNibiruApp(
+			val.Ctx.Logger, dbm.NewMemDB(), nil, true, make(map[int64]bool), val.Ctx.Config.RootDir, 0,
+			encodingCfg,
+			simapp.EmptyAppOptions{},
+			baseapp.SetPruning(types.NewPruningOptionsFromString(val.AppConfig.Pruning)),
+			baseapp.SetMinGasPrices(val.AppConfig.MinGasPrices),
+		)
+	}
+}
+
 // BuildNetworkConfig returns a configuration for a local in-testing network
 func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 	encCfg := app.MakeTestEncodingConfig()
@@ -174,19 +190,17 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 		LegacyAmino:       encCfg.Amino,
 		InterfaceRegistry: encCfg.InterfaceRegistry,
 		AccountRetriever:  authtypes.AccountRetriever{},
-		AppConstructor: func(val Validator) servertypes.Application {
-			return testapp.NewNibiruTestApp(val.Ctx.Config.RootDir, appGenesis)
-		},
-		GenesisState:   appGenesis,
-		TimeoutCommit:  time.Second / 2,
-		ChainID:        "chain-" + tmrand.NewRand().Str(6),
-		NumValidators:  1,
-		BondDenom:      denoms.NIBI,
-		MinGasPrices:   fmt.Sprintf("0.000006%s", denoms.NIBI),
-		AccountTokens:  sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
-		StakingTokens:  sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),
-		BondedTokens:   sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
-		StartingTokens: sdk.NewCoins(
+		AppConstructor:    NewAppConstructor(encCfg),
+		GenesisState:      appGenesis,
+		TimeoutCommit:     time.Second / 2,
+		ChainID:           "chain-" + tmrand.NewRand().Str(6),
+		NumValidators:     1,
+		BondDenom:         denoms.NIBI,
+		MinGasPrices:      fmt.Sprintf("0.000006%s", denoms.NIBI),
+		AccountTokens:     sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
+		StakingTokens:     sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),
+		BondedTokens:      sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
+		StartingTokens:    sdk.NewCoins(
 		//sdk.NewCoin(denoms.NUSD, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
 		//sdk.NewCoin(denoms.NIBI, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
 		//sdk.NewCoin(denoms.USDC, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),

@@ -2,6 +2,8 @@ package testapp
 
 import (
 	"encoding/json"
+	"os"
+
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
@@ -9,7 +11,6 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmdb "github.com/tendermint/tm-db"
-	"os"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -26,7 +27,7 @@ func NewNibiruTestAppAndContext(shouldUseDefaultGenesis bool) (*app.NibiruApp, s
 		appGenesis = app.NewDefaultGenesisState(encoding.Codec)
 	}
 
-	app := NewNibiruTestApp(os.TempDir(), appGenesis)
+	app := NewNibiruTestApp(appGenesis)
 	ctx := app.NewContext(false, tmproto.Header{
 		Height: 1,
 	})
@@ -40,7 +41,7 @@ func NewNibiruTestAppAndContext(shouldUseDefaultGenesis bool) (*app.NibiruApp, s
 // NewNibiruTestApp initializes a chain with the given genesis state to
 // creates an application instance ('app.NibiruApp'). This app uses an
 // in-memory database ('tmdb.MemDB') and has logging disabled.
-func NewNibiruTestApp(userHomeDir string, gen app.GenesisState) *app.NibiruApp {
+func NewNibiruTestApp(gen app.GenesisState) *app.NibiruApp {
 	db := tmdb.NewMemDB()
 	logger := log.NewNopLogger()
 
@@ -52,7 +53,7 @@ func NewNibiruTestApp(userHomeDir string, gen app.GenesisState) *app.NibiruApp {
 		/*traceStore=*/ nil,
 		/*loadLatest=*/ true,
 		/*skipUpgradeHeights=*/ map[int64]bool{},
-		/*homePath=*/ userHomeDir,
+		/*homePath=*/ os.TempDir(),
 		/*invCheckPeriod=*/ 0,
 		/*encodingConfig=*/ encoding,
 		/*appOpts=*/ simapp.EmptyAppOptions{},

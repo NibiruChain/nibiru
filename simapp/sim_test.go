@@ -39,7 +39,7 @@ func TestFullAppSimulation(tb *testing.T) {
 	}()
 
 	encoding := app.MakeTestEncodingConfig()
-	app := testapp.NewNibiruTestApp(dir, app.NewDefaultGenesisState(encoding.Codec))
+	app := testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encoding.Codec))
 
 	// Run randomized simulation:
 	_, simParams, simErr := simulation.SimulateFromSeed(
