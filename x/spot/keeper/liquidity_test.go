@@ -3,6 +3,8 @@ package keeper_test
 import (
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,7 +30,7 @@ func TestGetTotalLiquidity(t *testing.T) {
 	app, ctx := testapp.NewNibiruTestAppAndContext(true)
 
 	// Write to store
-	coinMap := map[string]sdk.Int{
+	coinMap := map[string]sdkmath.Int{
 		"atom": sdk.NewInt(123),
 		"nibi": sdk.NewInt(456),
 		"foo":  sdk.NewInt(789),
@@ -54,7 +56,7 @@ func assertLiqValues(
 	t *testing.T,
 	ctx sdk.Context,
 	spotKeeper keeper.Keeper,
-	expected map[string]sdk.Int,
+	expected map[string]sdkmath.Int,
 ) {
 	for denom, expectedLiq := range expected {
 		liq, err := spotKeeper.GetDenomLiquidity(ctx, denom)
@@ -74,7 +76,7 @@ func TestSetTotalLiquidity(t *testing.T) {
 	)))
 
 	// Read from store
-	expectedLiqValues := map[string]sdk.Int{
+	expectedLiqValues := map[string]sdkmath.Int{
 		"atom": sdk.NewInt(123),
 		"nibi": sdk.NewInt(456),
 		"foo":  sdk.NewInt(789),
@@ -96,7 +98,7 @@ func TestRecordTotalLiquidityIncrease(t *testing.T) {
 	))
 	assert.NoError(t, err)
 
-	expectedLiqValues := map[string]sdk.Int{
+	expectedLiqValues := map[string]sdkmath.Int{
 		"atom": sdk.NewInt(150),
 		"nibi": sdk.NewInt(275),
 	}
@@ -117,7 +119,7 @@ func TestRecordTotalLiquidityDecrease(t *testing.T) {
 	))
 	assert.NoError(t, err)
 
-	expectedLiqValues := map[string]sdk.Int{
+	expectedLiqValues := map[string]sdkmath.Int{
 		"atom": sdk.NewInt(50),
 		"nibi": sdk.NewInt(125),
 	}

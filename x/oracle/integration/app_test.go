@@ -25,6 +25,7 @@ type IntegrationTestSuite struct {
 
 func (s *IntegrationTestSuite) SetupTest() {
 	app.SetPrefixes(app.AccountAddressPrefix)
+	homeDir := s.T().TempDir()
 	s.cfg = testutilcli.BuildNetworkConfig(genesis.NewTestGenesisState())
 	s.cfg.NumValidators = 4
 	s.cfg.GenesisState[types.ModuleName] = s.cfg.Codec.MustMarshalJSON(func() codec.ProtoMarshaler {
@@ -37,8 +38,15 @@ func (s *IntegrationTestSuite) SetupTest() {
 		return gs
 	}())
 
-	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
-	_, err := s.network.WaitForHeight(2)
+	network, err := testutilcli.New(
+		s.T(),
+		homeDir,
+		s.cfg,
+	)
+	s.Require().NoError(err)
+	s.network = network
+
+	_, err = s.network.WaitForHeight(2)
 	require.NoError(s.T(), err)
 }
 

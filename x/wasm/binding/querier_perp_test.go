@@ -293,7 +293,7 @@ func (s *TestSuitePerpQuerier) TestPosition() {
 	s.NoErrorf(err, "freshCwResp: %s", freshCwResp)
 	s.Assert().EqualValues(resp.ExchangedNotionalValue, leverage.MulInt(margin))
 	s.Assert().EqualValues(cwResp.Position.OpenNotional, leverage.MulInt(margin))
-	s.Assert().EqualValues(cwResp.Position.Margin, margin.ToDec())
+	s.Assert().EqualValues(cwResp.Position.Margin, sdk.NewDecFromInt(margin))
 
 	s.T().Log("fail due to invalid pair")
 	cwReq = &cw_struct.PositionRequest{

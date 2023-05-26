@@ -28,7 +28,7 @@ import (
 var commonArgs = []string{
 	fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 	fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-	fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(10))).String()),
+	fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(100))).String()),
 }
 
 type IntegrationTestSuite struct {
@@ -78,10 +78,13 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			TotalShort:      sdk.ZeroDec(),
 		},
 	}
-	genesisState[perpv2types.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(perpv2Gen)
+	genesisState[perpv2types.ModuleName] = encodingConfig.Codec.MustMarshalJSON(perpv2Gen)
 
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
-	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
+	network, err := testutilcli.New(s.T(), s.T().TempDir(), s.cfg)
+	s.Require().NoError(err)
+
+	s.network = network
 	s.Require().NoError(s.network.WaitForNextBlock())
 }
 
@@ -137,12 +140,12 @@ func (s *IntegrationTestSuite) deployWasmContract(path string) (uint64, error) {
 		return 0, err
 	}
 
-	if len(respData.Data) < 1 {
+	if len(respData.MsgResponses) < 1 {
 		return 0, fmt.Errorf("no data found in response")
 	}
 
 	var storeCodeResponse wasm.MsgStoreCodeResponse
-	err = codec.Unmarshal(respData.Data[0].Data, &storeCodeResponse)
+	err = codec.Unmarshal(respData.MsgResponses[0].Value, &storeCodeResponse)
 	if err != nil {
 		return 0, err
 	}

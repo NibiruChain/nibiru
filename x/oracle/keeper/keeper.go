@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"time"
 
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+
+	sdkerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/libs/math"
@@ -21,7 +23,7 @@ import (
 // Keeper of the oracle store
 type Keeper struct {
 	cdc      codec.BinaryCodec
-	storeKey sdk.StoreKey
+	storeKey storetypes.StoreKey
 
 	AccountKeeper types.AccountKeeper
 	bankKeeper    types.BankKeeper
@@ -45,7 +47,7 @@ type Keeper struct {
 }
 
 // NewKeeper constructs a new keeper for oracle
-func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey,
+func NewKeeper(cdc codec.BinaryCodec, storeKey storetypes.StoreKey,
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper, distrKeeper types.DistributionKeeper,
 	stakingKeeper types.StakingKeeper, distrName string) Keeper {

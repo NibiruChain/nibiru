@@ -13,7 +13,7 @@ import (
 	. "github.com/NibiruChain/nibiru/x/common/testutil/assertion"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
-	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 func TestMsgServerOpenPosition(t *testing.T) {

@@ -5,6 +5,8 @@ package keeper
 import (
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -24,7 +26,7 @@ ret:
 
 	amount: the amount of liquidity for the provided coin. Returns 0 if not found.
 */
-func (k Keeper) GetDenomLiquidity(ctx sdk.Context, denom string) (amount sdk.Int, err error) {
+func (k Keeper) GetDenomLiquidity(ctx sdk.Context, denom string) (amount sdkmath.Int, err error) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetDenomLiquidityPrefix(denom))
 	if bz == nil {
@@ -49,7 +51,7 @@ args:
 	denom: the coin denom
 	amount: the amount of liquidity for the coin
 */
-func (k Keeper) SetDenomLiquidity(ctx sdk.Context, denom string, amount sdk.Int) error {
+func (k Keeper) SetDenomLiquidity(ctx sdk.Context, denom string, amount sdkmath.Int) error {
 	store := ctx.KVStore(k.storeKey)
 	bz, err := amount.Marshal()
 	if err != nil {

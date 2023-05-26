@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 
@@ -130,7 +132,7 @@ func TestNewPool(t *testing.T) {
 			},
 		},
 		TotalWeight: sdk.NewInt(2 << 30),
-		TotalShares: sdk.NewCoin("nibiru/pool/1", sdk.NewIntWithDecimal(100, 18)),
+		TotalShares: sdk.NewCoin("nibiru/pool/1", sdkmath.NewIntWithDecimal(100, 18)),
 	}, pool)
 }
 
@@ -139,7 +141,7 @@ func TestJoinPoolHappyPath(t *testing.T) {
 		name              string
 		pool              Pool
 		tokensIn          sdk.Coins
-		expectedNumShares sdk.Int
+		expectedNumShares sdkmath.Int
 		expectedRemCoins  sdk.Coins
 		expectedPool      Pool
 	}{
@@ -329,7 +331,7 @@ func TestJoinPoolAllTokens(t *testing.T) {
 		name              string
 		pool              Pool
 		tokensIn          sdk.Coins
-		expectedNumShares sdk.Int
+		expectedNumShares sdkmath.Int
 		expectedRemCoins  sdk.Coins
 		expectedPool      Pool
 	}{
@@ -792,7 +794,7 @@ func TestGetD(t *testing.T) {
 	for _, tc := range []struct {
 		name                   string
 		poolAssets             []PoolAsset
-		amplificationParameter sdk.Int
+		amplificationParameter sdkmath.Int
 		expectedErr            error
 		expectedD              uint64
 	}{
@@ -872,11 +874,11 @@ func TestGetD(t *testing.T) {
 
 type TestCaseDy struct {
 	balance       []uint64
-	amplification sdk.Int
+	amplification sdkmath.Int
 	send          int
 	receive       int
-	dx            sdk.Int
-	expectedDy    sdk.Int
+	dx            sdkmath.Int
+	expectedDy    sdkmath.Int
 }
 
 /*

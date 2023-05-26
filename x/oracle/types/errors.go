@@ -5,7 +5,7 @@ import (
 
 	"github.com/tendermint/tendermint/crypto/tmhash"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "cosmossdk.io/errors"
 )
 
 // Oracle Errors

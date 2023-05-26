@@ -4,6 +4,8 @@ import (
 	"errors"
 	fmt "fmt"
 
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -28,7 +30,7 @@ func (poolAsset PoolAsset) Validate() error {
 Subtracts an amount of coins from a pool's assets.
 Throws an error if the final amount is less than zero.
 */
-func (pool *Pool) SubtractPoolAssetBalance(assetDenom string, subAmt sdk.Int) (err error) {
+func (pool *Pool) SubtractPoolAssetBalance(assetDenom string, subAmt sdkmath.Int) (err error) {
 	if subAmt.LT(sdk.ZeroInt()) {
 		return errors.New("can't subtract a negative amount")
 	}

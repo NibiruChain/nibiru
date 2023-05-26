@@ -4,14 +4,18 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/cosmos/cosmos-sdk/types/errors"
+
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+
 	"github.com/NibiruChain/collections"
 	"github.com/cosmos/cosmos-sdk/codec"
 
 	"github.com/NibiruChain/nibiru/x/common/set"
 	"github.com/NibiruChain/nibiru/x/sudo/pb"
 
+	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 type Keeper struct {
@@ -20,7 +24,7 @@ type Keeper struct {
 
 func NewKeeper(
 	cdc codec.BinaryCodec,
-	storeKey sdk.StoreKey,
+	storeKey storetypes.StoreKey,
 ) Keeper {
 	return Keeper{
 		Sudoers: collections.NewItem(storeKey, 1, SudoersValueEncoder(cdc)),
@@ -43,7 +47,7 @@ func NewHandler(k Keeper) sdk.Handler {
 		default:
 			errMsg := fmt.Sprintf(
 				"unrecognized %s message type: %T", pb.ModuleName, msg)
-			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
+			return nil, sdkerrors.Wrap(errors.ErrUnknownRequest, errMsg)
 		}
 	}
 }

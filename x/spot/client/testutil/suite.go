@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -23,12 +25,13 @@ import (
 type IntegrationTestSuite struct {
 	suite.Suite
 
+	homeDir string
 	cfg     testutilcli.Config
 	network *testutilcli.Network
 }
 
-func NewIntegrationTestSuite(cfg testutilcli.Config) *IntegrationTestSuite {
-	return &IntegrationTestSuite{cfg: cfg}
+func NewIntegrationTestSuite(homeDir string, cfg testutilcli.Config) *IntegrationTestSuite {
+	return &IntegrationTestSuite{homeDir: homeDir, cfg: cfg}
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
@@ -43,8 +46,15 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.T().Log("setting up integration test suite")
 
-	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
-	_, err := s.network.WaitForHeight(1)
+	network, err := testutilcli.New(
+		s.T(),
+		s.homeDir,
+		s.cfg,
+	)
+	s.Require().NoError(err)
+
+	s.network = network
+	_, err = s.network.WaitForHeight(1)
 	s.NoError(err)
 }
 
@@ -376,8 +386,8 @@ func (s *IntegrationTestSuite) TestNewExitPoolCmd() {
 		expectErr          bool
 		respType           proto.Message
 		expectedCode       uint32
-		expectedunibi      sdk.Int
-		expectedOtherToken sdk.Int
+		expectedunibi      sdkmath.Int
+		expectedOtherToken sdkmath.Int
 	}{
 		{
 			name:               "exit pool from invalid pool",
@@ -490,8 +500,8 @@ func (s *IntegrationTestSuite) TestNewExitStablePoolCmd() {
 		expectErr          bool
 		respType           proto.Message
 		expectedCode       uint32
-		expectedunibi      sdk.Int
-		expectedOtherToken sdk.Int
+		expectedunibi      sdkmath.Int
+		expectedOtherToken sdkmath.Int
 	}{
 		{
 			name:               "exit pool from invalid pool",
@@ -829,7 +839,7 @@ func (s *IntegrationTestSuite) TestSwapStableAssets() {
 /***************************** Convenience Methods ****************************/
 
 /*
-Adds tokens from val[0] to a recipient address.
+FundAccount Adds tokens from val[0] to a recipient address.
 
 args:
   - recipient: the recipient address
@@ -853,7 +863,7 @@ func (s *IntegrationTestSuite) FundAccount(recipient sdk.Address, tokens sdk.Coi
 }
 
 /*
-Creates a new account and returns the address.
+NewAccount Creates a new account and returns the address.
 
 args:
   - uid: a unique identifier to ensure duplicate accounts are not created
@@ -874,5 +884,8 @@ func (s *IntegrationTestSuite) NewAccount(uid string) (addr sdk.AccAddress) {
 	)
 	s.Require().NoError(err)
 
-	return sdk.AccAddress(info.GetPubKey().Address())
+	address, err := info.GetAddress()
+	s.Require().NoError(err)
+
+	return address
 }

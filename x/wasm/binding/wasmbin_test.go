@@ -52,11 +52,6 @@ func SetupAllContracts(
 
 	wasmKey = wasmbin.WasmKeyController
 	codeId = StoreContract(t, wasmKey, ctx, nibiru, sender)
-	contract = Instantiate.ShifterContract(t, ctx, nibiru, codeId, sender, deposit)
-	ContractMap[wasmKey] = contract
-
-	wasmKey = wasmbin.WasmKeyController
-	codeId = StoreContract(t, wasmKey, ctx, nibiru, sender)
 	contract = Instantiate.ControllerContract(t, ctx, nibiru, codeId, sender, deposit)
 	ContractMap[wasmKey] = contract
 

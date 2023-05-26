@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -86,7 +87,7 @@ func (k Keeper) EditSwapInvariant(ctx sdk.Context, pair asset.Pair, multiplier s
 	return
 }
 
-func (k Keeper) handleMarketUpdateCost(ctx sdk.Context, pair asset.Pair, costAmt sdk.Int) (err error) {
+func (k Keeper) handleMarketUpdateCost(ctx sdk.Context, pair asset.Pair, costAmt sdkmath.Int) (err error) {
 	if costAmt.IsPositive() {
 		// Positive cost, send from perp EF to vault
 		cost := sdk.NewCoins(

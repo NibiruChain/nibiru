@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -387,7 +389,7 @@ func fundAccountWithTokens(ctx sdk.Context, address sdk.AccAddress, bk types.Ban
 
 // findRandomPoolWithDenom search possible pool available to swap from a set of coins
 func findRandomPoolWithDenom(ctx sdk.Context, r *rand.Rand, spendableCoins sdk.Coins, k keeper.Keeper) (
-	denomIn string, denomOut string, poolId uint64, balanceIn sdk.Int) {
+	denomIn string, denomOut string, poolId uint64, balanceIn sdkmath.Int) {
 	randomIndices := r.Perm(spendableCoins.Len())
 	whitelistedAssets := k.GetParams(ctx).GetWhitelistedAssetsAsMap()
 

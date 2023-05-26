@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -163,10 +165,10 @@ func TestGetCollRatio_Input(t *testing.T) {
 func TestStableRequiredForTargetCollRatio(t *testing.T) {
 	testCases := []struct {
 		name             string
-		protocolColl     sdk.Int
+		protocolColl     sdkmath.Int
 		priceCollStable  sdk.Dec
 		postedAssetPairs []asset.Pair
-		stableSupply     sdk.Int
+		stableSupply     sdkmath.Int
 		targetCollRatio  sdk.Dec
 		neededUSD        sdk.Dec
 
@@ -241,11 +243,11 @@ func TestStableRequiredForTargetCollRatio(t *testing.T) {
 func TestRecollateralizeCollAmtForTargetCollRatio(t *testing.T) {
 	type TestCaseRecollateralizeCollAmtForTargetCollRatio struct {
 		name            string
-		protocolColl    sdk.Int
+		protocolColl    sdkmath.Int
 		priceCollStable sdk.Dec
-		stableSupply    sdk.Int
+		stableSupply    sdkmath.Int
 		targetCollRatio sdk.Dec
-		neededCollAmt   sdk.Int
+		neededCollAmt   sdkmath.Int
 		expectedPass    bool
 	}
 
@@ -350,14 +352,14 @@ func TestRecollateralizeCollAmtForTargetCollRatio(t *testing.T) {
 func TestGovAmtFromFullRecollateralize(t *testing.T) {
 	testCases := []struct {
 		name             string
-		protocolColl     sdk.Int
+		protocolColl     sdkmath.Int
 		priceCollStable  sdk.Dec
 		priceGovStable   sdk.Dec
-		stableSupply     sdk.Int
+		stableSupply     sdkmath.Int
 		targetCollRatio  sdk.Dec
 		postedAssetPairs []asset.Pair
 
-		govOut       sdk.Int
+		govOut       sdkmath.Int
 		expectedPass bool
 	}{
 		{
@@ -366,7 +368,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 			stableSupply:     sdk.NewInt(1000),
 			targetCollRatio:  sdk.MustNewDecFromStr("0.6"),
 			postedAssetPairs: []asset.Pair{},
-			govOut:           sdk.Int{},
+			govOut:           sdkmath.Int{},
 			expectedPass:     false,
 		},
 		{
@@ -377,7 +379,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 			priceCollStable: sdk.OneDec(),
 			postedAssetPairs: []asset.Pair{
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD)},
-			govOut:       sdk.Int{},
+			govOut:       sdkmath.Int{},
 			expectedPass: false,
 		},
 		{
@@ -388,7 +390,7 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 			priceGovStable:  sdk.OneDec(),
 			postedAssetPairs: []asset.Pair{
 				asset.Registry.Pair(denoms.NIBI, denoms.NUSD)},
-			govOut:       sdk.Int{},
+			govOut:       sdkmath.Int{},
 			expectedPass: false,
 		},
 		{
@@ -487,9 +489,9 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 type NeededCollScenario struct {
-	protocolColl    sdk.Int
+	protocolColl    sdkmath.Int
 	priceCollStable sdk.Dec
-	stableSupply    sdk.Int
+	stableSupply    sdkmath.Int
 	collRatio       sdk.Dec
 }
 
@@ -1125,7 +1127,7 @@ func TestBuybackGovAmtForTargetCollRatio(t *testing.T) {
 		postedAssetPairs []asset.Pair
 		priceGovStable   sdk.Dec
 
-		outGovAmt sdk.Int
+		outGovAmt sdkmath.Int
 	}{
 		{
 			name: "both prices $1, correct amount out",

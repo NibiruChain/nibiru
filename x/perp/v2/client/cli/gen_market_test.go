@@ -113,7 +113,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			cfg, err := genutiltest.CreateDefaultTendermintConfig(home)
 			require.NoError(t, err)
 
-			appCodec := simapp.MakeTestEncodingConfig().Marshaler
+			appCodec := simapp.MakeTestEncodingConfig().Codec
 			err = genutiltest.ExecInitCmd(
 				testModuleBasicManager, home, appCodec)
 			require.NoError(t, err)

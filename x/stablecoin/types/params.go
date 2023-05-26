@@ -136,38 +136,38 @@ func (p *Params) Validate() error {
 }
 
 func (p *Params) GetFeeRatioAsDec() sdk.Dec {
-	return sdk.NewIntFromUint64(uint64(p.FeeRatio)).
-		ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
+	return sdk.NewDecFromInt(sdk.NewIntFromUint64(uint64(p.FeeRatio))).
+		Quo(sdk.MustNewDecFromStr("1000000"))
 }
 
 func (p *Params) GetCollRatioAsDec() sdk.Dec {
-	return sdk.NewIntFromUint64(uint64(p.CollRatio)).
-		ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
+	return sdk.NewDecFromInt(sdk.NewIntFromUint64(uint64(p.CollRatio))).
+		Quo(sdk.MustNewDecFromStr("1000000"))
 }
 
 func (p *Params) GetEfFeeRatioAsDec() sdk.Dec {
-	return sdk.NewIntFromUint64(uint64(p.EfFeeRatio)).
-		ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
+	return sdk.NewDecFromInt(sdk.NewIntFromUint64(uint64(p.EfFeeRatio))).
+		Quo(sdk.MustNewDecFromStr("1000000"))
 }
 
 func (p *Params) GetBonusRateRecollAsDec() sdk.Dec {
-	return sdk.NewIntFromUint64(uint64(p.BonusRateRecoll)).
-		ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
+	return sdk.NewDecFromInt(sdk.NewIntFromUint64(uint64(p.BonusRateRecoll))).
+		Quo(sdk.MustNewDecFromStr("1000000"))
 }
 
 func (p *Params) GetAdjustmentStepAsDec() sdk.Dec {
-	return sdk.NewIntFromUint64(uint64(p.AdjustmentStep)).
-		ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
+	return sdk.NewDecFromInt(sdk.NewIntFromUint64(uint64(p.AdjustmentStep))).
+		Quo(sdk.MustNewDecFromStr("1000000"))
 }
 
 func (p *Params) GetPriceLowerBoundAsDec() sdk.Dec {
-	return sdk.NewIntFromUint64(uint64(p.PriceLowerBound)).
-		ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
+	return sdk.NewDecFromInt(sdk.NewIntFromUint64(uint64(p.PriceLowerBound))).
+		Quo(sdk.MustNewDecFromStr("1000000"))
 }
 
 func (p *Params) GetPriceUpperBoundAsDec() sdk.Dec {
-	return sdk.NewIntFromUint64(uint64(p.PriceUpperBound)).
-		ToDec().Quo(sdk.MustNewDecFromStr("1000000"))
+	return sdk.NewDecFromInt(sdk.NewIntFromUint64(uint64(p.PriceUpperBound))).
+		Quo(sdk.MustNewDecFromStr("1000000"))
 }
 
 func validateCollRatio(i interface{}) error {

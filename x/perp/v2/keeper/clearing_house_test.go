@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/NibiruChain/nibiru/x/common/testutil/assertion"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -754,7 +756,7 @@ func TestOpenPositionError(t *testing.T) {
 
 		// position arguments
 		side      types.Direction
-		margin    sdk.Int
+		margin    sdkmath.Int
 		leverage  sdk.Dec
 		baseLimit sdk.Dec
 

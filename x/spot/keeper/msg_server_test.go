@@ -442,14 +442,14 @@ func TestCreateExitJoinPool(t *testing.T) {
 
 			require.Equal(
 				t,
-				tc.senderInitialFunds.Sub(sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 1e9))),
+				tc.senderInitialFunds.Sub(sdk.NewInt64Coin(denoms.NIBI, 1e9)),
 				app.BankKeeper.GetAllBalances(ctx, tc.creatorAddr),
 			)
 
 			msgJoinPool := types.MsgJoinPool{
 				Sender:      tc.creatorAddr.String(),
 				PoolId:      1,
-				TokensIn:    tc.senderInitialFunds.Sub(sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 1e9))),
+				TokensIn:    tc.senderInitialFunds.Sub(sdk.NewInt64Coin(denoms.NIBI, 1e9)),
 				UseAllCoins: tc.useAllCoins,
 			}
 			_, err = msgServer.JoinPool(sdk.WrapSDKContext(ctx), &msgJoinPool)

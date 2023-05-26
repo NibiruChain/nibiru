@@ -3,6 +3,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -106,7 +107,7 @@ func startInProcess(cfg Config, val *Validator) error {
 	}
 
 	if val.AppConfig.GRPC.Enable {
-		grpcSrv, err := servergrpc.StartGRPCServer(val.ClientCtx, app, val.AppConfig.GRPC.Address)
+		grpcSrv, err := servergrpc.StartGRPCServer(val.ClientCtx, app, val.AppConfig.GRPC)
 		if err != nil {
 			return err
 		}
@@ -159,19 +160,14 @@ func collectGenFiles(cfg Config, vals []*Validator, outputDir string) error {
 	return nil
 }
 
-func initGenFiles(
-	cfg Config,
-	genAccounts []authtypes.GenesisAccount,
-	genBalances []banktypes.Balance,
-	genFiles []string,
-) (Config, error) {
+func initGenFiles(cfg Config, genAccounts []authtypes.GenesisAccount, genBalances []banktypes.Balance, genFiles []string) error {
 	// set the accounts in the genesis state
 	var authGenState authtypes.GenesisState
 	cfg.Codec.MustUnmarshalJSON(cfg.GenesisState[authtypes.ModuleName], &authGenState)
 
 	accounts, err := authtypes.PackAccounts(genAccounts)
 	if err != nil {
-		return cfg, err
+		return err
 	}
 
 	authGenState.Accounts = append(authGenState.Accounts, accounts...)
@@ -180,12 +176,13 @@ func initGenFiles(
 	// set the balances in the genesis state
 	var bankGenState banktypes.GenesisState
 	cfg.Codec.MustUnmarshalJSON(cfg.GenesisState[banktypes.ModuleName], &bankGenState)
+
 	bankGenState.Balances = append(bankGenState.Balances, genBalances...)
 	cfg.GenesisState[banktypes.ModuleName] = cfg.Codec.MustMarshalJSON(&bankGenState)
 
 	appGenStateJSON, err := json.MarshalIndent(cfg.GenesisState, "", "  ")
 	if err != nil {
-		return cfg, err
+		return err
 	}
 
 	genDoc := types.GenesisDoc{
@@ -197,23 +194,23 @@ func initGenFiles(
 	// generate empty genesis files for each validator and save
 	for i := 0; i < cfg.NumValidators; i++ {
 		if err := genDoc.SaveAs(genFiles[i]); err != nil {
-			return cfg, err
+			return err
 		}
 	}
 
-	return cfg, nil
+	return nil
 }
 
 func writeFile(name string, dir string, contents []byte) error {
-	writePath := filepath.Join(dir)
+	writePath := filepath.Join(dir) //nolint:gocritic
 	file := filepath.Join(writePath, name)
 
-	err := tmos.EnsureDir(writePath, 0755)
+	err := tmos.EnsureDir(writePath, 0o755)
 	if err != nil {
 		return err
 	}
 
-	err = tmos.WriteFile(file, contents, 0644)
+	err = os.WriteFile(file, contents, 0o644) // nolint: gosec
 	if err != nil {
 		return err
 	}
@@ -276,5 +273,9 @@ func NewAccount(network *Network, uid string) sdk.AccAddress {
 		panic(err)
 	}
 
-	return sdk.AccAddress(info.GetPubKey().Address())
+	addr, err := info.GetAddress()
+	if err != nil {
+		panic(err)
+	}
+	return addr
 }

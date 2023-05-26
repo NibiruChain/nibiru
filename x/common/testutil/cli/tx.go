@@ -10,7 +10,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
-	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/abci/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -68,7 +67,7 @@ func ExecTx(network *Network, cmd *cobra.Command, txSender sdk.AccAddress, args 
 	args = append(args, fmt.Sprintf("--%s=%s", flags.FlagFrom, txSender))
 
 	options := execTxOptions{
-		fees:             sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(10))),
+		fees:             sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(1000))),
 		gas:              2000000,
 		skipConfirmation: true,
 		broadcastMode:    flags.BroadcastBlock,
@@ -117,15 +116,25 @@ func ExecTx(network *Network, cmd *cobra.Command, txSender sdk.AccAddress, args 
 
 func (n *Network) SendTx(addr sdk.AccAddress, msgs ...sdk.Msg) (*sdk.TxResponse, error) {
 	cfg := n.Config
-	kb, info := n.keyBaseAndInfoForAddr(addr)
+	kb, info, err := n.keyBaseAndInfoForAddr(addr)
+	if err != nil {
+		return nil, err
+	}
+
 	rpc := n.Validators[0].RPCClient
 	txBuilder := cfg.TxConfig.NewTxBuilder()
-	require.NoError(n.T, txBuilder.SetMsgs(msgs...))
-	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(cfg.BondDenom, sdk.NewInt(1))))
+	err = txBuilder.SetMsgs(msgs...)
+	if err != nil {
+		return nil, err
+	}
+
+	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(cfg.BondDenom, sdk.NewInt(1000))))
 	txBuilder.SetGasLimit(uint64(1 * common.TO_MICRO))
 
 	acc, err := cfg.AccountRetriever.GetAccount(n.Validators[0].ClientCtx, addr)
-	require.NoError(n.T, err)
+	if err != nil {
+		return nil, err
+	}
 
 	txFactory := tx.Factory{}
 	txFactory = txFactory.
@@ -136,17 +145,27 @@ func (n *Network) SendTx(addr sdk.AccAddress, msgs ...sdk.Msg) (*sdk.TxResponse,
 		WithAccountNumber(acc.GetAccountNumber()).
 		WithSequence(acc.GetSequence())
 
-	err = tx.Sign(txFactory, info.GetName(), txBuilder, true)
-	require.NoError(n.T, err)
+	err = tx.Sign(txFactory, info.Name, txBuilder, true)
+	if err != nil {
+		return nil, err
+	}
 
 	txBytes, err := cfg.TxConfig.TxEncoder()(txBuilder.GetTx())
-	require.NoError(n.T, err)
+	if err != nil {
+		return nil, err
+	}
 
 	respRaw, err := rpc.BroadcastTxCommit(context.Background(), txBytes)
-	require.NoError(n.T, err)
+	if err != nil {
+		return nil, err
+	}
 
-	require.Truef(n.T, respRaw.CheckTx.IsOK(), "tx failed: %s", respRaw.CheckTx.Log)
-	require.Truef(n.T, respRaw.DeliverTx.IsOK(), "tx failed: %s", respRaw.DeliverTx.Log)
+	if !respRaw.CheckTx.IsOK() {
+		return nil, fmt.Errorf("tx failed: %s", respRaw.CheckTx.Log)
+	}
+	if !respRaw.DeliverTx.IsOK() {
+		return nil, fmt.Errorf("tx failed: %s", respRaw.DeliverTx.Log)
+	}
 
 	return sdk.NewResponseFormatBroadcastTxCommit(respRaw), nil
 }

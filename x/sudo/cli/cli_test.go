@@ -110,8 +110,12 @@ func (s *IntegrationSuite) SetupSuite() {
 		addr:       rootAddr,
 		passphrase: "secure-password",
 	}
+	homeDir := s.T().TempDir()
 	s.cfg = testutilcli.BuildNetworkConfig(genState)
-	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
+	network, err := testutilcli.New(s.T(), homeDir, s.cfg)
+	s.Require().NoError(err)
+
+	s.network = network
 	s.FundRoot(s.root)
 	s.AddRootToKeyring(s.root)
 }
@@ -247,7 +251,7 @@ func (s *IntegrationSuite) TestMarshal_EditSudoers() {
 	fileJsonBz, _ := msgPlus.ToJson(t)
 
 	t.Log("check unmarshal file → proto")
-	cdc := genesis.TEST_ENCODING_CONFIG.Marshaler
+	cdc := genesis.TEST_ENCODING_CONFIG.Codec
 	newMsg := new(pb.MsgEditSudoers)
 	err := cdc.UnmarshalJSON(fileJsonBz, newMsg)
 	assert.NoErrorf(t, err, "fileJsonBz: #%v", fileJsonBz)

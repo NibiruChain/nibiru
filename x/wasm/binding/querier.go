@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
+	sdkerrors "cosmossdk.io/errors"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"

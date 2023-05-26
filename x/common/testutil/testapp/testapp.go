@@ -3,7 +3,6 @@ package testapp
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -25,7 +24,7 @@ func NewNibiruTestAppAndContext(shouldUseDefaultGenesis bool) (*app.NibiruApp, s
 	encoding := app.MakeTestEncodingConfig()
 	var appGenesis app.GenesisState
 	if shouldUseDefaultGenesis {
-		appGenesis = app.NewDefaultGenesisState(encoding.Marshaler)
+		appGenesis = app.NewDefaultGenesisState(encoding.Codec)
 	}
 
 	app := NewNibiruTestApp(appGenesis)
@@ -43,8 +42,6 @@ func NewNibiruTestAppAndContext(shouldUseDefaultGenesis bool) (*app.NibiruApp, s
 // creates an application instance ('app.NibiruApp'). This app uses an
 // in-memory database ('tmdb.MemDB') and has logging disabled.
 func NewNibiruTestApp(gen app.GenesisState) *app.NibiruApp {
-	userHomeDir := os.TempDir()
-	nodeHome := filepath.Join(userHomeDir, ".nibid")
 	db := tmdb.NewMemDB()
 	logger := log.NewNopLogger()
 
@@ -56,11 +53,16 @@ func NewNibiruTestApp(gen app.GenesisState) *app.NibiruApp {
 		/*traceStore=*/ nil,
 		/*loadLatest=*/ true,
 		/*skipUpgradeHeights=*/ map[int64]bool{},
-		/*homePath=*/ nodeHome,
+		/*homePath=*/ os.TempDir(),
 		/*invCheckPeriod=*/ 0,
 		/*encodingConfig=*/ encoding,
 		/*appOpts=*/ simapp.EmptyAppOptions{},
 	)
+
+	gen, err := GenesisStateWithSingleValidator(encoding.Codec, gen)
+	if err != nil {
+		panic(err)
+	}
 
 	stateBytes, err := json.MarshalIndent(gen, "", " ")
 	if err != nil {

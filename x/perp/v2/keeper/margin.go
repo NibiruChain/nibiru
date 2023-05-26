@@ -45,7 +45,7 @@ func (k Keeper) AddMargin(
 	}
 
 	fundingPayment := FundingPayment(position, market.LatestCumulativePremiumFraction)
-	remainingMargin := position.Margin.Add(marginToAdd.Amount.ToDec()).Sub(fundingPayment)
+	remainingMargin := position.Margin.Add(sdk.NewDecFromInt(marginToAdd.Amount)).Sub(fundingPayment)
 
 	if remainingMargin.IsNegative() {
 		return nil, types.ErrBadDebt.Wrapf("applying funding payment would result in negative remaining margin: %s", remainingMargin)
@@ -153,7 +153,7 @@ func (k Keeper) RemoveMargin(
 		remainingMargin = remainingMargin.Add(unrealizedPnl)
 	}
 
-	if remainingMargin.LT(marginToRemove.Amount.ToDec()) {
+	if remainingMargin.LT(sdk.NewDecFromInt(marginToRemove.Amount)) {
 		return nil, types.ErrBadDebt.Wrapf(
 			"not enough free collateral to remove margin; remainingMargin %s, marginToRemove %s", remainingMargin, marginToRemove,
 		)
@@ -164,7 +164,7 @@ func (k Keeper) RemoveMargin(
 	}
 
 	// apply funding payment and remove margin
-	position.Margin = position.Margin.Sub(fundingPayment).Sub(marginToRemove.Amount.ToDec())
+	position.Margin = position.Margin.Sub(fundingPayment).Sub(sdk.NewDecFromInt(marginToRemove.Amount))
 	position.LatestCumulativePremiumFraction = market.LatestCumulativePremiumFraction
 	position.LastUpdatedBlockNumber = ctx.BlockHeight()
 	k.Positions.Insert(ctx, collections.Join(position.Pair, traderAddr), position)

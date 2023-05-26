@@ -21,5 +21,5 @@ func TestRootCmdConfig(t *testing.T) {
 	}
 	rootCmd.SetArgs(cmds)
 
-	require.NoError(t, svrcmd.Execute(rootCmd, app.DefaultNodeHome))
+	require.NoError(t, svrcmd.Execute(rootCmd, "", app.DefaultNodeHome))
 }

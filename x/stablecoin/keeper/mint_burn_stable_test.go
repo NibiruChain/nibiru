@@ -167,14 +167,14 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 			efModuleBalance := nibiruApp.BankKeeper.GetAllBalances(
 				ctx, nibiruApp.AccountKeeper.GetModuleAddress(types.StableEFModuleAccount),
 			)
-			collFeesInEf := neededCollFees.Amount.ToDec().Mul(sdk.MustNewDecFromStr("0.5")).TruncateInt()
+			collFeesInEf := sdk.NewDecFromInt(neededCollFees.Amount).Mul(sdk.MustNewDecFromStr("0.5")).TruncateInt()
 			assert.Equal(t, sdk.NewCoins(sdk.NewCoin(denoms.USDC, collFeesInEf)), efModuleBalance)
 
 			// Check balances in Treasury
 			treasuryModuleBalance := nibiruApp.BankKeeper.
 				GetAllBalances(ctx, nibiruApp.AccountKeeper.GetModuleAddress(common.TreasuryPoolModuleAccount))
-			collFeesInTreasury := neededCollFees.Amount.ToDec().Mul(sdk.MustNewDecFromStr("0.5")).TruncateInt()
-			govFeesInTreasury := neededGovFees.Amount.ToDec().Mul(sdk.MustNewDecFromStr("0.5")).TruncateInt()
+			collFeesInTreasury := sdk.NewDecFromInt(neededCollFees.Amount).Mul(sdk.MustNewDecFromStr("0.5")).TruncateInt()
+			govFeesInTreasury := sdk.NewDecFromInt(neededGovFees.Amount).Mul(sdk.MustNewDecFromStr("0.5")).TruncateInt()
 			assert.Equal(
 				t,
 				sdk.NewCoins(

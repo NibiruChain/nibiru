@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -51,7 +53,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	stableGen := stabletypes.DefaultGenesis()
 	stableGen.Params.IsCollateralRatioValid = true
 	stableGen.ModuleAccountBalance = sdk.NewCoin(denoms.USDC, sdk.NewInt(10000*common.TO_MICRO))
-	genesisState[stabletypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(stableGen)
+	genesisState[stabletypes.ModuleName] = encodingConfig.Codec.MustMarshalJSON(stableGen)
 
 	oracleGenesis := oracletypes.DefaultGenesisState()
 	oracleGenesis.ExchangeRates = []oracletypes.ExchangeRateTuple{
@@ -60,12 +62,16 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	}
 	oracleGenesis.Params.VotePeriod = 1_000
 
-	genesisState[oracletypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(oracleGenesis)
+	genesisState[oracletypes.ModuleName] = encodingConfig.Codec.MustMarshalJSON(oracleGenesis)
 
+	homeDir := s.T().TempDir()
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
 
-	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
-	_, err := s.network.WaitForHeight(1)
+	network, err := testutilcli.New(s.T(), homeDir, s.cfg)
+	s.Require().NoError(err)
+
+	s.network = network
+	_, err = s.network.WaitForHeight(1)
 	s.NoError(err)
 }
 
@@ -98,7 +104,7 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 		name string
 		args []string
 
-		expectedStable sdk.Int
+		expectedStable sdkmath.Int
 		expectErr      bool
 		respType       proto.Message
 		expectedCode   uint32
@@ -175,9 +181,9 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 		name string
 		args []string
 
-		expectedStable   sdk.Int
-		expectedColl     sdk.Int
-		expectedGov      sdk.Int
+		expectedStable   sdkmath.Int
+		expectedColl     sdkmath.Int
+		expectedGov      sdkmath.Int
 		expectedTreasury sdk.Coins
 		expectedEf       sdk.Coins
 		expectErr        bool

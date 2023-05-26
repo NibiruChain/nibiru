@@ -3,6 +3,8 @@ package types
 import (
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
@@ -13,7 +15,7 @@ func TestMaximalSharesFromExactRatioJoin(t *testing.T) {
 		poolAssets        []PoolAsset
 		existingShares    int64
 		tokensIn          sdk.Coins
-		expectedNumShares sdk.Int
+		expectedNumShares sdkmath.Int
 		expectedRemCoins  sdk.Coins
 	}{
 		{
@@ -136,7 +138,7 @@ func TestTokensOutFromExactSharesHappyPath(t *testing.T) {
 	for _, tc := range []struct {
 		name              string
 		pool              Pool
-		numSharesIn       sdk.Int
+		numSharesIn       sdkmath.Int
 		expectedTokensOut sdk.Coins
 		expectedFees      sdk.Coins
 	}{
@@ -276,7 +278,7 @@ func TestTokensOutFromExactSharesErrors(t *testing.T) {
 	for _, tc := range []struct {
 		name        string
 		pool        Pool
-		numSharesIn sdk.Int
+		numSharesIn sdkmath.Int
 	}{
 		{
 			name: "zero pool shares",
@@ -321,9 +323,9 @@ func TestUpdateLiquidityHappyPath(t *testing.T) {
 	for _, tc := range []struct {
 		name                  string
 		pool                  Pool
-		numShares             sdk.Int
+		numShares             sdkmath.Int
 		newLiquidity          sdk.Coins
-		expectedNumShares     sdk.Int
+		expectedNumShares     sdkmath.Int
 		expectedNewPoolAssets []PoolAsset
 	}{
 		{
@@ -369,7 +371,7 @@ func TestUpdateLiquidityInvalidInput(t *testing.T) {
 	for _, tc := range []struct {
 		name         string
 		pool         Pool
-		numShares    sdk.Int
+		numShares    sdkmath.Int
 		newLiquidity sdk.Coins
 	}{
 		{
@@ -413,8 +415,8 @@ func TestNumSharesOutStableswap(t *testing.T) {
 		poolAssets        []PoolAsset
 		existingShares    int64
 		tokensIn          sdk.Coins
-		expectedNumShares sdk.Int
-		A                 sdk.Int
+		expectedNumShares sdkmath.Int
+		A                 sdkmath.Int
 		expectedError     error
 	}{
 		{

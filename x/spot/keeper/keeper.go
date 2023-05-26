@@ -4,6 +4,10 @@ import (
 	"errors"
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
+
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -18,7 +22,7 @@ import (
 type (
 	Keeper struct {
 		cdc        codec.BinaryCodec
-		storeKey   sdk.StoreKey
+		storeKey   storetypes.StoreKey
 		paramstore paramtypes.Subspace
 
 		accountKeeper types.AccountKeeper
@@ -44,7 +48,7 @@ ret
 */
 func NewKeeper(
 	cdc codec.BinaryCodec,
-	storeKey sdk.StoreKey,
+	storeKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
@@ -240,7 +244,7 @@ ret:
 
 	err: returns an error if something errored out
 */
-func (k Keeper) mintPoolShareToAccount(ctx sdk.Context, poolId uint64, recipientAddr sdk.AccAddress, amountPoolShares sdk.Int) (err error) {
+func (k Keeper) mintPoolShareToAccount(ctx sdk.Context, poolId uint64, recipientAddr sdk.AccAddress, amountPoolShares sdkmath.Int) (err error) {
 	newCoins := sdk.Coins{
 		sdk.NewCoin(types.GetPoolShareBaseDenom(poolId), amountPoolShares),
 	}
@@ -465,7 +469,7 @@ func (k Keeper) JoinPool(
 
 	poolAddr := pool.GetAddress()
 
-	var numShares sdk.Int
+	var numShares sdkmath.Int
 	if !shouldSwap || pool.PoolParams.PoolType == types.PoolType_STABLESWAP {
 		numShares, remCoins, err = pool.AddTokensToPool(tokensIn)
 	} else {
@@ -475,7 +479,7 @@ func (k Keeper) JoinPool(
 		return types.Pool{}, sdk.Coin{}, sdk.Coins{}, err
 	}
 
-	tokensConsumed := tokensIn.Sub(remCoins)
+	tokensConsumed := tokensIn.Sub(remCoins...)
 
 	// take coins from joiner to pool
 	if err = k.bankKeeper.SendCoins(

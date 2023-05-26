@@ -3,6 +3,8 @@ package assertion
 import (
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/app"
@@ -31,14 +33,14 @@ func (b allBalancesEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, 
 	return ctx, nil, false
 }
 
-func BalanceEqual(account sdk.AccAddress, denom string, amount sdk.Int) *balanceEqual {
+func BalanceEqual(account sdk.AccAddress, denom string, amount sdkmath.Int) *balanceEqual {
 	return &balanceEqual{Account: account, Denom: denom, Amount: amount}
 }
 
 type balanceEqual struct {
 	Account sdk.AccAddress
 	Denom   string
-	Amount  sdk.Int
+	Amount  sdkmath.Int
 }
 
 func (b balanceEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
@@ -55,14 +57,14 @@ func (b balanceEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, erro
 	return ctx, nil, false
 }
 
-func ModuleBalanceEqual(moduleName string, denom string, amount sdk.Int) *moduleBalanceEqual {
+func ModuleBalanceEqual(moduleName string, denom string, amount sdkmath.Int) *moduleBalanceEqual {
 	return &moduleBalanceEqual{ModuleName: moduleName, Denom: denom, Amount: amount}
 }
 
 type moduleBalanceEqual struct {
 	ModuleName string
 	Denom      string
-	Amount     sdk.Int
+	Amount     sdkmath.Int
 }
 
 func (b moduleBalanceEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {

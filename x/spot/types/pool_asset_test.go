@@ -3,6 +3,8 @@ package types
 import (
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
@@ -76,7 +78,7 @@ func TestSubtractPoolAssetBalance(t *testing.T) {
 		name          string
 		pool          Pool
 		tokenDenom    string
-		subAmt        sdk.Int
+		subAmt        sdkmath.Int
 		expectedCoins sdk.Coins
 	}{
 		{

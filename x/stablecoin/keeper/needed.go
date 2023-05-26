@@ -1,10 +1,11 @@
 package keeper
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// Computes the amount of NIBI needed to mint NUSD given some COLL amount.
+// NeededGovAmtGivenColl Computes the amount of NIBI needed to mint NUSD given some COLL amount.
 // Args:
 //
 //	collAmt sdk.Int: Amount of COLL given.
@@ -14,9 +15,9 @@ import (
 //	neededGovAmt sdk.Int: Amount of NIBI needed.
 //	mintableStableAmt sdk.Int: Amount of NUSD that can be minted.
 func NeededGovAmtGivenColl(
-	collAmt sdk.Int, priceGov sdk.Dec, priceColl sdk.Dec,
-	collRatio sdk.Dec) (neededGovAmt sdk.Int, mintableStableAmt sdk.Int) {
-	collUSD := collAmt.ToDec().Mul(priceColl)
+	collAmt sdkmath.Int, priceGov sdk.Dec, priceColl sdk.Dec,
+	collRatio sdk.Dec) (neededGovAmt sdkmath.Int, mintableStableAmt sdkmath.Int) {
+	collUSD := sdk.NewDecFromInt(collAmt).Mul(priceColl)
 	neededGovUSD := (collUSD.Quo(collRatio)).Sub(collUSD)
 
 	neededGovAmt = neededGovUSD.Quo(priceGov).TruncateInt()
@@ -24,7 +25,7 @@ func NeededGovAmtGivenColl(
 	return neededGovAmt, mintableStableAmt
 }
 
-// Computes the amount of COLL needed to mint NUSD given some NIBI amount.
+// NeededCollAmtGivenGov Computes the amount of COLL needed to mint NUSD given some NIBI amount.
 // Args:
 //
 //	govAmt sdk.Int: Amount of  NIBI given.
@@ -34,8 +35,8 @@ func NeededGovAmtGivenColl(
 //	neededCollAmt sdk.Int: Amount of COLL needed.
 //	mintableStableAmt sdk.Int: Amount of NUSD that can be minted.
 func NeededCollAmtGivenGov(
-	govAmt sdk.Int, priceGov sdk.Dec, priceColl sdk.Dec,
-	collRatio sdk.Dec) (neededCollAmt sdk.Int, mintableStableAmt sdk.Int) {
+	govAmt sdkmath.Int, priceGov sdk.Dec, priceColl sdk.Dec,
+	collRatio sdk.Dec) (neededCollAmt sdkmath.Int, mintableStableAmt sdkmath.Int) {
 	govUSD := sdk.NewDecFromInt(govAmt).Mul(priceGov)
 	govRatio := sdk.NewDec(1).Sub(collRatio)
 	neededCollUSD := collRatio.Quo(govRatio).Mul(govUSD)

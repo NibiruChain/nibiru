@@ -4,6 +4,8 @@ import (
 	"sort"
 	"testing"
 
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+
 	"github.com/NibiruChain/collections"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -24,14 +26,14 @@ func TestGroupBallotsByPair(t *testing.T) {
 
 	power := int64(100)
 	amt := sdk.TokensFromConsensusPower(power, sdk.DefaultPowerReduction)
-	sh := staking.NewHandler(fixture.StakingKeeper)
+	sh := stakingkeeper.NewMsgServerImpl(fixture.StakingKeeper)
 
 	// Validator created
-	_, err := sh(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[0], ValPubKeys[0], amt))
+	_, err := sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[0], ValPubKeys[0], amt))
 	require.NoError(t, err)
-	_, err = sh(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[1], ValPubKeys[1], amt))
+	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[1], ValPubKeys[1], amt))
 	require.NoError(t, err)
-	_, err = sh(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[2], ValPubKeys[2], amt))
+	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[2], ValPubKeys[2], amt))
 	require.NoError(t, err)
 	staking.EndBlocker(fixture.Ctx, fixture.StakingKeeper)
 
@@ -94,14 +96,14 @@ func TestClearBallots(t *testing.T) {
 
 	power := int64(100)
 	amt := sdk.TokensFromConsensusPower(power, sdk.DefaultPowerReduction)
-	sh := staking.NewHandler(fixture.StakingKeeper)
+	sh := stakingkeeper.NewMsgServerImpl(fixture.StakingKeeper)
 
 	// Validator created
-	_, err := sh(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[0], ValPubKeys[0], amt))
+	_, err := sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[0], ValPubKeys[0], amt))
 	require.NoError(t, err)
-	_, err = sh(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[1], ValPubKeys[1], amt))
+	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[1], ValPubKeys[1], amt))
 	require.NoError(t, err)
-	_, err = sh(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[2], ValPubKeys[2], amt))
+	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[2], ValPubKeys[2], amt))
 	require.NoError(t, err)
 	staking.EndBlocker(fixture.Ctx, fixture.StakingKeeper)
 

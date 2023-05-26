@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/denoms"
@@ -96,7 +97,7 @@ func (k Keeper) GetProportions(
 
 // GetCirculatingSupply returns the bank supply of the mintDenom excluding the
 // team allocation in the first year
-func (k Keeper) GetCirculatingSupply(ctx sdk.Context, mintDenom string) sdk.Int {
+func (k Keeper) GetCirculatingSupply(ctx sdk.Context, mintDenom string) sdkmath.Int {
 	return k.bankKeeper.GetSupply(ctx, mintDenom).Amount
 }
 
@@ -113,7 +114,8 @@ func (k Keeper) GetInflationRate(ctx sdk.Context, mintDenom string) sdk.Dec {
 	}
 
 	// EpochMintProvision * 365 / circulatingSupply * 100
-	return epochMintProvision.MulInt64(int64(k.EpochsPerPeriod(ctx))).Quo(circulatingSupply.ToDec()).Mul(sdk.NewDec(100))
+	circulatingSupplyToDec := sdk.NewDecFromInt(circulatingSupply)
+	return epochMintProvision.MulInt64(int64(k.EpochsPerPeriod(ctx))).Quo(circulatingSupplyToDec).Mul(sdk.NewDec(100))
 }
 
 // GetEpochMintProvision retrieves necessary params KV storage

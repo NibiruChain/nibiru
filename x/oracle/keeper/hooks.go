@@ -43,7 +43,7 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64) 
 
 		balances := h.bankKeeper.GetAllBalances(ctx, account.GetAddress())
 		for _, balance := range balances {
-			validatorFees := balance.Amount.ToDec().Mul(params.ValidatorFeeRatio).TruncateInt()
+			validatorFees := sdk.NewDecFromInt(balance.Amount).Mul(params.ValidatorFeeRatio).TruncateInt()
 			rest := balance.Amount.Sub(validatorFees)
 			totalValidatorFees = append(totalValidatorFees, sdk.NewCoin(balance.Denom, validatorFees))
 			totalRest = append(totalRest, sdk.NewCoin(balance.Denom, rest))

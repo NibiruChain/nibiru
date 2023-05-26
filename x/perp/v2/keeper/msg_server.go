@@ -45,7 +45,7 @@ func (m msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPositio
 		traderAddr,
 		req.QuoteAssetAmount,
 		req.Leverage,
-		req.BaseAssetAmountLimit.ToDec(),
+		sdk.NewDecFromInt(req.BaseAssetAmountLimit),
 	)
 	if err != nil {
 		return nil, err

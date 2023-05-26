@@ -66,12 +66,19 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		{Pair: asset.Registry.Pair(denoms.ATOM, denoms.NUSD), ExchangeRate: sdk.NewDec(6_000)},
 		{Pair: asset.Registry.Pair(denoms.OSMO, denoms.NUSD), ExchangeRate: sdk.NewDec(6_000)},
 	}
-	genState[oracletypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(oracleGenesis)
+	genState[oracletypes.ModuleName] = encodingConfig.Codec.MustMarshalJSON(oracleGenesis)
 
 	s.cfg = testutilcli.BuildNetworkConfig(genState)
 	s.cfg.NumValidators = 1
 	s.cfg.Mnemonics = []string{"satisfy december text daring wheat vanish save viable holiday rural vessel shuffle dice skate promote fade badge federal sail during lend fever balance give"}
-	s.network = testutilcli.NewNetwork(s.T(), s.cfg)
+	network, err := testutilcli.New(
+		s.T(),
+		s.T().TempDir(),
+		s.cfg,
+	)
+	s.Require().NoError(err)
+	s.network = network
+
 	s.NoError(s.network.WaitForNextBlock())
 
 	val := s.network.Validators[0]

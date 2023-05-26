@@ -3,6 +3,8 @@ package types
 import (
 	fmt "fmt"
 
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -82,11 +84,11 @@ type PositionResp struct {
 
 type LiquidateResp struct {
 	// Amount of bad debt created by the liquidation event
-	BadDebt sdk.Int
+	BadDebt sdkmath.Int
 	// Fee paid to the liquidator
-	FeeToLiquidator sdk.Int
+	FeeToLiquidator sdkmath.Int
 	// Fee paid to the Perp EF fund
-	FeeToPerpEcosystemFund sdk.Int
+	FeeToPerpEcosystemFund sdkmath.Int
 	// Address of the liquidator
 	Liquidator string
 	// Position response from the close or open reverse position
@@ -97,7 +99,7 @@ func (l *LiquidateResp) Validate() error {
 	nilFieldError := fmt.Errorf("invalid liquidationOutput, must not have nil fields")
 
 	// nil sdk.Int check
-	for _, field := range []sdk.Int{
+	for _, field := range []sdkmath.Int{
 		l.FeeToLiquidator, l.FeeToPerpEcosystemFund} {
 		if field.IsNil() {
 			return nilFieldError
@@ -105,7 +107,7 @@ func (l *LiquidateResp) Validate() error {
 	}
 
 	// nil sdk.Int check
-	for _, field := range []sdk.Int{l.BadDebt} {
+	for _, field := range []sdkmath.Int{l.BadDebt} {
 		if field.IsNil() {
 			return nilFieldError
 		}

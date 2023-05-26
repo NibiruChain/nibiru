@@ -3,6 +3,8 @@ package keeper_test
 import (
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/NibiruChain/nibiru/x/stablecoin/keeper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -14,7 +16,7 @@ func TestAsInt(t *testing.T) {
 	testCases := []struct {
 		name   string
 		inDec  sdk.Dec
-		outInt sdk.Int
+		outInt sdkmath.Int
 	}{
 		{
 			name:   "One to int",
@@ -49,12 +51,12 @@ func TestAsInt(t *testing.T) {
 func TestMint_NeededCollAmtGivenGov(t *testing.T) {
 	testCases := []struct {
 		name                      string
-		govAmt                    sdk.Int
+		govAmt                    sdkmath.Int
 		priceGov                  sdk.Dec
 		priceColl                 sdk.Dec
 		collRatio                 sdk.Dec
-		expectedNeededCollAmt     sdk.Int
-		expectedMintableStableAmt sdk.Int
+		expectedNeededCollAmt     sdkmath.Int
+		expectedMintableStableAmt sdkmath.Int
 	}{
 		{
 			name:                      "Low collateral ratio",
@@ -88,12 +90,12 @@ func TestMint_NeededCollAmtGivenGov(t *testing.T) {
 func TestMint_NeededGovAmtGivenColl(t *testing.T) {
 	testCases := []struct {
 		name              string
-		collAmt           sdk.Int
+		collAmt           sdkmath.Int
 		priceGov          sdk.Dec
 		priceColl         sdk.Dec
 		collRatio         sdk.Dec
-		neededGovAmt      sdk.Int
-		mintableStableAmt sdk.Int
+		neededGovAmt      sdkmath.Int
+		mintableStableAmt sdkmath.Int
 		err               error
 	}{
 		{

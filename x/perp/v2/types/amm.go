@@ -4,6 +4,8 @@ import (
 	fmt "fmt"
 	"math/big"
 
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -272,9 +274,9 @@ func (amm *AMM) Bias() (bias sdk.Dec) {
 /*
 CalcRepegCost provides the cost of re-pegging the pool to a new candidate peg multiplier.
 */
-func (amm AMM) CalcRepegCost(newPriceMultiplier sdk.Dec) (cost sdk.Int, err error) {
+func (amm AMM) CalcRepegCost(newPriceMultiplier sdk.Dec) (cost sdkmath.Int, err error) {
 	if !newPriceMultiplier.IsPositive() {
-		return sdk.Int{}, ErrNonPositivePegMultiplier
+		return sdkmath.Int{}, ErrNonPositivePegMultiplier
 	}
 
 	bias := amm.Bias()
@@ -292,7 +294,7 @@ func (amm AMM) CalcRepegCost(newPriceMultiplier sdk.Dec) (cost sdk.Int, err erro
 
 	biasInQuoteReserve, err := amm.GetQuoteReserveAmt(bias.Abs(), dir)
 	if err != nil {
-		return sdk.Int{}, err
+		return sdkmath.Int{}, err
 	}
 
 	costDec := biasInQuoteReserve.Mul(newPriceMultiplier.Sub(amm.PriceMultiplier))
@@ -336,28 +338,28 @@ func (amm AMM) GetMarketValue() (sdk.Dec, error) {
 /*
 CalcUpdateSwapInvariantCost returns the cost of updating the invariant of the pool
 */
-func (amm AMM) CalcUpdateSwapInvariantCost(newSwapInvariant sdk.Dec) (sdk.Int, error) {
+func (amm AMM) CalcUpdateSwapInvariantCost(newSwapInvariant sdk.Dec) (sdkmath.Int, error) {
 	if newSwapInvariant.IsNil() {
-		return sdk.Int{}, ErrNilSwapInvariant
+		return sdkmath.Int{}, ErrNilSwapInvariant
 	}
 
 	if !newSwapInvariant.IsPositive() {
-		return sdk.Int{}, ErrNegativeSwapInvariant
+		return sdkmath.Int{}, ErrNegativeSwapInvariant
 	}
 
 	marketValueBefore, err := amm.GetMarketValue()
 	if err != nil {
-		return sdk.Int{}, err
+		return sdkmath.Int{}, err
 	}
 
 	err = amm.UpdateSwapInvariant(newSwapInvariant)
 	if err != nil {
-		return sdk.Int{}, err
+		return sdkmath.Int{}, err
 	}
 
 	marketValueAfter, err := amm.GetMarketValue()
 	if err != nil {
-		return sdk.Int{}, err
+		return sdkmath.Int{}, err
 	}
 
 	cost := marketValueAfter.Sub(marketValueBefore)

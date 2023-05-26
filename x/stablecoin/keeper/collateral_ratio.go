@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
@@ -137,12 +139,12 @@ func (k *Keeper) StableRequiredForTargetCollRatio(
 
 func (k *Keeper) RecollateralizeCollAmtForTargetCollRatio(
 	ctx sdk.Context,
-) (neededCollAmount sdk.Int, err error) {
+) (neededCollAmount sdkmath.Int, err error) {
 	neededUSDForRecoll, _ := k.StableRequiredForTargetCollRatio(ctx)
 	priceCollStable, err := k.OracleKeeper.GetExchangeRate(
 		ctx, asset.Registry.Pair(denoms.USDC, denoms.NUSD))
 	if err != nil {
-		return sdk.Int{}, err
+		return sdkmath.Int{}, err
 	}
 
 	neededCollAmountDec := neededUSDForRecoll.Quo(priceCollStable)
@@ -290,14 +292,14 @@ Returns:
 */
 func (k *Keeper) GovAmtFromRecollateralize(
 	ctx sdk.Context, inUSD sdk.Dec,
-) (govOut sdk.Int, err error) {
+) (govOut sdkmath.Int, err error) {
 	params := k.GetParams(ctx)
 	bonusRate := params.GetBonusRateRecollAsDec()
 
 	priceGovStable, err := k.OracleKeeper.GetExchangeRate(
 		ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD))
 	if err != nil {
-		return sdk.Int{}, err
+		return sdkmath.Int{}, err
 	}
 	govOut = inUSD.Mul(sdk.OneDec().Add(bonusRate)).
 		Quo(priceGovStable).TruncateInt()
@@ -306,10 +308,10 @@ func (k *Keeper) GovAmtFromRecollateralize(
 
 func (k *Keeper) GovAmtFromFullRecollateralize(
 	ctx sdk.Context,
-) (govOut sdk.Int, err error) {
+) (govOut sdkmath.Int, err error) {
 	neededCollUSD, err := k.StableRequiredForTargetCollRatio(ctx)
 	if err != nil {
-		return sdk.Int{}, err
+		return sdkmath.Int{}, err
 	}
 	return k.GovAmtFromRecollateralize(ctx, neededCollUSD)
 }
@@ -334,13 +336,13 @@ Returns:
 */
 func (k *Keeper) BuybackGovAmtForTargetCollRatio(
 	ctx sdk.Context,
-) (neededGovAmt sdk.Int, err error) {
+) (neededGovAmt sdkmath.Int, err error) {
 	neededUSDForRecoll, _ := k.StableRequiredForTargetCollRatio(ctx)
 	neededUSDForBuyback := neededUSDForRecoll.Neg()
 	priceGovStable, err := k.OracleKeeper.GetExchangeRate(
 		ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD))
 	if err != nil {
-		return sdk.Int{}, err
+		return sdkmath.Int{}, err
 	}
 
 	neededGovAmtDec := neededUSDForBuyback.Quo(priceGovStable)
@@ -473,11 +475,11 @@ Returns:
 */
 func (k *Keeper) CollAmtFromBuyback(
 	ctx sdk.Context, valUSD sdk.Dec,
-) (collAmt sdk.Int, err error) {
+) (collAmt sdkmath.Int, err error) {
 	priceCollStable, err := k.OracleKeeper.GetExchangeRate(
 		ctx, asset.Registry.Pair(denoms.USDC, denoms.NUSD))
 	if err != nil {
-		return sdk.Int{}, err
+		return sdkmath.Int{}, err
 	}
 	collAmt = valUSD.
 		Quo(priceCollStable).TruncateInt()
@@ -487,10 +489,10 @@ func (k *Keeper) CollAmtFromBuyback(
 // TODO hygiene: cover with test cases | https://github.com/NibiruChain/nibiru/issues/537
 func (k *Keeper) CollAmtFromFullBuyback(
 	ctx sdk.Context,
-) (collAmt sdk.Int, err error) {
+) (collAmt sdkmath.Int, err error) {
 	neededUSDForRecoll, err := k.StableRequiredForTargetCollRatio(ctx)
 	if err != nil {
-		return sdk.Int{}, err
+		return sdkmath.Int{}, err
 	}
 	neededUSDForBuyback := neededUSDForRecoll.Neg()
 	return k.CollAmtFromBuyback(ctx, neededUSDForBuyback)
