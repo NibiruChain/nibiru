@@ -49,3 +49,24 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ghcr.io/nibiruchain/nibiru:latest
+
+      # localnet images are ready-to-go images (with genesis and config files already configured)
+      - name: Build and push versioned localnet image
+        uses: docker/build-push-action@v4
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          context: .
+          file: ./contrib/docker/localnet.Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ghcr.io/nibiruchain/localnet:${{ steps.get_version.outputs.version-without-v }}
+
+      - name: Build and push latest localnet image
+        uses: docker/build-push-action@v4
+        if: github.ref == 'refs/heads/master'
+        with:
+          context: .
+          file: ./contrib/docker/localnet.Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ghcr.io/nibiruchain/localnet:latest
