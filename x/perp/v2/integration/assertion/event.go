@@ -34,7 +34,7 @@ func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context)
 			return ctx, fmt.Errorf("expected event is not of type PositionChangedEvent"), false
 		}
 
-		if err := types.PositionsAreEqual(&theEvent.FinalPosition, &p.ExpectedEvent.FinalPosition); err != nil {
+		if err := types.PositionsAreEqual(&p.ExpectedEvent.FinalPosition, &theEvent.FinalPosition); err != nil {
 			return ctx, err, false
 		}
 

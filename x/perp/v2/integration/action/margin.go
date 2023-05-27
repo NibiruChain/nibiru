@@ -62,8 +62,8 @@ func (a removeMarginAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context
 		ctx, a.Pair, a.Account, sdk.NewCoin(a.Pair.QuoteDenom(), a.Margin),
 	)
 	if err != nil {
-		return ctx, err, true
+		return ctx, err, false
 	}
 
-	return ctx, nil, true
+	return ctx, nil, false
 }

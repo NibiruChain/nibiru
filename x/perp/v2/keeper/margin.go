@@ -159,14 +159,19 @@ func (k Keeper) RemoveMargin(
 		)
 	}
 
-	if err = k.Withdraw(ctx, market, traderAddr, marginToRemove.Amount); err != nil {
-		return nil, err
-	}
-
 	// apply funding payment and remove margin
 	position.Margin = position.Margin.Sub(fundingPayment).Sub(sdk.NewDecFromInt(marginToRemove.Amount))
 	position.LatestCumulativePremiumFraction = market.LatestCumulativePremiumFraction
 	position.LastUpdatedBlockNumber = ctx.BlockHeight()
+
+	err = k.checkMarginRatio(ctx, market, amm, position)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = k.Withdraw(ctx, market, traderAddr, marginToRemove.Amount); err != nil {
+		return nil, err
+	}
 	k.Positions.Insert(ctx, collections.Join(position.Pair, traderAddr), position)
 
 	if err = ctx.EventManager().EmitTypedEvent(
