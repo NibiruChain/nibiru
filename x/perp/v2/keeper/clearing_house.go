@@ -602,10 +602,7 @@ func (k Keeper) checkMarginRatio(ctx sdk.Context, market types.Market, amm types
 		preferredPositionNotional = sdk.MinDec(spotNotional, twapNotional)
 	}
 
-	fmt.Println("preferredPositionNotional", preferredPositionNotional)
-
 	marginRatio := MarginRatio(position, preferredPositionNotional, market.LatestCumulativePremiumFraction)
-	fmt.Println("marginRatio", marginRatio)
 	if marginRatio.LT(market.MaintenanceMarginRatio) {
 		return types.ErrMarginRatioTooLow
 	}
