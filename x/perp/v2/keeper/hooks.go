@@ -51,13 +51,10 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64)
 
 		_ = ctx.EventManager().EmitTypedEvent(&types.FundingRateChangedEvent{
 			Pair:                      market.Pair,
-			MarkPrice:                 markTwap,
-			IndexPrice:                indexTWAP,
-			LatestFundingRate:         premiumFraction.Quo(indexTWAP),
-			LatestPremiumFraction:     premiumFraction,
+			MarkPriceTwap:             markTwap,
+			IndexPriceTwap:            indexTWAP,
+			PremiumFraction:           premiumFraction,
 			CumulativePremiumFraction: market.LatestCumulativePremiumFraction,
-			BlockHeight:               ctx.BlockHeight(),
-			BlockTimeMs:               ctx.BlockTime().UnixMilli(),
 		})
 	}
 }
