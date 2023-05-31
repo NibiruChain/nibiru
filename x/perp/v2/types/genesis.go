@@ -48,8 +48,8 @@ func (gs GenesisState) Validate() error {
 	return nil
 }
 
-func DefaultMarket(pair asset.Pair) Market {
-	return Market{
+func DefaultMarket(pair asset.Pair) *Market {
+	return &Market{
 		Pair:                            pair,
 		Enabled:                         true,
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),

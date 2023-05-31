@@ -19,6 +19,16 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 			TimestampMs: ctx.BlockTime().UnixMilli(),
 		}
 		k.ReserveSnapshots.Insert(ctx, collections.Join(amm.Pair, ctx.BlockTime()), snapshot)
+
+		_ = ctx.EventManager().EmitTypedEvent(&types.AmmUpdatedEvent{
+			FinalAmm: amm,
+		})
+	}
+
+	for _, market := range k.Markets.Iterate(ctx, collections.Range[asset.Pair]{}).Values() {
+		_ = ctx.EventManager().EmitTypedEvent(&types.MarketUpdatedEvent{
+			FinalMarket: market,
+		})
 	}
 	return []abci.ValidatorUpdate{}
 }
