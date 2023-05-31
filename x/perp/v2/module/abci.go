@@ -20,15 +20,44 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 		}
 		k.ReserveSnapshots.Insert(ctx, collections.Join(amm.Pair, ctx.BlockTime()), snapshot)
 
-		_ = ctx.EventManager().EmitTypedEvent(&types.AmmUpdatedEvent{
-			FinalAmm: amm,
-		})
-	}
+		market, err := k.Markets.Get(ctx, amm.Pair)
+		if err != nil {
+			k.Logger(ctx).Error("failed to fetch market", "pair", amm.Pair, "error", err)
+			continue
+		}
 
-	for _, market := range k.Markets.Iterate(ctx, collections.Range[asset.Pair]{}).Values() {
+		markTwap, err := k.CalcTwap(ctx, amm.Pair, types.TwapCalcOption_SPOT, types.Direction_DIRECTION_UNSPECIFIED, sdk.ZeroDec(), market.TwapLookbackWindow)
+		if err != nil {
+			k.Logger(ctx).Error("failed to fetch twap mark price", "market.Pair", market.Pair, "error", err)
+			continue
+		}
+
+		indexTwap, err := k.OracleKeeper.GetExchangeRateTwap(ctx, amm.Pair)
+		if err != nil {
+			k.Logger(ctx).Error("failed to fetch twap index price", "market.Pair", market.Pair, "error", err)
+			continue
+		}
+
+		if markTwap.IsNil() || markTwap.IsZero() {
+			k.Logger(ctx).Error("mark price is zero", "market.Pair", market.Pair)
+			continue
+		}
+
+		if indexTwap.IsNil() || indexTwap.IsZero() {
+			k.Logger(ctx).Error("index price is zero", "market.Pair", market.Pair)
+			continue
+		}
+
+		_ = ctx.EventManager().EmitTypedEvent(&types.AmmUpdatedEvent{
+			FinalAmm:       amm,
+			MarkPriceTwap:  markTwap,
+			IndexPriceTwap: indexTwap,
+		})
+
 		_ = ctx.EventManager().EmitTypedEvent(&types.MarketUpdatedEvent{
 			FinalMarket: market,
 		})
 	}
+
 	return []abci.ValidatorUpdate{}
 }

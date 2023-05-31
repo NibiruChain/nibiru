@@ -231,6 +231,18 @@ message LiquidationFailedEvent {
 message AmmUpdatedEvent {
   // the final state of the AMM
   AMM final_amm = 1 [ (gogoproto.nullable) = false ];
+
+  // The mark price of the pair.
+  string mark_price_twap = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // The oracle index price of the pair.
+  string index_price_twap = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // This event is emitted at the end of every block for persisting market changes
