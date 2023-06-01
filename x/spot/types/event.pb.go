@@ -27,10 +27,8 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 type EventPoolCreated struct {
 	// the address of the user who created the pool
 	Creator string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
-	// the pool id
-	PoolId uint64 `protobuf:"varint,2,opt,name=pool_id,json=poolId,proto3" json:"pool_id,omitempty"`
-	// the amount of tokens that the user deposited
-	Fees []types.Coin `protobuf:"bytes,3,rep,name=fees,proto3" json:"fees"`
+	// the create pool fee
+	Fees []types.Coin `protobuf:"bytes,2,rep,name=fees,proto3" json:"fees"`
 	// the final state of the pool
 	FinalPool Pool `protobuf:"bytes,4,opt,name=final_pool,json=finalPool,proto3" json:"final_pool"`
 	// the amount of pool shares that the user received
@@ -77,13 +75,6 @@ func (m *EventPoolCreated) GetCreator() string {
 	return ""
 }
 
-func (m *EventPoolCreated) GetPoolId() uint64 {
-	if m != nil {
-		return m.PoolId
-	}
-	return 0
-}
-
 func (m *EventPoolCreated) GetFees() []types.Coin {
 	if m != nil {
 		return m.Fees
@@ -108,18 +99,16 @@ func (m *EventPoolCreated) GetFinalUserPoolShares() types.Coin {
 type EventPoolJoined struct {
 	// the address of the user who joined the pool
 	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
-	// the pool id
-	PoolId uint64 `protobuf:"varint,2,opt,name=pool_id,json=poolId,proto3" json:"pool_id,omitempty"`
 	// the amount of tokens that the user deposited
-	TokensIn []types.Coin `protobuf:"bytes,3,rep,name=tokens_in,json=tokensIn,proto3" json:"tokens_in"`
+	TokensIn []types.Coin `protobuf:"bytes,2,rep,name=tokens_in,json=tokensIn,proto3" json:"tokens_in"`
 	// the amount of pool shares that the user received
-	PoolSharesOut types.Coin `protobuf:"bytes,4,opt,name=pool_shares_out,json=poolSharesOut,proto3" json:"pool_shares_out"`
-	// the amount of fees collected by the pool
-	RemCoins []types.Coin `protobuf:"bytes,5,rep,name=rem_coins,json=remCoins,proto3" json:"rem_coins"`
+	PoolSharesOut types.Coin `protobuf:"bytes,3,opt,name=pool_shares_out,json=poolSharesOut,proto3" json:"pool_shares_out"`
+	// the amount of tokens remaining for the user
+	RemCoins []types.Coin `protobuf:"bytes,4,rep,name=rem_coins,json=remCoins,proto3" json:"rem_coins"`
 	// the final state of the pool
-	FinalPool Pool `protobuf:"bytes,6,opt,name=final_pool,json=finalPool,proto3" json:"final_pool"`
+	FinalPool Pool `protobuf:"bytes,5,opt,name=final_pool,json=finalPool,proto3" json:"final_pool"`
 	// the final amount of user pool shares
-	FinalUserPoolShares types.Coin `protobuf:"bytes,7,opt,name=final_user_pool_shares,json=finalUserPoolShares,proto3" json:"final_user_pool_shares"`
+	FinalUserPoolShares types.Coin `protobuf:"bytes,6,opt,name=final_user_pool_shares,json=finalUserPoolShares,proto3" json:"final_user_pool_shares"`
 }
 
 func (m *EventPoolJoined) Reset()         { *m = EventPoolJoined{} }
@@ -162,13 +151,6 @@ func (m *EventPoolJoined) GetAddress() string {
 	return ""
 }
 
-func (m *EventPoolJoined) GetPoolId() uint64 {
-	if m != nil {
-		return m.PoolId
-	}
-	return 0
-}
-
 func (m *EventPoolJoined) GetTokensIn() []types.Coin {
 	if m != nil {
 		return m.TokensIn
@@ -207,18 +189,16 @@ func (m *EventPoolJoined) GetFinalUserPoolShares() types.Coin {
 type EventPoolExited struct {
 	// the address of the user who exited the pool
 	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
-	// the pool id
-	PoolId uint64 `protobuf:"varint,2,opt,name=pool_id,json=poolId,proto3" json:"pool_id,omitempty"`
 	// the amount of pool shares that the user exited with
-	PoolSharesIn types.Coin `protobuf:"bytes,3,opt,name=pool_shares_in,json=poolSharesIn,proto3" json:"pool_shares_in"`
+	PoolSharesIn types.Coin `protobuf:"bytes,2,opt,name=pool_shares_in,json=poolSharesIn,proto3" json:"pool_shares_in"`
 	// the amount of tokens returned to the user
-	TokensOut []types.Coin `protobuf:"bytes,4,rep,name=tokens_out,json=tokensOut,proto3" json:"tokens_out"`
+	TokensOut []types.Coin `protobuf:"bytes,3,rep,name=tokens_out,json=tokensOut,proto3" json:"tokens_out"`
 	// the amount of fees collected by the pool
-	Fees []types.Coin `protobuf:"bytes,5,rep,name=fees,proto3" json:"fees"`
+	Fees []types.Coin `protobuf:"bytes,4,rep,name=fees,proto3" json:"fees"`
 	// the final state of the pool
-	FinalPool Pool `protobuf:"bytes,6,opt,name=final_pool,json=finalPool,proto3" json:"final_pool"`
+	FinalPool Pool `protobuf:"bytes,5,opt,name=final_pool,json=finalPool,proto3" json:"final_pool"`
 	// the final amount of user pool shares
-	FinalUserPoolShares types.Coin `protobuf:"bytes,7,opt,name=final_user_pool_shares,json=finalUserPoolShares,proto3" json:"final_user_pool_shares"`
+	FinalUserPoolShares types.Coin `protobuf:"bytes,6,opt,name=final_user_pool_shares,json=finalUserPoolShares,proto3" json:"final_user_pool_shares"`
 }
 
 func (m *EventPoolExited) Reset()         { *m = EventPoolExited{} }
@@ -261,13 +241,6 @@ func (m *EventPoolExited) GetAddress() string {
 	return ""
 }
 
-func (m *EventPoolExited) GetPoolId() uint64 {
-	if m != nil {
-		return m.PoolId
-	}
-	return 0
-}
-
 func (m *EventPoolExited) GetPoolSharesIn() types.Coin {
 	if m != nil {
 		return m.PoolSharesIn
@@ -306,16 +279,14 @@ func (m *EventPoolExited) GetFinalUserPoolShares() types.Coin {
 type EventAssetsSwapped struct {
 	// the address of the user who swapped tokens
 	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
-	// the pool id
-	PoolId uint64 `protobuf:"varint,2,opt,name=pool_id,json=poolId,proto3" json:"pool_id,omitempty"`
 	// the amount of tokens that the user deposited
-	TokenIn types.Coin `protobuf:"bytes,3,opt,name=token_in,json=tokenIn,proto3" json:"token_in"`
+	TokenIn types.Coin `protobuf:"bytes,2,opt,name=token_in,json=tokenIn,proto3" json:"token_in"`
 	// the amount of tokens that the user received
-	TokenOut types.Coin `protobuf:"bytes,4,opt,name=token_out,json=tokenOut,proto3" json:"token_out"`
+	TokenOut types.Coin `protobuf:"bytes,3,opt,name=token_out,json=tokenOut,proto3" json:"token_out"`
 	// the amount of fees collected by the pool
-	Fee types.Coin `protobuf:"bytes,5,opt,name=fee,proto3" json:"fee"`
+	Fee types.Coin `protobuf:"bytes,4,opt,name=fee,proto3" json:"fee"`
 	// the final state of the pool
-	FinalPool Pool `protobuf:"bytes,6,opt,name=final_pool,json=finalPool,proto3" json:"final_pool"`
+	FinalPool Pool `protobuf:"bytes,5,opt,name=final_pool,json=finalPool,proto3" json:"final_pool"`
 }
 
 func (m *EventAssetsSwapped) Reset()         { *m = EventAssetsSwapped{} }
@@ -358,13 +329,6 @@ func (m *EventAssetsSwapped) GetAddress() string {
 	return ""
 }
 
-func (m *EventAssetsSwapped) GetPoolId() uint64 {
-	if m != nil {
-		return m.PoolId
-	}
-	return 0
-}
-
 func (m *EventAssetsSwapped) GetTokenIn() types.Coin {
 	if m != nil {
 		return m.TokenIn
@@ -403,41 +367,39 @@ func init() {
 func init() { proto.RegisterFile("spot/v1/event.proto", fileDescriptor_b076fd0fab18c3a9) }
 
 var fileDescriptor_b076fd0fab18c3a9 = []byte{
-	// 532 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x94, 0x41, 0x6f, 0xd3, 0x3e,
-	0x18, 0xc6, 0x9b, 0xb6, 0x6b, 0xff, 0xf5, 0xfe, 0x6c, 0xc8, 0x9b, 0x20, 0xec, 0x10, 0xaa, 0x9d,
-	0x2a, 0x0e, 0xb6, 0xba, 0x9d, 0x40, 0x08, 0x89, 0x95, 0x0a, 0x95, 0x03, 0xa0, 0x0e, 0x2e, 0x5c,
-	0xa2, 0xa4, 0x79, 0xdb, 0x5a, 0xb4, 0x76, 0x64, 0x3b, 0x65, 0x7c, 0x06, 0x2e, 0x70, 0xe5, 0x4b,
-	0xf0, 0x35, 0x76, 0xdc, 0x91, 0x13, 0x42, 0xed, 0x17, 0x41, 0xb6, 0xd3, 0x52, 0x90, 0xd0, 0xb2,
-	0x8e, 0x03, 0xb7, 0x38, 0x7e, 0x9f, 0x37, 0x8f, 0x9f, 0x5f, 0x5e, 0xa3, 0x3d, 0x95, 0x0a, 0x4d,
-	0x67, 0x6d, 0x0a, 0x33, 0xe0, 0x9a, 0xa4, 0x52, 0x68, 0x81, 0x77, 0x38, 0x8b, 0x99, 0xcc, 0x88,
-	0xd9, 0x23, 0xb3, 0xf6, 0xc1, 0xfe, 0x48, 0x8c, 0x84, 0xdd, 0xa2, 0xe6, 0xc9, 0x55, 0x1d, 0x04,
-	0x03, 0xa1, 0xa6, 0x42, 0xd1, 0x38, 0x52, 0x40, 0x67, 0xed, 0x18, 0x74, 0xd4, 0xa6, 0x03, 0xc1,
-	0x78, 0xbe, 0x8f, 0x97, 0xad, 0x53, 0x21, 0x26, 0xee, 0xdd, 0xe1, 0x87, 0x32, 0xba, 0xd9, 0x35,
-	0x5f, 0x7a, 0x29, 0xc4, 0xa4, 0x23, 0x21, 0xd2, 0x90, 0x60, 0x1f, 0xd5, 0x07, 0xe6, 0x51, 0x48,
-	0xdf, 0x6b, 0x7a, 0xad, 0x46, 0x7f, 0xb9, 0xc4, 0xb7, 0x51, 0xdd, 0x88, 0x43, 0x96, 0xf8, 0xe5,
-	0xa6, 0xd7, 0xaa, 0xf6, 0x6b, 0x66, 0xd9, 0x4b, 0xf0, 0x31, 0xaa, 0x0e, 0x01, 0x94, 0x5f, 0x69,
-	0x56, 0x5a, 0xdb, 0x47, 0x77, 0x88, 0xb3, 0x42, 0x8c, 0x15, 0x92, 0x5b, 0x21, 0x1d, 0xc1, 0xf8,
-	0x49, 0xf5, 0xfc, 0xdb, 0xdd, 0x52, 0xdf, 0x16, 0xe3, 0xfb, 0x08, 0x0d, 0x19, 0x8f, 0x26, 0xa1,
-	0x69, 0xe2, 0x57, 0x9b, 0x5e, 0x6b, 0xfb, 0x68, 0x9f, 0xfc, 0x7a, 0x56, 0x62, 0x8c, 0xe5, 0xaa,
-	0x86, 0xad, 0x36, 0x2f, 0xf0, 0x2b, 0x74, 0xcb, 0x49, 0x33, 0x05, 0xd2, 0xea, 0x43, 0x35, 0x8e,
-	0x24, 0x28, 0x7f, 0xcb, 0xb6, 0xb9, 0xd4, 0xc1, 0x9e, 0x95, 0xbf, 0x56, 0x20, 0x4d, 0xbf, 0x53,
-	0xab, 0x3d, 0xfc, 0x5c, 0x41, 0xbb, 0xab, 0x34, 0x9e, 0x09, 0xc6, 0x5d, 0x18, 0x51, 0x92, 0x48,
-	0x50, 0x6a, 0x19, 0x46, 0xbe, 0xfc, 0x73, 0x18, 0x0f, 0x51, 0x43, 0x8b, 0xb7, 0xc0, 0x55, 0xc8,
-	0x78, 0xd1, 0x44, 0xfe, 0x73, 0x8a, 0x1e, 0xc7, 0x4f, 0xd1, 0xee, 0xda, 0x79, 0x42, 0x91, 0xe9,
-	0x3c, 0x9a, 0x4b, 0x7b, 0xdc, 0x48, 0x57, 0x47, 0x79, 0x91, 0x69, 0x63, 0x43, 0xc2, 0x34, 0x34,
-	0x7f, 0x80, 0x89, 0xa5, 0x98, 0x0d, 0x09, 0x53, 0xb3, 0xfc, 0x1d, 0x4e, 0xed, 0xef, 0xc0, 0xa9,
-	0x5f, 0x03, 0xce, 0xa7, 0x75, 0x38, 0xdd, 0x33, 0xa6, 0x37, 0x83, 0xd3, 0x45, 0x3b, 0xeb, 0xf1,
-	0x5a, 0x42, 0x85, 0x4c, 0xfd, 0xff, 0x33, 0xdd, 0x1e, 0xc7, 0x8f, 0x10, 0xca, 0x19, 0x3b, 0x40,
-	0x85, 0xd2, 0xcd, 0x7f, 0x0b, 0x03, 0x67, 0x39, 0x30, 0x5b, 0x9b, 0x0f, 0xcc, 0x3f, 0xc0, 0xe4,
-	0x4b, 0x19, 0x61, 0xcb, 0xe4, 0xb1, 0x52, 0xa0, 0xd5, 0xe9, 0xbb, 0x28, 0x4d, 0x37, 0xc3, 0xf2,
-	0x00, 0xb9, 0x09, 0xb8, 0x02, 0x90, 0xba, 0x15, 0xf4, 0xf8, 0x6a, 0xde, 0xae, 0x32, 0x2b, 0xee,
-	0x6b, 0x86, 0x44, 0x1b, 0x55, 0x86, 0x00, 0x45, 0xef, 0x0d, 0x53, 0x7b, 0x0d, 0x0e, 0x27, 0x4f,
-	0xce, 0xe7, 0x81, 0x77, 0x31, 0x0f, 0xbc, 0xef, 0xf3, 0xc0, 0xfb, 0xb8, 0x08, 0x4a, 0x17, 0x8b,
-	0xa0, 0xf4, 0x75, 0x11, 0x94, 0xde, 0xdc, 0x1b, 0x31, 0x3d, 0xce, 0x62, 0x32, 0x10, 0x53, 0xfa,
-	0xdc, 0xb6, 0xea, 0x8c, 0x23, 0xc6, 0xa9, 0x6b, 0x4b, 0xcf, 0xa8, 0xbd, 0xbe, 0xf5, 0xfb, 0x14,
-	0x54, 0x5c, 0xb3, 0xb7, 0xf7, 0xf1, 0x8f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x52, 0xb6, 0xe9, 0xb7,
-	0x2e, 0x06, 0x00, 0x00,
+	// 512 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x54, 0x31, 0x6f, 0x13, 0x31,
+	0x14, 0xce, 0x25, 0xd7, 0x96, 0xb8, 0xd0, 0x22, 0xb7, 0x42, 0x47, 0x87, 0x23, 0xea, 0x14, 0x31,
+	0xd8, 0xba, 0x76, 0x02, 0x21, 0x24, 0x1a, 0x22, 0x14, 0x06, 0x40, 0x2d, 0x2c, 0x2c, 0xa7, 0xbb,
+	0xe4, 0x25, 0xb1, 0x48, 0xec, 0x93, 0xed, 0x0b, 0x65, 0xe4, 0x1f, 0x30, 0xf1, 0x9b, 0x3a, 0x76,
+	0x64, 0x42, 0x28, 0xf9, 0x07, 0x4c, 0x8c, 0xc8, 0xf6, 0x5d, 0x08, 0x0c, 0xed, 0x95, 0x32, 0xb0,
+	0x9d, 0xed, 0xf7, 0xbd, 0xef, 0xbd, 0xef, 0x7b, 0xf7, 0xd0, 0x8e, 0xca, 0x84, 0xa6, 0xb3, 0x88,
+	0xc2, 0x0c, 0xb8, 0x26, 0x99, 0x14, 0x5a, 0xe0, 0x2d, 0xce, 0x52, 0x26, 0x73, 0x62, 0xde, 0xc8,
+	0x2c, 0xda, 0xdb, 0x1d, 0x89, 0x91, 0xb0, 0x4f, 0xd4, 0x7c, 0xb9, 0xa8, 0xbd, 0xb0, 0x2f, 0xd4,
+	0x54, 0x28, 0x9a, 0x26, 0x0a, 0xe8, 0x2c, 0x4a, 0x41, 0x27, 0x11, 0xed, 0x0b, 0xc6, 0x8b, 0x77,
+	0x5c, 0xa6, 0xce, 0x84, 0x98, 0xb8, 0xbb, 0xfd, 0xef, 0x1e, 0xba, 0xdd, 0x35, 0x4c, 0xaf, 0x84,
+	0x98, 0x74, 0x24, 0x24, 0x1a, 0x06, 0x38, 0x40, 0x1b, 0x7d, 0xf3, 0x29, 0x64, 0xe0, 0xb5, 0xbc,
+	0x76, 0xf3, 0xb8, 0x3c, 0xe2, 0x43, 0xe4, 0x0f, 0x01, 0x54, 0x50, 0x6f, 0x35, 0xda, 0x9b, 0x07,
+	0x77, 0x89, 0x63, 0x24, 0x86, 0x91, 0x14, 0x8c, 0xa4, 0x23, 0x18, 0x3f, 0xf2, 0xcf, 0xbe, 0xde,
+	0xab, 0x1d, 0xdb, 0x60, 0xfc, 0x00, 0xa1, 0x21, 0xe3, 0xc9, 0x24, 0x36, 0xbc, 0x81, 0xdf, 0xf2,
+	0xda, 0x9b, 0x07, 0xbb, 0xe4, 0xf7, 0x96, 0x88, 0xe1, 0x2f, 0x50, 0x4d, 0x1b, 0x6d, 0x2e, 0xf0,
+	0x6b, 0x74, 0xc7, 0x41, 0x73, 0x05, 0xd2, 0xe2, 0x63, 0x35, 0x4e, 0x24, 0xa8, 0x60, 0xcd, 0xa6,
+	0xb9, 0xb4, 0x82, 0x1d, 0x0b, 0x7f, 0xa3, 0x40, 0x9a, 0x7c, 0x27, 0x16, 0xbb, 0xff, 0xb1, 0x81,
+	0xb6, 0x97, 0x4d, 0x3f, 0x17, 0x8c, 0xbb, 0x9e, 0x93, 0xc1, 0x40, 0x82, 0x52, 0x65, 0xcf, 0xc5,
+	0x11, 0x3f, 0x42, 0x4d, 0x2d, 0xde, 0x01, 0x57, 0x31, 0xe3, 0x55, 0x1b, 0xbf, 0xe1, 0x10, 0x3d,
+	0x8e, 0x9f, 0xa1, 0xed, 0x95, 0xb2, 0x63, 0x91, 0xeb, 0xa0, 0x51, 0xad, 0xf4, 0x5b, 0xd9, 0xb2,
+	0xe2, 0x97, 0xb9, 0x36, 0x65, 0x48, 0x98, 0xc6, 0xc6, 0x4f, 0x15, 0xf8, 0x15, 0xcb, 0x90, 0x30,
+	0x35, 0xc7, 0x3f, 0x3d, 0x58, 0xfb, 0x37, 0x1e, 0xac, 0x5f, 0xc3, 0x83, 0x1f, 0xf5, 0x15, 0x0f,
+	0xba, 0xa7, 0x4c, 0x5f, 0xe8, 0x41, 0x17, 0x6d, 0xad, 0xaa, 0x68, 0x8d, 0xa8, 0xc4, 0x7d, 0xf3,
+	0x97, 0x88, 0x3d, 0x8e, 0x1f, 0x23, 0x54, 0x58, 0xe9, 0x7c, 0xa8, 0x24, 0x62, 0xe1, 0xbe, 0xf1,
+	0xa0, 0x1c, 0x7f, 0xff, 0xef, 0xc7, 0xff, 0x3f, 0x90, 0xfe, 0x73, 0x1d, 0x61, 0x2b, 0xfd, 0x13,
+	0xa5, 0x40, 0xab, 0x93, 0xf7, 0x49, 0x96, 0x5d, 0xa8, 0xfe, 0x43, 0xe4, 0xe6, 0xf9, 0x0a, 0xba,
+	0x6f, 0x58, 0x40, 0x8f, 0x2f, 0xff, 0x9e, 0xab, 0x4c, 0xbe, 0x63, 0x33, 0x82, 0x47, 0xa8, 0x31,
+	0x04, 0x28, 0x76, 0xc6, 0xa5, 0x38, 0x13, 0x7b, 0x0d, 0xb9, 0x8f, 0x9e, 0x9e, 0xcd, 0x43, 0xef,
+	0x7c, 0x1e, 0x7a, 0xdf, 0xe6, 0xa1, 0xf7, 0x69, 0x11, 0xd6, 0xce, 0x17, 0x61, 0xed, 0xcb, 0x22,
+	0xac, 0xbd, 0xbd, 0x3f, 0x62, 0x7a, 0x9c, 0xa7, 0xa4, 0x2f, 0xa6, 0xf4, 0x85, 0x4d, 0xd5, 0x19,
+	0x27, 0x8c, 0x53, 0x97, 0x96, 0x9e, 0x52, 0xbb, 0x5a, 0xf5, 0x87, 0x0c, 0x54, 0xba, 0x6e, 0x37,
+	0xeb, 0xe1, 0xcf, 0x00, 0x00, 0x00, 0xff, 0xff, 0xe6, 0x1d, 0x07, 0x34, 0xca, 0x05, 0x00, 0x00,
 }
 
 func (m *EventPoolCreated) Marshal() (dAtA []byte, err error) {
@@ -491,13 +453,8 @@ func (m *EventPoolCreated) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 				i = encodeVarintEvent(dAtA, i, uint64(size))
 			}
 			i--
-			dAtA[i] = 0x1a
+			dAtA[i] = 0x12
 		}
-	}
-	if m.PoolId != 0 {
-		i = encodeVarintEvent(dAtA, i, uint64(m.PoolId))
-		i--
-		dAtA[i] = 0x10
 	}
 	if len(m.Creator) > 0 {
 		i -= len(m.Creator)
@@ -538,7 +495,7 @@ func (m *EventPoolJoined) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i = encodeVarintEvent(dAtA, i, uint64(size))
 	}
 	i--
-	dAtA[i] = 0x3a
+	dAtA[i] = 0x32
 	{
 		size, err := m.FinalPool.MarshalToSizedBuffer(dAtA[:i])
 		if err != nil {
@@ -548,7 +505,7 @@ func (m *EventPoolJoined) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i = encodeVarintEvent(dAtA, i, uint64(size))
 	}
 	i--
-	dAtA[i] = 0x32
+	dAtA[i] = 0x2a
 	if len(m.RemCoins) > 0 {
 		for iNdEx := len(m.RemCoins) - 1; iNdEx >= 0; iNdEx-- {
 			{
@@ -560,7 +517,7 @@ func (m *EventPoolJoined) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 				i = encodeVarintEvent(dAtA, i, uint64(size))
 			}
 			i--
-			dAtA[i] = 0x2a
+			dAtA[i] = 0x22
 		}
 	}
 	{
@@ -572,7 +529,7 @@ func (m *EventPoolJoined) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i = encodeVarintEvent(dAtA, i, uint64(size))
 	}
 	i--
-	dAtA[i] = 0x22
+	dAtA[i] = 0x1a
 	if len(m.TokensIn) > 0 {
 		for iNdEx := len(m.TokensIn) - 1; iNdEx >= 0; iNdEx-- {
 			{
@@ -584,13 +541,8 @@ func (m *EventPoolJoined) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 				i = encodeVarintEvent(dAtA, i, uint64(size))
 			}
 			i--
-			dAtA[i] = 0x1a
+			dAtA[i] = 0x12
 		}
-	}
-	if m.PoolId != 0 {
-		i = encodeVarintEvent(dAtA, i, uint64(m.PoolId))
-		i--
-		dAtA[i] = 0x10
 	}
 	if len(m.Address) > 0 {
 		i -= len(m.Address)
@@ -631,7 +583,7 @@ func (m *EventPoolExited) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i = encodeVarintEvent(dAtA, i, uint64(size))
 	}
 	i--
-	dAtA[i] = 0x3a
+	dAtA[i] = 0x32
 	{
 		size, err := m.FinalPool.MarshalToSizedBuffer(dAtA[:i])
 		if err != nil {
@@ -641,7 +593,7 @@ func (m *EventPoolExited) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i = encodeVarintEvent(dAtA, i, uint64(size))
 	}
 	i--
-	dAtA[i] = 0x32
+	dAtA[i] = 0x2a
 	if len(m.Fees) > 0 {
 		for iNdEx := len(m.Fees) - 1; iNdEx >= 0; iNdEx-- {
 			{
@@ -653,7 +605,7 @@ func (m *EventPoolExited) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 				i = encodeVarintEvent(dAtA, i, uint64(size))
 			}
 			i--
-			dAtA[i] = 0x2a
+			dAtA[i] = 0x22
 		}
 	}
 	if len(m.TokensOut) > 0 {
@@ -667,7 +619,7 @@ func (m *EventPoolExited) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 				i = encodeVarintEvent(dAtA, i, uint64(size))
 			}
 			i--
-			dAtA[i] = 0x22
+			dAtA[i] = 0x1a
 		}
 	}
 	{
@@ -679,12 +631,7 @@ func (m *EventPoolExited) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i = encodeVarintEvent(dAtA, i, uint64(size))
 	}
 	i--
-	dAtA[i] = 0x1a
-	if m.PoolId != 0 {
-		i = encodeVarintEvent(dAtA, i, uint64(m.PoolId))
-		i--
-		dAtA[i] = 0x10
-	}
+	dAtA[i] = 0x12
 	if len(m.Address) > 0 {
 		i -= len(m.Address)
 		copy(dAtA[i:], m.Address)
@@ -724,7 +671,7 @@ func (m *EventAssetsSwapped) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i = encodeVarintEvent(dAtA, i, uint64(size))
 	}
 	i--
-	dAtA[i] = 0x32
+	dAtA[i] = 0x2a
 	{
 		size, err := m.Fee.MarshalToSizedBuffer(dAtA[:i])
 		if err != nil {
@@ -734,7 +681,7 @@ func (m *EventAssetsSwapped) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i = encodeVarintEvent(dAtA, i, uint64(size))
 	}
 	i--
-	dAtA[i] = 0x2a
+	dAtA[i] = 0x22
 	{
 		size, err := m.TokenOut.MarshalToSizedBuffer(dAtA[:i])
 		if err != nil {
@@ -744,7 +691,7 @@ func (m *EventAssetsSwapped) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i = encodeVarintEvent(dAtA, i, uint64(size))
 	}
 	i--
-	dAtA[i] = 0x22
+	dAtA[i] = 0x1a
 	{
 		size, err := m.TokenIn.MarshalToSizedBuffer(dAtA[:i])
 		if err != nil {
@@ -754,12 +701,7 @@ func (m *EventAssetsSwapped) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i = encodeVarintEvent(dAtA, i, uint64(size))
 	}
 	i--
-	dAtA[i] = 0x1a
-	if m.PoolId != 0 {
-		i = encodeVarintEvent(dAtA, i, uint64(m.PoolId))
-		i--
-		dAtA[i] = 0x10
-	}
+	dAtA[i] = 0x12
 	if len(m.Address) > 0 {
 		i -= len(m.Address)
 		copy(dAtA[i:], m.Address)
@@ -791,9 +733,6 @@ func (m *EventPoolCreated) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovEvent(uint64(l))
 	}
-	if m.PoolId != 0 {
-		n += 1 + sovEvent(uint64(m.PoolId))
-	}
 	if len(m.Fees) > 0 {
 		for _, e := range m.Fees {
 			l = e.Size()
@@ -816,9 +755,6 @@ func (m *EventPoolJoined) Size() (n int) {
 	l = len(m.Address)
 	if l > 0 {
 		n += 1 + l + sovEvent(uint64(l))
-	}
-	if m.PoolId != 0 {
-		n += 1 + sovEvent(uint64(m.PoolId))
 	}
 	if len(m.TokensIn) > 0 {
 		for _, e := range m.TokensIn {
@@ -851,9 +787,6 @@ func (m *EventPoolExited) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovEvent(uint64(l))
 	}
-	if m.PoolId != 0 {
-		n += 1 + sovEvent(uint64(m.PoolId))
-	}
 	l = m.PoolSharesIn.Size()
 	n += 1 + l + sovEvent(uint64(l))
 	if len(m.TokensOut) > 0 {
@@ -884,9 +817,6 @@ func (m *EventAssetsSwapped) Size() (n int) {
 	l = len(m.Address)
 	if l > 0 {
 		n += 1 + l + sovEvent(uint64(l))
-	}
-	if m.PoolId != 0 {
-		n += 1 + sovEvent(uint64(m.PoolId))
 	}
 	l = m.TokenIn.Size()
 	n += 1 + l + sovEvent(uint64(l))
@@ -967,25 +897,6 @@ func (m *EventPoolCreated) Unmarshal(dAtA []byte) error {
 			m.Creator = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PoolId", wireType)
-			}
-			m.PoolId = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowEvent
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.PoolId |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Fees", wireType)
 			}
@@ -1168,25 +1079,6 @@ func (m *EventPoolJoined) Unmarshal(dAtA []byte) error {
 			m.Address = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PoolId", wireType)
-			}
-			m.PoolId = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowEvent
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.PoolId |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field TokensIn", wireType)
 			}
@@ -1220,7 +1112,7 @@ func (m *EventPoolJoined) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 4:
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field PoolSharesOut", wireType)
 			}
@@ -1253,7 +1145,7 @@ func (m *EventPoolJoined) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 5:
+		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field RemCoins", wireType)
 			}
@@ -1287,7 +1179,7 @@ func (m *EventPoolJoined) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 6:
+		case 5:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field FinalPool", wireType)
 			}
@@ -1320,7 +1212,7 @@ func (m *EventPoolJoined) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 7:
+		case 6:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field FinalUserPoolShares", wireType)
 			}
@@ -1436,25 +1328,6 @@ func (m *EventPoolExited) Unmarshal(dAtA []byte) error {
 			m.Address = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PoolId", wireType)
-			}
-			m.PoolId = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowEvent
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.PoolId |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field PoolSharesIn", wireType)
 			}
@@ -1487,7 +1360,7 @@ func (m *EventPoolExited) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 4:
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field TokensOut", wireType)
 			}
@@ -1521,7 +1394,7 @@ func (m *EventPoolExited) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 5:
+		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Fees", wireType)
 			}
@@ -1555,7 +1428,7 @@ func (m *EventPoolExited) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 6:
+		case 5:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field FinalPool", wireType)
 			}
@@ -1588,7 +1461,7 @@ func (m *EventPoolExited) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 7:
+		case 6:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field FinalUserPoolShares", wireType)
 			}
@@ -1704,25 +1577,6 @@ func (m *EventAssetsSwapped) Unmarshal(dAtA []byte) error {
 			m.Address = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PoolId", wireType)
-			}
-			m.PoolId = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowEvent
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.PoolId |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field TokenIn", wireType)
 			}
@@ -1755,7 +1609,7 @@ func (m *EventAssetsSwapped) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 4:
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field TokenOut", wireType)
 			}
@@ -1788,7 +1642,7 @@ func (m *EventAssetsSwapped) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 5:
+		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Fee", wireType)
 			}
@@ -1821,7 +1675,7 @@ func (m *EventAssetsSwapped) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 6:
+		case 5:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field FinalPool", wireType)
 			}

@@ -405,7 +405,6 @@ func (k Keeper) NewPool(
 
 	err = ctx.EventManager().EmitTypedEvent(&types.EventPoolCreated{
 		Creator:             sender.String(),
-		PoolId:              poolId,
 		Fees:                params.PoolCreationFee,
 		FinalPool:           pool,
 		FinalUserPoolShares: newPoolShares,
@@ -514,7 +513,6 @@ func (k Keeper) JoinPool(
 
 	err = ctx.EventManager().EmitTypedEvent(&types.EventPoolJoined{
 		Address:             joinerAddr.String(),
-		PoolId:              poolId,
 		TokensIn:            tokensIn,
 		PoolSharesOut:       newPoolShares,
 		RemCoins:            remCoins,
@@ -599,7 +597,6 @@ func (k Keeper) ExitPool(
 
 	err = ctx.EventManager().EmitTypedEvent(&types.EventPoolExited{
 		Address:             sender.String(),
-		PoolId:              poolId,
 		PoolSharesIn:        poolSharesOut,
 		TokensOut:           tokensOut,
 		Fees:                fees,
