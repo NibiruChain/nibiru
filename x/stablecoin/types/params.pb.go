@@ -5,7 +5,7 @@ package types
 
 import (
 	fmt "fmt"
-	_ "github.com/gogo/protobuf/gogoproto"
+	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
 	io "io"
 	math "math"
@@ -31,16 +31,20 @@ type Params struct {
 	FeeRatio int64 `protobuf:"varint,2,opt,name=fee_ratio,json=feeRatio,proto3" json:"fee_ratio,omitempty"`
 	// efFeeRatio is the ratio taken from the fees that goes to Ecosystem Fund
 	EfFeeRatio int64 `protobuf:"varint,3,opt,name=ef_fee_ratio,json=efFeeRatio,proto3" json:"ef_fee_ratio,omitempty"`
-	// BonusRateRecoll is the percentage of extra stablecoin value given to the caller
-	// of 'Recollateralize' in units of governance tokens.
+	// BonusRateRecoll is the percentage of extra stablecoin value given to the
+	// caller of 'Recollateralize' in units of governance tokens.
 	BonusRateRecoll int64 `protobuf:"varint,4,opt,name=bonus_rate_recoll,json=bonusRateRecoll,proto3" json:"bonus_rate_recoll,omitempty"`
-	// distr_epoch_identifier defines the frequnecy of update for the collateral ratio
+	// distr_epoch_identifier defines the frequnecy of update for the collateral
+	// ratio
 	DistrEpochIdentifier string `protobuf:"bytes,5,opt,name=distr_epoch_identifier,json=distrEpochIdentifier,proto3" json:"distr_epoch_identifier,omitempty" yaml:"distr_epoch_identifier"`
-	// adjustmentStep is the size of the step taken when updating the collateral ratio
+	// adjustmentStep is the size of the step taken when updating the collateral
+	// ratio
 	AdjustmentStep int64 `protobuf:"varint,6,opt,name=adjustment_step,json=adjustmentStep,proto3" json:"adjustment_step,omitempty"`
-	// priceLowerBound is the lower bound for the stable coin to trigger a collateral ratio update
+	// priceLowerBound is the lower bound for the stable coin to trigger a
+	// collateral ratio update
 	PriceLowerBound int64 `protobuf:"varint,7,opt,name=price_lower_bound,json=priceLowerBound,proto3" json:"price_lower_bound,omitempty"`
-	// priceUpperBound is the upper bound for the stable coin to trigger a collateral ratio update
+	// priceUpperBound is the upper bound for the stable coin to trigger a
+	// collateral ratio update
 	PriceUpperBound int64 `protobuf:"varint,8,opt,name=price_upper_bound,json=priceUpperBound,proto3" json:"price_upper_bound,omitempty"`
 	// isCollateralRatioValid checks if the collateral ratio is correctly updated
 	IsCollateralRatioValid bool `protobuf:"varint,9,opt,name=is_collateral_ratio_valid,json=isCollateralRatioValid,proto3" json:"is_collateral_ratio_valid,omitempty"`
