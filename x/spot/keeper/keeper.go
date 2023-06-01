@@ -244,22 +244,21 @@ ret:
 
 	err: returns an error if something errored out
 */
-func (k Keeper) mintPoolShareToAccount(ctx sdk.Context, poolId uint64, recipientAddr sdk.AccAddress, amountPoolShares sdkmath.Int) (err error) {
-	newCoins := sdk.Coins{
-		sdk.NewCoin(types.GetPoolShareBaseDenom(poolId), amountPoolShares),
-	}
+func (k Keeper) mintPoolShareToAccount(ctx sdk.Context, poolId uint64, recipientAddr sdk.AccAddress, amount sdkmath.Int) (poolShares sdk.Coin, err error) {
+	poolShares = sdk.NewCoin(types.GetPoolShareBaseDenom(poolId), amount)
+	newCoins := sdk.NewCoins(poolShares)
 
 	err = k.bankKeeper.MintCoins(ctx, types.ModuleName, newCoins)
 	if err != nil {
-		return err
+		return sdk.Coin{}, err
 	}
 
 	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, recipientAddr, newCoins)
 	if err != nil {
-		return err
+		return sdk.Coin{}, err
 	}
 
-	return nil
+	return poolShares, nil
 }
 
 /*
@@ -373,7 +372,8 @@ func (k Keeper) NewPool(
 	}
 
 	// Mint the initial 100.000000000000000000 pool share tokens to the sender
-	if err = k.mintPoolShareToAccount(ctx, pool.Id, sender, types.InitPoolSharesSupply); err != nil {
+	newPoolShares, err := k.mintPoolShareToAccount(ctx, pool.Id, sender, types.InitPoolSharesSupply)
+	if err != nil {
 		return 0, err
 	}
 
@@ -404,9 +404,11 @@ func (k Keeper) NewPool(
 	}
 
 	err = ctx.EventManager().EmitTypedEvent(&types.EventPoolCreated{
-		Creator: sender.String(),
-		PoolId:  poolId,
-		Fees:    params.PoolCreationFee,
+		Creator:             sender.String(),
+		PoolId:              poolId,
+		Fees:                params.PoolCreationFee,
+		FinalPool:           pool,
+		FinalUserPoolShares: newPoolShares,
 	})
 	if err != nil {
 		return
@@ -492,12 +494,13 @@ func (k Keeper) JoinPool(
 	}
 
 	// give joiner LP shares
-	if err = k.mintPoolShareToAccount(
+	newPoolShares, err := k.mintPoolShareToAccount(
 		ctx,
 		/*from=*/ pool.Id,
 		/*to=*/ joinerAddr,
 		/*amount=*/ numShares,
-	); err != nil {
+	)
+	if err != nil {
 		return types.Pool{}, sdk.Coin{}, sdk.Coins{}, err
 	}
 
@@ -507,20 +510,22 @@ func (k Keeper) JoinPool(
 		return pool, numSharesOut, remCoins, err
 	}
 
-	poolSharesOut := sdk.NewCoin(pool.TotalShares.Denom, numShares)
+	existingPoolShares := k.bankKeeper.GetBalance(ctx, joinerAddr, newPoolShares.Denom)
 
 	err = ctx.EventManager().EmitTypedEvent(&types.EventPoolJoined{
-		Address:       joinerAddr.String(),
-		PoolId:        poolId,
-		TokensIn:      tokensIn,
-		PoolSharesOut: poolSharesOut,
-		RemCoins:      remCoins,
+		Address:             joinerAddr.String(),
+		PoolId:              poolId,
+		TokensIn:            tokensIn,
+		PoolSharesOut:       newPoolShares,
+		RemCoins:            remCoins,
+		FinalPool:           pool,
+		FinalUserPoolShares: existingPoolShares.Add(newPoolShares),
 	})
 	if err != nil {
 		return
 	}
 
-	return pool, poolSharesOut, remCoins, nil
+	return pool, newPoolShares, remCoins, nil
 }
 
 /*
@@ -590,12 +595,16 @@ func (k Keeper) ExitPool(
 		return sdk.Coins{}, err
 	}
 
+	existingPoolShares := k.bankKeeper.GetBalance(ctx, sender, poolSharesOut.Denom)
+
 	err = ctx.EventManager().EmitTypedEvent(&types.EventPoolExited{
-		Address:      sender.String(),
-		PoolId:       poolId,
-		PoolSharesIn: poolSharesOut,
-		TokensOut:    tokensOut,
-		Fees:         fees,
+		Address:             sender.String(),
+		PoolId:              poolId,
+		PoolSharesIn:        poolSharesOut,
+		TokensOut:           tokensOut,
+		Fees:                fees,
+		FinalPool:           pool,
+		FinalUserPoolShares: existingPoolShares.Sub(poolSharesOut),
 	})
 	if err != nil {
 		return sdk.Coins{}, err
