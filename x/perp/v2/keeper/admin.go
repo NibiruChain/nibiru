@@ -94,7 +94,7 @@ func (k admin) CreateMarket(
 	baseReserve := sqrtDepth
 	var market *types.Market
 	if args.Market == nil {
-		*market = types.DefaultMarket(pair)
+		market = types.DefaultMarket(pair)
 	} else {
 		market = args.Market
 	}

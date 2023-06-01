@@ -588,9 +588,6 @@ func (k Keeper) afterPositionUpdate(
 			FundingPayment:   positionResp.FundingPayment,
 			BlockHeight:      ctx.BlockHeight(),
 		},
-		&types.AmmUpdatedEvent{
-			FinalAmm: amm,
-		},
 	)
 
 	return nil

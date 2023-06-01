@@ -21,12 +21,12 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64)
 			return
 		}
 
-		indexTWAP, err := k.OracleKeeper.GetExchangeRateTwap(ctx, market.Pair)
+		indexTwap, err := k.OracleKeeper.GetExchangeRateTwap(ctx, market.Pair)
 		if err != nil {
 			ctx.Logger().Error("failed to fetch twap index price", "market.Pair", market.Pair, "error", err)
 			continue
 		}
-		if indexTWAP.IsZero() {
+		if indexTwap.IsZero() {
 			ctx.Logger().Error("index price is zero", "market.Pair", market.Pair)
 			continue
 		}
@@ -44,20 +44,21 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64)
 		epochInfo := k.EpochKeeper.GetEpochInfo(ctx, epochIdentifier)
 		intervalsPerDay := (24 * time.Hour) / epochInfo.Duration
 		// See https://www.notion.so/nibiru/Funding-Payments-5032d0f8ed164096808354296d43e1fa for an explanation of these terms.
-		premiumFraction := markTwap.Sub(indexTWAP).QuoInt64(int64(intervalsPerDay))
+		premiumFraction := markTwap.Sub(indexTwap).QuoInt64(int64(intervalsPerDay))
 
 		market.LatestCumulativePremiumFraction = market.LatestCumulativePremiumFraction.Add(premiumFraction)
 		k.Markets.Insert(ctx, market.Pair, market)
 
 		_ = ctx.EventManager().EmitTypedEvent(&types.FundingRateChangedEvent{
 			Pair:                      market.Pair,
-			MarkPrice:                 markTwap,
-			IndexPrice:                indexTWAP,
-			LatestFundingRate:         premiumFraction.Quo(indexTWAP),
-			LatestPremiumFraction:     premiumFraction,
+			MarkPriceTwap:             markTwap,
+			IndexPriceTwap:            indexTwap,
+			PremiumFraction:           premiumFraction,
 			CumulativePremiumFraction: market.LatestCumulativePremiumFraction,
-			BlockHeight:               ctx.BlockHeight(),
-			BlockTimeMs:               ctx.BlockTime().UnixMilli(),
+		})
+
+		_ = ctx.EventManager().EmitTypedEvent(&types.MarketUpdatedEvent{
+			FinalMarket: market,
 		})
 	}
 }

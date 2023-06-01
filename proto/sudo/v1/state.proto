@@ -12,13 +12,10 @@ message Sudoers {
 
   // Root: The "root" user.
   string root = 1;
-  
+
   // Contracts: The set of contracts with elevated permissions.
   repeated string contracts = 2;
 }
 
 // GenesisState defines the module's genesis state.
-message GenesisState {
-  Sudoers sudoers = 1 [(gogoproto.nullable) = false ]; 
-}
-
+message GenesisState { Sudoers sudoers = 1 [ (gogoproto.nullable) = false ]; }
