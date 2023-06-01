@@ -574,6 +574,8 @@ func (k Keeper) ExitPool(
 		)
 	}
 
+	existingPoolShares := k.bankKeeper.GetBalance(ctx, sender, poolSharesOut.Denom)
+
 	// calculate withdrawn liquidity
 	tokensOut, fees, err := pool.ExitPool(poolSharesOut.Amount)
 	if err != nil {
@@ -594,8 +596,6 @@ func (k Keeper) ExitPool(
 	if err = k.RecordTotalLiquidityDecrease(ctx, tokensOut); err != nil {
 		return sdk.Coins{}, err
 	}
-
-	existingPoolShares := k.bankKeeper.GetBalance(ctx, sender, poolSharesOut.Denom)
 
 	err = ctx.EventManager().EmitTypedEvent(&types.EventPoolExited{
 		Address:             sender.String(),
