@@ -12,8 +12,20 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// `Action` is a type of operation or task that can be performed in the
+// Nibiru application.
 type Action interface {
-	Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool)
+	// `Do` is a specific implementation of the `Action`. When `Do` is called,
+	// the action is performed and some feedback is provided about the action's
+	// success. `Do` can mutate the app.
+	//
+	// Returns:
+	//   - outCtx: The new context after stateful changes
+	//   - err: The error if one was raised.
+	//   - isMandatory: Whether an error should have been raised.
+	Do(app *app.NibiruApp, ctx sdk.Context) (
+		outCtx sdk.Context, err error, isMandatory bool,
+	)
 }
 
 type TestCases []TestCase

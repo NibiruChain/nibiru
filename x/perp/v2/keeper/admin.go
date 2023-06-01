@@ -21,7 +21,7 @@ import (
 // 3. Only be callable from x/wasm/binding via sudo contracts.
 //
 // The intention here is to make it more obvious to the developer that an unsafe
-// is being used when it's called as a function on the Admin() struct.
+// function is being used when it's called on the Admin() struct.
 func (k Keeper) Admin() admin {
 	return admin{&k}
 }

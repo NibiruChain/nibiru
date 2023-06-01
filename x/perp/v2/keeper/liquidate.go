@@ -365,7 +365,7 @@ func (k Keeper) distributeLiquidateRewards(
 	// Transfer fee from vault to liquidator
 	feeToLiquidator := liquidateResp.FeeToLiquidator
 	if feeToLiquidator.IsPositive() {
-		err = k.Withdraw(ctx, market, liquidator, feeToLiquidator)
+		err = k.WithdrawFromVault(ctx, market, liquidator, feeToLiquidator)
 		if err != nil {
 			return err
 		}

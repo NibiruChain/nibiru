@@ -16,7 +16,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
-func TestWithdraw(t *testing.T) {
+func TestWithdrawFromVault(t *testing.T) {
 	alice := testutil.AccAddress()
 	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.USDC)
 	startBlockTime := time.Now()
@@ -30,7 +30,7 @@ func TestWithdraw(t *testing.T) {
 				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1000)))),
 			).
 			When(
-				Withdraw(pairBtcUsdc, alice, sdk.NewInt(1000)),
+				WithdrawFromVault(pairBtcUsdc, alice, sdk.NewInt(1000)),
 			).
 			Then(
 				BalanceEqual(alice, denoms.USDC, sdk.NewInt(1000)),
@@ -47,7 +47,7 @@ func TestWithdraw(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(500)))),
 			).
 			When(
-				Withdraw(pairBtcUsdc, alice, sdk.NewInt(1000)),
+				WithdrawFromVault(pairBtcUsdc, alice, sdk.NewInt(1000)),
 			).
 			Then(
 				BalanceEqual(alice, denoms.USDC, sdk.NewInt(1000)),
@@ -64,7 +64,7 @@ func TestWithdraw(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1000)))),
 			).
 			When(
-				Withdraw(pairBtcUsdc, alice, sdk.NewInt(1000)),
+				WithdrawFromVault(pairBtcUsdc, alice, sdk.NewInt(1000)),
 			).
 			Then(
 				BalanceEqual(alice, denoms.USDC, sdk.NewInt(1000)),
@@ -81,7 +81,7 @@ func TestWithdraw(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1000)))),
 			).
 			When(
-				Withdraw(pairBtcUsdc, alice, sdk.NewInt(1000)),
+				WithdrawFromVault(pairBtcUsdc, alice, sdk.NewInt(1000)),
 			).
 			Then(
 				BalanceEqual(alice, denoms.USDC, sdk.NewInt(1000)),

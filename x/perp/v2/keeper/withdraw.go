@@ -30,7 +30,7 @@ import (
 //
 // returns:
 // - error: error
-func (k Keeper) Withdraw(
+func (k Keeper) WithdrawFromVault(
 	ctx sdk.Context,
 	market types.Market,
 	receiver sdk.AccAddress,

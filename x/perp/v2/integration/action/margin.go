@@ -62,8 +62,40 @@ func (a removeMarginAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context
 		ctx, a.Pair, a.Account, sdk.NewCoin(a.Pair.QuoteDenom(), a.Margin),
 	)
 	if err != nil {
-		return ctx, err, true
+		return ctx, err, false
 	}
 
-	return ctx, nil, true
+	return ctx, nil, false
+}
+
+func RemoveMarginFail(
+	account sdk.AccAddress,
+	pair asset.Pair,
+	margin sdkmath.Int,
+	err error,
+) action.Action {
+	return &removeMarginActionFail{
+		Account:     account,
+		Pair:        pair,
+		Margin:      margin,
+		ExpectedErr: err,
+	}
+}
+
+type removeMarginActionFail struct {
+	Account     sdk.AccAddress
+	Pair        asset.Pair
+	Margin      sdkmath.Int
+	ExpectedErr error
+}
+
+func (a removeMarginActionFail) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	_, err := app.PerpKeeperV2.RemoveMargin(
+		ctx, a.Pair, a.Account, sdk.NewCoin(a.Pair.QuoteDenom(), a.Margin),
+	)
+	if err != a.ExpectedErr {
+		return ctx, err, false
+	}
+
+	return ctx, nil, false
 }
