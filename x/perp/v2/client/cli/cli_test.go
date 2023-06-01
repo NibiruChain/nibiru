@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	"github.com/NibiruChain/collections"
+	abcitypes "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	"github.com/stretchr/testify/suite"
-	abcitypes "github.com/tendermint/tendermint/abci/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
