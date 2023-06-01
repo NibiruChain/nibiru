@@ -51,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `github.com/spf13/cast` from 1.5.0 to 1.5.1 (#1358)
 - Bump `github.com/stretchr/testify` from 1.8.2 to 1.8.3 (#1384)
 - Bump `github.com/cosmos/ibc-go/v6` from 6.1.0 to 6.2.0 (#1404)
+- deps: change tendermint/tendermint to use cometbft/cometbft v0.34.27 (#1404)
 
 ### Breaking
 
