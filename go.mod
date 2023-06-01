@@ -4,14 +4,14 @@ go 1.19
 
 require (
 	cosmossdk.io/errors v1.0.0-beta.7
-	cosmossdk.io/math v1.0.0-beta.6
-	github.com/CosmWasm/wasmd v0.0.0-00010101000000-000000000000
-	github.com/CosmWasm/wasmvm v1.1.2
+	cosmossdk.io/math v1.0.1
+	github.com/CosmWasm/wasmd v0.40.0
+	github.com/CosmWasm/wasmvm v1.2.3
 	github.com/NibiruChain/collections v0.2.0
 	github.com/armon/go-metrics v0.4.1
-	github.com/cosmos/cosmos-sdk v0.46.10
+	github.com/cosmos/cosmos-sdk v0.47.2
 	github.com/cosmos/go-bip39 v1.0.0
-	github.com/cosmos/ibc-go/v6 v6.1.0
+	github.com/cosmos/ibc-go/v7 v7.0.1
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.5.3
@@ -174,6 +174,5 @@ replace github.com/cosmos/gorocksdb v1.2.0 => github.com/NibiruChain/gorocksdb v
 
 replace github.com/linxGnu/grocksdb => github.com/NibiruChain/grocksdb v0.0.0-20230522141059-38c21249c0aa
 
-replace github.com/tendermint/tendermint => github.com/informalsystems/tendermint v0.34.26
-
-replace github.com/CosmWasm/wasmd => github.com/notional-labs/wasmd v0.30.0-sdk469.5
+replace github.com/tendermint/tendermint => github.com/cometbft/cometbft v0.37.1
+replace github.com/tendermint/tm-db => github.com/cometbft/cometbft-db v0.7.0

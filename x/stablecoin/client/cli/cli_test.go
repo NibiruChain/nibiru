@@ -10,7 +10,6 @@ import (
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
-	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
@@ -141,7 +140,7 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 				s.NoError(err)
 				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
 
-				resp, err := banktestutil.QueryBalancesExec(clientCtx, minter)
+				resp, err := clitestutil.QueryBalancesExec(clientCtx, minter)
 				s.NoError(err)
 
 				var balRes banktypes.QueryAllBalancesResponse
@@ -240,7 +239,7 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 				s.NoError(err)
 				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
 
-				resp, err := banktestutil.QueryBalancesExec(clientCtx, burner)
+				resp, err := clitestutil.QueryBalancesExec(clientCtx, burner)
 				s.NoError(err)
 
 				var balRes banktypes.QueryAllBalancesResponse
@@ -255,7 +254,7 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 					tc.expectedStable, balRes.Balances.AmountOf(denoms.NUSD))
 
 				// Query treasury pool balance
-				resp, err = banktestutil.QueryBalancesExec(
+				resp, err = clitestutil.QueryBalancesExec(
 					clientCtx, types.NewModuleAddress(common.TreasuryPoolModuleAccount))
 				s.NoError(err)
 				err = val.ClientCtx.Codec.UnmarshalJSON(resp.Bytes(), &balRes)
@@ -265,7 +264,7 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 					tc.expectedTreasury, balRes.Balances)
 
 				// Query ecosystem fund balance
-				resp, err = banktestutil.QueryBalancesExec(
+				resp, err = clitestutil.QueryBalancesExec(
 					clientCtx,
 					types.NewModuleAddress(stabletypes.StableEFModuleAccount))
 				s.NoError(err)
