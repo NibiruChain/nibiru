@@ -169,7 +169,7 @@ func (k Keeper) RemoveMargin(
 		return nil, err
 	}
 
-	if err = k.Withdraw(ctx, market, traderAddr, marginToRemove.Amount); err != nil {
+	if err = k.WithdrawFromVault(ctx, market, traderAddr, marginToRemove.Amount); err != nil {
 		return nil, err
 	}
 	k.Positions.Insert(ctx, collections.Join(position.Pair, traderAddr), position)

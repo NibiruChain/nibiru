@@ -416,7 +416,7 @@ func (k Keeper) closeAndOpenReversePosition(
 		// should never happen as this should also be checked in the caller
 		return nil, nil, fmt.Errorf(
 			"provided quote asset amount and leverage not large enough to close position. need %s but got %s",
-			closePositionResp.ExchangedNotionalValue.String(), reverseNotionalValue.String())
+			closePositionResp.ExchangedNotionalValue, reverseNotionalValue)
 	} else if remainingReverseNotionalValue.IsPositive() {
 		updatedBaseAmtLimit := baseAmtLimit
 		if baseAmtLimit.IsPositive() {
@@ -425,7 +425,7 @@ func (k Keeper) closeAndOpenReversePosition(
 		if updatedBaseAmtLimit.IsNegative() {
 			return nil, nil, fmt.Errorf(
 				"position size changed by greater than the specified base limit: %s",
-				baseAmtLimit.String(),
+				baseAmtLimit,
 			)
 		}
 
@@ -543,7 +543,7 @@ func (k Keeper) afterPositionUpdate(
 			return err
 		}
 	case marginToVault.IsNegative():
-		if err = k.Withdraw(ctx, market, traderAddr, marginToVault.Abs()); err != nil {
+		if err = k.WithdrawFromVault(ctx, market, traderAddr, marginToVault.Abs()); err != nil {
 			return err
 		}
 	}
