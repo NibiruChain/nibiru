@@ -15,21 +15,25 @@ message Params {
   // efFeeRatio is the ratio taken from the fees that goes to Ecosystem Fund
   int64 ef_fee_ratio = 3;
 
-  /* BonusRateRecoll is the percentage of extra stablecoin value given to the caller
-  of 'Recollateralize' in units of governance tokens.*/
+  /* BonusRateRecoll is the percentage of extra stablecoin value given to the
+  caller of 'Recollateralize' in units of governance tokens.*/
   int64 bonus_rate_recoll = 4;
 
-  // distr_epoch_identifier defines the frequnecy of update for the collateral ratio
+  // distr_epoch_identifier defines the frequnecy of update for the collateral
+  // ratio
   string distr_epoch_identifier = 5
-  [ (gogoproto.moretags) = "yaml:\"distr_epoch_identifier\"" ];
+      [ (gogoproto.moretags) = "yaml:\"distr_epoch_identifier\"" ];
 
-  // adjustmentStep is the size of the step taken when updating the collateral ratio
+  // adjustmentStep is the size of the step taken when updating the collateral
+  // ratio
   int64 adjustment_step = 6;
 
-  // priceLowerBound is the lower bound for the stable coin to trigger a collateral ratio update
+  // priceLowerBound is the lower bound for the stable coin to trigger a
+  // collateral ratio update
   int64 price_lower_bound = 7;
 
-  // priceUpperBound is the upper bound for the stable coin to trigger a collateral ratio update
+  // priceUpperBound is the upper bound for the stable coin to trigger a
+  // collateral ratio update
   int64 price_upper_bound = 8;
 
   // isCollateralRatioValid checks if the collateral ratio is correctly updated

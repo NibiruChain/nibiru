@@ -9,98 +9,102 @@ option go_package = "github.com/NibiruChain/nibiru/x/stablecoin/types";
 
 // Msg defines the x/stablecoin Msg service.
 service Msg {
-  /* MintStable defines a method for trading a mixture of GOV and COLL to mint an 
-  equivalent value of stablecoins. */
+  /* MintStable defines a method for trading a mixture of GOV and COLL to mint
+  an equivalent value of stablecoins. */
   rpc MintStable(MsgMintStable) returns (MsgMintStableResponse) {
     option (google.api.http).post = "/nibiru/stablecoin/mint-sc";
   }
 
-  /* BurnStable defines a method for redeeming/burning stablecoins to receive an 
+  /* BurnStable defines a method for redeeming/burning stablecoins to receive an
   equivalent value as a mixture of governance and collateral tokens. */
   rpc BurnStable(MsgBurnStable) returns (MsgBurnStableResponse) {
     option (google.api.http).post = "/nibiru/stablecoin/burn-sc";
   }
 
-  /* Recollateralize defines a method for manually adding collateral to the 
-  protocol in exchange for an equivalent stablecoin value in governance tokens 
+  /* Recollateralize defines a method for manually adding collateral to the
+  protocol in exchange for an equivalent stablecoin value in governance tokens
   plus a small bonus. */
   rpc Recollateralize(MsgRecollateralize) returns (MsgRecollateralizeResponse) {
     option (google.api.http).post = "/nibiru/stablecoin/recoll";
   }
 
-  /* Buyback defines a method for manually adding NIBI to the protocol 
-  in exchange for an equivalent stablecoin value in collateral, effectively 
-  executing a share buyback for Nibiru Chain. The NIBI purchased by the protocol 
+  /* Buyback defines a method for manually adding NIBI to the protocol
+  in exchange for an equivalent stablecoin value in collateral, effectively
+  executing a share buyback for Nibiru Chain. The NIBI purchased by the protocol
   is then burned, distributing value to all NIBI hodlers. */
   rpc Buyback(MsgBuyback) returns (MsgBuybackResponse) {
     option (google.api.http).post = "/nibiru/stablecoin/buyback";
   }
 }
 
-/* 
-MsgMintStable: Msg to mint NUSD. A user deposits NIBI and collateral and gets 
-NUSD in return. The amount of NUSD received depends on the current price set 
+/*
+MsgMintStable: Msg to mint NUSD. A user deposits NIBI and collateral and gets
+NUSD in return. The amount of NUSD received depends on the current price set
 by the oracle library and the current collateral ratio for the protocol.
 */
 message MsgMintStable {
   string creator = 1;
-  cosmos.base.v1beta1.Coin stable = 2 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin stable = 2 [ (gogoproto.nullable) = false ];
 }
 
-/* MsgMintStableResponse specifies the amount of NUSD token the user will receive after their
-* mint transaction*/
+/* MsgMintStableResponse specifies the amount of NUSD token the user will
+ * receive after their mint transaction*/
 message MsgMintStableResponse {
-  cosmos.base.v1beta1.Coin stable = 1 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin stable = 1 [ (gogoproto.nullable) = false ];
   repeated cosmos.base.v1beta1.Coin used_coins = 2 [
-      (gogoproto.nullable) = false, 
-      (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
   repeated cosmos.base.v1beta1.Coin fees_payed = 3 [
-      (gogoproto.nullable) = false, 
-      (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
 }
 
-/* 
-MsgBurnStable allows users to burn NUSD in exchange for NIBI and collateral. 
-The amount of NIBI and Collateral received depends on the current price set by 
+/*
+MsgBurnStable allows users to burn NUSD in exchange for NIBI and collateral.
+The amount of NIBI and Collateral received depends on the current price set by
 the x/oracle library and the current collateral ratio.
 */
 message MsgBurnStable {
   string creator = 1;
-  cosmos.base.v1beta1.Coin stable = 2 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin stable = 2 [ (gogoproto.nullable) = false ];
 }
 
-/* MsgBurnStableResponse specifies the amount of collateral and governance 
+/* MsgBurnStableResponse specifies the amount of collateral and governance
    token the user will receive after their burn transaction. */
 message MsgBurnStableResponse {
-  cosmos.base.v1beta1.Coin collateral = 1 [(gogoproto.nullable) = false];
-  cosmos.base.v1beta1.Coin gov = 2 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin collateral = 1 [ (gogoproto.nullable) = false ];
+  cosmos.base.v1beta1.Coin gov = 2 [ (gogoproto.nullable) = false ];
   repeated cosmos.base.v1beta1.Coin fees_payed = 3 [
-      (gogoproto.nullable) = false, 
-      (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
 }
 
 /* MsgRecollateralize  */
 message MsgRecollateralize {
   string creator = 1;
-  cosmos.base.v1beta1.Coin coll = 2 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin coll = 2 [ (gogoproto.nullable) = false ];
 }
 
 /* MsgRecollateralizeResponse is the output of a successful 'Recollateralize' */
 message MsgRecollateralizeResponse {
-  // Gov (sdk.Coin): Tokens rewarded to the caller in exchange for her collateral.  
-  cosmos.base.v1beta1.Coin gov = 1 [(gogoproto.nullable) = false];
+  // Gov (sdk.Coin): Tokens rewarded to the caller in exchange for her
+  // collateral.
+  cosmos.base.v1beta1.Coin gov = 1 [ (gogoproto.nullable) = false ];
 }
 
 /* MsgBuyback  */
 message MsgBuyback {
   string creator = 1;
-  /* Gov (sdk.Coin): Tokens the caller wants to sell to the protocol in exchange 
+  /* Gov (sdk.Coin): Tokens the caller wants to sell to the protocol in exchange
     for collateral. */
-  cosmos.base.v1beta1.Coin gov = 2 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin gov = 2 [ (gogoproto.nullable) = false ];
 }
 
 /* MsgBuybackResponse is the output of a successful 'Buyback' */
 message MsgBuybackResponse {
-  // Coll (sdk.Coin): Tokens sold to the caller in exchange for her collateral.  
-  cosmos.base.v1beta1.Coin coll = 1 [(gogoproto.nullable) = false];
+  // Coll (sdk.Coin): Tokens sold to the caller in exchange for her collateral.
+  cosmos.base.v1beta1.Coin coll = 1 [ (gogoproto.nullable) = false ];
 }

@@ -41,13 +41,7 @@ func (k Keeper) EditPriceMultiplier(
 	amm.PriceMultiplier = newPriceMultiplier
 	k.AMMs.Insert(ctx, pair, amm)
 
-	_ = ctx.EventManager().EmitTypedEvent(
-		&types.AmmUpdatedEvent{
-			FinalAmm: amm,
-		},
-	)
-
-	return
+	return nil
 }
 
 // EditSwapInvariant edits the swap invariant of an amm pool after making
@@ -78,13 +72,7 @@ func (k Keeper) EditSwapInvariant(ctx sdk.Context, pair asset.Pair, multiplier s
 
 	k.AMMs.Insert(ctx, pair, amm)
 
-	_ = ctx.EventManager().EmitTypedEvent(
-		&types.AmmUpdatedEvent{
-			FinalAmm: amm,
-		},
-	)
-
-	return
+	return nil
 }
 
 func (k Keeper) handleMarketUpdateCost(ctx sdk.Context, pair asset.Pair, costAmt sdkmath.Int) (err error) {
