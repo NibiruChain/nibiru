@@ -151,6 +151,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1381](https://github.com/NibiruChain/nibiru/pull/1381) - chore(deps): Bump github.com/cosmos/cosmos-sdk to 0.45.16
 * [#1405](https://github.com/NibiruChain/nibiru/pull/1405) - ci: use Buf to build protos
 * [#1406](https://github.com/NibiruChain/nibiru/pull/1406) - feat(perp): emit additional event info
+* [#1408](https://github.com/NibiruChain/nibiru/pull/1408) - feat(spot): idempotent events
 
 ### Bug Fixes
 
