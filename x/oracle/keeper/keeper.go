@@ -8,11 +8,11 @@ import (
 	storetypes "cosmossdk.io/store/types"
 
 	sdkerrors "cosmossdk.io/errors"
+	"github.com/cometbft/cometbft/libs/log"
+	"github.com/cometbft/cometbft/libs/math"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/tendermint/tendermint/libs/log"
-	"github.com/tendermint/tendermint/libs/math"
 
 	"cosmossdk.io/collections"
 

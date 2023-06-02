@@ -7,9 +7,9 @@ import (
 
 	"cosmossdk.io/collections"
 
+	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/NibiruChain/nibiru/x/epochs/types"
 )

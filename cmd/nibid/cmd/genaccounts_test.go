@@ -8,6 +8,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 
+	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -16,7 +17,6 @@ import (
 	genutiltest "github.com/cosmos/cosmos-sdk/x/genutil/client/testutil"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/libs/log"
 
 	nibid "github.com/NibiruChain/nibiru/cmd/nibid/cmd"
 )
