@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"path/filepath"
 
 	"cosmossdk.io/store/types"
@@ -8,7 +9,6 @@ import (
 
 	ibcmock "github.com/cosmos/ibc-go/v7/testing/mock"
 
-	simappparams "cosmossdk.io/simapp/params"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -430,7 +430,7 @@ func (app *NibiruApp) InitKeepers(
 }
 
 func (app *NibiruApp) AppModules(
-	encodingConfig simappparams.EncodingConfig,
+	encodingConfig testutil.TestEncodingConfig,
 	skipGenesisInvariants bool,
 ) []module.AppModule {
 	appCodec := app.appCodec
@@ -551,7 +551,7 @@ func OrderedModuleNames() []string {
 // NOTE: Any module instantiated in the module manager that is later modified
 // must be passed by reference here.
 func (app *NibiruApp) InitModuleManager(
-	encodingConfig simappparams.EncodingConfig,
+	encodingConfig testutil.TestEncodingConfig,
 	skipGenesisInvariants bool,
 ) {
 	app.mm = module.NewManager(

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	testutil2 "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -15,8 +16,6 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/simapp"
-	simappparams "cosmossdk.io/simapp/params"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	dbm "github.com/tendermint/tm-db"
 
@@ -170,12 +169,12 @@ func NewCLILogger(cmd *cobra.Command) CLILogger {
 }
 
 // NewAppConstructor returns a new simapp AppConstructor
-func NewAppConstructor(encodingCfg simappparams.EncodingConfig) AppConstructor {
+func NewAppConstructor(encodingCfg testutil2.TestEncodingConfig) AppConstructor {
 	return func(val Validator) servertypes.Application {
 		return app.NewNibiruApp(
 			val.Ctx.Logger, dbm.NewMemDB(), nil, true, make(map[int64]bool), val.Ctx.Config.RootDir, 0,
 			encodingCfg,
-			simapp.EmptyAppOptions{},
+			testutil2.EmptyAppOptions{},
 			baseapp.SetPruning(types.NewPruningOptionsFromString(val.AppConfig.Pruning)),
 			baseapp.SetMinGasPrices(val.AppConfig.MinGasPrices),
 		)

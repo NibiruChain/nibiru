@@ -2,9 +2,9 @@ package testapp
 
 import (
 	"encoding/json"
+	"github.com/cosmos/cosmos-sdk/testutil/sims"
 	"os"
 
-	"cosmossdk.io/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -56,7 +56,7 @@ func NewNibiruTestApp(gen app.GenesisState) *app.NibiruApp {
 		/*homePath=*/ os.TempDir(),
 		/*invCheckPeriod=*/ 0,
 		/*encodingConfig=*/ encoding,
-		/*appOpts=*/ simapp.EmptyAppOptions{},
+		/*appOpts=*/ sims.EmptyAppOptions{},
 	)
 
 	gen, err := GenesisStateWithSingleValidator(encoding.Codec, gen)
@@ -70,7 +70,7 @@ func NewNibiruTestApp(gen app.GenesisState) *app.NibiruApp {
 	}
 
 	app.InitChain(abci.RequestInitChain{
-		ConsensusParams: simapp.DefaultConsensusParams,
+		ConsensusParams: sims.DefaultConsensusParams,
 		AppStateBytes:   stateBytes,
 	})
 

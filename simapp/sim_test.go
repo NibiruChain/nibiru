@@ -3,11 +3,11 @@ package simapp
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/cosmos/ibc-go/v4/testing/simapp"
 	"math/rand"
 	"os"
 	"testing"
 
-	sdkSimapp "cosmossdk.io/simapp"
 	helpers "github.com/cosmos/cosmos-sdk/testutil/sims"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	simulationtypes "github.com/cosmos/cosmos-sdk/types/simulation"
@@ -20,11 +20,11 @@ import (
 )
 
 func init() {
-	sdkSimapp.GetSimulatorFlags()
+	app.GetSimulatorFlags()
 }
 
 func TestFullAppSimulation(tb *testing.T) {
-	config, db, dir, _, skip, err := sdkSimapp.SetupSimulation("goleveldb-app-sim", "Simulation")
+	config, db, dir, _, skip, err := simapp.SetupSimulation("goleveldb-app-sim", "Simulation")
 	if skip {
 		tb.Skip("skipping application simulation")
 	}
@@ -48,14 +48,14 @@ func TestFullAppSimulation(tb *testing.T) {
 		/* app */ app.BaseApp,
 		/* appStateFn */ AppStateFn(app.AppCodec(), app.SimulationManager()),
 		/* randAccFn */ simulationtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
-		/* ops */ sdkSimapp.SimulationOperations(app, app.AppCodec(), config), // Run all registered operations
+		/* ops */ simapp.SimulationOperations(app, app.AppCodec(), config), // Run all registered operations
 		/* blockedAddrs */ app.ModuleAccountAddrs(),
 		/* config */ config,
 		/* cdc */ app.AppCodec(),
 	)
 
 	// export state and simParams before the simulation error is checked
-	if err = sdkSimapp.CheckExportSimulation(app, config, simParams); err != nil {
+	if err = simapp.CheckExportSimulation(app, config, simParams); err != nil {
 		tb.Fatal(err)
 	}
 
@@ -64,18 +64,18 @@ func TestFullAppSimulation(tb *testing.T) {
 	}
 
 	if config.Commit {
-		sdkSimapp.PrintStats(db)
+		simapp.PrintStats(db)
 	}
 }
 
 func TestAppStateDeterminism(t *testing.T) {
-	if !sdkSimapp.FlagEnabledValue {
+	if !simapp.FlagEnabledValue {
 		t.Skip("skipping application simulation")
 	}
 
 	encoding := app.MakeTestEncodingConfig()
 
-	config := sdkSimapp.NewConfigFromFlags()
+	config := simapp.NewConfigFromFlags()
 	config.InitialBlockHeight = 1
 	config.ExportParamsPath = ""
 	config.OnOperation = false
@@ -104,7 +104,7 @@ func TestAppStateDeterminism(t *testing.T) {
 				app.BaseApp,
 				AppStateFn(app.AppCodec(), app.SimulationManager()),
 				simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
-				sdkSimapp.SimulationOperations(app, app.AppCodec(), config),
+				simapp.SimulationOperations(app, app.AppCodec(), config),
 				app.ModuleAccountAddrs(),
 				config,
 				app.AppCodec(),
@@ -112,7 +112,7 @@ func TestAppStateDeterminism(t *testing.T) {
 			require.NoError(t, err)
 
 			if config.Commit {
-				sdkSimapp.PrintStats(db)
+				simapp.PrintStats(db)
 			}
 
 			appHash := app.LastCommitID().Hash

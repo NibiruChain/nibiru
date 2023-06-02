@@ -12,7 +12,7 @@ require (
 	github.com/armon/go-metrics v0.4.1
 	github.com/tendermint/tendermint v0.34.1
 	github.com/tendermint/tm-db v0.6.7
-	github.com/cosmos/cosmos-sdk v0.46.12
+	github.com/cosmos/cosmos-sdk v0.47.2
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/mock v1.6.0
 	github.com/google/gofuzz v1.2.0

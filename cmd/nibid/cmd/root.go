@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"io"
 	"os"
 	"path/filepath"
@@ -10,7 +11,6 @@ import (
 	snapshotoptions "github.com/cosmos/cosmos-sdk/snapshots/types"
 	tmcfg "github.com/tendermint/tendermint/config"
 
-	"cosmossdk.io/simapp/params"
 	"cosmossdk.io/store"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -41,7 +41,7 @@ import (
 
 // NewRootCmd creates a new root command for nibid. It is called once in the
 // main function.
-func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
+func NewRootCmd() (*cobra.Command, testutil.TestEncodingConfig) {
 	encodingConfig := app.MakeTestEncodingConfig()
 	initClientCtx := client.Context{}.
 		WithCodec(encodingConfig.Codec).
@@ -141,7 +141,7 @@ Args:
 	  for a given app. This is provided for compatibility between protobuf and
 	  amino implementations.
 */
-func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
+func initRootCmd(rootCmd *cobra.Command, encodingConfig testutil.TestEncodingConfig) {
 	cfg := sdk.GetConfig()
 	cfg.Seal()
 
@@ -233,7 +233,7 @@ func txCommand() *cobra.Command {
 }
 
 type appCreator struct {
-	encCfg params.EncodingConfig
+	encCfg testutil.TestEncodingConfig
 }
 
 // newApp is an appCreator

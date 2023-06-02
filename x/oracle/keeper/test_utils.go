@@ -3,12 +3,12 @@ package keeper
 
 import (
 	storetypes "cosmossdk.io/store/types"
+	"github.com/cosmos/cosmos-sdk/testutil/sims"
+	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"testing"
 
 	"time"
 
-	"cosmossdk.io/simapp"
-	simparams "cosmossdk.io/simapp/params"
 	"cosmossdk.io/store"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
@@ -59,7 +59,7 @@ func MakeTestCodec(t *testing.T) codec.Codec {
 }
 
 // MakeEncodingConfig nolint
-func MakeEncodingConfig(_ *testing.T) simparams.EncodingConfig {
+func MakeEncodingConfig(_ *testing.T) testutil.TestEncodingConfig {
 	amino := codec.NewLegacyAmino()
 	interfaceRegistry := codectypes.NewInterfaceRegistry()
 	codec := codec.NewProtoCodec(interfaceRegistry)
@@ -72,7 +72,7 @@ func MakeEncodingConfig(_ *testing.T) simparams.EncodingConfig {
 	ModuleBasics.RegisterInterfaces(interfaceRegistry)
 	types.RegisterLegacyAminoCodec(amino)
 	types.RegisterInterfaces(interfaceRegistry)
-	return simparams.EncodingConfig{
+	return testutil.TestEncodingConfig{
 		InterfaceRegistry: interfaceRegistry,
 		Codec:             codec,
 		TxConfig:          txCfg,
@@ -82,7 +82,7 @@ func MakeEncodingConfig(_ *testing.T) simparams.EncodingConfig {
 
 // Test addresses
 var (
-	ValPubKeys = simapp.CreateTestPubKeys(5)
+	ValPubKeys = sims.CreateTestPubKeys(5)
 
 	pubKeys = []crypto.PubKey{
 		secp256k1.GenPrivKey().PubKey(),

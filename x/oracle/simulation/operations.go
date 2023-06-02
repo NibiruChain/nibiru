@@ -3,6 +3,7 @@ package simulation
 //DONTCOVER
 
 import (
+	"github.com/CosmWasm/wasmd/app/params"
 	"math/rand"
 	"strings"
 
@@ -11,7 +12,6 @@ import (
 
 	helpers "github.com/cosmos/cosmos-sdk/testutil/sims"
 
-	simappparams "cosmossdk.io/simapp/params"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -50,13 +50,13 @@ func WeightedOperations(
 	)
 	appParams.GetOrGenerate(cdc, OpWeightMsgAggregateExchangeRatePrevote, &weightMsgAggregateExchangeRatePrevote, nil,
 		func(_ *rand.Rand) {
-			weightMsgAggregateExchangeRatePrevote = simappparams.DefaultWeightMsgSend * 2
+			weightMsgAggregateExchangeRatePrevote = params.DefaultWeightMsgSend * 2
 		},
 	)
 
 	appParams.GetOrGenerate(cdc, OpWeightMsgAggregateExchangeRateVote, &weightMsgAggregateExchangeRateVote, nil,
 		func(_ *rand.Rand) {
-			weightMsgAggregateExchangeRateVote = simappparams.DefaultWeightMsgSend * 2
+			weightMsgAggregateExchangeRateVote = params.DefaultWeightMsgSend * 2
 		},
 	)
 

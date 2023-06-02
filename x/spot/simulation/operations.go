@@ -2,13 +2,13 @@ package simulation
 
 import (
 	"fmt"
+	app2 "github.com/NibiruChain/nibiru/app"
 	"math/rand"
 	"strings"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
 
-	"cosmossdk.io/simapp"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
@@ -82,7 +82,7 @@ func SimulateMsgCreatePool(ak types.AccountKeeper, bk types.BankKeeper, k keeper
 			simulation.OperationInput{
 				R:               r,
 				App:             app,
-				TxGen:           simapp.MakeTestEncodingConfig().TxConfig,
+				TxGen:           app2.MakeTestEncodingConfig().TxConfig,
 				Cdc:             nil,
 				Msg:             msg,
 				MsgType:         msg.Type(),
@@ -136,7 +136,7 @@ func SimulateMsgSwap(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keepe
 			simulation.OperationInput{
 				R:               r,
 				App:             app,
-				TxGen:           simapp.MakeTestEncodingConfig().TxConfig,
+				TxGen:           app2.MakeTestEncodingConfig().TxConfig,
 				Cdc:             nil,
 				Msg:             msg,
 				MsgType:         msg.Type(),
@@ -201,7 +201,7 @@ func SimulateJoinPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keep
 			simulation.OperationInput{
 				R:               r,
 				App:             app,
-				TxGen:           simapp.MakeTestEncodingConfig().TxConfig,
+				TxGen:           app2.MakeTestEncodingConfig().TxConfig,
 				Cdc:             nil,
 				Msg:             msg,
 				MsgType:         msg.Type(),
@@ -278,7 +278,7 @@ func SimulateExitPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keep
 			simulation.OperationInput{
 				R:               r,
 				App:             app,
-				TxGen:           simapp.MakeTestEncodingConfig().TxConfig,
+				TxGen:           app2.MakeTestEncodingConfig().TxConfig,
 				Cdc:             nil,
 				Msg:             msg,
 				MsgType:         msg.Type(),

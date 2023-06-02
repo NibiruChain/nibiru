@@ -3,9 +3,9 @@ package cli_test
 import (
 	"context"
 	"fmt"
+	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"testing"
 
-	"cosmossdk.io/simapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -113,7 +113,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			cfg, err := genutiltest.CreateDefaultTendermintConfig(home)
 			require.NoError(t, err)
 
-			appCodec := simapp.MakeTestEncodingConfig().Codec
+			appCodec := moduletestutil.MakeTestEncodingConfig().Codec
 			err = genutiltest.ExecInitCmd(
 				testModuleBasicManager, home, appCodec)
 			require.NoError(t, err)
