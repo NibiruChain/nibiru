@@ -1,8 +1,8 @@
 package types
 
 import (
-	"github.com/cometbft/cometbft/crypto/tmhash"
 	"github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/tendermint/tendermint/crypto/tmhash"
 
 	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"

@@ -20,7 +20,7 @@ import (
 	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/wasmbin"

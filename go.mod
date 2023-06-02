@@ -10,8 +10,8 @@ require (
 	github.com/CosmWasm/wasmd v0.32.0
 	github.com/CosmWasm/wasmvm v1.2.3
 	github.com/armon/go-metrics v0.4.1
-	github.com/cometbft/cometbft v0.37.1
-	github.com/cometbft/cometbft-db v0.7.0
+	github.com/tendermint/tendermint v0.34.1
+	github.com/tendermint/tm-db v0.6.7
 	github.com/cosmos/cosmos-sdk v0.46.12
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/mock v1.6.0
@@ -191,3 +191,6 @@ replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alp
 replace github.com/cosmos/gorocksdb v1.2.0 => github.com/NibiruChain/gorocksdb v1.2.1
 
 replace github.com/linxGnu/grocksdb => github.com/NibiruChain/grocksdb v0.0.0-20230522141059-38c21249c0aa
+
+replace github.com/tendermint/tendermint => github.com/cometbft/cometbft v0.37.1
+replace github.com/tendermint/tm-db => github.com/cometbft/cometbft-db v0.7.0

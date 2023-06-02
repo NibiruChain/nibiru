@@ -3,7 +3,7 @@ package types
 import (
 	"fmt"
 
-	"github.com/cometbft/cometbft/crypto/tmhash"
+	"github.com/tendermint/tendermint/crypto/tmhash"
 
 	sdkerrors "cosmossdk.io/errors"
 )

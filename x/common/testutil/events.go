@@ -3,10 +3,10 @@ package testutil
 import (
 	"reflect"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/require"
+	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 func RequireNotHasTypedEvent(t require.TestingT, ctx sdk.Context, event proto.Message) {

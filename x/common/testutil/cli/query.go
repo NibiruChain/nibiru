@@ -7,9 +7,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 
-	tmcli "github.com/cometbft/cometbft/libs/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
+	tmcli "github.com/tendermint/tendermint/libs/cli"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	oraclecli "github.com/NibiruChain/nibiru/x/oracle/client/cli"

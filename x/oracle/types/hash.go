@@ -6,9 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"gopkg.in/yaml.v2"
-
-	"github.com/cometbft/cometbft/crypto/tmhash"
+	"github.com/tendermint/tendermint/crypto/tmhash"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
