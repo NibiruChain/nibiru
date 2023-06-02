@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	cosmossdk.io/collections v0.1.0
+	cosmossdk.io/api v0.3.1
 	cosmossdk.io/errors v1.0.0-beta.7
 	cosmossdk.io/math v1.0.1
 	cosmossdk.io/store v0.1.0-alpha.1
@@ -41,7 +42,7 @@ require (
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v0.13.0 // indirect
 	cloud.google.com/go/storage v1.29.0 // indirect
-	cosmossdk.io/api v0.4.2 // indirect
+	cosmossdk.io/api v0.4.0 // indirect
 	cosmossdk.io/core v0.6.1 // indirect
 	cosmossdk.io/depinject v1.0.0-alpha.3 // indirect
 	cosmossdk.io/log v0.1.0 // indirect
@@ -194,3 +195,4 @@ replace github.com/linxGnu/grocksdb => github.com/NibiruChain/grocksdb v0.0.0-20
 
 replace github.com/tendermint/tendermint => github.com/cometbft/cometbft v0.37.1
 replace github.com/tendermint/tm-db => github.com/cometbft/cometbft-db v0.7.0
+replace 	cosmossdk.io/api => 	cosmossdk.io/api v0.3.1
