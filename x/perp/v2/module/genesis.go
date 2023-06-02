@@ -3,7 +3,7 @@ package perp
 import (
 	"time"
 
-	"github.com/NibiruChain/collections"
+	"cosmossdk.io/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
