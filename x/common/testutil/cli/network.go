@@ -25,8 +25,6 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"cosmossdk.io/store/pruning/types"
-
 	tmrand "github.com/cometbft/cometbft/libs/rand"
 	"github.com/cometbft/cometbft/node"
 	tmclient "github.com/cometbft/cometbft/rpc/client"

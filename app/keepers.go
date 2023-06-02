@@ -1,7 +1,6 @@
 package app
 
 import (
-	"cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 	"github.com/cosmos/cosmos-sdk/codec"

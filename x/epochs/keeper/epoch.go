@@ -53,14 +53,17 @@ func (k Keeper) AddEpochInfo(ctx sdk.Context, epoch types.EpochInfo) error {
 
 	epoch.CurrentEpochStartHeight = ctx.BlockHeight()
 
-	k.Epochs.Insert(ctx, epoch.Identifier, epoch)
+	err := k.Epochs.Set(ctx, epoch.Identifier, epoch)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
 
 // DeleteEpochInfo delete epoch info.
 func (k Keeper) DeleteEpochInfo(ctx sdk.Context, identifier string) {
-	err := k.Epochs.Delete(ctx, identifier)
+	err := k.Epochs.Remove(ctx, identifier)
 	if err != nil {
 		panic(err)
 	}
@@ -71,11 +74,17 @@ func (k Keeper) IterateEpochInfo(
 	ctx sdk.Context,
 	fn func(index int64, epochInfo types.EpochInfo) (stop bool),
 ) {
-	iterate := k.Epochs.Iterate(ctx, collections.Range[string]{})
+	iterate, err := k.Epochs.Iterate(ctx, &collections.Range[string]{})
+	if err != nil {
+		panic(err)
+	}
 	i := int64(0)
 
 	for ; iterate.Valid(); iterate.Next() {
-		epoch := iterate.Value()
+		epoch, err := iterate.Value()
+		if err != nil {
+			panic(err)
+		}
 		stop := fn(i, epoch)
 
 		if stop {

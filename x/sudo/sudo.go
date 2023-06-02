@@ -6,8 +6,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/types/errors"
 
-	storetypes "cosmossdk.io/store/types"
-
 	"cosmossdk.io/collections"
 	"github.com/cosmos/cosmos-sdk/codec"
 

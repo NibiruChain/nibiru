@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	storetypes "cosmossdk.io/store/types"
-
 	sdkerrors "cosmossdk.io/errors"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cometbft/cometbft/libs/math"

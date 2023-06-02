@@ -11,7 +11,6 @@ import (
 	tmcfg "github.com/cometbft/cometbft/config"
 	snapshotoptions "github.com/cosmos/cosmos-sdk/snapshots/types"
 
-	"cosmossdk.io/store"
 	dbm "github.com/cometbft/cometbft-db"
 	tmcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/cometbft/cometbft/libs/log"
