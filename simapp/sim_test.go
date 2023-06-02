@@ -3,7 +3,7 @@ package simapp
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/cosmos/ibc-go/v4/testing/simapp"
+	"github.com/cosmos/ibc-go/v7/testing/simapp"
 	"math/rand"
 	"os"
 	"testing"
@@ -24,7 +24,7 @@ func init() {
 }
 
 func TestFullAppSimulation(tb *testing.T) {
-	config, db, dir, _, skip, err := simapp.SetupSimulation("goleveldb-app-sim", "Simulation")
+	db, dir, _, skip, err := helpers.SetupSimulation("goleveldb-app-sim", "Simulation", "", false, false)
 	if skip {
 		tb.Skip("skipping application simulation")
 	}

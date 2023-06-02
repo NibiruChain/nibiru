@@ -7,7 +7,7 @@ require (
 	cosmossdk.io/errors v1.0.0-beta.7
 	cosmossdk.io/math v1.0.1
 	cosmossdk.io/store v0.1.0-alpha.1
-	github.com/CosmWasm/wasmd v0.32.0
+	github.com/CosmWasm/wasmd v0.40.0
 	github.com/CosmWasm/wasmvm v1.2.3
 	github.com/armon/go-metrics v0.4.1
 	github.com/tendermint/tendermint v0.34.1
