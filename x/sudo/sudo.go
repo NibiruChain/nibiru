@@ -3,6 +3,7 @@ package sudo
 import (
 	"context"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/store/types"
 
 	"github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -22,7 +23,7 @@ type Keeper struct {
 
 func NewKeeper(
 	cdc codec.BinaryCodec,
-	storeKey storetypes.StoreKey,
+	storeKey types.StoreKey,
 ) Keeper {
 	return Keeper{
 		Sudoers: collections.NewItem(storeKey, 1, SudoersValueEncoder(cdc)),

@@ -25,7 +25,10 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 
 	// Skip inflation if it is disabled and increment number of skipped epochs
 	if !params.InflationEnabled {
-		prevSkippedEpochs := k.NumSkippedEpochs.Next(ctx)
+		prevSkippedEpochs, err := k.NumSkippedEpochs.Next(ctx)
+		if err != nil {
+			panic(err)
+		}
 
 		k.Logger(ctx).Debug(
 			"skipping inflation mint and allocation",
@@ -38,7 +41,10 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 	}
 
 	// mint coins, update supply
-	period := k.CurrentPeriod.Peek(ctx)
+	period, err := k.CurrentPeriod.Peek(ctx)
+	if err != nil {
+		panic(err)
+	}
 	epochsPerPeriod := k.EpochsPerPeriod(ctx)
 
 	epochMintProvision := types.CalculateEpochMintProvision(
@@ -74,9 +80,13 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 	//   => 1 - 365 * 0 - 0 < 365 --- nothing to do here
 	// Given, epochNumber = 741, period = 1, epochPerPeriod = 365, skippedEpochs = 10
 	//   => 741 - 1 * 365 - 10 > 365 --- a period has passed! we set a new period
+	peek, err := k.NumSkippedEpochs.Peek(ctx)
+	if err != nil {
+		panic(err)
+	}
 	if int64(epochNumber)-
 		int64(epochsPerPeriod*period)-
-		int64(k.NumSkippedEpochs.Peek(ctx)) > int64(epochsPerPeriod) {
+		int64(peek) > int64(epochsPerPeriod) {
 		k.CurrentPeriod.Next(ctx)
 	}
 

@@ -4,15 +4,14 @@ package keeper
 
 import (
 	"fmt"
+	spottypes "github.com/NibiruChain/nibiru/x/spot/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/spot/types"
 )
 
 /*
@@ -29,7 +28,7 @@ ret:
 */
 func (k Keeper) GetDenomLiquidity(ctx sdk.Context, denom string) (amount sdkmath.Int, err error) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetDenomLiquidityPrefix(denom))
+	bz := store.Get(spottypes.GetDenomLiquidityPrefix(denom))
 	if bz == nil {
 		return sdk.NewInt(0), nil
 	}
@@ -58,7 +57,7 @@ func (k Keeper) SetDenomLiquidity(ctx sdk.Context, denom string, amount sdkmath.
 	if err != nil {
 		return err
 	}
-	store.Set(types.GetDenomLiquidityPrefix(denom), bz)
+	store.Set(spottypes.GetDenomLiquidityPrefix(denom), bz)
 	return nil
 }
 
@@ -75,7 +74,7 @@ ret:
 */
 func (k Keeper) GetTotalLiquidity(ctx sdk.Context) (coins sdk.Coins) {
 	store := ctx.KVStore(k.storeKey)
-	prefixStore := prefix.NewStore(store, types.KeyTotalLiquidity)
+	prefixStore := prefix.NewStore(store, spottypes.KeyTotalLiquidity)
 
 	iterator := prefixStore.Iterator(nil, nil)
 	defer iterator.Close()
