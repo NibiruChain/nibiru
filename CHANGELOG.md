@@ -92,6 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1385](https://github.com/NibiruChain/nibiru/pull/1385) - test(perp): add clearing house negative tests
 * [#1388](https://github.com/NibiruChain/nibiru/pull/1388) - refactor(perp)!: idempotent position changed event
 * [#1387](https://github.com/NibiruChain/nibiru/pull/1387) - feat: upgrade to Cosmos SDK v0.46.10
+* [#1413](https://github.com/NibiruChain/nibiru/pull/1413) - fix(perp): provide descriptive errors when all liquidations fail in MultiLiquidate
 
 ### Improvements
 
