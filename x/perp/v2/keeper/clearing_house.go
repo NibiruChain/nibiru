@@ -416,7 +416,7 @@ func (k Keeper) closeAndOpenReversePosition(
 		// should never happen as this should also be checked in the caller
 		return nil, nil, fmt.Errorf(
 			"provided quote asset amount and leverage not large enough to close position. need %s but got %s",
-			closePositionResp.ExchangedNotionalValue.String(), reverseNotionalValue.String())
+			closePositionResp.ExchangedNotionalValue, reverseNotionalValue)
 	} else if remainingReverseNotionalValue.IsPositive() {
 		updatedBaseAmtLimit := baseAmtLimit
 		if baseAmtLimit.IsPositive() {
@@ -425,7 +425,7 @@ func (k Keeper) closeAndOpenReversePosition(
 		if updatedBaseAmtLimit.IsNegative() {
 			return nil, nil, fmt.Errorf(
 				"position size changed by greater than the specified base limit: %s",
-				baseAmtLimit.String(),
+				baseAmtLimit,
 			)
 		}
 
@@ -454,6 +454,10 @@ func (k Keeper) closeAndOpenReversePosition(
 		)
 		if err != nil {
 			return nil, nil, err
+		}
+		err = k.checkMarginRatio(ctx, market, amm, increasePositionResp.Position)
+		if err != nil {
+			return
 		}
 
 		positionResp = &types.PositionResp{
@@ -523,24 +527,9 @@ func (k Keeper) afterPositionUpdate(
 	}
 
 	if !positionResp.Position.Size_.IsZero() {
-		spotNotional, err := PositionNotionalSpot(amm, positionResp.Position)
+		err = k.checkMarginRatio(ctx, market, amm, positionResp.Position)
 		if err != nil {
 			return err
-		}
-		twapNotional, err := k.PositionNotionalTWAP(ctx, positionResp.Position, market.TwapLookbackWindow)
-		if err != nil {
-			return err
-		}
-		var preferredPositionNotional sdk.Dec
-		if positionResp.Position.Size_.IsPositive() {
-			preferredPositionNotional = sdk.MaxDec(spotNotional, twapNotional)
-		} else {
-			preferredPositionNotional = sdk.MinDec(spotNotional, twapNotional)
-		}
-
-		marginRatio := MarginRatio(positionResp.Position, preferredPositionNotional, market.LatestCumulativePremiumFraction)
-		if marginRatio.LT(market.MaintenanceMarginRatio) {
-			return types.ErrMarginRatioTooLow
 		}
 	}
 
@@ -554,7 +543,7 @@ func (k Keeper) afterPositionUpdate(
 			return err
 		}
 	case marginToVault.IsNegative():
-		if err = k.Withdraw(ctx, market, traderAddr, marginToVault.Abs()); err != nil {
+		if err = k.WithdrawFromVault(ctx, market, traderAddr, marginToVault.Abs()); err != nil {
 			return err
 		}
 	}
@@ -591,6 +580,30 @@ func (k Keeper) afterPositionUpdate(
 	)
 
 	return nil
+}
+
+// checkMarginRatio checks if the margin ratio of the position is below the liquidation threshold.
+func (k Keeper) checkMarginRatio(ctx sdk.Context, market types.Market, amm types.AMM, position types.Position) (err error) {
+	spotNotional, err := PositionNotionalSpot(amm, position)
+	if err != nil {
+		return
+	}
+	twapNotional, err := k.PositionNotionalTWAP(ctx, position, market.TwapLookbackWindow)
+	if err != nil {
+		return
+	}
+	var preferredPositionNotional sdk.Dec
+	if position.Size_.IsPositive() {
+		preferredPositionNotional = sdk.MaxDec(spotNotional, twapNotional)
+	} else {
+		preferredPositionNotional = sdk.MinDec(spotNotional, twapNotional)
+	}
+
+	marginRatio := MarginRatio(position, preferredPositionNotional, market.LatestCumulativePremiumFraction)
+	if marginRatio.LT(market.MaintenanceMarginRatio) {
+		return types.ErrMarginRatioTooLow
+	}
+	return
 }
 
 // transfers the fee to the exchange fee pool
