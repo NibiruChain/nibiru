@@ -115,9 +115,14 @@ message MsgMultiLiquidateResponse {
     string error = 2;
 
     cosmos.base.v1beta1.Coin liquidator_fee = 3
-        [ (gogoproto.nullable) = false ];
+        [ (gogoproto.nullable) = true ]; 
+        // nullable since no fee is taken on failed liquidation
+
     cosmos.base.v1beta1.Coin perp_ef_fee = 4
-        [ (gogoproto.nullable) = false ]; // perp ecosystem fund
+        [ (gogoproto.nullable) = true ]; // perp ecosystem fund
+        // nullable since no fee is taken on failed liquidation
+
+    string trader = 5;
   }
 
   repeated LiquidationResponse liquidations = 1;

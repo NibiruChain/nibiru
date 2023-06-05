@@ -5,6 +5,7 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
@@ -13,6 +14,8 @@ import (
 	. "github.com/NibiruChain/nibiru/x/common/testutil/assertion"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
+
+	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
@@ -216,4 +219,95 @@ func TestMultiLiquidate(t *testing.T) {
 	}
 
 	NewTestSuite(t).WithTestCases(tc...).Run()
+}
+
+func TestPrettyLiquidateResponse(t *testing.T) {
+	type TestCase struct {
+		name        string
+		resps       []*types.MsgMultiLiquidateResponse_LiquidationResponse
+		shouldError bool
+		// prettyContains: sections of JSON string expected to be contained in
+		// the pretty output.
+		prettyContains []string
+	}
+
+	dummy := struct {
+		LiquidatorFee sdk.Coin
+		PerpEfFee     sdk.Coin
+		Trader        string
+	}{
+		LiquidatorFee: sdk.NewInt64Coin("unibi", 420),
+		PerpEfFee:     sdk.NewInt64Coin("unibi", 420),
+		Trader:        "dummytrader",
+	}
+
+	testCases := []TestCase{
+		{
+			name:        "empty",
+			resps:       []*types.MsgMultiLiquidateResponse_LiquidationResponse{},
+			shouldError: false,
+		},
+
+		{
+			name: "success only",
+			resps: []*types.MsgMultiLiquidateResponse_LiquidationResponse{
+				{
+					Success:       true,
+					LiquidatorFee: &dummy.LiquidatorFee,
+					PerpEfFee:     &dummy.PerpEfFee,
+					Trader:        dummy.Trader,
+				},
+			},
+			shouldError: false,
+			prettyContains: []string{
+				`success": true`,
+				`liquidator_fee": {`,
+				`perp_ef_fee": {`,
+				`denom": "unibi`,
+				`amount": "420`,
+				`trader": "dummytrader"`,
+			},
+		},
+
+		{
+			name: "errors only",
+			resps: []*types.MsgMultiLiquidateResponse_LiquidationResponse{
+				{
+					Success: false,
+					Error:   "failed liquidation A",
+					Trader:  dummy.Trader,
+				},
+				{
+					Success: false,
+					Error:   "failed liquidation B",
+					Trader:  dummy.Trader,
+				},
+			},
+			shouldError: false,
+			prettyContains: []string{
+				`success": false`,
+				`liquidator_fee": null`,
+				`perp_ef_fee": null`,
+				`trader": "dummytrader"`,
+				`error": "failed liquidation A"`,
+				`error": "failed liquidation B"`,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			pretty, err := keeper.PrettyLiquidateResponse(tc.resps)
+
+			if tc.shouldError {
+				require.Errorf(t, err, "pretty: %s", pretty)
+			} else {
+				require.NoErrorf(t, err, "pretty: %s", pretty)
+			}
+
+			for _, prettyContains := range tc.prettyContains {
+				require.Contains(t, pretty, prettyContains)
+			}
+		})
+	}
 }
