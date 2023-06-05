@@ -227,6 +227,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1210](https://github.com/NibiruChain/nibiru/pull/1210) - fix(ci): fix docker push workflow
 * [#1212](https://github.com/NibiruChain/nibiru/pull/1212) - fix(spot): gracefully handle join spot pool with wrong tokens denom
 * [#1219](https://github.com/NibiruChain/nibiru/pull/1219) - fix(ci): use chaosnet image on chaosnet docker compose
+* [#1414](https://github.com/NibiruChain/nibiru/pull/1414) - fix(oracle): Add deterministic map iterations to avoid consensus failure.
 
 ## [v0.16.3](https://github.com/NibiruChain/nibiru/releases/tag/v0.16.3)
 
