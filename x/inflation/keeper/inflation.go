@@ -121,10 +121,8 @@ func (k Keeper) GetInflationRate(ctx sdk.Context, mintDenom string) sdk.Dec {
 // GetEpochMintProvision retrieves necessary params KV storage
 // and calculate EpochMintProvision
 func (k Keeper) GetEpochMintProvision(ctx sdk.Context) sdk.Dec {
-	peek, err := k.CurrentPeriod.Peek(ctx)
-	if err != nil {
-		panic(err)
-	}
+	peek := k.CurrentPeriod.Peek(ctx)
+
 	return types.CalculateEpochMintProvision(
 		k.GetParams(ctx),
 		peek,

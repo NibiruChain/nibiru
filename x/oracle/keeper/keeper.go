@@ -3,6 +3,7 @@ package keeper
 import (
 	"errors"
 	"fmt"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"time"
 
 	sdkerrors "cosmossdk.io/errors"
@@ -12,7 +13,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"cosmossdk.io/collections"
+	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/oracle/types"

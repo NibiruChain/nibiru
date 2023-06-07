@@ -3,7 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"cosmossdk.io/collections"
+	"github.com/NibiruChain/collections"
 )
 
 // SlashAndResetMissCounters do slash any operator who over criteria & clear all operators miss counter to zero

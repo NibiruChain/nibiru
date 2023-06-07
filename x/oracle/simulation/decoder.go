@@ -8,7 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/kv"
 	gogotypes "github.com/gogo/protobuf/types"
 
-	"cosmossdk.io/collections"
+	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )

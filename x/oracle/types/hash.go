@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"gopkg.in/yaml.v2"
 
 	"github.com/cometbft/cometbft/crypto/tmhash"
 

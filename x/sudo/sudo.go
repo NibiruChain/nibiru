@@ -7,7 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/types/errors"
 
-	"cosmossdk.io/collections"
+	"github.com/NibiruChain/collections"
 	"github.com/cosmos/cosmos-sdk/codec"
 
 	"github.com/NibiruChain/nibiru/x/common/set"
