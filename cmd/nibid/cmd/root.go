@@ -5,7 +5,6 @@ import (
 	"fmt"
 	snapshotoptions "github.com/cosmos/cosmos-sdk/snapshots/types"
 	"github.com/cosmos/cosmos-sdk/store"
-	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"io"
 	"os"
 	"path/filepath"
@@ -39,7 +38,7 @@ import (
 
 // NewRootCmd creates a new root command for nibid. It is called once in the
 // main function.
-func NewRootCmd() (*cobra.Command, testutil.TestEncodingConfig) {
+func NewRootCmd() (*cobra.Command, app.EncodingConfig) {
 	encodingConfig := app.MakeEncodingConfig()
 	app.SetPrefixes(app.AccountAddressPrefix)
 
@@ -142,7 +141,7 @@ Args:
 func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 	rootCmd.AddCommand(
 		genutilcli.InitCmd(app.ModuleBasics, app.DefaultNodeHome),
-		genutilcli.CollectGenTxsCmd(banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome),
+		genutilcli.CollectGenTxsCmd(banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome, nil),
 		genutilcli.MigrateGenesisCmd(),
 		genutilcli.GenTxCmd(app.ModuleBasics, encodingConfig.TxConfig, banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome),
 		genutilcli.ValidateGenesisCmd(app.ModuleBasics),
@@ -165,10 +164,11 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 		keys.Commands(app.DefaultNodeHome),
 	)
 
+	// TODO add rosettaj
 	// add rosetta
-	rootCmd.AddCommand(
-		server.RosettaCommand(
-			encodingConfig.InterfaceRegistry, encodingConfig.Codec))
+	//rootCmd.AddCommand(
+	//	server.RosettaCommand(
+	//		encodingConfig.InterfaceRegistry, encodingConfig.Codec))
 }
 
 // Implements the servertypes.ModuleInitFlags interface
@@ -228,7 +228,7 @@ func txCommand() *cobra.Command {
 }
 
 type appCreator struct {
-	encCfg testutil.TestEncodingConfig
+	encCfg app.EncodingConfig
 }
 
 // newApp is an appCreator
@@ -293,11 +293,12 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 func (a appCreator) appExport(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, height int64,
 	forZeroHeight bool, jailAllowedAddrs []string, appOpts servertypes.AppOptions,
+	modulesToExport []string,
 ) (servertypes.ExportedApp, error) {
 	var nibiruApp *app.NibiruApp
 	homePath, ok := appOpts.Get(flags.FlagHome).(string)
 	if !ok || homePath == "" {
-		return servertypes.ExportedApp{}, errors.New("application home not set")
+		return servertypes.ExportedApp{}, errors.New("application home is not set")
 	}
 
 	if height != -1 {
@@ -310,5 +311,5 @@ func (a appCreator) appExport(
 		nibiruApp = app.NewNibiruApp(logger, db, traceStore, true, map[int64]bool{}, homePath, uint(1), a.encCfg, appOpts)
 	}
 
-	return nibiruApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs)
+	return nibiruApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)
 }

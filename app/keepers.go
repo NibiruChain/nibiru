@@ -8,7 +8,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
@@ -427,7 +426,7 @@ func (app *NibiruApp) InitKeepers(
 }
 
 func (app *NibiruApp) AppModules(
-	encodingConfig testutil.TestEncodingConfig,
+	encodingConfig EncodingConfig,
 	skipGenesisInvariants bool,
 ) []module.AppModule {
 	appCodec := app.appCodec
@@ -545,10 +544,11 @@ func OrderedModuleNames() []string {
 	}
 }
 
+// InitModuleManager Load all the modules and stores them in the module manager
 // NOTE: Any module instantiated in the module manager that is later modified
 // must be passed by reference here.
 func (app *NibiruApp) InitModuleManager(
-	encodingConfig testutil.TestEncodingConfig,
+	encodingConfig EncodingConfig,
 	skipGenesisInvariants bool,
 ) {
 	app.mm = module.NewManager(
@@ -565,7 +565,6 @@ func (app *NibiruApp) InitModuleManager(
 	// app.mm.SetOrderMigrations(custom order)
 
 	app.mm.RegisterInvariants(&app.crisisKeeper)
-	app.mm.RegisterRoutes(app.Router(), app.QueryRouter(), encodingConfig.Amino)
 	app.configurator = module.NewConfigurator(
 		app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
 	app.mm.RegisterServices(app.configurator)
