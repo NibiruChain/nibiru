@@ -4,6 +4,7 @@ package simulation
 
 import (
 	"github.com/CosmWasm/wasmd/app/params"
+	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"math/rand"
 	"strings"
 
@@ -62,7 +63,7 @@ func WeightedOperations(
 
 	appParams.GetOrGenerate(cdc, OpWeightMsgDelegateFeedConsent, &weightMsgDelegateFeedConsent, nil,
 		func(_ *rand.Rand) {
-			weightMsgDelegateFeedConsent = simappparams.DefaultWeightMsgSetWithdrawAddress
+			weightMsgDelegateFeedConsent = params.DefaultWeightMsgDelegate // TODO: temp fix
 		},
 	)
 
@@ -119,7 +120,7 @@ func SimulateMsgAggregateExchangeRatePrevote(ak types.AccountKeeper, bk types.Ba
 
 		msg := types.NewMsgAggregateExchangeRatePrevote(voteHash, feederAddr, address)
 
-		txGen := simappparams.MakeTestEncodingConfig().TxConfig
+		txGen := testutil.MakeTestEncodingConfig().TxConfig
 		tx, err := helpers.GenSignedMockTx(
 			r,
 			txGen,
@@ -190,7 +191,7 @@ func SimulateMsgAggregateExchangeRateVote(ak types.AccountKeeper, bk types.BankK
 
 		msg := types.NewMsgAggregateExchangeRateVote(salt, exchangeRatesStr, feederAddr, address)
 
-		txGen := simappparams.MakeTestEncodingConfig().TxConfig
+		txGen := testutil.MakeTestEncodingConfig().TxConfig
 		tx, err := helpers.GenSignedMockTx(
 			r,
 			txGen,
@@ -248,7 +249,7 @@ func SimulateMsgDelegateFeedConsent(ak types.AccountKeeper, bk types.BankKeeper,
 
 		msg := types.NewMsgDelegateFeedConsent(valAddress, delegateAccount.Address)
 
-		txGen := simappparams.MakeTestEncodingConfig().TxConfig
+		txGen := testutil.MakeTestEncodingConfig().TxConfig
 		tx, err := helpers.GenSignedMockTx(
 			r,
 			txGen,

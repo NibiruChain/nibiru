@@ -47,7 +47,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	app.SetPrefixes(app.AccountAddressPrefix)
 
 	// setup market
-	encodingConfig := app.MakeTestEncodingConfig()
+	encodingConfig := app.MakeEncodingConfig()
 	genState := genesis.NewTestGenesisState()
 	genState = genesis.AddPerpV2Genesis(genState)
 	genState = genesis.AddOracleGenesis(genState)

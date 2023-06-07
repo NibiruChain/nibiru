@@ -34,7 +34,6 @@ import (
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
-	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
@@ -169,16 +168,15 @@ func CreateTestFixture(t *testing.T) TestFixture {
 		types.ModuleName:               nil,
 	}
 
-	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, keyParams, tKeyParams)
 	accountKeeper := authkeeper.NewAccountKeeper(
 		appCodec,
 		keyAcc,
-		paramsKeeper.Subspace(authtypes.ModuleName),
 		authtypes.ProtoBaseAccount,
 		maccPerms,
 		sdk.GetConfig().GetBech32AccountAddrPrefix(),
+		"",
 	)
-	bankKeeper := bankkeeper.NewBaseKeeper(appCodec, keyBank, accountKeeper, paramsKeeper.Subspace(banktypes.ModuleName), blackListAddrs)
+	bankKeeper := bankkeeper.NewBaseKeeper(appCodec, keyBank, accountKeeper, blackListAddrs, "")
 
 	totalSupply := sdk.NewCoins(sdk.NewCoin(denoms.NIBI, InitTokens.MulRaw(int64(len(Addrs)*10))))
 	bankKeeper.MintCoins(ctx, faucetAccountName, totalSupply)
@@ -188,7 +186,7 @@ func CreateTestFixture(t *testing.T) TestFixture {
 		keyStaking,
 		accountKeeper,
 		bankKeeper,
-		paramsKeeper.Subspace(stakingtypes.ModuleName),
+		"",
 	)
 
 	stakingParams := stakingtypes.DefaultParams()
@@ -197,9 +195,9 @@ func CreateTestFixture(t *testing.T) TestFixture {
 
 	distrKeeper := distrkeeper.NewKeeper(
 		appCodec,
-		keyDistr, paramsKeeper.Subspace(distrtypes.ModuleName),
+		keyDistr,
 		accountKeeper, bankKeeper, stakingKeeper,
-		authtypes.FeeCollectorName,
+		authtypes.FeeCollectorName, "",
 	)
 
 	distrKeeper.SetFeePool(ctx, distrtypes.InitialFeePool())
@@ -248,7 +246,7 @@ func CreateTestFixture(t *testing.T) TestFixture {
 
 	keeper.Params.Set(ctx, defaults)
 
-	return TestFixture{ctx, legacyAmino, accountKeeper, bankKeeper, keeper, stakingKeeper, distrKeeper}
+	return TestFixture{ctx, legacyAmino, accountKeeper, bankKeeper, keeper, *stakingKeeper, distrKeeper}
 }
 
 // NewTestMsgCreateValidator test msg creator
@@ -296,7 +294,7 @@ func Setup(t *testing.T) (TestFixture, types.MsgServer) {
 
 	h := NewMsgServerImpl(fixture.OracleKeeper)
 
-	sh := stakingkeeper.NewMsgServerImpl(fixture.StakingKeeper)
+	sh := stakingkeeper.NewMsgServerImpl(&fixture.StakingKeeper)
 
 	// Validator created
 	_, err := sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[0], ValPubKeys[0], stakingAmt))
@@ -309,7 +307,7 @@ func Setup(t *testing.T) (TestFixture, types.MsgServer) {
 	require.NoError(t, err)
 	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[4], ValPubKeys[4], stakingAmt))
 	require.NoError(t, err)
-	staking.EndBlocker(fixture.Ctx, fixture.StakingKeeper)
+	staking.EndBlocker(fixture.Ctx, &fixture.StakingKeeper)
 
 	return fixture, h
 }

@@ -181,7 +181,7 @@ func NewAppConstructor(encodingCfg testutil2.TestEncodingConfig) AppConstructor 
 
 // BuildNetworkConfig returns a configuration for a local in-testing network
 func BuildNetworkConfig(appGenesis app.GenesisState) Config {
-	encCfg := app.MakeTestEncodingConfig()
+	encCfg := app.MakeEncodingConfig()
 
 	return Config{
 		Codec:             encCfg.Codec,

@@ -19,7 +19,7 @@ import (
 
 func Test_TestnetCmd(t *testing.T) {
 	home := t.TempDir()
-	encodingConfig := app.MakeTestEncodingConfig()
+	encodingConfig := app.MakeEncodingConfig()
 	logger := log.NewNopLogger()
 	cfg, err := genutiltest.CreateDefaultTendermintConfig(home)
 	require.NoError(t, err)

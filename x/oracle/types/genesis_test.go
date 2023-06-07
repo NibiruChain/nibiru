@@ -19,7 +19,7 @@ func TestGenesisValidation(t *testing.T) {
 }
 
 func TestGetGenesisStateFromAppState(t *testing.T) {
-	cdc := app.MakeTestEncodingConfig().Codec
+	cdc := app.MakeEncodingConfig().Codec
 	appState := make(map[string]json.RawMessage)
 
 	defaultGenesisState := types.DefaultGenesisState()

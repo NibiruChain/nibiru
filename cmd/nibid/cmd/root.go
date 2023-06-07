@@ -3,13 +3,12 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	snapshotoptions "github.com/cosmos/cosmos-sdk/snapshots/types"
+	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"io"
 	"os"
 	"path/filepath"
-
-	tmcfg "github.com/cometbft/cometbft/config"
-	snapshotoptions "github.com/cosmos/cosmos-sdk/snapshots/types"
 
 	dbm "github.com/cometbft/cometbft-db"
 	tmcli "github.com/cometbft/cometbft/libs/cli"
@@ -41,9 +40,11 @@ import (
 // NewRootCmd creates a new root command for nibid. It is called once in the
 // main function.
 func NewRootCmd() (*cobra.Command, testutil.TestEncodingConfig) {
-	encodingConfig := app.MakeTestEncodingConfig()
+	encodingConfig := app.MakeEncodingConfig()
+	app.SetPrefixes(app.AccountAddressPrefix)
+
 	initClientCtx := client.Context{}.
-		WithCodec(encodingConfig.Codec).
+		WithCodec(encodingConfig.Marshaler).
 		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
 		WithTxConfig(encodingConfig.TxConfig).
 		WithLegacyAmino(encodingConfig.Amino).
@@ -52,13 +53,10 @@ func NewRootCmd() (*cobra.Command, testutil.TestEncodingConfig) {
 		WithHomeDir(app.DefaultNodeHome).
 		WithViper("") // In simapp, we don't use any prefix for env variables.
 
-	app.SetPrefixes(app.AccountAddressPrefix)
-
 	rootCmd := &cobra.Command{
 		Use:   "nibid",
 		Short: "Nibiru app",
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-			// set the default command outputs
 			cmd.SetOut(cmd.OutOrStdout())
 			cmd.SetErr(cmd.ErrOrStderr())
 
@@ -80,12 +78,13 @@ func NewRootCmd() (*cobra.Command, testutil.TestEncodingConfig) {
 			}
 
 			customAppTemplate, customAppConfig := initAppConfig()
+			tmCfg := customTendermintConfig()
 
 			return server.InterceptConfigsPreRunHandler(
 				cmd,
 				customAppTemplate,
 				customAppConfig,
-				tmcfg.DefaultConfig(),
+				tmCfg,
 			)
 		},
 	}
@@ -140,12 +139,9 @@ Args:
 	  for a given app. This is provided for compatibility between protobuf and
 	  amino implementations.
 */
-func initRootCmd(rootCmd *cobra.Command, encodingConfig testutil.TestEncodingConfig) {
-	cfg := sdk.GetConfig()
-	cfg.Seal()
-
+func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 	rootCmd.AddCommand(
-		InitCmd(app.ModuleBasics, app.DefaultNodeHome),
+		genutilcli.InitCmd(app.ModuleBasics, app.DefaultNodeHome),
 		genutilcli.CollectGenTxsCmd(banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome),
 		genutilcli.MigrateGenesisCmd(),
 		genutilcli.GenTxCmd(app.ModuleBasics, encodingConfig.TxConfig, banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome),
