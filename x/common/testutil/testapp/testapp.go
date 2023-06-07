@@ -24,7 +24,7 @@ func NewNibiruTestAppAndContext(shouldUseDefaultGenesis bool) (*app.NibiruApp, s
 	encoding := app.MakeEncodingConfig()
 	var appGenesis app.GenesisState
 	if shouldUseDefaultGenesis {
-		appGenesis = app.NewDefaultGenesisState(encoding.Codec)
+		appGenesis = app.NewDefaultGenesisState(encoding.Marshaler)
 	}
 
 	app := NewNibiruTestApp(appGenesis)
@@ -59,7 +59,7 @@ func NewNibiruTestApp(gen app.GenesisState) *app.NibiruApp {
 		/*appOpts=*/ sims.EmptyAppOptions{},
 	)
 
-	gen, err := GenesisStateWithSingleValidator(encoding.Codec, gen)
+	gen, err := GenesisStateWithSingleValidator(encoding.Marshaler, gen)
 	if err != nil {
 		panic(err)
 	}

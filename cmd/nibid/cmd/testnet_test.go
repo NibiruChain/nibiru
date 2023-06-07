@@ -24,12 +24,12 @@ func Test_TestnetCmd(t *testing.T) {
 	cfg, err := genutiltest.CreateDefaultTendermintConfig(home)
 	require.NoError(t, err)
 
-	err = genutiltest.ExecInitCmd(app.ModuleBasics, home, encodingConfig.Codec)
+	err = genutiltest.ExecInitCmd(app.ModuleBasics, home, encodingConfig.Marshaler)
 	require.NoError(t, err)
 
 	serverCtx := server.NewContext(viper.New(), cfg, logger)
 	clientCtx := client.Context{}.
-		WithCodec(encodingConfig.Codec).
+		WithCodec(encodingConfig.Marshaler).
 		WithHomeDir(home).
 		WithTxConfig(encodingConfig.TxConfig)
 
@@ -47,6 +47,6 @@ func Test_TestnetCmd(t *testing.T) {
 	appState, _, err := genutiltypes.GenesisStateFromGenFile(genFile)
 	require.NoError(t, err)
 
-	bankGenState := banktypes.GetGenesisStateFromAppState(encodingConfig.Codec, appState)
+	bankGenState := banktypes.GetGenesisStateFromAppState(encodingConfig.Marshaler, appState)
 	require.NotEmpty(t, bankGenState.Supply.String())
 }

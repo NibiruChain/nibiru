@@ -21,7 +21,7 @@ identifier strings to raw json messages.
 */
 func NewTestGenesisState() app.GenesisState {
 	encodingConfig := app.MakeEncodingConfig()
-	codec := encodingConfig.Codec
+	codec := encodingConfig.Marshaler
 	genState := app.NewDefaultGenesisState(codec)
 
 	// Set short voting period to allow fast gov proposals in tests

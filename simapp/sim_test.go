@@ -13,18 +13,30 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	simulationtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
+	simcli "github.com/cosmos/cosmos-sdk/x/simulation/client/cli"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 )
 
+// SimAppChainID hardcoded chainID for simulation
+const SimAppChainID = "simulation-app"
+
 func init() {
 	app.GetSimulatorFlags()
 }
 
 func TestFullAppSimulation(tb *testing.T) {
-	db, dir, _, skip, err := helpers.SetupSimulation("goleveldb-app-sim", "Simulation", "", false, false)
+	config := simcli.NewConfigFromFlags()
+	config.ChainID = SimAppChainID
+
+	db, dir, _, skip, err := helpers.SetupSimulation(
+		config,
+		"goleveldb-app-sim",
+		"Simulation",
+		simcli.FlagVerboseValue, simcli.FlagEnabledValue,
+	)
 	if skip {
 		tb.Skip("skipping application simulation")
 	}
@@ -39,7 +51,7 @@ func TestFullAppSimulation(tb *testing.T) {
 	}()
 
 	encoding := app.MakeEncodingConfig()
-	app := testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encoding.Codec))
+	app := testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encoding.Marshaler))
 
 	// Run randomized simulation:
 	_, simParams, simErr := simulation.SimulateFromSeed(
@@ -80,7 +92,7 @@ func TestAppStateDeterminism(t *testing.T) {
 	config.ExportParamsPath = ""
 	config.OnOperation = false
 	config.AllInvariants = false
-	config.ChainID = helpers.SimAppChainID
+	config.ChainID = SimAppChainID
 
 	numSeeds := 3
 	numTimesToRunPerSeed := 5
@@ -91,7 +103,7 @@ func TestAppStateDeterminism(t *testing.T) {
 
 		for j := 0; j < numTimesToRunPerSeed; j++ {
 			db := dbm.NewMemDB()
-			app := testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encoding.Codec))
+			app := testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encoding.Marshaler))
 
 			fmt.Printf(
 				"running non-determinism simulation; seed %d: %d/%d, attempt: %d/%d\n",

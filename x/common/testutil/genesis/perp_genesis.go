@@ -116,7 +116,7 @@ func AddPerpV2Genesis(gen app.GenesisState) app.GenesisState {
 		ReserveSnapshots: []perpv2types.ReserveSnapshot{},
 	}
 
-	gen[perpv2types.ModuleName] = TEST_ENCODING_CONFIG.Codec.
+	gen[perpv2types.ModuleName] = TEST_ENCODING_CONFIG.Marshaler.
 		MustMarshalJSON(perpV2Gen)
 	return gen
 }
