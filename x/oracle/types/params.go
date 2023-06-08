@@ -27,13 +27,11 @@ var (
 )
 
 // Default parameter values
-// TODO(mercilex): need to adjust this based on expected genesis parameters, this assumes block times are 1s
-// DefaultVotePeriod: 10s
-// DefaultSlashWindow: 1 Week
+// Assumes block times are 2s
 const (
-	DefaultVotePeriod  = 10     // vote every 10s
-	DefaultSlashWindow = 604800 // 1 week
-	DefaultMinVoters   = 4      // minimum of 4 voters for a pair to become valid
+	DefaultVotePeriod  = 30   // vote every 1 minute
+	DefaultSlashWindow = 3600 // 2 hours
+	DefaultMinVoters   = 4    // minimum of 4 voters for a pair to become valid
 )
 
 // Default parameter values
@@ -68,10 +66,10 @@ var (
 		// asset.Registry.Pair(denoms.SOL, denoms.USD),
 		// asset.Registry.Pair(denoms.ADA, denoms.USD),
 	}
-	DefaultSlashFraction      = sdk.NewDecWithPrec(1, 4)        // 0.01%
-	DefaultMinValidPerWindow  = sdk.NewDecWithPrec(5, 2)        // 5%
+	DefaultSlashFraction      = sdk.NewDecWithPrec(5, 3)        // 0.5%
+	DefaultMinValidPerWindow  = sdk.NewDecWithPrec(69, 2)       // 69%
 	DefaultTwapLookbackWindow = time.Duration(15 * time.Minute) // 15 minutes
-	DefaultValidatorFeeRatio  = sdk.MustNewDecFromStr("0.05")   // 1%
+	DefaultValidatorFeeRatio  = sdk.NewDecWithPrec(5, 2)        // 0.05%
 )
 
 // DefaultParams creates default oracle module parameters

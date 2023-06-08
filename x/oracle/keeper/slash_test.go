@@ -46,7 +46,7 @@ func TestSlashAndResetMissCounters(t *testing.T) {
 
 	votePeriodsPerWindow := sdk.NewDec(int64(input.OracleKeeper.SlashWindow(input.Ctx))).QuoInt64(int64(input.OracleKeeper.VotePeriod(input.Ctx))).TruncateInt64()
 	slashFraction := input.OracleKeeper.SlashFraction(input.Ctx)
-	minValidVotes := input.OracleKeeper.MinValidPerWindow(input.Ctx).MulInt64(votePeriodsPerWindow).TruncateInt64()
+	minValidVotes := input.OracleKeeper.MinValidPerWindow(input.Ctx).MulInt64(votePeriodsPerWindow).Ceil().TruncateInt64()
 	// Case 1, no slash
 	input.OracleKeeper.MissCounters.Insert(input.Ctx, ValAddrs[0], uint64(votePeriodsPerWindow-minValidVotes))
 	input.OracleKeeper.SlashAndResetMissCounters(input.Ctx)
