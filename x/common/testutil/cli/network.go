@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	testutil2 "github.com/cosmos/cosmos-sdk/types/module/testutil"
+	"github.com/cometbft/cometbft/libs/log"
+	"github.com/cosmos/cosmos-sdk/store/pruning/types"
+	"github.com/cosmos/cosmos-sdk/testutil/sims"
 	"net/http"
 	"net/url"
 	"os"
@@ -20,7 +22,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 
 	"github.com/cosmos/cosmos-sdk/testutil"
-	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 
 	sdkmath "cosmossdk.io/math"
@@ -167,12 +168,12 @@ func NewCLILogger(cmd *cobra.Command) CLILogger {
 }
 
 // NewAppConstructor returns a new simapp AppConstructor
-func NewAppConstructor(encodingCfg testutil2.TestEncodingConfig) AppConstructor {
+func NewAppConstructor(encodingCfg app.EncodingConfig) AppConstructor {
 	return func(val Validator) servertypes.Application {
 		return app.NewNibiruApp(
 			val.Ctx.Logger, dbm.NewMemDB(), nil, true, make(map[int64]bool), val.Ctx.Config.RootDir, 0,
 			encodingCfg,
-			testutil2.EmptyAppOptions{},
+			sims.EmptyAppOptions{},
 			baseapp.SetPruning(types.NewPruningOptionsFromString(val.AppConfig.Pruning)),
 			baseapp.SetMinGasPrices(val.AppConfig.MinGasPrices),
 		)
@@ -184,7 +185,7 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 	encCfg := app.MakeEncodingConfig()
 
 	return Config{
-		Codec:             encCfg.Codec,
+		Codec:             encCfg.Marshaler,
 		TxConfig:          encCfg.TxConfig,
 		LegacyAmino:       encCfg.Amino,
 		InterfaceRegistry: encCfg.InterfaceRegistry,
@@ -305,10 +306,9 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 			appCfg.GRPCWeb.Enable = true
 		}
 
-		logger := server.ZeroLogWrapper{Logger: zerolog.Nop()}
+		logger := log.NewNopLogger()
 		if cfg.EnableTMLogging {
-			logWriter := zerolog.ConsoleWriter{Out: os.Stderr}
-			logger = server.ZeroLogWrapper{Logger: zerolog.New(logWriter).Level(zerolog.InfoLevel).With().Timestamp().Logger()}
+			logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 		}
 
 		ctx.Logger = logger

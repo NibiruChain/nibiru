@@ -22,7 +22,7 @@ func init() {
 }
 
 func setup() (*app.NibiruApp, sdk.Context) {
-	genState := app.NewDefaultGenesisState(app.MakeEncodingConfig().Codec)
+	genState := app.NewDefaultGenesisState(app.DefaultEncoding().Marshaler)
 	nibiru := testapp.NewNibiruTestApp(genState)
 	ctx := nibiru.NewContext(false, tmproto.Header{
 		Height:  1,

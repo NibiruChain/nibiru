@@ -54,7 +54,7 @@ func (s *TestSuiteOracleExecutor) SetupSuite() {
 	s.nibiru = *nibiru
 	s.ctx = ctx
 
-	wasmkeeper.NewMsgServerImpl(wasmkeeper.NewDefaultPermissionKeeper(nibiru.WasmKeeper))
+	wasmkeeper.NewMsgServerImpl(&nibiru.WasmKeeper)
 	s.contract = ContractMap[wasmbin.WasmKeyController]
 	s.exec = binding.ExecutorOracle{
 		Oracle: nibiru.OracleKeeper,

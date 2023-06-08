@@ -52,7 +52,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	stableGen := stabletypes.DefaultGenesis()
 	stableGen.Params.IsCollateralRatioValid = true
 	stableGen.ModuleAccountBalance = sdk.NewCoin(denoms.USDC, sdk.NewInt(10000*common.TO_MICRO))
-	genesisState[stabletypes.ModuleName] = encodingConfig.Codec.MustMarshalJSON(stableGen)
+	genesisState[stabletypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(stableGen)
 
 	oracleGenesis := oracletypes.DefaultGenesisState()
 	oracleGenesis.ExchangeRates = []oracletypes.ExchangeRateTuple{
@@ -61,7 +61,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	}
 	oracleGenesis.Params.VotePeriod = 1_000
 
-	genesisState[oracletypes.ModuleName] = encodingConfig.Codec.MustMarshalJSON(oracleGenesis)
+	genesisState[oracletypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(oracleGenesis)
 
 	homeDir := s.T().TempDir()
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
@@ -95,7 +95,7 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 
 	commonArgs := []string{
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(10))).String()),
 	}
 
@@ -172,7 +172,7 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 	defaultBondCoinsString := sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(10))).String()
 	commonArgs := []string{
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 		fmt.Sprintf("--%s=%s", flags.FlagFees, defaultBondCoinsString),
 	}
 

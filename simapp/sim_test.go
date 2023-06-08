@@ -60,14 +60,14 @@ func TestFullAppSimulation(tb *testing.T) {
 		/* app */ app.BaseApp,
 		/* appStateFn */ AppStateFn(app.AppCodec(), app.SimulationManager()),
 		/* randAccFn */ simulationtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
-		/* ops */ simapp.SimulationOperations(app, app.AppCodec(), config), // Run all registered operations
+		/* ops */ helpers.SimulationOperations(app, app.AppCodec(), config), // Run all registered operations
 		/* blockedAddrs */ app.ModuleAccountAddrs(),
 		/* config */ config,
 		/* cdc */ app.AppCodec(),
 	)
 
 	// export state and simParams before the simulation error is checked
-	if err = simapp.CheckExportSimulation(app, config, simParams); err != nil {
+	if err = helpers.CheckExportSimulation(app, config, simParams); err != nil {
 		tb.Fatal(err)
 	}
 
@@ -116,7 +116,7 @@ func TestAppStateDeterminism(t *testing.T) {
 				app.BaseApp,
 				AppStateFn(app.AppCodec(), app.SimulationManager()),
 				simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
-				simapp.SimulationOperations(app, app.AppCodec(), config),
+				helpers.SimulationOperations(app, app.AppCodec(), config),
 				app.ModuleAccountAddrs(),
 				config,
 				app.AppCodec(),
