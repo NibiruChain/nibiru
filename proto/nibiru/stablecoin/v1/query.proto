@@ -1,0 +1,108 @@
+syntax = "proto3";
+package nibiru.stablecoin.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "nibiru/stablecoin/v1/params.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/x/stablecoin/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // Parameters queries the parameters of the x/stablecoin module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/nibiru/stablecoin/v1/params";
+  }
+
+  // ModuleAccountBalances queries the account balance of x/stablecoin.
+  rpc ModuleAccountBalances(QueryModuleAccountBalances)
+      returns (QueryModuleAccountBalancesResponse) {
+    option (google.api.http).get = "/nibiru/stablecoin/module_account_balance";
+  }
+
+  rpc CirculatingSupplies(QueryCirculatingSupplies)
+      returns (QueryCirculatingSuppliesResponse) {
+    option (google.api.http).get = "/nibiru/stablecoin/circulating_supplies";
+  }
+
+  rpc LiquidityRatioInfo(QueryLiquidityRatioInfoRequest)
+      returns (QueryLiquidityRatioInfoResponse) {
+    option (google.api.http).get = "/nibiru/stablecoin/liquidity_ratio_info";
+  }
+}
+
+// ---------------------------------------- Params
+
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params holds all the parameters of this module.
+  Params params = 1 [ (gogoproto.nullable) = false ];
+}
+
+// ---------------------------------------- ModuleAccountBalances
+
+/* QueryModuleAccountBalances is the request type for the balance of the
+   x/stablecoin module account. */
+message QueryModuleAccountBalances {}
+
+message QueryModuleAccountBalancesResponse {
+  // ModuleAccountBalances is the balance of all coins in the x/stablecoin
+  // module.
+  repeated cosmos.base.v1beta1.Coin module_account_balances = 1 [
+    (gogoproto.moretags) = "yaml:\"coins\"",
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}
+
+// ---------------------------------------- CirculatingSupplies
+
+/* QueryCirculatingSupplies is the request type for the circulating supply of
+   both NIBI and NUSD. */
+message QueryCirculatingSupplies {}
+
+message QueryCirculatingSuppliesResponse {
+  cosmos.base.v1beta1.Coin nibi = 1 [ (gogoproto.nullable) = false ];
+  cosmos.base.v1beta1.Coin nusd = 2 [ (gogoproto.nullable) = false ];
+}
+
+// ---------------------------------------- GovToMintStable
+
+// QueryGovToMintStable is the request type for the Query/GovToMintStable RPC
+// method
+message QueryGovToMintStable {
+  cosmos.base.v1beta1.Coin collateral = 1 [ (gogoproto.nullable) = false ];
+}
+
+// QueryGovToMintStableResponse is the response type for 'QueryGovToMintStable'
+message QueryGovToMintStableResponse {
+  cosmos.base.v1beta1.Coin gov = 1 [ (gogoproto.nullable) = false ];
+}
+
+// ---------------------------------------- Liquidity Ratio Info
+
+message LiquidityRatioInfo {
+  string liquidity_ratio = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  string upper_band = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  string lower_band = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message QueryLiquidityRatioInfoRequest {}
+
+message QueryLiquidityRatioInfoResponse {
+  LiquidityRatioInfo info = 1 [ (gogoproto.nullable) = false ];
+}

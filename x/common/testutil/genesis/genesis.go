@@ -20,15 +20,15 @@ genesis as input. The blockchain genesis state is represented as a map from modu
 identifier strings to raw json messages.
 */
 func NewTestGenesisState() app.GenesisState {
-	encodingConfig := app.MakeEncodingConfig()
+	encodingConfig := app.DefaultEncoding()
 	codec := encodingConfig.Marshaler
 	genState := app.NewDefaultGenesisState(codec)
 
 	// Set short voting period to allow fast gov proposals in tests
 	var govGenState govtypes.GenesisState
 	codec.MustUnmarshalJSON(genState[gov.ModuleName], &govGenState)
-	*govGenState.VotingParams.VotingPeriod = time.Second * 20
-	govGenState.DepositParams.MinDeposit = sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 1_000_000)) // min deposit of 1 NIBI
+	*govGenState.Params.VotingPeriod = time.Second * 20
+	govGenState.Params.MinDeposit = sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 1_000_000)) // min deposit of 1 NIBI
 	genState[gov.ModuleName] = codec.MustMarshalJSON(&govGenState)
 
 	return genState

@@ -112,15 +112,18 @@ func GetStoreKeys() (
 		slashingtypes.StoreKey,
 		govtypes.StoreKey,
 		paramstypes.StoreKey,
+		consensusparamtypes.StoreKey,
 		upgradetypes.StoreKey,
 		feegrant.StoreKey,
 		evidencetypes.StoreKey,
 		capabilitytypes.StoreKey,
 		authzkeeper.StoreKey,
+		crisistypes.StoreKey,
 
 		// ibc keys
 		ibctransfertypes.StoreKey,
 		ibcfeetypes.StoreKey,
+		ibcexported.StoreKey,
 
 		// nibiru x/ keys
 		spottypes.StoreKey,
@@ -211,14 +214,6 @@ func (app *NibiruApp) InitKeepers(
 		authtypes.FeeCollectorName,
 		"",
 	)
-	app.slashingKeeper = slashingkeeper.NewKeeper(
-		appCodec,
-		legacyAmino,
-		keys[slashingtypes.StoreKey],
-		app.stakingKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
-
 	invCheckPeriod := app.invCheckPeriod
 	app.crisisKeeper = *crisiskeeper.NewKeeper(
 		appCodec,
@@ -243,7 +238,7 @@ func (app *NibiruApp) InitKeepers(
 
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
-	app.stakingKeeper = *stakingkeeper.NewKeeper(
+	app.stakingKeeper = stakingkeeper.NewKeeper(
 		appCodec,
 		keys[stakingtypes.StoreKey],
 		app.AccountKeeper,
@@ -252,6 +247,14 @@ func (app *NibiruApp) InitKeepers(
 	)
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
+	app.slashingKeeper = slashingkeeper.NewKeeper(
+		appCodec,
+		legacyAmino,
+		keys[slashingtypes.StoreKey],
+		app.stakingKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
 	app.stakingKeeper.SetHooks(
 		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.slashingKeeper.Hooks()),
 	)
@@ -370,7 +373,7 @@ func (app *NibiruApp) InitKeepers(
 	// Create evidence keeper.
 	// This keeper automatically includes an evidence router.
 	app.evidenceKeeper = *evidencekeeper.NewKeeper(
-		appCodec, keys[evidencetypes.StoreKey], &app.stakingKeeper,
+		appCodec, keys[evidencetypes.StoreKey], app.stakingKeeper,
 		app.slashingKeeper,
 	)
 
@@ -477,7 +480,7 @@ func (app *NibiruApp) AppModules(
 		appCodec, app.PerpKeeperV2, app.AccountKeeper, app.BankKeeper, app.OracleKeeper,
 	)
 	inflationModule := inflation.NewAppModule(
-		app.InflationKeeper, app.AccountKeeper, app.stakingKeeper,
+		app.InflationKeeper, app.AccountKeeper, *app.stakingKeeper,
 	)
 	sudoModule := sudo.NewAppModule(appCodec, app.SudoKeeper)
 
@@ -495,7 +498,7 @@ func (app *NibiruApp) AppModules(
 		// TODO dont we have mint module?
 		slashing.NewAppModule(appCodec, app.slashingKeeper, app.AccountKeeper, app.BankKeeper, app.stakingKeeper, app.GetSubspace(slashingtypes.ModuleName)),
 		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.stakingKeeper, app.GetSubspace(distrtypes.ModuleName)),
-		staking.NewAppModule(appCodec, &app.stakingKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName)),
+		staking.NewAppModule(appCodec, app.stakingKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName)),
 		upgrade.NewAppModule(&app.upgradeKeeper),
 		params.NewAppModule(app.paramsKeeper),
 		authzmodule.NewAppModule(appCodec, app.authzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
@@ -571,6 +574,7 @@ func OrderedModuleNames() []string {
 		// --------------------------------------------------------------------
 		// IBC modules
 		ibctransfertypes.ModuleName,
+		ibcexported.ModuleName,
 		ibcfeetypes.ModuleName,
 
 		// --------------------------------------------------------------------

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/client/grpc/node"
+	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 	"io"
 	"net/http"
 	"os"
@@ -253,7 +254,7 @@ type NibiruApp struct {
 	// BankKeeper defines a module interface that facilitates the transfer of coins between accounts
 	BankKeeper       bankkeeper.Keeper
 	capabilityKeeper *capabilitykeeper.Keeper
-	stakingKeeper    stakingkeeper.Keeper
+	stakingKeeper    *stakingkeeper.Keeper
 	slashingKeeper   slashingkeeper.Keeper
 	/* DistrKeeper is the keeper of the distribution store */
 	DistrKeeper           distrkeeper.Keeper
@@ -651,6 +652,7 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(inflationtypes.ModuleName)
 	// ibc params keepers
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
+	paramsKeeper.Subspace(ibcexported.ModuleName)
 	paramsKeeper.Subspace(ibcfeetypes.ModuleName)
 	// wasm params keepers
 	paramsKeeper.Subspace(wasm.ModuleName)

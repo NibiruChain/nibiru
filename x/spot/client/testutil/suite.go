@@ -101,7 +101,17 @@ func (s *IntegrationTestSuite) TestCreatePoolCmd_Errors() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			out, err := ExecMsgCreatePool(s.T(), val.ClientCtx, val.Address, tc.tokenWeights, tc.initialDeposit, "0.003", "0.003", "balancer", "0")
+			out, err := ExecMsgCreatePool(
+				s.T(),
+				val.ClientCtx,
+				val.Address,
+				tc.tokenWeights,
+				tc.initialDeposit,
+				"0.003",
+				"0.003",
+				"balancer",
+				"0",
+			)
 			if tc.expectedErr != nil {
 				s.Require().ErrorIs(err, tc.expectedErr)
 			} else {
@@ -855,7 +865,7 @@ func (s *IntegrationTestSuite) FundAccount(recipient sdk.Address, tokens sdk.Coi
 		/*amount=*/ tokens,
 		/*extraArgs*/
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewInt64Coin(s.cfg.BondDenom, 10)),
 	)
 	s.Require().NoError(err)

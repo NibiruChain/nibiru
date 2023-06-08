@@ -27,7 +27,7 @@ import (
 // commonArgs is args for CLI test commands.
 var commonArgs = []string{
 	fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-	fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+	fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 	fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(100))).String()),
 }
 
@@ -78,7 +78,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			TotalShort:      sdk.ZeroDec(),
 		},
 	}
-	genesisState[perpv2types.ModuleName] = encodingConfig.Codec.MustMarshalJSON(perpv2Gen)
+	genesisState[perpv2types.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(perpv2Gen)
 
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
 	network, err := testutilcli.New(s.T(), s.T().TempDir(), s.cfg)
