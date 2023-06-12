@@ -6,6 +6,7 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil/sims"
 	"github.com/cosmos/cosmos-sdk/types/module/testutil"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"testing"
 
 	"time"
@@ -176,7 +177,13 @@ func CreateTestFixture(t *testing.T) TestFixture {
 		sdk.GetConfig().GetBech32AccountAddrPrefix(),
 		"",
 	)
-	bankKeeper := bankkeeper.NewBaseKeeper(appCodec, keyBank, accountKeeper, blackListAddrs, "")
+	bankKeeper := bankkeeper.NewBaseKeeper(
+		appCodec,
+		keyBank,
+		accountKeeper,
+		blackListAddrs,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
 
 	totalSupply := sdk.NewCoins(sdk.NewCoin(denoms.NIBI, InitTokens.MulRaw(int64(len(Addrs)*10))))
 	bankKeeper.MintCoins(ctx, faucetAccountName, totalSupply)

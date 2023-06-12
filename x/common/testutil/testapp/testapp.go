@@ -2,13 +2,11 @@ package testapp
 
 import (
 	"encoding/json"
-	"github.com/cosmos/cosmos-sdk/testutil/sims"
-	"os"
-
 	tmdb "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	"github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 
@@ -46,16 +44,12 @@ func NewNibiruTestApp(gen app.GenesisState) *app.NibiruApp {
 	logger := log.NewNopLogger()
 
 	encoding := app.MakeEncodingConfig()
-
 	app := app.NewNibiruApp(
 		logger,
 		db,
 		/*traceStore=*/ nil,
 		/*loadLatest=*/ true,
-		/*skipUpgradeHeights=*/ map[int64]bool{},
-		/*homePath=*/ os.TempDir(),
-		/*invCheckPeriod=*/ 0,
-		/*encodingConfig=*/ encoding,
+		encoding,
 		/*appOpts=*/ sims.EmptyAppOptions{},
 	)
 

@@ -2,7 +2,9 @@ package app
 
 import (
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/server"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -67,6 +69,7 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 	ibcmock "github.com/cosmos/ibc-go/v7/testing/mock"
+	"github.com/spf13/cast"
 	"path/filepath"
 
 	"github.com/NibiruChain/nibiru/x/epochs"
@@ -141,8 +144,6 @@ func GetStoreKeys() (
 }
 
 func (app *NibiruApp) InitKeepers(
-	skipUpgradeHeights map[int64]bool,
-	homePath string,
 	appOpts servertypes.AppOptions,
 ) (wasmConfig wasmtypes.WasmConfig) {
 	var appCodec = app.appCodec
@@ -189,7 +190,7 @@ func (app *NibiruApp) InitKeepers(
 		authtypes.ProtoBaseAccount,
 		maccPerms,
 		sdk.GetConfig().GetBech32AccountAddrPrefix(),
-		"",
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	app.BankKeeper = bankkeeper.NewBaseKeeper(
 		appCodec,
@@ -212,9 +213,10 @@ func (app *NibiruApp) InitKeepers(
 		app.BankKeeper,
 		stakingKeeper,
 		authtypes.FeeCollectorName,
-		"",
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-	invCheckPeriod := app.invCheckPeriod
+
+	invCheckPeriod := cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod))
 	app.crisisKeeper = *crisiskeeper.NewKeeper(
 		appCodec,
 		keys[crisistypes.StoreKey],
@@ -225,6 +227,13 @@ func (app *NibiruApp) InitKeepers(
 	)
 
 	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(appCodec, keys[feegrant.StoreKey], app.AccountKeeper)
+
+	// get skipUpgradeHeights from the app options
+	skipUpgradeHeights := map[int64]bool{}
+	for _, h := range cast.ToIntSlice(appOpts.Get(server.FlagUnsafeSkipUpgrades)) {
+		skipUpgradeHeights[int64(h)] = true
+	}
+	homePath := cast.ToString(appOpts.Get(flags.FlagHome))
 
 	/*upgradeKeeper must be created before ibcKeeper. */
 	app.upgradeKeeper = *upgradekeeper.NewKeeper(

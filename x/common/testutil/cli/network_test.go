@@ -34,10 +34,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.T().Log("setting up integration test suite")
 
+	encConfig := app.MakeEncodingConfig()
+
 	network, err := cli.New(
 		s.T(),
 		s.T().TempDir(),
-		cli.BuildNetworkConfig(genesis.NewTestGenesisState(app.MakeEncodingConfig())),
+		cli.BuildNetworkConfig(genesis.NewTestGenesisState(encConfig)),
 	)
 	s.Require().NoError(err)
 	s.network = network

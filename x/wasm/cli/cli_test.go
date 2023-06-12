@@ -28,7 +28,7 @@ import (
 var commonArgs = []string{
 	fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 	fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
-	fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(100))).String()),
+	fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(10000000))).String()),
 }
 
 type IntegrationTestSuite struct {
@@ -111,8 +111,8 @@ func (s *IntegrationTestSuite) deployWasmContract(path string) (uint64, error) {
 	codec := val.ClientCtx.Codec
 
 	args := []string{
-		"--from", val.Address.String(),
 		path,
+		"--from", val.Address.String(),
 		"--gas", "11000000",
 	}
 	args = append(args, commonArgs...)

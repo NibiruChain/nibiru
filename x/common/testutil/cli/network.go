@@ -168,14 +168,18 @@ func NewCLILogger(cmd *cobra.Command) CLILogger {
 }
 
 // NewAppConstructor returns a new simapp AppConstructor
-func NewAppConstructor(encodingCfg app.EncodingConfig) AppConstructor {
+func NewAppConstructor(encodingCfg app.EncodingConfig, chainID string) AppConstructor {
 	return func(val Validator) servertypes.Application {
 		return app.NewNibiruApp(
-			val.Ctx.Logger, dbm.NewMemDB(), nil, true, make(map[int64]bool), val.Ctx.Config.RootDir, 0,
+			val.Ctx.Logger,
+			dbm.NewMemDB(),
+			nil,
+			true,
 			encodingCfg,
 			sims.EmptyAppOptions{},
 			baseapp.SetPruning(types.NewPruningOptionsFromString(val.AppConfig.Pruning)),
 			baseapp.SetMinGasPrices(val.AppConfig.MinGasPrices),
+			baseapp.SetChainID(chainID),
 		)
 	}
 }
@@ -184,16 +188,17 @@ func NewAppConstructor(encodingCfg app.EncodingConfig) AppConstructor {
 func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 	encCfg := app.MakeEncodingConfig()
 
+	chainID := "chain-" + tmrand.NewRand().Str(6)
 	return Config{
 		Codec:             encCfg.Marshaler,
 		TxConfig:          encCfg.TxConfig,
 		LegacyAmino:       encCfg.Amino,
 		InterfaceRegistry: encCfg.InterfaceRegistry,
 		AccountRetriever:  authtypes.AccountRetriever{},
-		AppConstructor:    NewAppConstructor(encCfg),
+		AppConstructor:    NewAppConstructor(encCfg, chainID),
 		GenesisState:      appGenesis,
 		TimeoutCommit:     time.Second / 2,
-		ChainID:           "chain-" + tmrand.NewRand().Str(6),
+		ChainID:           chainID,
 		NumValidators:     1,
 		BondDenom:         denoms.NIBI,
 		MinGasPrices:      fmt.Sprintf("0.000006%s", denoms.NIBI),

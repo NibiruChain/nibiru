@@ -33,7 +33,8 @@ TEMPDIR ?= $(CURDIR)/temp
 export GO111MODULE = on
 
 # process build tags
-build_tags = netgo osusergo rocksdb grocksdb_no_link
+#build_tags = netgo osusergo rocksdb grocksdb_no_link
+build_tags = netgo osusergo
 build_tags += $(BUILD_TAGS)
 build_tags := $(strip $(build_tags))
 
@@ -49,15 +50,15 @@ ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=nibiru \
 		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
 		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)" \
 		  -X github.com/tendermint/tendermint/version.TMCoreSemVer=$(TM_VERSION) \
-		  -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb \
 		  -w -s
+		 # -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb \
 
 ldflags += $(LDFLAGS)
 ldflags := $(strip $(ldflags))
 
 BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
 CGO_CFLAGS  := -I$(TEMPDIR)/include
-CGO_LDFLAGS := -L$(TEMPDIR)/lib -lrocksdb
+#CGO_LDFLAGS := -L$(TEMPDIR)/lib -lrocksdb
 ifeq ($(OS_NAME),darwin)
 	CGO_LDFLAGS += -lz -lbz2
 endif
