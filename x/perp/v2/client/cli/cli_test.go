@@ -48,7 +48,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	// setup market
 	encodingConfig := app.MakeEncodingConfig()
-	genState := genesis.NewTestGenesisState()
+	genState := genesis.NewTestGenesisState(encodingConfig)
 	genState = genesis.AddPerpV2Genesis(genState)
 	genState = genesis.AddOracleGenesis(genState)
 
@@ -66,7 +66,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		{Pair: asset.Registry.Pair(denoms.ATOM, denoms.NUSD), ExchangeRate: sdk.NewDec(6_000)},
 		{Pair: asset.Registry.Pair(denoms.OSMO, denoms.NUSD), ExchangeRate: sdk.NewDec(6_000)},
 	}
-	genState[oracletypes.ModuleName] = encodingConfig.Codec.MustMarshalJSON(oracleGenesis)
+	genState[oracletypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(oracleGenesis)
 
 	s.cfg = testutilcli.BuildNetworkConfig(genState)
 	s.cfg.NumValidators = 1

@@ -3,11 +3,10 @@ package cmd_test
 import (
 	"context"
 	"fmt"
+	"github.com/NibiruChain/nibiru/app"
 	"testing"
 
 	"github.com/NibiruChain/nibiru/x/common/testutil"
-	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -40,7 +39,7 @@ func TestAddGenesisAccountCmd(t *testing.T) {
 			cfg, err := genutiltest.CreateDefaultTendermintConfig(home)
 			require.NoError(t, err)
 
-			appCodec := moduletestutil.MakeTestEncodingConfig().Codec
+			appCodec := app.MakeEncodingConfig().Marshaler
 			err = genutiltest.ExecInitCmd(
 				testModuleBasicManager, home, appCodec)
 			require.NoError(t, err)

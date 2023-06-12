@@ -2,6 +2,7 @@
 package cli_test
 
 import (
+	"github.com/NibiruChain/nibiru/app"
 	"testing"
 	"time"
 
@@ -36,7 +37,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	network, err := cli.New(
 		s.T(),
 		s.T().TempDir(),
-		cli.BuildNetworkConfig(genesis.NewTestGenesisState()),
+		cli.BuildNetworkConfig(genesis.NewTestGenesisState(app.MakeEncodingConfig())),
 	)
 	s.Require().NoError(err)
 	s.network = network

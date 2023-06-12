@@ -19,8 +19,7 @@ import (
 genesis as input. The blockchain genesis state is represented as a map from module
 identifier strings to raw json messages.
 */
-func NewTestGenesisState() app.GenesisState {
-	encodingConfig := app.DefaultEncoding()
+func NewTestGenesisState(encodingConfig app.EncodingConfig) app.GenesisState {
 	codec := encodingConfig.Marshaler
 	genState := app.NewDefaultGenesisState(codec)
 

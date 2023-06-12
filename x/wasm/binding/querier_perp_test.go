@@ -72,7 +72,7 @@ type TestSuitePerpQuerier struct {
 }
 
 func SetupPerpGenesis() app.GenesisState {
-	genesisState := genesis.NewTestGenesisState()
+	genesisState := genesis.NewTestGenesisState(app.MakeEncodingConfig())
 	genesisState = genesis.AddOracleGenesis(genesisState)
 	genesisState = genesis.AddPerpV2Genesis(genesisState)
 	return genesisState

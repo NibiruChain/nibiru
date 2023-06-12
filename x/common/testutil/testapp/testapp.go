@@ -21,7 +21,7 @@ import (
 // NewNibiruTestAppAndContext creates an 'app.NibiruApp' instance with an in-memory
 // 'tmdb.MemDB' and fresh 'sdk.Context'.
 func NewNibiruTestAppAndContext(shouldUseDefaultGenesis bool) (*app.NibiruApp, sdk.Context) {
-	encoding := app.DefaultEncoding()
+	encoding := app.MakeEncodingConfig()
 	var appGenesis app.GenesisState
 	if shouldUseDefaultGenesis {
 		appGenesis = app.NewDefaultGenesisState(encoding.Marshaler)
