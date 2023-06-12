@@ -4,8 +4,10 @@ package keeper
 
 import (
 	"fmt"
-	spottypes "github.com/NibiruChain/nibiru/x/spot/types"
+
 	"github.com/cosmos/cosmos-sdk/store/prefix"
+
+	spottypes "github.com/NibiruChain/nibiru/x/spot/types"
 
 	sdkmath "cosmossdk.io/math"
 

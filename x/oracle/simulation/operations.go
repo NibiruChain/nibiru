@@ -3,10 +3,11 @@ package simulation
 //DONTCOVER
 
 import (
-	"github.com/CosmWasm/wasmd/app/params"
-	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"math/rand"
 	"strings"
+
+	"github.com/CosmWasm/wasmd/app/params"
+	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"

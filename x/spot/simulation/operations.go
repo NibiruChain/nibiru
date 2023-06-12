@@ -2,10 +2,11 @@ package simulation
 
 import (
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"math/rand"
 	"strings"
 	"time"
+
+	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 
 	sdkmath "cosmossdk.io/math"
 

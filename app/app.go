@@ -3,13 +3,14 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/client/grpc/node"
-	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/cosmos/cosmos-sdk/client/grpc/node"
+	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
 	"github.com/cosmos/cosmos-sdk/runtime"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
@@ -349,7 +350,6 @@ func NewNibiruApp(
 	appOpts servertypes.AppOptions,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *NibiruApp {
-
 	appCodec := encodingConfig.Marshaler
 	legacyAmino := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry

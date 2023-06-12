@@ -3,8 +3,9 @@ package cli_test
 import (
 	"context"
 	"fmt"
-	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"testing"
+
+	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/client"

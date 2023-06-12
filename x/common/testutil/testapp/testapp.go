@@ -2,6 +2,7 @@ package testapp
 
 import (
 	"encoding/json"
+
 	tmdb "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"

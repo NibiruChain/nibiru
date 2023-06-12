@@ -3,10 +3,11 @@ package simapp
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/cosmos/ibc-go/v7/testing/simapp"
 	"math/rand"
 	"os"
 	"testing"
+
+	"github.com/cosmos/ibc-go/v7/testing/simapp"
 
 	dbm "github.com/cometbft/cometbft-db"
 	helpers "github.com/cosmos/cosmos-sdk/testutil/sims"

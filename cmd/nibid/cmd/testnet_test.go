@@ -3,8 +3,9 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/NibiruChain/nibiru/app"
 	"testing"
+
+	"github.com/NibiruChain/nibiru/app"
 
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/client"

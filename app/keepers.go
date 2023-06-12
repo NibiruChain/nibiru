@@ -1,6 +1,8 @@
 package app
 
 import (
+	"path/filepath"
+
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -70,7 +72,6 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 	ibcmock "github.com/cosmos/ibc-go/v7/testing/mock"
 	"github.com/spf13/cast"
-	"path/filepath"
 
 	"github.com/NibiruChain/nibiru/x/epochs"
 	epochskeeper "github.com/NibiruChain/nibiru/x/epochs/keeper"

@@ -3,10 +3,10 @@ package cmd_test
 import (
 	"context"
 	"fmt"
-	"github.com/NibiruChain/nibiru/app"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/app"
+
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -16,6 +16,8 @@ import (
 	genutiltest "github.com/cosmos/cosmos-sdk/x/genutil/client/testutil"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 
 	nibid "github.com/NibiruChain/nibiru/cmd/nibid/cmd"
 )

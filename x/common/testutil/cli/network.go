@@ -6,9 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/cometbft/cometbft/libs/log"
-	"github.com/cosmos/cosmos-sdk/store/pruning/types"
-	"github.com/cosmos/cosmos-sdk/testutil/sims"
 	"net/http"
 	"net/url"
 	"os"
@@ -17,6 +14,10 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/cometbft/cometbft/libs/log"
+	"github.com/cosmos/cosmos-sdk/store/pruning/types"
+	"github.com/cosmos/cosmos-sdk/testutil/sims"
 
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"

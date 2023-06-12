@@ -2,6 +2,9 @@ package cmd
 
 import (
 	"errors"
+	"io"
+	"os"
+
 	dbm "github.com/cometbft/cometbft-db"
 	tmcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/cometbft/cometbft/libs/log"
@@ -21,8 +24,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	"github.com/spf13/cobra"
-	"io"
-	"os"
 
 	"github.com/NibiruChain/nibiru/app"
 	perpv2cli "github.com/NibiruChain/nibiru/x/perp/v2/client/cli"

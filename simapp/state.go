@@ -2,11 +2,12 @@ package simapp
 
 import (
 	"encoding/json"
-	"github.com/cosmos/cosmos-sdk/testutil/sims"
 	"log"
 	"math/rand"
 	"os"
 	"time"
+
+	"github.com/cosmos/cosmos-sdk/testutil/sims"
 
 	"cosmossdk.io/math"
 

@@ -2,9 +2,10 @@
 package cli_test
 
 import (
-	"github.com/NibiruChain/nibiru/app"
 	"testing"
 	"time"
+
+	"github.com/NibiruChain/nibiru/app"
 
 	"github.com/stretchr/testify/suite"
 
