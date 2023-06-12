@@ -154,6 +154,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1405](https://github.com/NibiruChain/nibiru/pull/1405) - ci: use Buf to build protos
 * [#1406](https://github.com/NibiruChain/nibiru/pull/1406) - feat(perp): emit additional event info
 * [#1419](https://github.com/NibiruChain/nibiru/pull/1419) - fix(spot): add pools to genesis state
+* [#1408](https://github.com/NibiruChain/nibiru/pull/1408) - feat(spot): idempotent events
+* [#1420](https://github.com/NibiruChain/nibiru/pull/1420) - refactor(oracle): update default params
 
 ### Bug Fixes
 
@@ -162,6 +164,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1379](https://github.com/NibiruChain/nibiru/pull/1379) - feat(perp): check for denom in add/remove margin
 * [#1383](https://github.com/NibiruChain/nibiru/pull/1383) - feat: enforce contract to be whitelisted when calling perp bindings
 * [#1397](https://github.com/NibiruChain/nibiru/pull/1397) - fix: ensure margin is high enough when removing it
+* [#1417](https://github.com/NibiruChain/nibiru/pull/1417) - fix: run end blocker on block end for perp v2
 
 ## [v0.19.2](https://github.com/NibiruChain/nibiru/releases/tag/v0.19.2) - 2023-02-24
 
