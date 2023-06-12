@@ -35,7 +35,8 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64) 
 	if epochIdentifier == types.WeekEpochID {
 		params, err := h.k.Params.Get(ctx)
 		if err != nil {
-			panic(err)
+			h.k.Logger(ctx).Error("failed to get params", "error", err)
+			return
 		}
 
 		account := h.accountKeeper.GetModuleAccount(ctx, perptypes.FeePoolModuleAccount)
@@ -51,7 +52,7 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64) 
 
 		err = h.bankKeeper.SendCoinsFromModuleToModule(ctx, perptypes.FeePoolModuleAccount, perptypes.PerpEFModuleAccount, totalRest)
 		if err != nil {
-			panic(err)
+			h.k.Logger(ctx).Error("failed to send coins from module to module", "error", err)
 		}
 
 		err = h.k.AllocateRewards(
@@ -61,7 +62,7 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64) 
 			1,
 		)
 		if err != nil {
-			panic(err)
+			h.k.Logger(ctx).Error("failed to allocate rewards", "error", err)
 		}
 	}
 }

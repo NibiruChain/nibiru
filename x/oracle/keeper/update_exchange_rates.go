@@ -88,7 +88,7 @@ func (k Keeper) resetExchangeRates(ctx sdk.Context) {
 	for _, key := range k.ExchangeRates.Iterate(ctx, collections.Range[asset.Pair]{}).Keys() {
 		err := k.ExchangeRates.Delete(ctx, key)
 		if err != nil {
-			panic(err)
+			k.Logger(ctx).Error("failed to delete exchange rate", "key", key, "error", err)
 		}
 	}
 }
