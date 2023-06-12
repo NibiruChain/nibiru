@@ -107,11 +107,11 @@ func (k Keeper) SwapExactAmountIn(
 	}
 
 	err = ctx.EventManager().EmitTypedEvent(&types.EventAssetsSwapped{
-		Address:  sender.String(),
-		PoolId:   poolId,
-		TokenIn:  tokenIn,
-		TokenOut: tokenOut,
-		Fee:      fee,
+		Address:   sender.String(),
+		TokenIn:   tokenIn,
+		TokenOut:  tokenOut,
+		Fee:       fee,
+		FinalPool: pool,
 	})
 	if err != nil {
 		return tokenOut, err
