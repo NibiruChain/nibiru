@@ -26,6 +26,7 @@ func TestOracleTallyTiming(t *testing.T) {
 	require.NoError(t, err)
 
 	params.VotePeriod = 10 // set vote period to 10 for now, for convenience
+	params.ExpirationBlocks = 100
 	input.OracleKeeper.Params.Set(input.Ctx, params)
 	require.Equal(t, 1, int(input.Ctx.BlockHeight()))
 
