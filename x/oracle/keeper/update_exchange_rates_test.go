@@ -65,7 +65,7 @@ func TestOracleThreshold(t *testing.T) {
 	fixture.OracleKeeper.UpdateExchangeRates(fixture.Ctx)
 	rate, err := fixture.OracleKeeper.ExchangeRates.Get(fixture.Ctx, exchangeRates[0].Pair)
 	require.NoError(t, err)
-	assert.Equal(t, randomExchangeRate, rate)
+	assert.Equal(t, randomExchangeRate, rate.ExchangeRate)
 
 	// Case 3.
 	// Increase voting power of absent validator, exchange rate consensus fails
