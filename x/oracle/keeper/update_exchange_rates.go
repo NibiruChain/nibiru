@@ -94,7 +94,7 @@ func (k Keeper) resetExchangeRates(ctx sdk.Context, pairBallotsMap map[asset.Pai
 
 		_, validBallot := pairBallotsMap[key]
 		exchangeRate, _ := k.ExchangeRates.Get(ctx, key)
-		isExpired := exchangeRate.BlockSet+expirationBlocks < uint64(ctx.BlockHeight())
+		isExpired := exchangeRate.BlockSet+expirationBlocks <= uint64(ctx.BlockHeight())
 
 		if validBallot || isExpired {
 			err := k.ExchangeRates.Delete(ctx, key)
