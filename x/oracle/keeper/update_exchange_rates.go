@@ -15,12 +15,13 @@ import (
 // UpdateExchangeRates updates the ExchangeRates, this is supposed to be executed on EndBlock.
 func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 	k.Logger(ctx).Info("processing validator price votes")
-	k.resetExchangeRates(ctx)
 
 	validatorPerformances := k.newValidatorPerformances(ctx)
 	pairBallotsMap, whitelistedPairs := k.getPairBallotsMapAndWhitelistedPairs(ctx, validatorPerformances)
 
+	k.resetExchangeRates(ctx, pairBallotsMap)
 	k.countVotesAndUpdateExchangeRates(ctx, pairBallotsMap, validatorPerformances)
+
 	k.registerMissedVotes(ctx, whitelistedPairs, validatorPerformances)
 	k.rewardBallotWinners(ctx, validatorPerformances)
 
@@ -84,11 +85,22 @@ func (k Keeper) getPairBallotsMapAndWhitelistedPairs(
 }
 
 // resetExchangeRates removes all exchange rates from the state
-func (k Keeper) resetExchangeRates(ctx sdk.Context) {
+// We remove the price for pair with expired prices or valid ballots
+func (k Keeper) resetExchangeRates(ctx sdk.Context, pairBallotsMap map[asset.Pair]types.ExchangeRateBallots) {
+	params, _ := k.Params.Get(ctx)
+	expirationBlocks := params.ExpirationBlocks
+
 	for _, key := range k.ExchangeRates.Iterate(ctx, collections.Range[asset.Pair]{}).Keys() {
-		err := k.ExchangeRates.Delete(ctx, key)
-		if err != nil {
-			panic(err)
+
+		_, validBallot := pairBallotsMap[key]
+		exchangeRate, _ := k.ExchangeRates.Get(ctx, key)
+		isExpired := exchangeRate.BlockSet+expirationBlocks < uint64(ctx.BlockHeight())
+
+		if validBallot || isExpired {
+			err := k.ExchangeRates.Delete(ctx, key)
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
 }
