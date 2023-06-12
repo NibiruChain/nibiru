@@ -77,6 +77,12 @@ func (k Keeper) CalcTwap(
 	cumulativePeriodMs := int64(0)
 
 	for _, snapshot := range snapshots {
+		if snapshot.TimestampMs == prevTimestampMs {
+			// in some extreme cases, 2 reserves snapshots can have the same timestamp which would cause a divide by zero error
+			// in this case, we skip the second snapshot
+			continue
+		}
+
 		price, err := getPriceWithSnapshot(
 			snapshot,
 			snapshotPriceOps{
@@ -104,6 +110,18 @@ func (k Keeper) CalcTwap(
 			break
 		}
 		prevTimestampMs = snapshot.TimestampMs
+	}
+
+	if cumulativePeriodMs == 0 {
+		// Can be reached if 2 snapshot timestamps are the same and are also the lower limit timestamp
+		return getPriceWithSnapshot(
+			snapshots[0],
+			snapshotPriceOps{
+				twapCalcOption: twapCalcOption,
+				direction:      direction,
+				assetAmt:       assetAmt,
+			},
+		)
 	}
 
 	return cumulativePrice.QuoInt64(cumulativePeriodMs), nil
