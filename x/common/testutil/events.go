@@ -1,11 +1,11 @@
 package testutil
 
 import (
+	"github.com/cosmos/gogoproto/proto"
 	"reflect"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/require"
 )
 
@@ -39,7 +39,8 @@ func RequireHasTypedEvent(t require.TestingT, ctx sdk.Context, event proto.Messa
 func RequireContainsTypedEvent(t require.TestingT, ctx sdk.Context, event proto.Message) {
 	foundEvents := []proto.Message{}
 	for _, abciEvent := range ctx.EventManager().Events() {
-		if abciEvent.Type != proto.MessageName(event) {
+		eventName := proto.MessageName(event)
+		if abciEvent.Type != eventName {
 			continue
 		}
 		typedEvent, err := sdk.ParseTypedEvent(abci.Event{

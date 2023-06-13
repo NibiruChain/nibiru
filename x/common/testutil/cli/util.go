@@ -231,7 +231,7 @@ func FillWalletFromValidator(
 		balance,
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
-		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewInt64Coin(feesDenom, 10)),
+		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewInt64Coin(feesDenom, 10000)),
 	)
 	if err != nil {
 		return err

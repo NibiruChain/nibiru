@@ -175,7 +175,7 @@ func CreateTestFixture(t *testing.T) TestFixture {
 		authtypes.ProtoBaseAccount,
 		maccPerms,
 		sdk.GetConfig().GetBech32AccountAddrPrefix(),
-		"",
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	bankKeeper := bankkeeper.NewBaseKeeper(
 		appCodec,
@@ -193,7 +193,7 @@ func CreateTestFixture(t *testing.T) TestFixture {
 		keyStaking,
 		accountKeeper,
 		bankKeeper,
-		"",
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	stakingParams := stakingtypes.DefaultParams()
@@ -204,7 +204,8 @@ func CreateTestFixture(t *testing.T) TestFixture {
 		appCodec,
 		keyDistr,
 		accountKeeper, bankKeeper, stakingKeeper,
-		authtypes.FeeCollectorName, "",
+		authtypes.FeeCollectorName,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	distrKeeper.SetFeePool(ctx, distrtypes.InitialFeePool())
@@ -300,7 +301,6 @@ func Setup(t *testing.T) (TestFixture, types.MsgServer) {
 	params, _ = fixture.OracleKeeper.Params.Get(fixture.Ctx)
 
 	h := NewMsgServerImpl(fixture.OracleKeeper)
-
 	sh := stakingkeeper.NewMsgServerImpl(&fixture.StakingKeeper)
 
 	// Validator created

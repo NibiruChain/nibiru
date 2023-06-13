@@ -86,7 +86,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	for i := 0; i < 8; i++ {
 		newUser := testutilcli.NewAccount(s.network, fmt.Sprintf("user%d", i))
 		s.users = append(s.users, newUser)
-		s.NoError(
+		s.Require().NoError(
 			testutilcli.FillWalletFromValidator(newUser,
 				sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 10e6),
@@ -97,6 +97,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 				denoms.NIBI,
 			),
 		)
+		s.NoError(s.network.WaitForNextBlock())
 	}
 
 	s.liquidator = sdk.MustAccAddressFromBech32("nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m")
