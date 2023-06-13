@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
@@ -22,20 +23,33 @@ func TestHooks_AfterEpochEnd(t *testing.T) {
 		expectedEFBalances     sdk.Coins
 	}{
 		{
-			"happy path",
-			sdk.NewCoins(
+			name: "happy path",
+			initialFunds: sdk.NewCoins(
 				sdk.NewCoin("coin1", sdk.NewInt(1000000000000000000)),
 				sdk.NewCoin("coin2", sdk.NewInt(1000000000000000000)),
 			),
-			types.WeekEpochID,
-			sdk.NewCoins(
+			epochIdentifier: types.WeekEpochID,
+			expectedOracleBalances: sdk.NewCoins(
 				sdk.NewCoin("coin1", sdk.NewInt(50000000000000000)),
 				sdk.NewCoin("coin2", sdk.NewInt(50000000000000000)),
 			),
-			sdk.NewCoins(
+			expectedEFBalances: sdk.NewCoins(
 				sdk.NewCoin("coin1", sdk.NewInt(950000000000000000)),
 				sdk.NewCoin("coin2", sdk.NewInt(950000000000000000)),
 			),
+		},
+		{
+			name: "zero oracle fees",
+			initialFunds: sdk.Coins{
+				sdk.NewCoin("coin1", sdk.OneInt()),
+				sdk.NewCoin("coin2", sdk.OneInt()),
+			},
+			epochIdentifier:        types.WeekEpochID,
+			expectedOracleBalances: sdk.Coins{},
+			expectedEFBalances: sdk.Coins{
+				sdk.NewCoin("coin1", sdk.OneInt()),
+				sdk.NewCoin("coin2", sdk.OneInt()),
+			},
 		},
 	}
 
@@ -53,11 +67,11 @@ func TestHooks_AfterEpochEnd(t *testing.T) {
 
 			account := app.AccountKeeper.GetModuleAccount(ctx, oracletypes.ModuleName)
 			balances := app.BankKeeper.GetAllBalances(ctx, account.GetAddress())
-			require.True(t, tt.expectedOracleBalances.IsEqual(balances))
+			assert.Equal(t, tt.expectedOracleBalances, balances)
 
 			account = app.AccountKeeper.GetModuleAccount(ctx, perptypes.PerpEFModuleAccount)
 			balances = app.BankKeeper.GetAllBalances(ctx, account.GetAddress())
-			require.True(t, tt.expectedEFBalances.IsEqual(balances))
+			assert.Equal(t, tt.expectedEFBalances, balances)
 		})
 	}
 }
