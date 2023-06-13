@@ -141,7 +141,7 @@ message DatedPrice {
     (gogoproto.nullable) = false
   ];
 
-  uint64 block_set = 2 [ (gogoproto.moretags) = "yaml:\"block_set\"" ];
+  uint64 created_block = 2 [ (gogoproto.moretags) = "yaml:\"created_block\"" ];
 }
 
 // Rewards defines a credit object towards validators

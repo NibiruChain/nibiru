@@ -190,7 +190,7 @@ func (k Keeper) GetExchangeRate(ctx sdk.Context, pair asset.Pair) (price sdk.Dec
 
 // SetPrice sets the price for a pair as well as the price snapshot.
 func (k Keeper) SetPrice(ctx sdk.Context, pair asset.Pair, price sdk.Dec) {
-	k.ExchangeRates.Insert(ctx, pair, types.DatedPrice{ExchangeRate: price, BlockSet: uint64(ctx.BlockHeight())})
+	k.ExchangeRates.Insert(ctx, pair, types.DatedPrice{ExchangeRate: price, CreatedBlock: uint64(ctx.BlockHeight())})
 
 	key := collections.Join(pair, ctx.BlockTime())
 	timestampMs := ctx.BlockTime().UnixMilli()
