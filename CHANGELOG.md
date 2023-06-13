@@ -96,6 +96,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Improvements
 
+* [#xxx](https://github.com/NibiruChain/nibiru/pull/xxx) - feat(perp): Add change type and exchanged margin to position changed events.
 * [#1390](https://github.com/NibiruChain/nibiru/pull/1390) - fix(localnet.sh): Fix genesis market initialization + add force exits on failure
 * [#1340](https://github.com/NibiruChain/nibiru/pull/1340) - feat(wasm): Enforce x/sudo contract permission checks on the shifter contract + integration tests
 * [#1317](https://github.com/NibiruChain/nibiru/pull/1317) - feat(testutil): Use secp256k1 algo for private key generation in common/testutil.
