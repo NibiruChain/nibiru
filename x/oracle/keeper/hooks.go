@@ -39,29 +39,39 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64) 
 		}
 
 		account := h.accountKeeper.GetModuleAccount(ctx, perptypes.FeePoolModuleAccount)
-		totalValidatorFees, totalRest := sdk.Coins{}, sdk.Coins{}
+		totalOracleRewards, totalRemainder := sdk.Coins{}, sdk.Coins{}
 
 		balances := h.bankKeeper.GetAllBalances(ctx, account.GetAddress())
 		for _, balance := range balances {
-			validatorFees := sdk.NewDecFromInt(balance.Amount).Mul(params.ValidatorFeeRatio).TruncateInt()
-			rest := balance.Amount.Sub(validatorFees)
-			totalValidatorFees = append(totalValidatorFees, sdk.NewCoin(balance.Denom, validatorFees))
-			totalRest = append(totalRest, sdk.NewCoin(balance.Denom, rest))
+			oracleRewards := sdk.NewDecFromInt(balance.Amount).Mul(params.ValidatorFeeRatio).TruncateInt()
+			remainder := balance.Amount.Sub(oracleRewards)
+
+			if !oracleRewards.IsZero() {
+				totalOracleRewards = append(totalOracleRewards, sdk.NewCoin(balance.Denom, oracleRewards))
+			}
+
+			if !remainder.IsZero() {
+				totalRemainder = append(totalRemainder, sdk.NewCoin(balance.Denom, remainder))
+			}
 		}
 
-		err = h.bankKeeper.SendCoinsFromModuleToModule(ctx, perptypes.FeePoolModuleAccount, perptypes.PerpEFModuleAccount, totalRest)
-		if err != nil {
-			panic(err)
+		if !totalRemainder.IsZero() {
+			err = h.bankKeeper.SendCoinsFromModuleToModule(ctx, perptypes.FeePoolModuleAccount, perptypes.PerpEFModuleAccount, totalRemainder)
+			if err != nil {
+				h.k.Logger(ctx).Error("Failed to send coins to perp ef module", "err", err)
+			}
 		}
 
-		err = h.k.AllocateRewards(
-			ctx,
-			perptypes.FeePoolModuleAccount,
-			totalValidatorFees,
-			1,
-		)
-		if err != nil {
-			panic(err)
+		if !totalOracleRewards.IsZero() {
+			err = h.k.AllocateRewards(
+				ctx,
+				perptypes.FeePoolModuleAccount,
+				totalOracleRewards,
+				1,
+			)
+			if err != nil {
+				h.k.Logger(ctx).Error("Failed to allocate oracle rewards from perp fee pool", "err", err)
+			}
 		}
 	}
 }

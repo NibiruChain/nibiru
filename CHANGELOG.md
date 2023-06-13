@@ -156,6 +156,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1419](https://github.com/NibiruChain/nibiru/pull/1419) - fix(spot): add pools to genesis state
 * [#1408](https://github.com/NibiruChain/nibiru/pull/1408) - feat(spot): idempotent events
 * [#1420](https://github.com/NibiruChain/nibiru/pull/1420) - refactor(oracle): update default params
+* [#1422](https://github.com/NibiruChain/nibiru/pull/1422) - fix(oracle): handle zero oracle rewards
 
 ### Bug Fixes
 
