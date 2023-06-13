@@ -556,6 +556,9 @@ func (k Keeper) afterPositionUpdate(
 	if !positionResp.Position.Size_.IsZero() {
 		k.Positions.Insert(ctx, collections.Join(market.Pair, traderAddr), positionResp.Position)
 	} else {
+		if !positionResp.Position.Margin.IsZero() {
+			return fmt.Errorf("unexpected error - margin is non zero when position size is zero")
+		}
 		_ = k.Positions.Delete(ctx, collections.Join(market.Pair, traderAddr))
 	}
 
