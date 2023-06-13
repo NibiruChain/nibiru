@@ -27,7 +27,4 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	if types.IsPeriodLastBlock(ctx, params.SlashWindow) {
 		k.SlashAndResetMissCounters(ctx)
 	}
-
-	// Clean up expired prices
-	k.CleanExpiredRates(ctx)
 }

@@ -60,7 +60,7 @@ func TestOraclePriceExpiration(t *testing.T) {
 	require.NoError(t, err)
 
 	params.VotePeriod = 10
-	params.ExpirationBlocks = 15
+	params.ExpirationBlocks = 10
 	input.OracleKeeper.Params.Set(input.Ctx, params)
 
 	// Wait for prices to set

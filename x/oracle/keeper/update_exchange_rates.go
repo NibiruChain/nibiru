@@ -104,24 +104,6 @@ func (k Keeper) resetExchangeRates(ctx sdk.Context, pairBallotsMap map[asset.Pai
 	}
 }
 
-// CleanExpiredRates removes all exchange rates from the state that are expired
-func (k Keeper) CleanExpiredRates(ctx sdk.Context) {
-	params, _ := k.Params.Get(ctx)
-	expirationBlocks := params.ExpirationBlocks
-
-	for _, key := range k.ExchangeRates.Iterate(ctx, collections.Range[asset.Pair]{}).Keys() {
-		exchangeRate, _ := k.ExchangeRates.Get(ctx, key)
-		isExpired := exchangeRate.BlockSet+expirationBlocks <= uint64(ctx.BlockHeight())
-
-		if isExpired {
-			err := k.ExchangeRates.Delete(ctx, key)
-			if err != nil {
-				panic(err)
-			}
-		}
-	}
-}
-
 // newValidatorPerformances creates a new map of validators and their performance, excluding validators that are
 // not bonded.
 func (k Keeper) newValidatorPerformances(ctx sdk.Context) types.ValidatorPerformances {
