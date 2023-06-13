@@ -555,6 +555,8 @@ func (k Keeper) afterPositionUpdate(
 
 	if !positionResp.Position.Size_.IsZero() {
 		k.Positions.Insert(ctx, collections.Join(market.Pair, traderAddr), positionResp.Position)
+	} else {
+		k.Positions.Delete(ctx, collections.Join(market.Pair, traderAddr))
 	}
 
 	// calculate positionNotional (it's different depends on long or short side)
