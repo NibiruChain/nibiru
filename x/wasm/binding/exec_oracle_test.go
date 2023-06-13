@@ -132,7 +132,7 @@ func (s *TestSuiteOracleExecutor) TestExecuteOracleParams() {
 	// Slash Fraction
 	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
 	s.Require().NoError(err)
-	s.Require().Equal(sdk.NewDecWithPrec(1, 4), params.SlashFraction)
+	s.Require().Equal(sdk.NewDecWithPrec(5, 3), params.SlashFraction)
 
 	slashFraction := sdk.MustNewDecFromStr("0.5")
 	cwMsg = &cw_struct.EditOracleParams{
@@ -149,7 +149,7 @@ func (s *TestSuiteOracleExecutor) TestExecuteOracleParams() {
 	// Slash Window
 	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
 	s.Require().NoError(err)
-	s.Require().Equal(uint64(604800), params.SlashWindow)
+	s.Require().Equal(uint64(3600), params.SlashWindow)
 
 	slashWindow := sdk.NewInt(2)
 	cwMsg = &cw_struct.EditOracleParams{
@@ -166,7 +166,7 @@ func (s *TestSuiteOracleExecutor) TestExecuteOracleParams() {
 	// Min valid per window
 	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
 	s.Require().NoError(err)
-	s.Require().Equal(sdk.NewDecWithPrec(5, 2), params.MinValidPerWindow)
+	s.Require().Equal(sdk.NewDecWithPrec(69, 2), params.MinValidPerWindow)
 
 	minValidPerWindow := sdk.MustNewDecFromStr("0.5")
 	cwMsg = &cw_struct.EditOracleParams{
