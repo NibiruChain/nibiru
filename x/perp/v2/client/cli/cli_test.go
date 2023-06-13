@@ -108,6 +108,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			denoms.NIBI,
 		),
 	)
+	s.NoError(s.network.WaitForNextBlock())
 }
 
 func (s *IntegrationTestSuite) TearDownSuite() {
@@ -166,6 +167,8 @@ func (s *IntegrationTestSuite) TestMultiLiquidate() {
 		fmt.Sprintf("%s:%s:%s", denoms.OSMO, denoms.NUSD, s.users[3].String()),
 	})
 	s.Require().NoError(err)
+	err = s.network.WaitForNextBlock()
+	s.Require().NoError(err)
 
 	s.T().Log("check trader position")
 	_, err = testutilcli.QueryPositionV2(s.network.Validators[0].ClientCtx, asset.Registry.Pair(denoms.ATOM, denoms.NUSD), s.users[2])
@@ -221,6 +224,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	)
 	s.NoError(err)
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
+	s.NoError(s.network.WaitForNextBlock())
 
 	s.T().Log("B. check market balance after open position")
 	ammMarketDuo, err = testutilcli.QueryMarketV2(val.ClientCtx, pair)
@@ -252,6 +256,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	})
 	s.NoError(err)
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
+	s.NoError(s.network.WaitForNextBlock())
 
 	s.T().Log("C. check trader position")
 	queryResp, err = testutilcli.QueryPositionV2(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
@@ -276,6 +281,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	})
 	s.NoError(err)
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
+	s.NoError(s.network.WaitForNextBlock())
 
 	s.T().Log("D. Check market after opening reverse position")
 
@@ -308,6 +314,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	})
 	s.NoError(err)
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
+	s.NoError(s.network.WaitForNextBlock())
 
 	s.T().Log("E. Check trader position")
 	queryResp, err = testutilcli.QueryPositionV2(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
@@ -329,6 +336,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	})
 	s.NoError(err)
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
+	s.NoError(s.network.WaitForNextBlock())
 
 	s.T().Log("F. check trader position")
 	queryResp, err = testutilcli.QueryPositionV2(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
