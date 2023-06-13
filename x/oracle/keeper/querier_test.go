@@ -36,7 +36,7 @@ func TestQueryExchangeRate(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := sdk.NewDec(1700)
-	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), types.DatedPrice{ExchangeRate: rate, BlockSet: uint64(input.Ctx.BlockHeight())})
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), types.DatedPrice{ExchangeRate: rate, CreatedBlock: uint64(input.Ctx.BlockHeight())})
 
 	// empty request
 	_, err := querier.ExchangeRate(ctx, nil)
@@ -76,8 +76,8 @@ func TestQueryExchangeRates(t *testing.T) {
 	querier := NewQuerier(input.OracleKeeper)
 
 	rate := sdk.NewDec(1700)
-	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), types.DatedPrice{ExchangeRate: rate, BlockSet: uint64(input.Ctx.BlockHeight())})
-	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), types.DatedPrice{ExchangeRate: rate, BlockSet: uint64(input.Ctx.BlockHeight())})
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), types.DatedPrice{ExchangeRate: rate, CreatedBlock: uint64(input.Ctx.BlockHeight())})
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), types.DatedPrice{ExchangeRate: rate, CreatedBlock: uint64(input.Ctx.BlockHeight())})
 
 	res, err := querier.ExchangeRates(ctx, &types.QueryExchangeRatesRequest{})
 	require.NoError(t, err)
@@ -205,9 +205,9 @@ func TestQueryActives(t *testing.T) {
 	queryClient := NewQuerier(input.OracleKeeper)
 
 	rate := sdk.NewDec(1700)
-	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), types.DatedPrice{ExchangeRate: rate, BlockSet: uint64(input.Ctx.BlockHeight())})
-	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD), types.DatedPrice{ExchangeRate: rate, BlockSet: uint64(input.Ctx.BlockHeight())})
-	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), types.DatedPrice{ExchangeRate: rate, BlockSet: uint64(input.Ctx.BlockHeight())})
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), types.DatedPrice{ExchangeRate: rate, CreatedBlock: uint64(input.Ctx.BlockHeight())})
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD), types.DatedPrice{ExchangeRate: rate, CreatedBlock: uint64(input.Ctx.BlockHeight())})
+	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), types.DatedPrice{ExchangeRate: rate, CreatedBlock: uint64(input.Ctx.BlockHeight())})
 
 	res, err := queryClient.Actives(ctx, &types.QueryActivesRequest{})
 	require.NoError(t, err)
