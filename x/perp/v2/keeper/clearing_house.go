@@ -3,7 +3,6 @@ package keeper
 import (
 	"errors"
 	"fmt"
-	"time"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -521,11 +520,6 @@ func (k Keeper) afterPositionUpdate(
 		return fmt.Errorf("bad debt must be zero to prevent attacker from leveraging it")
 	}
 
-	// check price fluctuation
-	if err := k.checkPriceFluctuationLimitRatio(ctx, market, amm); err != nil {
-		return err
-	}
-
 	if !positionResp.Position.Size_.IsZero() {
 		err = k.checkMarginRatio(ctx, market, amm, positionResp.Position)
 		if err != nil {
@@ -663,40 +657,6 @@ func (k Keeper) transferFee(
 	}
 
 	return feeToExchangeFeePool.Add(feeToEcosystemFund), nil
-}
-
-// checks that the mark price of the pool does not violate the fluctuation limit
-//
-// args:
-//   - ctx: the cosmos-sdk context
-//   - market: the perp market
-//   - amm: the amm reserves
-//
-// returns:
-//   - err: error if any
-func (k Keeper) checkPriceFluctuationLimitRatio(ctx sdk.Context, market types.Market, amm types.AMM) error {
-	if market.PriceFluctuationLimitRatio.IsZero() {
-		// early return to avoid expensive state operations
-		return nil
-	}
-
-	it := k.ReserveSnapshots.Iterate(ctx, collections.PairRange[asset.Pair, time.Time]{}.Prefix(amm.Pair).Descending())
-	defer it.Close()
-
-	if !it.Valid() {
-		return fmt.Errorf("error getting last snapshot number for pair %s", amm.Pair)
-	}
-
-	snapshotMarkPrice := it.Value().Amm.MarkPrice()
-	snapshotUpperLimit := snapshotMarkPrice.Mul(sdk.OneDec().Add(market.PriceFluctuationLimitRatio))
-	snapshotLowerLimit := snapshotMarkPrice.Mul(sdk.OneDec().Sub(market.PriceFluctuationLimitRatio))
-
-	if amm.MarkPrice().GT(snapshotUpperLimit) || amm.MarkPrice().LT(snapshotLowerLimit) {
-		return types.ErrOverFluctuationLimit.Wrapf("candidate mark price %s is not within the fluctuation limit [%s, %s]",
-			amm.MarkPrice(), snapshotLowerLimit, snapshotUpperLimit)
-	}
-
-	return nil
 }
 
 // ClosePosition closes a position entirely and transfers the remaining margin back to the user.

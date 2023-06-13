@@ -130,7 +130,6 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 				fmt.Sprintf("--%s=%s", cli.FlagPair, tc.pairName),
 				fmt.Sprintf("--%s=%s", cli.FlagSqrtDepth, tc.sqrtDepth),
 				fmt.Sprintf("--%s=%s", cli.FlagPriceMultiplier, tc.priceMultiplier),
-				fmt.Sprintf("--%s=%s", cli.FlagPriceFluctuationLimit, tc.flucLimit),
 				fmt.Sprintf("--%s=%s", cli.FlagMaintenenceMarginRatio, tc.maintainRatio),
 				fmt.Sprintf("--%s=%s", cli.FlagMaxLeverage, tc.maxLeverage),
 				fmt.Sprintf("--%s=home", flags.FlagHome),
