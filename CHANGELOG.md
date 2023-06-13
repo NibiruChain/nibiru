@@ -153,9 +153,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1381](https://github.com/NibiruChain/nibiru/pull/1381) - chore(deps): Bump github.com/cosmos/cosmos-sdk to 0.45.16
 * [#1405](https://github.com/NibiruChain/nibiru/pull/1405) - ci: use Buf to build protos
 * [#1406](https://github.com/NibiruChain/nibiru/pull/1406) - feat(perp): emit additional event info
+* [#1419](https://github.com/NibiruChain/nibiru/pull/1419) - fix(spot): add pools to genesis state
 * [#1408](https://github.com/NibiruChain/nibiru/pull/1408) - feat(spot): idempotent events
 * [#1420](https://github.com/NibiruChain/nibiru/pull/1420) - refactor(oracle): update default params
 * [#1421](https://github.com/NibiruChain/nibiru/pull/1421) - feat(oracle): add expiry time to oracle prices
+* [#1422](https://github.com/NibiruChain/nibiru/pull/1422) - fix(oracle): handle zero oracle rewards
 
 ### Bug Fixes
 
