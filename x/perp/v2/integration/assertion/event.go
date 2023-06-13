@@ -77,6 +77,12 @@ func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context)
 			fieldErrs = append(fieldErrs, err.Error())
 		}
 
+		if theEvent.ChangeType != p.ExpectedEvent.ChangeType {
+			err := fmt.Errorf("expected change type %s, got %s",
+				p.ExpectedEvent.ChangeType, theEvent.ChangeType)
+			fieldErrs = append(fieldErrs, err.Error())
+		}
+
 		if len(fieldErrs) != 0 {
 			err := strings.Join(fieldErrs, "\n")
 			return ctx, errors.New(err), false
