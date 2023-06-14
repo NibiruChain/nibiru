@@ -99,7 +99,7 @@ func (k Keeper) OpenPosition(
 	}
 
 	if err = k.afterPositionUpdate(
-		ctx, market, *updatedAMM, traderAddr, *positionResp, types.PositionChangedEvent_CHANGE_REASON_OPEN_POSITION,
+		ctx, market, *updatedAMM, traderAddr, *positionResp, types.ChangeReason_OpenPosition,
 	); err != nil {
 		return nil, err
 	}
@@ -517,7 +517,7 @@ func (k Keeper) afterPositionUpdate(
 	amm types.AMM,
 	traderAddr sdk.AccAddress,
 	positionResp types.PositionResp,
-	changeType types.PositionChangedEvent_ChangeReason,
+	changeType types.ChangeReason,
 ) (err error) {
 	// check bad debt
 	if !positionResp.BadDebt.IsZero() {
@@ -760,7 +760,7 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.A
 		*updatedAMM,
 		traderAddr,
 		*positionResp,
-		types.PositionChangedEvent_CHANGE_REASON_CLOSE_POSITION,
+		types.ChangeReason_ClosePosition,
 	); err != nil {
 		return nil, err
 	}

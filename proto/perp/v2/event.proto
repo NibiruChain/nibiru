@@ -12,14 +12,6 @@ option go_package = "github.com/NibiruChain/nibiru/x/perp/v2/types";
 
 // Emitted when a position changes.
 message PositionChangedEvent {
-  enum ChangeReason {
-    CHANGE_REASON_UNSPECIFIED = 0;
-    CHANGE_REASON_ADD_MARGIN = 1;
-    CHANGE_REASON_REMOVE_MARGIN = 2;
-    CHANGE_REASON_OPEN_POSITION = 3;
-    CHANGE_REASON_CLOSE_POSITION = 4;
-  }
-
   Position final_position = 1 [ (gogoproto.nullable) = false ];
 
   // Position notional (in quote units) after the change. In general,
@@ -75,7 +67,8 @@ message PositionChangedEvent {
   // - CHANGE_REASON_REMOVE_MARGIN: Margin was removed from the position.
   // - CHANGE_REASON_OPEN_POSITION: A new position was opened.
   // - CHANGE_REASON_CLOSE_POSITION: An existing position was closed.
-  ChangeReason change_reason = 9;
+  string change_reason = 9
+      [ (gogoproto.customtype) = "ChangeReason", (gogoproto.nullable) = false ];
 }
 
 // Emitted when a position is liquidated.

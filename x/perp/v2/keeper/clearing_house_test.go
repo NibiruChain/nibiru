@@ -92,7 +92,7 @@ func TestOpenPosition(t *testing.T) {
 					BlockHeight:      1,
 					// exchangedMargin = - marginToVault - transferredFee
 					MarginToUser: sdk.NewInt(1_000 + 20).Neg(),
-					ChangeReason: types.PositionChangedEvent_CHANGE_REASON_OPEN_POSITION,
+					ChangeReason: types.ChangeReason_OpenPosition,
 				}),
 			),
 
@@ -147,7 +147,7 @@ func TestOpenPosition(t *testing.T) {
 					BlockHeight:      2,
 					// exchangedMargin = - marginToVault - transferredFee
 					MarginToUser: sdk.NewInt(1_000 + 20).Neg(),
-					ChangeReason: types.PositionChangedEvent_CHANGE_REASON_OPEN_POSITION,
+					ChangeReason: types.ChangeReason_OpenPosition,
 				}),
 			),
 
@@ -203,7 +203,7 @@ func TestOpenPosition(t *testing.T) {
 					BlockHeight:      2,
 					// exchangedMargin = - marginToVault - transferredFee
 					MarginToUser: sdk.NewInt(0 + 10).Neg(),
-					ChangeReason: types.PositionChangedEvent_CHANGE_REASON_OPEN_POSITION,
+					ChangeReason: types.ChangeReason_OpenPosition,
 				}),
 			),
 
@@ -259,7 +259,7 @@ func TestOpenPosition(t *testing.T) {
 					BlockHeight:      2,
 					// exchangedMargin = - marginToVault - transferredFee
 					MarginToUser: sdk.NewInt(1_000 + 60).Neg(),
-					ChangeReason: types.PositionChangedEvent_CHANGE_REASON_OPEN_POSITION,
+					ChangeReason: types.ChangeReason_OpenPosition,
 				}),
 			),
 
@@ -323,7 +323,7 @@ func TestOpenPosition(t *testing.T) {
 					BlockHeight:      1,
 					// exchangedMargin = - marginToVault - transferredFee
 					MarginToUser: sdk.NewInt(47_619_047_619 + 95_238_096).Neg(),
-					ChangeReason: types.PositionChangedEvent_CHANGE_REASON_OPEN_POSITION,
+					ChangeReason: types.ChangeReason_OpenPosition,
 				}),
 			),
 
@@ -387,7 +387,7 @@ func TestOpenPosition(t *testing.T) {
 					BlockHeight:      1,
 					// exchangedMargin = - marginToVault - transferredFee
 					MarginToUser: sdk.NewInt(1_000 + 20).Neg(),
-					ChangeReason: types.PositionChangedEvent_CHANGE_REASON_OPEN_POSITION,
+					ChangeReason: types.ChangeReason_OpenPosition,
 				}),
 			),
 
@@ -443,7 +443,7 @@ func TestOpenPosition(t *testing.T) {
 					BlockHeight:      2,
 					// exchangedMargin = - marginToVault - transferredFee
 					MarginToUser: sdk.NewInt(1_000 + 20).Neg(),
-					ChangeReason: types.PositionChangedEvent_CHANGE_REASON_OPEN_POSITION,
+					ChangeReason: types.ChangeReason_OpenPosition,
 				}),
 			),
 
@@ -499,7 +499,7 @@ func TestOpenPosition(t *testing.T) {
 					BlockHeight:      2,
 					// exchangedMargin = - marginToVault - transferredFee
 					MarginToUser: sdk.NewInt(0 + 10).Neg(),
-					ChangeReason: types.PositionChangedEvent_CHANGE_REASON_OPEN_POSITION,
+					ChangeReason: types.ChangeReason_OpenPosition,
 				}),
 			),
 
@@ -555,7 +555,7 @@ func TestOpenPosition(t *testing.T) {
 					BlockHeight:      2,
 					// exchangedMargin = - marginToVault - transferredFee
 					MarginToUser: sdk.NewInt(1_000 + 60).Neg(),
-					ChangeReason: types.PositionChangedEvent_CHANGE_REASON_OPEN_POSITION,
+					ChangeReason: types.ChangeReason_OpenPosition,
 				}),
 			),
 
@@ -619,7 +619,7 @@ func TestOpenPosition(t *testing.T) {
 					BlockHeight:      1,
 					// exchangedMargin = - marginToVault - transferredFee
 					MarginToUser: sdk.NewInt(47_619_047_619 + 95_238_096).Neg(),
-					ChangeReason: types.PositionChangedEvent_CHANGE_REASON_OPEN_POSITION,
+					ChangeReason: types.ChangeReason_OpenPosition,
 				}),
 			),
 
@@ -1119,7 +1119,7 @@ func TestClosePosition(t *testing.T) {
 				BlockHeight:      ctx.BlockHeight(),
 				// exchangedMargin = - marginToVault - transferredFee
 				MarginToUser: tc.expectedMarginToVault.RoundInt().Neg().SubRaw(0),
-				ChangeReason: types.PositionChangedEvent_CHANGE_REASON_CLOSE_POSITION,
+				ChangeReason: types.ChangeReason_ClosePosition,
 			})
 		})
 	}

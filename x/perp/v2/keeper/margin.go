@@ -81,7 +81,7 @@ func (k Keeper) AddMargin(
 			FundingPayment:   fundingPayment,
 			BlockHeight:      ctx.BlockHeight(),
 			MarginToUser:     marginToAdd.Amount.Neg(),
-			ChangeReason:     types.PositionChangedEvent_CHANGE_REASON_ADD_MARGIN,
+			ChangeReason:     types.ChangeReason_AddMargin,
 		},
 	); err != nil {
 		return nil, err
@@ -186,7 +186,7 @@ func (k Keeper) RemoveMargin(
 			FundingPayment:   fundingPayment,
 			BlockHeight:      ctx.BlockHeight(),
 			MarginToUser:     marginToRemove.Amount,
-			ChangeReason:     types.PositionChangedEvent_CHANGE_REASON_REMOVE_MARGIN,
+			ChangeReason:     types.ChangeReason_RemoveMargin,
 		},
 	); err != nil {
 		return nil, err
