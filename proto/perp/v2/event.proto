@@ -12,6 +12,14 @@ option go_package = "github.com/NibiruChain/nibiru/x/perp/v2/types";
 
 // Emitted when a position changes.
 message PositionChangedEvent {
+  enum ChangeReason {
+    CHANGE_REASON_UNSPECIFIED = 0;
+    CHANGE_REASON_ADD_MARGIN = 1;
+    CHANGE_REASON_REMOVE_MARGIN = 2;
+    CHANGE_REASON_OPEN_POSITION = 3;
+    CHANGE_REASON_CLOSE_POSITION = 4;
+  }
+
   Position final_position = 1 [ (gogoproto.nullable) = false ];
 
   // Position notional (in quote units) after the change. In general,
@@ -51,19 +59,23 @@ message PositionChangedEvent {
   // The block number at which this position was changed.
   int64 block_height = 7;
 
-  // Exchanged margin is the amount of collateral received by the trader during
+  // margin_to_user is the amount of collateral received by the trader during
   // the position change. A positve value indicates that the trader received
   // funds, while a negative value indicates that the trader spent funds.
-  string exchanged_margin = 8 [
+  string margin_to_user = 8 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
 
-  // Change type describes the type of state transition that resulted in the
-  // position change. Change type can take the following values:
+  // change_reason describes the reason for why the position resulted in a
+  // change. Change type can take the following values:
   //
-  // ["open_position", "close_position", "liquidate", "add_margin", "remove_margin"]
-  string change_type = 9;
+  // - CHANGE_REASON_UNSPECIFIED: Unspecified change reason.
+  // - CHANGE_REASON_ADD_MARGIN: Margin was added to the position.
+  // - CHANGE_REASON_REMOVE_MARGIN: Margin was removed from the position.
+  // - CHANGE_REASON_OPEN_POSITION: A new position was opened.
+  // - CHANGE_REASON_CLOSE_POSITION: An existing position was closed.
+  ChangeReason change_reason = 9;
 }
 
 // Emitted when a position is liquidated.

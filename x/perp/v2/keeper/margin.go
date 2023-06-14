@@ -80,8 +80,8 @@ func (k Keeper) AddMargin(
 			BadDebt:          sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
 			FundingPayment:   fundingPayment,
 			BlockHeight:      ctx.BlockHeight(),
-			ExchangedMargin:  marginToAdd.Amount.Neg(),
-			ChangeType:       "add_margin",
+			MarginToUser:     marginToAdd.Amount.Neg(),
+			ChangeReason:     types.PositionChangedEvent_CHANGE_REASON_ADD_MARGIN,
 		},
 	); err != nil {
 		return nil, err
@@ -185,8 +185,8 @@ func (k Keeper) RemoveMargin(
 			BadDebt:          sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when removing margin
 			FundingPayment:   fundingPayment,
 			BlockHeight:      ctx.BlockHeight(),
-			ExchangedMargin:  marginToRemove.Amount,
-			ChangeType:       "remove_margin",
+			MarginToUser:     marginToRemove.Amount,
+			ChangeReason:     types.PositionChangedEvent_CHANGE_REASON_REMOVE_MARGIN,
 		},
 	); err != nil {
 		return nil, err
