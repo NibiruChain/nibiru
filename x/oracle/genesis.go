@@ -106,7 +106,7 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 
 	exchangeRates := []types.ExchangeRateTuple{}
 	for _, er := range keeper.ExchangeRates.Iterate(ctx, collections.Range[asset.Pair]{}).KeyValues() {
-		exchangeRates = append(exchangeRates, types.ExchangeRateTuple{Pair: er.Key, ExchangeRate: er.Value})
+		exchangeRates = append(exchangeRates, types.ExchangeRateTuple{Pair: er.Key, ExchangeRate: er.Value.ExchangeRate})
 	}
 
 	missCounters := []types.MissCounter{}

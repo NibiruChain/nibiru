@@ -48,7 +48,7 @@ func SetExchangeRates(
 
 		rate, err := nibiru.OracleKeeper.ExchangeRates.Get(ctx, pair)
 		s.Assert().NoError(err)
-		s.Assert().EqualValues(exchangeRate, rate)
+		s.Assert().EqualValues(exchangeRate, rate.ExchangeRate)
 	}
 
 	return oracletypes.ExchangeRateTuples(exchangeRateTuples).ToMap()

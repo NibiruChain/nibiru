@@ -87,7 +87,7 @@ func (q querier) ExchangeRates(c context.Context, _ *types.QueryExchangeRatesReq
 	for _, er := range q.Keeper.ExchangeRates.Iterate(ctx, collections.Range[asset.Pair]{}).KeyValues() {
 		exchangeRates = append(exchangeRates, types.ExchangeRateTuple{
 			Pair:         er.Key,
-			ExchangeRate: er.Value,
+			ExchangeRate: er.Value.ExchangeRate,
 		})
 	}
 
