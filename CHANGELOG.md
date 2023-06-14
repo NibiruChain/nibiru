@@ -157,6 +157,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1408](https://github.com/NibiruChain/nibiru/pull/1408) - feat(spot): idempotent events
 * [#1420](https://github.com/NibiruChain/nibiru/pull/1420) - refactor(oracle): update default params
 * [#1422](https://github.com/NibiruChain/nibiru/pull/1422) - fix(oracle): handle zero oracle rewards
+* [#1426](https://github.com/NibiruChain/nibiru/pull/1426) - refactor(perp): remove price fluctuation limit check
 
 ### Bug Fixes
 
