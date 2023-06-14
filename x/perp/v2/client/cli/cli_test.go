@@ -357,13 +357,10 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 	s.Error(err, "no position found")
 
 	// close position should produce error
-	res, err := testutilcli.ExecTx(s.network, cli.ClosePositionCmd(), user, []string{
+	_, err = testutilcli.ExecTx(s.network, cli.ClosePositionCmd(), user, []string{
 		asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
 	})
-	s.NoError(s.network.WaitForNextBlock())
-	resp, err := testutilcli.QueryTx(s.network.Validators[0].ClientCtx, res.TxHash)
-	s.Require().NoError(err)
-	s.Contains(resp.RawLog, collections.ErrNotFound.Error())
+	s.Contains(err.Error(), collections.ErrNotFound.Error())
 }
 
 // user[0] opens a position and removes margin to trigger bad debt
@@ -382,14 +379,11 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 
 	// Remove margin to trigger bad debt on user 0
 	s.T().Log("removing margin on user 0....")
-	res, err := testutilcli.ExecTx(s.network, cli.RemoveMarginCmd(), s.users[0], []string{
+	_, err = testutilcli.ExecTx(s.network, cli.RemoveMarginCmd(), s.users[0], []string{
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 		fmt.Sprintf("%s%s", "10000000", denoms.NUSD),
 	})
-	s.NoError(s.network.WaitForNextBlock())
-	resp, err := testutilcli.QueryTx(s.network.Validators[0].ClientCtx, res.TxHash)
-	s.Require().NoError(err)
-	s.Contains(resp.RawLog, types.ErrBadDebt.Error())
+	s.Contains(err.Error(), types.ErrBadDebt.Error())
 
 	s.T().Log("removing margin on user 0....")
 	_, err = testutilcli.ExecTx(s.network, cli.RemoveMarginCmd(), s.users[0], []string{

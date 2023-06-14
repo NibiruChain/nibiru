@@ -122,9 +122,15 @@ func (s *IntegrationTestSuite) deployWasmContract(path string) (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	resp := &sdk.TxResponse{}
 	err = codec.UnmarshalJSON(out.Bytes(), resp)
+	if err != nil {
+		return 0, err
+	}
+
+	resp, err = testutilcli.QueryTx(val.ClientCtx, resp.TxHash)
 	if err != nil {
 		return 0, err
 	}
