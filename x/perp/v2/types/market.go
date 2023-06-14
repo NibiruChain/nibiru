@@ -13,7 +13,6 @@ func isPercent(v sdk.Dec) bool {
 }
 
 func (market *Market) Validate() error {
-
 	if !isPercent(market.MaintenanceMarginRatio) {
 		return fmt.Errorf("maintenance margin ratio ratio must be 0 <= ratio <= 1")
 	}
