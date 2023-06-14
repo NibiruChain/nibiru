@@ -357,10 +357,13 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 	s.Error(err, "no position found")
 
 	// close position should produce error
-	_, err = testutilcli.ExecTx(s.network, cli.ClosePositionCmd(), user, []string{
+	res, err := testutilcli.ExecTx(s.network, cli.ClosePositionCmd(), user, []string{
 		asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
 	})
-	s.Contains(err.Error(), collections.ErrNotFound.Error())
+	s.NoError(s.network.WaitForNextBlock())
+	resp, err := testutilcli.QueryTx(s.network.Validators[0].ClientCtx, res.TxHash)
+	s.Require().NoError(err)
+	s.Contains(resp.RawLog, collections.ErrNotFound.Error())
 }
 
 // user[0] opens a position and removes margin to trigger bad debt
@@ -375,14 +378,18 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 		"0",
 	})
 	s.NoError(err)
+	s.NoError(s.network.WaitForNextBlock())
 
 	// Remove margin to trigger bad debt on user 0
 	s.T().Log("removing margin on user 0....")
-	_, err = testutilcli.ExecTx(s.network, cli.RemoveMarginCmd(), s.users[0], []string{
+	res, err := testutilcli.ExecTx(s.network, cli.RemoveMarginCmd(), s.users[0], []string{
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 		fmt.Sprintf("%s%s", "10000000", denoms.NUSD),
 	})
-	s.Contains(err.Error(), types.ErrBadDebt.Error())
+	s.NoError(s.network.WaitForNextBlock())
+	resp, err := testutilcli.QueryTx(s.network.Validators[0].ClientCtx, res.TxHash)
+	s.Require().NoError(err)
+	s.Contains(resp.RawLog, types.ErrBadDebt.Error())
 
 	s.T().Log("removing margin on user 0....")
 	_, err = testutilcli.ExecTx(s.network, cli.RemoveMarginCmd(), s.users[0], []string{
@@ -390,6 +397,7 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 		fmt.Sprintf("%s%s", "1", denoms.NUSD),
 	})
 	s.NoError(err)
+	s.NoError(s.network.WaitForNextBlock())
 }
 
 // user[1] opens a position and adds margin
@@ -404,6 +412,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 		"0.0000001",
 	})
 	s.Require().NoError(err)
+	s.NoError(s.network.WaitForNextBlock())
 
 	testCases := []struct {
 		name           string
@@ -431,11 +440,16 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 	}
 
 	for _, tc := range testCases {
+		tc := tc
 		s.T().Run(tc.name, func(t *testing.T) {
 			s.T().Log("adding margin on user 3....")
 			txResp, err = testutilcli.ExecTx(s.network, cli.AddMarginCmd(), s.users[1], tc.args, testutilcli.WithTxCanFail(true))
-			s.NoError(err)
-			s.EqualValues(tc.expectedCode, txResp.Code)
+			s.Require().NoError(err)
+			s.Require().NoError(s.network.WaitForNextBlock())
+
+			resp, err := testutilcli.QueryTx(s.network.Validators[0].ClientCtx, txResp.TxHash)
+			s.Require().NoError(err)
+			s.Require().EqualValues(tc.expectedCode, resp.Code)
 
 			if tc.expectedCode == 0 {
 				// query trader position

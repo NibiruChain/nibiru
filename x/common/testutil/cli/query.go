@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -126,6 +127,22 @@ func QueryPositionV2(ctx client.Context, pair asset.Pair, trader sdk.AccAddress)
 	if err := ExecQuery(ctx, perpv2cli.CmdQueryPosition(), []string{trader.String(), pair.String()}, &queryResp); err != nil {
 		return nil, err
 	}
+	return &queryResp, nil
+}
+
+func QueryTx(ctx client.Context, txHash string) (*sdk.TxResponse, error) {
+	var queryResp sdk.TxResponse
+	if err := ExecQuery(
+		ctx,
+		cli.QueryTxCmd(),
+		[]string{
+			txHash,
+		},
+		&queryResp,
+	); err != nil {
+		return nil, err
+	}
+
 	return &queryResp, nil
 }
 
