@@ -201,7 +201,6 @@ func (k Keeper) increasePosition(
 //   - currentPosition: the current position
 //   - decreasedNotional: the amount of notional the user is decreasing by
 //   - baseAmtLimit: the user-specified limit on the base reserves
-//   - skipFluctuationLimitCheck: whether to skip the fluctuation limit check
 //
 // returns:
 //   - updatedAMM: the updated AMM reserves
@@ -231,7 +230,6 @@ func (k Keeper) openReversePosition(
 			currentPosition,
 			notionalToDecreaseBy,
 			baseAmtLimit,
-			/* skipFluctuationLimitCheck */ false,
 		)
 	} else {
 		// close and reverse
@@ -263,7 +261,6 @@ func (k Keeper) openReversePosition(
 //   - currentPosition: the current position
 //   - decreasedNotional: the amount of notional the user is decreasing by
 //   - baseAmtLimit: the user-specified limit on the base reserves
-//   - skipFluctuationLimitCheck: whether to skip the fluctuation limit check
 //
 // returns:
 //   - updatedAMM: the updated AMM reserves
@@ -276,7 +273,6 @@ func (k Keeper) decreasePosition(
 	currentPosition types.Position,
 	decreasedNotional sdk.Dec,
 	baseAmtLimit sdk.Dec,
-	skipFluctuationLimitCheck bool,
 ) (updatedAMM *types.AMM, positionResp *types.PositionResp, err error) {
 	if currentPosition.Size_.IsZero() {
 		return nil, nil, fmt.Errorf("current position size is zero, nothing to decrease")
@@ -731,7 +727,6 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.A
 //   - amm: the amm reserves
 //   - currentPosition: the existing position
 //   - quoteAssetAmountLimit: the user-specified limit on the quote asset reserves
-//   - skipFluctuationLimitCheck: whether to skip the fluctuation check
 //
 // returns:
 //   - updatedAMM: updated AMM reserves
