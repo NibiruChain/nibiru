@@ -54,7 +54,8 @@ func (suite *AnteTestSuite) SetupTest() {
 		WithChainID(chainId).
 		WithLegacyAmino(encodingConfig.Amino)
 
-	suite.app.AccountKeeper.SetParams(ctx, authtypes.DefaultParams())
+	err := suite.app.AccountKeeper.SetParams(ctx, authtypes.DefaultParams())
+	suite.Require().NoError(err)
 	params := suite.app.AccountKeeper.GetParams(ctx)
 	suite.Require().NoError(params.Validate())
 

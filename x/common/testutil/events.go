@@ -1,8 +1,9 @@
 package testutil
 
 import (
-	"github.com/cosmos/gogoproto/proto"
 	"reflect"
+
+	"github.com/cosmos/gogoproto/proto"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"

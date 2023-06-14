@@ -2,8 +2,9 @@ package testutil
 
 import (
 	"fmt"
-	"github.com/NibiruChain/collections"
 	"testing"
+
+	"github.com/NibiruChain/collections"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -113,6 +114,7 @@ func (s *IntegrationTestSuite) TestCreatePoolCmd_Errors() {
 				"balancer",
 				"0",
 			)
+			s.Require().NoError(err)
 
 			txResp := sdk.TxResponse{}
 			err = s.network.Validators[0].ClientCtx.Codec.UnmarshalJSON(out.Bytes(), &txResp)
