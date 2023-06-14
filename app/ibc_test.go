@@ -6,7 +6,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	"github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/stretchr/testify/suite"
 
@@ -90,8 +89,6 @@ func (suite *IBCTestSuite) TestHandleMsgTransfer() {
 	path := NewIBCTestingTransferPath(suite.chainA, suite.chainB)
 	suite.coordinator.Setup(path)
 
-	timeoutHeight := types.NewHeight(0, 110)
-
 	amount, ok := sdk.NewIntFromString("9223372036854775808") // 2^63 (one above int64)
 	suite.Require().True(ok)
 	coinToSendToB := sdk.NewCoin(sdk.DefaultBondDenom, amount)
@@ -103,7 +100,7 @@ func (suite *IBCTestSuite) TestHandleMsgTransfer() {
 		coinToSendToB,
 		suite.chainA.SenderAccount.GetAddress().String(),
 		suite.chainB.SenderAccount.GetAddress().String(),
-		timeoutHeight,
+		suite.chainB.GetTimeoutHeight(),
 		0,
 		"",
 	)
@@ -141,7 +138,7 @@ func (suite *IBCTestSuite) TestHandleMsgTransfer() {
 		coinSentFromAToB,
 		suite.chainB.SenderAccount.GetAddress().String(),
 		suite.chainC.SenderAccount.GetAddress().String(),
-		timeoutHeight,
+		suite.chainC.GetTimeoutHeight(),
 		0,
 		"",
 	)
@@ -176,7 +173,7 @@ func (suite *IBCTestSuite) TestHandleMsgTransfer() {
 		coinSentFromBToC,
 		suite.chainC.SenderAccount.GetAddress().String(),
 		suite.chainB.SenderAccount.GetAddress().String(),
-		timeoutHeight,
+		suite.chainB.GetTimeoutHeight(),
 		0,
 		"",
 	)
