@@ -177,10 +177,6 @@ replace github.com/cosmos/gorocksdb v1.2.0 => github.com/NibiruChain/gorocksdb v
 
 replace github.com/linxGnu/grocksdb => github.com/NibiruChain/grocksdb v0.0.0-20230522141059-38c21249c0aa
 
-replace github.com/tendermint/tendermint => github.com/cometbft/cometbft v0.37.2
-
-replace github.com/tendermint/tm-db => github.com/cometbft/cometbft-db v0.7.0
-
 replace cosmossdk.io/api => cosmossdk.io/api v0.3.1
 
 replace github.com/cosmos/iavl => github.com/cosmos/iavl v0.20.0
