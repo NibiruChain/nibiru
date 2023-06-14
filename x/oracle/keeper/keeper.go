@@ -33,7 +33,7 @@ type Keeper struct {
 	distrModuleName string
 
 	Params            collections.Item[types.Params]
-	ExchangeRates     collections.Map[asset.Pair, sdk.Dec]
+	ExchangeRates     collections.Map[asset.Pair, types.DatedPrice]
 	FeederDelegations collections.Map[sdk.ValAddress, sdk.AccAddress]
 	MissCounters      collections.Map[sdk.ValAddress, uint64]
 	Prevotes          collections.Map[sdk.ValAddress, types.AggregateExchangeRatePrevote]
@@ -65,7 +65,7 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey storetypes.StoreKey,
 		StakingKeeper:     stakingKeeper,
 		distrModuleName:   distrName,
 		Params:            collections.NewItem(storeKey, 11, collections.ProtoValueEncoder[types.Params](cdc)),
-		ExchangeRates:     collections.NewMap(storeKey, 1, asset.PairKeyEncoder, collections.DecValueEncoder),
+		ExchangeRates:     collections.NewMap(storeKey, 1, asset.PairKeyEncoder, collections.ProtoValueEncoder[types.DatedPrice](cdc)),
 		PriceSnapshots:    collections.NewMap(storeKey, 10, collections.PairKeyEncoder(asset.PairKeyEncoder, collections.TimeKeyEncoder), collections.ProtoValueEncoder[types.PriceSnapshot](cdc)),
 		FeederDelegations: collections.NewMap(storeKey, 2, collections.ValAddressKeyEncoder, collections.AccAddressValueEncoder),
 		MissCounters:      collections.NewMap(storeKey, 3, collections.ValAddressKeyEncoder, collections.Uint64ValueEncoder),
@@ -183,12 +183,14 @@ func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair asset.Pair) (price sdk
 }
 
 func (k Keeper) GetExchangeRate(ctx sdk.Context, pair asset.Pair) (price sdk.Dec, err error) {
-	return k.ExchangeRates.Get(ctx, pair)
+	exchangeRate, err := k.ExchangeRates.Get(ctx, pair)
+	price = exchangeRate.ExchangeRate
+	return
 }
 
 // SetPrice sets the price for a pair as well as the price snapshot.
 func (k Keeper) SetPrice(ctx sdk.Context, pair asset.Pair, price sdk.Dec) {
-	k.ExchangeRates.Insert(ctx, pair, price)
+	k.ExchangeRates.Insert(ctx, pair, types.DatedPrice{ExchangeRate: price, CreatedBlock: uint64(ctx.BlockHeight())})
 
 	key := collections.Join(pair, ctx.BlockTime())
 	timestampMs := ctx.BlockTime().UnixMilli()

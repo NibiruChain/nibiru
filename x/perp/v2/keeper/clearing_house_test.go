@@ -90,6 +90,9 @@ func TestOpenPosition(t *testing.T) {
 					FundingPayment:   sdk.ZeroDec(),
 					TransactionFee:   sdk.NewCoin(denoms.NUSD, sdk.NewInt(20)),
 					BlockHeight:      1,
+					// exchangedMargin = - marginToVault - transferredFee
+					ExchangedMargin: sdk.NewInt(1_000 + 20).Neg(),
+					ChangeType:      "open_position",
 				}),
 			),
 
@@ -142,6 +145,9 @@ func TestOpenPosition(t *testing.T) {
 					FundingPayment:   sdk.ZeroDec(),
 					TransactionFee:   sdk.NewCoin(denoms.NUSD, sdk.NewInt(20)), // 20 bps
 					BlockHeight:      2,
+					// exchangedMargin = - marginToVault - transferredFee
+					ExchangedMargin: sdk.NewInt(1_000 + 20).Neg(),
+					ChangeType:      "open_position",
 				}),
 			),
 
@@ -195,6 +201,9 @@ func TestOpenPosition(t *testing.T) {
 					FundingPayment:   sdk.ZeroDec(),
 					TransactionFee:   sdk.NewCoin(denoms.NUSD, sdk.NewInt(10)), // 20 bps
 					BlockHeight:      2,
+					// exchangedMargin = - marginToVault - transferredFee
+					ExchangedMargin: sdk.NewInt(0 + 10).Neg(),
+					ChangeType:      "open_position",
 				}),
 			),
 
@@ -248,6 +257,9 @@ func TestOpenPosition(t *testing.T) {
 					FundingPayment:   sdk.ZeroDec(),
 					TransactionFee:   sdk.NewCoin(denoms.NUSD, sdk.NewInt(60)), // 20 bps
 					BlockHeight:      2,
+					// exchangedMargin = - marginToVault - transferredFee
+					ExchangedMargin: sdk.NewInt(1_000 + 60).Neg(),
+					ChangeType:      "open_position",
 				}),
 			),
 
@@ -309,6 +321,9 @@ func TestOpenPosition(t *testing.T) {
 					FundingPayment:   sdk.ZeroDec(),
 					TransactionFee:   sdk.NewCoin(denoms.NUSD, sdk.NewInt(95_238_096)),
 					BlockHeight:      1,
+					// exchangedMargin = - marginToVault - transferredFee
+					ExchangedMargin: sdk.NewInt(47_619_047_619 + 95_238_096).Neg(),
+					ChangeType:      "open_position",
 				}),
 			),
 
@@ -370,6 +385,9 @@ func TestOpenPosition(t *testing.T) {
 					FundingPayment:   sdk.ZeroDec(),
 					TransactionFee:   sdk.NewCoin(denoms.NUSD, sdk.NewInt(20)),
 					BlockHeight:      1,
+					// exchangedMargin = - marginToVault - transferredFee
+					ExchangedMargin: sdk.NewInt(1_000 + 20).Neg(),
+					ChangeType:      "open_position",
 				}),
 			),
 
@@ -423,6 +441,9 @@ func TestOpenPosition(t *testing.T) {
 					FundingPayment:   sdk.ZeroDec(),
 					TransactionFee:   sdk.NewCoin(denoms.NUSD, sdk.NewInt(20)), // 20 bps
 					BlockHeight:      2,
+					// exchangedMargin = - marginToVault - transferredFee
+					ExchangedMargin: sdk.NewInt(1_000 + 20).Neg(),
+					ChangeType:      "open_position",
 				}),
 			),
 
@@ -476,6 +497,9 @@ func TestOpenPosition(t *testing.T) {
 					FundingPayment:   sdk.ZeroDec(),
 					TransactionFee:   sdk.NewCoin(denoms.NUSD, sdk.NewInt(10)), // 20 bps
 					BlockHeight:      2,
+					// exchangedMargin = - marginToVault - transferredFee
+					ExchangedMargin: sdk.NewInt(0 + 10).Neg(),
+					ChangeType:      "open_position",
 				}),
 			),
 
@@ -529,6 +553,9 @@ func TestOpenPosition(t *testing.T) {
 					FundingPayment:   sdk.ZeroDec(),
 					TransactionFee:   sdk.NewCoin(denoms.NUSD, sdk.NewInt(60)), // 20 bps
 					BlockHeight:      2,
+					// exchangedMargin = - marginToVault - transferredFee
+					ExchangedMargin: sdk.NewInt(1_000 + 60).Neg(),
+					ChangeType:      "open_position",
 				}),
 			),
 
@@ -590,6 +617,9 @@ func TestOpenPosition(t *testing.T) {
 					FundingPayment:   sdk.ZeroDec(),
 					TransactionFee:   sdk.NewCoin(denoms.NUSD, sdk.NewInt(95_238_096)),
 					BlockHeight:      1,
+					// exchangedMargin = - marginToVault - transferredFee
+					ExchangedMargin: sdk.NewInt(47_619_047_619 + 95_238_096).Neg(),
+					ChangeType:      "open_position",
 				}),
 			),
 
@@ -1167,6 +1197,9 @@ func TestClosePosition(t *testing.T) {
 				FundingPayment:   tc.expectedFundingPayment,
 				TransactionFee:   sdk.NewInt64Coin(denoms.NUSD, 0),
 				BlockHeight:      ctx.BlockHeight(),
+				// exchangedMargin = - marginToVault - transferredFee
+				ExchangedMargin: tc.expectedMarginToVault.RoundInt().Neg().SubRaw(0),
+				ChangeType:      "close_position",
 			})
 		})
 	}
