@@ -61,7 +61,10 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 
 	staking, incentives, communityPool, err := k.MintAndAllocateInflation(ctx, mintedCoin, params)
 	if err != nil {
-		panic(err)
+		k.Logger(ctx).Error(
+			"SKIPPING INFLATION: failed to mint and allocate inflation",
+			"error", err,
+		)
 	}
 
 	// If period is passed, update the period. A period is
