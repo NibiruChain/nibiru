@@ -411,13 +411,33 @@ func (k Keeper) closeAndOpenReversePosition(
 	remainingReverseNotionalValue := reverseNotionalValue.Sub(
 		closePositionResp.ExchangedNotionalValue)
 
+	var sideToTake types.Direction
+	// flipped since we are going against the current position
+	if existingPosition.Size_.IsPositive() {
+		sideToTake = types.Direction_SHORT
+	} else {
+		sideToTake = types.Direction_LONG
+	}
+
+	_, sizeAvailable, err := k.SwapQuoteAsset(
+		ctx,
+		market,
+		amm,
+		sideToTake,
+		remainingReverseNotionalValue,
+		baseAmtLimit,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	var increasePositionResp *types.PositionResp
 	if remainingReverseNotionalValue.IsNegative() {
 		// should never happen as this should also be checked in the caller
 		return nil, nil, fmt.Errorf(
 			"provided quote asset amount and leverage not large enough to close position. need %s but got %s",
 			closePositionResp.ExchangedNotionalValue, reverseNotionalValue)
-	} else if remainingReverseNotionalValue.IsPositive() {
+	} else if !sizeAvailable.IsZero() {
 		updatedBaseAmtLimit := baseAmtLimit
 		if baseAmtLimit.IsPositive() {
 			updatedBaseAmtLimit = baseAmtLimit.Sub(closePositionResp.ExchangedPositionSize.Abs())
@@ -427,14 +447,6 @@ func (k Keeper) closeAndOpenReversePosition(
 				"position size changed by greater than the specified base limit: %s",
 				baseAmtLimit,
 			)
-		}
-
-		var sideToTake types.Direction
-		// flipped since we are going against the current position
-		if existingPosition.Size_.IsPositive() {
-			sideToTake = types.Direction_SHORT
-		} else {
-			sideToTake = types.Direction_LONG
 		}
 
 		newPosition := types.ZeroPosition(
@@ -555,11 +567,6 @@ func (k Keeper) afterPositionUpdate(
 
 	if !positionResp.Position.Size_.IsZero() {
 		k.Positions.Insert(ctx, collections.Join(market.Pair, traderAddr), positionResp.Position)
-	} else {
-		if !positionResp.Position.Margin.IsZero() {
-			return fmt.Errorf("unexpected error - margin is non zero when position size is zero")
-		}
-		_ = k.Positions.Delete(ctx, collections.Join(market.Pair, traderAddr))
 	}
 
 	// calculate positionNotional (it's different depends on long or short side)
