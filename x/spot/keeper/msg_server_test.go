@@ -126,7 +126,7 @@ func TestCreatePool(t *testing.T) {
 			senderInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.NIBI, 1e9),
 			),
-			expectedErr: fmt.Errorf("0unibi is smaller than 1unibi: insufficient funds"),
+			expectedErr: fmt.Errorf("is smaller than 1unibi: insufficient funds"), // SDK does not print 0nibi
 		},
 		{
 			name:       "successful pool creation",
@@ -246,7 +246,7 @@ func TestCreatePool(t *testing.T) {
 			senderInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.NIBI, 1e9),
 			),
-			expectedErr: fmt.Errorf("0unibi is smaller than 1unibi: insufficient funds"),
+			expectedErr: fmt.Errorf("is smaller than 1unibi: insufficient funds"), // SDK cannot print 0unibi
 		},
 		{
 			name:       "successful pool creation - Stableswap",
@@ -291,7 +291,7 @@ func TestCreatePool(t *testing.T) {
 
 			_, err := msgServer.CreatePool(sdk.WrapSDKContext(ctx), &msgCreatePool)
 			if tc.expectedErr != nil {
-				require.EqualError(t, err, tc.expectedErr.Error())
+				require.Contains(t, err.Error(), tc.expectedErr.Error())
 				testutil.RequireNotHasTypedEvent(t, ctx, &types.EventPoolCreated{
 					Creator: tc.creatorAddr.String(),
 					PoolId:  1,

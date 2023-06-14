@@ -250,7 +250,7 @@ func txOK(cdc codec.Codec, txBytes []byte) error {
 }
 
 /*
-Creates a new account with a random mnemonic, stores the mnemonic in the keyring, and returns the address.
+NewAccount Creates a new account with a random mnemonic, stores the mnemonic in the keyring, and returns the address.
 
 args:
   - network: the network in which to create the account and key

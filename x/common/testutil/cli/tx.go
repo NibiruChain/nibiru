@@ -96,9 +96,18 @@ func ExecTx(network *Network, cmd *cobra.Command, txSender sdk.AccAddress, args 
 	if err != nil {
 		return nil, err
 	}
+	tmpResp := new(sdk.TxResponse)
+	err = clientCtx.Codec.UnmarshalJSON(rawResp.Bytes(), tmpResp)
+	if err != nil {
+		return nil, err
+	}
 
-	resp := new(sdk.TxResponse)
-	err = clientCtx.Codec.UnmarshalJSON(rawResp.Bytes(), resp)
+	err = network.WaitForNextBlock()
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := QueryTx(clientCtx, tmpResp.TxHash)
 	if err != nil {
 		return nil, err
 	}

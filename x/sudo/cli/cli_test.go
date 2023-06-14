@@ -68,7 +68,6 @@ func (msg MsgEditSudoersPlus) ToJson(t *testing.T) (fileJsonBz []byte, fileName 
 }
 
 func (msg MsgEditSudoersPlus) Exec(
-	t *testing.T,
 	network *testutilcli.Network,
 	fileName string,
 	from sdk.AccAddress,
@@ -159,72 +158,64 @@ func (s *IntegrationSuite) TestCmdEditSudoers() {
 
 	var sender sdk.AccAddress = s.root.addr
 
-	s.Run("add_contracts", func() {
-		pbMsg := pb.MsgEditSudoers{
-			Action:    "add_contracts",
-			Contracts: []string{contracts[0], contracts[1], contracts[2]},
-			Sender:    sender.String(),
-		}
+	pbMsg := pb.MsgEditSudoers{
+		Action:    "add_contracts",
+		Contracts: []string{contracts[0], contracts[1], contracts[2]},
+		Sender:    sender.String(),
+	}
 
-		msg := MsgEditSudoersPlus{pbMsg}
-		jsonBz, fileName := msg.ToJson(s.T())
+	msg := MsgEditSudoersPlus{pbMsg}
+	jsonBz, fileName := msg.ToJson(s.T())
 
-		s.T().Log("sending from the wrong address should fail.")
-		wrongSender := testutil.AccAddress()
-		msg.Sender = wrongSender.String()
-		out, err := msg.Exec(s.T(), s.network, fileName, wrongSender)
-		s.Assert().Errorf(err, "out: %s\n", out)
-		s.Contains(err.Error(), "key not found", "msg: %s\nout: %s", jsonBz, out)
+	s.T().Log("sending from the wrong address should fail.")
+	wrongSender := testutil.AccAddress()
+	msg.Sender = wrongSender.String()
+	out, err := msg.Exec(s.network, fileName, wrongSender)
+	s.Assert().Errorf(err, "out: %s\n", out)
+	s.Contains(err.Error(), "key not found", "msg: %s\nout: %s", jsonBz, out)
 
-		s.T().Log("happy - add_contracts exec tx")
-		msg.Sender = sender.String()
-		out, err = msg.Exec(s.T(), s.network, fileName, sender)
-		s.NoErrorf(err, "msg: %s\nout: %s", jsonBz, out)
-	})
+	s.T().Log("happy - add_contracts exec tx")
+	msg.Sender = sender.String()
+	out, err = msg.Exec(s.network, fileName, sender)
+	s.NoErrorf(err, "msg: %s\nout: %s", jsonBz, out)
 
-	s.Run("query state after add_contracts", func() {
-		state, err := testutilcli.QuerySudoers(val.ClientCtx)
-		s.NoError(err)
+	state, err := testutilcli.QuerySudoers(val.ClientCtx)
+	s.NoError(err)
 
-		gotRoot := state.Sudoers.Root
-		s.Equal(s.root.addr.String(), gotRoot)
+	gotRoot := state.Sudoers.Root
+	s.Equal(s.root.addr.String(), gotRoot)
 
-		gotContracts := set.New(state.Sudoers.Contracts...)
-		s.Equal(len(contracts), gotContracts.Len())
-		for _, contract := range contracts {
-			s.True(gotContracts.Has(contract))
-		}
-	})
+	gotContracts := set.New(state.Sudoers.Contracts...)
+	s.Equal(len(contracts), gotContracts.Len())
+	for _, contract := range contracts {
+		s.True(gotContracts.Has(contract))
+	}
 
-	s.Run("remove_contracts", func() {
-		pbMsg := pb.MsgEditSudoers{
-			Action:    "remove_contracts",
-			Contracts: []string{contracts[1]},
-			Sender:    sender.String(),
-		}
+	pbMsg = pb.MsgEditSudoers{
+		Action:    "remove_contracts",
+		Contracts: []string{contracts[1]},
+		Sender:    sender.String(),
+	}
 
-		msg := MsgEditSudoersPlus{pbMsg}
-		jsonBz, fileName := msg.ToJson(s.T())
+	msg = MsgEditSudoersPlus{pbMsg}
+	jsonBz, fileName = msg.ToJson(s.T())
 
-		s.T().Log("happy - remove_contracts exec tx")
-		out, err := msg.Exec(s.T(), s.network, fileName, sender)
-		s.NoErrorf(err, "msg: %s\nout: %s", jsonBz, out)
-	})
+	s.T().Log("happy - remove_contracts exec tx")
+	out, err = msg.Exec(s.network, fileName, sender)
+	s.NoErrorf(err, "msg: %s\nout: %s", jsonBz, out)
 
-	s.Run("query state after remove_contracts", func() {
-		state, err := testutilcli.QuerySudoers(val.ClientCtx)
-		s.NoError(err)
+	state, err = testutilcli.QuerySudoers(val.ClientCtx)
+	s.NoError(err)
 
-		gotRoot := state.Sudoers.Root
-		s.Equal(s.root.addr.String(), gotRoot)
+	gotRoot = state.Sudoers.Root
+	s.Equal(s.root.addr.String(), gotRoot)
 
-		wantContracts := []string{contracts[0], contracts[2]}
-		gotContracts := set.New(state.Sudoers.Contracts...)
-		s.Equal(len(wantContracts), gotContracts.Len())
-		for _, contract := range wantContracts {
-			s.True(gotContracts.Has(contract))
-		}
-	})
+	wantContracts := []string{contracts[0], contracts[2]}
+	gotContracts = set.New(state.Sudoers.Contracts...)
+	s.Equal(len(wantContracts), gotContracts.Len())
+	for _, contract := range wantContracts {
+		s.True(gotContracts.Has(contract))
+	}
 }
 
 // TestMarshal_EditSudoers verifies that the expected proto.Message for
