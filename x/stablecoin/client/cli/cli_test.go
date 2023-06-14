@@ -98,6 +98,7 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(10))).String()),
 	}
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	testCases := []struct {
 		name string
@@ -128,6 +129,7 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 			clientCtx := val.ClientCtx
 
 			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
+			s.Require().NoError(s.network.WaitForNextBlock())
 			if tc.expectErr {
 				s.Require().Error(err)
 			} else {
@@ -136,9 +138,10 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 					clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
 
 				txResp := tc.respType.(*sdk.TxResponse)
-				err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
+				tx, err := testutilcli.QueryTx(val.ClientCtx, txResp.TxHash)
 				s.NoError(err)
-				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+
+				s.Require().Equal(tc.expectedCode, tx.Code, out.String())
 
 				resp, err := clitestutil.QueryBalancesExec(clientCtx, minter)
 				s.NoError(err)
@@ -166,7 +169,6 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 		val,
 		s.cfg.BondDenom,
 	))
-
 	s.NoError(s.network.WaitForNextBlock())
 
 	defaultBondCoinsString := sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(10))).String()
@@ -225,6 +227,8 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 			clientCtx := val.ClientCtx
 
 			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
+			s.Require().NoError(s.network.WaitForNextBlock())
+
 			if tc.expectErr {
 				s.Require().Error(err)
 			} else {
@@ -235,9 +239,9 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 				)
 
 				txResp := tc.respType.(*sdk.TxResponse)
-				err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
+				tx, err := testutilcli.QueryTx(val.ClientCtx, txResp.TxHash)
 				s.NoError(err)
-				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+				s.Require().Equal(tc.expectedCode, tx.Code, out.String())
 
 				resp, err := clitestutil.QueryBalancesExec(clientCtx, burner)
 				s.NoError(err)
