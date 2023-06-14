@@ -31,6 +31,9 @@ func TestOracleThreshold(t *testing.T) {
 	require.NoError(t, err)
 
 	fixture, msgServer := Setup(t)
+	params, _ := fixture.OracleKeeper.Params.Get(fixture.Ctx)
+	params.ExpirationBlocks = 0
+	fixture.OracleKeeper.Params.Set(fixture.Ctx, params)
 
 	// Case 1.
 	// Less than the threshold signs, exchange rate consensus fails
@@ -65,7 +68,7 @@ func TestOracleThreshold(t *testing.T) {
 	fixture.OracleKeeper.UpdateExchangeRates(fixture.Ctx)
 	rate, err := fixture.OracleKeeper.ExchangeRates.Get(fixture.Ctx, exchangeRates[0].Pair)
 	require.NoError(t, err)
-	assert.Equal(t, randomExchangeRate, rate)
+	assert.Equal(t, randomExchangeRate, rate.ExchangeRate)
 
 	// Case 3.
 	// Increase voting power of absent validator, exchange rate consensus fails
@@ -85,6 +88,43 @@ func TestOracleThreshold(t *testing.T) {
 	}
 	fixture.OracleKeeper.UpdateExchangeRates(fixture.Ctx)
 	_, err = fixture.OracleKeeper.ExchangeRates.Get(fixture.Ctx, exchangeRates[0].Pair)
+	assert.Error(t, err)
+}
+
+func TestResetExchangeRates(t *testing.T) {
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	fixture, _ := Setup(t)
+
+	emptyBallot := map[asset.Pair]types.ExchangeRateBallots{}
+	validBallot := map[asset.Pair]types.ExchangeRateBallots{pair: {}}
+
+	// Set expiration blocks to 10
+	params, _ := fixture.OracleKeeper.Params.Get(fixture.Ctx)
+	params.ExpirationBlocks = 10
+	fixture.OracleKeeper.Params.Set(fixture.Ctx, params)
+
+	// Post a price at block 1
+	fixture.OracleKeeper.SetPrice(fixture.Ctx.WithBlockHeight(1), pair, randomExchangeRate)
+
+	// reset exchange rates at block 2
+	// Price should still be there because not expired yet
+	fixture.OracleKeeper.resetExchangeRates(fixture.Ctx.WithBlockHeight(2), emptyBallot)
+	_, err := fixture.OracleKeeper.ExchangeRates.Get(fixture.Ctx, pair)
+	assert.NoError(t, err)
+
+	// reset exchange rates at block 3 but pair is in ballot
+	// Price should be removed there because there was a valid ballot
+	fixture.OracleKeeper.resetExchangeRates(fixture.Ctx.WithBlockHeight(3), validBallot)
+	_, err = fixture.OracleKeeper.ExchangeRates.Get(fixture.Ctx, pair)
+	assert.Error(t, err)
+
+	// Post a price at block 69
+	// reset exchange rates at block 79
+	// Price should not be there anymore because expired
+	fixture.OracleKeeper.SetPrice(fixture.Ctx.WithBlockHeight(69), pair, randomExchangeRate)
+	fixture.OracleKeeper.resetExchangeRates(fixture.Ctx.WithBlockHeight(79), emptyBallot)
+
+	_, err = fixture.OracleKeeper.ExchangeRates.Get(fixture.Ctx, pair)
 	assert.Error(t, err)
 }
 
