@@ -107,10 +107,7 @@ func (pb ExchangeRateBallots) WeightedMedian() sdk.Dec {
 
 // WeightedMedianWithAssertion returns the median weighted by the power of the ExchangeRateVote.
 func (pb ExchangeRateBallots) WeightedMedianWithAssertion() sdk.Dec {
-	if !sort.IsSorted(pb) {
-		panic("ballot must be sorted")
-	}
-
+	sort.Sort(pb)
 	totalPower := pb.Power()
 	if pb.Len() > 0 {
 		pivot := int64(0)

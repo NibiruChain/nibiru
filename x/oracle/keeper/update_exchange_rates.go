@@ -98,7 +98,7 @@ func (k Keeper) resetExchangeRates(ctx sdk.Context, pairBallotsMap map[asset.Pai
 		if validBallot || isExpired {
 			err := k.ExchangeRates.Delete(ctx, key)
 			if err != nil {
-				panic(err)
+				k.Logger(ctx).Error("failed to delete exchange rate", "pair", key.String(), "error", err)
 			}
 		}
 	}

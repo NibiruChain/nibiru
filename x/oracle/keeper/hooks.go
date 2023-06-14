@@ -35,7 +35,8 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64) 
 	if epochIdentifier == types.WeekEpochID {
 		params, err := h.k.Params.Get(ctx)
 		if err != nil {
-			panic(err)
+			h.k.Logger(ctx).Error("failed to get params", "error", err)
+			return
 		}
 
 		account := h.accountKeeper.GetModuleAccount(ctx, perptypes.FeePoolModuleAccount)
