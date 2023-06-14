@@ -29,9 +29,10 @@ var (
 // Default parameter values
 // Assumes block times are 2s
 const (
-	DefaultVotePeriod  = 30   // vote every 1 minute
-	DefaultSlashWindow = 3600 // 2 hours
-	DefaultMinVoters   = 4    // minimum of 4 voters for a pair to become valid
+	DefaultVotePeriod       = 30   // vote every 1 minute
+	DefaultSlashWindow      = 3600 // 2 hours
+	DefaultMinVoters        = 4    // minimum of 4 voters for a pair to become valid
+	DefaultExpirationBlocks = 900  // 30 minutes
 )
 
 // Default parameter values
@@ -78,6 +79,7 @@ func DefaultParams() Params {
 		VotePeriod:         DefaultVotePeriod,
 		VoteThreshold:      DefaultVoteThreshold,
 		MinVoters:          DefaultMinVoters,
+		ExpirationBlocks:   DefaultExpirationBlocks,
 		RewardBand:         DefaultRewardBand,
 		Whitelist:          DefaultWhitelist,
 		SlashFraction:      DefaultSlashFraction,
