@@ -1,9 +1,7 @@
 package assertion
 
 import (
-	"errors"
 	"fmt"
-	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gogo/protobuf/proto"
@@ -40,52 +38,28 @@ func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context)
 			return ctx, err, false
 		}
 
-		fieldErrs := []string{}
 		if !theEvent.PositionNotional.Equal(p.ExpectedEvent.PositionNotional) {
-			err := fmt.Errorf("expected position notional %s, got %s", p.ExpectedEvent.PositionNotional, theEvent.PositionNotional)
-			fieldErrs = append(fieldErrs, err.Error())
+			return ctx, fmt.Errorf("expected position notional %s, got %s", p.ExpectedEvent.PositionNotional, theEvent.PositionNotional), false
 		}
 
 		if !theEvent.TransactionFee.Equal(p.ExpectedEvent.TransactionFee) {
-			err := fmt.Errorf("expected transaction fee %s, got %s", p.ExpectedEvent.TransactionFee, theEvent.TransactionFee)
-			fieldErrs = append(fieldErrs, err.Error())
+			return ctx, fmt.Errorf("expected transaction fee %s, got %s", p.ExpectedEvent.TransactionFee, theEvent.TransactionFee), false
 		}
 
 		if !theEvent.RealizedPnl.Equal(p.ExpectedEvent.RealizedPnl) {
-			err := fmt.Errorf("expected realized pnl %s, got %s", p.ExpectedEvent.RealizedPnl, theEvent.RealizedPnl)
-			fieldErrs = append(fieldErrs, err.Error())
+			return ctx, fmt.Errorf("expected realized pnl %s, got %s", p.ExpectedEvent.RealizedPnl, theEvent.RealizedPnl), false
 		}
 
 		if !theEvent.BadDebt.Equal(p.ExpectedEvent.BadDebt) {
-			err := fmt.Errorf("expected bad debt %s, got %s", p.ExpectedEvent.BadDebt, theEvent.BadDebt)
-			fieldErrs = append(fieldErrs, err.Error())
+			return ctx, fmt.Errorf("expected bad debt %s, got %s", p.ExpectedEvent.BadDebt, theEvent.BadDebt), false
 		}
 
 		if !theEvent.FundingPayment.Equal(p.ExpectedEvent.FundingPayment) {
-			err := fmt.Errorf("expected funding payment %s, got %s", p.ExpectedEvent.FundingPayment, theEvent.FundingPayment)
-			fieldErrs = append(fieldErrs, err.Error())
+			return ctx, fmt.Errorf("expected funding payment %s, got %s", p.ExpectedEvent.FundingPayment, theEvent.FundingPayment), false
 		}
 
 		if theEvent.BlockHeight != p.ExpectedEvent.BlockHeight {
-			err := fmt.Errorf("expected block height %d, got %d", p.ExpectedEvent.BlockHeight, theEvent.BlockHeight)
-			fieldErrs = append(fieldErrs, err.Error())
-		}
-
-		if !theEvent.ExchangedMargin.Equal(p.ExpectedEvent.ExchangedMargin) {
-			err := fmt.Errorf("expected exchanged margin %s, got %s",
-				p.ExpectedEvent.ExchangedMargin, theEvent.ExchangedMargin)
-			fieldErrs = append(fieldErrs, err.Error())
-		}
-
-		if theEvent.ChangeType != p.ExpectedEvent.ChangeType {
-			err := fmt.Errorf("expected change type %s, got %s",
-				p.ExpectedEvent.ChangeType, theEvent.ChangeType)
-			fieldErrs = append(fieldErrs, err.Error())
-		}
-
-		if len(fieldErrs) != 0 {
-			err := strings.Join(fieldErrs, "\n")
-			return ctx, errors.New(err), false
+			return ctx, fmt.Errorf("expected block height %d, got %d", p.ExpectedEvent.BlockHeight, theEvent.BlockHeight), false
 		}
 	}
 
