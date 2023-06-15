@@ -59,7 +59,7 @@ func (k Keeper) clearVotesAndPreVotes(ctx sdk.Context, votePeriod uint64) {
 		if ctx.BlockHeight() >= int64(aggregatePrevote.SubmitBlock+votePeriod) {
 			err := k.Prevotes.Delete(ctx, valAddr)
 			if err != nil {
-				panic(err)
+				k.Logger(ctx).Error("failed to delete prevote", "error", err)
 			}
 		}
 	}
@@ -68,7 +68,7 @@ func (k Keeper) clearVotesAndPreVotes(ctx sdk.Context, votePeriod uint64) {
 	for _, valAddr := range k.Votes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).Keys() {
 		err := k.Votes.Delete(ctx, valAddr)
 		if err != nil {
-			panic(err)
+			k.Logger(ctx).Error("failed to delete vote", "error", err)
 		}
 	}
 }
@@ -141,8 +141,6 @@ func (k Keeper) removeInvalidBallots(
 //
 // ALERT: This function mutates validatorPerformances slice based on the votes made by the validators.
 func Tally(ballots types.ExchangeRateBallots, rewardBand sdk.Dec, validatorPerformances types.ValidatorPerformances) sdk.Dec {
-	sort.Sort(ballots)
-
 	weightedMedian := ballots.WeightedMedianWithAssertion()
 	standardDeviation := ballots.StandardDeviation(weightedMedian)
 	rewardSpread := weightedMedian.Mul(rewardBand.QuoInt64(2))

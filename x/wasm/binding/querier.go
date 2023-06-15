@@ -160,9 +160,6 @@ func (perpExt *PerpQuerier) AllMarkets(
 			TotalShort: pbMarket.Amm.TotalShort,
 			PegMult:    pbMarket.Amm.PriceMultiplier,
 			Config: &cw_struct.MarketConfig{
-				// TradeLimitRatio:        pbMarket.Config.TradeLimitRatio,
-				FluctLimitRatio: pbMarket.Market.PriceFluctuationLimitRatio,
-				// MaxOracleSpreadRatio:   pbMarket.Config.MaxOracleSpreadRatio,
 				MaintenanceMarginRatio: pbMarket.Market.MaintenanceMarginRatio,
 				MaxLeverage:            pbMarket.Market.MaxLeverage,
 			},
