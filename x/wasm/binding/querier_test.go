@@ -110,9 +110,6 @@ func GetHappyFields() ExampleFields {
 		TotalShort:   fields.Dec,
 		PegMult:      fields.Dec,
 		Config: &cw_struct.MarketConfig{
-			TradeLimitRatio:        fields.Dec,
-			FluctLimitRatio:        fields.Dec,
-			MaxOracleSpreadRatio:   fields.Dec,
 			MaintenanceMarginRatio: fields.Dec,
 			MaxLeverage:            fields.Dec,
 		},

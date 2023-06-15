@@ -3,7 +3,6 @@ package keeper
 import (
 	"errors"
 	"fmt"
-	"time"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -205,7 +204,6 @@ func (k Keeper) increasePosition(
 //   - currentPosition: the current position
 //   - decreasedNotional: the amount of notional the user is decreasing by
 //   - baseAmtLimit: the user-specified limit on the base reserves
-//   - skipFluctuationLimitCheck: whether to skip the fluctuation limit check
 //
 // returns:
 //   - updatedAMM: the updated AMM reserves
@@ -235,7 +233,6 @@ func (k Keeper) openReversePosition(
 			currentPosition,
 			notionalToDecreaseBy,
 			baseAmtLimit,
-			/* skipFluctuationLimitCheck */ false,
 		)
 	} else {
 		// close and reverse
@@ -267,7 +264,6 @@ func (k Keeper) openReversePosition(
 //   - currentPosition: the current position
 //   - decreasedNotional: the amount of notional the user is decreasing by
 //   - baseAmtLimit: the user-specified limit on the base reserves
-//   - skipFluctuationLimitCheck: whether to skip the fluctuation limit check
 //
 // returns:
 //   - updatedAMM: the updated AMM reserves
@@ -280,7 +276,6 @@ func (k Keeper) decreasePosition(
 	currentPosition types.Position,
 	decreasedNotional sdk.Dec,
 	baseAmtLimit sdk.Dec,
-	skipFluctuationLimitCheck bool,
 ) (updatedAMM *types.AMM, positionResp *types.PositionResp, err error) {
 	if currentPosition.Size_.IsZero() {
 		return nil, nil, fmt.Errorf("current position size is zero, nothing to decrease")
@@ -537,11 +532,6 @@ func (k Keeper) afterPositionUpdate(
 		return fmt.Errorf("bad debt must be zero to prevent attacker from leveraging it")
 	}
 
-	// check price fluctuation
-	if err := k.checkPriceFluctuationLimitRatio(ctx, market, amm); err != nil {
-		return err
-	}
-
 	if !positionResp.Position.Size_.IsZero() {
 		err = k.checkMarginRatio(ctx, market, amm, positionResp.Position)
 		if err != nil {
@@ -683,40 +673,6 @@ func (k Keeper) transferFee(
 	return feeToExchangeFeePool.Add(feeToEcosystemFund), nil
 }
 
-// checks that the mark price of the pool does not violate the fluctuation limit
-//
-// args:
-//   - ctx: the cosmos-sdk context
-//   - market: the perp market
-//   - amm: the amm reserves
-//
-// returns:
-//   - err: error if any
-func (k Keeper) checkPriceFluctuationLimitRatio(ctx sdk.Context, market types.Market, amm types.AMM) error {
-	if market.PriceFluctuationLimitRatio.IsZero() {
-		// early return to avoid expensive state operations
-		return nil
-	}
-
-	it := k.ReserveSnapshots.Iterate(ctx, collections.PairRange[asset.Pair, time.Time]{}.Prefix(amm.Pair).Descending())
-	defer it.Close()
-
-	if !it.Valid() {
-		return fmt.Errorf("error getting last snapshot number for pair %s", amm.Pair)
-	}
-
-	snapshotMarkPrice := it.Value().Amm.MarkPrice()
-	snapshotUpperLimit := snapshotMarkPrice.Mul(sdk.OneDec().Add(market.PriceFluctuationLimitRatio))
-	snapshotLowerLimit := snapshotMarkPrice.Mul(sdk.OneDec().Sub(market.PriceFluctuationLimitRatio))
-
-	if amm.MarkPrice().GT(snapshotUpperLimit) || amm.MarkPrice().LT(snapshotLowerLimit) {
-		return types.ErrOverFluctuationLimit.Wrapf("candidate mark price %s is not within the fluctuation limit [%s, %s]",
-			amm.MarkPrice(), snapshotLowerLimit, snapshotUpperLimit)
-	}
-
-	return nil
-}
-
 // ClosePosition closes a position entirely and transfers the remaining margin back to the user.
 // Errors if the position has bad debt.
 //
@@ -791,7 +747,6 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.A
 //   - amm: the amm reserves
 //   - currentPosition: the existing position
 //   - quoteAssetAmountLimit: the user-specified limit on the quote asset reserves
-//   - skipFluctuationLimitCheck: whether to skip the fluctuation check
 //
 // returns:
 //   - updatedAMM: updated AMM reserves
