@@ -160,6 +160,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1421](https://github.com/NibiruChain/nibiru/pull/1421) - feat(oracle): add expiry time to oracle prices
 * [#1422](https://github.com/NibiruChain/nibiru/pull/1422) - fix(oracle): handle zero oracle rewards
 * [#1426](https://github.com/NibiruChain/nibiru/pull/1426) - refactor(perp): remove price fluctuation limit check
+* [#1423](https://github.com/NibiruChain/nibiru/pull/1423) - fix: remove panics from abci hooks
 
 ### Bug Fixes
 
