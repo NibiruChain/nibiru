@@ -28,7 +28,6 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 		pairName        string
 		sqrtDepth       string
 		priceMultiplier string
-		flucLimit       string
 		maintainRatio   string
 		maxLeverage     string
 		expectError     bool
@@ -38,7 +37,6 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			pairName:        "",
 			sqrtDepth:       "1",
 			priceMultiplier: "1",
-			flucLimit:       "1",
 			maintainRatio:   "1",
 			maxLeverage:     "1",
 			expectError:     true,
@@ -48,7 +46,6 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			pairName:        "token0:token1:token2",
 			sqrtDepth:       "1",
 			priceMultiplier: "1",
-			flucLimit:       "1",
 			maintainRatio:   "1",
 			maxLeverage:     "1",
 			expectError:     true,
@@ -58,7 +55,6 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			pairName:        "token0:token1",
 			sqrtDepth:       "",
 			priceMultiplier: "1",
-			flucLimit:       "1",
 			maintainRatio:   "1",
 			maxLeverage:     "1",
 			expectError:     true,
@@ -68,7 +64,6 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			pairName:        "token0:token1",
 			sqrtDepth:       "100",
 			priceMultiplier: "1",
-			flucLimit:       "0.1",
 			maintainRatio:   "0.1",
 			maxLeverage:     "0",
 			expectError:     true,
@@ -78,7 +73,6 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			pairName:        "token0:token1",
 			sqrtDepth:       "100",
 			priceMultiplier: "0",
-			flucLimit:       "0.1",
 			maintainRatio:   "0.1",
 			maxLeverage:     "1",
 			expectError:     true,
@@ -88,7 +82,6 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			pairName:        "token0:token1",
 			sqrtDepth:       "100",
 			priceMultiplier: "-1",
-			flucLimit:       "0.1",
 			maintainRatio:   "0.1",
 			maxLeverage:     "1",
 			expectError:     true,
@@ -98,7 +91,6 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			pairName:        "token0:token1",
 			sqrtDepth:       "100",
 			priceMultiplier: "1",
-			flucLimit:       "0.1",
 			maintainRatio:   "0.1",
 			maxLeverage:     "10",
 			expectError:     false,
@@ -130,7 +122,6 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 				fmt.Sprintf("--%s=%s", cli.FlagPair, tc.pairName),
 				fmt.Sprintf("--%s=%s", cli.FlagSqrtDepth, tc.sqrtDepth),
 				fmt.Sprintf("--%s=%s", cli.FlagPriceMultiplier, tc.priceMultiplier),
-				fmt.Sprintf("--%s=%s", cli.FlagPriceFluctuationLimit, tc.flucLimit),
 				fmt.Sprintf("--%s=%s", cli.FlagMaintenenceMarginRatio, tc.maintainRatio),
 				fmt.Sprintf("--%s=%s", cli.FlagMaxLeverage, tc.maxLeverage),
 				fmt.Sprintf("--%s=home", flags.FlagHome),
