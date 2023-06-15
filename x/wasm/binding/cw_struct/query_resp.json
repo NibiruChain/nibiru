@@ -11,9 +11,6 @@
         "total_short": "69",
         "peg_mult": "420",
         "config": {
-          "trade_limit_ratio": "420",
-          "fluct_limit_ratio": "420",
-          "max_oracle_spread_ratio": "420",
           "maintenance_margin_ratio": "420",
           "max_leverage": "420"
         },

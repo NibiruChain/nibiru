@@ -44,21 +44,14 @@ message Market {
   // whether or not the market is enabled
   bool enabled = 2;
 
-  // percentage that a single open or close position can alter the reserve
-  // amounts
-  string price_fluctuation_limit_ratio = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-
   // the minimum margin ratio which a user must maintain on this market
-  string maintenance_margin_ratio = 4 [
+  string maintenance_margin_ratio = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
   // the maximum leverage a user is able to be taken on this market
-  string max_leverage = 5 [
+  string max_leverage = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
@@ -67,20 +60,20 @@ message Market {
   // Calculated once per funding rate interval.
   // A premium fraction is the difference between mark and index, divided by the
   // number of payments per day. (mark - index) / # payments in a day
-  string latest_cumulative_premium_fraction = 6 [
+  string latest_cumulative_premium_fraction = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
   // the percentage of the notional given to the exchange when trading
-  string exchange_fee_ratio = 7 [
+  string exchange_fee_ratio = 6 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
   // the percentage of the notional transferred to the ecosystem fund when
   // trading
-  string ecosystem_fund_fee_ratio = 8 [
+  string ecosystem_fund_fee_ratio = 7 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
@@ -88,27 +81,27 @@ message Market {
   // the percentage of liquidated position that will be
   // given to out as a reward. Half of the liquidation fee is given to the
   // liquidator, and the other half is given to the ecosystem fund.
-  string liquidation_fee_ratio = 9 [
+  string liquidation_fee_ratio = 8 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
   // the portion of the position size we try to liquidate if the available
   // margin is higher than liquidation fee
-  string partial_liquidation_ratio = 10 [
+  string partial_liquidation_ratio = 9 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
   // specifies the interval on which the funding rate is updated
-  string funding_rate_epoch_id = 11;
+  string funding_rate_epoch_id = 10;
 
   // amount of time to look back for TWAP calculations
-  google.protobuf.Duration twap_lookback_window = 12
+  google.protobuf.Duration twap_lookback_window = 11
       [ (gogoproto.nullable) = false, (gogoproto.stdduration) = true ];
 
   // the amount of collateral already credited from the ecosystem fund
-  cosmos.base.v1beta1.Coin prepaid_bad_debt = 13
+  cosmos.base.v1beta1.Coin prepaid_bad_debt = 12
       [ (gogoproto.nullable) = false ];
 }
 

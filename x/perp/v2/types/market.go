@@ -13,10 +13,6 @@ func isPercent(v sdk.Dec) bool {
 }
 
 func (market *Market) Validate() error {
-	if !isPercent(market.PriceFluctuationLimitRatio) {
-		return fmt.Errorf("fluctuation limit ratio must be 0 <= ratio <= 1")
-	}
-
 	if !isPercent(market.MaintenanceMarginRatio) {
 		return fmt.Errorf("maintenance margin ratio ratio must be 0 <= ratio <= 1")
 	}
@@ -46,11 +42,6 @@ func (market *Market) Validate() error {
 	}
 
 	return nil
-}
-
-func (market *Market) WithPriceFluctuationLimitRatio(value sdk.Dec) *Market {
-	market.PriceFluctuationLimitRatio = value
-	return market
 }
 
 func (market *Market) WithMaintenanceMarginRatio(value sdk.Dec) *Market {
@@ -101,10 +92,6 @@ func (market *Market) WithLatestCumulativePremiumFraction(value sdk.Dec) *Market
 func MarketsAreEqual(expected, actual *Market) error {
 	if expected.Pair != actual.Pair {
 		return fmt.Errorf("expected market pair %s, got %s", expected.Pair, actual.Pair)
-	}
-
-	if !expected.PriceFluctuationLimitRatio.Equal(actual.PriceFluctuationLimitRatio) {
-		return fmt.Errorf("expected market price fluctuation limit ratio %s, got %s", expected.PriceFluctuationLimitRatio, actual.PriceFluctuationLimitRatio)
 	}
 
 	if !expected.MaintenanceMarginRatio.Equal(actual.MaintenanceMarginRatio) {

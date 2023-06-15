@@ -212,7 +212,6 @@ func (exec *ExecutorPerp) CreateMarket(
 		market = perpv2types.Market{
 			Pair:                            pair,
 			Enabled:                         true,
-			PriceFluctuationLimitRatio:      mp.PriceFluctuationLimitRatio,
 			MaintenanceMarginRatio:          mp.MaintenanceMarginRatio,
 			MaxLeverage:                     mp.MaxLeverage,
 			LatestCumulativePremiumFraction: mp.LatestCumulativePremiumFraction,

@@ -107,9 +107,6 @@ type CreateMarket struct {
 type MarketParams struct {
 	Pair    string
 	Enabled bool `json:"enabled,omitempty"`
-	// percentage that a single open or close position can alter the reserve
-	// amounts
-	PriceFluctuationLimitRatio sdk.Dec
 	// the minimum margin ratio which a user must maintain on this market
 	MaintenanceMarginRatio sdk.Dec `json:"maintenance_margin_ratio"`
 	// the maximum leverage a user is able to be taken on this market

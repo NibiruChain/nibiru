@@ -7,13 +7,11 @@ import sdkerrors "cosmossdk.io/errors"
 // other developers to know which "code" value should be used next.
 
 var (
-	ErrPairNotSupported     = sdkerrors.Register(ModuleName, 1, "pair not supported")
-	ErrOverTradingLimit     = sdkerrors.Register(ModuleName, 2, "over trading limit")
-	ErrQuoteReserveAtZero   = sdkerrors.Register(ModuleName, 3, "quote reserve after at zero")
-	ErrBaseReserveAtZero    = sdkerrors.Register(ModuleName, 4, "base reserve after at zero")
-	ErrNoLastSnapshotSaved  = sdkerrors.Register(ModuleName, 5, "There was no last snapshot, could be that you did not do snapshot on pool creation")
-	ErrOverFluctuationLimit = sdkerrors.Register(ModuleName, 6, "price is over fluctuation limit")
-	ErrAssetFailsUserLimit  = sdkerrors.Register(ModuleName, 7, "amount of assets traded does not meet user-defined limit")
+	ErrPairNotSupported    = sdkerrors.Register(ModuleName, 1, "pair not supported")
+	ErrQuoteReserveAtZero  = sdkerrors.Register(ModuleName, 2, "quote reserve after at zero")
+	ErrBaseReserveAtZero   = sdkerrors.Register(ModuleName, 3, "base reserve after at zero")
+	ErrNoLastSnapshotSaved = sdkerrors.Register(ModuleName, 4, "There was no last snapshot, could be that you did not do snapshot on pool creation")
+	ErrAssetFailsUserLimit = sdkerrors.Register(ModuleName, 5, "amount of assets traded does not meet user-defined limit")
 
 	// Price-related errors
 	ErrNoValidPrice = sdkerrors.Register(ModuleName, 8, "no valid prices available")

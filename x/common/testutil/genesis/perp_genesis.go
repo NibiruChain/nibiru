@@ -23,7 +23,6 @@ func AddPerpV2Genesis(gen app.GenesisState) app.GenesisState {
 			Market: perpv2types.Market{
 				Pair:                            asset.NewPair(denoms.BTC, denoms.NUSD),
 				Enabled:                         true,
-				PriceFluctuationLimitRatio:      sdk.MustNewDecFromStr("0.1"),
 				MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.04"),
 				MaxLeverage:                     sdk.MustNewDecFromStr("20"),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -49,7 +48,6 @@ func AddPerpV2Genesis(gen app.GenesisState) app.GenesisState {
 			Market: perpv2types.Market{
 				Pair:                            asset.NewPair(denoms.ATOM, denoms.NUSD),
 				Enabled:                         true,
-				PriceFluctuationLimitRatio:      sdk.MustNewDecFromStr("0.1"),
 				MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:                     sdk.MustNewDecFromStr("15"),
 				ExchangeFeeRatio:                sdk.MustNewDecFromStr("0.0010"),
@@ -75,7 +73,6 @@ func AddPerpV2Genesis(gen app.GenesisState) app.GenesisState {
 			Market: perpv2types.Market{
 				Pair:                            asset.NewPair(denoms.OSMO, denoms.NUSD),
 				Enabled:                         true,
-				PriceFluctuationLimitRatio:      sdk.MustNewDecFromStr("0.1"),
 				MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.0625"),
 				MaxLeverage:                     sdk.MustNewDecFromStr("15"),
 				ExchangeFeeRatio:                sdk.MustNewDecFromStr("0.0010"),
@@ -126,7 +123,6 @@ var START_MARKETS = map[asset.Pair]perpv2types.AmmMarket{
 		Market: perpv2types.Market{
 			Pair:                            asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 			Enabled:                         true,
-			PriceFluctuationLimitRatio:      sdk.MustNewDecFromStr("0.2"),
 			MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:                     sdk.MustNewDecFromStr("15"),
 			LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -152,7 +148,6 @@ var START_MARKETS = map[asset.Pair]perpv2types.AmmMarket{
 		Market: perpv2types.Market{
 			Pair:                            asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 			Enabled:                         true,
-			PriceFluctuationLimitRatio:      sdk.MustNewDecFromStr("0.2"),
 			MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.04"),
 			MaxLeverage:                     sdk.MustNewDecFromStr("20"),
 			LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -182,7 +177,6 @@ func PerpV2Genesis() *perpv2types.GenesisState {
 			{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Enabled:                         true,
-				PriceFluctuationLimitRatio:      sdk.MustNewDecFromStr("0.2"),
 				MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.04"),
 				MaxLeverage:                     sdk.MustNewDecFromStr("20"),
 				LatestCumulativePremiumFraction: sdk.ZeroDec(),

@@ -356,7 +356,6 @@ func (k Keeper) executePartialLiquidation(
 		/* currentPosition */ *currentPosition,
 		/* quoteAssetAmount */ quoteAssetDelta,
 		/* baseAmtLimit */ sdk.ZeroDec(),
-		/* skipFluctuationLimitCheck */ true,
 	)
 	if err != nil {
 		return types.LiquidateResp{}, err

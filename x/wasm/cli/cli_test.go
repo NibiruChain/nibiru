@@ -54,7 +54,6 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		{
 			Pair:                            asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 			Enabled:                         true,
-			PriceFluctuationLimitRatio:      sdk.MustNewDecFromStr("0.2"),
 			MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.0625"),
 			MaxLeverage:                     sdk.MustNewDecFromStr("15"),
 			LatestCumulativePremiumFraction: sdk.ZeroDec(),
