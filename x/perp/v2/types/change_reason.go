@@ -1,5 +1,7 @@
 package types
 
+import "encoding/json"
+
 type customProtobufType interface {
 	Marshal() ([]byte, error)
 	MarshalTo(data []byte) (n int, err error)
@@ -40,10 +42,17 @@ func (c *ChangeReason) Unmarshal(data []byte) error {
 }
 
 func (c *ChangeReason) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + *c + "\""), nil
+	return json.Marshal(*c)
 }
 
 func (c *ChangeReason) UnmarshalJSON(data []byte) error {
-	*c = ChangeReason(data)
+	var s string
+
+	err := json.Unmarshal(data, &s)
+	if err != nil {
+		return err
+	}
+
+	*c = ChangeReason(s)
 	return nil
 }
