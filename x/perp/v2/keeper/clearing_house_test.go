@@ -627,6 +627,86 @@ func TestOpenPosition(t *testing.T) {
 			Then(
 				PositionShouldNotExist(alice, pairBtcUsdc),
 			),
+
+		TC("position should not exist after opening a closing manually").
+			Given(
+				SetBlockTime(startBlockTime),
+				SetBlockNumber(1),
+				CreateCustomMarket(pairBtcUsdc, WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
+				SetOraclePrice(pairBtcUsdc, sdk.NewDec(25_000)),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(20_000_000_000+20_000_000)))),
+			).
+			When(
+				OpenPosition(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
+				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
+			).
+			Then(
+				PositionShouldNotExist(alice, pairBtcUsdc),
+			),
+
+		TC("position should not exist after opening a closing manually - reverse with leverage").
+			Given(
+				SetBlockTime(startBlockTime),
+				SetBlockNumber(1),
+				CreateCustomMarket(pairBtcUsdc, WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
+				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+			).
+			When(
+				OpenPosition(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(100_000), sdk.OneDec(), sdk.ZeroDec()),
+				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(50_000), sdk.NewDec(2), sdk.ZeroDec()),
+			).
+			Then(
+				PositionShouldNotExist(alice, pairBtcUsdc),
+			),
+		TC("position should not exist after opening a closing manually - open with leverage").
+			Given(
+				SetBlockTime(startBlockTime),
+				SetBlockNumber(1),
+				CreateCustomMarket(pairBtcUsdc, WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
+				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+			).
+			When(
+				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(50_000), sdk.NewDec(2), sdk.ZeroDec()),
+				OpenPosition(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(100_000), sdk.OneDec(), sdk.ZeroDec()),
+			).
+			Then(
+				PositionShouldNotExist(alice, pairBtcUsdc),
+			),
+
+		TC("position should not exist after opening a closing manually - reverse with leverage").
+			Given(
+				SetBlockTime(startBlockTime),
+				SetBlockNumber(1),
+				CreateCustomMarket(pairBtcUsdc, WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
+				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+			).
+			When(
+				OpenPosition(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(100_000), sdk.OneDec(), sdk.ZeroDec()),
+				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(50_000), sdk.NewDec(2), sdk.ZeroDec()),
+			).
+			Then(
+				PositionShouldNotExist(alice, pairBtcUsdc),
+			),
+
+		TC("position should not exist after opening a closing manually - reverse with leverage - more steps").
+			Given(
+				SetBlockTime(startBlockTime),
+				SetBlockNumber(1),
+				CreateCustomMarket(pairBtcUsdc, WithPricePeg(sdk.MustNewDecFromStr("25000"))),
+				SetOraclePrice(pairBtcUsdc, sdk.NewDec(2)),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+			).
+			When(
+				OpenPosition(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(100_000), sdk.OneDec(), sdk.ZeroDec()),
+				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(50_000), sdk.NewDec(4), sdk.ZeroDec()),
+				OpenPosition(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(50_000), sdk.NewDec(2), sdk.ZeroDec()),
+			).
+			Then(
+				PositionShouldNotExist(alice, pairBtcUsdc),
+			),
 	}
 
 	NewTestSuite(t).WithTestCases(tc...).Run()

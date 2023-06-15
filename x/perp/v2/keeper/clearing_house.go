@@ -408,70 +408,83 @@ func (k Keeper) closeAndOpenReversePosition(
 	reverseNotionalValue := leverage.Mul(quoteAssetAmount)
 	remainingReverseNotionalValue := reverseNotionalValue.Sub(
 		closePositionResp.ExchangedNotionalValue)
-
-	var increasePositionResp *types.PositionResp
 	if remainingReverseNotionalValue.IsNegative() {
-		// should never happen as this should also be checked in the caller
+		// should never happen as openReversePosition should have checked this
 		return nil, nil, fmt.Errorf(
 			"provided quote asset amount and leverage not large enough to close position. need %s but got %s",
 			closePositionResp.ExchangedNotionalValue, reverseNotionalValue)
-	} else if remainingReverseNotionalValue.IsPositive() {
-		updatedBaseAmtLimit := baseAmtLimit
-		if baseAmtLimit.IsPositive() {
-			updatedBaseAmtLimit = baseAmtLimit.Sub(closePositionResp.ExchangedPositionSize.Abs())
-		}
-		if updatedBaseAmtLimit.IsNegative() {
-			return nil, nil, fmt.Errorf(
-				"position size changed by greater than the specified base limit: %s",
-				baseAmtLimit,
-			)
-		}
+	}
 
-		var sideToTake types.Direction
-		// flipped since we are going against the current position
-		if existingPosition.Size_.IsPositive() {
-			sideToTake = types.Direction_SHORT
-		} else {
-			sideToTake = types.Direction_LONG
-		}
-
-		newPosition := types.ZeroPosition(
-			ctx,
-			existingPosition.Pair,
-			trader,
-		)
-		updatedAMM, increasePositionResp, err = k.increasePosition(
-			ctx,
-			market,
-			*updatedAMM,
-			newPosition,
-			sideToTake,
-			remainingReverseNotionalValue,
-			updatedBaseAmtLimit,
-			leverage,
-		)
-		if err != nil {
-			return nil, nil, err
-		}
-		err = k.checkMarginRatio(ctx, market, amm, increasePositionResp.Position)
-		if err != nil {
-			return
-		}
-
-		positionResp = &types.PositionResp{
-			Position:               increasePositionResp.Position,
-			PositionNotional:       increasePositionResp.PositionNotional,
-			ExchangedNotionalValue: closePositionResp.ExchangedNotionalValue.Add(increasePositionResp.ExchangedNotionalValue),
-			BadDebt:                closePositionResp.BadDebt.Add(increasePositionResp.BadDebt),
-			ExchangedPositionSize:  closePositionResp.ExchangedPositionSize.Add(increasePositionResp.ExchangedPositionSize),
-			FundingPayment:         closePositionResp.FundingPayment.Add(increasePositionResp.FundingPayment),
-			RealizedPnl:            closePositionResp.RealizedPnl.Add(increasePositionResp.RealizedPnl),
-			MarginToVault:          closePositionResp.MarginToVault.Add(increasePositionResp.MarginToVault),
-			UnrealizedPnlAfter:     sdk.ZeroDec(),
-		}
+	var sideToTake types.Direction
+	// flipped since we are going against the current position
+	if existingPosition.Size_.IsPositive() {
+		sideToTake = types.Direction_SHORT
 	} else {
-		// case where remaining open notional == 0
-		positionResp = closePositionResp
+		sideToTake = types.Direction_LONG
+	}
+
+	_, sizeAvailable, err := k.SwapQuoteAsset(
+		ctx,
+		market,
+		amm,
+		sideToTake,
+		remainingReverseNotionalValue,
+		baseAmtLimit,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if sizeAvailable.IsZero() {
+		// nothing to do
+		return updatedAMM, closePositionResp, nil
+	}
+
+	var increasePositionResp *types.PositionResp
+	updatedBaseAmtLimit := baseAmtLimit
+	if baseAmtLimit.IsPositive() {
+		updatedBaseAmtLimit = baseAmtLimit.Sub(closePositionResp.ExchangedPositionSize.Abs())
+	}
+	if updatedBaseAmtLimit.IsNegative() {
+		return nil, nil, fmt.Errorf(
+			"position size changed by greater than the specified base limit: %s",
+			baseAmtLimit,
+		)
+	}
+
+	newPosition := types.ZeroPosition(
+		ctx,
+		existingPosition.Pair,
+		trader,
+	)
+	updatedAMM, increasePositionResp, err = k.increasePosition(
+		ctx,
+		market,
+		*updatedAMM,
+		newPosition,
+		sideToTake,
+		remainingReverseNotionalValue,
+		updatedBaseAmtLimit,
+		leverage,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	err = k.checkMarginRatio(ctx, market, amm, increasePositionResp.Position)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	positionResp = &types.PositionResp{
+		Position:               increasePositionResp.Position,
+		PositionNotional:       increasePositionResp.PositionNotional,
+		ExchangedNotionalValue: closePositionResp.ExchangedNotionalValue.Add(increasePositionResp.ExchangedNotionalValue),
+		BadDebt:                closePositionResp.BadDebt.Add(increasePositionResp.BadDebt),
+		ExchangedPositionSize:  closePositionResp.ExchangedPositionSize.Add(increasePositionResp.ExchangedPositionSize),
+		FundingPayment:         closePositionResp.FundingPayment.Add(increasePositionResp.FundingPayment),
+		RealizedPnl:            closePositionResp.RealizedPnl.Add(increasePositionResp.RealizedPnl),
+		MarginToVault:          closePositionResp.MarginToVault.Add(increasePositionResp.MarginToVault),
+		UnrealizedPnlAfter:     sdk.ZeroDec(),
 	}
 
 	return updatedAMM, positionResp, nil
