@@ -170,6 +170,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1383](https://github.com/NibiruChain/nibiru/pull/1383) - feat: enforce contract to be whitelisted when calling perp bindings
 * [#1397](https://github.com/NibiruChain/nibiru/pull/1397) - fix: ensure margin is high enough when removing it
 * [#1417](https://github.com/NibiruChain/nibiru/pull/1417) - fix: run end blocker on block end for perp v2
+* [#1425](https://github.com/NibiruChain/nibiru/pull/1425) - fix: remove positions from state when closed with reverse position
 
 ## [v0.19.2](https://github.com/NibiruChain/nibiru/releases/tag/v0.19.2) - 2023-02-24
 
