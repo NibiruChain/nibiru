@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"sort"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/collections"
@@ -13,12 +15,13 @@ import (
 // UpdateExchangeRates updates the ExchangeRates, this is supposed to be executed on EndBlock.
 func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 	k.Logger(ctx).Info("processing validator price votes")
-	k.resetExchangeRates(ctx)
 
 	validatorPerformances := k.newValidatorPerformances(ctx)
 	pairBallotsMap, whitelistedPairs := k.getPairBallotsMapAndWhitelistedPairs(ctx, validatorPerformances)
 
+	k.resetExchangeRates(ctx, pairBallotsMap)
 	k.countVotesAndUpdateExchangeRates(ctx, pairBallotsMap, validatorPerformances)
+
 	k.registerMissedVotes(ctx, whitelistedPairs, validatorPerformances)
 	k.rewardBallotWinners(ctx, validatorPerformances)
 
@@ -47,7 +50,16 @@ func (k Keeper) countVotesAndUpdateExchangeRates(
 ) {
 	rewardBand := k.RewardBand(ctx)
 
-	for pair, ballots := range pairBallotsMap {
+	// Iterate through sorted keys for deterministic ordering.
+	// For more info, see: https://github.com/NibiruChain/nibiru/issues/1374#issue-1715353299
+	var pairs []string
+	for pair := range pairBallotsMap {
+		pairs = append(pairs, pair.String())
+	}
+	sort.Strings(pairs)
+	for _, pairStr := range pairs {
+		pair := asset.Pair(pairStr)
+		ballots := pairBallotsMap[pair]
 		exchangeRate := Tally(ballots, rewardBand, validatorPerformances)
 
 		k.SetPrice(ctx, pair, exchangeRate)
@@ -73,11 +85,21 @@ func (k Keeper) getPairBallotsMapAndWhitelistedPairs(
 }
 
 // resetExchangeRates removes all exchange rates from the state
-func (k Keeper) resetExchangeRates(ctx sdk.Context) {
+// We remove the price for pair with expired prices or valid ballots
+func (k Keeper) resetExchangeRates(ctx sdk.Context, pairBallotsMap map[asset.Pair]types.ExchangeRateBallots) {
+	params, _ := k.Params.Get(ctx)
+	expirationBlocks := params.ExpirationBlocks
+
 	for _, key := range k.ExchangeRates.Iterate(ctx, collections.Range[asset.Pair]{}).Keys() {
-		err := k.ExchangeRates.Delete(ctx, key)
-		if err != nil {
-			panic(err)
+		_, validBallot := pairBallotsMap[key]
+		exchangeRate, _ := k.ExchangeRates.Get(ctx, key)
+		isExpired := exchangeRate.CreatedBlock+expirationBlocks <= uint64(ctx.BlockHeight())
+
+		if validBallot || isExpired {
+			err := k.ExchangeRates.Delete(ctx, key)
+			if err != nil {
+				k.Logger(ctx).Error("failed to delete exchange rate", "pair", key.String(), "error", err)
+			}
 		}
 	}
 }

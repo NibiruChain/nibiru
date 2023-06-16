@@ -19,3 +19,6 @@ lint:
     - PACKAGE_VERSION_SUFFIX
     - RPC_REQUEST_STANDARD_NAME
     - PACKAGE_DIRECTORY_MATCH
+
+  ignore:
+    - tendermint

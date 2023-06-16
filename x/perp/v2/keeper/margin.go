@@ -80,6 +80,8 @@ func (k Keeper) AddMargin(
 			BadDebt:          sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
 			FundingPayment:   fundingPayment,
 			BlockHeight:      ctx.BlockHeight(),
+			ExchangedMargin:  marginToAdd.Amount.Neg(),
+			ChangeType:       "add_margin",
 		},
 	); err != nil {
 		return nil, err
@@ -159,14 +161,19 @@ func (k Keeper) RemoveMargin(
 		)
 	}
 
-	if err = k.Withdraw(ctx, market, traderAddr, marginToRemove.Amount); err != nil {
-		return nil, err
-	}
-
 	// apply funding payment and remove margin
 	position.Margin = position.Margin.Sub(fundingPayment).Sub(sdk.NewDecFromInt(marginToRemove.Amount))
 	position.LatestCumulativePremiumFraction = market.LatestCumulativePremiumFraction
 	position.LastUpdatedBlockNumber = ctx.BlockHeight()
+
+	err = k.checkMarginRatio(ctx, market, amm, position)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = k.WithdrawFromVault(ctx, market, traderAddr, marginToRemove.Amount); err != nil {
+		return nil, err
+	}
 	k.Positions.Insert(ctx, collections.Join(position.Pair, traderAddr), position)
 
 	if err = ctx.EventManager().EmitTypedEvent(
@@ -178,6 +185,8 @@ func (k Keeper) RemoveMargin(
 			BadDebt:          sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when removing margin
 			FundingPayment:   fundingPayment,
 			BlockHeight:      ctx.BlockHeight(),
+			ExchangedMargin:  marginToRemove.Amount,
+			ChangeType:       "remove_margin",
 		},
 	); err != nil {
 		return nil, err

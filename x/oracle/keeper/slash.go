@@ -35,7 +35,7 @@ func (k Keeper) SlashAndResetMissCounters(ctx sdk.Context) {
 			if validator.IsBonded() && !validator.IsJailed() {
 				consAddr, err := validator.GetConsAddr()
 				if err != nil {
-					panic(err)
+					k.Logger(ctx).Error("fail to get consensus address", "validator", validator.GetOperator().String())
 				}
 
 				k.StakingKeeper.Slash(
@@ -49,7 +49,7 @@ func (k Keeper) SlashAndResetMissCounters(ctx sdk.Context) {
 
 		err := k.MissCounters.Delete(ctx, operator)
 		if err != nil {
-			panic(err)
+			k.Logger(ctx).Error("fail to delete miss counter", "operator", operator.String(), "error", err)
 		}
 	}
 }

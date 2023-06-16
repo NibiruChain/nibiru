@@ -17,7 +17,7 @@ endif
 
 
 OS_NAME := $(shell uname -s | tr A-Z a-z)
-ifeq ($(shell uname -p),x86_64)
+ifeq ($(shell uname -m),x86_64)
 	ARCH_NAME := amd64
 else
 	ARCH_NAME := arm64

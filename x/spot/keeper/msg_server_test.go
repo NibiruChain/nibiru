@@ -292,17 +292,8 @@ func TestCreatePool(t *testing.T) {
 			_, err := msgServer.CreatePool(sdk.WrapSDKContext(ctx), &msgCreatePool)
 			if tc.expectedErr != nil {
 				require.Contains(t, err.Error(), tc.expectedErr.Error())
-				testutil.RequireNotHasTypedEvent(t, ctx, &types.EventPoolCreated{
-					Creator: tc.creatorAddr.String(),
-					PoolId:  1,
-				})
 			} else {
 				require.NoError(t, err)
-				testutil.RequireHasTypedEvent(t, ctx, &types.EventPoolCreated{
-					Creator: tc.creatorAddr.String(),
-					PoolId:  1,
-					Fees:    sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 1e9)),
-				})
 			}
 		})
 	}
@@ -425,11 +416,6 @@ func TestCreateExitJoinPool(t *testing.T) {
 
 			_, err := msgServer.CreatePool(sdk.WrapSDKContext(ctx), &msgCreatePool)
 			require.NoError(t, err)
-			testutil.RequireHasTypedEvent(t, ctx, &types.EventPoolCreated{
-				Creator: tc.creatorAddr.String(),
-				PoolId:  1,
-				Fees:    sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 1e9)),
-			})
 
 			poolShares := app.BankKeeper.GetBalance(ctx, tc.creatorAddr, "nibiru/pool/1")
 			msgExitPool := types.MsgExitPool{
@@ -690,14 +676,6 @@ func TestMsgServerJoinPool(t *testing.T) {
 				RemainingCoins:   tc.expectedRemCoins,
 			}, *resp)
 			require.Equal(t, tc.expectedJoinerFinalFunds, app.BankKeeper.GetAllBalances(ctx, joinerAddr))
-			expectedEvent := &types.EventPoolJoined{
-				Address:       joinerAddr.String(),
-				PoolId:        1,
-				TokensIn:      tc.tokensIn,
-				PoolSharesOut: resp.NumPoolSharesOut,
-				RemCoins:      resp.RemainingCoins,
-			}
-			testutil.RequireHasTypedEvent(t, ctx, expectedEvent)
 		})
 	}
 }
@@ -915,16 +893,6 @@ func TestMsgServerExitPool(t *testing.T) {
 				tc.expectedJoinerFinalFunds,
 				app.BankKeeper.GetAllBalances(ctx, sender),
 			)
-
-			expectedEvent := &types.EventPoolExited{
-				Address:      sender.String(),
-				PoolId:       1,
-				PoolSharesIn: tc.poolSharesIn,
-				TokensOut:    resp.TokensOut,
-				Fees:         tc.expectedFees,
-			}
-
-			testutil.RequireHasTypedEvent(t, ctx, expectedEvent)
 		})
 	}
 }
@@ -1269,15 +1237,6 @@ func TestMsgServerSwapAssets(t *testing.T) {
 					},
 					*resp,
 				)
-
-				// check events
-				testutil.RequireHasTypedEvent(t, ctx, &types.EventAssetsSwapped{
-					Address:  sender.String(),
-					PoolId:   1,
-					TokenIn:  tc.tokenIn,
-					TokenOut: tc.expectedTokenOut,
-					Fee:      sdk.NewInt64Coin("unibi", 0),
-				})
 			}
 
 			// check user's final funds

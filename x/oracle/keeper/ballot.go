@@ -59,7 +59,7 @@ func (k Keeper) clearVotesAndPreVotes(ctx sdk.Context, votePeriod uint64) {
 		if ctx.BlockHeight() >= int64(aggregatePrevote.SubmitBlock+votePeriod) {
 			err := k.Prevotes.Delete(ctx, valAddr)
 			if err != nil {
-				panic(err)
+				k.Logger(ctx).Error("failed to delete prevote", "error", err)
 			}
 		}
 	}
@@ -68,7 +68,7 @@ func (k Keeper) clearVotesAndPreVotes(ctx sdk.Context, votePeriod uint64) {
 	for _, valAddr := range k.Votes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).Keys() {
 		err := k.Votes.Delete(ctx, valAddr)
 		if err != nil {
-			panic(err)
+			k.Logger(ctx).Error("failed to delete vote", "error", err)
 		}
 	}
 }
@@ -107,7 +107,16 @@ func (k Keeper) removeInvalidBallots(
 	thresholdVotingPower := k.VoteThreshold(ctx).MulInt64(totalBondedPower).RoundInt()
 	minVoters := k.MinVoters(ctx)
 
-	for pair, ballots := range pairBallotsMap {
+	// Iterate through sorted keys for deterministic ordering.
+	// For more info, see: https://github.com/NibiruChain/nibiru/issues/1374#issue-1715353299
+	var pairs []string
+	for pair := range pairBallotsMap {
+		pairs = append(pairs, pair.String())
+	}
+	sort.Strings(pairs)
+	for _, pairStr := range pairs {
+		pair := asset.Pair(pairStr)
+		ballots := pairBallotsMap[pair]
 		// If pair is not whitelisted, or the ballot for it has failed, then skip
 		// and remove it from pairBallotsMap for iteration efficiency
 		if _, exists := whitelistedPairs[pair]; !exists {
@@ -132,8 +141,6 @@ func (k Keeper) removeInvalidBallots(
 //
 // ALERT: This function mutates validatorPerformances slice based on the votes made by the validators.
 func Tally(ballots types.ExchangeRateBallots, rewardBand sdk.Dec, validatorPerformances types.ValidatorPerformances) sdk.Dec {
-	sort.Sort(ballots)
-
 	weightedMedian := ballots.WeightedMedianWithAssertion()
 	standardDeviation := ballots.StandardDeviation(weightedMedian)
 	rewardSpread := weightedMedian.Mul(rewardBand.QuoInt64(2))

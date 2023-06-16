@@ -39,8 +39,8 @@ message PositionChangedEvent {
 
   /* A funding payment made or received by the trader on the current position.
   'fundingPayment' is positive if 'owner' is the sender and negative if 'owner'
-  is the receiver of the payment. Its magnitude is abs(vSize * fundingRate).
-  Funding payments act to converge the mark price (vPrice) and index price
+  is the receiver of the payment. Its magnitude is abs(size * fundingRate).
+  Funding payments act to converge the mark price and index price
   (average price on major exchanges).
     */
   string funding_payment = 6 [
@@ -50,6 +50,20 @@ message PositionChangedEvent {
 
   // The block number at which this position was changed.
   int64 block_height = 7;
+
+  // Exchanged margin is the amount of collateral received by the trader during
+  // the position change. A positve value indicates that the trader received
+  // funds, while a negative value indicates that the trader spent funds.
+  string exchanged_margin = 8 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  // Change type describes the type of state transition that resulted in the
+  // position change. Change type can take the following values:
+  //
+  // ["open_position", "close_position", "liquidate", "add_margin", "remove_margin"]
+  string change_type = 9;
 }
 
 // Emitted when a position is liquidated.
@@ -154,9 +168,8 @@ message PositionSettledEvent {
   ];
 }
 
-// Emitted when a new funding rate is calculated.
+// Emitted when the funding rate changes for a market.
 message FundingRateChangedEvent {
-
   // The pair for which the funding rate was calculated.
   string pair = 1 [
     (gogoproto.customtype) =
@@ -165,30 +178,24 @@ message FundingRateChangedEvent {
   ];
 
   // The mark price of the pair.
-  string mark_price = 2 [
+  string mark_price_twap = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
   // The oracle index price of the pair.
-  string index_price = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-
-  // The latest funding rate.
-  string latest_funding_rate = 4 [
+  string index_price_twap = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
   // The latest premium fraction just calculated.
-  string latest_premium_fraction = 5 [
+  string premium_fraction = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
-  // The latest cumulative premium fraction.
+  // The market's latest cumulative premium fraction.
   // The funding payment a position will pay is the difference between this
   // value and the latest cumulative premium fraction on the position,
   // multiplied by the position size.
@@ -196,13 +203,6 @@ message FundingRateChangedEvent {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-
-  // The block number at which the funding rate was calculated.
-  int64 block_height = 7;
-
-  // The block time in unix milliseconds at which the funding rate was
-  // calculated.
-  int64 block_time_ms = 8;
 }
 
 // Emitted when liquidation fails.
@@ -245,4 +245,29 @@ message LiquidationFailedEvent {
 message AmmUpdatedEvent {
   // the final state of the AMM
   AMM final_amm = 1 [ (gogoproto.nullable) = false ];
+
+  // The mark price of the pair.
+  string mark_price_twap = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // The oracle index price of the pair.
+  string index_price_twap = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// This event is emitted at the end of every block for persisting market changes
+// off-chain
+//
+// Market changes are triggered by the following actions:
+//
+// - disabling market
+// - changing market fees
+// - bad debt is prepaid by the ecosystem fund
+message MarketUpdatedEvent {
+  // the final state of the market
+  Market final_market = 1 [ (gogoproto.nullable) = false ];
 }

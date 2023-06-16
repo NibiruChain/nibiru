@@ -24,7 +24,6 @@ const (
 	FlagPair                   = "pair"
 	FlagSqrtDepth              = "sqrt-depth"
 	FlagPriceMultiplier        = "price-multiplier"
-	FlagPriceFluctuationLimit  = "price-fluct-lim"
 	FlagMaintenenceMarginRatio = "mmr"
 	FlagMaxLeverage            = "max-leverage"
 )
@@ -36,7 +35,6 @@ var addMarketGenesisFlags = map[string]struct {
 	FlagPair:                   {"", "trading pair identifier of the form 'base:quote'. E.g., ueth:unusd"},
 	FlagSqrtDepth:              {"", "sqrt k"},
 	FlagPriceMultiplier:        {"", "the peg multiplier for the pool"},
-	FlagPriceFluctuationLimit:  {"0.1", "percentage that a single open or close position can alter the reserves"},
 	FlagMaintenenceMarginRatio: {"0.0625", "maintenance margin ratio"},
 	FlagMaxLeverage:            {"10", "maximum leverage for opening a position"},
 }
@@ -121,9 +119,6 @@ func newMarketFromFlags(flagSet *flag.FlagSet,
 	priceMultiplierStr, err := flagSet.GetString(FlagPriceMultiplier)
 	flagErrors = append(flagErrors, err)
 
-	fluctLimStr, err := flagSet.GetString(FlagPriceFluctuationLimit)
-	flagErrors = append(flagErrors, err)
-
 	mmrAsString, err := flagSet.GetString(FlagMaintenenceMarginRatio)
 	flagErrors = append(flagErrors, err)
 
@@ -146,11 +141,6 @@ func newMarketFromFlags(flagSet *flag.FlagSet,
 		return
 	}
 
-	fluctuationLimitRatio, err := sdk.NewDecFromStr(fluctLimStr)
-	if err != nil {
-		return
-	}
-
 	maintenanceMarginRatio, err := sdk.NewDecFromStr(mmrAsString)
 	if err != nil {
 		return
@@ -169,7 +159,6 @@ func newMarketFromFlags(flagSet *flag.FlagSet,
 	market = types.Market{
 		Pair:                            pair,
 		Enabled:                         true,
-		PriceFluctuationLimitRatio:      fluctuationLimitRatio,
 		MaintenanceMarginRatio:          maintenanceMarginRatio,
 		MaxLeverage:                     maxLeverage,
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),

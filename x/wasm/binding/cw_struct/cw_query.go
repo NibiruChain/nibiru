@@ -83,7 +83,6 @@ func (m Market) ToAppMarket() (appMarket perpv2types.Market, err error) {
 	return perpv2types.Market{
 		Pair:                            pair,
 		Enabled:                         true,
-		PriceFluctuationLimitRatio:      config.FluctLimitRatio,
 		MaintenanceMarginRatio:          config.MaintenanceMarginRatio,
 		MaxLeverage:                     config.MaxLeverage,
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -108,7 +107,6 @@ func NewMarket(appMarket perpv2types.Market, appAmm perpv2types.AMM, indexPrice,
 		TotalShort: appAmm.TotalShort,
 		PegMult:    appAmm.PriceMultiplier,
 		Config: &MarketConfig{
-			FluctLimitRatio:        appMarket.PriceFluctuationLimitRatio,
 			MaintenanceMarginRatio: appMarket.MaintenanceMarginRatio,
 			MaxLeverage:            appMarket.MaxLeverage,
 		},
@@ -120,9 +118,6 @@ func NewMarket(appMarket perpv2types.Market, appAmm perpv2types.AMM, indexPrice,
 }
 
 type MarketConfig struct {
-	TradeLimitRatio        sdk.Dec `json:"trade_limit_ratio"`
-	FluctLimitRatio        sdk.Dec `json:"fluct_limit_ratio"`
-	MaxOracleSpreadRatio   sdk.Dec `json:"max_oracle_spread_ratio"`
 	MaintenanceMarginRatio sdk.Dec `json:"maintenance_margin_ratio"`
 	MaxLeverage            sdk.Dec `json:"max_leverage"`
 }

@@ -48,8 +48,8 @@ func (gs GenesisState) Validate() error {
 	return nil
 }
 
-func DefaultMarket(pair asset.Pair) Market {
-	return Market{
+func DefaultMarket(pair asset.Pair) *Market {
+	return &Market{
 		Pair:                            pair,
 		Enabled:                         true,
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -60,7 +60,6 @@ func DefaultMarket(pair asset.Pair) Market {
 		FundingRateEpochId:              epochstypes.ThirtyMinuteEpochID,
 		TwapLookbackWindow:              time.Minute * 30,
 		PrepaidBadDebt:                  sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
-		PriceFluctuationLimitRatio:      sdk.MustNewDecFromStr("0.1000"),
 		MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.0625"),
 		MaxLeverage:                     sdk.NewDec(10),
 	}
