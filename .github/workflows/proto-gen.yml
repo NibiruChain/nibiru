@@ -21,5 +21,8 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Pull Docker image
+        run: docker pull ghcr.io/nibiruchain/cosmossdk-proto:v0.1.0
+
       - name: Generate proto code
         run: make proto-gen
