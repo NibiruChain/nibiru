@@ -14,5 +14,12 @@ jobs:
           go-version: 1.19
           cache: true
 
+      - name: Login to GHCR container register
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Generate proto code
         run: make proto-gen
