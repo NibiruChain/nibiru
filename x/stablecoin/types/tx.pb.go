@@ -86,8 +86,8 @@ func (m *MsgMintStable) GetStable() types.Coin {
 	return types.Coin{}
 }
 
-// MsgMintStableResponse specifies the amount of NUSD token the user will receive after their
-// mint transaction
+// MsgMintStableResponse specifies the amount of NUSD token the user will
+// receive after their mint transaction
 type MsgMintStableResponse struct {
 	Stable    types.Coin                               `protobuf:"bytes,1,opt,name=stable,proto3" json:"stable"`
 	UsedCoins github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,2,rep,name=used_coins,json=usedCoins,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"used_coins"`
@@ -320,7 +320,8 @@ func (m *MsgRecollateralize) GetColl() types.Coin {
 
 // MsgRecollateralizeResponse is the output of a successful 'Recollateralize'
 type MsgRecollateralizeResponse struct {
-	// Gov (sdk.Coin): Tokens rewarded to the caller in exchange for her collateral.
+	// Gov (sdk.Coin): Tokens rewarded to the caller in exchange for her
+	// collateral.
 	Gov types.Coin `protobuf:"bytes,1,opt,name=gov,proto3" json:"gov"`
 }
 
@@ -531,8 +532,8 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
-	// MintStable defines a method for trading a mixture of GOV and COLL to mint an
-	// equivalent value of stablecoins.
+	// MintStable defines a method for trading a mixture of GOV and COLL to mint
+	// an equivalent value of stablecoins.
 	MintStable(ctx context.Context, in *MsgMintStable, opts ...grpc.CallOption) (*MsgMintStableResponse, error)
 	// BurnStable defines a method for redeeming/burning stablecoins to receive an
 	// equivalent value as a mixture of governance and collateral tokens.
@@ -594,8 +595,8 @@ func (c *msgClient) Buyback(ctx context.Context, in *MsgBuyback, opts ...grpc.Ca
 
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
-	// MintStable defines a method for trading a mixture of GOV and COLL to mint an
-	// equivalent value of stablecoins.
+	// MintStable defines a method for trading a mixture of GOV and COLL to mint
+	// an equivalent value of stablecoins.
 	MintStable(context.Context, *MsgMintStable) (*MsgMintStableResponse, error)
 	// BurnStable defines a method for redeeming/burning stablecoins to receive an
 	// equivalent value as a mixture of governance and collateral tokens.

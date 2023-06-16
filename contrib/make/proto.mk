@@ -28,7 +28,6 @@ proto-lint:
 # How to run manually:
 # docker build --pull --rm -f "contrib/devtools/Dockerfile" -t cosmossdk-proto:latest "contrib/devtools"
 # docker run --rm -v $(pwd):/workspace --workdir /workspace cosmossdk-proto sh ./scripts/protocgen.sh
-
 proto-gen2:
 	@echo "Generating Protobuf files"
 	@$(protoImage) sh ./scripts/protocgen.sh
