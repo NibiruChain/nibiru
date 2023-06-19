@@ -18,6 +18,7 @@ func (k Keeper) Period(
 ) (*types.QueryPeriodResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	period := k.CurrentPeriod.Peek(ctx)
+
 	return &types.QueryPeriodResponse{Period: period}, nil
 }
 
@@ -41,6 +42,7 @@ func (k Keeper) SkippedEpochs(
 ) (*types.QuerySkippedEpochsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	skippedEpochs := k.NumSkippedEpochs.Peek(ctx)
+
 	return &types.QuerySkippedEpochsResponse{SkippedEpochs: skippedEpochs}, nil
 }
 

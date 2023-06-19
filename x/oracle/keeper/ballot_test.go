@@ -26,7 +26,7 @@ func TestGroupBallotsByPair(t *testing.T) {
 
 	power := int64(100)
 	amt := sdk.TokensFromConsensusPower(power, sdk.DefaultPowerReduction)
-	sh := stakingkeeper.NewMsgServerImpl(fixture.StakingKeeper)
+	sh := stakingkeeper.NewMsgServerImpl(&fixture.StakingKeeper)
 
 	// Validator created
 	_, err := sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[0], ValPubKeys[0], amt))
@@ -35,7 +35,7 @@ func TestGroupBallotsByPair(t *testing.T) {
 	require.NoError(t, err)
 	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[2], ValPubKeys[2], amt))
 	require.NoError(t, err)
-	staking.EndBlocker(fixture.Ctx, fixture.StakingKeeper)
+	staking.EndBlocker(fixture.Ctx, &fixture.StakingKeeper)
 
 	btcBallots := types.ExchangeRateBallots{
 		types.NewExchangeRateBallot(sdk.NewDec(17), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[0], power),
@@ -96,7 +96,7 @@ func TestClearBallots(t *testing.T) {
 
 	power := int64(100)
 	amt := sdk.TokensFromConsensusPower(power, sdk.DefaultPowerReduction)
-	sh := stakingkeeper.NewMsgServerImpl(fixture.StakingKeeper)
+	sh := stakingkeeper.NewMsgServerImpl(&fixture.StakingKeeper)
 
 	// Validator created
 	_, err := sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[0], ValPubKeys[0], amt))
@@ -105,7 +105,7 @@ func TestClearBallots(t *testing.T) {
 	require.NoError(t, err)
 	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[2], ValPubKeys[2], amt))
 	require.NoError(t, err)
-	staking.EndBlocker(fixture.Ctx, fixture.StakingKeeper)
+	staking.EndBlocker(fixture.Ctx, &fixture.StakingKeeper)
 
 	btcBallot := types.ExchangeRateBallots{
 		types.NewExchangeRateBallot(sdk.NewDec(17), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[0], power),

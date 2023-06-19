@@ -52,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `github.com/stretchr/testify` from 1.8.2 to 1.8.3 (#1384)
 - Bump `cosmossdk.io/math` from 1.0.0-beta.6 to 1.0.1 (#1394)
 - Bump `google.golang.org/grpc` from 1.53.0 to 1.55.0 (#1395)
+- Bump `github.com/gin-gonic/gin` from 1.8.1 to 1.9.1 (#1409)
 
 ### Breaking
 
@@ -95,6 +96,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1387](https://github.com/NibiruChain/nibiru/pull/1387) - feat: upgrade to Cosmos SDK v0.46.10
 * [#1413](https://github.com/NibiruChain/nibiru/pull/1413) - fix(perp): provide descriptive errors when all liquidations fail in MultiLiquidate
 * [#1427](https://github.com/NibiruChain/nibiru/pull/1427) - refactor(perp)!: PositionChangedEvent `MarginToUser`
+* [#1407](https://github.com/NibiruChain/nibiru/pull/1407) - feat!: upgrade to Cosmos SDK v0.47.3
 
 ### Improvements
 

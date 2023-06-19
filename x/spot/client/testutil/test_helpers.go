@@ -21,7 +21,7 @@ import (
 // commonArgs is args for CLI test commands.
 var commonArgs = []string{
 	fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-	fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+	fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 	fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(10))).String()),
 }
 
@@ -141,15 +141,15 @@ func ExecMsgSwapAssets(
 
 // WhitelistGenesisAssets given a testapp.GenesisState includes the whitelisted assets into spot Whitelisted assets.
 func WhitelistGenesisAssets(state app.GenesisState, assets []string) app.GenesisState {
-	encConfig := app.MakeTestEncodingConfig()
+	encConfig := app.MakeEncodingConfig()
 
 	jsonState := state[types.ModuleName]
 
 	var genesis types.GenesisState
-	encConfig.Codec.MustUnmarshalJSON(jsonState, &genesis)
+	encConfig.Marshaler.MustUnmarshalJSON(jsonState, &genesis)
 	genesis.Params.WhitelistedAsset = assets
 
-	json, _ := encConfig.Codec.MarshalJSON(&genesis)
+	json, _ := encConfig.Marshaler.MarshalJSON(&genesis)
 	state[types.ModuleName] = json
 
 	return state

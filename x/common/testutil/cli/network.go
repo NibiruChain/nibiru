@@ -15,19 +15,21 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cometbft/cometbft/libs/log"
+	"github.com/cosmos/cosmos-sdk/store/pruning/types"
+	"github.com/cosmos/cosmos-sdk/testutil/sims"
+
+	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/simapp"
-	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
-	dbm "github.com/tendermint/tm-db"
 
 	"github.com/cosmos/cosmos-sdk/testutil"
-	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/cosmos/cosmos-sdk/pruning/types"
-
+	tmrand "github.com/cometbft/cometbft/libs/rand"
+	"github.com/cometbft/cometbft/node"
+	tmclient "github.com/cometbft/cometbft/rpc/client"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -44,9 +46,6 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	tmrand "github.com/tendermint/tendermint/libs/rand"
-	"github.com/tendermint/tendermint/node"
-	tmclient "github.com/tendermint/tendermint/rpc/client"
 	"google.golang.org/grpc"
 
 	"github.com/NibiruChain/nibiru/x/common/denoms"
@@ -170,32 +169,37 @@ func NewCLILogger(cmd *cobra.Command) CLILogger {
 }
 
 // NewAppConstructor returns a new simapp AppConstructor
-func NewAppConstructor(encodingCfg simappparams.EncodingConfig) AppConstructor {
+func NewAppConstructor(encodingCfg app.EncodingConfig, chainID string) AppConstructor {
 	return func(val Validator) servertypes.Application {
 		return app.NewNibiruApp(
-			val.Ctx.Logger, dbm.NewMemDB(), nil, true, make(map[int64]bool), val.Ctx.Config.RootDir, 0,
+			val.Ctx.Logger,
+			dbm.NewMemDB(),
+			nil,
+			true,
 			encodingCfg,
-			simapp.EmptyAppOptions{},
+			sims.EmptyAppOptions{},
 			baseapp.SetPruning(types.NewPruningOptionsFromString(val.AppConfig.Pruning)),
 			baseapp.SetMinGasPrices(val.AppConfig.MinGasPrices),
+			baseapp.SetChainID(chainID),
 		)
 	}
 }
 
 // BuildNetworkConfig returns a configuration for a local in-testing network
 func BuildNetworkConfig(appGenesis app.GenesisState) Config {
-	encCfg := app.MakeTestEncodingConfig()
+	encCfg := app.MakeEncodingConfig()
 
+	chainID := "chain-" + tmrand.NewRand().Str(6)
 	return Config{
-		Codec:             encCfg.Codec,
+		Codec:             encCfg.Marshaler,
 		TxConfig:          encCfg.TxConfig,
 		LegacyAmino:       encCfg.Amino,
 		InterfaceRegistry: encCfg.InterfaceRegistry,
 		AccountRetriever:  authtypes.AccountRetriever{},
-		AppConstructor:    NewAppConstructor(encCfg),
+		AppConstructor:    NewAppConstructor(encCfg, chainID),
 		GenesisState:      appGenesis,
 		TimeoutCommit:     time.Second / 2,
-		ChainID:           "chain-" + tmrand.NewRand().Str(6),
+		ChainID:           chainID,
 		NumValidators:     1,
 		BondDenom:         denoms.NIBI,
 		MinGasPrices:      fmt.Sprintf("0.000006%s", denoms.NIBI),
@@ -308,10 +312,9 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 			appCfg.GRPCWeb.Enable = true
 		}
 
-		logger := server.ZeroLogWrapper{Logger: zerolog.Nop()}
+		logger := log.NewNopLogger()
 		if cfg.EnableTMLogging {
-			logWriter := zerolog.ConsoleWriter{Out: os.Stderr}
-			logger = server.ZeroLogWrapper{Logger: zerolog.New(logWriter).Level(zerolog.InfoLevel).With().Timestamp().Logger()}
+			logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 		}
 
 		ctx.Logger = logger

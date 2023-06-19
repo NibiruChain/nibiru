@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	"github.com/NibiruChain/collections"
+	abcitypes "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	"github.com/stretchr/testify/suite"
-	abcitypes "github.com/tendermint/tendermint/abci/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -47,8 +47,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	app.SetPrefixes(app.AccountAddressPrefix)
 
 	// setup market
-	encodingConfig := app.MakeTestEncodingConfig()
-	genState := genesis.NewTestGenesisState()
+	encodingConfig := app.MakeEncodingConfig()
+	genState := genesis.NewTestGenesisState(encodingConfig)
 	genState = genesis.AddPerpV2Genesis(genState)
 	genState = genesis.AddOracleGenesis(genState)
 
@@ -66,7 +66,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		{Pair: asset.Registry.Pair(denoms.ATOM, denoms.NUSD), ExchangeRate: sdk.NewDec(6_000)},
 		{Pair: asset.Registry.Pair(denoms.OSMO, denoms.NUSD), ExchangeRate: sdk.NewDec(6_000)},
 	}
-	genState[oracletypes.ModuleName] = encodingConfig.Codec.MustMarshalJSON(oracleGenesis)
+	genState[oracletypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(oracleGenesis)
 
 	s.cfg = testutilcli.BuildNetworkConfig(genState)
 	s.cfg.NumValidators = 1
@@ -86,7 +86,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	for i := 0; i < 8; i++ {
 		newUser := testutilcli.NewAccount(s.network, fmt.Sprintf("user%d", i))
 		s.users = append(s.users, newUser)
-		s.NoError(
+		s.Require().NoError(
 			testutilcli.FillWalletFromValidator(newUser,
 				sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 10e6),
@@ -97,6 +97,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 				denoms.NIBI,
 			),
 		)
+		s.NoError(s.network.WaitForNextBlock())
 	}
 
 	s.liquidator = sdk.MustAccAddressFromBech32("nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m")
@@ -107,6 +108,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			denoms.NIBI,
 		),
 	)
+	s.NoError(s.network.WaitForNextBlock())
 }
 
 func (s *IntegrationTestSuite) TearDownSuite() {
@@ -165,6 +167,8 @@ func (s *IntegrationTestSuite) TestMultiLiquidate() {
 		fmt.Sprintf("%s:%s:%s", denoms.OSMO, denoms.NUSD, s.users[3].String()),
 	})
 	s.Require().NoError(err)
+	err = s.network.WaitForNextBlock()
+	s.Require().NoError(err)
 
 	s.T().Log("check trader position")
 	_, err = testutilcli.QueryPositionV2(s.network.Validators[0].ClientCtx, asset.Registry.Pair(denoms.ATOM, denoms.NUSD), s.users[2])
@@ -220,6 +224,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	)
 	s.NoError(err)
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
+	s.NoError(s.network.WaitForNextBlock())
 
 	s.T().Log("B. check market balance after open position")
 	ammMarketDuo, err = testutilcli.QueryMarketV2(val.ClientCtx, pair)
@@ -251,6 +256,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	})
 	s.NoError(err)
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
+	s.NoError(s.network.WaitForNextBlock())
 
 	s.T().Log("C. check trader position")
 	queryResp, err = testutilcli.QueryPositionV2(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
@@ -275,6 +281,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	})
 	s.NoError(err)
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
+	s.NoError(s.network.WaitForNextBlock())
 
 	s.T().Log("D. Check market after opening reverse position")
 
@@ -307,6 +314,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	})
 	s.NoError(err)
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
+	s.NoError(s.network.WaitForNextBlock())
 
 	s.T().Log("E. Check trader position")
 	queryResp, err = testutilcli.QueryPositionV2(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
@@ -328,6 +336,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	})
 	s.NoError(err)
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
+	s.NoError(s.network.WaitForNextBlock())
 
 	s.T().Log("F. check trader position")
 	queryResp, err = testutilcli.QueryPositionV2(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
@@ -366,6 +375,7 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 		"0",
 	})
 	s.NoError(err)
+	s.NoError(s.network.WaitForNextBlock())
 
 	// Remove margin to trigger bad debt on user 0
 	s.T().Log("removing margin on user 0....")
@@ -381,6 +391,7 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 		fmt.Sprintf("%s%s", "1", denoms.NUSD),
 	})
 	s.NoError(err)
+	s.NoError(s.network.WaitForNextBlock())
 }
 
 // user[1] opens a position and adds margin
@@ -395,6 +406,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 		"0.0000001",
 	})
 	s.Require().NoError(err)
+	s.NoError(s.network.WaitForNextBlock())
 
 	testCases := []struct {
 		name           string
@@ -422,11 +434,16 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 	}
 
 	for _, tc := range testCases {
+		tc := tc
 		s.T().Run(tc.name, func(t *testing.T) {
 			s.T().Log("adding margin on user 3....")
 			txResp, err = testutilcli.ExecTx(s.network, cli.AddMarginCmd(), s.users[1], tc.args, testutilcli.WithTxCanFail(true))
-			s.NoError(err)
-			s.EqualValues(tc.expectedCode, txResp.Code)
+			s.Require().NoError(err)
+			s.Require().NoError(s.network.WaitForNextBlock())
+
+			resp, err := testutilcli.QueryTx(s.network.Validators[0].ClientCtx, txResp.TxHash)
+			s.Require().NoError(err)
+			s.Require().EqualValues(tc.expectedCode, resp.Code)
 
 			if tc.expectedCode == 0 {
 				// query trader position

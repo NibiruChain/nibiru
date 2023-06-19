@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
-	"github.com/tendermint/tendermint/abci/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
@@ -70,7 +70,7 @@ func ExecTx(network *Network, cmd *cobra.Command, txSender sdk.AccAddress, args 
 		fees:             sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(1000))),
 		gas:              2000000,
 		skipConfirmation: true,
-		broadcastMode:    flags.BroadcastBlock,
+		broadcastMode:    flags.BroadcastSync,
 		canFail:          false,
 		keyringBackend:   keyring.BackendTest,
 	}
@@ -94,13 +94,22 @@ func ExecTx(network *Network, cmd *cobra.Command, txSender sdk.AccAddress, args 
 
 	rawResp, err := cli.ExecTestCLICmd(clientCtx, cmd, args)
 	if err != nil {
+		return nil, fmt.Errorf("failed to execute tx: %w", err)
+	}
+	tmpResp := new(sdk.TxResponse)
+	err = clientCtx.Codec.UnmarshalJSON(rawResp.Bytes(), tmpResp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal tx response: %w", err)
+	}
+
+	err = network.WaitForNextBlock()
+	if err != nil {
 		return nil, err
 	}
 
-	resp := new(sdk.TxResponse)
-	err = clientCtx.Codec.UnmarshalJSON(rawResp.Bytes(), resp)
+	resp, err := QueryTx(clientCtx, tmpResp.TxHash)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to query tx: %w", err)
 	}
 
 	if options.canFail {
@@ -155,17 +164,10 @@ func (n *Network) SendTx(addr sdk.AccAddress, msgs ...sdk.Msg) (*sdk.TxResponse,
 		return nil, err
 	}
 
-	respRaw, err := rpc.BroadcastTxCommit(context.Background(), txBytes)
+	respRaw, err := rpc.BroadcastTxSync(context.Background(), txBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	if !respRaw.CheckTx.IsOK() {
-		return nil, fmt.Errorf("tx failed: %s", respRaw.CheckTx.Log)
-	}
-	if !respRaw.DeliverTx.IsOK() {
-		return nil, fmt.Errorf("tx failed: %s", respRaw.DeliverTx.Log)
-	}
-
-	return sdk.NewResponseFormatBroadcastTxCommit(respRaw), nil
+	return sdk.NewResponseFormatBroadcastTx(respRaw), nil
 }

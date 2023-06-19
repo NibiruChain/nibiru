@@ -147,14 +147,14 @@ else
 fi
 
 echo_info "Adding gentx validator..."
-if $BINARY gentx validator 900000000unibi --chain-id $CHAIN_ID; then
+if $BINARY genesis gentx validator 900000000unibi --chain-id $CHAIN_ID; then
   echo_success "Successfully added gentx"
 else
   echo_error "Failed to add gentx"
 fi
 
 echo_info "Collecting gentx..."
-if $BINARY collect-gentxs; then
+if $BINARY genesis collect-gentxs; then
   echo_success "Successfully collected genesis txs into genesis.json"
 else
   echo_error "Failed to collect genesis txs"
@@ -238,4 +238,4 @@ add_genesis_param '.app_state.oracle.exchange_rates[1].exchange_rate = "2000"'
 
 # Start the network
 echo_info "Starting $CHAIN_ID in $CHAIN_DIR..."
-$BINARY start
+$BINARY start --db_backend goleveldb --home "$CHAIN_DIR" --pruning nothing

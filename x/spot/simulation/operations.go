@@ -6,10 +6,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/types/module/testutil"
+
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
@@ -82,7 +83,7 @@ func SimulateMsgCreatePool(ak types.AccountKeeper, bk types.BankKeeper, k keeper
 			simulation.OperationInput{
 				R:               r,
 				App:             app,
-				TxGen:           simapp.MakeTestEncodingConfig().TxConfig,
+				TxGen:           testutil.MakeTestEncodingConfig().TxConfig,
 				Cdc:             nil,
 				Msg:             msg,
 				MsgType:         msg.Type(),
@@ -136,7 +137,7 @@ func SimulateMsgSwap(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keepe
 			simulation.OperationInput{
 				R:               r,
 				App:             app,
-				TxGen:           simapp.MakeTestEncodingConfig().TxConfig,
+				TxGen:           testutil.MakeTestEncodingConfig().TxConfig,
 				Cdc:             nil,
 				Msg:             msg,
 				MsgType:         msg.Type(),
@@ -201,7 +202,7 @@ func SimulateJoinPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keep
 			simulation.OperationInput{
 				R:               r,
 				App:             app,
-				TxGen:           simapp.MakeTestEncodingConfig().TxConfig,
+				TxGen:           testutil.MakeTestEncodingConfig().TxConfig,
 				Cdc:             nil,
 				Msg:             msg,
 				MsgType:         msg.Type(),
@@ -278,7 +279,7 @@ func SimulateExitPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keep
 			simulation.OperationInput{
 				R:               r,
 				App:             app,
-				TxGen:           simapp.MakeTestEncodingConfig().TxConfig,
+				TxGen:           testutil.MakeTestEncodingConfig().TxConfig,
 				Cdc:             nil,
 				Msg:             msg,
 				MsgType:         msg.Type(),

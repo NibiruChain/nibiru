@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package nibiru.spot.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "nibiru/spot/v1/pool.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/x/spot/types";
+
+message EventPoolCreated {
+  // the address of the user who created the pool
+  string creator = 1;
+
+  // the create pool fee
+  repeated cosmos.base.v1beta1.Coin fees = 2 [ (gogoproto.nullable) = false ];
+
+  // the final state of the pool
+  Pool final_pool = 4 [ (gogoproto.nullable) = false ];
+
+  // the amount of pool shares that the user received
+  cosmos.base.v1beta1.Coin final_user_pool_shares = 5
+      [ (gogoproto.nullable) = false ];
+}
+
+message EventPoolJoined {
+  // the address of the user who joined the pool
+  string address = 1;
+
+  // the amount of tokens that the user deposited
+  repeated cosmos.base.v1beta1.Coin tokens_in = 2
+      [ (gogoproto.nullable) = false ];
+
+  // the amount of pool shares that the user received
+  cosmos.base.v1beta1.Coin pool_shares_out = 3 [ (gogoproto.nullable) = false ];
+
+  // the amount of tokens remaining for the user
+  repeated cosmos.base.v1beta1.Coin rem_coins = 4
+      [ (gogoproto.nullable) = false ];
+
+  // the final state of the pool
+  Pool final_pool = 5 [ (gogoproto.nullable) = false ];
+
+  // the final amount of user pool shares
+  cosmos.base.v1beta1.Coin final_user_pool_shares = 6
+      [ (gogoproto.nullable) = false ];
+}
+
+message EventPoolExited {
+  // the address of the user who exited the pool
+  string address = 1;
+
+  // the amount of pool shares that the user exited with
+  cosmos.base.v1beta1.Coin pool_shares_in = 2 [ (gogoproto.nullable) = false ];
+
+  // the amount of tokens returned to the user
+  repeated cosmos.base.v1beta1.Coin tokens_out = 3
+      [ (gogoproto.nullable) = false ];
+
+  // the amount of fees collected by the pool
+  repeated cosmos.base.v1beta1.Coin fees = 4 [ (gogoproto.nullable) = false ];
+
+  // the final state of the pool
+  Pool final_pool = 5 [ (gogoproto.nullable) = false ];
+
+  // the final amount of user pool shares
+  cosmos.base.v1beta1.Coin final_user_pool_shares = 6
+      [ (gogoproto.nullable) = false ];
+}
+
+message EventAssetsSwapped {
+  // the address of the user who swapped tokens
+  string address = 1;
+
+  // the amount of tokens that the user deposited
+  cosmos.base.v1beta1.Coin token_in = 2 [ (gogoproto.nullable) = false ];
+
+  // the amount of tokens that the user received
+  cosmos.base.v1beta1.Coin token_out = 3 [ (gogoproto.nullable) = false ];
+
+  // the amount of fees collected by the pool
+  cosmos.base.v1beta1.Coin fee = 4 [ (gogoproto.nullable) = false ];
+
+  // the final state of the pool
+  Pool final_pool = 5 [ (gogoproto.nullable) = false ];
+}

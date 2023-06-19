@@ -7,24 +7,37 @@ import (
 	"os"
 	"testing"
 
-	sdkSimapp "github.com/cosmos/cosmos-sdk/simapp"
-	"github.com/cosmos/cosmos-sdk/simapp/helpers"
+	"github.com/cosmos/ibc-go/v7/testing/simapp"
+
+	dbm "github.com/cometbft/cometbft-db"
+	helpers "github.com/cosmos/cosmos-sdk/testutil/sims"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	simulationtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
+	simcli "github.com/cosmos/cosmos-sdk/x/simulation/client/cli"
 	"github.com/stretchr/testify/require"
-	dbm "github.com/tendermint/tm-db"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 )
 
+// SimAppChainID hardcoded chainID for simulation
+const SimAppChainID = "simulation-app"
+
 func init() {
-	sdkSimapp.GetSimulatorFlags()
+	app.GetSimulatorFlags()
 }
 
 func TestFullAppSimulation(tb *testing.T) {
-	config, db, dir, _, skip, err := sdkSimapp.SetupSimulation("goleveldb-app-sim", "Simulation")
+	config := simcli.NewConfigFromFlags()
+	config.ChainID = SimAppChainID
+
+	db, dir, _, skip, err := helpers.SetupSimulation(
+		config,
+		"goleveldb-app-sim",
+		"Simulation",
+		simcli.FlagVerboseValue, simcli.FlagEnabledValue,
+	)
 	if skip {
 		tb.Skip("skipping application simulation")
 	}
@@ -38,8 +51,8 @@ func TestFullAppSimulation(tb *testing.T) {
 		}
 	}()
 
-	encoding := app.MakeTestEncodingConfig()
-	app := testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encoding.Codec))
+	encoding := app.MakeEncodingConfig()
+	app := testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encoding.Marshaler))
 
 	// Run randomized simulation:
 	_, simParams, simErr := simulation.SimulateFromSeed(
@@ -48,14 +61,14 @@ func TestFullAppSimulation(tb *testing.T) {
 		/* app */ app.BaseApp,
 		/* appStateFn */ AppStateFn(app.AppCodec(), app.SimulationManager()),
 		/* randAccFn */ simulationtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
-		/* ops */ sdkSimapp.SimulationOperations(app, app.AppCodec(), config), // Run all registered operations
+		/* ops */ helpers.SimulationOperations(app, app.AppCodec(), config), // Run all registered operations
 		/* blockedAddrs */ app.ModuleAccountAddrs(),
 		/* config */ config,
 		/* cdc */ app.AppCodec(),
 	)
 
 	// export state and simParams before the simulation error is checked
-	if err = sdkSimapp.CheckExportSimulation(app, config, simParams); err != nil {
+	if err = helpers.CheckExportSimulation(app, config, simParams); err != nil {
 		tb.Fatal(err)
 	}
 
@@ -64,23 +77,23 @@ func TestFullAppSimulation(tb *testing.T) {
 	}
 
 	if config.Commit {
-		sdkSimapp.PrintStats(db)
+		simapp.PrintStats(db)
 	}
 }
 
 func TestAppStateDeterminism(t *testing.T) {
-	if !sdkSimapp.FlagEnabledValue {
+	if !simapp.FlagEnabledValue {
 		t.Skip("skipping application simulation")
 	}
 
-	encoding := app.MakeTestEncodingConfig()
+	encoding := app.MakeEncodingConfig()
 
-	config := sdkSimapp.NewConfigFromFlags()
+	config := simapp.NewConfigFromFlags()
 	config.InitialBlockHeight = 1
 	config.ExportParamsPath = ""
 	config.OnOperation = false
 	config.AllInvariants = false
-	config.ChainID = helpers.SimAppChainID
+	config.ChainID = SimAppChainID
 
 	numSeeds := 3
 	numTimesToRunPerSeed := 5
@@ -91,7 +104,7 @@ func TestAppStateDeterminism(t *testing.T) {
 
 		for j := 0; j < numTimesToRunPerSeed; j++ {
 			db := dbm.NewMemDB()
-			app := testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encoding.Codec))
+			app := testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encoding.Marshaler))
 
 			fmt.Printf(
 				"running non-determinism simulation; seed %d: %d/%d, attempt: %d/%d\n",
@@ -104,7 +117,7 @@ func TestAppStateDeterminism(t *testing.T) {
 				app.BaseApp,
 				AppStateFn(app.AppCodec(), app.SimulationManager()),
 				simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
-				sdkSimapp.SimulationOperations(app, app.AppCodec(), config),
+				helpers.SimulationOperations(app, app.AppCodec(), config),
 				app.ModuleAccountAddrs(),
 				config,
 				app.AppCodec(),
@@ -112,7 +125,7 @@ func TestAppStateDeterminism(t *testing.T) {
 			require.NoError(t, err)
 
 			if config.Commit {
-				sdkSimapp.PrintStats(db)
+				simapp.PrintStats(db)
 			}
 
 			appHash := app.LastCommitID().Hash

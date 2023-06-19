@@ -8,7 +8,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/tendermint/tendermint/crypto/tmhash"
+	"github.com/cometbft/cometbft/crypto/tmhash"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

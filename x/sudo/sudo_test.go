@@ -11,10 +11,10 @@ import (
 	"github.com/NibiruChain/nibiru/x/sudo"
 	"github.com/NibiruChain/nibiru/x/sudo/pb"
 
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
 func init() {
@@ -22,7 +22,7 @@ func init() {
 }
 
 func setup() (*app.NibiruApp, sdk.Context) {
-	genState := app.NewDefaultGenesisState(app.MakeTestEncodingConfig().Codec)
+	genState := app.NewDefaultGenesisState(app.DefaultEncoding().Marshaler)
 	nibiru := testapp.NewNibiruTestApp(genState)
 	ctx := nibiru.NewContext(false, tmproto.Header{
 		Height:  1,

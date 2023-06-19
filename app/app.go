@@ -8,133 +8,108 @@ import (
 	"os"
 	"path/filepath"
 
-	ibctesting "github.com/cosmos/ibc-go/v6/testing"
-	"github.com/cosmos/ibc-go/v6/testing/types"
-
-	ibcmock "github.com/cosmos/ibc-go/v6/testing/mock"
-
+	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	dbm "github.com/cometbft/cometbft-db"
+	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/libs/log"
+	tmos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
+	"github.com/cosmos/cosmos-sdk/client/grpc/node"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/cosmos/cosmos-sdk/simapp"
-	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
-
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-
 	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
-
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
-
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-
 	"github.com/cosmos/cosmos-sdk/x/capability"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
-
+	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	crisiskeeper "github.com/cosmos/cosmos-sdk/x/crisis/keeper"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
-
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
-	distrclient "github.com/cosmos/cosmos-sdk/x/distribution/client"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-
 	"github.com/cosmos/cosmos-sdk/x/evidence"
 	evidencekeeper "github.com/cosmos/cosmos-sdk/x/evidence/keeper"
-
 	feegrantkeeper "github.com/cosmos/cosmos-sdk/x/feegrant/keeper"
 	feegrantmodule "github.com/cosmos/cosmos-sdk/x/feegrant/module"
-
 	"github.com/cosmos/cosmos-sdk/x/genutil"
-
+	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-
+	groupmodule "github.com/cosmos/cosmos-sdk/x/group/module"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
-
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
-
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-
-	ibcfee "github.com/cosmos/ibc-go/v6/modules/apps/29-fee"
-	ibcfeekeeper "github.com/cosmos/ibc-go/v6/modules/apps/29-fee/keeper"
-	ibcfeetypes "github.com/cosmos/ibc-go/v6/modules/apps/29-fee/types"
-	ibctransfer "github.com/cosmos/ibc-go/v6/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v6/modules/apps/transfer/keeper"
-	ibctransfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v6/modules/core"
-	ibcclientclient "github.com/cosmos/ibc-go/v6/modules/core/02-client/client"
-	ibchost "github.com/cosmos/ibc-go/v6/modules/core/24-host"
-	ibckeeper "github.com/cosmos/ibc-go/v6/modules/core/keeper"
+	ibcfee "github.com/cosmos/ibc-go/v7/modules/apps/29-fee"
+	ibcfeekeeper "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/keeper"
+	ibcfeetypes "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/types"
+	ibctransfer "github.com/cosmos/ibc-go/v7/modules/apps/transfer"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v7/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/v7/modules/core"
+	ibcclientclient "github.com/cosmos/ibc-go/v7/modules/core/02-client/client"
+	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
+	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
+	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	ibcmock "github.com/cosmos/ibc-go/v7/testing/mock"
+	"github.com/cosmos/ibc-go/v7/testing/types"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cast"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/log"
-	tmos "github.com/tendermint/tendermint/libs/os"
-	dbm "github.com/tendermint/tm-db"
 
 	"github.com/NibiruChain/nibiru/x/common"
-
 	"github.com/NibiruChain/nibiru/x/epochs"
 	epochskeeper "github.com/NibiruChain/nibiru/x/epochs/keeper"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
-
 	"github.com/NibiruChain/nibiru/x/inflation"
 	inflationkeeper "github.com/NibiruChain/nibiru/x/inflation/keeper"
 	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
-
-	oracle "github.com/NibiruChain/nibiru/x/oracle"
+	"github.com/NibiruChain/nibiru/x/oracle"
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
-
 	perpkeeperv2 "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	perpv2 "github.com/NibiruChain/nibiru/x/perp/v2/module"
 	perptypesv2 "github.com/NibiruChain/nibiru/x/perp/v2/types"
-
 	"github.com/NibiruChain/nibiru/x/spot"
 	spotkeeper "github.com/NibiruChain/nibiru/x/spot/keeper"
 	spottypes "github.com/NibiruChain/nibiru/x/spot/types"
-
-	"github.com/NibiruChain/nibiru/x/sudo"
-
 	"github.com/NibiruChain/nibiru/x/stablecoin"
 	stablecoinkeeper "github.com/NibiruChain/nibiru/x/stablecoin/keeper"
 	stablecointypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
-
-	"github.com/CosmWasm/wasmd/x/wasm"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-
+	"github.com/NibiruChain/nibiru/x/sudo"
 	wasmbinding "github.com/NibiruChain/nibiru/x/wasm/binding"
 )
 
@@ -159,16 +134,15 @@ var (
 	// and genesis verification.
 	ModuleBasics = module.NewBasicManager(
 		auth.AppModuleBasic{},
-		genutil.AppModuleBasic{},
+		genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
 		BankModule{},
 		capability.AppModuleBasic{},
 		StakingModule{},
 		distr.AppModuleBasic{},
 		NewGovModuleBasic(
 			paramsclient.ProposalHandler,
-			distrclient.ProposalHandler,
 			upgradeclient.LegacyProposalHandler,
-			upgradeclient.LegacyProposalHandler,
+			upgradeclient.LegacyCancelProposalHandler,
 			ibcclientclient.UpdateClientProposalHandler,
 			ibcclientclient.UpgradeProposalHandler,
 		),
@@ -176,13 +150,15 @@ var (
 		CrisisModule{},
 		slashing.AppModuleBasic{},
 		feegrantmodule.AppModuleBasic{},
-		authzmodule.AppModuleBasic{},
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
+		authzmodule.AppModuleBasic{},
+		groupmodule.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 		// ibc 'AppModuleBasic's
 		ibc.AppModuleBasic{},
 		ibctransfer.AppModuleBasic{},
+		ibctm.AppModuleBasic{},
 		// native x/
 		spot.AppModuleBasic{},
 		oracle.AppModuleBasic{},
@@ -218,12 +194,12 @@ var (
 		stablecointypes.StableEFModuleAccount: {authtypes.Burner},
 		sudo.ModuleName:                       {},
 		common.TreasuryPoolModuleAccount:      {},
-		wasm.ModuleName:                       {},
+		wasm.ModuleName:                       {authtypes.Burner},
 	}
 )
 
 var (
-	_ simapp.App              = (*NibiruApp)(nil)
+	_ runtime.AppI            = (*NibiruApp)(nil)
 	_ servertypes.Application = (*NibiruApp)(nil)
 	_ ibctesting.TestingApp   = (*NibiruApp)(nil)
 )
@@ -236,8 +212,6 @@ type NibiruApp struct {
 	legacyAmino       *codec.LegacyAmino
 	appCodec          codec.Codec
 	interfaceRegistry codectypes.InterfaceRegistry
-
-	invCheckPeriod uint
 
 	// keys to access the substores
 	keys    map[string]*storetypes.KVStoreKey
@@ -253,16 +227,17 @@ type NibiruApp struct {
 	// BankKeeper defines a module interface that facilitates the transfer of coins between accounts
 	BankKeeper       bankkeeper.Keeper
 	capabilityKeeper *capabilitykeeper.Keeper
-	stakingKeeper    stakingkeeper.Keeper
+	stakingKeeper    *stakingkeeper.Keeper
 	slashingKeeper   slashingkeeper.Keeper
 	/* DistrKeeper is the keeper of the distribution store */
-	DistrKeeper    distrkeeper.Keeper
-	GovKeeper      govkeeper.Keeper
-	crisisKeeper   crisiskeeper.Keeper
-	upgradeKeeper  upgradekeeper.Keeper
-	paramsKeeper   paramskeeper.Keeper
-	authzKeeper    authzkeeper.Keeper
-	FeeGrantKeeper feegrantkeeper.Keeper
+	DistrKeeper           distrkeeper.Keeper
+	GovKeeper             govkeeper.Keeper
+	crisisKeeper          crisiskeeper.Keeper
+	upgradeKeeper         upgradekeeper.Keeper
+	paramsKeeper          paramskeeper.Keeper
+	authzKeeper           authzkeeper.Keeper
+	FeeGrantKeeper        feegrantkeeper.Keeper
+	ConsensusParamsKeeper consensusparamkeeper.Keeper
 
 	// --------------------------------------------------------------------
 	// IBC keepers
@@ -344,22 +319,21 @@ func NewNibiruApp(
 	db dbm.DB,
 	traceStore io.Writer,
 	loadLatest bool,
-	skipUpgradeHeights map[int64]bool,
-	homePath string,
-	invCheckPeriod uint,
-	encodingConfig simappparams.EncodingConfig,
+	encodingConfig EncodingConfig,
 	appOpts servertypes.AppOptions,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *NibiruApp {
-	appCodec := encodingConfig.Codec
+	appCodec := encodingConfig.Marshaler
 	legacyAmino := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
+	txConfig := encodingConfig.TxConfig
 
 	bApp := baseapp.NewBaseApp(
 		appName, logger, db, encodingConfig.TxConfig.TxDecoder(), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	bApp.SetVersion(version.Version)
 	bApp.SetInterfaceRegistry(interfaceRegistry)
+	bApp.SetTxEncoder(txConfig.TxEncoder())
 
 	keys, tkeys, memKeys := GetStoreKeys()
 	app := &NibiruApp{
@@ -367,13 +341,12 @@ func NewNibiruApp(
 		legacyAmino:       legacyAmino,
 		appCodec:          appCodec,
 		interfaceRegistry: interfaceRegistry,
-		invCheckPeriod:    invCheckPeriod,
 		keys:              keys,
 		tkeys:             tkeys,
 		memKeys:           memKeys,
 	}
 
-	wasmConfig := app.InitKeepers(skipUpgradeHeights, homePath, appOpts)
+	wasmConfig := app.InitKeepers(appOpts)
 
 	// -------------------------- Module Options --------------------------
 
@@ -475,6 +448,10 @@ func (app *NibiruApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) ab
 // LoadHeight loads a particular height
 func (app *NibiruApp) LoadHeight(height int64) error {
 	return app.LoadVersion(height)
+}
+
+func (app *NibiruApp) RegisterNodeService(clientCtx client.Context) {
+	node.RegisterNodeService(clientCtx, app.GRPCQueryRouter())
 }
 
 // ModuleAccountAddrs returns all the app's module account addresses.
@@ -608,7 +585,7 @@ func (app *NibiruApp) GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper {
    This is provided for compatibility between protobuf and amino implementations. */
 
 func (app *NibiruApp) GetTxConfig() client.TxConfig {
-	return MakeTestEncodingConfig().TxConfig
+	return MakeEncodingConfig().TxConfig
 }
 
 // ------------------------------------------------------------------------
@@ -637,7 +614,7 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(stakingtypes.ModuleName)
 	paramsKeeper.Subspace(distrtypes.ModuleName)
 	paramsKeeper.Subspace(slashingtypes.ModuleName)
-	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypesv1.ParamKeyTable())
+	paramsKeeper.Subspace(govtypes.ModuleName)
 	paramsKeeper.Subspace(crisistypes.ModuleName)
 	// Nibiru core params keepers | x/
 	paramsKeeper.Subspace(spottypes.ModuleName)
@@ -646,7 +623,7 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(inflationtypes.ModuleName)
 	// ibc params keepers
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
-	paramsKeeper.Subspace(ibchost.ModuleName)
+	paramsKeeper.Subspace(ibcexported.ModuleName)
 	paramsKeeper.Subspace(ibcfeetypes.ModuleName)
 	// wasm params keepers
 	paramsKeeper.Subspace(wasm.ModuleName)

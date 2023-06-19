@@ -2,15 +2,14 @@ package testapp
 
 import (
 	"encoding/json"
-	"os"
 
-	"github.com/cosmos/cosmos-sdk/simapp"
+	tmdb "github.com/cometbft/cometbft-db"
+	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/libs/log"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	"github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/log"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmdb "github.com/tendermint/tm-db"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -21,10 +20,10 @@ import (
 // NewNibiruTestAppAndContext creates an 'app.NibiruApp' instance with an in-memory
 // 'tmdb.MemDB' and fresh 'sdk.Context'.
 func NewNibiruTestAppAndContext(shouldUseDefaultGenesis bool) (*app.NibiruApp, sdk.Context) {
-	encoding := app.MakeTestEncodingConfig()
+	encoding := app.MakeEncodingConfig()
 	var appGenesis app.GenesisState
 	if shouldUseDefaultGenesis {
-		appGenesis = app.NewDefaultGenesisState(encoding.Codec)
+		appGenesis = app.NewDefaultGenesisState(encoding.Marshaler)
 	}
 
 	app := NewNibiruTestApp(appGenesis)
@@ -45,21 +44,17 @@ func NewNibiruTestApp(gen app.GenesisState) *app.NibiruApp {
 	db := tmdb.NewMemDB()
 	logger := log.NewNopLogger()
 
-	encoding := app.MakeTestEncodingConfig()
-
+	encoding := app.MakeEncodingConfig()
 	app := app.NewNibiruApp(
 		logger,
 		db,
 		/*traceStore=*/ nil,
 		/*loadLatest=*/ true,
-		/*skipUpgradeHeights=*/ map[int64]bool{},
-		/*homePath=*/ os.TempDir(),
-		/*invCheckPeriod=*/ 0,
-		/*encodingConfig=*/ encoding,
-		/*appOpts=*/ simapp.EmptyAppOptions{},
+		encoding,
+		/*appOpts=*/ sims.EmptyAppOptions{},
 	)
 
-	gen, err := GenesisStateWithSingleValidator(encoding.Codec, gen)
+	gen, err := GenesisStateWithSingleValidator(encoding.Marshaler, gen)
 	if err != nil {
 		panic(err)
 	}
@@ -70,7 +65,7 @@ func NewNibiruTestApp(gen app.GenesisState) *app.NibiruApp {
 	}
 
 	app.InitChain(abci.RequestInitChain{
-		ConsensusParams: simapp.DefaultConsensusParams,
+		ConsensusParams: sims.DefaultConsensusParams,
 		AppStateBytes:   stateBytes,
 	})
 

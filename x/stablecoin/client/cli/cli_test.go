@@ -10,7 +10,6 @@ import (
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
-	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
@@ -46,14 +45,14 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.T().Log("setting up integration test suite")
 	app.SetPrefixes(app.AccountAddressPrefix)
 
-	encodingConfig := app.MakeTestEncodingConfig()
-	genesisState := genesis.NewTestGenesisState()
+	encodingConfig := app.MakeEncodingConfig()
+	genesisState := genesis.NewTestGenesisState(encodingConfig)
 
 	// x/stablecoin genesis state
 	stableGen := stabletypes.DefaultGenesis()
 	stableGen.Params.IsCollateralRatioValid = true
 	stableGen.ModuleAccountBalance = sdk.NewCoin(denoms.USDC, sdk.NewInt(10000*common.TO_MICRO))
-	genesisState[stabletypes.ModuleName] = encodingConfig.Codec.MustMarshalJSON(stableGen)
+	genesisState[stabletypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(stableGen)
 
 	oracleGenesis := oracletypes.DefaultGenesisState()
 	oracleGenesis.ExchangeRates = []oracletypes.ExchangeRateTuple{
@@ -62,7 +61,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	}
 	oracleGenesis.Params.VotePeriod = 1_000
 
-	genesisState[oracletypes.ModuleName] = encodingConfig.Codec.MustMarshalJSON(oracleGenesis)
+	genesisState[oracletypes.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(oracleGenesis)
 
 	homeDir := s.T().TempDir()
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
@@ -96,9 +95,10 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 
 	commonArgs := []string{
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(10))).String()),
 	}
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	testCases := []struct {
 		name string
@@ -129,6 +129,7 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 			clientCtx := val.ClientCtx
 
 			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
+			s.Require().NoError(s.network.WaitForNextBlock())
 			if tc.expectErr {
 				s.Require().Error(err)
 			} else {
@@ -137,11 +138,12 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 					clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
 
 				txResp := tc.respType.(*sdk.TxResponse)
-				err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
+				tx, err := testutilcli.QueryTx(val.ClientCtx, txResp.TxHash)
 				s.NoError(err)
-				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
 
-				resp, err := banktestutil.QueryBalancesExec(clientCtx, minter)
+				s.Require().Equal(tc.expectedCode, tx.Code, out.String())
+
+				resp, err := clitestutil.QueryBalancesExec(clientCtx, minter)
 				s.NoError(err)
 
 				var balRes banktypes.QueryAllBalancesResponse
@@ -167,13 +169,12 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 		val,
 		s.cfg.BondDenom,
 	))
-
 	s.NoError(s.network.WaitForNextBlock())
 
 	defaultBondCoinsString := sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(10))).String()
 	commonArgs := []string{
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 		fmt.Sprintf("--%s=%s", flags.FlagFees, defaultBondCoinsString),
 	}
 
@@ -226,6 +227,8 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 			clientCtx := val.ClientCtx
 
 			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
+			s.Require().NoError(s.network.WaitForNextBlock())
+
 			if tc.expectErr {
 				s.Require().Error(err)
 			} else {
@@ -236,11 +239,11 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 				)
 
 				txResp := tc.respType.(*sdk.TxResponse)
-				err = val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp)
+				tx, err := testutilcli.QueryTx(val.ClientCtx, txResp.TxHash)
 				s.NoError(err)
-				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+				s.Require().Equal(tc.expectedCode, tx.Code, out.String())
 
-				resp, err := banktestutil.QueryBalancesExec(clientCtx, burner)
+				resp, err := clitestutil.QueryBalancesExec(clientCtx, burner)
 				s.NoError(err)
 
 				var balRes banktypes.QueryAllBalancesResponse
@@ -255,7 +258,7 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 					tc.expectedStable, balRes.Balances.AmountOf(denoms.NUSD))
 
 				// Query treasury pool balance
-				resp, err = banktestutil.QueryBalancesExec(
+				resp, err = clitestutil.QueryBalancesExec(
 					clientCtx, types.NewModuleAddress(common.TreasuryPoolModuleAccount))
 				s.NoError(err)
 				err = val.ClientCtx.Codec.UnmarshalJSON(resp.Bytes(), &balRes)
@@ -265,7 +268,7 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 					tc.expectedTreasury, balRes.Balances)
 
 				// Query ecosystem fund balance
-				resp, err = banktestutil.QueryBalancesExec(
+				resp, err = clitestutil.QueryBalancesExec(
 					clientCtx,
 					types.NewModuleAddress(stabletypes.StableEFModuleAccount))
 				s.NoError(err)
