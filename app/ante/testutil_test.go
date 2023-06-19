@@ -6,7 +6,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	ibcante "github.com/cosmos/ibc-go/v6/modules/core/ante"
+	ibcante "github.com/cosmos/ibc-go/v7/modules/core/ante"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -16,7 +16,7 @@ import (
 	xauthsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/stretchr/testify/suite"
 
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	"github.com/NibiruChain/nibiru/app"
 	feeante "github.com/NibiruChain/nibiru/app/ante"
@@ -39,7 +39,7 @@ type AnteTestSuite struct {
 func (suite *AnteTestSuite) SetupTest() {
 	// Set up base app and ctx
 	encodingConfig := genesis.TEST_ENCODING_CONFIG
-	suite.app = testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encodingConfig.Codec))
+	suite.app = testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encodingConfig.Marshaler))
 	chainId := "test-chain-id"
 	ctx := suite.app.NewContext(true, tmproto.Header{
 		Height:  1,
@@ -54,7 +54,8 @@ func (suite *AnteTestSuite) SetupTest() {
 		WithChainID(chainId).
 		WithLegacyAmino(encodingConfig.Amino)
 
-	suite.app.AccountKeeper.SetParams(ctx, authtypes.DefaultParams())
+	err := suite.app.AccountKeeper.SetParams(ctx, authtypes.DefaultParams())
+	suite.Require().NoError(err)
 	params := suite.app.AccountKeeper.GetParams(ctx)
 	suite.Require().NoError(params.Validate())
 

@@ -71,7 +71,7 @@ func (k Keeper) IterateEpochInfo(
 	ctx sdk.Context,
 	fn func(index int64, epochInfo types.EpochInfo) (stop bool),
 ) {
-	iterate := k.Epochs.Iterate(ctx, collections.Range[string]{})
+	iterate := k.Epochs.Iterate(ctx, &collections.Range[string]{})
 	i := int64(0)
 
 	for ; iterate.Valid(); iterate.Next() {

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gogo/protobuf/proto"
-	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
@@ -71,15 +71,15 @@ func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context)
 			fieldErrs = append(fieldErrs, err.Error())
 		}
 
-		if !theEvent.ExchangedMargin.Equal(p.ExpectedEvent.ExchangedMargin) {
+		if !theEvent.MarginToUser.Equal(p.ExpectedEvent.MarginToUser) {
 			err := fmt.Errorf("expected exchanged margin %s, got %s",
-				p.ExpectedEvent.ExchangedMargin, theEvent.ExchangedMargin)
+				p.ExpectedEvent.MarginToUser, theEvent.MarginToUser)
 			fieldErrs = append(fieldErrs, err.Error())
 		}
 
-		if theEvent.ChangeType != p.ExpectedEvent.ChangeType {
+		if theEvent.ChangeReason != p.ExpectedEvent.ChangeReason {
 			err := fmt.Errorf("expected change type %s, got %s",
-				p.ExpectedEvent.ChangeType, theEvent.ChangeType)
+				p.ExpectedEvent.ChangeReason, theEvent.ChangeReason)
 			fieldErrs = append(fieldErrs, err.Error())
 		}
 

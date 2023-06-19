@@ -3,12 +3,15 @@ package cli
 import (
 	"fmt"
 
+	"github.com/cosmos/cosmos-sdk/x/auth/client/cli"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
+
+	tmcli "github.com/cometbft/cometbft/libs/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
-	tmcli "github.com/tendermint/tendermint/libs/cli"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	oraclecli "github.com/NibiruChain/nibiru/x/oracle/client/cli"
@@ -125,6 +128,22 @@ func QueryPositionV2(ctx client.Context, pair asset.Pair, trader sdk.AccAddress)
 	if err := ExecQuery(ctx, perpv2cli.CmdQueryPosition(), []string{trader.String(), pair.String()}, &queryResp); err != nil {
 		return nil, err
 	}
+	return &queryResp, nil
+}
+
+func QueryTx(ctx client.Context, txHash string) (*sdk.TxResponse, error) {
+	var queryResp sdk.TxResponse
+	if err := ExecQuery(
+		ctx,
+		cli.QueryTxCmd(),
+		[]string{
+			txHash,
+		},
+		&queryResp,
+	); err != nil {
+		return nil, err
+	}
+
 	return &queryResp, nil
 }
 

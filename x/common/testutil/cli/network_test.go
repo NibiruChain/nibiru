@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/app"
+
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/x/common/testutil/cli"
@@ -33,10 +35,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.T().Log("setting up integration test suite")
 
+	encConfig := app.MakeEncodingConfig()
+
 	network, err := cli.New(
 		s.T(),
 		s.T().TempDir(),
-		cli.BuildNetworkConfig(genesis.NewTestGenesisState()),
+		cli.BuildNetworkConfig(genesis.NewTestGenesisState(encConfig)),
 	)
 	s.Require().NoError(err)
 	s.network = network

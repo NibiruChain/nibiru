@@ -5,9 +5,9 @@ import (
 	"time"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
@@ -54,7 +54,7 @@ func (s *TestSuiteOracleExecutor) SetupSuite() {
 	s.nibiru = *nibiru
 	s.ctx = ctx
 
-	wasmkeeper.NewMsgServerImpl(wasmkeeper.NewDefaultPermissionKeeper(nibiru.WasmKeeper))
+	wasmkeeper.NewMsgServerImpl(&nibiru.WasmKeeper)
 	s.contract = ContractMap[wasmbin.WasmKeyController]
 	s.exec = binding.ExecutorOracle{
 		Oracle: nibiru.OracleKeeper,

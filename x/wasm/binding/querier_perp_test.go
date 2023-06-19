@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -72,7 +72,7 @@ type TestSuitePerpQuerier struct {
 }
 
 func SetupPerpGenesis() app.GenesisState {
-	genesisState := genesis.NewTestGenesisState()
+	genesisState := genesis.NewTestGenesisState(app.MakeEncodingConfig())
 	genesisState = genesis.AddOracleGenesis(genesisState)
 	genesisState = genesis.AddPerpV2Genesis(genesisState)
 	return genesisState

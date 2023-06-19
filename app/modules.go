@@ -101,7 +101,7 @@ type GovModule struct {
 // DefaultGenesis returns custom Nibiru x/gov module genesis state.
 func (GovModule) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 	genState := govtypes.DefaultGenesisState()
-	genState.DepositParams.MinDeposit = sdk.NewCoins(
+	genState.Params.MinDeposit = sdk.NewCoins(
 		sdk.NewCoin(BondDenom, govtypes.DefaultMinDepositTokens))
 	return cdc.MustMarshalJSON(genState)
 }

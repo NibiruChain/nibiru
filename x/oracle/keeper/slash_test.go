@@ -23,7 +23,7 @@ func TestSlashAndResetMissCounters(t *testing.T) {
 	addr, val := ValAddrs[0], ValPubKeys[0]
 	addr1, val1 := ValAddrs[1], ValPubKeys[1]
 	amt := sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)
-	sh := stakingkeeper.NewMsgServerImpl(input.StakingKeeper)
+	sh := stakingkeeper.NewMsgServerImpl(&input.StakingKeeper)
 	ctx := input.Ctx
 
 	// Validator created
@@ -31,7 +31,7 @@ func TestSlashAndResetMissCounters(t *testing.T) {
 	require.NoError(t, err)
 	_, err = sh.CreateValidator(ctx, NewTestMsgCreateValidator(addr1, val1, amt))
 	require.NoError(t, err)
-	staking.EndBlocker(ctx, input.StakingKeeper)
+	staking.EndBlocker(ctx, &input.StakingKeeper)
 
 	require.Equal(
 		t, input.BankKeeper.GetAllBalances(ctx, sdk.AccAddress(addr)),
@@ -50,7 +50,7 @@ func TestSlashAndResetMissCounters(t *testing.T) {
 	// Case 1, no slash
 	input.OracleKeeper.MissCounters.Insert(input.Ctx, ValAddrs[0], uint64(votePeriodsPerWindow-minValidVotes))
 	input.OracleKeeper.SlashAndResetMissCounters(input.Ctx)
-	staking.EndBlocker(input.Ctx, input.StakingKeeper)
+	staking.EndBlocker(input.Ctx, &input.StakingKeeper)
 
 	validator, _ := input.StakingKeeper.GetValidator(input.Ctx, ValAddrs[0])
 	require.Equal(t, amt, validator.GetBondedTokens())
