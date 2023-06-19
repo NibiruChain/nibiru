@@ -94,12 +94,12 @@ func ExecTx(network *Network, cmd *cobra.Command, txSender sdk.AccAddress, args 
 
 	rawResp, err := cli.ExecTestCLICmd(clientCtx, cmd, args)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to execute tx: %w", err)
 	}
 	tmpResp := new(sdk.TxResponse)
 	err = clientCtx.Codec.UnmarshalJSON(rawResp.Bytes(), tmpResp)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to unmarshal tx response: %w", err)
 	}
 
 	err = network.WaitForNextBlock()
@@ -109,7 +109,7 @@ func ExecTx(network *Network, cmd *cobra.Command, txSender sdk.AccAddress, args 
 
 	resp, err := QueryTx(clientCtx, tmpResp.TxHash)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to query tx: %w", err)
 	}
 
 	if options.canFail {
