@@ -1,9 +1,10 @@
 version: v1
-name: buf.build/cosmwasm/wasmd
+name: buf.build/NibiruChain/nibiru
 deps:
   - buf.build/cosmos/cosmos-proto
   - buf.build/cosmos/cosmos-sdk:v0.47.3
   - buf.build/cosmos/gogo-proto
+  - buf.build/googleapis/googleapis
 breaking:
   use:
     - FILE

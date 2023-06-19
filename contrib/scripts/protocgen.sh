@@ -13,9 +13,8 @@ for dir in $proto_dirs; do
   done
 done
 
-ls -al
 cd ..
-ls -al
+
 # move proto files to the right places
 cp -r github.com/NibiruChain/nibiru/* ./
 rm -rf github.com
