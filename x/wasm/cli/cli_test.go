@@ -27,8 +27,8 @@ import (
 // commonArgs is args for CLI test commands.
 var commonArgs = []string{
 	fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-	fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-	fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(100))).String()),
+	fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
+	fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(10000000))).String()),
 }
 
 type IntegrationTestSuite struct {
@@ -47,8 +47,8 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	app.SetPrefixes(app.AccountAddressPrefix)
 
-	encodingConfig := app.MakeTestEncodingConfig()
-	genesisState := genesis.NewTestGenesisState()
+	encodingConfig := app.MakeEncodingConfig()
+	genesisState := genesis.NewTestGenesisState(encodingConfig)
 	perpv2Gen := perpv2types.DefaultGenesis()
 	perpv2Gen.Markets = []perpv2types.Market{
 		{
@@ -77,7 +77,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			TotalShort:      sdk.ZeroDec(),
 		},
 	}
-	genesisState[perpv2types.ModuleName] = encodingConfig.Codec.MustMarshalJSON(perpv2Gen)
+	genesisState[perpv2types.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(perpv2Gen)
 
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
 	network, err := testutilcli.New(s.T(), s.T().TempDir(), s.cfg)
@@ -110,8 +110,8 @@ func (s *IntegrationTestSuite) deployWasmContract(path string) (uint64, error) {
 	codec := val.ClientCtx.Codec
 
 	args := []string{
-		"--from", val.Address.String(),
 		path,
+		"--from", val.Address.String(),
 		"--gas", "11000000",
 	}
 	args = append(args, commonArgs...)
@@ -121,9 +121,15 @@ func (s *IntegrationTestSuite) deployWasmContract(path string) (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	resp := &sdk.TxResponse{}
 	err = codec.UnmarshalJSON(out.Bytes(), resp)
+	if err != nil {
+		return 0, err
+	}
+
+	resp, err = testutilcli.QueryTx(val.ClientCtx, resp.TxHash)
 	if err != nil {
 		return 0, err
 	}

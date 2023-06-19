@@ -2,20 +2,26 @@
 package keeper
 
 import (
+	"github.com/cosmos/cosmos-sdk/store"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	"github.com/cosmos/cosmos-sdk/testutil/sims"
+	"github.com/cosmos/cosmos-sdk/types/module/testutil"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"testing"
 
 	"time"
 
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
+	dbm "github.com/cometbft/cometbft-db"
+	"github.com/cometbft/cometbft/crypto"
+	"github.com/cometbft/cometbft/crypto/secp256k1"
+	"github.com/cometbft/cometbft/libs/log"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	"github.com/cosmos/cosmos-sdk/simapp"
-	simparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	"github.com/cosmos/cosmos-sdk/std"
-	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -29,17 +35,11 @@ import (
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
-	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/crypto"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
-	"github.com/tendermint/tendermint/libs/log"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	dbm "github.com/tendermint/tm-db"
 )
 
 const faucetAccountName = "faucet"
@@ -59,7 +59,7 @@ func MakeTestCodec(t *testing.T) codec.Codec {
 }
 
 // MakeEncodingConfig nolint
-func MakeEncodingConfig(_ *testing.T) simparams.EncodingConfig {
+func MakeEncodingConfig(_ *testing.T) testutil.TestEncodingConfig {
 	amino := codec.NewLegacyAmino()
 	interfaceRegistry := codectypes.NewInterfaceRegistry()
 	codec := codec.NewProtoCodec(interfaceRegistry)
@@ -72,7 +72,7 @@ func MakeEncodingConfig(_ *testing.T) simparams.EncodingConfig {
 	ModuleBasics.RegisterInterfaces(interfaceRegistry)
 	types.RegisterLegacyAminoCodec(amino)
 	types.RegisterInterfaces(interfaceRegistry)
-	return simparams.EncodingConfig{
+	return testutil.TestEncodingConfig{
 		InterfaceRegistry: interfaceRegistry,
 		Codec:             codec,
 		TxConfig:          txCfg,
@@ -82,7 +82,7 @@ func MakeEncodingConfig(_ *testing.T) simparams.EncodingConfig {
 
 // Test addresses
 var (
-	ValPubKeys = simapp.CreateTestPubKeys(5)
+	ValPubKeys = sims.CreateTestPubKeys(5)
 
 	pubKeys = []crypto.PubKey{
 		secp256k1.GenPrivKey().PubKey(),
@@ -169,16 +169,21 @@ func CreateTestFixture(t *testing.T) TestFixture {
 		types.ModuleName:               nil,
 	}
 
-	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, keyParams, tKeyParams)
 	accountKeeper := authkeeper.NewAccountKeeper(
 		appCodec,
 		keyAcc,
-		paramsKeeper.Subspace(authtypes.ModuleName),
 		authtypes.ProtoBaseAccount,
 		maccPerms,
 		sdk.GetConfig().GetBech32AccountAddrPrefix(),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-	bankKeeper := bankkeeper.NewBaseKeeper(appCodec, keyBank, accountKeeper, paramsKeeper.Subspace(banktypes.ModuleName), blackListAddrs)
+	bankKeeper := bankkeeper.NewBaseKeeper(
+		appCodec,
+		keyBank,
+		accountKeeper,
+		blackListAddrs,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
 
 	totalSupply := sdk.NewCoins(sdk.NewCoin(denoms.NIBI, InitTokens.MulRaw(int64(len(Addrs)*10))))
 	bankKeeper.MintCoins(ctx, faucetAccountName, totalSupply)
@@ -188,7 +193,7 @@ func CreateTestFixture(t *testing.T) TestFixture {
 		keyStaking,
 		accountKeeper,
 		bankKeeper,
-		paramsKeeper.Subspace(stakingtypes.ModuleName),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	stakingParams := stakingtypes.DefaultParams()
@@ -197,9 +202,10 @@ func CreateTestFixture(t *testing.T) TestFixture {
 
 	distrKeeper := distrkeeper.NewKeeper(
 		appCodec,
-		keyDistr, paramsKeeper.Subspace(distrtypes.ModuleName),
+		keyDistr,
 		accountKeeper, bankKeeper, stakingKeeper,
 		authtypes.FeeCollectorName,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	distrKeeper.SetFeePool(ctx, distrtypes.InitialFeePool())
@@ -248,7 +254,7 @@ func CreateTestFixture(t *testing.T) TestFixture {
 
 	keeper.Params.Set(ctx, defaults)
 
-	return TestFixture{ctx, legacyAmino, accountKeeper, bankKeeper, keeper, stakingKeeper, distrKeeper}
+	return TestFixture{ctx, legacyAmino, accountKeeper, bankKeeper, keeper, *stakingKeeper, distrKeeper}
 }
 
 // NewTestMsgCreateValidator test msg creator
@@ -295,8 +301,7 @@ func Setup(t *testing.T) (TestFixture, types.MsgServer) {
 	params, _ = fixture.OracleKeeper.Params.Get(fixture.Ctx)
 
 	h := NewMsgServerImpl(fixture.OracleKeeper)
-
-	sh := stakingkeeper.NewMsgServerImpl(fixture.StakingKeeper)
+	sh := stakingkeeper.NewMsgServerImpl(&fixture.StakingKeeper)
 
 	// Validator created
 	_, err := sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[0], ValPubKeys[0], stakingAmt))
@@ -309,7 +314,7 @@ func Setup(t *testing.T) (TestFixture, types.MsgServer) {
 	require.NoError(t, err)
 	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[4], ValPubKeys[4], stakingAmt))
 	require.NoError(t, err)
-	staking.EndBlocker(fixture.Ctx, fixture.StakingKeeper)
+	staking.EndBlocker(fixture.Ctx, &fixture.StakingKeeper)
 
 	return fixture, h
 }

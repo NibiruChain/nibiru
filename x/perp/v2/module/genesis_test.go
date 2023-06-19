@@ -79,7 +79,7 @@ func RunTestGenesis(t *testing.T, tc TestCase) {
 	// export genesis
 	genState := perp.ExportGenesis(ctx, app.PerpKeeperV2)
 	err := genState.Validate()
-	jsonBz, errMarshalJson := genesis.TEST_ENCODING_CONFIG.Codec.MarshalJSON(genState)
+	jsonBz, errMarshalJson := genesis.TEST_ENCODING_CONFIG.Marshaler.MarshalJSON(genState)
 	require.NoError(t, errMarshalJson)
 	require.NoErrorf(t, err, "genState: \n%s", jsonBz)
 

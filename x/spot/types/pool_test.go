@@ -579,7 +579,7 @@ func TestExitPoolHappyPath(t *testing.T) {
 			},
 			exitingShares:           sdk.NewInt64Coin("nibiru/pool/1", 100),
 			expectedRemainingShares: sdk.NewInt64Coin("nibiru/pool/1", 0),
-			expectedCoins:           nil,
+			expectedCoins:           sdk.NewCoins(),
 			expectedExitedCoins: sdk.NewCoins(
 				sdk.NewInt64Coin("aaa", 100),
 				sdk.NewInt64Coin("bbb", 200),

@@ -105,7 +105,7 @@ func TestSubtractPoolAssetBalance(t *testing.T) {
 			},
 			tokenDenom:    "aaa",
 			subAmt:        sdk.NewInt(1 * common.TO_MICRO),
-			expectedCoins: nil,
+			expectedCoins: sdk.NewCoins(),
 		},
 	} {
 		tc := tc

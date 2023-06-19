@@ -3,7 +3,7 @@ package mock
 import (
 	"testing"
 
-	sdktestsmocks "github.com/cosmos/cosmos-sdk/tests/mocks"
+	sdktestsmocks "github.com/cosmos/cosmos-sdk/testutil/mock"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gomock "github.com/golang/mock/gomock"
 )

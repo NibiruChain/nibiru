@@ -9,10 +9,10 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 
+	"github.com/cometbft/cometbft/crypto/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/crypto/ed25519"
 
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/spot/keeper"
@@ -126,7 +126,7 @@ func TestCreatePool(t *testing.T) {
 			senderInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.NIBI, 1e9),
 			),
-			expectedErr: fmt.Errorf("0unibi is smaller than 1unibi: insufficient funds"),
+			expectedErr: fmt.Errorf("is smaller than 1unibi: insufficient funds"), // SDK does not print 0nibi
 		},
 		{
 			name:       "successful pool creation",
@@ -246,7 +246,7 @@ func TestCreatePool(t *testing.T) {
 			senderInitialFunds: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.NIBI, 1e9),
 			),
-			expectedErr: fmt.Errorf("0unibi is smaller than 1unibi: insufficient funds"),
+			expectedErr: fmt.Errorf("is smaller than 1unibi: insufficient funds"), // SDK cannot print 0unibi
 		},
 		{
 			name:       "successful pool creation - Stableswap",
@@ -291,7 +291,7 @@ func TestCreatePool(t *testing.T) {
 
 			_, err := msgServer.CreatePool(sdk.WrapSDKContext(ctx), &msgCreatePool)
 			if tc.expectedErr != nil {
-				require.EqualError(t, err, tc.expectedErr.Error())
+				require.Contains(t, err.Error(), tc.expectedErr.Error())
 			} else {
 				require.NoError(t, err)
 			}

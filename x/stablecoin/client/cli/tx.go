@@ -44,7 +44,12 @@ func MintStableCmd() *cobra.Command {
 				return err
 			}
 
-			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(
+			txf, err := tx.NewFactoryCLI(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			txf = txf.WithTxConfig(
 				clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
 
 			inCoin, err := sdk.ParseCoinNormalized(args[0])
@@ -76,8 +81,11 @@ func BurnStableCmd() *cobra.Command {
 				return err
 			}
 
-			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).
-				WithTxConfig(clientCtx.TxConfig).
+			txf, err := tx.NewFactoryCLI(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
+			txf.WithTxConfig(clientCtx.TxConfig).
 				WithAccountRetriever(clientCtx.AccountRetriever)
 
 			inCoin, err := sdk.ParseCoinNormalized(args[0])
@@ -112,8 +120,12 @@ func BuybackCmd() *cobra.Command {
 				return err
 			}
 
-			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(
-				clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
+			txf, err := tx.NewFactoryCLI(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			txf = txf.WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
 
 			inCoin, err := sdk.ParseCoinNormalized(args[0])
 			if err != nil {
@@ -149,7 +161,12 @@ func RecollateralizeCmd() *cobra.Command {
 				return err
 			}
 
-			txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).WithTxConfig(
+			txf, err := tx.NewFactoryCLI(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			txf = txf.WithTxConfig(
 				clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
 
 			inCoin, err := sdk.ParseCoinNormalized(args[0])

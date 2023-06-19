@@ -77,9 +77,10 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 	//   => 1 - 365 * 0 - 0 < 365 --- nothing to do here
 	// Given, epochNumber = 741, period = 1, epochPerPeriod = 365, skippedEpochs = 10
 	//   => 741 - 1 * 365 - 10 > 365 --- a period has passed! we set a new period
+	peek := k.NumSkippedEpochs.Peek(ctx)
 	if int64(epochNumber)-
 		int64(epochsPerPeriod*period)-
-		int64(k.NumSkippedEpochs.Peek(ctx)) > int64(epochsPerPeriod) {
+		int64(peek) > int64(epochsPerPeriod) {
 		k.CurrentPeriod.Next(ctx)
 	}
 

@@ -67,7 +67,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 					Amount:      sdk.NewCoins(sdk.NewInt64Coin(app.BondDenom, 100)),
 				},
 			},
-			expectedGas: 5402,
+			expectedGas: 1042,
 			expectedErr: sdkerrors.Wrap(errors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than those two messages"),
 		},
 		{
@@ -84,7 +84,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 					Validator: addr.String(),
 				},
 			},
-			expectedGas: 5402,
+			expectedGas: 1042,
 			expectedErr: sdkerrors.Wrap(errors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than those two messages"),
 		},
 		{
@@ -102,7 +102,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 					Amount:      sdk.NewCoins(sdk.NewInt64Coin(app.BondDenom, 100)),
 				},
 			},
-			expectedGas: 5402,
+			expectedGas: 1042,
 			expectedErr: sdkerrors.Wrap(errors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than those two messages"),
 		},
 		{
@@ -120,7 +120,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 					Validator:     addr.String(),
 				},
 			},
-			expectedGas: 5402,
+			expectedGas: 1042,
 			expectedErr: sdkerrors.Wrap(errors.ErrInvalidRequest, "a transaction that includes an oracle vote or prevote message cannot have more than those two messages"),
 		},
 		{
@@ -179,7 +179,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 					Validator: addr.String(),
 				},
 			},
-			expectedGas: 5402,
+			expectedGas: 1042,
 			expectedErr: sdkerrors.Wrap(errors.ErrInvalidRequest, "a transaction cannot have more than a single oracle vote and prevote message"),
 		},
 		{
@@ -196,7 +196,7 @@ func (suite *AnteTestSuite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 					Amount:      sdk.NewCoins(sdk.NewInt64Coin(app.BondDenom, 200)),
 				},
 			},
-			expectedGas: 79944,
+			expectedGas: 62504,
 			expectedErr: nil,
 		},
 	}
