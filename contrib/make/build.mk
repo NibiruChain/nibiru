@@ -24,7 +24,7 @@ else
 endif
 
 SDK_PACK := $(shell go list -m github.com/cosmos/cosmos-sdk | sed  's/ /\@/g')
-TM_VERSION := $(shell go list -m github.com/tendermint/tendermint | sed 's:.* ::') # grab everything after the space in "github.com/tendermint/tendermint v0.34.7"
+TM_VERSION := $(shell go list -m github.com/cometbft/cometbft | sed 's:.* ::') # grab everything after the space in "github.com/tendermint/tendermint v0.34.7"
 ROCKSDB_VERSION := 8.1.1
 DOCKER := $(shell which docker)
 BUILDDIR ?= $(CURDIR)/build
@@ -57,7 +57,7 @@ ldflags := $(strip $(ldflags))
 
 BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
 CGO_CFLAGS  := -I$(TEMPDIR)/include
-CGO_LDFLAGS := -L$(TEMPDIR)/lib -lrocksdb
+CGO_LDFLAGS := -L$(TEMPDIR)/lib -lrocksdb -lstdc++ -ldl -lm
 ifeq ($(OS_NAME),darwin)
 	CGO_LDFLAGS += -lz -lbz2
 endif
