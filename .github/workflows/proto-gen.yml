@@ -22,7 +22,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Pull Docker image
-        run: docker pull ghcr.io/nibiruchain/cosmossdk-proto:v0.1.0
+        run: docker pull ghcr.io/cosmos/proto-builder:0.13.2
 
       - name: Generate proto code
         run: make proto-gen
