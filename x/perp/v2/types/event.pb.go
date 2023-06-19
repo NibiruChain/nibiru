@@ -76,10 +76,10 @@ type PositionChangedEvent struct {
 	// Bad debt is negative net margin past the liquidation point of a position.
 	BadDebt types.Coin `protobuf:"bytes,5,opt,name=bad_debt,json=badDebt,proto3" json:"bad_debt"`
 	// A funding payment made or received by the trader on the current position.
-	// 'fundingPayment' is positive if 'owner' is the sender and negative if 'owner'
-	// is the receiver of the payment. Its magnitude is abs(size * fundingRate).
-	// Funding payments act to converge the mark price and index price
-	// (average price on major exchanges).
+	//'fundingPayment' is positive if 'owner' is the sender and negative if 'owner'
+	//is the receiver of the payment. Its magnitude is abs(size * fundingRate).
+	//Funding payments act to converge the mark price and index price
+	//(average price on major exchanges).
 	FundingPayment github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,6,opt,name=funding_payment,json=fundingPayment,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"funding_payment"`
 	// The block number at which this position was changed.
 	BlockHeight int64 `protobuf:"varint,7,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
