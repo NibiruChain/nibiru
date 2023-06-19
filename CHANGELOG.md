@@ -93,9 +93,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1385](https://github.com/NibiruChain/nibiru/pull/1385) - test(perp): add clearing house negative tests
 * [#1388](https://github.com/NibiruChain/nibiru/pull/1388) - refactor(perp)!: idempotent position changed event
 * [#1387](https://github.com/NibiruChain/nibiru/pull/1387) - feat: upgrade to Cosmos SDK v0.46.10
+* [#1413](https://github.com/NibiruChain/nibiru/pull/1413) - fix(perp): provide descriptive errors when all liquidations fail in MultiLiquidate
+* [#1427](https://github.com/NibiruChain/nibiru/pull/1427) - refactor(perp)!: PositionChangedEvent `MarginToUser`
 
 ### Improvements
 
+* [#1424](https://github.com/NibiruChain/nibiru/pull/1424) - feat(perp): Add change type and exchanged margin to position changed events.
 * [#1390](https://github.com/NibiruChain/nibiru/pull/1390) - fix(localnet.sh): Fix genesis market initialization + add force exits on failure
 * [#1340](https://github.com/NibiruChain/nibiru/pull/1340) - feat(wasm): Enforce x/sudo contract permission checks on the shifter contract + integration tests
 * [#1317](https://github.com/NibiruChain/nibiru/pull/1317) - feat(testutil): Use secp256k1 algo for private key generation in common/testutil.
@@ -153,6 +156,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1381](https://github.com/NibiruChain/nibiru/pull/1381) - chore(deps): Bump github.com/cosmos/cosmos-sdk to 0.45.16
 * [#1405](https://github.com/NibiruChain/nibiru/pull/1405) - ci: use Buf to build protos
 * [#1406](https://github.com/NibiruChain/nibiru/pull/1406) - feat(perp): emit additional event info
+* [#1419](https://github.com/NibiruChain/nibiru/pull/1419) - fix(spot): add pools to genesis state
+* [#1408](https://github.com/NibiruChain/nibiru/pull/1408) - feat(spot): idempotent events
+* [#1420](https://github.com/NibiruChain/nibiru/pull/1420) - refactor(oracle): update default params
+* [#1421](https://github.com/NibiruChain/nibiru/pull/1421) - feat(oracle): add expiry time to oracle prices
+* [#1422](https://github.com/NibiruChain/nibiru/pull/1422) - fix(oracle): handle zero oracle rewards
+* [#1426](https://github.com/NibiruChain/nibiru/pull/1426) - refactor(perp): remove price fluctuation limit check
+* [#1423](https://github.com/NibiruChain/nibiru/pull/1423) - fix: remove panics from abci hooks
 
 ### Bug Fixes
 
@@ -161,6 +171,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1379](https://github.com/NibiruChain/nibiru/pull/1379) - feat(perp): check for denom in add/remove margin
 * [#1383](https://github.com/NibiruChain/nibiru/pull/1383) - feat: enforce contract to be whitelisted when calling perp bindings
 * [#1397](https://github.com/NibiruChain/nibiru/pull/1397) - fix: ensure margin is high enough when removing it
+* [#1417](https://github.com/NibiruChain/nibiru/pull/1417) - fix: run end blocker on block end for perp v2
+* [#1425](https://github.com/NibiruChain/nibiru/pull/1425) - fix: remove positions from state when closed with reverse position
 
 ## [v0.19.2](https://github.com/NibiruChain/nibiru/releases/tag/v0.19.2) - 2023-02-24
 

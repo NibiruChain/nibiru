@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"fmt"
-
 	"github.com/NibiruChain/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -57,7 +55,7 @@ func (k Keeper) rewardBallotWinners(
 	// Move distributed reward to distribution module
 	err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, k.distrModuleName, distributedRewards)
 	if err != nil {
-		panic(fmt.Sprintf("[oracle] Failed to send coins to distribution module %s", err.Error()))
+		k.Logger(ctx).Error("Failed to send coins to distribution module", "err", err)
 	}
 }
 
@@ -68,7 +66,7 @@ func (k Keeper) GatherRewardsForVotePeriod(ctx sdk.Context) sdk.Coins {
 	for _, rewardId := range k.Rewards.Iterate(ctx, collections.Range[uint64]{}).Keys() {
 		pairReward, err := k.Rewards.Get(ctx, rewardId)
 		if err != nil {
-			panic(fmt.Sprintf("[oracle] Failed to get reward %s", err.Error()))
+			k.Logger(ctx).Error("Failed to get reward", "err", err)
 		}
 		coins = coins.Add(pairReward.Coins...)
 
@@ -78,7 +76,7 @@ func (k Keeper) GatherRewardsForVotePeriod(ctx sdk.Context) sdk.Coins {
 			// If the distribution period count drops to 0: the reward instance is removed.
 			err := k.Rewards.Delete(ctx, rewardId)
 			if err != nil {
-				panic(fmt.Sprintf("[oracle] Failed to delete pair reward %s", err.Error()))
+				k.Logger(ctx).Error("Failed to delete pair reward", "err", err)
 			}
 		} else {
 			k.Rewards.Insert(ctx, rewardId, pairReward)

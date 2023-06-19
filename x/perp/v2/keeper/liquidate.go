@@ -1,9 +1,15 @@
 package keeper
 
 import (
+	"encoding/json"
+	"fmt"
+	"strings"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/collections"
+	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
@@ -17,21 +23,30 @@ func (k Keeper) MultiLiquidate(
 	var allFailed bool = true
 
 	for i, req := range liquidationRequests {
-		traderAddr := sdk.MustAccAddressFromBech32(req.Trader)
 		cachedCtx, commit := ctx.CacheContext()
+		traderAddr, errAccAddress := sdk.AccAddressFromBech32(req.Trader)
 		liquidatorFee, perpEfFee, err := k.liquidate(cachedCtx, liquidator, req.Pair, traderAddr)
 
-		if err != nil {
+		switch {
+		case errAccAddress != nil:
+			resp[i] = &types.MsgMultiLiquidateResponse_LiquidationResponse{
+				Success: false,
+				Error:   errAccAddress.Error(),
+				Trader:  req.Trader,
+			}
+		case err != nil:
 			resp[i] = &types.MsgMultiLiquidateResponse_LiquidationResponse{
 				Success: false,
 				Error:   err.Error(),
+				Trader:  req.Trader,
 			}
-		} else {
+		default:
 			allFailed = false
 			resp[i] = &types.MsgMultiLiquidateResponse_LiquidationResponse{
 				Success:       true,
-				LiquidatorFee: liquidatorFee,
-				PerpEfFee:     perpEfFee,
+				LiquidatorFee: &liquidatorFee,
+				PerpEfFee:     &perpEfFee,
+				Trader:        req.Trader,
 			}
 
 			ctx.EventManager().EmitEvents(cachedCtx.EventManager().Events())
@@ -40,10 +55,73 @@ func (k Keeper) MultiLiquidate(
 	}
 
 	if allFailed {
-		return resp, types.ErrAllLiquidationsFailed.Wrapf("%d liquidations failed", len(liquidationRequests))
+		prettyResps, errPrettyResp := PrettyLiquidateResponse(resp)
+
+		numLiquidations := len(liquidationRequests)
+		errDescription := strings.Join(
+			[]string{
+				fmt.Sprintf("%d liquidations failed", numLiquidations),
+				fmt.Sprintf("liquidate_responses: %s", prettyResps),
+			},
+			"\n",
+		)
+		if errPrettyResp != nil {
+			errDescription += fmt.Sprintf("\n%s", errPrettyResp.Error())
+		}
+		return resp, types.ErrAllLiquidationsFailed.Wrap(errDescription)
 	}
 
 	return resp, nil
+}
+
+/*
+PrettyLiquidateResponse converts a slice of liquidation responses into a
+pretty formatted JSON array for each response. This helps with providing
+descriptive error messages in the case of failed liquidations.
+
+Example outputs:
+
+```json
+[
+
+	{
+	  "success": false,
+	  "error": "failed liquidation A",
+	  "liquidator_fee": null,
+	  "perp_ef_fee": null,
+	  "trader": "dummytraderA"
+	},
+	{
+	  "success": true,
+	  "error": "",
+	  "liquidator_fee": { denom: "unibi", amount: "420"},
+	  "perp_ef_fee": null,
+	  "trader": "dummytraderB"
+	}
+
+]
+```
+*/
+func PrettyLiquidateResponse(
+	resps []*types.MsgMultiLiquidateResponse_LiquidationResponse,
+) (pretty string, err error) {
+	protoCodec := codec.NewProtoCodec(codectypes.NewInterfaceRegistry())
+	var respJsons []json.RawMessage
+	var jsonErrs string = ""
+	for _, resp := range resps {
+		respJsonBz, jsonErr := protoCodec.MarshalJSON(resp)
+		if jsonErr != nil {
+			jsonErrs += jsonErr.Error()
+		}
+		respJsons = append(respJsons, respJsonBz)
+	}
+
+	prettyBz, _ := json.MarshalIndent(respJsons, "", "  ")
+	pretty = string(prettyBz)
+	if jsonErrs != "" {
+		return pretty, types.ErrParseLiquidateResponse.Wrap(jsonErrs)
+	}
+	return
 }
 
 /*
@@ -278,7 +356,6 @@ func (k Keeper) executePartialLiquidation(
 		/* currentPosition */ *currentPosition,
 		/* quoteAssetAmount */ quoteAssetDelta,
 		/* baseAmtLimit */ sdk.ZeroDec(),
-		/* skipFluctuationLimitCheck */ true,
 	)
 	if err != nil {
 		return types.LiquidateResp{}, err
