@@ -94,3 +94,25 @@ builds:
 
 universal_binaries:
   - id: darwin
+
+dockers:
+  - image_templates:
+      - "ghcr.io/nibiruchain/nibiru:{{ .Version }}-amd64"
+    use: docker
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--platform=linux/amd64"
+
+  - image_templates:
+      - "ghcr.io/nibiruchain/nibiru:{{ .Version }}-arm64"
+    use: docker
+    goarch: arm64
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--platform=linux/arm64"
+
+docker_manifests:
+  - name_template: "ghcr.io/nibiruchain/nibiru:{{ .Version }}"
+    image_templates:
+      - "ghcr.io/nibiruchain/nibiru:{{ .Version }}-amd64"
+      - "ghcr.io/nibiruchain/nibiru:{{ .Version }}-arm64"
