@@ -63,7 +63,7 @@ CGO_LDFLAGS := -L$(TEMPDIR)/lib
 ifeq ($(OS_NAME),linux)
 	CGO_LDFLAGS += -static
 endif
-CGO_LDFLAGS += -L$(TEMPDIR)/lib -lrocksdb -lstdc++ -lm -ldl
+CGO_LDFLAGS += -lrocksdb -lstdc++ -lm -ldl
 ifeq ($(OS_NAME),darwin)
 	CGO_LDFLAGS += -lz -lbz2
 endif
