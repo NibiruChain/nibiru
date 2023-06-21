@@ -47,55 +47,32 @@ add_genesis_perp_markets_with_coingecko_prices() {
 
   local M=1000000
 
-  local num_users=24000
+  local num_users=300000
   local faucet_nusd_amt=100
-  local quote_amt=$(($num_users * $faucet_nusd_amt * $M))
+  local reserve_amt=$(($num_users * $faucet_nusd_amt * $M))
 
   price_btc=$(cat tmp_market_prices.json | jq -r '.bitcoin.usd')
   price_btc=${price_btc%.*}
-  base_amt_btc=$(($quote_amt / $price_btc))
+  if [ -z "$price_btc" ]; then
+    return 1
+  fi
+
+  nibid add-genesis-perp-market --pair=ubtc:unusd --sqrt-depth=$reserve_amt --price-multiplier=$price_btc
 
   price_eth=$(cat tmp_market_prices.json | jq -r '.ethereum.usd')
   price_eth=${price_eth%.*}
-  base_amt_eth=$(($quote_amt / $price_eth))
+  if [ -z "$price_eth" ]; then
+    return 1
+  fi
 
-  nibid add-genesis-perp-market --pair=ubtc:unusd --base-amt=$base_amt_btc --quote-amt=$quote_amt --max-leverage=12
-  nibid add-genesis-perp-market --pair=ueth:unusd --base-amt=$base_amt_eth --quote-amt=$quote_amt --max-leverage=20 --mmr=0.04
-
-  echo 'tmp_market_prices: '
-  cat $temp_json_fname | jq .
-  rm -f $temp_json_fname
-}
-
-add_genesis_perp_markets_default() {
-  # nibid add-genesis-perp-market [pair] [base-asset-reserve] [quote-asset-reserve] [trade-limit-ratio] [fluctuation-limit-ratio] [maxOracle-spread-ratio] [maintenance-margin-ratio] [max-leverage]
-  local KILO="000"
-  local MEGA="000000"
-  local quote_amt=10$KILO$MEGA
-  local base_amt_btc=$(($quote_amt / 16500))
-  local base_amt_eth=$(($quote_amt / 1200))
-  nibid add-genesis-perp-market --pair=ubtc:unusd --base-amt=$base_amt_btc --quote-amt=$quote_amt --max-leverage=12
-  nibid add-genesis-perp-market --pair=ueth:unusd --base-amt=$base_amt_eth --quote-amt=$quote_amt --max-leverage=20 --mmr=0.04
+  nibid add-genesis-perp-market --pair=ueth:unusd --sqrt-depth=$reserve_amt --price-multiplier=$price_eth
 }
 
 add_genesis_perp_markets_with_coingecko_prices
 
-# x/perp
-add_genesis_param '.app_state.perp.params.stopped = false'
-add_genesis_param '.app_state.perp.params.fee_pool_fee_ratio = "0.001"'
-add_genesis_param '.app_state.perp.params.ecosystem_fund_fee_ratio = "0.001"'
-add_genesis_param '.app_state.perp.params.liquidation_fee_ratio = "0.025"'
-add_genesis_param '.app_state.perp.params.partial_liquidation_ratio = "0.25"'
-add_genesis_param '.app_state.perp.params.funding_rate_interval = "30 min"'
-add_genesis_param '.app_state.perp.params.twap_lookback_window = "900s"'
-add_genesis_param '.app_state.perp.pair_metadata[0].pair = "ubtc:unusd"'
-add_genesis_param '.app_state.perp.pair_metadata[0].latest_cumulative_premium_fraction = "0"'
-add_genesis_param '.app_state.perp.pair_metadata[1].pair = "ueth:unusd"'
-add_genesis_param '.app_state.perp.pair_metadata[1].latest_cumulative_premium_fraction = "0"'
-
 # x/oracle
 add_genesis_param '.app_state.oracle.params.twap_lookback_window = "900s"'
-add_genesis_param '.app_state.oracle.params.vote_period = "10"'
+add_genesis_param '.app_state.oracle.params.vote_period = "10000"'
 add_genesis_param '.app_state.oracle.params.min_voters = "1"'
 add_genesis_param '.app_state.oracle.exchange_rates[0].pair = "ubtc:unusd"'
 add_genesis_param '.app_state.oracle.exchange_rates[0].exchange_rate = "20000"'
