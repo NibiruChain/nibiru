@@ -34,7 +34,7 @@ TEMPDIR ?= $(CURDIR)/temp
 export GO111MODULE = on
 
 # process build tags
-build_tags = netgo osusergo rocksdb grocksdb_no_link static static_wasm muslc
+build_tags = netgo osusergo rocksdb grocksdb_no_link static_wasm muslc
 build_tags += $(BUILD_TAGS)
 build_tags := $(strip $(build_tags))
 
@@ -59,13 +59,11 @@ ldflags := $(strip $(ldflags))
 
 BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
 CGO_CFLAGS  := -I$(TEMPDIR)/include
-CGO_LDFLAGS := -L$(TEMPDIR)/lib
-ifeq ($(OS_NAME),linux)
-	CGO_LDFLAGS += -static
-endif
-CGO_LDFLAGS += -lrocksdb -lstdc++ -lm -ldl
+CGO_LDFLAGS := -L$(TEMPDIR)/lib -lrocksdb -lstdc++ -lm -ldl
 ifeq ($(OS_NAME),darwin)
 	CGO_LDFLAGS += -lz -lbz2
+else
+	CGO_LDFLAGS += -static -lwasmvm_muslc
 endif
 
 ###############################################################################
