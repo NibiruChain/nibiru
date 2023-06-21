@@ -8,8 +8,6 @@ GOLANG_CROSS_VERSION  ?= v1.19.4
 release:
 	docker run \
 		--rm \
-		--privileged \
-		-v /var/run/docker.sock:/var/run/docker.sock \
 		--platform linux/amd64 \
 		-v "$(CURDIR)":/go/src/$(PACKAGE_NAME) \
 		-w /go/src/$(PACKAGE_NAME) \
@@ -21,8 +19,6 @@ release:
 release-snapshot:
 	docker run \
 		--rm \
-		--privileged \
-		-v /var/run/docker.sock:/var/run/docker.sock \
 		--platform linux/amd64 \
 		-v "$(CURDIR)":/go/src/$(PACKAGE_NAME) \
 		-w /go/src/$(PACKAGE_NAME) \
