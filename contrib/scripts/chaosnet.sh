@@ -17,9 +17,9 @@ sed -i 's/swagger = false/swagger = true/' $HOME/.nibid/config/app.toml
 sed -i 's/enabled-unsafe-cors = false/enabled-unsafe-cors = true/' $HOME/.nibid/config/app.toml
 sed -i 's/127.0.0.1/0.0.0.0/' $HOME/.nibid/config/config.toml
 echo "$MNEMONIC" | nibid keys add validator --recover
-nibid add-genesis-account $(nibid keys show validator -a) "10000000000000unibi,10000000000000unusd,10000000000000uusdt,10000000000000uusdc"
-nibid gentx validator 900000000unibi --chain-id $CHAIN_ID
-nibid collect-gentxs
+nibid genesis add-genesis-account $(nibid keys show validator -a) "10000000000000unibi,10000000000000unusd,10000000000000uusdt,10000000000000uusdc"
+nibid genesis gentx validator 900000000unibi --chain-id $CHAIN_ID
+nibid genesis collect-gentxs
 
 # ------------------------------------------------------------------------
 # Configure genesis params

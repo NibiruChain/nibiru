@@ -77,7 +77,7 @@ builds:
       - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
       - -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb
       - -linkmode=external
-      - -extldflags '-static -lrocksdb -l:libstdc++.a -l:libm.a -ldl -lpthread'
+      - -extldflags '-static -lrocksdb -lstdc++ -lm -ldl -lpthread'
     tags:
       - netgo
       - osusergo
