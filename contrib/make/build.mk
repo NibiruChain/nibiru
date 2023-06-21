@@ -92,7 +92,7 @@ wasmvmlib: $(TEMPDIR)/
         ifeq ($(OS_NAME),darwin)
 	        wget https://github.com/CosmWasm/wasmvm/releases/download/v$(WASMVM_VERSION)/libwasmvmstatic_darwin.a -O $(TEMPDIR)/lib/libwasmvmstatic_darwin.a
         else
-            ifeq ($(ARCH_NAME),x86_64)
+            ifeq ($(ARCH_NAME),amd64)
 	            wget https://github.com/CosmWasm/wasmvm/releases/download/v$(WASMVM_VERSION)/libwasmvm_muslc.x86_64.a -O $(TEMPDIR)/lib/libwasmvm_muslc.a
             else
 	            wget https://github.com/CosmWasm/wasmvm/releases/download/v$(WASMVM_VERSION)/libwasmvm_muslc.aarch64.a -O $(TEMPDIR)/lib/libwasmvm_muslc.a
