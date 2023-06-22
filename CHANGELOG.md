@@ -51,7 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `github.com/spf13/cast` from 1.5.0 to 1.5.1 (#1358)
 - Bump `github.com/stretchr/testify` from 1.8.2 to 1.8.4 (#1384, #1435)
 - Bump `cosmossdk.io/math` from 1.0.0-beta.6 to 1.0.1 (#1394)
-- Bump `google.golang.org/grpc` from 1.53.0 to 1.55.0 (#1395)
+- Bump `google.golang.org/grpc` from 1.53.0 to 1.56.0 (#1395, #1437)
 - Bump `github.com/gin-gonic/gin` from 1.8.1 to 1.9.1 (#1409)
 
 ### Breaking
