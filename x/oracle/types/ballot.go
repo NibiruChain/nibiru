@@ -136,12 +136,17 @@ func (pb ExchangeRateBallots) StandardDeviation(median sdk.Dec) (standardDeviati
 	}()
 
 	sum := sdk.ZeroDec()
+	n := 0
 	for _, v := range pb {
-		deviation := v.ExchangeRate.Sub(median)
-		sum = sum.Add(deviation.Mul(deviation))
+		// ignore abstain votes in std dev calculation
+		if v.ExchangeRate.IsPositive() {
+			deviation := v.ExchangeRate.Sub(median)
+			sum = sum.Add(deviation.Mul(deviation))
+			n += 1
+		}
 	}
 
-	variance := sum.QuoInt64(int64(len(pb)))
+	variance := sum.QuoInt64(int64(n))
 
 	floatNum, _ := strconv.ParseFloat(variance.String(), 64)
 	floatNum = math.Sqrt(floatNum)
