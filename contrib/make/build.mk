@@ -34,7 +34,7 @@ TEMPDIR ?= $(CURDIR)/temp
 export GO111MODULE = on
 
 # process build tags
-build_tags = netgo osusergo rocksdb grocksdb_no_link static static_wasm muslc
+build_tags = netgo osusergo rocksdb grocksdb_no_link static_wasm muslc
 build_tags += $(BUILD_TAGS)
 build_tags := $(strip $(build_tags))
 
@@ -59,13 +59,11 @@ ldflags := $(strip $(ldflags))
 
 BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
 CGO_CFLAGS  := -I$(TEMPDIR)/include
-CGO_LDFLAGS := -L$(TEMPDIR)/lib
-ifeq ($(OS_NAME),linux)
-	CGO_LDFLAGS += -static
-endif
-CGO_LDFLAGS += -L$(TEMPDIR)/lib -lrocksdb -lstdc++ -lm -ldl
+CGO_LDFLAGS := -L$(TEMPDIR)/lib -lrocksdb -lstdc++ -lm -ldl
 ifeq ($(OS_NAME),darwin)
 	CGO_LDFLAGS += -lz -lbz2
+else
+	CGO_LDFLAGS += -static -lwasmvm_muslc
 endif
 
 ###############################################################################
@@ -92,7 +90,7 @@ wasmvmlib: $(TEMPDIR)/
         ifeq ($(OS_NAME),darwin)
 	        wget https://github.com/CosmWasm/wasmvm/releases/download/v$(WASMVM_VERSION)/libwasmvmstatic_darwin.a -O $(TEMPDIR)/lib/libwasmvmstatic_darwin.a
         else
-            ifeq ($(ARCH_NAME),x86_64)
+            ifeq ($(ARCH_NAME),amd64)
 	            wget https://github.com/CosmWasm/wasmvm/releases/download/v$(WASMVM_VERSION)/libwasmvm_muslc.x86_64.a -O $(TEMPDIR)/lib/libwasmvm_muslc.a
             else
 	            wget https://github.com/CosmWasm/wasmvm/releases/download/v$(WASMVM_VERSION)/libwasmvm_muslc.aarch64.a -O $(TEMPDIR)/lib/libwasmvm_muslc.a

@@ -39,4 +39,4 @@ jobs:
           context: .
           push: true
           platforms: linux/amd64,linux/arm64
-          tags: ghcr.io/nibiruchain/chaosnet
+          tags: ghcr.io/nibiruchain/chaosnet:${{ steps.get_version.outputs.version }}
