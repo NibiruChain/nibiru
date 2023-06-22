@@ -26,6 +26,7 @@ endif
 SDK_PACK := $(shell go list -m github.com/cosmos/cosmos-sdk | sed  's/ /\@/g')
 TM_VERSION := $(shell go list -m github.com/cometbft/cometbft | sed 's:.* ::') # grab everything after the space in "github.com/tendermint/tendermint v0.34.7"
 ROCKSDB_VERSION := 8.1.1
+WASMVM_VERSION := 1.2.4
 DOCKER := $(shell which docker)
 BUILDDIR ?= $(CURDIR)/build
 TEMPDIR ?= $(CURDIR)/temp
@@ -33,7 +34,7 @@ TEMPDIR ?= $(CURDIR)/temp
 export GO111MODULE = on
 
 # process build tags
-build_tags = netgo osusergo rocksdb grocksdb_no_link
+build_tags = netgo osusergo rocksdb grocksdb_no_link static static_wasm muslc
 build_tags += $(BUILD_TAGS)
 build_tags := $(strip $(build_tags))
 
@@ -50,6 +51,7 @@ ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=nibiru \
 		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)" \
 		  -X github.com/tendermint/tendermint/version.TMCoreSemVer=$(TM_VERSION) \
 		  -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb \
+		  -linkmode=external \
 		  -w -s
 
 ldflags += $(LDFLAGS)
@@ -57,7 +59,11 @@ ldflags := $(strip $(ldflags))
 
 BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
 CGO_CFLAGS  := -I$(TEMPDIR)/include
-CGO_LDFLAGS := -L$(TEMPDIR)/lib -lrocksdb -lstdc++ -ldl -lm
+CGO_LDFLAGS := -L$(TEMPDIR)/lib
+ifeq ($(OS_NAME),linux)
+	CGO_LDFLAGS += -static
+endif
+CGO_LDFLAGS += -L$(TEMPDIR)/lib -lrocksdb -lstdc++ -lm -ldl
 ifeq ($(OS_NAME),darwin)
 	CGO_LDFLAGS += -lz -lbz2
 endif
@@ -73,17 +79,31 @@ $(TEMPDIR)/:
 rocksdblib: $(TEMPDIR)/
 	@mkdir -p $(TEMPDIR)/include
 	@mkdir -p $(TEMPDIR)/lib
-ifeq (",$(wildcard $(TEMPDIR)/include/rocksdb)")
-	wget https://github.com/NibiruChain/gorocksdb/releases/download/v$(ROCKSDB_VERSION)/include.$(ROCKSDB_VERSION).tar.gz -O - | tar -xz -C $(TEMPDIR)/include/
-endif
-ifeq (",$(wildcard $(TEMPDIR)/lib/librocksdb.a)")
-	wget https://github.com/NibiruChain/gorocksdb/releases/download/v$(ROCKSDB_VERSION)/librocksdb_$(ROCKSDB_VERSION)_$(OS_NAME)_$(ARCH_NAME).tar.gz -O - | tar -xz -C $(TEMPDIR)/lib/
-endif
+    ifeq (",$(wildcard $(TEMPDIR)/include/rocksdb)")
+	    wget https://github.com/NibiruChain/gorocksdb/releases/download/v$(ROCKSDB_VERSION)/include.$(ROCKSDB_VERSION).tar.gz -O - | tar -xz -C $(TEMPDIR)/include/
+    endif
+    ifeq (",$(wildcard $(TEMPDIR)/lib/librocksdb.a)")
+	    wget https://github.com/NibiruChain/gorocksdb/releases/download/v$(ROCKSDB_VERSION)/librocksdb_$(ROCKSDB_VERSION)_$(OS_NAME)_$(ARCH_NAME).tar.gz -O - | tar -xz -C $(TEMPDIR)/lib/
+    endif
+
+wasmvmlib: $(TEMPDIR)/
+	@mkdir -p $(TEMPDIR)/lib
+    ifeq (",$(wildcard $(TEMPDIR)/lib/libwasmvm*.a)")
+        ifeq ($(OS_NAME),darwin)
+	        wget https://github.com/CosmWasm/wasmvm/releases/download/v$(WASMVM_VERSION)/libwasmvmstatic_darwin.a -O $(TEMPDIR)/lib/libwasmvmstatic_darwin.a
+        else
+            ifeq ($(ARCH_NAME),x86_64)
+	            wget https://github.com/CosmWasm/wasmvm/releases/download/v$(WASMVM_VERSION)/libwasmvm_muslc.x86_64.a -O $(TEMPDIR)/lib/libwasmvm_muslc.a
+            else
+	            wget https://github.com/CosmWasm/wasmvm/releases/download/v$(WASMVM_VERSION)/libwasmvm_muslc.aarch64.a -O $(TEMPDIR)/lib/libwasmvm_muslc.a
+            endif
+        endif
+    endif
 
 # command for make build and make install
 build: BUILDARGS=-o $(BUILDDIR)/
-build install: go.sum $(BUILDDIR)/ rocksdblib
-	CGO_CFLAGS="$(CGO_CFLAGS)" CGO_LDFLAGS="$(CGO_LDFLAGS)" go $@ -mod=readonly $(BUILD_FLAGS) $(BUILDARGS) ./...
+build install: go.sum $(BUILDDIR)/ rocksdblib wasmvmlib
+	CGO_ENABLED=1 CGO_CFLAGS="$(CGO_CFLAGS)" CGO_LDFLAGS="$(CGO_LDFLAGS)" go $@ -mod=readonly $(BUILD_FLAGS) $(BUILDARGS) ./...
 
 # ensure build directory exists
 $(BUILDDIR)/:
