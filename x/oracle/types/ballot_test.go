@@ -267,6 +267,13 @@ func TestPBStandardDeviation(t *testing.T) {
 			[]bool{true, true, true, true},
 			sdk.NewDecWithPrec(0, 0),
 		},
+		{
+			// Abstain votes are ignored
+			[]float64{1.0, 2.0, 10.0, 100000.0, -99999999999.0, 0},
+			[]int64{1, 1, 100, 1, 1, 1},
+			[]bool{true, true, true, true, true, true},
+			sdk.NewDecWithPrec(4999500036300, types.OracleDecPrecision),
+		},
 	}
 
 	base := math.Pow10(types.OracleDecPrecision)
