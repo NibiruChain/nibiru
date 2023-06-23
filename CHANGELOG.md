@@ -49,9 +49,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `github.com/docker/distribution` from 2.8.1+incompatible to 2.8.2+incompatible (#1339)
 - Bump `github.com/CosmWasm/wasmvm` from 1.2.1 to 1.2.3 (#1354)
 - Bump `github.com/spf13/cast` from 1.5.0 to 1.5.1 (#1358)
-- Bump `github.com/stretchr/testify` from 1.8.2 to 1.8.3 (#1384)
+- Bump `github.com/stretchr/testify` from 1.8.2 to 1.8.4 (#1384, #1435)
 - Bump `cosmossdk.io/math` from 1.0.0-beta.6 to 1.0.1 (#1394)
-- Bump `google.golang.org/grpc` from 1.53.0 to 1.55.0 (#1395)
+- Bump `google.golang.org/grpc` from 1.53.0 to 1.56.1 (#1395, #1437, #1443)
 - Bump `github.com/gin-gonic/gin` from 1.8.1 to 1.9.1 (#1409)
 
 ### Breaking
@@ -175,6 +175,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1397](https://github.com/NibiruChain/nibiru/pull/1397) - fix: ensure margin is high enough when removing it
 * [#1417](https://github.com/NibiruChain/nibiru/pull/1417) - fix: run end blocker on block end for perp v2
 * [#1425](https://github.com/NibiruChain/nibiru/pull/1425) - fix: remove positions from state when closed with reverse position
+* [#1441](https://github.com/NibiruChain/nibiru/pull/1441) - fix(oracle): ignore abstain votes in std dev calculation
 
 ## [v0.19.2](https://github.com/NibiruChain/nibiru/releases/tag/v0.19.2) - 2023-02-24
 

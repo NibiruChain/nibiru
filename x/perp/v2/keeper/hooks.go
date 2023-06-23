@@ -56,10 +56,6 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64)
 			PremiumFraction:           premiumFraction,
 			CumulativePremiumFraction: market.LatestCumulativePremiumFraction,
 		})
-
-		_ = ctx.EventManager().EmitTypedEvent(&types.MarketUpdatedEvent{
-			FinalMarket: market,
-		})
 	}
 }
 
