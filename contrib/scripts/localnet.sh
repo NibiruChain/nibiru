@@ -230,6 +230,9 @@ else
   exit 1
 fi
 
+# set validator as sudoer
+add_genesis_param '.app_state.sudo.sudoers.roog = "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"'
+
 # hack for localnet since we don't have a pricefeeder yet
 add_genesis_param '.app_state.oracle.exchange_rates[0].pair = "ubtc:unusd"'
 add_genesis_param '.app_state.oracle.exchange_rates[0].exchange_rate = "20000"'
@@ -238,4 +241,4 @@ add_genesis_param '.app_state.oracle.exchange_rates[1].exchange_rate = "2000"'
 
 # Start the network
 echo_info "Starting $CHAIN_ID in $CHAIN_DIR..."
-$BINARY start --db_backend goleveldb --home "$CHAIN_DIR" --pruning nothing
+$BINARY start --home "$CHAIN_DIR" --pruning nothing
