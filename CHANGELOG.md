@@ -179,6 +179,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1417](https://github.com/NibiruChain/nibiru/pull/1417) - fix: run end blocker on block end for perp v2
 * [#1425](https://github.com/NibiruChain/nibiru/pull/1425) - fix: remove positions from state when closed with reverse position
 * [#1441](https://github.com/NibiruChain/nibiru/pull/1441) - fix(oracle): ignore abstain votes in std dev calculation
+* [#xxx](/xxx) - fix(cmd): Add custom InitCmd to set set desired Tendermint consensus params for each node.
 
 ## [v0.19.2](https://github.com/NibiruChain/nibiru/releases/tag/v0.19.2) - 2023-02-24
 
