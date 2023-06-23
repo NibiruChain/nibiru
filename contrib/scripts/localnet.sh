@@ -100,7 +100,7 @@ fi
 
 # Configure broadcast mode
 echo_info "Configuring broadcast mode..."
-if $BINARY config broadcast-mode block; then
+if $BINARY config broadcast-mode sync; then
   echo_success "Successfully configured broadcast-mode"
 else
   echo_error "Failed to configure broadcast mode"
