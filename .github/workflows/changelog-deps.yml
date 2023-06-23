@@ -6,7 +6,9 @@ on:
 jobs:
   changelog-update:
     runs-on: ubuntu-latest
-    if: contains(github.event.pull_request.labels.*.name, 'dependabot')
+    if: |
+      contains(github.event.pull_request.labels.*.name, 'dependabot') || 
+      ${{ any(contains(commit.author.username, 'dependabot') for commit in github.event.commits) }}
     steps: 
       - uses: actions/checkout@v3
         with:
