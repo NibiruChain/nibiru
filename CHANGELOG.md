@@ -53,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `cosmossdk.io/math` from 1.0.0-beta.6 to 1.0.1 (#1394)
 - Bump `google.golang.org/grpc` from 1.53.0 to 1.56.1 (#1395, #1437, #1443)
 - Bump `github.com/gin-gonic/gin` from 1.8.1 to 1.9.1 (#1409)
+- Bump `github.com/cosmos/ibc-go/v7` from 7.1.0 to 7.2.0 (#1445)
 
 ### Breaking
 
