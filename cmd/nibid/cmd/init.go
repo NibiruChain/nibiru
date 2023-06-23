@@ -12,7 +12,6 @@ import (
 	"os"
 	"path/filepath"
 
-	// cfg "github.com/cometbft/cometbft/config"
 	tmcli "github.com/cometbft/cometbft/libs/cli"
 	tmrand "github.com/cometbft/cometbft/libs/rand"
 	tmtypes "github.com/cometbft/cometbft/types"
