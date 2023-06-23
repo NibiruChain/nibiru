@@ -55,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `github.com/gin-gonic/gin` from 1.8.1 to 1.9.1 (#1409)
 - Bump `github.com/spf13/viper` from 1.15.0 to 1.16.0 (#1436)
 - Bump `github.com/prometheus/client_golang` from 1.15.1 to 1.16.0 (#1431)
+- Bump `github.com/cosmos/ibc-go/v7` from 7.1.0 to 7.2.0 (#1445)
 
 ### Breaking
 
