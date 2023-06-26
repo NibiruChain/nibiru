@@ -67,6 +67,7 @@ func (k Keeper) GatherRewardsForVotePeriod(ctx sdk.Context) sdk.Coins {
 		pairReward, err := k.Rewards.Get(ctx, rewardId)
 		if err != nil {
 			k.Logger(ctx).Error("Failed to get reward", "err", err)
+			continue
 		}
 		coins = coins.Add(pairReward.Coins...)
 

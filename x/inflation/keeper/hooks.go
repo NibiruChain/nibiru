@@ -65,6 +65,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 			"SKIPPING INFLATION: failed to mint and allocate inflation",
 			"error", err,
 		)
+		return
 	}
 
 	// If period is passed, update the period. A period is
