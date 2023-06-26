@@ -280,6 +280,11 @@ func (k Keeper) decreasePosition(
 		return nil, nil, fmt.Errorf("current position size is zero, nothing to decrease")
 	}
 
+	trader, err := sdk.AccAddressFromBech32(currentPosition.TraderAddress)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	var dir types.Direction
 	if currentPosition.Size_.IsPositive() {
 		dir = types.Direction_SHORT
@@ -352,6 +357,13 @@ func (k Keeper) decreasePosition(
 		OpenNotional:                    remainOpenNotional,
 		LatestCumulativePremiumFraction: market.LatestCumulativePremiumFraction,
 		LastUpdatedBlockNumber:          ctx.BlockHeight(),
+	}
+
+	if positionResp.Position.Size_.IsZero() {
+		err := k.Positions.Delete(ctx, collections.Join(currentPosition.Pair, trader))
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 
 	return updatedAMM, positionResp, nil
