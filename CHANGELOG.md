@@ -181,6 +181,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1425](https://github.com/NibiruChain/nibiru/pull/1425) - fix: remove positions from state when closed with reverse position
 * [#1441](https://github.com/NibiruChain/nibiru/pull/1441) - fix(oracle): ignore abstain votes in std dev calculation
 * [#1446](https://github.com/NibiruChain/nibiru/pull/1446) - fix(cmd): Add custom InitCmd to set set desired Tendermint consensus params for each node.
+* [#1451](https://github.com/NibiruChain/nibiru/pull/1451) - fix(perp): decrease position with zero size
 
 ## [v0.19.2](https://github.com/NibiruChain/nibiru/releases/tag/v0.19.2) - 2023-02-24
 
