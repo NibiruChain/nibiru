@@ -36,6 +36,7 @@ func (k Keeper) SlashAndResetMissCounters(ctx sdk.Context) {
 				consAddr, err := validator.GetConsAddr()
 				if err != nil {
 					k.Logger(ctx).Error("fail to get consensus address", "validator", validator.GetOperator().String())
+					continue
 				}
 
 				k.StakingKeeper.Slash(
