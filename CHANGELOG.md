@@ -57,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `github.com/prometheus/client_golang` from 1.15.1 to 1.16.0 (#1431)
 - Bump `github.com/cosmos/ibc-go/v7` from 7.1.0 to 7.2.0 (#1445)
 - Bump `bufbuild/buf-setup-action` from 1.21.0 to 1.22.0 (#1449)
+- Bump `google.golang.org/protobuf` from 1.30.0 to 1.31.0 (#1450)
 
 ### Breaking
 
