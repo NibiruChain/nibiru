@@ -1,0 +1,28 @@
+name: Run Gosec
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    env:
+      GO111MODULE: on
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          path: /usr/local/go/bin
+          go-version: '1.19.2'
+      - name: Checkout Source
+        uses: actions/checkout@v2
+      - name: Set env vars
+        run: |
+            echo "${HOME}/goroot/bin" >> $GITHUB_PATH
+      - name: Run Gosec Security Scanner
+        uses: cosmos/gosec@master
+        with:
+          args: ./...
