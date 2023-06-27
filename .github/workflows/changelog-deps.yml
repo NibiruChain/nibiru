@@ -7,6 +7,8 @@ jobs:
   changelog-update:
     runs-on: ubuntu-latest
     if: contains(github.event.pull_request.labels.*.name, 'dependabot')
+      # TODO: feat: try to use author of the commit(s) to see if it's dependabot
+      # ${{ any(contains(commit.author.username, 'dependabot') for commit in github.event.commits) }}
     steps: 
       - uses: actions/checkout@v3
         with:
