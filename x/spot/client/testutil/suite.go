@@ -233,7 +233,6 @@ func (s *IntegrationTestSuite) TestNewJoinPoolCmd() {
 }
 
 func (s *IntegrationTestSuite) TestNewJoinStablePoolCmd() {
-	s.T().SkipNow()
 	val := s.network.Validators[0]
 
 	// create a new pool
