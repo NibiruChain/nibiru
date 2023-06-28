@@ -7,7 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 )
 
-func RegisterCodec(cdc *codec.LegacyAmino) {
+func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgAddMargin{}, "perpv2/add_margin", nil)
 	cdc.RegisterConcrete(&MsgRemoveMargin{}, "perpv2/remove_margin", nil)
 	cdc.RegisterConcrete(&MsgOpenPosition{}, "perpv2/open_position", nil)
