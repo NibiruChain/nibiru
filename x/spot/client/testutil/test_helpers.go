@@ -156,13 +156,7 @@ func WhitelistGenesisAssets(state app.GenesisState, assets []string) app.Genesis
 }
 
 // ExtractPoolIDFromCreatePoolResponse extracts the created PoolID from a MsgCreatePool command.
-func ExtractPoolIDFromCreatePoolResponse(codec codec.Codec, out testutil.BufferWriter) (uint64, error) {
-	resp := &sdk.TxResponse{}
-	err := codec.UnmarshalJSON(out.Bytes(), resp)
-	if err != nil {
-		return 0, err
-	}
-
+func ExtractPoolIDFromCreatePoolResponse(codec codec.Codec, resp *sdk.TxResponse) (uint64, error) {
 	decodedResult, err := hex.DecodeString(resp.Data)
 	if err != nil {
 		return 0, err
