@@ -671,10 +671,9 @@ func (s *IntegrationTestSuite) TestSwapAssets() {
 
 	for _, tc := range testCases {
 		tc := tc
-		ctx := val.ClientCtx
 
 		s.Run(tc.name, func() {
-			out, err := ExecMsgSwapAssets(ctx, tc.poolId, val.Address, tc.tokenIn, tc.tokenOutDenom)
+			out, err := ExecMsgSwapAssets(val.ClientCtx, tc.poolId, val.Address, tc.tokenIn, tc.tokenOutDenom)
 			if tc.expectErr {
 				s.Require().Error(err)
 			} else {
@@ -682,8 +681,8 @@ func (s *IntegrationTestSuite) TestSwapAssets() {
 				s.Require().NoError(s.network.WaitForNextBlock())
 
 				resp := &sdk.TxResponse{}
-				ctx.Codec.MustUnmarshalJSON(out.Bytes(), resp)
-				resp, err = testutilcli.QueryTx(ctx, resp.TxHash)
+				val.ClientCtx.Codec.MustUnmarshalJSON(out.Bytes(), resp)
+				resp, err = testutilcli.QueryTx(val.ClientCtx, resp.TxHash)
 				s.Require().NoError(err)
 
 				s.Assert().Equal(tc.expectedCode, resp.Code, out.String())
@@ -693,7 +692,6 @@ func (s *IntegrationTestSuite) TestSwapAssets() {
 }
 
 func (s *IntegrationTestSuite) TestSwapStableAssets() {
-	s.T().SkipNow()
 	val := s.network.Validators[0]
 
 	// create a new pool
@@ -702,7 +700,7 @@ func (s *IntegrationTestSuite) TestSwapStableAssets() {
 		val.ClientCtx,
 		/*owner-*/ val.Address,
 		/*tokenWeights=*/ fmt.Sprintf("1%s,1%s", "coin-1", "coin-5"),
-		/*tokenWeights=*/ fmt.Sprintf("100%s,100%s", "coin-1", "coin-5"),
+		/*initialDeposit=*/ fmt.Sprintf("100%s,100%s", "coin-1", "coin-5"),
 		/*swapFee=*/ "0.01",
 		/*exitFee=*/ "0.01",
 		/*poolType=*/ "stableswap",
@@ -724,7 +722,6 @@ func (s *IntegrationTestSuite) TestSwapStableAssets() {
 		poolId        uint64
 		tokenIn       string
 		tokenOutDenom string
-		respType      proto.Message
 		expectedCode  uint32
 		expectErr     bool
 	}{
@@ -785,18 +782,21 @@ func (s *IntegrationTestSuite) TestSwapStableAssets() {
 
 	for _, tc := range testCases {
 		tc := tc
-		ctx := val.ClientCtx
 
 		s.Run(tc.name, func() {
-			out, err := ExecMsgSwapAssets(ctx, tc.poolId, val.Address, tc.tokenIn, tc.tokenOutDenom)
+			out, err := ExecMsgSwapAssets(val.ClientCtx, tc.poolId, val.Address, tc.tokenIn, tc.tokenOutDenom)
 			if tc.expectErr {
 				s.Require().Error(err)
 			} else {
 				s.Require().NoError(err, out.String())
-				s.Require().NoError(ctx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
+				s.Require().NoError(s.network.WaitForNextBlock())
 
-				txResp := tc.respType.(*sdk.TxResponse)
-				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+				resp := &sdk.TxResponse{}
+				val.ClientCtx.Codec.MustUnmarshalJSON(out.Bytes(), resp)
+				resp, err = testutilcli.QueryTx(val.ClientCtx, resp.TxHash)
+				s.Require().NoError(err)
+
+				s.Assert().Equal(tc.expectedCode, resp.Code, out.String())
 			}
 		})
 	}
