@@ -581,7 +581,6 @@ func (s *IntegrationTestSuite) TestGetCmdTotalLiquidity() {
 }
 
 func (s *IntegrationTestSuite) TestSwapAssets() {
-	s.T().SkipNow()
 	val := s.network.Validators[0]
 
 	// create a new pool
@@ -612,7 +611,6 @@ func (s *IntegrationTestSuite) TestSwapAssets() {
 		poolId        uint64
 		tokenIn       string
 		tokenOutDenom string
-		respType      proto.Message
 		expectedCode  uint32
 		expectErr     bool
 	}{
@@ -642,7 +640,6 @@ func (s *IntegrationTestSuite) TestSwapAssets() {
 			poolId:        1000000,
 			tokenIn:       "50unibi",
 			tokenOutDenom: "uusdc",
-			respType:      &sdk.TxResponse{},
 			expectedCode:  types.ErrPoolNotFound.ABCICode(),
 			expectErr:     false,
 		},
@@ -651,7 +648,6 @@ func (s *IntegrationTestSuite) TestSwapAssets() {
 			poolId:        poolID,
 			tokenIn:       "50foo",
 			tokenOutDenom: "coin-5",
-			respType:      &sdk.TxResponse{},
 			expectedCode:  types.ErrTokenDenomNotFound.ABCICode(),
 			expectErr:     false,
 		},
@@ -660,7 +656,6 @@ func (s *IntegrationTestSuite) TestSwapAssets() {
 			poolId:        poolID,
 			tokenIn:       "50coin-4",
 			tokenOutDenom: "foo",
-			respType:      &sdk.TxResponse{},
 			expectedCode:  types.ErrTokenDenomNotFound.ABCICode(),
 			expectErr:     false,
 		},
@@ -669,7 +664,6 @@ func (s *IntegrationTestSuite) TestSwapAssets() {
 			poolId:        poolID,
 			tokenIn:       "50coin-4",
 			tokenOutDenom: "coin-5",
-			respType:      &sdk.TxResponse{},
 			expectedCode:  0,
 			expectErr:     false,
 		},
@@ -685,10 +679,14 @@ func (s *IntegrationTestSuite) TestSwapAssets() {
 				s.Require().Error(err)
 			} else {
 				s.Require().NoError(err, out.String())
-				s.Require().NoError(ctx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
+				s.Require().NoError(s.network.WaitForNextBlock())
 
-				txResp := tc.respType.(*sdk.TxResponse)
-				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+				resp := &sdk.TxResponse{}
+				ctx.Codec.MustUnmarshalJSON(out.Bytes(), resp)
+				resp, err = testutilcli.QueryTx(ctx, resp.TxHash)
+				s.Require().NoError(err)
+
+				s.Assert().Equal(tc.expectedCode, resp.Code, out.String())
 			}
 		})
 	}
@@ -756,7 +754,6 @@ func (s *IntegrationTestSuite) TestSwapStableAssets() {
 			poolId:        1000000,
 			tokenIn:       "50unibi",
 			tokenOutDenom: "uusdc",
-			respType:      &sdk.TxResponse{},
 			expectedCode:  types.ErrPoolNotFound.ABCICode(),
 			expectErr:     false,
 		},
@@ -765,7 +762,6 @@ func (s *IntegrationTestSuite) TestSwapStableAssets() {
 			poolId:        poolID,
 			tokenIn:       "50foo",
 			tokenOutDenom: "coin-5",
-			respType:      &sdk.TxResponse{},
 			expectedCode:  types.ErrTokenDenomNotFound.ABCICode(),
 			expectErr:     false,
 		},
@@ -774,7 +770,6 @@ func (s *IntegrationTestSuite) TestSwapStableAssets() {
 			poolId:        poolID,
 			tokenIn:       "50coin-1",
 			tokenOutDenom: "foo",
-			respType:      &sdk.TxResponse{},
 			expectedCode:  types.ErrTokenDenomNotFound.ABCICode(),
 			expectErr:     false,
 		},
@@ -783,7 +778,6 @@ func (s *IntegrationTestSuite) TestSwapStableAssets() {
 			poolId:        poolID,
 			tokenIn:       "50coin-1",
 			tokenOutDenom: "coin-5",
-			respType:      &sdk.TxResponse{},
 			expectedCode:  0,
 			expectErr:     false,
 		},
