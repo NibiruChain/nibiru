@@ -9,7 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/testutil"
-	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
+	sdktestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/app"
@@ -69,7 +69,7 @@ func ExecMsgCreatePool(
 	args = append(args, commonArgs...)
 	args = append(args, extraArgs...)
 
-	return clitestutil.ExecTestCLICmd(clientCtx, cli.CmdCreatePool(), args)
+	return sdktestutil.ExecTestCLICmd(clientCtx, cli.CmdCreatePool(), args)
 }
 
 // ExecMsgJoinPool broadcast a join pool message.
@@ -92,7 +92,7 @@ func ExecMsgJoinPool(
 	args = append(args, commonArgs...)
 	args = append(args, extraArgs...)
 
-	return clitestutil.ExecTestCLICmd(clientCtx, cli.CmdJoinPool(), args)
+	return sdktestutil.ExecTestCLICmd(clientCtx, cli.CmdJoinPool(), args)
 }
 
 // ExecMsgExitPool broadcast an exit pool message.
@@ -113,7 +113,7 @@ func ExecMsgExitPool(
 	args = append(args, commonArgs...)
 	args = append(args, extraArgs...)
 
-	return clitestutil.ExecTestCLICmd(clientCtx, cli.CmdExitPool(), args)
+	return sdktestutil.ExecTestCLICmd(clientCtx, cli.CmdExitPool(), args)
 }
 
 // ExecMsgSwapAssets broadcast a swap assets message.
@@ -136,7 +136,7 @@ func ExecMsgSwapAssets(
 	args = append(args, commonArgs...)
 	args = append(args, extraArgs...)
 
-	return clitestutil.ExecTestCLICmd(clientCtx, cli.CmdSwapAssets(), args)
+	return sdktestutil.ExecTestCLICmd(clientCtx, cli.CmdSwapAssets(), args)
 }
 
 // WhitelistGenesisAssets given a testapp.GenesisState includes the whitelisted assets into spot Whitelisted assets.

@@ -2,12 +2,13 @@ package testutil
 
 import (
 	"fmt"
+	"strconv"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
 
 	tmcli "github.com/cometbft/cometbft/libs/cli"
-	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
+	sdktestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/gogo/protobuf/proto"
@@ -187,7 +188,6 @@ func (s *IntegrationTestSuite) TestCreatePoolStableSwapCmd_Errors() {
 }
 
 func (s *IntegrationTestSuite) TestCreatePoolCmd() {
-	s.T().SkipNow()
 	val := s.network.Validators[0]
 
 	tc := []struct {
@@ -225,17 +225,19 @@ func (s *IntegrationTestSuite) TestCreatePoolCmd() {
 			val.ClientCtx.Codec.MustUnmarshalJSON(out.Bytes(), resp)
 			resp, err = testutilcli.QueryTx(s.network.Validators[0].ClientCtx, resp.TxHash)
 			s.Require().NoError(err)
-
 			s.Require().Equal(uint32(0), resp.Code, out.String())
+
+			poolId, err := ExtractPoolIDFromCreatePoolResponse(val.ClientCtx.Codec, resp)
+			s.Require().NoError(err)
 
 			// Query balance
 			cmd := cli.CmdTotalPoolLiquidity()
-			out, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cmd, []string{"1"})
+			out, err = sdktestutil.ExecTestCLICmd(val.ClientCtx, cmd, []string{strconv.Itoa(int(poolId))})
 
 			queryResp := types.QueryTotalPoolLiquidityResponse{}
 			s.Require().NoError(err, out.String())
 			val.ClientCtx.Codec.MustUnmarshalJSON(out.Bytes(), &queryResp)
-			s.Require().EqualValues(tc.initialDeposit, queryResp.Liquidity)
+			s.Require().EqualValues(tc.initialDeposit, queryResp.Liquidity.String())
 		})
 	}
 }
@@ -477,7 +479,7 @@ func (s *IntegrationTestSuite) TestNewExitPoolCmd() {
 
 		s.Run(tc.name, func() {
 			// Get original balance
-			resp, err := clitestutil.QueryBalancesExec(ctx, val.Address)
+			resp, err := sdktestutil.QueryBalancesExec(ctx, val.Address)
 			s.Require().NoError(err)
 			var originalBalance banktypes.QueryAllBalancesResponse
 			s.Require().NoError(ctx.Codec.UnmarshalJSON(resp.Bytes(), &originalBalance))
@@ -494,7 +496,7 @@ func (s *IntegrationTestSuite) TestNewExitPoolCmd() {
 				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
 
 				// Ensure balance is ok
-				resp, err := clitestutil.QueryBalancesExec(ctx, val.Address)
+				resp, err := sdktestutil.QueryBalancesExec(ctx, val.Address)
 				s.Require().NoError(err)
 				var finalBalance banktypes.QueryAllBalancesResponse
 				s.Require().NoError(ctx.Codec.UnmarshalJSON(resp.Bytes(), &finalBalance))
@@ -597,7 +599,7 @@ func (s *IntegrationTestSuite) TestNewExitStablePoolCmd() {
 
 		s.Run(tc.name, func() {
 			// Get original balance
-			resp, err := clitestutil.QueryBalancesExec(ctx, val.Address)
+			resp, err := sdktestutil.QueryBalancesExec(ctx, val.Address)
 			s.Require().NoError(err)
 			var originalBalance banktypes.QueryAllBalancesResponse
 			s.Require().NoError(ctx.Codec.UnmarshalJSON(resp.Bytes(), &originalBalance))
@@ -614,7 +616,7 @@ func (s *IntegrationTestSuite) TestNewExitStablePoolCmd() {
 				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
 
 				// Ensure balance is ok
-				resp, err := clitestutil.QueryBalancesExec(ctx, val.Address)
+				resp, err := sdktestutil.QueryBalancesExec(ctx, val.Address)
 				s.Require().NoError(err)
 				var finalBalance banktypes.QueryAllBalancesResponse
 				s.Require().NoError(ctx.Codec.UnmarshalJSON(resp.Bytes(), &finalBalance))
@@ -656,7 +658,7 @@ func (s *IntegrationTestSuite) TestGetCmdTotalLiquidity() {
 			cmd := cli.CmdTotalLiquidity()
 			clientCtx := val.ClientCtx
 
-			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
+			out, err := sdktestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
 			if tc.expectErr {
 				s.Require().Error(err)
 			} else {
