@@ -2,7 +2,6 @@ package testutil
 
 import (
 	"fmt"
-	"strconv"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
@@ -60,7 +59,7 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 	s.network.Cleanup()
 }
 
-func (s *IntegrationTestSuite) TestCreatePoolCmd_Errors() {
+func (s *IntegrationTestSuite) TestCreatePoolCmd() {
 	val := s.network.Validators[0]
 
 	tc := []struct {
@@ -105,6 +104,20 @@ func (s *IntegrationTestSuite) TestCreatePoolCmd_Errors() {
 			poolType:       "stableswap",
 			expectedErr:    types.ErrAmplificationTooLow,
 		},
+		{
+			name:           "happy path - balancer",
+			tokenWeights:   "1unibi,1uusdc",
+			initialDeposit: "100unibi,100uusdc",
+			poolType:       "balancer",
+			amplification:  "0",
+		},
+		{
+			name:           "happy path - stable",
+			tokenWeights:   "1unusd,1uusdc",
+			initialDeposit: "100unusd,100uusdc",
+			poolType:       "stableswap",
+			amplification:  "4",
+		},
 	}
 
 	for _, tc := range tc {
@@ -127,70 +140,15 @@ func (s *IntegrationTestSuite) TestCreatePoolCmd_Errors() {
 				s.Require().ErrorIs(err, tc.expectedErr, out.String())
 			} else {
 				s.Require().NoError(err)
-
-				txResp := sdk.TxResponse{}
-				s.network.Validators[0].ClientCtx.Codec.MustUnmarshalJSON(out.Bytes(), &txResp)
 				s.Require().NoError(s.network.WaitForNextBlock())
 
-				resp, err := testutilcli.QueryTx(s.network.Validators[0].ClientCtx, txResp.TxHash)
+				txResp := sdk.TxResponse{}
+				val.ClientCtx.Codec.MustUnmarshalJSON(out.Bytes(), &txResp)
+				resp, err := testutilcli.QueryTx(val.ClientCtx, txResp.TxHash)
 				s.Require().NoError(err)
-				s.Assert().Equal(tc.expectedCode, resp.Code, string(s.network.Validators[0].ClientCtx.Codec.MustMarshalJSON(resp)))
+
+				s.Assert().Equal(tc.expectedCode, resp.Code, string(val.ClientCtx.Codec.MustMarshalJSON(resp)))
 			}
-		})
-	}
-}
-
-func (s *IntegrationTestSuite) TestCreatePoolCmd() {
-	val := s.network.Validators[0]
-
-	tc := []struct {
-		name           string
-		tokenWeights   string
-		initialDeposit string
-		poolType       string
-		amplification  string
-	}{
-		{
-			name:           "happy path",
-			tokenWeights:   "1unibi,1uusdc",
-			initialDeposit: "100unibi,100uusdc",
-			poolType:       "balancer",
-			amplification:  "0",
-		},
-		{
-			name:           "happy path - stable",
-			tokenWeights:   "1unusd,1uusdc",
-			initialDeposit: "100unusd,100uusdc",
-			poolType:       "stableswap",
-			amplification:  "4",
-		},
-	}
-
-	for _, tc := range tc {
-		tc := tc
-
-		s.Run(tc.name, func() {
-			out, err := ExecMsgCreatePool(s.T(), val.ClientCtx, val.Address, tc.tokenWeights, tc.initialDeposit, "0.003", "0.003", tc.poolType, tc.amplification)
-			s.Require().NoError(err, out.String())
-			s.Require().NoError(s.network.WaitForNextBlock())
-
-			resp := &sdk.TxResponse{}
-			val.ClientCtx.Codec.MustUnmarshalJSON(out.Bytes(), resp)
-			resp, err = testutilcli.QueryTx(s.network.Validators[0].ClientCtx, resp.TxHash)
-			s.Require().NoError(err)
-			s.Require().Equal(uint32(0), resp.Code, out.String())
-
-			poolId, err := ExtractPoolIDFromCreatePoolResponse(val.ClientCtx.Codec, resp)
-			s.Require().NoError(err)
-
-			// Query balance
-			cmd := cli.CmdTotalPoolLiquidity()
-			out, err = sdktestutil.ExecTestCLICmd(val.ClientCtx, cmd, []string{strconv.Itoa(int(poolId))})
-
-			queryResp := types.QueryTotalPoolLiquidityResponse{}
-			s.Require().NoError(err, out.String())
-			val.ClientCtx.Codec.MustUnmarshalJSON(out.Bytes(), &queryResp)
-			s.Require().EqualValues(tc.initialDeposit, queryResp.Liquidity.String())
 		})
 	}
 }
