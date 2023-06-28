@@ -8,7 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	"github.com/cosmos/cosmos-sdk/testutil/cli"
+	sdktestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 
@@ -92,14 +92,9 @@ func ExecTx(network *Network, cmd *cobra.Command, txSender sdk.AccAddress, args 
 
 	clientCtx := network.Validators[0].ClientCtx
 
-	rawResp, err := cli.ExecTestCLICmd(clientCtx, cmd, args)
+	rawResp, err := sdktestutil.ExecTestCLICmd(clientCtx, cmd, args)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute tx: %w", err)
-	}
-	tmpResp := new(sdk.TxResponse)
-	err = clientCtx.Codec.UnmarshalJSON(rawResp.Bytes(), tmpResp)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal tx response: %w", err)
 	}
 
 	err = network.WaitForNextBlock()
@@ -107,7 +102,9 @@ func ExecTx(network *Network, cmd *cobra.Command, txSender sdk.AccAddress, args 
 		return nil, err
 	}
 
-	resp, err := QueryTx(clientCtx, tmpResp.TxHash)
+	txResp := new(sdk.TxResponse)
+	clientCtx.Codec.MustUnmarshalJSON(rawResp.Bytes(), txResp)
+	resp, err := QueryTx(clientCtx, txResp.TxHash)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query tx: %w", err)
 	}
