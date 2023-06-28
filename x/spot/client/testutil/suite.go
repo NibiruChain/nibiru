@@ -61,7 +61,6 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 }
 
 func (s *IntegrationTestSuite) TestCreatePoolCmd_Errors() {
-	s.T().SkipNow()
 	val := s.network.Validators[0]
 
 	tc := []struct {
