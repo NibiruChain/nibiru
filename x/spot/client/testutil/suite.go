@@ -64,34 +64,46 @@ func (s *IntegrationTestSuite) TestCreatePoolCmd_Errors() {
 	val := s.network.Validators[0]
 
 	tc := []struct {
-		name             string
-		tokenWeights     string
-		initialDeposit   string
-		expectedErr      error
-		expectedCode     uint32
-		queryexpectedErr string
-		queryArgs        []string
+		name           string
+		tokenWeights   string
+		initialDeposit string
+		poolType       string
+		amplification  string
+
+		expectedErr  error
+		expectedCode uint32
 	}{
 		{
-			name:             "create pool with insufficient funds",
-			tokenWeights:     fmt.Sprintf("1%s, 1%s", "coin-1", "coin-2"),
-			initialDeposit:   fmt.Sprintf("1000000000%s,10000000000%s", "coin-1", "coin-2"),
-			expectedCode:     5, // bankKeeper code for insufficient funds
-			queryexpectedErr: "pool not found",
+			name:           "create pool with insufficient funds",
+			tokenWeights:   fmt.Sprintf("1%s, 1%s", "coin-1", "coin-2"),
+			initialDeposit: fmt.Sprintf("1000000000%s,10000000000%s", "coin-1", "coin-2"),
+			poolType:       "balancer",
+			amplification:  "0",
+			expectedCode:   5, // bankKeeper code for insufficient funds
 		},
 		{
-			name:             "create pool with invalid weights",
-			tokenWeights:     fmt.Sprintf("0%s, 1%s", "coin-1", "coin-2"),
-			initialDeposit:   fmt.Sprintf("10000%s,10000%s", "coin-1", "coin-2"),
-			expectedErr:      types.ErrInvalidCreatePoolArgs,
-			queryexpectedErr: "pool not found",
+			name:           "create pool with invalid weights",
+			tokenWeights:   fmt.Sprintf("0%s, 1%s", "coin-1", "coin-2"),
+			initialDeposit: fmt.Sprintf("10000%s,10000%s", "coin-1", "coin-2"),
+			poolType:       "balancer",
+			amplification:  "0",
+			expectedErr:    types.ErrInvalidCreatePoolArgs,
 		},
 		{
-			name:             "create pool with deposit not matching weights",
-			tokenWeights:     fmt.Sprintf("1%s, 1%s", "coin-1", "coin-2"),
-			initialDeposit:   "1000foo,10000uusdc",
-			expectedErr:      types.ErrInvalidCreatePoolArgs,
-			queryexpectedErr: "pool not found",
+			name:           "create pool with deposit not matching weights",
+			tokenWeights:   fmt.Sprintf("1%s, 1%s", "coin-1", "coin-2"),
+			initialDeposit: "1000foo,10000uusdc",
+			poolType:       "balancer",
+			amplification:  "0",
+			expectedErr:    types.ErrInvalidCreatePoolArgs,
+		},
+		{
+			name:           "create a stableswap pool, amplification parameter below 1",
+			tokenWeights:   fmt.Sprintf("1%s, 1%s", "coin-1", "coin-2"),
+			initialDeposit: fmt.Sprintf("1000%s,10000%s", "coin-1", "coin-2"),
+			amplification:  "0",
+			poolType:       "stableswap",
+			expectedErr:    types.ErrAmplificationTooLow,
 		},
 	}
 
@@ -107,12 +119,12 @@ func (s *IntegrationTestSuite) TestCreatePoolCmd_Errors() {
 				tc.initialDeposit,
 				"0.003",
 				"0.003",
-				"balancer",
-				"0",
+				tc.poolType,
+				tc.amplification,
 			)
 
 			if tc.expectedErr != nil {
-				s.Require().ErrorIs(err, tc.expectedErr)
+				s.Require().ErrorIs(err, tc.expectedErr, out.String())
 			} else {
 				s.Require().NoError(err)
 
@@ -123,64 +135,6 @@ func (s *IntegrationTestSuite) TestCreatePoolCmd_Errors() {
 				resp, err := testutilcli.QueryTx(s.network.Validators[0].ClientCtx, txResp.TxHash)
 				s.Require().NoError(err)
 				s.Assert().Equal(tc.expectedCode, resp.Code, string(s.network.Validators[0].ClientCtx.Codec.MustMarshalJSON(resp)))
-			}
-		})
-	}
-}
-
-func (s *IntegrationTestSuite) TestCreatePoolStableSwapCmd_Errors() {
-	s.T().SkipNow()
-	val := s.network.Validators[0]
-
-	tc := []struct {
-		name           string
-		amplification  string
-		tokenWeights   string
-		initialDeposit string
-		poolType       string
-		expectedErr    error
-		expectedCode   uint32
-	}{
-		{
-			name:          "create a stableswap pool, amplification parameter below 1",
-			amplification: "0",
-			poolType:      "stableswap",
-			expectedCode:  17,
-			expectedErr:   types.ErrAmplificationTooLow,
-		},
-		{
-			name:          "create a balancer pool, no need for other parameters",
-			amplification: "0",
-			poolType:      "balancer",
-			expectedErr:   nil,
-		},
-		{
-			name:          "create a stableswap pool, happy path",
-			amplification: "10",
-			poolType:      "stableswap",
-			expectedErr:   nil,
-		},
-	}
-
-	for _, tc := range tc {
-		tc := tc
-
-		s.Run(tc.name, func() {
-			tokenWeights := fmt.Sprintf("1%s, 1%s", "coin-1", "coin-2")
-			initialDeposit := fmt.Sprintf("1000000000%s,10000000000%s", "coin-1", "coin-2")
-			out, err := ExecMsgCreatePool(s.T(), val.ClientCtx, val.Address, tokenWeights, initialDeposit, "0.003", "0.003", tc.poolType, tc.amplification)
-			if tc.expectedErr != nil {
-				s.Require().ErrorIs(err, tc.expectedErr)
-			} else {
-				s.Require().NoError(err, out.String())
-				s.Require().NoError(s.network.WaitForNextBlock())
-
-				resp := &sdk.TxResponse{}
-				val.ClientCtx.Codec.MustUnmarshalJSON(out.Bytes(), resp)
-				resp, err = testutilcli.QueryTx(val.ClientCtx, resp.TxHash)
-				s.Require().NoError(err)
-
-				s.Require().Equal(tc.expectedCode, resp.Code, string(val.ClientCtx.Codec.MustMarshalJSON(resp)))
 			}
 		})
 	}
