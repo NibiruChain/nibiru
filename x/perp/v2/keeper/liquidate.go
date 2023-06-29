@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	proto "github.com/cosmos/gogoproto/proto"
 
 	"github.com/NibiruChain/collections"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -26,12 +25,12 @@ func (k Keeper) MultiLiquidate(
 	for reqIdx, req := range liquidationRequests {
 		// NOTE: writeCachedCtx (1) emits the events on the EventManager of the
 		// cachedCtx. and (2) writes that context to the commit multi store.
-		cachedCtx, writeCachedCtx := ctx.CacheContext()
+
+		// cachedCtx, writeCachedCtx := ctx.CacheContext()
 		traderAddr, errAccAddress := sdk.AccAddressFromBech32(req.Trader)
-		liquidatorFee, perpEfFee, err, event := k.liquidate(cachedCtx, liquidator, req.Pair, traderAddr)
-		if event != nil {
-			_ = ctx.EventManager().EmitTypedEvent(*event)
-		}
+		liquidatorFee, perpEfFee, err := k.liquidate(
+			ctx, liquidator, req.Pair, traderAddr,
+		)
 
 		switch {
 		case errAccAddress != nil:
@@ -58,7 +57,7 @@ func (k Keeper) MultiLiquidate(
 				Trader:        req.Trader,
 				Pair:          req.Pair,
 			}
-			writeCachedCtx()
+			// writeCachedCtx()
 		}
 	}
 
@@ -154,42 +153,44 @@ func (k Keeper) liquidate(
 	pair asset.Pair,
 	trader sdk.AccAddress,
 ) (liquidatorFee sdk.Coin, insuranceFundFee sdk.Coin, err error) {
-	var eventLiqFailed *proto.Message = nil
 	// eventLiqFailed exists when the liquidation fails and is nil when the
 	// liquidation succeeds.
 
 	market, err := k.Markets.Get(ctx, pair)
 	if err != nil {
-		*eventLiqFailed = &types.LiquidationFailedEvent{
+		eventLiqFailed := &types.LiquidationFailedEvent{
 			Pair:       pair,
 			Trader:     trader.String(),
 			Liquidator: liquidator.String(),
 			Reason:     types.LiquidationFailedEvent_NONEXISTENT_PAIR,
 		}
+		_ = ctx.EventManager().EmitTypedEvent(eventLiqFailed)
 		err = fmt.Errorf("%w: pair: %s", types.ErrPairNotFound, pair)
 		return
 	}
 
 	amm, err := k.AMMs.Get(ctx, pair)
 	if err != nil {
-		*eventLiqFailed = &types.LiquidationFailedEvent{
+		eventLiqFailed := &types.LiquidationFailedEvent{
 			Pair:       pair,
 			Trader:     trader.String(),
 			Liquidator: liquidator.String(),
 			Reason:     types.LiquidationFailedEvent_NONEXISTENT_PAIR,
 		}
+		_ = ctx.EventManager().EmitTypedEvent(eventLiqFailed)
 		err = fmt.Errorf("%w: pair: %s", types.ErrPairNotFound, pair)
 		return
 	}
 
 	position, err := k.Positions.Get(ctx, collections.Join(pair, trader))
 	if err != nil {
-		*eventLiqFailed = &types.LiquidationFailedEvent{
+		eventLiqFailed := &types.LiquidationFailedEvent{
 			Pair:       pair,
 			Trader:     trader.String(),
 			Liquidator: liquidator.String(),
 			Reason:     types.LiquidationFailedEvent_NONEXISTENT_POSITION,
 		}
+		_ = ctx.EventManager().EmitTypedEvent(eventLiqFailed)
 		return
 	}
 
@@ -212,12 +213,13 @@ func (k Keeper) liquidate(
 
 	marginRatio := MarginRatio(position, preferredPositionNotional, market.LatestCumulativePremiumFraction)
 	if marginRatio.GTE(market.MaintenanceMarginRatio) {
-		*eventLiqFailed = &types.LiquidationFailedEvent{
+		eventLiqFailed := &types.LiquidationFailedEvent{
 			Pair:       pair,
 			Trader:     trader.String(),
 			Liquidator: liquidator.String(),
 			Reason:     types.LiquidationFailedEvent_POSITION_HEALTHY,
 		}
+		_ = ctx.EventManager().EmitTypedEvent(eventLiqFailed)
 		err = types.ErrPositionHealthy
 		return
 	}
@@ -243,9 +245,6 @@ func (k Keeper) liquidate(
 		liquidationResponse.FeeToPerpEcosystemFund,
 	)
 
-	if eventLiqFailed != nil {
-		err = ctx.EventManager().EmitTypedEvent(*eventLiqFailed)
-	}
 	return liquidatorFee, insuranceFundFee, err
 }
 

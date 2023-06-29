@@ -29,7 +29,7 @@ func PositionChangedEventShouldBeEqual(
 // ContainsLiquidateEvent checks if a typed event (proto.Message) is contained in the
 // event manager of the app context.
 func ContainsLiquidateEvent(
-	expectedEvent proto.Message,
+	expectedEvent types.LiquidationFailedEvent,
 ) action.Action {
 	return containsLiquidateEvent{
 		ExpectedEvent: expectedEvent,
@@ -37,7 +37,7 @@ func ContainsLiquidateEvent(
 }
 
 type containsLiquidateEvent struct {
-	ExpectedEvent proto.Message
+	ExpectedEvent types.LiquidationFailedEvent
 }
 
 func ProtoToJson(protoMsg proto.Message) (jsonOut string, err error) {
@@ -50,22 +50,79 @@ func ProtoToJson(protoMsg proto.Message) (jsonOut string, err error) {
 func (act containsLiquidateEvent) Do(_ *app.NibiruApp, ctx sdk.Context) (
 	outCtx sdk.Context, err error, isMandatory bool,
 ) {
-
-	typedEvent, err := sdk.ParseTypedEvent(act.ExpectedEvent)
-	if err != nil {
-		return ctx, err, false
+	// TODO test(perp): Add support for testing the appearance of of successful
+	// liquidation events.
+	typedEvent := act.ExpectedEvent
+	eventContained := false
+	errDescriptions := []string{}
+	events := ctx.EventManager().Events()
+	for idx, abciEvent := range events {
+		err := EventEquals.LiquidationFailedEvent(abciEvent, typedEvent, idx)
+		if err == nil {
+			eventContained = true
+			errDescriptions = []string{}
+			break
+		} else if abciEvent.Type != "nibiru.perp.v2.LiquidationFailedEvent" {
+			continue
+		} else if abciEvent.Type == "nibiru.perp.v2.LiquidationFailedEvent" && err != nil {
+			errDescriptions = append(errDescriptions, err.Error())
+		}
 	}
 
-	// TODO test(perp): Add support for testing the appearance of of successful 
-	// liquidation events. 
-
-	theEvent, ok_liqFailed := typedEvent.(*types.LiquidationFailedEvent)
-
-	for _, abciEvent := range ctx.EventManager().Events() {
-	
-		abciEvent.Attributes[0].
+	if eventContained {
+		// happy path
+		return ctx, nil, true
+	} else {
+		// Show descriptive error messages if the expected event is missing
+		teventJson, _ := ProtoToJson(&typedEvent)
+		return ctx, fmt.Errorf(
+			`expected the context event manager to contain event: %s.
+			found %v events: 
+			description: %v`,
+			teventJson, len(events), errDescriptions,
+		), false
 	}
-	return
+}
+
+var EventEquals = eventEquals{}
+
+type eventEquals struct{}
+
+func (ee eventEquals) LiquidationFailedEvent(
+	abciEvent sdk.Event, tevent types.LiquidationFailedEvent, eventIdx int,
+) error {
+	fieldErrs := []string{fmt.Sprintf("DEBUG [eventIdx: %v]", eventIdx)}
+	if err := EventHasAttribueValue(abciEvent, "pair", tevent.Pair.String()); err != nil {
+		fieldErrs = append(fieldErrs, err.Error())
+	}
+	if err := EventHasAttribueValue(abciEvent, "trader", tevent.Trader); err != nil {
+		fieldErrs = append(fieldErrs, err.Error())
+	}
+	if err := EventHasAttribueValue(abciEvent, "liquidator", tevent.Liquidator); err != nil {
+		fieldErrs = append(fieldErrs, err.Error())
+	}
+	if err := EventHasAttribueValue(abciEvent, "reason", tevent.Reason.String()); err != nil {
+		fieldErrs = append(fieldErrs, err.Error())
+	}
+
+	if len(fieldErrs) != 1 {
+		return errors.New(strings.Join(fieldErrs, "\n"))
+	}
+	return nil
+}
+
+func EventHasAttribueValue(abciEvent sdk.Event, key string, want string) error {
+	attr, ok := abciEvent.GetAttribute(key)
+	if !ok {
+		return fmt.Errorf("abci event does not contain key: %s", key)
+	}
+
+	got := attr.Value
+	if !strings.Contains(got, want) {
+		return fmt.Errorf("expected %s %s, got %s", key, want, got)
+	}
+
+	return nil
 }
 
 type positionChangedEventShouldBeEqual struct {
