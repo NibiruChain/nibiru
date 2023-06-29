@@ -13,7 +13,6 @@ import (
 )
 
 func TestIntegrationTestSuite(t *testing.T) {
-	t.SkipNow() // Skipped as it is not binded to the app
 	coinsFromGenesis := []string{
 		denoms.NIBI,
 		denoms.NUSD,
