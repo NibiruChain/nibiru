@@ -45,7 +45,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	govv1types "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	govv1beta1types "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
@@ -200,7 +201,7 @@ func (app *NibiruApp) InitKeepers(
 		BlockedAddresses(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-	stakingKeeper := stakingkeeper.NewKeeper(
+	app.stakingKeeper = stakingkeeper.NewKeeper(
 		appCodec,
 		keys[stakingtypes.StoreKey],
 		app.AccountKeeper,
@@ -212,7 +213,7 @@ func (app *NibiruApp) InitKeepers(
 		keys[distrtypes.StoreKey],
 		app.AccountKeeper,
 		app.BankKeeper,
-		stakingKeeper,
+		app.stakingKeeper,
 		authtypes.FeeCollectorName,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
@@ -246,15 +247,6 @@ func (app *NibiruApp) InitKeepers(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	// register the staking hooks
-	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
-	app.stakingKeeper = stakingkeeper.NewKeeper(
-		appCodec,
-		keys[stakingtypes.StoreKey],
-		app.AccountKeeper,
-		app.BankKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
 	app.slashingKeeper = slashingkeeper.NewKeeper(
@@ -446,16 +438,16 @@ func (app *NibiruApp) InitKeepers(
 	   No more routes can be added. */
 	app.ibcKeeper.SetRouter(ibcRouter)
 
-	govRouter := v1beta1.NewRouter()
+	govRouter := govv1beta1types.NewRouter()
 	govRouter.
-		AddRoute(govtypes.RouterKey, v1beta1.ProposalHandler).
+		AddRoute(govtypes.RouterKey, govv1beta1types.ProposalHandler).
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.paramsKeeper)).
 		//AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.DistrKeeper)).
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(&app.upgradeKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.ibcKeeper.ClientKeeper))
 
 	govConfig := govtypes.DefaultConfig()
-	govKpr := govkeeper.NewKeeper(
+	govKeeper := govkeeper.NewKeeper(
 		appCodec,
 		keys[govtypes.StoreKey],
 		app.AccountKeeper,
@@ -465,8 +457,9 @@ func (app *NibiruApp) InitKeepers(
 		govConfig,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+	govKeeper.SetLegacyRouter(govRouter)
 
-	app.GovKeeper = *govKpr.SetHooks(
+	app.GovKeeper = *govKeeper.SetHooks(
 		govtypes.NewMultiGovHooks(),
 	)
 
@@ -642,6 +635,27 @@ func (app *NibiruApp) InitModuleManager(
 	app.configurator = module.NewConfigurator(
 		app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
 	app.mm.RegisterServices(app.configurator)
+
+	for _, subspace := range app.paramsKeeper.GetSubspaces() {
+		subspace := subspace
+
+		switch subspace.Name() {
+		case authtypes.ModuleName:
+			subspace.WithKeyTable(authtypes.ParamKeyTable())
+		case banktypes.ModuleName:
+			subspace.WithKeyTable(banktypes.ParamKeyTable())
+		case stakingtypes.ModuleName:
+			subspace.WithKeyTable(stakingtypes.ParamKeyTable())
+		case distrtypes.ModuleName:
+			subspace.WithKeyTable(distrtypes.ParamKeyTable())
+		case slashingtypes.ModuleName:
+			subspace.WithKeyTable(slashingtypes.ParamKeyTable())
+		case govtypes.ModuleName:
+			subspace.WithKeyTable(govv1types.ParamKeyTable())
+		case crisistypes.ModuleName:
+			subspace.WithKeyTable(crisistypes.ParamKeyTable())
+		}
+	}
 }
 
 // TODO: Simulation manager
