@@ -38,28 +38,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## Unreleased
+
+### Bug Fixes
+
+* [#1459](https://github.com/NibiruChain/nibiru/pull/1459) - fix(spot): wire `x/spot` msgService into app router
 
 ## [v0.21.0](https://github.com/NibiruChain/nibiru/releases/tag/v0.21.0) - 2023-06-27
 
 ### Dependencies
 
-- Bump `robinraju/release-downloader` from 1.6 to 1.8 (#1326)
-- Bump `pozetroninc/github-action-get-latest-release` from 0.6.0 to 0.7.0 (#1325)
-- Bump `technote-space/get-diff-action` from 4 to 6 (#1327)
-- Bump `actions/setup-go` from 3 to 4 (#1324)
-- Bump `github.com/docker/distribution` from 2.8.1+incompatible to 2.8.2+incompatible (#1339)
-- Bump `github.com/CosmWasm/wasmvm` from 1.2.1 to 1.2.3 (#1354)
-- Bump `github.com/spf13/cast` from 1.5.0 to 1.5.1 (#1358)
-- Bump `github.com/stretchr/testify` from 1.8.2 to 1.8.4 (#1384, #1435)
-- Bump `cosmossdk.io/math` from 1.0.0-beta.6 to 1.0.1 (#1394)
-- Bump `google.golang.org/grpc` from 1.53.0 to 1.56.1 (#1395, #1437, #1443)
-- Bump `github.com/gin-gonic/gin` from 1.8.1 to 1.9.1 (#1409)
-- Bump `github.com/spf13/viper` from 1.15.0 to 1.16.0 (#1436)
-- Bump `github.com/prometheus/client_golang` from 1.15.1 to 1.16.0 (#1431)
-- Bump `github.com/cosmos/ibc-go/v7` from 7.1.0 to 7.2.0 (#1445)
-- Bump `bufbuild/buf-setup-action` from 1.21.0 to 1.22.0 (#1449)
-- Bump `google.golang.org/protobuf` from 1.30.0 to 1.31.0 (#1450)
+* Bump `robinraju/release-downloader` from 1.6 to 1.8 (#1326)
+* Bump `pozetroninc/github-action-get-latest-release` from 0.6.0 to 0.7.0 (#1325)
+* Bump `technote-space/get-diff-action` from 4 to 6 (#1327)
+* Bump `actions/setup-go` from 3 to 4 (#1324)
+* Bump `github.com/docker/distribution` from 2.8.1+incompatible to 2.8.2+incompatible (#1339)
+* Bump `github.com/CosmWasm/wasmvm` from 1.2.1 to 1.2.3 (#1354)
+* Bump `github.com/spf13/cast` from 1.5.0 to 1.5.1 (#1358)
+* Bump `github.com/stretchr/testify` from 1.8.2 to 1.8.4 (#1384, #1435)
+* Bump `cosmossdk.io/math` from 1.0.0-beta.6 to 1.0.1 (#1394)
+* Bump `google.golang.org/grpc` from 1.53.0 to 1.56.1 (#1395, #1437, #1443)
+* Bump `github.com/gin-gonic/gin` from 1.8.1 to 1.9.1 (#1409)
+* Bump `github.com/spf13/viper` from 1.15.0 to 1.16.0 (#1436)
+* Bump `github.com/prometheus/client_golang` from 1.15.1 to 1.16.0 (#1431)
+* Bump `github.com/cosmos/ibc-go/v7` from 7.1.0 to 7.2.0 (#1445)
+* Bump `bufbuild/buf-setup-action` from 1.21.0 to 1.22.0 (#1449)
+* Bump `google.golang.org/protobuf` from 1.30.0 to 1.31.0 (#1450)
 
 ### Breaking
 
