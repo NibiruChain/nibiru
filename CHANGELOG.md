@@ -40,6 +40,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Improvements
+
+* #[1466](https://github.com/NibiruChain/nibiru/pull/1466) - refactor(perp): `PositionLiquidatedEvent`
+
 ### Bug Fixes
 
 * [#1459](https://github.com/NibiruChain/nibiru/pull/1459) - fix(spot): wire `x/spot` msgService into app router
