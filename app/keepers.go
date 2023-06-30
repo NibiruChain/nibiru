@@ -638,8 +638,6 @@ func (app *NibiruApp) InitModuleManager(
 
 	// see https://github.com/cosmos/cosmos-sdk/blob/666c345ad23ddda9523cc5cd1b71187d91c26f34/simapp/upgrades.go#L35-L57
 	for _, subspace := range app.paramsKeeper.GetSubspaces() {
-		subspace := subspace
-
 		switch subspace.Name() {
 		case authtypes.ModuleName:
 			subspace.WithKeyTable(authtypes.ParamKeyTable()) //nolint:staticcheck
