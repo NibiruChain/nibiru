@@ -122,6 +122,11 @@ message MsgMultiLiquidateResponse {
         // nullable since no fee is taken on failed liquidation
 
     string trader = 5;
+    string pair = 6 [
+      (gogoproto.customtype) =
+          "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+      (gogoproto.nullable) = false
+    ];
   }
 
   repeated LiquidationResponse liquidations = 1;
