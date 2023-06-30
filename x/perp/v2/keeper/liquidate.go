@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/collections"
@@ -165,7 +166,7 @@ func (k Keeper) liquidate(
 			Reason:     types.LiquidationFailedEvent_NONEXISTENT_PAIR,
 		}
 		_ = ctx.EventManager().EmitTypedEvent(eventLiqFailed)
-		err = fmt.Errorf("%w: pair: %s", types.ErrPairNotFound, pair)
+		sdkerrors.Wrapf(types.ErrPairNotFound, "pair: %s", pair)
 		return
 	}
 
@@ -178,7 +179,7 @@ func (k Keeper) liquidate(
 			Reason:     types.LiquidationFailedEvent_NONEXISTENT_PAIR,
 		}
 		_ = ctx.EventManager().EmitTypedEvent(eventLiqFailed)
-		err = fmt.Errorf("%w: pair: %s", types.ErrPairNotFound, pair)
+		sdkerrors.Wrapf(types.ErrPairNotFound, "pair: %s", pair)
 		return
 	}
 
