@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"testing"
 
+	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/oracle/client/cli"
-	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -66,7 +67,6 @@ func TestAddGenesisPricefeederDelegation(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-
 			logger := log.NewNopLogger()
 
 			home := t.TempDir()
