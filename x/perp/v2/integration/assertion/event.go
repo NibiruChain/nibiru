@@ -41,11 +41,11 @@ func ContainsLiquidateEvent(
 	}
 }
 
-// EventEquals exports functions for comparing sdk.Events to concrete typed
+// eventEquals exports functions for comparing sdk.Events to concrete typed
 // events implemented as proto.Message instances in Nibiru.
-var EventEquals = eventEquals{}
+var eventEquals = iEventEquals{}
 
-type eventEquals struct{}
+type iEventEquals struct{}
 
 // --------------------------------------------------
 // --------------------------------------------------
@@ -62,7 +62,7 @@ func (act containsLiquidateEvent) Do(_ *app.NibiruApp, ctx sdk.Context) (
 	events := ctx.EventManager().Events()
 	eventsOfMatchingType := []abci.Event{}
 	for idx, sdkEvent := range events {
-		err := EventEquals.LiquidationFailedEvent(sdkEvent, wantEvent, idx)
+		err := eventEquals.LiquidationFailedEvent(sdkEvent, wantEvent, idx)
 		if err == nil {
 			isEventContained = true
 			break
@@ -94,7 +94,7 @@ func (act containsLiquidateEvent) Do(_ *app.NibiruApp, ctx sdk.Context) (
 	}
 }
 
-func (ee eventEquals) LiquidationFailedEvent(
+func (ee iEventEquals) LiquidationFailedEvent(
 	sdkEvent sdk.Event, tevent types.LiquidationFailedEvent, eventIdx int,
 ) error {
 	fieldErrs := []string{fmt.Sprintf("[DEBUG eventIdx: %v]", eventIdx)}
@@ -119,7 +119,7 @@ func (ee eventEquals) LiquidationFailedEvent(
 	return nil
 }
 
-func (ee eventEquals) PositionChangedEvent(
+func (ee iEventEquals) PositionChangedEvent(
 	sdkEvent sdk.Event, tevent types.PositionChangedEvent, eventIdx int,
 ) error {
 	fieldErrs := []string{fmt.Sprintf("[DEBUG eventIdx: %v]", eventIdx)}
@@ -174,7 +174,7 @@ func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context)
 			return ctx, err, false
 		}
 
-		if err := EventEquals.PositionChangedEvent(gotSdkEvent, *gotTypedEvent, eventIdx); err != nil {
+		if err := eventEquals.PositionChangedEvent(gotSdkEvent, *gotTypedEvent, eventIdx); err != nil {
 			return ctx, err, false
 		}
 	}
