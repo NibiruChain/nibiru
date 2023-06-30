@@ -1,4 +1,10 @@
 # buf.gen.py.yaml
+# 
+# Run with:
+#
+# proto_dir="proto"
+# out_dir="gen_python"
+# buf generate $proto_dir --template proto/buf.gen.py.yaml -o $out_dir
 version: v1
 plugins:
   - plugin: buf.build/protocolbuffers/python:v21.9
