@@ -1,0 +1,5 @@
+# buf.gen.py.yaml
+version: v1
+plugins:
+  - plugin: buf.build/protocolbuffers/python:v21.9
+    out: .
