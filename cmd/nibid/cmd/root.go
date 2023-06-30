@@ -26,6 +26,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/app"
+	oraclecli "github.com/NibiruChain/nibiru/x/oracle/client/cli"
 	perpv2cli "github.com/NibiruChain/nibiru/x/perp/v2/client/cli"
 )
 
@@ -136,7 +137,6 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 	rootCmd.AddCommand(
 		InitCmd(app.ModuleBasics, app.DefaultNodeHome),
 		AddGenesisAccountCmd(app.DefaultNodeHome),
-		perpv2cli.AddMarketGenesisCmd(app.DefaultNodeHome),
 		tmcli.NewCompletionCmd(rootCmd, true),
 		testnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
 		debug.Cmd(),
@@ -149,7 +149,11 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 	// add keybase, auxiliary RPC, query, and tx child commands
 	rootCmd.AddCommand(
 		rpc.StatusCommand(),
-		genesisCommand(encodingConfig),
+		genesisCommand(
+			encodingConfig,
+			oraclecli.AddGenesisPricefeederDelegationCmd(app.DefaultNodeHome),
+			perpv2cli.AddMarketGenesisCmd(app.DefaultNodeHome),
+		),
 		queryCommand(),
 		txCommand(),
 		keys.Commands(app.DefaultNodeHome),
