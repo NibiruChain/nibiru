@@ -166,7 +166,7 @@ func (k Keeper) liquidate(
 			Reason:     types.LiquidationFailedEvent_NONEXISTENT_PAIR,
 		}
 		_ = ctx.EventManager().EmitTypedEvent(eventLiqFailed)
-		sdkerrors.Wrapf(types.ErrPairNotFound, "pair: %s", pair)
+		err = sdkerrors.Wrapf(types.ErrPairNotFound, "pair: %s", pair)
 		return
 	}
 
@@ -179,7 +179,7 @@ func (k Keeper) liquidate(
 			Reason:     types.LiquidationFailedEvent_NONEXISTENT_PAIR,
 		}
 		_ = ctx.EventManager().EmitTypedEvent(eventLiqFailed)
-		sdkerrors.Wrapf(types.ErrPairNotFound, "pair: %s", pair)
+		err = sdkerrors.Wrapf(types.ErrPairNotFound, "pair: %s", pair)
 		return
 	}
 
