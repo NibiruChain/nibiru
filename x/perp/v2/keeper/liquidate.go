@@ -246,11 +246,6 @@ ret:
 func (k Keeper) executeFullLiquidation(
 	ctx sdk.Context, market types.Market, amm types.AMM, liquidator sdk.AccAddress, position *types.Position,
 ) (liquidationResp types.LiquidateResp, err error) {
-	traderAddr, err := sdk.AccAddressFromBech32(position.TraderAddress)
-	if err != nil {
-		return types.LiquidateResp{}, err
-	}
-
 	_, positionResp, err := k.closePositionEntirely(
 		ctx,
 		market,
@@ -307,21 +302,20 @@ func (k Keeper) executeFullLiquidation(
 	}
 
 	_ = ctx.EventManager().EmitTypedEvent(&types.PositionLiquidatedEvent{
-		Pair:                  position.Pair,
-		TraderAddress:         traderAddr.String(),
-		ExchangedQuoteAmount:  positionResp.ExchangedNotionalValue,
-		ExchangedPositionSize: positionResp.ExchangedPositionSize,
-		LiquidatorAddress:     liquidator.String(),
-		FeeToLiquidator:       sdk.NewCoin(position.Pair.QuoteDenom(), feeToLiquidator.RoundInt()),
-		FeeToEcosystemFund:    sdk.NewCoin(position.Pair.QuoteDenom(), feeToPerpEcosystemFund.RoundInt()),
-		BadDebt:               sdk.NewCoin(position.Pair.QuoteDenom(), totalBadDebt.RoundInt()),
-		Margin:                sdk.NewCoin(position.Pair.QuoteDenom(), liquidationResp.PositionResp.Position.Margin.RoundInt()),
-		PositionNotional:      liquidationResp.PositionResp.PositionNotional,
-		PositionSize:          liquidationResp.PositionResp.Position.Size_,
-		UnrealizedPnl:         liquidationResp.PositionResp.UnrealizedPnlAfter,
-		MarkPrice:             amm.MarkPrice(),
-		BlockHeight:           ctx.BlockHeight(),
-		BlockTimeMs:           ctx.BlockTime().UnixMilli(),
+		PositionChangedEvent: types.PositionChangedEvent{
+			FinalPosition:    positionResp.Position,
+			PositionNotional: positionResp.PositionNotional,
+			TransactionFee:   sdk.NewCoin(position.Pair.QuoteDenom(), sdk.ZeroInt()), // no transaction fee for liquidation
+			RealizedPnl:      positionResp.RealizedPnl,
+			BadDebt:          sdk.NewCoin(position.Pair.QuoteDenom(), totalBadDebt.RoundInt()),
+			FundingPayment:   positionResp.FundingPayment,
+			BlockHeight:      ctx.BlockHeight(),
+			MarginToUser:     sdk.ZeroInt(), // no margin to user for full liquidation
+			ChangeReason:     types.ChangeReason_FullLiquidation,
+		},
+		LiquidatorAddress:  liquidator.String(),
+		FeeToLiquidator:    sdk.NewCoin(position.Pair.QuoteDenom(), feeToLiquidator.RoundInt()),
+		FeeToEcosystemFund: sdk.NewCoin(position.Pair.QuoteDenom(), feeToPerpEcosystemFund.RoundInt()),
 	})
 
 	return liquidationResp, err
@@ -329,21 +323,21 @@ func (k Keeper) executeFullLiquidation(
 
 // executePartialLiquidation partially liquidates a position
 func (k Keeper) executePartialLiquidation(
-	ctx sdk.Context, market types.Market, amm types.AMM, liquidator sdk.AccAddress, currentPosition *types.Position,
+	ctx sdk.Context, market types.Market, amm types.AMM, liquidator sdk.AccAddress, position *types.Position,
 ) (types.LiquidateResp, error) {
-	traderAddr, err := sdk.AccAddressFromBech32(currentPosition.TraderAddress)
+	traderAddr, err := sdk.AccAddressFromBech32(position.TraderAddress)
 	if err != nil {
 		return types.LiquidateResp{}, err
 	}
 
 	var dir types.Direction
-	if currentPosition.Size_.IsPositive() {
+	if position.Size_.IsPositive() {
 		dir = types.Direction_SHORT
 	} else {
 		dir = types.Direction_LONG
 	}
 
-	quoteReserveDelta, err := amm.GetQuoteReserveAmt(currentPosition.Size_.Mul(market.PartialLiquidationRatio), dir)
+	quoteReserveDelta, err := amm.GetQuoteReserveAmt(position.Size_.Mul(market.PartialLiquidationRatio), dir)
 	if err != nil {
 		return types.LiquidateResp{}, err
 	}
@@ -353,7 +347,7 @@ func (k Keeper) executePartialLiquidation(
 		/* ctx */ ctx,
 		market,
 		amm,
-		/* currentPosition */ *currentPosition,
+		/* currentPosition */ *position,
 		/* quoteAssetAmount */ quoteAssetDelta,
 		/* baseAmtLimit */ sdk.ZeroDec(),
 	)
@@ -383,21 +377,20 @@ func (k Keeper) executePartialLiquidation(
 	}
 
 	_ = ctx.EventManager().EmitTypedEvent(&types.PositionLiquidatedEvent{
-		Pair:                  currentPosition.Pair,
-		TraderAddress:         traderAddr.String(),
-		ExchangedQuoteAmount:  positionResp.ExchangedNotionalValue,
-		ExchangedPositionSize: positionResp.ExchangedPositionSize,
-		LiquidatorAddress:     liquidator.String(),
-		FeeToLiquidator:       sdk.NewCoin(currentPosition.Pair.QuoteDenom(), feeToLiquidator.RoundInt()),
-		FeeToEcosystemFund:    sdk.NewCoin(currentPosition.Pair.QuoteDenom(), feeToPerpEcosystemFund.RoundInt()),
-		BadDebt:               sdk.NewCoin(currentPosition.Pair.QuoteDenom(), liquidationResponse.BadDebt),
-		Margin:                sdk.NewCoin(currentPosition.Pair.QuoteDenom(), liquidationResponse.PositionResp.Position.Margin.RoundInt()),
-		PositionNotional:      liquidationResponse.PositionResp.PositionNotional,
-		PositionSize:          liquidationResponse.PositionResp.Position.Size_,
-		UnrealizedPnl:         liquidationResponse.PositionResp.UnrealizedPnlAfter,
-		MarkPrice:             amm.MarkPrice(),
-		BlockHeight:           ctx.BlockHeight(),
-		BlockTimeMs:           ctx.BlockTime().UnixMilli(),
+		PositionChangedEvent: types.PositionChangedEvent{
+			FinalPosition:    positionResp.Position,
+			PositionNotional: positionResp.PositionNotional,
+			TransactionFee:   sdk.NewCoin(position.Pair.QuoteDenom(), sdk.ZeroInt()), // no transaction fee for liquidation
+			RealizedPnl:      positionResp.RealizedPnl,
+			BadDebt:          sdk.NewCoin(position.Pair.QuoteDenom(), sdk.ZeroInt()), // no bad debt for partial liquidation
+			FundingPayment:   positionResp.FundingPayment,
+			BlockHeight:      ctx.BlockHeight(),
+			MarginToUser:     sdk.ZeroInt(), // no margin to user for partial liquidation
+			ChangeReason:     types.ChangeReason_PartialLiquidation,
+		},
+		LiquidatorAddress:  liquidator.String(),
+		FeeToLiquidator:    sdk.NewCoin(position.Pair.QuoteDenom(), feeToLiquidator.RoundInt()),
+		FeeToEcosystemFund: sdk.NewCoin(position.Pair.QuoteDenom(), feeToPerpEcosystemFund.RoundInt()),
 	})
 
 	return liquidationResponse, err
