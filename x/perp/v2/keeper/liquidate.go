@@ -24,10 +24,6 @@ func (k Keeper) MultiLiquidate(
 	var allFailed bool = true
 
 	for reqIdx, req := range liquidationRequests {
-		// NOTE: writeCachedCtx (1) emits the events on the EventManager of the
-		// cachedCtx. and (2) writes that context to the commit multi store.
-
-		// cachedCtx, writeCachedCtx := ctx.CacheContext()
 		traderAddr, errAccAddress := sdk.AccAddressFromBech32(req.Trader)
 		liquidatorFee, perpEfFee, err := k.liquidate(
 			ctx, liquidator, req.Pair, traderAddr,
@@ -58,7 +54,6 @@ func (k Keeper) MultiLiquidate(
 				Trader:        req.Trader,
 				Pair:          req.Pair,
 			}
-			// writeCachedCtx()
 		}
 	}
 

@@ -1,28 +1,25 @@
 package assertion
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
 
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gogo/protobuf/proto"
 
 	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
-// --------------------------------------------------
-// Action Functions
-// --------------------------------------------------
-
 var _ action.Action = (*containsLiquidateEvent)(nil)
 var _ action.Action = (*positionChangedEventShouldBeEqual)(nil)
+
+// TODO test(perp): Add action for testing the appearance of of successful
+// liquidation events.
 
 // PositionChangedEventShouldBeEqual checks that the position changed event is
 // equal to the expected event.
@@ -44,42 +41,11 @@ func ContainsLiquidateEvent(
 	}
 }
 
-// ProtoToJson converts a proto message into a JSON string using the proto codec.
-// A codec defines a functionality for serializing other objects. The proto
-// codec provides full Protobuf serialization compatibility.
-func ProtoToJson(protoMsg proto.Message) (jsonOut string, err error) {
-	protoCodec := codec.NewProtoCodec(codectypes.NewInterfaceRegistry())
-	var jsonBz json.RawMessage
-	jsonBz, err = protoCodec.MarshalJSON(protoMsg)
-	return string(jsonBz), err
-}
-
 // EventEquals exports functions for comparing sdk.Events to concrete typed
 // events implemented as proto.Message instances in Nibiru.
 var EventEquals = eventEquals{}
 
 type eventEquals struct{}
-
-// EventHasAttribueValue parses the given ABCI event at a key to see if it
-// matches (contains) the wanted value.
-//
-// Args:
-//   - abciEvent: The event under test
-//   - key: The key for which we'll check the value
-//   - want: The desired value
-func EventHasAttribueValue(abciEvent sdk.Event, key string, want string) error {
-	attr, ok := abciEvent.GetAttribute(key)
-	if !ok {
-		return fmt.Errorf("abci event does not contain key: %s", key)
-	}
-
-	got := attr.Value
-	if !strings.Contains(got, want) {
-		return fmt.Errorf("expected %s %s, got %s", key, want, got)
-	}
-
-	return nil
-}
 
 // --------------------------------------------------
 // --------------------------------------------------
@@ -91,8 +57,6 @@ type containsLiquidateEvent struct {
 func (act containsLiquidateEvent) Do(_ *app.NibiruApp, ctx sdk.Context) (
 	outCtx sdk.Context, err error, isMandatory bool,
 ) {
-	// TODO test(perp): Add action for testing the appearance of of successful
-	// liquidation events.
 	wantEvent := act.ExpectedEvent
 	isEventContained := false
 	events := ctx.EventManager().Events()
@@ -118,7 +82,7 @@ func (act containsLiquidateEvent) Do(_ *app.NibiruApp, ctx sdk.Context) (
 		return ctx, nil, true
 	} else {
 		// Show descriptive error messages if the expected event is missing
-		wantEventJson, _ := ProtoToJson(&wantEvent)
+		wantEventJson, _ := testutil.ProtoToJson(&wantEvent)
 		var matchingEvents string = sdk.StringifyEvents(eventsOfMatchingType).String()
 		return ctx, errors.New(
 			strings.Join([]string{
@@ -144,7 +108,7 @@ func (ee eventEquals) LiquidationFailedEvent(
 		{"liquidator", tevent.Liquidator},
 		{"reason", tevent.Reason.String()},
 	} {
-		if err := EventHasAttribueValue(sdkEvent, keyWantPair.key, keyWantPair.want); err != nil {
+		if err := testutil.EventHasAttribueValue(sdkEvent, keyWantPair.key, keyWantPair.want); err != nil {
 			fieldErrs = append(fieldErrs, err.Error())
 		}
 	}
@@ -173,7 +137,7 @@ func (ee eventEquals) PositionChangedEvent(
 		{"margin_to_user", tevent.MarginToUser.String()},
 		{"change_reason", string(tevent.ChangeReason)},
 	} {
-		if err := EventHasAttribueValue(sdkEvent, keyWantPair.key, keyWantPair.want); err != nil {
+		if err := testutil.EventHasAttribueValue(sdkEvent, keyWantPair.key, keyWantPair.want); err != nil {
 			fieldErrs = append(fieldErrs, err.Error())
 		}
 	}
@@ -193,7 +157,7 @@ func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context)
 		if gotSdkEvent.Type != proto.MessageName(p.ExpectedEvent) {
 			continue
 		}
-		typedEvent, err := sdk.ParseTypedEvent(abci.Event{
+		gotProtoMessage, err := sdk.ParseTypedEvent(abci.Event{
 			Type:       gotSdkEvent.Type,
 			Attributes: gotSdkEvent.Attributes,
 		})
@@ -201,16 +165,16 @@ func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context)
 			return ctx, err, false
 		}
 
-		theEvent, ok := typedEvent.(*types.PositionChangedEvent)
+		gotTypedEvent, ok := gotProtoMessage.(*types.PositionChangedEvent)
 		if !ok {
 			return ctx, fmt.Errorf("expected event is not of type PositionChangedEvent"), false
 		}
 
-		if err := types.PositionsAreEqual(&p.ExpectedEvent.FinalPosition, &theEvent.FinalPosition); err != nil {
+		if err := types.PositionsAreEqual(&p.ExpectedEvent.FinalPosition, &gotTypedEvent.FinalPosition); err != nil {
 			return ctx, err, false
 		}
 
-		if err := EventEquals.PositionChangedEvent(gotSdkEvent, *theEvent, eventIdx); err != nil {
+		if err := EventEquals.PositionChangedEvent(gotSdkEvent, *gotTypedEvent, eventIdx); err != nil {
 			return ctx, err, false
 		}
 	}
