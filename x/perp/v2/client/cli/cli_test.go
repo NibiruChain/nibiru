@@ -118,7 +118,7 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 
 func (s *IntegrationTestSuite) TestMultiLiquidate() {
 	s.T().Log("opening positions")
-	_, err := testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[2], []string{
+	_, err := testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), s.users[2], []string{
 		"buy",
 		asset.Registry.Pair(denoms.ATOM, denoms.NUSD).String(),
 		"15",      // Leverage
@@ -127,7 +127,7 @@ func (s *IntegrationTestSuite) TestMultiLiquidate() {
 	})
 	s.Require().NoError(err)
 
-	_, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[3], []string{
+	_, err = testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), s.users[3], []string{
 		"buy",
 		asset.Registry.Pair(denoms.OSMO, denoms.NUSD).String(),
 		"15",      // Leverage
@@ -137,7 +137,7 @@ func (s *IntegrationTestSuite) TestMultiLiquidate() {
 	s.Require().NoError(err)
 
 	s.T().Log("opening counter positions")
-	_, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[4], []string{
+	_, err = testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), s.users[4], []string{
 		"sell",
 		asset.Registry.Pair(denoms.ATOM, denoms.NUSD).String(),
 		"15",       // Leverage
@@ -146,7 +146,7 @@ func (s *IntegrationTestSuite) TestMultiLiquidate() {
 	})
 	s.Require().NoError(err)
 
-	_, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[5], []string{
+	_, err = testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), s.users[5], []string{
 		"sell",
 		asset.Registry.Pair(denoms.OSMO, denoms.NUSD).String(),
 		"15",       // Leverage
@@ -191,7 +191,7 @@ func (s *IntegrationTestSuite) TestMultiLiquidate() {
 }
 
 // user[0] opens a long position
-func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
+func (s *IntegrationTestSuite) TestMarketOrdersAndCloseCmd() {
 	val := s.network.Validators[0]
 	user := s.users[0]
 
@@ -215,7 +215,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.Error(err)
 
 	s.T().Log("B. open position")
-	txResp, err := testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), user, []string{
+	txResp, err := testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), user, []string{
 		"buy",
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 		/* leverage */ "1",
@@ -247,7 +247,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.NewDec(1), queryResp.MarginRatio)
 
 	s.T().Log("C. open position with 2x leverage and zero baseAmtLimit")
-	txResp, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), user, []string{
+	txResp, err = testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), user, []string{
 		"buy",
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 		/* leverage */ "2",
@@ -272,7 +272,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.MustNewDecFromStr("0.666666666666666667"), queryResp.MarginRatio)
 
 	s.T().Log("D. Open a reverse position smaller than the existing position")
-	txResp, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), user, []string{
+	txResp, err = testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), user, []string{
 		"sell",
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 		/* leverage */ "1",
@@ -305,7 +305,7 @@ func (s *IntegrationTestSuite) TestOpenPositionsAndCloseCmd() {
 	s.EqualValues(sdk.MustNewDecFromStr("0.800000000000000000"), queryResp.MarginRatio)
 
 	s.T().Log("E. Open a reverse position larger than the existing position")
-	txResp, err = testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), user, []string{
+	txResp, err = testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), user, []string{
 		"sell",
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 		/* leverage */ "1",
@@ -367,7 +367,7 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 func (s *IntegrationTestSuite) TestRemoveMargin() {
 	// Open a position with first user
 	s.T().Log("opening a position with user 0")
-	_, err := testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[0], []string{
+	_, err := testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), s.users[0], []string{
 		"buy",
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 		"10",      // Leverage
@@ -398,7 +398,7 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 func (s *IntegrationTestSuite) TestX_AddMargin() {
 	// Open a new position
 	s.T().Log("opening a position with user 1....")
-	txResp, err := testutilcli.ExecTx(s.network, cli.OpenPositionCmd(), s.users[1], []string{
+	txResp, err := testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), s.users[1], []string{
 		"buy",
 		asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
 		"10",      // Leverage
