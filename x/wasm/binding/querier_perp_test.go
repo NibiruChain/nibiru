@@ -274,7 +274,7 @@ func (s *TestSuitePerpQuerier) TestPosition() {
 	s.Errorf(err, "\ncwResp: %s", cwResp)
 
 	s.T().Log("Open a position")
-	resp, err := s.nibiru.PerpKeeperV2.OpenPosition(
+	resp, err := s.nibiru.PerpKeeperV2.MarketOrder(
 		s.ctx, pair, perpv2types.Direction_LONG,
 		trader, margin, leverage, baseAmtLimit,
 	)
