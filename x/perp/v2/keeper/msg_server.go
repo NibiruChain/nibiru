@@ -34,11 +34,11 @@ func (m msgServer) AddMargin(ctx context.Context, msg *types.MsgAddMargin,
 	return m.k.AddMargin(sdk.UnwrapSDKContext(ctx), msg.Pair, traderAddr, msg.Margin)
 }
 
-func (m msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPosition,
-) (response *types.MsgOpenPositionResponse, err error) {
+func (m msgServer) MarketOrder(goCtx context.Context, req *types.MsgMarketOrder,
+) (response *types.MsgMarketOrderResponse, err error) {
 	traderAddr := sdk.MustAccAddressFromBech32(req.Sender)
 
-	positionResp, err := m.k.OpenPosition(
+	positionResp, err := m.k.MarketOrder(
 		sdk.UnwrapSDKContext(goCtx),
 		req.Pair,
 		req.Side,
@@ -51,7 +51,7 @@ func (m msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPositio
 		return nil, err
 	}
 
-	return &types.MsgOpenPositionResponse{
+	return &types.MsgMarketOrderResponse{
 		Position:               &positionResp.Position,
 		ExchangedNotionalValue: positionResp.ExchangedNotionalValue,
 		ExchangedPositionSize:  positionResp.ExchangedPositionSize,

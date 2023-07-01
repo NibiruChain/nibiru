@@ -35,7 +35,7 @@ type BindingExecuteMsgWrapper struct {
 	// For example, the perp bindings have route "perp".
 	Route *string `json:"route,omitempty"`
 	// ExecuteMsg is a json struct for ExecuteMsg::{
-	//   OpenPosition, ClosePosition, AddMargin, RemoveMargin, ...} from the
+	//   MarketOrder, ClosePosition, AddMargin, RemoveMargin, ...} from the
 	//   bindings smart contracts.
 	ExecuteMsg *cw_struct.BindingMsg `json:"msg,omitempty"`
 }
@@ -56,12 +56,12 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 
 		switch {
 		// Perp module
-		case contractExecuteMsg.ExecuteMsg.OpenPosition != nil:
+		case contractExecuteMsg.ExecuteMsg.MarketOrder != nil:
 			if err := messenger.Sudo.CheckPermissions(contractAddr, ctx); err != nil {
 				return events, data, err
 			}
-			cwMsg := contractExecuteMsg.ExecuteMsg.OpenPosition
-			_, err = messenger.Perp.OpenPosition(cwMsg, contractAddr, ctx)
+			cwMsg := contractExecuteMsg.ExecuteMsg.MarketOrder
+			_, err = messenger.Perp.MarketOrder(cwMsg, contractAddr, ctx)
 			return events, data, err
 		case contractExecuteMsg.ExecuteMsg.ClosePosition != nil:
 			if err := messenger.Sudo.CheckPermissions(contractAddr, ctx); err != nil {

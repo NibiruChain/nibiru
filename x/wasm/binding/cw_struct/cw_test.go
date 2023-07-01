@@ -101,7 +101,7 @@ func (s *TestSuiteBindingJsonTypes) TestExecuteMsgs() {
 	var fileJson = getFileJson(t)
 
 	testCaseMap := []string{
-		"open_position",
+		"market_order",
 		"close_position",
 		"add_margin",
 		"remove_margin",

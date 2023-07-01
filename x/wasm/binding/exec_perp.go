@@ -20,10 +20,10 @@ func (exec *ExecutorPerp) MsgServer() perpv2types.MsgServer {
 	return perpv2keeper.NewMsgServerImpl(exec.PerpV2)
 }
 
-func (exec *ExecutorPerp) OpenPosition(
-	cwMsg *cw_struct.OpenPosition, sender sdk.AccAddress, ctx sdk.Context,
+func (exec *ExecutorPerp) MarketOrder(
+	cwMsg *cw_struct.MarketOrder, sender sdk.AccAddress, ctx sdk.Context,
 ) (
-	sdkResp *perpv2types.MsgOpenPositionResponse, err error,
+	sdkResp *perpv2types.MsgMarketOrderResponse, err error,
 ) {
 	if cwMsg == nil {
 		return sdkResp, wasmvmtypes.InvalidRequest{Err: "null open position msg"}
@@ -41,7 +41,7 @@ func (exec *ExecutorPerp) OpenPosition(
 		side = perpv2types.Direction_SHORT
 	}
 
-	sdkMsg := &perpv2types.MsgOpenPosition{
+	sdkMsg := &perpv2types.MsgMarketOrder{
 		Sender:               sender.String(),
 		Pair:                 pair,
 		Side:                 side,
@@ -51,7 +51,7 @@ func (exec *ExecutorPerp) OpenPosition(
 	}
 
 	goCtx := sdk.WrapSDKContext(ctx)
-	return exec.MsgServer().OpenPosition(goCtx, sdkMsg)
+	return exec.MsgServer().MarketOrder(goCtx, sdkMsg)
 }
 
 func (exec *ExecutorPerp) ClosePosition(

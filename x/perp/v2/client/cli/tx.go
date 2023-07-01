@@ -27,7 +27,7 @@ func GetTxCmd() *cobra.Command {
 	txCmd.AddCommand(
 		RemoveMarginCmd(),
 		AddMarginCmd(),
-		OpenPositionCmd(),
+		MarketOrderCmd(),
 		ClosePositionCmd(),
 		MultiLiquidateCmd(),
 		DonateToEcosystemFundCmd(),
@@ -93,7 +93,7 @@ func MultiLiquidateCmd() *cobra.Command {
 	return cmd
 }
 
-func OpenPositionCmd() *cobra.Command {
+func MarketOrderCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "open-position [buy/sell] [pair] [leverage] [quoteAmt / sdk.Dec] [baseAmtLimit / sdk.Dec]",
 		Short: "Opens a position",
@@ -128,7 +128,7 @@ func OpenPositionCmd() *cobra.Command {
 
 			baseAmtLimit := sdk.MustNewDecFromStr(args[4])
 
-			msg := &types.MsgOpenPosition{
+			msg := &types.MsgMarketOrder{
 				Sender:               clientCtx.GetFromAddress().String(),
 				Pair:                 assetPair,
 				Side:                 side,

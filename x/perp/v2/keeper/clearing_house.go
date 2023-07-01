@@ -13,7 +13,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
-// OpenPosition opens a position on the selected pair.
+// MarketOrder opens a position on the selected pair.
 //
 // args:
 //   - ctx: cosmos-sdk context
@@ -27,7 +27,7 @@ import (
 // ret:
 //   - positionResp: contains the result of the open position and the new position
 //   - err: error
-func (k Keeper) OpenPosition(
+func (k Keeper) MarketOrder(
 	ctx sdk.Context,
 	pair asset.Pair,
 	dir types.Direction,
@@ -50,7 +50,7 @@ func (k Keeper) OpenPosition(
 		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
 	}
 
-	err = checkOpenPositionRequirements(market, quoteAssetAmt, leverage)
+	err = checkMarketOrderRequirements(market, quoteAssetAmt, leverage)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func (k Keeper) OpenPosition(
 	}
 
 	if err = k.afterPositionUpdate(
-		ctx, market, *updatedAMM, traderAddr, *positionResp, types.ChangeReason_OpenPosition,
+		ctx, market, *updatedAMM, traderAddr, *positionResp, types.ChangeReason_MarketOrder,
 	); err != nil {
 		return nil, err
 	}
@@ -501,7 +501,7 @@ func (k Keeper) closeAndOpenReversePosition(
 	return updatedAMM, positionResp, nil
 }
 
-// checkOpenPositionRequirements checks the minimum requirements to open a position.
+// checkMarketOrderRequirements checks the minimum requirements to open a position.
 //
 // - Checks that quote asset is not zero.
 // - Checks that leverage is not zero.
@@ -514,7 +514,7 @@ func (k Keeper) closeAndOpenReversePosition(
 //
 // returns:
 // - error: if any of the requirements is not met
-func checkOpenPositionRequirements(market types.Market, quoteAssetAmt sdkmath.Int, userLeverage sdk.Dec) error {
+func checkMarketOrderRequirements(market types.Market, quoteAssetAmt sdkmath.Int, userLeverage sdk.Dec) error {
 	if !quoteAssetAmt.IsPositive() {
 		return types.ErrInputQuoteAmtNegative
 	}
