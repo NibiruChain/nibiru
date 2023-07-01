@@ -12,30 +12,18 @@ option go_package = "github.com/NibiruChain/nibiru/x/perp/v2/types";
 // Msg defines the x/perp Msg service.
 service Msg {
 
-  rpc RemoveMargin(MsgRemoveMargin) returns (MsgRemoveMarginResponse) {
-    option (google.api.http).post = "/nibiru/perp/v2/remove_margin";
-  }
+  rpc RemoveMargin(MsgRemoveMargin) returns (MsgRemoveMarginResponse) {}
 
-  rpc AddMargin(MsgAddMargin) returns (MsgAddMarginResponse) {
-    option (google.api.http).post = "/nibiru/perp/v2/add_margin";
-  }
+  rpc AddMargin(MsgAddMargin) returns (MsgAddMarginResponse) {}
 
-  rpc MultiLiquidate(MsgMultiLiquidate) returns (MsgMultiLiquidateResponse) {
-    option (google.api.http).post = "/nibiru/perp/v2/multiliquidate";
-  }
+  rpc MultiLiquidate(MsgMultiLiquidate) returns (MsgMultiLiquidateResponse) {}
 
-  rpc OpenPosition(MsgOpenPosition) returns (MsgOpenPositionResponse) {
-    option (google.api.http).post = "/nibiru/perp/v2/open_position";
-  }
+  rpc MarketOrder(MsgMarketOrder) returns (MsgMarketOrderResponse) {}
 
-  rpc ClosePosition(MsgClosePosition) returns (MsgClosePositionResponse) {
-    option (google.api.http).post = "/nibiru/perp/v2/close_position";
-  }
+  rpc ClosePosition(MsgClosePosition) returns (MsgClosePositionResponse) {}
 
   rpc DonateToEcosystemFund(MsgDonateToEcosystemFund)
-      returns (MsgDonateToEcosystemFundResponse) {
-    option (google.api.http).post = "/nibiru/perp/v2/donate_to_ecosystem_fund";
-  }
+      returns (MsgDonateToEcosystemFundResponse) {}
 }
 
 // -------------------------- RemoveMargin --------------------------
@@ -113,13 +101,12 @@ message MsgMultiLiquidateResponse {
     bool success = 1;
     string error = 2;
 
-    cosmos.base.v1beta1.Coin liquidator_fee = 3
-        [ (gogoproto.nullable) = true ]; 
-        // nullable since no fee is taken on failed liquidation
+    cosmos.base.v1beta1.Coin liquidator_fee = 3 [ (gogoproto.nullable) = true ];
+    // nullable since no fee is taken on failed liquidation
 
     cosmos.base.v1beta1.Coin perp_ef_fee = 4
         [ (gogoproto.nullable) = true ]; // perp ecosystem fund
-        // nullable since no fee is taken on failed liquidation
+    // nullable since no fee is taken on failed liquidation
 
     string trader = 5;
     string pair = 6 [
@@ -132,9 +119,9 @@ message MsgMultiLiquidateResponse {
   repeated LiquidationResponse liquidations = 1;
 }
 
-// -------------------------- OpenPosition --------------------------
+// -------------------------- MarketOrder --------------------------
 
-message MsgOpenPosition {
+message MsgMarketOrder {
   string sender = 1;
 
   string pair = 2 [
@@ -161,7 +148,7 @@ message MsgOpenPosition {
   ];
 }
 
-message MsgOpenPositionResponse {
+message MsgMarketOrderResponse {
   Position position = 1;
 
   // The amount of quote assets exchanged.
