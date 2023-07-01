@@ -17,7 +17,7 @@ var _ customProtobufType = (*ChangeReason)(nil)
 type ChangeReason string
 
 const (
-	ChangeReason_OpenPosition  ChangeReason = "open_position"
+	ChangeReason_MarketOrder   ChangeReason = "open_position"
 	ChangeReason_ClosePosition ChangeReason = "close_position"
 	ChangeReason_AddMargin     ChangeReason = "add_margin"
 	ChangeReason_RemoveMargin  ChangeReason = "remove_margin"

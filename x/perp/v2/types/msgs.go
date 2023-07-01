@@ -11,7 +11,7 @@ import (
 
 var _ sdk.Msg = &MsgRemoveMargin{}
 var _ sdk.Msg = &MsgAddMargin{}
-var _ sdk.Msg = &MsgOpenPosition{}
+var _ sdk.Msg = &MsgMarketOrder{}
 var _ sdk.Msg = &MsgClosePosition{}
 var _ sdk.Msg = &MsgMultiLiquidate{}
 
@@ -91,12 +91,12 @@ func (m MsgAddMargin) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{signer}
 }
 
-// MsgOpenPosition
+// MsgMarketOrder
 
-func (m MsgOpenPosition) Route() string { return "perp" }
-func (m MsgOpenPosition) Type() string  { return "open_position_msg" }
+func (m MsgMarketOrder) Route() string { return "perp" }
+func (m MsgMarketOrder) Type() string  { return "open_position_msg" }
 
-func (m *MsgOpenPosition) ValidateBasic() error {
+func (m *MsgMarketOrder) ValidateBasic() error {
 	if m.Side != Direction_SHORT && m.Side != Direction_LONG {
 		return fmt.Errorf("invalid side")
 	}
@@ -119,11 +119,11 @@ func (m *MsgOpenPosition) ValidateBasic() error {
 	return nil
 }
 
-func (m MsgOpenPosition) GetSignBytes() []byte {
+func (m MsgMarketOrder) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
 }
 
-func (m *MsgOpenPosition) GetSigners() []sdk.AccAddress {
+func (m *MsgMarketOrder) GetSigners() []sdk.AccAddress {
 	signer, err := sdk.AccAddressFromBech32(m.Sender)
 	if err != nil {
 		panic(err)
