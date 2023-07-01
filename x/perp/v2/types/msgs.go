@@ -94,7 +94,7 @@ func (m MsgAddMargin) GetSigners() []sdk.AccAddress {
 // MsgMarketOrder
 
 func (m MsgMarketOrder) Route() string { return "perp" }
-func (m MsgMarketOrder) Type() string  { return "open_position_msg" }
+func (m MsgMarketOrder) Type() string  { return "market_order_msg" }
 
 func (m *MsgMarketOrder) ValidateBasic() error {
 	if m.Side != Direction_SHORT && m.Side != Direction_LONG {

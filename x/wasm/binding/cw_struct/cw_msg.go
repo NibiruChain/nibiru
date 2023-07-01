@@ -13,7 +13,7 @@ import (
 // - https://github.com/NibiruChain/cw-nibiru/blob/90df123f8d32d47b5b280ec6ae7dde0f9dbf2787/contracts/bindings-perp/src/msg.rs
 type BindingMsg struct {
 	// bindings-perp ExecuteMsg enum types
-	MarketOrder   *MarketOrder   `json:"open_position,omitempty"`
+	MarketOrder   *MarketOrder   `json:"market_order,omitempty"`
 	ClosePosition *ClosePosition `json:"close_position,omitempty"`
 	//MultiLiquidate        *MultiLiquidate        `json:"multi_liquidate,omitempty"` // TODO
 	AddMargin             *AddMargin             `json:"add_margin,omitempty"`
