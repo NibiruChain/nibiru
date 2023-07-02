@@ -22,48 +22,21 @@ var _ action.Action = (*positionChangedEventShouldBeEqual)(nil)
 // TODO test(perp): Add action for testing the appearance of of successful
 // liquidation events.
 
-// PositionChangedEventShouldBeEqual checks that the position changed event is
-// equal to the expected event.
-func PositionChangedEventShouldBeEqual(
-	expectedEvent *types.PositionChangedEvent,
-) action.Action {
-	return positionChangedEventShouldBeEqual{
-		ExpectedEvent: expectedEvent,
-	}
-}
-
-// ContainsLiquidateEvent checks if a typed event (proto.Message) is contained in the
-// event manager of the app context.
-func ContainsLiquidateEvent(
-	expectedEvent types.LiquidationFailedEvent,
-) action.Action {
-	return containsLiquidateEvent{
-		ExpectedEvent: expectedEvent,
-	}
-}
-
-// eventEquals exports functions for comparing sdk.Events to concrete typed
-// events implemented as proto.Message instances in Nibiru.
-var eventEquals = iEventEquals{}
-
-type iEventEquals struct{}
-
 // --------------------------------------------------
 // --------------------------------------------------
 
 type containsLiquidateEvent struct {
-	ExpectedEvent types.LiquidationFailedEvent
+	expectedEvent types.LiquidationFailedEvent
 }
 
 func (act containsLiquidateEvent) Do(_ *app.NibiruApp, ctx sdk.Context) (
 	outCtx sdk.Context, err error, isMandatory bool,
 ) {
-	wantEvent := act.ExpectedEvent
 	isEventContained := false
 	events := ctx.EventManager().Events()
 	eventsOfMatchingType := []abci.Event{}
-	for idx, sdkEvent := range events {
-		err := eventEquals.LiquidationFailedEvent(sdkEvent, wantEvent, idx)
+	for _, sdkEvent := range events {
+		err := assertLiquidationFailedEvent(sdkEvent, act.expectedEvent)
 		if err == nil {
 			isEventContained = true
 			break
@@ -83,7 +56,7 @@ func (act containsLiquidateEvent) Do(_ *app.NibiruApp, ctx sdk.Context) (
 		return ctx, nil, true
 	} else {
 		// Show descriptive error messages if the expected event is missing
-		wantEventJson, _ := testutil.ProtoToJson(&wantEvent)
+		wantEventJson, _ := testutil.ProtoToJson(&act.expectedEvent)
 		var matchingEvents string = sdk.StringifyEvents(eventsOfMatchingType).String()
 		return ctx, errors.New(
 			strings.Join([]string{
@@ -95,28 +68,39 @@ func (act containsLiquidateEvent) Do(_ *app.NibiruApp, ctx sdk.Context) (
 	}
 }
 
-func (ee iEventEquals) LiquidationFailedEvent(
-	sdkEvent sdk.Event, tevent types.LiquidationFailedEvent, eventIdx int,
-) error {
-	fieldErrs := []string{fmt.Sprintf("[DEBUG eventIdx: %v]", eventIdx)}
+// ContainsLiquidateEvent checks if a typed event (proto.Message) is contained in the
+// event manager of the app context.
+func ContainsLiquidateEvent(
+	expectedEvent types.LiquidationFailedEvent,
+) action.Action {
+	return containsLiquidateEvent{
+		expectedEvent: expectedEvent,
+	}
+}
 
-	for _, keyWantPair := range []struct {
+func assertLiquidationFailedEvent(
+	sdkEvent sdk.Event, liquidationFailedEvent types.LiquidationFailedEvent,
+) error {
+	fieldErrs := []string{}
+
+	for _, eventField := range []struct {
 		key  string
 		want string
 	}{
-		{"pair", tevent.Pair.String()},
-		{"trader", tevent.Trader},
-		{"liquidator", tevent.Liquidator},
-		{"reason", tevent.Reason.String()},
+		{"pair", liquidationFailedEvent.Pair.String()},
+		{"trader", liquidationFailedEvent.Trader},
+		{"liquidator", liquidationFailedEvent.Liquidator},
+		{"reason", liquidationFailedEvent.Reason.String()},
 	} {
-		if err := testutil.EventHasAttribueValue(sdkEvent, keyWantPair.key, keyWantPair.want); err != nil {
+		if err := testutil.EventHasAttribueValue(sdkEvent, eventField.key, eventField.want); err != nil {
 			fieldErrs = append(fieldErrs, err.Error())
 		}
 	}
 
-	if len(fieldErrs) != 1 {
+	if len(fieldErrs) > 0 {
 		return errors.New(strings.Join(fieldErrs, ". "))
 	}
+
 	return nil
 }
 
@@ -191,4 +175,14 @@ func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context)
 	}
 
 	return ctx, nil, false
+}
+
+// PositionChangedEventShouldBeEqual checks that the position changed event is
+// equal to the expected event.
+func PositionChangedEventShouldBeEqual(
+	expectedEvent *types.PositionChangedEvent,
+) action.Action {
+	return positionChangedEventShouldBeEqual{
+		ExpectedEvent: expectedEvent,
+	}
 }
