@@ -16,7 +16,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
-func TestMsgServerOpenPosition(t *testing.T) {
+func TestMsgServerMarketOrder(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	alice := testutil.AccAddress()
 
@@ -27,7 +27,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
 			).
 			When(
-				MsgServerOpenPosition(alice, pair, types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroInt()),
+				MsgServerMarketOrder(alice, pair, types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroInt()),
 			).
 			Then(
 				PositionShouldBeEqual(alice, pair,
@@ -50,7 +50,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
 			).
 			When(
-				MsgServerOpenPosition(alice, pair, types.Direction_SHORT, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroInt()),
+				MsgServerMarketOrder(alice, pair, types.Direction_SHORT, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroInt()),
 			).
 			Then(
 				PositionShouldBeEqual(alice, pair,
@@ -80,7 +80,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 			Given(
 				CreateCustomMarket(pair),
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
-				OpenPosition(alice, pair, types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroDec()),
+				MarketOrder(alice, pair, types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
 			When(
@@ -95,7 +95,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 			Given(
 				CreateCustomMarket(pair),
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
-				OpenPosition(alice, pair, types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroDec()),
+				MarketOrder(alice, pair, types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
 			When(
@@ -119,7 +119,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 			Given(
 				CreateCustomMarket(pair),
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
-				OpenPosition(alice, pair, types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroDec()),
+				MarketOrder(alice, pair, types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
 			When(
@@ -153,7 +153,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			Given(
 				CreateCustomMarket(pair),
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
-				OpenPosition(alice, pair, types.Direction_LONG, sdk.NewInt(2), sdk.NewDec(1), sdk.ZeroDec()),
+				MarketOrder(alice, pair, types.Direction_LONG, sdk.NewInt(2), sdk.NewDec(1), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
 			When(
