@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
 
@@ -120,24 +121,33 @@ func (ee iEventEquals) LiquidationFailedEvent(
 }
 
 func (ee iEventEquals) PositionChangedEvent(
-	sdkEvent sdk.Event, tevent types.PositionChangedEvent, eventIdx int,
+	sdkEvent sdk.Event, positionChangedEvent types.PositionChangedEvent, eventIdx int,
 ) error {
 	fieldErrs := []string{fmt.Sprintf("[DEBUG eventIdx: %v]", eventIdx)}
 
-	for _, keyWantPair := range []struct {
+	badDebtBz, err := codec.ProtoMarshalJSON(&positionChangedEvent.BadDebt, nil)
+	if err != nil {
+		panic(err)
+	}
+	transactionFeeBz, err := codec.ProtoMarshalJSON(&positionChangedEvent.TransactionFee, nil)
+	if err != nil {
+		panic(err)
+	}
+
+	for _, eventField := range []struct {
 		key  string
 		want string
 	}{
-		{"position_notional", tevent.PositionNotional.String()},
-		{"transaction_fee", tevent.TransactionFee.String()},
-		{"bad_debt", tevent.BadDebt.String()},
-		{"realized_pnl", tevent.RealizedPnl.String()},
-		{"funding_payment", tevent.FundingPayment.String()},
-		{"block_height", fmt.Sprintf("%v", tevent.BlockHeight)},
-		{"margin_to_user", tevent.MarginToUser.String()},
-		{"change_reason", string(tevent.ChangeReason)},
+		{"position_notional", positionChangedEvent.PositionNotional.String()},
+		{"transaction_fee", string(transactionFeeBz)},
+		{"bad_debt", string(badDebtBz)},
+		{"realized_pnl", positionChangedEvent.RealizedPnl.String()},
+		{"funding_payment", positionChangedEvent.FundingPayment.String()},
+		{"block_height", fmt.Sprintf("%v", positionChangedEvent.BlockHeight)},
+		{"margin_to_user", positionChangedEvent.MarginToUser.String()},
+		{"change_reason", string(positionChangedEvent.ChangeReason)},
 	} {
-		if err := testutil.EventHasAttribueValue(sdkEvent, keyWantPair.key, keyWantPair.want); err != nil {
+		if err := testutil.EventHasAttribueValue(sdkEvent, eventField.key, eventField.want); err != nil {
 			fieldErrs = append(fieldErrs, err.Error())
 		}
 	}
