@@ -120,11 +120,9 @@ func (ee iEventEquals) LiquidationFailedEvent(
 	return nil
 }
 
-func (ee iEventEquals) PositionChangedEvent(
-	sdkEvent sdk.Event, positionChangedEvent types.PositionChangedEvent, eventIdx int,
+func assertPositionChangedEvent(
+	sdkEvent sdk.Event, positionChangedEvent types.PositionChangedEvent,
 ) error {
-	fieldErrs := []string{fmt.Sprintf("[DEBUG eventIdx: %v]", eventIdx)}
-
 	badDebtBz, err := codec.ProtoMarshalJSON(&positionChangedEvent.BadDebt, nil)
 	if err != nil {
 		panic(err)
@@ -133,6 +131,8 @@ func (ee iEventEquals) PositionChangedEvent(
 	if err != nil {
 		panic(err)
 	}
+
+	fieldErrs := []string{}
 
 	for _, eventField := range []struct {
 		key  string
@@ -152,9 +152,10 @@ func (ee iEventEquals) PositionChangedEvent(
 		}
 	}
 
-	if len(fieldErrs) != 1 {
+	if len(fieldErrs) > 0 {
 		return errors.New(strings.Join(fieldErrs, ". "))
 	}
+
 	return nil
 }
 
@@ -163,7 +164,7 @@ type positionChangedEventShouldBeEqual struct {
 }
 
 func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	for eventIdx, gotSdkEvent := range ctx.EventManager().Events() {
+	for _, gotSdkEvent := range ctx.EventManager().Events() {
 		if gotSdkEvent.Type != proto.MessageName(p.ExpectedEvent) {
 			continue
 		}
@@ -184,7 +185,7 @@ func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context)
 			return ctx, err, false
 		}
 
-		if err := eventEquals.PositionChangedEvent(gotSdkEvent, *gotTypedEvent, eventIdx); err != nil {
+		if err := assertPositionChangedEvent(gotSdkEvent, *gotTypedEvent); err != nil {
 			return ctx, err, false
 		}
 	}
