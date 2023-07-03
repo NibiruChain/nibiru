@@ -225,6 +225,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### State Machine Breaking
 
+* [#xxx](https://github.com/NibiruChain/nibiru/pull/xxx) - fix(wasm)!: call `ValidateBasic` before all `sdk.Msg` calls for the bindings-perp contract + remove sudo permissioning
 * [#1154](https://github.com/NibiruChain/nibiru/pull/1154) - refactor(asset-pair)!: refactors `common.AssetPair` as an extension of string
 * [#1156](https://github.com/NibiruChain/nibiru/pull/1156) - refactor: remove lockup & incentivation module
 
