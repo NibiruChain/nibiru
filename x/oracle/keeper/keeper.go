@@ -180,7 +180,7 @@ func (k Keeper) SetPrice(ctx sdk.Context, pair asset.Pair, price sdk.Dec) {
 		Price:       price,
 		TimestampMs: timestampMs,
 	})
-	if err := ctx.EventManager().EmitTypedEvent(&types.OraclePriceUpdate{
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventPriceUpdate{
 		Pair:        pair.String(),
 		Price:       price,
 		TimestampMs: timestampMs,
