@@ -340,3 +340,30 @@ func PartialClose(trader sdk.AccAddress, pair asset.Pair, amount sdk.Dec) action
 		amount: amount,
 	}
 }
+
+type partialCloseFails struct {
+	trader sdk.AccAddress
+	pair   asset.Pair
+	amount sdk.Dec
+
+	expectedErr error
+}
+
+func (p partialCloseFails) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	_, err := app.PerpKeeperV2.PartialClose(ctx, p.pair, p.trader, p.amount)
+
+	if !errors.Is(err, p.expectedErr) {
+		return ctx, fmt.Errorf("expected error %s, got %s", p.expectedErr, err), true
+	}
+
+	return ctx, nil, true
+}
+
+func PartialCloseFails(trader sdk.AccAddress, pair asset.Pair, amount sdk.Dec, expecedErr error) action.Action {
+	return partialCloseFails{
+		trader:      trader,
+		pair:        pair,
+		amount:      amount,
+		expectedErr: expecedErr,
+	}
+}
