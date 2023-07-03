@@ -52,8 +52,8 @@ func (act containsLiquidateEvent) Do(_ *app.NibiruApp, ctx sdk.Context) (
 
 		liquidationFailedEvent, ok := typedEvent.(*types.LiquidationFailedEvent)
 		if !ok {
-			return ctx, errors.New(
-				fmt.Sprintf("expected event of type %s, got %s", proto.MessageName(act.expectedEvent), abciEvent.Type),
+			return ctx, fmt.Errorf(
+				"expected event of type %s, got %s", proto.MessageName(act.expectedEvent), abciEvent.Type,
 			), false
 		}
 
