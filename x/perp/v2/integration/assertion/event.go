@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
 
@@ -71,10 +70,10 @@ func (act containsLiquidateEvent) Do(_ *app.NibiruApp, ctx sdk.Context) (
 	}
 
 	// Show descriptive error messages if the expected event is missing
-	expectedEventBz, _ := codec.ProtoMarshalJSON(act.expectedEvent, nil)
+	expected, _ := sdk.TypedEventToEvent(act.expectedEvent)
 	return ctx, errors.New(
 		strings.Join([]string{
-			fmt.Sprintf("expected the context event manager to contain event: %+v.", string(expectedEventBz)),
+			fmt.Sprintf("expected: %+v.", sdk.StringifyEvents([]abci.Event{abci.Event(expected)})),
 			fmt.Sprintf("found %v events:", len(events)),
 			fmt.Sprintf("events of matching type:\n%v", sdk.StringifyEvents(matchingEvents).String()),
 		}, "\n"),
