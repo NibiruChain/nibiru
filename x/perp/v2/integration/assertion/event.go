@@ -12,7 +12,6 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
@@ -27,121 +26,69 @@ var _ action.Action = (*positionChangedEventShouldBeEqual)(nil)
 // --------------------------------------------------
 
 type containsLiquidateEvent struct {
-	expectedEvent types.LiquidationFailedEvent
+	expectedEvent *types.LiquidationFailedEvent
 }
 
 func (act containsLiquidateEvent) Do(_ *app.NibiruApp, ctx sdk.Context) (
 	outCtx sdk.Context, err error, isMandatory bool,
 ) {
-	isEventContained := false
+	foundEvent := false
 	events := ctx.EventManager().Events()
-	eventsOfMatchingType := []abci.Event{}
+	matchingEvents := []abci.Event{}
 	for _, sdkEvent := range events {
-		err := assertLiquidationFailedEvent(sdkEvent, act.expectedEvent)
-		if err == nil {
-			isEventContained = true
-			break
-		} else if sdkEvent.Type != "nibiru.perp.v2.LiquidationFailedEvent" {
+		if sdkEvent.Type != proto.MessageName(act.expectedEvent) {
 			continue
-		} else if sdkEvent.Type == "nibiru.perp.v2.LiquidationFailedEvent" && err != nil {
-			abciEvent := abci.Event{
-				Type:       sdkEvent.Type,
-				Attributes: sdkEvent.Attributes,
-			}
-			eventsOfMatchingType = append(eventsOfMatchingType, abciEvent)
 		}
+
+		abciEvent := abci.Event{
+			Type:       sdkEvent.Type,
+			Attributes: sdkEvent.Attributes,
+		}
+
+		typedEvent, err := sdk.ParseTypedEvent(abciEvent)
+		if err != nil {
+			return ctx, err, false
+		}
+
+		liquidationFailedEvent, ok := typedEvent.(*types.LiquidationFailedEvent)
+		if !ok {
+			return ctx, errors.New(
+				fmt.Sprintf("expected event of type %s, got %s", proto.MessageName(act.expectedEvent), abciEvent.Type),
+			), false
+		}
+
+		if reflect.DeepEqual(act.expectedEvent, liquidationFailedEvent) {
+			foundEvent = true
+			break
+		}
+
+		matchingEvents = append(matchingEvents, abciEvent)
 	}
 
-	if isEventContained {
+	if foundEvent {
 		// happy path
 		return ctx, nil, true
-	} else {
-		// Show descriptive error messages if the expected event is missing
-		wantEventJson, _ := testutil.ProtoToJson(&act.expectedEvent)
-		var matchingEvents string = sdk.StringifyEvents(eventsOfMatchingType).String()
-		return ctx, errors.New(
-			strings.Join([]string{
-				fmt.Sprintf("expected the context event manager to contain event: %s.", wantEventJson),
-				fmt.Sprintf("found %v events:", len(events)),
-				fmt.Sprintf("events of matching type:\n%v", matchingEvents),
-			}, "\n"),
-		), false
 	}
+
+	// Show descriptive error messages if the expected event is missing
+	expectedEventBz, _ := codec.ProtoMarshalJSON(act.expectedEvent, nil)
+	return ctx, errors.New(
+		strings.Join([]string{
+			fmt.Sprintf("expected the context event manager to contain event: %+v.", string(expectedEventBz)),
+			fmt.Sprintf("found %v events:", len(events)),
+			fmt.Sprintf("events of matching type:\n%v", sdk.StringifyEvents(matchingEvents).String()),
+		}, "\n"),
+	), false
 }
 
 // ContainsLiquidateEvent checks if a typed event (proto.Message) is contained in the
 // event manager of the app context.
 func ContainsLiquidateEvent(
-	expectedEvent types.LiquidationFailedEvent,
+	expectedEvent *types.LiquidationFailedEvent,
 ) action.Action {
 	return containsLiquidateEvent{
 		expectedEvent: expectedEvent,
 	}
-}
-
-func assertLiquidationFailedEvent(
-	sdkEvent sdk.Event, liquidationFailedEvent types.LiquidationFailedEvent,
-) error {
-	fieldErrs := []string{}
-
-	for _, eventField := range []struct {
-		key  string
-		want string
-	}{
-		{"pair", liquidationFailedEvent.Pair.String()},
-		{"trader", liquidationFailedEvent.Trader},
-		{"liquidator", liquidationFailedEvent.Liquidator},
-		{"reason", liquidationFailedEvent.Reason.String()},
-	} {
-		if err := testutil.EventHasAttribueValue(sdkEvent, eventField.key, eventField.want); err != nil {
-			fieldErrs = append(fieldErrs, err.Error())
-		}
-	}
-
-	if len(fieldErrs) > 0 {
-		return errors.New(strings.Join(fieldErrs, ". "))
-	}
-
-	return nil
-}
-
-func assertPositionChangedEvent(
-	sdkEvent sdk.Event, positionChangedEvent types.PositionChangedEvent,
-) error {
-	badDebtBz, err := codec.ProtoMarshalJSON(&positionChangedEvent.BadDebt, nil)
-	if err != nil {
-		panic(err)
-	}
-	transactionFeeBz, err := codec.ProtoMarshalJSON(&positionChangedEvent.TransactionFee, nil)
-	if err != nil {
-		panic(err)
-	}
-
-	fieldErrs := []string{}
-
-	for _, eventField := range []struct {
-		key  string
-		want string
-	}{
-		{"position_notional", positionChangedEvent.PositionNotional.String()},
-		{"transaction_fee", string(transactionFeeBz)},
-		{"bad_debt", string(badDebtBz)},
-		{"realized_pnl", positionChangedEvent.RealizedPnl.String()},
-		{"funding_payment", positionChangedEvent.FundingPayment.String()},
-		{"block_height", fmt.Sprintf("%v", positionChangedEvent.BlockHeight)},
-		{"margin_to_user", positionChangedEvent.MarginToUser.String()},
-		{"change_reason", string(positionChangedEvent.ChangeReason)},
-	} {
-		if err := testutil.EventHasAttribueValue(sdkEvent, eventField.key, eventField.want); err != nil {
-			fieldErrs = append(fieldErrs, err.Error())
-		}
-	}
-
-	if len(fieldErrs) > 0 {
-		return errors.New(strings.Join(fieldErrs, ". "))
-	}
-
-	return nil
 }
 
 type positionChangedEventShouldBeEqual struct {
@@ -172,11 +119,11 @@ func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context)
 		}
 
 		if !reflect.DeepEqual(p.expectedEvent, positionChangedEvent) {
-			return ctx, fmt.Errorf(`expected event is not equal to actual event. 
+			return ctx, fmt.Errorf(`expected event is not equal to the actual event.
 got:
-%+v, 
-want: 
-%+v.`, positionChangedEvent, p.expectedEvent), false
+%+v
+want:
+%+v`, positionChangedEvent, p.expectedEvent), false
 		}
 	}
 
