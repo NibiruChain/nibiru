@@ -3,6 +3,7 @@ package assertion
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -152,10 +153,11 @@ func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context)
 		if sdkEvent.Type != proto.MessageName(p.expectedEvent) {
 			continue
 		}
-		typedEvent, err := sdk.ParseTypedEvent(abci.Event{
+		abciEvent := abci.Event{
 			Type:       sdkEvent.Type,
 			Attributes: sdkEvent.Attributes,
-		})
+		}
+		typedEvent, err := sdk.ParseTypedEvent(abciEvent)
 		if err != nil {
 			return ctx, err, false
 		}
@@ -169,8 +171,12 @@ func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context)
 			return ctx, err, false
 		}
 
-		if err := assertPositionChangedEvent(sdkEvent, *p.expectedEvent); err != nil {
-			return ctx, err, false
+		if !reflect.DeepEqual(p.expectedEvent, positionChangedEvent) {
+			return ctx, fmt.Errorf(`expected event is not equal to actual event. 
+got:
+%+v, 
+want: 
+%+v.`, positionChangedEvent, p.expectedEvent), false
 		}
 	}
 

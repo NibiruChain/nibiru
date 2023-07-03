@@ -1093,9 +1093,8 @@ func TestPartialClose(t *testing.T) {
 					FundingPayment:   sdk.NewDec(2),
 					TransactionFee:   sdk.NewCoin(denoms.NUSD, sdk.NewInt(10)),
 					BlockHeight:      1,
-					// exchangedMargin = - marginToVault - transferredFee
-					MarginToUser: sdk.ZeroInt(),
-					ChangeReason: types.ChangeReason_PartialClose,
+					MarginToUser:     sdk.NewInt(-10),
+					ChangeReason:     types.ChangeReason_PartialClose,
 				}),
 			),
 	}
