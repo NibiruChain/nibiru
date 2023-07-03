@@ -9,7 +9,7 @@ import "google/api/annotations.proto";
 option go_package = "github.com/NibiruChain/nibiru/x/oracle/types";
 
 // Emitted when a price is posted
-message EventExchangeRateUpdate {
+message EventPriceUpdate {
   string pair = 1;
   string price = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
