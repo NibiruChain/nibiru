@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
 
@@ -52,8 +51,8 @@ func (act containsLiquidateEvent) Do(_ *app.NibiruApp, ctx sdk.Context) (
 
 		liquidationFailedEvent, ok := typedEvent.(*types.LiquidationFailedEvent)
 		if !ok {
-			return ctx, fmt.Errorf(
-				"expected event of type %s, got %s", proto.MessageName(act.expectedEvent), abciEvent.Type,
+			return ctx, errors.New(
+				fmt.Sprintf("expected event of type %s, got %s", proto.MessageName(act.expectedEvent), abciEvent.Type),
 			), false
 		}
 
@@ -71,10 +70,10 @@ func (act containsLiquidateEvent) Do(_ *app.NibiruApp, ctx sdk.Context) (
 	}
 
 	// Show descriptive error messages if the expected event is missing
-	expectedEventBz, _ := codec.ProtoMarshalJSON(act.expectedEvent, nil)
+	expected, _ := sdk.TypedEventToEvent(act.expectedEvent)
 	return ctx, errors.New(
 		strings.Join([]string{
-			fmt.Sprintf("expected the context event manager to contain event: %+v.", string(expectedEventBz)),
+			fmt.Sprintf("expected: %+v.", sdk.StringifyEvents([]abci.Event{abci.Event(expected)})),
 			fmt.Sprintf("found %v events:", len(events)),
 			fmt.Sprintf("events of matching type:\n%v", sdk.StringifyEvents(matchingEvents).String()),
 		}, "\n"),
@@ -100,10 +99,11 @@ func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context)
 		if sdkEvent.Type != proto.MessageName(p.expectedEvent) {
 			continue
 		}
-		typedEvent, err := sdk.ParseTypedEvent(abci.Event{
+		abciEvent := abci.Event{
 			Type:       sdkEvent.Type,
 			Attributes: sdkEvent.Attributes,
-		})
+		}
+		typedEvent, err := sdk.ParseTypedEvent(abciEvent)
 		if err != nil {
 			return ctx, err, false
 		}
@@ -118,11 +118,13 @@ func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context)
 		}
 
 		if !reflect.DeepEqual(p.expectedEvent, positionChangedEvent) {
+			expected, _ := sdk.TypedEventToEvent(p.expectedEvent)
+			actual, _ := sdk.TypedEventToEvent(positionChangedEvent)
 			return ctx, fmt.Errorf(`expected event is not equal to the actual event.
-got:
-%+v
 want:
-%+v`, positionChangedEvent, p.expectedEvent), false
+%+v
+got:
+%+v`, sdk.StringifyEvents([]abci.Event{abci.Event(expected)}), sdk.StringifyEvents([]abci.Event{abci.Event(actual)})), false
 		}
 	}
 
