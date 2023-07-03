@@ -97,10 +97,10 @@ func TestQueryExchangeRateTwap(t *testing.T) {
 	testutilevents.RequireContainsTypedEvent(
 		t,
 		input.Ctx,
-		&types.OraclePriceUpdate{
-			Pair:        asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
-			Price:       rate,
-			TimestampMs: input.Ctx.BlockTime().UnixMilli()},
+		&types.EventExchangeRateUpdate{
+			Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
+			ExchangeRate: rate,
+			TimestampMs:  input.Ctx.BlockTime().UnixMilli()},
 	)
 
 	ctx := sdk.WrapSDKContext(input.Ctx.

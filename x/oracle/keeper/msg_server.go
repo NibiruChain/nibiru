@@ -163,17 +163,10 @@ func (ms msgServer) DelegateFeedConsent(goCtx context.Context, msg *types.MsgDel
 	// Set the delegation
 	ms.Keeper.FeederDelegations.Insert(ctx, operatorAddr, delegateAddr)
 
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			types.EventTypeFeedDelegate,
-			sdk.NewAttribute(types.AttributeKeyFeeder, msg.Delegate),
-		),
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.Operator),
-		),
+	err = ctx.EventManager().EmitTypedEvent(&types.EventDelegateFeederConsent{
+		Feeder:   msg.Delegate,
+		Operator: msg.Operator,
 	})
 
-	return &types.MsgDelegateFeedConsentResponse{}, nil
+	return &types.MsgDelegateFeedConsentResponse{}, err
 }

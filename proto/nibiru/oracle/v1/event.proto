@@ -8,11 +8,22 @@ import "google/api/annotations.proto";
 option go_package = "github.com/NibiruChain/nibiru/x/oracle/types";
 
 // Emitted when a price is posted
-message OraclePriceUpdate {
+message EventExchangeRateUpdate {
   string pair = 1;
-  string price = 2 [
+  string exchange_rate = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
   int64 timestamp_ms = 3;
+}
+
+// Emitted when a valoper delegates oracle voting rights to a feeder address.
+message EventDelegateFeederConsent {
+  // Feeder is the delegate or representative that will be able to send 
+  // vote and prevote transaction messages.
+  string feeder = 1;
+
+  // Operator is the delegator, a valdiator operator that is delegating 
+  // voting rights.
+  string operator = 2;
 }

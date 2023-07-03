@@ -5,7 +5,6 @@ const (
 	EventTypeExchangeRateUpdate = "exchange_rate_update"
 	EventTypePrevote            = "prevote"
 	EventTypeVote               = "vote"
-	EventTypeFeedDelegate       = "feed_delegate"
 	EventTypeAggregatePrevote   = "aggregate_prevote"
 	EventTypeAggregateVote      = "aggregate_vote"
 

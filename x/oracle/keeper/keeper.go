@@ -199,10 +199,10 @@ func (k Keeper) SetPrice(ctx sdk.Context, pair asset.Pair, price sdk.Dec) {
 		Price:       price,
 		TimestampMs: timestampMs,
 	})
-	if err := ctx.EventManager().EmitTypedEvent(&types.OraclePriceUpdate{
-		Pair:        pair.String(),
-		Price:       price,
-		TimestampMs: timestampMs,
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventExchangeRateUpdate{
+		Pair:         pair.String(),
+		ExchangeRate: price,
+		TimestampMs:  timestampMs,
 	}); err != nil {
 		ctx.Logger().Error("failed to emit OraclePriceUpdate", "pair", pair, "error", err)
 	}
