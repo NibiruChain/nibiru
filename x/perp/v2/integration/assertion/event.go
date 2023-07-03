@@ -32,40 +32,41 @@ type containsLiquidateEvent struct {
 func (act containsLiquidateEvent) Do(_ *app.NibiruApp, ctx sdk.Context) (
 	outCtx sdk.Context, err error, isMandatory bool,
 ) {
-	isEventContained := false
+	foundEvent := false
 	events := ctx.EventManager().Events()
-	eventsOfMatchingType := []abci.Event{}
+	matchingEvents := []abci.Event{}
 	for _, sdkEvent := range events {
+		if sdkEvent.Type != proto.MessageName(&act.expectedEvent) {
+			continue
+		}
+
 		err := assertLiquidationFailedEvent(sdkEvent, act.expectedEvent)
 		if err == nil {
-			isEventContained = true
+			foundEvent = true
 			break
-		} else if sdkEvent.Type != "nibiru.perp.v2.LiquidationFailedEvent" {
-			continue
-		} else if sdkEvent.Type == "nibiru.perp.v2.LiquidationFailedEvent" && err != nil {
-			abciEvent := abci.Event{
-				Type:       sdkEvent.Type,
-				Attributes: sdkEvent.Attributes,
-			}
-			eventsOfMatchingType = append(eventsOfMatchingType, abciEvent)
 		}
+
+		abciEvent := abci.Event{
+			Type:       sdkEvent.Type,
+			Attributes: sdkEvent.Attributes,
+		}
+		matchingEvents = append(matchingEvents, abciEvent)
 	}
 
-	if isEventContained {
+	if foundEvent {
 		// happy path
 		return ctx, nil, true
-	} else {
-		// Show descriptive error messages if the expected event is missing
-		wantEventJson, _ := testutil.ProtoToJson(&act.expectedEvent)
-		var matchingEvents string = sdk.StringifyEvents(eventsOfMatchingType).String()
-		return ctx, errors.New(
-			strings.Join([]string{
-				fmt.Sprintf("expected the context event manager to contain event: %s.", wantEventJson),
-				fmt.Sprintf("found %v events:", len(events)),
-				fmt.Sprintf("events of matching type:\n%v", matchingEvents),
-			}, "\n"),
-		), false
 	}
+
+	// Show descriptive error messages if the expected event is missing
+	expectedEventBz, _ := codec.ProtoMarshalJSON(&act.expectedEvent, nil)
+	return ctx, errors.New(
+		strings.Join([]string{
+			fmt.Sprintf("expected the context event manager to contain event: %s.", string(expectedEventBz)),
+			fmt.Sprintf("found %v events:", len(events)),
+			fmt.Sprintf("events of matching type:\n%v", sdk.StringifyEvents(matchingEvents).String()),
+		}, "\n"),
+	), false
 }
 
 // ContainsLiquidateEvent checks if a typed event (proto.Message) is contained in the
@@ -92,7 +93,7 @@ func assertLiquidationFailedEvent(
 		{"liquidator", liquidationFailedEvent.Liquidator},
 		{"reason", liquidationFailedEvent.Reason.String()},
 	} {
-		if err := testutil.EventHasAttribueValue(sdkEvent, eventField.key, eventField.want); err != nil {
+		if err := testutil.EventHasAttributeValue(sdkEvent, eventField.key, eventField.want); err != nil {
 			fieldErrs = append(fieldErrs, err.Error())
 		}
 	}
@@ -131,7 +132,7 @@ func assertPositionChangedEvent(
 		{"margin_to_user", positionChangedEvent.MarginToUser.String()},
 		{"change_reason", string(positionChangedEvent.ChangeReason)},
 	} {
-		if err := testutil.EventHasAttribueValue(sdkEvent, eventField.key, eventField.want); err != nil {
+		if err := testutil.EventHasAttributeValue(sdkEvent, eventField.key, eventField.want); err != nil {
 			fieldErrs = append(fieldErrs, err.Error())
 		}
 	}
@@ -144,32 +145,32 @@ func assertPositionChangedEvent(
 }
 
 type positionChangedEventShouldBeEqual struct {
-	ExpectedEvent *types.PositionChangedEvent
+	expectedEvent *types.PositionChangedEvent
 }
 
 func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	for _, gotSdkEvent := range ctx.EventManager().Events() {
-		if gotSdkEvent.Type != proto.MessageName(p.ExpectedEvent) {
+	for _, sdkEvent := range ctx.EventManager().Events() {
+		if sdkEvent.Type != proto.MessageName(p.expectedEvent) {
 			continue
 		}
-		gotProtoMessage, err := sdk.ParseTypedEvent(abci.Event{
-			Type:       gotSdkEvent.Type,
-			Attributes: gotSdkEvent.Attributes,
+		typedEvent, err := sdk.ParseTypedEvent(abci.Event{
+			Type:       sdkEvent.Type,
+			Attributes: sdkEvent.Attributes,
 		})
 		if err != nil {
 			return ctx, err, false
 		}
 
-		gotTypedEvent, ok := gotProtoMessage.(*types.PositionChangedEvent)
+		positionChangedEvent, ok := typedEvent.(*types.PositionChangedEvent)
 		if !ok {
 			return ctx, fmt.Errorf("expected event is not of type PositionChangedEvent"), false
 		}
 
-		if err := types.PositionsAreEqual(&p.ExpectedEvent.FinalPosition, &gotTypedEvent.FinalPosition); err != nil {
+		if err := types.PositionsAreEqual(&p.expectedEvent.FinalPosition, &positionChangedEvent.FinalPosition); err != nil {
 			return ctx, err, false
 		}
 
-		if err := assertPositionChangedEvent(gotSdkEvent, *gotTypedEvent); err != nil {
+		if err := assertPositionChangedEvent(sdkEvent, *p.expectedEvent); err != nil {
 			return ctx, err, false
 		}
 	}
@@ -183,6 +184,6 @@ func PositionChangedEventShouldBeEqual(
 	expectedEvent *types.PositionChangedEvent,
 ) action.Action {
 	return positionChangedEventShouldBeEqual{
-		ExpectedEvent: expectedEvent,
+		expectedEvent: expectedEvent,
 	}
 }
