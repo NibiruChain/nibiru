@@ -49,6 +49,9 @@ func (exec *ExecutorPerp) MarketOrder(
 		Leverage:             cwMsg.Leverage,
 		BaseAssetAmountLimit: cwMsg.BaseAmountLimit,
 	}
+	if err := sdkMsg.ValidateBasic(); err != nil {
+		return sdkResp, err
+	}
 
 	goCtx := sdk.WrapSDKContext(ctx)
 	return exec.MsgServer().MarketOrder(goCtx, sdkMsg)
@@ -71,6 +74,9 @@ func (exec *ExecutorPerp) ClosePosition(
 	sdkMsg := &perpv2types.MsgClosePosition{
 		Sender: sender.String(),
 		Pair:   pair,
+	}
+	if err := sdkMsg.ValidateBasic(); err != nil {
+		return sdkResp, err
 	}
 
 	goCtx := sdk.WrapSDKContext(ctx)
@@ -96,6 +102,9 @@ func (exec *ExecutorPerp) AddMargin(
 		Pair:   pair,
 		Margin: cwMsg.Margin,
 	}
+	if err := sdkMsg.ValidateBasic(); err != nil {
+		return sdkResp, err
+	}
 
 	goCtx := sdk.WrapSDKContext(ctx)
 	return exec.MsgServer().AddMargin(goCtx, sdkMsg)
@@ -119,6 +128,9 @@ func (exec *ExecutorPerp) RemoveMargin(
 		Sender: sender.String(),
 		Pair:   pair,
 		Margin: cwMsg.Margin,
+	}
+	if err := sdkMsg.ValidateBasic(); err != nil {
+		return sdkResp, err
 	}
 
 	goCtx := sdk.WrapSDKContext(ctx)

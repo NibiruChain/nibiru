@@ -76,7 +76,7 @@ func (s *TestSuitePerpExecutor) SetupSuite() {
 
 func (s *TestSuitePerpExecutor) OnSetupEnd() {
 	s.contractPerp = ContractMap[wasmbin.WasmKeyPerpBinding]
-	s.ratesMap = SetExchangeRates(s.Suite, s.nibiru, s.ctx)
+	s.ratesMap = SetExchangeRates(&s.Suite, s.nibiru, s.ctx)
 }
 
 // Happy path coverage of MarketOrder, AddMargin, RemoveMargin, and ClosePosition
