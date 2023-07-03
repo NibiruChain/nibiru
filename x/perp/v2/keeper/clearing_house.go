@@ -838,3 +838,64 @@ func (k Keeper) closePositionEntirely(
 
 	return updatedAMM, resp, nil
 }
+
+func (k Keeper) PartialClose(
+	ctx sdk.Context,
+	pair asset.Pair,
+	traderAddr sdk.AccAddress,
+	sizeAmt sdk.Dec,
+) (*types.PositionResp, error) {
+	market, err := k.Markets.Get(ctx, pair)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
+	}
+
+	amm, err := k.AMMs.Get(ctx, pair)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
+	}
+
+	position, err := k.Positions.Get(ctx, collections.Join(pair, traderAddr))
+	if err != nil {
+		return nil, err
+	}
+
+	if position.Size_.IsZero() {
+		return nil, fmt.Errorf("zero position size")
+	}
+
+	if sizeAmt.Abs().GT(position.Size_.Abs()) {
+		return nil, fmt.Errorf("position size is smaller than the amount to close")
+	}
+
+	var dir types.Direction
+	if position.Size_.IsPositive() {
+		dir = types.Direction_SHORT
+	} else {
+		dir = types.Direction_LONG
+	}
+
+	reverseNotionalAmt, err := amm.SwapBaseAsset(sizeAmt.Abs(), dir)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedAMM, positionResp, err := k.decreasePosition(ctx, market, amm, position, reverseNotionalAmt, sdk.ZeroDec())
+	if err != nil {
+		return nil, err
+	}
+
+	err = k.afterPositionUpdate(
+		ctx,
+		market,
+		*updatedAMM,
+		traderAddr,
+		*positionResp,
+		types.ChangeReason_PartialClose,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return positionResp, nil
+}

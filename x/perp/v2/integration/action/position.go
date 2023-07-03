@@ -317,3 +317,26 @@ func WithLastUpdatedBlockNumber(lastUpdatedBlockNumber int64) positionModifier {
 		position.LastUpdatedBlockNumber = lastUpdatedBlockNumber
 	}
 }
+
+type partialClose struct {
+	trader sdk.AccAddress
+	pair   asset.Pair
+	amount sdk.Dec
+}
+
+func (p partialClose) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	_, err := app.PerpKeeperV2.PartialClose(ctx, p.pair, p.trader, p.amount)
+	if err != nil {
+		return ctx, err, true
+	}
+
+	return ctx, nil, true
+}
+
+func PartialClose(trader sdk.AccAddress, pair asset.Pair, amount sdk.Dec) action.Action {
+	return partialClose{
+		trader: trader,
+		pair:   pair,
+		amount: amount,
+	}
+}

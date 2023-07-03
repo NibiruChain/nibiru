@@ -144,32 +144,32 @@ func assertPositionChangedEvent(
 }
 
 type positionChangedEventShouldBeEqual struct {
-	ExpectedEvent *types.PositionChangedEvent
+	expectedEvent *types.PositionChangedEvent
 }
 
 func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	for _, gotSdkEvent := range ctx.EventManager().Events() {
-		if gotSdkEvent.Type != proto.MessageName(p.ExpectedEvent) {
+	for _, sdkEvent := range ctx.EventManager().Events() {
+		if sdkEvent.Type != proto.MessageName(p.expectedEvent) {
 			continue
 		}
-		gotProtoMessage, err := sdk.ParseTypedEvent(abci.Event{
-			Type:       gotSdkEvent.Type,
-			Attributes: gotSdkEvent.Attributes,
+		typedEvent, err := sdk.ParseTypedEvent(abci.Event{
+			Type:       sdkEvent.Type,
+			Attributes: sdkEvent.Attributes,
 		})
 		if err != nil {
 			return ctx, err, false
 		}
 
-		gotTypedEvent, ok := gotProtoMessage.(*types.PositionChangedEvent)
+		positionChangedEvent, ok := typedEvent.(*types.PositionChangedEvent)
 		if !ok {
 			return ctx, fmt.Errorf("expected event is not of type PositionChangedEvent"), false
 		}
 
-		if err := types.PositionsAreEqual(&p.ExpectedEvent.FinalPosition, &gotTypedEvent.FinalPosition); err != nil {
+		if err := types.PositionsAreEqual(&p.expectedEvent.FinalPosition, &positionChangedEvent.FinalPosition); err != nil {
 			return ctx, err, false
 		}
 
-		if err := assertPositionChangedEvent(gotSdkEvent, *gotTypedEvent); err != nil {
+		if err := assertPositionChangedEvent(sdkEvent, *p.expectedEvent); err != nil {
 			return ctx, err, false
 		}
 	}
@@ -183,6 +183,6 @@ func PositionChangedEventShouldBeEqual(
 	expectedEvent *types.PositionChangedEvent,
 ) action.Action {
 	return positionChangedEventShouldBeEqual{
-		ExpectedEvent: expectedEvent,
+		expectedEvent: expectedEvent,
 	}
 }

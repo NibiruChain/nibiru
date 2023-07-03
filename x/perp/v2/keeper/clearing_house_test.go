@@ -1040,6 +1040,266 @@ func TestClosePosition(t *testing.T) {
 	}
 }
 
+func TestPartialClose(t *testing.T) {
+	alice := testutil.AccAddress()
+	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	startBlockTime := time.Now()
+
+	tc := TestCases{
+		TC("partial close long position with positive PnL").
+			Given(
+				CreateCustomMarket(
+					pairBtcUsdc,
+					WithPricePeg(sdk.NewDec(2)),
+					WithMarketLatestCPF(sdk.MustNewDecFromStr("0.0002")),
+				),
+				SetBlockTime(startBlockTime),
+				SetBlockNumber(1),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1020)))),
+				InsertPosition(
+					WithPair(pairBtcUsdc),
+					WithTrader(alice),
+					WithSize(sdk.NewDec(10_000)),
+					WithMargin(sdk.NewDec(1_000)),
+					WithOpenNotional(sdk.NewDec(10_000)),
+				),
+			).
+			When(
+				PartialClose(alice, pairBtcUsdc, sdk.NewDec(2_500)),
+			).
+			Then(
+				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionShouldBeEqualTo(types.Position{
+					Pair:                            pairBtcUsdc,
+					TraderAddress:                   alice.String(),
+					Margin:                          sdk.MustNewDecFromStr("3497.999937500000623750"),
+					OpenNotional:                    sdk.MustNewDecFromStr("7499.999950000000592500"),
+					Size_:                           sdk.MustNewDecFromStr("7499.999987499999968750"),
+					LastUpdatedBlockNumber:          1,
+					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.0002"),
+				})),
+				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
+					FinalPosition: types.Position{
+						Pair:                            pairBtcUsdc,
+						TraderAddress:                   alice.String(),
+						Margin:                          sdk.MustNewDecFromStr("3497.999937500000623750"),
+						OpenNotional:                    sdk.MustNewDecFromStr("7499.999950000000592500"),
+						Size_:                           sdk.MustNewDecFromStr("7499.999987499999968750"),
+						LastUpdatedBlockNumber:          1,
+						LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.0002"),
+					},
+					PositionNotional: sdk.MustNewDecFromStr("14999.999712500003843750"),
+					RealizedPnl:      sdk.MustNewDecFromStr("2499.999937500000623750"),
+					BadDebt:          sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
+					FundingPayment:   sdk.NewDec(2),
+					TransactionFee:   sdk.NewCoin(denoms.NUSD, sdk.NewInt(10)),
+					BlockHeight:      1,
+					// exchangedMargin = - marginToVault - transferredFee
+					MarginToUser: sdk.ZeroInt(),
+					ChangeReason: types.ChangeReason_PartialClose,
+				}),
+			),
+	}
+
+	NewTestSuite(t).WithTestCases(tc...).Run()
+}
+
+func TestPartialClose_OLD(t *testing.T) {
+	tests := []struct {
+		name string
+
+		initialPosition    types.Position
+		newPriceMultiplier sdk.Dec
+		newLatestCPF       sdk.Dec
+		partialCloseSize   sdk.Dec
+
+		expectedFundingPayment         sdk.Dec
+		expectedBadDebt                sdk.Dec
+		expectedRealizedPnl            sdk.Dec
+		expectedMarginToVault          sdk.Dec
+		expectedExchangedNotionalValue sdk.Dec
+	}{
+		{
+			name: "long position, positive PnL",
+			// user bought in at 100 BTC for 10 NUSD at 10x leverage (1 BTC = 1 NUSD)
+			// notional value is 100 NUSD
+			// BTC doubles in value, now its price is 1 BTC = 2 NUSD
+			// user has position notional value of 200 NUSD and unrealized PnL of +100 NUSD
+			// user closes 1/2 of the position
+			// user ends up with realized PnL of +100 NUSD, unrealized PnL after of 0 NUSD,
+			//   position notional value of 0 NUSD
+			initialPosition: types.Position{
+				TraderAddress:                   testutil.AccAddress().String(),
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				Size_:                           sdk.NewDec(100), // 100 BTC
+				Margin:                          sdk.NewDec(10),  // 10 NUSD
+				OpenNotional:                    sdk.NewDec(100), // 100 NUSD
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				LastUpdatedBlockNumber:          0,
+			},
+			newPriceMultiplier: sdk.NewDec(2),
+			newLatestCPF:       sdk.MustNewDecFromStr("0.02"),
+			partialCloseSize:   sdk.NewDec(50),
+
+			expectedExchangedNotionalValue: sdk.MustNewDecFromStr("199.999999980000000002"),
+			expectedBadDebt:                sdk.ZeroDec(),
+			expectedFundingPayment:         sdk.NewDec(2),
+			expectedRealizedPnl:            sdk.MustNewDecFromStr("99.999999980000000002"),
+			expectedMarginToVault:          sdk.MustNewDecFromStr("-107.999999980000000002"),
+		},
+		{
+			name: "close long position, negative PnL",
+			// user bought in at 100 BTC for 10 NUSD at 10x leverage (1 BTC = 1 NUSD)
+			//   position and open notional value is 100 NUSD
+			// BTC drops in value, now its price is 1 BTC = 0.95 NUSD
+			// user has position notional value of 195 NUSD and unrealized PnL of -5 NUSD
+			// user closes position
+			// user ends up with realized PnL of -5 NUSD, unrealized PnL of 0 NUSD,
+			//   position notional value of 0 NUSD
+			initialPosition: types.Position{
+				TraderAddress:                   testutil.AccAddress().String(),
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				Size_:                           sdk.NewDec(100),
+				Margin:                          sdk.NewDec(10),
+				OpenNotional:                    sdk.NewDec(100),
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				LastUpdatedBlockNumber:          0,
+			},
+			newPriceMultiplier: sdk.MustNewDecFromStr("0.95"),
+			newLatestCPF:       sdk.MustNewDecFromStr("0.02"),
+
+			expectedBadDebt:                sdk.ZeroDec(),
+			expectedFundingPayment:         sdk.NewDec(2),
+			expectedRealizedPnl:            sdk.MustNewDecFromStr("-5.000000009499999999"),
+			expectedMarginToVault:          sdk.MustNewDecFromStr("-2.999999990500000001"), // 10(old) + (-5)(realized PnL) - (2)(funding payment)
+			expectedExchangedNotionalValue: sdk.MustNewDecFromStr("94.999999990500000001"),
+		},
+
+		/*==========================SHORT POSITIONS===========================*/
+		{
+			name: "close short position, positive PnL",
+			// user bought in at 100 BTC for 10 NUSD at 10x leverage (1 BTC = 1 NUSD)
+			// position and open notional value is 100 NUSD
+			// BTC drops in value, now its price is 1 BTC = 0.95 NUSD
+			// user has position notional value of 95 NUSD and unrealized PnL of 5 NUSD
+			// user closes position
+			// user ends up with realized PnL of 5 NUSD, unrealized PnL of 0 NUSD,
+			//   position notional value of 0 NUSD
+			initialPosition: types.Position{
+				TraderAddress:                   testutil.AccAddress().String(),
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				Size_:                           sdk.NewDec(-100),
+				Margin:                          sdk.NewDec(10),
+				OpenNotional:                    sdk.NewDec(100),
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				LastUpdatedBlockNumber:          0,
+			},
+			newPriceMultiplier: sdk.MustNewDecFromStr("0.95"),
+			newLatestCPF:       sdk.MustNewDecFromStr("0.02"),
+
+			expectedBadDebt:                sdk.ZeroDec(),
+			expectedFundingPayment:         sdk.NewDec(-2),
+			expectedRealizedPnl:            sdk.MustNewDecFromStr("4.999999990499999999"),
+			expectedMarginToVault:          sdk.MustNewDecFromStr("-16.999999990499999999"), // old(10) + (5)(realizedPnL) - (-2)(fundingPayment)
+			expectedExchangedNotionalValue: sdk.MustNewDecFromStr("95.000000009500000001"),
+		},
+		{
+			name: "decrease short position, negative PnL",
+			// user bought in at 100 BTC for 10 NUSD at 10x leverage (1 BTC = 1 NUSD)
+			// position and open notional value is 100 NUSD
+			// BTC increases in value, now its price is 1 BTC = 1.05 NUSD
+			// user has position notional value of 105 NUSD and unrealized PnL of -5 NUSD
+			// user closes their position
+			// user ends up with realized PnL of -5 NUSD, unrealized PnL of 0 NUSD
+			//   position notional value of 0 NUSD
+			initialPosition: types.Position{
+				TraderAddress:                   testutil.AccAddress().String(),
+				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				Size_:                           sdk.NewDec(-100), // -100 BTC
+				Margin:                          sdk.NewDec(10),   // 10 NUSD
+				OpenNotional:                    sdk.NewDec(100),  // 100 NUSD
+				LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				LastUpdatedBlockNumber:          0,
+			},
+			newPriceMultiplier: sdk.MustNewDecFromStr("1.05"),
+			newLatestCPF:       sdk.MustNewDecFromStr("0.02"),
+
+			expectedBadDebt:                sdk.ZeroDec(),
+			expectedFundingPayment:         sdk.NewDec(-2),
+			expectedRealizedPnl:            sdk.MustNewDecFromStr("-5.000000010500000001"),
+			expectedMarginToVault:          sdk.MustNewDecFromStr("-6.999999989499999999"), // old(10) + (-5)(realizedPnL) - (-2)(fundingPayment)
+			expectedExchangedNotionalValue: sdk.MustNewDecFromStr("105.000000010500000001"),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			app, ctx := testapp.NewNibiruTestAppAndContext(true)
+			traderAddr := sdk.MustAccAddressFromBech32(tc.initialPosition.TraderAddress)
+
+			market := mock.TestMarket().WithLatestCumulativePremiumFraction(tc.newLatestCPF)
+			amm := mock.TestAMMDefault().WithPriceMultiplier(tc.newPriceMultiplier)
+			app.PerpKeeperV2.Markets.Insert(ctx, tc.initialPosition.Pair, *market)
+			app.PerpKeeperV2.AMMs.Insert(ctx, tc.initialPosition.Pair, *amm)
+			app.PerpKeeperV2.ReserveSnapshots.Insert(ctx, collections.Join(tc.initialPosition.Pair, ctx.BlockTime()), types.ReserveSnapshot{
+				Amm:         *amm,
+				TimestampMs: ctx.BlockTime().UnixMilli(),
+			})
+			app.PerpKeeperV2.Positions.Insert(ctx, collections.Join(tc.initialPosition.Pair, traderAddr), tc.initialPosition)
+			require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1e18))))
+			require.NoError(t, testapp.FundModuleAccount(app.BankKeeper, ctx, types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1e18))))
+
+			resp, err := app.PerpKeeperV2.ClosePosition(
+				ctx,
+				tc.initialPosition.Pair,
+				traderAddr,
+			)
+
+			require.NoError(t, err)
+			assert.Equal(t, types.PositionResp{
+				Position: types.Position{
+					TraderAddress:                   tc.initialPosition.TraderAddress,
+					Pair:                            tc.initialPosition.Pair,
+					Size_:                           sdk.ZeroDec(),
+					Margin:                          sdk.ZeroDec(),
+					OpenNotional:                    sdk.ZeroDec(),
+					LatestCumulativePremiumFraction: tc.newLatestCPF,
+					LastUpdatedBlockNumber:          ctx.BlockHeight(),
+				},
+				ExchangedNotionalValue: tc.expectedExchangedNotionalValue,
+				ExchangedPositionSize:  tc.initialPosition.Size_.Neg(),
+				BadDebt:                tc.expectedBadDebt,
+				FundingPayment:         tc.expectedFundingPayment,
+				RealizedPnl:            tc.expectedRealizedPnl,
+				UnrealizedPnlAfter:     sdk.ZeroDec(),
+				MarginToVault:          tc.expectedMarginToVault,
+				PositionNotional:       sdk.ZeroDec(),
+			}, *resp)
+
+			testutil.RequireHasTypedEvent(t, ctx, &types.PositionChangedEvent{
+				FinalPosition: types.Position{
+					TraderAddress:                   tc.initialPosition.TraderAddress,
+					Pair:                            tc.initialPosition.Pair,
+					Size_:                           sdk.ZeroDec(),
+					Margin:                          sdk.ZeroDec(),
+					OpenNotional:                    sdk.ZeroDec(),
+					LatestCumulativePremiumFraction: tc.newLatestCPF,
+					LastUpdatedBlockNumber:          ctx.BlockHeight(),
+				},
+				PositionNotional: sdk.ZeroDec(),
+				RealizedPnl:      tc.expectedRealizedPnl,
+				BadDebt:          sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
+				FundingPayment:   tc.expectedFundingPayment,
+				TransactionFee:   sdk.NewInt64Coin(denoms.NUSD, 0),
+				BlockHeight:      ctx.BlockHeight(),
+				// exchangedMargin = - marginToVault - transferredFee
+				MarginToUser: tc.expectedMarginToVault.RoundInt().Neg().SubRaw(0),
+				ChangeReason: types.ChangeReason_ClosePosition,
+			})
+		})
+	}
+}
+
 func TestClosePositionWithBadDebt(t *testing.T) {
 	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.USDC)
 
