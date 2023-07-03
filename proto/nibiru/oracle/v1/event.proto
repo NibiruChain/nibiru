@@ -33,7 +33,7 @@ message EventAggregateVote {
   // Validator is the Bech32 address to which the vote will be credited.
   string validator = 1;
 
-  // Feeder is the delegate or representative that will sends vote and prevote 
+  // Feeder is the delegate or representative that will send vote and prevote 
   // transaction messages on behalf of the voting validator.
   string feeder = 2;
 
@@ -49,7 +49,7 @@ message EventAggregatePrevote {
   // Validator is the Bech32 address to which the vote will be credited.
   string validator = 1;
 
-  // Feeder is the delegate or representative that will sends vote and prevote 
+  // Feeder is the delegate or representative that will send vote and prevote 
   // transaction messages on behalf of the voting validator.
   string feeder = 2;
 }

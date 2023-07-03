@@ -139,7 +139,7 @@ func (m *EventDelegateFeederConsent) GetFeeder() string {
 type EventAggregateVote struct {
 	// Validator is the Bech32 address to which the vote will be credited.
 	Validator string `protobuf:"bytes,1,opt,name=validator,proto3" json:"validator,omitempty"`
-	// Feeder is the delegate or representative that will sends vote and prevote
+	// Feeder is the delegate or representative that will send vote and prevote
 	// transaction messages on behalf of the voting validator.
 	Feeder string             `protobuf:"bytes,2,opt,name=feeder,proto3" json:"feeder,omitempty"`
 	Prices ExchangeRateTuples `protobuf:"bytes,3,rep,name=prices,proto3,castrepeated=ExchangeRateTuples" json:"prices"`
@@ -204,7 +204,7 @@ func (m *EventAggregateVote) GetPrices() ExchangeRateTuples {
 type EventAggregatePrevote struct {
 	// Validator is the Bech32 address to which the vote will be credited.
 	Validator string `protobuf:"bytes,1,opt,name=validator,proto3" json:"validator,omitempty"`
-	// Feeder is the delegate or representative that will sends vote and prevote
+	// Feeder is the delegate or representative that will send vote and prevote
 	// transaction messages on behalf of the voting validator.
 	Feeder string `protobuf:"bytes,2,opt,name=feeder,proto3" json:"feeder,omitempty"`
 }
