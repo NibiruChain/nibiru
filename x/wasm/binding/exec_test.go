@@ -104,7 +104,7 @@ func (s *TestSuiteExecutor) SetupSuite() {
 }
 
 func (s *TestSuiteExecutor) OnSetupEnd() {
-	SetExchangeRates(s.Suite, s.nibiru, s.ctx)
+	SetExchangeRates(&s.Suite, s.nibiru, s.ctx)
 }
 
 func (s *TestSuiteExecutor) TestOpenAddRemoveClose() {
