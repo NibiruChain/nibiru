@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package nibiru.oracle.v1;
 
+import "nibiru/oracle/v1/oracle.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 
@@ -10,7 +11,7 @@ option go_package = "github.com/NibiruChain/nibiru/x/oracle/types";
 // Emitted when a price is posted
 message EventExchangeRateUpdate {
   string pair = 1;
-  string exchange_rate = 2 [
+  string price = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
@@ -36,8 +37,10 @@ message EventAggregateVote {
   // transaction messages on behalf of the voting validator.
   string feeder = 2;
 
-  string exchange_rates = 3
-      [ (gogoproto.moretags) = "yaml:\"exchange_rates\"" ];
+  repeated ExchangeRateTuple prices = 3 [
+    (gogoproto.castrepeated) = "ExchangeRateTuples",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // Emitted by MsgAggregateExchangePrevote when an aggregate prevote is added 
