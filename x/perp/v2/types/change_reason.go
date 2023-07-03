@@ -17,11 +17,12 @@ var _ customProtobufType = (*ChangeReason)(nil)
 type ChangeReason string
 
 const (
-	ChangeReason_OpenPosition  ChangeReason = "open_position"
-	ChangeReason_ClosePosition ChangeReason = "close_position"
-	ChangeReason_AddMargin     ChangeReason = "add_margin"
-	ChangeReason_RemoveMargin  ChangeReason = "remove_margin"
-	ChangeReason_Liquidate     ChangeReason = "liquidate"
+	ChangeReason_MarketOrder        ChangeReason = "market_order"
+	ChangeReason_ClosePosition      ChangeReason = "close_position"
+	ChangeReason_AddMargin          ChangeReason = "add_margin"
+	ChangeReason_RemoveMargin       ChangeReason = "remove_margin"
+	ChangeReason_PartialLiquidation ChangeReason = "partial_liquidation"
+	ChangeReason_FullLiquidation    ChangeReason = "full_liquidation"
 )
 
 func (c *ChangeReason) Size() int {

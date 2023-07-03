@@ -148,7 +148,7 @@ func (s *TestSuiteQuerier) SetupSuite() {
 }
 
 func (s *TestSuiteQuerier) OnSetupEnd() {
-	SetExchangeRates(s.Suite, s.nibiru, s.ctx)
+	SetExchangeRates(&s.Suite, s.nibiru, s.ctx)
 }
 
 func (s *TestSuiteQuerier) TestQueryReserves() {

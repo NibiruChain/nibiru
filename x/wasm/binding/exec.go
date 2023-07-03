@@ -35,7 +35,7 @@ type BindingExecuteMsgWrapper struct {
 	// For example, the perp bindings have route "perp".
 	Route *string `json:"route,omitempty"`
 	// ExecuteMsg is a json struct for ExecuteMsg::{
-	//   OpenPosition, ClosePosition, AddMargin, RemoveMargin, ...} from the
+	//   MarketOrder, ClosePosition, AddMargin, RemoveMargin, ...} from the
 	//   bindings smart contracts.
 	ExecuteMsg *cw_struct.BindingMsg `json:"msg,omitempty"`
 }
@@ -55,32 +55,20 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 		}
 
 		switch {
-		// Perp module
-		case contractExecuteMsg.ExecuteMsg.OpenPosition != nil:
-			if err := messenger.Sudo.CheckPermissions(contractAddr, ctx); err != nil {
-				return events, data, err
-			}
-			cwMsg := contractExecuteMsg.ExecuteMsg.OpenPosition
-			_, err = messenger.Perp.OpenPosition(cwMsg, contractAddr, ctx)
+		// Perp module | bindings-perp: for trading with smart contracts
+		case contractExecuteMsg.ExecuteMsg.MarketOrder != nil:
+			cwMsg := contractExecuteMsg.ExecuteMsg.MarketOrder
+			_, err = messenger.Perp.MarketOrder(cwMsg, contractAddr, ctx)
 			return events, data, err
 		case contractExecuteMsg.ExecuteMsg.ClosePosition != nil:
-			if err := messenger.Sudo.CheckPermissions(contractAddr, ctx); err != nil {
-				return events, data, err
-			}
 			cwMsg := contractExecuteMsg.ExecuteMsg.ClosePosition
 			_, err = messenger.Perp.ClosePosition(cwMsg, contractAddr, ctx)
 			return events, data, err
 		case contractExecuteMsg.ExecuteMsg.AddMargin != nil:
-			if err := messenger.Sudo.CheckPermissions(contractAddr, ctx); err != nil {
-				return events, data, err
-			}
 			cwMsg := contractExecuteMsg.ExecuteMsg.AddMargin
 			_, err = messenger.Perp.AddMargin(cwMsg, contractAddr, ctx)
 			return events, data, err
 		case contractExecuteMsg.ExecuteMsg.RemoveMargin != nil:
-			if err := messenger.Sudo.CheckPermissions(contractAddr, ctx); err != nil {
-				return events, data, err
-			}
 			cwMsg := contractExecuteMsg.ExecuteMsg.RemoveMargin
 			_, err = messenger.Perp.RemoveMargin(cwMsg, contractAddr, ctx)
 			return events, data, err

@@ -10,7 +10,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
-func TestParseExchangeRateTuples(t *testing.T) {
+func TestExchangeRateTuples_ToString(t *testing.T) {
 	t.Run("inverse", func(t *testing.T) {
 		tuples := types.ExchangeRateTuples{
 			{

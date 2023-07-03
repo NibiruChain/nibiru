@@ -4,17 +4,14 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-
-	gogotypes "github.com/gogo/protobuf/types"
-	"github.com/stretchr/testify/require"
-
 	"github.com/cometbft/cometbft/crypto/ed25519"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/kv"
+	gogotypes "github.com/cosmos/gogoproto/types"
+	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/oracle/keeper"
 	sim "github.com/NibiruChain/nibiru/x/oracle/simulation"
 	"github.com/NibiruChain/nibiru/x/oracle/types"

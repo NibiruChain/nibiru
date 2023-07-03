@@ -40,38 +40,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-### Features
+## [v0.21.5](https://github.com/NibiruChain/nibiru/releases/tag/v0.21.5) - 2023-07-02
 
-* [#1463](https://github.com/NibiruChain/nibiru/pull/1463) - feat(oracle): add genesis pricefeeder delegation
+### State Machine Breaking
 
-### Bug Fixes
-
-* [#1459](https://github.com/NibiruChain/nibiru/pull/1459) - fix(spot): wire `x/spot` msgService into app router
-* [#1464](https://github.com/NibiruChain/nibiru/pull/1464) - fix(gov): wire legacy proposal handlers
-
-## [v0.21.0](https://github.com/NibiruChain/nibiru/releases/tag/v0.21.0) - 2023-06-27
-
-### Dependencies
-
-* Bump `robinraju/release-downloader` from 1.6 to 1.8 (#1326)
-* Bump `pozetroninc/github-action-get-latest-release` from 0.6.0 to 0.7.0 (#1325)
-* Bump `technote-space/get-diff-action` from 4 to 6 (#1327)
-* Bump `actions/setup-go` from 3 to 4 (#1324)
-* Bump `github.com/docker/distribution` from 2.8.1+incompatible to 2.8.2+incompatible (#1339)
-* Bump `github.com/CosmWasm/wasmvm` from 1.2.1 to 1.2.3 (#1354)
-* Bump `github.com/spf13/cast` from 1.5.0 to 1.5.1 (#1358)
-* Bump `github.com/stretchr/testify` from 1.8.2 to 1.8.4 (#1384, #1435)
-* Bump `cosmossdk.io/math` from 1.0.0-beta.6 to 1.0.1 (#1394)
-* Bump `google.golang.org/grpc` from 1.53.0 to 1.56.1 (#1395, #1437, #1443)
-* Bump `github.com/gin-gonic/gin` from 1.8.1 to 1.9.1 (#1409)
-* Bump `github.com/spf13/viper` from 1.15.0 to 1.16.0 (#1436)
-* Bump `github.com/prometheus/client_golang` from 1.15.1 to 1.16.0 (#1431)
-* Bump `github.com/cosmos/ibc-go/v7` from 7.1.0 to 7.2.0 (#1445)
-* Bump `bufbuild/buf-setup-action` from 1.21.0 to 1.22.0 (#1449)
-* Bump `google.golang.org/protobuf` from 1.30.0 to 1.31.0 (#1450)
-
-### Breaking
-
+* [#1473](https://github.com/NibiruChain/nibiru/pull/1473) - refactor(perp)!: rename `OpenPosition` to `MarketOrder`
+* [#1477](https://github.com/NibiruChain/nibiru/pull/1477) - refactor(oracle)!: Move away from deprecated events to typed events in x/oracle
 * [#1380](https://github.com/NibiruChain/nibiru/pull/1380) - feat(wasm): Add CreateMarket admin call for the controller contract
 * [#1359](https://github.com/NibiruChain/nibiru/pull/1359) - feat(perp): Add InsuranceFundWithdraw admin call with corresponding smart contract
 * [#1356](https://github.com/NibiruChain/nibiru/pull/1356) - build: Regress wasmvm (v1.1.1), tendermint (v0.34.24), and Cosmos-SDK (v0.45.14) dependencies
@@ -116,6 +90,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Improvements
 
+* [#1463](https://github.com/NibiruChain/nibiru/pull/1463) - feat(oracle): add genesis pricefeeder delegation
 * [#1462](https://github.com/NibiruChain/nibiru/pull/1462) - fix(perp): Add pair to liquidation failed event.
 * [#1424](https://github.com/NibiruChain/nibiru/pull/1424) - feat(perp): Add change type and exchanged margin to position changed events.
 * [#1390](https://github.com/NibiruChain/nibiru/pull/1390) - fix(localnet.sh): Fix genesis market initialization + add force exits on failure
@@ -182,6 +157,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1422](https://github.com/NibiruChain/nibiru/pull/1422) - fix(oracle): handle zero oracle rewards
 * [#1426](https://github.com/NibiruChain/nibiru/pull/1426) - refactor(perp): remove price fluctuation limit check
 * [#1423](https://github.com/NibiruChain/nibiru/pull/1423) - fix: remove panics from abci hooks
+* #[1466](https://github.com/NibiruChain/nibiru/pull/1466) - refactor(perp): `PositionLiquidatedEvent`
 
 ### Bug Fixes
 
@@ -196,7 +172,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1446](https://github.com/NibiruChain/nibiru/pull/1446) - fix(cmd): Add custom InitCmd to set set desired Tendermint consensus params for each node.
 * [#1452](https://github.com/NibiruChain/nibiru/pull/1452) - fix(oracle): continue with abci hook during error
 * [#1451](https://github.com/NibiruChain/nibiru/pull/1451) - fix(perp): decrease position with zero size
+* [#1459](https://github.com/NibiruChain/nibiru/pull/1459) - fix(spot): wire `x/spot` msgService into app router
+* [#1467](https://github.com/NibiruChain/nibiru/pull/1467) - fix(oracle): make `calcTwap` safer
+* [#1464](https://github.com/NibiruChain/nibiru/pull/1464) - fix(gov): wire legacy proposal handlers
 
+### Dependencies
+
+- Bump `robinraju/release-downloader` from 1.6 to 1.8 (#1326)
+- Bump `pozetroninc/github-action-get-latest-release` from 0.6.0 to 0.7.0 (#1325)
+- Bump `technote-space/get-diff-action` from 4 to 6 (#1327)
+- Bump `actions/setup-go` from 3 to 4 (#1324)
+- Bump `github.com/docker/distribution` from 2.8.1+incompatible to 2.8.2+incompatible (#1339)
+- Bump `github.com/CosmWasm/wasmvm` from 1.2.1 to 1.2.3 (#1354)
+- Bump `github.com/spf13/cast` from 1.5.0 to 1.5.1 (#1358)
+- Bump `github.com/stretchr/testify` from 1.8.2 to 1.8.4 (#1384, #1435)
+- Bump `cosmossdk.io/math` from 1.0.0-beta.6 to 1.0.1 (#1394)
+- Bump `google.golang.org/grpc` from 1.53.0 to 1.56.1 (#1395, #1437, #1443)
+- Bump `github.com/gin-gonic/gin` from 1.8.1 to 1.9.1 (#1409)
+- Bump `github.com/spf13/viper` from 1.15.0 to 1.16.0 (#1436)
+- Bump `github.com/prometheus/client_golang` from 1.15.1 to 1.16.0 (#1431)
+- Bump `github.com/cosmos/ibc-go/v7` from 7.1.0 to 7.2.0 (#1445)
+- Bump `bufbuild/buf-setup-action` from 1.21.0 to 1.23.1 (#1449, #1469)
+- Bump `google.golang.org/protobuf` from 1.30.0 to 1.31.0 (#1450)
+- 
 ## [v0.19.2](https://github.com/NibiruChain/nibiru/releases/tag/v0.19.2) - 2023-02-24
 
 ### Features
@@ -218,6 +216,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### State Machine Breaking
 
+* [#xxx](https://github.com/NibiruChain/nibiru/pull/xxx) - fix(wasm)!: call `ValidateBasic` before all `sdk.Msg` calls for the bindings-perp contract + remove sudo permissioning
 * [#1154](https://github.com/NibiruChain/nibiru/pull/1154) - refactor(asset-pair)!: refactors `common.AssetPair` as an extension of string
 * [#1156](https://github.com/NibiruChain/nibiru/pull/1156) - refactor: remove lockup & incentivation module
 

@@ -30,7 +30,7 @@ func TestAddMargin(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2020)))),
-				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			When(
 				MoveToNextBlock(),
@@ -79,7 +79,7 @@ func TestAddMargin(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2020)))),
-				OpenPosition(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			When(
 				MoveToNextBlock(),
@@ -138,7 +138,7 @@ func TestRemoveMargin(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1002)))),
-				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.OneDec(), sdk.ZeroDec()),
+				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.OneDec(), sdk.ZeroDec()),
 			).
 			When(
 				MoveToNextBlock(),
@@ -185,7 +185,7 @@ func TestRemoveMargin(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1002)))),
-				OpenPosition(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(1), sdk.ZeroDec()),
+				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(1), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
 			When(
@@ -232,7 +232,7 @@ func TestRemoveMargin(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1002)))),
-				OpenPosition(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.OneDec(), sdk.ZeroDec()),
+				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.OneDec(), sdk.ZeroDec()),
 			).
 			When(
 				MoveToNextBlock(),
