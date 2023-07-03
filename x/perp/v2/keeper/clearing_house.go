@@ -875,10 +875,11 @@ func (k Keeper) PartialClose(
 		dir = types.Direction_LONG
 	}
 
-	reverseNotionalAmt, err := amm.SwapBaseAsset(sizeAmt.Abs(), dir)
+	reverseNotionalAmt, err := amm.GetQuoteReserveAmt(sizeAmt.Abs(), dir)
 	if err != nil {
 		return nil, err
 	}
+	reverseNotionalAmt = amm.FromQuoteReserveToAsset(reverseNotionalAmt)
 
 	updatedAMM, positionResp, err := k.decreasePosition(ctx, market, amm, position, reverseNotionalAmt, sdk.ZeroDec())
 	if err != nil {

@@ -85,7 +85,7 @@ func (m msgServer) PartialClose(goCtx context.Context, req *types.MsgPartialClos
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	traderAddr := sdk.MustAccAddressFromBech32(req.Sender)
 
-	resp, err := m.k.ClosePosition(ctx, req.Pair, traderAddr)
+	resp, err := m.k.PartialClose(ctx, req.Pair, traderAddr, req.Size_)
 	if err != nil {
 		return nil, err
 	}
