@@ -621,7 +621,7 @@ func (k Keeper) checkMarginRatio(ctx sdk.Context, market types.Market, amm types
 
 	marginRatio := MarginRatio(position, preferredPositionNotional, market.LatestCumulativePremiumFraction)
 	if marginRatio.LT(market.MaintenanceMarginRatio) {
-		return types.ErrMarginRatioTooLow
+		return types.ErrMarginRatioTooLow.Wrapf("position margin ratio: %s, maintenance margin ratio: %s", marginRatio, market.MaintenanceMarginRatio)
 	}
 	return
 }
