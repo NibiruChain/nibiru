@@ -27,7 +27,7 @@ func TestSuitePerpQuerier_RunAll(t *testing.T) {
 }
 
 func SetExchangeRates(
-	testSuite suite.Suite,
+	testSuite *suite.Suite,
 	nibiru *app.NibiruApp,
 	ctx sdk.Context,
 ) (exchangeRateMap map[asset.Pair]sdk.Dec) {
@@ -108,7 +108,7 @@ func (s *TestSuitePerpQuerier) SetupSuite() {
 }
 
 func (s *TestSuitePerpQuerier) OnSetupEnd() {
-	s.ratesMap = SetExchangeRates(s.Suite, s.nibiru, s.ctx)
+	s.ratesMap = SetExchangeRates(&s.Suite, s.nibiru, s.ctx)
 }
 
 // ————————————————————————————————————————————————————————————————————————————
@@ -274,7 +274,7 @@ func (s *TestSuitePerpQuerier) TestPosition() {
 	s.Errorf(err, "\ncwResp: %s", cwResp)
 
 	s.T().Log("Open a position")
-	resp, err := s.nibiru.PerpKeeperV2.OpenPosition(
+	resp, err := s.nibiru.PerpKeeperV2.MarketOrder(
 		s.ctx, pair, perpv2types.Direction_LONG,
 		trader, margin, leverage, baseAmtLimit,
 	)

@@ -18,17 +18,17 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
-// OpenPosition opens a position with the given parameters.
+// MarketOrder opens a position with the given parameters.
 //
 // responseCheckers are optional functions that can be used to check expected response.
-func OpenPosition(
+func MarketOrder(
 	trader sdk.AccAddress,
 	pair asset.Pair,
 	dir types.Direction,
 	margin sdkmath.Int,
 	leverage sdk.Dec,
 	baseAssetLimit sdk.Dec,
-	responseCheckers ...OpenPositionResponseChecker,
+	responseCheckers ...MarketOrderResponseChecker,
 ) action.Action {
 	return &openPositionAction{
 		trader:           trader,
@@ -49,11 +49,11 @@ type openPositionAction struct {
 	leverage       sdk.Dec
 	baseAssetLimit sdk.Dec
 
-	responseCheckers []OpenPositionResponseChecker
+	responseCheckers []MarketOrderResponseChecker
 }
 
 func (o openPositionAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	resp, err := app.PerpKeeperV2.OpenPosition(
+	resp, err := app.PerpKeeperV2.MarketOrder(
 		ctx, o.pair, o.dir, o.trader,
 		o.margin, o.leverage, o.baseAssetLimit,
 	)
@@ -84,7 +84,7 @@ type openPositionFailsAction struct {
 }
 
 func (o openPositionFailsAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	_, err := app.PerpKeeperV2.OpenPosition(
+	_, err := app.PerpKeeperV2.MarketOrder(
 		ctx, o.pair, o.dir, o.trader,
 		o.margin, o.leverage, o.baseAssetLimit,
 	)
@@ -96,7 +96,7 @@ func (o openPositionFailsAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Co
 	return ctx, nil, true
 }
 
-func OpenPositionFails(
+func MarketOrderFails(
 	trader sdk.AccAddress,
 	pair asset.Pair,
 	dir types.Direction,
@@ -117,10 +117,10 @@ func OpenPositionFails(
 }
 
 // Open Position Response Checkers
-type OpenPositionResponseChecker func(resp *types.PositionResp) error
+type MarketOrderResponseChecker func(resp *types.PositionResp) error
 
-// OpenPositionResp_PositionShouldBeEqual checks that the position included in the response is equal to the expected position response.
-func OpenPositionResp_PositionShouldBeEqual(expected types.Position) OpenPositionResponseChecker {
+// MarketOrderResp_PositionShouldBeEqual checks that the position included in the response is equal to the expected position response.
+func MarketOrderResp_PositionShouldBeEqual(expected types.Position) MarketOrderResponseChecker {
 	return func(actual *types.PositionResp) error {
 		if err := types.PositionsAreEqual(&expected, &actual.Position); err != nil {
 			return err
@@ -130,8 +130,8 @@ func OpenPositionResp_PositionShouldBeEqual(expected types.Position) OpenPositio
 	}
 }
 
-// OpenPositionResp_ExchangeNotionalValueShouldBeEqual checks that the exchanged notional value included in the response is equal to the expected value.
-func OpenPositionResp_ExchangeNotionalValueShouldBeEqual(expected sdk.Dec) OpenPositionResponseChecker {
+// MarketOrderResp_ExchangeNotionalValueShouldBeEqual checks that the exchanged notional value included in the response is equal to the expected value.
+func MarketOrderResp_ExchangeNotionalValueShouldBeEqual(expected sdk.Dec) MarketOrderResponseChecker {
 	return func(actual *types.PositionResp) error {
 		if !actual.ExchangedNotionalValue.Equal(expected) {
 			return fmt.Errorf("expected exchanged notional value %s, got %s", expected, actual.ExchangedNotionalValue)
@@ -141,8 +141,8 @@ func OpenPositionResp_ExchangeNotionalValueShouldBeEqual(expected sdk.Dec) OpenP
 	}
 }
 
-// OpenPositionResp_ExchangedPositionSizeShouldBeEqual checks that the exchanged position size included in the response is equal to the expected value.
-func OpenPositionResp_ExchangedPositionSizeShouldBeEqual(expected sdk.Dec) OpenPositionResponseChecker {
+// MarketOrderResp_ExchangedPositionSizeShouldBeEqual checks that the exchanged position size included in the response is equal to the expected value.
+func MarketOrderResp_ExchangedPositionSizeShouldBeEqual(expected sdk.Dec) MarketOrderResponseChecker {
 	return func(actual *types.PositionResp) error {
 		if !actual.ExchangedPositionSize.Equal(expected) {
 			return fmt.Errorf("expected exchanged position size %s, got %s", expected, actual.ExchangedPositionSize)
@@ -152,8 +152,8 @@ func OpenPositionResp_ExchangedPositionSizeShouldBeEqual(expected sdk.Dec) OpenP
 	}
 }
 
-// OpenPositionResp_BadDebtShouldBeEqual checks that the bad debt included in the response is equal to the expected value.
-func OpenPositionResp_BadDebtShouldBeEqual(expected sdk.Dec) OpenPositionResponseChecker {
+// MarketOrderResp_BadDebtShouldBeEqual checks that the bad debt included in the response is equal to the expected value.
+func MarketOrderResp_BadDebtShouldBeEqual(expected sdk.Dec) MarketOrderResponseChecker {
 	return func(actual *types.PositionResp) error {
 		if !actual.BadDebt.Equal(expected) {
 			return fmt.Errorf("expected bad debt %s, got %s", expected, actual.BadDebt)
@@ -163,8 +163,8 @@ func OpenPositionResp_BadDebtShouldBeEqual(expected sdk.Dec) OpenPositionRespons
 	}
 }
 
-// OpenPositionResp_FundingPaymentShouldBeEqual checks that the funding payment included in the response is equal to the expected value.
-func OpenPositionResp_FundingPaymentShouldBeEqual(expected sdk.Dec) OpenPositionResponseChecker {
+// MarketOrderResp_FundingPaymentShouldBeEqual checks that the funding payment included in the response is equal to the expected value.
+func MarketOrderResp_FundingPaymentShouldBeEqual(expected sdk.Dec) MarketOrderResponseChecker {
 	return func(actual *types.PositionResp) error {
 		if !actual.FundingPayment.Equal(expected) {
 			return fmt.Errorf("expected funding payment %s, got %s", expected, actual.FundingPayment)
@@ -174,8 +174,8 @@ func OpenPositionResp_FundingPaymentShouldBeEqual(expected sdk.Dec) OpenPosition
 	}
 }
 
-// OpenPositionResp_RealizedPnlShouldBeEqual checks that the realized pnl included in the response is equal to the expected value.
-func OpenPositionResp_RealizedPnlShouldBeEqual(expected sdk.Dec) OpenPositionResponseChecker {
+// MarketOrderResp_RealizedPnlShouldBeEqual checks that the realized pnl included in the response is equal to the expected value.
+func MarketOrderResp_RealizedPnlShouldBeEqual(expected sdk.Dec) MarketOrderResponseChecker {
 	return func(actual *types.PositionResp) error {
 		if !actual.RealizedPnl.Equal(expected) {
 			return fmt.Errorf("expected realized pnl %s, got %s", expected, actual.RealizedPnl)
@@ -185,8 +185,8 @@ func OpenPositionResp_RealizedPnlShouldBeEqual(expected sdk.Dec) OpenPositionRes
 	}
 }
 
-// OpenPositionResp_UnrealizedPnlAfterShouldBeEqual checks that the unrealized pnl after included in the response is equal to the expected value.
-func OpenPositionResp_UnrealizedPnlAfterShouldBeEqual(expected sdk.Dec) OpenPositionResponseChecker {
+// MarketOrderResp_UnrealizedPnlAfterShouldBeEqual checks that the unrealized pnl after included in the response is equal to the expected value.
+func MarketOrderResp_UnrealizedPnlAfterShouldBeEqual(expected sdk.Dec) MarketOrderResponseChecker {
 	return func(actual *types.PositionResp) error {
 		if !actual.UnrealizedPnlAfter.Equal(expected) {
 			return fmt.Errorf("expected unrealized pnl after %s, got %s", expected, actual.UnrealizedPnlAfter)
@@ -196,8 +196,8 @@ func OpenPositionResp_UnrealizedPnlAfterShouldBeEqual(expected sdk.Dec) OpenPosi
 	}
 }
 
-// OpenPositionResp_MarginToVaultShouldBeEqual checks that the margin to vault included in the response is equal to the expected value.
-func OpenPositionResp_MarginToVaultShouldBeEqual(expected sdk.Dec) OpenPositionResponseChecker {
+// MarketOrderResp_MarginToVaultShouldBeEqual checks that the margin to vault included in the response is equal to the expected value.
+func MarketOrderResp_MarginToVaultShouldBeEqual(expected sdk.Dec) MarketOrderResponseChecker {
 	return func(actual *types.PositionResp) error {
 		if !actual.MarginToVault.Equal(expected) {
 			return fmt.Errorf("expected margin to vault %s, got %s", expected, actual.MarginToVault)
@@ -207,8 +207,8 @@ func OpenPositionResp_MarginToVaultShouldBeEqual(expected sdk.Dec) OpenPositionR
 	}
 }
 
-// OpenPositionResp_PositionNotionalShouldBeEqual checks that the position notional included in the response is equal to the expected value.
-func OpenPositionResp_PositionNotionalShouldBeEqual(expected sdk.Dec) OpenPositionResponseChecker {
+// MarketOrderResp_PositionNotionalShouldBeEqual checks that the position notional included in the response is equal to the expected value.
+func MarketOrderResp_PositionNotionalShouldBeEqual(expected sdk.Dec) MarketOrderResponseChecker {
 	return func(actual *types.PositionResp) error {
 		if !actual.PositionNotional.Equal(expected) {
 			return fmt.Errorf("expected position notional %s, got %s", expected, actual.PositionNotional)

@@ -83,7 +83,7 @@ func (m ExchangeRateTuple) ToString() (string, error) {
 func NewExchangeRateTupleFromString(s string) (ExchangeRateTuple, error) {
 	// strip parentheses
 	if len(s) <= 2 {
-		return ExchangeRateTuple{}, fmt.Errorf("invalid string length")
+		return ExchangeRateTuple{}, fmt.Errorf("invalid string length: %v", len(s))
 	}
 
 	if s[0] != ExchangeRateTupleStringPrefix || s[len(s)-1] != ExchangeRateTupleStringSuffix {
