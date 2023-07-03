@@ -64,12 +64,11 @@ func (k Keeper) countVotesAndUpdateExchangeRates(
 
 		k.SetPrice(ctx, pair, exchangeRate)
 
-		ctx.EventManager().EmitEvent(
-			sdk.NewEvent(types.EventTypeExchangeRateUpdate,
-				sdk.NewAttribute(types.AttributeKeyPair, pair.String()),
-				sdk.NewAttribute(types.AttributeKeyExchangeRate, exchangeRate.String()),
-			),
-		)
+		_ = ctx.EventManager().EmitTypedEvent(&types.EventPriceUpdate{
+			Pair:        pairStr,
+			Price:       exchangeRate,
+			TimestampMs: ctx.BlockTime().UnixMilli(),
+		})
 	}
 }
 

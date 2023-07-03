@@ -2,17 +2,54 @@ syntax = "proto3";
 
 package nibiru.oracle.v1;
 
+import "nibiru/oracle/v1/oracle.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/oracle/types";
 
 // Emitted when a price is posted
-message OraclePriceUpdate {
+message EventPriceUpdate {
   string pair = 1;
   string price = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
   int64 timestamp_ms = 3;
+}
+
+// Emitted when a valoper delegates oracle voting rights to a feeder address.
+message EventDelegateFeederConsent {
+  // Validator is the Bech32 address that is delegating voting rights.
+  string validator = 1;
+
+  // Feeder is the delegate or representative that will be able to send 
+  // vote and prevote transaction messages.
+  string feeder = 2;
+}
+
+// Emitted by MsgAggregateExchangeVote when an aggregate vote is added to state
+message EventAggregateVote {
+  // Validator is the Bech32 address to which the vote will be credited.
+  string validator = 1;
+
+  // Feeder is the delegate or representative that will send vote and prevote 
+  // transaction messages on behalf of the voting validator.
+  string feeder = 2;
+
+  repeated ExchangeRateTuple prices = 3 [
+    (gogoproto.castrepeated) = "ExchangeRateTuples",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// Emitted by MsgAggregateExchangePrevote when an aggregate prevote is added 
+// to state
+message EventAggregatePrevote {
+  // Validator is the Bech32 address to which the vote will be credited.
+  string validator = 1;
+
+  // Feeder is the delegate or representative that will send vote and prevote 
+  // transaction messages on behalf of the voting validator.
+  string feeder = 2;
 }
