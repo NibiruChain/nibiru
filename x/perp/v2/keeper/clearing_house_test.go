@@ -1180,6 +1180,140 @@ func TestPartialClose(t *testing.T) {
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 				})),
 			),
+		TC("partial close short position with positive PnL").
+			Given(
+				CreateCustomMarket(
+					pairBtcUsdc,
+					WithPricePeg(sdk.MustNewDecFromStr("0.10")),
+					WithMarketLatestCPF(sdk.MustNewDecFromStr("0.0002")),
+				),
+				SetBlockTime(startBlockTime),
+				SetBlockNumber(1),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(2)))),
+				InsertPosition(
+					WithPair(pairBtcUsdc),
+					WithTrader(alice),
+					WithSize(sdk.NewDec(-10_000)),
+					WithMargin(sdk.NewDec(1_000)),
+					WithOpenNotional(sdk.NewDec(10_000)),
+				),
+			).
+			When(
+				PartialClose(alice, pairBtcUsdc, sdk.NewDec(7_500)),
+			).
+			Then(
+				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionShouldBeEqualTo(types.Position{
+					Pair:                            pairBtcUsdc,
+					TraderAddress:                   alice.String(),
+					Margin:                          sdk.MustNewDecFromStr("7751.999880000000666938"),
+					OpenNotional:                    sdk.MustNewDecFromStr("2500.000114374999290874"),
+					Size_:                           sdk.MustNewDecFromStr("-2500.000112499999156245"),
+					LastUpdatedBlockNumber:          1,
+					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.0002"),
+				})),
+				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
+					FinalPosition: types.Position{
+						Pair:                            pairBtcUsdc,
+						TraderAddress:                   alice.String(),
+						Margin:                          sdk.MustNewDecFromStr("7751.999880000000666938"),
+						OpenNotional:                    sdk.MustNewDecFromStr("2500.000114374999290874"),
+						Size_:                           sdk.MustNewDecFromStr("-2500.000112499999156245"),
+						LastUpdatedBlockNumber:          1,
+						LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.0002"),
+					},
+					PositionNotional: sdk.MustNewDecFromStr("250.000019375000451562"),
+					RealizedPnl:      sdk.MustNewDecFromStr("6749.999880000000666938"),
+					BadDebt:          sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
+					FundingPayment:   sdk.NewDec(-2),
+					TransactionFee:   sdk.NewCoin(denoms.NUSD, sdk.NewInt(2)),
+					BlockHeight:      1,
+					MarginToUser:     sdk.NewInt(-2),
+					ChangeReason:     types.ChangeReason_PartialClose,
+				}),
+			),
+		TC("partial close short position with negative PnL").
+			Given(
+				CreateCustomMarket(
+					pairBtcUsdc,
+					WithPricePeg(sdk.MustNewDecFromStr("1.05")),
+					WithMarketLatestCPF(sdk.MustNewDecFromStr("0.0002")),
+				),
+				SetBlockTime(startBlockTime),
+				SetBlockNumber(1),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(16)))),
+				InsertPosition(
+					WithPair(pairBtcUsdc),
+					WithTrader(alice),
+					WithSize(sdk.NewDec(-10_000)),
+					WithMargin(sdk.NewDec(1_000)),
+					WithOpenNotional(sdk.NewDec(10_000)),
+				),
+			).
+			When(
+				PartialClose(alice, pairBtcUsdc, sdk.NewDec(7_500)),
+			).
+			Then(
+				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionShouldBeEqualTo(types.Position{
+					Pair:                            pairBtcUsdc,
+					TraderAddress:                   alice.String(),
+					Margin:                          sdk.MustNewDecFromStr("626.999808749999022844"),
+					OpenNotional:                    sdk.MustNewDecFromStr("2500.000132187500534187"),
+					Size_:                           sdk.MustNewDecFromStr("-2500.000112499999156250"),
+					LastUpdatedBlockNumber:          1,
+					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.0002"),
+				})),
+				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
+					FinalPosition: types.Position{
+						Pair:                            pairBtcUsdc,
+						TraderAddress:                   alice.String(),
+						Margin:                          sdk.MustNewDecFromStr("626.999808749999022844"),
+						OpenNotional:                    sdk.MustNewDecFromStr("2500.000132187500534187"),
+						Size_:                           sdk.MustNewDecFromStr("-2500.000112499999156250"),
+						LastUpdatedBlockNumber:          1,
+						LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.0002"),
+					},
+					PositionNotional: sdk.MustNewDecFromStr("2625.000203437504741406"),
+					RealizedPnl:      sdk.MustNewDecFromStr("-375.000191250000977156"),
+					BadDebt:          sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
+					FundingPayment:   sdk.NewDec(-2),
+					TransactionFee:   sdk.NewCoin(denoms.NUSD, sdk.NewInt(16)),
+					BlockHeight:      1,
+					MarginToUser:     sdk.NewInt(-16),
+					ChangeReason:     types.ChangeReason_PartialClose,
+				}),
+			),
+		TC("partial close short position with bad debt").
+			Given(
+				CreateCustomMarket(
+					pairBtcUsdc,
+					WithPricePeg(sdk.MustNewDecFromStr("1.10")),
+					WithMarketLatestCPF(sdk.MustNewDecFromStr("0.0002")),
+				),
+				SetBlockTime(startBlockTime),
+				SetBlockNumber(1),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(16)))),
+				InsertPosition(
+					WithPair(pairBtcUsdc),
+					WithTrader(alice),
+					WithSize(sdk.NewDec(-10_000)),
+					WithMargin(sdk.NewDec(1_000)),
+					WithOpenNotional(sdk.NewDec(10_000)),
+				),
+			).
+			When(
+				PartialCloseFails(alice, pairBtcUsdc, sdk.NewDec(7_500), types.ErrMarginRatioTooLow),
+			).
+			Then(
+				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionShouldBeEqualTo(types.Position{
+					Pair:                            pairBtcUsdc,
+					TraderAddress:                   alice.String(),
+					Margin:                          sdk.NewDec(1_000),
+					OpenNotional:                    sdk.NewDec(10_000),
+					Size_:                           sdk.NewDec(-10_000),
+					LastUpdatedBlockNumber:          0,
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+				})),
+			),
 	}
 
 	NewTestSuite(t).WithTestCases(tc...).Run()
