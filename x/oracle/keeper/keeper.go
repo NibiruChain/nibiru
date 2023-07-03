@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -9,7 +8,6 @@ import (
 
 	sdkerrors "cosmossdk.io/errors"
 	"github.com/cometbft/cometbft/libs/log"
-	"github.com/cometbft/cometbft/libs/math"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -111,57 +109,10 @@ func (k Keeper) ValidateFeeder(
 	return nil
 }
 
-/*
-calcTwap walks through a slice of PriceSnapshots and tallies up the prices weighted
-by the amount of time they were active for.
-
-NOTE: Callers of this function should check if the snapshot slice is empty before
-calling 'calcTwap'.
-*/
-func (k Keeper) calcTwap(ctx sdk.Context, snapshots []types.PriceSnapshot) (price sdk.Dec, err error) {
-	if len(snapshots) == 0 {
-		return price, errors.New("cannot calculate TWAP with empty snapshot slice")
-	} else if len(snapshots) == 1 {
-		return snapshots[0].Price, nil
-	}
-	params, err := k.Params.Get(ctx)
-	if err != nil {
-		return
-	}
-
-	twapLookBack := params.TwapLookbackWindow.Milliseconds()
-	firstTimeStamp := ctx.BlockTime().UnixMilli() - twapLookBack
-	cumulativePrice := sdk.ZeroDec()
-
-	firstTimeStamp = math.MaxInt64(snapshots[0].TimestampMs, firstTimeStamp)
-
-	for i, s := range snapshots {
-		var nextTimestampMs int64
-		var timestampStart int64
-
-		if i == 0 {
-			timestampStart = firstTimeStamp
-		} else {
-			timestampStart = s.TimestampMs
-		}
-
-		if i == len(snapshots)-1 {
-			// if we're at the last snapshot, then consider that price as ongoing until the current blocktime
-			nextTimestampMs = ctx.BlockTime().UnixMilli()
-		} else {
-			nextTimestampMs = snapshots[i+1].TimestampMs
-		}
-
-		price := s.Price.MulInt64(nextTimestampMs - timestampStart)
-		cumulativePrice = cumulativePrice.Add(price)
-	}
-	return cumulativePrice.QuoInt64(ctx.BlockTime().UnixMilli() - firstTimeStamp), nil
-}
-
 func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair asset.Pair) (price sdk.Dec, err error) {
 	params, err := k.Params.Get(ctx)
 	if err != nil {
-		return
+		return sdk.OneDec().Neg(), err
 	}
 
 	snapshots := k.PriceSnapshots.Iterate(
@@ -176,10 +127,40 @@ func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair asset.Pair) (price sdk
 
 	if len(snapshots) == 0 {
 		// if there are no snapshots, return -1 for the price
-		return sdk.OneDec().Neg(), types.ErrNoValidTWAP
+		return sdk.OneDec().Neg(), types.ErrNoValidTWAP.Wrapf("no snapshots for pair %s", pair.String())
 	}
 
-	return k.calcTwap(ctx, snapshots)
+	if len(snapshots) == 1 {
+		return snapshots[0].Price, nil
+	}
+
+	firstTimestampMs := snapshots[0].TimestampMs
+	if firstTimestampMs > ctx.BlockTime().UnixMilli() {
+		// should never happen, or else we have corrupted state
+		return sdk.OneDec().Neg(), types.ErrNoValidTWAP.Wrapf(
+			"Possible corrupted state. First timestamp %d is after current blocktime %d", firstTimestampMs, ctx.BlockTime().UnixMilli())
+	}
+
+	if firstTimestampMs == ctx.BlockTime().UnixMilli() {
+		// shouldn't happen because we check for len(snapshots) == 1, but if it does, return the first snapshot price
+		return snapshots[0].Price, nil
+	}
+
+	cumulativePrice := sdk.ZeroDec()
+	for i, s := range snapshots {
+		var nextTimestampMs int64
+		if i == len(snapshots)-1 {
+			// if we're at the last snapshot, then consider that price as ongoing until the current blocktime
+			nextTimestampMs = ctx.BlockTime().UnixMilli()
+		} else {
+			nextTimestampMs = snapshots[i+1].TimestampMs
+		}
+
+		price := s.Price.MulInt64(nextTimestampMs - s.TimestampMs)
+		cumulativePrice = cumulativePrice.Add(price)
+	}
+
+	return cumulativePrice.QuoInt64(ctx.BlockTime().UnixMilli() - firstTimestampMs), nil
 }
 
 func (k Keeper) GetExchangeRate(ctx sdk.Context, pair asset.Pair) (price sdk.Dec, err error) {
