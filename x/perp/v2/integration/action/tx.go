@@ -12,7 +12,7 @@ import (
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
-type msgServerOpenPosition struct {
+type msgServerMarketOrder struct {
 	pair              asset.Pair
 	traderAddress     sdk.AccAddress
 	dir               types.Direction
@@ -21,11 +21,11 @@ type msgServerOpenPosition struct {
 	baseAssetAmtLimit sdkmath.Int
 }
 
-func (m msgServerOpenPosition) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (m msgServerMarketOrder) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
 
 	// don't need to check response because it's already checked in clearing_house tests
-	_, err := msgServer.OpenPosition(sdk.WrapSDKContext(ctx), &types.MsgOpenPosition{
+	_, err := msgServer.MarketOrder(sdk.WrapSDKContext(ctx), &types.MsgMarketOrder{
 		Pair:                 m.pair,
 		Sender:               m.traderAddress.String(),
 		Side:                 m.dir,
@@ -37,7 +37,7 @@ func (m msgServerOpenPosition) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Cont
 	return ctx, err, true
 }
 
-func MsgServerOpenPosition(
+func MsgServerMarketOrder(
 	traderAddress sdk.AccAddress,
 	pair asset.Pair,
 	dir types.Direction,
@@ -45,7 +45,7 @@ func MsgServerOpenPosition(
 	leverage sdk.Dec,
 	baseAssetAmtLimit sdkmath.Int,
 ) action.Action {
-	return msgServerOpenPosition{
+	return msgServerMarketOrder{
 		pair:              pair,
 		traderAddress:     traderAddress,
 		dir:               dir,
