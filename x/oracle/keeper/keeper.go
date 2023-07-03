@@ -135,6 +135,16 @@ func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair asset.Pair) (price sdk
 	}
 
 	firstTimestampMs := snapshots[0].TimestampMs
+	if firstTimestampMs > ctx.BlockTime().UnixMilli() {
+		// should never happen, or else we have corrupted state
+		return sdk.OneDec().Neg(), types.ErrNoValidTWAP.Wrapf(
+			"Possible corrupted state. First timestamp %d is after current blocktime %d", firstTimestampMs, ctx.BlockTime().UnixMilli())
+	}
+
+	if firstTimestampMs == ctx.BlockTime().UnixMilli() {
+		// shouldn't happen because we check for len(snapshots) == 1, but if it does, return the first snapshot price
+		return snapshots[0].Price, nil
+	}
 
 	cumulativePrice := sdk.ZeroDec()
 	for i, s := range snapshots {
