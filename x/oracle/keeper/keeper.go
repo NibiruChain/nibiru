@@ -127,7 +127,7 @@ func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair asset.Pair) (price sdk
 
 	if len(snapshots) == 0 {
 		// if there are no snapshots, return -1 for the price
-		return sdk.OneDec().Neg(), types.ErrNoValidTWAP
+		return sdk.OneDec().Neg(), types.ErrNoValidTWAP.Wrapf("no snapshots for pair %s", pair.String())
 	}
 
 	if len(snapshots) == 1 {
@@ -159,6 +159,7 @@ func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair asset.Pair) (price sdk
 		price := s.Price.MulInt64(nextTimestampMs - s.TimestampMs)
 		cumulativePrice = cumulativePrice.Add(price)
 	}
+
 	return cumulativePrice.QuoInt64(ctx.BlockTime().UnixMilli() - firstTimestampMs), nil
 }
 
