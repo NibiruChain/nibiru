@@ -119,11 +119,13 @@ func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context)
 		}
 
 		if !reflect.DeepEqual(p.expectedEvent, positionChangedEvent) {
+			expected, _ := sdk.TypedEventToEvent(p.expectedEvent)
+			actual, _ := sdk.TypedEventToEvent(positionChangedEvent)
 			return ctx, fmt.Errorf(`expected event is not equal to the actual event.
-got:
-%+v
 want:
-%+v`, positionChangedEvent, p.expectedEvent), false
+%+v
+got:
+%+v`, sdk.StringifyEvents([]abci.Event{abci.Event(expected)}), sdk.StringifyEvents([]abci.Event{abci.Event(actual)})), false
 		}
 	}
 
