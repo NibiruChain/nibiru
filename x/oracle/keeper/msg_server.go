@@ -50,19 +50,11 @@ func (ms msgServer) AggregateExchangeRatePrevote(
 
 	ms.Keeper.Prevotes.Insert(ctx, valAddr, types.NewAggregateExchangeRatePrevote(voteHash, valAddr, uint64(ctx.BlockHeight())))
 
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			types.EventTypeAggregatePrevote,
-			sdk.NewAttribute(types.AttributeKeyVoter, msg.Validator),
-		),
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.Feeder),
-		),
+	err = ctx.EventManager().EmitTypedEvent(&types.EventAggregatePrevote{
+		Validator: msg.Validator,
+		Feeder:    msg.Feeder,
 	})
-
-	return &types.MsgAggregateExchangeRatePrevoteResponse{}, nil
+	return &types.MsgAggregateExchangeRatePrevoteResponse{}, err
 }
 
 func (ms msgServer) AggregateExchangeRateVote(goCtx context.Context, msg *types.MsgAggregateExchangeRateVote) (*types.MsgAggregateExchangeRateVoteResponse, error) {
@@ -125,20 +117,13 @@ func (ms msgServer) AggregateExchangeRateVote(goCtx context.Context, msg *types.
 	ms.Keeper.Votes.Insert(ctx, valAddr, types.NewAggregateExchangeRateVote(exchangeRateTuples, valAddr))
 	_ = ms.Keeper.Prevotes.Delete(ctx, valAddr)
 
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			types.EventTypeAggregateVote,
-			sdk.NewAttribute(types.AttributeKeyVoter, msg.Validator),
-			sdk.NewAttribute(types.AttributeKeyExchangeRates, msg.ExchangeRates),
-		),
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.Feeder),
-		),
+	err = ctx.EventManager().EmitTypedEvent(&types.EventAggregateVote{
+		Validator:     msg.Validator,
+		Feeder:        msg.Feeder,
+		ExchangeRates: msg.ExchangeRates,
 	})
 
-	return &types.MsgAggregateExchangeRateVoteResponse{}, nil
+	return &types.MsgAggregateExchangeRateVoteResponse{}, err
 }
 
 func (ms msgServer) DelegateFeedConsent(goCtx context.Context, msg *types.MsgDelegateFeedConsent) (*types.MsgDelegateFeedConsentResponse, error) {
@@ -164,8 +149,8 @@ func (ms msgServer) DelegateFeedConsent(goCtx context.Context, msg *types.MsgDel
 	ms.Keeper.FeederDelegations.Insert(ctx, operatorAddr, delegateAddr)
 
 	err = ctx.EventManager().EmitTypedEvent(&types.EventDelegateFeederConsent{
-		Feeder:   msg.Delegate,
-		Operator: msg.Operator,
+		Feeder:    msg.Delegate,
+		Validator: msg.Operator,
 	})
 
 	return &types.MsgDelegateFeedConsentResponse{}, err

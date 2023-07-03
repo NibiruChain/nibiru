@@ -19,11 +19,34 @@ message EventExchangeRateUpdate {
 
 // Emitted when a valoper delegates oracle voting rights to a feeder address.
 message EventDelegateFeederConsent {
+  // Validator is the Bech32 address that is delegating voting rights.
+  string validator = 1;
+
   // Feeder is the delegate or representative that will be able to send 
   // vote and prevote transaction messages.
-  string feeder = 1;
+  string feeder = 2;
+}
 
-  // Operator is the delegator, a valdiator operator that is delegating 
-  // voting rights.
-  string operator = 2;
+// Emitted by MsgAggregateExchangeVote when an aggregate vote is added to state
+message EventAggregateVote {
+  // Validator is the Bech32 address to which the vote will be credited.
+  string validator = 1;
+
+  // Feeder is the delegate or representative that will sends vote and prevote 
+  // transaction messages on behalf of the voting validator.
+  string feeder = 2;
+
+  string exchange_rates = 3
+      [ (gogoproto.moretags) = "yaml:\"exchange_rates\"" ];
+}
+
+// Emitted by MsgAggregateExchangePrevote when an aggregate prevote is added 
+// to state
+message EventAggregatePrevote {
+  // Validator is the Bech32 address to which the vote will be credited.
+  string validator = 1;
+
+  // Feeder is the delegate or representative that will sends vote and prevote 
+  // transaction messages on behalf of the voting validator.
+  string feeder = 2;
 }
