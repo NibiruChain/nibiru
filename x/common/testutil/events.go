@@ -5,12 +5,7 @@ import (
 	"reflect"
 	"strings"
 
-	"encoding/json"
-
 	"github.com/cosmos/gogoproto/proto"
-
-	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -67,24 +62,14 @@ func RequireContainsTypedEvent(t require.TestingT, ctx sdk.Context, event proto.
 	t.Errorf("event not found, event: %+v, found events: %+v", event, foundEvents)
 }
 
-// ProtoToJson converts a proto message into a JSON string using the proto codec.
-// A codec defines a functionality for serializing other objects. The proto
-// codec provides full Protobuf serialization compatibility.
-func ProtoToJson(protoMsg proto.Message) (jsonOut string, err error) {
-	protoCodec := codec.NewProtoCodec(codectypes.NewInterfaceRegistry())
-	var jsonBz json.RawMessage
-	jsonBz, err = protoCodec.MarshalJSON(protoMsg)
-	return string(jsonBz), err
-}
-
-// EventHasAttribueValue parses the given ABCI event at a key to see if it
+// EventHasAttributeValue parses the given ABCI event at a key to see if it
 // matches (contains) the wanted value.
 //
 // Args:
 //   - abciEvent: The event under test
 //   - key: The key for which we'll check the value
 //   - want: The desired value
-func EventHasAttribueValue(abciEvent sdk.Event, key string, want string) error {
+func EventHasAttributeValue(abciEvent sdk.Event, key string, want string) error {
 	attr, ok := abciEvent.GetAttribute(key)
 	if !ok {
 		return fmt.Errorf("abci event does not contain key: %s", key)
