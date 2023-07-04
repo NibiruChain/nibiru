@@ -50,22 +50,16 @@ func (ms msgServer) AggregateExchangeRatePrevote(
 
 	ms.Keeper.Prevotes.Insert(ctx, valAddr, types.NewAggregateExchangeRatePrevote(voteHash, valAddr, uint64(ctx.BlockHeight())))
 
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			types.EventTypeAggregatePrevote,
-			sdk.NewAttribute(types.AttributeKeyVoter, msg.Validator),
-		),
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.Feeder),
-		),
+	err = ctx.EventManager().EmitTypedEvent(&types.EventAggregatePrevote{
+		Validator: msg.Validator,
+		Feeder:    msg.Feeder,
 	})
-
-	return &types.MsgAggregateExchangeRatePrevoteResponse{}, nil
+	return &types.MsgAggregateExchangeRatePrevoteResponse{}, err
 }
 
-func (ms msgServer) AggregateExchangeRateVote(goCtx context.Context, msg *types.MsgAggregateExchangeRateVote) (*types.MsgAggregateExchangeRateVoteResponse, error) {
+func (ms msgServer) AggregateExchangeRateVote(
+	goCtx context.Context, msg *types.MsgAggregateExchangeRateVote,
+) (msgResp *types.MsgAggregateExchangeRateVoteResponse, err error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	valAddr, err := sdk.ValAddressFromBech32(msg.Validator)
@@ -118,30 +112,33 @@ func (ms msgServer) AggregateExchangeRateVote(goCtx context.Context, msg *types.
 	// Verify an exchange rate with aggregate prevote hash
 	hash := types.GetAggregateVoteHash(msg.Salt, msg.ExchangeRates, valAddr)
 	if aggregatePrevote.Hash != hash.String() {
-		return nil, sdkerrors.Wrapf(types.ErrVerificationFailed, "must be given %s not %s", aggregatePrevote.Hash, hash)
+		return nil, sdkerrors.Wrapf(
+			types.ErrVerificationFailed, "must be given %s not %s", aggregatePrevote.Hash, hash,
+		)
 	}
 
 	// Move aggregate prevote to aggregate vote with given exchange rates
-	ms.Keeper.Votes.Insert(ctx, valAddr, types.NewAggregateExchangeRateVote(exchangeRateTuples, valAddr))
+	ms.Keeper.Votes.Insert(
+		ctx, valAddr, types.NewAggregateExchangeRateVote(exchangeRateTuples, valAddr),
+	)
 	_ = ms.Keeper.Prevotes.Delete(ctx, valAddr)
 
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			types.EventTypeAggregateVote,
-			sdk.NewAttribute(types.AttributeKeyVoter, msg.Validator),
-			sdk.NewAttribute(types.AttributeKeyExchangeRates, msg.ExchangeRates),
-		),
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.Feeder),
-		),
+	priceTuples, err := types.NewExchangeRateTuplesFromString(msg.ExchangeRates)
+	if err != nil {
+		return
+	}
+	err = ctx.EventManager().EmitTypedEvent(&types.EventAggregateVote{
+		Validator: msg.Validator,
+		Feeder:    msg.Feeder,
+		Prices:    priceTuples,
 	})
 
-	return &types.MsgAggregateExchangeRateVoteResponse{}, nil
+	return &types.MsgAggregateExchangeRateVoteResponse{}, err
 }
 
-func (ms msgServer) DelegateFeedConsent(goCtx context.Context, msg *types.MsgDelegateFeedConsent) (*types.MsgDelegateFeedConsentResponse, error) {
+func (ms msgServer) DelegateFeedConsent(
+	goCtx context.Context, msg *types.MsgDelegateFeedConsent,
+) (*types.MsgDelegateFeedConsentResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	operatorAddr, err := sdk.ValAddressFromBech32(msg.Operator)
@@ -163,17 +160,10 @@ func (ms msgServer) DelegateFeedConsent(goCtx context.Context, msg *types.MsgDel
 	// Set the delegation
 	ms.Keeper.FeederDelegations.Insert(ctx, operatorAddr, delegateAddr)
 
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			types.EventTypeFeedDelegate,
-			sdk.NewAttribute(types.AttributeKeyFeeder, msg.Delegate),
-		),
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.Operator),
-		),
+	err = ctx.EventManager().EmitTypedEvent(&types.EventDelegateFeederConsent{
+		Feeder:    msg.Delegate,
+		Validator: msg.Operator,
 	})
 
-	return &types.MsgDelegateFeedConsentResponse{}, nil
+	return &types.MsgDelegateFeedConsentResponse{}, err
 }

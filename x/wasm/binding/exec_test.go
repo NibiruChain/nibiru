@@ -104,7 +104,7 @@ func (s *TestSuiteExecutor) SetupSuite() {
 }
 
 func (s *TestSuiteExecutor) OnSetupEnd() {
-	SetExchangeRates(s.Suite, s.nibiru, s.ctx)
+	SetExchangeRates(&s.Suite, s.nibiru, s.ctx)
 }
 
 func (s *TestSuiteExecutor) TestOpenAddRemoveClose() {
@@ -116,9 +116,9 @@ func (s *TestSuiteExecutor) TestOpenAddRemoveClose() {
 	)
 	s.NoError(testapp.FundAccount(s.nibiru.BankKeeper, s.ctx, s.contractPerp, coins))
 
-	// TestOpenPosition (integration - real contract, real app)
+	// TestMarketOrder (integration - real contract, real app)
 	execMsg := cw_struct.BindingMsg{
-		OpenPosition: &cw_struct.OpenPosition{
+		MarketOrder: &cw_struct.MarketOrder{
 			Pair:            s.happyFields.Pair,
 			IsLong:          true,
 			QuoteAmount:     sdk.NewInt(42),

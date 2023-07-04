@@ -1,6 +1,6 @@
 {
-  "open_position": {
-    "open_position": {
+  "market_order": {
+    "market_order": {
       "pair": "ETH:USD",
       "is_long": true,
       "quote_amount": "100",
