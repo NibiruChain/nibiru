@@ -937,9 +937,9 @@ func TestClosePosition(t *testing.T) {
 
 		TC("close long position with bad debt").
 			Given(
-				SetBlockNumber(1),
 				CreateCustomMarket(pairBtcNusd),
-
+				SetBlockNumber(1),
+				SetBlockTime(startBlockTime),
 				InsertPosition(
 					WithTrader(alice),
 					WithPair(pairBtcNusd),
@@ -978,6 +978,142 @@ func TestClosePosition(t *testing.T) {
 				}),
 				ModuleBalanceEqual(types.VaultModuleAccount, denoms.NUSD, sdk.NewInt(1050)), // 1000 + 50 from perp ef
 				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.NUSD, sdk.NewInt(10)),
+			),
+
+		TC("close short position with positive PnL").
+			Given(
+				CreateCustomMarket(pairBtcNusd,
+					WithPricePeg(sdk.MustNewDecFromStr("0.10")),
+					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
+				),
+				SetBlockTime(startBlockTime),
+				SetBlockNumber(1),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(2)))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 10_002))),
+				InsertPosition(
+					WithTrader(alice),
+					WithPair(pairBtcNusd),
+					WithSize(sdk.NewDec(-10_000)),
+					WithMargin(sdk.NewDec(1_000)),
+					WithOpenNotional(sdk.NewDec(10_000)),
+				),
+			).
+			When(
+				ClosePosition(alice, pairBtcNusd),
+			).
+			Then(
+				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
+					FinalPosition: types.Position{
+						Pair:                            pairBtcNusd,
+						TraderAddress:                   alice.String(),
+						Margin:                          sdk.ZeroDec(),
+						OpenNotional:                    sdk.ZeroDec(),
+						Size_:                           sdk.ZeroDec(),
+						LastUpdatedBlockNumber:          1,
+						LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.0002"),
+					},
+					PositionNotional: sdk.ZeroDec(),
+					RealizedPnl:      sdk.MustNewDecFromStr("8999.999989999999900000"),
+					BadDebt:          sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
+					FundingPayment:   sdk.NewDec(-2),
+					TransactionFee:   sdk.NewCoin(denoms.NUSD, sdk.NewInt(2)),
+					BlockHeight:      1,
+					MarginToUser:     sdk.NewInt(10_000),
+					ChangeReason:     types.ChangeReason_ClosePosition,
+				}),
+			),
+
+		TC("close short position with negative PnL").
+			Given(
+				CreateCustomMarket(pairBtcNusd,
+					WithPricePeg(sdk.MustNewDecFromStr("1.01")),
+					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
+				),
+				SetBlockTime(startBlockTime),
+				SetBlockNumber(1),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(20)))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 902))),
+				InsertPosition(
+					WithTrader(alice),
+					WithPair(pairBtcNusd),
+					WithSize(sdk.NewDec(-10_000)),
+					WithMargin(sdk.NewDec(1_000)),
+					WithOpenNotional(sdk.NewDec(10_000)),
+				),
+			).
+			When(
+				ClosePosition(alice, pairBtcNusd),
+			).
+			Then(
+				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
+					FinalPosition: types.Position{
+						Pair:                            pairBtcNusd,
+						TraderAddress:                   alice.String(),
+						Margin:                          sdk.ZeroDec(),
+						OpenNotional:                    sdk.ZeroDec(),
+						Size_:                           sdk.ZeroDec(),
+						LastUpdatedBlockNumber:          1,
+						LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.0002"),
+					},
+					PositionNotional: sdk.ZeroDec(),
+					RealizedPnl:      sdk.MustNewDecFromStr("-100.000101000001010000"),
+					BadDebt:          sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
+					FundingPayment:   sdk.NewDec(-2),
+					TransactionFee:   sdk.NewCoin(denoms.NUSD, sdk.NewInt(20)),
+					BlockHeight:      1,
+					MarginToUser:     sdk.NewInt(882),
+					ChangeReason:     types.ChangeReason_ClosePosition,
+				}),
+			),
+
+		TC("close short position with bad debt").
+			Given(
+				CreateCustomMarket(pairBtcNusd,
+					WithPricePeg(sdk.MustNewDecFromStr("1.11")),
+					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
+				),
+				SetBlockTime(startBlockTime),
+				SetBlockNumber(1),
+				InsertPosition(
+					WithTrader(alice),
+					WithPair(pairBtcNusd),
+					WithSize(sdk.NewDec(-10_000)),
+					WithMargin(sdk.NewDec(1_000)),
+					WithOpenNotional(sdk.NewDec(10_000)),
+				),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 22))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1000))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 98))),
+			).
+			When(
+				MoveToNextBlock(),
+				ClosePosition(alice, pairBtcNusd),
+			).
+			Then(
+				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
+					FinalPosition: types.Position{
+						TraderAddress:                   alice.String(),
+						Pair:                            pairBtcNusd,
+						Size_:                           sdk.ZeroDec(),
+						Margin:                          sdk.ZeroDec(),
+						OpenNotional:                    sdk.ZeroDec(),
+						LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.0002"),
+						LastUpdatedBlockNumber:          2,
+					},
+					PositionNotional: sdk.ZeroDec(),
+					TransactionFee:   sdk.NewInt64Coin(denoms.NUSD, 22),
+					RealizedPnl:      sdk.MustNewDecFromStr("-1100.000111000001110000"),
+					BadDebt:          sdk.NewInt64Coin(denoms.NUSD, 98),
+					FundingPayment:   sdk.NewDec(-2),
+					BlockHeight:      2,
+					MarginToUser:     sdk.NewInt(-22),
+					ChangeReason:     types.ChangeReason_ClosePosition,
+				}),
+				ModuleBalanceEqual(types.VaultModuleAccount, denoms.NUSD, sdk.NewInt(1098)), // 1000 + 100 from perp ef
+				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.NUSD, sdk.NewInt(11)),
 			),
 	}
 
