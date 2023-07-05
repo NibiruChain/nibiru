@@ -45,7 +45,7 @@ func (m *MsgEditSudoers) ValidateBasic() error {
 		}
 	}
 
-	if !RootActions.Has(m.Action) {
+	if !RootActions.Has(m.RootAction()) {
 		return fmt.Errorf(
 			"invalid action type %s, expected one of %s",
 			m.Action, RootActions.ToSlice(),
@@ -65,4 +65,8 @@ func (m *MsgEditSudoers) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{signer}
+}
+
+func (m *MsgEditSudoers) RootAction() RootAction {
+	return RootAction(m.Action)
 }

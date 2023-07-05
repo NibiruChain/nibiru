@@ -245,7 +245,7 @@ func TestKeeper_AddContracts(t *testing.T) {
 				exampleAddrs[0],
 			},
 			msg: &types.MsgEditSudoers{
-				Action: types.RootAction.AddContracts,
+				Action: string(types.AddContracts),
 				Contracts: []string{
 					exampleAddrs[1],
 					exampleAddrs[2],
@@ -265,7 +265,7 @@ func TestKeeper_AddContracts(t *testing.T) {
 				exampleAddrs[0],
 			},
 			msg: &types.MsgEditSudoers{
-				Action: types.RootAction.AddContracts,
+				Action: string(types.AddContracts),
 				Contracts: []string{
 					exampleAddrs[1],
 					"rotten address",
@@ -294,7 +294,7 @@ func TestKeeper_AddContracts(t *testing.T) {
 				exampleAddrs[0],
 			},
 			msg: &types.MsgEditSudoers{
-				Action: types.RootAction.AddContracts,
+				Action: string(types.AddContracts),
 				Sender: exampleAddrs[1],
 				Contracts: []string{
 					exampleAddrs[1],
@@ -387,7 +387,7 @@ func TestKeeper_RemoveContracts(t *testing.T) {
 				exampleAddrs[2],
 			},
 			msg: &types.MsgEditSudoers{
-				Action: types.RootAction.RemoveContracts,
+				Action: string(types.RemoveContracts),
 				Contracts: []string{
 					exampleAddrs[1],
 					exampleAddrs[2],
@@ -418,7 +418,7 @@ func TestKeeper_RemoveContracts(t *testing.T) {
 				exampleAddrs[2],
 			},
 			msg: &types.MsgEditSudoers{
-				Action: types.RootAction.RemoveContracts,
+				Action: string(types.RemoveContracts),
 				Contracts: []string{
 					exampleAddrs[1],
 				},

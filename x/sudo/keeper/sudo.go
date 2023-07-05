@@ -37,10 +37,10 @@ func (k Keeper) EditSudoers(
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
 	}
-	switch msg.Action {
-	case sudotypes.RootAction.AddContracts:
+	switch msg.RootAction() {
+	case sudotypes.AddContracts:
 		return k.AddContracts(goCtx, msg)
-	case sudotypes.RootAction.RemoveContracts:
+	case sudotypes.RemoveContracts:
 		return k.RemoveContracts(goCtx, msg)
 	default:
 		return nil, fmt.Errorf("invalid action type specified on msg: %s", msg)
@@ -114,7 +114,7 @@ func (sudo *Sudoers) AddContracts(
 func (k Keeper) AddContracts(
 	goCtx context.Context, msg *sudotypes.MsgEditSudoers,
 ) (msgResp *sudotypes.MsgEditSudoersResponse, err error) {
-	if msg.Action != sudotypes.RootAction.AddContracts {
+	if msg.RootAction() != sudotypes.AddContracts {
 		err = fmt.Errorf("invalid action type %s for msg add contracts", msg.Action)
 		return
 	}
@@ -152,7 +152,7 @@ func (k Keeper) AddContracts(
 func (k Keeper) RemoveContracts(
 	goCtx context.Context, msg *sudotypes.MsgEditSudoers,
 ) (msgResp *sudotypes.MsgEditSudoersResponse, err error) {
-	if msg.Action != sudotypes.RootAction.RemoveContracts {
+	if msg.RootAction() != sudotypes.RemoveContracts {
 		err = fmt.Errorf("invalid action type %s for msg add contracts", msg.Action)
 		return
 	}
