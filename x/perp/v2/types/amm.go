@@ -13,11 +13,11 @@ import (
 )
 
 func (amm AMM) Validate() error {
-	if amm.BaseReserve.LTE(sdk.ZeroDec()) {
+	if amm.BaseReserve.LTE(sdk.ZeroInt()) {
 		return fmt.Errorf("init pool token supply must be > 0")
 	}
 
-	if amm.QuoteReserve.LTE(sdk.ZeroDec()) {
+	if amm.QuoteReserve.LTE(sdk.ZeroInt()) {
 		return fmt.Errorf("init pool token supply must be > 0")
 	}
 
@@ -52,13 +52,13 @@ func (amm AMM) Validate() error {
 }
 
 // returns the amount of quote reserve equivalent to the amount of quote asset given
-func (amm AMM) FromQuoteAssetToReserve(quoteAsset sdk.Dec) sdk.Dec {
-	return quoteAsset.Quo(amm.PriceMultiplier)
+func (amm AMM) FromQuoteAssetToReserve(quoteAsset sdkmath.Int) sdkmath.Int {
+	return sdk.OneDec().Quo(amm.PriceMultiplier).MulInt(quoteAsset).RoundInt()
 }
 
 // returns the amount of quote asset equivalent to the amount of quote reserve given
-func (amm AMM) FromQuoteReserveToAsset(quoteReserve sdk.Dec) sdk.Dec {
-	return quoteReserve.Mul(amm.PriceMultiplier)
+func (amm AMM) FromQuoteReserveToAsset(quoteReserve sdkmath.Int) sdkmath.Int {
+	return amm.PriceMultiplier.MulInt(quoteReserve).RoundInt()
 }
 
 // Returns the amount of base reserve equivalent to the amount of quote reserve given
@@ -74,16 +74,16 @@ func (amm AMM) FromQuoteReserveToAsset(quoteReserve sdk.Dec) sdk.Dec {
 // NOTE: baseReserveDelta is always positive
 // Throws an error if input quoteReserveAmt is negative, or if the final quote reserve is not positive
 func (amm AMM) GetBaseReserveAmt(
-	quoteReserveAmt sdk.Dec, // unsigned
+	quoteReserveAmt sdkmath.Int, // unsigned
 	dir Direction,
-) (baseReserveDelta sdk.Dec, err error) {
+) (baseReserveDelta sdkmath.Int, err error) {
 	if quoteReserveAmt.IsNegative() {
-		return sdk.Dec{}, ErrInputQuoteAmtNegative
+		return sdkmath.Int{}, ErrInputQuoteAmtNegative
 	}
 
 	invariant := amm.QuoteReserve.Mul(amm.BaseReserve) // x * y = k
 
-	var quoteReservesAfter sdk.Dec
+	var quoteReservesAfter sdkmath.Int
 	if dir == Direction_LONG {
 		quoteReservesAfter = amm.QuoteReserve.Add(quoteReserveAmt)
 	} else {
@@ -91,7 +91,7 @@ func (amm AMM) GetBaseReserveAmt(
 	}
 
 	if !quoteReservesAfter.IsPositive() {
-		return sdk.Dec{}, ErrQuoteReserveAtZero
+		return sdkmath.Int{}, ErrQuoteReserveAtZero
 	}
 
 	baseReservesAfter := invariant.Quo(quoteReservesAfter)
@@ -112,16 +112,16 @@ func (amm AMM) GetBaseReserveAmt(
 //
 // NOTE: quoteReserveDelta is always positive
 func (amm AMM) GetQuoteReserveAmt(
-	baseReserveAmt sdk.Dec,
+	baseReserveAmt sdkmath.Int, // unsigned
 	dir Direction,
-) (quoteReserveDelta sdk.Dec, err error) {
+) (quoteReserveDelta sdkmath.Int, err error) {
 	if baseReserveAmt.IsNegative() {
-		return sdk.Dec{}, ErrInputBaseAmtNegative
+		return sdkmath.Int{}, ErrInputBaseAmtNegative
 	}
 
 	invariant := amm.QuoteReserve.Mul(amm.BaseReserve) // x * y = k
 
-	var baseReservesAfter sdk.Dec
+	var baseReservesAfter sdkmath.Int
 	if dir == Direction_LONG {
 		baseReservesAfter = amm.BaseReserve.Sub(baseReserveAmt)
 	} else {
@@ -129,7 +129,7 @@ func (amm AMM) GetQuoteReserveAmt(
 	}
 
 	if !baseReservesAfter.IsPositive() {
-		return sdk.Dec{}, ErrBaseReserveAtZero.Wrapf(
+		return sdkmath.Int{}, ErrBaseReserveAtZero.Wrapf(
 			"base assets below zero after trying to swap %s base assets",
 			baseReserveAmt.String(),
 		)
@@ -148,7 +148,7 @@ func (amm AMM) MarkPrice() sdk.Dec {
 		return sdk.ZeroDec()
 	}
 
-	return amm.QuoteReserve.Quo(amm.BaseReserve).Mul(amm.PriceMultiplier)
+	return amm.PriceMultiplier.MulInt(amm.QuoteReserve.Quo(amm.BaseReserve))
 }
 
 // Returns the sqrt k of the reserves
@@ -161,7 +161,7 @@ func (amm AMM) ComputeSqrtDepth() (sqrtDepth sdk.Dec, err error) {
 	}
 
 	liqDepth := amm.QuoteReserve.Mul(amm.BaseReserve)
-	return common.SqrtDec(liqDepth)
+	return common.SqrtDec(sdk.NewDecFromInt(liqDepth))
 }
 
 func (amm *AMM) WithPair(pair asset.Pair) *AMM {
@@ -169,12 +169,12 @@ func (amm *AMM) WithPair(pair asset.Pair) *AMM {
 	return amm
 }
 
-func (amm *AMM) WithBaseReserve(baseReserve sdk.Dec) *AMM {
+func (amm *AMM) WithBaseReserve(baseReserve sdkmath.Int) *AMM {
 	amm.BaseReserve = baseReserve
 	return amm
 }
 
-func (amm *AMM) WithQuoteReserve(quoteReserve sdk.Dec) *AMM {
+func (amm *AMM) WithQuoteReserve(quoteReserve sdkmath.Int) *AMM {
 	amm.QuoteReserve = quoteReserve
 	return amm
 }
@@ -184,12 +184,12 @@ func (amm *AMM) WithPriceMultiplier(priceMultiplier sdk.Dec) *AMM {
 	return amm
 }
 
-func (amm *AMM) WithTotalLong(totalLong sdk.Dec) *AMM {
+func (amm *AMM) WithTotalLong(totalLong sdkmath.Int) *AMM {
 	amm.TotalLong = totalLong
 	return amm
 }
 
-func (amm *AMM) WithTotalShort(totalShort sdk.Dec) *AMM {
+func (amm *AMM) WithTotalShort(totalShort sdkmath.Int) *AMM {
 	amm.TotalShort = totalShort
 	return amm
 }
@@ -211,13 +211,13 @@ func (amm *AMM) WithSqrtDepth(sqrtDepth sdk.Dec) *AMM {
 //
 // NOTE: baseAssetDelta is always positive
 func (amm *AMM) SwapQuoteAsset(
-	quoteAssetAmt sdk.Dec, // unsigned
+	quoteAssetAmt sdkmath.Int, // unsigned
 	dir Direction,
-) (baseAssetDelta sdk.Dec, err error) {
+) (baseAssetDelta sdkmath.Int, err error) {
 	quoteReserveAmt := amm.FromQuoteAssetToReserve(quoteAssetAmt)
 	baseReserveDelta, err := amm.GetBaseReserveAmt(quoteReserveAmt, dir)
 	if err != nil {
-		return sdk.Dec{}, err
+		return sdkmath.Int{}, err
 	}
 
 	if dir == Direction_LONG {
@@ -244,10 +244,13 @@ func (amm *AMM) SwapQuoteAsset(
 //   - err: error if any
 //
 // Note: quoteAssetDelta is always positive
-func (amm *AMM) SwapBaseAsset(baseAssetAmt sdk.Dec, dir Direction) (quoteAssetDelta sdk.Dec, err error) {
+func (amm *AMM) SwapBaseAsset(
+	baseAssetAmt sdkmath.Int, // unsigned
+	dir Direction,
+) (quoteAssetDelta sdkmath.Int, err error) {
 	quoteReserveDelta, err := amm.GetQuoteReserveAmt(baseAssetAmt, dir)
 	if err != nil {
-		return sdk.Dec{}, err
+		return sdkmath.Int{}, err
 	}
 
 	if dir == Direction_LONG {
@@ -267,7 +270,7 @@ func (amm *AMM) SwapBaseAsset(baseAssetAmt sdk.Dec, dir Direction) (quoteAssetDe
 Bias returns the bias of the market in the base asset. It's the net amount of base assets for longs minus the net
 amount of base assets for shorts.
 */
-func (amm *AMM) Bias() (bias sdk.Dec) {
+func (amm *AMM) Bias() (bias sdkmath.Int) {
 	return amm.TotalLong.Sub(amm.TotalShort)
 }
 
@@ -297,7 +300,7 @@ func (amm AMM) CalcRepegCost(newPriceMultiplier sdk.Dec) (cost sdkmath.Int, err 
 		return sdkmath.Int{}, err
 	}
 
-	costDec := biasInQuoteReserve.Mul(newPriceMultiplier.Sub(amm.PriceMultiplier))
+	costDec := newPriceMultiplier.Sub(amm.PriceMultiplier).MulInt(biasInQuoteReserve)
 
 	if bias.IsNegative() {
 		costDec = costDec.Neg()
@@ -309,11 +312,11 @@ func (amm AMM) CalcRepegCost(newPriceMultiplier sdk.Dec) (cost sdkmath.Int, err 
 // returns the amount of quote assets the amm has to pay out if all longs and shorts close out their positions
 // positive value means the amm has to pay out quote assets
 // negative value means the amm has to receive quote assets
-func (amm AMM) GetMarketValue() (sdk.Dec, error) {
+func (amm AMM) GetMarketValue() (sdkmath.Int, error) {
 	bias := amm.Bias()
 
 	if bias.IsZero() {
-		return sdk.ZeroDec(), nil
+		return sdk.ZeroInt(), nil
 	}
 
 	var dir Direction
@@ -325,7 +328,7 @@ func (amm AMM) GetMarketValue() (sdk.Dec, error) {
 
 	marketValueInReserves, err := amm.GetQuoteReserveAmt(bias.Abs(), dir)
 	if err != nil {
-		return sdk.Dec{}, err
+		return sdkmath.Int{}, err
 	}
 
 	if bias.IsNegative() {
@@ -338,7 +341,7 @@ func (amm AMM) GetMarketValue() (sdk.Dec, error) {
 /*
 CalcUpdateSwapInvariantCost returns the cost of updating the invariant of the pool
 */
-func (amm AMM) CalcUpdateSwapInvariantCost(newSwapInvariant sdk.Dec) (sdkmath.Int, error) {
+func (amm AMM) CalcUpdateSwapInvariantCost(newSwapInvariant sdkmath.Int) (sdkmath.Int, error) {
 	if newSwapInvariant.IsNil() {
 		return sdkmath.Int{}, ErrNilSwapInvariant
 	}
@@ -362,24 +365,23 @@ func (amm AMM) CalcUpdateSwapInvariantCost(newSwapInvariant sdk.Dec) (sdkmath.In
 		return sdkmath.Int{}, err
 	}
 
-	cost := marketValueAfter.Sub(marketValueBefore)
-
-	return cost.Ceil().TruncateInt(), nil
+	return marketValueAfter.Sub(marketValueBefore), nil
 }
 
 // UpdateSwapInvariant updates the swap invariant of the amm
-func (amm *AMM) UpdateSwapInvariant(newSwapInvariant sdk.Dec) (err error) {
+func (amm *AMM) UpdateSwapInvariant(newSwapInvariant sdkmath.Int) (err error) {
 	// k = x * y
 	// newK = (cx) * (cy) = c^2 xy = c^2 k
 	// newPrice = (c y) / (c x) = y / x = price | unchanged price
-	newSqrtDepth := common.MustSqrtDec(newSwapInvariant)
+	newSwapInvariantDec := sdk.NewDecFromInt(newSwapInvariant)
+	newSqrtDepth := common.MustSqrtDec(newSwapInvariantDec)
 	multiplier := newSqrtDepth.Quo(amm.SqrtDepth)
 
 	// Change the swap invariant while holding price constant.
 	// Multiplying by the same factor to both of the reserves won't affect price.
 	amm.SqrtDepth = newSqrtDepth
-	amm.BaseReserve = amm.BaseReserve.Mul(multiplier)
-	amm.QuoteReserve = amm.QuoteReserve.Mul(multiplier)
+	amm.BaseReserve = multiplier.MulInt(amm.BaseReserve).RoundInt()
+	amm.QuoteReserve = multiplier.MulInt(amm.QuoteReserve).RoundInt()
 
 	return amm.Validate()
 }

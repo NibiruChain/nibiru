@@ -18,13 +18,13 @@ import (
 func TestSwapBaseAsset(t *testing.T) {
 	tests := []struct {
 		name                    string
-		baseAssetAmt            sdk.Dec
+		baseAssetAmt            sdk.Int
 		dir                     types.Direction
-		expectedQuoteAssetDelta sdk.Dec
-		expectedBaseReserve     sdk.Dec
-		expectedQuoteReserve    sdk.Dec
-		expectedTotalLong       sdk.Dec
-		expectedTotalShort      sdk.Dec
+		expectedQuoteAssetDelta sdk.Int
+		expectedBaseReserve     sdk.Int
+		expectedQuoteReserve    sdk.Int
+		expectedTotalLong       sdk.Int
+		expectedTotalShort      sdk.Int
 		expectedMarkPrice       sdk.Dec
 		expectedErr             error
 	}{
