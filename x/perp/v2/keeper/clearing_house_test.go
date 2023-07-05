@@ -937,19 +937,22 @@ func TestClosePosition(t *testing.T) {
 
 		TC("close long position with bad debt").
 			Given(
-				CreateCustomMarket(pairBtcNusd),
+				CreateCustomMarket(pairBtcNusd,
+					WithPricePeg(sdk.MustNewDecFromStr("0.89")),
+					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
+				),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				InsertPosition(
 					WithTrader(alice),
 					WithPair(pairBtcNusd),
 					WithSize(sdk.NewDec(10_000)),
-					WithMargin(sdk.NewDec(750)),
-					WithOpenNotional(sdk.NewDec(10_800)),
+					WithMargin(sdk.NewDec(1_000)),
+					WithOpenNotional(sdk.NewDec(10_000)),
 				),
-				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 20))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 18))),
 				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1000))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 50))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 102))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -964,20 +967,20 @@ func TestClosePosition(t *testing.T) {
 						Size_:                           sdk.ZeroDec(),
 						Margin:                          sdk.ZeroDec(),
 						OpenNotional:                    sdk.ZeroDec(),
-						LatestCumulativePremiumFraction: sdk.ZeroDec(),
+						LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.0002"),
 						LastUpdatedBlockNumber:          2,
 					},
 					PositionNotional: sdk.ZeroDec(),
-					TransactionFee:   sdk.NewInt64Coin(denoms.NUSD, 20),
-					RealizedPnl:      sdk.MustNewDecFromStr("-800.000099999999000000"),
-					BadDebt:          sdk.NewCoin(denoms.NUSD, sdk.NewInt(50)),
-					FundingPayment:   sdk.ZeroDec(),
+					TransactionFee:   sdk.NewInt64Coin(denoms.NUSD, 18),
+					RealizedPnl:      sdk.MustNewDecFromStr("-1100.000088999999110000"),
+					BadDebt:          sdk.NewCoin(denoms.NUSD, sdk.NewInt(102)),
+					FundingPayment:   sdk.NewDec(2),
 					BlockHeight:      2,
-					MarginToUser:     sdk.NewInt(-20),
+					MarginToUser:     sdk.NewInt(-18),
 					ChangeReason:     types.ChangeReason_ClosePosition,
 				}),
-				ModuleBalanceEqual(types.VaultModuleAccount, denoms.NUSD, sdk.NewInt(1050)), // 1000 + 50 from perp ef
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.NUSD, sdk.NewInt(10)),
+				ModuleBalanceEqual(types.VaultModuleAccount, denoms.NUSD, sdk.NewInt(1102)), // 1000 + 102 from perp ef
+				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.NUSD, sdk.NewInt(9)),
 			),
 
 		TC("close short position with positive PnL").
@@ -1112,7 +1115,7 @@ func TestClosePosition(t *testing.T) {
 					MarginToUser:     sdk.NewInt(-22),
 					ChangeReason:     types.ChangeReason_ClosePosition,
 				}),
-				ModuleBalanceEqual(types.VaultModuleAccount, denoms.NUSD, sdk.NewInt(1098)), // 1000 + 100 from perp ef
+				ModuleBalanceEqual(types.VaultModuleAccount, denoms.NUSD, sdk.NewInt(1098)), // 1000 + 98 from perp ef
 				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.NUSD, sdk.NewInt(11)),
 			),
 	}
