@@ -11,7 +11,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
 	. "github.com/NibiruChain/nibiru/x/common/testutil/assertion"
-	. "github.com/NibiruChain/nibiru/x/oracle/integration/action"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
@@ -28,7 +27,6 @@ func TestAddMargin(t *testing.T) {
 				CreateCustomMarket(pairBtcUsdc),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2020)))),
 				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
@@ -77,7 +75,6 @@ func TestAddMargin(t *testing.T) {
 				CreateCustomMarket(pairBtcUsdc),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2020)))),
 				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
@@ -136,7 +133,6 @@ func TestRemoveMargin(t *testing.T) {
 				CreateCustomMarket(pairBtcUsdc),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1002)))),
 				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.OneDec(), sdk.ZeroDec()),
 			).
@@ -178,12 +174,11 @@ func TestRemoveMargin(t *testing.T) {
 				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.NewInt(1)),
 			),
 
-		TC("existing long position, remove almmost all margin").
+		TC("existing long position, remove almost all margin fails").
 			Given(
 				CreateCustomMarket(pairBtcUsdc),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1002)))),
 				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(1), sdk.ZeroDec()),
 				MoveToNextBlock(),
@@ -201,25 +196,6 @@ func TestRemoveMargin(t *testing.T) {
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 					LastUpdatedBlockNumber:          1,
 				})),
-				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
-					FinalPosition: types.Position{
-						Pair:                            pairBtcUsdc,
-						TraderAddress:                   alice.String(),
-						Size_:                           sdk.MustNewDecFromStr("999.999999000000001000"),
-						Margin:                          sdk.NewDec(1000),
-						OpenNotional:                    sdk.NewDec(1000),
-						LatestCumulativePremiumFraction: sdk.ZeroDec(),
-						LastUpdatedBlockNumber:          1,
-					},
-					PositionNotional: sdk.NewDec(1000),
-					RealizedPnl:      sdk.ZeroDec(),
-					BadDebt:          sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
-					FundingPayment:   sdk.ZeroDec(),
-					TransactionFee:   sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
-					BlockHeight:      2,
-					MarginToUser:     sdk.NewInt(0),
-					ChangeReason:     types.ChangeReason_RemoveMargin,
-				}),
 				BalanceEqual(alice, denoms.USDC, sdk.NewInt(0)),
 				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(1)),
 				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.NewInt(1)),
@@ -230,7 +206,6 @@ func TestRemoveMargin(t *testing.T) {
 				CreateCustomMarket(pairBtcUsdc),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				SetOraclePrice(pairBtcUsdc, sdk.MustNewDecFromStr("2.1")),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1002)))),
 				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.OneDec(), sdk.ZeroDec()),
 			).
@@ -268,6 +243,33 @@ func TestRemoveMargin(t *testing.T) {
 					ChangeReason:     types.ChangeReason_RemoveMargin,
 				}),
 				BalanceEqual(alice, denoms.USDC, sdk.NewInt(500)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(1)),
+				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.NewInt(1)),
+			),
+
+		TC("existing short position, remove almost all margin fails").
+			Given(
+				CreateCustomMarket(pairBtcUsdc),
+				SetBlockNumber(1),
+				SetBlockTime(startBlockTime),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1002)))),
+				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(1), sdk.ZeroDec()),
+				MoveToNextBlock(),
+			).
+			When(
+				RemoveMarginFail(alice, pairBtcUsdc, sdk.NewInt(999), types.ErrMarginRatioTooLow),
+			).
+			Then(
+				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionShouldBeEqualTo(types.Position{
+					Pair:                            pairBtcUsdc,
+					TraderAddress:                   alice.String(),
+					Size_:                           sdk.MustNewDecFromStr("-1000.000001000000001000"),
+					Margin:                          sdk.NewDec(1000),
+					OpenNotional:                    sdk.NewDec(1000),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+					LastUpdatedBlockNumber:          1,
+				})),
+				BalanceEqual(alice, denoms.USDC, sdk.NewInt(0)),
 				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(1)),
 				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.NewInt(1)),
 			),
