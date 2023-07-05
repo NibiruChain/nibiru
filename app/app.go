@@ -3,11 +3,12 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"

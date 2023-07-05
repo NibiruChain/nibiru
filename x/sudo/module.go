@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/NibiruChain/nibiru/x/sudo/types"
 
 	abci "github.com/cometbft/cometbft/abci/types"

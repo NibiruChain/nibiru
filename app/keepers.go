@@ -1,8 +1,9 @@
 package app
 
 import (
-	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 	"path/filepath"
+
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 	"github.com/cosmos/cosmos-sdk/client/flags"

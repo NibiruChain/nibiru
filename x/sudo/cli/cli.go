@@ -2,9 +2,10 @@ package cli
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/sudo/types"
 	"os"
 	"strings"
+
+	"github.com/NibiruChain/nibiru/x/sudo/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"

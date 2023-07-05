@@ -2,15 +2,21 @@ package cli_test
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/sudo/types"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/NibiruChain/nibiru/x/sudo/types"
 
 	"github.com/cosmos/gogoproto/jsonpb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/cosmos/cosmos-sdk/crypto"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
@@ -20,10 +26,6 @@ import (
 	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/x/sudo/cli"
-	"github.com/cosmos/cosmos-sdk/crypto"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // ———————————————————————————————————————————————————————————————————
