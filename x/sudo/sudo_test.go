@@ -61,7 +61,7 @@ func TestGenesis(t *testing.T) {
 		{
 			name: "happy genesis with contracts",
 			genState: &types.GenesisState{
-				Sudoers: sudo.PbSudoers{
+				Sudoers: types.Sudoers{
 					Root: testutil.AccAddress().String(),
 					Contracts: []string{
 						testutil.AccAddress().String(),
@@ -80,7 +80,7 @@ func TestGenesis(t *testing.T) {
 		{
 			name: "invalid genesis (panic)",
 			genState: &types.GenesisState{
-				Sudoers: sudo.PbSudoers{
+				Sudoers: types.Sudoers{
 					Root:      "root",
 					Contracts: []string{"contract"},
 				}},
@@ -189,7 +189,7 @@ func TestSudo_AddContracts(t *testing.T) {
 func TestSudo_FromPbSudoers(t *testing.T) {
 	for _, tc := range []struct {
 		name string
-		in   sudo.PbSudoers
+		in   types.Sudoers
 		out  sudo.Sudoers
 	}{
 		{
@@ -325,8 +325,7 @@ func TestKeeper_AddContracts(t *testing.T) {
 
 			t.Log("Execute message")
 			// Check via message handler directly
-			handler := sudo.NewHandler(k)
-			res, err := handler(ctx, tc.msg)
+			res, err := k.EditSudoers(sdk.WrapSDKContext(ctx), tc.msg)
 			// Check via Keeper
 			res2, err2 := k.AddContracts(sdk.WrapSDKContext(ctx), tc.msg)
 			if tc.shouldFail {
@@ -361,15 +360,6 @@ func (dm DummyMsg) ValidateBasic() error         { return nil }
 func (dm *DummyMsg) Reset()                      {}
 func (dm *DummyMsg) ProtoMessage()               {}
 func (dm *DummyMsg) String() string              { return "dummy" }
-
-func TestUnrecognizedHandlerMessage(t *testing.T) {
-	handler := sudo.NewHandler(sudo.Keeper{})
-	_, ctx := setup()
-	msg := new(DummyMsg)
-	_, err := handler(ctx, msg)
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "unrecognized")
-}
 
 func TestKeeper_RemoveContracts(t *testing.T) {
 	root := "nibi1ggpg3vluy09qmfkgwsgkumhmmv2z44rdafn6qa"
@@ -454,8 +444,7 @@ func TestKeeper_RemoveContracts(t *testing.T) {
 
 			t.Log("Execute message")
 			// Check via message handler directly
-			handler := sudo.NewHandler(k)
-			res, err := handler(ctx, tc.msg)
+			res, err := k.EditSudoers(ctx, tc.msg)
 			// Check via Keeper
 			res2, err2 := k.RemoveContracts(sdk.WrapSDKContext(ctx), tc.msg)
 			if tc.shouldFail {

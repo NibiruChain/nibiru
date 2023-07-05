@@ -4,19 +4,16 @@ import (
 	"context"
 	"fmt"
 
-	sdkerrors "cosmossdk.io/errors"
 	"github.com/NibiruChain/collections"
+	"github.com/NibiruChain/nibiru/x/common/set"
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/errors"
-
-	"github.com/NibiruChain/nibiru/x/common/set"
-	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 )
 
 type Keeper struct {
-	Sudoers collections.Item[PbSudoers]
+	Sudoers collections.Item[sudotypes.Sudoers]
 }
 
 func NewKeeper(
@@ -25,24 +22,6 @@ func NewKeeper(
 ) Keeper {
 	return Keeper{
 		Sudoers: collections.NewItem(storeKey, 1, SudoersValueEncoder(cdc)),
-	}
-}
-
-func NewHandler(k Keeper) sdk.Handler {
-	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
-		goCtx := sdk.WrapSDKContext(
-			ctx.WithEventManager(sdk.NewEventManager()),
-		)
-		switch msg := msg.(type) {
-		case *sudotypes.MsgEditSudoers:
-			res, err := k.EditSudoers(goCtx, msg)
-			return sdk.WrapServiceResult(ctx, res, err)
-
-		default:
-			errMsg := fmt.Sprintf(
-				"unrecognized %s message type: %T", sudotypes.ModuleName, msg)
-			return nil, sdkerrors.Wrap(errors.ErrUnknownRequest, errMsg)
-		}
 	}
 }
 
@@ -82,8 +61,6 @@ func (k Keeper) SenderHasPermission(sender string, root string) error {
 func SudoersValueEncoder(cdc codec.BinaryCodec) collections.ValueEncoder[sudotypes.Sudoers] {
 	return collections.ProtoValueEncoder[sudotypes.Sudoers](cdc)
 }
-
-type PbSudoers = sudotypes.Sudoers
 
 type Sudoers struct {
 	Root      string          `json:"root"`
