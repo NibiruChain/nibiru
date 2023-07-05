@@ -6,7 +6,7 @@ Package pb is a reverse proxy.
 
 It translates gRPC into RESTful JSON APIs.
 */
-package pb
+package types
 
 import (
 	"context"

@@ -178,7 +178,7 @@ func TestRemoveMargin(t *testing.T) {
 				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.NewInt(1)),
 			),
 
-		TC("existing long position, remove almmost all margin").
+		TC("existing long position, remove almost all margin").
 			Given(
 				CreateCustomMarket(pairBtcUsdc),
 				SetBlockNumber(1),
