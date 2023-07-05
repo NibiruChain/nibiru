@@ -240,10 +240,8 @@ func (amm *AMM) SwapQuoteAsset(
 //   - dir: direction of swap
 //
 // returns:
-//   - quoteAssetDelta: amount of quote asset received
+//   - quoteAssetDelta: amount of quote asset received. Always positive
 //   - err: error if any
-//
-// Note: quoteAssetDelta is always positive
 func (amm *AMM) SwapBaseAsset(baseAssetAmt sdk.Dec, dir Direction) (quoteAssetDelta sdk.Dec, err error) {
 	quoteReserveDelta, err := amm.GetQuoteReserveAmt(baseAssetAmt, dir)
 	if err != nil {

@@ -12,6 +12,7 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgRemoveMargin{}, "perpv2/remove_margin", nil)
 	cdc.RegisterConcrete(&MsgMarketOrder{}, "perpv2/market_order", nil)
 	cdc.RegisterConcrete(&MsgClosePosition{}, "perpv2/close_position", nil)
+	cdc.RegisterConcrete(&MsgPartialClose{}, "perpv2/partial_close", nil)
 	cdc.RegisterConcrete(&MsgDonateToEcosystemFund{}, "perpv2/donate_to_ef", nil)
 	cdc.RegisterConcrete(&MsgMultiLiquidate{}, "perpv2/multi_liquidate", nil)
 }
@@ -24,6 +25,7 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgAddMargin{},
 		&MsgMarketOrder{},
 		&MsgClosePosition{},
+		&MsgPartialClose{},
 		&MsgMultiLiquidate{},
 	)
 
