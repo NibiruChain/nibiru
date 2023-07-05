@@ -97,6 +97,11 @@ func (k Keeper) MarketOrder(
 		}
 	}
 
+	// check bad debt
+	if !positionResp.BadDebt.IsZero() {
+		return nil, fmt.Errorf("bad debt must be zero to prevent attacker from leveraging it")
+	}
+
 	if err = k.afterPositionUpdate(
 		ctx, market, *updatedAMM, traderAddr, *positionResp, types.ChangeReason_MarketOrder,
 	); err != nil {
@@ -539,11 +544,6 @@ func (k Keeper) afterPositionUpdate(
 	positionResp types.PositionResp,
 	changeType types.ChangeReason,
 ) (err error) {
-	// check bad debt
-	if !positionResp.BadDebt.IsZero() {
-		return fmt.Errorf("bad debt must be zero to prevent attacker from leveraging it")
-	}
-
 	if !positionResp.Position.Size_.IsZero() {
 		err = k.checkMarginRatio(ctx, market, amm, positionResp.Position)
 		if err != nil {
@@ -730,8 +730,6 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.A
 		); err != nil {
 			return nil, err
 		}
-
-		return positionResp, nil
 	}
 
 	if err = k.afterPositionUpdate(
