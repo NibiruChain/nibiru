@@ -880,6 +880,11 @@ func (k Keeper) PartialClose(
 		return nil, err
 	}
 
+	// check bad debt
+	if !positionResp.BadDebt.IsZero() {
+		return nil, fmt.Errorf("bad debt must be zero to prevent attacker from leveraging it")
+	}
+
 	err = k.afterPositionUpdate(
 		ctx,
 		market,
