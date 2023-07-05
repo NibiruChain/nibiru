@@ -213,3 +213,33 @@ func (m MsgDonateToEcosystemFund) GetSigners() []sdk.AccAddress {
 	}
 	return []sdk.AccAddress{signer}
 }
+
+// MsgPartialClose
+
+func (m MsgPartialClose) Route() string { return "perp" }
+func (m MsgPartialClose) Type() string  { return "partial_close_msg" }
+
+func (m MsgPartialClose) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return sdkerrors.Wrapf(errors.ErrInvalidAddress, "invalid sender address (%s)", err)
+	}
+	if err := m.Pair.Validate(); err != nil {
+		return err
+	}
+	if !m.Size_.IsPositive() {
+		return fmt.Errorf("invalid size amount: %s", m.Size_.String())
+	}
+	return nil
+}
+
+func (m MsgPartialClose) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
+}
+
+func (m MsgPartialClose) GetSigners() []sdk.AccAddress {
+	signer, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{signer}
+}

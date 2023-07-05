@@ -22,6 +22,8 @@ service Msg {
 
   rpc ClosePosition(MsgClosePosition) returns (MsgClosePositionResponse) {}
 
+  rpc PartialClose(MsgPartialClose) returns (MsgPartialCloseResponse) {}
+
   rpc DonateToEcosystemFund(MsgDonateToEcosystemFund)
       returns (MsgDonateToEcosystemFundResponse) {}
 }
@@ -240,7 +242,57 @@ message MsgClosePositionResponse {
 
   // The amount of margin the trader receives after closing the position, from
   // the vault. Should never be negative.
-  string margin_to_trader = 7 [
+  string margin_to_trader = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message MsgPartialClose {
+  string sender = 1;
+
+  string pair = 2 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+
+  string size = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message MsgPartialCloseResponse {
+  // The amount of quote assets exchanged.
+  string exchanged_notional_value = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // The amount of base assets exchanged.
+  string exchanged_position_size = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // The funding payment applied on this position change, measured in quote
+  // units.
+  string funding_payment = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // The amount of PnL realized on this position changed, measured in quote
+  // units.
+  string realized_pnl = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // The amount of margin the trader receives after closing the position, from
+  // the vault. Should never be negative.
+  string margin_to_trader = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];

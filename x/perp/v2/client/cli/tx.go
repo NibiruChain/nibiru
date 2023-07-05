@@ -29,6 +29,7 @@ func GetTxCmd() *cobra.Command {
 		AddMarginCmd(),
 		MarketOrderCmd(),
 		ClosePositionCmd(),
+		PartialCloseCmd(),
 		MultiLiquidateCmd(),
 		DonateToEcosystemFundCmd(),
 	)
@@ -150,7 +151,6 @@ func MarketOrderCmd() *cobra.Command {
 	return cmd
 }
 
-// TODO: how is a position idenitfiied? by pair? by id?
 func ClosePositionCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "close-position [pair]",
@@ -170,6 +170,45 @@ func ClosePositionCmd() *cobra.Command {
 			msg := &types.MsgClosePosition{
 				Sender: clientCtx.GetFromAddress().String(),
 				Pair:   pair,
+			}
+			if err = msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func PartialCloseCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "partial-close [pair] [size]",
+		Short: "Partially closes a position",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			pair, err := asset.TryNewPair(args[0])
+			if err != nil {
+				return err
+			}
+
+			size, err := sdk.NewDecFromStr(args[1])
+			if err != nil {
+				return err
+			}
+
+			msg := &types.MsgPartialClose{
+				Sender: clientCtx.GetFromAddress().String(),
+				Pair:   pair,
+				Size_:  size,
 			}
 			if err = msg.ValidateBasic(); err != nil {
 				return err
