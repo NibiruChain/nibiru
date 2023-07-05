@@ -6,7 +6,7 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 
 	"github.com/NibiruChain/nibiru/x/sudo"
-	sudotypes "github.com/NibiruChain/nibiru/x/sudo/pb"
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 

@@ -40,6 +40,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [v0.21.6](https://github.com/NibiruChain/nibiru/releases/tag/v0.21.6) - 2023-07-05
+
+### Features
+
+* [#1479](https://github.com/NibiruChain/nibiru/pull/1479) - feat(perp): implement `PartialClose`
+
 ## [v0.21.5](https://github.com/NibiruChain/nibiru/releases/tag/v0.21.5) - 2023-07-02
 
 ### State Machine Breaking
