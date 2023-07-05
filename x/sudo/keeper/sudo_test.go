@@ -1,9 +1,10 @@
 package keeper_test
 
 import (
-	"github.com/NibiruChain/nibiru/x/sudo/keeper"
 	"testing"
 	"time"
+
+	"github.com/NibiruChain/nibiru/x/sudo/keeper"
 
 	"github.com/NibiruChain/nibiru/x/sudo/types"
 

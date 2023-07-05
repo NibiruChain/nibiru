@@ -2,6 +2,7 @@ package binding
 
 import (
 	"encoding/json"
+
 	"github.com/NibiruChain/nibiru/x/sudo/keeper"
 
 	sdkerrors "cosmossdk.io/errors"

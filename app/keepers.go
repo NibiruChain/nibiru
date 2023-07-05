@@ -1,8 +1,9 @@
 package app
 
 import (
-	"github.com/NibiruChain/nibiru/x/sudo/keeper"
 	"path/filepath"
+
+	"github.com/NibiruChain/nibiru/x/sudo/keeper"
 
 	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 

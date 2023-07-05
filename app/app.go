@@ -3,11 +3,12 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/sudo/keeper"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/NibiruChain/nibiru/x/sudo/keeper"
 
 	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 
@@ -272,8 +273,8 @@ type NibiruApp struct {
 	SpotKeeper       spotkeeper.Keeper
 	OracleKeeper     oraclekeeper.Keeper
 	StablecoinKeeper stablecoinkeeper.Keeper
-	InflationKeeper inflationkeeper.Keeper
-	SudoKeeper      keeper.Keeper
+	InflationKeeper  inflationkeeper.Keeper
+	SudoKeeper       keeper.Keeper
 
 	// WASM keepers
 	WasmKeeper       wasm.Keeper
