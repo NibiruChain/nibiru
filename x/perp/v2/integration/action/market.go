@@ -89,6 +89,12 @@ func WithSqrtDepth(amount sdk.Dec) marketModifier {
 	}
 }
 
+func WithLatestMarketCPF(amount sdk.Dec) marketModifier {
+	return func(market *types.Market, amm *types.AMM) {
+		market.LatestCumulativePremiumFraction = amount
+	}
+}
+
 type editPriceMultiplier struct {
 	pair       asset.Pair
 	multiplier sdk.Dec

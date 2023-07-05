@@ -26,23 +26,23 @@ import (
 
 func TestMarketOrder(t *testing.T) {
 	alice := testutil.AccAddress()
-	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	pairBtcNusd := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	startBlockTime := time.Now()
 
 	tc := TestCases{
 		TC("new long position").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcNusd),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1020)))),
 			).
 			When(
-				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec(),
+				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec(),
 					MarketOrderResp_PositionShouldBeEqual(
 						types.Position{
-							Pair:                            pairBtcUsdc,
+							Pair:                            pairBtcNusd,
 							TraderAddress:                   alice.String(),
 							Margin:                          sdk.NewDec(1000),
 							OpenNotional:                    sdk.NewDec(10_000),
@@ -61,8 +61,8 @@ func TestMarketOrder(t *testing.T) {
 				),
 			).
 			Then(
-				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionShouldBeEqualTo(types.Position{
-					Pair:                            pairBtcUsdc,
+				PositionShouldBeEqual(alice, pairBtcNusd, Position_PositionShouldBeEqualTo(types.Position{
+					Pair:                            pairBtcNusd,
 					TraderAddress:                   alice.String(),
 					Margin:                          sdk.NewDec(1000),
 					OpenNotional:                    sdk.NewDec(10_000),
@@ -72,7 +72,7 @@ func TestMarketOrder(t *testing.T) {
 				})),
 				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
 					FinalPosition: types.Position{
-						Pair:                            pairBtcUsdc,
+						Pair:                            pairBtcNusd,
 						TraderAddress:                   alice.String(),
 						Margin:                          sdk.NewDec(1000),
 						OpenNotional:                    sdk.NewDec(10_000),
@@ -96,17 +96,17 @@ func TestMarketOrder(t *testing.T) {
 			Given(
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				CreateCustomMarket(pairBtcUsdc),
-				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				CreateCustomMarket(pairBtcNusd),
+				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(2040)))),
-				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			When(
 				MoveToNextBlock(),
-				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec(),
+				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec(),
 					MarketOrderResp_PositionShouldBeEqual(
 						types.Position{
-							Pair:                            pairBtcUsdc,
+							Pair:                            pairBtcNusd,
 							TraderAddress:                   alice.String(),
 							Margin:                          sdk.NewDec(2000),
 							OpenNotional:                    sdk.NewDec(20_000),
@@ -127,7 +127,7 @@ func TestMarketOrder(t *testing.T) {
 			Then(
 				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
 					FinalPosition: types.Position{
-						Pair:                            pairBtcUsdc,
+						Pair:                            pairBtcNusd,
 						TraderAddress:                   alice.String(),
 						Margin:                          sdk.NewDec(2000),
 						OpenNotional:                    sdk.NewDec(20_000),
@@ -149,19 +149,19 @@ func TestMarketOrder(t *testing.T) {
 
 		TC("existing long position, decrease a bit").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcNusd),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1030)))),
-				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			When(
 				MoveToNextBlock(),
-				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(500), sdk.NewDec(10), sdk.ZeroDec(),
+				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(500), sdk.NewDec(10), sdk.ZeroDec(),
 					MarketOrderResp_PositionShouldBeEqual(
 						types.Position{
-							Pair:                            pairBtcUsdc,
+							Pair:                            pairBtcNusd,
 							TraderAddress:                   alice.String(),
 							Margin:                          sdk.NewDec(1000),
 							OpenNotional:                    sdk.NewDec(5000),
@@ -183,7 +183,7 @@ func TestMarketOrder(t *testing.T) {
 			Then(
 				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
 					FinalPosition: types.Position{
-						Pair:                            pairBtcUsdc,
+						Pair:                            pairBtcNusd,
 						TraderAddress:                   alice.String(),
 						Margin:                          sdk.NewDec(1000),
 						OpenNotional:                    sdk.NewDec(5000),
@@ -205,19 +205,19 @@ func TestMarketOrder(t *testing.T) {
 
 		TC("existing long position, decrease a lot").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcNusd),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(4080)))),
-				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			When(
 				MoveToNextBlock(),
-				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(3000), sdk.NewDec(10), sdk.ZeroDec(),
+				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(3000), sdk.NewDec(10), sdk.ZeroDec(),
 					MarketOrderResp_PositionShouldBeEqual(
 						types.Position{
-							Pair:                            pairBtcUsdc,
+							Pair:                            pairBtcNusd,
 							TraderAddress:                   alice.String(),
 							Margin:                          sdk.NewDec(2000),
 							OpenNotional:                    sdk.NewDec(20000),
@@ -239,7 +239,7 @@ func TestMarketOrder(t *testing.T) {
 			Then(
 				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
 					FinalPosition: types.Position{
-						Pair:                            pairBtcUsdc,
+						Pair:                            pairBtcNusd,
 						TraderAddress:                   alice.String(),
 						Margin:                          sdk.NewDec(2000),
 						OpenNotional:                    sdk.NewDec(20000),
@@ -261,17 +261,17 @@ func TestMarketOrder(t *testing.T) {
 
 		TC("new short position").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcNusd),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1020)))),
 			).
 			When(
-				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec(),
+				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec(),
 					MarketOrderResp_PositionShouldBeEqual(
 						types.Position{
-							Pair:                            pairBtcUsdc,
+							Pair:                            pairBtcNusd,
 							TraderAddress:                   alice.String(),
 							Margin:                          sdk.NewDec(1000),
 							OpenNotional:                    sdk.NewDec(10_000),
@@ -290,9 +290,9 @@ func TestMarketOrder(t *testing.T) {
 				),
 			).
 			Then(
-				PositionShouldBeEqual(alice, pairBtcUsdc,
+				PositionShouldBeEqual(alice, pairBtcNusd,
 					Position_PositionShouldBeEqualTo(types.Position{
-						Pair:                            pairBtcUsdc,
+						Pair:                            pairBtcNusd,
 						TraderAddress:                   alice.String(),
 						Margin:                          sdk.NewDec(1000),
 						OpenNotional:                    sdk.NewDec(10_000),
@@ -303,7 +303,7 @@ func TestMarketOrder(t *testing.T) {
 				),
 				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
 					FinalPosition: types.Position{
-						Pair:                            pairBtcUsdc,
+						Pair:                            pairBtcNusd,
 						TraderAddress:                   alice.String(),
 						Margin:                          sdk.NewDec(1000),
 						OpenNotional:                    sdk.NewDec(10_000),
@@ -325,19 +325,19 @@ func TestMarketOrder(t *testing.T) {
 
 		TC("existing short position, go more short").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcNusd),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(2040)))),
-				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			When(
 				MoveToNextBlock(),
-				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec(),
+				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec(),
 					MarketOrderResp_PositionShouldBeEqual(
 						types.Position{
-							Pair:                            pairBtcUsdc,
+							Pair:                            pairBtcNusd,
 							TraderAddress:                   alice.String(),
 							Margin:                          sdk.NewDec(2000),
 							OpenNotional:                    sdk.NewDec(20_000),
@@ -359,7 +359,7 @@ func TestMarketOrder(t *testing.T) {
 			Then(
 				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
 					FinalPosition: types.Position{
-						Pair:                            pairBtcUsdc,
+						Pair:                            pairBtcNusd,
 						TraderAddress:                   alice.String(),
 						Margin:                          sdk.NewDec(2000),
 						OpenNotional:                    sdk.NewDec(20_000),
@@ -381,19 +381,19 @@ func TestMarketOrder(t *testing.T) {
 
 		TC("existing short position, decrease a bit").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcNusd),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1030)))),
-				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			When(
 				MoveToNextBlock(),
-				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(500), sdk.NewDec(10), sdk.ZeroDec(),
+				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(500), sdk.NewDec(10), sdk.ZeroDec(),
 					MarketOrderResp_PositionShouldBeEqual(
 						types.Position{
-							Pair:                            pairBtcUsdc,
+							Pair:                            pairBtcNusd,
 							TraderAddress:                   alice.String(),
 							Margin:                          sdk.NewDec(1000),
 							OpenNotional:                    sdk.NewDec(5000),
@@ -415,7 +415,7 @@ func TestMarketOrder(t *testing.T) {
 			Then(
 				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
 					FinalPosition: types.Position{
-						Pair:                            pairBtcUsdc,
+						Pair:                            pairBtcNusd,
 						TraderAddress:                   alice.String(),
 						Margin:                          sdk.NewDec(1000),
 						OpenNotional:                    sdk.NewDec(5000),
@@ -437,19 +437,19 @@ func TestMarketOrder(t *testing.T) {
 
 		TC("existing short position, decrease a lot").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcNusd),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(4080)))),
-				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			When(
 				MoveToNextBlock(),
-				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(3000), sdk.NewDec(10), sdk.ZeroDec(),
+				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(3000), sdk.NewDec(10), sdk.ZeroDec(),
 					MarketOrderResp_PositionShouldBeEqual(
 						types.Position{
-							Pair:                            pairBtcUsdc,
+							Pair:                            pairBtcNusd,
 							TraderAddress:                   alice.String(),
 							Margin:                          sdk.NewDec(2000),
 							OpenNotional:                    sdk.NewDec(20000),
@@ -471,7 +471,7 @@ func TestMarketOrder(t *testing.T) {
 			Then(
 				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
 					FinalPosition: types.Position{
-						Pair:                            pairBtcUsdc,
+						Pair:                            pairBtcNusd,
 						TraderAddress:                   alice.String(),
 						Margin:                          sdk.NewDec(2000),
 						OpenNotional:                    sdk.NewDec(20000),
@@ -493,215 +493,215 @@ func TestMarketOrder(t *testing.T) {
 
 		TC("user has insufficient funds").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcNusd),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(99)))),
 			).
 			When(
 				MarketOrderFails(
-					alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(100), sdk.OneDec(), sdk.ZeroDec(),
+					alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(100), sdk.OneDec(), sdk.ZeroDec(),
 					sdkerrors.ErrInsufficientFunds),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				PositionShouldNotExist(alice, pairBtcNusd),
 			),
 
 		TC("new long position, can close position after market is not enabled").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcNusd),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(47_714_285_715)))),
-				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(47_619_047_619), sdk.OneDec(), sdk.ZeroDec()),
-				SetMarketEnabled(pairBtcUsdc, false),
+				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(47_619_047_619), sdk.OneDec(), sdk.ZeroDec()),
+				SetMarketEnabled(pairBtcNusd, false),
 			).
 			When(
-				ClosePosition(alice, pairBtcUsdc),
+				ClosePosition(alice, pairBtcNusd),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				PositionShouldNotExist(alice, pairBtcNusd),
 			),
 
 		TC("new long position, can not open new position after market is not enabled").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcNusd),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(47_714_285_715)))),
-				SetMarketEnabled(pairBtcUsdc, false),
+				SetMarketEnabled(pairBtcNusd, false),
 			).
 			When(
-				MarketOrderFails(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(47_619_047_619), sdk.OneDec(), sdk.ZeroDec(),
+				MarketOrderFails(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(47_619_047_619), sdk.OneDec(), sdk.ZeroDec(),
 					types.ErrMarketNotEnabled),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				PositionShouldNotExist(alice, pairBtcNusd),
 			),
 
 		TC("existing long position, can not open new one but can close").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcNusd),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(47_714_285_715)))),
-				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(50_000), sdk.OneDec(), sdk.ZeroDec()),
-				SetMarketEnabled(pairBtcUsdc, false),
+				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(50_000), sdk.OneDec(), sdk.ZeroDec()),
+				SetMarketEnabled(pairBtcNusd, false),
 			).
 			When(
-				MarketOrderFails(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(47_619_047_619), sdk.OneDec(), sdk.ZeroDec(),
+				MarketOrderFails(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(47_619_047_619), sdk.OneDec(), sdk.ZeroDec(),
 					types.ErrMarketNotEnabled),
-				ClosePosition(alice, pairBtcUsdc),
+				ClosePosition(alice, pairBtcNusd),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				PositionShouldNotExist(alice, pairBtcNusd),
 			),
 
 		TC("market doesn't exist").
 			Given(
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(47_714_285_715)))),
 			).
 			When(
-				MarketOrderFails(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(47_619_047_619), sdk.OneDec(), sdk.ZeroDec(),
+				MarketOrderFails(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(47_619_047_619), sdk.OneDec(), sdk.ZeroDec(),
 					types.ErrPairNotFound),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				PositionShouldNotExist(alice, pairBtcNusd),
 			),
 
 		TC("zero quote asset amount").
 			Given(
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				CreateCustomMarket(pairBtcUsdc),
-				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				CreateCustomMarket(pairBtcNusd),
+				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(47_714_285_715)))),
 			).
 			When(
-				MarketOrderFails(alice, pairBtcUsdc, types.Direction_LONG, sdk.ZeroInt(), sdk.OneDec(), sdk.ZeroDec(),
+				MarketOrderFails(alice, pairBtcNusd, types.Direction_LONG, sdk.ZeroInt(), sdk.OneDec(), sdk.ZeroDec(),
 					types.ErrInputQuoteAmtNegative),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				PositionShouldNotExist(alice, pairBtcNusd),
 			),
 
 		TC("zero leverage").
 			Given(
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				CreateCustomMarket(pairBtcUsdc),
-				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				CreateCustomMarket(pairBtcNusd),
+				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				MarketOrderFails(alice, pairBtcUsdc, types.Direction_LONG, sdk.OneInt(), sdk.ZeroDec(), sdk.ZeroDec(),
+				MarketOrderFails(alice, pairBtcNusd, types.Direction_LONG, sdk.OneInt(), sdk.ZeroDec(), sdk.ZeroDec(),
 					types.ErrUserLeverageNegative),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				PositionShouldNotExist(alice, pairBtcNusd),
 			),
 
 		TC("user leverage greater than market max leverage").
 			Given(
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				CreateCustomMarket(pairBtcUsdc),
-				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				CreateCustomMarket(pairBtcNusd),
+				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				MarketOrderFails(alice, pairBtcUsdc, types.Direction_LONG, sdk.OneInt(), sdk.NewDec(11), sdk.ZeroDec(),
+				MarketOrderFails(alice, pairBtcNusd, types.Direction_LONG, sdk.OneInt(), sdk.NewDec(11), sdk.ZeroDec(),
 					types.ErrLeverageIsTooHigh),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				PositionShouldNotExist(alice, pairBtcNusd),
 			),
 
 		TC("position should not exist after opening a closing manually").
 			Given(
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				CreateCustomMarket(pairBtcUsdc, WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
-				SetOraclePrice(pairBtcUsdc, sdk.NewDec(25_000)),
+				CreateCustomMarket(pairBtcNusd, WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
+				SetOraclePrice(pairBtcNusd, sdk.NewDec(25_000)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(20_000_000_000+20_000_000)))),
 			).
 			When(
-				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
-				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
+				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
+				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				PositionShouldNotExist(alice, pairBtcNusd),
 			),
 
 		TC("position should not exist after opening a closing manually - reverse with leverage").
 			Given(
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				CreateCustomMarket(pairBtcUsdc, WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
-				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				CreateCustomMarket(pairBtcNusd, WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
+				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(100_000), sdk.OneDec(), sdk.ZeroDec()),
-				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(50_000), sdk.NewDec(2), sdk.ZeroDec()),
+				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(100_000), sdk.OneDec(), sdk.ZeroDec()),
+				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(50_000), sdk.NewDec(2), sdk.ZeroDec()),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				PositionShouldNotExist(alice, pairBtcNusd),
 			),
 		TC("position should not exist after opening a closing manually - open with leverage").
 			Given(
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				CreateCustomMarket(pairBtcUsdc, WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
-				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				CreateCustomMarket(pairBtcNusd, WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
+				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(50_000), sdk.NewDec(2), sdk.ZeroDec()),
-				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(100_000), sdk.OneDec(), sdk.ZeroDec()),
+				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(50_000), sdk.NewDec(2), sdk.ZeroDec()),
+				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(100_000), sdk.OneDec(), sdk.ZeroDec()),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				PositionShouldNotExist(alice, pairBtcNusd),
 			),
 
 		TC("position should not exist after opening a closing manually - reverse with leverage").
 			Given(
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				CreateCustomMarket(pairBtcUsdc, WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
-				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				CreateCustomMarket(pairBtcNusd, WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
+				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(100_000), sdk.OneDec(), sdk.ZeroDec()),
-				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(50_000), sdk.NewDec(2), sdk.ZeroDec()),
+				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(100_000), sdk.OneDec(), sdk.ZeroDec()),
+				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(50_000), sdk.NewDec(2), sdk.ZeroDec()),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				PositionShouldNotExist(alice, pairBtcNusd),
 			),
 
 		TC("position should not exist after opening a closing manually - reverse with leverage - more steps").
 			Given(
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				CreateCustomMarket(pairBtcUsdc, WithPricePeg(sdk.MustNewDecFromStr("25000"))),
-				SetOraclePrice(pairBtcUsdc, sdk.NewDec(2)),
+				CreateCustomMarket(pairBtcNusd, WithPricePeg(sdk.MustNewDecFromStr("25000"))),
+				SetOraclePrice(pairBtcNusd, sdk.NewDec(2)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(100_000), sdk.OneDec(), sdk.ZeroDec()),
-				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(50_000), sdk.NewDec(4), sdk.ZeroDec()),
-				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(50_000), sdk.NewDec(2), sdk.ZeroDec()),
+				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(100_000), sdk.OneDec(), sdk.ZeroDec()),
+				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(50_000), sdk.NewDec(4), sdk.ZeroDec()),
+				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(50_000), sdk.NewDec(2), sdk.ZeroDec()),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				PositionShouldNotExist(alice, pairBtcNusd),
 			),
 	}
 
@@ -842,6 +842,149 @@ func TestMarketOrderError(t *testing.T) {
 }
 
 func TestClosePosition(t *testing.T) {
+	alice := testutil.AccAddress()
+	pairBtcNusd := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	startBlockTime := time.Now()
+
+	tc := TestCases{
+		TC("close long position with positive PnL").
+			Given(
+				CreateCustomMarket(pairBtcNusd,
+					WithPricePeg(sdk.NewDec(2)),
+					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
+				),
+				SetBlockTime(startBlockTime),
+				SetBlockNumber(1),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(40)))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 10_998))),
+				InsertPosition(
+					WithTrader(alice),
+					WithPair(pairBtcNusd),
+					WithSize(sdk.NewDec(10_000)),
+					WithMargin(sdk.NewDec(1_000)),
+					WithOpenNotional(sdk.NewDec(10_000)),
+				),
+			).
+			When(
+				ClosePosition(alice, pairBtcNusd),
+			).
+			Then(
+				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
+					FinalPosition: types.Position{
+						Pair:                            pairBtcNusd,
+						TraderAddress:                   alice.String(),
+						Margin:                          sdk.ZeroDec(),
+						OpenNotional:                    sdk.ZeroDec(),
+						Size_:                           sdk.ZeroDec(),
+						LastUpdatedBlockNumber:          1,
+						LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.0002"),
+					},
+					PositionNotional: sdk.ZeroDec(),
+					RealizedPnl:      sdk.MustNewDecFromStr("9999.999800000002000000"),
+					BadDebt:          sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
+					FundingPayment:   sdk.NewDec(2),
+					TransactionFee:   sdk.NewCoin(denoms.NUSD, sdk.NewInt(40)),
+					BlockHeight:      1,
+					MarginToUser:     sdk.NewInt(10_958),
+					ChangeReason:     types.ChangeReason_ClosePosition,
+				}),
+			),
+
+		TC("close long position with negative PnL").
+			Given(
+				CreateCustomMarket(pairBtcNusd,
+					WithPricePeg(sdk.MustNewDecFromStr("0.99")),
+					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
+				),
+				SetBlockTime(startBlockTime),
+				SetBlockNumber(1),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(20)))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 898))),
+				InsertPosition(
+					WithTrader(alice),
+					WithPair(pairBtcNusd),
+					WithSize(sdk.NewDec(10_000)),
+					WithMargin(sdk.NewDec(1_000)),
+					WithOpenNotional(sdk.NewDec(10_000)),
+				),
+			).
+			When(
+				ClosePosition(alice, pairBtcNusd),
+			).
+			Then(
+				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
+					FinalPosition: types.Position{
+						Pair:                            pairBtcNusd,
+						TraderAddress:                   alice.String(),
+						Margin:                          sdk.ZeroDec(),
+						OpenNotional:                    sdk.ZeroDec(),
+						Size_:                           sdk.ZeroDec(),
+						LastUpdatedBlockNumber:          1,
+						LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.0002"),
+					},
+					PositionNotional: sdk.ZeroDec(),
+					RealizedPnl:      sdk.MustNewDecFromStr("-100.000098999999010000"),
+					BadDebt:          sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
+					FundingPayment:   sdk.NewDec(2),
+					TransactionFee:   sdk.NewCoin(denoms.NUSD, sdk.NewInt(20)),
+					BlockHeight:      1,
+					MarginToUser:     sdk.NewInt(878),
+					ChangeReason:     types.ChangeReason_ClosePosition,
+				}),
+			),
+
+		TC("close long position with bad debt").
+			Given(
+				SetBlockNumber(1),
+				CreateCustomMarket(pairBtcNusd),
+
+				InsertPosition(
+					WithTrader(alice),
+					WithPair(pairBtcNusd),
+					WithSize(sdk.NewDec(10_000)),
+					WithMargin(sdk.NewDec(750)),
+					WithOpenNotional(sdk.NewDec(10_800)),
+				),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 20))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1000))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 50))),
+			).
+			When(
+				MoveToNextBlock(),
+				ClosePosition(alice, pairBtcNusd),
+			).
+			Then(
+				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
+					FinalPosition: types.Position{
+						TraderAddress:                   alice.String(),
+						Pair:                            pairBtcNusd,
+						Size_:                           sdk.ZeroDec(),
+						Margin:                          sdk.ZeroDec(),
+						OpenNotional:                    sdk.ZeroDec(),
+						LatestCumulativePremiumFraction: sdk.ZeroDec(),
+						LastUpdatedBlockNumber:          2,
+					},
+					PositionNotional: sdk.ZeroDec(),
+					TransactionFee:   sdk.NewInt64Coin(denoms.NUSD, 20),
+					RealizedPnl:      sdk.MustNewDecFromStr("-800.000099999999000000"),
+					BadDebt:          sdk.NewCoin(denoms.NUSD, sdk.NewInt(50)),
+					FundingPayment:   sdk.ZeroDec(),
+					BlockHeight:      2,
+					MarginToUser:     sdk.NewInt(-20),
+					ChangeReason:     types.ChangeReason_ClosePosition,
+				}),
+				ModuleBalanceEqual(types.VaultModuleAccount, denoms.NUSD, sdk.NewInt(1050)), // 1000 + 50 from perp ef
+				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.NUSD, sdk.NewInt(10)),
+			),
+	}
+
+	NewTestSuite(t).WithTestCases(tc...).Run()
+}
+
+func TestClosePositionOLD(t *testing.T) {
 	tests := []struct {
 		name string
 
@@ -1036,66 +1179,10 @@ func TestClosePosition(t *testing.T) {
 	}
 }
 
-func TestClosePositionWithBadDebt(t *testing.T) {
-	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.USDC)
-
-	alice := testutil.AccAddress()
-	startTime := time.Now()
-
-	tc := TestCases{
-		TC("close long position with bad debt").
-			Given(
-				SetBlockNumber(1),
-				SetBlockTime(startTime),
-				CreateCustomMarket(pairBtcUsdc),
-
-				InsertPosition(
-					WithTrader(alice),
-					WithPair(pairBtcUsdc),
-					WithSize(sdk.NewDec(10_000)),
-					WithMargin(sdk.NewDec(750)),
-					WithOpenNotional(sdk.NewDec(10_800))),
-				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 20))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 50))),
-			).
-			When(
-				MoveToNextBlock(),
-				ClosePosition(alice, pairBtcUsdc),
-			).
-			Then(
-				PositionShouldNotExist(alice, pairBtcUsdc),
-				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
-					FinalPosition: types.Position{
-						TraderAddress:                   alice.String(),
-						Pair:                            pairBtcUsdc,
-						Size_:                           sdk.ZeroDec(),
-						Margin:                          sdk.ZeroDec(),
-						OpenNotional:                    sdk.ZeroDec(),
-						LatestCumulativePremiumFraction: sdk.ZeroDec(),
-						LastUpdatedBlockNumber:          2,
-					},
-					PositionNotional: sdk.ZeroDec(),
-					TransactionFee:   sdk.NewInt64Coin(denoms.USDC, 20),
-					RealizedPnl:      sdk.MustNewDecFromStr("-800.000099999999000000"),
-					BadDebt:          sdk.NewCoin(denoms.USDC, sdk.NewInt(50)),
-					FundingPayment:   sdk.ZeroDec(),
-					BlockHeight:      2,
-					MarginToUser:     sdk.NewInt(-20),
-					ChangeReason:     types.ChangeReason_ClosePosition,
-				}),
-				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(1050)), // 1000 + 50 from perp ef
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(10)),
-			),
-	}
-
-	NewTestSuite(t).WithTestCases(tc...).Run()
-}
-
 func TestUpdateSwapInvariant(t *testing.T) {
 	alice := testutil.AccAddress()
 	bob := testutil.AccAddress()
-	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	pairBtcNusd := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	startBlockTime := time.Now()
 
 	startingSwapInvariant := sdk.NewDec(1_000_000_000_000).Mul(sdk.NewDec(1_000_000_000_000))
@@ -1103,182 +1190,182 @@ func TestUpdateSwapInvariant(t *testing.T) {
 	tc := TestCases{
 		TC("only long position - no change to swap invariant").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcNusd),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100000)))),
 			).
 			When(
-				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.ZeroDec()),
-				ClosePosition(alice, pairBtcUsdc),
+				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.ZeroDec()),
+				ClosePosition(alice, pairBtcNusd),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				PositionShouldNotExist(alice, pairBtcNusd),
 			),
 		TC("only short position - no change to swap invariant").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcNusd),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100000)))),
 			).
 			When(
-				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.NewDec(10_000_000_000_000)),
-				ClosePosition(alice, pairBtcUsdc),
+				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.NewDec(10_000_000_000_000)),
+				ClosePosition(alice, pairBtcNusd),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				PositionShouldNotExist(alice, pairBtcNusd),
 			),
 		TC("only long position - increasing k").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcNusd),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100_000_000)))),
 			).
 			When(
-				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.ZeroDec()),
-				EditSwapInvariant(pairBtcUsdc, startingSwapInvariant.MulInt64(100)),
+				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.ZeroDec()),
+				EditSwapInvariant(pairBtcNusd, startingSwapInvariant.MulInt64(100)),
 				AMMShouldBeEqual(
-					pairBtcUsdc,
+					pairBtcNusd,
 					AMM_SwapInvariantShouldBeEqual(sdk.MustNewDecFromStr("99999999999999999999999999.999999000000000000"))),
-				ClosePosition(alice, pairBtcUsdc),
+				ClosePosition(alice, pairBtcNusd),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				PositionShouldNotExist(alice, pairBtcNusd),
 				ModuleBalanceShouldBeEqualTo(types.VaultModuleAccount, sdk.NewCoins()),
 			),
 		TC("only short position - increasing k").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcNusd),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100_000_000)))),
 			).
 			When(
-				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.ZeroDec()),
-				EditSwapInvariant(pairBtcUsdc, startingSwapInvariant.MulInt64(100)),
+				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.ZeroDec()),
+				EditSwapInvariant(pairBtcNusd, startingSwapInvariant.MulInt64(100)),
 				AMMShouldBeEqual(
-					pairBtcUsdc,
+					pairBtcNusd,
 					AMM_SwapInvariantShouldBeEqual(sdk.MustNewDecFromStr("99999999999999999999999999.999999000000000000"))),
-				ClosePosition(alice, pairBtcUsdc),
+				ClosePosition(alice, pairBtcNusd),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				PositionShouldNotExist(alice, pairBtcNusd),
 				ModuleBalanceShouldBeEqualTo(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.OneInt()))),
 			),
 
 		TC("only long position - decreasing k").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcNusd),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100_000_000)))),
 			).
 			When(
-				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.ZeroDec()),
-				EditSwapInvariant(pairBtcUsdc, startingSwapInvariant.Mul(sdk.MustNewDecFromStr("0.1"))),
+				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.ZeroDec()),
+				EditSwapInvariant(pairBtcNusd, startingSwapInvariant.Mul(sdk.MustNewDecFromStr("0.1"))),
 				AMMShouldBeEqual(
-					pairBtcUsdc,
+					pairBtcNusd,
 					AMM_SwapInvariantShouldBeEqual(sdk.MustNewDecFromStr("99999999999999999873578.871987715651277660"))),
-				ClosePosition(alice, pairBtcUsdc),
+				ClosePosition(alice, pairBtcNusd),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				PositionShouldNotExist(alice, pairBtcNusd),
 				ModuleBalanceShouldBeEqualTo(types.VaultModuleAccount, sdk.NewCoins()),
 			),
 		TC("only short position - decreasing k").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcNusd),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100_000_000)))),
 			).
 			When(
-				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.ZeroDec()),
-				EditSwapInvariant(pairBtcUsdc, startingSwapInvariant.Mul(sdk.MustNewDecFromStr("0.1"))),
+				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.ZeroDec()),
+				EditSwapInvariant(pairBtcNusd, startingSwapInvariant.Mul(sdk.MustNewDecFromStr("0.1"))),
 				AMMShouldBeEqual(
-					pairBtcUsdc,
+					pairBtcNusd,
 					AMM_SwapInvariantShouldBeEqual(sdk.MustNewDecFromStr("99999999999999999873578.871987801032774485"))),
-				ClosePosition(alice, pairBtcUsdc),
+				ClosePosition(alice, pairBtcNusd),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				PositionShouldNotExist(alice, pairBtcNusd),
 				ModuleBalanceShouldBeEqualTo(types.VaultModuleAccount, sdk.NewCoins()),
 			),
 
 		TC("long and short position - increasing k").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcNusd),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
 				FundAccount(bob, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
 			).
 			When(
-				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.ZeroDec()),
-				MarketOrder(bob, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.NewDec(10_000_000_000_000)),
+				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.ZeroDec()),
+				MarketOrder(bob, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.NewDec(10_000_000_000_000)),
 
-				EditSwapInvariant(pairBtcUsdc, startingSwapInvariant.MulInt64(100)),
+				EditSwapInvariant(pairBtcNusd, startingSwapInvariant.MulInt64(100)),
 				AMMShouldBeEqual(
-					pairBtcUsdc,
+					pairBtcNusd,
 					AMM_BiasShouldBeEqual(sdk.ZeroDec()),
 					AMM_SwapInvariantShouldBeEqual(sdk.MustNewDecFromStr("100000000000000000000000000.000000000000000000"))),
 
 				ModuleBalanceShouldBeEqualTo(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(20_000_000_000)))),
 				ModuleBalanceShouldBeEqualTo(types.FeePoolModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(20_000_000)))), // Fees are 10_000_000_000 * 0.0010 * 2
 
-				ClosePosition(alice, pairBtcUsdc),
-				ClosePosition(bob, pairBtcUsdc),
+				ClosePosition(alice, pairBtcNusd),
+				ClosePosition(bob, pairBtcNusd),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcUsdc),
-				PositionShouldNotExist(bob, pairBtcUsdc),
+				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionShouldNotExist(bob, pairBtcNusd),
 
 				ModuleBalanceShouldBeEqualTo(types.VaultModuleAccount, sdk.NewCoins()),
 				ModuleBalanceShouldBeEqualTo(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(39_782_394)))),
 			),
 		TC("long and short position - reducing k").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcNusd),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcUsdc, sdk.NewDec(1)),
+				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
 				FundAccount(bob, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
 			).
 			When(
-				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.ZeroDec()),
-				MarketOrder(bob, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.NewDec(10_000_000_000_000)),
+				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.ZeroDec()),
+				MarketOrder(bob, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.NewDec(10_000_000_000_000)),
 
-				EditSwapInvariant(pairBtcUsdc, startingSwapInvariant.Mul(sdk.MustNewDecFromStr("0.1"))),
+				EditSwapInvariant(pairBtcNusd, startingSwapInvariant.Mul(sdk.MustNewDecFromStr("0.1"))),
 				AMMShouldBeEqual(
-					pairBtcUsdc,
+					pairBtcNusd,
 					AMM_BiasShouldBeEqual(sdk.ZeroDec()),
 					AMM_SwapInvariantShouldBeEqual(sdk.MustNewDecFromStr("99999999999999999873578.871987712489000000"))),
 
 				ModuleBalanceShouldBeEqualTo(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(20_000_000_000)))),
 				ModuleBalanceShouldBeEqualTo(types.FeePoolModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(20_000_000)))), // Fees are 10_000_000_000 * 0.0010 * 2
 
-				ClosePosition(alice, pairBtcUsdc),
-				ClosePosition(bob, pairBtcUsdc),
+				ClosePosition(alice, pairBtcNusd),
+				ClosePosition(bob, pairBtcNusd),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcUsdc),
-				PositionShouldNotExist(bob, pairBtcUsdc),
+				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionShouldNotExist(bob, pairBtcNusd),
 
 				ModuleBalanceShouldBeEqualTo(types.VaultModuleAccount, sdk.NewCoins()),
 				ModuleBalanceShouldBeEqualTo(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(39_200_810)))),
