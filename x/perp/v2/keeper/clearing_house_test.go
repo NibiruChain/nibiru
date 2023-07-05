@@ -1208,6 +1208,59 @@ func TestPartialClose(t *testing.T) {
 					ChangeReason:     types.ChangeReason_PartialClose,
 				}),
 			),
+
+		TC("partial close short position with bad debt").
+			Given(
+				CreateCustomMarket(
+					pairBtcNusd,
+					WithPricePeg(sdk.MustNewDecFromStr("1.14")),
+					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
+				),
+				SetBlockTime(startBlockTime),
+				SetBlockNumber(1),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(18)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 48))),
+				InsertPosition(
+					WithPair(pairBtcNusd),
+					WithTrader(alice),
+					WithSize(sdk.NewDec(-10_000)),
+					WithMargin(sdk.NewDec(1_000)),
+					WithOpenNotional(sdk.NewDec(10_000)),
+				),
+			).
+			When(
+				PartialClose(alice, pairBtcNusd, sdk.NewDec(7_500)),
+			).
+			Then(
+				PositionShouldBeEqual(alice, pairBtcNusd, Position_PositionShouldBeEqualTo(types.Position{
+					Pair:                            pairBtcNusd,
+					TraderAddress:                   alice.String(),
+					Margin:                          sdk.ZeroDec(),
+					OpenNotional:                    sdk.MustNewDecFromStr("2500.000021375000374062"),
+					Size_:                           sdk.MustNewDecFromStr("-2500.000000000000000000"),
+					LastUpdatedBlockNumber:          1,
+					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.0002"),
+				})),
+				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
+					FinalPosition: types.Position{
+						Pair:                            pairBtcNusd,
+						TraderAddress:                   alice.String(),
+						Margin:                          sdk.ZeroDec(),
+						OpenNotional:                    sdk.MustNewDecFromStr("2500.000021375000374062"),
+						Size_:                           sdk.MustNewDecFromStr("-2500.000000000000000000"),
+						LastUpdatedBlockNumber:          1,
+						LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.0002"),
+					},
+					PositionNotional: sdk.MustNewDecFromStr("2850.000049875000659062"),
+					RealizedPnl:      sdk.MustNewDecFromStr("-1050.000085500000855000"),
+					BadDebt:          sdk.NewInt64Coin(denoms.NUSD, 48),
+					FundingPayment:   sdk.NewDec(-2),
+					TransactionFee:   sdk.NewCoin(denoms.NUSD, sdk.NewInt(18)),
+					BlockHeight:      1,
+					MarginToUser:     sdk.NewInt(-18),
+					ChangeReason:     types.ChangeReason_PartialClose,
+				}),
+			),
 	}
 
 	NewTestSuite(t).WithTestCases(tc...).Run()
