@@ -566,7 +566,9 @@ func (k Keeper) afterPositionUpdate(
 		}
 	}
 
-	transferredFee, err := k.transferFee(ctx, market.Pair, traderAddr, positionResp.ExchangedNotionalValue)
+	transferredFee, err := k.transferFee(ctx, market.Pair, traderAddr, positionResp.ExchangedNotionalValue,
+		market.ExchangeFeeRatio, market.EcosystemFundFeeRatio,
+	)
 	if err != nil {
 		return err
 	}
@@ -642,13 +644,10 @@ func (k Keeper) transferFee(
 	pair asset.Pair,
 	trader sdk.AccAddress,
 	positionNotional sdk.Dec,
+	exchangeFeeRatio sdk.Dec,
+	ecosystemFundFeeRatio sdk.Dec,
 ) (fees sdkmath.Int, err error) {
-	m, err := k.Markets.Get(ctx, pair)
-	if err != nil {
-		return sdkmath.Int{}, err
-	}
-
-	feeToExchangeFeePool := m.ExchangeFeeRatio.Mul(positionNotional).RoundInt()
+	feeToExchangeFeePool := exchangeFeeRatio.Mul(positionNotional).RoundInt()
 	if feeToExchangeFeePool.IsPositive() {
 		if err = k.BankKeeper.SendCoinsFromAccountToModule(
 			ctx,
@@ -665,7 +664,7 @@ func (k Keeper) transferFee(
 		}
 	}
 
-	feeToEcosystemFund := m.EcosystemFundFeeRatio.Mul(positionNotional).RoundInt()
+	feeToEcosystemFund := ecosystemFundFeeRatio.Mul(positionNotional).RoundInt()
 	if feeToEcosystemFund.IsPositive() {
 		if err = k.BankKeeper.SendCoinsFromAccountToModule(
 			ctx,
