@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	keeper2 "github.com/NibiruChain/nibiru/x/sudo/keeper"
+	sudokeeper "github.com/NibiruChain/nibiru/x/sudo/keeper"
 
 	"github.com/NibiruChain/nibiru/x/sudo/types"
 
@@ -58,7 +58,7 @@ func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 
 // ValidateGenesis performs genesis state validation for the capability module.
 func (AppModuleBasic) ValidateGenesis(
-	cdc codec.JSONCodec, config client.TxEncodingConfig, bz json.RawMessage,
+	cdc codec.JSONCodec, _ client.TxEncodingConfig, bz json.RawMessage,
 ) error {
 	var genState types.GenesisState
 	if err := cdc.UnmarshalJSON(bz, &genState); err != nil {
@@ -94,12 +94,12 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 
-	keeper keeper2.Keeper
+	keeper sudokeeper.Keeper
 }
 
 func NewAppModule(
 	cdc codec.Codec,
-	keeper keeper2.Keeper,
+	keeper sudokeeper.Keeper,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(cdc),
@@ -149,6 +149,6 @@ func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 
 // EndBlock executes all ABCI EndBlock logic respective to the capability module. It
 // returns no validator updates.
-func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
+func (am AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return []abci.ValidatorUpdate{}
 }
