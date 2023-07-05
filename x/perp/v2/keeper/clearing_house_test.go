@@ -1001,6 +1001,58 @@ func TestPartialClose(t *testing.T) {
 					ChangeReason:     types.ChangeReason_PartialClose,
 				})),
 
+		TC("partial close long position with bad debt").
+			Given(
+				CreateCustomMarket(
+					pairBtcNusd,
+					WithPricePeg(sdk.MustNewDecFromStr("0.59")),
+					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
+				),
+				SetBlockTime(startBlockTime),
+				SetBlockNumber(1),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 2))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 27))),
+				InsertPosition(
+					WithPair(pairBtcNusd),
+					WithTrader(alice),
+					WithSize(sdk.NewDec(10_000)),
+					WithMargin(sdk.NewDec(1_000)),
+					WithOpenNotional(sdk.NewDec(10_000)),
+				),
+			).
+			When(
+				PartialClose(alice, pairBtcNusd, sdk.NewDec(2_500)),
+			).
+			Then(
+				PositionShouldBeEqual(alice, pairBtcNusd, Position_PositionShouldBeEqualTo(types.Position{
+					Pair:                            pairBtcNusd,
+					TraderAddress:                   alice.String(),
+					Margin:                          sdk.ZeroDec(),
+					OpenNotional:                    sdk.MustNewDecFromStr("7499.999988937500138281"),
+					Size_:                           sdk.MustNewDecFromStr("7500.000000000000000000"),
+					LastUpdatedBlockNumber:          1,
+					LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.0002"),
+				})),
+				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
+					FinalPosition: types.Position{
+						Pair:                            pairBtcNusd,
+						TraderAddress:                   alice.String(),
+						Margin:                          sdk.ZeroDec(),
+						OpenNotional:                    sdk.MustNewDecFromStr("7499.999988937500138281"),
+						Size_:                           sdk.MustNewDecFromStr("7500.000000000000000000"),
+						LastUpdatedBlockNumber:          1,
+						LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.0002"),
+					},
+					PositionNotional: sdk.MustNewDecFromStr("4424.999944687500580781"),
+					RealizedPnl:      sdk.MustNewDecFromStr("-1025.000014749999852500"),
+					BadDebt:          sdk.NewInt64Coin(denoms.NUSD, 27),
+					FundingPayment:   sdk.NewDec(2),
+					TransactionFee:   sdk.NewInt64Coin(denoms.NUSD, 2),
+					BlockHeight:      1,
+					MarginToUser:     sdk.NewInt(-2),
+					ChangeReason:     types.ChangeReason_PartialClose,
+				})),
+
 		TC("partial close short position with positive PnL").
 			Given(
 				CreateCustomMarket(
