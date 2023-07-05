@@ -4,9 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/sudo/cli"
-	sudokeeper "github.com/NibiruChain/nibiru/x/sudo/keeper"
-	"github.com/NibiruChain/nibiru/x/sudo/types"
+
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -15,6 +13,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
+
+	"github.com/NibiruChain/nibiru/x/sudo/cli"
+	sudokeeper "github.com/NibiruChain/nibiru/x/sudo/keeper"
+	"github.com/NibiruChain/nibiru/x/sudo/types"
 )
 
 // Ensure the interface is properly implemented at compile time
