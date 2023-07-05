@@ -11,20 +11,18 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/x/sudo/cli"
-	"github.com/NibiruChain/nibiru/x/sudo/pb"
+	sudokeeper "github.com/NibiruChain/nibiru/x/sudo/keeper"
+	"github.com/NibiruChain/nibiru/x/sudo/types"
 )
 
 // Ensure the interface is properly implemented at compile time
 var (
-	_          module.AppModule      = AppModule{}
-	_          module.AppModuleBasic = AppModuleBasic{}
-	ModuleName                       = pb.ModuleName
-	StoreKey                         = pb.StoreKey
+	_ module.AppModule      = AppModule{}
+	_ module.AppModuleBasic = AppModuleBasic{}
 )
 
 // ----------------------------------------------------------------------------
@@ -40,20 +38,16 @@ func NewAppModuleBasic(binaryCodec codec.BinaryCodec) AppModuleBasic {
 }
 
 func (AppModuleBasic) Name() string {
-	return pb.ModuleName
+	return types.ModuleName
 }
 
 // RegisterInterfaces registers interfaces and implementations of the perp module.
 func (AppModuleBasic) RegisterInterfaces(interfaceRegistry codectypes.InterfaceRegistry) {
-	pb.RegisterInterfaces(interfaceRegistry)
-}
-
-func (AppModuleBasic) RegisterCodec(aminoCodec *codec.LegacyAmino) {
-	pb.RegisterCodec(aminoCodec)
+	types.RegisterInterfaces(interfaceRegistry)
 }
 
 func (AppModuleBasic) RegisterLegacyAminoCodec(aminoCodec *codec.LegacyAmino) {
-	pb.RegisterCodec(aminoCodec)
+	types.RegisterCodec(aminoCodec)
 }
 
 // DefaultGenesis returns default genesis state as raw bytes for the module.
@@ -63,24 +57,20 @@ func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 
 // ValidateGenesis performs genesis state validation for the capability module.
 func (AppModuleBasic) ValidateGenesis(
-	cdc codec.JSONCodec, config client.TxEncodingConfig, bz json.RawMessage,
+	cdc codec.JSONCodec, _ client.TxEncodingConfig, bz json.RawMessage,
 ) error {
-	var genState pb.GenesisState
+	var genState types.GenesisState
 	if err := cdc.UnmarshalJSON(bz, &genState); err != nil {
-		return fmt.Errorf("failed to unmarshal %s genesis state: %w", pb.ModuleName, err)
+		return fmt.Errorf("failed to unmarshal %s genesis state: %w", types.ModuleName, err)
 	}
 	return genState.Validate()
-}
-
-// RegisterRESTRoutes registers the capability module's REST service handlers.
-func (AppModuleBasic) RegisterRESTRoutes(clientCtx client.Context, rtr *mux.Router) {
 }
 
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the module.
 func (AppModuleBasic) RegisterGRPCGatewayRoutes(
 	clientCtx client.Context, mux *runtime.ServeMux,
 ) {
-	if err := pb.RegisterQueryHandlerClient(context.Background(), mux, pb.NewQueryClient(clientCtx)); err != nil {
+	if err := types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx)); err != nil {
 		panic(err)
 	}
 }
@@ -103,12 +93,12 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 
-	keeper Keeper
+	keeper sudokeeper.Keeper
 }
 
 func NewAppModule(
 	cdc codec.Codec,
-	keeper Keeper,
+	keeper sudokeeper.Keeper,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(cdc),
@@ -121,14 +111,11 @@ func (am AppModule) Name() string {
 	return am.AppModuleBasic.Name()
 }
 
-// QuerierRoute returns the capability module's query routing key.
-func (AppModule) QuerierRoute() string { return pb.QuerierRoute }
-
 // RegisterServices registers a GRPC query service to respond to the
 // module-specific GRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	pb.RegisterQueryServer(cfg.QueryServer(), am.keeper)
-	pb.RegisterMsgServer(cfg.MsgServer(), am.keeper)
+	types.RegisterQueryServer(cfg.QueryServer(), am.keeper)
+	types.RegisterMsgServer(cfg.MsgServer(), am.keeper)
 }
 
 // RegisterInvariants registers the capability module's invariants.
@@ -138,7 +125,7 @@ func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage,
 ) []abci.ValidatorUpdate {
-	var genState pb.GenesisState
+	var genState types.GenesisState
 	// Initialize global index to index in genesis state
 	cdc.MustUnmarshalJSON(gs, &genState)
 
@@ -161,6 +148,6 @@ func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 
 // EndBlock executes all ABCI EndBlock logic respective to the capability module. It
 // returns no validator updates.
-func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
+func (am AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return []abci.ValidatorUpdate{}
 }
