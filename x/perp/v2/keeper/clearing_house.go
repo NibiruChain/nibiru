@@ -275,7 +275,7 @@ func (k Keeper) decreasePosition(
 	currentPosition types.Position,
 	decreasedNotional sdk.Dec,
 	baseAmtLimit sdk.Dec,
-) (updatedAMM *types.AMM, positionResp *types.PositionResp, err error) {
+) (updatedAMM *types.AMM, resp *types.PositionResp, err error) {
 	if currentPosition.Size_.IsZero() {
 		return nil, nil, fmt.Errorf("current position size is zero, nothing to decrease")
 	}
@@ -292,7 +292,7 @@ func (k Keeper) decreasePosition(
 		dir = types.Direction_LONG
 	}
 
-	positionResp = &types.PositionResp{
+	resp = &types.PositionResp{
 		MarginToVault: sdk.ZeroDec(),
 	}
 
@@ -315,24 +315,24 @@ func (k Keeper) decreasePosition(
 	}
 
 	if dir == types.Direction_LONG {
-		positionResp.ExchangedPositionSize = baseAssetDeltaAbs
+		resp.ExchangedPositionSize = baseAssetDeltaAbs
 	} else {
-		positionResp.ExchangedPositionSize = baseAssetDeltaAbs.Neg()
+		resp.ExchangedPositionSize = baseAssetDeltaAbs.Neg()
 	}
 
-	positionResp.RealizedPnl = currentUnrealizedPnl.Mul(
-		positionResp.ExchangedPositionSize.Abs().
+	resp.RealizedPnl = currentUnrealizedPnl.Mul(
+		resp.ExchangedPositionSize.Abs().
 			Quo(currentPosition.Size_.Abs()),
 	)
 
 	fundingPayment := FundingPayment(currentPosition, market.LatestCumulativePremiumFraction)
-	remainingMargin := currentPosition.Margin.Add(positionResp.RealizedPnl).Sub(fundingPayment)
+	remainingMargin := currentPosition.Margin.Add(resp.RealizedPnl).Sub(fundingPayment)
 
-	positionResp.BadDebt = sdk.MinDec(sdk.ZeroDec(), remainingMargin).Abs()
-	positionResp.FundingPayment = fundingPayment
-	positionResp.UnrealizedPnlAfter = currentUnrealizedPnl.Sub(positionResp.RealizedPnl)
-	positionResp.ExchangedNotionalValue = decreasedNotional
-	positionResp.PositionNotional = currentPositionNotional.Sub(decreasedNotional)
+	resp.BadDebt = sdk.MinDec(sdk.ZeroDec(), remainingMargin).Abs()
+	resp.FundingPayment = fundingPayment
+	resp.UnrealizedPnlAfter = currentUnrealizedPnl.Sub(resp.RealizedPnl)
+	resp.ExchangedNotionalValue = decreasedNotional
+	resp.PositionNotional = currentPositionNotional.Sub(decreasedNotional)
 
 	// calculate openNotional (it's different depends on long or short side)
 	// long: unrealizedPnl = positionNotional - openNotional => openNotional = positionNotional - unrealizedPnl
@@ -340,33 +340,33 @@ func (k Keeper) decreasePosition(
 	// positionNotional = oldPositionNotional - notionalValueToDecrease
 	var remainOpenNotional sdk.Dec
 	if currentPosition.Size_.IsPositive() {
-		remainOpenNotional = positionResp.PositionNotional.Sub(positionResp.UnrealizedPnlAfter)
+		remainOpenNotional = resp.PositionNotional.Sub(resp.UnrealizedPnlAfter)
 	} else {
-		remainOpenNotional = positionResp.PositionNotional.Add(positionResp.UnrealizedPnlAfter)
+		remainOpenNotional = resp.PositionNotional.Add(resp.UnrealizedPnlAfter)
 	}
 
 	if remainOpenNotional.IsNegative() {
 		return nil, nil, fmt.Errorf("value of open notional < 0")
 	}
 
-	positionResp.Position = types.Position{
+	resp.Position = types.Position{
 		TraderAddress:                   currentPosition.TraderAddress,
 		Pair:                            currentPosition.Pair,
-		Size_:                           currentPosition.Size_.Add(positionResp.ExchangedPositionSize),
+		Size_:                           currentPosition.Size_.Add(resp.ExchangedPositionSize),
 		Margin:                          sdk.MaxDec(sdk.ZeroDec(), remainingMargin).Abs(),
 		OpenNotional:                    remainOpenNotional,
 		LatestCumulativePremiumFraction: market.LatestCumulativePremiumFraction,
 		LastUpdatedBlockNumber:          ctx.BlockHeight(),
 	}
 
-	if positionResp.Position.Size_.IsZero() {
+	if resp.Position.Size_.IsZero() {
 		err := k.Positions.Delete(ctx, collections.Join(currentPosition.Pair, trader))
 		if err != nil {
 			return nil, nil, err
 		}
 	}
 
-	return updatedAMM, positionResp, nil
+	return updatedAMM, resp, nil
 }
 
 // Closes a position and realizes PnL and funding payments.
