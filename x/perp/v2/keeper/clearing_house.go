@@ -38,16 +38,16 @@ func (k Keeper) MarketOrder(
 ) (positionResp *types.PositionResp, err error) {
 	market, err := k.Markets.Get(ctx, pair)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
+		return nil, types.ErrPairNotFound.Wrapf("pair %s not found", pair)
 	}
 
 	if !market.Enabled {
-		return nil, fmt.Errorf("%w: %s", types.ErrMarketNotEnabled, pair)
+		return nil, types.ErrMarketNotEnabled.Wrapf("market pair %s not enabled", pair)
 	}
 
 	amm, err := k.AMMs.Get(ctx, pair)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
+		return nil, types.ErrPairNotFound.Wrapf("pair %s not found", pair)
 	}
 
 	err = checkMarketOrderRequirements(market, quoteAssetAmt, leverage)
@@ -99,7 +99,7 @@ func (k Keeper) MarketOrder(
 
 	// check bad debt
 	if !positionResp.BadDebt.IsZero() {
-		return nil, fmt.Errorf("bad debt must be zero to prevent attacker from leveraging it")
+		return nil, types.ErrBadDebt.Wrapf("bad debt %s", positionResp.BadDebt)
 	}
 
 	if err = k.afterPositionUpdate(
@@ -544,14 +544,6 @@ func (k Keeper) afterPositionUpdate(
 	positionResp types.PositionResp,
 	changeType types.ChangeReason,
 ) (err error) {
-	if !positionResp.Position.Size_.IsZero() {
-		err = k.checkMarginRatio(ctx, market, amm, positionResp.Position)
-		if err != nil {
-			return err
-		}
-		k.Positions.Insert(ctx, collections.Join(market.Pair, traderAddr), positionResp.Position)
-	}
-
 	// transfer trader <=> vault
 	marginToVault := positionResp.MarginToVault.RoundInt()
 	switch {
@@ -572,6 +564,14 @@ func (k Keeper) afterPositionUpdate(
 	)
 	if err != nil {
 		return err
+	}
+
+	if !positionResp.Position.Size_.IsZero() {
+		err = k.checkMarginRatio(ctx, market, amm, positionResp.Position)
+		if err != nil {
+			return err
+		}
+		k.Positions.Insert(ctx, collections.Join(market.Pair, traderAddr), positionResp.Position)
 	}
 
 	// calculate positionNotional (it's different depends on long or short side)
@@ -841,12 +841,12 @@ func (k Keeper) PartialClose(
 ) (*types.PositionResp, error) {
 	market, err := k.Markets.Get(ctx, pair)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
+		return nil, types.ErrPairNotFound.Wrapf("pair: %s", pair)
 	}
 
 	amm, err := k.AMMs.Get(ctx, pair)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
+		return nil, types.ErrPairNotFound.Wrapf("pair: %s", pair)
 	}
 
 	position, err := k.Positions.Get(ctx, collections.Join(pair, traderAddr))
@@ -882,7 +882,7 @@ func (k Keeper) PartialClose(
 
 	// check bad debt
 	if !positionResp.BadDebt.IsZero() {
-		return nil, fmt.Errorf("bad debt must be zero to prevent attacker from leveraging it")
+		return nil, types.ErrBadDebt.Wrapf("bad debt: %s", positionResp.BadDebt)
 	}
 
 	err = k.afterPositionUpdate(
