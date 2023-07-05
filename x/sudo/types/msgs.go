@@ -1,4 +1,4 @@
-package pb
+package types
 
 import (
 	fmt "fmt"
@@ -16,16 +16,11 @@ var (
 	// StoreKey defines the primary module store key.
 	StoreKey = ModuleName
 
-	MemStoreKey = "mem_" + ModuleName
-
 	// RouterKey is the message route for transactions.
 	RouterKey = ModuleName
-
-	// QuerierRoute defines the module's query routing key.
-	QuerierRoute = ModuleName
 )
 
-func (gen GenesisState) Validate() error {
+func (gen *GenesisState) Validate() error {
 	if gen.Sudoers.Contracts == nil {
 		return fmt.Errorf("nil contract state must be []string")
 	} else if err := gen.Sudoers.Validate(); err != nil {
@@ -36,10 +31,10 @@ func (gen GenesisState) Validate() error {
 
 // MsgEditSudoers
 
-func (m MsgEditSudoers) Route() string { return RouterKey }
-func (m MsgEditSudoers) Type() string  { return "msg_edit_sudoers" }
+func (m *MsgEditSudoers) Route() string { return RouterKey }
+func (m *MsgEditSudoers) Type() string  { return "msg_edit_sudoers" }
 
-func (m MsgEditSudoers) ValidateBasic() error {
+func (m *MsgEditSudoers) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
 		return err
 	}
@@ -50,24 +45,28 @@ func (m MsgEditSudoers) ValidateBasic() error {
 		}
 	}
 
-	if !ROOT_ACTIONS.Has(m.Action) {
+	if !RootActions.Has(m.RootAction()) {
 		return fmt.Errorf(
 			"invalid action type %s, expected one of %s",
-			m.Action, ROOT_ACTIONS.ToSlice(),
+			m.Action, RootActions.ToSlice(),
 		)
 	}
 
 	return nil
 }
 
-func (m MsgEditSudoers) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
+func (m *MsgEditSudoers) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(m))
 }
 
-func (m MsgEditSudoers) GetSigners() []sdk.AccAddress {
+func (m *MsgEditSudoers) GetSigners() []sdk.AccAddress {
 	signer, err := sdk.AccAddressFromBech32(m.Sender)
 	if err != nil {
 		panic(err)
 	}
 	return []sdk.AccAddress{signer}
+}
+
+func (m *MsgEditSudoers) RootAction() RootAction {
+	return RootAction(m.Action)
 }

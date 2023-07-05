@@ -3,6 +3,10 @@ package app
 import (
 	"path/filepath"
 
+	"github.com/NibiruChain/nibiru/x/sudo/keeper"
+
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
+
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -137,7 +141,7 @@ func GetStoreKeys() (
 		epochstypes.StoreKey,
 		perpv2types.StoreKey,
 		inflationtypes.StoreKey,
-		sudo.StoreKey,
+		sudotypes.StoreKey,
 		wasm.StoreKey,
 	)
 	tkeys = sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -298,8 +302,8 @@ func (app *NibiruApp) InitKeepers(
 		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.stakingKeeper, authtypes.FeeCollectorName,
 	)
 
-	app.SudoKeeper = sudo.NewKeeper(
-		appCodec, keys[sudo.StoreKey],
+	app.SudoKeeper = keeper.NewKeeper(
+		appCodec, keys[sudotypes.StoreKey],
 	)
 
 	app.EpochsKeeper.SetHooks(
@@ -572,7 +576,7 @@ func OrderedModuleNames() []string {
 		oracletypes.ModuleName,
 		perpv2types.ModuleName,
 		inflationtypes.ModuleName,
-		sudo.ModuleName,
+		sudotypes.ModuleName,
 
 		// --------------------------------------------------------------------
 		// IBC modules
