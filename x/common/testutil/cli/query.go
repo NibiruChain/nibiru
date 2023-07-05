@@ -19,7 +19,7 @@ import (
 	perpv2cli "github.com/NibiruChain/nibiru/x/perp/v2/client/cli"
 	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 	sudocli "github.com/NibiruChain/nibiru/x/sudo/cli"
-	sudotypes "github.com/NibiruChain/nibiru/x/sudo/pb"
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 )
 
 // ExecQueryOption defines a type which customizes a CLI query operation.
