@@ -102,6 +102,13 @@ func (k Keeper) MarketOrder(
 		return nil, types.ErrBadDebt.Wrapf("bad debt %s", positionResp.BadDebt)
 	}
 
+	if !positionResp.Position.Size_.IsZero() {
+		err = k.checkMarginRatio(ctx, market, amm, positionResp.Position)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if err = k.afterPositionUpdate(
 		ctx, market, *updatedAMM, traderAddr, *positionResp, types.ChangeReason_MarketOrder,
 	); err != nil {
@@ -567,10 +574,6 @@ func (k Keeper) afterPositionUpdate(
 	}
 
 	if !positionResp.Position.Size_.IsZero() {
-		err = k.checkMarginRatio(ctx, market, amm, positionResp.Position)
-		if err != nil {
-			return err
-		}
 		k.Positions.Insert(ctx, collections.Join(market.Pair, traderAddr), positionResp.Position)
 	}
 
@@ -837,7 +840,7 @@ func (k Keeper) PartialClose(
 	ctx sdk.Context,
 	pair asset.Pair,
 	traderAddr sdk.AccAddress,
-	sizeAmt sdk.Dec,
+	sizeAmt sdk.Dec, //unsigned
 ) (*types.PositionResp, error) {
 	market, err := k.Markets.Get(ctx, pair)
 	if err != nil {
@@ -880,9 +883,14 @@ func (k Keeper) PartialClose(
 		return nil, err
 	}
 
-	// check bad debt
-	if !positionResp.BadDebt.IsZero() {
-		return nil, types.ErrBadDebt.Wrapf("bad debt: %s", positionResp.BadDebt)
+	if positionResp.BadDebt.IsPositive() {
+		if err = k.realizeBadDebt(
+			ctx,
+			market,
+			positionResp.BadDebt.RoundInt(),
+		); err != nil {
+			return nil, err
+		}
 	}
 
 	err = k.afterPositionUpdate(
