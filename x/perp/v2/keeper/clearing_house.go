@@ -549,6 +549,7 @@ func (k Keeper) afterPositionUpdate(
 		if err != nil {
 			return err
 		}
+		k.Positions.Insert(ctx, collections.Join(market.Pair, traderAddr), positionResp.Position)
 	}
 
 	// transfer trader <=> vault
@@ -566,15 +567,11 @@ func (k Keeper) afterPositionUpdate(
 		}
 	}
 
-	transferredFee, err := k.transferFee(ctx, market.Pair, traderAddr, positionResp.ExchangedNotionalValue,
+	fees, err := k.transferFee(ctx, market.Pair, traderAddr, positionResp.ExchangedNotionalValue,
 		market.ExchangeFeeRatio, market.EcosystemFundFeeRatio,
 	)
 	if err != nil {
 		return err
-	}
-
-	if !positionResp.Position.Size_.IsZero() {
-		k.Positions.Insert(ctx, collections.Join(market.Pair, traderAddr), positionResp.Position)
 	}
 
 	// calculate positionNotional (it's different depends on long or short side)
@@ -591,12 +588,12 @@ func (k Keeper) afterPositionUpdate(
 		&types.PositionChangedEvent{
 			FinalPosition:    positionResp.Position,
 			PositionNotional: positionNotional,
-			TransactionFee:   sdk.NewCoin(market.Pair.QuoteDenom(), transferredFee),
+			TransactionFee:   sdk.NewCoin(market.Pair.QuoteDenom(), fees),
 			RealizedPnl:      positionResp.RealizedPnl,
 			BadDebt:          sdk.NewCoin(market.Pair.QuoteDenom(), positionResp.BadDebt.RoundInt()),
 			FundingPayment:   positionResp.FundingPayment,
 			BlockHeight:      ctx.BlockHeight(),
-			MarginToUser:     marginToVault.Neg().Sub(transferredFee),
+			MarginToUser:     marginToVault.Neg().Sub(fees),
 			ChangeReason:     changeType,
 		},
 	)
