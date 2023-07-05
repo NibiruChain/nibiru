@@ -1,6 +1,8 @@
 package action
 
 import (
+	"errors"
+
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -93,7 +95,7 @@ func (a removeMarginActionFail) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Con
 	_, err := app.PerpKeeperV2.RemoveMargin(
 		ctx, a.Pair, a.Account, sdk.NewCoin(a.Pair.QuoteDenom(), a.Margin),
 	)
-	if err != a.ExpectedErr {
+	if !errors.Is(err, a.ExpectedErr) {
 		return ctx, err, false
 	}
 
