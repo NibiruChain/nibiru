@@ -348,6 +348,74 @@ func (s *IntegrationTestSuite) TestMarketOrdersAndCloseCmd() {
 	s.EqualValues(codes.InvalidArgument, status.Code())
 }
 
+func (s *IntegrationTestSuite) TestPartialCloseCmd() {
+	val := s.network.Validators[0]
+	user := s.users[6]
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	var err error
+
+	s.T().Log("Open position")
+	txResp, err := testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), user, []string{
+		"buy",
+		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
+		/* leverage */ "1",
+		/* quoteAmt */ "12000000", // 12e6 uNUSD
+		/* baseAssetLimit */ "0"},
+	)
+	s.NoError(err)
+	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
+	s.NoError(s.network.WaitForNextBlock())
+
+	s.T().Log("Check market balance after open position")
+	ammMarketDuo, err := testutilcli.QueryMarketV2(val.ClientCtx, pair)
+	s.Require().NoError(err)
+	s.T().Logf("ammMarketDuo: %s", ammMarketDuo.String())
+	s.EqualValues(sdk.MustNewDecFromStr("9998000.399920015996800640"), ammMarketDuo.Amm.BaseReserve)
+	s.EqualValues(sdk.MustNewDecFromStr("10002000.000000000000000000"), ammMarketDuo.Amm.QuoteReserve)
+
+	s.T().Log("Check trader position")
+	queryResp, err := testutilcli.QueryPositionV2(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
+	s.NoError(err)
+	s.T().Logf("query response: %+v", queryResp)
+	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
+	s.EqualValues(pair, queryResp.Position.Pair)
+	s.EqualValues(sdk.MustNewDecFromStr("1999.600079984003199360"), queryResp.Position.Size_)
+	s.EqualValues(sdk.NewDec(12e6), queryResp.Position.Margin)
+	s.EqualValues(sdk.NewDec(12e6), queryResp.Position.OpenNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("12000000"), queryResp.PositionNotional)
+	s.EqualValues(sdk.ZeroDec(), queryResp.UnrealizedPnl)
+	s.EqualValues(sdk.NewDec(1), queryResp.MarginRatio)
+
+	s.T().Log("Partially close the position")
+	txResp, err = testutilcli.ExecTx(s.network, cli.PartialCloseCmd(), user, []string{
+		pair.String(),
+		"500", // 500 uBTC
+	})
+	s.NoError(err)
+	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
+	s.NoError(s.network.WaitForNextBlock())
+
+	s.T().Log("Check market after partial close")
+	ammMarketDuo, err = testutilcli.QueryMarketV2(val.ClientCtx, pair)
+	s.Require().NoError(err)
+	s.T().Logf("ammMarketDuo: %s", ammMarketDuo.String())
+	s.EqualValues(sdk.MustNewDecFromStr("9998500.399920015996800640"), ammMarketDuo.Amm.BaseReserve)
+	s.EqualValues(sdk.MustNewDecFromStr("10001499.824993752062459356"), ammMarketDuo.Amm.QuoteReserve)
+
+	s.T().Log("Check trader position")
+	queryResp, err = testutilcli.QueryPositionV2(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
+	s.NoError(err)
+	s.T().Logf("query response: %+v", queryResp)
+	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
+	s.EqualValues(asset.Registry.Pair(denoms.BTC, denoms.NUSD), queryResp.Position.Pair)
+	s.EqualValues(sdk.MustNewDecFromStr("1499.600079984003199360"), queryResp.Position.Size_)
+	s.EqualValues(sdk.NewDec(12e6), queryResp.Position.Margin)
+	s.EqualValues(sdk.MustNewDecFromStr("8998949.962512374756136000"), queryResp.Position.OpenNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("8998949.962512374756136000"), queryResp.PositionNotional)
+	s.EqualValues(sdk.ZeroDec(), queryResp.UnrealizedPnl)
+	s.EqualValues(sdk.MustNewDecFromStr("1.333488912594172945"), queryResp.MarginRatio)
+}
+
 func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 	val := s.network.Validators[0]
 	user := s.users[0]

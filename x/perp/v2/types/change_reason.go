@@ -19,6 +19,7 @@ type ChangeReason string
 const (
 	ChangeReason_MarketOrder        ChangeReason = "market_order"
 	ChangeReason_ClosePosition      ChangeReason = "close_position"
+	ChangeReason_PartialClose       ChangeReason = "partial_close"
 	ChangeReason_AddMargin          ChangeReason = "add_margin"
 	ChangeReason_RemoveMargin       ChangeReason = "remove_margin"
 	ChangeReason_PartialLiquidation ChangeReason = "partial_liquidation"
