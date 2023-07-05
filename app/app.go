@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 	"io"
 	"net/http"
 	"os"
@@ -191,7 +192,7 @@ var (
 
 		epochstypes.ModuleName:                {},
 		stablecointypes.StableEFModuleAccount: {authtypes.Burner},
-		sudo.ModuleName:                       {},
+		sudotypes.ModuleName:                  {},
 		common.TreasuryPoolModuleAccount:      {},
 		wasm.ModuleName:                       {authtypes.Burner},
 	}

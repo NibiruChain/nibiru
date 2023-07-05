@@ -4,18 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/store/types"
-
-	"github.com/cosmos/cosmos-sdk/types/errors"
-
-	"github.com/NibiruChain/collections"
-	"github.com/cosmos/cosmos-sdk/codec"
-
-	"github.com/NibiruChain/nibiru/x/common/set"
-	"github.com/NibiruChain/nibiru/x/sudo/pb"
-
 	sdkerrors "cosmossdk.io/errors"
+	"github.com/NibiruChain/collections"
+	"github.com/NibiruChain/nibiru/x/common/set"
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 type Keeper struct {
@@ -31,41 +27,38 @@ func NewKeeper(
 	}
 }
 
-var ROOT_ACTIONS = pb.ROOT_ACTIONS
-var ROOT_ACTION = pb.ROOT_ACTION
-
 func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		goCtx := sdk.WrapSDKContext(
 			ctx.WithEventManager(sdk.NewEventManager()),
 		)
 		switch msg := msg.(type) {
-		case *pb.MsgEditSudoers:
+		case *sudotypes.MsgEditSudoers:
 			res, err := k.EditSudoers(goCtx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 
 		default:
 			errMsg := fmt.Sprintf(
-				"unrecognized %s message type: %T", pb.ModuleName, msg)
+				"unrecognized %s message type: %T", sudotypes.ModuleName, msg)
 			return nil, sdkerrors.Wrap(errors.ErrUnknownRequest, errMsg)
 		}
 	}
 }
 
 // Ensure the interface is properly implemented at compile time
-var _ pb.MsgServer = Keeper{}
+var _ sudotypes.MsgServer = Keeper{}
 
 // EditSudoers adds or removes sudo contracts from state.
 func (k Keeper) EditSudoers(
-	goCtx context.Context, msg *pb.MsgEditSudoers,
-) (*pb.MsgEditSudoersResponse, error) {
+	goCtx context.Context, msg *sudotypes.MsgEditSudoers,
+) (*sudotypes.MsgEditSudoersResponse, error) {
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
 	}
 	switch msg.Action {
-	case ROOT_ACTION.AddContracts:
+	case sudotypes.RootAction.AddContracts:
 		return k.AddContracts(goCtx, msg)
-	case ROOT_ACTION.RemoveContracts:
+	case sudotypes.RootAction.RemoveContracts:
 		return k.RemoveContracts(goCtx, msg)
 	default:
 		return nil, fmt.Errorf("invalid action type specified on msg: %s", msg)
@@ -85,11 +78,11 @@ func (k Keeper) SenderHasPermission(sender string, root string) error {
 // Encoder for the Sudoers type
 // ————————————————————————————————————————————————————————————————————————————
 
-func SudoersValueEncoder(cdc codec.BinaryCodec) collections.ValueEncoder[pb.Sudoers] {
-	return collections.ProtoValueEncoder[pb.Sudoers](cdc)
+func SudoersValueEncoder(cdc codec.BinaryCodec) collections.ValueEncoder[sudotypes.Sudoers] {
+	return collections.ProtoValueEncoder[sudotypes.Sudoers](cdc)
 }
 
-type PbSudoers = pb.Sudoers
+type PbSudoers = sudotypes.Sudoers
 
 type Sudoers struct {
 	Root      string          `json:"root"`
@@ -100,21 +93,21 @@ func (sudo Sudoers) String() string {
 	return sudo.ToPb().String()
 }
 
-func (sudo Sudoers) ToPb() pb.Sudoers {
-	return pb.Sudoers{
+func (sudo Sudoers) ToPb() sudotypes.Sudoers {
+	return sudotypes.Sudoers{
 		Root:      sudo.Root,
 		Contracts: sudo.Contracts.ToSlice(),
 	}
 }
 
-func (sudo Sudoers) FromPb(pbSudoers pb.Sudoers) Sudoers {
+func SudoersFromPb(pbSudoers sudotypes.Sudoers) Sudoers {
 	return Sudoers{
 		Root:      pbSudoers.Root,
 		Contracts: set.New[string](pbSudoers.Contracts...),
 	}
 }
 
-func SudoersToPb(sudo Sudoers) pb.Sudoers {
+func SudoersToPb(sudo Sudoers) sudotypes.Sudoers {
 	return sudo.ToPb()
 }
 
@@ -139,9 +132,9 @@ func (sudo *Sudoers) AddContracts(
 // Keeper.AddContracts executes a MsgEditSudoers message with action type
 // "add_contracts". This adds contract addresses to the sudoer set.
 func (k Keeper) AddContracts(
-	goCtx context.Context, msg *pb.MsgEditSudoers,
-) (msgResp *pb.MsgEditSudoersResponse, err error) {
-	if msg.Action != ROOT_ACTION.AddContracts {
+	goCtx context.Context, msg *sudotypes.MsgEditSudoers,
+) (msgResp *sudotypes.MsgEditSudoersResponse, err error) {
+	if msg.Action != sudotypes.RootAction.AddContracts {
 		err = fmt.Errorf("invalid action type %s for msg add contracts", msg.Action)
 		return
 	}
@@ -152,7 +145,7 @@ func (k Keeper) AddContracts(
 	if err != nil {
 		return
 	}
-	sudoersBefore := Sudoers{}.FromPb(pbSudoersBefore)
+	sudoersBefore := SudoersFromPb(pbSudoersBefore)
 	err = k.SenderHasPermission(msg.Sender, sudoersBefore.Root)
 	if err != nil {
 		return
@@ -165,8 +158,8 @@ func (k Keeper) AddContracts(
 	}
 	pbSudoers := SudoersToPb(Sudoers{Root: sudoersBefore.Root, Contracts: contracts})
 	k.Sudoers.Set(ctx, pbSudoers)
-	msgResp = new(pb.MsgEditSudoersResponse)
-	return msgResp, ctx.EventManager().EmitTypedEvent(&pb.EventUpdateSudoers{
+	msgResp = new(sudotypes.MsgEditSudoersResponse)
+	return msgResp, ctx.EventManager().EmitTypedEvent(&sudotypes.EventUpdateSudoers{
 		Sudoers: pbSudoers,
 		Action:  msg.Action,
 	})
@@ -177,9 +170,9 @@ func (k Keeper) AddContracts(
 // ————————————————————————————————————————————————————————————————————————————
 
 func (k Keeper) RemoveContracts(
-	goCtx context.Context, msg *pb.MsgEditSudoers,
-) (msgResp *pb.MsgEditSudoersResponse, err error) {
-	if msg.Action != ROOT_ACTION.RemoveContracts {
+	goCtx context.Context, msg *sudotypes.MsgEditSudoers,
+) (msgResp *sudotypes.MsgEditSudoersResponse, err error) {
+	if msg.Action != sudotypes.RootAction.RemoveContracts {
 		err = fmt.Errorf("invalid action type %s for msg add contracts", msg.Action)
 		return
 	}
@@ -194,7 +187,7 @@ func (k Keeper) RemoveContracts(
 	if err != nil {
 		return
 	}
-	sudoers := Sudoers{}.FromPb(pbSudoers)
+	sudoers := SudoersFromPb(pbSudoers)
 	err = k.SenderHasPermission(msg.Sender, sudoers.Root)
 	if err != nil {
 		return
@@ -205,8 +198,8 @@ func (k Keeper) RemoveContracts(
 	pbSudoers = SudoersToPb(sudoers)
 	k.Sudoers.Set(ctx, pbSudoers)
 
-	msgResp = new(pb.MsgEditSudoersResponse)
-	return msgResp, ctx.EventManager().EmitTypedEvent(&pb.EventUpdateSudoers{
+	msgResp = new(sudotypes.MsgEditSudoersResponse)
+	return msgResp, ctx.EventManager().EmitTypedEvent(&sudotypes.EventUpdateSudoers{
 		Sudoers: pbSudoers,
 		Action:  msg.Action,
 	})
@@ -254,7 +247,7 @@ func (k Keeper) GetSudoContracts(ctx sdk.Context) (contracts []string, err error
 // SetSudoContracts overwrites the state. This function is a convenience
 // function for testing with permissioned contracts in other modules..
 func (k Keeper) SetSudoContracts(contracts []string, ctx sdk.Context) {
-	k.Sudoers.Set(ctx, pb.Sudoers{
+	k.Sudoers.Set(ctx, sudotypes.Sudoers{
 		Root:      "",
 		Contracts: contracts,
 	})

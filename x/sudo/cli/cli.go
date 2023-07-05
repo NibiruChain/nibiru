@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"github.com/NibiruChain/nibiru/x/sudo/types"
 	"os"
 	"strings"
 
@@ -11,15 +12,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 
 	"github.com/spf13/cobra"
-
-	"github.com/NibiruChain/nibiru/x/sudo/pb"
 )
 
 // GetTxCmd returns a cli command for this module's transactions
 func GetTxCmd() *cobra.Command {
 	txCmd := &cobra.Command{
-		Use:                        pb.ModuleName,
-		Short:                      fmt.Sprintf("x/%s transaction subcommands", pb.ModuleName),
+		Use:                        types.ModuleName,
+		Short:                      fmt.Sprintf("x/%s transaction subcommands", types.ModuleName),
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
@@ -36,9 +35,9 @@ func GetTxCmd() *cobra.Command {
 // GetQueryCmd returns a cli command for this module's queries
 func GetQueryCmd() *cobra.Command {
 	moduleQueryCmd := &cobra.Command{
-		Use: pb.ModuleName,
+		Use: types.ModuleName,
 		Short: fmt.Sprintf(
-			"Query commands for the x/%s module", pb.ModuleName),
+			"Query commands for the x/%s module", types.ModuleName),
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
@@ -84,7 +83,7 @@ func CmdEditSudoers() *cobra.Command {
 				return err
 			}
 
-			msg := new(pb.MsgEditSudoers)
+			msg := new(types.MsgEditSudoers)
 
 			// marshals contents into the proto.Message to which 'msg' points.
 			contents, err := os.ReadFile(args[0])
@@ -123,9 +122,9 @@ func CmdQuerySudoers() *cobra.Command {
 				return err
 			}
 
-			queryClient := pb.NewQueryClient(clientCtx)
+			queryClient := types.NewQueryClient(clientCtx)
 
-			req := new(pb.QuerySudoersRequest)
+			req := new(types.QuerySudoersRequest)
 			resp, err := queryClient.QuerySudoers(
 				cmd.Context(), req,
 			)

@@ -1,6 +1,7 @@
 package sudo_test
 
 import (
+	"github.com/NibiruChain/nibiru/x/sudo/types"
 	"testing"
 	"time"
 
@@ -9,8 +10,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/sudo"
-	"github.com/NibiruChain/nibiru/x/sudo/pb"
-
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
@@ -48,7 +47,7 @@ func useNibiAccPrefix() {
 func TestGenesis(t *testing.T) {
 	for _, testCase := range []struct {
 		name     string
-		genState *pb.GenesisState
+		genState *types.GenesisState
 		panic    bool
 		empty    bool
 	}{
@@ -59,7 +58,7 @@ func TestGenesis(t *testing.T) {
 		},
 		{
 			name: "happy genesis with contracts",
-			genState: &pb.GenesisState{
+			genState: &types.GenesisState{
 				Sudoers: sudo.PbSudoers{
 					Root: testutil.AccAddress().String(),
 					Contracts: []string{
@@ -78,7 +77,7 @@ func TestGenesis(t *testing.T) {
 		},
 		{
 			name: "invalid genesis (panic)",
-			genState: &pb.GenesisState{
+			genState: &types.GenesisState{
 				Sudoers: sudo.PbSudoers{
 					Root:      "root",
 					Contracts: []string{"contract"},
@@ -114,7 +113,7 @@ func TestGenesis(t *testing.T) {
 			require.EqualValues(t, *testCase.genState, *got)
 
 			// Validate with AppModule
-			cdc := pb.ModuleCdc
+			cdc := types.ModuleCdc
 			require.Panics(t, func() {
 				// failing case
 				appModule := sudo.AppModule{}
@@ -193,7 +192,7 @@ func TestSudo_FromPbSudoers(t *testing.T) {
 	}{
 		{
 			name: "empty",
-			in:   pb.Sudoers{},
+			in:   types.Sudoers{},
 			out: sudo.Sudoers{
 				Root:      "",
 				Contracts: set.Set[string]{},
@@ -201,7 +200,7 @@ func TestSudo_FromPbSudoers(t *testing.T) {
 		},
 		{
 			name: "happy",
-			in:   pb.Sudoers{Root: "root", Contracts: []string{"contractA", "contractB"}},
+			in:   types.Sudoers{Root: "root", Contracts: []string{"contractA", "contractB"}},
 			out: sudo.Sudoers{
 				Root:      "root",
 				Contracts: set.New[string]("contractA", "contractB"),
@@ -209,7 +208,7 @@ func TestSudo_FromPbSudoers(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			out := sudo.Sudoers{}.FromPb(tc.in)
+			out := sudo.SudoersFromPb(tc.in)
 			assert.EqualValues(t, tc.out.Contracts, out.Contracts)
 			assert.EqualValues(t, tc.out.Root, out.Root)
 
@@ -232,7 +231,7 @@ func TestKeeper_AddContracts(t *testing.T) {
 	testCases := []struct {
 		name            string
 		contractsBefore []string
-		msg             *pb.MsgEditSudoers
+		msg             *types.MsgEditSudoers
 		contractsAfter  []string
 		shouldFail      bool
 	}{
@@ -241,8 +240,8 @@ func TestKeeper_AddContracts(t *testing.T) {
 			contractsBefore: []string{
 				exampleAddrs[0],
 			},
-			msg: &pb.MsgEditSudoers{
-				Action: pb.ROOT_ACTION.AddContracts,
+			msg: &types.MsgEditSudoers{
+				Action: types.RootAction.AddContracts,
 				Contracts: []string{
 					exampleAddrs[1],
 					exampleAddrs[2],
@@ -261,8 +260,8 @@ func TestKeeper_AddContracts(t *testing.T) {
 			contractsBefore: []string{
 				exampleAddrs[0],
 			},
-			msg: &pb.MsgEditSudoers{
-				Action: pb.ROOT_ACTION.AddContracts,
+			msg: &types.MsgEditSudoers{
+				Action: types.RootAction.AddContracts,
 				Contracts: []string{
 					exampleAddrs[1],
 					"rotten address",
@@ -278,7 +277,7 @@ func TestKeeper_AddContracts(t *testing.T) {
 			contractsBefore: []string{
 				exampleAddrs[0],
 			},
-			msg: &pb.MsgEditSudoers{
+			msg: &types.MsgEditSudoers{
 				Action: "not an action type",
 				Sender: root,
 			},
@@ -290,8 +289,8 @@ func TestKeeper_AddContracts(t *testing.T) {
 			contractsBefore: []string{
 				exampleAddrs[0],
 			},
-			msg: &pb.MsgEditSudoers{
-				Action: pb.ROOT_ACTION.AddContracts,
+			msg: &types.MsgEditSudoers{
+				Action: types.RootAction.AddContracts,
 				Sender: exampleAddrs[1],
 				Contracts: []string{
 					exampleAddrs[1],
@@ -313,7 +312,7 @@ func TestKeeper_AddContracts(t *testing.T) {
 			k := nibiru.SudoKeeper
 
 			t.Log("Set starting contracts state")
-			stateBefore := pb.Sudoers{
+			stateBefore := types.Sudoers{
 				Root:      root,
 				Contracts: tc.contractsBefore,
 			}
@@ -382,7 +381,7 @@ func TestKeeper_RemoveContracts(t *testing.T) {
 	for _, tc := range []struct {
 		name            string
 		contractsBefore []string
-		msg             *pb.MsgEditSudoers
+		msg             *types.MsgEditSudoers
 		contractsAfter  []string
 		shouldFail      bool
 	}{
@@ -393,8 +392,8 @@ func TestKeeper_RemoveContracts(t *testing.T) {
 				exampleAddrs[1],
 				exampleAddrs[2],
 			},
-			msg: &pb.MsgEditSudoers{
-				Action: pb.ROOT_ACTION.RemoveContracts,
+			msg: &types.MsgEditSudoers{
+				Action: types.RootAction.RemoveContracts,
 				Contracts: []string{
 					exampleAddrs[1],
 					exampleAddrs[2],
@@ -411,7 +410,7 @@ func TestKeeper_RemoveContracts(t *testing.T) {
 			contractsBefore: []string{
 				exampleAddrs[0],
 			},
-			msg: &pb.MsgEditSudoers{
+			msg: &types.MsgEditSudoers{
 				Action: "not an action type",
 				Sender: root,
 			},
@@ -424,8 +423,8 @@ func TestKeeper_RemoveContracts(t *testing.T) {
 				exampleAddrs[0],
 				exampleAddrs[2],
 			},
-			msg: &pb.MsgEditSudoers{
-				Action: pb.ROOT_ACTION.RemoveContracts,
+			msg: &types.MsgEditSudoers{
+				Action: types.RootAction.RemoveContracts,
 				Contracts: []string{
 					exampleAddrs[1],
 				},
@@ -442,7 +441,7 @@ func TestKeeper_RemoveContracts(t *testing.T) {
 			k := nibiru.SudoKeeper
 
 			t.Log("Set starting contracts state")
-			stateBefore := pb.Sudoers{
+			stateBefore := types.Sudoers{
 				Root:      root,
 				Contracts: tc.contractsBefore,
 			}
@@ -481,11 +480,11 @@ func TestKeeper_RemoveContracts(t *testing.T) {
 func TestQuerySudoers(t *testing.T) {
 	for _, tc := range []struct {
 		name  string
-		state pb.Sudoers
+		state types.Sudoers
 	}{
 		{
 			name: "happy 1",
-			state: pb.Sudoers{
+			state: types.Sudoers{
 				Root:      "alice",
 				Contracts: []string{"contractA", "contractB"},
 			},
@@ -493,7 +492,7 @@ func TestQuerySudoers(t *testing.T) {
 
 		{
 			name: "happy 2 (empty)",
-			state: pb.Sudoers{
+			state: types.Sudoers{
 				Root:      "",
 				Contracts: []string(nil),
 			},
@@ -501,7 +500,7 @@ func TestQuerySudoers(t *testing.T) {
 
 		{
 			name: "happy 3",
-			state: pb.Sudoers{
+			state: types.Sudoers{
 				Root:      "",
 				Contracts: []string{"boop", "blap"},
 			},
@@ -512,7 +511,7 @@ func TestQuerySudoers(t *testing.T) {
 
 			nibiru.SudoKeeper.Sudoers.Set(ctx, tc.state)
 
-			req := new(pb.QuerySudoersRequest)
+			req := new(types.QuerySudoersRequest)
 			resp, err := nibiru.SudoKeeper.QuerySudoers(
 				sdk.WrapSDKContext(ctx), req,
 			)
@@ -525,7 +524,7 @@ func TestQuerySudoers(t *testing.T) {
 
 	t.Run("nil request should error", func(t *testing.T) {
 		nibiru, ctx := setup()
-		var req *pb.QuerySudoersRequest = nil
+		var req *types.QuerySudoersRequest = nil
 		_, err := nibiru.SudoKeeper.QuerySudoers(
 			sdk.WrapSDKContext(ctx), req,
 		)

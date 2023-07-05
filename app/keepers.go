@@ -1,6 +1,7 @@
 package app
 
 import (
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 	"path/filepath"
 
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
@@ -137,7 +138,7 @@ func GetStoreKeys() (
 		epochstypes.StoreKey,
 		perpv2types.StoreKey,
 		inflationtypes.StoreKey,
-		sudo.StoreKey,
+		sudotypes.StoreKey,
 		wasm.StoreKey,
 	)
 	tkeys = sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -299,7 +300,7 @@ func (app *NibiruApp) InitKeepers(
 	)
 
 	app.SudoKeeper = sudo.NewKeeper(
-		appCodec, keys[sudo.StoreKey],
+		appCodec, keys[sudotypes.StoreKey],
 	)
 
 	app.EpochsKeeper.SetHooks(
@@ -572,7 +573,7 @@ func OrderedModuleNames() []string {
 		oracletypes.ModuleName,
 		perpv2types.ModuleName,
 		inflationtypes.ModuleName,
-		sudo.ModuleName,
+		sudotypes.ModuleName,
 
 		// --------------------------------------------------------------------
 		// IBC modules

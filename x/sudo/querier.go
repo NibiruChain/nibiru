@@ -2,8 +2,7 @@ package sudo
 
 import (
 	"context"
-
-	"github.com/NibiruChain/nibiru/x/sudo/pb"
+	"github.com/NibiruChain/nibiru/x/sudo/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
@@ -11,12 +10,12 @@ import (
 )
 
 // Ensure the interface is properly implemented at compile time
-var _ pb.QueryServer = Keeper{}
+var _ types.QueryServer = Keeper{}
 
 func (k Keeper) QuerySudoers(
 	goCtx context.Context,
-	req *pb.QuerySudoersRequest,
-) (resp *pb.QuerySudoersResponse, err error) {
+	req *types.QuerySudoersRequest,
+) (resp *types.QuerySudoersResponse, err error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -24,7 +23,7 @@ func (k Keeper) QuerySudoers(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	sudoers, err := k.Sudoers.Get(ctx)
 
-	return &pb.QuerySudoersResponse{
+	return &types.QuerySudoersResponse{
 		Sudoers: sudoers,
 	}, err
 }
