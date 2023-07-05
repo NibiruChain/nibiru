@@ -103,7 +103,7 @@ func (k Keeper) MarketOrder(
 	}
 
 	if !positionResp.Position.Size_.IsZero() {
-		err = k.checkMarginRatio(ctx, market, amm, positionResp.Position)
+		err = k.checkMarginRatio(ctx, market, *updatedAMM, positionResp.Position)
 		if err != nil {
 			return nil, err
 		}
