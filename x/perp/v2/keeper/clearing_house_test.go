@@ -5,25 +5,21 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-
-	"github.com/NibiruChain/nibiru/x/common/testutil/assertion"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/NibiruChain/collections"
-
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
+	. "github.com/NibiruChain/nibiru/x/common/testutil/assertion"
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	. "github.com/NibiruChain/nibiru/x/oracle/integration/action"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
@@ -1047,7 +1043,7 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 	startTime := time.Now()
 
 	tc := TestCases{
-		TC("close position with bad debt").
+		TC("close long position with bad debt").
 			Given(
 				SetBlockNumber(1),
 				SetBlockTime(startTime),
@@ -1069,8 +1065,8 @@ func TestClosePositionWithBadDebt(t *testing.T) {
 			).
 			Then(
 				PositionShouldNotExist(alice, pairBtcUsdc),
-				assertion.ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(1050)), // 1000 + 50 from perp ef
-				assertion.ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(0)),
+				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(1050)), // 1000 + 50 from perp ef
+				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(0)),
 			),
 	}
 
