@@ -1,8 +1,7 @@
-package sudo
+package keeper
 
 import (
 	"context"
-
 	"github.com/NibiruChain/nibiru/x/sudo/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"

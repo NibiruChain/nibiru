@@ -1,6 +1,7 @@
-package sudo_test
+package keeper_test
 
 import (
+	"github.com/NibiruChain/nibiru/x/sudo/keeper"
 	"testing"
 	"time"
 
@@ -171,7 +172,7 @@ func TestSudo_AddContracts(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			_, _ = setup()
 			root := testutil.AccAddress().String()
-			sudoers := sudo.Sudoers{
+			sudoers := keeper.Sudoers{
 				Root:      root,
 				Contracts: set.New(tc.start...),
 			}
@@ -190,12 +191,12 @@ func TestSudo_FromPbSudoers(t *testing.T) {
 	for _, tc := range []struct {
 		name string
 		in   types.Sudoers
-		out  sudo.Sudoers
+		out  keeper.Sudoers
 	}{
 		{
 			name: "empty",
 			in:   types.Sudoers{},
-			out: sudo.Sudoers{
+			out: keeper.Sudoers{
 				Root:      "",
 				Contracts: set.Set[string]{},
 			},
@@ -203,18 +204,18 @@ func TestSudo_FromPbSudoers(t *testing.T) {
 		{
 			name: "happy",
 			in:   types.Sudoers{Root: "root", Contracts: []string{"contractA", "contractB"}},
-			out: sudo.Sudoers{
+			out: keeper.Sudoers{
 				Root:      "root",
 				Contracts: set.New[string]("contractA", "contractB"),
 			},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			out := sudo.SudoersFromPb(tc.in)
+			out := keeper.SudoersFromPb(tc.in)
 			assert.EqualValues(t, tc.out.Contracts, out.Contracts)
 			assert.EqualValues(t, tc.out.Root, out.Root)
 
-			pbSudoers := sudo.SudoersToPb(out)
+			pbSudoers := keeper.SudoersToPb(out)
 			for _, contract := range tc.in.Contracts {
 				assert.True(t, set.New(pbSudoers.Contracts...).Has(contract))
 			}

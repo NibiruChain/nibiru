@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/NibiruChain/nibiru/x/sudo/keeper"
 	"path/filepath"
 
 	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
@@ -300,7 +301,7 @@ func (app *NibiruApp) InitKeepers(
 		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.stakingKeeper, authtypes.FeeCollectorName,
 	)
 
-	app.SudoKeeper = sudo.NewKeeper(
+	app.SudoKeeper = keeper.NewKeeper(
 		appCodec, keys[sudotypes.StoreKey],
 	)
 

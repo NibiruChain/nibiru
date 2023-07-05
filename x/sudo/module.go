@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	keeper2 "github.com/NibiruChain/nibiru/x/sudo/keeper"
 
 	"github.com/NibiruChain/nibiru/x/sudo/types"
 
@@ -93,12 +94,12 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 
-	keeper Keeper
+	keeper keeper2.Keeper
 }
 
 func NewAppModule(
 	cdc codec.Codec,
-	keeper Keeper,
+	keeper keeper2.Keeper,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(cdc),

@@ -1,15 +1,16 @@
-package sudo
+package keeper
 
 import (
 	"context"
 	"fmt"
 
-	"github.com/NibiruChain/collections"
-	"github.com/NibiruChain/nibiru/x/common/set"
-	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/collections"
+	"github.com/NibiruChain/nibiru/x/common/set"
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 )
 
 type Keeper struct {
@@ -93,7 +94,7 @@ func SudoersToPb(sudo Sudoers) sudotypes.Sudoers {
 // AddContracts
 // ————————————————————————————————————————————————————————————————————————————
 
-// Sudoers.AddContracts adds contract addresses to the sudoer set.
+// AddContracts adds contract addresses to the sudoer set.
 func (sudo *Sudoers) AddContracts(
 	contracts []string,
 ) (out set.Set[string], err error) {
@@ -107,7 +108,7 @@ func (sudo *Sudoers) AddContracts(
 	return sudo.Contracts, err
 }
 
-// Keeper.AddContracts executes a MsgEditSudoers message with action type
+// AddContracts executes a MsgEditSudoers message with action type
 // "add_contracts". This adds contract addresses to the sudoer set.
 func (k Keeper) AddContracts(
 	goCtx context.Context, msg *sudotypes.MsgEditSudoers,
