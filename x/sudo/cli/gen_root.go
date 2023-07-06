@@ -3,7 +3,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/sudo/types"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -11,6 +11,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/spf13/cobra"
+
+	"github.com/NibiruChain/nibiru/x/sudo/types"
 )
 
 func AddSudoRootAccountCmd(defaultNodeHome string) *cobra.Command {

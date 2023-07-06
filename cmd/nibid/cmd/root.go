@@ -2,9 +2,10 @@ package cmd
 
 import (
 	"errors"
-	"github.com/NibiruChain/nibiru/x/sudo/cli"
 	"io"
 	"os"
+
+	"github.com/NibiruChain/nibiru/x/sudo/cli"
 
 	dbm "github.com/cometbft/cometbft-db"
 	tmcli "github.com/cometbft/cometbft/libs/cli"
