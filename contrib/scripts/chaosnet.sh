@@ -9,12 +9,12 @@ rm -rf $HOME/.nibid
 nibid init $CHAIN_ID --chain-id $CHAIN_ID --home $HOME/.nibid --overwrite
 nibid config keyring-backend test
 nibid config chain-id $CHAIN_ID
-nibid config broadcast-mode block
+nibid config broadcast-mode sync
 nibid config output json
 
 sed -i '/\[api\]/,+3 s/enable = false/enable = true/' $HOME/.nibid/config/app.toml
-sed -i 's/swagger = false/swagger = true/' $HOME/.nibid/config/app.toml
 sed -i 's/enabled-unsafe-cors = false/enabled-unsafe-cors = true/' $HOME/.nibid/config/app.toml
+sed -i 's/address = "localhost:9090"/address = "0.0.0.0:9090"/' $HOME/.nibid/config/app.toml
 sed -i 's/127.0.0.1/0.0.0.0/' $HOME/.nibid/config/config.toml
 echo "$MNEMONIC" | nibid keys add validator --recover
 nibid genesis add-genesis-account $(nibid keys show validator -a) "10000000000000unibi,10000000000000unusd,10000000000000uusdt,10000000000000uusdc"
@@ -57,7 +57,7 @@ add_genesis_perp_markets_with_coingecko_prices() {
     return 1
   fi
 
-  nibid add-genesis-perp-market --pair=ubtc:unusd --sqrt-depth=$reserve_amt --price-multiplier=$price_btc
+  nibid genesis add-genesis-perp-market --pair=ubtc:unusd --sqrt-depth=$reserve_amt --price-multiplier=$price_btc
 
   price_eth=$(cat tmp_market_prices.json | jq -r '.ethereum.usd')
   price_eth=${price_eth%.*}
@@ -65,7 +65,7 @@ add_genesis_perp_markets_with_coingecko_prices() {
     return 1
   fi
 
-  nibid add-genesis-perp-market --pair=ueth:unusd --sqrt-depth=$reserve_amt --price-multiplier=$price_eth
+  nibid genesis add-genesis-perp-market --pair=ueth:unusd --sqrt-depth=$reserve_amt --price-multiplier=$price_eth
 }
 
 add_genesis_perp_markets_with_coingecko_prices
