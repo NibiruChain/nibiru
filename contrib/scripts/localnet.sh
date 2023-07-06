@@ -231,7 +231,7 @@ else
 fi
 
 # set validator as sudoer
-add_genesis_param '.app_state.sudo.sudoers.root = "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"'
+$BINARY genesis add-sudo-root-account "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"
 
 # hack for localnet since we don't have a pricefeeder yet
 add_genesis_param '.app_state.oracle.exchange_rates[0].pair = "ubtc:unusd"'
