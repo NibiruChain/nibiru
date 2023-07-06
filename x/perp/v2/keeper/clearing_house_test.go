@@ -6,6 +6,10 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/NibiruChain/collections"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/stretchr/testify/require"
+
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
@@ -16,9 +20,6 @@ import (
 	. "github.com/NibiruChain/nibiru/x/oracle/integration/action"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/stretchr/testify/require"
 
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
