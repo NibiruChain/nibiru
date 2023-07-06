@@ -8,6 +8,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/NibiruChain/nibiru/x/sudo/keeper"
+
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
+
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	dbm "github.com/cometbft/cometbft-db"
@@ -191,7 +195,7 @@ var (
 
 		epochstypes.ModuleName:                {},
 		stablecointypes.StableEFModuleAccount: {authtypes.Burner},
-		sudo.ModuleName:                       {},
+		sudotypes.ModuleName:                  {},
 		common.TreasuryPoolModuleAccount:      {},
 		wasm.ModuleName:                       {authtypes.Burner},
 	}
@@ -270,7 +274,7 @@ type NibiruApp struct {
 	OracleKeeper     oraclekeeper.Keeper
 	StablecoinKeeper stablecoinkeeper.Keeper
 	InflationKeeper  inflationkeeper.Keeper
-	SudoKeeper       sudo.Keeper
+	SudoKeeper       keeper.Keeper
 
 	// WASM keepers
 	WasmKeeper       wasm.Keeper

@@ -74,8 +74,8 @@ func EventHasAttributeValue(abciEvent sdk.Event, key string, want string) error 
 	if !ok {
 		return fmt.Errorf("abci event does not contain key: %s", key)
 	}
-
 	got := attr.Value
+
 	if !strings.Contains(got, want) {
 		return fmt.Errorf("expected %s %s, got %s", key, want, got)
 	}
