@@ -54,7 +54,17 @@ func AddSudoRootAccountCmd(defaultNodeHome string) *cobra.Command {
 			}
 
 			genDoc.AppState = appStateJSON
-			return genutil.ExportGenesisFile(genDoc, genFile)
+			err = genutil.ExportGenesisFile(genDoc, genFile)
+			if err != nil {
+				return err
+			}
+
+			err = clientCtx.PrintString(fmt.Sprintf("sudo module root account added to genesis.json: %s\n", rootAccount))
+			if err != nil {
+				return err
+			}
+
+			return nil
 		},
 	}
 

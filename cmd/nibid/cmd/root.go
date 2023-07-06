@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"github.com/NibiruChain/nibiru/x/sudo/cli"
 	"io"
 	"os"
 
@@ -153,6 +154,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 			encodingConfig,
 			oraclecli.AddGenesisPricefeederDelegationCmd(app.DefaultNodeHome),
 			perpv2cli.AddMarketGenesisCmd(app.DefaultNodeHome),
+			cli.AddSudoRootAccountCmd(app.DefaultNodeHome),
 		),
 		queryCommand(),
 		txCommand(),
