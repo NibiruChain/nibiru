@@ -14,8 +14,10 @@ nibid config output json
 
 sed -i '/\[api\]/,+3 s/enable = false/enable = true/' $HOME/.nibid/config/app.toml
 sed -i 's/enabled-unsafe-cors = false/enabled-unsafe-cors = true/' $HOME/.nibid/config/app.toml
-sed -i 's/address = "localhost:9090"/address = "0.0.0.0:9090"/' $HOME/.nibid/config/app.toml
 sed -i 's/127.0.0.1/0.0.0.0/' $HOME/.nibid/config/config.toml
+sed -i 's/localhost/0.0.0.0/' $HOME/.nibid/config/config.toml
+sed -i 's/localhost/0.0.0.0/' $HOME/.nibid/config/app.toml
+sed -i 's/localhost/0.0.0.0/' $HOME/.nibid/config/app.toml
 
 echo "$MNEMONIC" | nibid keys add validator --recover
 nibid genesis add-genesis-account $(nibid keys show validator -a) "10000000000000unibi,10000000000000unusd,10000000000000uusdt,10000000000000uusdc"
