@@ -19,7 +19,7 @@ services:
     image: ghcr.io/nibiruchain/go-faucet:latest
     environment:
       NODE: nibiru:9090
-      MNEMONIC: guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host
+      MNEMONIC: undo donkey arena rule old portion long forget rescue post stuff normal reduce raw unable warrior method stairs valley enhance glory lens sign zero
       SEND_COINS: 11000000unibi,100000000unusd,100000000uusdt
       MAX_SEND_COINS: 110000000unibi,1000000000unusd,1000000000uusdt
     depends_on:
@@ -61,7 +61,7 @@ services:
       - GRPC_ENDPOINT=tcp://nibiru:9090
       - GRPC_INSECURE=true
       - NO_PARTITIONS=true
-      - LIQUIDATOR_MNEMONIC=guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host
+      - LIQUIDATOR_MNEMONIC=record damage person caution truly riot resource luxury rude guide mushroom athlete fantasy dentist friend mule depth salmon photo unfold exclude coyote idea evoke
       - LIQUIDATOR_GAS_LIMIT_INITIAL=500000
       - LIQUIDATOR_GAS_MULTIPLIER=5
       - LIQUIDATOR_GAS_MAX_ATTEMPTS=10
@@ -89,7 +89,7 @@ services:
       CHAIN_ID: nibiru-localnet-0
       GRPC_ENDPOINT: nibiru:9090
       WEBSOCKET_ENDPOINT: ws://nibiru:26657/websocket
-      FEEDER_MNEMONIC: guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host
+      FEEDER_MNEMONIC: empower dice proud brick treat reward pull jeans right rubber infant hamster pet foster among crush quick report rival bracket easily mouse topple absorb
       EXCHANGE_SYMBOLS_MAP: '{ "bitfinex": { "ubtc:uusd": "tBTCUSD", "ueth:uusd": "tETHUSD", "uusdt:uusd": "tUSTUSD" }, "binance": { "ubtc:uusd": "BTCUSD", "ueth:uusd": "ETHUSD", "uusdt:uusd": "USDTUSD", "uusdc:uusd": "USDCUSD", "uatom:uusd": "ATOMUSD", "ubnb:uusd": "BNBUSD", "uavax:uusd": "AVAXUSD", "usol:uusd": "SOLUSD", "uada:uusd": "ADAUSD", "ubtc:unusd": "BTCUSD", "ueth:unusd": "ETHUSD", "uusdt:unusd": "USDTUSD", "uusdc:unusd": "USDCUSD", "uatom:unusd": "ATOMUSD", "ubnb:unusd": "BNBUSD", "uavax:unusd": "AVAXUSD", "usol:unusd": "SOLUSD", "uada:unusd": "ADAUSD" } }'
     depends_on:
       nibiru:

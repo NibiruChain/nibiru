@@ -16,8 +16,12 @@ sed -i '/\[api\]/,+3 s/enable = false/enable = true/' $HOME/.nibid/config/app.to
 sed -i 's/enabled-unsafe-cors = false/enabled-unsafe-cors = true/' $HOME/.nibid/config/app.toml
 sed -i 's/address = "localhost:9090"/address = "0.0.0.0:9090"/' $HOME/.nibid/config/app.toml
 sed -i 's/127.0.0.1/0.0.0.0/' $HOME/.nibid/config/config.toml
+
 echo "$MNEMONIC" | nibid keys add validator --recover
 nibid genesis add-genesis-account $(nibid keys show validator -a) "10000000000000unibi,10000000000000unusd,10000000000000uusdt,10000000000000uusdc"
+nibid genesis add-genesis-account nibi1wx9360p9rvy9m5cdhsua6qpdf9ktvwhjqw949s "10000000000000unibi,10000000000000unusd,10000000000000uusdt,10000000000000uusdc" # faucet
+nibid genesis add-genesis-account nibi1g7vzqfthhf4l4vs6skyjj27vqhe97m5gp33hxy "10000000000000unibi" # liquidator
+nibid genesis add-genesis-account nibi19n0clnacpjv0d3t8evvzp3fptlup9srjdqunzs "10000000000000unibi" # pricefeeder
 nibid genesis gentx validator 900000000unibi --chain-id $CHAIN_ID
 nibid genesis collect-gentxs
 
@@ -78,3 +82,5 @@ add_genesis_param '.app_state.oracle.exchange_rates[0].pair = "ubtc:unusd"'
 add_genesis_param '.app_state.oracle.exchange_rates[0].exchange_rate = "20000"'
 add_genesis_param '.app_state.oracle.exchange_rates[1].pair = "ueth:unusd"'
 add_genesis_param '.app_state.oracle.exchange_rates[1].exchange_rate = "2000"'
+
+nibid genesis add-genesis-pricefeeder-delegation --validator $(nibid keys show validator -a --bech val) --pricefeeder nibi19n0clnacpjv0d3t8evvzp3fptlup9srjdqunzs
