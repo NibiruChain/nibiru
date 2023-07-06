@@ -91,6 +91,7 @@ services:
       WEBSOCKET_ENDPOINT: ws://nibiru:26657/websocket
       FEEDER_MNEMONIC: empower dice proud brick treat reward pull jeans right rubber infant hamster pet foster among crush quick report rival bracket easily mouse topple absorb
       EXCHANGE_SYMBOLS_MAP: '{ "bitfinex": { "ubtc:uusd": "tBTCUSD", "ueth:uusd": "tETHUSD", "uusdt:uusd": "tUSTUSD" }, "binance": { "ubtc:uusd": "BTCUSD", "ueth:uusd": "ETHUSD", "uusdt:uusd": "USDTUSD", "uusdc:uusd": "USDCUSD", "uatom:uusd": "ATOMUSD", "ubnb:uusd": "BNBUSD", "uavax:uusd": "AVAXUSD", "usol:uusd": "SOLUSD", "uada:uusd": "ADAUSD", "ubtc:unusd": "BTCUSD", "ueth:unusd": "ETHUSD", "uusdt:unusd": "USDTUSD", "uusdc:unusd": "USDCUSD", "uatom:unusd": "ATOMUSD", "ubnb:unusd": "BNBUSD", "uavax:unusd": "AVAXUSD", "usol:unusd": "SOLUSD", "uada:unusd": "ADAUSD" } }'
+      VALIDATOR_ADDRESS: nibivaloper1zaavvzxez0elundtn32qnk9lkm8kmcszuwx9jz
     depends_on:
       nibiru:
         condition: service_started
