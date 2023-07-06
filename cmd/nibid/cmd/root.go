@@ -5,6 +5,8 @@ import (
 	"io"
 	"os"
 
+	"github.com/NibiruChain/nibiru/x/sudo/cli"
+
 	dbm "github.com/cometbft/cometbft-db"
 	tmcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/cometbft/cometbft/libs/log"
@@ -153,6 +155,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 			encodingConfig,
 			oraclecli.AddGenesisPricefeederDelegationCmd(app.DefaultNodeHome),
 			perpv2cli.AddMarketGenesisCmd(app.DefaultNodeHome),
+			cli.AddSudoRootAccountCmd(app.DefaultNodeHome),
 		),
 		queryCommand(),
 		txCommand(),

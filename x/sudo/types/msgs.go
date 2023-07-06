@@ -20,15 +20,6 @@ var (
 	RouterKey = ModuleName
 )
 
-func (gen *GenesisState) Validate() error {
-	if gen.Sudoers.Contracts == nil {
-		return fmt.Errorf("nil contract state must be []string")
-	} else if err := gen.Sudoers.Validate(); err != nil {
-		return err
-	}
-	return nil
-}
-
 // MsgEditSudoers
 
 func (m *MsgEditSudoers) Route() string { return RouterKey }

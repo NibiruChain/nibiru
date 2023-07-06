@@ -68,7 +68,7 @@ func (msg MsgEditSudoersPlus) ToJson(t *testing.T) (fileJsonBz []byte, fileName 
 	return fileJsonBz, fileName
 }
 
-func (msg MsgEditSudoersPlus) Exec(
+func (MsgEditSudoersPlus) Exec(
 	network *testutilcli.Network,
 	fileName string,
 	from sdk.AccAddress,
