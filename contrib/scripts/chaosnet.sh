@@ -78,11 +78,7 @@ add_genesis_perp_markets_with_coingecko_prices
 
 # x/oracle
 add_genesis_param '.app_state.oracle.params.twap_lookback_window = "900s"'
-add_genesis_param '.app_state.oracle.params.vote_period = "10000"'
+add_genesis_param '.app_state.oracle.params.vote_period = "10"'
 add_genesis_param '.app_state.oracle.params.min_voters = "1"'
-add_genesis_param '.app_state.oracle.exchange_rates[0].pair = "ubtc:unusd"'
-add_genesis_param '.app_state.oracle.exchange_rates[0].exchange_rate = "20000"'
-add_genesis_param '.app_state.oracle.exchange_rates[1].pair = "ueth:unusd"'
-add_genesis_param '.app_state.oracle.exchange_rates[1].exchange_rate = "2000"'
 
 nibid genesis add-genesis-pricefeeder-delegation --validator $(nibid keys show validator -a --bech val) --pricefeeder nibi19n0clnacpjv0d3t8evvzp3fptlup9srjdqunzs
