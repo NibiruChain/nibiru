@@ -9,15 +9,21 @@ rm -rf $HOME/.nibid
 nibid init $CHAIN_ID --chain-id $CHAIN_ID --home $HOME/.nibid --overwrite
 nibid config keyring-backend test
 nibid config chain-id $CHAIN_ID
-nibid config broadcast-mode block
+nibid config broadcast-mode sync
 nibid config output json
 
 sed -i '/\[api\]/,+3 s/enable = false/enable = true/' $HOME/.nibid/config/app.toml
-sed -i 's/swagger = false/swagger = true/' $HOME/.nibid/config/app.toml
 sed -i 's/enabled-unsafe-cors = false/enabled-unsafe-cors = true/' $HOME/.nibid/config/app.toml
 sed -i 's/127.0.0.1/0.0.0.0/' $HOME/.nibid/config/config.toml
+sed -i 's/localhost/0.0.0.0/' $HOME/.nibid/config/config.toml
+sed -i 's/localhost/0.0.0.0/' $HOME/.nibid/config/app.toml
+sed -i 's/localhost/0.0.0.0/' $HOME/.nibid/config/app.toml
+
 echo "$MNEMONIC" | nibid keys add validator --recover
 nibid genesis add-genesis-account $(nibid keys show validator -a) "10000000000000unibi,10000000000000unusd,10000000000000uusdt,10000000000000uusdc"
+nibid genesis add-genesis-account nibi1wx9360p9rvy9m5cdhsua6qpdf9ktvwhjqw949s "10000000000000unibi,10000000000000unusd,10000000000000uusdt,10000000000000uusdc" # faucet
+nibid genesis add-genesis-account nibi1g7vzqfthhf4l4vs6skyjj27vqhe97m5gp33hxy "10000000000000unibi" # liquidator
+nibid genesis add-genesis-account nibi19n0clnacpjv0d3t8evvzp3fptlup9srjdqunzs "10000000000000unibi" # pricefeeder
 nibid genesis gentx validator 900000000unibi --chain-id $CHAIN_ID
 nibid genesis collect-gentxs
 
@@ -57,7 +63,7 @@ add_genesis_perp_markets_with_coingecko_prices() {
     return 1
   fi
 
-  nibid add-genesis-perp-market --pair=ubtc:unusd --sqrt-depth=$reserve_amt --price-multiplier=$price_btc
+  nibid genesis add-genesis-perp-market --pair=ubtc:unusd --sqrt-depth=$reserve_amt --price-multiplier=$price_btc
 
   price_eth=$(cat tmp_market_prices.json | jq -r '.ethereum.usd')
   price_eth=${price_eth%.*}
@@ -65,16 +71,14 @@ add_genesis_perp_markets_with_coingecko_prices() {
     return 1
   fi
 
-  nibid add-genesis-perp-market --pair=ueth:unusd --sqrt-depth=$reserve_amt --price-multiplier=$price_eth
+  nibid genesis add-genesis-perp-market --pair=ueth:unusd --sqrt-depth=$reserve_amt --price-multiplier=$price_eth
 }
 
 add_genesis_perp_markets_with_coingecko_prices
 
 # x/oracle
 add_genesis_param '.app_state.oracle.params.twap_lookback_window = "900s"'
-add_genesis_param '.app_state.oracle.params.vote_period = "10000"'
+add_genesis_param '.app_state.oracle.params.vote_period = "10"'
 add_genesis_param '.app_state.oracle.params.min_voters = "1"'
-add_genesis_param '.app_state.oracle.exchange_rates[0].pair = "ubtc:unusd"'
-add_genesis_param '.app_state.oracle.exchange_rates[0].exchange_rate = "20000"'
-add_genesis_param '.app_state.oracle.exchange_rates[1].pair = "ueth:unusd"'
-add_genesis_param '.app_state.oracle.exchange_rates[1].exchange_rate = "2000"'
+
+nibid genesis add-genesis-pricefeeder-delegation --validator $(nibid keys show validator -a --bech val) --pricefeeder nibi19n0clnacpjv0d3t8evvzp3fptlup9srjdqunzs
