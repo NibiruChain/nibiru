@@ -32,9 +32,9 @@ func (act containsLiquidateEvent) Do(_ *app.NibiruApp, ctx sdk.Context) (
 	outCtx sdk.Context, err error, isMandatory bool,
 ) {
 	foundEvent := false
-	events := ctx.EventManager().Events()
 	matchingEvents := []abci.Event{}
-	for _, sdkEvent := range events {
+
+	for _, sdkEvent := range ctx.EventManager().Events() {
 		if sdkEvent.Type != proto.MessageName(act.expectedEvent) {
 			continue
 		}
@@ -74,7 +74,7 @@ func (act containsLiquidateEvent) Do(_ *app.NibiruApp, ctx sdk.Context) (
 	return ctx, errors.New(
 		strings.Join([]string{
 			fmt.Sprintf("expected: %+v.", sdk.StringifyEvents([]abci.Event{abci.Event(expected)})),
-			fmt.Sprintf("found %v events:", len(events)),
+			fmt.Sprintf("found %v events:", len(ctx.EventManager().Events())),
 			fmt.Sprintf("events of matching type:\n%v", sdk.StringifyEvents(matchingEvents).String()),
 		}, "\n"),
 	), false
@@ -99,10 +99,12 @@ func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context)
 		if sdkEvent.Type != proto.MessageName(p.expectedEvent) {
 			continue
 		}
+
 		abciEvent := abci.Event{
 			Type:       sdkEvent.Type,
 			Attributes: sdkEvent.Attributes,
 		}
+
 		typedEvent, err := sdk.ParseTypedEvent(abciEvent)
 		if err != nil {
 			return ctx, err, false
@@ -119,16 +121,17 @@ func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context)
 
 		if !reflect.DeepEqual(p.expectedEvent, positionChangedEvent) {
 			expected, _ := sdk.TypedEventToEvent(p.expectedEvent)
-			actual, _ := sdk.TypedEventToEvent(positionChangedEvent)
 			return ctx, fmt.Errorf(`expected event is not equal to the actual event.
 want:
 %+v
 got:
-%+v`, sdk.StringifyEvents([]abci.Event{abci.Event(expected)}), sdk.StringifyEvents([]abci.Event{abci.Event(actual)})), false
+%+v`, sdk.StringifyEvents([]abci.Event{abci.Event(expected)}), sdk.StringifyEvents([]abci.Event{abciEvent})), false
 		}
+
+		return ctx, nil, false
 	}
 
-	return ctx, nil, false
+	return ctx, fmt.Errorf("unable to find desired event of type %s", proto.MessageName(p.expectedEvent)), false
 }
 
 // PositionChangedEventShouldBeEqual checks that the position changed event is

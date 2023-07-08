@@ -77,7 +77,7 @@ type positionShouldNotExist struct {
 func (p positionShouldNotExist) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	_, err := app.PerpKeeperV2.Positions.Get(ctx, collections.Join(p.Pair, p.Account))
 	if err == nil {
-		return ctx, fmt.Errorf("position should not exist"), false
+		return ctx, fmt.Errorf("position should not exist, but it does with pair %s", p.Pair), false
 	}
 
 	return ctx, nil, false
