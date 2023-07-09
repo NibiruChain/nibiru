@@ -3,6 +3,8 @@ package binding
 import (
 	"encoding/json"
 
+	"github.com/NibiruChain/nibiru/x/sudo/keeper"
+
 	sdkerrors "cosmossdk.io/errors"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
@@ -10,7 +12,6 @@ import (
 
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
-	"github.com/NibiruChain/nibiru/x/sudo"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 )
 
@@ -21,7 +22,7 @@ var _ wasmkeeper.Messenger = (*CustomWasmExecutor)(nil)
 type CustomWasmExecutor struct {
 	Wasm   wasmkeeper.Messenger
 	Perp   ExecutorPerp
-	Sudo   sudo.Keeper
+	Sudo   keeper.Keeper
 	Oracle ExecutorOracle
 }
 
@@ -136,7 +137,7 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 
 func CustomExecuteMsgHandler(
 	perpv2 perpv2keeper.Keeper,
-	sudoKeeper sudo.Keeper,
+	sudoKeeper keeper.Keeper,
 	oracleKeeper oraclekeeper.Keeper,
 ) func(wasmkeeper.Messenger) wasmkeeper.Messenger {
 	return func(originalWasmMessenger wasmkeeper.Messenger) wasmkeeper.Messenger {
