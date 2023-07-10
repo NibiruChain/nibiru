@@ -353,10 +353,10 @@ func (p partialCloseFails) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context,
 	_, err := app.PerpKeeperV2.PartialClose(ctx, p.pair, p.trader, p.amount)
 
 	if !errors.Is(err, p.expectedErr) {
-		return ctx, fmt.Errorf("expected error %s, got %s", p.expectedErr, err), true
+		return ctx, fmt.Errorf("expected error %s, got %s", p.expectedErr, err), false
 	}
 
-	return ctx, nil, true
+	return ctx, nil, false
 }
 
 func PartialCloseFails(trader sdk.AccAddress, pair asset.Pair, amount sdk.Dec, expecedErr error) action.Action {

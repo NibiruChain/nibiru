@@ -231,13 +231,11 @@ else
 fi
 
 # set validator as sudoer
-add_genesis_param '.app_state.sudo.sudoers.root = "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"'
+$BINARY genesis add-sudo-root-account "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"
 
-# hack for localnet since we don't have a pricefeeder yet
-add_genesis_param '.app_state.oracle.exchange_rates[0].pair = "ubtc:unusd"'
-add_genesis_param '.app_state.oracle.exchange_rates[0].exchange_rate = "20000"'
-add_genesis_param '.app_state.oracle.exchange_rates[1].pair = "ueth:unusd"'
-add_genesis_param '.app_state.oracle.exchange_rates[1].exchange_rate = "2000"'
+add_genesis_param '.app_state.oracle.params.twap_lookback_window = "900s"'
+add_genesis_param '.app_state.oracle.params.vote_period = "10"'
+add_genesis_param '.app_state.oracle.params.min_voters = "1"'
 
 # Start the network
 echo_info "Starting $CHAIN_ID in $CHAIN_DIR..."
