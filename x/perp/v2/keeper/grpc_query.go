@@ -95,11 +95,6 @@ func (q queryServer) position(ctx sdk.Context, pair asset.Pair, trader sdk.AccAd
 	}
 	unrealizedPnl := UnrealizedPnl(position, positionNotional)
 
-	// marginRatioMark, err := q.k.GetMarginRatio(ctx, market, amm, position, types.MarginCalculationPriceOption_MAX_PNL)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
 	return types.QueryPositionResponse{
 		Position:         position,
 		PositionNotional: positionNotional,
