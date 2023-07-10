@@ -38,16 +38,16 @@ func (k Keeper) MarketOrder(
 ) (positionResp *types.PositionResp, err error) {
 	market, err := k.Markets.Get(ctx, pair)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
+		return nil, types.ErrPairNotFound.Wrapf("pair %s not found", pair)
 	}
 
 	if !market.Enabled {
-		return nil, fmt.Errorf("%w: %s", types.ErrMarketNotEnabled, pair)
+		return nil, types.ErrMarketNotEnabled.Wrapf("market pair %s not enabled", pair)
 	}
 
 	amm, err := k.AMMs.Get(ctx, pair)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
+		return nil, types.ErrPairNotFound.Wrapf("pair %s not found", pair)
 	}
 
 	err = checkMarketOrderRequirements(market, quoteAssetAmt, leverage)
@@ -92,6 +92,18 @@ func (k Keeper) MarketOrder(
 			/* leverage */ leverage,
 			/* baseAmtLimit */ baseAmtLimit,
 		)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// check bad debt
+	if !positionResp.BadDebt.IsZero() {
+		return nil, types.ErrBadDebt.Wrapf("bad debt %s", positionResp.BadDebt)
+	}
+
+	if !positionResp.Position.Size_.IsZero() {
+		err = k.checkMarginRatio(ctx, market, *updatedAMM, positionResp.Position)
 		if err != nil {
 			return nil, err
 		}
@@ -144,10 +156,20 @@ func (k Keeper) increasePosition(
 	baseAmtLimit sdk.Dec, // unsigned
 	leverage sdk.Dec, // unsigned
 ) (updatedAMM *types.AMM, positionResp *types.PositionResp, err error) {
-	positionResp = &types.PositionResp{}
-	marginIncrease := increasedNotional.Quo(leverage)
-	fundingPayment := FundingPayment(currentPosition, market.LatestCumulativePremiumFraction) // signed
-	remainingMargin := currentPosition.Margin.Add(marginIncrease).Sub(fundingPayment)         // signed
+	positionNotional, err := PositionNotionalSpot(amm, currentPosition)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	positionResp = &types.PositionResp{
+		RealizedPnl:            sdk.ZeroDec(),
+		MarginToVault:          increasedNotional.Quo(leverage),                                         // unsigned
+		FundingPayment:         FundingPayment(currentPosition, market.LatestCumulativePremiumFraction), // signed
+		ExchangedNotionalValue: increasedNotional,                                                       // unsigned
+		PositionNotional:       positionNotional.Add(increasedNotional),                                 // unsigned
+	}
+
+	remainingMargin := currentPosition.Margin.Add(positionResp.MarginToVault).Sub(positionResp.FundingPayment) // signed
 
 	updatedAMM, baseAssetDeltaAbs, err := k.SwapQuoteAsset(
 		ctx,
@@ -167,16 +189,6 @@ func (k Keeper) increasePosition(
 		positionResp.ExchangedPositionSize = baseAssetDeltaAbs.Neg()
 	}
 
-	positionNotional, err := PositionNotionalSpot(amm, currentPosition)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	positionResp.ExchangedNotionalValue = increasedNotional
-	positionResp.PositionNotional = positionNotional.Add(increasedNotional)
-	positionResp.RealizedPnl = sdk.ZeroDec()
-	positionResp.MarginToVault = marginIncrease
-	positionResp.FundingPayment = fundingPayment
 	positionResp.BadDebt = sdk.MinDec(sdk.ZeroDec(), remainingMargin).Abs()
 	positionResp.Position = types.Position{
 		TraderAddress:                   currentPosition.TraderAddress,
@@ -539,18 +551,6 @@ func (k Keeper) afterPositionUpdate(
 	positionResp types.PositionResp,
 	changeType types.ChangeReason,
 ) (err error) {
-	// check bad debt
-	if !positionResp.BadDebt.IsZero() {
-		return fmt.Errorf("bad debt must be zero to prevent attacker from leveraging it")
-	}
-
-	if !positionResp.Position.Size_.IsZero() {
-		err = k.checkMarginRatio(ctx, market, amm, positionResp.Position)
-		if err != nil {
-			return err
-		}
-	}
-
 	// transfer trader <=> vault
 	marginToVault := positionResp.MarginToVault.RoundInt()
 	switch {
@@ -566,7 +566,9 @@ func (k Keeper) afterPositionUpdate(
 		}
 	}
 
-	transferredFee, err := k.transferFee(ctx, market.Pair, traderAddr, positionResp.ExchangedNotionalValue)
+	transferredFee, err := k.transferFee(ctx, market.Pair, traderAddr, positionResp.ExchangedNotionalValue,
+		market.ExchangeFeeRatio, market.EcosystemFundFeeRatio,
+	)
 	if err != nil {
 		return err
 	}
@@ -642,13 +644,10 @@ func (k Keeper) transferFee(
 	pair asset.Pair,
 	trader sdk.AccAddress,
 	positionNotional sdk.Dec,
+	exchangeFeeRatio sdk.Dec,
+	ecosystemFundFeeRatio sdk.Dec,
 ) (fees sdkmath.Int, err error) {
-	m, err := k.Markets.Get(ctx, pair)
-	if err != nil {
-		return sdkmath.Int{}, err
-	}
-
-	feeToExchangeFeePool := m.ExchangeFeeRatio.Mul(positionNotional).RoundInt()
+	feeToExchangeFeePool := exchangeFeeRatio.Mul(positionNotional).RoundInt()
 	if feeToExchangeFeePool.IsPositive() {
 		if err = k.BankKeeper.SendCoinsFromAccountToModule(
 			ctx,
@@ -665,7 +664,7 @@ func (k Keeper) transferFee(
 		}
 	}
 
-	feeToEcosystemFund := m.EcosystemFundFeeRatio.Mul(positionNotional).RoundInt()
+	feeToEcosystemFund := ecosystemFundFeeRatio.Mul(positionNotional).RoundInt()
 	if feeToEcosystemFund.IsPositive() {
 		if err = k.BankKeeper.SendCoinsFromAccountToModule(
 			ctx,
@@ -731,8 +730,6 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.A
 		); err != nil {
 			return nil, err
 		}
-
-		return positionResp, nil
 	}
 
 	if err = k.afterPositionUpdate(
@@ -843,16 +840,16 @@ func (k Keeper) PartialClose(
 	ctx sdk.Context,
 	pair asset.Pair,
 	traderAddr sdk.AccAddress,
-	sizeAmt sdk.Dec,
+	sizeAmt sdk.Dec, //unsigned
 ) (*types.PositionResp, error) {
 	market, err := k.Markets.Get(ctx, pair)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
+		return nil, types.ErrPairNotFound.Wrapf("pair: %s", pair)
 	}
 
 	amm, err := k.AMMs.Get(ctx, pair)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
+		return nil, types.ErrPairNotFound.Wrapf("pair: %s", pair)
 	}
 
 	position, err := k.Positions.Get(ctx, collections.Join(pair, traderAddr))
@@ -884,6 +881,16 @@ func (k Keeper) PartialClose(
 	updatedAMM, positionResp, err := k.decreasePosition(ctx, market, amm, position, reverseNotionalAmt, sdk.ZeroDec())
 	if err != nil {
 		return nil, err
+	}
+
+	if positionResp.BadDebt.IsPositive() {
+		if err = k.realizeBadDebt(
+			ctx,
+			market,
+			positionResp.BadDebt.RoundInt(),
+		); err != nil {
+			return nil, err
+		}
 	}
 
 	err = k.afterPositionUpdate(

@@ -42,7 +42,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Improvements
 
-* #[1466](https://github.com/NibiruChain/nibiru/pull/1466) - refactor(perp): `PositionLiquidatedEvent`
+* [#1466](https://github.com/NibiruChain/nibiru/pull/1466) - refactor(perp): `PositionLiquidatedEvent`
+* [#1494](https://github.com/NibiruChain/nibiru/pull/1494) - feat: create cli to add sudo account into genesis
+* [#1493](https://github.com/NibiruChain/nibiru/pull/1493) - fix(perp): allow `ClosePosition` when there is bad debt
 
 ### Features
 
@@ -71,7 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `github.com/spf13/cast` from 1.5.0 to 1.5.1 (#1358)
 - Bump `github.com/stretchr/testify` from 1.8.2 to 1.8.4 (#1384, #1435)
 - Bump `cosmossdk.io/math` from 1.0.0-beta.6 to 1.0.1 (#1394)
-- Bump `google.golang.org/grpc` from 1.53.0 to 1.56.1 (#1395, #1437, #1443)
+- Bump `google.golang.org/grpc` from 1.53.0 to 1.56.2 (#1395, #1437, #1443, #1497)
 - Bump `github.com/gin-gonic/gin` from 1.8.1 to 1.9.1 (#1409)
 - Bump `github.com/spf13/viper` from 1.15.0 to 1.16.0 (#1436)
 - Bump `github.com/prometheus/client_golang` from 1.15.1 to 1.16.0 (#1431)
