@@ -546,6 +546,70 @@ func TestMarketOrder(t *testing.T) {
 				}),
 			),
 
+		TC("existing short position, decrease a lot when there's bad debt").
+			Given(
+				CreateCustomMarket(pairBtcNusd,
+					WithPricePeg(sdk.MustNewDecFromStr("1.11")),
+					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
+				),
+				SetBlockNumber(1),
+				SetBlockTime(startBlockTime),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(22)))),
+				InsertPosition(
+					WithPair(pairBtcNusd),
+					WithTrader(alice),
+					WithMargin(sdk.NewDec(1_000)),
+					WithSize(sdk.NewDec(-10_000)),
+					WithOpenNotional(sdk.NewDec(10_000)),
+				),
+			).
+			When(
+				MoveToNextBlock(),
+				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(3000), sdk.NewDec(10), sdk.ZeroDec(),
+					MarketOrderResp_PositionShouldBeEqual(
+						types.Position{
+							Pair:                            pairBtcNusd,
+							TraderAddress:                   alice.String(),
+							Margin:                          sdk.ZeroDec(),
+							OpenNotional:                    sdk.ZeroDec(),
+							Size_:                           sdk.ZeroDec(),
+							LastUpdatedBlockNumber:          2,
+							LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.0002"),
+						},
+					),
+					MarketOrderResp_ExchangeNotionalValueShouldBeEqual(sdk.MustNewDecFromStr("11100.000111000001110000")),
+					MarketOrderResp_ExchangedPositionSizeShouldBeEqual(sdk.MustNewDecFromStr("10000")),
+					MarketOrderResp_BadDebtShouldBeEqual(sdk.MustNewDecFromStr("98.000111000001110000")),
+					MarketOrderResp_FundingPaymentShouldBeEqual(sdk.NewDec(-2)),
+					MarketOrderResp_RealizedPnlShouldBeEqual(sdk.MustNewDecFromStr("-1100.000111000001110000")),
+					MarketOrderResp_UnrealizedPnlAfterShouldBeEqual(sdk.ZeroDec()),
+					MarketOrderResp_MarginToVaultShouldBeEqual(sdk.ZeroDec()),
+					MarketOrderResp_PositionNotionalShouldBeEqual(sdk.ZeroDec()),
+				),
+			).
+			Then(
+				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
+					FinalPosition: types.Position{
+						Pair:                            pairBtcNusd,
+						TraderAddress:                   alice.String(),
+						Margin:                          sdk.ZeroDec(),
+						OpenNotional:                    sdk.ZeroDec(),
+						Size_:                           sdk.ZeroDec(),
+						LastUpdatedBlockNumber:          2,
+						LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.0002"),
+					},
+					PositionNotional: sdk.ZeroDec(),
+					RealizedPnl:      sdk.MustNewDecFromStr("-1100.000111000001110000"),
+					BadDebt:          sdk.NewInt64Coin(denoms.NUSD, 98),
+					FundingPayment:   sdk.NewDec(-2),
+					TransactionFee:   sdk.NewInt64Coin(denoms.NUSD, 22), // 20 bps
+					BlockHeight:      2,
+					// exchangedMargin = - marginToVault - transferredFee
+					MarginToUser: sdk.NewInt(-22),
+					ChangeReason: types.ChangeReason_MarketOrder,
+				}),
+			),
+
 		TC("user has insufficient funds").
 			Given(
 				CreateCustomMarket(pairBtcNusd),
