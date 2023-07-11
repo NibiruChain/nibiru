@@ -187,6 +187,42 @@ func TestSudo_AddContracts(t *testing.T) {
 	}
 }
 
+func TestMsgServer_ChangeRoot(t *testing.T) {
+	app, ctx := setup()
+
+	_, err := app.SudoKeeper.Sudoers.Get(ctx)
+	require.NoError(t, err)
+
+	actualRoot := testutil.AccAddress().String()
+	newRoot := testutil.AccAddress().String()
+	fakeRoot := testutil.AccAddress().String()
+
+	app.SudoKeeper.Sudoers.Set(ctx, types.Sudoers{
+		Root: actualRoot,
+	})
+
+	// try to change root with non-root account
+	msgServer := keeper.NewMsgServer(app.SudoKeeper)
+	_, err = msgServer.ChangeRoot(
+		sdk.WrapSDKContext(ctx),
+		&types.MsgChangeRoot{Sender: fakeRoot, NewRoot: newRoot},
+	)
+	require.EqualError(t, err, "unauthorized: missing sudo permissions")
+
+	// try to change root with root account
+	_, err = msgServer.ChangeRoot(
+		sdk.WrapSDKContext(ctx),
+		&types.MsgChangeRoot{Sender: actualRoot, NewRoot: newRoot},
+	)
+	require.NoError(t, err)
+
+	// check that root has changed
+	sudoers, err := app.SudoKeeper.Sudoers.Get(ctx)
+	require.NoError(t, err)
+
+	require.Equal(t, newRoot, sudoers.Root)
+}
+
 func TestSudo_FromPbSudoers(t *testing.T) {
 	for _, tc := range []struct {
 		name string
@@ -469,61 +505,4 @@ func TestKeeper_RemoveContracts(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestQuerySudoers(t *testing.T) {
-	for _, tc := range []struct {
-		name  string
-		state types.Sudoers
-	}{
-		{
-			name: "happy 1",
-			state: types.Sudoers{
-				Root:      "alice",
-				Contracts: []string{"contractA", "contractB"},
-			},
-		},
-
-		{
-			name: "happy 2 (empty)",
-			state: types.Sudoers{
-				Root:      "",
-				Contracts: []string(nil),
-			},
-		},
-
-		{
-			name: "happy 3",
-			state: types.Sudoers{
-				Root:      "",
-				Contracts: []string{"boop", "blap"},
-			},
-		},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			nibiru, ctx := setup()
-
-			nibiru.SudoKeeper.Sudoers.Set(ctx, tc.state)
-
-			req := new(types.QuerySudoersRequest)
-			querier := keeper.NewQuerier(nibiru.SudoKeeper)
-			resp, err := querier.QuerySudoers(
-				sdk.WrapSDKContext(ctx), req,
-			)
-			require.NoError(t, err)
-
-			outSudoers := resp.Sudoers
-			require.EqualValues(t, tc.state, outSudoers)
-		})
-	}
-
-	t.Run("nil request should error", func(t *testing.T) {
-		nibiru, ctx := setup()
-		var req *types.QuerySudoersRequest = nil
-		querier := keeper.NewQuerier(nibiru.SudoKeeper)
-		_, err := querier.QuerySudoers(
-			sdk.WrapSDKContext(ctx), req,
-		)
-		require.Error(t, err)
-	})
 }

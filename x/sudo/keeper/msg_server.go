@@ -21,11 +21,6 @@ func NewMsgServer(keeper Keeper) *MsgServer {
 	return &MsgServer{keeper: keeper}
 }
 
-func (m MsgServer) ChangeRoot(ctx context.Context, root *sudotypes.MsgChangeRoot) (*sudotypes.MsgChangeRootResponse, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
 // Ensure the interface is properly implemented at compile time
 var _ sudotypes.MsgServer = MsgServer{}
 
@@ -33,9 +28,6 @@ var _ sudotypes.MsgServer = MsgServer{}
 func (m MsgServer) EditSudoers(
 	goCtx context.Context, msg *sudotypes.MsgEditSudoers,
 ) (*sudotypes.MsgEditSudoersResponse, error) {
-	if err := msg.ValidateBasic(); err != nil {
-		return nil, err
-	}
 	switch msg.RootAction() {
 	case sudotypes.AddContracts:
 		return m.keeper.AddContracts(goCtx, msg)
@@ -44,6 +36,43 @@ func (m MsgServer) EditSudoers(
 	default:
 		return nil, fmt.Errorf("invalid action type specified on msg: %s", msg)
 	}
+}
+
+func (m MsgServer) ChangeRoot(ctx context.Context, msg *sudotypes.MsgChangeRoot) (*sudotypes.MsgChangeRootResponse, error) {
+	sdkContext := sdk.UnwrapSDKContext(ctx)
+
+	pbSudoers, err := m.keeper.Sudoers.Get(sdkContext)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get sudoers: %w", err)
+	}
+
+	err = m.validateRootPermissions(pbSudoers, msg)
+	if err != nil {
+		return nil, err
+	}
+
+	pbSudoers.Root = msg.NewRoot
+	m.keeper.Sudoers.Set(sdkContext, pbSudoers)
+
+	return &sudotypes.MsgChangeRootResponse{}, nil
+}
+
+func (m MsgServer) validateRootPermissions(pbSudoers sudotypes.Sudoers, msg *sudotypes.MsgChangeRoot) error {
+	root, err := sdk.AccAddressFromBech32(pbSudoers.Root)
+	if err != nil {
+		return fmt.Errorf("failed to parse root address: %w", err)
+	}
+
+	sender, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return fmt.Errorf("failed to parse sender address: %w", err)
+	}
+
+	if !root.Equals(sender) {
+		return sudotypes.ErrUnauthorized
+	}
+
+	return nil
 }
 
 // ————————————————————————————————————————————————————————————————————————————
