@@ -114,8 +114,8 @@ func (am AppModule) Name() string {
 // RegisterServices registers a GRPC query service to respond to the
 // module-specific GRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	types.RegisterQueryServer(cfg.QueryServer(), am.keeper)
-	types.RegisterMsgServer(cfg.MsgServer(), am.keeper)
+	types.RegisterQueryServer(cfg.QueryServer(), sudokeeper.NewQuerier(am.keeper))
+	types.RegisterMsgServer(cfg.MsgServer(), sudokeeper.NewMsgServer(am.keeper))
 }
 
 // RegisterInvariants registers the capability module's invariants.

@@ -219,6 +219,23 @@ func (s *IntegrationSuite) TestCmdEditSudoers() {
 	}
 }
 
+func (s *IntegrationSuite) Test_ZCmdChangeRoot() {
+	val := s.network.Validators[0]
+
+	sudoers, err := testutilcli.QuerySudoers(val.ClientCtx)
+	s.NoError(err)
+	initialRoot := sudoers.Sudoers.Root
+
+	newRoot := testutil.AccAddress()
+	_, err = testutilcli.ExecTx(s.network, cli.CmdChangeRoot(), s.root.addr, []string{newRoot.String()})
+	require.NoError(s.T(), err)
+
+	sudoers, err = testutilcli.QuerySudoers(val.ClientCtx)
+	s.NoError(err)
+	require.NotEqual(s.T(), sudoers.Sudoers.Root, initialRoot)
+	require.Equal(s.T(), sudoers.Sudoers.Root, newRoot.String())
+}
+
 // TestMarshal_EditSudoers verifies that the expected proto.Message for
 // the EditSudoders fn marshals and unmarshals properly from JSON.
 // This unmarshaling is used in the main body of the CmdEditSudoers command.
