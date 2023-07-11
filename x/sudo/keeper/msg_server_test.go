@@ -326,7 +326,8 @@ func TestKeeper_AddContracts(t *testing.T) {
 
 			t.Log("Execute message")
 			// Check via message handler directly
-			res, err := k.EditSudoers(sdk.WrapSDKContext(ctx), tc.msg)
+			msgServer := keeper.NewMsgServer(k)
+			res, err := msgServer.EditSudoers(sdk.WrapSDKContext(ctx), tc.msg)
 			// Check via Keeper
 			res2, err2 := k.AddContracts(sdk.WrapSDKContext(ctx), tc.msg)
 			if tc.shouldFail {
@@ -445,7 +446,8 @@ func TestKeeper_RemoveContracts(t *testing.T) {
 
 			t.Log("Execute message")
 			// Check via message handler directly
-			res, err := k.EditSudoers(ctx, tc.msg)
+			msgServer := keeper.NewMsgServer(k)
+			res, err := msgServer.EditSudoers(ctx, tc.msg)
 			// Check via Keeper
 			res2, err2 := k.RemoveContracts(sdk.WrapSDKContext(ctx), tc.msg)
 			if tc.shouldFail {
