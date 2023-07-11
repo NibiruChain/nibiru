@@ -5,6 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/x/sudo/keeper"
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
+
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -25,6 +28,22 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/wasmbin"
 )
+
+// ————————————————————————————————————————————————————————————————————————————
+// Keeper only used for testing, never for production
+// ————————————————————————————————————————————————————————————————————————————
+type TestKeeper struct {
+	keeper.Keeper
+}
+
+// SetSudoContracts overwrites the state. This function is a convenience
+// function for testing with permissioned contracts in other modules..
+func (k TestKeeper) SetSudoContracts(contracts []string, ctx sdk.Context) {
+	k.Sudoers.Set(ctx, sudotypes.Sudoers{
+		Root:      "",
+		Contracts: contracts,
+	})
+}
 
 func TestSuiteExecutor_RunAll(t *testing.T) {
 	suite.Run(t, new(TestSuiteExecutor))
@@ -65,6 +84,8 @@ type TestSuiteExecutor struct {
 	ctx              sdk.Context
 	contractDeployer sdk.AccAddress
 
+	keeper TestKeeper
+
 	contractPerp       sdk.AccAddress
 	contractController sdk.AccAddress
 	contractShifter    sdk.AccAddress
@@ -93,6 +114,7 @@ func (s *TestSuiteExecutor) SetupSuite() {
 	nibiru, ctx = SetupAllContracts(s.T(), sender, nibiru, ctx)
 	s.nibiru = nibiru
 	s.ctx = ctx
+	s.keeper = TestKeeper{Keeper: s.nibiru.SudoKeeper}
 
 	s.contractPerp = ContractMap[wasmbin.WasmKeyPerpBinding]
 	s.contractController = ContractMap[wasmbin.WasmKeyController]
@@ -128,7 +150,7 @@ func (s *TestSuiteExecutor) TestOpenAddRemoveClose() {
 	}
 
 	s.T().Log("Executing with permission should succeed")
-	s.nibiru.SudoKeeper.SetSudoContracts(
+	s.keeper.SetSudoContracts(
 		[]string{s.contractPerp.String()}, s.ctx,
 	)
 
@@ -180,14 +202,14 @@ func (s *TestSuiteExecutor) TestOracleParams() {
 	s.Require().Equal(defaultParams, params)
 
 	s.T().Log("Executing without permission should fail")
-	s.nibiru.SudoKeeper.SetSudoContracts(
+	s.keeper.SetSudoContracts(
 		[]string{}, s.ctx,
 	)
 	contractRespBz, err := s.ExecuteAgainstContract(s.contractController, execMsg)
 	s.Errorf(err, "contractRespBz: %s", contractRespBz)
 
 	s.T().Log("Executing with permission should succeed")
-	s.nibiru.SudoKeeper.SetSudoContracts(
+	s.keeper.SetSudoContracts(
 		[]string{s.contractController.String()}, s.ctx,
 	)
 
@@ -353,14 +375,14 @@ func (s *TestSuiteExecutor) TestPegShift() {
 
 	s.T().Log("Executing with permission should succeed")
 	contract := s.contractShifter
-	s.nibiru.SudoKeeper.SetSudoContracts(
+	s.keeper.SetSudoContracts(
 		[]string{contract.String()}, s.ctx,
 	)
 	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
 
 	s.T().Log("Executing without permission should fail")
-	s.nibiru.SudoKeeper.SetSudoContracts(
+	s.keeper.SetSudoContracts(
 		[]string{}, s.ctx,
 	)
 	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
@@ -368,7 +390,7 @@ func (s *TestSuiteExecutor) TestPegShift() {
 
 	s.T().Log("Executing the wrong contract should fail")
 	contract = s.contractPerp
-	s.nibiru.SudoKeeper.SetSudoContracts(
+	s.keeper.SetSudoContracts(
 		[]string{contract.String()}, s.ctx,
 	)
 	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
@@ -387,14 +409,14 @@ func (s *TestSuiteExecutor) TestDepthShift() {
 
 	s.T().Log("Executing with permission should succeed")
 	contract := s.contractShifter
-	s.nibiru.SudoKeeper.SetSudoContracts(
+	s.keeper.SetSudoContracts(
 		[]string{contract.String()}, s.ctx,
 	)
 	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
 
 	s.T().Log("Executing without permission should fail")
-	s.nibiru.SudoKeeper.SetSudoContracts(
+	s.keeper.SetSudoContracts(
 		[]string{}, s.ctx,
 	)
 	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
@@ -402,7 +424,7 @@ func (s *TestSuiteExecutor) TestDepthShift() {
 
 	s.T().Log("Executing the wrong contract should fail")
 	contract = s.contractPerp
-	s.nibiru.SudoKeeper.SetSudoContracts(
+	s.keeper.SetSudoContracts(
 		[]string{contract.String()}, s.ctx,
 	)
 	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
@@ -422,14 +444,14 @@ func (s *TestSuiteExecutor) TestInsuranceFundWithdraw() {
 
 	s.T().Log("Executing should fail since the IF doesn't have funds")
 	contract := s.contractController
-	s.nibiru.SudoKeeper.SetSudoContracts(
+	s.keeper.SetSudoContracts(
 		[]string{contract.String()}, s.ctx,
 	)
 	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
 	s.Errorf(err, "contractRespBz: %s", contractRespBz)
 
 	s.T().Log("Executing without permission should fail")
-	s.nibiru.SudoKeeper.SetSudoContracts(
+	s.keeper.SetSudoContracts(
 		[]string{}, s.ctx,
 	)
 	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
@@ -443,7 +465,7 @@ func (s *TestSuiteExecutor) TestInsuranceFundWithdraw() {
 		sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(420))),
 	)
 	s.NoError(err)
-	s.nibiru.SudoKeeper.SetSudoContracts(
+	s.keeper.SetSudoContracts(
 		[]string{contract.String()}, s.ctx,
 	)
 	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
@@ -451,7 +473,7 @@ func (s *TestSuiteExecutor) TestInsuranceFundWithdraw() {
 
 	s.T().Log("Executing the wrong contract should fail")
 	contract = s.contractPerp
-	s.nibiru.SudoKeeper.SetSudoContracts(
+	s.keeper.SetSudoContracts(
 		[]string{contract.String()}, s.ctx,
 	)
 	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
@@ -474,7 +496,7 @@ func (s *TestSuiteExecutor) TestSetMarketEnabled() {
 		}
 
 		s.T().Logf("Execute - happy %v: market: %s", testIdx, market.Pair)
-		s.nibiru.SudoKeeper.SetSudoContracts(
+		s.keeper.SetSudoContracts(
 			[]string{contract.String()}, s.ctx,
 		)
 		contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
@@ -486,7 +508,7 @@ func (s *TestSuiteExecutor) TestSetMarketEnabled() {
 	}
 
 	s.T().Log("Executing without permission should fail")
-	s.nibiru.SudoKeeper.SetSudoContracts(
+	s.keeper.SetSudoContracts(
 		[]string{}, s.ctx,
 	)
 	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
@@ -494,7 +516,7 @@ func (s *TestSuiteExecutor) TestSetMarketEnabled() {
 
 	s.T().Log("Executing the wrong contract should fail")
 	contract = s.contractPerp
-	s.nibiru.SudoKeeper.SetSudoContracts(
+	s.keeper.SetSudoContracts(
 		[]string{contract.String()}, s.ctx,
 	)
 	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
@@ -515,7 +537,7 @@ func (s *TestSuiteExecutor) TestCreateMarket() {
 	}
 
 	s.T().Logf("Execute - happy: market: %s", pair)
-	s.nibiru.SudoKeeper.SetSudoContracts(
+	s.keeper.SetSudoContracts(
 		[]string{contract.String()}, s.ctx,
 	)
 	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
@@ -528,7 +550,7 @@ func (s *TestSuiteExecutor) TestCreateMarket() {
 	s.EqualValues(pair, market.Pair)
 
 	s.T().Log("Executing without permission should fail")
-	s.nibiru.SudoKeeper.SetSudoContracts(
+	s.keeper.SetSudoContracts(
 		[]string{}, s.ctx,
 	)
 	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
@@ -536,7 +558,7 @@ func (s *TestSuiteExecutor) TestCreateMarket() {
 
 	s.T().Log("Executing the wrong contract should fail")
 	contract = s.contractPerp
-	s.nibiru.SudoKeeper.SetSudoContracts(
+	s.keeper.SetSudoContracts(
 		[]string{contract.String()}, s.ctx,
 	)
 	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
