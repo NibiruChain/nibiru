@@ -17,7 +17,6 @@ import (
 	. "github.com/NibiruChain/nibiru/x/common/testutil/assertion"
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	. "github.com/NibiruChain/nibiru/x/oracle/integration/action"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
 
@@ -35,7 +34,6 @@ func TestMarketOrder(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1020)))),
 			).
 			When(
@@ -97,7 +95,6 @@ func TestMarketOrder(t *testing.T) {
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				CreateCustomMarket(pairBtcNusd),
-				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(2040)))),
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
@@ -152,7 +149,6 @@ func TestMarketOrder(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1030)))),
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
@@ -208,7 +204,6 @@ func TestMarketOrder(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(4080)))),
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
@@ -259,12 +254,75 @@ func TestMarketOrder(t *testing.T) {
 				}),
 			),
 
+		TC("existing long position, decrease a lot when there's bad debt").
+			Given(
+				CreateCustomMarket(
+					pairBtcNusd,
+					WithPricePeg(sdk.MustNewDecFromStr("0.89")),
+					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
+				),
+				SetBlockNumber(1),
+				SetBlockTime(startBlockTime),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(18)))),
+				InsertPosition(
+					WithPair(pairBtcNusd),
+					WithTrader(alice),
+					WithMargin(sdk.NewDec(1_000)),
+					WithSize(sdk.NewDec(10_000)),
+					WithOpenNotional(sdk.NewDec(10_000)),
+				),
+			).
+			When(
+				MoveToNextBlock(),
+				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(3000), sdk.NewDec(10), sdk.ZeroDec(),
+					MarketOrderResp_PositionShouldBeEqual(
+						types.Position{
+							Pair:                            pairBtcNusd,
+							TraderAddress:                   alice.String(),
+							Margin:                          sdk.ZeroDec(),
+							OpenNotional:                    sdk.ZeroDec(),
+							Size_:                           sdk.ZeroDec(),
+							LastUpdatedBlockNumber:          2,
+							LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.0002"),
+						},
+					),
+					MarketOrderResp_ExchangeNotionalValueShouldBeEqual(sdk.MustNewDecFromStr("8899.999911000000890000")),
+					MarketOrderResp_ExchangedPositionSizeShouldBeEqual(sdk.MustNewDecFromStr("-10000")),
+					MarketOrderResp_BadDebtShouldBeEqual(sdk.MustNewDecFromStr("102.000088999999110000")),
+					MarketOrderResp_FundingPaymentShouldBeEqual(sdk.NewDec(2)),
+					MarketOrderResp_RealizedPnlShouldBeEqual(sdk.MustNewDecFromStr("-1100.000088999999110000")),
+					MarketOrderResp_UnrealizedPnlAfterShouldBeEqual(sdk.ZeroDec()),
+					MarketOrderResp_MarginToVaultShouldBeEqual(sdk.ZeroDec()),
+					MarketOrderResp_PositionNotionalShouldBeEqual(sdk.ZeroDec()),
+				),
+			).
+			Then(
+				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
+					FinalPosition: types.Position{
+						Pair:                            pairBtcNusd,
+						TraderAddress:                   alice.String(),
+						Margin:                          sdk.ZeroDec(),
+						OpenNotional:                    sdk.ZeroDec(),
+						Size_:                           sdk.ZeroDec(),
+						LastUpdatedBlockNumber:          2,
+						LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0.0002"),
+					},
+					PositionNotional: sdk.ZeroDec(),
+					RealizedPnl:      sdk.MustNewDecFromStr("-1100.000088999999110000"),
+					BadDebt:          sdk.NewInt64Coin(denoms.NUSD, 102),
+					FundingPayment:   sdk.NewDec(2),
+					TransactionFee:   sdk.NewInt64Coin(denoms.NUSD, 18), // 20 bps
+					BlockHeight:      2,
+					MarginToUser:     sdk.NewInt(-18),
+					ChangeReason:     types.ChangeReason_MarketOrder,
+				}),
+			),
+
 		TC("new short position").
 			Given(
 				CreateCustomMarket(pairBtcNusd),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1020)))),
 			).
 			When(
@@ -328,7 +386,6 @@ func TestMarketOrder(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(2040)))),
 				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
@@ -384,7 +441,6 @@ func TestMarketOrder(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1030)))),
 				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
@@ -440,7 +496,6 @@ func TestMarketOrder(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(4080)))),
 				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
@@ -496,7 +551,6 @@ func TestMarketOrder(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(99)))),
 			).
 			When(
@@ -513,7 +567,6 @@ func TestMarketOrder(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(47_714_285_715)))),
 				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(47_619_047_619), sdk.OneDec(), sdk.ZeroDec()),
 				SetMarketEnabled(pairBtcNusd, false),
@@ -530,7 +583,6 @@ func TestMarketOrder(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(47_714_285_715)))),
 				SetMarketEnabled(pairBtcNusd, false),
 			).
@@ -547,7 +599,6 @@ func TestMarketOrder(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(47_714_285_715)))),
 				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(50_000), sdk.OneDec(), sdk.ZeroDec()),
 				SetMarketEnabled(pairBtcNusd, false),
@@ -565,7 +616,6 @@ func TestMarketOrder(t *testing.T) {
 			Given(
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(47_714_285_715)))),
 			).
 			When(
@@ -581,7 +631,6 @@ func TestMarketOrder(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				CreateCustomMarket(pairBtcNusd),
-				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(47_714_285_715)))),
 			).
 			When(
@@ -597,7 +646,6 @@ func TestMarketOrder(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				CreateCustomMarket(pairBtcNusd),
-				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 			).
 			When(
@@ -613,7 +661,6 @@ func TestMarketOrder(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				CreateCustomMarket(pairBtcNusd),
-				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 			).
 			When(
@@ -629,7 +676,6 @@ func TestMarketOrder(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				CreateCustomMarket(pairBtcNusd, WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
-				SetOraclePrice(pairBtcNusd, sdk.NewDec(25_000)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(20_000_000_000+20_000_000)))),
 			).
 			When(
@@ -645,7 +691,6 @@ func TestMarketOrder(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				CreateCustomMarket(pairBtcNusd, WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
-				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 			).
 			When(
@@ -660,7 +705,6 @@ func TestMarketOrder(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				CreateCustomMarket(pairBtcNusd, WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
-				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 			).
 			When(
@@ -676,7 +720,6 @@ func TestMarketOrder(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				CreateCustomMarket(pairBtcNusd, WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
-				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 			).
 			When(
@@ -692,7 +735,6 @@ func TestMarketOrder(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				CreateCustomMarket(pairBtcNusd, WithPricePeg(sdk.MustNewDecFromStr("25000"))),
-				SetOraclePrice(pairBtcNusd, sdk.NewDec(2)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 			).
 			When(
@@ -1563,7 +1605,6 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100000)))),
 			).
@@ -1579,7 +1620,6 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100000)))),
 			).
@@ -1595,7 +1635,6 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100_000_000)))),
 			).
@@ -1616,7 +1655,6 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100_000_000)))),
 			).
@@ -1638,7 +1676,6 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100_000_000)))),
 			).
@@ -1659,7 +1696,6 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100_000_000)))),
 			).
@@ -1681,7 +1717,6 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
 				FundAccount(bob, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
 			).
@@ -1713,7 +1748,6 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				SetOraclePrice(pairBtcNusd, sdk.NewDec(1)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
 				FundAccount(bob, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
 			).

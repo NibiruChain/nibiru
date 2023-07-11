@@ -98,11 +98,11 @@ func (k Keeper) MarketOrder(
 	}
 
 	// check bad debt
-	if !positionResp.BadDebt.IsZero() {
-		return nil, types.ErrBadDebt.Wrapf("bad debt %s", positionResp.BadDebt)
-	}
-
 	if !positionResp.Position.Size_.IsZero() {
+		if !positionResp.BadDebt.IsZero() {
+			return nil, types.ErrBadDebt.Wrapf("position has bad debt %s", positionResp.BadDebt)
+		}
+
 		err = k.checkMarginRatio(ctx, market, *updatedAMM, positionResp.Position)
 		if err != nil {
 			return nil, err
@@ -425,7 +425,8 @@ func (k Keeper) closeAndOpenReversePosition(
 	}
 
 	if closePositionResp.BadDebt.IsPositive() {
-		return nil, nil, fmt.Errorf("underwater position")
+		// if there's already bad debt, then we don't allow the user to continue and just early return
+		return updatedAMM, closePositionResp, nil
 	}
 
 	reverseNotionalValue := leverage.Mul(quoteAssetAmount)
@@ -438,37 +439,29 @@ func (k Keeper) closeAndOpenReversePosition(
 			closePositionResp.ExchangedNotionalValue, reverseNotionalValue)
 	}
 
-	var sideToTake types.Direction
+	var dir types.Direction
 	// flipped since we are going against the current position
 	if existingPosition.Size_.IsPositive() {
-		sideToTake = types.Direction_SHORT
+		dir = types.Direction_SHORT
 	} else {
-		sideToTake = types.Direction_LONG
+		dir = types.Direction_LONG
 	}
 
-	_, sizeAvailable, err := k.SwapQuoteAsset(
-		ctx,
-		market,
-		amm,
-		sideToTake,
-		remainingReverseNotionalValue,
-		baseAmtLimit,
-	)
+	// check if it's worth continuing with the increase position
+	quoteReserveAmt := updatedAMM.FromQuoteAssetToReserve(remainingReverseNotionalValue)
+	possibleNextSize, err := updatedAMM.GetBaseReserveAmt(quoteReserveAmt, dir)
 	if err != nil {
 		return nil, nil, err
 	}
-
-	if sizeAvailable.IsZero() {
-		// nothing to do
+	if possibleNextSize.IsZero() {
+		// nothing to do, early return
 		return updatedAMM, closePositionResp, nil
 	}
 
-	var increasePositionResp *types.PositionResp
-	updatedBaseAmtLimit := baseAmtLimit
 	if baseAmtLimit.IsPositive() {
-		updatedBaseAmtLimit = baseAmtLimit.Sub(closePositionResp.ExchangedPositionSize.Abs())
+		baseAmtLimit = baseAmtLimit.Sub(closePositionResp.ExchangedPositionSize.Abs())
 	}
-	if updatedBaseAmtLimit.IsNegative() {
+	if baseAmtLimit.IsNegative() {
 		return nil, nil, fmt.Errorf(
 			"position size changed by greater than the specified base limit: %s",
 			baseAmtLimit,
@@ -480,20 +473,16 @@ func (k Keeper) closeAndOpenReversePosition(
 		existingPosition.Pair,
 		trader,
 	)
-	updatedAMM, increasePositionResp, err = k.increasePosition(
+	updatedAMM, increasePositionResp, err := k.increasePosition(
 		ctx,
 		market,
 		*updatedAMM,
 		newPosition,
-		sideToTake,
+		dir,
 		remainingReverseNotionalValue,
-		updatedBaseAmtLimit,
+		baseAmtLimit,
 		leverage,
 	)
-	if err != nil {
-		return nil, nil, err
-	}
-	err = k.checkMarginRatio(ctx, market, amm, increasePositionResp.Position)
 	if err != nil {
 		return nil, nil, err
 	}
