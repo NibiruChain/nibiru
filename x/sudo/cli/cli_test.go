@@ -219,7 +219,7 @@ func (s *IntegrationSuite) TestCmdEditSudoers() {
 	}
 }
 
-func (s *IntegrationSuite) TestCmdChangeRoot() {
+func (s *IntegrationSuite) Test_ZCmdChangeRoot() {
 	val := s.network.Validators[0]
 
 	sudoers, err := testutilcli.QuerySudoers(val.ClientCtx)
