@@ -60,7 +60,7 @@ func (k Keeper) AddContracts(
 	if err != nil {
 		return
 	}
-	pbSudoers := SudoersToPb(Sudoers{Root: sudoersBefore.Root, Contracts: contracts})
+	pbSudoers := Sudoers{Root: sudoersBefore.Root, Contracts: contracts}.ToPb()
 	k.Sudoers.Set(ctx, pbSudoers)
 	msgResp = new(sudotypes.MsgEditSudoersResponse)
 	return msgResp, ctx.EventManager().EmitTypedEvent(&sudotypes.EventUpdateSudoers{
@@ -99,7 +99,7 @@ func (k Keeper) RemoveContracts(
 
 	// Update state
 	sudoers.RemoveContracts(msg.Contracts)
-	pbSudoers = SudoersToPb(sudoers)
+	pbSudoers = sudoers.ToPb()
 	k.Sudoers.Set(ctx, pbSudoers)
 
 	msgResp = new(sudotypes.MsgEditSudoersResponse)

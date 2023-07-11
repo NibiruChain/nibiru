@@ -215,7 +215,7 @@ func TestSudo_FromPbSudoers(t *testing.T) {
 			assert.EqualValues(t, tc.out.Contracts, out.Contracts)
 			assert.EqualValues(t, tc.out.Root, out.Root)
 
-			pbSudoers := keeper.SudoersToPb(out)
+			pbSudoers := out.ToPb()
 			for _, contract := range tc.in.Contracts {
 				assert.True(t, set.New(pbSudoers.Contracts...).Has(contract))
 			}
@@ -506,7 +506,8 @@ func TestQuerySudoers(t *testing.T) {
 			nibiru.SudoKeeper.Sudoers.Set(ctx, tc.state)
 
 			req := new(types.QuerySudoersRequest)
-			resp, err := nibiru.SudoKeeper.QuerySudoers(
+			querier := keeper.NewQuerier(nibiru.SudoKeeper)
+			resp, err := querier.QuerySudoers(
 				sdk.WrapSDKContext(ctx), req,
 			)
 			require.NoError(t, err)
@@ -519,7 +520,8 @@ func TestQuerySudoers(t *testing.T) {
 	t.Run("nil request should error", func(t *testing.T) {
 		nibiru, ctx := setup()
 		var req *types.QuerySudoersRequest = nil
-		_, err := nibiru.SudoKeeper.QuerySudoers(
+		querier := keeper.NewQuerier(nibiru.SudoKeeper)
+		_, err := querier.QuerySudoers(
 			sdk.WrapSDKContext(ctx), req,
 		)
 		require.Error(t, err)

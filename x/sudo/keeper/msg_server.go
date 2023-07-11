@@ -77,10 +77,6 @@ func SudoersFromPb(pbSudoers sudotypes.Sudoers) Sudoers {
 	}
 }
 
-func SudoersToPb(sudo Sudoers) sudotypes.Sudoers {
-	return sudo.ToPb()
-}
-
 // AddContracts adds contract addresses to the sudoer set.
 func (sudo *Sudoers) AddContracts(
 	contracts []string,
