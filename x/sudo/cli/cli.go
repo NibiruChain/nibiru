@@ -112,6 +112,52 @@ func CmdEditSudoers() *cobra.Command {
 	return cmd
 }
 
+// CmdChangeRoot is a terminal command corresponding to the ChangeRoot
+func CmdChangeRoot() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "change-root [new-root-address]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Change the root address of the x/sudo state",
+		Example: strings.TrimSpace(fmt.Sprintf(`
+			Example: 
+			$ %s tx sudo change-root <new-root-address> --from=<key_or_address>
+			`, version.AppName)),
+		Long: strings.TrimSpace(
+			`Change the root address of the x/sudo state, giving the
+				new address, should be executed by the current root address.
+			`),
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := new(types.MsgChangeRoot)
+
+			// marshals contents into the proto.Message to which 'msg' points.
+			root := args[0]
+			if err != nil {
+				return err
+			}
+
+			// Parse the message sender
+			from := clientCtx.GetFromAddress()
+			msg.Sender = from.String()
+			msg.NewRoot = root
+
+			if err = msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
 func CmdQuerySudoers() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "state",
