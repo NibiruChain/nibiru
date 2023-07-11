@@ -1,26 +1,15 @@
 package types
 
 import (
-	fmt "fmt"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var _ sdk.Msg = &MsgEditSudoers{}
 
-const (
-	ModuleName = "sudo"
-)
-
-var (
-	// StoreKey defines the primary module store key.
-	StoreKey = ModuleName
-
-	// RouterKey is the message route for transactions.
-	RouterKey = ModuleName
-)
-
 // MsgEditSudoers
+
 func (m *MsgEditSudoers) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
 		return err
