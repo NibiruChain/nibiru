@@ -7,9 +7,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 )
 
-func RegisterCodec(cdc *codec.LegacyAmino) {
+func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgCreatePool{}, "spot/CreatePool", nil)
-	// TODO(k-yang): register MsgJoinPool
+	cdc.RegisterConcrete(&MsgJoinPool{}, "spot/JoinPool", nil)
+	cdc.RegisterConcrete(&MsgExitPool{}, "spot/ExitPool", nil)
+	cdc.RegisterConcrete(&MsgSwapAssets{}, "spot/SwapAssets", nil)
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
@@ -18,12 +20,13 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		/* implementations */
 		&MsgCreatePool{},
 		&MsgJoinPool{},
+		&MsgExitPool{},
+		&MsgSwapAssets{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }
 
 var (
-	Amino     = codec.NewLegacyAmino()
 	ModuleCdc = codec.NewProtoCodec(cdctypes.NewInterfaceRegistry())
 )

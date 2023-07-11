@@ -47,7 +47,7 @@ func (AppModuleBasic) RegisterInterfaces(interfaceRegistry codectypes.InterfaceR
 }
 
 func (AppModuleBasic) RegisterLegacyAminoCodec(aminoCodec *codec.LegacyAmino) {
-	types.RegisterCodec(aminoCodec)
+	types.RegisterLegacyAminoCodec(aminoCodec)
 }
 
 // DefaultGenesis returns default genesis state as raw bytes for the module.
