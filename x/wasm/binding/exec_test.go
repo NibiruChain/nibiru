@@ -31,7 +31,6 @@ import (
 // ————————————————————————————————————————————————————————————————————————————
 // Keeper only used for testing, never for production
 // ————————————————————————————————————————————————————————————————————————————
-
 type TestKeeper struct {
 	keeper.Keeper
 }
