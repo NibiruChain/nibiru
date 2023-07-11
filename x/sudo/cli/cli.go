@@ -28,6 +28,7 @@ func GetTxCmd() *cobra.Command {
 	// Add subcommands
 	txCmd.AddCommand(
 		CmdEditSudoers(),
+		CmdChangeRoot(),
 	)
 
 	return txCmd
