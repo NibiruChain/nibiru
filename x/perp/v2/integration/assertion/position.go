@@ -59,16 +59,6 @@ func Position_PositionShouldBeEqualTo(expectedPosition types.Position) PositionC
 	}
 }
 
-// Position_PositionSizeShouldBeEqualTo checks if the position size is equal to the expected position size
-func Position_PositionSizeShouldBeEqualTo(expectedSize sdk.Dec) PositionChecker {
-	return func(position types.Position) error {
-		if position.Size_.Equal(expectedSize) {
-			return nil
-		}
-		return fmt.Errorf("expected position size %s, got %s", expectedSize, position.Size_.String())
-	}
-}
-
 type positionShouldNotExist struct {
 	Account sdk.AccAddress
 	Pair    asset.Pair

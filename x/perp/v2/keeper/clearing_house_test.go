@@ -144,6 +144,42 @@ func TestMarketOrder(t *testing.T) {
 				}),
 			),
 
+		TC("existing long position, go more long but there's bad debt").
+			Given(
+				CreateCustomMarket(
+					pairBtcNusd,
+					WithPricePeg(sdk.MustNewDecFromStr("0.89")),
+					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
+				),
+				SetBlockNumber(1),
+				SetBlockTime(startBlockTime),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(18)))),
+				InsertPosition(
+					WithPair(pairBtcNusd),
+					WithTrader(alice),
+					WithMargin(sdk.NewDec(1_000)),
+					WithSize(sdk.NewDec(10_000)),
+					WithOpenNotional(sdk.NewDec(10_000)),
+				),
+			).
+			When(
+				MoveToNextBlock(),
+				MarketOrderFails(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroDec(),
+					types.ErrMarginRatioTooLow,
+				),
+			).
+			Then(
+				PositionShouldBeEqual(alice, pairBtcNusd, Position_PositionShouldBeEqualTo(types.Position{
+					TraderAddress:                   alice.String(),
+					Pair:                            pairBtcNusd,
+					Size_:                           sdk.NewDec(10_000),
+					Margin:                          sdk.NewDec(1_000),
+					OpenNotional:                    sdk.NewDec(10_000),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+					LastUpdatedBlockNumber:          0,
+				})),
+			),
+
 		TC("existing long position, decrease a bit").
 			Given(
 				CreateCustomMarket(pairBtcNusd),
@@ -197,6 +233,42 @@ func TestMarketOrder(t *testing.T) {
 					MarginToUser: sdk.NewInt(0 + 10).Neg(),
 					ChangeReason: types.ChangeReason_MarketOrder,
 				}),
+			),
+
+		TC("existing long position, decrease a bit but there's bad debt").
+			Given(
+				CreateCustomMarket(
+					pairBtcNusd,
+					WithPricePeg(sdk.MustNewDecFromStr("0.89")),
+					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
+				),
+				SetBlockNumber(1),
+				SetBlockTime(startBlockTime),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(18)))),
+				InsertPosition(
+					WithPair(pairBtcNusd),
+					WithTrader(alice),
+					WithMargin(sdk.NewDec(1_000)),
+					WithSize(sdk.NewDec(10_000)),
+					WithOpenNotional(sdk.NewDec(10_000)),
+				),
+			).
+			When(
+				MoveToNextBlock(),
+				MarketOrderFails(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroDec(),
+					types.ErrMarginRatioTooLow,
+				),
+			).
+			Then(
+				PositionShouldBeEqual(alice, pairBtcNusd, Position_PositionShouldBeEqualTo(types.Position{
+					TraderAddress:                   alice.String(),
+					Pair:                            pairBtcNusd,
+					Size_:                           sdk.NewDec(10_000),
+					Margin:                          sdk.NewDec(1_000),
+					OpenNotional:                    sdk.NewDec(10_000),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+					LastUpdatedBlockNumber:          0,
+				})),
 			),
 
 		TC("existing long position, decrease a lot").
@@ -254,7 +326,7 @@ func TestMarketOrder(t *testing.T) {
 				}),
 			),
 
-		TC("existing long position, decrease a lot when there's bad debt").
+		TC("existing long position, decrease a lot but there's bad debt").
 			Given(
 				CreateCustomMarket(
 					pairBtcNusd,
@@ -436,6 +508,41 @@ func TestMarketOrder(t *testing.T) {
 				}),
 			),
 
+		TC("existing short position, go more short but there's bad debt").
+			Given(
+				CreateCustomMarket(pairBtcNusd,
+					WithPricePeg(sdk.MustNewDecFromStr("1.11")),
+					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
+				),
+				SetBlockNumber(1),
+				SetBlockTime(startBlockTime),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(22)))),
+				InsertPosition(
+					WithPair(pairBtcNusd),
+					WithTrader(alice),
+					WithMargin(sdk.NewDec(1_000)),
+					WithSize(sdk.NewDec(-10_000)),
+					WithOpenNotional(sdk.NewDec(10_000)),
+				),
+			).
+			When(
+				MoveToNextBlock(),
+				MarketOrderFails(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroDec(),
+					types.ErrMarginRatioTooLow,
+				),
+			).
+			Then(
+				PositionShouldBeEqual(alice, pairBtcNusd, Position_PositionShouldBeEqualTo(types.Position{
+					TraderAddress:                   alice.String(),
+					Pair:                            pairBtcNusd,
+					Size_:                           sdk.NewDec(-10_000),
+					Margin:                          sdk.NewDec(1_000),
+					OpenNotional:                    sdk.NewDec(10_000),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+					LastUpdatedBlockNumber:          0,
+				})),
+			),
+
 		TC("existing short position, decrease a bit").
 			Given(
 				CreateCustomMarket(pairBtcNusd),
@@ -489,6 +596,41 @@ func TestMarketOrder(t *testing.T) {
 					MarginToUser: sdk.NewInt(0 + 10).Neg(),
 					ChangeReason: types.ChangeReason_MarketOrder,
 				}),
+			),
+
+		TC("existing short position, decrease a bit but there's bad debt").
+			Given(
+				CreateCustomMarket(pairBtcNusd,
+					WithPricePeg(sdk.MustNewDecFromStr("1.11")),
+					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
+				),
+				SetBlockNumber(1),
+				SetBlockTime(startBlockTime),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(22)))),
+				InsertPosition(
+					WithPair(pairBtcNusd),
+					WithTrader(alice),
+					WithMargin(sdk.NewDec(1_000)),
+					WithSize(sdk.NewDec(-10_000)),
+					WithOpenNotional(sdk.NewDec(10_000)),
+				),
+			).
+			When(
+				MoveToNextBlock(),
+				MarketOrderFails(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroDec(),
+					types.ErrMarginRatioTooLow,
+				),
+			).
+			Then(
+				PositionShouldBeEqual(alice, pairBtcNusd, Position_PositionShouldBeEqualTo(types.Position{
+					TraderAddress:                   alice.String(),
+					Pair:                            pairBtcNusd,
+					Size_:                           sdk.NewDec(-10_000),
+					Margin:                          sdk.NewDec(1_000),
+					OpenNotional:                    sdk.NewDec(10_000),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+					LastUpdatedBlockNumber:          0,
+				})),
 			),
 
 		TC("existing short position, decrease a lot").
@@ -546,7 +688,7 @@ func TestMarketOrder(t *testing.T) {
 				}),
 			),
 
-		TC("existing short position, decrease a lot when there's bad debt").
+		TC("existing short position, decrease a lot but there's bad debt").
 			Given(
 				CreateCustomMarket(pairBtcNusd,
 					WithPricePeg(sdk.MustNewDecFromStr("1.11")),
