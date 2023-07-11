@@ -5,7 +5,7 @@ package nibiru.sudo.v1;
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/sudo/pb";
+option go_package = "github.com/NibiruChain/nibiru/x/sudo/types";
 
 // Msg defines the x/sudo module's Msg service. Protobuf `Msg` services are
 // called from `BaseApp` instances during `DeliverTx`. The `Msg` service will be

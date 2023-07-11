@@ -18,6 +18,11 @@ type Keeper struct {
 	Sudoers collections.Item[sudotypes.Sudoers]
 }
 
+func (k Keeper) ChangeRoot(ctx context.Context, root *sudotypes.MsgChangeRoot) (*sudotypes.MsgChangeRootResponse, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey types.StoreKey,
