@@ -2,7 +2,7 @@
 // source: nibiru/sudo/v1/query.proto
 
 /*
-Package pb is a reverse proxy.
+Package types is a reverse proxy.
 
 It translates gRPC into RESTful JSON APIs.
 */
