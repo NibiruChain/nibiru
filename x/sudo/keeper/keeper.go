@@ -3,12 +3,14 @@ package keeper
 import (
 	"context"
 	"fmt"
+
 	"github.com/NibiruChain/collections"
-	"github.com/NibiruChain/nibiru/x/common/set"
-	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/common/set"
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 )
 
 type Keeper struct {

@@ -2,10 +2,11 @@ package binding_test
 
 import (
 	"encoding/json"
-	"github.com/NibiruChain/nibiru/x/sudo/keeper"
-	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 	"testing"
 	"time"
+
+	"github.com/NibiruChain/nibiru/x/sudo/keeper"
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 
