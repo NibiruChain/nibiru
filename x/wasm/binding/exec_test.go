@@ -3,6 +3,7 @@ package binding_test
 import (
 	"encoding/json"
 	"github.com/NibiruChain/nibiru/x/sudo/keeper"
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 	"testing"
 	"time"
 
@@ -26,6 +27,23 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/wasmbin"
 )
+
+// ————————————————————————————————————————————————————————————————————————————
+// Keeper only used for testing, never for production
+// ————————————————————————————————————————————————————————————————————————————
+
+type TestKeeper struct {
+	keeper.Keeper
+}
+
+// SetSudoContracts overwrites the state. This function is a convenience
+// function for testing with permissioned contracts in other modules..
+func (k TestKeeper) SetSudoContracts(contracts []string, ctx sdk.Context) {
+	k.Sudoers.Set(ctx, sudotypes.Sudoers{
+		Root:      "",
+		Contracts: contracts,
+	})
+}
 
 func TestSuiteExecutor_RunAll(t *testing.T) {
 	suite.Run(t, new(TestSuiteExecutor))
@@ -66,7 +84,7 @@ type TestSuiteExecutor struct {
 	ctx              sdk.Context
 	contractDeployer sdk.AccAddress
 
-	keeper keeper.TestKeeper
+	keeper TestKeeper
 
 	contractPerp       sdk.AccAddress
 	contractController sdk.AccAddress
@@ -96,7 +114,7 @@ func (s *TestSuiteExecutor) SetupSuite() {
 	nibiru, ctx = SetupAllContracts(s.T(), sender, nibiru, ctx)
 	s.nibiru = nibiru
 	s.ctx = ctx
-	s.keeper = keeper.TestKeeper{Keeper: s.nibiru.SudoKeeper}
+	s.keeper = TestKeeper{Keeper: s.nibiru.SudoKeeper}
 
 	s.contractPerp = ContractMap[wasmbin.WasmKeyPerpBinding]
 	s.contractController = ContractMap[wasmbin.WasmKeyController]

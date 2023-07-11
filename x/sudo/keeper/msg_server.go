@@ -219,20 +219,3 @@ func (k Keeper) GetSudoContracts(ctx sdk.Context) (contracts []string, err error
 	state, err := k.Sudoers.Get(ctx)
 	return state.Contracts, err
 }
-
-// ————————————————————————————————————————————————————————————————————————————
-// Keeper only used for testing, never for production
-// ————————————————————————————————————————————————————————————————————————————
-
-type TestKeeper struct {
-	Keeper
-}
-
-// SetSudoContracts overwrites the state. This function is a convenience
-// function for testing with permissioned contracts in other modules..
-func (k TestKeeper) SetSudoContracts(contracts []string, ctx sdk.Context) {
-	k.Sudoers.Set(ctx, sudotypes.Sudoers{
-		Root:      "",
-		Contracts: contracts,
-	})
-}

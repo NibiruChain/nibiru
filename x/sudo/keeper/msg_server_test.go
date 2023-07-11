@@ -23,7 +23,6 @@ import (
 func init() {
 	useNibiAccPrefix()
 }
-
 func setup() (*app.NibiruApp, sdk.Context) {
 	genState := app.NewDefaultGenesisState(app.DefaultEncoding().Marshaler)
 	nibiru := testapp.NewNibiruTestApp(genState)
