@@ -34,13 +34,38 @@ echo_success() {
   echo "${reset}"
 }
 
-echo_info "Building from source..."
-if make install; then
-  echo_success "Successfully built binary"
-else
-  echo_error "Could not build binary. Failed to make install."
-  exit 1
+# Flag parsing: --flag-name (BASH_VAR_NAME)
+#
+# --no-build ($FLAG_NO_BUILD): toggles whether to build from source. The default 
+#   behavior of the script is to run make install. 
+FLAG_NO_BUILD=false 
+
+build_from_source() {
+  echo_info "Building from source..."
+  if make install; then
+    echo_success "Successfully built binary"
+  else
+    echo_error "Could not build binary. Failed to make install."
+    exit 1
+  fi
+}
+
+echo_info "Parsing flags for the script..."
+
+# Iterate over all arguments to the script
+for arg in "$@"
+do
+  if [ "$arg" == "--no-build" ] ; then
+    FLAG_NO_BUILD=true
+  fi
+done
+
+
+# Check if FLAG_NO_BUILD was set to true
+if ! $FLAG_NO_BUILD ; then
+  build_from_source
 fi
+
 
 # Set localnet settings
 BINARY="nibid"
@@ -53,10 +78,15 @@ CHAIN_DIR="$HOME/.nibid"
 echo "CHAIN_DIR: $CHAIN_DIR"
 echo "CHAIN_ID: $CHAIN_ID"
 
+
 SEDOPTION=""
 if [[ "$OSTYPE" == "darwin"* ]]; then
   SEDOPTION="''"
 fi
+
+# ------------------------------------------------------------------------
+echo_info "Successfully finished localnet script setup."
+# ------------------------------------------------------------------------
 
 # Stop nibid if it is already running
 if pgrep -x "$BINARY" >/dev/null; then
@@ -139,15 +169,21 @@ else
 fi
 
 echo_info "Adding genesis accounts..."
-echo "$MNEMONIC" | $BINARY keys add validator --recover
-if $BINARY add-genesis-account $($BINARY keys show validator -a) $GENESIS_COINS; then
-  echo_success "Successfully added genesis accounts"
+
+val_key_name="validator"
+
+echo "$MNEMONIC" | $BINARY keys add $val_key_name --recover
+if $BINARY add-genesis-account $($BINARY keys show $val_key_name -a) $GENESIS_COINS; then
+  echo_success "Successfully added genesis account: $val_key_name"
 else
-  echo_error "Failed to add genesis accounts"
+  echo_error "Failed to add genesis account: $val_key_name"
 fi
 
+val_address=$($BINARY keys list | jq -r '.[] | select(.name == "validator") | .address')
+val_address=${val_address:-"nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"}
+
 echo_info "Adding gentx validator..."
-if $BINARY genesis gentx validator 900000000unibi --chain-id $CHAIN_ID; then
+if $BINARY genesis gentx $val_key_name 900000000unibi --chain-id $CHAIN_ID; then
   echo_success "Successfully added gentx"
 else
   echo_error "Failed to add gentx"
@@ -176,6 +212,13 @@ add_genesis_param() {
   mv $CHAIN_DIR/config/tmp_genesis.json $CHAIN_DIR/config/genesis.json
 }
 
+add_genesis_reserve_amt() {
+  local M=1000000
+  local num_users=300000
+  local faucet_nusd_amt=100
+  local reserve_amt=$(($num_users * $faucet_nusd_amt * $M))
+  echo "$reserve_amt"
+}
 
 add_genesis_perp_markets_with_coingecko_prices() {
   local temp_json_fname="tmp_market_prices.json"
@@ -184,11 +227,7 @@ add_genesis_perp_markets_with_coingecko_prices() {
     -H 'accept: application/json' \
     >$temp_json_fname
 
-  local M=1000000
-
-  local num_users=300000
-  local faucet_nusd_amt=100
-  local reserve_amt=$(($num_users * $faucet_nusd_amt * $M))
+  local reserve_amt=$(add_genesis_reserve_amt)
 
   price_btc=$(cat tmp_market_prices.json | jq -r '.bitcoin.usd')
   price_btc=${price_btc%.*}
@@ -202,7 +241,7 @@ add_genesis_perp_markets_with_coingecko_prices() {
     else
       echo_error "Command \"$*\" failed."
       exit 1
-    fi 
+    fi
   }
 
   nibid genesis add-genesis-perp-market --pair=ubtc:unusd --sqrt-depth=$reserve_amt --price-multiplier=$price_btc
@@ -222,20 +261,33 @@ add_genesis_perp_markets_with_coingecko_prices() {
   rm -f $temp_json_fname
 }
 
+add_genesis_perp_markets_offline() {
+  local reserve_amt=$(add_genesis_reserve_amt)
+  price_btc="20000"
+  price_eth="2000"
+  nibid genesis add-genesis-perp-market --pair=ubtc:unusd --sqrt-depth=$reserve_amt --price-multiplier=$price_btc
+  nibid genesis add-genesis-perp-market --pair=ueth:unusd --sqrt-depth=$reserve_amt --price-multiplier=$price_eth
+}
+
 echo_info "Configuring genesis params"
+
 if add_genesis_perp_markets_with_coingecko_prices; then
   echo_success "set perp markets with coingecko prices"
+elif add_genesis_perp_markets_offline; then
+  echo_success "set perp markets with offline defaults"
 else
   echo_error "failed to set genesis perp markets"
   exit 1
 fi
 
 # set validator as sudoer
-$BINARY genesis add-sudo-root-account "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"
+add_genesis_param '.app_state.sudo.sudoers.root = "'"$val_address"'"'
 
-add_genesis_param '.app_state.oracle.params.twap_lookback_window = "900s"'
-add_genesis_param '.app_state.oracle.params.vote_period = "10"'
-add_genesis_param '.app_state.oracle.params.min_voters = "1"'
+# hack for localnet since we don't have a pricefeeder yet
+add_genesis_param '.app_state.oracle.exchange_rates[0].pair = "ubtc:unusd"'
+add_genesis_param '.app_state.oracle.exchange_rates[0].exchange_rate = "'"$price_btc"'"'
+add_genesis_param '.app_state.oracle.exchange_rates[1].pair = "ueth:unusd"'
+add_genesis_param '.app_state.oracle.exchange_rates[1].exchange_rate = "'"$price_eth"'"'
 
 # Start the network
 echo_info "Starting $CHAIN_ID in $CHAIN_DIR..."
