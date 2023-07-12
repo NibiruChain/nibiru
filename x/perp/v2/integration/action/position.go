@@ -122,11 +122,7 @@ type MarketOrderResponseChecker func(resp *types.PositionResp) error
 // MarketOrderResp_PositionShouldBeEqual checks that the position included in the response is equal to the expected position response.
 func MarketOrderResp_PositionShouldBeEqual(expected types.Position) MarketOrderResponseChecker {
 	return func(actual *types.PositionResp) error {
-		if err := types.PositionsAreEqual(&expected, &actual.Position); err != nil {
-			return err
-		}
-
-		return nil
+		return types.PositionsAreEqual(&expected, &actual.Position)
 	}
 }
 
