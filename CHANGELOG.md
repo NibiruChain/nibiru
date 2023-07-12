@@ -40,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [v0.21.7](https://github.com/NibiruChain/nibiru/releases/tag/v0.21.7) - 2023-07-12
+
 ### Improvements
 
 * [#1494](https://github.com/NibiruChain/nibiru/pull/1494) - feat: create cli to add sudo account into genesis
