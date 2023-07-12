@@ -11,9 +11,17 @@ import (
 )
 
 // Ensure the interface is properly implemented at compile time
-var _ types.QueryServer = Keeper{}
+var _ types.QueryServer = Querier{}
 
-func (k Keeper) QuerySudoers(
+type Querier struct {
+	keeper Keeper
+}
+
+func NewQuerier(k Keeper) types.QueryServer {
+	return Querier{keeper: k}
+}
+
+func (q Querier) QuerySudoers(
 	goCtx context.Context,
 	req *types.QuerySudoersRequest,
 ) (resp *types.QuerySudoersResponse, err error) {
@@ -22,7 +30,7 @@ func (k Keeper) QuerySudoers(
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	sudoers, err := k.Sudoers.Get(ctx)
+	sudoers, err := q.keeper.Sudoers.Get(ctx)
 
 	return &types.QuerySudoersResponse{
 		Sudoers: sudoers,
