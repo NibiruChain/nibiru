@@ -59,16 +59,6 @@ func Position_PositionShouldBeEqualTo(expectedPosition types.Position) PositionC
 	}
 }
 
-// Position_PositionSizeShouldBeEqualTo checks if the position size is equal to the expected position size
-func Position_PositionSizeShouldBeEqualTo(expectedSize sdk.Dec) PositionChecker {
-	return func(position types.Position) error {
-		if position.Size_.Equal(expectedSize) {
-			return nil
-		}
-		return fmt.Errorf("expected position size %s, got %s", expectedSize, position.Size_.String())
-	}
-}
-
 type positionShouldNotExist struct {
 	Account sdk.AccAddress
 	Pair    asset.Pair
@@ -77,7 +67,7 @@ type positionShouldNotExist struct {
 func (p positionShouldNotExist) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	_, err := app.PerpKeeperV2.Positions.Get(ctx, collections.Join(p.Pair, p.Account))
 	if err == nil {
-		return ctx, fmt.Errorf("position should not exist"), false
+		return ctx, fmt.Errorf("position should not exist, but it does with pair %s", p.Pair), false
 	}
 
 	return ctx, nil, false
