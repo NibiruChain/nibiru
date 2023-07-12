@@ -1,0 +1,28 @@
+# buf.gen.py.yaml
+# 
+# Run with:
+#
+# proto_dir="proto"
+# out_dir="gen_python"
+# buf generate $proto_dir --template proto/buf.gen.py.yaml -o $out_dir
+version: v1
+plugins:
+  - plugin: buf.build/protocolbuffers/python:v21.9
+    out: .
+  # The mypy extension generated .pyi Python interface definitions. 
+  # These are important for the LSP to understand which classes and
+  # functions the proto generation makes available.
+  #
+  # See: 
+  # - https://mypy.readthedocs.io/en/stable/stubs.html
+  # - https://buf.build/community/nipunn1313-mypy
+  - plugin: buf.build/community/nipunn1313-mypy:v3.4.0
+    out: .
+  # GRPC stubs are necessary for creating grpc.UnaryUnaryMultiCallable
+  # instances, which enable GRPC clients in Python for Nibiru.
+  #
+  # See: 
+  # - https://grpc.github.io/grpc/python/grpc.html
+  # - https://buf.build/grpc/python
+  - plugin: buf.build/grpc/python:v1.56.0
+    out: .

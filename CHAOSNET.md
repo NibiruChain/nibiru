@@ -32,6 +32,14 @@ make chaosnet-build
 
 to force re-build and pull images.
 
+## Endpoints
+
+- `http://localhost:5555` -> GraphQL server
+- `http://localhost:26657` -> Tendermint RPC server
+- `tcp://localhost:9090` -> Cosmos SDK gRPC server
+- `http://localhost:1317` -> Cosmos SDK LCD (REST) server
+- `http://localhost:8000` -> Faucet server (HTTP POST only)
+
 ## FAQ
 
 ### `make chaosnet` says that "Additional property name is not allowed"

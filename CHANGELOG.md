@@ -40,6 +40,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Improvements
+
+* [#1494](https://github.com/NibiruChain/nibiru/pull/1494) - feat: create cli to add sudo account into genesis
+* [#1493](https://github.com/NibiruChain/nibiru/pull/1493) - fix(perp): allow `ClosePosition` when there is bad debt
+* [#1500](https://github.com/NibiruChain/nibiru/pull/1500) - refactor(perp): clean up reverse market order mechanics
+
+### Features
+
+* [#1498](https://github.com/NibiruChain/nibiru/pull/1498) - feat: add cli to change root sudo command
+* [#1501](https://github.com/NibiruChain/nibiru/pull/1501) - feat(localnet.sh): (1) Make it possible to run while offline. (2) Implement --no-build option to use the script with the current `nibid` installed.
+* [#1501](https://github.com/NibiruChain/nibiru/pull/1501) - feat(proto): add Python buf generation logic for py-sdk
+  
 ## [v0.21.6](https://github.com/NibiruChain/nibiru/releases/tag/v0.21.6) - 2023-07-05
 
 ### Features
@@ -97,6 +109,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Improvements
 
 * [#1463](https://github.com/NibiruChain/nibiru/pull/1463) - feat(oracle): add genesis pricefeeder delegation
+* [#1466](https://github.com/NibiruChain/nibiru/pull/1466) - refactor(perp): `PositionLiquidatedEvent`
 * [#1462](https://github.com/NibiruChain/nibiru/pull/1462) - fix(perp): Add pair to liquidation failed event.
 * [#1424](https://github.com/NibiruChain/nibiru/pull/1424) - feat(perp): Add change type and exchanged margin to position changed events.
 * [#1390](https://github.com/NibiruChain/nibiru/pull/1390) - fix(localnet.sh): Fix genesis market initialization + add force exits on failure
