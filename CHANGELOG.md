@@ -42,13 +42,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Improvements
 
-* #[1466](https://github.com/NibiruChain/nibiru/pull/1466) - refactor(perp): `PositionLiquidatedEvent`
-* #[1494](https://github.com/NibiruChain/nibiru/pull/1494) - feat: create cli to add sudo account into genesis
+* [#1466](https://github.com/NibiruChain/nibiru/pull/1466) - refactor(perp): `PositionLiquidatedEvent`
+* [#1494](https://github.com/NibiruChain/nibiru/pull/1494) - feat: create cli to add sudo account into genesis
+* [#1493](https://github.com/NibiruChain/nibiru/pull/1493) - fix(perp): allow `ClosePosition` when there is bad debt
+* [#1500](https://github.com/NibiruChain/nibiru/pull/1500) - refactor(perp): clean up reverse market order mechanics
 
 ### Features
 
 * [#1463](https://github.com/NibiruChain/nibiru/pull/1463) - feat(oracle): add genesis pricefeeder delegation
 * [#1479](https://github.com/NibiruChain/nibiru/pull/1479) - feat(perp): implement `PartialClose`
+* [#1498](https://github.com/NibiruChain/nibiru/pull/1498) - feat: add cli to change root sudo command
+* [#1501](https://github.com/NibiruChain/nibiru/pull/1501) - feat(localnet.sh): (1) Make it possible to run while offline. (2) Implement --no-build option to use the script with the current `nibid` installed.
+* [#1501](https://github.com/NibiruChain/nibiru/pull/1501) - feat(proto): add Python buf generation logic for py-sdk
 
 ### Bug Fixes
 
@@ -72,13 +77,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `github.com/spf13/cast` from 1.5.0 to 1.5.1 (#1358)
 - Bump `github.com/stretchr/testify` from 1.8.2 to 1.8.4 (#1384, #1435)
 - Bump `cosmossdk.io/math` from 1.0.0-beta.6 to 1.0.1 (#1394)
-- Bump `google.golang.org/grpc` from 1.53.0 to 1.56.1 (#1395, #1437, #1443)
+- Bump `google.golang.org/grpc` from 1.53.0 to 1.56.2 (#1395, #1437, #1443, #1497)
 - Bump `github.com/gin-gonic/gin` from 1.8.1 to 1.9.1 (#1409)
 - Bump `github.com/spf13/viper` from 1.15.0 to 1.16.0 (#1436)
 - Bump `github.com/prometheus/client_golang` from 1.15.1 to 1.16.0 (#1431)
 - Bump `github.com/cosmos/ibc-go/v7` from 7.1.0 to 7.2.0 (#1445)
 - Bump `bufbuild/buf-setup-action` from 1.21.0 to 1.23.1 (#1449, #1469)
 - Bump `google.golang.org/protobuf` from 1.30.0 to 1.31.0 (#1450)
+- Bump `cosmossdk.io/errors` from 1.0.0-beta.7 to 1.0.0 (#1499)
 
 ### Breaking
 
@@ -126,6 +132,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Improvements
 
+* [#1463](https://github.com/NibiruChain/nibiru/pull/1463) - feat(oracle): add genesis pricefeeder delegation
+* [#1466](https://github.com/NibiruChain/nibiru/pull/1466) - refactor(perp): `PositionLiquidatedEvent`
 * [#1462](https://github.com/NibiruChain/nibiru/pull/1462) - fix(perp): Add pair to liquidation failed event.
 * [#1424](https://github.com/NibiruChain/nibiru/pull/1424) - feat(perp): Add change type and exchanged margin to position changed events.
 * [#1390](https://github.com/NibiruChain/nibiru/pull/1390) - fix(localnet.sh): Fix genesis market initialization + add force exits on failure

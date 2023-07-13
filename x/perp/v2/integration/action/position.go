@@ -122,11 +122,7 @@ type MarketOrderResponseChecker func(resp *types.PositionResp) error
 // MarketOrderResp_PositionShouldBeEqual checks that the position included in the response is equal to the expected position response.
 func MarketOrderResp_PositionShouldBeEqual(expected types.Position) MarketOrderResponseChecker {
 	return func(actual *types.PositionResp) error {
-		if err := types.PositionsAreEqual(&expected, &actual.Position); err != nil {
-			return err
-		}
-
-		return nil
+		return types.PositionsAreEqual(&expected, &actual.Position)
 	}
 }
 
@@ -353,10 +349,10 @@ func (p partialCloseFails) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context,
 	_, err := app.PerpKeeperV2.PartialClose(ctx, p.pair, p.trader, p.amount)
 
 	if !errors.Is(err, p.expectedErr) {
-		return ctx, fmt.Errorf("expected error %s, got %s", p.expectedErr, err), true
+		return ctx, fmt.Errorf("expected error %s, got %s", p.expectedErr, err), false
 	}
 
-	return ctx, nil, true
+	return ctx, nil, false
 }
 
 func PartialCloseFails(trader sdk.AccAddress, pair asset.Pair, amount sdk.Dec, expecedErr error) action.Action {
