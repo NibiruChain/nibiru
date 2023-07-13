@@ -10,20 +10,26 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
+	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
+	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 )
 
 type QueryPlugin struct {
-	Perp *PerpQuerier
+	Perp   *PerpQuerier
+	Oracle *OracleQuerier
 }
 
 // NewQueryPlugin returns a pointer to a new QueryPlugin
-func NewQueryPlugin(perp perpv2keeper.Keeper) QueryPlugin {
+func NewQueryPlugin(perp perpv2keeper.Keeper, oracle oraclekeeper.Keeper) QueryPlugin {
 	return QueryPlugin{
 		Perp: &PerpQuerier{
 			perp: perpv2keeper.NewQuerier(perp),
+		},
+		Oracle: &OracleQuerier{
+			oracle: oraclekeeper.NewQuerier(oracle),
 		},
 	}
 }
@@ -96,6 +102,11 @@ func CustomQuerier(qp QueryPlugin) func(ctx sdk.Context, request json.RawMessage
 		case wasmContractQuery.PerpParams != nil:
 			cwReq := wasmContractQuery.PerpParams
 			cwResp, err := qp.Perp.ModuleParams(ctx, cwReq)
+			return qp.ToBinary(cwResp, err, cwReq)
+
+		case wasmContractQuery.OracleExchangeRate != nil:
+			cwReq := wasmContractQuery.OracleExchangeRate
+			cwResp, err := qp.Oracle.ExchangeRate(ctx, cwReq)
 			return qp.ToBinary(cwResp, err, cwReq)
 
 		default:
@@ -293,5 +304,32 @@ func (perpExt *PerpQuerier) Positions(
 
 	return &cw_struct.PositionsResponse{
 		Positions: positionMap,
+	}, err
+}
+
+// ----------------------------------------------------------------------
+// OracleQuerier
+// ----------------------------------------------------------------------
+
+type OracleQuerier struct {
+	oracle oracletypes.QueryServer
+}
+
+func (oracleExt *OracleQuerier) ExchangeRate(
+	ctx sdk.Context, cwReq *cw_struct.OracleExchangeRate,
+) (*cw_struct.OracleExchangeRateResponse, error) {
+	pair, err := asset.TryNewPair(cwReq.Pair)
+
+	if err != nil {
+		return nil, wasmvmtypes.ToSystemError(errors.New("invalid pair"))
+	}
+
+	queryExchangeRateRequest := oracletypes.QueryExchangeRateRequest{
+		Pair: pair,
+	}
+	queryExchangeRate, err := oracleExt.oracle.ExchangeRate(ctx, &queryExchangeRateRequest)
+
+	return &cw_struct.OracleExchangeRateResponse{
+		ExchangeRate: queryExchangeRate.ExchangeRate,
 	}, err
 }

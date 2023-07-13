@@ -28,15 +28,16 @@ import (
 // - https://github.com/NibiruChain/cw-nibiru/blob/90df123f8d32d47b5b280ec6ae7dde0f9dbf2787/contracts/bindings-perp/src/query.rs
 type BindingQuery struct {
 	// bindings-perp NibiruQuery enum types
-	Reserves        *ReservesRequest        `json:"reserves,omitempty"`
-	AllMarkets      *AllMarketsRequest      `json:"all_markets,omitempty"`
-	BasePrice       *BasePriceRequest       `json:"base_price,omitempty"`
-	Positions       *PositionsRequest       `json:"positions,omitempty"`
-	Position        *PositionRequest        `json:"position,omitempty"`
-	PremiumFraction *PremiumFractionRequest `json:"premium_fraction,omitempty"`
-	Metrics         *MetricsRequest         `json:"metrics,omitempty"`
-	ModuleAccounts  *ModuleAccountsRequest  `json:"module_accounts,omitempty"`
-	PerpParams      *PerpParamsRequest      `json:"module_params,omitempty"`
+	Reserves           *ReservesRequest        `json:"reserves,omitempty"`
+	AllMarkets         *AllMarketsRequest      `json:"all_markets,omitempty"`
+	BasePrice          *BasePriceRequest       `json:"base_price,omitempty"`
+	Positions          *PositionsRequest       `json:"positions,omitempty"`
+	Position           *PositionRequest        `json:"position,omitempty"`
+	PremiumFraction    *PremiumFractionRequest `json:"premium_fraction,omitempty"`
+	Metrics            *MetricsRequest         `json:"metrics,omitempty"`
+	ModuleAccounts     *ModuleAccountsRequest  `json:"module_accounts,omitempty"`
+	PerpParams         *PerpParamsRequest      `json:"module_params,omitempty"`
+	OracleExchangeRate *OracleExchangeRate     `json:"oracle_exchange_rate,omitempty"`
 }
 
 type ReservesRequest struct {
@@ -222,4 +223,12 @@ type PerpParams struct {
 	FundingRateInterval     string            `json:"funding_rate_interval"`
 	TwapLookbackWindow      sdkmath.Int       `json:"twap_lookback_window"`
 	WhitelistedLiquidators  []string          `json:"whitelisted_liquidators"`
+}
+
+type OracleExchangeRate struct {
+	Pair string `json:"pair"`
+}
+
+type OracleExchangeRateResponse struct {
+	ExchangeRate sdk.Dec `json:"exchange_rate"`
 }
