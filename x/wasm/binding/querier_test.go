@@ -225,7 +225,7 @@ func (s *TestSuiteQuerier) TestQueryAllMarkets() {
 // Integration test for BindingQuery::AllMarkets against real contract
 func (s *TestSuiteQuerier) TestQueryExchangeRate() {
 	bindingQuery := cw_struct.BindingQuery{
-		OracleExchangeRates: &cw_struct.OracleExchangeRates{Pair: "ueth:unusd"},
+		OracleExchangeRates: &cw_struct.OracleExchangeRates{},
 	}
 	bindingResp := new(cw_struct.OracleExchangeRatesResponse)
 
@@ -234,7 +234,7 @@ func (s *TestSuiteQuerier) TestQueryExchangeRate() {
 	)
 	s.Require().NoErrorf(err, "resp bytes: %s", respBz)
 
-	s.Assert().EqualValues(bindingResp.Rates["ueth:unusd"], sdk.NewDec(1000))
+	s.Assert().EqualValues(sdk.NewDec(1000), bindingResp.Rates["ueth:unusd"].String())
 }
 
 // func (s *TestSuiteQuerier) TestQueryBasePrice() {

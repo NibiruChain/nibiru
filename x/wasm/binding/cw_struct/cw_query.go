@@ -226,7 +226,6 @@ type PerpParams struct {
 }
 
 type OracleExchangeRates struct {
-	Pair string `json:"pair"`
 }
 
 type OracleExchangeRatesResponse struct {
