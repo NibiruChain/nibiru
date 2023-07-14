@@ -104,8 +104,8 @@ func CustomQuerier(qp QueryPlugin) func(ctx sdk.Context, request json.RawMessage
 			cwResp, err := qp.Perp.ModuleParams(ctx, cwReq)
 			return qp.ToBinary(cwResp, err, cwReq)
 
-		case wasmContractQuery.OracleExchangeRate != nil:
-			cwReq := wasmContractQuery.OracleExchangeRate
+		case wasmContractQuery.OracleExchangeRates != nil:
+			cwReq := wasmContractQuery.OracleExchangeRates
 			cwResp, err := qp.Oracle.ExchangeRate(ctx, cwReq)
 			return qp.ToBinary(cwResp, err, cwReq)
 
@@ -316,20 +316,18 @@ type OracleQuerier struct {
 }
 
 func (oracleExt *OracleQuerier) ExchangeRate(
-	ctx sdk.Context, cwReq *cw_struct.OracleExchangeRate,
-) (*cw_struct.OracleExchangeRateResponse, error) {
-	pair, err := asset.TryNewPair(cwReq.Pair)
+	ctx sdk.Context, cwReq *cw_struct.OracleExchangeRates,
+) (*cw_struct.OracleExchangeRatesResponse, error) {
+	queryExchangeRatesRequest := oracletypes.QueryExchangeRatesRequest{}
+	queryExchangeRates, err := oracleExt.oracle.ExchangeRates(ctx, &queryExchangeRatesRequest)
 
-	if err != nil {
-		return nil, wasmvmtypes.ToSystemError(errors.New("invalid pair"))
+	// Transform Tuple to Map
+	exchangeRates := make(map[string]sdk.Dec)
+	for _, exchangeRate := range queryExchangeRates.ExchangeRates {
+		exchangeRates[exchangeRate.Pair.String()] = exchangeRate.ExchangeRate
 	}
 
-	queryExchangeRateRequest := oracletypes.QueryExchangeRateRequest{
-		Pair: pair,
-	}
-	queryExchangeRate, err := oracleExt.oracle.ExchangeRate(ctx, &queryExchangeRateRequest)
-
-	return &cw_struct.OracleExchangeRateResponse{
-		ExchangeRate: queryExchangeRate.ExchangeRate,
+	return &cw_struct.OracleExchangeRatesResponse{
+		Rates: exchangeRates,
 	}, err
 }
