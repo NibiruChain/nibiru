@@ -85,6 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `bufbuild/buf-setup-action` from 1.21.0 to 1.23.1 (#1449, #1469)
 - Bump `google.golang.org/protobuf` from 1.30.0 to 1.31.0 (#1450)
 - Bump `cosmossdk.io/errors` from 1.0.0-beta.7 to 1.0.0 (#1499)
+- Bump `github.com/holiman/uint256` from 1.2.2 to 1.2.3 (#1504)
 
 ### Breaking
 
