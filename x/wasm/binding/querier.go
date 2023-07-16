@@ -10,20 +10,26 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
+	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
+	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 )
 
 type QueryPlugin struct {
-	Perp *PerpQuerier
+	Perp   *PerpQuerier
+	Oracle *OracleQuerier
 }
 
 // NewQueryPlugin returns a pointer to a new QueryPlugin
-func NewQueryPlugin(perp perpv2keeper.Keeper) QueryPlugin {
+func NewQueryPlugin(perp perpv2keeper.Keeper, oracle oraclekeeper.Keeper) QueryPlugin {
 	return QueryPlugin{
 		Perp: &PerpQuerier{
 			perp: perpv2keeper.NewQuerier(perp),
+		},
+		Oracle: &OracleQuerier{
+			oracle: oraclekeeper.NewQuerier(oracle),
 		},
 	}
 }
@@ -96,6 +102,11 @@ func CustomQuerier(qp QueryPlugin) func(ctx sdk.Context, request json.RawMessage
 		case wasmContractQuery.PerpParams != nil:
 			cwReq := wasmContractQuery.PerpParams
 			cwResp, err := qp.Perp.ModuleParams(ctx, cwReq)
+			return qp.ToBinary(cwResp, err, cwReq)
+
+		case wasmContractQuery.OraclePrices != nil:
+			cwReq := wasmContractQuery.OraclePrices
+			cwResp, err := qp.Oracle.ExchangeRates(ctx, cwReq)
 			return qp.ToBinary(cwResp, err, cwReq)
 
 		default:
@@ -294,4 +305,29 @@ func (perpExt *PerpQuerier) Positions(
 	return &cw_struct.PositionsResponse{
 		Positions: positionMap,
 	}, err
+}
+
+// ----------------------------------------------------------------------
+// OracleQuerier
+// ----------------------------------------------------------------------
+
+type OracleQuerier struct {
+	oracle oracletypes.QueryServer
+}
+
+func (oracleExt *OracleQuerier) ExchangeRates(
+	ctx sdk.Context, cwReq *cw_struct.OraclePrices,
+) (*cw_struct.OraclePricesResponse, error) {
+	queryExchangeRatesRequest := oracletypes.QueryExchangeRatesRequest{}
+	queryExchangeRates, err := oracleExt.oracle.ExchangeRates(ctx, &queryExchangeRatesRequest)
+
+	// Transform Tuple to Map
+	exchangeRates := make(map[string]sdk.Dec)
+	for _, exchangeRate := range queryExchangeRates.ExchangeRates {
+		exchangeRates[exchangeRate.Pair.String()] = exchangeRate.ExchangeRate
+	}
+
+	cwResp := new(cw_struct.OraclePricesResponse)
+	*cwResp = exchangeRates
+	return cwResp, err
 }

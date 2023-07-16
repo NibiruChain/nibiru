@@ -222,61 +222,94 @@ func (s *TestSuiteQuerier) TestQueryAllMarkets() {
 	}
 }
 
-// func (s *TestSuiteQuerier) TestQueryBasePrice() {
-// 	cwReq := &cw_struct.BasePriceRequest{
-// 		Pair:       s.fields.Pair,
-// 		IsLong:     true,
-// 		BaseAmount: sdk.NewInt(69_420),
-// 	}
-// 	bindingQuery := cw_struct.BindingQuery{
-// 		BasePrice: cwReq,
-// 	}
-// 	bindingResp := new(cw_struct.BasePriceResponse)
+// Integration test for BindingQuery::AllMarkets against real contract
+func (s *TestSuiteQuerier) TestQueryExchangeRate() {
+	bindingQuery := cw_struct.BindingQuery{
+		OraclePrices: &cw_struct.OraclePrices{},
+	}
+	bindingResp := new(cw_struct.OraclePricesResponse)
+	respBz, err := DoCustomBindingQuery(
+		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
+	)
+	priceMap := *bindingResp
+	s.Require().NoErrorf(err, "resp bytes: %s", respBz)
+	s.Assert().EqualValues(sdk.NewDec(1000).String(), priceMap["ueth:unusd"].String())
+}
 
-// 	respBz, err := DoCustomBindingQuery(
-// 		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
-// 	)
-// 	s.Require().NoErrorf(err, "resp bytes: %s", respBz)
+func (s *TestSuiteQuerier) TestQueryBasePrice() {
+	cwReq := &cw_struct.BasePriceRequest{
+		Pair:       s.fields.Pair,
+		IsLong:     true,
+		BaseAmount: sdk.NewInt(69_420),
+	}
+	bindingQuery := cw_struct.BindingQuery{
+		BasePrice: cwReq,
+	}
+	bindingResp := new(cw_struct.BasePriceResponse)
 
-// 	s.Assert().EqualValues(cwReq.Pair, bindingResp.Pair)
-// 	s.Assert().EqualValues(cwReq.IsLong, bindingResp.IsLong)
-// 	s.Assert().EqualValues(cwReq.BaseAmount.ToDec(), bindingResp.BaseAmount)
-// 	s.Assert().True(bindingResp.QuoteAmount.GT(sdk.ZeroDec()))
+	var respBz []byte
+	var err error
+	err = common.TryCatch(func() {
+		respBz, err = DoCustomBindingQuery(
+			s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
+		)
+		s.Require().Errorf(err, "expect error since query is not implemented: resp bytes: %s", respBz)
+		s.Require().Contains(err.Error(), "Wasmer runtime error")
+	})()
 
-// 	cwReqBz, err := json.Marshal(cwReq)
-// 	s.T().Logf("cwReq: %s", cwReqBz)
-// 	s.NoError(err)
+	// s.Require().NoErrorf(err, "resp bytes: %s", respBz)
+	// s.Assert().EqualValues(cwReq.Pair, bindingResp.Pair)
+	// s.Assert().EqualValues(cwReq.IsLong, bindingResp.IsLong)
+	// s.Assert().EqualValues(cwReq.BaseAmount.String(), bindingResp.BaseAmount.String())
+	// s.Assert().True(bindingResp.QuoteAmount.GT(sdk.ZeroDec()))
+	//
+	// cwReqBz, err := json.Marshal(cwReq)
+	// s.T().Logf("cwReq: %s", cwReqBz)
+	// s.NoError(err)
+	//
+	// cwRespBz, err := json.Marshal(bindingResp)
+	// s.T().Logf("cwResp: %s", cwRespBz)
+	// s.NoError(err)
+}
 
-// 	cwRespBz, err := json.Marshal(bindingResp)
-// 	s.T().Logf("cwResp: %s", cwRespBz)
-// 	s.NoError(err)
-// }
+func (s *TestSuiteQuerier) TestQueryPremiumFraction() {
+	cwReq := &cw_struct.PremiumFractionRequest{
+		Pair: s.fields.Pair,
+	}
 
-// func (s *TestSuiteQuerier) TestQueryPremiumFraction() {
-// 	cwReq := &cw_struct.PremiumFractionRequest{
-// 		Pair: s.fields.Pair,
-// 	}
+	bindingQuery := cw_struct.BindingQuery{
+		PremiumFraction: cwReq,
+	}
+	bindingResp := new(cw_struct.PremiumFractionResponse)
 
-// 	bindingQuery := cw_struct.BindingQuery{
-// 		PremiumFraction: cwReq,
-// 	}
-// 	bindingResp := new(cw_struct.PremiumFractionResponse)
+	var respBz []byte
+	var err error
+	err = common.TryCatch(func() {
+		respBz, err = DoCustomBindingQuery(
+			s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
+		)
+		s.Require().Errorf(err, "expect error since query is not implemented: resp bytes: %s", respBz)
+		s.Require().Contains(err.Error(), "Querier contract error")
+	})()
 
-// 	respBz, err := DoCustomBindingQuery(
-// 		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
-// 	)
-// 	s.Require().NoErrorf(err, "resp bytes: %s", respBz)
+	// 	respBz, err := DoCustomBindingQuery(
+	// 		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
+	// 	)
+	// 	s.Require().NoErrorf(err, "resp bytes: %s", respBz)
 
-// 	s.Assert().EqualValues(cwReq.Pair, bindingResp.Pair)
-// 	s.Assert().Truef(
-// 		!bindingResp.CPF.IsNegative(),
-// 		"cpf: %s",
-// 		bindingResp.CPF)
-// 	s.Assert().Truef(
-// 		!bindingResp.EstimatedNextCPF.IsNegative(),
-// 		"estimated_next_cpf: %s",
-// 		bindingResp.EstimatedNextCPF)
-// }
+	// s.Assert().EqualValues(cwReq.Pair, bindingResp.Pair)
+	// s.Assert().Truef(
+	//
+	//	!bindingResp.CPF.IsNegative(),
+	//	"cpf: %s",
+	//	bindingResp.CPF)
+	//
+	// s.Assert().Truef(
+	//
+	//	!bindingResp.EstimatedNextCPF.IsNegative(),
+	//	"estimated_next_cpf: %s",
+	//	bindingResp.EstimatedNextCPF)
+}
 
 // func (s *TestSuiteQuerier) TestQueryMetrics() {
 // 	cwReq := &cw_struct.MetricsRequest{

@@ -103,6 +103,7 @@ func (s *TestSuitePerpQuerier) SetupSuite() {
 	s.contractPerp = ContractMap[wasmbin.WasmKeyPerpBinding]
 	s.queryPlugin = binding.NewQueryPlugin(
 		nibiru.PerpKeeperV2,
+		nibiru.OracleKeeper,
 	)
 	s.OnSetupEnd()
 }

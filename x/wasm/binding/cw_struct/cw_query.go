@@ -37,6 +37,7 @@ type BindingQuery struct {
 	Metrics         *MetricsRequest         `json:"metrics,omitempty"`
 	ModuleAccounts  *ModuleAccountsRequest  `json:"module_accounts,omitempty"`
 	PerpParams      *PerpParamsRequest      `json:"module_params,omitempty"`
+	OraclePrices    *OraclePrices           `json:"oracle_prices,omitempty"`
 }
 
 type ReservesRequest struct {
@@ -129,10 +130,9 @@ type BasePriceRequest struct {
 }
 
 type BasePriceResponse struct {
-	Pair        string  `json:"pair"`
-	BaseAmount  sdk.Dec `json:"base_amount"`
-	QuoteAmount sdk.Dec `json:"quote_amount"`
-	IsLong      bool    `json:"is_long"`
+	Pair       string  `json:"pair"`
+	BaseAmount sdk.Dec `json:"base_amount"`
+	IsLong     bool    `json:"is_long"`
 }
 
 type PositionsRequest struct {
@@ -223,3 +223,8 @@ type PerpParams struct {
 	TwapLookbackWindow      sdkmath.Int       `json:"twap_lookback_window"`
 	WhitelistedLiquidators  []string          `json:"whitelisted_liquidators"`
 }
+
+type OraclePrices struct {
+}
+
+type OraclePricesResponse = map[string]sdk.Dec
