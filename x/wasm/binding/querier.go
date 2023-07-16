@@ -104,9 +104,9 @@ func CustomQuerier(qp QueryPlugin) func(ctx sdk.Context, request json.RawMessage
 			cwResp, err := qp.Perp.ModuleParams(ctx, cwReq)
 			return qp.ToBinary(cwResp, err, cwReq)
 
-		case wasmContractQuery.OracleExchangeRates != nil:
-			cwReq := wasmContractQuery.OracleExchangeRates
-			cwResp, err := qp.Oracle.ExchangeRate(ctx, cwReq)
+		case wasmContractQuery.OraclePrices != nil:
+			cwReq := wasmContractQuery.OraclePrices
+			cwResp, err := qp.Oracle.ExchangeRates(ctx, cwReq)
 			return qp.ToBinary(cwResp, err, cwReq)
 
 		default:
@@ -315,9 +315,9 @@ type OracleQuerier struct {
 	oracle oracletypes.QueryServer
 }
 
-func (oracleExt *OracleQuerier) ExchangeRate(
-	ctx sdk.Context, cwReq *cw_struct.OracleExchangeRates,
-) (*cw_struct.OracleExchangeRatesResponse, error) {
+func (oracleExt *OracleQuerier) ExchangeRates(
+	ctx sdk.Context, cwReq *cw_struct.OraclePrices,
+) (*cw_struct.OraclePricesResponse, error) {
 	queryExchangeRatesRequest := oracletypes.QueryExchangeRatesRequest{}
 	queryExchangeRates, err := oracleExt.oracle.ExchangeRates(ctx, &queryExchangeRatesRequest)
 
@@ -327,7 +327,7 @@ func (oracleExt *OracleQuerier) ExchangeRate(
 		exchangeRates[exchangeRate.Pair.String()] = exchangeRate.ExchangeRate
 	}
 
-	return &cw_struct.OracleExchangeRatesResponse{
-		Rates: exchangeRates,
-	}, err
+	cwResp := new(cw_struct.OraclePricesResponse)
+	*cwResp = exchangeRates
+	return cwResp, err
 }

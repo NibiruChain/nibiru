@@ -28,16 +28,16 @@ import (
 // - https://github.com/NibiruChain/cw-nibiru/blob/90df123f8d32d47b5b280ec6ae7dde0f9dbf2787/contracts/bindings-perp/src/query.rs
 type BindingQuery struct {
 	// bindings-perp NibiruQuery enum types
-	Reserves            *ReservesRequest        `json:"reserves,omitempty"`
-	AllMarkets          *AllMarketsRequest      `json:"all_markets,omitempty"`
-	BasePrice           *BasePriceRequest       `json:"base_price,omitempty"`
-	Positions           *PositionsRequest       `json:"positions,omitempty"`
-	Position            *PositionRequest        `json:"position,omitempty"`
-	PremiumFraction     *PremiumFractionRequest `json:"premium_fraction,omitempty"`
-	Metrics             *MetricsRequest         `json:"metrics,omitempty"`
-	ModuleAccounts      *ModuleAccountsRequest  `json:"module_accounts,omitempty"`
-	PerpParams          *PerpParamsRequest      `json:"module_params,omitempty"`
-	OracleExchangeRates *OracleExchangeRates    `json:"oracle_exchange_rates,omitempty"`
+	Reserves        *ReservesRequest        `json:"reserves,omitempty"`
+	AllMarkets      *AllMarketsRequest      `json:"all_markets,omitempty"`
+	BasePrice       *BasePriceRequest       `json:"base_price,omitempty"`
+	Positions       *PositionsRequest       `json:"positions,omitempty"`
+	Position        *PositionRequest        `json:"position,omitempty"`
+	PremiumFraction *PremiumFractionRequest `json:"premium_fraction,omitempty"`
+	Metrics         *MetricsRequest         `json:"metrics,omitempty"`
+	ModuleAccounts  *ModuleAccountsRequest  `json:"module_accounts,omitempty"`
+	PerpParams      *PerpParamsRequest      `json:"module_params,omitempty"`
+	OraclePrices    *OraclePrices           `json:"oracle_prices,omitempty"`
 }
 
 type ReservesRequest struct {
@@ -130,10 +130,9 @@ type BasePriceRequest struct {
 }
 
 type BasePriceResponse struct {
-	Pair        string  `json:"pair"`
-	BaseAmount  sdk.Dec `json:"base_amount"`
-	QuoteAmount sdk.Dec `json:"quote_amount"`
-	IsLong      bool    `json:"is_long"`
+	Pair       string  `json:"pair"`
+	BaseAmount sdk.Dec `json:"base_amount"`
+	IsLong     bool    `json:"is_long"`
 }
 
 type PositionsRequest struct {
@@ -225,9 +224,7 @@ type PerpParams struct {
 	WhitelistedLiquidators  []string          `json:"whitelisted_liquidators"`
 }
 
-type OracleExchangeRates struct {
+type OraclePrices struct {
 }
 
-type OracleExchangeRatesResponse struct {
-	Rates map[string]sdk.Dec `json:"rates"`
-}
+type OraclePricesResponse = map[string]sdk.Dec
