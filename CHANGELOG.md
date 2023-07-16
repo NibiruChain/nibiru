@@ -83,9 +83,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `github.com/spf13/viper` from 1.15.0 to 1.16.0 (#1436)
 - Bump `github.com/prometheus/client_golang` from 1.15.1 to 1.16.0 (#1431)
 - Bump `github.com/cosmos/ibc-go/v7` from 7.1.0 to 7.2.0 (#1445)
-- Bump `bufbuild/buf-setup-action` from 1.21.0 to 1.23.1 (#1449, #1469)
+- Bump `bufbuild/buf-setup-action` from 1.21.0 to 1.24.0 (#1449, #1469, #1505)
 - Bump `google.golang.org/protobuf` from 1.30.0 to 1.31.0 (#1450)
 - Bump `cosmossdk.io/errors` from 1.0.0-beta.7 to 1.0.0 (#1499)
+- Bump `github.com/holiman/uint256` from 1.2.2 to 1.2.3 (#1504)
 
 ### Breaking
 
