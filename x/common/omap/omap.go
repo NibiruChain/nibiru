@@ -119,6 +119,18 @@ func (om *OrderedMap[K, V]) Get(key K) (out *V) {
 	return out
 }
 
+func (om *OrderedMap[K, V]) IndexOf(key K) (out *int) {
+	if om.Get(key) == nil {
+		return nil
+	}
+	for idx, k := range om.Keys() {
+		if k == key {
+			return &idx
+		}
+	}
+	return
+}
+
 // Set adds a key-value pair to the map, or updates the value if the key
 // already exists. It ensures the keys are ordered after the operation.
 func (om *OrderedMap[K, V]) Set(key K, val V) {
