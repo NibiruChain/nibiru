@@ -1,22 +1,18 @@
-// Package omap defines a generic-based type for creating ordered maps. The
-// package publicly exports the "Sorter" interface to enable the creation of
-// new types of ordered maps with arbitrary key and value types.
+// Package omap defines a generic-based type for creating ordered maps. It
+// exports a "Sorter" interface, allowing the creation of ordered maps with
+// custom key and value types.
 //
-// For instance, the omap package implements for ordered maps that can accept
-// string or fmt.Stringer types as keys and arbitrary types as values. See
-// OrderedMap_String and OrderedMap_Pair in impl.go.
+// Specifically, omap supports ordered maps with keys of type string or
+// asset.Pair and values of any type. See impl.go for examples.
 //
 // ## Motivation
 //
-// A blockchain needs to maintain a deterministic system, where the same action
-// with the same input should always produce the same result. This is vital
-// because all nodes need to agree on the state of the blockchain, and if
-// different nodes get different results for the same action, they won't be
-// able to reach consensus.
-//
-// Disagreements in state can prevent nodes from being able to discern the
-// validity of a block. This prevents them from adding a block to the chain and
-// can result in chain halts.
+// Ensuring deterministic behavior is crucial in blockchain systems, as all
+// nodes must reach a consensus on the state of the blockchain. Every action,
+// given the same input, should consistently yield the same result. A
+// divergence in state could impede the ability of nodes to validate a block,
+// prohibiting the addition of the block to the chain, which could lead to
+// chain halts.
 package omap
 
 import (
