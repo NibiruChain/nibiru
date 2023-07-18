@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1494](https://github.com/NibiruChain/nibiru/pull/1494) - feat: create cli to add sudo account into genesis
 * [#1493](https://github.com/NibiruChain/nibiru/pull/1493) - fix(perp): allow `ClosePosition` when there is bad debt
 * [#1500](https://github.com/NibiruChain/nibiru/pull/1500) - refactor(perp): clean up reverse market order mechanics
+* [#1502](https://github.com/NibiruChain/nibiru/pull/1502) - feat: add ledger build support
 
 ### Features
 
@@ -54,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1498](https://github.com/NibiruChain/nibiru/pull/1498) - feat: add cli to change root sudo command
 * [#1501](https://github.com/NibiruChain/nibiru/pull/1501) - feat(localnet.sh): (1) Make it possible to run while offline. (2) Implement --no-build option to use the script with the current `nibid` installed.
 * [#1501](https://github.com/NibiruChain/nibiru/pull/1501) - feat(proto): add Python buf generation logic for py-sdk
+* [#1503](https://github.com/NibiruChain/nibiru/pull/1503) - feat(wasm): add Oracle Exchange Rate query for wasm
 
 ### Bug Fixes
 
@@ -82,9 +84,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `github.com/spf13/viper` from 1.15.0 to 1.16.0 (#1436)
 - Bump `github.com/prometheus/client_golang` from 1.15.1 to 1.16.0 (#1431)
 - Bump `github.com/cosmos/ibc-go/v7` from 7.1.0 to 7.2.0 (#1445)
-- Bump `bufbuild/buf-setup-action` from 1.21.0 to 1.23.1 (#1449, #1469)
+- Bump `bufbuild/buf-setup-action` from 1.21.0 to 1.24.0 (#1449, #1469, #1505)
 - Bump `google.golang.org/protobuf` from 1.30.0 to 1.31.0 (#1450)
 - Bump `cosmossdk.io/errors` from 1.0.0-beta.7 to 1.0.0 (#1499)
+- Bump `github.com/holiman/uint256` from 1.2.2 to 1.2.3 (#1504)
 
 ### Breaking
 
