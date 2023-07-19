@@ -4,18 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
-	abci "github.com/tendermint/tendermint/abci/types"
 
-	v1 "github.com/archway-network/archway/x/genmsg/v1"
+	v1 "github.com/NibiruChain/nibiru/x/genmsg/v1"
 )
 
 const (
@@ -65,8 +64,6 @@ func (a AppModule) ExportGenesis(_ sdk.Context, codec codec.JSONCodec) json.RawM
 	return codec.MustMarshalJSON(new(v1.GenesisState))
 }
 
-func (a AppModule) RegisterRESTRoutes(_ client.Context, _ *mux.Router) {}
-
 func (a AppModule) RegisterGRPCGatewayRoutes(_ client.Context, _ *runtime.ServeMux) {}
 
 func (a AppModule) GetTxCmd() *cobra.Command { return &cobra.Command{Use: ModuleName} }
@@ -74,20 +71,6 @@ func (a AppModule) GetTxCmd() *cobra.Command { return &cobra.Command{Use: Module
 func (a AppModule) GetQueryCmd() *cobra.Command { return &cobra.Command{Use: ModuleName} }
 
 func (a AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
-
-func (a AppModule) Route() sdk.Route {
-	return sdk.NewRoute(ModuleName, func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
-		return nil, fmt.Errorf("do not use me")
-	})
-}
-
-func (a AppModule) QuerierRoute() string { return ModuleName }
-
-func (a AppModule) LegacyQuerierHandler(_ *codec.LegacyAmino) sdk.Querier {
-	return func(ctx sdk.Context, path []string, req abci.RequestQuery) ([]byte, error) {
-		return nil, fmt.Errorf("do not use me")
-	}
-}
 
 func (a AppModule) RegisterServices(_ module.Configurator) {}
 

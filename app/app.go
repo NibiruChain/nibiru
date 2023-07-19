@@ -123,11 +123,6 @@ const (
 	DisplayDenom         = "NIBI"
 )
 
-// IBC application testing ports
-const (
-	MockFeePort string = ibcmock.ModuleName + ibcfeetypes.ModuleName
-)
-
 var (
 	// DefaultNodeHome default home directories for the application daemon
 	DefaultNodeHome string

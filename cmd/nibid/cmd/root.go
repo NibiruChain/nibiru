@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	wasmcli "github.com/NibiruChain/nibiru/x/genmsg/client/cli"
 	"io"
 	"os"
 
@@ -156,6 +157,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 			oraclecli.AddGenesisPricefeederDelegationCmd(app.DefaultNodeHome),
 			perpv2cli.AddMarketGenesisCmd(app.DefaultNodeHome),
 			cli.AddSudoRootAccountCmd(app.DefaultNodeHome),
+			wasmcli.AddContractToGenesis(),
 		),
 		queryCommand(),
 		txCommand(),
