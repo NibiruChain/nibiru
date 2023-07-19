@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/NibiruChain/nibiru/x/genmsg"
 	"io"
 	"net/http"
 	"os"
@@ -167,6 +168,7 @@ var (
 		sudo.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		ibcfee.AppModuleBasic{},
+		genmsg.AppModule{},
 	)
 
 	// module account permissions
