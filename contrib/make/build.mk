@@ -26,7 +26,12 @@ endif
 SDK_PACK := $(shell go list -m github.com/cosmos/cosmos-sdk | sed  's/ /\@/g')
 TM_VERSION := $(shell go list -m github.com/cometbft/cometbft | sed 's:.* ::') # grab everything after the space in "github.com/tendermint/tendermint v0.34.7"
 ROCKSDB_VERSION := 8.1.1
+<<<<<<< HEAD
 WASMVM_VERSION := 1.3.0
+=======
+
+WASMVM_VERSION := $(shell go list -m github.com/CosmWasm/wasmvm | awk '{sub(/^v/, "", $$2); print $$2}')
+>>>>>>> f834301d... deps(build.mk): read the WASMVM_VERSION programattically with 'go list'
 DOCKER := $(shell which docker)
 BUILDDIR ?= $(CURDIR)/build
 TEMPDIR ?= $(CURDIR)/temp
