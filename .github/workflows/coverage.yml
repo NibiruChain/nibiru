@@ -1,10 +1,11 @@
-name: Daily Test Report
+name: 🚀🔬⚙️🧪✨ Test coverages ✨🧪⚙️🔬🚀
 
 on:
   workflow_call:
   workflow_dispatch: # Runs on manual calls
   schedule: 
     - cron: "0 0 * * *" # Runs automatically every day
+  pull_request:
 
 jobs:
   test-coverage:
