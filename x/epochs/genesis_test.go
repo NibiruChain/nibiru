@@ -80,6 +80,9 @@ func TestEpochsInitGenesis(t *testing.T) {
 			},
 		},
 	}
+	err := epochs.InitGenesis(ctx, app.EpochsKeeper, genesisState)
+	require.Error(t, err)
+
 	require.EqualError(t, genesisState.Validate(), "epoch identifier should be unique")
 
 	genesisState = types.GenesisState{
@@ -96,7 +99,8 @@ func TestEpochsInitGenesis(t *testing.T) {
 		},
 	}
 
-	epochs.InitGenesis(ctx, app.EpochsKeeper, genesisState)
+	err = epochs.InitGenesis(ctx, app.EpochsKeeper, genesisState)
+	require.NoError(t, err)
 	epochInfo, err := app.EpochsKeeper.GetEpochInfo(ctx, "monthly")
 	require.NoError(t, err)
 	require.Equal(t, epochInfo.Identifier, "monthly")

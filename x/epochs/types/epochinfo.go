@@ -2,24 +2,7 @@ package types
 
 import (
 	"errors"
-	"time"
 )
-
-func NewEpochInfo(identifier string) EpochInfo {
-	return EpochInfo{
-		Identifier:              identifier,
-		StartTime:               time.Time{},
-		Duration:                0,
-		CurrentEpoch:            0,
-		CurrentEpochStartTime:   time.Time{},
-		EpochCountingStarted:    false,
-		CurrentEpochStartHeight: 0,
-	}
-}
-
-func (e *EpochInfo) Initialize() {
-
-}
 
 // Validate also validates epoch info.
 func (e *EpochInfo) Validate() error {
