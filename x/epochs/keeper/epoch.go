@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -26,7 +25,7 @@ func (k Keeper) GetEpochInfo(ctx sdk.Context, identifier string) (epoch types.Ep
 // EpochExists checks if the epoch exists
 func (k Keeper) EpochExists(ctx sdk.Context, identifier string) bool {
 	_, err := k.Epochs.Get(ctx, identifier)
-	if errors.Is(err, collections.ErrNotFound) {
+	if err != nil {
 		return false
 	}
 
