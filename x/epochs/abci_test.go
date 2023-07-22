@@ -174,7 +174,8 @@ func TestEpochStartingOneMonthAfterInitGenesis(t *testing.T) {
 	// To check init genesis again, should make it fresh status
 	epochInfos := app.EpochsKeeper.AllEpochInfos(ctx)
 	for _, epochInfo := range epochInfos {
-		app.EpochsKeeper.DeleteEpochInfo(ctx, epochInfo.Identifier)
+		err := app.EpochsKeeper.DeleteEpochInfo(ctx, epochInfo.Identifier)
+		require.NoError(t, err)
 	}
 
 	now := time.Now()
@@ -267,7 +268,8 @@ func TestLegacyEpochSerialization(t *testing.T) {
 	// To check init genesis again, should make it fresh status
 	epochInfos := app.EpochsKeeper.AllEpochInfos(ctx)
 	for _, epochInfo := range epochInfos {
-		app.EpochsKeeper.DeleteEpochInfo(ctx, epochInfo.Identifier)
+		err := app.EpochsKeeper.DeleteEpochInfo(ctx, epochInfo.Identifier)
+		require.NoError(t, err)
 	}
 
 	ctx = ctx.WithBlockHeight(1).WithBlockTime(now)
