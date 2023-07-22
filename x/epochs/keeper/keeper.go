@@ -1,15 +1,11 @@
 package keeper
 
 import (
-	"fmt"
-
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
 	"github.com/NibiruChain/collections"
 
-	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/epochs/types"
 )
@@ -36,8 +32,4 @@ func (k *Keeper) SetHooks(eh types.EpochHooks) *Keeper {
 	k.hooks = eh
 
 	return k
-}
-
-func (k Keeper) Logger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }

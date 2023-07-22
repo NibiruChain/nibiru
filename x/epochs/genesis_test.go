@@ -97,7 +97,8 @@ func TestEpochsInitGenesis(t *testing.T) {
 	}
 
 	epochs.InitGenesis(ctx, app.EpochsKeeper, genesisState)
-	epochInfo := app.EpochsKeeper.GetEpochInfo(ctx, "monthly")
+	epochInfo, err := app.EpochsKeeper.GetEpochInfo(ctx, "monthly")
+	require.NoError(t, err)
 	require.Equal(t, epochInfo.Identifier, "monthly")
 	require.Equal(t, epochInfo.StartTime.UTC().String(), now.UTC().String())
 	require.Equal(t, epochInfo.Duration, time.Hour*24)
