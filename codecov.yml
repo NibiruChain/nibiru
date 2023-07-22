@@ -4,7 +4,6 @@ ignore:
   - "**/mocks/.*"
   - "**/kubernetes_mock/.*"
   - "pkg"
-comment: false
 codecov:
   require_ci_to_pass: true
 parsers:
@@ -23,3 +22,10 @@ coverage:
       default:
         if_not_found: success
         if_ci_failed: error
+
+comment: # this is a top-level key
+  layout: " diff, flags, files"
+  behavior: default
+  require_changes: true # if true: only post the comment if coverage changes
+  require_base: false # [true :: must have a base report to post]
+  require_head: true # [true :: must have a head report to post]
