@@ -1,7 +1,6 @@
 package epochs
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
@@ -22,7 +21,6 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
 		if !shouldEpochStart(epochInfo, ctx) {
 			return false
 		}
-		logger := k.Logger(ctx)
 
 		epochInfo.CurrentEpochStartHeight = ctx.BlockHeight()
 		epochInfo.CurrentEpochStartTime = ctx.BlockTime()
@@ -30,12 +28,10 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
 		if !epochInfo.EpochCountingStarted {
 			epochInfo.EpochCountingStarted = true
 			epochInfo.CurrentEpoch = 1
-			logger.Info(fmt.Sprintf("Starting new epoch with identifier %s epoch number %d", epochInfo.Identifier, epochInfo.CurrentEpoch))
 		} else {
 			_ = ctx.EventManager().EmitTypedEvent(&types.EventEpochEnd{EpochNumber: epochInfo.CurrentEpoch})
 			k.AfterEpochEnd(ctx, epochInfo.Identifier, epochInfo.CurrentEpoch)
 			epochInfo.CurrentEpoch += 1
-			logger.Info(fmt.Sprintf("Starting epoch with identifier %s epoch number %d", epochInfo.Identifier, epochInfo.CurrentEpoch))
 		}
 
 		// emit new epoch start event, set epoch info, and run BeforeEpochStart hook

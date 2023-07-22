@@ -7,6 +7,43 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestDefaultGenesis(t *testing.T) {
+	genState := DefaultGenesis()
+
+	expectedEpochs := []EpochInfo{
+		{
+			Identifier:              FifteenMinuteEpochID,
+			StartTime:               time.Time{},
+			Duration:                15 * time.Minute,
+			CurrentEpoch:            0,
+			CurrentEpochStartHeight: 0,
+			CurrentEpochStartTime:   time.Time{},
+			EpochCountingStarted:    false,
+		},
+		{
+			Identifier:              ThirtyMinuteEpochID,
+			StartTime:               time.Time{},
+			Duration:                30 * time.Minute,
+			CurrentEpoch:            0,
+			CurrentEpochStartHeight: 0,
+			CurrentEpochStartTime:   time.Time{},
+			EpochCountingStarted:    false,
+		},
+		{
+			Identifier:              WeekEpochID,
+			StartTime:               time.Time{},
+			Duration:                7 * 24 * time.Hour,
+			CurrentEpoch:            0,
+			CurrentEpochStartHeight: 0,
+			CurrentEpochStartTime:   time.Time{},
+			EpochCountingStarted:    false,
+		},
+	}
+
+	// Ensure that genState and expectedEpochs are the same
+	require.Equal(t, expectedEpochs, genState.Epochs)
+}
+
 func TestEpochInfo_Validate(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -60,6 +97,34 @@ func TestEpochInfo_Validate(t *testing.T) {
 			err := tc.epochInfo.Validate()
 			require.Error(t, err)
 			require.ErrorContains(t, err, tc.errString)
+		})
+	}
+}
+
+func TestEpochInfo_HappyPath(t *testing.T) {
+	tests := []struct {
+		name      string
+		epochInfo EpochInfo
+	}{
+		{
+			name: "empty identifier",
+			epochInfo: EpochInfo{
+				Identifier:              "myEpoch",
+				StartTime:               time.Now(),
+				Duration:                10 * time.Minute,
+				CurrentEpoch:            1,
+				CurrentEpochStartTime:   time.Now(),
+				EpochCountingStarted:    false,
+				CurrentEpochStartHeight: 1,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.epochInfo.Validate()
+			require.NoError(t, err)
 		})
 	}
 }

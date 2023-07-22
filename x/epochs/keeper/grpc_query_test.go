@@ -42,3 +42,20 @@ func TestQueryEpochInfos(t *testing.T) {
 	require.Equal(t, epochInfosResponse.Epochs[1].CurrentEpochStartTime, chainStartTime)
 	require.Equal(t, epochInfosResponse.Epochs[1].EpochCountingStarted, false)
 }
+
+func TestCurrentEpochQuery(t *testing.T) {
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
+
+	queryHelper := baseapp.NewQueryServerTestHelper(ctx, nibiruApp.InterfaceRegistry())
+	types.RegisterQueryServer(queryHelper, keeper.NewQuerier(nibiruApp.EpochsKeeper))
+	queryClient := types.NewQueryClient(queryHelper)
+
+	// Valid epoch
+	epochInfosResponse, err := queryClient.CurrentEpoch(gocontext.Background(), &types.QueryCurrentEpochRequest{Identifier: "15 min"})
+	require.NoError(t, err)
+	require.Equal(t, epochInfosResponse.CurrentEpoch, uint64(0))
+
+	// Invalid epoch
+	_, err = queryClient.CurrentEpoch(gocontext.Background(), &types.QueryCurrentEpochRequest{Identifier: "invalid epoch"})
+	require.Error(t, err)
+}
