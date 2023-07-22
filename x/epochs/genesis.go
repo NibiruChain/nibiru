@@ -9,6 +9,10 @@ import (
 
 // InitGenesis sets epoch info from genesis
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) (err error) {
+	err = genState.Validate()
+	if err != nil {
+		return
+	}
 	for _, epoch := range genState.Epochs {
 		if err = k.AddEpochInfo(ctx, epoch); err != nil {
 			return err
