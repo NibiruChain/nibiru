@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	fmt "fmt"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
@@ -695,4 +696,82 @@ func TestGetMarketValue(t *testing.T) {
 			assert.Equal(t, tc.expectedMarketValue, marketValue)
 		})
 	}
+}
+
+func TestValidateAMM(t *testing.T) {
+	tests := []struct {
+		name        string
+		amm         types.AMM
+		expectedErr error
+	}{
+
+		{
+			name: "Invalid base reserve",
+			amm: types.AMM{
+				BaseReserve:     sdk.ZeroDec(),
+				QuoteReserve:    sdk.NewDec(1),
+				PriceMultiplier: sdk.NewDec(1),
+				SqrtDepth:       sdk.NewDec(1),
+			},
+			expectedErr: fmt.Errorf("init pool token supply must be > 0"),
+		},
+		{
+			name: "Invalid quote reserve",
+			amm: types.AMM{
+				BaseReserve:     sdk.NewDec(1),
+				QuoteReserve:    sdk.ZeroDec(),
+				PriceMultiplier: sdk.NewDec(1),
+				SqrtDepth:       sdk.NewDec(1),
+			},
+			expectedErr: fmt.Errorf("init pool token supply must be > 0"),
+		},
+		{
+			name: "Invalid price multiplier",
+			amm: types.AMM{
+				BaseReserve:     sdk.NewDec(1),
+				QuoteReserve:    sdk.NewDec(1),
+				PriceMultiplier: sdk.ZeroDec(),
+				SqrtDepth:       sdk.NewDec(1),
+			},
+			expectedErr: fmt.Errorf("init price multiplier must be > 0"),
+		},
+		{
+			name: "Invalid sqrt depth",
+			amm: types.AMM{
+				BaseReserve:     sdk.NewDec(1),
+				QuoteReserve:    sdk.NewDec(1),
+				PriceMultiplier: sdk.NewDec(1),
+				SqrtDepth:       sdk.ZeroDec(),
+			},
+			expectedErr: fmt.Errorf("init sqrt depth must be > 0"),
+		},
+		{
+			name: "Invalid sqrt depth value",
+			amm: types.AMM{
+				BaseReserve:     sdk.NewDec(1),
+				QuoteReserve:    sdk.NewDec(1),
+				PriceMultiplier: sdk.NewDec(1),
+				SqrtDepth:       sdk.NewDec(3),
+			},
+			expectedErr: types.ErrLiquidityDepth,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.amm.Validate()
+			if tc.expectedErr == nil {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tc.expectedErr.Error())
+			}
+		})
+	}
+}
+
+func TestPositionNotionalFail(t *testing.T) {
+	amm := mock.TestAMM(sdk.NewDec(-1), sdk.NewDec(2))
+	_, err := amm.GetQuoteReserveAmt(sdk.NewDec(-1), types.Direction_LONG)
+	require.ErrorIs(t, err, types.ErrInputBaseAmtNegative)
 }
