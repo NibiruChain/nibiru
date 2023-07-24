@@ -201,14 +201,14 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			name: "User has no GOV",
 			accFunds: sdk.NewCoins(
 				sdk.NewCoin(denoms.USDC, sdk.NewInt(9001)),
-				sdk.NewCoin(denoms.NIBI, sdk.NewInt(0)),
+				sdk.NewCoin(denoms.NIBI, sdk.ZeroInt()),
 			),
 			msgMint: types.MsgMintStable{
 				Creator: testutil.AccAddress().String(),
 				Stable:  sdk.NewCoin(denoms.NUSD, sdk.NewInt(100)),
 			},
 			msgResponse: types.MsgMintStableResponse{
-				Stable: sdk.NewCoin(denoms.NUSD, sdk.NewInt(0)),
+				Stable: sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
 			},
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.MustNewDecFromStr("1"),
@@ -216,7 +216,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 		}, {
 			name: "User has no COLL",
 			accFunds: sdk.NewCoins(
-				sdk.NewCoin(denoms.USDC, sdk.NewInt(0)),
+				sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
 				sdk.NewCoin(denoms.NIBI, sdk.NewInt(9001)),
 			),
 			msgMint: types.MsgMintStable{
@@ -224,7 +224,7 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 				Stable:  sdk.NewCoin(denoms.NUSD, sdk.NewInt(100)),
 			},
 			msgResponse: types.MsgMintStableResponse{
-				Stable: sdk.NewCoin(denoms.NUSD, sdk.NewInt(0)),
+				Stable: sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
 			},
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.MustNewDecFromStr("1"),
@@ -234,23 +234,23 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			name: "Not enough GOV",
 			accFunds: sdk.NewCoins(
 				sdk.NewCoin(denoms.USDC, sdk.NewInt(9001)),
-				sdk.NewCoin(denoms.NIBI, sdk.NewInt(1)),
+				sdk.NewCoin(denoms.NIBI, sdk.OneInt()),
 			),
 			msgMint: types.MsgMintStable{
 				Creator: testutil.AccAddress().String(),
 				Stable:  sdk.NewCoin(denoms.NUSD, sdk.NewInt(1000)),
 			},
 			msgResponse: types.MsgMintStableResponse{
-				Stable: sdk.NewCoin(denoms.NUSD, sdk.NewInt(0)),
+				Stable: sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
 			},
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.MustNewDecFromStr("1"),
 			err: types.NotEnoughBalance.Wrap(
-				sdk.NewCoin(denoms.NIBI, sdk.NewInt(1)).String()),
+				sdk.NewCoin(denoms.NIBI, sdk.OneInt()).String()),
 		}, {
 			name: "Not enough COLL",
 			accFunds: sdk.NewCoins(
-				sdk.NewCoin(denoms.USDC, sdk.NewInt(1)),
+				sdk.NewCoin(denoms.USDC, sdk.OneInt()),
 				sdk.NewCoin(denoms.NIBI, sdk.NewInt(9001)),
 			),
 			msgMint: types.MsgMintStable{
@@ -258,12 +258,12 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 				Stable:  sdk.NewCoin(denoms.NUSD, sdk.NewInt(100)),
 			},
 			msgResponse: types.MsgMintStableResponse{
-				Stable: sdk.NewCoin(denoms.NUSD, sdk.NewInt(0)),
+				Stable: sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
 			},
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.MustNewDecFromStr("1"),
 			err: types.NotEnoughBalance.Wrap(
-				sdk.NewCoin(denoms.USDC, sdk.NewInt(1)).String()),
+				sdk.NewCoin(denoms.USDC, sdk.OneInt()).String()),
 		},
 	}
 

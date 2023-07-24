@@ -20,13 +20,13 @@ func TestGetPoolAssetAndIndexHappyPath(t *testing.T) {
 			poolAssets: []PoolAsset{
 				{
 					Token:  sdk.NewInt64Coin("foo", 100),
-					Weight: sdk.NewInt(1),
+					Weight: sdk.OneInt(),
 				},
 			},
 			denom: "foo",
 			expectedPoolAsset: PoolAsset{
 				Token:  sdk.NewInt64Coin("foo", 100),
-				Weight: sdk.NewInt(1),
+				Weight: sdk.OneInt(),
 			},
 			expectedIndex: 0,
 		},
@@ -35,21 +35,21 @@ func TestGetPoolAssetAndIndexHappyPath(t *testing.T) {
 			poolAssets: []PoolAsset{
 				{
 					Token:  sdk.NewInt64Coin("bar", 100),
-					Weight: sdk.NewInt(1),
+					Weight: sdk.OneInt(),
 				},
 				{
 					Token:  sdk.NewInt64Coin("foo", 100),
-					Weight: sdk.NewInt(1),
+					Weight: sdk.OneInt(),
 				},
 				{
 					Token:  sdk.NewInt64Coin("zee", 100),
-					Weight: sdk.NewInt(1),
+					Weight: sdk.OneInt(),
 				},
 			},
 			denom: "foo",
 			expectedPoolAsset: PoolAsset{
 				Token:  sdk.NewInt64Coin("foo", 100),
-				Weight: sdk.NewInt(1),
+				Weight: sdk.OneInt(),
 			},
 			expectedIndex: 1,
 		},
@@ -58,17 +58,17 @@ func TestGetPoolAssetAndIndexHappyPath(t *testing.T) {
 			poolAssets: []PoolAsset{
 				{
 					Token:  sdk.NewInt64Coin("bar", 100),
-					Weight: sdk.NewInt(1),
+					Weight: sdk.OneInt(),
 				},
 				{
 					Token:  sdk.NewInt64Coin("foo", 200),
-					Weight: sdk.NewInt(1),
+					Weight: sdk.OneInt(),
 				},
 			},
 			denom: "bar",
 			expectedPoolAsset: PoolAsset{
 				Token:  sdk.NewInt64Coin("bar", 100),
-				Weight: sdk.NewInt(1),
+				Weight: sdk.OneInt(),
 			},
 			expectedIndex: 0,
 		},
@@ -106,7 +106,7 @@ func TestGetPoolAssetAndIndexErrors(t *testing.T) {
 			poolAssets: []PoolAsset{
 				{
 					Token:  sdk.NewInt64Coin("foo", 100),
-					Weight: sdk.NewInt(1),
+					Weight: sdk.OneInt(),
 				},
 			},
 			denom:         "",
@@ -117,7 +117,7 @@ func TestGetPoolAssetAndIndexErrors(t *testing.T) {
 			poolAssets: []PoolAsset{
 				{
 					Token:  sdk.NewInt64Coin("bar", 100),
-					Weight: sdk.NewInt(1),
+					Weight: sdk.OneInt(),
 				},
 			},
 			denom:         "foo",
@@ -128,7 +128,7 @@ func TestGetPoolAssetAndIndexErrors(t *testing.T) {
 			poolAssets: []PoolAsset{
 				{
 					Token:  sdk.NewInt64Coin("foo", 100),
-					Weight: sdk.NewInt(1),
+					Weight: sdk.OneInt(),
 				},
 			},
 			denom:         "bar",
@@ -159,7 +159,7 @@ func TestPoolBalances(t *testing.T) {
 			poolAssets: []PoolAsset{
 				{
 					Token:  sdk.NewInt64Coin("foo", 100),
-					Weight: sdk.NewInt(1),
+					Weight: sdk.OneInt(),
 				},
 			},
 			expectedCoins: sdk.NewCoins(sdk.NewInt64Coin("foo", 100)),
@@ -169,11 +169,11 @@ func TestPoolBalances(t *testing.T) {
 			poolAssets: []PoolAsset{
 				{
 					Token:  sdk.NewInt64Coin("bar", 100),
-					Weight: sdk.NewInt(1),
+					Weight: sdk.OneInt(),
 				},
 				{
 					Token:  sdk.NewInt64Coin("foo", 200),
-					Weight: sdk.NewInt(1),
+					Weight: sdk.OneInt(),
 				},
 			},
 			expectedCoins: sdk.NewCoins(
@@ -205,13 +205,13 @@ func TestSortPoolAssets(t *testing.T) {
 			poolAssets: []PoolAsset{
 				{
 					Token:  sdk.NewInt64Coin("foo", 100),
-					Weight: sdk.NewInt(1),
+					Weight: sdk.OneInt(),
 				},
 			},
 			expectedPoolAsset: []PoolAsset{
 				{
 					Token:  sdk.NewInt64Coin("foo", 100),
-					Weight: sdk.NewInt(1),
+					Weight: sdk.OneInt(),
 				},
 			},
 		},
@@ -220,21 +220,21 @@ func TestSortPoolAssets(t *testing.T) {
 			poolAssets: []PoolAsset{
 				{
 					Token:  sdk.NewInt64Coin("foo", 100),
-					Weight: sdk.NewInt(1),
+					Weight: sdk.OneInt(),
 				},
 				{
 					Token:  sdk.NewInt64Coin("bar", 200),
-					Weight: sdk.NewInt(1),
+					Weight: sdk.OneInt(),
 				},
 			},
 			expectedPoolAsset: []PoolAsset{
 				{
 					Token:  sdk.NewInt64Coin("bar", 200),
-					Weight: sdk.NewInt(1),
+					Weight: sdk.OneInt(),
 				},
 				{
 					Token:  sdk.NewInt64Coin("foo", 100),
-					Weight: sdk.NewInt(1),
+					Weight: sdk.OneInt(),
 				},
 			},
 		},

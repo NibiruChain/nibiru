@@ -33,7 +33,7 @@ func (amm AMM) Validate() error {
 		return err
 	}
 
-	if !amm.SqrtDepth.Sub(computedSqrtDepth).Abs().LTE(sdk.NewDec(1)) {
+	if !amm.SqrtDepth.Sub(computedSqrtDepth).Abs().LTE(sdk.OneDec()) {
 		return ErrLiquidityDepth.Wrap(
 			"computed sqrt and current sqrt are mismatched. pool: " + amm.String())
 	}

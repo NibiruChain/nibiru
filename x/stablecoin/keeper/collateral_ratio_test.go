@@ -590,7 +590,7 @@ func TestRecollateralize(t *testing.T) {
 				asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 			},
-			priceGovStable: sdk.NewDec(1),
+			priceGovStable: sdk.OneDec(),
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(500),
 				priceCollStable: sdk.MustNewDecFromStr("1.099999"),
@@ -617,7 +617,7 @@ func TestRecollateralize(t *testing.T) {
 				asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 			},
-			priceGovStable: sdk.NewDec(1),
+			priceGovStable: sdk.OneDec(),
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(500),
 				priceCollStable: sdk.MustNewDecFromStr("1.5"),
@@ -644,7 +644,7 @@ func TestRecollateralize(t *testing.T) {
 				asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 			},
-			priceGovStable: sdk.NewDec(1),
+			priceGovStable: sdk.OneDec(),
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(500),
 				priceCollStable: sdk.MustNewDecFromStr("1"),
@@ -670,7 +670,7 @@ func TestRecollateralize(t *testing.T) {
 			postedAssetPairs: []asset.Pair{
 				asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 			},
-			priceGovStable: sdk.NewDec(1),
+			priceGovStable: sdk.OneDec(),
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(500),
 				priceCollStable: sdk.MustNewDecFromStr("1"),

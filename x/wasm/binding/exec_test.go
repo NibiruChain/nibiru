@@ -145,7 +145,7 @@ func (s *TestSuiteExecutor) TestOpenAddRemoveClose() {
 			IsLong:          true,
 			QuoteAmount:     sdk.NewInt(42),
 			Leverage:        sdk.NewDec(5),
-			BaseAmountLimit: sdk.NewInt(0),
+			BaseAmountLimit: sdk.ZeroInt(),
 		},
 	}
 

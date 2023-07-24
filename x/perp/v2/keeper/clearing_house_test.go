@@ -164,7 +164,7 @@ func TestMarketOrder(t *testing.T) {
 			).
 			When(
 				MoveToNextBlock(),
-				MarketOrderFails(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroDec(),
+				MarketOrderFails(alice, pairBtcNusd, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec(),
 					types.ErrMarginRatioTooLow,
 				),
 			).
@@ -255,7 +255,7 @@ func TestMarketOrder(t *testing.T) {
 			).
 			When(
 				MoveToNextBlock(),
-				MarketOrderFails(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroDec(),
+				MarketOrderFails(alice, pairBtcNusd, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec(),
 					types.ErrMarginRatioTooLow,
 				),
 			).
@@ -527,7 +527,7 @@ func TestMarketOrder(t *testing.T) {
 			).
 			When(
 				MoveToNextBlock(),
-				MarketOrderFails(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroDec(),
+				MarketOrderFails(alice, pairBtcNusd, types.Direction_SHORT, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec(),
 					types.ErrMarginRatioTooLow,
 				),
 			).
@@ -617,7 +617,7 @@ func TestMarketOrder(t *testing.T) {
 			).
 			When(
 				MoveToNextBlock(),
-				MarketOrderFails(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroDec(),
+				MarketOrderFails(alice, pairBtcNusd, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec(),
 					types.ErrMarginRatioTooLow,
 				),
 			).
@@ -993,7 +993,7 @@ func TestMarketOrderError(t *testing.T) {
 				LastUpdatedBlockNumber:          1,
 			},
 			side:        types.Direction_LONG,
-			margin:      sdk.NewInt(1),
+			margin:      sdk.OneInt(),
 			leverage:    sdk.OneDec(),
 			baseLimit:   sdk.ZeroDec(),
 			expectedErr: types.ErrMarginRatioTooLow,
@@ -1023,7 +1023,7 @@ func TestMarketOrderError(t *testing.T) {
 			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 1020)),
 			initialPosition: nil,
 			side:            types.Direction_SHORT,
-			margin:          sdk.NewInt(0),
+			margin:          sdk.ZeroInt(),
 			leverage:        sdk.NewDec(10),
 			baseLimit:       sdk.NewDec(10_000),
 			expectedErr:     types.ErrInputQuoteAmtNegative,
@@ -1034,7 +1034,7 @@ func TestMarketOrderError(t *testing.T) {
 			initialPosition: nil,
 			side:            types.Direction_SHORT,
 			margin:          sdk.NewInt(1000),
-			leverage:        sdk.NewDec(0),
+			leverage:        sdk.ZeroDec(),
 			baseLimit:       sdk.NewDec(10_000),
 			expectedErr:     types.ErrUserLeverageNegative,
 		},
@@ -1055,7 +1055,7 @@ func TestMarketOrderError(t *testing.T) {
 			side:            types.Direction_LONG,
 			margin:          sdk.NewInt(100),
 			leverage:        sdk.NewDec(16),
-			baseLimit:       sdk.NewDec(0),
+			baseLimit:       sdk.ZeroDec(),
 			expectedErr:     types.ErrLeverageIsTooHigh,
 		},
 	}
@@ -1815,7 +1815,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100000)))),
 			).
 			When(
-				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.ZeroDec()),
+				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
 				ClosePosition(alice, pairBtcNusd),
 			).
 			Then(
@@ -1830,7 +1830,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100000)))),
 			).
 			When(
-				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.NewDec(10_000_000_000_000)),
+				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.NewDec(10_000_000_000_000)),
 				ClosePosition(alice, pairBtcNusd),
 			).
 			Then(
@@ -1845,7 +1845,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100_000_000)))),
 			).
 			When(
-				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.ZeroDec()),
+				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
 				EditSwapInvariant(pairBtcNusd, startingSwapInvariant.MulInt64(100)),
 				AMMShouldBeEqual(
 					pairBtcNusd,
@@ -1865,7 +1865,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100_000_000)))),
 			).
 			When(
-				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.ZeroDec()),
+				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
 				EditSwapInvariant(pairBtcNusd, startingSwapInvariant.MulInt64(100)),
 				AMMShouldBeEqual(
 					pairBtcNusd,
@@ -1886,7 +1886,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100_000_000)))),
 			).
 			When(
-				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.ZeroDec()),
+				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
 				EditSwapInvariant(pairBtcNusd, startingSwapInvariant.Mul(sdk.MustNewDecFromStr("0.1"))),
 				AMMShouldBeEqual(
 					pairBtcNusd,
@@ -1906,7 +1906,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100_000_000)))),
 			).
 			When(
-				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.ZeroDec()),
+				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
 				EditSwapInvariant(pairBtcNusd, startingSwapInvariant.Mul(sdk.MustNewDecFromStr("0.1"))),
 				AMMShouldBeEqual(
 					pairBtcNusd,
@@ -1927,8 +1927,8 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				FundAccount(bob, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
 			).
 			When(
-				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.ZeroDec()),
-				MarketOrder(bob, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.NewDec(10_000_000_000_000)),
+				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
+				MarketOrder(bob, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.NewDec(10_000_000_000_000)),
 
 				EditSwapInvariant(pairBtcNusd, startingSwapInvariant.MulInt64(100)),
 				AMMShouldBeEqual(
@@ -1958,8 +1958,8 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				FundAccount(bob, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
 			).
 			When(
-				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.ZeroDec()),
-				MarketOrder(bob, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.NewDec(1), sdk.NewDec(10_000_000_000_000)),
+				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
+				MarketOrder(bob, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.NewDec(10_000_000_000_000)),
 
 				EditSwapInvariant(pairBtcNusd, startingSwapInvariant.Mul(sdk.MustNewDecFromStr("0.1"))),
 				AMMShouldBeEqual(

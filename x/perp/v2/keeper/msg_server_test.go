@@ -27,7 +27,7 @@ func TestMsgServerMarketOrder(t *testing.T) {
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
 			).
 			When(
-				MsgServerMarketOrder(alice, pair, types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroInt()),
+				MsgServerMarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroInt()),
 			).
 			Then(
 				PositionShouldBeEqual(alice, pair,
@@ -35,8 +35,8 @@ func TestMsgServerMarketOrder(t *testing.T) {
 						TraderAddress:                   alice.String(),
 						Pair:                            pair,
 						Size_:                           sdk.MustNewDecFromStr("0.999999999999"),
-						Margin:                          sdk.NewDec(1),
-						OpenNotional:                    sdk.NewDec(1),
+						Margin:                          sdk.OneDec(),
+						OpenNotional:                    sdk.OneDec(),
 						LatestCumulativePremiumFraction: sdk.ZeroDec(),
 						LastUpdatedBlockNumber:          1,
 					}),
@@ -50,7 +50,7 @@ func TestMsgServerMarketOrder(t *testing.T) {
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
 			).
 			When(
-				MsgServerMarketOrder(alice, pair, types.Direction_SHORT, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroInt()),
+				MsgServerMarketOrder(alice, pair, types.Direction_SHORT, sdk.OneInt(), sdk.OneDec(), sdk.ZeroInt()),
 			).
 			Then(
 				PositionShouldBeEqual(alice, pair,
@@ -58,8 +58,8 @@ func TestMsgServerMarketOrder(t *testing.T) {
 						TraderAddress:                   alice.String(),
 						Pair:                            pair,
 						Size_:                           sdk.MustNewDecFromStr("-1.000000000001"),
-						Margin:                          sdk.NewDec(1),
-						OpenNotional:                    sdk.NewDec(1),
+						Margin:                          sdk.OneDec(),
+						OpenNotional:                    sdk.OneDec(),
 						LatestCumulativePremiumFraction: sdk.ZeroDec(),
 						LastUpdatedBlockNumber:          1,
 					}),
@@ -80,7 +80,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 			Given(
 				CreateCustomMarket(pair),
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
-				MarketOrder(alice, pair, types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroDec()),
+				MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
 			When(
@@ -95,7 +95,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 			Given(
 				CreateCustomMarket(pair),
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
-				MarketOrder(alice, pair, types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroDec()),
+				MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
 			When(
@@ -119,11 +119,11 @@ func TestMsgServerAddMargin(t *testing.T) {
 			Given(
 				CreateCustomMarket(pair),
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
-				MarketOrder(alice, pair, types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroDec()),
+				MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
 			When(
-				MsgServerAddMargin(alice, pair, sdk.NewInt(1)),
+				MsgServerAddMargin(alice, pair, sdk.OneInt()),
 			).
 			Then(
 				PositionShouldBeEqual(alice, pair,
@@ -132,7 +132,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 						Pair:                            pair,
 						Size_:                           sdk.MustNewDecFromStr("0.999999999999"),
 						Margin:                          sdk.NewDec(2),
-						OpenNotional:                    sdk.NewDec(1),
+						OpenNotional:                    sdk.OneDec(),
 						LatestCumulativePremiumFraction: sdk.ZeroDec(),
 						LastUpdatedBlockNumber:          2,
 					}),
@@ -153,11 +153,11 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			Given(
 				CreateCustomMarket(pair),
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
-				MarketOrder(alice, pair, types.Direction_LONG, sdk.NewInt(2), sdk.NewDec(1), sdk.ZeroDec()),
+				MarketOrder(alice, pair, types.Direction_LONG, sdk.NewInt(2), sdk.OneDec(), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
 			When(
-				MsgServerRemoveMargin(alice, pair, sdk.NewInt(1)),
+				MsgServerRemoveMargin(alice, pair, sdk.OneInt()),
 			).
 			Then(
 				PositionShouldBeEqual(alice, pair,
@@ -165,7 +165,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 						TraderAddress:                   alice.String(),
 						Pair:                            pair,
 						Size_:                           sdk.MustNewDecFromStr("1.999999999996"),
-						Margin:                          sdk.NewDec(1),
+						Margin:                          sdk.OneDec(),
 						OpenNotional:                    sdk.NewDec(2),
 						LatestCumulativePremiumFraction: sdk.ZeroDec(),
 						LastUpdatedBlockNumber:          2,
