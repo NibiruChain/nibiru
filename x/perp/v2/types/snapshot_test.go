@@ -54,7 +54,7 @@ func TestReserveSnapshot_Validate(t *testing.T) {
 			name: "Missing quote reserve",
 			snapshot: ReserveSnapshot{
 				Amm: AMM{
-					Pair:            invalidPair,
+					Pair:            validPair,
 					BaseReserve:     validDec,
 					PriceMultiplier: validDec,
 				},
@@ -66,7 +66,7 @@ func TestReserveSnapshot_Validate(t *testing.T) {
 			name: "Negative base reserve",
 			snapshot: ReserveSnapshot{
 				Amm: AMM{
-					Pair:            invalidPair,
+					Pair:            validPair,
 					BaseReserve:     sdk.NewDec(-1),
 					QuoteReserve:    sdk.NewDec(1),
 					PriceMultiplier: validDec,
@@ -79,7 +79,7 @@ func TestReserveSnapshot_Validate(t *testing.T) {
 			name: "Negative quote reserve",
 			snapshot: ReserveSnapshot{
 				Amm: AMM{
-					Pair:            invalidPair,
+					Pair:            validPair,
 					BaseReserve:     sdk.NewDec(1),
 					QuoteReserve:    sdk.NewDec(-1),
 					PriceMultiplier: validDec,
@@ -92,7 +92,7 @@ func TestReserveSnapshot_Validate(t *testing.T) {
 			name: "Peg multiplier",
 			snapshot: ReserveSnapshot{
 				Amm: AMM{
-					Pair:            invalidPair,
+					Pair:            validPair,
 					BaseReserve:     validDec,
 					QuoteReserve:    validDec,
 					PriceMultiplier: sdk.NewDec(-1),
@@ -105,7 +105,7 @@ func TestReserveSnapshot_Validate(t *testing.T) {
 			name: "low timestamp",
 			snapshot: ReserveSnapshot{
 				Amm: AMM{
-					Pair:            invalidPair,
+					Pair:            validPair,
 					BaseReserve:     validDec,
 					QuoteReserve:    validDec,
 					PriceMultiplier: validDec,
