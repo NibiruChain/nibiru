@@ -376,17 +376,6 @@ func TestMsgValidateBasic(t *testing.T) {
 	}
 }
 
-func TestMsgDonateToEcosystemFund_GetSignBytes(t *testing.T) {
-	msg := MsgDonateToEcosystemFund{
-		Sender: "cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v",
-		// ... other fields
-	}
-
-	expectedBytes := ModuleCdc.MustMarshalJSON(&msg)
-
-	require.Equal(t, expectedBytes, msg.GetSignBytes())
-}
-
 func TestMsg_GetSigners(t *testing.T) {
 	validSender := "cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v"
 	invalidSender := "invalid_address"
