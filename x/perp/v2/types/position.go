@@ -107,3 +107,44 @@ func (m *Position) Validate() error {
 
 	return nil
 }
+
+func (position *Position) WithTraderAddress(value string) *Position {
+	position.TraderAddress = value
+	return position
+}
+func (position *Position) WithPair(value asset.Pair) *Position {
+	position.Pair = value
+	return position
+}
+func (position *Position) WithSize_(value sdk.Dec) *Position {
+	position.Size_ = value
+	return position
+}
+func (position *Position) WithMargin(value sdk.Dec) *Position {
+	position.Margin = value
+	return position
+}
+func (position *Position) WithOpenNotional(value sdk.Dec) *Position {
+	position.OpenNotional = value
+	return position
+}
+func (position *Position) WithLatestCumulativePremiumFraction(value sdk.Dec) *Position {
+	position.LatestCumulativePremiumFraction = value
+	return position
+}
+func (position *Position) WithLastUpdatedBlockNumber(value int64) *Position {
+	position.LastUpdatedBlockNumber = value
+	return position
+}
+
+func (p *Position) copy() *Position {
+	return &Position{
+		TraderAddress:                   p.TraderAddress,
+		Pair:                            p.Pair,
+		Size_:                           p.Size_,
+		Margin:                          p.Margin,
+		OpenNotional:                    p.OpenNotional,
+		LatestCumulativePremiumFraction: p.LatestCumulativePremiumFraction,
+		LastUpdatedBlockNumber:          p.LastUpdatedBlockNumber,
+	}
+}

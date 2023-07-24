@@ -33,8 +33,8 @@ func TestNewParams_Errors(t *testing.T) {
 			"collateral ratio bigger than 1",
 			types.NewParams(
 				sdk.MustNewDecFromStr("2"),
-				sdk.MustNewDecFromStr("1"),
-				sdk.MustNewDecFromStr("1"),
+				sdk.OneDec(),
+				sdk.OneDec(),
 				sdk.MustNewDecFromStr("0.002"),
 				"15 min",
 				sdk.MustNewDecFromStr("0.0025"),
@@ -49,9 +49,9 @@ func TestNewParams_Errors(t *testing.T) {
 		{
 			"fee ratio bigger than 1",
 			types.NewParams(
-				sdk.MustNewDecFromStr("1"),
+				sdk.OneDec(),
 				sdk.MustNewDecFromStr("2"),
-				sdk.MustNewDecFromStr("1"),
+				sdk.OneDec(),
 				sdk.MustNewDecFromStr("0.002"),
 				"15 min",
 				sdk.MustNewDecFromStr("0.0025"),
@@ -66,8 +66,8 @@ func TestNewParams_Errors(t *testing.T) {
 		{
 			"stable EF fee ratio bigger than 1",
 			types.NewParams(
-				sdk.MustNewDecFromStr("1"),
-				sdk.MustNewDecFromStr("1"),
+				sdk.OneDec(),
+				sdk.OneDec(),
 				sdk.MustNewDecFromStr("2"),
 				sdk.MustNewDecFromStr("0.002"),
 				"15 min",

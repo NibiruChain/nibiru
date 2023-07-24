@@ -106,7 +106,7 @@ func (s *TestSuitePerpExecutor) DoMarketOrderTest(pair asset.Pair) error {
 		IsLong:          false,
 		QuoteAmount:     sdk.NewInt(4_200_000),
 		Leverage:        sdk.NewDec(5),
-		BaseAmountLimit: sdk.NewInt(0),
+		BaseAmountLimit: sdk.ZeroInt(),
 	}
 
 	_, err := s.exec.MarketOrder(cwMsg, s.contractPerp, s.ctx)

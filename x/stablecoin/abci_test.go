@@ -47,7 +47,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 		{
 			Name:              "Price at peg, coll ratio should be the same",
 			InCollRatio:       sdk.MustNewDecFromStr("0.8"),
-			price:             sdk.MustNewDecFromStr("1"),
+			price:             sdk.OneDec(),
 			ExpectedCollRatio: sdk.MustNewDecFromStr("0.8"),
 			fn: func() {
 				ctx = ctx.WithBlockHeight(2).WithBlockTime(ctx.BlockTime().Add(time.Second))

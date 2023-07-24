@@ -133,6 +133,9 @@ func (m *MsgMarketOrder) GetSigners() []sdk.AccAddress {
 
 // MsgMultiLiquidate
 
+func (m MsgMultiLiquidate) Route() string { return "perp" }
+func (m MsgMultiLiquidate) Type() string  { return "multi_liquidate_msg" }
+
 func (m *MsgMultiLiquidate) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
 		return err
@@ -149,6 +152,10 @@ func (m *MsgMultiLiquidate) ValidateBasic() error {
 	}
 
 	return nil
+}
+
+func (m MsgMultiLiquidate) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
 }
 
 func (m *MsgMultiLiquidate) GetSigners() []sdk.AccAddress {

@@ -38,7 +38,7 @@ func NeededCollAmtGivenGov(
 	govAmt sdkmath.Int, priceGov sdk.Dec, priceColl sdk.Dec,
 	collRatio sdk.Dec) (neededCollAmt sdkmath.Int, mintableStableAmt sdkmath.Int) {
 	govUSD := sdk.NewDecFromInt(govAmt).Mul(priceGov)
-	govRatio := sdk.NewDec(1).Sub(collRatio)
+	govRatio := sdk.OneDec().Sub(collRatio)
 	neededCollUSD := collRatio.Quo(govRatio).Mul(govUSD)
 
 	neededCollAmt = neededCollUSD.Quo(priceColl).TruncateInt()

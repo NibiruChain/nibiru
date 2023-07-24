@@ -32,7 +32,7 @@ func (k Keeper) GetDenomLiquidity(ctx sdk.Context, denom string) (amount sdkmath
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(spottypes.GetDenomLiquidityPrefix(denom))
 	if bz == nil {
-		return sdk.NewInt(0), nil
+		return sdk.ZeroInt(), nil
 	}
 
 	if err := amount.Unmarshal(bz); err != nil {

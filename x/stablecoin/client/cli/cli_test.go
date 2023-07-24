@@ -57,7 +57,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	oracleGenesis := oracletypes.DefaultGenesisState()
 	oracleGenesis.ExchangeRates = []oracletypes.ExchangeRateTuple{
 		{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: sdk.NewDec(10)},
-		{Pair: asset.Registry.Pair(denoms.USDC, denoms.NUSD), ExchangeRate: sdk.NewDec(1)},
+		{Pair: asset.Registry.Pair(denoms.USDC, denoms.NUSD), ExchangeRate: sdk.OneDec()},
 	}
 	oracleGenesis.Params.VotePeriod = 1_000
 
@@ -210,7 +210,7 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 		// 	args: append([]string{
 		// 		"100000000unusd",
 		// 		fmt.Sprintf("--%s=%s", flags.FlagFrom, "burn")}, commonArgs...),
-		// 	expectedStable: sdk.NewInt(0),
+		// 	expectedStable: sdk.ZeroInt(),
 		// 	expectedColl:   sdk.NewInt(90 * common.TO_MICRO),
 		// 	expectedGov:    sdk.NewInt(1 * common.TO_MICRO),
 		// 	expectErr:      false,

@@ -21,7 +21,7 @@ func TestPoolAssetValidateError(t *testing.T) {
 			name: "coin amount too little",
 			pa: PoolAsset{
 				Token:  sdk.NewInt64Coin("foo", 0),
-				Weight: sdk.NewInt(1),
+				Weight: sdk.OneInt(),
 			},
 			errMsg: "can't add the zero or negative balance of token",
 		},
@@ -29,7 +29,7 @@ func TestPoolAssetValidateError(t *testing.T) {
 			name: "weight too little",
 			pa: PoolAsset{
 				Token:  sdk.NewInt64Coin("foo", 1),
-				Weight: sdk.NewInt(0),
+				Weight: sdk.ZeroInt(),
 			},
 			errMsg: "can't add the zero or negative balance of token",
 		},
@@ -60,7 +60,7 @@ func TestPoolAssetValidateSuccess(t *testing.T) {
 			name: "successful validation",
 			pa: PoolAsset{
 				Token:  sdk.NewInt64Coin("foo", 1),
-				Weight: sdk.NewInt(1),
+				Weight: sdk.OneInt(),
 			},
 		},
 	}

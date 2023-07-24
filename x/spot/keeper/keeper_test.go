@@ -63,11 +63,11 @@ func TestSetAndFetchPool(t *testing.T) {
 		PoolAssets: []types.PoolAsset{
 			{
 				Token:  sdk.NewCoin(denoms.BTC, sdk.NewInt(1000)),
-				Weight: sdk.NewInt(1),
+				Weight: sdk.OneInt(),
 			},
 			{
 				Token:  sdk.NewCoin(denoms.NUSD, sdk.NewInt(1000)),
-				Weight: sdk.NewInt(1),
+				Weight: sdk.OneInt(),
 			},
 		},
 		TotalWeight: sdk.NewInt(2),
@@ -101,7 +101,7 @@ func TestFetchPoolFromPair(t *testing.T) {
 			firstToken:     "tokenB",
 			secondToken:    "tokenA",
 			expectedPass:   true,
-			expectedPoolId: sdk.NewInt(1).Uint64(),
+			expectedPoolId: sdk.OneInt().Uint64(),
 		},
 		{
 			name:           "Correct parse pool 2",
@@ -172,11 +172,11 @@ func TestFetchPoolFromPair(t *testing.T) {
 				PoolAssets: []types.PoolAsset{
 					{
 						Token:  sdk.NewCoin("tokenB", sdk.NewInt(1000)),
-						Weight: sdk.NewInt(1),
+						Weight: sdk.OneInt(),
 					},
 					{
 						Token:  sdk.NewCoin("tokenA", sdk.NewInt(1000)),
-						Weight: sdk.NewInt(1),
+						Weight: sdk.OneInt(),
 					},
 				},
 				TotalWeight: sdk.NewInt(2),
@@ -195,11 +195,11 @@ func TestFetchPoolFromPair(t *testing.T) {
 				PoolAssets: []types.PoolAsset{
 					{
 						Token:  sdk.NewCoin("tokenB", sdk.NewInt(1000)),
-						Weight: sdk.NewInt(1),
+						Weight: sdk.OneInt(),
 					},
 					{
 						Token:  sdk.NewCoin("tokenC", sdk.NewInt(1000)),
-						Weight: sdk.NewInt(1),
+						Weight: sdk.OneInt(),
 					},
 				},
 				TotalWeight: sdk.NewInt(2),
@@ -256,11 +256,11 @@ func TestNewPool(t *testing.T) {
 		[]types.PoolAsset{
 			{
 				Token:  sdk.NewCoin("uatom", sdk.NewInt(1000)),
-				Weight: sdk.NewInt(1),
+				Weight: sdk.OneInt(),
 			},
 			{
 				Token:  sdk.NewCoin("uosmo", sdk.NewInt(1000)),
-				Weight: sdk.NewInt(1),
+				Weight: sdk.OneInt(),
 			},
 		})
 	require.NoError(t, err)
@@ -322,11 +322,11 @@ func TestNewPoolNotEnoughFunds(t *testing.T) {
 		[]types.PoolAsset{
 			{
 				Token:  sdk.NewCoin("uatom", sdk.NewInt(1000)),
-				Weight: sdk.NewInt(1),
+				Weight: sdk.OneInt(),
 			},
 			{
 				Token:  sdk.NewCoin("uosmo", sdk.NewInt(1000)),
-				Weight: sdk.NewInt(1),
+				Weight: sdk.OneInt(),
 			},
 		})
 	require.Error(t, err)
@@ -451,11 +451,11 @@ func TestNewPoolDups(t *testing.T) {
 	poolAssets := []types.PoolAsset{
 		{
 			Token:  sdk.NewCoin("bar", sdk.NewInt(10)),
-			Weight: sdk.NewInt(1),
+			Weight: sdk.OneInt(),
 		},
 		{
 			Token:  sdk.NewCoin("foo", sdk.NewInt(10)),
-			Weight: sdk.NewInt(1),
+			Weight: sdk.OneInt(),
 		},
 	}
 

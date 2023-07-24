@@ -47,9 +47,9 @@ func TestSwapExactAmountIn(t *testing.T) {
 				},
 				PoolAssets: []types.PoolAsset{
 					{Token: sdk.NewInt64Coin("unusd", 1_510_778_598),
-						Weight: sdk.NewInt(1)},
+						Weight: sdk.OneInt()},
 					{Token: sdk.NewInt64Coin("uusdt", 7_712_056),
-						Weight: sdk.NewInt(1)},
+						Weight: sdk.OneInt()},
 				},
 				TotalWeight: sdk.NewInt(2),
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
@@ -72,9 +72,9 @@ func TestSwapExactAmountIn(t *testing.T) {
 				},
 				PoolAssets: []types.PoolAsset{
 					{Token: sdk.NewInt64Coin("unusd", 3_010_778_598),
-						Weight: sdk.NewInt(1)},
+						Weight: sdk.OneInt()},
 					{Token: sdk.NewInt64Coin("uusdt", 1_041_720),
-						Weight: sdk.NewInt(1)},
+						Weight: sdk.OneInt()},
 				},
 				TotalWeight: sdk.NewInt(2),
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 100),
