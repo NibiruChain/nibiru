@@ -375,3 +375,175 @@ func TestMsgValidateBasic(t *testing.T) {
 		})
 	}
 }
+
+func TestMsgDonateToEcosystemFund_GetSignBytes(t *testing.T) {
+	msg := MsgDonateToEcosystemFund{
+		Sender: "cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v",
+		// ... other fields
+	}
+
+	expectedBytes := ModuleCdc.MustMarshalJSON(&msg)
+
+	require.Equal(t, expectedBytes, msg.GetSignBytes())
+}
+
+func TestMsg_GetSigners(t *testing.T) {
+	validSender := "cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v"
+	invalidSender := "invalid_address"
+
+	msgValidSenderList := []sdk.Msg{
+		&MsgAddMargin{Sender: validSender},
+		&MsgRemoveMargin{Sender: validSender},
+		&MsgMarketOrder{Sender: validSender},
+		&MsgClosePosition{Sender: validSender},
+		&MsgPartialClose{Sender: validSender},
+		&MsgDonateToEcosystemFund{Sender: validSender},
+		&MsgMultiLiquidate{Sender: validSender},
+	}
+	msgInvalidSenderList := []sdk.Msg{
+		&MsgAddMargin{Sender: invalidSender},
+		&MsgRemoveMargin{Sender: invalidSender},
+		&MsgMarketOrder{Sender: invalidSender},
+		&MsgClosePosition{Sender: invalidSender},
+		&MsgPartialClose{Sender: invalidSender},
+		&MsgDonateToEcosystemFund{Sender: invalidSender},
+		&MsgMultiLiquidate{Sender: invalidSender},
+	}
+
+	for _, msg := range msgValidSenderList {
+		defer func() {
+			r := recover()
+			if (r != nil) != false {
+				t.Errorf("GetSigners() recover = %v, expectPanic = %v", r, false)
+			}
+		}()
+		signerAddr, _ := sdk.AccAddressFromBech32(validSender)
+		require.Equal(t, []sdk.AccAddress{signerAddr}, msg.GetSigners())
+	}
+	for _, msg := range msgInvalidSenderList {
+		defer func() {
+			r := recover()
+			if (r != nil) != true {
+				t.Errorf("GetSigners() recover = %v, expectPanic = %v", r, true)
+			}
+		}()
+		msg.GetSigners()
+	}
+}
+
+type RouteTyper interface {
+	sdk.Msg
+	Route() string
+	Type() string
+}
+
+func TestMsg_RouteAndType(t *testing.T) {
+	testCases := []struct {
+		name          string
+		msg           RouteTyper
+		expectedRoute string
+		expectedType  string
+	}{
+		{
+			name:          "MsgAddMargin",
+			msg:           &MsgAddMargin{},
+			expectedRoute: "perp",
+			expectedType:  "add_margin_msg",
+		},
+		{
+			name:          "MsgRemoveMargin",
+			msg:           &MsgRemoveMargin{},
+			expectedRoute: "perp",
+			expectedType:  "remove_margin_msg",
+		},
+		{
+			name:          "MsgMarketOrder",
+			msg:           &MsgMarketOrder{},
+			expectedRoute: "perp",
+			expectedType:  "market_order_msg",
+		},
+		{
+			name:          "MsgClosePosition",
+			msg:           &MsgClosePosition{},
+			expectedRoute: "perp",
+			expectedType:  "close_position_msg",
+		},
+		{
+			name:          "MsgPartialClose",
+			msg:           &MsgPartialClose{},
+			expectedRoute: "perp",
+			expectedType:  "partial_close_msg",
+		},
+		{
+			name:          "MsgDonateToEcosystemFund",
+			msg:           &MsgDonateToEcosystemFund{},
+			expectedRoute: "perp",
+			expectedType:  "donate_to_ef_msg",
+		},
+		{
+			name:          "MsgMultiLiquidate",
+			msg:           &MsgMultiLiquidate{},
+			expectedRoute: "perp",
+			expectedType:  "multi_liquidate_msg",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.expectedRoute, tc.msg.Route())
+			require.Equal(t, tc.expectedType, tc.msg.Type())
+		})
+	}
+}
+
+type SignBytesGetter interface {
+	sdk.Msg
+	GetSignBytes() []byte
+}
+
+func TestMsg_GetSignBytes(t *testing.T) {
+	testCases := []struct {
+		name string
+		msg  SignBytesGetter
+	}{
+		{
+			name: "MsgAddMargin",
+			msg:  &MsgAddMargin{},
+		},
+		{
+			name: "MsgRemoveMargin",
+			msg:  &MsgRemoveMargin{},
+		},
+		{
+			name: "MsgMarketOrder",
+			msg:  &MsgMarketOrder{},
+		},
+		{
+			name: "MsgClosePosition",
+			msg:  &MsgClosePosition{},
+		},
+		{
+			name: "MsgPartialClose",
+			msg:  &MsgPartialClose{},
+		},
+		{
+			name: "MsgDonateToEcosystemFund",
+			msg:  &MsgDonateToEcosystemFund{},
+		},
+		{
+			name: "MsgMultiLiquidate",
+			msg:  &MsgMultiLiquidate{},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			bytes := tc.msg.GetSignBytes()
+			require.NotNil(t, bytes)
+			require.NotEmpty(t, bytes)
+
+			// The same message should always return the same bytes
+			require.Equal(t, bytes, tc.msg.GetSignBytes())
+		})
+	}
+}
