@@ -170,8 +170,8 @@ func TestRemoveMargin(t *testing.T) {
 					ChangeReason:     types.ChangeReason_RemoveMargin,
 				}),
 				BalanceEqual(alice, denoms.USDC, sdk.NewInt(500)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(1)),
-				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.NewInt(1)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.OneInt()),
+				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.OneInt()),
 			),
 
 		TC("existing long position, remove almost all margin fails").
@@ -180,7 +180,7 @@ func TestRemoveMargin(t *testing.T) {
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1002)))),
-				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(1), sdk.ZeroDec()),
+				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.OneDec(), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
 			When(
@@ -196,9 +196,9 @@ func TestRemoveMargin(t *testing.T) {
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 					LastUpdatedBlockNumber:          1,
 				})),
-				BalanceEqual(alice, denoms.USDC, sdk.NewInt(0)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(1)),
-				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.NewInt(1)),
+				BalanceEqual(alice, denoms.USDC, sdk.ZeroInt()),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.OneInt()),
+				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.OneInt()),
 			),
 
 		TC("existing short position, remove margin").
@@ -243,8 +243,8 @@ func TestRemoveMargin(t *testing.T) {
 					ChangeReason:     types.ChangeReason_RemoveMargin,
 				}),
 				BalanceEqual(alice, denoms.USDC, sdk.NewInt(500)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(1)),
-				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.NewInt(1)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.OneInt()),
+				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.OneInt()),
 			),
 
 		TC("existing short position, remove almost all margin fails").
@@ -253,7 +253,7 @@ func TestRemoveMargin(t *testing.T) {
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1002)))),
-				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(1), sdk.ZeroDec()),
+				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.OneDec(), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
 			When(
@@ -269,9 +269,9 @@ func TestRemoveMargin(t *testing.T) {
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 					LastUpdatedBlockNumber:          1,
 				})),
-				BalanceEqual(alice, denoms.USDC, sdk.NewInt(0)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(1)),
-				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.NewInt(1)),
+				BalanceEqual(alice, denoms.USDC, sdk.ZeroInt()),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.OneInt()),
+				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.OneInt()),
 			),
 	}
 

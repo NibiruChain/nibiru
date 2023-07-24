@@ -47,7 +47,7 @@ func TestSqrtDec(t *testing.T) {
 	}{
 		// --------------------------------------------------------------------
 		// Cases: 1 or higher
-		{dec: sdk.NewDec(1), sqrtDec: sdk.NewDec(1)},
+		{dec: sdk.OneDec(), sqrtDec: sdk.OneDec()},
 		{dec: sdk.NewDec(4), sqrtDec: sdk.NewDec(2)},
 		{dec: sdk.NewDec(250_000), sqrtDec: sdk.NewDec(500)},
 		{dec: sdk.NewDec(4_819_136_400), sqrtDec: sdk.NewDec(69_420)},

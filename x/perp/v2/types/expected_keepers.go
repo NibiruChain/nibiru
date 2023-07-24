@@ -46,5 +46,5 @@ type OracleKeeper interface {
 
 type EpochKeeper interface {
 	// GetEpochInfo returns epoch info by identifier.
-	GetEpochInfo(ctx sdk.Context, identifier string) types.EpochInfo
+	GetEpochInfo(ctx sdk.Context, identifier string) (types.EpochInfo, error)
 }

@@ -78,13 +78,13 @@ func TestToCrossRate(t *testing.T) {
 			expected: sdk.NewDec(16),
 		},
 		{
-			base:     sdk.NewDec(0),
+			base:     sdk.ZeroDec(),
 			quote:    sdk.NewDec(100),
 			expected: sdk.NewDec(16),
 		},
 		{
 			base:     sdk.NewDec(1600),
-			quote:    sdk.NewDec(0),
+			quote:    sdk.ZeroDec(),
 			expected: sdk.NewDec(16),
 		},
 	}
@@ -196,7 +196,7 @@ func TestPBWeightedMedian(t *testing.T) {
 			[]int64{},
 			[]int64{},
 			[]bool{true, true, true, true},
-			sdk.NewDec(0),
+			sdk.ZeroDec(),
 		},
 		{
 			// not sorted
