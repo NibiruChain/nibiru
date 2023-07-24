@@ -2,6 +2,7 @@ package types
 
 import (
 	"testing"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -61,6 +62,86 @@ func TestValidate(t *testing.T) {
 			tc.modifier(newMarket)
 
 			err := newMarket.Validate()
+			require.Error(t, err)
+			require.Contains(t, err.Error(), tc.requiredError)
+		})
+	}
+}
+
+func TestMarketEqual(t *testing.T) {
+	market := new(Market)
+
+	// Test when all values are within expected ranges
+	market.WithMaintenanceMarginRatio(sdk.NewDecWithPrec(1, 1))
+	market.WithEcosystemFee(sdk.NewDecWithPrec(3, 1))
+	market.WithExchangeFee(sdk.NewDecWithPrec(4, 1))
+	market.WithLiquidationFee(sdk.NewDecWithPrec(2, 1))
+	market.WithPartialLiquidationRatio(sdk.NewDecWithPrec(1, 1))
+	market.WithMaxLeverage(sdk.NewDec(10))
+	market.WithLatestCumulativePremiumFraction(sdk.OneDec())
+	require.NoError(t, market.Validate())
+
+	testCases := []struct {
+		modifier      func(*Market)
+		requiredError string
+	}{
+		{
+			modifier:      func(m *Market) { m.WithPair("ueth:unusd") },
+			requiredError: "expected market pair",
+		},
+		{
+			modifier:      func(m *Market) { m.WithMaintenanceMarginRatio(sdk.NewDec(42)) },
+			requiredError: "expected market maintenance margin ratio",
+		},
+		{
+			modifier:      func(m *Market) { m.WithMaxLeverage(sdk.NewDec(42)) },
+			requiredError: "expected market max leverage",
+		},
+		{
+			modifier:      func(m *Market) { m.WithPartialLiquidationRatio(sdk.NewDec(42)) },
+			requiredError: "expected market partial liquidation ratio",
+		},
+		{
+			modifier:      func(m *Market) { m.WithFundingRateEpochId("hi") },
+			requiredError: "expected market funding rate epoch id",
+		},
+		{
+			modifier:      func(m *Market) { m.WithLatestCumulativePremiumFraction(sdk.NewDec(42)) },
+			requiredError: "expected market latest cumulative premium fraction",
+		},
+		{
+			modifier:      func(m *Market) { m.WithEcosystemFundFeeRatio(sdk.NewDec(42)) },
+			requiredError: "expected market ecosystem fund fee ratio",
+		},
+		{
+			modifier:      func(m *Market) { m.WithExchangeFeeRatio(sdk.NewDec(42)) },
+			requiredError: "expected market exchange fee ratio",
+		},
+		{
+			modifier:      func(m *Market) { m.WithLiquidationFeeRatio(sdk.NewDec(42)) },
+			requiredError: "expected market liquidation fee ratio",
+		},
+		{
+			modifier:      func(m *Market) { m.WithPrepaidBadDebt(sdk.NewCoin("ubtc", sdk.OneInt())) },
+			requiredError: "expected market prepaid bad debt",
+		},
+		{
+			modifier:      func(m *Market) { m.WithEnabled(true) },
+			requiredError: "expected market enabled",
+		},
+		{
+			modifier:      func(m *Market) { m.WithTwapLookbackWindow(time.Minute) },
+			requiredError: "expected market twap lookback window",
+		},
+	}
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.requiredError, func(t *testing.T) {
+			newMarket := market.copy()
+
+			tc.modifier(newMarket)
+
+			err := MarketsAreEqual(market, newMarket)
 			require.Error(t, err)
 			require.Contains(t, err.Error(), tc.requiredError)
 		})
