@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	fmt "fmt"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
@@ -695,4 +696,109 @@ func TestGetMarketValue(t *testing.T) {
 			assert.Equal(t, tc.expectedMarketValue, marketValue)
 		})
 	}
+}
+
+func TestValidateAMM(t *testing.T) {
+	tests := []struct {
+		name        string
+		amm         types.AMM
+		expectedErr error
+	}{
+
+		{
+			name: "Invalid base reserve",
+			amm: types.AMM{
+				BaseReserve:     sdk.ZeroDec(),
+				QuoteReserve:    sdk.OneDec(),
+				PriceMultiplier: sdk.OneDec(),
+				SqrtDepth:       sdk.OneDec(),
+			},
+			expectedErr: fmt.Errorf("init pool token supply must be > 0"),
+		},
+		{
+			name: "Invalid quote reserve",
+			amm: types.AMM{
+				BaseReserve:     sdk.OneDec(),
+				QuoteReserve:    sdk.ZeroDec(),
+				PriceMultiplier: sdk.OneDec(),
+				SqrtDepth:       sdk.OneDec(),
+			},
+			expectedErr: fmt.Errorf("init pool token supply must be > 0"),
+		},
+		{
+			name: "Invalid price multiplier",
+			amm: types.AMM{
+				BaseReserve:     sdk.OneDec(),
+				QuoteReserve:    sdk.OneDec(),
+				PriceMultiplier: sdk.ZeroDec(),
+				SqrtDepth:       sdk.OneDec(),
+			},
+			expectedErr: fmt.Errorf("init price multiplier must be > 0"),
+		},
+		{
+			name: "Invalid sqrt depth",
+			amm: types.AMM{
+				BaseReserve:     sdk.OneDec(),
+				QuoteReserve:    sdk.OneDec(),
+				PriceMultiplier: sdk.OneDec(),
+				SqrtDepth:       sdk.ZeroDec(),
+			},
+			expectedErr: fmt.Errorf("init sqrt depth must be > 0"),
+		},
+		{
+			name: "Invalid sqrt depth value",
+			amm: types.AMM{
+				BaseReserve:     sdk.OneDec(),
+				QuoteReserve:    sdk.OneDec(),
+				PriceMultiplier: sdk.OneDec(),
+				SqrtDepth:       sdk.NewDec(3),
+			},
+			expectedErr: types.ErrLiquidityDepth,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.amm.Validate()
+			if tc.expectedErr == nil {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tc.expectedErr.Error())
+			}
+		})
+	}
+}
+
+func TestPositionNotionalFail(t *testing.T) {
+	amm := mock.TestAMM(sdk.NewDec(-1), sdk.NewDec(2))
+	_, err := amm.GetQuoteReserveAmt(sdk.NewDec(-1), types.Direction_LONG)
+	require.ErrorIs(t, err, types.ErrInputBaseAmtNegative)
+}
+
+func TestAMM_WithMethods(t *testing.T) {
+	pair := asset.MustNewPair("ubtc:unusd")
+	baseReserve := sdk.NewDec(100)
+	quoteReserve := sdk.NewDec(200)
+	priceMultiplier := sdk.NewDec(1)
+	totalLong := sdk.NewDec(50)
+	totalShort := sdk.NewDec(50)
+	sqrtDepth := sdk.NewDec(10)
+
+	amm := new(types.AMM).
+		WithPair(pair).
+		WithBaseReserve(baseReserve).
+		WithQuoteReserve(quoteReserve).
+		WithPriceMultiplier(priceMultiplier).
+		WithTotalLong(totalLong).
+		WithTotalShort(totalShort).
+		WithSqrtDepth(sqrtDepth)
+
+	require.Equal(t, pair, amm.Pair)
+	require.Equal(t, baseReserve, amm.BaseReserve)
+	require.Equal(t, quoteReserve, amm.QuoteReserve)
+	require.Equal(t, priceMultiplier, amm.PriceMultiplier)
+	require.Equal(t, totalLong, amm.TotalLong)
+	require.Equal(t, totalShort, amm.TotalShort)
+	require.Equal(t, sqrtDepth, amm.SqrtDepth)
 }

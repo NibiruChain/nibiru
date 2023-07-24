@@ -82,7 +82,7 @@ func validateExponentialCalculation(i interface{}) error {
 	}
 
 	// validate reduction factor
-	if v.R.GT(sdk.NewDec(1)) {
+	if v.R.GT(sdk.OneDec()) {
 		return fmt.Errorf("reduction factor cannot be greater than 1")
 	}
 

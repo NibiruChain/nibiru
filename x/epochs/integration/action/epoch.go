@@ -12,7 +12,10 @@ type startEpoch struct {
 }
 
 func (s startEpoch) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	epochInfo := app.EpochsKeeper.GetEpochInfo(ctx, s.epochIdentifier)
+	epochInfo, err := app.EpochsKeeper.GetEpochInfo(ctx, s.epochIdentifier)
+	if err != nil {
+		return ctx, err, false
+	}
 	epochInfo.EpochCountingStarted = true
 	epochInfo.CurrentEpoch = 1
 	epochInfo.CurrentEpochStartHeight = ctx.BlockHeight()

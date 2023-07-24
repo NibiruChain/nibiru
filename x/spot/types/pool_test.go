@@ -81,11 +81,11 @@ func TestMinSharesInForTokensOut(t *testing.T) {
 	poolAssets := []PoolAsset{
 		{
 			Token:  sdk.NewInt64Coin("foo", 123124124124),
-			Weight: sdk.NewInt(1),
+			Weight: sdk.OneInt(),
 		},
 		{
 			Token:  sdk.NewInt64Coin("bar", 13224112312124124),
-			Weight: sdk.NewInt(1),
+			Weight: sdk.OneInt(),
 		},
 	}
 
@@ -107,11 +107,11 @@ func TestNewPool(t *testing.T) {
 	poolAssets := []PoolAsset{
 		{
 			Token:  sdk.NewInt64Coin("foo", 100),
-			Weight: sdk.NewInt(1),
+			Weight: sdk.OneInt(),
 		},
 		{
 			Token:  sdk.NewInt64Coin("bar", 100),
-			Weight: sdk.NewInt(1),
+			Weight: sdk.OneInt(),
 		},
 	}
 
@@ -811,7 +811,7 @@ func TestGetD(t *testing.T) {
 					Token: sdk.NewInt64Coin("ccc", 100),
 				},
 			},
-			amplificationParameter: sdk.NewInt(1),
+			amplificationParameter: sdk.OneInt(),
 			expectedErr:            nil,
 			expectedD:              397,
 		},
@@ -825,7 +825,7 @@ func TestGetD(t *testing.T) {
 					Token: sdk.NewInt64Coin("bbb", 100),
 				},
 			},
-			amplificationParameter: sdk.NewInt(1),
+			amplificationParameter: sdk.OneInt(),
 			expectedErr:            nil,
 			expectedD:              294,
 		},

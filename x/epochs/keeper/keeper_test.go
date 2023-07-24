@@ -25,7 +25,8 @@ func TestUpsertEpochInfo_HappyPath(t *testing.T) {
 
 	nibiruApp.EpochsKeeper.Epochs.Insert(ctx, epochInfo.Identifier, epochInfo)
 
-	epochInfoSaved := nibiruApp.EpochsKeeper.GetEpochInfo(ctx, "monthly")
+	epochInfoSaved, err := nibiruApp.EpochsKeeper.GetEpochInfo(ctx, "monthly")
+	require.NoError(t, err)
 	require.Equal(t, epochInfo, epochInfoSaved)
 
 	allEpochs := nibiruApp.EpochsKeeper.AllEpochInfos(ctx)
