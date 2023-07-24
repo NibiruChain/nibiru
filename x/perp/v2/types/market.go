@@ -144,3 +144,14 @@ func MarketsAreEqual(expected, actual *Market) error {
 
 	return nil
 }
+
+func (m *Market) copy() *Market {
+	return &Market{
+		MaintenanceMarginRatio:  m.MaintenanceMarginRatio,
+		EcosystemFundFeeRatio:   m.EcosystemFundFeeRatio,
+		ExchangeFeeRatio:        m.ExchangeFeeRatio,
+		LiquidationFeeRatio:     m.LiquidationFeeRatio,
+		PartialLiquidationRatio: m.PartialLiquidationRatio,
+		MaxLeverage:             m.MaxLeverage,
+	}
+}
