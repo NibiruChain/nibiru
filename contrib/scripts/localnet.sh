@@ -94,23 +94,23 @@ if pgrep -x "$BINARY" >/dev/null; then
   killall nibid
 fi
 
-## Remove previous data
-#echo_info "Removing previous chain data from $CHAIN_DIR..."
-#rm -rf $CHAIN_DIR
-#
-## Add directory for chain, exit if error
-#if ! mkdir -p $CHAIN_DIR 2>/dev/null; then
-#  echo_error "Failed to create chain folder. Aborting..."
-#  exit 1
-#fi
-#
-## Initialize nibid with "localnet" chain id
-#echo_info "Initializing $CHAIN_ID..."
-#if $BINARY init nibiru-localnet-0 --chain-id $CHAIN_ID --overwrite; then
-#  echo_success "Successfully initialized $CHAIN_ID"
-#else
-#  echo_error "Failed to initialize $CHAIN_ID"
-#fi
+# Remove previous data
+echo_info "Removing previous chain data from $CHAIN_DIR..."
+rm -rf $CHAIN_DIR
+
+# Add directory for chain, exit if error
+if ! mkdir -p $CHAIN_DIR 2>/dev/null; then
+  echo_error "Failed to create chain folder. Aborting..."
+  exit 1
+fi
+
+# Initialize nibid with "localnet" chain id
+echo_info "Initializing $CHAIN_ID..."
+if $BINARY init nibiru-localnet-0 --chain-id $CHAIN_ID --overwrite; then
+  echo_success "Successfully initialized $CHAIN_ID"
+else
+  echo_error "Failed to initialize $CHAIN_ID"
+fi
 
 # Configure keyring-backend to "test"
 echo_info "Configuring keyring-backend..."
@@ -281,12 +281,13 @@ else
 fi
 
 # set validator as sudoer
-$BINARY genesis add-sudo-root-account "$val_address"
+add_genesis_param '.app_state.sudo.sudoers.root = "'"$val_address"'"'
 
-# set local oracle params
-add_genesis_param '.app_state.oracle.params.twap_lookback_window = "900s"'
-add_genesis_param '.app_state.oracle.params.vote_period = "10"'
-add_genesis_param '.app_state.oracle.params.min_voters = "1"'
+# hack for localnet since we don't have a pricefeeder yet
+add_genesis_param '.app_state.oracle.exchange_rates[0].pair = "ubtc:unusd"'
+add_genesis_param '.app_state.oracle.exchange_rates[0].exchange_rate = "'"$price_btc"'"'
+add_genesis_param '.app_state.oracle.exchange_rates[1].pair = "ueth:unusd"'
+add_genesis_param '.app_state.oracle.exchange_rates[1].exchange_rate = "'"$price_eth"'"'
 
 # Start the network
 echo_info "Starting $CHAIN_ID in $CHAIN_DIR..."
