@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -13,25 +12,20 @@ import (
 )
 
 // GetEpochInfo returns epoch info by identifier.
-func (k Keeper) GetEpochInfo(ctx sdk.Context, identifier string) types.EpochInfo {
-	epoch, err := k.Epochs.Get(ctx, identifier)
+func (k Keeper) GetEpochInfo(ctx sdk.Context, identifier string) (epoch types.EpochInfo, err error) {
+	epoch, err = k.Epochs.Get(ctx, identifier)
 	if err != nil {
-		panic(err)
+		err = fmt.Errorf("epoch with identifier %s not found", identifier)
+		return
 	}
 
-	return epoch
+	return
 }
 
 // EpochExists checks if the epoch exists
 func (k Keeper) EpochExists(ctx sdk.Context, identifier string) bool {
 	_, err := k.Epochs.Get(ctx, identifier)
-	if errors.Is(err, collections.ErrNotFound) {
-		return false
-	} else if err != nil {
-		panic(err)
-	}
-
-	return true
+	return err == nil
 }
 
 // AddEpochInfo adds a new epoch info. Will return an error if the epoch fails validation,
@@ -59,11 +53,9 @@ func (k Keeper) AddEpochInfo(ctx sdk.Context, epoch types.EpochInfo) error {
 }
 
 // DeleteEpochInfo delete epoch info.
-func (k Keeper) DeleteEpochInfo(ctx sdk.Context, identifier string) {
-	err := k.Epochs.Delete(ctx, identifier)
-	if err != nil {
-		panic(err)
-	}
+func (k Keeper) DeleteEpochInfo(ctx sdk.Context, identifier string) (err error) {
+	err = k.Epochs.Delete(ctx, identifier)
+	return
 }
 
 // IterateEpochInfo iterate through epochs.
