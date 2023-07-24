@@ -647,7 +647,7 @@ func TestRecollateralize(t *testing.T) {
 			priceGovStable: sdk.OneDec(),
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(500),
-				priceCollStable: sdk.MustNewDecFromStr("1"),
+				priceCollStable: sdk.OneDec(),
 				stableSupply:    sdk.NewInt(1_000),
 				collRatio:       sdk.MustNewDecFromStr("0.9"),
 				// neededUSD =  (0.9 * 1000) - (500 * 1) = 400
@@ -673,7 +673,7 @@ func TestRecollateralize(t *testing.T) {
 			priceGovStable: sdk.OneDec(),
 			scenario: NeededCollScenario{
 				protocolColl:    sdk.NewInt(500),
-				priceCollStable: sdk.MustNewDecFromStr("1"),
+				priceCollStable: sdk.OneDec(),
 				stableSupply:    sdk.NewInt(1_000),
 				collRatio:       sdk.MustNewDecFromStr("0.9"),
 				// neededUSD =  (0.9 * 1000) - (500 * 1) = 400
