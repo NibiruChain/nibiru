@@ -94,6 +94,16 @@ func TestMsgValidateBasic(t *testing.T) {
 			"decoding bech32 failed",
 		},
 		{
+			"Test MsgAddMargin: Invalid pair",
+			&MsgAddMargin{
+				Sender: validSender,
+				Pair:   invalidPair,
+				Margin: sdk.NewCoin("denom", sdk.NewInt(10)),
+			},
+			true,
+			"invalid base asset",
+		},
+		{
 			"Test MsgAddMargin: Negative margin",
 			&MsgAddMargin{
 				Sender: validSender,
