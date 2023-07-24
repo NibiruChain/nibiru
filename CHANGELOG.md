@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1493](https://github.com/NibiruChain/nibiru/pull/1493) - fix(perp): allow `ClosePosition` when there is bad debt
 * [#1500](https://github.com/NibiruChain/nibiru/pull/1500) - refactor(perp): clean up reverse market order mechanics
 * [#1502](https://github.com/NibiruChain/nibiru/pull/1502) - feat: add ledger build support
+* [#1495](https://github.com/NibiruChain/nibiru/pull/1495) - feat: add genmsg module
 
 ### Features
 

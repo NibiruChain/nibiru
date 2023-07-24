@@ -3,11 +3,12 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/genmsg"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/NibiruChain/nibiru/x/genmsg"
 
 	"github.com/NibiruChain/nibiru/x/sudo/keeper"
 

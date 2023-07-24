@@ -1,8 +1,9 @@
 package app
 
 import (
-	"github.com/NibiruChain/nibiru/x/genmsg"
 	"path/filepath"
+
+	"github.com/NibiruChain/nibiru/x/genmsg"
 
 	"github.com/NibiruChain/nibiru/x/sudo/keeper"
 
