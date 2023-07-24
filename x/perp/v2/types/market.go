@@ -2,6 +2,7 @@ package types
 
 import (
 	fmt "fmt"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -89,6 +90,31 @@ func (market *Market) WithLatestCumulativePremiumFraction(value sdk.Dec) *Market
 	return market
 }
 
+func (market *Market) WithEcosystemFundFeeRatio(value sdk.Dec) *Market {
+	market.EcosystemFundFeeRatio = value
+	return market
+}
+func (market *Market) WithExchangeFeeRatio(value sdk.Dec) *Market {
+	market.ExchangeFeeRatio = value
+	return market
+}
+func (market *Market) WithLiquidationFeeRatio(value sdk.Dec) *Market {
+	market.LiquidationFeeRatio = value
+	return market
+}
+func (market *Market) WithPrepaidBadDebt(value sdk.Coin) *Market {
+	market.PrepaidBadDebt = value
+	return market
+}
+func (market *Market) WithEnabled(value bool) *Market {
+	market.Enabled = value
+	return market
+}
+func (market *Market) WithTwapLookbackWindow(value time.Duration) *Market {
+	market.TwapLookbackWindow = value
+	return market
+}
+
 func MarketsAreEqual(expected, actual *Market) error {
 	if expected.Pair != actual.Pair {
 		return fmt.Errorf("expected market pair %s, got %s", expected.Pair, actual.Pair)
@@ -143,4 +169,15 @@ func MarketsAreEqual(expected, actual *Market) error {
 	}
 
 	return nil
+}
+
+func (m *Market) copy() *Market {
+	return &Market{
+		MaintenanceMarginRatio:  m.MaintenanceMarginRatio,
+		EcosystemFundFeeRatio:   m.EcosystemFundFeeRatio,
+		ExchangeFeeRatio:        m.ExchangeFeeRatio,
+		LiquidationFeeRatio:     m.LiquidationFeeRatio,
+		PartialLiquidationRatio: m.PartialLiquidationRatio,
+		MaxLeverage:             m.MaxLeverage,
+	}
 }

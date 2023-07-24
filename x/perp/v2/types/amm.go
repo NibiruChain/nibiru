@@ -29,21 +29,12 @@ func (amm AMM) Validate() error {
 		return fmt.Errorf("init sqrt depth must be > 0")
 	}
 
-	if !amm.QuoteReserve.IsPositive() || !amm.BaseReserve.IsPositive() {
-		return ErrInvalidAmmReserves.Wrapf("amm %s has invalid reserves", amm.String())
-	}
-
 	computedSqrtDepth, err := amm.ComputeSqrtDepth()
 	if err != nil {
 		return err
 	}
 
-	if !amm.SqrtDepth.IsPositive() {
-		return ErrLiquidityDepth.Wrap(
-			"liq depth must be positive. pool: " + amm.String())
-	}
-
-	if !amm.SqrtDepth.Sub(computedSqrtDepth).Abs().LTE(sdk.NewDec(1)) {
+	if !amm.SqrtDepth.Sub(computedSqrtDepth).Abs().LTE(sdk.OneDec()) {
 		return ErrLiquidityDepth.Wrap(
 			"computed sqrt and current sqrt are mismatched. pool: " + amm.String())
 	}
