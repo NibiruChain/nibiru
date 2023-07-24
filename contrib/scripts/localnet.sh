@@ -94,23 +94,23 @@ if pgrep -x "$BINARY" >/dev/null; then
   killall nibid
 fi
 
-# Remove previous data
-echo_info "Removing previous chain data from $CHAIN_DIR..."
-rm -rf $CHAIN_DIR
-
-# Add directory for chain, exit if error
-if ! mkdir -p $CHAIN_DIR 2>/dev/null; then
-  echo_error "Failed to create chain folder. Aborting..."
-  exit 1
-fi
-
-# Initialize nibid with "localnet" chain id
-echo_info "Initializing $CHAIN_ID..."
-if $BINARY init nibiru-localnet-0 --chain-id $CHAIN_ID --overwrite; then
-  echo_success "Successfully initialized $CHAIN_ID"
-else
-  echo_error "Failed to initialize $CHAIN_ID"
-fi
+## Remove previous data
+#echo_info "Removing previous chain data from $CHAIN_DIR..."
+#rm -rf $CHAIN_DIR
+#
+## Add directory for chain, exit if error
+#if ! mkdir -p $CHAIN_DIR 2>/dev/null; then
+#  echo_error "Failed to create chain folder. Aborting..."
+#  exit 1
+#fi
+#
+## Initialize nibid with "localnet" chain id
+#echo_info "Initializing $CHAIN_ID..."
+#if $BINARY init nibiru-localnet-0 --chain-id $CHAIN_ID --overwrite; then
+#  echo_success "Successfully initialized $CHAIN_ID"
+#else
+#  echo_error "Failed to initialize $CHAIN_ID"
+#fi
 
 # Configure keyring-backend to "test"
 echo_info "Configuring keyring-backend..."

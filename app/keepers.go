@@ -580,7 +580,6 @@ func OrderedModuleNames() []string {
 		perpv2types.ModuleName,
 		inflationtypes.ModuleName,
 		sudotypes.ModuleName,
-		genmsg.ModuleName,
 
 		// --------------------------------------------------------------------
 		// IBC modules
@@ -591,6 +590,9 @@ func OrderedModuleNames() []string {
 		// --------------------------------------------------------------------
 		// CosmWasm
 		wasm.ModuleName,
+
+		// Should be before genmsg
+		genmsg.ModuleName,
 	}
 }
 
