@@ -38,7 +38,7 @@ func OrderedMap_Pair[V any](
 	return omap.BuildFrom(data, pairSorter{})
 }
 
-// stringSorter is a Sorter implementation for keys of type asset.Pair. It uses
+// pairSorter is a Sorter implementation for keys of type asset.Pair. It uses
 // the built-in string comparison to determine order.
 type pairSorter struct{}
 
