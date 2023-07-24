@@ -24,7 +24,7 @@ import (
 // API that mirrors that functionality of `map`. OrderedMap is built with
 // generics, so it can hold various combinations of key-value types.
 type OrderedMap[K comparable, V any] struct {
-	data        map[K]V
+	Data        map[K]V
 	orderedKeys []K
 	keyIndexMap map[K]int // useful for delete operation
 	isOrdered   bool
@@ -41,8 +41,8 @@ type Sorter[K any] interface {
 // ensureOrder is a method on the OrderedMap that sorts the keys in the map
 // and rebuilds the index map.
 func (om *OrderedMap[K, V]) ensureOrder() {
-	keys := make([]K, 0, len(om.data))
-	for key := range om.data {
+	keys := make([]K, 0, len(om.Data))
+	for key := range om.Data {
 		keys = append(keys, key)
 	}
 
@@ -66,7 +66,7 @@ func (om *OrderedMap[K, V]) ensureOrder() {
 func (om OrderedMap[K, V]) BuildFrom(
 	data map[K]V, sorter Sorter[K],
 ) OrderedMap[K, V] {
-	om.data = data
+	om.Data = data
 	om.sorter = sorter
 	om.ensureOrder()
 	return om
@@ -90,13 +90,13 @@ func (om OrderedMap[K, V]) Range() <-chan (K) {
 
 // Has checks whether a key exists in the map.
 func (om OrderedMap[K, V]) Has(key K) bool {
-	_, exists := om.data[key]
+	_, exists := om.Data[key]
 	return exists
 }
 
 // Len returns the number of items in the map.
 func (om OrderedMap[K, V]) Len() int {
-	return len(om.data)
+	return len(om.Data)
 }
 
 // Keys returns a slice of the keys in their sorted order.
@@ -107,34 +107,10 @@ func (om *OrderedMap[K, V]) Keys() []K {
 	return om.orderedKeys
 }
 
-// Get returns the value associated with a key in the map. If the key is not
-// in the map, it returns nil.
-func (om *OrderedMap[K, V]) Get(key K) (out *V) {
-	v, exists := om.data[key]
-	if exists {
-		*out = v
-	} else {
-		out = nil
-	}
-	return out
-}
-
-func (om *OrderedMap[K, V]) IndexOf(key K) (out *int) {
-	if om.Get(key) == nil {
-		return nil
-	}
-	for idx, k := range om.Keys() {
-		if k == key {
-			return &idx
-		}
-	}
-	return
-}
-
 // Set adds a key-value pair to the map, or updates the value if the key
 // already exists. It ensures the keys are ordered after the operation.
 func (om *OrderedMap[K, V]) Set(key K, val V) {
-	om.data[key] = val
+	om.Data[key] = val
 	om.ensureOrder() // TODO perf: make this more efficient with a clever insert.
 }
 
@@ -142,7 +118,7 @@ func (om *OrderedMap[K, V]) Set(key K, val V) {
 func (om *OrderedMap[K, V]) Delete(key K) {
 	idx, keyExists := om.keyIndexMap[key]
 	if keyExists {
-		delete(om.data, key)
+		delete(om.Data, key)
 
 		orderedKeys := om.orderedKeys
 		orderedKeys = append(orderedKeys[:idx], orderedKeys[idx+1:]...)
