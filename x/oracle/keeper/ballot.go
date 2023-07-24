@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"sort"
-
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -10,14 +8,18 @@ import (
 	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/omap"
 	"github.com/NibiruChain/nibiru/x/common/set"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
-// groupBallotsByPair groups votes by pair and removes votes that are not part of
-// the validator set.
+// groupBallotsByPair takes a collection of votes and organizes them by their
+// associated asset pair. This method only considers votes from active validators
+// and disregards votes from validators that are not in the provided validator set.
 //
-// NOTE: **Make abstain votes to have zero vote power**
+// Note that any abstain votes (votes with a non-positive exchange rate) are
+// assigned zero vote power. This function then returns a map where each
+// asset pair is associated with its collection of ExchangeRateBallots.
 func (k Keeper) groupBallotsByPair(
 	ctx sdk.Context,
 	validatorsPerformance types.ValidatorPerformances,
@@ -74,7 +76,9 @@ func (k Keeper) clearVotesAndPreVotes(ctx sdk.Context, votePeriod uint64) {
 }
 
 // isPassingVoteThreshold ballot is passing the threshold amount of voting power
-func isPassingVoteThreshold(ballots types.ExchangeRateBallots, thresholdVotingPower sdkmath.Int, minVoters uint64) bool {
+func isPassingVoteThreshold(
+	ballots types.ExchangeRateBallots, thresholdVotingPower sdkmath.Int, minVoters uint64,
+) bool {
 	ballotPower := sdk.NewInt(ballots.Power())
 	if ballotPower.IsZero() {
 		return false
@@ -91,31 +95,28 @@ func isPassingVoteThreshold(ballots types.ExchangeRateBallots, thresholdVotingPo
 	return true
 }
 
-// removeInvalidBallots removes the ballots which have not reached the vote threshold
-// or which are not part of the whitelisted pairs anymore: example when params change during a vote period
-// but some votes were already made.
+// removeInvalidBallots removes the ballots which have not reached the vote
+// threshold or which are not part of the whitelisted pairs anymore: example
+// when params change during a vote period but some votes were already made.
 //
-// ALERT: This function mutates pairBallotMap slice, it removes the ballot for the pair which is not passing the threshold
-// or which is not whitelisted anymore.
+// ALERT: This function mutates pairBallotMap slice, it removes the ballot for
+// the pair which is not passing the threshold or which is not whitelisted
+// anymore.
 func (k Keeper) removeInvalidBallots(
 	ctx sdk.Context,
 	pairBallotsMap map[asset.Pair]types.ExchangeRateBallots,
 ) (map[asset.Pair]types.ExchangeRateBallots, set.Set[asset.Pair]) {
 	whitelistedPairs := set.New(k.GetWhitelistedPairs(ctx)...)
 
-	totalBondedPower := sdk.TokensToConsensusPower(k.StakingKeeper.TotalBondedTokens(ctx), k.StakingKeeper.PowerReduction(ctx))
+	totalBondedPower := sdk.TokensToConsensusPower(
+		k.StakingKeeper.TotalBondedTokens(ctx), k.StakingKeeper.PowerReduction(ctx),
+	)
 	thresholdVotingPower := k.VoteThreshold(ctx).MulInt64(totalBondedPower).RoundInt()
 	minVoters := k.MinVoters(ctx)
 
 	// Iterate through sorted keys for deterministic ordering.
-	// For more info, see: https://github.com/NibiruChain/nibiru/issues/1374#issue-1715353299
-	var pairs []string
-	for pair := range pairBallotsMap {
-		pairs = append(pairs, pair.String())
-	}
-	sort.Strings(pairs)
-	for _, pairStr := range pairs {
-		pair := asset.Pair(pairStr)
+	orderedBallotsMap := omap.OrderedMap_Pair[types.ExchangeRateBallots](pairBallotsMap)
+	for pair := range orderedBallotsMap.Range() {
 		ballots := pairBallotsMap[pair]
 		// If pair is not whitelisted, or the ballot for it has failed, then skip
 		// and remove it from pairBallotsMap for iteration efficiency
