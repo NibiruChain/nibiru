@@ -775,3 +775,30 @@ func TestPositionNotionalFail(t *testing.T) {
 	_, err := amm.GetQuoteReserveAmt(sdk.NewDec(-1), types.Direction_LONG)
 	require.ErrorIs(t, err, types.ErrInputBaseAmtNegative)
 }
+
+func TestAMM_WithMethods(t *testing.T) {
+	pair := asset.MustNewPair("ubtc:unusd")
+	baseReserve := sdk.NewDec(100)
+	quoteReserve := sdk.NewDec(200)
+	priceMultiplier := sdk.NewDec(1)
+	totalLong := sdk.NewDec(50)
+	totalShort := sdk.NewDec(50)
+	sqrtDepth := sdk.NewDec(10)
+
+	amm := new(types.AMM).
+		WithPair(pair).
+		WithBaseReserve(baseReserve).
+		WithQuoteReserve(quoteReserve).
+		WithPriceMultiplier(priceMultiplier).
+		WithTotalLong(totalLong).
+		WithTotalShort(totalShort).
+		WithSqrtDepth(sqrtDepth)
+
+	require.Equal(t, pair, amm.Pair)
+	require.Equal(t, baseReserve, amm.BaseReserve)
+	require.Equal(t, quoteReserve, amm.QuoteReserve)
+	require.Equal(t, priceMultiplier, amm.PriceMultiplier)
+	require.Equal(t, totalLong, amm.TotalLong)
+	require.Equal(t, totalShort, amm.TotalShort)
+	require.Equal(t, sqrtDepth, amm.SqrtDepth)
+}
