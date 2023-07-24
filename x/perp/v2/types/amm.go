@@ -9,6 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	"github.com/NibiruChain/nibiru/x/common/asset"
 )
 
 func (amm AMM) Validate() error {
@@ -152,6 +153,41 @@ func (amm AMM) ComputeSqrtDepth() (sqrtDepth sdk.Dec, err error) {
 
 	liqDepth := amm.QuoteReserve.Mul(amm.BaseReserve)
 	return common.SqrtDec(liqDepth)
+}
+
+func (amm *AMM) WithPair(pair asset.Pair) *AMM {
+	amm.Pair = pair
+	return amm
+}
+
+func (amm *AMM) WithBaseReserve(baseReserve sdk.Dec) *AMM {
+	amm.BaseReserve = baseReserve
+	return amm
+}
+
+func (amm *AMM) WithQuoteReserve(quoteReserve sdk.Dec) *AMM {
+	amm.QuoteReserve = quoteReserve
+	return amm
+}
+
+func (amm *AMM) WithPriceMultiplier(priceMultiplier sdk.Dec) *AMM {
+	amm.PriceMultiplier = priceMultiplier
+	return amm
+}
+
+func (amm *AMM) WithTotalLong(totalLong sdk.Dec) *AMM {
+	amm.TotalLong = totalLong
+	return amm
+}
+
+func (amm *AMM) WithTotalShort(totalShort sdk.Dec) *AMM {
+	amm.TotalShort = totalShort
+	return amm
+}
+
+func (amm *AMM) WithSqrtDepth(sqrtDepth sdk.Dec) *AMM {
+	amm.SqrtDepth = sqrtDepth
+	return amm
 }
 
 // SwapQuoteAsset swaps base asset for quote asset
