@@ -398,6 +398,16 @@ func (s *TestSuiteExecutor) TestPegShift() {
 	s.Contains(err.Error(), "Error parsing into type")
 }
 
+func (s *TestSuiteExecutor) TestNoOp() {
+	execMsg := cw_struct.BindingMsg{
+		NoOp: &cw_struct.NoOp{},
+	}
+
+	contract := s.contractShifter
+	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
+	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
+}
+
 func (s *TestSuiteExecutor) TestDepthShift() {
 	pair := asset.MustNewPair(s.happyFields.Pair)
 	execMsg := cw_struct.BindingMsg{

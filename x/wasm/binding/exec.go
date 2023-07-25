@@ -55,7 +55,14 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 			return events, data, sdkerrors.Wrapf(err, "wasmMsg: %s", wasmMsg.Custom)
 		}
 
+		isNoOp := contractExecuteMsg.ExecuteMsg == nil || contractExecuteMsg.ExecuteMsg.NoOp != nil
+		if isNoOp {
+			ctx.Logger().Info("execute DispatchMsg: NoOp (no operation)")
+			return events, data, nil
+		}
+
 		switch {
+
 		// Perp module | bindings-perp: for trading with smart contracts
 		case contractExecuteMsg.ExecuteMsg.MarketOrder != nil:
 			cwMsg := contractExecuteMsg.ExecuteMsg.MarketOrder
