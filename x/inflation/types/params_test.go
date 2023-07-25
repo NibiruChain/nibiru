@@ -3,17 +3,14 @@ package types
 import (
 	"testing"
 
-	"cosmossdk.io/depinject"
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/store"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+
+	"github.com/NibiruChain/nibiru/app/codec"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	dbm "github.com/cometbft/cometbft-db"
-	paramstestutil "github.com/cosmos/cosmos-sdk/x/params/testutil"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
@@ -178,42 +175,25 @@ func TestParamsValidate(t *testing.T) {
 
 type ParamKeyTableTestSuite struct {
 	suite.Suite
-
-	cdc   codec.Codec
-	amino *codec.LegacyAmino
-	db    *dbm.MemDB
-	ms    storetypes.CommitMultiStore
-	key   *storetypes.KVStoreKey
-	tkey  *storetypes.TransientStoreKey
-}
-
-func (s *ParamKeyTableTestSuite) SetupTest() {
-	s.key = sdk.NewKVStoreKey("storekey")
-	s.tkey = sdk.NewTransientStoreKey("transientstorekey")
-
-	db := dbm.NewMemDB()
-	ms := store.NewCommitMultiStore(db)
-	ms.MountStoreWithDB(s.key, storetypes.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(s.tkey, storetypes.StoreTypeTransient, db)
-	s.NoError(ms.LoadLatestVersion())
-
-	cdc := new(codec.Codec)
-	legacyAmino := new(codec.LegacyAmino)
-	err := depinject.Inject(paramstestutil.AppConfig,
-		cdc,
-		legacyAmino,
-	)
-	s.NoError(err)
 }
 
 func (s *ParamKeyTableTestSuite) TestParamKeyTable() {
+	encCfg := codec.MakeEncodingConfig()
+	cdc := encCfg.Marshaler
+	amino := encCfg.Amino
+
+	storeKey := storetypes.NewKVStoreKey("mockStoreKey")
+	transientStoreKey := storetypes.NewTransientStoreKey("mockTransientKey")
+
 	var keyTable paramstypes.KeyTable
 	s.Require().NotPanics(func() {
 		keyTable = ParamKeyTable()
 	})
 	s.Require().NotPanics(func() {
 		subspace := paramstypes.NewSubspace(
-			s.cdc, s.amino, s.key, s.tkey, "inflationsubspace",
+			cdc,
+			amino,
+			storeKey, transientStoreKey, "inflationsubspace",
 		)
 		subspace.WithKeyTable(keyTable)
 	})
