@@ -62,7 +62,6 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 		}
 
 		switch {
-
 		// Perp module | bindings-perp: for trading with smart contracts
 		case contractExecuteMsg.ExecuteMsg.MarketOrder != nil:
 			cwMsg := contractExecuteMsg.ExecuteMsg.MarketOrder
