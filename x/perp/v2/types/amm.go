@@ -106,7 +106,7 @@ func (amm AMM) GetQuoteReserveAmt(
 	baseReserveAmt sdk.Dec,
 	dir Direction,
 ) (quoteReserveDelta sdk.Dec, err error) {
-	if baseReserveAmt.IsNegative() {
+	if !baseReserveAmt.IsPositive() {
 		return sdk.Dec{}, ErrInputBaseAmtNegative
 	}
 
