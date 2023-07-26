@@ -117,10 +117,12 @@ func (k Keeper) RemoveContracts(
 func (k Keeper) CheckPermissions(
 	contract sdk.AccAddress, ctx sdk.Context,
 ) error {
-	contracts, err := k.GetSudoContracts(ctx)
+	state, err := k.Sudoers.Get(ctx)
 	if err != nil {
 		return err
 	}
+	contracts := state.Contracts
+
 	hasPermission := set.New(contracts...).Has(contract.String())
 	if !hasPermission {
 		return fmt.Errorf(
@@ -129,9 +131,4 @@ func (k Keeper) CheckPermissions(
 		)
 	}
 	return nil
-}
-
-func (k Keeper) GetSudoContracts(ctx sdk.Context) (contracts []string, err error) {
-	state, err := k.Sudoers.Get(ctx)
-	return state.Contracts, err
 }
