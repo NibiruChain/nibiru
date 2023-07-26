@@ -3,6 +3,8 @@ name: 🧪✨ Test coverage ✨🧪
 on:
   workflow_call:
   workflow_dispatch: # Runs on manual calls
+  schedule: 
+    - cron: "0 0 * * *" # Runs automatically every day
   pull_request:
 
 # Allow concurrent runs on main/release branches but isolates other branches 
@@ -23,7 +25,7 @@ jobs:
           cache: true
 
       - name: Run all unit tests.
-        run: make test-coverage
+        run: make test-coverage-integration
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
