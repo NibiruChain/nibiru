@@ -83,3 +83,21 @@ func (s *QueryServerSuite) TestQueryInflationRate() {
 	s.NoError(err)
 	s.NotNil(resp)
 }
+
+func (s *QueryServerSuite) TestQueryCirculatingSupply() {
+	nibiruApp, ctx := s.nibiruApp, s.ctx
+	resp, err := nibiruApp.InflationKeeper.CirculatingSupply(
+		sdk.WrapSDKContext(ctx), &inflationtypes.QueryCirculatingSupplyRequest{},
+	)
+	s.NoError(err)
+	s.NotNil(resp)
+}
+
+func (s *QueryServerSuite) TestQueryParams() {
+	nibiruApp, ctx := s.nibiruApp, s.ctx
+	resp, err := nibiruApp.InflationKeeper.Params(
+		sdk.WrapSDKContext(ctx), &inflationtypes.QueryParamsRequest{},
+	)
+	s.NoError(err)
+	s.NotNil(resp)
+}
