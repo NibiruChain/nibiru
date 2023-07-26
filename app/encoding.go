@@ -8,10 +8,15 @@ import (
 // This is provided for compatibility between protobuf and amino implementations.
 type EncodingConfig = codec.EncodingConfig
 
-// MakeEncodingConfig creates an EncodingConfig for an amino based test configuration.
-func MakeEncodingConfig() EncodingConfig {
-	encodingConfig := codec.MakeEncodingConfig()
+// RegisterModuleBasics registers an EncodingConfig for amino based test configuration.
+func RegisterModuleBasics(encodingConfig EncodingConfig) EncodingConfig {
 	ModuleBasics.RegisterLegacyAminoCodec(encodingConfig.Amino)
 	ModuleBasics.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 	return encodingConfig
+}
+
+// MakeEncodingConfigAndRegister creates an EncodingConfig for an amino based test configuration.
+func MakeEncodingConfigAndRegister() EncodingConfig {
+	encodingConfig := codec.MakeEncodingConfig()
+	return RegisterModuleBasics(encodingConfig)
 }
