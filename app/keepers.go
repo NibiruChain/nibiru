@@ -3,6 +3,8 @@ package app
 import (
 	"path/filepath"
 
+	"github.com/NibiruChain/nibiru/x/genmsg"
+
 	"github.com/NibiruChain/nibiru/x/sudo/keeper"
 
 	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
@@ -490,6 +492,7 @@ func (app *NibiruApp) AppModules(
 		app.InflationKeeper, app.AccountKeeper, *app.stakingKeeper,
 	)
 	sudoModule := sudo.NewAppModule(appCodec, app.SudoKeeper)
+	genMsgModule := genmsg.NewAppModule(app.MsgServiceRouter())
 
 	return []module.AppModule{
 		genutil.NewAppModule(
@@ -519,6 +522,7 @@ func (app *NibiruApp) AppModules(
 		inflationModule,
 		sudoModule,
 		perpv2Module,
+		genMsgModule,
 
 		// ibc
 		evidence.NewAppModule(app.evidenceKeeper),
@@ -587,6 +591,9 @@ func OrderedModuleNames() []string {
 		// --------------------------------------------------------------------
 		// CosmWasm
 		wasm.ModuleName,
+
+		// Should be before genmsg
+		genmsg.ModuleName,
 	}
 }
 
