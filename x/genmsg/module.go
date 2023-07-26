@@ -66,9 +66,9 @@ func (a AppModule) ExportGenesis(_ sdk.Context, codec codec.JSONCodec) json.RawM
 
 func (a AppModule) RegisterGRPCGatewayRoutes(_ client.Context, _ *runtime.ServeMux) {}
 
-func (a AppModule) GetTxCmd() *cobra.Command { return &cobra.Command{Use: ModuleName} }
+func (a AppModule) GetTxCmd() *cobra.Command { return nil }
 
-func (a AppModule) GetQueryCmd() *cobra.Command { return &cobra.Command{Use: ModuleName} }
+func (a AppModule) GetQueryCmd() *cobra.Command { return nil }
 
 func (a AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
