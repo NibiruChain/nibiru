@@ -525,18 +525,23 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 
 func (s *IntegrationTestSuite) TestDonateToEcosystemFund() {
 	s.T().Logf("donate to ecosystem fund")
-	out, err := testutilcli.ExecTx(s.network, cli.DonateToEcosystemFundCmd(), sdk.MustAccAddressFromBech32("nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m"), []string{"100unusd"})
+	out, err := testutilcli.ExecTx(
+		s.network, cli.DonateToEcosystemFundCmd(),
+		sdk.MustAccAddressFromBech32("nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m"),
+		[]string{"100unusd"},
+	)
 	s.NoError(err)
 	s.Require().EqualValues(abcitypes.CodeTypeOK, out.Code)
 
 	s.NoError(s.network.WaitForNextBlock())
 
 	resp := new(sdk.Coin)
+	moduleAccountAddrPerpEF := "nibi1trh2mamq64u4g042zfeevvjk4cukrthvppfnc7"
 	s.NoError(
 		testutilcli.ExecQuery(
 			s.network.Validators[0].ClientCtx,
 			bankcli.GetBalancesCmd(),
-			[]string{"nibi1trh2mamq64u4g042zfeevvjk4cukrthvppfnc7", "--denom", "unusd"}, // nibi1trh2mamq64u4g042zfeevvjk4cukrthvppfnc7 is the perp_ef module account address
+			[]string{moduleAccountAddrPerpEF, "--denom", "unusd"},
 			resp,
 		),
 	)

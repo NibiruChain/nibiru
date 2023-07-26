@@ -22,6 +22,28 @@ import (
 
 var testModuleBasicManager = module.NewBasicManager(genutil.AppModuleBasic{})
 
+// setupServer configures the client context and sets up a context at which we
+// can execute genesis CLI commands.
+func setupServer(t *testing.T) context.Context {
+	home := t.TempDir()
+	logger := log.NewNopLogger()
+	cfg, err := genutiltest.CreateDefaultTendermintConfig(home)
+	require.NoError(t, err)
+
+	appCodec := moduletestutil.MakeTestEncodingConfig().Codec
+	err = genutiltest.ExecInitCmd(
+		testModuleBasicManager, home, appCodec)
+	require.NoError(t, err)
+
+	serverCtx := server.NewContext(viper.New(), cfg, logger)
+	clientCtx := client.Context{}.WithCodec(appCodec).WithHomeDir(home)
+
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, client.ClientContextKey, &clientCtx)
+	ctx = context.WithValue(ctx, server.ServerContextKey, serverCtx)
+	return ctx
+}
+
 // Tests "add-genesis-perp-market", a command that adds a market to genesis.json
 func TestAddMarketGenesisCmd(t *testing.T) {
 	tests := []struct {
@@ -98,26 +120,10 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 		},
 	}
 
+	ctx := setupServer(t)
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			home := t.TempDir()
-			logger := log.NewNopLogger()
-			cfg, err := genutiltest.CreateDefaultTendermintConfig(home)
-			require.NoError(t, err)
-
-			appCodec := moduletestutil.MakeTestEncodingConfig().Codec
-			err = genutiltest.ExecInitCmd(
-				testModuleBasicManager, home, appCodec)
-			require.NoError(t, err)
-
-			serverCtx := server.NewContext(viper.New(), cfg, logger)
-			clientCtx := client.Context{}.WithCodec(appCodec).WithHomeDir(home)
-
-			ctx := context.Background()
-			ctx = context.WithValue(ctx, client.ClientContextKey, &clientCtx)
-			ctx = context.WithValue(ctx, server.ServerContextKey, serverCtx)
-
 			cmd := cli.AddMarketGenesisCmd("home")
 			cmd.SetArgs([]string{
 				fmt.Sprintf("--%s=%s", cli.FlagPair, tc.pairName),
