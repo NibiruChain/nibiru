@@ -1,16 +1,18 @@
 package genmsg_test
 
 import (
-	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	"github.com/NibiruChain/nibiru/x/genmsg"
-	v1 "github.com/NibiruChain/nibiru/x/genmsg/v1"
+	"testing"
+
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
-	"testing"
+
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/x/genmsg"
+	v1 "github.com/NibiruChain/nibiru/x/genmsg/v1"
 )
 
 func TestIntegration(t *testing.T) {
@@ -53,5 +55,6 @@ func TestIntegration(t *testing.T) {
 		Address: recvAddr.String(),
 		Denom:   "unibi",
 	})
+	require.NoError(t, err)
 	require.True(t, balance.Balance.Equal(sdk.NewInt64Coin("unibi", 1000)))
 }
