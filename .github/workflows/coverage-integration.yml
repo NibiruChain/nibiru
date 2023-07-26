@@ -1,9 +1,10 @@
-name: 🧪✨ Test coverage ✨🧪
+name: 🧪✨ Test coverage (integration) ✨🧪
 
 on:
   workflow_call:
   workflow_dispatch: # Runs on manual calls
-  pull_request:
+  schedule: 
+    - cron: "0 0 * * *" # Runs automatically every day
 
 # Allow concurrent runs on main/release branches but isolates other branches 
 concurrency:
@@ -11,7 +12,7 @@ concurrency:
   cancel-in-progress: ${{ ! (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/')) }}
 
 jobs:
-  test-coverage:
+  test-coverage-integration:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -23,7 +24,4 @@ jobs:
           cache: true
 
       - name: Run all unit tests.
-        run: make test-coverage
-
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
+        run: make test-coverage-integration
