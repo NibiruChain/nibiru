@@ -53,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1518](https://github.com/NibiruChain/nibiru/pull/1518) - test: add more tests to x/perp
 * [#1520](https://github.com/NibiruChain/nibiru/pull/1520) - feat(wasm): no op handler + tests with updated contracts
 * [#1521](https://github.com/NibiruChain/nibiru/pull/1521) - test(sudo): increase unit test coverage
+* [#1523](https://github.com/NibiruChain/nibiru/pull/1523) - chore: bump cosmos-sdk to v0.47.4
 
 ### Features
 
