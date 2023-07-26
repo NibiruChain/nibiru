@@ -135,5 +135,4 @@ func TestGetters(t *testing.T) {
 		_ = k.InflationEnabled(ctx)
 		_ = k.EpochsPerPeriod(ctx)
 	})
-
 }
