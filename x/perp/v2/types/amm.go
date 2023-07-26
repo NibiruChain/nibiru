@@ -106,8 +106,11 @@ func (amm AMM) GetQuoteReserveAmt(
 	baseReserveAmt sdk.Dec,
 	dir Direction,
 ) (quoteReserveDelta sdk.Dec, err error) {
-	if !baseReserveAmt.IsPositive() {
+	if baseReserveAmt.IsNegative() {
 		return sdk.Dec{}, ErrInputBaseAmtNegative
+	}
+	if baseReserveAmt.IsZero() {
+		return sdk.ZeroDec(), nil
 	}
 
 	invariant := amm.QuoteReserve.Mul(amm.BaseReserve) // x * y = k
