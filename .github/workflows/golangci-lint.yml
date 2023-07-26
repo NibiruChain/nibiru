@@ -8,6 +8,11 @@ on:
   pull_request:
     paths: ["**.go", "**.proto", "go.mod", "go.sum"]
 
+# Allow concurrent runs on main/release branches but isolates other branches 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.head_ref }}
+  cancel-in-progress: ${{ ! (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/')) }}
+
 permissions:
   contents: read
 

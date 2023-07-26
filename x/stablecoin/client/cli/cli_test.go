@@ -45,7 +45,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.T().Log("setting up integration test suite")
 	app.SetPrefixes(app.AccountAddressPrefix)
 
-	encodingConfig := app.MakeEncodingConfig()
+	encodingConfig := app.MakeEncodingConfigAndRegister()
 	genesisState := genesis.NewTestGenesisState(encodingConfig)
 
 	// x/stablecoin genesis state
