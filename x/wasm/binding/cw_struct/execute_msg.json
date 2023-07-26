@@ -66,6 +66,9 @@
       "depth_mult": "420"
     }
   },
+  "no_op": {
+    "no_op": {}
+  },
   "insurance_fund_withdraw": {
     "insurance_fund_withdraw": {
       "amount": "420",

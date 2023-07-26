@@ -1,4 +1,4 @@
-package simapp
+package simapp_test
 
 import (
 	"encoding/json"

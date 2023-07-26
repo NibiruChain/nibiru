@@ -26,6 +26,9 @@ type BindingMsg struct {
 	CreateMarket          *CreateMarket          `json:"create_market,omitempty"`
 
 	EditOracleParams *EditOracleParams `json:"edit_oracle_params,omitempty"`
+
+	// Short for "no operation". A wasm binding payload that does nothing.
+	NoOp *NoOp `json:"no_op,omitempty"`
 }
 
 type MarketOrder struct {
@@ -132,4 +135,7 @@ type MarketParams struct {
 	FundingRateEpochId string `json:"funding_rate_epoch_id,omitempty"`
 	// amount of time to look back for TWAP calculations
 	TwapLookbackWindow sdkmath.Int `json:"twap_lookback_window"`
+}
+
+type NoOp struct {
 }

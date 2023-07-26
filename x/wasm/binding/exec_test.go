@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/x/sudo/keeper"
+	sudokeeper "github.com/NibiruChain/nibiru/x/sudo/keeper"
 	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 
 	"github.com/NibiruChain/nibiru/x/oracle/types"
@@ -29,16 +29,14 @@ import (
 	"github.com/NibiruChain/nibiru/x/wasm/binding/wasmbin"
 )
 
-// ————————————————————————————————————————————————————————————————————————————
 // Keeper only used for testing, never for production
-// ————————————————————————————————————————————————————————————————————————————
-type TestKeeper struct {
-	keeper.Keeper
+type TestOnlySudoKeeper struct {
+	sudokeeper.Keeper
 }
 
 // SetSudoContracts overwrites the state. This function is a convenience
 // function for testing with permissioned contracts in other modules..
-func (k TestKeeper) SetSudoContracts(contracts []string, ctx sdk.Context) {
+func (k TestOnlySudoKeeper) SetSudoContracts(contracts []string, ctx sdk.Context) {
 	k.Sudoers.Set(ctx, sudotypes.Sudoers{
 		Root:      "",
 		Contracts: contracts,
@@ -84,7 +82,8 @@ type TestSuiteExecutor struct {
 	ctx              sdk.Context
 	contractDeployer sdk.AccAddress
 
-	keeper TestKeeper
+	keeper     TestOnlySudoKeeper
+	wasmKeeper *wasmkeeper.PermissionedKeeper
 
 	contractPerp       sdk.AccAddress
 	contractController sdk.AccAddress
@@ -114,7 +113,8 @@ func (s *TestSuiteExecutor) SetupSuite() {
 	nibiru, ctx = SetupAllContracts(s.T(), sender, nibiru, ctx)
 	s.nibiru = nibiru
 	s.ctx = ctx
-	s.keeper = TestKeeper{Keeper: s.nibiru.SudoKeeper}
+	s.keeper = TestOnlySudoKeeper{Keeper: s.nibiru.SudoKeeper}
+	s.wasmKeeper = wasmkeeper.NewDefaultPermissionKeeper(nibiru.WasmKeeper)
 
 	s.contractPerp = ContractMap[wasmbin.WasmKeyPerpBinding]
 	s.contractController = ContractMap[wasmbin.WasmKeyController]
@@ -396,6 +396,15 @@ func (s *TestSuiteExecutor) TestPegShift() {
 	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
 	s.Errorf(err, "contractRespBz: %s", contractRespBz)
 	s.Contains(err.Error(), "Error parsing into type")
+}
+
+func (s *TestSuiteExecutor) TestNoOp() {
+	contract := s.contractShifter
+	execMsg := cw_struct.BindingMsg{
+		NoOp: &cw_struct.NoOp{},
+	}
+	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
+	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
 }
 
 func (s *TestSuiteExecutor) TestDepthShift() {

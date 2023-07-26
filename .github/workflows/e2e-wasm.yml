@@ -4,11 +4,11 @@ name: CosmWasm e2e contract tests
 on:
   # On normal PRs or when workflow goreleaser finishes, as it gets the last release tag.
   pull_request:
-#  workflow_run:
-#    workflows: ["goreleaser"]
-#    types:
-#      - completed
-#  workflow_dispatch:
+
+# Allow concurrent runs on main/release branches but isolates other branches 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.head_ref }}
+  cancel-in-progress: ${{ ! (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/')) }}
 
 jobs:
   get-release:
