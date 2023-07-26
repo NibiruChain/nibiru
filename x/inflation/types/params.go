@@ -59,8 +59,10 @@ func ParamKeyTable() paramstypes.KeyTable {
 	return paramstypes.NewKeyTable().RegisterParamSet(&Params{})
 }
 
-// ParamSetPairs implements the ParamSet interface and returns all the key/value pairs
-// pairs of oracle module's parameters.
+var _ paramstypes.ParamSet = (*Params)(nil)
+
+// ParamSetPairs returns all the of key, value type, and validation function
+// for each module parameter. ParamSetPairs implements the ParamSet interface.
 func (p *Params) ParamSetPairs() paramstypes.ParamSetPairs {
 	return paramstypes.ParamSetPairs{
 		paramstypes.NewParamSetPair(KeyInflationEnabled, &p.InflationEnabled, validateBool),
