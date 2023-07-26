@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"testing"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
@@ -21,6 +23,10 @@ func (s *QueryServerSuite) SetupSuite() {
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 	s.nibiruApp = nibiruApp
 	s.ctx = ctx
+}
+
+func TestSuite_QueryServerSuite_RunAll(t *testing.T) {
+	suite.Run(t, new(QueryServerSuite))
 }
 
 func (s *QueryServerSuite) TestQueryPeriod() {

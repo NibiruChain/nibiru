@@ -18,7 +18,6 @@ func (k Keeper) Period(
 ) (*types.QueryPeriodResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	period := k.CurrentPeriod.Peek(ctx)
-
 	return &types.QueryPeriodResponse{Period: period}, nil
 }
 
