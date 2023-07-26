@@ -51,7 +51,7 @@ func TestFullAppSimulation(tb *testing.T) {
 		}
 	}()
 
-	encoding := app.MakeEncodingConfig()
+	encoding := app.MakeEncodingConfigAndRegister()
 	app := testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encoding.Marshaler))
 
 	// Run randomized simulation:
@@ -86,7 +86,7 @@ func TestAppStateDeterminism(t *testing.T) {
 		t.Skip("skipping application simulation")
 	}
 
-	encoding := app.MakeEncodingConfig()
+	encoding := app.MakeEncodingConfigAndRegister()
 
 	config := simapp.NewConfigFromFlags()
 	config.InitialBlockHeight = 1
