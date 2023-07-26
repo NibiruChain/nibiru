@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1500](https://github.com/NibiruChain/nibiru/pull/1500) - refactor(perp): clean up reverse market order mechanics
 * [#1506](https://github.com/NibiruChain/nibiru/pull/1506) - refactor(oracle): Implement OrderedMap and use it for iterating through maps in x/oracle
 * [#1502](https://github.com/NibiruChain/nibiru/pull/1502) - feat: add ledger build support
+* [#1495](https://github.com/NibiruChain/nibiru/pull/1495) - feat: add genmsg module
 * [#1517](https://github.com/NibiruChain/nibiru/pull/1517) - test: add more tests to x/hooks
 * [#1518](https://github.com/NibiruChain/nibiru/pull/1518) - test: add more tests to x/perp
 * [#1519](https://github.com/NibiruChain/nibiru/pull/1519) - test: add more tests to x/perp keeper
