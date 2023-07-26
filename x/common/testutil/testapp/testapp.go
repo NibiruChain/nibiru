@@ -93,3 +93,14 @@ func FundModuleAccount(bankKeeper bankkeeper.Keeper, ctx sdk.Context, recipientM
 
 	return bankKeeper.SendCoinsFromModuleToModule(ctx, inflationtypes.ModuleName, recipientMod, amounts)
 }
+
+// EnsureNibiruPrefix sets the account address prefix to Nibiru's rather than
+// the default from the Cosmos-SDK, guaranteeing that tests will work with nibi
+// addresses rather than cosmos ones (for Gaia).
+func EnsureNibiruPrefix() {
+	csdkConfig := sdk.GetConfig()
+	nibiruPrefix := app.AccountAddressPrefix
+	if csdkConfig.GetBech32AccountAddrPrefix() != nibiruPrefix {
+		app.SetPrefixes(nibiruPrefix)
+	}
+}

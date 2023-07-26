@@ -22,8 +22,9 @@ import (
 )
 
 func init() {
-	useNibiAccPrefix()
+	testapp.EnsureNibiruPrefix()
 }
+
 func setup() (*app.NibiruApp, sdk.Context) {
 	genState := app.NewDefaultGenesisState(codec.DefaultEncoding().Marshaler)
 	nibiru := testapp.NewNibiruTestApp(genState)
@@ -33,19 +34,6 @@ func setup() (*app.NibiruApp, sdk.Context) {
 		Time:    time.Now().UTC(),
 	})
 	return nibiru, ctx
-}
-
-func useNibiAccPrefix() {
-	accountAddressPrefix := "nibi"
-	accountPubKeyPrefix := accountAddressPrefix + "pub"
-	validatorAddressPrefix := accountAddressPrefix + "valoper"
-	validatorPubKeyPrefix := accountAddressPrefix + "valoperpub"
-	consNodeAddressPrefix := accountAddressPrefix + "valcons"
-	consNodePubKeyPrefix := accountAddressPrefix + "valconspub"
-	config := sdk.GetConfig()
-	config.SetBech32PrefixForAccount(accountAddressPrefix, accountPubKeyPrefix)
-	config.SetBech32PrefixForValidator(validatorAddressPrefix, validatorPubKeyPrefix)
-	config.SetBech32PrefixForConsensusNode(consNodeAddressPrefix, consNodePubKeyPrefix)
 }
 
 func TestGenesis(t *testing.T) {
@@ -249,8 +237,8 @@ func TestSudo_FromPbSudoers(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			out := keeper.SudoersFromPb(tc.in)
-			assert.EqualValues(t, tc.out.Contracts, out.Contracts)
-			assert.EqualValues(t, tc.out.Root, out.Root)
+			assert.EqualValuesf(t, tc.out.Contracts, out.Contracts, "out: %s", out.String())
+			assert.EqualValuesf(t, tc.out.Root, out.Root, "out: %s", out.String())
 
 			pbSudoers := out.ToPb()
 			for _, contract := range tc.in.Contracts {
@@ -388,17 +376,6 @@ func TestKeeper_AddContracts(t *testing.T) {
 		})
 	}
 }
-
-type DummyMsg struct {
-}
-
-var _ sdk.Msg = (*DummyMsg)(nil)
-
-func (dm DummyMsg) GetSigners() []sdk.AccAddress { return []sdk.AccAddress{} }
-func (dm DummyMsg) ValidateBasic() error         { return nil }
-func (dm *DummyMsg) Reset()                      {}
-func (dm *DummyMsg) ProtoMessage()               {}
-func (dm *DummyMsg) String() string              { return "dummy" }
 
 func TestKeeper_RemoveContracts(t *testing.T) {
 	root := "nibi1ggpg3vluy09qmfkgwsgkumhmmv2z44rdafn6qa"
