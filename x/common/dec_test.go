@@ -34,7 +34,8 @@ func TestSqrtBigInt(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(fmt.Sprintf(`bigInt: %s, sqrtBigInt: %s`, tc.bigInt, tc.sqrtBigInt), func(t *testing.T) {
-			sqrtInt := common.MustSqrtBigInt(tc.bigInt)
+			sqrtInt, err := common.SqrtBigInt(tc.bigInt)
+			assert.NoError(t, err)
 			assert.Equal(t, tc.sqrtBigInt.String(), sqrtInt.String())
 		})
 	}
@@ -74,8 +75,53 @@ func TestSqrtDec(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(fmt.Sprintf(`dec: %s, sqrtDec: %s`, tc.dec, tc.sqrtDec), func(t *testing.T) {
-			sqrtDec := common.MustSqrtDec(tc.dec)
+			sqrtDec, err := common.SqrtDec(tc.dec)
+			assert.NoError(t, err)
 			assert.Equal(t, tc.sqrtDec.String(), sqrtDec.String())
 		})
 	}
+}
+
+func TestBankersRound(t *testing.T) {
+	quo := big.NewInt(56789)
+	halfPrecision := big.NewInt(50000)
+
+	testCases := []struct {
+		name    string
+		quo     *big.Int
+		rem     *big.Int
+		rounded *big.Int
+	}{
+		{
+			name:    "Remainder < half precision => round down",
+			rem:     big.NewInt(49_999),
+			rounded: quo,
+		},
+		{
+			name:    "Remainder > half precision => round up",
+			rem:     big.NewInt(50_001),
+			rounded: big.NewInt(56_790), // = quo + 1
+		},
+		{
+			name:    "Remainder = half precision, quotient is odd => round up",
+			rem:     halfPrecision,
+			rounded: big.NewInt(56_742),
+			quo:     big.NewInt(56_741),
+		},
+		{
+			name:    "Remainder = half precision, quotient is even => no change",
+			rem:     halfPrecision,
+			rounded: quo,
+		},
+	}
+
+	for _, tc := range testCases {
+		tcQuo := quo
+		if tc.quo != nil {
+			tcQuo = tc.quo
+		}
+		rounded := common.BankersRound(tcQuo, tc.rem, halfPrecision)
+		assert.EqualValues(t, tc.rounded, rounded)
+	}
+
 }
