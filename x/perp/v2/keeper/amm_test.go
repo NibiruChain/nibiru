@@ -274,7 +274,7 @@ func TestEditSwapInvariantFail(t *testing.T) {
 
 	// Fail at validate
 	err = app.PerpKeeperV2.Admin().EditSwapInvariant(ctx, pair, sdk.NewDec(0))
-	require.ErrorContains(t, err, "init sqrt depth must be > 0")
+	require.ErrorContains(t, err, "swap multiplier must be > 0")
 
 	// Works because it goes in the other way
 	err = app.PerpKeeperV2.Admin().EditSwapInvariant(ctx, pair, sdk.NewDec(500_000))
