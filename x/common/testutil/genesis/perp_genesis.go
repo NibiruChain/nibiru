@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	TEST_ENCODING_CONFIG = app.MakeEncodingConfig()
+	TEST_ENCODING_CONFIG = app.MakeEncodingConfigAndRegister()
 )
 
 func AddPerpV2Genesis(gen app.GenesisState) app.GenesisState {

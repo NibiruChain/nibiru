@@ -113,6 +113,7 @@ func (s *TestSuiteBindingJsonTypes) TestExecuteMsgs() {
 		"set_market_enabled",
 		"insurance_fund_withdraw",
 		"create_market",
+		"no_op",
 	}
 
 	for _, name := range testCaseMap {
