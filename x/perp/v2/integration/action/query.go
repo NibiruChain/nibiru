@@ -188,7 +188,6 @@ func QueryMarkets_MarketsShouldContain(expectedMarket types.Market) QueryMarkets
 }
 
 type queryModuleAccounts struct {
-	traderAddress       sdk.AccAddress
 	allResponseCheckers []QueryModuleAccountsChecker
 }
 
