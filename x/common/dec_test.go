@@ -123,5 +123,4 @@ func TestBankersRound(t *testing.T) {
 		rounded := common.BankersRound(tcQuo, tc.rem, halfPrecision)
 		assert.EqualValues(t, tc.rounded, rounded)
 	}
-
 }

@@ -3,9 +3,10 @@ package common_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/stretchr/testify/require"
 )
 
 func TestAddress(t *testing.T) {
