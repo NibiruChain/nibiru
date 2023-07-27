@@ -80,20 +80,48 @@ type (
 		AppConfig *serverconfig.Config
 		ClientCtx client.Context
 		Ctx       *server.Context
-		Dir       string
-		NodeID    string
-		PubKey    cryptotypes.PubKey
+		// Dir is the root directory of the validator node data and config. Passed to the Tendermint config.
+		Dir string
+
+		// NodeID is a unique ID for the validator generated when the
+		// 'cli.Network' is started.
+		NodeID string
+		PubKey cryptotypes.PubKey
+
 		// Moniker is a human-readable name that identifies a validator. A
 		// moniker is optional and may be empty.
-		Moniker    string
-		APIAddress string
-		RPCAddress string
-		P2PAddress string
-		Address    sdk.AccAddress
-		ValAddress sdk.ValAddress
-		RPCClient  tmclient.Client
+		Moniker string
 
-		tmNode  *node.Node
+		// APIAddress is the endpoint that the validator API server binds to.
+		// Only the first validator of a 'cli.Network' exposes the full API.
+		APIAddress string
+
+		// RPCAddress is the endpoint that the RPC server binds to. Only the
+		// first validator of a 'cli.Network' exposes the full API.
+		RPCAddress string
+
+		// P2PAddress is the endpoint that the RPC server binds to. The P2P
+		// server handles Tendermint peer-to-peer (P2P) networking and is
+		// critical for blockchain replication and consensus. It allows nodes
+		// to gossip blocks, transactions, and consensus messages. Only the
+		// first validator of a 'cli.Network' exposes the full API.
+		P2PAddress string
+
+		// Address - account address
+		Address sdk.AccAddress
+
+		// ValAddress - validator operator (valoper) address
+		ValAddress sdk.ValAddress
+
+		// RPCClient wraps most important rpc calls a client would make to
+		// listen for events, test if it also implements events.EventSwitch.
+		RPCClient tmclient.Client
+
+		tmNode *node.Node
+
+		// API exposes the app's REST and gRPC interfaces, allowing clients to
+		// read from state and broadcast txs. The API server connects to the
+		// underlying ABCI application.
 		api     *serverapi.Server
 		grpc    *grpc.Server
 		grpcWeb *http.Server
@@ -314,8 +342,8 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 			return nil, err
 		}
 
-		// if PrintMnemonic is set to true, we print the first validator node's secret to the network's logger
-		// for debugging and manual testing
+		// if PrintMnemonic is set to true, we print the first validator node's
+		// secret to the network's logger for debugging and manual testing
 		if cfg.PrintMnemonic && i == 0 {
 			printMnemonic(l, secret)
 		}
@@ -451,11 +479,11 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 
 	l.Log("started test network at height:", height)
 
-	// Ensure we cleanup incase any test was abruptly halted (e.g. SIGINT) as any
-	// defer in a test would not be called.
+	// Ensure we cleanup incase any test was abruptly halted (e.g. SIGINT) as
+	// any defer in a test would not be called.
 	server.TrapSignal(network.Cleanup)
 
-	return network, nil
+	return network, err
 }
 
 // LatestHeight returns the latest height of the network or an error if the
@@ -586,8 +614,9 @@ func (n *Network) Cleanup() {
 		}
 	}
 
-	// Give a brief pause for things to finish closing in other processes. Hopefully this helps with the address-in-use errors.
-	// 100ms chosen randomly.
+	// Give a brief pause for things to finish closing in other processes.
+	// Hopefully this helps with the address-in-use errors. 100ms chosen
+	// randomly.
 	time.Sleep(100 * time.Millisecond)
 
 	if n.Config.CleanupDir {
@@ -628,7 +657,8 @@ func printMnemonic(l Logger, secret string) {
 	l.Log("\n")
 }
 
-// centerText centers text across a fixed width, filling either side with whitespace buffers
+// centerText: Centers text across a fixed width, filling either side with
+// whitespace buffers
 func centerText(text string, width int) string {
 	textLen := len(text)
 	leftBuffer := strings.Repeat(" ", (width-textLen)/2)
