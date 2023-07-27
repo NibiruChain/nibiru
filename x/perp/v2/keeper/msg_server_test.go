@@ -142,6 +142,30 @@ func TestMsgServerAddMargin(t *testing.T) {
 				),
 				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(98)),
 			),
+		TC("partial close").
+			Given(
+				CreateCustomMarket(pair),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
+				MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
+				MoveToNextBlock(),
+			).
+			When(
+				MsgServerAddMargin(alice, pair, sdk.OneInt()),
+			).
+			Then(
+				PositionShouldBeEqual(alice, pair,
+					Position_PositionShouldBeEqualTo(types.Position{
+						TraderAddress:                   alice.String(),
+						Pair:                            pair,
+						Size_:                           sdk.MustNewDecFromStr("0.999999999999"),
+						Margin:                          sdk.NewDec(2),
+						OpenNotional:                    sdk.OneDec(),
+						LatestCumulativePremiumFraction: sdk.ZeroDec(),
+						LastUpdatedBlockNumber:          2,
+					}),
+				),
+				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(98)),
+			),
 	}
 
 	NewTestSuite(t).WithTestCases(tests...).Run()
