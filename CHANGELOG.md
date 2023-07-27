@@ -53,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1518](https://github.com/NibiruChain/nibiru/pull/1518) - test: add more tests to x/perp
 * [#1520](https://github.com/NibiruChain/nibiru/pull/1520) - feat(wasm): no op handler + tests with updated contracts
 * [#1521](https://github.com/NibiruChain/nibiru/pull/1521) - test(sudo): increase unit test coverage
+* [#1523](https://github.com/NibiruChain/nibiru/pull/1523) - chore: bump cosmos-sdk to v0.47.4
 
 ### Features
 
@@ -85,7 +86,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `github.com/spf13/cast` from 1.5.0 to 1.5.1 (#1358)
 - Bump `github.com/stretchr/testify` from 1.8.2 to 1.8.4 (#1384, #1435)
 - Bump `cosmossdk.io/math` from 1.0.0-beta.6 to 1.0.1 (#1394)
-- Bump `google.golang.org/grpc` from 1.53.0 to 1.56.2 (#1395, #1437, #1443, #1497)
+- Bump `google.golang.org/grpc` from 1.53.0 to 1.57.0 (#1395, #1437, #1443, #1497, [#1525](https://github.com/NibiruChain/nibiru/pull/1525))
 - Bump `github.com/gin-gonic/gin` from 1.8.1 to 1.9.1 (#1409)
 - Bump `github.com/spf13/viper` from 1.15.0 to 1.16.0 (#1436)
 - Bump `github.com/prometheus/client_golang` from 1.15.1 to 1.16.0 (#1431)
