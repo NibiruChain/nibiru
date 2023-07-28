@@ -18,7 +18,6 @@ func (k Keeper) Period(
 ) (*types.QueryPeriodResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	period := k.CurrentPeriod.Peek(ctx)
-
 	return &types.QueryPeriodResponse{Period: period}, nil
 }
 
@@ -29,9 +28,7 @@ func (k Keeper) EpochMintProvision(
 ) (*types.QueryEpochMintProvisionResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	epochMintProvision := k.GetEpochMintProvision(ctx)
-
 	coin := sdk.NewDecCoinFromDec(denoms.NIBI, epochMintProvision)
-
 	return &types.QueryEpochMintProvisionResponse{EpochMintProvision: coin}, nil
 }
 
@@ -42,7 +39,6 @@ func (k Keeper) SkippedEpochs(
 ) (*types.QuerySkippedEpochsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	skippedEpochs := k.NumSkippedEpochs.Peek(ctx)
-
 	return &types.QuerySkippedEpochsResponse{SkippedEpochs: skippedEpochs}, nil
 }
 
@@ -53,7 +49,6 @@ func (k Keeper) InflationRate(
 ) (*types.QueryInflationRateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	inflationRate := k.GetInflationRate(ctx, denoms.NIBI)
-
 	return &types.QueryInflationRateResponse{InflationRate: inflationRate}, nil
 }
 

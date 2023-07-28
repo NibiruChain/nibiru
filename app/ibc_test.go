@@ -31,7 +31,7 @@ func SetupNibiruTestingApp() (
 	nibiruApp, _ := testapp.NewNibiruTestAppAndContext(true)
 
 	// Create genesis state
-	encCdc := app.MakeEncodingConfig()
+	encCdc := app.MakeEncodingConfigAndRegister()
 	genesisState := app.NewDefaultGenesisState(encCdc.Marshaler)
 
 	return nibiruApp, genesisState

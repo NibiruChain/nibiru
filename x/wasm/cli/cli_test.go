@@ -47,7 +47,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	app.SetPrefixes(app.AccountAddressPrefix)
 
-	encodingConfig := app.MakeEncodingConfig()
+	encodingConfig := app.MakeEncodingConfigAndRegister()
 	genesisState := genesis.NewTestGenesisState(encodingConfig)
 	perpv2Gen := perpv2types.DefaultGenesis()
 	perpv2Gen.Markets = []perpv2types.Market{
@@ -63,7 +63,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			PartialLiquidationRatio:         sdk.MustNewDecFromStr("0.5"),
 			FundingRateEpochId:              epochstypes.ThirtyMinuteEpochID,
 			TwapLookbackWindow:              30 * time.Minute,
-			PrepaidBadDebt:                  sdk.NewCoin(denoms.NUSD, sdk.NewInt(0)),
+			PrepaidBadDebt:                  sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
 		},
 	}
 	perpv2Gen.Amms = []perpv2types.AMM{

@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/NibiruChain/nibiru/x/genmsg"
+
 	"github.com/NibiruChain/nibiru/x/sudo/keeper"
 
 	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
@@ -123,11 +125,6 @@ const (
 	DisplayDenom         = "NIBI"
 )
 
-// IBC application testing ports
-const (
-	MockFeePort string = ibcmock.ModuleName + ibcfeetypes.ModuleName
-)
-
 var (
 	// DefaultNodeHome default home directories for the application daemon
 	DefaultNodeHome string
@@ -172,6 +169,7 @@ var (
 		sudo.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		ibcfee.AppModuleBasic{},
+		genmsg.AppModule{},
 	)
 
 	// module account permissions
@@ -583,7 +581,7 @@ func (app *NibiruApp) GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper {
    This is provided for compatibility between protobuf and amino implementations. */
 
 func (app *NibiruApp) GetTxConfig() client.TxConfig {
-	return MakeEncodingConfig().TxConfig
+	return MakeEncodingConfigAndRegister().TxConfig
 }
 
 // ------------------------------------------------------------------------

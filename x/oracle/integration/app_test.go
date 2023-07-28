@@ -26,7 +26,7 @@ type IntegrationTestSuite struct {
 func (s *IntegrationTestSuite) SetupTest() {
 	app.SetPrefixes(app.AccountAddressPrefix)
 	homeDir := s.T().TempDir()
-	s.cfg = testutilcli.BuildNetworkConfig(genesis.NewTestGenesisState(app.MakeEncodingConfig()))
+	s.cfg = testutilcli.BuildNetworkConfig(genesis.NewTestGenesisState(app.MakeEncodingConfigAndRegister()))
 	s.cfg.NumValidators = 4
 	s.cfg.GenesisState[types.ModuleName] = s.cfg.Codec.MustMarshalJSON(func() codec.ProtoMarshaler {
 		gs := types.DefaultGenesisState()
@@ -61,19 +61,19 @@ func (s *IntegrationTestSuite) TestSuccessfulVoting() {
 	// then the number picked is the one in the middle always.
 	prices := []map[asset.Pair]sdk.Dec{
 		{
-			"nibi:usdc": sdk.MustNewDecFromStr("1"),
+			"nibi:usdc": sdk.OneDec(),
 			"btc:usdc":  sdk.MustNewDecFromStr("100203.0"),
 		},
 		{
-			"nibi:usdc": sdk.MustNewDecFromStr("1"),
+			"nibi:usdc": sdk.OneDec(),
 			"btc:usdc":  sdk.MustNewDecFromStr("100150.5"),
 		},
 		{
-			"nibi:usdc": sdk.MustNewDecFromStr("1"),
+			"nibi:usdc": sdk.OneDec(),
 			"btc:usdc":  sdk.MustNewDecFromStr("100200.9"),
 		},
 		{
-			"nibi:usdc": sdk.MustNewDecFromStr("1"),
+			"nibi:usdc": sdk.OneDec(),
 			"btc:usdc":  sdk.MustNewDecFromStr("100300.9"),
 		},
 	}
@@ -88,7 +88,7 @@ func (s *IntegrationTestSuite) TestSuccessfulVoting() {
 	gotPrices := s.currentPrices()
 	require.Equal(s.T(),
 		map[asset.Pair]sdk.Dec{
-			"nibi:usdc": sdk.MustNewDecFromStr("1"),
+			"nibi:usdc": sdk.OneDec(),
 			"btc:usdc":  sdk.MustNewDecFromStr("100200.9"),
 		},
 		gotPrices,

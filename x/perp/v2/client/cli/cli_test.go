@@ -47,7 +47,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	app.SetPrefixes(app.AccountAddressPrefix)
 
 	// setup market
-	encodingConfig := app.MakeEncodingConfig()
+	encodingConfig := app.MakeEncodingConfigAndRegister()
 	genState := genesis.NewTestGenesisState(encodingConfig)
 	genState = genesis.AddPerpV2Genesis(genState)
 	genState = genesis.AddOracleGenesis(genState)
@@ -244,7 +244,7 @@ func (s *IntegrationTestSuite) TestMarketOrdersAndCloseCmd() {
 	s.EqualValues(sdk.NewDec(2*common.TO_MICRO), queryResp.Position.OpenNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("1999999.999999999999998000"), queryResp.PositionNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000002000"), queryResp.UnrealizedPnl)
-	s.EqualValues(sdk.NewDec(1), queryResp.MarginRatio)
+	s.EqualValues(sdk.OneDec(), queryResp.MarginRatio)
 
 	s.T().Log("C. open position with 2x leverage and zero baseAmtLimit")
 	txResp, err = testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), user, []string{
@@ -384,7 +384,7 @@ func (s *IntegrationTestSuite) TestPartialCloseCmd() {
 	s.EqualValues(sdk.NewDec(12e6), queryResp.Position.OpenNotional)
 	s.EqualValues(sdk.MustNewDecFromStr("12000000"), queryResp.PositionNotional)
 	s.EqualValues(sdk.ZeroDec(), queryResp.UnrealizedPnl)
-	s.EqualValues(sdk.NewDec(1), queryResp.MarginRatio)
+	s.EqualValues(sdk.OneDec(), queryResp.MarginRatio)
 
 	s.T().Log("Partially close the position")
 	txResp, err = testutilcli.ExecTx(s.network, cli.PartialCloseCmd(), user, []string{

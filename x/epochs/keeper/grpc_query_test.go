@@ -11,20 +11,20 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/epochs/keeper"
 
-	"github.com/NibiruChain/nibiru/x/epochs/types"
+	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
 )
 
 func TestQueryEpochInfos(t *testing.T) {
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
 
 	queryHelper := baseapp.NewQueryServerTestHelper(ctx, nibiruApp.InterfaceRegistry())
-	types.RegisterQueryServer(queryHelper, keeper.NewQuerier(nibiruApp.EpochsKeeper))
-	queryClient := types.NewQueryClient(queryHelper)
+	epochstypes.RegisterQueryServer(queryHelper, keeper.NewQuerier(nibiruApp.EpochsKeeper))
+	queryClient := epochstypes.NewQueryClient(queryHelper)
 
 	chainStartTime := ctx.BlockTime()
 
 	// Invalid param
-	epochInfosResponse, err := queryClient.EpochInfos(gocontext.Background(), &types.QueryEpochsInfoRequest{})
+	epochInfosResponse, err := queryClient.EpochInfos(gocontext.Background(), &epochstypes.QueryEpochsInfoRequest{})
 	require.NoError(t, err)
 	require.Len(t, epochInfosResponse.Epochs, 3)
 
@@ -41,4 +41,21 @@ func TestQueryEpochInfos(t *testing.T) {
 	require.Equal(t, epochInfosResponse.Epochs[1].CurrentEpoch, uint64(0))
 	require.Equal(t, epochInfosResponse.Epochs[1].CurrentEpochStartTime, chainStartTime)
 	require.Equal(t, epochInfosResponse.Epochs[1].EpochCountingStarted, false)
+}
+
+func TestCurrentEpochQuery(t *testing.T) {
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
+
+	queryHelper := baseapp.NewQueryServerTestHelper(ctx, nibiruApp.InterfaceRegistry())
+	epochstypes.RegisterQueryServer(queryHelper, keeper.NewQuerier(nibiruApp.EpochsKeeper))
+	queryClient := epochstypes.NewQueryClient(queryHelper)
+
+	// Valid epoch
+	epochInfosResponse, err := queryClient.CurrentEpoch(gocontext.Background(), &epochstypes.QueryCurrentEpochRequest{Identifier: "15 min"})
+	require.NoError(t, err)
+	require.Equal(t, epochInfosResponse.CurrentEpoch, uint64(0))
+
+	// Invalid epoch
+	_, err = queryClient.CurrentEpoch(gocontext.Background(), &epochstypes.QueryCurrentEpochRequest{Identifier: "invalid epoch"})
+	require.Error(t, err)
 }

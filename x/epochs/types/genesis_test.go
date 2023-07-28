@@ -93,3 +93,44 @@ func TestGenesisState_Validate(t *testing.T) {
 		})
 	}
 }
+
+func TestGenesisState_HappyPath(t *testing.T) {
+	tests := []struct {
+		name     string
+		genState GenesisState
+	}{
+		{
+			name: "duplicate epochinfo",
+			genState: GenesisState{
+				Epochs: []EpochInfo{
+					{
+						Identifier:              "firstOne",
+						StartTime:               time.Now(),
+						Duration:                10,
+						CurrentEpoch:            2,
+						CurrentEpochStartTime:   time.Now(),
+						EpochCountingStarted:    false,
+						CurrentEpochStartHeight: 1,
+					},
+					{
+						Identifier:              "someOther",
+						StartTime:               time.Now(),
+						Duration:                10,
+						CurrentEpoch:            2,
+						CurrentEpochStartTime:   time.Now(),
+						EpochCountingStarted:    false,
+						CurrentEpochStartHeight: 1,
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.genState.Validate()
+			require.NoError(t, err)
+		})
+	}
+}

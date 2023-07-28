@@ -72,7 +72,7 @@ type TestSuitePerpQuerier struct {
 }
 
 func SetupPerpGenesis() app.GenesisState {
-	genesisState := genesis.NewTestGenesisState(app.MakeEncodingConfig())
+	genesisState := genesis.NewTestGenesisState(app.MakeEncodingConfigAndRegister())
 	genesisState = genesis.AddOracleGenesis(genesisState)
 	genesisState = genesis.AddPerpV2Genesis(genesisState)
 	return genesisState
@@ -103,6 +103,7 @@ func (s *TestSuitePerpQuerier) SetupSuite() {
 	s.contractPerp = ContractMap[wasmbin.WasmKeyPerpBinding]
 	s.queryPlugin = binding.NewQueryPlugin(
 		nibiru.PerpKeeperV2,
+		nibiru.OracleKeeper,
 	)
 	s.OnSetupEnd()
 }
