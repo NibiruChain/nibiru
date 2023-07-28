@@ -3,8 +3,10 @@ package main
 import (
 	"os"
 
+	_ "github.com/KimMachineGun/automemlimit"
 	"github.com/cosmos/cosmos-sdk/server"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
+	_ "go.uber.org/automaxprocs"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/cmd/nibid/cmd"
