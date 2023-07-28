@@ -66,3 +66,11 @@ func TestCalculateEpochMintProvision(t *testing.T) {
 		})
 	}
 }
+
+func TestCalculateEpochMintProvision_ZeroEpochs(t *testing.T) {
+	params := DefaultParams()
+	params.EpochsPerPeriod = 0
+
+	epochMintProvisions := CalculateEpochMintProvision(params, 1)
+	require.Equal(t, epochMintProvisions, sdk.ZeroDec())
+}

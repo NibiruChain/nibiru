@@ -8,12 +8,17 @@ import (
 )
 
 // InitGenesis sets epoch info from genesis
-func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
+func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) (err error) {
+	err = genState.Validate()
+	if err != nil {
+		return
+	}
 	for _, epoch := range genState.Epochs {
-		if err := k.AddEpochInfo(ctx, epoch); err != nil {
-			panic(err)
+		if err = k.AddEpochInfo(ctx, epoch); err != nil {
+			return err
 		}
 	}
+	return
 }
 
 // ExportGenesis returns the capability module's exported genesis.

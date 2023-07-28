@@ -35,7 +35,7 @@ import (
 // NewRootCmd creates a new root command for nibid. It is called once in the
 // main function.
 func NewRootCmd() (*cobra.Command, app.EncodingConfig) {
-	encodingConfig := app.MakeEncodingConfig()
+	encodingConfig := app.MakeEncodingConfigAndRegister()
 	app.SetPrefixes(app.AccountAddressPrefix)
 
 	initClientCtx := client.Context{}.

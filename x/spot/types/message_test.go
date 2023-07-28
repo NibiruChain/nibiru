@@ -27,11 +27,11 @@ func TestValidateBasic(t *testing.T) {
 				PoolAssets: []PoolAsset{
 					{
 						Token:  sdk.NewInt64Coin("aaa", 1),
-						Weight: sdk.NewInt(1),
+						Weight: sdk.OneInt(),
 					},
 					{
 						Token:  sdk.NewInt64Coin("bbb", 1),
-						Weight: sdk.NewInt(1),
+						Weight: sdk.OneInt(),
 					},
 				},
 			},
@@ -48,11 +48,11 @@ func TestValidateBasic(t *testing.T) {
 				PoolAssets: []PoolAsset{
 					{
 						Token:  sdk.NewInt64Coin("aaa", 1),
-						Weight: sdk.NewInt(1),
+						Weight: sdk.OneInt(),
 					},
 					{
 						Token:  sdk.NewInt64Coin("bbb", 1),
-						Weight: sdk.NewInt(1),
+						Weight: sdk.OneInt(),
 					},
 				},
 			},
@@ -69,11 +69,11 @@ func TestValidateBasic(t *testing.T) {
 				PoolAssets: []PoolAsset{
 					{
 						Token:  sdk.NewInt64Coin("aaa", 1),
-						Weight: sdk.NewInt(1),
+						Weight: sdk.OneInt(),
 					},
 					{
 						Token:  sdk.NewInt64Coin("bbb", 1),
-						Weight: sdk.NewInt(1),
+						Weight: sdk.OneInt(),
 					},
 				},
 			},
@@ -90,11 +90,11 @@ func TestValidateBasic(t *testing.T) {
 				PoolAssets: []PoolAsset{
 					{
 						Token:  sdk.NewInt64Coin("aaa", 1),
-						Weight: sdk.NewInt(1),
+						Weight: sdk.OneInt(),
 					},
 					{
 						Token:  sdk.NewInt64Coin("bbb", 1),
-						Weight: sdk.NewInt(1),
+						Weight: sdk.OneInt(),
 					},
 				},
 			},
@@ -111,11 +111,11 @@ func TestValidateBasic(t *testing.T) {
 				PoolAssets: []PoolAsset{
 					{
 						Token:  sdk.NewInt64Coin("aaa", 1),
-						Weight: sdk.NewInt(1),
+						Weight: sdk.OneInt(),
 					},
 					{
 						Token:  sdk.NewInt64Coin("bbb", 1),
-						Weight: sdk.NewInt(1),
+						Weight: sdk.OneInt(),
 					},
 				},
 			},
@@ -132,7 +132,7 @@ func TestValidateBasic(t *testing.T) {
 				PoolAssets: []PoolAsset{
 					{
 						Token:  sdk.NewInt64Coin("aaa", 1),
-						Weight: sdk.NewInt(1),
+						Weight: sdk.OneInt(),
 					},
 				},
 			},
@@ -149,15 +149,15 @@ func TestValidateBasic(t *testing.T) {
 				PoolAssets: []PoolAsset{
 					{
 						Token:  sdk.NewInt64Coin("aaa", 1),
-						Weight: sdk.NewInt(1),
+						Weight: sdk.OneInt(),
 					},
 					{
 						Token:  sdk.NewInt64Coin("bbb", 1),
-						Weight: sdk.NewInt(1),
+						Weight: sdk.OneInt(),
 					},
 					{
 						Token:  sdk.NewInt64Coin("ccc", 1),
-						Weight: sdk.NewInt(1),
+						Weight: sdk.OneInt(),
 					},
 				},
 			},
@@ -174,11 +174,11 @@ func TestValidateBasic(t *testing.T) {
 				PoolAssets: []PoolAsset{
 					{
 						Token:  sdk.NewInt64Coin("aaa", 1),
-						Weight: sdk.NewInt(0),
+						Weight: sdk.ZeroInt(),
 					},
 					{
 						Token:  sdk.NewInt64Coin("bbb", 1),
-						Weight: sdk.NewInt(0),
+						Weight: sdk.ZeroInt(),
 					},
 				},
 			},
@@ -195,11 +195,11 @@ func TestValidateBasic(t *testing.T) {
 				PoolAssets: []PoolAsset{
 					{
 						Token:  sdk.NewInt64Coin("aaa", 1),
-						Weight: sdk.NewInt(1),
+						Weight: sdk.OneInt(),
 					},
 					{
 						Token:  sdk.NewInt64Coin("bbb", 1),
-						Weight: sdk.NewInt(1),
+						Weight: sdk.OneInt(),
 					},
 				},
 			},

@@ -5,6 +5,11 @@ on:
     # paths makes the action run only when the given paths are changed
     paths: ["**.go", "**.proto", "go.mod", "go.sum"]
 
+# Allow concurrent runs on main/release branches but isolates other branches 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.head_ref }}
+  cancel-in-progress: ${{ ! (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/')) }}
+
 jobs:
   integration-tests:
     runs-on: ubuntu-latest

@@ -50,7 +50,8 @@ func TestEpochsInitGenesis(t *testing.T) {
 	// To check init genesis again, should make it fresh status
 	epochInfos := app.EpochsKeeper.AllEpochInfos(ctx)
 	for _, epochInfo := range epochInfos {
-		app.EpochsKeeper.DeleteEpochInfo(ctx, epochInfo.Identifier)
+		err := app.EpochsKeeper.DeleteEpochInfo(ctx, epochInfo.Identifier)
+		require.NoError(t, err)
 	}
 
 	now := time.Now()
@@ -80,6 +81,9 @@ func TestEpochsInitGenesis(t *testing.T) {
 			},
 		},
 	}
+	err := epochs.InitGenesis(ctx, app.EpochsKeeper, genesisState)
+	require.Error(t, err)
+
 	require.EqualError(t, genesisState.Validate(), "epoch identifier should be unique")
 
 	genesisState = types.GenesisState{
@@ -96,8 +100,10 @@ func TestEpochsInitGenesis(t *testing.T) {
 		},
 	}
 
-	epochs.InitGenesis(ctx, app.EpochsKeeper, genesisState)
-	epochInfo := app.EpochsKeeper.GetEpochInfo(ctx, "monthly")
+	err = epochs.InitGenesis(ctx, app.EpochsKeeper, genesisState)
+	require.NoError(t, err)
+	epochInfo, err := app.EpochsKeeper.GetEpochInfo(ctx, "monthly")
+	require.NoError(t, err)
 	require.Equal(t, epochInfo.Identifier, "monthly")
 	require.Equal(t, epochInfo.StartTime.UTC().String(), now.UTC().String())
 	require.Equal(t, epochInfo.Duration, time.Hour*24)

@@ -102,7 +102,7 @@ func TestMint_NeededGovAmtGivenColl(t *testing.T) {
 			name:              "collRatio above 50%",
 			collAmt:           sdk.NewInt(70),
 			priceGov:          sdk.NewDec(10),
-			priceColl:         sdk.NewDec(1), // 70 * 1 = 70
+			priceColl:         sdk.OneDec(), // 70 * 1 = 70
 			collRatio:         sdk.MustNewDecFromStr("0.7"),
 			neededGovAmt:      sdk.NewInt(3),   // 10 * 3 = 30
 			mintableStableAmt: sdk.NewInt(100), // = 70 + 30

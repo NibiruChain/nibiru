@@ -35,7 +35,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.T().Log("setting up integration test suite")
 
-	encConfig := app.MakeEncodingConfig()
+	encConfig := app.MakeEncodingConfigAndRegister()
 
 	network, err := cli.New(
 		s.T(),

@@ -83,7 +83,7 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 				Stable:  sdk.NewCoin(denoms.NUSD, sdk.NewInt(1*common.TO_MICRO)),
 			},
 			govPrice:               sdk.MustNewDecFromStr("10"),
-			collPrice:              sdk.MustNewDecFromStr("1"),
+			collPrice:              sdk.OneDec(),
 			err:                    types.NoValidCollateralRatio,
 			isCollateralRatioValid: false,
 		},
@@ -100,7 +100,7 @@ func TestMsgMintStableResponse_HappyPath(t *testing.T) {
 				FeesPayed: sdk.NewCoins(neededCollFees, neededGovFees),
 			},
 			govPrice:   sdk.MustNewDecFromStr("10"),
-			collPrice:  sdk.MustNewDecFromStr("1"),
+			collPrice:  sdk.OneDec(),
 			supplyNIBI: sdk.NewCoin(denoms.NIBI, sdk.NewInt(10)),
 			// 10_000 - 20 (neededAmt - fees) - 10 (0.5 of fees from EFund are burned)
 			supplyNUSD:             sdk.NewCoin(denoms.NUSD, sdk.NewInt(1*common.TO_MICRO)),
@@ -201,22 +201,22 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			name: "User has no GOV",
 			accFunds: sdk.NewCoins(
 				sdk.NewCoin(denoms.USDC, sdk.NewInt(9001)),
-				sdk.NewCoin(denoms.NIBI, sdk.NewInt(0)),
+				sdk.NewCoin(denoms.NIBI, sdk.ZeroInt()),
 			),
 			msgMint: types.MsgMintStable{
 				Creator: testutil.AccAddress().String(),
 				Stable:  sdk.NewCoin(denoms.NUSD, sdk.NewInt(100)),
 			},
 			msgResponse: types.MsgMintStableResponse{
-				Stable: sdk.NewCoin(denoms.NUSD, sdk.NewInt(0)),
+				Stable: sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
 			},
 			govPrice:  sdk.MustNewDecFromStr("10"),
-			collPrice: sdk.MustNewDecFromStr("1"),
+			collPrice: sdk.OneDec(),
 			err:       types.NotEnoughBalance.Wrap(denoms.NIBI),
 		}, {
 			name: "User has no COLL",
 			accFunds: sdk.NewCoins(
-				sdk.NewCoin(denoms.USDC, sdk.NewInt(0)),
+				sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
 				sdk.NewCoin(denoms.NIBI, sdk.NewInt(9001)),
 			),
 			msgMint: types.MsgMintStable{
@@ -224,33 +224,33 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 				Stable:  sdk.NewCoin(denoms.NUSD, sdk.NewInt(100)),
 			},
 			msgResponse: types.MsgMintStableResponse{
-				Stable: sdk.NewCoin(denoms.NUSD, sdk.NewInt(0)),
+				Stable: sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
 			},
 			govPrice:  sdk.MustNewDecFromStr("10"),
-			collPrice: sdk.MustNewDecFromStr("1"),
+			collPrice: sdk.OneDec(),
 			err:       types.NotEnoughBalance.Wrap(denoms.USDC),
 		},
 		{
 			name: "Not enough GOV",
 			accFunds: sdk.NewCoins(
 				sdk.NewCoin(denoms.USDC, sdk.NewInt(9001)),
-				sdk.NewCoin(denoms.NIBI, sdk.NewInt(1)),
+				sdk.NewCoin(denoms.NIBI, sdk.OneInt()),
 			),
 			msgMint: types.MsgMintStable{
 				Creator: testutil.AccAddress().String(),
 				Stable:  sdk.NewCoin(denoms.NUSD, sdk.NewInt(1000)),
 			},
 			msgResponse: types.MsgMintStableResponse{
-				Stable: sdk.NewCoin(denoms.NUSD, sdk.NewInt(0)),
+				Stable: sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
 			},
 			govPrice:  sdk.MustNewDecFromStr("10"),
-			collPrice: sdk.MustNewDecFromStr("1"),
+			collPrice: sdk.OneDec(),
 			err: types.NotEnoughBalance.Wrap(
-				sdk.NewCoin(denoms.NIBI, sdk.NewInt(1)).String()),
+				sdk.NewCoin(denoms.NIBI, sdk.OneInt()).String()),
 		}, {
 			name: "Not enough COLL",
 			accFunds: sdk.NewCoins(
-				sdk.NewCoin(denoms.USDC, sdk.NewInt(1)),
+				sdk.NewCoin(denoms.USDC, sdk.OneInt()),
 				sdk.NewCoin(denoms.NIBI, sdk.NewInt(9001)),
 			),
 			msgMint: types.MsgMintStable{
@@ -258,12 +258,12 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 				Stable:  sdk.NewCoin(denoms.NUSD, sdk.NewInt(100)),
 			},
 			msgResponse: types.MsgMintStableResponse{
-				Stable: sdk.NewCoin(denoms.NUSD, sdk.NewInt(0)),
+				Stable: sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
 			},
 			govPrice:  sdk.MustNewDecFromStr("10"),
-			collPrice: sdk.MustNewDecFromStr("1"),
+			collPrice: sdk.OneDec(),
 			err: types.NotEnoughBalance.Wrap(
-				sdk.NewCoin(denoms.USDC, sdk.NewInt(1)).String()),
+				sdk.NewCoin(denoms.USDC, sdk.OneInt()).String()),
 		},
 	}
 
@@ -384,14 +384,14 @@ func TestMsgBurnResponse_NotEnoughFunds(t *testing.T) {
 				Gov:        sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
 			},
 			govPrice:     sdk.MustNewDecFromStr("10"),
-			collPrice:    sdk.MustNewDecFromStr("1"),
+			collPrice:    sdk.OneDec(),
 			expectedPass: false,
 			err:          "insufficient funds",
 		},
 		{
 			name:      "Stable is zero",
 			govPrice:  sdk.MustNewDecFromStr("10"),
-			collPrice: sdk.MustNewDecFromStr("1"),
+			collPrice: sdk.OneDec(),
 			accFunds: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.NUSD, 1000*common.TO_MICRO),
 			),
@@ -490,7 +490,7 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 		{
 			name:      "invalid collateral ratio",
 			govPrice:  sdk.MustNewDecFromStr("10"),
-			collPrice: sdk.MustNewDecFromStr("1"),
+			collPrice: sdk.OneDec(),
 			accFunds: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.NUSD, 1_000*common.TO_MICRO),
 			),
@@ -510,7 +510,7 @@ func TestMsgBurnResponse_HappyPath(t *testing.T) {
 		{
 			name:      "Happy path",
 			govPrice:  sdk.MustNewDecFromStr("10"),
-			collPrice: sdk.MustNewDecFromStr("1"),
+			collPrice: sdk.OneDec(),
 			accFunds: sdk.NewCoins(
 				sdk.NewInt64Coin(denoms.NUSD, 1_000*common.TO_MICRO),
 			),

@@ -162,7 +162,7 @@ func SimulateJoinPool(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keep
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		msg := &types.MsgJoinPool{}
 		// run only 1/3 of the time
-		if simtypes.RandomDecAmount(r, sdk.MustNewDecFromStr("1")).GTE(sdk.MustNewDecFromStr("0.33")) {
+		if simtypes.RandomDecAmount(r, sdk.OneDec()).GTE(sdk.MustNewDecFromStr("0.33")) {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "No join pool done"), nil, nil
 		}
 

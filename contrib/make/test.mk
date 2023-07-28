@@ -15,7 +15,17 @@ test-integration:
 # Used for CI by Codecov
 .PHONY: test-coverage
 test-coverage:
-	go test ./... -coverprofile=coverage.txt -covermode=atomic -race
+	go test ./... -short \
+		-coverprofile=coverage.txt \
+		-covermode=atomic \
+		-race | grep -v "no test" | grep -v "no statement"
+
+.PHONY: test-coverage-integration
+test-coverage-integration:
+	go test ./... \
+		-coverprofile=coverage.txt \
+		-covermode=atomic \
+		-race | grep -v "no test" | grep -v "no statement"
 
 # Require Python3
 .PHONY: test-create-test-cases

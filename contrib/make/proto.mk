@@ -3,7 +3,7 @@
 ###############################################################################
 PROJECT_NAME = $(shell git remote get-url origin | xargs basename -s .git)
 
-protoVer=0.13.2
+protoVer=0.13.5
 protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
 containerProtoGen=$(PROJECT_NAME)-proto-gen-$(protoVer)
 containerProtoFmt=$(PROJECT_NAME)-proto-fmt-$(protoVer)

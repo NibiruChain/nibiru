@@ -47,6 +47,7 @@ func (s *TestSuiteBindingJsonTypes) TestQueries() {
 		"premium_fraction": new(cw_struct.PremiumFractionResponse),
 		"metrics":          new(cw_struct.MetricsResponse),
 		"module_accounts":  new(cw_struct.ModuleAccountsResponse),
+		"oracle_prices":    new(cw_struct.OraclePricesResponse),
 	}
 
 	for name, cwRespPtr := range testCaseMap {
@@ -112,6 +113,7 @@ func (s *TestSuiteBindingJsonTypes) TestExecuteMsgs() {
 		"set_market_enabled",
 		"insurance_fund_withdraw",
 		"create_market",
+		"no_op",
 	}
 
 	for _, name := range testCaseMap {

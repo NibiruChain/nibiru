@@ -103,7 +103,7 @@ func TestSuite_IntegrationSuite_RunAll(t *testing.T) {
 func (s *IntegrationSuite) SetupSuite() {
 	app.SetPrefixes(app.AccountAddressPrefix)
 
-	genState := genesis.NewTestGenesisState(app.MakeEncodingConfig())
+	genState := genesis.NewTestGenesisState(app.MakeEncodingConfigAndRegister())
 	genState, rootPrivKey, rootAddr := genesis.AddSudoGenesis(genState)
 	s.root = Account{
 		privKey:    rootPrivKey,

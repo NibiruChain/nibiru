@@ -41,7 +41,11 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64)
 			continue
 		}
 
-		epochInfo := k.EpochKeeper.GetEpochInfo(ctx, epochIdentifier)
+		epochInfo, err := k.EpochKeeper.GetEpochInfo(ctx, epochIdentifier)
+		if err != nil {
+			ctx.Logger().Error("failed to fetch epoch info", "epochIdentifier", epochIdentifier, "error", err)
+			continue
+		}
 		intervalsPerDay := (24 * time.Hour) / epochInfo.Duration
 		// See https://www.notion.so/nibiru/Funding-Payments-5032d0f8ed164096808354296d43e1fa for an explanation of these terms.
 		premiumFraction := markTwap.Sub(indexTwap).QuoInt64(int64(intervalsPerDay))

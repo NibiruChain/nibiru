@@ -688,6 +688,7 @@ func (s *IntegrationTestSuite) TestSwapAssets() {
 }
 
 func (s *IntegrationTestSuite) TestSwapStableAssets() {
+	s.Require().NoError(s.network.WaitForNextBlock())
 	val := s.network.Validators[0]
 
 	// create a new pool
