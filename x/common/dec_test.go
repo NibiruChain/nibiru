@@ -113,6 +113,11 @@ func TestBankersRound(t *testing.T) {
 			rem:     halfPrecision,
 			rounded: quo,
 		},
+		{
+			name:    "Remainder = 0 => no change",
+			rem:     big.NewInt(0),
+			rounded: quo,
+		},
 	}
 
 	for _, tc := range testCases {
