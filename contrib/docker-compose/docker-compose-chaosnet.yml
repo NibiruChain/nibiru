@@ -90,7 +90,7 @@ services:
       GRPC_ENDPOINT: nibiru:9090
       WEBSOCKET_ENDPOINT: ws://nibiru:26657/websocket
       FEEDER_MNEMONIC: empower dice proud brick treat reward pull jeans right rubber infant hamster pet foster among crush quick report rival bracket easily mouse topple absorb
-      EXCHANGE_SYMBOLS_MAP: '{ "bitfinex": { "ubtc:uusd": "tBTCUSD", "ueth:uusd": "tETHUSD", "uusdt:uusd": "tUSTUSD" }, "binance": { "ubtc:uusd": "BTCUSD", "ueth:uusd": "ETHUSD", "uusdt:uusd": "USDTUSD", "uusdc:uusd": "USDCUSD", "uatom:uusd": "ATOMUSD", "ubnb:uusd": "BNBUSD", "uavax:uusd": "AVAXUSD", "usol:uusd": "SOLUSD", "uada:uusd": "ADAUSD", "ubtc:unusd": "BTCUSD", "ueth:unusd": "ETHUSD", "uusdt:unusd": "USDTUSD", "uusdc:unusd": "USDCUSD", "uatom:unusd": "ATOMUSD", "ubnb:unusd": "BNBUSD", "uavax:unusd": "AVAXUSD", "usol:unusd": "SOLUSD", "uada:unusd": "ADAUSD" } }'
+      EXCHANGE_SYMBOLS_MAP: '{ "coingecko": { "ubtc:uusd": "bitcoin", "ueth:uusd": "ethereum", "uusdt:uusd": "tether", "uusdc:uusd": "usd-coin", "uatom:uusd": "cosmos", "ubnb:uusd": "binancecoin", "uavax:uusd": "avalanche-2", "usol:uusd": "solana", "uada:uusd": "cardano", "ubtc:unusd": "bitcoin", "ueth:unusd": "ethereum", "uusdt:unusd": "tether", "uusdc:unusd": "usd-coin", "uatom:unusd": "cosmos", "ubnb:unusd": "binancecoin", "uavax:unusd": "avalanche-2", "usol:unusd": "solana", "uada:unusd": "cardano" } }'
       VALIDATOR_ADDRESS: nibivaloper1zaavvzxez0elundtn32qnk9lkm8kmcszuwx9jz
     depends_on:
       nibiru:
