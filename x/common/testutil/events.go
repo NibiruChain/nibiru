@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"testing"
 
 	"github.com/cosmos/gogoproto/proto"
 
@@ -11,6 +12,38 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
+
+// FilterNewEvents returns only the new events from afterEvents that were not present in beforeEvents
+func FilterNewEvents(beforeEvents, afterEvents sdk.Events) sdk.Events {
+	newEvents := make(sdk.Events, 0)
+
+	for _, afterEvent := range afterEvents {
+		found := false
+		for _, beforeEvent := range beforeEvents {
+			if reflect.DeepEqual(afterEvent, beforeEvent) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			newEvents = append(newEvents, afterEvent)
+		}
+	}
+
+	return newEvents
+}
+
+// AssertEventsPresent fails the test if the given eventsType are not present in the events
+func AssertEventsPresent(t *testing.T, events sdk.Events, eventsType []string) {
+	for _, eventType := range eventsType {
+		for _, event := range events {
+			if event.Type == eventType {
+				return
+			}
+		}
+		t.Errorf("event %s not found", eventType)
+	}
+}
 
 func RequireNotHasTypedEvent(t require.TestingT, ctx sdk.Context, event proto.Message) {
 	name := proto.MessageName(event)
