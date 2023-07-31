@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,6 +13,10 @@ import (
 func PositionNotionalSpot(amm types.AMM, position types.Position) (positionNotional sdk.Dec, err error) {
 	// we want to know the price if the user closes their position
 	// e.g. if the user has positive size, we want to short
+	if position.Size_.IsNil() {
+		return sdk.Dec{}, fmt.Errorf("input base amt is nil")
+	}
+
 	var dir types.Direction
 	if position.Size_.IsPositive() {
 		dir = types.Direction_SHORT
