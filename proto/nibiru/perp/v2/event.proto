@@ -69,6 +69,24 @@ message PositionChangedEvent {
   // - CHANGE_REASON_CLOSE_POSITION: An existing position was closed.
   string change_reason = 9
       [ (gogoproto.customtype) = "ChangeReason", (gogoproto.nullable) = false ];
+
+  // exchanged_size represent the change in size for an existing position
+  // after the change. A positive value indicates that the position size
+  // increased, while a negative value indicates that the position size
+  // decreased.
+  string exchanged_size = 10 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // exchanged_notional represent the change in notional for an existing
+  // position after the change. A positive value indicates that the position
+  // notional increased, while a negative value indicates that the position
+  // notional decreased.
+  string exchanged_notional = 11 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // Emitted when a position is liquidated. Wraps a PositionChanged event since a
