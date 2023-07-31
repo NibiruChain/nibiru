@@ -59,8 +59,6 @@ func (k Keeper) MarketOrder(
 	isNewPosition := errors.Is(err, collections.ErrNotFound)
 	if isNewPosition {
 		position = types.ZeroPosition(ctx, pair, traderAddr)
-	} else if err != nil && !isNewPosition {
-		return nil, err
 	}
 
 	sameSideLong := position.Size_.IsPositive() && dir == types.Direction_LONG

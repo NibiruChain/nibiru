@@ -25,10 +25,38 @@ import (
 
 func TestMarketOrder(t *testing.T) {
 	alice := testutil.AccAddress()
+	bob := testutil.AccAddress()
 	pairBtcNusd := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	startBlockTime := time.Now()
 
 	tc := TestCases{
+		TC("open big short position and then close after reducing swap invariant").
+			Given(
+				CreateCustomMarket(
+					pairBtcNusd,
+					WithPricePeg(sdk.OneDec()),
+					WithSqrtDepth(sdk.NewDec(100_000)),
+				),
+				SetBlockNumber(1),
+				SetBlockTime(startBlockTime),
+
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200)))),
+				FundAccount(bob, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100_000_000)))),
+
+				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
+				MarketOrder(bob, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
+
+				EditSwapInvariant(pairBtcNusd, sdk.OneDec()),
+			).
+			When(
+				PartialCloseFails(alice, pairBtcNusd, sdk.NewDec(5_000), types.ErrBaseReserveAtZero),
+			).
+			Then(
+				ClosePosition(bob, pairBtcNusd),
+				PartialClose(alice, pairBtcNusd, sdk.NewDec(5_000)),
+			),
+
 		TC("new long position").
 			Given(
 				CreateCustomMarket(pairBtcNusd),
@@ -178,6 +206,63 @@ func TestMarketOrder(t *testing.T) {
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 					LastUpdatedBlockNumber:          0,
 				})),
+			),
+
+		TC("existing long position, close a bit but there's bad debt").
+			Given(
+				CreateCustomMarket(
+					pairBtcNusd,
+					WithPricePeg(sdk.MustNewDecFromStr("0.89")),
+					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
+				),
+				SetBlockNumber(1),
+				SetBlockTime(startBlockTime),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(18)))),
+				InsertPosition(
+					WithPair(pairBtcNusd),
+					WithTrader(alice),
+					WithMargin(sdk.NewDec(1_000)),
+					WithSize(sdk.NewDec(10_000)),
+					WithOpenNotional(sdk.NewDec(10_000)),
+				),
+			).
+			When(
+				MoveToNextBlock(),
+				MarketOrderFails(alice, pairBtcNusd, types.Direction_SHORT, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec(),
+					types.ErrMarginRatioTooLow,
+				),
+			).
+			Then(
+				PositionShouldBeEqual(alice, pairBtcNusd, Position_PositionShouldBeEqualTo(types.Position{
+					TraderAddress:                   alice.String(),
+					Pair:                            pairBtcNusd,
+					Size_:                           sdk.NewDec(10_000),
+					Margin:                          sdk.NewDec(1_000),
+					OpenNotional:                    sdk.NewDec(10_000),
+					LatestCumulativePremiumFraction: sdk.ZeroDec(),
+					LastUpdatedBlockNumber:          0,
+				})),
+			),
+
+		TC("open big long position and then close after reducing swap invariant").
+			Given(
+				CreateCustomMarket(
+					pairBtcNusd,
+					WithPricePeg(sdk.OneDec()),
+					WithSqrtDepth(sdk.NewDec(100_000)),
+				),
+				SetBlockNumber(1),
+				SetBlockTime(startBlockTime),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_000)))),
+				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(9_000), sdk.NewDec(10), sdk.ZeroDec()),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100_000_000)))),
+				EditSwapInvariant(pairBtcNusd, sdk.OneDec()),
+			).
+			When(
+				ClosePosition(alice, pairBtcNusd),
+			).
+			Then(
+				PositionShouldNotExist(alice, pairBtcNusd),
 			),
 
 		TC("existing long position, decrease a bit").
@@ -1509,6 +1594,24 @@ func TestPartialClose(t *testing.T) {
 					MarginToUser:     sdk.NewInt(-18),
 					ChangeReason:     types.ChangeReason_PartialClose,
 				}),
+			),
+		TC("test partial closes fail").
+			Given(
+				CreateCustomMarket(
+					pairBtcNusd,
+					WithPricePeg(sdk.OneDec()),
+					WithSqrtDepth(sdk.NewDec(10_000)),
+				),
+				SetBlockNumber(1),
+				SetBlockTime(startBlockTime),
+
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200)))),
+
+				PartialCloseFails(alice, pairBtcNusd, sdk.NewDec(5_000), collections.ErrNotFound),
+				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(9_000), sdk.OneDec(), sdk.ZeroDec()),
+			).
+			When(
+				PartialCloseFails(alice, asset.MustNewPair("luna:usdt"), sdk.NewDec(5_000), types.ErrPairNotFound),
 			),
 	}
 

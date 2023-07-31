@@ -113,7 +113,7 @@ func (k Keeper) CalcTwap(
 	}
 
 	if cumulativePeriodMs == 0 {
-		// Can be reached if 2 snapshot timestamps are the same and are also the lower limit timestamp
+		// Should not be reachable
 		return getPriceWithSnapshot(
 			snapshots[0],
 			snapshotPriceOps{

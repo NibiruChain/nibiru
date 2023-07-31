@@ -142,3 +142,94 @@ func QueryPositionNotFound(pair asset.Pair, traderAddress sdk.AccAddress) action
 		traderAddress: traderAddress,
 	}
 }
+
+type queryMarkets struct {
+	allResponseCheckers []QueryMarketsChecker
+}
+
+func (q queryMarkets) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	queryServer := keeper.NewQuerier(app.PerpKeeperV2)
+
+	resp, err := queryServer.QueryMarkets(sdk.WrapSDKContext(ctx), &types.QueryMarketsRequest{})
+	if err != nil {
+		return ctx, err, false
+	}
+
+	for _, marketsCheckers := range q.allResponseCheckers {
+		if err := marketsCheckers(resp.AmmMarkets); err != nil {
+			return ctx, err, false
+		}
+	}
+
+	return ctx, nil, false
+}
+
+func QueryMarkets(responseCheckers ...QueryMarketsChecker) action.Action {
+	return queryMarkets{
+		allResponseCheckers: responseCheckers,
+	}
+}
+
+type QueryMarketsChecker func(resp []types.AmmMarket) error
+
+func QueryMarkets_MarketsShouldContain(expectedMarket types.Market) QueryMarketsChecker {
+	return func(resp []types.AmmMarket) error {
+		for _, market := range resp {
+			if types.MarketsAreEqual(&expectedMarket, &market.Market) == nil {
+				return nil
+			}
+		}
+		marketsStr := make([]string, len(resp))
+		for i, market := range resp {
+			marketsStr[i] = market.Market.String()
+		}
+		return fmt.Errorf("expected markets to contain %s but found %s", expectedMarket.String(), marketsStr)
+	}
+}
+
+type queryModuleAccounts struct {
+	allResponseCheckers []QueryModuleAccountsChecker
+}
+
+func (q queryModuleAccounts) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	queryServer := keeper.NewQuerier(app.PerpKeeperV2)
+
+	resp, err := queryServer.ModuleAccounts(sdk.WrapSDKContext(ctx), &types.QueryModuleAccountsRequest{})
+	if err != nil {
+		return ctx, err, false
+	}
+
+	for _, accountsCheckers := range q.allResponseCheckers {
+		if err := accountsCheckers(resp.Accounts); err != nil {
+			return ctx, err, false
+		}
+	}
+
+	return ctx, nil, false
+}
+
+func QueryModuleAccounts(responseCheckers ...QueryModuleAccountsChecker) action.Action {
+	return queryModuleAccounts{allResponseCheckers: responseCheckers}
+}
+
+type QueryModuleAccountsChecker func(resp []types.AccountWithBalance) error
+
+func QueryModuleAccounts_ModulesBalanceShouldBe(expectedBalance map[string]sdk.Coins) QueryModuleAccountsChecker {
+	return func(resp []types.AccountWithBalance) error {
+		for name, balance := range expectedBalance {
+			found := false
+			for _, account := range resp {
+				if account.Name == name {
+					found = true
+					if !account.Balance.IsEqual(balance) {
+						return fmt.Errorf("expected module %s to have balance %s, got %s", name, balance, account.Balance)
+					}
+				}
+			}
+			if !found {
+				return fmt.Errorf("expected module %s to have balance %s but not found", name, balance)
+			}
+		}
+		return nil
+	}
+}
