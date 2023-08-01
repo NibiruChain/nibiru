@@ -18,36 +18,36 @@ import (
 
 type ExecTxOption func(*execTxOptions)
 
-func WithTxFees(feeCoins sdk.Coins) ExecTxOption {
+func WithTxOptions(newOptions TxOptionChanges) ExecTxOption {
 	return func(options *execTxOptions) {
-		options.fees = feeCoins
+		if newOptions.BroadcastMode != nil {
+			options.broadcastMode = *newOptions.BroadcastMode
+		}
+		if newOptions.CanFail != nil {
+			options.canFail = *newOptions.CanFail
+		}
+		if newOptions.Fees != nil {
+			options.fees = *newOptions.Fees
+		}
+		if newOptions.Gas != nil {
+			options.gas = *newOptions.Gas
+		}
+		if newOptions.KeyringBackend != nil {
+			options.keyringBackend = *newOptions.KeyringBackend
+		}
+		if newOptions.SkipConfirmation != nil {
+			options.skipConfirmation = *newOptions.SkipConfirmation
+		}
 	}
 }
 
-func WithTxSkipConfirmation(skipConfirmation bool) ExecTxOption {
-	return func(options *execTxOptions) {
-		options.skipConfirmation = skipConfirmation
-	}
-}
-
-func WithTxBroadcastMode(broadcastMode string) ExecTxOption {
-	return func(options *execTxOptions) {
-		options.broadcastMode = broadcastMode
-	}
-}
-
-// WithTxCanFail will not make ExecTx return an error
-// in case the response code of the TX is not ok.
-func WithTxCanFail(canFail bool) ExecTxOption {
-	return func(options *execTxOptions) {
-		options.canFail = canFail
-	}
-}
-
-func WithKeyringBackend(keyringBackend string) ExecTxOption {
-	return func(options *execTxOptions) {
-		options.keyringBackend = keyringBackend
-	}
+type TxOptionChanges struct {
+	BroadcastMode    *string
+	CanFail          *bool
+	Fees             *sdk.Coins
+	Gas              *int64
+	KeyringBackend   *string
+	SkipConfirmation *bool
 }
 
 type execTxOptions struct {
