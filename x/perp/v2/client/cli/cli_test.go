@@ -507,7 +507,8 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 			s.T().Log("adding margin on user 3....")
 			canFail := true
 			txResp, err = testutilcli.ExecTx(s.network, cli.AddMarginCmd(), s.users[1], tc.args,
-				testutilcli.WithTxOptions(testutilcli.TxOptions{CanFail: &canFail}),
+				testutilcli.WithTxOptions(
+					testutilcli.TxOptionChanges{CanFail: &canFail}),
 			)
 			s.Require().NoError(err)
 			s.Require().NoError(s.network.WaitForNextBlock())

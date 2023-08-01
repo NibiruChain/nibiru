@@ -239,9 +239,9 @@ func FillWalletFromValidator(
 	return txOK(val.ClientCtx.Codec, rawResp.Bytes())
 }
 
-func txOK(cdc codec.Codec, txBytes []byte) error {
+func txOK(jsonCodec codec.JSONCodec, txBytes []byte) error {
 	resp := new(sdk.TxResponse)
-	cdc.MustUnmarshalJSON(txBytes, resp)
+	jsonCodec.MustUnmarshalJSON(txBytes, resp)
 	if resp.Code != tmtypes.CodeTypeOK {
 		return fmt.Errorf("%s", resp.RawLog)
 	}
