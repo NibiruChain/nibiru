@@ -13,6 +13,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
+	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -109,30 +110,41 @@ func TestEnableMarket(t *testing.T) {
 	NewTestSuite(t).WithTestCases(tests...).Run()
 }
 
-func TestCreateMarket(t *testing.T) {
+func TestCreateMarketFail(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	amm := *mock.TestAMMDefault()
+	app, ctx := testapp.NewNibiruTestAppAndContext(true)
 
-	tests := TestCases{
-		TC("create pool").
-			Given().
-			When(
-				CreateMarket(pair, *mock.TestMarket(), *mock.TestAMMDefault()),
-			).
-			Then(
-				MarketShouldBeEqual(pair,
-					Market_EnableShouldBeEqualTo(true),
-					Market_PrepaidBadDebtShouldBeEqualTo(sdk.ZeroInt()),
-					Market_LatestCPFShouldBeEqualTo(sdk.ZeroDec()),
-				),
-				AMMShouldBeEqual(pair,
-					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e12)),
-					AMM_QuoteReserveShouldBeEqual(sdk.NewDec(1e12)),
-					AMM_BiasShouldBeEqual(sdk.ZeroDec()),
-					AMM_PriceMultiplierShouldBeEqual(sdk.OneDec()),
-					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e12)),
-				),
-			),
-	}
+	// Error because of invalid market
+	err := app.PerpKeeperV2.Admin().CreateMarket(ctx, keeper.ArgsCreateMarket{
+		Pair:            pair,
+		PriceMultiplier: amm.PriceMultiplier,
+		SqrtDepth:       amm.SqrtDepth,
+		Market:          types.DefaultMarket(pair).WithMaintenanceMarginRatio(sdk.NewDec(2)), // Invalid maintenance ratio
+	})
+	require.ErrorContains(t, err, "maintenance margin ratio ratio must be 0 <= ratio <= 1")
 
-	NewTestSuite(t).WithTestCases(tests...).Run()
+	// Error because of invalid amm
+	err = app.PerpKeeperV2.Admin().CreateMarket(ctx, keeper.ArgsCreateMarket{
+		Pair:            pair,
+		PriceMultiplier: sdk.NewDec(-1),
+		SqrtDepth:       amm.SqrtDepth,
+	})
+	require.ErrorContains(t, err, "init price multiplier must be > 0")
+
+	// Set it correctly
+	err = app.PerpKeeperV2.Admin().CreateMarket(ctx, keeper.ArgsCreateMarket{
+		Pair:            pair,
+		PriceMultiplier: amm.PriceMultiplier,
+		SqrtDepth:       amm.SqrtDepth,
+	})
+	require.NoError(t, err)
+
+	// Fail since it already exists
+	err = app.PerpKeeperV2.Admin().CreateMarket(ctx, keeper.ArgsCreateMarket{
+		Pair:            pair,
+		PriceMultiplier: amm.PriceMultiplier,
+		SqrtDepth:       amm.SqrtDepth,
+	})
+	require.ErrorContains(t, err, "already exists")
 }

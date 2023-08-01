@@ -59,8 +59,6 @@ func (k Keeper) MarketOrder(
 	isNewPosition := errors.Is(err, collections.ErrNotFound)
 	if isNewPosition {
 		position = types.ZeroPosition(ctx, pair, traderAddr)
-	} else if err != nil && !isNewPosition {
-		return nil, err
 	}
 
 	sameSideLong := position.Size_.IsPositive() && dir == types.Direction_LONG
@@ -110,7 +108,7 @@ func (k Keeper) MarketOrder(
 	}
 
 	if err = k.afterPositionUpdate(
-		ctx, market, *updatedAMM, traderAddr, *positionResp, types.ChangeReason_MarketOrder,
+		ctx, market, *updatedAMM, traderAddr, *positionResp, types.ChangeReason_MarketOrder, position,
 	); err != nil {
 		return nil, err
 	}
@@ -539,6 +537,7 @@ func (k Keeper) afterPositionUpdate(
 	traderAddr sdk.AccAddress,
 	positionResp types.PositionResp,
 	changeType types.ChangeReason,
+	existingPosition types.Position,
 ) (err error) {
 	// transfer trader <=> vault
 	marginToVault := positionResp.MarginToVault.RoundInt()
@@ -578,15 +577,17 @@ func (k Keeper) afterPositionUpdate(
 
 	_ = ctx.EventManager().EmitTypedEvents(
 		&types.PositionChangedEvent{
-			FinalPosition:    positionResp.Position,
-			PositionNotional: positionNotional,
-			TransactionFee:   sdk.NewCoin(market.Pair.QuoteDenom(), transferredFee),
-			RealizedPnl:      positionResp.RealizedPnl,
-			BadDebt:          sdk.NewCoin(market.Pair.QuoteDenom(), positionResp.BadDebt.RoundInt()),
-			FundingPayment:   positionResp.FundingPayment,
-			BlockHeight:      ctx.BlockHeight(),
-			MarginToUser:     marginToVault.Neg().Sub(transferredFee),
-			ChangeReason:     changeType,
+			FinalPosition:     positionResp.Position,
+			PositionNotional:  positionNotional,
+			TransactionFee:    sdk.NewCoin(market.Pair.QuoteDenom(), transferredFee),
+			RealizedPnl:       positionResp.RealizedPnl,
+			BadDebt:           sdk.NewCoin(market.Pair.QuoteDenom(), positionResp.BadDebt.RoundInt()),
+			FundingPayment:    positionResp.FundingPayment,
+			BlockHeight:       ctx.BlockHeight(),
+			MarginToUser:      marginToVault.Neg().Sub(transferredFee),
+			ChangeReason:      changeType,
+			ExchangedSize:     positionResp.Position.Size_.Sub(existingPosition.Size_),
+			ExchangedNotional: positionResp.PositionNotional.Sub(existingPosition.OpenNotional),
 		},
 	)
 
@@ -728,6 +729,7 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.A
 		traderAddr,
 		*positionResp,
 		types.ChangeReason_ClosePosition,
+		position,
 	); err != nil {
 		return nil, err
 	}
@@ -889,6 +891,7 @@ func (k Keeper) PartialClose(
 		traderAddr,
 		*positionResp,
 		types.ChangeReason_PartialClose,
+		position,
 	)
 	if err != nil {
 		return nil, err

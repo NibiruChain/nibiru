@@ -201,7 +201,7 @@ func (exec *ExecutorPerp) SetMarketEnabled(
 		return err
 	}
 
-	return exec.PerpV2.Admin().SetMarketEnabled(ctx, pair, cwMsg.Enabled)
+	return exec.PerpV2.ChangeMarketEnabledParameter(ctx, pair, cwMsg.Enabled)
 }
 
 func (exec *ExecutorPerp) CreateMarket(
