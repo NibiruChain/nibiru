@@ -504,7 +504,7 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 func (s *IntegrationTestSuite) TestX_AddMargin() {
 	// Open a new position
 	s.T().Log("opening a position with user 1....")
-	txResp, err := testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), s.users[1], []string{
+	_, err := testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), s.users[1], []string{
 		"buy",
 		asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
 		"10",      // Leverage
@@ -575,7 +575,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 				_, err = testutilcli.ExecTx(s.network, cli.AddMarginCmd(), s.users[1], tc.args, testutilcli.WithTxCanFail(true))
 				s.Require().Error(err)
 			} else {
-				txResp, err = testutilcli.ExecTx(s.network, cli.AddMarginCmd(), s.users[1], tc.args, testutilcli.WithTxCanFail(true))
+				txResp, err := testutilcli.ExecTx(s.network, cli.AddMarginCmd(), s.users[1], tc.args, testutilcli.WithTxCanFail(true))
 				s.Require().NoError(err)
 				s.Require().NoError(s.network.WaitForNextBlock())
 
@@ -598,7 +598,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 	// Open a new position
 	s.T().Log("opening a position with user 1....")
-	txResp, err := testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), s.users[1], []string{
+	_, err := testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), s.users[1], []string{
 		"buy",
 		asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
 		"10",      // Leverage
@@ -669,7 +669,7 @@ func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 				_, err = testutilcli.ExecTx(s.network, cli.RemoveMarginCmd(), s.users[1], tc.args, testutilcli.WithTxCanFail(true))
 				s.Require().Error(err)
 			} else {
-				txResp, err = testutilcli.ExecTx(s.network, cli.RemoveMarginCmd(), s.users[1], tc.args, testutilcli.WithTxCanFail(true))
+				txResp, err := testutilcli.ExecTx(s.network, cli.RemoveMarginCmd(), s.users[1], tc.args, testutilcli.WithTxCanFail(true))
 				s.Require().NoError(err)
 				s.Require().NoError(s.network.WaitForNextBlock())
 
