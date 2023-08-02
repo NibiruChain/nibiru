@@ -17,7 +17,7 @@ func (s *IntegrationTestSuite) TestSendTx() {
 	fromAddr := s.network.Validators[0].Address
 	toAddr := testutil.AccAddress()
 	sendCoin := sdk.NewCoin(denoms.NIBI, sdk.NewInt(42))
-	txResp, err := s.network.SendTx(fromAddr, &banktypes.MsgSend{
+	txResp, err := s.network.BroadcastMsgs(fromAddr, &banktypes.MsgSend{
 		FromAddress: fromAddr.String(),
 		ToAddress:   toAddr.String(),
 		Amount:      sdk.NewCoins(sendCoin)},
@@ -31,7 +31,7 @@ func (s *IntegrationTestSuite) TestExecTx() {
 	toAddr := testutil.AccAddress()
 	sendCoin := sdk.NewCoin(denoms.NIBI, sdk.NewInt(69))
 	args := []string{fromAddr.String(), toAddr.String(), sendCoin.String()}
-	txResp, err := cli.ExecTx(s.network, bankcli.NewSendTxCmd(), fromAddr, args)
+	txResp, err := s.network.ExecTxCmd(bankcli.NewSendTxCmd(), fromAddr, args)
 	s.NoError(err)
 	s.EqualValues(0, txResp.Code)
 
@@ -45,7 +45,7 @@ func (s *IntegrationTestSuite) TestExecTx() {
 			KeyringBackend:   &defaultOpts.KeyringBackend,
 			SkipConfirmation: &defaultOpts.SkipConfirmation,
 		})
-		txResp, err = cli.ExecTx(s.network, bankcli.NewSendTxCmd(), fromAddr, args, opts)
+		txResp, err = s.network.ExecTxCmd(bankcli.NewSendTxCmd(), fromAddr, args, opts)
 		s.NoError(err)
 		s.EqualValues(0, txResp.Code)
 	})
@@ -54,8 +54,7 @@ func (s *IntegrationTestSuite) TestExecTx() {
 		networkNoVals := new(cli.Network)
 		*networkNoVals = *s.network
 		networkNoVals.Validators = []*cli.Validator{}
-		_, err := cli.ExecTx(
-			networkNoVals, bankcli.NewTxCmd(), fromAddr, args)
+		_, err := networkNoVals.ExecTxCmd(bankcli.NewTxCmd(), fromAddr, args)
 		s.Error(err)
 		s.Contains(err.Error(), "")
 	})

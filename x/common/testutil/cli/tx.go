@@ -68,15 +68,14 @@ var DEFAULT_TX_OPTIONS = execTxOptions{
 	KeyringBackend:   keyring.BackendTest,
 }
 
-func ExecTx(
-	network *Network, cmd *cobra.Command, txSender sdk.AccAddress,
-	args []string, opts ...ExecTxOption,
+func (network *Network) ExecTxCmd(
+	cmd *cobra.Command, from sdk.AccAddress, args []string, opts ...ExecTxOption,
 ) (*sdk.TxResponse, error) {
 	if len(network.Validators) == 0 {
 		return nil, fmt.Errorf("invalid network")
 	}
 
-	args = append(args, fmt.Sprintf("--%s=%s", flags.FlagFrom, txSender))
+	args = append(args, fmt.Sprintf("--%s=%s", flags.FlagFrom, from))
 
 	options := DEFAULT_TX_OPTIONS
 
@@ -125,11 +124,11 @@ func ExecTx(
 	return resp, nil
 }
 
-func (chain *Network) SendTx(
-	addr sdk.AccAddress, msgs ...sdk.Msg,
+func (chain *Network) BroadcastMsgs(
+	from sdk.AccAddress, msgs ...sdk.Msg,
 ) (*sdk.TxResponse, error) {
 	cfg := chain.Config
-	kb, info, err := chain.keyBaseAndInfoForAddr(addr)
+	kb, info, err := chain.keyBaseAndInfoForAddr(from)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +143,7 @@ func (chain *Network) SendTx(
 	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(cfg.BondDenom, sdk.NewInt(1000))))
 	txBuilder.SetGasLimit(uint64(1 * common.TO_MICRO))
 
-	acc, err := cfg.AccountRetriever.GetAccount(chain.Validators[0].ClientCtx, addr)
+	acc, err := cfg.AccountRetriever.GetAccount(chain.Validators[0].ClientCtx, from)
 	if err != nil {
 		return nil, err
 	}
@@ -173,5 +172,5 @@ func (chain *Network) SendTx(
 		return nil, err
 	}
 
-	return sdk.NewResponseFormatBroadcastTx(respRaw), nil
+	return sdk.NewResponseFormatBroadcastTx(respRaw), err
 }
