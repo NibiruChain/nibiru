@@ -188,7 +188,7 @@ func (s *IntegrationTestSuite) TestMultiLiquidate() {
 	_, err = testutilcli.QueryPositionV2(s.network.Validators[0].ClientCtx, asset.Registry.Pair(denoms.OSMO, denoms.NUSD), s.users[3])
 	s.Require().Error(err)
 
-	s.T().Log("closing positions - FAIL")
+	s.T().Log("closing positions - fail")
 	_, err = testutilcli.ExecTx(s.network, cli.ClosePositionCmd(), s.users[4], []string{
 		"asset.Registry.Pair(denoms.ATOM, denoms.NUSD).String()",
 	})
@@ -407,18 +407,18 @@ func (s *IntegrationTestSuite) TestPartialCloseCmd() {
 	s.EqualValues(sdk.ZeroDec(), queryResp.UnrealizedPnl)
 	s.EqualValues(sdk.OneDec(), queryResp.MarginRatio)
 
-	s.T().Log("Partially close the position - FAILS")
-	txResp, err = testutilcli.ExecTx(s.network, cli.PartialCloseCmd(), user, []string{
+	s.T().Log("Partially close the position - fails")
+	_, err = testutilcli.ExecTx(s.network, cli.PartialCloseCmd(), user, []string{
 		pair.String(),
 		"",
 	})
 	s.Error(err) // invalid size amount
-	txResp, err = testutilcli.ExecTx(s.network, cli.PartialCloseCmd(), user, []string{
+	_, err = testutilcli.ExecTx(s.network, cli.PartialCloseCmd(), user, []string{
 		"pair.String()",
 		"500",
 	})
 	s.Error(err) // invalid pair
-	txResp, err = testutilcli.ExecTx(s.network, cli.PartialCloseCmd(), user, []string{
+	_, err = testutilcli.ExecTx(s.network, cli.PartialCloseCmd(), user, []string{
 		"uluna:usdt",
 		"500",
 	})
@@ -532,7 +532,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 			excpectedFail:  false,
 		},
 		{
-			name: "FAIL: position not found",
+			name: "fail: position not found",
 			args: []string{
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 				fmt.Sprintf("10000%s", denoms.NUSD),
@@ -541,7 +541,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 			excpectedFail: false,
 		},
 		{
-			name: "FAIL: not correct margin denom",
+			name: "fail: not correct margin denom",
 			args: []string{
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 				fmt.Sprintf("10000%s", denoms.USDT),
@@ -549,7 +549,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 			excpectedFail: true,
 		},
 		{
-			name: "FAIL: invalid coin",
+			name: "fail: invalid coin",
 			args: []string{
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 				"100",
@@ -557,7 +557,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 			excpectedFail: true,
 		},
 		{
-			name: "FAIL: invalid pair",
+			name: "fail: invalid pair",
 			args: []string{
 				"alisdhjal;dhao;sdh",
 				fmt.Sprintf("10000%s", denoms.NUSD),
@@ -598,7 +598,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 	// Open a new position
 	s.T().Log("opening a position with user 1....")
-	_, err := testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), s.users[1], []string{
+	_, err := testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), s.users[2], []string{
 		"buy",
 		asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
 		"10",      // Leverage
@@ -626,7 +626,7 @@ func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 			excpectedFail:  false,
 		},
 		{
-			name: "FAIL: position not found",
+			name: "fail: position not found",
 			args: []string{
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 				fmt.Sprintf("10000%s", denoms.NUSD),
@@ -635,7 +635,7 @@ func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 			excpectedFail: false,
 		},
 		{
-			name: "FAIL: not correct margin denom",
+			name: "fail: not correct margin denom",
 			args: []string{
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 				fmt.Sprintf("10000%s", denoms.USDT),
@@ -643,7 +643,7 @@ func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 			excpectedFail: true,
 		},
 		{
-			name: "FAIL: invalid coin",
+			name: "fail: invalid coin",
 			args: []string{
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 				"100",
@@ -651,7 +651,7 @@ func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 			excpectedFail: true,
 		},
 		{
-			name: "FAIL: invalid pair",
+			name: "fail: invalid pair",
 			args: []string{
 				"alisdhjal;dhao;sdh",
 				fmt.Sprintf("10000%s", denoms.NUSD),
@@ -666,10 +666,10 @@ func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 			s.T().Log("removing margin on user 3....")
 
 			if tc.excpectedFail {
-				_, err = testutilcli.ExecTx(s.network, cli.RemoveMarginCmd(), s.users[1], tc.args, testutilcli.WithTxCanFail(true))
+				_, err = testutilcli.ExecTx(s.network, cli.RemoveMarginCmd(), s.users[2], tc.args, testutilcli.WithTxCanFail(true))
 				s.Require().Error(err)
 			} else {
-				txResp, err := testutilcli.ExecTx(s.network, cli.RemoveMarginCmd(), s.users[1], tc.args, testutilcli.WithTxCanFail(true))
+				txResp, err := testutilcli.ExecTx(s.network, cli.RemoveMarginCmd(), s.users[2], tc.args, testutilcli.WithTxCanFail(true))
 				s.Require().NoError(err)
 				s.Require().NoError(s.network.WaitForNextBlock())
 
