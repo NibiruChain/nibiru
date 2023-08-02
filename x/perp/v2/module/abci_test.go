@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	testutilevents "github.com/NibiruChain/nibiru/x/common/testutil"
+
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
@@ -99,4 +101,46 @@ func TestSnapshotUpdates(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.EqualValues(t, expectedSnapshot, snapshot)
+}
+
+func TestEndBlocker(t *testing.T) {
+	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+
+	initialMarket := *mock.TestMarket()
+	initialAmm := *mock.TestAMMDefault()
+
+	runBlock := func(duration time.Duration) {
+		perp.EndBlocker(ctx, app.PerpKeeperV2)
+		ctx = ctx.
+			WithBlockHeight(ctx.BlockHeight() + 1).
+			WithBlockTime(ctx.BlockTime().Add(duration))
+	}
+
+	ctx = ctx.WithBlockTime(time.Date(2015, 10, 21, 0, 0, 0, 0, time.UTC)).WithBlockHeight(1)
+
+	runBlock(5 * time.Second)
+
+	require.NoError(t, app.PerpKeeperV2.Admin().CreateMarket(
+		/* ctx */ ctx, keeper.ArgsCreateMarket{
+			Pair:            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+			PriceMultiplier: initialAmm.PriceMultiplier,
+			SqrtDepth:       initialAmm.SqrtDepth,
+			Market:          &initialMarket,
+		},
+	))
+
+	t.Log("run one block of 5 seconds")
+	app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdk.NewDec(100e6))
+
+	beforeEvents := ctx.EventManager().Events()
+	runBlock(5 * time.Second)
+	afterEvents := ctx.EventManager().Events()
+
+	testutilevents.AssertEventsPresent(
+		t,
+		testutilevents.FilterNewEvents(beforeEvents, afterEvents),
+		[]string{"nibiru.perp.v2.AmmUpdatedEvent", "nibiru.perp.v2.MarketUpdatedEvent"},
+	)
+
+	// add index price
 }

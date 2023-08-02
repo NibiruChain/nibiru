@@ -1,9 +1,12 @@
 package perp_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/NibiruChain/collections"
+	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
@@ -101,4 +104,44 @@ func RunTestGenesis(t *testing.T, tc TestCase) {
 	for i, pos := range genState.Positions {
 		require.Equalf(t, pos, genStateAfterInit.Positions[i], "%s <-> %s", pos, genStateAfterInit.Positions[i])
 	}
+}
+
+func TestNewAppModuleBasic(t *testing.T) {
+	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+
+	binaryCodec := codec.NewProtoCodec(nil) // Provide appropriate codec interface registry
+	appModuleBasic := perp.NewAppModuleBasic(binaryCodec)
+
+	require.Equal(t, types.ModuleName, appModuleBasic.Name())
+	cdc := codec.NewProtoCodec(nil)
+
+	appModule := perp.NewAppModule(cdc, app.PerpKeeperV2, nil, nil, nil)
+
+	require.Equal(t, types.ModuleName, appModule.Name())
+	require.Equal(t, uint64(3), appModule.ConsensusVersion())
+
+	exportedGenesis := appModule.ExportGenesis(ctx, cdc)
+	err := appModule.ValidateGenesis(cdc, nil, exportedGenesis)
+	require.NoError(t, err)
+
+	// Test genesis functionalities
+	genesisState := types.DefaultGenesis()
+	rawGS, err := cdc.MarshalJSON(genesisState)
+	require.NoError(t, err)
+
+	// Test DefaultGenesis
+	require.Equal(t, json.RawMessage(rawGS), appModule.DefaultGenesis(cdc))
+
+	// Test ValidateGenesis
+	err = appModule.ValidateGenesis(cdc, nil, rawGS)
+	require.NoError(t, err)
+
+	appModule.BeginBlock(ctx, abci.RequestBeginBlock{})
+	appModule.EndBlock(ctx, abci.RequestEndBlock{})
+
+	cmds := appModule.GetTxCmd()
+	require.Len(t, cmds.Commands(), 7)
+
+	cmds = appModule.GetQueryCmd()
+	require.Len(t, cmds.Commands(), 4)
 }

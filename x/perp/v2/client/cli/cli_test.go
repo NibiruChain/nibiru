@@ -146,6 +146,17 @@ func (s *IntegrationTestSuite) TestMultiLiquidate() {
 	})
 	s.Require().NoError(err)
 
+	s.T().Logf("review positions")
+	resp := new(types.QueryPositionsResponse)
+	s.NoError(
+		testutilcli.ExecQuery(
+			s.network.Validators[0].ClientCtx,
+			cli.CmdQueryPositions(),
+			[]string{s.users[2].String()},
+			resp,
+		),
+	)
+
 	_, err = s.network.ExecTxCmd(cli.MarketOrderCmd(), s.users[5], []string{
 		"sell",
 		asset.Registry.Pair(denoms.OSMO, denoms.NUSD).String(),
@@ -176,6 +187,17 @@ func (s *IntegrationTestSuite) TestMultiLiquidate() {
 
 	_, err = testutilcli.QueryPositionV2(s.network.Validators[0].ClientCtx, asset.Registry.Pair(denoms.OSMO, denoms.NUSD), s.users[3])
 	s.Require().Error(err)
+
+	s.T().Log("closing positions - fail")
+	_, err = s.network.ExecTxCmd(cli.ClosePositionCmd(), s.users[4], []string{
+		"asset.Registry.Pair(denoms.ATOM, denoms.NUSD).String()",
+	})
+	s.Require().Error(err) // invalid pair
+
+	_, err = s.network.ExecTxCmd(cli.ClosePositionCmd(), s.users[4], []string{
+		"uluna:usdt",
+	})
+	s.Require().Error(err) // non whitelisted pair
 
 	s.T().Log("closing positions")
 
@@ -386,6 +408,23 @@ func (s *IntegrationTestSuite) TestPartialCloseCmd() {
 	s.EqualValues(sdk.ZeroDec(), queryResp.UnrealizedPnl)
 	s.EqualValues(sdk.OneDec(), queryResp.MarginRatio)
 
+	s.T().Log("Partially close the position - fails")
+	_, err = s.network.ExecTxCmd(cli.PartialCloseCmd(), user, []string{
+		pair.String(),
+		"",
+	})
+	s.Error(err) // invalid size amount
+	_, err = s.network.ExecTxCmd(cli.PartialCloseCmd(), user, []string{
+		"pair.String()",
+		"500",
+	})
+	s.Error(err) // invalid pair
+	_, err = s.network.ExecTxCmd(cli.PartialCloseCmd(), user, []string{
+		"uluna:usdt",
+		"500",
+	})
+	s.Error(err) // not whitelisted pair
+
 	s.T().Log("Partially close the position")
 	txResp, err = s.network.ExecTxCmd(cli.PartialCloseCmd(), user, []string{
 		pair.String(),
@@ -473,7 +512,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 		"1000000", // Quote asset amount
 		"0.0000001",
 	})
-	s.Require().NoError(err)
+	s.Require().NoError(err, txResp)
 	s.NoError(s.network.WaitForNextBlock())
 
 	testCases := []struct {
@@ -481,6 +520,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 		args           []string
 		expectedCode   uint32
 		expectedMargin sdk.Dec
+		expectFail     bool
 	}{
 		{
 			name: "PASS: add margin to correct position",
@@ -490,14 +530,40 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 			},
 			expectedCode:   0,
 			expectedMargin: sdk.NewDec(1_010_000),
+			expectFail:     false,
 		},
 		{
-			name: "FAIL: position not found",
+			name: "fail: position not found",
 			args: []string{
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 				fmt.Sprintf("10000%s", denoms.NUSD),
 			},
 			expectedCode: 1,
+			expectFail:   false,
+		},
+		{
+			name: "fail: not correct margin denom",
+			args: []string{
+				asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
+				fmt.Sprintf("10000%s", denoms.USDT),
+			},
+			expectFail: true,
+		},
+		{
+			name: "fail: invalid coin",
+			args: []string{
+				asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
+				"100",
+			},
+			expectFail: true,
+		},
+		{
+			name: "fail: invalid pair",
+			args: []string{
+				"alisdhjal;dhao;sdh",
+				fmt.Sprintf("10000%s", denoms.NUSD),
+			},
+			expectFail: true,
 		},
 	}
 
@@ -506,22 +572,130 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 		s.T().Run(tc.name, func(t *testing.T) {
 			s.T().Log("adding margin on user 3....")
 			canFail := true
-			txResp, err = s.network.ExecTxCmd(cli.AddMarginCmd(), s.users[1], tc.args,
+			if tc.expectFail {
+				txResp, err = s.network.ExecTxCmd(
+					cli.AddMarginCmd(), s.users[1], tc.args,
+					testutilcli.WithTxOptions(
+						testutilcli.TxOptionChanges{CanFail: &canFail}),
+				)
+				s.Require().Error(err, txResp)
+			} else {
+				txResp, err := s.network.ExecTxCmd(
+					cli.AddMarginCmd(), s.users[1], tc.args,
+					testutilcli.WithTxOptions(
+						testutilcli.TxOptionChanges{CanFail: &canFail}),
+				)
+				s.Require().NoError(err)
+				s.Require().NoError(s.network.WaitForNextBlock())
+
+				resp, err := testutilcli.QueryTx(s.network.Validators[0].ClientCtx, txResp.TxHash)
+				s.Require().NoError(err)
+				s.Require().EqualValues(tc.expectedCode, resp.Code)
+
+				if tc.expectedCode == 0 {
+					// query trader position
+					queryResp, err := testutilcli.QueryPositionV2(s.network.Validators[0].ClientCtx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), s.users[1])
+					s.NoError(err)
+					s.EqualValues(tc.expectedMargin, queryResp.Position.Margin)
+				}
+			}
+		})
+	}
+}
+
+// user[1] opens a position and removes margin
+func (s *IntegrationTestSuite) TestX_RemoveMargin() {
+	// Open a new position
+	s.T().Log("opening a position with user 1....")
+	_, err := s.network.ExecTxCmd(cli.MarketOrderCmd(), s.users[2], []string{
+		"buy",
+		asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
+		"10",      // Leverage
+		"1000000", // Quote asset amount
+		"0.0000001",
+	})
+	s.Require().NoError(err)
+	s.NoError(s.network.WaitForNextBlock())
+
+	testCases := []struct {
+		name           string
+		args           []string
+		expectedCode   uint32
+		expectedMargin sdk.Dec
+		expectFail     bool
+	}{
+		{
+			name: "PASS: remove margin to correct position",
+			args: []string{
+				asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
+				fmt.Sprintf("10000%s", denoms.NUSD),
+			},
+			expectedCode:   0,
+			expectedMargin: sdk.NewDec(990_000),
+			expectFail:     false,
+		},
+		{
+			name: "fail: position not found",
+			args: []string{
+				asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
+				fmt.Sprintf("10000%s", denoms.NUSD),
+			},
+			expectedCode: 1,
+			expectFail:   false,
+		},
+		{
+			name: "fail: not correct margin denom",
+			args: []string{
+				asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
+				fmt.Sprintf("10000%s", denoms.USDT),
+			},
+			expectFail: true,
+		},
+		{
+			name: "fail: invalid coin",
+			args: []string{
+				asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
+				"100",
+			},
+			expectFail: true,
+		},
+		{
+			name: "fail: invalid pair",
+			args: []string{
+				"alisdhjal;dhao;sdh",
+				fmt.Sprintf("10000%s", denoms.NUSD),
+			},
+			expectFail: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		s.T().Run(tc.name, func(t *testing.T) {
+			s.T().Log("removing margin on user 3....")
+
+			canFail := true
+			txResp, err := s.network.ExecTxCmd(
+				cli.RemoveMarginCmd(), s.users[2], tc.args,
 				testutilcli.WithTxOptions(
 					testutilcli.TxOptionChanges{CanFail: &canFail}),
 			)
-			s.Require().NoError(err)
-			s.Require().NoError(s.network.WaitForNextBlock())
+			if tc.expectFail {
+				s.Require().Errorf(err, "txResp: %v", txResp)
+			} else {
+				s.Require().NoErrorf(err, "txResp: %v", txResp)
+				s.Require().NoError(s.network.WaitForNextBlock())
 
-			resp, err := testutilcli.QueryTx(s.network.Validators[0].ClientCtx, txResp.TxHash)
-			s.Require().NoError(err)
-			s.Require().EqualValues(tc.expectedCode, resp.Code)
+				resp, err := testutilcli.QueryTx(s.network.Validators[0].ClientCtx, txResp.TxHash)
+				s.Require().NoError(err)
+				s.Require().EqualValues(tc.expectedCode, resp.Code)
 
-			if tc.expectedCode == 0 {
-				// query trader position
-				queryResp, err := testutilcli.QueryPositionV2(s.network.Validators[0].ClientCtx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), s.users[1])
-				s.NoError(err)
-				s.EqualValues(tc.expectedMargin, queryResp.Position.Margin)
+				if tc.expectedCode == 0 {
+					// query trader position
+					queryResp, err := testutilcli.QueryPositionV2(s.network.Validators[0].ClientCtx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), s.users[2])
+					s.NoError(err)
+					s.EqualValues(tc.expectedMargin, queryResp.Position.Margin)
+				}
 			}
 		})
 	}
@@ -539,6 +713,13 @@ func (s *IntegrationTestSuite) TestDonateToEcosystemFund() {
 
 	s.NoError(s.network.WaitForNextBlock())
 
+	_, err = s.network.ExecTxCmd(
+		cli.DonateToEcosystemFundCmd(),
+		sdk.MustAccAddressFromBech32("nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m"),
+		[]string{"10"})
+	s.Error(err)
+
+	s.NoError(s.network.WaitForNextBlock())
 	resp := new(sdk.Coin)
 	moduleAccountAddrPerpEF := "nibi1trh2mamq64u4g042zfeevvjk4cukrthvppfnc7"
 	s.NoError(
@@ -550,6 +731,19 @@ func (s *IntegrationTestSuite) TestDonateToEcosystemFund() {
 		),
 	)
 	s.Require().EqualValues(sdk.NewInt64Coin("unusd", 100), *resp)
+}
+
+func (s *IntegrationTestSuite) TestQueryModuleAccount() {
+	s.T().Logf("donate to ecosystem fund")
+	resp := new(types.QueryModuleAccountsResponse)
+	s.NoError(
+		testutilcli.ExecQuery(
+			s.network.Validators[0].ClientCtx,
+			cli.CmdQueryModuleAccounts(),
+			[]string{},
+			resp,
+		),
+	)
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
