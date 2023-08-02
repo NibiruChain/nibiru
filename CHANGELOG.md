@@ -55,7 +55,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1520](https://github.com/NibiruChain/nibiru/pull/1520) - feat(wasm): no op handler + tests with updated contracts
 * [#1521](https://github.com/NibiruChain/nibiru/pull/1521) - test(sudo): increase unit test coverage
 * [#1523](https://github.com/NibiruChain/nibiru/pull/1523) - chore: bump cosmos-sdk to v0.47.4
+<<<<<<< HEAD
+* [#1536](https://github.com/NibiruChain/nibiru/pull/1536) - test(perp): add more tests to perp module and cli
+=======
 * [#1533](https://github.com/NibiruChain/nibiru/pull/1533) - feat(perp): add differential fields to PositionChangedEvent
+>>>>>>> 828589a8f765552fb85b158e2ff7377207f99fa7
 
 ### Features
 
