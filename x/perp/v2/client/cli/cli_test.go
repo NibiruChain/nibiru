@@ -679,7 +679,7 @@ func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 
 				if tc.expectedCode == 0 {
 					// query trader position
-					queryResp, err := testutilcli.QueryPositionV2(s.network.Validators[0].ClientCtx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), s.users[1])
+					queryResp, err := testutilcli.QueryPositionV2(s.network.Validators[0].ClientCtx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), s.users[2])
 					s.NoError(err)
 					s.EqualValues(tc.expectedMargin, queryResp.Position.Margin)
 				}
