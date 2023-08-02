@@ -74,9 +74,9 @@ type (
 		Logger     Logger
 	}
 
-	// Validator defines an in-process Tendermint validator node. Through this object,
-	// a client can make RPC and API calls and interact with any client command
-	// or handler.
+	// Validator defines an in-process Tendermint validator node. Through this
+	// object, a client can make RPC and API calls and interact with any client
+	// command or handler.
 	Validator struct {
 		AppConfig *serverconfig.Config
 		ClientCtx client.Context
@@ -116,6 +116,10 @@ type (
 
 		// RPCClient wraps most important rpc calls a client would make to
 		// listen for events, test if it also implements events.EventSwitch.
+		//
+		// RPCClient implementations in "github.com/cometbft/cometbft/rpc" v0.37.2:
+		// - rcp.HTTP
+		// - rpc.Local
 		RPCClient tmclient.Client
 
 		tmNode *node.Node

@@ -1,6 +1,8 @@
 package cli_test
 
 import (
+	"testing"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/denoms"
@@ -29,17 +31,34 @@ func (s *IntegrationTestSuite) TestExecTx() {
 	toAddr := testutil.AccAddress()
 	sendCoin := sdk.NewCoin(denoms.NIBI, sdk.NewInt(69))
 	args := []string{fromAddr.String(), toAddr.String(), sendCoin.String()}
-
 	txResp, err := cli.ExecTx(s.network, bankcli.NewSendTxCmd(), fromAddr, args)
 	s.NoError(err)
 	s.EqualValues(0, txResp.Code)
 
-	// test tx option changes
-	canFail := true
-	opts := cli.WithTxOptions(cli.TxOptionChanges{CanFail: &canFail})
-	txResp, err = cli.ExecTx(s.network, bankcli.NewSendTxCmd(), fromAddr, args, opts)
-	s.NoError(err)
-	s.EqualValues(0, txResp.Code)
+	s.T().Run("test tx option changes", func(t *testing.T) {
+		defaultOpts := cli.DEFAULT_TX_OPTIONS
+		opts := cli.WithTxOptions(cli.TxOptionChanges{
+			BroadcastMode:    &defaultOpts.BroadcastMode,
+			CanFail:          &defaultOpts.CanFail,
+			Fees:             &defaultOpts.Fees,
+			Gas:              &defaultOpts.Gas,
+			KeyringBackend:   &defaultOpts.KeyringBackend,
+			SkipConfirmation: &defaultOpts.SkipConfirmation,
+		})
+		txResp, err = cli.ExecTx(s.network, bankcli.NewSendTxCmd(), fromAddr, args, opts)
+		s.NoError(err)
+		s.EqualValues(0, txResp.Code)
+	})
+
+	s.T().Run("fail when validators are missing", func(t *testing.T) {
+		networkNoVals := new(cli.Network)
+		*networkNoVals = *s.network
+		networkNoVals.Validators = []*cli.Validator{}
+		_, err := cli.ExecTx(
+			networkNoVals, bankcli.NewTxCmd(), fromAddr, args)
+		s.Error(err)
+		s.Contains(err.Error(), "")
+	})
 }
 
 func (s *IntegrationTestSuite) TestFillWalletFromValidator() {
