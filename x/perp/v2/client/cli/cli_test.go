@@ -146,6 +146,17 @@ func (s *IntegrationTestSuite) TestMultiLiquidate() {
 	})
 	s.Require().NoError(err)
 
+	s.T().Logf("review positions")
+	resp := new(types.QueryPositionsResponse)
+	s.NoError(
+		testutilcli.ExecQuery(
+			s.network.Validators[0].ClientCtx,
+			cli.CmdQueryPositions(),
+			[]string{s.users[2].String()},
+			resp,
+		),
+	)
+
 	_, err = testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), s.users[5], []string{
 		"sell",
 		asset.Registry.Pair(denoms.OSMO, denoms.NUSD).String(),
@@ -559,11 +570,12 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 		tc := tc
 		s.T().Run(tc.name, func(t *testing.T) {
 			s.T().Log("adding margin on user 3....")
-			txResp, err = testutilcli.ExecTx(s.network, cli.AddMarginCmd(), s.users[1], tc.args, testutilcli.WithTxCanFail(true))
 
 			if tc.excpectedFail {
+				_, err = testutilcli.ExecTx(s.network, cli.AddMarginCmd(), s.users[1], tc.args, testutilcli.WithTxCanFail(true))
 				s.Require().Error(err)
 			} else {
+				txResp, err = testutilcli.ExecTx(s.network, cli.AddMarginCmd(), s.users[1], tc.args, testutilcli.WithTxCanFail(true))
 				s.Require().NoError(err)
 				s.Require().NoError(s.network.WaitForNextBlock())
 
@@ -652,11 +664,12 @@ func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 		tc := tc
 		s.T().Run(tc.name, func(t *testing.T) {
 			s.T().Log("removing margin on user 3....")
-			txResp, err = testutilcli.ExecTx(s.network, cli.RemoveMarginCmd(), s.users[1], tc.args, testutilcli.WithTxCanFail(true))
 
 			if tc.excpectedFail {
+				_, err = testutilcli.ExecTx(s.network, cli.RemoveMarginCmd(), s.users[1], tc.args, testutilcli.WithTxCanFail(true))
 				s.Require().Error(err)
 			} else {
+				txResp, err = testutilcli.ExecTx(s.network, cli.RemoveMarginCmd(), s.users[1], tc.args, testutilcli.WithTxCanFail(true))
 				s.Require().NoError(err)
 				s.Require().NoError(s.network.WaitForNextBlock())
 
@@ -683,10 +696,10 @@ func (s *IntegrationTestSuite) TestDonateToEcosystemFund() {
 
 	s.NoError(s.network.WaitForNextBlock())
 
-	out, err = testutilcli.ExecTx(s.network, cli.DonateToEcosystemFundCmd(), sdk.MustAccAddressFromBech32("nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m"), []string{"100unusd"})
+	_, err = testutilcli.ExecTx(s.network, cli.DonateToEcosystemFundCmd(), sdk.MustAccAddressFromBech32("nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m"), []string{"100unusd"})
 	s.Error(err)
 
-	out, err = testutilcli.ExecTx(s.network, cli.DonateToEcosystemFundCmd(), sdk.MustAccAddressFromBech32("invalidaddress"), []string{"10"})
+	_, err = testutilcli.ExecTx(s.network, cli.DonateToEcosystemFundCmd(), sdk.MustAccAddressFromBech32("invalidaddress"), []string{"10"})
 	s.Error(err)
 
 	s.NoError(s.network.WaitForNextBlock())
@@ -700,6 +713,19 @@ func (s *IntegrationTestSuite) TestDonateToEcosystemFund() {
 		),
 	)
 	s.Require().EqualValues(sdk.NewInt64Coin("unusd", 100), *resp)
+}
+
+func (s *IntegrationTestSuite) TestQueryModuleAccount() {
+	s.T().Logf("donate to ecosystem fund")
+	resp := new(types.QueryModuleAccountsResponse)
+	s.NoError(
+		testutilcli.ExecQuery(
+			s.network.Validators[0].ClientCtx,
+			cli.CmdQueryModuleAccounts(),
+			[]string{},
+			resp,
+		),
+	)
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
