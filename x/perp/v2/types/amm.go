@@ -109,6 +109,9 @@ func (amm AMM) GetQuoteReserveAmt(
 	if baseReserveAmt.IsNegative() {
 		return sdk.Dec{}, ErrInputBaseAmtNegative
 	}
+	if baseReserveAmt.IsZero() {
+		return sdk.ZeroDec(), nil
+	}
 
 	invariant := amm.QuoteReserve.Mul(amm.BaseReserve) // x * y = k
 
@@ -121,7 +124,8 @@ func (amm AMM) GetQuoteReserveAmt(
 
 	if !baseReservesAfter.IsPositive() {
 		return sdk.Dec{}, ErrBaseReserveAtZero.Wrapf(
-			"base assets below zero after trying to swap %s base assets",
+			"base assets below zero (%s) after trying to swap %s base assets",
+			baseReservesAfter.String(),
 			baseReserveAmt.String(),
 		)
 	}
@@ -370,5 +374,5 @@ func (amm *AMM) UpdateSwapInvariant(newSwapInvariant sdk.Dec) (err error) {
 	amm.BaseReserve = amm.BaseReserve.Mul(multiplier)
 	amm.QuoteReserve = amm.QuoteReserve.Mul(multiplier)
 
-	return amm.Validate()
+	return amm.Validate() // might be useless
 }

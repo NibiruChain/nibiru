@@ -322,3 +322,41 @@ func TestQueryPosition(t *testing.T) {
 
 	NewTestSuite(t).WithTestCases(tc...).Run()
 }
+
+func TestQueryMarkets(t *testing.T) {
+	alice := testutil.AccAddress()
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+
+	tc := TestCases{
+		TC("positive PnL").
+			Given(
+				CreateCustomMarket(
+					pair,
+					WithPricePeg(sdk.NewDec(2)),
+				),
+				FundModule("perp_ef", sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10)))),
+			).
+			When(
+				InsertPosition(
+					WithPair(pair),
+					WithTrader(alice),
+					WithMargin(sdk.OneDec()),
+					WithSize(sdk.NewDec(10)),
+					WithOpenNotional(sdk.NewDec(10)),
+				),
+			).
+			Then(
+				QueryMarkets(QueryMarkets_MarketsShouldContain(*types.DefaultMarket(pair))),
+				QueryModuleAccounts(QueryModuleAccounts_ModulesBalanceShouldBe(
+					map[string]sdk.Coins{
+						"perp_ef": sdk.NewCoins(
+							sdk.NewCoin(denoms.BTC, sdk.ZeroInt()),
+							sdk.NewCoin(denoms.NUSD, sdk.NewInt(10)),
+						),
+					},
+				)),
+			),
+	}
+
+	NewTestSuite(t).WithTestCases(tc...).Run()
+}
