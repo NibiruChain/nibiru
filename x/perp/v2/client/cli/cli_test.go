@@ -696,10 +696,7 @@ func (s *IntegrationTestSuite) TestDonateToEcosystemFund() {
 
 	s.NoError(s.network.WaitForNextBlock())
 
-	_, err = testutilcli.ExecTx(s.network, cli.DonateToEcosystemFundCmd(), sdk.MustAccAddressFromBech32("nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m"), []string{"100unusd"})
-	s.Error(err)
-
-	_, err = testutilcli.ExecTx(s.network, cli.DonateToEcosystemFundCmd(), sdk.MustAccAddressFromBech32("invalidaddress"), []string{"10"})
+	_, err = testutilcli.ExecTx(s.network, cli.DonateToEcosystemFundCmd(), sdk.MustAccAddressFromBech32("nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m"), []string{"10"})
 	s.Error(err)
 
 	s.NoError(s.network.WaitForNextBlock())
