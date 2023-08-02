@@ -82,6 +82,37 @@ func MsgServerClosePosition(
 	}
 }
 
+type msgServerPartialClose struct {
+	pair          asset.Pair
+	traderAddress sdk.AccAddress
+	size          sdk.Dec
+}
+
+func (m msgServerPartialClose) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
+
+	// don't need to check response because it's already checked in clearing_house tests
+	_, err := msgServer.PartialClose(sdk.WrapSDKContext(ctx), &types.MsgPartialClose{
+		Pair:   m.pair,
+		Sender: m.traderAddress.String(),
+		Size_:  m.size,
+	})
+
+	return ctx, err, true
+}
+
+func MsgServerPartialClosePosition(
+	traderAddress sdk.AccAddress,
+	pair asset.Pair,
+	size sdk.Dec,
+) action.Action {
+	return msgServerPartialClose{
+		pair:          pair,
+		traderAddress: traderAddress,
+		size:          size,
+	}
+}
+
 type msgServerAddmargin struct {
 	pair          asset.Pair
 	traderAddress sdk.AccAddress

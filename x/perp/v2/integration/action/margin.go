@@ -41,6 +41,39 @@ func (a addMarginAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, e
 	return ctx, nil, true
 }
 
+// AddMarginFail adds margin to the position expecting a fail
+func AddMarginFail(
+	account sdk.AccAddress,
+	pair asset.Pair,
+	margin sdkmath.Int,
+	err error,
+) action.Action {
+	return &addMarginFailAction{
+		Account:     account,
+		Pair:        pair,
+		Margin:      margin,
+		ExpectedErr: err,
+	}
+}
+
+type addMarginFailAction struct {
+	Account     sdk.AccAddress
+	Pair        asset.Pair
+	Margin      sdkmath.Int
+	ExpectedErr error
+}
+
+func (a addMarginFailAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	_, err := app.PerpKeeperV2.AddMargin(
+		ctx, a.Pair, a.Account, sdk.NewCoin(a.Pair.QuoteDenom(), a.Margin),
+	)
+	if !errors.Is(err, a.ExpectedErr) {
+		return ctx, err, false
+	}
+
+	return ctx, nil, false
+}
+
 func RemoveMargin(
 	account sdk.AccAddress,
 	pair asset.Pair,
