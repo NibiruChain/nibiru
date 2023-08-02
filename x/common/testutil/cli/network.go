@@ -127,9 +127,10 @@ type (
 		// API exposes the app's REST and gRPC interfaces, allowing clients to
 		// read from state and broadcast txs. The API server connects to the
 		// underlying ABCI application.
-		api     *serverapi.Server
-		grpc    *grpc.Server
-		grpcWeb *http.Server
+		api            *serverapi.Server
+		grpc           *grpc.Server
+		grpcWeb        *http.Server
+		secretMnemonic string
 	}
 )
 
@@ -180,7 +181,6 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 		CleanupDir:      true,
 		SigningAlgo:     string(hd.Secp256k1Type),
 		KeyringOptions:  []keyring.Option{},
-		PrintMnemonic:   true,
 	}
 }
 
@@ -348,12 +348,6 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 			return nil, err
 		}
 
-		// if PrintMnemonic is set to true, we print the first validator node's
-		// secret to the network's logger for debugging and manual testing
-		if cfg.PrintMnemonic && i == 0 {
-			PrintMnemonic(logger, secret)
-		}
-
 		info := map[string]string{"secret": secret}
 		infoBz, err := json.Marshal(info)
 		if err != nil {
@@ -445,18 +439,19 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 			WithAccountRetriever(cfg.AccountRetriever)
 
 		network.Validators[i] = &Validator{
-			AppConfig:  appCfg,
-			ClientCtx:  clientCtx,
-			Ctx:        ctx,
-			Dir:        filepath.Join(network.BaseDir, nodeDirName),
-			NodeID:     nodeID,
-			PubKey:     pubKey,
-			Moniker:    nodeDirName,
-			RPCAddress: tmCfg.RPC.ListenAddress,
-			P2PAddress: tmCfg.P2P.ListenAddress,
-			APIAddress: apiAddr,
-			Address:    addr,
-			ValAddress: sdk.ValAddress(addr),
+			AppConfig:      appCfg,
+			ClientCtx:      clientCtx,
+			Ctx:            ctx,
+			Dir:            filepath.Join(network.BaseDir, nodeDirName),
+			NodeID:         nodeID,
+			PubKey:         pubKey,
+			Moniker:        nodeDirName,
+			RPCAddress:     tmCfg.RPC.ListenAddress,
+			P2PAddress:     tmCfg.P2P.ListenAddress,
+			APIAddress:     apiAddr,
+			Address:        addr,
+			ValAddress:     sdk.ValAddress(addr),
+			secretMnemonic: secret,
 		}
 	}
 
@@ -632,7 +627,17 @@ func (n *Network) Cleanup() {
 	n.Logger.Log("finished cleaning up test network")
 }
 
-func PrintMnemonic(l Logger, secret string) {
+func (val Validator) SecretMnemonic() string {
+	return val.secretMnemonic
+}
+
+func (val Validator) SecretMnemonicSlice() []string {
+	return strings.Fields(val.secretMnemonic)
+}
+
+// LogMnemonic logs a secret to the network's logger for debugging and manual
+// testing
+func LogMnemonic(l Logger, secret string) {
 	lines := []string{
 		"THIS MNEMONIC IS FOR TESTING PURPOSES ONLY",
 		"DO NOT USE IN PRODUCTION",

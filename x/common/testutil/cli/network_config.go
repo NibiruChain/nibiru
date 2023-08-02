@@ -44,7 +44,6 @@ type Config struct {
 	RPCAddress      string                     // RPC listen address (including port)
 	APIAddress      string                     // REST API listen address (including port)
 	GRPCAddress     string                     // GRPC server listen address (including port)
-	PrintMnemonic   bool                       // print the mnemonic of first validator as log output for testing
 }
 
 func (cfg *Config) AbsorbServerConfig(srvCfg *serverconfig.Config) {

@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"testing"
 	"time"
 
 	tmtypes "github.com/cometbft/cometbft/abci/types"
-	"github.com/cosmos/cosmos-sdk/codec"
+	sdkcodec "github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+
+	"github.com/NibiruChain/nibiru/app/codec"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server/api"
@@ -239,7 +242,7 @@ func FillWalletFromValidator(
 	return txOK(val.ClientCtx.Codec, rawResp.Bytes())
 }
 
-func txOK(jsonCodec codec.JSONCodec, txBytes []byte) error {
+func txOK(jsonCodec sdkcodec.JSONCodec, txBytes []byte) error {
 	resp := new(sdk.TxResponse)
 	jsonCodec.MustUnmarshalJSON(txBytes, resp)
 	if resp.Code != tmtypes.CodeTypeOK {
@@ -279,4 +282,16 @@ func NewAccount(network *Network, uid string) sdk.AccAddress {
 		panic(err)
 	}
 	return addr
+}
+
+func NewKeyring(t *testing.T) (
+	kring keyring.Keyring,
+	algo keyring.SignatureAlgo,
+	nodeDirName string,
+) {
+	var cdc sdkcodec.Codec = codec.MakeEncodingConfig().Marshaler
+	kring = keyring.NewInMemory(cdc)
+	nodeDirName = t.TempDir()
+	algo = hd.Secp256k1
+	return kring, algo, nodeDirName
 }

@@ -3,6 +3,7 @@ package cli_test
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -14,9 +15,6 @@ import (
 	"github.com/NibiruChain/nibiru/app/codec"
 
 	"github.com/stretchr/testify/suite"
-
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 
 	"github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
@@ -85,12 +83,10 @@ func (s *IntegrationTestSuite) TestNetwork_LatestHeight() {
 	s.Error(err)
 }
 
-func (s *IntegrationTestSuite) TestPrintMnemonic() {
-	var cdc sdkcodec.Codec = codec.MakeEncodingConfig().Marshaler
-	kring := keyring.NewInMemory(cdc)
-	nodeDirName := s.T().TempDir()
-	algo := hd.Secp256k1
+func (s *IntegrationTestSuite) TestLogMnemonic() {
+	kring, algo, nodeDirName := cli.NewKeyring(s.T())
 
+	var cdc sdkcodec.Codec = codec.MakeEncodingConfig().Marshaler
 	_, mnemonic, err := sdktestutil.GenerateCoinKey(algo, cdc)
 	s.NoError(err)
 
@@ -100,9 +96,26 @@ func (s *IntegrationTestSuite) TestPrintMnemonic() {
 	)
 	s.NoError(err)
 
-	cli.PrintMnemonic(&mockLogger{
+	cli.LogMnemonic(&mockLogger{
 		Logs: []string{},
 	}, secret)
+}
+
+func (s *IntegrationTestSuite) TestValidatorGetSecret() {
+	val := s.network.Validators[0]
+	secret := val.SecretMnemonic()
+	secretSlice := val.SecretMnemonicSlice()
+	s.Equal(secret, strings.Join(secretSlice, " "))
+
+	kring, algo, nodeDirName := cli.NewKeyring(s.T())
+	mnemonic := secret
+	overwrite := true
+	addrGenerated, secretGenerated, err := sdktestutil.GenerateSaveCoinKey(
+		kring, nodeDirName, mnemonic, overwrite, algo,
+	)
+	s.NoError(err)
+	s.Equal(secret, secretGenerated)
+	s.Equal(val.Address, addrGenerated)
 }
 
 var _ cli.Logger = (*mockLogger)(nil)
