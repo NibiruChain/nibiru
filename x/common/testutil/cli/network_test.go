@@ -2,12 +2,21 @@
 package cli_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
+	sdkcodec "github.com/cosmos/cosmos-sdk/codec"
+	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/app/codec"
 
 	"github.com/stretchr/testify/suite"
+
+	"github.com/cosmos/cosmos-sdk/crypto/hd"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 
 	"github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
@@ -21,6 +30,7 @@ type IntegrationTestSuite struct {
 	suite.Suite
 
 	network *cli.Network
+	cfg     *cli.Config
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
@@ -32,18 +42,21 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	if testing.Short() {
 		s.T().Skip("skipping integration test suite")
 	}
-
 	s.T().Log("setting up integration test suite")
 
 	encConfig := app.MakeEncodingConfigAndRegister()
-
+	cfg := new(cli.Config)
+	*cfg = cli.BuildNetworkConfig(genesis.NewTestGenesisState(encConfig))
 	network, err := cli.New(
 		s.T(),
 		s.T().TempDir(),
-		cli.BuildNetworkConfig(genesis.NewTestGenesisState(encConfig)),
+		*cfg,
 	)
 	s.Require().NoError(err)
 	s.network = network
+
+	cfg.AbsorbListenAddresses(network.Validators[0])
+	s.cfg = cfg
 
 	_, err = s.network.WaitForHeight(1)
 	s.Require().NoError(err)
@@ -57,6 +70,9 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 func (s *IntegrationTestSuite) TestNetwork_Liveness() {
 	height, err := s.network.WaitForHeightWithTimeout(4, time.Minute)
 	s.Require().NoError(err, "expected to reach 4 blocks; got %d", height)
+
+	err = s.network.WaitForDuration(1 * time.Second)
+	s.NoError(err)
 }
 
 func (s *IntegrationTestSuite) TestNetwork_LatestHeight() {
@@ -67,4 +83,45 @@ func (s *IntegrationTestSuite) TestNetwork_LatestHeight() {
 	sadNetwork := new(cli.Network)
 	_, err = sadNetwork.LatestHeight()
 	s.Error(err)
+}
+
+func (s *IntegrationTestSuite) TestPrintMnemonic() {
+	var cdc sdkcodec.Codec = codec.MakeEncodingConfig().Marshaler
+	kring := keyring.NewInMemory(cdc)
+	nodeDirName := s.T().TempDir()
+	algo := hd.Secp256k1
+
+	_, mnemonic, err := sdktestutil.GenerateCoinKey(algo, cdc)
+	s.NoError(err)
+
+	overwrite := true
+	_, secret, err := sdktestutil.GenerateSaveCoinKey(
+		kring, nodeDirName, mnemonic, overwrite, algo,
+	)
+	s.NoError(err)
+
+	cli.PrintMnemonic(&mockLogger{
+		Logs: []string{},
+	}, secret)
+}
+
+var _ cli.Logger = (*mockLogger)(nil)
+
+type mockLogger struct {
+	Logs []string
+}
+
+func (ml *mockLogger) Log(args ...interface{}) {
+	ml.Logs = append(ml.Logs, fmt.Sprint(args...))
+}
+
+func (ml *mockLogger) Logf(format string, args ...interface{}) {
+	ml.Logs = append(ml.Logs, fmt.Sprintf(format, args...))
+}
+
+func (s *IntegrationTestSuite) TestNewAccount() {
+	s.NotPanics(func() {
+		addr := cli.NewAccount(s.network, "newacc")
+		s.NoError(sdk.VerifyAddressFormat(addr))
+	})
 }

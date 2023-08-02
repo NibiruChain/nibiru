@@ -55,22 +55,23 @@ var lock = new(sync.Mutex)
 type AppConstructor = func(val Validator) servertypes.Application
 
 type (
-	// Network defines a local in-process testing network using SimApp. It can be
-	// configured to start any number of validators, each with its own RPC and API
-	// clients. Typically, this test network would be used in client and integration
-	// testing where user input is expected.
+	// Network defines a in-process testing network. It is primarily intended
+	// for client and integration testing. The Network struct can spawn any
+	// number of validators, each with its own RPC and API clients.
 	//
-	// Note, due to Tendermint constraints in regards to RPC functionality, there
-	// may only be one test network running at a time. Thus, any caller must be
-	// sure to Cleanup after testing is finished in order to allow other tests
-	// to create networks. In addition, only the first validator will have a valid
-	// RPC and API server/client.
+	// ### Constraints
+	//
+	// 1. Only the first validator will have a functional RPC and API
+	//    server/client.
+	// 2. Due to constraints in Tendermint's JSON-RPC implementation, only one
+	//    test network can run at a time. For this reason, it's essential to
+	//    invoke `Network.Cleanup` after testing to allow other tests to create
+	//    networks.
 	Network struct {
-		Logger     Logger
 		BaseDir    string
+		Config     Config
 		Validators []*Validator
-
-		Config Config
+		Logger     Logger
 	}
 
 	// Validator defines an in-process Tendermint validator node. Through this object,
@@ -175,23 +176,24 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 		CleanupDir:      true,
 		SigningAlgo:     string(hd.Secp256k1Type),
 		KeyringOptions:  []keyring.Option{},
+		PrintMnemonic:   true,
 	}
 }
 
 // New creates a new Network for integration tests.
-func New(l Logger, baseDir string, cfg Config) (*Network, error) {
+func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 	// only one caller/test can create and use a network at a time
-	l.Log("acquiring test network lock")
+	logger.Log("acquiring test network lock")
 	lock.Lock()
 
 	network := &Network{
-		Logger:     l,
+		Logger:     logger,
 		BaseDir:    baseDir,
 		Validators: make([]*Validator, cfg.NumValidators),
 		Config:     cfg,
 	}
 
-	l.Log("preparing test network...")
+	logger.Log("preparing test network...")
 
 	monikers := make([]string, cfg.NumValidators)
 	nodeIDs := make([]string, cfg.NumValidators)
@@ -272,12 +274,12 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 			appCfg.GRPCWeb.Enable = true
 		}
 
-		logger := log.NewNopLogger()
+		loggerNoOp := log.NewNopLogger()
 		if cfg.EnableTMLogging {
-			logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+			loggerNoOp = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 		}
 
-		ctx.Logger = logger
+		ctx.Logger = loggerNoOp
 
 		nodeDirName := fmt.Sprintf("node%d", i)
 		nodeDir := filepath.Join(network.BaseDir, nodeDirName, "simd")
@@ -345,7 +347,7 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 		// if PrintMnemonic is set to true, we print the first validator node's
 		// secret to the network's logger for debugging and manual testing
 		if cfg.PrintMnemonic && i == 0 {
-			printMnemonic(l, secret)
+			PrintMnemonic(logger, secret)
 		}
 
 		info := map[string]string{"secret": secret}
@@ -463,13 +465,13 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 		return nil, err
 	}
 
-	l.Log("starting test network...")
+	logger.Log("starting test network...")
 	for idx, v := range network.Validators {
 		err := startInProcess(cfg, v)
 		if err != nil {
 			return nil, err
 		}
-		l.Log("started validator", idx)
+		logger.Log("started validator", idx)
 	}
 
 	height, err := network.LatestHeight()
@@ -477,7 +479,7 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 		return nil, err
 	}
 
-	l.Log("started test network at height:", height)
+	logger.Log("started test network at height:", height)
 
 	// Ensure we cleanup incase any test was abruptly halted (e.g. SIGINT) as
 	// any defer in a test would not be called.
@@ -626,7 +628,7 @@ func (n *Network) Cleanup() {
 	n.Logger.Log("finished cleaning up test network")
 }
 
-func printMnemonic(l Logger, secret string) {
+func PrintMnemonic(l Logger, secret string) {
 	lines := []string{
 		"THIS MNEMONIC IS FOR TESTING PURPOSES ONLY",
 		"DO NOT USE IN PRODUCTION",

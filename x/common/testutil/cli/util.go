@@ -219,8 +219,8 @@ func writeFile(name string, dir string, contents []byte) error {
 	return nil
 }
 
-// FillWalletFromValidator fills the wallet with some coins that come from the validator.
-// Used for cli tests.
+// FillWalletFromValidator fills the wallet with some coins that come from the
+// validator.
 func FillWalletFromValidator(
 	addr sdk.AccAddress, balance sdk.Coins, val *Validator, feesDenom string,
 ) error {

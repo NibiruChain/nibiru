@@ -15,8 +15,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// Config defines the necessary configuration used to bootstrap and start an
-// in-process local testing network.
+// Config: Defines the parameters needed to start a local test network.
 type Config struct {
 	Codec             codec.Codec
 	LegacyAmino       *codec.LegacyAmino // TODO: Remove!

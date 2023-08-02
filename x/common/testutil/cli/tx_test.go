@@ -29,12 +29,27 @@ func (s *IntegrationTestSuite) TestExecTx() {
 	toAddr := testutil.AccAddress()
 	sendCoin := sdk.NewCoin(denoms.NIBI, sdk.NewInt(69))
 	args := []string{fromAddr.String(), toAddr.String(), sendCoin.String()}
+
 	txResp, err := cli.ExecTx(s.network, bankcli.NewSendTxCmd(), fromAddr, args)
+	s.NoError(err)
+	s.EqualValues(0, txResp.Code)
+
+	// test tx option changes
+	canFail := true
+	opts := cli.WithTxOptions(cli.TxOptionChanges{CanFail: &canFail})
+	txResp, err = cli.ExecTx(s.network, bankcli.NewSendTxCmd(), fromAddr, args, opts)
 	s.NoError(err)
 	s.EqualValues(0, txResp.Code)
 }
 
-func (s *IntegrationTestSuite) TestLogger() {
-	s.network.Logger.Log("CLILogger.Log works")
-	s.network.Logger.Logf("CLILogger.Logf %v", "works")
+func (s *IntegrationTestSuite) TestFillWalletFromValidator() {
+	toAddr := testutil.AccAddress()
+	val := s.network.Validators[0]
+	funds := sdk.NewCoins(
+		sdk.NewInt64Coin(denoms.NIBI, 420),
+	)
+	feeDenom := denoms.NIBI
+	s.NoError(cli.FillWalletFromValidator(
+		toAddr, funds, val, feeDenom,
+	))
 }
