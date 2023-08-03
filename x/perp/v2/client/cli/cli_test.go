@@ -118,7 +118,7 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 
 func (s *IntegrationTestSuite) TestMultiLiquidate() {
 	s.T().Log("opening positions")
-	_, err := testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), s.users[2], []string{
+	_, err := s.network.ExecTxCmd(cli.MarketOrderCmd(), s.users[2], []string{
 		"buy",
 		asset.Registry.Pair(denoms.ATOM, denoms.NUSD).String(),
 		"15",      // Leverage
@@ -127,7 +127,7 @@ func (s *IntegrationTestSuite) TestMultiLiquidate() {
 	})
 	s.Require().NoError(err)
 
-	_, err = testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), s.users[3], []string{
+	_, err = s.network.ExecTxCmd(cli.MarketOrderCmd(), s.users[3], []string{
 		"buy",
 		asset.Registry.Pair(denoms.OSMO, denoms.NUSD).String(),
 		"15",      // Leverage
@@ -137,7 +137,7 @@ func (s *IntegrationTestSuite) TestMultiLiquidate() {
 	s.Require().NoError(err)
 
 	s.T().Log("opening counter positions")
-	_, err = testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), s.users[4], []string{
+	_, err = s.network.ExecTxCmd(cli.MarketOrderCmd(), s.users[4], []string{
 		"sell",
 		asset.Registry.Pair(denoms.ATOM, denoms.NUSD).String(),
 		"15",       // Leverage
@@ -157,7 +157,7 @@ func (s *IntegrationTestSuite) TestMultiLiquidate() {
 		),
 	)
 
-	_, err = testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), s.users[5], []string{
+	_, err = s.network.ExecTxCmd(cli.MarketOrderCmd(), s.users[5], []string{
 		"sell",
 		asset.Registry.Pair(denoms.OSMO, denoms.NUSD).String(),
 		"15",       // Leverage
@@ -173,7 +173,7 @@ func (s *IntegrationTestSuite) TestMultiLiquidate() {
 	s.Require().NoError(err)
 
 	s.T().Log("liquidating all users...")
-	_, err = testutilcli.ExecTx(s.network, cli.MultiLiquidateCmd(), s.liquidator, []string{
+	_, err = s.network.ExecTxCmd(cli.MultiLiquidateCmd(), s.liquidator, []string{
 		fmt.Sprintf("%s:%s:%s", denoms.ATOM, denoms.NUSD, s.users[2].String()),
 		fmt.Sprintf("%s:%s:%s", denoms.OSMO, denoms.NUSD, s.users[3].String()),
 	})
@@ -189,23 +189,24 @@ func (s *IntegrationTestSuite) TestMultiLiquidate() {
 	s.Require().Error(err)
 
 	s.T().Log("closing positions - fail")
-	_, err = testutilcli.ExecTx(s.network, cli.ClosePositionCmd(), s.users[4], []string{
+	_, err = s.network.ExecTxCmd(cli.ClosePositionCmd(), s.users[4], []string{
 		"asset.Registry.Pair(denoms.ATOM, denoms.NUSD).String()",
 	})
 	s.Require().Error(err) // invalid pair
-	_, err = testutilcli.ExecTx(s.network, cli.ClosePositionCmd(), s.users[4], []string{
+
+	_, err = s.network.ExecTxCmd(cli.ClosePositionCmd(), s.users[4], []string{
 		"uluna:usdt",
 	})
 	s.Require().Error(err) // non whitelisted pair
 
 	s.T().Log("closing positions")
 
-	_, err = testutilcli.ExecTx(s.network, cli.ClosePositionCmd(), s.users[4], []string{
+	_, err = s.network.ExecTxCmd(cli.ClosePositionCmd(), s.users[4], []string{
 		asset.Registry.Pair(denoms.ATOM, denoms.NUSD).String(),
 	})
 	s.Require().NoError(err)
 
-	_, err = testutilcli.ExecTx(s.network, cli.ClosePositionCmd(), s.users[5], []string{
+	_, err = s.network.ExecTxCmd(cli.ClosePositionCmd(), s.users[5], []string{
 		asset.Registry.Pair(denoms.OSMO, denoms.NUSD).String(),
 	})
 	s.Require().NoError(err)
@@ -236,7 +237,7 @@ func (s *IntegrationTestSuite) TestMarketOrdersAndCloseCmd() {
 	s.Error(err)
 
 	s.T().Log("B. open position")
-	txResp, err := testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), user, []string{
+	txResp, err := s.network.ExecTxCmd(cli.MarketOrderCmd(), user, []string{
 		"buy",
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 		/* leverage */ "1",
@@ -268,7 +269,7 @@ func (s *IntegrationTestSuite) TestMarketOrdersAndCloseCmd() {
 	s.EqualValues(sdk.OneDec(), queryResp.MarginRatio)
 
 	s.T().Log("C. open position with 2x leverage and zero baseAmtLimit")
-	txResp, err = testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), user, []string{
+	txResp, err = s.network.ExecTxCmd(cli.MarketOrderCmd(), user, []string{
 		"buy",
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 		/* leverage */ "2",
@@ -293,7 +294,7 @@ func (s *IntegrationTestSuite) TestMarketOrdersAndCloseCmd() {
 	s.EqualValues(sdk.MustNewDecFromStr("0.666666666666666667"), queryResp.MarginRatio)
 
 	s.T().Log("D. Open a reverse position smaller than the existing position")
-	txResp, err = testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), user, []string{
+	txResp, err = s.network.ExecTxCmd(cli.MarketOrderCmd(), user, []string{
 		"sell",
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 		/* leverage */ "1",
@@ -326,7 +327,7 @@ func (s *IntegrationTestSuite) TestMarketOrdersAndCloseCmd() {
 	s.EqualValues(sdk.MustNewDecFromStr("0.800000000000000000"), queryResp.MarginRatio)
 
 	s.T().Log("E. Open a reverse position larger than the existing position")
-	txResp, err = testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), user, []string{
+	txResp, err = s.network.ExecTxCmd(cli.MarketOrderCmd(), user, []string{
 		"sell",
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 		/* leverage */ "1",
@@ -352,7 +353,7 @@ func (s *IntegrationTestSuite) TestMarketOrdersAndCloseCmd() {
 	s.InDelta(1, queryResp.MarginRatio.MustFloat64(), 0.008)
 
 	s.T().Log("F. Close position")
-	txResp, err = testutilcli.ExecTx(s.network, cli.ClosePositionCmd(), user, []string{
+	txResp, err = s.network.ExecTxCmd(cli.ClosePositionCmd(), user, []string{
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 	})
 	s.NoError(err)
@@ -376,7 +377,7 @@ func (s *IntegrationTestSuite) TestPartialCloseCmd() {
 	var err error
 
 	s.T().Log("Open position")
-	txResp, err := testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), user, []string{
+	txResp, err := s.network.ExecTxCmd(cli.MarketOrderCmd(), user, []string{
 		"buy",
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 		/* leverage */ "1",
@@ -408,24 +409,24 @@ func (s *IntegrationTestSuite) TestPartialCloseCmd() {
 	s.EqualValues(sdk.OneDec(), queryResp.MarginRatio)
 
 	s.T().Log("Partially close the position - fails")
-	_, err = testutilcli.ExecTx(s.network, cli.PartialCloseCmd(), user, []string{
+	_, err = s.network.ExecTxCmd(cli.PartialCloseCmd(), user, []string{
 		pair.String(),
 		"",
 	})
 	s.Error(err) // invalid size amount
-	_, err = testutilcli.ExecTx(s.network, cli.PartialCloseCmd(), user, []string{
+	_, err = s.network.ExecTxCmd(cli.PartialCloseCmd(), user, []string{
 		"pair.String()",
 		"500",
 	})
 	s.Error(err) // invalid pair
-	_, err = testutilcli.ExecTx(s.network, cli.PartialCloseCmd(), user, []string{
+	_, err = s.network.ExecTxCmd(cli.PartialCloseCmd(), user, []string{
 		"uluna:usdt",
 		"500",
 	})
 	s.Error(err) // not whitelisted pair
 
 	s.T().Log("Partially close the position")
-	txResp, err = testutilcli.ExecTx(s.network, cli.PartialCloseCmd(), user, []string{
+	txResp, err = s.network.ExecTxCmd(cli.PartialCloseCmd(), user, []string{
 		pair.String(),
 		"500", // 500 uBTC
 	})
@@ -463,7 +464,7 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 	s.Error(err, "no position found")
 
 	// close position should produce error
-	_, err = testutilcli.ExecTx(s.network, cli.ClosePositionCmd(), user, []string{
+	_, err = s.network.ExecTxCmd(cli.ClosePositionCmd(), user, []string{
 		asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
 	})
 	s.Contains(err.Error(), collections.ErrNotFound.Error())
@@ -473,7 +474,7 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 func (s *IntegrationTestSuite) TestRemoveMargin() {
 	// Open a position with first user
 	s.T().Log("opening a position with user 0")
-	_, err := testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), s.users[0], []string{
+	_, err := s.network.ExecTxCmd(cli.MarketOrderCmd(), s.users[0], []string{
 		"buy",
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 		"10",      // Leverage
@@ -485,14 +486,14 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 
 	// Remove margin to trigger bad debt on user 0
 	s.T().Log("removing margin on user 0....")
-	_, err = testutilcli.ExecTx(s.network, cli.RemoveMarginCmd(), s.users[0], []string{
+	_, err = s.network.ExecTxCmd(cli.RemoveMarginCmd(), s.users[0], []string{
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 		fmt.Sprintf("%s%s", "10000000", denoms.NUSD),
 	})
 	s.Contains(err.Error(), types.ErrBadDebt.Error())
 
 	s.T().Log("removing margin on user 0....")
-	_, err = testutilcli.ExecTx(s.network, cli.RemoveMarginCmd(), s.users[0], []string{
+	_, err = s.network.ExecTxCmd(cli.RemoveMarginCmd(), s.users[0], []string{
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 		fmt.Sprintf("%s%s", "1", denoms.NUSD),
 	})
@@ -504,14 +505,14 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 func (s *IntegrationTestSuite) TestX_AddMargin() {
 	// Open a new position
 	s.T().Log("opening a position with user 1....")
-	_, err := testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), s.users[1], []string{
+	txResp, err := s.network.ExecTxCmd(cli.MarketOrderCmd(), s.users[1], []string{
 		"buy",
 		asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
 		"10",      // Leverage
 		"1000000", // Quote asset amount
 		"0.0000001",
 	})
-	s.Require().NoError(err)
+	s.Require().NoError(err, txResp)
 	s.NoError(s.network.WaitForNextBlock())
 
 	testCases := []struct {
@@ -519,7 +520,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 		args           []string
 		expectedCode   uint32
 		expectedMargin sdk.Dec
-		excpectedFail  bool
+		expectFail     bool
 	}{
 		{
 			name: "PASS: add margin to correct position",
@@ -529,7 +530,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 			},
 			expectedCode:   0,
 			expectedMargin: sdk.NewDec(1_010_000),
-			excpectedFail:  false,
+			expectFail:     false,
 		},
 		{
 			name: "fail: position not found",
@@ -537,8 +538,8 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 				fmt.Sprintf("10000%s", denoms.NUSD),
 			},
-			expectedCode:  1,
-			excpectedFail: false,
+			expectedCode: 1,
+			expectFail:   false,
 		},
 		{
 			name: "fail: not correct margin denom",
@@ -546,7 +547,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 				fmt.Sprintf("10000%s", denoms.USDT),
 			},
-			excpectedFail: true,
+			expectFail: true,
 		},
 		{
 			name: "fail: invalid coin",
@@ -554,7 +555,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 				"100",
 			},
-			excpectedFail: true,
+			expectFail: true,
 		},
 		{
 			name: "fail: invalid pair",
@@ -562,7 +563,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 				"alisdhjal;dhao;sdh",
 				fmt.Sprintf("10000%s", denoms.NUSD),
 			},
-			excpectedFail: true,
+			expectFail: true,
 		},
 	}
 
@@ -570,12 +571,20 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 		tc := tc
 		s.T().Run(tc.name, func(t *testing.T) {
 			s.T().Log("adding margin on user 3....")
-
-			if tc.excpectedFail {
-				_, err = testutilcli.ExecTx(s.network, cli.AddMarginCmd(), s.users[1], tc.args, testutilcli.WithTxCanFail(true))
-				s.Require().Error(err)
+			canFail := true
+			if tc.expectFail {
+				txResp, err = s.network.ExecTxCmd(
+					cli.AddMarginCmd(), s.users[1], tc.args,
+					testutilcli.WithTxOptions(
+						testutilcli.TxOptionChanges{CanFail: &canFail}),
+				)
+				s.Require().Error(err, txResp)
 			} else {
-				txResp, err := testutilcli.ExecTx(s.network, cli.AddMarginCmd(), s.users[1], tc.args, testutilcli.WithTxCanFail(true))
+				txResp, err := s.network.ExecTxCmd(
+					cli.AddMarginCmd(), s.users[1], tc.args,
+					testutilcli.WithTxOptions(
+						testutilcli.TxOptionChanges{CanFail: &canFail}),
+				)
 				s.Require().NoError(err)
 				s.Require().NoError(s.network.WaitForNextBlock())
 
@@ -598,7 +607,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 	// Open a new position
 	s.T().Log("opening a position with user 1....")
-	_, err := testutilcli.ExecTx(s.network, cli.MarketOrderCmd(), s.users[2], []string{
+	_, err := s.network.ExecTxCmd(cli.MarketOrderCmd(), s.users[2], []string{
 		"buy",
 		asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
 		"10",      // Leverage
@@ -613,7 +622,7 @@ func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 		args           []string
 		expectedCode   uint32
 		expectedMargin sdk.Dec
-		excpectedFail  bool
+		expectFail     bool
 	}{
 		{
 			name: "PASS: remove margin to correct position",
@@ -623,7 +632,7 @@ func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 			},
 			expectedCode:   0,
 			expectedMargin: sdk.NewDec(990_000),
-			excpectedFail:  false,
+			expectFail:     false,
 		},
 		{
 			name: "fail: position not found",
@@ -631,8 +640,8 @@ func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 				fmt.Sprintf("10000%s", denoms.NUSD),
 			},
-			expectedCode:  1,
-			excpectedFail: false,
+			expectedCode: 1,
+			expectFail:   false,
 		},
 		{
 			name: "fail: not correct margin denom",
@@ -640,7 +649,7 @@ func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 				fmt.Sprintf("10000%s", denoms.USDT),
 			},
-			excpectedFail: true,
+			expectFail: true,
 		},
 		{
 			name: "fail: invalid coin",
@@ -648,7 +657,7 @@ func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 				"100",
 			},
-			excpectedFail: true,
+			expectFail: true,
 		},
 		{
 			name: "fail: invalid pair",
@@ -656,7 +665,7 @@ func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 				"alisdhjal;dhao;sdh",
 				fmt.Sprintf("10000%s", denoms.NUSD),
 			},
-			excpectedFail: true,
+			expectFail: true,
 		},
 	}
 
@@ -665,12 +674,16 @@ func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 		s.T().Run(tc.name, func(t *testing.T) {
 			s.T().Log("removing margin on user 3....")
 
-			if tc.excpectedFail {
-				_, err = testutilcli.ExecTx(s.network, cli.RemoveMarginCmd(), s.users[2], tc.args, testutilcli.WithTxCanFail(true))
-				s.Require().Error(err)
+			canFail := true
+			txResp, err := s.network.ExecTxCmd(
+				cli.RemoveMarginCmd(), s.users[2], tc.args,
+				testutilcli.WithTxOptions(
+					testutilcli.TxOptionChanges{CanFail: &canFail}),
+			)
+			if tc.expectFail {
+				s.Require().Errorf(err, "txResp: %v", txResp)
 			} else {
-				txResp, err := testutilcli.ExecTx(s.network, cli.RemoveMarginCmd(), s.users[2], tc.args, testutilcli.WithTxCanFail(true))
-				s.Require().NoError(err)
+				s.Require().NoErrorf(err, "txResp: %v", txResp)
 				s.Require().NoError(s.network.WaitForNextBlock())
 
 				resp, err := testutilcli.QueryTx(s.network.Validators[0].ClientCtx, txResp.TxHash)
@@ -690,22 +703,30 @@ func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 
 func (s *IntegrationTestSuite) TestDonateToEcosystemFund() {
 	s.T().Logf("donate to ecosystem fund")
-	out, err := testutilcli.ExecTx(s.network, cli.DonateToEcosystemFundCmd(), sdk.MustAccAddressFromBech32("nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m"), []string{"100unusd"})
+	out, err := s.network.ExecTxCmd(
+		cli.DonateToEcosystemFundCmd(),
+		sdk.MustAccAddressFromBech32("nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m"),
+		[]string{"100unusd"},
+	)
 	s.NoError(err)
 	s.Require().EqualValues(abcitypes.CodeTypeOK, out.Code)
 
 	s.NoError(s.network.WaitForNextBlock())
 
-	_, err = testutilcli.ExecTx(s.network, cli.DonateToEcosystemFundCmd(), sdk.MustAccAddressFromBech32("nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m"), []string{"10"})
+	_, err = s.network.ExecTxCmd(
+		cli.DonateToEcosystemFundCmd(),
+		sdk.MustAccAddressFromBech32("nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m"),
+		[]string{"10"})
 	s.Error(err)
 
 	s.NoError(s.network.WaitForNextBlock())
 	resp := new(sdk.Coin)
+	moduleAccountAddrPerpEF := "nibi1trh2mamq64u4g042zfeevvjk4cukrthvppfnc7"
 	s.NoError(
 		testutilcli.ExecQuery(
 			s.network.Validators[0].ClientCtx,
 			bankcli.GetBalancesCmd(),
-			[]string{"nibi1trh2mamq64u4g042zfeevvjk4cukrthvppfnc7", "--denom", "unusd"}, // nibi1trh2mamq64u4g042zfeevvjk4cukrthvppfnc7 is the perp_ef module account address
+			[]string{moduleAccountAddrPerpEF, "--denom", "unusd"},
 			resp,
 		),
 	)

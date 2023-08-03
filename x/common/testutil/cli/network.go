@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"testing"
 	"time"
 
 	"github.com/cometbft/cometbft/libs/log"
@@ -22,24 +21,19 @@ import (
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 
-	"github.com/cosmos/cosmos-sdk/testutil"
-	"github.com/spf13/cobra"
-
-	sdkmath "cosmossdk.io/math"
+	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
 
 	tmrand "github.com/cometbft/cometbft/libs/rand"
 	"github.com/cometbft/cometbft/node"
 	tmclient "github.com/cometbft/cometbft/rpc/client"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/cosmos/cosmos-sdk/server/api"
-	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
+	serverapi "github.com/cosmos/cosmos-sdk/server/api"
+	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -60,113 +54,85 @@ var lock = new(sync.Mutex)
 // creates an ABCI Application to provide to Tendermint.
 type AppConstructor = func(val Validator) servertypes.Application
 
-// Config defines the necessary configuration used to bootstrap and start an
-// in-process local testing network.
-type Config struct {
-	Codec             codec.Codec
-	LegacyAmino       *codec.LegacyAmino // TODO: Remove!
-	InterfaceRegistry codectypes.InterfaceRegistry
-
-	TxConfig         client.TxConfig
-	AccountRetriever client.AccountRetriever
-	AppConstructor   AppConstructor             // the ABCI application constructor
-	GenesisState     map[string]json.RawMessage // custom genesis state to provide
-	TimeoutCommit    time.Duration              // the consensus commitment timeout
-	ChainID          string                     // the network chain-id
-	NumValidators    int                        // the total number of validators to create and bond
-	Mnemonics        []string                   // custom user-provided validator operator mnemonics
-	BondDenom        string                     // the staking bond denomination
-	MinGasPrices     string                     // the minimum gas prices each validator will accept
-	AccountTokens    sdkmath.Int                // the amount of unique validator tokens (e.g. 1000node0)
-	StakingTokens    sdkmath.Int                // the amount of tokens each validator has available to stake
-	BondedTokens     sdkmath.Int                // the amount of tokens each validator stakes
-	StartingTokens   sdk.Coins                  // Additional tokens to be added to the starting block to validators
-	PruningStrategy  string                     // the pruning strategy each validator will have
-	EnableTMLogging  bool                       // enable Tendermint logging to STDOUT
-	CleanupDir       bool                       // remove base temporary directory during cleanup
-	SigningAlgo      string                     // signing algorithm for keys
-	KeyringOptions   []keyring.Option           // keyring configuration options
-	RPCAddress       string                     // RPC listen address (including port)
-	APIAddress       string                     // REST API listen address (including port)
-	GRPCAddress      string                     // GRPC server listen address (including port)
-	PrintMnemonic    bool                       // print the mnemonic of first validator as log output for testing
-}
-
 type (
-	// Network defines a local in-process testing network using SimApp. It can be
-	// configured to start any number of validators, each with its own RPC and API
-	// clients. Typically, this test network would be used in client and integration
-	// testing where user input is expected.
+	// Network defines a in-process testing network. It is primarily intended
+	// for client and integration testing. The Network struct can spawn any
+	// number of validators, each with its own RPC and API clients.
 	//
-	// Note, due to Tendermint constraints in regards to RPC functionality, there
-	// may only be one test network running at a time. Thus, any caller must be
-	// sure to Cleanup after testing is finished in order to allow other tests
-	// to create networks. In addition, only the first validator will have a valid
-	// RPC and API server/client.
+	// ### Constraints
+	//
+	// 1. Only the first validator will have a functional RPC and API
+	//    server/client.
+	// 2. Due to constraints in Tendermint's JSON-RPC implementation, only one
+	//    test network can run at a time. For this reason, it's essential to
+	//    invoke `Network.Cleanup` after testing to allow other tests to create
+	//    networks.
 	Network struct {
-		Logger     Logger
 		BaseDir    string
+		Config     Config
 		Validators []*Validator
-
-		Config Config
+		Logger     Logger
 	}
 
-	// Validator defines an in-process Tendermint validator node. Through this object,
-	// a client can make RPC and API calls and interact with any client command
-	// or handler.
+	// Validator defines an in-process Tendermint validator node. Through this
+	// object, a client can make RPC and API calls and interact with any client
+	// command or handler.
 	Validator struct {
-		AppConfig  *srvconfig.Config
-		ClientCtx  client.Context
-		Ctx        *server.Context
-		Dir        string
-		NodeID     string
-		PubKey     cryptotypes.PubKey
-		Moniker    string
-		APIAddress string
-		RPCAddress string
-		P2PAddress string
-		Address    sdk.AccAddress
-		ValAddress sdk.ValAddress
-		RPCClient  tmclient.Client
+		AppConfig *serverconfig.Config
+		ClientCtx client.Context
+		Ctx       *server.Context
+		// Dir is the root directory of the validator node data and config. Passed to the Tendermint config.
+		Dir string
 
-		tmNode  *node.Node
-		api     *api.Server
-		grpc    *grpc.Server
-		grpcWeb *http.Server
+		// NodeID is a unique ID for the validator generated when the
+		// 'cli.Network' is started.
+		NodeID string
+		PubKey cryptotypes.PubKey
+
+		// Moniker is a human-readable name that identifies a validator. A
+		// moniker is optional and may be empty.
+		Moniker string
+
+		// APIAddress is the endpoint that the validator API server binds to.
+		// Only the first validator of a 'cli.Network' exposes the full API.
+		APIAddress string
+
+		// RPCAddress is the endpoint that the RPC server binds to. Only the
+		// first validator of a 'cli.Network' exposes the full API.
+		RPCAddress string
+
+		// P2PAddress is the endpoint that the RPC server binds to. The P2P
+		// server handles Tendermint peer-to-peer (P2P) networking and is
+		// critical for blockchain replication and consensus. It allows nodes
+		// to gossip blocks, transactions, and consensus messages. Only the
+		// first validator of a 'cli.Network' exposes the full API.
+		P2PAddress string
+
+		// Address - account address
+		Address sdk.AccAddress
+
+		// ValAddress - validator operator (valoper) address
+		ValAddress sdk.ValAddress
+
+		// RPCClient wraps most important rpc calls a client would make to
+		// listen for events, test if it also implements events.EventSwitch.
+		//
+		// RPCClient implementations in "github.com/cometbft/cometbft/rpc" v0.37.2:
+		// - rcp.HTTP
+		// - rpc.Local
+		RPCClient tmclient.Client
+
+		tmNode *node.Node
+
+		// API exposes the app's REST and gRPC interfaces, allowing clients to
+		// read from state and broadcast txs. The API server connects to the
+		// underlying ABCI application.
+		api            *serverapi.Server
+		grpc           *grpc.Server
+		grpcWeb        *http.Server
+		secretMnemonic string
 	}
 )
-
-// Logger is a network logger interface that exposes testnet-level Log() methods for an in-process testing network
-// This is not to be confused with logging that may happen at an individual node or validator level
-type Logger interface {
-	Log(args ...interface{})
-	Logf(format string, args ...interface{})
-}
-
-var (
-	_ Logger = (*testing.T)(nil)
-	_ Logger = (*CLILogger)(nil)
-)
-
-// CLILogger wraps a cobra.Command and provides command logging methods.
-type CLILogger struct {
-	cmd *cobra.Command
-}
-
-// Log logs given args.
-func (s CLILogger) Log(args ...interface{}) {
-	s.cmd.Println(args...)
-}
-
-// Logf logs given args according to a format specifier.
-func (s CLILogger) Logf(format string, args ...interface{}) {
-	s.cmd.Printf(format, args...)
-}
-
-// NewCLILogger creates a new CLILogger.
-func NewCLILogger(cmd *cobra.Command) CLILogger {
-	return CLILogger{cmd}
-}
 
 // NewAppConstructor returns a new simapp AppConstructor
 func NewAppConstructor(encodingCfg app.EncodingConfig, chainID string) AppConstructor {
@@ -219,19 +185,19 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 }
 
 // New creates a new Network for integration tests.
-func New(l Logger, baseDir string, cfg Config) (*Network, error) {
+func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 	// only one caller/test can create and use a network at a time
-	l.Log("acquiring test network lock")
+	logger.Log("acquiring test network lock")
 	lock.Lock()
 
 	network := &Network{
-		Logger:     l,
+		Logger:     logger,
 		BaseDir:    baseDir,
 		Validators: make([]*Validator, cfg.NumValidators),
 		Config:     cfg,
 	}
 
-	l.Log("preparing test network...")
+	logger.Log("preparing test network...")
 
 	monikers := make([]string, cfg.NumValidators)
 	nodeIDs := make([]string, cfg.NumValidators)
@@ -247,7 +213,7 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 
 	// generate private keys, node IDs, and initial transactions
 	for i := 0; i < cfg.NumValidators; i++ {
-		appCfg := srvconfig.DefaultConfig()
+		appCfg := serverconfig.DefaultConfig()
 		appCfg.Pruning = cfg.PruningStrategy
 		appCfg.MinGasPrices = cfg.MinGasPrices
 		appCfg.API.Enable = true
@@ -312,12 +278,12 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 			appCfg.GRPCWeb.Enable = true
 		}
 
-		logger := log.NewNopLogger()
+		loggerNoOp := log.NewNopLogger()
 		if cfg.EnableTMLogging {
-			logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+			loggerNoOp = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 		}
 
-		ctx.Logger = logger
+		ctx.Logger = loggerNoOp
 
 		nodeDirName := fmt.Sprintf("node%d", i)
 		nodeDir := filepath.Join(network.BaseDir, nodeDirName, "simd")
@@ -377,15 +343,9 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 			mnemonic = cfg.Mnemonics[i]
 		}
 
-		addr, secret, err := testutil.GenerateSaveCoinKey(kb, nodeDirName, mnemonic, true, algo)
+		addr, secret, err := sdktestutil.GenerateSaveCoinKey(kb, nodeDirName, mnemonic, true, algo)
 		if err != nil {
 			return nil, err
-		}
-
-		// if PrintMnemonic is set to true, we print the first validator node's secret to the network's logger
-		// for debugging and manual testing
-		if cfg.PrintMnemonic && i == 0 {
-			printMnemonic(l, secret)
 		}
 
 		info := map[string]string{"secret": secret}
@@ -465,7 +425,7 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 			return nil, err
 		}
 
-		srvconfig.WriteConfigFile(filepath.Join(nodeDir, "config", "app.toml"), appCfg)
+		serverconfig.WriteConfigFile(filepath.Join(nodeDir, "config", "app.toml"), appCfg)
 
 		clientCtx := client.Context{}.
 			WithKeyringDir(clientDir).
@@ -479,18 +439,19 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 			WithAccountRetriever(cfg.AccountRetriever)
 
 		network.Validators[i] = &Validator{
-			AppConfig:  appCfg,
-			ClientCtx:  clientCtx,
-			Ctx:        ctx,
-			Dir:        filepath.Join(network.BaseDir, nodeDirName),
-			NodeID:     nodeID,
-			PubKey:     pubKey,
-			Moniker:    nodeDirName,
-			RPCAddress: tmCfg.RPC.ListenAddress,
-			P2PAddress: tmCfg.P2P.ListenAddress,
-			APIAddress: apiAddr,
-			Address:    addr,
-			ValAddress: sdk.ValAddress(addr),
+			AppConfig:      appCfg,
+			ClientCtx:      clientCtx,
+			Ctx:            ctx,
+			Dir:            filepath.Join(network.BaseDir, nodeDirName),
+			NodeID:         nodeID,
+			PubKey:         pubKey,
+			Moniker:        nodeDirName,
+			RPCAddress:     tmCfg.RPC.ListenAddress,
+			P2PAddress:     tmCfg.P2P.ListenAddress,
+			APIAddress:     apiAddr,
+			Address:        addr,
+			ValAddress:     sdk.ValAddress(addr),
+			secretMnemonic: secret,
 		}
 	}
 
@@ -503,13 +464,13 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 		return nil, err
 	}
 
-	l.Log("starting test network...")
+	logger.Log("starting test network...")
 	for idx, v := range network.Validators {
 		err := startInProcess(cfg, v)
 		if err != nil {
 			return nil, err
 		}
-		l.Log("started validator", idx)
+		logger.Log("started validator", idx)
 	}
 
 	height, err := network.LatestHeight()
@@ -517,13 +478,13 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 		return nil, err
 	}
 
-	l.Log("started test network at height:", height)
+	logger.Log("started test network at height:", height)
 
-	// Ensure we cleanup incase any test was abruptly halted (e.g. SIGINT) as any
-	// defer in a test would not be called.
+	// Ensure we cleanup incase any test was abruptly halted (e.g. SIGINT) as
+	// any defer in a test would not be called.
 	server.TrapSignal(network.Cleanup)
 
-	return network, nil
+	return network, err
 }
 
 // LatestHeight returns the latest height of the network or an error if the
@@ -654,8 +615,9 @@ func (n *Network) Cleanup() {
 		}
 	}
 
-	// Give a brief pause for things to finish closing in other processes. Hopefully this helps with the address-in-use errors.
-	// 100ms chosen randomly.
+	// Give a brief pause for things to finish closing in other processes.
+	// Hopefully this helps with the address-in-use errors. 100ms chosen
+	// randomly.
 	time.Sleep(100 * time.Millisecond)
 
 	if n.Config.CleanupDir {
@@ -665,7 +627,17 @@ func (n *Network) Cleanup() {
 	n.Logger.Log("finished cleaning up test network")
 }
 
-func printMnemonic(l Logger, secret string) {
+func (val Validator) SecretMnemonic() string {
+	return val.secretMnemonic
+}
+
+func (val Validator) SecretMnemonicSlice() []string {
+	return strings.Fields(val.secretMnemonic)
+}
+
+// LogMnemonic logs a secret to the network's logger for debugging and manual
+// testing
+func LogMnemonic(l Logger, secret string) {
 	lines := []string{
 		"THIS MNEMONIC IS FOR TESTING PURPOSES ONLY",
 		"DO NOT USE IN PRODUCTION",
@@ -696,7 +668,8 @@ func printMnemonic(l Logger, secret string) {
 	l.Log("\n")
 }
 
-// centerText centers text across a fixed width, filling either side with whitespace buffers
+// centerText: Centers text across a fixed width, filling either side with
+// whitespace buffers
 func centerText(text string, width int) string {
 	textLen := len(text)
 	leftBuffer := strings.Repeat(" ", (width-textLen)/2)

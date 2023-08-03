@@ -91,8 +91,8 @@ func TestOrderedMap_Pair(t *testing.T) {
 	orderedKeyStrs = append(orderedKeyStrs, pairStrs...)
 	sort.Strings(orderedKeyStrs)
 
-	orderedKeys := asset.News(orderedKeyStrs...)
-	pairs := asset.News(pairStrs...)
+	orderedKeys := asset.MustNewPairs(orderedKeyStrs...)
+	pairs := asset.MustNewPairs(pairStrs...)
 
 	type ValueType struct{}
 	unorderedMap := make(map[asset.Pair]ValueType)
@@ -103,7 +103,7 @@ func TestOrderedMap_Pair(t *testing.T) {
 	om := omap.OrderedMap_Pair[ValueType](unorderedMap)
 	require.Equal(t, 6, om.Len())
 	require.EqualValues(t, orderedKeys, om.Keys())
-	require.NotEqualValues(t, orderedKeys.Strings(), pairStrs)
+	require.NotEqualValues(t, asset.PairsToStrings(orderedKeys), pairStrs)
 
 	var pairsFromLoop []asset.Pair
 	for pair := range om.Range() {
