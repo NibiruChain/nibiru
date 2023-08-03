@@ -76,7 +76,7 @@ func (MsgEditSudoersPlus) Exec(
 	args := []string{
 		fileName,
 	}
-	return testutilcli.ExecTx(network, cli.CmdEditSudoers(), from, args)
+	return network.ExecTxCmd(cli.CmdEditSudoers(), from, args)
 }
 
 type IntegrationSuite struct {
@@ -227,7 +227,8 @@ func (s *IntegrationSuite) Test_ZCmdChangeRoot() {
 	initialRoot := sudoers.Sudoers.Root
 
 	newRoot := testutil.AccAddress()
-	_, err = testutilcli.ExecTx(s.network, cli.CmdChangeRoot(), s.root.addr, []string{newRoot.String()})
+	_, err = s.network.ExecTxCmd(
+		cli.CmdChangeRoot(), s.root.addr, []string{newRoot.String()})
 	require.NoError(s.T(), err)
 
 	sudoers, err = testutilcli.QuerySudoers(val.ClientCtx)

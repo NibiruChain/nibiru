@@ -142,7 +142,7 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	ctx = ctx.WithBlockHeight(1).WithBlockTime(time.Now())
 	epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
-	pairs := asset.Pairs{
+	pairs := []asset.Pair{
 		asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 	}
 	params := otypes.DefaultParams()

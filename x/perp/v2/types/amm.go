@@ -146,15 +146,16 @@ func (amm AMM) MarkPrice() sdk.Dec {
 	return amm.QuoteReserve.Quo(amm.BaseReserve).Mul(amm.PriceMultiplier)
 }
 
-// Returns the sqrt k of the reserves
+// ComputeSqrtDepth: Returns the sqrt of the product of the reserves
 func (amm AMM) ComputeSqrtDepth() (sqrtDepth sdk.Dec, err error) {
-	mul := new(big.Int).Mul(amm.BaseReserve.BigInt(), amm.BaseReserve.BigInt())
+	liqDepthBigInt := new(big.Int).Mul(amm.QuoteReserve.BigInt(), amm.BaseReserve.BigInt())
 
-	chopped := common.ChopPrecisionAndRound(mul)
+	chopped := common.ChopPrecisionAndRound(liqDepthBigInt)
 	if chopped.BitLen() > common.MaxDecBitLen {
 		return sdk.Dec{}, ErrLiquidityDepthOverflow
 	}
-
+	// Since common.ChopPrecisionAndRound mutates the input, there's no guarantee that
+	// sdk.NewDecFromBigInt(liqDepthBigInt) is equal to amm.QuoteReserve.Mul(amm.BaseReserve)
 	liqDepth := amm.QuoteReserve.Mul(amm.BaseReserve)
 	return common.SqrtDec(liqDepth)
 }

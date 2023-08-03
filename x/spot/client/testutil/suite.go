@@ -443,10 +443,10 @@ func (s *IntegrationTestSuite) TestNewExitStablePoolCmd() {
 	resp := &sdk.TxResponse{}
 	val.ClientCtx.Codec.MustUnmarshalJSON(out.Bytes(), resp)
 	resp, err = testutilcli.QueryTx(s.network.Validators[0].ClientCtx, resp.TxHash)
-	s.Require().NoError(err)
+	s.Require().NoErrorf(err, "cmd output: %s", out)
 
 	poolID, err := ExtractPoolIDFromCreatePoolResponse(val.ClientCtx.Codec, resp)
-	s.Require().NoError(err, out.String())
+	s.Require().NoErrorf(err, "cmd output: %s", out)
 
 	testCases := []struct {
 		name          string
