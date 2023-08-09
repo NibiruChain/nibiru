@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"testing"
 	"time"
 
 	tmtypes "github.com/cometbft/cometbft/abci/types"
-	"github.com/cosmos/cosmos-sdk/codec"
+	sdkcodec "github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+
+	"github.com/NibiruChain/nibiru/app/codec"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server/api"
@@ -219,8 +222,8 @@ func writeFile(name string, dir string, contents []byte) error {
 	return nil
 }
 
-// FillWalletFromValidator fills the wallet with some coins that come from the validator.
-// Used for cli tests.
+// FillWalletFromValidator fills the wallet with some coins that come from the
+// validator.
 func FillWalletFromValidator(
 	addr sdk.AccAddress, balance sdk.Coins, val *Validator, feesDenom string,
 ) error {
@@ -239,9 +242,9 @@ func FillWalletFromValidator(
 	return txOK(val.ClientCtx.Codec, rawResp.Bytes())
 }
 
-func txOK(cdc codec.Codec, txBytes []byte) error {
+func txOK(jsonCodec sdkcodec.JSONCodec, txBytes []byte) error {
 	resp := new(sdk.TxResponse)
-	cdc.MustUnmarshalJSON(txBytes, resp)
+	jsonCodec.MustUnmarshalJSON(txBytes, resp)
 	if resp.Code != tmtypes.CodeTypeOK {
 		return fmt.Errorf("%s", resp.RawLog)
 	}
@@ -279,4 +282,16 @@ func NewAccount(network *Network, uid string) sdk.AccAddress {
 		panic(err)
 	}
 	return addr
+}
+
+func NewKeyring(t *testing.T) (
+	kring keyring.Keyring,
+	algo keyring.SignatureAlgo,
+	nodeDirName string,
+) {
+	var cdc sdkcodec.Codec = codec.MakeEncodingConfig().Marshaler
+	kring = keyring.NewInMemory(cdc)
+	nodeDirName = t.TempDir()
+	algo = hd.Secp256k1
+	return kring, algo, nodeDirName
 }

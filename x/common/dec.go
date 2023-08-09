@@ -10,7 +10,7 @@ import (
 
 const (
 	// number of decimal places
-	Precision = 18
+	PrecisionExponent = 18
 
 	// bits required to represent the above precision
 	// Ceiling[Log2[10^Precision - 1]]
@@ -25,9 +25,11 @@ const (
 )
 
 var (
-	precisionReuse = new(big.Int).Exp(big.NewInt(10), big.NewInt(Precision), nil)
-	fivePrecision  = new(big.Int).Quo(precisionReuse, big.NewInt(2))
-	oneInt         = big.NewInt(1)
+	// precisionInt: 10 ** PrecisionExponent
+	precisionInt = new(big.Int).Exp(big.NewInt(10), big.NewInt(PrecisionExponent), nil)
+	// halfPrecisionInt: (10 ** PrecisionExponent) / 2
+	halfPrecisionInt = new(big.Int).Quo(precisionInt, big.NewInt(2))
+	oneInt           = big.NewInt(1)
 )
 
 // MustSqrtDec computes the square root of the input decimal using its
@@ -119,8 +121,9 @@ func calcPrecisionMultiplier(prec int64) *big.Int {
 // |_____:  /   | $$$    |
 //              |________|
 
-// Remove a Precision amount of rightmost digits and perform bankers rounding
-// on the remainder (gaussian rounding) on the digits which have been removed.
+// ChopPrecisionAndRound: Remove a Precision amount of rightmost digits and
+// perform bankers rounding on the remainder (gaussian rounding) on the digits
+// which have been removed.
 //
 // Mutates the input. Use the non-mutative version if that is undesired
 func ChopPrecisionAndRound(d *big.Int) *big.Int {
@@ -133,20 +136,39 @@ func ChopPrecisionAndRound(d *big.Int) *big.Int {
 		return d
 	}
 
-	// get the truncated quotient and remainder
+	// Divide out the 'precisionInt', which truncates to a quotient and remainder.
 	quo, rem := d, big.NewInt(0)
-	quo, rem = quo.QuoRem(d, precisionReuse, rem)
+	quo, rem = quo.QuoRem(d, precisionInt, rem)
 
-	if rem.Sign() == 0 { // remainder is zero
+	return BankersRound(quo, rem, halfPrecisionInt)
+}
+
+// BankersRound: Banker's rounding is a method commonly used in banking and
+// accounting to reduce roudning bias when processing large volumes of rounded
+// numbers.
+//
+// 1. If the remainder < half precision, round down
+// 2. If the remainder > half precision, round up
+// 3. If remainder == half precision,  round to the nearest even number
+//
+// The name comes from the idea that it provides egalitarian rounding that
+// doesn't consistently favor one party over another (e.g. always rounding up).
+// With this method, rounding errors tend to cancel out rather than
+// accumulating in one direction.
+func BankersRound(quo, rem, halfPrecision *big.Int) *big.Int {
+	// Zero remainder after dividing precision means => no rounding is needed.
+	if rem.Sign() == 0 {
 		return quo
 	}
 
-	switch rem.Cmp(fivePrecision) {
+	// Nonzero remainder after dividing precision means => do banker's rounding
+	switch rem.Cmp(halfPrecision) {
 	case -1:
 		return quo
 	case 1:
 		return quo.Add(quo, oneInt)
-	default: // bankers rounding must take place
+	default:
+		// default case: bankers rounding must take place
 		// always round to an even number
 		if quo.Bit(0) == 0 {
 			return quo

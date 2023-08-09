@@ -382,3 +382,14 @@ func TestFundingPayment(t *testing.T) {
 		})
 	}
 }
+
+func TestMarginRatioFail(t *testing.T) {
+	val := keeper.MarginRatio(types.Position{Size_: sdk.ZeroDec()}, sdk.ZeroDec(), sdk.ZeroDec())
+	require.Equal(t, sdk.ZeroDec(), val)
+
+	_, err := keeper.PositionNotionalSpot(types.AMM{PriceMultiplier: sdk.OneDec()}, types.Position{Size_: sdk.ZeroDec()})
+	require.NoError(t, err)
+
+	_, err = keeper.PositionNotionalSpot(types.AMM{}, types.Position{})
+	require.ErrorContains(t, err, "input base amt is nil")
+}

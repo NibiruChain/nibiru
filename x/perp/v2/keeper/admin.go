@@ -58,18 +58,6 @@ func (k admin) WithdrawFromInsuranceFund(
 	return nil
 }
 
-func (k admin) SetMarketEnabled(
-	ctx sdk.Context, pair asset.Pair, enabled bool,
-) (err error) {
-	market, err := k.Markets.Get(ctx, pair)
-	if err != nil {
-		return
-	}
-	market.Enabled = enabled
-	k.Markets.Insert(ctx, pair, market)
-	return
-}
-
 type ArgsCreateMarket struct {
 	Pair            asset.Pair
 	PriceMultiplier sdk.Dec

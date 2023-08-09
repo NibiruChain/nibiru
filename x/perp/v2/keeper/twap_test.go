@@ -103,6 +103,38 @@ func TestCalcTwap(t *testing.T) {
 	NewTestSuite(t).WithTestCases(tc...).Run()
 }
 
+func TestInvalidTwap(t *testing.T) {
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+
+	app.PerpKeeperV2.Markets.Insert(ctx, pair, *mock.TestMarket())
+	app.PerpKeeperV2.AMMs.Insert(ctx, pair, *mock.TestAMMDefault())
+	app.PerpKeeperV2.ReserveSnapshots.Insert(ctx, collections.Join(pair, time.UnixMilli(0)), types.ReserveSnapshot{
+		Amm:         *mock.TestAMMDefault(),
+		TimestampMs: 0,
+	})
+
+	tc := struct {
+		twapCalcOption   types.TwapCalcOption
+		direction        types.Direction
+		assetAmount      sdk.Dec
+		lookbackInterval time.Duration
+	}{
+		twapCalcOption:   types.TwapCalcOption_SPOT,
+		direction:        types.Direction_DIRECTION_UNSPECIFIED,
+		assetAmount:      sdk.ZeroDec(),
+		lookbackInterval: 30 * time.Second,
+	}
+	_, err := app.PerpKeeperV2.CalcTwap(ctx,
+		pair,
+		tc.twapCalcOption,
+		tc.direction,
+		tc.assetAmount,
+		tc.lookbackInterval,
+	)
+	require.ErrorIs(t, err, types.ErrNoValidTWAP)
+}
+
 func TestCalcTwapExtended(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 

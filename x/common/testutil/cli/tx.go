@@ -18,72 +18,76 @@ import (
 
 type ExecTxOption func(*execTxOptions)
 
-func WithTxFees(feeCoins sdk.Coins) ExecTxOption {
+func WithTxOptions(newOptions TxOptionChanges) ExecTxOption {
 	return func(options *execTxOptions) {
-		options.fees = feeCoins
+		if newOptions.BroadcastMode != nil {
+			options.BroadcastMode = *newOptions.BroadcastMode
+		}
+		if newOptions.CanFail != nil {
+			options.CanFail = *newOptions.CanFail
+		}
+		if newOptions.Fees != nil {
+			options.Fees = *newOptions.Fees
+		}
+		if newOptions.Gas != nil {
+			options.Gas = *newOptions.Gas
+		}
+		if newOptions.KeyringBackend != nil {
+			options.KeyringBackend = *newOptions.KeyringBackend
+		}
+		if newOptions.SkipConfirmation != nil {
+			options.SkipConfirmation = *newOptions.SkipConfirmation
+		}
 	}
 }
 
-func WithTxSkipConfirmation(skipConfirmation bool) ExecTxOption {
-	return func(options *execTxOptions) {
-		options.skipConfirmation = skipConfirmation
-	}
-}
-
-func WithTxBroadcastMode(broadcastMode string) ExecTxOption {
-	return func(options *execTxOptions) {
-		options.broadcastMode = broadcastMode
-	}
-}
-
-// WithTxCanFail will not make ExecTx return an error
-// in case the response code of the TX is not ok.
-func WithTxCanFail(canFail bool) ExecTxOption {
-	return func(options *execTxOptions) {
-		options.canFail = canFail
-	}
-}
-
-func WithKeyringBackend(keyringBackend string) ExecTxOption {
-	return func(options *execTxOptions) {
-		options.keyringBackend = keyringBackend
-	}
+type TxOptionChanges struct {
+	BroadcastMode    *string
+	CanFail          *bool
+	Fees             *sdk.Coins
+	Gas              *int64
+	KeyringBackend   *string
+	SkipConfirmation *bool
 }
 
 type execTxOptions struct {
-	fees             sdk.Coins
-	gas              int64
-	skipConfirmation bool
-	broadcastMode    string
-	canFail          bool
-	keyringBackend   string
+	BroadcastMode    string
+	CanFail          bool
+	Fees             sdk.Coins
+	Gas              int64
+	KeyringBackend   string
+	SkipConfirmation bool
 }
 
-func ExecTx(network *Network, cmd *cobra.Command, txSender sdk.AccAddress, args []string, opt ...ExecTxOption) (*sdk.TxResponse, error) {
+var DEFAULT_TX_OPTIONS = execTxOptions{
+	Fees:             sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(1000))),
+	Gas:              2000000,
+	SkipConfirmation: true,
+	BroadcastMode:    flags.BroadcastSync,
+	CanFail:          false,
+	KeyringBackend:   keyring.BackendTest,
+}
+
+func (network *Network) ExecTxCmd(
+	cmd *cobra.Command, from sdk.AccAddress, args []string, opts ...ExecTxOption,
+) (*sdk.TxResponse, error) {
 	if len(network.Validators) == 0 {
 		return nil, fmt.Errorf("invalid network")
 	}
 
-	args = append(args, fmt.Sprintf("--%s=%s", flags.FlagFrom, txSender))
+	args = append(args, fmt.Sprintf("--%s=%s", flags.FlagFrom, from))
 
-	options := execTxOptions{
-		fees:             sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(1000))),
-		gas:              2000000,
-		skipConfirmation: true,
-		broadcastMode:    flags.BroadcastSync,
-		canFail:          false,
-		keyringBackend:   keyring.BackendTest,
+	options := DEFAULT_TX_OPTIONS
+
+	for _, opt := range opts {
+		opt(&options)
 	}
 
-	for _, o := range opt {
-		o(&options)
-	}
-
-	args = append(args, fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, options.broadcastMode))
-	args = append(args, fmt.Sprintf("--%s=%s", flags.FlagFees, options.fees))
-	args = append(args, fmt.Sprintf("--%s=%d", flags.FlagGas, options.gas))
-	args = append(args, fmt.Sprintf("--%s=%s", flags.FlagKeyringBackend, options.keyringBackend))
-	switch options.skipConfirmation {
+	args = append(args, fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, options.BroadcastMode))
+	args = append(args, fmt.Sprintf("--%s=%s", flags.FlagFees, options.Fees))
+	args = append(args, fmt.Sprintf("--%s=%d", flags.FlagGas, options.Gas))
+	args = append(args, fmt.Sprintf("--%s=%s", flags.FlagKeyringBackend, options.KeyringBackend))
+	switch options.SkipConfirmation {
 	case true:
 		args = append(args, fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation))
 	case false:
@@ -109,7 +113,7 @@ func ExecTx(network *Network, cmd *cobra.Command, txSender sdk.AccAddress, args 
 		return nil, fmt.Errorf("failed to query tx: %w", err)
 	}
 
-	if options.canFail {
+	if options.CanFail {
 		return resp, nil
 	}
 
@@ -120,14 +124,16 @@ func ExecTx(network *Network, cmd *cobra.Command, txSender sdk.AccAddress, args 
 	return resp, nil
 }
 
-func (n *Network) SendTx(addr sdk.AccAddress, msgs ...sdk.Msg) (*sdk.TxResponse, error) {
-	cfg := n.Config
-	kb, info, err := n.keyBaseAndInfoForAddr(addr)
+func (chain *Network) BroadcastMsgs(
+	from sdk.AccAddress, msgs ...sdk.Msg,
+) (*sdk.TxResponse, error) {
+	cfg := chain.Config
+	kb, info, err := chain.keyBaseAndInfoForAddr(from)
 	if err != nil {
 		return nil, err
 	}
 
-	rpc := n.Validators[0].RPCClient
+	rpc := chain.Validators[0].RPCClient
 	txBuilder := cfg.TxConfig.NewTxBuilder()
 	err = txBuilder.SetMsgs(msgs...)
 	if err != nil {
@@ -137,7 +143,7 @@ func (n *Network) SendTx(addr sdk.AccAddress, msgs ...sdk.Msg) (*sdk.TxResponse,
 	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(cfg.BondDenom, sdk.NewInt(1000))))
 	txBuilder.SetGasLimit(uint64(1 * common.TO_MICRO))
 
-	acc, err := cfg.AccountRetriever.GetAccount(n.Validators[0].ClientCtx, addr)
+	acc, err := cfg.AccountRetriever.GetAccount(chain.Validators[0].ClientCtx, from)
 	if err != nil {
 		return nil, err
 	}
@@ -166,5 +172,5 @@ func (n *Network) SendTx(addr sdk.AccAddress, msgs ...sdk.Msg) (*sdk.TxResponse,
 		return nil, err
 	}
 
-	return sdk.NewResponseFormatBroadcastTx(respRaw), nil
+	return sdk.NewResponseFormatBroadcastTx(respRaw), err
 }

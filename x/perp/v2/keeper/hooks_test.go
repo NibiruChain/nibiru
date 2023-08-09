@@ -62,6 +62,63 @@ func TestAfterEpochEnd(t *testing.T) {
 			Then(
 				MarketShouldBeEqual(pairBtcUsdc, Market_LatestCPFShouldBeEqualTo(sdk.ZeroDec())),
 			),
+
+		TC("missing twap").
+			Given(
+				CreateCustomMarket(pairBtcUsdc),
+				SetBlockTime(startTime),
+				StartEpoch(epochtypes.ThirtyMinuteEpochID),
+			).
+			When(
+				MoveToNextBlockWithDuration(30 * time.Minute),
+			).
+			Then(
+				MarketShouldBeEqual(pairBtcUsdc, Market_LatestCPFShouldBeEqualTo(sdk.ZeroDec())),
+			),
+
+		TC("0 price mark").
+			Given(
+				CreateCustomMarket(pairBtcUsdc),
+				SetBlockTime(startTime),
+				StartEpoch(epochtypes.ThirtyMinuteEpochID),
+				InsertOraclePriceSnapshot(pairBtcUsdc, startTime.Add(15*time.Minute), sdk.ZeroDec()),
+			).
+			When(
+				MoveToNextBlockWithDuration(30 * time.Minute),
+			).
+			Then(
+				MarketShouldBeEqual(pairBtcUsdc, Market_LatestCPFShouldBeEqualTo(sdk.ZeroDec())),
+			),
+
+		TC("market not enabled").
+			Given(
+				CreateCustomMarket(pairBtcUsdc),
+				SetMarketEnabled(pairBtcUsdc, false),
+				SetBlockTime(startTime),
+				StartEpoch(epochtypes.ThirtyMinuteEpochID),
+				InsertOraclePriceSnapshot(pairBtcUsdc, startTime.Add(15*time.Minute), sdk.NewDec(2)),
+			).
+			When(
+				MoveToNextBlockWithDuration(30 * time.Minute),
+			).
+			Then(
+				MarketShouldBeEqual(pairBtcUsdc, Market_LatestCPFShouldBeEqualTo(sdk.ZeroDec())),
+			),
+
+		TC("not correct epoch id").
+			Given(
+				CreateCustomMarket(pairBtcUsdc),
+				SetMarketEnabled(pairBtcUsdc, false),
+				SetBlockTime(startTime),
+				StartEpoch(epochtypes.FifteenMinuteEpochID),
+				InsertOraclePriceSnapshot(pairBtcUsdc, startTime.Add(15*time.Minute), sdk.NewDec(2)),
+			).
+			When(
+				MoveToNextBlockWithDuration(30 * time.Minute),
+			).
+			Then(
+				MarketShouldBeEqual(pairBtcUsdc, Market_LatestCPFShouldBeEqualTo(sdk.ZeroDec())),
+			),
 	}
 
 	NewTestSuite(t).WithTestCases(tc...).Run()

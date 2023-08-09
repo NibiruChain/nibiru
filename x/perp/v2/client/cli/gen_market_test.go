@@ -1,26 +1,15 @@
 package cli_test
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
-	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-
-	"github.com/cometbft/cometbft/libs/log"
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/x/genutil"
-	genutiltest "github.com/cosmos/cosmos-sdk/x/genutil/client/testutil"
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/perp/v2/client/cli"
 )
-
-var testModuleBasicManager = module.NewBasicManager(genutil.AppModuleBasic{})
 
 // Tests "add-genesis-perp-market", a command that adds a market to genesis.json
 func TestAddMarketGenesisCmd(t *testing.T) {
@@ -98,26 +87,10 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 		},
 	}
 
+	ctx := testutil.SetupClientCtx(t)
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			home := t.TempDir()
-			logger := log.NewNopLogger()
-			cfg, err := genutiltest.CreateDefaultTendermintConfig(home)
-			require.NoError(t, err)
-
-			appCodec := moduletestutil.MakeTestEncodingConfig().Codec
-			err = genutiltest.ExecInitCmd(
-				testModuleBasicManager, home, appCodec)
-			require.NoError(t, err)
-
-			serverCtx := server.NewContext(viper.New(), cfg, logger)
-			clientCtx := client.Context{}.WithCodec(appCodec).WithHomeDir(home)
-
-			ctx := context.Background()
-			ctx = context.WithValue(ctx, client.ClientContextKey, &clientCtx)
-			ctx = context.WithValue(ctx, server.ServerContextKey, serverCtx)
-
 			cmd := cli.AddMarketGenesisCmd("home")
 			cmd.SetArgs([]string{
 				fmt.Sprintf("--%s=%s", cli.FlagPair, tc.pairName),
