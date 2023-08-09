@@ -31,24 +31,6 @@ func (pool Pool) numSharesOutFromTokensIn(tokensIn sdk.Coins) (
 	maxShareRatio := sdk.ZeroDec()
 
 	poolLiquidity := pool.PoolBalances()
-	if len(tokensIn) == 1 {
-		// From balancer whitepaper, for 2 assets with the same weight, the shares issued are:
-		// P_{supply} * (sqrt(1+((1-f/2) * x_{in})/X)-1)
-
-		one := sdk.OneDec()
-
-		joinShare := sdk.NewDecFromInt(tokensIn[0].Amount).Mul(one.Sub(pool.PoolParams.SwapFee.Quo(sdk.NewDec(2)))).QuoInt(
-			poolLiquidity.AmountOfNoDenomValidation(tokensIn[0].Denom),
-		).Add(one)
-
-		joinShare, err = joinShare.ApproxSqrt()
-		if err != nil {
-			return
-		}
-
-		numShares = joinShare.Sub(one).MulInt(pool.TotalShares.Amount).TruncateInt()
-		return
-	}
 
 	for i, coin := range tokensIn {
 		shareRatio := sdk.NewDecFromInt(coin.Amount).QuoInt(
