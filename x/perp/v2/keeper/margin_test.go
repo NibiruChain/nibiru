@@ -5,6 +5,9 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
@@ -19,6 +22,7 @@ import (
 func TestAddMargin(t *testing.T) {
 	alice := testutil.AccAddress()
 	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.USDC)
+	pairEthUsdc := asset.Registry.Pair(denoms.ETH, denoms.USDC)
 	startBlockTime := time.Now()
 
 	tc := TestCases{
@@ -56,14 +60,16 @@ func TestAddMargin(t *testing.T) {
 						LatestCumulativePremiumFraction: sdk.ZeroDec(),
 						LastUpdatedBlockNumber:          2,
 					},
-					PositionNotional: sdk.NewDec(10_000),
-					RealizedPnl:      sdk.ZeroDec(),
-					BadDebt:          sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
-					FundingPayment:   sdk.ZeroDec(),
-					TransactionFee:   sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
-					BlockHeight:      2,
-					MarginToUser:     sdk.NewInt(-1_000),
-					ChangeReason:     types.ChangeReason_AddMargin,
+					PositionNotional:  sdk.NewDec(10_000),
+					RealizedPnl:       sdk.ZeroDec(),
+					BadDebt:           sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+					FundingPayment:    sdk.ZeroDec(),
+					TransactionFee:    sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+					BlockHeight:       2,
+					MarginToUser:      sdk.NewInt(-1_000),
+					ChangeReason:      types.ChangeReason_AddMargin,
+					ExchangedNotional: sdk.MustNewDecFromStr("0"),
+					ExchangedSize:     sdk.MustNewDecFromStr("0"),
 				}),
 				BalanceEqual(alice, denoms.USDC, sdk.ZeroInt()),
 				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(10)),
@@ -104,18 +110,42 @@ func TestAddMargin(t *testing.T) {
 						LatestCumulativePremiumFraction: sdk.ZeroDec(),
 						LastUpdatedBlockNumber:          2,
 					},
-					PositionNotional: sdk.NewDec(10_000),
-					RealizedPnl:      sdk.ZeroDec(),
-					BadDebt:          sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
-					FundingPayment:   sdk.ZeroDec(),
-					TransactionFee:   sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
-					BlockHeight:      2,
-					MarginToUser:     sdk.NewInt(-1000),
-					ChangeReason:     types.ChangeReason_AddMargin,
+					PositionNotional:  sdk.NewDec(10_000),
+					RealizedPnl:       sdk.ZeroDec(),
+					BadDebt:           sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+					FundingPayment:    sdk.ZeroDec(),
+					TransactionFee:    sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+					BlockHeight:       2,
+					MarginToUser:      sdk.NewInt(-1000),
+					ChangeReason:      types.ChangeReason_AddMargin,
+					ExchangedNotional: sdk.MustNewDecFromStr("0"),
+					ExchangedSize:     sdk.MustNewDecFromStr("0"),
 				}),
 				BalanceEqual(alice, denoms.USDC, sdk.ZeroInt()),
 				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(10)),
 				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.NewInt(10)),
+			),
+
+		TC("Testing fails").
+			Given(
+				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairEthUsdc),
+
+				SetBlockNumber(1),
+				SetBlockTime(startBlockTime),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
+				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+			).
+			When(
+				MoveToNextBlock(),
+				AddMarginFail(alice, asset.MustNewPair("luna:usdt"), sdk.NewInt(1000), types.ErrPairNotFound),
+				AddMarginFail(alice, pairEthUsdc, sdk.NewInt(1000), collections.ErrNotFound),
+				AddMarginFail(alice, pairBtcUsdc, sdk.NewInt(1000), sdkerrors.ErrInsufficientFunds),
+
+				RemoveMarginFail(alice, asset.MustNewPair("luna:usdt"), sdk.NewInt(1000), types.ErrPairNotFound),
+				RemoveMarginFail(alice, pairEthUsdc, sdk.NewInt(1000), collections.ErrNotFound),
+				RemoveMarginFail(alice, pairBtcUsdc, sdk.NewInt(2000), types.ErrBadDebt),
+				RemoveMarginFail(alice, pairBtcUsdc, sdk.NewInt(900), types.ErrMarginRatioTooLow),
 			),
 	}
 
@@ -160,14 +190,16 @@ func TestRemoveMargin(t *testing.T) {
 						LatestCumulativePremiumFraction: sdk.ZeroDec(),
 						LastUpdatedBlockNumber:          2,
 					},
-					PositionNotional: sdk.NewDec(1000),
-					RealizedPnl:      sdk.ZeroDec(),
-					BadDebt:          sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
-					FundingPayment:   sdk.ZeroDec(),
-					TransactionFee:   sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
-					BlockHeight:      2,
-					MarginToUser:     sdk.NewInt(500),
-					ChangeReason:     types.ChangeReason_RemoveMargin,
+					PositionNotional:  sdk.NewDec(1000),
+					RealizedPnl:       sdk.ZeroDec(),
+					BadDebt:           sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+					FundingPayment:    sdk.ZeroDec(),
+					TransactionFee:    sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+					BlockHeight:       2,
+					MarginToUser:      sdk.NewInt(500),
+					ChangeReason:      types.ChangeReason_RemoveMargin,
+					ExchangedNotional: sdk.MustNewDecFromStr("0"),
+					ExchangedSize:     sdk.MustNewDecFromStr("0"),
 				}),
 				BalanceEqual(alice, denoms.USDC, sdk.NewInt(500)),
 				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.OneInt()),
@@ -233,14 +265,16 @@ func TestRemoveMargin(t *testing.T) {
 						LatestCumulativePremiumFraction: sdk.ZeroDec(),
 						LastUpdatedBlockNumber:          2,
 					},
-					PositionNotional: sdk.NewDec(1000),
-					RealizedPnl:      sdk.ZeroDec(),
-					BadDebt:          sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
-					FundingPayment:   sdk.ZeroDec(),
-					TransactionFee:   sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
-					BlockHeight:      2,
-					MarginToUser:     sdk.NewInt(500),
-					ChangeReason:     types.ChangeReason_RemoveMargin,
+					PositionNotional:  sdk.NewDec(1000),
+					RealizedPnl:       sdk.ZeroDec(),
+					BadDebt:           sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+					FundingPayment:    sdk.ZeroDec(),
+					TransactionFee:    sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+					BlockHeight:       2,
+					MarginToUser:      sdk.NewInt(500),
+					ChangeReason:      types.ChangeReason_RemoveMargin,
+					ExchangedNotional: sdk.MustNewDecFromStr("0"),
+					ExchangedSize:     sdk.MustNewDecFromStr("0"),
 				}),
 				BalanceEqual(alice, denoms.USDC, sdk.NewInt(500)),
 				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.OneInt()),

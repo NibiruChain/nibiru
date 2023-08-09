@@ -106,7 +106,7 @@ func (s *IntegrationTestSuite) sendPrevotes(prices []map[asset.Pair]sdk.Dec) []s
 
 		pricesStr, err := votes.ToString()
 		require.NoError(s.T(), err)
-		_, err = s.network.SendTx(val.Address, &types.MsgAggregateExchangeRatePrevote{
+		_, err = s.network.BroadcastMsgs(val.Address, &types.MsgAggregateExchangeRatePrevote{
 			Hash:      types.GetAggregateVoteHash("1", pricesStr, val.ValAddress).String(),
 			Feeder:    val.Address.String(),
 			Validator: val.ValAddress.String(),
@@ -121,7 +121,7 @@ func (s *IntegrationTestSuite) sendPrevotes(prices []map[asset.Pair]sdk.Dec) []s
 
 func (s *IntegrationTestSuite) sendVotes(rates []string) {
 	for i, val := range s.network.Validators {
-		_, err := s.network.SendTx(val.Address, &types.MsgAggregateExchangeRateVote{
+		_, err := s.network.BroadcastMsgs(val.Address, &types.MsgAggregateExchangeRateVote{
 			Salt:          "1",
 			ExchangeRates: rates[i],
 			Feeder:        val.Address.String(),
