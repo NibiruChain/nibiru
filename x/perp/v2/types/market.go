@@ -80,6 +80,11 @@ func (market *Market) WithFundingRateEpochId(value string) *Market {
 	return market
 }
 
+func (market *Market) WithMaxFundingRate(value sdk.Dec) *Market {
+	market.MaxFundingRate = value
+	return market
+}
+
 func (market *Market) WithPair(value asset.Pair) *Market {
 	market.Pair = value
 	return market
@@ -146,6 +151,10 @@ func MarketsAreEqual(expected, actual *Market) error {
 
 	if expected.FundingRateEpochId != actual.FundingRateEpochId {
 		return fmt.Errorf("expected market funding rate epoch id %s, got %s", expected.FundingRateEpochId, actual.FundingRateEpochId)
+	}
+
+	if expected.MaxFundingRate != actual.MaxFundingRate {
+		return fmt.Errorf("expected market max funding rate %s, got %s", expected.MaxFundingRate, actual.MaxFundingRate)
 	}
 
 	if !expected.PrepaidBadDebt.Equal(actual.PrepaidBadDebt) {

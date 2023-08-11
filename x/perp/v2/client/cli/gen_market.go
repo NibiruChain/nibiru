@@ -167,6 +167,7 @@ func newMarketFromFlags(flagSet *flag.FlagSet,
 		LiquidationFeeRatio:             sdk.MustNewDecFromStr("0.0500"),
 		PartialLiquidationRatio:         sdk.MustNewDecFromStr("0.5"),
 		FundingRateEpochId:              epochstypes.ThirtyMinuteEpochID,
+		MaxFundingRate:                  sdk.NewDec(1),
 		TwapLookbackWindow:              time.Minute * 30,
 		PrepaidBadDebt:                  sdk.NewInt64Coin(pair.QuoteDenom(), 0),
 	}

@@ -106,6 +106,10 @@ func TestMarketEqual(t *testing.T) {
 			requiredError: "expected market funding rate epoch id",
 		},
 		{
+			modifier:      func(m *Market) { m.WithMaxFundingRate(sdk.NewDec(42)) },
+			requiredError: "expected market funding rate epoch id",
+		},
+		{
 			modifier:      func(m *Market) { m.WithLatestCumulativePremiumFraction(sdk.NewDec(42)) },
 			requiredError: "expected market latest cumulative premium fraction",
 		},

@@ -50,6 +50,12 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64)
 		// See https://www.notion.so/nibiru/Funding-Payments-5032d0f8ed164096808354296d43e1fa for an explanation of these terms.
 		premiumFraction := markTwap.Sub(indexTwap).QuoInt64(int64(intervalsPerDay))
 
+		if premiumFraction.GT(market.MaxFundingRate) {
+			premiumFraction = market.MaxFundingRate
+		} else if premiumFraction.LT(market.MaxFundingRate.Neg()) {
+			premiumFraction = market.MaxFundingRate.Neg()
+		}
+
 		market.LatestCumulativePremiumFraction = market.LatestCumulativePremiumFraction.Add(premiumFraction)
 		k.Markets.Insert(ctx, market.Pair, market)
 
