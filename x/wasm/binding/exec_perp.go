@@ -232,7 +232,7 @@ func (exec *ExecutorPerp) CreateMarket(
 			LiquidationFeeRatio:             mp.LiquidationFeeRatio,
 			PartialLiquidationRatio:         mp.PartialLiquidationRatio,
 			FundingRateEpochId:              mp.FundingRateEpochId,
-			MaxFundingRate:                  mp.MaxFundingRate,
+			MaxPremiumFraction:              mp.MaxPremiumFraction,
 			TwapLookbackWindow:              time.Duration(mp.TwapLookbackWindow.Int64()),
 			PrepaidBadDebt:                  sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()),
 		}

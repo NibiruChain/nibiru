@@ -51,7 +51,7 @@ func TestAfterEpochEnd(t *testing.T) {
 
 		TC("index > mark - max funding rate").
 			Given(
-				CreateCustomMarket(pairBtcUsdc, WithMaxFundingRate(sdk.MustNewDecFromStr("0.001"))),
+				CreateCustomMarket(pairBtcUsdc, WithMaxPremiumFraction(sdk.MustNewDecFromStr("0.001"))),
 				SetBlockTime(startTime),
 				InsertOraclePriceSnapshot(pairBtcUsdc, startTime.Add(15*time.Minute), sdk.MustNewDecFromStr("5.8")),
 				StartEpoch(epochtypes.ThirtyMinuteEpochID),
@@ -65,7 +65,7 @@ func TestAfterEpochEnd(t *testing.T) {
 
 		TC("index < mark - max funding rate").
 			Given(
-				CreateCustomMarket(pairBtcUsdc, WithMaxFundingRate(sdk.MustNewDecFromStr("0.001"))),
+				CreateCustomMarket(pairBtcUsdc, WithMaxPremiumFraction(sdk.MustNewDecFromStr("0.001"))),
 				SetBlockTime(startTime),
 				InsertOraclePriceSnapshot(pairBtcUsdc, startTime.Add(15*time.Minute), sdk.MustNewDecFromStr("0.52")),
 				StartEpoch(epochtypes.ThirtyMinuteEpochID),

@@ -62,7 +62,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			LiquidationFeeRatio:             sdk.MustNewDecFromStr("0.001"),
 			PartialLiquidationRatio:         sdk.MustNewDecFromStr("0.5"),
 			FundingRateEpochId:              epochstypes.ThirtyMinuteEpochID,
-			MaxFundingRate:                  sdk.OneDec(),
+			MaxPremiumFraction:              sdk.OneDec(),
 			TwapLookbackWindow:              30 * time.Minute,
 			PrepaidBadDebt:                  sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
 		},

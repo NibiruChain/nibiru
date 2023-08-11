@@ -113,9 +113,9 @@ func WithLatestMarketCPF(amount sdk.Dec) marketModifier {
 	}
 }
 
-func WithMaxFundingRate(amount sdk.Dec) marketModifier {
+func WithMaxPremiumFraction(amount sdk.Dec) marketModifier {
 	return func(market *types.Market, amm *types.AMM) {
-		market.MaxFundingRate = amount
+		market.MaxPremiumFraction = amount
 	}
 }
 

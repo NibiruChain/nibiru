@@ -92,7 +92,7 @@ func (m Market) ToAppMarket() (appMarket perpv2types.Market, err error) {
 		LiquidationFeeRatio:             sdk.MustNewDecFromStr("0.0500"),
 		PartialLiquidationRatio:         sdk.MustNewDecFromStr("0.5"),
 		FundingRateEpochId:              epochstypes.ThirtyMinuteEpochID,
-		MaxFundingRate:                  sdk.NewDec(1),
+		MaxPremiumFraction:              sdk.NewDec(1),
 		TwapLookbackWindow:              30 * time.Minute,
 		PrepaidBadDebt:                  sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()),
 	}, nil

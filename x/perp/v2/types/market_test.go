@@ -79,7 +79,7 @@ func TestMarketEqual(t *testing.T) {
 	market.WithPartialLiquidationRatio(sdk.NewDecWithPrec(1, 1))
 	market.WithMaxLeverage(sdk.NewDec(10))
 	market.WithLatestCumulativePremiumFraction(sdk.OneDec())
-	market.WithMaxFundingRate(sdk.OneDec())
+	market.WithMaxPremiumFraction(sdk.OneDec())
 	require.NoError(t, market.Validate())
 
 	testCases := []struct {
@@ -107,7 +107,7 @@ func TestMarketEqual(t *testing.T) {
 			requiredError: "expected market funding rate epoch id",
 		},
 		{
-			modifier:      func(m *Market) { m.WithMaxFundingRate(sdk.NewDec(42)) },
+			modifier:      func(m *Market) { m.WithMaxPremiumFraction(sdk.NewDec(42)) },
 			requiredError: "expected market max funding rate",
 		},
 		{
