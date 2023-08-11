@@ -49,6 +49,34 @@ func TestAfterEpochEnd(t *testing.T) {
 				MarketShouldBeEqual(pairBtcUsdc, Market_LatestCPFShouldBeEqualTo(sdk.MustNewDecFromStr("0.01"))),
 			),
 
+		TC("index > mark - max funding rate").
+			Given(
+				CreateCustomMarket(pairBtcUsdc, WithMaxFundingRate(sdk.MustNewDecFromStr("0.001"))),
+				SetBlockTime(startTime),
+				InsertOraclePriceSnapshot(pairBtcUsdc, startTime.Add(15*time.Minute), sdk.MustNewDecFromStr("5.8")),
+				StartEpoch(epochtypes.ThirtyMinuteEpochID),
+			).
+			When(
+				MoveToNextBlockWithDuration(30 * time.Minute),
+			).
+			Then(
+				MarketShouldBeEqual(pairBtcUsdc, Market_LatestCPFShouldBeEqualTo(sdk.MustNewDecFromStr("-0.001"))),
+			),
+
+		TC("index < mark - max funding rate").
+			Given(
+				CreateCustomMarket(pairBtcUsdc, WithMaxFundingRate(sdk.MustNewDecFromStr("0.001"))),
+				SetBlockTime(startTime),
+				InsertOraclePriceSnapshot(pairBtcUsdc, startTime.Add(15*time.Minute), sdk.MustNewDecFromStr("0.52")),
+				StartEpoch(epochtypes.ThirtyMinuteEpochID),
+			).
+			When(
+				MoveToNextBlockWithDuration(30 * time.Minute),
+			).
+			Then(
+				MarketShouldBeEqual(pairBtcUsdc, Market_LatestCPFShouldBeEqualTo(sdk.MustNewDecFromStr("0.001"))),
+			),
+
 		TC("index == mark").
 			Given(
 				CreateCustomMarket(pairBtcUsdc),
