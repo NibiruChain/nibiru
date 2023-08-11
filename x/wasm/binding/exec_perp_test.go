@@ -95,6 +95,7 @@ func (s *TestSuitePerpExecutor) TestOpenAddRemoveClose() {
 		s.DoPegShiftTest(pair),
 		s.DoInsuranceFundWithdrawTest(sdk.NewInt(69), s.contractDeployer),
 		s.DoCreateMarketTest(asset.MustNewPair("ufoo:ubar")),
+		s.DoCreateMarketTestWithParams(asset.MustNewPair("ufoo2:ubar")),
 	} {
 		s.NoError(err)
 	}
