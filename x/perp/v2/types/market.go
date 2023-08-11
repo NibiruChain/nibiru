@@ -153,7 +153,7 @@ func MarketsAreEqual(expected, actual *Market) error {
 		return fmt.Errorf("expected market funding rate epoch id %s, got %s", expected.FundingRateEpochId, actual.FundingRateEpochId)
 	}
 
-	if expected.MaxFundingRate != actual.MaxFundingRate {
+	if !expected.MaxFundingRate.Equal(actual.MaxFundingRate) {
 		return fmt.Errorf("expected market max funding rate %s, got %s", expected.MaxFundingRate, actual.MaxFundingRate)
 	}
 
@@ -188,5 +188,6 @@ func (m *Market) copy() *Market {
 		LiquidationFeeRatio:     m.LiquidationFeeRatio,
 		PartialLiquidationRatio: m.PartialLiquidationRatio,
 		MaxLeverage:             m.MaxLeverage,
+		MaxFundingRate:          m.MaxFundingRate,
 	}
 }
