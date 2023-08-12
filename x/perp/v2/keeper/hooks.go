@@ -7,6 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
@@ -48,7 +49,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64)
 		}
 		intervalsPerDay := (24 * time.Hour) / epochInfo.Duration
 		// See https://www.notion.so/nibiru/Funding-Payments-5032d0f8ed164096808354296d43e1fa for an explanation of these terms.
-		clampedDivergence := Clamp(markTwap.Sub(indexTwap).Quo(indexTwap), market.MaxFundingRate)
+		clampedDivergence := common.Clamp(markTwap.Sub(indexTwap).Quo(indexTwap), market.MaxFundingRate)
 		premiumFraction := clampedDivergence.Mul(indexTwap).QuoInt64(int64(intervalsPerDay))
 
 		market.LatestCumulativePremiumFraction = market.LatestCumulativePremiumFraction.Add(premiumFraction)
@@ -62,17 +63,6 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64)
 			CumulativePremiumFraction: market.LatestCumulativePremiumFraction,
 		})
 	}
-}
-
-// Clamp return the value if it is within the clampValue, otherwise return the clampValue.
-// e.g. Clamp(1.5, 1) = 1, Clamp(-1.5, 1) = -1, Clamp(0.5, 1) = 0.5
-func Clamp(value sdk.Dec, clampValue sdk.Dec) sdk.Dec {
-	if value.GT(clampValue) {
-		return clampValue
-	} else if value.LT(clampValue.Neg()) {
-		return clampValue.Neg()
-	}
-	return value
 }
 
 // ___________________________________________________________________________________________________
