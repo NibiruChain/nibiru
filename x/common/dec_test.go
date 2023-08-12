@@ -129,3 +129,38 @@ func TestBankersRound(t *testing.T) {
 		assert.EqualValues(t, tc.rounded, rounded)
 	}
 }
+
+func TestClamp(t *testing.T) {
+	tests := []struct {
+		value       sdk.Dec
+		clampValue  sdk.Dec
+		expected    sdk.Dec
+		description string
+	}{
+		{
+			value:       sdk.NewDec(15),
+			clampValue:  sdk.NewDec(1),
+			expected:    sdk.NewDec(1),
+			description: "Clamping 1.5 to 1",
+		},
+		{
+			value:       sdk.NewDec(-15),
+			clampValue:  sdk.NewDec(1),
+			expected:    sdk.NewDec(-1),
+			description: "Clamping -1.5 to 1",
+		},
+		{
+			value:       sdk.MustNewDecFromStr("0.5"),
+			clampValue:  sdk.NewDec(1),
+			expected:    sdk.MustNewDecFromStr("0.5"),
+			description: "Clamping 0.5 to 1",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.description, func(t *testing.T) {
+			result := common.Clamp(tt.value, tt.clampValue)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}

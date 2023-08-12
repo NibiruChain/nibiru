@@ -80,8 +80,8 @@ func (market *Market) WithFundingRateEpochId(value string) *Market {
 	return market
 }
 
-func (market *Market) WithMaxPremiumFraction(value sdk.Dec) *Market {
-	market.MaxPremiumFraction = value
+func (market *Market) WithMaxFundingRate(value sdk.Dec) *Market {
+	market.MaxFundingRate = value
 	return market
 }
 
@@ -153,8 +153,8 @@ func MarketsAreEqual(expected, actual *Market) error {
 		return fmt.Errorf("expected market funding rate epoch id %s, got %s", expected.FundingRateEpochId, actual.FundingRateEpochId)
 	}
 
-	if !expected.MaxPremiumFraction.Equal(actual.MaxPremiumFraction) {
-		return fmt.Errorf("expected market max funding rate %s, got %s", expected.MaxPremiumFraction, actual.MaxPremiumFraction)
+	if !expected.MaxFundingRate.Equal(actual.MaxFundingRate) {
+		return fmt.Errorf("expected market max funding rate %s, got %s", expected.MaxFundingRate, actual.MaxFundingRate)
 	}
 
 	if !expected.PrepaidBadDebt.Equal(actual.PrepaidBadDebt) {
@@ -188,6 +188,6 @@ func (m *Market) copy() *Market {
 		LiquidationFeeRatio:     m.LiquidationFeeRatio,
 		PartialLiquidationRatio: m.PartialLiquidationRatio,
 		MaxLeverage:             m.MaxLeverage,
-		MaxPremiumFraction:      m.MaxPremiumFraction,
+		MaxFundingRate:          m.MaxFundingRate,
 	}
 }

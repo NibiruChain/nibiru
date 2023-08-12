@@ -48,13 +48,8 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64)
 		}
 		intervalsPerDay := (24 * time.Hour) / epochInfo.Duration
 		// See https://www.notion.so/nibiru/Funding-Payments-5032d0f8ed164096808354296d43e1fa for an explanation of these terms.
-		premiumFraction := markTwap.Sub(indexTwap).QuoInt64(int64(intervalsPerDay))
-
-		if premiumFraction.GT(market.MaxPremiumFraction) {
-			premiumFraction = market.MaxPremiumFraction
-		} else if premiumFraction.LT(market.MaxPremiumFraction.Neg()) {
-			premiumFraction = market.MaxPremiumFraction.Neg()
-		}
+		clampedDivergence := Clamp(markTwap.Sub(indexTwap).Quo(indexTwap), market.MaxFundingRate)
+		premiumFraction := clampedDivergence.Mul(indexTwap).QuoInt64(int64(intervalsPerDay))
 
 		market.LatestCumulativePremiumFraction = market.LatestCumulativePremiumFraction.Add(premiumFraction)
 		k.Markets.Insert(ctx, market.Pair, market)
@@ -67,6 +62,17 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64)
 			CumulativePremiumFraction: market.LatestCumulativePremiumFraction,
 		})
 	}
+}
+
+// Clamp return the value if it is within the clampValue, otherwise return the clampValue.
+// e.g. Clamp(1.5, 1) = 1, Clamp(-1.5, 1) = -1, Clamp(0.5, 1) = 0.5
+func Clamp(value sdk.Dec, clampValue sdk.Dec) sdk.Dec {
+	if value.GT(clampValue) {
+		return clampValue
+	} else if value.LT(clampValue.Neg()) {
+		return clampValue.Neg()
+	}
+	return value
 }
 
 // ___________________________________________________________________________________________________

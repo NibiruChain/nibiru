@@ -278,7 +278,7 @@ func (s *TestSuitePerpExecutor) DoCreateMarketTestWithParams(pair asset.Pair) er
 			LiquidationFeeRatio:             sdk.OneDec(),
 			PartialLiquidationRatio:         sdk.OneDec(),
 			FundingRateEpochId:              "hi",
-			MaxPremiumFraction:              sdk.OneDec(),
+			MaxFundingRate:                  sdk.OneDec(),
 			TwapLookbackWindow:              sdk.OneInt(),
 		},
 	}

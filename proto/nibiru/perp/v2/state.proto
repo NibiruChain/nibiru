@@ -107,7 +107,7 @@ message Market {
   // the maximum funding rate payment per epoch, this represents the maximum
   // amount of funding that can be paid out per epoch as a percentage of the
   // position size
-  string max_premium_fraction = 13 [
+  string max_funding_rate = 13 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.stdduration) = true,
     (gogoproto.nullable) = false
