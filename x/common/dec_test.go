@@ -141,7 +141,7 @@ func TestClamp(t *testing.T) {
 			value:       sdk.NewDec(15),
 			clampValue:  sdk.NewDec(1),
 			expected:    sdk.NewDec(1),
-			description: "Clamping 1.5 to 1",
+			description: "Clamping 15 to 1",
 		},
 		{
 			value:       sdk.NewDec(-15),
