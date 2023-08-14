@@ -38,6 +38,10 @@ func (market *Market) Validate() error {
 		return fmt.Errorf("max leverage must be > 0")
 	}
 
+	if market.MaxFundingRate.LT(sdk.ZeroDec()) {
+		return fmt.Errorf("max funding rate must be >= 0")
+	}
+
 	if sdk.OneDec().Quo(market.MaxLeverage).LT(market.MaintenanceMarginRatio) {
 		return fmt.Errorf("margin ratio opened with max leverage position will be lower than Maintenance margin ratio")
 	}
