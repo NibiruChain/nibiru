@@ -176,3 +176,14 @@ func BankersRound(quo, rem, halfPrecision *big.Int) *big.Int {
 		return quo.Add(quo, oneInt)
 	}
 }
+
+// Clamp return the value if it is within the clampValue, otherwise return the clampValue.
+// e.g. Clamp(1.5, 1) = 1, Clamp(-1.5, 1) = -1, Clamp(0.5, 1) = 0.5
+func Clamp(value sdk.Dec, clampValue sdk.Dec) sdk.Dec {
+	if value.GT(clampValue) {
+		return clampValue
+	} else if value.LT(clampValue.Neg()) {
+		return clampValue.Neg()
+	}
+	return value
+}

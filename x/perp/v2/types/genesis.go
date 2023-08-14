@@ -58,6 +58,7 @@ func DefaultMarket(pair asset.Pair) *Market {
 		LiquidationFeeRatio:             sdk.MustNewDecFromStr("0.0500"),
 		PartialLiquidationRatio:         sdk.MustNewDecFromStr("0.5000"),
 		FundingRateEpochId:              epochstypes.ThirtyMinuteEpochID,
+		MaxFundingRate:                  sdk.NewDec(1),
 		TwapLookbackWindow:              time.Minute * 30,
 		PrepaidBadDebt:                  sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
 		MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.0625"),

@@ -38,6 +38,10 @@ func (market *Market) Validate() error {
 		return fmt.Errorf("max leverage must be > 0")
 	}
 
+	if market.MaxFundingRate.LT(sdk.ZeroDec()) {
+		return fmt.Errorf("max funding rate must be >= 0")
+	}
+
 	if sdk.OneDec().Quo(market.MaxLeverage).LT(market.MaintenanceMarginRatio) {
 		return fmt.Errorf("margin ratio opened with max leverage position will be lower than Maintenance margin ratio")
 	}
@@ -77,6 +81,11 @@ func (market *Market) WithPartialLiquidationRatio(value sdk.Dec) *Market {
 
 func (market *Market) WithFundingRateEpochId(value string) *Market {
 	market.FundingRateEpochId = value
+	return market
+}
+
+func (market *Market) WithMaxFundingRate(value sdk.Dec) *Market {
+	market.MaxFundingRate = value
 	return market
 }
 
@@ -148,6 +157,10 @@ func MarketsAreEqual(expected, actual *Market) error {
 		return fmt.Errorf("expected market funding rate epoch id %s, got %s", expected.FundingRateEpochId, actual.FundingRateEpochId)
 	}
 
+	if !expected.MaxFundingRate.Equal(actual.MaxFundingRate) {
+		return fmt.Errorf("expected market max funding rate %s, got %s", expected.MaxFundingRate, actual.MaxFundingRate)
+	}
+
 	if !expected.PrepaidBadDebt.Equal(actual.PrepaidBadDebt) {
 		return fmt.Errorf("expected market prepaid bad debt %s, got %s", expected.PrepaidBadDebt, actual.PrepaidBadDebt)
 	}
@@ -179,5 +192,6 @@ func (m *Market) copy() *Market {
 		LiquidationFeeRatio:     m.LiquidationFeeRatio,
 		PartialLiquidationRatio: m.PartialLiquidationRatio,
 		MaxLeverage:             m.MaxLeverage,
+		MaxFundingRate:          m.MaxFundingRate,
 	}
 }
