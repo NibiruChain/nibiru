@@ -133,6 +133,8 @@ type MarketParams struct {
 	PartialLiquidationRatio sdk.Dec `json:"partial_liquidation_ratio"`
 	// specifies the interval on which the funding rate is updated
 	FundingRateEpochId string `json:"funding_rate_epoch_id,omitempty"`
+	// specifies the maximum premium fraction to be paid out
+	MaxFundingRate sdk.Dec `json:"max_funding_rate,omitempty"`
 	// amount of time to look back for TWAP calculations
 	TwapLookbackWindow sdkmath.Int `json:"twap_lookback_window"`
 }

@@ -23,6 +23,7 @@ func TestMarket() *types.Market {
 		LiquidationFeeRatio:             sdk.MustNewDecFromStr("0.0005"),
 		PartialLiquidationRatio:         sdk.MustNewDecFromStr("0.5"),
 		FundingRateEpochId:              "30 min",
+		MaxFundingRate:                  sdk.NewDec(1),
 		TwapLookbackWindow:              time.Minute * 30,
 		PrepaidBadDebt:                  sdk.NewInt64Coin(denoms.NUSD, 0),
 	}

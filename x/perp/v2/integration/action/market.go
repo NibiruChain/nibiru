@@ -113,6 +113,12 @@ func WithLatestMarketCPF(amount sdk.Dec) marketModifier {
 	}
 }
 
+func WithMaxFundingRate(amount sdk.Dec) marketModifier {
+	return func(market *types.Market, amm *types.AMM) {
+		market.MaxFundingRate = amount
+	}
+}
+
 type editPriceMultiplier struct {
 	pair     asset.Pair
 	newValue sdk.Dec

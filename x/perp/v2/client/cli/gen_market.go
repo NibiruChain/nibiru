@@ -26,6 +26,7 @@ const (
 	FlagPriceMultiplier        = "price-multiplier"
 	FlagMaintenenceMarginRatio = "mmr"
 	FlagMaxLeverage            = "max-leverage"
+	FlagMaxFundingrate         = "max-funding-rate"
 )
 
 var addMarketGenesisFlags = map[string]struct {
@@ -37,6 +38,7 @@ var addMarketGenesisFlags = map[string]struct {
 	FlagPriceMultiplier:        {"", "the peg multiplier for the pool"},
 	FlagMaintenenceMarginRatio: {"0.0625", "maintenance margin ratio"},
 	FlagMaxLeverage:            {"10", "maximum leverage for opening a position"},
+	FlagMaxFundingrate:         {"0.01", "maximum funding rate for the market"},
 }
 
 // getCmdFlagSet returns a flag set and list of required flags for the command.
@@ -125,6 +127,9 @@ func newMarketFromFlags(flagSet *flag.FlagSet,
 	maxLeverageStr, err := flagSet.GetString(FlagMaxLeverage)
 	flagErrors = append(flagErrors, err)
 
+	maxFundingRateStr, err := flagSet.GetString(FlagMaxFundingrate)
+	flagErrors = append(flagErrors, err)
+
 	for _, err := range flagErrors { // for brevity's sake
 		if err != nil {
 			return types.Market{}, types.AMM{}, err
@@ -151,6 +156,13 @@ func newMarketFromFlags(flagSet *flag.FlagSet,
 		return types.Market{}, types.AMM{}, err
 	}
 
+	maxFundingRate, err := sdk.NewDecFromStr(maxFundingRateStr)
+	if err != nil {
+		return types.Market{}, types.AMM{}, err
+	}
+
+	fmt.Println(maxFundingRate)
+
 	priceMultiplier, err := sdk.NewDecFromStr(priceMultiplierStr)
 	if err != nil {
 		return types.Market{}, types.AMM{}, err
@@ -167,6 +179,7 @@ func newMarketFromFlags(flagSet *flag.FlagSet,
 		LiquidationFeeRatio:             sdk.MustNewDecFromStr("0.0500"),
 		PartialLiquidationRatio:         sdk.MustNewDecFromStr("0.5"),
 		FundingRateEpochId:              epochstypes.ThirtyMinuteEpochID,
+		MaxFundingRate:                  maxFundingRate,
 		TwapLookbackWindow:              time.Minute * 30,
 		PrepaidBadDebt:                  sdk.NewInt64Coin(pair.QuoteDenom(), 0),
 	}
