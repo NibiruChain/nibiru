@@ -20,6 +20,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 		priceMultiplier string
 		maintainRatio   string
 		maxLeverage     string
+		maxFundingRate  string
 		expectError     bool
 	}{
 		{
@@ -29,6 +30,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			priceMultiplier: "1",
 			maintainRatio:   "1",
 			maxLeverage:     "1",
+			maxFundingRate:  "1",
 			expectError:     true,
 		},
 		{
@@ -38,6 +40,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			priceMultiplier: "1",
 			maintainRatio:   "1",
 			maxLeverage:     "1",
+			maxFundingRate:  "1",
 			expectError:     true,
 		},
 		{
@@ -47,6 +50,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			priceMultiplier: "1",
 			maintainRatio:   "1",
 			maxLeverage:     "1",
+			maxFundingRate:  "1",
 			expectError:     true,
 		},
 		{
@@ -56,6 +60,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			priceMultiplier: "1",
 			maintainRatio:   "0.1",
 			maxLeverage:     "0",
+			maxFundingRate:  "0",
 			expectError:     true,
 		},
 		{
@@ -65,6 +70,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			priceMultiplier: "0",
 			maintainRatio:   "0.1",
 			maxLeverage:     "1",
+			maxFundingRate:  "1",
 			expectError:     true,
 		},
 		{
@@ -74,6 +80,17 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			priceMultiplier: "-1",
 			maintainRatio:   "0.1",
 			maxLeverage:     "1",
+			maxFundingRate:  "1",
+			expectError:     true,
+		},
+		{
+			name:            "negative max funding rate",
+			pairName:        "token0:token1",
+			sqrtDepth:       "100",
+			priceMultiplier: "1",
+			maintainRatio:   "0.1",
+			maxLeverage:     "10",
+			maxFundingRate:  "-1",
 			expectError:     true,
 		},
 		{
@@ -83,6 +100,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			priceMultiplier: "1",
 			maintainRatio:   "0.1",
 			maxLeverage:     "10",
+			maxFundingRate:  "10",
 			expectError:     false,
 		},
 	}
@@ -98,6 +116,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 				fmt.Sprintf("--%s=%s", cli.FlagPriceMultiplier, tc.priceMultiplier),
 				fmt.Sprintf("--%s=%s", cli.FlagMaintenenceMarginRatio, tc.maintainRatio),
 				fmt.Sprintf("--%s=%s", cli.FlagMaxLeverage, tc.maxLeverage),
+				fmt.Sprintf("--%s=%s", cli.FlagMaxFundingrate, tc.maxFundingRate),
 				fmt.Sprintf("--%s=home", flags.FlagHome),
 			})
 
