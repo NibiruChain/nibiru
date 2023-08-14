@@ -2,6 +2,7 @@ package testapp
 
 import (
 	"encoding/json"
+	"time"
 
 	tmdb "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -27,9 +28,7 @@ func NewNibiruTestAppAndContext(shouldUseDefaultGenesis bool) (*app.NibiruApp, s
 	}
 
 	app := NewNibiruTestApp(appGenesis)
-	ctx := app.NewContext(false, tmproto.Header{
-		Height: 1,
-	})
+	ctx := NewContext(app)
 
 	app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdk.NewDec(20000))
 	app.OracleKeeper.SetPrice(ctx, "xxx:yyy", sdk.NewDec(20000))
@@ -72,10 +71,20 @@ func NewNibiruTestApp(gen app.GenesisState) *app.NibiruApp {
 	return app
 }
 
+func NewContext(nibiru *app.NibiruApp) sdk.Context {
+	return nibiru.NewContext(false, tmproto.Header{
+		Height: 1,
+		Time:   time.Now(),
+	})
+}
+
 // FundAccount is a utility function that funds an account by minting and
 // sending the coins to the address. This should be used for testing purposes
 // only!
-func FundAccount(bankKeeper bankkeeper.Keeper, ctx sdk.Context, addr sdk.AccAddress, amounts sdk.Coins) error {
+func FundAccount(
+	bankKeeper bankkeeper.Keeper, ctx sdk.Context, addr sdk.AccAddress,
+	amounts sdk.Coins,
+) error {
 	if err := bankKeeper.MintCoins(ctx, inflationtypes.ModuleName, amounts); err != nil {
 		return err
 	}
@@ -86,7 +95,10 @@ func FundAccount(bankKeeper bankkeeper.Keeper, ctx sdk.Context, addr sdk.AccAddr
 // FundModuleAccount is a utility function that funds a module account by
 // minting and sending the coins to the address. This should be used for testing
 // purposes only!
-func FundModuleAccount(bankKeeper bankkeeper.Keeper, ctx sdk.Context, recipientMod string, amounts sdk.Coins) error {
+func FundModuleAccount(
+	bankKeeper bankkeeper.Keeper, ctx sdk.Context,
+	recipientMod string, amounts sdk.Coins,
+) error {
 	if err := bankKeeper.MintCoins(ctx, inflationtypes.ModuleName, amounts); err != nil {
 		return err
 	}

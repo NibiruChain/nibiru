@@ -104,6 +104,7 @@ import (
 	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
 	"github.com/NibiruChain/nibiru/x/oracle"
 
+	devgas "github.com/NibiruChain/nibiru/x/devgas/v1"
 	devgaskeeper "github.com/NibiruChain/nibiru/x/devgas/v1/keeper"
 	devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
 
@@ -172,6 +173,7 @@ var (
 		inflation.AppModuleBasic{},
 		sudo.AppModuleBasic{},
 		wasm.AppModuleBasic{},
+		devgas.AppModuleBasic{},
 		ibcfee.AppModuleBasic{},
 		genmsg.AppModule{},
 	)
@@ -390,6 +392,8 @@ func NewNibiruApp(
 		IBCKeeper:         app.ibcKeeper,
 		TxCounterStoreKey: keys[wasm.StoreKey],
 		WasmConfig:        &wasmConfig,
+		DevGasKeeper:      &app.DevGasKeeper,
+		DevGasBankKeeper:  app.BankKeeper,
 	})
 	if err != nil {
 		panic(fmt.Errorf("failed to create sdk.AnteHandler: %s", err))
@@ -628,6 +632,7 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(ibcfeetypes.ModuleName)
 	// wasm params keepers
 	paramsKeeper.Subspace(wasm.ModuleName)
+	paramsKeeper.Subspace(devgastypes.ModuleName)
 
 	return paramsKeeper
 }

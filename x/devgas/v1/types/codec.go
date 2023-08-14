@@ -25,7 +25,7 @@ var (
 const (
 	// Amino names
 	cancelFeeShareName   = "nibiru/MsgCancelFeeShare"
-	registerFeeShareName = "nibiru/MsgRegisterFeeShare"
+	registerFeeShareName = "/nibiru/MsgRegisterFeeShare"
 	updateFeeShareName   = "nibiru/MsgUpdateFeeShare"
 	updateFeeShareParams = "nibiru/MsgUpdateParams"
 )

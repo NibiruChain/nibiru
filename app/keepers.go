@@ -149,6 +149,7 @@ func GetStoreKeys() (
 		inflationtypes.StoreKey,
 		sudotypes.StoreKey,
 		wasm.StoreKey,
+		devgastypes.StoreKey,
 	)
 	tkeys = sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys = sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey, stablecointypes.MemStoreKey)
@@ -358,7 +359,7 @@ func (app *NibiruApp) InitKeepers(
 	// assigned.
 	// For example, if there are bindings for the x/perp module, then the app
 	// passed to GetWasmOpts must already have a non-nil PerpKeeper.
-	supportedFeatures := "iterator,staking,stargate"
+	supportedFeatures := "iterator,staking,stargate,cosmwasm_1_1"
 	app.WasmKeeper = wasm.NewKeeper(
 		appCodec,
 		keys[wasm.StoreKey],
