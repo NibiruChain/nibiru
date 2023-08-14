@@ -103,6 +103,15 @@ message Market {
   // the amount of collateral already credited from the ecosystem fund
   cosmos.base.v1beta1.Coin prepaid_bad_debt = 12
       [ (gogoproto.nullable) = false ];
+
+  // the maximum funding rate payment per epoch, this represents the maximum
+  // amount of funding that can be paid out per epoch as a percentage of the
+  // position size
+  string max_funding_rate = 13 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.stdduration) = true,
+    (gogoproto.nullable) = false
+  ];
 }
 
 message AMM {
