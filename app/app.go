@@ -103,6 +103,10 @@ import (
 	inflationkeeper "github.com/NibiruChain/nibiru/x/inflation/keeper"
 	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
 	"github.com/NibiruChain/nibiru/x/oracle"
+
+	devgaskeeper "github.com/NibiruChain/nibiru/x/devgas/v1/keeper"
+	devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
+
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	perpkeeperv2 "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
@@ -273,6 +277,7 @@ type NibiruApp struct {
 	StablecoinKeeper stablecoinkeeper.Keeper
 	InflationKeeper  inflationkeeper.Keeper
 	SudoKeeper       keeper.Keeper
+	DevGasKeeper     devgaskeeper.Keeper
 
 	// WASM keepers
 	WasmKeeper       wasm.Keeper

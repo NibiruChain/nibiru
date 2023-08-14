@@ -12,11 +12,15 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 
 	"github.com/NibiruChain/nibiru/app/ante"
+	devgasante "github.com/NibiruChain/nibiru/x/devgas/v1/ante"
+	devgaskeeper "github.com/NibiruChain/nibiru/x/devgas/v1/keeper"
 )
 
 type AnteHandlerOptions struct {
 	sdkante.HandlerOptions
-	IBCKeeper *ibckeeper.Keeper
+	IBCKeeper        *ibckeeper.Keeper
+	DevGasKeeper     devgaskeeper.Keeper
+	DevGasBankKeeper devgasante.BankKeeper
 
 	TxCounterStoreKey types.StoreKey
 	WasmConfig        *wasmtypes.WasmConfig
@@ -57,7 +61,11 @@ func NewAnteHandler(options AnteHandlerOptions) (sdk.AnteHandler, error) {
 		sdkante.NewValidateMemoDecorator(options.AccountKeeper),
 		ante.NewPostPriceFixedPriceDecorator(),
 		sdkante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
-		sdkante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper, options.TxFeeChecker), // Replace fee ante from cosmos auth with a custom one.
+		// Replace fee ante from cosmos auth with a custom one.
+		sdkante.NewDeductFeeDecorator(
+			options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper, options.TxFeeChecker),
+		devgasante.NewFeeSharePayoutDecorator(
+			options.DevGasBankKeeper, options.DevGasKeeper),
 		// SetPubKeyDecorator must be called before all signature verification decorators
 		sdkante.NewSetPubKeyDecorator(options.AccountKeeper),
 		sdkante.NewValidateSigCountDecorator(options.AccountKeeper),
