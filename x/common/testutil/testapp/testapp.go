@@ -15,6 +15,7 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
+	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
 	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
 )
 
@@ -23,19 +24,31 @@ import (
 func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
 	encoding := app.MakeEncodingConfigAndRegister()
 	var appGenesis app.GenesisState = app.NewDefaultGenesisState(encoding.Marshaler)
+	genModEpochs := epochstypes.DefaultGenesisFromTime(time.Now().UTC())
+	appGenesis[epochstypes.ModuleName] = encoding.Marshaler.MustMarshalJSON(
+		genModEpochs,
+	)
 	app := NewNibiruTestApp(appGenesis)
 	ctx := NewContext(app)
 
 	app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdk.NewDec(20000))
 	app.OracleKeeper.SetPrice(ctx, "xxx:yyy", sdk.NewDec(20000))
+
 	return app, ctx
+}
+
+func NewContext(nibiru *app.NibiruApp) sdk.Context {
+	return nibiru.NewContext(false, tmproto.Header{
+		Height: 1,
+		Time:   time.Now().UTC(),
+	})
 }
 
 // NewNibiruTestAppAndZeroTimeCtx: Runs NewNibiruTestAppAndZeroTimeCtx with the
 // block time set to time zero.
-func NewNibiruTestAppAndZeroTimeCtx() (*app.NibiruApp, sdk.Context) {
+func NewNibiruTestAppAndContextAtTime(startTime time.Time) (*app.NibiruApp, sdk.Context) {
 	app, ctx := NewNibiruTestAppAndContext()
-	ctx = NewContext(app).WithBlockTime(time.UnixMilli(0))
+	ctx = NewContext(app).WithBlockTime(startTime)
 	return app, ctx
 }
 
@@ -72,13 +85,6 @@ func NewNibiruTestApp(gen app.GenesisState) *app.NibiruApp {
 	})
 
 	return app
-}
-
-func NewContext(nibiru *app.NibiruApp) sdk.Context {
-	return nibiru.NewContext(false, tmproto.Header{
-		Height: 1,
-		Time:   time.Now(),
-	})
 }
 
 // FundAccount is a utility function that funds an account by minting and
