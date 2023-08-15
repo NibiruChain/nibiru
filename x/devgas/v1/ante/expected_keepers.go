@@ -1,19 +1,25 @@
 package ante
 
-// Used for the Juno ante handler so we can properly send 50% of fees to dAPP developers via fee share module
+// Interfaces needed for the for the Nibiru Chain ante handler so
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	revtypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
+	devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
 )
 
 type BankKeeper interface {
-	SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
-	SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
+	SendCoinsFromAccountToModule(
+		ctx sdk.Context, senderAddr sdk.AccAddress,
+		recipientModule string, amt sdk.Coins,
+	) error
+	SendCoinsFromModuleToAccount(
+		ctx sdk.Context, senderModule string,
+		recipientAddr sdk.AccAddress, amt sdk.Coins,
+	) error
 }
 
 type FeeShareKeeper interface {
-	GetParams(ctx sdk.Context) revtypes.Params
-	GetFeeShare(ctx sdk.Context, contract sdk.Address) (revtypes.FeeShare, bool)
+	GetParams(ctx sdk.Context) devgastypes.Params
+	GetFeeShare(ctx sdk.Context, contract sdk.Address) (devgastypes.FeeShare, bool)
 }

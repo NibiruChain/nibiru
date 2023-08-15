@@ -20,7 +20,7 @@ func TestAnteSuite(t *testing.T) {
 
 func (suite *AnteTestSuite) TestFeeLogic() {
 	// We expect all to pass
-	feeCoins := sdk.NewCoins(sdk.NewCoin("ujuno", sdk.NewInt(500)), sdk.NewCoin("utoken", sdk.NewInt(250)))
+	feeCoins := sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(500)), sdk.NewCoin("utoken", sdk.NewInt(250)))
 
 	testCases := []struct {
 		name               string
@@ -34,70 +34,70 @@ func (suite *AnteTestSuite) TestFeeLogic() {
 			feeCoins,
 			sdk.NewDecWithPrec(100, 2),
 			1,
-			sdk.NewCoins(sdk.NewCoin("ujuno", sdk.NewInt(500)), sdk.NewCoin("utoken", sdk.NewInt(250))),
+			sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(500)), sdk.NewCoin("utoken", sdk.NewInt(250))),
 		},
 		{
 			"100% fee / 2 contracts",
 			feeCoins,
 			sdk.NewDecWithPrec(100, 2),
 			2,
-			sdk.NewCoins(sdk.NewCoin("ujuno", sdk.NewInt(250)), sdk.NewCoin("utoken", sdk.NewInt(125))),
+			sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(250)), sdk.NewCoin("utoken", sdk.NewInt(125))),
 		},
 		{
 			"100% fee / 10 contracts",
 			feeCoins,
 			sdk.NewDecWithPrec(100, 2),
 			10,
-			sdk.NewCoins(sdk.NewCoin("ujuno", sdk.NewInt(50)), sdk.NewCoin("utoken", sdk.NewInt(25))),
+			sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(50)), sdk.NewCoin("utoken", sdk.NewInt(25))),
 		},
 		{
 			"67% fee / 7 contracts",
 			feeCoins,
 			sdk.NewDecWithPrec(67, 2),
 			7,
-			sdk.NewCoins(sdk.NewCoin("ujuno", sdk.NewInt(48)), sdk.NewCoin("utoken", sdk.NewInt(24))),
+			sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(48)), sdk.NewCoin("utoken", sdk.NewInt(24))),
 		},
 		{
 			"50% fee / 1 contracts",
 			feeCoins,
 			sdk.NewDecWithPrec(50, 2),
 			1,
-			sdk.NewCoins(sdk.NewCoin("ujuno", sdk.NewInt(250)), sdk.NewCoin("utoken", sdk.NewInt(125))),
+			sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(250)), sdk.NewCoin("utoken", sdk.NewInt(125))),
 		},
 		{
 			"50% fee / 2 contracts",
 			feeCoins,
 			sdk.NewDecWithPrec(50, 2),
 			2,
-			sdk.NewCoins(sdk.NewCoin("ujuno", sdk.NewInt(125)), sdk.NewCoin("utoken", sdk.NewInt(62))),
+			sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(125)), sdk.NewCoin("utoken", sdk.NewInt(62))),
 		},
 		{
 			"50% fee / 3 contracts",
 			feeCoins,
 			sdk.NewDecWithPrec(50, 2),
 			3,
-			sdk.NewCoins(sdk.NewCoin("ujuno", sdk.NewInt(83)), sdk.NewCoin("utoken", sdk.NewInt(42))),
+			sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(83)), sdk.NewCoin("utoken", sdk.NewInt(42))),
 		},
 		{
 			"25% fee / 2 contracts",
 			feeCoins,
 			sdk.NewDecWithPrec(25, 2),
 			2,
-			sdk.NewCoins(sdk.NewCoin("ujuno", sdk.NewInt(62)), sdk.NewCoin("utoken", sdk.NewInt(31))),
+			sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(62)), sdk.NewCoin("utoken", sdk.NewInt(31))),
 		},
 		{
 			"15% fee / 3 contracts",
 			feeCoins,
 			sdk.NewDecWithPrec(15, 2),
 			3,
-			sdk.NewCoins(sdk.NewCoin("ujuno", sdk.NewInt(25)), sdk.NewCoin("utoken", sdk.NewInt(12))),
+			sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(25)), sdk.NewCoin("utoken", sdk.NewInt(12))),
 		},
 		{
 			"1% fee / 2 contracts",
 			feeCoins,
 			sdk.NewDecWithPrec(1, 2),
 			2,
-			sdk.NewCoins(sdk.NewCoin("ujuno", sdk.NewInt(2)), sdk.NewCoin("utoken", sdk.NewInt(1))),
+			sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(2)), sdk.NewCoin("utoken", sdk.NewInt(1))),
 		},
 	}
 
