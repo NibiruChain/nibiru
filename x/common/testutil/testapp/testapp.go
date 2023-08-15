@@ -31,6 +31,14 @@ func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
 	return app, ctx
 }
 
+// NewNibiruTestAppAndZeroTimeCtx: Runs NewNibiruTestAppAndZeroTimeCtx with the
+// block time set to time zero.
+func NewNibiruTestAppAndZeroTimeCtx() (*app.NibiruApp, sdk.Context) {
+	app, ctx := NewNibiruTestAppAndContext()
+	ctx = NewContext(app).WithBlockTime(time.UnixMilli(0))
+	return app, ctx
+}
+
 // NewNibiruTestApp initializes a chain with the given genesis state to
 // creates an application instance ('app.NibiruApp'). This app uses an
 // in-memory database ('tmdb.MemDB') and has logging disabled.

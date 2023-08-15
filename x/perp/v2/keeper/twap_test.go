@@ -17,6 +17,8 @@ import (
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 )
 
 func TestCalcTwap(t *testing.T) {
@@ -106,13 +108,18 @@ func TestCalcTwap(t *testing.T) {
 func TestInvalidTwap(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	app, ctx := testapp.NewNibiruTestAppAndContext()
+	ctx = app.NewContext(false, tmproto.Header{
+		Height: 1,
+	})
+	startTime := time.UnixMilli(0)
 
 	app.PerpKeeperV2.Markets.Insert(ctx, pair, *mock.TestMarket())
 	app.PerpKeeperV2.AMMs.Insert(ctx, pair, *mock.TestAMMDefault())
-	app.PerpKeeperV2.ReserveSnapshots.Insert(ctx, collections.Join(pair, time.UnixMilli(0)), types.ReserveSnapshot{
-		Amm:         *mock.TestAMMDefault(),
-		TimestampMs: 0,
-	})
+	app.PerpKeeperV2.ReserveSnapshots.Insert(
+		ctx, collections.Join(pair, startTime), types.ReserveSnapshot{
+			Amm:         *mock.TestAMMDefault(),
+			TimestampMs: 0,
+		})
 
 	tc := struct {
 		twapCalcOption   types.TwapCalcOption
@@ -363,13 +370,18 @@ func TestCalcTwapExtended(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testapp.NewNibiruTestAppAndContext()
+			ctx = app.NewContext(false, tmproto.Header{
+				Height: 1,
+			})
+			startTime := time.UnixMilli(0)
 
 			app.PerpKeeperV2.Markets.Insert(ctx, pair, *mock.TestMarket())
 			app.PerpKeeperV2.AMMs.Insert(ctx, pair, *mock.TestAMMDefault())
-			app.PerpKeeperV2.ReserveSnapshots.Insert(ctx, collections.Join(pair, time.UnixMilli(0)), types.ReserveSnapshot{
-				Amm:         *mock.TestAMMDefault(),
-				TimestampMs: 0,
-			})
+			app.PerpKeeperV2.ReserveSnapshots.Insert(
+				ctx, collections.Join(pair, startTime), types.ReserveSnapshot{
+					Amm:         *mock.TestAMMDefault(),
+					TimestampMs: 0,
+				})
 
 			for _, snapshot := range tc.reserveSnapshots {
 				ctx = ctx.WithBlockTime(time.UnixMilli(snapshot.TimestampMs))
