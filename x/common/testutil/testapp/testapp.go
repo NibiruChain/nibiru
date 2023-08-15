@@ -47,8 +47,8 @@ func NewContext(nibiru *app.NibiruApp) sdk.Context {
 // NewNibiruTestAppAndZeroTimeCtx: Runs NewNibiruTestAppAndZeroTimeCtx with the
 // block time set to time zero.
 func NewNibiruTestAppAndContextAtTime(startTime time.Time) (*app.NibiruApp, sdk.Context) {
-	app, ctx := NewNibiruTestAppAndContext()
-	ctx = NewContext(app).WithBlockTime(startTime)
+	app, _ := NewNibiruTestAppAndContext()
+	ctx := NewContext(app).WithBlockTime(startTime)
 	return app, ctx
 }
 

@@ -107,8 +107,8 @@ func TestCalcTwap(t *testing.T) {
 
 func TestInvalidTwap(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
-	app, ctx := testapp.NewNibiruTestAppAndContext()
-	ctx = app.NewContext(false, tmproto.Header{
+	app, _ := testapp.NewNibiruTestAppAndContext()
+	ctx := app.NewContext(false, tmproto.Header{
 		Height: 1,
 	})
 	startTime := time.UnixMilli(0)
@@ -369,8 +369,8 @@ func TestCalcTwapExtended(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruTestAppAndContext()
-			ctx = app.NewContext(false, tmproto.Header{
+			app, _ := testapp.NewNibiruTestAppAndContext()
+			ctx := app.NewContext(false, tmproto.Header{
 				Height: 1,
 			})
 			startTime := time.UnixMilli(0)
