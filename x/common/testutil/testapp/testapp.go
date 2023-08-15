@@ -18,21 +18,16 @@ import (
 	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
 )
 
-// NewNibiruTestAppAndContext creates an 'app.NibiruApp' instance with an in-memory
-// 'tmdb.MemDB' and fresh 'sdk.Context'.
-func NewNibiruTestAppAndContext(shouldUseDefaultGenesis bool) (*app.NibiruApp, sdk.Context) {
+// NewNibiruTestAppAndContext creates an 'app.NibiruApp' instance with an
+// in-memory 'tmdb.MemDB' and fresh 'sdk.Context'.
+func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
 	encoding := app.MakeEncodingConfigAndRegister()
-	var appGenesis app.GenesisState
-	if shouldUseDefaultGenesis {
-		appGenesis = app.NewDefaultGenesisState(encoding.Marshaler)
-	}
-
+	var appGenesis app.GenesisState = app.NewDefaultGenesisState(encoding.Marshaler)
 	app := NewNibiruTestApp(appGenesis)
 	ctx := NewContext(app)
 
 	app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdk.NewDec(20000))
 	app.OracleKeeper.SetPrice(ctx, "xxx:yyy", sdk.NewDec(20000))
-
 	return app, ctx
 }
 

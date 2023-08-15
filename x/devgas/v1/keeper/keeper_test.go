@@ -38,8 +38,7 @@ type IntegrationTestSuite struct {
 }
 
 func (s *IntegrationTestSuite) SetupTest() {
-	useDefautlGenesis := true
-	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(useDefautlGenesis)
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 	s.app = nibiruApp
 	s.ctx = ctx
 

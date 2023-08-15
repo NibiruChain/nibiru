@@ -105,7 +105,7 @@ func TestCalcTwap(t *testing.T) {
 
 func TestInvalidTwap(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
-	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext()
 
 	app.PerpKeeperV2.Markets.Insert(ctx, pair, *mock.TestMarket())
 	app.PerpKeeperV2.AMMs.Insert(ctx, pair, *mock.TestAMMDefault())
@@ -362,7 +362,7 @@ func TestCalcTwapExtended(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruTestAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext()
 
 			app.PerpKeeperV2.Markets.Insert(ctx, pair, *mock.TestMarket())
 			app.PerpKeeperV2.AMMs.Insert(ctx, pair, *mock.TestAMMDefault())

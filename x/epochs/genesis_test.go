@@ -12,7 +12,7 @@ import (
 )
 
 func TestEpochsExportGenesis(t *testing.T) {
-	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext()
 
 	chainStartTime := ctx.BlockTime()
 
@@ -45,7 +45,7 @@ func TestEpochsExportGenesis(t *testing.T) {
 }
 
 func TestEpochsInitGenesis(t *testing.T) {
-	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext()
 	// On init genesis, default epochs information is set
 	// To check init genesis again, should make it fresh status
 	epochInfos := app.EpochsKeeper.AllEpochInfos(ctx)

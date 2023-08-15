@@ -75,7 +75,7 @@ func (t *TestSuite) WithTestCases(testCase ...TestCase) *TestSuite {
 
 func (t *TestSuite) Run() {
 	for _, testCase := range t.testCases {
-		app, ctx := testapp.NewNibiruTestAppAndContext(true)
+		app, ctx := testapp.NewNibiruTestAppAndContext()
 		var err error
 		var isMandatory bool
 

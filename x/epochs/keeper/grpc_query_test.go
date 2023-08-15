@@ -15,7 +15,7 @@ import (
 )
 
 func TestQueryEpochInfos(t *testing.T) {
-	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 
 	queryHelper := baseapp.NewQueryServerTestHelper(ctx, nibiruApp.InterfaceRegistry())
 	epochstypes.RegisterQueryServer(queryHelper, keeper.NewQuerier(nibiruApp.EpochsKeeper))
@@ -44,7 +44,7 @@ func TestQueryEpochInfos(t *testing.T) {
 }
 
 func TestCurrentEpochQuery(t *testing.T) {
-	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 
 	queryHelper := baseapp.NewQueryServerTestHelper(ctx, nibiruApp.InterfaceRegistry())
 	epochstypes.RegisterQueryServer(queryHelper, keeper.NewQuerier(nibiruApp.EpochsKeeper))

@@ -149,7 +149,7 @@ func TestEditPriceMultipler(t *testing.T) {
 
 func TestEditPriceMultiplerFail(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
-	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext()
 	account := sdk.MustAccAddressFromBech32("cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v")
 
 	err := app.PerpKeeperV2.Admin().CreateMarket(
@@ -214,7 +214,7 @@ func TestEditPriceMultiplerFail(t *testing.T) {
 
 func TestEditSwapInvariantFail(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
-	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext()
 	account := sdk.MustAccAddressFromBech32("cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v")
 
 	err := app.PerpKeeperV2.Admin().CreateMarket(
