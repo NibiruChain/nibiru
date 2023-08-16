@@ -89,7 +89,7 @@ message MsgUpdateParams {
   // params defines the x/feeshare parameters to update.
   //
   // NOTE: All parameters must be supplied.
-  Params params = 2 [ (gogoproto.nullable) = false ];
+  ModuleParams params = 2 [ (gogoproto.nullable) = false ];
 }
 
 // MsgUpdateParamsResponse defines the response structure for executing a

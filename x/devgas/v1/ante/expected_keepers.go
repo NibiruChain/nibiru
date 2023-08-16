@@ -1,6 +1,6 @@
 package ante
 
-// Interfaces needed for the for the Nibiru Chain ante handler so
+// Interfaces needed for the for the Nibiru Chain ante handler
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -19,7 +19,7 @@ type BankKeeper interface {
 	) error
 }
 
-type FeeShareKeeper interface {
-	GetParams(ctx sdk.Context) devgastypes.Params
+type IDevGasKeeper interface {
+	GetParams(ctx sdk.Context) devgastypes.ModuleParams
 	GetFeeShare(ctx sdk.Context, contract sdk.Address) (devgastypes.FeeShare, bool)
 }

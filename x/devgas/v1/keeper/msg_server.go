@@ -149,8 +149,6 @@ func (k Keeper) RegisterFeeShare(
 	// prevent storing the same address for deployer and withdrawer
 	feeshare := types.NewFeeShare(contract, deployer, withdrawer)
 	k.SetFeeShare(ctx, feeshare)
-	k.SetDeployerMap(ctx, deployer, contract)
-	k.SetWithdrawerMap(ctx, withdrawer, contract)
 
 	k.Logger(ctx).Debug(
 		"registering contract for transaction fees",
@@ -213,22 +211,12 @@ func (k Keeper) UpdateFeeShare(
 		return nil, err
 	}
 
-	withdrawAddr, err := sdk.AccAddressFromBech32(feeshare.WithdrawerAddress)
-	if err != nil {
-		return nil, errorsmod.Wrapf(
-			sdkerrors.ErrInvalidAddress,
-			"invalid withdrawer address (%s)", err,
-		)
-	}
 	newWithdrawAddr, err := sdk.AccAddressFromBech32(msg.WithdrawerAddress)
 	if err != nil {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid WithdrawerAddress %s", msg.WithdrawerAddress)
 	}
 
-	k.DeleteWithdrawerMap(ctx, withdrawAddr, contract)
-	k.SetWithdrawerMap(ctx, newWithdrawAddr, contract)
-
-	// update feeshare
+	// update feeshare with new withdrawer
 	feeshare.WithdrawerAddress = newWithdrawAddr.String()
 	k.SetFeeShare(ctx, feeshare)
 
@@ -274,20 +262,9 @@ func (k Keeper) CancelFeeShare(
 		return nil, err
 	}
 
-	k.DeleteFeeShare(ctx, fee)
-	k.DeleteDeployerMap(
-		ctx,
-		fee.GetDeployerAddr(),
-		contract,
-	)
-
-	withdrawAddr := fee.GetWithdrawerAddr()
-	if withdrawAddr != nil {
-		k.DeleteWithdrawerMap(
-			ctx,
-			withdrawAddr,
-			contract,
-		)
+	err = k.DevGasStore.Delete(ctx, fee.GetContractAddress())
+	if err != nil {
+		return nil, err
 	}
 
 	ctx.EventManager().EmitEvents(
@@ -303,15 +280,18 @@ func (k Keeper) CancelFeeShare(
 	return &types.MsgCancelFeeShareResponse{}, nil
 }
 
-func (k Keeper) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
+func (k Keeper) UpdateParams(
+	goCtx context.Context, req *types.MsgUpdateParams,
+) (resp *types.MsgUpdateParamsResponse, err error) {
 	if k.authority != req.Authority {
 		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", k.authority, req.Authority)
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	if err := k.SetParams(ctx, req.Params); err != nil {
-		return nil, err
+	if err := req.Params.Validate(); err != nil {
+		return resp, err
 	}
+	k.ModuleParams.Set(ctx, req.Params)
 
-	return &types.MsgUpdateParamsResponse{}, nil
+	return &types.MsgUpdateParamsResponse{}, err
 }

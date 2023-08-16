@@ -11,16 +11,16 @@ func NewParams(
 	enableFeeShare bool,
 	developerShares sdk.Dec,
 	allowedDenoms []string,
-) Params {
-	return Params{
+) ModuleParams {
+	return ModuleParams{
 		EnableFeeShare:  enableFeeShare,
 		DeveloperShares: developerShares,
 		AllowedDenoms:   allowedDenoms,
 	}
 }
 
-func DefaultParams() Params {
-	return Params{
+func DefaultParams() ModuleParams {
+	return ModuleParams{
 		EnableFeeShare:  DefaultEnableFeeShare,
 		DeveloperShares: DefaultDeveloperShares,
 		AllowedDenoms:   DefaultAllowedDenoms,
@@ -73,7 +73,7 @@ func validateArray(i interface{}) error {
 	return nil
 }
 
-func (p Params) Validate() error {
+func (p ModuleParams) Validate() error {
 	if err := validateBool(p.EnableFeeShare); err != nil {
 		return err
 	}

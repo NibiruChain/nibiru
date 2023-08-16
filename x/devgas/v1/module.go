@@ -5,34 +5,31 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	sdkclient "github.com/cosmos/cosmos-sdk/client"
+	sdkcodec "github.com/cosmos/cosmos-sdk/codec"
+	sdkcodectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 
-	"github.com/NibiruChain/nibiru/x/devgas/v1/client/cli"
-	"github.com/NibiruChain/nibiru/x/devgas/v1/exported"
-	"github.com/NibiruChain/nibiru/x/devgas/v1/keeper"
-	"github.com/NibiruChain/nibiru/x/devgas/v1/types"
+	devgascli "github.com/NibiruChain/nibiru/x/devgas/v1/client/cli"
+	devgasexported "github.com/NibiruChain/nibiru/x/devgas/v1/exported"
+	devgaskeeper "github.com/NibiruChain/nibiru/x/devgas/v1/keeper"
+	devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
 )
 
 // type check to ensure the interface is properly implemented
 var (
-	_ module.AppModule           = AppModule{}
-	_ module.AppModuleBasic      = AppModuleBasic{}
-	_ module.AppModuleSimulation = AppModule{}
+	_ module.AppModule      = AppModule{}
+	_ module.AppModuleBasic = AppModuleBasic{}
 )
 
-// ConsensusVersion defines the current x/feeshare module consensus version.
+// ConsensusVersion defines the current module consensus version.
 const ConsensusVersion = 2
 
 // AppModuleBasic type for the fees module
@@ -40,13 +37,13 @@ type AppModuleBasic struct{}
 
 // Name returns the fees module's name.
 func (AppModuleBasic) Name() string {
-	return types.ModuleName
+	return devgastypes.ModuleName
 }
 
 // RegisterLegacyAminoCodec performs a no-op as the fees do not support Amino
 // encoding.
-func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	types.RegisterLegacyAminoCodec(cdc)
+func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *sdkcodec.LegacyAmino) {
+	devgastypes.RegisterLegacyAminoCodec(cdc)
 }
 
 // ConsensusVersion returns the consensus state-breaking version for the module.
@@ -56,46 +53,48 @@ func (AppModuleBasic) ConsensusVersion() uint64 {
 
 // RegisterInterfaces registers interfaces and implementations of the fees
 // module.
-func (AppModuleBasic) RegisterInterfaces(interfaceRegistry codectypes.InterfaceRegistry) {
-	types.RegisterInterfaces(interfaceRegistry)
+func (AppModuleBasic) RegisterInterfaces(
+	interfaceRegistry sdkcodectypes.InterfaceRegistry,
+) {
+	devgastypes.RegisterInterfaces(interfaceRegistry)
 }
 
 // DefaultGenesis returns default genesis state as raw bytes for the fees
 // module.
-func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
-	return cdc.MustMarshalJSON(types.DefaultGenesisState())
+func (AppModuleBasic) DefaultGenesis(cdc sdkcodec.JSONCodec) json.RawMessage {
+	return cdc.MustMarshalJSON(devgastypes.DefaultGenesisState())
 }
 
 // ValidateGenesis performs genesis state validation for the fees module.
-func (b AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncodingConfig, bz json.RawMessage) error {
-	var genesisState types.GenesisState
+func (b AppModuleBasic) ValidateGenesis(
+	cdc sdkcodec.JSONCodec, _ sdkclient.TxEncodingConfig, bz json.RawMessage,
+) error {
+	var genesisState devgastypes.GenesisState
 	if err := cdc.UnmarshalJSON(bz, &genesisState); err != nil {
-		return fmt.Errorf("failed to unmarshal %s genesis state: %w", types.ModuleName, err)
+		return fmt.Errorf("failed to unmarshal %s genesis state: %w", devgastypes.ModuleName, err)
 	}
 
 	return genesisState.Validate()
 }
 
-// RegisterRESTRoutes performs a no-op as the fees module doesn't expose REST
-// endpoints
-func (AppModuleBasic) RegisterRESTRoutes(_ client.Context, _ *mux.Router) {}
-
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the fees
 // module.
-func (b AppModuleBasic) RegisterGRPCGatewayRoutes(c client.Context, serveMux *runtime.ServeMux) {
-	if err := types.RegisterQueryHandlerClient(context.Background(), serveMux, types.NewQueryClient(c)); err != nil {
+func (b AppModuleBasic) RegisterGRPCGatewayRoutes(
+	c sdkclient.Context, serveMux *runtime.ServeMux,
+) {
+	if err := devgastypes.RegisterQueryHandlerClient(context.Background(), serveMux, devgastypes.NewQueryClient(c)); err != nil {
 		panic(err)
 	}
 }
 
 // GetTxCmd returns the root tx command for the fees module.
 func (AppModuleBasic) GetTxCmd() *cobra.Command {
-	return cli.NewTxCmd()
+	return devgascli.NewTxCmd()
 }
 
 // GetQueryCmd returns the fees module's root query command.
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
-	return cli.GetQueryCmd()
+	return devgascli.GetQueryCmd()
 }
 
 // ___________________________________________________________________________
@@ -103,18 +102,18 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 // AppModule implements the AppModule interface for the fees module.
 type AppModule struct {
 	AppModuleBasic
-	keeper keeper.Keeper
+	keeper devgaskeeper.Keeper
 	ak     authkeeper.AccountKeeper
 
 	// legacySubspace is used solely for migration of x/params managed parameters
-	legacySubspace exported.Subspace
+	legacySubspace devgasexported.Subspace
 }
 
 // NewAppModule creates a new AppModule Object
 func NewAppModule(
-	k keeper.Keeper,
+	k devgaskeeper.Keeper,
 	ak authkeeper.AccountKeeper,
-	ss exported.Subspace,
+	ss devgasexported.Subspace,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
@@ -126,27 +125,24 @@ func NewAppModule(
 
 // Name returns the fees module's name.
 func (AppModule) Name() string {
-	return types.ModuleName
+	return devgastypes.ModuleName
 }
 
 // RegisterInvariants registers the fees module's invariants.
 func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
-// NewHandler returns nil - fees module doesn't expose tx gRPC endpoints
-func (am AppModule) NewHandler() sdk.Handler {
-	return nil
-}
-
-// QuerierRoute returns the claim module's query routing key.
+// QuerierRoute returns the module's query routing key.
 func (am AppModule) QuerierRoute() string {
-	return types.RouterKey
+	return devgastypes.RouterKey
 }
 
 // RegisterServices registers a GRPC query service to respond to the
 // module-specific GRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	types.RegisterMsgServer(cfg.MsgServer(), am.keeper)
-	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQuerier(am.keeper))
+	devgastypes.RegisterMsgServer(cfg.MsgServer(), am.keeper)
+	devgastypes.RegisterQueryServer(
+		cfg.QueryServer(), devgaskeeper.NewQuerier(am.keeper),
+	)
 }
 
 // BeginBlock executes all ABCI BeginBlock logic respective to the fees module.
@@ -161,8 +157,8 @@ func (am AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.Valid
 
 // InitGenesis performs the fees module's genesis initialization. It returns
 // no validator updates.
-func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
-	var genesisState types.GenesisState
+func (am AppModule) InitGenesis(ctx sdk.Context, cdc sdkcodec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
+	var genesisState devgastypes.GenesisState
 
 	cdc.MustUnmarshalJSON(data, &genesisState)
 	InitGenesis(ctx, am.keeper, genesisState)
@@ -170,29 +166,7 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.
 }
 
 // ExportGenesis returns the fees module's exported genesis state as raw JSON bytes.
-func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
+func (am AppModule) ExportGenesis(ctx sdk.Context, cdc sdkcodec.JSONCodec) json.RawMessage {
 	gs := ExportGenesis(ctx, am.keeper)
 	return cdc.MustMarshalJSON(gs)
-}
-
-// ___________________________________________________________________________
-
-// AppModuleSimulation functions
-
-// GenerateGenesisState creates a randomized GenState of the fees module.
-func (am AppModule) GenerateGenesisState(_ *module.SimulationState) {
-}
-
-// ProposalContents returns content functions for governance proposals.
-func (am AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedProposalMsg {
-	return []simtypes.WeightedProposalMsg{}
-}
-
-// RegisterStoreDecoder registers a decoder for fees module's types.
-func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {
-}
-
-// WeightedOperations returns fees module weighted operations
-func (am AppModule) WeightedOperations(_ module.SimulationState) []simtypes.WeightedOperation {
-	return []simtypes.WeightedOperation{}
 }

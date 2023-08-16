@@ -11,23 +11,34 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	revtypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
+	"github.com/NibiruChain/collections"
+
+	devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
 )
 
 // Keeper of this module maintains collections of feeshares for contracts
-// registered to receive transaction fees.
+// registered to receive Nibiru Chain gas fees.
 type Keeper struct {
 	storeKey storetypes.StoreKey
 	cdc      codec.BinaryCodec
 
-	bankKeeper    revtypes.BankKeeper
+	bankKeeper    devgastypes.BankKeeper
 	wasmKeeper    wasmkeeper.Keeper
-	accountKeeper revtypes.AccountKeeper
+	accountKeeper devgastypes.AccountKeeper
 
 	feeCollectorName string
 
-	// the address capable of executing a MsgUpdateParams message. Typically, this
-	// should be the x/gov module account.
+	// DevGasStore: IndexedMap
+	//  - primary key (PK): Contract address. The contract is the primary key
+	//  because there's exactly one deployer and withdrawer.
+	//  - value (V): FeeShare value saved into state.
+	//  - indexers (I):  Indexed by deployer and withdrawer
+	DevGasStore collections.IndexedMap[string, devgastypes.FeeShare, DevGasIndexes]
+
+	ModuleParams collections.Item[devgastypes.ModuleParams]
+
+	// the address capable of executing a MsgUpdateParams message. Typically,
+	// this should be the x/gov module account.
 	authority string
 }
 
@@ -35,9 +46,9 @@ type Keeper struct {
 func NewKeeper(
 	storeKey storetypes.StoreKey,
 	cdc codec.BinaryCodec,
-	bk revtypes.BankKeeper,
+	bk devgastypes.BankKeeper,
 	wk wasmkeeper.Keeper,
-	ak revtypes.AccountKeeper,
+	ak devgastypes.AccountKeeper,
 	feeCollector string,
 	authority string,
 ) Keeper {
@@ -49,6 +60,11 @@ func NewKeeper(
 		accountKeeper:    ak,
 		feeCollectorName: feeCollector,
 		authority:        authority,
+		DevGasStore:      NewDevGasStore(storeKey, cdc),
+		ModuleParams: collections.NewItem(
+			storeKey, devgastypes.KeyPrefixParams,
+			collections.ProtoValueEncoder[devgastypes.ModuleParams](cdc),
+		),
 	}
 }
 
@@ -59,5 +75,5 @@ func (k Keeper) GetAuthority() string {
 
 // Logger returns a module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With("module", fmt.Sprintf("x/%s", revtypes.ModuleName))
+	return ctx.Logger().With("module", fmt.Sprintf("x/%s", devgastypes.ModuleName))
 }

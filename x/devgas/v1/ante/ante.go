@@ -14,27 +14,36 @@ import (
 	feeshare "github.com/NibiruChain/nibiru/x/devgas/v1/types"
 )
 
-// FeeSharePayoutDecorator Run his after we already deduct the fee from the account with
-// the ante.NewDeductFeeDecorator() decorator. We pull funds from the FeeCollector ModuleAccount
-type FeeSharePayoutDecorator struct {
-	bankKeeper     BankKeeper
-	feesharekeeper FeeShareKeeper
+var _ sdk.AnteDecorator = (*DevGasPayoutDecorator)(nil)
+
+// DevGasPayoutDecorator Run his after we already deduct the fee from the
+// account with the ante.NewDeductFeeDecorator() decorator. We pull funds from
+// the FeeCollector ModuleAccount
+type DevGasPayoutDecorator struct {
+	bankKeeper   BankKeeper
+	devgasKeeper IDevGasKeeper
 }
 
-func NewFeeSharePayoutDecorator(bk BankKeeper, fs FeeShareKeeper) FeeSharePayoutDecorator {
-	return FeeSharePayoutDecorator{
-		bankKeeper:     bk,
-		feesharekeeper: fs,
+func NewDevGasPayoutDecorator(
+	bk BankKeeper, fs IDevGasKeeper,
+) DevGasPayoutDecorator {
+	return DevGasPayoutDecorator{
+		bankKeeper:   bk,
+		devgasKeeper: fs,
 	}
 }
 
-func (fsd FeeSharePayoutDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
+func (anteDec DevGasPayoutDecorator) AnteHandle(
+	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
+) (newCtx sdk.Context, err error) {
 	feeTx, ok := tx.(sdk.FeeTx)
 	if !ok {
 		return ctx, errorsmod.Wrap(sdkerrors.ErrTxDecode, "Tx must be a FeeTx")
 	}
 
-	err = FeeSharePayout(ctx, fsd.bankKeeper, feeTx.GetFee(), fsd.feesharekeeper, tx.GetMsgs())
+	err = DevGasPayout(
+		ctx, anteDec.bankKeeper, feeTx.GetFee(), anteDec.devgasKeeper, tx.GetMsgs(),
+	)
 	if err != nil {
 		return ctx, errorsmod.Wrapf(sdkerrors.ErrInsufficientFunds, err.Error())
 	}
@@ -42,10 +51,9 @@ func (fsd FeeSharePayoutDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simula
 	return next(ctx, tx, simulate)
 }
 
-// FeePayLogic takes the total fees and splits them based on the governance params
-// and the number of contracts we are executing on.
-// This returns the amount of fees each contract developer should get.
-// tested in ante_test.go
+// FeePayLogic takes the total fees and splits them based on the governance
+// params and the number of contracts we are executing on. This returns the
+// amount of fees each contract developer should get. tested in ante_test.go
 func FeePayLogic(fees sdk.Coins, govPercent sdk.Dec, numPairs int) sdk.Coins {
 	var splitFees sdk.Coins
 	for _, c := range fees.Sort() {
@@ -62,10 +70,16 @@ type FeeSharePayoutEventOutput struct {
 	FeesPaid        sdk.Coins      `json:"fees_paid"`
 }
 
-// FeeSharePayout takes the total fees and redistributes 50% (or param set) to the contract developers
-// provided they opted-in to payments.
-func FeeSharePayout(ctx sdk.Context, bankKeeper BankKeeper, totalFees sdk.Coins, revKeeper FeeShareKeeper, msgs []sdk.Msg) error {
-	params := revKeeper.GetParams(ctx)
+// DevGasPayout takes the total fees and redistributes 50% (or param set) to
+// the contract developers provided they opted-in to payments.
+func DevGasPayout(
+	ctx sdk.Context,
+	bankKeeper BankKeeper,
+	totalFees sdk.Coins,
+	devgasKeeper IDevGasKeeper,
+	msgs []sdk.Msg,
+) error {
+	params := devgasKeeper.GetParams(ctx)
 	if !params.EnableFeeShare {
 		return nil
 	}
@@ -74,12 +88,14 @@ func FeeSharePayout(ctx sdk.Context, bankKeeper BankKeeper, totalFees sdk.Coins,
 	toPay := make([]sdk.AccAddress, 0)
 	for _, msg := range msgs {
 		if _, ok := msg.(*wasmtypes.MsgExecuteContract); ok {
-			contractAddr, err := sdk.AccAddressFromBech32(msg.(*wasmtypes.MsgExecuteContract).Contract)
+			contractAddr, err := sdk.AccAddressFromBech32(
+				msg.(*wasmtypes.MsgExecuteContract).Contract,
+			)
 			if err != nil {
 				return err
 			}
 
-			shareData, _ := revKeeper.GetFeeShare(ctx, contractAddr)
+			shareData, _ := devgasKeeper.GetFeeShare(ctx, contractAddr)
 
 			withdrawAddr := shareData.GetWithdrawerAddr()
 			if withdrawAddr != nil && !withdrawAddr.Empty() {

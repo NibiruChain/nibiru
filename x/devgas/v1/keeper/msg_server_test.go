@@ -115,14 +115,14 @@ func (s *IntegrationTestSuite) TestRegisterFeeShare() {
 	_, _, sender := testdata.KeyTestPubAddr()
 	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(1_000_000))))
 
-	gov := s.accountKeeper.GetModuleAddress(govtypes.ModuleName).String()
+	gov := s.app.AccountKeeper.GetModuleAddress(govtypes.ModuleName).String()
 	govContract := s.InstantiateContract(sender.String(), gov)
 
 	contractAddress := s.InstantiateContract(sender.String(), "")
 	contractAddress2 := s.InstantiateContract(contractAddress, contractAddress)
 
-	DAODAO := s.InstantiateContract(sender.String(), "")
-	subContract := s.InstantiateContract(DAODAO, DAODAO)
+	deployer := s.InstantiateContract(sender.String(), "")
+	subContract := s.InstantiateContract(deployer, deployer)
 
 	_, _, withdrawer := testdata.KeyTestPubAddr()
 
@@ -213,11 +213,11 @@ func (s *IntegrationTestSuite) TestRegisterFeeShare() {
 			shouldErr: false,
 		},
 		{
-			desc: "Success register contract from DAODAO contract as admin",
+			desc: "Success register contract from contract as admin",
 			msg: &types.MsgRegisterFeeShare{
 				ContractAddress:   subContract,
-				DeployerAddress:   DAODAO,
-				WithdrawerAddress: DAODAO,
+				DeployerAddress:   deployer,
+				WithdrawerAddress: deployer,
 			},
 			resp:      &types.MsgRegisterFeeShareResponse{},
 			shouldErr: false,
@@ -227,11 +227,11 @@ func (s *IntegrationTestSuite) TestRegisterFeeShare() {
 		s.Run(tc.desc, func() {
 			goCtx := sdk.WrapSDKContext(s.ctx)
 			if !tc.shouldErr {
-				resp, err := s.feeShareMsgServer.RegisterFeeShare(goCtx, tc.msg)
+				resp, err := s.devgasMsgServer.RegisterFeeShare(goCtx, tc.msg)
 				s.Require().NoError(err)
 				s.Require().Equal(resp, tc.resp)
 			} else {
-				resp, err := s.feeShareMsgServer.RegisterFeeShare(goCtx, tc.msg)
+				resp, err := s.devgasMsgServer.RegisterFeeShare(goCtx, tc.msg)
 				s.Require().Error(err)
 				s.Require().Nil(resp)
 			}
@@ -259,7 +259,7 @@ func (s *IntegrationTestSuite) TestUpdateFeeShare() {
 		DeployerAddress:   sender.String(),
 		WithdrawerAddress: withdrawer.String(),
 	}
-	_, err := s.feeShareMsgServer.RegisterFeeShare(goCtx, msg)
+	_, err := s.devgasMsgServer.RegisterFeeShare(goCtx, msg)
 	s.Require().NoError(err)
 	_, _, newWithdrawer := testdata.KeyTestPubAddr()
 	s.Require().NotEqual(withdrawer, newWithdrawer)
@@ -325,10 +325,10 @@ func (s *IntegrationTestSuite) TestUpdateFeeShare() {
 		s.Run(tc.desc, func() {
 			goCtx := sdk.WrapSDKContext(s.ctx)
 			if !tc.shouldErr {
-				_, err := s.feeShareMsgServer.UpdateFeeShare(goCtx, tc.msg)
+				_, err := s.devgasMsgServer.UpdateFeeShare(goCtx, tc.msg)
 				s.Require().NoError(err)
 			} else {
-				resp, err := s.feeShareMsgServer.UpdateFeeShare(goCtx, tc.msg)
+				resp, err := s.devgasMsgServer.UpdateFeeShare(goCtx, tc.msg)
 				s.Require().Error(err)
 				s.Require().Nil(resp)
 			}
@@ -350,7 +350,7 @@ func (s *IntegrationTestSuite) TestCancelFeeShare() {
 		DeployerAddress:   sender.String(),
 		WithdrawerAddress: withdrawer.String(),
 	}
-	_, err := s.feeShareMsgServer.RegisterFeeShare(goCtx, msg)
+	_, err := s.devgasMsgServer.RegisterFeeShare(goCtx, msg)
 	s.Require().NoError(err)
 
 	for _, tc := range []struct {
@@ -391,11 +391,11 @@ func (s *IntegrationTestSuite) TestCancelFeeShare() {
 		s.Run(tc.desc, func() {
 			goCtx := sdk.WrapSDKContext(s.ctx)
 			if !tc.shouldErr {
-				resp, err := s.feeShareMsgServer.CancelFeeShare(goCtx, tc.msg)
+				resp, err := s.devgasMsgServer.CancelFeeShare(goCtx, tc.msg)
 				s.Require().NoError(err)
 				s.Require().Equal(resp, tc.resp)
 			} else {
-				resp, err := s.feeShareMsgServer.CancelFeeShare(goCtx, tc.msg)
+				resp, err := s.devgasMsgServer.CancelFeeShare(goCtx, tc.msg)
 				s.Require().Error(err)
 				s.Require().Equal(resp, tc.resp)
 			}

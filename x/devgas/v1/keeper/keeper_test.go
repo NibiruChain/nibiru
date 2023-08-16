@@ -12,8 +12,8 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	"github.com/NibiruChain/nibiru/x/devgas/v1/keeper"
-	"github.com/NibiruChain/nibiru/x/devgas/v1/types"
+	devgaskeeper "github.com/NibiruChain/nibiru/x/devgas/v1/keeper"
+	devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
 )
 
 // BankKeeper defines the expected interface needed to retrieve account balances.
@@ -28,13 +28,11 @@ type BankKeeper interface {
 type IntegrationTestSuite struct {
 	suite.Suite
 
-	ctx               sdk.Context
-	app               *app.NibiruApp
-	bankKeeper        BankKeeper
-	accountKeeper     types.AccountKeeper
-	queryClient       types.QueryClient
-	feeShareMsgServer types.MsgServer
-	wasmMsgServer     wasmtypes.MsgServer
+	ctx             sdk.Context
+	app             *app.NibiruApp
+	queryClient     devgastypes.QueryClient
+	devgasMsgServer devgastypes.MsgServer
+	wasmMsgServer   wasmtypes.MsgServer
 }
 
 func (s *IntegrationTestSuite) SetupTest() {
@@ -42,13 +40,15 @@ func (s *IntegrationTestSuite) SetupTest() {
 	s.app = nibiruApp
 	s.ctx = ctx
 
-	queryHelper := baseapp.NewQueryServerTestHelper(s.ctx, s.app.InterfaceRegistry())
-	types.RegisterQueryServer(queryHelper, keeper.NewQuerier(s.app.DevGasKeeper))
+	queryHelper := baseapp.NewQueryServerTestHelper(
+		s.ctx, s.app.InterfaceRegistry(),
+	)
+	devgastypes.RegisterQueryServer(
+		queryHelper, devgaskeeper.NewQuerier(s.app.DevGasKeeper),
+	)
 
-	s.queryClient = types.NewQueryClient(queryHelper)
-	s.bankKeeper = s.app.BankKeeper
-	s.accountKeeper = s.app.AccountKeeper
-	s.feeShareMsgServer = s.app.DevGasKeeper
+	s.queryClient = devgastypes.NewQueryClient(queryHelper)
+	s.devgasMsgServer = s.app.DevGasKeeper
 	s.wasmMsgServer = wasmkeeper.NewMsgServerImpl(&s.app.WasmKeeper)
 }
 

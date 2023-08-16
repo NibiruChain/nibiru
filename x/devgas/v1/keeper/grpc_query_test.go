@@ -3,13 +3,12 @@ package keeper_test
 import (
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/devgas/v1/types"
 )
 
-func (s *IntegrationTestSuite) TestFeeShares() {
+func (s *IntegrationTestSuite) TestQueryFeeShares() {
 	s.SetupTest()
 	_, _, sender := testdata.KeyTestPubAddr()
 	_ = s.FundAccount(
@@ -26,7 +25,7 @@ func (s *IntegrationTestSuite) TestFeeShares() {
 		index++
 	}
 
-	// RegsisFeeShare
+	// Register FeeShares
 	var feeShares []types.FeeShare
 	for _, contractAddress := range contractAddressList {
 		goCtx := sdk.WrapSDKContext(s.ctx)
@@ -44,49 +43,29 @@ func (s *IntegrationTestSuite) TestFeeShares() {
 
 		feeShares = append(feeShares, feeShare)
 
-		_, err := s.feeShareMsgServer.RegisterFeeShare(goCtx, msg)
+		_, err := s.devgasMsgServer.RegisterFeeShare(goCtx, msg)
 		s.Require().NoError(err)
 	}
 
-	request := func(next []byte, offset, limit uint64, total bool) *types.QueryFeeSharesRequest {
-		return &types.QueryFeeSharesRequest{
-			Pagination: &query.PageRequest{
-				Key:        next,
-				Offset:     offset,
-				Limit:      limit,
-				CountTotal: total,
-			},
+	s.Run("from deployer", func() {
+		deployer := sender.String()
+		req := &types.QueryFeeSharesRequest{
+			Deployer: deployer,
 		}
-	}
-	s.Run("ByOffset", func() {
-		step := 2
 		goCtx := sdk.WrapSDKContext(s.ctx)
-		for i := 0; i < len(contractAddressList); i += step {
-			resp, err := s.queryClient.FeeShares(goCtx, request(nil, uint64(i), uint64(step), false))
-			s.Require().NoError(err)
-			s.Require().LessOrEqual(len(resp.Feeshare), step)
-			s.Require().Subset(testutil.Fill(feeShares), testutil.Fill(resp.Feeshare))
-		}
+		resp, err := s.queryClient.FeeShares(goCtx, req)
+		s.NoError(err)
+		s.Len(resp.Feeshare, len(feeShares))
 	})
-	s.Run("ByKey", func() {
-		step := 2
-		var next []byte
-		goCtx := sdk.WrapSDKContext(s.ctx)
-		for i := 0; i < len(contractAddressList); i += step {
-			resp, err := s.queryClient.FeeShares(goCtx, request(next, 0, uint64(step), false))
-			s.Require().NoError(err)
-			s.Require().LessOrEqual(len(resp.Feeshare), step)
-			s.Require().Subset(
-				testutil.Fill(feeShares), testutil.Fill(resp.Feeshare))
-			next = resp.Pagination.NextKey
+	s.Run("from random", func() {
+		deployer := testutil.AccAddress().String()
+		req := &types.QueryFeeSharesRequest{
+			Deployer: deployer,
 		}
-	})
-	s.Run("Total", func() {
 		goCtx := sdk.WrapSDKContext(s.ctx)
-		resp, err := s.queryClient.FeeShares(goCtx, request(nil, 0, 0, true))
-		s.Require().NoError(err)
-		s.Require().Equal(len(feeShares), int(resp.Pagination.Total))
-		s.Require().ElementsMatch(testutil.Fill(feeShares), testutil.Fill(resp.Feeshare))
+		resp, err := s.queryClient.FeeShares(goCtx, req)
+		s.NoError(err)
+		s.Len(resp.Feeshare, 0)
 	})
 }
 
@@ -110,7 +89,7 @@ func (s *IntegrationTestSuite) TestFeeShare() {
 		DeployerAddress:   sender.String(),
 		WithdrawerAddress: withdrawer.String(),
 	}
-	_, err := s.feeShareMsgServer.RegisterFeeShare(goCtx, msg)
+	_, err := s.devgasMsgServer.RegisterFeeShare(goCtx, msg)
 	s.Require().NoError(err)
 
 	req := &types.QueryFeeShareRequest{
@@ -122,7 +101,7 @@ func (s *IntegrationTestSuite) TestFeeShare() {
 	s.Require().Equal(resp.Feeshare, feeShare)
 }
 
-func (s *IntegrationTestSuite) TestDeployerFeeShares() {
+func (s *IntegrationTestSuite) TestFeeSharesByWithdrawer() {
 	s.SetupTest()
 	_, _, sender := testdata.KeyTestPubAddr()
 	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(1_000_000))))
@@ -146,118 +125,17 @@ func (s *IntegrationTestSuite) TestDeployerFeeShares() {
 			WithdrawerAddress: withdrawer.String(),
 		}
 
-		_, err := s.feeShareMsgServer.RegisterFeeShare(goCtx, msg)
+		_, err := s.devgasMsgServer.RegisterFeeShare(goCtx, msg)
 		s.Require().NoError(err)
 	}
 
-	request := func(next []byte, offset, limit uint64, total bool) *types.QueryDeployerFeeSharesRequest {
-		return &types.QueryDeployerFeeSharesRequest{
-			DeployerAddress: sender.String(),
-			Pagination: &query.PageRequest{
-				Key:        next,
-				Offset:     offset,
-				Limit:      limit,
-				CountTotal: total,
-			},
-		}
-	}
-	s.Run("ByOffset", func() {
-		step := 2
-		goCtx := sdk.WrapSDKContext(s.ctx)
-		for i := 0; i < len(contractAddressList); i += step {
-			resp, err := s.queryClient.DeployerFeeShares(goCtx, request(nil, uint64(i), uint64(step), false))
-			s.Require().NoError(err)
-			s.Require().LessOrEqual(len(resp.ContractAddresses), step)
-			s.Require().Subset(testutil.Fill(contractAddressList), testutil.Fill(resp.ContractAddresses))
-		}
-	})
-	s.Run("ByKey", func() {
-		step := 2
-		var next []byte
-		goCtx := sdk.WrapSDKContext(s.ctx)
-		for i := 0; i < len(contractAddressList); i += step {
-			resp, err := s.queryClient.DeployerFeeShares(goCtx, request(next, 0, uint64(step), false))
-			s.Require().NoError(err)
-			s.Require().LessOrEqual(len(resp.ContractAddresses), step)
-			s.Require().Subset(testutil.Fill(contractAddressList), testutil.Fill(resp.ContractAddresses))
-			next = resp.Pagination.NextKey
-		}
-	})
 	s.Run("Total", func() {
 		goCtx := sdk.WrapSDKContext(s.ctx)
-		resp, err := s.queryClient.DeployerFeeShares(goCtx, request(nil, 0, 0, true))
+		resp, err := s.queryClient.FeeSharesByWithdrawer(goCtx,
+			&types.QueryFeeSharesByWithdrawerRequest{
+				WithdrawerAddress: withdrawer.String(),
+			})
 		s.Require().NoError(err)
-		s.Require().Equal(len(contractAddressList), int(resp.Pagination.Total))
-		s.Require().ElementsMatch(testutil.Fill(contractAddressList), testutil.Fill(resp.ContractAddresses))
-	})
-}
-
-func (s *IntegrationTestSuite) TestWithdrawerFeeShares() {
-	s.SetupTest()
-	_, _, sender := testdata.KeyTestPubAddr()
-	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(1_000_000))))
-
-	_, _, withdrawer := testdata.KeyTestPubAddr()
-
-	var contractAddressList []string
-	var index uint64
-	for index < 5 {
-		contractAddress := s.InstantiateContract(sender.String(), "")
-		contractAddressList = append(contractAddressList, contractAddress)
-		index++
-	}
-
-	// RegsisFeeShare
-	for _, contractAddress := range contractAddressList {
-		goCtx := sdk.WrapSDKContext(s.ctx)
-		msg := &types.MsgRegisterFeeShare{
-			ContractAddress:   contractAddress,
-			DeployerAddress:   sender.String(),
-			WithdrawerAddress: withdrawer.String(),
-		}
-
-		_, err := s.feeShareMsgServer.RegisterFeeShare(goCtx, msg)
-		s.Require().NoError(err)
-	}
-
-	request := func(next []byte, offset, limit uint64, total bool) *types.QueryWithdrawerFeeSharesRequest {
-		return &types.QueryWithdrawerFeeSharesRequest{
-			WithdrawerAddress: withdrawer.String(),
-			Pagination: &query.PageRequest{
-				Key:        next,
-				Offset:     offset,
-				Limit:      limit,
-				CountTotal: total,
-			},
-		}
-	}
-	s.Run("ByOffset", func() {
-		step := 2
-		goCtx := sdk.WrapSDKContext(s.ctx)
-		for i := 0; i < len(contractAddressList); i += step {
-			resp, err := s.queryClient.WithdrawerFeeShares(goCtx, request(nil, uint64(i), uint64(step), false))
-			s.Require().NoError(err)
-			s.Require().LessOrEqual(len(resp.ContractAddresses), step)
-			s.Require().Subset(testutil.Fill(contractAddressList), testutil.Fill(resp.ContractAddresses))
-		}
-	})
-	s.Run("ByKey", func() {
-		step := 2
-		var next []byte
-		goCtx := sdk.WrapSDKContext(s.ctx)
-		for i := 0; i < len(contractAddressList); i += step {
-			resp, err := s.queryClient.WithdrawerFeeShares(goCtx, request(next, 0, uint64(step), false))
-			s.Require().NoError(err)
-			s.Require().LessOrEqual(len(resp.ContractAddresses), step)
-			s.Require().Subset(testutil.Fill(contractAddressList), testutil.Fill(resp.ContractAddresses))
-			next = resp.Pagination.NextKey
-		}
-	})
-	s.Run("Total", func() {
-		goCtx := sdk.WrapSDKContext(s.ctx)
-		resp, err := s.queryClient.WithdrawerFeeShares(goCtx, request(nil, 0, 0, true))
-		s.Require().NoError(err)
-		s.Require().Equal(len(contractAddressList), int(resp.Pagination.Total))
-		s.Require().ElementsMatch(testutil.Fill(contractAddressList), testutil.Fill(resp.ContractAddresses))
+		s.Require().Equal(len(contractAddressList), len(resp.Feeshare))
 	})
 }

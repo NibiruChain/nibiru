@@ -25,7 +25,7 @@ func TestLegacyParamsValidate(t *testing.T) {
 
 	testCases := []struct {
 		name     string
-		params   Params
+		params   ModuleParams
 		expError bool
 	}{
 		{"default", DefaultParams(), false},
@@ -41,27 +41,27 @@ func TestLegacyParamsValidate(t *testing.T) {
 		},
 		{
 			"valid: 100% devs",
-			Params{true, sdk.NewDecFromInt(sdk.NewInt(1)), acceptedDenoms},
+			ModuleParams{true, sdk.NewDecFromInt(sdk.NewInt(1)), acceptedDenoms},
 			false,
 		},
 		{
 			"empty",
-			Params{},
+			ModuleParams{},
 			true,
 		},
 		{
 			"invalid: share > 1",
-			Params{true, sdk.NewDecFromInt(sdk.NewInt(2)), acceptedDenoms},
+			ModuleParams{true, sdk.NewDecFromInt(sdk.NewInt(2)), acceptedDenoms},
 			true,
 		},
 		{
 			"invalid: share < 0",
-			Params{true, sdk.NewDecFromInt(sdk.NewInt(-1)), acceptedDenoms},
+			ModuleParams{true, sdk.NewDecFromInt(sdk.NewInt(-1)), acceptedDenoms},
 			true,
 		},
 		{
 			"valid: all denoms allowed",
-			Params{true, sdk.NewDecFromInt(sdk.NewInt(-1)), []string{}},
+			ModuleParams{true, sdk.NewDecFromInt(sdk.NewInt(-1)), []string{}},
 			true,
 		},
 	}

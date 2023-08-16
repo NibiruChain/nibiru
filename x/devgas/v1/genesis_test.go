@@ -10,7 +10,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	"github.com/NibiruChain/nibiru/x/devgas/v1"
+	devgas "github.com/NibiruChain/nibiru/x/devgas/v1"
 	devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
 )
 
@@ -50,7 +50,7 @@ func (suite *GenesisTestSuite) TestFeeShareInitGenesis() {
 		{
 			"custom genesis - feeshare disabled",
 			devgastypes.GenesisState{
-				Params: devgastypes.Params{
+				Params: devgastypes.ModuleParams{
 					EnableFeeShare:  false,
 					DeveloperShares: devgastypes.DefaultDeveloperShares,
 					AllowedDenoms:   []string{"unibi"},
@@ -61,7 +61,7 @@ func (suite *GenesisTestSuite) TestFeeShareInitGenesis() {
 		{
 			"custom genesis - feeshare enabled, 0% developer shares",
 			devgastypes.GenesisState{
-				Params: devgastypes.Params{
+				Params: devgastypes.ModuleParams{
 					EnableFeeShare:  true,
 					DeveloperShares: sdk.NewDecWithPrec(0, 2),
 					AllowedDenoms:   []string{"unibi"},
@@ -72,7 +72,7 @@ func (suite *GenesisTestSuite) TestFeeShareInitGenesis() {
 		{
 			"custom genesis - feeshare enabled, 100% developer shares",
 			devgastypes.GenesisState{
-				Params: devgastypes.Params{
+				Params: devgastypes.ModuleParams{
 					EnableFeeShare:  true,
 					DeveloperShares: sdk.NewDecWithPrec(100, 2),
 					AllowedDenoms:   []string{"unibi"},
@@ -83,7 +83,7 @@ func (suite *GenesisTestSuite) TestFeeShareInitGenesis() {
 		{
 			"custom genesis - feeshare enabled, all denoms allowed",
 			devgastypes.GenesisState{
-				Params: devgastypes.Params{
+				Params: devgastypes.ModuleParams{
 					EnableFeeShare:  true,
 					DeveloperShares: sdk.NewDecWithPrec(10, 2),
 					AllowedDenoms:   []string(nil),

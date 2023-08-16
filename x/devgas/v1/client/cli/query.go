@@ -27,8 +27,7 @@ func GetQueryCmd() *cobra.Command {
 		GetCmdQueryFeeShares(),
 		GetCmdQueryFeeShare(),
 		GetCmdQueryParams(),
-		GetCmdQueryDeployerFeeShares(),
-		GetCmdQueryWithdrawerFeeShares(),
+		GetCmdQueryFeeSharesByWithdrawer(),
 	)
 
 	return feesQueryCmd
@@ -38,23 +37,27 @@ func GetQueryCmd() *cobra.Command {
 // for fee distribution
 func GetCmdQueryFeeShares() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "contracts",
-		Short: "Query all FeeShares",
-		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, _ []string) error {
+		Use:   "contracts [deployer_addr]",
+		Short: "Query dev gas contracts registered with a deployer",
+		Long:  "Query dev gas contracts registered with a deployer",
+		Args:  cobra.ExactArgs(1),
+		Example: fmt.Sprintf("%s query %s deployer-contracts <deployer-address>",
+			version.AppName, types.ModuleName,
+		),
+
+		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			pageReq, err := client.ReadPageRequest(cmd.Flags())
-			if err != nil {
-				return err
-			}
-
+			deployer := args[0]
 			req := &types.QueryFeeSharesRequest{
-				Pagination: pageReq,
+				Deployer: deployer,
+			}
+			if err := req.ValidateBasic(); err != nil {
+				return err
 			}
 
 			res, err := queryClient.FeeShares(context.Background(), req)
@@ -136,53 +139,10 @@ func GetCmdQueryParams() *cobra.Command {
 	return cmd
 }
 
-// GetCmdQueryDeployerFeeShares implements a command that returns all contracts
-// that a deployer has registered for fee distribution
-func GetCmdQueryDeployerFeeShares() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "deployer-contracts [deployer_address]",
-		Args:    cobra.ExactArgs(1),
-		Short:   "Query all contracts that a given deployer has registered for feeshare distribution",
-		Long:    "Query all contracts that a given deployer has registered for feeshare distribution",
-		Example: fmt.Sprintf("%s query feeshare deployer-contracts <deployer-address>", version.AppName),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientQueryContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			queryClient := types.NewQueryClient(clientCtx)
-
-			pageReq, err := client.ReadPageRequest(cmd.Flags())
-			if err != nil {
-				return err
-			}
-
-			deployerFeeShareReq := &types.QueryDeployerFeeSharesRequest{
-				DeployerAddress: args[0],
-				Pagination:      pageReq,
-			}
-			if deployerFeeShareReq.ValidateBasic() != nil {
-				return err
-			}
-
-			// Query store
-			res, err := queryClient.DeployerFeeShares(context.Background(), deployerFeeShareReq)
-			if err != nil {
-				return err
-			}
-
-			return clientCtx.PrintProto(res)
-		},
-	}
-	flags.AddQueryFlagsToCmd(cmd)
-	return cmd
-}
-
-// GetCmdQueryWithdrawerFeeShares implements a command that returns all
+// GetCmdQueryFeeSharesByWithdrawer implements a command that returns all
 // contracts that have registered for fee distribution with a given withdraw
 // address
-func GetCmdQueryWithdrawerFeeShares() *cobra.Command {
+func GetCmdQueryFeeSharesByWithdrawer() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "withdrawer-contracts [withdraw_address]",
 		Args:    cobra.ExactArgs(1),
@@ -197,14 +157,8 @@ func GetCmdQueryWithdrawerFeeShares() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			pageReq, err := client.ReadPageRequest(cmd.Flags())
-			if err != nil {
-				return err
-			}
-
-			withdrawReq := &types.QueryWithdrawerFeeSharesRequest{
+			withdrawReq := &types.QueryFeeSharesByWithdrawerRequest{
 				WithdrawerAddress: args[0],
-				Pagination:        pageReq,
 			}
 
 			if err := withdrawReq.ValidateBasic(); err != nil {
@@ -212,7 +166,8 @@ func GetCmdQueryWithdrawerFeeShares() *cobra.Command {
 			}
 
 			// Query store
-			res, err := queryClient.WithdrawerFeeShares(context.Background(), withdrawReq)
+			goCtx := context.Background()
+			res, err := queryClient.FeeSharesByWithdrawer(goCtx, withdrawReq)
 			if err != nil {
 				return err
 			}

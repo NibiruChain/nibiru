@@ -172,7 +172,7 @@ The `x/devgas` module keeps the following objects in the state:
 | :-------------------- | :------------------------------------ | :---------------------------------------------------------------- | :----------------- | :---- |
 | `FeeShare`            | Fee split bytecode                    | `[]byte{1} + []byte(contract_address)`                            | `[]byte{feeshare}` | KV    |
 | `DeployerFeeShares`   | Contract by deployer address bytecode | `[]byte{2} + []byte(deployer_address) + []byte(contract_address)` | `[]byte{1}`        | KV    |
-| `WithdrawerFeeShares` | Contract by withdraw address bytecode | `[]byte{3} + []byte(withdraw_address) + []byte(contract_address)` | `[]byte{1}`        | KV    |
+| `FeeSharesByWithdrawer` | Contract by withdraw address bytecode | `[]byte{3} + []byte(withdraw_address) + []byte(contract_address)` | `[]byte{1}`        | KV    |
 
 ### State: FeeShare
 
@@ -483,7 +483,7 @@ nibid query feeshare params
 | `gRPC` | `nibiru.devgas.v1.Query/FeeShare`                  | Get the devgas for a given contract    |
 | `gRPC` | `nibiru.devgas.v1.Query/FeeShares`                 | Get all feeshares                        |
 | `gRPC` | `nibiru.devgas.v1.Query/DeployerFeeShares`         | Get all feeshares of a given deployer    |
-| `gRPC` | `nibiru.devgas.v1.Query/WithdrawerFeeShares`       | Get all feeshares of a given withdrawer  |
+| `gRPC` | `nibiru.devgas.v1.Query/FeeSharesByWithdrawer`       | Get all feeshares of a given withdrawer  |
 | `GET`  | `/nibiru.devgas/v1/params`                        | Get devgas params                      |
 | `GET`  | `/nibiru.devgas/v1/feeshares/{contract_address}`  | Get the devgas for a given contract    |
 | `GET`  | `/nibiru.devgas/v1/feeshares`                     | Get all feeshares                        |
@@ -506,4 +506,4 @@ nibid query feeshare params
 > "This module is a heavily modified fork of
 [evmos/x/revenue](https://github.com/evmos/evmos/tree/main/x/revenue)" - Juno Network
 
-This module is fork of Juno's fork. 🙃
+This module is a heavily modified fork of Juno's heavily modified fork. 🙃

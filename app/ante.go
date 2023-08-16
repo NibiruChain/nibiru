@@ -65,7 +65,7 @@ func NewAnteHandler(options AnteHandlerOptions) (sdk.AnteHandler, error) {
 		// Replace fee ante from cosmos auth with a custom one.
 		sdkante.NewDeductFeeDecorator(
 			options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper, options.TxFeeChecker),
-		devgasante.NewFeeSharePayoutDecorator(
+		devgasante.NewDevGasPayoutDecorator(
 			options.DevGasBankKeeper, options.DevGasKeeper),
 		// SetPubKeyDecorator must be called before all signature verification decorators
 		sdkante.NewSetPubKeyDecorator(options.AccountKeeper),
