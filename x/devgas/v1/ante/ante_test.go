@@ -1,13 +1,23 @@
 package ante_test
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	sdkclienttx "github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	ante "github.com/NibiruChain/nibiru/x/devgas/v1/ante"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	devgasante "github.com/NibiruChain/nibiru/x/devgas/v1/ante"
+	devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
 )
 
 type AnteTestSuite struct {
@@ -102,7 +112,7 @@ func (suite *AnteTestSuite) TestFeeLogic() {
 	}
 
 	for _, tc := range testCases {
-		coins := ante.FeePayLogic(tc.incomingFee, tc.govPercent, tc.numContracts)
+		coins := devgasante.FeePayLogic(tc.incomingFee, tc.govPercent, tc.numContracts)
 
 		for _, coin := range coins {
 			for _, expectedCoin := range tc.expectedFeePayment {
@@ -111,5 +121,171 @@ func (suite *AnteTestSuite) TestFeeLogic() {
 				}
 			}
 		}
+	}
+}
+
+func (suite *AnteTestSuite) TestDevGasPayout() {
+	txGasCoins := sdk.NewCoins(
+		sdk.NewCoin("unibi", sdk.NewInt(1_000)),
+		sdk.NewCoin("utoken", sdk.NewInt(500)),
+	)
+
+	_, addrs := testutil.PrivKeyAddressPairs(11)
+	contracts := addrs[:5]
+	withdrawAddrs := addrs[5:10]
+	deployerAddr := addrs[10]
+	wasmExecMsgs := []*wasmtypes.MsgExecuteContract{
+		{Contract: contracts[0].String()},
+		{Contract: contracts[1].String()},
+		{Contract: contracts[2].String()},
+		{Contract: contracts[3].String()},
+		{Contract: contracts[4].String()},
+	}
+	devGasForWithdrawer := func(
+		contractIdx int, withdrawerIdx int,
+	) devgastypes.FeeShare {
+		return devgastypes.FeeShare{
+			ContractAddress:   contracts[contractIdx].String(),
+			DeployerAddress:   deployerAddr.String(),
+			WithdrawerAddress: withdrawAddrs[withdrawerIdx].String(),
+		}
+	}
+
+	testCases := []struct {
+		name                    string
+		devGasState             []devgastypes.FeeShare
+		wantWithdrawerRoyalties sdk.Coins
+		wantErr                 bool
+		setup                   func() (*app.NibiruApp, sdk.Context)
+	}{
+		{
+			name: "1 contract, 1 exec, 1 withdrawer",
+			devGasState: []devgastypes.FeeShare{
+				devGasForWithdrawer(0, 0),
+			},
+			// The expected royalty is gas / num_withdrawers / 2. Thus, We
+			// divide gas by (num_withdrawers * 2). The 2 comes from 50% split.
+			// wantWithdrawerRoyalties: num_withdrawers * 2 = 2
+			wantWithdrawerRoyalties: txGasCoins.QuoInt(sdk.NewInt(2)),
+			wantErr:                 false,
+			setup: func() (*app.NibiruApp, sdk.Context) {
+				bapp, ctx := testapp.NewNibiruTestAppAndContext()
+				err := testapp.FundModuleAccount(
+					bapp.BankKeeper, ctx, authtypes.FeeCollectorName, txGasCoins)
+				suite.NoError(err)
+				return bapp, ctx
+			},
+		},
+		{
+			name: "1 contract, 4 exec, 2 withdrawer",
+			devGasState: []devgastypes.FeeShare{
+				devGasForWithdrawer(0, 0),
+				devGasForWithdrawer(1, 0),
+				devGasForWithdrawer(2, 1),
+				devGasForWithdrawer(3, 1),
+			},
+			// The expected royalty is gas / num_withdrawers / 2. Thus, We
+			// divide gas by (num_withdrawers * 2). The 2 comes from 50% split.
+			// wantWithdrawerRoyalties: num_withdrawers * 2 = 4
+			wantWithdrawerRoyalties: txGasCoins.QuoInt(sdk.NewInt(4)),
+			wantErr:                 false,
+			setup: func() (*app.NibiruApp, sdk.Context) {
+				bapp, ctx := testapp.NewNibiruTestAppAndContext()
+				err := testapp.FundModuleAccount(
+					bapp.BankKeeper, ctx, authtypes.FeeCollectorName, txGasCoins)
+				suite.NoError(err)
+				return bapp, ctx
+			},
+		},
+		{
+			name: "err: empty fee collector module account",
+			devGasState: []devgastypes.FeeShare{
+				devGasForWithdrawer(0, 0),
+			},
+			// The expected royalty is gas / num_withdrawers / 2. Thus, We
+			// divide gas by (num_withdrawers * 2). The 2 comes from 50% split.
+			// wantWithdrawerRoyalties: num_withdrawers * 2 = 2
+			wantWithdrawerRoyalties: txGasCoins.QuoInt(sdk.NewInt(2)),
+			wantErr:                 true,
+			setup: func() (*app.NibiruApp, sdk.Context) {
+				bapp, ctx := testapp.NewNibiruTestAppAndContext()
+				return bapp, ctx
+			},
+		},
+		{
+			name:        "happy: no registered dev gas contracts",
+			devGasState: []devgastypes.FeeShare{},
+			// The expected royalty is gas / num_withdrawers / 2. Thus, We
+			// divide gas by (num_withdrawers * 2). The 2 comes from 50% split.
+			// wantWithdrawerRoyalties: num_withdrawers * 2 = 2
+			wantWithdrawerRoyalties: txGasCoins.QuoInt(sdk.NewInt(2)),
+			wantErr:                 false,
+			setup: func() (*app.NibiruApp, sdk.Context) {
+				bapp, ctx := testapp.NewNibiruTestAppAndContext()
+				return bapp, ctx
+			},
+		},
+	}
+
+	var nextMockAnteHandler sdk.AnteHandler = func(
+		ctx sdk.Context, tx sdk.Tx, simulate bool,
+	) (newCtx sdk.Context, err error) {
+		return ctx, nil
+	}
+
+	for _, tc := range testCases {
+		suite.T().Run(tc.name, func(t *testing.T) {
+			bapp, ctx := tc.setup()
+			ctx = ctx.WithChainID("mock-chain-id")
+			anteDecorator := devgasante.NewDevGasPayoutDecorator(
+				bapp.BankKeeper, bapp.DevGasKeeper,
+			)
+
+			t.Log("set dev gas state based on test case")
+			for _, devGas := range tc.devGasState {
+				bapp.DevGasKeeper.SetFeeShare(ctx, devGas)
+			}
+
+			t.Log("build tx and call AnteHandle")
+			encCfg := app.MakeEncodingConfigAndRegister()
+			txMsgs := []sdk.Msg{}
+			for _, wasmExecMsg := range wasmExecMsgs {
+				txMsgs = append(txMsgs, wasmExecMsg)
+			}
+			txBuilder, err := sdkclienttx.Factory{}.
+				WithFees(txGasCoins.String()).
+				WithChainID(ctx.ChainID()).
+				WithTxConfig(encCfg.TxConfig).
+				BuildUnsignedTx(txMsgs...)
+			suite.NoError(err)
+			tx := txBuilder.GetTx()
+			simulate := true
+			ctx, err = anteDecorator.AnteHandle(
+				ctx, tx, simulate, nextMockAnteHandler,
+			)
+			if tc.wantErr {
+				suite.Error(err)
+				return
+			}
+			suite.NoError(err)
+
+			t.Log("tc withdrawers should have the expected funds")
+			for _, devGas := range tc.devGasState {
+				withdrawerCoins := bapp.BankKeeper.SpendableCoins(
+					ctx, devGas.GetWithdrawerAddr(),
+				)
+				wantWithdrawerRoyalties := tc.wantWithdrawerRoyalties.Sub(
+					sdk.NewInt64Coin(txGasCoins[0].Denom, 1),
+					sdk.NewInt64Coin(txGasCoins[1].Denom, 1),
+				)
+				suite.True(
+					withdrawerCoins.IsAllGTE(wantWithdrawerRoyalties),
+					strings.Join([]string{
+						fmt.Sprintf("withdrawerCoins: %v\n", withdrawerCoins),
+						fmt.Sprintf("tc.wantWithdrawerRoyalties: %v\n", tc.wantWithdrawerRoyalties),
+					}, " "),
+				)
+			}
+		})
 	}
 }
