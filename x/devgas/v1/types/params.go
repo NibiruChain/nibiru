@@ -83,3 +83,12 @@ func (p ModuleParams) Validate() error {
 	err := validateArray(p.AllowedDenoms)
 	return err
 }
+
+func (p ModuleParams) Sanitize() ModuleParams {
+	newP := new(ModuleParams)
+	*newP = p
+	if len(newP.AllowedDenoms) == 0 {
+		newP.AllowedDenoms = DefaultAllowedDenoms
+	}
+	return *newP
+}

@@ -11,7 +11,8 @@ import (
 var (
 	DefaultEnableFeeShare  = true
 	DefaultDeveloperShares = sdk.NewDecWithPrec(50, 2) // 50%
-	DefaultAllowedDenoms   = []string(nil)             // all allowed
+	// DefaultAllowedDenoms   = []string(nil)             // all allowed
+	DefaultAllowedDenoms = []string{} // all allowed
 
 	ParamStoreKeyEnableFeeShare  = []byte("EnableFeeShare")
 	ParamStoreKeyDeveloperShares = []byte("DeveloperShares")

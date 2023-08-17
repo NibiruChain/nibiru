@@ -4,6 +4,8 @@ import (
 	"crypto/sha256"
 	"fmt"
 
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	_ "embed"
@@ -398,6 +400,60 @@ func (s *IntegrationTestSuite) TestCancelFeeShare() {
 				resp, err := s.devgasMsgServer.CancelFeeShare(goCtx, tc.msg)
 				s.Require().Error(err)
 				s.Require().Equal(resp, tc.resp)
+			}
+		})
+	}
+}
+
+func (s *IntegrationTestSuite) TestUpdateParams() {
+	govModuleAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
+	goCtx := sdk.WrapSDKContext(s.ctx)
+
+	for _, tc := range []struct {
+		desc      string
+		msg       *types.MsgUpdateParams
+		shouldErr bool
+	}{
+		{
+			desc: "happy",
+			msg: &types.MsgUpdateParams{
+				Authority: govModuleAddr,
+				Params:    types.DefaultParams().Sanitize(),
+			},
+			shouldErr: false,
+		},
+		{
+			desc: "err - empty params",
+			msg: &types.MsgUpdateParams{
+				Authority: govModuleAddr,
+				Params:    types.ModuleParams{},
+			},
+			shouldErr: true,
+		},
+		{
+			desc: "err - nil params",
+			msg: &types.MsgUpdateParams{
+				Authority: govModuleAddr,
+			},
+			shouldErr: true,
+		},
+		{
+			desc: "err - nil params",
+			msg: &types.MsgUpdateParams{
+				Authority: "not-an-authority",
+				Params:    types.DefaultParams(),
+			},
+			shouldErr: true,
+		},
+	} {
+		tc := tc
+		s.Run(tc.desc, func() {
+			if !tc.shouldErr {
+				_, err := s.devgasMsgServer.UpdateParams(goCtx, tc.msg)
+				s.NoError(err)
+			} else {
+				_, err := s.devgasMsgServer.UpdateParams(goCtx, tc.msg)
+				s.Error(err)
 			}
 		})
 	}

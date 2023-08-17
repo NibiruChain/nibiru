@@ -27,7 +27,8 @@ func TestParamsValidate(t *testing.T) {
 		params   ModuleParams
 		expError bool
 	}{
-		{"default", DefaultParams(), false},
+		{name: "default", params: DefaultParams(), expError: false},
+		{name: "default sanitize", params: DefaultParams().Sanitize(), expError: false},
 		{
 			"valid: enabled",
 			NewParams(true, devShares, acceptedDenoms),

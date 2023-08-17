@@ -9,5 +9,5 @@ import (
 // GetParams returns the total set of fees parameters.
 func (k Keeper) GetParams(ctx sdk.Context) (params types.ModuleParams) {
 	params, _ = k.ModuleParams.Get(ctx)
-	return params
+	return params.Sanitize()
 }

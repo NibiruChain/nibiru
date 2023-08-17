@@ -125,16 +125,28 @@ func (suite *MsgsTestSuite) TestMsgCancelFeeShareGetters() {
 
 func (suite *MsgsTestSuite) TestMsgCancelFeeShareNew() {
 	testCases := []struct {
-		msg        string
+		errMsg     string
 		contract   string
 		deployer   string
 		expectPass bool
 	}{
 		{
-			"msg cancel contract fee - pass",
-			suite.contract.String(),
-			suite.deployerStr,
-			true,
+			errMsg:     "msg cancel contract fee - pass",
+			contract:   suite.contract.String(),
+			deployer:   suite.deployerStr,
+			expectPass: true,
+		},
+		{
+			errMsg:     "decoding bech32 failed",
+			contract:   "contract",
+			deployer:   suite.deployerStr,
+			expectPass: false,
+		},
+		{
+			errMsg:     "decoding bech32 failed",
+			contract:   suite.contract.String(),
+			deployer:   "deployer",
+			expectPass: false,
 		},
 	}
 
@@ -146,10 +158,10 @@ func (suite *MsgsTestSuite) TestMsgCancelFeeShareNew() {
 		err := tx.ValidateBasic()
 
 		if tc.expectPass {
-			suite.Require().NoError(err, "valid test %d failed: %s, %v", i, tc.msg)
+			suite.Require().NoError(err, "valid test %d failed: %s, %v", i, tc.errMsg)
 		} else {
-			suite.Require().Error(err, "invalid test %d passed: %s, %v", i, tc.msg)
-			suite.Require().Contains(err.Error(), tc.msg)
+			suite.Require().Error(err, "invalid test %d passed: %s, %v", i, tc.errMsg)
+			suite.Require().Contains(err.Error(), tc.errMsg)
 		}
 	}
 }
@@ -219,5 +231,53 @@ func (suite *MsgsTestSuite) TestMsgUpdateFeeShareNew() {
 			suite.Require().Error(err, "invalid test %d passed: %s, %v", i, tc.msg)
 			suite.Require().Contains(err.Error(), tc.msg)
 		}
+	}
+}
+
+func (s *MsgsTestSuite) TestQuery_ValidateBasic() {
+	validAddr := s.contract.String()
+	invalidAddr := "invalid-addr"
+
+	for _, tc := range []struct {
+		name string
+		test func()
+	}{
+		{
+			name: "query fee share", test: func() {
+				queryMsg := &QueryFeeShareRequest{
+					ContractAddress: validAddr,
+				}
+				s.NoError(queryMsg.ValidateBasic())
+
+				queryMsg.ContractAddress = invalidAddr
+				s.Error(queryMsg.ValidateBasic())
+			},
+		},
+		{
+			name: "query fee shares", test: func() {
+				queryMsg := &QueryFeeSharesRequest{
+					Deployer: validAddr,
+				}
+				s.NoError(queryMsg.ValidateBasic())
+
+				queryMsg.Deployer = invalidAddr
+				s.Error(queryMsg.ValidateBasic())
+			},
+		},
+		{
+			name: "query fee shares by withdraw", test: func() {
+				queryMsg := &QueryFeeSharesByWithdrawerRequest{
+					WithdrawerAddress: validAddr,
+				}
+				s.NoError(queryMsg.ValidateBasic())
+
+				queryMsg.WithdrawerAddress = invalidAddr
+				s.Error(queryMsg.ValidateBasic())
+			},
+		},
+	} {
+		s.T().Run(tc.name, func(t *testing.T) {
+			tc.test()
+		})
 	}
 }

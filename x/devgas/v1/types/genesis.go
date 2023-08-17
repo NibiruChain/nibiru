@@ -14,7 +14,8 @@ func NewGenesisState(params ModuleParams, feeshare []FeeShare) GenesisState {
 // default params and chain config values.
 func DefaultGenesisState() *GenesisState {
 	return &GenesisState{
-		Params: DefaultParams(),
+		Params:   DefaultParams(),
+		FeeShare: []FeeShare{},
 	}
 }
 

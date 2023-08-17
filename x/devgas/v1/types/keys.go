@@ -2,7 +2,6 @@ package types
 
 import (
 	"github.com/NibiruChain/collections"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // constants
@@ -25,15 +24,3 @@ const (
 	KeyPrefixWithdrawer
 	KeyPrefixParams
 )
-
-// GetKeyPrefixDeployer returns the KVStore key prefix for storing
-// registered feeshare contract for a deployer
-func GetKeyPrefixDeployer(deployerAddress sdk.AccAddress) []byte {
-	return append(KeyPrefixDeployer.Prefix(), deployerAddress.Bytes()...)
-}
-
-// GetKeyPrefixWithdrawer returns the KVStore key prefix for storing
-// registered feeshare contract for a withdrawer
-func GetKeyPrefixWithdrawer(withdrawerAddress sdk.AccAddress) []byte {
-	return append(KeyPrefixWithdrawer.Prefix(), withdrawerAddress.Bytes()...)
-}

@@ -19,7 +19,7 @@ func InitGenesis(
 		panic(err)
 	}
 
-	k.ModuleParams.Set(ctx, data.Params)
+	k.ModuleParams.Set(ctx, data.Params.Sanitize())
 
 	for _, share := range data.FeeShare {
 		// Set initial contracts receiving transaction fees
