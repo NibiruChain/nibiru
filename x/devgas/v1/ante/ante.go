@@ -72,7 +72,28 @@ func (a DevGasPayoutDecorator) devGasPayout(
 		return nil
 	}
 
-	allowedFees := getAllowedFees(params, tx.GetFee())
+	feesPaidOutput, err := a.settleFeePayments(ctx, toPay, params, tx.GetFee())
+	if err != nil {
+		return err
+	}
+
+	bz, err := json.Marshal(feesPaidOutput)
+	if err != nil {
+		return errorsmod.Wrapf(feeshare.ErrFeeSharePayment, "failed to marshal feesPaidOutput: %s", err.Error())
+	}
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			feeshare.EventTypePayoutFeeShare,
+			sdk.NewAttribute(feeshare.AttributeWithdrawPayouts, string(bz))),
+	)
+
+	return nil
+}
+
+// settleFeePayments actually sends the funds to the contract developers
+func (a DevGasPayoutDecorator) settleFeePayments(ctx sdk.Context, toPay []sdk.AccAddress, params feeshare.ModuleParams, totalFees sdk.Coins) ([]FeeSharePayoutEventOutput, error) {
+	allowedFees := getAllowedFees(params, totalFees)
 
 	numPairs := len(toPay)
 	feesPaidOutput := make([]FeeSharePayoutEventOutput, numPairs)
@@ -89,23 +110,12 @@ func (a DevGasPayoutDecorator) devGasPayout(
 			}
 
 			if err != nil {
-				return errorsmod.Wrapf(feeshare.ErrFeeSharePayment, "failed to pay allowedFees to contract developer: %s", err.Error())
+				return nil, errorsmod.Wrapf(feeshare.ErrFeeSharePayment, "failed to pay allowedFees to contract developer: %s", err.Error())
 			}
 		}
 	}
 
-	bz, err := json.Marshal(feesPaidOutput)
-	if err != nil {
-		return errorsmod.Wrapf(feeshare.ErrFeeSharePayment, "failed to marshal feesPaidOutput: %s", err.Error())
-	}
-
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			feeshare.EventTypePayoutFeeShare,
-			sdk.NewAttribute(feeshare.AttributeWithdrawPayouts, string(bz))),
-	)
-
-	return nil
+	return feesPaidOutput, nil
 }
 
 // getAllowedFees gets the allowed fees to be paid based on the governance params
