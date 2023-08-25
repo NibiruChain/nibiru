@@ -15,8 +15,8 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 
-	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
-	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
+	tutilaction "github.com/NibiruChain/nibiru/x/common/testutil/action"
+	perpaction "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
 )
 
@@ -68,74 +68,74 @@ func TestPositionNotionalTWAP(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.USDC)
 	startTime := time.Now()
 
-	tc := TestCases{
-		TC("long position").
+	tc := tutilaction.TestCases{
+		tutilaction.TC("long position").
 			Given(
-				SetBlockTime(startTime),
-				SetBlockNumber(1),
-				CreateCustomMarket(pair),
-				InsertPosition(WithSize(sdk.NewDec(10)), WithTrader(alice)),
-				InsertReserveSnapshot(pair, startTime, WithPriceMultiplier(sdk.NewDec(9))),
-				InsertReserveSnapshot(pair, startTime.Add(10*time.Second), WithPriceMultiplier(sdk.MustNewDecFromStr("8.5"))),
-				InsertReserveSnapshot(pair, startTime.Add(20*time.Second), WithPriceMultiplier(sdk.MustNewDecFromStr("9.5"))),
+				tutilaction.SetBlockTime(startTime),
+				tutilaction.SetBlockNumber(1),
+				perpaction.CreateCustomMarket(pair),
+				perpaction.InsertPosition(perpaction.WithSize(sdk.NewDec(10)), perpaction.WithTrader(alice)),
+				perpaction.InsertReserveSnapshot(pair, startTime, perpaction.WithPriceMultiplier(sdk.NewDec(9))),
+				perpaction.InsertReserveSnapshot(pair, startTime.Add(10*time.Second), perpaction.WithPriceMultiplier(sdk.MustNewDecFromStr("8.5"))),
+				perpaction.InsertReserveSnapshot(pair, startTime.Add(20*time.Second), perpaction.WithPriceMultiplier(sdk.MustNewDecFromStr("9.5"))),
 			).
 			When(
-				MoveToNextBlockWithDuration(30 * time.Second),
+				tutilaction.MoveToNextBlockWithDuration(30 * time.Second),
 			).
 			Then(
 				PositionNotionalTWAPShouldBeEqualTo(pair, alice, 30*time.Second, sdk.MustNewDecFromStr("89.999999999100000000")),
 			),
 
-		TC("short position").
+		tutilaction.TC("short position").
 			Given(
-				SetBlockTime(startTime),
-				SetBlockNumber(1),
-				CreateCustomMarket(pair),
-				InsertPosition(WithSize(sdk.NewDec(-10)), WithTrader(alice)),
-				InsertReserveSnapshot(pair, startTime, WithPriceMultiplier(sdk.NewDec(9))),
-				InsertReserveSnapshot(pair, startTime.Add(10*time.Second), WithPriceMultiplier(sdk.MustNewDecFromStr("8.5"))),
-				InsertReserveSnapshot(pair, startTime.Add(20*time.Second), WithPriceMultiplier(sdk.MustNewDecFromStr("9.5"))),
+				tutilaction.SetBlockTime(startTime),
+				tutilaction.SetBlockNumber(1),
+				perpaction.CreateCustomMarket(pair),
+				perpaction.InsertPosition(perpaction.WithSize(sdk.NewDec(-10)), perpaction.WithTrader(alice)),
+				perpaction.InsertReserveSnapshot(pair, startTime, perpaction.WithPriceMultiplier(sdk.NewDec(9))),
+				perpaction.InsertReserveSnapshot(pair, startTime.Add(10*time.Second), perpaction.WithPriceMultiplier(sdk.MustNewDecFromStr("8.5"))),
+				perpaction.InsertReserveSnapshot(pair, startTime.Add(20*time.Second), perpaction.WithPriceMultiplier(sdk.MustNewDecFromStr("9.5"))),
 			).
 			When(
-				MoveToNextBlockWithDuration(30 * time.Second),
+				tutilaction.MoveToNextBlockWithDuration(30 * time.Second),
 			).
 			Then(
 				PositionNotionalTWAPShouldBeEqualTo(pair, alice, 30*time.Second, sdk.MustNewDecFromStr("90.000000000900000000")),
 			),
 
-		TC("zero position").
+		tutilaction.TC("zero position").
 			Given(
-				SetBlockTime(startTime),
-				SetBlockNumber(1),
-				CreateCustomMarket(pair),
-				InsertPosition(WithSize(sdk.ZeroDec()), WithTrader(alice)),
-				InsertReserveSnapshot(pair, startTime, WithPriceMultiplier(sdk.NewDec(9))),
-				InsertReserveSnapshot(pair, startTime.Add(10*time.Second), WithPriceMultiplier(sdk.MustNewDecFromStr("8.5"))),
-				InsertReserveSnapshot(pair, startTime.Add(20*time.Second), WithPriceMultiplier(sdk.MustNewDecFromStr("9.5"))),
+				tutilaction.SetBlockTime(startTime),
+				tutilaction.SetBlockNumber(1),
+				perpaction.CreateCustomMarket(pair),
+				perpaction.InsertPosition(perpaction.WithSize(sdk.ZeroDec()), perpaction.WithTrader(alice)),
+				perpaction.InsertReserveSnapshot(pair, startTime, perpaction.WithPriceMultiplier(sdk.NewDec(9))),
+				perpaction.InsertReserveSnapshot(pair, startTime.Add(10*time.Second), perpaction.WithPriceMultiplier(sdk.MustNewDecFromStr("8.5"))),
+				perpaction.InsertReserveSnapshot(pair, startTime.Add(20*time.Second), perpaction.WithPriceMultiplier(sdk.MustNewDecFromStr("9.5"))),
 			).
 			When(
-				MoveToNextBlockWithDuration(30 * time.Second),
+				tutilaction.MoveToNextBlockWithDuration(30 * time.Second),
 			).
 			Then(
 				PositionNotionalTWAPShouldBeEqualTo(pair, alice, 30*time.Second, sdk.ZeroDec()),
 			),
 
-		TC("single snapshot").
+		tutilaction.TC("single snapshot").
 			Given(
-				SetBlockTime(startTime),
-				SetBlockNumber(1),
-				CreateCustomMarket(pair),
+				tutilaction.SetBlockTime(startTime),
+				tutilaction.SetBlockNumber(1),
+				perpaction.CreateCustomMarket(pair),
 			).
 			When(
-				InsertPosition(WithSize(sdk.NewDec(100)), WithTrader(alice)),
-				InsertReserveSnapshot(pair, startTime, WithPriceMultiplier(sdk.NewDec(9))),
+				perpaction.InsertPosition(perpaction.WithSize(sdk.NewDec(100)), perpaction.WithTrader(alice)),
+				perpaction.InsertReserveSnapshot(pair, startTime, perpaction.WithPriceMultiplier(sdk.NewDec(9))),
 			).
 			Then(
 				PositionNotionalTWAPShouldBeEqualTo(pair, alice, 30*time.Second, sdk.MustNewDecFromStr("899.999999910000000009")),
 			),
 	}
 
-	NewTestSuite(t).WithTestCases(tc...).Run()
+	tutilaction.NewTestSuite(t).WithTestCases(tc...).Run()
 }
 
 func TestUnrealizedPnl(t *testing.T) {
