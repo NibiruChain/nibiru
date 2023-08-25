@@ -21,7 +21,7 @@ import (
 )
 
 func TestGetAndSetNextPoolNumber(t *testing.T) {
-	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext()
 
 	// Write to store
 	app.SpotKeeper.SetNextPoolNumber(ctx, 150)
@@ -33,7 +33,7 @@ func TestGetAndSetNextPoolNumber(t *testing.T) {
 }
 
 func TestGetNextPoolNumberAndIncrement(t *testing.T) {
-	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext()
 
 	// Write a pool number
 	app.SpotKeeper.SetNextPoolNumber(ctx, 200)
@@ -50,7 +50,7 @@ func TestGetNextPoolNumberAndIncrement(t *testing.T) {
 }
 
 func TestSetAndFetchPool(t *testing.T) {
-	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext()
 
 	pool := types.Pool{
 		Id: 150,
@@ -159,7 +159,7 @@ func TestFetchPoolFromPair(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruTestAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext()
 
 			app.SpotKeeper.SetPool(ctx, types.Pool{
 				Id: 1,
@@ -221,7 +221,7 @@ func TestFetchPoolFromPair(t *testing.T) {
 }
 
 func TestNewPool(t *testing.T) {
-	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext()
 
 	poolCreationFeeCoin := sdk.NewInt64Coin(denoms.NIBI, 1000*common.TO_MICRO)
 	app.SpotKeeper.SetParams(ctx, types.NewParams(
@@ -292,7 +292,7 @@ func TestNewPool(t *testing.T) {
 }
 
 func TestNewPoolNotEnoughFunds(t *testing.T) {
-	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext()
 
 	app.SpotKeeper.SetParams(ctx, types.NewParams(
 		/*startingPoolNumber=*/ 1,
@@ -333,7 +333,7 @@ func TestNewPoolNotEnoughFunds(t *testing.T) {
 }
 
 func TestNewPoolTooLittleAssets(t *testing.T) {
-	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext()
 	userAddr, err := sdk.AccAddressFromBech32(testutil.AccAddress().String())
 	require.NoError(t, err)
 
@@ -354,7 +354,7 @@ func TestNewPoolTooLittleAssets(t *testing.T) {
 }
 
 func TestKeeperNewPoolNotWhitelistedAssets(t *testing.T) {
-	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext()
 	userAddr, err := sdk.AccAddressFromBech32(testutil.AccAddress().String())
 	require.NoError(t, err)
 
@@ -379,7 +379,7 @@ func TestKeeperNewPoolNotWhitelistedAssets(t *testing.T) {
 }
 
 func TestNewPoolTooManyAssets(t *testing.T) {
-	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext()
 	userAddr, err := sdk.AccAddressFromBech32(testutil.AccAddress().String())
 	require.NoError(t, err)
 
@@ -424,7 +424,7 @@ func TestNewPoolTooManyAssets(t *testing.T) {
 }
 
 func TestNewPoolDups(t *testing.T) {
-	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext()
 	userAddr, err := sdk.AccAddressFromBech32(testutil.AccAddress().String())
 	require.NoError(t, err)
 
@@ -579,7 +579,7 @@ func TestJoinPool(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruTestAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext()
 
 			poolAddr := testutil.AccAddress()
 			tc.initialPool.Address = poolAddr.String()
@@ -738,7 +738,7 @@ func TestJoinPoolAllAssets(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruTestAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext()
 
 			poolAddr := testutil.AccAddress()
 			tc.initialPool.Address = poolAddr.String()
@@ -851,7 +851,7 @@ func TestExitPool(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruTestAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext()
 
 			poolAddr := testutil.AccAddress()
 			tc.initialPool.Address = poolAddr.String()

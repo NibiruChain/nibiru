@@ -19,7 +19,7 @@ func TestExpectedKeepers(t *testing.T) {
 		appKeeper      interface{}
 	}
 
-	nibiruApp, _ := testapp.NewNibiruTestAppAndContext(true)
+	nibiruApp, _ := testapp.NewNibiruTestAppAndContext()
 	testCases := []TestCase{
 		{
 			name:           "OracleKeeper from x/oracle",
