@@ -13,9 +13,9 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	tutilaction "github.com/NibiruChain/nibiru/x/common/testutil/action"
-	. "github.com/NibiruChain/nibiru/x/common/testutil/assertion"
-	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
-	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
+	tutilassert "github.com/NibiruChain/nibiru/x/common/testutil/assertion"
+	perpaction "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
+	perpassert "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
@@ -28,18 +28,18 @@ func TestAddMargin(t *testing.T) {
 	tc := tutilaction.TestCases{
 		tutilaction.TC("existing long position, add margin").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				perpaction.CreateCustomMarket(pairBtcUsdc),
 				tutilaction.SetBlockNumber(1),
 				tutilaction.SetBlockTime(startBlockTime),
 				tutilaction.FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2020)))),
-				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				perpaction.MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			When(
 				tutilaction.MoveToNextBlock(),
-				AddMargin(alice, pairBtcUsdc, sdk.NewInt(1000)),
+				perpaction.AddMargin(alice, pairBtcUsdc, sdk.NewInt(1000)),
 			).
 			Then(
-				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionShouldBeEqualTo(
+				perpassert.PositionShouldBeEqual(alice, pairBtcUsdc, perpassert.Position_PositionShouldBeEqualTo(
 					types.Position{
 						Pair:                            pairBtcUsdc,
 						TraderAddress:                   alice.String(),
@@ -50,7 +50,7 @@ func TestAddMargin(t *testing.T) {
 						LastUpdatedBlockNumber:          2,
 					},
 				)),
-				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
+				perpassert.PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
 					FinalPosition: types.Position{
 						Pair:                            pairBtcUsdc,
 						TraderAddress:                   alice.String(),
@@ -71,25 +71,25 @@ func TestAddMargin(t *testing.T) {
 					ExchangedNotional: sdk.MustNewDecFromStr("0"),
 					ExchangedSize:     sdk.MustNewDecFromStr("0"),
 				}),
-				BalanceEqual(alice, denoms.USDC, sdk.ZeroInt()),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(10)),
-				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.NewInt(10)),
+				tutilassert.BalanceEqual(alice, denoms.USDC, sdk.ZeroInt()),
+				tutilassert.ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(10)),
+				tutilassert.ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.NewInt(10)),
 			),
 
 		tutilaction.TC("existing short position, add margin").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				perpaction.CreateCustomMarket(pairBtcUsdc),
 				tutilaction.SetBlockNumber(1),
 				tutilaction.SetBlockTime(startBlockTime),
 				tutilaction.FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2020)))),
-				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				perpaction.MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			When(
 				tutilaction.MoveToNextBlock(),
-				AddMargin(alice, pairBtcUsdc, sdk.NewInt(1000)),
+				perpaction.AddMargin(alice, pairBtcUsdc, sdk.NewInt(1000)),
 			).
 			Then(
-				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionShouldBeEqualTo(
+				perpassert.PositionShouldBeEqual(alice, pairBtcUsdc, perpassert.Position_PositionShouldBeEqualTo(
 					types.Position{
 						Pair:                            pairBtcUsdc,
 						TraderAddress:                   alice.String(),
@@ -100,7 +100,7 @@ func TestAddMargin(t *testing.T) {
 						LastUpdatedBlockNumber:          2,
 					},
 				)),
-				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
+				perpassert.PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
 					FinalPosition: types.Position{
 						Pair:                            pairBtcUsdc,
 						TraderAddress:                   alice.String(),
@@ -121,31 +121,31 @@ func TestAddMargin(t *testing.T) {
 					ExchangedNotional: sdk.MustNewDecFromStr("0"),
 					ExchangedSize:     sdk.MustNewDecFromStr("0"),
 				}),
-				BalanceEqual(alice, denoms.USDC, sdk.ZeroInt()),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(10)),
-				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.NewInt(10)),
+				tutilassert.BalanceEqual(alice, denoms.USDC, sdk.ZeroInt()),
+				tutilassert.ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(10)),
+				tutilassert.ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.NewInt(10)),
 			),
 
 		tutilaction.TC("Testing fails").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
-				CreateCustomMarket(pairEthUsdc),
+				perpaction.CreateCustomMarket(pairBtcUsdc),
+				perpaction.CreateCustomMarket(pairEthUsdc),
 
 				tutilaction.SetBlockNumber(1),
 				tutilaction.SetBlockTime(startBlockTime),
 				tutilaction.FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
-				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
+				perpaction.MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			When(
 				tutilaction.MoveToNextBlock(),
-				AddMarginFail(alice, asset.MustNewPair("luna:usdt"), sdk.NewInt(1000), types.ErrPairNotFound),
-				AddMarginFail(alice, pairEthUsdc, sdk.NewInt(1000), collections.ErrNotFound),
-				AddMarginFail(alice, pairBtcUsdc, sdk.NewInt(1000), sdkerrors.ErrInsufficientFunds),
+				perpaction.AddMarginFail(alice, asset.MustNewPair("luna:usdt"), sdk.NewInt(1000), types.ErrPairNotFound),
+				perpaction.AddMarginFail(alice, pairEthUsdc, sdk.NewInt(1000), collections.ErrNotFound),
+				perpaction.AddMarginFail(alice, pairBtcUsdc, sdk.NewInt(1000), sdkerrors.ErrInsufficientFunds),
 
-				RemoveMarginFail(alice, asset.MustNewPair("luna:usdt"), sdk.NewInt(1000), types.ErrPairNotFound),
-				RemoveMarginFail(alice, pairEthUsdc, sdk.NewInt(1000), collections.ErrNotFound),
-				RemoveMarginFail(alice, pairBtcUsdc, sdk.NewInt(2000), types.ErrBadDebt),
-				RemoveMarginFail(alice, pairBtcUsdc, sdk.NewInt(900), types.ErrMarginRatioTooLow),
+				perpaction.RemoveMarginFail(alice, asset.MustNewPair("luna:usdt"), sdk.NewInt(1000), types.ErrPairNotFound),
+				perpaction.RemoveMarginFail(alice, pairEthUsdc, sdk.NewInt(1000), collections.ErrNotFound),
+				perpaction.RemoveMarginFail(alice, pairBtcUsdc, sdk.NewInt(2000), types.ErrBadDebt),
+				perpaction.RemoveMarginFail(alice, pairBtcUsdc, sdk.NewInt(900), types.ErrMarginRatioTooLow),
 			),
 	}
 
@@ -160,18 +160,18 @@ func TestRemoveMargin(t *testing.T) {
 	tc := tutilaction.TestCases{
 		tutilaction.TC("existing long position, remove margin").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				perpaction.CreateCustomMarket(pairBtcUsdc),
 				tutilaction.SetBlockNumber(1),
 				tutilaction.SetBlockTime(startBlockTime),
 				tutilaction.FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1002)))),
-				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.OneDec(), sdk.ZeroDec()),
+				perpaction.MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.OneDec(), sdk.ZeroDec()),
 			).
 			When(
 				tutilaction.MoveToNextBlock(),
-				RemoveMargin(alice, pairBtcUsdc, sdk.NewInt(500)),
+				perpaction.RemoveMargin(alice, pairBtcUsdc, sdk.NewInt(500)),
 			).
 			Then(
-				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionShouldBeEqualTo(types.Position{
+				perpassert.PositionShouldBeEqual(alice, pairBtcUsdc, perpassert.Position_PositionShouldBeEqualTo(types.Position{
 					Pair:                            pairBtcUsdc,
 					TraderAddress:                   alice.String(),
 					Size_:                           sdk.MustNewDecFromStr("999.999999000000001000"),
@@ -180,7 +180,7 @@ func TestRemoveMargin(t *testing.T) {
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 					LastUpdatedBlockNumber:          2,
 				})),
-				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
+				perpassert.PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
 					FinalPosition: types.Position{
 						Pair:                            pairBtcUsdc,
 						TraderAddress:                   alice.String(),
@@ -201,25 +201,25 @@ func TestRemoveMargin(t *testing.T) {
 					ExchangedNotional: sdk.MustNewDecFromStr("0"),
 					ExchangedSize:     sdk.MustNewDecFromStr("0"),
 				}),
-				BalanceEqual(alice, denoms.USDC, sdk.NewInt(500)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.OneInt()),
-				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.OneInt()),
+				tutilassert.BalanceEqual(alice, denoms.USDC, sdk.NewInt(500)),
+				tutilassert.ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.OneInt()),
+				tutilassert.ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.OneInt()),
 			),
 
 		tutilaction.TC("existing long position, remove almost all margin fails").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				perpaction.CreateCustomMarket(pairBtcUsdc),
 				tutilaction.SetBlockNumber(1),
 				tutilaction.SetBlockTime(startBlockTime),
 				tutilaction.FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1002)))),
-				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.OneDec(), sdk.ZeroDec()),
+				perpaction.MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.OneDec(), sdk.ZeroDec()),
 				tutilaction.MoveToNextBlock(),
 			).
 			When(
-				RemoveMarginFail(alice, pairBtcUsdc, sdk.NewInt(999), types.ErrMarginRatioTooLow),
+				perpaction.RemoveMarginFail(alice, pairBtcUsdc, sdk.NewInt(999), types.ErrMarginRatioTooLow),
 			).
 			Then(
-				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionShouldBeEqualTo(types.Position{
+				perpassert.PositionShouldBeEqual(alice, pairBtcUsdc, perpassert.Position_PositionShouldBeEqualTo(types.Position{
 					Pair:                            pairBtcUsdc,
 					TraderAddress:                   alice.String(),
 					Size_:                           sdk.MustNewDecFromStr("999.999999000000001000"),
@@ -228,25 +228,25 @@ func TestRemoveMargin(t *testing.T) {
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 					LastUpdatedBlockNumber:          1,
 				})),
-				BalanceEqual(alice, denoms.USDC, sdk.ZeroInt()),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.OneInt()),
-				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.OneInt()),
+				tutilassert.BalanceEqual(alice, denoms.USDC, sdk.ZeroInt()),
+				tutilassert.ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.OneInt()),
+				tutilassert.ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.OneInt()),
 			),
 
 		tutilaction.TC("existing short position, remove margin").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				perpaction.CreateCustomMarket(pairBtcUsdc),
 				tutilaction.SetBlockNumber(1),
 				tutilaction.SetBlockTime(startBlockTime),
 				tutilaction.FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1002)))),
-				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.OneDec(), sdk.ZeroDec()),
+				perpaction.MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.OneDec(), sdk.ZeroDec()),
 			).
 			When(
 				tutilaction.MoveToNextBlock(),
-				RemoveMargin(alice, pairBtcUsdc, sdk.NewInt(500)),
+				perpaction.RemoveMargin(alice, pairBtcUsdc, sdk.NewInt(500)),
 			).
 			Then(
-				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionShouldBeEqualTo(types.Position{
+				perpassert.PositionShouldBeEqual(alice, pairBtcUsdc, perpassert.Position_PositionShouldBeEqualTo(types.Position{
 					Pair:                            pairBtcUsdc,
 					TraderAddress:                   alice.String(),
 					Size_:                           sdk.MustNewDecFromStr("-1000.000001000000001000"),
@@ -255,7 +255,7 @@ func TestRemoveMargin(t *testing.T) {
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 					LastUpdatedBlockNumber:          2,
 				})),
-				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
+				perpassert.PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
 					FinalPosition: types.Position{
 						Pair:                            pairBtcUsdc,
 						TraderAddress:                   alice.String(),
@@ -276,25 +276,25 @@ func TestRemoveMargin(t *testing.T) {
 					ExchangedNotional: sdk.MustNewDecFromStr("0"),
 					ExchangedSize:     sdk.MustNewDecFromStr("0"),
 				}),
-				BalanceEqual(alice, denoms.USDC, sdk.NewInt(500)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.OneInt()),
-				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.OneInt()),
+				tutilassert.BalanceEqual(alice, denoms.USDC, sdk.NewInt(500)),
+				tutilassert.ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.OneInt()),
+				tutilassert.ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.OneInt()),
 			),
 
 		tutilaction.TC("existing short position, remove almost all margin fails").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				perpaction.CreateCustomMarket(pairBtcUsdc),
 				tutilaction.SetBlockNumber(1),
 				tutilaction.SetBlockTime(startBlockTime),
 				tutilaction.FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1002)))),
-				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.OneDec(), sdk.ZeroDec()),
+				perpaction.MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.OneDec(), sdk.ZeroDec()),
 				tutilaction.MoveToNextBlock(),
 			).
 			When(
-				RemoveMarginFail(alice, pairBtcUsdc, sdk.NewInt(999), types.ErrMarginRatioTooLow),
+				perpaction.RemoveMarginFail(alice, pairBtcUsdc, sdk.NewInt(999), types.ErrMarginRatioTooLow),
 			).
 			Then(
-				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionShouldBeEqualTo(types.Position{
+				perpassert.PositionShouldBeEqual(alice, pairBtcUsdc, perpassert.Position_PositionShouldBeEqualTo(types.Position{
 					Pair:                            pairBtcUsdc,
 					TraderAddress:                   alice.String(),
 					Size_:                           sdk.MustNewDecFromStr("-1000.000001000000001000"),
@@ -303,9 +303,9 @@ func TestRemoveMargin(t *testing.T) {
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 					LastUpdatedBlockNumber:          1,
 				})),
-				BalanceEqual(alice, denoms.USDC, sdk.ZeroInt()),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.OneInt()),
-				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.OneInt()),
+				tutilassert.BalanceEqual(alice, denoms.USDC, sdk.ZeroInt()),
+				tutilassert.ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.OneInt()),
+				tutilassert.ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.OneInt()),
 			),
 	}
 
