@@ -103,12 +103,16 @@ func (s *IntegrationTestSuite) TestGetContractAdminOrCreatorAddress() {
 		tc := tc
 		s.Run(tc.desc, func() {
 			if !tc.shouldErr {
-				_, err := s.app.DevGasKeeper.GetContractAdminOrCreatorAddress(s.ctx, sdk.MustAccAddressFromBech32(tc.contractAddress), tc.deployerAddress)
-				s.Require().NoError(err)
-			} else {
-				_, err := s.app.DevGasKeeper.GetContractAdminOrCreatorAddress(s.ctx, sdk.MustAccAddressFromBech32(tc.contractAddress), tc.deployerAddress)
-				s.Require().Error(err)
+				_, err := s.app.DevGasKeeper.GetContractAdminOrCreatorAddress(
+					s.ctx, sdk.MustAccAddressFromBech32(tc.contractAddress), tc.deployerAddress,
+				)
+				s.NoError(err)
+				return
 			}
+			_, err := s.app.DevGasKeeper.GetContractAdminOrCreatorAddress(
+				s.ctx, sdk.MustAccAddressFromBech32(tc.contractAddress), tc.deployerAddress,
+			)
+			s.Error(err)
 		})
 	}
 }
