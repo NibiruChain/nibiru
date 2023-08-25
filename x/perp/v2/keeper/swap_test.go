@@ -88,7 +88,7 @@ func TestSwapQuoteAsset(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruTestAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext()
 			market := mock.TestMarket()
 			amm := mock.TestAMMDefault().WithPriceMultiplier(sdk.NewDec(2))
 
@@ -190,7 +190,7 @@ func TestSwapBaseAsset(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruTestAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext()
 			market := mock.TestMarket()
 			amm := mock.TestAMMDefault().WithPriceMultiplier(sdk.NewDec(2))
 

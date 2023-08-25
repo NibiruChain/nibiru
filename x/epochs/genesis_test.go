@@ -1,51 +1,61 @@
 package epochs_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/epochs"
 	"github.com/NibiruChain/nibiru/x/epochs/types"
 )
 
 func TestEpochsExportGenesis(t *testing.T) {
-	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+	chainStartTime := time.Now().UTC()
+	moduleGenesisIn := types.DefaultGenesisFromTime(chainStartTime)
 
-	chainStartTime := ctx.BlockTime()
+	encCfg := app.MakeEncodingConfigAndRegister()
+	appGenesis := genesis.NewTestGenesisState(encCfg)
+	appGenesis[types.ModuleName] = encCfg.Marshaler.MustMarshalJSON(moduleGenesisIn)
+
+	app := testapp.NewNibiruTestApp(appGenesis)
+	ctx := testapp.NewContext(app).WithBlockTime(chainStartTime)
 
 	genesis := epochs.ExportGenesis(ctx, app.EpochsKeeper)
 	require.Len(t, genesis.Epochs, 3)
 
+	errMsg := fmt.Sprintf("app.EpochsKeeper.AllEpochInfos(ctx): %v\n", app.EpochsKeeper.AllEpochInfos(ctx))
 	require.Equal(t, genesis.Epochs[0].Identifier, "15 min")
-	require.Equal(t, genesis.Epochs[0].StartTime, chainStartTime)
-	require.Equal(t, genesis.Epochs[0].Duration, time.Minute*15)
+	require.Equal(t, genesis.Epochs[0].StartTime, chainStartTime, errMsg)
+	require.Equal(t, genesis.Epochs[0].Duration, time.Minute*15, errMsg)
 	require.Equal(t, genesis.Epochs[0].CurrentEpoch, uint64(0))
 	require.Equal(t, genesis.Epochs[0].CurrentEpochStartHeight, int64(0))
 	require.Equal(t, genesis.Epochs[0].CurrentEpochStartTime, chainStartTime)
 	require.Equal(t, genesis.Epochs[0].EpochCountingStarted, false)
 
 	require.Equal(t, genesis.Epochs[1].Identifier, "30 min")
-	require.Equal(t, genesis.Epochs[1].StartTime, chainStartTime)
+	require.Equal(t, genesis.Epochs[1].StartTime, chainStartTime, errMsg)
 	require.Equal(t, genesis.Epochs[1].Duration, time.Minute*30)
 	require.Equal(t, genesis.Epochs[1].CurrentEpoch, uint64(0))
 	require.Equal(t, genesis.Epochs[1].CurrentEpochStartHeight, int64(0))
-	require.Equal(t, genesis.Epochs[1].CurrentEpochStartTime, chainStartTime)
+	require.Equal(t, genesis.Epochs[1].CurrentEpochStartTime, chainStartTime, errMsg)
 	require.Equal(t, genesis.Epochs[1].EpochCountingStarted, false)
 
 	require.Equal(t, genesis.Epochs[2].Identifier, "week")
-	require.Equal(t, genesis.Epochs[2].StartTime, chainStartTime)
+	require.Equal(t, genesis.Epochs[2].StartTime, chainStartTime, errMsg)
 	require.Equal(t, genesis.Epochs[2].Duration, time.Hour*24*7)
 	require.Equal(t, genesis.Epochs[2].CurrentEpoch, uint64(0))
 	require.Equal(t, genesis.Epochs[2].CurrentEpochStartHeight, int64(0))
-	require.Equal(t, genesis.Epochs[2].CurrentEpochStartTime, chainStartTime)
+	require.Equal(t, genesis.Epochs[2].CurrentEpochStartTime, chainStartTime, errMsg)
 	require.Equal(t, genesis.Epochs[2].EpochCountingStarted, false)
 }
 
 func TestEpochsInitGenesis(t *testing.T) {
-	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext()
 	// On init genesis, default epochs information is set
 	// To check init genesis again, should make it fresh status
 	epochInfos := app.EpochsKeeper.AllEpochInfos(ctx)

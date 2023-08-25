@@ -11,7 +11,7 @@ import (
 )
 
 func TestParamsQuery(t *testing.T) {
-	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 	keeper := &nibiruApp.StablecoinKeeper
 	wctx := sdk.WrapSDKContext(ctx)
 	params := types.DefaultParams()

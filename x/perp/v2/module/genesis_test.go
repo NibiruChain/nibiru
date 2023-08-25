@@ -62,7 +62,7 @@ func TestGenesis(t *testing.T) {
 }
 
 func RunTestGenesis(t *testing.T, tc TestCase) {
-	app, ctxUncached := testapp.NewNibiruTestAppAndContext(true)
+	app, ctxUncached := testapp.NewNibiruTestAppAndContext()
 	ctx, _ := ctxUncached.CacheContext()
 
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
@@ -107,7 +107,7 @@ func RunTestGenesis(t *testing.T, tc TestCase) {
 }
 
 func TestNewAppModuleBasic(t *testing.T) {
-	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext()
 
 	binaryCodec := codec.NewProtoCodec(nil) // Provide appropriate codec interface registry
 	appModuleBasic := perp.NewAppModuleBasic(binaryCodec)

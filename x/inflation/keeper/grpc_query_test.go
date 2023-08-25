@@ -20,7 +20,7 @@ type QueryServerSuite struct {
 }
 
 func (s *QueryServerSuite) SetupSuite() {
-	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 	s.nibiruApp = nibiruApp
 	s.ctx = ctx
 }
