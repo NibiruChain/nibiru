@@ -27,8 +27,13 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 type EventRegisterDevGas struct {
 	// deployer is the addess of the account that registered the smart contract to
 	// receive dev gas royalties.
-	Deployer   string `protobuf:"bytes,1,opt,name=deployer,proto3" json:"deployer,omitempty"`
-	Contract   string `protobuf:"bytes,2,opt,name=contract,proto3" json:"contract,omitempty"`
+	Deployer string `protobuf:"bytes,1,opt,name=deployer,proto3" json:"deployer,omitempty"`
+	// Address of the smart contract. This identifies the specific contract
+	// that will receive fee sharing payouts.
+	Contract string `protobuf:"bytes,2,opt,name=contract,proto3" json:"contract,omitempty"`
+	// The address that will receive the fee sharing payouts for the registered
+	// contract. This could be the deployer address or a separate withdrawer
+	// address specified.
 	Withdrawer string `protobuf:"bytes,3,opt,name=withdrawer,proto3" json:"withdrawer,omitempty"`
 }
 
@@ -92,6 +97,8 @@ type EventCancelDevGas struct {
 	// deployer is the addess of the account that registered the smart contract to
 	// receive dev gas royalties.
 	Deployer string `protobuf:"bytes,1,opt,name=deployer,proto3" json:"deployer,omitempty"`
+	// Address of the smart contract. This identifies the specific contract
+	// that will receive fee sharing payouts.
 	Contract string `protobuf:"bytes,2,opt,name=contract,proto3" json:"contract,omitempty"`
 }
 
@@ -147,8 +154,13 @@ func (m *EventCancelDevGas) GetContract() string {
 type EventUpdateDevGas struct {
 	// deployer is the addess of the account that registered the smart contract to
 	// receive dev gas royalties.
-	Deployer   string `protobuf:"bytes,1,opt,name=deployer,proto3" json:"deployer,omitempty"`
-	Contract   string `protobuf:"bytes,2,opt,name=contract,proto3" json:"contract,omitempty"`
+	Deployer string `protobuf:"bytes,1,opt,name=deployer,proto3" json:"deployer,omitempty"`
+	// Address of the smart contract. This identifies the specific contract
+	// that will receive fee sharing payouts.
+	Contract string `protobuf:"bytes,2,opt,name=contract,proto3" json:"contract,omitempty"`
+	// The address that will receive the fee sharing payouts for the registered
+	// contract. This could be the deployer address or a separate withdrawer
+	// address specified.
 	Withdrawer string `protobuf:"bytes,3,opt,name=withdrawer,proto3" json:"withdrawer,omitempty"`
 }
 

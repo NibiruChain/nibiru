@@ -9,7 +9,14 @@ message EventRegisterDevGas {
   // deployer is the addess of the account that registered the smart contract to
   // receive dev gas royalties.
   string deployer = 1;
+
+  // Address of the smart contract. This identifies the specific contract
+  // that will receive fee sharing payouts.
   string contract = 2;
+
+  // The address that will receive the fee sharing payouts for the registered
+  // contract. This could be the deployer address or a separate withdrawer
+  // address specified.
   string withdrawer = 3;
 }
 
@@ -19,6 +26,9 @@ message EventCancelDevGas {
   // deployer is the addess of the account that registered the smart contract to
   // receive dev gas royalties.
   string deployer = 1;
+
+  // Address of the smart contract. This identifies the specific contract
+  // that will receive fee sharing payouts.
   string contract = 2;
 }
 
@@ -28,7 +38,14 @@ message EventUpdateDevGas {
   // deployer is the addess of the account that registered the smart contract to
   // receive dev gas royalties.
   string deployer = 1;
+
+  // Address of the smart contract. This identifies the specific contract
+  // that will receive fee sharing payouts.
   string contract = 2;
+
+  // The address that will receive the fee sharing payouts for the registered
+  // contract. This could be the deployer address or a separate withdrawer
+  // address specified.
   string withdrawer = 3;
 }
 
