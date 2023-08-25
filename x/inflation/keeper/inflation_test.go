@@ -42,7 +42,7 @@ func TestMintAndAllocateInflation(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("Case %s", tc.name), func(t *testing.T) {
-			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 
 			_, _, _, err := nibiruApp.InflationKeeper.MintAndAllocateInflation(ctx, tc.mintCoin, types.DefaultParams())
 
@@ -105,7 +105,7 @@ func TestGetCirculatingSupplyAndInflationRate(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("Case %s", tc.name), func(t *testing.T) {
-			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 
 			tc.malleate(nibiruApp, ctx)
 
@@ -127,7 +127,7 @@ func TestGetCirculatingSupplyAndInflationRate(t *testing.T) {
 }
 
 func TestGetters(t *testing.T) {
-	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 	k := nibiruApp.InflationKeeper
 	require.NotPanics(t, func() {
 		_ = k.ExponentialCalculation(ctx)

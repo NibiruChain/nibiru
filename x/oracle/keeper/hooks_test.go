@@ -56,7 +56,7 @@ func TestHooks_AfterEpochEnd(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruTestAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext()
 
 			h := keeper.NewHooks(app.OracleKeeper, app.AccountKeeper, app.BankKeeper)
 

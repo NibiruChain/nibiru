@@ -2,6 +2,7 @@ package action
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -75,7 +76,7 @@ func (t *TestSuite) WithTestCases(testCase ...TestCase) *TestSuite {
 
 func (t *TestSuite) Run() {
 	for _, testCase := range t.testCases {
-		app, ctx := testapp.NewNibiruTestAppAndContext(true)
+		app, ctx := testapp.NewNibiruTestAppAndContextAtTime(time.UnixMilli(0))
 		var err error
 		var isMandatory bool
 

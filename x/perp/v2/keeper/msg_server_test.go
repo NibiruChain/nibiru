@@ -292,7 +292,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 
 func TestFailMsgServer(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
-	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext()
 
 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
 

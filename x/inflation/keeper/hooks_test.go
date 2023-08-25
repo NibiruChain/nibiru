@@ -14,7 +14,7 @@ import (
 )
 
 func TestEpochIdentifierAfterEpochEnd(t *testing.T) {
-	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 
 	feePoolOld := nibiruApp.DistrKeeper.GetFeePool(ctx)
 	nibiruApp.EpochsKeeper.AfterEpochEnd(ctx, epochstypes.DayEpochID, 1)
@@ -25,7 +25,7 @@ func TestEpochIdentifierAfterEpochEnd(t *testing.T) {
 }
 
 func TestPeriodChangesSkippedEpochsAfterEpochEnd(t *testing.T) {
-	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 	currentEpochPeriod := nibiruApp.InflationKeeper.EpochsPerPeriod(ctx)
 
 	testCases := []struct {

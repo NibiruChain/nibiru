@@ -22,7 +22,7 @@ import (
 // each production smart contract is expected to interact with x/wasm/binding.
 func TestSetupContracts(t *testing.T) {
 	sender := testutil.AccAddress()
-	nibiru, _ := testapp.NewNibiruTestAppAndContext(true)
+	nibiru, _ := testapp.NewNibiruTestAppAndContext()
 	ctx := nibiru.NewContext(false, tmproto.Header{
 		Height:  1,
 		ChainID: "nibiru-wasmnet-1",

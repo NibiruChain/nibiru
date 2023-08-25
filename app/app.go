@@ -103,6 +103,11 @@ import (
 	inflationkeeper "github.com/NibiruChain/nibiru/x/inflation/keeper"
 	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
 	"github.com/NibiruChain/nibiru/x/oracle"
+
+	devgas "github.com/NibiruChain/nibiru/x/devgas/v1"
+	devgaskeeper "github.com/NibiruChain/nibiru/x/devgas/v1/keeper"
+	devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
+
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	perpkeeperv2 "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
@@ -168,6 +173,7 @@ var (
 		inflation.AppModuleBasic{},
 		sudo.AppModuleBasic{},
 		wasm.AppModuleBasic{},
+		devgas.AppModuleBasic{},
 		ibcfee.AppModuleBasic{},
 		genmsg.AppModule{},
 	)
@@ -273,6 +279,7 @@ type NibiruApp struct {
 	StablecoinKeeper stablecoinkeeper.Keeper
 	InflationKeeper  inflationkeeper.Keeper
 	SudoKeeper       keeper.Keeper
+	DevGasKeeper     devgaskeeper.Keeper
 
 	// WASM keepers
 	WasmKeeper       wasm.Keeper
@@ -385,6 +392,8 @@ func NewNibiruApp(
 		IBCKeeper:         app.ibcKeeper,
 		TxCounterStoreKey: keys[wasm.StoreKey],
 		WasmConfig:        &wasmConfig,
+		DevGasKeeper:      &app.DevGasKeeper,
+		DevGasBankKeeper:  app.BankKeeper,
 	})
 	if err != nil {
 		panic(fmt.Errorf("failed to create sdk.AnteHandler: %s", err))
@@ -623,6 +632,7 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(ibcfeetypes.ModuleName)
 	// wasm params keepers
 	paramsKeeper.Subspace(wasm.ModuleName)
+	paramsKeeper.Subspace(devgastypes.ModuleName)
 
 	return paramsKeeper
 }

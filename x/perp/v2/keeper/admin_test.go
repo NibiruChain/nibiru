@@ -34,7 +34,7 @@ func TestAdmin_WithdrawFromInsuranceFund(t *testing.T) {
 	}
 
 	setup := func() (nibiru *app.NibiruApp, ctx sdk.Context) {
-		nibiru, ctx = testapp.NewNibiruTestAppAndContext(true)
+		nibiru, ctx = testapp.NewNibiruTestAppAndContext()
 		expectBalance(sdk.ZeroInt(), t, nibiru, ctx)
 		return nibiru, ctx
 	}
@@ -113,7 +113,7 @@ func TestEnableMarket(t *testing.T) {
 func TestCreateMarketFail(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	amm := *mock.TestAMMDefault()
-	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext()
 
 	// Error because of invalid market
 	err := app.PerpKeeperV2.Admin().CreateMarket(ctx, keeper.ArgsCreateMarket{

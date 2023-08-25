@@ -18,7 +18,7 @@ import (
 )
 
 func TestParamsQuery(t *testing.T) {
-	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext()
 
 	params := types.DefaultParams()
 	app.SpotKeeper.SetParams(ctx, params)
@@ -90,7 +90,7 @@ func TestQueryPoolHappyPath(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruTestAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext()
 			app.SpotKeeper.SetPool(ctx, tc.existingPool)
 
 			queryServer := keeper.NewQuerier(app.SpotKeeper)
@@ -116,7 +116,7 @@ func TestQueryPoolFail(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruTestAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext()
 			queryServer := keeper.NewQuerier(app.SpotKeeper)
 			resp, err := queryServer.Pool(sdk.WrapSDKContext(ctx), nil)
 			require.Error(t, err)
@@ -233,7 +233,7 @@ func TestQueryPools(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruTestAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext()
 			for _, existingPool := range tc.existingPools {
 				app.SpotKeeper.SetPool(ctx, existingPool)
 			}
@@ -312,7 +312,7 @@ func TestQueryNumPools(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruTestAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext()
 			sender := testutil.AccAddress()
 			// need funds to create pools
 			require.NoError(t, testapp.FundAccount(
@@ -421,7 +421,7 @@ func TestQueryPoolParams(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruTestAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext()
 			app.SpotKeeper.SetPool(ctx, tc.existingPool)
 
 			queryServer := keeper.NewQuerier(app.SpotKeeper)
@@ -458,7 +458,7 @@ func TestQueryTotalShares(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruTestAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext()
 
 			app.SpotKeeper.SetPool(ctx, tc.existingPool)
 
@@ -531,7 +531,7 @@ func TestQuerySpotPrice(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruTestAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext()
 
 			app.SpotKeeper.SetPool(ctx, tc.existingPool)
 
@@ -593,7 +593,7 @@ func TestQueryEstimateSwapExactAmountIn(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruTestAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext()
 			app.SpotKeeper.SetPool(ctx, tc.existingPool)
 			queryServer := keeper.NewQuerier(app.SpotKeeper)
 
@@ -655,7 +655,7 @@ func TestQueryEstimateSwapExactAmountOut(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruTestAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext()
 			app.SpotKeeper.SetPool(ctx, tc.existingPool)
 			queryServer := keeper.NewQuerier(app.SpotKeeper)
 
@@ -723,7 +723,7 @@ func TestQueryEstimateJoinExactAmountIn(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruTestAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext()
 			app.SpotKeeper.SetPool(ctx, tc.existingPool)
 			queryServer := keeper.NewQuerier(app.SpotKeeper)
 
@@ -788,7 +788,7 @@ func TestQueryEstimateExitExactAmountIn(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruTestAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext()
 			app.SpotKeeper.SetPool(ctx, tc.existingPool)
 			queryServer := keeper.NewQuerier(app.SpotKeeper)
 

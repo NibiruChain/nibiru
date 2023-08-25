@@ -27,7 +27,7 @@ func NewKeeper(cdc codec.Codec, storeKey storetypes.StoreKey) Keeper {
 	}
 }
 
-// SetHooks Set the gamm hooks.
+// SetHooks Set the epoch hooks.
 func (k *Keeper) SetHooks(eh types.EpochHooks) *Keeper {
 	k.hooks = eh
 

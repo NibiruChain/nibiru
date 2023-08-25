@@ -21,7 +21,7 @@ import (
 )
 
 func TestSnapshotUpdates(t *testing.T) {
-	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext()
 	initialMarket := *mock.TestMarket()
 	initialAmm := *mock.TestAMMDefault()
 
@@ -104,7 +104,7 @@ func TestSnapshotUpdates(t *testing.T) {
 }
 
 func TestEndBlocker(t *testing.T) {
-	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext()
 
 	initialMarket := *mock.TestMarket()
 	initialAmm := *mock.TestAMMDefault()

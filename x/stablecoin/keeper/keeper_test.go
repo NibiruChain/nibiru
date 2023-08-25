@@ -47,7 +47,7 @@ func TestGetAndSetParams(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 			stableKeeper := nibiruApp.StablecoinKeeper
 
 			params := tc.requiredParams()

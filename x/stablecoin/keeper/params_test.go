@@ -13,7 +13,7 @@ import (
 )
 
 func TestGetParams(t *testing.T) {
-	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 	stableKeeper := &nibiruApp.StablecoinKeeper
 
 	params := types.DefaultParams()

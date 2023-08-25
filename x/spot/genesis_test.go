@@ -41,7 +41,7 @@ func TestGenesis(t *testing.T) {
 		},
 	}
 
-	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+	app, ctx := testapp.NewNibiruTestAppAndContext()
 	spot.InitGenesis(ctx, app.SpotKeeper, genesisState)
 	got := spot.ExportGenesis(ctx, app.SpotKeeper)
 	require.NotNil(t, got)

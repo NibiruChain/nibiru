@@ -17,7 +17,7 @@ import (
 )
 
 func TestKeeper_GetStableMarketCap(t *testing.T) {
-	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 	k := nibiruApp.StablecoinKeeper
 
 	// We set some supply
@@ -33,7 +33,7 @@ func TestKeeper_GetStableMarketCap(t *testing.T) {
 }
 
 func TestKeeper_GetGovMarketCap(t *testing.T) {
-	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 	keeper := nibiruApp.StablecoinKeeper
 
 	poolAccountAddr := testutil.AccAddress()
@@ -70,7 +70,7 @@ func TestKeeper_GetGovMarketCap(t *testing.T) {
 }
 
 func TestKeeper_GetLiquidityRatio_AndBands(t *testing.T) {
-	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 	keeper := nibiruApp.StablecoinKeeper
 
 	poolAccountAddr := testutil.AccAddress()
