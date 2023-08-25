@@ -1,0 +1,37 @@
+syntax = "proto3";
+package nibiru.devgas.v1;
+
+option go_package = "github.com/NibiruChain/nibiru/x/devgas/v1/types";
+
+// ABCI event emitted when a deployer registers a contract to receive fee
+// sharing payouts, specifying the deployer, contract, and withdrawer addresses.
+message EventRegisterDevGas {
+  // deployer is the addess of the account that registered the smart contract to
+  // receive dev gas royalties.
+  string deployer = 1;
+  string contract = 2;
+  string withdrawer = 3;
+}
+
+// ABCI event emitted when a deployer cancels fee sharing for a contract,
+// specifying the deployer and contract addresses.
+message EventCancelDevGas {
+  // deployer is the addess of the account that registered the smart contract to
+  // receive dev gas royalties.
+  string deployer = 1;
+  string contract = 2;
+}
+
+// ABCI event emitted when a deployer updates the fee sharing registration for a
+// contract, specifying updated deployer, contract, and/or withdrawer addresses.
+message EventUpdateDevGas {
+  // deployer is the addess of the account that registered the smart contract to
+  // receive dev gas royalties.
+  string deployer = 1;
+  string contract = 2;
+  string withdrawer = 3;
+}
+
+// ABCI event emitted when fee sharing payouts are made, containing details on
+// the payouts in JSON format.
+message EventPayoutDevGas { string payouts = 1; }
