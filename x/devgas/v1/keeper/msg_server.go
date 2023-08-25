@@ -5,8 +5,6 @@ import (
 
 	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
-	errorsmod "cosmossdk.io/errors"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
