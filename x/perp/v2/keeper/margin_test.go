@@ -12,7 +12,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
-	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
+	tutilaction "github.com/NibiruChain/nibiru/x/common/testutil/action"
 	. "github.com/NibiruChain/nibiru/x/common/testutil/assertion"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
@@ -25,17 +25,17 @@ func TestAddMargin(t *testing.T) {
 	pairEthUsdc := asset.Registry.Pair(denoms.ETH, denoms.USDC)
 	startBlockTime := time.Now()
 
-	tc := TestCases{
-		TC("existing long position, add margin").
+	tc := tutilaction.TestCases{
+		tutilaction.TC("existing long position, add margin").
 			Given(
 				CreateCustomMarket(pairBtcUsdc),
-				SetBlockNumber(1),
-				SetBlockTime(startBlockTime),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2020)))),
+				tutilaction.SetBlockNumber(1),
+				tutilaction.SetBlockTime(startBlockTime),
+				tutilaction.FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2020)))),
 				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			When(
-				MoveToNextBlock(),
+				tutilaction.MoveToNextBlock(),
 				AddMargin(alice, pairBtcUsdc, sdk.NewInt(1000)),
 			).
 			Then(
@@ -76,16 +76,16 @@ func TestAddMargin(t *testing.T) {
 				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.NewInt(10)),
 			),
 
-		TC("existing short position, add margin").
+		tutilaction.TC("existing short position, add margin").
 			Given(
 				CreateCustomMarket(pairBtcUsdc),
-				SetBlockNumber(1),
-				SetBlockTime(startBlockTime),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2020)))),
+				tutilaction.SetBlockNumber(1),
+				tutilaction.SetBlockTime(startBlockTime),
+				tutilaction.FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2020)))),
 				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			When(
-				MoveToNextBlock(),
+				tutilaction.MoveToNextBlock(),
 				AddMargin(alice, pairBtcUsdc, sdk.NewInt(1000)),
 			).
 			Then(
@@ -126,18 +126,18 @@ func TestAddMargin(t *testing.T) {
 				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.NewInt(10)),
 			),
 
-		TC("Testing fails").
+		tutilaction.TC("Testing fails").
 			Given(
 				CreateCustomMarket(pairBtcUsdc),
 				CreateCustomMarket(pairEthUsdc),
 
-				SetBlockNumber(1),
-				SetBlockTime(startBlockTime),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
+				tutilaction.SetBlockNumber(1),
+				tutilaction.SetBlockTime(startBlockTime),
+				tutilaction.FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
 				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			When(
-				MoveToNextBlock(),
+				tutilaction.MoveToNextBlock(),
 				AddMarginFail(alice, asset.MustNewPair("luna:usdt"), sdk.NewInt(1000), types.ErrPairNotFound),
 				AddMarginFail(alice, pairEthUsdc, sdk.NewInt(1000), collections.ErrNotFound),
 				AddMarginFail(alice, pairBtcUsdc, sdk.NewInt(1000), sdkerrors.ErrInsufficientFunds),
@@ -149,7 +149,7 @@ func TestAddMargin(t *testing.T) {
 			),
 	}
 
-	NewTestSuite(t).WithTestCases(tc...).Run()
+	tutilaction.NewTestSuite(t).WithTestCases(tc...).Run()
 }
 
 func TestRemoveMargin(t *testing.T) {
@@ -157,17 +157,17 @@ func TestRemoveMargin(t *testing.T) {
 	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.USDC)
 	startBlockTime := time.Now()
 
-	tc := TestCases{
-		TC("existing long position, remove margin").
+	tc := tutilaction.TestCases{
+		tutilaction.TC("existing long position, remove margin").
 			Given(
 				CreateCustomMarket(pairBtcUsdc),
-				SetBlockNumber(1),
-				SetBlockTime(startBlockTime),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1002)))),
+				tutilaction.SetBlockNumber(1),
+				tutilaction.SetBlockTime(startBlockTime),
+				tutilaction.FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1002)))),
 				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.OneDec(), sdk.ZeroDec()),
 			).
 			When(
-				MoveToNextBlock(),
+				tutilaction.MoveToNextBlock(),
 				RemoveMargin(alice, pairBtcUsdc, sdk.NewInt(500)),
 			).
 			Then(
@@ -206,14 +206,14 @@ func TestRemoveMargin(t *testing.T) {
 				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.OneInt()),
 			),
 
-		TC("existing long position, remove almost all margin fails").
+		tutilaction.TC("existing long position, remove almost all margin fails").
 			Given(
 				CreateCustomMarket(pairBtcUsdc),
-				SetBlockNumber(1),
-				SetBlockTime(startBlockTime),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1002)))),
+				tutilaction.SetBlockNumber(1),
+				tutilaction.SetBlockTime(startBlockTime),
+				tutilaction.FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1002)))),
 				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.OneDec(), sdk.ZeroDec()),
-				MoveToNextBlock(),
+				tutilaction.MoveToNextBlock(),
 			).
 			When(
 				RemoveMarginFail(alice, pairBtcUsdc, sdk.NewInt(999), types.ErrMarginRatioTooLow),
@@ -233,16 +233,16 @@ func TestRemoveMargin(t *testing.T) {
 				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.OneInt()),
 			),
 
-		TC("existing short position, remove margin").
+		tutilaction.TC("existing short position, remove margin").
 			Given(
 				CreateCustomMarket(pairBtcUsdc),
-				SetBlockNumber(1),
-				SetBlockTime(startBlockTime),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1002)))),
+				tutilaction.SetBlockNumber(1),
+				tutilaction.SetBlockTime(startBlockTime),
+				tutilaction.FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1002)))),
 				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.OneDec(), sdk.ZeroDec()),
 			).
 			When(
-				MoveToNextBlock(),
+				tutilaction.MoveToNextBlock(),
 				RemoveMargin(alice, pairBtcUsdc, sdk.NewInt(500)),
 			).
 			Then(
@@ -281,14 +281,14 @@ func TestRemoveMargin(t *testing.T) {
 				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.OneInt()),
 			),
 
-		TC("existing short position, remove almost all margin fails").
+		tutilaction.TC("existing short position, remove almost all margin fails").
 			Given(
 				CreateCustomMarket(pairBtcUsdc),
-				SetBlockNumber(1),
-				SetBlockTime(startBlockTime),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1002)))),
+				tutilaction.SetBlockNumber(1),
+				tutilaction.SetBlockTime(startBlockTime),
+				tutilaction.FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1002)))),
 				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.OneDec(), sdk.ZeroDec()),
-				MoveToNextBlock(),
+				tutilaction.MoveToNextBlock(),
 			).
 			When(
 				RemoveMarginFail(alice, pairBtcUsdc, sdk.NewInt(999), types.ErrMarginRatioTooLow),
@@ -309,5 +309,5 @@ func TestRemoveMargin(t *testing.T) {
 			),
 	}
 
-	NewTestSuite(t).WithTestCases(tc...).Run()
+	tutilaction.NewTestSuite(t).WithTestCases(tc...).Run()
 }

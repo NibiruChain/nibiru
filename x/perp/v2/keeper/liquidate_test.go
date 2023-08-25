@@ -10,7 +10,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
-	action "github.com/NibiruChain/nibiru/x/common/testutil/action"
+	tutilaction "github.com/NibiruChain/nibiru/x/common/testutil/action"
 	assertion "github.com/NibiruChain/nibiru/x/common/testutil/assertion"
 	perpaction "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
 	perpassertion "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
@@ -30,11 +30,11 @@ func TestMultiLiquidate(t *testing.T) {
 	liquidator := testutil.AccAddress()
 	startTime := time.Now()
 
-	tc := action.TestCases{
-		action.TC("partial liquidation").
+	tc := tutilaction.TestCases{
+		tutilaction.TC("partial liquidation").
 			Given(
-				action.SetBlockNumber(1),
-				action.SetBlockTime(startTime),
+				tutilaction.SetBlockNumber(1),
+				tutilaction.SetBlockTime(startTime),
 				perpaction.CreateCustomMarket(pairBtcUsdc),
 				perpaction.InsertPosition(
 					perpaction.WithTrader(alice),
@@ -42,12 +42,12 @@ func TestMultiLiquidate(t *testing.T) {
 					perpaction.WithSize(sdk.NewDec(10000)),
 					perpaction.WithMargin(sdk.NewDec(1000)),
 					perpaction.WithOpenNotional(sdk.NewDec(10400))),
-				action.FundModule(
+				tutilaction.FundModule(
 					types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000)),
 				),
 			).
 			When(
-				action.MoveToNextBlock(),
+				tutilaction.MoveToNextBlock(),
 				perpaction.MultiLiquidate(liquidator, false,
 					perpaction.PairTraderTuple{Pair: pairBtcUsdc, Trader: alice, Successful: true},
 				),
@@ -71,10 +71,10 @@ func TestMultiLiquidate(t *testing.T) {
 				),
 			),
 
-		action.TC("full liquidation").
+		tutilaction.TC("full liquidation").
 			Given(
-				action.SetBlockNumber(1),
-				action.SetBlockTime(startTime),
+				tutilaction.SetBlockNumber(1),
+				tutilaction.SetBlockTime(startTime),
 				perpaction.CreateCustomMarket(pairBtcUsdc),
 				perpaction.InsertPosition(
 					perpaction.WithTrader(alice),
@@ -82,12 +82,12 @@ func TestMultiLiquidate(t *testing.T) {
 					perpaction.WithSize(sdk.NewDec(10000)),
 					perpaction.WithMargin(sdk.NewDec(1000)),
 					perpaction.WithOpenNotional(sdk.NewDec(10600))),
-				action.FundModule(
+				tutilaction.FundModule(
 					types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000)),
 				),
 			).
 			When(
-				action.MoveToNextBlock(),
+				tutilaction.MoveToNextBlock(),
 
 				perpaction.MultiLiquidate(liquidator, false,
 					perpaction.PairTraderTuple{Pair: pairBtcUsdc, Trader: alice, Successful: true},
@@ -101,18 +101,18 @@ func TestMultiLiquidate(t *testing.T) {
 				perpassertion.PositionShouldNotExist(alice, pairBtcUsdc),
 			),
 
-		action.TC("full liquidation").
+		tutilaction.TC("full liquidation").
 			Given(
-				action.SetBlockNumber(1),
-				action.SetBlockTime(startTime),
+				tutilaction.SetBlockNumber(1),
+				tutilaction.SetBlockTime(startTime),
 				perpaction.CreateCustomMarket(pairBtcUsdc),
 				perpaction.InsertPosition(perpaction.WithTrader(alice), perpaction.WithPair(pairBtcUsdc), perpaction.WithSize(sdk.NewDec(10000)), perpaction.WithMargin(sdk.NewDec(1000)), perpaction.WithOpenNotional(sdk.NewDec(10600))),
-				action.FundModule(
+				tutilaction.FundModule(
 					types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000)),
 				),
 			).
 			When(
-				action.MoveToNextBlock(),
+				tutilaction.MoveToNextBlock(),
 				perpaction.MultiLiquidate(liquidator, false,
 					perpaction.PairTraderTuple{Pair: pairBtcUsdc, Trader: alice, Successful: true},
 				),
@@ -124,18 +124,18 @@ func TestMultiLiquidate(t *testing.T) {
 				perpassertion.PositionShouldNotExist(alice, pairBtcUsdc),
 			),
 
-		action.TC("one fail liquidation - one correct").
+		tutilaction.TC("one fail liquidation - one correct").
 			Given(
-				action.SetBlockNumber(1),
-				action.SetBlockTime(startTime),
+				tutilaction.SetBlockNumber(1),
+				tutilaction.SetBlockTime(startTime),
 				perpaction.CreateCustomMarket(pairBtcUsdc),
 				perpaction.InsertPosition(perpaction.WithTrader(alice), perpaction.WithPair(pairBtcUsdc), perpaction.WithSize(sdk.NewDec(10000)), perpaction.WithMargin(sdk.NewDec(1000)), perpaction.WithOpenNotional(sdk.NewDec(10600))),
-				action.FundModule(
+				tutilaction.FundModule(
 					types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000)),
 				),
 			).
 			When(
-				action.MoveToNextBlock(),
+				tutilaction.MoveToNextBlock(),
 				perpaction.MultiLiquidate(liquidator, false,
 					perpaction.PairTraderTuple{Pair: pairBtcUsdc, Successful: false},
 					perpaction.PairTraderTuple{Pair: pairBtcUsdc, Trader: alice, Successful: true},
@@ -148,18 +148,18 @@ func TestMultiLiquidate(t *testing.T) {
 				perpassertion.PositionShouldNotExist(alice, pairBtcUsdc),
 			),
 
-		action.TC("one fail liquidation because market does not exists- one correct").
+		tutilaction.TC("one fail liquidation because market does not exists- one correct").
 			Given(
-				action.SetBlockNumber(1),
-				action.SetBlockTime(startTime),
+				tutilaction.SetBlockNumber(1),
+				tutilaction.SetBlockTime(startTime),
 				perpaction.CreateCustomMarket(pairBtcUsdc),
 				perpaction.InsertPosition(perpaction.WithTrader(alice), perpaction.WithPair(pairBtcUsdc), perpaction.WithSize(sdk.NewDec(10000)), perpaction.WithMargin(sdk.NewDec(1000)), perpaction.WithOpenNotional(sdk.NewDec(10600))),
-				action.FundModule(
+				tutilaction.FundModule(
 					types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000)),
 				),
 			).
 			When(
-				action.MoveToNextBlock(),
+				tutilaction.MoveToNextBlock(),
 				perpaction.MultiLiquidate(liquidator, false,
 					perpaction.PairTraderTuple{Pair: asset.MustNewPair("luna:usdt"), Successful: false},
 					perpaction.PairTraderTuple{Pair: pairBtcUsdc, Trader: alice, Successful: true},
@@ -172,21 +172,21 @@ func TestMultiLiquidate(t *testing.T) {
 				perpassertion.PositionShouldNotExist(alice, pairBtcUsdc),
 			),
 
-		action.TC("realizes bad debt").
+		tutilaction.TC("realizes bad debt").
 			Given(
-				action.SetBlockNumber(1),
-				action.SetBlockTime(startTime),
+				tutilaction.SetBlockNumber(1),
+				tutilaction.SetBlockTime(startTime),
 				perpaction.CreateCustomMarket(pairBtcUsdc),
 				perpaction.InsertPosition(perpaction.WithTrader(alice), perpaction.WithPair(pairBtcUsdc), perpaction.WithSize(sdk.NewDec(10000)), perpaction.WithMargin(sdk.NewDec(1000)), perpaction.WithOpenNotional(sdk.NewDec(10800))),
-				action.FundModule(
+				tutilaction.FundModule(
 					types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000)),
 				),
-				action.FundModule(
+				tutilaction.FundModule(
 					types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 50)),
 				),
 			).
 			When(
-				action.MoveToNextBlock(),
+				tutilaction.MoveToNextBlock(),
 				perpaction.MultiLiquidate(liquidator, false,
 					perpaction.PairTraderTuple{Pair: pairBtcUsdc, Trader: alice, Successful: true},
 				),
@@ -198,16 +198,16 @@ func TestMultiLiquidate(t *testing.T) {
 				perpassertion.PositionShouldNotExist(alice, pairBtcUsdc),
 			),
 
-		action.TC("uses prepaid bad debt").
+		tutilaction.TC("uses prepaid bad debt").
 			Given(
-				action.SetBlockNumber(1),
-				action.SetBlockTime(startTime),
+				tutilaction.SetBlockNumber(1),
+				tutilaction.SetBlockTime(startTime),
 				perpaction.CreateCustomMarket(pairBtcUsdc, perpaction.WithPrepaidBadDebt(sdk.NewInt(50))),
 				perpaction.InsertPosition(perpaction.WithTrader(alice), perpaction.WithPair(pairBtcUsdc), perpaction.WithSize(sdk.NewDec(10000)), perpaction.WithMargin(sdk.NewDec(1000)), perpaction.WithOpenNotional(sdk.NewDec(10800))),
-				action.FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
+				tutilaction.FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
 			).
 			When(
-				action.MoveToNextBlock(),
+				tutilaction.MoveToNextBlock(),
 				perpaction.MultiLiquidate(liquidator, false,
 					perpaction.PairTraderTuple{Pair: pairBtcUsdc, Trader: alice, Successful: true},
 				),
@@ -223,16 +223,16 @@ func TestMultiLiquidate(t *testing.T) {
 				),
 			),
 
-		action.TC("healthy position").
+		tutilaction.TC("healthy position").
 			Given(
-				action.SetBlockNumber(1),
-				action.SetBlockTime(startTime),
+				tutilaction.SetBlockNumber(1),
+				tutilaction.SetBlockTime(startTime),
 				perpaction.CreateCustomMarket(pairBtcUsdc),
 				perpaction.InsertPosition(perpaction.WithTrader(alice), perpaction.WithPair(pairBtcUsdc), perpaction.WithSize(sdk.NewDec(100)), perpaction.WithMargin(sdk.NewDec(10)), perpaction.WithOpenNotional(sdk.NewDec(100))),
-				action.FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 10))),
+				tutilaction.FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 10))),
 			).
 			When(
-				action.MoveToNextBlock(),
+				tutilaction.MoveToNextBlock(),
 				perpaction.MultiLiquidate(liquidator, true,
 					perpaction.PairTraderTuple{Pair: pairBtcUsdc, Trader: alice, Successful: false},
 				),
@@ -262,20 +262,20 @@ func TestMultiLiquidate(t *testing.T) {
 				}),
 			),
 
-		action.TC("mixed bag").
+		tutilaction.TC("mixed bag").
 			Given(
-				action.SetBlockNumber(1),
-				action.SetBlockTime(startTime),
+				tutilaction.SetBlockNumber(1),
+				tutilaction.SetBlockTime(startTime),
 				perpaction.CreateCustomMarket(pairBtcUsdc),
 				perpaction.CreateCustomMarket(pairEthUsdc),
 				perpaction.CreateCustomMarket(pairAtomUsdc),
 				perpaction.InsertPosition(perpaction.WithTrader(alice), perpaction.WithPair(pairBtcUsdc), perpaction.WithSize(sdk.NewDec(10000)), perpaction.WithMargin(sdk.NewDec(1000)), perpaction.WithOpenNotional(sdk.NewDec(10400))),  // partial
 				perpaction.InsertPosition(perpaction.WithTrader(alice), perpaction.WithPair(pairEthUsdc), perpaction.WithSize(sdk.NewDec(10000)), perpaction.WithMargin(sdk.NewDec(1000)), perpaction.WithOpenNotional(sdk.NewDec(10600))),  // full
 				perpaction.InsertPosition(perpaction.WithTrader(alice), perpaction.WithPair(pairAtomUsdc), perpaction.WithSize(sdk.NewDec(10000)), perpaction.WithMargin(sdk.NewDec(1000)), perpaction.WithOpenNotional(sdk.NewDec(10000))), // healthy
-				action.FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 3000))),
+				tutilaction.FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 3000))),
 			).
 			When(
-				action.MoveToNextBlock(),
+				tutilaction.MoveToNextBlock(),
 				perpaction.MultiLiquidate(liquidator, false,
 					perpaction.PairTraderTuple{Pair: pairBtcUsdc, Trader: alice, Successful: true},
 					perpaction.PairTraderTuple{Pair: pairEthUsdc, Trader: alice, Successful: true},
@@ -337,7 +337,7 @@ func TestMultiLiquidate(t *testing.T) {
 			),
 	}
 
-	action.NewTestSuite(t).WithTestCases(tc...).Run()
+	tutilaction.NewTestSuite(t).WithTestCases(tc...).Run()
 }
 
 func TestPrettyLiquidateResponse(t *testing.T) {

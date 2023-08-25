@@ -17,7 +17,7 @@ import (
 
 	tutilaction "github.com/NibiruChain/nibiru/x/common/testutil/action"
 	perpaction "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
-	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
+	perpassert "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
 )
 
 func TestPositionNotionalSpot(t *testing.T) {
@@ -83,7 +83,7 @@ func TestPositionNotionalTWAP(t *testing.T) {
 				tutilaction.MoveToNextBlockWithDuration(30 * time.Second),
 			).
 			Then(
-				PositionNotionalTWAPShouldBeEqualTo(pair, alice, 30*time.Second, sdk.MustNewDecFromStr("89.999999999100000000")),
+				perpassert.PositionNotionalTWAPShouldBeEqualTo(pair, alice, 30*time.Second, sdk.MustNewDecFromStr("89.999999999100000000")),
 			),
 
 		tutilaction.TC("short position").
@@ -100,7 +100,7 @@ func TestPositionNotionalTWAP(t *testing.T) {
 				tutilaction.MoveToNextBlockWithDuration(30 * time.Second),
 			).
 			Then(
-				PositionNotionalTWAPShouldBeEqualTo(pair, alice, 30*time.Second, sdk.MustNewDecFromStr("90.000000000900000000")),
+				perpassert.PositionNotionalTWAPShouldBeEqualTo(pair, alice, 30*time.Second, sdk.MustNewDecFromStr("90.000000000900000000")),
 			),
 
 		tutilaction.TC("zero position").
@@ -117,7 +117,7 @@ func TestPositionNotionalTWAP(t *testing.T) {
 				tutilaction.MoveToNextBlockWithDuration(30 * time.Second),
 			).
 			Then(
-				PositionNotionalTWAPShouldBeEqualTo(pair, alice, 30*time.Second, sdk.ZeroDec()),
+				perpassert.PositionNotionalTWAPShouldBeEqualTo(pair, alice, 30*time.Second, sdk.ZeroDec()),
 			),
 
 		tutilaction.TC("single snapshot").
@@ -131,7 +131,7 @@ func TestPositionNotionalTWAP(t *testing.T) {
 				perpaction.InsertReserveSnapshot(pair, startTime, perpaction.WithPriceMultiplier(sdk.NewDec(9))),
 			).
 			Then(
-				PositionNotionalTWAPShouldBeEqualTo(pair, alice, 30*time.Second, sdk.MustNewDecFromStr("899.999999910000000009")),
+				perpassert.PositionNotionalTWAPShouldBeEqualTo(pair, alice, 30*time.Second, sdk.MustNewDecFromStr("899.999999910000000009")),
 			),
 	}
 
