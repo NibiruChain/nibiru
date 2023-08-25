@@ -54,27 +54,34 @@ func NewKeeper(
 		OracleKeeper:  oracleKeeper,
 		EpochKeeper:   epochKeeper,
 		Markets: collections.NewMap(
-			storeKey, 11,
+			storeKey, NamespaceMarkets,
 			asset.PairKeyEncoder,
 			collections.ProtoValueEncoder[types.Market](cdc),
 		),
 		AMMs: collections.NewMap(
-			storeKey, 12,
+			storeKey, NamespaceAmms,
 			asset.PairKeyEncoder,
 			collections.ProtoValueEncoder[types.AMM](cdc),
 		),
 		Positions: collections.NewMap(
-			storeKey, 13,
+			storeKey, NamespacePositions,
 			collections.PairKeyEncoder(asset.PairKeyEncoder, collections.AccAddressKeyEncoder),
 			collections.ProtoValueEncoder[types.Position](cdc),
 		),
 		ReserveSnapshots: collections.NewMap(
-			storeKey, 14,
+			storeKey, NamespaceReserveSnapshots,
 			collections.PairKeyEncoder(asset.PairKeyEncoder, collections.TimeKeyEncoder),
 			collections.ProtoValueEncoder[types.ReserveSnapshot](cdc),
 		),
 	}
 }
+
+const (
+	NamespaceMarkets collections.Namespace = iota + 11 // == 11 because iota starts from 0
+	NamespaceAmms
+	NamespacePositions
+	NamespaceReserveSnapshots
+)
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))

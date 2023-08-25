@@ -5,10 +5,14 @@ import (
 
 	"github.com/NibiruChain/collections"
 
+	storeprefix "github.com/cosmos/cosmos-sdk/store/prefix"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkquery "github.com/cosmos/cosmos-sdk/types/query"
+
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
@@ -28,7 +32,7 @@ func (q queryServer) QueryPositions(
 	goCtx context.Context, req *types.QueryPositionsRequest,
 ) (*types.QueryPositionsResponse, error) {
 	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
+		return nil, grpcstatus.Error(grpccodes.InvalidArgument, "nil request")
 	}
 	traderAddr, err := sdk.AccAddressFromBech32(req.Trader) // just for validation purposes
 	if err != nil {
@@ -60,7 +64,7 @@ func (q queryServer) QueryPosition(
 	goCtx context.Context, req *types.QueryPositionRequest,
 ) (*types.QueryPositionResponse, error) {
 	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
+		return nil, grpcstatus.Error(grpccodes.InvalidArgument, "nil request")
 	}
 	traderAddr, err := sdk.AccAddressFromBech32(req.Trader) // just for validation purposes
 	if err != nil {
@@ -81,6 +85,35 @@ func (q queryServer) QueryPosition(
 
 	resp, err := q.position(ctx, req.Pair, traderAddr, market, amm)
 	return &resp, err
+}
+
+func (q queryServer) QueryPositionStore(
+	goCtx context.Context, req *types.QueryPositionStoreRequest,
+) (resp *types.QueryPositionStoreResponse, err error) {
+	if req == nil {
+		return nil, grpcstatus.Error(grpccodes.InvalidArgument, "nil request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	store := storeprefix.NewStore(ctx.KVStore(q.k.storeKey), NamespacePositions.Prefix())
+
+	var respPayload []types.Position
+	pageRes, err := sdkquery.Paginate(store, req.Pagination, func(key, value []byte) error {
+		pos := new(types.Position)
+		if err := q.k.cdc.Unmarshal(value, pos); err != nil {
+			return err
+		}
+		respPayload = append(respPayload, *pos)
+		return nil
+	})
+	if err != nil {
+		return resp, grpcstatus.Error(grpccodes.Internal, err.Error())
+	}
+
+	return &types.QueryPositionStoreResponse{
+		Positions:  respPayload,
+		Pagination: pageRes,
+	}, err
 }
 
 func (q queryServer) position(ctx sdk.Context, pair asset.Pair, trader sdk.AccAddress, market types.Market, amm types.AMM) (types.QueryPositionResponse, error) {
