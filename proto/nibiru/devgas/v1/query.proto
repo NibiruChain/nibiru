@@ -1,0 +1,96 @@
+syntax = "proto3";
+package nibiru.devgas.v1;
+
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "nibiru/devgas/v1/genesis.proto";
+import "nibiru/devgas/v1/devgas.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/x/devgas/v1/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // FeeShares retrieves all FeeShares that a deployer has
+  // registered
+  rpc FeeShares(QueryFeeSharesRequest) returns (QueryFeeSharesResponse) {
+    option (google.api.http).get = "/nibiru/devgas/v1/fee_shares/{deployer}";
+  }
+
+  // FeeShare retrieves a registered FeeShare for a given contract address
+  rpc FeeShare(QueryFeeShareRequest) returns (QueryFeeShareResponse) {
+    option (google.api.http).get =
+        "/nibiru/devgas/v1/fee_shares/{contract_address}";
+  }
+
+  // Params retrieves the FeeShare module params
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/nibiru/devgas/v1/params";
+  }
+
+  // FeeSharesByWithdrawer retrieves all FeeShares with a given withdrawer
+  // address
+  rpc FeeSharesByWithdrawer(QueryFeeSharesByWithdrawerRequest)
+      returns (QueryFeeSharesByWithdrawerResponse) {
+    option (google.api.http).get =
+        "/nibiru/devgas/v1/fee_shares/{withdrawer_address}";
+  }
+}
+
+// QueryFeeSharesRequest is the request type for the Query/FeeShares RPC method.
+message QueryFeeSharesRequest {
+  // TODO feat(devgas): re-implement the paginated version
+  // TODO feat(colletions): add automatic pagination generation
+  string deployer = 1;
+  // pagination defines an optional pagination for the request.
+  // cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// TODO feat(devgas): re-implement the paginated version
+// TODO feat(collections): add automatic pagination generation
+// Notes for above feat:
+// pagination defines an optional pagination for the request.
+// cosmos.base.query.v1beta1.PageRequest pagination = 1;
+// pagination defines the pagination in the response.
+// cosmos.base.query.v1beta1.PageResponse pagination = 2;
+
+// QueryFeeSharesResponse is the response type for the Query/FeeShares RPC
+// method.
+message QueryFeeSharesResponse {
+  // FeeShare is the slice of all stored Reveneue for the deployer
+  repeated FeeShare feeshare = 1 [ (gogoproto.nullable) = false ];
+}
+
+// QueryFeeShareRequest is the request type for the Query/FeeShare RPC method.
+message QueryFeeShareRequest {
+  // contract_address of a registered contract in bech32 format
+  string contract_address = 1;
+}
+
+// QueryFeeShareResponse is the response type for the Query/FeeShare RPC method.
+message QueryFeeShareResponse {
+  // FeeShare is a stored Reveneue for the queried contract
+  FeeShare feeshare = 1 [ (gogoproto.nullable) = false ];
+}
+
+// QueryParamsRequest is the request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is the response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params is the returned FeeShare parameter
+  ModuleParams params = 1 [ (gogoproto.nullable) = false ];
+}
+
+// QueryFeeSharesByWithdrawerRequest is the request type for the
+// Query/FeeSharesByWithdrawer RPC method.
+message QueryFeeSharesByWithdrawerRequest {
+  // withdrawer_address in bech32 format
+  string withdrawer_address = 1;
+}
+
+// QueryFeeSharesByWithdrawerResponse is the response type for the
+// Query/FeeSharesByWithdrawer RPC method.
+message QueryFeeSharesByWithdrawerResponse {
+  repeated FeeShare feeshare = 1 [ (gogoproto.nullable) = false ];
+}

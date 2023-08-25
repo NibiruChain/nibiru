@@ -98,6 +98,10 @@ import (
 	perpv2 "github.com/NibiruChain/nibiru/x/perp/v2/module"
 	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 
+	"github.com/NibiruChain/nibiru/x/devgas/v1"
+	devgaskeeper "github.com/NibiruChain/nibiru/x/devgas/v1/keeper"
+	devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
+
 	"github.com/NibiruChain/nibiru/x/spot"
 	spotkeeper "github.com/NibiruChain/nibiru/x/spot/keeper"
 	spottypes "github.com/NibiruChain/nibiru/x/spot/types"
@@ -145,6 +149,7 @@ func GetStoreKeys() (
 		inflationtypes.StoreKey,
 		sudotypes.StoreKey,
 		wasm.StoreKey,
+		devgastypes.StoreKey,
 	)
 	tkeys = sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys = sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey, stablecointypes.MemStoreKey)
@@ -354,7 +359,7 @@ func (app *NibiruApp) InitKeepers(
 	// assigned.
 	// For example, if there are bindings for the x/perp module, then the app
 	// passed to GetWasmOpts must already have a non-nil PerpKeeper.
-	supportedFeatures := "iterator,staking,stargate"
+	supportedFeatures := "iterator,staking,stargate,cosmwasm_1_1"
 	app.WasmKeeper = wasm.NewKeeper(
 		appCodec,
 		keys[wasm.StoreKey],
@@ -374,6 +379,18 @@ func (app *NibiruApp) InitKeepers(
 		supportedFeatures,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		GetWasmOpts(*app, appOpts)...,
+	)
+
+	// DevGas uses WasmKeeper
+	govModuleAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
+	app.DevGasKeeper = devgaskeeper.NewKeeper(
+		keys[devgastypes.StoreKey],
+		appCodec,
+		app.BankKeeper,
+		app.WasmKeeper,
+		app.AccountKeeper,
+		authtypes.FeeCollectorName,
+		govModuleAddr,
 	)
 
 	// register the proposal types
@@ -530,7 +547,14 @@ func (app *NibiruApp) AppModules(
 		ibctransfer.NewAppModule(app.transferKeeper),
 		ibcfee.NewAppModule(app.ibcFeeKeeper),
 
-		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.stakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.GetSubspace(wasmtypes.ModuleName)),
+		// wasm
+		wasm.NewAppModule(
+			appCodec, &app.WasmKeeper, app.stakingKeeper, app.AccountKeeper,
+			app.BankKeeper, app.MsgServiceRouter(),
+			app.GetSubspace(wasmtypes.ModuleName)),
+		devgas.NewAppModule(
+			app.DevGasKeeper, app.AccountKeeper,
+			app.GetSubspace(devgastypes.ModuleName)),
 		crisis.NewAppModule(&app.crisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
 	}
 }
@@ -591,6 +615,7 @@ func OrderedModuleNames() []string {
 		// --------------------------------------------------------------------
 		// CosmWasm
 		wasm.ModuleName,
+		devgastypes.ModuleName,
 
 		// Should be before genmsg
 		genmsg.ModuleName,

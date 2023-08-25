@@ -11,32 +11,37 @@ func NewGenesisState(epochs []EpochInfo) *GenesisState {
 
 // DefaultGenesis returns the default Capability genesis state.
 func DefaultGenesis() *GenesisState {
+	startTime := time.Time{}
+	return DefaultGenesisFromTime(startTime)
+}
+
+func DefaultGenesisFromTime(startTime time.Time) *GenesisState {
 	epochs := []EpochInfo{
 		{
 			Identifier:              FifteenMinuteEpochID,
-			StartTime:               time.Time{},
+			StartTime:               startTime,
 			Duration:                15 * time.Minute,
 			CurrentEpoch:            0,
 			CurrentEpochStartHeight: 0,
-			CurrentEpochStartTime:   time.Time{},
+			CurrentEpochStartTime:   startTime,
 			EpochCountingStarted:    false,
 		},
 		{
 			Identifier:              ThirtyMinuteEpochID,
-			StartTime:               time.Time{},
+			StartTime:               startTime,
 			Duration:                30 * time.Minute,
 			CurrentEpoch:            0,
 			CurrentEpochStartHeight: 0,
-			CurrentEpochStartTime:   time.Time{},
+			CurrentEpochStartTime:   startTime,
 			EpochCountingStarted:    false,
 		},
 		{
 			Identifier:              WeekEpochID,
-			StartTime:               time.Time{},
+			StartTime:               startTime,
 			Duration:                7 * 24 * time.Hour,
 			CurrentEpoch:            0,
 			CurrentEpochStartHeight: 0,
-			CurrentEpochStartTime:   time.Time{},
+			CurrentEpochStartTime:   startTime,
 			EpochCountingStarted:    false,
 		},
 	}
