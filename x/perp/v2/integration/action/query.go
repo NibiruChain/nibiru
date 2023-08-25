@@ -175,7 +175,7 @@ type QueryMarketsChecker func(resp []types.AmmMarket) error
 func QueryMarkets_MarketsShouldContain(expectedMarket types.Market) QueryMarketsChecker {
 	return func(resp []types.AmmMarket) error {
 		for _, market := range resp {
-			if types.MarketsAreEqual(&expectedMarket, &market.Market) == nil {
+			if types.MarketsAreEqual(expectedMarket, market.Market) == nil {
 				return nil
 			}
 		}

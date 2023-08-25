@@ -71,8 +71,8 @@ func (k admin) CreateMarket(
 	args ArgsCreateMarket,
 ) error {
 	pair := args.Pair
-	_, err := k.Markets.Get(ctx, pair)
-	if err == nil {
+	market, err := k.Markets.Get(ctx, pair)
+	if err == nil && market.Enabled {
 		return fmt.Errorf("market %s already exists", pair)
 	}
 
@@ -80,11 +80,10 @@ func (k admin) CreateMarket(
 	sqrtDepth := args.SqrtDepth
 	quoteReserve := sqrtDepth
 	baseReserve := sqrtDepth
-	var market *types.Market
 	if args.Market == nil {
 		market = types.DefaultMarket(pair)
 	} else {
-		market = args.Market
+		market = *args.Market
 	}
 	if err := market.Validate(); err != nil {
 		return err
@@ -104,7 +103,7 @@ func (k admin) CreateMarket(
 		return err
 	}
 
-	k.Markets.Insert(ctx, pair, *market)
+	k.Markets.Insert(ctx, pair, market)
 	k.AMMs.Insert(ctx, pair, amm)
 
 	return nil

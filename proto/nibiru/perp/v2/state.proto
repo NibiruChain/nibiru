@@ -122,6 +122,10 @@ message AMM {
     (gogoproto.nullable) = false
   ];
 
+  // the version of the Market, only one market can exist per pair, when one is closed it cannot be reactivated,
+  // so a new market must be created, this is the version of the market
+  uint64 version = 8;
+
   // the amount of base reserves this AMM has
   string base_reserve = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",

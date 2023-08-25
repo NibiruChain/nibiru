@@ -64,11 +64,11 @@ func CreateCustomMarket(pair asset.Pair, marketModifiers ...marketModifier) acti
 	}
 
 	for _, modifier := range marketModifiers {
-		modifier(market, &amm)
+		modifier(&market, &amm)
 	}
 
 	return createMarketAction{
-		Market: *market,
+		Market: market,
 		AMM:    amm,
 	}
 }

@@ -116,11 +116,12 @@ func TestCreateMarketFail(t *testing.T) {
 	app, ctx := testapp.NewNibiruTestAppAndContext(true)
 
 	// Error because of invalid market
+	market := types.DefaultMarket(pair).WithMaintenanceMarginRatio(sdk.NewDec(2))
 	err := app.PerpKeeperV2.Admin().CreateMarket(ctx, keeper.ArgsCreateMarket{
 		Pair:            pair,
 		PriceMultiplier: amm.PriceMultiplier,
 		SqrtDepth:       amm.SqrtDepth,
-		Market:          types.DefaultMarket(pair).WithMaintenanceMarginRatio(sdk.NewDec(2)), // Invalid maintenance ratio
+		Market:          &market, // Invalid maintenance ratio
 	})
 	require.ErrorContains(t, err, "maintenance margin ratio ratio must be 0 <= ratio <= 1")
 
@@ -140,7 +141,7 @@ func TestCreateMarketFail(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// Fail since it already exists
+	// Fail since it already exists and it is not disabled
 	err = app.PerpKeeperV2.Admin().CreateMarket(ctx, keeper.ArgsCreateMarket{
 		Pair:            pair,
 		PriceMultiplier: amm.PriceMultiplier,
