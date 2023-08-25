@@ -50,8 +50,7 @@ type ReservesResponse struct {
 	QuoteReserve sdk.Dec `json:"quote_reserve"`
 }
 
-type AllMarketsRequest struct {
-}
+type AllMarketsRequest struct{}
 
 type AllMarketsResponse struct {
 	MarketMap map[string]Market `json:"market_map"`
@@ -194,8 +193,7 @@ type Metrics struct {
 	BlockNumber sdkmath.Int       `json:"block_number"`
 }
 
-type ModuleAccountsRequest struct {
-}
+type ModuleAccountsRequest struct{}
 
 type ModuleAccountWithBalance struct {
 	Name    string         `json:"name"`
@@ -207,8 +205,7 @@ type ModuleAccountsResponse struct {
 	ModuleAccounts map[string]ModuleAccountWithBalance `json:"module_accounts"`
 }
 
-type PerpParamsRequest struct {
-}
+type PerpParamsRequest struct{}
 
 type PerpParamsResponse struct {
 	ModuleParams PerpParams `json:"module_params"`
@@ -225,7 +222,6 @@ type PerpParams struct {
 	WhitelistedLiquidators  []string          `json:"whitelisted_liquidators"`
 }
 
-type OraclePrices struct {
-}
+type OraclePrices struct{}
 
 type OraclePricesResponse = map[string]sdk.Dec

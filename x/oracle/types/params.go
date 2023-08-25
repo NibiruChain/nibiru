@@ -40,7 +40,6 @@ var (
 	DefaultVoteThreshold = sdk.OneDec().Quo(sdk.NewDec(3)) // 33.33%
 	DefaultRewardBand    = sdk.NewDecWithPrec(2, 2)        // 2% (-1, 1)
 	DefaultWhitelist     = []asset.Pair{
-
 		// paired against NUSD
 		asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD),

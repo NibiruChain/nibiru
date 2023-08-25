@@ -112,26 +112,32 @@ func (position *Position) WithTraderAddress(value string) *Position {
 	position.TraderAddress = value
 	return position
 }
+
 func (position *Position) WithPair(value asset.Pair) *Position {
 	position.Pair = value
 	return position
 }
+
 func (position *Position) WithSize_(value sdk.Dec) *Position {
 	position.Size_ = value
 	return position
 }
+
 func (position *Position) WithMargin(value sdk.Dec) *Position {
 	position.Margin = value
 	return position
 }
+
 func (position *Position) WithOpenNotional(value sdk.Dec) *Position {
 	position.OpenNotional = value
 	return position
 }
+
 func (position *Position) WithLatestCumulativePremiumFraction(value sdk.Dec) *Position {
 	position.LatestCumulativePremiumFraction = value
 	return position
 }
+
 func (position *Position) WithLastUpdatedBlockNumber(value int64) *Position {
 	position.LastUpdatedBlockNumber = value
 	return position
