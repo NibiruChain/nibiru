@@ -92,7 +92,7 @@ func TestInvalidVotesSlashing(t *testing.T) {
 	input, h := Setup(t)
 	params, err := input.OracleKeeper.Params.Get(input.Ctx)
 	require.NoError(t, err)
-	params.Whitelist = asset.Pairs{asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}
+	params.Whitelist = []asset.Pair{asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}
 	input.OracleKeeper.Params.Set(input.Ctx, params)
 	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD))
 

@@ -6,10 +6,17 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gogo/protobuf/jsonpb"
+	"github.com/NibiruChain/nibiru/x/sudo/types"
+
+	"github.com/cosmos/gogoproto/jsonpb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/cosmos/cosmos-sdk/crypto"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
@@ -19,12 +26,6 @@ import (
 	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/x/sudo/cli"
-	"github.com/NibiruChain/nibiru/x/sudo/pb"
-
-	"github.com/cosmos/cosmos-sdk/crypto"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // ———————————————————————————————————————————————————————————————————
@@ -34,7 +35,7 @@ import (
 // MsgEditSudoersPlus is a wrapper struct to extend the default MsgEditSudoers
 // type with convenience functions
 type MsgEditSudoersPlus struct {
-	pb.MsgEditSudoers
+	types.MsgEditSudoers
 }
 
 // ToJson converts the message into a json string and saves it in a temporary
@@ -52,7 +53,7 @@ func (msg MsgEditSudoersPlus) ToJson(t *testing.T) (fileJsonBz []byte, fileName 
 	`, msg.Action, strings.Join(msg.Contracts, `", "`), msg.Sender)
 
 	t.Log("check the unmarshal json → proto")
-	tempMsg := new(pb.MsgEditSudoers)
+	tempMsg := new(types.MsgEditSudoers)
 	err := jsonpb.UnmarshalString(msgJsonStr, tempMsg)
 	assert.NoErrorf(t, err, "DEBUG tempMsg: %v\njsonStr: %v", tempMsg, msgJsonStr)
 
@@ -67,7 +68,7 @@ func (msg MsgEditSudoersPlus) ToJson(t *testing.T) (fileJsonBz []byte, fileName 
 	return fileJsonBz, fileName
 }
 
-func (msg MsgEditSudoersPlus) Exec(
+func (MsgEditSudoersPlus) Exec(
 	network *testutilcli.Network,
 	fileName string,
 	from sdk.AccAddress,
@@ -75,7 +76,7 @@ func (msg MsgEditSudoersPlus) Exec(
 	args := []string{
 		fileName,
 	}
-	return testutilcli.ExecTx(network, cli.CmdEditSudoers(), from, args)
+	return network.ExecTxCmd(cli.CmdEditSudoers(), from, args)
 }
 
 type IntegrationSuite struct {
@@ -102,7 +103,7 @@ func TestSuite_IntegrationSuite_RunAll(t *testing.T) {
 func (s *IntegrationSuite) SetupSuite() {
 	app.SetPrefixes(app.AccountAddressPrefix)
 
-	genState := genesis.NewTestGenesisState(app.MakeEncodingConfig())
+	genState := genesis.NewTestGenesisState(app.MakeEncodingConfigAndRegister())
 	genState, rootPrivKey, rootAddr := genesis.AddSudoGenesis(genState)
 	s.root = Account{
 		privKey:    rootPrivKey,
@@ -158,7 +159,7 @@ func (s *IntegrationSuite) TestCmdEditSudoers() {
 
 	var sender sdk.AccAddress = s.root.addr
 
-	pbMsg := pb.MsgEditSudoers{
+	pbMsg := types.MsgEditSudoers{
 		Action:    "add_contracts",
 		Contracts: []string{contracts[0], contracts[1], contracts[2]},
 		Sender:    sender.String(),
@@ -191,7 +192,7 @@ func (s *IntegrationSuite) TestCmdEditSudoers() {
 		s.True(gotContracts.Has(contract))
 	}
 
-	pbMsg = pb.MsgEditSudoers{
+	pbMsg = types.MsgEditSudoers{
 		Action:    "remove_contracts",
 		Contracts: []string{contracts[1]},
 		Sender:    sender.String(),
@@ -218,6 +219,24 @@ func (s *IntegrationSuite) TestCmdEditSudoers() {
 	}
 }
 
+func (s *IntegrationSuite) Test_ZCmdChangeRoot() {
+	val := s.network.Validators[0]
+
+	sudoers, err := testutilcli.QuerySudoers(val.ClientCtx)
+	s.NoError(err)
+	initialRoot := sudoers.Sudoers.Root
+
+	newRoot := testutil.AccAddress()
+	_, err = s.network.ExecTxCmd(
+		cli.CmdChangeRoot(), s.root.addr, []string{newRoot.String()})
+	require.NoError(s.T(), err)
+
+	sudoers, err = testutilcli.QuerySudoers(val.ClientCtx)
+	s.NoError(err)
+	require.NotEqual(s.T(), sudoers.Sudoers.Root, initialRoot)
+	require.Equal(s.T(), sudoers.Sudoers.Root, newRoot.String())
+}
+
 // TestMarshal_EditSudoers verifies that the expected proto.Message for
 // the EditSudoders fn marshals and unmarshals properly from JSON.
 // This unmarshaling is used in the main body of the CmdEditSudoers command.
@@ -231,7 +250,7 @@ func (s *IntegrationSuite) TestMarshal_EditSudoers() {
 	for _, addr := range addrs[1:] {
 		contracts = append(contracts, addr.String())
 	}
-	msg := pb.MsgEditSudoers{
+	msg := types.MsgEditSudoers{
 		Action:    "add_contracts",
 		Contracts: contracts,
 		Sender:    sender.String(),
@@ -243,7 +262,7 @@ func (s *IntegrationSuite) TestMarshal_EditSudoers() {
 
 	t.Log("check unmarshal file → proto")
 	cdc := genesis.TEST_ENCODING_CONFIG.Marshaler
-	newMsg := new(pb.MsgEditSudoers)
+	newMsg := new(types.MsgEditSudoers)
 	err := cdc.UnmarshalJSON(fileJsonBz, newMsg)
 	assert.NoErrorf(t, err, "fileJsonBz: #%v", fileJsonBz)
 	require.NoError(t, newMsg.ValidateBasic(), newMsg.String())

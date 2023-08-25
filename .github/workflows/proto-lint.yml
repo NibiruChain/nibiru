@@ -6,6 +6,11 @@ on:
     paths:
       - "proto/**"
 
+# Allow concurrent runs on main/release branches but isolates other branches 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.head_ref }}
+  cancel-in-progress: ${{ ! (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/')) }}
+
 permissions:
   contents: read
 
@@ -17,7 +22,7 @@ jobs:
   #     timeout-minutes: 5
   #     steps:
   #       - uses: actions/checkout@v3
-  #       - uses: bufbuild/buf-setup-action@v1.22.0
+  #       - uses: bufbuild/buf-setup-action@v1.26.1
   #       - uses: bufbuild/buf-lint-action@v1
   #         with:
   #           input: "proto"
@@ -26,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: bufbuild/buf-setup-action@v1.22.0
+      - uses: bufbuild/buf-setup-action@v1.26.1
       - uses: bufbuild/buf-breaking-action@v1
         with:
           input: "proto"

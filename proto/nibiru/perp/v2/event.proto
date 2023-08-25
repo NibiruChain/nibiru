@@ -69,88 +69,46 @@ message PositionChangedEvent {
   // - CHANGE_REASON_CLOSE_POSITION: An existing position was closed.
   string change_reason = 9
       [ (gogoproto.customtype) = "ChangeReason", (gogoproto.nullable) = false ];
+
+  // exchanged_size represent the change in size for an existing position
+  // after the change. A positive value indicates that the position size
+  // increased, while a negative value indicates that the position size
+  // decreased.
+  string exchanged_size = 10 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // exchanged_notional represent the change in notional for an existing
+  // position after the change. A positive value indicates that the position
+  // notional increased, while a negative value indicates that the position
+  // notional decreased.
+  string exchanged_notional = 11 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 }
 
-// Emitted when a position is liquidated.
+// Emitted when a position is liquidated. Wraps a PositionChanged event since a
+// liquidation causes position changes.
 message PositionLiquidatedEvent {
-  // identifier of the corresponding virtual pool for the position
-  string pair = 1 [
-    (gogoproto.customtype) =
-        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
-    (gogoproto.nullable) = false
-  ];
-
-  // owner of the position.
-  string trader_address = 2;
-
-  // margin * leverage * vPrice. 'notional' is the virtual size times  the
-  // virtual price on 'perp.amm'.
-  string exchanged_quote_amount = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-
-  // virtual amount of base assets for the position, which would be margin *
-  // leverage * priceBasePerQuote.
-  string exchanged_position_size = 4 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
+  PositionChangedEvent position_changed_event = 1
+      [ (gogoproto.nullable) = false ];
 
   // Address of the account that executed the tx.
-  string liquidator_address = 5;
+  string liquidator_address = 2;
 
   // Commission (in margin units) received by 'liquidator'.
-  cosmos.base.v1beta1.Coin fee_to_liquidator = 6 [
+  cosmos.base.v1beta1.Coin fee_to_liquidator = 3 [
     (gogoproto.moretags) = "yaml:\"fee_to_liquidator\"",
     (gogoproto.nullable) = false
   ];
 
   // Commission (in margin units) given to the ecosystem fund.
-  cosmos.base.v1beta1.Coin fee_to_ecosystem_fund = 7 [
+  cosmos.base.v1beta1.Coin fee_to_ecosystem_fund = 4 [
     (gogoproto.moretags) = "yaml:\"fee_to_ecosystem_fund\"",
     (gogoproto.nullable) = false
   ];
-
-  //  Bad debt (margin units) cleared by the PerpEF during the tx. Bad debt is
-  //  negative net margin past the liquidation point of a position.
-  cosmos.base.v1beta1.Coin bad_debt = 8 [ (gogoproto.nullable) = false ];
-
-  // Remaining margin in the position after liquidation
-  cosmos.base.v1beta1.Coin margin = 9 [
-    (gogoproto.moretags) = "yaml:\"margin\"",
-    (gogoproto.nullable) = false
-  ];
-
-  // Remaining position notional in the position after liquidation
-  string position_notional = 10 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-
-  // Remaining position size in the position after liquidation
-  string position_size = 11 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-
-  // Unrealized PnL in the position after liquidation
-  string unrealizedPnl = 12 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-
-  // Spot price of the vAMM after liquidation
-  string mark_price = 13 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-
-  // The block number at which this liquidation occured.
-  int64 block_height = 14;
-
-  // The unix timestamp in milliseconds at which this liquidation occured.
-  int64 block_time_ms = 15;
 }
 
 // Emitted when a position is settled.

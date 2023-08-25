@@ -76,17 +76,17 @@ func (s *TestSuitePerpExecutor) SetupSuite() {
 
 func (s *TestSuitePerpExecutor) OnSetupEnd() {
 	s.contractPerp = ContractMap[wasmbin.WasmKeyPerpBinding]
-	s.ratesMap = SetExchangeRates(s.Suite, s.nibiru, s.ctx)
+	s.ratesMap = SetExchangeRates(&s.Suite, s.nibiru, s.ctx)
 }
 
-// Happy path coverage of OpenPosition, AddMargin, RemoveMargin, and ClosePosition
+// Happy path coverage of MarketOrder, AddMargin, RemoveMargin, and ClosePosition
 func (s *TestSuitePerpExecutor) TestOpenAddRemoveClose() {
 	pair := asset.MustNewPair(s.happyFields.Pair)
 	margin := sdk.NewCoin(denoms.NUSD, sdk.NewInt(69))
 	incorrectMargin := sdk.NewCoin(denoms.USDT, sdk.NewInt(69))
 
 	for _, err := range []error{
-		s.DoOpenPositionTest(pair),
+		s.DoMarketOrderTest(pair),
 		s.DoAddMarginTest(pair, margin),
 		s.DoAddIncorrectMarginTest(pair, incorrectMargin),
 		s.DoRemoveIncorrectMarginTest(pair, incorrectMargin),
@@ -95,21 +95,22 @@ func (s *TestSuitePerpExecutor) TestOpenAddRemoveClose() {
 		s.DoPegShiftTest(pair),
 		s.DoInsuranceFundWithdrawTest(sdk.NewInt(69), s.contractDeployer),
 		s.DoCreateMarketTest(asset.MustNewPair("ufoo:ubar")),
+		s.DoCreateMarketTestWithParams(asset.MustNewPair("ufoo2:ubar")),
 	} {
 		s.NoError(err)
 	}
 }
 
-func (s *TestSuitePerpExecutor) DoOpenPositionTest(pair asset.Pair) error {
-	cwMsg := &cw_struct.OpenPosition{
+func (s *TestSuitePerpExecutor) DoMarketOrderTest(pair asset.Pair) error {
+	cwMsg := &cw_struct.MarketOrder{
 		Pair:            pair.String(),
 		IsLong:          false,
 		QuoteAmount:     sdk.NewInt(4_200_000),
 		Leverage:        sdk.NewDec(5),
-		BaseAmountLimit: sdk.NewInt(0),
+		BaseAmountLimit: sdk.ZeroInt(),
 	}
 
-	_, err := s.exec.OpenPosition(cwMsg, s.contractPerp, s.ctx)
+	_, err := s.exec.MarketOrder(cwMsg, s.contractPerp, s.ctx)
 	if err != nil {
 		return err
 	}
@@ -261,10 +262,34 @@ func (s *TestSuitePerpExecutor) DoCreateMarketTest(pair asset.Pair) error {
 	return s.exec.CreateMarket(cwMsg, s.ctx)
 }
 
+func (s *TestSuitePerpExecutor) DoCreateMarketTestWithParams(pair asset.Pair) error {
+	cwMsg := &cw_struct.CreateMarket{
+		Pair:      pair.String(),
+		PegMult:   sdk.NewDec(2_500),
+		SqrtDepth: sdk.NewDec(1_000),
+		MarketParams: &cw_struct.MarketParams{
+			Pair:                            pair.String(),
+			Enabled:                         true,
+			MaintenanceMarginRatio:          sdk.OneDec(),
+			MaxLeverage:                     sdk.OneDec(),
+			LatestCumulativePremiumFraction: sdk.OneDec(),
+			ExchangeFeeRatio:                sdk.OneDec(),
+			EcosystemFundFeeRatio:           sdk.OneDec(),
+			LiquidationFeeRatio:             sdk.OneDec(),
+			PartialLiquidationRatio:         sdk.OneDec(),
+			FundingRateEpochId:              "hi",
+			MaxFundingRate:                  sdk.OneDec(),
+			TwapLookbackWindow:              sdk.OneInt(),
+		},
+	}
+
+	return s.exec.CreateMarket(cwMsg, s.ctx)
+}
+
 func (s *TestSuitePerpExecutor) TestSadPaths_Nil() {
 	var err error
 
-	_, err = s.exec.OpenPosition(nil, nil, s.ctx)
+	_, err = s.exec.MarketOrder(nil, nil, s.ctx)
 	s.Error(err)
 
 	_, err = s.exec.AddMargin(nil, nil, s.ctx)
@@ -318,7 +343,7 @@ func (s *TestSuitePerpExecutor) TestSadPaths_InvalidPair() {
 	margin := sdk.NewCoin(denoms.NUSD, sdk.NewInt(69))
 
 	for _, err := range []error{
-		s.DoOpenPositionTest(pair),
+		s.DoMarketOrderTest(pair),
 		s.DoAddMarginTest(pair, margin),
 		s.DoRemoveMarginTest(pair, margin),
 		s.DoClosePositionTest(pair),
@@ -327,6 +352,7 @@ func (s *TestSuitePerpExecutor) TestSadPaths_InvalidPair() {
 		s.DoSetMarketEnabledTest(pair, true),
 		s.DoSetMarketEnabledTest(pair, false),
 		s.DoCreateMarketTest(pair),
+		s.DoCreateMarketTestWithParams(pair),
 	} {
 		s.Error(err)
 	}

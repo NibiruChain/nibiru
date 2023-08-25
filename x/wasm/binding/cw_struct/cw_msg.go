@@ -13,7 +13,7 @@ import (
 // - https://github.com/NibiruChain/cw-nibiru/blob/90df123f8d32d47b5b280ec6ae7dde0f9dbf2787/contracts/bindings-perp/src/msg.rs
 type BindingMsg struct {
 	// bindings-perp ExecuteMsg enum types
-	OpenPosition  *OpenPosition  `json:"open_position,omitempty"`
+	MarketOrder   *MarketOrder   `json:"market_order,omitempty"`
 	ClosePosition *ClosePosition `json:"close_position,omitempty"`
 	//MultiLiquidate        *MultiLiquidate        `json:"multi_liquidate,omitempty"` // TODO
 	AddMargin             *AddMargin             `json:"add_margin,omitempty"`
@@ -26,9 +26,12 @@ type BindingMsg struct {
 	CreateMarket          *CreateMarket          `json:"create_market,omitempty"`
 
 	EditOracleParams *EditOracleParams `json:"edit_oracle_params,omitempty"`
+
+	// Short for "no operation". A wasm binding payload that does nothing.
+	NoOp *NoOp `json:"no_op,omitempty"`
 }
 
-type OpenPosition struct {
+type MarketOrder struct {
 	Pair            string      `json:"pair"`
 	IsLong          bool        `json:"is_long"`
 	QuoteAmount     sdkmath.Int `json:"quote_amount"`
@@ -130,6 +133,11 @@ type MarketParams struct {
 	PartialLiquidationRatio sdk.Dec `json:"partial_liquidation_ratio"`
 	// specifies the interval on which the funding rate is updated
 	FundingRateEpochId string `json:"funding_rate_epoch_id,omitempty"`
+	// specifies the maximum premium fraction to be paid out
+	MaxFundingRate sdk.Dec `json:"max_funding_rate,omitempty"`
 	// amount of time to look back for TWAP calculations
 	TwapLookbackWindow sdkmath.Int `json:"twap_lookback_window"`
+}
+
+type NoOp struct {
 }

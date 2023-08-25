@@ -125,3 +125,14 @@ func TestGetCirculatingSupplyAndInflationRate(t *testing.T) {
 		})
 	}
 }
+
+func TestGetters(t *testing.T) {
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext(true)
+	k := nibiruApp.InflationKeeper
+	require.NotPanics(t, func() {
+		_ = k.ExponentialCalculation(ctx)
+		_ = k.InflationDistribution(ctx)
+		_ = k.InflationEnabled(ctx)
+		_ = k.EpochsPerPeriod(ctx)
+	})
+}

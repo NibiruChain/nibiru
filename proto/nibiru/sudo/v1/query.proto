@@ -7,7 +7,7 @@ import "google/api/annotations.proto";
 
 import "nibiru/sudo/v1/state.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/x/sudo/pb";
+option go_package = "github.com/NibiruChain/nibiru/x/sudo/types";
 
 // Query defines the gRPC querier service.
 service Query {

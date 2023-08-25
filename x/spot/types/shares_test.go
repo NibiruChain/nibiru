@@ -71,7 +71,7 @@ func TestMaximalSharesFromExactRatioJoin(t *testing.T) {
 				sdk.NewInt64Coin("aaa", 1),
 				sdk.NewInt64Coin("bbb", 50),
 			),
-			expectedNumShares: sdk.NewInt(1),
+			expectedNumShares: sdk.OneInt(),
 			expectedRemCoins: sdk.NewCoins(
 				sdk.NewInt64Coin("bbb", 49),
 			),
@@ -293,7 +293,7 @@ func TestTokensOutFromExactSharesErrors(t *testing.T) {
 				},
 				TotalShares: sdk.NewInt64Coin("nibiru/pool/1", 50),
 			},
-			numSharesIn: sdk.NewInt(0),
+			numSharesIn: sdk.ZeroInt(),
 		},
 		{
 			name: "too many pool shares",

@@ -20,10 +20,10 @@ func (exec *ExecutorPerp) MsgServer() perpv2types.MsgServer {
 	return perpv2keeper.NewMsgServerImpl(exec.PerpV2)
 }
 
-func (exec *ExecutorPerp) OpenPosition(
-	cwMsg *cw_struct.OpenPosition, sender sdk.AccAddress, ctx sdk.Context,
+func (exec *ExecutorPerp) MarketOrder(
+	cwMsg *cw_struct.MarketOrder, sender sdk.AccAddress, ctx sdk.Context,
 ) (
-	sdkResp *perpv2types.MsgOpenPositionResponse, err error,
+	sdkResp *perpv2types.MsgMarketOrderResponse, err error,
 ) {
 	if cwMsg == nil {
 		return sdkResp, wasmvmtypes.InvalidRequest{Err: "null open position msg"}
@@ -41,7 +41,7 @@ func (exec *ExecutorPerp) OpenPosition(
 		side = perpv2types.Direction_SHORT
 	}
 
-	sdkMsg := &perpv2types.MsgOpenPosition{
+	sdkMsg := &perpv2types.MsgMarketOrder{
 		Sender:               sender.String(),
 		Pair:                 pair,
 		Side:                 side,
@@ -49,9 +49,12 @@ func (exec *ExecutorPerp) OpenPosition(
 		Leverage:             cwMsg.Leverage,
 		BaseAssetAmountLimit: cwMsg.BaseAmountLimit,
 	}
+	if err := sdkMsg.ValidateBasic(); err != nil {
+		return sdkResp, err
+	}
 
 	goCtx := sdk.WrapSDKContext(ctx)
-	return exec.MsgServer().OpenPosition(goCtx, sdkMsg)
+	return exec.MsgServer().MarketOrder(goCtx, sdkMsg)
 }
 
 func (exec *ExecutorPerp) ClosePosition(
@@ -71,6 +74,9 @@ func (exec *ExecutorPerp) ClosePosition(
 	sdkMsg := &perpv2types.MsgClosePosition{
 		Sender: sender.String(),
 		Pair:   pair,
+	}
+	if err := sdkMsg.ValidateBasic(); err != nil {
+		return sdkResp, err
 	}
 
 	goCtx := sdk.WrapSDKContext(ctx)
@@ -96,6 +102,9 @@ func (exec *ExecutorPerp) AddMargin(
 		Pair:   pair,
 		Margin: cwMsg.Margin,
 	}
+	if err := sdkMsg.ValidateBasic(); err != nil {
+		return sdkResp, err
+	}
 
 	goCtx := sdk.WrapSDKContext(ctx)
 	return exec.MsgServer().AddMargin(goCtx, sdkMsg)
@@ -119,6 +128,9 @@ func (exec *ExecutorPerp) RemoveMargin(
 		Sender: sender.String(),
 		Pair:   pair,
 		Margin: cwMsg.Margin,
+	}
+	if err := sdkMsg.ValidateBasic(); err != nil {
+		return sdkResp, err
 	}
 
 	goCtx := sdk.WrapSDKContext(ctx)
@@ -189,7 +201,7 @@ func (exec *ExecutorPerp) SetMarketEnabled(
 		return err
 	}
 
-	return exec.PerpV2.Admin().SetMarketEnabled(ctx, pair, cwMsg.Enabled)
+	return exec.PerpV2.ChangeMarketEnabledParameter(ctx, pair, cwMsg.Enabled)
 }
 
 func (exec *ExecutorPerp) CreateMarket(
@@ -220,6 +232,7 @@ func (exec *ExecutorPerp) CreateMarket(
 			LiquidationFeeRatio:             mp.LiquidationFeeRatio,
 			PartialLiquidationRatio:         mp.PartialLiquidationRatio,
 			FundingRateEpochId:              mp.FundingRateEpochId,
+			MaxFundingRate:                  mp.MaxFundingRate,
 			TwapLookbackWindow:              time.Duration(mp.TwapLookbackWindow.Int64()),
 			PrepaidBadDebt:                  sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()),
 		}

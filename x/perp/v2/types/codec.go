@@ -7,11 +7,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 )
 
-func RegisterCodec(cdc *codec.LegacyAmino) {
+func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgAddMargin{}, "perpv2/add_margin", nil)
 	cdc.RegisterConcrete(&MsgRemoveMargin{}, "perpv2/remove_margin", nil)
-	cdc.RegisterConcrete(&MsgOpenPosition{}, "perpv2/open_position", nil)
+	cdc.RegisterConcrete(&MsgMarketOrder{}, "perpv2/market_order", nil)
 	cdc.RegisterConcrete(&MsgClosePosition{}, "perpv2/close_position", nil)
+	cdc.RegisterConcrete(&MsgPartialClose{}, "perpv2/partial_close", nil)
 	cdc.RegisterConcrete(&MsgDonateToEcosystemFund{}, "perpv2/donate_to_ef", nil)
 	cdc.RegisterConcrete(&MsgMultiLiquidate{}, "perpv2/multi_liquidate", nil)
 }
@@ -22,8 +23,9 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		/* implementations */
 		&MsgRemoveMargin{},
 		&MsgAddMargin{},
-		&MsgOpenPosition{},
+		&MsgMarketOrder{},
 		&MsgClosePosition{},
+		&MsgPartialClose{},
 		&MsgMultiLiquidate{},
 	)
 

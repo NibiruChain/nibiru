@@ -76,6 +76,72 @@ func TestMultiLiquidate(t *testing.T) {
 				MoveToNextBlock(),
 				MultiLiquidate(liquidator, false,
 					PairTraderTuple{Pair: pairBtcUsdc, Trader: alice, Successful: true},
+					PairTraderTuple{Pair: pairAtomUsdc, Trader: alice, Successful: false},
+				),
+			).
+			Then(
+				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(600)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(150)),
+				BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(250)),
+				PositionShouldNotExist(alice, pairBtcUsdc),
+			),
+
+		TC("full liquidation").
+			Given(
+				SetBlockNumber(1),
+				SetBlockTime(startTime),
+				CreateCustomMarket(pairBtcUsdc),
+				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10600))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
+			).
+			When(
+				MoveToNextBlock(),
+				MultiLiquidate(liquidator, false,
+					PairTraderTuple{Pair: pairBtcUsdc, Trader: alice, Successful: true},
+				),
+			).
+			Then(
+				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(600)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(150)),
+				BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(250)),
+				PositionShouldNotExist(alice, pairBtcUsdc),
+			),
+
+		TC("one fail liquidation - one correct").
+			Given(
+				SetBlockNumber(1),
+				SetBlockTime(startTime),
+				CreateCustomMarket(pairBtcUsdc),
+				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10600))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
+			).
+			When(
+				MoveToNextBlock(),
+				MultiLiquidate(liquidator, false,
+					PairTraderTuple{Pair: pairBtcUsdc, Successful: false},
+					PairTraderTuple{Pair: pairBtcUsdc, Trader: alice, Successful: true},
+				),
+			).
+			Then(
+				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(600)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(150)),
+				BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(250)),
+				PositionShouldNotExist(alice, pairBtcUsdc),
+			),
+
+		TC("one fail liquidation because market does not exists- one correct").
+			Given(
+				SetBlockNumber(1),
+				SetBlockTime(startTime),
+				CreateCustomMarket(pairBtcUsdc),
+				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10600))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
+			).
+			When(
+				MoveToNextBlock(),
+				MultiLiquidate(liquidator, false,
+					PairTraderTuple{Pair: asset.MustNewPair("luna:usdt"), Successful: false},
+					PairTraderTuple{Pair: pairBtcUsdc, Trader: alice, Successful: true},
 				),
 			).
 			Then(
@@ -160,6 +226,12 @@ func TestMultiLiquidate(t *testing.T) {
 						},
 					),
 				),
+				ContainsLiquidateEvent(&types.LiquidationFailedEvent{
+					Pair:       pairBtcUsdc,
+					Trader:     alice.String(),
+					Liquidator: liquidator.String(),
+					Reason:     types.LiquidationFailedEvent_POSITION_HEALTHY,
+				}),
 			),
 
 		TC("mixed bag").
@@ -215,6 +287,25 @@ func TestMultiLiquidate(t *testing.T) {
 						},
 					),
 				),
+
+				ContainsLiquidateEvent(&types.LiquidationFailedEvent{
+					Pair:       pairAtomUsdc,
+					Trader:     alice.String(),
+					Liquidator: liquidator.String(),
+					Reason:     types.LiquidationFailedEvent_POSITION_HEALTHY,
+				}),
+				ContainsLiquidateEvent(&types.LiquidationFailedEvent{
+					Pair:       pairSolUsdc,
+					Trader:     alice.String(),
+					Liquidator: liquidator.String(),
+					Reason:     types.LiquidationFailedEvent_NONEXISTENT_PAIR,
+				}),
+				ContainsLiquidateEvent(&types.LiquidationFailedEvent{
+					Pair:       pairBtcUsdc,
+					Trader:     bob.String(),
+					Liquidator: liquidator.String(),
+					Reason:     types.LiquidationFailedEvent_NONEXISTENT_POSITION,
+				}),
 			),
 	}
 

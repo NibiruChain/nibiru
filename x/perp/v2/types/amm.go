@@ -29,21 +29,12 @@ func (amm AMM) Validate() error {
 		return fmt.Errorf("init sqrt depth must be > 0")
 	}
 
-	if !amm.QuoteReserve.IsPositive() || !amm.BaseReserve.IsPositive() {
-		return ErrInvalidAmmReserves.Wrapf("amm %s has invalid reserves", amm.String())
-	}
-
 	computedSqrtDepth, err := amm.ComputeSqrtDepth()
 	if err != nil {
 		return err
 	}
 
-	if !amm.SqrtDepth.IsPositive() {
-		return ErrLiquidityDepth.Wrap(
-			"liq depth must be positive. pool: " + amm.String())
-	}
-
-	if !amm.SqrtDepth.Sub(computedSqrtDepth).Abs().LTE(sdk.NewDec(1)) {
+	if !amm.SqrtDepth.Sub(computedSqrtDepth).Abs().LTE(sdk.OneDec()) {
 		return ErrLiquidityDepth.Wrap(
 			"computed sqrt and current sqrt are mismatched. pool: " + amm.String())
 	}
@@ -118,6 +109,9 @@ func (amm AMM) GetQuoteReserveAmt(
 	if baseReserveAmt.IsNegative() {
 		return sdk.Dec{}, ErrInputBaseAmtNegative
 	}
+	if baseReserveAmt.IsZero() {
+		return sdk.ZeroDec(), nil
+	}
 
 	invariant := amm.QuoteReserve.Mul(amm.BaseReserve) // x * y = k
 
@@ -130,7 +124,8 @@ func (amm AMM) GetQuoteReserveAmt(
 
 	if !baseReservesAfter.IsPositive() {
 		return sdk.Dec{}, ErrBaseReserveAtZero.Wrapf(
-			"base assets below zero after trying to swap %s base assets",
+			"base assets below zero (%s) after trying to swap %s base assets",
+			baseReservesAfter.String(),
 			baseReserveAmt.String(),
 		)
 	}
@@ -151,15 +146,16 @@ func (amm AMM) MarkPrice() sdk.Dec {
 	return amm.QuoteReserve.Quo(amm.BaseReserve).Mul(amm.PriceMultiplier)
 }
 
-// Returns the sqrt k of the reserves
+// ComputeSqrtDepth: Returns the sqrt of the product of the reserves
 func (amm AMM) ComputeSqrtDepth() (sqrtDepth sdk.Dec, err error) {
-	mul := new(big.Int).Mul(amm.BaseReserve.BigInt(), amm.BaseReserve.BigInt())
+	liqDepthBigInt := new(big.Int).Mul(amm.QuoteReserve.BigInt(), amm.BaseReserve.BigInt())
 
-	chopped := common.ChopPrecisionAndRound(mul)
+	chopped := common.ChopPrecisionAndRound(liqDepthBigInt)
 	if chopped.BitLen() > common.MaxDecBitLen {
 		return sdk.Dec{}, ErrLiquidityDepthOverflow
 	}
-
+	// Since common.ChopPrecisionAndRound mutates the input, there's no guarantee that
+	// sdk.NewDecFromBigInt(liqDepthBigInt) is equal to amm.QuoteReserve.Mul(amm.BaseReserve)
 	liqDepth := amm.QuoteReserve.Mul(amm.BaseReserve)
 	return common.SqrtDec(liqDepth)
 }
@@ -240,10 +236,8 @@ func (amm *AMM) SwapQuoteAsset(
 //   - dir: direction of swap
 //
 // returns:
-//   - quoteAssetDelta: amount of quote asset received
+//   - quoteAssetDelta: amount of quote asset received. Always positive
 //   - err: error if any
-//
-// Note: quoteAssetDelta is always positive
 func (amm *AMM) SwapBaseAsset(baseAssetAmt sdk.Dec, dir Direction) (quoteAssetDelta sdk.Dec, err error) {
 	quoteReserveDelta, err := amm.GetQuoteReserveAmt(baseAssetAmt, dir)
 	if err != nil {
@@ -381,5 +375,5 @@ func (amm *AMM) UpdateSwapInvariant(newSwapInvariant sdk.Dec) (err error) {
 	amm.BaseReserve = amm.BaseReserve.Mul(multiplier)
 	amm.QuoteReserve = amm.QuoteReserve.Mul(multiplier)
 
-	return amm.Validate()
+	return amm.Validate() // might be useless
 }

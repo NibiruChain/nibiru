@@ -1,6 +1,6 @@
 {
-  "open_position": {
-    "open_position": {
+  "market_order": {
+    "market_order": {
       "pair": "ETH:USD",
       "is_long": true,
       "quote_amount": "100",
@@ -65,6 +65,9 @@
       "pair": "ETH:USD",
       "depth_mult": "420"
     }
+  },
+  "no_op": {
+    "no_op": {}
   },
   "insurance_fund_withdraw": {
     "insurance_fund_withdraw": {

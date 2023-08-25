@@ -1,26 +1,15 @@
 package cli_test
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
-	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-
-	"github.com/cometbft/cometbft/libs/log"
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/x/genutil"
-	genutiltest "github.com/cosmos/cosmos-sdk/x/genutil/client/testutil"
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/perp/v2/client/cli"
 )
-
-var testModuleBasicManager = module.NewBasicManager(genutil.AppModuleBasic{})
 
 // Tests "add-genesis-perp-market", a command that adds a market to genesis.json
 func TestAddMarketGenesisCmd(t *testing.T) {
@@ -31,6 +20,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 		priceMultiplier string
 		maintainRatio   string
 		maxLeverage     string
+		maxFundingRate  string
 		expectError     bool
 	}{
 		{
@@ -40,6 +30,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			priceMultiplier: "1",
 			maintainRatio:   "1",
 			maxLeverage:     "1",
+			maxFundingRate:  "1",
 			expectError:     true,
 		},
 		{
@@ -49,6 +40,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			priceMultiplier: "1",
 			maintainRatio:   "1",
 			maxLeverage:     "1",
+			maxFundingRate:  "1",
 			expectError:     true,
 		},
 		{
@@ -58,6 +50,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			priceMultiplier: "1",
 			maintainRatio:   "1",
 			maxLeverage:     "1",
+			maxFundingRate:  "1",
 			expectError:     true,
 		},
 		{
@@ -67,6 +60,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			priceMultiplier: "1",
 			maintainRatio:   "0.1",
 			maxLeverage:     "0",
+			maxFundingRate:  "0",
 			expectError:     true,
 		},
 		{
@@ -76,6 +70,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			priceMultiplier: "0",
 			maintainRatio:   "0.1",
 			maxLeverage:     "1",
+			maxFundingRate:  "1",
 			expectError:     true,
 		},
 		{
@@ -85,6 +80,17 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			priceMultiplier: "-1",
 			maintainRatio:   "0.1",
 			maxLeverage:     "1",
+			maxFundingRate:  "1",
+			expectError:     true,
+		},
+		{
+			name:            "negative max funding rate",
+			pairName:        "token0:token1",
+			sqrtDepth:       "100",
+			priceMultiplier: "1",
+			maintainRatio:   "0.1",
+			maxLeverage:     "10",
+			maxFundingRate:  "-1",
 			expectError:     true,
 		},
 		{
@@ -94,30 +100,15 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			priceMultiplier: "1",
 			maintainRatio:   "0.1",
 			maxLeverage:     "10",
+			maxFundingRate:  "10",
 			expectError:     false,
 		},
 	}
 
+	ctx := testutil.SetupClientCtx(t)
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			home := t.TempDir()
-			logger := log.NewNopLogger()
-			cfg, err := genutiltest.CreateDefaultTendermintConfig(home)
-			require.NoError(t, err)
-
-			appCodec := moduletestutil.MakeTestEncodingConfig().Codec
-			err = genutiltest.ExecInitCmd(
-				testModuleBasicManager, home, appCodec)
-			require.NoError(t, err)
-
-			serverCtx := server.NewContext(viper.New(), cfg, logger)
-			clientCtx := client.Context{}.WithCodec(appCodec).WithHomeDir(home)
-
-			ctx := context.Background()
-			ctx = context.WithValue(ctx, client.ClientContextKey, &clientCtx)
-			ctx = context.WithValue(ctx, server.ServerContextKey, serverCtx)
-
 			cmd := cli.AddMarketGenesisCmd("home")
 			cmd.SetArgs([]string{
 				fmt.Sprintf("--%s=%s", cli.FlagPair, tc.pairName),
@@ -125,6 +116,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 				fmt.Sprintf("--%s=%s", cli.FlagPriceMultiplier, tc.priceMultiplier),
 				fmt.Sprintf("--%s=%s", cli.FlagMaintenenceMarginRatio, tc.maintainRatio),
 				fmt.Sprintf("--%s=%s", cli.FlagMaxLeverage, tc.maxLeverage),
+				fmt.Sprintf("--%s=%s", cli.FlagMaxFundingrate, tc.maxFundingRate),
 				fmt.Sprintf("--%s=home", flags.FlagHome),
 			})
 

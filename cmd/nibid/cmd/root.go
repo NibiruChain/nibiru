@@ -5,6 +5,8 @@ import (
 	"io"
 	"os"
 
+	"github.com/NibiruChain/nibiru/x/sudo/cli"
+
 	dbm "github.com/cometbft/cometbft-db"
 	tmcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/cometbft/cometbft/libs/log"
@@ -26,13 +28,14 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/app"
+	oraclecli "github.com/NibiruChain/nibiru/x/oracle/client/cli"
 	perpv2cli "github.com/NibiruChain/nibiru/x/perp/v2/client/cli"
 )
 
 // NewRootCmd creates a new root command for nibid. It is called once in the
 // main function.
 func NewRootCmd() (*cobra.Command, app.EncodingConfig) {
-	encodingConfig := app.MakeEncodingConfig()
+	encodingConfig := app.MakeEncodingConfigAndRegister()
 	app.SetPrefixes(app.AccountAddressPrefix)
 
 	initClientCtx := client.Context{}.
@@ -136,7 +139,6 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 	rootCmd.AddCommand(
 		InitCmd(app.ModuleBasics, app.DefaultNodeHome),
 		AddGenesisAccountCmd(app.DefaultNodeHome),
-		perpv2cli.AddMarketGenesisCmd(app.DefaultNodeHome),
 		tmcli.NewCompletionCmd(rootCmd, true),
 		testnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
 		debug.Cmd(),
@@ -149,7 +151,12 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 	// add keybase, auxiliary RPC, query, and tx child commands
 	rootCmd.AddCommand(
 		rpc.StatusCommand(),
-		genesisCommand(encodingConfig),
+		genesisCommand(
+			encodingConfig,
+			oraclecli.AddGenesisPricefeederDelegationCmd(app.DefaultNodeHome),
+			perpv2cli.AddMarketGenesisCmd(app.DefaultNodeHome),
+			cli.AddSudoRootAccountCmd(app.DefaultNodeHome),
+		),
 		queryCommand(),
 		txCommand(),
 		keys.Commands(app.DefaultNodeHome),

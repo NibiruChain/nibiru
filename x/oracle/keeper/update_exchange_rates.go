@@ -1,13 +1,12 @@
 package keeper
 
 import (
-	"sort"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/omap"
 	"github.com/NibiruChain/nibiru/x/common/set"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
@@ -51,25 +50,18 @@ func (k Keeper) countVotesAndUpdateExchangeRates(
 	rewardBand := k.RewardBand(ctx)
 
 	// Iterate through sorted keys for deterministic ordering.
-	// For more info, see: https://github.com/NibiruChain/nibiru/issues/1374#issue-1715353299
-	var pairs []string
-	for pair := range pairBallotsMap {
-		pairs = append(pairs, pair.String())
-	}
-	sort.Strings(pairs)
-	for _, pairStr := range pairs {
-		pair := asset.Pair(pairStr)
+	orderedBallotsMap := omap.OrderedMap_Pair[types.ExchangeRateBallots](pairBallotsMap)
+	for pair := range orderedBallotsMap.Range() {
 		ballots := pairBallotsMap[pair]
 		exchangeRate := Tally(ballots, rewardBand, validatorPerformances)
 
 		k.SetPrice(ctx, pair, exchangeRate)
 
-		ctx.EventManager().EmitEvent(
-			sdk.NewEvent(types.EventTypeExchangeRateUpdate,
-				sdk.NewAttribute(types.AttributeKeyPair, pair.String()),
-				sdk.NewAttribute(types.AttributeKeyExchangeRate, exchangeRate.String()),
-			),
-		)
+		_ = ctx.EventManager().EmitTypedEvent(&types.EventPriceUpdate{
+			Pair:        pair.String(),
+			Price:       exchangeRate,
+			TimestampMs: ctx.BlockTime().UnixMilli(),
+		})
 	}
 }
 

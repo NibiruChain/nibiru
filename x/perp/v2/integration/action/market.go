@@ -1,6 +1,8 @@
 package action
 
 import (
+	"fmt"
+
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -13,6 +15,22 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
+
+// Logger
+type logger struct {
+	log string
+}
+
+func (e logger) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	fmt.Println(e.log)
+	return ctx, nil, true
+}
+
+func Log(log string) action.Action {
+	return logger{
+		log: log,
+	}
+}
 
 // createMarketAction creates a market
 type createMarketAction struct {
@@ -63,9 +81,9 @@ func WithPrepaidBadDebt(amount sdkmath.Int) marketModifier {
 	}
 }
 
-func WithPricePeg(multiplier sdk.Dec) marketModifier {
+func WithPricePeg(newValue sdk.Dec) marketModifier {
 	return func(market *types.Market, amm *types.AMM) {
-		amm.PriceMultiplier = multiplier
+		amm.PriceMultiplier = newValue
 	}
 }
 
@@ -89,37 +107,49 @@ func WithSqrtDepth(amount sdk.Dec) marketModifier {
 	}
 }
 
+func WithLatestMarketCPF(amount sdk.Dec) marketModifier {
+	return func(market *types.Market, amm *types.AMM) {
+		market.LatestCumulativePremiumFraction = amount
+	}
+}
+
+func WithMaxFundingRate(amount sdk.Dec) marketModifier {
+	return func(market *types.Market, amm *types.AMM) {
+		market.MaxFundingRate = amount
+	}
+}
+
 type editPriceMultiplier struct {
-	pair       asset.Pair
-	multiplier sdk.Dec
+	pair     asset.Pair
+	newValue sdk.Dec
 }
 
 func (e editPriceMultiplier) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	err := app.PerpKeeperV2.EditPriceMultiplier(ctx, e.pair, e.multiplier)
+	err := app.PerpKeeperV2.EditPriceMultiplier(ctx, e.pair, e.newValue)
 	return ctx, err, true
 }
 
-func EditPriceMultiplier(pair asset.Pair, multiplier sdk.Dec) action.Action {
+func EditPriceMultiplier(pair asset.Pair, newValue sdk.Dec) action.Action {
 	return editPriceMultiplier{
-		pair:       pair,
-		multiplier: multiplier,
+		pair:     pair,
+		newValue: newValue,
 	}
 }
 
 type editSwapInvariant struct {
-	pair       asset.Pair
-	multiplier sdk.Dec
+	pair     asset.Pair
+	newValue sdk.Dec
 }
 
 func (e editSwapInvariant) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	err := app.PerpKeeperV2.EditSwapInvariant(ctx, e.pair, e.multiplier)
+	err := app.PerpKeeperV2.EditSwapInvariant(ctx, e.pair, e.newValue)
 	return ctx, err, true
 }
 
-func EditSwapInvariant(pair asset.Pair, multiplier sdk.Dec) action.Action {
+func EditSwapInvariant(pair asset.Pair, newValue sdk.Dec) action.Action {
 	return editSwapInvariant{
-		pair:       pair,
-		multiplier: multiplier,
+		pair:     pair,
+		newValue: newValue,
 	}
 }
 

@@ -2,6 +2,7 @@ package types
 
 import (
 	fmt "fmt"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -35,6 +36,10 @@ func (market *Market) Validate() error {
 
 	if market.MaxLeverage.LTE(sdk.ZeroDec()) {
 		return fmt.Errorf("max leverage must be > 0")
+	}
+
+	if market.MaxFundingRate.LT(sdk.ZeroDec()) {
+		return fmt.Errorf("max funding rate must be >= 0")
 	}
 
 	if sdk.OneDec().Quo(market.MaxLeverage).LT(market.MaintenanceMarginRatio) {
@@ -79,6 +84,11 @@ func (market *Market) WithFundingRateEpochId(value string) *Market {
 	return market
 }
 
+func (market *Market) WithMaxFundingRate(value sdk.Dec) *Market {
+	market.MaxFundingRate = value
+	return market
+}
+
 func (market *Market) WithPair(value asset.Pair) *Market {
 	market.Pair = value
 	return market
@@ -86,6 +96,31 @@ func (market *Market) WithPair(value asset.Pair) *Market {
 
 func (market *Market) WithLatestCumulativePremiumFraction(value sdk.Dec) *Market {
 	market.LatestCumulativePremiumFraction = value
+	return market
+}
+
+func (market *Market) WithEcosystemFundFeeRatio(value sdk.Dec) *Market {
+	market.EcosystemFundFeeRatio = value
+	return market
+}
+func (market *Market) WithExchangeFeeRatio(value sdk.Dec) *Market {
+	market.ExchangeFeeRatio = value
+	return market
+}
+func (market *Market) WithLiquidationFeeRatio(value sdk.Dec) *Market {
+	market.LiquidationFeeRatio = value
+	return market
+}
+func (market *Market) WithPrepaidBadDebt(value sdk.Coin) *Market {
+	market.PrepaidBadDebt = value
+	return market
+}
+func (market *Market) WithEnabled(value bool) *Market {
+	market.Enabled = value
+	return market
+}
+func (market *Market) WithTwapLookbackWindow(value time.Duration) *Market {
+	market.TwapLookbackWindow = value
 	return market
 }
 
@@ -122,6 +157,10 @@ func MarketsAreEqual(expected, actual *Market) error {
 		return fmt.Errorf("expected market funding rate epoch id %s, got %s", expected.FundingRateEpochId, actual.FundingRateEpochId)
 	}
 
+	if !expected.MaxFundingRate.Equal(actual.MaxFundingRate) {
+		return fmt.Errorf("expected market max funding rate %s, got %s", expected.MaxFundingRate, actual.MaxFundingRate)
+	}
+
 	if !expected.PrepaidBadDebt.Equal(actual.PrepaidBadDebt) {
 		return fmt.Errorf("expected market prepaid bad debt %s, got %s", expected.PrepaidBadDebt, actual.PrepaidBadDebt)
 	}
@@ -143,4 +182,16 @@ func MarketsAreEqual(expected, actual *Market) error {
 	}
 
 	return nil
+}
+
+func (m *Market) copy() *Market {
+	return &Market{
+		MaintenanceMarginRatio:  m.MaintenanceMarginRatio,
+		EcosystemFundFeeRatio:   m.EcosystemFundFeeRatio,
+		ExchangeFeeRatio:        m.ExchangeFeeRatio,
+		LiquidationFeeRatio:     m.LiquidationFeeRatio,
+		PartialLiquidationRatio: m.PartialLiquidationRatio,
+		MaxLeverage:             m.MaxLeverage,
+		MaxFundingRate:          m.MaxFundingRate,
+	}
 }

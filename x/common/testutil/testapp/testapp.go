@@ -20,7 +20,7 @@ import (
 // NewNibiruTestAppAndContext creates an 'app.NibiruApp' instance with an in-memory
 // 'tmdb.MemDB' and fresh 'sdk.Context'.
 func NewNibiruTestAppAndContext(shouldUseDefaultGenesis bool) (*app.NibiruApp, sdk.Context) {
-	encoding := app.MakeEncodingConfig()
+	encoding := app.MakeEncodingConfigAndRegister()
 	var appGenesis app.GenesisState
 	if shouldUseDefaultGenesis {
 		appGenesis = app.NewDefaultGenesisState(encoding.Marshaler)
@@ -44,7 +44,7 @@ func NewNibiruTestApp(gen app.GenesisState) *app.NibiruApp {
 	db := tmdb.NewMemDB()
 	logger := log.NewNopLogger()
 
-	encoding := app.MakeEncodingConfig()
+	encoding := app.MakeEncodingConfigAndRegister()
 	app := app.NewNibiruApp(
 		logger,
 		db,
@@ -92,4 +92,15 @@ func FundModuleAccount(bankKeeper bankkeeper.Keeper, ctx sdk.Context, recipientM
 	}
 
 	return bankKeeper.SendCoinsFromModuleToModule(ctx, inflationtypes.ModuleName, recipientMod, amounts)
+}
+
+// EnsureNibiruPrefix sets the account address prefix to Nibiru's rather than
+// the default from the Cosmos-SDK, guaranteeing that tests will work with nibi
+// addresses rather than cosmos ones (for Gaia).
+func EnsureNibiruPrefix() {
+	csdkConfig := sdk.GetConfig()
+	nibiruPrefix := app.AccountAddressPrefix
+	if csdkConfig.GetBech32AccountAddrPrefix() != nibiruPrefix {
+		app.SetPrefixes(nibiruPrefix)
+	}
 }

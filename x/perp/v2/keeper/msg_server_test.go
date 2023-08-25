@@ -5,18 +5,21 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
 	. "github.com/NibiruChain/nibiru/x/common/testutil/assertion"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
+	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
-func TestMsgServerOpenPosition(t *testing.T) {
+func TestMsgServerMarketOrder(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	alice := testutil.AccAddress()
 
@@ -27,7 +30,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
 			).
 			When(
-				MsgServerOpenPosition(alice, pair, types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroInt()),
+				MsgServerMarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroInt()),
 			).
 			Then(
 				PositionShouldBeEqual(alice, pair,
@@ -35,8 +38,8 @@ func TestMsgServerOpenPosition(t *testing.T) {
 						TraderAddress:                   alice.String(),
 						Pair:                            pair,
 						Size_:                           sdk.MustNewDecFromStr("0.999999999999"),
-						Margin:                          sdk.NewDec(1),
-						OpenNotional:                    sdk.NewDec(1),
+						Margin:                          sdk.OneDec(),
+						OpenNotional:                    sdk.OneDec(),
 						LatestCumulativePremiumFraction: sdk.ZeroDec(),
 						LastUpdatedBlockNumber:          1,
 					}),
@@ -50,7 +53,7 @@ func TestMsgServerOpenPosition(t *testing.T) {
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
 			).
 			When(
-				MsgServerOpenPosition(alice, pair, types.Direction_SHORT, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroInt()),
+				MsgServerMarketOrder(alice, pair, types.Direction_SHORT, sdk.OneInt(), sdk.OneDec(), sdk.ZeroInt()),
 			).
 			Then(
 				PositionShouldBeEqual(alice, pair,
@@ -58,8 +61,8 @@ func TestMsgServerOpenPosition(t *testing.T) {
 						TraderAddress:                   alice.String(),
 						Pair:                            pair,
 						Size_:                           sdk.MustNewDecFromStr("-1.000000000001"),
-						Margin:                          sdk.NewDec(1),
-						OpenNotional:                    sdk.NewDec(1),
+						Margin:                          sdk.OneDec(),
+						OpenNotional:                    sdk.OneDec(),
 						LatestCumulativePremiumFraction: sdk.ZeroDec(),
 						LastUpdatedBlockNumber:          1,
 					}),
@@ -80,7 +83,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 			Given(
 				CreateCustomMarket(pair),
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
-				OpenPosition(alice, pair, types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroDec()),
+				MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
 			When(
@@ -95,7 +98,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 			Given(
 				CreateCustomMarket(pair),
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
-				OpenPosition(alice, pair, types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroDec()),
+				MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
 			When(
@@ -119,11 +122,11 @@ func TestMsgServerAddMargin(t *testing.T) {
 			Given(
 				CreateCustomMarket(pair),
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
-				OpenPosition(alice, pair, types.Direction_LONG, sdk.NewInt(1), sdk.NewDec(1), sdk.ZeroDec()),
+				MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
 			When(
-				MsgServerAddMargin(alice, pair, sdk.NewInt(1)),
+				MsgServerAddMargin(alice, pair, sdk.OneInt()),
 			).
 			Then(
 				PositionShouldBeEqual(alice, pair,
@@ -132,7 +135,31 @@ func TestMsgServerAddMargin(t *testing.T) {
 						Pair:                            pair,
 						Size_:                           sdk.MustNewDecFromStr("0.999999999999"),
 						Margin:                          sdk.NewDec(2),
-						OpenNotional:                    sdk.NewDec(1),
+						OpenNotional:                    sdk.OneDec(),
+						LatestCumulativePremiumFraction: sdk.ZeroDec(),
+						LastUpdatedBlockNumber:          2,
+					}),
+				),
+				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(98)),
+			),
+		TC("partial close").
+			Given(
+				CreateCustomMarket(pair),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
+				MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
+				MoveToNextBlock(),
+			).
+			When(
+				MsgServerAddMargin(alice, pair, sdk.OneInt()),
+			).
+			Then(
+				PositionShouldBeEqual(alice, pair,
+					Position_PositionShouldBeEqualTo(types.Position{
+						TraderAddress:                   alice.String(),
+						Pair:                            pair,
+						Size_:                           sdk.MustNewDecFromStr("0.999999999999"),
+						Margin:                          sdk.NewDec(2),
+						OpenNotional:                    sdk.OneDec(),
 						LatestCumulativePremiumFraction: sdk.ZeroDec(),
 						LastUpdatedBlockNumber:          2,
 					}),
@@ -153,11 +180,11 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 			Given(
 				CreateCustomMarket(pair),
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
-				OpenPosition(alice, pair, types.Direction_LONG, sdk.NewInt(2), sdk.NewDec(1), sdk.ZeroDec()),
+				MarketOrder(alice, pair, types.Direction_LONG, sdk.NewInt(2), sdk.OneDec(), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
 			When(
-				MsgServerRemoveMargin(alice, pair, sdk.NewInt(1)),
+				MsgServerRemoveMargin(alice, pair, sdk.OneInt()),
 			).
 			Then(
 				PositionShouldBeEqual(alice, pair,
@@ -165,7 +192,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 						TraderAddress:                   alice.String(),
 						Pair:                            pair,
 						Size_:                           sdk.MustNewDecFromStr("1.999999999996"),
-						Margin:                          sdk.NewDec(1),
+						Margin:                          sdk.OneDec(),
 						OpenNotional:                    sdk.NewDec(2),
 						LatestCumulativePremiumFraction: sdk.ZeroDec(),
 						LastUpdatedBlockNumber:          2,
@@ -261,4 +288,51 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	}
 
 	NewTestSuite(t).WithTestCases(tests...).Run()
+}
+
+func TestFailMsgServer(t *testing.T) {
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	app, ctx := testapp.NewNibiruTestAppAndContext(true)
+
+	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
+
+	_, err := msgServer.MarketOrder(ctx, &types.MsgMarketOrder{
+		Sender:               "cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v",
+		Pair:                 pair,
+		Side:                 types.Direction_LONG,
+		QuoteAssetAmount:     sdk.OneInt(),
+		Leverage:             sdk.OneDec(),
+		BaseAssetAmountLimit: sdk.ZeroInt(),
+	})
+	require.ErrorContains(t, err, "pair ubtc:unusd not found")
+
+	_, err = msgServer.ClosePosition(ctx, &types.MsgClosePosition{
+		Sender: "cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v",
+		Pair:   pair,
+	})
+	require.ErrorContains(t, err, "collections: not found:")
+
+	_, err = msgServer.PartialClose(ctx, &types.MsgPartialClose{
+		Sender: "cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v",
+		Pair:   pair,
+		Size_:  sdk.OneDec(),
+	})
+	require.ErrorContains(t, err, "pair: ubtc:unusd: pair doesn't have live market")
+
+	_, err = msgServer.MultiLiquidate(ctx, &types.MsgMultiLiquidate{
+		Sender: "cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v",
+		Liquidations: []*types.MsgMultiLiquidate_Liquidation{
+			{
+				Pair:   pair,
+				Trader: "cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v",
+			},
+		},
+	})
+	require.ErrorContains(t, err, "pair: ubtc:unusd: pair doesn't have live market")
+
+	_, err = msgServer.DonateToEcosystemFund(ctx, &types.MsgDonateToEcosystemFund{
+		Sender:   "cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v",
+		Donation: sdk.NewCoin("luna", sdk.OneInt()),
+	})
+	require.ErrorContains(t, err, "spendable balance  is smaller than 1luna")
 }

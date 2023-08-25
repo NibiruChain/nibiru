@@ -3,11 +3,12 @@ package sudo
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/x/sudo/pb"
+	"github.com/NibiruChain/nibiru/x/sudo/keeper"
+	"github.com/NibiruChain/nibiru/x/sudo/types"
 )
 
 // InitGenesis initializes the module's state from a provided genesis state JSON.
-func InitGenesis(ctx sdk.Context, k Keeper, genState pb.GenesisState) {
+func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
 	if err := genState.Validate(); err != nil {
 		panic(err)
 	}
@@ -16,20 +17,20 @@ func InitGenesis(ctx sdk.Context, k Keeper, genState pb.GenesisState) {
 
 // ExportGenesis returns the module's exported genesis state.
 // This fn assumes InitGenesis has already been called.
-func ExportGenesis(ctx sdk.Context, k Keeper) *pb.GenesisState {
+func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	pbSudoers, err := k.Sudoers.Get(ctx)
 	if err != nil {
 		panic(err)
 	}
 
-	return &pb.GenesisState{
+	return &types.GenesisState{
 		Sudoers: pbSudoers,
 	}
 }
 
-func DefaultGenesis() *pb.GenesisState {
-	return &pb.GenesisState{
-		Sudoers: pb.Sudoers{
+func DefaultGenesis() *types.GenesisState {
+	return &types.GenesisState{
+		Sudoers: types.Sudoers{
 			Root:      "",
 			Contracts: []string{},
 		},

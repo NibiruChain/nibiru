@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
@@ -48,12 +47,8 @@ func (AppModuleBasic) RegisterInterfaces(interfaceRegistry codectypes.InterfaceR
 	types.RegisterInterfaces(interfaceRegistry)
 }
 
-func (AppModuleBasic) RegisterCodec(aminoCodec *codec.LegacyAmino) {
-	types.RegisterCodec(aminoCodec)
-}
-
 func (AppModuleBasic) RegisterLegacyAminoCodec(aminoCodec *codec.LegacyAmino) {
-	types.RegisterCodec(aminoCodec)
+	types.RegisterLegacyAminoCodec(aminoCodec)
 }
 
 // DefaultGenesis returns default genesis state as raw bytes for the erc20
@@ -71,10 +66,6 @@ func (AppModuleBasic) ValidateGenesis(
 		return fmt.Errorf("failed to unmarshal %s genesis state: %w", types.ModuleName, err)
 	}
 	return genState.Validate()
-}
-
-// RegisterRESTRoutes registers the capability module's REST service handlers.
-func (AppModuleBasic) RegisterRESTRoutes(clientCtx client.Context, rtr *mux.Router) {
 }
 
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the module.
@@ -130,9 +121,6 @@ func NewAppModule(
 func (am AppModule) Name() string {
 	return am.AppModuleBasic.Name()
 }
-
-// QuerierRoute returns the capability module's query routing key.
-func (AppModule) QuerierRoute() string { return types.QuerierRoute }
 
 // RegisterServices registers a GRPC query service to respond to the
 // module-specific GRPC queries.

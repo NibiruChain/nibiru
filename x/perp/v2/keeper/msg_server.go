@@ -34,11 +34,11 @@ func (m msgServer) AddMargin(ctx context.Context, msg *types.MsgAddMargin,
 	return m.k.AddMargin(sdk.UnwrapSDKContext(ctx), msg.Pair, traderAddr, msg.Margin)
 }
 
-func (m msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPosition,
-) (response *types.MsgOpenPositionResponse, err error) {
+func (m msgServer) MarketOrder(goCtx context.Context, req *types.MsgMarketOrder,
+) (response *types.MsgMarketOrderResponse, err error) {
 	traderAddr := sdk.MustAccAddressFromBech32(req.Sender)
 
-	positionResp, err := m.k.OpenPosition(
+	positionResp, err := m.k.MarketOrder(
 		sdk.UnwrapSDKContext(goCtx),
 		req.Pair,
 		req.Side,
@@ -51,7 +51,7 @@ func (m msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPositio
 		return nil, err
 	}
 
-	return &types.MsgOpenPositionResponse{
+	return &types.MsgMarketOrderResponse{
 		Position:               &positionResp.Position,
 		ExchangedNotionalValue: positionResp.ExchangedNotionalValue,
 		ExchangedPositionSize:  positionResp.ExchangedPositionSize,
@@ -63,16 +63,34 @@ func (m msgServer) OpenPosition(goCtx context.Context, req *types.MsgOpenPositio
 	}, nil
 }
 
-func (m msgServer) ClosePosition(goCtx context.Context, position *types.MsgClosePosition) (*types.MsgClosePositionResponse, error) {
+func (m msgServer) ClosePosition(goCtx context.Context, req *types.MsgClosePosition) (*types.MsgClosePositionResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	traderAddr := sdk.MustAccAddressFromBech32(position.Sender)
+	traderAddr := sdk.MustAccAddressFromBech32(req.Sender)
 
-	resp, err := m.k.ClosePosition(ctx, position.Pair, traderAddr)
+	resp, err := m.k.ClosePosition(ctx, req.Pair, traderAddr)
 	if err != nil {
 		return nil, err
 	}
 
 	return &types.MsgClosePositionResponse{
+		ExchangedNotionalValue: resp.ExchangedNotionalValue,
+		ExchangedPositionSize:  resp.ExchangedPositionSize,
+		FundingPayment:         resp.FundingPayment,
+		RealizedPnl:            resp.RealizedPnl,
+		MarginToTrader:         resp.MarginToVault.Neg(),
+	}, nil
+}
+
+func (m msgServer) PartialClose(goCtx context.Context, req *types.MsgPartialClose) (*types.MsgPartialCloseResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	traderAddr := sdk.MustAccAddressFromBech32(req.Sender)
+
+	resp, err := m.k.PartialClose(ctx, req.Pair, traderAddr, req.Size_)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgPartialCloseResponse{
 		ExchangedNotionalValue: resp.ExchangedNotionalValue,
 		ExchangedPositionSize:  resp.ExchangedPositionSize,
 		FundingPayment:         resp.FundingPayment,

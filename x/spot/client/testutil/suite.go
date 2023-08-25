@@ -4,18 +4,12 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/NibiruChain/collections"
-
 	sdkmath "cosmossdk.io/math"
 
 	tmcli "github.com/cometbft/cometbft/libs/cli"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
+	sdktestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
 
 	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
@@ -64,130 +58,6 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 	s.network.Cleanup()
 }
 
-func (s *IntegrationTestSuite) TestCreatePoolCmd_Errors() {
-	val := s.network.Validators[0]
-
-	tc := []struct {
-		name             string
-		tokenWeights     string
-		initialDeposit   string
-		expectedErr      error
-		expectedCode     uint32
-		queryexpectedErr string
-		queryArgs        []string
-	}{
-		{
-			name:             "create pool with insufficient funds",
-			tokenWeights:     fmt.Sprintf("1%s, 1%s", "coin-1", "coin-2"),
-			initialDeposit:   fmt.Sprintf("1000000000%s,10000000000%s", "coin-1", "coin-2"),
-			expectedCode:     5, // bankKeeper code for insufficient funds
-			queryexpectedErr: "pool not found",
-		},
-		{
-			name:             "create pool with invalid weights",
-			tokenWeights:     fmt.Sprintf("0%s, 1%s", "coin-1", "coin-2"),
-			initialDeposit:   fmt.Sprintf("10000%s,10000%s", "coin-1", "coin-2"),
-			expectedErr:      types.ErrInvalidCreatePoolArgs,
-			queryexpectedErr: "pool not found",
-		},
-		{
-			name:             "create pool with deposit not matching weights",
-			tokenWeights:     fmt.Sprintf("1%s, 1%s", "coin-1", "coin-2"),
-			initialDeposit:   "1000foo,10000uusdc",
-			expectedErr:      types.ErrInvalidCreatePoolArgs,
-			queryexpectedErr: "pool not found",
-		},
-	}
-
-	for _, tc := range tc {
-		tc := tc
-
-		s.Run(tc.name, func() {
-			out, err := ExecMsgCreatePool(
-				s.T(),
-				val.ClientCtx,
-				val.Address,
-				tc.tokenWeights,
-				tc.initialDeposit,
-				"0.003",
-				"0.003",
-				"balancer",
-				"0",
-			)
-			s.Require().NoError(err)
-
-			txResp := sdk.TxResponse{}
-			err = s.network.Validators[0].ClientCtx.Codec.UnmarshalJSON(out.Bytes(), &txResp)
-			s.Require().NoError(err)
-			s.Require().NoError(s.network.WaitForNextBlock())
-
-			resp, err := testutilcli.QueryTx(s.network.Validators[0].ClientCtx, txResp.TxHash)
-			s.Require().NoError(err)
-			s.Require().Contains(resp.RawLog, collections.ErrNotFound.Error())
-
-			if tc.expectedErr != nil {
-				s.Require().ErrorIs(err, tc.expectedErr)
-			} else {
-				s.Require().NoError(err, out.String())
-
-				//s.Require().Equal(tc.expectedCode, resp.Code, out.String())
-			}
-		})
-	}
-}
-
-func (s *IntegrationTestSuite) TestCreatePoolStableSwapCmd_Errors() {
-	val := s.network.Validators[0]
-
-	tc := []struct {
-		name           string
-		amplification  string
-		tokenWeights   string
-		initialDeposit string
-		poolType       string
-		expectedErr    error
-		expectedCode   uint32
-	}{
-		{
-			name:          "create a stableswap pool, amplification parameter below 1",
-			amplification: "0",
-			poolType:      "stableswap",
-			expectedCode:  17,
-			expectedErr:   types.ErrAmplificationTooLow,
-		},
-		{
-			name:          "create a balancer pool, no need for other parameters",
-			amplification: "0",
-			poolType:      "balancer",
-			expectedErr:   nil,
-		},
-		{
-			name:          "create a stableswap pool, happy path",
-			amplification: "10",
-			poolType:      "stableswap",
-			expectedErr:   nil,
-		},
-	}
-
-	for _, tc := range tc {
-		tc := tc
-
-		s.Run(tc.name, func() {
-			tokenWeights := fmt.Sprintf("1%s, 1%s", "coin-1", "coin-2")
-			initialDeposit := fmt.Sprintf("1000000000%s,10000000000%s", "coin-1", "coin-2")
-			out, err := ExecMsgCreatePool(s.T(), val.ClientCtx, val.Address, tokenWeights, initialDeposit, "0.003", "0.003", tc.poolType, tc.amplification)
-			if tc.expectedErr != nil {
-				s.Require().ErrorIs(err, tc.expectedErr)
-			} else {
-				s.Require().NoError(err, out.String())
-
-				resp := &sdk.TxResponse{}
-				s.Require().NoError(val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), resp), out.String())
-			}
-		})
-	}
-}
-
 func (s *IntegrationTestSuite) TestCreatePoolCmd() {
 	val := s.network.Validators[0]
 
@@ -197,9 +67,44 @@ func (s *IntegrationTestSuite) TestCreatePoolCmd() {
 		initialDeposit string
 		poolType       string
 		amplification  string
+
+		expectedErr  error
+		expectedCode uint32
 	}{
 		{
-			name:           "happy path",
+			name:           "create pool with insufficient funds",
+			tokenWeights:   fmt.Sprintf("1%s, 1%s", "coin-1", "coin-2"),
+			initialDeposit: fmt.Sprintf("1000000000%s,10000000000%s", "coin-1", "coin-2"),
+			poolType:       "balancer",
+			amplification:  "0",
+			expectedCode:   5, // bankKeeper code for insufficient funds
+		},
+		{
+			name:           "create pool with invalid weights",
+			tokenWeights:   fmt.Sprintf("0%s, 1%s", "coin-1", "coin-2"),
+			initialDeposit: fmt.Sprintf("10000%s,10000%s", "coin-1", "coin-2"),
+			poolType:       "balancer",
+			amplification:  "0",
+			expectedErr:    types.ErrInvalidCreatePoolArgs,
+		},
+		{
+			name:           "create pool with deposit not matching weights",
+			tokenWeights:   fmt.Sprintf("1%s, 1%s", "coin-1", "coin-2"),
+			initialDeposit: "1000foo,10000uusdc",
+			poolType:       "balancer",
+			amplification:  "0",
+			expectedErr:    types.ErrInvalidCreatePoolArgs,
+		},
+		{
+			name:           "create a stableswap pool, amplification parameter below 1",
+			tokenWeights:   fmt.Sprintf("1%s, 1%s", "coin-1", "coin-2"),
+			initialDeposit: fmt.Sprintf("1000%s,10000%s", "coin-1", "coin-2"),
+			amplification:  "0",
+			poolType:       "stableswap",
+			expectedErr:    types.ErrAmplificationTooLow,
+		},
+		{
+			name:           "happy path - balancer",
 			tokenWeights:   "1unibi,1uusdc",
 			initialDeposit: "100unibi,100uusdc",
 			poolType:       "balancer",
@@ -218,25 +123,31 @@ func (s *IntegrationTestSuite) TestCreatePoolCmd() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			out, err := ExecMsgCreatePool(s.T(), val.ClientCtx, val.Address, tc.tokenWeights, tc.initialDeposit, "0.003", "0.003", tc.poolType, tc.amplification)
-			s.Require().NoError(err, out.String())
-			resp := &sdk.TxResponse{}
-			s.Require().NoError(val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), resp), out.String())
+			out, err := ExecMsgCreatePool(
+				s.T(),
+				val.ClientCtx,
+				val.Address,
+				tc.tokenWeights,
+				tc.initialDeposit,
+				"0.003",
+				"0.003",
+				tc.poolType,
+				tc.amplification,
+			)
 
-			s.Require().NoError(s.network.WaitForNextBlock())
+			if tc.expectedErr != nil {
+				s.Require().ErrorIs(err, tc.expectedErr, out.String())
+			} else {
+				s.Require().NoError(err)
+				s.Require().NoError(s.network.WaitForNextBlock())
 
-			resp, err = testutilcli.QueryTx(s.network.Validators[0].ClientCtx, resp.TxHash)
-			s.Require().NoError(err)
+				txResp := sdk.TxResponse{}
+				val.ClientCtx.Codec.MustUnmarshalJSON(out.Bytes(), &txResp)
+				resp, err := testutilcli.QueryTx(val.ClientCtx, txResp.TxHash)
+				s.Require().NoError(err)
 
-			s.Require().Equal(uint32(0), resp.Code, out.String())
-
-			// Query balance
-			cmd := cli.CmdTotalPoolLiquidity()
-			out, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cmd, []string{"1"})
-
-			queryResp := types.QueryTotalPoolLiquidityResponse{}
-			s.Require().NoError(err, out.String())
-			s.Require().NoError(val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), &queryResp), out.String())
+				s.Assert().Equal(tc.expectedCode, resp.Code, string(val.ClientCtx.Codec.MustMarshalJSON(resp)))
+			}
 		})
 	}
 }
@@ -257,16 +168,21 @@ func (s *IntegrationTestSuite) TestNewJoinPoolCmd() {
 		/*amplification=*/ "0",
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
-	poolID, err := ExtractPoolIDFromCreatePoolResponse(val.ClientCtx.Codec, out)
+	resp := &sdk.TxResponse{}
+	val.ClientCtx.Codec.MustUnmarshalJSON(out.Bytes(), resp)
+	resp, err = testutilcli.QueryTx(s.network.Validators[0].ClientCtx, resp.TxHash)
 	s.Require().NoError(err, out.String())
+
+	poolID, err := ExtractPoolIDFromCreatePoolResponse(val.ClientCtx.Codec, resp)
+	s.Require().NoError(err)
 
 	testCases := []struct {
 		name         string
 		poolId       uint64
 		tokensIn     string
 		expectErr    bool
-		respType     proto.Message
 		expectedCode uint32
 	}{
 		{
@@ -274,7 +190,6 @@ func (s *IntegrationTestSuite) TestNewJoinPoolCmd() {
 			poolId:       poolID,
 			tokensIn:     fmt.Sprintf("1000000000%s,10000000000%s", "coin-2", "coin-3"),
 			expectErr:    false,
-			respType:     &sdk.TxResponse{},
 			expectedCode: 5, // bankKeeper code for insufficient funds
 		},
 		{
@@ -282,7 +197,6 @@ func (s *IntegrationTestSuite) TestNewJoinPoolCmd() {
 			poolId:       poolID,
 			tokensIn:     fmt.Sprintf("1000000000%s,10000000000%s", "coin-1", "coin-3"),
 			expectErr:    false,
-			respType:     &sdk.TxResponse{},
 			expectedCode: 13, // bankKeeper code for insufficient funds
 		},
 		{
@@ -290,7 +204,6 @@ func (s *IntegrationTestSuite) TestNewJoinPoolCmd() {
 			poolId:       poolID,
 			tokensIn:     fmt.Sprintf("100%s,100%s", "coin-2", "coin-3"),
 			expectErr:    false,
-			respType:     &sdk.TxResponse{},
 			expectedCode: 0,
 		},
 	}
@@ -306,10 +219,13 @@ func (s *IntegrationTestSuite) TestNewJoinPoolCmd() {
 				s.Require().Error(err)
 			} else {
 				s.Require().NoError(err, out.String())
-				s.Require().NoError(ctx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
+				s.Require().NoError(s.network.WaitForNextBlock())
+				resp := &sdk.TxResponse{}
+				ctx.Codec.MustUnmarshalJSON(out.Bytes(), resp)
 
-				txResp := tc.respType.(*sdk.TxResponse)
-				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+				resp, err = testutilcli.QueryTx(ctx, resp.TxHash)
+				s.Require().NoError(err, out.String())
+				s.Require().Equal(tc.expectedCode, resp.Code, out.String())
 			}
 		})
 	}
@@ -333,7 +249,12 @@ func (s *IntegrationTestSuite) TestNewJoinStablePoolCmd() {
 	s.Require().NoError(err)
 	s.Require().NoError(s.network.WaitForNextBlock())
 
-	poolID, err := ExtractPoolIDFromCreatePoolResponse(val.ClientCtx.Codec, out)
+	resp := &sdk.TxResponse{}
+	val.ClientCtx.Codec.MustUnmarshalJSON(out.Bytes(), resp)
+	resp, err = testutilcli.QueryTx(s.network.Validators[0].ClientCtx, resp.TxHash)
+	s.Require().NoError(err)
+
+	poolID, err := ExtractPoolIDFromCreatePoolResponse(val.ClientCtx.Codec, resp)
 	s.Require().NoError(err, out.String())
 
 	testCases := []struct {
@@ -341,7 +262,6 @@ func (s *IntegrationTestSuite) TestNewJoinStablePoolCmd() {
 		poolId       uint64
 		tokensIn     string
 		expectErr    bool
-		respType     proto.Message
 		expectedCode uint32
 	}{
 		{
@@ -349,7 +269,6 @@ func (s *IntegrationTestSuite) TestNewJoinStablePoolCmd() {
 			poolId:       poolID,
 			tokensIn:     fmt.Sprintf("1000000000%s,10000000000%s", "coin-1", "coin-3"),
 			expectErr:    false,
-			respType:     &sdk.TxResponse{},
 			expectedCode: 5, // bankKeeper code for insufficient funds
 		},
 		{
@@ -357,7 +276,6 @@ func (s *IntegrationTestSuite) TestNewJoinStablePoolCmd() {
 			poolId:       poolID,
 			tokensIn:     fmt.Sprintf("100%s,50%s", "coin-1", "coin-3"),
 			expectErr:    false,
-			respType:     &sdk.TxResponse{},
 			expectedCode: 0,
 		},
 	}
@@ -373,17 +291,19 @@ func (s *IntegrationTestSuite) TestNewJoinStablePoolCmd() {
 				s.Require().Error(err)
 			} else {
 				s.Require().NoError(err, out.String())
-				s.Require().NoError(ctx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
+				s.Require().NoError(s.network.WaitForNextBlock())
+				resp := &sdk.TxResponse{}
+				ctx.Codec.MustUnmarshalJSON(out.Bytes(), resp)
+				resp, err = testutilcli.QueryTx(ctx, resp.TxHash)
+				s.Require().NoError(err, out.String())
 
-				txResp := tc.respType.(*sdk.TxResponse)
-				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+				s.Require().Equal(tc.expectedCode, resp.Code, out.String())
 			}
 		})
 	}
 }
 
 func (s *IntegrationTestSuite) TestNewExitPoolCmd() {
-	s.T().Skip("this test looks like it has a bug https://github.com/NibiruChain/nibiru/issues/869")
 	val := s.network.Validators[0]
 
 	// create a new pool
@@ -392,66 +312,69 @@ func (s *IntegrationTestSuite) TestNewExitPoolCmd() {
 		val.ClientCtx,
 		/*owner-*/ val.Address,
 		/*tokenWeights=*/ fmt.Sprintf("1%s,1%s", "coin-3", "coin-4"),
-		/*tokenWeights=*/ fmt.Sprintf("100%s,100%s", "coin-3", "coin-4"),
+		/*initialDeposit=*/ fmt.Sprintf("100%s,100%s", "coin-3", "coin-4"),
 		/*swapFee=*/ "0.01",
 		/*exitFee=*/ "0.01",
 		/*poolType=*/ "balancer",
 		/*amplification=*/ "0",
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
-	poolID, err := ExtractPoolIDFromCreatePoolResponse(val.ClientCtx.Codec, out)
+	resp := &sdk.TxResponse{}
+	val.ClientCtx.Codec.MustUnmarshalJSON(out.Bytes(), resp)
+	resp, err = testutilcli.QueryTx(s.network.Validators[0].ClientCtx, resp.TxHash)
+	s.Require().NoError(err)
+
+	poolID, err := ExtractPoolIDFromCreatePoolResponse(val.ClientCtx.Codec, resp)
 	s.Require().NoError(err, out.String())
 
 	testCases := []struct {
-		name               string
-		poolId             uint64
-		poolSharesOut      string
-		expectErr          bool
-		respType           proto.Message
-		expectedCode       uint32
-		expectedunibi      sdkmath.Int
-		expectedOtherToken sdkmath.Int
+		name          string
+		poolId        uint64
+		poolSharesOut string
+
+		expectErr    bool
+		expectedCode uint32
+
+		expectedCoin3 sdkmath.Int
+		expectedCoin4 sdkmath.Int
 	}{
 		{
-			name:               "exit pool from invalid pool",
-			poolId:             100,
-			poolSharesOut:      "100nibiru/pool/100",
-			expectErr:          false,
-			respType:           &sdk.TxResponse{},
-			expectedCode:       1, // spot.types.ErrNonExistingPool
-			expectedunibi:      sdk.NewInt(-10),
-			expectedOtherToken: sdk.NewInt(0),
+			name:          "exit pool from invalid pool",
+			poolId:        100,
+			poolSharesOut: "100nibiru/pool/100",
+			expectErr:     false,
+			expectedCode:  1, // spot.types.ErrNonExistingPool
+			expectedCoin3: sdk.ZeroInt(),
+			expectedCoin4: sdk.ZeroInt(),
 		},
 		{
-			name:               "exit pool for too many shares",
-			poolId:             poolID,
-			poolSharesOut:      fmt.Sprintf("1001000000000000000000nibiru/pool/%d", poolID),
-			expectErr:          false,
-			respType:           &sdk.TxResponse{},
-			expectedCode:       1,
-			expectedunibi:      sdk.NewInt(-10),
-			expectedOtherToken: sdk.NewInt(0),
+			name:          "exit pool for too many shares",
+			poolId:        poolID,
+			poolSharesOut: fmt.Sprintf("1001000000000000000000nibiru/pool/%d", poolID),
+			expectErr:     false,
+			expectedCode:  1,
+			expectedCoin3: sdk.ZeroInt(),
+			expectedCoin4: sdk.ZeroInt(),
 		},
 		{
-			name:               "exit pool for zero shares",
-			poolId:             poolID,
-			poolSharesOut:      fmt.Sprintf("0nibiru/pool/%d", poolID),
-			expectErr:          false,
-			respType:           &sdk.TxResponse{},
-			expectedCode:       1,
-			expectedunibi:      sdk.NewInt(-10),
-			expectedOtherToken: sdk.NewInt(0),
+			name:          "exit pool for zero shares",
+			poolId:        poolID,
+			poolSharesOut: fmt.Sprintf("0nibiru/pool/%d", poolID),
+			expectErr:     false,
+			expectedCode:  1,
+			expectedCoin3: sdk.ZeroInt(),
+			expectedCoin4: sdk.ZeroInt(),
 		},
 		{ // Looks with a bug
-			name:               "exit pool with sufficient balance",
-			poolId:             poolID,
-			poolSharesOut:      fmt.Sprintf("100000000000000000000nibiru/pool/%d", poolID),
-			expectErr:          false,
-			respType:           &sdk.TxResponse{},
-			expectedCode:       0,
-			expectedunibi:      sdk.NewInt(100 - 10 - 1), // Received unibi minus 10unibi tx fee minus 1 exit pool fee
-			expectedOtherToken: sdk.NewInt(100 - 1),      // Received uusdc minus 1 exit pool fee
+			name:          "exit pool with sufficient balance",
+			poolId:        poolID,
+			poolSharesOut: fmt.Sprintf("100000000000000000000nibiru/pool/%d", poolID),
+			expectErr:     false,
+			expectedCode:  0,
+			expectedCoin3: sdk.NewInt(99), // Received coin-3 minus 1 exit pool fee
+			expectedCoin4: sdk.NewInt(99), // Received coin-4 minus 1 exit pool fee
 		},
 	}
 
@@ -461,10 +384,10 @@ func (s *IntegrationTestSuite) TestNewExitPoolCmd() {
 
 		s.Run(tc.name, func() {
 			// Get original balance
-			resp, err := clitestutil.QueryBalancesExec(ctx, val.Address)
+			resp, err := sdktestutil.QueryBalancesExec(ctx, val.Address)
 			s.Require().NoError(err)
 			var originalBalance banktypes.QueryAllBalancesResponse
-			s.Require().NoError(ctx.Codec.UnmarshalJSON(resp.Bytes(), &originalBalance))
+			ctx.Codec.MustUnmarshalJSON(resp.Bytes(), &originalBalance)
 
 			out, err := ExecMsgExitPool(ctx, tc.poolId, val.Address, tc.poolSharesOut)
 
@@ -472,24 +395,27 @@ func (s *IntegrationTestSuite) TestNewExitPoolCmd() {
 				s.Require().Error(err)
 			} else {
 				s.Require().NoError(err, out.String())
-				s.Require().NoError(ctx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
+				s.Require().NoError(s.network.WaitForNextBlock())
 
-				txResp := tc.respType.(*sdk.TxResponse)
-				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+				resp := &sdk.TxResponse{}
+				ctx.Codec.MustUnmarshalJSON(out.Bytes(), resp)
+				resp, err = testutilcli.QueryTx(ctx, resp.TxHash)
+				s.Require().NoError(err, out.String())
+				s.Require().Equal(tc.expectedCode, resp.Code, out.String())
 
 				// Ensure balance is ok
-				resp, err := clitestutil.QueryBalancesExec(ctx, val.Address)
+				out, err = sdktestutil.QueryBalancesExec(ctx, val.Address)
 				s.Require().NoError(err)
 				var finalBalance banktypes.QueryAllBalancesResponse
-				s.Require().NoError(ctx.Codec.UnmarshalJSON(resp.Bytes(), &finalBalance))
+				ctx.Codec.MustUnmarshalJSON(out.Bytes(), &finalBalance)
 
-				s.Require().Equal(
-					originalBalance.Balances.AmountOf("uusdc").Add(tc.expectedOtherToken),
-					finalBalance.Balances.AmountOf("uusdc"),
+				s.Assert().Equal(
+					originalBalance.Balances.AmountOf("coin-3").Add(tc.expectedCoin3),
+					finalBalance.Balances.AmountOf("coin-3"),
 				)
-				s.Require().Equal(
-					originalBalance.Balances.AmountOf("unibi").Add(tc.expectedunibi),
-					finalBalance.Balances.AmountOf("unibi"),
+				s.Assert().Equal(
+					originalBalance.Balances.AmountOf("coin-4").Add(tc.expectedCoin4),
+					finalBalance.Balances.AmountOf("coin-4"),
 				)
 			}
 		})
@@ -497,7 +423,6 @@ func (s *IntegrationTestSuite) TestNewExitPoolCmd() {
 }
 
 func (s *IntegrationTestSuite) TestNewExitStablePoolCmd() {
-	s.T().Skip("this test looks like it has a bug https://github.com/NibiruChain/nibiru/issues/869")
 	val := s.network.Validators[0]
 
 	// create a new pool
@@ -505,67 +430,68 @@ func (s *IntegrationTestSuite) TestNewExitStablePoolCmd() {
 		s.T(),
 		val.ClientCtx,
 		/*owner-*/ val.Address,
-		/*tokenWeights=*/ fmt.Sprintf("1%s,1%s", "coin-3", "coin-4"),
-		/*tokenWeights=*/ fmt.Sprintf("100%s,100%s", "coin-3", "coin-4"),
+		/*tokenWeights=*/ fmt.Sprintf("1%s,1%s", "coin-3", "coin-5"),
+		/*tokenWeights=*/ fmt.Sprintf("100%s,100%s", "coin-3", "coin-5"),
 		/*swapFee=*/ "0.01",
 		/*exitFee=*/ "0.01",
 		/*poolType=*/ "stableswap",
 		/*amplification=*/ "4242",
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
-	poolID, err := ExtractPoolIDFromCreatePoolResponse(val.ClientCtx.Codec, out)
-	s.Require().NoError(err, out.String())
+	resp := &sdk.TxResponse{}
+	val.ClientCtx.Codec.MustUnmarshalJSON(out.Bytes(), resp)
+	resp, err = testutilcli.QueryTx(s.network.Validators[0].ClientCtx, resp.TxHash)
+	s.Require().NoErrorf(err, "cmd output: %s", out)
+
+	poolID, err := ExtractPoolIDFromCreatePoolResponse(val.ClientCtx.Codec, resp)
+	s.Require().NoErrorf(err, "cmd output: %s", out)
 
 	testCases := []struct {
-		name               string
-		poolId             uint64
-		poolSharesOut      string
-		expectErr          bool
-		respType           proto.Message
-		expectedCode       uint32
-		expectedunibi      sdkmath.Int
-		expectedOtherToken sdkmath.Int
+		name          string
+		poolId        uint64
+		poolSharesOut string
+		expectErr     bool
+		expectedCode  uint32
+		expectedCoin3 sdkmath.Int
+		expectedCoin5 sdkmath.Int
 	}{
 		{
-			name:               "exit pool from invalid pool",
-			poolId:             100,
-			poolSharesOut:      "100nibiru/pool/100",
-			expectErr:          false,
-			respType:           &sdk.TxResponse{},
-			expectedCode:       1, // spot.types.ErrNonExistingPool
-			expectedunibi:      sdk.NewInt(-10),
-			expectedOtherToken: sdk.NewInt(0),
+			name:          "exit pool from invalid pool",
+			poolId:        100,
+			poolSharesOut: "100nibiru/pool/100",
+			expectErr:     false,
+			expectedCode:  1, // spot.types.ErrNonExistingPool
+			expectedCoin3: sdk.ZeroInt(),
+			expectedCoin5: sdk.ZeroInt(),
 		},
 		{
-			name:               "exit pool for too many shares",
-			poolId:             poolID,
-			poolSharesOut:      fmt.Sprintf("1001000000000000000000nibiru/pool/%d", poolID),
-			expectErr:          false,
-			respType:           &sdk.TxResponse{},
-			expectedCode:       1,
-			expectedunibi:      sdk.NewInt(-10),
-			expectedOtherToken: sdk.NewInt(0),
+			name:          "exit pool for too many shares",
+			poolId:        poolID,
+			poolSharesOut: fmt.Sprintf("1001000000000000000000nibiru/pool/%d", poolID),
+			expectErr:     false,
+			expectedCode:  1,
+			expectedCoin3: sdk.ZeroInt(),
+			expectedCoin5: sdk.ZeroInt(),
 		},
 		{
-			name:               "exit pool for zero shares",
-			poolId:             poolID,
-			poolSharesOut:      fmt.Sprintf("0nibiru/pool/%d", poolID),
-			expectErr:          false,
-			respType:           &sdk.TxResponse{},
-			expectedCode:       1,
-			expectedunibi:      sdk.NewInt(-10),
-			expectedOtherToken: sdk.NewInt(0),
+			name:          "exit pool for zero shares",
+			poolId:        poolID,
+			poolSharesOut: fmt.Sprintf("0nibiru/pool/%d", poolID),
+			expectErr:     false,
+			expectedCode:  1,
+			expectedCoin3: sdk.ZeroInt(),
+			expectedCoin5: sdk.ZeroInt(),
 		},
 		{ // Looks with a bug
-			name:               "exit pool with sufficient balance",
-			poolId:             poolID,
-			poolSharesOut:      fmt.Sprintf("100000000000000000000nibiru/pool/%d", poolID),
-			expectErr:          false,
-			respType:           &sdk.TxResponse{},
-			expectedCode:       0,
-			expectedunibi:      sdk.NewInt(100 - 10 - 1), // Received unibi minus 10unibi tx fee minus 1 exit pool fee
-			expectedOtherToken: sdk.NewInt(100 - 1),      // Received uusdc minus 1 exit pool fee
+			name:          "exit pool with sufficient balance",
+			poolId:        poolID,
+			poolSharesOut: fmt.Sprintf("100000000000000000000nibiru/pool/%d", poolID),
+			expectErr:     false,
+			expectedCode:  0,
+			expectedCoin3: sdk.NewInt(99), // Received coin-3 minus 1 exit pool fee
+			expectedCoin5: sdk.NewInt(99), // Received coin-5 minus 1 exit pool fee
 		},
 	}
 
@@ -575,10 +501,10 @@ func (s *IntegrationTestSuite) TestNewExitStablePoolCmd() {
 
 		s.Run(tc.name, func() {
 			// Get original balance
-			resp, err := clitestutil.QueryBalancesExec(ctx, val.Address)
+			resp, err := sdktestutil.QueryBalancesExec(ctx, val.Address)
 			s.Require().NoError(err)
 			var originalBalance banktypes.QueryAllBalancesResponse
-			s.Require().NoError(ctx.Codec.UnmarshalJSON(resp.Bytes(), &originalBalance))
+			ctx.Codec.MustUnmarshalJSON(resp.Bytes(), &originalBalance)
 
 			out, err := ExecMsgExitPool(ctx, tc.poolId, val.Address, tc.poolSharesOut)
 
@@ -586,24 +512,28 @@ func (s *IntegrationTestSuite) TestNewExitStablePoolCmd() {
 				s.Require().Error(err)
 			} else {
 				s.Require().NoError(err, out.String())
-				s.Require().NoError(ctx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
+				s.Require().NoError(s.network.WaitForNextBlock())
 
-				txResp := tc.respType.(*sdk.TxResponse)
-				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+				resp := &sdk.TxResponse{}
+				ctx.Codec.MustUnmarshalJSON(out.Bytes(), resp)
+				resp, err = testutilcli.QueryTx(ctx, resp.TxHash)
+				s.Require().NoError(err)
+
+				s.Require().Equal(tc.expectedCode, resp.Code, out.String())
 
 				// Ensure balance is ok
-				resp, err := clitestutil.QueryBalancesExec(ctx, val.Address)
+				out, err := sdktestutil.QueryBalancesExec(ctx, val.Address)
 				s.Require().NoError(err)
 				var finalBalance banktypes.QueryAllBalancesResponse
-				s.Require().NoError(ctx.Codec.UnmarshalJSON(resp.Bytes(), &finalBalance))
+				ctx.Codec.MustUnmarshalJSON(out.Bytes(), &finalBalance)
 
-				s.Require().Equal(
-					originalBalance.Balances.AmountOf("uusdc").Add(tc.expectedOtherToken),
-					finalBalance.Balances.AmountOf("uusdc"),
+				s.Assert().Equal(
+					originalBalance.Balances.AmountOf("coin-3").Add(tc.expectedCoin3),
+					finalBalance.Balances.AmountOf("coin-3"),
 				)
-				s.Require().Equal(
-					originalBalance.Balances.AmountOf("unibi").Add(tc.expectedunibi),
-					finalBalance.Balances.AmountOf("unibi"),
+				s.Assert().Equal(
+					originalBalance.Balances.AmountOf("coin-5").Add(tc.expectedCoin5),
+					finalBalance.Balances.AmountOf("coin-5"),
 				)
 			}
 		})
@@ -634,7 +564,7 @@ func (s *IntegrationTestSuite) TestGetCmdTotalLiquidity() {
 			cmd := cli.CmdTotalLiquidity()
 			clientCtx := val.ClientCtx
 
-			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
+			out, err := sdktestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
 			if tc.expectErr {
 				s.Require().Error(err)
 			} else {
@@ -662,8 +592,14 @@ func (s *IntegrationTestSuite) TestSwapAssets() {
 		/*amplification=*/ "0",
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
-	poolID, err := ExtractPoolIDFromCreatePoolResponse(val.ClientCtx.Codec, out)
+	resp := &sdk.TxResponse{}
+	val.ClientCtx.Codec.MustUnmarshalJSON(out.Bytes(), resp)
+	resp, err = testutilcli.QueryTx(s.network.Validators[0].ClientCtx, resp.TxHash)
+	s.Require().NoError(err)
+
+	poolID, err := ExtractPoolIDFromCreatePoolResponse(val.ClientCtx.Codec, resp)
 	s.Require().NoError(err, out.String())
 
 	testCases := []struct {
@@ -671,7 +607,6 @@ func (s *IntegrationTestSuite) TestSwapAssets() {
 		poolId        uint64
 		tokenIn       string
 		tokenOutDenom string
-		respType      proto.Message
 		expectedCode  uint32
 		expectErr     bool
 	}{
@@ -701,7 +636,6 @@ func (s *IntegrationTestSuite) TestSwapAssets() {
 			poolId:        1000000,
 			tokenIn:       "50unibi",
 			tokenOutDenom: "uusdc",
-			respType:      &sdk.TxResponse{},
 			expectedCode:  types.ErrPoolNotFound.ABCICode(),
 			expectErr:     false,
 		},
@@ -710,7 +644,6 @@ func (s *IntegrationTestSuite) TestSwapAssets() {
 			poolId:        poolID,
 			tokenIn:       "50foo",
 			tokenOutDenom: "coin-5",
-			respType:      &sdk.TxResponse{},
 			expectedCode:  types.ErrTokenDenomNotFound.ABCICode(),
 			expectErr:     false,
 		},
@@ -719,7 +652,6 @@ func (s *IntegrationTestSuite) TestSwapAssets() {
 			poolId:        poolID,
 			tokenIn:       "50coin-4",
 			tokenOutDenom: "foo",
-			respType:      &sdk.TxResponse{},
 			expectedCode:  types.ErrTokenDenomNotFound.ABCICode(),
 			expectErr:     false,
 		},
@@ -728,7 +660,6 @@ func (s *IntegrationTestSuite) TestSwapAssets() {
 			poolId:        poolID,
 			tokenIn:       "50coin-4",
 			tokenOutDenom: "coin-5",
-			respType:      &sdk.TxResponse{},
 			expectedCode:  0,
 			expectErr:     false,
 		},
@@ -736,24 +667,28 @@ func (s *IntegrationTestSuite) TestSwapAssets() {
 
 	for _, tc := range testCases {
 		tc := tc
-		ctx := val.ClientCtx
 
 		s.Run(tc.name, func() {
-			out, err := ExecMsgSwapAssets(ctx, tc.poolId, val.Address, tc.tokenIn, tc.tokenOutDenom)
+			out, err := ExecMsgSwapAssets(val.ClientCtx, tc.poolId, val.Address, tc.tokenIn, tc.tokenOutDenom)
 			if tc.expectErr {
 				s.Require().Error(err)
 			} else {
 				s.Require().NoError(err, out.String())
-				s.Require().NoError(ctx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
+				s.Require().NoError(s.network.WaitForNextBlock())
 
-				txResp := tc.respType.(*sdk.TxResponse)
-				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+				resp := &sdk.TxResponse{}
+				val.ClientCtx.Codec.MustUnmarshalJSON(out.Bytes(), resp)
+				resp, err = testutilcli.QueryTx(val.ClientCtx, resp.TxHash)
+				s.Require().NoError(err)
+
+				s.Assert().Equal(tc.expectedCode, resp.Code, out.String())
 			}
 		})
 	}
 }
 
 func (s *IntegrationTestSuite) TestSwapStableAssets() {
+	s.Require().NoError(s.network.WaitForNextBlock())
 	val := s.network.Validators[0]
 
 	// create a new pool
@@ -762,15 +697,21 @@ func (s *IntegrationTestSuite) TestSwapStableAssets() {
 		val.ClientCtx,
 		/*owner-*/ val.Address,
 		/*tokenWeights=*/ fmt.Sprintf("1%s,1%s", "coin-1", "coin-5"),
-		/*tokenWeights=*/ fmt.Sprintf("100%s,100%s", "coin-1", "coin-5"),
+		/*initialDeposit=*/ fmt.Sprintf("100%s,100%s", "coin-1", "coin-5"),
 		/*swapFee=*/ "0.01",
 		/*exitFee=*/ "0.01",
 		/*poolType=*/ "stableswap",
 		/*amplification=*/ "42",
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
-	poolID, err := ExtractPoolIDFromCreatePoolResponse(val.ClientCtx.Codec, out)
+	resp := &sdk.TxResponse{}
+	val.ClientCtx.Codec.MustUnmarshalJSON(out.Bytes(), resp)
+	resp, err = testutilcli.QueryTx(s.network.Validators[0].ClientCtx, resp.TxHash)
+	s.Require().NoError(err)
+
+	poolID, err := ExtractPoolIDFromCreatePoolResponse(val.ClientCtx.Codec, resp)
 	s.Require().NoError(err, out.String())
 
 	testCases := []struct {
@@ -778,7 +719,6 @@ func (s *IntegrationTestSuite) TestSwapStableAssets() {
 		poolId        uint64
 		tokenIn       string
 		tokenOutDenom string
-		respType      proto.Message
 		expectedCode  uint32
 		expectErr     bool
 	}{
@@ -808,7 +748,6 @@ func (s *IntegrationTestSuite) TestSwapStableAssets() {
 			poolId:        1000000,
 			tokenIn:       "50unibi",
 			tokenOutDenom: "uusdc",
-			respType:      &sdk.TxResponse{},
 			expectedCode:  types.ErrPoolNotFound.ABCICode(),
 			expectErr:     false,
 		},
@@ -817,7 +756,6 @@ func (s *IntegrationTestSuite) TestSwapStableAssets() {
 			poolId:        poolID,
 			tokenIn:       "50foo",
 			tokenOutDenom: "coin-5",
-			respType:      &sdk.TxResponse{},
 			expectedCode:  types.ErrTokenDenomNotFound.ABCICode(),
 			expectErr:     false,
 		},
@@ -826,7 +764,6 @@ func (s *IntegrationTestSuite) TestSwapStableAssets() {
 			poolId:        poolID,
 			tokenIn:       "50coin-1",
 			tokenOutDenom: "foo",
-			respType:      &sdk.TxResponse{},
 			expectedCode:  types.ErrTokenDenomNotFound.ABCICode(),
 			expectErr:     false,
 		},
@@ -835,7 +772,6 @@ func (s *IntegrationTestSuite) TestSwapStableAssets() {
 			poolId:        poolID,
 			tokenIn:       "50coin-1",
 			tokenOutDenom: "coin-5",
-			respType:      &sdk.TxResponse{},
 			expectedCode:  0,
 			expectErr:     false,
 		},
@@ -843,73 +779,22 @@ func (s *IntegrationTestSuite) TestSwapStableAssets() {
 
 	for _, tc := range testCases {
 		tc := tc
-		ctx := val.ClientCtx
 
 		s.Run(tc.name, func() {
-			out, err := ExecMsgSwapAssets(ctx, tc.poolId, val.Address, tc.tokenIn, tc.tokenOutDenom)
+			out, err := ExecMsgSwapAssets(val.ClientCtx, tc.poolId, val.Address, tc.tokenIn, tc.tokenOutDenom)
 			if tc.expectErr {
 				s.Require().Error(err)
 			} else {
 				s.Require().NoError(err, out.String())
-				s.Require().NoError(ctx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
+				s.Require().NoError(s.network.WaitForNextBlock())
 
-				txResp := tc.respType.(*sdk.TxResponse)
-				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+				resp := &sdk.TxResponse{}
+				val.ClientCtx.Codec.MustUnmarshalJSON(out.Bytes(), resp)
+				resp, err = testutilcli.QueryTx(val.ClientCtx, resp.TxHash)
+				s.Require().NoError(err)
+
+				s.Assert().Equal(tc.expectedCode, resp.Code, out.String())
 			}
 		})
 	}
-}
-
-/***************************** Convenience Methods ****************************/
-
-/*
-FundAccount Adds tokens from val[0] to a recipient address.
-
-args:
-  - recipient: the recipient address
-  - tokens: the amount of tokens to transfer
-*/
-func (s *IntegrationTestSuite) FundAccount(recipient sdk.Address, tokens sdk.Coins) {
-	val := s.network.Validators[0]
-
-	// fund the user
-	_, err := clitestutil.MsgSendExec(
-		val.ClientCtx,
-		/*from=*/ val.Address,
-		/*to=*/ recipient,
-		/*amount=*/ tokens,
-		/*extraArgs*/
-		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
-		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewInt64Coin(s.cfg.BondDenom, 10)),
-	)
-	s.Require().NoError(err)
-}
-
-/*
-NewAccount Creates a new account and returns the address.
-
-args:
-  - uid: a unique identifier to ensure duplicate accounts are not created
-
-ret:
-  - addr: the address of the new account
-*/
-func (s *IntegrationTestSuite) NewAccount(uid string) (addr sdk.AccAddress) {
-	val := s.network.Validators[0]
-
-	// create a new user address
-	info, _, err := val.ClientCtx.Keyring.NewMnemonic(
-		uid,
-		keyring.English,
-		sdk.FullFundraiserPath,
-		"iron fossil rug jazz mosquito sand kangaroo noble motor jungle job silk naive assume poverty afford twist critic start solid actual fetch flat fix",
-		hd.Secp256k1,
-	)
-	s.Require().NoError(err)
-
-	address, err := info.GetAddress()
-	s.Require().NoError(err)
-
-	return address
 }

@@ -1,7 +1,10 @@
 package testutil
 
 import (
+	"fmt"
 	"reflect"
+	"strings"
+	"testing"
 
 	"github.com/cosmos/gogoproto/proto"
 
@@ -9,6 +12,38 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
+
+// FilterNewEvents returns only the new events from afterEvents that were not present in beforeEvents
+func FilterNewEvents(beforeEvents, afterEvents sdk.Events) sdk.Events {
+	newEvents := make(sdk.Events, 0)
+
+	for _, afterEvent := range afterEvents {
+		found := false
+		for _, beforeEvent := range beforeEvents {
+			if reflect.DeepEqual(afterEvent, beforeEvent) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			newEvents = append(newEvents, afterEvent)
+		}
+	}
+
+	return newEvents
+}
+
+// AssertEventsPresent fails the test if the given eventsType are not present in the events
+func AssertEventsPresent(t *testing.T, events sdk.Events, eventsType []string) {
+	for _, eventType := range eventsType {
+		for _, event := range events {
+			if event.Type == eventType {
+				return
+			}
+		}
+		t.Errorf("event %s not found", eventType)
+	}
+}
 
 func RequireNotHasTypedEvent(t require.TestingT, ctx sdk.Context, event proto.Message) {
 	name := proto.MessageName(event)
@@ -58,4 +93,25 @@ func RequireContainsTypedEvent(t require.TestingT, ctx sdk.Context, event proto.
 	}
 
 	t.Errorf("event not found, event: %+v, found events: %+v", event, foundEvents)
+}
+
+// EventHasAttributeValue parses the given ABCI event at a key to see if it
+// matches (contains) the wanted value.
+//
+// Args:
+//   - abciEvent: The event under test
+//   - key: The key for which we'll check the value
+//   - want: The desired value
+func EventHasAttributeValue(abciEvent sdk.Event, key string, want string) error {
+	attr, ok := abciEvent.GetAttribute(key)
+	if !ok {
+		return fmt.Errorf("abci event does not contain key: %s", key)
+	}
+	got := attr.Value
+
+	if !strings.Contains(got, want) {
+		return fmt.Errorf("expected %s %s, got %s", key, want, got)
+	}
+
+	return nil
 }

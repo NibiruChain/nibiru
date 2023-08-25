@@ -47,7 +47,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 		{
 			Name:              "Price at peg, coll ratio should be the same",
 			InCollRatio:       sdk.MustNewDecFromStr("0.8"),
-			price:             sdk.MustNewDecFromStr("1"),
+			price:             sdk.OneDec(),
 			ExpectedCollRatio: sdk.MustNewDecFromStr("0.8"),
 			fn: func() {
 				ctx = ctx.WithBlockHeight(2).WithBlockTime(ctx.BlockTime().Add(time.Second))
@@ -142,7 +142,7 @@ func TestEpochInfoChangesCollateralValidity(t *testing.T) {
 	ctx = ctx.WithBlockHeight(1).WithBlockTime(time.Now())
 	epochs.BeginBlocker(ctx, app.EpochsKeeper)
 
-	pairs := asset.Pairs{
+	pairs := []asset.Pair{
 		asset.Registry.Pair(denoms.USDC, denoms.NUSD),
 	}
 	params := otypes.DefaultParams()

@@ -13,7 +13,6 @@ import (
 )
 
 func TestIntegrationTestSuite(t *testing.T) {
-	t.SkipNow() // Skipped as it is not binded to the app
 	coinsFromGenesis := []string{
 		denoms.NIBI,
 		denoms.NUSD,
@@ -26,7 +25,7 @@ func TestIntegrationTestSuite(t *testing.T) {
 	}
 
 	app.SetPrefixes(app.AccountAddressPrefix)
-	genesisState := genesis.NewTestGenesisState(app.MakeEncodingConfig())
+	genesisState := genesis.NewTestGenesisState(app.MakeEncodingConfigAndRegister())
 
 	genesisState = WhitelistGenesisAssets(
 		genesisState,

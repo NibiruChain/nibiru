@@ -34,14 +34,14 @@ func TestQueryPositions(t *testing.T) {
 				InsertPosition(
 					WithPair(pair),
 					WithTrader(alice),
-					WithMargin(sdk.NewDec(1)),
+					WithMargin(sdk.OneDec()),
 					WithSize(sdk.NewDec(10)),
 					WithOpenNotional(sdk.NewDec(10)),
 				),
 				InsertPosition(
 					WithPair(pair2),
 					WithTrader(alice),
-					WithMargin(sdk.NewDec(1)),
+					WithMargin(sdk.OneDec()),
 					WithSize(sdk.NewDec(10)),
 					WithOpenNotional(sdk.NewDec(10)),
 				),
@@ -53,7 +53,7 @@ func TestQueryPositions(t *testing.T) {
 							Pair:                            pair,
 							TraderAddress:                   alice.String(),
 							Size_:                           sdk.NewDec(10),
-							Margin:                          sdk.NewDec(1),
+							Margin:                          sdk.OneDec(),
 							OpenNotional:                    sdk.NewDec(10),
 							LatestCumulativePremiumFraction: sdk.ZeroDec(),
 							LastUpdatedBlockNumber:          0,
@@ -67,7 +67,7 @@ func TestQueryPositions(t *testing.T) {
 							Pair:                            pair2,
 							TraderAddress:                   alice.String(),
 							Size_:                           sdk.NewDec(10),
-							Margin:                          sdk.NewDec(1),
+							Margin:                          sdk.OneDec(),
 							OpenNotional:                    sdk.NewDec(10),
 							LatestCumulativePremiumFraction: sdk.ZeroDec(),
 							LastUpdatedBlockNumber:          0,
@@ -83,7 +83,7 @@ func TestQueryPositions(t *testing.T) {
 			Given(
 				CreateCustomMarket(
 					pair,
-					WithPricePeg(sdk.NewDec(1)),
+					WithPricePeg(sdk.OneDec()),
 				),
 				CreateCustomMarket(
 					pair2,
@@ -94,14 +94,14 @@ func TestQueryPositions(t *testing.T) {
 				InsertPosition(
 					WithPair(pair),
 					WithTrader(alice),
-					WithMargin(sdk.NewDec(1)),
+					WithMargin(sdk.OneDec()),
 					WithSize(sdk.NewDec(10)),
 					WithOpenNotional(sdk.NewDec(10)),
 				),
 				InsertPosition(
 					WithPair(pair2),
 					WithTrader(alice),
-					WithMargin(sdk.NewDec(1)),
+					WithMargin(sdk.OneDec()),
 					WithSize(sdk.NewDec(10)),
 					WithOpenNotional(sdk.NewDec(10)),
 				),
@@ -113,7 +113,7 @@ func TestQueryPositions(t *testing.T) {
 							Pair:                            pair,
 							TraderAddress:                   alice.String(),
 							Size_:                           sdk.NewDec(10),
-							Margin:                          sdk.NewDec(1),
+							Margin:                          sdk.OneDec(),
 							OpenNotional:                    sdk.NewDec(10),
 							LatestCumulativePremiumFraction: sdk.ZeroDec(),
 							LastUpdatedBlockNumber:          0,
@@ -127,7 +127,7 @@ func TestQueryPositions(t *testing.T) {
 							Pair:                            pair2,
 							TraderAddress:                   alice.String(),
 							Size_:                           sdk.NewDec(10),
-							Margin:                          sdk.NewDec(1),
+							Margin:                          sdk.OneDec(),
 							OpenNotional:                    sdk.NewDec(10),
 							LatestCumulativePremiumFraction: sdk.ZeroDec(),
 							LastUpdatedBlockNumber:          0,
@@ -154,14 +154,14 @@ func TestQueryPositions(t *testing.T) {
 				InsertPosition(
 					WithPair(pair),
 					WithTrader(alice),
-					WithMargin(sdk.NewDec(1)),
+					WithMargin(sdk.OneDec()),
 					WithSize(sdk.NewDec(10)),
 					WithOpenNotional(sdk.NewDec(10)),
 				),
 				InsertPosition(
 					WithPair(pair2),
 					WithTrader(alice),
-					WithMargin(sdk.NewDec(1)),
+					WithMargin(sdk.OneDec()),
 					WithSize(sdk.NewDec(10)),
 					WithOpenNotional(sdk.NewDec(10)),
 				),
@@ -173,7 +173,7 @@ func TestQueryPositions(t *testing.T) {
 							Pair:                            pair,
 							TraderAddress:                   alice.String(),
 							Size_:                           sdk.NewDec(10),
-							Margin:                          sdk.NewDec(1),
+							Margin:                          sdk.OneDec(),
 							OpenNotional:                    sdk.NewDec(10),
 							LatestCumulativePremiumFraction: sdk.ZeroDec(),
 							LastUpdatedBlockNumber:          0,
@@ -187,7 +187,7 @@ func TestQueryPositions(t *testing.T) {
 							Pair:                            pair2,
 							TraderAddress:                   alice.String(),
 							Size_:                           sdk.NewDec(10),
-							Margin:                          sdk.NewDec(1),
+							Margin:                          sdk.OneDec(),
 							OpenNotional:                    sdk.NewDec(10),
 							LatestCumulativePremiumFraction: sdk.ZeroDec(),
 							LastUpdatedBlockNumber:          0,
@@ -219,7 +219,7 @@ func TestQueryPosition(t *testing.T) {
 				InsertPosition(
 					WithPair(pair),
 					WithTrader(alice),
-					WithMargin(sdk.NewDec(1)),
+					WithMargin(sdk.OneDec()),
 					WithSize(sdk.NewDec(10)),
 					WithOpenNotional(sdk.NewDec(10)),
 				),
@@ -230,7 +230,7 @@ func TestQueryPosition(t *testing.T) {
 						Pair:                            pair,
 						TraderAddress:                   alice.String(),
 						Size_:                           sdk.NewDec(10),
-						Margin:                          sdk.NewDec(1),
+						Margin:                          sdk.OneDec(),
 						OpenNotional:                    sdk.NewDec(10),
 						LatestCumulativePremiumFraction: sdk.ZeroDec(),
 						LastUpdatedBlockNumber:          0,
@@ -245,14 +245,14 @@ func TestQueryPosition(t *testing.T) {
 			Given(
 				CreateCustomMarket(
 					pair,
-					WithPricePeg(sdk.NewDec(1)),
+					WithPricePeg(sdk.OneDec()),
 				),
 			).
 			When(
 				InsertPosition(
 					WithPair(pair),
 					WithTrader(alice),
-					WithMargin(sdk.NewDec(1)),
+					WithMargin(sdk.OneDec()),
 					WithSize(sdk.NewDec(10)),
 					WithOpenNotional(sdk.NewDec(10)),
 				),
@@ -263,7 +263,7 @@ func TestQueryPosition(t *testing.T) {
 						Pair:                            pair,
 						TraderAddress:                   alice.String(),
 						Size_:                           sdk.NewDec(10),
-						Margin:                          sdk.NewDec(1),
+						Margin:                          sdk.OneDec(),
 						OpenNotional:                    sdk.NewDec(10),
 						LatestCumulativePremiumFraction: sdk.ZeroDec(),
 						LastUpdatedBlockNumber:          0,
@@ -285,7 +285,7 @@ func TestQueryPosition(t *testing.T) {
 				InsertPosition(
 					WithPair(pair),
 					WithTrader(alice),
-					WithMargin(sdk.NewDec(1)),
+					WithMargin(sdk.OneDec()),
 					WithSize(sdk.NewDec(10)),
 					WithOpenNotional(sdk.NewDec(10)),
 				),
@@ -296,7 +296,7 @@ func TestQueryPosition(t *testing.T) {
 						Pair:                            pair,
 						TraderAddress:                   alice.String(),
 						Size_:                           sdk.NewDec(10),
-						Margin:                          sdk.NewDec(1),
+						Margin:                          sdk.OneDec(),
 						OpenNotional:                    sdk.NewDec(10),
 						LatestCumulativePremiumFraction: sdk.ZeroDec(),
 						LastUpdatedBlockNumber:          0,
@@ -317,6 +317,44 @@ func TestQueryPosition(t *testing.T) {
 			When().
 			Then(
 				QueryPositionNotFound(pair, alice),
+			),
+	}
+
+	NewTestSuite(t).WithTestCases(tc...).Run()
+}
+
+func TestQueryMarkets(t *testing.T) {
+	alice := testutil.AccAddress()
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+
+	tc := TestCases{
+		TC("positive PnL").
+			Given(
+				CreateCustomMarket(
+					pair,
+					WithPricePeg(sdk.NewDec(2)),
+				),
+				FundModule("perp_ef", sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10)))),
+			).
+			When(
+				InsertPosition(
+					WithPair(pair),
+					WithTrader(alice),
+					WithMargin(sdk.OneDec()),
+					WithSize(sdk.NewDec(10)),
+					WithOpenNotional(sdk.NewDec(10)),
+				),
+			).
+			Then(
+				QueryMarkets(QueryMarkets_MarketsShouldContain(*types.DefaultMarket(pair))),
+				QueryModuleAccounts(QueryModuleAccounts_ModulesBalanceShouldBe(
+					map[string]sdk.Coins{
+						"perp_ef": sdk.NewCoins(
+							sdk.NewCoin(denoms.BTC, sdk.ZeroInt()),
+							sdk.NewCoin(denoms.NUSD, sdk.NewInt(10)),
+						),
+					},
+				)),
 			),
 	}
 

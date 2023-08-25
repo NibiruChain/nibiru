@@ -3,6 +3,8 @@ package binding
 import (
 	"encoding/json"
 
+	"github.com/NibiruChain/nibiru/x/sudo/keeper"
+
 	sdkerrors "cosmossdk.io/errors"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
@@ -10,7 +12,6 @@ import (
 
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
-	"github.com/NibiruChain/nibiru/x/sudo"
 	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 )
 
@@ -21,7 +22,7 @@ var _ wasmkeeper.Messenger = (*CustomWasmExecutor)(nil)
 type CustomWasmExecutor struct {
 	Wasm   wasmkeeper.Messenger
 	Perp   ExecutorPerp
-	Sudo   sudo.Keeper
+	Sudo   keeper.Keeper
 	Oracle ExecutorOracle
 }
 
@@ -35,7 +36,7 @@ type BindingExecuteMsgWrapper struct {
 	// For example, the perp bindings have route "perp".
 	Route *string `json:"route,omitempty"`
 	// ExecuteMsg is a json struct for ExecuteMsg::{
-	//   OpenPosition, ClosePosition, AddMargin, RemoveMargin, ...} from the
+	//   MarketOrder, ClosePosition, AddMargin, RemoveMargin, ...} from the
 	//   bindings smart contracts.
 	ExecuteMsg *cw_struct.BindingMsg `json:"msg,omitempty"`
 }
@@ -54,33 +55,27 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 			return events, data, sdkerrors.Wrapf(err, "wasmMsg: %s", wasmMsg.Custom)
 		}
 
+		isNoOp := contractExecuteMsg.ExecuteMsg == nil || contractExecuteMsg.ExecuteMsg.NoOp != nil
+		if isNoOp {
+			ctx.Logger().Info("execute DispatchMsg: NoOp (no operation)")
+			return events, data, nil
+		}
+
 		switch {
-		// Perp module
-		case contractExecuteMsg.ExecuteMsg.OpenPosition != nil:
-			if err := messenger.Sudo.CheckPermissions(contractAddr, ctx); err != nil {
-				return events, data, err
-			}
-			cwMsg := contractExecuteMsg.ExecuteMsg.OpenPosition
-			_, err = messenger.Perp.OpenPosition(cwMsg, contractAddr, ctx)
+		// Perp module | bindings-perp: for trading with smart contracts
+		case contractExecuteMsg.ExecuteMsg.MarketOrder != nil:
+			cwMsg := contractExecuteMsg.ExecuteMsg.MarketOrder
+			_, err = messenger.Perp.MarketOrder(cwMsg, contractAddr, ctx)
 			return events, data, err
 		case contractExecuteMsg.ExecuteMsg.ClosePosition != nil:
-			if err := messenger.Sudo.CheckPermissions(contractAddr, ctx); err != nil {
-				return events, data, err
-			}
 			cwMsg := contractExecuteMsg.ExecuteMsg.ClosePosition
 			_, err = messenger.Perp.ClosePosition(cwMsg, contractAddr, ctx)
 			return events, data, err
 		case contractExecuteMsg.ExecuteMsg.AddMargin != nil:
-			if err := messenger.Sudo.CheckPermissions(contractAddr, ctx); err != nil {
-				return events, data, err
-			}
 			cwMsg := contractExecuteMsg.ExecuteMsg.AddMargin
 			_, err = messenger.Perp.AddMargin(cwMsg, contractAddr, ctx)
 			return events, data, err
 		case contractExecuteMsg.ExecuteMsg.RemoveMargin != nil:
-			if err := messenger.Sudo.CheckPermissions(contractAddr, ctx); err != nil {
-				return events, data, err
-			}
 			cwMsg := contractExecuteMsg.ExecuteMsg.RemoveMargin
 			_, err = messenger.Perp.RemoveMargin(cwMsg, contractAddr, ctx)
 			return events, data, err
@@ -148,7 +143,7 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 
 func CustomExecuteMsgHandler(
 	perpv2 perpv2keeper.Keeper,
-	sudoKeeper sudo.Keeper,
+	sudoKeeper keeper.Keeper,
 	oracleKeeper oraclekeeper.Keeper,
 ) func(wasmkeeper.Messenger) wasmkeeper.Messenger {
 	return func(originalWasmMessenger wasmkeeper.Messenger) wasmkeeper.Messenger {

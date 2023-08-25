@@ -149,49 +149,19 @@ func (pairKeyEncoder) Decode(b []byte) (int, Pair) {
 	return i, MustNewPair(s)
 }
 
-//-----------------------------------------------------------------------------
-// Pairs
-
-// Pairs is a set of Pair, one per pair.
-type Pairs []Pair
-
-// News constructs a new asset pair set. A panic will occur if one of
+// MustNewPairs constructs a new asset pair set. A panic will occur if one of
 // the provided pair names is invalid.
-func News(pairStrings ...string) (pairs Pairs) {
+func MustNewPairs(pairStrings ...string) (pairs []Pair) {
 	for _, pairString := range pairStrings {
 		pairs = append(pairs, MustNewPair(pairString))
 	}
 	return pairs
 }
 
-// Contains checks if a token pair is contained within 'Pairs'
-func (haystack Pairs) Contains(needle Pair) bool {
-	for _, p := range haystack {
-		if p.Equal(needle) {
-			return true
-		}
-	}
-	return false
-}
-
-func (pairs Pairs) Strings() []string {
+func PairsToStrings(pairs []Pair) []string {
 	pairsStrings := []string{}
 	for _, pair := range pairs {
 		pairsStrings = append(pairsStrings, pair.String())
 	}
 	return pairsStrings
-}
-
-func (pairs Pairs) Validate() error {
-	seenPairs := make(map[string]bool)
-	for _, pair := range pairs {
-		if seenPairs[pair.String()] {
-			return fmt.Errorf("duplicate pair %s", pair.String())
-		}
-		if err := pair.Validate(); err != nil {
-			return err
-		}
-		seenPairs[pair.String()] = true
-	}
-	return nil
 }

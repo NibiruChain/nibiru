@@ -3,6 +3,12 @@ package app
 import (
 	"path/filepath"
 
+	"github.com/NibiruChain/nibiru/x/genmsg"
+
+	"github.com/NibiruChain/nibiru/x/sudo/keeper"
+
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
+
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -45,7 +51,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	govv1types "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	govv1beta1types "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
@@ -136,7 +143,7 @@ func GetStoreKeys() (
 		epochstypes.StoreKey,
 		perpv2types.StoreKey,
 		inflationtypes.StoreKey,
-		sudo.StoreKey,
+		sudotypes.StoreKey,
 		wasm.StoreKey,
 	)
 	tkeys = sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -200,7 +207,7 @@ func (app *NibiruApp) InitKeepers(
 		BlockedAddresses(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-	stakingKeeper := stakingkeeper.NewKeeper(
+	app.stakingKeeper = stakingkeeper.NewKeeper(
 		appCodec,
 		keys[stakingtypes.StoreKey],
 		app.AccountKeeper,
@@ -212,7 +219,7 @@ func (app *NibiruApp) InitKeepers(
 		keys[distrtypes.StoreKey],
 		app.AccountKeeper,
 		app.BankKeeper,
-		stakingKeeper,
+		app.stakingKeeper,
 		authtypes.FeeCollectorName,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
@@ -246,15 +253,6 @@ func (app *NibiruApp) InitKeepers(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	// register the staking hooks
-	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
-	app.stakingKeeper = stakingkeeper.NewKeeper(
-		appCodec,
-		keys[stakingtypes.StoreKey],
-		app.AccountKeeper,
-		app.BankKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
 	app.slashingKeeper = slashingkeeper.NewKeeper(
@@ -306,8 +304,8 @@ func (app *NibiruApp) InitKeepers(
 		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.stakingKeeper, authtypes.FeeCollectorName,
 	)
 
-	app.SudoKeeper = sudo.NewKeeper(
-		appCodec, keys[sudo.StoreKey],
+	app.SudoKeeper = keeper.NewKeeper(
+		appCodec, keys[sudotypes.StoreKey],
 	)
 
 	app.EpochsKeeper.SetHooks(
@@ -446,16 +444,16 @@ func (app *NibiruApp) InitKeepers(
 	   No more routes can be added. */
 	app.ibcKeeper.SetRouter(ibcRouter)
 
-	govRouter := v1beta1.NewRouter()
+	govRouter := govv1beta1types.NewRouter()
 	govRouter.
-		AddRoute(govtypes.RouterKey, v1beta1.ProposalHandler).
+		AddRoute(govtypes.RouterKey, govv1beta1types.ProposalHandler).
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.paramsKeeper)).
 		//AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.DistrKeeper)).
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(&app.upgradeKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.ibcKeeper.ClientKeeper))
 
 	govConfig := govtypes.DefaultConfig()
-	govKpr := govkeeper.NewKeeper(
+	govKeeper := govkeeper.NewKeeper(
 		appCodec,
 		keys[govtypes.StoreKey],
 		app.AccountKeeper,
@@ -465,8 +463,9 @@ func (app *NibiruApp) InitKeepers(
 		govConfig,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+	govKeeper.SetLegacyRouter(govRouter)
 
-	app.GovKeeper = *govKpr.SetHooks(
+	app.GovKeeper = *govKeeper.SetHooks(
 		govtypes.NewMultiGovHooks(),
 	)
 
@@ -493,6 +492,7 @@ func (app *NibiruApp) AppModules(
 		app.InflationKeeper, app.AccountKeeper, *app.stakingKeeper,
 	)
 	sudoModule := sudo.NewAppModule(appCodec, app.SudoKeeper)
+	genMsgModule := genmsg.NewAppModule(app.MsgServiceRouter())
 
 	return []module.AppModule{
 		genutil.NewAppModule(
@@ -522,6 +522,7 @@ func (app *NibiruApp) AppModules(
 		inflationModule,
 		sudoModule,
 		perpv2Module,
+		genMsgModule,
 
 		// ibc
 		evidence.NewAppModule(app.evidenceKeeper),
@@ -579,7 +580,7 @@ func OrderedModuleNames() []string {
 		oracletypes.ModuleName,
 		perpv2types.ModuleName,
 		inflationtypes.ModuleName,
-		sudo.ModuleName,
+		sudotypes.ModuleName,
 
 		// --------------------------------------------------------------------
 		// IBC modules
@@ -590,6 +591,9 @@ func OrderedModuleNames() []string {
 		// --------------------------------------------------------------------
 		// CosmWasm
 		wasm.ModuleName,
+
+		// Should be before genmsg
+		genmsg.ModuleName,
 	}
 }
 
@@ -642,6 +646,26 @@ func (app *NibiruApp) InitModuleManager(
 	app.configurator = module.NewConfigurator(
 		app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
 	app.mm.RegisterServices(app.configurator)
+
+	// see https://github.com/cosmos/cosmos-sdk/blob/666c345ad23ddda9523cc5cd1b71187d91c26f34/simapp/upgrades.go#L35-L57
+	for _, subspace := range app.paramsKeeper.GetSubspaces() {
+		switch subspace.Name() {
+		case authtypes.ModuleName:
+			subspace.WithKeyTable(authtypes.ParamKeyTable()) //nolint:staticcheck
+		case banktypes.ModuleName:
+			subspace.WithKeyTable(banktypes.ParamKeyTable()) //nolint:staticcheck
+		case stakingtypes.ModuleName:
+			subspace.WithKeyTable(stakingtypes.ParamKeyTable()) //nolint:staticcheck
+		case distrtypes.ModuleName:
+			subspace.WithKeyTable(distrtypes.ParamKeyTable()) //nolint:staticcheck
+		case slashingtypes.ModuleName:
+			subspace.WithKeyTable(slashingtypes.ParamKeyTable()) //nolint:staticcheck
+		case govtypes.ModuleName:
+			subspace.WithKeyTable(govv1types.ParamKeyTable()) //nolint:staticcheck
+		case crisistypes.ModuleName:
+			subspace.WithKeyTable(crisistypes.ParamKeyTable()) //nolint:staticcheck
+		}
+	}
 }
 
 // TODO: Simulation manager

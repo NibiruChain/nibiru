@@ -383,11 +383,12 @@ func (m *MsgMultiLiquidateResponse) GetLiquidations() []*MsgMultiLiquidateRespon
 }
 
 type MsgMultiLiquidateResponse_LiquidationResponse struct {
-	Success       bool        `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	Error         string      `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
-	LiquidatorFee *types.Coin `protobuf:"bytes,3,opt,name=liquidator_fee,json=liquidatorFee,proto3" json:"liquidator_fee,omitempty"`
-	PerpEfFee     *types.Coin `protobuf:"bytes,4,opt,name=perp_ef_fee,json=perpEfFee,proto3" json:"perp_ef_fee,omitempty"`
-	Trader        string      `protobuf:"bytes,5,opt,name=trader,proto3" json:"trader,omitempty"`
+	Success       bool                                              `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Error         string                                            `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
+	LiquidatorFee *types.Coin                                       `protobuf:"bytes,3,opt,name=liquidator_fee,json=liquidatorFee,proto3" json:"liquidator_fee,omitempty"`
+	PerpEfFee     *types.Coin                                       `protobuf:"bytes,4,opt,name=perp_ef_fee,json=perpEfFee,proto3" json:"perp_ef_fee,omitempty"`
+	Trader        string                                            `protobuf:"bytes,5,opt,name=trader,proto3" json:"trader,omitempty"`
+	Pair          github_com_NibiruChain_nibiru_x_common_asset.Pair `protobuf:"bytes,6,opt,name=pair,proto3,customtype=github.com/NibiruChain/nibiru/x/common/asset.Pair" json:"pair"`
 }
 
 func (m *MsgMultiLiquidateResponse_LiquidationResponse) Reset() {
@@ -462,7 +463,7 @@ func (m *MsgMultiLiquidateResponse_LiquidationResponse) GetTrader() string {
 	return ""
 }
 
-type MsgOpenPosition struct {
+type MsgMarketOrder struct {
 	Sender               string                                            `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	Pair                 github_com_NibiruChain_nibiru_x_common_asset.Pair `protobuf:"bytes,2,opt,name=pair,proto3,customtype=github.com/NibiruChain/nibiru/x/common/asset.Pair" json:"pair"`
 	Side                 Direction                                         `protobuf:"varint,3,opt,name=side,proto3,enum=nibiru.perp.v2.Direction" json:"side,omitempty"`
@@ -471,18 +472,18 @@ type MsgOpenPosition struct {
 	BaseAssetAmountLimit github_com_cosmos_cosmos_sdk_types.Int            `protobuf:"bytes,6,opt,name=base_asset_amount_limit,json=baseAssetAmountLimit,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"base_asset_amount_limit"`
 }
 
-func (m *MsgOpenPosition) Reset()         { *m = MsgOpenPosition{} }
-func (m *MsgOpenPosition) String() string { return proto.CompactTextString(m) }
-func (*MsgOpenPosition) ProtoMessage()    {}
-func (*MsgOpenPosition) Descriptor() ([]byte, []int) {
+func (m *MsgMarketOrder) Reset()         { *m = MsgMarketOrder{} }
+func (m *MsgMarketOrder) String() string { return proto.CompactTextString(m) }
+func (*MsgMarketOrder) ProtoMessage()    {}
+func (*MsgMarketOrder) Descriptor() ([]byte, []int) {
 	return fileDescriptor_b95cda40bf0a0f91, []int{6}
 }
-func (m *MsgOpenPosition) XXX_Unmarshal(b []byte) error {
+func (m *MsgMarketOrder) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgOpenPosition) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgMarketOrder) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgOpenPosition.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgMarketOrder.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -492,33 +493,33 @@ func (m *MsgOpenPosition) XXX_Marshal(b []byte, deterministic bool) ([]byte, err
 		return b[:n], nil
 	}
 }
-func (m *MsgOpenPosition) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgOpenPosition.Merge(m, src)
+func (m *MsgMarketOrder) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgMarketOrder.Merge(m, src)
 }
-func (m *MsgOpenPosition) XXX_Size() int {
+func (m *MsgMarketOrder) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgOpenPosition) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgOpenPosition.DiscardUnknown(m)
+func (m *MsgMarketOrder) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgMarketOrder.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgOpenPosition proto.InternalMessageInfo
+var xxx_messageInfo_MsgMarketOrder proto.InternalMessageInfo
 
-func (m *MsgOpenPosition) GetSender() string {
+func (m *MsgMarketOrder) GetSender() string {
 	if m != nil {
 		return m.Sender
 	}
 	return ""
 }
 
-func (m *MsgOpenPosition) GetSide() Direction {
+func (m *MsgMarketOrder) GetSide() Direction {
 	if m != nil {
 		return m.Side
 	}
 	return Direction_DIRECTION_UNSPECIFIED
 }
 
-type MsgOpenPositionResponse struct {
+type MsgMarketOrderResponse struct {
 	Position *Position `protobuf:"bytes,1,opt,name=position,proto3" json:"position,omitempty"`
 	// The amount of quote assets exchanged.
 	ExchangedNotionalValue github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=exchanged_notional_value,json=exchangedNotionalValue,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"exchanged_notional_value"`
@@ -541,18 +542,18 @@ type MsgOpenPositionResponse struct {
 	PositionNotional github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,8,opt,name=position_notional,json=positionNotional,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"position_notional"`
 }
 
-func (m *MsgOpenPositionResponse) Reset()         { *m = MsgOpenPositionResponse{} }
-func (m *MsgOpenPositionResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgOpenPositionResponse) ProtoMessage()    {}
-func (*MsgOpenPositionResponse) Descriptor() ([]byte, []int) {
+func (m *MsgMarketOrderResponse) Reset()         { *m = MsgMarketOrderResponse{} }
+func (m *MsgMarketOrderResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgMarketOrderResponse) ProtoMessage()    {}
+func (*MsgMarketOrderResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_b95cda40bf0a0f91, []int{7}
 }
-func (m *MsgOpenPositionResponse) XXX_Unmarshal(b []byte) error {
+func (m *MsgMarketOrderResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgOpenPositionResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgMarketOrderResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgOpenPositionResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgMarketOrderResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -562,19 +563,19 @@ func (m *MsgOpenPositionResponse) XXX_Marshal(b []byte, deterministic bool) ([]b
 		return b[:n], nil
 	}
 }
-func (m *MsgOpenPositionResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgOpenPositionResponse.Merge(m, src)
+func (m *MsgMarketOrderResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgMarketOrderResponse.Merge(m, src)
 }
-func (m *MsgOpenPositionResponse) XXX_Size() int {
+func (m *MsgMarketOrderResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgOpenPositionResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgOpenPositionResponse.DiscardUnknown(m)
+func (m *MsgMarketOrderResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgMarketOrderResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgOpenPositionResponse proto.InternalMessageInfo
+var xxx_messageInfo_MsgMarketOrderResponse proto.InternalMessageInfo
 
-func (m *MsgOpenPositionResponse) GetPosition() *Position {
+func (m *MsgMarketOrderResponse) GetPosition() *Position {
 	if m != nil {
 		return m.Position
 	}
@@ -639,7 +640,7 @@ type MsgClosePositionResponse struct {
 	RealizedPnl github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,4,opt,name=realized_pnl,json=realizedPnl,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"realized_pnl"`
 	// The amount of margin the trader receives after closing the position, from
 	// the vault. Should never be negative.
-	MarginToTrader github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,7,opt,name=margin_to_trader,json=marginToTrader,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"margin_to_trader"`
+	MarginToTrader github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,5,opt,name=margin_to_trader,json=marginToTrader,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"margin_to_trader"`
 }
 
 func (m *MsgClosePositionResponse) Reset()         { *m = MsgClosePositionResponse{} }
@@ -675,6 +676,101 @@ func (m *MsgClosePositionResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgClosePositionResponse proto.InternalMessageInfo
 
+type MsgPartialClose struct {
+	Sender string                                            `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	Pair   github_com_NibiruChain_nibiru_x_common_asset.Pair `protobuf:"bytes,2,opt,name=pair,proto3,customtype=github.com/NibiruChain/nibiru/x/common/asset.Pair" json:"pair"`
+	Size_  github_com_cosmos_cosmos_sdk_types.Dec            `protobuf:"bytes,3,opt,name=size,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"size"`
+}
+
+func (m *MsgPartialClose) Reset()         { *m = MsgPartialClose{} }
+func (m *MsgPartialClose) String() string { return proto.CompactTextString(m) }
+func (*MsgPartialClose) ProtoMessage()    {}
+func (*MsgPartialClose) Descriptor() ([]byte, []int) {
+	return fileDescriptor_b95cda40bf0a0f91, []int{10}
+}
+func (m *MsgPartialClose) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgPartialClose) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgPartialClose.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgPartialClose) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgPartialClose.Merge(m, src)
+}
+func (m *MsgPartialClose) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgPartialClose) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgPartialClose.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgPartialClose proto.InternalMessageInfo
+
+func (m *MsgPartialClose) GetSender() string {
+	if m != nil {
+		return m.Sender
+	}
+	return ""
+}
+
+type MsgPartialCloseResponse struct {
+	// The amount of quote assets exchanged.
+	ExchangedNotionalValue github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,1,opt,name=exchanged_notional_value,json=exchangedNotionalValue,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"exchanged_notional_value"`
+	// The amount of base assets exchanged.
+	ExchangedPositionSize github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=exchanged_position_size,json=exchangedPositionSize,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"exchanged_position_size"`
+	// The funding payment applied on this position change, measured in quote
+	// units.
+	FundingPayment github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,opt,name=funding_payment,json=fundingPayment,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"funding_payment"`
+	// The amount of PnL realized on this position changed, measured in quote
+	// units.
+	RealizedPnl github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,4,opt,name=realized_pnl,json=realizedPnl,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"realized_pnl"`
+	// The amount of margin the trader receives after closing the position, from
+	// the vault. Should never be negative.
+	MarginToTrader github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,5,opt,name=margin_to_trader,json=marginToTrader,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"margin_to_trader"`
+}
+
+func (m *MsgPartialCloseResponse) Reset()         { *m = MsgPartialCloseResponse{} }
+func (m *MsgPartialCloseResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgPartialCloseResponse) ProtoMessage()    {}
+func (*MsgPartialCloseResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_b95cda40bf0a0f91, []int{11}
+}
+func (m *MsgPartialCloseResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgPartialCloseResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgPartialCloseResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgPartialCloseResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgPartialCloseResponse.Merge(m, src)
+}
+func (m *MsgPartialCloseResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgPartialCloseResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgPartialCloseResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgPartialCloseResponse proto.InternalMessageInfo
+
 type MsgDonateToEcosystemFund struct {
 	Sender string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	// donation to the EF
@@ -685,7 +781,7 @@ func (m *MsgDonateToEcosystemFund) Reset()         { *m = MsgDonateToEcosystemFu
 func (m *MsgDonateToEcosystemFund) String() string { return proto.CompactTextString(m) }
 func (*MsgDonateToEcosystemFund) ProtoMessage()    {}
 func (*MsgDonateToEcosystemFund) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b95cda40bf0a0f91, []int{10}
+	return fileDescriptor_b95cda40bf0a0f91, []int{12}
 }
 func (m *MsgDonateToEcosystemFund) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -735,7 +831,7 @@ func (m *MsgDonateToEcosystemFundResponse) Reset()         { *m = MsgDonateToEco
 func (m *MsgDonateToEcosystemFundResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgDonateToEcosystemFundResponse) ProtoMessage()    {}
 func (*MsgDonateToEcosystemFundResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b95cda40bf0a0f91, []int{11}
+	return fileDescriptor_b95cda40bf0a0f91, []int{13}
 }
 func (m *MsgDonateToEcosystemFundResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -773,10 +869,12 @@ func init() {
 	proto.RegisterType((*MsgMultiLiquidate_Liquidation)(nil), "nibiru.perp.v2.MsgMultiLiquidate.Liquidation")
 	proto.RegisterType((*MsgMultiLiquidateResponse)(nil), "nibiru.perp.v2.MsgMultiLiquidateResponse")
 	proto.RegisterType((*MsgMultiLiquidateResponse_LiquidationResponse)(nil), "nibiru.perp.v2.MsgMultiLiquidateResponse.LiquidationResponse")
-	proto.RegisterType((*MsgOpenPosition)(nil), "nibiru.perp.v2.MsgOpenPosition")
-	proto.RegisterType((*MsgOpenPositionResponse)(nil), "nibiru.perp.v2.MsgOpenPositionResponse")
+	proto.RegisterType((*MsgMarketOrder)(nil), "nibiru.perp.v2.MsgMarketOrder")
+	proto.RegisterType((*MsgMarketOrderResponse)(nil), "nibiru.perp.v2.MsgMarketOrderResponse")
 	proto.RegisterType((*MsgClosePosition)(nil), "nibiru.perp.v2.MsgClosePosition")
 	proto.RegisterType((*MsgClosePositionResponse)(nil), "nibiru.perp.v2.MsgClosePositionResponse")
+	proto.RegisterType((*MsgPartialClose)(nil), "nibiru.perp.v2.MsgPartialClose")
+	proto.RegisterType((*MsgPartialCloseResponse)(nil), "nibiru.perp.v2.MsgPartialCloseResponse")
 	proto.RegisterType((*MsgDonateToEcosystemFund)(nil), "nibiru.perp.v2.MsgDonateToEcosystemFund")
 	proto.RegisterType((*MsgDonateToEcosystemFundResponse)(nil), "nibiru.perp.v2.MsgDonateToEcosystemFundResponse")
 }
@@ -784,83 +882,82 @@ func init() {
 func init() { proto.RegisterFile("nibiru/perp/v2/tx.proto", fileDescriptor_b95cda40bf0a0f91) }
 
 var fileDescriptor_b95cda40bf0a0f91 = []byte{
-	// 1209 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xd4, 0x58, 0x4d, 0x6f, 0x1b, 0x45,
-	0x18, 0xce, 0xda, 0xae, 0x9b, 0x4c, 0x52, 0x27, 0x1d, 0xd2, 0xc6, 0xb5, 0x8a, 0x63, 0x56, 0x50,
-	0x02, 0x52, 0x76, 0x5b, 0x83, 0x84, 0x40, 0x02, 0x94, 0x26, 0x0d, 0x02, 0xc5, 0x69, 0xba, 0x44,
-	0x01, 0x01, 0xd2, 0x32, 0xf1, 0x8e, 0x37, 0x2b, 0x76, 0x67, 0xdc, 0x9d, 0x59, 0x2b, 0xc9, 0xa5,
-	0x52, 0x91, 0x38, 0x23, 0xf1, 0x1b, 0x7a, 0x45, 0x42, 0x5c, 0xf8, 0x09, 0x3d, 0x56, 0xe2, 0x82,
-	0x38, 0x44, 0x28, 0xa9, 0x80, 0x73, 0xc5, 0x0f, 0x40, 0x33, 0xfb, 0x61, 0x7b, 0xbb, 0x89, 0x1d,
-	0x93, 0x46, 0xe2, 0x64, 0xef, 0xce, 0x3b, 0xcf, 0xf3, 0x3e, 0xef, 0xd7, 0x8c, 0x0d, 0xe6, 0x88,
-	0xb3, 0xed, 0xf8, 0x81, 0xde, 0xc6, 0x7e, 0x5b, 0xef, 0xd4, 0x75, 0xbe, 0xab, 0xb5, 0x7d, 0xca,
-	0x29, 0x2c, 0x85, 0x0b, 0x9a, 0x58, 0xd0, 0x3a, 0xf5, 0xca, 0x75, 0x9b, 0x52, 0xdb, 0xc5, 0x3a,
-	0x6a, 0x3b, 0x3a, 0x22, 0x84, 0x72, 0xc4, 0x1d, 0x4a, 0x58, 0x68, 0x5d, 0xa9, 0x36, 0x29, 0xf3,
-	0x28, 0xd3, 0xb7, 0x11, 0xc3, 0x7a, 0xe7, 0xd6, 0x36, 0xe6, 0xe8, 0x96, 0xde, 0xa4, 0x0e, 0x89,
-	0xd6, 0x67, 0x6d, 0x6a, 0x53, 0xf9, 0x55, 0x17, 0xdf, 0xa2, 0xb7, 0x95, 0x14, 0x39, 0xe3, 0x88,
-	0xe3, 0x70, 0x4d, 0xfd, 0x49, 0x01, 0xd3, 0x0d, 0x66, 0x1b, 0xd8, 0xa3, 0x1d, 0xdc, 0x40, 0xbe,
-	0xed, 0x10, 0x78, 0x15, 0x14, 0x19, 0x26, 0x16, 0xf6, 0xcb, 0x4a, 0x4d, 0x59, 0x98, 0x30, 0xa2,
-	0x27, 0xd8, 0x00, 0x85, 0x36, 0x72, 0xfc, 0x72, 0x4e, 0xbc, 0xbd, 0xfd, 0xee, 0xe3, 0x83, 0xf9,
-	0xb1, 0xdf, 0x0f, 0xe6, 0x6f, 0xd9, 0x0e, 0xdf, 0x09, 0xb6, 0xb5, 0x26, 0xf5, 0xf4, 0x75, 0x49,
-	0xb4, 0xbc, 0x83, 0x1c, 0xa2, 0x47, 0xa4, 0xbb, 0x7a, 0x93, 0x7a, 0x1e, 0x25, 0x3a, 0x62, 0x0c,
-	0x73, 0x6d, 0x03, 0x39, 0xbe, 0x21, 0x61, 0xe0, 0x3b, 0xa0, 0xe8, 0x49, 0xc2, 0x72, 0xbe, 0xa6,
-	0x2c, 0x4c, 0xd6, 0xaf, 0x69, 0xa1, 0x3a, 0x4d, 0xa8, 0xd3, 0x22, 0x75, 0xda, 0x32, 0x75, 0xc8,
-	0xed, 0x82, 0xe0, 0x32, 0x22, 0x73, 0xf5, 0x6f, 0x05, 0xcc, 0xa5, 0x7c, 0x36, 0x30, 0x6b, 0x53,
-	0xc2, 0x30, 0xfc, 0x00, 0x80, 0xd0, 0xca, 0xa4, 0x01, 0x97, 0xfe, 0x0f, 0x01, 0x3c, 0x11, 0x6e,
-	0xb9, 0x1b, 0x70, 0xf8, 0x19, 0x98, 0x6e, 0x05, 0xc4, 0x72, 0x88, 0x6d, 0xb6, 0xd1, 0x9e, 0x87,
-	0x09, 0x8f, 0xe4, 0x6a, 0x91, 0xdc, 0x1b, 0x3d, 0x72, 0xa3, 0x6c, 0x84, 0x1f, 0x8b, 0xcc, 0xfa,
-	0x46, 0xe7, 0x7b, 0x6d, 0xcc, 0xb4, 0x15, 0xdc, 0x34, 0x4a, 0x11, 0xcc, 0x46, 0x88, 0x02, 0xdf,
-	0x06, 0xe3, 0x6d, 0xca, 0x1c, 0x91, 0xcd, 0x48, 0x6f, 0x59, 0xeb, 0xcf, 0xbd, 0xb6, 0x11, 0xad,
-	0x1b, 0x89, 0xa5, 0xfa, 0xa3, 0x02, 0xa6, 0x1a, 0xcc, 0x5e, 0xb2, 0xac, 0xff, 0x49, 0x6e, 0x1e,
-	0x29, 0x60, 0xb6, 0xd7, 0xe1, 0x24, 0x31, 0x19, 0x81, 0x55, 0xce, 0x3c, 0xb0, 0xb9, 0xa1, 0x03,
-	0xfb, 0x8f, 0x02, 0x2e, 0x37, 0x98, 0xdd, 0x08, 0x5c, 0xee, 0xac, 0x39, 0xf7, 0x03, 0xc7, 0x42,
-	0x1c, 0x1f, 0x1b, 0xdd, 0x7b, 0x60, 0xca, 0x8d, 0x8c, 0x44, 0x37, 0x96, 0x73, 0xb5, 0xfc, 0xc2,
-	0x64, 0x7d, 0x31, 0xcd, 0xf3, 0x1c, 0xa0, 0xb6, 0xd6, 0xdd, 0x65, 0xf4, 0x41, 0x54, 0x38, 0x98,
-	0xec, 0x59, 0x4c, 0xf2, 0xa7, 0x9c, 0x4d, 0xfe, 0xae, 0x82, 0x22, 0xf7, 0x91, 0x10, 0x92, 0x0b,
-	0x85, 0x84, 0x4f, 0xea, 0x5f, 0x39, 0x70, 0xed, 0x39, 0x2f, 0x93, 0x1c, 0xa1, 0x94, 0x4c, 0x45,
-	0xca, 0x7c, 0x7f, 0xa0, 0xcc, 0x18, 0xa0, 0x4f, 0x6e, 0xf4, 0x2e, 0x25, 0xfb, 0x4f, 0x05, 0xbc,
-	0x94, 0x61, 0x05, 0xcb, 0xe0, 0x22, 0x0b, 0x9a, 0x4d, 0xcc, 0x98, 0x0c, 0xc1, 0xb8, 0x11, 0x3f,
-	0xc2, 0x59, 0x70, 0x01, 0xfb, 0x3e, 0x8d, 0x95, 0x84, 0x0f, 0x70, 0x15, 0x94, 0x62, 0x5c, 0xea,
-	0x9b, 0x2d, 0x8c, 0x87, 0x2b, 0x54, 0xc5, 0xb8, 0xd4, 0xdd, 0xb6, 0x8a, 0x31, 0xfc, 0x10, 0x4c,
-	0x0a, 0x59, 0x26, 0x6e, 0x49, 0x90, 0xc2, 0x70, 0x20, 0x13, 0x62, 0xcf, 0x9d, 0x96, 0x00, 0xe8,
-	0x46, 0xfa, 0x42, 0x5f, 0xa4, 0x7f, 0xc9, 0xcb, 0xc1, 0x7a, 0xb7, 0x8d, 0x49, 0x5c, 0x7e, 0xe7,
-	0xd5, 0xbc, 0x8b, 0xa0, 0xc0, 0x1c, 0x2b, 0x8c, 0x48, 0xa9, 0x7e, 0x2d, 0x9d, 0xbe, 0x15, 0xc7,
-	0xc7, 0x4d, 0x19, 0x7c, 0x69, 0x06, 0xbf, 0x02, 0xf0, 0x7e, 0x40, 0x39, 0x36, 0x25, 0x90, 0x89,
-	0x3c, 0x1a, 0x10, 0x2e, 0x23, 0x71, 0xba, 0xe6, 0xfc, 0x98, 0x70, 0x63, 0x46, 0x22, 0x2d, 0x09,
-	0xa0, 0x25, 0x89, 0x03, 0x3f, 0x01, 0xe3, 0x2e, 0xee, 0x60, 0x1f, 0xd9, 0x38, 0x8c, 0xd0, 0xa9,
-	0x1b, 0x3e, 0xd9, 0x0f, 0x31, 0x98, 0x13, 0x19, 0xe9, 0x73, 0xd4, 0x74, 0x1d, 0xcf, 0xe1, 0xe5,
-	0xe2, 0x48, 0xee, 0xce, 0x0a, 0xb8, 0x1e, 0x6f, 0xd7, 0x04, 0x96, 0xfa, 0xf4, 0x82, 0x3c, 0x5f,
-	0x7a, 0x53, 0x97, 0xd4, 0x69, 0xef, 0xb4, 0x51, 0x86, 0x9d, 0x36, 0x70, 0x07, 0x94, 0xf1, 0x6e,
-	0x73, 0x07, 0x11, 0x1b, 0x5b, 0x26, 0xa1, 0xe2, 0x1d, 0x72, 0xcd, 0x0e, 0x72, 0x03, 0x3c, 0xe2,
-	0xf1, 0x72, 0x35, 0xc1, 0x5b, 0x8f, 0xe0, 0xb6, 0x04, 0x1a, 0x6c, 0x81, 0xb9, 0x2e, 0x53, 0xcc,
-	0x6f, 0x32, 0x67, 0x3f, 0x2c, 0x87, 0xd3, 0x13, 0x5d, 0x49, 0xe0, 0x62, 0x5d, 0x9f, 0x3a, 0xfb,
-	0x99, 0xe3, 0xbc, 0x70, 0x26, 0xe3, 0xfc, 0x1e, 0x98, 0xf2, 0x31, 0x72, 0x9d, 0x7d, 0xe1, 0x3f,
-	0x71, 0x47, 0xac, 0x99, 0xc9, 0x18, 0x63, 0x83, 0xb8, 0xf0, 0x6b, 0x30, 0x1b, 0x90, 0x5e, 0x50,
-	0x13, 0xb5, 0x38, 0xf6, 0x47, 0xa8, 0x19, 0x01, 0x0d, 0xbb, 0x58, 0x1b, 0xc4, 0x5d, 0x12, 0x48,
-	0x70, 0x0b, 0x4c, 0x47, 0xb7, 0x0e, 0x4e, 0xcd, 0x0e, 0x0a, 0x5c, 0x5e, 0xbe, 0x38, 0x12, 0xf8,
-	0xa5, 0x10, 0x66, 0x93, 0x6e, 0x09, 0x10, 0xf8, 0x25, 0xb8, 0x9c, 0xe4, 0x30, 0x2e, 0x9b, 0xf2,
-	0xf8, 0x48, 0xc8, 0x33, 0x31, 0x50, 0x5c, 0x2f, 0xea, 0x1e, 0x98, 0x69, 0x30, 0x7b, 0xd9, 0xa5,
-	0x0c, 0x9f, 0xf3, 0x84, 0x52, 0x9f, 0xe5, 0x41, 0x39, 0xcd, 0x9d, 0xb4, 0xd8, 0x49, 0xcd, 0xa2,
-	0x9c, 0x57, 0xb3, 0xe4, 0x5e, 0x70, 0xb3, 0xe4, 0x5f, 0x48, 0xb3, 0x14, 0xfe, 0x7b, 0xb3, 0x7c,
-	0x0e, 0x66, 0xba, 0xa5, 0x1c, 0x9d, 0x6c, 0xa3, 0xd5, 0x72, 0x29, 0xae, 0xe5, 0xcd, 0xf0, 0x44,
-	0x7c, 0xa8, 0xc8, 0xa4, 0xaf, 0x50, 0x82, 0x38, 0xde, 0xa4, 0x77, 0x9a, 0x94, 0xed, 0x31, 0x8e,
-	0xbd, 0xd5, 0x80, 0x58, 0xc7, 0x16, 0xde, 0x3a, 0x18, 0xb7, 0xc4, 0x86, 0xee, 0xed, 0xee, 0x84,
-	0xc3, 0x79, 0x4e, 0x78, 0xf8, 0xec, 0x60, 0x7e, 0x7a, 0x0f, 0x79, 0xee, 0x7b, 0x6a, 0xbc, 0x51,
-	0x35, 0x12, 0x0c, 0x55, 0x05, 0xb5, 0xe3, 0x7c, 0x88, 0x0b, 0xb0, 0xfe, 0x73, 0x11, 0xe4, 0x1b,
-	0xcc, 0x86, 0x0f, 0xc0, 0x54, 0xdf, 0xef, 0xa2, 0xf9, 0x8c, 0x8b, 0x50, 0xaf, 0x41, 0xe5, 0xf5,
-	0x01, 0x06, 0x31, 0x83, 0xfa, 0xda, 0xc3, 0x5f, 0x9f, 0xfe, 0x90, 0x9b, 0x57, 0x5f, 0xd6, 0x53,
-	0x3f, 0xcd, 0x7c, 0x69, 0x6d, 0x86, 0x91, 0x83, 0x0c, 0x4c, 0x74, 0x6f, 0xfe, 0xd7, 0x33, 0xc0,
-	0x93, 0xd5, 0xca, 0xab, 0x27, 0xad, 0x26, 0xbc, 0xaa, 0xe4, 0xbd, 0xae, 0x56, 0xd2, 0xbc, 0xc8,
-	0xb2, 0x62, 0xd2, 0xef, 0x14, 0x50, 0x4a, 0x5d, 0x8b, 0x5f, 0x19, 0x78, 0x03, 0xac, 0xbc, 0x31,
-	0xf4, 0x25, 0x51, 0xbd, 0x21, 0x9d, 0xa8, 0xa9, 0xd5, 0xb4, 0x13, 0x9e, 0xb0, 0x77, 0x13, 0xd6,
-	0x07, 0x60, 0xaa, 0xef, 0xf6, 0x94, 0x15, 0xfe, 0x5e, 0x83, 0xcc, 0xf0, 0x67, 0x1d, 0xe2, 0xc7,
-	0x87, 0x9f, 0xb6, 0x31, 0x49, 0x06, 0x01, 0xfc, 0x56, 0x01, 0x97, 0xfa, 0xc7, 0x63, 0x2d, 0x83,
-	0xa1, 0xcf, 0xa2, 0xb2, 0x30, 0xc8, 0x62, 0x70, 0x18, 0x9a, 0xc2, 0xbc, 0xeb, 0xc5, 0x23, 0x05,
-	0x5c, 0xc9, 0xee, 0x99, 0x2c, 0xae, 0x4c, 0xcb, 0xca, 0xcd, 0x61, 0x2d, 0x13, 0xef, 0x6e, 0x4a,
-	0xef, 0xde, 0x54, 0x17, 0xd2, 0xde, 0xc9, 0x4e, 0xc2, 0x62, 0x38, 0xe0, 0x78, 0xa3, 0x29, 0xa6,
-	0xd2, 0xed, 0x8f, 0x1e, 0x1f, 0x56, 0x95, 0x27, 0x87, 0x55, 0xe5, 0x8f, 0xc3, 0xaa, 0xf2, 0xfd,
-	0x51, 0x75, 0xec, 0xc9, 0x51, 0x75, 0xec, 0xb7, 0xa3, 0xea, 0xd8, 0x17, 0x8b, 0x83, 0x8e, 0x89,
-	0xe4, 0x5f, 0x11, 0x31, 0x3b, 0xb6, 0x8b, 0xf2, 0x9f, 0x89, 0xb7, 0xfe, 0x0d, 0x00, 0x00, 0xff,
-	0xff, 0xfc, 0xbc, 0xe4, 0x89, 0x34, 0x11, 0x00, 0x00,
+	// 1200 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0x58, 0xcf, 0x6f, 0x1b, 0xc5,
+	0x17, 0xf7, 0xda, 0x4e, 0x9a, 0x3c, 0xa7, 0x4e, 0x3a, 0xdf, 0x34, 0x71, 0xad, 0xca, 0xc9, 0x77,
+	0x85, 0x4a, 0x38, 0x64, 0x97, 0x1a, 0x24, 0x04, 0x12, 0xa0, 0xa4, 0x3f, 0x10, 0xa8, 0x6e, 0xdd,
+	0xa5, 0x6a, 0x51, 0x01, 0x6d, 0x27, 0xf6, 0x78, 0x33, 0xea, 0x7a, 0xc6, 0xdd, 0x99, 0xb5, 0x9a,
+	0x1c, 0xf9, 0x0b, 0xf8, 0x17, 0x38, 0x70, 0x45, 0xe2, 0x00, 0x5c, 0xf8, 0x03, 0x7a, 0xec, 0x11,
+	0x71, 0x88, 0x50, 0x72, 0xe1, 0x4a, 0xc5, 0x1f, 0x80, 0x66, 0x7f, 0x79, 0xed, 0x6e, 0x12, 0xc7,
+	0xa4, 0x91, 0x40, 0x9c, 0xec, 0xdd, 0xf7, 0xde, 0xe7, 0xfd, 0xf8, 0xbc, 0x79, 0x33, 0xb3, 0xb0,
+	0xcc, 0xe8, 0x16, 0xf5, 0x7c, 0xb3, 0x47, 0xbc, 0x9e, 0xd9, 0xaf, 0x9b, 0xf2, 0xa9, 0xd1, 0xf3,
+	0xb8, 0xe4, 0xa8, 0x1c, 0x0a, 0x0c, 0x25, 0x30, 0xfa, 0xf5, 0xea, 0x65, 0x87, 0x73, 0xc7, 0x25,
+	0x26, 0xee, 0x51, 0x13, 0x33, 0xc6, 0x25, 0x96, 0x94, 0x33, 0x11, 0x6a, 0x57, 0x6b, 0x2d, 0x2e,
+	0xba, 0x5c, 0x98, 0x5b, 0x58, 0x10, 0xb3, 0x7f, 0x75, 0x8b, 0x48, 0x7c, 0xd5, 0x6c, 0x71, 0xca,
+	0x22, 0xf9, 0xa2, 0xc3, 0x1d, 0x1e, 0xfc, 0x35, 0xd5, 0xbf, 0xe8, 0x6d, 0x75, 0xc4, 0xb9, 0x90,
+	0x58, 0x92, 0x50, 0xa6, 0x7f, 0xaf, 0xc1, 0x7c, 0x43, 0x38, 0x16, 0xe9, 0xf2, 0x3e, 0x69, 0x60,
+	0xcf, 0xa1, 0x0c, 0x2d, 0xc1, 0xb4, 0x20, 0xac, 0x4d, 0xbc, 0x8a, 0xb6, 0xaa, 0xad, 0xcd, 0x5a,
+	0xd1, 0x13, 0x6a, 0x40, 0xb1, 0x87, 0xa9, 0x57, 0xc9, 0xab, 0xb7, 0x9b, 0xef, 0x3e, 0xdb, 0x5b,
+	0xc9, 0xfd, 0xba, 0xb7, 0x72, 0xd5, 0xa1, 0x72, 0xdb, 0xdf, 0x32, 0x5a, 0xbc, 0x6b, 0xde, 0x0e,
+	0x1c, 0x5d, 0xdb, 0xc6, 0x94, 0x99, 0x91, 0xd3, 0xa7, 0x66, 0x8b, 0x77, 0xbb, 0x9c, 0x99, 0x58,
+	0x08, 0x22, 0x8d, 0x26, 0xa6, 0x9e, 0x15, 0xc0, 0xa0, 0x77, 0x60, 0xba, 0x1b, 0x38, 0xac, 0x14,
+	0x56, 0xb5, 0xb5, 0x52, 0xfd, 0x92, 0x11, 0x66, 0x67, 0xa8, 0xec, 0x8c, 0x28, 0x3b, 0xe3, 0x1a,
+	0xa7, 0x6c, 0xb3, 0xa8, 0x7c, 0x59, 0x91, 0xba, 0xfe, 0xbb, 0x06, 0xcb, 0x23, 0x31, 0x5b, 0x44,
+	0xf4, 0x38, 0x13, 0x04, 0x7d, 0x00, 0x10, 0x6a, 0xd9, 0xdc, 0x97, 0x41, 0xfc, 0x63, 0x00, 0xcf,
+	0x86, 0x26, 0x77, 0x7c, 0x89, 0x1e, 0xc0, 0x7c, 0xc7, 0x67, 0x6d, 0xca, 0x1c, 0xbb, 0x87, 0x77,
+	0xba, 0x84, 0xc9, 0x28, 0x5d, 0x23, 0x4a, 0xf7, 0x4a, 0x2a, 0xdd, 0x88, 0x8d, 0xf0, 0x67, 0x5d,
+	0xb4, 0x1f, 0x9b, 0x72, 0xa7, 0x47, 0x84, 0x71, 0x9d, 0xb4, 0xac, 0x72, 0x04, 0xd3, 0x0c, 0x51,
+	0xd0, 0xdb, 0x30, 0xd3, 0xe3, 0x82, 0x2a, 0x36, 0xa3, 0x7c, 0x2b, 0xc6, 0x30, 0xf7, 0x46, 0x33,
+	0x92, 0x5b, 0x89, 0xa6, 0xfe, 0x9d, 0x06, 0x73, 0x0d, 0xe1, 0x6c, 0xb4, 0xdb, 0xff, 0x10, 0x6e,
+	0xbe, 0xd5, 0x60, 0x31, 0x1d, 0x70, 0x42, 0x4c, 0x46, 0x61, 0xb5, 0x53, 0x2f, 0x6c, 0x7e, 0xec,
+	0xc2, 0xfe, 0xa9, 0xc1, 0x85, 0x86, 0x70, 0x1a, 0xbe, 0x2b, 0xe9, 0x2d, 0xfa, 0xc4, 0xa7, 0x6d,
+	0x2c, 0xc9, 0xa1, 0xd5, 0xbd, 0x0b, 0x73, 0x6e, 0xa4, 0xa4, 0x56, 0x63, 0x25, 0xbf, 0x5a, 0x58,
+	0x2b, 0xd5, 0xd7, 0x47, 0xfd, 0xbc, 0x04, 0x68, 0xdc, 0x1a, 0x58, 0x59, 0x43, 0x10, 0x55, 0x09,
+	0xa5, 0x94, 0x30, 0xe1, 0x4f, 0x3b, 0x1d, 0xfe, 0x96, 0x60, 0x5a, 0x7a, 0x58, 0x25, 0x92, 0x0f,
+	0x13, 0x09, 0x9f, 0xf4, 0x1f, 0x0b, 0x70, 0xe9, 0xa5, 0x28, 0x13, 0x8e, 0xf0, 0x48, 0x9a, 0x5a,
+	0x90, 0xe6, 0xfb, 0xc7, 0xa6, 0x19, 0x03, 0x0c, 0xa5, 0x1b, 0xbd, 0x1b, 0x49, 0xfb, 0x87, 0x3c,
+	0xfc, 0x2f, 0x43, 0x0b, 0x55, 0xe0, 0x9c, 0xf0, 0x5b, 0x2d, 0x22, 0x44, 0x50, 0x82, 0x19, 0x2b,
+	0x7e, 0x44, 0x8b, 0x30, 0x45, 0x3c, 0x8f, 0xc7, 0x99, 0x84, 0x0f, 0xe8, 0x26, 0x94, 0x63, 0x5c,
+	0xee, 0xd9, 0x1d, 0x42, 0xc6, 0x6b, 0x54, 0xcd, 0x3a, 0x3f, 0x30, 0xbb, 0x49, 0x08, 0xfa, 0x10,
+	0x4a, 0x2a, 0x2d, 0x9b, 0x74, 0x02, 0x90, 0xe2, 0x78, 0x20, 0xb3, 0xca, 0xe6, 0x46, 0x47, 0x01,
+	0x0c, 0x2a, 0x3d, 0x95, 0xae, 0x74, 0x42, 0xe8, 0xf4, 0xa9, 0x10, 0xaa, 0xff, 0x54, 0x80, 0xb2,
+	0xaa, 0x3b, 0xf6, 0x1e, 0x13, 0x79, 0xc7, 0x53, 0x1e, 0xce, 0x68, 0x14, 0xac, 0x43, 0x51, 0xd0,
+	0x76, 0x58, 0xdf, 0x72, 0xfd, 0xd2, 0x68, 0x33, 0x5c, 0xa7, 0x1e, 0x69, 0x05, 0x54, 0x06, 0x6a,
+	0xe8, 0x0b, 0x40, 0x4f, 0x7c, 0x2e, 0x89, 0x1d, 0x00, 0xd9, 0xb8, 0xcb, 0x7d, 0x26, 0x83, 0xba,
+	0x9e, 0x6c, 0xa9, 0x7f, 0xcc, 0xa4, 0xb5, 0x10, 0x20, 0x6d, 0x28, 0xa0, 0x8d, 0x00, 0x07, 0x7d,
+	0x02, 0x33, 0x2e, 0xe9, 0x13, 0x0f, 0x3b, 0x24, 0xac, 0xf7, 0x89, 0xc7, 0x47, 0x62, 0x8f, 0x08,
+	0x2c, 0x2b, 0x7e, 0x87, 0x02, 0xb5, 0x5d, 0xda, 0xa5, 0x32, 0x22, 0xed, 0xa4, 0xe1, 0x2e, 0x2a,
+	0xb8, 0x54, 0xb4, 0xb7, 0x14, 0x96, 0x7e, 0x30, 0x05, 0x4b, 0xc3, 0xcc, 0x25, 0x4d, 0x9f, 0x1e,
+	0x5d, 0xda, 0xb8, 0xa3, 0x0b, 0x6d, 0x43, 0x85, 0x3c, 0x6d, 0x6d, 0x63, 0xe6, 0x90, 0xb6, 0xcd,
+	0xb8, 0x7a, 0x87, 0x5d, 0xbb, 0x8f, 0x5d, 0x9f, 0x4c, 0xb8, 0x57, 0x2d, 0x25, 0x78, 0xb7, 0x23,
+	0xb8, 0xfb, 0x0a, 0x0d, 0x75, 0x60, 0x79, 0xe0, 0x29, 0xf6, 0x6f, 0x0b, 0xba, 0x1b, 0x76, 0xc3,
+	0xc9, 0x1d, 0x5d, 0x4c, 0xe0, 0xe2, 0xbc, 0x3e, 0xa5, 0xbb, 0x99, 0x7b, 0x43, 0xf1, 0x54, 0xf6,
+	0x86, 0xbb, 0x30, 0xe7, 0x11, 0xec, 0xd2, 0x5d, 0x15, 0x3f, 0x73, 0x27, 0x6c, 0x99, 0x52, 0x8c,
+	0xd1, 0x64, 0x2e, 0x7a, 0x04, 0x8b, 0x3e, 0x4b, 0x83, 0xda, 0xb8, 0x23, 0x89, 0x37, 0x41, 0xcb,
+	0x28, 0x68, 0x34, 0xc0, 0x6a, 0x32, 0x77, 0x43, 0x21, 0xa1, 0xfb, 0x30, 0x1f, 0x1d, 0x61, 0x24,
+	0xb7, 0xfb, 0xd8, 0x77, 0x65, 0xe5, 0xdc, 0x44, 0xe0, 0xe7, 0x43, 0x98, 0x7b, 0xfc, 0xbe, 0x02,
+	0x41, 0x9f, 0xc3, 0x85, 0x84, 0xc3, 0xb8, 0x6d, 0x2a, 0x33, 0x13, 0x21, 0x2f, 0xc4, 0x40, 0x71,
+	0xbf, 0xe8, 0x3b, 0xb0, 0xd0, 0x10, 0xce, 0x35, 0x97, 0x0b, 0x12, 0x53, 0x7b, 0x46, 0x03, 0x4a,
+	0x7f, 0x51, 0x80, 0xca, 0xa8, 0xef, 0x64, 0x89, 0x1d, 0xb5, 0x58, 0xb4, 0xb3, 0x5a, 0x2c, 0xf9,
+	0x57, 0xbc, 0x58, 0x0a, 0xaf, 0x64, 0xb1, 0x14, 0xff, 0xfe, 0x62, 0xf9, 0x0c, 0x16, 0x06, 0xad,
+	0x9c, 0xde, 0x26, 0x4f, 0x1e, 0x6c, 0xdc, 0xcb, 0xf7, 0xc2, 0x83, 0xcc, 0xcf, 0xe1, 0xbd, 0xa5,
+	0x89, 0x3d, 0x49, 0xb1, 0x1b, 0x70, 0x7f, 0x56, 0x1b, 0xe2, 0xa6, 0xda, 0x10, 0x27, 0x1e, 0x81,
+	0x81, 0xad, 0xfe, 0x47, 0x21, 0xb8, 0xc2, 0xa4, 0xc3, 0xff, 0xaf, 0x65, 0xff, 0xe5, 0x2d, 0xfb,
+	0x95, 0x16, 0xcc, 0xa9, 0xeb, 0x9c, 0x61, 0x49, 0xee, 0xf1, 0x1b, 0x2d, 0x2e, 0x76, 0x84, 0x24,
+	0xdd, 0x9b, 0x3e, 0x6b, 0x1f, 0xda, 0xbb, 0xb7, 0x61, 0xa6, 0xad, 0x0c, 0x06, 0xb7, 0x9b, 0x23,
+	0x0e, 0xa7, 0xcb, 0x2a, 0xc2, 0x17, 0x7b, 0x2b, 0xf3, 0x3b, 0xb8, 0xeb, 0xbe, 0xa7, 0xc7, 0x86,
+	0xba, 0x95, 0x60, 0xe8, 0x3a, 0xac, 0x1e, 0x16, 0x43, 0xdc, 0x80, 0xf5, 0x6f, 0xa6, 0xa0, 0xd0,
+	0x10, 0x0e, 0x7a, 0x08, 0x73, 0x43, 0xdf, 0x05, 0x56, 0x32, 0x2e, 0x02, 0x69, 0x85, 0xea, 0xeb,
+	0xc7, 0x28, 0xc4, 0x1e, 0xf4, 0x1c, 0xba, 0x0b, 0xb3, 0x83, 0x4b, 0xed, 0xe5, 0x0c, 0xbb, 0x44,
+	0x5a, 0x7d, 0xed, 0x28, 0x69, 0x0a, 0xf2, 0x11, 0x94, 0x47, 0xae, 0x73, 0xff, 0x3f, 0xf6, 0xe6,
+	0x52, 0x7d, 0x63, 0xec, 0xcb, 0x8d, 0x9e, 0x43, 0x0f, 0xa0, 0x94, 0x3e, 0x80, 0xd7, 0xb2, 0x6c,
+	0x07, 0xf2, 0xea, 0x95, 0xa3, 0xe5, 0x29, 0xe0, 0x2f, 0xe1, 0xfc, 0xf0, 0xd6, 0xb9, 0x9a, 0x61,
+	0x3a, 0xa4, 0x51, 0x5d, 0x3b, 0x4e, 0x23, 0x05, 0xff, 0x10, 0xe6, 0x86, 0x06, 0x65, 0x16, 0x91,
+	0x69, 0x85, 0x4c, 0x22, 0xb3, 0x66, 0x95, 0x9e, 0x43, 0x3e, 0x5c, 0xcc, 0xee, 0xe8, 0xac, 0x00,
+	0x33, 0x35, 0xab, 0x6f, 0x8e, 0xab, 0x39, 0x70, 0xbb, 0xf9, 0xd1, 0xb3, 0xfd, 0x9a, 0xf6, 0x7c,
+	0xbf, 0xa6, 0xfd, 0xb6, 0x5f, 0xd3, 0xbe, 0x3e, 0xa8, 0xe5, 0x9e, 0x1f, 0xd4, 0x72, 0xbf, 0x1c,
+	0xd4, 0x72, 0x0f, 0xd7, 0x8f, 0x9b, 0xeb, 0xc9, 0x37, 0x38, 0xb5, 0x52, 0xb7, 0xa6, 0x83, 0xef,
+	0x60, 0x6f, 0xfd, 0x15, 0x00, 0x00, 0xff, 0xff, 0x1f, 0xd0, 0xb3, 0xf4, 0xa2, 0x13, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -878,8 +975,9 @@ type MsgClient interface {
 	RemoveMargin(ctx context.Context, in *MsgRemoveMargin, opts ...grpc.CallOption) (*MsgRemoveMarginResponse, error)
 	AddMargin(ctx context.Context, in *MsgAddMargin, opts ...grpc.CallOption) (*MsgAddMarginResponse, error)
 	MultiLiquidate(ctx context.Context, in *MsgMultiLiquidate, opts ...grpc.CallOption) (*MsgMultiLiquidateResponse, error)
-	OpenPosition(ctx context.Context, in *MsgOpenPosition, opts ...grpc.CallOption) (*MsgOpenPositionResponse, error)
+	MarketOrder(ctx context.Context, in *MsgMarketOrder, opts ...grpc.CallOption) (*MsgMarketOrderResponse, error)
 	ClosePosition(ctx context.Context, in *MsgClosePosition, opts ...grpc.CallOption) (*MsgClosePositionResponse, error)
+	PartialClose(ctx context.Context, in *MsgPartialClose, opts ...grpc.CallOption) (*MsgPartialCloseResponse, error)
 	DonateToEcosystemFund(ctx context.Context, in *MsgDonateToEcosystemFund, opts ...grpc.CallOption) (*MsgDonateToEcosystemFundResponse, error)
 }
 
@@ -918,9 +1016,9 @@ func (c *msgClient) MultiLiquidate(ctx context.Context, in *MsgMultiLiquidate, o
 	return out, nil
 }
 
-func (c *msgClient) OpenPosition(ctx context.Context, in *MsgOpenPosition, opts ...grpc.CallOption) (*MsgOpenPositionResponse, error) {
-	out := new(MsgOpenPositionResponse)
-	err := c.cc.Invoke(ctx, "/nibiru.perp.v2.Msg/OpenPosition", in, out, opts...)
+func (c *msgClient) MarketOrder(ctx context.Context, in *MsgMarketOrder, opts ...grpc.CallOption) (*MsgMarketOrderResponse, error) {
+	out := new(MsgMarketOrderResponse)
+	err := c.cc.Invoke(ctx, "/nibiru.perp.v2.Msg/MarketOrder", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -930,6 +1028,15 @@ func (c *msgClient) OpenPosition(ctx context.Context, in *MsgOpenPosition, opts 
 func (c *msgClient) ClosePosition(ctx context.Context, in *MsgClosePosition, opts ...grpc.CallOption) (*MsgClosePositionResponse, error) {
 	out := new(MsgClosePositionResponse)
 	err := c.cc.Invoke(ctx, "/nibiru.perp.v2.Msg/ClosePosition", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) PartialClose(ctx context.Context, in *MsgPartialClose, opts ...grpc.CallOption) (*MsgPartialCloseResponse, error) {
+	out := new(MsgPartialCloseResponse)
+	err := c.cc.Invoke(ctx, "/nibiru.perp.v2.Msg/PartialClose", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -950,8 +1057,9 @@ type MsgServer interface {
 	RemoveMargin(context.Context, *MsgRemoveMargin) (*MsgRemoveMarginResponse, error)
 	AddMargin(context.Context, *MsgAddMargin) (*MsgAddMarginResponse, error)
 	MultiLiquidate(context.Context, *MsgMultiLiquidate) (*MsgMultiLiquidateResponse, error)
-	OpenPosition(context.Context, *MsgOpenPosition) (*MsgOpenPositionResponse, error)
+	MarketOrder(context.Context, *MsgMarketOrder) (*MsgMarketOrderResponse, error)
 	ClosePosition(context.Context, *MsgClosePosition) (*MsgClosePositionResponse, error)
+	PartialClose(context.Context, *MsgPartialClose) (*MsgPartialCloseResponse, error)
 	DonateToEcosystemFund(context.Context, *MsgDonateToEcosystemFund) (*MsgDonateToEcosystemFundResponse, error)
 }
 
@@ -968,11 +1076,14 @@ func (*UnimplementedMsgServer) AddMargin(ctx context.Context, req *MsgAddMargin)
 func (*UnimplementedMsgServer) MultiLiquidate(ctx context.Context, req *MsgMultiLiquidate) (*MsgMultiLiquidateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MultiLiquidate not implemented")
 }
-func (*UnimplementedMsgServer) OpenPosition(ctx context.Context, req *MsgOpenPosition) (*MsgOpenPositionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method OpenPosition not implemented")
+func (*UnimplementedMsgServer) MarketOrder(ctx context.Context, req *MsgMarketOrder) (*MsgMarketOrderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MarketOrder not implemented")
 }
 func (*UnimplementedMsgServer) ClosePosition(ctx context.Context, req *MsgClosePosition) (*MsgClosePositionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ClosePosition not implemented")
+}
+func (*UnimplementedMsgServer) PartialClose(ctx context.Context, req *MsgPartialClose) (*MsgPartialCloseResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PartialClose not implemented")
 }
 func (*UnimplementedMsgServer) DonateToEcosystemFund(ctx context.Context, req *MsgDonateToEcosystemFund) (*MsgDonateToEcosystemFundResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DonateToEcosystemFund not implemented")
@@ -1036,20 +1147,20 @@ func _Msg_MultiLiquidate_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Msg_OpenPosition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgOpenPosition)
+func _Msg_MarketOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgMarketOrder)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MsgServer).OpenPosition(ctx, in)
+		return srv.(MsgServer).MarketOrder(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/nibiru.perp.v2.Msg/OpenPosition",
+		FullMethod: "/nibiru.perp.v2.Msg/MarketOrder",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).OpenPosition(ctx, req.(*MsgOpenPosition))
+		return srv.(MsgServer).MarketOrder(ctx, req.(*MsgMarketOrder))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1068,6 +1179,24 @@ func _Msg_ClosePosition_Handler(srv interface{}, ctx context.Context, dec func(i
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MsgServer).ClosePosition(ctx, req.(*MsgClosePosition))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_PartialClose_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgPartialClose)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).PartialClose(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/nibiru.perp.v2.Msg/PartialClose",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).PartialClose(ctx, req.(*MsgPartialClose))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1107,12 +1236,16 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Msg_MultiLiquidate_Handler,
 		},
 		{
-			MethodName: "OpenPosition",
-			Handler:    _Msg_OpenPosition_Handler,
+			MethodName: "MarketOrder",
+			Handler:    _Msg_MarketOrder_Handler,
 		},
 		{
 			MethodName: "ClosePosition",
 			Handler:    _Msg_ClosePosition_Handler,
+		},
+		{
+			MethodName: "PartialClose",
+			Handler:    _Msg_PartialClose_Handler,
 		},
 		{
 			MethodName: "DonateToEcosystemFund",
@@ -1464,6 +1597,16 @@ func (m *MsgMultiLiquidateResponse_LiquidationResponse) MarshalToSizedBuffer(dAt
 	_ = i
 	var l int
 	_ = l
+	{
+		size := m.Pair.Size()
+		i -= size
+		if _, err := m.Pair.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x32
 	if len(m.Trader) > 0 {
 		i -= len(m.Trader)
 		copy(dAtA[i:], m.Trader)
@@ -1515,7 +1658,7 @@ func (m *MsgMultiLiquidateResponse_LiquidationResponse) MarshalToSizedBuffer(dAt
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgOpenPosition) Marshal() (dAtA []byte, err error) {
+func (m *MsgMarketOrder) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1525,12 +1668,12 @@ func (m *MsgOpenPosition) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgOpenPosition) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgMarketOrder) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgOpenPosition) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgMarketOrder) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1590,7 +1733,7 @@ func (m *MsgOpenPosition) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgOpenPositionResponse) Marshal() (dAtA []byte, err error) {
+func (m *MsgMarketOrderResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1600,12 +1743,12 @@ func (m *MsgOpenPositionResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgOpenPositionResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgMarketOrderResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgOpenPositionResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgMarketOrderResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1764,7 +1907,130 @@ func (m *MsgClosePositionResponse) MarshalToSizedBuffer(dAtA []byte) (int, error
 		i = encodeVarintTx(dAtA, i, uint64(size))
 	}
 	i--
-	dAtA[i] = 0x3a
+	dAtA[i] = 0x2a
+	{
+		size := m.RealizedPnl.Size()
+		i -= size
+		if _, err := m.RealizedPnl.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x22
+	{
+		size := m.FundingPayment.Size()
+		i -= size
+		if _, err := m.FundingPayment.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x1a
+	{
+		size := m.ExchangedPositionSize.Size()
+		i -= size
+		if _, err := m.ExchangedPositionSize.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	{
+		size := m.ExchangedNotionalValue.Size()
+		i -= size
+		if _, err := m.ExchangedNotionalValue.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgPartialClose) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgPartialClose) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgPartialClose) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size := m.Size_.Size()
+		i -= size
+		if _, err := m.Size_.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x1a
+	{
+		size := m.Pair.Size()
+		i -= size
+		if _, err := m.Pair.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	if len(m.Sender) > 0 {
+		i -= len(m.Sender)
+		copy(dAtA[i:], m.Sender)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Sender)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgPartialCloseResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgPartialCloseResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgPartialCloseResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size := m.MarginToTrader.Size()
+		i -= size
+		if _, err := m.MarginToTrader.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x2a
 	{
 		size := m.RealizedPnl.Size()
 		i -= size
@@ -2022,10 +2288,12 @@ func (m *MsgMultiLiquidateResponse_LiquidationResponse) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
+	l = m.Pair.Size()
+	n += 1 + l + sovTx(uint64(l))
 	return n
 }
 
-func (m *MsgOpenPosition) Size() (n int) {
+func (m *MsgMarketOrder) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -2049,7 +2317,7 @@ func (m *MsgOpenPosition) Size() (n int) {
 	return n
 }
 
-func (m *MsgOpenPositionResponse) Size() (n int) {
+func (m *MsgMarketOrderResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -2092,6 +2360,42 @@ func (m *MsgClosePosition) Size() (n int) {
 }
 
 func (m *MsgClosePositionResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = m.ExchangedNotionalValue.Size()
+	n += 1 + l + sovTx(uint64(l))
+	l = m.ExchangedPositionSize.Size()
+	n += 1 + l + sovTx(uint64(l))
+	l = m.FundingPayment.Size()
+	n += 1 + l + sovTx(uint64(l))
+	l = m.RealizedPnl.Size()
+	n += 1 + l + sovTx(uint64(l))
+	l = m.MarginToTrader.Size()
+	n += 1 + l + sovTx(uint64(l))
+	return n
+}
+
+func (m *MsgPartialClose) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Sender)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = m.Pair.Size()
+	n += 1 + l + sovTx(uint64(l))
+	l = m.Size_.Size()
+	n += 1 + l + sovTx(uint64(l))
+	return n
+}
+
+func (m *MsgPartialCloseResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -3212,6 +3516,40 @@ func (m *MsgMultiLiquidateResponse_LiquidationResponse) Unmarshal(dAtA []byte) e
 			}
 			m.Trader = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Pair", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Pair.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTx(dAtA[iNdEx:])
@@ -3233,7 +3571,7 @@ func (m *MsgMultiLiquidateResponse_LiquidationResponse) Unmarshal(dAtA []byte) e
 	}
 	return nil
 }
-func (m *MsgOpenPosition) Unmarshal(dAtA []byte) error {
+func (m *MsgMarketOrder) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3256,10 +3594,10 @@ func (m *MsgOpenPosition) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgOpenPosition: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgMarketOrder: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgOpenPosition: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgMarketOrder: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -3470,7 +3808,7 @@ func (m *MsgOpenPosition) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgOpenPositionResponse) Unmarshal(dAtA []byte) error {
+func (m *MsgMarketOrderResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3493,10 +3831,10 @@ func (m *MsgOpenPositionResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgOpenPositionResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgMarketOrderResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgOpenPositionResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgMarketOrderResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -4075,7 +4413,377 @@ func (m *MsgClosePositionResponse) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 7:
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MarginToTrader", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.MarginToTrader.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgPartialClose) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgPartialClose: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgPartialClose: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sender", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Sender = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Pair", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Pair.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Size_", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Size_.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgPartialCloseResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgPartialCloseResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgPartialCloseResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ExchangedNotionalValue", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.ExchangedNotionalValue.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ExchangedPositionSize", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.ExchangedPositionSize.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FundingPayment", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.FundingPayment.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RealizedPnl", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.RealizedPnl.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 5:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field MarginToTrader", wireType)
 			}

@@ -3,8 +3,6 @@ package types
 import (
 	fmt "fmt"
 
-	sdkmath "cosmossdk.io/math"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -82,44 +80,6 @@ type PositionResp struct {
 	PositionNotional sdk.Dec
 }
 
-type LiquidateResp struct {
-	// Amount of bad debt created by the liquidation event
-	BadDebt sdkmath.Int
-	// Fee paid to the liquidator
-	FeeToLiquidator sdkmath.Int
-	// Fee paid to the Perp EF fund
-	FeeToPerpEcosystemFund sdkmath.Int
-	// Address of the liquidator
-	Liquidator string
-	// Position response from the close or open reverse position
-	PositionResp *PositionResp
-}
-
-func (l *LiquidateResp) Validate() error {
-	nilFieldError := fmt.Errorf("invalid liquidationOutput, must not have nil fields")
-
-	// nil sdk.Int check
-	for _, field := range []sdkmath.Int{
-		l.FeeToLiquidator, l.FeeToPerpEcosystemFund} {
-		if field.IsNil() {
-			return nilFieldError
-		}
-	}
-
-	// nil sdk.Int check
-	for _, field := range []sdkmath.Int{l.BadDebt} {
-		if field.IsNil() {
-			return nilFieldError
-		}
-	}
-
-	if _, err := sdk.AccAddressFromBech32(l.Liquidator); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (m *Position) Validate() error {
 	if _, err := sdk.AccAddressFromBech32(m.TraderAddress); err != nil {
 		return err
@@ -146,4 +106,45 @@ func (m *Position) Validate() error {
 	}
 
 	return nil
+}
+
+func (position *Position) WithTraderAddress(value string) *Position {
+	position.TraderAddress = value
+	return position
+}
+func (position *Position) WithPair(value asset.Pair) *Position {
+	position.Pair = value
+	return position
+}
+func (position *Position) WithSize_(value sdk.Dec) *Position {
+	position.Size_ = value
+	return position
+}
+func (position *Position) WithMargin(value sdk.Dec) *Position {
+	position.Margin = value
+	return position
+}
+func (position *Position) WithOpenNotional(value sdk.Dec) *Position {
+	position.OpenNotional = value
+	return position
+}
+func (position *Position) WithLatestCumulativePremiumFraction(value sdk.Dec) *Position {
+	position.LatestCumulativePremiumFraction = value
+	return position
+}
+func (position *Position) WithLastUpdatedBlockNumber(value int64) *Position {
+	position.LastUpdatedBlockNumber = value
+	return position
+}
+
+func (p *Position) copy() *Position {
+	return &Position{
+		TraderAddress:                   p.TraderAddress,
+		Pair:                            p.Pair,
+		Size_:                           p.Size_,
+		Margin:                          p.Margin,
+		OpenNotional:                    p.OpenNotional,
+		LatestCumulativePremiumFraction: p.LatestCumulativePremiumFraction,
+		LastUpdatedBlockNumber:          p.LastUpdatedBlockNumber,
+	}
 }

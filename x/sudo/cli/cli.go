@@ -5,21 +5,21 @@ import (
 	"os"
 	"strings"
 
+	"github.com/NibiruChain/nibiru/x/sudo/types"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/version"
 
 	"github.com/spf13/cobra"
-
-	"github.com/NibiruChain/nibiru/x/sudo/pb"
 )
 
 // GetTxCmd returns a cli command for this module's transactions
 func GetTxCmd() *cobra.Command {
 	txCmd := &cobra.Command{
-		Use:                        pb.ModuleName,
-		Short:                      fmt.Sprintf("x/%s transaction subcommands", pb.ModuleName),
+		Use:                        types.ModuleName,
+		Short:                      fmt.Sprintf("x/%s transaction subcommands", types.ModuleName),
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
@@ -28,6 +28,7 @@ func GetTxCmd() *cobra.Command {
 	// Add subcommands
 	txCmd.AddCommand(
 		CmdEditSudoers(),
+		CmdChangeRoot(),
 	)
 
 	return txCmd
@@ -36,9 +37,9 @@ func GetTxCmd() *cobra.Command {
 // GetQueryCmd returns a cli command for this module's queries
 func GetQueryCmd() *cobra.Command {
 	moduleQueryCmd := &cobra.Command{
-		Use: pb.ModuleName,
+		Use: types.ModuleName,
 		Short: fmt.Sprintf(
-			"Query commands for the x/%s module", pb.ModuleName),
+			"Query commands for the x/%s module", types.ModuleName),
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
@@ -84,7 +85,7 @@ func CmdEditSudoers() *cobra.Command {
 				return err
 			}
 
-			msg := new(pb.MsgEditSudoers)
+			msg := new(types.MsgEditSudoers)
 
 			// marshals contents into the proto.Message to which 'msg' points.
 			contents, err := os.ReadFile(args[0])
@@ -112,6 +113,52 @@ func CmdEditSudoers() *cobra.Command {
 	return cmd
 }
 
+// CmdChangeRoot is a terminal command corresponding to the ChangeRoot
+func CmdChangeRoot() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "change-root [new-root-address]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Change the root address of the x/sudo state",
+		Example: strings.TrimSpace(fmt.Sprintf(`
+			Example: 
+			$ %s tx sudo change-root <new-root-address> --from=<key_or_address>
+			`, version.AppName)),
+		Long: strings.TrimSpace(
+			`Change the root address of the x/sudo state, giving the
+				new address, should be executed by the current root address.
+			`),
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := new(types.MsgChangeRoot)
+
+			// marshals contents into the proto.Message to which 'msg' points.
+			root := args[0]
+			if err != nil {
+				return err
+			}
+
+			// Parse the message sender
+			from := clientCtx.GetFromAddress()
+			msg.Sender = from.String()
+			msg.NewRoot = root
+
+			if err = msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
 func CmdQuerySudoers() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "state",
@@ -123,9 +170,9 @@ func CmdQuerySudoers() *cobra.Command {
 				return err
 			}
 
-			queryClient := pb.NewQueryClient(clientCtx)
+			queryClient := types.NewQueryClient(clientCtx)
 
-			req := new(pb.QuerySudoersRequest)
+			req := new(types.QuerySudoersRequest)
 			resp, err := queryClient.QuerySudoers(
 				cmd.Context(), req,
 			)

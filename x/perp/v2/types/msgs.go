@@ -11,7 +11,7 @@ import (
 
 var _ sdk.Msg = &MsgRemoveMargin{}
 var _ sdk.Msg = &MsgAddMargin{}
-var _ sdk.Msg = &MsgOpenPosition{}
+var _ sdk.Msg = &MsgMarketOrder{}
 var _ sdk.Msg = &MsgClosePosition{}
 var _ sdk.Msg = &MsgMultiLiquidate{}
 
@@ -91,12 +91,12 @@ func (m MsgAddMargin) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{signer}
 }
 
-// MsgOpenPosition
+// MsgMarketOrder
 
-func (m MsgOpenPosition) Route() string { return "perp" }
-func (m MsgOpenPosition) Type() string  { return "open_position_msg" }
+func (m MsgMarketOrder) Route() string { return "perp" }
+func (m MsgMarketOrder) Type() string  { return "market_order_msg" }
 
-func (m *MsgOpenPosition) ValidateBasic() error {
+func (m *MsgMarketOrder) ValidateBasic() error {
 	if m.Side != Direction_SHORT && m.Side != Direction_LONG {
 		return fmt.Errorf("invalid side")
 	}
@@ -119,11 +119,11 @@ func (m *MsgOpenPosition) ValidateBasic() error {
 	return nil
 }
 
-func (m MsgOpenPosition) GetSignBytes() []byte {
+func (m MsgMarketOrder) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
 }
 
-func (m *MsgOpenPosition) GetSigners() []sdk.AccAddress {
+func (m *MsgMarketOrder) GetSigners() []sdk.AccAddress {
 	signer, err := sdk.AccAddressFromBech32(m.Sender)
 	if err != nil {
 		panic(err)
@@ -132,6 +132,9 @@ func (m *MsgOpenPosition) GetSigners() []sdk.AccAddress {
 }
 
 // MsgMultiLiquidate
+
+func (m MsgMultiLiquidate) Route() string { return "perp" }
+func (m MsgMultiLiquidate) Type() string  { return "multi_liquidate_msg" }
 
 func (m *MsgMultiLiquidate) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
@@ -149,6 +152,10 @@ func (m *MsgMultiLiquidate) ValidateBasic() error {
 	}
 
 	return nil
+}
+
+func (m MsgMultiLiquidate) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
 }
 
 func (m *MsgMultiLiquidate) GetSigners() []sdk.AccAddress {
@@ -207,6 +214,36 @@ func (m MsgDonateToEcosystemFund) GetSignBytes() []byte {
 }
 
 func (m MsgDonateToEcosystemFund) GetSigners() []sdk.AccAddress {
+	signer, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{signer}
+}
+
+// MsgPartialClose
+
+func (m MsgPartialClose) Route() string { return "perp" }
+func (m MsgPartialClose) Type() string  { return "partial_close_msg" }
+
+func (m MsgPartialClose) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return sdkerrors.Wrapf(errors.ErrInvalidAddress, "invalid sender address (%s)", err)
+	}
+	if err := m.Pair.Validate(); err != nil {
+		return err
+	}
+	if !m.Size_.IsPositive() {
+		return fmt.Errorf("invalid size amount: %s", m.Size_.String())
+	}
+	return nil
+}
+
+func (m MsgPartialClose) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
+}
+
+func (m MsgPartialClose) GetSigners() []sdk.AccAddress {
 	signer, err := sdk.AccAddressFromBech32(m.Sender)
 	if err != nil {
 		panic(err)

@@ -7,6 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
@@ -41,10 +42,15 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64)
 			continue
 		}
 
-		epochInfo := k.EpochKeeper.GetEpochInfo(ctx, epochIdentifier)
+		epochInfo, err := k.EpochKeeper.GetEpochInfo(ctx, epochIdentifier)
+		if err != nil {
+			ctx.Logger().Error("failed to fetch epoch info", "epochIdentifier", epochIdentifier, "error", err)
+			continue
+		}
 		intervalsPerDay := (24 * time.Hour) / epochInfo.Duration
 		// See https://www.notion.so/nibiru/Funding-Payments-5032d0f8ed164096808354296d43e1fa for an explanation of these terms.
-		premiumFraction := markTwap.Sub(indexTwap).QuoInt64(int64(intervalsPerDay))
+		clampedDivergence := common.Clamp(markTwap.Sub(indexTwap).Quo(indexTwap), market.MaxFundingRate)
+		premiumFraction := clampedDivergence.Mul(indexTwap).QuoInt64(int64(intervalsPerDay))
 
 		market.LatestCumulativePremiumFraction = market.LatestCumulativePremiumFraction.Add(premiumFraction)
 		k.Markets.Insert(ctx, market.Pair, market)

@@ -496,7 +496,7 @@ func TestQuerySpotPrice(t *testing.T) {
 			),
 			tokenInDenom:  denoms.NUSD,
 			tokenOutDenom: "unibi",
-			expectedPrice: sdk.MustNewDecFromStr("1"),
+			expectedPrice: sdk.OneDec(),
 		},
 		{
 			name: "price of 2 unusd per unibi",

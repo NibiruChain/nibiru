@@ -8,6 +8,12 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/NibiruChain/nibiru/x/genmsg"
+
+	"github.com/NibiruChain/nibiru/x/sudo/keeper"
+
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
+
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	dbm "github.com/cometbft/cometbft-db"
@@ -119,11 +125,6 @@ const (
 	DisplayDenom         = "NIBI"
 )
 
-// IBC application testing ports
-const (
-	MockFeePort string = ibcmock.ModuleName + ibcfeetypes.ModuleName
-)
-
 var (
 	// DefaultNodeHome default home directories for the application daemon
 	DefaultNodeHome string
@@ -168,6 +169,7 @@ var (
 		sudo.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		ibcfee.AppModuleBasic{},
+		genmsg.AppModule{},
 	)
 
 	// module account permissions
@@ -191,7 +193,7 @@ var (
 
 		epochstypes.ModuleName:                {},
 		stablecointypes.StableEFModuleAccount: {authtypes.Burner},
-		sudo.ModuleName:                       {},
+		sudotypes.ModuleName:                  {},
 		common.TreasuryPoolModuleAccount:      {},
 		wasm.ModuleName:                       {authtypes.Burner},
 	}
@@ -270,7 +272,7 @@ type NibiruApp struct {
 	OracleKeeper     oraclekeeper.Keeper
 	StablecoinKeeper stablecoinkeeper.Keeper
 	InflationKeeper  inflationkeeper.Keeper
-	SudoKeeper       sudo.Keeper
+	SudoKeeper       keeper.Keeper
 
 	// WASM keepers
 	WasmKeeper       wasm.Keeper
@@ -579,7 +581,7 @@ func (app *NibiruApp) GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper {
    This is provided for compatibility between protobuf and amino implementations. */
 
 func (app *NibiruApp) GetTxConfig() client.TxConfig {
-	return MakeEncodingConfig().TxConfig
+	return MakeEncodingConfigAndRegister().TxConfig
 }
 
 // ------------------------------------------------------------------------
