@@ -59,6 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1536](https://github.com/NibiruChain/nibiru/pull/1536) - test(perp): add more tests to perp module and cli
 * [#1533](https://github.com/NibiruChain/nibiru/pull/1533) - feat(perp): add differential fields to PositionChangedEvent
 * [#1541](https://github.com/NibiruChain/nibiru/pull/1541) - feat(perp): add clamp to premium fractions
+* [#xxx](https://github.com/NibiruChain/nibiru/pull/xxx) - feat(perp): paginated query to read the position store  
 
 ### Features
 

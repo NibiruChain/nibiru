@@ -6,7 +6,6 @@ import (
 	"github.com/NibiruChain/collections"
 
 	storeprefix "github.com/cosmos/cosmos-sdk/store/prefix"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkquery "github.com/cosmos/cosmos-sdk/types/query"
 
@@ -14,6 +13,7 @@ import (
 	grpccodes "google.golang.org/grpc/codes"
 	grpcstatus "google.golang.org/grpc/status"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
@@ -97,17 +97,22 @@ func (q queryServer) QueryPositionStore(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	store := storeprefix.NewStore(ctx.KVStore(q.k.storeKey), NamespacePositions.Prefix())
 
+	pagination, _, err := common.ParsePagination(req.Pagination)
+	if err != nil {
+		return resp, grpcstatus.Error(grpccodes.InvalidArgument, err.Error())
+	}
+
 	var respPayload []types.Position
-	pageRes, err := sdkquery.Paginate(store, req.Pagination, func(key, value []byte) error {
+	pageRes, err := sdkquery.Paginate(store, pagination, func(key, value []byte) error {
 		pos := new(types.Position)
 		if err := q.k.cdc.Unmarshal(value, pos); err != nil {
-			return err
+			return grpcstatus.Error(grpccodes.Internal, err.Error())
 		}
 		respPayload = append(respPayload, *pos)
 		return nil
 	})
 	if err != nil {
-		return resp, grpcstatus.Error(grpccodes.Internal, err.Error())
+		return resp, err
 	}
 
 	return &types.QueryPositionStoreResponse{
