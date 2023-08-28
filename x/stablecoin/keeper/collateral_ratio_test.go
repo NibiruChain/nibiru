@@ -378,7 +378,8 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 			targetCollRatio: sdk.MustNewDecFromStr("0.6"), // 0.6 * 1000 = 600
 			priceCollStable: sdk.OneDec(),
 			postedAssetPairs: []asset.Pair{
-				asset.Registry.Pair(denoms.USDC, denoms.NUSD)},
+				asset.Registry.Pair(denoms.USDC, denoms.NUSD),
+			},
 			govOut:       sdkmath.Int{},
 			expectedPass: false,
 		},
@@ -389,7 +390,8 @@ func TestGovAmtFromFullRecollateralize(t *testing.T) {
 			targetCollRatio: sdk.MustNewDecFromStr("0.6"), // 0.6 * 1000 = 600
 			priceGovStable:  sdk.OneDec(),
 			postedAssetPairs: []asset.Pair{
-				asset.Registry.Pair(denoms.NIBI, denoms.NUSD)},
+				asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
+			},
 			govOut:       sdkmath.Int{},
 			expectedPass: false,
 		},
@@ -805,7 +807,8 @@ func TestBuyback_MsgFormat(t *testing.T) {
 			name:   "non-bech32 caller has invalid address for the msg",
 			caller: "nibi_non_bech32",
 			err:    fmt.Errorf("decoding bech32 failed: invalid separator index "),
-		}, {
+		},
+		{
 			name:   "valid creator address",
 			caller: testutil.AccAddress().String(),
 			err:    nil,

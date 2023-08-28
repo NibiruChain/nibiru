@@ -5,11 +5,10 @@ import (
 	"math"
 	"sort"
 	"strconv"
+	"testing"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
-
-	"testing"
 
 	"github.com/stretchr/testify/require"
 
@@ -26,24 +25,20 @@ func TestToMap(t *testing.T) {
 		votes   []types.ExchangeRateBallot
 		isValid []bool
 	}{
-
 		[]types.ExchangeRateBallot{
 			{
-
 				Voter:        sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()),
 				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				ExchangeRate: sdk.NewDec(1600),
 				Power:        100,
 			},
 			{
-
 				Voter:        sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()),
 				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				ExchangeRate: sdk.ZeroDec(),
 				Power:        100,
 			},
 			{
-
 				Voter:        sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()),
 				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				ExchangeRate: sdk.NewDec(1500),

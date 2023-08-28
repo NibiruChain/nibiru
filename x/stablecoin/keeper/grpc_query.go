@@ -35,7 +35,8 @@ func (k Keeper) ModuleAccountBalances(
 		ctx, k.AccountKeeper.GetModuleAddress(types.ModuleName),
 	)
 	return &types.QueryModuleAccountBalancesResponse{
-		ModuleAccountBalances: balances}, nil
+		ModuleAccountBalances: balances,
+	}, nil
 }
 
 func (k Keeper) CirculatingSupplies(

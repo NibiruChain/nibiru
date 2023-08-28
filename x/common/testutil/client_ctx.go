@@ -25,7 +25,7 @@ func SetupClientCtx(t *testing.T) context.Context {
 	require.NoError(t, err)
 
 	appCodec := moduletestutil.MakeTestEncodingConfig().Codec
-	var testModuleBasicManager = module.NewBasicManager(genutil.AppModuleBasic{})
+	testModuleBasicManager := module.NewBasicManager(genutil.AppModuleBasic{})
 	err = genutiltest.ExecInitCmd(
 		testModuleBasicManager, home, appCodec)
 	require.NoError(t, err)

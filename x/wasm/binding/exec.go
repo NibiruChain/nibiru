@@ -132,7 +132,8 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 		default:
 			err = wasmvmtypes.InvalidRequest{
 				Err:     "invalid bindings request",
-				Request: wasmMsg.Custom}
+				Request: wasmMsg.Custom,
+			}
 			return events, data, err
 		}
 	}

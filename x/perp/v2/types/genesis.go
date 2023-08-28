@@ -1,11 +1,10 @@
 package types
 
 import (
+	"encoding/json"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"encoding/json"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"

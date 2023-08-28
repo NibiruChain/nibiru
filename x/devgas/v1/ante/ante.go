@@ -5,13 +5,11 @@ import (
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
-	errorsmod "cosmossdk.io/errors"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	feeshare "github.com/NibiruChain/nibiru/x/devgas/v1/types"
+	devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
 )
 
 var _ sdk.AnteDecorator = (*DevGasPayoutDecorator)(nil)
@@ -38,14 +36,14 @@ func (a DevGasPayoutDecorator) AnteHandle(
 ) (newCtx sdk.Context, err error) {
 	feeTx, ok := tx.(sdk.FeeTx)
 	if !ok {
-		return ctx, errorsmod.Wrap(sdkerrors.ErrTxDecode, "Tx must be a FeeTx")
+		return ctx, sdkerrors.ErrTxDecode.Wrap("Tx must be a FeeTx")
 	}
 
 	err = a.devGasPayout(
 		ctx, feeTx,
 	)
 	if err != nil {
-		return ctx, errorsmod.Wrapf(sdkerrors.ErrInsufficientFunds, err.Error())
+		return ctx, sdkerrors.ErrInsufficientFunds.Wrap(err.Error())
 	}
 
 	return next(ctx, tx, simulate)
@@ -79,20 +77,23 @@ func (a DevGasPayoutDecorator) devGasPayout(
 
 	bz, err := json.Marshal(feesPaidOutput)
 	if err != nil {
-		return errorsmod.Wrapf(feeshare.ErrFeeSharePayment, "failed to marshal feesPaidOutput: %s", err.Error())
+		return devgastypes.ErrFeeSharePayment.Wrapf("failed to marshal feesPaidOutput: %s", err.Error())
 	}
 
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			feeshare.EventTypePayoutFeeShare,
-			sdk.NewAttribute(feeshare.AttributeWithdrawPayouts, string(bz))),
+	return ctx.EventManager().EmitTypedEvent(
+		&devgastypes.EventPayoutDevGas{Payouts: string(bz)},
 	)
-
-	return nil
 }
 
-// settleFeePayments actually sends the funds to the contract developers
-func (a DevGasPayoutDecorator) settleFeePayments(ctx sdk.Context, toPay []sdk.AccAddress, params feeshare.ModuleParams, totalFees sdk.Coins) ([]FeeSharePayoutEventOutput, error) {
+type FeeSharePayoutEventOutput struct {
+	WithdrawAddress sdk.AccAddress `json:"withdraw_address"`
+	FeesPaid        sdk.Coins      `json:"fees_paid"`
+}
+
+// settleFeePayments sends the funds to the contract developers
+func (a DevGasPayoutDecorator) settleFeePayments(
+	ctx sdk.Context, toPay []sdk.AccAddress, params devgastypes.ModuleParams, totalFees sdk.Coins,
+) ([]FeeSharePayoutEventOutput, error) {
 	allowedFees := getAllowedFees(params, totalFees)
 
 	numPairs := len(toPay)
@@ -110,7 +111,7 @@ func (a DevGasPayoutDecorator) settleFeePayments(ctx sdk.Context, toPay []sdk.Ac
 			}
 
 			if err != nil {
-				return nil, errorsmod.Wrapf(feeshare.ErrFeeSharePayment, "failed to pay allowedFees to contract developer: %s", err.Error())
+				return nil, devgastypes.ErrFeeSharePayment.Wrapf("failed to pay allowedFees to contract developer: %s", err.Error())
 			}
 		}
 	}
@@ -118,8 +119,9 @@ func (a DevGasPayoutDecorator) settleFeePayments(ctx sdk.Context, toPay []sdk.Ac
 	return feesPaidOutput, nil
 }
 
-// getAllowedFees gets the allowed fees to be paid based on the governance params
-func getAllowedFees(params feeshare.ModuleParams, totalFees sdk.Coins) sdk.Coins {
+// getAllowedFees gets the allowed fees to be paid based on the module
+// parameters of x/devgas
+func getAllowedFees(params devgastypes.ModuleParams, totalFees sdk.Coins) sdk.Coins {
 	// Get only allowed governance fees to be paid (helps for taxes)
 	var allowedFees sdk.Coins
 	if len(params.AllowedDenoms) == 0 {
@@ -138,7 +140,8 @@ func getAllowedFees(params feeshare.ModuleParams, totalFees sdk.Coins) sdk.Coins
 	return allowedFees
 }
 
-// getWithdrawAddressesFromMsgs returns a list of all contract addresses that have opted-in to receiving payments
+// getWithdrawAddressesFromMsgs returns a list of all contract addresses that
+// have opted-in to receiving payments
 func (a DevGasPayoutDecorator) getWithdrawAddressesFromMsgs(ctx sdk.Context, msgs []sdk.Msg) ([]sdk.AccAddress, error) {
 	toPay := make([]sdk.AccAddress, 0)
 	for _, msg := range msgs {
@@ -175,9 +178,4 @@ func FeePayLogic(fees sdk.Coins, govPercent sdk.Dec, numPairs int) sdk.Coins {
 	}
 
 	return splitFees
-}
-
-type FeeSharePayoutEventOutput struct {
-	WithdrawAddress sdk.AccAddress `json:"withdraw_address"`
-	FeesPaid        sdk.Coins      `json:"fees_paid"`
 }

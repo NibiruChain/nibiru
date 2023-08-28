@@ -29,6 +29,10 @@ type Action interface {
 	)
 }
 
+func ActionResp(ctx sdk.Context, respErr error) (outCtx sdk.Context, err error, isMandatory bool) {
+	return ctx, respErr, false
+}
+
 type TestCases []TestCase
 
 type TestCase struct {

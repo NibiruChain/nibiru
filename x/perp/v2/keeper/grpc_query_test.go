@@ -4,7 +4,9 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkquery "github.com/cosmos/cosmos-sdk/types/query"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
@@ -361,4 +363,68 @@ func TestQueryMarkets(t *testing.T) {
 	}
 
 	tutilaction.NewTestSuite(t).WithTestCases(tc...).Run()
+}
+
+func TestQueryPositionStore(t *testing.T) {
+	pairs := []asset.Pair{
+		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
+		asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
+	}
+
+	insertManyPositions := func(num int, pair asset.Pair) []Action {
+		var actions []Action
+		for idx := 0; idx < num; idx++ {
+			insertAction := InsertPosition(WithPair(pair))
+			actions = append(actions, insertAction)
+		}
+
+		return actions
+	}
+
+	tc := TestCases{
+		TC("paginated positions in state").
+			Given(
+				CreateCustomMarket(pairs[0]),
+				CreateCustomMarket(pairs[1]),
+				CreateCustomMarket(pairs[2]),
+			).
+			When(
+				InsertPosition(WithPair(pairs[2])),
+				InsertPosition(WithPair(pairs[1])),
+				InsertPosition(WithPair(pairs[2])),
+			).
+			Then(
+				QueryPositionStore(&sdkquery.PageRequest{}, false, CheckPositionStore_NumPositions(3)),
+			),
+
+		TC("get default number of positions per page").
+			Given(
+				CreateCustomMarket(pairs[2]),
+			).
+			When(
+				insertManyPositions(99, pairs[2])...,
+			).
+			Then(
+				QueryPositionStore(&sdkquery.PageRequest{}, false,
+					CheckPositionStore_NumPositions(int(common.DefaultPageItemsLimit)),
+				),
+			),
+
+		TC("invalid request (key and offset defined)").
+			Given(
+				CreateCustomMarket(pairs[2]),
+			).
+			When(
+				insertManyPositions(2, pairs[2])...,
+			).
+			Then(
+				QueryPositionStore(&sdkquery.PageRequest{
+					Key: []byte{}, Offset: 25,
+				}, true,
+				),
+			),
+	}
+
+	NewTestSuite(t).WithTestCases(tc...).Run()
 }

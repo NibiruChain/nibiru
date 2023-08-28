@@ -176,7 +176,6 @@ $ nibid query oracle feeder nibivaloper...
 				context.Background(),
 				&types.QueryFeederDelegationRequest{ValidatorAddr: validator.String()},
 			)
-
 			if err != nil {
 				return err
 			}

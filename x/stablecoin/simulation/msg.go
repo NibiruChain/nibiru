@@ -30,7 +30,7 @@ func SimulateMsgMintStable(
 		}
 
 		// TODO: Implement the actual MintStable simulation.
-		var simOpMsg = simtypes.NoOpMsg(
+		simOpMsg := simtypes.NoOpMsg(
 			types.ModuleName, msg.Type(), "SimulateMintStable not implemented",
 		)
 		var futureOp []simtypes.FutureOperation = nil

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkquery "github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/NibiruChain/collections"
 
@@ -229,6 +230,61 @@ func QueryModuleAccounts_ModulesBalanceShouldBe(expectedBalance map[string]sdk.C
 			if !found {
 				return fmt.Errorf("expected module %s to have balance %s but not found", name, balance)
 			}
+		}
+		return nil
+	}
+}
+
+// ---------------------------------------------------------
+// QueryPositionStore
+// ---------------------------------------------------------
+
+func QueryPositionStore(
+	pageReq *sdkquery.PageRequest, wantErr bool, checks ...QueryPositionStoreChecks,
+) action.Action {
+	return queryPositionStore{
+		pageReq: pageReq,
+		wantErr: wantErr,
+		checks:  checks,
+	}
+}
+
+func (q queryPositionStore) Do(
+	app *app.NibiruApp, ctx sdk.Context,
+) (newCtx sdk.Context, err error, isMandatory bool) {
+	queryServer := keeper.NewQuerier(app.PerpKeeperV2)
+
+	gotResp, err := queryServer.QueryPositionStore(
+		sdk.WrapSDKContext(ctx),
+		&types.QueryPositionStoreRequest{Pagination: q.pageReq},
+	)
+	if q.wantErr && err != nil {
+		return action.ActionResp(ctx, nil) // pass
+	} else if !q.wantErr && err != nil {
+		return action.ActionResp(ctx, err) // fail
+	}
+
+	for _, checker := range q.checks {
+		if err := checker(*gotResp); err != nil {
+			return action.ActionResp(ctx, err)
+		}
+	}
+	return action.ActionResp(ctx, nil)
+}
+
+type queryPositionStore struct {
+	pageReq *sdkquery.PageRequest
+	wantErr bool
+	checks  []QueryPositionStoreChecks
+}
+
+type QueryPositionStoreChecks func(resp types.QueryPositionStoreResponse) error
+
+func CheckPositionStore_NumPositions(num int) QueryPositionStoreChecks {
+	return func(got types.QueryPositionStoreResponse) error {
+		gotNumPos := len(got.Positions)
+		if num != gotNumPos {
+			return fmt.Errorf("expected num positions: %v, got: %v", num, gotNumPos)
 		}
 		return nil
 	}

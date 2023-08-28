@@ -45,7 +45,8 @@ func TestPositionsAreEqual(t *testing.T) {
 	}{
 		{
 			modifier:      func(p *Position) { p.WithPair(asset.NewPair("ueth", "unusd")) },
-			requiredError: "expected position pair"},
+			requiredError: "expected position pair",
+		},
 		{
 			modifier:      func(p *Position) { p.WithTraderAddress(accOtherAddress) },
 			requiredError: "expected position trader address",

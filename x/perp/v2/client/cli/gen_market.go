@@ -110,7 +110,7 @@ func AddMarketGenesisCmd(defaultNodeHome string) *cobra.Command {
 
 func newMarketFromFlags(flagSet *flag.FlagSet,
 ) (market types.Market, amm types.AMM, err error) {
-	var flagErrors = []error{}
+	flagErrors := []error{}
 
 	pairStr, err := flagSet.GetString(FlagPair)
 	flagErrors = append(flagErrors, err)

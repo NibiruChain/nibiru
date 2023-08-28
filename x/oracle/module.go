@@ -2,9 +2,8 @@ package oracle
 
 import (
 	"context"
-	"fmt"
-
 	"encoding/json"
+	"fmt"
 
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -101,7 +100,8 @@ func NewAppModule(
 	cdc codec.Codec,
 	keeper keeper.Keeper,
 	accountKeeper types.AccountKeeper,
-	bankKeeper types.BankKeeper) AppModule {
+	bankKeeper types.BankKeeper,
+) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{cdc},
 		keeper:         keeper,

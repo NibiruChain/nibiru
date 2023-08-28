@@ -10,10 +10,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var (
-	// paired against USD
-	ErrInvalidTokenPair = sdkerrors.Register("asset", 1, "invalid token pair")
-)
+// paired against USD
+var ErrInvalidTokenPair = sdkerrors.Register("asset", 1, "invalid token pair")
 
 type Pair string
 
@@ -144,6 +142,7 @@ func (pairKeyEncoder) Stringify(a Pair) string { return a.String() }
 func (pairKeyEncoder) Encode(a Pair) []byte {
 	return collections.StringKeyEncoder.Encode(a.String())
 }
+
 func (pairKeyEncoder) Decode(b []byte) (int, Pair) {
 	i, s := collections.StringKeyEncoder.Decode(b)
 	return i, MustNewPair(s)

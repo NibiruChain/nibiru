@@ -1,16 +1,15 @@
 package cmd
 
 import (
-	"time"
-
-	db "github.com/cometbft/cometbft-db"
-	tmcfg "github.com/cometbft/cometbft/config"
-
 	"bufio"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
+
+	db "github.com/cometbft/cometbft-db"
+	tmcfg "github.com/cometbft/cometbft/config"
 
 	tmcli "github.com/cometbft/cometbft/libs/cli"
 	tmrand "github.com/cometbft/cometbft/libs/rand"
