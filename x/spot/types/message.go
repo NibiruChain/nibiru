@@ -6,10 +6,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-const TypeMsgExitPool = "exit_pool"
-const TypeMsgJoinPool = "join_pool"
-const TypeMsgSwapAssets = "swap_assets"
-const TypeMsgCreatePool = "create_pool"
+const (
+	TypeMsgExitPool   = "exit_pool"
+	TypeMsgJoinPool   = "join_pool"
+	TypeMsgSwapAssets = "swap_assets"
+	TypeMsgCreatePool = "create_pool"
+)
 
 var _ sdk.Msg = &MsgExitPool{}
 

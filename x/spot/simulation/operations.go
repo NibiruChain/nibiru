@@ -27,7 +27,8 @@ const defaultWeight = 100
 func WeightedOperations(
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
-	k keeper.Keeper) simulation.WeightedOperations {
+	k keeper.Keeper,
+) simulation.WeightedOperations {
 	return simulation.WeightedOperations{
 		simulation.NewWeightedOperation(
 			defaultWeight,
@@ -390,7 +391,8 @@ func fundAccountWithTokens(ctx sdk.Context, address sdk.AccAddress, bk types.Ban
 
 // findRandomPoolWithDenom search possible pool available to swap from a set of coins
 func findRandomPoolWithDenom(ctx sdk.Context, r *rand.Rand, spendableCoins sdk.Coins, k keeper.Keeper) (
-	denomIn string, denomOut string, poolId uint64, balanceIn sdkmath.Int) {
+	denomIn string, denomOut string, poolId uint64, balanceIn sdkmath.Int,
+) {
 	randomIndices := r.Perm(spendableCoins.Len())
 	whitelistedAssets := k.GetParams(ctx).GetWhitelistedAssetsAsMap()
 
@@ -413,7 +415,8 @@ func findRandomPoolWithDenom(ctx sdk.Context, r *rand.Rand, spendableCoins sdk.C
 
 // findRandomPoolWithDenomPair search one pool available from a pair of coins of simCoins
 func findRandomPoolWithDenomPair(ctx sdk.Context, r *rand.Rand, simCoins sdk.Coins, k keeper.Keeper) (
-	pool types.Pool, err error, index1 int, index2 int) {
+	pool types.Pool, err error, index1 int, index2 int,
+) {
 	whitelistedAssets := k.GetParams(ctx).GetWhitelistedAssetsAsMap()
 	randomIndices1 := r.Perm(simCoins.Len())
 	randomIndices2 := r.Perm(simCoins.Len())

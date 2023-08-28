@@ -60,6 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1533](https://github.com/NibiruChain/nibiru/pull/1533) - feat(perp): add differential fields to PositionChangedEvent
 * [#1541](https://github.com/NibiruChain/nibiru/pull/1541) - feat(perp): add clamp to premium fractions
 * [#1556](https://github.com/NibiruChain/nibiru/pull/1556) - refactor(perp): remove usage of unnamed dot imports
+* [#1554](https://github.com/NibiruChain/nibiru/pull/1554) - refactor: runs gofumpt formatter, which has nice conventions: go install mvdan.cc/gofumpt@latest
 
 ### Features
 

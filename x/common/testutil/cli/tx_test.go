@@ -20,7 +20,8 @@ func (s *IntegrationTestSuite) TestSendTx() {
 	txResp, err := s.network.BroadcastMsgs(fromAddr, &banktypes.MsgSend{
 		FromAddress: fromAddr.String(),
 		ToAddress:   toAddr.String(),
-		Amount:      sdk.NewCoins(sendCoin)},
+		Amount:      sdk.NewCoins(sendCoin),
+	},
 	)
 	s.NoError(err)
 	s.EqualValues(0, txResp.Code)
