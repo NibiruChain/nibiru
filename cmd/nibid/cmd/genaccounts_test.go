@@ -33,7 +33,7 @@ func TestAddGenesisAccountCmd(t *testing.T) {
 		expectError bool
 	}
 
-	var executeTest = func(t *testing.T, testCase TestCase) {
+	executeTest := func(t *testing.T, testCase TestCase) {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
 			home := t.TempDir()
@@ -57,7 +57,8 @@ func TestAddGenesisAccountCmd(t *testing.T) {
 			cmd.SetArgs([]string{
 				tc.addr,
 				tc.denom,
-				fmt.Sprintf("--%s=home", flags.FlagHome)})
+				fmt.Sprintf("--%s=home", flags.FlagHome),
+			})
 
 			if tc.expectError {
 				require.Error(t, cmd.ExecuteContext(ctx))

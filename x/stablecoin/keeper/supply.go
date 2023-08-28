@@ -60,7 +60,8 @@ func (k Keeper) GetLiquidityRatio(ctx sdk.Context) (sdk.Dec, error) {
 }
 
 func (k Keeper) GetLiquidityRatioBands(ctx sdk.Context) (
-	lowBand sdk.Dec, upBand sdk.Dec, err error) {
+	lowBand sdk.Dec, upBand sdk.Dec, err error,
+) {
 	liquidityRatio, err := k.GetLiquidityRatio(ctx)
 	if err != nil {
 		return sdk.Dec{}, sdk.Dec{}, err

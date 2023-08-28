@@ -100,7 +100,8 @@ func TestQueryExchangeRateTwap(t *testing.T) {
 		&types.EventPriceUpdate{
 			Pair:        asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 			Price:       rate,
-			TimestampMs: input.Ctx.BlockTime().UnixMilli()},
+			TimestampMs: input.Ctx.BlockTime().UnixMilli(),
+		},
 	)
 
 	ctx := sdk.WrapSDKContext(input.Ctx.

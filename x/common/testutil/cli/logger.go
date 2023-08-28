@@ -11,6 +11,4 @@ type Logger interface {
 	Logf(format string, args ...interface{})
 }
 
-var (
-	_ Logger = (*testing.T)(nil)
-)
+var _ Logger = (*testing.T)(nil)

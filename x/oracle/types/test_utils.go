@@ -2,10 +2,11 @@
 package types
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"math"
 	"math/rand"
 	"time"
+
+	sdkmath "cosmossdk.io/math"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -133,6 +134,7 @@ func (MockValidator) GetConsAddr() (sdk.ConsAddress, error) { return nil, nil }
 func (v MockValidator) GetTokens() sdk.Int {
 	return sdk.TokensFromConsensusPower(v.power, sdk.DefaultPowerReduction)
 }
+
 func (v MockValidator) GetBondedTokens() sdk.Int {
 	return sdk.TokensFromConsensusPower(v.power, sdk.DefaultPowerReduction)
 }

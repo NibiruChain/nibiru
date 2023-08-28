@@ -46,7 +46,8 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
 		paramtypes.NewParamSetPair([]byte("StartingPoolNumber"), &p.StartingPoolNumber, validatePoolNumber),
 		paramtypes.NewParamSetPair([]byte("PoolCreationFee"), &p.PoolCreationFee, validatePoolCreationFee),
-		paramtypes.NewParamSetPair([]byte("WhitelistedAsset"), &p.WhitelistedAsset, func(value interface{}) error { return nil })}
+		paramtypes.NewParamSetPair([]byte("WhitelistedAsset"), &p.WhitelistedAsset, func(value interface{}) error { return nil }),
+	}
 }
 
 func validatePoolNumber(i interface{}) error {

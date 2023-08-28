@@ -135,7 +135,6 @@ func (k queryServer) Pools(goCtx context.Context, req *types.QueryPoolsRequest) 
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -202,7 +201,6 @@ func (k queryServer) TotalPoolLiquidity(ctx context.Context, req *types.QueryTot
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	pool, err := k.FetchPool(sdkCtx, req.PoolId)
-
 	if err != nil {
 		return &types.QueryTotalPoolLiquidityResponse{}, err
 	}

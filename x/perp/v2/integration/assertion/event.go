@@ -15,8 +15,10 @@ import (
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
-var _ action.Action = (*containsLiquidateEvent)(nil)
-var _ action.Action = (*positionChangedEventShouldBeEqual)(nil)
+var (
+	_ action.Action = (*containsLiquidateEvent)(nil)
+	_ action.Action = (*positionChangedEventShouldBeEqual)(nil)
+)
 
 // TODO test(perp): Add action for testing the appearance of of successful
 // liquidation events.

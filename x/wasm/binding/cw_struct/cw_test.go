@@ -99,7 +99,7 @@ func getFileJson(t *testing.T) (fileJson map[string]json.RawMessage) {
 
 func (s *TestSuiteBindingJsonTypes) TestExecuteMsgs() {
 	t := s.T()
-	var fileJson = getFileJson(t)
+	fileJson := getFileJson(t)
 
 	testCaseMap := []string{
 		"market_order",

@@ -94,7 +94,8 @@ func TestCombineErrorsGeneric(t *testing.T) {
 		{
 			name: "type=[]fmt.Stringer | happy",
 			in:   []fmt.Stringer{asset.Registry.Pair(denoms.BTC, denoms.NUSD), asset.Registry.Pair(denoms.ETH, denoms.NUSD)},
-			out:  errors.New("ubtc:unusd: ueth:unusd")},
+			out:  errors.New("ubtc:unusd: ueth:unusd"),
+		},
 		{name: "type=[]fmt.Stringer | empty", in: []fmt.Stringer{}, out: nil},
 	}
 

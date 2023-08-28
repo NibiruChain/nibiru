@@ -164,7 +164,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 
 	// TODO add rosettaj
 	// add rosetta
-	//rootCmd.AddCommand(
+	// rootCmd.AddCommand(
 	//	server.RosettaCommand(
 	//		encodingConfig.InterfaceRegistry, encodingConfig.Codec))
 }

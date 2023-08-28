@@ -242,7 +242,8 @@ func (s *IntegrationTestSuite) TestMarketOrdersAndCloseCmd() {
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 		/* leverage */ "1",
 		/* quoteAmt */ "2000000", // 2*10^6 uNUSD
-		/* baseAssetLimit */ "1"},
+		/* baseAssetLimit */ "1",
+	},
 	)
 	s.NoError(err)
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
@@ -382,7 +383,8 @@ func (s *IntegrationTestSuite) TestPartialCloseCmd() {
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 		/* leverage */ "1",
 		/* quoteAmt */ "12000000", // 12e6 uNUSD
-		/* baseAssetLimit */ "0"},
+		/* baseAssetLimit */ "0",
+	},
 	)
 	s.NoError(err)
 	s.EqualValues(abcitypes.CodeTypeOK, txResp.Code)
