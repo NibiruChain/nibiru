@@ -133,7 +133,8 @@ func BuybackCmd() *cobra.Command {
 			}
 			msg := &types.MsgBuyback{
 				Creator: clientCtx.GetFromAddress().String(),
-				Gov:     inCoin}
+				Gov:     inCoin,
+			}
 
 			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
 		},
@@ -175,7 +176,8 @@ func RecollateralizeCmd() *cobra.Command {
 			}
 			msg := &types.MsgRecollateralize{
 				Creator: clientCtx.GetFromAddress().String(),
-				Coll:    inCoin}
+				Coll:    inCoin,
+			}
 
 			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
 		},

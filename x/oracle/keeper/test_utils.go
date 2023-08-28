@@ -2,14 +2,14 @@
 package keeper
 
 import (
+	"testing"
+	"time"
+
 	"github.com/cosmos/cosmos-sdk/store"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil/sims"
 	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"testing"
-
-	"time"
 
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
