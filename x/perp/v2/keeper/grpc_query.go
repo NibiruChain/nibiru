@@ -37,7 +37,7 @@ func (q queryServer) QueryPositions(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	markets := q.k.Markets.Iterate(ctx, collections.Range[asset.Pair]{}).Values()
+	markets := q.k.Markets.Iterate(ctx, collections.Range[collections.Pair[asset.Pair, uint64]]{}).Values()
 
 	var positions []types.QueryPositionResponse
 	for _, market := range markets {
@@ -69,7 +69,7 @@ func (q queryServer) QueryPosition(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	market, err := q.k.Markets.Get(ctx, req.Pair)
+	market, err := q.k.GetMarket(ctx, req.Pair)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +131,7 @@ func (q queryServer) QueryMarkets(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	var ammMarkets []types.AmmMarket
-	markets := q.k.Markets.Iterate(ctx, collections.Range[asset.Pair]{}).Values()
+	markets := q.k.Markets.Iterate(ctx, collections.Range[collections.Pair[asset.Pair, uint64]]{}).Values()
 	for _, market := range markets {
 		pair := market.Pair
 		amm, err := q.k.AMMs.Get(ctx, pair)

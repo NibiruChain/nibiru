@@ -2,6 +2,8 @@ package keeper
 
 import (
 	sdkmath "cosmossdk.io/math"
+	"fmt"
+	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -112,4 +114,19 @@ func (k Keeper) handleMarketUpdateCost(ctx sdk.Context, pair asset.Pair, costAmt
 		}
 	}
 	return nil
+}
+
+// GetMarket returns the market with last version.
+func (k Keeper) GetMarket(ctx sdk.Context, pair asset.Pair) (types.Market, error) {
+	lastVersion, err := k.MarketLastVersion.Get(ctx, pair)
+	if err != nil {
+		return types.Market{}, fmt.Errorf("market %s not found", pair)
+	}
+
+	market, err := k.Markets.Get(ctx, collections.Join(pair, lastVersion.Version))
+	if err != nil {
+		return types.Market{}, fmt.Errorf("market %s not found", pair)
+	}
+
+	return market, nil
 }

@@ -20,7 +20,7 @@ type marketShouldBeEqual struct {
 }
 
 func (m marketShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	market, err := app.PerpKeeperV2.Markets.Get(ctx, m.Pair)
+	market, err := app.PerpKeeperV2.GetMarket(ctx, m.Pair)
 	if err != nil {
 		return ctx, err, false
 	}

@@ -21,7 +21,7 @@ type logger struct {
 	log string
 }
 
-func (e logger) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (e logger) Do(_ *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	fmt.Println(e.log)
 	return ctx, nil, true
 }
@@ -39,7 +39,8 @@ type createMarketAction struct {
 }
 
 func (c createMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	app.PerpKeeperV2.Markets.Insert(ctx, c.Market.Pair, c.Market)
+	app.PerpKeeperV2.Markets.Insert(ctx, collections.Join(c.Market.Pair, uint64(1)), c.Market)
+	app.PerpKeeperV2.MarketLastVersion.Insert(ctx, c.Market.Pair, types.MarketLastVersion{Version: 1})
 	app.PerpKeeperV2.AMMs.Insert(ctx, c.AMM.Pair, c.AMM)
 
 	app.PerpKeeperV2.ReserveSnapshots.Insert(ctx, collections.Join(c.AMM.Pair, ctx.BlockTime()), types.ReserveSnapshot{

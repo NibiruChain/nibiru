@@ -17,7 +17,8 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 }
 
 func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64) {
-	for _, market := range k.Markets.Iterate(ctx, collections.Range[asset.Pair]{}).Values() {
+	for _, market := range k.Markets.Iterate(ctx, collections.Range[collections.Pair[asset.Pair, uint64]]{}).Values() {
+		// TODO (reviewer): this needs to be fixed for only enabled markets
 		if !market.Enabled || epochIdentifier != market.FundingRateEpochId {
 			return
 		}
@@ -53,7 +54,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64)
 		premiumFraction := clampedDivergence.Mul(indexTwap).QuoInt64(int64(intervalsPerDay))
 
 		market.LatestCumulativePremiumFraction = market.LatestCumulativePremiumFraction.Add(premiumFraction)
-		k.Markets.Insert(ctx, market.Pair, market)
+		k.Markets.Insert(ctx, collections.Join(market.Pair, market.Version), market)
 
 		_ = ctx.EventManager().EmitTypedEvent(&types.FundingRateChangedEvent{
 			Pair:                      market.Pair,

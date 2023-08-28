@@ -13,6 +13,7 @@ import (
 
 // EndBlocker Called every block to store a snapshot of the perpamm.
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
+	// TODO: take into account only enabled markets
 	for _, amm := range k.AMMs.Iterate(ctx, collections.Range[asset.Pair]{}).Values() {
 		snapshot := types.ReserveSnapshot{
 			Amm:         amm,
@@ -20,7 +21,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 		}
 		k.ReserveSnapshots.Insert(ctx, collections.Join(amm.Pair, ctx.BlockTime()), snapshot)
 
-		market, err := k.Markets.Get(ctx, amm.Pair)
+		market, err := k.GetMarket(ctx, amm.Pair)
 		if err != nil {
 			k.Logger(ctx).Error("failed to fetch market", "pair", amm.Pair, "error", err)
 			continue

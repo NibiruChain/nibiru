@@ -141,6 +141,10 @@ func TestCreateMarketFail(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	lastVersion, err := app.PerpKeeperV2.MarketLastVersion.Get(ctx, pair)
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), lastVersion.Version)
+
 	// Fail since it already exists and it is not disabled
 	err = app.PerpKeeperV2.Admin().CreateMarket(ctx, keeper.ArgsCreateMarket{
 		Pair:            pair,

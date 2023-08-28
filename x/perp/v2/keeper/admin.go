@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"github.com/NibiruChain/collections"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -71,9 +72,9 @@ func (k admin) CreateMarket(
 	args ArgsCreateMarket,
 ) error {
 	pair := args.Pair
-	market, err := k.Markets.Get(ctx, pair)
+	market, err := k.GetMarket(ctx, pair)
 	if err == nil && market.Enabled {
-		return fmt.Errorf("market %s already exists", pair)
+		return fmt.Errorf("market %s already exists and it is enabled", pair)
 	}
 
 	// init market
@@ -103,7 +104,10 @@ func (k admin) CreateMarket(
 		return err
 	}
 
-	k.Markets.Insert(ctx, pair, market)
+	lastVersion := k.MarketLastVersion.GetOr(ctx, pair, types.MarketLastVersion{Version: 1})
+
+	k.Markets.Insert(ctx, collections.Join(pair, lastVersion.Version), market)
+	k.MarketLastVersion.Insert(ctx, pair, lastVersion)
 	k.AMMs.Insert(ctx, pair, amm)
 
 	return nil

@@ -68,7 +68,7 @@ func RunTestGenesis(t *testing.T, tc TestCase) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 
 	// create some params
-	app.PerpKeeperV2.Markets.Insert(ctx, pair, *mock.TestMarket())
+	app.PerpKeeperV2.Markets.Insert(ctx, collections.Join(pair, uint64(1)), *mock.TestMarket())
 	app.PerpKeeperV2.AMMs.Insert(ctx, pair, *mock.TestAMMDefault())
 
 	// create some positions

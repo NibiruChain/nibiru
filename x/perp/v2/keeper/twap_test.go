@@ -107,7 +107,7 @@ func TestInvalidTwap(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	app, ctx := testapp.NewNibiruTestAppAndContext(true)
 
-	app.PerpKeeperV2.Markets.Insert(ctx, pair, *mock.TestMarket())
+	app.PerpKeeperV2.Markets.Insert(ctx, collections.Join(pair, uint64(1)), *mock.TestMarket())
 	app.PerpKeeperV2.AMMs.Insert(ctx, pair, *mock.TestAMMDefault())
 	app.PerpKeeperV2.ReserveSnapshots.Insert(ctx, collections.Join(pair, time.UnixMilli(0)), types.ReserveSnapshot{
 		Amm:         *mock.TestAMMDefault(),
@@ -364,7 +364,7 @@ func TestCalcTwapExtended(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testapp.NewNibiruTestAppAndContext(true)
 
-			app.PerpKeeperV2.Markets.Insert(ctx, pair, *mock.TestMarket())
+			app.PerpKeeperV2.Markets.Insert(ctx, collections.Join(pair, uint64(1)), *mock.TestMarket())
 			app.PerpKeeperV2.AMMs.Insert(ctx, pair, *mock.TestAMMDefault())
 			app.PerpKeeperV2.ReserveSnapshots.Insert(ctx, collections.Join(pair, time.UnixMilli(0)), types.ReserveSnapshot{
 				Amm:         *mock.TestAMMDefault(),

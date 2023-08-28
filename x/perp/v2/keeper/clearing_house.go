@@ -36,7 +36,7 @@ func (k Keeper) MarketOrder(
 	leverage sdk.Dec,
 	baseAmtLimit sdk.Dec,
 ) (positionResp *types.PositionResp, err error) {
-	market, err := k.Markets.Get(ctx, pair)
+	market, err := k.GetMarket(ctx, pair)
 	if err != nil {
 		return nil, types.ErrPairNotFound.Wrapf("pair %s not found", pair)
 	}
@@ -691,7 +691,7 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.A
 		return nil, err
 	}
 
-	market, err := k.Markets.Get(ctx, pair)
+	market, err := k.GetMarket(ctx, pair)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
 	}
@@ -833,7 +833,7 @@ func (k Keeper) PartialClose(
 	traderAddr sdk.AccAddress,
 	sizeAmt sdk.Dec, //unsigned
 ) (*types.PositionResp, error) {
-	market, err := k.Markets.Get(ctx, pair)
+	market, err := k.GetMarket(ctx, pair)
 	if err != nil {
 		return nil, types.ErrPairNotFound.Wrapf("pair: %s", pair)
 	}
