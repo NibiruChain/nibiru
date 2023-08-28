@@ -1168,7 +1168,7 @@ func TestMarketOrderError(t *testing.T) {
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			app, ctx := testapp.NewNibiruTestAppAndContext(true)
+			app, ctx := testapp.NewNibiruTestAppAndContext()
 			traderAddr := testutil.AccAddress()
 
 			market := mock.TestMarket()

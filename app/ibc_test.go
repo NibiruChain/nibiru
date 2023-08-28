@@ -28,7 +28,7 @@ func SetupNibiruTestingApp() (
 	defaultGenesis map[string]json.RawMessage,
 ) {
 	// create testing app
-	nibiruApp, _ := testapp.NewNibiruTestAppAndContext(true)
+	nibiruApp, _ := testapp.NewNibiruTestAppAndContext()
 
 	// Create genesis state
 	encCdc := app.MakeEncodingConfigAndRegister()
