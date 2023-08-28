@@ -35,10 +35,12 @@ func SetExchangeRates(
 	exchangeRateTuples := []oracletypes.ExchangeRateTuple{
 		{
 			Pair:         asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-			ExchangeRate: sdk.NewDec(1_000)},
+			ExchangeRate: sdk.NewDec(1_000),
+		},
 		{
 			Pair:         asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
-			ExchangeRate: sdk.NewDec(10)},
+			ExchangeRate: sdk.NewDec(10),
+		},
 	}
 
 	for _, exchangeRateTuple := range exchangeRateTuples {

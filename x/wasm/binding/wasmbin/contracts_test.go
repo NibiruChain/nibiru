@@ -21,7 +21,7 @@ func TestExpectedBytecodeExists(t *testing.T) {
 			pathToWasmbin := wasmbin.GetPackageDir(t)
 			pathToWasmBytecode := wasmKey.ToPath(pathToWasmbin)
 			_, err := os.Stat(pathToWasmBytecode)
-			var errMsg = ""
+			errMsg := ""
 			if os.IsNotExist(err) {
 				fileName := testName
 				errMsg = fmt.Sprintf("File %s does not exist\n", fileName)

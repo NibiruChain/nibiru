@@ -9,11 +9,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var _ sdk.Msg = &MsgRemoveMargin{}
-var _ sdk.Msg = &MsgAddMargin{}
-var _ sdk.Msg = &MsgMarketOrder{}
-var _ sdk.Msg = &MsgClosePosition{}
-var _ sdk.Msg = &MsgMultiLiquidate{}
+var (
+	_ sdk.Msg = &MsgRemoveMargin{}
+	_ sdk.Msg = &MsgAddMargin{}
+	_ sdk.Msg = &MsgMarketOrder{}
+	_ sdk.Msg = &MsgClosePosition{}
+	_ sdk.Msg = &MsgMultiLiquidate{}
+)
 
 // MsgRemoveMargin
 

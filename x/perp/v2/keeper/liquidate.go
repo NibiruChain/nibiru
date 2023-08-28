@@ -400,7 +400,8 @@ func (k Keeper) executePartialLiquidation(
 }
 
 func (k Keeper) distributeLiquidateRewards(
-	ctx sdk.Context, market types.Market, liquidator sdk.AccAddress, liquidatorFee sdk.Coin, ecosystemFundFee sdk.Coin) (err error) {
+	ctx sdk.Context, market types.Market, liquidator sdk.AccAddress, liquidatorFee sdk.Coin, ecosystemFundFee sdk.Coin,
+) (err error) {
 	// --------------------------------------------------------------
 	// Distribution of rewards
 	// --------------------------------------------------------------
