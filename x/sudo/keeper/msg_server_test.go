@@ -73,7 +73,8 @@ func TestGenesis(t *testing.T) {
 				Sudoers: types.Sudoers{
 					Root:      "root",
 					Contracts: []string{"contract"},
-				}},
+				},
+			},
 			panic: true,
 		},
 	} {

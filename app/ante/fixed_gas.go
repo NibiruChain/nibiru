@@ -14,8 +14,7 @@ var _ sdk.AnteDecorator = EnsureSinglePostPriceMessageDecorator{}
 
 // EnsureSinglePostPriceMessageDecorator ensures that there is only one oracle vote message in the transaction
 // and sets the gas meter to a fixed value.
-type EnsureSinglePostPriceMessageDecorator struct {
-}
+type EnsureSinglePostPriceMessageDecorator struct{}
 
 func NewPostPriceFixedPriceDecorator() EnsureSinglePostPriceMessageDecorator {
 	return EnsureSinglePostPriceMessageDecorator{}

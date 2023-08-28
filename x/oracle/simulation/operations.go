@@ -1,6 +1,6 @@
 package simulation
 
-//DONTCOVER
+// DONTCOVER
 
 import (
 	"math/rand"
@@ -44,7 +44,8 @@ func WeightedOperations(
 	cdc codec.JSONCodec,
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
-	k keeper.Keeper) simulation.WeightedOperations {
+	k keeper.Keeper,
+) simulation.WeightedOperations {
 	var (
 		weightMsgAggregateExchangeRatePrevote int
 		weightMsgAggregateExchangeRateVote    int
@@ -204,7 +205,6 @@ func SimulateMsgAggregateExchangeRateVote(ak types.AccountKeeper, bk types.BankK
 			[]uint64{feederAccount.GetSequence()},
 			feederSimAccount.PrivKey,
 		)
-
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to generate mock tx"), nil, err
 		}
@@ -262,7 +262,6 @@ func SimulateMsgDelegateFeedConsent(ak types.AccountKeeper, bk types.BankKeeper,
 			[]uint64{account.GetSequence()},
 			simAccount.PrivKey,
 		)
-
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "unable to generate mock tx"), nil, err
 		}
