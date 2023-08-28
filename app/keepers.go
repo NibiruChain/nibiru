@@ -159,9 +159,9 @@ func GetStoreKeys() (
 func (app *NibiruApp) InitKeepers(
 	appOpts servertypes.AppOptions,
 ) (wasmConfig wasmtypes.WasmConfig) {
-	var appCodec = app.appCodec
-	var legacyAmino = app.legacyAmino
-	var bApp = app.BaseApp
+	appCodec := app.appCodec
+	legacyAmino := app.legacyAmino
+	bApp := app.BaseApp
 
 	keys := app.keys
 	tkeys := app.tkeys
@@ -186,7 +186,7 @@ func (app *NibiruApp) InitKeepers(
 		memKeys[capabilitytypes.MemStoreKey],
 	)
 	app.ScopedIBCKeeper = app.capabilityKeeper.ScopeToModule(ibcexported.ModuleName)
-	//scopedFeeMockKeeper := app.capabilityKeeper.ScopeToModule(MockFeePort)
+	// scopedFeeMockKeeper := app.capabilityKeeper.ScopeToModule(MockFeePort)
 	app.ScopedTransferKeeper = app.capabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 
 	// NOTE: the IBC mock keeper and application module is used only for testing core IBC. Do
@@ -194,7 +194,7 @@ func (app *NibiruApp) InitKeepers(
 	_ = app.capabilityKeeper.ScopeToModule(ibcmock.ModuleName)
 
 	// seal capability keeper after scoping modules
-	//app.capabilityKeeper.Seal()
+	// app.capabilityKeeper.Seal()
 
 	// add keepers
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
@@ -420,7 +420,7 @@ func (app *NibiruApp) InitKeepers(
 	// Mock Module setup for testing IBC and also acts as the interchain accounts authentication module
 	// NOTE: the IBC mock keeper and application module is used only for testing core IBC. Do
 	// not replicate if you do not need to test core IBC or light clients.
-	//mockModule := ibcmock.NewAppModule(&app.ibcKeeper.PortKeeper)
+	// mockModule := ibcmock.NewAppModule(&app.ibcKeeper.PortKeeper)
 
 	// Create Transfer Stack
 	// SendPacket, since it is originating from the application to core IBC:
@@ -452,10 +452,10 @@ func (app *NibiruApp) InitKeepers(
 	// mockModule.OnAcknowledgementPacket -> fee.OnAcknowledgementPacket -> channel.OnAcknowledgementPacket
 
 	// create fee wrapped mock module
-	//feeMockModule := ibcmock.NewIBCModule(&mockModule, ibcmock.NewMockIBCApp(MockFeePort, scopedFeeMockKeeper))
-	//app.FeeMockModule = feeMockModule
-	//feeWithMockModule := ibcfee.NewIBCMiddleware(feeMockModule, app.ibcFeeKeeper)
-	//ibcRouter.AddRoute(MockFeePort, feeWithMockModule)
+	// feeMockModule := ibcmock.NewIBCModule(&mockModule, ibcmock.NewMockIBCApp(MockFeePort, scopedFeeMockKeeper))
+	// app.FeeMockModule = feeMockModule
+	// feeWithMockModule := ibcfee.NewIBCMiddleware(feeMockModule, app.ibcFeeKeeper)
+	// ibcRouter.AddRoute(MockFeePort, feeWithMockModule)
 
 	/* SetRouter finalizes all routes by sealing the router.
 	   No more routes can be added. */
@@ -465,7 +465,7 @@ func (app *NibiruApp) InitKeepers(
 	govRouter.
 		AddRoute(govtypes.RouterKey, govv1beta1types.ProposalHandler).
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.paramsKeeper)).
-		//AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.DistrKeeper)).
+		// AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.DistrKeeper)).
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(&app.upgradeKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.ibcKeeper.ClientKeeper))
 

@@ -213,7 +213,8 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			govPrice:  sdk.MustNewDecFromStr("10"),
 			collPrice: sdk.OneDec(),
 			err:       types.NotEnoughBalance.Wrap(denoms.NIBI),
-		}, {
+		},
+		{
 			name: "User has no COLL",
 			accFunds: sdk.NewCoins(
 				sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
@@ -247,7 +248,8 @@ func TestMsgMintStableResponse_NotEnoughFunds(t *testing.T) {
 			collPrice: sdk.OneDec(),
 			err: types.NotEnoughBalance.Wrap(
 				sdk.NewCoin(denoms.NIBI, sdk.OneInt()).String()),
-		}, {
+		},
+		{
 			name: "Not enough COLL",
 			accFunds: sdk.NewCoins(
 				sdk.NewCoin(denoms.USDC, sdk.OneInt()),

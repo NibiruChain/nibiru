@@ -98,7 +98,6 @@ ret:
 func (pool Pool) AreTokensInDenomInPoolAssets(tokensIn sdk.Coins) bool {
 	for _, asset := range tokensIn {
 		_, _, err := pool.getPoolAssetAndIndex(asset.Denom)
-
 		if err != nil {
 			return false
 		}
