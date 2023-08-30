@@ -24,6 +24,10 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 		k.Markets.Insert(ctx, collections.Join(m.Pair, m.Version), m)
 	}
 
+	for _, g := range genState.MarketLastVersions {
+		k.MarketLastVersion.Insert(ctx, g.Pair, types.MarketLastVersion{Version: g.Version})
+	}
+
 	for _, a := range genState.Amms {
 		pair := a.Pair
 		k.AMMs.Insert(ctx, pair, a)

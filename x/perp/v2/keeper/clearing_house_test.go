@@ -1172,7 +1172,8 @@ func TestMarketOrderError(t *testing.T) {
 			traderAddr := testutil.AccAddress()
 
 			market := mock.TestMarket()
-			app.PerpKeeperV2.Markets.Insert(ctx, collections.Join(asset.Registry.Pair(denoms.BTC, denoms.NUSD), uint64(1)), *market)
+			app.PerpKeeperV2.Markets.Insert(ctx, collections.Join(asset.Registry.Pair(denoms.BTC, denoms.NUSD), market.Version), *market)
+			app.PerpKeeperV2.MarketLastVersion.Insert(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), types.MarketLastVersion{Version: market.Version})
 			amm := mock.TestAMMDefault()
 			app.PerpKeeperV2.AMMs.Insert(ctx, amm.Pair, *amm)
 			app.PerpKeeperV2.ReserveSnapshots.Insert(ctx, collections.Join(amm.Pair, ctx.BlockTime()), types.ReserveSnapshot{

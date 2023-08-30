@@ -105,6 +105,7 @@ func (k admin) CreateMarket(
 	}
 
 	lastVersion := k.MarketLastVersion.GetOr(ctx, pair, types.MarketLastVersion{Version: 1})
+	market.Version = lastVersion.Version
 
 	k.Markets.Insert(ctx, collections.Join(pair, lastVersion.Version), market)
 	k.MarketLastVersion.Insert(ctx, pair, lastVersion)
