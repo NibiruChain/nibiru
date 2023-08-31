@@ -12,8 +12,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	"github.com/cosmos/cosmos-sdk/x/mint"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
@@ -76,19 +74,6 @@ type CrisisModule struct {
 func (CrisisModule) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 	genState := crisistypes.DefaultGenesisState()
 	genState.ConstantFee = sdk.NewCoin(BondDenom, genState.ConstantFee.Amount)
-	return cdc.MustMarshalJSON(genState)
-}
-
-// MintModule defines a custom wrapper around the x/mint module's
-// AppModuleBasic implementation to provide custom default genesis state.
-type MintModule struct {
-	mint.AppModuleBasic
-}
-
-// DefaultGenesis returns custom Nibiru x/mint module genesis state.
-func (MintModule) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
-	genState := minttypes.DefaultGenesisState()
-	genState.Params.MintDenom = BondDenom
 	return cdc.MustMarshalJSON(genState)
 }
 

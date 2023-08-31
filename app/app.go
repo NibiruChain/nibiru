@@ -8,12 +8,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/NibiruChain/nibiru/x/genmsg"
-
-	"github.com/NibiruChain/nibiru/x/sudo/keeper"
-
-	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
-
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	dbm "github.com/cometbft/cometbft-db"
@@ -96,18 +90,17 @@ import (
 	"github.com/spf13/cast"
 
 	"github.com/NibiruChain/nibiru/x/common"
+	devgas "github.com/NibiruChain/nibiru/x/devgas/v1"
+	devgaskeeper "github.com/NibiruChain/nibiru/x/devgas/v1/keeper"
+	devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
 	"github.com/NibiruChain/nibiru/x/epochs"
 	epochskeeper "github.com/NibiruChain/nibiru/x/epochs/keeper"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
+	"github.com/NibiruChain/nibiru/x/genmsg"
 	"github.com/NibiruChain/nibiru/x/inflation"
 	inflationkeeper "github.com/NibiruChain/nibiru/x/inflation/keeper"
 	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
 	"github.com/NibiruChain/nibiru/x/oracle"
-
-	devgas "github.com/NibiruChain/nibiru/x/devgas/v1"
-	devgaskeeper "github.com/NibiruChain/nibiru/x/devgas/v1/keeper"
-	devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
-
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	perpkeeperv2 "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
@@ -120,6 +113,8 @@ import (
 	stablecoinkeeper "github.com/NibiruChain/nibiru/x/stablecoin/keeper"
 	stablecointypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
 	"github.com/NibiruChain/nibiru/x/sudo"
+	"github.com/NibiruChain/nibiru/x/sudo/keeper"
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 	wasmbinding "github.com/NibiruChain/nibiru/x/wasm/binding"
 )
 
@@ -343,7 +338,7 @@ func NewNibiruApp(
 	bApp.SetInterfaceRegistry(interfaceRegistry)
 	bApp.SetTxEncoder(txConfig.TxEncoder())
 
-	keys, tkeys, memKeys := GetStoreKeys()
+	keys, tkeys, memKeys := initStoreKeys()
 	app := &NibiruApp{
 		BaseApp:           bApp,
 		legacyAmino:       legacyAmino,
@@ -363,7 +358,7 @@ func NewNibiruApp(
 	skipGenesisInvariants := cast.ToBool(
 		appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
-	app.InitModuleManager(encodingConfig, skipGenesisInvariants)
+	app.initModuleManager(encodingConfig, skipGenesisInvariants)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
