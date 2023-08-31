@@ -358,7 +358,7 @@ func NewNibiruApp(
 	skipGenesisInvariants := cast.ToBool(
 		appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
-	app.InitModuleManager(encodingConfig, skipGenesisInvariants)
+	app.initModuleManager(encodingConfig, skipGenesisInvariants)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.

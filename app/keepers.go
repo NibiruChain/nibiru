@@ -198,7 +198,7 @@ func (app *NibiruApp) InitKeepers(
 		appCodec,
 		keys[banktypes.StoreKey],
 		app.AccountKeeper,
-		BlockedAddresses(),
+		blockedAddresses(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	app.stakingKeeper = stakingkeeper.NewKeeper(
@@ -478,7 +478,7 @@ func (app *NibiruApp) InitKeepers(
 	return wasmConfig
 }
 
-func (app *NibiruApp) AppModules(
+func (app *NibiruApp) initAppModules(
 	encodingConfig EncodingConfig,
 	skipGenesisInvariants bool,
 ) []module.AppModule {
@@ -595,22 +595,10 @@ func orderedModuleNames() []string {
 	}
 }
 
-// GetMaccPerms returns a copy of the module account permissions
-//
-// NOTE: This is solely to be used for testing purposes.
-func GetMaccPerms() map[string][]string {
-	dupMaccPerms := make(map[string][]string)
-	for k, v := range maccPerms {
-		dupMaccPerms[k] = v
-	}
-
-	return dupMaccPerms
-}
-
-// BlockedAddresses returns all the app's blocked account addresses.
-func BlockedAddresses() map[string]bool {
+// blockedAddresses returns all the app's blocked account addresses.
+func blockedAddresses() map[string]bool {
 	modAccAddrs := make(map[string]bool)
-	for acc := range GetMaccPerms() {
+	for acc := range maccPerms {
 		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
 	}
 
@@ -620,15 +608,15 @@ func BlockedAddresses() map[string]bool {
 	return modAccAddrs
 }
 
-// InitModuleManager Load all the modules and stores them in the module manager
+// initModuleManager Load all the modules and stores them in the module manager
 // NOTE: Any module instantiated in the module manager that is later modified
 // must be passed by reference here.
-func (app *NibiruApp) InitModuleManager(
+func (app *NibiruApp) initModuleManager(
 	encodingConfig EncodingConfig,
 	skipGenesisInvariants bool,
 ) {
 	app.mm = module.NewManager(
-		app.AppModules(encodingConfig, skipGenesisInvariants)...,
+		app.initAppModules(encodingConfig, skipGenesisInvariants)...,
 	)
 
 	// Init module orders for hooks and genesis
@@ -636,6 +624,7 @@ func (app *NibiruApp) InitModuleManager(
 	app.mm.SetOrderBeginBlockers(orderedModules...)
 	app.mm.SetOrderEndBlockers(orderedModules...)
 	app.mm.SetOrderInitGenesis(orderedModules...)
+	app.mm.SetOrderExportGenesis(orderedModules...)
 
 	// Uncomment if you want to set a custom migration order here.
 	// app.mm.SetOrderMigrations(custom order)
