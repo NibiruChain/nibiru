@@ -173,9 +173,14 @@ func (pb ExchangeRateBallots) Swap(i, j int) {
 
 // ValidatorPerformance keeps track of a validator performance in the voting period.
 type ValidatorPerformance struct {
-	Power        int64 // tendermint consensus power
-	RewardWeight int64 // how much of the rewards this validator should receive, units of consensus power
-	WinCount     int64
+	// Tendermint consensus voting power
+	Power int64
+	// RewardWeight: Weight of rewards the validator should receive in units of
+	// consensus power.
+	RewardWeight int64
+	WinCount     int64 // Number of valid votes for which the validator will be rewarded
+	AbstainCount int64 // Number of abstained votes for which there will be no reward or punishment
+	MissCount    int64 // Number of invalid/punishable votes
 	ValAddress   sdk.ValAddress
 }
 
@@ -185,6 +190,8 @@ func NewValidatorPerformance(power int64, recipient sdk.ValAddress) ValidatorPer
 		Power:        power,
 		RewardWeight: 0,
 		WinCount:     0,
+		AbstainCount: 0,
+		MissCount:    0,
 		ValAddress:   recipient,
 	}
 }

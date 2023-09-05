@@ -170,12 +170,10 @@ func TestOracleTally(t *testing.T) {
 
 	validatorClaimMap := make(types.ValidatorPerformances)
 	for _, valAddr := range valAddrs {
-		validatorClaimMap[valAddr.String()] = types.ValidatorPerformance{
-			Power:        stakingKeeper.Validator(fixture.Ctx, valAddr).GetConsensusPower(sdk.DefaultPowerReduction),
-			RewardWeight: int64(0),
-			WinCount:     int64(0),
-			ValAddress:   valAddr,
-		}
+		validatorClaimMap[valAddr.String()] = types.NewValidatorPerformance(
+			stakingKeeper.Validator(fixture.Ctx, valAddr).GetConsensusPower(sdk.DefaultPowerReduction),
+			valAddr,
+		)
 	}
 	sort.Sort(ballot)
 	weightedMedian := ballot.WeightedMedianWithAssertion()
@@ -188,27 +186,29 @@ func TestOracleTally(t *testing.T) {
 
 	expectedValidatorClaimMap := make(types.ValidatorPerformances)
 	for _, valAddr := range valAddrs {
-		expectedValidatorClaimMap[valAddr.String()] = types.ValidatorPerformance{
-			Power:        stakingKeeper.Validator(fixture.Ctx, valAddr).GetConsensusPower(sdk.DefaultPowerReduction),
-			RewardWeight: int64(0),
-			WinCount:     int64(0),
-			ValAddress:   valAddr,
-		}
+		expectedValidatorClaimMap[valAddr.String()] = types.NewValidatorPerformance(
+			stakingKeeper.Validator(fixture.Ctx, valAddr).GetConsensusPower(sdk.DefaultPowerReduction),
+			valAddr,
+		)
 	}
 
 	for _, vote := range ballot {
-		if (vote.ExchangeRate.GTE(weightedMedian.Sub(maxSpread)) &&
-			vote.ExchangeRate.LTE(weightedMedian.Add(maxSpread))) ||
-			!vote.ExchangeRate.IsPositive() {
-			key := vote.Voter.String()
-			claim := expectedValidatorClaimMap[key]
+		key := vote.Voter.String()
+		claim := expectedValidatorClaimMap[key]
+		if vote.ExchangeRate.GTE(weightedMedian.Sub(maxSpread)) &&
+			vote.ExchangeRate.LTE(weightedMedian.Add(maxSpread)) {
 			claim.RewardWeight += vote.Power
 			claim.WinCount++
-			expectedValidatorClaimMap[key] = claim
+		} else if !vote.ExchangeRate.IsPositive() {
+			claim.AbstainCount++
+		} else {
+			claim.MissCount++
 		}
+		expectedValidatorClaimMap[key] = claim
 	}
 
-	tallyMedian := Tally(ballot, fixture.OracleKeeper.RewardBand(fixture.Ctx), validatorClaimMap)
+	tallyMedian := Tally(
+		ballot, fixture.OracleKeeper.RewardBand(fixture.Ctx), validatorClaimMap)
 
 	assert.Equal(t, expectedValidatorClaimMap, validatorClaimMap)
 	assert.Equal(t, tallyMedian.MulInt64(100).TruncateInt(), weightedMedian.MulInt64(100).TruncateInt())
