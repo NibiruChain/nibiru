@@ -11,11 +11,11 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
-	tutilaction "github.com/NibiruChain/nibiru/x/common/testutil/action"
+	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	perpaction "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
-	perpassert "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
+	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
+	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -25,84 +25,84 @@ func TestCalcTwap(t *testing.T) {
 	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.USDC)
 	startTime := time.Now()
 
-	tc := tutilaction.TestCases{
-		tutilaction.TC("spot twap").
+	tc := TestCases{
+		TC("spot twap").
 			Given(
-				perpaction.CreateCustomMarket(pairBtcUsdc),
-				tutilaction.SetBlockTime(startTime),
-				perpaction.InsertReserveSnapshot(pairBtcUsdc, startTime, perpaction.WithPriceMultiplier(sdk.NewDec(9))),
-				perpaction.InsertReserveSnapshot(pairBtcUsdc, startTime.Add(10*time.Second), perpaction.WithPriceMultiplier(sdk.NewDec(10))),
-				perpaction.InsertReserveSnapshot(pairBtcUsdc, startTime.Add(20*time.Second), perpaction.WithPriceMultiplier(sdk.NewDec(11))),
+				CreateCustomMarket(pairBtcUsdc),
+				SetBlockTime(startTime),
+				InsertReserveSnapshot(pairBtcUsdc, startTime, WithPriceMultiplier(sdk.NewDec(9))),
+				InsertReserveSnapshot(pairBtcUsdc, startTime.Add(10*time.Second), WithPriceMultiplier(sdk.NewDec(10))),
+				InsertReserveSnapshot(pairBtcUsdc, startTime.Add(20*time.Second), WithPriceMultiplier(sdk.NewDec(11))),
 			).
 			When(
-				tutilaction.MoveToNextBlockWithDuration(30 * time.Second),
+				MoveToNextBlockWithDuration(30 * time.Second),
 			).
 			Then(
-				perpassert.TwapShouldBe(pairBtcUsdc, types.TwapCalcOption_SPOT, types.Direction_DIRECTION_UNSPECIFIED, sdk.ZeroDec(), 30*time.Second, sdk.NewDec(10)),
+				TwapShouldBe(pairBtcUsdc, types.TwapCalcOption_SPOT, types.Direction_DIRECTION_UNSPECIFIED, sdk.ZeroDec(), 30*time.Second, sdk.NewDec(10)),
 			),
 
-		tutilaction.TC("base asset twap, long").
+		TC("base asset twap, long").
 			Given(
-				perpaction.CreateCustomMarket(pairBtcUsdc),
-				tutilaction.SetBlockTime(startTime),
-				perpaction.InsertReserveSnapshot(pairBtcUsdc, startTime, perpaction.WithPriceMultiplier(sdk.NewDec(9))),
-				perpaction.InsertReserveSnapshot(pairBtcUsdc, startTime.Add(10*time.Second), perpaction.WithPriceMultiplier(sdk.NewDec(10))),
-				perpaction.InsertReserveSnapshot(pairBtcUsdc, startTime.Add(20*time.Second), perpaction.WithPriceMultiplier(sdk.NewDec(11))),
+				CreateCustomMarket(pairBtcUsdc),
+				SetBlockTime(startTime),
+				InsertReserveSnapshot(pairBtcUsdc, startTime, WithPriceMultiplier(sdk.NewDec(9))),
+				InsertReserveSnapshot(pairBtcUsdc, startTime.Add(10*time.Second), WithPriceMultiplier(sdk.NewDec(10))),
+				InsertReserveSnapshot(pairBtcUsdc, startTime.Add(20*time.Second), WithPriceMultiplier(sdk.NewDec(11))),
 			).
 			When(
-				tutilaction.MoveToNextBlockWithDuration(30 * time.Second),
+				MoveToNextBlockWithDuration(30 * time.Second),
 			).
 			Then(
-				perpassert.TwapShouldBe(pairBtcUsdc, types.TwapCalcOption_BASE_ASSET_SWAP, types.Direction_LONG, sdk.NewDec(5), 30*time.Second, sdk.MustNewDecFromStr("50.000000000250000000")),
+				TwapShouldBe(pairBtcUsdc, types.TwapCalcOption_BASE_ASSET_SWAP, types.Direction_LONG, sdk.NewDec(5), 30*time.Second, sdk.MustNewDecFromStr("50.000000000250000000")),
 			),
 
-		tutilaction.TC("base asset twap, short").
+		TC("base asset twap, short").
 			Given(
-				perpaction.CreateCustomMarket(pairBtcUsdc),
-				tutilaction.SetBlockTime(startTime),
-				perpaction.InsertReserveSnapshot(pairBtcUsdc, startTime, perpaction.WithPriceMultiplier(sdk.NewDec(9))),
-				perpaction.InsertReserveSnapshot(pairBtcUsdc, startTime.Add(10*time.Second), perpaction.WithPriceMultiplier(sdk.NewDec(10))),
-				perpaction.InsertReserveSnapshot(pairBtcUsdc, startTime.Add(20*time.Second), perpaction.WithPriceMultiplier(sdk.NewDec(11))),
+				CreateCustomMarket(pairBtcUsdc),
+				SetBlockTime(startTime),
+				InsertReserveSnapshot(pairBtcUsdc, startTime, WithPriceMultiplier(sdk.NewDec(9))),
+				InsertReserveSnapshot(pairBtcUsdc, startTime.Add(10*time.Second), WithPriceMultiplier(sdk.NewDec(10))),
+				InsertReserveSnapshot(pairBtcUsdc, startTime.Add(20*time.Second), WithPriceMultiplier(sdk.NewDec(11))),
 			).
 			When(
-				tutilaction.MoveToNextBlockWithDuration(30 * time.Second),
+				MoveToNextBlockWithDuration(30 * time.Second),
 			).
 			Then(
-				perpassert.TwapShouldBe(pairBtcUsdc, types.TwapCalcOption_BASE_ASSET_SWAP, types.Direction_SHORT, sdk.NewDec(5), 30*time.Second, sdk.MustNewDecFromStr("49.999999999750000000")),
+				TwapShouldBe(pairBtcUsdc, types.TwapCalcOption_BASE_ASSET_SWAP, types.Direction_SHORT, sdk.NewDec(5), 30*time.Second, sdk.MustNewDecFromStr("49.999999999750000000")),
 			),
 
-		tutilaction.TC("quote asset twap, long").
+		TC("quote asset twap, long").
 			Given(
-				perpaction.CreateCustomMarket(pairBtcUsdc),
-				tutilaction.SetBlockTime(startTime),
-				perpaction.InsertReserveSnapshot(pairBtcUsdc, startTime, perpaction.WithPriceMultiplier(sdk.NewDec(9))),
-				perpaction.InsertReserveSnapshot(pairBtcUsdc, startTime.Add(10*time.Second), perpaction.WithPriceMultiplier(sdk.NewDec(10))),
-				perpaction.InsertReserveSnapshot(pairBtcUsdc, startTime.Add(20*time.Second), perpaction.WithPriceMultiplier(sdk.NewDec(11))),
+				CreateCustomMarket(pairBtcUsdc),
+				SetBlockTime(startTime),
+				InsertReserveSnapshot(pairBtcUsdc, startTime, WithPriceMultiplier(sdk.NewDec(9))),
+				InsertReserveSnapshot(pairBtcUsdc, startTime.Add(10*time.Second), WithPriceMultiplier(sdk.NewDec(10))),
+				InsertReserveSnapshot(pairBtcUsdc, startTime.Add(20*time.Second), WithPriceMultiplier(sdk.NewDec(11))),
 			).
 			When(
-				tutilaction.MoveToNextBlockWithDuration(30 * time.Second),
+				MoveToNextBlockWithDuration(30 * time.Second),
 			).
 			Then(
-				perpassert.TwapShouldBe(pairBtcUsdc, types.TwapCalcOption_QUOTE_ASSET_SWAP, types.Direction_LONG, sdk.NewDec(5), 30*time.Second, sdk.MustNewDecFromStr("0.503367003366748282")),
+				TwapShouldBe(pairBtcUsdc, types.TwapCalcOption_QUOTE_ASSET_SWAP, types.Direction_LONG, sdk.NewDec(5), 30*time.Second, sdk.MustNewDecFromStr("0.503367003366748282")),
 			),
 
-		tutilaction.TC("quote asset twap, short").
+		TC("quote asset twap, short").
 			Given(
-				perpaction.CreateCustomMarket(pairBtcUsdc),
-				tutilaction.SetBlockTime(startTime),
-				perpaction.InsertReserveSnapshot(pairBtcUsdc, startTime, perpaction.WithPriceMultiplier(sdk.NewDec(9))),
-				perpaction.InsertReserveSnapshot(pairBtcUsdc, startTime.Add(10*time.Second), perpaction.WithPriceMultiplier(sdk.NewDec(10))),
-				perpaction.InsertReserveSnapshot(pairBtcUsdc, startTime.Add(20*time.Second), perpaction.WithPriceMultiplier(sdk.NewDec(11))),
+				CreateCustomMarket(pairBtcUsdc),
+				SetBlockTime(startTime),
+				InsertReserveSnapshot(pairBtcUsdc, startTime, WithPriceMultiplier(sdk.NewDec(9))),
+				InsertReserveSnapshot(pairBtcUsdc, startTime.Add(10*time.Second), WithPriceMultiplier(sdk.NewDec(10))),
+				InsertReserveSnapshot(pairBtcUsdc, startTime.Add(20*time.Second), WithPriceMultiplier(sdk.NewDec(11))),
 			).
 			When(
-				tutilaction.MoveToNextBlockWithDuration(30 * time.Second),
+				MoveToNextBlockWithDuration(30 * time.Second),
 			).
 			Then(
-				perpassert.TwapShouldBe(pairBtcUsdc, types.TwapCalcOption_QUOTE_ASSET_SWAP, types.Direction_SHORT, sdk.NewDec(5), 30*time.Second, sdk.MustNewDecFromStr("0.503367003367258451")),
+				TwapShouldBe(pairBtcUsdc, types.TwapCalcOption_QUOTE_ASSET_SWAP, types.Direction_SHORT, sdk.NewDec(5), 30*time.Second, sdk.MustNewDecFromStr("0.503367003367258451")),
 			),
 	}
 
-	tutilaction.NewTestSuite(t).WithTestCases(tc...).Run()
+	NewTestSuite(t).WithTestCases(tc...).Run()
 }
 
 func TestInvalidTwap(t *testing.T) {

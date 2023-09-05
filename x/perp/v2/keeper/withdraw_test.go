@@ -9,10 +9,10 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
-	tutilaction "github.com/NibiruChain/nibiru/x/common/testutil/action"
-	tutilassert "github.com/NibiruChain/nibiru/x/common/testutil/assertion"
-	perpaction "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
-	perpassert "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
+	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
+	. "github.com/NibiruChain/nibiru/x/common/testutil/assertion"
+	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
+	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
@@ -21,75 +21,75 @@ func TestWithdrawFromVault(t *testing.T) {
 	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.USDC)
 	startBlockTime := time.Now()
 
-	tc := tutilaction.TestCases{
-		tutilaction.TC("successful withdraw, no bad debt").
+	tc := TestCases{
+		TC("successful withdraw, no bad debt").
 			Given(
-				tutilaction.SetBlockNumber(1),
-				tutilaction.SetBlockTime(startBlockTime),
-				perpaction.CreateCustomMarket(pairBtcUsdc),
-				tutilaction.FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1000)))),
+				SetBlockNumber(1),
+				SetBlockTime(startBlockTime),
+				CreateCustomMarket(pairBtcUsdc),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1000)))),
 			).
 			When(
-				perpaction.WithdrawFromVault(pairBtcUsdc, alice, sdk.NewInt(1000)),
+				WithdrawFromVault(pairBtcUsdc, alice, sdk.NewInt(1000)),
 			).
 			Then(
-				tutilassert.BalanceEqual(alice, denoms.USDC, sdk.NewInt(1000)),
-				tutilassert.ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.ZeroInt()),
-				perpassert.MarketShouldBeEqual(pairBtcUsdc, perpassert.Market_PrepaidBadDebtShouldBeEqualTo(sdk.ZeroInt())),
+				BalanceEqual(alice, denoms.USDC, sdk.NewInt(1000)),
+				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.ZeroInt()),
+				MarketShouldBeEqual(pairBtcUsdc, Market_PrepaidBadDebtShouldBeEqualTo(sdk.ZeroInt())),
 			),
 
-		tutilaction.TC("successful withdraw, some bad debt").
+		TC("successful withdraw, some bad debt").
 			Given(
-				tutilaction.SetBlockNumber(1),
-				tutilaction.SetBlockTime(startBlockTime),
-				perpaction.CreateCustomMarket(pairBtcUsdc),
-				tutilaction.FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(500)))),
-				tutilaction.FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(500)))),
+				SetBlockNumber(1),
+				SetBlockTime(startBlockTime),
+				CreateCustomMarket(pairBtcUsdc),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(500)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(500)))),
 			).
 			When(
-				perpaction.WithdrawFromVault(pairBtcUsdc, alice, sdk.NewInt(1000)),
+				WithdrawFromVault(pairBtcUsdc, alice, sdk.NewInt(1000)),
 			).
 			Then(
-				tutilassert.BalanceEqual(alice, denoms.USDC, sdk.NewInt(1000)),
-				tutilassert.ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.ZeroInt()),
-				tutilassert.ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.ZeroInt()),
-				perpassert.MarketShouldBeEqual(pairBtcUsdc, perpassert.Market_PrepaidBadDebtShouldBeEqualTo(sdk.NewInt(500))),
+				BalanceEqual(alice, denoms.USDC, sdk.NewInt(1000)),
+				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.ZeroInt()),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.ZeroInt()),
+				MarketShouldBeEqual(pairBtcUsdc, Market_PrepaidBadDebtShouldBeEqualTo(sdk.NewInt(500))),
 			),
 
-		tutilaction.TC("successful withdraw, all bad debt").
+		TC("successful withdraw, all bad debt").
 			Given(
-				tutilaction.SetBlockNumber(1),
-				tutilaction.SetBlockTime(startBlockTime),
-				perpaction.CreateCustomMarket(pairBtcUsdc),
-				tutilaction.FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1000)))),
+				SetBlockNumber(1),
+				SetBlockTime(startBlockTime),
+				CreateCustomMarket(pairBtcUsdc),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1000)))),
 			).
 			When(
-				perpaction.WithdrawFromVault(pairBtcUsdc, alice, sdk.NewInt(1000)),
+				WithdrawFromVault(pairBtcUsdc, alice, sdk.NewInt(1000)),
 			).
 			Then(
-				tutilassert.BalanceEqual(alice, denoms.USDC, sdk.NewInt(1000)),
-				tutilassert.ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.ZeroInt()),
-				tutilassert.ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.ZeroInt()),
-				perpassert.MarketShouldBeEqual(pairBtcUsdc, perpassert.Market_PrepaidBadDebtShouldBeEqualTo(sdk.NewInt(1000))),
+				BalanceEqual(alice, denoms.USDC, sdk.NewInt(1000)),
+				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.ZeroInt()),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.ZeroInt()),
+				MarketShouldBeEqual(pairBtcUsdc, Market_PrepaidBadDebtShouldBeEqualTo(sdk.NewInt(1000))),
 			),
 
-		tutilaction.TC("successful withdraw, existing bad debt").
+		TC("successful withdraw, existing bad debt").
 			Given(
-				tutilaction.SetBlockNumber(1),
-				tutilaction.SetBlockTime(startBlockTime),
-				perpaction.CreateCustomMarket(pairBtcUsdc, perpaction.WithPrepaidBadDebt(sdk.NewInt(1000))),
-				tutilaction.FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1000)))),
+				SetBlockNumber(1),
+				SetBlockTime(startBlockTime),
+				CreateCustomMarket(pairBtcUsdc, WithPrepaidBadDebt(sdk.NewInt(1000))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1000)))),
 			).
 			When(
-				perpaction.WithdrawFromVault(pairBtcUsdc, alice, sdk.NewInt(1000)),
+				WithdrawFromVault(pairBtcUsdc, alice, sdk.NewInt(1000)),
 			).
 			Then(
-				tutilassert.BalanceEqual(alice, denoms.USDC, sdk.NewInt(1000)),
-				tutilassert.ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.ZeroInt()),
-				tutilassert.ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.ZeroInt()),
-				perpassert.MarketShouldBeEqual(pairBtcUsdc, perpassert.Market_PrepaidBadDebtShouldBeEqualTo(sdk.NewInt(2000))),
+				BalanceEqual(alice, denoms.USDC, sdk.NewInt(1000)),
+				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.ZeroInt()),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.ZeroInt()),
+				MarketShouldBeEqual(pairBtcUsdc, Market_PrepaidBadDebtShouldBeEqualTo(sdk.NewInt(2000))),
 			),
 	}
 
-	tutilaction.NewTestSuite(t).WithTestCases(tc...).Run()
+	NewTestSuite(t).WithTestCases(tc...).Run()
 }

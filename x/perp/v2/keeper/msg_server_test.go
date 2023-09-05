@@ -10,11 +10,11 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
-	tutilaction "github.com/NibiruChain/nibiru/x/common/testutil/action"
-	tutilassert "github.com/NibiruChain/nibiru/x/common/testutil/assertion"
+	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
+	. "github.com/NibiruChain/nibiru/x/common/testutil/assertion"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	perpaction "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
-	perpassert "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
+	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
+	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
 	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
@@ -23,18 +23,18 @@ func TestMsgServerMarketOrder(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	alice := testutil.AccAddress()
 
-	tests := tutilaction.TestCases{
-		tutilaction.TC("open long position").
+	tests := TestCases{
+		TC("open long position").
 			Given(
-				perpaction.CreateCustomMarket(pair),
-				tutilaction.FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
+				CreateCustomMarket(pair),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
 			).
 			When(
-				perpaction.MsgServerMarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroInt()),
+				MsgServerMarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroInt()),
 			).
 			Then(
-				perpassert.PositionShouldBeEqual(alice, pair,
-					perpassert.Position_PositionShouldBeEqualTo(types.Position{
+				PositionShouldBeEqual(alice, pair,
+					Position_PositionShouldBeEqualTo(types.Position{
 						TraderAddress:                   alice.String(),
 						Pair:                            pair,
 						Size_:                           sdk.MustNewDecFromStr("0.999999999999"),
@@ -44,20 +44,20 @@ func TestMsgServerMarketOrder(t *testing.T) {
 						LastUpdatedBlockNumber:          1,
 					}),
 				),
-				tutilassert.BalanceEqual(alice, denoms.NUSD, sdk.NewInt(99)),
+				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(99)),
 			),
 
-		tutilaction.TC("open short position").
+		TC("open short position").
 			Given(
-				perpaction.CreateCustomMarket(pair),
-				tutilaction.FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
+				CreateCustomMarket(pair),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
 			).
 			When(
-				perpaction.MsgServerMarketOrder(alice, pair, types.Direction_SHORT, sdk.OneInt(), sdk.OneDec(), sdk.ZeroInt()),
+				MsgServerMarketOrder(alice, pair, types.Direction_SHORT, sdk.OneInt(), sdk.OneDec(), sdk.ZeroInt()),
 			).
 			Then(
-				perpassert.PositionShouldBeEqual(alice, pair,
-					perpassert.Position_PositionShouldBeEqualTo(types.Position{
+				PositionShouldBeEqual(alice, pair,
+					Position_PositionShouldBeEqualTo(types.Position{
 						TraderAddress:                   alice.String(),
 						Pair:                            pair,
 						Size_:                           sdk.MustNewDecFromStr("-1.000000000001"),
@@ -67,70 +67,70 @@ func TestMsgServerMarketOrder(t *testing.T) {
 						LastUpdatedBlockNumber:          1,
 					}),
 				),
-				tutilassert.BalanceEqual(alice, denoms.NUSD, sdk.NewInt(99)),
+				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(99)),
 			),
 	}
 
-	tutilaction.NewTestSuite(t).WithTestCases(tests...).Run()
+	NewTestSuite(t).WithTestCases(tests...).Run()
 }
 
 func TestMsgServerClosePosition(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	alice := testutil.AccAddress()
 
-	tests := tutilaction.TestCases{
-		tutilaction.TC("close long position").
+	tests := TestCases{
+		TC("close long position").
 			Given(
-				perpaction.CreateCustomMarket(pair),
-				tutilaction.FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
-				perpaction.MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
-				tutilaction.MoveToNextBlock(),
+				CreateCustomMarket(pair),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
+				MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
+				MoveToNextBlock(),
 			).
 			When(
-				perpaction.MsgServerClosePosition(alice, pair),
+				MsgServerClosePosition(alice, pair),
 			).
 			Then(
-				perpassert.PositionShouldNotExist(alice, pair),
-				tutilassert.BalanceEqual(alice, denoms.NUSD, sdk.NewInt(100)),
+				PositionShouldNotExist(alice, pair),
+				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(100)),
 			),
 
-		tutilaction.TC("close short position").
+		TC("close short position").
 			Given(
-				perpaction.CreateCustomMarket(pair),
-				tutilaction.FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
-				perpaction.MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
-				tutilaction.MoveToNextBlock(),
+				CreateCustomMarket(pair),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
+				MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
+				MoveToNextBlock(),
 			).
 			When(
-				perpaction.MsgServerClosePosition(alice, pair),
+				MsgServerClosePosition(alice, pair),
 			).
 			Then(
-				perpassert.PositionShouldNotExist(alice, pair),
-				tutilassert.BalanceEqual(alice, denoms.NUSD, sdk.NewInt(100)),
+				PositionShouldNotExist(alice, pair),
+				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(100)),
 			),
 	}
 
-	tutilaction.NewTestSuite(t).WithTestCases(tests...).Run()
+	NewTestSuite(t).WithTestCases(tests...).Run()
 }
 
 func TestMsgServerAddMargin(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	alice := testutil.AccAddress()
 
-	tests := tutilaction.TestCases{
-		tutilaction.TC("add margin").
+	tests := TestCases{
+		TC("add margin").
 			Given(
-				perpaction.CreateCustomMarket(pair),
-				tutilaction.FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
-				perpaction.MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
-				tutilaction.MoveToNextBlock(),
+				CreateCustomMarket(pair),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
+				MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
+				MoveToNextBlock(),
 			).
 			When(
-				perpaction.MsgServerAddMargin(alice, pair, sdk.OneInt()),
+				MsgServerAddMargin(alice, pair, sdk.OneInt()),
 			).
 			Then(
-				perpassert.PositionShouldBeEqual(alice, pair,
-					perpassert.Position_PositionShouldBeEqualTo(types.Position{
+				PositionShouldBeEqual(alice, pair,
+					Position_PositionShouldBeEqualTo(types.Position{
 						TraderAddress:                   alice.String(),
 						Pair:                            pair,
 						Size_:                           sdk.MustNewDecFromStr("0.999999999999"),
@@ -140,21 +140,21 @@ func TestMsgServerAddMargin(t *testing.T) {
 						LastUpdatedBlockNumber:          2,
 					}),
 				),
-				tutilassert.BalanceEqual(alice, denoms.NUSD, sdk.NewInt(98)),
+				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(98)),
 			),
-		tutilaction.TC("partial close").
+		TC("partial close").
 			Given(
-				perpaction.CreateCustomMarket(pair),
-				tutilaction.FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
-				perpaction.MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
-				tutilaction.MoveToNextBlock(),
+				CreateCustomMarket(pair),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
+				MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
+				MoveToNextBlock(),
 			).
 			When(
-				perpaction.MsgServerAddMargin(alice, pair, sdk.OneInt()),
+				MsgServerAddMargin(alice, pair, sdk.OneInt()),
 			).
 			Then(
-				perpassert.PositionShouldBeEqual(alice, pair,
-					perpassert.Position_PositionShouldBeEqualTo(types.Position{
+				PositionShouldBeEqual(alice, pair,
+					Position_PositionShouldBeEqualTo(types.Position{
 						TraderAddress:                   alice.String(),
 						Pair:                            pair,
 						Size_:                           sdk.MustNewDecFromStr("0.999999999999"),
@@ -164,31 +164,31 @@ func TestMsgServerAddMargin(t *testing.T) {
 						LastUpdatedBlockNumber:          2,
 					}),
 				),
-				tutilassert.BalanceEqual(alice, denoms.NUSD, sdk.NewInt(98)),
+				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(98)),
 			),
 	}
 
-	tutilaction.NewTestSuite(t).WithTestCases(tests...).Run()
+	NewTestSuite(t).WithTestCases(tests...).Run()
 }
 
 func TestMsgServerRemoveMargin(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	alice := testutil.AccAddress()
 
-	tests := tutilaction.TestCases{
-		tutilaction.TC("add margin").
+	tests := TestCases{
+		TC("add margin").
 			Given(
-				perpaction.CreateCustomMarket(pair),
-				tutilaction.FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
-				perpaction.MarketOrder(alice, pair, types.Direction_LONG, sdk.NewInt(2), sdk.OneDec(), sdk.ZeroDec()),
-				tutilaction.MoveToNextBlock(),
+				CreateCustomMarket(pair),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
+				MarketOrder(alice, pair, types.Direction_LONG, sdk.NewInt(2), sdk.OneDec(), sdk.ZeroDec()),
+				MoveToNextBlock(),
 			).
 			When(
-				perpaction.MsgServerRemoveMargin(alice, pair, sdk.OneInt()),
+				MsgServerRemoveMargin(alice, pair, sdk.OneInt()),
 			).
 			Then(
-				perpassert.PositionShouldBeEqual(alice, pair,
-					perpassert.Position_PositionShouldBeEqualTo(types.Position{
+				PositionShouldBeEqual(alice, pair,
+					Position_PositionShouldBeEqualTo(types.Position{
 						TraderAddress:                   alice.String(),
 						Pair:                            pair,
 						Size_:                           sdk.MustNewDecFromStr("1.999999999996"),
@@ -198,31 +198,31 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 						LastUpdatedBlockNumber:          2,
 					}),
 				),
-				tutilassert.BalanceEqual(alice, denoms.NUSD, sdk.NewInt(99)),
+				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(99)),
 			),
 	}
 
-	tutilaction.NewTestSuite(t).WithTestCases(tests...).Run()
+	NewTestSuite(t).WithTestCases(tests...).Run()
 }
 
 func TestMsgServerDonateToPerpEf(t *testing.T) {
 	alice := testutil.AccAddress()
 
-	tests := tutilaction.TestCases{
-		tutilaction.TC("success").
+	tests := TestCases{
+		TC("success").
 			Given(
-				tutilaction.FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
 			).
 			When(
-				perpaction.MsgServerDonateToPerpEf(alice, sdk.NewInt(50)),
+				MsgServerDonateToPerpEf(alice, sdk.NewInt(50)),
 			).
 			Then(
-				tutilassert.BalanceEqual(alice, denoms.NUSD, sdk.NewInt(50)),
-				tutilassert.ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.NUSD, sdk.NewInt(50)),
+				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(50)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.NUSD, sdk.NewInt(50)),
 			),
 	}
 
-	tutilaction.NewTestSuite(t).WithTestCases(tests...).Run()
+	NewTestSuite(t).WithTestCases(tests...).Run()
 }
 
 func TestMsgServerMultiLiquidate(t *testing.T) {
@@ -231,27 +231,27 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 	liquidator := testutil.AccAddress()
 	startTime := time.Now()
 
-	tests := tutilaction.TestCases{
-		tutilaction.TC("partial liquidation").
+	tests := TestCases{
+		TC("partial liquidation").
 			Given(
-				tutilaction.SetBlockNumber(1),
-				tutilaction.SetBlockTime(startTime),
-				perpaction.CreateCustomMarket(pairBtcUsdc),
-				perpaction.InsertPosition(perpaction.WithTrader(alice), perpaction.WithPair(pairBtcUsdc), perpaction.WithSize(sdk.NewDec(10000)), perpaction.WithMargin(sdk.NewDec(1000)), perpaction.WithOpenNotional(sdk.NewDec(10400))),
-				tutilaction.FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
+				SetBlockNumber(1),
+				SetBlockTime(startTime),
+				CreateCustomMarket(pairBtcUsdc),
+				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10400))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
 			).
 			When(
-				tutilaction.MoveToNextBlock(),
-				perpaction.MsgServerMultiLiquidate(liquidator, false,
-					perpaction.PairTraderTuple{Pair: pairBtcUsdc, Trader: alice, Successful: true},
+				MoveToNextBlock(),
+				MsgServerMultiLiquidate(liquidator, false,
+					PairTraderTuple{Pair: pairBtcUsdc, Trader: alice, Successful: true},
 				),
 			).
 			Then(
-				tutilassert.ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(750)),
-				tutilassert.ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(125)),
-				tutilassert.BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(125)),
-				perpassert.PositionShouldBeEqual(alice, pairBtcUsdc,
-					perpassert.Position_PositionShouldBeEqualTo(
+				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(750)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(125)),
+				BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(125)),
+				PositionShouldBeEqual(alice, pairBtcUsdc,
+					Position_PositionShouldBeEqualTo(
 						types.Position{
 							Pair:                            pairBtcUsdc,
 							TraderAddress:                   alice.String(),
@@ -265,29 +265,29 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 				),
 			),
 
-		tutilaction.TC("full liquidation").
+		TC("full liquidation").
 			Given(
-				tutilaction.SetBlockNumber(1),
-				tutilaction.SetBlockTime(startTime),
-				perpaction.CreateCustomMarket(pairBtcUsdc),
-				perpaction.InsertPosition(perpaction.WithTrader(alice), perpaction.WithPair(pairBtcUsdc), perpaction.WithSize(sdk.NewDec(10000)), perpaction.WithMargin(sdk.NewDec(1000)), perpaction.WithOpenNotional(sdk.NewDec(10600))),
-				tutilaction.FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
+				SetBlockNumber(1),
+				SetBlockTime(startTime),
+				CreateCustomMarket(pairBtcUsdc),
+				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10600))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
 			).
 			When(
-				tutilaction.MoveToNextBlock(),
-				perpaction.MsgServerMultiLiquidate(liquidator, false,
-					perpaction.PairTraderTuple{Pair: pairBtcUsdc, Trader: alice, Successful: true},
+				MoveToNextBlock(),
+				MsgServerMultiLiquidate(liquidator, false,
+					PairTraderTuple{Pair: pairBtcUsdc, Trader: alice, Successful: true},
 				),
 			).
 			Then(
-				tutilassert.ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(600)),
-				tutilassert.ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(150)),
-				tutilassert.BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(250)),
-				perpassert.PositionShouldNotExist(alice, pairBtcUsdc),
+				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(600)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(150)),
+				BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(250)),
+				PositionShouldNotExist(alice, pairBtcUsdc),
 			),
 	}
 
-	tutilaction.NewTestSuite(t).WithTestCases(tests...).Run()
+	NewTestSuite(t).WithTestCases(tests...).Run()
 }
 
 func TestFailMsgServer(t *testing.T) {
