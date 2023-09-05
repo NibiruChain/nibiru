@@ -22,7 +22,7 @@ import (
 // asset pair is associated with its collection of ExchangeRateBallots.
 func (k Keeper) groupBallotsByPair(
 	ctx sdk.Context,
-	validatorsPerformance types.ValidatorPerformances,
+	valPerfMap types.ValidatorPerformances,
 ) (pairBallotsMap map[asset.Pair]types.ExchangeRateBallots) {
 	pairBallotsMap = map[asset.Pair]types.ExchangeRateBallots{}
 
@@ -30,7 +30,7 @@ func (k Keeper) groupBallotsByPair(
 		voterAddr, aggregateVote := value.Key, value.Value
 
 		// organize ballot only for the active validators
-		if validatorPerformance, exists := validatorsPerformance[aggregateVote.Voter]; exists {
+		if validatorPerformance, exists := valPerfMap[aggregateVote.Voter]; exists {
 			for _, exchangeRateTuple := range aggregateVote.ExchangeRateTuples {
 				power := validatorPerformance.Power
 				if !exchangeRateTuple.ExchangeRate.IsPositive() {
@@ -147,7 +147,7 @@ func Tally(
 	ballots types.ExchangeRateBallots,
 	rewardBand sdk.Dec,
 	validatorPerformances types.ValidatorPerformances,
-) sdk.Dec {
+) (sdk.Dec, types.ValidatorPerformances) {
 	weightedMedian := ballots.WeightedMedianWithAssertion()
 	standardDeviation := ballots.StandardDeviation(weightedMedian)
 	rewardSpread := weightedMedian.Mul(rewardBand.QuoInt64(2))
@@ -162,20 +162,18 @@ func Tally(
 			ballot.ExchangeRate.LTE(weightedMedian.Add(rewardSpread))
 		isAbstainVote := !ballot.ExchangeRate.IsPositive()
 		isMiss := !(voteInsideSpread || isAbstainVote)
-
 		voterAddr := ballot.Voter.String()
 		validatorPerformance := validatorPerformances[voterAddr]
 		switch {
-		case isAbstainVote:
-			validatorPerformance.AbstainCount++
 		case voteInsideSpread:
 			validatorPerformance.RewardWeight += ballot.Power
 			validatorPerformance.WinCount++
 		case isMiss:
 			validatorPerformance.MissCount++
+		case isAbstainVote:
+			validatorPerformance.AbstainCount++
 		}
 		validatorPerformances[voterAddr] = validatorPerformance
 	}
-
-	return weightedMedian
+	return weightedMedian, validatorPerformances
 }

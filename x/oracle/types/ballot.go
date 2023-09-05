@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"sort"
@@ -206,4 +207,14 @@ func (vp ValidatorPerformances) GetTotalRewardWeight() int64 {
 	}
 
 	return totalRewardWeight
+}
+
+func (vp ValidatorPerformances) String() string {
+	jsonBz, _ := json.Marshal(vp)
+	return string(jsonBz)
+}
+
+func (vp ValidatorPerformance) String() string {
+	jsonBz, _ := json.Marshal(vp)
+	return string(jsonBz)
 }
