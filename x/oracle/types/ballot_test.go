@@ -20,7 +20,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
-func TestToMap(t *testing.T) {
+func TestExchangeRateBallots_ToMap(t *testing.T) {
 	tests := struct {
 		votes   []types.ExchangeRateBallot
 		isValid []bool
@@ -59,6 +59,9 @@ func TestToMap(t *testing.T) {
 			require.False(t, ok)
 		}
 	}
+	require.NotPanics(t, func() {
+		types.ExchangeRateBallots(tests.votes).NumValidVoters()
+	})
 }
 
 func TestToCrossRate(t *testing.T) {
@@ -333,4 +336,27 @@ func TestNewClaim(t *testing.T) {
 		WinCount:     winCount,
 		ValAddress:   addr,
 	}, claim)
+}
+
+func TestValidatorPerformances(t *testing.T) {
+	power := int64(42)
+	valNames := []string{"val0", "val1", "val2", "val3"}
+	perfList := []types.ValidatorPerformance{
+		types.NewValidatorPerformance(power, sdk.ValAddress([]byte(valNames[0]))),
+		types.NewValidatorPerformance(power, sdk.ValAddress([]byte(valNames[1]))),
+		types.NewValidatorPerformance(power, sdk.ValAddress([]byte(valNames[2]))),
+		types.NewValidatorPerformance(power, sdk.ValAddress([]byte(valNames[3]))),
+	}
+	perfs := make(types.ValidatorPerformances)
+	for idx, perf := range perfList {
+		perfs[valNames[idx]] = perf
+	}
+
+	require.NotPanics(t, func() {
+		out := perfs.String()
+		require.NotEmpty(t, out)
+
+		out = perfs[valNames[0]].String()
+		require.NotEmpty(t, out)
+	})
 }
