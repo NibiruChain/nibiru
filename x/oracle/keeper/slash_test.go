@@ -170,7 +170,10 @@ func TestWhitelistSlashing(t *testing.T) {
 	slashFraction := input.OracleKeeper.SlashFraction(input.Ctx)
 	minValidPerWindow := input.OracleKeeper.MinValidPerWindow(input.Ctx)
 
-	for i := uint64(0); i < uint64(sdk.OneDec().Sub(minValidPerWindow).MulInt64(votePeriodsPerWindow).TruncateInt64()); i++ {
+	allowedMissPct := sdk.OneDec().Sub(minValidPerWindow)
+	allowedMissPeriods := allowedMissPct.MulInt64(votePeriodsPerWindow).
+		TruncateInt64()
+	for idxMissPeriod := uint64(0); idxMissPeriod < uint64(allowedMissPeriods); idxMissPeriod++ {
 		input.Ctx = input.Ctx.WithBlockHeight(input.Ctx.BlockHeight() + 1)
 
 		// Account 2, govstable
@@ -181,7 +184,7 @@ func TestWhitelistSlashing(t *testing.T) {
 		input.OracleKeeper.UpdateExchangeRates(input.Ctx)
 		// input.OracleKeeper.SlashAndResetMissCounters(input.Ctx)
 		// input.OracleKeeper.UpdateExchangeRates(input.Ctx)
-		require.Equal(t, i+1, input.OracleKeeper.MissCounters.GetOr(input.Ctx, ValAddrs[0], 0))
+		require.Equal(t, idxMissPeriod+1, input.OracleKeeper.MissCounters.GetOr(input.Ctx, ValAddrs[0], 0))
 	}
 
 	validator := input.StakingKeeper.Validator(input.Ctx, ValAddrs[0])
