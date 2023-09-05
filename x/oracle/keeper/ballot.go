@@ -137,11 +137,17 @@ func (k Keeper) removeInvalidBallots(
 	return pairBallotsMap, whitelistedPairs
 }
 
-// Tally calculates the median and returns it. Sets the set of voters to be rewarded, i.e. voted within
-// a reasonable spread from the weighted median to the store
+// Tally calculates the median and returns it. Sets the set of voters to be
+// rewarded, i.e. voted within a reasonable spread from the weighted median to
+// the store.
 //
-// ALERT: This function mutates validatorPerformances slice based on the votes made by the validators.
-func Tally(ballots types.ExchangeRateBallots, rewardBand sdk.Dec, validatorPerformances types.ValidatorPerformances) sdk.Dec {
+// ALERT: This function mutates validatorPerformances slice based on the votes
+// made by the validators.
+func Tally(
+	ballots types.ExchangeRateBallots,
+	rewardBand sdk.Dec,
+	validatorPerformances types.ValidatorPerformances,
+) sdk.Dec {
 	weightedMedian := ballots.WeightedMedianWithAssertion()
 	standardDeviation := ballots.StandardDeviation(weightedMedian)
 	rewardSpread := weightedMedian.Mul(rewardBand.QuoInt64(2))
@@ -155,15 +161,20 @@ func Tally(ballots types.ExchangeRateBallots, rewardBand sdk.Dec, validatorPerfo
 		voteInsideSpread := ballot.ExchangeRate.GTE(weightedMedian.Sub(rewardSpread)) &&
 			ballot.ExchangeRate.LTE(weightedMedian.Add(rewardSpread))
 		isAbstainVote := !ballot.ExchangeRate.IsPositive()
+		isMiss := !(voteInsideSpread || isAbstainVote)
 
-		if voteInsideSpread || isAbstainVote {
-			voterAddr := ballot.Voter.String()
-
-			validatorPerformance := validatorPerformances[voterAddr]
+		voterAddr := ballot.Voter.String()
+		validatorPerformance := validatorPerformances[voterAddr]
+		switch {
+		case isAbstainVote:
+			validatorPerformance.AbstainCount++
+		case voteInsideSpread:
 			validatorPerformance.RewardWeight += ballot.Power
 			validatorPerformance.WinCount++
-			validatorPerformances[voterAddr] = validatorPerformance
+		case isMiss:
+			validatorPerformance.MissCount++
 		}
+		validatorPerformances[voterAddr] = validatorPerformance
 	}
 
 	return weightedMedian
