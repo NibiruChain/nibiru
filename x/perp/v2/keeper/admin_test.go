@@ -9,10 +9,10 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	tutilaction "github.com/NibiruChain/nibiru/x/common/testutil/action"
-	tutilmock "github.com/NibiruChain/nibiru/x/common/testutil/mock"
-	perpaction "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
-	perpassert "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
+	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
+	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
+	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
+	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
 	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 
 	"github.com/NibiruChain/nibiru/app"
@@ -91,28 +91,28 @@ func TestAdmin_WithdrawFromInsuranceFund(t *testing.T) {
 func TestEnableMarket(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 
-	tests := tutilaction.TestCases{
-		tutilaction.TC("true -> false").
+	tests := TestCases{
+		TC("true -> false").
 			Given(
-				perpaction.CreateCustomMarket(pair),
-				perpassert.MarketShouldBeEqual(pair, perpassert.Market_EnableShouldBeEqualTo(true)),
+				CreateCustomMarket(pair),
+				MarketShouldBeEqual(pair, Market_EnableShouldBeEqualTo(true)),
 			).
 			When(
-				perpaction.SetMarketEnabled(pair, false),
-				perpassert.MarketShouldBeEqual(pair, perpassert.Market_EnableShouldBeEqualTo(false)),
-				perpaction.SetMarketEnabled(pair, true),
+				SetMarketEnabled(pair, false),
+				MarketShouldBeEqual(pair, Market_EnableShouldBeEqualTo(false)),
+				SetMarketEnabled(pair, true),
 			).
 			Then(
-				perpassert.MarketShouldBeEqual(pair, perpassert.Market_EnableShouldBeEqualTo(true)),
+				MarketShouldBeEqual(pair, Market_EnableShouldBeEqualTo(true)),
 			),
 	}
 
-	tutilaction.NewTestSuite(t).WithTestCases(tests...).Run()
+	NewTestSuite(t).WithTestCases(tests...).Run()
 }
 
 func TestCreateMarketFail(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
-	amm := *tutilmock.TestAMMDefault()
+	amm := *mock.TestAMMDefault()
 	app, ctx := testapp.NewNibiruTestAppAndContext()
 
 	// Error because of invalid market
