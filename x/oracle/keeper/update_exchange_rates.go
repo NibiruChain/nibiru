@@ -29,19 +29,25 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 	k.updateWhitelist(ctx, params.Whitelist, whitelistedPairs)
 }
 
-// registerMissedVotes it parses all validators performance and increases the missed vote of those that did not vote.
-func (k Keeper) registerMissedVotes(ctx sdk.Context, whitelistedPairs set.Set[asset.Pair], validatorPerformances types.ValidatorPerformances) {
+// registerMissedVotes it parses all validators performance and increases the
+// missed vote of those that did not vote.
+func (k Keeper) registerMissedVotes(
+	ctx sdk.Context,
+	whitelistedPairs set.Set[asset.Pair],
+	validatorPerformances types.ValidatorPerformances,
+) {
 	for _, validatorPerformance := range validatorPerformances {
-		if int(validatorPerformance.WinCount) == len(whitelistedPairs) {
-			continue
+		if int(validatorPerformance.MissCount) > 0 {
+			k.MissCounters.Insert(
+				ctx, validatorPerformance.ValAddress,
+				k.MissCounters.GetOr(ctx, validatorPerformance.ValAddress, 0)+1)
+			k.Logger(ctx).Info("vote miss", "validator", validatorPerformance.ValAddress.String())
 		}
-
-		k.MissCounters.Insert(ctx, validatorPerformance.ValAddress, k.MissCounters.GetOr(ctx, validatorPerformance.ValAddress, 0)+1)
-		k.Logger(ctx).Info("vote miss", "validator", validatorPerformance.ValAddress.String())
 	}
 }
 
-// countVotesAndUpdateExchangeRates processes the votes and updates the ExchangeRates based on the results.
+// countVotesAndUpdateExchangeRates processes the votes and updates the
+// ExchangeRates based on the results.
 func (k Keeper) countVotesAndUpdateExchangeRates(
 	ctx sdk.Context,
 	pairBallotsMap map[asset.Pair]types.ExchangeRateBallots,

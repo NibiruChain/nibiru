@@ -10,8 +10,8 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
-	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
-	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
+	tutilaction "github.com/NibiruChain/nibiru/x/common/testutil/action"
+	perpaction "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
@@ -20,38 +20,38 @@ func TestQueryPositions(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	pair2 := asset.Registry.Pair(denoms.ETH, denoms.NUSD)
 
-	tc := TestCases{
-		TC("positive PnL").
+	tc := tutilaction.TestCases{
+		tutilaction.TC("positive PnL").
 			Given(
-				CreateCustomMarket(
+				perpaction.CreateCustomMarket(
 					pair,
-					WithPricePeg(sdk.NewDec(2)),
+					perpaction.WithPricePeg(sdk.NewDec(2)),
 				),
-				CreateCustomMarket(
+				perpaction.CreateCustomMarket(
 					pair2,
-					WithPricePeg(sdk.NewDec(3)),
+					perpaction.WithPricePeg(sdk.NewDec(3)),
 				),
 			).
 			When(
-				InsertPosition(
-					WithPair(pair),
-					WithTrader(alice),
-					WithMargin(sdk.OneDec()),
-					WithSize(sdk.NewDec(10)),
-					WithOpenNotional(sdk.NewDec(10)),
+				perpaction.InsertPosition(
+					perpaction.WithPair(pair),
+					perpaction.WithTrader(alice),
+					perpaction.WithMargin(sdk.OneDec()),
+					perpaction.WithSize(sdk.NewDec(10)),
+					perpaction.WithOpenNotional(sdk.NewDec(10)),
 				),
-				InsertPosition(
-					WithPair(pair2),
-					WithTrader(alice),
-					WithMargin(sdk.OneDec()),
-					WithSize(sdk.NewDec(10)),
-					WithOpenNotional(sdk.NewDec(10)),
+				perpaction.InsertPosition(
+					perpaction.WithPair(pair2),
+					perpaction.WithTrader(alice),
+					perpaction.WithMargin(sdk.OneDec()),
+					perpaction.WithSize(sdk.NewDec(10)),
+					perpaction.WithOpenNotional(sdk.NewDec(10)),
 				),
 			).
 			Then(
-				QueryPositions(alice,
-					[]QueryPositionChecker{
-						QueryPosition_PositionEquals(types.Position{
+				perpaction.QueryPositions(alice,
+					[]perpaction.QueryPositionChecker{
+						perpaction.QueryPosition_PositionEquals(types.Position{
 							Pair:                            pair,
 							TraderAddress:                   alice.String(),
 							Size_:                           sdk.NewDec(10),
@@ -60,12 +60,12 @@ func TestQueryPositions(t *testing.T) {
 							LatestCumulativePremiumFraction: sdk.ZeroDec(),
 							LastUpdatedBlockNumber:          0,
 						}),
-						QueryPosition_PositionNotionalEquals(sdk.MustNewDecFromStr("19.9999999998")),
-						QueryPosition_UnrealizedPnlEquals(sdk.MustNewDecFromStr("9.9999999998")),
-						QueryPosition_MarginRatioEquals(sdk.MustNewDecFromStr("0.5499999999955")),
+						perpaction.QueryPosition_PositionNotionalEquals(sdk.MustNewDecFromStr("19.9999999998")),
+						perpaction.QueryPosition_UnrealizedPnlEquals(sdk.MustNewDecFromStr("9.9999999998")),
+						perpaction.QueryPosition_MarginRatioEquals(sdk.MustNewDecFromStr("0.5499999999955")),
 					},
-					[]QueryPositionChecker{
-						QueryPosition_PositionEquals(types.Position{
+					[]perpaction.QueryPositionChecker{
+						perpaction.QueryPosition_PositionEquals(types.Position{
 							Pair:                            pair2,
 							TraderAddress:                   alice.String(),
 							Size_:                           sdk.NewDec(10),
@@ -74,44 +74,44 @@ func TestQueryPositions(t *testing.T) {
 							LatestCumulativePremiumFraction: sdk.ZeroDec(),
 							LastUpdatedBlockNumber:          0,
 						}),
-						QueryPosition_PositionNotionalEquals(sdk.MustNewDecFromStr("29.9999999997")),
-						QueryPosition_UnrealizedPnlEquals(sdk.MustNewDecFromStr("19.9999999997")),
-						QueryPosition_MarginRatioEquals(sdk.MustNewDecFromStr("0.699999999997")),
+						perpaction.QueryPosition_PositionNotionalEquals(sdk.MustNewDecFromStr("29.9999999997")),
+						perpaction.QueryPosition_UnrealizedPnlEquals(sdk.MustNewDecFromStr("19.9999999997")),
+						perpaction.QueryPosition_MarginRatioEquals(sdk.MustNewDecFromStr("0.699999999997")),
 					},
 				),
 			),
 
-		TC("negative PnL, positive margin ratio").
+		tutilaction.TC("negative PnL, positive margin ratio").
 			Given(
-				CreateCustomMarket(
+				perpaction.CreateCustomMarket(
 					pair,
-					WithPricePeg(sdk.OneDec()),
+					perpaction.WithPricePeg(sdk.OneDec()),
 				),
-				CreateCustomMarket(
+				perpaction.CreateCustomMarket(
 					pair2,
-					WithPricePeg(sdk.MustNewDecFromStr("0.95")),
+					perpaction.WithPricePeg(sdk.MustNewDecFromStr("0.95")),
 				),
 			).
 			When(
-				InsertPosition(
-					WithPair(pair),
-					WithTrader(alice),
-					WithMargin(sdk.OneDec()),
-					WithSize(sdk.NewDec(10)),
-					WithOpenNotional(sdk.NewDec(10)),
+				perpaction.InsertPosition(
+					perpaction.WithPair(pair),
+					perpaction.WithTrader(alice),
+					perpaction.WithMargin(sdk.OneDec()),
+					perpaction.WithSize(sdk.NewDec(10)),
+					perpaction.WithOpenNotional(sdk.NewDec(10)),
 				),
-				InsertPosition(
-					WithPair(pair2),
-					WithTrader(alice),
-					WithMargin(sdk.OneDec()),
-					WithSize(sdk.NewDec(10)),
-					WithOpenNotional(sdk.NewDec(10)),
+				perpaction.InsertPosition(
+					perpaction.WithPair(pair2),
+					perpaction.WithTrader(alice),
+					perpaction.WithMargin(sdk.OneDec()),
+					perpaction.WithSize(sdk.NewDec(10)),
+					perpaction.WithOpenNotional(sdk.NewDec(10)),
 				),
 			).
 			Then(
-				QueryPositions(alice,
-					[]QueryPositionChecker{
-						QueryPosition_PositionEquals(types.Position{
+				perpaction.QueryPositions(alice,
+					[]perpaction.QueryPositionChecker{
+						perpaction.QueryPosition_PositionEquals(types.Position{
 							Pair:                            pair,
 							TraderAddress:                   alice.String(),
 							Size_:                           sdk.NewDec(10),
@@ -120,12 +120,12 @@ func TestQueryPositions(t *testing.T) {
 							LatestCumulativePremiumFraction: sdk.ZeroDec(),
 							LastUpdatedBlockNumber:          0,
 						}),
-						QueryPosition_PositionNotionalEquals(sdk.MustNewDecFromStr("9.9999999999")),
-						QueryPosition_UnrealizedPnlEquals(sdk.MustNewDecFromStr("-0.0000000001")),
-						QueryPosition_MarginRatioEquals(sdk.MustNewDecFromStr("0.099999999991")),
+						perpaction.QueryPosition_PositionNotionalEquals(sdk.MustNewDecFromStr("9.9999999999")),
+						perpaction.QueryPosition_UnrealizedPnlEquals(sdk.MustNewDecFromStr("-0.0000000001")),
+						perpaction.QueryPosition_MarginRatioEquals(sdk.MustNewDecFromStr("0.099999999991")),
 					},
-					[]QueryPositionChecker{
-						QueryPosition_PositionEquals(types.Position{
+					[]perpaction.QueryPositionChecker{
+						perpaction.QueryPosition_PositionEquals(types.Position{
 							Pair:                            pair2,
 							TraderAddress:                   alice.String(),
 							Size_:                           sdk.NewDec(10),
@@ -134,44 +134,44 @@ func TestQueryPositions(t *testing.T) {
 							LatestCumulativePremiumFraction: sdk.ZeroDec(),
 							LastUpdatedBlockNumber:          0,
 						}),
-						QueryPosition_PositionNotionalEquals(sdk.MustNewDecFromStr("9.499999999905")),
-						QueryPosition_UnrealizedPnlEquals(sdk.MustNewDecFromStr("-0.500000000095")),
-						QueryPosition_MarginRatioEquals(sdk.MustNewDecFromStr("0.052631578937894737")),
+						perpaction.QueryPosition_PositionNotionalEquals(sdk.MustNewDecFromStr("9.499999999905")),
+						perpaction.QueryPosition_UnrealizedPnlEquals(sdk.MustNewDecFromStr("-0.500000000095")),
+						perpaction.QueryPosition_MarginRatioEquals(sdk.MustNewDecFromStr("0.052631578937894737")),
 					},
 				),
 			),
 
-		TC("negative PnL, negative margin ratio").
+		tutilaction.TC("negative PnL, negative margin ratio").
 			Given(
-				CreateCustomMarket(
+				perpaction.CreateCustomMarket(
 					pair,
-					WithPricePeg(sdk.MustNewDecFromStr("0.5")),
+					perpaction.WithPricePeg(sdk.MustNewDecFromStr("0.5")),
 				),
-				CreateCustomMarket(
+				perpaction.CreateCustomMarket(
 					pair2,
-					WithPricePeg(sdk.MustNewDecFromStr("0.9")),
+					perpaction.WithPricePeg(sdk.MustNewDecFromStr("0.9")),
 				),
 			).
 			When(
-				InsertPosition(
-					WithPair(pair),
-					WithTrader(alice),
-					WithMargin(sdk.OneDec()),
-					WithSize(sdk.NewDec(10)),
-					WithOpenNotional(sdk.NewDec(10)),
+				perpaction.InsertPosition(
+					perpaction.WithPair(pair),
+					perpaction.WithTrader(alice),
+					perpaction.WithMargin(sdk.OneDec()),
+					perpaction.WithSize(sdk.NewDec(10)),
+					perpaction.WithOpenNotional(sdk.NewDec(10)),
 				),
-				InsertPosition(
-					WithPair(pair2),
-					WithTrader(alice),
-					WithMargin(sdk.OneDec()),
-					WithSize(sdk.NewDec(10)),
-					WithOpenNotional(sdk.NewDec(10)),
+				perpaction.InsertPosition(
+					perpaction.WithPair(pair2),
+					perpaction.WithTrader(alice),
+					perpaction.WithMargin(sdk.OneDec()),
+					perpaction.WithSize(sdk.NewDec(10)),
+					perpaction.WithOpenNotional(sdk.NewDec(10)),
 				),
 			).
 			Then(
-				QueryPositions(alice,
-					[]QueryPositionChecker{
-						QueryPosition_PositionEquals(types.Position{
+				perpaction.QueryPositions(alice,
+					[]perpaction.QueryPositionChecker{
+						perpaction.QueryPosition_PositionEquals(types.Position{
 							Pair:                            pair,
 							TraderAddress:                   alice.String(),
 							Size_:                           sdk.NewDec(10),
@@ -180,12 +180,12 @@ func TestQueryPositions(t *testing.T) {
 							LatestCumulativePremiumFraction: sdk.ZeroDec(),
 							LastUpdatedBlockNumber:          0,
 						}),
-						QueryPosition_PositionNotionalEquals(sdk.MustNewDecFromStr("4.99999999995")),
-						QueryPosition_UnrealizedPnlEquals(sdk.MustNewDecFromStr("-5.00000000005")),
-						QueryPosition_MarginRatioEquals(sdk.MustNewDecFromStr("-0.800000000018")),
+						perpaction.QueryPosition_PositionNotionalEquals(sdk.MustNewDecFromStr("4.99999999995")),
+						perpaction.QueryPosition_UnrealizedPnlEquals(sdk.MustNewDecFromStr("-5.00000000005")),
+						perpaction.QueryPosition_MarginRatioEquals(sdk.MustNewDecFromStr("-0.800000000018")),
 					},
-					[]QueryPositionChecker{
-						QueryPosition_PositionEquals(types.Position{
+					[]perpaction.QueryPositionChecker{
+						perpaction.QueryPosition_PositionEquals(types.Position{
 							Pair:                            pair2,
 							TraderAddress:                   alice.String(),
 							Size_:                           sdk.NewDec(10),
@@ -194,41 +194,41 @@ func TestQueryPositions(t *testing.T) {
 							LatestCumulativePremiumFraction: sdk.ZeroDec(),
 							LastUpdatedBlockNumber:          0,
 						}),
-						QueryPosition_PositionNotionalEquals(sdk.MustNewDecFromStr("8.99999999991")),
-						QueryPosition_UnrealizedPnlEquals(sdk.MustNewDecFromStr("-1.00000000009")),
-						QueryPosition_MarginRatioEquals(sdk.MustNewDecFromStr("-0.00000000001")),
+						perpaction.QueryPosition_PositionNotionalEquals(sdk.MustNewDecFromStr("8.99999999991")),
+						perpaction.QueryPosition_UnrealizedPnlEquals(sdk.MustNewDecFromStr("-1.00000000009")),
+						perpaction.QueryPosition_MarginRatioEquals(sdk.MustNewDecFromStr("-0.00000000001")),
 					},
 				),
 			),
 	}
 
-	NewTestSuite(t).WithTestCases(tc...).Run()
+	tutilaction.NewTestSuite(t).WithTestCases(tc...).Run()
 }
 
 func TestQueryPosition(t *testing.T) {
 	alice := testutil.AccAddress()
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 
-	tc := TestCases{
-		TC("positive PnL").
+	tc := tutilaction.TestCases{
+		tutilaction.TC("positive PnL").
 			Given(
-				CreateCustomMarket(
+				perpaction.CreateCustomMarket(
 					pair,
-					WithPricePeg(sdk.NewDec(2)),
+					perpaction.WithPricePeg(sdk.NewDec(2)),
 				),
 			).
 			When(
-				InsertPosition(
-					WithPair(pair),
-					WithTrader(alice),
-					WithMargin(sdk.OneDec()),
-					WithSize(sdk.NewDec(10)),
-					WithOpenNotional(sdk.NewDec(10)),
+				perpaction.InsertPosition(
+					perpaction.WithPair(pair),
+					perpaction.WithTrader(alice),
+					perpaction.WithMargin(sdk.OneDec()),
+					perpaction.WithSize(sdk.NewDec(10)),
+					perpaction.WithOpenNotional(sdk.NewDec(10)),
 				),
 			).
 			Then(
-				QueryPosition(pair, alice,
-					QueryPosition_PositionEquals(types.Position{
+				perpaction.QueryPosition(pair, alice,
+					perpaction.QueryPosition_PositionEquals(types.Position{
 						Pair:                            pair,
 						TraderAddress:                   alice.String(),
 						Size_:                           sdk.NewDec(10),
@@ -237,31 +237,31 @@ func TestQueryPosition(t *testing.T) {
 						LatestCumulativePremiumFraction: sdk.ZeroDec(),
 						LastUpdatedBlockNumber:          0,
 					}),
-					QueryPosition_PositionNotionalEquals(sdk.MustNewDecFromStr("19.9999999998")),
-					QueryPosition_UnrealizedPnlEquals(sdk.MustNewDecFromStr("9.9999999998")),
-					QueryPosition_MarginRatioEquals(sdk.MustNewDecFromStr("0.5499999999955")),
+					perpaction.QueryPosition_PositionNotionalEquals(sdk.MustNewDecFromStr("19.9999999998")),
+					perpaction.QueryPosition_UnrealizedPnlEquals(sdk.MustNewDecFromStr("9.9999999998")),
+					perpaction.QueryPosition_MarginRatioEquals(sdk.MustNewDecFromStr("0.5499999999955")),
 				),
 			),
 
-		TC("negative PnL, positive margin ratio").
+		tutilaction.TC("negative PnL, positive margin ratio").
 			Given(
-				CreateCustomMarket(
+				perpaction.CreateCustomMarket(
 					pair,
-					WithPricePeg(sdk.OneDec()),
+					perpaction.WithPricePeg(sdk.OneDec()),
 				),
 			).
 			When(
-				InsertPosition(
-					WithPair(pair),
-					WithTrader(alice),
-					WithMargin(sdk.OneDec()),
-					WithSize(sdk.NewDec(10)),
-					WithOpenNotional(sdk.NewDec(10)),
+				perpaction.InsertPosition(
+					perpaction.WithPair(pair),
+					perpaction.WithTrader(alice),
+					perpaction.WithMargin(sdk.OneDec()),
+					perpaction.WithSize(sdk.NewDec(10)),
+					perpaction.WithOpenNotional(sdk.NewDec(10)),
 				),
 			).
 			Then(
-				QueryPosition(pair, alice,
-					QueryPosition_PositionEquals(types.Position{
+				perpaction.QueryPosition(pair, alice,
+					perpaction.QueryPosition_PositionEquals(types.Position{
 						Pair:                            pair,
 						TraderAddress:                   alice.String(),
 						Size_:                           sdk.NewDec(10),
@@ -270,31 +270,31 @@ func TestQueryPosition(t *testing.T) {
 						LatestCumulativePremiumFraction: sdk.ZeroDec(),
 						LastUpdatedBlockNumber:          0,
 					}),
-					QueryPosition_PositionNotionalEquals(sdk.MustNewDecFromStr("9.9999999999")),
-					QueryPosition_UnrealizedPnlEquals(sdk.MustNewDecFromStr("-0.0000000001")),
-					QueryPosition_MarginRatioEquals(sdk.MustNewDecFromStr("0.099999999991")),
+					perpaction.QueryPosition_PositionNotionalEquals(sdk.MustNewDecFromStr("9.9999999999")),
+					perpaction.QueryPosition_UnrealizedPnlEquals(sdk.MustNewDecFromStr("-0.0000000001")),
+					perpaction.QueryPosition_MarginRatioEquals(sdk.MustNewDecFromStr("0.099999999991")),
 				),
 			),
 
-		TC("negative PnL, negative margin ratio").
+		tutilaction.TC("negative PnL, negative margin ratio").
 			Given(
-				CreateCustomMarket(
+				perpaction.CreateCustomMarket(
 					pair,
-					WithPricePeg(sdk.MustNewDecFromStr("0.5")),
+					perpaction.WithPricePeg(sdk.MustNewDecFromStr("0.5")),
 				),
 			).
 			When(
-				InsertPosition(
-					WithPair(pair),
-					WithTrader(alice),
-					WithMargin(sdk.OneDec()),
-					WithSize(sdk.NewDec(10)),
-					WithOpenNotional(sdk.NewDec(10)),
+				perpaction.InsertPosition(
+					perpaction.WithPair(pair),
+					perpaction.WithTrader(alice),
+					perpaction.WithMargin(sdk.OneDec()),
+					perpaction.WithSize(sdk.NewDec(10)),
+					perpaction.WithOpenNotional(sdk.NewDec(10)),
 				),
 			).
 			Then(
-				QueryPosition(pair, alice,
-					QueryPosition_PositionEquals(types.Position{
+				perpaction.QueryPosition(pair, alice,
+					perpaction.QueryPosition_PositionEquals(types.Position{
 						Pair:                            pair,
 						TraderAddress:                   alice.String(),
 						Size_:                           sdk.NewDec(10),
@@ -303,53 +303,55 @@ func TestQueryPosition(t *testing.T) {
 						LatestCumulativePremiumFraction: sdk.ZeroDec(),
 						LastUpdatedBlockNumber:          0,
 					}),
-					QueryPosition_PositionNotionalEquals(sdk.MustNewDecFromStr("4.99999999995")),
-					QueryPosition_UnrealizedPnlEquals(sdk.MustNewDecFromStr("-5.00000000005")),
-					QueryPosition_MarginRatioEquals(sdk.MustNewDecFromStr("-0.800000000018")),
+					perpaction.QueryPosition_PositionNotionalEquals(sdk.MustNewDecFromStr("4.99999999995")),
+					perpaction.QueryPosition_UnrealizedPnlEquals(sdk.MustNewDecFromStr("-5.00000000005")),
+					perpaction.QueryPosition_MarginRatioEquals(sdk.MustNewDecFromStr("-0.800000000018")),
 				),
 			),
 
-		TC("non existent position").
+		tutilaction.TC("non existent position").
 			Given(
-				CreateCustomMarket(
+				perpaction.CreateCustomMarket(
 					pair,
-					WithPricePeg(sdk.NewDec(2)),
+					perpaction.WithPricePeg(sdk.NewDec(2)),
 				),
 			).
 			When().
 			Then(
-				QueryPositionNotFound(pair, alice),
+				perpaction.QueryPositionNotFound(pair, alice),
 			),
 	}
 
-	NewTestSuite(t).WithTestCases(tc...).Run()
+	tutilaction.NewTestSuite(t).WithTestCases(tc...).Run()
 }
 
 func TestQueryMarkets(t *testing.T) {
 	alice := testutil.AccAddress()
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 
-	tc := TestCases{
-		TC("positive PnL").
+	tc := tutilaction.TestCases{
+		tutilaction.TC("positive PnL").
 			Given(
-				CreateCustomMarket(
+				perpaction.CreateCustomMarket(
 					pair,
-					WithPricePeg(sdk.NewDec(2)),
+					perpaction.WithPricePeg(sdk.NewDec(2)),
 				),
-				FundModule("perp_ef", sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10)))),
+				tutilaction.FundModule(
+					"perp_ef", sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10))),
+				),
 			).
 			When(
-				InsertPosition(
-					WithPair(pair),
-					WithTrader(alice),
-					WithMargin(sdk.OneDec()),
-					WithSize(sdk.NewDec(10)),
-					WithOpenNotional(sdk.NewDec(10)),
+				perpaction.InsertPosition(
+					perpaction.WithPair(pair),
+					perpaction.WithTrader(alice),
+					perpaction.WithMargin(sdk.OneDec()),
+					perpaction.WithSize(sdk.NewDec(10)),
+					perpaction.WithOpenNotional(sdk.NewDec(10)),
 				),
 			).
 			Then(
-				QueryMarkets(QueryMarkets_MarketsShouldContain(*types.DefaultMarket(pair))),
-				QueryModuleAccounts(QueryModuleAccounts_ModulesBalanceShouldBe(
+				perpaction.QueryMarkets(perpaction.QueryMarkets_MarketsShouldContain(*types.DefaultMarket(pair))),
+				perpaction.QueryModuleAccounts(perpaction.QueryModuleAccounts_ModulesBalanceShouldBe(
 					map[string]sdk.Coins{
 						"perp_ef": sdk.NewCoins(
 							sdk.NewCoin(denoms.BTC, sdk.ZeroInt()),
@@ -360,7 +362,7 @@ func TestQueryMarkets(t *testing.T) {
 			),
 	}
 
-	NewTestSuite(t).WithTestCases(tc...).Run()
+	tutilaction.NewTestSuite(t).WithTestCases(tc...).Run()
 }
 
 func TestQueryPositionStore(t *testing.T) {
