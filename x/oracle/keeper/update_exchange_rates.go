@@ -12,7 +12,7 @@ import (
 )
 
 // UpdateExchangeRates updates the ExchangeRates, this is supposed to be executed on EndBlock.
-func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
+func (k Keeper) UpdateExchangeRates(ctx sdk.Context) types.ValidatorPerformances {
 	k.Logger(ctx).Info("processing validator price votes")
 
 	validatorPerformances := k.newValidatorPerformances(ctx)
@@ -27,6 +27,8 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) {
 	params, _ := k.Params.Get(ctx)
 	k.clearVotesAndPreVotes(ctx, params.VotePeriod)
 	k.updateWhitelist(ctx, params.Whitelist, whitelistedPairs)
+	k.registerAbstainsByOmission(ctx, len(params.Whitelist), validatorPerformances)
+	return validatorPerformances
 }
 
 // registerMissedVotes it parses all validators performance and increases the
@@ -46,6 +48,20 @@ func (k Keeper) registerMissedVotes(
 	}
 }
 
+func (k Keeper) registerAbstainsByOmission(
+	ctx sdk.Context,
+	numMarkets int,
+	perfs types.ValidatorPerformances,
+) {
+	for valAddr, perf := range perfs {
+		omitCount := int64(numMarkets) - (perf.WinCount + perf.AbstainCount + perf.MissCount)
+		if omitCount > 0 {
+			perf.AbstainCount += omitCount
+			perfs[valAddr] = perf
+		}
+	}
+}
+
 // countVotesAndUpdateExchangeRates processes the votes and updates the
 // ExchangeRates based on the results.
 func (k Keeper) countVotesAndUpdateExchangeRates(
@@ -59,7 +75,7 @@ func (k Keeper) countVotesAndUpdateExchangeRates(
 	orderedBallotsMap := omap.OrderedMap_Pair[types.ExchangeRateBallots](pairBallotsMap)
 	for pair := range orderedBallotsMap.Range() {
 		ballots := pairBallotsMap[pair]
-		exchangeRate := Tally(ballots, rewardBand, validatorPerformances)
+		exchangeRate, _ := Tally(ballots, rewardBand, validatorPerformances)
 
 		k.SetPrice(ctx, pair, exchangeRate)
 

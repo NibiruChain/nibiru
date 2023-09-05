@@ -24,7 +24,7 @@ func TestOracleThreshold(t *testing.T) {
 	exchangeRates := types.ExchangeRateTuples{
 		{
 			Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			ExchangeRate: randomExchangeRate,
+			ExchangeRate: TEST_ERATE,
 		},
 	}
 	exchangeRateStr, err := exchangeRates.ToString()
@@ -68,12 +68,12 @@ func TestOracleThreshold(t *testing.T) {
 	fixture.OracleKeeper.UpdateExchangeRates(fixture.Ctx)
 	rate, err := fixture.OracleKeeper.ExchangeRates.Get(fixture.Ctx, exchangeRates[0].Pair)
 	require.NoError(t, err)
-	assert.Equal(t, randomExchangeRate, rate.ExchangeRate)
+	assert.Equal(t, TEST_ERATE, rate.ExchangeRate)
 
 	// Case 3.
 	// Increase voting power of absent validator, exchange rate consensus fails
 	val, _ := fixture.StakingKeeper.GetValidator(fixture.Ctx, ValAddrs[4])
-	_, _ = fixture.StakingKeeper.Delegate(fixture.Ctx.WithBlockHeight(0), Addrs[4], stakingAmt.MulRaw(8), stakingtypes.Unbonded, val, false)
+	_, _ = fixture.StakingKeeper.Delegate(fixture.Ctx.WithBlockHeight(0), Addrs[4], TEST_STAKING_AMT.MulRaw(8), stakingtypes.Unbonded, val, false)
 
 	for i := 0; i < 4; i++ {
 		salt := fmt.Sprintf("%d", i)
@@ -104,7 +104,7 @@ func TestResetExchangeRates(t *testing.T) {
 	fixture.OracleKeeper.Params.Set(fixture.Ctx, params)
 
 	// Post a price at block 1
-	fixture.OracleKeeper.SetPrice(fixture.Ctx.WithBlockHeight(1), pair, randomExchangeRate)
+	fixture.OracleKeeper.SetPrice(fixture.Ctx.WithBlockHeight(1), pair, TEST_ERATE)
 
 	// reset exchange rates at block 2
 	// Price should still be there because not expired yet
@@ -121,7 +121,7 @@ func TestResetExchangeRates(t *testing.T) {
 	// Post a price at block 69
 	// reset exchange rates at block 79
 	// Price should not be there anymore because expired
-	fixture.OracleKeeper.SetPrice(fixture.Ctx.WithBlockHeight(69), pair, randomExchangeRate)
+	fixture.OracleKeeper.SetPrice(fixture.Ctx.WithBlockHeight(69), pair, TEST_ERATE)
 	fixture.OracleKeeper.resetExchangeRates(fixture.Ctx.WithBlockHeight(79), emptyBallot)
 
 	_, err = fixture.OracleKeeper.ExchangeRates.Get(fixture.Ctx, pair)
@@ -153,7 +153,7 @@ func TestOracleTally(t *testing.T) {
 		require.NoError(t, err1)
 		require.NoError(t, err2)
 
-		power := stakingAmt.QuoRaw(int64(6)).Int64()
+		power := TEST_STAKING_AMT.QuoRaw(int64(6)).Int64()
 		if decExchangeRate.IsZero() {
 			power = int64(0)
 		}
@@ -207,11 +207,12 @@ func TestOracleTally(t *testing.T) {
 		expectedValidatorClaimMap[key] = claim
 	}
 
-	tallyMedian := Tally(
+	tallyMedian, perfs := Tally(
 		ballot, fixture.OracleKeeper.RewardBand(fixture.Ctx), validatorClaimMap)
 
 	assert.Equal(t, expectedValidatorClaimMap, validatorClaimMap)
 	assert.Equal(t, tallyMedian.MulInt64(100).TruncateInt(), weightedMedian.MulInt64(100).TruncateInt())
+	assert.NotEqualValues(t, 0, perfs.GetTotalRewardWeight(), perfs.String())
 }
 
 func TestOracleRewardBand(t *testing.T) {
@@ -228,26 +229,26 @@ func TestOracleRewardBand(t *testing.T) {
 	}
 	fixture.OracleKeeper.WhitelistedPairs.Insert(fixture.Ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD))
 
-	rewardSpread := randomExchangeRate.Mul(fixture.OracleKeeper.RewardBand(fixture.Ctx).QuoInt64(2))
+	rewardSpread := TEST_ERATE.Mul(fixture.OracleKeeper.RewardBand(fixture.Ctx).QuoInt64(2))
 
 	// Account 1, nibi:nusd
 	MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{
-		{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate.Sub(rewardSpread)},
+		{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: TEST_ERATE.Sub(rewardSpread)},
 	}, 0)
 
 	// Account 2, nibi:nusd
 	MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{
-		{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate},
+		{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: TEST_ERATE},
 	}, 1)
 
 	// Account 3, nibi:nusd
 	MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{
-		{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate},
+		{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: TEST_ERATE},
 	}, 2)
 
 	// Account 4, nibi:nusd
 	MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{
-		{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate.Add(rewardSpread)},
+		{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: TEST_ERATE.Add(rewardSpread)},
 	}, 3)
 
 	fixture.OracleKeeper.UpdateExchangeRates(fixture.Ctx)
@@ -260,22 +261,22 @@ func TestOracleRewardBand(t *testing.T) {
 	// Account 1 will miss the vote due to raward band condition
 	// Account 1, nibi:nusd
 	MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{
-		{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate.Sub(rewardSpread.Add(sdk.OneDec()))},
+		{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: TEST_ERATE.Sub(rewardSpread.Add(sdk.OneDec()))},
 	}, 0)
 
 	// Account 2, nibi:nusd
 	MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{
-		{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate},
+		{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: TEST_ERATE},
 	}, 1)
 
 	// Account 3, nibi:nusd
 	MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{
-		{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate},
+		{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: TEST_ERATE},
 	}, 2)
 
 	// Account 4, nibi:nusd
 	MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{
-		{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate.Add(rewardSpread)},
+		{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: TEST_ERATE.Add(rewardSpread)},
 	}, 3)
 
 	fixture.OracleKeeper.UpdateExchangeRates(fixture.Ctx)
@@ -403,62 +404,81 @@ func TestWhitelistedPairs(t *testing.T) {
 	params, err := fixture.OracleKeeper.Params.Get(fixture.Ctx)
 	require.NoError(t, err)
 
+	t.Log("whitelist ONLY nibi:nusd")
 	for _, p := range fixture.OracleKeeper.WhitelistedPairs.Iterate(fixture.Ctx, collections.Range[asset.Pair]{}).Keys() {
 		fixture.OracleKeeper.WhitelistedPairs.Delete(fixture.Ctx, p)
 	}
 	fixture.OracleKeeper.WhitelistedPairs.Insert(fixture.Ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD))
 
-	// nibi:nusd
-	MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 0)
-	MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 1)
-	MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 2)
-	MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 3)
+	t.Log("vote and prevote from all vals on nibi:nusd")
+	priceVoteFromVal := func(valIdx int, block int64) {
+		MakeAggregatePrevoteAndVote(t, fixture, msgServer, block, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: TEST_ERATE}}, valIdx)
+	}
+	block := int64(0)
+	priceVoteFromVal(0, block)
+	priceVoteFromVal(1, block)
+	priceVoteFromVal(2, block)
+	priceVoteFromVal(3, block)
 
-	// add btc:nusd for next vote period
+	t.Log("whitelist btc:nusd for next vote period")
 	params.Whitelist = []asset.Pair{asset.Registry.Pair(denoms.NIBI, denoms.NUSD), asset.Registry.Pair(denoms.BTC, denoms.NUSD)}
 	fixture.OracleKeeper.Params.Set(fixture.Ctx, params)
 	fixture.OracleKeeper.UpdateExchangeRates(fixture.Ctx)
 
-	// no missing current
+	t.Log("assert: no miss counts for all vals")
 	assert.Equal(t, uint64(0), fixture.OracleKeeper.MissCounters.GetOr(fixture.Ctx, ValAddrs[0], 0))
 	assert.Equal(t, uint64(0), fixture.OracleKeeper.MissCounters.GetOr(fixture.Ctx, ValAddrs[1], 0))
 	assert.Equal(t, uint64(0), fixture.OracleKeeper.MissCounters.GetOr(fixture.Ctx, ValAddrs[2], 0))
 	assert.Equal(t, uint64(0), fixture.OracleKeeper.MissCounters.GetOr(fixture.Ctx, ValAddrs[3], 0))
 
-	// whitelisted pairs are {nibi:nusd, btc:nusd}
-	assert.Equal(t, []asset.Pair{asset.Registry.Pair(denoms.BTC, denoms.NUSD), asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}, fixture.OracleKeeper.GetWhitelistedPairs(fixture.Ctx))
+	t.Log("whitelisted pairs are {nibi:nusd, btc:nusd}")
+	assert.Equal(t,
+		[]asset.Pair{
+			asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+			asset.Registry.Pair(denoms.NIBI, denoms.NUSD)},
+		fixture.OracleKeeper.GetWhitelistedPairs(fixture.Ctx))
 
-	// nibi:nusd, missing btc:nusd
-	MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 0)
-	MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 1)
-	MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 2)
-	MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 3)
+	t.Log("vote from vals 0-3 on nibi:nusd (but not btc:nusd)")
+	priceVoteFromVal(0, block)
+	priceVoteFromVal(1, block)
+	priceVoteFromVal(2, block)
+	priceVoteFromVal(3, block)
 
-	// delete btc:nusd for next vote period
+	t.Log("delete btc:nusd for next vote period")
 	params.Whitelist = []asset.Pair{asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}
 	fixture.OracleKeeper.Params.Set(fixture.Ctx, params)
-	fixture.OracleKeeper.UpdateExchangeRates(fixture.Ctx)
+	perfs := fixture.OracleKeeper.UpdateExchangeRates(fixture.Ctx)
 
-	assert.Equal(t, uint64(1), fixture.OracleKeeper.MissCounters.GetOr(fixture.Ctx, ValAddrs[0], 0))
-	assert.Equal(t, uint64(1), fixture.OracleKeeper.MissCounters.GetOr(fixture.Ctx, ValAddrs[1], 0))
-	assert.Equal(t, uint64(1), fixture.OracleKeeper.MissCounters.GetOr(fixture.Ctx, ValAddrs[2], 0))
-	assert.Equal(t, uint64(1), fixture.OracleKeeper.MissCounters.GetOr(fixture.Ctx, ValAddrs[3], 0))
+	t.Log("validators 0-3 all voted -> expect win")
+	for valIdx := 0; valIdx < 4; valIdx++ {
+		perf := perfs[ValAddrs[valIdx].String()]
+		assert.EqualValues(t, 1, perf.WinCount)
+		assert.EqualValues(t, 0, perf.AbstainCount)
+		assert.EqualValues(t, 0, perf.MissCount)
+	}
+	t.Log("validators 4 didn't vote -> expect abstain")
+	perf := perfs[ValAddrs[4].String()]
+	assert.EqualValues(t, 0, perf.WinCount)
+	assert.EqualValues(t, 1, perf.AbstainCount)
+	assert.EqualValues(t, 0, perf.MissCount)
 
-	// btc:nusd must be deleted
-	assert.Equal(t, []asset.Pair{asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}, fixture.OracleKeeper.GetWhitelistedPairs(fixture.Ctx))
-	require.False(t, fixture.OracleKeeper.WhitelistedPairs.Has(fixture.Ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)))
+	t.Log("btc:nusd must be deleted")
+	assert.Equal(t, []asset.Pair{asset.Registry.Pair(denoms.NIBI, denoms.NUSD)},
+		fixture.OracleKeeper.GetWhitelistedPairs(fixture.Ctx))
+	require.False(t, fixture.OracleKeeper.WhitelistedPairs.Has(
+		fixture.Ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)))
 
-	// nibi:nusd, no missing
-	MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 0)
-	MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 1)
-	MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 2)
-	MakeAggregatePrevoteAndVote(t, fixture, msgServer, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 3)
+	t.Log("vote from vals 0-2 on nibi:nusd (same vote period)")
+	priceVoteFromVal(0, block)
+	priceVoteFromVal(1, block)
+	priceVoteFromVal(2, block)
+	perfs = fixture.OracleKeeper.UpdateExchangeRates(fixture.Ctx)
 
-	fixture.OracleKeeper.UpdateExchangeRates(fixture.Ctx)
-
-	// validators keep miss counters from last vote period
-	assert.Equal(t, uint64(1), fixture.OracleKeeper.MissCounters.GetOr(fixture.Ctx, ValAddrs[0], 0))
-	assert.Equal(t, uint64(1), fixture.OracleKeeper.MissCounters.GetOr(fixture.Ctx, ValAddrs[1], 0))
-	assert.Equal(t, uint64(1), fixture.OracleKeeper.MissCounters.GetOr(fixture.Ctx, ValAddrs[2], 0))
-	assert.Equal(t, uint64(1), fixture.OracleKeeper.MissCounters.GetOr(fixture.Ctx, ValAddrs[2], 0))
+	t.Log("Although validators 0-2 voted, it's for the same period -> expect abstains for everyone")
+	for valIdx := 0; valIdx < 5; valIdx++ {
+		perf := perfs[ValAddrs[valIdx].String()]
+		assert.EqualValues(t, 0, perf.WinCount)
+		assert.EqualValues(t, 1, perf.AbstainCount)
+		assert.EqualValues(t, 0, perf.MissCount)
+	}
 }
