@@ -210,11 +210,11 @@ func (vp ValidatorPerformances) GetTotalRewardWeight() int64 {
 }
 
 func (vp ValidatorPerformances) String() string {
-	jsonBz, _ := json.Marshal(vp)
+	jsonBz, _ := json.MarshalIndent(vp, "", "  ")
 	return string(jsonBz)
 }
 
 func (vp ValidatorPerformance) String() string {
-	jsonBz, _ := json.Marshal(vp)
+	jsonBz, _ := json.MarshalIndent(vp, "", "  ")
 	return string(jsonBz)
 }
