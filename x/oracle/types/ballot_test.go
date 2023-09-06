@@ -20,7 +20,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
-func TestExchangeRateBallots_ToMap(t *testing.T) {
+func TestExchangeRateBallotsToMap(t *testing.T) {
 	tests := struct {
 		votes   []types.ExchangeRateBallot
 		isValid []bool

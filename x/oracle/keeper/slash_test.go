@@ -169,7 +169,6 @@ func TestWhitelistSlashing(t *testing.T) {
 	input, msgServer := Setup(t)
 
 	votePeriodsPerWindow := sdk.NewDec(int64(input.OracleKeeper.SlashWindow(input.Ctx))).QuoInt64(int64(input.OracleKeeper.VotePeriod(input.Ctx))).TruncateInt64()
-	// slashFraction := input.OracleKeeper.SlashFraction(input.Ctx)
 	minValidPerWindow := input.OracleKeeper.MinValidPerWindow(input.Ctx)
 
 	pair := asset.Registry.Pair(denoms.NIBI, denoms.NUSD)
@@ -182,27 +181,17 @@ func TestWhitelistSlashing(t *testing.T) {
 	perfs := input.OracleKeeper.UpdateExchangeRates(input.Ctx)
 	require.EqualValues(t, 0, perfs.GetTotalRewardWeight())
 
-	block := input.Ctx.BlockHeight() + 50
-	priceVoteFromVal(0, block, TEST_ERATE)
-	priceVoteFromVal(1, block, TEST_ERATE)
-	input.Ctx = input.Ctx.WithBlockHeight(block + 100)
-
 	allowedMissPct := sdk.OneDec().Sub(minValidPerWindow)
 	allowedMissPeriods := allowedMissPct.MulInt64(votePeriodsPerWindow).
 		TruncateInt64()
-
-	// TODO
-
 	t.Logf("For %v blocks, valoper0 does not vote, while 1 and 2 do.", allowedMissPeriods)
 	for idxMissPeriod := uint64(0); idxMissPeriod < uint64(allowedMissPeriods); idxMissPeriod++ {
 		block := input.Ctx.BlockHeight() + 1
 		input.Ctx = input.Ctx.WithBlockHeight(block)
 
-		valIdx := 0
+		valIdx := 0 // Valoper doesn't vote (abstain)
 		priceVoteFromVal(valIdx+1, block, TEST_ERATE)
 		priceVoteFromVal(valIdx+2, block, TEST_ERATE)
-
-		// Valoper 0 votes outside band (miss)
 
 		perfs := input.OracleKeeper.UpdateExchangeRates(input.Ctx)
 		missCount := input.OracleKeeper.MissCounters.GetOr(input.Ctx, ValAddrs[0], 0)
@@ -212,20 +201,6 @@ func TestWhitelistSlashing(t *testing.T) {
 	t.Log("valoper0 should not be slashed")
 	validator := input.StakingKeeper.Validator(input.Ctx, ValAddrs[0])
 	require.Equal(t, TEST_STAKING_AMT, validator.GetBondedTokens())
-
-	// // one more miss vote will inccur Account 1 slashing
-	//
-	// // Account 2, govstable
-	// MakeAggregatePrevoteAndVote(t, input, msgServer, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 1)
-	// // Account 3, govstable
-	// MakeAggregatePrevoteAndVote(t, input, msgServer, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: randomExchangeRate}}, 2)
-	//
-	// input.Ctx = input.Ctx.WithBlockHeight(votePeriodsPerWindow - 1)
-	// input.OracleKeeper.UpdateExchangeRates(input.Ctx)
-	// input.OracleKeeper.SlashAndResetMissCounters(input.Ctx)
-	// // input.OracleKeeper.UpdateExchangeRates(input.Ctx)
-	// validator = input.StakingKeeper.Validator(input.Ctx, ValAddrs[0])
-	// require.Equal(t, sdk.OneDec().Sub(slashFraction).MulInt(stakingAmt).TruncateInt(), validator.GetBondedTokens())
 }
 
 func TestNotPassedBallotSlashing(t *testing.T) {
