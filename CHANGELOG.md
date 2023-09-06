@@ -104,6 +104,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `google.golang.org/protobuf` from 1.30.0 to 1.31.0 (#1450)
 - Bump `cosmossdk.io/errors` from 1.0.0-beta.7 to 1.0.0 (#1499)
 - Bump `github.com/holiman/uint256` from 1.2.2 to 1.2.3 (#1504)
+- Bump `actions/checkout` from 3 to 4 ([#1563](https://github.com/NibiruChain/nibiru/pull/1563))
 
 ### Breaking
 
