@@ -37,15 +37,17 @@ func TestGroupBallotsByPair(t *testing.T) {
 	require.NoError(t, err)
 	staking.EndBlocker(fixture.Ctx, &fixture.StakingKeeper)
 
+	pairBtc := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	pairEth := asset.Registry.Pair(denoms.ETH, denoms.NUSD)
 	btcBallots := types.ExchangeRateBallots{
-		types.NewExchangeRateBallot(sdk.NewDec(17), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[0], power),
-		types.NewExchangeRateBallot(sdk.NewDec(10), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[1], power),
-		types.NewExchangeRateBallot(sdk.NewDec(6), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[2], power),
+		{Pair: pairBtc, ExchangeRate: sdk.NewDec(17), Voter: ValAddrs[0], Power: power},
+		{Pair: pairBtc, ExchangeRate: sdk.NewDec(10), Voter: ValAddrs[1], Power: power},
+		{Pair: pairBtc, ExchangeRate: sdk.NewDec(6), Voter: ValAddrs[2], Power: power},
 	}
 	ethBallots := types.ExchangeRateBallots{
-		types.NewExchangeRateBallot(sdk.NewDec(1000), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[0], power),
-		types.NewExchangeRateBallot(sdk.NewDec(1300), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[1], power),
-		types.NewExchangeRateBallot(sdk.NewDec(2000), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[2], power),
+		{Pair: pairEth, ExchangeRate: sdk.NewDec(1_000), Voter: ValAddrs[0], Power: power},
+		{Pair: pairEth, ExchangeRate: sdk.NewDec(1_300), Voter: ValAddrs[1], Power: power},
+		{Pair: pairEth, ExchangeRate: sdk.NewDec(2_000), Voter: ValAddrs[2], Power: power},
 	}
 
 	for i, ballot := range btcBallots {
