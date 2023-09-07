@@ -152,4 +152,19 @@ func TestCreateMarketFail(t *testing.T) {
 		SqrtDepth:       amm.SqrtDepth,
 	})
 	require.ErrorContains(t, err, "already exists")
+
+	// Disable the market to test that we can create it again but with an increased version
+	err = app.PerpKeeperV2.ChangeMarketEnabledParameter(ctx, pair, false)
+	require.NoError(t, err)
+
+	err = app.PerpKeeperV2.Admin().CreateMarket(ctx, keeper.ArgsCreateMarket{
+		Pair:            pair,
+		PriceMultiplier: amm.PriceMultiplier,
+		SqrtDepth:       amm.SqrtDepth,
+	})
+	require.NoError(t, err)
+
+	lastVersion, err = app.PerpKeeperV2.MarketLastVersion.Get(ctx, pair)
+	require.NoError(t, err)
+	require.Equal(t, uint64(2), lastVersion.Version)
 }
