@@ -147,7 +147,11 @@ func (k Keeper) RegisterFeeShare(
 		// contract to be the contract itself, so long as the contract was
 		// created from the "factory" (gov module or if contract admin or creator is another contract)
 		if msg.WithdrawerAddress != msg.ContractAddress {
-			return nil, types.ErrFeeShareInvalidWithdrawer.Wrapf("withdrawer address must be the same as the contract address if it is from a factory contract withdraw:%s contract:%s", msg.WithdrawerAddress, msg.ContractAddress)
+			return nil, types.ErrFeeShareInvalidWithdrawer.Wrapf(
+				"withdrawer address must be the same as the contract address if it is from a "+
+					"factory contract withdrawer: %s contract: %s",
+				msg.WithdrawerAddress, msg.ContractAddress,
+			)
 		}
 
 		// set the deployer address to the contract address so it can self register
@@ -176,18 +180,13 @@ func (k Keeper) RegisterFeeShare(
 		"withdraw", msg.WithdrawerAddress,
 	)
 
-	ctx.EventManager().EmitEvents(
-		sdk.Events{
-			sdk.NewEvent(
-				types.EventTypeRegisterFeeShare,
-				// sdk.NewAttribute(sdk.AttributeKeySender, msg.DeployerAddress), // SDK v47
-				sdk.NewAttribute(types.AttributeKeyContract, msg.ContractAddress),
-				sdk.NewAttribute(types.AttributeKeyWithdrawerAddress, msg.WithdrawerAddress),
-			),
+	return &types.MsgRegisterFeeShareResponse{}, ctx.EventManager().EmitTypedEvent(
+		&types.EventRegisterDevGas{
+			Deployer:   msg.DeployerAddress,
+			Contract:   msg.ContractAddress,
+			Withdrawer: msg.WithdrawerAddress,
 		},
 	)
-
-	return &types.MsgRegisterFeeShareResponse{}, nil
 }
 
 // UpdateFeeShare updates the withdraw address of a given FeeShare. If the given
@@ -243,18 +242,13 @@ func (k Keeper) UpdateFeeShare(
 	feeshare.WithdrawerAddress = newWithdrawAddr.String()
 	k.SetFeeShare(ctx, feeshare)
 
-	ctx.EventManager().EmitEvents(
-		sdk.Events{
-			sdk.NewEvent(
-				types.EventTypeUpdateFeeShare,
-				// sdk.NewAttribute(sdk.AttributeKeySender, msg.DeployerAddress), // SDK v47
-				sdk.NewAttribute(types.AttributeKeyContract, msg.ContractAddress),
-				sdk.NewAttribute(types.AttributeKeyWithdrawerAddress, msg.WithdrawerAddress),
-			),
+	return &types.MsgUpdateFeeShareResponse{}, ctx.EventManager().EmitTypedEvent(
+		&types.EventUpdateDevGas{
+			Deployer:   msg.DeployerAddress,
+			Contract:   msg.ContractAddress,
+			Withdrawer: msg.WithdrawerAddress,
 		},
 	)
-
-	return &types.MsgUpdateFeeShareResponse{}, nil
 }
 
 // CancelFeeShare deletes the FeeShare for a given contract
@@ -292,17 +286,12 @@ func (k Keeper) CancelFeeShare(
 		return nil, err
 	}
 
-	ctx.EventManager().EmitEvents(
-		sdk.Events{
-			sdk.NewEvent(
-				types.EventTypeCancelFeeShare,
-				// sdk.NewAttribute(sdk.AttributeKeySender, msg.DeployerAddress), // SDK v47
-				sdk.NewAttribute(types.AttributeKeyContract, msg.ContractAddress),
-			),
+	return &types.MsgCancelFeeShareResponse{}, ctx.EventManager().EmitTypedEvent(
+		&types.EventCancelDevGas{
+			Deployer: msg.DeployerAddress,
+			Contract: msg.ContractAddress,
 		},
 	)
-
-	return &types.MsgCancelFeeShareResponse{}, nil
 }
 
 func (k Keeper) UpdateParams(

@@ -48,7 +48,8 @@ type Keeper struct {
 func NewKeeper(cdc codec.BinaryCodec, storeKey storetypes.StoreKey,
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper, distrKeeper types.DistributionKeeper,
-	stakingKeeper types.StakingKeeper, distrName string) Keeper {
+	stakingKeeper types.StakingKeeper, distrName string,
+) Keeper {
 	// ensure oracle module account is set
 	if addr := accountKeeper.GetModuleAddress(types.ModuleName); addr == nil {
 		panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))

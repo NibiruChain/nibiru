@@ -113,7 +113,8 @@ func (s IntegrationTestSuite) TestMintStableCmd() {
 			name: "Mint correct amount",
 			args: append([]string{
 				"1000000unusd",
-				fmt.Sprintf("--%s=%s", flags.FlagFrom, "minter2")}, commonArgs...),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, "minter2"),
+			}, commonArgs...),
 			expectedStable: sdk.NewInt(1 * common.TO_MICRO),
 			expectErr:      false,
 			respType:       &sdk.TxResponse{},
@@ -195,7 +196,8 @@ func (s IntegrationTestSuite) TestBurnStableCmd() {
 			name: "Burn at 100% collRatio",
 			args: append([]string{
 				"50000000unusd",
-				fmt.Sprintf("--%s=%s", flags.FlagFrom, "burn")}, commonArgs...),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, "burn"),
+			}, commonArgs...),
 			expectedStable:   sdk.ZeroInt(),
 			expectedColl:     sdk.NewInt(50*common.TO_MICRO - 100_000), // Collateral minus 0,02% fees
 			expectedGov:      sdk.NewInt(19_990),

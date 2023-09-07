@@ -153,7 +153,8 @@ func (s *TestSuitePerpExecutor) DoMarketOrderTest(pair asset.Pair) error {
 }
 
 func (s *TestSuitePerpExecutor) DoAddMarginTest(
-	pair asset.Pair, margin sdk.Coin) error {
+	pair asset.Pair, margin sdk.Coin,
+) error {
 	cwMsg := &cw_struct.AddMargin{
 		Pair:   pair.String(),
 		Margin: margin,
@@ -164,7 +165,8 @@ func (s *TestSuitePerpExecutor) DoAddMarginTest(
 }
 
 func (s *TestSuitePerpExecutor) DoAddIncorrectMarginTest(
-	pair asset.Pair, margin sdk.Coin) error {
+	pair asset.Pair, margin sdk.Coin,
+) error {
 	cwMsg := &cw_struct.AddMargin{
 		Pair:   pair.String(),
 		Margin: margin,
@@ -178,7 +180,8 @@ func (s *TestSuitePerpExecutor) DoAddIncorrectMarginTest(
 }
 
 func (s *TestSuitePerpExecutor) DoRemoveIncorrectMarginTest(
-	pair asset.Pair, margin sdk.Coin) error {
+	pair asset.Pair, margin sdk.Coin,
+) error {
 	cwMsg := &cw_struct.RemoveMargin{
 		Pair:   pair.String(),
 		Margin: margin,
@@ -192,7 +195,8 @@ func (s *TestSuitePerpExecutor) DoRemoveIncorrectMarginTest(
 }
 
 func (s *TestSuitePerpExecutor) DoRemoveMarginTest(
-	pair asset.Pair, margin sdk.Coin) error {
+	pair asset.Pair, margin sdk.Coin,
+) error {
 	cwMsg := &cw_struct.RemoveMargin{
 		Pair:   pair.String(),
 		Margin: margin,

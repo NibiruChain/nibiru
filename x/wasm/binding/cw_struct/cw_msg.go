@@ -15,7 +15,7 @@ type BindingMsg struct {
 	// bindings-perp ExecuteMsg enum types
 	MarketOrder   *MarketOrder   `json:"market_order,omitempty"`
 	ClosePosition *ClosePosition `json:"close_position,omitempty"`
-	//MultiLiquidate        *MultiLiquidate        `json:"multi_liquidate,omitempty"` // TODO
+	// MultiLiquidate        *MultiLiquidate        `json:"multi_liquidate,omitempty"` // TODO
 	AddMargin             *AddMargin             `json:"add_margin,omitempty"`
 	RemoveMargin          *RemoveMargin          `json:"remove_margin,omitempty"`
 	DonateToInsuranceFund *DonateToInsuranceFund `json:"donate_to_insurance_fund,omitempty"` // TODO
@@ -139,5 +139,4 @@ type MarketParams struct {
 	TwapLookbackWindow sdkmath.Int `json:"twap_lookback_window"`
 }
 
-type NoOp struct {
-}
+type NoOp struct{}

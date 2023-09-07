@@ -704,7 +704,6 @@ func TestValidateAMM(t *testing.T) {
 		amm         types.AMM
 		expectedErr error
 	}{
-
 		{
 			name: "Invalid base reserve",
 			amm: types.AMM{

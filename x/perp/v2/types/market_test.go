@@ -34,30 +34,38 @@ func TestValidate(t *testing.T) {
 	}{
 		{
 			modifier:      func(m Market) Market { return m.WithMaintenanceMarginRatio(sdk.NewDec(-1)) },
-			requiredError: "maintenance margin ratio ratio must be 0 <= ratio <= 1"},
+			requiredError: "maintenance margin ratio ratio must be 0 <= ratio <= 1",
+		},
 		{
 			modifier:      func(m Market) Market { return m.WithEcosystemFee(sdk.NewDec(2)) },
-			requiredError: "ecosystem fund fee ratio must be 0 <= ratio <= 1"},
+			requiredError: "ecosystem fund fee ratio must be 0 <= ratio <= 1",
+		},
 		{
 			modifier:      func(m Market) Market { return m.WithExchangeFee(sdk.NewDec(-1)) },
-			requiredError: "exchange fee ratio must be 0 <= ratio <= 1"},
+			requiredError: "exchange fee ratio must be 0 <= ratio <= 1",
+		},
 		{
 			modifier:      func(m Market) Market { return m.WithLiquidationFee(sdk.NewDec(2)) },
-			requiredError: "liquidation fee ratio must be 0 <= ratio <= 1"},
+			requiredError: "liquidation fee ratio must be 0 <= ratio <= 1",
+		},
 		{
 			modifier:      func(m Market) Market { return m.WithPartialLiquidationRatio(sdk.NewDec(-1)) },
-			requiredError: "partial liquidation ratio must be 0 <= ratio <= 1"},
+			requiredError: "partial liquidation ratio must be 0 <= ratio <= 1",
+		},
 		{
 			modifier:      func(m Market) Market { return m.WithMaxLeverage(sdk.ZeroDec()) },
-			requiredError: "max leverage must be > 0"},
+			requiredError: "max leverage must be > 0",
+		},
 		{
 			modifier:      func(m Market) Market { return m.WithMaxFundingRate(sdk.NewDec(-1)) },
-			requiredError: "max funding rate must be >= 0"},
+			requiredError: "max funding rate must be >= 0",
+		},
 		{
 			modifier: func(m Market) Market {
 				return m.WithMaxLeverage(sdk.NewDec(20)).WithMaintenanceMarginRatio(sdk.NewDec(1))
 			},
-			requiredError: "margin ratio opened with max leverage position will be lower than Maintenance margin ratio"},
+			requiredError: "margin ratio opened with max leverage position will be lower than Maintenance margin ratio",
+		},
 	}
 	for _, tc := range testCases {
 		tc := tc

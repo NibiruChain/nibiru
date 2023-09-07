@@ -65,7 +65,7 @@ func (k Keeper) MarketOrder(
 	sameSideShort := position.Size_.IsNegative() && dir == types.Direction_SHORT
 
 	var updatedAMM *types.AMM
-	var openSideMatchesPosition = sameSideLong || sameSideShort
+	openSideMatchesPosition := sameSideLong || sameSideShort
 	if isNewPosition || openSideMatchesPosition {
 		updatedAMM, positionResp, err = k.increasePosition(
 			ctx,
@@ -831,7 +831,8 @@ func (k Keeper) PartialClose(
 	ctx sdk.Context,
 	pair asset.Pair,
 	traderAddr sdk.AccAddress,
-	sizeAmt sdk.Dec, //unsigned
+	sizeAmt sdk.Dec, // unsigned
+
 ) (*types.PositionResp, error) {
 	market, err := k.GetMarket(ctx, pair)
 	if err != nil {

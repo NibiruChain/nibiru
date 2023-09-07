@@ -13,9 +13,7 @@ import (
 	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
-var (
-	TEST_ENCODING_CONFIG = app.MakeEncodingConfigAndRegister()
-)
+var TEST_ENCODING_CONFIG = app.MakeEncodingConfigAndRegister()
 
 func AddPerpV2Genesis(gen app.GenesisState) app.GenesisState {
 	extraMarketAmms := map[asset.Pair]perpv2types.AmmMarket{
