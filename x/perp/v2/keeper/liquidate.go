@@ -165,7 +165,7 @@ func (k Keeper) liquidate(
 		return
 	}
 
-	amm, err := k.AMMs.Get(ctx, pair)
+	amm, err := k.GetAMM(ctx, pair)
 	if err != nil {
 		eventLiqFailed := &types.LiquidationFailedEvent{
 			Pair:       pair,

@@ -1,8 +1,9 @@
 package keeper
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"fmt"
+
+	sdkmath "cosmossdk.io/math"
 	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -18,7 +19,7 @@ func (k Keeper) EditPriceMultiplier(
 	pair asset.Pair,
 	newPriceMultiplier sdk.Dec,
 ) (err error) {
-	amm, err := k.AMMs.Get(ctx, pair)
+	amm, err := k.GetAMM(ctx, pair)
 	if err != nil {
 		return err
 	}
@@ -41,7 +42,7 @@ func (k Keeper) EditPriceMultiplier(
 
 	// Do the re-peg
 	amm.PriceMultiplier = newPriceMultiplier
-	k.AMMs.Insert(ctx, pair, amm)
+	k.AMMs.Insert(ctx, collections.Join(pair, amm.Version), amm)
 
 	return nil
 }
@@ -51,7 +52,7 @@ func (k Keeper) EditPriceMultiplier(
 // funds get send to the vault to pay for trader's new net margin.
 func (k Keeper) EditSwapInvariant(ctx sdk.Context, pair asset.Pair, newSwapInvariant sdk.Dec) (err error) {
 	// Get the pool
-	amm, err := k.AMMs.Get(ctx, pair)
+	amm, err := k.GetAMM(ctx, pair)
 	if err != nil {
 		return err
 	}
@@ -72,7 +73,7 @@ func (k Keeper) EditSwapInvariant(ctx sdk.Context, pair asset.Pair, newSwapInvar
 		return err
 	}
 
-	k.AMMs.Insert(ctx, pair, amm)
+	k.AMMs.Insert(ctx, collections.Join(pair, amm.Version), amm)
 
 	return nil
 }
@@ -129,4 +130,19 @@ func (k Keeper) GetMarket(ctx sdk.Context, pair asset.Pair) (types.Market, error
 	}
 
 	return market, nil
+}
+
+// GetAMM returns the amm with last version.
+func (k Keeper) GetAMM(ctx sdk.Context, pair asset.Pair) (types.AMM, error) {
+	lastVersion, err := k.MarketLastVersion.Get(ctx, pair)
+	if err != nil {
+		return types.AMM{}, fmt.Errorf("market %s not found", pair)
+	}
+
+	amm, err := k.AMMs.Get(ctx, collections.Join(pair, lastVersion.Version))
+	if err != nil {
+		return types.AMM{}, fmt.Errorf("market %s not found", pair)
+	}
+
+	return amm, nil
 }

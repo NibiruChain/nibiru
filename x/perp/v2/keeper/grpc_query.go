@@ -45,7 +45,7 @@ func (q queryServer) QueryPositions(
 
 	var positions []types.QueryPositionResponse
 	for _, market := range markets {
-		amm, err := q.k.AMMs.Get(ctx, market.Pair)
+		amm, err := q.k.GetAMM(ctx, market.Pair)
 		if err != nil {
 			return nil, err
 		}
@@ -78,7 +78,7 @@ func (q queryServer) QueryPosition(
 		return nil, err
 	}
 
-	amm, err := q.k.AMMs.Get(ctx, req.Pair)
+	amm, err := q.k.GetAMM(ctx, req.Pair)
 	if err != nil {
 		return nil, err
 	}
@@ -171,8 +171,13 @@ func (q queryServer) QueryMarkets(
 	var ammMarkets []types.AmmMarket
 	markets := q.k.Markets.Iterate(ctx, collections.Range[collections.Pair[asset.Pair, uint64]]{}).Values()
 	for _, market := range markets {
+		// disabled markets are not returned
+		if market.Enabled == false {
+			continue
+		}
+
 		pair := market.Pair
-		amm, err := q.k.AMMs.Get(ctx, pair)
+		amm, err := q.k.AMMs.Get(ctx, collections.Join(pair, market.Version))
 		if err != nil {
 			return nil, err
 		}

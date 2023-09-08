@@ -25,11 +25,12 @@ type Keeper struct {
 	OracleKeeper  types.OracleKeeper
 	EpochKeeper   types.EpochKeeper
 
-	Markets           collections.Map[collections.Pair[asset.Pair, uint64], types.Market]
 	MarketLastVersion collections.Map[asset.Pair, types.MarketLastVersion]
-	AMMs              collections.Map[asset.Pair, types.AMM]
-	Positions         collections.Map[collections.Pair[asset.Pair, sdk.AccAddress], types.Position]
-	ReserveSnapshots  collections.Map[collections.Pair[asset.Pair, time.Time], types.ReserveSnapshot]
+	Markets           collections.Map[collections.Pair[asset.Pair, uint64], types.Market]
+	AMMs              collections.Map[collections.Pair[asset.Pair, uint64], types.AMM]
+
+	Positions        collections.Map[collections.Pair[asset.Pair, sdk.AccAddress], types.Position]
+	ReserveSnapshots collections.Map[collections.Pair[asset.Pair, time.Time], types.ReserveSnapshot]
 }
 
 // NewKeeper Creates a new x/perp Keeper instance.
@@ -66,7 +67,7 @@ func NewKeeper(
 		),
 		AMMs: collections.NewMap(
 			storeKey, NamespaceAmms,
-			asset.PairKeyEncoder,
+			collections.PairKeyEncoder(asset.PairKeyEncoder, collections.Uint64KeyEncoder),
 			collections.ProtoValueEncoder[types.AMM](cdc),
 		),
 		Positions: collections.NewMap(

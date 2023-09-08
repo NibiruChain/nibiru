@@ -45,7 +45,7 @@ func (k Keeper) MarketOrder(
 		return nil, types.ErrMarketNotEnabled.Wrapf("market pair %s not enabled", pair)
 	}
 
-	amm, err := k.AMMs.Get(ctx, pair)
+	amm, err := k.GetAMM(ctx, pair)
 	if err != nil {
 		return nil, types.ErrPairNotFound.Wrapf("pair %s not found", pair)
 	}
@@ -696,7 +696,7 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.A
 		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
 	}
 
-	amm, err := k.AMMs.Get(ctx, pair)
+	amm, err := k.GetAMM(ctx, pair)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
 	}
@@ -798,7 +798,6 @@ func (k Keeper) closePositionEntirely(
 	}
 	updatedAMM, exchangedNotionalValue, err := k.SwapBaseAsset(
 		ctx,
-		market,
 		amm,
 		dir,
 		currentPosition.Size_.Abs(),
@@ -839,7 +838,7 @@ func (k Keeper) PartialClose(
 		return nil, types.ErrPairNotFound.Wrapf("pair: %s", pair)
 	}
 
-	amm, err := k.AMMs.Get(ctx, pair)
+	amm, err := k.GetAMM(ctx, pair)
 	if err != nil {
 		return nil, types.ErrPairNotFound.Wrapf("pair: %s", pair)
 	}

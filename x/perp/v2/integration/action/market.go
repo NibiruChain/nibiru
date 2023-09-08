@@ -41,7 +41,7 @@ type createMarketAction struct {
 func (c createMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	app.PerpKeeperV2.Markets.Insert(ctx, collections.Join(c.Market.Pair, uint64(1)), c.Market)
 	app.PerpKeeperV2.MarketLastVersion.Insert(ctx, c.Market.Pair, types.MarketLastVersion{Version: 1})
-	app.PerpKeeperV2.AMMs.Insert(ctx, c.AMM.Pair, c.AMM)
+	app.PerpKeeperV2.AMMs.Insert(ctx, collections.Join(c.AMM.Pair, uint64(1)), c.AMM)
 
 	app.PerpKeeperV2.ReserveSnapshots.Insert(ctx, collections.Join(c.AMM.Pair, ctx.BlockTime()), types.ReserveSnapshot{
 		Amm:         c.AMM,
@@ -56,6 +56,7 @@ func CreateCustomMarket(pair asset.Pair, marketModifiers ...marketModifier) acti
 	market := types.DefaultMarket(pair)
 	amm := types.AMM{
 		Pair:            pair,
+		Version:         1,
 		BaseReserve:     sdk.NewDec(1e12),
 		QuoteReserve:    sdk.NewDec(1e12),
 		SqrtDepth:       sdk.NewDec(1e12),

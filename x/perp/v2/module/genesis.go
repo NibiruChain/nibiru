@@ -29,7 +29,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 	for _, a := range genState.Amms {
 		pair := a.Pair
-		k.AMMs.Insert(ctx, pair, a)
+		k.AMMs.Insert(ctx, collections.Join(a.Pair, a.Version), a)
 		timestampMs := ctx.BlockTime().UnixMilli()
 		k.ReserveSnapshots.Insert(
 			ctx,
@@ -64,7 +64,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		})
 	}
 
-	genesis.Amms = k.AMMs.Iterate(ctx, collections.Range[asset.Pair]{}).Values()
+	genesis.Amms = k.AMMs.Iterate(ctx, collections.Range[collections.Pair[asset.Pair, uint64]]{}).Values()
 	genesis.Positions = k.Positions.Iterate(ctx, collections.PairRange[asset.Pair, sdk.AccAddress]{}).Values()
 	genesis.ReserveSnapshots = k.ReserveSnapshots.Iterate(ctx, collections.PairRange[asset.Pair, time.Time]{}).Values()
 

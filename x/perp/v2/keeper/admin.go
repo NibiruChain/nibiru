@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+
 	"github.com/NibiruChain/collections"
 
 	sdkmath "cosmossdk.io/math"
@@ -90,9 +91,14 @@ func (k admin) CreateMarket(
 		return err
 	}
 
+	lastVersion := k.MarketLastVersion.GetOr(ctx, pair, types.MarketLastVersion{Version: 0})
+	lastVersion.Version += 1
+	market.Version = lastVersion.Version
+
 	// init amm
 	amm := types.AMM{
 		Pair:            pair,
+		Version:         1,
 		BaseReserve:     baseReserve,
 		QuoteReserve:    quoteReserve,
 		SqrtDepth:       sqrtDepth,
@@ -104,13 +110,9 @@ func (k admin) CreateMarket(
 		return err
 	}
 
-	lastVersion := k.MarketLastVersion.GetOr(ctx, pair, types.MarketLastVersion{Version: 0})
-	lastVersion.Version += 1
-	market.Version = lastVersion.Version
-
 	k.Markets.Insert(ctx, collections.Join(pair, lastVersion.Version), market)
+	k.AMMs.Insert(ctx, collections.Join(pair, lastVersion.Version), amm)
 	k.MarketLastVersion.Insert(ctx, pair, lastVersion)
-	k.AMMs.Insert(ctx, pair, amm)
 
 	return nil
 }

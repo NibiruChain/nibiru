@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
@@ -66,7 +67,7 @@ func (k Keeper) SwapQuoteAsset(
 		return nil, sdk.Dec{}, err
 	}
 
-	k.AMMs.Insert(ctx, amm.Pair, amm)
+	k.AMMs.Insert(ctx, collections.Join(amm.Pair, amm.Version), amm)
 
 	return &amm, baseAssetDelta, nil
 }
@@ -90,7 +91,6 @@ func (k Keeper) SwapQuoteAsset(
 // NOTE: the quoteAssetDelta is always positive
 func (k Keeper) SwapBaseAsset(
 	ctx sdk.Context,
-	market types.Market,
 	amm types.AMM,
 	dir types.Direction,
 	baseAssetAmt sdk.Dec,
@@ -109,7 +109,7 @@ func (k Keeper) SwapBaseAsset(
 		return nil, sdk.Dec{}, err
 	}
 
-	k.AMMs.Insert(ctx, amm.Pair, amm)
+	k.AMMs.Insert(ctx, collections.Join(amm.Pair, amm.Version), amm)
 
 	return &amm, quoteAssetDelta, err
 }

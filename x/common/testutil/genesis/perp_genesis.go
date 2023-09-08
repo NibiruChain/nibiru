@@ -36,6 +36,7 @@ func AddPerpV2Genesis(gen app.GenesisState) app.GenesisState {
 			},
 			Amm: perpv2types.AMM{
 				Pair:            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				Version:         1,
 				BaseReserve:     sdk.NewDec(10e6),
 				QuoteReserve:    sdk.NewDec(10e6),
 				SqrtDepth:       sdk.NewDec(10e6),
@@ -63,6 +64,7 @@ func AddPerpV2Genesis(gen app.GenesisState) app.GenesisState {
 			},
 			Amm: perpv2types.AMM{
 				Pair:            asset.Registry.Pair(denoms.ATOM, denoms.NUSD),
+				Version:         1,
 				BaseReserve:     sdk.NewDec(10e6),
 				QuoteReserve:    sdk.NewDec(10e6),
 				SqrtDepth:       sdk.NewDec(10e6),
@@ -90,6 +92,7 @@ func AddPerpV2Genesis(gen app.GenesisState) app.GenesisState {
 			},
 			Amm: perpv2types.AMM{
 				Pair:            asset.Registry.Pair(denoms.OSMO, denoms.NUSD),
+				Version:         1,
 				BaseReserve:     sdk.NewDec(10e6),
 				QuoteReserve:    sdk.NewDec(10e6),
 				SqrtDepth:       sdk.NewDec(10e6),
@@ -148,6 +151,7 @@ var START_MARKETS = map[asset.Pair]perpv2types.AmmMarket{
 		},
 		Amm: perpv2types.AMM{
 			Pair:            asset.Registry.Pair(denoms.ETH, denoms.NUSD),
+			Version:         1,
 			BaseReserve:     sdk.NewDec(10e6),
 			QuoteReserve:    sdk.NewDec(10e6),
 			SqrtDepth:       sdk.NewDec(10e6),
@@ -175,6 +179,7 @@ var START_MARKETS = map[asset.Pair]perpv2types.AmmMarket{
 		},
 		Amm: perpv2types.AMM{
 			Pair:            asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
+			Version:         1,
 			BaseReserve:     sdk.NewDec(10 * common.TO_MICRO),
 			QuoteReserve:    sdk.NewDec(10 * common.TO_MICRO),
 			SqrtDepth:       common.MustSqrtDec(sdk.NewDec(10 * common.TO_MICRO * 10 * common.TO_MICRO)),
