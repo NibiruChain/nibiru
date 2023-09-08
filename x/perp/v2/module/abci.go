@@ -21,7 +21,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 		}
 
 		// only snapshot enabled markets
-		if market.Enabled == false {
+		if !market.Enabled {
 			continue
 		}
 

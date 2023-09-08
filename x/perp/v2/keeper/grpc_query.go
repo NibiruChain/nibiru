@@ -172,7 +172,7 @@ func (q queryServer) QueryMarkets(
 	markets := q.k.Markets.Iterate(ctx, collections.Range[collections.Pair[asset.Pair, uint64]]{}).Values()
 	for _, market := range markets {
 		// disabled markets are not returned
-		if market.Enabled == false {
+		if !market.Enabled {
 			continue
 		}
 
