@@ -91,7 +91,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `technote-space/get-diff-action` from 4 to 6 (#1327)
 - Bump `actions/setup-go` from 3 to 4 (#1324)
 - Bump `github.com/docker/distribution` from 2.8.1+incompatible to 2.8.2+incompatible (#1339)
-- Bump `github.com/CosmWasm/wasmvm` from 1.2.1 to 1.3.0 (#1354, #1507)
+- Bump `github.com/CosmWasm/wasmvm` from 1.2.1 to 1.4.0 (#1354, #1507, [#1564](https://github.com/NibiruChain/nibiru/pull/1564))
 - Bump `github.com/spf13/cast` from 1.5.0 to 1.5.1 (#1358)
 - Bump `github.com/stretchr/testify` from 1.8.2 to 1.8.4 (#1384, #1435)
 - Bump `cosmossdk.io/math` from 1.0.0-beta.6 to 1.1.2 (#1394, [#1547](https://github.com/NibiruChain/nibiru/pull/1547))
