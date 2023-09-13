@@ -3,8 +3,6 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/NibiruChain/collections"
-
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -111,7 +109,7 @@ func (k admin) CreateMarket(
 	}
 
 	k.SaveMarket(ctx, market)
-	k.AMMs.Insert(ctx, collections.Join(pair, lastVersion.Version), amm)
+	k.SaveAMM(ctx, amm)
 	k.MarketLastVersion.Insert(ctx, pair, lastVersion)
 
 	return nil

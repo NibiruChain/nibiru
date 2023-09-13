@@ -42,7 +42,7 @@ func (k Keeper) EditPriceMultiplier(
 
 	// Do the re-peg
 	amm.PriceMultiplier = newPriceMultiplier
-	k.AMMs.Insert(ctx, collections.Join(pair, amm.Version), amm)
+	k.SaveAMM(ctx, amm)
 
 	return nil
 }
@@ -73,7 +73,7 @@ func (k Keeper) EditSwapInvariant(ctx sdk.Context, pair asset.Pair, newSwapInvar
 		return err
 	}
 
-	k.AMMs.Insert(ctx, collections.Join(pair, amm.Version), amm)
+	k.SaveAMM(ctx, amm)
 
 	return nil
 }
@@ -132,6 +132,7 @@ func (k Keeper) GetMarket(ctx sdk.Context, pair asset.Pair) (types.Market, error
 	return market, nil
 }
 
+// SaveMarket saves the market by pair and version.
 func (k Keeper) SaveMarket(ctx sdk.Context, market types.Market) {
 	k.Markets.Insert(ctx, collections.Join(market.Pair, market.Version), market)
 }
@@ -149,4 +150,9 @@ func (k Keeper) GetAMM(ctx sdk.Context, pair asset.Pair) (types.AMM, error) {
 	}
 
 	return amm, nil
+}
+
+// SaveAMM saves the amm by pair and version.
+func (k Keeper) SaveAMM(ctx sdk.Context, amm types.AMM) {
+	k.AMMs.Insert(ctx, collections.Join(amm.Pair, amm.Version), amm)
 }

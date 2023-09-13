@@ -1175,7 +1175,7 @@ func TestMarketOrderError(t *testing.T) {
 			app.PerpKeeperV2.SaveMarket(ctx, *market)
 			app.PerpKeeperV2.MarketLastVersion.Insert(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), types.MarketLastVersion{Version: market.Version})
 			amm := mock.TestAMMDefault()
-			app.PerpKeeperV2.AMMs.Insert(ctx, collections.Join(asset.Registry.Pair(denoms.BTC, denoms.NUSD), market.Version), *amm)
+			app.PerpKeeperV2.SaveAMM(ctx, *amm)
 			app.PerpKeeperV2.ReserveSnapshots.Insert(ctx, collections.Join(amm.Pair, ctx.BlockTime()), types.ReserveSnapshot{
 				Amm:         *amm,
 				TimestampMs: ctx.BlockTime().UnixMilli(),

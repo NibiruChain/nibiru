@@ -41,7 +41,7 @@ type createMarketAction struct {
 func (c createMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	app.PerpKeeperV2.MarketLastVersion.Insert(ctx, c.Market.Pair, types.MarketLastVersion{Version: 1})
 	app.PerpKeeperV2.SaveMarket(ctx, c.Market)
-	app.PerpKeeperV2.AMMs.Insert(ctx, collections.Join(c.AMM.Pair, uint64(1)), c.AMM)
+	app.PerpKeeperV2.SaveAMM(ctx, c.AMM)
 
 	app.PerpKeeperV2.ReserveSnapshots.Insert(ctx, collections.Join(c.AMM.Pair, ctx.BlockTime()), types.ReserveSnapshot{
 		Amm:         c.AMM,

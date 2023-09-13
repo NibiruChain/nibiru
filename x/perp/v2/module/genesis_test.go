@@ -70,7 +70,7 @@ func RunTestGenesis(t *testing.T, tc TestCase) {
 	// create some params
 	app.PerpKeeperV2.SaveMarket(ctx, *mock.TestMarket())
 	app.PerpKeeperV2.MarketLastVersion.Insert(ctx, pair, types.MarketLastVersion{Version: 1})
-	app.PerpKeeperV2.AMMs.Insert(ctx, collections.Join(pair, uint64(1)), *mock.TestAMMDefault())
+	app.PerpKeeperV2.SaveAMM(ctx, *mock.TestAMMDefault())
 
 	// create some positions
 	for _, position := range tc.positions {

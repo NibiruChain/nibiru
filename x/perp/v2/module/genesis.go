@@ -27,15 +27,15 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 		k.MarketLastVersion.Insert(ctx, g.Pair, types.MarketLastVersion{Version: g.Version})
 	}
 
-	for _, a := range genState.Amms {
-		pair := a.Pair
-		k.AMMs.Insert(ctx, collections.Join(a.Pair, a.Version), a)
+	for _, amm := range genState.Amms {
+		pair := amm.Pair
+		k.SaveAMM(ctx, amm)
 		timestampMs := ctx.BlockTime().UnixMilli()
 		k.ReserveSnapshots.Insert(
 			ctx,
 			collections.Join(pair, time.UnixMilli(timestampMs)),
 			types.ReserveSnapshot{
-				Amm:         a,
+				Amm:         amm,
 				TimestampMs: timestampMs,
 			},
 		)
