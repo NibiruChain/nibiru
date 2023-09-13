@@ -67,7 +67,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis.DnrEpoch = k.DnREpoch.GetOr(ctx, 0)
 
 	// export volumes
-	volumes := k.TraderVolumes.Iterate(ctx, nil)
+	volumes := k.TraderVolumes.Iterate(ctx, collections.PairRange[sdk.AccAddress, uint64]{})
 	defer volumes.Close()
 	for ; volumes.Valid(); volumes.Next() {
 		key := volumes.Key()
