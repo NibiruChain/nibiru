@@ -446,7 +446,7 @@ func (k Keeper) closeAndOpenReversePosition(
 	}
 
 	// check if it's worth continuing with the increase position
-	quoteReserveAmt := updatedAMM.FromQuoteAssetToReserve(remainingReverseNotionalValue)
+	quoteReserveAmt := updatedAMM.QuoteAssetToReserve(remainingReverseNotionalValue)
 	possibleNextSize, err := updatedAMM.GetBaseReserveAmt(quoteReserveAmt, dir)
 	if err != nil {
 		return nil, nil, err
@@ -868,7 +868,7 @@ func (k Keeper) PartialClose(
 	if err != nil {
 		return nil, err
 	}
-	reverseNotionalAmt = amm.FromQuoteReserveToAsset(reverseNotionalAmt)
+	reverseNotionalAmt = amm.QuoteReserveToAsset(reverseNotionalAmt)
 
 	updatedAMM, positionResp, err := k.decreasePosition(ctx, market, amm, position, reverseNotionalAmt, sdk.ZeroDec())
 	if err != nil {

@@ -348,7 +348,7 @@ func (k Keeper) executePartialLiquidation(
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
-	quoteAssetDelta := amm.FromQuoteReserveToAsset(quoteReserveDelta)
+	quoteAssetDelta := amm.QuoteReserveToAsset(quoteReserveDelta)
 
 	_, positionResp, err := k.decreasePosition(
 		/* ctx */ ctx,

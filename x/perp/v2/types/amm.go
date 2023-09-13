@@ -42,14 +42,63 @@ func (amm AMM) Validate() error {
 	return nil
 }
 
-// returns the amount of quote reserve equivalent to the amount of quote asset given
-func (amm AMM) FromQuoteAssetToReserve(quoteAsset sdk.Dec) sdk.Dec {
-	return quoteAsset.Quo(amm.PriceMultiplier)
+// SettlementPrice: Computes the uniform settlement price for the current AMM.
+//
+// Returns:
+//   - price: uniform settlement price from several batched trades. In this case,
+//     "price" is the result of closing all positions together and giving
+//     all traders the same price.
+//   - newAmm: The AMM that results from closing all positions together. Note that
+//     this should have a bias, or skew, of 0.
+//   - err: Errors if it's impossible to swap away the open interest bias.
+func (amm AMM) SettlementPrice() (price sdk.Dec, newAmm AMM, err error) {
+	// bias: open interest (base) skew in the AMM.
+	bias := amm.Bias()
+	if bias.IsZero() {
+		return amm.MarkPrice(), amm, nil
+	}
+
+	var dir Direction
+	if bias.IsPositive() {
+		dir = Direction_SHORT
+	} else {
+		dir = Direction_LONG
+	}
+
+	quoteAssetDelta, err := amm.SwapBaseAsset(bias.Abs(), dir)
+	newAmm = amm
+	if err != nil {
+		return price, newAmm, err
+	}
+
+	price = quoteAssetDelta.Abs().Quo(bias.Abs())
+	return price, newAmm, err
 }
 
-// returns the amount of quote asset equivalent to the amount of quote reserve given
-func (amm AMM) FromQuoteReserveToAsset(quoteReserve sdk.Dec) sdk.Dec {
-	return quoteReserve.Mul(amm.PriceMultiplier)
+// QuoteReserveToAsset: converts quote reserves to assets
+func (amm AMM) QuoteReserveToAsset(quoteReserve sdk.Dec) sdk.Dec {
+	return QuoteReserveToAsset(quoteReserve, amm.PriceMultiplier)
+}
+
+// QuoteAssetToReserve: converts quote assets to reserves
+func (amm AMM) QuoteAssetToReserve(quoteAssets sdk.Dec) sdk.Dec {
+	return QuoteAssetToReserve(quoteAssets, amm.PriceMultiplier)
+}
+
+// QuoteAssetToReserve: converts "quote assets" to "quote reserves". In this
+// convention, "assets" are liquid funds that change hands, whereas reserves
+// are simply a number field on the DAMM. The reason for this distinction is to
+// account for the AMM.PriceMultiplier.
+func QuoteAssetToReserve(quoteAsset, priceMult sdk.Dec) sdk.Dec {
+	return quoteAsset.Quo(priceMult)
+}
+
+// QuoteReserveToAsset: converts "quote reserves" to "quote assets". In this
+// convention, "assets" are liquid funds that change hands, whereas reserves
+// are simply a number field on the DAMM. The reason for this distinction is to
+// account for the AMM.PriceMultiplier.
+func QuoteReserveToAsset(quoteReserve, priceMult sdk.Dec) sdk.Dec {
+	return quoteReserve.Mul(priceMult)
 }
 
 // Returns the amount of base reserve equivalent to the amount of quote reserve given
@@ -136,7 +185,9 @@ func (amm AMM) GetQuoteReserveAmt(
 	return quoteReserveDelta, nil
 }
 
-// Returns the instantaneous mark price of the trading pair
+// MarkPrice: Returns the instantaneous mark price of the trading pair.
+// This is the price if the AMM has zero slippage, or equivalently, if there's
+// infinite liquidity depth with the same ratio of reserves.
 func (amm AMM) MarkPrice() sdk.Dec {
 	if amm.BaseReserve.IsNil() || amm.BaseReserve.IsZero() ||
 		amm.QuoteReserve.IsNil() || amm.QuoteReserve.IsZero() {
@@ -210,7 +261,7 @@ func (amm *AMM) SwapQuoteAsset(
 	quoteAssetAmt sdk.Dec, // unsigned
 	dir Direction,
 ) (baseAssetDelta sdk.Dec, err error) {
-	quoteReserveAmt := amm.FromQuoteAssetToReserve(quoteAssetAmt)
+	quoteReserveAmt := QuoteAssetToReserve(quoteAssetAmt, amm.PriceMultiplier)
 	baseReserveDelta, err := amm.GetBaseReserveAmt(quoteReserveAmt, dir)
 	if err != nil {
 		return sdk.Dec{}, err
@@ -254,13 +305,12 @@ func (amm *AMM) SwapBaseAsset(baseAssetAmt sdk.Dec, dir Direction) (quoteAssetDe
 		amm.TotalShort = amm.TotalShort.Add(baseAssetAmt)
 	}
 
-	return amm.FromQuoteReserveToAsset(quoteReserveDelta), nil
+	return amm.QuoteReserveToAsset(quoteReserveDelta), nil
 }
 
-/*
-Bias returns the bias of the market in the base asset. It's the net amount of base assets for longs minus the net
-amount of base assets for shorts.
-*/
+// Bias: returns the bias, or open interest skew, of the market in the base
+// units. Bias is the net amount of long perpetual contracts minus the net
+// amount of shorts.
 func (amm *AMM) Bias() (bias sdk.Dec) {
 	return amm.TotalLong.Sub(amm.TotalShort)
 }
@@ -326,7 +376,7 @@ func (amm AMM) GetMarketValue() (sdk.Dec, error) {
 		marketValueInReserves = marketValueInReserves.Neg()
 	}
 
-	return amm.FromQuoteReserveToAsset(marketValueInReserves), nil
+	return amm.QuoteReserveToAsset(marketValueInReserves), nil
 }
 
 /*
