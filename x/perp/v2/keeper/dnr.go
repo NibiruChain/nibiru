@@ -47,9 +47,9 @@ func (k Keeper) AddUserVolume(ctx sdk.Context, user sdk.AccAddress, volume math.
 	if err != nil {
 		panic(err)
 	}
-	currentVolume := k.UserVolumes.GetOr(ctx, collections.Join(user, currentEpoch), math.ZeroInt())
+	currentVolume := k.TraderVolumes.GetOr(ctx, collections.Join(user, currentEpoch), math.ZeroInt())
 	newVolume := currentVolume.Add(volume)
-	k.UserVolumes.Insert(ctx, collections.Join(user, currentEpoch), newVolume)
+	k.TraderVolumes.Insert(ctx, collections.Join(user, currentEpoch), newVolume)
 	k.gcUserVolume(ctx, user, currentEpoch)
 }
 
@@ -65,8 +65,8 @@ func (k Keeper) gcUserVolume(ctx sdk.Context, user sdk.AccAddress, currentEpoch 
 		EndExclusive(currentEpoch - 1). // we want to preserve current and last epoch, as it's needed to compute DnR rewards.
 		Descending()
 
-	for _, key := range k.UserVolumes.Iterate(ctx, rng).Keys() {
-		err := k.UserVolumes.Delete(ctx, key)
+	for _, key := range k.TraderVolumes.Iterate(ctx, rng).Keys() {
+		err := k.TraderVolumes.Delete(ctx, key)
 		if err != nil {
 			panic(err)
 		}
@@ -86,5 +86,5 @@ func (k Keeper) GetUserVolumeLastEpoch(ctx sdk.Context, user sdk.AccAddress) mat
 		return math.ZeroInt()
 	}
 	// return the user's volume for the last epoch, or zero.
-	return k.UserVolumes.GetOr(ctx, collections.Join(user, currentEpoch-1), math.ZeroInt())
+	return k.TraderVolumes.GetOr(ctx, collections.Join(user, currentEpoch-1), math.ZeroInt())
 }

@@ -42,7 +42,7 @@ func (e expectVolumeAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.
 	if err != nil {
 		return ctx, err, true
 	}
-	volume, err := app.PerpKeeperV2.UserVolumes.Get(ctx, collections.Join(e.User, currentEpoch))
+	volume, err := app.PerpKeeperV2.TraderVolumes.Get(ctx, collections.Join(e.User, currentEpoch))
 	if err != nil {
 		return ctx, err, true
 	}
@@ -85,7 +85,7 @@ type expectVolumeNotExistAction struct {
 }
 
 func (e expectVolumeNotExistAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
-	v, err := app.PerpKeeperV2.UserVolumes.Get(ctx, collections.Join(e.User, e.Epoch))
+	v, err := app.PerpKeeperV2.TraderVolumes.Get(ctx, collections.Join(e.User, e.Epoch))
 	if err == nil {
 		return ctx, fmt.Errorf("unexpected user dnr volume, got %s", v), true
 	}
