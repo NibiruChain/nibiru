@@ -174,7 +174,7 @@ func (perpExt *PerpQuerier) AllMarkets(
 				MaintenanceMarginRatio: pbMarket.Market.MaintenanceMarginRatio,
 				MaxLeverage:            pbMarket.Market.MaxLeverage,
 			},
-			MarkPrice: pbMarket.Amm.MarkPrice(),
+			MarkPrice: pbMarket.Amm.InstMarkPrice(),
 			// IndexPrice:  pbPrice.IndexPrice,
 			// TwapMark:    pbPrice.TwapMark,
 			BlockNumber: sdk.NewInt(ctx.BlockHeight()),

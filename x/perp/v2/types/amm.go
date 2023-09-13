@@ -55,7 +55,7 @@ func (amm AMM) SettlementPrice() (price sdk.Dec, newAmm AMM, err error) {
 	// bias: open interest (base) skew in the AMM.
 	bias := amm.Bias()
 	if bias.IsZero() {
-		return amm.MarkPrice(), amm, nil
+		return amm.InstMarkPrice(), amm, nil
 	}
 
 	var dir Direction
@@ -185,10 +185,10 @@ func (amm AMM) GetQuoteReserveAmt(
 	return quoteReserveDelta, nil
 }
 
-// MarkPrice: Returns the instantaneous mark price of the trading pair.
+// InstMarkPrice: Returns the instantaneous mark price of the trading pair.
 // This is the price if the AMM has zero slippage, or equivalently, if there's
 // infinite liquidity depth with the same ratio of reserves.
-func (amm AMM) MarkPrice() sdk.Dec {
+func (amm AMM) InstMarkPrice() sdk.Dec {
 	if amm.BaseReserve.IsNil() || amm.BaseReserve.IsZero() ||
 		amm.QuoteReserve.IsNil() || amm.QuoteReserve.IsZero() {
 		return sdk.ZeroDec()
