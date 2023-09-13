@@ -554,6 +554,9 @@ func (k Keeper) afterPositionUpdate(
 		}
 	}
 
+	// update user volume
+	k.AddUserVolume(ctx, traderAddr, positionResp.ExchangedNotionalValue.Abs().TruncateInt())
+
 	transferredFee, err := k.transferFee(ctx, market.Pair, traderAddr, positionResp.ExchangedNotionalValue,
 		market.ExchangeFeeRatio, market.EcosystemFundFeeRatio,
 	)

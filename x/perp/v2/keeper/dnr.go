@@ -47,7 +47,7 @@ func (k Keeper) AddUserVolume(ctx sdk.Context, user sdk.AccAddress, volume math.
 	if err != nil {
 		panic(err)
 	}
-	currentVolume := k.UserVolumes.GetOr(ctx, collections.Join(user, currentEpoch), volume)
+	currentVolume := k.UserVolumes.GetOr(ctx, collections.Join(user, currentEpoch), math.ZeroInt())
 	newVolume := currentVolume.Add(volume)
 	k.UserVolumes.Insert(ctx, collections.Join(user, currentEpoch), newVolume)
 	k.gcUserVolume(ctx, user, currentEpoch)
