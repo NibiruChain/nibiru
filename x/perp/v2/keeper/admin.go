@@ -110,7 +110,7 @@ func (k admin) CreateMarket(
 		return err
 	}
 
-	k.Markets.Insert(ctx, collections.Join(pair, lastVersion.Version), market)
+	k.SaveMarket(ctx, market)
 	k.AMMs.Insert(ctx, collections.Join(pair, lastVersion.Version), amm)
 	k.MarketLastVersion.Insert(ctx, pair, lastVersion)
 

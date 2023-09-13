@@ -20,7 +20,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	}
 
 	for _, m := range genState.Markets {
-		k.Markets.Insert(ctx, collections.Join(m.Pair, m.Version), m)
+		k.SaveMarket(ctx, m)
 	}
 
 	for _, g := range genState.MarketLastVersions {

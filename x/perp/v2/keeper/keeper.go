@@ -101,6 +101,6 @@ func (k Keeper) ChangeMarketEnabledParameter(ctx sdk.Context, pair asset.Pair, e
 		return
 	}
 	market.Enabled = enabled
-	k.Markets.Insert(ctx, collections.Join(pair, market.Version), market)
+	k.SaveMarket(ctx, market)
 	return
 }

@@ -2,7 +2,6 @@ package keeper
 
 import (
 	sdkmath "cosmossdk.io/math"
-	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
@@ -82,19 +81,19 @@ func (k Keeper) WithdrawFromVault(
 // IncrementPrepaidBadDebt increases the bad debt for the provided denom.
 func (k Keeper) IncrementPrepaidBadDebt(ctx sdk.Context, market types.Market, amount sdkmath.Int) {
 	market.PrepaidBadDebt.Amount = market.PrepaidBadDebt.Amount.Add(amount)
-	k.Markets.Insert(ctx, collections.Join(market.Pair, market.Version), market)
+	k.SaveMarket(ctx, market)
 }
 
 // ZeroPrepaidBadDebt out the prepaid bad debt
 func (k Keeper) ZeroPrepaidBadDebt(ctx sdk.Context, market types.Market) {
 	market.PrepaidBadDebt.Amount = sdk.ZeroInt()
-	k.Markets.Insert(ctx, collections.Join(market.Pair, market.Version), market)
+	k.SaveMarket(ctx, market)
 }
 
 // DecrementPrepaidBadDebt decrements the amount of bad debt prepaid by denom.
 func (k Keeper) DecrementPrepaidBadDebt(ctx sdk.Context, market types.Market, amount sdkmath.Int) {
 	market.PrepaidBadDebt.Amount = market.PrepaidBadDebt.Amount.Sub(amount)
-	k.Markets.Insert(ctx, collections.Join(market.Pair, market.Version), market)
+	k.SaveMarket(ctx, market)
 }
 
 /*

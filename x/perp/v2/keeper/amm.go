@@ -132,6 +132,10 @@ func (k Keeper) GetMarket(ctx sdk.Context, pair asset.Pair) (types.Market, error
 	return market, nil
 }
 
+func (k Keeper) SaveMarket(ctx sdk.Context, market types.Market) {
+	k.Markets.Insert(ctx, collections.Join(market.Pair, market.Version), market)
+}
+
 // GetAMM returns the amm with last version.
 func (k Keeper) GetAMM(ctx sdk.Context, pair asset.Pair) (types.AMM, error) {
 	lastVersion, err := k.MarketLastVersion.Get(ctx, pair)

@@ -54,7 +54,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64)
 		premiumFraction := clampedDivergence.Mul(indexTwap).QuoInt64(int64(intervalsPerDay))
 
 		market.LatestCumulativePremiumFraction = market.LatestCumulativePremiumFraction.Add(premiumFraction)
-		k.Markets.Insert(ctx, collections.Join(market.Pair, market.Version), market)
+		k.SaveMarket(ctx, market)
 
 		_ = ctx.EventManager().EmitTypedEvent(&types.FundingRateChangedEvent{
 			Pair:                      market.Pair,
