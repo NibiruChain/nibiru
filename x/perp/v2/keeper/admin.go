@@ -98,7 +98,7 @@ func (k admin) CreateMarket(
 	// init amm
 	amm := types.AMM{
 		Pair:            pair,
-		Version:         1,
+		Version:         lastVersion.Version,
 		BaseReserve:     baseReserve,
 		QuoteReserve:    quoteReserve,
 		SqrtDepth:       sqrtDepth,

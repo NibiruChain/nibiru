@@ -107,7 +107,7 @@ func TestEnableMarket(t *testing.T) {
 	NewTestSuite(t).WithTestCases(tests...).Run()
 }
 
-func TestCreateMarketFail(t *testing.T) {
+func TestCreateMarket(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	amm := *mock.TestAMMDefault()
 	app, ctx := testapp.NewNibiruTestAppAndContext()
@@ -142,6 +142,15 @@ func TestCreateMarketFail(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), lastVersion.Version)
 
+	// Check that amm and market have version 1
+	amm, err = app.PerpKeeperV2.GetAMM(ctx, pair)
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), amm.Version)
+
+	market, err = app.PerpKeeperV2.GetMarket(ctx, pair)
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), market.Version)
+
 	// Fail since it already exists and it is not disabled
 	err = app.PerpKeeperV2.Admin().CreateMarket(ctx, keeper.ArgsCreateMarket{
 		Pair:            pair,
@@ -164,4 +173,13 @@ func TestCreateMarketFail(t *testing.T) {
 	lastVersion, err = app.PerpKeeperV2.MarketLastVersion.Get(ctx, pair)
 	require.NoError(t, err)
 	require.Equal(t, uint64(2), lastVersion.Version)
+
+	// Check that amm and market have version 2
+	amm, err = app.PerpKeeperV2.GetAMM(ctx, pair)
+	require.NoError(t, err)
+	require.Equal(t, uint64(2), amm.Version)
+
+	market, err = app.PerpKeeperV2.GetMarket(ctx, pair)
+	require.NoError(t, err)
+	require.Equal(t, uint64(2), market.Version)
 }
