@@ -10,7 +10,6 @@ on:
 
 jobs:
   test-coverage:
-  unit-tests:
     runs-on: ubuntu-latest
     steps:
       - name: skip-tests
