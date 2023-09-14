@@ -2,13 +2,9 @@
 # 
 # Run with:
 # ```bash
-# proto_dir="proto"
-# out_dir="gen_rust"
-# buf generate $proto_dir --template proto/buf.gen.rs.yaml \
-#   -o $out_dir \ 
-#   --config proto/buf.yaml \
-#   --include-imports
+# bash proto/buf.gen.rs.sh
 # ```
+# 
 version: v1
 managed:
   enabled: true
@@ -19,10 +15,6 @@ plugins:
     out: proto-rs
     opt:
       - bytes=.
-      # - file_descriptor_set
-      # - compile_well_known_types
-      # - extern_path=.google.protobuf=::pbjson_types
-
 
   # TODO(Unique-Divine): investigate whether JSON serialization trait 
   # implementations are needed for Rust protobufs used on Wasm::StargateMsg.
