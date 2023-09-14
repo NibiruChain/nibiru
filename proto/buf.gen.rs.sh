@@ -103,7 +103,7 @@ proto_clone_sdk() {
 
   # degit copies a GitHub repo without downloading the entire git history, 
   # which is much faster than a full git clone.
-  # npx degit "cosmos/cosmos-sdk#$nibiru_cosmos_sdk_version" cosmos-sdk --force
+  npx degit "cosmos/cosmos-sdk#$nibiru_cosmos_sdk_version" cosmos-sdk --force
   DIR_COSMOS_SDK="$(pwd)/cosmos-sdk"
   cd $start_dir
 }
