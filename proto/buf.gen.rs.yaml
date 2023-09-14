@@ -1,0 +1,32 @@
+# buf.gen.rs.yaml
+# 
+# Run with:
+# ```bash
+# proto_dir="proto"
+# out_dir="gen_rust"
+# buf generate $proto_dir --template proto/buf.gen.rs.yaml \
+#   -o $out_dir \ 
+#   --config proto/buf.yaml \
+#   --include-imports
+# ```
+version: v1
+managed:
+  enabled: true
+plugins:
+  # protoc-gen-prost is the main code generation plugin
+  # https://github.com/neoeinstein/protoc-gen-prost/blob/main/protoc-gen-prost/README.md
+  - plugin: buf.build/community/neoeinstein-prost:v0.2.3
+    out: proto-rs
+    opt:
+      - bytes=.
+      # - file_descriptor_set
+      # - compile_well_known_types
+      # - extern_path=.google.protobuf=::pbjson_types
+
+
+  # TODO(Unique-Divine): investigate whether JSON serialization trait 
+  # implementations are needed for Rust protobufs used on Wasm::StargateMsg.
+  # protoc-gen-prost-serde: Canonical JSON serialization of protobuf types
+  # https://github.com/neoeinstein/protoc-gen-prost/blob/main/protoc-gen-prost-serde/README.md
+  # - plugin: buf.build/community/neoeinstein-prost-serde:v0.2.3
+  #   out: proto-rs

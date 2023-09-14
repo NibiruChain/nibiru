@@ -63,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1558](https://github.com/NibiruChain/nibiru/pull/1558) - feat(perp): paginated query to read the position store  
 * [#1554](https://github.com/NibiruChain/nibiru/pull/1554) - refactor: runs gofumpt formatter, which has nice conventions: go install mvdan.cc/gofumpt@latest
 * [#1574](https://github.com/NibiruChain/nibiru/pull/1574) - chore(goreleaser): update wasmvm to v1.4.0
+* [#xxx](https://github.com/NibiruChain/nibiru/pull/xxx) - chore(proto): Add a buf.gen.rs.yaml and corresponding script to create Rust types for Wasm Stargate messages
 
 ### Features
 
