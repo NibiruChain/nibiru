@@ -110,7 +110,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `docker/login-action` from 2 to 3 ([#1571](https://github.com/NibiruChain/nibiru/pull/1571))
 - Bump `docker/setup-buildx-action` from 2 to 3 ([#1570](https://github.com/NibiruChain/nibiru/pull/1570))
 - Bump `docker/setup-qemu-action` from 2 to 3 ([#1569](https://github.com/NibiruChain/nibiru/pull/1569))
-- Bump `cosmos/cosmos-sdk` from v0.47.4 to v0.47.5 ([#1578](https://github.com/NibiruChain/nibiru/pull/1578))
 - Bump `github.com/cosmos/cosmos-sdk` from v0.47.4 to v0.47.5 ([#1578](https://github.com/NibiruChain/nibiru/pull/1578))
 
 ### Breaking
