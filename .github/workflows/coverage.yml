@@ -6,6 +6,7 @@ on:
   schedule: 
     - cron: "0 0 * * *" # Runs automatically every day
   pull_request:
+    paths: ["**.go", "**.proto", "go.mod", "go.sum"]
 
 # Allow concurrent runs on main/release branches but isolates other branches 
 concurrency:
