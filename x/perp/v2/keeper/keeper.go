@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"cosmossdk.io/math"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
 	"github.com/NibiruChain/collections"
@@ -29,6 +30,8 @@ type Keeper struct {
 	AMMs             collections.Map[asset.Pair, types.AMM]
 	Positions        collections.Map[collections.Pair[asset.Pair, sdk.AccAddress], types.Position]
 	ReserveSnapshots collections.Map[collections.Pair[asset.Pair, time.Time], types.ReserveSnapshot]
+	DnREpoch         collections.Item[uint64]
+	TraderVolumes    collections.Map[collections.Pair[sdk.AccAddress, uint64], math.Int] // Keeps track of user volumes for each epoch.
 }
 
 // NewKeeper Creates a new x/perp Keeper instance.
@@ -73,6 +76,15 @@ func NewKeeper(
 			collections.PairKeyEncoder(asset.PairKeyEncoder, collections.TimeKeyEncoder),
 			collections.ProtoValueEncoder[types.ReserveSnapshot](cdc),
 		),
+		DnREpoch: collections.NewItem(
+			storeKey, NamespaceDnrEpoch,
+			collections.Uint64ValueEncoder,
+		),
+		TraderVolumes: collections.NewMap(
+			storeKey, NamespaceUserVolumes,
+			collections.PairKeyEncoder(collections.AccAddressKeyEncoder, collections.Uint64KeyEncoder),
+			IntValueEncoder,
+		),
 	}
 }
 
@@ -81,6 +93,8 @@ const (
 	NamespaceAmms
 	NamespacePositions
 	NamespaceReserveSnapshots
+	NamespaceDnrEpoch
+	NamespaceUserVolumes
 )
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {

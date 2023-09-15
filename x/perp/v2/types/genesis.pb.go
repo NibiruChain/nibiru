@@ -6,6 +6,7 @@ package types
 import (
 	fmt "fmt"
 	_ "github.com/cosmos/cosmos-sdk/types"
+	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
@@ -27,10 +28,12 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // GenesisState defines the perp module's genesis state.
 type GenesisState struct {
-	Markets          []Market          `protobuf:"bytes,2,rep,name=markets,proto3" json:"markets"`
-	Amms             []AMM             `protobuf:"bytes,3,rep,name=amms,proto3" json:"amms"`
-	Positions        []Position        `protobuf:"bytes,4,rep,name=positions,proto3" json:"positions"`
-	ReserveSnapshots []ReserveSnapshot `protobuf:"bytes,5,rep,name=reserve_snapshots,json=reserveSnapshots,proto3" json:"reserve_snapshots"`
+	Markets          []Market                    `protobuf:"bytes,2,rep,name=markets,proto3" json:"markets"`
+	Amms             []AMM                       `protobuf:"bytes,3,rep,name=amms,proto3" json:"amms"`
+	Positions        []Position                  `protobuf:"bytes,4,rep,name=positions,proto3" json:"positions"`
+	ReserveSnapshots []ReserveSnapshot           `protobuf:"bytes,5,rep,name=reserve_snapshots,json=reserveSnapshots,proto3" json:"reserve_snapshots"`
+	DnrEpoch         uint64                      `protobuf:"varint,6,opt,name=dnr_epoch,json=dnrEpoch,proto3" json:"dnr_epoch,omitempty"`
+	TraderVolumes    []GenesisState_TraderVolume `protobuf:"bytes,7,rep,name=trader_volumes,json=traderVolumes,proto3" json:"trader_volumes"`
 }
 
 func (m *GenesisState) Reset()         { *m = GenesisState{} }
@@ -94,35 +97,111 @@ func (m *GenesisState) GetReserveSnapshots() []ReserveSnapshot {
 	return nil
 }
 
+func (m *GenesisState) GetDnrEpoch() uint64 {
+	if m != nil {
+		return m.DnrEpoch
+	}
+	return 0
+}
+
+func (m *GenesisState) GetTraderVolumes() []GenesisState_TraderVolume {
+	if m != nil {
+		return m.TraderVolumes
+	}
+	return nil
+}
+
+type GenesisState_TraderVolume struct {
+	Trader string                                 `protobuf:"bytes,1,opt,name=trader,proto3" json:"trader,omitempty"`
+	Epoch  uint64                                 `protobuf:"varint,2,opt,name=epoch,proto3" json:"epoch,omitempty"`
+	Volume github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,3,opt,name=volume,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"volume"`
+}
+
+func (m *GenesisState_TraderVolume) Reset()         { *m = GenesisState_TraderVolume{} }
+func (m *GenesisState_TraderVolume) String() string { return proto.CompactTextString(m) }
+func (*GenesisState_TraderVolume) ProtoMessage()    {}
+func (*GenesisState_TraderVolume) Descriptor() ([]byte, []int) {
+	return fileDescriptor_c2c7acfef3993fde, []int{0, 0}
+}
+func (m *GenesisState_TraderVolume) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *GenesisState_TraderVolume) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_GenesisState_TraderVolume.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *GenesisState_TraderVolume) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GenesisState_TraderVolume.Merge(m, src)
+}
+func (m *GenesisState_TraderVolume) XXX_Size() int {
+	return m.Size()
+}
+func (m *GenesisState_TraderVolume) XXX_DiscardUnknown() {
+	xxx_messageInfo_GenesisState_TraderVolume.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GenesisState_TraderVolume proto.InternalMessageInfo
+
+func (m *GenesisState_TraderVolume) GetTrader() string {
+	if m != nil {
+		return m.Trader
+	}
+	return ""
+}
+
+func (m *GenesisState_TraderVolume) GetEpoch() uint64 {
+	if m != nil {
+		return m.Epoch
+	}
+	return 0
+}
+
 func init() {
 	proto.RegisterType((*GenesisState)(nil), "nibiru.perp.v2.GenesisState")
+	proto.RegisterType((*GenesisState_TraderVolume)(nil), "nibiru.perp.v2.GenesisState.TraderVolume")
 }
 
 func init() { proto.RegisterFile("nibiru/perp/v2/genesis.proto", fileDescriptor_c2c7acfef3993fde) }
 
 var fileDescriptor_c2c7acfef3993fde = []byte{
-	// 326 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x5c, 0x90, 0xcd, 0x4a, 0x33, 0x31,
-	0x14, 0x86, 0xa7, 0x3f, 0xdf, 0x27, 0x8e, 0x22, 0x3a, 0x8a, 0x0c, 0x43, 0x49, 0xc5, 0x95, 0x9b,
-	0x4e, 0x68, 0x05, 0x57, 0x6e, 0xac, 0x8b, 0xae, 0x2a, 0xd2, 0xee, 0xdc, 0x48, 0xa6, 0x84, 0x34,
-	0xe8, 0xe4, 0x84, 0x9c, 0x74, 0xd0, 0x2b, 0x70, 0xeb, 0x65, 0x75, 0xd9, 0xa5, 0x2b, 0x91, 0xf6,
-	0x46, 0x64, 0x32, 0x51, 0xe9, 0xec, 0xc2, 0x79, 0x9f, 0xe7, 0xe5, 0xe4, 0x84, 0x1d, 0x25, 0x33,
-	0x69, 0x16, 0x54, 0x73, 0xa3, 0x69, 0x31, 0xa0, 0x82, 0x2b, 0x8e, 0x12, 0x53, 0x6d, 0xc0, 0x42,
-	0x74, 0x50, 0xa5, 0x69, 0x99, 0xa6, 0xc5, 0x20, 0x39, 0x11, 0x20, 0xc0, 0x45, 0xb4, 0x7c, 0x55,
-	0x54, 0xd2, 0x11, 0x00, 0xe2, 0x99, 0x53, 0xa6, 0x25, 0x65, 0x4a, 0x81, 0x65, 0x56, 0x82, 0xf2,
-	0x1d, 0x09, 0x99, 0x01, 0xe6, 0x80, 0x34, 0x63, 0xc8, 0x69, 0xd1, 0xcf, 0xb8, 0x65, 0x7d, 0x3a,
-	0x03, 0xa9, 0x7c, 0x9e, 0xd4, 0x36, 0x40, 0xcb, 0x2c, 0xaf, 0xb2, 0xf3, 0xb7, 0x66, 0xb8, 0x3f,
-	0xaa, 0x36, 0x9a, 0x96, 0xe3, 0xe8, 0x2a, 0xdc, 0xc9, 0x99, 0x79, 0xe2, 0x16, 0xe3, 0xe6, 0x59,
-	0xeb, 0x62, 0x6f, 0x70, 0x9a, 0x6e, 0xaf, 0x98, 0x8e, 0x5d, 0x3c, 0x6c, 0x2f, 0x3f, 0xbb, 0xc1,
-	0xe4, 0x07, 0x8e, 0x7a, 0x61, 0x9b, 0xe5, 0x39, 0xc6, 0x2d, 0x27, 0x1d, 0xd7, 0xa5, 0x9b, 0xf1,
-	0xd8, 0x1b, 0x0e, 0x8b, 0xae, 0xc3, 0x5d, 0x0d, 0x28, 0xdd, 0x37, 0xe2, 0xb6, 0x73, 0xe2, 0xba,
-	0x73, 0xef, 0x01, 0x2f, 0xfe, 0x09, 0xd1, 0x24, 0x3c, 0x32, 0x1c, 0xb9, 0x29, 0xf8, 0x23, 0x2a,
-	0xa6, 0x71, 0x0e, 0x16, 0xe3, 0x7f, 0xae, 0xa5, 0x5b, 0x6f, 0x99, 0x54, 0xe0, 0xd4, 0x73, 0xbe,
-	0xec, 0xd0, 0x6c, 0x8f, 0x71, 0x38, 0x5a, 0xae, 0x49, 0x63, 0xb5, 0x26, 0x8d, 0xaf, 0x35, 0x69,
-	0xbc, 0x6f, 0x48, 0xb0, 0xda, 0x90, 0xe0, 0x63, 0x43, 0x82, 0x87, 0x9e, 0x90, 0x76, 0xbe, 0xc8,
-	0xd2, 0x19, 0xe4, 0xf4, 0xce, 0x95, 0xdf, 0xce, 0x99, 0x54, 0xd4, 0x9f, 0xf5, 0xe5, 0xf7, 0xb0,
-	0xf6, 0x55, 0x73, 0xcc, 0xfe, 0xbb, 0xcb, 0x5e, 0x7e, 0x07, 0x00, 0x00, 0xff, 0xff, 0x13, 0x97,
-	0x6b, 0x44, 0xf9, 0x01, 0x00, 0x00,
+	// 452 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x5c, 0x52, 0x4f, 0x6f, 0xd3, 0x30,
+	0x14, 0x6f, 0xb6, 0xac, 0xa3, 0x66, 0x4c, 0x60, 0xa6, 0xc9, 0x0a, 0x53, 0x5a, 0x71, 0x40, 0xe5,
+	0x50, 0x5b, 0x2b, 0x12, 0x27, 0x2e, 0x14, 0xc1, 0xc4, 0xa1, 0x08, 0x65, 0x68, 0x07, 0x2e, 0x95,
+	0xd3, 0x5a, 0xa9, 0xb5, 0xc5, 0x8e, 0xfc, 0xdc, 0x08, 0xce, 0xf0, 0x01, 0xf8, 0x58, 0x3b, 0xee,
+	0x88, 0x38, 0x4c, 0xa8, 0xfd, 0x22, 0x28, 0xb6, 0x81, 0x2e, 0xa7, 0xe4, 0xbd, 0xdf, 0x9f, 0xf7,
+	0x7b, 0xd6, 0x43, 0x27, 0x4a, 0xe6, 0xd2, 0xac, 0x58, 0x25, 0x4c, 0xc5, 0xea, 0x31, 0x2b, 0x84,
+	0x12, 0x20, 0x81, 0x56, 0x46, 0x5b, 0x8d, 0x0f, 0x3d, 0x4a, 0x1b, 0x94, 0xd6, 0xe3, 0xe4, 0xa8,
+	0xd0, 0x85, 0x76, 0x10, 0x6b, 0xfe, 0x3c, 0x2b, 0x39, 0x29, 0xb4, 0x2e, 0xae, 0x04, 0xe3, 0x95,
+	0x64, 0x5c, 0x29, 0x6d, 0xb9, 0x95, 0x5a, 0x05, 0x8f, 0x24, 0x9d, 0x6b, 0x28, 0x35, 0xb0, 0x9c,
+	0x83, 0x60, 0xf5, 0x69, 0x2e, 0x2c, 0x3f, 0x65, 0x73, 0x2d, 0x55, 0xc0, 0x93, 0x56, 0x02, 0xb0,
+	0xdc, 0x0a, 0x8f, 0x3d, 0xfd, 0x16, 0xa3, 0x83, 0x33, 0x9f, 0xe8, 0xbc, 0x69, 0xe3, 0x97, 0x68,
+	0xbf, 0xe4, 0xe6, 0x52, 0x58, 0x20, 0x3b, 0x83, 0xdd, 0xe1, 0xfd, 0xf1, 0x31, 0xbd, 0x1b, 0x91,
+	0x4e, 0x1d, 0x3c, 0x89, 0xaf, 0x6f, 0xfb, 0x9d, 0xec, 0x2f, 0x19, 0x8f, 0x50, 0xcc, 0xcb, 0x12,
+	0xc8, 0xae, 0x13, 0x3d, 0x6e, 0x8b, 0x5e, 0x4f, 0xa7, 0x41, 0xe1, 0x68, 0xf8, 0x15, 0xea, 0x55,
+	0x1a, 0xa4, 0x5b, 0x83, 0xc4, 0x4e, 0x43, 0xda, 0x9a, 0x8f, 0x81, 0x10, 0x84, 0xff, 0x05, 0x38,
+	0x43, 0x8f, 0x8c, 0x00, 0x61, 0x6a, 0x31, 0x03, 0xc5, 0x2b, 0x58, 0x6a, 0x0b, 0x64, 0xcf, 0xb9,
+	0xf4, 0xdb, 0x2e, 0x99, 0x27, 0x9e, 0x07, 0x5e, 0x30, 0x7b, 0x68, 0xee, 0xb6, 0x01, 0x3f, 0x41,
+	0xbd, 0x85, 0x32, 0x33, 0x51, 0xe9, 0xf9, 0x92, 0x74, 0x07, 0xd1, 0x30, 0xce, 0xee, 0x2d, 0x94,
+	0x79, 0xdb, 0xd4, 0xf8, 0x02, 0x1d, 0x5a, 0xc3, 0x17, 0xc2, 0xcc, 0x6a, 0x7d, 0xb5, 0x2a, 0x05,
+	0x90, 0x7d, 0x37, 0xed, 0x79, 0x7b, 0xda, 0xf6, 0x5b, 0xd2, 0x4f, 0x4e, 0x72, 0xe1, 0x14, 0x61,
+	0xee, 0x03, 0xbb, 0xd5, 0x83, 0xe4, 0x7b, 0x84, 0x0e, 0xb6, 0x59, 0xf8, 0x18, 0x75, 0x3d, 0x83,
+	0x44, 0x83, 0x68, 0xd8, 0xcb, 0x42, 0x85, 0x8f, 0xd0, 0x9e, 0x4f, 0xb6, 0xe3, 0x92, 0xf9, 0x02,
+	0xbf, 0x43, 0x5d, 0x9f, 0x87, 0xec, 0x36, 0xec, 0x09, 0x6d, 0x66, 0xfc, 0xba, 0xed, 0x3f, 0x2b,
+	0xa4, 0x5d, 0xae, 0x72, 0x3a, 0xd7, 0x25, 0x0b, 0xc7, 0xe1, 0x3f, 0x23, 0x58, 0x5c, 0x32, 0xfb,
+	0xb5, 0x12, 0x40, 0xdf, 0x2b, 0x9b, 0x05, 0xf5, 0xe4, 0xec, 0x7a, 0x9d, 0x46, 0x37, 0xeb, 0x34,
+	0xfa, 0xbd, 0x4e, 0xa3, 0x1f, 0x9b, 0xb4, 0x73, 0xb3, 0x49, 0x3b, 0x3f, 0x37, 0x69, 0xe7, 0xf3,
+	0x68, 0xcb, 0xe9, 0x83, 0x5b, 0xf5, 0xcd, 0x92, 0x4b, 0xc5, 0xc2, 0x49, 0x7d, 0xf9, 0x77, 0x54,
+	0xce, 0x34, 0xef, 0xba, 0xab, 0x7a, 0xf1, 0x27, 0x00, 0x00, 0xff, 0xff, 0x88, 0xaf, 0x68, 0x64,
+	0xf5, 0x02, 0x00, 0x00,
 }
 
 func (m *GenesisState) Marshal() (dAtA []byte, err error) {
@@ -145,6 +224,25 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.TraderVolumes) > 0 {
+		for iNdEx := len(m.TraderVolumes) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.TraderVolumes[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x3a
+		}
+	}
+	if m.DnrEpoch != 0 {
+		i = encodeVarintGenesis(dAtA, i, uint64(m.DnrEpoch))
+		i--
+		dAtA[i] = 0x30
+	}
 	if len(m.ReserveSnapshots) > 0 {
 		for iNdEx := len(m.ReserveSnapshots) - 1; iNdEx >= 0; iNdEx-- {
 			{
@@ -204,6 +302,51 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *GenesisState_TraderVolume) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *GenesisState_TraderVolume) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *GenesisState_TraderVolume) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size := m.Volume.Size()
+		i -= size
+		if _, err := m.Volume.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintGenesis(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x1a
+	if m.Epoch != 0 {
+		i = encodeVarintGenesis(dAtA, i, uint64(m.Epoch))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.Trader) > 0 {
+		i -= len(m.Trader)
+		copy(dAtA[i:], m.Trader)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.Trader)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintGenesis(dAtA []byte, offset int, v uint64) int {
 	offset -= sovGenesis(v)
 	base := offset
@@ -245,6 +388,33 @@ func (m *GenesisState) Size() (n int) {
 			n += 1 + l + sovGenesis(uint64(l))
 		}
 	}
+	if m.DnrEpoch != 0 {
+		n += 1 + sovGenesis(uint64(m.DnrEpoch))
+	}
+	if len(m.TraderVolumes) > 0 {
+		for _, e := range m.TraderVolumes {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *GenesisState_TraderVolume) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Trader)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	if m.Epoch != 0 {
+		n += 1 + sovGenesis(uint64(m.Epoch))
+	}
+	l = m.Volume.Size()
+	n += 1 + l + sovGenesis(uint64(l))
 	return n
 }
 
@@ -416,6 +586,194 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			}
 			m.ReserveSnapshots = append(m.ReserveSnapshots, ReserveSnapshot{})
 			if err := m.ReserveSnapshots[len(m.ReserveSnapshots)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DnrEpoch", wireType)
+			}
+			m.DnrEpoch = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.DnrEpoch |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TraderVolumes", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.TraderVolumes = append(m.TraderVolumes, GenesisState_TraderVolume{})
+			if err := m.TraderVolumes[len(m.TraderVolumes)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipGenesis(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *GenesisState_TraderVolume) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowGenesis
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: TraderVolume: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: TraderVolume: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Trader", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Trader = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Epoch", wireType)
+			}
+			m.Epoch = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Epoch |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Volume", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Volume.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
