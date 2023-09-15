@@ -52,7 +52,7 @@ func (c createMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context
 }
 
 // CreateCustomMarket creates a market with custom parameters
-func CreateCustomMarket(pair asset.Pair, marketModifiers ...marketModifier) action.Action {
+func CreateCustomMarket(pair asset.Pair, marketModifiers ...MarketModifier) action.Action {
 	market := types.DefaultMarket(pair)
 	amm := types.AMM{
 		Pair:            pair,
@@ -75,33 +75,33 @@ func CreateCustomMarket(pair asset.Pair, marketModifiers ...marketModifier) acti
 	}
 }
 
-type marketModifier func(market *types.Market, amm *types.AMM)
+type MarketModifier func(market *types.Market, amm *types.AMM)
 
-func WithPrepaidBadDebt(amount sdkmath.Int) marketModifier {
+func WithPrepaidBadDebt(amount sdkmath.Int) MarketModifier {
 	return func(market *types.Market, amm *types.AMM) {
 		market.PrepaidBadDebt = sdk.NewCoin(market.Pair.QuoteDenom(), amount)
 	}
 }
 
-func WithPricePeg(newValue sdk.Dec) marketModifier {
+func WithPricePeg(newValue sdk.Dec) MarketModifier {
 	return func(market *types.Market, amm *types.AMM) {
 		amm.PriceMultiplier = newValue
 	}
 }
 
-func WithTotalLong(amount sdk.Dec) marketModifier {
+func WithTotalLong(amount sdk.Dec) MarketModifier {
 	return func(market *types.Market, amm *types.AMM) {
 		amm.TotalLong = amount
 	}
 }
 
-func WithTotalShort(amount sdk.Dec) marketModifier {
+func WithTotalShort(amount sdk.Dec) MarketModifier {
 	return func(market *types.Market, amm *types.AMM) {
 		amm.TotalShort = amount
 	}
 }
 
-func WithSqrtDepth(amount sdk.Dec) marketModifier {
+func WithSqrtDepth(amount sdk.Dec) MarketModifier {
 	return func(market *types.Market, amm *types.AMM) {
 		amm.SqrtDepth = amount
 		amm.BaseReserve = amount
@@ -109,15 +109,28 @@ func WithSqrtDepth(amount sdk.Dec) marketModifier {
 	}
 }
 
-func WithLatestMarketCPF(amount sdk.Dec) marketModifier {
+func WithLatestMarketCPF(amount sdk.Dec) MarketModifier {
 	return func(market *types.Market, amm *types.AMM) {
 		market.LatestCumulativePremiumFraction = amount
 	}
 }
 
-func WithMaxFundingRate(amount sdk.Dec) marketModifier {
+func WithMaxFundingRate(amount sdk.Dec) MarketModifier {
 	return func(market *types.Market, amm *types.AMM) {
 		market.MaxFundingRate = amount
+	}
+}
+
+func WithVersion(version uint64) MarketModifier {
+	return func(market *types.Market, amm *types.AMM) {
+		market.Version = version
+		amm.Version = version
+	}
+}
+
+func WithEnabled(enabled bool) MarketModifier {
+	return func(market *types.Market, amm *types.AMM) {
+		market.Enabled = enabled
 	}
 }
 

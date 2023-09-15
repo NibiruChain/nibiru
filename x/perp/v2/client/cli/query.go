@@ -12,6 +12,8 @@ import (
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
+const FlagVersioned = "versioned"
+
 // GetQueryCmd returns the cli query commands for this module
 func GetQueryCmd() *cobra.Command {
 	// Group stablecoin queries under a subcommand
@@ -156,7 +158,14 @@ func CmdQueryMarkets() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			res, err := queryClient.QueryMarkets(cmd.Context(), &types.QueryMarketsRequest{})
+			versioned, err := cmd.Flags().GetBool(FlagVersioned)
+			if err != nil {
+				return err
+			}
+
+			res, err := queryClient.QueryMarkets(cmd.Context(), &types.QueryMarketsRequest{
+				Versioned: versioned,
+			})
 			if err != nil {
 				return err
 			}
@@ -164,6 +173,8 @@ func CmdQueryMarkets() *cobra.Command {
 			return clientCtx.PrintProto(res)
 		},
 	}
+
+	cmd.Flags().Bool(FlagVersioned, false, "show all markets with version, enabled and disabled")
 
 	flags.AddQueryFlagsToCmd(cmd)
 
