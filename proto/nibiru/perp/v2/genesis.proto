@@ -19,4 +19,15 @@ message GenesisState {
 
   repeated ReserveSnapshot reserve_snapshots = 5
       [ (gogoproto.nullable) = false ];
+  uint64 dnr_epoch = 6;
+  repeated TraderVolume trader_volumes = 7 [ (gogoproto.nullable) = false ];
+
+  message TraderVolume {
+    string trader = 1;
+    uint64 epoch = 2;
+    string volume = 3 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+      (gogoproto.nullable) = false
+    ];
+  }
 }
