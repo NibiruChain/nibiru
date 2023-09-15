@@ -149,7 +149,9 @@ func CmdQueryMarkets() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "markets",
 		Short: "query all market info",
-		Args:  cobra.NoArgs,
+		Long: "query all market info, including version, if --versioned is set to true all markets will be shown, " +
+			"active and inactive, otherwise only active markets will be shown",
+		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
