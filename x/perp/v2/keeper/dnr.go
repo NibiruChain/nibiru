@@ -41,12 +41,7 @@ func (i intValueEncoder) Name() string {
 }
 
 // IncreaseTraderVolume adds the volume to the user's volume for the current epoch.
-func (k Keeper) IncreaseTraderVolume(ctx sdk.Context, user sdk.AccAddress, volume math.Int) {
-	currentEpoch, err := k.DnREpoch.Get(ctx)
-	// the DnREpoch must always exist. Otherwise, the chain was not initted properly.
-	if err != nil {
-		panic(err)
-	}
+func (k Keeper) IncreaseTraderVolume(ctx sdk.Context, currentEpoch uint64, user sdk.AccAddress, volume math.Int) {
 	currentVolume := k.TraderVolumes.GetOr(ctx, collections.Join(user, currentEpoch), math.ZeroInt())
 	newVolume := currentVolume.Add(volume)
 	k.TraderVolumes.Insert(ctx, collections.Join(user, currentEpoch), newVolume)
