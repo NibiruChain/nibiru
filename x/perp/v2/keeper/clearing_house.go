@@ -554,6 +554,13 @@ func (k Keeper) afterPositionUpdate(
 		}
 	}
 
+	// update user volume
+	dnrEpoch, err := k.DnREpoch.Get(ctx)
+	if err != nil {
+		return err
+	}
+	k.IncreaseTraderVolume(ctx, dnrEpoch, traderAddr, positionResp.ExchangedNotionalValue.Abs().TruncateInt())
+
 	transferredFee, err := k.transferFee(ctx, market.Pair, traderAddr, positionResp.ExchangedNotionalValue,
 		market.ExchangeFeeRatio, market.EcosystemFundFeeRatio,
 	)
