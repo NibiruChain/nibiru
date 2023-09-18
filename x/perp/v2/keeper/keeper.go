@@ -64,7 +64,7 @@ func NewKeeper(
 			collections.ProtoValueEncoder[types.Market](cdc),
 		),
 		MarketLastVersion: collections.NewMap(
-			storeKey, 15,
+			storeKey, NamespaceMarketLastVersion,
 			asset.PairKeyEncoder,
 			collections.ProtoValueEncoder[types.MarketLastVersion](cdc),
 		),
@@ -102,6 +102,7 @@ const (
 	NamespaceReserveSnapshots
 	NamespaceDnrEpoch
 	NamespaceUserVolumes
+	NamespaceMarketLastVersion
 )
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
