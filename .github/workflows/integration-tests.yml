@@ -1,6 +1,9 @@
 name: Integration tests
 
 on:
+  workflow_dispatch: # Runs on manual calls
+  schedule: 
+    - cron: "0 0 * * *" # Runs automatically every day
   pull_request:
     # paths makes the action run only when the given paths are changed
     paths: ["**.go", "**.proto", "go.mod", "go.sum"]
