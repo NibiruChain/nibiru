@@ -5,9 +5,10 @@ import (
 
 	"cosmossdk.io/math"
 	"github.com/NibiruChain/collections"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func DnREpochIs(epoch uint64) action.Action {
