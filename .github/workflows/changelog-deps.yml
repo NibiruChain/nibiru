@@ -10,7 +10,7 @@ jobs:
       # TODO: feat: try to use author of the commit(s) to see if it's dependabot
       # ${{ any(contains(commit.author.username, 'dependabot') for commit in github.event.commits) }}
     steps: 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
         with:
           token: ${{ secrets.NIBIRU_PM }}
           # to avoid checking out the repo in a detached state
