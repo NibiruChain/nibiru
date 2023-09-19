@@ -12,6 +12,8 @@ import (
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
+const FlagVersioned = "versioned"
+
 // GetQueryCmd returns the cli query commands for this module
 func GetQueryCmd() *cobra.Command {
 	// Group stablecoin queries under a subcommand
@@ -146,8 +148,12 @@ func CmdQueryModuleAccounts() *cobra.Command {
 func CmdQueryMarkets() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "markets",
-		Short: "query all market info",
-		Args:  cobra.NoArgs,
+		Short: "Query all market info",
+		Long: `
+Query all market info. By default, only active tradable markets are shown.
+If --versioned is to to true, the query will return all markets including the 
+inactive ones.`,
+		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -156,7 +162,14 @@ func CmdQueryMarkets() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			res, err := queryClient.QueryMarkets(cmd.Context(), &types.QueryMarketsRequest{})
+			versioned, err := cmd.Flags().GetBool(FlagVersioned)
+			if err != nil {
+				return err
+			}
+
+			res, err := queryClient.QueryMarkets(cmd.Context(), &types.QueryMarketsRequest{
+				Versioned: versioned,
+			})
 			if err != nil {
 				return err
 			}
@@ -164,6 +177,8 @@ func CmdQueryMarkets() *cobra.Command {
 			return clientCtx.PrintProto(res)
 		},
 	}
+
+	cmd.Flags().Bool(FlagVersioned, false, "toggles whether to include inactive markets")
 
 	flags.AddQueryFlagsToCmd(cmd)
 
