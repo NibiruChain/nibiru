@@ -148,9 +148,11 @@ func CmdQueryModuleAccounts() *cobra.Command {
 func CmdQueryMarkets() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "markets",
-		Short: "query all market info",
-		Long: "query all market info, including version, if --versioned is set to true all markets will be shown, " +
-			"active and inactive, otherwise only active markets will be shown",
+		Short: "Query all market info",
+		Long: `
+Query all market info. By default, only active tradable markets are shown.
+If --versioned is to to true, the query will return all markets including the 
+inactive ones.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -176,7 +178,7 @@ func CmdQueryMarkets() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().Bool(FlagVersioned, false, "show all markets with version, enabled and disabled")
+	cmd.Flags().Bool(FlagVersioned, false, "toggles whether to include inactive markets")
 
 	flags.AddQueryFlagsToCmd(cmd)
 

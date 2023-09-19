@@ -10,6 +10,8 @@ import "nibiru/perp/v2/state.proto";
 option go_package = "github.com/NibiruChain/nibiru/x/perp/v2/types";
 
 // GenesisState defines the perp module's genesis state.
+// Thge genesis state is used not only to start the network but also useful for
+// exporting and importing state during network upgrades.
 message GenesisState {
   repeated Market markets = 2 [ (gogoproto.nullable) = false ];
 

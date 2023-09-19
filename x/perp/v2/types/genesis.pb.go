@@ -28,6 +28,8 @@ var _ = math.Inf
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // GenesisState defines the perp module's genesis state.
+// Thge genesis state is used not only to start the network but also useful for
+// exporting and importing state during network upgrades.
 type GenesisState struct {
 	Markets            []Market                    `protobuf:"bytes,2,rep,name=markets,proto3" json:"markets"`
 	Amms               []AMM                       `protobuf:"bytes,3,rep,name=amms,proto3" json:"amms"`
