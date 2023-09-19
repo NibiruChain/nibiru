@@ -164,7 +164,7 @@ func (q queryServer) ModuleAccounts(
 }
 
 func (q queryServer) QueryMarkets(
-	goCtx context.Context, _ *types.QueryMarketsRequest,
+	goCtx context.Context, req *types.QueryMarketsRequest,
 ) (*types.QueryMarketsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
@@ -172,7 +172,7 @@ func (q queryServer) QueryMarkets(
 	markets := q.k.Markets.Iterate(ctx, collections.Range[collections.Pair[asset.Pair, uint64]]{}).Values()
 	for _, market := range markets {
 		// disabled markets are not returned
-		if !market.Enabled {
+		if !req.Versioned && !market.Enabled {
 			continue
 		}
 
