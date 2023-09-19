@@ -73,12 +73,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1501](https://github.com/NibiruChain/nibiru/pull/1501) - feat(proto): add Python buf generation logic for py-sdk
 * [#1503](https://github.com/NibiruChain/nibiru/pull/1503) - feat(wasm): add Oracle Exchange Rate query for wasm
 * [#1543](https://github.com/NibiruChain/nibiru/pull/1543) - epic(devgas): devgas module for incentivizing smart contract
+* [#1559](https://github.com/NibiruChain/nibiru/pull/1559) - feat: add versions to markets to allow to disable them
+* [#1585](https://github.com/NibiruChain/nibiru/pull/1585) - feat: include flag versioned in query markets to allow to query disabled markets
 
 ### Bug Fixes
 
 * [#1459](https://github.com/NibiruChain/nibiru/pull/1459) - fix(spot): wire `x/spot` msgService into app router
 * [#1467](https://github.com/NibiruChain/nibiru/pull/1467) - fix(oracle): make `calcTwap` safer
 * [#1464](https://github.com/NibiruChain/nibiru/pull/1464) - fix(gov): wire legacy proposal handlers
+* [#1586](https://github.com/NibiruChain/nibiru/pull/1586) - fix(sudo): make messages compatible with `Amino`
 
 ### State Machine Breaking
 

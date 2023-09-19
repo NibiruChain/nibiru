@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package nibiru.tokenfactory.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "cosmos/base/v1beta1/coin.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/x/tokenfactory/types";
+
+// DenomAuthorityMetadata specifies metadata foraddresses that have specific
+// capabilities over a token factory denom. Right now there is only one Admin
+// permission, but is planned to be extended to the future.
+message DenomAuthorityMetadata {
+  option (gogoproto.equal) = true;
+
+  // Admin: Bech32 address of the admin for the tokefactory denom. Can be empty
+  // for no admin.
+  string admin = 1 [ (gogoproto.moretags) = "yaml:\"admin\"" ];
+}
+
+// ModuleParams defines the parameters for the tokenfactory module.
+//
+// ### On Denom Creation Costs
+//
+// We'd like for fees to be paid by the user/signer of a ransaction, but in many
+// casess, token creation is abstracted away behind a smart contract. Setting a
+// nonzero `denom_creation_fee` would force each contract to handle collecting
+// and paying a fees for denom (factory/{contract-addr}/{subdenom}) creation on
+// behalf of the end user.
+//
+// For IBC token transfers, it's unclear who should pay the fee—the contract,
+// the relayer, or the original sender?
+// > "Charging fees will mess up composability, the same way Terra transfer tax
+//   caused all kinds of headaches for contract devs." - @ethanfrey
+//
+// ### Recommended Solution
+//
+// Have the end user (signer) pay fees directly in the form of higher gas costs.
+// This way, contracts won't need to handle collecting or paying fees. And for
+// IBC, the gas costs are already paid by the original sender and can be
+// estimated by the relayer. It's easier to tune gas costs to make spam
+// prohibitively expensive since there are per-transaction and per-block gas
+// limits.
+//
+// See https://github.com/CosmWasm/token-factory/issues/11 for the initial
+// discussion of the issue with @ethanfrey and @valardragon.
+message ModuleParams {
+  // Adds gas consumption to the execution of `MsgCreateDenom` as a method of
+  // spam prevention. Defaults to 10 NIBI.
+  uint64 denom_creation_gas_consume = 1
+      [ (gogoproto.moretags) = "yaml:\"denom_creation_gas_consume\"" ];
+}
+
+// TFDenom is a token factory (TF) denom. The canonical representation is
+// "tf/{creator}/{subdenom}", its unique denomination in the x/bank module.
+message TFDenom {
+  option (gogoproto.goproto_stringer) = false;
+  option (gogoproto.stringer) = false;
+
+  // Creator: Bech32 address of the creator of the denom.
+  string creator = 1;
+  // Subdenom: Unique suffix of a token factory denom. A subdenom is specific
+  // to a given creator. It is the name given during a token factory "Mint".
+  string subdenom = 2;
+}
+
+// ----------------------------------------------
+// Genesis
+// ----------------------------------------------
+
+// GenesisState for the Token Factory module.
+message GenesisState {
+  ModuleParams params = 1 [ (gogoproto.nullable) = false ];
+
+  repeated GenesisDenom factory_denoms = 2 [
+    (gogoproto.moretags) = "yaml:\"factory_denoms\"",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// GenesisDenom defines a tokenfactory denoms in the genesis state.
+message GenesisDenom {
+  option (gogoproto.equal) = true;
+
+  string denom = 1 [ (gogoproto.moretags) = "yaml:\"denom\"" ];
+  DenomAuthorityMetadata authority_metadata = 2 [
+    (gogoproto.moretags) = "yaml:\"authority_metadata\"",
+    (gogoproto.nullable) = false
+  ];
+}

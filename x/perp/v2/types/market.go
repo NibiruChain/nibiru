@@ -13,7 +13,7 @@ func isPercent(v sdk.Dec) bool {
 	return v.GTE(sdk.ZeroDec()) && v.LTE(sdk.OneDec())
 }
 
-func (market *Market) Validate() error {
+func (market Market) Validate() error {
 	if !isPercent(market.MaintenanceMarginRatio) {
 		return fmt.Errorf("maintenance margin ratio ratio must be 0 <= ratio <= 1")
 	}
@@ -49,87 +49,87 @@ func (market *Market) Validate() error {
 	return nil
 }
 
-func (market *Market) WithMaintenanceMarginRatio(value sdk.Dec) *Market {
+func (market Market) WithMaintenanceMarginRatio(value sdk.Dec) Market {
 	market.MaintenanceMarginRatio = value
 	return market
 }
 
-func (market *Market) WithMaxLeverage(value sdk.Dec) *Market {
+func (market Market) WithMaxLeverage(value sdk.Dec) Market {
 	market.MaxLeverage = value
 	return market
 }
 
-func (market *Market) WithEcosystemFee(value sdk.Dec) *Market {
+func (market Market) WithEcosystemFee(value sdk.Dec) Market {
 	market.EcosystemFundFeeRatio = value
 	return market
 }
 
-func (market *Market) WithExchangeFee(value sdk.Dec) *Market {
+func (market Market) WithExchangeFee(value sdk.Dec) Market {
 	market.ExchangeFeeRatio = value
 	return market
 }
 
-func (market *Market) WithLiquidationFee(value sdk.Dec) *Market {
+func (market Market) WithLiquidationFee(value sdk.Dec) Market {
 	market.LiquidationFeeRatio = value
 	return market
 }
 
-func (market *Market) WithPartialLiquidationRatio(value sdk.Dec) *Market {
+func (market Market) WithPartialLiquidationRatio(value sdk.Dec) Market {
 	market.PartialLiquidationRatio = value
 	return market
 }
 
-func (market *Market) WithFundingRateEpochId(value string) *Market {
+func (market Market) WithFundingRateEpochId(value string) Market {
 	market.FundingRateEpochId = value
 	return market
 }
 
-func (market *Market) WithMaxFundingRate(value sdk.Dec) *Market {
+func (market Market) WithMaxFundingRate(value sdk.Dec) Market {
 	market.MaxFundingRate = value
 	return market
 }
 
-func (market *Market) WithPair(value asset.Pair) *Market {
+func (market Market) WithPair(value asset.Pair) Market {
 	market.Pair = value
 	return market
 }
 
-func (market *Market) WithLatestCumulativePremiumFraction(value sdk.Dec) *Market {
+func (market Market) WithLatestCumulativePremiumFraction(value sdk.Dec) Market {
 	market.LatestCumulativePremiumFraction = value
 	return market
 }
 
-func (market *Market) WithEcosystemFundFeeRatio(value sdk.Dec) *Market {
+func (market Market) WithEcosystemFundFeeRatio(value sdk.Dec) Market {
 	market.EcosystemFundFeeRatio = value
 	return market
 }
 
-func (market *Market) WithExchangeFeeRatio(value sdk.Dec) *Market {
+func (market Market) WithExchangeFeeRatio(value sdk.Dec) Market {
 	market.ExchangeFeeRatio = value
 	return market
 }
 
-func (market *Market) WithLiquidationFeeRatio(value sdk.Dec) *Market {
+func (market Market) WithLiquidationFeeRatio(value sdk.Dec) Market {
 	market.LiquidationFeeRatio = value
 	return market
 }
 
-func (market *Market) WithPrepaidBadDebt(value sdk.Coin) *Market {
+func (market Market) WithPrepaidBadDebt(value sdk.Coin) Market {
 	market.PrepaidBadDebt = value
 	return market
 }
 
-func (market *Market) WithEnabled(value bool) *Market {
+func (market Market) WithEnabled(value bool) Market {
 	market.Enabled = value
 	return market
 }
 
-func (market *Market) WithTwapLookbackWindow(value time.Duration) *Market {
+func (market Market) WithTwapLookbackWindow(value time.Duration) Market {
 	market.TwapLookbackWindow = value
 	return market
 }
 
-func MarketsAreEqual(expected, actual *Market) error {
+func MarketsAreEqual(expected, actual Market) error {
 	if expected.Pair != actual.Pair {
 		return fmt.Errorf("expected market pair %s, got %s", expected.Pair, actual.Pair)
 	}
@@ -187,16 +187,4 @@ func MarketsAreEqual(expected, actual *Market) error {
 	}
 
 	return nil
-}
-
-func (m *Market) copy() *Market {
-	return &Market{
-		MaintenanceMarginRatio:  m.MaintenanceMarginRatio,
-		EcosystemFundFeeRatio:   m.EcosystemFundFeeRatio,
-		ExchangeFeeRatio:        m.ExchangeFeeRatio,
-		LiquidationFeeRatio:     m.LiquidationFeeRatio,
-		PartialLiquidationRatio: m.PartialLiquidationRatio,
-		MaxLeverage:             m.MaxLeverage,
-		MaxFundingRate:          m.MaxFundingRate,
-	}
 }
