@@ -142,7 +142,7 @@ func (o *marketOrderFeeIs) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context,
 
 	balanceBefore = balanceBefore.Sub(resp.MarginToVault.TruncateInt())
 
-	expectedFee := math.LegacyNewDecFromInt(o.margin).Mul(o.fee)
+	expectedFee := math.LegacyNewDecFromInt(o.margin).Mul(o.fee.Add(sdk.MustNewDecFromStr("0.001"))) // we add the ecosystem fund fee
 	balanceAfter := app.BankKeeper.GetBalance(ctx, o.trader, o.pair.QuoteDenom()).Amount
 	paidFees := balanceBefore.Sub(balanceAfter)
 	if !paidFees.Equal(expectedFee.TruncateInt()) {

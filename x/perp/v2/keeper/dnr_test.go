@@ -104,8 +104,11 @@ func TestDiscount(t *testing.T) {
 	positionSize := sdk.NewInt(10_000)
 	startBlockTime := time.Now()
 
-	ecosystemFee := sdk.MustNewDecFromStr("0.0010") // 0.1%, default fee taken from CreateCustomMarketAction
-	exchangeFee := sdk.MustNewDecFromStr("0.0010")  // 0.1%, default fee taken from CreateCustomMarketAction
+	exchangeFee := sdk.MustNewDecFromStr("0.0010")           // 0.1%, default fee taken from CreateCustomMarketAction
+	globalFeeDiscount := sdk.MustNewDecFromStr("0.0005")     // 0.05%
+	fauxGlobalFeeDiscount := sdk.MustNewDecFromStr("0.0004") // 0.05%
+	customFeeDiscount := sdk.MustNewDecFromStr("0.0002")     // 0.02%
+	fauxCustomFeeDiscount := sdk.MustNewDecFromStr("0.0003") // 0.03%
 
 	tests := TestCases{
 		TC("user does not have any past epoch volume: no discount applies").
@@ -126,7 +129,7 @@ func TestDiscount(t *testing.T) {
 				DnREpochIs(1),
 			).
 			Then(
-				MarketOrderFeeIs(exchangeFee.Add(ecosystemFee), alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
+				MarketOrderFeeIs(exchangeFee, alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
 			),
 		TC("user has past epoch volume: no discount applies").
 			Given(
@@ -143,11 +146,13 @@ func TestDiscount(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100_000_000)))),
 			).
 			When(
-				SetGlobalDiscount(exchangeFee.QuoInt64(2), sdk.NewInt(100_000)),
-				SetCustomDiscount(alice, exchangeFee.QuoInt64(10), sdk.NewInt(100_000)),
+				SetGlobalDiscount(fauxGlobalFeeDiscount, sdk.NewInt(50_000)),
+				SetGlobalDiscount(globalFeeDiscount, sdk.NewInt(100_000)),
+				SetCustomDiscount(alice, fauxCustomFeeDiscount, sdk.NewInt(50_000)),
+				SetCustomDiscount(alice, customFeeDiscount, sdk.NewInt(100_000)),
 				SetPreviousEpochUserVolume(alice, sdk.NewInt(10_000)),
 			).Then(
-			MarketOrderFeeIs(exchangeFee.Add(ecosystemFee), alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
+			MarketOrderFeeIs(exchangeFee, alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
 		),
 		TC("user has past epoch volume: custom discount applies").
 			Given(
@@ -164,12 +169,14 @@ func TestDiscount(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100_000_000)))),
 			).
 			When(
-				SetGlobalDiscount(exchangeFee.QuoInt64(2), sdk.NewInt(100_000)),
-				SetCustomDiscount(alice, exchangeFee.QuoInt64(10), sdk.NewInt(100_000)),
+				SetGlobalDiscount(sdk.MustNewDecFromStr("0.0004"), sdk.NewInt(50_000)),
+				SetGlobalDiscount(fauxGlobalFeeDiscount, sdk.NewInt(100_000)),
+				SetCustomDiscount(alice, fauxCustomFeeDiscount, sdk.NewInt(50_000)),
+				SetCustomDiscount(alice, customFeeDiscount, sdk.NewInt(100_000)),
 				SetPreviousEpochUserVolume(alice, sdk.NewInt(100_000)),
 			).
 			Then(
-				MarketOrderFeeIs(ecosystemFee.Add(exchangeFee.QuoInt64(10)), alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
+				MarketOrderFeeIs(customFeeDiscount, alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
 			),
 		TC("user has past epoch volume: global discount applies").
 			Given(
@@ -186,11 +193,13 @@ func TestDiscount(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100_000_000)))),
 			).
 			When(
-				SetGlobalDiscount(exchangeFee.QuoInt64(2), sdk.NewInt(100_000)),
+				SetGlobalDiscount(sdk.MustNewDecFromStr("0.0004"), sdk.NewInt(50_000)),
+				SetGlobalDiscount(globalFeeDiscount, sdk.NewInt(100_000)),
+				SetCustomDiscount(alice, sdk.MustNewDecFromStr("0.0003"), sdk.NewInt(50_000)),
 				SetPreviousEpochUserVolume(alice, sdk.NewInt(100_000)),
 			).
 			Then(
-				MarketOrderFeeIs(ecosystemFee.Add(exchangeFee.QuoInt64(2)), alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
+				MarketOrderFeeIs(globalFeeDiscount, alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
 			),
 	}
 	NewTestSuite(t).WithTestCases(tests...).Run()
