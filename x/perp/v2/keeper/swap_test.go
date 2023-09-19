@@ -191,12 +191,10 @@ func TestSwapBaseAsset(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testapp.NewNibiruTestAppAndContext()
-			market := mock.TestMarket()
 			amm := mock.TestAMMDefault().WithPriceMultiplier(sdk.NewDec(2))
 
 			updatedAMM, quoteAssetAmount, err := app.PerpKeeperV2.SwapBaseAsset(
 				ctx,
-				*market,
 				*amm,
 				tc.direction,
 				tc.baseAssetAmt,

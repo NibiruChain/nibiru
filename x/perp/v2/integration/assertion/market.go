@@ -3,6 +3,8 @@ package assertion
 import (
 	"fmt"
 
+	"github.com/NibiruChain/nibiru/x/common/testutil/action"
+
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,7 +22,7 @@ type marketShouldBeEqual struct {
 }
 
 func (m marketShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	market, err := app.PerpKeeperV2.Markets.Get(ctx, m.Pair)
+	market, err := app.PerpKeeperV2.GetMarket(ctx, m.Pair)
 	if err != nil {
 		return ctx, err, false
 	}
@@ -34,7 +36,7 @@ func (m marketShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Contex
 	return ctx, nil, false
 }
 
-func MarketShouldBeEqual(pair asset.Pair, marketCheckers ...MarketChecker) marketShouldBeEqual {
+func MarketShouldBeEqual(pair asset.Pair, marketCheckers ...MarketChecker) action.Action {
 	return marketShouldBeEqual{
 		Pair:     pair,
 		Checkers: marketCheckers,
@@ -77,7 +79,7 @@ type ammShouldBeEqual struct {
 type AMMChecker func(amm types.AMM) error
 
 func (a ammShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	amm, err := app.PerpKeeperV2.AMMs.Get(ctx, a.Pair)
+	amm, err := app.PerpKeeperV2.GetAMM(ctx, a.Pair)
 	if err != nil {
 		return ctx, err, false
 	}
@@ -91,7 +93,7 @@ func (a ammShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, 
 	return ctx, nil, false
 }
 
-func AMMShouldBeEqual(pair asset.Pair, ammCheckers ...AMMChecker) ammShouldBeEqual {
+func AMMShouldBeEqual(pair asset.Pair, ammCheckers ...AMMChecker) action.Action {
 	return ammShouldBeEqual{
 		Pair:     pair,
 		Checkers: ammCheckers,
@@ -148,6 +150,15 @@ func AMM_BiasShouldBeEqual(expectedBias sdk.Dec) AMMChecker {
 	return func(amm types.AMM) error {
 		if !amm.Bias().Equal(expectedBias) {
 			return fmt.Errorf("expected bias to be %s, got %s", expectedBias, amm.Bias())
+		}
+		return nil
+	}
+}
+
+func AMM_VersionShouldBeEqual(expectedVersion uint64) AMMChecker {
+	return func(amm types.AMM) error {
+		if amm.Version != expectedVersion {
+			return fmt.Errorf("expected version to be %d, got %d", expectedVersion, amm.Version)
 		}
 		return nil
 	}

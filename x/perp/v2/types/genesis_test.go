@@ -85,7 +85,7 @@ func TestGenesisValidate(t *testing.T) {
 			name: "valid genesis",
 			setupGenesis: func() *types.GenesisState {
 				genesis := types.GenesisState{
-					Markets:          []types.Market{*validMarket},
+					Markets:          []types.Market{validMarket},
 					Amms:             []types.AMM{validAmms},
 					Positions:        []types.Position{validPositions},
 					ReserveSnapshots: []types.ReserveSnapshot{},

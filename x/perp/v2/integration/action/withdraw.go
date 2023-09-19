@@ -18,7 +18,7 @@ type withdraw struct {
 func (w withdraw) Do(app *app.NibiruApp, ctx sdk.Context) (
 	outCtx sdk.Context, err error, isMandatory bool,
 ) {
-	market, err := app.PerpKeeperV2.Markets.Get(ctx, w.Pair)
+	market, err := app.PerpKeeperV2.GetMarket(ctx, w.Pair)
 	if err != nil {
 		return ctx, err, true
 	}

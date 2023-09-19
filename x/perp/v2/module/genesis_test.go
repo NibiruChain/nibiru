@@ -68,8 +68,9 @@ func RunTestGenesis(t *testing.T, tc TestCase) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 
 	// create some params
-	app.PerpKeeperV2.Markets.Insert(ctx, pair, *mock.TestMarket())
-	app.PerpKeeperV2.AMMs.Insert(ctx, pair, *mock.TestAMMDefault())
+	app.PerpKeeperV2.SaveMarket(ctx, *mock.TestMarket())
+	app.PerpKeeperV2.MarketLastVersion.Insert(ctx, pair, types.MarketLastVersion{Version: 1})
+	app.PerpKeeperV2.SaveAMM(ctx, *mock.TestAMMDefault())
 
 	// create some positions
 	for _, position := range tc.positions {
@@ -93,9 +94,17 @@ func RunTestGenesis(t *testing.T, tc TestCase) {
 	// export again to ensure they match
 	genStateAfterInit := perp.ExportGenesis(ctx, app.PerpKeeperV2)
 
+	require.Len(t, genStateAfterInit.Markets, len(genState.Markets))
 	for i, pm := range genState.Markets {
 		require.Equal(t, pm, genStateAfterInit.Markets[i])
 	}
+
+	require.Len(t, genStateAfterInit.MarketLastVersions, len(genState.MarketLastVersions))
+	for i, mlv := range genState.MarketLastVersions {
+		require.Equal(t, mlv, genStateAfterInit.MarketLastVersions[i])
+	}
+
+	require.Len(t, genStateAfterInit.Amms, len(genState.Amms))
 	for i, amm := range genState.Amms {
 		require.Equal(t, amm, genStateAfterInit.Amms[i])
 	}

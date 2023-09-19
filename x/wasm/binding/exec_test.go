@@ -511,7 +511,7 @@ func (s *TestSuiteExecutor) TestSetMarketEnabled() {
 		contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
 		s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
 
-		marketAfter, err := s.nibiru.PerpKeeperV2.Markets.Get(s.ctx, market.Pair)
+		marketAfter, err := s.nibiru.PerpKeeperV2.GetMarket(s.ctx, market.Pair)
 		s.NoError(err)
 		s.Equal(!market.Enabled, marketAfter.Enabled)
 	}
@@ -552,7 +552,7 @@ func (s *TestSuiteExecutor) TestCreateMarket() {
 	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
 
-	market, err := s.nibiru.PerpKeeperV2.Markets.Get(s.ctx, pair)
+	market, err := s.nibiru.PerpKeeperV2.GetMarket(s.ctx, pair)
 	s.NoError(err)
 	s.NoError(market.Validate())
 	s.True(market.Enabled)

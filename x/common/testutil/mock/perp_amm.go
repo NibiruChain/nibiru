@@ -12,6 +12,7 @@ import (
 func TestAMMDefault() *types.AMM {
 	return &types.AMM{
 		Pair:            asset.NewPair(denoms.BTC, denoms.NUSD),
+		Version:         1,
 		BaseReserve:     sdk.NewDec(1e12),
 		QuoteReserve:    sdk.NewDec(1e12),
 		SqrtDepth:       sdk.NewDec(1e12),

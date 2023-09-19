@@ -328,7 +328,7 @@ func (s *TestSuitePerpExecutor) DoSetMarketEnabledTest(
 		return err
 	}
 
-	market, err := s.nibiru.PerpKeeperV2.Markets.Get(s.ctx, pair)
+	market, err := s.nibiru.PerpKeeperV2.GetMarket(s.ctx, pair)
 	s.NoError(err)
 	s.Equal(enabled, market.Enabled)
 	return err

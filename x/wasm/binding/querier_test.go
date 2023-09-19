@@ -211,9 +211,6 @@ func (s *TestSuiteQuerier) TestQueryAllMarkets() {
 		s.Assert().EqualValues(marketAmm.Amm.BaseReserve, cwMarket.BaseReserve)
 		s.Assert().EqualValues(marketAmm.Amm.QuoteReserve, cwMarket.QuoteReserve)
 		s.Assert().EqualValues(marketAmm.Amm.SqrtDepth, cwMarket.SqrtDepth)
-		// s.Assert().EqualValues(
-		// 	marketAmm.Amm.BaseReserve.Mul(marketAmm.Amm.QuoteReserve).String(),
-		// 	cwMarket.Depth.ToDec().String())
 		s.Assert().EqualValues(marketAmm.Amm.TotalLong, cwMarket.TotalLong)
 		s.Assert().EqualValues(marketAmm.Amm.TotalShort, cwMarket.TotalShort)
 		s.Assert().EqualValues(marketAmm.Amm.PriceMultiplier.String(), cwMarket.PegMult.String())

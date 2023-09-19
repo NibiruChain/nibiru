@@ -13,18 +13,23 @@ import (
 
 // EndBlocker Called every block to store a snapshot of the perpamm.
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
-	for _, amm := range k.AMMs.Iterate(ctx, collections.Range[asset.Pair]{}).Values() {
+	for _, amm := range k.AMMs.Iterate(ctx, collections.Range[collections.Pair[asset.Pair, uint64]]{}).Values() {
+		market, err := k.GetMarket(ctx, amm.Pair)
+		if err != nil {
+			k.Logger(ctx).Error("failed to fetch market", "pair", amm.Pair, "error", err)
+			continue
+		}
+
+		// only snapshot enabled markets
+		if !market.Enabled {
+			continue
+		}
+
 		snapshot := types.ReserveSnapshot{
 			Amm:         amm,
 			TimestampMs: ctx.BlockTime().UnixMilli(),
 		}
 		k.ReserveSnapshots.Insert(ctx, collections.Join(amm.Pair, ctx.BlockTime()), snapshot)
-
-		market, err := k.Markets.Get(ctx, amm.Pair)
-		if err != nil {
-			k.Logger(ctx).Error("failed to fetch market", "pair", amm.Pair, "error", err)
-			continue
-		}
 
 		markTwap, err := k.CalcTwap(ctx, amm.Pair, types.TwapCalcOption_SPOT, types.Direction_DIRECTION_UNSPECIFIED, sdk.ZeroDec(), market.TwapLookbackWindow)
 		if err != nil {

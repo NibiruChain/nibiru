@@ -218,7 +218,7 @@ func (exec *ExecutorPerp) CreateMarket(
 
 	var market perpv2types.Market
 	if cwMsg.MarketParams == nil {
-		market = *perpv2types.DefaultMarket(pair)
+		market = perpv2types.DefaultMarket(pair)
 	} else {
 		mp := cwMsg.MarketParams
 		market = perpv2types.Market{

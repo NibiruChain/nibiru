@@ -177,9 +177,9 @@ func TestEditPriceMultiplerFail(t *testing.T) {
 		})
 	require.NoError(t, err)
 
-	// Error because of invalid price multiplier
+	// Error because of invalid pair
 	err = app.PerpKeeperV2.Admin().EditPriceMultiplier(ctx, asset.MustNewPair("luna:usdt"), sdk.NewDec(-1))
-	require.ErrorContains(t, err, "collections: not found")
+	require.ErrorContains(t, err, "market luna:usdt not found")
 
 	// Error because of invalid price multiplier
 	err = app.PerpKeeperV2.Admin().EditPriceMultiplier(ctx, pair, sdk.NewDec(-1))
@@ -244,7 +244,7 @@ func TestEditSwapInvariantFail(t *testing.T) {
 
 	// Error because of invalid price multiplier
 	err = app.PerpKeeperV2.Admin().EditSwapInvariant(ctx, asset.MustNewPair("luna:usdt"), sdk.NewDec(-1))
-	require.ErrorContains(t, err, "collections: not found")
+	require.ErrorContains(t, err, "market luna:usdt not found")
 
 	// Error because of invalid price multiplier
 	err = app.PerpKeeperV2.Admin().EditSwapInvariant(ctx, pair, sdk.NewDec(-1))

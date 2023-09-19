@@ -26,8 +26,10 @@ type Keeper struct {
 	OracleKeeper  types.OracleKeeper
 	EpochKeeper   types.EpochKeeper
 
-	Markets          collections.Map[asset.Pair, types.Market]
-	AMMs             collections.Map[asset.Pair, types.AMM]
+	MarketLastVersion collections.Map[asset.Pair, types.MarketLastVersion]
+	Markets           collections.Map[collections.Pair[asset.Pair, uint64], types.Market]
+	AMMs              collections.Map[collections.Pair[asset.Pair, uint64], types.AMM]
+
 	Positions        collections.Map[collections.Pair[asset.Pair, sdk.AccAddress], types.Position]
 	ReserveSnapshots collections.Map[collections.Pair[asset.Pair, time.Time], types.ReserveSnapshot]
 	DnREpoch         collections.Item[uint64]
@@ -58,12 +60,17 @@ func NewKeeper(
 		EpochKeeper:   epochKeeper,
 		Markets: collections.NewMap(
 			storeKey, NamespaceMarkets,
-			asset.PairKeyEncoder,
+			collections.PairKeyEncoder(asset.PairKeyEncoder, collections.Uint64KeyEncoder),
 			collections.ProtoValueEncoder[types.Market](cdc),
+		),
+		MarketLastVersion: collections.NewMap(
+			storeKey, NamespaceMarketLastVersion,
+			asset.PairKeyEncoder,
+			collections.ProtoValueEncoder[types.MarketLastVersion](cdc),
 		),
 		AMMs: collections.NewMap(
 			storeKey, NamespaceAmms,
-			asset.PairKeyEncoder,
+			collections.PairKeyEncoder(asset.PairKeyEncoder, collections.Uint64KeyEncoder),
 			collections.ProtoValueEncoder[types.AMM](cdc),
 		),
 		Positions: collections.NewMap(
@@ -95,6 +102,7 @@ const (
 	NamespaceReserveSnapshots
 	NamespaceDnrEpoch
 	NamespaceUserVolumes
+	NamespaceMarketLastVersion
 )
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
@@ -103,11 +111,11 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 
 // ChangeMarketEnabledParameter change the market enabled parameter
 func (k Keeper) ChangeMarketEnabledParameter(ctx sdk.Context, pair asset.Pair, enabled bool) (err error) {
-	market, err := k.Markets.Get(ctx, pair)
+	market, err := k.GetMarket(ctx, pair)
 	if err != nil {
 		return
 	}
 	market.Enabled = enabled
-	k.Markets.Insert(ctx, pair, market)
+	k.SaveMarket(ctx, market)
 	return
 }

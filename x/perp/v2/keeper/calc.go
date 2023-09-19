@@ -66,7 +66,7 @@ func UnrealizedPnl(position types.Position, positionNotional sdk.Dec) (unrealize
 	}
 }
 
-// Given a position and it's notional value, returns the margin ratio.
+// MarginRatio Given a position and it's notional value, returns the margin ratio.
 func MarginRatio(
 	position types.Position,
 	positionNotional sdk.Dec,

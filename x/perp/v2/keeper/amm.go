@@ -1,7 +1,10 @@
 package keeper
 
 import (
+	"fmt"
+
 	sdkmath "cosmossdk.io/math"
+	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -16,7 +19,7 @@ func (k Keeper) EditPriceMultiplier(
 	pair asset.Pair,
 	newPriceMultiplier sdk.Dec,
 ) (err error) {
-	amm, err := k.AMMs.Get(ctx, pair)
+	amm, err := k.GetAMM(ctx, pair)
 	if err != nil {
 		return err
 	}
@@ -39,7 +42,7 @@ func (k Keeper) EditPriceMultiplier(
 
 	// Do the re-peg
 	amm.PriceMultiplier = newPriceMultiplier
-	k.AMMs.Insert(ctx, pair, amm)
+	k.SaveAMM(ctx, amm)
 
 	return nil
 }
@@ -49,7 +52,7 @@ func (k Keeper) EditPriceMultiplier(
 // funds get send to the vault to pay for trader's new net margin.
 func (k Keeper) EditSwapInvariant(ctx sdk.Context, pair asset.Pair, newSwapInvariant sdk.Dec) (err error) {
 	// Get the pool
-	amm, err := k.AMMs.Get(ctx, pair)
+	amm, err := k.GetAMM(ctx, pair)
 	if err != nil {
 		return err
 	}
@@ -70,7 +73,7 @@ func (k Keeper) EditSwapInvariant(ctx sdk.Context, pair asset.Pair, newSwapInvar
 		return err
 	}
 
-	k.AMMs.Insert(ctx, pair, amm)
+	k.SaveAMM(ctx, amm)
 
 	return nil
 }
@@ -112,4 +115,44 @@ func (k Keeper) handleMarketUpdateCost(ctx sdk.Context, pair asset.Pair, costAmt
 		}
 	}
 	return nil
+}
+
+// GetMarket returns the market with last version.
+func (k Keeper) GetMarket(ctx sdk.Context, pair asset.Pair) (types.Market, error) {
+	lastVersion, err := k.MarketLastVersion.Get(ctx, pair)
+	if err != nil {
+		return types.Market{}, fmt.Errorf("market %s not found", pair)
+	}
+
+	market, err := k.Markets.Get(ctx, collections.Join(pair, lastVersion.Version))
+	if err != nil {
+		return types.Market{}, fmt.Errorf("market %s not found", pair)
+	}
+
+	return market, nil
+}
+
+// SaveMarket saves the market by pair and version.
+func (k Keeper) SaveMarket(ctx sdk.Context, market types.Market) {
+	k.Markets.Insert(ctx, collections.Join(market.Pair, market.Version), market)
+}
+
+// GetAMM returns the amm with last version.
+func (k Keeper) GetAMM(ctx sdk.Context, pair asset.Pair) (types.AMM, error) {
+	lastVersion, err := k.MarketLastVersion.Get(ctx, pair)
+	if err != nil {
+		return types.AMM{}, fmt.Errorf("market %s not found", pair)
+	}
+
+	amm, err := k.AMMs.Get(ctx, collections.Join(pair, lastVersion.Version))
+	if err != nil {
+		return types.AMM{}, fmt.Errorf("market %s not found", pair)
+	}
+
+	return amm, nil
+}
+
+// SaveAMM saves the amm by pair and version.
+func (k Keeper) SaveAMM(ctx sdk.Context, amm types.AMM) {
+	k.AMMs.Insert(ctx, collections.Join(amm.Pair, amm.Version), amm)
 }
