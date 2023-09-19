@@ -96,3 +96,101 @@ func TestUserVolumes(t *testing.T) {
 	}
 	NewTestSuite(t).WithTestCases(tests...).Run()
 }
+
+func TestDiscount(t *testing.T) {
+	alice := testutil.AccAddress()
+	pairBtcNusd := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	positionSize := sdk.NewInt(10_000)
+	startBlockTime := time.Now()
+
+	ecosystemFee := sdk.MustNewDecFromStr("0.0010") // 0.1%, default fee taken from CreateCustomMarketAction
+	exchangeFee := sdk.MustNewDecFromStr("0.0010")  // 0.1%, default fee taken from CreateCustomMarketAction
+
+	tests := TestCases{
+		TC("user does not have any past epoch volume: no discount applies").
+			Given(
+				DnREpochIs(1),
+				CreateCustomMarket(
+					pairBtcNusd,
+					WithPricePeg(sdk.OneDec()),
+					WithSqrtDepth(sdk.NewDec(100_000)),
+				),
+				SetBlockNumber(1),
+				SetBlockTime(startBlockTime),
+
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, positionSize.AddRaw(1000)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100_000_000)))),
+			).
+			When(
+				DnREpochIs(1),
+			).
+			Then(
+				MarketOrderFeeIs(exchangeFee.Add(ecosystemFee), alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
+			),
+		TC("user has past epoch volume: no discount applies").
+			Given(
+				DnREpochIs(2),
+				CreateCustomMarket(
+					pairBtcNusd,
+					WithPricePeg(sdk.OneDec()),
+					WithSqrtDepth(sdk.NewDec(100_000)),
+				),
+				SetBlockNumber(1),
+				SetBlockTime(startBlockTime),
+
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, positionSize.AddRaw(1000)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100_000_000)))),
+			).
+			When(
+				SetGlobalDiscount(exchangeFee.QuoInt64(2), sdk.NewInt(100_000)),
+				SetCustomDiscount(alice, exchangeFee.QuoInt64(10), sdk.NewInt(100_000)),
+				SetPreviousEpochUserVolume(alice, sdk.NewInt(10_000)),
+			).Then(
+			MarketOrderFeeIs(exchangeFee.Add(ecosystemFee), alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
+		),
+		TC("user has past epoch volume: custom discount applies").
+			Given(
+				DnREpochIs(2),
+				CreateCustomMarket(
+					pairBtcNusd,
+					WithPricePeg(sdk.OneDec()),
+					WithSqrtDepth(sdk.NewDec(100_000)),
+				),
+				SetBlockNumber(1),
+				SetBlockTime(startBlockTime),
+
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, positionSize.AddRaw(1000)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100_000_000)))),
+			).
+			When(
+				SetGlobalDiscount(exchangeFee.QuoInt64(2), sdk.NewInt(100_000)),
+				SetCustomDiscount(alice, exchangeFee.QuoInt64(10), sdk.NewInt(100_000)),
+				SetPreviousEpochUserVolume(alice, sdk.NewInt(100_000)),
+			).
+			Then(
+				MarketOrderFeeIs(ecosystemFee.Add(exchangeFee.QuoInt64(2)), alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
+			),
+		TC("user has past epoch volume: global discount applies").
+			Given(
+				DnREpochIs(2),
+				CreateCustomMarket(
+					pairBtcNusd,
+					WithPricePeg(sdk.OneDec()),
+					WithSqrtDepth(sdk.NewDec(100_000)),
+				),
+				SetBlockNumber(1),
+				SetBlockTime(startBlockTime),
+
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, positionSize.AddRaw(1000)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100_000_000)))),
+			).
+			When(
+				SetGlobalDiscount(exchangeFee.QuoInt64(2), sdk.NewInt(100_000)),
+				SetPreviousEpochUserVolume(alice, sdk.NewInt(100_000)),
+			).
+			Then(
+				MarketOrderFeeIs(ecosystemFee.Add(exchangeFee.QuoInt64(2)), alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
+			),
+	}
+	NewTestSuite(t).WithTestCases(tests...).Run()
+}
