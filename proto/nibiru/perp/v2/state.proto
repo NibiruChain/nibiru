@@ -44,6 +44,10 @@ message Market {
   // whether or not the market is enabled
   bool enabled = 2;
 
+  // the version of the Market, only one market can exist per pair, when one is closed it cannot be reactivated,
+  // so a new market must be created, this is the version of the market
+  uint64 version = 14;
+
   // the minimum margin ratio which a user must maintain on this market
   string maintenance_margin_ratio = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
@@ -114,6 +118,12 @@ message Market {
   ];
 }
 
+// MarketLastVersion is used to store the last version of the market
+message MarketLastVersion {
+  // version of the market
+  uint64 version = 1;
+}
+
 message AMM {
   // identifies the market this AMM belongs to
   string pair = 1 [
@@ -121,6 +131,10 @@ message AMM {
         "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
+
+  // the version of the AMM, only one AMM can exist per pair, when one is closed it cannot be reactivated,
+  // so a new AMM must be created, this is the version of the AMM
+  uint64 version = 8;
 
   // the amount of base reserves this AMM has
   string base_reserve = 2 [

@@ -348,7 +348,7 @@ func TestQueryMarkets(t *testing.T) {
 				),
 			).
 			Then(
-				QueryMarkets(QueryMarkets_MarketsShouldContain(*types.DefaultMarket(pair))),
+				QueryMarkets(QueryMarkets_MarketsShouldContain(types.DefaultMarket(pair))),
 				QueryModuleAccounts(QueryModuleAccounts_ModulesBalanceShouldBe(
 					map[string]sdk.Coins{
 						"perp_ef": sdk.NewCoins(

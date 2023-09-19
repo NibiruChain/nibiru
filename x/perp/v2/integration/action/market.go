@@ -21,7 +21,7 @@ type logger struct {
 	log string
 }
 
-func (e logger) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (e logger) Do(_ *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	fmt.Println(e.log)
 	return ctx, nil, true
 }
@@ -39,8 +39,9 @@ type createMarketAction struct {
 }
 
 func (c createMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	app.PerpKeeperV2.Markets.Insert(ctx, c.Market.Pair, c.Market)
-	app.PerpKeeperV2.AMMs.Insert(ctx, c.AMM.Pair, c.AMM)
+	app.PerpKeeperV2.MarketLastVersion.Insert(ctx, c.Market.Pair, types.MarketLastVersion{Version: 1})
+	app.PerpKeeperV2.SaveMarket(ctx, c.Market)
+	app.PerpKeeperV2.SaveAMM(ctx, c.AMM)
 
 	app.PerpKeeperV2.ReserveSnapshots.Insert(ctx, collections.Join(c.AMM.Pair, ctx.BlockTime()), types.ReserveSnapshot{
 		Amm:         c.AMM,
@@ -55,6 +56,7 @@ func CreateCustomMarket(pair asset.Pair, marketModifiers ...marketModifier) acti
 	market := types.DefaultMarket(pair)
 	amm := types.AMM{
 		Pair:            pair,
+		Version:         1,
 		BaseReserve:     sdk.NewDec(1e12),
 		QuoteReserve:    sdk.NewDec(1e12),
 		SqrtDepth:       sdk.NewDec(1e12),
@@ -64,11 +66,11 @@ func CreateCustomMarket(pair asset.Pair, marketModifiers ...marketModifier) acti
 	}
 
 	for _, modifier := range marketModifiers {
-		modifier(market, &amm)
+		modifier(&market, &amm)
 	}
 
 	return createMarketAction{
-		Market: *market,
+		Market: market,
 		AMM:    amm,
 	}
 }
