@@ -203,7 +203,7 @@ type setCustomDiscountAction struct {
 	user   sdk.AccAddress
 }
 
-func (s setCustomDiscountAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
+func (s *setCustomDiscountAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
 	app.PerpKeeperV2.TraderDiscounts.Insert(ctx, collections.Join(s.user, s.volume), s.fee)
 	return ctx, nil, true
 }

@@ -1,6 +1,9 @@
 package keeper
 
 import (
+	"log"
+	"math/big"
+
 	"cosmossdk.io/math"
 	"github.com/NibiruChain/collections"
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -48,20 +51,26 @@ func (i intValueEncoder) Name() string {
 type intKeyEncoder struct{}
 
 func (intKeyEncoder) Encode(key math.Int) []byte {
-	b, err := key.Marshal()
-	if err != nil {
-		panic(err)
+	i := key.BigInt()
+	if i.Sign() < 0 {
+		log.Panicf("cannot encode negative math.Int")
 	}
-	return b
+	if i == nil {
+		log.Panicf("cannot encode nil key")
+	}
+
+	be := i.Bytes()
+	padded := make([]byte, math.MaxBitLen)
+	copy(padded[math.MaxBitLen-len(be):], be)
+	return padded
 }
 
 func (intKeyEncoder) Decode(b []byte) (int, math.Int) {
-	i := math.Int{}
-	err := i.Unmarshal(b)
-	if err != nil {
-		panic(err)
+	if len(b) != math.MaxBitLen {
+		panic("invalid key length")
 	}
-	return len(b), i
+	i := new(big.Int).SetBytes(b)
+	return math.MaxBitLen, math.NewIntFromBigInt(i)
 }
 
 func (intKeyEncoder) Stringify(key math.Int) string { return key.String() }
