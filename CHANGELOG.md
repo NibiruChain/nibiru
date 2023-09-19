@@ -40,6 +40,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Features
+
+* [#1575](https://github.com/NibiruChain/nibiru/pull/1575) - feat(perp): Add trader volume tracking
+* [#1463](https://github.com/NibiruChain/nibiru/pull/1463) - feat(oracle): add genesis pricefeeder delegation
+* [#1479](https://github.com/NibiruChain/nibiru/pull/1479) - feat(perp): implement `PartialClose`
+* [#1498](https://github.com/NibiruChain/nibiru/pull/1498) - feat: add cli to change root sudo command
+* [#1501](https://github.com/NibiruChain/nibiru/pull/1501) - feat(localnet.sh): (1) Make it possible to run while offline. (2) Implement --no-build option to use the script with the current `nibid` installed.
+* [#1501](https://github.com/NibiruChain/nibiru/pull/1501) - feat(proto): add Python buf generation logic for py-sdk
+* [#1503](https://github.com/NibiruChain/nibiru/pull/1503) - feat(wasm): add Oracle Exchange Rate query for wasm
+* [#1543](https://github.com/NibiruChain/nibiru/pull/1543) - epic(devgas): devgas module for incentivizing smart contract
+* [#1559](https://github.com/NibiruChain/nibiru/pull/1559) - feat: add versions to markets to allow to disable them
+* [#1585](https://github.com/NibiruChain/nibiru/pull/1585) - feat: include flag versioned in query markets to allow to query disabled markets
+
 ### Improvements
 
 * [#1466](https://github.com/NibiruChain/nibiru/pull/1466) - refactor(perp): `PositionLiquidatedEvent`
@@ -63,105 +76,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1558](https://github.com/NibiruChain/nibiru/pull/1558) - feat(perp): paginated query to read the position store  
 * [#1554](https://github.com/NibiruChain/nibiru/pull/1554) - refactor: runs gofumpt formatter, which has nice conventions: go install mvdan.cc/gofumpt@latest
 * [#1574](https://github.com/NibiruChain/nibiru/pull/1574) - chore(goreleaser): update wasmvm to v1.4.0
-
-### Features
-* [#1575](https://github.com/NibiruChain/nibiru/pull/1575) - feat(perp): Add trader volume tracking
-* [#1463](https://github.com/NibiruChain/nibiru/pull/1463) - feat(oracle): add genesis pricefeeder delegation
-* [#1479](https://github.com/NibiruChain/nibiru/pull/1479) - feat(perp): implement `PartialClose`
-* [#1498](https://github.com/NibiruChain/nibiru/pull/1498) - feat: add cli to change root sudo command
-* [#1501](https://github.com/NibiruChain/nibiru/pull/1501) - feat(localnet.sh): (1) Make it possible to run while offline. (2) Implement --no-build option to use the script with the current `nibid` installed.
-* [#1501](https://github.com/NibiruChain/nibiru/pull/1501) - feat(proto): add Python buf generation logic for py-sdk
-* [#1503](https://github.com/NibiruChain/nibiru/pull/1503) - feat(wasm): add Oracle Exchange Rate query for wasm
-* [#1543](https://github.com/NibiruChain/nibiru/pull/1543) - epic(devgas): devgas module for incentivizing smart contract
-* [#1559](https://github.com/NibiruChain/nibiru/pull/1559) - feat: add versions to markets to allow to disable them
-* [#1585](https://github.com/NibiruChain/nibiru/pull/1585) - feat: include flag versioned in query markets to allow to query disabled markets
-
-### Bug Fixes
-
-* [#1459](https://github.com/NibiruChain/nibiru/pull/1459) - fix(spot): wire `x/spot` msgService into app router
-* [#1467](https://github.com/NibiruChain/nibiru/pull/1467) - fix(oracle): make `calcTwap` safer
-* [#1464](https://github.com/NibiruChain/nibiru/pull/1464) - fix(gov): wire legacy proposal handlers
-* [#1586](https://github.com/NibiruChain/nibiru/pull/1586) - fix(sudo): make messages compatible with `Amino`
-
-### State Machine Breaking
-
-* [#1473](https://github.com/NibiruChain/nibiru/pull/1473) - refactor(perp)!: rename `OpenPosition` to `MarketOrder`
-* [#1477](https://github.com/NibiruChain/nibiru/pull/1477) - refactor(oracle)!: Move away from deprecated events to typed events in x/oracle
-
-### Dependencies
-
-- Bump `robinraju/release-downloader` from 1.6 to 1.8 (#1326)
-- Bump `pozetroninc/github-action-get-latest-release` from 0.6.0 to 0.7.0 (#1325)
-- Bump `technote-space/get-diff-action` from 4 to 6 (#1327)
-- Bump `actions/setup-go` from 3 to 4 (#1324)
-- Bump `github.com/docker/distribution` from 2.8.1+incompatible to 2.8.2+incompatible (#1339)
-- Bump `github.com/CosmWasm/wasmvm` from 1.2.1 to 1.4.0 (#1354, #1507, [#1564](https://github.com/NibiruChain/nibiru/pull/1564))
-- Bump `github.com/spf13/cast` from 1.5.0 to 1.5.1 (#1358)
-- Bump `github.com/stretchr/testify` from 1.8.2 to 1.8.4 (#1384, #1435)
-- Bump `cosmossdk.io/math` from 1.0.0-beta.6 to 1.1.2 (#1394, [#1547](https://github.com/NibiruChain/nibiru/pull/1547))
-- Bump `google.golang.org/grpc` from 1.53.0 to 1.58.1 (#1395, #1437, #1443, #1497, [#1525](https://github.com/NibiruChain/nibiru/pull/1525), [#1568](https://github.com/NibiruChain/nibiru/pull/1568), [#1582](https://github.com/NibiruChain/nibiru/pull/1582))
-- Bump `github.com/gin-gonic/gin` from 1.8.1 to 1.9.1 (#1409)
-- Bump `github.com/spf13/viper` from 1.15.0 to 1.16.0 (#1436)
-- Bump `github.com/prometheus/client_golang` from 1.15.1 to 1.16.0 (#1431)
-- Bump `github.com/cosmos/ibc-go/v7` from 7.1.0 to 7.3.0 (#1445, [#1562](https://github.com/NibiruChain/nibiru/pull/1562))
-- Bump `bufbuild/buf-setup-action` from 1.21.0 to 1.26.1 (#1449, #1469, #1505, #1510, [#1537](https://github.com/NibiruChain/nibiru/pull/1537), [#1540](https://github.com/NibiruChain/nibiru/pull/1540), [#1544](https://github.com/NibiruChain/nibiru/pull/1544))
-- Bump `google.golang.org/protobuf` from 1.30.0 to 1.31.0 (#1450)
-- Bump `cosmossdk.io/errors` from 1.0.0-beta.7 to 1.0.0 (#1499)
-- Bump `github.com/holiman/uint256` from 1.2.2 to 1.2.3 (#1504)
-- Bump `actions/checkout` from 3 to 4 ([#1563](https://github.com/NibiruChain/nibiru/pull/1563))
-- Bump `docker/build-push-action` from 4 to 5 ([#1572](https://github.com/NibiruChain/nibiru/pull/1572))
-- Bump `docker/login-action` from 2 to 3 ([#1571](https://github.com/NibiruChain/nibiru/pull/1571))
-- Bump `docker/setup-buildx-action` from 2 to 3 ([#1570](https://github.com/NibiruChain/nibiru/pull/1570))
-- Bump `docker/setup-qemu-action` from 2 to 3 ([#1569](https://github.com/NibiruChain/nibiru/pull/1569))
-- Bump `github.com/cosmos/cosmos-sdk` from v0.47.4 to v0.47.5 ([#1578](https://github.com/NibiruChain/nibiru/pull/1578))
-- Bump `codecov/codecov-action` from 3 to 4 ([#1583](https://github.com/NibiruChain/nibiru/pull/1583))
-
-### Breaking
-
-* [#1380](https://github.com/NibiruChain/nibiru/pull/1380) - feat(wasm): Add CreateMarket admin call for the controller contract
-* [#1359](https://github.com/NibiruChain/nibiru/pull/1359) - feat(perp): Add InsuranceFundWithdraw admin call with corresponding smart contract
-* [#1356](https://github.com/NibiruChain/nibiru/pull/1356) - build: Regress wasmvm (v1.1.1), tendermint (v0.34.24), and Cosmos-SDK (v0.45.14) dependencies
-* [#1346](https://github.com/NibiruChain/nibiru/pull/1346) - build: Upgrade wasmvm (v1.2.1), tendermint (v0.34.26), and Cosmos-SDK (v0.45.14) dependencies
-* [#1317](https://github.com/NibiruChain/nibiru/pull/1317) - feat(sudo): Implement and test CLI commands for tx and queries. 
-* [#1307](https://github.com/NibiruChain/nibiru/pull/1307) - feat(sudo): Create the x/sudo module + integration tests
-* [#1299](https://github.com/NibiruChain/nibiru/pull/1299) - feat(wasm): Add peg shift bindings
-* [#1292](https://github.com/NibiruChain/nibiru/pull/1292) - feat(wasm): Add module bindings for execute calls in x/perp: OpenPosition, ClosePosition, AddMargin, RemoveMargin.
-* [#1287](https://github.com/NibiruChain/nibiru/pull/1287) - feat(wasm): Add module bindings for custom queries in x/perp: Reserves, AllMarkets, BasePrice, PremiumFraction, Metrics, PerpParams, PerpModuleAccounts
-* [#1282](https://github.com/NibiruChain/nibiru/pull/1282) - feat(inflation)!: add inflation module
-* [#1270](https://github.com/NibiruChain/nibiru/pull/1270) - refactor(proto)!: lint protos and standardize versioning
-* [#1271](https://github.com/NibiruChain/nibiru/pull/1271) - refactor(perp)!: vpool → perp/amm #2 | imports and renames
-* [#1269](https://github.com/NibiruChain/nibiru/pull/1269) - refactor(perp)!: merge x/util with x/perp
-* [#1267](https://github.com/NibiruChain/nibiru/pull/1267) - refactor(perp)!: vpool → perp/amm #1 | Moves types, keeper, and cli
-* [#1243](https://github.com/NibiruChain/nibiru/pull/1243) - feat(vpool): sqrt of liquidity depth tracked on pool
-* [#1220](https://github.com/NibiruChain/nibiru/pull/1220) - feat: reduce gas fees when posting price
-* [#1229](https://github.com/NibiruChain/nibiru/pull/1229) - feat: upgrade ibc to v4.2.0 and wasm v0.30.0
-* [#1254](https://github.com/NibiruChain/nibiru/pull/1254) - feat: add bias field into vpool
-* [#1255](https://github.com/NibiruChain/nibiru/pull/1255) - feat: add peg multiplier field into vpool, which for now defaults to 1
-* [#1281](https://github.com/NibiruChain/nibiru/pull/1281) - feat: add peg multiplier to the pricing logic
-* [#1291](https://github.com/NibiruChain/nibiru/pull/1291) - refactor(perp)!: add perp v2 state protos
-* [#1296](https://github.com/NibiruChain/nibiru/pull/1296) - refactor(perp)!: update perp v2 state protos
-* [#1298](https://github.com/NibiruChain/nibiru/pull/1298) - refactor(perp)!: remove `MaxOracleSpreadRatio` from Perpv2
-* [#1302](https://github.com/NibiruChain/nibiru/pull/1302) - refactor(oracle)!: price snapshot start time inclusive
-* [#1301](https://github.com/NibiruChain/nibiru/pull/1301) - fix(epochs)!: correct epoch start time
-* [#1304](https://github.com/NibiruChain/nibiru/pull/1304) - feat: db backend - rocksdb
-* [#1305](https://github.com/NibiruChain/nibiru/pull/1305) - refactor(perp!): Remove unnecessary protos
-* [#1312](https://github.com/NibiruChain/nibiru/pull/1312) - feat(wasm): wire depth shift handler to the wasm router
-* [#1306](https://github.com/NibiruChain/nibiru/pull/1306) - feat(perp): complete perp v2 types
-* [#1309](https://github.com/NibiruChain/nibiru/pull/1309) - feat: minimum swap amount set to $1
-* [#1336](https://github.com/NibiruChain/nibiru/pull/1336) - feat: move oracle params out of params subspace and onto the keeper
-* [#1315](https://github.com/NibiruChain/nibiru/pull/1315) - feat: oracle rewards distribution every week
-* [#1342](https://github.com/NibiruChain/nibiru/pull/1342) - feat(perp): market not enabled can only be used to close out existing positions
-* [#1367](https://github.com/NibiruChain/nibiru/pull/1367) - feat: wire enable market to wasm
-* [#1382](https://github.com/NibiruChain/nibiru/pull/1382) - refactor(perp)!: remove `perpv1`
-* [#1385](https://github.com/NibiruChain/nibiru/pull/1385) - test(perp): add clearing house negative tests
-* [#1388](https://github.com/NibiruChain/nibiru/pull/1388) - refactor(perp)!: idempotent position changed event
-* [#1387](https://github.com/NibiruChain/nibiru/pull/1387) - feat: upgrade to Cosmos SDK v0.46.10
-* [#1413](https://github.com/NibiruChain/nibiru/pull/1413) - fix(perp): provide descriptive errors when all liquidations fail in MultiLiquidate
-* [#1427](https://github.com/NibiruChain/nibiru/pull/1427) - refactor(perp)!: PositionChangedEvent `MarginToUser`
-* [#1407](https://github.com/NibiruChain/nibiru/pull/1407) - feat!: upgrade to Cosmos SDK v0.47.3
-
-### Improvements
-
 * [#1463](https://github.com/NibiruChain/nibiru/pull/1463) - feat(oracle): add genesis pricefeeder delegation
 * [#1466](https://github.com/NibiruChain/nibiru/pull/1466) - refactor(perp): `PositionLiquidatedEvent`
 * [#1462](https://github.com/NibiruChain/nibiru/pull/1462) - fix(perp): Add pair to liquidation failed event.
@@ -233,6 +147,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Bug Fixes
 
+* [#1459](https://github.com/NibiruChain/nibiru/pull/1459) - fix(spot): wire `x/spot` msgService into app router
+* [#1467](https://github.com/NibiruChain/nibiru/pull/1467) - fix(oracle): make `calcTwap` safer
+* [#1464](https://github.com/NibiruChain/nibiru/pull/1464) - fix(gov): wire legacy proposal handlers
+* [#1586](https://github.com/NibiruChain/nibiru/pull/1586) - fix(sudo): make messages compatible with `Amino`
 * [#1210](https://github.com/NibiruChain/nibiru/pull/1210) - fix(ci): fix docker push workflow
 * [#1337](https://github.com/NibiruChain/nibiru/pull/1337) - fix(ci): fix dockerfile with rocksdb
 * [#1379](https://github.com/NibiruChain/nibiru/pull/1379) - feat(perp): check for denom in add/remove margin
@@ -244,6 +162,83 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1446](https://github.com/NibiruChain/nibiru/pull/1446) - fix(cmd): Add custom InitCmd to set set desired Tendermint consensus params for each node.
 * [#1452](https://github.com/NibiruChain/nibiru/pull/1452) - fix(oracle): continue with abci hook during error
 * [#1451](https://github.com/NibiruChain/nibiru/pull/1451) - fix(perp): decrease position with zero size
+
+### State Machine Breaking
+
+* [#1473](https://github.com/NibiruChain/nibiru/pull/1473) - refactor(perp)!: rename `OpenPosition` to `MarketOrder`
+* [#1477](https://github.com/NibiruChain/nibiru/pull/1477) - refactor(oracle)!: Move away from deprecated events to typed events in x/oracle
+
+### API Breaking
+
+* [#1380](https://github.com/NibiruChain/nibiru/pull/1380) - feat(wasm): Add CreateMarket admin call for the controller contract
+* [#1359](https://github.com/NibiruChain/nibiru/pull/1359) - feat(perp): Add InsuranceFundWithdraw admin call with corresponding smart contract
+* [#1356](https://github.com/NibiruChain/nibiru/pull/1356) - build: Regress wasmvm (v1.1.1), tendermint (v0.34.24), and Cosmos-SDK (v0.45.14) dependencies
+* [#1346](https://github.com/NibiruChain/nibiru/pull/1346) - build: Upgrade wasmvm (v1.2.1), tendermint (v0.34.26), and Cosmos-SDK (v0.45.14) dependencies
+* [#1317](https://github.com/NibiruChain/nibiru/pull/1317) - feat(sudo): Implement and test CLI commands for tx and queries. 
+* [#1307](https://github.com/NibiruChain/nibiru/pull/1307) - feat(sudo): Create the x/sudo module + integration tests
+* [#1299](https://github.com/NibiruChain/nibiru/pull/1299) - feat(wasm): Add peg shift bindings
+* [#1292](https://github.com/NibiruChain/nibiru/pull/1292) - feat(wasm): Add module bindings for execute calls in x/perp: OpenPosition, ClosePosition, AddMargin, RemoveMargin.
+* [#1287](https://github.com/NibiruChain/nibiru/pull/1287) - feat(wasm): Add module bindings for custom queries in x/perp: Reserves, AllMarkets, BasePrice, PremiumFraction, Metrics, PerpParams, PerpModuleAccounts
+* [#1282](https://github.com/NibiruChain/nibiru/pull/1282) - feat(inflation)!: add inflation module
+* [#1270](https://github.com/NibiruChain/nibiru/pull/1270) - refactor(proto)!: lint protos and standardize versioning
+* [#1271](https://github.com/NibiruChain/nibiru/pull/1271) - refactor(perp)!: vpool → perp/amm #2 | imports and renames
+* [#1269](https://github.com/NibiruChain/nibiru/pull/1269) - refactor(perp)!: merge x/util with x/perp
+* [#1267](https://github.com/NibiruChain/nibiru/pull/1267) - refactor(perp)!: vpool → perp/amm #1 | Moves types, keeper, and cli
+* [#1243](https://github.com/NibiruChain/nibiru/pull/1243) - feat(vpool): sqrt of liquidity depth tracked on pool
+* [#1220](https://github.com/NibiruChain/nibiru/pull/1220) - feat: reduce gas fees when posting price
+* [#1229](https://github.com/NibiruChain/nibiru/pull/1229) - feat: upgrade ibc to v4.2.0 and wasm v0.30.0
+* [#1254](https://github.com/NibiruChain/nibiru/pull/1254) - feat: add bias field into vpool
+* [#1255](https://github.com/NibiruChain/nibiru/pull/1255) - feat: add peg multiplier field into vpool, which for now defaults to 1
+* [#1281](https://github.com/NibiruChain/nibiru/pull/1281) - feat: add peg multiplier to the pricing logic
+* [#1291](https://github.com/NibiruChain/nibiru/pull/1291) - refactor(perp)!: add perp v2 state protos
+* [#1296](https://github.com/NibiruChain/nibiru/pull/1296) - refactor(perp)!: update perp v2 state protos
+* [#1298](https://github.com/NibiruChain/nibiru/pull/1298) - refactor(perp)!: remove `MaxOracleSpreadRatio` from Perpv2
+* [#1302](https://github.com/NibiruChain/nibiru/pull/1302) - refactor(oracle)!: price snapshot start time inclusive
+* [#1301](https://github.com/NibiruChain/nibiru/pull/1301) - fix(epochs)!: correct epoch start time
+* [#1304](https://github.com/NibiruChain/nibiru/pull/1304) - feat: db backend - rocksdb
+* [#1305](https://github.com/NibiruChain/nibiru/pull/1305) - refactor(perp!): Remove unnecessary protos
+* [#1312](https://github.com/NibiruChain/nibiru/pull/1312) - feat(wasm): wire depth shift handler to the wasm router
+* [#1306](https://github.com/NibiruChain/nibiru/pull/1306) - feat(perp): complete perp v2 types
+* [#1309](https://github.com/NibiruChain/nibiru/pull/1309) - feat: minimum swap amount set to $1
+* [#1336](https://github.com/NibiruChain/nibiru/pull/1336) - feat: move oracle params out of params subspace and onto the keeper
+* [#1315](https://github.com/NibiruChain/nibiru/pull/1315) - feat: oracle rewards distribution every week
+* [#1342](https://github.com/NibiruChain/nibiru/pull/1342) - feat(perp): market not enabled can only be used to close out existing positions
+* [#1367](https://github.com/NibiruChain/nibiru/pull/1367) - feat: wire enable market to wasm
+* [#1382](https://github.com/NibiruChain/nibiru/pull/1382) - refactor(perp)!: remove `perpv1`
+* [#1385](https://github.com/NibiruChain/nibiru/pull/1385) - test(perp): add clearing house negative tests
+* [#1388](https://github.com/NibiruChain/nibiru/pull/1388) - refactor(perp)!: idempotent position changed event
+* [#1387](https://github.com/NibiruChain/nibiru/pull/1387) - feat: upgrade to Cosmos SDK v0.46.10
+* [#1413](https://github.com/NibiruChain/nibiru/pull/1413) - fix(perp): provide descriptive errors when all liquidations fail in MultiLiquidate
+* [#1427](https://github.com/NibiruChain/nibiru/pull/1427) - refactor(perp)!: PositionChangedEvent `MarginToUser`
+* [#1407](https://github.com/NibiruChain/nibiru/pull/1407) - feat!: upgrade to Cosmos SDK v0.47.3
+
+### Dependencies
+
+- Bump `robinraju/release-downloader` from 1.6 to 1.8 (#1326)
+- Bump `pozetroninc/github-action-get-latest-release` from 0.6.0 to 0.7.0 (#1325)
+- Bump `technote-space/get-diff-action` from 4 to 6 (#1327)
+- Bump `actions/setup-go` from 3 to 4 (#1324)
+- Bump `github.com/docker/distribution` from 2.8.1+incompatible to 2.8.2+incompatible (#1339)
+- Bump `github.com/CosmWasm/wasmvm` from 1.2.1 to 1.4.0 (#1354, #1507, [#1564](https://github.com/NibiruChain/nibiru/pull/1564))
+- Bump `github.com/spf13/cast` from 1.5.0 to 1.5.1 (#1358)
+- Bump `github.com/stretchr/testify` from 1.8.2 to 1.8.4 (#1384, #1435)
+- Bump `cosmossdk.io/math` from 1.0.0-beta.6 to 1.1.2 (#1394, [#1547](https://github.com/NibiruChain/nibiru/pull/1547))
+- Bump `google.golang.org/grpc` from 1.53.0 to 1.58.1 (#1395, #1437, #1443, #1497, [#1525](https://github.com/NibiruChain/nibiru/pull/1525), [#1568](https://github.com/NibiruChain/nibiru/pull/1568), [#1582](https://github.com/NibiruChain/nibiru/pull/1582))
+- Bump `github.com/gin-gonic/gin` from 1.8.1 to 1.9.1 (#1409)
+- Bump `github.com/spf13/viper` from 1.15.0 to 1.16.0 (#1436)
+- Bump `github.com/prometheus/client_golang` from 1.15.1 to 1.16.0 (#1431)
+- Bump `github.com/cosmos/ibc-go/v7` from 7.1.0 to 7.3.0 (#1445, [#1562](https://github.com/NibiruChain/nibiru/pull/1562))
+- Bump `bufbuild/buf-setup-action` from 1.21.0 to 1.26.1 (#1449, #1469, #1505, #1510, [#1537](https://github.com/NibiruChain/nibiru/pull/1537), [#1540](https://github.com/NibiruChain/nibiru/pull/1540), [#1544](https://github.com/NibiruChain/nibiru/pull/1544))
+- Bump `google.golang.org/protobuf` from 1.30.0 to 1.31.0 (#1450)
+- Bump `cosmossdk.io/errors` from 1.0.0-beta.7 to 1.0.0 (#1499)
+- Bump `github.com/holiman/uint256` from 1.2.2 to 1.2.3 (#1504)
+- Bump `actions/checkout` from 3 to 4 ([#1563](https://github.com/NibiruChain/nibiru/pull/1563))
+- Bump `docker/build-push-action` from 4 to 5 ([#1572](https://github.com/NibiruChain/nibiru/pull/1572))
+- Bump `docker/login-action` from 2 to 3 ([#1571](https://github.com/NibiruChain/nibiru/pull/1571))
+- Bump `docker/setup-buildx-action` from 2 to 3 ([#1570](https://github.com/NibiruChain/nibiru/pull/1570))
+- Bump `docker/setup-qemu-action` from 2 to 3 ([#1569](https://github.com/NibiruChain/nibiru/pull/1569))
+- Bump `github.com/cosmos/cosmos-sdk` from v0.47.4 to v0.47.5 ([#1578](https://github.com/NibiruChain/nibiru/pull/1578))
+- Bump `codecov/codecov-action` from 3 to 4 ([#1583](https://github.com/NibiruChain/nibiru/pull/1583))
 
 ## [v0.19.2](https://github.com/NibiruChain/nibiru/releases/tag/v0.19.2) - 2023-02-24
 
