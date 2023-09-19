@@ -130,9 +130,9 @@ func MarketOrderFeeIs(
 	}
 }
 
-func (o marketOrderFeeIs) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (o *marketOrderFeeIs) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	balanceBefore := app.BankKeeper.GetBalance(ctx, o.trader, o.pair.QuoteDenom()).Amount
-	_, err := app.PerpKeeperV2.MarketOrder(
+	resp, err := app.PerpKeeperV2.MarketOrder(
 		ctx, o.pair, o.dir, o.trader,
 		o.margin, o.leverage, o.baseAssetLimit,
 	)
@@ -140,10 +140,12 @@ func (o marketOrderFeeIs) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, 
 		return ctx, err, true
 	}
 
-	expectedFee := o.baseAssetLimit.Mul(o.fee)
+	balanceBefore = balanceBefore.Sub(resp.MarginToVault.TruncateInt())
+
+	expectedFee := math.LegacyNewDecFromInt(o.margin).Mul(o.fee)
 	balanceAfter := app.BankKeeper.GetBalance(ctx, o.trader, o.pair.QuoteDenom()).Amount
 	paidFees := balanceBefore.Sub(balanceAfter)
-	if paidFees.Equal(expectedFee.TruncateInt()) {
+	if !paidFees.Equal(expectedFee.TruncateInt()) {
 		return ctx, fmt.Errorf("unexpected fee, wanted %s, got %s", expectedFee, paidFees), true
 	}
 	return ctx, nil, true

@@ -169,7 +169,7 @@ func TestDiscount(t *testing.T) {
 				SetPreviousEpochUserVolume(alice, sdk.NewInt(100_000)),
 			).
 			Then(
-				MarketOrderFeeIs(ecosystemFee.Add(exchangeFee.QuoInt64(2)), alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
+				MarketOrderFeeIs(ecosystemFee.Add(exchangeFee.QuoInt64(10)), alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
 			),
 		TC("user has past epoch volume: global discount applies").
 			Given(
