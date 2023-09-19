@@ -1,6 +1,9 @@
 name: Integration tests
 
 on:
+  workflow_dispatch: # Runs on manual calls
+  schedule: 
+    - cron: "0 0 * * *" # Runs automatically every day
   pull_request:
     # paths makes the action run only when the given paths are changed
     paths: ["**.go", "**.proto", "go.mod", "go.sum"]
@@ -15,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
       - name: Set up Go
         uses: actions/setup-go@v4
@@ -24,4 +27,7 @@ jobs:
           cache: true
 
       - name: Run all integration tests.
-        run: make test-integration
+        run: make test-coverage-integration
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3

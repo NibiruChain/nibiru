@@ -19,6 +19,8 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 		panic(err)
 	}
 
+	k.DnREpoch.Set(ctx, genState.DnrEpoch)
+
 	for _, m := range genState.Markets {
 		k.SaveMarket(ctx, m)
 	}
@@ -48,6 +50,14 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			p,
 		)
 	}
+
+	for _, vol := range genState.TraderVolumes {
+		k.TraderVolumes.Insert(
+			ctx,
+			collections.Join(sdk.MustAccAddressFromBech32(vol.Trader), vol.Epoch),
+			vol.Volume,
+		)
+	}
 }
 
 // ExportGenesis returns the capability module's exported genesis.
@@ -67,6 +77,19 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis.Amms = k.AMMs.Iterate(ctx, collections.Range[collections.Pair[asset.Pair, uint64]]{}).Values()
 	genesis.Positions = k.Positions.Iterate(ctx, collections.PairRange[asset.Pair, sdk.AccAddress]{}).Values()
 	genesis.ReserveSnapshots = k.ReserveSnapshots.Iterate(ctx, collections.PairRange[asset.Pair, time.Time]{}).Values()
+	genesis.DnrEpoch = k.DnREpoch.GetOr(ctx, 0)
+
+	// export volumes
+	volumes := k.TraderVolumes.Iterate(ctx, collections.PairRange[sdk.AccAddress, uint64]{})
+	defer volumes.Close()
+	for ; volumes.Valid(); volumes.Next() {
+		key := volumes.Key()
+		genesis.TraderVolumes = append(genesis.TraderVolumes, types.GenesisState_TraderVolume{
+			Trader: key.K1().String(),
+			Epoch:  key.K2(),
+			Volume: volumes.Value(),
+		})
+	}
 
 	return genesis
 }
