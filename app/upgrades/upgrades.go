@@ -8,6 +8,12 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 )
 
+func emptyUpgradeHandler(mm *module.Manager, configurator module.Configurator, bm BaseAppParamManager) upgradetypes.UpgradeHandler {
+	return func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+		return mm.RunMigrations(ctx, configurator, fromVM)
+	}
+}
+
 type BaseAppParamManager interface {
 	GetConsensusParams(ctx sdk.Context) *tmproto.ConsensusParams
 	StoreConsensusParams(ctx sdk.Context, cp *tmproto.ConsensusParams)
@@ -20,11 +26,7 @@ type Upgrade struct {
 }
 
 var Upgrade_0_21_10 = Upgrade{
-	UpgradeName: "0.21.10",
-	CreateUpgradeHandler: func(mm *module.Manager, configurator module.Configurator, bm BaseAppParamManager) upgradetypes.UpgradeHandler {
-		return func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
-			return mm.RunMigrations(ctx, configurator, fromVM)
-		}
-	},
-	StoreUpgrades: types.StoreUpgrades{},
+	UpgradeName:          "0.21.10",
+	CreateUpgradeHandler: emptyUpgradeHandler,
+	StoreUpgrades:        types.StoreUpgrades{},
 }
