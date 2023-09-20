@@ -8,7 +8,7 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 )
 
-func emptyUpgradeHandler(mm *module.Manager, configurator module.Configurator, bm BaseAppParamManager) upgradetypes.UpgradeHandler {
+func emptyUpgradeHandler(mm *module.Manager, configurator module.Configurator, _ BaseAppParamManager) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 		return mm.RunMigrations(ctx, configurator, fromVM)
 	}

@@ -3,11 +3,12 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/NibiruChain/nibiru/app/upgrades"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/NibiruChain/nibiru/app/upgrades"
 
 	"github.com/NibiruChain/nibiru/x/genmsg"
 
@@ -362,6 +363,8 @@ func NewNibiruApp(
 		appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
 	app.InitModuleManager(encodingConfig, skipGenesisInvariants)
+
+	app.setupUpgradeHandlers()
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
