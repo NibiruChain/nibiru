@@ -3,11 +3,12 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/NibiruChain/nibiru/app/upgrades"
 
@@ -473,7 +474,7 @@ func (app *NibiruApp) setupUpgradeHandlers() {
 	for _, u := range Upgrades {
 		app.upgradeKeeper.SetUpgradeHandler(
 			u.UpgradeName,
-			u.CreateUpgradeHandler(app.mm, app.configurator, app.BaseApp),
+			u.CreateUpgradeHandler(app.mm, app.configurator),
 		)
 	}
 }
