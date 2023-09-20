@@ -8,6 +8,10 @@ import (
 	"os"
 	"path/filepath"
 
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+
+	"github.com/NibiruChain/nibiru/app/upgrades"
+
 	"github.com/NibiruChain/nibiru/x/genmsg"
 
 	"github.com/NibiruChain/nibiru/x/sudo/keeper"
@@ -124,6 +128,10 @@ const (
 	BondDenom            = "unibi"
 	DisplayDenom         = "NIBI"
 )
+
+var Upgrades = []upgrades.Upgrade{
+	upgrades.Upgrade_0_21_10,
+}
 
 var (
 	// DefaultNodeHome default home directories for the application daemon
@@ -358,6 +366,8 @@ func NewNibiruApp(
 
 	app.InitModuleManager(encodingConfig, skipGenesisInvariants)
 
+	app.setupUpgradeHandlers()
+
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
 
@@ -458,6 +468,32 @@ func (app *NibiruApp) ModuleAccountAddrs() map[string]bool {
 	}
 
 	return modAccAddrs
+}
+
+func (app *NibiruApp) setupUpgradeHandlers() {
+	for _, u := range Upgrades {
+		app.upgradeKeeper.SetUpgradeHandler(
+			u.UpgradeName,
+			u.CreateUpgradeHandler(app.mm, app.configurator),
+		)
+	}
+}
+
+func (app *NibiruApp) setupUpgradeStoreLoaders() {
+	upgradeInfo, err := app.upgradeKeeper.ReadUpgradeInfoFromDisk()
+	if err != nil {
+		panic(fmt.Sprintf("failed to read upgrade info from disk %s", err))
+	}
+
+	if app.upgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+		return
+	}
+
+	for _, upgrade := range Upgrades {
+		if upgradeInfo.Name == upgrade.UpgradeName {
+			app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &upgrade.StoreUpgrades))
+		}
+	}
 }
 
 // LegacyAmino returns SimApp's amino codec.
