@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"io"
 	"net/http"
 	"os"
@@ -474,6 +475,23 @@ func (app *NibiruApp) setupUpgradeHandlers() {
 			u.UpgradeName,
 			u.CreateUpgradeHandler(app.mm, app.configurator, app.BaseApp),
 		)
+	}
+}
+
+func (app *NibiruApp) setupUpgradeStoreLoaders() {
+	upgradeInfo, err := app.upgradeKeeper.ReadUpgradeInfoFromDisk()
+	if err != nil {
+		panic(fmt.Sprintf("failed to read upgrade info from disk %s", err))
+	}
+
+	if app.upgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+		return
+	}
+
+	for _, upgrade := range Upgrades {
+		if upgradeInfo.Name == upgrade.UpgradeName {
+			app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &upgrade.StoreUpgrades))
+		}
 	}
 }
 

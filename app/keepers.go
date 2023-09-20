@@ -253,6 +253,9 @@ func (app *NibiruApp) InitKeepers(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
+	// after init upgrade keeper
+	app.setupUpgradeStoreLoaders()
+
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
 	app.slashingKeeper = slashingkeeper.NewKeeper(
