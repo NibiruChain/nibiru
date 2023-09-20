@@ -5,8 +5,9 @@ import (
 
 	"cosmossdk.io/math"
 	"github.com/NibiruChain/collections"
-	"github.com/NibiruChain/nibiru/x/common/asset"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/common/asset"
 )
 
 // DnRGCFrequency is the frequency at which the DnR garbage collector runs.
