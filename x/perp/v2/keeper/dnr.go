@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"log"
 	"math/big"
 
 	"cosmossdk.io/math"
@@ -23,54 +22,48 @@ var IntKeyEncoder collections.KeyEncoder[math.Int] = intKeyEncoder{}
 
 type intValueEncoder struct{}
 
-func (i intValueEncoder) Encode(value math.Int) []byte {
-	v, err := value.Marshal()
-	if err != nil {
-		panic(err)
-	}
-	return v
+func (intValueEncoder) Encode(value math.Int) []byte {
+	return IntKeyEncoder.Encode(value)
 }
 
-func (i intValueEncoder) Decode(b []byte) math.Int {
-	var v math.Int
-	err := v.Unmarshal(b)
-	if err != nil {
-		panic(err)
-	}
-	return v
+func (intValueEncoder) Decode(b []byte) math.Int {
+	_, got := IntKeyEncoder.Decode(b)
+	return got
 }
 
-func (i intValueEncoder) Stringify(value math.Int) string {
-	return value.String()
+func (intValueEncoder) Stringify(value math.Int) string {
+	return IntKeyEncoder.Stringify(value)
 }
 
-func (i intValueEncoder) Name() string {
+func (intValueEncoder) Name() string {
 	return "math.Int"
 }
 
 type intKeyEncoder struct{}
 
+const maxIntKeyLen = math.MaxBitLen / 8
+
 func (intKeyEncoder) Encode(key math.Int) []byte {
+	if key.IsNil() {
+		panic("cannot encode invalid math.Int")
+	}
+	if key.IsNegative() {
+		panic("cannot encode negative math.Int")
+	}
 	i := key.BigInt()
-	if i.Sign() < 0 {
-		log.Panicf("cannot encode negative math.Int")
-	}
-	if i == nil {
-		log.Panicf("cannot encode nil key")
-	}
 
 	be := i.Bytes()
-	padded := make([]byte, math.MaxBitLen)
-	copy(padded[math.MaxBitLen-len(be):], be)
+	padded := make([]byte, maxIntKeyLen)
+	copy(padded[maxIntKeyLen-len(be):], be)
 	return padded
 }
 
 func (intKeyEncoder) Decode(b []byte) (int, math.Int) {
-	if len(b) != math.MaxBitLen {
+	if len(b) != maxIntKeyLen {
 		panic("invalid key length")
 	}
 	i := new(big.Int).SetBytes(b)
-	return math.MaxBitLen, math.NewIntFromBigInt(i)
+	return maxIntKeyLen, math.NewIntFromBigInt(i)
 }
 
 func (intKeyEncoder) Stringify(key math.Int) string { return key.String() }
