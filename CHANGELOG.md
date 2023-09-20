@@ -65,7 +65,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1574](https://github.com/NibiruChain/nibiru/pull/1574) - chore(goreleaser): update wasmvm to v1.4.0
 
 ### Features
-* [#1575](https://github.com/NibiruChain/nibiru/pull/1575) - feat(perp): Add trader volume tracking
 * [#1463](https://github.com/NibiruChain/nibiru/pull/1463) - feat(oracle): add genesis pricefeeder delegation
 * [#1479](https://github.com/NibiruChain/nibiru/pull/1479) - feat(perp): implement `PartialClose`
 * [#1498](https://github.com/NibiruChain/nibiru/pull/1498) - feat: add cli to change root sudo command
@@ -74,7 +73,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1503](https://github.com/NibiruChain/nibiru/pull/1503) - feat(wasm): add Oracle Exchange Rate query for wasm
 * [#1543](https://github.com/NibiruChain/nibiru/pull/1543) - epic(devgas): devgas module for incentivizing smart contract
 * [#1559](https://github.com/NibiruChain/nibiru/pull/1559) - feat: add versions to markets to allow to disable them
+* [#1575](https://github.com/NibiruChain/nibiru/pull/1575) - feat(perp): Add trader volume tracking
 * [#1585](https://github.com/NibiruChain/nibiru/pull/1585) - feat: include flag versioned in query markets to allow to query disabled markets
+* [#1594](https://github.com/NibiruChain/nibiru/pull/1594) - feat(perp): add trader discounts
 
 ### Bug Fixes
 
