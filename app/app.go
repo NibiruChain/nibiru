@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/NibiruChain/nibiru/app/upgrades"
 	"io"
 	"net/http"
 	"os"
@@ -124,6 +125,10 @@ const (
 	BondDenom            = "unibi"
 	DisplayDenom         = "NIBI"
 )
+
+var Upgrades = []upgrades.Upgrade{
+	upgrades.Upgrade_0_21_10,
+}
 
 var (
 	// DefaultNodeHome default home directories for the application daemon
@@ -458,6 +463,15 @@ func (app *NibiruApp) ModuleAccountAddrs() map[string]bool {
 	}
 
 	return modAccAddrs
+}
+
+func (app *NibiruApp) setupUpgradeHandlers() {
+	for _, u := range Upgrades {
+		app.upgradeKeeper.SetUpgradeHandler(
+			u.UpgradeName,
+			u.CreateUpgradeHandler(app.mm, app.configurator, app.BaseApp),
+		)
+	}
 }
 
 // LegacyAmino returns SimApp's amino codec.
