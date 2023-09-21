@@ -3,9 +3,10 @@ package keeper
 import (
 	"context"
 
-	types "github.com/NibiruChain/nibiru/x/tokenfactory/types"
 	grpccodes "google.golang.org/grpc/codes"
 	grpcstatus "google.golang.org/grpc/status"
+
+	types "github.com/NibiruChain/nibiru/x/tokenfactory/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

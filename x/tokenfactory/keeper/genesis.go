@@ -2,9 +2,10 @@ package keeper
 
 import (
 	"github.com/NibiruChain/collections"
-	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
 
 // InitGenesis initializes the tokenfactory module's state from a provided genesis

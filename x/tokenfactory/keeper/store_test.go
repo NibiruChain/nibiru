@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/NibiruChain/collections"
+
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 
 	tftypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"

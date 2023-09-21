@@ -3,13 +3,13 @@ package types_test
 import (
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
 
 func TestDenomStr_Validate(t *testing.T) {
-
 	testCases := []struct {
 		denom   types.DenomStr
 		wantErr string
@@ -41,5 +41,4 @@ func TestDenomStr_Validate(t *testing.T) {
 			})
 		})
 	}
-
 }

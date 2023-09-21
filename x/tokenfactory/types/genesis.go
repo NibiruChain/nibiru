@@ -1,8 +1,9 @@
 package types
 
 import (
-	"github.com/NibiruChain/nibiru/x/common/set"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/common/set"
 )
 
 // DefaultGenesis returns the default genesis state. This state is used for

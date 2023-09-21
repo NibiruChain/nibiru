@@ -73,8 +73,6 @@ func (s *TestSuite) TestGenesis() {
 				gen := s.app.TokenFactoryKeeper.ExportGenesis(s.ctx)
 				s.NoError(gen.Validate())
 			}
-
 		})
 	}
-
 }

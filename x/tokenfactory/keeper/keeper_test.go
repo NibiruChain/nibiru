@@ -3,9 +3,10 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/suite"
+
 	tfkeeper "github.com/NibiruChain/nibiru/x/tokenfactory/keeper"
 	tftypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
-	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
