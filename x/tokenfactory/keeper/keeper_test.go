@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -46,6 +47,6 @@ func (s *TestSuite) SetupTest() {
 	queryGrpcHelper := baseapp.NewQueryServerTestHelper(
 		s.ctx, s.app.InterfaceRegistry())
 	s.queryClient = tftypes.NewQueryClient(queryGrpcHelper)
-
-	// s.msgServer = s.app.TokenfactoryKeeper
 }
+
+func (s *TestSuite) GoCtx() context.Context { return sdk.WrapSDKContext(s.ctx) }
