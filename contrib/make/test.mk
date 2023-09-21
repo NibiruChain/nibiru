@@ -14,7 +14,7 @@ test-coverage:
 
 .PHONY: test-coverage-integration
 test-coverage-integration:
-	go test ./... -v \
+	go test ./... \
 		-coverprofile=coverage.txt \
 		-covermode=atomic \
 		-race | grep -v "no test" | grep -v "no statement"
