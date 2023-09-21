@@ -70,7 +70,7 @@ var Latin = TypeLatin{
 	Numbers:    "0123456789",
 }
 
-func RandStringBytes(n int) string {
+func RandLetters(n int) string {
 	b := make([]byte, n)
 	for i := range b {
 		b[i] = Latin.Letters[rand.Intn(len(Latin.Letters))]
