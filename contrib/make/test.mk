@@ -14,7 +14,7 @@ test-coverage:
 
 .PHONY: test-coverage-integration
 test-coverage-integration:
-	go test ./... -v $(PACKAGES_NOSIMULATION) \
+	go test ./... -v \
 		-coverprofile=coverage.txt \
 		-covermode=atomic \
 		-race | grep -v "no test" | grep -v "no statement"
