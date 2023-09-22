@@ -9,6 +9,7 @@ on:
 
 jobs:
   golangci:
+    name: lint
     runs-on: ubuntu-latest
     steps:
       - name: skip-golangci
