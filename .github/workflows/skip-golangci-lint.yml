@@ -1,0 +1,17 @@
+name: Linter
+
+on:
+  pull_request:
+    # paths-ignore makes the action run when the given paths are unchanged
+    # See "Handling skipped but required checks" in
+    # https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/troubleshooting-required-status-checks#handling-skipped-but-required-checks
+    paths-ignore: ["**.go", "**.proto", "go.mod", "go.sum"]
+
+jobs:
+  golangci:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: skip-golangci
+        run: |
+          echo "job: golangci was skipped since Golang files were not changed."
