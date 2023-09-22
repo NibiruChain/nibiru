@@ -159,24 +159,21 @@ func (perpExt *PerpQuerier) AllMarkets(
 
 	marketMap := make(map[string]cw_struct.Market)
 	for _, pbMarket := range sdkResp.AmmMarkets {
-		// pbPrice := sdkResp.Prices[idx]
 		key := pbMarket.Amm.Pair.String()
 		marketMap[key] = cw_struct.Market{
 			Pair:         key,
+			Version:      sdk.NewIntFromUint64(pbMarket.Market.Version),
 			BaseReserve:  pbMarket.Amm.BaseReserve,
 			QuoteReserve: pbMarket.Amm.QuoteReserve,
 			SqrtDepth:    pbMarket.Amm.SqrtDepth,
-			// Depth:        pbPrice.SwapInvariant,
-			TotalLong:  pbMarket.Amm.TotalLong,
-			TotalShort: pbMarket.Amm.TotalShort,
-			PegMult:    pbMarket.Amm.PriceMultiplier,
+			TotalLong:    pbMarket.Amm.TotalLong,
+			TotalShort:   pbMarket.Amm.TotalShort,
+			PegMult:      pbMarket.Amm.PriceMultiplier,
 			Config: &cw_struct.MarketConfig{
 				MaintenanceMarginRatio: pbMarket.Market.MaintenanceMarginRatio,
 				MaxLeverage:            pbMarket.Market.MaxLeverage,
 			},
-			MarkPrice: pbMarket.Amm.MarkPrice(),
-			// IndexPrice:  pbPrice.IndexPrice,
-			// TwapMark:    pbPrice.TwapMark,
+			MarkPrice:   pbMarket.Amm.MarkPrice(),
 			BlockNumber: sdk.NewInt(ctx.BlockHeight()),
 		}
 	}

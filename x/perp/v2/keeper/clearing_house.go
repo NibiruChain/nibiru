@@ -36,7 +36,7 @@ func (k Keeper) MarketOrder(
 	leverage sdk.Dec,
 	baseAmtLimit sdk.Dec,
 ) (positionResp *types.PositionResp, err error) {
-	market, err := k.Markets.Get(ctx, pair)
+	market, err := k.GetMarket(ctx, pair)
 	if err != nil {
 		return nil, types.ErrPairNotFound.Wrapf("pair %s not found", pair)
 	}
@@ -45,7 +45,7 @@ func (k Keeper) MarketOrder(
 		return nil, types.ErrMarketNotEnabled.Wrapf("market pair %s not enabled", pair)
 	}
 
-	amm, err := k.AMMs.Get(ctx, pair)
+	amm, err := k.GetAMM(ctx, pair)
 	if err != nil {
 		return nil, types.ErrPairNotFound.Wrapf("pair %s not found", pair)
 	}
@@ -554,6 +554,13 @@ func (k Keeper) afterPositionUpdate(
 		}
 	}
 
+	// update user volume
+	dnrEpoch, err := k.DnREpoch.Get(ctx)
+	if err != nil {
+		return err
+	}
+	k.IncreaseTraderVolume(ctx, dnrEpoch, traderAddr, positionResp.ExchangedNotionalValue.Abs().TruncateInt())
+
 	transferredFee, err := k.transferFee(ctx, market.Pair, traderAddr, positionResp.ExchangedNotionalValue,
 		market.ExchangeFeeRatio, market.EcosystemFundFeeRatio,
 	)
@@ -691,12 +698,12 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.A
 		return nil, err
 	}
 
-	market, err := k.Markets.Get(ctx, pair)
+	market, err := k.GetMarket(ctx, pair)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
 	}
 
-	amm, err := k.AMMs.Get(ctx, pair)
+	amm, err := k.GetAMM(ctx, pair)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
 	}
@@ -798,7 +805,6 @@ func (k Keeper) closePositionEntirely(
 	}
 	updatedAMM, exchangedNotionalValue, err := k.SwapBaseAsset(
 		ctx,
-		market,
 		amm,
 		dir,
 		currentPosition.Size_.Abs(),
@@ -834,12 +840,12 @@ func (k Keeper) PartialClose(
 	sizeAmt sdk.Dec, // unsigned
 
 ) (*types.PositionResp, error) {
-	market, err := k.Markets.Get(ctx, pair)
+	market, err := k.GetMarket(ctx, pair)
 	if err != nil {
 		return nil, types.ErrPairNotFound.Wrapf("pair: %s", pair)
 	}
 
-	amm, err := k.AMMs.Get(ctx, pair)
+	amm, err := k.GetAMM(ctx, pair)
 	if err != nil {
 		return nil, types.ErrPairNotFound.Wrapf("pair: %s", pair)
 	}

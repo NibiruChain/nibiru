@@ -131,7 +131,11 @@ func (q queryPositionNotFound) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Cont
 		Trader: q.traderAddress.String(),
 	})
 	if !errors.Is(err, collections.ErrNotFound) {
-		return ctx, fmt.Errorf("expected position not found, but found a position for pair %s, trader %s", q.pair, q.traderAddress), false
+		return ctx, fmt.Errorf(
+			"expected position not found, but found a position for pair %s, trader %s",
+			q.pair,
+			q.traderAddress,
+		), false
 	}
 
 	return ctx, nil, false
@@ -145,13 +149,16 @@ func QueryPositionNotFound(pair asset.Pair, traderAddress sdk.AccAddress) action
 }
 
 type queryMarkets struct {
+	versioned           bool
 	allResponseCheckers []QueryMarketsChecker
 }
 
 func (q queryMarkets) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	queryServer := keeper.NewQuerier(app.PerpKeeperV2)
 
-	resp, err := queryServer.QueryMarkets(sdk.WrapSDKContext(ctx), &types.QueryMarketsRequest{})
+	resp, err := queryServer.QueryMarkets(sdk.WrapSDKContext(ctx), &types.QueryMarketsRequest{
+		Versioned: q.versioned,
+	})
 	if err != nil {
 		return ctx, err, false
 	}
@@ -165,8 +172,10 @@ func (q queryMarkets) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, erro
 	return ctx, nil, false
 }
 
-func QueryMarkets(responseCheckers ...QueryMarketsChecker) action.Action {
+// QueryMarkets queries all markets, versioned contains active and inactive markets
+func QueryMarkets(versioned bool, responseCheckers ...QueryMarketsChecker) action.Action {
 	return queryMarkets{
+		versioned:           versioned,
 		allResponseCheckers: responseCheckers,
 	}
 }
@@ -176,7 +185,7 @@ type QueryMarketsChecker func(resp []types.AmmMarket) error
 func QueryMarkets_MarketsShouldContain(expectedMarket types.Market) QueryMarketsChecker {
 	return func(resp []types.AmmMarket) error {
 		for _, market := range resp {
-			if types.MarketsAreEqual(&expectedMarket, &market.Market) == nil {
+			if types.MarketsAreEqual(expectedMarket, market.Market) == nil {
 				return nil
 			}
 		}
@@ -185,6 +194,16 @@ func QueryMarkets_MarketsShouldContain(expectedMarket types.Market) QueryMarkets
 			marketsStr[i] = market.Market.String()
 		}
 		return fmt.Errorf("expected markets to contain %s but found %s", expectedMarket.String(), marketsStr)
+	}
+}
+
+func QueryMarkets_ShouldLength(length int) QueryMarketsChecker {
+	return func(resp []types.AmmMarket) error {
+		if len(resp) != length {
+			return fmt.Errorf("expected markets to have length %d, got %d", length, len(resp))
+		}
+
+		return nil
 	}
 }
 

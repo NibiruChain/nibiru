@@ -41,11 +41,11 @@ func (q queryServer) QueryPositions(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	markets := q.k.Markets.Iterate(ctx, collections.Range[asset.Pair]{}).Values()
+	markets := q.k.Markets.Iterate(ctx, collections.Range[collections.Pair[asset.Pair, uint64]]{}).Values()
 
 	var positions []types.QueryPositionResponse
 	for _, market := range markets {
-		amm, err := q.k.AMMs.Get(ctx, market.Pair)
+		amm, err := q.k.GetAMM(ctx, market.Pair)
 		if err != nil {
 			return nil, err
 		}
@@ -73,12 +73,12 @@ func (q queryServer) QueryPosition(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	market, err := q.k.Markets.Get(ctx, req.Pair)
+	market, err := q.k.GetMarket(ctx, req.Pair)
 	if err != nil {
 		return nil, err
 	}
 
-	amm, err := q.k.AMMs.Get(ctx, req.Pair)
+	amm, err := q.k.GetAMM(ctx, req.Pair)
 	if err != nil {
 		return nil, err
 	}
@@ -164,15 +164,20 @@ func (q queryServer) ModuleAccounts(
 }
 
 func (q queryServer) QueryMarkets(
-	goCtx context.Context, _ *types.QueryMarketsRequest,
+	goCtx context.Context, req *types.QueryMarketsRequest,
 ) (*types.QueryMarketsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	var ammMarkets []types.AmmMarket
-	markets := q.k.Markets.Iterate(ctx, collections.Range[asset.Pair]{}).Values()
+	markets := q.k.Markets.Iterate(ctx, collections.Range[collections.Pair[asset.Pair, uint64]]{}).Values()
 	for _, market := range markets {
+		// disabled markets are not returned
+		if !req.Versioned && !market.Enabled {
+			continue
+		}
+
 		pair := market.Pair
-		amm, err := q.k.AMMs.Get(ctx, pair)
+		amm, err := q.k.AMMs.Get(ctx, collections.Join(pair, market.Version))
 		if err != nil {
 			return nil, err
 		}
