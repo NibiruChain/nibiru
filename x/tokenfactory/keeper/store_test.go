@@ -46,7 +46,7 @@ func (s *TestSuite) TestStoreWrite() {
 	s.T().Run("insert to state", func(t *testing.T) {
 		// inserting should succeed
 		for _, tfdenom := range tfdenoms {
-			api.MustInsertDenom(s.ctx, tfdenom)
+			s.Require().NoError(api.InsertDenom(s.ctx, tfdenom))
 		}
 
 		allDenoms := api.Denoms.Iterate(

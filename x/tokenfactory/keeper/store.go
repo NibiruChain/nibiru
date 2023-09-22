@@ -53,14 +53,6 @@ func (api StoreAPI) InsertDenom(
 	return nil
 }
 
-func (api StoreAPI) MustInsertDenom(
-	ctx sdk.Context, denom tftypes.TFDenom,
-) {
-	if err := api.InsertDenom(ctx, denom); err != nil {
-		panic(err)
-	}
-}
-
 // InsertDenomGenesis_NoBankUpdate: Populates the x/tokenfactory state without
 // making any assumptions about the x/bank state. This function is unsafe and
 // should only be used in InitGenesis or upgrades that populate state from an
