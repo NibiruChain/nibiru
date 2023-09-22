@@ -11,7 +11,7 @@ import (
 )
 
 /*
-Gets the time-weighted average price from [ ctx.BlockTime() - interval, ctx.BlockTime() )
+CalcTwap Gets the time-weighted average price from [ ctx.BlockTime() - interval, ctx.BlockTime() )
 Note the open-ended right bracket.
 
 args:

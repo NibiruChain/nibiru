@@ -171,7 +171,6 @@ func (s *TestSuitePerpQuerier) TestAllMarkets() {
 
 	marketMap := make(CwMarketMap)
 	for pair, ammMarket := range genesis.START_MARKETS {
-		// rate := s.ratesMap[pair]
 		cwMarket := cw_struct.NewMarket(
 			ammMarket.Market,
 			ammMarket.Amm,
@@ -188,12 +187,10 @@ func (s *TestSuitePerpQuerier) TestAllMarkets() {
 	}
 
 	testCases := map[string]struct {
-		cwReq     *cw_struct.AllMarketsRequest
 		marketMap CwMarketMap
 		expectErr bool
 	}{
 		"happy": {
-			cwReq:     &cw_struct.AllMarketsRequest{},
 			marketMap: marketMap,
 			expectErr: false,
 		},
@@ -252,13 +249,6 @@ func (s *TestSuitePerpQuerier) TestModuleParams() {
 	cwResp, err := s.queryPlugin.Perp.ModuleParams(s.ctx, cwReq)
 	s.Errorf(err, "\ncwResp: %s", cwResp)
 	s.Nil(cwResp)
-
-	// jsonBz, err := json.Marshal(cwResp)
-	// s.NoErrorf(err, "jsonBz: %s", jsonBz)
-
-	// freshCwResp := new(cw_struct.PerpParamsResponse)
-	// err = json.Unmarshal(jsonBz, freshCwResp)
-	// s.NoErrorf(err, "freshCwResp: %s", freshCwResp)
 }
 
 func (s *TestSuitePerpQuerier) TestPosition() {

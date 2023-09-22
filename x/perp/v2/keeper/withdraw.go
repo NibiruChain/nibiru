@@ -7,7 +7,7 @@ import (
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
-// Withdraws coins from the vault to the receiver.
+// WithdrawFromVault coins from the vault to the receiver.
 // If the total amount of coins to withdraw is greater than the vault's amount, then
 // withdraw the shortage from the PerpEF and mark it as prepaid bad debt.
 //
@@ -81,19 +81,19 @@ func (k Keeper) WithdrawFromVault(
 // IncrementPrepaidBadDebt increases the bad debt for the provided denom.
 func (k Keeper) IncrementPrepaidBadDebt(ctx sdk.Context, market types.Market, amount sdkmath.Int) {
 	market.PrepaidBadDebt.Amount = market.PrepaidBadDebt.Amount.Add(amount)
-	k.Markets.Insert(ctx, market.Pair, market)
+	k.SaveMarket(ctx, market)
 }
 
-// Zeroes out the prepaid bad debt
+// ZeroPrepaidBadDebt out the prepaid bad debt
 func (k Keeper) ZeroPrepaidBadDebt(ctx sdk.Context, market types.Market) {
 	market.PrepaidBadDebt.Amount = sdk.ZeroInt()
-	k.Markets.Insert(ctx, market.Pair, market)
+	k.SaveMarket(ctx, market)
 }
 
 // DecrementPrepaidBadDebt decrements the amount of bad debt prepaid by denom.
 func (k Keeper) DecrementPrepaidBadDebt(ctx sdk.Context, market types.Market, amount sdkmath.Int) {
 	market.PrepaidBadDebt.Amount = market.PrepaidBadDebt.Amount.Sub(amount)
-	k.Markets.Insert(ctx, market.Pair, market)
+	k.SaveMarket(ctx, market)
 }
 
 /*

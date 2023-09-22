@@ -21,7 +21,7 @@ type logger struct {
 	log string
 }
 
-func (e logger) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (e logger) Do(_ *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	fmt.Println(e.log)
 	return ctx, nil, true
 }
@@ -39,8 +39,9 @@ type createMarketAction struct {
 }
 
 func (c createMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	app.PerpKeeperV2.Markets.Insert(ctx, c.Market.Pair, c.Market)
-	app.PerpKeeperV2.AMMs.Insert(ctx, c.AMM.Pair, c.AMM)
+	app.PerpKeeperV2.MarketLastVersion.Insert(ctx, c.Market.Pair, types.MarketLastVersion{Version: 1})
+	app.PerpKeeperV2.SaveMarket(ctx, c.Market)
+	app.PerpKeeperV2.SaveAMM(ctx, c.AMM)
 
 	app.PerpKeeperV2.ReserveSnapshots.Insert(ctx, collections.Join(c.AMM.Pair, ctx.BlockTime()), types.ReserveSnapshot{
 		Amm:         c.AMM,
@@ -51,10 +52,11 @@ func (c createMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context
 }
 
 // CreateCustomMarket creates a market with custom parameters
-func CreateCustomMarket(pair asset.Pair, marketModifiers ...marketModifier) action.Action {
+func CreateCustomMarket(pair asset.Pair, marketModifiers ...MarketModifier) action.Action {
 	market := types.DefaultMarket(pair)
 	amm := types.AMM{
 		Pair:            pair,
+		Version:         1,
 		BaseReserve:     sdk.NewDec(1e12),
 		QuoteReserve:    sdk.NewDec(1e12),
 		SqrtDepth:       sdk.NewDec(1e12),
@@ -64,42 +66,42 @@ func CreateCustomMarket(pair asset.Pair, marketModifiers ...marketModifier) acti
 	}
 
 	for _, modifier := range marketModifiers {
-		modifier(market, &amm)
+		modifier(&market, &amm)
 	}
 
 	return createMarketAction{
-		Market: *market,
+		Market: market,
 		AMM:    amm,
 	}
 }
 
-type marketModifier func(market *types.Market, amm *types.AMM)
+type MarketModifier func(market *types.Market, amm *types.AMM)
 
-func WithPrepaidBadDebt(amount sdkmath.Int) marketModifier {
+func WithPrepaidBadDebt(amount sdkmath.Int) MarketModifier {
 	return func(market *types.Market, amm *types.AMM) {
 		market.PrepaidBadDebt = sdk.NewCoin(market.Pair.QuoteDenom(), amount)
 	}
 }
 
-func WithPricePeg(newValue sdk.Dec) marketModifier {
+func WithPricePeg(newValue sdk.Dec) MarketModifier {
 	return func(market *types.Market, amm *types.AMM) {
 		amm.PriceMultiplier = newValue
 	}
 }
 
-func WithTotalLong(amount sdk.Dec) marketModifier {
+func WithTotalLong(amount sdk.Dec) MarketModifier {
 	return func(market *types.Market, amm *types.AMM) {
 		amm.TotalLong = amount
 	}
 }
 
-func WithTotalShort(amount sdk.Dec) marketModifier {
+func WithTotalShort(amount sdk.Dec) MarketModifier {
 	return func(market *types.Market, amm *types.AMM) {
 		amm.TotalShort = amount
 	}
 }
 
-func WithSqrtDepth(amount sdk.Dec) marketModifier {
+func WithSqrtDepth(amount sdk.Dec) MarketModifier {
 	return func(market *types.Market, amm *types.AMM) {
 		amm.SqrtDepth = amount
 		amm.BaseReserve = amount
@@ -107,15 +109,28 @@ func WithSqrtDepth(amount sdk.Dec) marketModifier {
 	}
 }
 
-func WithLatestMarketCPF(amount sdk.Dec) marketModifier {
+func WithLatestMarketCPF(amount sdk.Dec) MarketModifier {
 	return func(market *types.Market, amm *types.AMM) {
 		market.LatestCumulativePremiumFraction = amount
 	}
 }
 
-func WithMaxFundingRate(amount sdk.Dec) marketModifier {
+func WithMaxFundingRate(amount sdk.Dec) MarketModifier {
 	return func(market *types.Market, amm *types.AMM) {
 		market.MaxFundingRate = amount
+	}
+}
+
+func WithVersion(version uint64) MarketModifier {
+	return func(market *types.Market, amm *types.AMM) {
+		market.Version = version
+		amm.Version = version
+	}
+}
+
+func WithEnabled(enabled bool) MarketModifier {
+	return func(market *types.Market, amm *types.AMM) {
+		market.Enabled = enabled
 	}
 }
 
