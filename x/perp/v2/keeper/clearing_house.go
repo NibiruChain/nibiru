@@ -838,7 +838,6 @@ func (k Keeper) PartialClose(
 	pair asset.Pair,
 	traderAddr sdk.AccAddress,
 	sizeAmt sdk.Dec, // unsigned
-
 ) (*types.PositionResp, error) {
 	market, err := k.GetMarket(ctx, pair)
 	if err != nil {
