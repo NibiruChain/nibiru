@@ -232,13 +232,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `google.golang.org/protobuf` from 1.30.0 to 1.31.0 (#1450)
 - Bump `cosmossdk.io/errors` from 1.0.0-beta.7 to 1.0.0 (#1499)
 - Bump `github.com/holiman/uint256` from 1.2.2 to 1.2.3 (#1504)
-- Bump `actions/checkout` from 3 to 4 ([#1563](https://github.com/NibiruChain/nibiru/pull/1563))
 - Bump `docker/build-push-action` from 4 to 5 ([#1572](https://github.com/NibiruChain/nibiru/pull/1572))
 - Bump `docker/login-action` from 2 to 3 ([#1571](https://github.com/NibiruChain/nibiru/pull/1571))
 - Bump `docker/setup-buildx-action` from 2 to 3 ([#1570](https://github.com/NibiruChain/nibiru/pull/1570))
 - Bump `docker/setup-qemu-action` from 2 to 3 ([#1569](https://github.com/NibiruChain/nibiru/pull/1569))
 - Bump `github.com/cosmos/cosmos-sdk` from v0.47.4 to v0.47.5 ([#1578](https://github.com/NibiruChain/nibiru/pull/1578))
 - Bump `codecov/codecov-action` from 3 to 4 ([#1583](https://github.com/NibiruChain/nibiru/pull/1583))
+- Bump `actions/checkout` from 3 to 4 ([#1593](https://github.com/NibiruChain/nibiru/pull/1593))
 
 ## [v0.19.2](https://github.com/NibiruChain/nibiru/releases/tag/v0.19.2) - 2023-02-24
 
