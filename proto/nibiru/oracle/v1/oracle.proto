@@ -68,6 +68,9 @@ message Params {
     (gogoproto.moretags) = "yaml:\"twap_lookback_window\""
   ];
 
+  uint64 twap_lookback_window_seconds = 12
+      [ (gogoproto.moretags) = "yaml:\"twap_lookback_window_seconds\"" ];
+
   // The minimum number of voters (i.e. oracle validators) per pair for it to be
   // considered a passing ballot. Recommended at least 4.
   uint64 min_voters = 9 [ (gogoproto.moretags) = "yaml:\"min_voters\"" ];
@@ -79,9 +82,8 @@ message Params {
     (gogoproto.nullable) = false
   ];
 
-  uint64 expiration_blocks = 11 [
-    (gogoproto.moretags) = "yaml:\"expiration_blocks\""
-  ];
+  uint64 expiration_blocks = 11
+      [ (gogoproto.moretags) = "yaml:\"expiration_blocks\"" ];
 }
 
 // Struct for aggregate prevoting on the ExchangeRateVote.
