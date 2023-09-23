@@ -24,3 +24,9 @@ var Upgrade_0_21_10 = Upgrade{
 	CreateUpgradeHandler: emptyUpgradeHandler,
 	StoreUpgrades:        types.StoreUpgrades{},
 }
+
+var Upgrade_0_21_11_alpha_1 = Upgrade{
+	UpgradeName:          "0.21.11-alpha.1",
+	CreateUpgradeHandler: emptyUpgradeHandler,
+	StoreUpgrades:        types.StoreUpgrades{},
+}

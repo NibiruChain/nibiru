@@ -131,6 +131,7 @@ const (
 
 var Upgrades = []upgrades.Upgrade{
 	upgrades.Upgrade_0_21_10,
+	upgrades.Upgrade_0_21_11_alpha_1,
 }
 
 var (
@@ -361,7 +362,7 @@ func NewNibiruApp(
 
 	// NOTE: we may consider parsing `appOpts` inside module constructors. For the moment
 	// we prefer to be more strict in what arguments the modules expect.
-	var skipGenesisInvariants = cast.ToBool(
+	skipGenesisInvariants := cast.ToBool(
 		appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
 	app.InitModuleManager(encodingConfig, skipGenesisInvariants)
@@ -638,7 +639,8 @@ func RegisterSwaggerAPI(ctx client.Context, rtr *mux.Router) {
 // initParamsKeeper init params perpammkeeper and its subspaces
 func initParamsKeeper(
 	appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key,
-	tkey storetypes.StoreKey) paramskeeper.Keeper {
+	tkey storetypes.StoreKey,
+) paramskeeper.Keeper {
 	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
 
 	paramsKeeper.Subspace(authtypes.ModuleName)
