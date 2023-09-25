@@ -60,7 +60,7 @@ func TestSnapshotUpdates(t *testing.T) {
 	assert.EqualValues(t, expectedSnapshot, snapshot)
 
 	t.Log("affect mark price")
-	amm, err := app.PerpKeeperV2.AMMs.Get(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+	amm, err := app.PerpKeeperV2.GetAMM(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 	require.NoError(t, err)
 
 	_, baseAmtAbs, err := app.PerpKeeperV2.SwapQuoteAsset(
@@ -77,6 +77,7 @@ func TestSnapshotUpdates(t *testing.T) {
 	expectedSnapshot = types.ReserveSnapshot{
 		Amm: types.AMM{
 			Pair:            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+			Version:         1,
 			BaseReserve:     sdk.NewDec(800e9),
 			QuoteReserve:    sdk.NewDec(1.25e12),
 			SqrtDepth:       sdk.NewDec(1e12),

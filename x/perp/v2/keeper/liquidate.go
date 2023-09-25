@@ -152,7 +152,7 @@ func (k Keeper) liquidate(
 	// eventLiqFailed exists when the liquidation fails and is nil when the
 	// liquidation succeeds.
 
-	market, err := k.Markets.Get(ctx, pair)
+	market, err := k.GetMarket(ctx, pair)
 	if err != nil {
 		eventLiqFailed := &types.LiquidationFailedEvent{
 			Pair:       pair,
@@ -165,7 +165,7 @@ func (k Keeper) liquidate(
 		return
 	}
 
-	amm, err := k.AMMs.Get(ctx, pair)
+	amm, err := k.GetAMM(ctx, pair)
 	if err != nil {
 		eventLiqFailed := &types.LiquidationFailedEvent{
 			Pair:       pair,

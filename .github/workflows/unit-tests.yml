@@ -22,7 +22,7 @@ jobs:
           cache: true
 
       - name: Run all unit tests.
-        run: make test-unit
+        run: make test-coverage
 
   build:
     runs-on: ubuntu-latest

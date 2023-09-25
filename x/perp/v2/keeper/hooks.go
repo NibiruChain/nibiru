@@ -13,11 +13,11 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
-func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNumber uint64) {
+func (k Keeper) BeforeEpochStart(_ sdk.Context, _ string, _ uint64) {
 }
 
 func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64) {
-	for _, market := range k.Markets.Iterate(ctx, collections.Range[asset.Pair]{}).Values() {
+	for _, market := range k.Markets.Iterate(ctx, collections.Range[collections.Pair[asset.Pair, uint64]]{}).Values() {
 		if !market.Enabled || epochIdentifier != market.FundingRateEpochId {
 			return
 		}
@@ -53,7 +53,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64)
 		premiumFraction := clampedDivergence.Mul(indexTwap).QuoInt64(int64(intervalsPerDay))
 
 		market.LatestCumulativePremiumFraction = market.LatestCumulativePremiumFraction.Add(premiumFraction)
-		k.Markets.Insert(ctx, market.Pair, market)
+		k.SaveMarket(ctx, market)
 
 		_ = ctx.EventManager().EmitTypedEvent(&types.FundingRateChangedEvent{
 			Pair:                      market.Pair,

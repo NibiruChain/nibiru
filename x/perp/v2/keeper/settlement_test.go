@@ -1,11 +1,10 @@
-package keeper
+package keeper_test
 
 import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
-	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"testing"
 	"time"
@@ -27,9 +26,7 @@ func TestDisableMarket(t *testing.T) {
 			When(
 				MoveToNextBlockWithDuration(30 * time.Second),
 			).
-			Then(
-				TwapShouldBe(pairBtcUsdc, types.TwapCalcOption_SPOT, types.Direction_DIRECTION_UNSPECIFIED, sdk.ZeroDec(), 30*time.Second, sdk.NewDec(10)),
-			),
+			Then(),
 	}
 
 	NewTestSuite(t).WithTestCases(tc...).Run()

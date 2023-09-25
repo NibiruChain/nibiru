@@ -58,6 +58,7 @@ type AllMarketsResponse struct {
 
 type Market struct {
 	Pair         string        `json:"pair"`
+	Version      sdkmath.Int   `json:"version"`
 	BaseReserve  sdk.Dec       `json:"base_reserve"`
 	QuoteReserve sdk.Dec       `json:"quote_reserve"`
 	SqrtDepth    sdk.Dec       `json:"sqrt_depth"`
@@ -72,7 +73,7 @@ type Market struct {
 	BlockNumber  sdkmath.Int   `json:"block_number"`
 }
 
-// Converts the JSON market, which comes in from Rust, to its corresponding
+// ToAppMarket Converts the JSON market, which comes in from Rust, to its corresponding
 // protobuf (Golang) type in the app: perpv2types.Market.
 func (m Market) ToAppMarket() (appMarket perpv2types.Market, err error) {
 	config := m.Config
@@ -83,6 +84,7 @@ func (m Market) ToAppMarket() (appMarket perpv2types.Market, err error) {
 	return perpv2types.Market{
 		Pair:                            pair,
 		Enabled:                         true,
+		Version:                         m.Version.Uint64(),
 		MaintenanceMarginRatio:          config.MaintenanceMarginRatio,
 		MaxLeverage:                     config.MaxLeverage,
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -100,6 +102,7 @@ func (m Market) ToAppMarket() (appMarket perpv2types.Market, err error) {
 func NewMarket(appMarket perpv2types.Market, appAmm perpv2types.AMM, indexPrice, twapMark string, blockNumber int64) Market {
 	return Market{
 		Pair:         appMarket.Pair.String(),
+		Version:      sdk.NewIntFromUint64(appMarket.Version),
 		BaseReserve:  appAmm.BaseReserve,
 		QuoteReserve: appAmm.QuoteReserve,
 		SqrtDepth:    appAmm.SqrtDepth,

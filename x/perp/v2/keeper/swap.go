@@ -65,7 +65,7 @@ func (k Keeper) SwapQuoteAsset(
 		return nil, sdk.Dec{}, err
 	}
 
-	k.AMMs.Insert(ctx, amm.Pair, amm)
+	k.SaveAMM(ctx, amm)
 
 	return &amm, baseAssetDelta, nil
 }
@@ -107,7 +107,7 @@ func (k Keeper) SwapBaseAsset(
 		return nil, sdk.Dec{}, err
 	}
 
-	k.AMMs.Insert(ctx, amm.Pair, amm)
+	k.SaveAMM(ctx, amm)
 
 	return &amm, quoteAssetDelta, err
 }
