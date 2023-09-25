@@ -40,6 +40,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Features 
+* [#xxx](https://github.com/NibiruChain/nibiru/pull/xxx) - epic(tokenfactory):
+  State transitions, collections, genesis import and export, and app wiring
+
+## [v0.21.10]
+
 ### Features
 
 * [#1575](https://github.com/NibiruChain/nibiru/pull/1575) - feat(perp): Add trader volume tracking

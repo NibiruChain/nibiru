@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package nibiru.tokenfactory.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "nibiru/tokenfactory/v1/state.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/x/tokenfactory/types";
+
+// Query defines the gRPC querier service.
+service Query {
+
+  // Params retrieves the module params
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/nibiru/tokenfactory/v1/params";
+  }
+}
+
+// QueryParamsRequest is the request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is the response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // Module parameters stored in state
+  ModuleParams params = 1 [ (gogoproto.nullable) = false ];
+}

@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package nibiru.tokenfactory.v1;
+
+option go_package = "github.com/NibiruChain/nibiru/x/tokenfactory/types";
+
+// Msg defines the gRPC Msg service for transactions.
+service Msg {}

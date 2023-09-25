@@ -23,7 +23,7 @@ service Query {
         "/nibiru/devgas/v1/fee_shares/{contract_address}";
   }
 
-  // Params retrieves the FeeShare module params
+  // Params retrieves the module params
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/nibiru/devgas/v1/params";
   }
