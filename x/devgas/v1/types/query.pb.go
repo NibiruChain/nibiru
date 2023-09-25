@@ -462,7 +462,7 @@ type QueryClient interface {
 	FeeShares(ctx context.Context, in *QueryFeeSharesRequest, opts ...grpc.CallOption) (*QueryFeeSharesResponse, error)
 	// FeeShare retrieves a registered FeeShare for a given contract address
 	FeeShare(ctx context.Context, in *QueryFeeShareRequest, opts ...grpc.CallOption) (*QueryFeeShareResponse, error)
-	// Params retrieves the FeeShare module params
+	// Params retrieves the module params
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
 	// FeeSharesByWithdrawer retrieves all FeeShares with a given withdrawer
 	// address
@@ -520,7 +520,7 @@ type QueryServer interface {
 	FeeShares(context.Context, *QueryFeeSharesRequest) (*QueryFeeSharesResponse, error)
 	// FeeShare retrieves a registered FeeShare for a given contract address
 	FeeShare(context.Context, *QueryFeeShareRequest) (*QueryFeeShareResponse, error)
-	// Params retrieves the FeeShare module params
+	// Params retrieves the module params
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
 	// FeeSharesByWithdrawer retrieves all FeeShares with a given withdrawer
 	// address

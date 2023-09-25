@@ -101,6 +101,10 @@ import (
 	"github.com/NibiruChain/nibiru/x/sudo"
 	"github.com/NibiruChain/nibiru/x/sudo/keeper"
 	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
+
+	tokenfactory "github.com/NibiruChain/nibiru/x/tokenfactory"
+	tokenfactorykeeper "github.com/NibiruChain/nibiru/x/tokenfactory/keeper"
+	tokenfactorytypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
 
 func initStoreKeys() (
@@ -139,6 +143,7 @@ func initStoreKeys() (
 		sudotypes.StoreKey,
 		wasm.StoreKey,
 		devgastypes.StoreKey,
+		tokenfactorytypes.StoreKey,
 	)
 	tkeys = sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys = sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey, stablecointypes.MemStoreKey)
@@ -382,6 +387,16 @@ func (app *NibiruApp) InitKeepers(
 		govModuleAddr,
 	)
 
+	// TokenFactory has wasm bindings
+	app.TokenFactoryKeeper = tokenfactorykeeper.NewKeeper(
+		keys[tokenfactorytypes.StoreKey],
+		appCodec,
+		app.BankKeeper,
+		app.AccountKeeper,
+		app.DistrKeeper,
+		govModuleAddr,
+	)
+
 	// register the proposal types
 
 	// Create evidence keeper.
@@ -527,6 +542,9 @@ func (app *NibiruApp) initAppModules(
 		devgas.NewAppModule(
 			app.DevGasKeeper, app.AccountKeeper,
 			app.GetSubspace(devgastypes.ModuleName)),
+		tokenfactory.NewAppModule(
+			app.TokenFactoryKeeper, app.AccountKeeper,
+		),
 
 		crisis.NewAppModule(&app.crisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
 	}
@@ -589,6 +607,7 @@ func orderedModuleNames() []string {
 		// CosmWasm
 		wasm.ModuleName,
 		devgastypes.ModuleName,
+		tokenfactorytypes.ModuleName,
 
 		// Should be before genmsg
 		genmsg.ModuleName,
