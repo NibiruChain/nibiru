@@ -28,20 +28,3 @@ func ChangeLiquidationFeeRatio(liquidationFeeRatio sdk.Dec) action.Action {
 		LiquidationFeeRatio: liquidationFeeRatio,
 	}
 }
-
-// Enable market
-func SetMarketEnabled(pair asset.Pair, enable bool) action.Action {
-	return setMarketEnabled{
-		Enable: enable,
-		Pair:   pair,
-	}
-}
-
-func (c setMarketEnabled) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	err := app.PerpKeeperV2.ChangeMarketEnabledParameter(ctx, c.Pair, c.Enable)
-	if err != nil {
-		return ctx, err, true
-	}
-
-	return ctx, nil, true
-}

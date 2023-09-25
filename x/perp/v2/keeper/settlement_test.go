@@ -5,7 +5,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
 	"testing"
 	"time"
 )
@@ -15,18 +15,26 @@ func TestDisableMarket(t *testing.T) {
 	startTime := time.Now()
 
 	tc := TestCases{
-		TC("spot twap").
+		TC("market can be disabled").
 			Given(
 				CreateCustomMarket(pairBtcUsdc),
 				SetBlockTime(startTime),
-				InsertReserveSnapshot(pairBtcUsdc, startTime, WithPriceMultiplier(sdk.NewDec(9))),
-				InsertReserveSnapshot(pairBtcUsdc, startTime.Add(10*time.Second), WithPriceMultiplier(sdk.NewDec(10))),
-				InsertReserveSnapshot(pairBtcUsdc, startTime.Add(20*time.Second), WithPriceMultiplier(sdk.NewDec(11))),
+				MarketShouldBeEqual(
+					pairBtcUsdc,
+					Market_EnableShouldBeEqualTo(true),
+				),
 			).
 			When(
-				MoveToNextBlockWithDuration(30 * time.Second),
+				CloseMarket(pairBtcUsdc),
 			).
-			Then(),
+			Then(
+				MarketShouldBeEqual(
+					pairBtcUsdc,
+					Market_EnableShouldBeEqualTo(false),
+				),
+			),
+
+		TC("market can be disabled and enabled again").When(),
 	}
 
 	NewTestSuite(t).WithTestCases(tc...).Run()

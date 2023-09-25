@@ -11,13 +11,10 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
-	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
-	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
 	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
-	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 func TestAdmin_WithdrawFromInsuranceFund(t *testing.T) {
@@ -85,28 +82,6 @@ func TestAdmin_WithdrawFromInsuranceFund(t *testing.T) {
 	testutil.RunFunctionTests(t, testCases)
 }
 
-func TestEnableMarket(t *testing.T) {
-	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
-
-	tests := TestCases{
-		TC("true -> false").
-			Given(
-				CreateCustomMarket(pair),
-				MarketShouldBeEqual(pair, Market_EnableShouldBeEqualTo(true)),
-			).
-			When(
-				SetMarketEnabled(pair, false),
-				MarketShouldBeEqual(pair, Market_EnableShouldBeEqualTo(false)),
-				SetMarketEnabled(pair, true),
-			).
-			Then(
-				MarketShouldBeEqual(pair, Market_EnableShouldBeEqualTo(true)),
-			),
-	}
-
-	NewTestSuite(t).WithTestCases(tests...).Run()
-}
-
 func TestCreateMarket(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	amm := *mock.TestAMMDefault()
@@ -159,8 +134,8 @@ func TestCreateMarket(t *testing.T) {
 	})
 	require.ErrorContains(t, err, "already exists")
 
-	// Disable the market to test that we can create it again but with an increased version
-	err = app.PerpKeeperV2.ChangeMarketEnabledParameter(ctx, pair, false)
+	// Close the market to test that we can create it again but with an increased version
+	err = app.PerpKeeperV2.CloseMarket(ctx, pair)
 	require.NoError(t, err)
 
 	err = app.PerpKeeperV2.Admin().CreateMarket(ctx, keeper.ArgsCreateMarket{

@@ -16,7 +16,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
-// Logger
 type logger struct {
 	log string
 }

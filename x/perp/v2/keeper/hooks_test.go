@@ -121,7 +121,7 @@ func TestAfterEpochEnd(t *testing.T) {
 		TC("market not enabled").
 			Given(
 				CreateCustomMarket(pairBtcUsdc),
-				SetMarketEnabled(pairBtcUsdc, false),
+				CloseMarket(pairBtcUsdc),
 				SetBlockTime(startTime),
 				StartEpoch(epochtypes.ThirtyMinuteEpochID),
 				InsertOraclePriceSnapshot(pairBtcUsdc, startTime.Add(15*time.Minute), sdk.NewDec(2)),
@@ -136,7 +136,7 @@ func TestAfterEpochEnd(t *testing.T) {
 		TC("not correct epoch id").
 			Given(
 				CreateCustomMarket(pairBtcUsdc),
-				SetMarketEnabled(pairBtcUsdc, false),
+				CloseMarket(pairBtcUsdc),
 				SetBlockTime(startTime),
 				StartEpoch(epochtypes.FifteenMinuteEpochID),
 				InsertOraclePriceSnapshot(pairBtcUsdc, startTime.Add(15*time.Minute), sdk.NewDec(2)),

@@ -880,7 +880,7 @@ func TestMarketOrder(t *testing.T) {
 				SetBlockNumber(1),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(47_714_285_715)))),
 				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(47_619_047_619), sdk.OneDec(), sdk.ZeroDec()),
-				SetMarketEnabled(pairBtcNusd, false),
+				CloseMarket(pairBtcNusd),
 			).
 			When(
 				ClosePosition(alice, pairBtcNusd),
@@ -895,7 +895,7 @@ func TestMarketOrder(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(47_714_285_715)))),
-				SetMarketEnabled(pairBtcNusd, false),
+				CloseMarket(pairBtcNusd),
 			).
 			When(
 				MarketOrderFails(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(47_619_047_619), sdk.OneDec(), sdk.ZeroDec(),
@@ -912,7 +912,7 @@ func TestMarketOrder(t *testing.T) {
 				SetBlockNumber(1),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(47_714_285_715)))),
 				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(50_000), sdk.OneDec(), sdk.ZeroDec()),
-				SetMarketEnabled(pairBtcNusd, false),
+				CloseMarket(pairBtcNusd),
 			).
 			When(
 				MarketOrderFails(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(47_619_047_619), sdk.OneDec(), sdk.ZeroDec(),
