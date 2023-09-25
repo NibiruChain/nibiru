@@ -2,23 +2,24 @@ name: Integration tests
 
 on:
   workflow_dispatch: # Runs on manual calls
-  schedule: 
+  schedule:
     - cron: "0 0 * * *" # Runs automatically every day
   pull_request:
     # paths makes the action run only when the given paths are changed
     paths: ["**.go", "**.proto", "go.mod", "go.sum"]
 
-# Allow concurrent runs on main/release branches but isolates other branches 
+# Allow concurrent runs on main/release branches but isolates other branches
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.head_ref }}
   cancel-in-progress: ${{ ! (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/')) }}
 
 jobs:
   integration-tests:
+    # Job that runs all tests and publishes code coverage reports.
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Go
         uses: actions/setup-go@v4
