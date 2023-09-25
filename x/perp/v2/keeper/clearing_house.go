@@ -171,7 +171,6 @@ func (k Keeper) increasePosition(
 
 	updatedAMM, baseAssetDeltaAbs, err := k.SwapQuoteAsset(
 		ctx,
-		market,
 		amm,
 		dir,
 		increasedNotional,
@@ -314,7 +313,6 @@ func (k Keeper) decreasePosition(
 
 	updatedAMM, baseAssetDeltaAbs, err := k.SwapQuoteAsset(
 		ctx,
-		market,
 		amm,
 		dir,
 		decreasedNotional,
@@ -805,7 +803,6 @@ func (k Keeper) closePositionEntirely(
 	}
 	updatedAMM, exchangedNotionalValue, err := k.SwapBaseAsset(
 		ctx,
-		market,
 		amm,
 		dir,
 		currentPosition.Size_.Abs(),

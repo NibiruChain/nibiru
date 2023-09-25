@@ -60,14 +60,11 @@ func TestSnapshotUpdates(t *testing.T) {
 	assert.EqualValues(t, expectedSnapshot, snapshot)
 
 	t.Log("affect mark price")
-	market, err := app.PerpKeeperV2.Markets.Get(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
-	require.NoError(t, err)
 	amm, err := app.PerpKeeperV2.AMMs.Get(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
 	require.NoError(t, err)
 
 	_, baseAmtAbs, err := app.PerpKeeperV2.SwapQuoteAsset(
 		ctx,
-		market,
 		amm,
 		types.Direction_LONG,
 		sdk.NewDec(250e9),
