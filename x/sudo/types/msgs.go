@@ -4,11 +4,12 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 )
 
 var (
-	_ sdk.Msg = &MsgEditSudoers{}
-	_ sdk.Msg = &MsgChangeRoot{}
+	_ legacytx.LegacyMsg = &MsgEditSudoers{}
+	_ legacytx.LegacyMsg = &MsgChangeRoot{}
 )
 
 // MsgEditSudoers
