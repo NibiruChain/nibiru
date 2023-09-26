@@ -701,6 +701,10 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.A
 		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
 	}
 
+	if !market.Enabled {
+		return nil, fmt.Errorf("%w: this position can be only closed by Settlement", types.ErrMarketNotEnabled)
+	}
+
 	amm, err := k.GetAMM(ctx, pair)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
@@ -840,6 +844,10 @@ func (k Keeper) PartialClose(
 	market, err := k.GetMarket(ctx, pair)
 	if err != nil {
 		return nil, types.ErrPairNotFound.Wrapf("pair: %s", pair)
+	}
+
+	if !market.Enabled {
+		return nil, fmt.Errorf("%w: this position can be only closed by Settlement", types.ErrMarketNotEnabled)
 	}
 
 	amm, err := k.GetAMM(ctx, pair)

@@ -873,22 +873,6 @@ func TestMarketOrder(t *testing.T) {
 				PositionShouldNotExist(alice, pairBtcNusd),
 			),
 
-		TC("new long position, can close position after market is not enabled").
-			Given(
-				CreateCustomMarket(pairBtcNusd),
-				SetBlockTime(startBlockTime),
-				SetBlockNumber(1),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(47_714_285_715)))),
-				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(47_619_047_619), sdk.OneDec(), sdk.ZeroDec()),
-				CloseMarket(pairBtcNusd),
-			).
-			When(
-				ClosePosition(alice, pairBtcNusd),
-			).
-			Then(
-				PositionShouldNotExist(alice, pairBtcNusd),
-			),
-
 		TC("new long position, can not open new position after market is not enabled").
 			Given(
 				CreateCustomMarket(pairBtcNusd),
@@ -900,24 +884,6 @@ func TestMarketOrder(t *testing.T) {
 			When(
 				MarketOrderFails(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(47_619_047_619), sdk.OneDec(), sdk.ZeroDec(),
 					types.ErrMarketNotEnabled),
-			).
-			Then(
-				PositionShouldNotExist(alice, pairBtcNusd),
-			),
-
-		TC("existing long position, can not open new one but can close").
-			Given(
-				CreateCustomMarket(pairBtcNusd),
-				SetBlockTime(startBlockTime),
-				SetBlockNumber(1),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(47_714_285_715)))),
-				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(50_000), sdk.OneDec(), sdk.ZeroDec()),
-				CloseMarket(pairBtcNusd),
-			).
-			When(
-				MarketOrderFails(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(47_619_047_619), sdk.OneDec(), sdk.ZeroDec(),
-					types.ErrMarketNotEnabled),
-				ClosePosition(alice, pairBtcNusd),
 			).
 			Then(
 				PositionShouldNotExist(alice, pairBtcNusd),

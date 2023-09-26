@@ -1,10 +1,11 @@
 package action
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type closeMarket struct {
@@ -12,7 +13,11 @@ type closeMarket struct {
 }
 
 func (c closeMarket) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	app.PerpKeeperV2.CloseMarket(ctx, c.pair)
+	err := app.PerpKeeperV2.CloseMarket(ctx, c.pair)
+	if err != nil {
+		return ctx, err, false
+	}
+
 	return ctx, nil, true
 }
 

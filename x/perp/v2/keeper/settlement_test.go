@@ -1,6 +1,11 @@
 package keeper_test
 
 import (
+	"testing"
+	"time"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
@@ -8,13 +13,10 @@ import (
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"testing"
-	"time"
 )
 
 func TestDisableMarket(t *testing.T) {
-	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.USDC)
+	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	startTime := time.Now()
 	alice := testutil.AccAddress()
 
@@ -47,7 +49,7 @@ func TestDisableMarket(t *testing.T) {
 				SetBlockNumber(1),
 				SetBlockTime(startTime),
 
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 			).
 			When(
 				CloseMarket(pairBtcUsdc),
@@ -63,6 +65,50 @@ func TestDisableMarket(t *testing.T) {
 					types.ErrMarketNotEnabled,
 				),
 			),
+		TC("cannot close position on disabled market").When(
+			CreateCustomMarket(
+				pairBtcUsdc,
+				WithPricePeg(sdk.OneDec()),
+				WithSqrtDepth(sdk.NewDec(100_000)),
+			),
+			SetBlockNumber(1),
+			SetBlockTime(startTime),
+			FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200)))),
+			MarketOrder(
+				alice,
+				pairBtcUsdc,
+				types.Direction_LONG,
+				sdk.NewInt(10_000),
+				sdk.OneDec(),
+				sdk.ZeroDec(),
+			),
+		).When(
+			CloseMarket(pairBtcUsdc),
+		).Then(
+			ClosePositionFails(alice, pairBtcUsdc, types.ErrMarketNotEnabled),
+		),
+		TC("cannot partial close position on disabled market").When(
+			CreateCustomMarket(
+				pairBtcUsdc,
+				WithPricePeg(sdk.OneDec()),
+				WithSqrtDepth(sdk.NewDec(100_000)),
+			),
+			SetBlockNumber(1),
+			SetBlockTime(startTime),
+			FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200)))),
+			MarketOrder(
+				alice,
+				pairBtcUsdc,
+				types.Direction_LONG,
+				sdk.NewInt(10_000),
+				sdk.OneDec(),
+				sdk.ZeroDec(),
+			),
+		).When(
+			CloseMarket(pairBtcUsdc),
+		).Then(
+			PartialCloseFails(alice, pairBtcUsdc, sdk.NewDec(5_000), types.ErrMarketNotEnabled),
+		),
 	}
 
 	NewTestSuite(t).WithTestCases(tc...).Run()

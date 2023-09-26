@@ -238,8 +238,32 @@ func ClosePosition(account sdk.AccAddress, pair asset.Pair) action.Action {
 	}
 }
 
-// Manually insert position, skipping open position logic
+type closePositionFailsAction struct {
+	Account sdk.AccAddress
+	Pair    asset.Pair
 
+	expectedErr error
+}
+
+func (c closePositionFailsAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	_, err := app.PerpKeeperV2.ClosePosition(ctx, c.Pair, c.Account)
+
+	if !errors.Is(err, c.expectedErr) {
+		return ctx, fmt.Errorf("expected error %s, got %s", c.expectedErr, err), true
+	}
+
+	return ctx, nil, true
+}
+
+func ClosePositionFails(account sdk.AccAddress, pair asset.Pair, expectedErr error) action.Action {
+	return &closePositionFailsAction{
+		Account:     account,
+		Pair:        pair,
+		expectedErr: expectedErr,
+	}
+}
+
+// Manually insert position, skipping open position logic
 type insertPosition struct {
 	position types.Position
 }
