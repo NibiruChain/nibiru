@@ -10,7 +10,12 @@ import (
 // MsgMintStable
 // ----------------------------------------------------------------
 
-var _ sdk.Msg = &MsgMintStable{}
+var (
+	_ sdk.Msg = &MsgMintStable{}
+	_ sdk.Msg = &MsgBurnStable{}
+	_ sdk.Msg = &MsgRecollateralize{}
+	_ sdk.Msg = &MsgBuyback{}
+)
 
 func (msg *MsgMintStable) Route() string {
 	return RouterKey
