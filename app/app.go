@@ -93,6 +93,11 @@ import (
 	devgas "github.com/NibiruChain/nibiru/x/devgas/v1"
 	devgaskeeper "github.com/NibiruChain/nibiru/x/devgas/v1/keeper"
 	devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
+
+	"github.com/NibiruChain/nibiru/x/tokenfactory"
+	tokenfactorykeeper "github.com/NibiruChain/nibiru/x/tokenfactory/keeper"
+	tokenfactorytypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
+
 	"github.com/NibiruChain/nibiru/x/epochs"
 	epochskeeper "github.com/NibiruChain/nibiru/x/epochs/keeper"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
@@ -169,6 +174,7 @@ var (
 		sudo.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		devgas.AppModuleBasic{},
+		tokenfactory.AppModuleBasic{},
 		ibcfee.AppModuleBasic{},
 		genmsg.AppModule{},
 	)
@@ -197,6 +203,7 @@ var (
 		sudotypes.ModuleName:                  {},
 		common.TreasuryPoolModuleAccount:      {},
 		wasm.ModuleName:                       {authtypes.Burner},
+		tokenfactorytypes.ModuleName:          {authtypes.Minter, authtypes.Burner},
 	}
 )
 
@@ -267,14 +274,15 @@ type NibiruApp struct {
 	// ---------------
 	// Nibiru keepers
 	// ---------------
-	EpochsKeeper     epochskeeper.Keeper
-	PerpKeeperV2     perpkeeperv2.Keeper
-	SpotKeeper       spotkeeper.Keeper
-	OracleKeeper     oraclekeeper.Keeper
-	StablecoinKeeper stablecoinkeeper.Keeper
-	InflationKeeper  inflationkeeper.Keeper
-	SudoKeeper       keeper.Keeper
-	DevGasKeeper     devgaskeeper.Keeper
+	EpochsKeeper       epochskeeper.Keeper
+	PerpKeeperV2       perpkeeperv2.Keeper
+	SpotKeeper         spotkeeper.Keeper
+	OracleKeeper       oraclekeeper.Keeper
+	StablecoinKeeper   stablecoinkeeper.Keeper
+	InflationKeeper    inflationkeeper.Keeper
+	SudoKeeper         keeper.Keeper
+	DevGasKeeper       devgaskeeper.Keeper
+	TokenFactoryKeeper tokenfactorykeeper.Keeper
 
 	// WASM keepers
 	WasmKeeper       wasm.Keeper

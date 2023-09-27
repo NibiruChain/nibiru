@@ -108,7 +108,7 @@ func (s *GenesisTestSuite) TestGenesis() {
 	}
 
 	for _, tc := range testCases {
-		s.Run(fmt.Sprintf("Case %s", tc.name), func() {
+		s.T().Run(fmt.Sprintf("Case %s", tc.name), func(t *testing.T) {
 			s.SetupTest() // reset
 
 			if tc.expPanic {
