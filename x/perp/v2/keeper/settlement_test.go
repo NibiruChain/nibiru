@@ -113,3 +113,46 @@ func TestDisableMarket(t *testing.T) {
 
 	NewTestSuite(t).WithTestCases(tc...).Run()
 }
+
+func TestKeeper_SettlePosition(t *testing.T) {
+	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	startTime := time.Now()
+	alice := testutil.AccAddress()
+
+	tc := TestCases{
+		TC("a position cannot be settled the market does not exist").
+			Given(
+				SetBlockNumber(1),
+				SetBlockTime(startTime),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200)))),
+			).
+			Then(
+				SettlePositionShouldFail(alice, pairBtcUsdc, 1, types.ErrMarketWithVersionNotFound),
+			),
+
+		TC("a position cannot be settled if it is not closed").
+			Given(
+				CreateCustomMarket(
+					pairBtcUsdc,
+					WithPricePeg(sdk.OneDec()),
+					WithSqrtDepth(sdk.NewDec(100_000)),
+				),
+				SetBlockNumber(1),
+				SetBlockTime(startTime),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200)))),
+				MarketOrder(
+					alice,
+					pairBtcUsdc,
+					types.Direction_LONG,
+					sdk.NewInt(10_000),
+					sdk.OneDec(),
+					sdk.ZeroDec(),
+				),
+			).
+			Then(
+				SettlePositionShouldFail(alice, pairBtcUsdc, 1, types.ErrSettlementPositionMarketEnabled),
+			),
+	}
+
+	NewTestSuite(t).WithTestCases(tc...).Run()
+}

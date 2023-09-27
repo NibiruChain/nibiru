@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -16,6 +17,20 @@ func (k Keeper) CloseMarket(ctx sdk.Context, pair asset.Pair) error {
 
 	market.Enabled = false
 	k.SaveMarket(ctx, market)
+
+	return nil
+}
+
+// SettlePosition settles the open position on the market.
+func (k Keeper) SettlePosition(ctx sdk.Context, account sdk.AccAddress, pair asset.Pair, version uint64) error {
+	market, err := k.GetMarketByPairAndVersion(ctx, pair, version)
+	if err != nil {
+		return types.ErrMarketWithVersionNotFound
+	}
+
+	if market.Enabled {
+		return types.ErrSettlementPositionMarketEnabled
+	}
 
 	return nil
 }

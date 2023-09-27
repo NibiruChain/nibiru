@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -415,4 +416,28 @@ func TestEditSwapInvariant(t *testing.T) {
 	}
 
 	NewTestSuite(t).WithTestCases(tests...).Run()
+}
+
+func TestKeeper_GetMarketByPairAndVersion(t *testing.T) {
+	app, ctx := testapp.NewNibiruTestAppAndContext()
+
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+
+	err := app.PerpKeeperV2.Admin().CreateMarket(
+		ctx,
+		keeper.ArgsCreateMarket{
+			Pair:            pair,
+			PriceMultiplier: sdk.NewDec(2),
+			SqrtDepth:       sdk.NewDec(1_000_000),
+		},
+	)
+	require.NoError(t, err)
+
+	market, err := app.PerpKeeperV2.Admin().GetMarketByPairAndVersion(ctx, pair, 1)
+	require.NoError(t, err)
+	require.Equal(t, market.Version, uint64(1))
+	require.Equal(t, market.Pair, pair)
+
+	market, err = app.PerpKeeperV2.Admin().GetMarketByPairAndVersion(ctx, pair, 2)
+	require.ErrorContains(t, err, fmt.Sprintf("market with pair %s and version 2 not found", pair.String()))
 }

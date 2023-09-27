@@ -2,7 +2,7 @@ package types
 
 import sdkerrors "cosmossdk.io/errors"
 
-// highestErrorCode = 31
+// highestErrorCode = 33
 // NOTE: Please increment this when you add an error to make it easier for
 // other developers to know which "code" value should be used next.
 
@@ -22,12 +22,13 @@ var (
 		"base and quote reserves must always be positive")
 	ErrLiquidityDepth = sdkerrors.Register(ModuleName, 11,
 		"liquidity depth must be positive and equal to the square of the reserves")
-	ErrMarginRatioTooHigh    = sdkerrors.Register(ModuleName, 13, "margin ratio is too healthy to liquidate")
-	ErrPairNotFound          = sdkerrors.Register(ModuleName, 14, "pair doesn't have live market")
-	ErrPositionZero          = sdkerrors.Register(ModuleName, 15, "position is zero")
-	ErrBadDebt               = sdkerrors.Register(ModuleName, 16, "position is underwater")
-	ErrInputQuoteAmtNegative = sdkerrors.Register(ModuleName, 17, "quote amount cannot be zero")
-	ErrInputBaseAmtNegative  = sdkerrors.Register(ModuleName, 30, "base amount cannot be zero")
+	ErrMarginRatioTooHigh        = sdkerrors.Register(ModuleName, 13, "margin ratio is too healthy to liquidate")
+	ErrPairNotFound              = sdkerrors.Register(ModuleName, 14, "pair doesn't have live market")
+	ErrMarketWithVersionNotFound = sdkerrors.Register(ModuleName, 33, "market with version not found")
+	ErrPositionZero              = sdkerrors.Register(ModuleName, 15, "position is zero")
+	ErrBadDebt                   = sdkerrors.Register(ModuleName, 16, "position is underwater")
+	ErrInputQuoteAmtNegative     = sdkerrors.Register(ModuleName, 17, "quote amount cannot be zero")
+	ErrInputBaseAmtNegative      = sdkerrors.Register(ModuleName, 30, "base amount cannot be zero")
 
 	ErrUserLeverageNegative     = sdkerrors.Register(ModuleName, 18, "leverage cannot be zero")
 	ErrMarginRatioTooLow        = sdkerrors.Register(ModuleName, 19, "margin ratio did not meet maintenance margin ratio")
@@ -42,4 +43,6 @@ var (
 	ErrNegativeSwapInvariant    = sdkerrors.Register(ModuleName, 27, "swap multiplier must be > 0")
 	ErrNilSwapInvariant         = sdkerrors.Register(ModuleName, 28, "swap multiplier must be not nil")
 	ErrNotEnoughFundToPayAction = sdkerrors.Register(ModuleName, 29, "not enough fund in perp EF to pay for action")
+
+	ErrSettlementPositionMarketEnabled = sdkerrors.Register(ModuleName, 32, "market is enabled, you can only settle position on disabled market")
 )
