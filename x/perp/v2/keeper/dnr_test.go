@@ -113,7 +113,6 @@ func TestDiscount(t *testing.T) {
 	tests := TestCases{
 		TC("user does not have any past epoch volume: no discount applies").
 			Given(
-				DnREpochIs(1),
 				CreateCustomMarket(
 					pairBtcNusd,
 					WithPricePeg(sdk.OneDec()),
@@ -170,11 +169,11 @@ func TestDiscount(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100_000_000)))),
 			).
 			When(
-				SetGlobalDiscount(sdk.MustNewDecFromStr("0.0004"), sdk.NewInt(50_000)),
+				SetGlobalDiscount(globalFeeDiscount, sdk.NewInt(50_000)),
 				SetGlobalDiscount(fauxGlobalFeeDiscount, sdk.NewInt(100_000)),
 				SetCustomDiscount(alice, fauxCustomFeeDiscount, sdk.NewInt(50_000)),
 				SetCustomDiscount(alice, customFeeDiscount, sdk.NewInt(100_000)),
-				SetPreviousEpochUserVolume(alice, sdk.NewInt(100_000)),
+				SetPreviousEpochUserVolume(alice, sdk.NewInt(100_001)),
 			).
 			Then(
 				MarketOrderFeeIs(customFeeDiscount, alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
