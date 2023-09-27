@@ -17,7 +17,7 @@ func TestFeederDelegation(t *testing.T) {
 	exchangeRates := types.ExchangeRateTuples{
 		{
 			Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-			ExchangeRate: TEST_ERATE,
+			ExchangeRate: testExchangeRate,
 		},
 	}
 

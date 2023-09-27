@@ -285,8 +285,8 @@ func AllocateRewards(t *testing.T, input TestFixture, rewards sdk.Coins, votePer
 }
 
 var (
-	TEST_STAKING_AMT = sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction)
-	TEST_ERATE       = sdk.NewDec(1700)
+	testStakingAmt   = sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction)
+	testExchangeRate = sdk.NewDec(1700)
 )
 
 func Setup(t *testing.T) (TestFixture, types.MsgServer) {
@@ -304,15 +304,15 @@ func Setup(t *testing.T) (TestFixture, types.MsgServer) {
 	sh := stakingkeeper.NewMsgServerImpl(&fixture.StakingKeeper)
 
 	// Validator created
-	_, err := sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[0], ValPubKeys[0], TEST_STAKING_AMT))
+	_, err := sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[0], ValPubKeys[0], testStakingAmt))
 	require.NoError(t, err)
-	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[1], ValPubKeys[1], TEST_STAKING_AMT))
+	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[1], ValPubKeys[1], testStakingAmt))
 	require.NoError(t, err)
-	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[2], ValPubKeys[2], TEST_STAKING_AMT))
+	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[2], ValPubKeys[2], testStakingAmt))
 	require.NoError(t, err)
-	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[3], ValPubKeys[3], TEST_STAKING_AMT))
+	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[3], ValPubKeys[3], testStakingAmt))
 	require.NoError(t, err)
-	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[4], ValPubKeys[4], TEST_STAKING_AMT))
+	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[4], ValPubKeys[4], testStakingAmt))
 	require.NoError(t, err)
 	staking.EndBlocker(fixture.Ctx, &fixture.StakingKeeper)
 
