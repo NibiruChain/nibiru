@@ -13,7 +13,12 @@ const (
 	TypeMsgCreatePool = "create_pool"
 )
 
-var _ sdk.Msg = &MsgExitPool{}
+var (
+	_ sdk.Msg = &MsgExitPool{}
+	_ sdk.Msg = &MsgJoinPool{}
+	_ sdk.Msg = &MsgSwapAssets{}
+	_ sdk.Msg = &MsgCreatePool{}
+)
 
 func NewMsgExitPool(sender string, poolId uint64, poolShares sdk.Coin) *MsgExitPool {
 	return &MsgExitPool{
