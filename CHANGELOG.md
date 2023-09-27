@@ -41,8 +41,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Features 
+
 * [#xxx](https://github.com/NibiruChain/nibiru/pull/xxx) - epic(tokenfactory):
   State transitions, collections, genesis import and export, and app wiring
+
+### Bug Fixes
+
+* [#1606](https://github.com/NibiruChain/nibiru/pull/1606) - fix(perp): emit `MarketUpdatedEvent` in the absence of index price
 
 ## [v0.21.10]
 
