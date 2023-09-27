@@ -147,12 +147,12 @@ func (k Keeper) applyDiscountAndRebate(
 	_ asset.Pair,
 	trader sdk.AccAddress,
 	positionNotional math.LegacyDec,
-	exchangeFeeRatio sdk.Dec,
-) (exFeeRatio sdk.Dec, err error) {
+	feeRatio sdk.Dec,
+) (sdk.Dec, error) {
 	// update user volume
 	dnrEpoch, err := k.DnREpoch.Get(ctx)
 	if err != nil {
-		return
+		return feeRatio, err
 	}
 	k.IncreaseTraderVolume(ctx, dnrEpoch, trader, positionNotional.Abs().TruncateInt())
 
@@ -160,15 +160,15 @@ func (k Keeper) applyDiscountAndRebate(
 	pastVolume := k.GetTraderVolumeLastEpoch(ctx, dnrEpoch, trader)
 	// if the trader has no volume for the last epoch, we return the provided fee ratios.
 	if pastVolume.IsZero() {
-		return exchangeFeeRatio, nil
+		return feeRatio, nil
 	}
 
 	// try to apply discount
-	discount, hasDiscount := k.GetTraderDiscount(ctx, trader, pastVolume)
+	discountedFeeRatio, hasDiscount := k.GetTraderDiscount(ctx, trader, pastVolume)
 	// if the trader does not have any discount, we return the provided fee ratios.
 	if !hasDiscount {
-		return exchangeFeeRatio, nil
+		return feeRatio, nil
 	}
 	// return discounted fee ratios
-	return discount, nil
+	return discountedFeeRatio, nil
 }
