@@ -155,6 +155,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1422](https://github.com/NibiruChain/nibiru/pull/1422) - fix(oracle): handle zero oracle rewards
 * [#1426](https://github.com/NibiruChain/nibiru/pull/1426) - refactor(perp): remove price fluctuation limit check
 * [#1423](https://github.com/NibiruChain/nibiru/pull/1423) - fix: remove panics from abci hooks
+* [#1579](https://github.com/NibiruChain/nibiru/pull/1579) - chore(proto): Add a buf.gen.rs.yaml and corresponding script to create Rust types for Wasm Stargate messages
 
 ### Bug Fixes
 
