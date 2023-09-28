@@ -26,7 +26,6 @@ type TestSuite struct {
 
 	keeper      tfkeeper.Keeper
 	queryClient tftypes.QueryClient
-	// msgServer tftypes.MsgServer // TODO when txs are added.
 
 	genesis tftypes.GenesisState
 }
@@ -44,9 +43,9 @@ func (s *TestSuite) SetupTest() {
 	s.keeper = s.app.TokenFactoryKeeper
 	s.genesis = *tftypes.DefaultGenesis()
 
-	queryGrpcHelper := baseapp.NewQueryServerTestHelper(
+	grpcClientConn := baseapp.NewQueryServerTestHelper(
 		s.ctx, s.app.InterfaceRegistry())
-	s.queryClient = tftypes.NewQueryClient(queryGrpcHelper)
+	s.queryClient = tftypes.NewQueryClient(grpcClientConn)
 }
 
 func (s *TestSuite) GoCtx() context.Context { return sdk.WrapSDKContext(s.ctx) }

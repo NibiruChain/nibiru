@@ -19,4 +19,5 @@ var (
 	ErrInvalidSubdenom          = registerError("invalid subdenom")
 	ErrInvalidAuthorityMetadata = registerError("invalid denom authority metadata")
 	ErrDenomAlreadyRegistered   = registerError("attempting to create denom that is already registered (has bank metadata)")
+	ErrInvalidSender            = registerError("invalid msg sender")
 )
