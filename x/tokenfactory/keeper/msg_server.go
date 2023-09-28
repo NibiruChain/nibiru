@@ -52,6 +52,9 @@ func (k Keeper) ChangeAdmin(
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	authData, err := k.Store.GetDenomAuthorityMetadata(ctx, txMsg.Denom)
+	if err != nil {
+		return resp, err
+	}
 	if txMsg.Sender != authData.Admin {
 		return resp, types.ErrInvalidSender.Wrapf(
 			"only the current admin can set a new admin: current admin (%s), sender (%s)",

@@ -166,6 +166,15 @@ func (s *TestSuite) TestChangeAdmin() {
 				s.NoError(err)
 			},
 		},
+
+		{
+			name: "sad: change admin for denom that doesn't exist ",
+			txMsg: &types.MsgChangeAdmin{
+				Sender:   sbf,
+				Denom:    types.TFDenom{Creator: sbf, Subdenom: "ftt"}.String(),
+				NewAdmin: testutil.AccAddress().String()},
+			wantErr: collections.ErrNotFound.Error(),
+		},
 	}
 
 	for _, tc := range testCases {
