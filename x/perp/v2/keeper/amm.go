@@ -162,6 +162,16 @@ func (k Keeper) GetAMM(ctx sdk.Context, pair asset.Pair) (types.AMM, error) {
 	return amm, nil
 }
 
+// GetAMMByPairAndVersion returns the amm by pair and version.
+func (k Keeper) GetAMMByPairAndVersion(ctx sdk.Context, pair asset.Pair, version uint64) (types.AMM, error) {
+	amm, err := k.AMMs.Get(ctx, collections.Join(pair, version))
+	if err != nil {
+		return types.AMM{}, fmt.Errorf("amm with pair %s and version %d not found", pair, version)
+	}
+
+	return amm, nil
+}
+
 // SaveAMM saves the amm by pair and version.
 func (k Keeper) SaveAMM(ctx sdk.Context, amm types.AMM) {
 	k.AMMs.Insert(ctx, collections.Join(amm.Pair, amm.Version), amm)

@@ -42,7 +42,7 @@ func (amm AMM) Validate() error {
 	return nil
 }
 
-// SettlementPrice: Computes the uniform settlement price for the current AMM.
+// SettlementPrice computes the uniform settlement price for the current AMM.
 //
 // Returns:
 //   - price: uniform settlement price from several batched trades. In this case,

@@ -441,3 +441,27 @@ func TestKeeper_GetMarketByPairAndVersion(t *testing.T) {
 	market, err = app.PerpKeeperV2.Admin().GetMarketByPairAndVersion(ctx, pair, 2)
 	require.ErrorContains(t, err, fmt.Sprintf("market with pair %s and version 2 not found", pair.String()))
 }
+
+func TestKeeper_GetAMMByPairAndVersion(t *testing.T) {
+	app, ctx := testapp.NewNibiruTestAppAndContext()
+
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+
+	err := app.PerpKeeperV2.Admin().CreateMarket(
+		ctx,
+		keeper.ArgsCreateMarket{
+			Pair:            pair,
+			PriceMultiplier: sdk.NewDec(2),
+			SqrtDepth:       sdk.NewDec(1_000_000),
+		},
+	)
+	require.NoError(t, err)
+
+	amm, err := app.PerpKeeperV2.Admin().GetAMMByPairAndVersion(ctx, pair, 1)
+	require.NoError(t, err)
+	require.Equal(t, amm.Version, uint64(1))
+	require.Equal(t, amm.Pair, pair)
+
+	amm, err = app.PerpKeeperV2.Admin().GetAMMByPairAndVersion(ctx, pair, 2)
+	require.ErrorContains(t, err, fmt.Sprintf("amm with pair %s and version 2 not found", pair.String()))
+}
