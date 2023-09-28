@@ -36,6 +36,42 @@ func (s *TestSuite) TestCreateDenom() {
 				s.Equal(allDenoms[0].Subdenom, "nusd")
 			},
 		},
+		{
+			name:    "creating the same denom a second time should fail",
+			txMsg:   &types.MsgCreateDenom{Sender: addrs[0].String(), Subdenom: "nusd"},
+			wantErr: "attempting to create denom that is already registered",
+			preHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
+				allDenoms := bapp.TokenFactoryKeeper.Store.Denoms.
+					Iterate(ctx, collections.Range[string]{}).Values()
+				s.Len(allDenoms, 0)
+				_, err := bapp.TokenFactoryKeeper.CreateDenom(
+					sdk.WrapSDKContext(s.ctx), &types.MsgCreateDenom{
+						Sender:   addrs[0].String(),
+						Subdenom: "nusd",
+					},
+				)
+				s.NoError(err)
+			},
+			postHook: func(ctx sdk.Context, bapp *app.NibiruApp) {},
+		},
+
+		{
+			name:    "sad: nil tx msg",
+			txMsg:   nil,
+			wantErr: "nil tx msg",
+		},
+
+		{
+			name:    "sad: sender",
+			txMsg:   &types.MsgCreateDenom{Sender: "sender", Subdenom: "nusd"},
+			wantErr: "invalid creator",
+		},
+
+		{
+			name:    "sad: denom",
+			txMsg:   &types.MsgCreateDenom{Sender: addrs[0].String(), Subdenom: ""},
+			wantErr: "denom format error",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -68,4 +104,100 @@ func (s *TestSuite) TestCreateDenom() {
 
 		})
 	}
+}
+
+func (s *TestSuite) TestChangeAdmin() {
+	sbf := testutil.AccAddress().String()
+
+	testCases := []struct {
+		name     string
+		txMsg    *types.MsgChangeAdmin
+		wantErr  string
+		preHook  func(ctx sdk.Context, bapp *app.NibiruApp)
+		postHook func(ctx sdk.Context, bapp *app.NibiruApp)
+	}{
+		// {}, // TODO happy
+		{
+			name:    "sad: nil tx msg",
+			txMsg:   nil,
+			wantErr: "nil tx msg",
+		},
+
+		{
+			name: "sad: fail validate basic",
+			txMsg: &types.MsgChangeAdmin{
+				Sender: "sender", Denom: "tf/creator/nusd", NewAdmin: "new admin"},
+			wantErr: "invalid sender",
+		},
+
+		{
+			name: "sad: non-admin tries to change admin",
+			txMsg: &types.MsgChangeAdmin{
+				Sender:   testutil.AccAddress().String(),
+				Denom:    types.TFDenom{Creator: sbf, Subdenom: "ftt"}.String(),
+				NewAdmin: testutil.AccAddress().String(),
+			},
+			wantErr: "only the current admin can set a new admin",
+			preHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
+				_, err := bapp.TokenFactoryKeeper.CreateDenom(
+					sdk.WrapSDKContext(ctx), &types.MsgCreateDenom{
+						Sender:   sbf,
+						Subdenom: "ftt",
+					},
+				)
+				s.NoError(err)
+			},
+		},
+
+		{
+			name: "happy: SBF changes FTT admin",
+			txMsg: &types.MsgChangeAdmin{
+				Sender:   sbf,
+				Denom:    types.TFDenom{Creator: sbf, Subdenom: "ftt"}.String(),
+				NewAdmin: testutil.AccAddress().String(),
+			},
+			wantErr: "",
+			preHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
+				_, err := bapp.TokenFactoryKeeper.CreateDenom(
+					sdk.WrapSDKContext(ctx), &types.MsgCreateDenom{
+						Sender:   sbf,
+						Subdenom: "ftt",
+					},
+				)
+				s.NoError(err)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		s.T().Run(tc.name, func(t *testing.T) {
+			s.SetupTest()
+			if tc.preHook != nil {
+				tc.preHook(s.ctx, s.app)
+			}
+
+			_, err := s.app.TokenFactoryKeeper.ChangeAdmin(
+				sdk.WrapSDKContext(s.ctx), tc.txMsg,
+			)
+
+			if tc.wantErr != "" {
+				s.Error(err)
+				s.ErrorContains(err, tc.wantErr)
+				return
+			}
+
+			s.T().Log("expect new admin to be set in state.")
+			s.NoError(err)
+			authData, err := s.app.TokenFactoryKeeper.Store.GetDenomAuthorityMetadata(
+				s.ctx, tc.txMsg.Denom)
+			s.NoError(err)
+			s.Equal(authData.Admin, tc.txMsg.NewAdmin)
+
+			if tc.postHook != nil {
+				tc.postHook(s.ctx, s.app)
+			}
+
+		})
+	}
+
 }

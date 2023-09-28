@@ -53,7 +53,8 @@ func (k Keeper) ChangeAdmin(
 	authData, err := k.Store.GetDenomAuthorityMetadata(ctx, txMsg.Denom)
 	if txMsg.Sender != authData.Admin {
 		return resp, types.ErrInvalidSender.Wrapf(
-			"only the current admin can set a new admin: current admin (%s), sender (%s)", authData.Admin, txMsg.Sender,
+			"only the current admin can set a new admin: current admin (%s), sender (%s)",
+			authData.Admin, txMsg.Sender,
 		)
 	}
 
