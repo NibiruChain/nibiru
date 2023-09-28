@@ -116,7 +116,6 @@ func (s *TestSuite) TestChangeAdmin() {
 		preHook  func(ctx sdk.Context, bapp *app.NibiruApp)
 		postHook func(ctx sdk.Context, bapp *app.NibiruApp)
 	}{
-		// {}, // TODO happy
 		{
 			name:    "sad: nil tx msg",
 			txMsg:   nil,
@@ -196,6 +195,71 @@ func (s *TestSuite) TestChangeAdmin() {
 			if tc.postHook != nil {
 				tc.postHook(s.ctx, s.app)
 			}
+
+		})
+	}
+
+}
+
+func (s *TestSuite) TestUpdateModuleParams() {
+	testCases := []struct {
+		name    string
+		txMsg   *types.MsgUpdateModuleParams
+		wantErr string
+	}{
+		{
+			name:    "sad: nil tx msg",
+			txMsg:   nil,
+			wantErr: "nil tx msg",
+		},
+
+		{
+			name: "sad: fail validate basic",
+			txMsg: &types.MsgUpdateModuleParams{
+				Authority: "authority",
+				Params:    types.DefaultModuleParams(),
+			},
+			wantErr: "invalid authority",
+		},
+
+		{
+			name: "sad: must be gov proposal form x/gov module account",
+			txMsg: &types.MsgUpdateModuleParams{
+				Authority: testutil.AccAddress().String(),
+				Params:    types.DefaultModuleParams(),
+			},
+			wantErr: "expected gov account as only signer for proposal message",
+		},
+
+		{
+			name: "happy: new params",
+			txMsg: &types.MsgUpdateModuleParams{
+				Authority: testutil.GovModuleAddr().String(),
+				Params: types.ModuleParams{
+					DenomCreationGasConsume: 69_420,
+				},
+			},
+			wantErr: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		s.T().Run(tc.name, func(t *testing.T) {
+			s.SetupTest()
+			_, err := s.app.TokenFactoryKeeper.UpdateModuleParams(
+				sdk.WrapSDKContext(s.ctx), tc.txMsg,
+			)
+
+			if tc.wantErr != "" {
+				s.Error(err)
+				s.ErrorContains(err, tc.wantErr)
+				return
+			}
+			s.NoError(err)
+
+			params, err := s.app.TokenFactoryKeeper.Store.ModuleParams.Get(s.ctx)
+			s.Require().NoError(err)
+			s.Equal(params, tc.txMsg.Params)
 
 		})
 	}
