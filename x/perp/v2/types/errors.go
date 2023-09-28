@@ -26,6 +26,7 @@ var (
 	ErrPairNotFound              = sdkerrors.Register(ModuleName, 14, "pair doesn't have live market")
 	ErrMarketWithVersionNotFound = sdkerrors.Register(ModuleName, 33, "market with version not found")
 	ErrAMMWithVersionNotFound    = sdkerrors.Register(ModuleName, 34, "amm with version not found")
+	ErrPositionNotFound          = sdkerrors.Register(ModuleName, 35, "position not found")
 	ErrPositionZero              = sdkerrors.Register(ModuleName, 15, "position is zero")
 	ErrBadDebt                   = sdkerrors.Register(ModuleName, 16, "position is underwater")
 	ErrInputQuoteAmtNegative     = sdkerrors.Register(ModuleName, 17, "quote amount cannot be zero")

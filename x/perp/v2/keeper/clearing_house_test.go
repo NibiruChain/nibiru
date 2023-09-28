@@ -1150,7 +1150,7 @@ func TestMarketOrderError(t *testing.T) {
 
 			if tc.initialPosition != nil {
 				tc.initialPosition.TraderAddress = traderAddr.String()
-				app.PerpKeeperV2.Positions.Insert(ctx, collections.Join(tc.initialPosition.Pair, traderAddr), *tc.initialPosition)
+				app.PerpKeeperV2.SavePosition(ctx, tc.initialPosition.Pair, 1, traderAddr, *tc.initialPosition)
 			}
 
 			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(ctx.BlockTime().Add(time.Second * 5))

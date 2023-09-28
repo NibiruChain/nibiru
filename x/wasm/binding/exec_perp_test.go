@@ -11,8 +11,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/collections"
-
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
@@ -116,9 +114,7 @@ func (s *TestSuitePerpExecutor) DoMarketOrderTest(pair asset.Pair) error {
 	}
 
 	// Verify position exists with PerpKeeper
-	_, err = s.exec.PerpV2.Positions.Get(
-		s.ctx, collections.Join(pair, s.contractPerp),
-	)
+	_, err = s.exec.PerpV2.GetPosition(s.ctx, pair, 1, s.contractPerp)
 	if err != nil {
 		return err
 	}

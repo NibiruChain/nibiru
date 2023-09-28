@@ -30,7 +30,7 @@ type Keeper struct {
 	Markets           collections.Map[collections.Pair[asset.Pair, uint64], types.Market]
 	AMMs              collections.Map[collections.Pair[asset.Pair, uint64], types.AMM]
 
-	Positions        collections.Map[collections.Pair[asset.Pair, sdk.AccAddress], types.Position]
+	Positions        collections.Map[collections.Pair[collections.Pair[asset.Pair, uint64], sdk.AccAddress], types.Position]
 	ReserveSnapshots collections.Map[collections.Pair[asset.Pair, time.Time], types.ReserveSnapshot]
 	DnREpoch         collections.Item[uint64]
 	TraderVolumes    collections.Map[collections.Pair[sdk.AccAddress, uint64], math.Int] // Keeps track of user volumes for each epoch.
@@ -75,7 +75,7 @@ func NewKeeper(
 		),
 		Positions: collections.NewMap(
 			storeKey, NamespacePositions,
-			collections.PairKeyEncoder(asset.PairKeyEncoder, collections.AccAddressKeyEncoder),
+			collections.PairKeyEncoder(collections.PairKeyEncoder(asset.PairKeyEncoder, collections.Uint64KeyEncoder), collections.AccAddressKeyEncoder),
 			collections.ProtoValueEncoder[types.Position](cdc),
 		),
 		ReserveSnapshots: collections.NewMap(

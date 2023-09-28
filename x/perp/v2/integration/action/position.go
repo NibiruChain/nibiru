@@ -270,7 +270,7 @@ type insertPosition struct {
 
 func (i insertPosition) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	traderAddr := sdk.MustAccAddressFromBech32(i.position.TraderAddress)
-	app.PerpKeeperV2.Positions.Insert(ctx, collections.Join(i.position.Pair, traderAddr), i.position)
+	app.PerpKeeperV2.Positions.Insert(ctx, collections.Join(collections.Join(i.position.Pair, uint64(1)), traderAddr), i.position)
 	return ctx, nil, true
 }
 

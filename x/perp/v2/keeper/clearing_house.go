@@ -55,7 +55,7 @@ func (k Keeper) MarketOrder(
 		return nil, err
 	}
 
-	position, err := k.Positions.Get(ctx, collections.Join(pair, traderAddr))
+	position, err := k.GetPosition(ctx, pair, market.Version, traderAddr)
 	isNewPosition := errors.Is(err, collections.ErrNotFound)
 	if isNewPosition {
 		position = types.ZeroPosition(ctx, pair, traderAddr)
@@ -368,7 +368,7 @@ func (k Keeper) decreasePosition(
 	}
 
 	if positionResp.Position.Size_.IsZero() {
-		err := k.Positions.Delete(ctx, collections.Join(currentPosition.Pair, trader))
+		err := k.Positions.Delete(ctx, collections.Join(collections.Join(currentPosition.Pair, amm.Version), trader))
 		if err != nil {
 			return nil, nil, err
 		}
@@ -567,7 +567,7 @@ func (k Keeper) afterPositionUpdate(
 	}
 
 	if !positionResp.Position.Size_.IsZero() {
-		k.Positions.Insert(ctx, collections.Join(market.Pair, traderAddr), positionResp.Position)
+		k.SavePosition(ctx, market.Pair, market.Version, traderAddr, positionResp.Position)
 	}
 
 	// calculate positionNotional (it's different depends on long or short side)
@@ -691,11 +691,6 @@ func (k Keeper) transferFee(
 //   - positionResp: response object containing information about the position change
 //   - err: error if any
 func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.AccAddress) (*types.PositionResp, error) {
-	position, err := k.Positions.Get(ctx, collections.Join(pair, traderAddr))
-	if err != nil {
-		return nil, err
-	}
-
 	market, err := k.GetMarket(ctx, pair)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
@@ -708,6 +703,11 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.A
 	amm, err := k.GetAMM(ctx, pair)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
+	}
+
+	position, err := k.GetPosition(ctx, pair, market.Version, traderAddr)
+	if err != nil {
+		return nil, err
 	}
 
 	updatedAMM, positionResp, err := k.closePositionEntirely(
@@ -827,7 +827,7 @@ func (k Keeper) closePositionEntirely(
 		LastUpdatedBlockNumber:          ctx.BlockHeight(),
 	}
 
-	err = k.Positions.Delete(ctx, collections.Join(currentPosition.Pair, trader))
+	err = k.DeletePosition(ctx, currentPosition.Pair, market.Version, trader)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -855,7 +855,7 @@ func (k Keeper) PartialClose(
 		return nil, types.ErrPairNotFound.Wrapf("pair: %s", pair)
 	}
 
-	position, err := k.Positions.Get(ctx, collections.Join(pair, traderAddr))
+	position, err := k.GetPosition(ctx, pair, market.Version, traderAddr)
 	if err != nil {
 		return nil, err
 	}

@@ -44,11 +44,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	}
 
 	for _, p := range genState.Positions {
-		k.Positions.Insert(
-			ctx,
-			collections.Join(p.Pair, sdk.MustAccAddressFromBech32(p.TraderAddress)),
-			p,
-		)
+		k.SavePosition(ctx, p.Pair, p.Version, sdk.MustAccAddressFromBech32(p.Position.TraderAddress), p.Position)
 	}
 
 	for _, vol := range genState.TraderVolumes {
@@ -75,7 +71,14 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	}
 
 	genesis.Amms = k.AMMs.Iterate(ctx, collections.Range[collections.Pair[asset.Pair, uint64]]{}).Values()
-	genesis.Positions = k.Positions.Iterate(ctx, collections.PairRange[asset.Pair, sdk.AccAddress]{}).Values()
+	pkv := k.Positions.Iterate(ctx, collections.PairRange[collections.Pair[asset.Pair, uint64], sdk.AccAddress]{}).KeyValues()
+	for _, kv := range pkv {
+		genesis.Positions = append(genesis.Positions, types.GenesisPosition{
+			Pair:     kv.Key.K1().K1(),
+			Version:  kv.Key.K1().K2(),
+			Position: kv.Value,
+		})
+	}
 	genesis.ReserveSnapshots = k.ReserveSnapshots.Iterate(ctx, collections.PairRange[asset.Pair, time.Time]{}).Values()
 	genesis.DnrEpoch = k.DnREpoch.GetOr(ctx, 0)
 
