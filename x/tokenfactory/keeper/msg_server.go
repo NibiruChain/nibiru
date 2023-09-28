@@ -13,13 +13,13 @@ import (
 
 var _ types.MsgServer = (*Keeper)(nil)
 
-var errNilTxMsg error = grpcstatus.Errorf(grpccodes.InvalidArgument, "nil tx msg")
+var errNilMsg error = grpcstatus.Errorf(grpccodes.InvalidArgument, "nil msg")
 
 func (k Keeper) CreateDenom(
 	goCtx context.Context, txMsg *types.MsgCreateDenom,
 ) (resp *types.MsgCreateDenomResponse, err error) {
 	if txMsg == nil {
-		return resp, errNilTxMsg
+		return resp, errNilMsg
 	}
 	if err := txMsg.ValidateBasic(); err != nil {
 		return resp, err // ValidateBasic needs to be guaranteed for Wasm bindings
@@ -44,7 +44,7 @@ func (k Keeper) ChangeAdmin(
 	goCtx context.Context, txMsg *types.MsgChangeAdmin,
 ) (resp *types.MsgChangeAdminResponse, err error) {
 	if txMsg == nil {
-		return resp, errNilTxMsg
+		return resp, errNilMsg
 	}
 	if err := txMsg.ValidateBasic(); err != nil {
 		return resp, err // ValidateBasic needs to be guaranteed for Wasm bindings
@@ -77,7 +77,7 @@ func (k Keeper) UpdateModuleParams(
 	goCtx context.Context, txMsg *types.MsgUpdateModuleParams,
 ) (resp *types.MsgUpdateModuleParamsResponse, err error) {
 	if txMsg == nil {
-		return resp, errNilTxMsg
+		return resp, errNilMsg
 	}
 	if err := txMsg.ValidateBasic(); err != nil {
 		return resp, err // ValidateBasic needs to be guaranteed for Wasm bindings

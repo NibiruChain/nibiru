@@ -57,9 +57,9 @@ func (s *TestSuite) TestCreateDenom() {
 		},
 
 		{
-			name:    "sad: nil tx msg",
+			name:    "sad: nil msg",
 			txMsg:   nil,
-			wantErr: "nil tx msg",
+			wantErr: "nil msg",
 		},
 
 		{
@@ -117,9 +117,9 @@ func (s *TestSuite) TestChangeAdmin() {
 		postHook func(ctx sdk.Context, bapp *app.NibiruApp)
 	}{
 		{
-			name:    "sad: nil tx msg",
+			name:    "sad: nil msg",
 			txMsg:   nil,
-			wantErr: "nil tx msg",
+			wantErr: "nil msg",
 		},
 
 		{
@@ -215,9 +215,9 @@ func (s *TestSuite) TestUpdateModuleParams() {
 		wantErr string
 	}{
 		{
-			name:    "sad: nil tx msg",
+			name:    "sad: nil msg",
 			txMsg:   nil,
-			wantErr: "nil tx msg",
+			wantErr: "nil msg",
 		},
 
 		{

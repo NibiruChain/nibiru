@@ -38,7 +38,21 @@ func TestDenomStr_Validate(t *testing.T) {
 			assert.NoError(t, tfDenom.Validate())
 			assert.NotPanics(t, func() {
 				_ = tfDenom.DefaultBankMetadata()
+				_ = tc.denom.MustToStruct()
 			})
+
+			assert.NoError(t, types.GenesisDenom{
+				Denom:             tc.denom.String(),
+				AuthorityMetadata: types.DenomAuthorityMetadata{},
+			}.Validate())
 		})
 	}
+}
+
+func TestModuleParamsValidate(t *testing.T) {
+	params := types.DefaultModuleParams()
+	require.NoError(t, params.Validate())
+
+	params.DenomCreationGasConsume = 0
+	require.Error(t, params.Validate())
 }
