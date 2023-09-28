@@ -3,11 +3,12 @@ package keeper
 import (
 	"context"
 
-	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	grpccodes "google.golang.org/grpc/codes"
 	grpcstatus "google.golang.org/grpc/status"
+
+	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
 
 var _ types.MsgServer = (*Keeper)(nil)

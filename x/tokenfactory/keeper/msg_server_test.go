@@ -4,10 +4,11 @@ import (
 	"testing"
 
 	"github.com/NibiruChain/collections"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func (s *TestSuite) TestCreateDenom() {
@@ -101,7 +102,6 @@ func (s *TestSuite) TestCreateDenom() {
 			if tc.postHook != nil {
 				tc.postHook(s.ctx, s.app)
 			}
-
 		})
 	}
 }
@@ -195,10 +195,8 @@ func (s *TestSuite) TestChangeAdmin() {
 			if tc.postHook != nil {
 				tc.postHook(s.ctx, s.app)
 			}
-
 		})
 	}
-
 }
 
 func (s *TestSuite) TestUpdateModuleParams() {
@@ -260,8 +258,6 @@ func (s *TestSuite) TestUpdateModuleParams() {
 			params, err := s.app.TokenFactoryKeeper.Store.ModuleParams.Get(s.ctx)
 			s.Require().NoError(err)
 			s.Equal(params, tc.txMsg.Params)
-
 		})
 	}
-
 }

@@ -4,11 +4,12 @@ import (
 	fmt "fmt"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
 
 func validateBasicTest(msg sdk.Msg, wantErr string) func(t *testing.T) {
@@ -51,7 +52,6 @@ func TestMsgCreateDenom_ValidateBasic(t *testing.T) {
 	} {
 		t.Run(tc.name, validateBasicTest(tc.msg, tc.wantErr))
 	}
-
 }
 
 func TestMsgChangeAdmin_ValidateBasic(t *testing.T) {
@@ -120,5 +120,4 @@ func TestMsgUpdateModuleParams_ValidateBasic(t *testing.T) {
 	} {
 		t.Run(tc.name, validateBasicTest(tc.msg, tc.wantErr))
 	}
-
 }

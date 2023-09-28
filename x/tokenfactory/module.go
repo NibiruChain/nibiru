@@ -99,14 +99,14 @@ func (b AppModuleBasic) RegisterGRPCGatewayRoutes(
 
 // GetTxCmd returns the root tx command for the fees module.
 func (AppModuleBasic) GetTxCmd() *cobra.Command {
-	panic("TODO")
-	// return modulecli.NewTxCmd()
+	// return modulecli.NewTxCmd() // TODO
+	return &cobra.Command{}
 }
 
 // GetQueryCmd returns the fees module's root query command.
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
-	panic("TODO")
-	// return modulecli.GetQueryCmd()
+	// return modulecli.GetQueryCmd() // TODO
+	return &cobra.Command{}
 }
 
 // ___________________________________________________________________________
