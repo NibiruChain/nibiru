@@ -5,7 +5,7 @@ import (
 )
 
 func (s *TestSuite) TestQueryModuleParams() {
-	res, err := s.queryClient.Params(s.GoCtx(), &types.QueryParamsRequest{})
+	res, err := s.querier.Params(s.GoCtx(), &types.QueryParamsRequest{})
 	s.NoError(err)
-	s.Equal(*res, types.DefaultModuleParams())
+	s.Equal(res.Params, types.DefaultModuleParams())
 }
