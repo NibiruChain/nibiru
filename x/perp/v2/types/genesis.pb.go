@@ -31,13 +31,15 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 // Thge genesis state is used not only to start the network but also useful for
 // exporting and importing state during network upgrades.
 type GenesisState struct {
-	Markets            []Market                    `protobuf:"bytes,2,rep,name=markets,proto3" json:"markets"`
-	Amms               []AMM                       `protobuf:"bytes,3,rep,name=amms,proto3" json:"amms"`
-	Positions          []Position                  `protobuf:"bytes,4,rep,name=positions,proto3" json:"positions"`
-	ReserveSnapshots   []ReserveSnapshot           `protobuf:"bytes,5,rep,name=reserve_snapshots,json=reserveSnapshots,proto3" json:"reserve_snapshots"`
-	DnrEpoch           uint64                      `protobuf:"varint,6,opt,name=dnr_epoch,json=dnrEpoch,proto3" json:"dnr_epoch,omitempty"`
-	TraderVolumes      []GenesisState_TraderVolume `protobuf:"bytes,7,rep,name=trader_volumes,json=traderVolumes,proto3" json:"trader_volumes"`
-	MarketLastVersions []GenesisMarketLastVersion  `protobuf:"bytes,8,rep,name=market_last_versions,json=marketLastVersions,proto3" json:"market_last_versions"`
+	Markets            []Market                      `protobuf:"bytes,2,rep,name=markets,proto3" json:"markets"`
+	Amms               []AMM                         `protobuf:"bytes,3,rep,name=amms,proto3" json:"amms"`
+	Positions          []Position                    `protobuf:"bytes,4,rep,name=positions,proto3" json:"positions"`
+	ReserveSnapshots   []ReserveSnapshot             `protobuf:"bytes,5,rep,name=reserve_snapshots,json=reserveSnapshots,proto3" json:"reserve_snapshots"`
+	DnrEpoch           uint64                        `protobuf:"varint,6,opt,name=dnr_epoch,json=dnrEpoch,proto3" json:"dnr_epoch,omitempty"`
+	TraderVolumes      []GenesisState_TraderVolume   `protobuf:"bytes,7,rep,name=trader_volumes,json=traderVolumes,proto3" json:"trader_volumes"`
+	GlobalDiscount     []GenesisState_Discount       `protobuf:"bytes,8,rep,name=global_discount,json=globalDiscount,proto3" json:"global_discount"`
+	CustomDiscounts    []GenesisState_CustomDiscount `protobuf:"bytes,9,rep,name=custom_discounts,json=customDiscounts,proto3" json:"custom_discounts"`
+	MarketLastVersions []GenesisMarketLastVersion    `protobuf:"bytes,10,rep,name=market_last_versions,json=marketLastVersions,proto3" json:"market_last_versions"`
 }
 
 func (m *GenesisState) Reset()         { *m = GenesisState{} }
@@ -115,6 +117,20 @@ func (m *GenesisState) GetTraderVolumes() []GenesisState_TraderVolume {
 	return nil
 }
 
+func (m *GenesisState) GetGlobalDiscount() []GenesisState_Discount {
+	if m != nil {
+		return m.GlobalDiscount
+	}
+	return nil
+}
+
+func (m *GenesisState) GetCustomDiscounts() []GenesisState_CustomDiscount {
+	if m != nil {
+		return m.CustomDiscounts
+	}
+	return nil
+}
+
 func (m *GenesisState) GetMarketLastVersions() []GenesisMarketLastVersion {
 	if m != nil {
 		return m.MarketLastVersions
@@ -175,6 +191,96 @@ func (m *GenesisState_TraderVolume) GetEpoch() uint64 {
 	return 0
 }
 
+type GenesisState_Discount struct {
+	Fee    github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,1,opt,name=fee,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"fee"`
+	Volume github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=volume,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"volume"`
+}
+
+func (m *GenesisState_Discount) Reset()         { *m = GenesisState_Discount{} }
+func (m *GenesisState_Discount) String() string { return proto.CompactTextString(m) }
+func (*GenesisState_Discount) ProtoMessage()    {}
+func (*GenesisState_Discount) Descriptor() ([]byte, []int) {
+	return fileDescriptor_c2c7acfef3993fde, []int{0, 1}
+}
+func (m *GenesisState_Discount) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *GenesisState_Discount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_GenesisState_Discount.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *GenesisState_Discount) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GenesisState_Discount.Merge(m, src)
+}
+func (m *GenesisState_Discount) XXX_Size() int {
+	return m.Size()
+}
+func (m *GenesisState_Discount) XXX_DiscardUnknown() {
+	xxx_messageInfo_GenesisState_Discount.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GenesisState_Discount proto.InternalMessageInfo
+
+type GenesisState_CustomDiscount struct {
+	Trader   string                 `protobuf:"bytes,1,opt,name=trader,proto3" json:"trader,omitempty"`
+	Discount *GenesisState_Discount `protobuf:"bytes,2,opt,name=discount,proto3" json:"discount,omitempty"`
+}
+
+func (m *GenesisState_CustomDiscount) Reset()         { *m = GenesisState_CustomDiscount{} }
+func (m *GenesisState_CustomDiscount) String() string { return proto.CompactTextString(m) }
+func (*GenesisState_CustomDiscount) ProtoMessage()    {}
+func (*GenesisState_CustomDiscount) Descriptor() ([]byte, []int) {
+	return fileDescriptor_c2c7acfef3993fde, []int{0, 2}
+}
+func (m *GenesisState_CustomDiscount) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *GenesisState_CustomDiscount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_GenesisState_CustomDiscount.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *GenesisState_CustomDiscount) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GenesisState_CustomDiscount.Merge(m, src)
+}
+func (m *GenesisState_CustomDiscount) XXX_Size() int {
+	return m.Size()
+}
+func (m *GenesisState_CustomDiscount) XXX_DiscardUnknown() {
+	xxx_messageInfo_GenesisState_CustomDiscount.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GenesisState_CustomDiscount proto.InternalMessageInfo
+
+func (m *GenesisState_CustomDiscount) GetTrader() string {
+	if m != nil {
+		return m.Trader
+	}
+	return ""
+}
+
+func (m *GenesisState_CustomDiscount) GetDiscount() *GenesisState_Discount {
+	if m != nil {
+		return m.Discount
+	}
+	return nil
+}
+
 // GenesisMarketLastVersion is the last version including pair only used for
 // genesis
 type GenesisMarketLastVersion struct {
@@ -225,47 +331,56 @@ func (m *GenesisMarketLastVersion) GetVersion() uint64 {
 func init() {
 	proto.RegisterType((*GenesisState)(nil), "nibiru.perp.v2.GenesisState")
 	proto.RegisterType((*GenesisState_TraderVolume)(nil), "nibiru.perp.v2.GenesisState.TraderVolume")
+	proto.RegisterType((*GenesisState_Discount)(nil), "nibiru.perp.v2.GenesisState.Discount")
+	proto.RegisterType((*GenesisState_CustomDiscount)(nil), "nibiru.perp.v2.GenesisState.CustomDiscount")
 	proto.RegisterType((*GenesisMarketLastVersion)(nil), "nibiru.perp.v2.GenesisMarketLastVersion")
 }
 
 func init() { proto.RegisterFile("nibiru/perp/v2/genesis.proto", fileDescriptor_c2c7acfef3993fde) }
 
 var fileDescriptor_c2c7acfef3993fde = []byte{
-	// 534 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x53, 0x4f, 0x6b, 0x13, 0x41,
-	0x14, 0xcf, 0x36, 0xdb, 0xa4, 0x19, 0x6b, 0xd1, 0x31, 0x94, 0x25, 0x96, 0x4d, 0xe8, 0x41, 0xe2,
-	0x21, 0x3b, 0x24, 0x82, 0x20, 0x78, 0x31, 0xa2, 0x45, 0x30, 0x52, 0xb6, 0x92, 0x83, 0x97, 0x38,
-	0x49, 0x86, 0xcd, 0xd0, 0xec, 0xcc, 0x32, 0x6f, 0xb2, 0xe8, 0x59, 0x3f, 0x80, 0x1f, 0xab, 0xc7,
-	0x1e, 0xc5, 0x43, 0x91, 0x04, 0xbf, 0x87, 0xec, 0xcc, 0x04, 0xd3, 0x85, 0xe2, 0x29, 0x79, 0xf3,
-	0x7e, 0xff, 0xde, 0xdb, 0x19, 0x74, 0x22, 0xf8, 0x94, 0xab, 0x15, 0xc9, 0x98, 0xca, 0x48, 0x3e,
-	0x20, 0x09, 0x13, 0x0c, 0x38, 0x44, 0x99, 0x92, 0x5a, 0xe2, 0x23, 0xdb, 0x8d, 0x8a, 0x6e, 0x94,
-	0x0f, 0x5a, 0xcd, 0x44, 0x26, 0xd2, 0xb4, 0x48, 0xf1, 0xcf, 0xa2, 0x5a, 0x27, 0x89, 0x94, 0xc9,
-	0x92, 0x11, 0x9a, 0x71, 0x42, 0x85, 0x90, 0x9a, 0x6a, 0x2e, 0x85, 0xd3, 0x68, 0x85, 0x33, 0x09,
-	0xa9, 0x04, 0x32, 0xa5, 0xc0, 0x48, 0xde, 0x9f, 0x32, 0x4d, 0xfb, 0x64, 0x26, 0xb9, 0x70, 0xfd,
-	0x56, 0x29, 0x01, 0x68, 0xaa, 0x99, 0xed, 0x9d, 0xfe, 0xf1, 0xd1, 0xe1, 0x99, 0x4d, 0x74, 0x51,
-	0x1c, 0xe3, 0xe7, 0xa8, 0x9e, 0x52, 0x75, 0xc9, 0x34, 0x04, 0x7b, 0x9d, 0x6a, 0xf7, 0xde, 0xe0,
-	0x38, 0xba, 0x1d, 0x31, 0x1a, 0x99, 0xf6, 0xd0, 0xbf, 0xba, 0x69, 0x57, 0xe2, 0x2d, 0x18, 0xf7,
-	0x90, 0x4f, 0xd3, 0x14, 0x82, 0xaa, 0x21, 0x3d, 0x2a, 0x93, 0x5e, 0x8d, 0x46, 0x8e, 0x61, 0x60,
-	0xf8, 0x25, 0x6a, 0x64, 0x12, 0xb8, 0x19, 0x23, 0xf0, 0x0d, 0x27, 0x28, 0x73, 0xce, 0x1d, 0xc0,
-	0x11, 0xff, 0x11, 0x70, 0x8c, 0x1e, 0x2a, 0x06, 0x4c, 0xe5, 0x6c, 0x02, 0x82, 0x66, 0xb0, 0x90,
-	0x1a, 0x82, 0x7d, 0xa3, 0xd2, 0x2e, 0xab, 0xc4, 0x16, 0x78, 0xe1, 0x70, 0x4e, 0xec, 0x81, 0xba,
-	0x7d, 0x0c, 0xf8, 0x31, 0x6a, 0xcc, 0x85, 0x9a, 0xb0, 0x4c, 0xce, 0x16, 0x41, 0xad, 0xe3, 0x75,
-	0xfd, 0xf8, 0x60, 0x2e, 0xd4, 0x9b, 0xa2, 0xc6, 0x63, 0x74, 0xa4, 0x15, 0x9d, 0x33, 0x35, 0xc9,
-	0xe5, 0x72, 0x95, 0x32, 0x08, 0xea, 0xc6, 0xed, 0x69, 0xd9, 0x6d, 0x77, 0x97, 0xd1, 0x47, 0x43,
-	0x19, 0x1b, 0x86, 0xf3, 0xbd, 0xaf, 0x77, 0xce, 0x00, 0x7f, 0x46, 0x4d, 0xbb, 0xc0, 0xc9, 0x92,
-	0x82, 0x9e, 0xe4, 0x4c, 0x81, 0xd9, 0xc8, 0x81, 0x51, 0xef, 0xde, 0xa1, 0x6e, 0xbf, 0xc0, 0x7b,
-	0x0a, 0x7a, 0x6c, 0x09, 0x4e, 0x1c, 0xa7, 0xe5, 0x06, 0xb4, 0xbe, 0x7b, 0xe8, 0x70, 0x37, 0x07,
-	0x3e, 0x46, 0x35, 0x9b, 0x21, 0xf0, 0x3a, 0x5e, 0xb7, 0x11, 0xbb, 0x0a, 0x37, 0xd1, 0xbe, 0x9d,
-	0x7d, 0xcf, 0xcc, 0x6e, 0x0b, 0xfc, 0x16, 0xd5, 0xec, 0xc4, 0x41, 0xb5, 0x40, 0x0f, 0xa3, 0xc2,
-	0xe8, 0xd7, 0x4d, 0xfb, 0x49, 0xc2, 0xf5, 0x62, 0x35, 0x8d, 0x66, 0x32, 0x25, 0xee, 0xfa, 0xd9,
-	0x9f, 0x1e, 0xcc, 0x2f, 0x89, 0xfe, 0x9a, 0x31, 0x88, 0xde, 0x09, 0x1d, 0x3b, 0xf6, 0xe9, 0x37,
-	0x0f, 0x05, 0x77, 0xa5, 0xc7, 0x23, 0xe4, 0x67, 0x94, 0xbb, 0x40, 0xc3, 0x17, 0xce, 0xa2, 0xbf,
-	0x63, 0xf1, 0xc1, 0xec, 0xe1, 0xf5, 0x82, 0x72, 0x41, 0xdc, 0x6d, 0xfe, 0x42, 0x66, 0x32, 0x4d,
-	0xa5, 0x20, 0x14, 0x80, 0xe9, 0xe8, 0x9c, 0x72, 0x15, 0x1b, 0x19, 0x1c, 0xa0, 0xba, 0x5b, 0xa4,
-	0x9b, 0x65, 0x5b, 0x0e, 0xcf, 0xae, 0xd6, 0xa1, 0x77, 0xbd, 0x0e, 0xbd, 0xdf, 0xeb, 0xd0, 0xfb,
-	0xb1, 0x09, 0x2b, 0xd7, 0x9b, 0xb0, 0xf2, 0x73, 0x13, 0x56, 0x3e, 0xf5, 0xfe, 0x67, 0xb6, 0x7d,
-	0x3c, 0x66, 0xb4, 0x69, 0xcd, 0xbc, 0x9e, 0x67, 0x7f, 0x03, 0x00, 0x00, 0xff, 0xff, 0x02, 0x3e,
-	0x48, 0xb0, 0xdd, 0x03, 0x00, 0x00,
+	// 649 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x54, 0xc1, 0x6b, 0x13, 0x4f,
+	0x14, 0xce, 0x36, 0x69, 0x9a, 0xcc, 0xaf, 0xbf, 0xb4, 0x8e, 0xa5, 0x0c, 0xb1, 0xa4, 0xa5, 0xa0,
+	0x44, 0xa4, 0x3b, 0xb4, 0x82, 0x20, 0x78, 0xb0, 0x69, 0xb5, 0x08, 0x46, 0xca, 0xb6, 0xf4, 0x20,
+	0x42, 0x9c, 0x6c, 0xc6, 0xcd, 0xd2, 0xec, 0xcc, 0x32, 0x6f, 0x12, 0xf4, 0xac, 0x7f, 0x80, 0x07,
+	0xaf, 0xfe, 0x3f, 0x3d, 0xf6, 0x28, 0x1e, 0x8a, 0xb4, 0xff, 0x88, 0xec, 0xcc, 0x24, 0x26, 0x0b,
+	0xad, 0x8a, 0xa7, 0x64, 0xde, 0x7b, 0xdf, 0xf7, 0xbd, 0x79, 0xdf, 0xdb, 0x41, 0x6b, 0x22, 0xee,
+	0xc6, 0x6a, 0x48, 0x53, 0xae, 0x52, 0x3a, 0xda, 0xa1, 0x11, 0x17, 0x1c, 0x62, 0xf0, 0x53, 0x25,
+	0xb5, 0xc4, 0x35, 0x9b, 0xf5, 0xb3, 0xac, 0x3f, 0xda, 0xa9, 0xaf, 0x44, 0x32, 0x92, 0x26, 0x45,
+	0xb3, 0x7f, 0xb6, 0xaa, 0xbe, 0x16, 0x49, 0x19, 0x0d, 0x38, 0x65, 0x69, 0x4c, 0x99, 0x10, 0x52,
+	0x33, 0x1d, 0x4b, 0xe1, 0x38, 0xea, 0x8d, 0x50, 0x42, 0x22, 0x81, 0x76, 0x19, 0x70, 0x3a, 0xda,
+	0xee, 0x72, 0xcd, 0xb6, 0x69, 0x28, 0x63, 0xe1, 0xf2, 0xf5, 0x5c, 0x07, 0xa0, 0x99, 0xe6, 0x36,
+	0xb7, 0xf9, 0xb5, 0x82, 0x16, 0x0f, 0x6c, 0x47, 0x47, 0x59, 0x18, 0x3f, 0x42, 0x0b, 0x09, 0x53,
+	0xa7, 0x5c, 0x03, 0x99, 0xdb, 0x28, 0x36, 0xff, 0xdb, 0x59, 0xf5, 0x67, 0x5b, 0xf4, 0xdb, 0x26,
+	0xdd, 0x2a, 0x9d, 0x5d, 0xac, 0x17, 0x82, 0x71, 0x31, 0xde, 0x42, 0x25, 0x96, 0x24, 0x40, 0x8a,
+	0x06, 0x74, 0x3b, 0x0f, 0xda, 0x6d, 0xb7, 0x1d, 0xc2, 0x94, 0xe1, 0x27, 0xa8, 0x9a, 0x4a, 0x88,
+	0xcd, 0x35, 0x48, 0xc9, 0x60, 0x48, 0x1e, 0x73, 0xe8, 0x0a, 0x1c, 0xf0, 0x17, 0x00, 0x07, 0xe8,
+	0x96, 0xe2, 0xc0, 0xd5, 0x88, 0x77, 0x40, 0xb0, 0x14, 0xfa, 0x52, 0x03, 0x99, 0x37, 0x2c, 0xeb,
+	0x79, 0x96, 0xc0, 0x16, 0x1e, 0xb9, 0x3a, 0x47, 0xb6, 0xac, 0x66, 0xc3, 0x80, 0xef, 0xa0, 0x6a,
+	0x4f, 0xa8, 0x0e, 0x4f, 0x65, 0xd8, 0x27, 0xe5, 0x0d, 0xaf, 0x59, 0x0a, 0x2a, 0x3d, 0xa1, 0x9e,
+	0x65, 0x67, 0x7c, 0x82, 0x6a, 0x5a, 0xb1, 0x1e, 0x57, 0x9d, 0x91, 0x1c, 0x0c, 0x13, 0x0e, 0x64,
+	0xc1, 0xa8, 0xdd, 0xcf, 0xab, 0x4d, 0xcf, 0xd2, 0x3f, 0x36, 0x90, 0x13, 0x83, 0x70, 0xba, 0xff,
+	0xeb, 0xa9, 0x18, 0xe0, 0x63, 0xb4, 0x14, 0x0d, 0x64, 0x97, 0x0d, 0x3a, 0xbd, 0x18, 0x42, 0x39,
+	0x14, 0x9a, 0x54, 0x0c, 0xf1, 0xdd, 0x1b, 0x89, 0xf7, 0x5d, 0xb1, 0x23, 0xad, 0x59, 0x8e, 0x71,
+	0x14, 0xbf, 0x41, 0xcb, 0xe1, 0x10, 0xb4, 0x4c, 0x26, 0xac, 0x40, 0xaa, 0x86, 0xf6, 0xc1, 0x8d,
+	0xb4, 0x7b, 0x06, 0x94, 0x23, 0x5f, 0x0a, 0x67, 0xa2, 0x80, 0xdf, 0xa2, 0x15, 0x6b, 0x7a, 0x67,
+	0xc0, 0x40, 0x77, 0x46, 0x5c, 0x81, 0x71, 0x11, 0x19, 0x85, 0xe6, 0x35, 0x0a, 0x76, 0x6b, 0x5e,
+	0x32, 0xd0, 0x27, 0x16, 0xe0, 0xe8, 0x71, 0x92, 0x4f, 0x40, 0xfd, 0x93, 0x87, 0x16, 0xa7, 0x67,
+	0x87, 0x57, 0x51, 0xd9, 0xce, 0x8d, 0x78, 0x1b, 0x5e, 0xb3, 0x1a, 0xb8, 0x13, 0x5e, 0x41, 0xf3,
+	0xd6, 0xaf, 0x39, 0xe3, 0x97, 0x3d, 0xe0, 0xe7, 0xa8, 0x6c, 0x5d, 0x22, 0xc5, 0xac, 0xba, 0xe5,
+	0x67, 0x42, 0xdf, 0x2f, 0xd6, 0xef, 0x45, 0xb1, 0xee, 0x0f, 0xbb, 0x7e, 0x28, 0x13, 0xea, 0x3e,
+	0x19, 0xfb, 0xb3, 0x05, 0xbd, 0x53, 0xaa, 0x3f, 0xa4, 0x1c, 0xfc, 0x17, 0x42, 0x07, 0x0e, 0x5d,
+	0xff, 0xe2, 0xa1, 0xca, 0x64, 0xa6, 0x4f, 0x51, 0xf1, 0x1d, 0xe7, 0x56, 0xff, 0xaf, 0x18, 0xf7,
+	0x79, 0x18, 0x64, 0xd0, 0xa9, 0xb6, 0xe6, 0xfe, 0xa9, 0xad, 0x53, 0x54, 0x9b, 0x35, 0xea, 0xda,
+	0xf1, 0xec, 0xa2, 0xca, 0x64, 0xad, 0x32, 0xcd, 0x3f, 0x5d, 0xab, 0x60, 0x02, 0xdb, 0xfc, 0xe8,
+	0x21, 0x72, 0x9d, 0x83, 0xb8, 0x8d, 0x4a, 0x29, 0x8b, 0x9d, 0x6a, 0xeb, 0xb1, 0xbb, 0xcf, 0xf6,
+	0xd4, 0x7d, 0x5e, 0x19, 0xb5, 0xbd, 0x3e, 0x8b, 0x05, 0x75, 0xaf, 0xd0, 0x7b, 0x1a, 0xca, 0x24,
+	0x91, 0x82, 0x32, 0x00, 0xae, 0xfd, 0x43, 0x16, 0xab, 0xc0, 0xd0, 0x60, 0x82, 0x16, 0xdc, 0x32,
+	0x39, 0x3f, 0xc7, 0xc7, 0xd6, 0xc1, 0xd9, 0x65, 0xc3, 0x3b, 0xbf, 0x6c, 0x78, 0x3f, 0x2e, 0x1b,
+	0xde, 0xe7, 0xab, 0x46, 0xe1, 0xfc, 0xaa, 0x51, 0xf8, 0x76, 0xd5, 0x28, 0xbc, 0xde, 0xfa, 0x9d,
+	0xd8, 0xf8, 0xd1, 0x33, 0x73, 0xec, 0x96, 0xcd, 0xab, 0xf7, 0xf0, 0x67, 0x00, 0x00, 0x00, 0xff,
+	0xff, 0xf6, 0x97, 0x5d, 0xb5, 0x95, 0x05, 0x00, 0x00,
 }
 
 func (m *GenesisState) Marshal() (dAtA []byte, err error) {
@@ -292,6 +407,34 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		for iNdEx := len(m.MarketLastVersions) - 1; iNdEx >= 0; iNdEx-- {
 			{
 				size, err := m.MarketLastVersions[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x52
+		}
+	}
+	if len(m.CustomDiscounts) > 0 {
+		for iNdEx := len(m.CustomDiscounts) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.CustomDiscounts[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x4a
+		}
+	}
+	if len(m.GlobalDiscount) > 0 {
+		for iNdEx := len(m.GlobalDiscount) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.GlobalDiscount[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -425,6 +568,91 @@ func (m *GenesisState_TraderVolume) MarshalToSizedBuffer(dAtA []byte) (int, erro
 	return len(dAtA) - i, nil
 }
 
+func (m *GenesisState_Discount) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *GenesisState_Discount) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *GenesisState_Discount) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size := m.Volume.Size()
+		i -= size
+		if _, err := m.Volume.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintGenesis(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	{
+		size := m.Fee.Size()
+		i -= size
+		if _, err := m.Fee.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintGenesis(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
+func (m *GenesisState_CustomDiscount) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *GenesisState_CustomDiscount) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *GenesisState_CustomDiscount) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Discount != nil {
+		{
+			size, err := m.Discount.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintGenesis(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Trader) > 0 {
+		i -= len(m.Trader)
+		copy(dAtA[i:], m.Trader)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.Trader)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *GenesisMarketLastVersion) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -513,6 +741,18 @@ func (m *GenesisState) Size() (n int) {
 			n += 1 + l + sovGenesis(uint64(l))
 		}
 	}
+	if len(m.GlobalDiscount) > 0 {
+		for _, e := range m.GlobalDiscount {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
+	if len(m.CustomDiscounts) > 0 {
+		for _, e := range m.CustomDiscounts {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
 	if len(m.MarketLastVersions) > 0 {
 		for _, e := range m.MarketLastVersions {
 			l = e.Size()
@@ -537,6 +777,36 @@ func (m *GenesisState_TraderVolume) Size() (n int) {
 	}
 	l = m.Volume.Size()
 	n += 1 + l + sovGenesis(uint64(l))
+	return n
+}
+
+func (m *GenesisState_Discount) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = m.Fee.Size()
+	n += 1 + l + sovGenesis(uint64(l))
+	l = m.Volume.Size()
+	n += 1 + l + sovGenesis(uint64(l))
+	return n
+}
+
+func (m *GenesisState_CustomDiscount) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Trader)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	if m.Discount != nil {
+		l = m.Discount.Size()
+		n += 1 + l + sovGenesis(uint64(l))
+	}
 	return n
 }
 
@@ -780,6 +1050,74 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 8:
 			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field GlobalDiscount", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.GlobalDiscount = append(m.GlobalDiscount, GenesisState_Discount{})
+			if err := m.GlobalDiscount[len(m.GlobalDiscount)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 9:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CustomDiscounts", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.CustomDiscounts = append(m.CustomDiscounts, GenesisState_CustomDiscount{})
+			if err := m.CustomDiscounts[len(m.CustomDiscounts)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 10:
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field MarketLastVersions", wireType)
 			}
 			var msglen int
@@ -944,6 +1282,242 @@ func (m *GenesisState_TraderVolume) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if err := m.Volume.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipGenesis(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *GenesisState_Discount) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowGenesis
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Discount: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Discount: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Fee", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Fee.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Volume", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Volume.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipGenesis(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *GenesisState_CustomDiscount) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowGenesis
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: CustomDiscount: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: CustomDiscount: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Trader", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Trader = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Discount", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Discount == nil {
+				m.Discount = &GenesisState_Discount{}
+			}
+			if err := m.Discount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

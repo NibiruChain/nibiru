@@ -554,13 +554,6 @@ func (k Keeper) afterPositionUpdate(
 		}
 	}
 
-	// update user volume
-	dnrEpoch, err := k.DnREpoch.Get(ctx)
-	if err != nil {
-		return err
-	}
-	k.IncreaseTraderVolume(ctx, dnrEpoch, traderAddr, positionResp.ExchangedNotionalValue.Abs().TruncateInt())
-
 	transferredFee, err := k.transferFee(ctx, market.Pair, traderAddr, positionResp.ExchangedNotionalValue,
 		market.ExchangeFeeRatio, market.EcosystemFundFeeRatio,
 	)
@@ -644,6 +637,10 @@ func (k Keeper) transferFee(
 	exchangeFeeRatio sdk.Dec,
 	ecosystemFundFeeRatio sdk.Dec,
 ) (fees sdkmath.Int, err error) {
+	exchangeFeeRatio, err = k.applyDiscountAndRebate(ctx, pair, trader, positionNotional, exchangeFeeRatio)
+	if err != nil {
+		return sdkmath.Int{}, err
+	}
 	feeToExchangeFeePool := exchangeFeeRatio.Mul(positionNotional).RoundInt()
 	if feeToExchangeFeePool.IsPositive() {
 		if err = k.BankKeeper.SendCoinsFromAccountToModule(
