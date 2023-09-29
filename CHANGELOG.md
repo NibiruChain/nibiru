@@ -41,8 +41,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Features 
+
 * [#xxx](https://github.com/NibiruChain/nibiru/pull/xxx) - epic(tokenfactory):
   State transitions, collections, genesis import and export, and app wiring
+
+### State Breaking
+
+* [#zzz](https://github.com/NibiruChain/nibiru/pull/zzz) - refactor(app)!: Remove x/stablecoin module.
 
 ## [v0.21.10]
 
