@@ -1,13 +1,9 @@
 package keeper_test
 
 import (
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"testing"
 	"time"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
-	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
@@ -17,6 +13,7 @@ import (
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestAddMargin(t *testing.T) {
@@ -139,11 +136,11 @@ func TestAddMargin(t *testing.T) {
 			When(
 				MoveToNextBlock(),
 				AddMarginFail(alice, asset.MustNewPair("luna:usdt"), sdk.NewInt(1000), types.ErrPairNotFound),
-				AddMarginFail(alice, pairEthUsdc, sdk.NewInt(1000), collections.ErrNotFound),
+				AddMarginFail(alice, pairEthUsdc, sdk.NewInt(1000), types.ErrPositionNotFound),
 				AddMarginFail(alice, pairBtcUsdc, sdk.NewInt(1000), sdkerrors.ErrInsufficientFunds),
 
 				RemoveMarginFail(alice, asset.MustNewPair("luna:usdt"), sdk.NewInt(1000), types.ErrPairNotFound),
-				RemoveMarginFail(alice, pairEthUsdc, sdk.NewInt(1000), collections.ErrNotFound),
+				RemoveMarginFail(alice, pairEthUsdc, sdk.NewInt(1000), types.ErrPositionNotFound),
 				RemoveMarginFail(alice, pairBtcUsdc, sdk.NewInt(2000), types.ErrBadDebt),
 				RemoveMarginFail(alice, pairBtcUsdc, sdk.NewInt(900), types.ErrMarginRatioTooLow),
 			),

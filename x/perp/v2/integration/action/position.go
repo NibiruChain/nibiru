@@ -8,8 +8,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/collections"
-
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
@@ -270,7 +268,7 @@ type insertPosition struct {
 
 func (i insertPosition) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	traderAddr := sdk.MustAccAddressFromBech32(i.position.TraderAddress)
-	app.PerpKeeperV2.Positions.Insert(ctx, collections.Join(collections.Join(i.position.Pair, uint64(1)), traderAddr), i.position)
+	app.PerpKeeperV2.SavePosition(ctx, i.position.Pair, 1, traderAddr, i.position)
 	return ctx, nil, true
 }
 

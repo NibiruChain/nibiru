@@ -1,16 +1,9 @@
 package cli_test
 
 import (
+	"cosmossdk.io/errors"
 	"fmt"
 	"testing"
-
-	"github.com/NibiruChain/collections"
-	abcitypes "github.com/cometbft/cometbft/abci/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
-	"github.com/stretchr/testify/suite"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
@@ -21,6 +14,10 @@ import (
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/NibiruChain/nibiru/x/perp/v2/client/cli"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
+	abcitypes "github.com/cometbft/cometbft/abci/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
+	"github.com/stretchr/testify/suite"
 )
 
 type IntegrationTestSuite struct {
@@ -364,11 +361,8 @@ func (s *IntegrationTestSuite) TestMarketOrdersAndCloseCmd() {
 	s.T().Log("F. check trader position")
 	queryResp, err = testutilcli.QueryPositionV2(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
 	s.Error(err)
+	errors.IsOf(err, types.ErrPositionNotFound)
 	s.T().Logf("query response: %+v", queryResp)
-
-	status, ok := status.FromError(err)
-	s.True(ok)
-	s.EqualValues(codes.InvalidArgument, status.Code())
 }
 
 func (s *IntegrationTestSuite) TestPartialCloseCmd() {
@@ -469,7 +463,7 @@ func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
 	_, err = s.network.ExecTxCmd(cli.ClosePositionCmd(), user, []string{
 		asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
 	})
-	s.Contains(err.Error(), collections.ErrNotFound.Error())
+	s.Contains(err.Error(), types.ErrPositionNotFound.Error())
 }
 
 // user[0] opens a position and removes margin to trigger bad debt
@@ -540,7 +534,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 				fmt.Sprintf("10000%s", denoms.NUSD),
 			},
-			expectedCode: 1,
+			expectedCode: types.ErrPositionNotFound.ABCICode(),
 			expectFail:   false,
 		},
 		{
@@ -642,7 +636,7 @@ func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 				fmt.Sprintf("10000%s", denoms.NUSD),
 			},
-			expectedCode: 1,
+			expectedCode: types.ErrPositionNotFound.ABCICode(),
 			expectFail:   false,
 		},
 		{

@@ -1610,7 +1610,7 @@ func TestPartialClose(t *testing.T) {
 
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200)))),
 
-				PartialCloseFails(alice, pairBtcNusd, sdk.NewDec(5_000), collections.ErrNotFound),
+				PartialCloseFails(alice, pairBtcNusd, sdk.NewDec(5_000), types.ErrPositionNotFound),
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(9_000), sdk.OneDec(), sdk.ZeroDec()),
 			).
 			When(

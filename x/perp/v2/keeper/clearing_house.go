@@ -56,7 +56,7 @@ func (k Keeper) MarketOrder(
 	}
 
 	position, err := k.GetPosition(ctx, pair, market.Version, traderAddr)
-	isNewPosition := errors.Is(err, collections.ErrNotFound)
+	isNewPosition := errors.Is(err, types.ErrPositionNotFound)
 	if isNewPosition {
 		position = types.ZeroPosition(ctx, pair, traderAddr)
 	}
