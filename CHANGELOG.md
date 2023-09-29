@@ -58,7 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1543](https://github.com/NibiruChain/nibiru/pull/1543) - epic(devgas): devgas module for incentivizing smart contract
 * [#1559](https://github.com/NibiruChain/nibiru/pull/1559) - feat: add versions to markets to allow to disable them
 * [#1585](https://github.com/NibiruChain/nibiru/pull/1585) - feat: include flag versioned in query markets to allow to query disabled markets
-
+* [#1594](https://github.com/NibiruChain/nibiru/pull/1594) - feat: add user discounts
 ### Improvements
 
 * [#1466](https://github.com/NibiruChain/nibiru/pull/1466) - refactor(perp): `PositionLiquidatedEvent`
@@ -150,6 +150,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1422](https://github.com/NibiruChain/nibiru/pull/1422) - fix(oracle): handle zero oracle rewards
 * [#1426](https://github.com/NibiruChain/nibiru/pull/1426) - refactor(perp): remove price fluctuation limit check
 * [#1423](https://github.com/NibiruChain/nibiru/pull/1423) - fix: remove panics from abci hooks
+* [#1579](https://github.com/NibiruChain/nibiru/pull/1579) - chore(proto): Add a buf.gen.rs.yaml and corresponding script to create Rust types for Wasm Stargate messages
 
 ### Bug Fixes
 
