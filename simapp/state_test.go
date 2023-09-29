@@ -20,6 +20,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/NibiruChain/nibiru/app"
+	appsim "github.com/NibiruChain/nibiru/app/sim"
 )
 
 // AppStateFn returns the initial application state using a genesis or the simulation parameters.
@@ -28,10 +29,10 @@ import (
 func AppStateFn(cdc codec.JSONCodec, simManager *module.SimulationManager) simtypes.AppStateFn {
 	return func(r *rand.Rand, accs []simtypes.Account, config simtypes.Config,
 	) (appState json.RawMessage, simAccs []simtypes.Account, chainID string, genesisTimestamp time.Time) {
-		if app.FlagGenesisTimeValue == 0 {
+		if appsim.FlagGenesisTimeValue == 0 {
 			genesisTimestamp = simtypes.RandTimestamp(r)
 		} else {
-			genesisTimestamp = time.Unix(app.FlagGenesisTimeValue, 0)
+			genesisTimestamp = time.Unix(appsim.FlagGenesisTimeValue, 0)
 		}
 
 		chainID = config.ChainID
@@ -43,7 +44,7 @@ func AppStateFn(cdc codec.JSONCodec, simManager *module.SimulationManager) simty
 			// override the default chain-id from simapp to set it later to the config
 			genesisDoc, accounts := app.AppStateFromGenesisFileFn(r, cdc, config.GenesisFile)
 
-			if app.FlagGenesisTimeValue == 0 {
+			if appsim.FlagGenesisTimeValue == 0 {
 				// use genesis timestamp if no custom timestamp is provided (i.e no random timestamp)
 				genesisTimestamp = genesisDoc.GenesisTime
 			}
