@@ -16,8 +16,6 @@ type TestSuite struct {
 	encCfg app.EncodingConfig
 }
 
-// var _ suite.SetupTestSuite = (*TestSuite)(nil)
-
 func TestAppTestSuite(t *testing.T) {
 	suite.Run(t, new(TestSuite))
 }
