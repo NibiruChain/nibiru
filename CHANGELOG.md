@@ -42,12 +42,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Features 
 
-* [#xxx](https://github.com/NibiruChain/nibiru/pull/xxx) - epic(tokenfactory):
+* [#1596](https://github.com/NibiruChain/nibiru/pull/1596) - epic(tokenfactory):
   State transitions, collections, genesis import and export, and app wiring
 
 ### State Breaking
 
 * [#1609](https://github.com/NibiruChain/nibiru/pull/1609) - refactor(app)!: Remove x/stablecoin module.
+
+### Improvements
+
+* [#1610](https://github.com/NibiruChain/nibiru/pull/1610) - refactor(app): Simplify app.go with less redundant imports using struct embedding.
 
 ## [v0.21.10]
 
