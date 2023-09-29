@@ -19,7 +19,7 @@ func DefaultModuleParams() ModuleParams {
 
 func (params ModuleParams) Validate() error {
 	if params.DenomCreationGasConsume < 1 {
-		return fmt.Errorf("cannot set gas creation cost to zero")
+		return ErrInvalidModuleParams.Wrap("cannot set gas creation cost to zero")
 	}
 	return nil
 }

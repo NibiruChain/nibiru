@@ -8,6 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
+
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
@@ -42,12 +44,20 @@ func TestMsgCreateDenom_ValidateBasic(t *testing.T) {
 			wantErr: "",
 		},
 		{
-			name: "invalid subdenom",
+			name: "sad subdenom",
 			msg: &types.MsgCreateDenom{
 				Sender:   addr,
 				Subdenom: "",
 			},
 			wantErr: "empty subdenom",
+		},
+		{
+			name: "sad creator",
+			msg: &types.MsgCreateDenom{
+				Sender:   "creator",
+				Subdenom: "subdenom",
+			},
+			wantErr: "invalid creator",
 		},
 	} {
 		t.Run(tc.name, validateBasicTest(tc.msg, tc.wantErr))
@@ -119,5 +129,41 @@ func TestMsgUpdateModuleParams_ValidateBasic(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, validateBasicTest(tc.msg, tc.wantErr))
+	}
+}
+
+func TestTxMsgInterface(t *testing.T) {
+	creator := testutil.AccAddress().String()
+	subdenom := testutil.RandLetters(4)
+	for _, msg := range []legacytx.LegacyMsg{
+		&types.MsgCreateDenom{
+			Sender:   creator,
+			Subdenom: subdenom,
+		},
+		&types.MsgChangeAdmin{
+			Sender:   creator,
+			Denom:    fmt.Sprintf("tf/%s/%s", creator, subdenom),
+			NewAdmin: testutil.AccAddress().String(),
+		},
+	} {
+		t.Run(msg.Type(), func(t *testing.T) {
+			require.NotPanics(t, func() {
+				_ = msg.GetSigners()
+				_ = msg.Route()
+				_ = msg.Type()
+				_ = msg.GetSignBytes()
+			})
+		})
+	}
+
+	for _, msg := range []sdk.Msg{
+		&types.MsgUpdateModuleParams{
+			Authority: testutil.GovModuleAddr().String(),
+			Params:    types.DefaultModuleParams(),
+		},
+	} {
+		require.NotPanics(t, func() {
+			_ = msg.GetSigners()
+		})
 	}
 }

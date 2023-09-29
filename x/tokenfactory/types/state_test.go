@@ -1,11 +1,13 @@
 package types_test
 
 import (
+	fmt "fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
 
@@ -55,4 +57,69 @@ func TestModuleParamsValidate(t *testing.T) {
 
 	params.DenomCreationGasConsume = 0
 	require.Error(t, params.Validate())
+}
+
+func TestGenesisState(t *testing.T) {
+	var happyGenDenoms []types.GenesisDenom
+	for i := 0; i < 5; i++ {
+		creator := testutil.AccAddress()
+		lettersIdx := i * 2
+		happyGenDenoms = append(happyGenDenoms, types.GenesisDenom{
+			Denom: types.TFDenom{
+				Creator:  creator.String(),
+				Subdenom: testutil.Latin.Letters[lettersIdx : lettersIdx+4],
+			}.String(),
+			AuthorityMetadata: types.DenomAuthorityMetadata{
+				Admin: creator.String(),
+			},
+		})
+	}
+
+	for idx, tc := range []struct {
+		name     string
+		genState types.GenesisState
+		wantErr  string
+	}{
+		{name: "default", wantErr: "", genState: *types.DefaultGenesis()},
+		{name: "sad: params", wantErr: types.ErrInvalidModuleParams.Error(),
+			genState: types.GenesisState{
+				Params: types.ModuleParams{
+					DenomCreationGasConsume: 0,
+				},
+				FactoryDenoms: happyGenDenoms,
+			},
+		},
+		{name: "sad: duplicate", wantErr: "duplicate denom",
+			genState: types.GenesisState{
+				Params: types.DefaultModuleParams(),
+				FactoryDenoms: []types.GenesisDenom{
+					happyGenDenoms[0], happyGenDenoms[0], happyGenDenoms[1],
+				},
+			},
+		},
+		{name: "sad: invalid admin", wantErr: types.ErrInvalidAdmin.Error(),
+			genState: types.GenesisState{
+				Params: types.DefaultModuleParams(),
+				FactoryDenoms: []types.GenesisDenom{
+					happyGenDenoms[0],
+					{
+						Denom: happyGenDenoms[1].Denom,
+						AuthorityMetadata: types.DenomAuthorityMetadata{
+							Admin: "not_an_address",
+						},
+					},
+				},
+			},
+		},
+	} {
+		t.Run(fmt.Sprintf("%v %s", idx, tc.name), func(t *testing.T) {
+			err := tc.genState.Validate()
+			if tc.wantErr != "" {
+				assert.Error(t, err)
+				require.Contains(t, err.Error(), tc.wantErr)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
 }
