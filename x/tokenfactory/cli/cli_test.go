@@ -63,8 +63,8 @@ func (s *IntegrationTestSuite) CreateDenomTest(t *testing.T) {
 	creator := s.val.Address
 	createDenom := func(subdenom string, wantErr bool) {
 		_, err := s.network.ExecTxCmd(
-			cli.CmdCreateDenom(),
-			creator, []string{subdenom})
+			cli.NewTxCmd(),
+			creator, []string{"create-denom", subdenom})
 		if wantErr {
 			s.Require().Error(err)
 			return
@@ -103,35 +103,35 @@ func (s *IntegrationTestSuite) ChangeAdminTest(t *testing.T) {
 	}
 
 	s.T().Log("Verify current admin is creator")
-	metadataResp := new(types.QueryDenomInfoResponse)
+	infoResp := new(types.QueryDenomInfoResponse)
 	s.NoError(
 		s.network.ExecQuery(
-			cli.CmdQueryDenomInfo(), []string{denom.String()}, metadataResp,
+			cli.NewQueryCmd(), []string{"denom-info", denom.String()}, infoResp,
 		),
 	)
-	s.Equal(metadataResp.Admin, admin.String())
+	s.Equal(infoResp.Admin, admin.String())
 
 	s.T().Log("Change to a new admin")
 	_, err := s.network.ExecTxCmd(
-		cli.CmdChangeAdmin(),
-		admin, []string{denom.String(), newAdmin.String()})
+		cli.NewTxCmd(),
+		admin, []string{"change-admin", denom.String(), newAdmin.String()})
 	s.Require().NoError(err)
 
 	s.T().Log("Verify new admin is in state")
-	metadataResp = new(types.QueryDenomInfoResponse)
+	infoResp = new(types.QueryDenomInfoResponse)
 	s.NoError(
 		s.network.ExecQuery(
-			cli.CmdQueryDenomInfo(), []string{denom.String()}, metadataResp,
+			cli.NewQueryCmd(), []string{"denom-info", denom.String()}, infoResp,
 		),
 	)
-	s.Equal(metadataResp.Admin, newAdmin.String())
+	s.Equal(infoResp.Admin, newAdmin.String())
 }
 
 func (s *IntegrationTestSuite) TestQueryModuleParams() {
 	paramResp := new(types.QueryParamsResponse)
 	s.NoError(
 		s.network.ExecQuery(
-			cli.CmdQueryModuleParams(), []string{}, paramResp,
+			cli.NewQueryCmd(), []string{"params"}, paramResp,
 		),
 	)
 	s.Equal(paramResp.Params, types.DefaultModuleParams())
