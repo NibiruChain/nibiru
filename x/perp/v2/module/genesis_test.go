@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
+	"cosmossdk.io/math"
+	"github.com/NibiruChain/collections"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -70,6 +72,9 @@ func RunTestGenesis(t *testing.T, tc TestCase) {
 	app.PerpKeeperV2.SaveMarket(ctx, *mock.TestMarket())
 	app.PerpKeeperV2.MarketLastVersion.Insert(ctx, pair, types.MarketLastVersion{Version: 1})
 	app.PerpKeeperV2.SaveAMM(ctx, *mock.TestAMMDefault())
+	app.PerpKeeperV2.TraderDiscounts.Insert(ctx, collections.Join(testutil.AccAddress(), math.NewInt(1_000_000)), sdk.MustNewDecFromStr("0.1"))
+	app.PerpKeeperV2.GlobalDiscounts.Insert(ctx, sdk.NewInt(1_000_000), sdk.MustNewDecFromStr("0.05"))
+	app.PerpKeeperV2.TraderVolumes.Insert(ctx, collections.Join(testutil.AccAddress(), uint64(0)), math.NewInt(1_000_000))
 
 	// create some positions
 	for _, position := range tc.positions {
@@ -110,6 +115,10 @@ func RunTestGenesis(t *testing.T, tc TestCase) {
 	for i, pos := range genState.Positions {
 		require.Equalf(t, pos, genStateAfterInit.Positions[i], "%s <-> %s", pos, genStateAfterInit.Positions[i])
 	}
+
+	require.Equal(t, genState.CustomDiscounts, genStateAfterInit.CustomDiscounts)
+	require.Equal(t, genState.GlobalDiscount, genStateAfterInit.GlobalDiscount)
+	require.Equal(t, genState.TraderVolumes, genStateAfterInit.TraderVolumes)
 }
 
 func TestNewAppModuleBasic(t *testing.T) {

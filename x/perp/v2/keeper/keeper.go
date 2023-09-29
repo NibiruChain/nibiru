@@ -33,7 +33,9 @@ type Keeper struct {
 	Positions        collections.Map[collections.Pair[collections.Pair[asset.Pair, uint64], sdk.AccAddress], types.Position]
 	ReserveSnapshots collections.Map[collections.Pair[asset.Pair, time.Time], types.ReserveSnapshot]
 	DnREpoch         collections.Item[uint64]
-	TraderVolumes    collections.Map[collections.Pair[sdk.AccAddress, uint64], math.Int] // Keeps track of user volumes for each epoch.
+	TraderVolumes    collections.Map[collections.Pair[sdk.AccAddress, uint64], math.Int]         // Keeps track of user volumes for each epoch.
+	GlobalDiscounts  collections.Map[math.Int, math.LegacyDec]                                   // maps a volume level to a discount
+	TraderDiscounts  collections.Map[collections.Pair[sdk.AccAddress, math.Int], math.LegacyDec] // maps a user and volume level to a discount, supersedes global discounts
 }
 
 // NewKeeper Creates a new x/perp Keeper instance.
@@ -92,6 +94,16 @@ func NewKeeper(
 			collections.PairKeyEncoder(collections.AccAddressKeyEncoder, collections.Uint64KeyEncoder),
 			IntValueEncoder,
 		),
+		GlobalDiscounts: collections.NewMap(
+			storeKey, NamespaceGlobalDiscounts,
+			IntKeyEncoder,
+			collections.DecValueEncoder,
+		),
+		TraderDiscounts: collections.NewMap(
+			storeKey, NamespaceUserDiscounts,
+			collections.PairKeyEncoder(collections.AccAddressKeyEncoder, IntKeyEncoder),
+			collections.DecValueEncoder,
+		),
 	}
 }
 
@@ -102,6 +114,8 @@ const (
 	NamespaceReserveSnapshots
 	NamespaceDnrEpoch
 	NamespaceUserVolumes
+	NamespaceGlobalDiscounts
+	NamespaceUserDiscounts
 	NamespaceMarketLastVersion
 )
 

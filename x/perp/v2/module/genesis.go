@@ -3,6 +3,7 @@ package perp
 import (
 	"time"
 
+	"cosmossdk.io/math"
 	"github.com/NibiruChain/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -54,6 +55,21 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			vol.Volume,
 		)
 	}
+	for _, globalDiscount := range genState.GlobalDiscount {
+		k.GlobalDiscounts.Insert(
+			ctx,
+			globalDiscount.Volume,
+			globalDiscount.Fee,
+		)
+	}
+
+	for _, customDiscount := range genState.CustomDiscounts {
+		k.TraderDiscounts.Insert(
+			ctx,
+			collections.Join(sdk.MustAccAddressFromBech32(customDiscount.Trader), customDiscount.Discount.Volume),
+			customDiscount.Discount.Fee,
+		)
+	}
 }
 
 // ExportGenesis returns the capability module's exported genesis.
@@ -94,5 +110,29 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		})
 	}
 
+	// export global discounts
+	discounts := k.GlobalDiscounts.Iterate(ctx, collections.Range[math.Int]{})
+	defer discounts.Close()
+	for ; discounts.Valid(); discounts.Next() {
+		genesis.GlobalDiscount = append(genesis.GlobalDiscount, types.GenesisState_Discount{
+			Fee:    discounts.Value(),
+			Volume: discounts.Key(),
+		})
+	}
+
+	// export custom discounts
+	customDiscounts := k.TraderDiscounts.Iterate(ctx, collections.PairRange[sdk.AccAddress, math.Int]{})
+	defer customDiscounts.Close()
+
+	for ; customDiscounts.Valid(); customDiscounts.Next() {
+		key := customDiscounts.Key()
+		genesis.CustomDiscounts = append(genesis.CustomDiscounts, types.GenesisState_CustomDiscount{
+			Trader: key.K1().String(),
+			Discount: &types.GenesisState_Discount{
+				Fee:    sdk.Dec{},
+				Volume: key.K2(),
+			},
+		})
+	}
 	return genesis
 }

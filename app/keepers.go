@@ -95,9 +95,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/spot"
 	spotkeeper "github.com/NibiruChain/nibiru/x/spot/keeper"
 	spottypes "github.com/NibiruChain/nibiru/x/spot/types"
-	"github.com/NibiruChain/nibiru/x/stablecoin"
-	stablecoinkeeper "github.com/NibiruChain/nibiru/x/stablecoin/keeper"
-	stablecointypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
 	"github.com/NibiruChain/nibiru/x/sudo"
 	"github.com/NibiruChain/nibiru/x/sudo/keeper"
 	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
@@ -135,7 +132,6 @@ func initStoreKeys() (
 
 		// nibiru x/ keys
 		spottypes.StoreKey,
-		stablecointypes.StoreKey,
 		oracletypes.StoreKey,
 		epochstypes.StoreKey,
 		perpv2types.StoreKey,
@@ -146,7 +142,7 @@ func initStoreKeys() (
 		tokenfactorytypes.StoreKey,
 	)
 	tkeys = sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
-	memKeys = sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey, stablecointypes.MemStoreKey)
+	memKeys = sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 	return keys, tkeys, memKeys
 }
 
@@ -283,12 +279,6 @@ func (app *NibiruApp) InitKeepers(
 		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.stakingKeeper, distrtypes.ModuleName,
 	)
 
-	app.StablecoinKeeper = stablecoinkeeper.NewKeeper(
-		appCodec, keys[stablecointypes.StoreKey], memKeys[stablecointypes.MemStoreKey],
-		app.GetSubspace(stablecointypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.SpotKeeper,
-	)
-
 	app.EpochsKeeper = epochskeeper.NewKeeper(
 		appCodec, keys[epochstypes.StoreKey],
 	)
@@ -309,7 +299,6 @@ func (app *NibiruApp) InitKeepers(
 
 	app.EpochsKeeper.SetHooks(
 		epochstypes.NewMultiEpochHooks(
-			app.StablecoinKeeper.Hooks(),
 			app.PerpKeeperV2.Hooks(),
 			app.InflationKeeper.Hooks(),
 			app.OracleKeeper.Hooks(),
@@ -520,7 +509,6 @@ func (app *NibiruApp) initAppModules(
 
 		// Nibiru modules
 		spot.NewAppModule(appCodec, app.SpotKeeper, app.AccountKeeper, app.BankKeeper),
-		stablecoin.NewAppModule(appCodec, app.StablecoinKeeper, app.AccountKeeper, app.BankKeeper, app.OracleKeeper),
 		oracle.NewAppModule(appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper),
 		epochs.NewAppModule(appCodec, app.EpochsKeeper),
 		perpv2.NewAppModule(appCodec, app.PerpKeeperV2, app.AccountKeeper, app.BankKeeper, app.OracleKeeper),
@@ -590,7 +578,6 @@ func orderedModuleNames() []string {
 		// --------------------------------------------------------------------
 		// Native x/ Modules
 		epochstypes.ModuleName,
-		stablecointypes.ModuleName,
 		spottypes.ModuleName,
 		oracletypes.ModuleName,
 		perpv2types.ModuleName,
