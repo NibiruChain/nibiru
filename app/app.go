@@ -114,9 +114,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/spot"
 	spotkeeper "github.com/NibiruChain/nibiru/x/spot/keeper"
 	spottypes "github.com/NibiruChain/nibiru/x/spot/types"
-	"github.com/NibiruChain/nibiru/x/stablecoin"
-	stablecoinkeeper "github.com/NibiruChain/nibiru/x/stablecoin/keeper"
-	stablecointypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
 	"github.com/NibiruChain/nibiru/x/sudo"
 	"github.com/NibiruChain/nibiru/x/sudo/keeper"
 	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
@@ -168,7 +165,6 @@ var (
 		spot.AppModuleBasic{},
 		oracle.AppModuleBasic{},
 		epochs.AppModuleBasic{},
-		stablecoin.AppModuleBasic{},
 		perpv2.AppModuleBasic{},
 		inflation.AppModuleBasic{},
 		sudo.AppModuleBasic{},
@@ -191,19 +187,17 @@ var (
 		oracletypes.ModuleName:         {},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		ibcfeetypes.ModuleName:         {},
-		stablecointypes.ModuleName:     {authtypes.Minter, authtypes.Burner},
 
 		perptypesv2.ModuleName:           {},
 		perptypesv2.VaultModuleAccount:   {},
 		perptypesv2.PerpEFModuleAccount:  {},
 		perptypesv2.FeePoolModuleAccount: {},
 
-		epochstypes.ModuleName:                {},
-		stablecointypes.StableEFModuleAccount: {authtypes.Burner},
-		sudotypes.ModuleName:                  {},
-		common.TreasuryPoolModuleAccount:      {},
-		wasm.ModuleName:                       {authtypes.Burner},
-		tokenfactorytypes.ModuleName:          {authtypes.Minter, authtypes.Burner},
+		epochstypes.ModuleName:           {},
+		sudotypes.ModuleName:             {},
+		common.TreasuryPoolModuleAccount: {},
+		wasm.ModuleName:                  {authtypes.Burner},
+		tokenfactorytypes.ModuleName:     {authtypes.Minter, authtypes.Burner},
 	}
 )
 
@@ -278,7 +272,6 @@ type NibiruApp struct {
 	PerpKeeperV2       perpkeeperv2.Keeper
 	SpotKeeper         spotkeeper.Keeper
 	OracleKeeper       oraclekeeper.Keeper
-	StablecoinKeeper   stablecoinkeeper.Keeper
 	InflationKeeper    inflationkeeper.Keeper
 	SudoKeeper         keeper.Keeper
 	DevGasKeeper       devgaskeeper.Keeper
@@ -628,7 +621,6 @@ func initParamsKeeper(
 	// Nibiru core params keepers | x/
 	paramsKeeper.Subspace(spottypes.ModuleName)
 	paramsKeeper.Subspace(epochstypes.ModuleName)
-	paramsKeeper.Subspace(stablecointypes.ModuleName)
 	paramsKeeper.Subspace(inflationtypes.ModuleName)
 	// ibc params keepers
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
