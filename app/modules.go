@@ -2,9 +2,12 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 
+	sdkclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
@@ -57,11 +60,34 @@ type StakingModule struct {
 	staking.AppModuleBasic
 }
 
+var _ module.HasGenesisBasics = (*StakingModule)(nil)
+
 // DefaultGenesis returns custom Nibiru x/staking module genesis state.
 func (StakingModule) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 	genState := stakingtypes.DefaultGenesisState()
 	genState.Params.BondDenom = BondDenom
+	genState.Params.MinCommissionRate = sdk.MustNewDecFromStr("0.05")
 	return cdc.MustMarshalJSON(genState)
+}
+
+// ValidateGenesis: Verifies that the provided staking genesis state holds
+// expected invariants. I.e., params in correct bounds, no duplicate validators.
+// This implements the module.HasGenesisBasics interface and gets called during
+// the setup of the chain's module.BasicManager.
+func (StakingModule) ValidateGenesis(
+	cdc codec.JSONCodec, txConfig sdkclient.TxEncodingConfig, bz json.RawMessage,
+) error {
+	gen := new(stakingtypes.GenesisState)
+	if err := cdc.UnmarshalJSON(bz, gen); err != nil {
+		return fmt.Errorf("failed to unmarshal %s genesis state: %s", stakingtypes.ModuleName, bz)
+	}
+	if !gen.Params.MinCommissionRate.IsPositive() {
+		return fmt.Errorf(
+			"staking.params.min_commission must be positive (preferably >= 0.05): found value of %s",
+			gen.Params.MinCommissionRate.String(),
+		)
+	}
+	return staking.ValidateGenesis(gen)
 }
 
 // CrisisModule defines a custom wrapper around the x/crisis module's
