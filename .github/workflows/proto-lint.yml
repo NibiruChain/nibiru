@@ -32,6 +32,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: bufbuild/buf-setup-action@v1.26.1
+        with:
+          github_token: ${{ github.token }}
       - uses: bufbuild/buf-breaking-action@v1
         with:
           input: "proto"
