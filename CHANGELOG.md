@@ -44,6 +44,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#xxx](https://github.com/NibiruChain/nibiru/pull/xxx) - epic(tokenfactory):
   State transitions, collections, genesis import and export, and app wiring
 
+### Dependencies
+- Bump `github.com/prometheus/client_golang` from 1.16.0 to 1.17.0 ([#1605](https://github.com/NibiruChain/nibiru/pull/1605))
+
 ## [v0.21.10]
 
 ### Features
