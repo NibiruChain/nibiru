@@ -35,7 +35,27 @@ message GenesisState {
     ];
   }
 
-  repeated GenesisMarketLastVersion market_last_versions = 8
+  message Discount {
+    string fee = 1 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false
+    ];
+    string volume = 2 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+      (gogoproto.nullable) = false
+    ];
+  }
+
+  repeated Discount global_discount = 8 [ (gogoproto.nullable) = false ];
+
+  repeated CustomDiscount custom_discounts = 9 [ (gogoproto.nullable) = false ];
+
+  message CustomDiscount {
+    string trader = 1;
+    Discount discount = 2;
+  }
+
+  repeated GenesisMarketLastVersion market_last_versions = 10
       [ (gogoproto.nullable) = false ];
 }
 
