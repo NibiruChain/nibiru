@@ -42,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Features 
 
-* [#xxx](https://github.com/NibiruChain/nibiru/pull/xxx) - epic(tokenfactory):
+* [#1596](https://github.com/NibiruChain/nibiru/pull/1596) - epic(tokenfactory):
   State transitions, collections, genesis import and export, and app wiring
 
 ### State Breaking
