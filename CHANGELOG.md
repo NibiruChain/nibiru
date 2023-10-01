@@ -49,6 +49,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * [#1609](https://github.com/NibiruChain/nibiru/pull/1609) - refactor(app)!: Remove x/stablecoin module.
 * [#1613](https://github.com/NibiruChain/nibiru/pull/1613) - feat(app)!: enforce min commission by changing default and genesis validation
+* [#1615](https://github.com/NibiruChain/nibiru/pull/1613) - feat(ante)!: Ante
+  handler to add a maximum commission rate of 25% for validators.
 
 ### Improvements
 
