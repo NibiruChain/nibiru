@@ -97,7 +97,21 @@ func (api StoreAPI) HasCreator(ctx sdk.Context, creator string) bool {
 func (api StoreAPI) GetDenomAuthorityMetadata(
 	ctx sdk.Context, denom string,
 ) (tftypes.DenomAuthorityMetadata, error) {
-	return api.denomAdmins.Get(ctx, denom)
+	metadata, err := api.denomAdmins.Get(ctx, denom)
+	if err != nil {
+		return metadata, tftypes.ErrGetAdmin.Wrap(err.Error())
+	}
+	return metadata, nil
+}
+
+func (api StoreAPI) GetAdmin(
+	ctx sdk.Context, denom string,
+) (string, error) {
+	metadata, err := api.denomAdmins.Get(ctx, denom)
+	if err != nil {
+		return "", err
+	}
+	return metadata.Admin, nil
 }
 
 // ---------------------------------------------

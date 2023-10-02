@@ -95,3 +95,38 @@ func (k Keeper) UpdateModuleParams(
 	k.Store.ModuleParams.Set(ctx, txMsg.Params)
 	return &types.MsgUpdateModuleParamsResponse{}, err
 }
+
+func (k Keeper) Mint(
+	goCtx context.Context, txMsg *types.MsgMint,
+) (resp *types.MsgMintResponse, err error) {
+	if txMsg == nil {
+		return resp, errNilMsg
+	}
+	if err := txMsg.ValidateBasic(); err != nil {
+		return resp, err // ValidateBasic needs to be guaranteed for Wasm bindings
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	admin, err := k.Store.GetAdmin(ctx, txMsg.Coin.Denom)
+	if err != nil {
+		return nil, err
+	}
+
+	_, isFound := k.bankKeeper.GetDenomMetaData(ctx, txMsg.Coin.Denom)
+	if !isFound {
+		return nil, types.ErrGetMetadata
+	}
+
+	if k.authority != txMsg.Authority {
+		return nil, govtypes.ErrInvalidSigner.Wrapf("invalid authority; expected %s, got %s", k.authority, txMsg.Authority)
+	}
+
+	if err := txMsg.Params.Validate(); err != nil {
+		return resp, err
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	k.Store.ModuleParams.Set(ctx, txMsg.Params)
+	return &types.MsgUpdateModuleParamsResponse{}, err
+}

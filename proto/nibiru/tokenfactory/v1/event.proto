@@ -2,6 +2,9 @@ syntax = "proto3";
 
 package nibiru.tokenfactory.v1;
 
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
+
 option go_package = "github.com/NibiruChain/nibiru/x/tokenfactory/types";
 
 message EventCreateDenom {
@@ -11,6 +14,20 @@ message EventCreateDenom {
 
 message EventChangeAdmin {
   string denom = 1;
-  string old_admin = 3;
   string new_admin = 2;
+  string old_admin = 3;
+}
+
+message EventMint {
+  cosmos.base.v1beta1.Coin coin = 1
+      [ (gogoproto.moretags) = "yaml:\"coin\"", (gogoproto.nullable) = false ];
+  string to_addr = 2;
+  string caller = 3;
+}
+
+message EventBurn {
+  cosmos.base.v1beta1.Coin coin = 1
+      [ (gogoproto.moretags) = "yaml:\"coin\"", (gogoproto.nullable) = false ];
+  string from_addr = 2;
+  string caller = 3;
 }

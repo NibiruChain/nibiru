@@ -21,4 +21,6 @@ var (
 	ErrDenomAlreadyRegistered = registerError("attempting to create denom that is already registered (has bank metadata)")
 	ErrInvalidSender          = registerError("invalid msg sender")
 	ErrInvalidModuleParams    = registerError("invalid module params")
+	ErrGetAdmin               = registerError("failed to find admin for denom")
+	ErrGetMetadata            = registerError("failed to find bank metadata for denom")
 )

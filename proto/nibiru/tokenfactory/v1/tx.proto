@@ -19,8 +19,8 @@ service Msg {
   // module parameters.
   rpc UpdateModuleParams(MsgUpdateModuleParams)
       returns (MsgUpdateModuleParamsResponse);
-  // TODO MsgMint
-  // TODO MsgBurn
+  rpc Mint(MsgMint) returns (MsgMintResponse);
+  rpc Burn(MsgBurn) returns (MsgBurnResponse);
   // TODO MsgSetDenomMetadata
   // TODO MsgForceTransfer
 }
@@ -69,3 +69,37 @@ message MsgUpdateModuleParams {
 // MsgUpdateModuleParamsResponse is the gRPC response for the
 // MsgUpdateModuleParams TxMsg.
 message MsgUpdateModuleParamsResponse {}
+
+// MsgMint: sdk.Msg (TxMsg) where an denom admin mints more of the token.
+message MsgMint {
+  string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
+  // amount: The denom identifier and amount to mint.
+  cosmos.base.v1beta1.Coin coin = 2
+      [ (gogoproto.moretags) = "yaml:\"coin\"", (gogoproto.nullable) = false ];
+  // mint_to_addr: An address to which tokens will be minted. If blank,
+  // tokens are minted to the "sender".
+  string mint_to = 3 [
+    (gogoproto.moretags) = "yaml:\"mint_to\"",
+    (gogoproto.nullable) = true
+  ];
+}
+
+message MsgMintResponse { string mint_to = 1; }
+
+// MsgBurn: sdk.Msg (TxMsg) where a denom admin burns some of the token.
+// The reason that the sender isn't automatically the "burn_from" address
+// is to support smart contracts (primary use case). In this situation, the
+// contract is the message signer and sender, while "burn_from" is based on the
+// contract logic.
+message MsgBurn {
+  string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
+  // amount: The denom identifier and amount to burn.
+  cosmos.base.v1beta1.Coin amount = 2 [
+    (gogoproto.moretags) = "yaml:\"amount\"",
+    (gogoproto.nullable) = false
+  ];
+  // burn_from: The address from which tokens will be burned.
+  string burn_from = 3 [ (gogoproto.moretags) = "yaml:\"burn_from\"" ];
+}
+
+message MsgBurnResponse {}
