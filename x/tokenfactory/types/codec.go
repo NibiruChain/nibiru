@@ -43,6 +43,8 @@ func TX_MSG_TYPE_URLS() []string {
 		"/nibiru.tokenfactory.v1.MsgCreateDenom",
 		"/nibiru.tokenfactory.v1.MsgChangeAdmin",
 		"/nibiru.tokenfactory.v1.MsgUpdateModuleParams",
+		"/nibiru.tokenfactory.v1.MsgMint",
+		"/nibiru.tokenfactory.v1.MsgBurn",
 	}
 }
 

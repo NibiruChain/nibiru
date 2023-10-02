@@ -41,7 +41,6 @@ func (s *TestSuite) SetupTest() {
 	s.ctx = ctx
 	s.keeper = s.app.TokenFactoryKeeper
 	s.genesis = *tftypes.DefaultGenesis()
-
 	s.querier = s.keeper.Querier()
 }
 

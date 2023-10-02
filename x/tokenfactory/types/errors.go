@@ -23,4 +23,5 @@ var (
 	ErrInvalidModuleParams    = registerError("invalid module params")
 	ErrGetAdmin               = registerError("failed to find admin for denom")
 	ErrGetMetadata            = registerError("failed to find bank metadata for denom")
+	ErrUnauthorized           = registerError("sender must be admin")
 )

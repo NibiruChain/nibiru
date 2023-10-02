@@ -61,6 +61,7 @@ func NewAnteHandler(options AnteHandlerOptions) (sdk.AnteHandler, error) {
 		sdkante.NewTxTimeoutHeightDecorator(),
 		sdkante.NewValidateMemoDecorator(options.AccountKeeper),
 		ante.NewPostPriceFixedPriceDecorator(),
+		ante.AnteDecoratorStakingCommission{},
 		sdkante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
 		// Replace fee ante from cosmos auth with a custom one.
 		sdkante.NewDeductFeeDecorator(

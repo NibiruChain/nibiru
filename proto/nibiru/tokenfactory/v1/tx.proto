@@ -73,7 +73,7 @@ message MsgUpdateModuleParamsResponse {}
 // MsgMint: sdk.Msg (TxMsg) where an denom admin mints more of the token.
 message MsgMint {
   string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
-  // amount: The denom identifier and amount to mint.
+  // coin: The denom identifier and amount to mint.
   cosmos.base.v1beta1.Coin coin = 2
       [ (gogoproto.moretags) = "yaml:\"coin\"", (gogoproto.nullable) = false ];
   // mint_to_addr: An address to which tokens will be minted. If blank,
@@ -93,11 +93,9 @@ message MsgMintResponse { string mint_to = 1; }
 // contract logic.
 message MsgBurn {
   string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
-  // amount: The denom identifier and amount to burn.
-  cosmos.base.v1beta1.Coin amount = 2 [
-    (gogoproto.moretags) = "yaml:\"amount\"",
-    (gogoproto.nullable) = false
-  ];
+  // coin: The denom identifier and amount to burn.
+  cosmos.base.v1beta1.Coin coin = 2
+      [ (gogoproto.moretags) = "yaml:\"coin\"", (gogoproto.nullable) = false ];
   // burn_from: The address from which tokens will be burned.
   string burn_from = 3 [ (gogoproto.moretags) = "yaml:\"burn_from\"" ];
 }
