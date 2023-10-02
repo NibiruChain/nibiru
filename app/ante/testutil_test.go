@@ -19,7 +19,7 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	"github.com/NibiruChain/nibiru/app"
-	feeante "github.com/NibiruChain/nibiru/app/ante"
+	nibiruante "github.com/NibiruChain/nibiru/app/ante"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 )
@@ -38,6 +38,7 @@ type AnteTestSuite struct {
 // SetupTest setups a new test, with new app, context, and anteHandler.
 func (suite *AnteTestSuite) SetupTest() {
 	// Set up base app and ctx
+	testapp.EnsureNibiruPrefix()
 	encodingConfig := genesis.TEST_ENCODING_CONFIG
 	suite.app = testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encodingConfig.Marshaler))
 	chainId := "test-chain-id"
@@ -66,7 +67,8 @@ func (suite *AnteTestSuite) SetupTest() {
 		ante.NewValidateBasicDecorator(),
 		ante.NewTxTimeoutHeightDecorator(),
 		ante.NewValidateMemoDecorator(suite.app.AccountKeeper),
-		feeante.NewPostPriceFixedPriceDecorator(),
+		nibiruante.NewPostPriceFixedPriceDecorator(),
+		nibiruante.AnteDecoratorStakingCommission{},
 		ante.NewConsumeGasForTxSizeDecorator(suite.app.AccountKeeper),
 		ante.NewDeductFeeDecorator(suite.app.AccountKeeper, suite.app.BankKeeper, suite.app.FeeGrantKeeper, nil), // Replace fee ante from cosmos auth with a custom one.
 
