@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### API Breaking
 
+* [#1616](https://github.com/NibiruChain/nibiru/pull/1616) - fix(app)!: Add custom wasm snapshotter for proper state exports
 * [#1380](https://github.com/NibiruChain/nibiru/pull/1380) - feat(wasm): Add CreateMarket admin call for the controller contract
 * [#1359](https://github.com/NibiruChain/nibiru/pull/1359) - feat(perp): Add InsuranceFundWithdraw admin call with corresponding smart contract
 * [#1356](https://github.com/NibiruChain/nibiru/pull/1356) - build: Regress wasmvm (v1.1.1), tendermint (v0.34.24), and Cosmos-SDK (v0.45.14) dependencies
