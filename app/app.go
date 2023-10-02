@@ -209,16 +209,14 @@ func NewNibiruApp(
 	snapshotManager := app.SnapshotManager()
 	if snapshotManager == nil {
 		panic("mistakes were made: snapshot manager is nil")
-	} else {
-		err := snapshotManager.RegisterExtensions(
-			wasmkeeper.NewWasmSnapshotter(
-				app.CommitMultiStore(),
-				&app.WasmKeeper,
-			),
-		)
-		if err != nil {
-			panic("failed to add wasm snapshot extension.")
-		}
+	}
+	if err = snapshotManager.RegisterExtensions(
+		wasmkeeper.NewWasmSnapshotter(
+			app.CommitMultiStore(),
+			&app.WasmKeeper,
+		),
+	); err != nil {
+		panic("failed to add wasm snapshot extension.")
 	}
 
 	if loadLatest {
