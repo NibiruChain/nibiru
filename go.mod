@@ -7,6 +7,7 @@ require (
 	cosmossdk.io/math v1.1.2
 	github.com/CosmWasm/wasmd v0.40.2
 	github.com/CosmWasm/wasmvm v1.4.0
+	github.com/MakeNowJust/heredoc/v2 v2.0.1
 	github.com/NibiruChain/collections v0.3.0
 	github.com/armon/go-metrics v0.4.1
 	github.com/cometbft/cometbft v0.37.2

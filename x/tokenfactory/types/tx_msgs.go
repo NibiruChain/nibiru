@@ -107,6 +107,8 @@ func (m MsgMint) ValidateBasic() error {
 
 	if err := validateCoin(m.Coin); err != nil {
 		return err
+	} else if err := DenomStr(m.Coin.Denom).Validate(); err != nil {
+		return err
 	}
 
 	if m.MintTo != "" {
@@ -147,6 +149,8 @@ func (m MsgBurn) ValidateBasic() error {
 	}
 
 	if err := validateCoin(m.Coin); err != nil {
+		return err
+	} else if err := DenomStr(m.Coin.Denom).Validate(); err != nil {
 		return err
 	}
 

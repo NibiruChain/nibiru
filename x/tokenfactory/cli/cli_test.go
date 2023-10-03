@@ -1,6 +1,7 @@
 package cli_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -99,9 +100,9 @@ func (s *IntegrationTestSuite) CreateDenomTest(t *testing.T) {
 func (s *IntegrationTestSuite) MintBurnTest(t *testing.T) {
 	creator := s.val.Address
 	mint := func(coin string, mintTo string, wantErr bool) {
+		mintToArg := fmt.Sprintf("--mint-to=%s", mintTo)
 		_, err := s.network.ExecTxCmd(
-			cli.NewTxCmd(),
-			creator, []string{"mint", coin, mintTo})
+			cli.NewTxCmd(), creator, []string{"mint", coin, mintToArg})
 		if wantErr {
 			s.Require().Error(err)
 			return
@@ -111,9 +112,9 @@ func (s *IntegrationTestSuite) MintBurnTest(t *testing.T) {
 	}
 
 	burn := func(coin string, burnFrom string, wantErr bool) {
+		burnFromArg := fmt.Sprintf("--burn-from=%s", burnFrom)
 		_, err := s.network.ExecTxCmd(
-			cli.NewTxCmd(),
-			creator, []string{"burn", coin, burnFrom})
+			cli.NewTxCmd(), creator, []string{"burn", coin, burnFromArg})
 		if wantErr {
 			s.Require().Error(err)
 			return
@@ -128,17 +129,28 @@ func (s *IntegrationTestSuite) MintBurnTest(t *testing.T) {
 		Subdenom: "nusd",
 	}
 	coin := sdk.NewInt64Coin(denom.String(), 420)
-	mint(coin.String(), creator.String(), false) // happy
+	wantErr := false
+	mint(coin.String(), creator.String(), wantErr) // happy
 
-	t.Log("fail to mint and burn on token that doesn't exist")
+	t.Log("want error: unregistered denom")
 	coin.Denom = "notadenom"
-	mint(coin.String(), creator.String(), true) // sad
+	wantErr = true
+	mint(coin.String(), creator.String(), wantErr)
+	burn(coin.String(), creator.String(), wantErr)
 
-	burn(coin.String(), creator.String(), true) // sad
+	t.Log("want error: invalid coin")
+	mint("notacoin_231,,", creator.String(), wantErr)
+	burn("notacoin_231,,", creator.String(), wantErr)
+
+	t.Log(`want error: unable to parse "mint-to" or "burn-from"`)
+	coin.Denom = denom.String()
+	mint(coin.String(), "invalidAddr", wantErr)
+	burn(coin.String(), "invalidAddr", wantErr)
 
 	t.Log("burn successfully")
 	coin.Denom = denom.String()
-	burn(coin.String(), creator.String(), false) // happy
+	wantErr = false
+	burn(coin.String(), creator.String(), wantErr) // happy
 }
 
 func (s *IntegrationTestSuite) ChangeAdminTest(t *testing.T) {

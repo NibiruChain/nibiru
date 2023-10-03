@@ -135,6 +135,7 @@ func TestMsgUpdateModuleParams_ValidateBasic(t *testing.T) {
 func TestTxMsgInterface(t *testing.T) {
 	creator := testutil.AccAddress().String()
 	subdenom := testutil.RandLetters(4)
+	denomStr := fmt.Sprintf("tf/%s/%s", creator, subdenom)
 	for _, msg := range []legacytx.LegacyMsg{
 		&types.MsgCreateDenom{
 			Sender:   creator,
@@ -142,7 +143,7 @@ func TestTxMsgInterface(t *testing.T) {
 		},
 		&types.MsgChangeAdmin{
 			Sender:   creator,
-			Denom:    fmt.Sprintf("tf/%s/%s", creator, subdenom),
+			Denom:    denomStr,
 			NewAdmin: testutil.AccAddress().String(),
 		},
 	} {
@@ -161,9 +162,129 @@ func TestTxMsgInterface(t *testing.T) {
 			Authority: testutil.GovModuleAddr().String(),
 			Params:    types.DefaultModuleParams(),
 		},
+		&types.MsgMint{
+			Sender: creator,
+			Coin:   sdk.NewInt64Coin(denomStr, 420),
+			MintTo: "",
+		},
+		&types.MsgBurn{
+			Sender:   creator,
+			Coin:     sdk.NewInt64Coin(denomStr, 420),
+			BurnFrom: "",
+		},
 	} {
 		require.NotPanics(t, func() {
 			_ = msg.GetSigners()
 		})
+	}
+}
+
+func TestMsgMint_ValidateBasic(t *testing.T) {
+	sbf := testutil.AccAddress().String()
+	validDenom := fmt.Sprintf("tf/%s/ftt", sbf)
+	validCoin := sdk.NewInt64Coin(validDenom, 420)
+	for _, tc := range []ValidateBasicTest{
+		{
+			name: "happy",
+			msg: &types.MsgMint{
+				Sender: sbf,
+				Coin:   validCoin,
+				MintTo: "",
+			},
+			wantErr: "",
+		},
+		{
+			name: "invalid sender",
+			msg: &types.MsgMint{
+				Sender: "sender",
+				Coin:   validCoin,
+				MintTo: "",
+			},
+			wantErr: "invalid address",
+		},
+		{
+			name: "invalid denom",
+			msg: &types.MsgMint{
+				Sender: sbf,
+				Coin:   sdk.Coin{Denom: "tf/", Amount: sdk.NewInt(420)},
+				MintTo: "",
+			},
+			wantErr: "denom format error",
+		},
+		{
+			name: "invalid mint to addr",
+			msg: &types.MsgMint{
+				Sender: sbf,
+				Coin:   validCoin,
+				MintTo: "mintto",
+			},
+			wantErr: "invalid mint_to",
+		},
+		{
+			name: "invalid coin",
+			msg: &types.MsgMint{
+				Sender: sbf,
+				Coin:   sdk.Coin{Amount: sdk.NewInt(-420)},
+				MintTo: "",
+			},
+			wantErr: "invalid coin",
+		},
+	} {
+		t.Run(tc.name, validateBasicTest(tc.msg, tc.wantErr))
+	}
+}
+
+func TestMsgBurn_ValidateBasic(t *testing.T) {
+	sbf := testutil.AccAddress().String()
+	validDenom := fmt.Sprintf("tf/%s/ftt", sbf)
+	validCoin := sdk.NewInt64Coin(validDenom, 420)
+	for _, tc := range []ValidateBasicTest{
+		{
+			name: "happy",
+			msg: &types.MsgBurn{
+				Sender:   sbf,
+				Coin:     validCoin,
+				BurnFrom: "",
+			},
+			wantErr: "",
+		},
+		{
+			name: "invalid sender",
+			msg: &types.MsgBurn{
+				Sender:   "sender",
+				Coin:     validCoin,
+				BurnFrom: "",
+			},
+			wantErr: "invalid address",
+		},
+		{
+			name: "invalid denom",
+			msg: &types.MsgBurn{
+				Sender:   sbf,
+				Coin:     sdk.Coin{Denom: "tf/", Amount: sdk.NewInt(420)},
+				BurnFrom: "",
+			},
+			wantErr: "denom format error",
+		},
+		{
+			name: "invalid burn from addr",
+			msg: &types.MsgBurn{
+				Sender:   sbf,
+				Coin:     validCoin,
+				BurnFrom: "mintto",
+			},
+			wantErr: "invalid burn_from",
+		},
+		{
+			name: "invalid coin",
+			msg: &types.MsgBurn{
+				Sender:   sbf,
+				Coin:     sdk.Coin{Amount: sdk.NewInt(-420)},
+				BurnFrom: "",
+			},
+			wantErr: "invalid coin",
+		},
+	} {
+		t.Run(tc.name, validateBasicTest(tc.msg, tc.wantErr))
 	}
 }
