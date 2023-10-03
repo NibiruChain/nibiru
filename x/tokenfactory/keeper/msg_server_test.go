@@ -6,11 +6,12 @@ import (
 	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 func (s *TestSuite) TestCreateDenom() {
@@ -127,7 +128,8 @@ func (s *TestSuite) TestChangeAdmin() {
 		{
 			name: "sad: fail validate basic",
 			txMsg: &types.MsgChangeAdmin{
-				Sender: "sender", Denom: "tf/creator/nusd", NewAdmin: "new admin"},
+				Sender: "sender", Denom: "tf/creator/nusd", NewAdmin: "new admin",
+			},
 			wantErr: "invalid sender",
 		},
 
@@ -174,7 +176,8 @@ func (s *TestSuite) TestChangeAdmin() {
 			txMsg: &types.MsgChangeAdmin{
 				Sender:   sbf,
 				Denom:    types.TFDenom{Creator: sbf, Subdenom: "ftt"}.String(),
-				NewAdmin: testutil.AccAddress().String()},
+				NewAdmin: testutil.AccAddress().String(),
+			},
 			wantErr: collections.ErrNotFound.Error(),
 		},
 	}
@@ -355,7 +358,6 @@ func (s *TestSuite) TestMintBurn() {
 					sdk.NewInt(1),
 					coin.Amount,
 				)
-
 			},
 		},
 
@@ -385,7 +387,6 @@ func (s *TestSuite) TestMintBurn() {
 		{
 			name: "sad: sender is not admin",
 			setupMsgs: []sdk.Msg{
-
 				&types.MsgCreateDenom{
 					Sender:   addrs[0].String(),
 					Subdenom: "nusd",
@@ -426,7 +427,6 @@ func (s *TestSuite) TestMintBurn() {
 		{
 			name: "sad: blocked addrs",
 			setupMsgs: []sdk.Msg{
-
 				&types.MsgCreateDenom{
 					Sender:   addrs[0].String(),
 					Subdenom: "nusd",

@@ -118,8 +118,10 @@ func (api StoreAPI) GetAdmin(
 // StoreAPI - Under the hood
 // ---------------------------------------------
 
-type storePKType = string
-type storeVType = tftypes.TFDenom
+type (
+	storePKType = string
+	storeVType  = tftypes.TFDenom
+)
 
 // NewTFDenomStore: Creates an indexed map over token facotry denoms indexed
 // by creator address.

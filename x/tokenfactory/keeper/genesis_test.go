@@ -58,7 +58,6 @@ func (s *TestSuite) TestGenesis() {
 
 			if tc.expPanic {
 				s.Require().Panics(func() {
-
 				})
 			} else {
 				s.Require().NotPanics(func() {
