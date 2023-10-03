@@ -26,7 +26,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 
-	// modulecli "github.com/NibiruChain/nibiru/x/tokenfactory/client/cli"
+	modulecli "github.com/NibiruChain/nibiru/x/tokenfactory/cli"
 	modulekeeper "github.com/NibiruChain/nibiru/x/tokenfactory/keeper"
 	moduletypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
@@ -99,14 +99,12 @@ func (b AppModuleBasic) RegisterGRPCGatewayRoutes(
 
 // GetTxCmd returns the root tx command for the fees module.
 func (AppModuleBasic) GetTxCmd() *cobra.Command {
-	panic("TODO")
-	// return modulecli.NewTxCmd()
+	return modulecli.NewTxCmd()
 }
 
 // GetQueryCmd returns the fees module's root query command.
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
-	panic("TODO")
-	// return modulecli.GetQueryCmd()
+	return modulecli.NewQueryCmd()
 }
 
 // ___________________________________________________________________________

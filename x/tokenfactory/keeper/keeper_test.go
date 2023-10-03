@@ -12,7 +12,6 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -24,9 +23,8 @@ type TestSuite struct {
 	ctx sdk.Context
 	app *app.NibiruApp
 
-	keeper      tfkeeper.Keeper
-	queryClient tftypes.QueryClient
-	// msgServer tftypes.MsgServer // TODO when txs are added.
+	keeper  tfkeeper.Keeper
+	querier tfkeeper.Querier
 
 	genesis tftypes.GenesisState
 }
@@ -44,9 +42,7 @@ func (s *TestSuite) SetupTest() {
 	s.keeper = s.app.TokenFactoryKeeper
 	s.genesis = *tftypes.DefaultGenesis()
 
-	queryGrpcHelper := baseapp.NewQueryServerTestHelper(
-		s.ctx, s.app.InterfaceRegistry())
-	s.queryClient = tftypes.NewQueryClient(queryGrpcHelper)
+	s.querier = s.keeper.Querier()
 }
 
 func (s *TestSuite) GoCtx() context.Context { return sdk.WrapSDKContext(s.ctx) }

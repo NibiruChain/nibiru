@@ -44,11 +44,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * [#1596](https://github.com/NibiruChain/nibiru/pull/1596) - epic(tokenfactory):
   State transitions, collections, genesis import and export, and app wiring
+  * [#1607](https://github.com/NibiruChain/nibiru/pull/1607) - Token factory
+    transaction messages for CreateDenom, ChangeAdmin, and UpdateModuleParams 
 
 ### State Machine Breaking 
 
 * [#1609](https://github.com/NibiruChain/nibiru/pull/1609) - refactor(app)!: Remove x/stablecoin module.
 * [#1613](https://github.com/NibiruChain/nibiru/pull/1613) - feat(app)!: enforce min commission by changing default and genesis validation
+* [#1615](https://github.com/NibiruChain/nibiru/pull/1613) - feat(ante)!: Ante
+  handler to add a maximum commission rate of 25% for validators.
+* [#1616](https://github.com/NibiruChain/nibiru/pull/1616) - fix(app)!:
+  Add custom wasm snapshotter for proper state exports
+* [#1617](https://github.com/NibiruChain/nibiru/pull/1617) - fix(app)!:
+  non-nil snapshot manager is not guarantted in testapp
 
 ### Improvements
 

@@ -206,6 +206,17 @@ func NewNibiruApp(
 	app.SetAnteHandler(anteHandler)
 	app.SetEndBlocker(app.EndBlocker)
 
+	if snapshotManager := app.SnapshotManager(); snapshotManager != nil {
+		if err = snapshotManager.RegisterExtensions(
+			wasmkeeper.NewWasmSnapshotter(
+				app.CommitMultiStore(),
+				&app.WasmKeeper,
+			),
+		); err != nil {
+			panic("failed to add wasm snapshot extension.")
+		}
+	}
+
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
 			tmos.Exit(err.Error())
