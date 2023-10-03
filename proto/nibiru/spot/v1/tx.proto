@@ -35,9 +35,11 @@ service Msg {
 message MsgCreatePool {
   string creator = 1;
 
-  PoolParams pool_params = 2 [ (gogoproto.moretags) = "yaml:\"pool_params\"" ];
+  nibiru.spot.v1.PoolParams pool_params = 2
+      [ (gogoproto.moretags) = "yaml:\"pool_params\"" ];
 
-  repeated PoolAsset pool_assets = 3 [ (gogoproto.nullable) = false ];
+  repeated nibiru.spot.v1.PoolAsset pool_assets = 3
+      [ (gogoproto.nullable) = false ];
 }
 
 message MsgCreatePoolResponse { uint64 pool_id = 1; }
@@ -63,7 +65,7 @@ Response when a user joins a pool.
 */
 message MsgJoinPoolResponse {
   // the final state of the pool after a join
-  Pool pool = 1;
+  nibiru.spot.v1.Pool pool = 1;
 
   // sum of LP tokens minted from the join
   cosmos.base.v1beta1.Coin num_pool_shares_out = 2 [
