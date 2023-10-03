@@ -24,4 +24,7 @@ var (
 	ErrGetAdmin               = registerError("failed to find admin for denom")
 	ErrGetMetadata            = registerError("failed to find bank metadata for denom")
 	ErrUnauthorized           = registerError("sender must be admin")
+	// ErrBlockedAddress: error when the x/bank keeper has an address
+	// blocked.
+	ErrBlockedAddress = registerError("blocked address")
 )

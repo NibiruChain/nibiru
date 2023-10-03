@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -42,6 +43,23 @@ func (s *TestSuite) SetupTest() {
 	s.keeper = s.app.TokenFactoryKeeper
 	s.genesis = *tftypes.DefaultGenesis()
 	s.querier = s.keeper.Querier()
+}
+
+func (s *TestSuite) HandleMsg(txMsg sdk.Msg) (err error) {
+	goCtx := sdk.WrapSDKContext(s.ctx)
+	switch txMsg := txMsg.(type) {
+	case *tftypes.MsgCreateDenom:
+		_, err = s.app.TokenFactoryKeeper.CreateDenom(goCtx, txMsg)
+	case *tftypes.MsgMint:
+		_, err = s.app.TokenFactoryKeeper.Mint(goCtx, txMsg)
+	case *tftypes.MsgBurn:
+		_, err = s.app.TokenFactoryKeeper.Burn(goCtx, txMsg)
+	case *tftypes.MsgChangeAdmin:
+		_, err = s.app.TokenFactoryKeeper.ChangeAdmin(goCtx, txMsg)
+	default:
+		err = fmt.Errorf("unknown message type: %t", txMsg)
+	}
+	return err
 }
 
 func (s *TestSuite) GoCtx() context.Context { return sdk.WrapSDKContext(s.ctx) }

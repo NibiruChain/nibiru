@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -120,11 +119,6 @@ func (k Keeper) Mint(
 		)
 	}
 
-	_, isFound := k.bankKeeper.GetDenomMetaData(ctx, txMsg.Coin.Denom)
-	if !isFound {
-		return nil, types.ErrGetMetadata
-	}
-
 	if txMsg.MintTo == "" {
 		txMsg.MintTo = txMsg.Sender
 	}
@@ -159,17 +153,18 @@ func (k Keeper) mint(
 		return err
 	}
 
-	toAddr, err := sdk.AccAddressFromBech32(mintTo)
+	mintToAddr, err := sdk.AccAddressFromBech32(mintTo)
 	if err != nil {
 		return err
 	}
 
-	if k.bankKeeper.BlockedAddr(toAddr) {
-		return fmt.Errorf("failed to mint to blocked address: %s", toAddr)
+	if k.bankKeeper.BlockedAddr(mintToAddr) {
+		return types.ErrBlockedAddress.Wrapf(
+			"failed to mint to %s", mintToAddr)
 	}
 
 	return k.bankKeeper.SendCoinsFromModuleToAccount(
-		ctx, types.ModuleName, toAddr, coins,
+		ctx, types.ModuleName, mintToAddr, coins,
 	)
 }
 
@@ -194,11 +189,6 @@ func (k Keeper) Burn(
 		return resp, types.ErrUnauthorized.Wrapf(
 			"sender (%s), admin (%s)", txMsg.Sender, admin,
 		)
-	}
-
-	_, isFound := k.bankKeeper.GetDenomMetaData(ctx, txMsg.Coin.Denom)
-	if !isFound {
-		return nil, types.ErrGetMetadata
 	}
 
 	if txMsg.BurnFrom == "" {
@@ -233,17 +223,18 @@ func (k Keeper) burn(
 		return err
 	}
 
-	toAddr, err := sdk.AccAddressFromBech32(burnFrom)
+	burnFromAddr, err := sdk.AccAddressFromBech32(burnFrom)
 	if err != nil {
 		return err
 	}
 
-	if k.bankKeeper.BlockedAddr(toAddr) {
-		return fmt.Errorf("failed to from from blocked address: %s", toAddr)
+	if k.bankKeeper.BlockedAddr(burnFromAddr) {
+		return types.ErrBlockedAddress.Wrapf(
+			"failed to burn from %s", burnFromAddr)
 	}
 
 	if err = k.bankKeeper.SendCoinsFromAccountToModule(
-		ctx, toAddr, types.ModuleName, coins,
+		ctx, burnFromAddr, types.ModuleName, coins,
 	); err != nil {
 		return err
 	}

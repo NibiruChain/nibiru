@@ -8,7 +8,9 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
+	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 func (s *TestSuite) TestCreateDenom() {
@@ -267,6 +269,221 @@ func (s *TestSuite) TestUpdateModuleParams() {
 			params, err := s.app.TokenFactoryKeeper.Store.ModuleParams.Get(s.ctx)
 			s.Require().NoError(err)
 			s.Equal(params, tc.txMsg.Params)
+		})
+	}
+}
+
+type SdkMsgTestCase struct {
+	TestMsg sdk.Msg
+	WantErr string
+}
+
+func (s *TestSuite) TestMintBurn() {
+	_, addrs := testutil.PrivKeyAddressPairs(4)
+	tfModuleAddr := authtypes.NewModuleAddress(types.ModuleName)
+	tfdenom := types.TFDenom{
+		Creator:  addrs[0].String(),
+		Subdenom: "nusd",
+	}
+	nusd69420 := sdk.Coin{
+		Denom:  tfdenom.String(),
+		Amount: sdk.NewInt(69_420),
+	}
+
+	testCases := []struct {
+		name      string
+		setupMsgs []sdk.Msg
+		testMsgs  []SdkMsgTestCase
+		preHook   func(ctx sdk.Context, bapp *app.NibiruApp)
+		postHook  func(ctx sdk.Context, bapp *app.NibiruApp)
+	}{
+		{
+			name: "happy: mint and burn",
+			setupMsgs: []sdk.Msg{
+				&types.MsgCreateDenom{
+					Sender:   addrs[0].String(),
+					Subdenom: "nusd",
+				},
+
+				&types.MsgMint{
+					Sender: addrs[0].String(),
+					Coin: sdk.Coin{
+						Denom: types.TFDenom{
+							Creator:  addrs[0].String(),
+							Subdenom: "nusd",
+						}.String(),
+						Amount: sdk.NewInt(69_420),
+					},
+					MintTo: "",
+				},
+			},
+			testMsgs: []SdkMsgTestCase{
+				{
+					TestMsg: &types.MsgBurn{
+						Sender: addrs[0].String(),
+						Coin: sdk.Coin{
+							Denom: types.TFDenom{
+								Creator:  addrs[0].String(),
+								Subdenom: "nusd",
+							}.String(),
+							Amount: sdk.NewInt(1),
+						},
+						BurnFrom: "",
+					},
+					WantErr: "",
+				},
+			},
+			preHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
+				allDenoms := bapp.TokenFactoryKeeper.Store.Denoms.
+					Iterate(ctx, collections.Range[string]{}).Values()
+				s.Len(allDenoms, 1)
+			},
+			postHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
+				allDenoms := bapp.TokenFactoryKeeper.Store.Denoms.
+					Iterate(ctx, collections.Range[string]{}).Values()
+
+				s.T().Log("Minting changes total supply, but burning does not.")
+				denom := allDenoms[0]
+				s.Equal(
+					sdk.NewInt(69_420), s.app.BankKeeper.GetSupply(s.ctx, denom.String()).Amount,
+				)
+
+				s.T().Log("We burned 1 token, so it should be in the module account.")
+				coin := s.app.BankKeeper.GetBalance(
+					s.ctx, tfModuleAddr, denom.String())
+				s.Equal(
+					sdk.NewInt(1),
+					coin.Amount,
+				)
+
+			},
+		},
+
+		{
+			name:      "sad: denom does not exist",
+			setupMsgs: []sdk.Msg{},
+			testMsgs: []SdkMsgTestCase{
+				{
+					TestMsg: &types.MsgMint{
+						Sender: addrs[0].String(),
+						Coin:   nusd69420,
+						MintTo: "",
+					},
+					WantErr: collections.ErrNotFound.Error(),
+				},
+				{
+					TestMsg: &types.MsgBurn{
+						Sender:   addrs[0].String(),
+						Coin:     nusd69420,
+						BurnFrom: "",
+					},
+					WantErr: collections.ErrNotFound.Error(),
+				},
+			},
+		},
+
+		{
+			name: "sad: sender is not admin",
+			setupMsgs: []sdk.Msg{
+
+				&types.MsgCreateDenom{
+					Sender:   addrs[0].String(),
+					Subdenom: "nusd",
+				},
+
+				&types.MsgMint{
+					Sender: addrs[0].String(),
+					Coin:   nusd69420,
+					MintTo: "",
+				},
+
+				&types.MsgChangeAdmin{
+					Sender:   addrs[0].String(),
+					Denom:    tfdenom.String(),
+					NewAdmin: addrs[1].String(),
+				},
+			},
+			testMsgs: []SdkMsgTestCase{
+				{
+					TestMsg: &types.MsgMint{
+						Sender: addrs[0].String(),
+						Coin:   nusd69420,
+						MintTo: "",
+					},
+					WantErr: types.ErrUnauthorized.Error(),
+				},
+				{
+					TestMsg: &types.MsgBurn{
+						Sender:   addrs[0].String(),
+						Coin:     nusd69420,
+						BurnFrom: "",
+					},
+					WantErr: types.ErrUnauthorized.Error(),
+				},
+			},
+		},
+
+		{
+			name: "sad: blocked addrs",
+			setupMsgs: []sdk.Msg{
+
+				&types.MsgCreateDenom{
+					Sender:   addrs[0].String(),
+					Subdenom: "nusd",
+				},
+
+				&types.MsgMint{
+					Sender: addrs[0].String(),
+					Coin:   nusd69420,
+					MintTo: "",
+				},
+			},
+			testMsgs: []SdkMsgTestCase{
+				{
+					TestMsg: &types.MsgMint{
+						Sender: addrs[0].String(),
+						Coin:   nusd69420,
+						MintTo: authtypes.NewModuleAddress(oracletypes.ModuleName).String(),
+					},
+					WantErr: types.ErrBlockedAddress.Error(),
+				},
+				{
+					TestMsg: &types.MsgBurn{
+						Sender:   addrs[0].String(),
+						Coin:     nusd69420,
+						BurnFrom: authtypes.NewModuleAddress(oracletypes.ModuleName).String(),
+					},
+					WantErr: types.ErrBlockedAddress.Error(),
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		s.T().Run(tc.name, func(t *testing.T) {
+			s.SetupTest()
+
+			for _, txMsg := range tc.setupMsgs {
+				err := s.HandleMsg(txMsg)
+				s.Require().NoError(err)
+			}
+
+			if tc.preHook != nil {
+				tc.preHook(s.ctx, s.app)
+			}
+
+			for _, msgTc := range tc.testMsgs {
+				err := s.HandleMsg(msgTc.TestMsg)
+				if msgTc.WantErr != "" {
+					s.ErrorContains(err, msgTc.WantErr)
+					continue
+				}
+				s.NoError(err)
+			}
+
+			if tc.postHook != nil {
+				tc.postHook(s.ctx, s.app)
+			}
 		})
 	}
 }
