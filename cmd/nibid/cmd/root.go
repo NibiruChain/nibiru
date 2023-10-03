@@ -264,11 +264,12 @@ func (a appCreator) appExport(
 		return servertypes.ExportedApp{}, errors.New("application home is not set")
 	}
 
+	loadLatestHeight := height == -1
 	nibiruApp = app.NewNibiruApp(
 		logger,
 		db,
 		traceStore,
-		height == -1,
+		loadLatestHeight,
 		a.encCfg,
 		appOpts,
 	)

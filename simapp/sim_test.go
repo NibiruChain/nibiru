@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/app"
+	appsim "github.com/NibiruChain/nibiru/app/sim"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 )
 
@@ -25,7 +26,7 @@ import (
 const SimAppChainID = "simulation-app"
 
 func init() {
-	app.GetSimulatorFlags()
+	appsim.GetSimulatorFlags()
 }
 
 func TestFullAppSimulation(tb *testing.T) {

@@ -42,12 +42,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Features 
 
-* [#xxx](https://github.com/NibiruChain/nibiru/pull/xxx) - epic(tokenfactory):
+* [#1596](https://github.com/NibiruChain/nibiru/pull/1596) - epic(tokenfactory):
   State transitions, collections, genesis import and export, and app wiring
 
-### State Breaking
+### State Machine Breaking 
 
 * [#1609](https://github.com/NibiruChain/nibiru/pull/1609) - refactor(app)!: Remove x/stablecoin module.
+* [#1613](https://github.com/NibiruChain/nibiru/pull/1613) - feat(app)!: enforce min commission by changing default and genesis validation
+* [#1615](https://github.com/NibiruChain/nibiru/pull/1613) - feat(ante)!: Ante
+  handler to add a maximum commission rate of 25% for validators.
+* [#1616](https://github.com/NibiruChain/nibiru/pull/1616) - fix(app)!:
+  Add custom wasm snapshotter for proper state exports
+
+### Improvements
+
+* [#1610](https://github.com/NibiruChain/nibiru/pull/1610) - refactor(app): Simplify app.go with less redundant imports using struct embedding.
+
+### Dependencies
+- Bump `github.com/prometheus/client_golang` from 1.16.0 to 1.17.0 ([#1605](https://github.com/NibiruChain/nibiru/pull/1605))
 
 ## [v0.21.10]
 
@@ -64,6 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1559](https://github.com/NibiruChain/nibiru/pull/1559) - feat: add versions to markets to allow to disable them
 * [#1585](https://github.com/NibiruChain/nibiru/pull/1585) - feat: include flag versioned in query markets to allow to query disabled markets
 * [#1594](https://github.com/NibiruChain/nibiru/pull/1594) - feat: add user discounts
+
 ### Improvements
 
 * [#1466](https://github.com/NibiruChain/nibiru/pull/1466) - refactor(perp): `PositionLiquidatedEvent`
