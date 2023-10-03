@@ -46,6 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   State transitions, collections, genesis import and export, and app wiring
   * [#1607](https://github.com/NibiruChain/nibiru/pull/1607) - Token factory
     transaction messages for CreateDenom, ChangeAdmin, and UpdateModuleParams 
+  * [#1620](https://github.com/NibiruChain/nibiru/pull/1620) - Token factory
+    transaction messages for Mint and Burn
 
 ### State Machine Breaking 
 
