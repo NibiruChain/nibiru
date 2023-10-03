@@ -62,7 +62,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Improvements
 
-* [#1610](https://github.com/NibiruChain/nibiru/pull/1610) - refactor(app): Simplify app.go with less redundant imports using struct embedding.
+* [#1610](https://github.com/NibiruChain/nibiru/pull/1610) - refactor(app):
+  Simplify app.go with less redundant imports using struct embedding.
+* [#1614](https://github.com/NibiruChain/nibiru/pull/1614) - refactor(proto): Use
+  explicit namespacing on proto imports for #1608
 
 ### Dependencies
 - Bump `github.com/prometheus/client_golang` from 1.16.0 to 1.17.0 ([#1605](https://github.com/NibiruChain/nibiru/pull/1605))
