@@ -20,5 +20,5 @@ message QuerySudoersRequest {}
 
 // QuerySudoersResponse indicates the successful execution of MsgEditSudeors.
 message QuerySudoersResponse {
-  Sudoers sudoers = 1 [ (gogoproto.nullable) = false ];
+  nibiru.sudo.v1.Sudoers sudoers = 1 [ (gogoproto.nullable) = false ];
 }

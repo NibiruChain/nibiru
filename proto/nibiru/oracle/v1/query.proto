@@ -119,7 +119,7 @@ message QueryExchangeRatesRequest {}
 message QueryExchangeRatesResponse {
   // exchange_rates defines a list of the exchange rate for all whitelisted
   // pairs.
-  repeated ExchangeRateTuple exchange_rates = 1 [
+  repeated nibiru.oracle.v1.ExchangeRateTuple exchange_rates = 1 [
     (gogoproto.castrepeated) = "ExchangeRateTuples",
     (gogoproto.nullable) = false
   ];
@@ -204,7 +204,7 @@ message QueryAggregatePrevoteRequest {
 message QueryAggregatePrevoteResponse {
   // aggregate_prevote defines oracle aggregate prevote submitted by a validator
   // in the current vote period
-  AggregateExchangeRatePrevote aggregate_prevote = 1
+  nibiru.oracle.v1.AggregateExchangeRatePrevote aggregate_prevote = 1
       [ (gogoproto.nullable) = false ];
   ;
 }
@@ -218,7 +218,7 @@ message QueryAggregatePrevotesRequest {}
 message QueryAggregatePrevotesResponse {
   // aggregate_prevotes defines all oracle aggregate prevotes submitted in the
   // current vote period
-  repeated AggregateExchangeRatePrevote aggregate_prevotes = 1
+  repeated nibiru.oracle.v1.AggregateExchangeRatePrevote aggregate_prevotes = 1
       [ (gogoproto.nullable) = false ];
 }
 
@@ -237,7 +237,8 @@ message QueryAggregateVoteRequest {
 message QueryAggregateVoteResponse {
   // aggregate_vote defines oracle aggregate vote submitted by a validator in
   // the current vote period
-  AggregateExchangeRateVote aggregate_vote = 1 [ (gogoproto.nullable) = false ];
+  nibiru.oracle.v1.AggregateExchangeRateVote aggregate_vote = 1
+      [ (gogoproto.nullable) = false ];
 }
 
 // QueryAggregateVotesRequest is the request type for the Query/AggregateVotes
@@ -249,7 +250,7 @@ message QueryAggregateVotesRequest {}
 message QueryAggregateVotesResponse {
   // aggregate_votes defines all oracle aggregate votes submitted in the current
   // vote period
-  repeated AggregateExchangeRateVote aggregate_votes = 1
+  repeated nibiru.oracle.v1.AggregateExchangeRateVote aggregate_votes = 1
       [ (gogoproto.nullable) = false ];
 }
 
@@ -259,5 +260,5 @@ message QueryParamsRequest {}
 // QueryParamsResponse is the response type for the Query/Params RPC method.
 message QueryParamsResponse {
   // params defines the parameters of the module.
-  Params params = 1 [ (gogoproto.nullable) = false ];
+  nibiru.oracle.v1.Params params = 1 [ (gogoproto.nullable) = false ];
 }

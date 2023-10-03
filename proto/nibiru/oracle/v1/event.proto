@@ -23,7 +23,7 @@ message EventDelegateFeederConsent {
   // Validator is the Bech32 address that is delegating voting rights.
   string validator = 1;
 
-  // Feeder is the delegate or representative that will be able to send 
+  // Feeder is the delegate or representative that will be able to send
   // vote and prevote transaction messages.
   string feeder = 2;
 }
@@ -33,23 +33,23 @@ message EventAggregateVote {
   // Validator is the Bech32 address to which the vote will be credited.
   string validator = 1;
 
-  // Feeder is the delegate or representative that will send vote and prevote 
+  // Feeder is the delegate or representative that will send vote and prevote
   // transaction messages on behalf of the voting validator.
   string feeder = 2;
 
-  repeated ExchangeRateTuple prices = 3 [
+  repeated nibiru.oracle.v1.ExchangeRateTuple prices = 3 [
     (gogoproto.castrepeated) = "ExchangeRateTuples",
     (gogoproto.nullable) = false
   ];
 }
 
-// Emitted by MsgAggregateExchangePrevote when an aggregate prevote is added 
+// Emitted by MsgAggregateExchangePrevote when an aggregate prevote is added
 // to state
 message EventAggregatePrevote {
   // Validator is the Bech32 address to which the vote will be credited.
   string validator = 1;
 
-  // Feeder is the delegate or representative that will send vote and prevote 
+  // Feeder is the delegate or representative that will send vote and prevote
   // transaction messages on behalf of the voting validator.
   string feeder = 2;
 }

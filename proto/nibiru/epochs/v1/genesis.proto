@@ -10,5 +10,6 @@ option go_package = "github.com/NibiruChain/nibiru/x/epochs/types";
 
 // GenesisState defines the epochs module's genesis state.
 message GenesisState {
-  repeated EpochInfo epochs = 1 [ (gogoproto.nullable) = false ];
+  repeated nibiru.epochs.v1.EpochInfo epochs = 1
+      [ (gogoproto.nullable) = false ];
 }

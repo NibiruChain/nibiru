@@ -54,7 +54,7 @@ message MsgRemoveMarginResponse {
   ];
 
   // The resulting position
-  Position position = 3;
+  nibiru.perp.v2.Position position = 3;
 }
 
 // -------------------------- AddMargin --------------------------
@@ -78,7 +78,7 @@ message MsgAddMarginResponse {
     (gogoproto.nullable) = false
   ];
 
-  Position position = 2;
+  nibiru.perp.v2.Position position = 2;
 }
 
 // -------------------------- Liquidation --------------------------
@@ -132,7 +132,7 @@ message MsgMarketOrder {
     (gogoproto.nullable) = false
   ];
 
-  Direction side = 3;
+  nibiru.perp.v2.Direction side = 3;
 
   string quote_asset_amount = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
@@ -151,7 +151,7 @@ message MsgMarketOrder {
 }
 
 message MsgMarketOrderResponse {
-  Position position = 1;
+  nibiru.perp.v2.Position position = 1;
 
   // The amount of quote assets exchanged.
   string exchanged_notional_value = 2 [

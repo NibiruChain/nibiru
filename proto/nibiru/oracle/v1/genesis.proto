@@ -9,24 +9,26 @@ option go_package = "github.com/NibiruChain/nibiru/x/oracle/types";
 
 // GenesisState defines the oracle module's genesis state.
 message GenesisState {
-  Params params = 1 [ (gogoproto.nullable) = false ];
-  repeated FeederDelegation feeder_delegations = 2
+  nibiru.oracle.v1.Params params = 1 [ (gogoproto.nullable) = false ];
+  repeated nibiru.oracle.v1.FeederDelegation feeder_delegations = 2
       [ (gogoproto.nullable) = false ];
-  repeated ExchangeRateTuple exchange_rates = 3 [
+  repeated nibiru.oracle.v1.ExchangeRateTuple exchange_rates = 3 [
     (gogoproto.castrepeated) = "ExchangeRateTuples",
     (gogoproto.nullable) = false
   ];
-  repeated MissCounter miss_counters = 4 [ (gogoproto.nullable) = false ];
-  repeated AggregateExchangeRatePrevote aggregate_exchange_rate_prevotes = 5
+  repeated nibiru.oracle.v1.MissCounter miss_counters = 4
       [ (gogoproto.nullable) = false ];
-  repeated AggregateExchangeRateVote aggregate_exchange_rate_votes = 6
-      [ (gogoproto.nullable) = false ];
+  repeated nibiru.oracle.v1.AggregateExchangeRatePrevote
+      aggregate_exchange_rate_prevotes = 5 [ (gogoproto.nullable) = false ];
+  repeated nibiru.oracle.v1.AggregateExchangeRateVote
+      aggregate_exchange_rate_votes = 6 [ (gogoproto.nullable) = false ];
   repeated string pairs = 7 [
     (gogoproto.customtype) =
         "github.com/NibiruChain/nibiru/x/common/asset.Pair",
     (gogoproto.nullable) = false
   ];
-  repeated Rewards rewards = 8 [ (gogoproto.nullable) = false ];
+  repeated nibiru.oracle.v1.Rewards rewards = 8
+      [ (gogoproto.nullable) = false ];
 }
 
 // FeederDelegation is the address for where oracle feeder authority are
