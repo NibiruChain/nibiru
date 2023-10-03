@@ -55,6 +55,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   handler to add a maximum commission rate of 25% for validators.
 * [#1616](https://github.com/NibiruChain/nibiru/pull/1616) - fix(app)!:
   Add custom wasm snapshotter for proper state exports
+* [#1617](https://github.com/NibiruChain/nibiru/pull/1617) - fix(app)!:
+  non-nil snapshot manager is not guarantted in testapp
 
 ### Improvements
 
