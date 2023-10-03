@@ -12,6 +12,8 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/tokenfactory/cli"
 	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var _ suite.SetupAllSuite = (*IntegrationTestSuite)(nil)
@@ -30,6 +32,7 @@ func TestIntegrationTestSuite(t *testing.T) {
 
 func (s *IntegrationTestSuite) TestTokenFactory() {
 	s.T().Run("CreateDenomTest", s.CreateDenomTest)
+	s.T().Run("MintBurnTest", s.MintBurnTest)
 	s.T().Run("ChangeAdminTest", s.ChangeAdminTest)
 }
 
@@ -91,6 +94,51 @@ func (s *IntegrationTestSuite) CreateDenomTest(t *testing.T) {
 		types.TFDenom{Creator: creator.String(), Subdenom: "stnusd"}.String(),
 	}
 	s.ElementsMatch(denoms, wantDenoms)
+}
+
+func (s *IntegrationTestSuite) MintBurnTest(t *testing.T) {
+	creator := s.val.Address
+	mint := func(coin string, mintTo string, wantErr bool) {
+		_, err := s.network.ExecTxCmd(
+			cli.NewTxCmd(),
+			creator, []string{"mint", coin, mintTo})
+		if wantErr {
+			s.Require().Error(err)
+			return
+		}
+		s.Require().NoError(err)
+		s.NoError(s.network.WaitForNextBlock())
+	}
+
+	burn := func(coin string, burnFrom string, wantErr bool) {
+		_, err := s.network.ExecTxCmd(
+			cli.NewTxCmd(),
+			creator, []string{"burn", coin, burnFrom})
+		if wantErr {
+			s.Require().Error(err)
+			return
+		}
+		s.Require().NoError(err)
+		s.NoError(s.network.WaitForNextBlock())
+	}
+
+	t.Log("mint successfully")
+	denom := types.TFDenom{
+		Creator:  creator.String(),
+		Subdenom: "nusd",
+	}
+	coin := sdk.NewInt64Coin(denom.String(), 420)
+	mint(coin.String(), creator.String(), false) // happy
+
+	t.Log("fail to mint and burn on token that doesn't exist")
+	coin.Denom = "notadenom"
+	mint(coin.String(), creator.String(), true) // sad
+
+	burn(coin.String(), creator.String(), true) // sad
+
+	t.Log("burn successfully")
+	coin.Denom = denom.String()
+	burn(coin.String(), creator.String(), false) // happy
 }
 
 func (s *IntegrationTestSuite) ChangeAdminTest(t *testing.T) {
