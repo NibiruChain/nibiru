@@ -23,7 +23,8 @@ service Query {
 
 message QueryEpochsInfoRequest {}
 message QueryEpochsInfoResponse {
-  repeated EpochInfo epochs = 1 [ (gogoproto.nullable) = false ];
+  repeated nibiru.epochs.v1.EpochInfo epochs = 1
+      [ (gogoproto.nullable) = false ];
 }
 
 message QueryCurrentEpochRequest { string identifier = 1; }

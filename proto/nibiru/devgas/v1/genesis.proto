@@ -8,9 +8,10 @@ option go_package = "github.com/NibiruChain/nibiru/x/devgas/v1/types";
 // GenesisState defines the module's genesis state.
 message GenesisState {
   // params are the feeshare module parameters
-  ModuleParams params = 1 [ (gogoproto.nullable) = false ];
+  nibiru.devgas.v1.ModuleParams params = 1 [ (gogoproto.nullable) = false ];
   // FeeShare is a slice of active registered contracts for fee distribution
-  repeated FeeShare fee_share = 2 [ (gogoproto.nullable) = false ];
+  repeated nibiru.devgas.v1.FeeShare fee_share = 2
+      [ (gogoproto.nullable) = false ];
 }
 
 // ModuleParams defines the params for the devgas module
