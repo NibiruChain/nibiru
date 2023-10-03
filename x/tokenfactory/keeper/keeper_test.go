@@ -42,9 +42,7 @@ func (s *TestSuite) SetupTest() {
 	s.keeper = s.app.TokenFactoryKeeper
 	s.genesis = *tftypes.DefaultGenesis()
 
-	s.querier = tfkeeper.Querier{
-		Keeper: s.app.TokenFactoryKeeper,
-	}
+	s.querier = s.keeper.Querier()
 }
 
 func (s *TestSuite) GoCtx() context.Context { return sdk.WrapSDKContext(s.ctx) }

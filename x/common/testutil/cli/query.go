@@ -47,8 +47,23 @@ func WithQueryEncodingType(e EncodingType) ExecQueryOption {
 	}
 }
 
+func (chain Network) ExecQuery(
+	cmd *cobra.Command,
+	args []string,
+	result codec.ProtoMarshaler,
+	opts ...ExecQueryOption,
+) error {
+	return ExecQuery(chain.Validators[0].ClientCtx, cmd, args, result, opts...)
+}
+
 // ExecQuery executes a CLI query onto the provided Network.
-func ExecQuery(clientCtx client.Context, cmd *cobra.Command, args []string, result codec.ProtoMarshaler, opts ...ExecQueryOption) error {
+func ExecQuery(
+	clientCtx client.Context,
+	cmd *cobra.Command,
+	args []string,
+	result codec.ProtoMarshaler,
+	opts ...ExecQueryOption,
+) error {
 	var options queryOptions
 	for _, o := range opts {
 		o(&options)

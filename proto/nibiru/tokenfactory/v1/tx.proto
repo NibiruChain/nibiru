@@ -2,7 +2,70 @@ syntax = "proto3";
 
 package nibiru.tokenfactory.v1;
 
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "nibiru/tokenfactory/v1/state.proto";
+
 option go_package = "github.com/NibiruChain/nibiru/x/tokenfactory/types";
 
 // Msg defines the gRPC Msg service for transactions.
-service Msg {}
+service Msg {
+  // CreateDenom: registers a token factory denom.
+  rpc CreateDenom(MsgCreateDenom) returns (MsgCreateDenomResponse);
+  rpc ChangeAdmin(MsgChangeAdmin) returns (MsgChangeAdminResponse);
+  // UpdateModuleParams: A governance operation for updating the x/tokenfactory
+  // module parameters.
+  rpc UpdateModuleParams(MsgUpdateModuleParams)
+      returns (MsgUpdateModuleParamsResponse);
+  // TODO MsgMint
+  // TODO MsgBurn
+  // TODO MsgSetDenomMetadata
+  // TODO MsgForceTransfer
+}
+
+// MsgCreateDenom: sdk.Msg that registers an a token factory denom.
+// A denom has the form "tf/[creatorAddr]/[subdenom]".
+//  - Denoms become unique x/bank tokens, so the creator-subdenom pair that
+//    defines a denom cannot be reused.
+//  - The resulting denom's admin is originally set to be the creator, but the
+//    admin can be changed later.
+message MsgCreateDenom {
+  string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
+  // subdenom can be up to 44 "alphanumeric" characters long.
+  string subdenom = 2 [ (gogoproto.moretags) = "yaml:\"subdenom\"" ];
+}
+
+// MsgCreateDenomResponse is the return value of MsgCreateDenom
+message MsgCreateDenomResponse {
+  // NewTokenDenom: identifier for the newly created token factory denom.
+  string new_token_denom = 1
+      [ (gogoproto.moretags) = "yaml:\"new_token_denom\"" ];
+}
+
+// MsgChangeAdmin is the sdk.Msg type for allowing an admin account to change
+// admin of a denom to a new account
+message MsgChangeAdmin {
+  string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
+  string denom = 2 [ (gogoproto.moretags) = "yaml:\"denom\"" ];
+  string new_admin = 3 [ (gogoproto.moretags) = "yaml:\"new_admin\"" ];
+}
+
+// MsgChangeAdminResponse is the gRPC response for the MsgChangeAdmin TxMsg.
+message MsgChangeAdminResponse {}
+
+// MsgUpdateModuleParams: sdk.Msg for updating the x/tokenfactory module params
+message MsgUpdateModuleParams {
+  option (cosmos.msg.v1.signer) = "authority";
+
+  // Authority: Address of the governance module account.
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  nibiru.tokenfactory.v1.ModuleParams params = 2
+      [ (gogoproto.nullable) = false ];
+}
+
+// MsgUpdateModuleParamsResponse is the gRPC response for the
+// MsgUpdateModuleParams TxMsg.
+message MsgUpdateModuleParamsResponse {}

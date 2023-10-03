@@ -33,41 +33,51 @@ func (api StoreAPI) InsertDenom(
 	if err := denom.Validate(); err != nil {
 		return err
 	}
-	key := denom.String()
 	// The x/bank keeper is the source of truth.
+	key := denom.String()
 	found := api.HasDenom(ctx, denom)
 	if found {
 		return tftypes.ErrDenomAlreadyRegistered.Wrap(key)
 	}
 
-	api.Denoms.Insert(ctx, key, denom)
-	api.creator.Insert(ctx, denom.Creator)
+	admin := denom.Creator
+	api.unsafeInsertDenom(ctx, denom, admin)
 
-	// The denom creator is the default admin. The admin can be updated after
-	// the denom exists using the ChangeAdmin message. Having no admin is also
-	// allowed.
 	api.bankKeeper.SetDenomMetaData(ctx, denom.DefaultBankMetadata())
 	api.denomAdmins.Insert(ctx, key, tftypes.DenomAuthorityMetadata{
-		Admin: denom.Creator,
+		Admin: admin,
 	})
 	return nil
 }
 
-// InsertDenomGenesis_NoBankUpdate: Populates the x/tokenfactory state without
-// making any assumptions about the x/bank state. This function is unsafe and
-// should only be used in InitGenesis or upgrades that populate state from an
-// exported genesis.
-func (api StoreAPI) InsertDenomGenesis_NoBankUpdate(
+// unsafeInsertDenom: Adds a token factory denom to state with the given admin.
+// NOTE: unsafe → assumes pre-validated inputs
+func (api StoreAPI) unsafeInsertDenom(
+	ctx sdk.Context, denom tftypes.TFDenom, admin string,
+) {
+	denomStr := denom.String()
+	api.Denoms.Insert(ctx, denomStr, denom)
+	api.creator.Insert(ctx, denom.Creator)
+	api.bankKeeper.SetDenomMetaData(ctx, denom.DefaultBankMetadata())
+	api.denomAdmins.Insert(ctx, denomStr, tftypes.DenomAuthorityMetadata{
+		Admin: admin,
+	})
+	_ = ctx.EventManager().EmitTypedEvent(&tftypes.EventCreateDenom{
+		Denom:   denomStr,
+		Creator: denom.Creator,
+	})
+}
+
+// unsafeGenesisInsertDenom: Populates the x/tokenfactory state without
+// making any assumptions about the x/bank state. This function should only be
+// used in InitGenesis or upgrades that populate state from an exported genesis.
+// NOTE: unsafe → assumes pre-validated inputs
+func (api StoreAPI) unsafeGenesisInsertDenom(
 	ctx sdk.Context, genDenom tftypes.GenesisDenom,
 ) {
 	denom := tftypes.DenomStr(genDenom.Denom).MustToStruct()
 	admin := genDenom.AuthorityMetadata.Admin
-	key := denom.String()
-	api.Denoms.Insert(ctx, key, denom)
-	api.creator.Insert(ctx, denom.Creator)
-	api.denomAdmins.Insert(ctx, key, tftypes.DenomAuthorityMetadata{
-		Admin: admin,
-	})
+	api.unsafeInsertDenom(ctx, denom, admin)
 }
 
 // HasDenom: True if the denom has already been registered.
@@ -82,7 +92,8 @@ func (api StoreAPI) HasCreator(ctx sdk.Context, creator string) bool {
 	return api.creator.Has(ctx, creator)
 }
 
-// GetDenomAuthorityMetadata returns the authority metadata for a specific denom
+// GetDenomAuthorityMetadata returns the admin (authority metadata) for a
+// specific denom. This differs from the x/bank metadata.
 func (api StoreAPI) GetDenomAuthorityMetadata(
 	ctx sdk.Context, denom string,
 ) (tftypes.DenomAuthorityMetadata, error) {

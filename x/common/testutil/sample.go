@@ -14,6 +14,9 @@ import (
 	tmdb "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/libs/log"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
 // AccAddress returns a sample address (sdk.AccAddress) created using secp256k1.
@@ -76,4 +79,8 @@ func RandLetters(n int) string {
 		b[i] = Latin.Letters[rand.Intn(len(Latin.Letters))]
 	}
 	return string(b)
+}
+
+func GovModuleAddr() sdk.AccAddress {
+	return authtypes.NewModuleAddress(govtypes.ModuleName)
 }

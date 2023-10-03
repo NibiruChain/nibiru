@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package nibiru.tokenfactory.v1;
+
+option go_package = "github.com/NibiruChain/nibiru/x/tokenfactory/types";
+
+message EventCreateDenom {
+  string denom = 1;
+  string creator = 2;
+}
+
+message EventChangeAdmin {
+  string denom = 1;
+  string old_admin = 3;
+  string new_admin = 2;
+}
