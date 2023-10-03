@@ -18,15 +18,9 @@ func DefaultModuleParams() ModuleParams {
 }
 
 func (params ModuleParams) Validate() error {
-	return validateDenomCreationGasConsume(params.DenomCreationGasConsume)
-}
-
-func validateDenomCreationGasConsume(i interface{}) error {
-	_, ok := i.(uint64)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
+	if params.DenomCreationGasConsume < 1 {
+		return ErrInvalidModuleParams.Wrap("cannot set gas creation cost to zero")
 	}
-
 	return nil
 }
 
@@ -81,6 +75,8 @@ func (denomStr DenomStr) Validate() error {
 	_, err := denomStr.ToStruct()
 	return err
 }
+
+func (denomStr DenomStr) String() string { return string(denomStr) }
 
 func (genDenom GenesisDenom) Validate() error {
 	return DenomStr(genDenom.Denom).Validate()

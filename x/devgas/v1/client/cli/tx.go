@@ -25,16 +25,16 @@ func NewTxCmd() *cobra.Command {
 	}
 
 	txCmd.AddCommand(
-		NewRegisterFeeShare(),
-		NewCancelFeeShare(),
-		NewUpdateFeeShare(),
+		CmdRegisterFeeShare(),
+		CmdCancelFeeShare(),
+		CmdUpdateFeeShare(),
 	)
 	return txCmd
 }
 
-// NewRegisterFeeShare returns a CLI command handler for registering a
+// CmdRegisterFeeShare returns a CLI command handler for registering a
 // contract for fee distribution
-func NewRegisterFeeShare() *cobra.Command {
+func CmdRegisterFeeShare() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "register [contract_bech32] [withdraw_bech32]",
 		Short: "Register a contract for fee distribution. Only the contract admin can register a contract.",
@@ -69,9 +69,9 @@ func NewRegisterFeeShare() *cobra.Command {
 	return cmd
 }
 
-// NewCancelFeeShare returns a CLI command handler for canceling a
+// CmdCancelFeeShare returns a CLI command handler for canceling a
 // contract for fee distribution
-func NewCancelFeeShare() *cobra.Command {
+func CmdCancelFeeShare() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cancel [contract_bech32]",
 		Short: "Cancel a contract from feeshare distribution",
@@ -104,9 +104,9 @@ func NewCancelFeeShare() *cobra.Command {
 	return cmd
 }
 
-// NewUpdateFeeShare returns a CLI command handler for updating the withdraw
+// CmdUpdateFeeShare returns a CLI command handler for updating the withdraw
 // address of a contract for fee distribution
-func NewUpdateFeeShare() *cobra.Command {
+func CmdUpdateFeeShare() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update [contract_bech32] [new_withdraw_bech32]",
 		Short: "Update withdrawer address for a contract registered for feeshare distribution.",

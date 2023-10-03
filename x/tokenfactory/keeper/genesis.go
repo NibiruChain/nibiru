@@ -22,7 +22,7 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 	for _, genDenom := range genState.GetFactoryDenoms() {
 		// We don't need to validate the struct again here because it's
 		// performed inside of the genState.Validate() execution above.
-		k.Store.InsertDenomGenesis_NoBankUpdate(ctx, genDenom)
+		k.Store.unsafeGenesisInsertDenom(ctx, genDenom)
 	}
 }
 

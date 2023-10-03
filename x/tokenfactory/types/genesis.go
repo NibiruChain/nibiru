@@ -38,7 +38,7 @@ func (gs GenesisState) Validate() error {
 		if genesisDenom.AuthorityMetadata.Admin != "" {
 			_, err = sdk.AccAddressFromBech32(genesisDenom.AuthorityMetadata.Admin)
 			if err != nil {
-				return ErrInvalidAuthorityMetadata.Wrapf("Invalid admin address (%s)", err)
+				return ErrInvalidAdmin.Wrapf("Invalid admin address (%s)", err)
 			}
 		}
 	}

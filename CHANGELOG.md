@@ -44,6 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * [#1596](https://github.com/NibiruChain/nibiru/pull/1596) - epic(tokenfactory):
   State transitions, collections, genesis import and export, and app wiring
+  * [#1607](https://github.com/NibiruChain/nibiru/pull/1607) - Token factory
+    transaction messages for CreateDenom, ChangeAdmin, and UpdateModuleParams 
 
 ### State Machine Breaking 
 
