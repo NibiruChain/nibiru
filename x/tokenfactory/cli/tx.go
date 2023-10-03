@@ -10,8 +10,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 
-	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
 
 // NewTxCmd returns the transaction commands for this module
