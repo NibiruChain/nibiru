@@ -57,6 +57,8 @@ func (s *TestSuite) HandleMsg(txMsg sdk.Msg) (err error) {
 		_, err = s.app.TokenFactoryKeeper.Burn(goCtx, txMsg)
 	case *tftypes.MsgChangeAdmin:
 		_, err = s.app.TokenFactoryKeeper.ChangeAdmin(goCtx, txMsg)
+	case *tftypes.MsgSetDenomMetadata:
+		_, err = s.app.TokenFactoryKeeper.SetDenomMetadata(goCtx, txMsg)
 	default:
 		err = fmt.Errorf("unknown message type: %t", txMsg)
 	}

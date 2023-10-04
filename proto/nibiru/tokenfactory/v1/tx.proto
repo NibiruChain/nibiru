@@ -6,6 +6,7 @@ import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos/msg/v1/msg.proto";
 import "cosmos_proto/cosmos.proto";
+import "cosmos/bank/v1beta1/bank.proto";
 import "nibiru/tokenfactory/v1/state.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/tokenfactory/types";
@@ -21,8 +22,8 @@ service Msg {
       returns (MsgUpdateModuleParamsResponse);
   rpc Mint(MsgMint) returns (MsgMintResponse);
   rpc Burn(MsgBurn) returns (MsgBurnResponse);
-  // TODO MsgSetDenomMetadata
-  // TODO MsgForceTransfer
+  rpc SetDenomMetadata(MsgSetDenomMetadata)
+      returns (MsgSetDenomMetadataResponse);
 }
 
 // MsgCreateDenom: sdk.Msg that registers an a token factory denom.
@@ -101,3 +102,15 @@ message MsgBurn {
 }
 
 message MsgBurnResponse {}
+
+// MsgSetDenomMetadata: sdk.Msg (TxMsg) enabling the denom admin to change its
+// bank metadata.
+message MsgSetDenomMetadata {
+  string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
+
+  // Metadata: Official x/bank metadata for the denom. All token factory denoms
+  // are standard, native assets. The "metadata.base" is the denom.
+  cosmos.bank.v1beta1.Metadata metadata = 2 [ (gogoproto.nullable) = false ];
+}
+
+message MsgSetDenomMetadataResponse {}

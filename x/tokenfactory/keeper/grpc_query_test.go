@@ -72,24 +72,27 @@ func (s *TestSuite) TestQueryDenomInfo() {
 	}
 	s.createDenom(creator, denom.Subdenom)
 
-	s.T().Log("case: nil msg")
-	_, err := s.querier.DenomInfo(s.GoCtx(),
-		nil)
-	s.ErrorContains(err, "nil msg")
+	s.Run("case: nil msg", func() {
+		_, err := s.querier.DenomInfo(s.GoCtx(),
+			nil)
+		s.ErrorContains(err, "nil msg")
+	})
 
-	s.T().Log("case: fail denom validation")
-	_, err = s.querier.DenomInfo(s.GoCtx(),
-		&types.QueryDenomInfoRequest{
-			Denom: "notadenom",
-		})
-	s.ErrorContains(err, "denom format error")
+	s.Run("case: fail denom validation", func() {
+		_, err := s.querier.DenomInfo(s.GoCtx(),
+			&types.QueryDenomInfoRequest{
+				Denom: "notadenom",
+			})
+		s.ErrorContains(err, "denom format error")
+	})
 
-	s.T().Log("case: happy")
-	resp, err := s.querier.DenomInfo(s.GoCtx(),
-		&types.QueryDenomInfoRequest{
-			Denom: denom.String(),
-		})
-	s.NoError(err)
-	s.Equal(creator.String(), resp.Admin)
-	s.Equal(denom.DefaultBankMetadata(), resp.Metadata)
+	s.Run("case: happy", func() {
+		resp, err := s.querier.DenomInfo(s.GoCtx(),
+			&types.QueryDenomInfoRequest{
+				Denom: denom.String(),
+			})
+		s.NoError(err)
+		s.Equal(creator.String(), resp.Admin)
+		s.Equal(denom.DefaultBankMetadata(), resp.Metadata)
+	})
 }

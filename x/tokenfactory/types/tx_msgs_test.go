@@ -10,11 +10,21 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
 
-func validateBasicTest(msg sdk.Msg, wantErr string) func(t *testing.T) {
+type ValidateBasicTest struct {
+	name    string
+	msg     sdk.Msg
+	wantErr string
+}
+
+func (vbt ValidateBasicTest) test() func(t *testing.T) {
+	var msg sdk.Msg = vbt.msg
+	var wantErr string = vbt.wantErr
 	return func(t *testing.T) {
 		err := msg.ValidateBasic()
 		if wantErr != "" {
@@ -26,12 +36,7 @@ func validateBasicTest(msg sdk.Msg, wantErr string) func(t *testing.T) {
 	}
 }
 
-type ValidateBasicTest struct {
-	name    string
-	msg     sdk.Msg
-	wantErr string
-}
-
+// TestMsgMint_ValidateBasic: Tests if MsgCreateDenom is properly validated.
 func TestMsgCreateDenom_ValidateBasic(t *testing.T) {
 	addr := testutil.AccAddress().String()
 	for _, tc := range []ValidateBasicTest{
@@ -60,10 +65,11 @@ func TestMsgCreateDenom_ValidateBasic(t *testing.T) {
 			wantErr: "invalid creator",
 		},
 	} {
-		t.Run(tc.name, validateBasicTest(tc.msg, tc.wantErr))
+		t.Run(tc.name, tc.test())
 	}
 }
 
+// TestMsgMint_ValidateBasic: Tests if MsgChangeAdmin is properly validated.
 func TestMsgChangeAdmin_ValidateBasic(t *testing.T) {
 	sbf := testutil.AccAddress().String()
 	validDenom := fmt.Sprintf("tf/%s/ftt", sbf)
@@ -105,7 +111,7 @@ func TestMsgChangeAdmin_ValidateBasic(t *testing.T) {
 			wantErr: "denom format error",
 		},
 	} {
-		t.Run(tc.name, validateBasicTest(tc.msg, tc.wantErr))
+		t.Run(tc.name, tc.test())
 	}
 }
 
@@ -128,7 +134,7 @@ func TestMsgUpdateModuleParams_ValidateBasic(t *testing.T) {
 			wantErr: "invalid authority",
 		},
 	} {
-		t.Run(tc.name, validateBasicTest(tc.msg, tc.wantErr))
+		t.Run(tc.name, tc.test())
 	}
 }
 
@@ -179,6 +185,8 @@ func TestTxMsgInterface(t *testing.T) {
 	}
 }
 
+// TestMsgMint_ValidateBasic: Tests if tx msgs MsgMint and MsgBurn are properly
+// validated.
 func TestMsgMint_ValidateBasic(t *testing.T) {
 	sbf := testutil.AccAddress().String()
 	validDenom := fmt.Sprintf("tf/%s/ftt", sbf)
@@ -230,7 +238,7 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 			wantErr: "invalid coin",
 		},
 	} {
-		t.Run(tc.name, validateBasicTest(tc.msg, tc.wantErr))
+		t.Run(tc.name, tc.test())
 	}
 }
 
@@ -285,6 +293,73 @@ func TestMsgBurn_ValidateBasic(t *testing.T) {
 			wantErr: "invalid coin",
 		},
 	} {
-		t.Run(tc.name, validateBasicTest(tc.msg, tc.wantErr))
+		t.Run(tc.name, tc.test())
+	}
+}
+
+func TestMsgSetDenomMetadata_ValidateBasic(t *testing.T) {
+	sbf := testutil.AccAddress().String()
+	satoshi := testutil.AccAddress().String()
+	ubtcDenom := fmt.Sprintf("tf/%s/ubtc", satoshi)
+	for _, tc := range []ValidateBasicTest{
+		{
+			name: "happy: satoshi nakamoto",
+			msg: &types.MsgSetDenomMetadata{
+				Sender: satoshi,
+				Metadata: banktypes.Metadata{
+					Description: "satoshi nakamoto bitcoin",
+					DenomUnits: []*banktypes.DenomUnit{
+						{Denom: ubtcDenom, Exponent: 0},
+						{Denom: "btc", Exponent: 6},
+					},
+					Base:    ubtcDenom,
+					Display: "btc",
+					Name:    "bitcoin",
+					Symbol:  "BTC",
+				},
+			},
+			wantErr: "",
+		},
+
+		{
+			name: "happy: SBF",
+			msg: &types.MsgSetDenomMetadata{
+				Sender: sbf,
+				Metadata: types.DenomStr(fmt.Sprintf("tf/%s/ftt", sbf)).
+					MustToStruct().DefaultBankMetadata(),
+			},
+			wantErr: "",
+		},
+
+		{
+			name: "invalid sender",
+			msg: &types.MsgSetDenomMetadata{
+				Sender: "notAnAddr",
+				Metadata: types.TFDenom{Creator: "notAnAddr", Subdenom: "abc"}.
+					DefaultBankMetadata(),
+			},
+			wantErr: "invalid address",
+		},
+
+		{
+			name: "sad: base denom doesn't match",
+			msg: &types.MsgSetDenomMetadata{
+				Sender: satoshi,
+				Metadata: banktypes.Metadata{
+					Description: "satoshi nakamoto bitcoin",
+					DenomUnits: []*banktypes.DenomUnit{
+						{Denom: ubtcDenom, Exponent: 0},
+						{Denom: "wbtc", Exponent: 6}, // must be first
+					},
+					Base:    "wbtc",
+					Display: "wbtc",
+					Name:    "bitcoin",
+					Symbol:  "BTC",
+				},
+			},
+			wantErr: "metadata's first denomination unit must be the one with base denom",
+		},
+	} {
+		t.Run(tc.name, tc.test())
 	}
 }

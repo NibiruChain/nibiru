@@ -73,6 +73,7 @@ func (k Keeper) ChangeAdmin(
 		})
 }
 
+// UpdateModuleParams: Message handler for the abci.Msg: MsgUpdateModuleParams
 func (k Keeper) UpdateModuleParams(
 	goCtx context.Context, txMsg *types.MsgUpdateModuleParams,
 ) (resp *types.MsgUpdateModuleParamsResponse, err error) {
@@ -96,6 +97,7 @@ func (k Keeper) UpdateModuleParams(
 	return &types.MsgUpdateModuleParamsResponse{}, err
 }
 
+// Mint: Message handler for the abci.Msg: MsgMint
 func (k Keeper) Mint(
 	goCtx context.Context, txMsg *types.MsgMint,
 ) (resp *types.MsgMintResponse, err error) {
@@ -168,6 +170,7 @@ func (k Keeper) mint(
 	)
 }
 
+// Burn: Message handler for the abci.Msg: MsgBurn
 func (k Keeper) Burn(
 	goCtx context.Context, txMsg *types.MsgBurn,
 ) (resp *types.MsgBurnResponse, err error) {
@@ -240,4 +243,39 @@ func (k Keeper) burn(
 	}
 
 	return k.bankKeeper.BurnCoins(ctx, types.ModuleName, coins)
+}
+
+// SetDenomMetadata: Message handler for the abci.Msg: MsgSetDenomMetadata
+func (k Keeper) SetDenomMetadata(
+	goCtx context.Context, txMsg *types.MsgSetDenomMetadata,
+) (resp *types.MsgSetDenomMetadataResponse, err error) {
+	if txMsg == nil {
+		return resp, errNilMsg
+	}
+	if err := txMsg.ValidateBasic(); err != nil {
+		return resp, err // ValidateBasic needs to be guaranteed for Wasm bindings
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	denom := txMsg.Metadata.Base
+	admin, err := k.Store.GetAdmin(ctx, denom)
+	if err != nil {
+		return nil, err
+	}
+
+	if txMsg.Sender != admin {
+		return resp, types.ErrUnauthorized.Wrapf(
+			"sender (%s), admin (%s)", txMsg.Sender, admin,
+		)
+	}
+
+	k.bankKeeper.SetDenomMetaData(ctx, txMsg.Metadata)
+
+	return &types.MsgSetDenomMetadataResponse{}, ctx.EventManager().
+		EmitTypedEvent(&types.EventSetDenomMetadata{
+			Denom:    denom,
+			Metadata: txMsg.Metadata,
+			Caller:   txMsg.Sender,
+		})
 }

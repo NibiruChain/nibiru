@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/NibiruChain/collections"
@@ -31,7 +30,6 @@ func (s *TestSuite) TestStoreWrite() {
 	s.T().Run("initial conditions", func(t *testing.T) {
 		for _, tfdenom := range tfdenoms {
 			// created denoms should be valid
-			fmt.Printf("tfdenom: %v\n", tfdenom)
 			s.NoError(tfdenom.Validate(), tfdenom)
 
 			// query by denom should fail for all denoms

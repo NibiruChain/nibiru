@@ -1,12 +1,11 @@
 package keeper_test
 
 import (
-	"testing"
-
 	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
@@ -79,7 +78,7 @@ func (s *TestSuite) TestCreateDenom() {
 	}
 
 	for _, tc := range testCases {
-		s.T().Run(tc.name, func(t *testing.T) {
+		s.Run(tc.name, func() {
 			s.SetupTest()
 			if tc.preHook != nil {
 				tc.preHook(s.ctx, s.app)
@@ -113,20 +112,20 @@ func (s *TestSuite) TestChangeAdmin() {
 	sbf := testutil.AccAddress().String()
 
 	testCases := []struct {
-		name     string
+		Name     string
 		txMsg    *types.MsgChangeAdmin
 		wantErr  string
 		preHook  func(ctx sdk.Context, bapp *app.NibiruApp)
 		postHook func(ctx sdk.Context, bapp *app.NibiruApp)
 	}{
 		{
-			name:    "sad: nil msg",
+			Name:    "sad: nil msg",
 			txMsg:   nil,
 			wantErr: "nil msg",
 		},
 
 		{
-			name: "sad: fail validate basic",
+			Name: "sad: fail validate basic",
 			txMsg: &types.MsgChangeAdmin{
 				Sender: "sender", Denom: "tf/creator/nusd", NewAdmin: "new admin",
 			},
@@ -134,7 +133,7 @@ func (s *TestSuite) TestChangeAdmin() {
 		},
 
 		{
-			name: "sad: non-admin tries to change admin",
+			Name: "sad: non-admin tries to change admin",
 			txMsg: &types.MsgChangeAdmin{
 				Sender:   testutil.AccAddress().String(),
 				Denom:    types.TFDenom{Creator: sbf, Subdenom: "ftt"}.String(),
@@ -153,7 +152,7 @@ func (s *TestSuite) TestChangeAdmin() {
 		},
 
 		{
-			name: "happy: SBF changes FTT admin",
+			Name: "happy: SBF changes FTT admin",
 			txMsg: &types.MsgChangeAdmin{
 				Sender:   sbf,
 				Denom:    types.TFDenom{Creator: sbf, Subdenom: "ftt"}.String(),
@@ -172,7 +171,7 @@ func (s *TestSuite) TestChangeAdmin() {
 		},
 
 		{
-			name: "sad: change admin for denom that doesn't exist ",
+			Name: "sad: change admin for denom that doesn't exist ",
 			txMsg: &types.MsgChangeAdmin{
 				Sender:   sbf,
 				Denom:    types.TFDenom{Creator: sbf, Subdenom: "ftt"}.String(),
@@ -183,7 +182,7 @@ func (s *TestSuite) TestChangeAdmin() {
 	}
 
 	for _, tc := range testCases {
-		s.T().Run(tc.name, func(t *testing.T) {
+		s.Run(tc.Name, func() {
 			s.SetupTest()
 			if tc.preHook != nil {
 				tc.preHook(s.ctx, s.app)
@@ -256,7 +255,7 @@ func (s *TestSuite) TestUpdateModuleParams() {
 	}
 
 	for _, tc := range testCases {
-		s.T().Run(tc.name, func(t *testing.T) {
+		s.Run(tc.name, func() {
 			s.SetupTest()
 			_, err := s.app.TokenFactoryKeeper.UpdateModuleParams(
 				sdk.WrapSDKContext(s.ctx), tc.txMsg,
@@ -276,7 +275,48 @@ func (s *TestSuite) TestUpdateModuleParams() {
 	}
 }
 
-type SdkMsgTestCase struct {
+type TestCaseTx struct {
+	// Name: identifier for the test case.
+	Name string
+
+	// SetupMsgs: a list of messages to broadcast in order that should execute
+	// without error. These can be used to create complex scenarios.
+	SetupMsgs []sdk.Msg
+
+	// PreHook: an optional hook that runs before TestMsgs
+	PreHook func(ctx sdk.Context, bapp *app.NibiruApp)
+
+	TestMsgs []TestMsgElem
+
+	// PostHook: an optional hook that runs after TestMsgs
+	PostHook func(ctx sdk.Context, bapp *app.NibiruApp)
+}
+
+func (tc TestCaseTx) RunTest(s *TestSuite) {
+	for _, txMsg := range tc.SetupMsgs {
+		err := s.HandleMsg(txMsg)
+		s.Require().NoError(err)
+	}
+
+	if tc.PreHook != nil {
+		tc.PreHook(s.ctx, s.app)
+	}
+
+	for _, msgTc := range tc.TestMsgs {
+		err := s.HandleMsg(msgTc.TestMsg)
+		if msgTc.WantErr != "" {
+			s.ErrorContains(err, msgTc.WantErr)
+			continue
+		}
+		s.NoError(err)
+	}
+
+	if tc.PostHook != nil {
+		tc.PostHook(s.ctx, s.app)
+	}
+}
+
+type TestMsgElem struct {
 	TestMsg sdk.Msg
 	WantErr string
 }
@@ -293,16 +333,10 @@ func (s *TestSuite) TestMintBurn() {
 		Amount: sdk.NewInt(69_420),
 	}
 
-	testCases := []struct {
-		name      string
-		setupMsgs []sdk.Msg
-		testMsgs  []SdkMsgTestCase
-		preHook   func(ctx sdk.Context, bapp *app.NibiruApp)
-		postHook  func(ctx sdk.Context, bapp *app.NibiruApp)
-	}{
+	testCases := []TestCaseTx{
 		{
-			name: "happy: mint and burn",
-			setupMsgs: []sdk.Msg{
+			Name: "happy: mint and burn",
+			SetupMsgs: []sdk.Msg{
 				&types.MsgCreateDenom{
 					Sender:   addrs[0].String(),
 					Subdenom: "nusd",
@@ -320,7 +354,7 @@ func (s *TestSuite) TestMintBurn() {
 					MintTo: "",
 				},
 			},
-			testMsgs: []SdkMsgTestCase{
+			TestMsgs: []TestMsgElem{
 				{
 					TestMsg: &types.MsgBurn{
 						Sender: addrs[0].String(),
@@ -336,12 +370,12 @@ func (s *TestSuite) TestMintBurn() {
 					WantErr: "",
 				},
 			},
-			preHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
+			PreHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
 				allDenoms := bapp.TokenFactoryKeeper.Store.Denoms.
 					Iterate(ctx, collections.Range[string]{}).Values()
 				s.Len(allDenoms, 1)
 			},
-			postHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
+			PostHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
 				allDenoms := bapp.TokenFactoryKeeper.Store.Denoms.
 					Iterate(ctx, collections.Range[string]{}).Values()
 
@@ -362,9 +396,9 @@ func (s *TestSuite) TestMintBurn() {
 		},
 
 		{
-			name:      "sad: denom does not exist",
-			setupMsgs: []sdk.Msg{},
-			testMsgs: []SdkMsgTestCase{
+			Name:      "sad: denom does not exist",
+			SetupMsgs: []sdk.Msg{},
+			TestMsgs: []TestMsgElem{
 				{
 					TestMsg: &types.MsgMint{
 						Sender: addrs[0].String(),
@@ -385,8 +419,8 @@ func (s *TestSuite) TestMintBurn() {
 		},
 
 		{
-			name: "sad: sender is not admin",
-			setupMsgs: []sdk.Msg{
+			Name: "sad: sender is not admin",
+			SetupMsgs: []sdk.Msg{
 				&types.MsgCreateDenom{
 					Sender:   addrs[0].String(),
 					Subdenom: "nusd",
@@ -404,7 +438,7 @@ func (s *TestSuite) TestMintBurn() {
 					NewAdmin: addrs[1].String(),
 				},
 			},
-			testMsgs: []SdkMsgTestCase{
+			TestMsgs: []TestMsgElem{
 				{
 					TestMsg: &types.MsgMint{
 						Sender: addrs[0].String(),
@@ -425,8 +459,8 @@ func (s *TestSuite) TestMintBurn() {
 		},
 
 		{
-			name: "sad: blocked addrs",
-			setupMsgs: []sdk.Msg{
+			Name: "sad: blocked addrs",
+			SetupMsgs: []sdk.Msg{
 				&types.MsgCreateDenom{
 					Sender:   addrs[0].String(),
 					Subdenom: "nusd",
@@ -438,7 +472,7 @@ func (s *TestSuite) TestMintBurn() {
 					MintTo: "",
 				},
 			},
-			testMsgs: []SdkMsgTestCase{
+			TestMsgs: []TestMsgElem{
 				{
 					TestMsg: &types.MsgMint{
 						Sender: addrs[0].String(),
@@ -460,30 +494,144 @@ func (s *TestSuite) TestMintBurn() {
 	}
 
 	for _, tc := range testCases {
-		s.T().Run(tc.name, func(t *testing.T) {
+		s.Run(tc.Name, func() {
 			s.SetupTest()
+			tc.RunTest(s)
+		})
+	}
+}
 
-			for _, txMsg := range tc.setupMsgs {
-				err := s.HandleMsg(txMsg)
-				s.Require().NoError(err)
-			}
+func (s *TestSuite) TestSetDenomMetadata() {
+	_, addrs := testutil.PrivKeyAddressPairs(4)
+	tfdenom := types.TFDenom{
+		Creator:  addrs[0].String(),
+		Subdenom: "nusd",
+	}
 
-			if tc.preHook != nil {
-				tc.preHook(s.ctx, s.app)
-			}
+	testCases := []TestCaseTx{
+		{
+			Name: "happy: set metadata",
+			SetupMsgs: []sdk.Msg{
+				&types.MsgCreateDenom{
+					Sender:   addrs[0].String(),
+					Subdenom: "nusd",
+				},
+			},
+			TestMsgs: []TestMsgElem{
+				{
+					TestMsg: &types.MsgSetDenomMetadata{
+						Sender:   addrs[0].String(),
+						Metadata: tfdenom.DefaultBankMetadata(),
+					},
+					WantErr: "",
+				},
+				{
+					TestMsg: &types.MsgSetDenomMetadata{
+						Sender: addrs[0].String(),
+						Metadata: banktypes.Metadata{
+							Description: "US Dollar",
+							DenomUnits: []*banktypes.DenomUnit{
+								{
+									Denom:    tfdenom.String(),
+									Exponent: 0,
+									Aliases:  []string{"unusd"},
+								},
+								{Denom: "USD", Exponent: 6},
+							},
+							Base:    tfdenom.String(),
+							Display: "USD",
+							Name:    "USD",
+							Symbol:  "USD",
+							URI:     "https://www.federalreserve.gov/aboutthefed/currency.htm",
+						},
+					},
+					WantErr: "",
+				},
+			},
+		}, // end case
 
-			for _, msgTc := range tc.testMsgs {
-				err := s.HandleMsg(msgTc.TestMsg)
-				if msgTc.WantErr != "" {
-					s.ErrorContains(err, msgTc.WantErr)
-					continue
-				}
-				s.NoError(err)
-			}
+		{
+			Name: "sad: sender not admin",
+			SetupMsgs: []sdk.Msg{
+				&types.MsgCreateDenom{
+					Sender:   addrs[0].String(),
+					Subdenom: "nusd",
+				},
+			},
+			TestMsgs: []TestMsgElem{
+				{
+					TestMsg: &types.MsgSetDenomMetadata{
+						Sender:   addrs[1].String(),
+						Metadata: tfdenom.DefaultBankMetadata(),
+					},
+					WantErr: types.ErrUnauthorized.Error(),
+				},
+			},
+		}, // end case
 
-			if tc.postHook != nil {
-				tc.postHook(s.ctx, s.app)
-			}
+		{
+			Name: "sad: invalid sender",
+			SetupMsgs: []sdk.Msg{
+				&types.MsgCreateDenom{
+					Sender:   addrs[0].String(),
+					Subdenom: "nusd",
+				},
+			},
+			TestMsgs: []TestMsgElem{
+				{
+					TestMsg: &types.MsgSetDenomMetadata{
+						Sender:   "sender",
+						Metadata: tfdenom.DefaultBankMetadata(),
+					},
+					WantErr: "invalid sender",
+				},
+			},
+		}, // end case
+
+		{
+			Name: "sad: nil msg",
+			TestMsgs: []TestMsgElem{
+				{
+					TestMsg: (*types.MsgSetDenomMetadata)(nil),
+					WantErr: "nil msg",
+				}},
+		},
+
+		{
+			Name: "sad: metadata.base is not registered",
+			SetupMsgs: []sdk.Msg{
+				&types.MsgCreateDenom{
+					Sender:   addrs[0].String(),
+					Subdenom: "nusd",
+				},
+			},
+			TestMsgs: []TestMsgElem{
+				{
+					TestMsg: &types.MsgSetDenomMetadata{
+						Sender: addrs[0].String(),
+						Metadata: banktypes.Metadata{
+							DenomUnits: []*banktypes.DenomUnit{{
+								Denom:    "ust",
+								Exponent: 0,
+							}},
+							Base: "ust",
+							// The following is necessary for x/bank denom validation
+							Display: "ust",
+							Name:    "ust",
+							Symbol:  "ust",
+						},
+					},
+					WantErr: collections.ErrNotFound.Error(),
+				},
+			},
+		}, // end case
+
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.Name, func() {
+			s.SetupTest()
+			tc.RunTest(s)
 		})
 	}
 }
