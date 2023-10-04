@@ -1,4 +1,4 @@
-# Nibiru Chain          <!-- omit in toc -->
+# Nibiru Chain
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/NibiruChain/nibiru.svg)](https://pkg.go.dev/github.com/NibiruChain/nibiru)
 [![Nibiru Test workflow][badge-go-linter]][workflow-go-linter]
@@ -10,11 +10,10 @@
 
 ## Components of Nibiru
 
-- **CosmWasm Smart Contracts**: Rust-based, [WebAssembly (WASM) smart contracts](https://book.cosmwasm.com/) built for the Cosmos Ecosystem. 
+- **CosmWasm Smart Contracts**: Rust-based, WebAssembly (WASM) smart contracts built for the Cosmos Ecosystem. See our [CosmWasm sandbox monorepo (cw-nibiru)](https://github.com/NibiruChain/cw-nibiru/tree/main) for the protocol's core smart contracts. 
 - **Nibi-Perps**: A perpetual futures exchange where users can take leveraged exposure and trade on a plethora of assets — completely on-chain, completely non-custodially, and with minimal gas fees.
 - **Oracle Module**: Nibiru accurately prices assets using a native, system of decentralized oracles, and communicates with other Cosmos layer-1 chains using the Inter-Blockchain Communication (IBC) (opens new window)protocol.
 - **Nibi-Swap**: An automated market maker protocol for multichain assets. This application gives users access to swaps, pools, and bonded liquidity gauges.
-- **NUSD Stablecoin**: Nibiru powers a two-token economic model, where NIBI is the staking and utility token for the protocol and NUSD is a capital-efficient, partially collateralized stablecoin for the protocol.
 
 ## Modules
 
@@ -22,18 +21,18 @@
 | --- | --- | 
 | [common][code-x-common] | Holds helper and utility functions to be utilized by other `x/` modules. |
 | [epochs][code-x-epochs] | Often in the SDK, we would like to run certain code every-so often. The purpose of `epochs` module is to allow other modules to set that they would like to be signaled once every period. So another module can specify it wants to execute code once a week, starting at UTC-time = x. `epochs` creates a generalized epoch interface to other modules so that they can easily be signalled upon such events. |
+| [inflation][code-x-inflation] | Implements the [tokenomics](https://nibiru.fi/docs/learn/tokenomics.html) for Nibiru. |
 | [oracle][code-x-oracle] | Handles the posting of an up-to-date and accurate feed of exchange rates from the validators. | 
 | [perp][code-x-perp] | Powers the Nibi-Perps exchange. This module enables traders to open long and short leveraged positions and houses all of the PnL calculation and liquidation logic. |
 | [spot][code-x-spot] | Responsible for creating, joining, and exiting liquidity pools. It also allows users to swap between two assets in an existing pool. It's a fully functional AMM. |
-| [stablecoin][code-x-stablecoin] | Responsible for handling mint and redeem transactions with NUSD. |
 | [wasm][code-x-wasm] | Implements the execution environment for [WebAssembly (WASM) smart contracts](https://book.cosmwasm.com/). |
 
 [code-x-common]: https://github.com/NibiruChain/nibiru/tree/master/x/common
 [code-x-epochs]: https://github.com/NibiruChain/nibiru/tree/master/x/epochs
+[code-x-inflation]: https://github.com/NibiruChain/nibiru/tree/master/x/inflation
 [code-x-oracle]: https://github.com/NibiruChain/nibiru/tree/master/x/oracle
 [code-x-perp]: https://github.com/NibiruChain/nibiru/tree/master/x/perp
 [code-x-spot]: https://github.com/NibiruChain/nibiru/tree/master/x/spot
-[code-x-stablecoin]: https://github.com/NibiruChain/nibiru/tree/master/x/stablecoin
 [code-x-wasm]: https://github.com/NibiruChain/nibiru/tree/master/x/wasm
 
 Nibiru is built with the [Cosmos-SDK][cosmos-sdk-repo] on [Tendermint Core](https://tendermint.com/core/) consensus, accurately prices assets using a system of decentralized oracles, and communicates with other Cosmos layer-1 chains using the [Inter-Blockchain Communication (IBC)](https://github.com/cosmos/ibc) protocol.  
@@ -55,7 +54,7 @@ If you have questions or concerns, feel free to connect with a developer or comm
 <p style="display: flex; gap: 24px; justify-content: center; text-align:center">
 <a href="https://discord.gg/nibiruchain"><img src="https://img.shields.io/badge/Discord-7289DA?&logo=discord&logoColor=white" alt="Discord" height="22"/></a>
 <a href="https://twitter.com/NibiruChain"><img src="https://img.shields.io/badge/Twitter-1DA1F2?&logo=twitter&logoColor=white" alt="Tweet" height="22"/></a>
-<a href="example.com"><img src="https://img.shields.io/badge/Telegram-2CA5E0?&logo=telegram&logoColor=white" alt="Telegram" height="22"/></a>
+<a href="https://t.me/nibiruhackathon"><img src="https://img.shields.io/badge/Telegram-2CA5E0?&logo=telegram&logoColor=white" alt="Telegram" height="22"/></a>
 </p>
 
 ----
