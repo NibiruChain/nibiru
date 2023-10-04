@@ -1,8 +1,6 @@
 package keeper_test
 
 import (
-	"testing"
-
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
@@ -53,7 +51,7 @@ func (s *TestSuite) TestGenesis() {
 	}
 
 	for _, tc := range testCases {
-		s.T().Run(tc.name, func(t *testing.T) {
+		s.Run(tc.name, func() {
 			s.SetupTest() // reset
 
 			if tc.expPanic {

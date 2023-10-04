@@ -1,8 +1,6 @@
 package keeper_test
 
 import (
-	"testing"
-
 	"github.com/NibiruChain/collections"
 
 	"github.com/NibiruChain/nibiru/x/common/testutil"
@@ -27,7 +25,7 @@ func (s *TestSuite) TestStoreWrite() {
 
 	api := s.keeper.Store
 
-	s.T().Run("initial conditions", func(t *testing.T) {
+	s.Run("initial conditions", func() {
 		for _, tfdenom := range tfdenoms {
 			// created denoms should be valid
 			s.NoError(tfdenom.Validate(), tfdenom)
@@ -41,7 +39,7 @@ func (s *TestSuite) TestStoreWrite() {
 		}
 	})
 
-	s.T().Run("insert to state", func(t *testing.T) {
+	s.Run("insert to state", func() {
 		// inserting should succeed
 		for _, tfdenom := range tfdenoms {
 			s.Require().NoError(api.InsertDenom(s.ctx, tfdenom))
@@ -59,7 +57,7 @@ func (s *TestSuite) TestStoreWrite() {
 		s.False(api.HasCreator(s.ctx, testutil.AccAddress().String()))
 	})
 
-	s.T().Run("inserting invalid denom should fail", func(t *testing.T) {
+	s.Run("inserting invalid denom should fail", func() {
 		blankDenom := tftypes.TFDenom{}
 		s.Error(blankDenom.Validate())
 		s.Error(api.InsertDenom(s.ctx, blankDenom))

@@ -32,7 +32,7 @@ func NewTxCmd() *cobra.Command {
 		CmdChangeAdmin(),
 		CmdMint(),
 		CmdBurn(),
-		// CmdModifyDenomMetadata(),
+		// CmdModifyDenomMetadata(), // CosmWasm only
 	)
 
 	return cmd
@@ -42,7 +42,7 @@ func NewTxCmd() *cobra.Command {
 func CmdCreateDenom() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create-denom [subdenom] [flags]",
-		Short: "create a new denom from an account",
+		Short: `Create a denom of the form "tf/{creator}/{subdenom}"`,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -74,9 +74,10 @@ func CmdCreateDenom() *cobra.Command {
 // CmdChangeAdmin: Broadcasts MsgChangeAdmin
 func CmdChangeAdmin() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "change-admin [denom] [new-admin] [flags]",
-		Short: heredoc.Doc(`
-			Changes the admin address for a token factory denom.
+		Use:   "change-admin [denom] [new-admin] [flags]",
+		Short: "Change the admin address for a token factory denom",
+		Long: heredoc.Doc(`
+			Change the admin address for a token factory denom.
 			Must have admin authority to do so.
 		`),
 		Args: cobra.ExactArgs(2),
@@ -109,8 +110,9 @@ func CmdChangeAdmin() *cobra.Command {
 // CmdMint: Broadcast MsgMint
 func CmdMint() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "mint [coin] [--mint-to] [flags]",
-		Short: heredoc.Doc(`
+		Use:   "mint [coin] [--mint-to] [flags]",
+		Short: "Mint a denom to an address.",
+		Long: heredoc.Doc(`
 			Mint a denom to an address.
 			Tx signer must be the denom admin.
 			If no --mint-to address is provided, it defaults to the sender.`,
@@ -162,8 +164,9 @@ func CmdMint() *cobra.Command {
 // CmdBurn: Broadcast MsgBurn
 func CmdBurn() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "burn [coin] [--burn-from] [flags]",
-		Short: heredoc.Doc(`
+		Use:   "burn [coin] [--burn-from] [flags]",
+		Short: "Burn tokens from an address.",
+		Long: heredoc.Doc(`
 			Burn tokens from an address.
 			Tx signer must be the denom admin.
 			If no --burn-from address is provided, it defaults to the sender.`,

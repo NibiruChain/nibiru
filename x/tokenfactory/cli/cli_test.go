@@ -31,10 +31,11 @@ func TestIntegrationTestSuite(t *testing.T) {
 	suite.Run(t, new(IntegrationTestSuite))
 }
 
+// TestTokenFactory: Runs the test suite with a deterministic order.
 func (s *IntegrationTestSuite) TestTokenFactory() {
-	s.T().Run("CreateDenomTest", s.CreateDenomTest)
-	s.T().Run("MintBurnTest", s.MintBurnTest)
-	s.T().Run("ChangeAdminTest", s.ChangeAdminTest)
+	s.Run("CreateDenomTest", s.CreateDenomTest)
+	s.Run("MintBurnTest", s.MintBurnTest)
+	s.Run("ChangeAdminTest", s.ChangeAdminTest)
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
@@ -63,7 +64,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.NoError(s.network.WaitForNextBlock())
 }
 
-func (s *IntegrationTestSuite) CreateDenomTest(t *testing.T) {
+func (s *IntegrationTestSuite) CreateDenomTest() {
 	creator := s.val.Address
 	createDenom := func(subdenom string, wantErr bool) {
 		_, err := s.network.ExecTxCmd(
@@ -97,7 +98,7 @@ func (s *IntegrationTestSuite) CreateDenomTest(t *testing.T) {
 	s.ElementsMatch(denoms, wantDenoms)
 }
 
-func (s *IntegrationTestSuite) MintBurnTest(t *testing.T) {
+func (s *IntegrationTestSuite) MintBurnTest() {
 	creator := s.val.Address
 	mint := func(coin string, mintTo string, wantErr bool) {
 		mintToArg := fmt.Sprintf("--mint-to=%s", mintTo)
@@ -123,6 +124,7 @@ func (s *IntegrationTestSuite) MintBurnTest(t *testing.T) {
 		s.NoError(s.network.WaitForNextBlock())
 	}
 
+	t := s.T()
 	t.Log("mint successfully")
 	denom := types.TFDenom{
 		Creator:  creator.String(),
@@ -153,7 +155,7 @@ func (s *IntegrationTestSuite) MintBurnTest(t *testing.T) {
 	burn(coin.String(), creator.String(), wantErr) // happy
 }
 
-func (s *IntegrationTestSuite) ChangeAdminTest(t *testing.T) {
+func (s *IntegrationTestSuite) ChangeAdminTest() {
 	creator := s.val.Address
 	admin := creator
 	newAdmin := testutil.AccAddress()
