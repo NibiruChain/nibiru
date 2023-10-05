@@ -51,7 +51,7 @@ func (amm AMM) Validate() error {
 //   - newAmm: The AMM that results from closing all positions together. Note that
 //     this should have a bias, or skew, of 0.
 //   - err: Errors if it's impossible to swap away the open interest bias.
-func (amm AMM) SettlementPrice() (price sdk.Dec, newAmm AMM, err error) {
+func (amm AMM) SettlementPrice() (sdk.Dec, AMM, error) {
 	// bias: open interest (base) skew in the AMM.
 	bias := amm.Bias()
 	if bias.IsZero() {
@@ -66,26 +66,25 @@ func (amm AMM) SettlementPrice() (price sdk.Dec, newAmm AMM, err error) {
 	}
 
 	quoteAssetDelta, err := amm.SwapBaseAsset(bias.Abs(), dir)
-	newAmm = amm
 	if err != nil {
-		return price, newAmm, err
+		return sdk.Dec{}, AMM{}, err
 	}
+	price := quoteAssetDelta.Abs().Quo(bias.Abs())
 
-	price = quoteAssetDelta.Abs().Quo(bias.Abs())
-	return price, newAmm, err
+	return price, amm, err
 }
 
-// QuoteReserveToAsset: converts quote reserves to assets
+// QuoteReserveToAsset converts quote reserves to assets
 func (amm AMM) QuoteReserveToAsset(quoteReserve sdk.Dec) sdk.Dec {
 	return QuoteReserveToAsset(quoteReserve, amm.PriceMultiplier)
 }
 
-// QuoteAssetToReserve: converts quote assets to reserves
+// QuoteAssetToReserve converts quote assets to reserves
 func (amm AMM) QuoteAssetToReserve(quoteAssets sdk.Dec) sdk.Dec {
 	return QuoteAssetToReserve(quoteAssets, amm.PriceMultiplier)
 }
 
-// QuoteAssetToReserve: converts "quote assets" to "quote reserves". In this
+// QuoteAssetToReserve converts "quote assets" to "quote reserves". In this
 // convention, "assets" are liquid funds that change hands, whereas reserves
 // are simply a number field on the DAMM. The reason for this distinction is to
 // account for the AMM.PriceMultiplier.
@@ -93,7 +92,7 @@ func QuoteAssetToReserve(quoteAsset, priceMult sdk.Dec) sdk.Dec {
 	return quoteAsset.Quo(priceMult)
 }
 
-// QuoteReserveToAsset: converts "quote reserves" to "quote assets". In this
+// QuoteReserveToAsset converts "quote reserves" to "quote assets". In this
 // convention, "assets" are liquid funds that change hands, whereas reserves
 // are simply a number field on the DAMM. The reason for this distinction is to
 // account for the AMM.PriceMultiplier.
@@ -101,7 +100,7 @@ func QuoteReserveToAsset(quoteReserve, priceMult sdk.Dec) sdk.Dec {
 	return quoteReserve.Mul(priceMult)
 }
 
-// Returns the amount of base reserve equivalent to the amount of quote reserve given
+// GetBaseReserveAmt Returns the amount of base reserve equivalent to the amount of quote reserve given
 //
 // args:
 // - quoteReserveAmt: the amount of quote reserve before the trade, must be positive
@@ -140,7 +139,7 @@ func (amm AMM) GetBaseReserveAmt(
 	return baseReserveDelta, nil
 }
 
-// returns the amount of quote reserve equivalent to the amount of base asset given
+// GetQuoteReserveAmt returns the amount of quote reserve equivalent to the amount of base asset given
 //
 // args:
 // - baseReserveAmt: the amount of base reserves to trade, must be positive
@@ -185,7 +184,7 @@ func (amm AMM) GetQuoteReserveAmt(
 	return quoteReserveDelta, nil
 }
 
-// InstMarkPrice: Returns the instantaneous mark price of the trading pair.
+// InstMarkPrice returns the instantaneous mark price of the trading pair.
 // This is the price if the AMM has zero slippage, or equivalently, if there's
 // infinite liquidity depth with the same ratio of reserves.
 func (amm AMM) InstMarkPrice() sdk.Dec {
@@ -197,7 +196,7 @@ func (amm AMM) InstMarkPrice() sdk.Dec {
 	return amm.QuoteReserve.Quo(amm.BaseReserve).Mul(amm.PriceMultiplier)
 }
 
-// ComputeSqrtDepth: Returns the sqrt of the product of the reserves
+// ComputeSqrtDepth returns the sqrt of the product of the reserves
 func (amm AMM) ComputeSqrtDepth() (sqrtDepth sdk.Dec, err error) {
 	liqDepthBigInt := new(big.Int).Mul(amm.QuoteReserve.BigInt(), amm.BaseReserve.BigInt())
 

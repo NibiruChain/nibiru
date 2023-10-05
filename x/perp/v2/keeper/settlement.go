@@ -32,9 +32,20 @@ func (k Keeper) SettlePosition(ctx sdk.Context, account sdk.AccAddress, pair ass
 		return types.ErrSettlementPositionMarketEnabled
 	}
 
-	_, err = k.GetAMMByPairAndVersion(ctx, pair, version)
+	amm, err := k.GetAMMByPairAndVersion(ctx, pair, version)
 	if err != nil {
 		return types.ErrAMMWithVersionNotFound
+	}
+
+	// get the position
+	position, err := k.GetPosition(ctx, pair, version, account)
+	if err != nil {
+		return types.ErrPositionNotFound
+	}
+
+	price, newAmm, err := amm.SettlementPrice()
+	if err != nil {
+		return err
 	}
 
 	return nil

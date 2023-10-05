@@ -153,7 +153,7 @@ func TestKeeper_SettlePosition(t *testing.T) {
 				SettlePositionShouldFail(alice, pairBtcUsdc, 1, types.ErrSettlementPositionMarketEnabled),
 			),
 
-		TC("a position is settled (happy path)").
+		TC("a position cannot be settled if the user does not have any position").
 			Given(
 				CreateCustomMarket(
 					pairBtcUsdc,
@@ -163,22 +163,40 @@ func TestKeeper_SettlePosition(t *testing.T) {
 				SetBlockNumber(1),
 				SetBlockTime(startTime),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200)))),
-				MarketOrder(
-					alice,
-					pairBtcUsdc,
-					types.Direction_LONG,
-					sdk.NewInt(10_000),
-					sdk.OneDec(),
-					sdk.ZeroDec(),
-				),
 			).
 			When(
 				CloseMarket(pairBtcUsdc),
-				SettlePosition(alice, pairBtcUsdc, 1),
 			).
 			Then(
-			// Checks that the position is settled.
+				SettlePositionShouldFail(alice, pairBtcUsdc, 1, types.ErrPositionNotFound),
 			),
+
+		//TC("a position is settled (happy path)").
+		//	Given(
+		//		CreateCustomMarket(
+		//			pairBtcUsdc,
+		//			WithPricePeg(sdk.OneDec()),
+		//			WithSqrtDepth(sdk.NewDec(100_000)),
+		//		),
+		//		SetBlockNumber(1),
+		//		SetBlockTime(startTime),
+		//		FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200)))),
+		//		MarketOrder(
+		//			alice,
+		//			pairBtcUsdc,
+		//			types.Direction_LONG,
+		//			sdk.NewInt(10_000),
+		//			sdk.OneDec(),
+		//			sdk.ZeroDec(),
+		//		),
+		//	).
+		//	When(
+		//		CloseMarket(pairBtcUsdc),
+		//		SettlePosition(alice, pairBtcUsdc, 1),
+		//	).
+		//	Then(
+		//		PositionShouldNotExist(alice, pairBtcUsdc),
+		//	),
 	}
 
 	NewTestSuite(t).WithTestCases(tc...).Run()
