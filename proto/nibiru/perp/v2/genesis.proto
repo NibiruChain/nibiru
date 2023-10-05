@@ -13,18 +13,16 @@ option go_package = "github.com/NibiruChain/nibiru/x/perp/v2/types";
 // Thge genesis state is used not only to start the network but also useful for
 // exporting and importing state during network upgrades.
 message GenesisState {
-  repeated Market markets = 2 [ (gogoproto.nullable) = false ];
+  repeated nibiru.perp.v2.Market markets = 2 [ (gogoproto.nullable) = false ];
 
-  repeated AMM amms = 3 [ (gogoproto.nullable) = false ];
+  repeated nibiru.perp.v2.AMM amms = 3 [ (gogoproto.nullable) = false ];
 
   repeated GenesisPosition positions = 4 [ (gogoproto.nullable) = false ];
 
-  repeated ReserveSnapshot reserve_snapshots = 5
+  repeated nibiru.perp.v2.ReserveSnapshot reserve_snapshots = 5
       [ (gogoproto.nullable) = false ];
 
   uint64 dnr_epoch = 6;
-
-  repeated TraderVolume trader_volumes = 7 [ (gogoproto.nullable) = false ];
 
   message TraderVolume {
     string trader = 1;
@@ -34,6 +32,8 @@ message GenesisState {
       (gogoproto.nullable) = false
     ];
   }
+
+  repeated TraderVolume trader_volumes = 7 [ (gogoproto.nullable) = false ];
 
   message Discount {
     string fee = 1 [
@@ -55,7 +55,7 @@ message GenesisState {
     Discount discount = 2;
   }
 
-  repeated GenesisMarketLastVersion market_last_versions = 10
+  repeated nibiru.perp.v2.GenesisMarketLastVersion market_last_versions = 10
       [ (gogoproto.nullable) = false ];
 }
 

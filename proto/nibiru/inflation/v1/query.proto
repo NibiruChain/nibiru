@@ -115,5 +115,5 @@ message QueryParamsRequest {}
 // QueryParamsResponse is the response type for the Query/Params RPC method.
 message QueryParamsResponse {
   // params defines the parameters of the module.
-  Params params = 1 [ (gogoproto.nullable) = false ];
+  nibiru.inflation.v1.Params params = 1 [ (gogoproto.nullable) = false ];
 }
