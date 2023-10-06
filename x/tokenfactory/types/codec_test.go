@@ -25,6 +25,5 @@ func (suite *CodecSuite) TestRegisterInterfaces() {
 	types.RegisterInterfaces(registry)
 
 	impls := registry.ListImplementations(sdk.MsgInterfaceProtoName)
-	suite.Require().Equal(3, len(impls))
 	suite.Require().ElementsMatch(types.TX_MSG_TYPE_URLS(), impls)
 }

@@ -46,9 +46,8 @@ func (s *ModuleTestSuite) TestAppModule() {
 		s.NoError(err)
 
 		s.T().Log("CLI commands")
-		// TODO
-		// s.NotNil(appModule.AppModuleBasic.GetTxCmd())
-		// s.NotNil(appModule.AppModuleBasic.GetQueryCmd())
+		s.NotNil(appModule.AppModuleBasic.GetTxCmd())
+		s.NotNil(appModule.AppModuleBasic.GetQueryCmd())
 		s.NotEmpty(appModule.QuerierRoute())
 	})
 }

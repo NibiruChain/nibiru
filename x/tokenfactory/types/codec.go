@@ -32,7 +32,9 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 		&MsgCreateDenom{},
 		&MsgChangeAdmin{},
 		&MsgUpdateModuleParams{},
-		// &MsgTODO{},
+		&MsgMint{},
+		&MsgBurn{},
+		&MsgSetDenomMetadata{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
@@ -43,6 +45,9 @@ func TX_MSG_TYPE_URLS() []string {
 		"/nibiru.tokenfactory.v1.MsgCreateDenom",
 		"/nibiru.tokenfactory.v1.MsgChangeAdmin",
 		"/nibiru.tokenfactory.v1.MsgUpdateModuleParams",
+		"/nibiru.tokenfactory.v1.MsgMint",
+		"/nibiru.tokenfactory.v1.MsgBurn",
+		"/nibiru.tokenfactory.v1.MsgSetDenomMetadata",
 	}
 }
 
@@ -57,6 +62,9 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 		{&MsgCreateDenom{}, "nibiru/tokenfactory/create-denom"},
 		{&MsgChangeAdmin{}, "nibiru/tokenfactory/change-admin"},
 		{&MsgUpdateModuleParams{}, "nibiru/tokenfactory/update-module-params"},
+		{&MsgMint{}, "nibiru/tokenfactory/mint"},
+		{&MsgBurn{}, "nibiru/tokenfactory/burn"},
+		{&MsgSetDenomMetadata{}, "nibiru/tokenfactory/set-denom-metadata"},
 	} {
 		cdc.RegisterConcrete(ele.MsgType, ele.Name, nil)
 	}

@@ -1,6 +1,7 @@
 package cli_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -12,6 +13,8 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/tokenfactory/cli"
 	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var _ suite.SetupAllSuite = (*IntegrationTestSuite)(nil)
@@ -28,9 +31,11 @@ func TestIntegrationTestSuite(t *testing.T) {
 	suite.Run(t, new(IntegrationTestSuite))
 }
 
+// TestTokenFactory: Runs the test suite with a deterministic order.
 func (s *IntegrationTestSuite) TestTokenFactory() {
-	s.T().Run("CreateDenomTest", s.CreateDenomTest)
-	s.T().Run("ChangeAdminTest", s.ChangeAdminTest)
+	s.Run("CreateDenomTest", s.CreateDenomTest)
+	s.Run("MintBurnTest", s.MintBurnTest)
+	s.Run("ChangeAdminTest", s.ChangeAdminTest)
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
@@ -59,7 +64,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.NoError(s.network.WaitForNextBlock())
 }
 
-func (s *IntegrationTestSuite) CreateDenomTest(t *testing.T) {
+func (s *IntegrationTestSuite) CreateDenomTest() {
 	creator := s.val.Address
 	createDenom := func(subdenom string, wantErr bool) {
 		_, err := s.network.ExecTxCmd(
@@ -93,7 +98,64 @@ func (s *IntegrationTestSuite) CreateDenomTest(t *testing.T) {
 	s.ElementsMatch(denoms, wantDenoms)
 }
 
-func (s *IntegrationTestSuite) ChangeAdminTest(t *testing.T) {
+func (s *IntegrationTestSuite) MintBurnTest() {
+	creator := s.val.Address
+	mint := func(coin string, mintTo string, wantErr bool) {
+		mintToArg := fmt.Sprintf("--mint-to=%s", mintTo)
+		_, err := s.network.ExecTxCmd(
+			cli.NewTxCmd(), creator, []string{"mint", coin, mintToArg})
+		if wantErr {
+			s.Require().Error(err)
+			return
+		}
+		s.Require().NoError(err)
+		s.NoError(s.network.WaitForNextBlock())
+	}
+
+	burn := func(coin string, burnFrom string, wantErr bool) {
+		burnFromArg := fmt.Sprintf("--burn-from=%s", burnFrom)
+		_, err := s.network.ExecTxCmd(
+			cli.NewTxCmd(), creator, []string{"burn", coin, burnFromArg})
+		if wantErr {
+			s.Require().Error(err)
+			return
+		}
+		s.Require().NoError(err)
+		s.NoError(s.network.WaitForNextBlock())
+	}
+
+	t := s.T()
+	t.Log("mint successfully")
+	denom := types.TFDenom{
+		Creator:  creator.String(),
+		Subdenom: "nusd",
+	}
+	coin := sdk.NewInt64Coin(denom.String(), 420)
+	wantErr := false
+	mint(coin.String(), creator.String(), wantErr) // happy
+
+	t.Log("want error: unregistered denom")
+	coin.Denom = "notadenom"
+	wantErr = true
+	mint(coin.String(), creator.String(), wantErr)
+	burn(coin.String(), creator.String(), wantErr)
+
+	t.Log("want error: invalid coin")
+	mint("notacoin_231,,", creator.String(), wantErr)
+	burn("notacoin_231,,", creator.String(), wantErr)
+
+	t.Log(`want error: unable to parse "mint-to" or "burn-from"`)
+	coin.Denom = denom.String()
+	mint(coin.String(), "invalidAddr", wantErr)
+	burn(coin.String(), "invalidAddr", wantErr)
+
+	t.Log("burn successfully")
+	coin.Denom = denom.String()
+	wantErr = false
+	burn(coin.String(), creator.String(), wantErr) // happy
+}
+
+func (s *IntegrationTestSuite) ChangeAdminTest() {
 	creator := s.val.Address
 	admin := creator
 	newAdmin := testutil.AccAddress()

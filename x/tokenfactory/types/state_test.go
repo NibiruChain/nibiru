@@ -89,7 +89,8 @@ func TestGenesisState(t *testing.T) {
 				FactoryDenoms: happyGenDenoms,
 			},
 		},
-		{name: "sad: duplicate", wantErr: "duplicate denom",
+		{name: "sad: duplicate",
+			wantErr: "duplicate denom",
 			genState: types.GenesisState{
 				Params: types.DefaultModuleParams(),
 				FactoryDenoms: []types.GenesisDenom{
@@ -97,7 +98,8 @@ func TestGenesisState(t *testing.T) {
 				},
 			},
 		},
-		{name: "sad: invalid admin", wantErr: types.ErrInvalidAdmin.Error(),
+		{name: "sad: invalid admin",
+			wantErr: types.ErrInvalidAdmin.Error(),
 			genState: types.GenesisState{
 				Params: types.DefaultModuleParams(),
 				FactoryDenoms: []types.GenesisDenom{
@@ -106,6 +108,22 @@ func TestGenesisState(t *testing.T) {
 						Denom: happyGenDenoms[1].Denom,
 						AuthorityMetadata: types.DenomAuthorityMetadata{
 							Admin: "not_an_address",
+						},
+					},
+				},
+			},
+		},
+
+		{name: "sad: invalid genesis denom",
+			wantErr: types.ErrInvalidGenesis.Error(),
+			genState: types.GenesisState{
+				Params: types.DefaultModuleParams(),
+				FactoryDenoms: []types.GenesisDenom{
+					happyGenDenoms[0],
+					{
+						Denom: "sad denom",
+						AuthorityMetadata: types.DenomAuthorityMetadata{
+							Admin: happyGenDenoms[1].AuthorityMetadata.Admin,
 						},
 					},
 				},
