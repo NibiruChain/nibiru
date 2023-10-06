@@ -1,6 +1,8 @@
 package types
 
 import (
+	fmt "fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/set"
@@ -32,13 +34,15 @@ func (gs GenesisState) Validate() error {
 		seenDenoms.Add(denom)
 
 		if err := genesisDenom.Validate(); err != nil {
-			return err
+			return ErrInvalidGenesis.Wrap(err.Error())
 		}
 
-		if genesisDenom.AuthorityMetadata.Admin != "" {
-			_, err = sdk.AccAddressFromBech32(genesisDenom.AuthorityMetadata.Admin)
+		if admin := genesisDenom.AuthorityMetadata.Admin; admin != "" {
+			_, err = sdk.AccAddressFromBech32(admin)
 			if err != nil {
-				return ErrInvalidAdmin.Wrapf("Invalid admin address (%s)", err)
+				return fmt.Errorf("%w: %s: admin address (%s): %s",
+					ErrInvalidGenesis, ErrInvalidAdmin, admin, err,
+				)
 			}
 		}
 	}
