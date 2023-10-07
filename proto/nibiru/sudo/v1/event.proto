@@ -9,7 +9,7 @@ import "nibiru/sudo/v1/state.proto";
 option go_package = "github.com/NibiruChain/nibiru/x/sudo/types";
 
 message EventUpdateSudoers {
-  Sudoers sudoers = 1 [ (gogoproto.nullable) = false ];
+  nibiru.sudo.v1.Sudoers sudoers = 1 [ (gogoproto.nullable) = false ];
 
   // Action is the type of update that occured to the "sudoers"
   string action = 2;

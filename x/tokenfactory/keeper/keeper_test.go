@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -12,7 +13,6 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -24,9 +24,8 @@ type TestSuite struct {
 	ctx sdk.Context
 	app *app.NibiruApp
 
-	keeper      tfkeeper.Keeper
-	queryClient tftypes.QueryClient
-	// msgServer tftypes.MsgServer // TODO when txs are added.
+	keeper  tfkeeper.Keeper
+	querier tfkeeper.Querier
 
 	genesis tftypes.GenesisState
 }
@@ -38,15 +37,32 @@ func TestKeeperTestSuite(t *testing.T) {
 // SetupTest: Runs before each test in the suite. It initializes a fresh app
 // and ctx.
 func (s *TestSuite) SetupTest() {
+	testapp.EnsureNibiruPrefix()
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 	s.app = nibiruApp
 	s.ctx = ctx
 	s.keeper = s.app.TokenFactoryKeeper
 	s.genesis = *tftypes.DefaultGenesis()
+	s.querier = s.keeper.Querier()
+}
 
-	queryGrpcHelper := baseapp.NewQueryServerTestHelper(
-		s.ctx, s.app.InterfaceRegistry())
-	s.queryClient = tftypes.NewQueryClient(queryGrpcHelper)
+func (s *TestSuite) HandleMsg(txMsg sdk.Msg) (err error) {
+	goCtx := sdk.WrapSDKContext(s.ctx)
+	switch txMsg := txMsg.(type) {
+	case *tftypes.MsgCreateDenom:
+		_, err = s.app.TokenFactoryKeeper.CreateDenom(goCtx, txMsg)
+	case *tftypes.MsgMint:
+		_, err = s.app.TokenFactoryKeeper.Mint(goCtx, txMsg)
+	case *tftypes.MsgBurn:
+		_, err = s.app.TokenFactoryKeeper.Burn(goCtx, txMsg)
+	case *tftypes.MsgChangeAdmin:
+		_, err = s.app.TokenFactoryKeeper.ChangeAdmin(goCtx, txMsg)
+	case *tftypes.MsgSetDenomMetadata:
+		_, err = s.app.TokenFactoryKeeper.SetDenomMetadata(goCtx, txMsg)
+	default:
+		err = fmt.Errorf("unknown message type: %t", txMsg)
+	}
+	return err
 }
 
 func (s *TestSuite) GoCtx() context.Context { return sdk.WrapSDKContext(s.ctx) }

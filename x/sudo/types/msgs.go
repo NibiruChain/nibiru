@@ -35,6 +35,7 @@ func (m MsgEditSudoers) ValidateBasic() error {
 	return nil
 }
 
+// GetSigners implements the sdk.Msg interface.
 func (m MsgEditSudoers) GetSigners() []sdk.AccAddress {
 	signer, err := sdk.AccAddressFromBech32(m.Sender)
 	if err != nil {
@@ -43,13 +44,13 @@ func (m MsgEditSudoers) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{signer}
 }
 
-// Route Implements Msg.
+// Route implements the sdk.Msg interface.
 func (msg MsgEditSudoers) Route() string { return ModuleName }
 
-// Type Implements Msg.
+// Type implements the sdk.Msg interface.
 func (msg MsgEditSudoers) Type() string { return "edit_sudoers" }
 
-// GetSignBytes Implements Msg.
+// GetSignBytes implements the sdk.Msg interface.
 func (m MsgEditSudoers) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
 }
