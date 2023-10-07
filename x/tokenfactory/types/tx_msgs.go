@@ -93,6 +93,85 @@ func (m MsgChangeAdmin) GetSignBytes() []byte {
 }
 
 // ----------------------------------------------------------------
+// MsgMint
+
+var _ sdk.Msg = &MsgMint{}
+
+// ValidateBasic performs stateless validation checks. Impl sdk.Msg.
+func (m MsgMint) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		return sdkerrors.ErrInvalidAddress.Wrapf(
+			"invalid sender (%s): %s", m.Sender, err)
+	}
+
+	if err := validateCoin(m.Coin); err != nil {
+		return err
+	} else if err := DenomStr(m.Coin.Denom).Validate(); err != nil {
+		return err
+	}
+
+	if m.MintTo != "" {
+		_, err = sdk.AccAddressFromBech32(m.MintTo)
+		if err != nil {
+			return sdkerrors.ErrInvalidAddress.Wrapf(
+				"invalid mint_to (%s): %s", m.MintTo, err)
+		}
+	}
+
+	return err
+}
+
+// GetSigners: Impl sdk.Msg.
+func (m MsgMint) GetSigners() []sdk.AccAddress {
+	sender, _ := sdk.AccAddressFromBech32(m.Sender)
+	return []sdk.AccAddress{sender}
+}
+
+func validateCoin(coin sdk.Coin) error {
+	if !coin.IsValid() || coin.IsZero() {
+		return sdkerrors.ErrInvalidCoins.Wrap(coin.String())
+	}
+	return nil
+}
+
+// ----------------------------------------------------------------
+// MsgBurn
+
+var _ sdk.Msg = &MsgBurn{}
+
+// ValidateBasic performs stateless validation checks. Impl sdk.Msg.
+func (m MsgBurn) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		return sdkerrors.ErrInvalidAddress.Wrapf(
+			"invalid sender (%s): %s", m.Sender, err)
+	}
+
+	if err := validateCoin(m.Coin); err != nil {
+		return err
+	} else if err := DenomStr(m.Coin.Denom).Validate(); err != nil {
+		return err
+	}
+
+	if m.BurnFrom != "" {
+		_, err = sdk.AccAddressFromBech32(m.BurnFrom)
+		if err != nil {
+			return sdkerrors.ErrInvalidAddress.Wrapf(
+				"invalid burn_from (%s): %s", m.BurnFrom, err)
+		}
+	}
+
+	return nil
+}
+
+// GetSigners: Impl sdk.Msg.
+func (m MsgBurn) GetSigners() []sdk.AccAddress {
+	sender, _ := sdk.AccAddressFromBech32(m.Sender)
+	return []sdk.AccAddress{sender}
+}
+
+// ----------------------------------------------------------------
 // MsgUpdateModuleParams
 
 var _ sdk.Msg = &MsgUpdateModuleParams{}
@@ -109,5 +188,26 @@ func (m MsgUpdateModuleParams) ValidateBasic() error {
 // GetSigners: Impl sdk.Msg.
 func (m MsgUpdateModuleParams) GetSigners() []sdk.AccAddress {
 	sender, _ := sdk.AccAddressFromBech32(m.Authority)
+	return []sdk.AccAddress{sender}
+}
+
+// ----------------------------------------------------------------
+// MsgSetDenomMetadata
+
+var _ sdk.Msg = &MsgSetDenomMetadata{}
+
+// ValidateBasic performs stateless validation checks. Impl sdk.Msg.
+func (m MsgSetDenomMetadata) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		return sdkerrors.ErrInvalidAddress.Wrapf(
+			"invalid sender (%s): %s", m.Sender, err)
+	}
+	return m.Metadata.Validate()
+}
+
+// GetSigners: Impl sdk.Msg.
+func (m MsgSetDenomMetadata) GetSigners() []sdk.AccAddress {
+	sender, _ := sdk.AccAddressFromBech32(m.Sender)
 	return []sdk.AccAddress{sender}
 }

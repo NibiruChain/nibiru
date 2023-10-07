@@ -46,6 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   State transitions, collections, genesis import and export, and app wiring
   * [#1607](https://github.com/NibiruChain/nibiru/pull/1607) - Token factory
     transaction messages for CreateDenom, ChangeAdmin, and UpdateModuleParams 
+  * [#1620](https://github.com/NibiruChain/nibiru/pull/1620) - Token factory
+    transaction messages for Mint and Burn
 
 ### State Machine Breaking 
 
@@ -67,6 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Dependencies
 - Bump `github.com/prometheus/client_golang` from 1.16.0 to 1.17.0 ([#1605](https://github.com/NibiruChain/nibiru/pull/1605))
+- Bump `bufbuild/buf-setup-action` from 1.26.1 to 1.27.0 ([#1624](https://github.com/NibiruChain/nibiru/pull/1624))
 
 ## [v0.21.10]
 
