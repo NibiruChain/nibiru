@@ -46,7 +46,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 		indexTwap, err = k.OracleKeeper.GetExchangeRateTwap(ctx, amm.Pair)
 		if err != nil {
 			k.Logger(ctx).Error("failed to fetch twap index price", "market.Pair", market.Pair, "error", err)
-			indexTwap = sdk.ZeroDec()
+			indexTwap = sdk.OneDec().Neg()
 		}
 
 		if indexTwap.IsNil() {
