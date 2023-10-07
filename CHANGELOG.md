@@ -69,6 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Dependencies
 - Bump `github.com/prometheus/client_golang` from 1.16.0 to 1.17.0 ([#1605](https://github.com/NibiruChain/nibiru/pull/1605))
+- Bump `bufbuild/buf-setup-action` from 1.26.1 to 1.27.0 ([#1624](https://github.com/NibiruChain/nibiru/pull/1624))
 
 ## [v0.21.10]
 
