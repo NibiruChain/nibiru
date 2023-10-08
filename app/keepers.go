@@ -277,7 +277,7 @@ func (app *NibiruApp) InitKeepers(
 		appCodec,
 		keys[banktypes.StoreKey],
 		app.AccountKeeper,
-		blockedAddresses(),
+		BlockedAddresses(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	app.stakingKeeper = stakingkeeper.NewKeeper(
@@ -679,8 +679,8 @@ func orderedModuleNames() []string {
 	}
 }
 
-// blockedAddresses returns all the app's blocked account addresses.
-func blockedAddresses() map[string]bool {
+// BlockedAddresses returns all the app's blocked account addresses.
+func BlockedAddresses() map[string]bool {
 	modAccAddrs := make(map[string]bool)
 	for acc := range maccPerms {
 		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true

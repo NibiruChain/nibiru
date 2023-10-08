@@ -3,9 +3,6 @@ package keeper
 import (
 	"context"
 
-	grpccodes "google.golang.org/grpc/codes"
-	grpcstatus "google.golang.org/grpc/status"
-
 	types "github.com/NibiruChain/nibiru/x/tokenfactory/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -30,13 +27,7 @@ func (q Querier) Params(
 	_ *types.QueryParamsRequest,
 ) (*types.QueryParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	params, err := q.Keeper.Store.ModuleParams.Get(ctx)
-	if err != nil {
-		return nil, grpcstatus.Errorf(
-			grpccodes.NotFound,
-			"failed to query module params",
-		)
-	}
+	params, _ := q.Keeper.Store.ModuleParams.Get(ctx)
 	return &types.QueryParamsResponse{Params: params}, nil
 }
 
