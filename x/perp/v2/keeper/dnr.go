@@ -5,9 +5,10 @@ import (
 
 	"cosmossdk.io/math"
 	"github.com/NibiruChain/collections"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 )

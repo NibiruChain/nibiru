@@ -63,8 +63,6 @@ message GenesisState {
     Discount discount = 2;
   }
 
-  repeated nibiru.perp.v2.GenesisMarketLastVersion market_last_versions = 10
-      [ (gogoproto.nullable) = false ];
   message Rebate {
     string rebate = 1 [
       (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
