@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/NibiruChain/nibiru/x/wasm/binding/wasmbin"
+	"github.com/NibiruChain/nibiru/wasmbinding/wasmbin"
 )
 
 func TestExpectedBytecodeExists(t *testing.T) {
