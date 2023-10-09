@@ -44,7 +44,7 @@ import (
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cast"
 
-	wasmbinding "github.com/NibiruChain/nibiru/x/wasm/binding"
+	wasmbinding "github.com/NibiruChain/nibiru/wasmbinding"
 )
 
 const (

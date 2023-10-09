@@ -1,4 +1,4 @@
-package binding_test
+package wasmbinding_test
 
 import (
 	"encoding/json"
@@ -10,6 +10,9 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/wasmbinding"
+	"github.com/NibiruChain/nibiru/wasmbinding/bindings"
+	"github.com/NibiruChain/nibiru/wasmbinding/wasmbin"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
@@ -17,9 +20,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
-	"github.com/NibiruChain/nibiru/x/wasm/binding"
-	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
-	"github.com/NibiruChain/nibiru/x/wasm/binding/wasmbin"
 )
 
 func TestSuitePerpQuerier_RunAll(t *testing.T) {
@@ -66,7 +66,7 @@ type TestSuitePerpQuerier struct {
 	nibiru           *app.NibiruApp
 	ctx              sdk.Context
 	contractDeployer sdk.AccAddress
-	queryPlugin      binding.QueryPlugin
+	queryPlugin      wasmbinding.QueryPlugin
 
 	contractPerp sdk.AccAddress
 	fields       ExampleFields
@@ -103,7 +103,7 @@ func (s *TestSuitePerpQuerier) SetupSuite() {
 	s.ctx = ctx
 
 	s.contractPerp = ContractMap[wasmbin.WasmKeyPerpBinding]
-	s.queryPlugin = binding.NewQueryPlugin(
+	s.queryPlugin = wasmbinding.NewQueryPlugin(
 		nibiru.PerpKeeperV2,
 		nibiru.OracleKeeper,
 	)
@@ -127,17 +127,17 @@ func (s *TestSuitePerpQuerier) OnSetupEnd() {
 
 func (s *TestSuitePerpQuerier) TestPremiumFraction() {
 	testCases := map[string]struct {
-		cwReq     *cw_struct.PremiumFractionRequest
-		cwResp    *cw_struct.PremiumFractionResponse
+		cwReq     *bindings.PremiumFractionRequest
+		cwResp    *bindings.PremiumFractionResponse
 		expectErr bool
 	}{
 		"invalid pair": {
-			cwReq:     &cw_struct.PremiumFractionRequest{Pair: "nonsense"},
+			cwReq:     &bindings.PremiumFractionRequest{Pair: "nonsense"},
 			expectErr: true,
 		},
 		"happy": {
-			cwReq: &cw_struct.PremiumFractionRequest{Pair: s.fields.Pair},
-			cwResp: &cw_struct.PremiumFractionResponse{
+			cwReq: &bindings.PremiumFractionRequest{Pair: s.fields.Pair},
+			cwResp: &bindings.PremiumFractionResponse{
 				Pair:             s.fields.Pair,
 				CPF:              sdk.MustNewDecFromStr("0.5"),
 				EstimatedNextCPF: sdk.MustNewDecFromStr("0.5"),
@@ -167,11 +167,11 @@ func (s *TestSuitePerpQuerier) TestPremiumFraction() {
 }
 
 func (s *TestSuitePerpQuerier) TestAllMarkets() {
-	type CwMarketMap map[asset.Pair]cw_struct.Market
+	type CwMarketMap map[asset.Pair]bindings.Market
 
 	marketMap := make(CwMarketMap)
 	for pair, ammMarket := range genesis.START_MARKETS {
-		cwMarket := cw_struct.NewMarket(
+		cwMarket := bindings.NewMarket(
 			ammMarket.Market,
 			ammMarket.Amm,
 			"",
@@ -226,26 +226,26 @@ func (s *TestSuitePerpQuerier) TestAllMarkets() {
 func (s *TestSuitePerpQuerier) TestMetrics() {
 	// happy case
 	for pair := range genesis.START_MARKETS {
-		cwReq := &cw_struct.MetricsRequest{Pair: pair.String()}
+		cwReq := &bindings.MetricsRequest{Pair: pair.String()}
 		cwResp, err := s.queryPlugin.Perp.Metrics(s.ctx, cwReq)
 		s.Error(err, "cwResp: %s", cwResp)
 		s.Nil(cwResp)
 	}
 
 	// sad case
-	cwReq := &cw_struct.MetricsRequest{Pair: "ftt:ust"}
+	cwReq := &bindings.MetricsRequest{Pair: "ftt:ust"}
 	cwResp, err := s.queryPlugin.Perp.Metrics(s.ctx, cwReq)
 	s.Errorf(err, "cwResp: %s", cwResp)
 }
 
 func (s *TestSuitePerpQuerier) TestModuleAccounts() {
-	cwReq := &cw_struct.ModuleAccountsRequest{}
+	cwReq := &bindings.ModuleAccountsRequest{}
 	cwResp, err := s.queryPlugin.Perp.ModuleAccounts(s.ctx, cwReq)
 	s.NoErrorf(err, "\ncwResp: %s", cwResp)
 }
 
 func (s *TestSuitePerpQuerier) TestModuleParams() {
-	cwReq := &cw_struct.PerpParamsRequest{}
+	cwReq := &bindings.PerpParamsRequest{}
 	cwResp, err := s.queryPlugin.Perp.ModuleParams(s.ctx, cwReq)
 	s.Errorf(err, "\ncwResp: %s", cwResp)
 	s.Nil(cwResp)
@@ -259,7 +259,7 @@ func (s *TestSuitePerpQuerier) TestPosition() {
 	baseAmtLimit := sdk.ZeroDec()
 
 	s.T().Log("Request should error since the trader hasn't yet opened a position")
-	cwReq := &cw_struct.PositionRequest{
+	cwReq := &bindings.PositionRequest{
 		Trader: trader.String(),
 		Pair:   pair.String(),
 	}
@@ -281,7 +281,7 @@ func (s *TestSuitePerpQuerier) TestPosition() {
 	jsonBz, err := json.Marshal(cwResp)
 	s.NoErrorf(err, "jsonBz: %s", jsonBz)
 	// and unmarshals from JSON
-	freshCwResp := new(cw_struct.PositionResponse)
+	freshCwResp := new(bindings.PositionResponse)
 	err = json.Unmarshal(jsonBz, freshCwResp)
 	s.NoErrorf(err, "freshCwResp: %s", freshCwResp)
 	s.Assert().EqualValues(resp.ExchangedNotionalValue, leverage.MulInt(margin))
@@ -289,7 +289,7 @@ func (s *TestSuitePerpQuerier) TestPosition() {
 	s.Assert().EqualValues(cwResp.Position.Margin, sdk.NewDecFromInt(margin))
 
 	s.T().Log("fail due to invalid pair")
-	cwReq = &cw_struct.PositionRequest{
+	cwReq = &bindings.PositionRequest{
 		Trader: trader.String(),
 		Pair:   "ftt:ust:xyz",
 	}
@@ -297,15 +297,15 @@ func (s *TestSuitePerpQuerier) TestPosition() {
 	s.Errorf(err, "\ncwResp: %s", cwResp)
 
 	s.T().Log("test multiple positions query")
-	positionResponses := []cw_struct.PositionResponse{*freshCwResp}
+	positionResponses := []bindings.PositionResponse{*freshCwResp}
 	s.DoPositionsTest(trader, positionResponses)
 }
 
 func (s *TestSuitePerpQuerier) DoPositionsTest(
-	trader sdk.AccAddress, responses []cw_struct.PositionResponse,
+	trader sdk.AccAddress, responses []bindings.PositionResponse,
 ) {
 	s.T().Log("test multiple positions query")
-	cwReq := &cw_struct.PositionsRequest{
+	cwReq := &bindings.PositionsRequest{
 		Trader: trader.String(),
 	}
 	cwResp, err := s.queryPlugin.Perp.Positions(s.ctx, cwReq)
