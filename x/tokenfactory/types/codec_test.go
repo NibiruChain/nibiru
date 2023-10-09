@@ -1,4 +1,4 @@
-package types
+package types_test
 
 import (
 	"testing"
@@ -7,6 +7,8 @@ import (
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
 
 type CodecSuite struct {
@@ -20,11 +22,8 @@ func TestCodecSuite(t *testing.T) {
 func (suite *CodecSuite) TestRegisterInterfaces() {
 	registry := codectypes.NewInterfaceRegistry()
 	registry.RegisterInterface(sdk.MsgInterfaceProtoName, (*sdk.Msg)(nil))
-	RegisterInterfaces(registry)
+	types.RegisterInterfaces(registry)
 
 	impls := registry.ListImplementations(sdk.MsgInterfaceProtoName)
-	suite.Require().Equal(0, len(impls))
-	suite.Require().ElementsMatch([]string{
-		// "/nibiru.tokenfactory.v1.MsgTODO",
-	}, impls)
+	suite.Require().ElementsMatch(types.TX_MSG_TYPE_URLS(), impls)
 }

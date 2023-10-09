@@ -9,7 +9,7 @@ test-coverage:
 	go test ./... $(PACKAGES_NOSIMULATION) -short \
 		-coverprofile=coverage.txt \
 		-covermode=atomic \
-		-race | grep -v "no test" | grep -v "no statement"
+		-race
 
 # NOTE: Using the verbose flag breaks the coverage reporting in CI.
 # Used for CI by Codecov
@@ -18,7 +18,7 @@ test-coverage-integration:
 	go test ./... \
 		-coverprofile=coverage.txt \
 		-covermode=atomic \
-		-race | grep -v "no test" | grep -v "no statement"
+		-race
 
 # Require Python3
 .PHONY: test-create-test-cases

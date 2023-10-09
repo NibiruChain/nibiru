@@ -44,6 +44,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * [#1596](https://github.com/NibiruChain/nibiru/pull/1596) - epic(tokenfactory):
   State transitions, collections, genesis import and export, and app wiring
+  * [#1607](https://github.com/NibiruChain/nibiru/pull/1607) - Token factory
+    transaction messages for CreateDenom, ChangeAdmin, and UpdateModuleParams 
+  * [#1620](https://github.com/NibiruChain/nibiru/pull/1620) - Token factory
+    transaction messages for Mint and Burn
 
 ### State Machine Breaking 
 
@@ -51,13 +55,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1613](https://github.com/NibiruChain/nibiru/pull/1613) - feat(app)!: enforce min commission by changing default and genesis validation
 * [#1615](https://github.com/NibiruChain/nibiru/pull/1613) - feat(ante)!: Ante
   handler to add a maximum commission rate of 25% for validators.
+* [#1616](https://github.com/NibiruChain/nibiru/pull/1616) - fix(app)!:
+  Add custom wasm snapshotter for proper state exports
+* [#1617](https://github.com/NibiruChain/nibiru/pull/1617) - fix(app)!:
+  non-nil snapshot manager is not guarantted in testapp
 
 ### Improvements
 
-* [#1610](https://github.com/NibiruChain/nibiru/pull/1610) - refactor(app): Simplify app.go with less redundant imports using struct embedding.
+* [#1610](https://github.com/NibiruChain/nibiru/pull/1610) - refactor(app):
+  Simplify app.go with less redundant imports using struct embedding.
+* [#1614](https://github.com/NibiruChain/nibiru/pull/1614) - refactor(proto): Use
+  explicit namespacing on proto imports for #1608
 
 ### Dependencies
 - Bump `github.com/prometheus/client_golang` from 1.16.0 to 1.17.0 ([#1605](https://github.com/NibiruChain/nibiru/pull/1605))
+- Bump `bufbuild/buf-setup-action` from 1.26.1 to 1.27.0 ([#1624](https://github.com/NibiruChain/nibiru/pull/1624))
+- Bump `stefanzweifel/git-auto-commit-action` from 4 to 5 ([#1625](https://github.com/NibiruChain/nibiru/pull/1625))
+
+### Bug Fixes
+
+* [#1606](https://github.com/NibiruChain/nibiru/pull/1606) - fix(perp): emit `MarketUpdatedEvent` in the absence of index price
 
 ## [v0.21.10]
 

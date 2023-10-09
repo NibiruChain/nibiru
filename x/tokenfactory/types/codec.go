@@ -11,7 +11,6 @@ import (
 var (
 	legacyAminoCdc = codec.NewLegacyAmino()
 	ModuleCdc      = codec.NewProtoCodec(codectypes.NewInterfaceRegistry())
-	AminoCdc       = codec.NewAminoCodec(legacyAminoCdc)
 )
 
 // NOTE: This is required for the GetSignBytes function
@@ -30,15 +29,43 @@ func init() {
 func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 	registry.RegisterImplementations(
 		(*sdk.Msg)(nil),
-		// &MsgTODO{},
+		&MsgCreateDenom{},
+		&MsgChangeAdmin{},
+		&MsgUpdateModuleParams{},
+		&MsgMint{},
+		&MsgBurn{},
+		&MsgSetDenomMetadata{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }
 
-// RegisterLegacyAminoCodec registers the necessary x/FeeShare interfaces and
+func TX_MSG_TYPE_URLS() []string {
+	return []string{
+		"/nibiru.tokenfactory.v1.MsgCreateDenom",
+		"/nibiru.tokenfactory.v1.MsgChangeAdmin",
+		"/nibiru.tokenfactory.v1.MsgUpdateModuleParams",
+		"/nibiru.tokenfactory.v1.MsgMint",
+		"/nibiru.tokenfactory.v1.MsgBurn",
+		"/nibiru.tokenfactory.v1.MsgSetDenomMetadata",
+	}
+}
+
+// RegisterLegacyAminoCodec registers the necessary x/tokenfactory interfaces and
 // concrete types on the provided LegacyAmino codec. These types are used for
 // Amino JSON serialization and EIP-712 compatibility.
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	// cdc.RegisterConcrete(&MsgTODO{}, "prefix/MsgTODO", nil)
+	for _, ele := range []struct {
+		MsgType interface{}
+		Name    string
+	}{
+		{&MsgCreateDenom{}, "nibiru/tokenfactory/create-denom"},
+		{&MsgChangeAdmin{}, "nibiru/tokenfactory/change-admin"},
+		{&MsgUpdateModuleParams{}, "nibiru/tokenfactory/update-module-params"},
+		{&MsgMint{}, "nibiru/tokenfactory/mint"},
+		{&MsgBurn{}, "nibiru/tokenfactory/burn"},
+		{&MsgSetDenomMetadata{}, "nibiru/tokenfactory/set-denom-metadata"},
+	} {
+		cdc.RegisterConcrete(ele.MsgType, ele.Name, nil)
+	}
 }

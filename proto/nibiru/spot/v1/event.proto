@@ -16,7 +16,7 @@ message EventPoolCreated {
   repeated cosmos.base.v1beta1.Coin fees = 2 [ (gogoproto.nullable) = false ];
 
   // the final state of the pool
-  Pool final_pool = 4 [ (gogoproto.nullable) = false ];
+  nibiru.spot.v1.Pool final_pool = 4 [ (gogoproto.nullable) = false ];
 
   // the amount of pool shares that the user received
   cosmos.base.v1beta1.Coin final_user_pool_shares = 5
@@ -39,7 +39,7 @@ message EventPoolJoined {
       [ (gogoproto.nullable) = false ];
 
   // the final state of the pool
-  Pool final_pool = 5 [ (gogoproto.nullable) = false ];
+  nibiru.spot.v1.Pool final_pool = 5 [ (gogoproto.nullable) = false ];
 
   // the final amount of user pool shares
   cosmos.base.v1beta1.Coin final_user_pool_shares = 6
@@ -61,7 +61,7 @@ message EventPoolExited {
   repeated cosmos.base.v1beta1.Coin fees = 4 [ (gogoproto.nullable) = false ];
 
   // the final state of the pool
-  Pool final_pool = 5 [ (gogoproto.nullable) = false ];
+  nibiru.spot.v1.Pool final_pool = 5 [ (gogoproto.nullable) = false ];
 
   // the final amount of user pool shares
   cosmos.base.v1beta1.Coin final_user_pool_shares = 6
@@ -82,5 +82,5 @@ message EventAssetsSwapped {
   cosmos.base.v1beta1.Coin fee = 4 [ (gogoproto.nullable) = false ];
 
   // the final state of the pool
-  Pool final_pool = 5 [ (gogoproto.nullable) = false ];
+  nibiru.spot.v1.Pool final_pool = 5 [ (gogoproto.nullable) = false ];
 }
