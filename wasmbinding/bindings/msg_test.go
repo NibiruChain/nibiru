@@ -1,4 +1,4 @@
-package cw_struct_test
+package bindings_test
 
 import (
 	"bytes"
@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/wasmbinding/bindings"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
-	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 )
 
 type TestSuiteBindingJsonTypes struct {
@@ -38,16 +38,16 @@ func (s *TestSuiteBindingJsonTypes) SetupSuite() {
 
 func (s *TestSuiteBindingJsonTypes) TestQueries() {
 	testCaseMap := map[string]any{
-		"all_markets":      new(cw_struct.AllMarketsResponse),
-		"reserves":         new(cw_struct.ReservesResponse),
-		"base_price":       new(cw_struct.BasePriceResponse),
-		"position":         new(cw_struct.PositionResponse),
-		"positions":        new(cw_struct.PositionsResponse),
-		"module_params":    new(cw_struct.PerpParamsResponse),
-		"premium_fraction": new(cw_struct.PremiumFractionResponse),
-		"metrics":          new(cw_struct.MetricsResponse),
-		"module_accounts":  new(cw_struct.ModuleAccountsResponse),
-		"oracle_prices":    new(cw_struct.OraclePricesResponse),
+		"all_markets":      new(bindings.AllMarketsResponse),
+		"reserves":         new(bindings.ReservesResponse),
+		"base_price":       new(bindings.BasePriceResponse),
+		"position":         new(bindings.PositionResponse),
+		"positions":        new(bindings.PositionsResponse),
+		"module_params":    new(bindings.PerpParamsResponse),
+		"premium_fraction": new(bindings.PremiumFractionResponse),
+		"metrics":          new(bindings.MetricsResponse),
+		"module_accounts":  new(bindings.ModuleAccountsResponse),
+		"oracle_prices":    new(bindings.OraclePricesResponse),
 	}
 
 	for name, cwRespPtr := range testCaseMap {
@@ -61,10 +61,10 @@ func (s *TestSuiteBindingJsonTypes) TestQueries() {
 }
 
 func (s *TestSuiteBindingJsonTypes) TestToAppMarket() {
-	var lastCwMarket cw_struct.Market
+	var lastCwMarket bindings.Market
 	for _, ammMarket := range genesis.START_MARKETS {
 		dummyBlockHeight := int64(1)
-		cwMarket := cw_struct.NewMarket(
+		cwMarket := bindings.NewMarket(
 			ammMarket.Market,
 			ammMarket.Amm,
 			"index price",
@@ -118,7 +118,7 @@ func (s *TestSuiteBindingJsonTypes) TestExecuteMsgs() {
 
 	for _, name := range testCaseMap {
 		t.Run(name, func(t *testing.T) {
-			var bindingMsg cw_struct.BindingMsg
+			var bindingMsg bindings.NibiruMsg
 			err := json.Unmarshal(fileJson[name], &bindingMsg)
 			assert.NoErrorf(t, err, "name: %v", name)
 
@@ -134,7 +134,7 @@ func (s *TestSuiteBindingJsonTypes) TestExecuteMsgs() {
 			compactFileBytes, err := compactJsonData(fileBytes)
 			require.NoError(t, err)
 
-			var reconsitutedBindingMsg cw_struct.BindingMsg
+			var reconsitutedBindingMsg bindings.NibiruMsg
 			err = json.Unmarshal(compactFileBytes.Bytes(), &reconsitutedBindingMsg)
 			require.NoError(t, err)
 

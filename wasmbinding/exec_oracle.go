@@ -1,4 +1,4 @@
-package binding
+package wasmbinding
 
 import (
 	"fmt"
@@ -6,17 +6,17 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/wasmbinding/bindings"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
-	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 )
 
 type ExecutorOracle struct {
 	Oracle oraclekeeper.Keeper
 }
 
-func (o ExecutorOracle) SetOracleParams(msg *cw_struct.EditOracleParams, ctx sdk.Context) error {
+func (o ExecutorOracle) SetOracleParams(msg *bindings.EditOracleParams, ctx sdk.Context) error {
 	params, err := o.Oracle.Params.Get(ctx)
 	if err != nil {
 		return fmt.Errorf("get oracle params error: %s", err.Error())
@@ -30,7 +30,7 @@ func (o ExecutorOracle) SetOracleParams(msg *cw_struct.EditOracleParams, ctx sdk
 
 // mergeOracleParams takes the oracle params from the wasm msg and merges them into the existing params
 // keeping any existing values if not set in the wasm msg
-func mergeOracleParams(msg *cw_struct.EditOracleParams, oracleParams oracletypes.Params) oracletypes.Params {
+func mergeOracleParams(msg *bindings.EditOracleParams, oracleParams oracletypes.Params) oracletypes.Params {
 	if msg.VotePeriod != nil {
 		oracleParams.VotePeriod = msg.VotePeriod.Uint64()
 	}

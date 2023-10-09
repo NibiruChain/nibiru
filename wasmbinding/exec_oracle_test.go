@@ -1,4 +1,4 @@
-package binding_test
+package wasmbinding_test
 
 import (
 	"testing"
@@ -10,12 +10,12 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/wasmbinding"
+	"github.com/NibiruChain/nibiru/wasmbinding/bindings"
+	"github.com/NibiruChain/nibiru/wasmbinding/wasmbin"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	"github.com/NibiruChain/nibiru/x/wasm/binding"
-	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
-	"github.com/NibiruChain/nibiru/x/wasm/binding/wasmbin"
 )
 
 func TestSuiteOracleExecutor_RunAll(t *testing.T) {
@@ -27,7 +27,7 @@ type TestSuiteOracleExecutor struct {
 
 	nibiru           app.NibiruApp
 	contractDeployer sdk.AccAddress
-	exec             binding.ExecutorOracle
+	exec             wasmbinding.ExecutorOracle
 	contract         sdk.AccAddress
 	ctx              sdk.Context
 }
@@ -56,14 +56,14 @@ func (s *TestSuiteOracleExecutor) SetupSuite() {
 
 	wasmkeeper.NewMsgServerImpl(&nibiru.WasmKeeper)
 	s.contract = ContractMap[wasmbin.WasmKeyController]
-	s.exec = binding.ExecutorOracle{
+	s.exec = wasmbinding.ExecutorOracle{
 		Oracle: nibiru.OracleKeeper,
 	}
 }
 
 func (s *TestSuiteOracleExecutor) TestExecuteOracleParams() {
 	period := sdk.NewInt(1234)
-	cwMsg := &cw_struct.EditOracleParams{
+	cwMsg := &bindings.EditOracleParams{
 		VotePeriod: &period,
 	}
 
@@ -85,7 +85,7 @@ func (s *TestSuiteOracleExecutor) TestExecuteOracleParams() {
 	s.Require().Equal(sdk.OneDec().Quo(sdk.NewDec(3)), params.VoteThreshold)
 
 	threshold := sdk.MustNewDecFromStr("0.4")
-	cwMsg = &cw_struct.EditOracleParams{
+	cwMsg = &bindings.EditOracleParams{
 		VoteThreshold: &threshold,
 	}
 
@@ -102,7 +102,7 @@ func (s *TestSuiteOracleExecutor) TestExecuteOracleParams() {
 	s.Require().Equal(sdk.NewDecWithPrec(2, 2), params.RewardBand)
 
 	band := sdk.MustNewDecFromStr("0.5")
-	cwMsg = &cw_struct.EditOracleParams{
+	cwMsg = &bindings.EditOracleParams{
 		RewardBand: &band,
 	}
 
@@ -119,7 +119,7 @@ func (s *TestSuiteOracleExecutor) TestExecuteOracleParams() {
 	s.Require().Equal(14, len(params.Whitelist))
 
 	whitelist := []string{"aave:usdc", "sol:usdc"}
-	cwMsg = &cw_struct.EditOracleParams{
+	cwMsg = &bindings.EditOracleParams{
 		Whitelist: whitelist,
 	}
 	err = s.exec.SetOracleParams(cwMsg, s.ctx)
@@ -135,7 +135,7 @@ func (s *TestSuiteOracleExecutor) TestExecuteOracleParams() {
 	s.Require().Equal(sdk.NewDecWithPrec(5, 3), params.SlashFraction)
 
 	slashFraction := sdk.MustNewDecFromStr("0.5")
-	cwMsg = &cw_struct.EditOracleParams{
+	cwMsg = &bindings.EditOracleParams{
 		SlashFraction: &slashFraction,
 	}
 
@@ -152,7 +152,7 @@ func (s *TestSuiteOracleExecutor) TestExecuteOracleParams() {
 	s.Require().Equal(uint64(3600), params.SlashWindow)
 
 	slashWindow := sdk.NewInt(2)
-	cwMsg = &cw_struct.EditOracleParams{
+	cwMsg = &bindings.EditOracleParams{
 		SlashWindow: &slashWindow,
 	}
 
@@ -169,7 +169,7 @@ func (s *TestSuiteOracleExecutor) TestExecuteOracleParams() {
 	s.Require().Equal(sdk.NewDecWithPrec(69, 2), params.MinValidPerWindow)
 
 	minValidPerWindow := sdk.MustNewDecFromStr("0.5")
-	cwMsg = &cw_struct.EditOracleParams{
+	cwMsg = &bindings.EditOracleParams{
 		MinValidPerWindow: &minValidPerWindow,
 	}
 
@@ -186,7 +186,7 @@ func (s *TestSuiteOracleExecutor) TestExecuteOracleParams() {
 	s.Require().Equal(time.Minute*15, params.TwapLookbackWindow)
 
 	twapLookbackWindow := sdk.NewInt(int64(time.Second * 30))
-	cwMsg = &cw_struct.EditOracleParams{
+	cwMsg = &bindings.EditOracleParams{
 		TwapLookbackWindow: &twapLookbackWindow,
 	}
 
@@ -203,7 +203,7 @@ func (s *TestSuiteOracleExecutor) TestExecuteOracleParams() {
 	s.Require().Equal(uint64(4), params.MinVoters)
 
 	minVoters := sdk.NewInt(2)
-	cwMsg = &cw_struct.EditOracleParams{
+	cwMsg = &bindings.EditOracleParams{
 		MinVoters: &minVoters,
 	}
 
@@ -220,7 +220,7 @@ func (s *TestSuiteOracleExecutor) TestExecuteOracleParams() {
 	s.Require().Equal(sdk.NewDecWithPrec(5, 2), params.ValidatorFeeRatio)
 
 	validatorFeeRatio := sdk.MustNewDecFromStr("0.7")
-	cwMsg = &cw_struct.EditOracleParams{
+	cwMsg = &bindings.EditOracleParams{
 		ValidatorFeeRatio: &validatorFeeRatio,
 	}
 

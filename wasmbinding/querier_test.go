@@ -1,4 +1,4 @@
-package binding_test
+package wasmbinding_test
 
 import (
 	"encoding/json"
@@ -13,14 +13,14 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/wasmbinding/bindings"
+	"github.com/NibiruChain/nibiru/wasmbinding/wasmbin"
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
-	"github.com/NibiruChain/nibiru/x/wasm/binding/wasmbin"
 )
 
 func TestSuiteQuerier_RunAll(t *testing.T) {
@@ -31,7 +31,7 @@ func DoCustomBindingQuery(
 	ctx sdk.Context,
 	nibiru *app.NibiruApp,
 	contract sdk.AccAddress,
-	bindingRequest cw_struct.BindingQuery,
+	bindingRequest bindings.BindingQuery,
 	responsePointer interface{},
 ) (contractRespBz []byte, err error) {
 	// Parse query type compatible with wasm vm
@@ -89,7 +89,7 @@ type ExampleFields struct {
 	Trader sdk.AccAddress
 	Dec    sdk.Dec
 	Int    sdkmath.Int
-	Market cw_struct.Market
+	Market bindings.Market
 }
 
 func GetHappyFields() ExampleFields {
@@ -100,7 +100,7 @@ func GetHappyFields() ExampleFields {
 		Int:    sdk.NewInt(420),
 	}
 
-	fields.Market = cw_struct.Market{
+	fields.Market = bindings.Market{
 		Pair:         fields.Pair,
 		BaseReserve:  fields.Dec,
 		QuoteReserve: fields.Dec,
@@ -109,7 +109,7 @@ func GetHappyFields() ExampleFields {
 		TotalLong:    fields.Dec,
 		TotalShort:   fields.Dec,
 		PegMult:      fields.Dec,
-		Config: &cw_struct.MarketConfig{
+		Config: &bindings.MarketConfig{
 			MaintenanceMarginRatio: fields.Dec,
 			MaxLeverage:            fields.Dec,
 		},
@@ -163,10 +163,10 @@ func (s *TestSuiteQuerier) TestQueryReserves() {
 	for name, testCase := range testCases {
 		s.T().Run(name, func(t *testing.T) {
 			pairStr := testCase.pairStr
-			bindingQuery := cw_struct.BindingQuery{
-				Reserves: &cw_struct.ReservesRequest{Pair: pairStr},
+			bindingQuery := bindings.BindingQuery{
+				Reserves: &bindings.ReservesRequest{Pair: pairStr},
 			}
-			bindingResp := new(cw_struct.ReservesResponse)
+			bindingResp := new(bindings.ReservesResponse)
 
 			if testCase.wasmError {
 				_, err := DoCustomBindingQuery(
@@ -196,10 +196,10 @@ func (s *TestSuiteQuerier) TestQueryReserves() {
 
 // Integration test for BindingQuery::AllMarkets against real contract
 func (s *TestSuiteQuerier) TestQueryAllMarkets() {
-	bindingQuery := cw_struct.BindingQuery{
-		AllMarkets: &cw_struct.AllMarketsRequest{},
+	bindingQuery := bindings.BindingQuery{
+		AllMarkets: &bindings.AllMarketsRequest{},
 	}
-	bindingResp := new(cw_struct.AllMarketsResponse)
+	bindingResp := new(bindings.AllMarketsResponse)
 
 	respBz, err := DoCustomBindingQuery(
 		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
@@ -221,10 +221,10 @@ func (s *TestSuiteQuerier) TestQueryAllMarkets() {
 
 // Integration test for BindingQuery::AllMarkets against real contract
 func (s *TestSuiteQuerier) TestQueryExchangeRate() {
-	bindingQuery := cw_struct.BindingQuery{
-		OraclePrices: &cw_struct.OraclePrices{},
+	bindingQuery := bindings.BindingQuery{
+		OraclePrices: &bindings.OraclePrices{},
 	}
-	bindingResp := new(cw_struct.OraclePricesResponse)
+	bindingResp := new(bindings.OraclePricesResponse)
 	respBz, err := DoCustomBindingQuery(
 		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
 	)
@@ -234,15 +234,15 @@ func (s *TestSuiteQuerier) TestQueryExchangeRate() {
 }
 
 func (s *TestSuiteQuerier) TestQueryBasePrice() {
-	cwReq := &cw_struct.BasePriceRequest{
+	cwReq := &bindings.BasePriceRequest{
 		Pair:       s.fields.Pair,
 		IsLong:     true,
 		BaseAmount: sdk.NewInt(69_420),
 	}
-	bindingQuery := cw_struct.BindingQuery{
+	bindingQuery := bindings.BindingQuery{
 		BasePrice: cwReq,
 	}
-	bindingResp := new(cw_struct.BasePriceResponse)
+	bindingResp := new(bindings.BasePriceResponse)
 
 	var respBz []byte
 	var err error
@@ -270,14 +270,14 @@ func (s *TestSuiteQuerier) TestQueryBasePrice() {
 }
 
 func (s *TestSuiteQuerier) TestQueryPremiumFraction() {
-	cwReq := &cw_struct.PremiumFractionRequest{
+	cwReq := &bindings.PremiumFractionRequest{
 		Pair: s.fields.Pair,
 	}
 
-	bindingQuery := cw_struct.BindingQuery{
+	bindingQuery := bindings.BindingQuery{
 		PremiumFraction: cwReq,
 	}
-	bindingResp := new(cw_struct.PremiumFractionResponse)
+	bindingResp := new(bindings.PremiumFractionResponse)
 
 	var respBz []byte
 	var err error
@@ -309,14 +309,14 @@ func (s *TestSuiteQuerier) TestQueryPremiumFraction() {
 }
 
 // func (s *TestSuiteQuerier) TestQueryMetrics() {
-// 	cwReq := &cw_struct.MetricsRequest{
+// 	cwReq := &bindings.MetricsRequest{
 // 		Pair: s.fields.Pair,
 // 	}
 
-// 	bindingQuery := cw_struct.BindingQuery{
+// 	bindingQuery := bindings.BindingQuery{
 // 		Metrics: cwReq,
 // 	}
-// 	bindingResp := new(cw_struct.MetricsResponse)
+// 	bindingResp := new(bindings.MetricsResponse)
 
 // 	respBz, err := DoCustomBindingQuery(
 // 		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
@@ -325,12 +325,12 @@ func (s *TestSuiteQuerier) TestQueryPremiumFraction() {
 // }
 
 // func (s *TestSuiteQuerier) TestQueryPerpParams() {
-// 	cwReq := &cw_struct.PerpParamsRequest{}
+// 	cwReq := &bindings.PerpParamsRequest{}
 
-// 	bindingQuery := cw_struct.BindingQuery{
+// 	bindingQuery := bindings.BindingQuery{
 // 		PerpParams: cwReq,
 // 	}
-// 	bindingResp := new(cw_struct.PerpParamsResponse)
+// 	bindingResp := new(bindings.PerpParamsResponse)
 
 // 	respBz, err := DoCustomBindingQuery(
 // 		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
@@ -339,12 +339,12 @@ func (s *TestSuiteQuerier) TestQueryPremiumFraction() {
 // }
 
 func (s *TestSuiteQuerier) TestQueryPerpModuleAccounts() {
-	cwReq := &cw_struct.ModuleAccountsRequest{}
+	cwReq := &bindings.ModuleAccountsRequest{}
 
-	bindingQuery := cw_struct.BindingQuery{
+	bindingQuery := bindings.BindingQuery{
 		ModuleAccounts: cwReq,
 	}
-	bindingResp := new(cw_struct.ModuleAccountsResponse)
+	bindingResp := new(bindings.ModuleAccountsResponse)
 
 	respBz, err := DoCustomBindingQuery(
 		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,

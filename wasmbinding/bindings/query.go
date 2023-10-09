@@ -1,4 +1,4 @@
-package cw_struct
+package bindings
 
 import (
 	"time"
