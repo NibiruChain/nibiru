@@ -42,7 +42,7 @@ func (amm AMM) Validate() error {
 	return nil
 }
 
-// SettlementPrice computes the uniform settlement price for the current AMM.
+// ComputeSettlementPrice computes the uniform settlement price for the current AMM.
 //
 // Returns:
 //   - price: uniform settlement price from several batched trades. In this case,
@@ -51,7 +51,7 @@ func (amm AMM) Validate() error {
 //   - newAmm: The AMM that results from closing all positions together. Note that
 //     this should have a bias, or skew, of 0.
 //   - err: Errors if it's impossible to swap away the open interest bias.
-func (amm AMM) SettlementPrice() (sdk.Dec, AMM, error) {
+func (amm AMM) ComputeSettlementPrice() (sdk.Dec, AMM, error) {
 	// bias: open interest (base) skew in the AMM.
 	bias := amm.Bias()
 	if bias.IsZero() {

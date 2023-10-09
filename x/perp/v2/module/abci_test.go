@@ -84,6 +84,7 @@ func TestSnapshotUpdates(t *testing.T) {
 			PriceMultiplier: sdk.OneDec(),
 			TotalLong:       sdk.NewDec(200e9),
 			TotalShort:      sdk.ZeroDec(),
+			SettlementPrice: sdk.ZeroDec(),
 		},
 		TimestampMs: ctx.BlockTime().UnixMilli(),
 	}

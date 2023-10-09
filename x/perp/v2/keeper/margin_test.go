@@ -1,9 +1,12 @@
 package keeper_test
 
 import (
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"testing"
 	"time"
+
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
@@ -13,7 +16,6 @@ import (
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestAddMargin(t *testing.T) {
