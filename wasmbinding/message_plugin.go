@@ -1,8 +1,9 @@
-package binding
+package wasmbinding
 
 import (
 	"encoding/json"
 
+	"github.com/NibiruChain/nibiru/wasmbinding/bindings"
 	"github.com/NibiruChain/nibiru/x/sudo/keeper"
 
 	sdkerrors "cosmossdk.io/errors"
@@ -12,24 +13,23 @@ import (
 
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
-	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 )
 
-var _ wasmkeeper.Messenger = (*CustomWasmExecutor)(nil)
+var _ wasmkeeper.Messenger = (*CustomMessenger)(nil)
 
-// CustomWasmExecutor is an extension of wasm/keeper.Messenger with its
+// CustomMessenger is an extension of wasm/keeper.Messenger with its
 // own custom `DispatchMsg` for CosmWasm execute calls on Nibiru.
-type CustomWasmExecutor struct {
+type CustomMessenger struct {
 	Wasm   wasmkeeper.Messenger
 	Perp   ExecutorPerp
 	Sudo   keeper.Keeper
 	Oracle ExecutorOracle
 }
 
-// BindingExecuteMsgWrapper is a n override of CosmosMsg::Custom
-// (json.RawMessage), which corresponds to `BindingExecuteMsgWrapper` in
+// NibiruMsgWrapper is a n override of CosmosMsg::Custom
+// (json.RawMessage), which corresponds to `NibiruMsgWrapper` in
 // the bindings-perp.rs contract.
-type BindingExecuteMsgWrapper struct {
+type NibiruMsgWrapper struct {
 	// Routes here refer to groups of modules on Nibiru. The idea behind setting
 	// routes alongside the messae payload is to add information on which module
 	// or group of modules a particular execute message belongs to.
@@ -38,11 +38,11 @@ type BindingExecuteMsgWrapper struct {
 	// ExecuteMsg is a json struct for ExecuteMsg::{
 	//   MarketOrder, ClosePosition, AddMargin, RemoveMargin, ...} from the
 	//   bindings smart contracts.
-	ExecuteMsg *cw_struct.BindingMsg `json:"msg,omitempty"`
+	ExecuteMsg *bindings.NibiruMsg `json:"msg,omitempty"`
 }
 
 // DispatchMsg encodes the wasmVM message and dispatches it.
-func (messenger *CustomWasmExecutor) DispatchMsg(
+func (messenger *CustomMessenger) DispatchMsg(
 	ctx sdk.Context,
 	contractAddr sdk.AccAddress,
 	contractIBCPortID string,
@@ -50,7 +50,7 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 ) (events []sdk.Event, data [][]byte, err error) {
 	// If the "Custom" field is set, we handle a BindingMsg.
 	if wasmMsg.Custom != nil {
-		var contractExecuteMsg BindingExecuteMsgWrapper
+		var contractExecuteMsg NibiruMsgWrapper
 		if err := json.Unmarshal(wasmMsg.Custom, &contractExecuteMsg); err != nil {
 			return events, data, sdkerrors.Wrapf(err, "wasmMsg: %s", wasmMsg.Custom)
 		}
@@ -142,13 +142,13 @@ func (messenger *CustomWasmExecutor) DispatchMsg(
 	return messenger.Wasm.DispatchMsg(ctx, contractAddr, contractIBCPortID, wasmMsg)
 }
 
-func CustomExecuteMsgHandler(
+func CustomMessageDecorator(
 	perpv2 perpv2keeper.Keeper,
 	sudoKeeper keeper.Keeper,
 	oracleKeeper oraclekeeper.Keeper,
 ) func(wasmkeeper.Messenger) wasmkeeper.Messenger {
 	return func(originalWasmMessenger wasmkeeper.Messenger) wasmkeeper.Messenger {
-		return &CustomWasmExecutor{
+		return &CustomMessenger{
 			Wasm:   originalWasmMessenger,
 			Perp:   ExecutorPerp{PerpV2: perpv2},
 			Sudo:   sudoKeeper,

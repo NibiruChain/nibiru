@@ -1,4 +1,4 @@
-package binding_test
+package wasmbinding_test
 
 import (
 	"errors"
@@ -6,22 +6,20 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-
+	"github.com/NibiruChain/collections"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/collections"
-
 	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/wasmbinding"
+	"github.com/NibiruChain/nibiru/wasmbinding/bindings"
+	"github.com/NibiruChain/nibiru/wasmbinding/wasmbin"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
-	"github.com/NibiruChain/nibiru/x/wasm/binding"
-	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
-	"github.com/NibiruChain/nibiru/x/wasm/binding/wasmbin"
 )
 
 func TestSuitePerpExecutor_RunAll(t *testing.T) {
@@ -34,7 +32,7 @@ type TestSuitePerpExecutor struct {
 	nibiru           *app.NibiruApp
 	ctx              sdk.Context
 	contractDeployer sdk.AccAddress
-	exec             *binding.ExecutorPerp
+	exec             *wasmbinding.ExecutorPerp
 
 	contractPerp sdk.AccAddress
 	ratesMap     map[asset.Pair]sdk.Dec
@@ -66,7 +64,7 @@ func (s *TestSuitePerpExecutor) SetupSuite() {
 	s.contractPerp = ContractMap[wasmbin.WasmKeyPerpBinding]
 
 	s.NoError(testapp.FundAccount(nibiru.BankKeeper, ctx, s.contractPerp, coins))
-	s.exec = &binding.ExecutorPerp{
+	s.exec = &wasmbinding.ExecutorPerp{
 		PerpV2: nibiru.PerpKeeperV2,
 	}
 	s.NoError(testapp.FundAccount(nibiru.BankKeeper, ctx, s.contractPerp, coins))
@@ -102,7 +100,7 @@ func (s *TestSuitePerpExecutor) TestOpenAddRemoveClose() {
 }
 
 func (s *TestSuitePerpExecutor) DoMarketOrderTest(pair asset.Pair) error {
-	cwMsg := &cw_struct.MarketOrder{
+	cwMsg := &bindings.MarketOrder{
 		Pair:            pair.String(),
 		IsLong:          false,
 		QuoteAmount:     sdk.NewInt(4_200_000),
@@ -124,12 +122,12 @@ func (s *TestSuitePerpExecutor) DoMarketOrderTest(pair asset.Pair) error {
 	}
 
 	// Verify position exists with CustomQuerier - multi-position
-	bindingQuery := cw_struct.BindingQuery{
-		Positions: &cw_struct.PositionsRequest{
+	bindingQuery := bindings.BindingQuery{
+		Positions: &bindings.PositionsRequest{
 			Trader: s.contractPerp.String(),
 		},
 	}
-	bindingRespMulti := new(cw_struct.PositionsRequest)
+	bindingRespMulti := new(bindings.PositionsRequest)
 	_, err = DoCustomBindingQuery(
 		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingRespMulti,
 	)
@@ -138,13 +136,13 @@ func (s *TestSuitePerpExecutor) DoMarketOrderTest(pair asset.Pair) error {
 	}
 
 	// Verify position exists with CustomQuerier - single position
-	bindingQuery = cw_struct.BindingQuery{
-		Position: &cw_struct.PositionRequest{
+	bindingQuery = bindings.BindingQuery{
+		Position: &bindings.PositionRequest{
 			Trader: s.contractPerp.String(),
 			Pair:   pair.String(),
 		},
 	}
-	bindingResp := new(cw_struct.PositionRequest)
+	bindingResp := new(bindings.PositionRequest)
 	_, err = DoCustomBindingQuery(
 		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
 	)
@@ -155,7 +153,7 @@ func (s *TestSuitePerpExecutor) DoMarketOrderTest(pair asset.Pair) error {
 func (s *TestSuitePerpExecutor) DoAddMarginTest(
 	pair asset.Pair, margin sdk.Coin,
 ) error {
-	cwMsg := &cw_struct.AddMargin{
+	cwMsg := &bindings.AddMargin{
 		Pair:   pair.String(),
 		Margin: margin,
 	}
@@ -167,7 +165,7 @@ func (s *TestSuitePerpExecutor) DoAddMarginTest(
 func (s *TestSuitePerpExecutor) DoAddIncorrectMarginTest(
 	pair asset.Pair, margin sdk.Coin,
 ) error {
-	cwMsg := &cw_struct.AddMargin{
+	cwMsg := &bindings.AddMargin{
 		Pair:   pair.String(),
 		Margin: margin,
 	}
@@ -182,7 +180,7 @@ func (s *TestSuitePerpExecutor) DoAddIncorrectMarginTest(
 func (s *TestSuitePerpExecutor) DoRemoveIncorrectMarginTest(
 	pair asset.Pair, margin sdk.Coin,
 ) error {
-	cwMsg := &cw_struct.RemoveMargin{
+	cwMsg := &bindings.RemoveMargin{
 		Pair:   pair.String(),
 		Margin: margin,
 	}
@@ -197,7 +195,7 @@ func (s *TestSuitePerpExecutor) DoRemoveIncorrectMarginTest(
 func (s *TestSuitePerpExecutor) DoRemoveMarginTest(
 	pair asset.Pair, margin sdk.Coin,
 ) error {
-	cwMsg := &cw_struct.RemoveMargin{
+	cwMsg := &bindings.RemoveMargin{
 		Pair:   pair.String(),
 		Margin: margin,
 	}
@@ -207,7 +205,7 @@ func (s *TestSuitePerpExecutor) DoRemoveMarginTest(
 }
 
 func (s *TestSuitePerpExecutor) DoClosePositionTest(pair asset.Pair) error {
-	cwMsg := &cw_struct.ClosePosition{
+	cwMsg := &bindings.ClosePosition{
 		Pair: pair.String(),
 	}
 
@@ -217,7 +215,7 @@ func (s *TestSuitePerpExecutor) DoClosePositionTest(pair asset.Pair) error {
 
 func (s *TestSuitePerpExecutor) DoPegShiftTest(pair asset.Pair) error {
 	contractAddr := s.contractPerp
-	cwMsg := &cw_struct.PegShift{
+	cwMsg := &bindings.PegShift{
 		Pair:    pair.String(),
 		PegMult: sdk.NewDec(420),
 	}
@@ -227,7 +225,7 @@ func (s *TestSuitePerpExecutor) DoPegShiftTest(pair asset.Pair) error {
 }
 
 func (s *TestSuitePerpExecutor) DoDepthShiftTest(pair asset.Pair) error {
-	cwMsg := &cw_struct.DepthShift{
+	cwMsg := &bindings.DepthShift{
 		Pair:      pair.String(),
 		DepthMult: sdk.NewDec(420),
 	}
@@ -239,7 +237,7 @@ func (s *TestSuitePerpExecutor) DoDepthShiftTest(pair asset.Pair) error {
 func (s *TestSuitePerpExecutor) DoInsuranceFundWithdrawTest(
 	amt sdkmath.Int, to sdk.AccAddress,
 ) error {
-	cwMsg := &cw_struct.InsuranceFundWithdraw{
+	cwMsg := &bindings.InsuranceFundWithdraw{
 		Amount: amt,
 		To:     to.String(),
 	}
@@ -256,7 +254,7 @@ func (s *TestSuitePerpExecutor) DoInsuranceFundWithdrawTest(
 }
 
 func (s *TestSuitePerpExecutor) DoCreateMarketTest(pair asset.Pair) error {
-	cwMsg := &cw_struct.CreateMarket{
+	cwMsg := &bindings.CreateMarket{
 		Pair:         pair.String(),
 		PegMult:      sdk.NewDec(2_500),
 		SqrtDepth:    sdk.NewDec(1_000),
@@ -267,11 +265,11 @@ func (s *TestSuitePerpExecutor) DoCreateMarketTest(pair asset.Pair) error {
 }
 
 func (s *TestSuitePerpExecutor) DoCreateMarketTestWithParams(pair asset.Pair) error {
-	cwMsg := &cw_struct.CreateMarket{
+	cwMsg := &bindings.CreateMarket{
 		Pair:      pair.String(),
 		PegMult:   sdk.NewDec(2_500),
 		SqrtDepth: sdk.NewDec(1_000),
-		MarketParams: &cw_struct.MarketParams{
+		MarketParams: &bindings.MarketParams{
 			Pair:                            pair.String(),
 			Enabled:                         true,
 			MaintenanceMarginRatio:          sdk.OneDec(),
@@ -319,7 +317,7 @@ func (s *TestSuitePerpExecutor) TestSadPaths_Nil() {
 func (s *TestSuitePerpExecutor) DoSetMarketEnabledTest(
 	pair asset.Pair, enabled bool,
 ) error {
-	cwMsg := &cw_struct.SetMarketEnabled{
+	cwMsg := &bindings.SetMarketEnabled{
 		Pair:    pair.String(),
 		Enabled: enabled,
 	}

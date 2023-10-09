@@ -1,4 +1,4 @@
-package binding
+package wasmbinding
 
 import (
 	"encoding/json"
@@ -9,12 +9,12 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/wasmbinding/bindings"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
-	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 )
 
 type QueryPlugin struct {
@@ -53,7 +53,7 @@ func (qp *QueryPlugin) ToBinary(
 // querier mechanism for specific messages
 func CustomQuerier(qp QueryPlugin) func(ctx sdk.Context, request json.RawMessage) ([]byte, error) {
 	return func(ctx sdk.Context, request json.RawMessage) ([]byte, error) {
-		var wasmContractQuery cw_struct.BindingQuery
+		var wasmContractQuery bindings.BindingQuery
 		if err := json.Unmarshal(request, &wasmContractQuery); err != nil {
 			return nil, sdkerrors.Wrapf(err, "failed to JSON unmarshal nibiru query: %v", err)
 		}
@@ -124,8 +124,8 @@ type PerpQuerier struct {
 }
 
 func (perpExt *PerpQuerier) Reserves(
-	ctx sdk.Context, cwReq *cw_struct.ReservesRequest,
-) (*cw_struct.ReservesResponse, error) {
+	ctx sdk.Context, cwReq *bindings.ReservesRequest,
+) (*bindings.ReservesResponse, error) {
 	pair := asset.Pair(cwReq.Pair)
 	sdkReq := &perpv2types.QueryMarketsRequest{}
 	goCtx := sdk.WrapSDKContext(ctx)
@@ -136,7 +136,7 @@ func (perpExt *PerpQuerier) Reserves(
 
 	for _, market := range sdkResp.AmmMarkets {
 		if market.Amm.Pair.Equal(pair) {
-			return &cw_struct.ReservesResponse{
+			return &bindings.ReservesResponse{
 				Pair:         pair.String(),
 				BaseReserve:  market.Amm.BaseReserve,
 				QuoteReserve: market.Amm.QuoteReserve,
@@ -149,7 +149,7 @@ func (perpExt *PerpQuerier) Reserves(
 
 func (perpExt *PerpQuerier) AllMarkets(
 	ctx sdk.Context,
-) (*cw_struct.AllMarketsResponse, error) {
+) (*bindings.AllMarketsResponse, error) {
 	sdkReq := &perpv2types.QueryMarketsRequest{}
 	goCtx := sdk.WrapSDKContext(ctx)
 	sdkResp, err := perpExt.perp.QueryMarkets(goCtx, sdkReq)
@@ -157,10 +157,10 @@ func (perpExt *PerpQuerier) AllMarkets(
 		return nil, err
 	}
 
-	marketMap := make(map[string]cw_struct.Market)
+	marketMap := make(map[string]bindings.Market)
 	for _, pbMarket := range sdkResp.AmmMarkets {
 		key := pbMarket.Amm.Pair.String()
-		marketMap[key] = cw_struct.Market{
+		marketMap[key] = bindings.Market{
 			Pair:         key,
 			Version:      sdk.NewIntFromUint64(pbMarket.Market.Version),
 			BaseReserve:  pbMarket.Amm.BaseReserve,
@@ -169,7 +169,7 @@ func (perpExt *PerpQuerier) AllMarkets(
 			TotalLong:    pbMarket.Amm.TotalLong,
 			TotalShort:   pbMarket.Amm.TotalShort,
 			PegMult:      pbMarket.Amm.PriceMultiplier,
-			Config: &cw_struct.MarketConfig{
+			Config: &bindings.MarketConfig{
 				MaintenanceMarginRatio: pbMarket.Market.MaintenanceMarginRatio,
 				MaxLeverage:            pbMarket.Market.MaxLeverage,
 			},
@@ -178,32 +178,32 @@ func (perpExt *PerpQuerier) AllMarkets(
 		}
 	}
 
-	return &cw_struct.AllMarketsResponse{
+	return &bindings.AllMarketsResponse{
 		MarketMap: marketMap,
 	}, err
 }
 
 func (perpExt *PerpQuerier) BasePrice(
-	ctx sdk.Context, cwReq *cw_struct.BasePriceRequest,
-) (*cw_struct.BasePriceResponse, error) {
+	ctx sdk.Context, cwReq *bindings.BasePriceRequest,
+) (*bindings.BasePriceResponse, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
 func (perpExt *PerpQuerier) PremiumFraction(
-	ctx sdk.Context, cwReq *cw_struct.PremiumFractionRequest,
-) (*cw_struct.PremiumFractionResponse, error) {
+	ctx sdk.Context, cwReq *bindings.PremiumFractionRequest,
+) (*bindings.PremiumFractionResponse, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
 func (perpExt *PerpQuerier) Metrics(
-	ctx sdk.Context, cwReq *cw_struct.MetricsRequest,
-) (*cw_struct.MetricsResponse, error) {
+	ctx sdk.Context, cwReq *bindings.MetricsRequest,
+) (*bindings.MetricsResponse, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
 func (perpExt *PerpQuerier) ModuleAccounts(
-	ctx sdk.Context, cwReq *cw_struct.ModuleAccountsRequest,
-) (*cw_struct.ModuleAccountsResponse, error) {
+	ctx sdk.Context, cwReq *bindings.ModuleAccountsRequest,
+) (*bindings.ModuleAccountsResponse, error) {
 	if cwReq == nil {
 		return nil, errors.New("nil request")
 	}
@@ -215,33 +215,33 @@ func (perpExt *PerpQuerier) ModuleAccounts(
 		return nil, err
 	}
 
-	moduleAccounts := make(map[string]cw_struct.ModuleAccountWithBalance)
+	moduleAccounts := make(map[string]bindings.ModuleAccountWithBalance)
 	for _, acc := range sdkResp.Accounts {
 		addr, err := sdk.AccAddressFromBech32(acc.Address)
 		if err != nil {
 			return nil, err
 		}
-		moduleAccounts[acc.Name] = cw_struct.ModuleAccountWithBalance{
+		moduleAccounts[acc.Name] = bindings.ModuleAccountWithBalance{
 			Name:    acc.Name,
 			Addr:    addr,
 			Balance: acc.Balance,
 		}
 	}
 
-	return &cw_struct.ModuleAccountsResponse{
+	return &bindings.ModuleAccountsResponse{
 		ModuleAccounts: moduleAccounts,
 	}, err
 }
 
 func (perpExt *PerpQuerier) ModuleParams(
-	ctx sdk.Context, cwReq *cw_struct.PerpParamsRequest,
-) (*cw_struct.PerpParamsResponse, error) {
+	ctx sdk.Context, cwReq *bindings.PerpParamsRequest,
+) (*bindings.PerpParamsResponse, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
 func (perpExt *PerpQuerier) Position(
-	ctx sdk.Context, cwReq *cw_struct.PositionRequest,
-) (*cw_struct.PositionResponse, error) {
+	ctx sdk.Context, cwReq *bindings.PositionRequest,
+) (*bindings.PositionResponse, error) {
 	pair, err := asset.TryNewPair(cwReq.Pair)
 	if err != nil {
 		return nil, err
@@ -255,8 +255,8 @@ func (perpExt *PerpQuerier) Position(
 	if err != nil {
 		return nil, err
 	}
-	return &cw_struct.PositionResponse{
-		Position: cw_struct.Position{
+	return &bindings.PositionResponse{
+		Position: bindings.Position{
 			TraderAddr:   sdkResp.Position.TraderAddress,
 			Pair:         sdkResp.Position.Pair.String(),
 			Size:         sdkResp.Position.Size_,
@@ -274,8 +274,8 @@ func (perpExt *PerpQuerier) Position(
 }
 
 func (perpExt *PerpQuerier) Positions(
-	ctx sdk.Context, cwReq *cw_struct.PositionsRequest,
-) (*cw_struct.PositionsResponse, error) {
+	ctx sdk.Context, cwReq *bindings.PositionsRequest,
+) (*bindings.PositionsResponse, error) {
 	sdkReq := &perpv2types.QueryPositionsRequest{
 		Trader: cwReq.Trader,
 	}
@@ -285,11 +285,11 @@ func (perpExt *PerpQuerier) Positions(
 		return nil, err
 	}
 
-	positionMap := make(map[string]cw_struct.Position)
+	positionMap := make(map[string]bindings.Position)
 	for _, posResp := range sdkResp.Positions {
 		pair := posResp.Position.Pair.String()
 		pos := posResp.Position
-		positionMap[pair] = cw_struct.Position{
+		positionMap[pair] = bindings.Position{
 			TraderAddr:   pos.TraderAddress,
 			Pair:         pair,
 			Size:         pos.Size_,
@@ -300,7 +300,7 @@ func (perpExt *PerpQuerier) Positions(
 		}
 	}
 
-	return &cw_struct.PositionsResponse{
+	return &bindings.PositionsResponse{
 		Positions: positionMap,
 	}, err
 }
@@ -314,8 +314,8 @@ type OracleQuerier struct {
 }
 
 func (oracleExt *OracleQuerier) ExchangeRates(
-	ctx sdk.Context, cwReq *cw_struct.OraclePrices,
-) (*cw_struct.OraclePricesResponse, error) {
+	ctx sdk.Context, cwReq *bindings.OraclePrices,
+) (*bindings.OraclePricesResponse, error) {
 	queryExchangeRatesRequest := oracletypes.QueryExchangeRatesRequest{}
 	queryExchangeRates, err := oracleExt.oracle.ExchangeRates(ctx, &queryExchangeRatesRequest)
 
@@ -325,7 +325,7 @@ func (oracleExt *OracleQuerier) ExchangeRates(
 		exchangeRates[exchangeRate.Pair.String()] = exchangeRate.ExchangeRate
 	}
 
-	cwResp := new(cw_struct.OraclePricesResponse)
+	cwResp := new(bindings.OraclePricesResponse)
 	*cwResp = exchangeRates
 	return cwResp, err
 }

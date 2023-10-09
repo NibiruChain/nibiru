@@ -1,4 +1,4 @@
-package binding
+package wasmbinding
 
 import (
 	"github.com/CosmWasm/wasmd/x/wasm"
@@ -21,7 +21,7 @@ func RegisterWasmOptions(
 	})
 
 	wasmExecuteOption := wasmkeeper.WithMessageHandlerDecorator(
-		CustomExecuteMsgHandler(perpv2, sudoKeeper, oracleKeeper),
+		CustomMessageDecorator(perpv2, sudoKeeper, oracleKeeper),
 	)
 
 	return []wasm.Option{wasmQueryOption, wasmExecuteOption}
