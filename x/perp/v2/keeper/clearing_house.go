@@ -693,10 +693,6 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.A
 		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
 	}
 
-	if !market.Enabled {
-		return nil, fmt.Errorf("%w: this position can be only closed by Settlement", types.ErrMarketNotEnabled)
-	}
-
 	amm, err := k.GetAMM(ctx, pair)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
@@ -802,15 +798,24 @@ func (k Keeper) closePositionEntirely(
 	} else {
 		dir = types.Direction_LONG
 	}
-	updatedAMM, exchangedNotionalValue, err := k.SwapBaseAsset(
-		ctx,
-		amm,
-		dir,
-		currentPosition.Size_.Abs(),
-		quoteAssetAmountLimit,
-	)
-	if err != nil {
-		return nil, nil, err
+
+	var exchangedNotionalValue sdk.Dec
+
+	if market.Enabled {
+		updatedAMM, exchangedNotionalValue, err = k.SwapBaseAsset(
+			ctx,
+			amm,
+			dir,
+			currentPosition.Size_.Abs(),
+			quoteAssetAmountLimit,
+		)
+		if err != nil {
+			return nil, nil, err
+		}
+	} else {
+		// we are settling the position, no slippage and price = price multiplier
+		updatedAMM = &amm
+		exchangedNotionalValue = currentPosition.Size_.Mul(amm.PriceMultiplier)
 	}
 
 	resp.ExchangedNotionalValue = exchangedNotionalValue
