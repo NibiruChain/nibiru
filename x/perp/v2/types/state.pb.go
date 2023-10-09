@@ -103,8 +103,9 @@ type Market struct {
 	Pair github_com_NibiruChain_nibiru_x_common_asset.Pair `protobuf:"bytes,1,opt,name=pair,proto3,customtype=github.com/NibiruChain/nibiru/x/common/asset.Pair" json:"pair"`
 	// whether or not the market is enabled
 	Enabled bool `protobuf:"varint,2,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	// the version of the Market, only one market can exist per pair, when one is closed it cannot be reactivated,
-	// so a new market must be created, this is the version of the market
+	// the version of the Market, only one market can exist per pair, when one is
+	// closed it cannot be reactivated, so a new market must be created, this is
+	// the version of the market
 	Version uint64 `protobuf:"varint,14,opt,name=version,proto3" json:"version,omitempty"`
 	// the minimum margin ratio which a user must maintain on this market
 	MaintenanceMarginRatio github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,opt,name=maintenance_margin_ratio,json=maintenanceMarginRatio,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"maintenance_margin_ratio"`
@@ -256,8 +257,9 @@ func (m *MarketLastVersion) GetVersion() uint64 {
 type AMM struct {
 	// identifies the market this AMM belongs to
 	Pair github_com_NibiruChain_nibiru_x_common_asset.Pair `protobuf:"bytes,1,opt,name=pair,proto3,customtype=github.com/NibiruChain/nibiru/x/common/asset.Pair" json:"pair"`
-	// the version of the AMM, only one AMM can exist per pair, when one is closed it cannot be reactivated,
-	// so a new AMM must be created, this is the version of the AMM
+	// the version of the AMM, only one AMM can exist per pair, when one is closed
+	// it cannot be reactivated, so a new AMM must be created, this is the version
+	// of the AMM
 	Version uint64 `protobuf:"varint,8,opt,name=version,proto3" json:"version,omitempty"`
 	// the amount of base reserves this AMM has
 	BaseReserve github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=base_reserve,json=baseReserve,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"base_reserve"`

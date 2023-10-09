@@ -79,9 +79,8 @@ message Params {
     (gogoproto.nullable) = false
   ];
 
-  uint64 expiration_blocks = 11 [
-    (gogoproto.moretags) = "yaml:\"expiration_blocks\""
-  ];
+  uint64 expiration_blocks = 11
+      [ (gogoproto.moretags) = "yaml:\"expiration_blocks\"" ];
 }
 
 // Struct for aggregate prevoting on the ExchangeRateVote.

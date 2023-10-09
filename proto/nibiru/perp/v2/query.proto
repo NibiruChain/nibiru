@@ -119,9 +119,7 @@ message AmmMarket {
   AMM amm = 2 [ (gogoproto.nullable) = false ];
 }
 
-message QueryMarketsRequest {
-  bool versioned = 1;
-}
+message QueryMarketsRequest { bool versioned = 1; }
 
 message QueryMarketsResponse {
   repeated AmmMarket amm_markets = 1 [ (gogoproto.nullable) = false ];

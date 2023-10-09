@@ -74,6 +74,8 @@ func RunTestGenesis(t *testing.T, tc TestCase) {
 	app.PerpKeeperV2.SaveAMM(ctx, *mock.TestAMMDefault())
 	app.PerpKeeperV2.TraderDiscounts.Insert(ctx, collections.Join(testutil.AccAddress(), math.NewInt(1_000_000)), sdk.MustNewDecFromStr("0.1"))
 	app.PerpKeeperV2.GlobalDiscounts.Insert(ctx, sdk.NewInt(1_000_000), sdk.MustNewDecFromStr("0.05"))
+	app.PerpKeeperV2.TraderRebates.Insert(ctx, collections.Join(testutil.AccAddress(), math.NewInt(1_000_000)), sdk.MustNewDecFromStr("0.1"))
+	app.PerpKeeperV2.GlobalRebates.Insert(ctx, sdk.NewInt(1_000_000), sdk.MustNewDecFromStr("0.05"))
 	app.PerpKeeperV2.TraderVolumes.Insert(ctx, collections.Join(testutil.AccAddress(), uint64(0)), math.NewInt(1_000_000))
 
 	// create some positions
@@ -120,6 +122,8 @@ func RunTestGenesis(t *testing.T, tc TestCase) {
 
 	require.Equal(t, genState.CustomDiscounts, genStateAfterInit.CustomDiscounts)
 	require.Equal(t, genState.GlobalDiscount, genStateAfterInit.GlobalDiscount)
+	require.Equal(t, genState.CustomRebates, genStateAfterInit.CustomRebates)
+	require.Equal(t, genState.GlobalRebates, genStateAfterInit.GlobalRebates)
 	require.Equal(t, genState.TraderVolumes, genStateAfterInit.TraderVolumes)
 }
 

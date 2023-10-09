@@ -74,6 +74,22 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			customDiscount.Discount.Fee,
 		)
 	}
+
+	for _, rebate := range genState.GlobalRebates {
+		k.GlobalRebates.Insert(
+			ctx,
+			rebate.Volume,
+			rebate.Rebate,
+		)
+	}
+
+	for _, customRebate := range genState.CustomRebates {
+		k.TraderRebates.Insert(
+			ctx,
+			collections.Join(sdk.MustAccAddressFromBech32(customRebate.Trader), customRebate.Rebate.Volume),
+			customRebate.Rebate.Rebate,
+		)
+	}
 }
 
 // ExportGenesis returns the capability module's exported genesis.
@@ -107,6 +123,13 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		})
 	}
 
+	exportDiscounts(genesis, ctx, k)
+	exportRebates(genesis, ctx, k)
+
+	return genesis
+}
+
+func exportDiscounts(genesis *types.GenesisState, ctx sdk.Context, k keeper.Keeper) {
 	// export global discounts
 	discounts := k.GlobalDiscounts.Iterate(ctx, collections.Range[math.Int]{})
 	defer discounts.Close()
@@ -126,10 +149,36 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		genesis.CustomDiscounts = append(genesis.CustomDiscounts, types.GenesisState_CustomDiscount{
 			Trader: key.K1().String(),
 			Discount: &types.GenesisState_Discount{
-				Fee:    sdk.Dec{},
+				Fee:    customDiscounts.Value(),
 				Volume: key.K2(),
 			},
 		})
 	}
-	return genesis
+}
+
+func exportRebates(genesis *types.GenesisState, ctx sdk.Context, k keeper.Keeper) {
+	// export global rebates
+	rebates := k.GlobalRebates.Iterate(ctx, collections.Range[math.Int]{})
+	defer rebates.Close()
+	for ; rebates.Valid(); rebates.Next() {
+		genesis.GlobalRebates = append(genesis.GlobalRebates, types.GenesisState_Rebate{
+			Rebate: rebates.Value(),
+			Volume: rebates.Key(),
+		})
+	}
+
+	// export custom rebates
+	customRebates := k.TraderRebates.Iterate(ctx, collections.PairRange[sdk.AccAddress, math.Int]{})
+	defer customRebates.Close()
+
+	for ; customRebates.Valid(); customRebates.Next() {
+		key := customRebates.Key()
+		genesis.CustomRebates = append(genesis.CustomRebates, types.GenesisState_CustomRebate{
+			Trader: key.K1().String(),
+			Rebate: &types.GenesisState_Rebate{
+				Rebate: customRebates.Value(),
+				Volume: key.K2(),
+			},
+		})
+	}
 }
