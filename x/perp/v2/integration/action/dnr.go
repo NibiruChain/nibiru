@@ -256,3 +256,23 @@ func (s *setPriceAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Con
 	app.OracleKeeper.SetPrice(ctx, s.pair, s.price)
 	return ctx, nil, true
 }
+
+func BalanceIs(acc sdk.AccAddress, coins sdk.Coins) action.Action {
+	return &balanceIsAction{
+		acc:   acc,
+		coins: coins,
+	}
+}
+
+type balanceIsAction struct {
+	acc   sdk.AccAddress
+	coins sdk.Coins
+}
+
+func (b *balanceIsAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
+	balance := app.BankKeeper.GetAllBalances(ctx, b.acc)
+	if !balance.IsEqual(b.coins) {
+		return ctx, fmt.Errorf("unexpected balance, wanted %s, got %s", b.coins, balance), true
+	}
+	return ctx, nil, true
+}

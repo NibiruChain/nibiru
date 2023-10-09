@@ -180,6 +180,32 @@ func TestDiscountAndRebates(t *testing.T) {
 				MarketOrderFeeAndRebateIs(customFeeDiscount, math.ZeroInt(), alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
 			),
 
+		TC("user has past epoch volume: global discount applies").
+			Given(
+				DnREpochIs(2),
+				CreateCustomMarket(
+					pairBtcNusd,
+					WithPricePeg(sdk.OneDec()),
+					WithSqrtDepth(sdk.NewDec(100_000)),
+				),
+				SetBlockNumber(1),
+				SetBlockTime(startBlockTime),
+
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, positionSize.AddRaw(1000)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100_000_000)))),
+			).
+			When(
+				SetPrice(asset.NewPair("stake", denoms.USD), sdk.MustNewDecFromStr("2")),
+				SetPrice(asset.NewPair(denoms.NUSD, denoms.USD), sdk.OneDec()),
+				SetGlobalDiscount(sdk.MustNewDecFromStr("0.0004"), sdk.NewInt(50_000)),
+				SetGlobalDiscount(globalFeeDiscount, sdk.NewInt(100_000)),
+				SetCustomRebate(alice, customRebate, sdk.NewInt(100_000)),
+				SetPreviousEpochUserVolume(alice, sdk.NewInt(100_000)),
+			).
+			Then(
+				MarketOrderFeeAndRebateIs(globalFeeDiscount, customRebate.MulInt(positionSize).TruncateInt().QuoRaw(2), alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
+			),
+
 		TC("trades do not fail if coinToBondEquivalent function fails").
 			Given(
 				DnREpochIs(2),
@@ -220,10 +246,21 @@ func TestDiscountAndRebates(t *testing.T) {
 			When(
 				SetCustomRebate(alice, customRebate, sdk.NewInt(99_999)), // alice qualifies for the rebate but the asset is unknown
 				SetPreviousEpochUserVolume(alice, sdk.NewInt(100_000)),
+				MarketOrder(alice, asset.NewPair("btc", "stake"), types.Direction_LONG, positionSize, sdk.MustNewDecFromStr("1"), math.LegacyZeroDec()),
 			).
 			Then(
-				// customRebate does not need adjustments with respect to price since quote and bond denom are the same.
-				MarketOrderFeeAndRebateIs(exchangeFee, customRebate.MulInt(sdk.NewInt(10_000)).TruncateInt(), alice, asset.NewPair("btc", "stake"), types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
+				// we do a simple balance check since counting fees when bond denom equals to quote denom is a bit tricky
+				// since it's difficult to discern between fees paid and the bond equivalent we get as rebate.
+				// We'd need to re-implement the coinToBondEquivalent function here to do that, which is quite nonsensical.
+				// fee to ecosystem fund is 10stake
+				// fee to exchange pool is 10stake
+				// rebate is 10_000 * 0.001 = 10stake
+				// initial balance is: 11_000stake
+				// margin used is: 10_000stake
+				// left balance is: initial balance - margin - fee to exchange fee pool - fee to ecosystem fund + rebate
+				// = 11_000 - 10_000 - 10 - 10 + 10
+				// = 990
+				BalanceIs(alice, sdk.NewCoins(sdk.NewCoin("stake", math.NewInt(990)))),
 			),
 	}
 	NewTestSuite(t).WithTestCases(tests...).Run()

@@ -3,6 +3,7 @@ package keeper
 import (
 	"errors"
 	"fmt"
+	"os"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -659,6 +660,7 @@ func (k Keeper) transferFee(
 	}
 
 	feeToEcosystemFund := ecosystemFundFeeRatio.Mul(positionNotional).RoundInt()
+	fmt.Fprintf(os.Stderr, "feeToEcosystemFund: %s feeToExchangeFeePool: %s\n", feeToEcosystemFund.String(), feeToExchangeFeePool.String())
 	if feeToEcosystemFund.IsPositive() {
 		if err = k.BankKeeper.SendCoinsFromAccountToModule(
 			ctx,
