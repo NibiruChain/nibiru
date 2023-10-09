@@ -25,17 +25,19 @@ type Keeper struct {
 	AccountKeeper types.AccountKeeper
 	OracleKeeper  types.OracleKeeper
 	EpochKeeper   types.EpochKeeper
+	StakingKeeper types.StakingKeeper
 
 	MarketLastVersion collections.Map[asset.Pair, types.MarketLastVersion]
 	Markets           collections.Map[collections.Pair[asset.Pair, uint64], types.Market]
 	AMMs              collections.Map[collections.Pair[asset.Pair, uint64], types.AMM]
-
-	Positions        collections.Map[collections.Pair[asset.Pair, sdk.AccAddress], types.Position]
-	ReserveSnapshots collections.Map[collections.Pair[asset.Pair, time.Time], types.ReserveSnapshot]
-	DnREpoch         collections.Item[uint64]
-	TraderVolumes    collections.Map[collections.Pair[sdk.AccAddress, uint64], math.Int]         // Keeps track of user volumes for each epoch.
-	GlobalDiscounts  collections.Map[math.Int, math.LegacyDec]                                   // maps a volume level to a discount
-	TraderDiscounts  collections.Map[collections.Pair[sdk.AccAddress, math.Int], math.LegacyDec] // maps a user and volume level to a discount, supersedes global discounts
+	Positions         collections.Map[collections.Pair[asset.Pair, sdk.AccAddress], types.Position]
+	ReserveSnapshots  collections.Map[collections.Pair[asset.Pair, time.Time], types.ReserveSnapshot]
+	DnREpoch          collections.Item[uint64]
+	TraderVolumes     collections.Map[collections.Pair[sdk.AccAddress, uint64], math.Int]         // Keeps track of user volumes for each epoch.
+	GlobalDiscounts   collections.Map[math.Int, math.LegacyDec]                                   // maps a volume level to a discount
+	TraderDiscounts   collections.Map[collections.Pair[sdk.AccAddress, math.Int], math.LegacyDec] // maps a user and volume level to a discount, supersedes global discounts
+	GlobalRebates     collections.Map[math.Int, math.LegacyDec]                                   // maps a volume level to a rebate
+	TraderRebates     collections.Map[collections.Pair[sdk.AccAddress, math.Int], math.LegacyDec] // maps a user and volume level to a rebate, supersedes global rebates
 }
 
 // NewKeeper Creates a new x/perp Keeper instance.
@@ -47,6 +49,7 @@ func NewKeeper(
 	bankKeeper types.BankKeeper,
 	oracleKeeper types.OracleKeeper,
 	epochKeeper types.EpochKeeper,
+	stakingKeeper types.StakingKeeper,
 ) Keeper {
 	// Ensure that the module account is set.
 	if moduleAcc := accountKeeper.GetModuleAddress(types.ModuleName); moduleAcc == nil {
@@ -60,15 +63,16 @@ func NewKeeper(
 		AccountKeeper: accountKeeper,
 		OracleKeeper:  oracleKeeper,
 		EpochKeeper:   epochKeeper,
-		Markets: collections.NewMap(
-			storeKey, NamespaceMarkets,
-			collections.PairKeyEncoder(asset.PairKeyEncoder, collections.Uint64KeyEncoder),
-			collections.ProtoValueEncoder[types.Market](cdc),
-		),
+		StakingKeeper: stakingKeeper,
 		MarketLastVersion: collections.NewMap(
 			storeKey, NamespaceMarketLastVersion,
 			asset.PairKeyEncoder,
 			collections.ProtoValueEncoder[types.MarketLastVersion](cdc),
+		),
+		Markets: collections.NewMap(
+			storeKey, NamespaceMarkets,
+			collections.PairKeyEncoder(asset.PairKeyEncoder, collections.Uint64KeyEncoder),
+			collections.ProtoValueEncoder[types.Market](cdc),
 		),
 		AMMs: collections.NewMap(
 			storeKey, NamespaceAmms,
@@ -104,6 +108,16 @@ func NewKeeper(
 			collections.PairKeyEncoder(collections.AccAddressKeyEncoder, IntKeyEncoder),
 			collections.DecValueEncoder,
 		),
+		GlobalRebates: collections.NewMap(
+			storeKey, NamespaceGlobalRebates,
+			IntKeyEncoder,
+			collections.DecValueEncoder,
+		),
+		TraderRebates: collections.NewMap(
+			storeKey, NamespaceUserRebates,
+			collections.PairKeyEncoder(collections.AccAddressKeyEncoder, IntKeyEncoder),
+			collections.DecValueEncoder,
+		),
 	}
 }
 
@@ -116,6 +130,8 @@ const (
 	NamespaceUserVolumes
 	NamespaceGlobalDiscounts
 	NamespaceUserDiscounts
+	NamespaceGlobalRebates
+	NamespaceUserRebates
 	NamespaceMarketLastVersion
 )
 

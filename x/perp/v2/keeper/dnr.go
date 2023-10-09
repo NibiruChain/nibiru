@@ -5,6 +5,8 @@ import (
 
 	"cosmossdk.io/math"
 	"github.com/NibiruChain/collections"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -112,31 +114,26 @@ func (k Keeper) GetTraderVolumeLastEpoch(ctx sdk.Context, currentEpoch uint64, u
 // If it does not have a custom discount, it will return the global discount for the given volume.
 // The discount is the nearest left entry of the trader volume.
 func (k Keeper) GetTraderDiscount(ctx sdk.Context, trader sdk.AccAddress, volume math.Int) (math.LegacyDec, bool) {
-	// we try to see if the trader has a custom discount.
-	customDiscountRng := collections.PairRange[sdk.AccAddress, math.Int]{}.
-		Prefix(trader).
-		EndInclusive(volume).
-		Descending()
+	return getTraderDiscountOrRebate(
+		ctx,
+		k.GlobalDiscounts,
+		k.TraderDiscounts,
+		trader,
+		volume,
+	)
+}
 
-	customDiscount := k.TraderDiscounts.Iterate(ctx, customDiscountRng)
-	defer customDiscount.Close()
-
-	if customDiscount.Valid() {
-		return customDiscount.Value(), true
-	}
-
-	// if it does not have a custom discount we try with global ones
-	globalDiscountRng := collections.Range[math.Int]{}.
-		EndInclusive(volume).
-		Descending()
-
-	globalDiscounts := k.GlobalDiscounts.Iterate(ctx, globalDiscountRng)
-	defer globalDiscounts.Close()
-
-	if globalDiscounts.Valid() {
-		return globalDiscounts.Value(), true
-	}
-	return math.LegacyZeroDec(), false
+// GetTraderRebate will check if the trader has a custom rebate for the given volume.
+// If it does not have a custom rebate, it will return the global rebate for the given volume.
+// The rebate is the nearest left entry of the trader volume.
+func (k Keeper) GetTraderRebate(ctx sdk.Context, trader sdk.AccAddress, volume math.Int) (math.LegacyDec, bool) {
+	return getTraderDiscountOrRebate(
+		ctx,
+		k.GlobalRebates,
+		k.TraderRebates,
+		trader,
+		volume,
+	)
 }
 
 // applyDiscountAndRebate applies the discount and rebate to the given exchange fee ratio.
@@ -144,7 +141,7 @@ func (k Keeper) GetTraderDiscount(ctx sdk.Context, trader sdk.AccAddress, volume
 // It returns the new exchange fee ratio.
 func (k Keeper) applyDiscountAndRebate(
 	ctx sdk.Context,
-	_ asset.Pair,
+	pair asset.Pair,
 	trader sdk.AccAddress,
 	positionNotional math.LegacyDec,
 	feeRatio sdk.Dec,
@@ -163,6 +160,12 @@ func (k Keeper) applyDiscountAndRebate(
 		return feeRatio, nil
 	}
 
+	// apply rebates
+	err = k.applyRebates(ctx, trader, pair, pastVolume, positionNotional)
+	if err != nil {
+		return feeRatio, err
+	}
+
 	// try to apply discount
 	discountedFeeRatio, hasDiscount := k.GetTraderDiscount(ctx, trader, pastVolume)
 	// if the trader does not have any discount, we return the provided fee ratios.
@@ -171,4 +174,100 @@ func (k Keeper) applyDiscountAndRebate(
 	}
 	// return discounted fee ratios
 	return discountedFeeRatio, nil
+}
+
+// applyRebates calculates the rebate based on the last epoch volume.
+// then estimates how much the rebate would be in the quote asset.
+// it converts the quote asset to the bond denom, and mints it to the trader.
+func (k Keeper) applyRebates(
+	ctx sdk.Context,
+	trader sdk.AccAddress,
+	pair asset.Pair,
+	volume math.Int,
+	positionNotional math.LegacyDec,
+) error {
+	// we calculate how much the rebate is, if zero. we skip.
+	rebate, hasRebate := k.GetTraderRebate(ctx, trader, volume)
+	if !hasRebate {
+		return nil
+	}
+	rebateCoins := sdk.NewCoin(pair.QuoteDenom(), positionNotional.Abs().Mul(rebate).TruncateInt())
+	bondRebateCoin, err := k.coinToBondEquivalent(ctx, rebateCoins)
+	if err != nil {
+		// log and skip.
+		ctx.Logger().Error("error converting rebate to bond equivalent", "error", err)
+		return nil
+	}
+	bondRebateCoins := sdk.NewCoins(bondRebateCoin)
+	err = k.BankKeeper.MintCoins(ctx, types.ModuleName, bondRebateCoins)
+	if err != nil {
+		return err
+	}
+	err = k.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, trader, bondRebateCoins)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// coinToBondEquivalent returns the amount of bond coins required to buy the given amount of denom coins.
+func (k Keeper) coinToBondEquivalent(ctx sdk.Context, denomCoin sdk.Coin) (coin sdk.Coin, err error) {
+	// find the bond denom price.
+	bondDenom := k.StakingKeeper.BondDenom(ctx)
+	// the amount required to buy itself is itself.
+	if bondDenom == denomCoin.Denom {
+		return denomCoin, nil
+	}
+	// find the bond denom price.
+	bondDenomPrice, err := k.OracleKeeper.GetExchangeRate(ctx, asset.NewPair(bondDenom, denoms.USD))
+	if err != nil {
+		return coin, err
+	}
+	// find the denom price.
+	denomPrice, err := k.OracleKeeper.GetExchangeRate(ctx, asset.NewPair(denomCoin.Denom, denoms.USD))
+	if err != nil {
+		return coin, err
+	}
+	// amt * denomPrice / bondDenomPrice
+	bondEquivalentAmount := denomCoin.Amount.ToLegacyDec().Mul(denomPrice).Quo(bondDenomPrice).TruncateInt()
+	return sdk.NewCoin(bondDenom, bondEquivalentAmount), nil
+}
+
+// getTraderDiscountOrRebate will check if the trader has a custom discount or rebate for the given volume.
+// It takes the globalMap which either represents the global discounts or rebates.
+// It takes the tradersMap which either represents the custom discounts or rebates.
+// It takes the trader and its volume to provide the discount or rebate ratio.
+// Returns the discount or rebate ratio and a boolean indicating if the trader has a discount or rebate.
+func getTraderDiscountOrRebate(
+	ctx sdk.Context,
+	globalMap collections.Map[math.Int, math.LegacyDec],
+	tradersMap collections.Map[collections.Pair[sdk.AccAddress, math.Int], math.LegacyDec],
+	trader sdk.AccAddress,
+	volume math.Int,
+) (math.LegacyDec, bool) {
+	// we try to see if the trader has a custom discount or rebate.
+	traderRng := collections.PairRange[sdk.AccAddress, math.Int]{}.
+		Prefix(trader).
+		EndInclusive(volume).
+		Descending()
+
+	custom := tradersMap.Iterate(ctx, traderRng)
+	defer custom.Close()
+
+	if custom.Valid() {
+		return custom.Value(), true
+	}
+
+	// if it does not have a custom discount or rebate we try with global ones
+	globalRng := collections.Range[math.Int]{}.
+		EndInclusive(volume).
+		Descending()
+
+	global := globalMap.Iterate(ctx, globalRng)
+	defer global.Close()
+
+	if global.Valid() {
+		return global.Value(), true
+	}
+	return math.LegacyZeroDec(), false
 }

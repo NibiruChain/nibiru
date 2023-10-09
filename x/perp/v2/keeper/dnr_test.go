@@ -98,7 +98,7 @@ func TestUserVolumes(t *testing.T) {
 	NewTestSuite(t).WithTestCases(tests...).Run()
 }
 
-func TestDiscount(t *testing.T) {
+func TestDiscountAndRebates(t *testing.T) {
 	alice := testutil.AccAddress()
 	pairBtcNusd := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	positionSize := sdk.NewInt(10_000)
@@ -109,6 +109,7 @@ func TestDiscount(t *testing.T) {
 	fauxGlobalFeeDiscount := sdk.MustNewDecFromStr("0.0006") // 0.06%
 	customFeeDiscount := sdk.MustNewDecFromStr("0.0002")     // 0.02%
 	fauxCustomFeeDiscount := sdk.MustNewDecFromStr("0.0003") // 0.03%
+	customRebate := sdk.MustNewDecFromStr("0.001")           // 0.01%
 
 	tests := TestCases{
 		TC("user does not have any past epoch volume: no discount applies").
@@ -128,7 +129,7 @@ func TestDiscount(t *testing.T) {
 				DnREpochIs(1),
 			).
 			Then(
-				MarketOrderFeeIs(exchangeFee, alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
+				MarketOrderFeeAndRebateIs(exchangeFee, math.ZeroInt(), alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
 			),
 		TC("user has past epoch volume: no discount applies").
 			Given(
@@ -152,7 +153,7 @@ func TestDiscount(t *testing.T) {
 				SetPreviousEpochUserVolume(alice, sdk.NewInt(10_000)), // lower than 50_000
 			).
 			Then(
-				MarketOrderFeeIs(exchangeFee, alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
+				MarketOrderFeeAndRebateIs(exchangeFee, math.ZeroInt(), alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
 			),
 		TC("user has past epoch volume: custom discount applies").
 			Given(
@@ -176,9 +177,10 @@ func TestDiscount(t *testing.T) {
 				SetPreviousEpochUserVolume(alice, sdk.NewInt(100_001)),
 			).
 			Then(
-				MarketOrderFeeIs(customFeeDiscount, alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
+				MarketOrderFeeAndRebateIs(customFeeDiscount, math.ZeroInt(), alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
 			),
-		TC("user has past epoch volume: global discount applies").
+
+		TC("trades do not fail if coinToBondEquivalent function fails").
 			Given(
 				DnREpochIs(2),
 				CreateCustomMarket(
@@ -191,14 +193,37 @@ func TestDiscount(t *testing.T) {
 
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, positionSize.AddRaw(1000)))),
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100_000_000)))),
+				// we do not set the price here!
 			).
 			When(
-				SetGlobalDiscount(sdk.MustNewDecFromStr("0.0004"), sdk.NewInt(50_000)),
-				SetGlobalDiscount(globalFeeDiscount, sdk.NewInt(100_000)),
+				SetCustomRebate(alice, customRebate, sdk.NewInt(99_999)), // alice qualifies for the rebate but the asset is unknown
 				SetPreviousEpochUserVolume(alice, sdk.NewInt(100_000)),
 			).
 			Then(
-				MarketOrderFeeIs(globalFeeDiscount, alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
+				MarketOrderFeeAndRebateIs(exchangeFee, math.ZeroInt(), alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
+			),
+		TC("if bond denom equals to quote denom then equivalent is minted").
+			Given(
+				DnREpochIs(2),
+				CreateCustomMarket(
+					asset.NewPair("btc", "stake"),
+					WithPricePeg(sdk.OneDec()),
+					WithSqrtDepth(sdk.NewDec(100_000)),
+				),
+				SetBlockNumber(1),
+				SetBlockTime(startBlockTime),
+
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin("stake", positionSize.AddRaw(1000)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(100_000_000)))),
+				// we do not set the price here, because if quote denom is bond denom, then we should just return 1 as price.
+			).
+			When(
+				SetCustomRebate(alice, customRebate, sdk.NewInt(99_999)), // alice qualifies for the rebate but the asset is unknown
+				SetPreviousEpochUserVolume(alice, sdk.NewInt(100_000)),
+			).
+			Then(
+				// customRebate does not need adjustments with respect to price since quote and bond denom are the same.
+				MarketOrderFeeAndRebateIs(exchangeFee, customRebate.MulInt(sdk.NewInt(10_000)).TruncateInt(), alice, asset.NewPair("btc", "stake"), types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
 			),
 	}
 	NewTestSuite(t).WithTestCases(tests...).Run()

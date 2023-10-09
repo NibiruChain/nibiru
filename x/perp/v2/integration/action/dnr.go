@@ -101,12 +101,14 @@ func (e expectVolumeNotExistAction) Do(app *app.NibiruApp, ctx sdk.Context) (out
 }
 
 type marketOrderFeeIs struct {
-	fee sdk.Dec
+	fee    sdk.Dec
+	rebate math.Int
 	*openPositionAction
 }
 
-func MarketOrderFeeIs(
+func MarketOrderFeeAndRebateIs(
 	fee sdk.Dec,
+	rebate math.Int,
 	trader sdk.AccAddress,
 	pair asset.Pair,
 	dir types.Direction,
@@ -126,12 +128,13 @@ func MarketOrderFeeIs(
 	}
 	return &marketOrderFeeIs{
 		fee:                fee,
+		rebate:             rebate,
 		openPositionAction: &o,
 	}
 }
 
 func (o *marketOrderFeeIs) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	balanceBefore := app.BankKeeper.GetBalance(ctx, o.trader, o.pair.QuoteDenom()).Amount
+	balanceBefore := app.BankKeeper.GetAllBalances(ctx, o.trader)
 	resp, err := app.PerpKeeperV2.MarketOrder(
 		ctx, o.pair, o.dir, o.trader,
 		o.margin, o.leverage, o.baseAssetLimit,
@@ -139,15 +142,25 @@ func (o *marketOrderFeeIs) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context,
 	if err != nil {
 		return ctx, err, true
 	}
-
-	balanceBefore = balanceBefore.Sub(resp.MarginToVault.TruncateInt())
-
+	feeBalanceBefore := balanceBefore.AmountOf(o.pair.QuoteDenom()).Sub(resp.MarginToVault.TruncateInt())
 	expectedFee := math.LegacyNewDecFromInt(o.margin).Mul(o.fee.Add(sdk.MustNewDecFromStr("0.001"))) // we add the ecosystem fund fee
-	balanceAfter := app.BankKeeper.GetBalance(ctx, o.trader, o.pair.QuoteDenom()).Amount
-	paidFees := balanceBefore.Sub(balanceAfter)
+	balanceAfter := app.BankKeeper.GetAllBalances(ctx, o.trader)
+
+	paidFees := feeBalanceBefore.Sub(balanceAfter.AmountOf(o.pair.QuoteDenom()))
 	if !paidFees.Equal(expectedFee.TruncateInt()) {
 		return ctx, fmt.Errorf("unexpected fee, wanted %s, got %s", expectedFee, paidFees), true
 	}
+
+	// now we check the rebate
+	rebateDenom := app.PerpKeeperV2.StakingKeeper.BondDenom(ctx)
+	if o.rebate.IsZero() {
+		return ctx, nil, true
+	}
+	rebateAfter := balanceAfter.AmountOf(rebateDenom).Sub(balanceBefore.AmountOf(rebateDenom))
+	if !o.rebate.Equal(rebateAfter) {
+		return ctx, fmt.Errorf("unexpected rebate, wanted %s, got %s", o.rebate, rebateAfter), true
+	}
+
 	return ctx, nil, true
 }
 
@@ -205,5 +218,41 @@ type setCustomDiscountAction struct {
 
 func (s *setCustomDiscountAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
 	app.PerpKeeperV2.TraderDiscounts.Insert(ctx, collections.Join(s.user, s.volume), s.fee)
+	return ctx, nil, true
+}
+
+func SetCustomRebate(user sdk.AccAddress, fee sdk.Dec, volume math.Int) action.Action {
+	return &setCustomRebateAction{
+		fee:    fee,
+		volume: volume,
+		user:   user,
+	}
+}
+
+type setCustomRebateAction struct {
+	fee    sdk.Dec
+	volume math.Int
+	user   sdk.AccAddress
+}
+
+func (s *setCustomRebateAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
+	app.PerpKeeperV2.TraderRebates.Insert(ctx, collections.Join(s.user, s.volume), s.fee)
+	return ctx, nil, true
+}
+
+type setPriceAction struct {
+	pair  asset.Pair
+	price sdk.Dec
+}
+
+func SetPrice(pair asset.Pair, price sdk.Dec) action.Action {
+	return &setPriceAction{
+		pair:  pair,
+		price: price,
+	}
+}
+
+func (s *setPriceAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
+	app.OracleKeeper.SetPrice(ctx, s.pair, s.price)
 	return ctx, nil, true
 }

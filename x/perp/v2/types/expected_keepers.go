@@ -48,3 +48,7 @@ type EpochKeeper interface {
 	// GetEpochInfo returns epoch info by identifier.
 	GetEpochInfo(ctx sdk.Context, identifier string) (types.EpochInfo, error)
 }
+
+type StakingKeeper interface {
+	BondDenom(ctx sdk.Context) string
+}

@@ -363,7 +363,7 @@ func (app *NibiruApp) InitKeepers(
 
 	app.PerpKeeperV2 = perpkeeper.NewKeeper(
 		appCodec, keys[perptypes.StoreKey],
-		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.EpochsKeeper,
+		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.EpochsKeeper, app.stakingKeeper,
 	)
 
 	app.InflationKeeper = inflationkeeper.NewKeeper(
@@ -798,7 +798,7 @@ func ModuleAccPerms() map[string][]string {
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		ibcfeetypes.ModuleName:         {},
 
-		perptypes.ModuleName:           {},
+		perptypes.ModuleName:           {authtypes.Minter},
 		perptypes.VaultModuleAccount:   {},
 		perptypes.PerpEFModuleAccount:  {},
 		perptypes.FeePoolModuleAccount: {},
@@ -844,12 +844,12 @@ func initParamsKeeper(
 func (app *NibiruApp) InitSimulationManager(
 	appCodec codec.Codec,
 ) {
-	//// create the simulation manager and define the order of the modules for deterministic simulations
-	////
-	//// NOTE: this is not required apps that don't use the simulator for fuzz testing
-	//// transactions
-	//epochsModule := epochs.NewAppModule(appCodec, app.EpochsKeeper)
-	//app.sm = module.NewSimulationManager(
+	// // create the simulation manager and define the order of the modules for deterministic simulations
+	// //
+	// // NOTE: this is not required apps that don't use the simulator for fuzz testing
+	// // transactions
+	// epochsModule := epochs.NewAppModule(appCodec, app.EpochsKeeper)
+	// app.sm = module.NewSimulationManager(
 	//	auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts),
 	//	bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
 	//	feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
@@ -867,7 +867,7 @@ func (app *NibiruApp) InitSimulationManager(
 	//	ibc.NewAppModule(app.ibcKeeper),
 	//	ibctransfer.NewAppModule(app.transferKeeper),
 	//	ibcfee.NewAppModule(app.ibcFeeKeeper),
-	//)
+	// )
 	//
-	//app.sm.RegisterStoreDecoders()
+	// app.sm.RegisterStoreDecoders()
 }
