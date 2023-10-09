@@ -1,9 +1,15 @@
 package cli_test
 
 import (
-	"cosmossdk.io/errors"
 	"fmt"
 	"testing"
+
+	"cosmossdk.io/errors"
+
+	abcitypes "github.com/cometbft/cometbft/abci/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common"
@@ -14,10 +20,6 @@ import (
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/NibiruChain/nibiru/x/perp/v2/client/cli"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
-	abcitypes "github.com/cometbft/cometbft/abci/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
-	"github.com/stretchr/testify/suite"
 )
 
 type IntegrationTestSuite struct {
