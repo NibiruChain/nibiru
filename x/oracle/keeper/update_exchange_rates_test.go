@@ -184,9 +184,9 @@ func TestOracleTally(t *testing.T) {
 		maxSpread = standardDeviation
 	}
 
-	expectedValidatorClaimMap := make(types.ValidatorPerformances)
+	expectedValidatorPerformances := make(types.ValidatorPerformances)
 	for _, valAddr := range valAddrs {
-		expectedValidatorClaimMap[valAddr.String()] = types.NewValidatorPerformance(
+		expectedValidatorPerformances[valAddr.String()] = types.NewValidatorPerformance(
 			stakingKeeper.Validator(fixture.Ctx, valAddr).GetConsensusPower(sdk.DefaultPowerReduction),
 			valAddr,
 		)
@@ -194,23 +194,23 @@ func TestOracleTally(t *testing.T) {
 
 	for _, vote := range ballot {
 		key := vote.Voter.String()
-		claim := expectedValidatorClaimMap[key]
+		validatorPerformance := expectedValidatorPerformances[key]
 		if vote.ExchangeRate.GTE(weightedMedian.Sub(maxSpread)) &&
 			vote.ExchangeRate.LTE(weightedMedian.Add(maxSpread)) {
-			claim.RewardWeight += vote.Power
-			claim.WinCount++
+			validatorPerformance.RewardWeight += vote.Power
+			validatorPerformance.WinCount++
 		} else if !vote.ExchangeRate.IsPositive() {
-			claim.AbstainCount++
+			validatorPerformance.AbstainCount++
 		} else {
-			claim.MissCount++
+			validatorPerformance.MissCount++
 		}
-		expectedValidatorClaimMap[key] = claim
+		expectedValidatorPerformances[key] = validatorPerformance
 	}
 
 	tallyMedian := Tally(
 		ballot, fixture.OracleKeeper.RewardBand(fixture.Ctx), validatorPerformances)
 
-	assert.Equal(t, expectedValidatorClaimMap, validatorPerformances)
+	assert.Equal(t, expectedValidatorPerformances, validatorPerformances)
 	assert.Equal(t, tallyMedian.MulInt64(100).TruncateInt(), weightedMedian.MulInt64(100).TruncateInt())
 	assert.NotEqualValues(t, 0, validatorPerformances.TotalRewardWeight(), validatorPerformances.String())
 }
