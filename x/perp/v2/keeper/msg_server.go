@@ -108,6 +108,24 @@ func (m msgServer) MultiLiquidate(goCtx context.Context, req *types.MsgMultiLiqu
 	return &types.MsgMultiLiquidateResponse{Liquidations: resp}, nil
 }
 
+func (m msgServer) SettlePosition(ctx context.Context, msg *types.MsgSettlePosition) (*types.MsgClosePositionResponse, error) {
+	// These fields should have already been validated by MsgSettlePosition.ValidateBasic() prior to being sent to the msgServer.
+	traderAddr := sdk.MustAccAddressFromBech32(msg.Sender)
+	resp, err := m.k.SettlePosition(sdk.UnwrapSDKContext(ctx), msg.Pair, msg.Version, traderAddr)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgClosePositionResponse{
+		ExchangedNotionalValue: resp.ExchangedNotionalValue,
+		ExchangedPositionSize:  resp.ExchangedPositionSize,
+		FundingPayment:         resp.FundingPayment,
+		RealizedPnl:            resp.RealizedPnl,
+		MarginToTrader:         resp.MarginToVault.Neg(),
+	}, nil
+}
+
 func (m msgServer) DonateToEcosystemFund(ctx context.Context, msg *types.MsgDonateToEcosystemFund) (*types.MsgDonateToEcosystemFundResponse, error) {
 	if err := m.k.BankKeeper.SendCoinsFromAccountToModule(
 		sdk.UnwrapSDKContext(ctx),

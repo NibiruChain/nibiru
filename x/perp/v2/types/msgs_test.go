@@ -243,6 +243,36 @@ func TestMsgValidateBasic(t *testing.T) {
 			true,
 			"decoding bech32 failed",
 		},
+		// MsgSettlePosition test cases
+		{
+			"Test MsgSettlePosition: Valid input",
+			&MsgSettlePosition{
+				Sender:  validSender,
+				Pair:    validPair,
+				Version: 1,
+			},
+			false,
+			"",
+		},
+		{
+			"Test MsgSettlePosition: Invalid pair",
+			&MsgSettlePosition{
+				Sender:  validSender,
+				Pair:    invalidPair,
+				Version: 1,
+			},
+			true,
+			"invalid base asset",
+		},
+		{
+			"Test MsgSettlePosition: Invalid sender",
+			&MsgSettlePosition{
+				Sender: "invalid",
+				Pair:   validPair,
+			},
+			true,
+			"decoding bech32 failed",
+		},
 		// MsgPartialClose test cases
 		{
 			"Test MsgPartialClose: Valid input",
@@ -385,6 +415,7 @@ func TestMsg_GetSigners(t *testing.T) {
 		&MsgRemoveMargin{Sender: validSender},
 		&MsgMarketOrder{Sender: validSender},
 		&MsgClosePosition{Sender: validSender},
+		&MsgSettlePosition{Sender: validSender},
 		&MsgPartialClose{Sender: validSender},
 		&MsgDonateToEcosystemFund{Sender: validSender},
 		&MsgMultiLiquidate{Sender: validSender},
@@ -394,6 +425,7 @@ func TestMsg_GetSigners(t *testing.T) {
 		&MsgRemoveMargin{Sender: invalidSender},
 		&MsgMarketOrder{Sender: invalidSender},
 		&MsgClosePosition{Sender: invalidSender},
+		&MsgSettlePosition{Sender: invalidSender},
 		&MsgPartialClose{Sender: invalidSender},
 		&MsgDonateToEcosystemFund{Sender: invalidSender},
 		&MsgMultiLiquidate{Sender: invalidSender},
@@ -458,6 +490,12 @@ func TestMsg_RouteAndType(t *testing.T) {
 			expectedType:  "close_position_msg",
 		},
 		{
+			name:          "MsgSettlePosition",
+			msg:           &MsgSettlePosition{},
+			expectedRoute: "perp",
+			expectedType:  "settle_position_msg",
+		},
+		{
 			name:          "MsgPartialClose",
 			msg:           &MsgPartialClose{},
 			expectedRoute: "perp",
@@ -510,6 +548,10 @@ func TestMsg_GetSignBytes(t *testing.T) {
 		{
 			name: "MsgClosePosition",
 			msg:  &MsgClosePosition{},
+		},
+		{
+			name: "MsgSettlePosition",
+			msg:  &MsgSettlePosition{},
 		},
 		{
 			name: "MsgPartialClose",

@@ -198,6 +198,34 @@ func (m MsgClosePosition) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{signer}
 }
 
+// MsgSettlePosition
+
+func (m MsgSettlePosition) Route() string { return "perp" }
+func (m MsgSettlePosition) Type() string  { return "settle_position_msg" }
+
+func (m MsgSettlePosition) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return sdkerrors.Wrapf(errors.ErrInvalidAddress, "invalid sender address (%s)", err)
+	}
+	if err := m.Pair.Validate(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m MsgSettlePosition) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
+}
+
+func (m MsgSettlePosition) GetSigners() []sdk.AccAddress {
+	signer, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{signer}
+}
+
 // MsgDonateToEcosystemFund
 
 func (m MsgDonateToEcosystemFund) Route() string { return "perp" }
