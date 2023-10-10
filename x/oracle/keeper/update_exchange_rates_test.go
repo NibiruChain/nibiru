@@ -91,7 +91,7 @@ func TestOracleThreshold(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestClearExchangeRates(t *testing.T) {
+func TestResetExchangeRates(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	fixture, _ := Setup(t)
 
@@ -454,13 +454,13 @@ func TestWhitelistedPairs(t *testing.T) {
 	for valIdx := 0; valIdx < 4; valIdx++ {
 		perf := perfs[ValAddrs[valIdx].String()]
 		assert.EqualValues(t, 1, perf.WinCount)
-		assert.EqualValues(t, 0, perf.AbstainCount)
+		assert.EqualValues(t, 1, perf.AbstainCount)
 		assert.EqualValues(t, 0, perf.MissCount)
 	}
 	t.Log("validators 4 didn't vote -> expect abstain")
 	perf := perfs[ValAddrs[4].String()]
 	assert.EqualValues(t, 0, perf.WinCount)
-	assert.EqualValues(t, 1, perf.AbstainCount)
+	assert.EqualValues(t, 2, perf.AbstainCount)
 	assert.EqualValues(t, 0, perf.MissCount)
 
 	t.Log("btc:nusd must be deleted")
@@ -469,17 +469,22 @@ func TestWhitelistedPairs(t *testing.T) {
 	require.False(t, fixture.OracleKeeper.WhitelistedPairs.Has(
 		fixture.Ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD)))
 
-	t.Log("vote from vals 0-2 on nibi:nusd (same vote period)")
+	t.Log("vote from vals 0-3 on nibi:nusd")
 	priceVoteFromVal(0, block)
 	priceVoteFromVal(1, block)
 	priceVoteFromVal(2, block)
+	priceVoteFromVal(3, block)
 	perfs = fixture.OracleKeeper.UpdateExchangeRates(fixture.Ctx)
 
 	t.Log("Although validators 0-2 voted, it's for the same period -> expect abstains for everyone")
-	for valIdx := 0; valIdx < 5; valIdx++ {
+	for valIdx := 0; valIdx < 4; valIdx++ {
 		perf := perfs[ValAddrs[valIdx].String()]
-		assert.EqualValues(t, 0, perf.WinCount)
-		assert.EqualValues(t, 1, perf.AbstainCount)
+		assert.EqualValues(t, 1, perf.WinCount)
+		assert.EqualValues(t, 0, perf.AbstainCount)
 		assert.EqualValues(t, 0, perf.MissCount)
 	}
+	perf = perfs[ValAddrs[4].String()]
+	assert.EqualValues(t, 0, perf.WinCount)
+	assert.EqualValues(t, 1, perf.AbstainCount)
+	assert.EqualValues(t, 0, perf.MissCount)
 }
