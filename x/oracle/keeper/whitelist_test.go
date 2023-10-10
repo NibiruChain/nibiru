@@ -106,7 +106,7 @@ func TestUpdateWhitelist(t *testing.T) {
 	sort.Slice(whitelistSlice, func(i, j int) bool {
 		return whitelistSlice[i].String() < whitelistSlice[j].String()
 	})
-	fixture.OracleKeeper.updateWhitelist(fixture.Ctx, whitelistSlice, currentWhitelist)
+	fixture.OracleKeeper.refreshWhitelist(fixture.Ctx, whitelistSlice, currentWhitelist)
 	assert.Equal(t, whitelistSlice, fixture.OracleKeeper.GetWhitelistedPairs(fixture.Ctx))
 
 	// len update (fast path)
@@ -115,7 +115,7 @@ func TestUpdateWhitelist(t *testing.T) {
 	sort.Slice(whitelistSlice, func(i, j int) bool {
 		return whitelistSlice[i].String() < whitelistSlice[j].String()
 	})
-	fixture.OracleKeeper.updateWhitelist(fixture.Ctx, whitelistSlice, currentWhitelist)
+	fixture.OracleKeeper.refreshWhitelist(fixture.Ctx, whitelistSlice, currentWhitelist)
 	assert.Equal(t, whitelistSlice, fixture.OracleKeeper.GetWhitelistedPairs(fixture.Ctx))
 
 	// diff update (slow path)
@@ -124,6 +124,6 @@ func TestUpdateWhitelist(t *testing.T) {
 	sort.Slice(whitelistSlice, func(i, j int) bool {
 		return whitelistSlice[i].String() < whitelistSlice[j].String()
 	})
-	fixture.OracleKeeper.updateWhitelist(fixture.Ctx, whitelistSlice, currentWhitelist)
+	fixture.OracleKeeper.refreshWhitelist(fixture.Ctx, whitelistSlice, currentWhitelist)
 	assert.Equal(t, whitelistSlice, fixture.OracleKeeper.GetWhitelistedPairs(fixture.Ctx))
 }

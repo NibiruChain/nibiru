@@ -285,8 +285,8 @@ func AllocateRewards(t *testing.T, input TestFixture, rewards sdk.Coins, votePer
 }
 
 var (
-	stakingAmt         = sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction)
-	randomExchangeRate = sdk.NewDec(1700)
+	testStakingAmt   = sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction)
+	testExchangeRate = sdk.NewDec(1700)
 )
 
 func Setup(t *testing.T) (TestFixture, types.MsgServer) {
@@ -304,22 +304,29 @@ func Setup(t *testing.T) (TestFixture, types.MsgServer) {
 	sh := stakingkeeper.NewMsgServerImpl(&fixture.StakingKeeper)
 
 	// Validator created
-	_, err := sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[0], ValPubKeys[0], stakingAmt))
+	_, err := sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[0], ValPubKeys[0], testStakingAmt))
 	require.NoError(t, err)
-	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[1], ValPubKeys[1], stakingAmt))
+	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[1], ValPubKeys[1], testStakingAmt))
 	require.NoError(t, err)
-	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[2], ValPubKeys[2], stakingAmt))
+	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[2], ValPubKeys[2], testStakingAmt))
 	require.NoError(t, err)
-	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[3], ValPubKeys[3], stakingAmt))
+	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[3], ValPubKeys[3], testStakingAmt))
 	require.NoError(t, err)
-	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[4], ValPubKeys[4], stakingAmt))
+	_, err = sh.CreateValidator(fixture.Ctx, NewTestMsgCreateValidator(ValAddrs[4], ValPubKeys[4], testStakingAmt))
 	require.NoError(t, err)
 	staking.EndBlocker(fixture.Ctx, &fixture.StakingKeeper)
 
 	return fixture, h
 }
 
-func MakeAggregatePrevoteAndVote(t *testing.T, input TestFixture, msgServer types.MsgServer, height int64, rates types.ExchangeRateTuples, valIdx int) {
+func MakeAggregatePrevoteAndVote(
+	t *testing.T,
+	input TestFixture,
+	msgServer types.MsgServer,
+	height int64,
+	rates types.ExchangeRateTuples,
+	valIdx int,
+) {
 	salt := "1"
 	ratesStr, err := rates.ToString()
 	require.NoError(t, err)

@@ -122,7 +122,7 @@ func AddPerpV2Genesis(gen app.GenesisState) app.GenesisState {
 		Markets:            marketsv2,
 		MarketLastVersions: marketLastVersions,
 		Amms:               ammsv2,
-		Positions:          []perpv2types.Position{},
+		Positions:          []perpv2types.GenesisPosition{},
 		ReserveSnapshots:   []perpv2types.ReserveSnapshot{},
 	}
 
@@ -226,7 +226,7 @@ func PerpV2Genesis() *perpv2types.GenesisState {
 				TotalShort:      sdk.ZeroDec(),
 			},
 		},
-		Positions:        []perpv2types.Position{},
+		Positions:        []perpv2types.GenesisPosition{},
 		ReserveSnapshots: []perpv2types.ReserveSnapshot{},
 	}
 }

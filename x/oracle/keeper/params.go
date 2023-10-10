@@ -18,20 +18,20 @@ func (k Keeper) VotePeriod(ctx sdk.Context) (res uint64) {
 	return params.VotePeriod
 }
 
-// VoteThreshold returns the minimum percentage of votes that must be received for a ballot to pass.
+// VoteThreshold returns the minimum percentage of votes that must be received for a votes to pass.
 func (k Keeper) VoteThreshold(ctx sdk.Context) (res sdk.Dec) {
 	params, _ := k.Params.Get(ctx)
 	return params.VoteThreshold
 }
 
-// MinVoters returns the minimum percentage of votes that must be received for a ballot to pass.
+// MinVoters returns the minimum percentage of votes that must be received for a votes to pass.
 func (k Keeper) MinVoters(ctx sdk.Context) (res uint64) {
 	params, _ := k.Params.Get(ctx)
 	return params.MinVoters
 }
 
 // RewardBand returns a maxium divergence that a price vote can have from the
-// weighted median in the ballot. If a vote lies within the valid range
+// weighted median in the votes. If a vote lies within the valid range
 // defined by:
 //
 //	μ := weightedMedian,
