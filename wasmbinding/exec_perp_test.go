@@ -6,7 +6,6 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/NibiruChain/collections"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
@@ -114,9 +113,7 @@ func (s *TestSuitePerpExecutor) DoMarketOrderTest(pair asset.Pair) error {
 	}
 
 	// Verify position exists with PerpKeeper
-	_, err = s.exec.PerpV2.Positions.Get(
-		s.ctx, collections.Join(pair, s.contractPerp),
-	)
+	_, err = s.exec.PerpV2.GetPosition(s.ctx, pair, 1, s.contractPerp)
 	if err != nil {
 		return err
 	}

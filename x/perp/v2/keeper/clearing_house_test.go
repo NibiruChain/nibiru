@@ -873,51 +873,17 @@ func TestMarketOrder(t *testing.T) {
 				PositionShouldNotExist(alice, pairBtcNusd),
 			),
 
-		TC("new long position, can close position after market is not enabled").
-			Given(
-				CreateCustomMarket(pairBtcNusd),
-				SetBlockTime(startBlockTime),
-				SetBlockNumber(1),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(47_714_285_715)))),
-				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(47_619_047_619), sdk.OneDec(), sdk.ZeroDec()),
-				SetMarketEnabled(pairBtcNusd, false),
-			).
-			When(
-				ClosePosition(alice, pairBtcNusd),
-			).
-			Then(
-				PositionShouldNotExist(alice, pairBtcNusd),
-			),
-
 		TC("new long position, can not open new position after market is not enabled").
 			Given(
 				CreateCustomMarket(pairBtcNusd),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(47_714_285_715)))),
-				SetMarketEnabled(pairBtcNusd, false),
+				CloseMarket(pairBtcNusd),
 			).
 			When(
 				MarketOrderFails(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(47_619_047_619), sdk.OneDec(), sdk.ZeroDec(),
 					types.ErrMarketNotEnabled),
-			).
-			Then(
-				PositionShouldNotExist(alice, pairBtcNusd),
-			),
-
-		TC("existing long position, can not open new one but can close").
-			Given(
-				CreateCustomMarket(pairBtcNusd),
-				SetBlockTime(startBlockTime),
-				SetBlockNumber(1),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(47_714_285_715)))),
-				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(50_000), sdk.OneDec(), sdk.ZeroDec()),
-				SetMarketEnabled(pairBtcNusd, false),
-			).
-			When(
-				MarketOrderFails(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(47_619_047_619), sdk.OneDec(), sdk.ZeroDec(),
-					types.ErrMarketNotEnabled),
-				ClosePosition(alice, pairBtcNusd),
 			).
 			Then(
 				PositionShouldNotExist(alice, pairBtcNusd),
@@ -1184,7 +1150,7 @@ func TestMarketOrderError(t *testing.T) {
 
 			if tc.initialPosition != nil {
 				tc.initialPosition.TraderAddress = traderAddr.String()
-				app.PerpKeeperV2.Positions.Insert(ctx, collections.Join(tc.initialPosition.Pair, traderAddr), *tc.initialPosition)
+				app.PerpKeeperV2.SavePosition(ctx, tc.initialPosition.Pair, 1, traderAddr, *tc.initialPosition)
 			}
 
 			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1).WithBlockTime(ctx.BlockTime().Add(time.Second * 5))
@@ -1644,7 +1610,7 @@ func TestPartialClose(t *testing.T) {
 
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200)))),
 
-				PartialCloseFails(alice, pairBtcNusd, sdk.NewDec(5_000), collections.ErrNotFound),
+				PartialCloseFails(alice, pairBtcNusd, sdk.NewDec(5_000), types.ErrPositionNotFound),
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(9_000), sdk.OneDec(), sdk.ZeroDec()),
 			).
 			When(

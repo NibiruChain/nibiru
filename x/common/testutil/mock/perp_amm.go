@@ -19,6 +19,7 @@ func TestAMMDefault() *types.AMM {
 		PriceMultiplier: sdk.OneDec(),
 		TotalLong:       sdk.ZeroDec(),
 		TotalShort:      sdk.ZeroDec(),
+		SettlementPrice: sdk.ZeroDec(),
 	}
 }
 

@@ -189,6 +189,7 @@ func (exec *ExecutorPerp) InsuranceFundWithdraw(
 	)
 }
 
+// TODO: rename to CloseMarket
 func (exec *ExecutorPerp) SetMarketEnabled(
 	cwMsg *bindings.SetMarketEnabled, ctx sdk.Context,
 ) (err error) {
@@ -201,7 +202,7 @@ func (exec *ExecutorPerp) SetMarketEnabled(
 		return err
 	}
 
-	return exec.PerpV2.ChangeMarketEnabledParameter(ctx, pair, cwMsg.Enabled)
+	return exec.PerpV2.CloseMarket(ctx, pair)
 }
 
 func (exec *ExecutorPerp) CreateMarket(

@@ -2,6 +2,7 @@ package action
 
 import (
 	"errors"
+	"fmt"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -68,7 +69,7 @@ func (a addMarginFailAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Contex
 		ctx, a.Pair, a.Account, sdk.NewCoin(a.Pair.QuoteDenom(), a.Margin),
 	)
 	if !errors.Is(err, a.ExpectedErr) {
-		return ctx, err, false
+		return ctx, fmt.Errorf("expected error %v, got %v", a.ExpectedErr, err), false
 	}
 
 	return ctx, nil, false
@@ -129,7 +130,7 @@ func (a removeMarginActionFail) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Con
 		ctx, a.Pair, a.Account, sdk.NewCoin(a.Pair.QuoteDenom(), a.Margin),
 	)
 	if !errors.Is(err, a.ExpectedErr) {
-		return ctx, err, false
+		return ctx, fmt.Errorf("expected error %v, got %v", a.ExpectedErr, err), false
 	}
 
 	return ctx, nil, false
