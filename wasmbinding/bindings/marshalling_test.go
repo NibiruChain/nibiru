@@ -68,7 +68,7 @@ func (s *TestSuiteBindingJsonTypes) TestToAppMarket() {
 			ammMarket.Market,
 			ammMarket.Amm,
 			"index price",
-			ammMarket.Amm.MarkPrice().String(),
+			ammMarket.Amm.InstMarkPrice().String(),
 			dummyBlockHeight,
 		)
 

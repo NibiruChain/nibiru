@@ -17,8 +17,7 @@ message GenesisState {
 
   repeated nibiru.perp.v2.AMM amms = 3 [ (gogoproto.nullable) = false ];
 
-  repeated nibiru.perp.v2.Position positions = 4
-      [ (gogoproto.nullable) = false ];
+  repeated GenesisPosition positions = 4 [ (gogoproto.nullable) = false ];
 
   repeated nibiru.perp.v2.ReserveSnapshot reserve_snapshots = 5
       [ (gogoproto.nullable) = false ];
@@ -70,4 +69,16 @@ message GenesisMarketLastVersion {
   ];
 
   uint64 version = 2;
+}
+
+message GenesisPosition {
+  string pair = 1 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+
+  uint64 version = 2;
+
+  Position position = 3 [ (gogoproto.nullable) = false ];
 }

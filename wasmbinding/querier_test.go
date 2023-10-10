@@ -214,7 +214,7 @@ func (s *TestSuiteQuerier) TestQueryAllMarkets() {
 		s.Assert().EqualValues(marketAmm.Amm.TotalLong, cwMarket.TotalLong)
 		s.Assert().EqualValues(marketAmm.Amm.TotalShort, cwMarket.TotalShort)
 		s.Assert().EqualValues(marketAmm.Amm.PriceMultiplier.String(), cwMarket.PegMult.String())
-		s.Assert().EqualValues(marketAmm.Amm.MarkPrice().String(), cwMarket.MarkPrice.String())
+		s.Assert().EqualValues(marketAmm.Amm.InstMarkPrice().String(), cwMarket.MarkPrice.String())
 		s.Assert().EqualValues(s.ctx.BlockHeight(), cwMarket.BlockNumber.Int64())
 	}
 }

@@ -163,3 +163,12 @@ func AMM_VersionShouldBeEqual(expectedVersion uint64) AMMChecker {
 		return nil
 	}
 }
+
+func AMM_SettlementPriceShoulBeEqual(expectedPrice sdk.Dec) AMMChecker {
+	return func(amm types.AMM) error {
+		if !amm.SettlementPrice.Equal(expectedPrice) {
+			return fmt.Errorf("expected settlement price to be %s, got %s", expectedPrice, amm.SettlementPrice)
+		}
+		return nil
+	}
+}

@@ -310,14 +310,14 @@ func TestFailMsgServer(t *testing.T) {
 		Sender: "cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v",
 		Pair:   pair,
 	})
-	require.ErrorContains(t, err, "collections: not found:")
+	require.ErrorContains(t, err, types.ErrPairNotFound.Error())
 
 	_, err = msgServer.PartialClose(ctx, &types.MsgPartialClose{
 		Sender: "cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v",
 		Pair:   pair,
 		Size_:  sdk.OneDec(),
 	})
-	require.ErrorContains(t, err, "pair: ubtc:unusd: pair doesn't have live market")
+	require.ErrorContains(t, err, types.ErrPairNotFound.Error())
 
 	_, err = msgServer.MultiLiquidate(ctx, &types.MsgMultiLiquidate{
 		Sender: "cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v",
@@ -328,7 +328,7 @@ func TestFailMsgServer(t *testing.T) {
 			},
 		},
 	})
-	require.ErrorContains(t, err, "pair: ubtc:unusd: pair doesn't have live market")
+	require.ErrorContains(t, err, types.ErrPairNotFound.Error())
 
 	_, err = msgServer.DonateToEcosystemFund(ctx, &types.MsgDonateToEcosystemFund{
 		Sender:   "cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v",

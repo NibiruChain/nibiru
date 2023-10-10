@@ -122,7 +122,7 @@ func (q queryServer) QueryPositionStore(
 }
 
 func (q queryServer) position(ctx sdk.Context, pair asset.Pair, trader sdk.AccAddress, market types.Market, amm types.AMM) (types.QueryPositionResponse, error) {
-	position, err := q.k.Positions.Get(ctx, collections.Join(pair, trader))
+	position, err := q.k.GetPosition(ctx, pair, market.Version, trader)
 	if err != nil {
 		return types.QueryPositionResponse{}, err
 	}

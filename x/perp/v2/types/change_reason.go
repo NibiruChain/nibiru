@@ -24,6 +24,7 @@ const (
 	ChangeReason_RemoveMargin       ChangeReason = "remove_margin"
 	ChangeReason_PartialLiquidation ChangeReason = "partial_liquidation"
 	ChangeReason_FullLiquidation    ChangeReason = "full_liquidation"
+	ChangeReason_Settlement         ChangeReason = "settlement"
 )
 
 func (c *ChangeReason) Size() int {

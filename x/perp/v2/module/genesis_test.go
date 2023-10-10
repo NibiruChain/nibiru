@@ -79,9 +79,7 @@ func RunTestGenesis(t *testing.T, tc TestCase) {
 	// create some positions
 	for _, position := range tc.positions {
 		trader := sdk.MustAccAddressFromBech32(position.TraderAddress)
-		app.PerpKeeperV2.Positions.Insert(ctx,
-			collections.Join(asset.Registry.Pair(denoms.NIBI, denoms.NUSD), trader),
-			position)
+		app.PerpKeeperV2.SavePosition(ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD), 1, trader, position)
 	}
 
 	// export genesis

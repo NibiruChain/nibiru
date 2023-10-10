@@ -102,7 +102,7 @@ func TestSwapBaseAsset(t *testing.T) {
 					TotalLong:       tc.expectedTotalLong,
 					TotalShort:      tc.expectedTotalShort,
 				}, *amm)
-				assert.Equal(t, tc.expectedMarkPrice, amm.MarkPrice())
+				assert.Equal(t, tc.expectedMarkPrice, amm.InstMarkPrice())
 			}
 		})
 	}
@@ -200,7 +200,7 @@ func TestSwapQuoteAsset(t *testing.T) {
 					TotalLong:       tc.expectedTotalLong,
 					TotalShort:      tc.expectedTotalShort,
 				}, *amm)
-				assert.Equal(t, tc.expectedMarkPrice, amm.MarkPrice())
+				assert.Equal(t, tc.expectedMarkPrice, amm.InstMarkPrice())
 			}
 		})
 	}

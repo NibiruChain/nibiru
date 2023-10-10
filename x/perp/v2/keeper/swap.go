@@ -51,7 +51,6 @@ func checkUserLimits(limit, amount sdk.Dec, dir types.Direction) error {
 // NOTE: the baseAssetDelta is always positive
 func (k Keeper) SwapQuoteAsset(
 	ctx sdk.Context,
-	market types.Market,
 	amm types.AMM,
 	dir types.Direction,
 	quoteAssetAmt sdk.Dec, // unsigned

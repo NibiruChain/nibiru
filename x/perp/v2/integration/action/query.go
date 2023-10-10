@@ -7,8 +7,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkquery "github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/NibiruChain/collections"
-
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
@@ -130,7 +128,7 @@ func (q queryPositionNotFound) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Cont
 		Pair:   q.pair,
 		Trader: q.traderAddress.String(),
 	})
-	if !errors.Is(err, collections.ErrNotFound) {
+	if !errors.Is(err, types.ErrPositionNotFound) {
 		return ctx, fmt.Errorf(
 			"expected position not found, but found a position for pair %s, trader %s",
 			q.pair,

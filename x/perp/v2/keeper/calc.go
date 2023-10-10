@@ -28,7 +28,7 @@ func PositionNotionalSpot(amm types.AMM, position types.Position) (positionNotio
 	if err != nil {
 		return sdk.Dec{}, err
 	}
-	return amm.FromQuoteReserveToAsset(quoteReserve), nil
+	return amm.QuoteReserveToAsset(quoteReserve), nil
 }
 
 // PositionNotionalTWAP returns the position's notional value based on the TWAP price.

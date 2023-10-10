@@ -171,6 +171,13 @@ message AMM {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
+
+  // The settlement price if the AMM is settled.
+  string settlement_price = 9 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.stdduration) = true,
+    (gogoproto.nullable) = false
+  ];
 }
 
 message Position {

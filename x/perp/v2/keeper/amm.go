@@ -117,7 +117,7 @@ func (k Keeper) handleMarketUpdateCost(ctx sdk.Context, pair asset.Pair, costAmt
 	return nil
 }
 
-// GetMarket returns the market with last version.
+// GetMarket returns the market that is enabled. It is the last version of the market.
 func (k Keeper) GetMarket(ctx sdk.Context, pair asset.Pair) (types.Market, error) {
 	lastVersion, err := k.MarketLastVersion.Get(ctx, pair)
 	if err != nil {
@@ -127,6 +127,16 @@ func (k Keeper) GetMarket(ctx sdk.Context, pair asset.Pair) (types.Market, error
 	market, err := k.Markets.Get(ctx, collections.Join(pair, lastVersion.Version))
 	if err != nil {
 		return types.Market{}, fmt.Errorf("market %s not found", pair)
+	}
+
+	return market, nil
+}
+
+// GetMarketByPairAndVersion this function returns the market by pair and version. It can be enabled or disabled.
+func (k Keeper) GetMarketByPairAndVersion(ctx sdk.Context, pair asset.Pair, version uint64) (types.Market, error) {
+	market, err := k.Markets.Get(ctx, collections.Join(pair, version))
+	if err != nil {
+		return types.Market{}, fmt.Errorf("market with pair %s and version %d not found", pair, version)
 	}
 
 	return market, nil
@@ -147,6 +157,16 @@ func (k Keeper) GetAMM(ctx sdk.Context, pair asset.Pair) (types.AMM, error) {
 	amm, err := k.AMMs.Get(ctx, collections.Join(pair, lastVersion.Version))
 	if err != nil {
 		return types.AMM{}, fmt.Errorf("market %s not found", pair)
+	}
+
+	return amm, nil
+}
+
+// GetAMMByPairAndVersion returns the amm by pair and version.
+func (k Keeper) GetAMMByPairAndVersion(ctx sdk.Context, pair asset.Pair, version uint64) (types.AMM, error) {
+	amm, err := k.AMMs.Get(ctx, collections.Join(pair, version))
+	if err != nil {
+		return types.AMM{}, fmt.Errorf("amm with pair %s and version %d not found", pair, version)
 	}
 
 	return amm, nil
