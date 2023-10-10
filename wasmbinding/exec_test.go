@@ -1,32 +1,27 @@
-package binding_test
+package wasmbinding_test
 
 import (
 	"encoding/json"
 	"testing"
 	"time"
 
-	sudokeeper "github.com/NibiruChain/nibiru/x/sudo/keeper"
-	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
-
-	"github.com/NibiruChain/nibiru/x/oracle/types"
-
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-
 	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/wasmbinding/bindings"
+	"github.com/NibiruChain/nibiru/wasmbinding/wasmbin"
 	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	"github.com/NibiruChain/nibiru/x/oracle/types"
 	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
-	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
-
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-	"github.com/NibiruChain/nibiru/x/wasm/binding/wasmbin"
+	sudokeeper "github.com/NibiruChain/nibiru/x/sudo/keeper"
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 )
 
 // Keeper only used for testing, never for production
@@ -52,7 +47,7 @@ func DoCustomBindingExecute(
 	nibiru *app.NibiruApp,
 	contract sdk.AccAddress,
 	sender sdk.AccAddress,
-	cwMsg cw_struct.BindingMsg,
+	cwMsg bindings.NibiruMsg,
 	funds sdk.Coins,
 ) (contractRespBz []byte, err error) {
 	jsonCwMsg, err := json.Marshal(cwMsg)
@@ -69,7 +64,7 @@ func DoCustomBindingExecute(
 }
 
 func (s *TestSuiteExecutor) ExecuteAgainstContract(
-	contract sdk.AccAddress, execMsg cw_struct.BindingMsg,
+	contract sdk.AccAddress, execMsg bindings.NibiruMsg,
 ) (contractRespBz []byte, err error) {
 	return DoCustomBindingExecute(
 		s.ctx, s.nibiru, contract, s.contractDeployer, execMsg, sdk.Coins{})
@@ -139,8 +134,8 @@ func (s *TestSuiteExecutor) TestOpenAddRemoveClose() {
 	s.NoError(testapp.FundAccount(s.nibiru.BankKeeper, s.ctx, s.contractPerp, coins))
 
 	// TestMarketOrder (integration - real contract, real app)
-	execMsg := cw_struct.BindingMsg{
-		MarketOrder: &cw_struct.MarketOrder{
+	execMsg := bindings.NibiruMsg{
+		MarketOrder: &bindings.MarketOrder{
 			Pair:            s.happyFields.Pair,
 			IsLong:          true,
 			QuoteAmount:     sdk.NewInt(42),
@@ -158,8 +153,8 @@ func (s *TestSuiteExecutor) TestOpenAddRemoveClose() {
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
 
 	// TestAddMargin (integration - real contract, real app)
-	execMsg = cw_struct.BindingMsg{
-		AddMargin: &cw_struct.AddMargin{
+	execMsg = bindings.NibiruMsg{
+		AddMargin: &bindings.AddMargin{
 			Pair:   pair.String(),
 			Margin: margin,
 		},
@@ -168,8 +163,8 @@ func (s *TestSuiteExecutor) TestOpenAddRemoveClose() {
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
 
 	// TestRemoveMargin (integration - real contract, real app)
-	execMsg = cw_struct.BindingMsg{
-		RemoveMargin: &cw_struct.RemoveMargin{
+	execMsg = bindings.NibiruMsg{
+		RemoveMargin: &bindings.RemoveMargin{
 			Pair:   pair.String(),
 			Margin: margin,
 		},
@@ -178,8 +173,8 @@ func (s *TestSuiteExecutor) TestOpenAddRemoveClose() {
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
 
 	// TestClosePosition (integration - real contract, real app)
-	execMsg = cw_struct.BindingMsg{
-		ClosePosition: &cw_struct.ClosePosition{
+	execMsg = bindings.NibiruMsg{
+		ClosePosition: &bindings.ClosePosition{
 			Pair: pair.String(),
 		},
 	}
@@ -191,8 +186,8 @@ func (s *TestSuiteExecutor) TestOracleParams() {
 	defaultParams := types.DefaultParams()
 	defaultParams.VotePeriod = 1_000
 	theVotePeriod := sdk.NewInt(1234)
-	execMsg := cw_struct.BindingMsg{
-		EditOracleParams: &cw_struct.EditOracleParams{
+	execMsg := bindings.NibiruMsg{
+		EditOracleParams: &bindings.EditOracleParams{
 			VotePeriod: &theVotePeriod,
 		},
 	}
@@ -215,8 +210,8 @@ func (s *TestSuiteExecutor) TestOracleParams() {
 
 	// VotePeriod should be updated
 	theVotePeriod = sdk.NewInt(1234)
-	execMsg = cw_struct.BindingMsg{
-		EditOracleParams: &cw_struct.EditOracleParams{
+	execMsg = bindings.NibiruMsg{
+		EditOracleParams: &bindings.EditOracleParams{
 			VotePeriod: &theVotePeriod,
 		},
 	}
@@ -230,8 +225,8 @@ func (s *TestSuiteExecutor) TestOracleParams() {
 
 	// VoteThreshold should be updated
 	theVoteThreshold := sdk.NewDecWithPrec(1, 1)
-	execMsg = cw_struct.BindingMsg{
-		EditOracleParams: &cw_struct.EditOracleParams{
+	execMsg = bindings.NibiruMsg{
+		EditOracleParams: &bindings.EditOracleParams{
 			VoteThreshold: &theVoteThreshold,
 		},
 	}
@@ -245,8 +240,8 @@ func (s *TestSuiteExecutor) TestOracleParams() {
 
 	// RewardBand should be updated
 	theRewardBand := sdk.NewDecWithPrec(1, 1)
-	execMsg = cw_struct.BindingMsg{
-		EditOracleParams: &cw_struct.EditOracleParams{
+	execMsg = bindings.NibiruMsg{
+		EditOracleParams: &bindings.EditOracleParams{
 			RewardBand: &theRewardBand,
 		},
 	}
@@ -260,8 +255,8 @@ func (s *TestSuiteExecutor) TestOracleParams() {
 
 	// Whitelist should be updated
 	theWhitelist := []string{"BTC:USDC"}
-	execMsg = cw_struct.BindingMsg{
-		EditOracleParams: &cw_struct.EditOracleParams{
+	execMsg = bindings.NibiruMsg{
+		EditOracleParams: &bindings.EditOracleParams{
 			Whitelist: theWhitelist,
 		},
 	}
@@ -275,8 +270,8 @@ func (s *TestSuiteExecutor) TestOracleParams() {
 
 	// SlashFraction should be updated
 	theSlashFraction := sdk.NewDecWithPrec(1, 4)
-	execMsg = cw_struct.BindingMsg{
-		EditOracleParams: &cw_struct.EditOracleParams{
+	execMsg = bindings.NibiruMsg{
+		EditOracleParams: &bindings.EditOracleParams{
 			SlashFraction: &theSlashFraction,
 		},
 	}
@@ -290,8 +285,8 @@ func (s *TestSuiteExecutor) TestOracleParams() {
 
 	// SlashWindow should be updated
 	theSlashWindow := sdk.NewInt(1234)
-	execMsg = cw_struct.BindingMsg{
-		EditOracleParams: &cw_struct.EditOracleParams{
+	execMsg = bindings.NibiruMsg{
+		EditOracleParams: &bindings.EditOracleParams{
 			SlashWindow: &theSlashWindow,
 		},
 	}
@@ -305,8 +300,8 @@ func (s *TestSuiteExecutor) TestOracleParams() {
 
 	// MinValidPerWindow should be updated
 	theMinValidPerWindow := sdk.NewDecWithPrec(1, 4)
-	execMsg = cw_struct.BindingMsg{
-		EditOracleParams: &cw_struct.EditOracleParams{
+	execMsg = bindings.NibiruMsg{
+		EditOracleParams: &bindings.EditOracleParams{
 			MinValidPerWindow: &theMinValidPerWindow,
 		},
 	}
@@ -320,8 +315,8 @@ func (s *TestSuiteExecutor) TestOracleParams() {
 
 	// TwapLookback should be updated
 	theTwapLookback := sdk.NewInt(1234)
-	execMsg = cw_struct.BindingMsg{
-		EditOracleParams: &cw_struct.EditOracleParams{
+	execMsg = bindings.NibiruMsg{
+		EditOracleParams: &bindings.EditOracleParams{
 			TwapLookbackWindow: &theTwapLookback,
 		},
 	}
@@ -335,8 +330,8 @@ func (s *TestSuiteExecutor) TestOracleParams() {
 
 	// MinVoters should be updated
 	theMinVoters := sdk.NewInt(1234)
-	execMsg = cw_struct.BindingMsg{
-		EditOracleParams: &cw_struct.EditOracleParams{
+	execMsg = bindings.NibiruMsg{
+		EditOracleParams: &bindings.EditOracleParams{
 			MinVoters: &theMinVoters,
 		},
 	}
@@ -350,8 +345,8 @@ func (s *TestSuiteExecutor) TestOracleParams() {
 
 	// Validator Fee Ratio should be updated
 	theValidatorFeeRatio := sdk.NewDecWithPrec(1, 4)
-	execMsg = cw_struct.BindingMsg{
-		EditOracleParams: &cw_struct.EditOracleParams{
+	execMsg = bindings.NibiruMsg{
+		EditOracleParams: &bindings.EditOracleParams{
 			ValidatorFeeRatio: &theValidatorFeeRatio,
 		},
 	}
@@ -366,8 +361,8 @@ func (s *TestSuiteExecutor) TestOracleParams() {
 
 func (s *TestSuiteExecutor) TestPegShift() {
 	pair := asset.MustNewPair(s.happyFields.Pair)
-	execMsg := cw_struct.BindingMsg{
-		PegShift: &cw_struct.PegShift{
+	execMsg := bindings.NibiruMsg{
+		PegShift: &bindings.PegShift{
 			Pair:    pair.String(),
 			PegMult: sdk.NewDec(420),
 		},
@@ -400,8 +395,8 @@ func (s *TestSuiteExecutor) TestPegShift() {
 
 func (s *TestSuiteExecutor) TestNoOp() {
 	contract := s.contractShifter
-	execMsg := cw_struct.BindingMsg{
-		NoOp: &cw_struct.NoOp{},
+	execMsg := bindings.NibiruMsg{
+		NoOp: &bindings.NoOp{},
 	}
 	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
@@ -409,8 +404,8 @@ func (s *TestSuiteExecutor) TestNoOp() {
 
 func (s *TestSuiteExecutor) TestDepthShift() {
 	pair := asset.MustNewPair(s.happyFields.Pair)
-	execMsg := cw_struct.BindingMsg{
-		DepthShift: &cw_struct.DepthShift{
+	execMsg := bindings.NibiruMsg{
+		DepthShift: &bindings.DepthShift{
 			Pair:      pair.String(),
 			DepthMult: sdk.NewDec(2),
 		},
@@ -444,8 +439,8 @@ func (s *TestSuiteExecutor) TestDepthShift() {
 func (s *TestSuiteExecutor) TestInsuranceFundWithdraw() {
 	admin := s.contractDeployer.String()
 	amtToWithdraw := sdk.NewInt(69)
-	execMsg := cw_struct.BindingMsg{
-		InsuranceFundWithdraw: &cw_struct.InsuranceFundWithdraw{
+	execMsg := bindings.NibiruMsg{
+		InsuranceFundWithdraw: &bindings.InsuranceFundWithdraw{
 			Amount: amtToWithdraw,
 			To:     admin,
 		},
@@ -494,11 +489,11 @@ func (s *TestSuiteExecutor) TestSetMarketEnabled() {
 	// admin := s.contractDeployer.String()
 	perpv2Genesis := genesis.PerpV2Genesis()
 	contract := s.contractController
-	var execMsg cw_struct.BindingMsg
+	var execMsg bindings.NibiruMsg
 
 	for testIdx, market := range perpv2Genesis.Markets {
-		execMsg = cw_struct.BindingMsg{
-			SetMarketEnabled: &cw_struct.SetMarketEnabled{
+		execMsg = bindings.NibiruMsg{
+			SetMarketEnabled: &bindings.SetMarketEnabled{
 				Pair:    market.Pair.String(),
 				Enabled: !market.Enabled,
 			},
@@ -536,8 +531,8 @@ func (s *TestSuiteExecutor) TestSetMarketEnabled() {
 func (s *TestSuiteExecutor) TestCreateMarket() {
 	contract := s.contractController
 	pair := asset.MustNewPair("bloop:blam")
-	execMsg := cw_struct.BindingMsg{
-		CreateMarket: &cw_struct.CreateMarket{
+	execMsg := bindings.NibiruMsg{
+		CreateMarket: &bindings.CreateMarket{
 			Pair:         pair.String(),
 			PegMult:      sdk.NewDec(420),
 			SqrtDepth:    sdk.NewDec(1_000),

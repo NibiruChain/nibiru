@@ -1,4 +1,4 @@
-package binding_test
+package wasmbinding_test
 
 import (
 	"fmt"
@@ -12,10 +12,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/wasmbinding/wasmbin"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	"github.com/NibiruChain/nibiru/x/wasm/binding/wasmbin"
 )
 
 // TestSetupContracts acts as an integration test by storing and instantiating

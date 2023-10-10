@@ -1,4 +1,4 @@
-package cli
+package test
 
 import (
 	"encoding/hex"

@@ -1,4 +1,4 @@
-package binding
+package wasmbinding
 
 import (
 	"time"
@@ -6,10 +6,10 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/wasmbinding/bindings"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
-	"github.com/NibiruChain/nibiru/x/wasm/binding/cw_struct"
 )
 
 type ExecutorPerp struct {
@@ -21,7 +21,7 @@ func (exec *ExecutorPerp) MsgServer() perpv2types.MsgServer {
 }
 
 func (exec *ExecutorPerp) MarketOrder(
-	cwMsg *cw_struct.MarketOrder, sender sdk.AccAddress, ctx sdk.Context,
+	cwMsg *bindings.MarketOrder, sender sdk.AccAddress, ctx sdk.Context,
 ) (
 	sdkResp *perpv2types.MsgMarketOrderResponse, err error,
 ) {
@@ -58,7 +58,7 @@ func (exec *ExecutorPerp) MarketOrder(
 }
 
 func (exec *ExecutorPerp) ClosePosition(
-	cwMsg *cw_struct.ClosePosition, sender sdk.AccAddress, ctx sdk.Context,
+	cwMsg *bindings.ClosePosition, sender sdk.AccAddress, ctx sdk.Context,
 ) (
 	sdkResp *perpv2types.MsgClosePositionResponse, err error,
 ) {
@@ -84,7 +84,7 @@ func (exec *ExecutorPerp) ClosePosition(
 }
 
 func (exec *ExecutorPerp) AddMargin(
-	cwMsg *cw_struct.AddMargin, sender sdk.AccAddress, ctx sdk.Context,
+	cwMsg *bindings.AddMargin, sender sdk.AccAddress, ctx sdk.Context,
 ) (
 	sdkResp *perpv2types.MsgAddMarginResponse, err error,
 ) {
@@ -111,7 +111,7 @@ func (exec *ExecutorPerp) AddMargin(
 }
 
 func (exec *ExecutorPerp) RemoveMargin(
-	cwMsg *cw_struct.RemoveMargin, sender sdk.AccAddress, ctx sdk.Context,
+	cwMsg *bindings.RemoveMargin, sender sdk.AccAddress, ctx sdk.Context,
 ) (
 	sdkResp *perpv2types.MsgRemoveMarginResponse, err error,
 ) {
@@ -138,7 +138,7 @@ func (exec *ExecutorPerp) RemoveMargin(
 }
 
 func (exec *ExecutorPerp) PegShift(
-	cwMsg *cw_struct.PegShift, contractAddr sdk.AccAddress, ctx sdk.Context,
+	cwMsg *bindings.PegShift, contractAddr sdk.AccAddress, ctx sdk.Context,
 ) (err error) {
 	if cwMsg == nil {
 		return wasmvmtypes.InvalidRequest{Err: "null msg"}
@@ -157,7 +157,7 @@ func (exec *ExecutorPerp) PegShift(
 	)
 }
 
-func (exec *ExecutorPerp) DepthShift(cwMsg *cw_struct.DepthShift, ctx sdk.Context) (err error) {
+func (exec *ExecutorPerp) DepthShift(cwMsg *bindings.DepthShift, ctx sdk.Context) (err error) {
 	if cwMsg == nil {
 		return wasmvmtypes.InvalidRequest{Err: "null msg"}
 	}
@@ -171,7 +171,7 @@ func (exec *ExecutorPerp) DepthShift(cwMsg *cw_struct.DepthShift, ctx sdk.Contex
 }
 
 func (exec *ExecutorPerp) InsuranceFundWithdraw(
-	cwMsg *cw_struct.InsuranceFundWithdraw, ctx sdk.Context,
+	cwMsg *bindings.InsuranceFundWithdraw, ctx sdk.Context,
 ) (err error) {
 	if cwMsg == nil {
 		return wasmvmtypes.InvalidRequest{Err: "null msg"}
@@ -191,7 +191,7 @@ func (exec *ExecutorPerp) InsuranceFundWithdraw(
 
 // TODO: rename to CloseMarket
 func (exec *ExecutorPerp) SetMarketEnabled(
-	cwMsg *cw_struct.SetMarketEnabled, ctx sdk.Context,
+	cwMsg *bindings.SetMarketEnabled, ctx sdk.Context,
 ) (err error) {
 	if cwMsg == nil {
 		return wasmvmtypes.InvalidRequest{Err: "null msg"}
@@ -206,7 +206,7 @@ func (exec *ExecutorPerp) SetMarketEnabled(
 }
 
 func (exec *ExecutorPerp) CreateMarket(
-	cwMsg *cw_struct.CreateMarket, ctx sdk.Context,
+	cwMsg *bindings.CreateMarket, ctx sdk.Context,
 ) (err error) {
 	if cwMsg == nil {
 		return wasmvmtypes.InvalidRequest{Err: "null msg"}
