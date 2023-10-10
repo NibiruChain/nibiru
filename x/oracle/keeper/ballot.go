@@ -29,25 +29,28 @@ func (k Keeper) groupVotesByPair(
 	for _, value := range k.Votes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {
 		voterAddr, aggregateVote := value.Key, value.Value
 
-		// organize ballot only for the active validators
-		if validatorPerformance, exists := validatorPerformances[aggregateVote.Voter]; exists {
-			for _, exchangeRateTuple := range aggregateVote.ExchangeRateTuples {
-				power := validatorPerformance.Power
-				if !exchangeRateTuple.ExchangeRate.IsPositive() {
-					// Make the power of abstain vote zero
-					power = 0
-				}
+		// skip votes from inactive validators
+		validatorPerformance, exists := validatorPerformances[aggregateVote.Voter]
+		if !exists {
+			continue
+		}
 
-				pairVotes[exchangeRateTuple.Pair] = append(
-					pairVotes[exchangeRateTuple.Pair],
-					types.NewExchangeRateVote(
-						exchangeRateTuple.ExchangeRate,
-						exchangeRateTuple.Pair,
-						voterAddr,
-						power,
-					),
-				)
+		for _, tuple := range aggregateVote.ExchangeRateTuples {
+			power := validatorPerformance.Power
+			if !tuple.ExchangeRate.IsPositive() {
+				// Make the power of abstain vote zero
+				power = 0
 			}
+
+			pairVotes[tuple.Pair] = append(
+				pairVotes[tuple.Pair],
+				types.NewExchangeRateVote(
+					tuple.ExchangeRate,
+					tuple.Pair,
+					voterAddr,
+					power,
+				),
+			)
 		}
 	}
 
@@ -145,7 +148,7 @@ func Tally(
 	votes types.ExchangeRateVotes,
 	rewardBand sdk.Dec,
 	validatorPerformances types.ValidatorPerformances,
-) (sdk.Dec, types.ValidatorPerformances) {
+) sdk.Dec {
 	weightedMedian := votes.WeightedMedianWithAssertion()
 	standardDeviation := votes.StandardDeviation(weightedMedian)
 	rewardSpread := weightedMedian.Mul(rewardBand.QuoInt64(2))
@@ -158,7 +161,6 @@ func Tally(
 		// Filter ballot winners & abstain voters
 		isInsideSpread := v.ExchangeRate.GTE(weightedMedian.Sub(rewardSpread)) &&
 			v.ExchangeRate.LTE(weightedMedian.Add(rewardSpread))
-
 		isAbstainVote := !v.ExchangeRate.IsPositive() // strictly less than zero, don't want to include zero
 		isMiss := !isInsideSpread && !isAbstainVote
 
@@ -177,5 +179,5 @@ func Tally(
 		validatorPerformances[v.Voter.String()] = validatorPerformance
 	}
 
-	return weightedMedian, validatorPerformances
+	return weightedMedian
 }

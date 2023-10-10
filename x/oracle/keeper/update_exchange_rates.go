@@ -17,7 +17,7 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) types.ValidatorPerformances
 	validatorPerformances := k.newValidatorPerformances(ctx)
 	whitelistedPairs := set.New[asset.Pair](k.GetWhitelistedPairs(ctx)...)
 
-	pairVotes := k.getPairVotesAndWhitelistedPairs(ctx, validatorPerformances, whitelistedPairs)
+	pairVotes := k.getPairVotes(ctx, validatorPerformances, whitelistedPairs)
 
 	k.resetExchangeRates(ctx, pairVotes)
 	k.tallyVotesAndUpdatePrices(ctx, pairVotes, validatorPerformances)
@@ -71,17 +71,17 @@ func (k Keeper) tallyVotesAndUpdatePrices(
 	pairVotes map[asset.Pair]types.ExchangeRateVotes,
 	validatorPerformances types.ValidatorPerformances,
 ) {
+	rewardBand := k.RewardBand(ctx)
 	// Iterate through sorted keys for deterministic ordering.
 	orderedPairVotes := omap.OrderedMap_Pair[types.ExchangeRateVotes](pairVotes)
 	for pair := range orderedPairVotes.Range() {
-		exchangeRate, _ := Tally(pairVotes[pair], k.RewardBand(ctx), validatorPerformances)
+		exchangeRate := Tally(pairVotes[pair], rewardBand, validatorPerformances)
 		k.SetPrice(ctx, pair, exchangeRate)
 	}
 }
 
-// getPairVotesAndWhitelistedPairs returns a map of pairs and votes excluding abstained votes
-// and a set of all whitelisted pairs.
-func (k Keeper) getPairVotesAndWhitelistedPairs(
+// getPairVotes returns a map of pairs and votes excluding abstained votes and ballots that don't meet the threshold criteria
+func (k Keeper) getPairVotes(
 	ctx sdk.Context,
 	validatorPerformances types.ValidatorPerformances,
 	whitelistedPairs set.Set[asset.Pair],
@@ -97,12 +97,11 @@ func (k Keeper) getPairVotesAndWhitelistedPairs(
 // We remove the price for pair with expired prices or valid ballots
 func (k Keeper) resetExchangeRates(ctx sdk.Context, pairVotes map[asset.Pair]types.ExchangeRateVotes) {
 	params, _ := k.Params.Get(ctx)
-	expirationBlocks := params.ExpirationBlocks
 
 	for _, key := range k.ExchangeRates.Iterate(ctx, collections.Range[asset.Pair]{}).Keys() {
 		_, isValid := pairVotes[key]
-		exchangeRate, _ := k.ExchangeRates.Get(ctx, key)
-		isExpired := exchangeRate.CreatedBlock+expirationBlocks <= uint64(ctx.BlockHeight())
+		previousExchangeRate, _ := k.ExchangeRates.Get(ctx, key)
+		isExpired := previousExchangeRate.CreatedBlock+params.ExpirationBlocks <= uint64(ctx.BlockHeight())
 
 		if isValid || isExpired {
 			err := k.ExchangeRates.Delete(ctx, key)
