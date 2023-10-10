@@ -6,7 +6,6 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/NibiruChain/collections"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
