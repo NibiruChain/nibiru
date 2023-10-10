@@ -199,8 +199,8 @@ func NewValidatorPerformance(power int64, recipient sdk.ValAddress) ValidatorPer
 
 type ValidatorPerformances map[string]ValidatorPerformance
 
-// GetTotalRewardWeight returns the sum of the reward weight of all the validators included in the map
-func (vp ValidatorPerformances) GetTotalRewardWeight() int64 {
+// TotalRewardWeight returns the sum of the reward weight of all the validators included in the map
+func (vp ValidatorPerformances) TotalRewardWeight() int64 {
 	totalRewardWeight := int64(0)
 	for _, validator := range vp {
 		totalRewardWeight += validator.RewardWeight

@@ -31,7 +31,7 @@ func (k Keeper) rewardWinners(
 	ctx sdk.Context,
 	validatorPerformances types.ValidatorPerformances,
 ) {
-	totalRewardWeight := validatorPerformances.GetTotalRewardWeight()
+	totalRewardWeight := validatorPerformances.TotalRewardWeight()
 	if totalRewardWeight == 0 {
 		return
 	}

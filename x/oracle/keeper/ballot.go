@@ -54,8 +54,8 @@ func (k Keeper) groupVotesByPair(
 	return
 }
 
-// clearVotesAndPreVotes clears all tallied prevotes and votes from the store
-func (k Keeper) clearVotesAndPreVotes(ctx sdk.Context, votePeriod uint64) {
+// clearVotesAndPrevotes clears all tallied prevotes and votes from the store
+func (k Keeper) clearVotesAndPrevotes(ctx sdk.Context, votePeriod uint64) {
 	// Clear all aggregate prevotes
 	for _, prevote := range k.Prevotes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {
 		valAddr, aggregatePrevote := prevote.Key, prevote.Value
@@ -106,9 +106,8 @@ func isPassingVoteThreshold(
 func (k Keeper) removeInvalidVotes(
 	ctx sdk.Context,
 	pairVotes map[asset.Pair]types.ExchangeRateVotes,
-) (map[asset.Pair]types.ExchangeRateVotes, set.Set[asset.Pair]) {
-	whitelistedPairs := set.New(k.GetWhitelistedPairs(ctx)...)
-
+	whitelistedPairs set.Set[asset.Pair],
+) {
 	totalBondedPower := sdk.TokensToConsensusPower(
 		k.StakingKeeper.TotalBondedTokens(ctx), k.StakingKeeper.PowerReduction(ctx),
 	)
@@ -134,8 +133,6 @@ func (k Keeper) removeInvalidVotes(
 			continue
 		}
 	}
-
-	return pairVotes, whitelistedPairs
 }
 
 // Tally calculates the median and returns it. Sets the set of voters to be

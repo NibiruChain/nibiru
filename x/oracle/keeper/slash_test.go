@@ -179,7 +179,7 @@ func TestWhitelistSlashing(t *testing.T) {
 	}
 	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, pair)
 	perfs := input.OracleKeeper.UpdateExchangeRates(input.Ctx)
-	require.EqualValues(t, 0, perfs.GetTotalRewardWeight())
+	require.EqualValues(t, 0, perfs.TotalRewardWeight())
 
 	allowedMissPct := sdk.OneDec().Sub(minValidVotePeriodsPerWindow)
 	allowedMissVotePeriods := allowedMissPct.MulInt64(votePeriodsPerSlashWindow).

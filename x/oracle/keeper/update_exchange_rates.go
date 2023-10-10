@@ -14,18 +14,19 @@ import (
 // UpdateExchangeRates updates the ExchangeRates, this is supposed to be executed on EndBlock.
 func (k Keeper) UpdateExchangeRates(ctx sdk.Context) types.ValidatorPerformances {
 	k.Logger(ctx).Info("processing validator price votes")
-
 	validatorPerformances := k.newValidatorPerformances(ctx)
-	pairVotes, whitelistedPairs := k.getPairVotesAndWhitelistedPairs(ctx, validatorPerformances)
+	whitelistedPairs := set.New[asset.Pair](k.GetWhitelistedPairs(ctx)...)
+
+	pairVotes := k.getPairVotesAndWhitelistedPairs(ctx, validatorPerformances, whitelistedPairs)
 
 	k.resetExchangeRates(ctx, pairVotes)
-	k.countVotesAndUpdateExchangeRates(ctx, pairVotes, validatorPerformances)
+	k.tallyVotesAndUpdatePrices(ctx, pairVotes, validatorPerformances)
 
 	k.registerMissedVotes(ctx, whitelistedPairs, validatorPerformances)
 	k.rewardWinners(ctx, validatorPerformances)
 
 	params, _ := k.Params.Get(ctx)
-	k.clearVotesAndPreVotes(ctx, params.VotePeriod)
+	k.clearVotesAndPrevotes(ctx, params.VotePeriod)
 	k.updateWhitelist(ctx, params.Whitelist, whitelistedPairs)
 	k.registerAbstainsByOmission(ctx, len(params.Whitelist), validatorPerformances)
 	return validatorPerformances
@@ -42,7 +43,9 @@ func (k Keeper) registerMissedVotes(
 		if int(validatorPerformance.MissCount) > 0 {
 			k.MissCounters.Insert(
 				ctx, validatorPerformance.ValAddress,
-				k.MissCounters.GetOr(ctx, validatorPerformance.ValAddress, 0)+1)
+				k.MissCounters.GetOr(ctx, validatorPerformance.ValAddress, 0)+uint64(validatorPerformance.MissCount),
+			)
+
 			k.Logger(ctx).Info("vote miss", "validator", validatorPerformance.ValAddress.String())
 		}
 	}
@@ -50,40 +53,29 @@ func (k Keeper) registerMissedVotes(
 
 func (k Keeper) registerAbstainsByOmission(
 	ctx sdk.Context,
-	numMarkets int,
-	perfs types.ValidatorPerformances,
+	numPairs int,
+	validatorPerformances types.ValidatorPerformances,
 ) {
-	for valAddr, perf := range perfs {
-		omitCount := int64(numMarkets) - (perf.WinCount + perf.AbstainCount + perf.MissCount)
+	for valAddr, performance := range validatorPerformances {
+		omitCount := int64(numPairs) - (performance.WinCount + performance.AbstainCount + performance.MissCount)
 		if omitCount > 0 {
-			perf.AbstainCount += omitCount
-			perfs[valAddr] = perf
+			performance.AbstainCount += omitCount
+			validatorPerformances[valAddr] = performance
 		}
 	}
 }
 
-// countVotesAndUpdateExchangeRates processes the votes and updates the
-// ExchangeRates based on the results.
-func (k Keeper) countVotesAndUpdateExchangeRates(
+// tallyVotesAndUpdatePrices processes the votes and updates the ExchangeRates based on the results.
+func (k Keeper) tallyVotesAndUpdatePrices(
 	ctx sdk.Context,
 	pairVotes map[asset.Pair]types.ExchangeRateVotes,
 	validatorPerformances types.ValidatorPerformances,
 ) {
-	rewardBand := k.RewardBand(ctx)
-
 	// Iterate through sorted keys for deterministic ordering.
 	orderedPairVotes := omap.OrderedMap_Pair[types.ExchangeRateVotes](pairVotes)
 	for pair := range orderedPairVotes.Range() {
-		votes := pairVotes[pair]
-		exchangeRate, _ := Tally(votes, rewardBand, validatorPerformances)
-
+		exchangeRate, _ := Tally(pairVotes[pair], k.RewardBand(ctx), validatorPerformances)
 		k.SetPrice(ctx, pair, exchangeRate)
-
-		_ = ctx.EventManager().EmitTypedEvent(&types.EventPriceUpdate{
-			Pair:        pair.String(),
-			Price:       exchangeRate,
-			TimestampMs: ctx.BlockTime().UnixMilli(),
-		})
 	}
 }
 
@@ -92,10 +84,13 @@ func (k Keeper) countVotesAndUpdateExchangeRates(
 func (k Keeper) getPairVotesAndWhitelistedPairs(
 	ctx sdk.Context,
 	validatorPerformances types.ValidatorPerformances,
-) (pairVotes map[asset.Pair]types.ExchangeRateVotes, whitelistedPairs set.Set[asset.Pair]) {
+	whitelistedPairs set.Set[asset.Pair],
+) (pairVotes map[asset.Pair]types.ExchangeRateVotes) {
 	pairVotes = k.groupVotesByPair(ctx, validatorPerformances)
 
-	return k.removeInvalidVotes(ctx, pairVotes)
+	k.removeInvalidVotes(ctx, pairVotes, whitelistedPairs)
+
+	return pairVotes
 }
 
 // resetExchangeRates removes all exchange rates from the state

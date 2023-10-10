@@ -212,7 +212,7 @@ func TestOracleTally(t *testing.T) {
 
 	assert.Equal(t, expectedValidatorClaimMap, validatorClaimMap)
 	assert.Equal(t, tallyMedian.MulInt64(100).TruncateInt(), weightedMedian.MulInt64(100).TruncateInt())
-	assert.NotEqualValues(t, 0, perfs.GetTotalRewardWeight(), perfs.String())
+	assert.NotEqualValues(t, 0, perfs.TotalRewardWeight(), perfs.String())
 }
 
 func TestOracleRewardBand(t *testing.T) {

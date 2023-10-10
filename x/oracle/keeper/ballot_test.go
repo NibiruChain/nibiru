@@ -134,7 +134,7 @@ func TestClearBallots(t *testing.T) {
 			}, ValAddrs[i]))
 	}
 
-	fixture.OracleKeeper.clearVotesAndPreVotes(fixture.Ctx, 10)
+	fixture.OracleKeeper.clearVotesAndPrevotes(fixture.Ctx, 10)
 
 	prevoteCounter := len(fixture.OracleKeeper.Prevotes.Iterate(fixture.Ctx, collections.Range[sdk.ValAddress]{}).Keys())
 	voteCounter := len(fixture.OracleKeeper.Votes.Iterate(fixture.Ctx, collections.Range[sdk.ValAddress]{}).Keys())
@@ -143,7 +143,7 @@ func TestClearBallots(t *testing.T) {
 	require.Equal(t, voteCounter, 0)
 
 	// vote period starts at b=10, clear the votes at b=0 and below.
-	fixture.OracleKeeper.clearVotesAndPreVotes(fixture.Ctx.WithBlockHeight(fixture.Ctx.BlockHeight()+10), 10)
+	fixture.OracleKeeper.clearVotesAndPrevotes(fixture.Ctx.WithBlockHeight(fixture.Ctx.BlockHeight()+10), 10)
 	prevoteCounter = len(fixture.OracleKeeper.Prevotes.Iterate(fixture.Ctx, collections.Range[sdk.ValAddress]{}).Keys())
 	require.Equal(t, prevoteCounter, 0)
 }
@@ -265,7 +265,10 @@ func TestRemoveInvalidBallots(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			fixture, _ := Setup(t)
 			assert.NotPanics(t, func() {
-				fixture.OracleKeeper.removeInvalidVotes(fixture.Ctx, tc.voteMap)
+				fixture.OracleKeeper.removeInvalidVotes(fixture.Ctx, tc.voteMap, set.New[asset.Pair](
+					asset.NewPair(denoms.BTC, denoms.NUSD),
+					asset.NewPair(denoms.ETH, denoms.NUSD),
+				))
 			}, "voteMap: %v", tc.voteMap)
 		})
 	}
@@ -330,11 +333,10 @@ func TestFuzzPickReferencePair(t *testing.T) {
 	// test OracleKeeper.Pairs.Insert
 	voteTargets := set.Set[asset.Pair]{}
 	f.Fuzz(&voteTargets)
-	whitelistedPairs := make(set.Set[string])
+	whitelistedPairs := make(set.Set[asset.Pair])
 
 	for key := range voteTargets {
-		input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, key)
-		whitelistedPairs.Add(key.String())
+		whitelistedPairs.Add(key)
 	}
 
 	// test OracleKeeper.RemoveInvalidBallots
@@ -342,7 +344,7 @@ func TestFuzzPickReferencePair(t *testing.T) {
 	f.Fuzz(&voteMap)
 
 	assert.NotPanics(t, func() {
-		input.OracleKeeper.removeInvalidVotes(input.Ctx, voteMap)
+		input.OracleKeeper.removeInvalidVotes(input.Ctx, voteMap, whitelistedPairs)
 	}, "voteMap: %v", voteMap)
 }
 
