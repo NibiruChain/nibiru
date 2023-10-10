@@ -231,12 +231,12 @@ func TestNotPassedBallotSlashing(t *testing.T) {
 
 func TestAbstainSlashing(t *testing.T) {
 	input, h := Setup(t)
+
+	// reset whitelisted pairs
 	params, err := input.OracleKeeper.Params.Get(input.Ctx)
 	require.NoError(t, err)
 	params.Whitelist = []asset.Pair{asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}
 	input.OracleKeeper.Params.Set(input.Ctx, params)
-
-	// clear tobin tax to reset vote targets
 	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys() {
 		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 	}
@@ -248,13 +248,13 @@ func TestAbstainSlashing(t *testing.T) {
 	for i := uint64(0); i <= uint64(sdk.OneDec().Sub(minValidPerWindow).MulInt64(votePeriodsPerWindow).TruncateInt64()); i++ {
 		input.Ctx = input.Ctx.WithBlockHeight(input.Ctx.BlockHeight() + 1)
 
-		// Account 1, govstable
+		// Account 1, NIBI/NUSD
 		MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: testExchangeRate}}, 0)
 
-		// Account 2, govstable, abstain vote
-		MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: sdk.ZeroDec()}}, 1)
+		// Account 2, NIBI/NUSD, abstain vote
+		MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: sdk.OneDec().Neg()}}, 1)
 
-		// Account 3, govstable
+		// Account 3, NIBI/NUSD
 		MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: testExchangeRate}}, 2)
 
 		input.OracleKeeper.UpdateExchangeRates(input.Ctx)

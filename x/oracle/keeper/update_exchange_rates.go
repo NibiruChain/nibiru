@@ -19,22 +19,23 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) types.ValidatorPerformances
 
 	pairVotes := k.getPairVotes(ctx, validatorPerformances, whitelistedPairs)
 
-	k.resetExchangeRates(ctx, pairVotes)
+	k.clearExchangeRates(ctx, pairVotes)
 	k.tallyVotesAndUpdatePrices(ctx, pairVotes, validatorPerformances)
 
-	k.registerMissedVotes(ctx, whitelistedPairs, validatorPerformances)
+	k.incrementMissCounters(ctx, whitelistedPairs, validatorPerformances)
+	k.incrementAbstainsByOmission(ctx, len(whitelistedPairs), validatorPerformances)
+
 	k.rewardWinners(ctx, validatorPerformances)
 
 	params, _ := k.Params.Get(ctx)
 	k.clearVotesAndPrevotes(ctx, params.VotePeriod)
-	k.updateWhitelist(ctx, params.Whitelist, whitelistedPairs)
-	k.registerAbstainsByOmission(ctx, len(params.Whitelist), validatorPerformances)
+	k.refreshWhitelist(ctx, params.Whitelist, whitelistedPairs)
 	return validatorPerformances
 }
 
-// registerMissedVotes it parses all validators performance and increases the
+// incrementMissCounters it parses all validators performance and increases the
 // missed vote of those that did not vote.
-func (k Keeper) registerMissedVotes(
+func (k Keeper) incrementMissCounters(
 	ctx sdk.Context,
 	whitelistedPairs set.Set[asset.Pair],
 	validatorPerformances types.ValidatorPerformances,
@@ -51,7 +52,7 @@ func (k Keeper) registerMissedVotes(
 	}
 }
 
-func (k Keeper) registerAbstainsByOmission(
+func (k Keeper) incrementAbstainsByOmission(
 	ctx sdk.Context,
 	numPairs int,
 	validatorPerformances types.ValidatorPerformances,
@@ -93,9 +94,9 @@ func (k Keeper) getPairVotes(
 	return pairVotes
 }
 
-// resetExchangeRates removes all exchange rates from the state
+// clearExchangeRates removes all exchange rates from the state
 // We remove the price for pair with expired prices or valid ballots
-func (k Keeper) resetExchangeRates(ctx sdk.Context, pairVotes map[asset.Pair]types.ExchangeRateVotes) {
+func (k Keeper) clearExchangeRates(ctx sdk.Context, pairVotes map[asset.Pair]types.ExchangeRateVotes) {
 	params, _ := k.Params.Get(ctx)
 
 	for _, key := range k.ExchangeRates.Iterate(ctx, collections.Range[asset.Pair]{}).Keys() {

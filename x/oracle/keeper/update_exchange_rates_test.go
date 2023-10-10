@@ -91,7 +91,7 @@ func TestOracleThreshold(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestResetExchangeRates(t *testing.T) {
+func TestClearExchangeRates(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	fixture, _ := Setup(t)
 
@@ -108,13 +108,13 @@ func TestResetExchangeRates(t *testing.T) {
 
 	// reset exchange rates at block 2
 	// Price should still be there because not expired yet
-	fixture.OracleKeeper.resetExchangeRates(fixture.Ctx.WithBlockHeight(2), emptyBallot)
+	fixture.OracleKeeper.clearExchangeRates(fixture.Ctx.WithBlockHeight(2), emptyBallot)
 	_, err := fixture.OracleKeeper.ExchangeRates.Get(fixture.Ctx, pair)
 	assert.NoError(t, err)
 
 	// reset exchange rates at block 3 but pair is in ballot
 	// Price should be removed there because there was a valid ballot
-	fixture.OracleKeeper.resetExchangeRates(fixture.Ctx.WithBlockHeight(3), validBallot)
+	fixture.OracleKeeper.clearExchangeRates(fixture.Ctx.WithBlockHeight(3), validBallot)
 	_, err = fixture.OracleKeeper.ExchangeRates.Get(fixture.Ctx, pair)
 	assert.Error(t, err)
 
@@ -122,7 +122,7 @@ func TestResetExchangeRates(t *testing.T) {
 	// reset exchange rates at block 79
 	// Price should not be there anymore because expired
 	fixture.OracleKeeper.SetPrice(fixture.Ctx.WithBlockHeight(69), pair, testExchangeRate)
-	fixture.OracleKeeper.resetExchangeRates(fixture.Ctx.WithBlockHeight(79), emptyBallot)
+	fixture.OracleKeeper.clearExchangeRates(fixture.Ctx.WithBlockHeight(79), emptyBallot)
 
 	_, err = fixture.OracleKeeper.ExchangeRates.Get(fixture.Ctx, pair)
 	assert.Error(t, err)
