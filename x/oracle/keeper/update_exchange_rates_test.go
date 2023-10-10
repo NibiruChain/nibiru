@@ -95,8 +95,8 @@ func TestResetExchangeRates(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	fixture, _ := Setup(t)
 
-	emptyBallot := map[asset.Pair]types.ExchangeRateVotes{}
-	validBallot := map[asset.Pair]types.ExchangeRateVotes{pair: {}}
+	emptyVotes := map[asset.Pair]types.ExchangeRateVotes{}
+	validVotes := map[asset.Pair]types.ExchangeRateVotes{pair: {}}
 
 	// Set expiration blocks to 10
 	params, _ := fixture.OracleKeeper.Params.Get(fixture.Ctx)
@@ -108,13 +108,13 @@ func TestResetExchangeRates(t *testing.T) {
 
 	// reset exchange rates at block 2
 	// Price should still be there because not expired yet
-	fixture.OracleKeeper.clearExchangeRates(fixture.Ctx.WithBlockHeight(2), emptyBallot)
+	fixture.OracleKeeper.clearExchangeRates(fixture.Ctx.WithBlockHeight(2), emptyVotes)
 	_, err := fixture.OracleKeeper.ExchangeRates.Get(fixture.Ctx, pair)
 	assert.NoError(t, err)
 
-	// reset exchange rates at block 3 but pair is in ballot
-	// Price should be removed there because there was a valid ballot
-	fixture.OracleKeeper.clearExchangeRates(fixture.Ctx.WithBlockHeight(3), validBallot)
+	// reset exchange rates at block 3 but pair is in votes
+	// Price should be removed there because there was a valid votes
+	fixture.OracleKeeper.clearExchangeRates(fixture.Ctx.WithBlockHeight(3), validVotes)
 	_, err = fixture.OracleKeeper.ExchangeRates.Get(fixture.Ctx, pair)
 	assert.Error(t, err)
 
@@ -122,7 +122,7 @@ func TestResetExchangeRates(t *testing.T) {
 	// reset exchange rates at block 79
 	// Price should not be there anymore because expired
 	fixture.OracleKeeper.SetPrice(fixture.Ctx.WithBlockHeight(69), pair, testExchangeRate)
-	fixture.OracleKeeper.clearExchangeRates(fixture.Ctx.WithBlockHeight(79), emptyBallot)
+	fixture.OracleKeeper.clearExchangeRates(fixture.Ctx.WithBlockHeight(79), emptyVotes)
 
 	_, err = fixture.OracleKeeper.ExchangeRates.Get(fixture.Ctx, pair)
 	assert.Error(t, err)
@@ -131,7 +131,7 @@ func TestResetExchangeRates(t *testing.T) {
 func TestOracleTally(t *testing.T) {
 	fixture, _ := Setup(t)
 
-	ballot := types.ExchangeRateVotes{}
+	votes := types.ExchangeRateVotes{}
 	rates, valAddrs, stakingKeeper := types.GenerateRandomTestCase()
 	fixture.OracleKeeper.StakingKeeper = stakingKeeper
 	h := NewMsgServerImpl(fixture.OracleKeeper)
@@ -160,7 +160,7 @@ func TestOracleTally(t *testing.T) {
 
 		vote := types.NewExchangeRateVote(
 			decExchangeRate, asset.Registry.Pair(denoms.BTC, denoms.NUSD), valAddrs[i], power)
-		ballot = append(ballot, vote)
+		votes = append(votes, vote)
 
 		// change power of every three validator
 		if i%3 == 0 {
@@ -175,9 +175,9 @@ func TestOracleTally(t *testing.T) {
 			valAddr,
 		)
 	}
-	sort.Sort(ballot)
-	weightedMedian := ballot.WeightedMedianWithAssertion()
-	standardDeviation := ballot.StandardDeviation(weightedMedian)
+	sort.Sort(votes)
+	weightedMedian := votes.WeightedMedianWithAssertion()
+	standardDeviation := votes.StandardDeviation(weightedMedian)
 	maxSpread := weightedMedian.Mul(fixture.OracleKeeper.RewardBand(fixture.Ctx).QuoInt64(2))
 
 	if standardDeviation.GT(maxSpread) {
@@ -192,7 +192,7 @@ func TestOracleTally(t *testing.T) {
 		)
 	}
 
-	for _, vote := range ballot {
+	for _, vote := range votes {
 		key := vote.Voter.String()
 		validatorPerformance := expectedValidatorPerformances[key]
 		if vote.ExchangeRate.GTE(weightedMedian.Sub(maxSpread)) &&
@@ -208,7 +208,7 @@ func TestOracleTally(t *testing.T) {
 	}
 
 	tallyMedian := Tally(
-		ballot, fixture.OracleKeeper.RewardBand(fixture.Ctx), validatorPerformances)
+		votes, fixture.OracleKeeper.RewardBand(fixture.Ctx), validatorPerformances)
 
 	assert.Equal(t, expectedValidatorPerformances, validatorPerformances)
 	assert.Equal(t, tallyMedian.MulInt64(100).TruncateInt(), weightedMedian.MulInt64(100).TruncateInt())

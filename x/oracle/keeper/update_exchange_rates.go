@@ -81,7 +81,7 @@ func (k Keeper) tallyVotesAndUpdatePrices(
 	}
 }
 
-// getPairVotes returns a map of pairs and votes excluding abstained votes and ballots that don't meet the threshold criteria
+// getPairVotes returns a map of pairs and votes excluding abstained votes and votes that don't meet the threshold criteria
 func (k Keeper) getPairVotes(
 	ctx sdk.Context,
 	validatorPerformances types.ValidatorPerformances,
@@ -95,7 +95,7 @@ func (k Keeper) getPairVotes(
 }
 
 // clearExchangeRates removes all exchange rates from the state
-// We remove the price for pair with expired prices or valid ballots
+// We remove the price for pair with expired prices or valid votes
 func (k Keeper) clearExchangeRates(ctx sdk.Context, pairVotes map[asset.Pair]types.ExchangeRateVotes) {
 	params, _ := k.Params.Get(ctx)
 

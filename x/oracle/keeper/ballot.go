@@ -79,7 +79,7 @@ func (k Keeper) clearVotesAndPrevotes(ctx sdk.Context, votePeriod uint64) {
 	}
 }
 
-// isPassingVoteThreshold ballot is passing the threshold amount of voting power
+// isPassingVoteThreshold votes is passing the threshold amount of voting power
 func isPassingVoteThreshold(
 	votes types.ExchangeRateVotes, thresholdVotingPower sdkmath.Int, minVoters uint64,
 ) bool {
@@ -99,7 +99,7 @@ func isPassingVoteThreshold(
 	return true
 }
 
-// removeInvalidVotes removes the ballots which have not reached the vote
+// removeInvalidVotes removes the votes which have not reached the vote
 // threshold or which are not part of the whitelisted pairs anymore: example
 // when params change during a vote period but some votes were already made.
 //
@@ -116,15 +116,15 @@ func (k Keeper) removeInvalidVotes(
 	)
 
 	// Iterate through sorted keys for deterministic ordering.
-	orderedBallotsMap := omap.OrderedMap_Pair[types.ExchangeRateVotes](pairVotes)
-	for pair := range orderedBallotsMap.Range() {
-		// If pair is not whitelisted, or the ballot for it has failed, then skip
+	orderedPairVotes := omap.OrderedMap_Pair[types.ExchangeRateVotes](pairVotes)
+	for pair := range orderedPairVotes.Range() {
+		// If pair is not whitelisted, or the votes for it has failed, then skip
 		// and remove it from pairBallotsMap for iteration efficiency
 		if !whitelistedPairs.Has(pair) {
 			delete(pairVotes, pair)
 		}
 
-		// If the ballot is not passed, remove it from the whitelistedPairs set
+		// If the votes is not passed, remove it from the whitelistedPairs set
 		// to prevent slashing validators who did valid vote.
 		if !isPassingVoteThreshold(
 			pairVotes[pair],
@@ -158,7 +158,7 @@ func Tally(
 	}
 
 	for _, v := range votes {
-		// Filter ballot winners & abstain voters
+		// Filter votes winners & abstain voters
 		isInsideSpread := v.ExchangeRate.GTE(weightedMedian.Sub(rewardSpread)) &&
 			v.ExchangeRate.LTE(weightedMedian.Add(rewardSpread))
 		isAbstainVote := !v.ExchangeRate.IsPositive() // strictly less than zero, don't want to include zero

@@ -105,8 +105,8 @@ func TestToCrossRate(t *testing.T) {
 		}
 	}
 
-	baseMapBallot := pbBase.ToMap()
-	require.Equal(t, cb, pbQuote.ToCrossRate(baseMapBallot))
+	basePairPrices := pbBase.ToMap()
+	require.Equal(t, cb, pbQuote.ToCrossRate(basePairPrices))
 
 	sort.Sort(cb)
 }
@@ -127,7 +127,7 @@ func TestPBPower(t *testing.T) {
 	ctx := sdk.NewContext(nil, tmproto.Header{}, false, nil)
 	_, valAccAddrs, sk := types.GenerateRandomTestCase()
 	pb := types.ExchangeRateVotes{}
-	ballotPower := int64(0)
+	totalPower := int64(0)
 
 	for i := 0; i < len(sk.Validators()); i++ {
 		power := sk.Validator(ctx, valAccAddrs[i]).GetConsensusPower(sdk.DefaultPowerReduction)
@@ -142,10 +142,10 @@ func TestPBPower(t *testing.T) {
 
 		require.NotEqual(t, int64(0), vote.Power)
 
-		ballotPower += vote.Power
+		totalPower += vote.Power
 	}
 
-	require.Equal(t, ballotPower, pb.Power())
+	require.Equal(t, totalPower, pb.Power())
 
 	// Mix in a fake validator, the total power should not have changed.
 	pubKey := secp256k1.GenPrivKey().PubKey()
@@ -158,7 +158,7 @@ func TestPBPower(t *testing.T) {
 	)
 
 	pb = append(pb, fakeVote)
-	require.Equal(t, ballotPower, pb.Power())
+	require.Equal(t, totalPower, pb.Power())
 }
 
 func TestPBWeightedMedian(t *testing.T) {

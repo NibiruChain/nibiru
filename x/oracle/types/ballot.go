@@ -48,7 +48,7 @@ func (pb ExchangeRateVotes) ToMap() map[string]sdk.Dec {
 	return validatorExchangeRateMap
 }
 
-// ToCrossRate return cross_rate(base/exchange_rate) ballot
+// ToCrossRate return cross_rate(base/exchange_rate) votes
 func (pb ExchangeRateVotes) ToCrossRate(bases map[string]sdk.Dec) (cb ExchangeRateVotes) {
 	for i := range pb {
 		vote := pb[i]
@@ -78,7 +78,7 @@ func (v ExchangeRateVotes) NumValidVoters() uint64 {
 	return uint64(count)
 }
 
-// Power returns the total amount of voting power in the ballot
+// Power returns the total amount of voting power in the votes
 func (v ExchangeRateVotes) Power() int64 {
 	totalPower := int64(0)
 	for _, vote := range v {
