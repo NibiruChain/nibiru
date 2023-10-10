@@ -8,7 +8,6 @@ import (
 	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/collections"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 
@@ -152,7 +151,7 @@ func (k Keeper) liquidate(
 	// eventLiqFailed exists when the liquidation fails and is nil when the
 	// liquidation succeeds.
 
-	market, err := k.Markets.Get(ctx, pair)
+	market, err := k.GetMarket(ctx, pair)
 	if err != nil {
 		eventLiqFailed := &types.LiquidationFailedEvent{
 			Pair:       pair,
@@ -165,7 +164,7 @@ func (k Keeper) liquidate(
 		return
 	}
 
-	amm, err := k.AMMs.Get(ctx, pair)
+	amm, err := k.GetAMM(ctx, pair)
 	if err != nil {
 		eventLiqFailed := &types.LiquidationFailedEvent{
 			Pair:       pair,
@@ -178,7 +177,7 @@ func (k Keeper) liquidate(
 		return
 	}
 
-	position, err := k.Positions.Get(ctx, collections.Join(pair, trader))
+	position, err := k.GetPosition(ctx, pair, market.Version, trader)
 	if err != nil {
 		eventLiqFailed := &types.LiquidationFailedEvent{
 			Pair:       pair,
@@ -348,7 +347,7 @@ func (k Keeper) executePartialLiquidation(
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
-	quoteAssetDelta := amm.FromQuoteReserveToAsset(quoteReserveDelta)
+	quoteAssetDelta := amm.QuoteReserveToAsset(quoteReserveDelta)
 
 	_, positionResp, err := k.decreasePosition(
 		/* ctx */ ctx,
@@ -365,7 +364,7 @@ func (k Keeper) executePartialLiquidation(
 	// Remove the liquidation fee from the margin of the position
 	liquidationFeeAmount := quoteAssetDelta.Mul(market.LiquidationFeeRatio)
 	positionResp.Position.Margin = positionResp.Position.Margin.Sub(liquidationFeeAmount)
-	k.Positions.Insert(ctx, collections.Join(positionResp.Position.Pair, traderAddr), positionResp.Position)
+	k.SavePosition(ctx, positionResp.Position.Pair, market.Version, traderAddr, positionResp.Position)
 
 	// Compute splits for the liquidation fee
 	feeToLiquidator := liquidationFeeAmount.QuoInt64(2)

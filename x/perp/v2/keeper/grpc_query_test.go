@@ -348,7 +348,7 @@ func TestQueryMarkets(t *testing.T) {
 				),
 			).
 			Then(
-				QueryMarkets(QueryMarkets_MarketsShouldContain(*types.DefaultMarket(pair))),
+				QueryMarkets(false, QueryMarkets_MarketsShouldContain(types.DefaultMarket(pair))),
 				QueryModuleAccounts(QueryModuleAccounts_ModulesBalanceShouldBe(
 					map[string]sdk.Coins{
 						"perp_ef": sdk.NewCoins(
@@ -358,6 +358,20 @@ func TestQueryMarkets(t *testing.T) {
 					},
 				)),
 			),
+		TC("versioned, all markets (active and inactive)").Given(
+			CreateCustomMarket("BTC:USD", WithVersion(1), WithEnabled(true)),
+			CreateCustomMarket("ETC:USD", WithVersion(1), WithEnabled(false)),
+			CreateCustomMarket("ETC:USD", WithVersion(2), WithEnabled(true)),
+		).Then(
+			QueryMarkets(true, QueryMarkets_ShouldLength(3)),
+		),
+		TC("not versioned, only active markets").Given(
+			CreateCustomMarket("BTC:USD", WithVersion(1), WithEnabled(true)),
+			CreateCustomMarket("ETC:USD", WithVersion(1), WithEnabled(false)),
+			CreateCustomMarket("ETC:USD", WithVersion(2), WithEnabled(true)),
+		).Then(
+			QueryMarkets(true, QueryMarkets_ShouldLength(3)),
+		),
 	}
 
 	NewTestSuite(t).WithTestCases(tc...).Run()

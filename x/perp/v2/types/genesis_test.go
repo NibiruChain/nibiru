@@ -36,14 +36,18 @@ func TestGenesisValidate(t *testing.T) {
 		PriceMultiplier: sdk.OneDec(),
 		SqrtDepth:       sdk.OneDec(),
 	}
-	validPositions := types.Position{
-		TraderAddress:                   "cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v",
-		Pair:                            pair,
-		Size_:                           sdk.OneDec(),
-		Margin:                          sdk.OneDec(),
-		OpenNotional:                    sdk.OneDec(),
-		LatestCumulativePremiumFraction: sdk.OneDec(),
-		LastUpdatedBlockNumber:          0,
+	validPositions := types.GenesisPosition{
+		Pair:    pair,
+		Version: 1,
+		Position: types.Position{
+			TraderAddress:                   "cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v",
+			Pair:                            pair,
+			Size_:                           sdk.OneDec(),
+			Margin:                          sdk.OneDec(),
+			OpenNotional:                    sdk.OneDec(),
+			LatestCumulativePremiumFraction: sdk.OneDec(),
+			LastUpdatedBlockNumber:          0,
+		},
 	}
 	invalidMarket := &types.Market{
 		Pair:                            pair,
@@ -66,14 +70,18 @@ func TestGenesisValidate(t *testing.T) {
 		PriceMultiplier: sdk.OneDec(),
 		SqrtDepth:       sdk.OneDec(),
 	}
-	invalidPositions := types.Position{
-		TraderAddress:                   "cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v",
-		Pair:                            pair,
-		Size_:                           sdk.ZeroDec(),
-		Margin:                          sdk.OneDec(),
-		OpenNotional:                    sdk.OneDec(),
-		LatestCumulativePremiumFraction: sdk.OneDec(),
-		LastUpdatedBlockNumber:          0,
+	invalidPositions := types.GenesisPosition{
+		Pair:    pair,
+		Version: 1,
+		Position: types.Position{
+			TraderAddress:                   "cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v",
+			Pair:                            pair,
+			Size_:                           sdk.ZeroDec(),
+			Margin:                          sdk.OneDec(),
+			OpenNotional:                    sdk.OneDec(),
+			LatestCumulativePremiumFraction: sdk.OneDec(),
+			LastUpdatedBlockNumber:          0,
+		},
 	}
 
 	tests := []struct {
@@ -85,9 +93,9 @@ func TestGenesisValidate(t *testing.T) {
 			name: "valid genesis",
 			setupGenesis: func() *types.GenesisState {
 				genesis := types.GenesisState{
-					Markets:          []types.Market{*validMarket},
+					Markets:          []types.Market{validMarket},
 					Amms:             []types.AMM{validAmms},
-					Positions:        []types.Position{validPositions},
+					Positions:        []types.GenesisPosition{validPositions},
 					ReserveSnapshots: []types.ReserveSnapshot{},
 				}
 
@@ -101,7 +109,7 @@ func TestGenesisValidate(t *testing.T) {
 				genesis := types.GenesisState{
 					Markets:          []types.Market{*invalidMarket},
 					Amms:             []types.AMM{validAmms},
-					Positions:        []types.Position{validPositions},
+					Positions:        []types.GenesisPosition{validPositions},
 					ReserveSnapshots: []types.ReserveSnapshot{},
 				}
 
@@ -115,7 +123,7 @@ func TestGenesisValidate(t *testing.T) {
 				genesis := types.GenesisState{
 					Markets:          []types.Market{*invalidMarket},
 					Amms:             []types.AMM{invalidAmms},
-					Positions:        []types.Position{validPositions},
+					Positions:        []types.GenesisPosition{validPositions},
 					ReserveSnapshots: []types.ReserveSnapshot{},
 				}
 
@@ -129,7 +137,7 @@ func TestGenesisValidate(t *testing.T) {
 				genesis := types.GenesisState{
 					Markets:          []types.Market{*invalidMarket},
 					Amms:             []types.AMM{validAmms},
-					Positions:        []types.Position{invalidPositions},
+					Positions:        []types.GenesisPosition{invalidPositions},
 					ReserveSnapshots: []types.ReserveSnapshot{},
 				}
 

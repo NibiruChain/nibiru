@@ -1,0 +1,116 @@
+syntax = "proto3";
+
+package nibiru.tokenfactory.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "cosmos/bank/v1beta1/bank.proto";
+import "nibiru/tokenfactory/v1/state.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/x/tokenfactory/types";
+
+// Msg defines the gRPC Msg service for transactions.
+service Msg {
+  // CreateDenom: registers a token factory denom.
+  rpc CreateDenom(MsgCreateDenom) returns (MsgCreateDenomResponse);
+  rpc ChangeAdmin(MsgChangeAdmin) returns (MsgChangeAdminResponse);
+  // UpdateModuleParams: A governance operation for updating the x/tokenfactory
+  // module parameters.
+  rpc UpdateModuleParams(MsgUpdateModuleParams)
+      returns (MsgUpdateModuleParamsResponse);
+  rpc Mint(MsgMint) returns (MsgMintResponse);
+  rpc Burn(MsgBurn) returns (MsgBurnResponse);
+  rpc SetDenomMetadata(MsgSetDenomMetadata)
+      returns (MsgSetDenomMetadataResponse);
+}
+
+// MsgCreateDenom: sdk.Msg that registers an a token factory denom.
+// A denom has the form "tf/[creatorAddr]/[subdenom]".
+//  - Denoms become unique x/bank tokens, so the creator-subdenom pair that
+//    defines a denom cannot be reused.
+//  - The resulting denom's admin is originally set to be the creator, but the
+//    admin can be changed later.
+message MsgCreateDenom {
+  string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
+  // subdenom can be up to 44 "alphanumeric" characters long.
+  string subdenom = 2 [ (gogoproto.moretags) = "yaml:\"subdenom\"" ];
+}
+
+// MsgCreateDenomResponse is the return value of MsgCreateDenom
+message MsgCreateDenomResponse {
+  // NewTokenDenom: identifier for the newly created token factory denom.
+  string new_token_denom = 1
+      [ (gogoproto.moretags) = "yaml:\"new_token_denom\"" ];
+}
+
+// MsgChangeAdmin is the sdk.Msg type for allowing an admin account to change
+// admin of a denom to a new account
+message MsgChangeAdmin {
+  string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
+  string denom = 2 [ (gogoproto.moretags) = "yaml:\"denom\"" ];
+  string new_admin = 3 [ (gogoproto.moretags) = "yaml:\"new_admin\"" ];
+}
+
+// MsgChangeAdminResponse is the gRPC response for the MsgChangeAdmin TxMsg.
+message MsgChangeAdminResponse {}
+
+// MsgUpdateModuleParams: sdk.Msg for updating the x/tokenfactory module params
+message MsgUpdateModuleParams {
+  option (cosmos.msg.v1.signer) = "authority";
+
+  // Authority: Address of the governance module account.
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  nibiru.tokenfactory.v1.ModuleParams params = 2
+      [ (gogoproto.nullable) = false ];
+}
+
+// MsgUpdateModuleParamsResponse is the gRPC response for the
+// MsgUpdateModuleParams TxMsg.
+message MsgUpdateModuleParamsResponse {}
+
+// MsgMint: sdk.Msg (TxMsg) where an denom admin mints more of the token.
+message MsgMint {
+  string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
+  // coin: The denom identifier and amount to mint.
+  cosmos.base.v1beta1.Coin coin = 2
+      [ (gogoproto.moretags) = "yaml:\"coin\"", (gogoproto.nullable) = false ];
+  // mint_to_addr: An address to which tokens will be minted. If blank,
+  // tokens are minted to the "sender".
+  string mint_to = 3 [
+    (gogoproto.moretags) = "yaml:\"mint_to\"",
+    (gogoproto.nullable) = true
+  ];
+}
+
+message MsgMintResponse { string mint_to = 1; }
+
+// MsgBurn: sdk.Msg (TxMsg) where a denom admin burns some of the token.
+// The reason that the sender isn't automatically the "burn_from" address
+// is to support smart contracts (primary use case). In this situation, the
+// contract is the message signer and sender, while "burn_from" is based on the
+// contract logic.
+message MsgBurn {
+  string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
+  // coin: The denom identifier and amount to burn.
+  cosmos.base.v1beta1.Coin coin = 2
+      [ (gogoproto.moretags) = "yaml:\"coin\"", (gogoproto.nullable) = false ];
+  // burn_from: The address from which tokens will be burned.
+  string burn_from = 3 [ (gogoproto.moretags) = "yaml:\"burn_from\"" ];
+}
+
+message MsgBurnResponse {}
+
+// MsgSetDenomMetadata: sdk.Msg (TxMsg) enabling the denom admin to change its
+// bank metadata.
+message MsgSetDenomMetadata {
+  string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
+
+  // Metadata: Official x/bank metadata for the denom. All token factory denoms
+  // are standard, native assets. The "metadata.base" is the denom.
+  cosmos.bank.v1beta1.Metadata metadata = 2 [ (gogoproto.nullable) = false ];
+}
+
+message MsgSetDenomMetadataResponse {}

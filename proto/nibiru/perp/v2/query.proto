@@ -42,7 +42,8 @@ service Query {
 message QueryPositionsRequest { string trader = 1; }
 
 message QueryPositionsResponse {
-  repeated QueryPositionResponse positions = 1 [ (gogoproto.nullable) = false ];
+  repeated nibiru.perp.v2.QueryPositionResponse positions = 1
+      [ (gogoproto.nullable) = false ];
 }
 
 message QueryPositionStoreRequest {
@@ -52,7 +53,8 @@ message QueryPositionStoreRequest {
 
 message QueryPositionStoreResponse {
   // Position responses: collection of all stored positions (with pagination)
-  repeated Position positions = 1 [ (gogoproto.nullable) = false ];
+  repeated nibiru.perp.v2.Position positions = 1
+      [ (gogoproto.nullable) = false ];
 
   // pagination defines a paginated response
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
@@ -74,7 +76,7 @@ message QueryPositionRequest {
 
 message QueryPositionResponse {
   // The position as it exists in the blockchain state
-  Position position = 1 [ (gogoproto.nullable) = false ];
+  nibiru.perp.v2.Position position = 1 [ (gogoproto.nullable) = false ];
 
   // The position's current notional value, if it were to be entirely closed (in
   // margin units).
@@ -101,7 +103,8 @@ message QueryPositionResponse {
 message QueryModuleAccountsRequest {}
 
 message QueryModuleAccountsResponse {
-  repeated AccountWithBalance accounts = 1 [ (gogoproto.nullable) = false ];
+  repeated nibiru.perp.v2.AccountWithBalance accounts = 1
+      [ (gogoproto.nullable) = false ];
 }
 
 message AccountWithBalance {
@@ -115,12 +118,13 @@ message AccountWithBalance {
 }
 
 message AmmMarket {
-  Market market = 1 [ (gogoproto.nullable) = false ];
-  AMM amm = 2 [ (gogoproto.nullable) = false ];
+  nibiru.perp.v2.Market market = 1 [ (gogoproto.nullable) = false ];
+  nibiru.perp.v2.AMM amm = 2 [ (gogoproto.nullable) = false ];
 }
 
-message QueryMarketsRequest {}
+message QueryMarketsRequest { bool versioned = 1; }
 
 message QueryMarketsResponse {
-  repeated AmmMarket amm_markets = 1 [ (gogoproto.nullable) = false ];
+  repeated nibiru.perp.v2.AmmMarket amm_markets = 1
+      [ (gogoproto.nullable) = false ];
 }

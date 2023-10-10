@@ -18,7 +18,7 @@ func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		Markets:          []Market{},
 		Amms:             []AMM{},
-		Positions:        []Position{},
+		Positions:        []GenesisPosition{},
 		ReserveSnapshots: []ReserveSnapshot{},
 	}
 }
@@ -38,19 +38,21 @@ func (gs GenesisState) Validate() error {
 		}
 	}
 
-	for _, pos := range gs.Positions {
-		if err := pos.Validate(); err != nil {
-			return err
-		}
-	}
+	// TODO: validate positions
+	//for _, pos := range gs.Positions {
+	//	if err := pos.Validate(); err != nil {
+	//		return err
+	//	}
+	//}
 
 	return nil
 }
 
-func DefaultMarket(pair asset.Pair) *Market {
-	return &Market{
+func DefaultMarket(pair asset.Pair) Market {
+	return Market{
 		Pair:                            pair,
 		Enabled:                         true,
+		Version:                         1,
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 		ExchangeFeeRatio:                sdk.MustNewDecFromStr("0.0010"),
 		EcosystemFundFeeRatio:           sdk.MustNewDecFromStr("0.0010"),

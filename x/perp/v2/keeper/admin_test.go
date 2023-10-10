@@ -4,23 +4,17 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-
-	"github.com/stretchr/testify/require"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
-	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
-	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
-	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
-	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
+	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
+	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 func TestAdmin_WithdrawFromInsuranceFund(t *testing.T) {
@@ -88,39 +82,18 @@ func TestAdmin_WithdrawFromInsuranceFund(t *testing.T) {
 	testutil.RunFunctionTests(t, testCases)
 }
 
-func TestEnableMarket(t *testing.T) {
-	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
-
-	tests := TestCases{
-		TC("true -> false").
-			Given(
-				CreateCustomMarket(pair),
-				MarketShouldBeEqual(pair, Market_EnableShouldBeEqualTo(true)),
-			).
-			When(
-				SetMarketEnabled(pair, false),
-				MarketShouldBeEqual(pair, Market_EnableShouldBeEqualTo(false)),
-				SetMarketEnabled(pair, true),
-			).
-			Then(
-				MarketShouldBeEqual(pair, Market_EnableShouldBeEqualTo(true)),
-			),
-	}
-
-	NewTestSuite(t).WithTestCases(tests...).Run()
-}
-
-func TestCreateMarketFail(t *testing.T) {
+func TestCreateMarket(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	amm := *mock.TestAMMDefault()
 	app, ctx := testapp.NewNibiruTestAppAndContext()
 
 	// Error because of invalid market
+	market := types.DefaultMarket(pair).WithMaintenanceMarginRatio(sdk.NewDec(2))
 	err := app.PerpKeeperV2.Admin().CreateMarket(ctx, keeper.ArgsCreateMarket{
 		Pair:            pair,
 		PriceMultiplier: amm.PriceMultiplier,
 		SqrtDepth:       amm.SqrtDepth,
-		Market:          types.DefaultMarket(pair).WithMaintenanceMarginRatio(sdk.NewDec(2)), // Invalid maintenance ratio
+		Market:          &market, // Invalid maintenance ratio
 	})
 	require.ErrorContains(t, err, "maintenance margin ratio ratio must be 0 <= ratio <= 1")
 
@@ -140,11 +113,48 @@ func TestCreateMarketFail(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// Fail since it already exists
+	lastVersion, err := app.PerpKeeperV2.MarketLastVersion.Get(ctx, pair)
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), lastVersion.Version)
+
+	// Check that amm and market have version 1
+	amm, err = app.PerpKeeperV2.GetAMM(ctx, pair)
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), amm.Version)
+
+	market, err = app.PerpKeeperV2.GetMarket(ctx, pair)
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), market.Version)
+
+	// Fail since it already exists and it is not disabled
 	err = app.PerpKeeperV2.Admin().CreateMarket(ctx, keeper.ArgsCreateMarket{
 		Pair:            pair,
 		PriceMultiplier: amm.PriceMultiplier,
 		SqrtDepth:       amm.SqrtDepth,
 	})
 	require.ErrorContains(t, err, "already exists")
+
+	// Close the market to test that we can create it again but with an increased version
+	err = app.PerpKeeperV2.CloseMarket(ctx, pair)
+	require.NoError(t, err)
+
+	err = app.PerpKeeperV2.Admin().CreateMarket(ctx, keeper.ArgsCreateMarket{
+		Pair:            pair,
+		PriceMultiplier: amm.PriceMultiplier,
+		SqrtDepth:       amm.SqrtDepth,
+	})
+	require.NoError(t, err)
+
+	lastVersion, err = app.PerpKeeperV2.MarketLastVersion.Get(ctx, pair)
+	require.NoError(t, err)
+	require.Equal(t, uint64(2), lastVersion.Version)
+
+	// Check that amm and market have version 2
+	amm, err = app.PerpKeeperV2.GetAMM(ctx, pair)
+	require.NoError(t, err)
+	require.Equal(t, uint64(2), amm.Version)
+
+	market, err = app.PerpKeeperV2.GetMarket(ctx, pair)
+	require.NoError(t, err)
+	require.Equal(t, uint64(2), market.Version)
 }

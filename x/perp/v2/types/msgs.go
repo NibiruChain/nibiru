@@ -13,8 +13,10 @@ var (
 	_ sdk.Msg = &MsgRemoveMargin{}
 	_ sdk.Msg = &MsgAddMargin{}
 	_ sdk.Msg = &MsgMarketOrder{}
-	_ sdk.Msg = &MsgClosePosition{}
 	_ sdk.Msg = &MsgMultiLiquidate{}
+	_ sdk.Msg = &MsgClosePosition{}
+	_ sdk.Msg = &MsgDonateToEcosystemFund{}
+	_ sdk.Msg = &MsgPartialClose{}
 )
 
 // MsgRemoveMargin

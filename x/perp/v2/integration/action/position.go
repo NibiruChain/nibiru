@@ -8,8 +8,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/collections"
-
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
@@ -238,15 +236,39 @@ func ClosePosition(account sdk.AccAddress, pair asset.Pair) action.Action {
 	}
 }
 
-// Manually insert position, skipping open position logic
+type closePositionFailsAction struct {
+	Account sdk.AccAddress
+	Pair    asset.Pair
 
+	expectedErr error
+}
+
+func (c closePositionFailsAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	_, err := app.PerpKeeperV2.ClosePosition(ctx, c.Pair, c.Account)
+
+	if !errors.Is(err, c.expectedErr) {
+		return ctx, fmt.Errorf("expected error %s, got %s", c.expectedErr, err), true
+	}
+
+	return ctx, nil, true
+}
+
+func ClosePositionFails(account sdk.AccAddress, pair asset.Pair, expectedErr error) action.Action {
+	return &closePositionFailsAction{
+		Account:     account,
+		Pair:        pair,
+		expectedErr: expectedErr,
+	}
+}
+
+// Manually insert position, skipping open position logic
 type insertPosition struct {
 	position types.Position
 }
 
 func (i insertPosition) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	traderAddr := sdk.MustAccAddressFromBech32(i.position.TraderAddress)
-	app.PerpKeeperV2.Positions.Insert(ctx, collections.Join(i.position.Pair, traderAddr), i.position)
+	app.PerpKeeperV2.SavePosition(ctx, i.position.Pair, 1, traderAddr, i.position)
 	return ctx, nil, true
 }
 

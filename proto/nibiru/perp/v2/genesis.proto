@@ -10,13 +10,75 @@ import "nibiru/perp/v2/state.proto";
 option go_package = "github.com/NibiruChain/nibiru/x/perp/v2/types";
 
 // GenesisState defines the perp module's genesis state.
+// Thge genesis state is used not only to start the network but also useful for
+// exporting and importing state during network upgrades.
 message GenesisState {
-  repeated Market markets = 2 [ (gogoproto.nullable) = false ];
+  repeated nibiru.perp.v2.Market markets = 2 [ (gogoproto.nullable) = false ];
 
-  repeated AMM amms = 3 [ (gogoproto.nullable) = false ];
+  repeated nibiru.perp.v2.AMM amms = 3 [ (gogoproto.nullable) = false ];
 
-  repeated Position positions = 4 [ (gogoproto.nullable) = false ];
+  repeated GenesisPosition positions = 4 [ (gogoproto.nullable) = false ];
 
-  repeated ReserveSnapshot reserve_snapshots = 5
+  repeated nibiru.perp.v2.ReserveSnapshot reserve_snapshots = 5
       [ (gogoproto.nullable) = false ];
+
+  uint64 dnr_epoch = 6;
+
+  message TraderVolume {
+    string trader = 1;
+    uint64 epoch = 2;
+    string volume = 3 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+      (gogoproto.nullable) = false
+    ];
+  }
+
+  repeated TraderVolume trader_volumes = 7 [ (gogoproto.nullable) = false ];
+
+  message Discount {
+    string fee = 1 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable) = false
+    ];
+    string volume = 2 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+      (gogoproto.nullable) = false
+    ];
+  }
+
+  repeated Discount global_discount = 8 [ (gogoproto.nullable) = false ];
+
+  repeated CustomDiscount custom_discounts = 9 [ (gogoproto.nullable) = false ];
+
+  message CustomDiscount {
+    string trader = 1;
+    Discount discount = 2;
+  }
+
+  repeated nibiru.perp.v2.GenesisMarketLastVersion market_last_versions = 10
+      [ (gogoproto.nullable) = false ];
+}
+
+// GenesisMarketLastVersion is the last version including pair only used for
+// genesis
+message GenesisMarketLastVersion {
+  string pair = 1 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+
+  uint64 version = 2;
+}
+
+message GenesisPosition {
+  string pair = 1 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+
+  uint64 version = 2;
+
+  Position position = 3 [ (gogoproto.nullable) = false ];
 }

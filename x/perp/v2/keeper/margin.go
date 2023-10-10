@@ -3,8 +3,6 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/NibiruChain/collections"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -26,11 +24,11 @@ import (
 func (k Keeper) AddMargin(
 	ctx sdk.Context, pair asset.Pair, traderAddr sdk.AccAddress, marginToAdd sdk.Coin,
 ) (res *types.MsgAddMarginResponse, err error) {
-	market, err := k.Markets.Get(ctx, pair)
+	market, err := k.GetMarket(ctx, pair)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
 	}
-	amm, err := k.AMMs.Get(ctx, pair)
+	amm, err := k.GetAMM(ctx, pair)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
 	}
@@ -39,7 +37,7 @@ func (k Keeper) AddMargin(
 		return nil, fmt.Errorf("invalid margin denom: %s", marginToAdd.Denom)
 	}
 
-	position, err := k.Positions.Get(ctx, collections.Join(pair, traderAddr))
+	position, err := k.GetPosition(ctx, pair, market.Version, traderAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +62,7 @@ func (k Keeper) AddMargin(
 	position.Margin = remainingMargin
 	position.LatestCumulativePremiumFraction = market.LatestCumulativePremiumFraction
 	position.LastUpdatedBlockNumber = ctx.BlockHeight()
-	k.Positions.Insert(ctx, collections.Join(position.Pair, traderAddr), position)
+	k.SavePosition(ctx, pair, market.Version, traderAddr, position)
 
 	positionNotional, err := PositionNotionalSpot(amm, position)
 	if err != nil {
@@ -116,12 +114,12 @@ func (k Keeper) RemoveMargin(
 	ctx sdk.Context, pair asset.Pair, traderAddr sdk.AccAddress, marginToRemove sdk.Coin,
 ) (res *types.MsgRemoveMarginResponse, err error) {
 	// fetch objects from state
-	market, err := k.Markets.Get(ctx, pair)
+	market, err := k.GetMarket(ctx, pair)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
 	}
 
-	amm, err := k.AMMs.Get(ctx, pair)
+	amm, err := k.GetAMM(ctx, pair)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
 	}
@@ -129,7 +127,7 @@ func (k Keeper) RemoveMargin(
 		return nil, fmt.Errorf("invalid margin denom: %s", marginToRemove.Denom)
 	}
 
-	position, err := k.Positions.Get(ctx, collections.Join(pair, traderAddr))
+	position, err := k.GetPosition(ctx, pair, market.Version, traderAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +172,7 @@ func (k Keeper) RemoveMargin(
 	if err = k.WithdrawFromVault(ctx, market, traderAddr, marginToRemove.Amount); err != nil {
 		return nil, err
 	}
-	k.Positions.Insert(ctx, collections.Join(position.Pair, traderAddr), position)
+	k.SavePosition(ctx, pair, market.Version, traderAddr, position)
 
 	if err = ctx.EventManager().EmitTypedEvent(
 		&types.PositionChangedEvent{

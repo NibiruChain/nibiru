@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package nibiru.tokenfactory.v1;
+
+import "cosmos/bank/v1beta1/bank.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/x/tokenfactory/types";
+
+message EventCreateDenom {
+  string denom = 1;
+  string creator = 2;
+}
+
+message EventChangeAdmin {
+  string denom = 1;
+  string new_admin = 2;
+  string old_admin = 3;
+}
+
+message EventMint {
+  cosmos.base.v1beta1.Coin coin = 1
+      [ (gogoproto.moretags) = "yaml:\"coin\"", (gogoproto.nullable) = false ];
+  string to_addr = 2;
+  string caller = 3;
+}
+
+message EventBurn {
+  cosmos.base.v1beta1.Coin coin = 1
+      [ (gogoproto.moretags) = "yaml:\"coin\"", (gogoproto.nullable) = false ];
+  string from_addr = 2;
+  string caller = 3;
+}
+
+message EventSetDenomMetadata {
+  string denom = 1;
+  // Metadata: Official x/bank metadata for the denom. All token factory denoms
+  // are standard, native assets. The "metadata.base" is the denom.
+  cosmos.bank.v1beta1.Metadata metadata = 2 [ (gogoproto.nullable) = false ];
+  string caller = 3;
+}

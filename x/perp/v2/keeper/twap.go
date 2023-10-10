@@ -11,7 +11,7 @@ import (
 )
 
 /*
-Gets the time-weighted average price from [ ctx.BlockTime() - interval, ctx.BlockTime() )
+CalcTwap Gets the time-weighted average price from [ ctx.BlockTime() - interval, ctx.BlockTime() )
 Note the open-ended right bracket.
 
 args:
@@ -163,12 +163,13 @@ func getPriceWithSnapshot(
 	snapshot types.ReserveSnapshot,
 	opts snapshotPriceOps,
 ) (price sdk.Dec, err error) {
+	priceMult := snapshot.Amm.PriceMultiplier
 	switch opts.twapCalcOption {
 	case types.TwapCalcOption_SPOT:
-		return snapshot.Amm.QuoteReserve.Mul(snapshot.Amm.PriceMultiplier).Quo(snapshot.Amm.BaseReserve), nil
+		return snapshot.Amm.QuoteReserve.Mul(priceMult).Quo(snapshot.Amm.BaseReserve), nil
 
 	case types.TwapCalcOption_QUOTE_ASSET_SWAP:
-		quoteReserve := snapshot.Amm.FromQuoteAssetToReserve(opts.assetAmt)
+		quoteReserve := types.QuoteAssetToReserve(opts.assetAmt, priceMult)
 		return snapshot.Amm.GetBaseReserveAmt(quoteReserve, opts.direction)
 
 	case types.TwapCalcOption_BASE_ASSET_SWAP:
@@ -176,7 +177,7 @@ func getPriceWithSnapshot(
 		if err != nil {
 			return sdk.Dec{}, err
 		}
-		return snapshot.Amm.FromQuoteReserveToAsset(quoteReserve), nil
+		return types.QuoteReserveToAsset(quoteReserve, priceMult), nil
 	}
 
 	return sdk.ZeroDec(), nil

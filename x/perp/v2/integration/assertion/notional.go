@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/app"
@@ -20,7 +19,7 @@ type positionNotionalTwapShouldBeEqualTo struct {
 }
 
 func (p positionNotionalTwapShouldBeEqualTo) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	position, err := app.PerpKeeperV2.Positions.Get(ctx, collections.Join(p.pair, p.trader))
+	position, err := app.PerpKeeperV2.GetPosition(ctx, p.pair, 1, p.trader)
 	if err != nil {
 		return ctx, err, false
 	}
