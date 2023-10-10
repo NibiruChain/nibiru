@@ -9,11 +9,7 @@ builds:
     binary: nibid
     hooks:
       pre:
-        - wget https://github.com/CosmWasm/wasmvm/releases/download/v1.4.0/libwasmvmstatic_darwin.a -O /osxcross/target/SDK/MacOSX12.0.sdk/usr/lib/libwasmvmstatic_darwin.a
-        - wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/include.8.1.1.tar.gz -O /root/include.8.1.1.tar.gz
-        - tar -xf /root/include.8.1.1.tar.gz -C /osxcross/target/SDK/MacOSX12.0.sdk/usr/include/
-        - wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/librocksdb_8.1.1_darwin_all.tar.gz -O /root/librocksdb_8.1.1_darwin_all.tar.gz
-        - tar -xf /root/librocksdb_8.1.1_darwin_all.tar.gz -C /osxcross/target/SDK/MacOSX12.0.sdk/usr/lib/
+        - bash contrib/scripts/release_pre_darwin.sh
     goos:
       - darwin
     goarch:
@@ -52,14 +48,7 @@ builds:
     binary: nibid
     hooks:
       pre:
-        - wget https://github.com/CosmWasm/wasmvm/releases/download/v1.4.0/libwasmvm_muslc.x86_64.a -O /usr/lib/x86_64-linux-gnu/libwasmvm_muslc.a
-        - wget https://github.com/CosmWasm/wasmvm/releases/download/v1.4.0/libwasmvm_muslc.aarch64.a -O /usr/lib/aarch64-linux-gnu/libwasmvm_muslc.a
-        - wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/include.8.1.1.tar.gz -O /root/include.8.1.1.tar.gz
-        - tar -xvf /root/include.8.1.1.tar.gz -C /usr/include/
-        - wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/librocksdb_8.1.1_linux_amd64.tar.gz -O /root/librocksdb_8.1.1_linux_amd64.tar.gz
-        - tar -xvf /root/librocksdb_8.1.1_linux_amd64.tar.gz -C /usr/lib/x86_64-linux-gnu/
-        - wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/librocksdb_8.1.1_linux_arm64.tar.gz -O /root/librocksdb_8.1.1_linux_arm64.tar.gz
-        - tar -xvf /root/librocksdb_8.1.1_linux_arm64.tar.gz -C /usr/lib/aarch64-linux-gnu/
+        - bash contrib/scripts/release_pre_linux.sh
     goos:
       - linux
     goarch:
