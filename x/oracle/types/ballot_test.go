@@ -20,12 +20,12 @@ import (
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
-func TestToMap(t *testing.T) {
+func TestExchangeRateVotesToMap(t *testing.T) {
 	tests := struct {
-		votes   []types.ExchangeRateBallot
+		votes   []types.ExchangeRateVote
 		isValid []bool
 	}{
-		[]types.ExchangeRateBallot{
+		[]types.ExchangeRateVote{
 			{
 				Voter:        sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()),
 				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -48,7 +48,7 @@ func TestToMap(t *testing.T) {
 		[]bool{true, false, true},
 	}
 
-	pb := types.ExchangeRateBallots(tests.votes)
+	pb := types.ExchangeRateVotes(tests.votes)
 	mapData := pb.ToMap()
 	for i, vote := range tests.votes {
 		exchangeRate, ok := mapData[string(vote.Voter)]
@@ -59,6 +59,9 @@ func TestToMap(t *testing.T) {
 			require.False(t, ok)
 		}
 	}
+	require.NotPanics(t, func() {
+		types.ExchangeRateVotes(tests.votes).NumValidVoters()
+	})
 }
 
 func TestToCrossRate(t *testing.T) {
@@ -84,26 +87,26 @@ func TestToCrossRate(t *testing.T) {
 		},
 	}
 
-	pbBase := types.ExchangeRateBallots{}
-	pbQuote := types.ExchangeRateBallots{}
-	cb := types.ExchangeRateBallots{}
+	pbBase := types.ExchangeRateVotes{}
+	pbQuote := types.ExchangeRateVotes{}
+	cb := types.ExchangeRateVotes{}
 	for _, data := range data {
 		valAddr := sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address())
 		if !data.base.IsZero() {
-			pbBase = append(pbBase, types.NewExchangeRateBallot(data.base, asset.Registry.Pair(denoms.BTC, denoms.NUSD), valAddr, 100))
+			pbBase = append(pbBase, types.NewExchangeRateVote(data.base, asset.Registry.Pair(denoms.BTC, denoms.NUSD), valAddr, 100))
 		}
 
-		pbQuote = append(pbQuote, types.NewExchangeRateBallot(data.quote, asset.Registry.Pair(denoms.BTC, denoms.NUSD), valAddr, 100))
+		pbQuote = append(pbQuote, types.NewExchangeRateVote(data.quote, asset.Registry.Pair(denoms.BTC, denoms.NUSD), valAddr, 100))
 
 		if !data.base.IsZero() && !data.quote.IsZero() {
-			cb = append(cb, types.NewExchangeRateBallot(data.base.Quo(data.quote), asset.Registry.Pair(denoms.BTC, denoms.NUSD), valAddr, 100))
+			cb = append(cb, types.NewExchangeRateVote(data.base.Quo(data.quote), asset.Registry.Pair(denoms.BTC, denoms.NUSD), valAddr, 100))
 		} else {
-			cb = append(cb, types.NewExchangeRateBallot(sdk.ZeroDec(), asset.Registry.Pair(denoms.BTC, denoms.NUSD), valAddr, 0))
+			cb = append(cb, types.NewExchangeRateVote(sdk.ZeroDec(), asset.Registry.Pair(denoms.BTC, denoms.NUSD), valAddr, 0))
 		}
 	}
 
-	baseMapBallot := pbBase.ToMap()
-	require.Equal(t, cb, pbQuote.ToCrossRate(baseMapBallot))
+	basePairPrices := pbBase.ToMap()
+	require.Equal(t, cb, pbQuote.ToCrossRate(basePairPrices))
 
 	sort.Sort(cb)
 }
@@ -123,12 +126,12 @@ func TestSqrt(t *testing.T) {
 func TestPBPower(t *testing.T) {
 	ctx := sdk.NewContext(nil, tmproto.Header{}, false, nil)
 	_, valAccAddrs, sk := types.GenerateRandomTestCase()
-	pb := types.ExchangeRateBallots{}
-	ballotPower := int64(0)
+	pb := types.ExchangeRateVotes{}
+	totalPower := int64(0)
 
 	for i := 0; i < len(sk.Validators()); i++ {
 		power := sk.Validator(ctx, valAccAddrs[i]).GetConsensusPower(sdk.DefaultPowerReduction)
-		vote := types.NewExchangeRateBallot(
+		vote := types.NewExchangeRateVote(
 			sdk.ZeroDec(),
 			asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 			valAccAddrs[i],
@@ -139,15 +142,15 @@ func TestPBPower(t *testing.T) {
 
 		require.NotEqual(t, int64(0), vote.Power)
 
-		ballotPower += vote.Power
+		totalPower += vote.Power
 	}
 
-	require.Equal(t, ballotPower, pb.Power())
+	require.Equal(t, totalPower, pb.Power())
 
 	// Mix in a fake validator, the total power should not have changed.
 	pubKey := secp256k1.GenPrivKey().PubKey()
 	faceValAddr := sdk.ValAddress(pubKey.Address())
-	fakeVote := types.NewExchangeRateBallot(
+	fakeVote := types.NewExchangeRateVote(
 		sdk.OneDec(),
 		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 		faceValAddr,
@@ -155,7 +158,7 @@ func TestPBPower(t *testing.T) {
 	)
 
 	pb = append(pb, fakeVote)
-	require.Equal(t, ballotPower, pb.Power())
+	require.Equal(t, totalPower, pb.Power())
 }
 
 func TestPBWeightedMedian(t *testing.T) {
@@ -203,7 +206,7 @@ func TestPBWeightedMedian(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		pb := types.ExchangeRateBallots{}
+		pb := types.ExchangeRateVotes{}
 		for i, input := range tc.inputs {
 			valAddr := sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address())
 
@@ -212,7 +215,7 @@ func TestPBWeightedMedian(t *testing.T) {
 				power = 0
 			}
 
-			vote := types.NewExchangeRateBallot(
+			vote := types.NewExchangeRateVote(
 				sdk.NewDec(int64(input)),
 				asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 				valAddr,
@@ -273,7 +276,7 @@ func TestPBStandardDeviation(t *testing.T) {
 
 	base := math.Pow10(types.OracleDecPrecision)
 	for _, tc := range tests {
-		pb := types.ExchangeRateBallots{}
+		pb := types.ExchangeRateVotes{}
 		for i, input := range tc.inputs {
 			valAddr := sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address())
 
@@ -282,7 +285,7 @@ func TestPBStandardDeviation(t *testing.T) {
 				power = 0
 			}
 
-			vote := types.NewExchangeRateBallot(
+			vote := types.NewExchangeRateVote(
 				sdk.NewDecWithPrec(int64(input*base), int64(types.OracleDecPrecision)),
 				asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 				valAddr,
@@ -301,12 +304,12 @@ func TestPBStandardDeviationOverflow(t *testing.T) {
 	exchangeRate, err := sdk.NewDecFromStr("100000000000000000000000000000000000000000000000000000000.0")
 	require.NoError(t, err)
 
-	pb := types.ExchangeRateBallots{types.NewExchangeRateBallot(
+	pb := types.ExchangeRateVotes{types.NewExchangeRateVote(
 		sdk.ZeroDec(),
 		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 		valAddr,
 		2,
-	), types.NewExchangeRateBallot(
+	), types.NewExchangeRateVote(
 		exchangeRate,
 		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 		valAddr,
@@ -333,4 +336,27 @@ func TestNewClaim(t *testing.T) {
 		WinCount:     winCount,
 		ValAddress:   addr,
 	}, claim)
+}
+
+func TestValidatorPerformances(t *testing.T) {
+	power := int64(42)
+	valNames := []string{"val0", "val1", "val2", "val3"}
+	perfList := []types.ValidatorPerformance{
+		types.NewValidatorPerformance(power, sdk.ValAddress([]byte(valNames[0]))),
+		types.NewValidatorPerformance(power, sdk.ValAddress([]byte(valNames[1]))),
+		types.NewValidatorPerformance(power, sdk.ValAddress([]byte(valNames[2]))),
+		types.NewValidatorPerformance(power, sdk.ValAddress([]byte(valNames[3]))),
+	}
+	perfs := make(types.ValidatorPerformances)
+	for idx, perf := range perfList {
+		perfs[valNames[idx]] = perf
+	}
+
+	require.NotPanics(t, func() {
+		out := perfs.String()
+		require.NotEmpty(t, out)
+
+		out = perfs[valNames[0]].String()
+		require.NotEmpty(t, out)
+	})
 }
