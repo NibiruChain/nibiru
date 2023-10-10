@@ -155,7 +155,7 @@ func TestNewAppModuleBasic(t *testing.T) {
 	appModule.EndBlock(ctx, abci.RequestEndBlock{})
 
 	cmds := appModule.GetTxCmd()
-	require.Len(t, cmds.Commands(), 7)
+	require.Len(t, cmds.Commands(), 8)
 
 	cmds = appModule.GetQueryCmd()
 	require.Len(t, cmds.Commands(), 4)
