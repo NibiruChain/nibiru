@@ -158,7 +158,7 @@ func TestOracleTally(t *testing.T) {
 			power = int64(0)
 		}
 
-		vote := types.NewExchangeRateBallot(
+		vote := types.NewExchangeRateVote(
 			decExchangeRate, asset.Registry.Pair(denoms.BTC, denoms.NUSD), valAddrs[i], power)
 		ballot = append(ballot, vote)
 

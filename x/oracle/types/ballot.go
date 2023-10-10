@@ -23,8 +23,8 @@ type ExchangeRateVote struct {
 	Power        int64 // how much tendermint consensus power this vote should have
 }
 
-// NewExchangeRateBallot returns a new ExchangeRateBallot instance
-func NewExchangeRateBallot(rate sdk.Dec, pair asset.Pair, voter sdk.ValAddress, power int64) ExchangeRateVote {
+// NewExchangeRateVote returns a new ExchangeRateVote instance
+func NewExchangeRateVote(rate sdk.Dec, pair asset.Pair, voter sdk.ValAddress, power int64) ExchangeRateVote {
 	return ExchangeRateVote{
 		ExchangeRate: rate,
 		Pair:         pair,
@@ -68,10 +68,10 @@ func (pb ExchangeRateVotes) ToCrossRate(bases map[string]sdk.Dec) (cb ExchangeRa
 }
 
 // NumValidVoters returns the number of voters who actually voted (i.e. did not abstain from voting for a pair).
-func (b ExchangeRateVotes) NumValidVoters() uint64 {
+func (v ExchangeRateVotes) NumValidVoters() uint64 {
 	count := 0
-	for _, ballot := range b {
-		if ballot.ExchangeRate.IsPositive() {
+	for _, vote := range v {
+		if vote.ExchangeRate.IsPositive() {
 			count++
 		}
 	}
@@ -79,9 +79,9 @@ func (b ExchangeRateVotes) NumValidVoters() uint64 {
 }
 
 // Power returns the total amount of voting power in the ballot
-func (b ExchangeRateVotes) Power() int64 {
+func (v ExchangeRateVotes) Power() int64 {
 	totalPower := int64(0)
-	for _, vote := range b {
+	for _, vote := range v {
 		totalPower += vote.Power
 	}
 
@@ -89,12 +89,12 @@ func (b ExchangeRateVotes) Power() int64 {
 }
 
 // WeightedMedian returns the median weighted by the power of the ExchangeRateVote.
-// CONTRACT: ballot must be sorted
-func (pb ExchangeRateVotes) WeightedMedian() sdk.Dec {
-	totalPower := pb.Power()
-	if pb.Len() > 0 {
+// CONTRACT: votes must be sorted
+func (votes ExchangeRateVotes) WeightedMedian() sdk.Dec {
+	totalPower := votes.Power()
+	if votes.Len() > 0 {
 		pivot := int64(0)
-		for _, v := range pb {
+		for _, v := range votes {
 			votePower := v.Power
 
 			pivot += votePower

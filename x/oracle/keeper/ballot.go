@@ -13,24 +13,24 @@ import (
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
-// groupBallotsByPair takes a collection of votes and organizes them by their
+// groupVotesByPair takes a collection of votes and groups them by their
 // associated asset pair. This method only considers votes from active validators
 // and disregards votes from validators that are not in the provided validator set.
 //
 // Note that any abstain votes (votes with a non-positive exchange rate) are
 // assigned zero vote power. This function then returns a map where each
-// asset pair is associated with its collection of ExchangeRateBallots.
-func (k Keeper) groupBallotsByPair(
+// asset pair is associated with its collection of ExchangeRateVotes.
+func (k Keeper) groupVotesByPair(
 	ctx sdk.Context,
-	valPerfMap types.ValidatorPerformances,
-) (pairBallotsMap map[asset.Pair]types.ExchangeRateVotes) {
-	pairBallotsMap = map[asset.Pair]types.ExchangeRateVotes{}
+	validatorPerformances types.ValidatorPerformances,
+) (pairVotes map[asset.Pair]types.ExchangeRateVotes) {
+	pairVotes = map[asset.Pair]types.ExchangeRateVotes{}
 
 	for _, value := range k.Votes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {
 		voterAddr, aggregateVote := value.Key, value.Value
 
 		// organize ballot only for the active validators
-		if validatorPerformance, exists := valPerfMap[aggregateVote.Voter]; exists {
+		if validatorPerformance, exists := validatorPerformances[aggregateVote.Voter]; exists {
 			for _, exchangeRateTuple := range aggregateVote.ExchangeRateTuples {
 				power := validatorPerformance.Power
 				if !exchangeRateTuple.ExchangeRate.IsPositive() {
@@ -38,8 +38,9 @@ func (k Keeper) groupBallotsByPair(
 					power = 0
 				}
 
-				pairBallotsMap[exchangeRateTuple.Pair] = append(pairBallotsMap[exchangeRateTuple.Pair],
-					types.NewExchangeRateBallot(
+				pairVotes[exchangeRateTuple.Pair] = append(
+					pairVotes[exchangeRateTuple.Pair],
+					types.NewExchangeRateVote(
 						exchangeRateTuple.ExchangeRate,
 						exchangeRateTuple.Pair,
 						voterAddr,
@@ -77,64 +78,64 @@ func (k Keeper) clearVotesAndPreVotes(ctx sdk.Context, votePeriod uint64) {
 
 // isPassingVoteThreshold ballot is passing the threshold amount of voting power
 func isPassingVoteThreshold(
-	ballots types.ExchangeRateVotes, thresholdVotingPower sdkmath.Int, minVoters uint64,
+	votes types.ExchangeRateVotes, thresholdVotingPower sdkmath.Int, minVoters uint64,
 ) bool {
-	ballotPower := sdk.NewInt(ballots.Power())
-	if ballotPower.IsZero() {
+	totalPower := sdk.NewInt(votes.Power())
+	if totalPower.IsZero() {
 		return false
 	}
 
-	if ballotPower.LT(thresholdVotingPower) {
+	if totalPower.LT(thresholdVotingPower) {
 		return false
 	}
 
-	if ballots.NumValidVoters() < minVoters {
+	if votes.NumValidVoters() < minVoters {
 		return false
 	}
 
 	return true
 }
 
-// removeInvalidBallots removes the ballots which have not reached the vote
+// removeInvalidVotes removes the ballots which have not reached the vote
 // threshold or which are not part of the whitelisted pairs anymore: example
 // when params change during a vote period but some votes were already made.
 //
-// ALERT: This function mutates pairBallotMap slice, it removes the ballot for
+// ALERT: This function mutates the pairVotes map, it removes the votes for
 // the pair which is not passing the threshold or which is not whitelisted
 // anymore.
-func (k Keeper) removeInvalidBallots(
+func (k Keeper) removeInvalidVotes(
 	ctx sdk.Context,
-	pairBallotsMap map[asset.Pair]types.ExchangeRateVotes,
+	pairVotes map[asset.Pair]types.ExchangeRateVotes,
 ) (map[asset.Pair]types.ExchangeRateVotes, set.Set[asset.Pair]) {
 	whitelistedPairs := set.New(k.GetWhitelistedPairs(ctx)...)
 
 	totalBondedPower := sdk.TokensToConsensusPower(
 		k.StakingKeeper.TotalBondedTokens(ctx), k.StakingKeeper.PowerReduction(ctx),
 	)
-	thresholdVotingPower := k.VoteThreshold(ctx).MulInt64(totalBondedPower).RoundInt()
-	minVoters := k.MinVoters(ctx)
 
 	// Iterate through sorted keys for deterministic ordering.
-	orderedBallotsMap := omap.OrderedMap_Pair[types.ExchangeRateVotes](pairBallotsMap)
+	orderedBallotsMap := omap.OrderedMap_Pair[types.ExchangeRateVotes](pairVotes)
 	for pair := range orderedBallotsMap.Range() {
-		ballots := pairBallotsMap[pair]
 		// If pair is not whitelisted, or the ballot for it has failed, then skip
 		// and remove it from pairBallotsMap for iteration efficiency
-		if _, exists := whitelistedPairs[pair]; !exists {
-			delete(pairBallotsMap, pair)
-			continue
+		if !whitelistedPairs.Has(pair) {
+			delete(pairVotes, pair)
 		}
 
 		// If the ballot is not passed, remove it from the whitelistedPairs set
 		// to prevent slashing validators who did valid vote.
-		if !isPassingVoteThreshold(ballots, thresholdVotingPower, minVoters) {
+		if !isPassingVoteThreshold(
+			pairVotes[pair],
+			k.VoteThreshold(ctx).MulInt64(totalBondedPower).RoundInt(),
+			k.MinVoters(ctx),
+		) {
 			delete(whitelistedPairs, pair)
-			delete(pairBallotsMap, pair)
+			delete(pairVotes, pair)
 			continue
 		}
 	}
 
-	return pairBallotsMap, whitelistedPairs
+	return pairVotes, whitelistedPairs
 }
 
 // Tally calculates the median and returns it. Sets the set of voters to be
@@ -144,36 +145,40 @@ func (k Keeper) removeInvalidBallots(
 // ALERT: This function mutates validatorPerformances slice based on the votes
 // made by the validators.
 func Tally(
-	ballots types.ExchangeRateVotes,
+	votes types.ExchangeRateVotes,
 	rewardBand sdk.Dec,
 	validatorPerformances types.ValidatorPerformances,
 ) (sdk.Dec, types.ValidatorPerformances) {
-	weightedMedian := ballots.WeightedMedianWithAssertion()
-	standardDeviation := ballots.StandardDeviation(weightedMedian)
+	weightedMedian := votes.WeightedMedianWithAssertion()
+	standardDeviation := votes.StandardDeviation(weightedMedian)
 	rewardSpread := weightedMedian.Mul(rewardBand.QuoInt64(2))
 
 	if standardDeviation.GT(rewardSpread) {
 		rewardSpread = standardDeviation
 	}
 
-	for _, ballot := range ballots {
+	for _, v := range votes {
 		// Filter ballot winners & abstain voters
-		voteInsideSpread := ballot.ExchangeRate.GTE(weightedMedian.Sub(rewardSpread)) &&
-			ballot.ExchangeRate.LTE(weightedMedian.Add(rewardSpread))
-		isAbstainVote := !ballot.ExchangeRate.IsPositive()
-		isMiss := !(voteInsideSpread || isAbstainVote)
-		voterAddr := ballot.Voter.String()
-		validatorPerformance := validatorPerformances[voterAddr]
+		isInsideSpread := v.ExchangeRate.GTE(weightedMedian.Sub(rewardSpread)) &&
+			v.ExchangeRate.LTE(weightedMedian.Add(rewardSpread))
+
+		isAbstainVote := !v.ExchangeRate.IsPositive() // strictly less than zero, don't want to include zero
+		isMiss := !isInsideSpread && !isAbstainVote
+
+		validatorPerformance := validatorPerformances[v.Voter.String()]
+
 		switch {
-		case voteInsideSpread:
-			validatorPerformance.RewardWeight += ballot.Power
+		case isInsideSpread:
+			validatorPerformance.RewardWeight += v.Power
 			validatorPerformance.WinCount++
 		case isMiss:
 			validatorPerformance.MissCount++
 		case isAbstainVote:
 			validatorPerformance.AbstainCount++
 		}
-		validatorPerformances[voterAddr] = validatorPerformance
+
+		validatorPerformances[v.Voter.String()] = validatorPerformance
 	}
+
 	return weightedMedian, validatorPerformances
 }

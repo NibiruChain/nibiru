@@ -25,9 +25,9 @@ func (k Keeper) AllocateRewards(ctx sdk.Context, funderModule string, totalCoins
 	return k.bankKeeper.SendCoinsFromModuleToModule(ctx, funderModule, types.ModuleName, totalCoins)
 }
 
-// rewardBallotWinners gives out a portion of spread fees collected in the
+// rewardWinners gives out a portion of spread fees collected in the
 // oracle reward pool to the oracle voters that voted faithfully.
-func (k Keeper) rewardBallotWinners(
+func (k Keeper) rewardWinners(
 	ctx sdk.Context,
 	validatorPerformances types.ValidatorPerformances,
 ) {

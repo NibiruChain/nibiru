@@ -16,13 +16,13 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) types.ValidatorPerformances
 	k.Logger(ctx).Info("processing validator price votes")
 
 	validatorPerformances := k.newValidatorPerformances(ctx)
-	pairBallotsMap, whitelistedPairs := k.getPairBallotsMapAndWhitelistedPairs(ctx, validatorPerformances)
+	pairVotes, whitelistedPairs := k.getPairVotesAndWhitelistedPairs(ctx, validatorPerformances)
 
-	k.resetExchangeRates(ctx, pairBallotsMap)
-	k.countVotesAndUpdateExchangeRates(ctx, pairBallotsMap, validatorPerformances)
+	k.resetExchangeRates(ctx, pairVotes)
+	k.countVotesAndUpdateExchangeRates(ctx, pairVotes, validatorPerformances)
 
 	k.registerMissedVotes(ctx, whitelistedPairs, validatorPerformances)
-	k.rewardBallotWinners(ctx, validatorPerformances)
+	k.rewardWinners(ctx, validatorPerformances)
 
 	params, _ := k.Params.Get(ctx)
 	k.clearVotesAndPreVotes(ctx, params.VotePeriod)
@@ -66,16 +66,16 @@ func (k Keeper) registerAbstainsByOmission(
 // ExchangeRates based on the results.
 func (k Keeper) countVotesAndUpdateExchangeRates(
 	ctx sdk.Context,
-	pairBallotsMap map[asset.Pair]types.ExchangeRateVotes,
+	pairVotes map[asset.Pair]types.ExchangeRateVotes,
 	validatorPerformances types.ValidatorPerformances,
 ) {
 	rewardBand := k.RewardBand(ctx)
 
 	// Iterate through sorted keys for deterministic ordering.
-	orderedBallotsMap := omap.OrderedMap_Pair[types.ExchangeRateVotes](pairBallotsMap)
-	for pair := range orderedBallotsMap.Range() {
-		ballots := pairBallotsMap[pair]
-		exchangeRate, _ := Tally(ballots, rewardBand, validatorPerformances)
+	orderedPairVotes := omap.OrderedMap_Pair[types.ExchangeRateVotes](pairVotes)
+	for pair := range orderedPairVotes.Range() {
+		votes := pairVotes[pair]
+		exchangeRate, _ := Tally(votes, rewardBand, validatorPerformances)
 
 		k.SetPrice(ctx, pair, exchangeRate)
 
@@ -87,29 +87,29 @@ func (k Keeper) countVotesAndUpdateExchangeRates(
 	}
 }
 
-// getPairBallotsMapAndWhitelistedPairs returns a map of pairs and ballots excluding invalid Ballots
-// and a map with all whitelisted pairs.
-func (k Keeper) getPairBallotsMapAndWhitelistedPairs(
+// getPairVotesAndWhitelistedPairs returns a map of pairs and votes excluding abstained votes
+// and a set of all whitelisted pairs.
+func (k Keeper) getPairVotesAndWhitelistedPairs(
 	ctx sdk.Context,
 	validatorPerformances types.ValidatorPerformances,
-) (pairBallotsMap map[asset.Pair]types.ExchangeRateVotes, whitelistedPairsMap set.Set[asset.Pair]) {
-	pairBallotsMap = k.groupBallotsByPair(ctx, validatorPerformances)
+) (pairVotes map[asset.Pair]types.ExchangeRateVotes, whitelistedPairs set.Set[asset.Pair]) {
+	pairVotes = k.groupVotesByPair(ctx, validatorPerformances)
 
-	return k.removeInvalidBallots(ctx, pairBallotsMap)
+	return k.removeInvalidVotes(ctx, pairVotes)
 }
 
 // resetExchangeRates removes all exchange rates from the state
 // We remove the price for pair with expired prices or valid ballots
-func (k Keeper) resetExchangeRates(ctx sdk.Context, pairBallotsMap map[asset.Pair]types.ExchangeRateVotes) {
+func (k Keeper) resetExchangeRates(ctx sdk.Context, pairVotes map[asset.Pair]types.ExchangeRateVotes) {
 	params, _ := k.Params.Get(ctx)
 	expirationBlocks := params.ExpirationBlocks
 
 	for _, key := range k.ExchangeRates.Iterate(ctx, collections.Range[asset.Pair]{}).Keys() {
-		_, validBallot := pairBallotsMap[key]
+		_, isValid := pairVotes[key]
 		exchangeRate, _ := k.ExchangeRates.Get(ctx, key)
 		isExpired := exchangeRate.CreatedBlock+expirationBlocks <= uint64(ctx.BlockHeight())
 
-		if validBallot || isExpired {
+		if isValid || isExpired {
 			err := k.ExchangeRates.Delete(ctx, key)
 			if err != nil {
 				k.Logger(ctx).Error("failed to delete exchange rate", "pair", key.String(), "error", err)

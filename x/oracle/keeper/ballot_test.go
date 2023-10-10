@@ -65,7 +65,7 @@ func TestGroupBallotsByPair(t *testing.T) {
 	}
 
 	// organize votes by pair
-	ballotMap := fixture.OracleKeeper.groupBallotsByPair(fixture.Ctx, types.ValidatorPerformances{
+	ballotMap := fixture.OracleKeeper.groupVotesByPair(fixture.Ctx, types.ValidatorPerformances{
 		ValAddrs[0].String(): {
 			Power:      power,
 			WinCount:   0,
@@ -110,14 +110,14 @@ func TestClearBallots(t *testing.T) {
 	staking.EndBlocker(fixture.Ctx, &fixture.StakingKeeper)
 
 	btcBallot := types.ExchangeRateVotes{
-		types.NewExchangeRateBallot(sdk.NewDec(17), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[0], power),
-		types.NewExchangeRateBallot(sdk.NewDec(10), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[1], power),
-		types.NewExchangeRateBallot(sdk.NewDec(6), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[2], power),
+		types.NewExchangeRateVote(sdk.NewDec(17), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[0], power),
+		types.NewExchangeRateVote(sdk.NewDec(10), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[1], power),
+		types.NewExchangeRateVote(sdk.NewDec(6), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[2], power),
 	}
 	ethBallot := types.ExchangeRateVotes{
-		types.NewExchangeRateBallot(sdk.NewDec(1000), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[0], power),
-		types.NewExchangeRateBallot(sdk.NewDec(1300), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[1], power),
-		types.NewExchangeRateBallot(sdk.NewDec(2000), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[2], power),
+		types.NewExchangeRateVote(sdk.NewDec(1000), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[0], power),
+		types.NewExchangeRateVote(sdk.NewDec(1300), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[1], power),
+		types.NewExchangeRateVote(sdk.NewDec(2000), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[2], power),
 	}
 
 	for i := range btcBallot {
@@ -177,7 +177,7 @@ func TestFuzzTally(t *testing.T) {
 				var rate sdk.Dec
 				c.Fuzz(&rate)
 
-				ballot = append(ballot, types.NewExchangeRateBallot(rate, asset.NewPair(c.RandString(), c.RandString()), addr, power))
+				ballot = append(ballot, types.NewExchangeRateVote(rate, asset.NewPair(c.RandString(), c.RandString()), addr, power))
 			}
 
 			*e = ballot
@@ -265,7 +265,7 @@ func TestRemoveInvalidBallots(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			fixture, _ := Setup(t)
 			assert.NotPanics(t, func() {
-				fixture.OracleKeeper.removeInvalidBallots(fixture.Ctx, tc.voteMap)
+				fixture.OracleKeeper.removeInvalidVotes(fixture.Ctx, tc.voteMap)
 			}, "voteMap: %v", tc.voteMap)
 		})
 	}
@@ -314,7 +314,7 @@ func TestFuzzPickReferencePair(t *testing.T) {
 					var rate sdk.Dec
 					c.Fuzz(&rate)
 
-					ballots = append(ballots, types.NewExchangeRateBallot(rate, pair, addr, power))
+					ballots = append(ballots, types.NewExchangeRateVote(rate, pair, addr, power))
 				}
 
 				(*e)[pair] = ballots
@@ -342,15 +342,15 @@ func TestFuzzPickReferencePair(t *testing.T) {
 	f.Fuzz(&voteMap)
 
 	assert.NotPanics(t, func() {
-		input.OracleKeeper.removeInvalidBallots(input.Ctx, voteMap)
+		input.OracleKeeper.removeInvalidVotes(input.Ctx, voteMap)
 	}, "voteMap: %v", voteMap)
 }
 
 func TestZeroBallotPower(t *testing.T) {
 	btcBallots := types.ExchangeRateVotes{
-		types.NewExchangeRateBallot(sdk.NewDec(17), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[0], 0),
-		types.NewExchangeRateBallot(sdk.NewDec(10), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[1], 0),
-		types.NewExchangeRateBallot(sdk.NewDec(6), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[2], 0),
+		types.NewExchangeRateVote(sdk.NewDec(17), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[0], 0),
+		types.NewExchangeRateVote(sdk.NewDec(10), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[1], 0),
+		types.NewExchangeRateVote(sdk.NewDec(6), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[2], 0),
 	}
 
 	assert.False(t, isPassingVoteThreshold(btcBallots, sdk.ZeroInt(), 0))
