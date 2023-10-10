@@ -95,8 +95,8 @@ func TestResetExchangeRates(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	fixture, _ := Setup(t)
 
-	emptyBallot := map[asset.Pair]types.ExchangeRateBallots{}
-	validBallot := map[asset.Pair]types.ExchangeRateBallots{pair: {}}
+	emptyBallot := map[asset.Pair]types.ExchangeRateVotes{}
+	validBallot := map[asset.Pair]types.ExchangeRateVotes{pair: {}}
 
 	// Set expiration blocks to 10
 	params, _ := fixture.OracleKeeper.Params.Get(fixture.Ctx)
@@ -131,7 +131,7 @@ func TestResetExchangeRates(t *testing.T) {
 func TestOracleTally(t *testing.T) {
 	fixture, _ := Setup(t)
 
-	ballot := types.ExchangeRateBallots{}
+	ballot := types.ExchangeRateVotes{}
 	rates, valAddrs, stakingKeeper := types.GenerateRandomTestCase()
 	fixture.OracleKeeper.StakingKeeper = stakingKeeper
 	h := NewMsgServerImpl(fixture.OracleKeeper)

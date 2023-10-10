@@ -66,13 +66,13 @@ func (k Keeper) registerAbstainsByOmission(
 // ExchangeRates based on the results.
 func (k Keeper) countVotesAndUpdateExchangeRates(
 	ctx sdk.Context,
-	pairBallotsMap map[asset.Pair]types.ExchangeRateBallots,
+	pairBallotsMap map[asset.Pair]types.ExchangeRateVotes,
 	validatorPerformances types.ValidatorPerformances,
 ) {
 	rewardBand := k.RewardBand(ctx)
 
 	// Iterate through sorted keys for deterministic ordering.
-	orderedBallotsMap := omap.OrderedMap_Pair[types.ExchangeRateBallots](pairBallotsMap)
+	orderedBallotsMap := omap.OrderedMap_Pair[types.ExchangeRateVotes](pairBallotsMap)
 	for pair := range orderedBallotsMap.Range() {
 		ballots := pairBallotsMap[pair]
 		exchangeRate, _ := Tally(ballots, rewardBand, validatorPerformances)
@@ -92,7 +92,7 @@ func (k Keeper) countVotesAndUpdateExchangeRates(
 func (k Keeper) getPairBallotsMapAndWhitelistedPairs(
 	ctx sdk.Context,
 	validatorPerformances types.ValidatorPerformances,
-) (pairBallotsMap map[asset.Pair]types.ExchangeRateBallots, whitelistedPairsMap set.Set[asset.Pair]) {
+) (pairBallotsMap map[asset.Pair]types.ExchangeRateVotes, whitelistedPairsMap set.Set[asset.Pair]) {
 	pairBallotsMap = k.groupBallotsByPair(ctx, validatorPerformances)
 
 	return k.removeInvalidBallots(ctx, pairBallotsMap)
@@ -100,7 +100,7 @@ func (k Keeper) getPairBallotsMapAndWhitelistedPairs(
 
 // resetExchangeRates removes all exchange rates from the state
 // We remove the price for pair with expired prices or valid ballots
-func (k Keeper) resetExchangeRates(ctx sdk.Context, pairBallotsMap map[asset.Pair]types.ExchangeRateBallots) {
+func (k Keeper) resetExchangeRates(ctx sdk.Context, pairBallotsMap map[asset.Pair]types.ExchangeRateVotes) {
 	params, _ := k.Params.Get(ctx)
 	expirationBlocks := params.ExpirationBlocks
 

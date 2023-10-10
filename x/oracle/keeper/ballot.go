@@ -23,8 +23,8 @@ import (
 func (k Keeper) groupBallotsByPair(
 	ctx sdk.Context,
 	valPerfMap types.ValidatorPerformances,
-) (pairBallotsMap map[asset.Pair]types.ExchangeRateBallots) {
-	pairBallotsMap = map[asset.Pair]types.ExchangeRateBallots{}
+) (pairBallotsMap map[asset.Pair]types.ExchangeRateVotes) {
+	pairBallotsMap = map[asset.Pair]types.ExchangeRateVotes{}
 
 	for _, value := range k.Votes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).KeyValues() {
 		voterAddr, aggregateVote := value.Key, value.Value
@@ -77,7 +77,7 @@ func (k Keeper) clearVotesAndPreVotes(ctx sdk.Context, votePeriod uint64) {
 
 // isPassingVoteThreshold ballot is passing the threshold amount of voting power
 func isPassingVoteThreshold(
-	ballots types.ExchangeRateBallots, thresholdVotingPower sdkmath.Int, minVoters uint64,
+	ballots types.ExchangeRateVotes, thresholdVotingPower sdkmath.Int, minVoters uint64,
 ) bool {
 	ballotPower := sdk.NewInt(ballots.Power())
 	if ballotPower.IsZero() {
@@ -104,8 +104,8 @@ func isPassingVoteThreshold(
 // anymore.
 func (k Keeper) removeInvalidBallots(
 	ctx sdk.Context,
-	pairBallotsMap map[asset.Pair]types.ExchangeRateBallots,
-) (map[asset.Pair]types.ExchangeRateBallots, set.Set[asset.Pair]) {
+	pairBallotsMap map[asset.Pair]types.ExchangeRateVotes,
+) (map[asset.Pair]types.ExchangeRateVotes, set.Set[asset.Pair]) {
 	whitelistedPairs := set.New(k.GetWhitelistedPairs(ctx)...)
 
 	totalBondedPower := sdk.TokensToConsensusPower(
@@ -115,7 +115,7 @@ func (k Keeper) removeInvalidBallots(
 	minVoters := k.MinVoters(ctx)
 
 	// Iterate through sorted keys for deterministic ordering.
-	orderedBallotsMap := omap.OrderedMap_Pair[types.ExchangeRateBallots](pairBallotsMap)
+	orderedBallotsMap := omap.OrderedMap_Pair[types.ExchangeRateVotes](pairBallotsMap)
 	for pair := range orderedBallotsMap.Range() {
 		ballots := pairBallotsMap[pair]
 		// If pair is not whitelisted, or the ballot for it has failed, then skip
@@ -144,7 +144,7 @@ func (k Keeper) removeInvalidBallots(
 // ALERT: This function mutates validatorPerformances slice based on the votes
 // made by the validators.
 func Tally(
-	ballots types.ExchangeRateBallots,
+	ballots types.ExchangeRateVotes,
 	rewardBand sdk.Dec,
 	validatorPerformances types.ValidatorPerformances,
 ) (sdk.Dec, types.ValidatorPerformances) {

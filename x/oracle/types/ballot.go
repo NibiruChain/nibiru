@@ -15,8 +15,8 @@ import (
 // NOTE: we don't need to implement proto interface on this file
 //       these are not used in store or rpc response
 
-// ExchangeRateBallot is a convenience wrapper to reduce redundant lookup cost
-type ExchangeRateBallot struct {
+// ExchangeRateVote is a convenience wrapper to reduce redundant lookup cost
+type ExchangeRateVote struct {
 	Pair         asset.Pair
 	ExchangeRate sdk.Dec // aka price
 	Voter        sdk.ValAddress
@@ -24,8 +24,8 @@ type ExchangeRateBallot struct {
 }
 
 // NewExchangeRateBallot returns a new ExchangeRateBallot instance
-func NewExchangeRateBallot(rate sdk.Dec, pair asset.Pair, voter sdk.ValAddress, power int64) ExchangeRateBallot {
-	return ExchangeRateBallot{
+func NewExchangeRateBallot(rate sdk.Dec, pair asset.Pair, voter sdk.ValAddress, power int64) ExchangeRateVote {
+	return ExchangeRateVote{
 		ExchangeRate: rate,
 		Pair:         pair,
 		Voter:        voter,
@@ -33,11 +33,11 @@ func NewExchangeRateBallot(rate sdk.Dec, pair asset.Pair, voter sdk.ValAddress, 
 	}
 }
 
-// ExchangeRateBallots is a convenience wrapper around a ExchangeRateVote slice
-type ExchangeRateBallots []ExchangeRateBallot
+// ExchangeRateVotes is a convenience wrapper around a ExchangeRateVote slice
+type ExchangeRateVotes []ExchangeRateVote
 
 // ToMap return organized exchange rate map by validator
-func (pb ExchangeRateBallots) ToMap() map[string]sdk.Dec {
+func (pb ExchangeRateVotes) ToMap() map[string]sdk.Dec {
 	validatorExchangeRateMap := make(map[string]sdk.Dec)
 	for _, vote := range pb {
 		if vote.ExchangeRate.IsPositive() {
@@ -49,7 +49,7 @@ func (pb ExchangeRateBallots) ToMap() map[string]sdk.Dec {
 }
 
 // ToCrossRate return cross_rate(base/exchange_rate) ballot
-func (pb ExchangeRateBallots) ToCrossRate(bases map[string]sdk.Dec) (cb ExchangeRateBallots) {
+func (pb ExchangeRateVotes) ToCrossRate(bases map[string]sdk.Dec) (cb ExchangeRateVotes) {
 	for i := range pb {
 		vote := pb[i]
 
@@ -68,7 +68,7 @@ func (pb ExchangeRateBallots) ToCrossRate(bases map[string]sdk.Dec) (cb Exchange
 }
 
 // NumValidVoters returns the number of voters who actually voted (i.e. did not abstain from voting for a pair).
-func (b ExchangeRateBallots) NumValidVoters() uint64 {
+func (b ExchangeRateVotes) NumValidVoters() uint64 {
 	count := 0
 	for _, ballot := range b {
 		if ballot.ExchangeRate.IsPositive() {
@@ -79,7 +79,7 @@ func (b ExchangeRateBallots) NumValidVoters() uint64 {
 }
 
 // Power returns the total amount of voting power in the ballot
-func (b ExchangeRateBallots) Power() int64 {
+func (b ExchangeRateVotes) Power() int64 {
 	totalPower := int64(0)
 	for _, vote := range b {
 		totalPower += vote.Power
@@ -90,7 +90,7 @@ func (b ExchangeRateBallots) Power() int64 {
 
 // WeightedMedian returns the median weighted by the power of the ExchangeRateVote.
 // CONTRACT: ballot must be sorted
-func (pb ExchangeRateBallots) WeightedMedian() sdk.Dec {
+func (pb ExchangeRateVotes) WeightedMedian() sdk.Dec {
 	totalPower := pb.Power()
 	if pb.Len() > 0 {
 		pivot := int64(0)
@@ -107,7 +107,7 @@ func (pb ExchangeRateBallots) WeightedMedian() sdk.Dec {
 }
 
 // WeightedMedianWithAssertion returns the median weighted by the power of the ExchangeRateVote.
-func (pb ExchangeRateBallots) WeightedMedianWithAssertion() sdk.Dec {
+func (pb ExchangeRateVotes) WeightedMedianWithAssertion() sdk.Dec {
 	sort.Sort(pb)
 	totalPower := pb.Power()
 	if pb.Len() > 0 {
@@ -125,7 +125,7 @@ func (pb ExchangeRateBallots) WeightedMedianWithAssertion() sdk.Dec {
 }
 
 // StandardDeviation returns the standard deviation by the power of the ExchangeRateVote.
-func (pb ExchangeRateBallots) StandardDeviation(median sdk.Dec) (standardDeviation sdk.Dec) {
+func (pb ExchangeRateVotes) StandardDeviation(median sdk.Dec) (standardDeviation sdk.Dec) {
 	if len(pb) == 0 {
 		return sdk.ZeroDec()
 	}
@@ -157,18 +157,18 @@ func (pb ExchangeRateBallots) StandardDeviation(median sdk.Dec) (standardDeviati
 }
 
 // Len implements sort.Interface
-func (pb ExchangeRateBallots) Len() int {
+func (pb ExchangeRateVotes) Len() int {
 	return len(pb)
 }
 
 // Less reports whether the element with
 // index i should sort before the element with index j.
-func (pb ExchangeRateBallots) Less(i, j int) bool {
+func (pb ExchangeRateVotes) Less(i, j int) bool {
 	return pb[i].ExchangeRate.LT(pb[j].ExchangeRate)
 }
 
 // Swap implements sort.Interface.
-func (pb ExchangeRateBallots) Swap(i, j int) {
+func (pb ExchangeRateVotes) Swap(i, j int) {
 	pb[i], pb[j] = pb[j], pb[i]
 }
 

@@ -22,10 +22,10 @@ import (
 
 func TestExchangeRateBallotsToMap(t *testing.T) {
 	tests := struct {
-		votes   []types.ExchangeRateBallot
+		votes   []types.ExchangeRateVote
 		isValid []bool
 	}{
-		[]types.ExchangeRateBallot{
+		[]types.ExchangeRateVote{
 			{
 				Voter:        sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()),
 				Pair:         asset.Registry.Pair(denoms.BTC, denoms.NUSD),
@@ -48,7 +48,7 @@ func TestExchangeRateBallotsToMap(t *testing.T) {
 		[]bool{true, false, true},
 	}
 
-	pb := types.ExchangeRateBallots(tests.votes)
+	pb := types.ExchangeRateVotes(tests.votes)
 	mapData := pb.ToMap()
 	for i, vote := range tests.votes {
 		exchangeRate, ok := mapData[string(vote.Voter)]
@@ -60,7 +60,7 @@ func TestExchangeRateBallotsToMap(t *testing.T) {
 		}
 	}
 	require.NotPanics(t, func() {
-		types.ExchangeRateBallots(tests.votes).NumValidVoters()
+		types.ExchangeRateVotes(tests.votes).NumValidVoters()
 	})
 }
 
@@ -87,9 +87,9 @@ func TestToCrossRate(t *testing.T) {
 		},
 	}
 
-	pbBase := types.ExchangeRateBallots{}
-	pbQuote := types.ExchangeRateBallots{}
-	cb := types.ExchangeRateBallots{}
+	pbBase := types.ExchangeRateVotes{}
+	pbQuote := types.ExchangeRateVotes{}
+	cb := types.ExchangeRateVotes{}
 	for _, data := range data {
 		valAddr := sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address())
 		if !data.base.IsZero() {
@@ -126,7 +126,7 @@ func TestSqrt(t *testing.T) {
 func TestPBPower(t *testing.T) {
 	ctx := sdk.NewContext(nil, tmproto.Header{}, false, nil)
 	_, valAccAddrs, sk := types.GenerateRandomTestCase()
-	pb := types.ExchangeRateBallots{}
+	pb := types.ExchangeRateVotes{}
 	ballotPower := int64(0)
 
 	for i := 0; i < len(sk.Validators()); i++ {
@@ -206,7 +206,7 @@ func TestPBWeightedMedian(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		pb := types.ExchangeRateBallots{}
+		pb := types.ExchangeRateVotes{}
 		for i, input := range tc.inputs {
 			valAddr := sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address())
 
@@ -276,7 +276,7 @@ func TestPBStandardDeviation(t *testing.T) {
 
 	base := math.Pow10(types.OracleDecPrecision)
 	for _, tc := range tests {
-		pb := types.ExchangeRateBallots{}
+		pb := types.ExchangeRateVotes{}
 		for i, input := range tc.inputs {
 			valAddr := sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address())
 
@@ -304,7 +304,7 @@ func TestPBStandardDeviationOverflow(t *testing.T) {
 	exchangeRate, err := sdk.NewDecFromStr("100000000000000000000000000000000000000000000000000000000.0")
 	require.NoError(t, err)
 
-	pb := types.ExchangeRateBallots{types.NewExchangeRateBallot(
+	pb := types.ExchangeRateVotes{types.NewExchangeRateBallot(
 		sdk.ZeroDec(),
 		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
 		valAddr,

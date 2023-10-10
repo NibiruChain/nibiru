@@ -39,12 +39,12 @@ func TestGroupBallotsByPair(t *testing.T) {
 
 	pairBtc := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	pairEth := asset.Registry.Pair(denoms.ETH, denoms.NUSD)
-	btcBallots := types.ExchangeRateBallots{
+	btcBallots := types.ExchangeRateVotes{
 		{Pair: pairBtc, ExchangeRate: sdk.NewDec(17), Voter: ValAddrs[0], Power: power},
 		{Pair: pairBtc, ExchangeRate: sdk.NewDec(10), Voter: ValAddrs[1], Power: power},
 		{Pair: pairBtc, ExchangeRate: sdk.NewDec(6), Voter: ValAddrs[2], Power: power},
 	}
-	ethBallots := types.ExchangeRateBallots{
+	ethBallots := types.ExchangeRateVotes{
 		{Pair: pairEth, ExchangeRate: sdk.NewDec(1_000), Voter: ValAddrs[0], Power: power},
 		{Pair: pairEth, ExchangeRate: sdk.NewDec(1_300), Voter: ValAddrs[1], Power: power},
 		{Pair: pairEth, ExchangeRate: sdk.NewDec(2_000), Voter: ValAddrs[2], Power: power},
@@ -109,12 +109,12 @@ func TestClearBallots(t *testing.T) {
 	require.NoError(t, err)
 	staking.EndBlocker(fixture.Ctx, &fixture.StakingKeeper)
 
-	btcBallot := types.ExchangeRateBallots{
+	btcBallot := types.ExchangeRateVotes{
 		types.NewExchangeRateBallot(sdk.NewDec(17), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[0], power),
 		types.NewExchangeRateBallot(sdk.NewDec(10), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[1], power),
 		types.NewExchangeRateBallot(sdk.NewDec(6), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[2], power),
 	}
-	ethBallot := types.ExchangeRateBallots{
+	ethBallot := types.ExchangeRateVotes{
 		types.NewExchangeRateBallot(sdk.NewDec(1000), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[0], power),
 		types.NewExchangeRateBallot(sdk.NewDec(1300), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[1], power),
 		types.NewExchangeRateBallot(sdk.NewDec(2000), asset.Registry.Pair(denoms.ETH, denoms.NUSD), ValAddrs[2], power),
@@ -169,8 +169,8 @@ func TestFuzzTally(t *testing.T) {
 				(*e)[validator] = types.NewValidatorPerformance(power, addr)
 			}
 		},
-		func(e *types.ExchangeRateBallots, c fuzz.Continue) {
-			ballot := types.ExchangeRateBallots{}
+		func(e *types.ExchangeRateVotes, c fuzz.Continue) {
+			ballot := types.ExchangeRateVotes{}
 			for addr, power := range validators {
 				addr, _ := sdk.ValAddressFromBech32(addr)
 
@@ -190,7 +190,7 @@ func TestFuzzTally(t *testing.T) {
 	claimMap := types.ValidatorPerformances{}
 	f.Fuzz(&claimMap)
 
-	ballot := types.ExchangeRateBallots{}
+	ballot := types.ExchangeRateVotes{}
 	f.Fuzz(&ballot)
 
 	var rewardBand sdk.Dec
@@ -201,7 +201,7 @@ func TestFuzzTally(t *testing.T) {
 	})
 }
 
-type VoteMap = map[asset.Pair]types.ExchangeRateBallots
+type VoteMap = map[asset.Pair]types.ExchangeRateVotes
 
 func TestRemoveInvalidBallots(t *testing.T) {
 	testCases := []struct {
@@ -211,35 +211,35 @@ func TestRemoveInvalidBallots(t *testing.T) {
 		{
 			name: "empty key, empty ballot",
 			voteMap: VoteMap{
-				"": types.ExchangeRateBallots{},
+				"": types.ExchangeRateVotes{},
 			},
 		},
 		{
 			name: "nonempty key, empty ballot",
 			voteMap: VoteMap{
-				"xxx": types.ExchangeRateBallots{},
+				"xxx": types.ExchangeRateVotes{},
 			},
 		},
 		{
 			name: "nonempty keys, empty ballot",
 			voteMap: VoteMap{
-				"xxx":    types.ExchangeRateBallots{},
-				"abc123": types.ExchangeRateBallots{},
+				"xxx":    types.ExchangeRateVotes{},
+				"abc123": types.ExchangeRateVotes{},
 			},
 		},
 		{
 			name: "mixed empty keys, empty ballot",
 			voteMap: VoteMap{
-				"xxx":    types.ExchangeRateBallots{},
-				"":       types.ExchangeRateBallots{},
-				"abc123": types.ExchangeRateBallots{},
-				"0x":     types.ExchangeRateBallots{},
+				"xxx":    types.ExchangeRateVotes{},
+				"":       types.ExchangeRateVotes{},
+				"abc123": types.ExchangeRateVotes{},
+				"0x":     types.ExchangeRateVotes{},
 			},
 		},
 		{
 			name: "empty key, nonempty ballot, not whitelisted",
 			voteMap: VoteMap{
-				"": types.ExchangeRateBallots{
+				"": types.ExchangeRateVotes{
 					{Pair: "", ExchangeRate: sdk.ZeroDec(), Voter: sdk.ValAddress{}, Power: 0},
 				},
 			},
@@ -247,13 +247,13 @@ func TestRemoveInvalidBallots(t *testing.T) {
 		{
 			name: "nonempty key, nonempty ballot, whitelisted",
 			voteMap: VoteMap{
-				"x": types.ExchangeRateBallots{
+				"x": types.ExchangeRateVotes{
 					{Pair: "x", ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
 				},
-				asset.Registry.Pair(denoms.BTC, denoms.NUSD): types.ExchangeRateBallots{
+				asset.Registry.Pair(denoms.BTC, denoms.NUSD): types.ExchangeRateVotes{
 					{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
 				},
-				asset.Registry.Pair(denoms.ETH, denoms.NUSD): types.ExchangeRateBallots{
+				asset.Registry.Pair(denoms.ETH, denoms.NUSD): types.ExchangeRateVotes{
 					{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: sdk.Dec{}, Voter: sdk.ValAddress{123}, Power: 5},
 				},
 			},
@@ -301,12 +301,12 @@ func TestFuzzPickReferencePair(t *testing.T) {
 				(*e)[sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address()).String()] = int64(c.Intn(100) + 1)
 			}
 		},
-		func(e *map[asset.Pair]types.ExchangeRateBallots, c fuzz.Continue) {
+		func(e *map[asset.Pair]types.ExchangeRateVotes, c fuzz.Continue) {
 			validators := map[string]int64{}
 			c.Fuzz(&validators)
 
 			for _, pair := range pairs {
-				ballots := types.ExchangeRateBallots{}
+				ballots := types.ExchangeRateVotes{}
 
 				for addr, power := range validators {
 					addr, _ := sdk.ValAddressFromBech32(addr)
@@ -338,7 +338,7 @@ func TestFuzzPickReferencePair(t *testing.T) {
 	}
 
 	// test OracleKeeper.RemoveInvalidBallots
-	voteMap := map[asset.Pair]types.ExchangeRateBallots{}
+	voteMap := map[asset.Pair]types.ExchangeRateVotes{}
 	f.Fuzz(&voteMap)
 
 	assert.NotPanics(t, func() {
@@ -347,7 +347,7 @@ func TestFuzzPickReferencePair(t *testing.T) {
 }
 
 func TestZeroBallotPower(t *testing.T) {
-	btcBallots := types.ExchangeRateBallots{
+	btcBallots := types.ExchangeRateVotes{
 		types.NewExchangeRateBallot(sdk.NewDec(17), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[0], 0),
 		types.NewExchangeRateBallot(sdk.NewDec(10), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[1], 0),
 		types.NewExchangeRateBallot(sdk.NewDec(6), asset.Registry.Pair(denoms.BTC, denoms.NUSD), ValAddrs[2], 0),
