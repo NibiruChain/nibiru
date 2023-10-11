@@ -48,7 +48,7 @@ func GenerateRandomTestCase() (rates []float64, valAddrs []sdk.ValAddress, staki
 
 var _ StakingKeeper = DummyStakingKeeper{}
 
-// DummyStakingKeeper dummy staking keeper to test ballot
+// DummyStakingKeeper dummy staking keeper to test votes
 type DummyStakingKeeper struct {
 	validators []MockValidator
 }
