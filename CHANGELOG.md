@@ -67,6 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `bufbuild/buf-setup-action` from 1.26.1 to 1.27.0 ([#1624](https://github.com/NibiruChain/nibiru/pull/1624))
 - Bump `stefanzweifel/git-auto-commit-action` from 4 to 5 ([#1625](https://github.com/NibiruChain/nibiru/pull/1625))
 - Bump `github.com/CosmWasm/wasmvm` from 1.4.0 to 1.4.1 ([#1629](https://github.com/NibiruChain/nibiru/pull/1629))
+- Bump `google.golang.org/grpc` from 1.58.2 to 1.58.3 ([#1633](https://github.com/NibiruChain/nibiru/pull/1633))
 
 ### Bug Fixes
 
