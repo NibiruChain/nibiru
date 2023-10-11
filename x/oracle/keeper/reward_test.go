@@ -40,7 +40,7 @@ func TestKeeperRewardsDistributionMultiVotePeriods(t *testing.T) {
 			MakeAggregatePrevoteAndVote(t, fixture, msgServer, fixture.Ctx.BlockHeight(), types.ExchangeRateTuples{
 				{
 					Pair:         asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
-					ExchangeRate: randomExchangeRate,
+					ExchangeRate: testExchangeRate,
 				},
 			}, valIndex)
 		}
