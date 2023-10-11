@@ -85,6 +85,8 @@ func TestDisableMarket(t *testing.T) {
 			),
 		).When(
 			CloseMarket(pairBtcUsdc),
+			CloseMarketShouldFail(pairBtcUsdc),
+			CloseMarketShouldFail("random:pair"),
 		).Then(
 			ClosePositionFails(alice, pairBtcUsdc, types.ErrMarketNotEnabled),
 		),
@@ -273,7 +275,6 @@ func TestSettlePosition(t *testing.T) {
 				sdk.ZeroDec(),
 			),
 		).Then(
-
 			SettlePositionShouldFail(pairBtcUsdc, 3, alice), // can't settle on non existing market
 			SettlePositionShouldFail(pairBtcUsdc, 2, alice), // can't settle on live market
 			SettlePosition(pairBtcUsdc, 1, alice),

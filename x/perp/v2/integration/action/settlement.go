@@ -29,6 +29,24 @@ func CloseMarket(pair asset.Pair) action.Action {
 	return closeMarket{pair: pair}
 }
 
+// closeMarketShouldFail
+type closeMarketShouldFail struct {
+	pair asset.Pair
+}
+
+func (c closeMarketShouldFail) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	err := app.PerpKeeperV2.CloseMarket(ctx, c.pair)
+	if err == nil {
+		return ctx, err, false
+	}
+
+	return ctx, nil, true
+}
+
+func CloseMarketShouldFail(pair asset.Pair) action.Action {
+	return closeMarketShouldFail{pair: pair}
+}
+
 // settlePosition
 type settlePosition struct {
 	pair             asset.Pair
