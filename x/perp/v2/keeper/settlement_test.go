@@ -10,6 +10,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
+	. "github.com/NibiruChain/nibiru/x/common/testutil/assertion"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
@@ -120,6 +121,7 @@ func TestSettlePosition(t *testing.T) {
 	startTime := time.Now()
 
 	alice := testutil.AccAddress()
+	bob := testutil.AccAddress()
 
 	tc := TestCases{
 		TC("Happy path").When(
@@ -144,6 +146,74 @@ func TestSettlePosition(t *testing.T) {
 			SettlePosition(pairBtcUsdc, 1, alice),
 		).Then(
 			PositionShouldNotExist(alice, pairBtcUsdc, 1),
+		),
+
+		TC("Happy path, but with bad debt").When(
+			CreateCustomMarket(
+				pairBtcUsdc,
+				WithPricePeg(sdk.OneDec()),
+				WithSqrtDepth(sdk.NewDec(100_000)),
+			),
+			SetBlockNumber(1),
+			SetBlockTime(startTime),
+			FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(104)))), // need 4 because we need to pay for the close position fee
+			FundAccount(bob, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1_020)))),
+			MarketOrder(
+				alice,
+				pairBtcUsdc,
+				types.Direction_SHORT,
+				sdk.NewInt(100),
+				sdk.NewDec(10),
+				sdk.ZeroDec(),
+			),
+			MarketOrder(
+				bob,
+				pairBtcUsdc,
+				types.Direction_LONG,
+				sdk.NewInt(1_000),
+				sdk.NewDec(10),
+				sdk.ZeroDec(),
+			),
+			QueryPosition(pairBtcUsdc, alice, QueryPosition_MarginRatioEquals(sdk.MustNewDecFromStr("-0.093502230451982156"))),
+		).When(
+			// Alice opened a short position (leverage x10) while bob a bigger long position
+			// Price jumped by 10%, with a settlement price of 1.09
+			// That creates a bad debt for alice
+			// Her Realized Pnl is -101.01010101 and her margin is 100, so -1.01010101 is bad debt
+			// Bob's Realized Pnl is 1010, so he has 1010 more than his margin
+
+			CloseMarket(pairBtcUsdc),
+			SettlePosition(
+				pairBtcUsdc,
+				1,
+				alice,
+				SettlePositionChecker_PositionEquals(
+					types.Position{
+						TraderAddress:                   alice.String(),
+						Pair:                            "ubtc:unusd",
+						Size_:                           sdk.MustNewDecFromStr("0"),
+						Margin:                          sdk.MustNewDecFromStr("0"),
+						OpenNotional:                    sdk.MustNewDecFromStr("0"),
+						LatestCumulativePremiumFraction: sdk.MustNewDecFromStr("0"),
+						LastUpdatedBlockNumber:          1,
+					},
+				),
+				SettlePositionChecker_MarginToVault(sdk.ZeroDec()),
+				SettlePositionChecker_BadDebt(sdk.MustNewDecFromStr("1.010101010101010101")),
+			),
+			SettlePosition(
+				pairBtcUsdc,
+				1,
+				bob,
+				SettlePositionChecker_MarginToVault(sdk.MustNewDecFromStr("-1101.010101010101010100")),
+				SettlePositionChecker_BadDebt(sdk.ZeroDec()),
+			),
+		).Then(
+			PositionShouldNotExist(alice, pairBtcUsdc, 1),
+			PositionShouldNotExist(bob, pairBtcUsdc, 1),
+			SetBlockNumber(2),
+			BalanceEqual(alice, "unusd", sdk.NewInt(0)),
+			BalanceEqual(bob, "unusd", sdk.NewInt(1101-20)),
 		),
 
 		TC("Error: can't settle on enabled market").When(

@@ -90,7 +90,7 @@ func (k Keeper) SettlePosition(ctx sdk.Context, pair asset.Pair, version uint64,
 // Settles a position and realizes PnL and funding payments.
 // Returns the updated AMM and the realized PnL and funding payments.
 func (k Keeper) settlePosition(ctx sdk.Context, market types.Market, amm types.AMM, position types.Position) (updatedAMM *types.AMM, resp *types.PositionResp, err error) {
-	positionNotional := position.Size_.Mul(amm.SettlementPrice)
+	positionNotional := position.Size_.Abs().Mul(amm.SettlementPrice)
 
 	resp = &types.PositionResp{
 		ExchangedPositionSize: position.Size_.Neg(),
