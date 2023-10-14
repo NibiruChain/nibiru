@@ -26,7 +26,10 @@ COPY ./contrib/scripts/chaosnet.sh ./
 RUN chmod +x ./chaosnet.sh
 ARG MNEMONIC
 ARG CHAIN_ID
-RUN MNEMONIC=${MNEMONIC} CHAIN_ID=${CHAIN_ID} ./chaosnet.sh
+ARG RPC_PORT
+ARG GRPC_PORT
+ARG LCD_PORT
+RUN MNEMONIC=${MNEMONIC} CHAIN_ID=${CHAIN_ID} RPC_PORT=${RPC_PORT} GRPC_PORT=${GRPC_PORT} LCD_PORT=${LCD_PORT} ./chaosnet.sh
 
 ENTRYPOINT ["nibid"]
 CMD [ "start" ]
