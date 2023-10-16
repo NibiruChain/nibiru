@@ -13,8 +13,6 @@ import (
 	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
-var TEST_ENCODING_CONFIG = app.MakeEncodingConfig()
-
 func AddPerpV2Genesis(gen app.GenesisState) app.GenesisState {
 	extraMarketAmms := map[asset.Pair]perpv2types.AmmMarket{
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD): {
@@ -126,7 +124,7 @@ func AddPerpV2Genesis(gen app.GenesisState) app.GenesisState {
 		ReserveSnapshots:   []perpv2types.ReserveSnapshot{},
 	}
 
-	gen[perpv2types.ModuleName] = TEST_ENCODING_CONFIG.Marshaler.
+	gen[perpv2types.ModuleName] = app.MakeEncodingConfig().Marshaler.
 		MustMarshalJSON(perpV2Gen)
 	return gen
 }
