@@ -4,13 +4,11 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/NibiruChain/nibiru/x/common/denoms"
-
 	gov "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 
 	"github.com/NibiruChain/nibiru/app"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 )
 
 /*

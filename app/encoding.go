@@ -9,7 +9,7 @@ import (
 type EncodingConfig = codec.EncodingConfig
 
 // MakeEncodingConfig creates an EncodingConfig for an amino based test configuration.
-func MakeEncodingConfig() codec.EncodingConfig {
+func MakeEncodingConfig() EncodingConfig {
 	encodingConfig := codec.MakeEncodingConfig()
 	std.RegisterLegacyAminoCodec(encodingConfig.Amino)
 	std.RegisterInterfaces(encodingConfig.InterfaceRegistry)
