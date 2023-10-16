@@ -141,7 +141,7 @@ func ExecMsgSwapAssets(
 
 // WhitelistGenesisAssets given a testapp.GenesisState includes the whitelisted assets into spot Whitelisted assets.
 func WhitelistGenesisAssets(state app.GenesisState, assets []string) app.GenesisState {
-	encConfig := app.MakeEncodingConfigAndRegister()
+	encConfig := app.MakeEncodingConfig()
 
 	jsonState := state[types.ModuleName]
 

@@ -21,7 +21,7 @@ func TestAppTestSuite(t *testing.T) {
 }
 
 func (s *TestSuite) SetupSuite() {
-	s.encCfg = app.MakeEncodingConfigAndRegister()
+	s.encCfg = app.MakeEncodingConfig()
 }
 
 func (s *TestSuite) DefaultGenesisCopy() app.GenesisState {
@@ -52,7 +52,8 @@ func (s *TestSuite) TestGenesis() {
 	}{
 		{
 			name: "default should work fine",
-			gen:  gens[0]},
+			gen:  gens[0],
+		},
 		{
 			name:    "zero commission should fail",
 			gen:     gens[1],

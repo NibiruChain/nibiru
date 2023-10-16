@@ -247,7 +247,7 @@ func (suite *AnteTestSuite) TestDevGasPayout() {
 			}
 
 			t.Log("build tx and call AnteHandle")
-			encCfg := app.MakeEncodingConfigAndRegister()
+			encCfg := app.MakeEncodingConfig()
 			txMsgs := []sdk.Msg{}
 			for _, wasmExecMsg := range wasmExecMsgs {
 				txMsgs = append(txMsgs, wasmExecMsg)

@@ -18,7 +18,7 @@ func TestEpochsExportGenesis(t *testing.T) {
 	chainStartTime := time.Now().UTC()
 	moduleGenesisIn := types.DefaultGenesisFromTime(chainStartTime)
 
-	encCfg := app.MakeEncodingConfigAndRegister()
+	encCfg := app.MakeEncodingConfig()
 	appGenesis := genesis.NewTestGenesisState(encCfg)
 	appGenesis[types.ModuleName] = encCfg.Marshaler.MustMarshalJSON(moduleGenesisIn)
 

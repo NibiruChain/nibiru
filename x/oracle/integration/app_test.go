@@ -26,7 +26,7 @@ type IntegrationTestSuite struct {
 func (s *IntegrationTestSuite) SetupTest() {
 	app.SetPrefixes(app.AccountAddressPrefix)
 	homeDir := s.T().TempDir()
-	s.cfg = testutilcli.BuildNetworkConfig(genesis.NewTestGenesisState(app.MakeEncodingConfigAndRegister()))
+	s.cfg = testutilcli.BuildNetworkConfig(genesis.NewTestGenesisState(app.MakeEncodingConfig()))
 	s.cfg.NumValidators = 4
 	s.cfg.GenesisState[types.ModuleName] = s.cfg.Codec.MustMarshalJSON(func() codec.ProtoMarshaler {
 		gs := types.DefaultGenesisState()

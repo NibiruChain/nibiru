@@ -19,7 +19,7 @@ func TestIntegration(t *testing.T) {
 	senderAddr := sdk.AccAddress("sender")
 	recvAddr := sdk.AccAddress("recv")
 
-	encoding := app.MakeEncodingConfigAndRegister()
+	encoding := app.MakeEncodingConfig()
 	appGenesis := app.NewDefaultGenesisState(encoding.Marshaler)
 
 	appGenesis[banktypes.ModuleName] = encoding.Marshaler.MustMarshalJSON(&banktypes.GenesisState{
