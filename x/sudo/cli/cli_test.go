@@ -261,7 +261,7 @@ func (s *IntegrationSuite) TestMarshal_EditSudoers() {
 	fileJsonBz, _ := msgPlus.ToJson(t)
 
 	t.Log("check unmarshal file → proto")
-	cdc := genesis.TEST_ENCODING_CONFIG.Marshaler
+	cdc := app.MakeEncodingConfig().Marshaler
 	newMsg := new(types.MsgEditSudoers)
 	err := cdc.UnmarshalJSON(fileJsonBz, newMsg)
 	assert.NoErrorf(t, err, "fileJsonBz: #%v", fileJsonBz)
