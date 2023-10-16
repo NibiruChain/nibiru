@@ -1,8 +1,9 @@
 package app
 
 import (
-	"github.com/NibiruChain/nibiru/app/codec"
 	"github.com/cosmos/cosmos-sdk/std"
+
+	"github.com/NibiruChain/nibiru/app/codec"
 )
 
 type EncodingConfig = codec.EncodingConfig
