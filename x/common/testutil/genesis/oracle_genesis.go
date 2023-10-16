@@ -10,12 +10,6 @@ import (
 )
 
 func AddOracleGenesis(gen app.GenesisState) app.GenesisState {
-	gen[oracletypes.ModuleName] = TEST_ENCODING_CONFIG.Marshaler.
-		MustMarshalJSON(OracleGenesis())
-	return gen
-}
-
-func OracleGenesis() *oracletypes.GenesisState {
 	oracleGenesis := oracletypes.DefaultGenesisState()
 	oracleGenesis.ExchangeRates = []oracletypes.ExchangeRateTuple{
 		{Pair: asset.Registry.Pair(denoms.ETH, denoms.NUSD), ExchangeRate: sdk.NewDec(1_000)},
@@ -23,5 +17,7 @@ func OracleGenesis() *oracletypes.GenesisState {
 	}
 	oracleGenesis.Params.VotePeriod = 1_000
 
-	return oracleGenesis
+	gen[oracletypes.ModuleName] = app.MakeEncodingConfig().Marshaler.
+		MustMarshalJSON(oracleGenesis)
+	return gen
 }

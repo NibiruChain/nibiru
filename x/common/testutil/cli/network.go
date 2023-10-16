@@ -153,7 +153,7 @@ func NewAppConstructor(encodingCfg app.EncodingConfig, chainID string) AppConstr
 
 // BuildNetworkConfig returns a configuration for a local in-testing network
 func BuildNetworkConfig(appGenesis app.GenesisState) Config {
-	encCfg := app.MakeEncodingConfigAndRegister()
+	encCfg := app.MakeEncodingConfig()
 
 	chainID := "chain-" + tmrand.NewRand().Str(6)
 	return Config{

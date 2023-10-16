@@ -117,7 +117,6 @@ func GetWasmOpts(nibiru NibiruApp, appOpts servertypes.AppOptions) []wasm.Option
 
 	// Add the bindings to the app's set of []wasm.Option.
 	wasmOpts = append(wasmOpts, wasmbinding.RegisterWasmOptions(
-		nibiru.PerpKeeperV2,
 		nibiru.SudoKeeper,
 		nibiru.OracleKeeper,
 	)...)
@@ -405,7 +404,7 @@ func (app *NibiruApp) GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper {
    This is provided for compatibility between protobuf and amino implementations. */
 
 func (app *NibiruApp) GetTxConfig() client.TxConfig {
-	return MakeEncodingConfigAndRegister().TxConfig
+	return MakeEncodingConfig().TxConfig
 }
 
 // ------------------------------------------------------------------------

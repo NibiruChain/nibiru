@@ -51,7 +51,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.T().Log("setting up integration test suite")
 
 	testapp.EnsureNibiruPrefix()
-	encodingConfig := app.MakeEncodingConfigAndRegister()
+	encodingConfig := app.MakeEncodingConfig()
 	genState := genesis.NewTestGenesisState(encodingConfig)
 	cfg := testutilcli.BuildNetworkConfig(genState)
 	cfg.NumValidators = 1
