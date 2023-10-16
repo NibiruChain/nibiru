@@ -4,6 +4,9 @@ set -e
 # Set localnet settings
 MNEMONIC=${MNEMONIC:-"guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host"}
 CHAIN_ID=${CHAIN_ID:-"nibiru-localnet-0"}
+LCD_PORT=${LCD_PORT:-"1317"}
+GRPC_PORT=${GRPC_PORT:-"9090"}
+RPC_PORT=${RPC_PORT:-"26657"}
 
 rm -rf $HOME/.nibid
 nibid init $CHAIN_ID --chain-id $CHAIN_ID --home $HOME/.nibid --overwrite
@@ -12,12 +15,13 @@ nibid config chain-id $CHAIN_ID
 nibid config broadcast-mode sync
 nibid config output json
 
+sed -i "s/127.0.0.1:26657/0.0.0.0:$RPC_PORT/" $HOME/.nibid/config/config.toml
+sed -i 's/log_format = .*/log_format = "json"/' $HOME/.nibid/config/config.toml
+
 sed -i '/\[api\]/,+3 s/enable = false/enable = true/' $HOME/.nibid/config/app.toml
 sed -i 's/enabled-unsafe-cors = false/enabled-unsafe-cors = true/' $HOME/.nibid/config/app.toml
-sed -i 's/127.0.0.1/0.0.0.0/' $HOME/.nibid/config/config.toml
-sed -i 's/localhost/0.0.0.0/' $HOME/.nibid/config/config.toml
-sed -i 's/localhost/0.0.0.0/' $HOME/.nibid/config/app.toml
-sed -i 's/localhost/0.0.0.0/' $HOME/.nibid/config/app.toml
+sed -i "s/localhost:1317/0.0.0.0:$LCD_PORT/" $HOME/.nibid/config/app.toml
+sed -i "s/localhost:9090/0.0.0.0:$GRPC_PORT/" $HOME/.nibid/config/app.toml
 
 echo "$MNEMONIC" | nibid keys add validator --recover
 nibid genesis add-genesis-account $(nibid keys show validator -a) "10000000000000unibi,10000000000000unusd,10000000000000uusdt,10000000000000uusdc"
