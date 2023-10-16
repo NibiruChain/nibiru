@@ -107,15 +107,9 @@ import (
 	oracle "github.com/NibiruChain/nibiru/x/oracle"
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
-
-	"github.com/NibiruChain/nibiru/x/spot"
-	spotkeeper "github.com/NibiruChain/nibiru/x/spot/keeper"
-	spottypes "github.com/NibiruChain/nibiru/x/spot/types"
-
 	"github.com/NibiruChain/nibiru/x/sudo"
 	"github.com/NibiruChain/nibiru/x/sudo/keeper"
 	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
-
 	tokenfactory "github.com/NibiruChain/nibiru/x/tokenfactory"
 	tokenfactorykeeper "github.com/NibiruChain/nibiru/x/tokenfactory/keeper"
 	tokenfactorytypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
@@ -166,7 +160,6 @@ type AppKeepers struct {
 	// Nibiru keepers
 	// ---------------
 	EpochsKeeper       epochskeeper.Keeper
-	SpotKeeper         spotkeeper.Keeper
 	OracleKeeper       oraclekeeper.Keeper
 	InflationKeeper    inflationkeeper.Keeper
 	SudoKeeper         keeper.Keeper
@@ -205,7 +198,6 @@ func initStoreKeys() (
 		ibcexported.StoreKey,
 
 		// nibiru x/ keys
-		spottypes.StoreKey,
 		oracletypes.StoreKey,
 		epochstypes.StoreKey,
 		inflationtypes.StoreKey,
@@ -343,11 +335,6 @@ func (app *NibiruApp) InitKeepers(
 	)
 
 	// ---------------------------------- Nibiru Chain x/ keepers
-
-	app.SpotKeeper = spotkeeper.NewKeeper(
-		appCodec, keys[spottypes.StoreKey], app.GetSubspace(spottypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.DistrKeeper)
-
 	app.OracleKeeper = oraclekeeper.NewKeeper(appCodec, keys[oracletypes.StoreKey],
 		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.stakingKeeper, distrtypes.ModuleName,
 	)
@@ -575,7 +562,6 @@ func (app *NibiruApp) initAppModules(
 		authzmodule.NewAppModule(appCodec, app.authzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 
 		// Nibiru modules
-		spot.NewAppModule(appCodec, app.SpotKeeper, app.AccountKeeper, app.BankKeeper),
 		oracle.NewAppModule(appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper),
 		epochs.NewAppModule(appCodec, app.EpochsKeeper),
 		inflation.NewAppModule(app.InflationKeeper, app.AccountKeeper, *app.stakingKeeper),
@@ -644,7 +630,6 @@ func orderedModuleNames() []string {
 		// --------------------------------------------------------------------
 		// Native x/ Modules
 		epochstypes.ModuleName,
-		spottypes.ModuleName,
 		oracletypes.ModuleName,
 		inflationtypes.ModuleName,
 		sudotypes.ModuleName,
@@ -758,7 +743,6 @@ func ModuleBasicManager() module.BasicManager {
 		ibctransfer.AppModuleBasic{},
 		ibctm.AppModuleBasic{},
 		// native x/
-		spot.AppModuleBasic{},
 		oracle.AppModuleBasic{},
 		epochs.AppModuleBasic{},
 		inflation.AppModuleBasic{},
@@ -779,7 +763,6 @@ func ModuleAccPerms() map[string][]string {
 		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
-		spottypes.ModuleName:           {authtypes.Minter, authtypes.Burner},
 		oracletypes.ModuleName:         {},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		ibcfeetypes.ModuleName:         {},
@@ -807,7 +790,6 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(govtypes.ModuleName)
 	paramsKeeper.Subspace(crisistypes.ModuleName)
 	// Nibiru core params keepers | x/
-	paramsKeeper.Subspace(spottypes.ModuleName)
 	paramsKeeper.Subspace(epochstypes.ModuleName)
 	paramsKeeper.Subspace(inflationtypes.ModuleName)
 	// ibc params keepers
