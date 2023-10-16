@@ -19,7 +19,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
-	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 	sudokeeper "github.com/NibiruChain/nibiru/x/sudo/keeper"
 	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 )
@@ -91,7 +90,9 @@ func (s *TestSuiteExecutor) SetupSuite() {
 	sender := testutil.AccAddress()
 	s.contractDeployer = sender
 
-	genesisState := SetupPerpGenesis()
+	genesisState := genesis.NewTestGenesisState(app.MakeEncodingConfig())
+	genesisState = genesis.AddOracleGenesis(genesisState)
+
 	nibiru := testapp.NewNibiruTestApp(genesisState)
 	ctx := nibiru.NewContext(false, tmproto.Header{
 		Height:  1,
@@ -117,69 +118,7 @@ func (s *TestSuiteExecutor) SetupSuite() {
 	s.contractController = ContractMap[wasmbin.WasmKeyController]
 	s.T().Logf("contract bindings-perp: %s", s.contractPerp)
 	s.T().Logf("contract shifter: %s", s.contractShifter)
-	s.OnSetupEnd()
-}
-
-func (s *TestSuiteExecutor) OnSetupEnd() {
-	SetExchangeRates(&s.Suite, s.nibiru, s.ctx)
-}
-
-func (s *TestSuiteExecutor) TestOpenAddRemoveClose() {
-	pair := asset.MustNewPair(s.happyFields.Pair)
-	margin := sdk.NewCoin(denoms.NUSD, sdk.NewInt(69))
-
-	coins := sdk.NewCoins(
-		margin.Add(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1_000))),
-	)
-	s.NoError(testapp.FundAccount(s.nibiru.BankKeeper, s.ctx, s.contractPerp, coins))
-
-	// TestMarketOrder (integration - real contract, real app)
-	execMsg := bindings.NibiruMsg{
-		MarketOrder: &bindings.MarketOrder{
-			Pair:            s.happyFields.Pair,
-			IsLong:          true,
-			QuoteAmount:     sdk.NewInt(42),
-			Leverage:        sdk.NewDec(5),
-			BaseAmountLimit: sdk.ZeroInt(),
-		},
-	}
-
-	s.T().Log("Executing with permission should succeed")
-	s.keeper.SetSudoContracts(
-		[]string{s.contractPerp.String()}, s.ctx,
-	)
-
-	contractRespBz, err := s.ExecuteAgainstContract(s.contractPerp, execMsg)
-	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
-
-	// TestAddMargin (integration - real contract, real app)
-	execMsg = bindings.NibiruMsg{
-		AddMargin: &bindings.AddMargin{
-			Pair:   pair.String(),
-			Margin: margin,
-		},
-	}
-	contractRespBz, err = s.ExecuteAgainstContract(s.contractPerp, execMsg)
-	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
-
-	// TestRemoveMargin (integration - real contract, real app)
-	execMsg = bindings.NibiruMsg{
-		RemoveMargin: &bindings.RemoveMargin{
-			Pair:   pair.String(),
-			Margin: margin,
-		},
-	}
-	contractRespBz, err = s.ExecuteAgainstContract(s.contractPerp, execMsg)
-	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
-
-	// TestClosePosition (integration - real contract, real app)
-	execMsg = bindings.NibiruMsg{
-		ClosePosition: &bindings.ClosePosition{
-			Pair: pair.String(),
-		},
-	}
-	contractRespBz, err = s.ExecuteAgainstContract(s.contractPerp, execMsg)
-	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
+	// SetExchangeRates(&s.Suite, s.nibiru, s.ctx)
 }
 
 func (s *TestSuiteExecutor) TestOracleParams() {
@@ -359,40 +298,6 @@ func (s *TestSuiteExecutor) TestOracleParams() {
 	s.Require().Equal(theValidatorFeeRatio, params.ValidatorFeeRatio)
 }
 
-func (s *TestSuiteExecutor) TestPegShift() {
-	pair := asset.MustNewPair(s.happyFields.Pair)
-	execMsg := bindings.NibiruMsg{
-		PegShift: &bindings.PegShift{
-			Pair:    pair.String(),
-			PegMult: sdk.NewDec(420),
-		},
-	}
-
-	s.T().Log("Executing with permission should succeed")
-	contract := s.contractShifter
-	s.keeper.SetSudoContracts(
-		[]string{contract.String()}, s.ctx,
-	)
-	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
-	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
-
-	s.T().Log("Executing without permission should fail")
-	s.keeper.SetSudoContracts(
-		[]string{}, s.ctx,
-	)
-	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
-	s.Errorf(err, "contractRespBz: %s", contractRespBz)
-
-	s.T().Log("Executing the wrong contract should fail")
-	contract = s.contractPerp
-	s.keeper.SetSudoContracts(
-		[]string{contract.String()}, s.ctx,
-	)
-	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
-	s.Errorf(err, "contractRespBz: %s", contractRespBz)
-	s.Contains(err.Error(), "Error parsing into type")
-}
-
 func (s *TestSuiteExecutor) TestNoOp() {
 	contract := s.contractShifter
 	execMsg := bindings.NibiruMsg{
@@ -400,172 +305,4 @@ func (s *TestSuiteExecutor) TestNoOp() {
 	}
 	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
-}
-
-func (s *TestSuiteExecutor) TestDepthShift() {
-	pair := asset.MustNewPair(s.happyFields.Pair)
-	execMsg := bindings.NibiruMsg{
-		DepthShift: &bindings.DepthShift{
-			Pair:      pair.String(),
-			DepthMult: sdk.NewDec(2),
-		},
-	}
-
-	s.T().Log("Executing with permission should succeed")
-	contract := s.contractShifter
-	s.keeper.SetSudoContracts(
-		[]string{contract.String()}, s.ctx,
-	)
-	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
-	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
-
-	s.T().Log("Executing without permission should fail")
-	s.keeper.SetSudoContracts(
-		[]string{}, s.ctx,
-	)
-	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
-	s.Errorf(err, "contractRespBz: %s", contractRespBz)
-
-	s.T().Log("Executing the wrong contract should fail")
-	contract = s.contractPerp
-	s.keeper.SetSudoContracts(
-		[]string{contract.String()}, s.ctx,
-	)
-	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
-	s.Errorf(err, "contractRespBz: %s", contractRespBz)
-	s.Contains(err.Error(), "Error parsing into type")
-}
-
-func (s *TestSuiteExecutor) TestInsuranceFundWithdraw() {
-	admin := s.contractDeployer.String()
-	amtToWithdraw := sdk.NewInt(69)
-	execMsg := bindings.NibiruMsg{
-		InsuranceFundWithdraw: &bindings.InsuranceFundWithdraw{
-			Amount: amtToWithdraw,
-			To:     admin,
-		},
-	}
-
-	s.T().Log("Executing should fail since the IF doesn't have funds")
-	contract := s.contractController
-	s.keeper.SetSudoContracts(
-		[]string{contract.String()}, s.ctx,
-	)
-	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
-	s.Errorf(err, "contractRespBz: %s", contractRespBz)
-
-	s.T().Log("Executing without permission should fail")
-	s.keeper.SetSudoContracts(
-		[]string{}, s.ctx,
-	)
-	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
-	s.Errorf(err, "contractRespBz: %s", contractRespBz)
-
-	s.T().Log("Executing should work when the IF has funds")
-	err = testapp.FundModuleAccount(
-		s.nibiru.BankKeeper,
-		s.ctx,
-		perpv2types.PerpEFModuleAccount,
-		sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(420))),
-	)
-	s.NoError(err)
-	s.keeper.SetSudoContracts(
-		[]string{contract.String()}, s.ctx,
-	)
-	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
-	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
-
-	s.T().Log("Executing the wrong contract should fail")
-	contract = s.contractPerp
-	s.keeper.SetSudoContracts(
-		[]string{contract.String()}, s.ctx,
-	)
-	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
-	s.Errorf(err, "contractRespBz: %s", contractRespBz)
-	s.Contains(err.Error(), "Error parsing into type")
-}
-
-func (s *TestSuiteExecutor) TestSetMarketEnabled() {
-	// admin := s.contractDeployer.String()
-	perpv2Genesis := genesis.PerpV2Genesis()
-	contract := s.contractController
-	var execMsg bindings.NibiruMsg
-
-	for testIdx, market := range perpv2Genesis.Markets {
-		execMsg = bindings.NibiruMsg{
-			SetMarketEnabled: &bindings.SetMarketEnabled{
-				Pair:    market.Pair.String(),
-				Enabled: !market.Enabled,
-			},
-		}
-
-		s.T().Logf("Execute - happy %v: market: %s", testIdx, market.Pair)
-		s.keeper.SetSudoContracts(
-			[]string{contract.String()}, s.ctx,
-		)
-		contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
-		s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
-
-		marketAfter, err := s.nibiru.PerpKeeperV2.GetMarket(s.ctx, market.Pair)
-		s.NoError(err)
-		s.Equal(!market.Enabled, marketAfter.Enabled)
-	}
-
-	s.T().Log("Executing without permission should fail")
-	s.keeper.SetSudoContracts(
-		[]string{}, s.ctx,
-	)
-	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
-	s.Errorf(err, "contractRespBz: %s", contractRespBz)
-
-	s.T().Log("Executing the wrong contract should fail")
-	contract = s.contractPerp
-	s.keeper.SetSudoContracts(
-		[]string{contract.String()}, s.ctx,
-	)
-	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
-	s.Errorf(err, "contractRespBz: %s", contractRespBz)
-	s.Contains(err.Error(), "Error parsing into type")
-}
-
-func (s *TestSuiteExecutor) TestCreateMarket() {
-	contract := s.contractController
-	pair := asset.MustNewPair("bloop:blam")
-	execMsg := bindings.NibiruMsg{
-		CreateMarket: &bindings.CreateMarket{
-			Pair:         pair.String(),
-			PegMult:      sdk.NewDec(420),
-			SqrtDepth:    sdk.NewDec(1_000),
-			MarketParams: nil,
-		},
-	}
-
-	s.T().Logf("Execute - happy: market: %s", pair)
-	s.keeper.SetSudoContracts(
-		[]string{contract.String()}, s.ctx,
-	)
-	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
-	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
-
-	market, err := s.nibiru.PerpKeeperV2.GetMarket(s.ctx, pair)
-	s.NoError(err)
-	s.NoError(market.Validate())
-	s.True(market.Enabled)
-	s.EqualValues(pair, market.Pair)
-
-	s.T().Log("Executing without permission should fail")
-	s.keeper.SetSudoContracts(
-		[]string{}, s.ctx,
-	)
-	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
-	s.Errorf(err, "contractRespBz: %s", contractRespBz)
-
-	s.T().Log("Executing the wrong contract should fail")
-	contract = s.contractPerp
-	s.keeper.SetSudoContracts(
-		[]string{contract.String()}, s.ctx,
-	)
-	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
-	s.Errorf(err, "contractRespBz: %s", contractRespBz)
-	s.Contains(err.Error(), "Error parsing into type")
 }

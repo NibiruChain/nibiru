@@ -12,7 +12,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/wasmbinding/bindings"
-	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 )
 
 type TestSuiteBindingJsonTypes struct {
@@ -58,33 +57,6 @@ func (s *TestSuiteBindingJsonTypes) TestQueries() {
 			s.NoErrorf(err, "jsonBz: %s", jsonBz)
 		})
 	}
-}
-
-func (s *TestSuiteBindingJsonTypes) TestToAppMarket() {
-	var lastCwMarket bindings.Market
-	for _, ammMarket := range genesis.START_MARKETS {
-		dummyBlockHeight := int64(1)
-		cwMarket := bindings.NewMarket(
-			ammMarket.Market,
-			ammMarket.Amm,
-			"index price",
-			ammMarket.Amm.InstMarkPrice().String(),
-			dummyBlockHeight,
-		)
-
-		// Test the ToAppMarket fn
-		gotAppMarket, err := cwMarket.ToAppMarket()
-		s.Assert().NoError(err)
-		s.Assert().EqualValues(ammMarket.Market, gotAppMarket)
-
-		lastCwMarket = cwMarket
-	}
-
-	// Test failure case
-	sadCwMarket := lastCwMarket
-	sadCwMarket.Pair = "ftt:ust:xxx-yyy!!!"
-	_, err := sadCwMarket.ToAppMarket()
-	s.Error(err)
 }
 
 func getFileJson(t *testing.T) (fileJson map[string]json.RawMessage) {

@@ -12,7 +12,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
-	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 )
 
 var _ wasmkeeper.Messenger = (*CustomMessenger)(nil)
@@ -21,7 +20,6 @@ var _ wasmkeeper.Messenger = (*CustomMessenger)(nil)
 // own custom `DispatchMsg` for CosmWasm execute calls on Nibiru.
 type CustomMessenger struct {
 	Wasm   wasmkeeper.Messenger
-	Perp   ExecutorPerp
 	Sudo   keeper.Keeper
 	Oracle ExecutorOracle
 }
@@ -62,64 +60,6 @@ func (messenger *CustomMessenger) DispatchMsg(
 		}
 
 		switch {
-		// Perp module | bindings-perp: for trading with smart contracts
-		case contractExecuteMsg.ExecuteMsg.MarketOrder != nil:
-			cwMsg := contractExecuteMsg.ExecuteMsg.MarketOrder
-			_, err = messenger.Perp.MarketOrder(cwMsg, contractAddr, ctx)
-			return events, data, err
-		case contractExecuteMsg.ExecuteMsg.ClosePosition != nil:
-			cwMsg := contractExecuteMsg.ExecuteMsg.ClosePosition
-			_, err = messenger.Perp.ClosePosition(cwMsg, contractAddr, ctx)
-			return events, data, err
-		case contractExecuteMsg.ExecuteMsg.AddMargin != nil:
-			cwMsg := contractExecuteMsg.ExecuteMsg.AddMargin
-			_, err = messenger.Perp.AddMargin(cwMsg, contractAddr, ctx)
-			return events, data, err
-		case contractExecuteMsg.ExecuteMsg.RemoveMargin != nil:
-			cwMsg := contractExecuteMsg.ExecuteMsg.RemoveMargin
-			_, err = messenger.Perp.RemoveMargin(cwMsg, contractAddr, ctx)
-			return events, data, err
-
-		// Perp module | shifter
-		case contractExecuteMsg.ExecuteMsg.PegShift != nil:
-			if err := messenger.Sudo.CheckPermissions(contractAddr, ctx); err != nil {
-				return events, data, err
-			}
-			cwMsg := contractExecuteMsg.ExecuteMsg.PegShift
-			err = messenger.Perp.PegShift(cwMsg, contractAddr, ctx)
-			return events, data, err
-		case contractExecuteMsg.ExecuteMsg.DepthShift != nil:
-			if err := messenger.Sudo.CheckPermissions(contractAddr, ctx); err != nil {
-				return events, data, err
-			}
-			cwMsg := contractExecuteMsg.ExecuteMsg.DepthShift
-			err = messenger.Perp.DepthShift(cwMsg, ctx)
-			return events, data, err
-
-		// Perp module | controller
-		case contractExecuteMsg.ExecuteMsg.CreateMarket != nil:
-			if err := messenger.Sudo.CheckPermissions(contractAddr, ctx); err != nil {
-				return events, data, err
-			}
-			cwMsg := contractExecuteMsg.ExecuteMsg.CreateMarket
-			err = messenger.Perp.CreateMarket(cwMsg, ctx)
-			return events, data, err
-
-		case contractExecuteMsg.ExecuteMsg.InsuranceFundWithdraw != nil:
-			if err := messenger.Sudo.CheckPermissions(contractAddr, ctx); err != nil {
-				return events, data, err
-			}
-			cwMsg := contractExecuteMsg.ExecuteMsg.InsuranceFundWithdraw
-			err = messenger.Perp.InsuranceFundWithdraw(cwMsg, ctx)
-			return events, data, err
-		case contractExecuteMsg.ExecuteMsg.SetMarketEnabled != nil:
-			if err := messenger.Sudo.CheckPermissions(contractAddr, ctx); err != nil {
-				return events, data, err
-			}
-			cwMsg := contractExecuteMsg.ExecuteMsg.SetMarketEnabled
-			err = messenger.Perp.SetMarketEnabled(cwMsg, ctx)
-			return events, data, err
-
 		// Oracle module
 		case contractExecuteMsg.ExecuteMsg.EditOracleParams != nil:
 			if err := messenger.Sudo.CheckPermissions(contractAddr, ctx); err != nil {
@@ -143,14 +83,12 @@ func (messenger *CustomMessenger) DispatchMsg(
 }
 
 func CustomMessageDecorator(
-	perpv2 perpv2keeper.Keeper,
 	sudoKeeper keeper.Keeper,
 	oracleKeeper oraclekeeper.Keeper,
 ) func(wasmkeeper.Messenger) wasmkeeper.Messenger {
 	return func(originalWasmMessenger wasmkeeper.Messenger) wasmkeeper.Messenger {
 		return &CustomMessenger{
 			Wasm:   originalWasmMessenger,
-			Perp:   ExecutorPerp{PerpV2: perpv2},
 			Sudo:   sudoKeeper,
 			Oracle: ExecutorOracle{Oracle: oracleKeeper},
 		}

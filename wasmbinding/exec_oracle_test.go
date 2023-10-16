@@ -15,6 +15,7 @@ import (
 	"github.com/NibiruChain/nibiru/wasmbinding/wasmbin"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 )
 
@@ -36,7 +37,9 @@ func (s *TestSuiteOracleExecutor) SetupSuite() {
 	sender := testutil.AccAddress()
 	s.contractDeployer = sender
 
-	genesisState := SetupPerpGenesis()
+	genesisState := genesis.NewTestGenesisState(app.MakeEncodingConfig())
+	genesisState = genesis.AddOracleGenesis(genesisState)
+
 	nibiru := testapp.NewNibiruTestApp(genesisState)
 	ctx := nibiru.NewContext(false, tmproto.Header{
 		Height:  1,

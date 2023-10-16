@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/app/codec"
 	"github.com/NibiruChain/nibiru/x/common/set"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
@@ -26,7 +25,7 @@ func init() {
 }
 
 func setup() (*app.NibiruApp, sdk.Context) {
-	genState := app.NewDefaultGenesisState(codec.DefaultEncoding().Marshaler)
+	genState := app.NewDefaultGenesisState(app.MakeEncodingConfig().Marshaler)
 	nibiru := testapp.NewNibiruTestApp(genState)
 	ctx := nibiru.NewContext(false, tmproto.Header{
 		Height:  1,

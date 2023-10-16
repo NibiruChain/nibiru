@@ -1,15 +1,9 @@
 package bindings
 
 import (
-	"time"
-
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/NibiruChain/nibiru/x/common/asset"
-	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
-	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 // BindingQuery corresponds to the NibiruQuery enum in CosmWasm binding
@@ -71,54 +65,6 @@ type Market struct {
 	IndexPrice   string        `json:"index_price"`
 	TwapMark     string        `json:"twap_mark"`
 	BlockNumber  sdkmath.Int   `json:"block_number"`
-}
-
-// ToAppMarket Converts the JSON market, which comes in from Rust, to its corresponding
-// protobuf (Golang) type in the app: perpv2types.Market.
-func (m Market) ToAppMarket() (appMarket perpv2types.Market, err error) {
-	config := m.Config
-	pair, err := asset.TryNewPair(m.Pair)
-	if err != nil {
-		return appMarket, err
-	}
-	return perpv2types.Market{
-		Pair:                            pair,
-		Enabled:                         true,
-		Version:                         m.Version.Uint64(),
-		MaintenanceMarginRatio:          config.MaintenanceMarginRatio,
-		MaxLeverage:                     config.MaxLeverage,
-		LatestCumulativePremiumFraction: sdk.ZeroDec(),
-		ExchangeFeeRatio:                sdk.MustNewDecFromStr("0.0010"),
-		EcosystemFundFeeRatio:           sdk.MustNewDecFromStr("0.0010"),
-		LiquidationFeeRatio:             sdk.MustNewDecFromStr("0.0500"),
-		PartialLiquidationRatio:         sdk.MustNewDecFromStr("0.5"),
-		FundingRateEpochId:              epochstypes.ThirtyMinuteEpochID,
-		MaxFundingRate:                  sdk.NewDec(1),
-		TwapLookbackWindow:              30 * time.Minute,
-		PrepaidBadDebt:                  sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()),
-	}, nil
-}
-
-func NewMarket(appMarket perpv2types.Market, appAmm perpv2types.AMM, indexPrice, twapMark string, blockNumber int64) Market {
-	return Market{
-		Pair:         appMarket.Pair.String(),
-		Version:      sdk.NewIntFromUint64(appMarket.Version),
-		BaseReserve:  appAmm.BaseReserve,
-		QuoteReserve: appAmm.QuoteReserve,
-		SqrtDepth:    appAmm.SqrtDepth,
-		// Depth:        base.Mul(quote).RoundInt(),
-		TotalLong:  appAmm.TotalLong,
-		TotalShort: appAmm.TotalShort,
-		PegMult:    appAmm.PriceMultiplier,
-		Config: &MarketConfig{
-			MaintenanceMarginRatio: appMarket.MaintenanceMarginRatio,
-			MaxLeverage:            appMarket.MaxLeverage,
-		},
-		MarkPrice:   appAmm.InstMarkPrice(),
-		IndexPrice:  indexPrice,
-		TwapMark:    twapMark,
-		BlockNumber: sdk.NewInt(blockNumber),
-	}
 }
 
 type MarketConfig struct {

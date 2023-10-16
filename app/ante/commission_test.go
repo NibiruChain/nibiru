@@ -114,7 +114,7 @@ func (s *AnteTestSuite) TestAnteDecoratorStakingCommission() {
 				sdk.NewCoin("utoken", sdk.NewInt(500)),
 			)
 
-			encCfg := app.MakeEncodingConfigAndRegister()
+			encCfg := app.MakeEncodingConfig()
 			txBuilder, err := sdkclienttx.Factory{}.
 				WithFees(txGasCoins.String()).
 				WithChainID(s.ctx.ChainID()).

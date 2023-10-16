@@ -126,7 +126,9 @@ func (s *TestSuiteQuerier) SetupSuite() {
 	sender := testutil.AccAddress()
 	s.contractDeployer = sender
 
-	genesisState := SetupPerpGenesis()
+	genesisState := genesis.NewTestGenesisState(app.MakeEncodingConfig())
+	genesisState = genesis.AddOracleGenesis(genesisState)
+
 	nibiru := testapp.NewNibiruTestApp(genesisState)
 	ctx := nibiru.NewContext(false, tmproto.Header{
 		Height:  1,
@@ -144,82 +146,34 @@ func (s *TestSuiteQuerier) SetupSuite() {
 	s.ctx = ctx
 
 	s.contractPerp = ContractMap[wasmbin.WasmKeyPerpBinding]
-	s.OnSetupEnd()
-}
-
-func (s *TestSuiteQuerier) OnSetupEnd() {
-	SetExchangeRates(&s.Suite, s.nibiru, s.ctx)
-}
-
-func (s *TestSuiteQuerier) TestQueryReserves() {
-	testCases := map[string]struct {
-		pairStr   string
-		wasmError bool
-	}{
-		"happy":                   {pairStr: s.fields.Pair, wasmError: false},
-		"sad - non existent pair": {pairStr: "ftt:ust", wasmError: true},
-	}
-
-	for name, testCase := range testCases {
-		s.T().Run(name, func(t *testing.T) {
-			pairStr := testCase.pairStr
-			bindingQuery := bindings.BindingQuery{
-				Reserves: &bindings.ReservesRequest{Pair: pairStr},
-			}
-			bindingResp := new(bindings.ReservesResponse)
-
-			if testCase.wasmError {
-				_, err := DoCustomBindingQuery(
-					s.ctx, s.nibiru, s.contractPerp,
-					bindingQuery, bindingResp,
-				)
-				s.Assert().Contains(err.Error(), "query wasm contract failed")
-				return
-			}
-
-			_, err := DoCustomBindingQuery(
-				s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
-			)
-			s.Require().NoError(err)
-
-			wantPair := asset.MustNewPair(pairStr)
-			s.Assert().EqualValues(bindingResp.Pair, wantPair)
-			s.Assert().EqualValues(
-				bindingResp.BaseReserve.String(),
-				genesis.START_MARKETS[wantPair].Amm.BaseReserve.String())
-			s.Assert().EqualValues(
-				bindingResp.QuoteReserve.String(),
-				genesis.START_MARKETS[wantPair].Amm.QuoteReserve.String())
-		})
-	}
+	// SetExchangeRates(&s.Suite, s.nibiru, s.ctx)
 }
 
 // Integration test for BindingQuery::AllMarkets against real contract
-func (s *TestSuiteQuerier) TestQueryAllMarkets() {
-	bindingQuery := bindings.BindingQuery{
-		AllMarkets: &bindings.AllMarketsRequest{},
-	}
-	bindingResp := new(bindings.AllMarketsResponse)
+// func (s *TestSuiteQuerier) TestQueryAllMarkets() {
+// 	bindingQuery := bindings.BindingQuery{
+// 		AllMarkets: &bindings.AllMarketsRequest{},
+// 	}
+// 	bindingResp := new(bindings.AllMarketsResponse)
 
-	respBz, err := DoCustomBindingQuery(
-		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
-	)
-	s.Require().NoErrorf(err, "resp bytes: %s", respBz)
+// 	respBz, err := DoCustomBindingQuery(
+// 		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
+// 	)
+// 	s.Require().NoErrorf(err, "resp bytes: %s", respBz)
 
-	for pair, marketAmm := range genesis.START_MARKETS {
-		cwMarket := bindingResp.MarketMap[pair.String()]
-		s.Assert().EqualValues(marketAmm.Amm.BaseReserve, cwMarket.BaseReserve)
-		s.Assert().EqualValues(marketAmm.Amm.QuoteReserve, cwMarket.QuoteReserve)
-		s.Assert().EqualValues(marketAmm.Amm.SqrtDepth, cwMarket.SqrtDepth)
-		s.Assert().EqualValues(marketAmm.Amm.TotalLong, cwMarket.TotalLong)
-		s.Assert().EqualValues(marketAmm.Amm.TotalShort, cwMarket.TotalShort)
-		s.Assert().EqualValues(marketAmm.Amm.PriceMultiplier.String(), cwMarket.PegMult.String())
-		s.Assert().EqualValues(marketAmm.Amm.InstMarkPrice().String(), cwMarket.MarkPrice.String())
-		s.Assert().EqualValues(s.ctx.BlockHeight(), cwMarket.BlockNumber.Int64())
-	}
-}
+// 	for pair, marketAmm := range genesis.START_MARKETS {
+// 		cwMarket := bindingResp.MarketMap[pair.String()]
+// 		s.Assert().EqualValues(marketAmm.Amm.BaseReserve, cwMarket.BaseReserve)
+// 		s.Assert().EqualValues(marketAmm.Amm.QuoteReserve, cwMarket.QuoteReserve)
+// 		s.Assert().EqualValues(marketAmm.Amm.SqrtDepth, cwMarket.SqrtDepth)
+// 		s.Assert().EqualValues(marketAmm.Amm.TotalLong, cwMarket.TotalLong)
+// 		s.Assert().EqualValues(marketAmm.Amm.TotalShort, cwMarket.TotalShort)
+// 		s.Assert().EqualValues(marketAmm.Amm.PriceMultiplier.String(), cwMarket.PegMult.String())
+// 		s.Assert().EqualValues(marketAmm.Amm.InstMarkPrice().String(), cwMarket.MarkPrice.String())
+// 		s.Assert().EqualValues(s.ctx.BlockHeight(), cwMarket.BlockNumber.Int64())
+// 	}
+// }
 
-// Integration test for BindingQuery::AllMarkets against real contract
 func (s *TestSuiteQuerier) TestQueryExchangeRate() {
 	bindingQuery := bindings.BindingQuery{
 		OraclePrices: &bindings.OraclePrices{},
@@ -269,44 +223,44 @@ func (s *TestSuiteQuerier) TestQueryBasePrice() {
 	// s.NoError(err)
 }
 
-func (s *TestSuiteQuerier) TestQueryPremiumFraction() {
-	cwReq := &bindings.PremiumFractionRequest{
-		Pair: s.fields.Pair,
-	}
+// func (s *TestSuiteQuerier) TestQueryPremiumFraction() {
+// 	cwReq := &bindings.PremiumFractionRequest{
+// 		Pair: s.fields.Pair,
+// 	}
 
-	bindingQuery := bindings.BindingQuery{
-		PremiumFraction: cwReq,
-	}
-	bindingResp := new(bindings.PremiumFractionResponse)
+// 	bindingQuery := bindings.BindingQuery{
+// 		PremiumFraction: cwReq,
+// 	}
+// 	bindingResp := new(bindings.PremiumFractionResponse)
 
-	var respBz []byte
-	var err error
-	err = common.TryCatch(func() {
-		respBz, err = DoCustomBindingQuery(
-			s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
-		)
-		s.Require().Errorf(err, "expect error since query is not implemented: resp bytes: %s", respBz)
-		s.Require().Contains(err.Error(), "Querier contract error")
-	})()
+// 	var respBz []byte
+// 	var err error
+// 	err = common.TryCatch(func() {
+// 		respBz, err = DoCustomBindingQuery(
+// 			s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
+// 		)
+// 		s.Require().Errorf(err, "expect error since query is not implemented: resp bytes: %s", respBz)
+// 		s.Require().Contains(err.Error(), "Querier contract error")
+// 	})()
 
-	// 	respBz, err := DoCustomBindingQuery(
-	// 		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
-	// 	)
-	// 	s.Require().NoErrorf(err, "resp bytes: %s", respBz)
+// 	// 	respBz, err := DoCustomBindingQuery(
+// 	// 		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
+// 	// 	)
+// 	// 	s.Require().NoErrorf(err, "resp bytes: %s", respBz)
 
-	// s.Assert().EqualValues(cwReq.Pair, bindingResp.Pair)
-	// s.Assert().Truef(
-	//
-	//	!bindingResp.CPF.IsNegative(),
-	//	"cpf: %s",
-	//	bindingResp.CPF)
-	//
-	// s.Assert().Truef(
-	//
-	//	!bindingResp.EstimatedNextCPF.IsNegative(),
-	//	"estimated_next_cpf: %s",
-	//	bindingResp.EstimatedNextCPF)
-}
+// 	// s.Assert().EqualValues(cwReq.Pair, bindingResp.Pair)
+// 	// s.Assert().Truef(
+// 	//
+// 	//	!bindingResp.CPF.IsNegative(),
+// 	//	"cpf: %s",
+// 	//	bindingResp.CPF)
+// 	//
+// 	// s.Assert().Truef(
+// 	//
+// 	//	!bindingResp.EstimatedNextCPF.IsNegative(),
+// 	//	"estimated_next_cpf: %s",
+// 	//	bindingResp.EstimatedNextCPF)
+// }
 
 // func (s *TestSuiteQuerier) TestQueryMetrics() {
 // 	cwReq := &bindings.MetricsRequest{
@@ -338,16 +292,16 @@ func (s *TestSuiteQuerier) TestQueryPremiumFraction() {
 // 	s.Require().NoErrorf(err, "resp bytes: %s", respBz)
 // }
 
-func (s *TestSuiteQuerier) TestQueryPerpModuleAccounts() {
-	cwReq := &bindings.ModuleAccountsRequest{}
+// func (s *TestSuiteQuerier) TestQueryPerpModuleAccounts() {
+// 	cwReq := &bindings.ModuleAccountsRequest{}
 
-	bindingQuery := bindings.BindingQuery{
-		ModuleAccounts: cwReq,
-	}
-	bindingResp := new(bindings.ModuleAccountsResponse)
+// 	bindingQuery := bindings.BindingQuery{
+// 		ModuleAccounts: cwReq,
+// 	}
+// 	bindingResp := new(bindings.ModuleAccountsResponse)
 
-	respBz, err := DoCustomBindingQuery(
-		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
-	)
-	s.Require().NoErrorf(err, "resp bytes: %s", respBz)
-}
+// 	respBz, err := DoCustomBindingQuery(
+// 		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
+// 	)
+// 	s.Require().NoErrorf(err, "resp bytes: %s", respBz)
+// }

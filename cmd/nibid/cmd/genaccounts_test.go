@@ -41,7 +41,7 @@ func TestAddGenesisAccountCmd(t *testing.T) {
 			cfg, err := genutiltest.CreateDefaultTendermintConfig(home)
 			require.NoError(t, err)
 
-			appCodec := app.MakeEncodingConfigAndRegister().Marshaler
+			appCodec := app.MakeEncodingConfig().Marshaler
 			err = genutiltest.ExecInitCmd(
 				testModuleBasicManager, home, appCodec)
 			require.NoError(t, err)
