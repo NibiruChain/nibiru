@@ -14,15 +14,16 @@ import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	codec "github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/tokenfactory/fixture"
 	tftypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
-	codec "github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
 )
 
 // Instantiate is a empty struct type with conventience functions for
@@ -282,9 +283,7 @@ func (s *TestSuite) TestStargateSerde() {
 			s.Require().NoError(err)
 			s.EqualValues(tc.sdkMsg, sdkMsgs[0])
 		})
-
 	}
-
 }
 
 func parseByteList(s string) ([]byte, error) {

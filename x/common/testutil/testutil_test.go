@@ -4,8 +4,9 @@ import (
 	"path"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 )
 
 type TestSuite struct {
