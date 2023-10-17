@@ -39,7 +39,7 @@ func TestKeeperTestSuite(t *testing.T) {
 // and ctx.
 func (s *TestSuite) SetupTest() {
 	testapp.EnsureNibiruPrefix()
-	s.encConfig = app.MakeEncodingConfigAndRegister()
+	s.encConfig = app.MakeEncodingConfig()
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 	s.app = nibiruApp
 	s.ctx = ctx
