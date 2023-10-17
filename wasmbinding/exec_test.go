@@ -550,7 +550,7 @@ func (s *TestSuiteExecutor) TestCreateMarket() {
 	market, err := s.nibiru.PerpKeeperV2.GetMarket(s.ctx, pair)
 	s.NoError(err)
 	s.NoError(market.Validate())
-	s.True(market.Enabled)
+	s.False(market.Enabled, "by default, we create a market in a disabled state")
 	s.EqualValues(pair, market.Pair)
 
 	s.T().Log("Executing without permission should fail")
