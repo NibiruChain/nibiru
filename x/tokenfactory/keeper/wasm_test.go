@@ -131,8 +131,6 @@ type WasmTestCase struct {
 //
 // in the example smart contract.
 func (s *TestSuite) TestStargate() {
-	fmt.Printf("\n---------- TestStargate ----------\n\n")
-
 	s.T().Log("create contract deployer and fund account")
 	deployer, err := sdk.AccAddressFromBech32("nibi18wcr5svu0dexdj2zwk44hcjfw6drcsfkn6hq9q")
 	s.NoError(err)
@@ -142,22 +140,9 @@ func (s *TestSuite) TestStargate() {
 		testapp.FundAccount(s.app.BankKeeper, s.ctx, deployer, funds),
 	)
 
-	fmt.Printf("deployer: %v\n", deployer.String())
-
 	liveContracts := SetupContracts(s.T(), deployer, s.app, s.ctx)
 	contract, isFound := liveContracts[fixture.WASM_NIBI_STARGATE]
 	s.True(isFound)
-
-	// DEBUG
-	// registry := s.app.InterfaceRegistry()
-	// impls := registry.ListImplementations(sdk.MsgInterfaceProtoName)
-
-	// sgVal := s.encConfig.Marshaler.MustMarshal(&tftypes.MsgCreateDenom{
-	// 	Sender:   contract.Addr.String(),
-	// 	Subdenom: "zzz",
-	// })
-	// fmt.Printf("DEBUG tokenfactory/../wasm_test.go sgVal (v): %v\n", sgVal)
-	// fmt.Printf("DEBUG tokenfactory/../wasm_test.go sgVal (s): %s\n", sgVal)
 
 	tfdenom := tftypes.TFDenom{
 		Creator:  contract.Addr.String(),
@@ -232,13 +217,32 @@ func (s *TestSuite) TestStargate() {
 	})
 }
 
-func (s *TestSuite) TestStargateSerde() {
-	fmt.Printf("\n---------- TestStargateSerde ----------\n\n")
+/*
+TestStargateSerde: Compares marshaled bytes produced for an sdk.Msg against
+the equivalent encoding in Rust (`Vec<u8>`).
+Test values for the `wantBz` field can be reproduced for a
+`nibiru_std::proto::NibiruStargateMsg` by running the `to_bytes` function.
 
+Example:
+
+	```rust
+	use nibiru_std::proto::nibiru;
+	let pb_msg: NibiruProstMsg = nibiru::tokenfactory::MsgMint { ... }
+	println!("{:?}", pb_msg.to_bytes())
+	```
+
+The printed vector corresponds one-to-one with what we'd get when marshaling
+that protobuf message to `[]byte` in Go.
+*/
+func (s *TestSuite) TestStargateSerde() {
 	testCases := []struct {
-		sdkMsg  sdk.Msg
+		// sdkMsg: A protobuf message implementing both the sdk.Msg and
+		// codec.ProtoMarshaler interfaces. Any transaction message will work here.
+		// Note that you need the pointer to the message for encoding.
+		sdkMsg any
+		// A namespaced string identifier for the type of a serialized protobuf
+		// message. Often associated with the `Any` type.
 		typeUrl string
-		pbMsg   codec.ProtoMarshaler
 		wantBz  string
 	}{
 		{
@@ -247,31 +251,35 @@ func (s *TestSuite) TestStargateSerde() {
 				Sender:   "sender",
 				Subdenom: "subdenom",
 			},
-			pbMsg: &tftypes.MsgCreateDenom{
-				Sender:   "sender",
-				Subdenom: "subdenom",
-			},
 			wantBz: "[10 6 115 101 110 100 101 114 18 8 115 117 98 100 101 110 111 109]",
+		},
+		{
+			typeUrl: "/nibiru.tokenfactory.v1.MsgMint",
+			sdkMsg: &tftypes.MsgMint{
+				Sender: "sender",
+				Coin:   sdk.NewInt64Coin("abcxyz", 123),
+				MintTo: "mint_to",
+			},
+			wantBz: fmt.Sprint([]byte{10, 6, 115, 101, 110, 100, 101, 114, 18, 13, 10, 6, 97, 98, 99, 120, 121, 122, 18, 3, 49, 50, 51, 26, 7, 109, 105, 110, 116, 95, 116, 111}),
 		},
 	}
 
 	for _, tc := range testCases {
 		s.Run(tc.typeUrl, func() {
-			sgMsgValue := s.encConfig.Marshaler.MustMarshal(tc.pbMsg)
+			pbMsg, _ := (tc.sdkMsg).(codec.ProtoMarshaler)
+			sgMsgValue := s.encConfig.Marshaler.MustMarshal(pbMsg)
 			sgMsg := wasmvmtypes.StargateMsg{
 				TypeURL: tc.typeUrl,
 				Value:   sgMsgValue,
 			}
-			fmt.Printf("sgMsgValue: %v\n", sgMsgValue)
 			if tc.wantBz != "" {
 				bz, _ := parseByteList(tc.wantBz)
 				s.Equal(bz, sgMsgValue)
 			}
 
-			ibcTransferPort := wasmtesting.MockIBCTransferKeeper{GetPortFn: func(ctx sdk.Context) string {
-				return "myTransferPort"
-			}}
-			fmt.Printf("s.encConfig.Marshaler: %v\n", s.encConfig.Marshaler)
+			ibcTransferPort := wasmtesting.MockIBCTransferKeeper{
+				GetPortFn: func(ctx sdk.Context) string { return "myTransferPort" },
+			}
 			wasmEncoders := wasmkeeper.DefaultEncoders(s.encConfig.Marshaler, ibcTransferPort)
 			mockContractAddr := testutil.AccAddress()
 			sdkMsgs, err := wasmEncoders.Encode(s.ctx, mockContractAddr, "mock-ibc-port",
@@ -281,15 +289,19 @@ func (s *TestSuite) TestStargateSerde() {
 			)
 
 			s.Require().NoError(err)
-			s.EqualValues(tc.sdkMsg, sdkMsgs[0])
+			sdkMsg, _ := (tc.sdkMsg).(sdk.Msg)
+			s.EqualValues(sdkMsg, sdkMsgs[0])
 		})
 	}
 }
 
-func parseByteList(s string) ([]byte, error) {
-	s = strings.TrimPrefix(s, "[")
-	s = strings.TrimSuffix(s, "]")
-	parts := strings.Split(s, " ")
+// parseByteList: Parses the string version of a `[]byte` object when formatted
+// using methods like 'fmt.Sprintf' or 'fmt.Println' to recover the underlying
+// type again.
+func parseByteList(bzStr string) ([]byte, error) {
+	bzStr = strings.TrimPrefix(bzStr, "[")
+	bzStr = strings.TrimSuffix(bzStr, "]")
+	parts := strings.Split(bzStr, " ")
 
 	var result []byte
 	for _, part := range parts {
