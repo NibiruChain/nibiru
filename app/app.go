@@ -405,7 +405,7 @@ func (app *NibiruApp) GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper {
    This is provided for compatibility between protobuf and amino implementations. */
 
 func (app *NibiruApp) GetTxConfig() client.TxConfig {
-	return MakeEncodingConfigAndRegister().TxConfig
+	return MakeEncodingConfig().TxConfig
 }
 
 // ------------------------------------------------------------------------

@@ -14,7 +14,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	perp "github.com/NibiruChain/nibiru/x/perp/v2/module"
@@ -85,7 +84,7 @@ func RunTestGenesis(t *testing.T, tc TestCase) {
 	// export genesis
 	genState := perp.ExportGenesis(ctx, app.PerpKeeperV2)
 	err := genState.Validate()
-	jsonBz, errMarshalJson := genesis.TEST_ENCODING_CONFIG.Marshaler.MarshalJSON(genState)
+	jsonBz, errMarshalJson := app.AppCodec().MarshalJSON(genState)
 	require.NoError(t, errMarshalJson)
 	require.NoErrorf(t, err, "genState: \n%s", jsonBz)
 

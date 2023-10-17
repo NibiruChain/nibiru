@@ -47,7 +47,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	app.SetPrefixes(app.AccountAddressPrefix)
 
-	encodingConfig := app.MakeEncodingConfigAndRegister()
+	encodingConfig := app.MakeEncodingConfig()
 	genesisState := genesis.NewTestGenesisState(encodingConfig)
 	perpv2Gen := perpv2types.DefaultGenesis()
 	perpv2Gen.Markets = []perpv2types.Market{
