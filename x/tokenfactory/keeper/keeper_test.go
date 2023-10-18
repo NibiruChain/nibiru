@@ -21,8 +21,9 @@ var _ suite.SetupTestSuite = (*TestSuite)(nil)
 type TestSuite struct {
 	suite.Suite
 
-	ctx sdk.Context
-	app *app.NibiruApp
+	ctx       sdk.Context
+	app       *app.NibiruApp
+	encConfig app.EncodingConfig
 
 	keeper  tfkeeper.Keeper
 	querier tfkeeper.Querier
@@ -38,6 +39,7 @@ func TestKeeperTestSuite(t *testing.T) {
 // and ctx.
 func (s *TestSuite) SetupTest() {
 	testapp.EnsureNibiruPrefix()
+	s.encConfig = app.MakeEncodingConfig()
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 	s.app = nibiruApp
 	s.ctx = ctx
