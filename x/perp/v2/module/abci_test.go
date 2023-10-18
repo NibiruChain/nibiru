@@ -135,10 +135,11 @@ func TestEndBlocker(t *testing.T) {
 	runBlock(5 * time.Second)
 	afterEvents := ctx.EventManager().Events()
 
-	testutilevents.AssertEventsPresent(
-		t,
-		testutilevents.FilterNewEvents(beforeEvents, afterEvents),
-		[]string{"nibiru.perp.v2.AmmUpdatedEvent", "nibiru.perp.v2.MarketUpdatedEvent"},
+	require.NoError(t,
+		testutilevents.AssertEventsPresent(
+			testutilevents.FilterNewEvents(beforeEvents, afterEvents),
+			[]string{"nibiru.perp.v2.AmmUpdatedEvent", "nibiru.perp.v2.MarketUpdatedEvent"},
+		),
 	)
 
 	// add index price
