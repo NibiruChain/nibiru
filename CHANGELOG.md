@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1607](https://github.com/NibiruChain/nibiru/pull/1607) - Token factory transaction messages for CreateDenom, ChangeAdmin, and UpdateModuleParams 
 * [#1620](https://github.com/NibiruChain/nibiru/pull/1620) - Token factory transaction messages for Mint and Burn
 * [#1573](https://github.com/NibiruChain/nibiru/pull/1573) - feat(perp): Close markets and compute settlement price
+* [#1632](https://github.com/NibiruChain/nibiru/pull/1632) - feat(perp): Add settle position transaction
 
 ### State Machine Breaking 
 
