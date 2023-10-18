@@ -83,7 +83,7 @@ func TestMultiLiquidate(t *testing.T) {
 				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(600)),
 				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(150)),
 				BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(250)),
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				PositionShouldNotExist(alice, pairBtcUsdc, 1),
 			),
 
 		TC("full liquidation").
@@ -104,7 +104,7 @@ func TestMultiLiquidate(t *testing.T) {
 				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(600)),
 				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(150)),
 				BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(250)),
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				PositionShouldNotExist(alice, pairBtcUsdc, 1),
 			),
 
 		TC("one fail liquidation - one correct").
@@ -126,7 +126,7 @@ func TestMultiLiquidate(t *testing.T) {
 				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(600)),
 				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(150)),
 				BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(250)),
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				PositionShouldNotExist(alice, pairBtcUsdc, 1),
 			),
 
 		TC("one fail liquidation because market does not exists- one correct").
@@ -148,7 +148,7 @@ func TestMultiLiquidate(t *testing.T) {
 				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(600)),
 				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(150)),
 				BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(250)),
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				PositionShouldNotExist(alice, pairBtcUsdc, 1),
 			),
 
 		TC("realizes bad debt").
@@ -170,7 +170,7 @@ func TestMultiLiquidate(t *testing.T) {
 				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(800)),
 				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.ZeroInt()),
 				BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(250)),
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				PositionShouldNotExist(alice, pairBtcUsdc, 1),
 			),
 
 		TC("uses prepaid bad debt").
@@ -191,7 +191,7 @@ func TestMultiLiquidate(t *testing.T) {
 				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(750)),
 				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.ZeroInt()),
 				BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(250)),
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				PositionShouldNotExist(alice, pairBtcUsdc, 1),
 				MarketShouldBeEqual(pairBtcUsdc, Market_PrepaidBadDebtShouldBeEqualTo(sdk.ZeroInt())),
 			),
 
@@ -273,7 +273,7 @@ func TestMultiLiquidate(t *testing.T) {
 						},
 					),
 				),
-				PositionShouldNotExist(alice, pairEthUsdc),
+				PositionShouldNotExist(alice, pairEthUsdc, 1),
 				PositionShouldBeEqual(alice, pairAtomUsdc,
 					Position_PositionShouldBeEqualTo(
 						types.Position{

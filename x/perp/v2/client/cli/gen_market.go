@@ -161,8 +161,6 @@ func newMarketFromFlags(flagSet *flag.FlagSet,
 		return types.Market{}, types.AMM{}, err
 	}
 
-	fmt.Println(maxFundingRate)
-
 	priceMultiplier, err := sdk.NewDecFromStr(priceMultiplierStr)
 	if err != nil {
 		return types.Market{}, types.AMM{}, err

@@ -1,8 +1,6 @@
 package action
 
 import (
-	"fmt"
-
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -21,7 +19,6 @@ type logger struct {
 }
 
 func (e logger) Do(_ *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	fmt.Println(e.log)
 	return ctx, nil, true
 }
 
@@ -38,7 +35,7 @@ type createMarketAction struct {
 }
 
 func (c createMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	app.PerpKeeperV2.MarketLastVersion.Insert(ctx, c.Market.Pair, types.MarketLastVersion{Version: 1})
+	app.PerpKeeperV2.MarketLastVersion.Insert(ctx, c.Market.Pair, types.MarketLastVersion{Version: c.Market.Version})
 	app.PerpKeeperV2.SaveMarket(ctx, c.Market)
 	app.PerpKeeperV2.SaveAMM(ctx, c.AMM)
 

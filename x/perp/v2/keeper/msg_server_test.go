@@ -90,7 +90,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 				MsgServerClosePosition(alice, pair),
 			).
 			Then(
-				PositionShouldNotExist(alice, pair),
+				PositionShouldNotExist(alice, pair, 1),
 				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(100)),
 			),
 
@@ -105,7 +105,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 				MsgServerClosePosition(alice, pair),
 			).
 			Then(
-				PositionShouldNotExist(alice, pair),
+				PositionShouldNotExist(alice, pair, 1),
 				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(100)),
 			),
 	}
@@ -283,7 +283,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(600)),
 				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(150)),
 				BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(250)),
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				PositionShouldNotExist(alice, pairBtcUsdc, 1),
 			),
 	}
 

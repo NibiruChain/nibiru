@@ -24,8 +24,25 @@ service Msg {
 
   rpc PartialClose(MsgPartialClose) returns (MsgPartialCloseResponse) {}
 
+  rpc SettlePosition(MsgSettlePosition) returns (MsgClosePositionResponse) {}
+
   rpc DonateToEcosystemFund(MsgDonateToEcosystemFund)
       returns (MsgDonateToEcosystemFundResponse) {}
+}
+
+// -------------------------- Settle Position --------------------------
+
+/* MsgSettlePosition: Msg to remove margin. */
+message MsgSettlePosition {
+  string sender = 1;
+
+  string pair = 2 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+
+  uint64 version = 3;
 }
 
 // -------------------------- RemoveMargin --------------------------

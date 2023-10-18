@@ -61,10 +61,11 @@ func Position_PositionShouldBeEqualTo(expectedPosition types.Position) PositionC
 type positionShouldNotExist struct {
 	Account sdk.AccAddress
 	Pair    asset.Pair
+	Version uint64
 }
 
 func (p positionShouldNotExist) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	_, err := app.PerpKeeperV2.GetPosition(ctx, p.Pair, 1, p.Account)
+	_, err := app.PerpKeeperV2.GetPosition(ctx, p.Pair, p.Version, p.Account)
 	if err == nil {
 		return ctx, fmt.Errorf("position should not exist, but it does with pair %s", p.Pair), false
 	}
@@ -72,9 +73,33 @@ func (p positionShouldNotExist) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Con
 	return ctx, nil, false
 }
 
-func PositionShouldNotExist(account sdk.AccAddress, pair asset.Pair) action.Action {
+func PositionShouldNotExist(account sdk.AccAddress, pair asset.Pair, version uint64) action.Action {
 	return positionShouldNotExist{
 		Account: account,
 		Pair:    pair,
+		Version: version,
+	}
+}
+
+type positionShouldExist struct {
+	Account sdk.AccAddress
+	Pair    asset.Pair
+	Version uint64
+}
+
+func (p positionShouldExist) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	_, err := app.PerpKeeperV2.GetPosition(ctx, p.Pair, p.Version, p.Account)
+	if err != nil {
+		return ctx, fmt.Errorf("position should exist, but it does not with pair %s", p.Pair), false
+	}
+
+	return ctx, nil, false
+}
+
+func PositionShouldExist(account sdk.AccAddress, pair asset.Pair, version uint64) action.Action {
+	return positionShouldExist{
+		Account: account,
+		Pair:    pair,
+		Version: version,
 	}
 }
