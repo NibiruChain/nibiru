@@ -68,9 +68,9 @@ func RequireNotHasTypedEvent(t require.TestingT, ctx sdk.Context, event proto.Me
 }
 
 func RequireContainsTypedEvent(t require.TestingT, ctx sdk.Context, event proto.Message) {
-	eventType := proto.MessageName(event)
 	foundEvents := []proto.Message{}
 	for _, abciEvent := range ctx.EventManager().Events() {
+		eventType := proto.MessageName(event)
 		if abciEvent.Type != eventType {
 			continue
 		}
