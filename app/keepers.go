@@ -2,7 +2,9 @@ package app
 
 import (
 	"path/filepath"
+	"strings"
 
+	wasmdapp "github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
@@ -420,7 +422,7 @@ func (app *NibiruApp) InitKeepers(
 	// assigned.
 	// For example, if there are bindings for the x/perp module, then the app
 	// passed to GetWasmOpts must already have a non-nil PerpKeeper.
-	supportedFeatures := "iterator,staking,stargate,cosmwasm_1_1"
+	supportedFeatures := strings.Join(wasmdapp.AllCapabilities(), ",")
 	app.WasmKeeper = wasm.NewKeeper(
 		appCodec,
 		keys[wasm.StoreKey],

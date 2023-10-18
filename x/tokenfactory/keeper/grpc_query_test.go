@@ -84,6 +84,8 @@ func (s *TestSuite) TestQueryDenomInfo() {
 				Denom: "notadenom",
 			})
 		s.ErrorContains(err, "denom format error")
+		_, err = s.app.TokenFactoryKeeper.QueryDenomInfo(s.ctx, "notadenom")
+		s.Error(err)
 	})
 
 	s.Run("case: happy", func() {
