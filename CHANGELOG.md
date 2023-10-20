@@ -56,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1616](https://github.com/NibiruChain/nibiru/pull/1616) - fix(app)!: Add custom wasm snapshotter for proper state exports
 * [#1617](https://github.com/NibiruChain/nibiru/pull/1617) - fix(app)!: non-nil snapshot manager is not guaranteed in testapp
 * [#1645](https://github.com/NibiruChain/nibiru/pull/1645) - fix(tokenfactory)!: token supply in bank keeper must be correct after MsgBurn.
+* [#xxx](https://github.com/NibiruChain/nibiru/pull/xxx) - feat(wasmbinding)!: whitelisted stargate queries for QueryRequest::Stargate: auth, bank, gov, tokenfactory, epochs, inflation, oracle, sudo, devgas
 
 ### Improvements
 
@@ -134,7 +135,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * [#1473](https://github.com/NibiruChain/nibiru/pull/1473) - refactor(perp)!: rename `OpenPosition` to `MarketOrder`
 * [#1477](https://github.com/NibiruChain/nibiru/pull/1477) - refactor(oracle)!: Move away from deprecated events to typed events in x/oracle
-* [#xxx](https://github.com/NibiruChain/nibiru/pull/xxx) - feat(wasmbinding)!: whitelisted stargate queries for QueryRequest::Stargate: auth, bank, gov, tokenfactory, epochs, inflation, oracle, sudo, devgas
 
 ### Dependencies
 
