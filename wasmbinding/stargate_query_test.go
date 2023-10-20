@@ -1,0 +1,98 @@
+package wasmbinding_test
+
+import (
+	"fmt"
+	"strings"
+	"testing"
+
+	"github.com/cosmos/gogoproto/proto"
+	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc"
+
+	"github.com/NibiruChain/nibiru/wasmbinding"
+
+	"github.com/NibiruChain/nibiru/x/common/set"
+
+	devgas "github.com/NibiruChain/nibiru/x/devgas/v1/types"
+	epochs "github.com/NibiruChain/nibiru/x/epochs/types"
+	inflation "github.com/NibiruChain/nibiru/x/inflation/types"
+	oracle "github.com/NibiruChain/nibiru/x/oracle/types"
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
+	tokenfactory "github.com/NibiruChain/nibiru/x/tokenfactory/types"
+)
+
+// TestWasmAcceptedStargateQueries: Verifies that the query paths registered in
+// the Wasm keeper's StargateQuerier are the official method names in the gRPC
+// query service of each path's respective module.
+func TestWasmAcceptedStargateQueries(t *testing.T) {
+	stargateQueryPaths := set.New[string]()
+	// Add cosmos query paths. These are hard-coded because the GRPC service
+	// descriptions aren't exported from the Cosmos-SDK and remain private vars.
+	// Maybe we could ask the maintainers to export them in the future.
+	for _, queryPath := range []string{
+		// auth
+		"/cosmos.auth.v1beta1.Query/Params",
+		"/cosmos.auth.v1beta1.Query/Account",
+		// bank
+		"/cosmos.bank.v1beta1.Query/SupplyOf",
+		"/cosmos.bank.v1beta1.Query/Params",
+		"/cosmos.bank.v1beta1.Query/DenomMetadata",
+		"/cosmos.bank.v1beta1.Query/Balance",
+	} {
+		stargateQueryPaths.Add(queryPath)
+	}
+
+	t.Log("Add nibiru query paths from GRPC service descriptions")
+	queryServiceDescriptions := []grpc.ServiceDesc{
+		epochs.GrpcQueryServiceDesc(),
+		devgas.GrpcQueryServiceDesc(),
+		inflation.GrpcQueryServiceDesc(),
+		oracle.GrpcQueryServiceDesc(),
+		sudotypes.GrpcQueryServiceDesc(),
+		tokenfactory.GrpcQueryServiceDesc(),
+	}
+	for _, serviceDesc := range queryServiceDescriptions {
+		for _, queryMethod := range serviceDesc.Methods {
+			stargateQueryPaths.Add(
+				fmt.Sprintf("/%v/%v", serviceDesc.ServiceName, queryMethod.MethodName),
+			)
+		}
+	}
+
+	gotQueryPaths := []string{}
+	for queryPath, protobufResponse := range wasmbinding.WasmAcceptedStargateQueries() {
+		gotQueryPaths = append(gotQueryPaths, queryPath)
+
+		// Show that the underlying protobuf name and query paths coincide.
+		pbQueryResponseTypeUrl := proto.MessageName(protobufResponse)
+		splitResponse := strings.Split(pbQueryResponseTypeUrl, "Response")
+		assert.Lenf(t, splitResponse, 2, "typeUrl: %v",
+			splitResponse, pbQueryResponseTypeUrl)
+
+		// Get proto message "package" from the response type
+		typeUrlMinusSuffix := strings.TrimLeft(splitResponse[0], "/")
+		typeUrlPartsFromProtoMsg := strings.Split(typeUrlMinusSuffix, ".")
+		protoMessagePackage := typeUrlPartsFromProtoMsg[:3]
+
+		// Get proto message "package" from the query path
+		typeUrlPartsFromQueryPath := strings.Split(strings.TrimLeft(queryPath, "/"), ".")
+		queryPathProtoPackage := typeUrlPartsFromQueryPath[:3]
+
+		// Verify that the packages match
+		assert.Equalf(t, queryPathProtoPackage, protoMessagePackage,
+			"package names inconsistent:\nfrom query path: %v\nfrom protobuf object: %v",
+			queryPath, pbQueryResponseTypeUrl,
+		)
+
+		// Verify that the method names match too.
+		methodNameFromPb := strings.TrimLeft(typeUrlPartsFromProtoMsg[3], "Query")
+		methodNameFromPath := strings.TrimLeft(typeUrlPartsFromQueryPath[3], "Query/")
+		assert.Equalf(t, methodNameFromPath, methodNameFromPb,
+			"method names inconsistent:\nfrom query path: %v\nfrom protobuf object: %v",
+			queryPath, pbQueryResponseTypeUrl,
+		)
+	}
+
+	t.Log("All stargate query paths must be actual GRPC query service methods")
+	assert.ElementsMatch(t, stargateQueryPaths.ToSlice(), gotQueryPaths)
+}
