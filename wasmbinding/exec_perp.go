@@ -202,7 +202,7 @@ func (exec *ExecutorPerp) SetMarketEnabled(
 		return err
 	}
 
-	return exec.PerpV2.CloseMarket(ctx, pair)
+	return exec.PerpV2.Admin().CloseMarket(ctx, pair)
 }
 
 func (exec *ExecutorPerp) CreateMarket(

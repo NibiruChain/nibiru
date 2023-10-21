@@ -23,7 +23,7 @@ func TestAfterEpochEnd(t *testing.T) {
 	tc := TestCases{
 		TC("index > mark").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
 				SetBlockTime(startTime),
 				InsertOraclePriceSnapshot(pairBtcUsdc, startTime.Add(15*time.Minute), sdk.MustNewDecFromStr("5.8")),
 				StartEpoch(epochtypes.ThirtyMinuteEpochID),
@@ -37,7 +37,7 @@ func TestAfterEpochEnd(t *testing.T) {
 
 		TC("index < mark").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
 				SetBlockTime(startTime),
 				InsertOraclePriceSnapshot(pairBtcUsdc, startTime.Add(15*time.Minute), sdk.MustNewDecFromStr("0.52")),
 				StartEpoch(epochtypes.ThirtyMinuteEpochID),
@@ -51,7 +51,7 @@ func TestAfterEpochEnd(t *testing.T) {
 
 		TC("index > mark - max funding rate").
 			Given(
-				CreateCustomMarket(pairBtcUsdc, WithMaxFundingRate(sdk.MustNewDecFromStr("0.001"))),
+				CreateCustomMarket(pairBtcUsdc, WithEnabled(true), WithMaxFundingRate(sdk.MustNewDecFromStr("0.001"))),
 				SetBlockTime(startTime),
 				InsertOraclePriceSnapshot(pairBtcUsdc, startTime.Add(15*time.Minute), sdk.MustNewDecFromStr("5.8")),
 				StartEpoch(epochtypes.ThirtyMinuteEpochID),
@@ -65,7 +65,7 @@ func TestAfterEpochEnd(t *testing.T) {
 
 		TC("index < mark - max funding rate").
 			Given(
-				CreateCustomMarket(pairBtcUsdc, WithMaxFundingRate(sdk.MustNewDecFromStr("0.001"))),
+				CreateCustomMarket(pairBtcUsdc, WithEnabled(true), WithMaxFundingRate(sdk.MustNewDecFromStr("0.001"))),
 				SetBlockTime(startTime),
 				InsertOraclePriceSnapshot(pairBtcUsdc, startTime.Add(15*time.Minute), sdk.MustNewDecFromStr("0.52")),
 				StartEpoch(epochtypes.ThirtyMinuteEpochID),
@@ -79,7 +79,7 @@ func TestAfterEpochEnd(t *testing.T) {
 
 		TC("index == mark").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
 				SetBlockTime(startTime),
 				InsertOraclePriceSnapshot(pairBtcUsdc, startTime.Add(15*time.Minute), sdk.OneDec()),
 				StartEpoch(epochtypes.ThirtyMinuteEpochID),
@@ -93,7 +93,7 @@ func TestAfterEpochEnd(t *testing.T) {
 
 		TC("missing twap").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
 				SetBlockTime(startTime),
 				StartEpoch(epochtypes.ThirtyMinuteEpochID),
 			).
@@ -106,7 +106,7 @@ func TestAfterEpochEnd(t *testing.T) {
 
 		TC("0 price mark").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
 				SetBlockTime(startTime),
 				StartEpoch(epochtypes.ThirtyMinuteEpochID),
 				InsertOraclePriceSnapshot(pairBtcUsdc, startTime.Add(15*time.Minute), sdk.ZeroDec()),
@@ -118,9 +118,9 @@ func TestAfterEpochEnd(t *testing.T) {
 				MarketShouldBeEqual(pairBtcUsdc, Market_LatestCPFShouldBeEqualTo(sdk.ZeroDec())),
 			),
 
-		TC("market not enabled").
+		TC("market closed").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
 				CloseMarket(pairBtcUsdc),
 				SetBlockTime(startTime),
 				StartEpoch(epochtypes.ThirtyMinuteEpochID),
@@ -135,7 +135,7 @@ func TestAfterEpochEnd(t *testing.T) {
 
 		TC("not correct epoch id").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
 				CloseMarket(pairBtcUsdc),
 				SetBlockTime(startTime),
 				StartEpoch(epochtypes.FifteenMinuteEpochID),

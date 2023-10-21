@@ -46,7 +46,10 @@ func TestEditPriceMultipler(t *testing.T) {
 
 		TC("net bias zero").
 			Given(
-				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(1000)), WithTotalShort(sdk.NewDec(1000))),
+				CreateCustomMarket(pair,
+					WithTotalLong(sdk.NewDec(1000)), WithTotalShort(sdk.NewDec(1000)),
+					WithEnabled(true),
+				),
 				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 			).
@@ -159,6 +162,7 @@ func TestEditPriceMultiplerFail(t *testing.T) {
 			Pair:            pair,
 			PriceMultiplier: sdk.NewDec(2),
 			SqrtDepth:       sdk.NewDec(1_000_000),
+			EnableMarket:    true,
 		},
 	)
 	app.PerpKeeperV2.ReserveSnapshots.Insert(
@@ -224,6 +228,7 @@ func TestEditSwapInvariantFail(t *testing.T) {
 			Pair:            pair,
 			PriceMultiplier: sdk.NewDec(2),
 			SqrtDepth:       sdk.NewDec(1_000),
+			EnableMarket:    true,
 		},
 	)
 	app.PerpKeeperV2.ReserveSnapshots.Insert(
@@ -429,6 +434,7 @@ func TestKeeper_GetMarketByPairAndVersion(t *testing.T) {
 			Pair:            pair,
 			PriceMultiplier: sdk.NewDec(2),
 			SqrtDepth:       sdk.NewDec(1_000_000),
+			EnableMarket:    true,
 		},
 	)
 	require.NoError(t, err)
@@ -453,6 +459,7 @@ func TestKeeper_GetAMMByPairAndVersion(t *testing.T) {
 			Pair:            pair,
 			PriceMultiplier: sdk.NewDec(2),
 			SqrtDepth:       sdk.NewDec(1_000_000),
+			EnableMarket:    true,
 		},
 	)
 	require.NoError(t, err)

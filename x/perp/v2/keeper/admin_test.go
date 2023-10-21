@@ -86,10 +86,11 @@ func TestCreateMarket(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	amm := *mock.TestAMMDefault()
 	app, ctx := testapp.NewNibiruTestAppAndContext()
+	admin := app.PerpKeeperV2.Admin()
 
 	// Error because of invalid market
 	market := types.DefaultMarket(pair).WithMaintenanceMarginRatio(sdk.NewDec(2))
-	err := app.PerpKeeperV2.Admin().CreateMarket(ctx, keeper.ArgsCreateMarket{
+	err := admin.CreateMarket(ctx, keeper.ArgsCreateMarket{
 		Pair:            pair,
 		PriceMultiplier: amm.PriceMultiplier,
 		SqrtDepth:       amm.SqrtDepth,
@@ -98,7 +99,7 @@ func TestCreateMarket(t *testing.T) {
 	require.ErrorContains(t, err, "maintenance margin ratio ratio must be 0 <= ratio <= 1")
 
 	// Error because of invalid amm
-	err = app.PerpKeeperV2.Admin().CreateMarket(ctx, keeper.ArgsCreateMarket{
+	err = admin.CreateMarket(ctx, keeper.ArgsCreateMarket{
 		Pair:            pair,
 		PriceMultiplier: sdk.NewDec(-1),
 		SqrtDepth:       amm.SqrtDepth,
@@ -106,10 +107,11 @@ func TestCreateMarket(t *testing.T) {
 	require.ErrorContains(t, err, "init price multiplier must be > 0")
 
 	// Set it correctly
-	err = app.PerpKeeperV2.Admin().CreateMarket(ctx, keeper.ArgsCreateMarket{
+	err = admin.CreateMarket(ctx, keeper.ArgsCreateMarket{
 		Pair:            pair,
 		PriceMultiplier: amm.PriceMultiplier,
 		SqrtDepth:       amm.SqrtDepth,
+		EnableMarket:    true,
 	})
 	require.NoError(t, err)
 
@@ -127,7 +129,7 @@ func TestCreateMarket(t *testing.T) {
 	require.Equal(t, uint64(1), market.Version)
 
 	// Fail since it already exists and it is not disabled
-	err = app.PerpKeeperV2.Admin().CreateMarket(ctx, keeper.ArgsCreateMarket{
+	err = admin.CreateMarket(ctx, keeper.ArgsCreateMarket{
 		Pair:            pair,
 		PriceMultiplier: amm.PriceMultiplier,
 		SqrtDepth:       amm.SqrtDepth,
@@ -135,10 +137,10 @@ func TestCreateMarket(t *testing.T) {
 	require.ErrorContains(t, err, "already exists")
 
 	// Close the market to test that we can create it again but with an increased version
-	err = app.PerpKeeperV2.CloseMarket(ctx, pair)
+	err = admin.CloseMarket(ctx, pair)
 	require.NoError(t, err)
 
-	err = app.PerpKeeperV2.Admin().CreateMarket(ctx, keeper.ArgsCreateMarket{
+	err = admin.CreateMarket(ctx, keeper.ArgsCreateMarket{
 		Pair:            pair,
 		PriceMultiplier: amm.PriceMultiplier,
 		SqrtDepth:       amm.SqrtDepth,

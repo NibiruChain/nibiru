@@ -7,9 +7,10 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
-// CloseMarket closes the market. From now on, no new position can be opened on this market or closed.
-// Only the open positions can be settled by calling SettlePosition.
-func (k Keeper) CloseMarket(ctx sdk.Context, pair asset.Pair) (err error) {
+// CloseMarket closes the market. From now on, no new position can be opened on
+// this market or closed. Only the open positions can be settled by calling
+// SettlePosition.
+func (k admin) CloseMarket(ctx sdk.Context, pair asset.Pair) (err error) {
 	market, err := k.GetMarket(ctx, pair)
 	if err != nil {
 		return err

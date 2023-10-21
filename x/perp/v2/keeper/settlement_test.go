@@ -24,7 +24,7 @@ func TestDisableMarket(t *testing.T) {
 	tc := TestCases{
 		TC("market can be disabled").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
 				SetBlockTime(startTime),
 				MarketShouldBeEqual(
 					pairBtcUsdc,
@@ -44,6 +44,7 @@ func TestDisableMarket(t *testing.T) {
 			Given(
 				CreateCustomMarket(
 					pairBtcUsdc,
+					WithEnabled(true),
 					WithPricePeg(sdk.OneDec()),
 					WithSqrtDepth(sdk.NewDec(100_000)),
 				),
@@ -71,6 +72,7 @@ func TestDisableMarket(t *testing.T) {
 				pairBtcUsdc,
 				WithPricePeg(sdk.OneDec()),
 				WithSqrtDepth(sdk.NewDec(100_000)),
+				WithEnabled(true),
 			),
 			SetBlockNumber(1),
 			SetBlockTime(startTime),
@@ -95,6 +97,7 @@ func TestDisableMarket(t *testing.T) {
 				pairBtcUsdc,
 				WithPricePeg(sdk.OneDec()),
 				WithSqrtDepth(sdk.NewDec(100_000)),
+				WithEnabled(true),
 			),
 			SetBlockNumber(1),
 			SetBlockTime(startTime),
@@ -131,6 +134,7 @@ func TestSettlePosition(t *testing.T) {
 				pairBtcUsdc,
 				WithPricePeg(sdk.OneDec()),
 				WithSqrtDepth(sdk.NewDec(100_000)),
+				WithEnabled(true),
 			),
 			SetBlockNumber(1),
 			SetBlockTime(startTime),
@@ -155,6 +159,7 @@ func TestSettlePosition(t *testing.T) {
 				pairBtcUsdc,
 				WithPricePeg(sdk.OneDec()),
 				WithSqrtDepth(sdk.NewDec(100_000)),
+				WithEnabled(true),
 			),
 			SetBlockNumber(1),
 			SetBlockTime(startTime),
@@ -223,6 +228,7 @@ func TestSettlePosition(t *testing.T) {
 				pairBtcUsdc,
 				WithPricePeg(sdk.OneDec()),
 				WithSqrtDepth(sdk.NewDec(100_000)),
+				WithEnabled(true),
 			),
 			SetBlockNumber(1),
 			SetBlockTime(startTime),
@@ -245,6 +251,7 @@ func TestSettlePosition(t *testing.T) {
 				WithPricePeg(sdk.OneDec()),
 				WithSqrtDepth(sdk.NewDec(100_000)),
 				WithVersion(1),
+				WithEnabled(true),
 			),
 			SetBlockNumber(1),
 			SetBlockTime(startTime),
@@ -264,6 +271,7 @@ func TestSettlePosition(t *testing.T) {
 				WithPricePeg(sdk.OneDec()),
 				WithSqrtDepth(sdk.NewDec(100_000)),
 				WithVersion(2),
+				WithEnabled(true),
 			),
 			SetBlockNumber(2),
 			MarketOrder(
@@ -289,6 +297,7 @@ func TestSettlePosition(t *testing.T) {
 				WithPricePeg(sdk.OneDec()),
 				WithSqrtDepth(sdk.NewDec(100_000)),
 				WithVersion(1),
+				WithEnabled(true),
 			),
 			SetBlockNumber(1),
 			SetBlockTime(startTime),
@@ -308,6 +317,7 @@ func TestSettlePosition(t *testing.T) {
 				WithPricePeg(sdk.OneDec()),
 				WithSqrtDepth(sdk.NewDec(100_000)),
 				WithVersion(2),
+				WithEnabled(true),
 			),
 			SetBlockNumber(2),
 			MarketOrder(

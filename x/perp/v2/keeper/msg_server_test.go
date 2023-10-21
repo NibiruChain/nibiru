@@ -26,7 +26,7 @@ func TestMsgServerMarketOrder(t *testing.T) {
 	tests := TestCases{
 		TC("open long position").
 			Given(
-				CreateCustomMarket(pair),
+				CreateCustomMarket(pair, WithEnabled(true)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
 			).
 			When(
@@ -49,7 +49,7 @@ func TestMsgServerMarketOrder(t *testing.T) {
 
 		TC("open short position").
 			Given(
-				CreateCustomMarket(pair),
+				CreateCustomMarket(pair, WithEnabled(true)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
 			).
 			When(
@@ -81,7 +81,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 	tests := TestCases{
 		TC("close long position").
 			Given(
-				CreateCustomMarket(pair),
+				CreateCustomMarket(pair, WithEnabled(true)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
 				MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
 				MoveToNextBlock(),
@@ -96,7 +96,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 
 		TC("close short position").
 			Given(
-				CreateCustomMarket(pair),
+				CreateCustomMarket(pair, WithEnabled(true)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
 				MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
 				MoveToNextBlock(),
@@ -120,7 +120,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 	tests := TestCases{
 		TC("add margin").
 			Given(
-				CreateCustomMarket(pair),
+				CreateCustomMarket(pair, WithEnabled(true)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
 				MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
 				MoveToNextBlock(),
@@ -144,7 +144,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 			),
 		TC("partial close").
 			Given(
-				CreateCustomMarket(pair),
+				CreateCustomMarket(pair, WithEnabled(true)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
 				MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
 				MoveToNextBlock(),
@@ -178,7 +178,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 	tests := TestCases{
 		TC("add margin").
 			Given(
-				CreateCustomMarket(pair),
+				CreateCustomMarket(pair, WithEnabled(true)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
 				MarketOrder(alice, pair, types.Direction_LONG, sdk.NewInt(2), sdk.OneDec(), sdk.ZeroDec()),
 				MoveToNextBlock(),
@@ -236,7 +236,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 			Given(
 				SetBlockNumber(1),
 				SetBlockTime(startTime),
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10400))),
 				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
 			).
@@ -269,7 +269,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 			Given(
 				SetBlockNumber(1),
 				SetBlockTime(startTime),
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10600))),
 				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
 			).
