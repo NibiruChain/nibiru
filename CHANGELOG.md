@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1607](https://github.com/NibiruChain/nibiru/pull/1607) - Token factory transaction messages for CreateDenom, ChangeAdmin, and UpdateModuleParams 
 * [#1620](https://github.com/NibiruChain/nibiru/pull/1620) - Token factory transaction messages for Mint and Burn
 * [#1573](https://github.com/NibiruChain/nibiru/pull/1573) - feat(perp): Close markets and compute settlement price
+* [#1632](https://github.com/NibiruChain/nibiru/pull/1632) - feat(perp): Add settle position transaction
 
 ### State Machine Breaking 
 
@@ -61,10 +62,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1614](https://github.com/NibiruChain/nibiru/pull/1614) - refactor(proto): Use explicit namespacing on proto imports for #1608
 * [#1630](https://github.com/NibiruChain/nibiru/pull/1630) - refactor(wasm): clean up wasmbinding/ folder structure
 * [#1631](https://github.com/NibiruChain/nibiru/pull/1631) - fix(.goreleaser.yml): Load version for wasmvm dynamically.
+* [#1638](https://github.com/NibiruChain/nibiru/pull/1638) - test(tokenfactory): integration test core logic with a real smart contract using `nibiru-std`
 
 ### Dependencies
 - Bump `github.com/prometheus/client_golang` from 1.16.0 to 1.17.0 ([#1605](https://github.com/NibiruChain/nibiru/pull/1605))
-- Bump `bufbuild/buf-setup-action` from 1.26.1 to 1.27.0 ([#1624](https://github.com/NibiruChain/nibiru/pull/1624))
+- Bump `bufbuild/buf-setup-action` from 1.26.1 to 1.27.1 ([#1624](https://github.com/NibiruChain/nibiru/pull/1624), [#1641](https://github.com/NibiruChain/nibiru/pull/1641))
 - Bump `stefanzweifel/git-auto-commit-action` from 4 to 5 ([#1625](https://github.com/NibiruChain/nibiru/pull/1625))
 - Bump `github.com/CosmWasm/wasmvm` from 1.4.0 to 1.4.1 ([#1629](https://github.com/NibiruChain/nibiru/pull/1629))
 - Bump `google.golang.org/grpc` from 1.58.2 to 1.58.3 ([#1633](https://github.com/NibiruChain/nibiru/pull/1633))

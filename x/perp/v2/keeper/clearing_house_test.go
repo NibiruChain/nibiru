@@ -266,7 +266,7 @@ func TestMarketOrder(t *testing.T) {
 				ClosePosition(alice, pairBtcNusd),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionShouldNotExist(alice, pairBtcNusd, 1),
 			),
 
 		TC("existing long position, decrease a bit").
@@ -870,7 +870,7 @@ func TestMarketOrder(t *testing.T) {
 					sdkerrors.ErrInsufficientFunds),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionShouldNotExist(alice, pairBtcNusd, 1),
 			),
 
 		TC("new long position, can not open new position after market is not enabled").
@@ -886,7 +886,7 @@ func TestMarketOrder(t *testing.T) {
 					types.ErrMarketNotEnabled),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionShouldNotExist(alice, pairBtcNusd, 1),
 			),
 
 		TC("market doesn't exist").
@@ -900,7 +900,7 @@ func TestMarketOrder(t *testing.T) {
 					types.ErrPairNotFound),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionShouldNotExist(alice, pairBtcNusd, 1),
 			),
 
 		TC("zero quote asset amount").
@@ -915,7 +915,7 @@ func TestMarketOrder(t *testing.T) {
 					types.ErrInputQuoteAmtNegative),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionShouldNotExist(alice, pairBtcNusd, 1),
 			),
 
 		TC("zero leverage").
@@ -930,7 +930,7 @@ func TestMarketOrder(t *testing.T) {
 					types.ErrUserLeverageNegative),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionShouldNotExist(alice, pairBtcNusd, 1),
 			),
 
 		TC("user leverage greater than market max leverage").
@@ -945,7 +945,7 @@ func TestMarketOrder(t *testing.T) {
 					types.ErrLeverageIsTooHigh),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionShouldNotExist(alice, pairBtcNusd, 1),
 			),
 
 		TC("position should not exist after opening a closing manually").
@@ -960,7 +960,7 @@ func TestMarketOrder(t *testing.T) {
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionShouldNotExist(alice, pairBtcNusd, 1),
 			),
 
 		TC("position should not exist after opening a closing manually - reverse with leverage").
@@ -975,7 +975,7 @@ func TestMarketOrder(t *testing.T) {
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(50_000), sdk.NewDec(2), sdk.ZeroDec()),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionShouldNotExist(alice, pairBtcNusd, 1),
 			),
 		TC("position should not exist after opening a closing manually - open with leverage").
 			Given(
@@ -989,7 +989,7 @@ func TestMarketOrder(t *testing.T) {
 				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(100_000), sdk.OneDec(), sdk.ZeroDec()),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionShouldNotExist(alice, pairBtcNusd, 1),
 			),
 
 		TC("position should not exist after opening a closing manually - reverse with leverage").
@@ -1004,7 +1004,7 @@ func TestMarketOrder(t *testing.T) {
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(50_000), sdk.NewDec(2), sdk.ZeroDec()),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionShouldNotExist(alice, pairBtcNusd, 1),
 			),
 
 		TC("position should not exist after opening a closing manually - reverse with leverage - more steps").
@@ -1020,7 +1020,7 @@ func TestMarketOrder(t *testing.T) {
 				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(50_000), sdk.NewDec(2), sdk.ZeroDec()),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionShouldNotExist(alice, pairBtcNusd, 1),
 			),
 	}
 
@@ -1649,7 +1649,7 @@ func TestClosePosition(t *testing.T) {
 				ClosePosition(alice, pairBtcNusd),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionShouldNotExist(alice, pairBtcNusd, 1),
 				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
 					FinalPosition: types.Position{
 						Pair:                            pairBtcNusd,
@@ -1695,7 +1695,7 @@ func TestClosePosition(t *testing.T) {
 				ClosePosition(alice, pairBtcNusd),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionShouldNotExist(alice, pairBtcNusd, 1),
 				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
 					FinalPosition: types.Position{
 						Pair:                            pairBtcNusd,
@@ -1743,7 +1743,7 @@ func TestClosePosition(t *testing.T) {
 				ClosePosition(alice, pairBtcNusd),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionShouldNotExist(alice, pairBtcNusd, 1),
 				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
 					FinalPosition: types.Position{
 						TraderAddress:                   alice.String(),
@@ -1791,7 +1791,7 @@ func TestClosePosition(t *testing.T) {
 				ClosePosition(alice, pairBtcNusd),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionShouldNotExist(alice, pairBtcNusd, 1),
 				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
 					FinalPosition: types.Position{
 						Pair:                            pairBtcNusd,
@@ -1837,7 +1837,7 @@ func TestClosePosition(t *testing.T) {
 				ClosePosition(alice, pairBtcNusd),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionShouldNotExist(alice, pairBtcNusd, 1),
 				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
 					FinalPosition: types.Position{
 						Pair:                            pairBtcNusd,
@@ -1885,7 +1885,7 @@ func TestClosePosition(t *testing.T) {
 				ClosePosition(alice, pairBtcNusd),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionShouldNotExist(alice, pairBtcNusd, 1),
 				PositionChangedEventShouldBeEqual(&types.PositionChangedEvent{
 					FinalPosition: types.Position{
 						TraderAddress:                   alice.String(),
@@ -1937,7 +1937,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				ClosePosition(alice, pairBtcNusd),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionShouldNotExist(alice, pairBtcNusd, 1),
 			),
 		TC("only short position - no change to swap invariant").
 			Given(
@@ -1952,7 +1952,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				ClosePosition(alice, pairBtcNusd),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionShouldNotExist(alice, pairBtcNusd, 1),
 			),
 		TC("only long position - increasing k").
 			Given(
@@ -1971,7 +1971,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				ClosePosition(alice, pairBtcNusd),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionShouldNotExist(alice, pairBtcNusd, 1),
 				ModuleBalanceShouldBeEqualTo(types.VaultModuleAccount, sdk.NewCoins()),
 			),
 		TC("only short position - increasing k").
@@ -1991,7 +1991,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				ClosePosition(alice, pairBtcNusd),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionShouldNotExist(alice, pairBtcNusd, 1),
 				ModuleBalanceShouldBeEqualTo(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.OneInt()))),
 			),
 
@@ -2012,7 +2012,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				ClosePosition(alice, pairBtcNusd),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionShouldNotExist(alice, pairBtcNusd, 1),
 				ModuleBalanceShouldBeEqualTo(types.VaultModuleAccount, sdk.NewCoins()),
 			),
 		TC("only short position - decreasing k").
@@ -2032,7 +2032,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				ClosePosition(alice, pairBtcNusd),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcNusd),
+				PositionShouldNotExist(alice, pairBtcNusd, 1),
 				ModuleBalanceShouldBeEqualTo(types.VaultModuleAccount, sdk.NewCoins()),
 			),
 
@@ -2061,8 +2061,8 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				ClosePosition(bob, pairBtcNusd),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcNusd),
-				PositionShouldNotExist(bob, pairBtcNusd),
+				PositionShouldNotExist(alice, pairBtcNusd, 1),
+				PositionShouldNotExist(bob, pairBtcNusd, 1),
 
 				ModuleBalanceShouldBeEqualTo(types.VaultModuleAccount, sdk.NewCoins()),
 				ModuleBalanceShouldBeEqualTo(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(39_782_394)))),
@@ -2092,8 +2092,8 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				ClosePosition(bob, pairBtcNusd),
 			).
 			Then(
-				PositionShouldNotExist(alice, pairBtcNusd),
-				PositionShouldNotExist(bob, pairBtcNusd),
+				PositionShouldNotExist(alice, pairBtcNusd, 1),
+				PositionShouldNotExist(bob, pairBtcNusd, 1),
 
 				ModuleBalanceShouldBeEqualTo(types.VaultModuleAccount, sdk.NewCoins()),
 				ModuleBalanceShouldBeEqualTo(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(39_200_810)))),
