@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
-	"testing"
 
 	"github.com/cosmos/gogoproto/proto"
+
+	"github.com/NibiruChain/nibiru/x/common/set"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -33,18 +34,30 @@ func FilterNewEvents(beforeEvents, afterEvents sdk.Events) sdk.Events {
 	return newEvents
 }
 
-// AssertEventsPresent fails the test if the given eventsType are not present in the events
-func AssertEventsPresent(t *testing.T, events sdk.Events, eventsType []string) {
-	for _, eventType := range eventsType {
-		for _, event := range events {
-			if event.Type == eventType {
-				return
-			}
+// AssertEventsPresent: Errors if the given event type is not present in events
+func AssertEventPresent(events sdk.Events, eventType string) error {
+	foundTypes := set.New[string]()
+	for _, event := range events {
+		if event.Type == eventType {
+			return nil
 		}
-		t.Errorf("event %s not found", eventType)
+		foundTypes.Add(event.Type)
 	}
+	return fmt.Errorf("event \"%s\" not found within set: %s", eventType, foundTypes.ToSlice())
 }
 
+// AssertEventsPresent: Errors if the given event types are not present in events
+func AssertEventsPresent(events sdk.Events, eventTypes []string) (err error) {
+	for _, eventType := range eventTypes {
+		err := AssertEventPresent(events, eventType)
+		if err != nil {
+			return err
+		}
+	}
+	return
+}
+
+// RequireNotHasTypedEvent: Error if an event type matches the proto.Message name
 func RequireNotHasTypedEvent(t require.TestingT, ctx sdk.Context, event proto.Message) {
 	name := proto.MessageName(event)
 	for _, ev := range ctx.EventManager().Events() {
@@ -54,29 +67,11 @@ func RequireNotHasTypedEvent(t require.TestingT, ctx sdk.Context, event proto.Me
 	}
 }
 
-func RequireHasTypedEvent(t require.TestingT, ctx sdk.Context, event proto.Message) {
-	for _, abciEvent := range ctx.EventManager().Events() {
-		if abciEvent.Type != proto.MessageName(event) {
-			continue
-		}
-		typedEvent, err := sdk.ParseTypedEvent(abci.Event{
-			Type:       abciEvent.Type,
-			Attributes: abciEvent.Attributes,
-		})
-		require.NoError(t, err)
-
-		require.EqualValues(t, event, typedEvent, "events do not match")
-		return
-	}
-
-	t.Errorf("event not found")
-}
-
 func RequireContainsTypedEvent(t require.TestingT, ctx sdk.Context, event proto.Message) {
 	foundEvents := []proto.Message{}
 	for _, abciEvent := range ctx.EventManager().Events() {
-		eventName := proto.MessageName(event)
-		if abciEvent.Type != eventName {
+		eventType := proto.MessageName(event)
+		if abciEvent.Type != eventType {
 			continue
 		}
 		typedEvent, err := sdk.ParseTypedEvent(abci.Event{
