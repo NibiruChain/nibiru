@@ -379,17 +379,17 @@ func (s *TestSuite) TestMintBurn() {
 				allDenoms := bapp.TokenFactoryKeeper.Store.Denoms.
 					Iterate(ctx, collections.Range[string]{}).Values()
 
-				s.T().Log("Minting changes total supply, but burning does not.")
+				s.T().Log("Total supply should decrease by burned amount.")
 				denom := allDenoms[0]
 				s.Equal(
-					sdk.NewInt(69_420), s.app.BankKeeper.GetSupply(s.ctx, denom.String()).Amount,
+					sdk.NewInt(69_419), s.app.BankKeeper.GetSupply(s.ctx, denom.String()).Amount,
 				)
 
-				s.T().Log("We burned 1 token, so it should be in the module account.")
+				s.T().Log("Module account should be empty.")
 				coin := s.app.BankKeeper.GetBalance(
 					s.ctx, tfModuleAddr, denom.String())
 				s.Equal(
-					sdk.NewInt(1),
+					sdk.NewInt(0),
 					coin.Amount,
 				)
 			},
