@@ -34,6 +34,7 @@ func TestMarketOrder(t *testing.T) {
 			Given(
 				CreateCustomMarket(
 					pairBtcNusd,
+					WithEnabled(true),
 					WithPricePeg(sdk.OneDec()),
 					WithSqrtDepth(sdk.NewDec(100_000)),
 				),
@@ -59,7 +60,9 @@ func TestMarketOrder(t *testing.T) {
 
 		TC("new long position").
 			Given(
-				CreateCustomMarket(pairBtcNusd),
+				CreateCustomMarket(pairBtcNusd,
+					WithEnabled(true),
+				),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1020)))),
@@ -124,7 +127,7 @@ func TestMarketOrder(t *testing.T) {
 			Given(
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				CreateCustomMarket(pairBtcNusd),
+				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(2040)))),
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
@@ -180,6 +183,7 @@ func TestMarketOrder(t *testing.T) {
 			Given(
 				CreateCustomMarket(
 					pairBtcNusd,
+					WithEnabled(true),
 					WithPricePeg(sdk.MustNewDecFromStr("0.89")),
 					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
 				),
@@ -215,7 +219,7 @@ func TestMarketOrder(t *testing.T) {
 		TC("existing long position, close a bit but there's bad debt").
 			Given(
 				CreateCustomMarket(
-					pairBtcNusd,
+					pairBtcNusd, WithEnabled(true),
 					WithPricePeg(sdk.MustNewDecFromStr("0.89")),
 					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
 				),
@@ -251,7 +255,7 @@ func TestMarketOrder(t *testing.T) {
 		TC("open big long position and then close after reducing swap invariant").
 			Given(
 				CreateCustomMarket(
-					pairBtcNusd,
+					pairBtcNusd, WithEnabled(true),
 					WithPricePeg(sdk.OneDec()),
 					WithSqrtDepth(sdk.NewDec(100_000)),
 				),
@@ -271,7 +275,7 @@ func TestMarketOrder(t *testing.T) {
 
 		TC("existing long position, decrease a bit").
 			Given(
-				CreateCustomMarket(pairBtcNusd),
+				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1030)))),
@@ -330,6 +334,7 @@ func TestMarketOrder(t *testing.T) {
 			Given(
 				CreateCustomMarket(
 					pairBtcNusd,
+					WithEnabled(true),
 					WithPricePeg(sdk.MustNewDecFromStr("0.89")),
 					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
 				),
@@ -364,7 +369,7 @@ func TestMarketOrder(t *testing.T) {
 
 		TC("existing long position, decrease a lot").
 			Given(
-				CreateCustomMarket(pairBtcNusd),
+				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(4080)))),
@@ -422,7 +427,7 @@ func TestMarketOrder(t *testing.T) {
 		TC("existing long position, decrease a lot but there's bad debt").
 			Given(
 				CreateCustomMarket(
-					pairBtcNusd,
+					pairBtcNusd, WithEnabled(true),
 					WithPricePeg(sdk.MustNewDecFromStr("0.89")),
 					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
 				),
@@ -487,7 +492,7 @@ func TestMarketOrder(t *testing.T) {
 
 		TC("new short position").
 			Given(
-				CreateCustomMarket(pairBtcNusd),
+				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1020)))),
@@ -552,7 +557,7 @@ func TestMarketOrder(t *testing.T) {
 
 		TC("existing short position, go more short").
 			Given(
-				CreateCustomMarket(pairBtcNusd),
+				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(2040)))),
@@ -609,7 +614,7 @@ func TestMarketOrder(t *testing.T) {
 
 		TC("existing short position, go more short but there's bad debt").
 			Given(
-				CreateCustomMarket(pairBtcNusd,
+				CreateCustomMarket(pairBtcNusd, WithEnabled(true),
 					WithPricePeg(sdk.MustNewDecFromStr("1.11")),
 					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
 				),
@@ -644,7 +649,7 @@ func TestMarketOrder(t *testing.T) {
 
 		TC("existing short position, decrease a bit").
 			Given(
-				CreateCustomMarket(pairBtcNusd),
+				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1030)))),
@@ -702,6 +707,7 @@ func TestMarketOrder(t *testing.T) {
 		TC("existing short position, decrease a bit but there's bad debt").
 			Given(
 				CreateCustomMarket(pairBtcNusd,
+					WithEnabled(true),
 					WithPricePeg(sdk.MustNewDecFromStr("1.11")),
 					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
 				),
@@ -736,7 +742,7 @@ func TestMarketOrder(t *testing.T) {
 
 		TC("existing short position, decrease a lot").
 			Given(
-				CreateCustomMarket(pairBtcNusd),
+				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(4080)))),
@@ -793,7 +799,7 @@ func TestMarketOrder(t *testing.T) {
 
 		TC("existing short position, decrease a lot but there's bad debt").
 			Given(
-				CreateCustomMarket(pairBtcNusd,
+				CreateCustomMarket(pairBtcNusd, WithEnabled(true),
 					WithPricePeg(sdk.MustNewDecFromStr("1.11")),
 					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
 				),
@@ -859,7 +865,7 @@ func TestMarketOrder(t *testing.T) {
 
 		TC("user has insufficient funds").
 			Given(
-				CreateCustomMarket(pairBtcNusd),
+				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(99)))),
@@ -875,7 +881,7 @@ func TestMarketOrder(t *testing.T) {
 
 		TC("new long position, can not open new position after market is not enabled").
 			Given(
-				CreateCustomMarket(pairBtcNusd),
+				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(47_714_285_715)))),
@@ -907,7 +913,7 @@ func TestMarketOrder(t *testing.T) {
 			Given(
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				CreateCustomMarket(pairBtcNusd),
+				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(47_714_285_715)))),
 			).
 			When(
@@ -922,7 +928,7 @@ func TestMarketOrder(t *testing.T) {
 			Given(
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				CreateCustomMarket(pairBtcNusd),
+				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 			).
 			When(
@@ -937,7 +943,7 @@ func TestMarketOrder(t *testing.T) {
 			Given(
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				CreateCustomMarket(pairBtcNusd),
+				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 			).
 			When(
@@ -952,7 +958,9 @@ func TestMarketOrder(t *testing.T) {
 			Given(
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				CreateCustomMarket(pairBtcNusd, WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
+				CreateCustomMarket(pairBtcNusd,
+					WithEnabled(true),
+					WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(20_000_000_000+20_000_000)))),
 			).
 			When(
@@ -967,7 +975,10 @@ func TestMarketOrder(t *testing.T) {
 			Given(
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				CreateCustomMarket(pairBtcNusd, WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
+				CreateCustomMarket(
+					pairBtcNusd,
+					WithEnabled(true),
+					WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 			).
 			When(
@@ -981,7 +992,10 @@ func TestMarketOrder(t *testing.T) {
 			Given(
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				CreateCustomMarket(pairBtcNusd, WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
+				CreateCustomMarket(
+					pairBtcNusd,
+					WithEnabled(true),
+					WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 			).
 			When(
@@ -996,7 +1010,10 @@ func TestMarketOrder(t *testing.T) {
 			Given(
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				CreateCustomMarket(pairBtcNusd, WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
+				CreateCustomMarket(
+					pairBtcNusd,
+					WithEnabled(true),
+					WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 			).
 			When(
@@ -1011,7 +1028,10 @@ func TestMarketOrder(t *testing.T) {
 			Given(
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				CreateCustomMarket(pairBtcNusd, WithPricePeg(sdk.MustNewDecFromStr("25000"))),
+				CreateCustomMarket(
+					pairBtcNusd,
+					WithEnabled(true),
+					WithPricePeg(sdk.MustNewDecFromStr("25000"))),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 			).
 			When(
@@ -1171,6 +1191,7 @@ func TestPartialClose(t *testing.T) {
 			Given(
 				CreateCustomMarket(
 					pairBtcNusd,
+					WithEnabled(true),
 					WithPricePeg(sdk.NewDec(2)),
 					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
 				),
@@ -1225,6 +1246,7 @@ func TestPartialClose(t *testing.T) {
 			Given(
 				CreateCustomMarket(
 					pairBtcNusd,
+					WithEnabled(true),
 					WithPricePeg(sdk.MustNewDecFromStr("0.95")),
 					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
 				),
@@ -1279,6 +1301,7 @@ func TestPartialClose(t *testing.T) {
 			Given(
 				CreateCustomMarket(
 					pairBtcNusd,
+					WithEnabled(true),
 					WithPricePeg(sdk.MustNewDecFromStr("0.94")),
 					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
 				),
@@ -1332,6 +1355,7 @@ func TestPartialClose(t *testing.T) {
 			Given(
 				CreateCustomMarket(
 					pairBtcNusd,
+					WithEnabled(true),
 					WithPricePeg(sdk.MustNewDecFromStr("0.59")),
 					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
 				),
@@ -1386,6 +1410,7 @@ func TestPartialClose(t *testing.T) {
 			Given(
 				CreateCustomMarket(
 					pairBtcNusd,
+					WithEnabled(true),
 					WithPricePeg(sdk.MustNewDecFromStr("0.10")),
 					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
 				),
@@ -1440,6 +1465,7 @@ func TestPartialClose(t *testing.T) {
 			Given(
 				CreateCustomMarket(
 					pairBtcNusd,
+					WithEnabled(true),
 					WithPricePeg(sdk.MustNewDecFromStr("1.05")),
 					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
 				),
@@ -1494,6 +1520,7 @@ func TestPartialClose(t *testing.T) {
 			Given(
 				CreateCustomMarket(
 					pairBtcNusd,
+					WithEnabled(true),
 					WithPricePeg(sdk.MustNewDecFromStr("1.09")),
 					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
 				),
@@ -1548,6 +1575,7 @@ func TestPartialClose(t *testing.T) {
 			Given(
 				CreateCustomMarket(
 					pairBtcNusd,
+					WithEnabled(true),
 					WithPricePeg(sdk.MustNewDecFromStr("1.14")),
 					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
 				),
@@ -1602,6 +1630,7 @@ func TestPartialClose(t *testing.T) {
 			Given(
 				CreateCustomMarket(
 					pairBtcNusd,
+					WithEnabled(true),
 					WithPricePeg(sdk.OneDec()),
 					WithSqrtDepth(sdk.NewDec(10_000)),
 				),
@@ -1630,6 +1659,7 @@ func TestClosePosition(t *testing.T) {
 		TC("close long position with positive PnL").
 			Given(
 				CreateCustomMarket(pairBtcNusd,
+					WithEnabled(true),
 					WithPricePeg(sdk.NewDec(2)),
 					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
 				),
@@ -1676,6 +1706,7 @@ func TestClosePosition(t *testing.T) {
 		TC("close long position with negative PnL").
 			Given(
 				CreateCustomMarket(pairBtcNusd,
+					WithEnabled(true),
 					WithPricePeg(sdk.MustNewDecFromStr("0.99")),
 					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
 				),
@@ -1722,6 +1753,7 @@ func TestClosePosition(t *testing.T) {
 		TC("close long position with bad debt").
 			Given(
 				CreateCustomMarket(pairBtcNusd,
+					WithEnabled(true),
 					WithPricePeg(sdk.MustNewDecFromStr("0.89")),
 					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
 				),
@@ -1772,6 +1804,7 @@ func TestClosePosition(t *testing.T) {
 		TC("close short position with positive PnL").
 			Given(
 				CreateCustomMarket(pairBtcNusd,
+					WithEnabled(true),
 					WithPricePeg(sdk.MustNewDecFromStr("0.10")),
 					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
 				),
@@ -1818,6 +1851,7 @@ func TestClosePosition(t *testing.T) {
 		TC("close short position with negative PnL").
 			Given(
 				CreateCustomMarket(pairBtcNusd,
+					WithEnabled(true),
 					WithPricePeg(sdk.MustNewDecFromStr("1.01")),
 					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
 				),
@@ -1864,6 +1898,7 @@ func TestClosePosition(t *testing.T) {
 		TC("close short position with bad debt").
 			Given(
 				CreateCustomMarket(pairBtcNusd,
+					WithEnabled(true),
 					WithPricePeg(sdk.MustNewDecFromStr("1.11")),
 					WithLatestMarketCPF(sdk.MustNewDecFromStr("0.0002")),
 				),
@@ -1926,7 +1961,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 	tc := TestCases{
 		TC("only long position - no change to swap invariant").
 			Given(
-				CreateCustomMarket(pairBtcNusd),
+				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
@@ -1941,7 +1976,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 			),
 		TC("only short position - no change to swap invariant").
 			Given(
-				CreateCustomMarket(pairBtcNusd),
+				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
@@ -1956,7 +1991,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 			),
 		TC("only long position - increasing k").
 			Given(
-				CreateCustomMarket(pairBtcNusd),
+				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
@@ -1976,7 +2011,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 			),
 		TC("only short position - increasing k").
 			Given(
-				CreateCustomMarket(pairBtcNusd),
+				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
@@ -1997,7 +2032,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 
 		TC("only long position - decreasing k").
 			Given(
-				CreateCustomMarket(pairBtcNusd),
+				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
@@ -2017,7 +2052,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 			),
 		TC("only short position - decreasing k").
 			Given(
-				CreateCustomMarket(pairBtcNusd),
+				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
@@ -2038,7 +2073,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 
 		TC("long and short position - increasing k").
 			Given(
-				CreateCustomMarket(pairBtcNusd),
+				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),
@@ -2069,7 +2104,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 			),
 		TC("long and short position - reducing k").
 			Given(
-				CreateCustomMarket(pairBtcNusd),
+				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200_000_000)))),

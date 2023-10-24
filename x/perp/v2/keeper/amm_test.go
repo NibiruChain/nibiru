@@ -46,7 +46,10 @@ func TestEditPriceMultipler(t *testing.T) {
 
 		TC("net bias zero").
 			Given(
-				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(1000)), WithTotalShort(sdk.NewDec(1000))),
+				CreateCustomMarket(pair,
+					WithTotalLong(sdk.NewDec(1000)), WithTotalShort(sdk.NewDec(1000)),
+					WithEnabled(true),
+				),
 				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
 			).
@@ -153,12 +156,13 @@ func TestEditPriceMultiplerFail(t *testing.T) {
 	app, ctx := testapp.NewNibiruTestAppAndContext()
 	account := sdk.MustAccAddressFromBech32("cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v")
 
-	err := app.PerpKeeperV2.Admin().CreateMarket(
+	err := app.PerpKeeperV2.Admin.CreateMarket(
 		ctx,
 		keeper.ArgsCreateMarket{
 			Pair:            pair,
 			PriceMultiplier: sdk.NewDec(2),
 			SqrtDepth:       sdk.NewDec(1_000_000),
+			EnableMarket:    true,
 		},
 	)
 	app.PerpKeeperV2.ReserveSnapshots.Insert(
@@ -179,11 +183,11 @@ func TestEditPriceMultiplerFail(t *testing.T) {
 	require.NoError(t, err)
 
 	// Error because of invalid pair
-	err = app.PerpKeeperV2.Admin().EditPriceMultiplier(ctx, asset.MustNewPair("luna:usdt"), sdk.NewDec(-1))
+	err = app.PerpKeeperV2.Admin.EditPriceMultiplier(ctx, asset.MustNewPair("luna:usdt"), sdk.NewDec(-1))
 	require.ErrorContains(t, err, "market luna:usdt not found")
 
 	// Error because of invalid price multiplier
-	err = app.PerpKeeperV2.Admin().EditPriceMultiplier(ctx, pair, sdk.NewDec(-1))
+	err = app.PerpKeeperV2.Admin.EditPriceMultiplier(ctx, pair, sdk.NewDec(-1))
 	require.ErrorIs(t, err, types.ErrNonPositivePegMultiplier)
 
 	// Add market activity
@@ -205,11 +209,11 @@ func TestEditPriceMultiplerFail(t *testing.T) {
 	require.NoError(t, err)
 
 	// Error because no money in perp ef fund
-	err = app.PerpKeeperV2.Admin().EditPriceMultiplier(ctx, pair, sdk.NewDec(3))
+	err = app.PerpKeeperV2.Admin.EditPriceMultiplier(ctx, pair, sdk.NewDec(3))
 	require.ErrorContains(t, err, "not enough fund in perp ef to pay for repeg")
 
 	// Works because it goes in the other way
-	err = app.PerpKeeperV2.Admin().EditPriceMultiplier(ctx, pair, sdk.NewDec(1))
+	err = app.PerpKeeperV2.Admin.EditPriceMultiplier(ctx, pair, sdk.NewDec(1))
 	require.NoError(t, err)
 }
 
@@ -218,12 +222,13 @@ func TestEditSwapInvariantFail(t *testing.T) {
 	app, ctx := testapp.NewNibiruTestAppAndContext()
 	account := sdk.MustAccAddressFromBech32("cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v")
 
-	err := app.PerpKeeperV2.Admin().CreateMarket(
+	err := app.PerpKeeperV2.Admin.CreateMarket(
 		ctx,
 		keeper.ArgsCreateMarket{
 			Pair:            pair,
 			PriceMultiplier: sdk.NewDec(2),
 			SqrtDepth:       sdk.NewDec(1_000),
+			EnableMarket:    true,
 		},
 	)
 	app.PerpKeeperV2.ReserveSnapshots.Insert(
@@ -244,11 +249,11 @@ func TestEditSwapInvariantFail(t *testing.T) {
 	require.NoError(t, err)
 
 	// Error because of invalid price multiplier
-	err = app.PerpKeeperV2.Admin().EditSwapInvariant(ctx, asset.MustNewPair("luna:usdt"), sdk.NewDec(-1))
+	err = app.PerpKeeperV2.Admin.EditSwapInvariant(ctx, asset.MustNewPair("luna:usdt"), sdk.NewDec(-1))
 	require.ErrorContains(t, err, "market luna:usdt not found")
 
 	// Error because of invalid price multiplier
-	err = app.PerpKeeperV2.Admin().EditSwapInvariant(ctx, pair, sdk.NewDec(-1))
+	err = app.PerpKeeperV2.Admin.EditSwapInvariant(ctx, pair, sdk.NewDec(-1))
 	require.ErrorIs(t, err, types.ErrNegativeSwapInvariant)
 
 	// Add market activity
@@ -270,15 +275,15 @@ func TestEditSwapInvariantFail(t *testing.T) {
 	require.NoError(t, err)
 
 	// Error because no money in perp ef fund
-	err = app.PerpKeeperV2.Admin().EditSwapInvariant(ctx, pair, sdk.NewDec(2_000_000))
+	err = app.PerpKeeperV2.Admin.EditSwapInvariant(ctx, pair, sdk.NewDec(2_000_000))
 	require.ErrorContains(t, err, "not enough fund in perp ef to pay for repeg")
 
 	// Fail at validate
-	err = app.PerpKeeperV2.Admin().EditSwapInvariant(ctx, pair, sdk.NewDec(0))
+	err = app.PerpKeeperV2.Admin.EditSwapInvariant(ctx, pair, sdk.NewDec(0))
 	require.ErrorContains(t, err, "swap multiplier must be > 0")
 
 	// Works because it goes in the other way
-	err = app.PerpKeeperV2.Admin().EditSwapInvariant(ctx, pair, sdk.NewDec(500_000))
+	err = app.PerpKeeperV2.Admin.EditSwapInvariant(ctx, pair, sdk.NewDec(500_000))
 	require.NoError(t, err)
 }
 
@@ -423,22 +428,23 @@ func TestKeeper_GetMarketByPairAndVersion(t *testing.T) {
 
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 
-	err := app.PerpKeeperV2.Admin().CreateMarket(
+	err := app.PerpKeeperV2.Admin.CreateMarket(
 		ctx,
 		keeper.ArgsCreateMarket{
 			Pair:            pair,
 			PriceMultiplier: sdk.NewDec(2),
 			SqrtDepth:       sdk.NewDec(1_000_000),
+			EnableMarket:    true,
 		},
 	)
 	require.NoError(t, err)
 
-	market, err := app.PerpKeeperV2.Admin().GetMarketByPairAndVersion(ctx, pair, 1)
+	market, err := app.PerpKeeperV2.Admin.GetMarketByPairAndVersion(ctx, pair, 1)
 	require.NoError(t, err)
 	require.Equal(t, market.Version, uint64(1))
 	require.Equal(t, market.Pair, pair)
 
-	market, err = app.PerpKeeperV2.Admin().GetMarketByPairAndVersion(ctx, pair, 2)
+	market, err = app.PerpKeeperV2.Admin.GetMarketByPairAndVersion(ctx, pair, 2)
 	require.ErrorContains(t, err, fmt.Sprintf("market with pair %s and version 2 not found", pair.String()))
 }
 
@@ -447,21 +453,22 @@ func TestKeeper_GetAMMByPairAndVersion(t *testing.T) {
 
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 
-	err := app.PerpKeeperV2.Admin().CreateMarket(
+	err := app.PerpKeeperV2.Admin.CreateMarket(
 		ctx,
 		keeper.ArgsCreateMarket{
 			Pair:            pair,
 			PriceMultiplier: sdk.NewDec(2),
 			SqrtDepth:       sdk.NewDec(1_000_000),
+			EnableMarket:    true,
 		},
 	)
 	require.NoError(t, err)
 
-	amm, err := app.PerpKeeperV2.Admin().GetAMMByPairAndVersion(ctx, pair, 1)
+	amm, err := app.PerpKeeperV2.Admin.GetAMMByPairAndVersion(ctx, pair, 1)
 	require.NoError(t, err)
 	require.Equal(t, amm.Version, uint64(1))
 	require.Equal(t, amm.Pair, pair)
 
-	amm, err = app.PerpKeeperV2.Admin().GetAMMByPairAndVersion(ctx, pair, 2)
+	amm, err = app.PerpKeeperV2.Admin.GetAMMByPairAndVersion(ctx, pair, 2)
 	require.ErrorContains(t, err, fmt.Sprintf("amm with pair %s and version 2 not found", pair.String()))
 }
