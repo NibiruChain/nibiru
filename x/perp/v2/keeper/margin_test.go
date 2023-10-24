@@ -27,7 +27,7 @@ func TestAddMargin(t *testing.T) {
 	tc := TestCases{
 		TC("existing long position, add margin").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2020)))),
@@ -77,7 +77,7 @@ func TestAddMargin(t *testing.T) {
 
 		TC("existing short position, add margin").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2020)))),
@@ -127,8 +127,8 @@ func TestAddMargin(t *testing.T) {
 
 		TC("Testing fails").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
-				CreateCustomMarket(pairEthUsdc),
+				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
+				CreateCustomMarket(pairEthUsdc, WithEnabled(true)),
 
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
@@ -159,7 +159,7 @@ func TestRemoveMargin(t *testing.T) {
 	tc := TestCases{
 		TC("existing long position, remove margin").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1002)))),
@@ -207,7 +207,7 @@ func TestRemoveMargin(t *testing.T) {
 
 		TC("existing long position, remove almost all margin fails").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1002)))),
@@ -234,7 +234,7 @@ func TestRemoveMargin(t *testing.T) {
 
 		TC("existing short position, remove margin").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1002)))),
@@ -282,7 +282,7 @@ func TestRemoveMargin(t *testing.T) {
 
 		TC("existing short position, remove almost all margin fails").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1002)))),

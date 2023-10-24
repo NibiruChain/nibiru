@@ -50,7 +50,7 @@ func (gs GenesisState) Validate() error {
 func DefaultMarket(pair asset.Pair) Market {
 	return Market{
 		Pair:                            pair,
-		Enabled:                         true,
+		Enabled:                         false,
 		Version:                         1,
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 		ExchangeFeeRatio:                sdk.MustNewDecFromStr("0.0010"),
