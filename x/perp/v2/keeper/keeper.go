@@ -26,6 +26,9 @@ type Keeper struct {
 	OracleKeeper  types.OracleKeeper
 	EpochKeeper   types.EpochKeeper
 
+	// Extends the Keeper with admin functions. See admin.go.
+	Admin admin
+
 	MarketLastVersion collections.Map[asset.Pair, types.MarketLastVersion]
 	Markets           collections.Map[collections.Pair[asset.Pair, uint64], types.Market]
 	AMMs              collections.Map[collections.Pair[asset.Pair, uint64], types.AMM]
@@ -53,7 +56,7 @@ func NewKeeper(
 		panic("The x/perp module account has not been set")
 	}
 
-	return Keeper{
+	k := Keeper{
 		cdc:           cdc,
 		storeKey:      storeKey,
 		BankKeeper:    bankKeeper,
@@ -105,6 +108,8 @@ func NewKeeper(
 			collections.DecValueEncoder,
 		),
 	}
+	k.Admin = admin{&k}
+	return k
 }
 
 const (

@@ -48,19 +48,54 @@ func TC(name string) TestCase {
 	return TestCase{Name: name}
 }
 
-func (t TestCase) Given(action ...Action) TestCase {
-	t.given = append(t.given, action...)
-	return t
+func (tc TestCase) Given(action ...Action) TestCase {
+	tc.given = append(tc.given, action...)
+	return tc
 }
 
-func (t TestCase) When(action ...Action) TestCase {
-	t.when = append(t.when, action...)
-	return t
+func (tc TestCase) When(action ...Action) TestCase {
+	tc.when = append(tc.when, action...)
+	return tc
 }
 
-func (t TestCase) Then(action ...Action) TestCase {
-	t.then = append(t.then, action...)
-	return t
+func (tc TestCase) Then(action ...Action) TestCase {
+	tc.then = append(tc.then, action...)
+	return tc
+}
+
+func (tc TestCase) Run(t *testing.T) {
+	t.Run(tc.Name, func(t *testing.T) {
+		app, ctx := testapp.NewNibiruTestAppAndContextAtTime(time.UnixMilli(0))
+		var err error
+		var isMandatory bool
+
+		for _, action := range tc.given {
+			ctx, err, isMandatory = action.Do(app, ctx)
+			if isMandatory {
+				require.NoError(t, err, "failed to execute given action: %s", tc.Name)
+			} else {
+				assert.NoError(t, err, "failed to execute given action: %s", tc.Name)
+			}
+		}
+
+		for _, action := range tc.when {
+			ctx, err, isMandatory = action.Do(app, ctx)
+			if isMandatory {
+				require.NoError(t, err, "failed to execute when action: %s", tc.Name)
+			} else {
+				assert.NoError(t, err, "failed to execute when action: %s", tc.Name)
+			}
+		}
+
+		for _, action := range tc.then {
+			ctx, err, isMandatory = action.Do(app, ctx)
+			if isMandatory {
+				require.NoError(t, err, "failed to execute then action: %s", tc.Name)
+			} else {
+				assert.NoError(t, err, "failed to execute then action: %s", tc.Name)
+			}
+		}
+	})
 }
 
 type TestSuite struct {
@@ -73,42 +108,13 @@ func NewTestSuite(t *testing.T) *TestSuite {
 	return &TestSuite{t: t}
 }
 
-func (t *TestSuite) WithTestCases(testCase ...TestCase) *TestSuite {
-	t.testCases = append(t.testCases, testCase...)
-	return t
+func (ts *TestSuite) WithTestCases(testCase ...TestCase) *TestSuite {
+	ts.testCases = append(ts.testCases, testCase...)
+	return ts
 }
 
-func (t *TestSuite) Run() {
-	for _, testCase := range t.testCases {
-		app, ctx := testapp.NewNibiruTestAppAndContextAtTime(time.UnixMilli(0))
-		var err error
-		var isMandatory bool
-
-		for _, action := range testCase.given {
-			ctx, err, isMandatory = action.Do(app, ctx)
-			if isMandatory {
-				require.NoError(t.t, err, "failed to execute given action: %s", testCase.Name)
-			} else {
-				assert.NoError(t.t, err, "failed to execute given action: %s", testCase.Name)
-			}
-		}
-
-		for _, action := range testCase.when {
-			ctx, err, isMandatory = action.Do(app, ctx)
-			if isMandatory {
-				require.NoError(t.t, err, "failed to execute when action: %s", testCase.Name)
-			} else {
-				assert.NoError(t.t, err, "failed to execute when action: %s", testCase.Name)
-			}
-		}
-
-		for _, action := range testCase.then {
-			ctx, err, isMandatory = action.Do(app, ctx)
-			if isMandatory {
-				require.NoError(t.t, err, "failed to execute then action: %s", testCase.Name)
-			} else {
-				assert.NoError(t.t, err, "failed to execute then action: %s", testCase.Name)
-			}
-		}
+func (ts *TestSuite) Run() {
+	for _, testCase := range ts.testCases {
+		testCase.Run(ts.t)
 	}
 }

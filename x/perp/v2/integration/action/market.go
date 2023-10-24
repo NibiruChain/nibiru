@@ -35,7 +35,8 @@ type createMarketAction struct {
 }
 
 func (c createMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	app.PerpKeeperV2.MarketLastVersion.Insert(ctx, c.Market.Pair, types.MarketLastVersion{Version: c.Market.Version})
+	app.PerpKeeperV2.MarketLastVersion.Insert(
+		ctx, c.Market.Pair, types.MarketLastVersion{Version: c.Market.Version})
 	app.PerpKeeperV2.SaveMarket(ctx, c.Market)
 	app.PerpKeeperV2.SaveAMM(ctx, c.AMM)
 
@@ -171,7 +172,7 @@ type createPool struct {
 }
 
 func (c createPool) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	err := app.PerpKeeperV2.Admin().CreateMarket(ctx, keeper.ArgsCreateMarket{
+	err := app.PerpKeeperV2.Admin.CreateMarket(ctx, keeper.ArgsCreateMarket{
 		Pair:            c.pair,
 		PriceMultiplier: c.amm.PriceMultiplier,
 		SqrtDepth:       c.amm.SqrtDepth,

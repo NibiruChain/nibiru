@@ -12,21 +12,16 @@ import (
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
-// Admin is syntactic sugar to separate admin calls off from the other Keeper
-// methods.
+// Extends the Keeper with admin functions. Admin is syntactic sugar to separate
+// admin calls off from the other Keeper methods.
 //
 // These Admin functions should:
-// 1. Not be wired into the MsgServer or
+// 1. Not be wired into the MsgServer.
 // 2. Not be called in other methods in the x/perp module.
-// 3. Only be callable from x/wasm/binding via sudo contracts.
+// 3. Only be callable from nibiru/wasmbinding via sudo contracts.
 //
 // The intention here is to make it more obvious to the developer that an unsafe
-// function is being used when it's called on the Admin() struct.
-func (k Keeper) Admin() admin {
-	return admin{&k}
-}
-
-// Extends the Keeper with admin functions.
+// function is being used when it's called from the PerpKeeper.Admin struct.
 type admin struct{ *Keeper }
 
 /*
@@ -63,6 +58,9 @@ type ArgsCreateMarket struct {
 	PriceMultiplier sdk.Dec
 	SqrtDepth       sdk.Dec
 	Market          *types.Market // pointer makes it optional
+	// EnableMarket: Optionally enable the default market without explicitly passing
+	// in each field as an argument. If 'Market' is present, this field is ignored.
+	EnableMarket bool
 }
 
 // CreateMarket creates a pool for a specific pair.
@@ -82,6 +80,7 @@ func (k admin) CreateMarket(
 	baseReserve := sqrtDepth
 	if args.Market == nil {
 		market = types.DefaultMarket(pair)
+		market.Enabled = args.EnableMarket
 	} else {
 		market = *args.Market
 	}
@@ -111,6 +110,37 @@ func (k admin) CreateMarket(
 	k.SaveMarket(ctx, market)
 	k.SaveAMM(ctx, amm)
 	k.MarketLastVersion.Insert(ctx, pair, lastVersion)
+
+	return nil
+}
+
+// CloseMarket closes the market. From now on, no new position can be opened on
+// this market or closed. Only the open positions can be settled by calling
+// SettlePosition.
+func (k admin) CloseMarket(ctx sdk.Context, pair asset.Pair) (err error) {
+	market, err := k.GetMarket(ctx, pair)
+	if err != nil {
+		return err
+	}
+	if !market.Enabled {
+		return types.ErrMarketNotEnabled
+	}
+
+	amm, err := k.GetAMM(ctx, pair)
+	if err != nil {
+		return err
+	}
+
+	settlementPrice, _, err := amm.ComputeSettlementPrice()
+	if err != nil {
+		return
+	}
+
+	amm.SettlementPrice = settlementPrice
+	market.Enabled = false
+
+	k.SaveAMM(ctx, amm)
+	k.SaveMarket(ctx, market)
 
 	return nil
 }

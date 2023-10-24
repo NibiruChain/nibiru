@@ -28,6 +28,7 @@ func TestUserVolumes(t *testing.T) {
 				DnREpochIs(1),
 				CreateCustomMarket(
 					pairBtcNusd,
+					WithEnabled(true),
 					WithPricePeg(sdk.OneDec()),
 					WithSqrtDepth(sdk.NewDec(100_000)),
 				),
@@ -48,6 +49,7 @@ func TestUserVolumes(t *testing.T) {
 			Given(
 				CreateCustomMarket(
 					pairBtcNusd,
+					WithEnabled(true),
 					WithPricePeg(sdk.OneDec()),
 					WithSqrtDepth(sdk.NewDec(100_000)),
 				),
@@ -71,6 +73,7 @@ func TestUserVolumes(t *testing.T) {
 			Given(
 				CreateCustomMarket(
 					pairBtcNusd,
+					WithEnabled(true),
 					WithPricePeg(sdk.OneDec()),
 					WithSqrtDepth(sdk.NewDec(100_000)),
 				),
@@ -115,6 +118,7 @@ func TestDiscount(t *testing.T) {
 			Given(
 				CreateCustomMarket(
 					pairBtcNusd,
+					WithEnabled(true),
 					WithPricePeg(sdk.OneDec()),
 					WithSqrtDepth(sdk.NewDec(100_000)),
 				),
@@ -135,6 +139,7 @@ func TestDiscount(t *testing.T) {
 				DnREpochIs(2),
 				CreateCustomMarket(
 					pairBtcNusd,
+					WithEnabled(true),
 					WithPricePeg(sdk.OneDec()),
 					WithSqrtDepth(sdk.NewDec(100_000)),
 				),
@@ -159,6 +164,7 @@ func TestDiscount(t *testing.T) {
 				DnREpochIs(2),
 				CreateCustomMarket(
 					pairBtcNusd,
+					WithEnabled(true),
 					WithPricePeg(sdk.OneDec()),
 					WithSqrtDepth(sdk.NewDec(100_000)),
 				),
@@ -183,6 +189,7 @@ func TestDiscount(t *testing.T) {
 				DnREpochIs(2),
 				CreateCustomMarket(
 					pairBtcNusd,
+					WithEnabled(true),
 					WithPricePeg(sdk.OneDec()),
 					WithSqrtDepth(sdk.NewDec(100_000)),
 				),
