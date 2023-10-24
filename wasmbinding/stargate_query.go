@@ -12,27 +12,47 @@ import (
 
 	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
+	gov "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	ibcconnectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 )
 
 func WasmAcceptedStargateQueries() wasmkeeper.AcceptedStargateQueries {
 	return wasmkeeper.AcceptedStargateQueries{
-		// auth
+		// ibc
+		"/ibc.core.client.v1.Query/ClientState":    &ibcclienttypes.QueryClientStateResponse{},
+		"/ibc.core.client.v1.Query/ConsensusState": &ibcclienttypes.QueryConsensusStateResponse{},
+		"/ibc.core.connection.v1.Query/Connection": &ibcconnectiontypes.QueryConnectionResponse{},
+
+		// ibc transfer
+		"/ibc.applications.transfer.v1.Query/DenomTrace": &ibctransfertypes.QueryDenomTraceResponse{},
+		"TODO": &ibctransfertypes.QueryParamsResponse{},
+
+		// cosmos auth
 		"/cosmos.auth.v1beta1.Query/Account": new(auth.QueryAccountResponse),
 		"/cosmos.auth.v1beta1.Query/Params":  new(auth.QueryParamsResponse),
 
-		// bank
+		// cosmos bank
 		"/cosmos.bank.v1beta1.Query/Balance":       new(bank.QueryBalanceResponse),
 		"/cosmos.bank.v1beta1.Query/DenomMetadata": new(bank.QueryDenomMetadataResponse),
 		"/cosmos.bank.v1beta1.Query/Params":        new(bank.QueryParamsResponse),
 		"/cosmos.bank.v1beta1.Query/SupplyOf":      new(bank.QuerySupplyOfResponse),
+		"/cosmos.bank.v1beta1.Query/AllBalances":   new(bank.QueryAllBalancesResponse),
 
-		// nibiru - tokenfactory
+		// cosmos gov
+		"/cosmos.gov.v1beta1.Query/Proposal": new(gov.QueryProposalResponse),
+		"/cosmos.gov.v1beta1.Query/Params":   new(gov.QueryParamsResponse),
+		"/cosmos.gov.v1beta1.Query/Vote":     new(gov.QueryVoteResponse),
+
+		// nibiru.tokenfactory
 		"/nibiru.tokenfactory.v1.Query/Denoms":    new(tokenfactory.QueryDenomsResponse),
 		"/nibiru.tokenfactory.v1.Query/Params":    new(tokenfactory.QueryParamsResponse),
 		"/nibiru.tokenfactory.v1.Query/DenomInfo": new(tokenfactory.QueryDenomInfoResponse),
 
-		// nibiru - epochs
-		"/nibiru.epochs.v1.Query/EpochInfos":   new(epochs.QueryEpochsInfoResponse),
+		// nibiru.epochs
+		"/nibiru.epochs.v1.Query/EpochInfos":   new(epochs.QueryEpochInfosResponse),
 		"/nibiru.epochs.v1.Query/CurrentEpoch": new(epochs.QueryCurrentEpochResponse),
 
 		// nibiru - inflation
@@ -43,7 +63,7 @@ func WasmAcceptedStargateQueries() wasmkeeper.AcceptedStargateQueries {
 		"/nibiru.inflation.v1.Query/InflationRate":      new(inflation.QueryInflationRateResponse),
 		"/nibiru.inflation.v1.Query/Params":             new(inflation.QueryParamsResponse),
 
-		// nibiru - oracle
+		// nibiru.oracle
 		"/nibiru.oracle.v1.Query/ExchangeRate":      new(oracle.QueryExchangeRateResponse),
 		"/nibiru.oracle.v1.Query/ExchangeRateTwap":  new(oracle.QueryExchangeRateResponse),
 		"/nibiru.oracle.v1.Query/ExchangeRates":     new(oracle.QueryExchangeRatesResponse),
@@ -57,22 +77,19 @@ func WasmAcceptedStargateQueries() wasmkeeper.AcceptedStargateQueries {
 		"/nibiru.oracle.v1.Query/AggregateVotes":    new(oracle.QueryAggregateVotesResponse),
 		"/nibiru.oracle.v1.Query/Params":            new(oracle.QueryParamsResponse),
 
-		// nibiru - sudo
+		// nibiru.sudo
 		"/nibiru.sudo.v1.Query/QuerySudoers": new(sudotypes.QuerySudoersResponse),
 
-		// nibiru - devgas
+		// nibiru.devgas
 		"/nibiru.devgas.v1.Query/FeeShares":             new(devgas.QueryFeeSharesResponse),
 		"/nibiru.devgas.v1.Query/FeeShare":              new(devgas.QueryFeeShareResponse),
 		"/nibiru.devgas.v1.Query/Params":                new(devgas.QueryParamsResponse),
 		"/nibiru.devgas.v1.Query/FeeSharesByWithdrawer": new(devgas.QueryFeeSharesByWithdrawerResponse),
 
-		// TODO for post v1
-		// nibiru - perp
+		// TODO: for post v1
+		// nibiru.perp
 
-		// TODO for post v1
-		// nibiru - spot
-		// "/nibiru.tokenfactory.v1.Query/Params":      &tokenfactory.QueryParamsResponse{},
-		// "/nibiru.tokenfactory.v1.Query/DenomInfo":      &tokenfactory.QueryDenomInfoResponse{},
-
+		// TODO: for post v1
+		// nibiru.spot
 	}
 }

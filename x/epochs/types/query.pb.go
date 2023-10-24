@@ -30,21 +30,21 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-type QueryEpochsInfoRequest struct {
+type QueryEpochInfosRequest struct {
 }
 
-func (m *QueryEpochsInfoRequest) Reset()         { *m = QueryEpochsInfoRequest{} }
-func (m *QueryEpochsInfoRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryEpochsInfoRequest) ProtoMessage()    {}
-func (*QueryEpochsInfoRequest) Descriptor() ([]byte, []int) {
+func (m *QueryEpochInfosRequest) Reset()         { *m = QueryEpochInfosRequest{} }
+func (m *QueryEpochInfosRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryEpochInfosRequest) ProtoMessage()    {}
+func (*QueryEpochInfosRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_2d273c3d69b40555, []int{0}
 }
-func (m *QueryEpochsInfoRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryEpochInfosRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryEpochsInfoRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryEpochInfosRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryEpochsInfoRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryEpochInfosRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -54,34 +54,34 @@ func (m *QueryEpochsInfoRequest) XXX_Marshal(b []byte, deterministic bool) ([]by
 		return b[:n], nil
 	}
 }
-func (m *QueryEpochsInfoRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryEpochsInfoRequest.Merge(m, src)
+func (m *QueryEpochInfosRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryEpochInfosRequest.Merge(m, src)
 }
-func (m *QueryEpochsInfoRequest) XXX_Size() int {
+func (m *QueryEpochInfosRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryEpochsInfoRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryEpochsInfoRequest.DiscardUnknown(m)
+func (m *QueryEpochInfosRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryEpochInfosRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryEpochsInfoRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryEpochInfosRequest proto.InternalMessageInfo
 
-type QueryEpochsInfoResponse struct {
+type QueryEpochInfosResponse struct {
 	Epochs []EpochInfo `protobuf:"bytes,1,rep,name=epochs,proto3" json:"epochs"`
 }
 
-func (m *QueryEpochsInfoResponse) Reset()         { *m = QueryEpochsInfoResponse{} }
-func (m *QueryEpochsInfoResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryEpochsInfoResponse) ProtoMessage()    {}
-func (*QueryEpochsInfoResponse) Descriptor() ([]byte, []int) {
+func (m *QueryEpochInfosResponse) Reset()         { *m = QueryEpochInfosResponse{} }
+func (m *QueryEpochInfosResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryEpochInfosResponse) ProtoMessage()    {}
+func (*QueryEpochInfosResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_2d273c3d69b40555, []int{1}
 }
-func (m *QueryEpochsInfoResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryEpochInfosResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryEpochsInfoResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryEpochInfosResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryEpochsInfoResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryEpochInfosResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -91,19 +91,19 @@ func (m *QueryEpochsInfoResponse) XXX_Marshal(b []byte, deterministic bool) ([]b
 		return b[:n], nil
 	}
 }
-func (m *QueryEpochsInfoResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryEpochsInfoResponse.Merge(m, src)
+func (m *QueryEpochInfosResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryEpochInfosResponse.Merge(m, src)
 }
-func (m *QueryEpochsInfoResponse) XXX_Size() int {
+func (m *QueryEpochInfosResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryEpochsInfoResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryEpochsInfoResponse.DiscardUnknown(m)
+func (m *QueryEpochInfosResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryEpochInfosResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryEpochsInfoResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryEpochInfosResponse proto.InternalMessageInfo
 
-func (m *QueryEpochsInfoResponse) GetEpochs() []EpochInfo {
+func (m *QueryEpochInfosResponse) GetEpochs() []EpochInfo {
 	if m != nil {
 		return m.Epochs
 	}
@@ -199,8 +199,8 @@ func (m *QueryCurrentEpochResponse) GetCurrentEpoch() uint64 {
 }
 
 func init() {
-	proto.RegisterType((*QueryEpochsInfoRequest)(nil), "nibiru.epochs.v1.QueryEpochsInfoRequest")
-	proto.RegisterType((*QueryEpochsInfoResponse)(nil), "nibiru.epochs.v1.QueryEpochsInfoResponse")
+	proto.RegisterType((*QueryEpochInfosRequest)(nil), "nibiru.epochs.v1.QueryEpochInfosRequest")
+	proto.RegisterType((*QueryEpochInfosResponse)(nil), "nibiru.epochs.v1.QueryEpochInfosResponse")
 	proto.RegisterType((*QueryCurrentEpochRequest)(nil), "nibiru.epochs.v1.QueryCurrentEpochRequest")
 	proto.RegisterType((*QueryCurrentEpochResponse)(nil), "nibiru.epochs.v1.QueryCurrentEpochResponse")
 }
@@ -250,7 +250,7 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type QueryClient interface {
 	// EpochInfos provide running epochInfos
-	EpochInfos(ctx context.Context, in *QueryEpochsInfoRequest, opts ...grpc.CallOption) (*QueryEpochsInfoResponse, error)
+	EpochInfos(ctx context.Context, in *QueryEpochInfosRequest, opts ...grpc.CallOption) (*QueryEpochInfosResponse, error)
 	// CurrentEpoch provide current epoch of specified identifier
 	CurrentEpoch(ctx context.Context, in *QueryCurrentEpochRequest, opts ...grpc.CallOption) (*QueryCurrentEpochResponse, error)
 }
@@ -263,8 +263,8 @@ func NewQueryClient(cc grpc1.ClientConn) QueryClient {
 	return &queryClient{cc}
 }
 
-func (c *queryClient) EpochInfos(ctx context.Context, in *QueryEpochsInfoRequest, opts ...grpc.CallOption) (*QueryEpochsInfoResponse, error) {
-	out := new(QueryEpochsInfoResponse)
+func (c *queryClient) EpochInfos(ctx context.Context, in *QueryEpochInfosRequest, opts ...grpc.CallOption) (*QueryEpochInfosResponse, error) {
+	out := new(QueryEpochInfosResponse)
 	err := c.cc.Invoke(ctx, "/nibiru.epochs.v1.Query/EpochInfos", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -284,7 +284,7 @@ func (c *queryClient) CurrentEpoch(ctx context.Context, in *QueryCurrentEpochReq
 // QueryServer is the server API for Query service.
 type QueryServer interface {
 	// EpochInfos provide running epochInfos
-	EpochInfos(context.Context, *QueryEpochsInfoRequest) (*QueryEpochsInfoResponse, error)
+	EpochInfos(context.Context, *QueryEpochInfosRequest) (*QueryEpochInfosResponse, error)
 	// CurrentEpoch provide current epoch of specified identifier
 	CurrentEpoch(context.Context, *QueryCurrentEpochRequest) (*QueryCurrentEpochResponse, error)
 }
@@ -293,7 +293,7 @@ type QueryServer interface {
 type UnimplementedQueryServer struct {
 }
 
-func (*UnimplementedQueryServer) EpochInfos(ctx context.Context, req *QueryEpochsInfoRequest) (*QueryEpochsInfoResponse, error) {
+func (*UnimplementedQueryServer) EpochInfos(ctx context.Context, req *QueryEpochInfosRequest) (*QueryEpochInfosResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EpochInfos not implemented")
 }
 func (*UnimplementedQueryServer) CurrentEpoch(ctx context.Context, req *QueryCurrentEpochRequest) (*QueryCurrentEpochResponse, error) {
@@ -305,7 +305,7 @@ func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
 }
 
 func _Query_EpochInfos_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryEpochsInfoRequest)
+	in := new(QueryEpochInfosRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -317,7 +317,7 @@ func _Query_EpochInfos_Handler(srv interface{}, ctx context.Context, dec func(in
 		FullMethod: "/nibiru.epochs.v1.Query/EpochInfos",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).EpochInfos(ctx, req.(*QueryEpochsInfoRequest))
+		return srv.(QueryServer).EpochInfos(ctx, req.(*QueryEpochInfosRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -357,7 +357,7 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 	Metadata: "nibiru/epochs/v1/query.proto",
 }
 
-func (m *QueryEpochsInfoRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryEpochInfosRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -367,12 +367,12 @@ func (m *QueryEpochsInfoRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryEpochsInfoRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryEpochInfosRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryEpochsInfoRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryEpochInfosRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -380,7 +380,7 @@ func (m *QueryEpochsInfoRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) 
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryEpochsInfoResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryEpochInfosResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -390,12 +390,12 @@ func (m *QueryEpochsInfoResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryEpochsInfoResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryEpochInfosResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryEpochsInfoResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryEpochInfosResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -486,7 +486,7 @@ func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *QueryEpochsInfoRequest) Size() (n int) {
+func (m *QueryEpochInfosRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -495,7 +495,7 @@ func (m *QueryEpochsInfoRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryEpochsInfoResponse) Size() (n int) {
+func (m *QueryEpochInfosResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -541,7 +541,7 @@ func sovQuery(x uint64) (n int) {
 func sozQuery(x uint64) (n int) {
 	return sovQuery(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *QueryEpochsInfoRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryEpochInfosRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -564,10 +564,10 @@ func (m *QueryEpochsInfoRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryEpochsInfoRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryEpochInfosRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryEpochsInfoRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryEpochInfosRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
@@ -591,7 +591,7 @@ func (m *QueryEpochsInfoRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryEpochsInfoResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryEpochInfosResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -614,10 +614,10 @@ func (m *QueryEpochsInfoResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryEpochsInfoResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryEpochInfosResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryEpochsInfoResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryEpochInfosResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
