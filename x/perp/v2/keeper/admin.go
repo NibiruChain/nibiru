@@ -12,21 +12,16 @@ import (
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
-// Admin is syntactic sugar to separate admin calls off from the other Keeper
-// methods.
+// Extends the Keeper with admin functions. Admin is syntactic sugar to separate
+// admin calls off from the other Keeper methods.
 //
 // These Admin functions should:
-// 1. Not be wired into the MsgServer or
+// 1. Not be wired into the MsgServer.
 // 2. Not be called in other methods in the x/perp module.
-// 3. Only be callable from x/wasm/binding via sudo contracts.
+// 3. Only be callable from nibiru/wasmbinding via sudo contracts.
 //
 // The intention here is to make it more obvious to the developer that an unsafe
-// function is being used when it's called on the Admin() struct.
-func (k Keeper) Admin() admin {
-	return admin{&k}
-}
-
-// Extends the Keeper with admin functions.
+// function is being used when it's called from the PerpKeeper.Admin struct.
 type admin struct{ *Keeper }
 
 /*

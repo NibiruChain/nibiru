@@ -52,7 +52,7 @@ func TestAdmin_WithdrawFromInsuranceFund(t *testing.T) {
 				fundModule(t, amountToFund, ctx, nibiru)
 
 				amountToWithdraw := amountToFund
-				err := nibiru.PerpKeeperV2.Admin().WithdrawFromInsuranceFund(
+				err := nibiru.PerpKeeperV2.Admin.WithdrawFromInsuranceFund(
 					ctx, amountToWithdraw, admin)
 				require.NoError(t, err)
 
@@ -72,7 +72,7 @@ func TestAdmin_WithdrawFromInsuranceFund(t *testing.T) {
 				fundModule(t, amountToFund, ctx, nibiru)
 
 				amountToWithdraw := amountToFund.MulRaw(5)
-				err := nibiru.PerpKeeperV2.Admin().WithdrawFromInsuranceFund(
+				err := nibiru.PerpKeeperV2.Admin.WithdrawFromInsuranceFund(
 					ctx, amountToWithdraw, admin)
 				require.Error(t, err)
 			},
@@ -86,7 +86,7 @@ func TestCreateMarket(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	amm := *mock.TestAMMDefault()
 	app, ctx := testapp.NewNibiruTestAppAndContext()
-	admin := app.PerpKeeperV2.Admin()
+	admin := app.PerpKeeperV2.Admin
 
 	// Error because of invalid market
 	market := types.DefaultMarket(pair).WithMaintenanceMarginRatio(sdk.NewDec(2))
