@@ -2,7 +2,7 @@ package keeper
 
 import (
 	"context"
-
+	"fmt"
 	"github.com/cosmos/cosmos-sdk/types/errors"
 
 	sdkerrors "cosmossdk.io/errors"
@@ -166,4 +166,18 @@ func (ms msgServer) DelegateFeedConsent(
 	})
 
 	return &types.MsgDelegateFeedConsentResponse{}, err
+}
+
+func (ms msgServer) EditOracleParams(goCtx context.Context, msg *types.MsgEditOracleParams) (*types.MsgEditOracleParamsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	params, err := ms.Keeper.Params.Get(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get oracle params error: %s", err.Error())
+	}
+
+	mergedParams := mergeOracleParams(msg, params)
+
+	ms.Keeper.UpdateParams(ctx, mergedParams)
+
+	return &types.MsgEditOracleParamsResponse{}, nil
 }
