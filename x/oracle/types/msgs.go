@@ -206,7 +206,7 @@ func (msg MsgEditOracleParams) GetSignBytes() []byte {
 
 // GetSigners implements sdk.Msg
 func (msg MsgEditOracleParams) GetSigners() []sdk.AccAddress {
-	sender, err := sdk.ValAddressFromBech32(msg.Sender)
+	sender, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		panic(err)
 	}
@@ -216,9 +216,9 @@ func (msg MsgEditOracleParams) GetSigners() []sdk.AccAddress {
 
 // ValidateBasic implements sdk.Msg
 func (msg MsgEditOracleParams) ValidateBasic() error {
-	_, err := sdk.ValAddressFromBech32(msg.Sender)
+	_, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
-		return sdkerrors.Wrapf(errors.ErrInvalidAddress, "Invalid operator address (%s)", err)
+		return sdkerrors.Wrapf(errors.ErrInvalidAddress, "Invalid sender address (%s)", err)
 	}
 
 	if msg.Params == nil {
