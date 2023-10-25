@@ -21,10 +21,10 @@ func NewQuerier(k Keeper) Querier {
 }
 
 // EpochInfos provide running epochInfos.
-func (q Querier) EpochInfos(c context.Context, _ *types.QueryEpochsInfoRequest) (*types.QueryEpochsInfoResponse, error) {
+func (q Querier) EpochInfos(c context.Context, _ *types.QueryEpochInfosRequest) (*types.QueryEpochInfosResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	return &types.QueryEpochsInfoResponse{
+	return &types.QueryEpochInfosResponse{
 		Epochs: q.Keeper.AllEpochInfos(ctx),
 	}, nil
 }
