@@ -205,3 +205,23 @@ $ nibid tx oracle aggregate-vote 1234 (40000.0,BTC:USD)|(1.243,NIBI:USD) nibival
 
 	return cmd
 }
+
+func GetCmdEditOracleParams() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "edit-params --vote-period [vote-period] --vote-threshold [vote-threshold] --reward-band [reward-band] --slash-fraction [slash-fraction] --slash-window [slash-window] --min-valid-per-window [min-valid-per-window] --whitelist [whitelist]",
+		Args:  cobra.ExactArgs(7),
+		Short: "Edit the oracle module parameters",
+		Long: strings.TrimSpace(`
+Edit the oracle module parameters.
+
+$ nibid tx oracle edit-params --vote-period 10 --vote-threshold 0.5 --reward-band 0.1 --slash-fraction 0.01 --slash-window 100 --min-valid-per-window 0.6 --whitelist BTC:USD,NIBI:USD
+`),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return nil
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}

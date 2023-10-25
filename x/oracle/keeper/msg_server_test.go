@@ -190,6 +190,3 @@ func TestAggregatePrevoteVote(t *testing.T) {
 	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx), aggregateExchangeRateVoteMsg)
 	require.NoError(t, err)
 }
-
-func TestMsgServer_EditOracleParams(t *testing.T) {
-}

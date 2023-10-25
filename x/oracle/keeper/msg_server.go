@@ -3,6 +3,8 @@ package keeper
 import (
 	"context"
 	"fmt"
+	sudokeeper "github.com/NibiruChain/nibiru/x/sudo/keeper"
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 	"github.com/cosmos/cosmos-sdk/types/errors"
 
 	sdkerrors "cosmossdk.io/errors"
@@ -14,12 +16,13 @@ import (
 
 type msgServer struct {
 	Keeper
+	SudoKeeper sudokeeper.Keeper
 }
 
 // NewMsgServerImpl returns an implementation of the oracle MsgServer interface
 // for the provided Keeper.
-func NewMsgServerImpl(keeper Keeper) types.MsgServer {
-	return &msgServer{Keeper: keeper}
+func NewMsgServerImpl(keeper Keeper, sudoKeeper sudokeeper.Keeper) types.MsgServer {
+	return &msgServer{Keeper: keeper, SudoKeeper: sudoKeeper}
 }
 
 func (ms msgServer) AggregateExchangeRatePrevote(
@@ -170,6 +173,17 @@ func (ms msgServer) DelegateFeedConsent(
 
 func (ms msgServer) EditOracleParams(goCtx context.Context, msg *types.MsgEditOracleParams) (*types.MsgEditOracleParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	sender, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, fmt.Errorf("invalid address")
+	}
+
+	err = ms.SudoKeeper.CheckPermissions(sender, ctx)
+	if err != nil {
+		return nil, sudotypes.ErrUnauthorized
+	}
+
 	params, err := ms.Keeper.Params.Get(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("get oracle params error: %s", err.Error())

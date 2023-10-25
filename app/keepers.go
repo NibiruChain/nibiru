@@ -564,7 +564,7 @@ func (app *NibiruApp) initAppModules(
 		authzmodule.NewAppModule(appCodec, app.authzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 
 		// Nibiru modules
-		oracle.NewAppModule(appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper),
+		oracle.NewAppModule(appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper, app.SudoKeeper),
 		epochs.NewAppModule(appCodec, app.EpochsKeeper),
 		inflation.NewAppModule(app.InflationKeeper, app.AccountKeeper, *app.stakingKeeper),
 		sudo.NewAppModule(appCodec, app.SudoKeeper),
