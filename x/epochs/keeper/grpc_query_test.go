@@ -28,7 +28,7 @@ func TestQueryEpochInfos(t *testing.T) {
 
 	// Invalid param
 	epochInfosResponse, err := queryClient.EpochInfos(
-		gocontext.Background(), &epochstypes.QueryEpochsInfoRequest{},
+		gocontext.Background(), &epochstypes.QueryEpochInfosRequest{},
 	)
 	require.NoError(t, err, errMsg)
 	require.Len(t, epochInfosResponse.Epochs, 3)

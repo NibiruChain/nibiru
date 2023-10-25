@@ -156,8 +156,8 @@ type AppKeepers struct {
 	   the app, so we can SetRouter on it correctly. */
 	ibcKeeper    *ibckeeper.Keeper
 	ibcFeeKeeper ibcfeekeeper.Keeper
-	/* transferKeeper is for cross-chain fungible token transfers. */
-	transferKeeper ibctransferkeeper.Keeper
+	/* ibcTransferKeeper is for cross-chain fungible token transfers. */
+	ibcTransferKeeper ibctransferkeeper.Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
@@ -434,7 +434,7 @@ func (app *NibiruApp) InitKeepers(
 		app.ibcKeeper.ChannelKeeper,
 		&app.ibcKeeper.PortKeeper,
 		app.ScopedWasmKeeper,
-		app.transferKeeper,
+		app.ibcTransferKeeper,
 		app.MsgServiceRouter(),
 		app.GRPCQueryRouter(),
 		wasmDir,
@@ -478,7 +478,7 @@ func (app *NibiruApp) InitKeepers(
 	/* Create IBC module and a static IBC router */
 	ibcRouter := porttypes.NewRouter()
 
-	app.transferKeeper = ibctransferkeeper.NewKeeper(
+	app.ibcTransferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec,
 		keys[ibctransfertypes.StoreKey],
 		/* paramSubspace */ app.GetSubspace(ibctransfertypes.ModuleName),
@@ -508,7 +508,7 @@ func (app *NibiruApp) InitKeepers(
 
 	// create IBC module from bottom to top of stack
 	var transferStack porttypes.IBCModule
-	transferStack = ibctransfer.NewIBCModule(app.transferKeeper)
+	transferStack = ibctransfer.NewIBCModule(app.ibcTransferKeeper)
 	transferStack = ibcfee.NewIBCMiddleware(transferStack, app.ibcFeeKeeper)
 
 	// Add transfer stack to IBC Router
@@ -599,7 +599,7 @@ func (app *NibiruApp) initAppModules(
 		// ibc
 		evidence.NewAppModule(app.evidenceKeeper),
 		ibc.NewAppModule(app.ibcKeeper),
-		ibctransfer.NewAppModule(app.transferKeeper),
+		ibctransfer.NewAppModule(app.ibcTransferKeeper),
 		ibcfee.NewAppModule(app.ibcFeeKeeper),
 
 		// wasm
