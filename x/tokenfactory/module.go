@@ -40,7 +40,7 @@ var (
 )
 
 // ConsensusVersion defines the current module consensus version.
-const ConsensusVersion = 2
+const ConsensusVersion = 1
 
 // AppModuleBasic type for the fees module
 type AppModuleBasic struct{}
