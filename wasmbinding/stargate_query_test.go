@@ -84,13 +84,14 @@ func TestWasmAcceptedStargateQueries(t *testing.T) {
 		// Get proto message "package" from the response type
 		typeUrlMinusSuffix := splitResponse[0]
 		typeUrlPartsFromProtoMsg := strings.Split(typeUrlMinusSuffix, ".")
-		assert.GreaterOrEqual(t, len(typeUrlPartsFromProtoMsg), 4, typeUrlPartsFromProtoMsg)
-		protoMessagePackage := typeUrlPartsFromProtoMsg[:3]
+		lenOfParts := len(typeUrlPartsFromProtoMsg)
+		assert.GreaterOrEqual(t, lenOfParts, 4, typeUrlPartsFromProtoMsg)
+		protoMessagePackage := typeUrlPartsFromProtoMsg[:lenOfParts-1]
 
 		// Get proto message "package" from the query path
 		typeUrlPartsFromQueryPath := strings.Split(queryPath, ".")
 		assert.GreaterOrEqual(t, len(typeUrlPartsFromQueryPath), 4, typeUrlPartsFromQueryPath)
-		queryPathProtoPackage := typeUrlPartsFromQueryPath[:3]
+		queryPathProtoPackage := typeUrlPartsFromQueryPath[:lenOfParts-1]
 
 		// Verify that the packages match
 		assert.Equalf(t, queryPathProtoPackage, protoMessagePackage,
