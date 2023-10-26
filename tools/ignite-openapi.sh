@@ -22,30 +22,24 @@ ensure_path() {
   current_dir=$(pwd)
 
   # Get the directory of the script
-  SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+  script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-  # # Ensure the script is being run from the root of the repo
-  # if [ "$current_dir" != "${SCRIPT_DIR%/tools}" ]; then
-  #   echo "Error: You must run this script from the repo root."
-  #   return 1
-  # fi
-  # Get the root directory of the repo
   local repo_root
-  repo_root="${SCRIPT_DIR%/tools}"
+  repo_root="${script_dir%/tools}"
 
 
   # Check if we're in the root directory or tools directory of the repo
   if [ "$current_dir" == "$repo_root" ]; then
       # We're in the root, nothing to do
       :
-  elif [ "$current_dir" == "$SCRIPT_DIR" ]; then
+  elif [ "$current_dir" == "$script_dir" ]; then
       # We're in the tools directory, move one level up to the root
       cd "$repo_root"
   else
       # We're neither in the root nor in the tools directory
       log_error "You must run this script from the repo root or the tools directory."
       log_debug "current_dir: $current_dir"
-      log_debug "SCRIPT_DIR: $SCRIPT_DIR"
+      log_debug "script_dir: $script_dir"
       log_debug "repo_root: $repo_root"
       exit 1
   fi
