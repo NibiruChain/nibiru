@@ -65,7 +65,15 @@ which_ok() {
 
 # ensure_deps: Make sure expected dependencies are installed.
 ensure_deps() {
-  which_ok ignite 
+  if ! which_ok ignite; then 
+    log_debug "Installing Ignite CLI (ignite)..."
+    curl https://get.ignite.com/cli! | bash
+    if ! which_ok ignite; then
+      log_error "Failed to install ignite."
+      return 1
+    fi
+  fi
+
   which_ok nibid
 }
 
