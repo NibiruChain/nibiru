@@ -55,6 +55,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1615](https://github.com/NibiruChain/nibiru/pull/1613) - feat(ante)!: Ante handler to add a maximum commission rate of 25% for validators.
 * [#1616](https://github.com/NibiruChain/nibiru/pull/1616) - fix(app)!: Add custom wasm snapshotter for proper state exports
 * [#1617](https://github.com/NibiruChain/nibiru/pull/1617) - fix(app)!: non-nil snapshot manager is not guaranteed in testapp
+* [#1645](https://github.com/NibiruChain/nibiru/pull/1645) - fix(tokenfactory)!: token supply in bank keeper must be correct after MsgBurn.
+* [#1646](https://github.com/NibiruChain/nibiru/pull/1646) - feat(wasmbinding)!: whitelisted stargate queries for QueryRequest::Stargate: auth, bank, gov, tokenfactory, epochs, inflation, oracle, sudo, devgas
 
 ### Improvements
 
@@ -63,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1630](https://github.com/NibiruChain/nibiru/pull/1630) - refactor(wasm): clean up wasmbinding/ folder structure
 * [#1631](https://github.com/NibiruChain/nibiru/pull/1631) - fix(.goreleaser.yml): Load version for wasmvm dynamically.
 * [#1638](https://github.com/NibiruChain/nibiru/pull/1638) - test(tokenfactory): integration test core logic with a real smart contract using `nibiru-std`
+* [#1639](https://github.com/NibiruChain/nibiru/pull/1639) - fix(perp): by default, disable new markets until they are toggled on.
 
 ### Dependencies
 - Bump `github.com/prometheus/client_golang` from 1.16.0 to 1.17.0 ([#1605](https://github.com/NibiruChain/nibiru/pull/1605))
@@ -71,10 +74,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `github.com/CosmWasm/wasmvm` from 1.4.0 to 1.4.1 ([#1629](https://github.com/NibiruChain/nibiru/pull/1629))
 - Bump `google.golang.org/grpc` from 1.58.2 to 1.59.0 ([#1633](https://github.com/NibiruChain/nibiru/pull/1633), [#1643](https://github.com/NibiruChain/nibiru/pull/1643))
 - Bump `golang.org/x/net` from 0.12.0 to 0.17.0 ([#1634](https://github.com/NibiruChain/nibiru/pull/1634))
+- feat(tools): Ignite CLI Open API spec generation -> Bump `github.com/grpc-ecosystem/grpc-gateway/v2` to v2.18.0 ([#1651](https://github.com/NibiruChain/nibiru/pull/1651))
+- Bump `github.com/cosmos/ibc-go/v7` from 7.3.0 to 7.3.1 ([#1647](https://github.com/NibiruChain/nibiru/pull/1647))
 
 ### Bug Fixes
 
 * [#1606](https://github.com/NibiruChain/nibiru/pull/1606) - fix(perp): emit `MarketUpdatedEvent` in the absence of index price
+* [#1649](https://github.com/NibiruChain/nibiru/pull/1649) - fix(ledger): fix ledger for newer macos versions
 
 ## [v0.21.10]
 

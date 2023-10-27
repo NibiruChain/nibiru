@@ -220,12 +220,6 @@ func (k Keeper) burn(
 		return err
 	}
 
-	coins := sdk.NewCoins(coin)
-	err := k.bankKeeper.MintCoins(ctx, types.ModuleName, coins)
-	if err != nil {
-		return err
-	}
-
 	burnFromAddr, err := sdk.AccAddressFromBech32(burnFrom)
 	if err != nil {
 		return err
@@ -236,6 +230,7 @@ func (k Keeper) burn(
 			"failed to burn from %s", burnFromAddr)
 	}
 
+	coins := sdk.NewCoins(coin)
 	if err = k.bankKeeper.SendCoinsFromAccountToModule(
 		ctx, burnFromAddr, types.ModuleName, coins,
 	); err != nil {
