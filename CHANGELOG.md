@@ -75,6 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `google.golang.org/grpc` from 1.58.2 to 1.58.3 ([#1633](https://github.com/NibiruChain/nibiru/pull/1633))
 - Bump `golang.org/x/net` from 0.12.0 to 0.17.0 ([#1634](https://github.com/NibiruChain/nibiru/pull/1634))
 - feat(tools): Ignite CLI Open API spec generation -> Bump `github.com/grpc-ecosystem/grpc-gateway/v2` to v2.18.0 ([#1651](https://github.com/NibiruChain/nibiru/pull/1651))
+- Bump `github.com/cosmos/ibc-go/v7` from 7.3.0 to 7.3.1 ([#1647](https://github.com/NibiruChain/nibiru/pull/1647))
 
 ### Bug Fixes
 
