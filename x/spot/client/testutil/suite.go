@@ -2,7 +2,6 @@ package testutil
 
 import (
 	"fmt"
-	"testing"
 
 	sdkmath "cosmossdk.io/math"
 
