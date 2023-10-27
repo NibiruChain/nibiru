@@ -15,6 +15,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
@@ -32,16 +33,7 @@ type IntegrationTestSuite struct {
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
-	/* 	Make test skip if -short is not used:
-	All tests: `go test ./...`
-	Unit tests only: `go test ./... -short`
-	Integration tests only: `go test ./... -run Integration`
-	https://stackoverflow.com/a/41407042/13305627 */
-	if testing.Short() {
-		s.T().Skip("skipping integration test suite")
-	}
-
-	s.T().Log("setting up integration test suite")
+	testutil.BeforeIntegrationSuite(s.T())
 
 	app.SetPrefixes(app.AccountAddressPrefix)
 
