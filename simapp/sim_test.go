@@ -36,10 +36,8 @@ func TestSimulationTestSuite(t *testing.T) {
 }
 
 var _ suite.SetupTestSuite = (*SimulationTestSuite)(nil)
-var _ suite.SetupAllSuite = (*SimulationTestSuite)(nil)
 
-// SetupSuite: Runs before the entire test suite.
-func (s *SimulationTestSuite) SetupSuite() {
+func init() {
 	// We call GetSimulatorFlags here in order to set the value for
 	// 'simapp.FlagEnabledValue', which enables simulations
 	appsim.GetSimulatorFlags()
