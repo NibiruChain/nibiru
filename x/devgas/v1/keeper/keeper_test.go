@@ -25,7 +25,7 @@ type BankKeeper interface {
 	SendCoinsFromModuleToModule(ctx sdk.Context, senderModule, recipientModule string, amt sdk.Coins) error
 }
 
-type IntegrationTestSuite struct {
+type KeeperTestSuite struct {
 	suite.Suite
 
 	ctx             sdk.Context
@@ -35,7 +35,7 @@ type IntegrationTestSuite struct {
 	wasmMsgServer   wasmtypes.MsgServer
 }
 
-func (s *IntegrationTestSuite) SetupTest() {
+func (s *KeeperTestSuite) SetupTest() {
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 	s.app = nibiruApp
 	s.ctx = ctx
@@ -52,16 +52,16 @@ func (s *IntegrationTestSuite) SetupTest() {
 	s.wasmMsgServer = wasmkeeper.NewMsgServerImpl(&s.app.WasmKeeper)
 }
 
-func (s *IntegrationTestSuite) SetupSuite() {
+func (s *KeeperTestSuite) SetupSuite() {
 	s.SetupTest()
 }
 
-func (s *IntegrationTestSuite) FundAccount(
+func (s *KeeperTestSuite) FundAccount(
 	ctx sdk.Context, addr sdk.AccAddress, amounts sdk.Coins,
 ) error {
 	return testapp.FundAccount(s.app.BankKeeper, ctx, addr, amounts)
 }
 
 func TestKeeperTestSuite(t *testing.T) {
-	suite.Run(t, new(IntegrationTestSuite))
+	suite.Run(t, new(KeeperTestSuite))
 }

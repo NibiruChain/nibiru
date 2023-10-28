@@ -2,11 +2,13 @@
 # Tests
 #########################################################################
 
-PACKAGES_NOSIMULATION = ${shell go list ./... | grep -v simapp}
+.PHONY: test-unit
+test-unit:
+	go test ./... -short
 
-.PHONY: test-coverage
-test-coverage:
-	go test ./... $(PACKAGES_NOSIMULATION) -short \
+.PHONY: test-coverage-unit
+test-coverage-unit:
+	go test ./... -short \
 		-coverprofile=coverage.txt \
 		-covermode=atomic \
 		-race
