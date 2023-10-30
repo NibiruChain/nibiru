@@ -14,16 +14,20 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	types "github.com/NibiruChain/nibiru/x/inflation/types"
+	"github.com/NibiruChain/nibiru/x/inflation/types"
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 )
 
 func TestMintAndAllocateInflation(t *testing.T) {
+	// app.SetPrefixes(app.AccountAddressPrefix)
+
 	testCases := []struct {
 		name                    string
 		mintCoin                sdk.Coin
 		expStakingRewardAmt     sdk.Coin
 		expStrategicReservesAmt sdk.Coin
 		expCommunityPoolAmt     sdk.DecCoins
+		rootAccount             string
 	}{
 		{
 			"pass",
@@ -31,6 +35,7 @@ func TestMintAndAllocateInflation(t *testing.T) {
 			sdk.NewCoin(denoms.NIBI, sdk.NewInt(278_000)),
 			sdk.NewCoin(denoms.NIBI, sdk.NewInt(100_000)),
 			sdk.NewDecCoins(sdk.NewDecCoin(denoms.NIBI, sdk.NewInt(622_000))),
+			"nibi1qyqf35fkhn73hjr70442fctpq8prpqr9ysj9sn",
 		},
 		{
 			"pass - no coins minted ",
@@ -38,20 +43,45 @@ func TestMintAndAllocateInflation(t *testing.T) {
 			sdk.NewCoin(denoms.NIBI, sdk.ZeroInt()),
 			sdk.NewCoin(denoms.NIBI, sdk.ZeroInt()),
 			sdk.DecCoins(nil),
+			"nibi1qyqf35fkhn73hjr70442fctpq8prpqr9ysj9sn",
+		},
+		{
+			"pass - no root account",
+			sdk.NewCoin(denoms.NIBI, sdk.NewInt(1_000_000)),
+			sdk.NewCoin(denoms.NIBI, sdk.NewInt(278_000)),
+			sdk.NewCoin(denoms.NIBI, sdk.NewInt(100_000)),
+			sdk.NewDecCoins(sdk.NewDecCoin(denoms.NIBI, sdk.NewInt(622_000))),
+			"",
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("Case %s", tc.name), func(t *testing.T) {
 			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 
-			_, _, _, err := nibiruApp.InflationKeeper.MintAndAllocateInflation(ctx, tc.mintCoin, types.DefaultParams())
+			if tc.rootAccount != "" {
+				nibiruApp.SudoKeeper.Sudoers.Set(ctx, sudotypes.Sudoers{
+					Root:      string(sdk.MustAccAddressFromBech32(tc.rootAccount)),
+					Contracts: []string{},
+				})
+			}
+
+			staking, strategic, community, err := nibiruApp.InflationKeeper.MintAndAllocateInflation(ctx, tc.mintCoin, types.DefaultParams())
+			require.NoError(t, err, tc.name)
 
 			// Get balances
-			balanceInflationModule := nibiruApp.BankKeeper.GetBalance(
-				ctx,
-				nibiruApp.AccountKeeper.GetModuleAddress(types.ModuleName),
-				denoms.NIBI,
-			)
+			var balanceStrategicReserve sdk.Coin
+			if tc.rootAccount != "" {
+				strategicAccount, err := nibiruApp.SudoKeeper.GetRoot(ctx)
+				require.NoError(t, err, tc.name)
+				balanceStrategicReserve = nibiruApp.BankKeeper.GetBalance(
+					ctx,
+					strategicAccount,
+					denoms.NIBI,
+				)
+			} else {
+				// if no root account is specified, then the strategic reserve remains in the x/inflation module account
+				balanceStrategicReserve = nibiruApp.BankKeeper.GetBalance(ctx, nibiruApp.AccountKeeper.GetModuleAddress(types.ModuleName), denoms.NIBI)
+			}
 
 			feeCollector := nibiruApp.AccountKeeper.GetModuleAddress(authtypes.FeeCollectorName)
 			balanceStakingRewards := nibiruApp.BankKeeper.GetBalance(
@@ -64,8 +94,11 @@ func TestMintAndAllocateInflation(t *testing.T) {
 
 			require.NoError(t, err, tc.name)
 			assert.Equal(t, tc.expStakingRewardAmt, balanceStakingRewards)
-			assert.Equal(t, tc.expStrategicReservesAmt, balanceInflationModule)
+			assert.Equal(t, tc.expStrategicReservesAmt, balanceStrategicReserve)
 			assert.Equal(t, tc.expCommunityPoolAmt, balanceCommunityPool)
+			assert.Equal(t, tc.expStakingRewardAmt, staking)
+			assert.Equal(t, tc.expStrategicReservesAmt, strategic)
+			assert.Equal(t, tc.expCommunityPoolAmt, community)
 		})
 	}
 }

@@ -39,3 +39,7 @@ type StakingKeeper interface {
 	StakingTokenSupply(ctx sdk.Context) sdkmath.Int
 	TotalBondedTokens(ctx sdk.Context) sdkmath.Int
 }
+
+type SudoKeeper interface {
+	GetRoot(ctx sdk.Context) (sdk.AccAddress, error)
+}
