@@ -23,7 +23,8 @@ jobs:
 
       # Use GitHub actions output paramters to get go paths. For more info, see
       # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions
-      - id: go-cache-paths
+      - name: "Set output variables for go cache"
+        id: go-cache-paths
         run: |
           echo "go-build-cache=$(go env GOCACHE)" >> $GITHUB_OUTPUT
           echo "go-mod-cache=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
