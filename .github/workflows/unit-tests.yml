@@ -21,6 +21,25 @@ jobs:
           go-version: 1.19
           cache: true
 
+      # Use GitHub actions output paramters to get go paths. For more info, see
+      # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions
+      - id: go-cache-paths
+        run: |
+          echo "go-build-cache=$(go env GOCACHE)" >> $GITHUB_OUTPUT
+          echo "go-mod-cache=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
+
+      - name: "Go build cache"
+        uses: actions/cache@v2
+        with:
+        path: ${{ steps.go-cache-paths.outputs.go-build-cache }}
+        key: go-build-cache-${{ hashFiles('**/go.sum') }}
+
+      - name: "Go mod cache"
+        uses: actions/cache@v2
+        with:
+        path: ${{ steps.go-cache-paths.outputs.go-mod-cache }}
+        key: go-mod-cache-${{ hashFiles('**/go.sum') }}
+
       - name: Run all unit tests.
         run: make test-unit
 
