@@ -35,11 +35,11 @@ jobs:
           path: ${{ steps.go-cache-paths.outputs.go-build-cache }}
           key: go-build-cache-${{ hashFiles('**/go.sum') }}
 
-      - name: "Go mod cache"
-        uses: actions/cache@v2
-        with:
-          path: ${{ steps.go-cache-paths.outputs.go-mod-cache }}
-          key: go-mod-cache-${{ hashFiles('**/go.sum') }}
+      # - name: "Go mod cache"
+      #   uses: actions/cache@v2
+      #   with:
+      #     path: ${{ steps.go-cache-paths.outputs.go-mod-cache }}
+      #     key: go-mod-cache-${{ hashFiles('**/go.sum') }}
 
       - name: Run all unit tests.
         run: make test-unit
