@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/spf13/cobra"
@@ -38,6 +39,9 @@ func GetBuildWasmMsg() *cobra.Command {
 					Value:   base64.StdEncoding.EncodeToString(anyMsg.Value),
 				},
 			})
+			if err != nil {
+				return err
+			}
 
 			fmt.Println(string(js))
 

@@ -2,9 +2,10 @@ package cli
 
 import (
 	"fmt"
-	"github.com/NibiruChain/nibiru/x/common/asset"
 	"strings"
 	"time"
+
+	"github.com/NibiruChain/nibiru/x/common/asset"
 
 	"github.com/pkg/errors"
 

@@ -3,9 +3,11 @@ package keeper
 import (
 	"context"
 	"fmt"
+
+	"github.com/cosmos/cosmos-sdk/types/errors"
+
 	sudokeeper "github.com/NibiruChain/nibiru/x/sudo/keeper"
 	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
-	"github.com/cosmos/cosmos-sdk/types/errors"
 
 	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
