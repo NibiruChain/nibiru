@@ -18,18 +18,18 @@ func DefaultGenesis() *GenesisState {
 func DefaultGenesisFromTime(startTime time.Time) *GenesisState {
 	epochs := []EpochInfo{
 		{
-			Identifier:              FifteenMinuteEpochID,
+			Identifier:              ThirtyMinuteEpochID,
 			StartTime:               startTime,
-			Duration:                15 * time.Minute,
+			Duration:                30 * time.Minute,
 			CurrentEpoch:            0,
 			CurrentEpochStartHeight: 0,
 			CurrentEpochStartTime:   startTime,
 			EpochCountingStarted:    false,
 		},
 		{
-			Identifier:              ThirtyMinuteEpochID,
+			Identifier:              DayEpochID,
 			StartTime:               startTime,
-			Duration:                30 * time.Minute,
+			Duration:                24 * time.Hour,
 			CurrentEpoch:            0,
 			CurrentEpochStartHeight: 0,
 			CurrentEpochStartTime:   startTime,
