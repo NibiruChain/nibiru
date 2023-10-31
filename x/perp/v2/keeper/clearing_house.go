@@ -539,9 +539,15 @@ func (k Keeper) afterPositionUpdate(
 ) (err error) {
 	// transfer trader <=> vault
 	marginToVault := positionResp.MarginToVault.RoundInt()
+
+	collateralDenom, err := k.Collaterals.Get(ctx, market.Pair.QuoteDenom())
+	if errors.Is(err, collections.ErrNotFound) {
+		return types.ErrCollateralTokenFactoryDenomNotSet.Wrapf("quote denom %s", market.Pair.QuoteDenom())
+	}
+
 	switch {
 	case marginToVault.IsPositive():
-		coinToSend := sdk.NewCoin(market.Pair.QuoteDenom(), marginToVault)
+		coinToSend := sdk.NewCoin(collateralDenom.GetTFDenom(), marginToVault)
 		if err = k.BankKeeper.SendCoinsFromAccountToModule(
 			ctx, traderAddr, types.VaultModuleAccount, sdk.NewCoins(coinToSend)); err != nil {
 			return err
@@ -577,9 +583,9 @@ func (k Keeper) afterPositionUpdate(
 		&types.PositionChangedEvent{
 			FinalPosition:     positionResp.Position,
 			PositionNotional:  positionNotional,
-			TransactionFee:    sdk.NewCoin(market.Pair.QuoteDenom(), transferredFee),
+			TransactionFee:    sdk.NewCoin(collateralDenom.GetTFDenom(), transferredFee),
 			RealizedPnl:       positionResp.RealizedPnl,
-			BadDebt:           sdk.NewCoin(market.Pair.QuoteDenom(), positionResp.BadDebt.RoundInt()),
+			BadDebt:           sdk.NewCoin(collateralDenom.GetTFDenom(), positionResp.BadDebt.RoundInt()),
 			FundingPayment:    positionResp.FundingPayment,
 			BlockHeight:       ctx.BlockHeight(),
 			MarginToUser:      marginToVault.Neg().Sub(transferredFee),

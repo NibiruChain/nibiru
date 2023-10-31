@@ -227,3 +227,9 @@ message ReserveSnapshot {
   // milliseconds since unix epoch
   int64 timestamp_ms = 2;
 }
+
+// collateral is used to make perp collaterals are stateful
+message Collateral{
+  string contract_address = 1 ;
+  string denom = 2 ;
+}

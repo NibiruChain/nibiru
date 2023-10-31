@@ -32,6 +32,7 @@ type Keeper struct {
 	MarketLastVersion collections.Map[asset.Pair, types.MarketLastVersion]
 	Markets           collections.Map[collections.Pair[asset.Pair, uint64], types.Market]
 	AMMs              collections.Map[collections.Pair[asset.Pair, uint64], types.AMM]
+	Collaterals       collections.Map[string, types.Collateral]
 
 	Positions        collections.Map[collections.Pair[collections.Pair[asset.Pair, uint64], sdk.AccAddress], types.Position]
 	ReserveSnapshots collections.Map[collections.Pair[asset.Pair, time.Time], types.ReserveSnapshot]
@@ -107,6 +108,11 @@ func NewKeeper(
 			collections.PairKeyEncoder(collections.AccAddressKeyEncoder, IntKeyEncoder),
 			collections.DecValueEncoder,
 		),
+		Collaterals: collections.NewMap(
+			storeKey, NamespaceCollateralDenoms,
+			collections.StringKeyEncoder,
+			collections.ProtoValueEncoder[types.Collateral](cdc),
+		),
 	}
 	k.Admin = admin{&k}
 	return k
@@ -122,6 +128,7 @@ const (
 	NamespaceGlobalDiscounts
 	NamespaceUserDiscounts
 	NamespaceMarketLastVersion
+	NamespaceCollateralDenoms
 )
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {

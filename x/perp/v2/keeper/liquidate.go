@@ -291,10 +291,13 @@ func (k Keeper) executeFullLiquidation(
 		ecosystemFundFeeAmount = remainMargin
 	}
 
-	quoteDenom := market.Pair.QuoteDenom()
+	quoteDenom, err := k.Collaterals.Get(ctx, market.Pair.QuoteDenom())
+	if err != nil {
+		return sdk.Coin{}, sdk.Coin{}, err
+	}
 
-	liquidatorfee = sdk.NewCoin(quoteDenom, liquidatorFeeAmount.RoundInt())
-	ecosystemFundFee = sdk.NewCoin(quoteDenom, ecosystemFundFeeAmount.RoundInt())
+	liquidatorfee = sdk.NewCoin(quoteDenom.GetTFDenom(), liquidatorFeeAmount.RoundInt())
+	ecosystemFundFee = sdk.NewCoin(quoteDenom.GetTFDenom(), ecosystemFundFeeAmount.RoundInt())
 
 	err = k.distributeLiquidateRewards(
 		ctx,
@@ -370,9 +373,14 @@ func (k Keeper) executePartialLiquidation(
 	feeToLiquidator := liquidationFeeAmount.QuoInt64(2)
 	feeToPerpEcosystemFund := liquidationFeeAmount.Sub(feeToLiquidator)
 
+	collateralDenom, err := k.Collaterals.Get(ctx, market.Pair.QuoteDenom())
+	if err != nil {
+		return sdk.Coin{}, sdk.Coin{}, err
+	}
+
 	err = k.distributeLiquidateRewards(ctx, market, liquidator,
-		sdk.NewCoin(market.Pair.QuoteDenom(), feeToPerpEcosystemFund.RoundInt()),
-		sdk.NewCoin(market.Pair.QuoteDenom(), feeToLiquidator.RoundInt()),
+		sdk.NewCoin(collateralDenom.GetTFDenom(), feeToPerpEcosystemFund.RoundInt()),
+		sdk.NewCoin(collateralDenom.GetTFDenom(), feeToLiquidator.RoundInt()),
 	)
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err

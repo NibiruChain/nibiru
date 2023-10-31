@@ -40,10 +40,15 @@ func (k Keeper) WithdrawFromVault(
 		return nil
 	}
 
+	collateralDenom, err := k.Collaterals.Get(ctx, market.Pair.QuoteDenom())
+	if err != nil {
+		return err
+	}
+
 	vaultQuoteBalance := k.BankKeeper.GetBalance(
 		ctx,
 		k.AccountKeeper.GetModuleAddress(types.VaultModuleAccount),
-		market.Pair.QuoteDenom(),
+		collateralDenom.GetTFDenom(),
 	)
 	if vaultQuoteBalance.Amount.LT(amountToWithdraw) {
 		// if withdraw amount is larger than entire balance of vault
@@ -60,7 +65,7 @@ func (k Keeper) WithdrawFromVault(
 			types.PerpEFModuleAccount,
 			types.VaultModuleAccount,
 			sdk.NewCoins(
-				sdk.NewCoin(market.Pair.QuoteDenom(), shortage),
+				sdk.NewCoin(collateralDenom.GetTFDenom(), shortage),
 			),
 		); err != nil {
 			return err
@@ -73,7 +78,7 @@ func (k Keeper) WithdrawFromVault(
 		/* from */ types.VaultModuleAccount,
 		/* to */ receiver,
 		sdk.NewCoins(
-			sdk.NewCoin(market.Pair.QuoteDenom(), amountToWithdraw),
+			sdk.NewCoin(collateralDenom.GetTFDenom(), amountToWithdraw),
 		),
 	)
 }
@@ -114,12 +119,17 @@ func (k Keeper) realizeBadDebt(ctx sdk.Context, market types.Market, badDebtToRe
 		// badDebtToRealize > prepaidBadDebtBalance
 		k.ZeroPrepaidBadDebt(ctx, market)
 
+		collateral, err := k.Collaterals.Get(ctx, market.Pair.QuoteDenom())
+		if err != nil {
+			return err
+		}
+
 		return k.BankKeeper.SendCoinsFromModuleToModule(ctx,
 			/*from=*/ types.PerpEFModuleAccount,
 			/*to=*/ types.VaultModuleAccount,
 			sdk.NewCoins(
 				sdk.NewCoin(
-					market.Pair.QuoteDenom(),
+					collateral.GetTFDenom(),
 					badDebtToRealize.Sub(market.PrepaidBadDebt.Amount),
 				),
 			),
