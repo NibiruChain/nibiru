@@ -24,15 +24,15 @@ func GetQueryCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		GetCmdEpochsInfos(),
+		GetCmdEpochInfos(),
 		GetCmdCurrentEpoch(),
 	)
 
 	return cmd
 }
 
-// GetCmdEpochsInfos provide running epochInfos.
-func GetCmdEpochsInfos() *cobra.Command {
+// GetCmdEpochInfos provide running epochInfos.
+func GetCmdEpochInfos() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "epoch-infos",
 		Short: "Query running epochInfos",
@@ -53,7 +53,7 @@ $ %s query epochs epoch-infos
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			res, err := queryClient.EpochInfos(cmd.Context(), &types.QueryEpochsInfoRequest{})
+			res, err := queryClient.EpochInfos(cmd.Context(), &types.QueryEpochInfosRequest{})
 			if err != nil {
 				return err
 			}
