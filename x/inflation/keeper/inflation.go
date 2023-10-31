@@ -27,8 +27,7 @@ func (k Keeper) MintAndAllocateInflation(
 		return sdk.Coin{}, sdk.Coin{}, sdk.Coin{}, err
 	}
 
-	// Allocate minted coins according to allocation proportions (staking, usage
-	// incentives, community pool)
+	// Allocate minted coins according to allocation proportions (staking, strategic, community pool)
 	return k.AllocateExponentialInflation(ctx, coins, params)
 }
 
@@ -42,7 +41,7 @@ func (k Keeper) MintCoins(ctx sdk.Context, coin sdk.Coin) error {
 // AllocateExponentialInflation allocates coins from the inflation to external
 // modules according to allocation proportions:
 //   - staking rewards -> sdk `auth` module fee collector
-//   - usage incentives -> `x/incentives` module
+//   - strategic reserves -> root account of x/sudo module
 //   - community pool -> `sdk `distr` module community pool
 func (k Keeper) AllocateExponentialInflation(
 	ctx sdk.Context,
@@ -53,7 +52,7 @@ func (k Keeper) AllocateExponentialInflation(
 	err error,
 ) {
 	inflationDistribution := params.InflationDistribution
-	moduleAddr := k.accountKeeper.GetModuleAddress(types.ModuleName)
+	inflationModuleAddr := k.accountKeeper.GetModuleAddress(types.ModuleName)
 	// Allocate staking rewards into fee collector account
 	staking = k.GetProportions(ctx, mintedCoin, inflationDistribution.StakingRewards)
 
@@ -72,13 +71,24 @@ func (k Keeper) AllocateExponentialInflation(
 	if err = k.distrKeeper.FundCommunityPool(
 		ctx,
 		sdk.NewCoins(community),
-		moduleAddr,
+		inflationModuleAddr,
 	); err != nil {
 		return sdk.Coin{}, sdk.Coin{}, sdk.Coin{}, err
 	}
 
-	// Remaining balance is strategic reserve allocation
-	strategic = k.bankKeeper.GetBalance(ctx, moduleAddr, denoms.NIBI)
+	// Remaining balance is strategic reserve allocation to the root account of the x/sudo module
+	strategic = k.bankKeeper.GetBalance(ctx, inflationModuleAddr, denoms.NIBI)
+	strategicAccountAddr, err := k.sudoKeeper.GetRoot(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("get root account error", "error", err)
+		return staking, strategic, community, nil
+	}
+
+	if err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, strategicAccountAddr, sdk.NewCoins(strategic)); err != nil {
+		k.Logger(ctx).Error("send coins to root account error", "error", err)
+		return sdk.Coin{}, sdk.Coin{}, sdk.Coin{}, nil
+	}
+
 	return staking, strategic, community, nil
 }
 

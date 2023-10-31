@@ -47,12 +47,12 @@ func (AppModuleBasic) ConsensusVersion() uint64 {
 	return 3
 }
 
-// RegisterInterfaces registers interfaces and implementations of the incentives
+// RegisterInterfaces registers interfaces and implementations of the inflation
 // module.
 func (AppModuleBasic) RegisterInterfaces(interfaceRegistry codectypes.InterfaceRegistry) {
 }
 
-// DefaultGenesis returns default genesis state as raw bytes for the incentives
+// DefaultGenesis returns default genesis state as raw bytes for the inflation
 // module.
 func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 	return cdc.MustMarshalJSON(types.DefaultGenesisState())
