@@ -22,6 +22,7 @@ type Keeper struct {
 	bankKeeper       types.BankKeeper
 	distrKeeper      types.DistrKeeper
 	stakingKeeper    types.StakingKeeper
+	sudoKeeper       types.SudoKeeper
 	feeCollectorName string
 
 	CurrentPeriod    collections.Sequence
@@ -33,14 +34,15 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey storetypes.StoreKey,
 	paramspace paramstypes.Subspace,
-	ak types.AccountKeeper,
-	bk types.BankKeeper,
-	dk types.DistrKeeper,
-	sk types.StakingKeeper,
+	accountKeeper types.AccountKeeper,
+	bankKeeper types.BankKeeper,
+	distributionKeeper types.DistrKeeper,
+	stakingKeeper types.StakingKeeper,
+	sudoKeeper types.SudoKeeper,
 	feeCollectorName string,
 ) Keeper {
 	// ensure mint module account is set
-	if addr := ak.GetModuleAddress(types.ModuleName); addr == nil {
+	if addr := accountKeeper.GetModuleAddress(types.ModuleName); addr == nil {
 		panic("the inflation module account has not been set")
 	}
 
@@ -53,10 +55,11 @@ func NewKeeper(
 		storeKey:         storeKey,
 		cdc:              cdc,
 		paramSpace:       paramspace,
-		accountKeeper:    ak,
-		bankKeeper:       bk,
-		distrKeeper:      dk,
-		stakingKeeper:    sk,
+		accountKeeper:    accountKeeper,
+		bankKeeper:       bankKeeper,
+		distrKeeper:      distributionKeeper,
+		stakingKeeper:    stakingKeeper,
+		sudoKeeper:       sudoKeeper,
 		feeCollectorName: feeCollectorName,
 		CurrentPeriod:    collections.NewSequence(storeKey, 0),
 		NumSkippedEpochs: collections.NewSequence(storeKey, 1),

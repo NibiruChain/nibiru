@@ -12,18 +12,18 @@ func TestDefaultGenesis(t *testing.T) {
 
 	expectedEpochs := []EpochInfo{
 		{
-			Identifier:              FifteenMinuteEpochID,
+			Identifier:              ThirtyMinuteEpochID,
 			StartTime:               time.Time{},
-			Duration:                15 * time.Minute,
+			Duration:                30 * time.Minute,
 			CurrentEpoch:            0,
 			CurrentEpochStartHeight: 0,
 			CurrentEpochStartTime:   time.Time{},
 			EpochCountingStarted:    false,
 		},
 		{
-			Identifier:              ThirtyMinuteEpochID,
+			Identifier:              DayEpochID,
 			StartTime:               time.Time{},
-			Duration:                30 * time.Minute,
+			Duration:                24 * time.Hour,
 			CurrentEpoch:            0,
 			CurrentEpochStartHeight: 0,
 			CurrentEpochStartTime:   time.Time{},
