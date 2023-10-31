@@ -138,7 +138,7 @@ func TestAfterEpochEnd(t *testing.T) {
 				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
 				CloseMarket(pairBtcUsdc),
 				SetBlockTime(startTime),
-				StartEpoch(epochtypes.FifteenMinuteEpochID),
+				StartEpoch(epochtypes.DayEpochID),
 				InsertOraclePriceSnapshot(pairBtcUsdc, startTime.Add(15*time.Minute), sdk.NewDec(2)),
 			).
 			When(
