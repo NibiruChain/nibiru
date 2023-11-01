@@ -94,11 +94,12 @@ func (s *TestSuitePerpQuerier) SetupSuite() {
 	})
 	coins := sdk.NewCoins(
 		sdk.NewCoin(denoms.NIBI, sdk.NewInt(10_000_000)),
-		sdk.NewCoin(denoms.NUSD, sdk.NewInt(1_420_000)),
+		sdk.NewCoin(perpv2types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(1_420_000)),
 	)
 	s.NoError(testapp.FundAccount(nibiru.BankKeeper, ctx, sender, coins))
 
 	nibiru, ctx = SetupAllContracts(s.T(), sender, nibiru, ctx)
+	nibiru.PerpKeeperV2.Collateral.Set(ctx, perpv2types.DefaultTestingCollateralNotForProd)
 	s.nibiru = nibiru
 	s.ctx = ctx
 

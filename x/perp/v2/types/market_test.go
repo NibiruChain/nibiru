@@ -138,7 +138,9 @@ func TestMarketEqual(t *testing.T) {
 			requiredError: "expected market liquidation fee ratio",
 		},
 		{
-			modifier:      func(m Market) Market { return m.WithPrepaidBadDebt(sdk.NewCoin("ubtc", sdk.OneInt())) },
+			modifier: func(m Market) Market {
+				return m.WithPrepaidBadDebt(sdk.NewCoin(DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.OneInt()))
+			},
 			requiredError: "expected market prepaid bad debt",
 		},
 		{

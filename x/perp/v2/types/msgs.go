@@ -38,10 +38,6 @@ func (m MsgRemoveMargin) ValidateBasic() error {
 		return fmt.Errorf("margin must be positive, not: %v", m.Margin.Amount.String())
 	}
 
-	if m.Margin.Denom != m.Pair.QuoteDenom() {
-		return fmt.Errorf("invalid margin denom, expected %s, got %s", m.Pair.QuoteDenom(), m.Margin.Denom)
-	}
-
 	return nil
 }
 
@@ -74,10 +70,6 @@ func (m MsgAddMargin) ValidateBasic() error {
 
 	if !m.Margin.Amount.IsPositive() {
 		return fmt.Errorf("margin must be positive, not: %v", m.Margin.Amount.String())
-	}
-
-	if m.Margin.Denom != m.Pair.QuoteDenom() {
-		return fmt.Errorf("invalid margin denom, expected %s, got %s", m.Pair.QuoteDenom(), m.Margin.Denom)
 	}
 
 	return nil

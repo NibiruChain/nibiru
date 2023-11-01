@@ -6,7 +6,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
 	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
@@ -122,11 +121,16 @@ type msgServerAddmargin struct {
 func (m msgServerAddmargin) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
 
+	collateral, err := app.PerpKeeperV2.Collateral.Get(ctx)
+	if err != nil {
+		return ctx, err, true
+	}
+
 	// don't need to check response because it's already checked in clearing_house tests
-	_, err := msgServer.AddMargin(sdk.WrapSDKContext(ctx), &types.MsgAddMargin{
+	_, err = msgServer.AddMargin(sdk.WrapSDKContext(ctx), &types.MsgAddMargin{
 		Pair:   m.pair,
 		Sender: m.traderAddress.String(),
-		Margin: sdk.NewCoin(m.pair.QuoteDenom(), m.amount),
+		Margin: sdk.NewCoin(collateral.GetTFDenom(), m.amount),
 	})
 
 	return ctx, err, true
@@ -153,11 +157,16 @@ type msgServerRemoveMargin struct {
 func (m msgServerRemoveMargin) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
 
+	collateral, err := app.PerpKeeperV2.Collateral.Get(ctx)
+	if err != nil {
+		return ctx, err, true
+	}
+
 	// don't need to check response because it's already checked in clearing_house tests
-	_, err := msgServer.RemoveMargin(sdk.WrapSDKContext(ctx), &types.MsgRemoveMargin{
+	_, err = msgServer.RemoveMargin(sdk.WrapSDKContext(ctx), &types.MsgRemoveMargin{
 		Pair:   m.pair,
 		Sender: m.traderAddress.String(),
-		Margin: sdk.NewCoin(m.pair.QuoteDenom(), m.amount),
+		Margin: sdk.NewCoin(collateral.GetTFDenom(), m.amount),
 	})
 
 	return ctx, err, true
@@ -183,9 +192,14 @@ type msgServerDonateToPerpEf struct {
 func (m msgServerDonateToPerpEf) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
 
-	_, err := msgServer.DonateToEcosystemFund(sdk.WrapSDKContext(ctx), &types.MsgDonateToEcosystemFund{
+	collateral, err := app.PerpKeeperV2.Collateral.Get(ctx)
+	if err != nil {
+		return ctx, err, true
+	}
+
+	_, err = msgServer.DonateToEcosystemFund(sdk.WrapSDKContext(ctx), &types.MsgDonateToEcosystemFund{
 		Sender:   m.sender.String(),
-		Donation: sdk.NewCoin(denoms.NUSD, m.amount),
+		Donation: sdk.NewCoin(collateral.GetTFDenom(), m.amount),
 	})
 
 	return ctx, err, true

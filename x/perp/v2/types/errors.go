@@ -47,5 +47,5 @@ var (
 	ErrNotEnoughFundToPayAction = sdkerrors.Register(ModuleName, 29, "not enough fund in perp EF to pay for action")
 
 	ErrSettlementPositionMarketEnabled   = sdkerrors.Register(ModuleName, 32, "market is enabled, you can only settle position on disabled market")
-	ErrCollateralTokenFactoryDenomNotSet = sdkerrors.Register(ModuleName, 33, "no corresponding collateral for this market quote asset")
+	ErrCollateralTokenFactoryDenomNotSet = sdkerrors.Register(ModuleName, 36, "no collateral denom set for the perp keeper")
 )

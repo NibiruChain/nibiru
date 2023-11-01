@@ -24,6 +24,11 @@ import (
 func (k Keeper) AddMargin(
 	ctx sdk.Context, pair asset.Pair, traderAddr sdk.AccAddress, marginToAdd sdk.Coin,
 ) (res *types.MsgAddMarginResponse, err error) {
+	collateral, err := k.Collateral.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	market, err := k.GetMarket(ctx, pair)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
@@ -33,7 +38,7 @@ func (k Keeper) AddMargin(
 		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
 	}
 
-	if marginToAdd.Denom != amm.Pair.QuoteDenom() {
+	if marginToAdd.Denom != collateral.GetTFDenom() {
 		return nil, fmt.Errorf("invalid margin denom: %s", marginToAdd.Denom)
 	}
 
@@ -73,9 +78,9 @@ func (k Keeper) AddMargin(
 		&types.PositionChangedEvent{
 			FinalPosition:    position,
 			PositionNotional: positionNotional,
-			TransactionFee:   sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
-			RealizedPnl:      sdk.ZeroDec(),                                 // always zero when adding margin
-			BadDebt:          sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when adding margin
+			TransactionFee:   sdk.NewCoin(collateral.GetTFDenom(), sdk.ZeroInt()), // always zero when adding margin
+			RealizedPnl:      sdk.ZeroDec(),                                       // always zero when adding margin
+			BadDebt:          sdk.NewCoin(collateral.GetTFDenom(), sdk.ZeroInt()), // always zero when adding margin
 			FundingPayment:   fundingPayment,
 			BlockHeight:      ctx.BlockHeight(),
 			MarginToUser:     marginToAdd.Amount.Neg(),
@@ -113,6 +118,11 @@ ret:
 func (k Keeper) RemoveMargin(
 	ctx sdk.Context, pair asset.Pair, traderAddr sdk.AccAddress, marginToRemove sdk.Coin,
 ) (res *types.MsgRemoveMarginResponse, err error) {
+	collateral, err := k.Collateral.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	// fetch objects from state
 	market, err := k.GetMarket(ctx, pair)
 	if err != nil {
@@ -123,7 +133,7 @@ func (k Keeper) RemoveMargin(
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
 	}
-	if marginToRemove.Denom != amm.Pair.QuoteDenom() {
+	if marginToRemove.Denom != collateral.GetTFDenom() {
 		return nil, fmt.Errorf("invalid margin denom: %s", marginToRemove.Denom)
 	}
 
@@ -178,9 +188,9 @@ func (k Keeper) RemoveMargin(
 		&types.PositionChangedEvent{
 			FinalPosition:    position,
 			PositionNotional: spotNotional,
-			TransactionFee:   sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when removing margin
-			RealizedPnl:      sdk.ZeroDec(),                                 // always zero when removing margin
-			BadDebt:          sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()), // always zero when removing margin
+			TransactionFee:   sdk.NewCoin(collateral.GetTFDenom(), sdk.ZeroInt()), // always zero when removing margin
+			RealizedPnl:      sdk.ZeroDec(),                                       // always zero when removing margin
+			BadDebt:          sdk.NewCoin(collateral.GetTFDenom(), sdk.ZeroInt()), // always zero when removing margin
 			FundingPayment:   fundingPayment,
 			BlockHeight:      ctx.BlockHeight(),
 			MarginToUser:     marginToRemove.Amount,

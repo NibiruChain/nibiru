@@ -98,6 +98,8 @@ func (s *TestSuiteExecutor) SetupSuite() {
 		ChainID: "nibiru-wasmnet-1",
 		Time:    time.Now().UTC(),
 	})
+	nibiru.PerpKeeperV2.Collateral.Set(ctx, perpv2types.DefaultTestingCollateralNotForProd)
+
 	coins := sdk.NewCoins(
 		sdk.NewCoin(denoms.NIBI, sdk.NewInt(10_000_000)),
 		sdk.NewCoin(denoms.NUSD, sdk.NewInt(420_000*69)),
@@ -110,6 +112,7 @@ func (s *TestSuiteExecutor) SetupSuite() {
 	s.ctx = ctx
 	s.keeper = TestOnlySudoKeeper{Keeper: s.nibiru.SudoKeeper}
 	s.wasmKeeper = wasmkeeper.NewDefaultPermissionKeeper(nibiru.WasmKeeper)
+	s.nibiru.PerpKeeperV2.Collateral.Set(s.ctx, perpv2types.DefaultTestingCollateralNotForProd)
 
 	s.contractPerp = ContractMap[wasmbin.WasmKeyPerpBinding]
 	s.contractController = ContractMap[wasmbin.WasmKeyController]

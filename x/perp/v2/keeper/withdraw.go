@@ -40,7 +40,7 @@ func (k Keeper) WithdrawFromVault(
 		return nil
 	}
 
-	collateralDenom, err := k.Collaterals.Get(ctx, market.Pair.QuoteDenom())
+	collateralDenom, err := k.Collateral.Get(ctx)
 	if err != nil {
 		return err
 	}
@@ -119,7 +119,7 @@ func (k Keeper) realizeBadDebt(ctx sdk.Context, market types.Market, badDebtToRe
 		// badDebtToRealize > prepaidBadDebtBalance
 		k.ZeroPrepaidBadDebt(ctx, market)
 
-		collateral, err := k.Collaterals.Get(ctx, market.Pair.QuoteDenom())
+		collateral, err := k.Collateral.Get(ctx)
 		if err != nil {
 			return err
 		}

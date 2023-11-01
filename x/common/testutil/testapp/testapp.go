@@ -17,6 +17,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
 	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
+	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 // NewNibiruTestAppAndContext creates an 'app.NibiruApp' instance with an
@@ -33,6 +34,8 @@ func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
 
 	app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdk.NewDec(20000))
 	app.OracleKeeper.SetPrice(ctx, "xxx:yyy", sdk.NewDec(20000))
+
+	app.PerpKeeperV2.Collateral.Set(ctx, types.DefaultTestingCollateralNotForProd)
 
 	return app, ctx
 }

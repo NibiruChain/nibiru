@@ -8,7 +8,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
@@ -36,7 +35,12 @@ Args:
 func (k admin) WithdrawFromInsuranceFund(
 	ctx sdk.Context, amount sdkmath.Int, to sdk.AccAddress,
 ) (err error) {
-	coinToSend := sdk.NewCoin(denoms.NUSD, amount)
+	collateral, err := k.Collateral.Get(ctx)
+	if err != nil {
+		return err
+	}
+
+	coinToSend := sdk.NewCoin(collateral.GetTFDenom(), amount)
 	if err = k.BankKeeper.SendCoinsFromModuleToAccount(
 		ctx,
 		/* from */ types.PerpEFModuleAccount,

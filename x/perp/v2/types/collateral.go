@@ -10,6 +10,9 @@ import (
 // Errors
 var ErrInvalidCollateral = sdkerrors.Register("collateral", 1, "invalid token factory")
 
+// Default collateral used for testing only.
+var DefaultTestingCollateralNotForProd = NewCollateral("cosmos15u3dt79t6sxxa3x3kpkhzsy56edaa5a66wvt3kxmukqjz2sx0hesh45zsv", "unusd")
+
 func NewCollateral(contractAddress string, collateralDenom string) Collateral {
 	return Collateral{
 		ContractAddress: contractAddress,

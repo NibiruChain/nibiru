@@ -28,18 +28,19 @@ func TestAdmin_WithdrawFromInsuranceFund(t *testing.T) {
 	) {
 		insuranceFund := nibiru.AccountKeeper.GetModuleAddress(types.PerpEFModuleAccount)
 		balances := nibiru.BankKeeper.GetAllBalances(ctx, insuranceFund)
-		got := balances.AmountOf(denoms.NUSD)
+		got := balances.AmountOf(types.DefaultTestingCollateralNotForProd.GetTFDenom())
 		require.EqualValues(t, want.String(), got.String())
 	}
 
 	setup := func() (nibiru *app.NibiruApp, ctx sdk.Context) {
 		nibiru, ctx = testapp.NewNibiruTestAppAndContext()
 		expectBalance(sdk.ZeroInt(), t, nibiru, ctx)
+		nibiru.PerpKeeperV2.Collateral.Set(ctx, types.DefaultTestingCollateralNotForProd)
 		return nibiru, ctx
 	}
 
 	fundModule := func(t *testing.T, amount sdkmath.Int, ctx sdk.Context, nibiru *app.NibiruApp) {
-		coins := sdk.NewCoins(sdk.NewCoin(denoms.NUSD, amount))
+		coins := sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), amount))
 		err := testapp.FundModuleAccount(
 			nibiru.BankKeeper, ctx, types.PerpEFModuleAccount,
 			coins,
@@ -63,7 +64,7 @@ func TestAdmin_WithdrawFromInsuranceFund(t *testing.T) {
 
 				require.EqualValues(t,
 					amountToFund.String(),
-					nibiru.BankKeeper.GetBalance(ctx, admin, denoms.NUSD).Amount.String(),
+					nibiru.BankKeeper.GetBalance(ctx, admin, types.DefaultTestingCollateralNotForProd.GetTFDenom()).Amount.String(),
 				)
 				expectBalance(sdk.ZeroInt(), t, nibiru, ctx)
 			},
@@ -201,7 +202,7 @@ func TestCloseMarket(t *testing.T) {
 				SetBlockNumber(1),
 				SetBlockTime(startTime),
 
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(1e6)))),
 			).
 			When(
 				CloseMarket(pairBtcUsdc),
@@ -226,7 +227,7 @@ func TestCloseMarket(t *testing.T) {
 			),
 			SetBlockNumber(1),
 			SetBlockTime(startTime),
-			FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200)))),
+			FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(10_200)))),
 			MarketOrder(
 				alice,
 				pairBtcUsdc,
@@ -251,7 +252,7 @@ func TestCloseMarket(t *testing.T) {
 			),
 			SetBlockNumber(1),
 			SetBlockTime(startTime),
-			FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200)))),
+			FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(10_200)))),
 			MarketOrder(
 				alice,
 				pairBtcUsdc,

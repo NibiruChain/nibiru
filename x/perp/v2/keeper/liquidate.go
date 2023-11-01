@@ -291,13 +291,13 @@ func (k Keeper) executeFullLiquidation(
 		ecosystemFundFeeAmount = remainMargin
 	}
 
-	quoteDenom, err := k.Collaterals.Get(ctx, market.Pair.QuoteDenom())
+	collateral, err := k.Collateral.Get(ctx)
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
 
-	liquidatorfee = sdk.NewCoin(quoteDenom.GetTFDenom(), liquidatorFeeAmount.RoundInt())
-	ecosystemFundFee = sdk.NewCoin(quoteDenom.GetTFDenom(), ecosystemFundFeeAmount.RoundInt())
+	liquidatorfee = sdk.NewCoin(collateral.GetTFDenom(), liquidatorFeeAmount.RoundInt())
+	ecosystemFundFee = sdk.NewCoin(collateral.GetTFDenom(), ecosystemFundFeeAmount.RoundInt())
 
 	err = k.distributeLiquidateRewards(
 		ctx,
@@ -314,17 +314,17 @@ func (k Keeper) executeFullLiquidation(
 		PositionChangedEvent: types.PositionChangedEvent{
 			FinalPosition:    positionResp.Position,
 			PositionNotional: positionResp.PositionNotional,
-			TransactionFee:   sdk.NewCoin(position.Pair.QuoteDenom(), sdk.ZeroInt()), // no transaction fee for liquidation
+			TransactionFee:   sdk.NewCoin(collateral.GetTFDenom(), sdk.ZeroInt()), // no transaction fee for liquidation
 			RealizedPnl:      positionResp.RealizedPnl,
-			BadDebt:          sdk.NewCoin(position.Pair.QuoteDenom(), totalBadDebt.RoundInt()),
+			BadDebt:          sdk.NewCoin(collateral.GetTFDenom(), totalBadDebt.RoundInt()),
 			FundingPayment:   positionResp.FundingPayment,
 			BlockHeight:      ctx.BlockHeight(),
 			MarginToUser:     sdk.ZeroInt(), // no margin to user for full liquidation
 			ChangeReason:     types.ChangeReason_FullLiquidation,
 		},
 		LiquidatorAddress:  liquidator.String(),
-		FeeToLiquidator:    sdk.NewCoin(position.Pair.QuoteDenom(), liquidatorFeeAmount.RoundInt()),
-		FeeToEcosystemFund: sdk.NewCoin(position.Pair.QuoteDenom(), ecosystemFundFeeAmount.RoundInt()),
+		FeeToLiquidator:    sdk.NewCoin(collateral.GetTFDenom(), liquidatorFeeAmount.RoundInt()),
+		FeeToEcosystemFund: sdk.NewCoin(collateral.GetTFDenom(), ecosystemFundFeeAmount.RoundInt()),
 	})
 
 	return liquidatorfee, ecosystemFundFee, err
@@ -373,14 +373,14 @@ func (k Keeper) executePartialLiquidation(
 	feeToLiquidator := liquidationFeeAmount.QuoInt64(2)
 	feeToPerpEcosystemFund := liquidationFeeAmount.Sub(feeToLiquidator)
 
-	collateralDenom, err := k.Collaterals.Get(ctx, market.Pair.QuoteDenom())
+	collateral, err := k.Collateral.Get(ctx)
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
 
 	err = k.distributeLiquidateRewards(ctx, market, liquidator,
-		sdk.NewCoin(collateralDenom.GetTFDenom(), feeToPerpEcosystemFund.RoundInt()),
-		sdk.NewCoin(collateralDenom.GetTFDenom(), feeToLiquidator.RoundInt()),
+		sdk.NewCoin(collateral.GetTFDenom(), feeToPerpEcosystemFund.RoundInt()),
+		sdk.NewCoin(collateral.GetTFDenom(), feeToLiquidator.RoundInt()),
 	)
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
@@ -390,17 +390,17 @@ func (k Keeper) executePartialLiquidation(
 		PositionChangedEvent: types.PositionChangedEvent{
 			FinalPosition:    positionResp.Position,
 			PositionNotional: positionResp.PositionNotional,
-			TransactionFee:   sdk.NewCoin(position.Pair.QuoteDenom(), sdk.ZeroInt()), // no transaction fee for liquidation
+			TransactionFee:   sdk.NewCoin(collateral.GetTFDenom(), sdk.ZeroInt()), // no transaction fee for liquidation
 			RealizedPnl:      positionResp.RealizedPnl,
-			BadDebt:          sdk.NewCoin(position.Pair.QuoteDenom(), sdk.ZeroInt()), // no bad debt for partial liquidation
+			BadDebt:          sdk.NewCoin(collateral.GetTFDenom(), sdk.ZeroInt()), // no bad debt for partial liquidation
 			FundingPayment:   positionResp.FundingPayment,
 			BlockHeight:      ctx.BlockHeight(),
 			MarginToUser:     sdk.ZeroInt(), // no margin to user for partial liquidation
 			ChangeReason:     types.ChangeReason_PartialLiquidation,
 		},
 		LiquidatorAddress:  liquidator.String(),
-		FeeToLiquidator:    sdk.NewCoin(position.Pair.QuoteDenom(), feeToLiquidator.RoundInt()),
-		FeeToEcosystemFund: sdk.NewCoin(position.Pair.QuoteDenom(), feeToPerpEcosystemFund.RoundInt()),
+		FeeToLiquidator:    sdk.NewCoin(collateral.GetTFDenom(), feeToLiquidator.RoundInt()),
+		FeeToEcosystemFund: sdk.NewCoin(collateral.GetTFDenom(), feeToPerpEcosystemFund.RoundInt()),
 	})
 
 	return liquidatorFee, ecosystemFundFee, err

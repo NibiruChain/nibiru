@@ -540,9 +540,9 @@ func (k Keeper) afterPositionUpdate(
 	// transfer trader <=> vault
 	marginToVault := positionResp.MarginToVault.RoundInt()
 
-	collateralDenom, err := k.Collaterals.Get(ctx, market.Pair.QuoteDenom())
+	collateralDenom, err := k.Collateral.Get(ctx)
 	if errors.Is(err, collections.ErrNotFound) {
-		return types.ErrCollateralTokenFactoryDenomNotSet.Wrapf("quote denom %s", market.Pair.QuoteDenom())
+		return types.ErrCollateralTokenFactoryDenomNotSet
 	}
 
 	switch {
@@ -641,6 +641,11 @@ func (k Keeper) transferFee(
 	exchangeFeeRatio sdk.Dec,
 	ecosystemFundFeeRatio sdk.Dec,
 ) (fees sdkmath.Int, err error) {
+	collateral, err := k.Collateral.Get(ctx)
+	if err != nil {
+		return sdkmath.Int{}, err
+	}
+
 	exchangeFeeRatio, err = k.applyDiscountAndRebate(ctx, pair, trader, positionNotional, exchangeFeeRatio)
 	if err != nil {
 		return sdkmath.Int{}, err
@@ -653,7 +658,7 @@ func (k Keeper) transferFee(
 			/* to */ types.FeePoolModuleAccount,
 			/* coins */ sdk.NewCoins(
 				sdk.NewCoin(
-					pair.QuoteDenom(),
+					collateral.GetTFDenom(),
 					feeToExchangeFeePool,
 				),
 			),
@@ -670,7 +675,7 @@ func (k Keeper) transferFee(
 			/* to */ types.PerpEFModuleAccount,
 			/* coins */ sdk.NewCoins(
 				sdk.NewCoin(
-					pair.QuoteDenom(),
+					collateral.GetTFDenom(),
 					feeToEcosystemFund,
 				),
 			),

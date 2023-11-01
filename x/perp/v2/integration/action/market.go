@@ -45,6 +45,8 @@ func (c createMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context
 		TimestampMs: ctx.BlockTime().UnixMilli(),
 	})
 
+	app.PerpKeeperV2.Collateral.Set(ctx, types.DefaultTestingCollateralNotForProd)
+
 	return ctx, nil, true
 }
 
@@ -74,9 +76,9 @@ func CreateCustomMarket(pair asset.Pair, marketModifiers ...MarketModifier) acti
 
 type MarketModifier func(market *types.Market, amm *types.AMM)
 
-func WithPrepaidBadDebt(amount sdkmath.Int) MarketModifier {
+func WithPrepaidBadDebt(amount sdkmath.Int, collateralDenom string) MarketModifier {
 	return func(market *types.Market, amm *types.AMM) {
-		market.PrepaidBadDebt = sdk.NewCoin(market.Pair.QuoteDenom(), amount)
+		market.PrepaidBadDebt = sdk.NewCoin(collateralDenom, amount)
 	}
 }
 
@@ -186,5 +188,20 @@ func CreateMarket(pair asset.Pair, market types.Market, amm types.AMM) action.Ac
 		pair:   pair,
 		market: market,
 		amm:    amm,
+	}
+}
+
+type setCollateral struct {
+	Collateral types.Collateral
+}
+
+func (c setCollateral) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	app.PerpKeeperV2.Collateral.Set(ctx, c.Collateral)
+	return ctx, nil, true
+}
+
+func SetCollateral(collateral types.Collateral) action.Action {
+	return setCollateral{
+		Collateral: collateral,
 	}
 }

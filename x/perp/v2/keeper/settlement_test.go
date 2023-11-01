@@ -33,7 +33,7 @@ func TestSettlePosition(t *testing.T) {
 			),
 			SetBlockNumber(1),
 			SetBlockTime(startTime),
-			FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200)))),
+			FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(10_200)))),
 			MarketOrder(
 				alice,
 				pairBtcUsdc,
@@ -58,8 +58,8 @@ func TestSettlePosition(t *testing.T) {
 			),
 			SetBlockNumber(1),
 			SetBlockTime(startTime),
-			FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(104)))), // need 4 because we need to pay for the close position fee
-			FundAccount(bob, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1_020)))),
+			FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(104)))), // need 4 because we need to pay for the close position fee
+			FundAccount(bob, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(1_020)))),
 			MarketOrder(
 				alice,
 				pairBtcUsdc,
@@ -114,8 +114,8 @@ func TestSettlePosition(t *testing.T) {
 			PositionShouldNotExist(alice, pairBtcUsdc, 1),
 			PositionShouldNotExist(bob, pairBtcUsdc, 1),
 			SetBlockNumber(2),
-			BalanceEqual(alice, "unusd", sdk.NewInt(0)),
-			BalanceEqual(bob, "unusd", sdk.NewInt(1101-20)),
+			BalanceEqual(alice, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(0)),
+			BalanceEqual(bob, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(1101-20)),
 		),
 
 		TC("Error: can't settle on enabled market").When(
@@ -127,7 +127,7 @@ func TestSettlePosition(t *testing.T) {
 			),
 			SetBlockNumber(1),
 			SetBlockTime(startTime),
-			FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200)))),
+			FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(10_200)))),
 			MarketOrder(
 				alice,
 				pairBtcUsdc,
@@ -150,7 +150,7 @@ func TestSettlePosition(t *testing.T) {
 			),
 			SetBlockNumber(1),
 			SetBlockTime(startTime),
-			FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(20_400)))),
+			FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(20_400)))),
 			MarketOrder(
 				alice,
 				pairBtcUsdc,
@@ -196,7 +196,7 @@ func TestSettlePosition(t *testing.T) {
 			),
 			SetBlockNumber(1),
 			SetBlockTime(startTime),
-			FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(20_400)))),
+			FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(20_400)))),
 			MarketOrder(
 				alice,
 				pairBtcUsdc,
