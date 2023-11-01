@@ -368,13 +368,13 @@ func (app *NibiruApp) InitKeepers(
 		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.EpochsKeeper,
 	)
 
-	app.InflationKeeper = inflationkeeper.NewKeeper(
-		appCodec, keys[inflationtypes.StoreKey], app.GetSubspace(inflationtypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.stakingKeeper, authtypes.FeeCollectorName,
-	)
-
 	app.SudoKeeper = keeper.NewKeeper(
 		appCodec, keys[sudotypes.StoreKey],
+	)
+
+	app.InflationKeeper = inflationkeeper.NewKeeper(
+		appCodec, keys[inflationtypes.StoreKey], app.GetSubspace(inflationtypes.ModuleName),
+		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.stakingKeeper, app.SudoKeeper, authtypes.FeeCollectorName,
 	)
 
 	app.EpochsKeeper.SetHooks(
