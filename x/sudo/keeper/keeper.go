@@ -26,6 +26,21 @@ func NewKeeper(
 	}
 }
 
+// Returns the root address of the sudo module.
+func (k Keeper) GetRoot(ctx sdk.Context) (sdk.AccAddress, error) {
+	sudoers, err := k.Sudoers.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	addr, err := sdk.AccAddressFromBech32(sudoers.Root)
+	if err != nil {
+		return nil, err
+	}
+
+	return addr, nil
+}
+
 func (k Keeper) senderHasPermission(sender string, root string) error {
 	if sender != root {
 		return fmt.Errorf(`message must be sent by root user. root: "%s", sender: "%s"`,

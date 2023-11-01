@@ -70,7 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Dependencies
 - Bump `github.com/prometheus/client_golang` from 1.16.0 to 1.17.0 ([#1605](https://github.com/NibiruChain/nibiru/pull/1605))
-- Bump `bufbuild/buf-setup-action` from 1.26.1 to 1.27.1 ([#1624](https://github.com/NibiruChain/nibiru/pull/1624), [#1641](https://github.com/NibiruChain/nibiru/pull/1641))
+- Bump `bufbuild/buf-setup-action` from 1.26.1 to 1.27.2 ([#1624](https://github.com/NibiruChain/nibiru/pull/1624), [#1641](https://github.com/NibiruChain/nibiru/pull/1641), [#1654](https://github.com/NibiruChain/nibiru/pull/1654))
 - Bump `stefanzweifel/git-auto-commit-action` from 4 to 5 ([#1625](https://github.com/NibiruChain/nibiru/pull/1625))
 - Bump `github.com/CosmWasm/wasmvm` from 1.4.0 to 1.4.1 ([#1629](https://github.com/NibiruChain/nibiru/pull/1629))
 - Bump `google.golang.org/grpc` from 1.58.2 to 1.59.0 ([#1633](https://github.com/NibiruChain/nibiru/pull/1633), [#1643](https://github.com/NibiruChain/nibiru/pull/1643))
@@ -82,6 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * [#1606](https://github.com/NibiruChain/nibiru/pull/1606) - fix(perp): emit `MarketUpdatedEvent` in the absence of index price
 * [#1649](https://github.com/NibiruChain/nibiru/pull/1649) - fix(ledger): fix ledger for newer macos versions
+* [#1655](https://github.com/NibiruChain/nibiru/pull/1655) - fix(inflation): inflate NIBI correctly to strategic treasury account
 
 ## [v0.21.10]
 
