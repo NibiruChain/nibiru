@@ -18,6 +18,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
@@ -39,11 +40,7 @@ type IntegrationTestSuite struct {
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
-	if testing.Short() {
-		s.T().Skip("skipping integration test suite")
-	}
-
-	s.T().Log("setting up integration test suite")
+	testutil.BeforeIntegrationSuite(s.T())
 
 	app.SetPrefixes(app.AccountAddressPrefix)
 

@@ -101,6 +101,7 @@ func TestSuite_IntegrationSuite_RunAll(t *testing.T) {
 // ———————————————————————————————————————————————————————————————————
 
 func (s *IntegrationSuite) SetupSuite() {
+	testutil.BeforeIntegrationSuite(s.T())
 	app.SetPrefixes(app.AccountAddressPrefix)
 
 	genState := genesis.NewTestGenesisState(app.MakeEncodingConfig())

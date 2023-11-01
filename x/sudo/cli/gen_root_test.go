@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/sudo/cli"
 )
 
@@ -26,6 +27,7 @@ func TestAddSudoRootAccountCmd(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
+			testapp.EnsureNibiruPrefix()
 			ctx := testutil.SetupClientCtx(t)
 			cmd := cli.AddSudoRootAccountCmd(t.TempDir())
 			cmd.SetArgs([]string{
