@@ -20,7 +20,7 @@ func RunFunctionTests(t *testing.T, testCases []FunctionTestCase) {
 }
 
 /*
-BeforeIntegrationSuite: Skips a test if the `-short` flag is not used:
+BeforeIntegrationSuite: Skips a test if the `-short` flag is used:
 
 All tests: `go test ./...`
 Unit tests only: `go test ./... -short`
