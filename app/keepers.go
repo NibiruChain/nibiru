@@ -417,7 +417,7 @@ func (app *NibiruApp) InitKeepers(
 		wasmConfig,
 		supportedFeatures,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		GetWasmOpts(appOpts)...,
+		GetWasmOpts(appOpts, *app)...,
 	)
 
 	// DevGas uses WasmKeeper
