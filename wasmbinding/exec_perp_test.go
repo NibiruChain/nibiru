@@ -95,6 +95,7 @@ func (s *TestSuitePerpExecutor) TestOpenAddRemoveClose() {
 		s.DoInsuranceFundWithdrawTest(sdk.NewInt(69), s.contractDeployer),
 		s.DoCreateMarketTest(asset.MustNewPair("ufoo:ubar")),
 		s.DoCreateMarketTestWithParams(asset.MustNewPair("ufoo2:ubar")),
+		s.DoUpdateCollateralTest(),
 	} {
 		s.NoError(err)
 	}
@@ -329,6 +330,45 @@ func (s *TestSuitePerpExecutor) DoSetMarketEnabledTest(
 	s.NoError(err)
 	s.Equal(enabled, market.Enabled)
 	return err
+}
+
+func (s *TestSuitePerpExecutor) DoUpdateCollateralTest() error {
+	cwMsg := &bindings.UpdateCollateral{
+		Denom:           "uust",
+		ContractAddress: "cosmos168ctmpyppk90d34p3jjy658zf5a5l3w8wk35wht6ccqj4mr0yv8skhnwe8",
+	}
+	err := s.exec.UpdateCollateral(cwMsg, s.ctx)
+	s.Require().NoError(err)
+
+	collateral, err := s.nibiru.PerpKeeperV2.Collateral.Get(s.ctx)
+	s.NoError(err)
+	s.Equal(collateral, perpv2types.NewCollateral(cwMsg.ContractAddress, cwMsg.Denom))
+	return err
+}
+
+func (s *TestSuitePerpExecutor) TestSadPath_UpdateCollateral() {
+	cwMsg := &bindings.UpdateCollateral{
+		Denom:           "uust",
+		ContractAddress: "notavalidaddress",
+	}
+	err := s.exec.UpdateCollateral(cwMsg, s.ctx)
+	s.Require().Error(err)
+
+	cwMsg = &bindings.UpdateCollateral{
+		Denom: "uust",
+	}
+	err = s.exec.UpdateCollateral(cwMsg, s.ctx)
+	s.Require().Error(err)
+
+	cwMsg = &bindings.UpdateCollateral{
+		ContractAddress: "notavalidaddress",
+	}
+	err = s.exec.UpdateCollateral(cwMsg, s.ctx)
+	s.Require().Error(err)
+
+	cwMsg = &bindings.UpdateCollateral{}
+	err = s.exec.UpdateCollateral(cwMsg, s.ctx)
+	s.Require().Error(err)
 }
 
 func (s *TestSuitePerpExecutor) TestSadPath_InsuranceFundWithdraw() {

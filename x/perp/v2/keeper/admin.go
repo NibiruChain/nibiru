@@ -148,3 +148,19 @@ func (k admin) CloseMarket(ctx sdk.Context, pair asset.Pair) (err error) {
 
 	return nil
 }
+
+// UpdateCollateral updates the collateral denom and contract allowed to mint it
+func (k admin) UpdateCollateral(
+	ctx sdk.Context,
+	denom string,
+	contract string,
+) error {
+	collateral := types.NewCollateral(contract, denom)
+
+	if err := collateral.Validate(); err != nil {
+		return err
+	}
+
+	k.Collateral.Set(ctx, collateral)
+	return nil
+}
