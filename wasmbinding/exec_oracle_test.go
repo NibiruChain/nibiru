@@ -70,19 +70,19 @@ func (s *TestSuiteOracleExecutor) TestExecuteOracleParams() {
 	// Vote Period
 	params, err := s.nibiru.OracleKeeper.Params.Get(s.ctx)
 	s.Require().NoError(err)
-	s.Require().Equal(uint64(1_000), params.VotePeriod)
+	s.Equal(uint64(1_000), params.VotePeriod)
 
 	err = s.exec.SetOracleParams(cwMsg, s.ctx)
 	s.Require().NoError(err)
 
 	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
 	s.Require().NoError(err)
-	s.Require().Equal(uint64(1234), params.VotePeriod)
+	s.Equal(uint64(1234), params.VotePeriod)
 
 	// Vote Threshold
 	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
 	s.Require().NoError(err)
-	s.Require().Equal(sdk.OneDec().Quo(sdk.NewDec(3)), params.VoteThreshold)
+	s.Equal(sdk.OneDec().Quo(sdk.NewDec(3)), params.VoteThreshold)
 
 	threshold := sdk.MustNewDecFromStr("0.4")
 	cwMsg = &bindings.EditOracleParams{
@@ -94,12 +94,12 @@ func (s *TestSuiteOracleExecutor) TestExecuteOracleParams() {
 
 	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
 	s.Require().NoError(err)
-	s.Require().Equal(threshold, params.VoteThreshold)
+	s.Equal(threshold, params.VoteThreshold)
 
 	// Reward Band
 	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
 	s.Require().NoError(err)
-	s.Require().Equal(sdk.NewDecWithPrec(2, 2), params.RewardBand)
+	s.Equal(sdk.NewDecWithPrec(2, 2), params.RewardBand)
 
 	band := sdk.MustNewDecFromStr("0.5")
 	cwMsg = &bindings.EditOracleParams{
@@ -111,12 +111,12 @@ func (s *TestSuiteOracleExecutor) TestExecuteOracleParams() {
 
 	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
 	s.Require().NoError(err)
-	s.Require().Equal(band, params.RewardBand)
+	s.Equal(band, params.RewardBand)
 
 	// White List
 	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
 	s.Require().NoError(err)
-	s.Require().Equal(14, len(params.Whitelist))
+	s.Assert().Equal(6, len(params.Whitelist))
 
 	whitelist := []string{"aave:usdc", "sol:usdc"}
 	cwMsg = &bindings.EditOracleParams{
@@ -127,12 +127,12 @@ func (s *TestSuiteOracleExecutor) TestExecuteOracleParams() {
 
 	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
 	s.Require().NoError(err)
-	s.Require().Equal(2, len(params.Whitelist))
+	s.Equal(2, len(params.Whitelist))
 
 	// Slash Fraction
 	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
 	s.Require().NoError(err)
-	s.Require().Equal(sdk.NewDecWithPrec(5, 3), params.SlashFraction)
+	s.Equal(sdk.NewDecWithPrec(5, 3), params.SlashFraction)
 
 	slashFraction := sdk.MustNewDecFromStr("0.5")
 	cwMsg = &bindings.EditOracleParams{
@@ -144,12 +144,12 @@ func (s *TestSuiteOracleExecutor) TestExecuteOracleParams() {
 
 	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
 	s.Require().NoError(err)
-	s.Require().Equal(slashFraction, params.SlashFraction)
+	s.Equal(slashFraction, params.SlashFraction)
 
 	// Slash Window
 	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
 	s.Require().NoError(err)
-	s.Require().Equal(uint64(3600), params.SlashWindow)
+	s.Equal(uint64(3600), params.SlashWindow)
 
 	slashWindow := sdk.NewInt(2)
 	cwMsg = &bindings.EditOracleParams{
@@ -161,12 +161,12 @@ func (s *TestSuiteOracleExecutor) TestExecuteOracleParams() {
 
 	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
 	s.Require().NoError(err)
-	s.Require().Equal(slashWindow.Uint64(), params.SlashWindow)
+	s.Equal(slashWindow.Uint64(), params.SlashWindow)
 
 	// Min valid per window
 	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
 	s.Require().NoError(err)
-	s.Require().Equal(sdk.NewDecWithPrec(69, 2), params.MinValidPerWindow)
+	s.Equal(sdk.NewDecWithPrec(69, 2), params.MinValidPerWindow)
 
 	minValidPerWindow := sdk.MustNewDecFromStr("0.5")
 	cwMsg = &bindings.EditOracleParams{
@@ -178,12 +178,12 @@ func (s *TestSuiteOracleExecutor) TestExecuteOracleParams() {
 
 	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
 	s.Require().NoError(err)
-	s.Require().Equal(minValidPerWindow, params.MinValidPerWindow)
+	s.Equal(minValidPerWindow, params.MinValidPerWindow)
 
 	// Twap lookback window
 	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
 	s.Require().NoError(err)
-	s.Require().Equal(time.Minute*15, params.TwapLookbackWindow)
+	s.Equal(time.Minute*15, params.TwapLookbackWindow)
 
 	twapLookbackWindow := sdk.NewInt(int64(time.Second * 30))
 	cwMsg = &bindings.EditOracleParams{
@@ -195,12 +195,12 @@ func (s *TestSuiteOracleExecutor) TestExecuteOracleParams() {
 
 	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
 	s.Require().NoError(err)
-	s.Require().Equal(time.Duration(twapLookbackWindow.Int64()), params.TwapLookbackWindow)
+	s.Equal(time.Duration(twapLookbackWindow.Int64()), params.TwapLookbackWindow)
 
 	// Min Voters
 	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
 	s.Require().NoError(err)
-	s.Require().Equal(uint64(4), params.MinVoters)
+	s.Equal(uint64(4), params.MinVoters)
 
 	minVoters := sdk.NewInt(2)
 	cwMsg = &bindings.EditOracleParams{
@@ -212,12 +212,12 @@ func (s *TestSuiteOracleExecutor) TestExecuteOracleParams() {
 
 	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
 	s.Require().NoError(err)
-	s.Require().Equal(minVoters.Uint64(), params.MinVoters)
+	s.Equal(minVoters.Uint64(), params.MinVoters)
 
 	// Validator Fee Ratio
 	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
 	s.Require().NoError(err)
-	s.Require().Equal(sdk.NewDecWithPrec(5, 2), params.ValidatorFeeRatio)
+	s.Equal(sdk.NewDecWithPrec(5, 2), params.ValidatorFeeRatio)
 
 	validatorFeeRatio := sdk.MustNewDecFromStr("0.7")
 	cwMsg = &bindings.EditOracleParams{
@@ -229,5 +229,5 @@ func (s *TestSuiteOracleExecutor) TestExecuteOracleParams() {
 
 	params, err = s.nibiru.OracleKeeper.Params.Get(s.ctx)
 	s.Require().NoError(err)
-	s.Require().Equal(validatorFeeRatio, params.ValidatorFeeRatio)
+	s.Equal(validatorFeeRatio, params.ValidatorFeeRatio)
 }
