@@ -76,9 +76,9 @@ func CreateCustomMarket(pair asset.Pair, marketModifiers ...MarketModifier) acti
 
 type MarketModifier func(market *types.Market, amm *types.AMM)
 
-func WithPrepaidBadDebt(amount sdkmath.Int, collateralDenom string) MarketModifier {
+func WithPrepaidBadDebt(amount sdkmath.Int, collateral string) MarketModifier {
 	return func(market *types.Market, amm *types.AMM) {
-		market.PrepaidBadDebt = sdk.NewCoin(collateralDenom, amount)
+		market.PrepaidBadDebt = sdk.NewCoin(collateral, amount)
 	}
 }
 

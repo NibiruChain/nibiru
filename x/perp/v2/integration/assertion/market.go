@@ -52,9 +52,9 @@ func Market_LatestCPFShouldBeEqualTo(expectedCPF sdk.Dec) MarketChecker {
 	}
 }
 
-func Market_PrepaidBadDebtShouldBeEqualTo(expectedAmount sdkmath.Int, collateralDenom string) MarketChecker {
+func Market_PrepaidBadDebtShouldBeEqualTo(expectedAmount sdkmath.Int, collateral string) MarketChecker {
 	return func(market types.Market) error {
-		expectedBadDebt := sdk.NewCoin(collateralDenom, expectedAmount)
+		expectedBadDebt := sdk.NewCoin(collateral, expectedAmount)
 		if !market.PrepaidBadDebt.Equal(expectedBadDebt) {
 			return fmt.Errorf("expected prepaid bad debt to be %s, got %s", expectedBadDebt, market.PrepaidBadDebt)
 		}

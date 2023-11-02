@@ -32,13 +32,13 @@ type addMarginAction struct {
 }
 
 func (a addMarginAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	collateralDenom, err := app.PerpKeeperV2.Collateral.Get(ctx)
+	collateral, err := app.PerpKeeperV2.Collateral.Get(ctx)
 	if err != nil {
 		return ctx, err, true
 	}
 
 	_, err = app.PerpKeeperV2.AddMargin(
-		ctx, a.Pair, a.Account, sdk.NewCoin(collateralDenom.GetTFDenom(), a.Margin),
+		ctx, a.Pair, a.Account, sdk.NewCoin(collateral.GetTFDenom(), a.Margin),
 	)
 	if err != nil {
 		return ctx, err, true
@@ -70,13 +70,13 @@ type addMarginFailAction struct {
 }
 
 func (a addMarginFailAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	collateralDenom, err := app.PerpKeeperV2.Collateral.Get(ctx)
+	collateral, err := app.PerpKeeperV2.Collateral.Get(ctx)
 	if err != nil {
 		return ctx, err, true
 	}
 
 	_, err = app.PerpKeeperV2.AddMargin(
-		ctx, a.Pair, a.Account, sdk.NewCoin(collateralDenom.GetTFDenom(), a.Margin),
+		ctx, a.Pair, a.Account, sdk.NewCoin(collateral.GetTFDenom(), a.Margin),
 	)
 	if !errors.Is(err, a.ExpectedErr) {
 		return ctx, fmt.Errorf("expected error %v, got %v", a.ExpectedErr, err), false
@@ -104,13 +104,13 @@ type removeMarginAction struct {
 }
 
 func (a removeMarginAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	collateralDenom, err := app.PerpKeeperV2.Collateral.Get(ctx)
+	collateral, err := app.PerpKeeperV2.Collateral.Get(ctx)
 	if err != nil {
 		return ctx, err, true
 	}
 
 	_, err = app.PerpKeeperV2.RemoveMargin(
-		ctx, a.Pair, a.Account, sdk.NewCoin(collateralDenom.GetTFDenom(), a.Margin),
+		ctx, a.Pair, a.Account, sdk.NewCoin(collateral.GetTFDenom(), a.Margin),
 	)
 	if err != nil {
 		return ctx, err, false
@@ -141,13 +141,13 @@ type removeMarginActionFail struct {
 }
 
 func (a removeMarginActionFail) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	collateralDenom, err := app.PerpKeeperV2.Collateral.Get(ctx)
+	collateral, err := app.PerpKeeperV2.Collateral.Get(ctx)
 	if err != nil {
 		return ctx, err, true
 	}
 
 	_, err = app.PerpKeeperV2.RemoveMargin(
-		ctx, a.Pair, a.Account, sdk.NewCoin(collateralDenom.GetTFDenom(), a.Margin),
+		ctx, a.Pair, a.Account, sdk.NewCoin(collateral.GetTFDenom(), a.Margin),
 	)
 	if !errors.Is(err, a.ExpectedErr) {
 		return ctx, fmt.Errorf("expected error %v, got %v", a.ExpectedErr, err), false
