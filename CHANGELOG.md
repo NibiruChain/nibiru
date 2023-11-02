@@ -67,6 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1638](https://github.com/NibiruChain/nibiru/pull/1638) - test(tokenfactory): integration test core logic with a real smart contract using `nibiru-std`
 * [#1639](https://github.com/NibiruChain/nibiru/pull/1639) - fix(perp): by default, disable new markets until they are toggled on.
 * [#1652](https://github.com/NibiruChain/nibiru/pull/1652) - test: refactors cli.network suites with 'Integration' to use common function
+* [#1659](https://github.com/NibiruChain/nibiru/pull/1659) - refactor(oracle): curate oracle default whitelist
 
 ### Dependencies
 - Bump `github.com/prometheus/client_golang` from 1.16.0 to 1.17.0 ([#1605](https://github.com/NibiruChain/nibiru/pull/1605))
