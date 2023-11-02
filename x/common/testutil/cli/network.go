@@ -42,6 +42,8 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"google.golang.org/grpc"
 
+	perpV2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 
 	"github.com/NibiruChain/nibiru/app"
@@ -174,6 +176,7 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 		BondedTokens:      sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
 		StartingTokens: sdk.NewCoins(
 			sdk.NewCoin(denoms.NUSD, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
+			sdk.NewCoin(perpV2types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
 			sdk.NewCoin(denoms.NIBI, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
 			sdk.NewCoin(denoms.USDC, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
 		),

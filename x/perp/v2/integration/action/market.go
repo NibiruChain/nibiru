@@ -196,8 +196,8 @@ type setCollateral struct {
 }
 
 func (c setCollateral) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	app.PerpKeeperV2.Admin.UpdateCollateral(ctx, c.Collateral.Denom, c.Collateral.ContractAddress)
-	return ctx, nil, true
+	err := app.PerpKeeperV2.Admin.UpdateCollateral(ctx, c.Collateral.Denom, c.Collateral.ContractAddress)
+	return ctx, err, true
 }
 
 func SetCollateral(collateral types.Collateral) action.Action {
