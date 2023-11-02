@@ -116,13 +116,20 @@ func AddPerpV2Genesis(gen app.GenesisState) app.GenesisState {
 		})
 	}
 
+	var collateral perpv2types.Collateral
+	if sdk.GetConfig().GetBech32AccountAddrPrefix() == "nibi" {
+		collateral = perpv2types.NibiTestingCollateralNotForProd
+	} else {
+		collateral = perpv2types.DefaultTestingCollateralNotForProd
+	}
+
 	perpV2Gen := &perpv2types.GenesisState{
 		Markets:            marketsv2,
 		MarketLastVersions: marketLastVersions,
 		Amms:               ammsv2,
 		Positions:          []perpv2types.GenesisPosition{},
 		ReserveSnapshots:   []perpv2types.ReserveSnapshot{},
-		Collateral:         &perpv2types.NibiTestingCollateralNotForProd,
+		Collateral:         &collateral,
 	}
 
 	gen[perpv2types.ModuleName] = app.MakeEncodingConfig().Marshaler.

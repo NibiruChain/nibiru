@@ -71,7 +71,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 		)
 	}
 
-	if genState.Collateral != nil {
+	if genState.Collateral != nil || genState.Collateral.Denom != "" {
 		err := k.Admin.UpdateCollateral(ctx, genState.Collateral.Denom, genState.Collateral.ContractAddress)
 		if err != nil {
 			panic(err)

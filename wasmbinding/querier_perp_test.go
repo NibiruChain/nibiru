@@ -99,7 +99,6 @@ func (s *TestSuitePerpQuerier) SetupSuite() {
 	s.NoError(testapp.FundAccount(nibiru.BankKeeper, ctx, sender, coins))
 
 	nibiru, ctx = SetupAllContracts(s.T(), sender, nibiru, ctx)
-	nibiru.PerpKeeperV2.Collateral.Set(ctx, perpv2types.DefaultTestingCollateralNotForProd)
 	s.nibiru = nibiru
 	s.ctx = ctx
 
