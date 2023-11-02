@@ -15,7 +15,7 @@ import (
 )
 
 func TestKeeperRewardsDistributionMultiVotePeriods(t *testing.T) {
-	// this simulates allocating rewards for the pair nibi:nusd
+	// this simulates allocating rewards for the pair atom:usd
 	// over 5 voting periods. It simulates rewards are correctly
 	// distributed over 5 voting periods to 5 validators.
 	// then we simulate that after the 5 voting periods are
@@ -39,7 +39,7 @@ func TestKeeperRewardsDistributionMultiVotePeriods(t *testing.T) {
 			// then changes the height to current height + vote period for the vote
 			MakeAggregatePrevoteAndVote(t, fixture, msgServer, fixture.Ctx.BlockHeight(), types.ExchangeRateTuples{
 				{
-					Pair:         asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
+					Pair:         asset.Registry.Pair(denoms.ATOM, denoms.USD),
 					ExchangeRate: testExchangeRate,
 				},
 			}, valIndex)
