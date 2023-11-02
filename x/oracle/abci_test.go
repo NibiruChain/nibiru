@@ -18,7 +18,7 @@ func TestOracleTallyTiming(t *testing.T) {
 	// all the Addrs vote for the block ... not last period block yet, so tally fails
 	for i := range keeper.Addrs[:4] {
 		keeper.MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{
-			{Pair: asset.Registry.Pair(denoms.BTC, denoms.NUSD), ExchangeRate: sdk.OneDec()},
+			{Pair: asset.Registry.Pair(denoms.BTC, denoms.USD), ExchangeRate: sdk.OneDec()},
 		}, i)
 	}
 
@@ -31,13 +31,13 @@ func TestOracleTallyTiming(t *testing.T) {
 	require.Equal(t, 1, int(input.Ctx.BlockHeight()))
 
 	EndBlocker(input.Ctx, input.OracleKeeper)
-	_, err = input.OracleKeeper.ExchangeRates.Get(input.Ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+	_, err = input.OracleKeeper.ExchangeRates.Get(input.Ctx, asset.Registry.Pair(denoms.BTC, denoms.USD))
 	require.Error(t, err)
 
 	input.Ctx = input.Ctx.WithBlockHeight(int64(params.VotePeriod - 1))
 
 	EndBlocker(input.Ctx, input.OracleKeeper)
-	_, err = input.OracleKeeper.ExchangeRates.Get(input.Ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD))
+	_, err = input.OracleKeeper.ExchangeRates.Get(input.Ctx, asset.Registry.Pair(denoms.BTC, denoms.USD))
 	require.NoError(t, err)
 }
 
@@ -45,8 +45,8 @@ func TestOracleTallyTiming(t *testing.T) {
 // Ensure that the updated pair is not deleted and the other pair is deleted after a certain time.
 func TestOraclePriceExpiration(t *testing.T) {
 	input, h := keeper.Setup(t)
-	pair1 := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
-	pair2 := asset.Registry.Pair(denoms.ETH, denoms.NUSD)
+	pair1 := asset.Registry.Pair(denoms.BTC, denoms.USD)
+	pair2 := asset.Registry.Pair(denoms.ETH, denoms.USD)
 
 	// Set prices for both pairs
 	for i := range keeper.Addrs[:4] {
