@@ -23,7 +23,7 @@ import (
 // in-memory 'tmdb.MemDB' and fresh 'sdk.Context'.
 func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
 	encoding := app.MakeEncodingConfig()
-	var appGenesis app.GenesisState = app.NewDefaultGenesisState(encoding.Marshaler)
+	var appGenesis = app.NewDefaultGenesisState(encoding.Marshaler)
 	genModEpochs := epochstypes.DefaultGenesisFromTime(time.Now().UTC())
 	appGenesis[epochstypes.ModuleName] = encoding.Marshaler.MustMarshalJSON(
 		genModEpochs,

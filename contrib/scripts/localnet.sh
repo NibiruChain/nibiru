@@ -244,8 +244,8 @@ add_genesis_perp_markets_with_coingecko_prices() {
     fi
   }
 
-  nibid genesis add-genesis-perp-market --pair=ubtc:unusd --sqrt-depth=$reserve_amt --price-multiplier=$price_btc
-  check_fail nibid genesis add-genesis-perp-market
+#  nibid genesis add-genesis-perp-market --pair=ubtc:unusd --sqrt-depth=$reserve_amt --price-multiplier=$price_btc
+#  check_fail nibid genesis add-genesis-perp-market
 
   price_eth=$(cat tmp_market_prices.json | jq -r '.ethereum.usd')
   price_eth=${price_eth%.*}
@@ -253,8 +253,8 @@ add_genesis_perp_markets_with_coingecko_prices() {
     return 1
   fi
 
-  nibid genesis add-genesis-perp-market --pair=ueth:unusd --sqrt-depth=$reserve_amt --price-multiplier=$price_eth
-  check_fail nibid genesis add-genesis-perp-market
+#  nibid genesis add-genesis-perp-market --pair=ueth:unusd --sqrt-depth=$reserve_amt --price-multiplier=$price_eth
+#  check_fail nibid genesis add-genesis-perp-market
 
   echo 'tmp_market_prices: '
   cat $temp_json_fname | jq .

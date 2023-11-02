@@ -7,8 +7,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 
 	"github.com/NibiruChain/nibiru/x/sudo/keeper"
-
-	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 )
 
 // NibiruWasmOptions: Wasm Options are extension points to instantiate the Wasm
@@ -17,11 +15,8 @@ func NibiruWasmOptions(
 	grpcQueryRouter *baseapp.GRPCQueryRouter,
 	appCodec codec.Codec,
 	sudoKeeper keeper.Keeper,
-	oracleKeeper oraclekeeper.Keeper,
 ) []wasm.Option {
-	wasmQueryPlugin := NewQueryPlugin(oracleKeeper)
 	wasmQueryOption := wasmkeeper.WithQueryPlugins(&wasmkeeper.QueryPlugins{
-		Custom: CustomQuerier(wasmQueryPlugin),
 		Stargate: wasmkeeper.AcceptListStargateQuerier(
 			WasmAcceptedStargateQueries(),
 			grpcQueryRouter,
@@ -29,9 +24,5 @@ func NibiruWasmOptions(
 		),
 	})
 
-	wasmExecuteOption := wasmkeeper.WithMessageHandlerDecorator(
-		CustomMessageDecorator(sudoKeeper, oracleKeeper),
-	)
-
-	return []wasm.Option{wasmQueryOption, wasmExecuteOption}
+	return []wasm.Option{wasmQueryOption}
 }

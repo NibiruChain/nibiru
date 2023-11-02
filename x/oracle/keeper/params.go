@@ -71,3 +71,53 @@ func (k Keeper) MinValidPerWindow(ctx sdk.Context) (res sdk.Dec) {
 	params, _ := k.Params.Get(ctx)
 	return params.MinValidPerWindow
 }
+
+// mergeOracleParams takes the oracle params from the wasm msg and merges them into the existing params
+// keeping any existing values if not set in the wasm msg
+func mergeOracleParams(msg *types.MsgEditOracleParams, oracleParams types.Params) types.Params {
+	if msg.Params.VotePeriod != 0 {
+		oracleParams.VotePeriod = msg.Params.VotePeriod
+	}
+
+	if msg.Params.VoteThreshold != nil && !msg.Params.VoteThreshold.IsNil() {
+		oracleParams.VoteThreshold = *msg.Params.VoteThreshold
+	}
+
+	if msg.Params.RewardBand != nil && !msg.Params.RewardBand.IsNil() {
+		oracleParams.RewardBand = *msg.Params.RewardBand
+	}
+
+	if msg.Params.Whitelist != nil && len(msg.Params.Whitelist) != 0 {
+		oracleParams.Whitelist = msg.Params.Whitelist
+	}
+
+	if msg.Params.SlashFraction != nil && !msg.Params.SlashFraction.IsNil() {
+		oracleParams.SlashFraction = *msg.Params.SlashFraction
+	}
+
+	if msg.Params.SlashWindow != 0 {
+		oracleParams.SlashWindow = msg.Params.SlashWindow
+	}
+
+	if msg.Params.MinValidPerWindow != nil && !msg.Params.MinValidPerWindow.IsNil() {
+		oracleParams.MinValidPerWindow = *msg.Params.MinValidPerWindow
+	}
+
+	if msg.Params.TwapLookbackWindow != nil {
+		oracleParams.TwapLookbackWindow = *msg.Params.TwapLookbackWindow
+	}
+
+	if msg.Params.MinVoters != 0 {
+		oracleParams.MinVoters = msg.Params.MinVoters
+	}
+
+	if msg.Params.ValidatorFeeRatio != nil && !msg.Params.ValidatorFeeRatio.IsNil() {
+		oracleParams.ValidatorFeeRatio = *msg.Params.ValidatorFeeRatio
+	}
+
+	if msg.Params.ExpirationBlocks != 0 {
+		oracleParams.ExpirationBlocks = msg.Params.ExpirationBlocks
+	}
+
+	return oracleParams
+}

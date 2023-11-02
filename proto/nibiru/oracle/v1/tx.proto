@@ -3,6 +3,8 @@ package nibiru.oracle.v1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
+import "google/protobuf/duration.proto";
+import "nibiru/oracle/v1/oracle.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/oracle/types";
 
@@ -28,6 +30,11 @@ service Msg {
   rpc DelegateFeedConsent(MsgDelegateFeedConsent)
       returns (MsgDelegateFeedConsentResponse) {
     option (google.api.http).post = "/nibiru/oracle/feeder-delegate";
+  }
+
+  rpc EditOracleParams(MsgEditOracleParams)
+      returns (MsgEditOracleParamsResponse) {
+    option (google.api.http).post = "/nibiru/oracle/params";
   }
 }
 
@@ -84,3 +91,101 @@ message MsgDelegateFeedConsent {
 // MsgDelegateFeedConsentResponse defines the Msg/DelegateFeedConsent response
 // type.
 message MsgDelegateFeedConsentResponse {}
+
+message MsgEditOracleParams {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
+
+  OracleParamsMsg params = 2 [ (gogoproto.moretags) = "yaml:\"params\"" ];
+}
+
+message MsgEditOracleParamsResponse {}
+
+message OracleParamsMsg {
+  option (gogoproto.equal) = true;
+  option (gogoproto.goproto_stringer) = true;
+
+  // VotePeriod defines the number of blocks during which voting takes place.
+  uint64 vote_period = 1 [
+    (gogoproto.moretags) = "yaml:\"vote_period\"",
+    (gogoproto.nullable) = true
+  ];
+
+  // VoteThreshold specifies the minimum proportion of votes that must be
+  // received for a ballot to pass.
+  string vote_threshold = 2 [
+    (gogoproto.moretags) = "yaml:\"vote_threshold\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = true
+  ];
+  // RewardBand defines a maxium divergence that a price vote can have from the
+  // weighted median in the ballot. If a vote lies within the valid range
+  // defined by:
+  //	μ := weightedMedian,
+  //	validRange := μ ± (μ * rewardBand / 2),
+  // then rewards are added to the validator performance.
+  // Note that if the reward band is smaller than 1 standard
+  // deviation, the band is taken to be 1 standard deviation.a price
+  string reward_band = 3 [
+    (gogoproto.moretags) = "yaml:\"reward_band\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = true
+  ];
+  // The set of whitelisted markets, or asset pairs, for the module.
+  // Ex. '["unibi:uusd","ubtc:uusd"]'
+  repeated string whitelist = 4 [
+    (gogoproto.moretags) = "yaml:\"whitelist\"",
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = true
+  ];
+  // SlashFraction returns the proportion of an oracle's stake that gets
+  // slashed in the event of slashing. `SlashFraction` specifies the exact
+  // penalty for failing a voting period.
+  string slash_fraction = 5 [
+    (gogoproto.moretags) = "yaml:\"slash_fraction\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = true
+  ];
+  // SlashWindow returns the number of voting periods that specify a
+  // "slash window". After each slash window, all oracles that have missed more
+  // than the penalty threshold are slashed. Missing the penalty threshold is
+  // synonymous with submitting fewer valid votes than `MinValidPerWindow`.
+  uint64 slash_window = 6 [
+    (gogoproto.moretags) = "yaml:\"slash_window\"",
+    (gogoproto.nullable) = true
+  ];
+  string min_valid_per_window = 7 [
+    (gogoproto.moretags) = "yaml:\"min_valid_per_window\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = true
+  ];
+
+  // Amount of time to look back for TWAP calculations
+  google.protobuf.Duration twap_lookback_window = 8 [
+    (gogoproto.nullable) = true,
+    (gogoproto.stdduration) = true,
+    (gogoproto.jsontag) = "twap_lookback_window,omitempty",
+    (gogoproto.moretags) = "yaml:\"twap_lookback_window\""
+  ];
+
+  // The minimum number of voters (i.e. oracle validators) per pair for it to be
+  // considered a passing ballot. Recommended at least 4.
+  uint64 min_voters = 9 [
+    (gogoproto.moretags) = "yaml:\"min_voters\"",
+    (gogoproto.nullable) = true
+  ];
+
+  // The validator fee ratio that is given to validators every epoch.
+  string validator_fee_ratio = 10 [
+    (gogoproto.moretags) = "yaml:\"validator_fee_ratio\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = true
+  ];
+
+  uint64 expiration_blocks = 11 [
+    (gogoproto.moretags) = "yaml:\"expiration_blocks\"",
+    (gogoproto.nullable) = true
+  ];
+}
