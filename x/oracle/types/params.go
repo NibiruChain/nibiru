@@ -40,21 +40,7 @@ var (
 	DefaultVoteThreshold = sdk.OneDec().Quo(sdk.NewDec(3)) // 33.33%
 	DefaultRewardBand    = sdk.NewDecWithPrec(2, 2)        // 2% (-1, 1)
 	DefaultWhitelist     = []asset.Pair{
-		// paired against NUSD
-		asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
-		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
-		asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-		asset.Registry.Pair(denoms.ATOM, denoms.NUSD),
-		asset.Registry.Pair(denoms.BNB, denoms.NUSD),
-		asset.Registry.Pair(denoms.USDC, denoms.NUSD),
-		asset.Registry.Pair(denoms.USDT, denoms.NUSD),
-		// asset.Registry.Pair(denoms.OSMO, denoms.NUSD),
-		// asset.Registry.Pair(denoms.AVAX, denoms.NUSD),
-		// asset.Registry.Pair(denoms.SOL, denoms.NUSD),
-		// asset.Registry.Pair(denoms.ADA, denoms.NUSD),
-
 		// paired against the US fiat dollar
-		asset.Registry.Pair(denoms.NIBI, denoms.USD),
 		asset.Registry.Pair(denoms.BTC, denoms.USD),
 		asset.Registry.Pair(denoms.ETH, denoms.USD),
 		asset.Registry.Pair(denoms.ATOM, denoms.USD),
