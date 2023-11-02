@@ -122,7 +122,7 @@ func AddPerpV2Genesis(gen app.GenesisState) app.GenesisState {
 		Amms:               ammsv2,
 		Positions:          []perpv2types.GenesisPosition{},
 		ReserveSnapshots:   []perpv2types.ReserveSnapshot{},
-		Collateral:         &perpv2types.DefaultTestingCollateralNotForProd,
+		Collateral:         &perpv2types.NibiTestingCollateralNotForProd,
 	}
 
 	gen[perpv2types.ModuleName] = app.MakeEncodingConfig().Marshaler.

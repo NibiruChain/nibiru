@@ -12,6 +12,7 @@ var ErrInvalidCollateral = sdkerrors.Register("collateral", 1, "invalid token fa
 
 // Default collateral used for testing only.
 var DefaultTestingCollateralNotForProd = NewCollateral("cosmos15u3dt79t6sxxa3x3kpkhzsy56edaa5a66wvt3kxmukqjz2sx0hesh45zsv", "unusd")
+var NibiTestingCollateralNotForProd = NewCollateral("nibi14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9ssa9gcs", "unusd")
 
 func NewCollateral(contractAddress string, collateral string) Collateral {
 	return Collateral{

@@ -82,7 +82,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 				sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 10e6),
 					sdk.NewInt64Coin(denoms.USDC, 1e3*common.TO_MICRO),
-					sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 5e3*common.TO_MICRO),
+					sdk.NewInt64Coin(types.NibiTestingCollateralNotForProd.GetTFDenom(), 5e3*common.TO_MICRO),
 				),
 				val,
 				denoms.NIBI,
@@ -478,14 +478,14 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 	s.T().Log("removing margin on user 0....")
 	_, err = s.network.ExecTxCmd(cli.RemoveMarginCmd(), s.users[0], []string{
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
-		fmt.Sprintf("%s%s", "10000000", types.DefaultTestingCollateralNotForProd.GetTFDenom()),
+		fmt.Sprintf("%s%s", "10000000", types.NibiTestingCollateralNotForProd.GetTFDenom()),
 	})
 	s.Contains(err.Error(), types.ErrBadDebt.Error())
 
 	s.T().Log("removing margin on user 0....")
 	_, err = s.network.ExecTxCmd(cli.RemoveMarginCmd(), s.users[0], []string{
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
-		fmt.Sprintf("%s%s", "1", types.DefaultTestingCollateralNotForProd.GetTFDenom()),
+		fmt.Sprintf("%s%s", "1", types.NibiTestingCollateralNotForProd.GetTFDenom()),
 	})
 	s.NoError(err)
 	s.NoError(s.network.WaitForNextBlock())
@@ -513,31 +513,34 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 		expectFail     bool
 	}{
 		{
-			name: "PASS: add margin to correct position",
-			args: []string{
-				asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
-				fmt.Sprintf("10000%s", types.DefaultTestingCollateralNotForProd.GetTFDenom()),
-			},
-			expectedCode:   0,
-			expectedMargin: sdk.NewDec(1_010_000),
-			expectFail:     false,
-		},
-		{
-			name: "fail: position not found",
-			args: []string{
-				asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
-				fmt.Sprintf("10000%s", types.DefaultTestingCollateralNotForProd.GetTFDenom()),
-			},
-			expectedCode: types.ErrPositionNotFound.ABCICode(),
-			expectFail:   false,
-		},
-		{
 			name: "fail: not correct margin denom",
 			args: []string{
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 				fmt.Sprintf("10000%s", denoms.USDT),
 			},
-			expectFail: true,
+			expectFail:     false,
+			expectedMargin: sdk.NewDec(1_000_000),
+			expectedCode:   1,
+		},
+		{
+			name: "fail: position not found",
+			args: []string{
+				asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
+				fmt.Sprintf("10000%s", types.NibiTestingCollateralNotForProd.GetTFDenom()),
+			},
+			expectedCode:   types.ErrPositionNotFound.ABCICode(),
+			expectedMargin: sdk.NewDec(1_000_000),
+			expectFail:     false,
+		},
+		{
+			name: "PASS: add margin to correct position",
+			args: []string{
+				asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
+				fmt.Sprintf("10000%s", types.NibiTestingCollateralNotForProd.GetTFDenom()),
+			},
+			expectedCode:   0,
+			expectedMargin: sdk.NewDec(1_010_000),
+			expectFail:     false,
 		},
 		{
 			name: "fail: invalid coin",
@@ -551,7 +554,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 			name: "fail: invalid pair",
 			args: []string{
 				"alisdhjal;dhao;sdh",
-				fmt.Sprintf("10000%s", types.DefaultTestingCollateralNotForProd.GetTFDenom()),
+				fmt.Sprintf("10000%s", types.NibiTestingCollateralNotForProd.GetTFDenom()),
 			},
 			expectFail: true,
 		},
@@ -582,12 +585,10 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 				s.Require().NoError(err)
 				s.Require().EqualValues(tc.expectedCode, resp.Code)
 
-				if tc.expectedCode == 0 {
-					// query trader position
-					queryResp, err := testutilcli.QueryPositionV2(s.network.Validators[0].ClientCtx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), s.users[1])
-					s.NoError(err)
-					s.EqualValues(tc.expectedMargin, queryResp.Position.Margin)
-				}
+				// query trader position
+				queryResp, err := testutilcli.QueryPositionV2(s.network.Validators[0].ClientCtx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), s.users[1])
+				s.NoError(err)
+				s.EqualValues(tc.expectedMargin, queryResp.Position.Margin)
 			}
 		})
 	}
@@ -615,31 +616,34 @@ func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 		expectFail     bool
 	}{
 		{
-			name: "PASS: remove margin to correct position",
-			args: []string{
-				asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
-				fmt.Sprintf("10000%s", types.DefaultTestingCollateralNotForProd.GetTFDenom()),
-			},
-			expectedCode:   0,
-			expectedMargin: sdk.NewDec(990_000),
-			expectFail:     false,
-		},
-		{
-			name: "fail: position not found",
-			args: []string{
-				asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
-				fmt.Sprintf("10000%s", types.DefaultTestingCollateralNotForProd.GetTFDenom()),
-			},
-			expectedCode: types.ErrPositionNotFound.ABCICode(),
-			expectFail:   false,
-		},
-		{
 			name: "fail: not correct margin denom",
 			args: []string{
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
 				fmt.Sprintf("10000%s", denoms.USDT),
 			},
-			expectFail: true,
+			expectFail:     false,
+			expectedCode:   1,
+			expectedMargin: sdk.NewDec(1_000_000),
+		},
+		{
+			name: "fail: position not found",
+			args: []string{
+				asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
+				fmt.Sprintf("10000%s", types.NibiTestingCollateralNotForProd.GetTFDenom()),
+			},
+			expectedCode:   types.ErrPositionNotFound.ABCICode(),
+			expectedMargin: sdk.NewDec(1_000_000),
+			expectFail:     false,
+		},
+		{
+			name: "PASS: remove margin to correct position",
+			args: []string{
+				asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
+				fmt.Sprintf("10000%s", types.NibiTestingCollateralNotForProd.GetTFDenom()),
+			},
+			expectedCode:   0,
+			expectedMargin: sdk.NewDec(990_000),
+			expectFail:     false,
 		},
 		{
 			name: "fail: invalid coin",
@@ -653,7 +657,7 @@ func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 			name: "fail: invalid pair",
 			args: []string{
 				"alisdhjal;dhao;sdh",
-				fmt.Sprintf("10000%s", types.DefaultTestingCollateralNotForProd.GetTFDenom()),
+				fmt.Sprintf("10000%s", types.NibiTestingCollateralNotForProd.GetTFDenom()),
 			},
 			expectFail: true,
 		},
@@ -680,12 +684,9 @@ func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 				s.Require().NoError(err)
 				s.Require().EqualValues(tc.expectedCode, resp.Code)
 
-				if tc.expectedCode == 0 {
-					// query trader position
-					queryResp, err := testutilcli.QueryPositionV2(s.network.Validators[0].ClientCtx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), s.users[2])
-					s.NoError(err)
-					s.EqualValues(tc.expectedMargin, queryResp.Position.Margin)
-				}
+				queryResp, err := testutilcli.QueryPositionV2(s.network.Validators[0].ClientCtx, asset.Registry.Pair(denoms.ETH, denoms.NUSD), s.users[2])
+				s.NoError(err)
+				s.EqualValues(tc.expectedMargin, queryResp.Position.Margin)
 			}
 		})
 	}
@@ -696,7 +697,7 @@ func (s *IntegrationTestSuite) TestDonateToEcosystemFund() {
 	out, err := s.network.ExecTxCmd(
 		cli.DonateToEcosystemFundCmd(),
 		sdk.MustAccAddressFromBech32("nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m"),
-		[]string{"100" + types.DefaultTestingCollateralNotForProd.GetTFDenom()},
+		[]string{"100" + types.NibiTestingCollateralNotForProd.GetTFDenom()},
 	)
 	s.NoError(err)
 	s.Require().EqualValues(abcitypes.CodeTypeOK, out.Code)
@@ -716,11 +717,11 @@ func (s *IntegrationTestSuite) TestDonateToEcosystemFund() {
 		testutilcli.ExecQuery(
 			s.network.Validators[0].ClientCtx,
 			bankcli.GetBalancesCmd(),
-			[]string{moduleAccountAddrPerpEF, "--denom", types.DefaultTestingCollateralNotForProd.GetTFDenom()},
+			[]string{moduleAccountAddrPerpEF, "--denom", types.NibiTestingCollateralNotForProd.GetTFDenom()},
 			resp,
 		),
 	)
-	s.Require().EqualValues(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 100), *resp)
+	s.Require().EqualValues(sdk.NewInt64Coin(types.NibiTestingCollateralNotForProd.GetTFDenom(), 100), *resp)
 }
 
 func (s *IntegrationTestSuite) TestQueryModuleAccount() {
