@@ -90,7 +90,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 				sdk.NewCoins(
 					sdk.NewInt64Coin(denoms.NIBI, 10e6),
 					sdk.NewInt64Coin(denoms.USDC, 1e3*common.TO_MICRO),
-					sdk.NewInt64Coin(denoms.NUSD, 5e3*common.TO_MICRO),
+					sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 5e3*common.TO_MICRO),
 				),
 				val,
 				denoms.NIBI,
@@ -486,14 +486,14 @@ func (s *IntegrationTestSuite) TestRemoveMargin() {
 	s.T().Log("removing margin on user 0....")
 	_, err = s.network.ExecTxCmd(cli.RemoveMarginCmd(), s.users[0], []string{
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
-		fmt.Sprintf("%s%s", "10000000", denoms.NUSD),
+		fmt.Sprintf("%s%s", "10000000", types.DefaultTestingCollateralNotForProd.GetTFDenom()),
 	})
 	s.Contains(err.Error(), types.ErrBadDebt.Error())
 
 	s.T().Log("removing margin on user 0....")
 	_, err = s.network.ExecTxCmd(cli.RemoveMarginCmd(), s.users[0], []string{
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
-		fmt.Sprintf("%s%s", "1", denoms.NUSD),
+		fmt.Sprintf("%s%s", "1", types.DefaultTestingCollateralNotForProd.GetTFDenom()),
 	})
 	s.NoError(err)
 	s.NoError(s.network.WaitForNextBlock())
@@ -524,7 +524,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 			name: "PASS: add margin to correct position",
 			args: []string{
 				asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
-				fmt.Sprintf("10000%s", denoms.NUSD),
+				fmt.Sprintf("10000%s", types.DefaultTestingCollateralNotForProd.GetTFDenom()),
 			},
 			expectedCode:   0,
 			expectedMargin: sdk.NewDec(1_010_000),
@@ -534,7 +534,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 			name: "fail: position not found",
 			args: []string{
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
-				fmt.Sprintf("10000%s", denoms.NUSD),
+				fmt.Sprintf("10000%s", types.DefaultTestingCollateralNotForProd.GetTFDenom()),
 			},
 			expectedCode: types.ErrPositionNotFound.ABCICode(),
 			expectFail:   false,
@@ -559,7 +559,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 			name: "fail: invalid pair",
 			args: []string{
 				"alisdhjal;dhao;sdh",
-				fmt.Sprintf("10000%s", denoms.NUSD),
+				fmt.Sprintf("10000%s", types.DefaultTestingCollateralNotForProd.GetTFDenom()),
 			},
 			expectFail: true,
 		},
@@ -626,7 +626,7 @@ func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 			name: "PASS: remove margin to correct position",
 			args: []string{
 				asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
-				fmt.Sprintf("10000%s", denoms.NUSD),
+				fmt.Sprintf("10000%s", types.DefaultTestingCollateralNotForProd.GetTFDenom()),
 			},
 			expectedCode:   0,
 			expectedMargin: sdk.NewDec(990_000),
@@ -636,7 +636,7 @@ func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 			name: "fail: position not found",
 			args: []string{
 				asset.Registry.Pair(denoms.BTC, denoms.NUSD).String(),
-				fmt.Sprintf("10000%s", denoms.NUSD),
+				fmt.Sprintf("10000%s", types.DefaultTestingCollateralNotForProd.GetTFDenom()),
 			},
 			expectedCode: types.ErrPositionNotFound.ABCICode(),
 			expectFail:   false,
@@ -661,7 +661,7 @@ func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 			name: "fail: invalid pair",
 			args: []string{
 				"alisdhjal;dhao;sdh",
-				fmt.Sprintf("10000%s", denoms.NUSD),
+				fmt.Sprintf("10000%s", types.DefaultTestingCollateralNotForProd.GetTFDenom()),
 			},
 			expectFail: true,
 		},
@@ -704,7 +704,7 @@ func (s *IntegrationTestSuite) TestDonateToEcosystemFund() {
 	out, err := s.network.ExecTxCmd(
 		cli.DonateToEcosystemFundCmd(),
 		sdk.MustAccAddressFromBech32("nibi1w89pf5yq8ntjg89048qmtaz929fdxup0a57d8m"),
-		[]string{"100unusd"},
+		[]string{"100" + types.DefaultTestingCollateralNotForProd.GetTFDenom()},
 	)
 	s.NoError(err)
 	s.Require().EqualValues(abcitypes.CodeTypeOK, out.Code)
@@ -724,11 +724,11 @@ func (s *IntegrationTestSuite) TestDonateToEcosystemFund() {
 		testutilcli.ExecQuery(
 			s.network.Validators[0].ClientCtx,
 			bankcli.GetBalancesCmd(),
-			[]string{moduleAccountAddrPerpEF, "--denom", "unusd"},
+			[]string{moduleAccountAddrPerpEF, "--denom", types.DefaultTestingCollateralNotForProd.GetTFDenom()},
 			resp,
 		),
 	)
-	s.Require().EqualValues(sdk.NewInt64Coin("unusd", 100), *resp)
+	s.Require().EqualValues(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 100), *resp)
 }
 
 func (s *IntegrationTestSuite) TestQueryModuleAccount() {

@@ -70,6 +70,10 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			customDiscount.Discount.Fee,
 		)
 	}
+
+	if genState.Collateral != nil {
+		k.Admin.UpdateCollateral(ctx, *&genState.Collateral.Denom, *&genState.Collateral.ContractAddress)
+	}
 }
 
 // ExportGenesis returns the capability module's exported genesis.
@@ -133,6 +137,11 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 				Volume: key.K2(),
 			},
 		})
+	}
+
+	collateral, err := k.Collateral.Get(ctx)
+	if err != nil {
+		genesis.Collateral = &collateral
 	}
 	return genesis
 }
