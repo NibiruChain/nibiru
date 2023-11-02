@@ -40,16 +40,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-## [v1.0.1](https://github.com/NibiruChain/nibiru/releases/tag/v1.0.1)
-
-### Features
-
-* [#1658](https://github.com/NibiruChain/nibiru/pull/1658) - feat(oracle): add `EditOracleParams` message
-
-### Bug fixes
-
-* [#1655](https://github.com/NibiruChain/nibiru/pull/1655) - fix(inflation): inflate NIBI correctly to strategic treasury account
-
 ## [v1.0.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.0.0)
 
 ### Features 
@@ -59,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1620](https://github.com/NibiruChain/nibiru/pull/1620) - Token factory transaction messages for Mint and Burn
 * [#1573](https://github.com/NibiruChain/nibiru/pull/1573) - feat(perp): Close markets and compute settlement price
 * [#1632](https://github.com/NibiruChain/nibiru/pull/1632) - feat(perp): Add settle position transaction
+* [#1658](https://github.com/NibiruChain/nibiru/pull/1658) - feat(oracle): add `EditOracleParams` message
 
 ### State Machine Breaking 
 
@@ -90,6 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * [#1606](https://github.com/NibiruChain/nibiru/pull/1606) - fix(perp): emit `MarketUpdatedEvent` in the absence of index price
 * [#1649](https://github.com/NibiruChain/nibiru/pull/1649) - fix(ledger): fix ledger for newer macos versions
+* [#1655](https://github.com/NibiruChain/nibiru/pull/1655) - fix(inflation): inflate NIBI correctly to strategic treasury account
 
 ## [v0.21.10]
 
