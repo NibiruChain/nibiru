@@ -13,11 +13,13 @@ var (
 	_ sdk.Msg = &MsgDelegateFeedConsent{}
 	_ sdk.Msg = &MsgAggregateExchangeRatePrevote{}
 	_ sdk.Msg = &MsgAggregateExchangeRateVote{}
+	_ sdk.Msg = &MsgEditOracleParams{}
 )
 
 // oracle message types
 const (
 	TypeMsgDelegateFeedConsent          = "delegate_feeder"
+	TypeMsgEditOracleParams             = "edit_oracle_params"
 	TypeMsgAggregateExchangeRatePrevote = "aggregate_exchange_rate_prevote"
 	TypeMsgAggregateExchangeRateVote    = "aggregate_exchange_rate_vote"
 )
@@ -188,6 +190,39 @@ func (msg MsgDelegateFeedConsent) ValidateBasic() error {
 	_, err = sdk.AccAddressFromBech32(msg.Delegate)
 	if err != nil {
 		return sdkerrors.Wrapf(errors.ErrInvalidAddress, "Invalid delegate address (%s)", err)
+	}
+
+	return nil
+}
+
+func (msg MsgEditOracleParams) Route() string { return RouterKey }
+
+func (msg MsgEditOracleParams) Type() string { return TypeMsgEditOracleParams }
+
+// GetSignBytes implements sdk.Msg
+func (msg MsgEditOracleParams) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
+}
+
+// GetSigners implements sdk.Msg
+func (msg MsgEditOracleParams) GetSigners() []sdk.AccAddress {
+	sender, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		panic(err)
+	}
+
+	return []sdk.AccAddress{sdk.AccAddress(sender)}
+}
+
+// ValidateBasic implements sdk.Msg
+func (msg MsgEditOracleParams) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return sdkerrors.Wrapf(errors.ErrInvalidAddress, "Invalid sender address (%s)", err)
+	}
+
+	if msg.Params == nil {
+		return sdkerrors.Wrap(errors.ErrInvalidRequest, "params cannot be nil")
 	}
 
 	return nil

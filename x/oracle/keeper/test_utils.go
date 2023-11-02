@@ -2,6 +2,8 @@
 package keeper
 
 import (
+	sudokeeper "github.com/NibiruChain/nibiru/x/sudo/keeper"
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 	"testing"
 	"time"
 
@@ -123,6 +125,7 @@ type TestFixture struct {
 	OracleKeeper  Keeper
 	StakingKeeper stakingkeeper.Keeper
 	DistrKeeper   distrkeeper.Keeper
+	SudoKeeper    sudokeeper.Keeper
 }
 
 // CreateTestFixture nolint
@@ -135,6 +138,7 @@ func CreateTestFixture(t *testing.T) TestFixture {
 	keyOracle := sdk.NewKVStoreKey(types.StoreKey)
 	keyStaking := sdk.NewKVStoreKey(stakingtypes.StoreKey)
 	keyDistr := sdk.NewKVStoreKey(distrtypes.StoreKey)
+	keySudo := sdk.NewKVStoreKey(sudotypes.StoreKey)
 
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
@@ -149,6 +153,7 @@ func CreateTestFixture(t *testing.T) TestFixture {
 	ms.MountStoreWithDB(keyOracle, storetypes.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyStaking, storetypes.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyDistr, storetypes.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keySudo, storetypes.StoreTypeIAVL, db)
 
 	require.NoError(t, ms.LoadLatestVersion())
 
@@ -236,6 +241,11 @@ func CreateTestFixture(t *testing.T) TestFixture {
 		require.NoError(t, err)
 	}
 
+	sudoKeeper := sudokeeper.NewKeeper(
+		appCodec,
+		keySudo,
+	)
+
 	keeper := NewKeeper(
 		appCodec,
 		keyOracle,
@@ -254,7 +264,7 @@ func CreateTestFixture(t *testing.T) TestFixture {
 
 	keeper.Params.Set(ctx, defaults)
 
-	return TestFixture{ctx, legacyAmino, accountKeeper, bankKeeper, keeper, *stakingKeeper, distrKeeper}
+	return TestFixture{ctx, legacyAmino, accountKeeper, bankKeeper, keeper, *stakingKeeper, distrKeeper, sudoKeeper}
 }
 
 // NewTestMsgCreateValidator test msg creator
@@ -300,7 +310,7 @@ func Setup(t *testing.T) (TestFixture, types.MsgServer) {
 
 	params, _ = fixture.OracleKeeper.Params.Get(fixture.Ctx)
 
-	h := NewMsgServerImpl(fixture.OracleKeeper)
+	h := NewMsgServerImpl(fixture.OracleKeeper, fixture.SudoKeeper)
 	sh := stakingkeeper.NewMsgServerImpl(&fixture.StakingKeeper)
 
 	// Validator created

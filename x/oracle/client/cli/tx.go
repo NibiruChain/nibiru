@@ -3,6 +3,9 @@ package cli
 import (
 	"fmt"
 	"strings"
+	"time"
+
+	"github.com/NibiruChain/nibiru/x/common/asset"
 
 	"github.com/pkg/errors"
 
@@ -30,6 +33,7 @@ func GetTxCmd() *cobra.Command {
 		GetCmdDelegateFeederPermission(),
 		GetCmdAggregateExchangeRatePrevote(),
 		GetCmdAggregateExchangeRateVote(),
+		GetCmdEditOracleParams(),
 	)
 
 	return oracleTxCmd
@@ -202,6 +206,147 @@ $ nibid tx oracle aggregate-vote 1234 (40000.0,BTC:USD)|(1.243,NIBI:USD) nibival
 	}
 
 	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func GetCmdEditOracleParams() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "edit-params --vote-period [vote-period] --vote-threshold [vote-threshold] --reward-band [reward-band] --slash-fraction [slash-fraction] --slash-window [slash-window] --min-valid-per-window [min-valid-per-window] --whitelist [whitelist]",
+		Args:  cobra.ExactArgs(0),
+		Short: "Edit the oracle module parameters",
+		Long: strings.TrimSpace(`
+Edit the oracle module parameters.
+
+Requires sudo permissions.
+
+--vote-period: the period of oracle vote
+--vote-threshold: the threshold of oracle vote
+--reward-band: the reward band of oracle vote
+--slash-fraction: the slash fraction of oracle vote
+--slash-window: the slash window of oracle vote
+--min-valid-per-window: the min valid per window of oracle vote
+--twap-lookback-window: the twap lookback window of oracle vote in seconds
+--min-voters: the min voters of oracle vote
+--validator-fee-ratio: the validator fee ratio of oracle vote
+--expiration-blocks: the expiration blocks of oracle vote
+--whitelist: the whitelist of oracle vote
+
+$ nibid tx oracle edit-params --vote-period 10 --vote-threshold 0.5 --reward-band 0.1 --slash-fraction 0.01 --slash-window 100 --min-valid-per-window 0.6 --whitelist BTC:USD,NIBI:USD
+`),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := &types.MsgEditOracleParams{
+				Sender: clientCtx.GetFromAddress().String(),
+				Params: &types.OracleParamsMsg{},
+			}
+
+			if votePeriod, _ := cmd.Flags().GetUint64("vote-period"); votePeriod != 0 {
+				msg.Params.VotePeriod = votePeriod
+			}
+
+			if voteThreshold, _ := cmd.Flags().GetString("vote-threshold"); voteThreshold != "" {
+				voteThresholdDec, err := sdk.NewDecFromStr(voteThreshold)
+				if err != nil {
+					return err
+				}
+
+				msg.Params.VoteThreshold = &voteThresholdDec
+			}
+
+			if rewardBand, _ := cmd.Flags().GetString("reward-band"); rewardBand != "" {
+				rewardBandDec, err := sdk.NewDecFromStr(rewardBand)
+				if err != nil {
+					return err
+				}
+
+				msg.Params.RewardBand = &rewardBandDec
+			}
+
+			if slashFraction, _ := cmd.Flags().GetString("slash-fraction"); slashFraction != "" {
+				slashFractionDec, err := sdk.NewDecFromStr(slashFraction)
+				if err != nil {
+					return err
+				}
+
+				msg.Params.SlashFraction = &slashFractionDec
+			}
+
+			if slashWindow, _ := cmd.Flags().GetUint64("slash-window"); slashWindow != 0 {
+				msg.Params.SlashWindow = slashWindow
+			}
+
+			if minValidPerWindow, _ := cmd.Flags().GetString("min-valid-per-window"); minValidPerWindow != "" {
+				minValidPerWindowDec, err := sdk.NewDecFromStr(minValidPerWindow)
+				if err != nil {
+					return err
+				}
+
+				msg.Params.MinValidPerWindow = &minValidPerWindowDec
+			}
+
+			if twapLookbackWindow, _ := cmd.Flags().GetUint64("twap-lookback-window"); twapLookbackWindow != 0 {
+				duration := time.Duration(twapLookbackWindow) * time.Second
+				msg.Params.TwapLookbackWindow = &duration
+			}
+
+			if minVoters, _ := cmd.Flags().GetUint64("min-voters"); minVoters != 0 {
+				msg.Params.MinVoters = minVoters
+			}
+
+			if validatorFeeRatio, _ := cmd.Flags().GetString("validator-fee-ratio"); validatorFeeRatio != "" {
+				validatorFeeRatioDec, err := sdk.NewDecFromStr(validatorFeeRatio)
+				if err != nil {
+					return err
+				}
+
+				msg.Params.ValidatorFeeRatio = &validatorFeeRatioDec
+			}
+
+			if expirationBlocks, _ := cmd.Flags().GetUint64("expiration-blocks"); expirationBlocks != 0 {
+				msg.Params.ExpirationBlocks = expirationBlocks
+			}
+
+			if whitelist, _ := cmd.Flags().GetString("whitelist"); whitelist != "" {
+				whitelistArr := strings.Split(whitelist, ",")
+				realWhitelist := make([]asset.Pair, len(whitelistArr))
+				for i, pair := range whitelistArr {
+					p, err := asset.TryNewPair(pair)
+					if err != nil {
+						return fmt.Errorf("invalid pair %s", p)
+					}
+
+					realWhitelist[i] = p
+				}
+
+				msg.Params.Whitelist = realWhitelist
+			}
+
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	cmd.Flags().Uint64("vote-period", 0, "the period of oracle vote")
+	cmd.Flags().String("vote-threshold", "", "the threshold of oracle vote")
+	cmd.Flags().String("reward-band", "", "the reward band of oracle vote")
+	cmd.Flags().String("slash-fraction", "", "the slash fraction of oracle vote")
+	cmd.Flags().Uint64("slash-window", 0, "the slash window of oracle vote")
+	cmd.Flags().String("min-valid-per-window", "", "the min valid per window of oracle vote")
+	cmd.Flags().Uint64("twap-lookback-window", 0, "the twap lookback window of oracle vote")
+	cmd.Flags().Uint64("min-voters", 0, "the min voters of oracle vote")
+	cmd.Flags().String("validator-fee-ratio", "", "the validator fee ratio of oracle vote")
+	cmd.Flags().Uint64("expiration-blocks", 0, "the expiration blocks of oracle vote")
+	cmd.Flags().String("whitelist", "", "the whitelist of oracle vote")
 
 	return cmd
 }
