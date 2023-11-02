@@ -4,7 +4,7 @@ on:
   pull_request:
     paths: ["**.go", "**.proto", "go.mod", "go.sum"]
 
-# Allow concurrent runs on main/release branches but isolates other branches 
+# Allow concurrent runs on main/release branches but isolates other branches
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.head_ref }}
   cancel-in-progress: ${{ ! (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/')) }}
@@ -21,18 +21,38 @@ jobs:
           go-version: 1.19
           cache: true
 
+      # Use GitHub actions output paramters to get go paths. For more info, see
+      # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions
+      - name: "Set output variables for go cache"
+        id: go-cache-paths
+        run: |
+          echo "go-build-cache=$(go env GOCACHE)" >> $GITHUB_OUTPUT
+          echo "go-mod-cache=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
+
+      - name: "Go build cache"
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-build-cache }}
+          key: go-build-cache-${{ hashFiles('**/go.sum') }}
+
+      - name: "Go mod cache"
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-mod-cache }}
+          key: go-mod-cache-${{ hashFiles('**/go.sum') }}
+
       - name: Run all unit tests.
-        run: make test-coverage
+        run: make test-unit
 
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: 1.19
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.19
 
-    - name: Build the nibid binary 
-      run: make build
+      - name: Build the nibid binary
+        run: make build

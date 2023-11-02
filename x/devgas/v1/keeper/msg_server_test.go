@@ -20,7 +20,7 @@ import (
 //go:embed testdata/reflect.wasm
 var wasmContract []byte
 
-func (s *IntegrationTestSuite) StoreCode() {
+func (s *KeeperTestSuite) StoreCode() {
 	_, _, sender := testdata.KeyTestPubAddr()
 	msg := wasmtypes.MsgStoreCodeFixture(func(m *wasmtypes.MsgStoreCode) {
 		m.WASMByteCode = wasmContract
@@ -41,7 +41,7 @@ func (s *IntegrationTestSuite) StoreCode() {
 	s.Require().Equal(wasmtypes.DefaultParams().InstantiateDefaultPermission.With(sender), info.InstantiateConfig)
 }
 
-func (s *IntegrationTestSuite) InstantiateContract(sender string, admin string) string {
+func (s *KeeperTestSuite) InstantiateContract(sender string, admin string) string {
 	msgStoreCode := wasmtypes.MsgStoreCodeFixture(func(m *wasmtypes.MsgStoreCode) {
 		m.WASMByteCode = wasmContract
 		m.Sender = sender
@@ -66,7 +66,7 @@ func (s *IntegrationTestSuite) InstantiateContract(sender string, admin string) 
 	return result.Address
 }
 
-func (s *IntegrationTestSuite) TestGetContractAdminOrCreatorAddress() {
+func (s *KeeperTestSuite) TestGetContractAdminOrCreatorAddress() {
 	_, _, sender := testdata.KeyTestPubAddr()
 	_, _, admin := testdata.KeyTestPubAddr()
 	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(1_000_000))))
@@ -117,7 +117,7 @@ func (s *IntegrationTestSuite) TestGetContractAdminOrCreatorAddress() {
 	}
 }
 
-func (s *IntegrationTestSuite) TestRegisterFeeShare() {
+func (s *KeeperTestSuite) TestRegisterFeeShare() {
 	_, _, sender := testdata.KeyTestPubAddr()
 	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(1_000_000))))
 
@@ -245,7 +245,7 @@ func (s *IntegrationTestSuite) TestRegisterFeeShare() {
 	}
 }
 
-func (s *IntegrationTestSuite) TestUpdateFeeShare() {
+func (s *KeeperTestSuite) TestUpdateFeeShare() {
 	_, _, sender := testdata.KeyTestPubAddr()
 	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(1_000_000))))
 
@@ -342,7 +342,7 @@ func (s *IntegrationTestSuite) TestUpdateFeeShare() {
 	}
 }
 
-func (s *IntegrationTestSuite) TestCancelFeeShare() {
+func (s *KeeperTestSuite) TestCancelFeeShare() {
 	_, _, sender := testdata.KeyTestPubAddr()
 	_ = s.FundAccount(s.ctx, sender, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(1_000_000))))
 
@@ -409,7 +409,7 @@ func (s *IntegrationTestSuite) TestCancelFeeShare() {
 	}
 }
 
-func (s *IntegrationTestSuite) TestUpdateParams() {
+func (s *KeeperTestSuite) TestUpdateParams() {
 	govModuleAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
 	goCtx := sdk.WrapSDKContext(s.ctx)
 
