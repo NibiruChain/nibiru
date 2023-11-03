@@ -139,7 +139,7 @@ func TestMarketEqual(t *testing.T) {
 		},
 		{
 			modifier: func(m Market) Market {
-				return m.WithPrepaidBadDebt(sdk.NewCoin(DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.OneInt()))
+				return m.WithPrepaidBadDebt(sdk.NewCoin(DefaultTestingCollateralNotForProd.String(), sdk.OneInt()))
 			},
 			requiredError: "expected market prepaid bad debt",
 		},

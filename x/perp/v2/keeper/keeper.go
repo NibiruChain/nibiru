@@ -15,6 +15,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	tftypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
 
 type Keeper struct {
@@ -32,7 +33,7 @@ type Keeper struct {
 	MarketLastVersion collections.Map[asset.Pair, types.MarketLastVersion]
 	Markets           collections.Map[collections.Pair[asset.Pair, uint64], types.Market]
 	AMMs              collections.Map[collections.Pair[asset.Pair, uint64], types.AMM]
-	Collateral        collections.Item[types.Collateral]
+	Collateral        collections.Item[tftypes.TFDenom]
 
 	Positions        collections.Map[collections.Pair[collections.Pair[asset.Pair, uint64], sdk.AccAddress], types.Position]
 	ReserveSnapshots collections.Map[collections.Pair[asset.Pair, time.Time], types.ReserveSnapshot]
@@ -110,7 +111,7 @@ func NewKeeper(
 		),
 		Collateral: collections.NewItem(
 			storeKey, NamespaceCollateral,
-			collections.ProtoValueEncoder[types.Collateral](cdc),
+			collections.ProtoValueEncoder[tftypes.TFDenom](cdc),
 		),
 	}
 	k.Admin = admin{&k}

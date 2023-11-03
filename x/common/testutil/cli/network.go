@@ -176,7 +176,7 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 		BondedTokens:      sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
 		StartingTokens: sdk.NewCoins(
 			sdk.NewCoin(denoms.NUSD, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
-			sdk.NewCoin(perpV2types.NibiTestingCollateralNotForProd.GetTFDenom(), sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
+			sdk.NewCoin(perpV2types.NibiTestingCollateralNotForProd.String(), sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
 			sdk.NewCoin(denoms.NIBI, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
 			sdk.NewCoin(denoms.USDC, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
 		),

@@ -71,8 +71,8 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 		)
 	}
 
-	if genState.Collateral != nil {
-		err := k.Admin.UpdateCollateral(ctx, genState.Collateral.Denom, genState.Collateral.ContractAddress)
+	if genState.CollateralCreator != "" {
+		err := k.Admin.UpdateCollateral(ctx, genState.CollateralSubdenom, genState.CollateralCreator)
 		if err != nil {
 			panic(err)
 		}
@@ -144,7 +144,8 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 
 	collateral, err := k.Collateral.Get(ctx)
 	if err != nil {
-		genesis.Collateral = &collateral
+		genesis.CollateralCreator = collateral.Creator
+		genesis.CollateralSubdenom = collateral.Subdenom
 	}
 	return genesis
 }

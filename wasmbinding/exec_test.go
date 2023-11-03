@@ -102,7 +102,7 @@ func (s *TestSuiteExecutor) SetupSuite() {
 
 	coins := sdk.NewCoins(
 		sdk.NewCoin(denoms.NIBI, sdk.NewInt(10_000_000)),
-		sdk.NewCoin(perpv2types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(420_000*69)),
+		sdk.NewCoin(perpv2types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(420_000*69)),
 	)
 
 	s.NoError(testapp.FundAccount(nibiru.BankKeeper, ctx, sender, coins))
@@ -129,10 +129,10 @@ func (s *TestSuiteExecutor) OnSetupEnd() {
 
 func (s *TestSuiteExecutor) TestOpenAddRemoveClose() {
 	pair := asset.MustNewPair(s.happyFields.Pair)
-	margin := sdk.NewCoin(perpv2types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(69))
+	margin := sdk.NewCoin(perpv2types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(69))
 
 	coins := sdk.NewCoins(
-		margin.Add(sdk.NewCoin(perpv2types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(1_000))),
+		margin.Add(sdk.NewCoin(perpv2types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1_000))),
 	)
 	s.NoError(testapp.FundAccount(s.nibiru.BankKeeper, s.ctx, s.contractPerp, coins))
 
@@ -469,7 +469,7 @@ func (s *TestSuiteExecutor) TestInsuranceFundWithdraw() {
 		s.nibiru.BankKeeper,
 		s.ctx,
 		perpv2types.PerpEFModuleAccount,
-		sdk.NewCoins(sdk.NewCoin(perpv2types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(420))),
+		sdk.NewCoins(sdk.NewCoin(perpv2types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(420))),
 	)
 	s.NoError(err)
 	s.keeper.SetSudoContracts(

@@ -25,7 +25,8 @@ func TestDefaultGenesis(t *testing.T) {
 	require.Empty(t, genesis.Amms)
 	require.Empty(t, genesis.Positions)
 	require.Empty(t, genesis.ReserveSnapshots)
-	require.Empty(t, genesis.Collateral)
+	require.Empty(t, genesis.CollateralSubdenom)
+	require.Empty(t, genesis.CollateralCreator)
 }
 
 func TestGenesisValidate(t *testing.T) {

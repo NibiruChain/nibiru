@@ -11,6 +11,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
 	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	tftypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
 
 func AddPerpV2Genesis(gen app.GenesisState) app.GenesisState {
@@ -116,7 +117,7 @@ func AddPerpV2Genesis(gen app.GenesisState) app.GenesisState {
 		})
 	}
 
-	var collateral perpv2types.Collateral
+	var collateral tftypes.TFDenom
 	if sdk.GetConfig().GetBech32AccountAddrPrefix() == "nibi" {
 		collateral = perpv2types.NibiTestingCollateralNotForProd
 	} else {
@@ -129,7 +130,8 @@ func AddPerpV2Genesis(gen app.GenesisState) app.GenesisState {
 		Amms:               ammsv2,
 		Positions:          []perpv2types.GenesisPosition{},
 		ReserveSnapshots:   []perpv2types.ReserveSnapshot{},
-		Collateral:         &collateral,
+		CollateralCreator:  collateral.Creator,
+		CollateralSubdenom: collateral.Subdenom,
 	}
 
 	gen[perpv2types.ModuleName] = app.MakeEncodingConfig().Marshaler.

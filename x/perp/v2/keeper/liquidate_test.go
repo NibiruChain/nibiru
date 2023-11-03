@@ -37,7 +37,7 @@ func TestMultiLiquidate(t *testing.T) {
 				SetBlockTime(startTime),
 				CreateCustomMarket(pairBtcUsdc),
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10400))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 1000))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 1000))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -46,9 +46,9 @@ func TestMultiLiquidate(t *testing.T) {
 				),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(750)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(125)),
-				BalanceEqual(liquidator, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(125)),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(750)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(125)),
+				BalanceEqual(liquidator, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(125)),
 				PositionShouldBeEqual(alice, pairBtcUsdc,
 					Position_PositionShouldBeEqualTo(
 						types.Position{
@@ -70,7 +70,7 @@ func TestMultiLiquidate(t *testing.T) {
 				SetBlockTime(startTime),
 				CreateCustomMarket(pairBtcUsdc),
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10600))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 1000))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 1000))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -80,9 +80,9 @@ func TestMultiLiquidate(t *testing.T) {
 				),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(600)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(150)),
-				BalanceEqual(liquidator, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(250)),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(600)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(150)),
+				BalanceEqual(liquidator, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(250)),
 				PositionShouldNotExist(alice, pairBtcUsdc, 1),
 			),
 
@@ -92,7 +92,7 @@ func TestMultiLiquidate(t *testing.T) {
 				SetBlockTime(startTime),
 				CreateCustomMarket(pairBtcUsdc),
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10600))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 1000))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 1000))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -101,9 +101,9 @@ func TestMultiLiquidate(t *testing.T) {
 				),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(600)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(150)),
-				BalanceEqual(liquidator, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(250)),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(600)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(150)),
+				BalanceEqual(liquidator, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(250)),
 				PositionShouldNotExist(alice, pairBtcUsdc, 1),
 			),
 
@@ -113,7 +113,7 @@ func TestMultiLiquidate(t *testing.T) {
 				SetBlockTime(startTime),
 				CreateCustomMarket(pairBtcUsdc),
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10600))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 1000))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 1000))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -123,9 +123,9 @@ func TestMultiLiquidate(t *testing.T) {
 				),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(600)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(150)),
-				BalanceEqual(liquidator, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(250)),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(600)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(150)),
+				BalanceEqual(liquidator, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(250)),
 				PositionShouldNotExist(alice, pairBtcUsdc, 1),
 			),
 
@@ -135,7 +135,7 @@ func TestMultiLiquidate(t *testing.T) {
 				SetBlockTime(startTime),
 				CreateCustomMarket(pairBtcUsdc),
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10600))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 1000))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 1000))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -145,9 +145,9 @@ func TestMultiLiquidate(t *testing.T) {
 				),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(600)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(150)),
-				BalanceEqual(liquidator, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(250)),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(600)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(150)),
+				BalanceEqual(liquidator, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(250)),
 				PositionShouldNotExist(alice, pairBtcUsdc, 1),
 			),
 
@@ -157,8 +157,8 @@ func TestMultiLiquidate(t *testing.T) {
 				SetBlockTime(startTime),
 				CreateCustomMarket(pairBtcUsdc),
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10800))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 1000))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 50))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 1000))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 50))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -167,9 +167,9 @@ func TestMultiLiquidate(t *testing.T) {
 				),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(800)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.ZeroInt()),
-				BalanceEqual(liquidator, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(250)),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(800)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.ZeroInt()),
+				BalanceEqual(liquidator, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(250)),
 				PositionShouldNotExist(alice, pairBtcUsdc, 1),
 			),
 
@@ -177,9 +177,9 @@ func TestMultiLiquidate(t *testing.T) {
 			Given(
 				SetBlockNumber(1),
 				SetBlockTime(startTime),
-				CreateCustomMarket(pairBtcUsdc, WithPrepaidBadDebt(sdk.NewInt(50), types.DefaultTestingCollateralNotForProd.GetTFDenom())),
+				CreateCustomMarket(pairBtcUsdc, WithPrepaidBadDebt(sdk.NewInt(50), types.DefaultTestingCollateralNotForProd.String())),
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10800))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 1000))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 1000))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -188,11 +188,11 @@ func TestMultiLiquidate(t *testing.T) {
 				),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(750)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.ZeroInt()),
-				BalanceEqual(liquidator, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(250)),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(750)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.ZeroInt()),
+				BalanceEqual(liquidator, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(250)),
 				PositionShouldNotExist(alice, pairBtcUsdc, 1),
-				MarketShouldBeEqual(pairBtcUsdc, Market_PrepaidBadDebtShouldBeEqualTo(sdk.ZeroInt(), types.DefaultTestingCollateralNotForProd.GetTFDenom())),
+				MarketShouldBeEqual(pairBtcUsdc, Market_PrepaidBadDebtShouldBeEqualTo(sdk.ZeroInt(), types.DefaultTestingCollateralNotForProd.String())),
 			),
 
 		TC("healthy position").
@@ -201,7 +201,7 @@ func TestMultiLiquidate(t *testing.T) {
 				SetBlockTime(startTime),
 				CreateCustomMarket(pairBtcUsdc),
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(100)), WithMargin(sdk.NewDec(10)), WithOpenNotional(sdk.NewDec(100))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 10))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 10))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -210,9 +210,9 @@ func TestMultiLiquidate(t *testing.T) {
 				),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(10)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.ZeroInt()),
-				BalanceEqual(liquidator, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.ZeroInt()),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(10)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.ZeroInt()),
+				BalanceEqual(liquidator, types.DefaultTestingCollateralNotForProd.String(), sdk.ZeroInt()),
 				PositionShouldBeEqual(alice, pairBtcUsdc,
 					Position_PositionShouldBeEqualTo(
 						types.Position{
@@ -244,7 +244,7 @@ func TestMultiLiquidate(t *testing.T) {
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10400))),  // partial
 				InsertPosition(WithTrader(alice), WithPair(pairEthUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10600))),  // full
 				InsertPosition(WithTrader(alice), WithPair(pairAtomUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10000))), // healthy
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 3000))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 3000))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -257,9 +257,9 @@ func TestMultiLiquidate(t *testing.T) {
 				),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(2350)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(275)),
-				BalanceEqual(liquidator, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(375)),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(2350)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(275)),
+				BalanceEqual(liquidator, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(375)),
 				PositionShouldBeEqual(alice, pairBtcUsdc,
 					Position_PositionShouldBeEqualTo(
 						types.Position{

@@ -38,7 +38,7 @@ func (a addMarginAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, e
 	}
 
 	_, err = app.PerpKeeperV2.AddMargin(
-		ctx, a.Pair, a.Account, sdk.NewCoin(collateral.GetTFDenom(), a.Margin),
+		ctx, a.Pair, a.Account, sdk.NewCoin(collateral.String(), a.Margin),
 	)
 	if err != nil {
 		return ctx, err, true
@@ -76,7 +76,7 @@ func (a addMarginFailAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Contex
 	}
 
 	_, err = app.PerpKeeperV2.AddMargin(
-		ctx, a.Pair, a.Account, sdk.NewCoin(collateral.GetTFDenom(), a.Margin),
+		ctx, a.Pair, a.Account, sdk.NewCoin(collateral.String(), a.Margin),
 	)
 	if !errors.Is(err, a.ExpectedErr) {
 		return ctx, fmt.Errorf("expected error %v, got %v", a.ExpectedErr, err), false
@@ -110,7 +110,7 @@ func (a removeMarginAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context
 	}
 
 	_, err = app.PerpKeeperV2.RemoveMargin(
-		ctx, a.Pair, a.Account, sdk.NewCoin(collateral.GetTFDenom(), a.Margin),
+		ctx, a.Pair, a.Account, sdk.NewCoin(collateral.String(), a.Margin),
 	)
 	if err != nil {
 		return ctx, err, false
@@ -147,7 +147,7 @@ func (a removeMarginActionFail) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Con
 	}
 
 	_, err = app.PerpKeeperV2.RemoveMargin(
-		ctx, a.Pair, a.Account, sdk.NewCoin(collateral.GetTFDenom(), a.Margin),
+		ctx, a.Pair, a.Account, sdk.NewCoin(collateral.String(), a.Margin),
 	)
 	if !errors.Is(err, a.ExpectedErr) {
 		return ctx, fmt.Errorf("expected error %v, got %v", a.ExpectedErr, err), false

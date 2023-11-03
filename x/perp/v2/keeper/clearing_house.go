@@ -547,7 +547,7 @@ func (k Keeper) afterPositionUpdate(
 
 	switch {
 	case marginToVault.IsPositive():
-		coinToSend := sdk.NewCoin(collateral.GetTFDenom(), marginToVault)
+		coinToSend := sdk.NewCoin(collateral.String(), marginToVault)
 		if err = k.BankKeeper.SendCoinsFromAccountToModule(
 			ctx, traderAddr, types.VaultModuleAccount, sdk.NewCoins(coinToSend)); err != nil {
 			return err
@@ -583,9 +583,9 @@ func (k Keeper) afterPositionUpdate(
 		&types.PositionChangedEvent{
 			FinalPosition:     positionResp.Position,
 			PositionNotional:  positionNotional,
-			TransactionFee:    sdk.NewCoin(collateral.GetTFDenom(), transferredFee),
+			TransactionFee:    sdk.NewCoin(collateral.String(), transferredFee),
 			RealizedPnl:       positionResp.RealizedPnl,
-			BadDebt:           sdk.NewCoin(collateral.GetTFDenom(), positionResp.BadDebt.RoundInt()),
+			BadDebt:           sdk.NewCoin(collateral.String(), positionResp.BadDebt.RoundInt()),
 			FundingPayment:    positionResp.FundingPayment,
 			BlockHeight:       ctx.BlockHeight(),
 			MarginToUser:      marginToVault.Neg().Sub(transferredFee),
@@ -658,7 +658,7 @@ func (k Keeper) transferFee(
 			/* to */ types.FeePoolModuleAccount,
 			/* coins */ sdk.NewCoins(
 				sdk.NewCoin(
-					collateral.GetTFDenom(),
+					collateral.String(),
 					feeToExchangeFeePool,
 				),
 			),
@@ -675,7 +675,7 @@ func (k Keeper) transferFee(
 			/* to */ types.PerpEFModuleAccount,
 			/* coins */ sdk.NewCoins(
 				sdk.NewCoin(
-					collateral.GetTFDenom(),
+					collateral.String(),
 					feeToEcosystemFund,
 				),
 			),

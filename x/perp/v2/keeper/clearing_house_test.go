@@ -41,9 +41,9 @@ func TestMarketOrder(t *testing.T) {
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(10_200)))),
-				FundAccount(bob, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(10_200)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(100_000_000)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(10_200)))),
+				FundAccount(bob, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(10_200)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(100_000_000)))),
 
 				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
 				MarketOrder(bob, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
@@ -65,7 +65,7 @@ func TestMarketOrder(t *testing.T) {
 				),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(1020)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1020)))),
 			).
 			When(
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec(),
@@ -111,9 +111,9 @@ func TestMarketOrder(t *testing.T) {
 					},
 					PositionNotional: sdk.NewDec(10_000),
 					RealizedPnl:      sdk.ZeroDec(),
-					BadDebt:          sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.ZeroInt()),
+					BadDebt:          sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.ZeroInt()),
 					FundingPayment:   sdk.ZeroDec(),
-					TransactionFee:   sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(20)),
+					TransactionFee:   sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(20)),
 					BlockHeight:      1,
 					// exchangedMargin = - marginToVault - transferredFee
 					MarginToUser:      sdk.NewInt(1_000 + 20).Neg(),
@@ -128,7 +128,7 @@ func TestMarketOrder(t *testing.T) {
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(2040)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(2040)))),
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			When(
@@ -167,9 +167,9 @@ func TestMarketOrder(t *testing.T) {
 					},
 					PositionNotional: sdk.NewDec(20_000),
 					RealizedPnl:      sdk.ZeroDec(),
-					BadDebt:          sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.ZeroInt()),
+					BadDebt:          sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.ZeroInt()),
 					FundingPayment:   sdk.ZeroDec(),
-					TransactionFee:   sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(20)), // 20 bps
+					TransactionFee:   sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(20)), // 20 bps
 					BlockHeight:      2,
 					// exchangedMargin = - marginToVault - transferredFee
 					MarginToUser:      sdk.NewInt(1_000 + 20).Neg(),
@@ -189,7 +189,7 @@ func TestMarketOrder(t *testing.T) {
 				),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(18)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(18)))),
 				InsertPosition(
 					WithPair(pairBtcNusd),
 					WithTrader(alice),
@@ -225,7 +225,7 @@ func TestMarketOrder(t *testing.T) {
 				),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(18)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(18)))),
 				InsertPosition(
 					WithPair(pairBtcNusd),
 					WithTrader(alice),
@@ -261,9 +261,9 @@ func TestMarketOrder(t *testing.T) {
 				),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(10_000)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(10_000)))),
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(9_000), sdk.NewDec(10), sdk.ZeroDec()),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(100_000_000)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(100_000_000)))),
 				EditSwapInvariant(pairBtcNusd, sdk.OneDec()),
 			).
 			When(
@@ -278,7 +278,7 @@ func TestMarketOrder(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(1030)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1030)))),
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			When(
@@ -318,9 +318,9 @@ func TestMarketOrder(t *testing.T) {
 					},
 					PositionNotional: sdk.NewDec(5000),
 					RealizedPnl:      sdk.ZeroDec(),
-					BadDebt:          sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.ZeroInt()),
+					BadDebt:          sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.ZeroInt()),
 					FundingPayment:   sdk.ZeroDec(),
-					TransactionFee:   sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(10)), // 20 bps
+					TransactionFee:   sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(10)), // 20 bps
 					BlockHeight:      2,
 					// exchangedMargin = - marginToVault - transferredFee
 					MarginToUser:      sdk.NewInt(0 + 10).Neg(),
@@ -340,7 +340,7 @@ func TestMarketOrder(t *testing.T) {
 				),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(18)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(18)))),
 				InsertPosition(
 					WithPair(pairBtcNusd),
 					WithTrader(alice),
@@ -372,7 +372,7 @@ func TestMarketOrder(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(4080)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(4080)))),
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			When(
@@ -412,9 +412,9 @@ func TestMarketOrder(t *testing.T) {
 					},
 					PositionNotional: sdk.NewDec(20000),
 					RealizedPnl:      sdk.ZeroDec(),
-					BadDebt:          sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.ZeroInt()),
+					BadDebt:          sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.ZeroInt()),
 					FundingPayment:   sdk.ZeroDec(),
-					TransactionFee:   sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(60)), // 20 bps
+					TransactionFee:   sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(60)), // 20 bps
 					BlockHeight:      2,
 					// exchangedMargin = - marginToVault - transferredFee
 					MarginToUser:      sdk.NewInt(1_000 + 60).Neg(),
@@ -433,7 +433,7 @@ func TestMarketOrder(t *testing.T) {
 				),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(18)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(18)))),
 				InsertPosition(
 					WithPair(pairBtcNusd),
 					WithTrader(alice),
@@ -479,9 +479,9 @@ func TestMarketOrder(t *testing.T) {
 					},
 					PositionNotional:  sdk.ZeroDec(),
 					RealizedPnl:       sdk.MustNewDecFromStr("-1100.000088999999110000"),
-					BadDebt:           sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 102),
+					BadDebt:           sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 102),
 					FundingPayment:    sdk.NewDec(2),
-					TransactionFee:    sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 18), // 20 bps
+					TransactionFee:    sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 18), // 20 bps
 					BlockHeight:       2,
 					MarginToUser:      sdk.NewInt(-18),
 					ChangeReason:      types.ChangeReason_MarketOrder,
@@ -495,7 +495,7 @@ func TestMarketOrder(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(1020)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1020)))),
 			).
 			When(
 				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec(),
@@ -543,9 +543,9 @@ func TestMarketOrder(t *testing.T) {
 					},
 					PositionNotional: sdk.NewDec(10_000),
 					RealizedPnl:      sdk.ZeroDec(),
-					BadDebt:          sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.ZeroInt()),
+					BadDebt:          sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.ZeroInt()),
 					FundingPayment:   sdk.ZeroDec(),
-					TransactionFee:   sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(20)),
+					TransactionFee:   sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(20)),
 					BlockHeight:      1,
 					// exchangedMargin = - marginToVault - transferredFee
 					MarginToUser:      sdk.NewInt(1_000 + 20).Neg(),
@@ -560,7 +560,7 @@ func TestMarketOrder(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(2040)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(2040)))),
 				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			When(
@@ -600,9 +600,9 @@ func TestMarketOrder(t *testing.T) {
 					},
 					PositionNotional: sdk.NewDec(20_000),
 					RealizedPnl:      sdk.ZeroDec(),
-					BadDebt:          sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.ZeroInt()),
+					BadDebt:          sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.ZeroInt()),
 					FundingPayment:   sdk.ZeroDec(),
-					TransactionFee:   sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(20)), // 20 bps
+					TransactionFee:   sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(20)), // 20 bps
 					BlockHeight:      2,
 					// exchangedMargin = - marginToVault - transferredFee
 					MarginToUser:      sdk.NewInt(1_000 + 20).Neg(),
@@ -620,7 +620,7 @@ func TestMarketOrder(t *testing.T) {
 				),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(22)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(22)))),
 				InsertPosition(
 					WithPair(pairBtcNusd),
 					WithTrader(alice),
@@ -652,7 +652,7 @@ func TestMarketOrder(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(1030)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1030)))),
 				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			When(
@@ -692,9 +692,9 @@ func TestMarketOrder(t *testing.T) {
 					},
 					PositionNotional: sdk.NewDec(5000),
 					RealizedPnl:      sdk.ZeroDec(),
-					BadDebt:          sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.ZeroInt()),
+					BadDebt:          sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.ZeroInt()),
 					FundingPayment:   sdk.ZeroDec(),
-					TransactionFee:   sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(10)), // 20 bps
+					TransactionFee:   sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(10)), // 20 bps
 					BlockHeight:      2,
 					// exchangedMargin = - marginToVault - transferredFee
 					MarginToUser:      sdk.NewInt(0 + 10).Neg(),
@@ -713,7 +713,7 @@ func TestMarketOrder(t *testing.T) {
 				),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(22)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(22)))),
 				InsertPosition(
 					WithPair(pairBtcNusd),
 					WithTrader(alice),
@@ -745,7 +745,7 @@ func TestMarketOrder(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(4080)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(4080)))),
 				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			When(
@@ -785,9 +785,9 @@ func TestMarketOrder(t *testing.T) {
 					},
 					PositionNotional: sdk.NewDec(20000),
 					RealizedPnl:      sdk.ZeroDec(),
-					BadDebt:          sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.ZeroInt()),
+					BadDebt:          sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.ZeroInt()),
 					FundingPayment:   sdk.ZeroDec(),
-					TransactionFee:   sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(60)), // 20 bps
+					TransactionFee:   sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(60)), // 20 bps
 					BlockHeight:      2,
 					// exchangedMargin = - marginToVault - transferredFee
 					MarginToUser:      sdk.NewInt(1_000 + 60).Neg(),
@@ -805,7 +805,7 @@ func TestMarketOrder(t *testing.T) {
 				),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(22)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(22)))),
 				InsertPosition(
 					WithPair(pairBtcNusd),
 					WithTrader(alice),
@@ -851,9 +851,9 @@ func TestMarketOrder(t *testing.T) {
 					},
 					PositionNotional: sdk.ZeroDec(),
 					RealizedPnl:      sdk.MustNewDecFromStr("-1100.000111000001110000"),
-					BadDebt:          sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 98),
+					BadDebt:          sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 98),
 					FundingPayment:   sdk.NewDec(-2),
-					TransactionFee:   sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 22), // 20 bps
+					TransactionFee:   sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 22), // 20 bps
 					BlockHeight:      2,
 					// exchangedMargin = - marginToVault - transferredFee
 					MarginToUser:      sdk.NewInt(-22),
@@ -868,7 +868,7 @@ func TestMarketOrder(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(99)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(99)))),
 			).
 			When(
 				MarketOrderFails(
@@ -884,7 +884,7 @@ func TestMarketOrder(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(47_714_285_715)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(47_714_285_715)))),
 				CloseMarket(pairBtcNusd),
 			).
 			When(
@@ -899,7 +899,7 @@ func TestMarketOrder(t *testing.T) {
 			Given(
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(47_714_285_715)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(47_714_285_715)))),
 			).
 			When(
 				MarketOrderFails(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(47_619_047_619), sdk.OneDec(), sdk.ZeroDec(),
@@ -914,7 +914,7 @@ func TestMarketOrder(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(47_714_285_715)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(47_714_285_715)))),
 			).
 			When(
 				MarketOrderFails(alice, pairBtcNusd, types.Direction_LONG, sdk.ZeroInt(), sdk.OneDec(), sdk.ZeroDec(),
@@ -929,7 +929,7 @@ func TestMarketOrder(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(1e6)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)))),
 			).
 			When(
 				MarketOrderFails(alice, pairBtcNusd, types.Direction_LONG, sdk.OneInt(), sdk.ZeroDec(), sdk.ZeroDec(),
@@ -944,7 +944,7 @@ func TestMarketOrder(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(1e6)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)))),
 			).
 			When(
 				MarketOrderFails(alice, pairBtcNusd, types.Direction_LONG, sdk.OneInt(), sdk.NewDec(11), sdk.ZeroDec(),
@@ -961,7 +961,7 @@ func TestMarketOrder(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd,
 					WithEnabled(true),
 					WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(20_000_000_000+20_000_000)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(20_000_000_000+20_000_000)))),
 			).
 			When(
 				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
@@ -979,7 +979,7 @@ func TestMarketOrder(t *testing.T) {
 					pairBtcNusd,
 					WithEnabled(true),
 					WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(1e6)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)))),
 			).
 			When(
 				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(100_000), sdk.OneDec(), sdk.ZeroDec()),
@@ -996,7 +996,7 @@ func TestMarketOrder(t *testing.T) {
 					pairBtcNusd,
 					WithEnabled(true),
 					WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(1e6)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)))),
 			).
 			When(
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(50_000), sdk.NewDec(2), sdk.ZeroDec()),
@@ -1014,7 +1014,7 @@ func TestMarketOrder(t *testing.T) {
 					pairBtcNusd,
 					WithEnabled(true),
 					WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(1e6)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)))),
 			).
 			When(
 				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(100_000), sdk.OneDec(), sdk.ZeroDec()),
@@ -1032,7 +1032,7 @@ func TestMarketOrder(t *testing.T) {
 					pairBtcNusd,
 					WithEnabled(true),
 					WithPricePeg(sdk.MustNewDecFromStr("25000"))),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(1e6)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)))),
 			).
 			When(
 				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(100_000), sdk.OneDec(), sdk.ZeroDec()),
@@ -1064,7 +1064,7 @@ func TestMarketOrderError(t *testing.T) {
 	}{
 		{
 			name:            "not enough trader funds",
-			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 999)),
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 999)),
 			initialPosition: nil,
 			side:            types.Direction_LONG,
 			margin:          sdk.NewInt(1000),
@@ -1074,7 +1074,7 @@ func TestMarketOrderError(t *testing.T) {
 		},
 		{
 			name:        "position has bad debt",
-			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 999)),
+			traderFunds: sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 999)),
 			initialPosition: &types.Position{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
 				Size_:                           sdk.OneDec(),
@@ -1091,7 +1091,7 @@ func TestMarketOrderError(t *testing.T) {
 		},
 		{
 			name:            "new long position not over base limit",
-			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 1020)),
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 1020)),
 			initialPosition: nil,
 			side:            types.Direction_LONG,
 			margin:          sdk.NewInt(1000),
@@ -1101,7 +1101,7 @@ func TestMarketOrderError(t *testing.T) {
 		},
 		{
 			name:            "new short position not under base limit",
-			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 1020)),
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 1020)),
 			initialPosition: nil,
 			side:            types.Direction_SHORT,
 			margin:          sdk.NewInt(1000),
@@ -1111,7 +1111,7 @@ func TestMarketOrderError(t *testing.T) {
 		},
 		{
 			name:            "quote asset amount is zero",
-			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 1020)),
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 1020)),
 			initialPosition: nil,
 			side:            types.Direction_SHORT,
 			margin:          sdk.ZeroInt(),
@@ -1121,7 +1121,7 @@ func TestMarketOrderError(t *testing.T) {
 		},
 		{
 			name:            "leverage amount is zero",
-			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 1020)),
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 1020)),
 			initialPosition: nil,
 			side:            types.Direction_SHORT,
 			margin:          sdk.NewInt(1000),
@@ -1131,7 +1131,7 @@ func TestMarketOrderError(t *testing.T) {
 		},
 		{
 			name:            "leverage amount is too high - SELL",
-			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 1020)),
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 1020)),
 			initialPosition: nil,
 			side:            types.Direction_SHORT,
 			margin:          sdk.NewInt(100),
@@ -1141,7 +1141,7 @@ func TestMarketOrderError(t *testing.T) {
 		},
 		{
 			name:            "leverage amount is too high - BUY",
-			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 1020)),
+			traderFunds:     sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 1020)),
 			initialPosition: nil,
 			side:            types.Direction_LONG,
 			margin:          sdk.NewInt(100),
@@ -1197,7 +1197,7 @@ func TestPartialClose(t *testing.T) {
 				),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(10)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(10)))),
 				InsertPosition(
 					WithPair(pairBtcNusd),
 					WithTrader(alice),
@@ -1231,9 +1231,9 @@ func TestPartialClose(t *testing.T) {
 					},
 					PositionNotional:  sdk.MustNewDecFromStr("14999.999812500001968750"),
 					RealizedPnl:       sdk.MustNewDecFromStr("2499.999950000000500000"),
-					BadDebt:           sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.ZeroInt()),
+					BadDebt:           sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.ZeroInt()),
 					FundingPayment:    sdk.NewDec(2),
-					TransactionFee:    sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(10)),
+					TransactionFee:    sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(10)),
 					BlockHeight:       1,
 					MarginToUser:      sdk.NewInt(-10),
 					ChangeReason:      types.ChangeReason_PartialClose,
@@ -1252,7 +1252,7 @@ func TestPartialClose(t *testing.T) {
 				),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(4)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(4)))),
 				InsertPosition(
 					WithPair(pairBtcNusd),
 					WithTrader(alice),
@@ -1286,9 +1286,9 @@ func TestPartialClose(t *testing.T) {
 					},
 					PositionNotional:  sdk.MustNewDecFromStr("7124.999910937500935156"),
 					RealizedPnl:       sdk.MustNewDecFromStr("-125.000023749999762500"),
-					BadDebt:           sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.ZeroInt()),
+					BadDebt:           sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.ZeroInt()),
 					FundingPayment:    sdk.NewDec(2),
-					TransactionFee:    sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(4)),
+					TransactionFee:    sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(4)),
 					BlockHeight:       1,
 					MarginToUser:      sdk.NewInt(-4),
 					ChangeReason:      types.ChangeReason_PartialClose,
@@ -1307,7 +1307,7 @@ func TestPartialClose(t *testing.T) {
 				),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(4)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(4)))),
 				InsertPosition(
 					WithPair(pairBtcNusd),
 					WithTrader(alice),
@@ -1341,9 +1341,9 @@ func TestPartialClose(t *testing.T) {
 					},
 					PositionNotional:  sdk.MustNewDecFromStr("7049.999911875000925312"),
 					RealizedPnl:       sdk.MustNewDecFromStr("-150.000023499999765000"),
-					BadDebt:           sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.ZeroInt()),
+					BadDebt:           sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.ZeroInt()),
 					FundingPayment:    sdk.NewDec(2),
-					TransactionFee:    sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(4)),
+					TransactionFee:    sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(4)),
 					BlockHeight:       1,
 					MarginToUser:      sdk.NewInt(-4),
 					ChangeReason:      types.ChangeReason_PartialClose,
@@ -1361,8 +1361,8 @@ func TestPartialClose(t *testing.T) {
 				),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 2))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 27))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 2))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 27))),
 				InsertPosition(
 					WithPair(pairBtcNusd),
 					WithTrader(alice),
@@ -1396,9 +1396,9 @@ func TestPartialClose(t *testing.T) {
 					},
 					PositionNotional:  sdk.MustNewDecFromStr("4424.999944687500580781"),
 					RealizedPnl:       sdk.MustNewDecFromStr("-1025.000014749999852500"),
-					BadDebt:           sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 27),
+					BadDebt:           sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 27),
 					FundingPayment:    sdk.NewDec(2),
-					TransactionFee:    sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 2),
+					TransactionFee:    sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 2),
 					BlockHeight:       1,
 					MarginToUser:      sdk.NewInt(-2),
 					ChangeReason:      types.ChangeReason_PartialClose,
@@ -1416,7 +1416,7 @@ func TestPartialClose(t *testing.T) {
 				),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(2)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(2)))),
 				InsertPosition(
 					WithPair(pairBtcNusd),
 					WithTrader(alice),
@@ -1450,9 +1450,9 @@ func TestPartialClose(t *testing.T) {
 					},
 					PositionNotional:  sdk.MustNewDecFromStr("250.000004375000057812"),
 					RealizedPnl:       sdk.MustNewDecFromStr("6749.999992499999925000"),
-					BadDebt:           sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.ZeroInt()),
+					BadDebt:           sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.ZeroInt()),
 					FundingPayment:    sdk.NewDec(-2),
-					TransactionFee:    sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(2)),
+					TransactionFee:    sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(2)),
 					BlockHeight:       1,
 					MarginToUser:      sdk.NewInt(-2),
 					ChangeReason:      types.ChangeReason_PartialClose,
@@ -1471,7 +1471,7 @@ func TestPartialClose(t *testing.T) {
 				),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(16)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(16)))),
 				InsertPosition(
 					WithPair(pairBtcNusd),
 					WithTrader(alice),
@@ -1505,9 +1505,9 @@ func TestPartialClose(t *testing.T) {
 					},
 					PositionNotional:  sdk.MustNewDecFromStr("2625.000045937500607031"),
 					RealizedPnl:       sdk.MustNewDecFromStr("-375.000078750000787500"),
-					BadDebt:           sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.ZeroInt()),
+					BadDebt:           sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.ZeroInt()),
 					FundingPayment:    sdk.NewDec(-2),
-					TransactionFee:    sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(16)),
+					TransactionFee:    sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(16)),
 					BlockHeight:       1,
 					MarginToUser:      sdk.NewInt(-16),
 					ChangeReason:      types.ChangeReason_PartialClose,
@@ -1526,7 +1526,7 @@ func TestPartialClose(t *testing.T) {
 				),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(16)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(16)))),
 				InsertPosition(
 					WithPair(pairBtcNusd),
 					WithTrader(alice),
@@ -1560,9 +1560,9 @@ func TestPartialClose(t *testing.T) {
 					},
 					PositionNotional:  sdk.MustNewDecFromStr("2725.000047687500630156"),
 					RealizedPnl:       sdk.MustNewDecFromStr("-675.000081750000817500"),
-					BadDebt:           sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.ZeroInt()),
+					BadDebt:           sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.ZeroInt()),
 					FundingPayment:    sdk.NewDec(-2),
-					TransactionFee:    sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(16)),
+					TransactionFee:    sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(16)),
 					BlockHeight:       1,
 					MarginToUser:      sdk.NewInt(-16),
 					ChangeReason:      types.ChangeReason_PartialClose,
@@ -1581,8 +1581,8 @@ func TestPartialClose(t *testing.T) {
 				),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(18)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 48))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(18)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 48))),
 				InsertPosition(
 					WithPair(pairBtcNusd),
 					WithTrader(alice),
@@ -1616,9 +1616,9 @@ func TestPartialClose(t *testing.T) {
 					},
 					PositionNotional:  sdk.MustNewDecFromStr("2850.000049875000659062"),
 					RealizedPnl:       sdk.MustNewDecFromStr("-1050.000085500000855000"),
-					BadDebt:           sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 48),
+					BadDebt:           sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 48),
 					FundingPayment:    sdk.NewDec(-2),
-					TransactionFee:    sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(18)),
+					TransactionFee:    sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(18)),
 					BlockHeight:       1,
 					MarginToUser:      sdk.NewInt(-18),
 					ChangeReason:      types.ChangeReason_PartialClose,
@@ -1637,7 +1637,7 @@ func TestPartialClose(t *testing.T) {
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(10_200)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(10_200)))),
 
 				PartialCloseFails(alice, pairBtcNusd, sdk.NewDec(5_000), types.ErrPositionNotFound),
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(9_000), sdk.OneDec(), sdk.ZeroDec()),
@@ -1665,8 +1665,8 @@ func TestClosePosition(t *testing.T) {
 				),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(40)))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 10_998))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(40)))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 10_998))),
 				InsertPosition(
 					WithTrader(alice),
 					WithPair(pairBtcNusd),
@@ -1692,9 +1692,9 @@ func TestClosePosition(t *testing.T) {
 					},
 					PositionNotional:  sdk.ZeroDec(),
 					RealizedPnl:       sdk.MustNewDecFromStr("9999.999800000002000000"),
-					BadDebt:           sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.ZeroInt()),
+					BadDebt:           sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.ZeroInt()),
 					FundingPayment:    sdk.NewDec(2),
-					TransactionFee:    sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(40)),
+					TransactionFee:    sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(40)),
 					BlockHeight:       1,
 					MarginToUser:      sdk.NewInt(10_958),
 					ChangeReason:      types.ChangeReason_ClosePosition,
@@ -1712,8 +1712,8 @@ func TestClosePosition(t *testing.T) {
 				),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(20)))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 898))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(20)))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 898))),
 				InsertPosition(
 					WithTrader(alice),
 					WithPair(pairBtcNusd),
@@ -1739,9 +1739,9 @@ func TestClosePosition(t *testing.T) {
 					},
 					PositionNotional:  sdk.ZeroDec(),
 					RealizedPnl:       sdk.MustNewDecFromStr("-100.000098999999010000"),
-					BadDebt:           sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.ZeroInt()),
+					BadDebt:           sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.ZeroInt()),
 					FundingPayment:    sdk.NewDec(2),
-					TransactionFee:    sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(20)),
+					TransactionFee:    sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(20)),
 					BlockHeight:       1,
 					MarginToUser:      sdk.NewInt(878),
 					ChangeReason:      types.ChangeReason_ClosePosition,
@@ -1766,9 +1766,9 @@ func TestClosePosition(t *testing.T) {
 					WithMargin(sdk.NewDec(1_000)),
 					WithOpenNotional(sdk.NewDec(10_000)),
 				),
-				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 18))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 1000))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 102))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 18))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 1000))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 102))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -1787,9 +1787,9 @@ func TestClosePosition(t *testing.T) {
 						LastUpdatedBlockNumber:          2,
 					},
 					PositionNotional:  sdk.ZeroDec(),
-					TransactionFee:    sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 18),
+					TransactionFee:    sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 18),
 					RealizedPnl:       sdk.MustNewDecFromStr("-1100.000088999999110000"),
-					BadDebt:           sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(102)),
+					BadDebt:           sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(102)),
 					FundingPayment:    sdk.NewDec(2),
 					BlockHeight:       2,
 					MarginToUser:      sdk.NewInt(-18),
@@ -1797,8 +1797,8 @@ func TestClosePosition(t *testing.T) {
 					ExchangedNotional: sdk.MustNewDecFromStr("-10000.000000000000000000"),
 					ExchangedSize:     sdk.MustNewDecFromStr("-10000.000000000000000000"),
 				}),
-				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(1102)), // 1000 + 102 from perp ef
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(9)),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1102)), // 1000 + 102 from perp ef
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(9)),
 			),
 
 		TC("close short position with positive PnL").
@@ -1810,8 +1810,8 @@ func TestClosePosition(t *testing.T) {
 				),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(2)))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 10_002))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(2)))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 10_002))),
 				InsertPosition(
 					WithTrader(alice),
 					WithPair(pairBtcNusd),
@@ -1837,9 +1837,9 @@ func TestClosePosition(t *testing.T) {
 					},
 					PositionNotional:  sdk.ZeroDec(),
 					RealizedPnl:       sdk.MustNewDecFromStr("8999.999989999999900000"),
-					BadDebt:           sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.ZeroInt()),
+					BadDebt:           sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.ZeroInt()),
 					FundingPayment:    sdk.NewDec(-2),
-					TransactionFee:    sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(2)),
+					TransactionFee:    sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(2)),
 					BlockHeight:       1,
 					MarginToUser:      sdk.NewInt(10_000),
 					ChangeReason:      types.ChangeReason_ClosePosition,
@@ -1857,8 +1857,8 @@ func TestClosePosition(t *testing.T) {
 				),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(20)))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 902))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(20)))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 902))),
 				InsertPosition(
 					WithTrader(alice),
 					WithPair(pairBtcNusd),
@@ -1884,9 +1884,9 @@ func TestClosePosition(t *testing.T) {
 					},
 					PositionNotional:  sdk.ZeroDec(),
 					RealizedPnl:       sdk.MustNewDecFromStr("-100.000101000001010000"),
-					BadDebt:           sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.ZeroInt()),
+					BadDebt:           sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.ZeroInt()),
 					FundingPayment:    sdk.NewDec(-2),
-					TransactionFee:    sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(20)),
+					TransactionFee:    sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(20)),
 					BlockHeight:       1,
 					MarginToUser:      sdk.NewInt(882),
 					ChangeReason:      types.ChangeReason_ClosePosition,
@@ -1911,9 +1911,9 @@ func TestClosePosition(t *testing.T) {
 					WithMargin(sdk.NewDec(1_000)),
 					WithOpenNotional(sdk.NewDec(10_000)),
 				),
-				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 22))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 1000))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 98))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 22))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 1000))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 98))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -1932,9 +1932,9 @@ func TestClosePosition(t *testing.T) {
 						LastUpdatedBlockNumber:          2,
 					},
 					PositionNotional:  sdk.ZeroDec(),
-					TransactionFee:    sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 22),
+					TransactionFee:    sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 22),
 					RealizedPnl:       sdk.MustNewDecFromStr("-1100.000111000001110000"),
-					BadDebt:           sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), 98),
+					BadDebt:           sdk.NewInt64Coin(types.DefaultTestingCollateralNotForProd.String(), 98),
 					FundingPayment:    sdk.NewDec(-2),
 					BlockHeight:       2,
 					MarginToUser:      sdk.NewInt(-22),
@@ -1942,8 +1942,8 @@ func TestClosePosition(t *testing.T) {
 					ExchangedNotional: sdk.MustNewDecFromStr("-10000.000000000000000000"),
 					ExchangedSize:     sdk.MustNewDecFromStr("10000.000000000000000000"),
 				}),
-				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(1098)), // 1000 + 98 from perp ef
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(11)),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1098)), // 1000 + 98 from perp ef
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(11)),
 			),
 	}
 
@@ -1964,8 +1964,8 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(10_200_000_000)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(100000)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(10_200_000_000)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(100000)))),
 			).
 			When(
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
@@ -1979,8 +1979,8 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(10_200_000_000)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(100000)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(10_200_000_000)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(100000)))),
 			).
 			When(
 				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.NewDec(10_000_000_000_000)),
@@ -1994,8 +1994,8 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(10_200_000_000)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(100_000_000)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(10_200_000_000)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(100_000_000)))),
 			).
 			When(
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
@@ -2014,8 +2014,8 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(10_200_000_000)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(100_000_000)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(10_200_000_000)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(100_000_000)))),
 			).
 			When(
 				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
@@ -2027,7 +2027,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 			).
 			Then(
 				PositionShouldNotExist(alice, pairBtcNusd, 1),
-				ModuleBalanceShouldBeEqualTo(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.OneInt()))),
+				ModuleBalanceShouldBeEqualTo(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.OneInt()))),
 			),
 
 		TC("only long position - decreasing k").
@@ -2035,8 +2035,8 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(10_200_000_000)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(100_000_000)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(10_200_000_000)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(100_000_000)))),
 			).
 			When(
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
@@ -2055,8 +2055,8 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(10_200_000_000)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(100_000_000)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(10_200_000_000)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(100_000_000)))),
 			).
 			When(
 				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
@@ -2076,8 +2076,8 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(10_200_000_000)))),
-				FundAccount(bob, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(10_200_000_000)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(10_200_000_000)))),
+				FundAccount(bob, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(10_200_000_000)))),
 			).
 			When(
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
@@ -2089,8 +2089,8 @@ func TestUpdateSwapInvariant(t *testing.T) {
 					AMM_BiasShouldBeEqual(sdk.ZeroDec()),
 					AMM_SwapInvariantShouldBeEqual(sdk.MustNewDecFromStr("100000000000000000000000000.000000000000000000"))),
 
-				ModuleBalanceShouldBeEqualTo(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(20_000_000_000)))),
-				ModuleBalanceShouldBeEqualTo(types.FeePoolModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(20_000_000)))), // Fees are 10_000_000_000 * 0.0010 * 2
+				ModuleBalanceShouldBeEqualTo(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(20_000_000_000)))),
+				ModuleBalanceShouldBeEqualTo(types.FeePoolModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(20_000_000)))), // Fees are 10_000_000_000 * 0.0010 * 2
 
 				ClosePosition(alice, pairBtcNusd),
 				ClosePosition(bob, pairBtcNusd),
@@ -2100,15 +2100,15 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				PositionShouldNotExist(bob, pairBtcNusd, 1),
 
 				ModuleBalanceShouldBeEqualTo(types.VaultModuleAccount, sdk.NewCoins()),
-				ModuleBalanceShouldBeEqualTo(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(39_782_394)))),
+				ModuleBalanceShouldBeEqualTo(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(39_782_394)))),
 			),
 		TC("long and short position - reducing k").
 			Given(
 				CreateCustomMarket(pairBtcNusd, WithEnabled(true)),
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(10_200_000_000)))),
-				FundAccount(bob, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(10_200_000_000)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(10_200_000_000)))),
+				FundAccount(bob, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(10_200_000_000)))),
 			).
 			When(
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
@@ -2120,8 +2120,8 @@ func TestUpdateSwapInvariant(t *testing.T) {
 					AMM_BiasShouldBeEqual(sdk.ZeroDec()),
 					AMM_SwapInvariantShouldBeEqual(sdk.MustNewDecFromStr("99999999999999999873578.871987712489000000"))),
 
-				ModuleBalanceShouldBeEqualTo(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(20_000_000_000)))),
-				ModuleBalanceShouldBeEqualTo(types.FeePoolModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(20_000_000)))), // Fees are 10_000_000_000 * 0.0010 * 2
+				ModuleBalanceShouldBeEqualTo(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(20_000_000_000)))),
+				ModuleBalanceShouldBeEqualTo(types.FeePoolModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(20_000_000)))), // Fees are 10_000_000_000 * 0.0010 * 2
 
 				ClosePosition(alice, pairBtcNusd),
 				ClosePosition(bob, pairBtcNusd),
@@ -2131,7 +2131,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				PositionShouldNotExist(bob, pairBtcNusd, 1),
 
 				ModuleBalanceShouldBeEqualTo(types.VaultModuleAccount, sdk.NewCoins()),
-				ModuleBalanceShouldBeEqualTo(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.GetTFDenom(), sdk.NewInt(39_200_810)))),
+				ModuleBalanceShouldBeEqualTo(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(39_200_810)))),
 			),
 	}
 

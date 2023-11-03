@@ -68,7 +68,7 @@ func RunTestGenesis(t *testing.T, tc TestCase) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 
 	// create some params
-	require.NoError(t, app.PerpKeeperV2.Admin.UpdateCollateral(ctx, "unusd", types.DefaultTestingCollateralNotForProd.ContractAddress))
+	require.NoError(t, app.PerpKeeperV2.Admin.UpdateCollateral(ctx, "unusd", types.DefaultTestingCollateralNotForProd.Creator))
 	app.PerpKeeperV2.SaveMarket(ctx, *mock.TestMarket())
 	app.PerpKeeperV2.MarketLastVersion.Insert(ctx, pair, types.MarketLastVersion{Version: 1})
 	app.PerpKeeperV2.SaveAMM(ctx, *mock.TestAMMDefault())
@@ -119,7 +119,8 @@ func RunTestGenesis(t *testing.T, tc TestCase) {
 	require.Equal(t, genState.CustomDiscounts, genStateAfterInit.CustomDiscounts)
 	require.Equal(t, genState.GlobalDiscount, genStateAfterInit.GlobalDiscount)
 	require.Equal(t, genState.TraderVolumes, genStateAfterInit.TraderVolumes)
-	require.Equal(t, genState.Collateral, genStateAfterInit.Collateral)
+	require.Equal(t, genState.CollateralCreator, genStateAfterInit.CollateralCreator)
+	require.Equal(t, genState.CollateralSubdenom, genStateAfterInit.CollateralSubdenom)
 }
 
 func TestNewAppModuleBasic(t *testing.T) {

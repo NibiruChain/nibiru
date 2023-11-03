@@ -130,7 +130,7 @@ func (m msgServerAddmargin) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context
 	_, err = msgServer.AddMargin(sdk.WrapSDKContext(ctx), &types.MsgAddMargin{
 		Pair:   m.pair,
 		Sender: m.traderAddress.String(),
-		Margin: sdk.NewCoin(collateral.GetTFDenom(), m.amount),
+		Margin: sdk.NewCoin(collateral.String(), m.amount),
 	})
 
 	return ctx, err, true
@@ -166,7 +166,7 @@ func (m msgServerRemoveMargin) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Cont
 	_, err = msgServer.RemoveMargin(sdk.WrapSDKContext(ctx), &types.MsgRemoveMargin{
 		Pair:   m.pair,
 		Sender: m.traderAddress.String(),
-		Margin: sdk.NewCoin(collateral.GetTFDenom(), m.amount),
+		Margin: sdk.NewCoin(collateral.String(), m.amount),
 	})
 
 	return ctx, err, true
@@ -199,7 +199,7 @@ func (m msgServerDonateToPerpEf) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Co
 
 	_, err = msgServer.DonateToEcosystemFund(sdk.WrapSDKContext(ctx), &types.MsgDonateToEcosystemFund{
 		Sender:   m.sender.String(),
-		Donation: sdk.NewCoin(collateral.GetTFDenom(), m.amount),
+		Donation: sdk.NewCoin(collateral.String(), m.amount),
 	})
 
 	return ctx, err, true

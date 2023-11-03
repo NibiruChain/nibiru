@@ -6,6 +6,7 @@ import "cosmos/base/v1beta1/coin.proto";
 import "google/api/annotations.proto";
 import "gogoproto/gogo.proto";
 import "nibiru/perp/v2/state.proto";
+import "nibiru/tokenfactory/v1/state.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/perp/v2/types";
 
@@ -32,9 +33,11 @@ message GenesisState {
       (gogoproto.nullable) = false
     ];
 
-    // For testing purpose, we allow the collateral to be set at genesis
   }
-  Collateral collateral = 11;
+  
+  // For testing purpose, we allow the collateral to be set at genesis
+  string collateral_creator = 11;
+  string collateral_subdenom = 12;
 
   repeated TraderVolume trader_volumes = 7 [ (gogoproto.nullable) = false ];
 

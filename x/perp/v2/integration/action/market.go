@@ -12,6 +12,7 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
+	tftypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
 
 type logger struct {
@@ -192,15 +193,15 @@ func CreateMarket(pair asset.Pair, market types.Market, amm types.AMM) action.Ac
 }
 
 type setCollateral struct {
-	Collateral types.Collateral
+	Collateral tftypes.TFDenom
 }
 
 func (c setCollateral) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	err := app.PerpKeeperV2.Admin.UpdateCollateral(ctx, c.Collateral.Denom, c.Collateral.ContractAddress)
+	err := app.PerpKeeperV2.Admin.UpdateCollateral(ctx, c.Collateral.Subdenom, c.Collateral.Creator)
 	return ctx, err, true
 }
 
-func SetCollateral(collateral types.Collateral) action.Action {
+func SetCollateral(collateral tftypes.TFDenom) action.Action {
 	return setCollateral{
 		Collateral: collateral,
 	}
