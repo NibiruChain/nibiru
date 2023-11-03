@@ -18,9 +18,9 @@ var (
 var (
 	DefaultInflation              = true
 	DefaultExponentialCalculation = ExponentialCalculation{
-		A: sdk.NewDec(int64(405_000_000)),
+		A: sdk.NewDec(int64(405_300_000)),
 		R: sdk.NewDecWithPrec(50, 2), // 50%
-		C: sdk.NewDecWithPrec(395_507_8125, 4),
+		C: sdk.NewDecWithPrec(395_800_775, 3),
 	}
 	DefaultInflationDistribution = InflationDistribution{
 		StakingRewards:    sdk.NewDecWithPrec(27_8, 3),  // 27.8%
