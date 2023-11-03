@@ -39,16 +39,7 @@ func (s *IntegrationTestSuite) TestTokenFactory() {
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
-	// Make test skip if -short is not used:
-	// All tests: `go test ./...`
-	// Unit tests only: `go test ./... -short`
-	// Integration tests only: `go test ./... -run Integration`
-	// See: https://stackoverflow.com/a/41407042/13305627
-	if testing.Short() {
-		s.T().Skip("skipping integration test suite")
-	}
-
-	s.T().Log("setting up integration test suite")
+	testutil.BeforeIntegrationSuite(s.T())
 
 	testapp.EnsureNibiruPrefix()
 	encodingConfig := app.MakeEncodingConfig()

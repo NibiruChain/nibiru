@@ -92,9 +92,9 @@ func TestInvalidVotesSlashing(t *testing.T) {
 	input, h := Setup(t)
 	params, err := input.OracleKeeper.Params.Get(input.Ctx)
 	require.NoError(t, err)
-	params.Whitelist = []asset.Pair{asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}
+	params.Whitelist = []asset.Pair{asset.Registry.Pair(denoms.ATOM, denoms.USD)}
 	input.OracleKeeper.Params.Set(input.Ctx, params)
-	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD))
+	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, asset.Registry.Pair(denoms.ATOM, denoms.USD))
 
 	votePeriodsPerWindow := sdk.NewDec(int64(input.OracleKeeper.SlashWindow(input.Ctx))).QuoInt64(int64(input.OracleKeeper.VotePeriod(input.Ctx))).TruncateInt64()
 	slashFraction := input.OracleKeeper.SlashFraction(input.Ctx)
@@ -105,22 +105,22 @@ func TestInvalidVotesSlashing(t *testing.T) {
 
 		// Account 1, govstable
 		MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{
-			{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: testExchangeRate},
+			{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: testExchangeRate},
 		}, 0)
 
 		// Account 2, govstable, miss vote
 		MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{
-			{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: testExchangeRate.Add(sdk.NewDec(100000000000000))},
+			{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: testExchangeRate.Add(sdk.NewDec(100000000000000))},
 		}, 1)
 
 		// Account 3, govstable
 		MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{
-			{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: testExchangeRate},
+			{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: testExchangeRate},
 		}, 2)
 
 		// Account 4, govstable
 		MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{
-			{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: testExchangeRate},
+			{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: testExchangeRate},
 		}, 3)
 
 		input.OracleKeeper.UpdateExchangeRates(input.Ctx)
@@ -136,22 +136,22 @@ func TestInvalidVotesSlashing(t *testing.T) {
 	// one more miss vote will inccur ValAddrs[1] slashing
 	// Account 1, govstable
 	MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{
-		{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: testExchangeRate},
+		{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: testExchangeRate},
 	}, 0)
 
 	// Account 2, govstable, miss vote
 	MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{
-		{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: testExchangeRate.Add(sdk.NewDec(100000000000000))},
+		{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: testExchangeRate.Add(sdk.NewDec(100000000000000))},
 	}, 1)
 
 	// Account 3, govstable
 	MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{
-		{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: testExchangeRate},
+		{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: testExchangeRate},
 	}, 2)
 
 	// Account 4, govstable
 	MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{
-		{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: testExchangeRate},
+		{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: testExchangeRate},
 	}, 3)
 
 	input.Ctx = input.Ctx.WithBlockHeight(votePeriodsPerWindow - 1)
@@ -171,7 +171,7 @@ func TestWhitelistSlashing(t *testing.T) {
 	votePeriodsPerSlashWindow := sdk.NewDec(int64(input.OracleKeeper.SlashWindow(input.Ctx))).QuoInt64(int64(input.OracleKeeper.VotePeriod(input.Ctx))).TruncateInt64()
 	minValidVotePeriodsPerWindow := input.OracleKeeper.MinValidPerWindow(input.Ctx)
 
-	pair := asset.Registry.Pair(denoms.NIBI, denoms.NUSD)
+	pair := asset.Registry.Pair(denoms.ATOM, denoms.USD)
 	priceVoteFromVal := func(valIdx int, block int64, erate sdk.Dec) {
 		MakeAggregatePrevoteAndVote(t, input, msgServer, block,
 			types.ExchangeRateTuples{{Pair: pair, ExchangeRate: erate}},
@@ -207,19 +207,19 @@ func TestNotPassedBallotSlashing(t *testing.T) {
 	input, h := Setup(t)
 	params, err := input.OracleKeeper.Params.Get(input.Ctx)
 	require.NoError(t, err)
-	params.Whitelist = []asset.Pair{asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}
+	params.Whitelist = []asset.Pair{asset.Registry.Pair(denoms.ATOM, denoms.USD)}
 	input.OracleKeeper.Params.Set(input.Ctx, params)
 
 	// clear tobin tax to reset vote targets
 	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys() {
 		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 	}
-	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD))
+	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, asset.Registry.Pair(denoms.ATOM, denoms.USD))
 
 	input.Ctx = input.Ctx.WithBlockHeight(input.Ctx.BlockHeight() + 1)
 
 	// Account 1, govstable
-	MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: testExchangeRate}}, 0)
+	MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: testExchangeRate}}, 0)
 
 	input.OracleKeeper.UpdateExchangeRates(input.Ctx)
 	input.OracleKeeper.SlashAndResetMissCounters(input.Ctx)
@@ -235,12 +235,12 @@ func TestAbstainSlashing(t *testing.T) {
 	// reset whitelisted pairs
 	params, err := input.OracleKeeper.Params.Get(input.Ctx)
 	require.NoError(t, err)
-	params.Whitelist = []asset.Pair{asset.Registry.Pair(denoms.NIBI, denoms.NUSD)}
+	params.Whitelist = []asset.Pair{asset.Registry.Pair(denoms.ATOM, denoms.USD)}
 	input.OracleKeeper.Params.Set(input.Ctx, params)
 	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys() {
 		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 	}
-	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, asset.Registry.Pair(denoms.NIBI, denoms.NUSD))
+	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, asset.Registry.Pair(denoms.ATOM, denoms.USD))
 
 	votePeriodsPerWindow := sdk.NewDec(int64(input.OracleKeeper.SlashWindow(input.Ctx))).QuoInt64(int64(input.OracleKeeper.VotePeriod(input.Ctx))).TruncateInt64()
 	minValidPerWindow := input.OracleKeeper.MinValidPerWindow(input.Ctx)
@@ -248,14 +248,14 @@ func TestAbstainSlashing(t *testing.T) {
 	for i := uint64(0); i <= uint64(sdk.OneDec().Sub(minValidPerWindow).MulInt64(votePeriodsPerWindow).TruncateInt64()); i++ {
 		input.Ctx = input.Ctx.WithBlockHeight(input.Ctx.BlockHeight() + 1)
 
-		// Account 1, NIBI/NUSD
-		MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: testExchangeRate}}, 0)
+		// Account 1, ATOM/USD
+		MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: testExchangeRate}}, 0)
 
-		// Account 2, NIBI/NUSD, abstain vote
-		MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: sdk.OneDec().Neg()}}, 1)
+		// Account 2, ATOM/USD, abstain vote
+		MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: sdk.OneDec().Neg()}}, 1)
 
-		// Account 3, NIBI/NUSD
-		MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.NIBI, denoms.NUSD), ExchangeRate: testExchangeRate}}, 2)
+		// Account 3, ATOM/USD
+		MakeAggregatePrevoteAndVote(t, input, h, 0, types.ExchangeRateTuples{{Pair: asset.Registry.Pair(denoms.ATOM, denoms.USD), ExchangeRate: testExchangeRate}}, 2)
 
 		input.OracleKeeper.UpdateExchangeRates(input.Ctx)
 		input.OracleKeeper.SlashAndResetMissCounters(input.Ctx)
