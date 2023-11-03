@@ -23,9 +23,9 @@ var (
 		C: sdk.NewDecWithPrec(395_800_775, 3),
 	}
 	DefaultInflationDistribution = InflationDistribution{
-		StakingRewards:    sdk.NewDecWithPrec(27_8, 3),  // 27.8%
-		CommunityPool:     sdk.NewDecWithPrec(62_20, 4), // 62.20%
-		StrategicReserves: sdk.NewDecWithPrec(10, 2),    // 10%
+		CommunityPool:     sdk.NewDecWithPrec(35_159141, 6), // 35.159141%
+		StakingRewards:    sdk.NewDecWithPrec(27_757217, 6), // 27.757217%
+		StrategicReserves: sdk.NewDecWithPrec(37_083642, 6), // 37.083642%
 	}
 	DefaultEpochsPerPeriod = uint64(365)
 )
