@@ -38,6 +38,15 @@ func TestDefaultGenesis(t *testing.T) {
 			CurrentEpochStartTime:   time.Time{},
 			EpochCountingStarted:    false,
 		},
+		{
+			Identifier:              MonthEpochID,
+			StartTime:               time.Time{},
+			Duration:                30 * 24 * time.Hour,
+			CurrentEpoch:            0,
+			CurrentEpochStartHeight: 0,
+			CurrentEpochStartTime:   time.Time{},
+			EpochCountingStarted:    false,
+		},
 	}
 
 	// Ensure that genState and expectedEpochs are the same

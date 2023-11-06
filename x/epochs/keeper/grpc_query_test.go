@@ -31,7 +31,7 @@ func TestQueryEpochInfos(t *testing.T) {
 		gocontext.Background(), &epochstypes.QueryEpochInfosRequest{},
 	)
 	require.NoError(t, err, errMsg)
-	require.Len(t, epochInfosResponse.Epochs, 3)
+	require.Len(t, epochInfosResponse.Epochs, 4)
 
 	// check if EpochInfos are correct
 	require.Equal(t, epochInfosResponse.Epochs[0].StartTime, chainStartTime, errMsg)

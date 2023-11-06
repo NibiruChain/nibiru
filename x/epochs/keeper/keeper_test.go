@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
@@ -14,9 +15,9 @@ func TestUpsertEpochInfo_HappyPath(t *testing.T) {
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 
 	epochInfo := types.EpochInfo{
-		Identifier:              "monthly",
+		Identifier:              "year",
 		StartTime:               time.Time{},
-		Duration:                time.Hour * 24 * 30,
+		Duration:                time.Hour * 24 * 365,
 		CurrentEpoch:            0,
 		CurrentEpochStartHeight: 0,
 		CurrentEpochStartTime:   time.Time{},
@@ -25,18 +26,19 @@ func TestUpsertEpochInfo_HappyPath(t *testing.T) {
 
 	nibiruApp.EpochsKeeper.Epochs.Insert(ctx, epochInfo.Identifier, epochInfo)
 
-	epochInfoSaved, err := nibiruApp.EpochsKeeper.GetEpochInfo(ctx, "monthly")
+	epochInfoSaved, err := nibiruApp.EpochsKeeper.GetEpochInfo(ctx, "year")
 	require.NoError(t, err)
-	require.Equal(t, epochInfo, epochInfoSaved)
+	assert.EqualValues(t, epochInfo, epochInfoSaved)
 
 	allEpochs := nibiruApp.EpochsKeeper.AllEpochInfos(ctx)
 
-	require.Len(t, allEpochs, 4)
+	require.Len(t, allEpochs, 5)
 	// Epochs are ordered in alphabetical order
 	require.Equal(t, "30 min", allEpochs[0].Identifier)
 	require.Equal(t, "day", allEpochs[1].Identifier)
-	require.Equal(t, "monthly", allEpochs[2].Identifier)
+	require.Equal(t, "month", allEpochs[2].Identifier)
 	require.Equal(t, "week", allEpochs[3].Identifier)
+	require.Equal(t, "year", allEpochs[4].Identifier)
 }
 
 func TestEpochExists(t *testing.T) {
