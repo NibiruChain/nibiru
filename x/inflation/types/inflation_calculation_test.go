@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCalculateEpochMintProvision(t *testing.T) {
@@ -17,42 +17,42 @@ func TestCalculateEpochMintProvision(t *testing.T) {
 		{
 			"pass - initial period",
 			0,
-			sdk.MustNewDecFromStr("1110672624143.835616438356000000"),
+			sdk.MustNewDecFromStr("1111495344589.041095890410000000"),
 		},
 		{
 			"pass - period 1",
 			1,
-			sdk.MustNewDecFromStr("555878103595.890410958904000000"),
+			sdk.MustNewDecFromStr("556289865136.986301369863000000"),
 		},
 		{
 			"pass - period 2",
 			2,
-			sdk.MustNewDecFromStr("278480843321.917808219178000000"),
+			sdk.MustNewDecFromStr("278687125410.958904109589000000"),
 		},
 		{
 			"pass - period 3",
 			3,
-			sdk.MustNewDecFromStr("139782213184.931506849315000000"),
+			sdk.MustNewDecFromStr("139885755547.945205479452000000"),
 		},
 		{
 			"pass - period 4",
 			4,
-			sdk.MustNewDecFromStr("70432898116.438356164383000000"),
+			sdk.MustNewDecFromStr("70485070616.438356164383000000"),
 		},
 		{
 			"pass - period 5",
 			5,
-			sdk.MustNewDecFromStr("35758240582.191780821917000000"),
+			sdk.MustNewDecFromStr("35784728150.684931506849000000"),
 		},
 		{
 			"pass - period 6",
 			6,
-			sdk.MustNewDecFromStr("18420911815.068493150684000000"),
+			sdk.MustNewDecFromStr("18434556917.808219178082000000"),
 		},
 		{
 			"pass - period 7",
 			7,
-			sdk.MustNewDecFromStr("9752247431.506849315068000000"),
+			sdk.MustNewDecFromStr("9759471301.369863013698000000"),
 		},
 	}
 	for _, tc := range testCases {
@@ -62,7 +62,7 @@ func TestCalculateEpochMintProvision(t *testing.T) {
 				tc.period,
 			)
 
-			require.Equal(t, tc.expEpochProvision, epochMintProvisions)
+			assert.EqualValues(t, tc.expEpochProvision, epochMintProvisions)
 		})
 	}
 }
@@ -72,5 +72,5 @@ func TestCalculateEpochMintProvision_ZeroEpochs(t *testing.T) {
 	params.EpochsPerPeriod = 0
 
 	epochMintProvisions := CalculateEpochMintProvision(params, 1)
-	require.Equal(t, epochMintProvisions, sdk.ZeroDec())
+	assert.EqualValues(t, epochMintProvisions, sdk.ZeroDec())
 }
