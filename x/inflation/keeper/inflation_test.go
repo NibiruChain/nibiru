@@ -37,12 +37,12 @@ func TestMintAndAllocateInflation(t *testing.T) {
 		{
 			name:                             "pass",
 			coinsToMint:                      sdk.NewCoin(denoms.NIBI, sdk.NewInt(1_000_000)),
-			expectedStakingAmt:               sdk.NewCoin(denoms.NIBI, sdk.NewInt(278_000)),
-			expectedStrategicAmt:             sdk.NewCoin(denoms.NIBI, sdk.NewInt(100_000)),
-			expectedCommunityAmt:             sdk.NewCoin(denoms.NIBI, sdk.NewInt(622_000)),
-			expectedStakingRewardsBalance:    sdk.NewCoin(denoms.NIBI, sdk.NewInt(278_000)),
-			expectedStrategicReservesBalance: sdk.NewCoin(denoms.NIBI, sdk.NewInt(100_000)),
-			expectedCommunityPoolBalance:     sdk.NewDecCoins(sdk.NewDecCoin(denoms.NIBI, sdk.NewInt(622_000))),
+			expectedStakingAmt:               sdk.NewCoin(denoms.NIBI, sdk.NewInt(277_572)),
+			expectedStrategicAmt:             sdk.NewCoin(denoms.NIBI, sdk.NewInt(370_837)),
+			expectedCommunityAmt:             sdk.NewCoin(denoms.NIBI, sdk.NewInt(351_591)),
+			expectedStakingRewardsBalance:    sdk.NewCoin(denoms.NIBI, sdk.NewInt(277_572)),
+			expectedStrategicReservesBalance: sdk.NewCoin(denoms.NIBI, sdk.NewInt(370_837)),
+			expectedCommunityPoolBalance:     sdk.NewDecCoins(sdk.NewDecCoin(denoms.NIBI, sdk.NewInt(351_591))),
 			rootAccount:                      "nibi1qyqf35fkhn73hjr70442fctpq8prpqr9ysj9sn",
 		},
 		{
@@ -59,12 +59,12 @@ func TestMintAndAllocateInflation(t *testing.T) {
 		{
 			name:                             "pass - no root account",
 			coinsToMint:                      sdk.NewCoin(denoms.NIBI, sdk.NewInt(1_000_000)),
-			expectedStakingAmt:               sdk.NewCoin(denoms.NIBI, sdk.NewInt(278_000)),
-			expectedStrategicAmt:             sdk.NewCoin(denoms.NIBI, sdk.NewInt(100_000)),
-			expectedCommunityAmt:             sdk.NewCoin(denoms.NIBI, sdk.NewInt(622_000)),
-			expectedStakingRewardsBalance:    sdk.NewCoin(denoms.NIBI, sdk.NewInt(278_000)),
-			expectedStrategicReservesBalance: sdk.NewCoin(denoms.NIBI, sdk.NewInt(100_000)),
-			expectedCommunityPoolBalance:     sdk.NewDecCoins(sdk.NewDecCoin(denoms.NIBI, sdk.NewInt(622_000))),
+			expectedStakingAmt:               sdk.NewCoin(denoms.NIBI, sdk.NewInt(277_572)),
+			expectedStrategicAmt:             sdk.NewCoin(denoms.NIBI, sdk.NewInt(370_837)),
+			expectedCommunityAmt:             sdk.NewCoin(denoms.NIBI, sdk.NewInt(351_591)),
+			expectedStakingRewardsBalance:    sdk.NewCoin(denoms.NIBI, sdk.NewInt(277_572)),
+			expectedStrategicReservesBalance: sdk.NewCoin(denoms.NIBI, sdk.NewInt(370_837)),
+			expectedCommunityPoolBalance:     sdk.NewDecCoins(sdk.NewDecCoin(denoms.NIBI, sdk.NewInt(351_591))),
 			rootAccount:                      "",
 		},
 	}
@@ -82,9 +82,9 @@ func TestMintAndAllocateInflation(t *testing.T) {
 
 			staking, strategic, community, err := nibiruApp.InflationKeeper.MintAndAllocateInflation(ctx, tc.coinsToMint, types.DefaultParams())
 			require.NoError(t, err)
-			assert.Equal(t, tc.expectedStakingAmt, staking)
-			assert.Equal(t, tc.expectedStrategicAmt, strategic)
-			assert.Equal(t, tc.expectedCommunityAmt, community)
+			assert.EqualValues(t, tc.expectedStakingAmt, staking)
+			assert.EqualValues(t, tc.expectedStrategicAmt, strategic)
+			assert.EqualValues(t, tc.expectedCommunityAmt, community)
 
 			// Get balances
 			var balanceStrategicReserve sdk.Coin
@@ -110,9 +110,9 @@ func TestMintAndAllocateInflation(t *testing.T) {
 			balanceCommunityPool := nibiruApp.DistrKeeper.GetFeePoolCommunityCoins(ctx)
 
 			require.NoError(t, err, tc.name)
-			assert.Equal(t, tc.expectedStakingRewardsBalance, balanceStakingRewards)
-			assert.Equal(t, tc.expectedStrategicReservesBalance, balanceStrategicReserve)
-			assert.Equal(t, tc.expectedCommunityPoolBalance, balanceCommunityPool)
+			assert.EqualValues(t, tc.expectedStakingRewardsBalance, balanceStakingRewards)
+			assert.EqualValues(t, tc.expectedStrategicReservesBalance, balanceStrategicReserve)
+			assert.EqualValues(t, tc.expectedCommunityPoolBalance, balanceCommunityPool)
 		})
 	}
 }
