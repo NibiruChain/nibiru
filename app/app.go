@@ -8,8 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
@@ -109,16 +109,17 @@ func init() {
 }
 
 // GetWasmOpts build wasm options
-func GetWasmOpts(appOpts servertypes.AppOptions, nibiruApp NibiruApp) []wasm.Option {
-	var wasmOpts []wasm.Option
+func GetWasmOpts(nibiru NibiruApp, appOpts servertypes.AppOptions) []wasmkeeper.Option {
+	var wasmOpts []wasmkeeper.Option
 	if cast.ToBool(appOpts.Get("telemetry.enabled")) {
 		wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
 	}
 
+	// Add the bindings to the app's set of []wasmkeeper.Option.
 	wasmOpts = append(wasmOpts, wasmbinding.NibiruWasmOptions(
-		nibiruApp.GRPCQueryRouter(),
-		nibiruApp.AppCodec(),
-		nibiruApp.SudoKeeper,
+		nibiru.GRPCQueryRouter(),
+		nibiru.AppCodec(),
+		nibiru.SudoKeeper,
 	)...)
 	// Add the bindings to the app's set of []wasm.Option.
 	return wasmOpts
@@ -193,7 +194,7 @@ func NewNibiruApp(
 			SigGasConsumer:  authante.DefaultSigVerificationGasConsumer,
 		},
 		IBCKeeper:         app.ibcKeeper,
-		TxCounterStoreKey: keys[wasm.StoreKey],
+		TxCounterStoreKey: keys[wasmtypes.StoreKey],
 		WasmConfig:        &wasmConfig,
 		DevGasKeeper:      &app.DevGasKeeper,
 		DevGasBankKeeper:  app.BankKeeper,
