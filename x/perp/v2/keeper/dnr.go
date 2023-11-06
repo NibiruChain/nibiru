@@ -210,3 +210,12 @@ func (k Keeper) WithdrawEpochRebates(ctx sdk.Context, epoch uint64, addr sdk.Acc
 	// and that the user cannot claim from the same allocation twice.
 	return k.TraderVolumes.Delete(ctx, collections.Join(addr, epoch))
 }
+
+// AllocateEpochRebates will allocate the given amount of coins to the current epoch.
+func (k Keeper) AllocateEpochRebates(ctx sdk.Context, sender sdk.AccAddress, amount sdk.Coins) (total sdk.Coins, err error) {
+	err = k.BankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.DNRAllocationModuleAccount, amount)
+	if err != nil {
+		return sdk.Coins{}, err
+	}
+	return k.BankKeeper.GetAllBalances(ctx, k.AccountKeeper.GetModuleAddress(types.DNRAllocationModuleAccount)), nil
+}

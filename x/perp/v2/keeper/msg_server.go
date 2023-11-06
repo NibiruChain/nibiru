@@ -138,3 +138,16 @@ func (m msgServer) DonateToEcosystemFund(ctx context.Context, msg *types.MsgDona
 
 	return &types.MsgDonateToEcosystemFundResponse{}, nil
 }
+
+func (m msgServer) AllocateEpochRebates(ctx context.Context, msg *types.MsgAllocateEpochRebates) (*types.MsgAllocateEpochRebatesResponse, error) {
+	sender, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, err
+	}
+	total, err := m.k.AllocateEpochRebates(sdk.UnwrapSDKContext(ctx), sender, msg.Rebates)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgAllocateEpochRebatesResponse{TotalEpochRebates: total}, nil
+}
