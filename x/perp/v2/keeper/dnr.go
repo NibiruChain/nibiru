@@ -174,23 +174,23 @@ func (k Keeper) applyDiscountAndRebate(
 }
 
 // WithdrawEpochRebates will withdraw the user's rebates for the given epoch.
-func (k Keeper) WithdrawEpochRebates(ctx sdk.Context, epoch uint64, addr sdk.AccAddress) error {
+func (k Keeper) WithdrawEpochRebates(ctx sdk.Context, epoch uint64, addr sdk.AccAddress) (withdrawn sdk.Coins, err error) {
 	// get the allocation for the epoch, this also ensures that if the user is trying to withdraw
 	// from current epoch the function immediately fails.
 	allocationCoins, err := k.EpochRebateAllocations.Get(ctx, epoch)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	// get user volume for the epoch
 	userVolume := k.TraderVolumes.GetOr(ctx, collections.Join(addr, epoch), math.ZeroInt())
 	if userVolume.IsZero() {
-		return nil
+		return sdk.NewCoins(), nil
 	}
 
 	// calculate the user's share
 	globalVolume, err := k.GlobalVolumes.Get(ctx, epoch)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	weight := userVolume.ToLegacyDec().Quo(globalVolume.ToLegacyDec())
 	distrCoins := sdk.NewCoins()
@@ -203,12 +203,12 @@ func (k Keeper) WithdrawEpochRebates(ctx sdk.Context, epoch uint64, addr sdk.Acc
 	// send money to user from escrow
 	err = k.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.DNREscrowModuleAccount, addr, distrCoins)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// garbage collect user volume. This ensures state is not bloated,
 	// and that the user cannot claim from the same allocation twice.
-	return k.TraderVolumes.Delete(ctx, collections.Join(addr, epoch))
+	return distrCoins, k.TraderVolumes.Delete(ctx, collections.Join(addr, epoch))
 }
 
 // AllocateEpochRebates will allocate the given amount of coins to the current epoch.
