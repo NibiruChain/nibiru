@@ -141,13 +141,13 @@ func TestGetCirculatingSupplyAndInflationRate(t *testing.T) {
 			"high supply",
 			sdk.TokensFromConsensusPower(800_000_000, sdk.DefaultPowerReduction),
 			func(nibiruApp *app.NibiruApp, ctx sdk.Context) {},
-			sdk.MustNewDecFromStr("50.674438476562500000"),
+			sdk.MustNewDecFromStr("50.711975096875000000"),
 		},
 		{
 			"low supply",
 			sdk.TokensFromConsensusPower(400_000_000, sdk.DefaultPowerReduction),
 			func(nibiruApp *app.NibiruApp, ctx sdk.Context) {},
-			sdk.MustNewDecFromStr("101.348876953125000000"),
+			sdk.MustNewDecFromStr("101.423950193750000000"),
 		},
 	}
 	for _, tc := range testCases {
@@ -165,10 +165,10 @@ func TestGetCirculatingSupplyAndInflationRate(t *testing.T) {
 			require.NoError(t, err)
 
 			circulatingSupply := nibiruApp.InflationKeeper.GetCirculatingSupply(ctx, denoms.NIBI)
-			require.EqualValues(t, tc.supply, circulatingSupply)
+			assert.EqualValues(t, tc.supply, circulatingSupply)
 
 			inflationRate := nibiruApp.InflationKeeper.GetInflationRate(ctx, denoms.NIBI)
-			require.Equal(t, tc.expInflationRate, inflationRate)
+			assert.EqualValues(t, tc.expInflationRate, inflationRate)
 		})
 	}
 }

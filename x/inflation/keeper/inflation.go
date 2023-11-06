@@ -111,7 +111,7 @@ func (k Keeper) GetCirculatingSupply(ctx sdk.Context, mintDenom string) sdkmath.
 	return k.bankKeeper.GetSupply(ctx, mintDenom).Amount
 }
 
-// GetInflationRate returns the inflation rate for the current period.
+// GetInflationRate returns the annualized inflation rate for the current period.
 func (k Keeper) GetInflationRate(ctx sdk.Context, mintDenom string) sdk.Dec {
 	epochMintProvision := k.GetEpochMintProvision(ctx)
 	if epochMintProvision.IsZero() {
