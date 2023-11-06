@@ -70,6 +70,25 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			customDiscount.Discount.Fee,
 		)
 	}
+
+	for _, globalVolume := range genState.GlobalVolumes {
+		k.GlobalVolumes.Insert(
+			ctx,
+			globalVolume.Epoch,
+			globalVolume.Volume,
+		)
+	}
+
+	for _, rebateAlloc := range genState.RebatesAllocations {
+		k.EpochRebateAllocations.Insert(
+			ctx,
+			rebateAlloc.Epoch,
+			types.DNRAllocation{
+				Epoch:  rebateAlloc.Epoch,
+				Amount: rebateAlloc.Amount,
+			},
+		)
+	}
 }
 
 // ExportGenesis returns the capability module's exported genesis.
@@ -134,5 +153,19 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 			},
 		})
 	}
+
+	// export global volumes
+	globalVolumes := k.GlobalVolumes.Iterate(ctx, collections.Range[uint64]{})
+	defer globalVolumes.Close()
+	for ; globalVolumes.Valid(); globalVolumes.Next() {
+		genesis.GlobalVolumes = append(genesis.GlobalVolumes, types.GenesisState_GlobalVolume{
+			Epoch:  globalVolumes.Key(),
+			Volume: globalVolumes.Value(),
+		})
+	}
+
+	// export rebates allocations
+	genesis.RebatesAllocations = k.EpochRebateAllocations.Iterate(ctx, collections.Range[uint64]{}).Values()
+
 	return genesis
 }
