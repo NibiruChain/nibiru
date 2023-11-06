@@ -70,6 +70,11 @@ func NewKeeper(
 			asset.PairKeyEncoder,
 			collections.ProtoValueEncoder[types.MarketLastVersion](cdc),
 		),
+		Markets: collections.NewMap(
+			storeKey, NamespaceMarkets,
+			collections.PairKeyEncoder(asset.PairKeyEncoder, collections.Uint64KeyEncoder),
+			collections.ProtoValueEncoder[types.Market](cdc),
+		),
 		AMMs: collections.NewMap(
 			storeKey, NamespaceAmms,
 			collections.PairKeyEncoder(asset.PairKeyEncoder, collections.Uint64KeyEncoder),

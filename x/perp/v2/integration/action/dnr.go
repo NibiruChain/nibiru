@@ -5,6 +5,7 @@ import (
 
 	"cosmossdk.io/math"
 	"github.com/NibiruChain/collections"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/app"
@@ -205,5 +206,90 @@ type setCustomDiscountAction struct {
 
 func (s *setCustomDiscountAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
 	app.PerpKeeperV2.TraderDiscounts.Insert(ctx, collections.Join(s.user, s.volume), s.fee)
+	return ctx, nil, true
+}
+
+type fundDnREpoch struct {
+	amt sdk.Coins
+}
+
+func (f fundDnREpoch) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
+	tmpAcc := testutil.AccAddress()
+	ctx, err, _ = action.FundAccount(tmpAcc, f.amt).Do(app, ctx)
+	if err != nil {
+		return ctx, err, true
+	}
+	_, err = app.PerpKeeperV2.AllocateEpochRebates(ctx, tmpAcc, f.amt)
+	if err != nil {
+		return ctx, err, true
+	}
+	return ctx, nil, true
+}
+
+func FundDnREpoch(amt sdk.Coins) action.Action {
+	return fundDnREpoch{amt}
+}
+
+type startNewDnRepochAction struct {
+}
+
+func (s startNewDnRepochAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
+	currentEpoch, err := app.PerpKeeperV2.DnREpoch.Get(ctx)
+	if err != nil {
+		return ctx, err, true
+	}
+	err = app.PerpKeeperV2.StartNewEpoch(ctx, currentEpoch+1)
+	if err != nil {
+		return ctx, err, true
+	}
+	return ctx, nil, true
+}
+
+func StartNewDnREpoch() action.Action {
+	return &startNewDnRepochAction{}
+}
+
+type dnrRebateIsAction struct {
+	user            sdk.AccAddress
+	epoch           uint64
+	expectedRewards sdk.Coins
+}
+
+func (d dnrRebateIsAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
+	withdrawn, err := app.PerpKeeperV2.WithdrawEpochRebates(ctx, d.epoch, d.user)
+	if err != nil {
+		return ctx, err, true
+	}
+	if !withdrawn.IsEqual(d.expectedRewards) {
+		return ctx, fmt.Errorf("expected %s, got %s", d.expectedRewards, withdrawn), true
+	}
+	return ctx, nil, true
+}
+
+func DnRRebateIs(user sdk.AccAddress, epoch uint64, expectedRewards sdk.Coins) action.Action {
+	return &dnrRebateIsAction{
+		user:            user,
+		epoch:           epoch,
+		expectedRewards: expectedRewards,
+	}
+}
+
+func DnRRebateFails(user sdk.AccAddress, epoch uint64) action.Action {
+	return &dnrRebateFailsAction{
+		user:  user,
+		epoch: epoch,
+	}
+}
+
+type dnrRebateFailsAction struct {
+	user  sdk.AccAddress
+	epoch uint64
+}
+
+func (d dnrRebateFailsAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
+	withdrawn, err := app.PerpKeeperV2.WithdrawEpochRebates(ctx, d.epoch, d.user)
+	if err == nil {
+		return ctx, fmt.Errorf("expected withdrawal error but got instead: %s rewards", withdrawn.String()), true
+	}
 	return ctx, nil, true
 }
