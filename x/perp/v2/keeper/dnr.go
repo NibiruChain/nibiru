@@ -10,9 +10,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 )
 
-// DnRGCFrequency is the frequency at which the DnR garbage collector runs.
-const DnRGCFrequency = 1000
-
 // IntValueEncoder instructs collections on how to encode a math.Int as a value.
 // TODO: move to collections.
 var IntValueEncoder collections.ValueEncoder[math.Int] = intValueEncoder{}
@@ -76,27 +73,6 @@ func (k Keeper) IncreaseTraderVolume(ctx sdk.Context, currentEpoch uint64, user 
 	newVolume := currentVolume.Add(volume)
 	k.TraderVolumes.Insert(ctx, collections.Join(user, currentEpoch), newVolume)
 	k.GlobalVolumes.Insert(ctx, currentEpoch, k.GlobalVolumes.GetOr(ctx, currentEpoch, math.ZeroInt()).Add(volume))
-	k.gcUserVolume(ctx, user, currentEpoch)
-}
-
-// gcUserVolume deletes the un-needed user epochs.
-func (k Keeper) gcUserVolume(ctx sdk.Context, user sdk.AccAddress, currentEpoch uint64) {
-	// we do not want to do this always.
-	if ctx.BlockHeight()%DnRGCFrequency != 0 {
-		return
-	}
-
-	rng := collections.PairRange[sdk.AccAddress, uint64]{}.
-		Prefix(user).                   // only iterate over the user's epochs.
-		EndExclusive(currentEpoch - 1). // we want to preserve current and last epoch, as it's needed to compute DnR rewards.
-		Descending()
-
-	for _, key := range k.TraderVolumes.Iterate(ctx, rng).Keys() {
-		err := k.TraderVolumes.Delete(ctx, key)
-		if err != nil {
-			panic(err)
-		}
-	}
 }
 
 // GetTraderVolumeLastEpoch returns the user's volume for the last epoch.
