@@ -28,6 +28,8 @@ service Msg {
 
   rpc DonateToEcosystemFund(MsgDonateToEcosystemFund)
       returns (MsgDonateToEcosystemFundResponse) {}
+
+  rpc AllocateEpochRebates(MsgAllocateEpochRebates) returns (MsgAllocateEpochRebatesResponse) {}
 }
 
 // -------------------------- Settle Position --------------------------
@@ -328,3 +330,21 @@ message MsgDonateToEcosystemFund {
 }
 
 message MsgDonateToEcosystemFundResponse {}
+
+// -------------------------- AllocateEpochRebates --------------------------
+message MsgAllocateEpochRebates {
+  string sender = 1;
+
+  // rebates to allocate
+  repeated cosmos.base.v1beta1.Coin rebates = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}
+
+message MsgAllocateEpochRebatesResponse {
+  repeated cosmos.base.v1beta1.Coin total_epoch_rebates = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}
