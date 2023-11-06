@@ -5,6 +5,7 @@ import (
 
 	"cosmossdk.io/math"
 	"github.com/NibiruChain/collections"
+	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -65,6 +66,27 @@ func (intKeyEncoder) Decode(b []byte) (int, math.Int) {
 }
 
 func (intKeyEncoder) Stringify(key math.Int) string { return key.String() }
+
+// StartNewEpoch is called by the epochs hooks when a new 30day epoch starts.
+func (k Keeper) StartNewEpoch(ctx sdk.Context, identifier uint64) error {
+	// set the current epoch
+	k.DnREpoch.Set(ctx, identifier)
+	// we now check the rebates allocated for the previous epoch,
+	// and move them to the escrow such that they can be claimed lazily
+	// by users.
+	previousEpoch := identifier - 1
+	allocationAddr := k.AccountKeeper.GetModuleAddress(types.DNRAllocationModuleAccount)
+	allocationBalance := k.BankKeeper.GetAllBalances(ctx, allocationAddr)
+	err := k.BankKeeper.SendCoinsFromModuleToModule(ctx, types.DNRAllocationModuleAccount, types.DNREscrowModuleAccount, allocationBalance)
+	if err != nil {
+		return err
+	}
+	k.EpochRebateAllocations.Insert(ctx, previousEpoch, types.DNRAllocation{
+		Epoch:  previousEpoch,
+		Amount: allocationBalance,
+	})
+	return nil
+}
 
 // IncreaseTraderVolume adds the volume to the user's volume for the current epoch.
 // It also increases the global volume for the current epoch.
@@ -149,4 +171,42 @@ func (k Keeper) applyDiscountAndRebate(
 	}
 	// return discounted fee ratios
 	return discountedFeeRatio, nil
+}
+
+// WithdrawEpochRebates will withdraw the user's rebates for the given epoch.
+func (k Keeper) WithdrawEpochRebates(ctx sdk.Context, epoch uint64, addr sdk.AccAddress) error {
+	// get the allocation for the epoch, this also ensures that if the user is trying to withdraw
+	// from current epoch the function immediately fails.
+	allocationCoins, err := k.EpochRebateAllocations.Get(ctx, epoch)
+	if err != nil {
+		return err
+	}
+	// get user volume for the epoch
+	userVolume := k.TraderVolumes.GetOr(ctx, collections.Join(addr, epoch), math.ZeroInt())
+	if userVolume.IsZero() {
+		return nil
+	}
+
+	// calculate the user's share
+	globalVolume, err := k.GlobalVolumes.Get(ctx, epoch)
+	if err != nil {
+		return err
+	}
+	weight := userVolume.ToLegacyDec().Quo(globalVolume.ToLegacyDec())
+	distrCoins := sdk.NewCoins()
+
+	for _, coin := range allocationCoins.Amount {
+		amt := coin.Amount.ToLegacyDec().Mul(weight).TruncateInt()
+		distrCoins = distrCoins.Add(sdk.NewCoin(coin.Denom, amt))
+	}
+
+	// send money to user from escrow
+	err = k.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.DNREscrowModuleAccount, addr, distrCoins)
+	if err != nil {
+		return err
+	}
+
+	// garbage collect user volume. This ensures state is not bloated,
+	// and that the user cannot claim from the same allocation twice.
+	return k.TraderVolumes.Delete(ctx, collections.Join(addr, epoch))
 }
