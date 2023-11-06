@@ -1,7 +1,6 @@
 package wasmbinding
 
 import (
-	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -20,7 +19,7 @@ func NibiruWasmOptions(
 	perpv2 perpv2keeper.Keeper,
 	sudoKeeper keeper.Keeper,
 	oracleKeeper oraclekeeper.Keeper,
-) []wasm.Option {
+) []wasmkeeper.Option {
 	wasmQueryPlugin := NewQueryPlugin(perpv2, oracleKeeper)
 	wasmQueryOption := wasmkeeper.WithQueryPlugins(&wasmkeeper.QueryPlugins{
 		Custom: CustomQuerier(wasmQueryPlugin),
@@ -35,5 +34,5 @@ func NibiruWasmOptions(
 		CustomMessageDecorator(perpv2, sudoKeeper, oracleKeeper),
 	)
 
-	return []wasm.Option{wasmQueryOption, wasmExecuteOption}
+	return []wasmkeeper.Option{wasmQueryOption, wasmExecuteOption}
 }
