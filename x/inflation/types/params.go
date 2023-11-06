@@ -23,9 +23,9 @@ var (
 		C: sdk.NewDecWithPrec(395_800_775, 3),
 	}
 	DefaultInflationDistribution = InflationDistribution{
-		CommunityPool:     sdk.NewDecWithPrec(35_159141, 6), // 35.159141%
-		StakingRewards:    sdk.NewDecWithPrec(27_757217, 6), // 27.757217%
-		StrategicReserves: sdk.NewDecWithPrec(37_083642, 6), // 37.083642%
+		CommunityPool:     sdk.NewDecWithPrec(35_159141, 8), // 35.159141%
+		StakingRewards:    sdk.NewDecWithPrec(27_757217, 8), // 27.757217%
+		StrategicReserves: sdk.NewDecWithPrec(37_083642, 8), // 37.083642%
 	}
 	DefaultEpochsPerPeriod = uint64(365)
 )
@@ -120,7 +120,7 @@ func validateInflationDistribution(i interface{}) error {
 
 	totalProportions := v.StakingRewards.Add(v.StrategicReserves).Add(v.CommunityPool)
 	if !totalProportions.Equal(sdk.OneDec()) {
-		return errors.New("total distributions ratio should be 1")
+		return fmt.Errorf("total distributions ratio should be 1, but it is currently %s", totalProportions.String())
 	}
 
 	return nil
