@@ -16,14 +16,14 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
-	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
+	tokenfactorytypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
 
 // NewNibiruTestAppAndContext creates an 'app.NibiruApp' instance with an
 // in-memory 'tmdb.MemDB' and fresh 'sdk.Context'.
 func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
 	encoding := app.MakeEncodingConfig()
-	var appGenesis = app.NewDefaultGenesisState(encoding.Marshaler)
+	appGenesis := app.NewDefaultGenesisState(encoding.Marshaler)
 	genModEpochs := epochstypes.DefaultGenesisFromTime(time.Now().UTC())
 	appGenesis[epochstypes.ModuleName] = encoding.Marshaler.MustMarshalJSON(
 		genModEpochs,
@@ -94,11 +94,11 @@ func FundAccount(
 	bankKeeper bankkeeper.Keeper, ctx sdk.Context, addr sdk.AccAddress,
 	amounts sdk.Coins,
 ) error {
-	if err := bankKeeper.MintCoins(ctx, inflationtypes.ModuleName, amounts); err != nil {
+	if err := bankKeeper.MintCoins(ctx, tokenfactorytypes.ModuleName, amounts); err != nil {
 		return err
 	}
 
-	return bankKeeper.SendCoinsFromModuleToAccount(ctx, inflationtypes.ModuleName, addr, amounts)
+	return bankKeeper.SendCoinsFromModuleToAccount(ctx, tokenfactorytypes.ModuleName, addr, amounts)
 }
 
 // FundModuleAccount is a utility function that funds a module account by
@@ -108,11 +108,11 @@ func FundModuleAccount(
 	bankKeeper bankkeeper.Keeper, ctx sdk.Context,
 	recipientMod string, amounts sdk.Coins,
 ) error {
-	if err := bankKeeper.MintCoins(ctx, inflationtypes.ModuleName, amounts); err != nil {
+	if err := bankKeeper.MintCoins(ctx, tokenfactorytypes.ModuleName, amounts); err != nil {
 		return err
 	}
 
-	return bankKeeper.SendCoinsFromModuleToModule(ctx, inflationtypes.ModuleName, recipientMod, amounts)
+	return bankKeeper.SendCoinsFromModuleToModule(ctx, tokenfactorytypes.ModuleName, recipientMod, amounts)
 }
 
 // EnsureNibiruPrefix sets the account address prefix to Nibiru's rather than
