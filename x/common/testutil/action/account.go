@@ -4,7 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/app"
-	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
+	tokenfactorytypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
 
 type fundAccount struct {
@@ -17,12 +17,12 @@ func FundAccount(account sdk.AccAddress, amount sdk.Coins) Action {
 }
 
 func (c fundAccount) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	err := app.BankKeeper.MintCoins(ctx, inflationtypes.ModuleName, c.Amount)
+	err := app.BankKeeper.MintCoins(ctx, tokenfactorytypes.ModuleName, c.Amount)
 	if err != nil {
 		return ctx, err, true
 	}
 
-	err = app.BankKeeper.SendCoinsFromModuleToAccount(ctx, inflationtypes.ModuleName, c.Account, c.Amount)
+	err = app.BankKeeper.SendCoinsFromModuleToAccount(ctx, tokenfactorytypes.ModuleName, c.Account, c.Amount)
 	if err != nil {
 		return ctx, err, true
 	}
@@ -40,12 +40,12 @@ func FundModule(module string, amount sdk.Coins) Action {
 }
 
 func (c fundModule) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	err := app.BankKeeper.MintCoins(ctx, inflationtypes.ModuleName, c.Amount)
+	err := app.BankKeeper.MintCoins(ctx, tokenfactorytypes.ModuleName, c.Amount)
 	if err != nil {
 		return ctx, err, true
 	}
 
-	err = app.BankKeeper.SendCoinsFromModuleToModule(ctx, inflationtypes.ModuleName, c.Module, c.Amount)
+	err = app.BankKeeper.SendCoinsFromModuleToModule(ctx, tokenfactorytypes.ModuleName, c.Module, c.Amount)
 	if err != nil {
 		return ctx, err, true
 	}

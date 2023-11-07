@@ -5,7 +5,6 @@ import (
 
 	devgas "github.com/NibiruChain/nibiru/x/devgas/v1/types"
 	epochs "github.com/NibiruChain/nibiru/x/epochs/types"
-	inflation "github.com/NibiruChain/nibiru/x/inflation/types"
 	oracle "github.com/NibiruChain/nibiru/x/oracle/types"
 	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 	tokenfactory "github.com/NibiruChain/nibiru/x/tokenfactory/types"
@@ -110,13 +109,14 @@ func WasmAcceptedStargateQueries() wasmkeeper.AcceptedStargateQueries {
 		"/nibiru.epochs.v1.Query/EpochInfos":   new(epochs.QueryEpochInfosResponse),
 		"/nibiru.epochs.v1.Query/CurrentEpoch": new(epochs.QueryCurrentEpochResponse),
 
+		// TODO: for post v1
 		// nibiru inflation
-		"/nibiru.inflation.v1.Query/Period":             new(inflation.QueryPeriodResponse),
-		"/nibiru.inflation.v1.Query/EpochMintProvision": new(inflation.QueryEpochMintProvisionResponse),
-		"/nibiru.inflation.v1.Query/SkippedEpochs":      new(inflation.QuerySkippedEpochsResponse),
-		"/nibiru.inflation.v1.Query/CirculatingSupply":  new(inflation.QueryCirculatingSupplyResponse),
-		"/nibiru.inflation.v1.Query/InflationRate":      new(inflation.QueryInflationRateResponse),
-		"/nibiru.inflation.v1.Query/Params":             new(inflation.QueryParamsResponse),
+		// "/nibiru.inflation.v1.Query/Period":             new(inflation.QueryPeriodResponse),
+		// "/nibiru.inflation.v1.Query/EpochMintProvision": new(inflation.QueryEpochMintProvisionResponse),
+		// "/nibiru.inflation.v1.Query/SkippedEpochs":      new(inflation.QuerySkippedEpochsResponse),
+		// "/nibiru.inflation.v1.Query/CirculatingSupply":  new(inflation.QueryCirculatingSupplyResponse),
+		// "/nibiru.inflation.v1.Query/InflationRate":      new(inflation.QueryInflationRateResponse),
+		// "/nibiru.inflation.v1.Query/Params":             new(inflation.QueryParamsResponse),
 
 		// nibiru oracle
 		"/nibiru.oracle.v1.Query/ExchangeRate":      new(oracle.QueryExchangeRateResponse),

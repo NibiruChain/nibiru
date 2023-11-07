@@ -15,7 +15,6 @@ import (
 
 	devgas "github.com/NibiruChain/nibiru/x/devgas/v1/types"
 	epochs "github.com/NibiruChain/nibiru/x/epochs/types"
-	inflation "github.com/NibiruChain/nibiru/x/inflation/types"
 	oracle "github.com/NibiruChain/nibiru/x/oracle/types"
 	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 	tokenfactory "github.com/NibiruChain/nibiru/x/tokenfactory/types"
@@ -41,7 +40,6 @@ func TestWasmAcceptedStargateQueries(t *testing.T) {
 	queryServiceDescriptions := []grpc.ServiceDesc{
 		epochs.GrpcQueryServiceDesc(),
 		devgas.GrpcQueryServiceDesc(),
-		inflation.GrpcQueryServiceDesc(),
 		oracle.GrpcQueryServiceDesc(),
 		sudotypes.GrpcQueryServiceDesc(),
 		tokenfactory.GrpcQueryServiceDesc(),
