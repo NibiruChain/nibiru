@@ -190,3 +190,19 @@ func (q queryServer) QueryMarkets(
 
 	return &types.QueryMarketsResponse{AmmMarkets: ammMarkets}, nil
 }
+
+func (q queryServer) QueryCollateral(
+	goCtx context.Context, req *types.QueryCollateralRequest,
+) (*types.QueryCollateralResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	collateral, err := q.k.Collateral.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryCollateralResponse{
+		CollateralCreator:  collateral.Creator,
+		CollateralSubdenom: collateral.Subdenom,
+	}, nil
+}

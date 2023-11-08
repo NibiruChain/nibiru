@@ -35,6 +35,10 @@ service Query {
   rpc QueryMarkets(QueryMarketsRequest) returns (QueryMarketsResponse) {
     option (google.api.http).get = "/nibiru/perp/v2/markets";
   }
+
+  rpc QueryCollateral(QueryCollateralRequest) returns (QueryCollateralResponse) {
+    option (google.api.http).get = "/nibiru/perp/v2/collateral";
+  }
 }
 
 // ---------------------------------------- Positions
@@ -127,4 +131,11 @@ message QueryMarketsRequest { bool versioned = 1; }
 message QueryMarketsResponse {
   repeated nibiru.perp.v2.AmmMarket amm_markets = 1
       [ (gogoproto.nullable) = false ];
+}
+
+message QueryCollateralRequest {}
+
+message QueryCollateralResponse {
+  string collateral_creator= 1;
+  string collateral_subdenom= 2;
 }

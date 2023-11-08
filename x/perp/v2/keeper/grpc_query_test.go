@@ -390,6 +390,31 @@ func TestQueryMarkets(t *testing.T) {
 	NewTestSuite(t).WithTestCases(tc...).Run()
 }
 
+func TestGetCollateral(t *testing.T) {
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+
+	tc := TestCases{
+		TC("positive PnL").
+			Given(
+				CreateCustomMarket(
+					pair,
+					WithEnabled(true),
+					WithPricePeg(sdk.NewDec(2)),
+				),
+				FundModule("perp_ef", sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10)))),
+			).
+			When(
+				QueryCollateralShouldFail(),
+				SetCollateral(types.DefaultTestingCollateralNotForProd),
+			).
+			Then(
+				QueryCollateral(types.DefaultTestingCollateralNotForProd.Subdenom, types.DefaultTestingCollateralNotForProd.Creator),
+			),
+	}
+
+	NewTestSuite(t).WithTestCases(tc...).Run()
+}
+
 func TestQueryPositionStore(t *testing.T) {
 	pairs := []asset.Pair{
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD),
