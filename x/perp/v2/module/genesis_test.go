@@ -160,5 +160,5 @@ func TestNewAppModuleBasic(t *testing.T) {
 	require.Len(t, cmds.Commands(), 8)
 
 	cmds = appModule.GetQueryCmd()
-	require.Len(t, cmds.Commands(), 4)
+	require.Len(t, cmds.Commands(), 5)
 }
