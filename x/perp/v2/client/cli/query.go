@@ -31,6 +31,7 @@ func GetQueryCmd() *cobra.Command {
 		CmdQueryPositions(),
 		CmdQueryModuleAccounts(),
 		CmdQueryMarkets(),
+		CmdQueryCollateral(),
 	}
 	for _, cmd := range cmds {
 		moduleQueryCmd.AddCommand(cmd)
@@ -170,6 +171,38 @@ inactive ones.`,
 			res, err := queryClient.QueryMarkets(cmd.Context(), &types.QueryMarketsRequest{
 				Versioned: versioned,
 			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	cmd.Flags().Bool(FlagVersioned, false, "toggles whether to include inactive markets")
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdQueryCollateral() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "collateral",
+		Short: "Query the collateral info",
+		Long: `
+Query the metadata of the collateral used by the perp module.
+.`,
+		Args: cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.QueryCollateral(cmd.Context(), &types.QueryCollateralRequest{})
 			if err != nil {
 				return err
 			}
