@@ -23,14 +23,20 @@ message Params {
   // inflation_enabled is the parameter that enables inflation and halts
   // increasing the skipped_epochs
   bool inflation_enabled = 1;
-  // exponential_calculation takes in the variables to calculate exponential
+  // polynomial_factors takes in the variables to calculate polynomial
   // inflation
-  ExponentialCalculation exponential_calculation = 2
-      [ (gogoproto.nullable) = false ];
+  repeated string polynomial_factors = 2[
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
   // inflation_distribution of the minted denom
   InflationDistribution inflation_distribution = 3
       [ (gogoproto.nullable) = false ];
   // epochs_per_period is the number of epochs that must pass before a new
   // period is created
   uint64 epochs_per_period = 4;
+
+  // max_period is the maximum number of periods that have inflation being 
+  // paid off. After this period, inflation will be disabled.
+  uint64 max_period = 5;
 }

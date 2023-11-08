@@ -9,25 +9,31 @@ func CalculateEpochMintProvision(
 	params Params,
 	period uint64,
 ) sdk.Dec {
-	if params.EpochsPerPeriod == 0 {
+	if params.EpochsPerPeriod == 0 || !params.InflationEnabled || period >= params.MaxPeriod {
 		return sdk.ZeroDec()
 	}
 
-	x := period                          // period
-	a := params.ExponentialCalculation.A // initial value
-	r := params.ExponentialCalculation.R // reduction factor
-	c := params.ExponentialCalculation.C // long term inflation
+	// truncating to the nearest integer
+	x := period / params.EpochsPerPeriod
 
-	// exponentialDecay := a * (1 - r) ^ x + c
-	decay := sdk.OneDec().Sub(r)
-	periodProvision := a.Mul(decay.Power(x)).Add(c)
+	// Calculate the value of the polynomial at x
+	polynomialValue := polynomial(params.PolynomialFactors, sdk.NewDec(int64(x)))
 
-	// epochProvision = periodProvision / epochsPerPeriod
-	epochProvision := periodProvision.QuoInt64(int64(params.EpochsPerPeriod))
+	if polynomialValue.IsNegative() {
+		// Just to make sure nothing weird occur
+		return sdk.ZeroDec()
+	}
 
-	// Multiply epochMintProvision with power reduction (10^6 for unibi) as the
-	// calculation is based on `NIBI` and the issued tokens need to be given in
-	// `uNIBI`
-	epochProvision = epochProvision.MulInt(sdk.DefaultPowerReduction)
-	return epochProvision
+	return polynomialValue.Quo(sdk.NewDec(int64(params.EpochsPerPeriod)))
+}
+
+// Compute the value of x given the polynomial factors
+func polynomial(factors []sdk.Dec, x sdk.Dec) sdk.Dec {
+	result := sdk.ZeroDec()
+	for i, factor := range factors {
+		result = result.Add(factor.Mul(x.Power(uint64(len(factors) - i - 1))))
+	}
+
+	// Multiply by 1 million to get the value in unibi
+	return result.Mul(sdk.NewDec(1_000_000))
 }

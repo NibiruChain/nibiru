@@ -9,48 +9,56 @@ import (
 )
 
 var (
-	KeyInflationEnabled       = []byte("InflationEnabled")
-	KeyExponentialCalculation = []byte("ExponentialCalculation")
-	KeyInflationDistribution  = []byte("InflationDistribution")
-	KeyEpochsPerPeriod        = []byte("EpochsPerPeriod")
+	KeyInflationEnabled      = []byte("InflationEnabled")
+	KeyPolynomialFactors     = []byte("PolynomialFactors")
+	KeyInflationDistribution = []byte("InflationDistribution")
+	KeyEpochsPerPeriod       = []byte("EpochsPerPeriod")
+	KeyMaxPeriod             = []byte("MaxPeriod")
 )
 
 var (
-	DefaultInflation              = true
-	DefaultExponentialCalculation = ExponentialCalculation{
-		A: sdk.NewDec(int64(405_000_000)),
-		R: sdk.NewDecWithPrec(50, 2), // 50%
-		C: sdk.NewDecWithPrec(395_507_8125, 4),
+	DefaultInflation         = true
+	DefaultPolynomialFactors = []sdk.Dec{
+		sdk.MustNewDecFromStr("-0.00014903"),
+		sdk.MustNewDecFromStr("0.07527647"),
+		sdk.MustNewDecFromStr("-19.11742154"),
+		sdk.MustNewDecFromStr("3170.0969905"),
+		sdk.MustNewDecFromStr("-339271.31060432"),
+		sdk.MustNewDecFromStr("18063678.8582418"),
 	}
 	DefaultInflationDistribution = InflationDistribution{
 		StakingRewards:    sdk.NewDecWithPrec(27_8, 3),  // 27.8%
 		CommunityPool:     sdk.NewDecWithPrec(62_20, 4), // 62.20%
 		StrategicReserves: sdk.NewDecWithPrec(10, 2),    // 10%
 	}
-	DefaultEpochsPerPeriod = uint64(365)
+	DefaultEpochsPerPeriod = uint64(30)
+	DefaultMaxPeriod       = uint64(8 * 12 * 30) // 8 years with 360 days per year
 )
 
 func NewParams(
-	exponentialCalculation ExponentialCalculation,
+	polynomialCalculation []sdk.Dec,
 	inflationDistribution InflationDistribution,
 	inflationEnabled bool,
-	epochsPerPeriod uint64,
+	epochsPerPeriod,
+	maxPeriod uint64,
 ) Params {
 	return Params{
-		ExponentialCalculation: exponentialCalculation,
-		InflationDistribution:  inflationDistribution,
-		InflationEnabled:       inflationEnabled,
-		EpochsPerPeriod:        epochsPerPeriod,
+		PolynomialFactors:     polynomialCalculation,
+		InflationDistribution: inflationDistribution,
+		InflationEnabled:      inflationEnabled,
+		EpochsPerPeriod:       epochsPerPeriod,
+		MaxPeriod:             maxPeriod,
 	}
 }
 
 // default minting module parameters
 func DefaultParams() Params {
 	return Params{
-		ExponentialCalculation: DefaultExponentialCalculation,
-		InflationDistribution:  DefaultInflationDistribution,
-		InflationEnabled:       DefaultInflation,
-		EpochsPerPeriod:        DefaultEpochsPerPeriod,
+		PolynomialFactors:     DefaultPolynomialFactors,
+		InflationDistribution: DefaultInflationDistribution,
+		InflationEnabled:      DefaultInflation,
+		EpochsPerPeriod:       DefaultEpochsPerPeriod,
+		MaxPeriod:             DefaultMaxPeriod,
 	}
 }
 
@@ -66,37 +74,22 @@ var _ paramstypes.ParamSet = (*Params)(nil)
 func (p *Params) ParamSetPairs() paramstypes.ParamSetPairs {
 	return paramstypes.ParamSetPairs{
 		paramstypes.NewParamSetPair(KeyInflationEnabled, &p.InflationEnabled, validateBool),
-		paramstypes.NewParamSetPair(KeyExponentialCalculation, &p.ExponentialCalculation, validateExponentialCalculation),
+		paramstypes.NewParamSetPair(KeyPolynomialFactors, &p.PolynomialFactors, validatePolynomialFactors),
 		paramstypes.NewParamSetPair(KeyInflationDistribution, &p.InflationDistribution, validateInflationDistribution),
 		paramstypes.NewParamSetPair(KeyEpochsPerPeriod, &p.EpochsPerPeriod, validateUint64),
+		paramstypes.NewParamSetPair(KeyMaxPeriod, &p.MaxPeriod, validateUint64),
 	}
 }
 
-func validateExponentialCalculation(i interface{}) error {
-	v, ok := i.(ExponentialCalculation)
+func validatePolynomialFactors(i interface{}) error {
+	v, ok := i.([]sdk.Dec)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
-	// validate initial value
-	if v.A.IsNegative() {
-		return fmt.Errorf("initial value cannot be negative")
+	if len(v) == 0 {
+		return errors.New("polynomial factors cannot be empty")
 	}
-
-	// validate reduction factor
-	if v.R.GT(sdk.OneDec()) {
-		return fmt.Errorf("reduction factor cannot be greater than 1")
-	}
-
-	if v.R.IsNegative() {
-		return fmt.Errorf("reduction factor cannot be negative")
-	}
-
-	// validate long term inflation
-	if v.C.IsNegative() {
-		return fmt.Errorf("long term inflation cannot be negative")
-	}
-
 	return nil
 }
 
@@ -160,10 +153,13 @@ func (p Params) Validate() error {
 	if err := validateEpochsPerPeriod(p.EpochsPerPeriod); err != nil {
 		return err
 	}
-	if err := validateExponentialCalculation(p.ExponentialCalculation); err != nil {
+	if err := validatePolynomialFactors(p.PolynomialFactors); err != nil {
 		return err
 	}
 	if err := validateInflationDistribution(p.InflationDistribution); err != nil {
+		return err
+	}
+	if err := validateUint64(p.MaxPeriod); err != nil {
 		return err
 	}
 

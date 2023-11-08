@@ -129,10 +129,10 @@ func TestGetCirculatingSupplyAndInflationRate(t *testing.T) {
 			sdk.TokensFromConsensusPower(400_000_000, sdk.DefaultPowerReduction),
 			func(nibiruApp *app.NibiruApp, ctx sdk.Context) {
 				nibiruApp.InflationKeeper.SetParams(ctx, types.Params{
-					EpochsPerPeriod:        0,
-					InflationEnabled:       true,
-					ExponentialCalculation: types.DefaultExponentialCalculation,
-					InflationDistribution:  types.DefaultInflationDistribution,
+					EpochsPerPeriod:       0,
+					InflationEnabled:      true,
+					PolynomialFactors:     types.DefaultPolynomialFactors,
+					InflationDistribution: types.DefaultInflationDistribution,
 				})
 			},
 			sdk.ZeroDec(),
@@ -177,7 +177,7 @@ func TestGetters(t *testing.T) {
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 	k := nibiruApp.InflationKeeper
 	require.NotPanics(t, func() {
-		_ = k.ExponentialCalculation(ctx)
+		_ = k.PolynomialFactors(ctx)
 		_ = k.InflationDistribution(ctx)
 		_ = k.InflationEnabled(ctx)
 		_ = k.EpochsPerPeriod(ctx)

@@ -18,8 +18,8 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 }
 
 // VotePeriod returns the number of blocks during which voting takes place.
-func (k Keeper) ExponentialCalculation(ctx sdk.Context) (res types.ExponentialCalculation) {
-	k.paramSpace.Get(ctx, types.KeyExponentialCalculation, &res)
+func (k Keeper) PolynomialFactors(ctx sdk.Context) (res []sdk.Dec) {
+	k.paramSpace.Get(ctx, types.KeyPolynomialFactors, &res)
 	return
 }
 

@@ -8,63 +8,43 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCalculateEpochMintProvision(t *testing.T) {
-	testCases := []struct {
-		name              string
-		period            uint64
-		expEpochProvision sdk.Dec
-	}{
-		{
-			"pass - initial period",
-			0,
-			sdk.MustNewDecFromStr("1110672624143.835616438356000000"),
-		},
-		{
-			"pass - period 1",
-			1,
-			sdk.MustNewDecFromStr("555878103595.890410958904000000"),
-		},
-		{
-			"pass - period 2",
-			2,
-			sdk.MustNewDecFromStr("278480843321.917808219178000000"),
-		},
-		{
-			"pass - period 3",
-			3,
-			sdk.MustNewDecFromStr("139782213184.931506849315000000"),
-		},
-		{
-			"pass - period 4",
-			4,
-			sdk.MustNewDecFromStr("70432898116.438356164383000000"),
-		},
-		{
-			"pass - period 5",
-			5,
-			sdk.MustNewDecFromStr("35758240582.191780821917000000"),
-		},
-		{
-			"pass - period 6",
-			6,
-			sdk.MustNewDecFromStr("18420911815.068493150684000000"),
-		},
-		{
-			"pass - period 7",
-			7,
-			sdk.MustNewDecFromStr("9752247431.506849315068000000"),
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(fmt.Sprintf("Case %s", tc.name), func(t *testing.T) {
-			epochMintProvisions := CalculateEpochMintProvision(
-				DefaultParams(),
-				tc.period,
-			)
+// These numbers are for year n month 1
+var ExpectedYearlyInflation = []sdk.Dec{
+	sdk.NewDec(195_895_391_000_000),
+	sdk.NewDec(156_348_637_000_000),
+	sdk.NewDec(124_785_459_000_000),
+	sdk.NewDec(99_594_157_000_000),
+	sdk.NewDec(79_488_398_000_000),
+	sdk.NewDec(63_441_527_000_000),
+	sdk.NewDec(50_634_148_000_000),
+	sdk.NewDec(40_412_283_000_000),
+}
 
-			require.Equal(t, tc.expEpochProvision, epochMintProvisions)
-		})
+var ExpectedTotalInflation = sdk.NewDec(810_600_000_000_000)
+
+func TestCalculateEpochMintProvision(t *testing.T) {
+	params := DefaultParams()
+
+	epochId := uint64(0)
+	totalInflation := sdk.ZeroDec()
+
+	// Only the first 8 years have inflation with default params
+	for year := uint64(0); year < 10; year++ {
+		yearlyInflation := sdk.ZeroDec()
+		for month := uint64(0); month < 12; month++ {
+			for day := uint64(0); day < 30; day++ {
+				epochMintProvisions := CalculateEpochMintProvision(params, epochId)
+				yearlyInflation = yearlyInflation.Add(epochMintProvisions)
+				epochId++
+			}
+		}
+		// Should be within 0.0098%
+		if year < uint64(len(ExpectedYearlyInflation)) {
+			require.NoError(t, withingRange(yearlyInflation, ExpectedYearlyInflation[year]))
+		}
+		totalInflation = totalInflation.Add(yearlyInflation)
 	}
+	require.NoError(t, withingRange(totalInflation, ExpectedTotalInflation))
 }
 
 func TestCalculateEpochMintProvision_ZeroEpochs(t *testing.T) {
@@ -73,4 +53,16 @@ func TestCalculateEpochMintProvision_ZeroEpochs(t *testing.T) {
 
 	epochMintProvisions := CalculateEpochMintProvision(params, 1)
 	require.Equal(t, epochMintProvisions, sdk.ZeroDec())
+}
+
+// withingRange returns an error if the actual value is not within the expected value +/- tolerance
+// tolerance is a percentage set to 0.01% by default
+func withingRange(expected, actual sdk.Dec) error {
+	tolerance := sdk.NewDecWithPrec(1, 4)
+	is_within := expected.Sub(actual).Abs().Quo(expected).LTE(tolerance)
+	if !is_within {
+		tolerancePercent := tolerance.Mul(sdk.NewDec(100))
+		return fmt.Errorf("expected %s to be within %s%% of %s", actual.String(), tolerancePercent.String(), expected.String())
+	}
+	return nil
 }

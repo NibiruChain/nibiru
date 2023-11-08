@@ -28,25 +28,3 @@ message InflationDistribution {
     (gogoproto.nullable) = false
   ];
 }
-
-// ExponentialCalculation holds factors to calculate exponential inflation on
-// each period. Calculation reference:
-// periodProvision = exponentialDecay
-// f(x)            = a * (1 - r) ^ x + c
-message ExponentialCalculation {
-  // a defines the initial value
-  string a = 1 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-  // r defines the reduction factor
-  string r = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-  // c defines the parameter for long term inflation
-  string c = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-}
