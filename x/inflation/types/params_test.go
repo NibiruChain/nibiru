@@ -29,83 +29,41 @@ func TestParamsValidate(t *testing.T) {
 		{
 			"valid",
 			inflationtypes.NewParams(
-				inflationtypes.DefaultExponentialCalculation,
+				inflationtypes.DefaultPolynomialFactors,
 				inflationtypes.DefaultInflationDistribution,
 				true,
 				inflationtypes.DefaultEpochsPerPeriod,
+				inflationtypes.DefaultPeriodsPerYear,
+				inflationtypes.DefaultMaxPeriod,
 			),
 			false,
 		},
 		{
 			"valid param literal",
 			inflationtypes.Params{
-				ExponentialCalculation: inflationtypes.DefaultExponentialCalculation,
-				InflationDistribution:  inflationtypes.DefaultInflationDistribution,
-				InflationEnabled:       true,
-				EpochsPerPeriod:        inflationtypes.DefaultEpochsPerPeriod,
+				PolynomialFactors:     inflationtypes.DefaultPolynomialFactors,
+				InflationDistribution: inflationtypes.DefaultInflationDistribution,
+				InflationEnabled:      true,
+				EpochsPerPeriod:       inflationtypes.DefaultEpochsPerPeriod,
+				PeriodsPerYear:        inflationtypes.DefaultPeriodsPerYear,
 			},
 			false,
 		},
 		{
-			"invalid - exponential calculation - negative A",
+			"invalid - polynomial calculation - no coefficient",
 			inflationtypes.Params{
-				ExponentialCalculation: inflationtypes.ExponentialCalculation{
-					A: sdk.NewDec(int64(-1)),
-					R: sdk.NewDecWithPrec(5, 1),
-					C: sdk.NewDec(int64(9_375_000)),
-				},
+				PolynomialFactors:     []sdk.Dec{},
 				InflationDistribution: inflationtypes.DefaultInflationDistribution,
 				InflationEnabled:      true,
 				EpochsPerPeriod:       inflationtypes.DefaultEpochsPerPeriod,
-			},
-			true,
-		},
-		{
-			"invalid - exponential calculation - R greater than 1",
-			inflationtypes.Params{
-				ExponentialCalculation: inflationtypes.ExponentialCalculation{
-					A: sdk.NewDec(int64(300_000_000)),
-					R: sdk.NewDecWithPrec(5, 0),
-					C: sdk.NewDec(int64(9_375_000)),
-				},
-				InflationDistribution: inflationtypes.DefaultInflationDistribution,
-				InflationEnabled:      true,
-				EpochsPerPeriod:       inflationtypes.DefaultEpochsPerPeriod,
-			},
-			true,
-		},
-		{
-			"invalid - exponential calculation - negative R",
-			inflationtypes.Params{
-				ExponentialCalculation: inflationtypes.ExponentialCalculation{
-					A: sdk.NewDec(int64(300_000_000)),
-					R: sdk.NewDecWithPrec(-5, 1),
-					C: sdk.NewDec(int64(9_375_000)),
-				},
-				InflationDistribution: inflationtypes.DefaultInflationDistribution,
-				InflationEnabled:      true,
-				EpochsPerPeriod:       inflationtypes.DefaultEpochsPerPeriod,
-			},
-			true,
-		},
-		{
-			"invalid - exponential calculation - negative C",
-			inflationtypes.Params{
-				ExponentialCalculation: inflationtypes.ExponentialCalculation{
-					A: sdk.NewDec(int64(300_000_000)),
-					R: sdk.NewDecWithPrec(5, 1),
-					C: sdk.NewDec(int64(-9_375_000)),
-				},
-				InflationDistribution: inflationtypes.DefaultInflationDistribution,
-				InflationEnabled:      true,
-				EpochsPerPeriod:       inflationtypes.DefaultEpochsPerPeriod,
+				PeriodsPerYear:        inflationtypes.DefaultPeriodsPerYear,
 			},
 			true,
 		},
 		{
 			"invalid - inflation distribution - negative staking rewards",
 			inflationtypes.Params{
-				ExponentialCalculation: inflationtypes.DefaultExponentialCalculation,
+				PolynomialFactors: inflationtypes.DefaultPolynomialFactors,
 				InflationDistribution: inflationtypes.InflationDistribution{
 					StakingRewards:    sdk.OneDec().Neg(),
 					CommunityPool:     sdk.NewDecWithPrec(133333, 6),
@@ -113,13 +71,14 @@ func TestParamsValidate(t *testing.T) {
 				},
 				InflationEnabled: true,
 				EpochsPerPeriod:  inflationtypes.DefaultEpochsPerPeriod,
+				PeriodsPerYear:   inflationtypes.DefaultPeriodsPerYear,
 			},
 			true,
 		},
 		{
 			"invalid - inflation distribution - negative usage incentives",
 			inflationtypes.Params{
-				ExponentialCalculation: inflationtypes.DefaultExponentialCalculation,
+				PolynomialFactors: inflationtypes.DefaultPolynomialFactors,
 				InflationDistribution: inflationtypes.InflationDistribution{
 					StakingRewards:    sdk.NewDecWithPrec(533334, 6),
 					CommunityPool:     sdk.NewDecWithPrec(133333, 6),
@@ -127,13 +86,14 @@ func TestParamsValidate(t *testing.T) {
 				},
 				InflationEnabled: true,
 				EpochsPerPeriod:  inflationtypes.DefaultEpochsPerPeriod,
+				PeriodsPerYear:   inflationtypes.DefaultPeriodsPerYear,
 			},
 			true,
 		},
 		{
 			"invalid - inflation distribution - negative community pool rewards",
 			inflationtypes.Params{
-				ExponentialCalculation: inflationtypes.DefaultExponentialCalculation,
+				PolynomialFactors: inflationtypes.DefaultPolynomialFactors,
 				InflationDistribution: inflationtypes.InflationDistribution{
 					StakingRewards:    sdk.NewDecWithPrec(533334, 6),
 					CommunityPool:     sdk.OneDec().Neg(),
@@ -141,13 +101,14 @@ func TestParamsValidate(t *testing.T) {
 				},
 				InflationEnabled: true,
 				EpochsPerPeriod:  inflationtypes.DefaultEpochsPerPeriod,
+				PeriodsPerYear:   inflationtypes.DefaultPeriodsPerYear,
 			},
 			true,
 		},
 		{
 			"invalid - inflation distribution - total distribution ratio unequal 1",
 			inflationtypes.Params{
-				ExponentialCalculation: inflationtypes.DefaultExponentialCalculation,
+				PolynomialFactors: inflationtypes.DefaultPolynomialFactors,
 				InflationDistribution: inflationtypes.InflationDistribution{
 					StakingRewards:    sdk.NewDecWithPrec(533333, 6),
 					CommunityPool:     sdk.NewDecWithPrec(133333, 6),
@@ -155,6 +116,7 @@ func TestParamsValidate(t *testing.T) {
 				},
 				InflationEnabled: true,
 				EpochsPerPeriod:  inflationtypes.DefaultEpochsPerPeriod,
+				PeriodsPerYear:   inflationtypes.DefaultPeriodsPerYear,
 			},
 			true,
 		},

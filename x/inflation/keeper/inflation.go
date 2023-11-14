@@ -28,7 +28,7 @@ func (k Keeper) MintAndAllocateInflation(
 	}
 
 	// Allocate minted coins according to allocation proportions (staking, strategic, community pool)
-	return k.AllocateExponentialInflation(ctx, coins, params)
+	return k.AllocatePolynomialInflation(ctx, coins, params)
 }
 
 // MintCoins implements an alias call to the underlying supply keeper's
@@ -38,12 +38,12 @@ func (k Keeper) MintCoins(ctx sdk.Context, coin sdk.Coin) error {
 	return k.bankKeeper.MintCoins(ctx, types.ModuleName, coins)
 }
 
-// AllocateExponentialInflation allocates coins from the inflation to external
+// AllocatePolynomialInflation allocates coins from the inflation to external
 // modules according to allocation proportions:
 //   - staking rewards -> sdk `auth` module fee collector
 //   - strategic reserves -> root account of x/sudo module
 //   - community pool -> `sdk `distr` module community pool
-func (k Keeper) AllocateExponentialInflation(
+func (k Keeper) AllocatePolynomialInflation(
 	ctx sdk.Context,
 	mintedCoin sdk.Coin,
 	params types.Params,
@@ -125,7 +125,11 @@ func (k Keeper) GetInflationRate(ctx sdk.Context, mintDenom string) sdk.Dec {
 
 	// EpochMintProvision * 365 / circulatingSupply * 100
 	circulatingSupplyToDec := sdk.NewDecFromInt(circulatingSupply)
-	return epochMintProvision.MulInt64(int64(k.EpochsPerPeriod(ctx))).Quo(circulatingSupplyToDec).Mul(sdk.NewDec(100))
+	return epochMintProvision.
+		MulInt64(int64(k.EpochsPerPeriod(ctx))).
+		MulInt64(int64(k.PeriodsPerYear(ctx))).
+		Quo(circulatingSupplyToDec).
+		Mul(sdk.NewDec(100))
 }
 
 // GetEpochMintProvision retrieves necessary params KV storage
