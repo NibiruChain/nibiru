@@ -44,7 +44,7 @@ import (
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cast"
 
-	"github.com/NibiruChain/nibiru/wasmbinding"
+	wasmbinding "github.com/NibiruChain/nibiru/wasmbinding"
 )
 
 const (
@@ -118,10 +118,10 @@ func GetWasmOpts(nibiru NibiruApp, appOpts servertypes.AppOptions) []wasmkeeper.
 	// Add the bindings to the app's set of []wasmkeeper.Option.
 	wasmOpts = append(wasmOpts, wasmbinding.NibiruWasmOptions(
 		nibiru.GRPCQueryRouter(),
-		nibiru.AppCodec(),
+		nibiru.appCodec,
 		nibiru.SudoKeeper,
 	)...)
-	// Add the bindings to the app's set of []wasm.Option.
+
 	return wasmOpts
 }
 
