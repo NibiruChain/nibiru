@@ -49,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1620](https://github.com/NibiruChain/nibiru/pull/1620) - Token factory transaction messages for Mint and Burn
 * [#1573](https://github.com/NibiruChain/nibiru/pull/1573) - feat(perp): Close markets and compute settlement price
 * [#1632](https://github.com/NibiruChain/nibiru/pull/1632) - feat(perp): Add settle position transaction
-* [#1658](https://github.com/NibiruChain/nibiru/pull/1658) - feat(oracle): add `EditOracleParams` message
+* [#1670](https://github.com/NibiruChain/nibiru/pull/1670) - feat(inflation): Make inflation polynomial
 
 ### State Machine Breaking 
 

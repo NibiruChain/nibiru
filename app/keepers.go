@@ -104,12 +104,16 @@ import (
 	epochskeeper "github.com/NibiruChain/nibiru/x/epochs/keeper"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
 	"github.com/NibiruChain/nibiru/x/genmsg"
+	"github.com/NibiruChain/nibiru/x/inflation"
+	inflationkeeper "github.com/NibiruChain/nibiru/x/inflation/keeper"
+	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
 	oracle "github.com/NibiruChain/nibiru/x/oracle"
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/NibiruChain/nibiru/x/sudo"
 	"github.com/NibiruChain/nibiru/x/sudo/keeper"
 	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
+
 	tokenfactory "github.com/NibiruChain/nibiru/x/tokenfactory"
 	tokenfactorykeeper "github.com/NibiruChain/nibiru/x/tokenfactory/keeper"
 	tokenfactorytypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
@@ -161,6 +165,7 @@ type AppKeepers struct {
 	// ---------------
 	EpochsKeeper       epochskeeper.Keeper
 	OracleKeeper       oraclekeeper.Keeper
+	InflationKeeper    inflationkeeper.Keeper
 	SudoKeeper         keeper.Keeper
 	DevGasKeeper       devgaskeeper.Keeper
 	TokenFactoryKeeper tokenfactorykeeper.Keeper
@@ -199,6 +204,7 @@ func initStoreKeys() (
 		// nibiru x/ keys
 		oracletypes.StoreKey,
 		epochstypes.StoreKey,
+		inflationtypes.StoreKey,
 		sudotypes.StoreKey,
 		wasmtypes.StoreKey,
 		devgastypes.StoreKey,
@@ -345,8 +351,14 @@ func (app *NibiruApp) InitKeepers(
 		appCodec, keys[sudotypes.StoreKey],
 	)
 
+	app.InflationKeeper = inflationkeeper.NewKeeper(
+		appCodec, keys[inflationtypes.StoreKey], app.GetSubspace(inflationtypes.ModuleName),
+		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.stakingKeeper, app.SudoKeeper, authtypes.FeeCollectorName,
+	)
+
 	app.EpochsKeeper.SetHooks(
 		epochstypes.NewMultiEpochHooks(
+			app.InflationKeeper.Hooks(),
 			app.OracleKeeper.Hooks(),
 		),
 	)
@@ -556,6 +568,7 @@ func (app *NibiruApp) initAppModules(
 		// Nibiru modules
 		oracle.NewAppModule(appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper, app.SudoKeeper),
 		epochs.NewAppModule(appCodec, app.EpochsKeeper),
+		inflation.NewAppModule(app.InflationKeeper, app.AccountKeeper, *app.stakingKeeper),
 		sudo.NewAppModule(appCodec, app.SudoKeeper),
 		genmsg.NewAppModule(app.MsgServiceRouter()),
 
@@ -622,6 +635,7 @@ func orderedModuleNames() []string {
 		// Native x/ Modules
 		epochstypes.ModuleName,
 		oracletypes.ModuleName,
+		inflationtypes.ModuleName,
 		sudotypes.ModuleName,
 
 		// --------------------------------------------------------------------
@@ -735,6 +749,7 @@ func ModuleBasicManager() module.BasicManager {
 		// native x/
 		oracle.AppModuleBasic{},
 		epochs.AppModuleBasic{},
+		inflation.AppModuleBasic{},
 		sudo.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		devgas.AppModuleBasic{},
@@ -746,14 +761,16 @@ func ModuleBasicManager() module.BasicManager {
 
 func ModuleAccPerms() map[string][]string {
 	return map[string][]string{
-		authtypes.FeeCollectorName:       nil,
-		distrtypes.ModuleName:            nil,
-		stakingtypes.BondedPoolName:      {authtypes.Burner, authtypes.Staking},
-		stakingtypes.NotBondedPoolName:   {authtypes.Burner, authtypes.Staking},
-		govtypes.ModuleName:              {authtypes.Burner},
-		oracletypes.ModuleName:           {},
-		ibctransfertypes.ModuleName:      {authtypes.Minter, authtypes.Burner},
-		ibcfeetypes.ModuleName:           {},
+		authtypes.FeeCollectorName:     nil,
+		distrtypes.ModuleName:          nil,
+		inflationtypes.ModuleName:      {authtypes.Minter},
+		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
+		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
+		govtypes.ModuleName:            {authtypes.Burner},
+		oracletypes.ModuleName:         {},
+		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
+		ibcfeetypes.ModuleName:         {},
+
 		epochstypes.ModuleName:           {},
 		sudotypes.ModuleName:             {},
 		common.TreasuryPoolModuleAccount: {},
@@ -778,6 +795,7 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(crisistypes.ModuleName)
 	// Nibiru core params keepers | x/
 	paramsKeeper.Subspace(epochstypes.ModuleName)
+	paramsKeeper.Subspace(inflationtypes.ModuleName)
 	// ibc params keepers
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibcexported.ModuleName)
