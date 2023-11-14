@@ -129,10 +129,10 @@ func TestGetCirculatingSupplyAndInflationRate(t *testing.T) {
 			sdk.TokensFromConsensusPower(400_000_000, sdk.DefaultPowerReduction),
 			func(nibiruApp *app.NibiruApp, ctx sdk.Context) {
 				nibiruApp.InflationKeeper.SetParams(ctx, types.Params{
-					EpochsPerPeriod:        0,
-					InflationEnabled:       true,
-					ExponentialCalculation: types.DefaultExponentialCalculation,
-					InflationDistribution:  types.DefaultInflationDistribution,
+					EpochsPerPeriod:       0,
+					InflationEnabled:      true,
+					PolynomialFactors:     types.DefaultPolynomialFactors,
+					InflationDistribution: types.DefaultInflationDistribution,
 				})
 			},
 			sdk.ZeroDec(),
@@ -141,13 +141,13 @@ func TestGetCirculatingSupplyAndInflationRate(t *testing.T) {
 			"high supply",
 			sdk.TokensFromConsensusPower(800_000_000, sdk.DefaultPowerReduction),
 			func(nibiruApp *app.NibiruApp, ctx sdk.Context) {},
-			sdk.MustNewDecFromStr("50.674438476562500000"),
+			sdk.MustNewDecFromStr("27.095518287362700000"),
 		},
 		{
 			"low supply",
 			sdk.TokensFromConsensusPower(400_000_000, sdk.DefaultPowerReduction),
 			func(nibiruApp *app.NibiruApp, ctx sdk.Context) {},
-			sdk.MustNewDecFromStr("101.348876953125000000"),
+			sdk.MustNewDecFromStr("54.191036574725400000"),
 		},
 	}
 	for _, tc := range testCases {
@@ -177,7 +177,8 @@ func TestGetters(t *testing.T) {
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 	k := nibiruApp.InflationKeeper
 	require.NotPanics(t, func() {
-		_ = k.ExponentialCalculation(ctx)
+		_ = k.PolynomialFactors(ctx)
+		_ = k.PeriodsPerYear(ctx)
 		_ = k.InflationDistribution(ctx)
 		_ = k.InflationEnabled(ctx)
 		_ = k.EpochsPerPeriod(ctx)
