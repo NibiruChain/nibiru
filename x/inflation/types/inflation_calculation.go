@@ -1,6 +1,8 @@
 package types
 
 import (
+	fmt "fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -9,6 +11,8 @@ func CalculateEpochMintProvision(
 	params Params,
 	period uint64,
 ) sdk.Dec {
+	fmt.Println("Called with period", period)
+
 	if params.EpochsPerPeriod == 0 || !params.InflationEnabled || period >= params.MaxPeriod {
 		return sdk.ZeroDec()
 	}

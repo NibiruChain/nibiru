@@ -36,7 +36,10 @@ message Params {
   // period is created
   uint64 epochs_per_period = 4;
 
+  // periods_per_year is the number of periods that occur in a year
+  uint64 periods_per_year = 5;
+
   // max_period is the maximum number of periods that have inflation being 
   // paid off. After this period, inflation will be disabled.
-  uint64 max_period = 5;
+  uint64 max_period = 6;
 }

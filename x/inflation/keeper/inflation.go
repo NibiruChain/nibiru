@@ -125,7 +125,11 @@ func (k Keeper) GetInflationRate(ctx sdk.Context, mintDenom string) sdk.Dec {
 
 	// EpochMintProvision * 365 / circulatingSupply * 100
 	circulatingSupplyToDec := sdk.NewDecFromInt(circulatingSupply)
-	return epochMintProvision.MulInt64(int64(k.EpochsPerPeriod(ctx))).Quo(circulatingSupplyToDec).Mul(sdk.NewDec(100))
+	return epochMintProvision.
+		MulInt64(int64(k.EpochsPerPeriod(ctx))).
+		MulInt64(int64(k.PeriodsPerYear(ctx))).
+		Quo(circulatingSupplyToDec).
+		Mul(sdk.NewDec(100))
 }
 
 // GetEpochMintProvision retrieves necessary params KV storage

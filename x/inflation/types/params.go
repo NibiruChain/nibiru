@@ -13,6 +13,7 @@ var (
 	KeyPolynomialFactors     = []byte("PolynomialFactors")
 	KeyInflationDistribution = []byte("InflationDistribution")
 	KeyEpochsPerPeriod       = []byte("EpochsPerPeriod")
+	KeyPeriodsPerYear        = []byte("PeriodsPerYear")
 	KeyMaxPeriod             = []byte("MaxPeriod")
 )
 
@@ -32,6 +33,7 @@ var (
 		StrategicReserves: sdk.NewDecWithPrec(10, 2),    // 10%
 	}
 	DefaultEpochsPerPeriod = uint64(30)
+	DefaultPeriodsPerYear  = uint64(12)
 	DefaultMaxPeriod       = uint64(8 * 12 * 30) // 8 years with 360 days per year
 )
 
@@ -40,6 +42,7 @@ func NewParams(
 	inflationDistribution InflationDistribution,
 	inflationEnabled bool,
 	epochsPerPeriod,
+	periodsPerYear,
 	maxPeriod uint64,
 ) Params {
 	return Params{
@@ -47,6 +50,7 @@ func NewParams(
 		InflationDistribution: inflationDistribution,
 		InflationEnabled:      inflationEnabled,
 		EpochsPerPeriod:       epochsPerPeriod,
+		PeriodsPerYear:        periodsPerYear,
 		MaxPeriod:             maxPeriod,
 	}
 }
@@ -58,6 +62,7 @@ func DefaultParams() Params {
 		InflationDistribution: DefaultInflationDistribution,
 		InflationEnabled:      DefaultInflation,
 		EpochsPerPeriod:       DefaultEpochsPerPeriod,
+		PeriodsPerYear:        DefaultPeriodsPerYear,
 		MaxPeriod:             DefaultMaxPeriod,
 	}
 }
@@ -77,6 +82,7 @@ func (p *Params) ParamSetPairs() paramstypes.ParamSetPairs {
 		paramstypes.NewParamSetPair(KeyPolynomialFactors, &p.PolynomialFactors, validatePolynomialFactors),
 		paramstypes.NewParamSetPair(KeyInflationDistribution, &p.InflationDistribution, validateInflationDistribution),
 		paramstypes.NewParamSetPair(KeyEpochsPerPeriod, &p.EpochsPerPeriod, validateUint64),
+		paramstypes.NewParamSetPair(KeyPeriodsPerYear, &p.PeriodsPerYear, validateUint64),
 		paramstypes.NewParamSetPair(KeyMaxPeriod, &p.MaxPeriod, validateUint64),
 	}
 }
@@ -149,8 +155,24 @@ func validateEpochsPerPeriod(i interface{}) error {
 	return nil
 }
 
+func validatePeriodsPerYear(i interface{}) error {
+	val, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if val <= 0 {
+		return fmt.Errorf("periods per year must be positive: %d", val)
+	}
+
+	return nil
+}
+
 func (p Params) Validate() error {
 	if err := validateEpochsPerPeriod(p.EpochsPerPeriod); err != nil {
+		return err
+	}
+	if err := validatePeriodsPerYear(p.PeriodsPerYear); err != nil {
 		return err
 	}
 	if err := validatePolynomialFactors(p.PolynomialFactors); err != nil {

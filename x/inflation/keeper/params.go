@@ -39,3 +39,8 @@ func (k Keeper) EpochsPerPeriod(ctx sdk.Context) (res uint64) {
 	k.paramSpace.Get(ctx, types.KeyEpochsPerPeriod, &res)
 	return
 }
+
+func (k Keeper) PeriodsPerYear(ctx sdk.Context) (res uint64) {
+	k.paramSpace.Get(ctx, types.KeyPeriodsPerYear, &res)
+	return
+}
