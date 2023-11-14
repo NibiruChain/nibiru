@@ -35,12 +35,14 @@ func TestCalculateEpochMintProvision(t *testing.T) {
 			for day := uint64(0); day < 30; day++ {
 				epochMintProvisions := CalculateEpochMintProvision(params, epochId)
 				yearlyInflation = yearlyInflation.Add(epochMintProvisions)
-				epochId++
 			}
+			epochId++
 		}
 		// Should be within 0.0098%
 		if year < uint64(len(ExpectedYearlyInflation)) {
 			require.NoError(t, withingRange(yearlyInflation, ExpectedYearlyInflation[year]))
+		} else {
+			require.Equal(t, yearlyInflation, sdk.ZeroDec())
 		}
 		totalInflation = totalInflation.Add(yearlyInflation)
 	}

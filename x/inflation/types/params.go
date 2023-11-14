@@ -34,7 +34,7 @@ var (
 	}
 	DefaultEpochsPerPeriod = uint64(30)
 	DefaultPeriodsPerYear  = uint64(12)
-	DefaultMaxPeriod       = uint64(8 * 12 * 30) // 8 years with 360 days per year
+	DefaultMaxPeriod       = uint64(8 * 12) // 8 years with 360 days per year
 )
 
 func NewParams(

@@ -1,8 +1,6 @@
 package types
 
 import (
-	fmt "fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -11,14 +9,12 @@ func CalculateEpochMintProvision(
 	params Params,
 	period uint64,
 ) sdk.Dec {
-	fmt.Println("Called with period", period)
-
 	if params.EpochsPerPeriod == 0 || !params.InflationEnabled || period >= params.MaxPeriod {
 		return sdk.ZeroDec()
 	}
 
 	// truncating to the nearest integer
-	x := period / params.EpochsPerPeriod
+	x := period
 
 	// Calculate the value of the polynomial at x
 	polynomialValue := polynomial(params.PolynomialFactors, sdk.NewDec(int64(x)))
