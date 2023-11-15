@@ -1,26 +1,28 @@
 name: "Automatically update changelog with dependabot"
-on: 
+on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
 
 jobs:
   changelog-update:
     runs-on: ubuntu-latest
+
+    # TODO: feat: try to use author of the commit(s) to see if it's dependabot
+    # ${{ any(contains(commit.author.username, 'dependabot') for commit in github.event.commits) }}
     if: contains(github.event.pull_request.labels.*.name, 'dependabot')
-      # TODO: feat: try to use author of the commit(s) to see if it's dependabot
-      # ${{ any(contains(commit.author.username, 'dependabot') for commit in github.event.commits) }}
-    steps: 
+
+    steps:
       - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.NIBIRU_PM }}
+          token: ${{ secrets.NIBIBOT_GIT_TOKEN }}
           # to avoid checking out the repo in a detached state
           ref: ${{ github.head_ref }}
       # Helps keep your repository up-to-date when Dependabot updates your dependencies.
       # This step updates adds a line to the  "## Unreleased" section
       - uses: dangoslen/dependabot-changelog-helper@v3
         with:
-          activationLabel: 'dependabot'
-          changelogPath: './CHANGELOG.md'
+          activationLabel: "dependabot"
+          changelogPath: "./CHANGELOG.md"
 
       - uses: stefanzweifel/git-auto-commit-action@v5
         with:
