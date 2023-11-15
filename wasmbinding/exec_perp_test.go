@@ -334,7 +334,6 @@ func (s *TestSuitePerpExecutor) DoSetMarketEnabledTest(
 }
 
 func (s *TestSuitePerpExecutor) DoUpdateCollateralTest() error {
-
 	// Works with regular denom
 	cwMsg := &bindings.UpdateCollateral{
 		Denom: "uust",

@@ -155,7 +155,6 @@ func (k admin) UpdateCollateral(
 	ctx sdk.Context,
 	denom string,
 ) error {
-
 	if err := sdk.ValidateDenom(denom); err != nil {
 		return types.ErrInvalidCollateral.Wrap(err.Error())
 	}
