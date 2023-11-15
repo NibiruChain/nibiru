@@ -5,15 +5,15 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	grpccodes "google.golang.org/grpc/codes"
-	grpcstatus "google.golang.org/grpc/status"
+
+	"github.com/NibiruChain/nibiru/x/common"
 
 	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
 
 var _ types.MsgServer = (*Keeper)(nil)
 
-var errNilMsg error = grpcstatus.Errorf(grpccodes.InvalidArgument, "nil msg")
+var errNilMsg error = common.ErrNilMsg()
 
 func (k Keeper) CreateDenom(
 	goCtx context.Context, txMsg *types.MsgCreateDenom,

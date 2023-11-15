@@ -28,6 +28,9 @@ service Msg {
 
   rpc DonateToEcosystemFund(MsgDonateToEcosystemFund)
       returns (MsgDonateToEcosystemFundResponse) {}
+
+  rpc ChangeCollateralDenom(MsgChangeCollateralDenom)
+      returns (MsgChangeCollateralDenomResponse) {}
 }
 
 // -------------------------- Settle Position --------------------------
@@ -328,3 +331,14 @@ message MsgDonateToEcosystemFund {
 }
 
 message MsgDonateToEcosystemFundResponse {}
+
+// -----------------------  MsgChangeCollateralDenom -----------------------
+
+// MsgChangeCollateralDenom: Changes the collateral denom for the module.
+// [Admin] Only callable by sudoers.
+message MsgChangeCollateralDenom {
+  string sender = 1;
+  string new_denom = 2;
+}
+
+message MsgChangeCollateralDenomResponse {}

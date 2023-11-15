@@ -8,7 +8,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
@@ -36,7 +35,12 @@ Args:
 func (k admin) WithdrawFromInsuranceFund(
 	ctx sdk.Context, amount sdkmath.Int, to sdk.AccAddress,
 ) (err error) {
-	coinToSend := sdk.NewCoin(denoms.NUSD, amount)
+	collateral, err := k.Collateral.Get(ctx)
+	if err != nil {
+		return err
+	}
+
+	coinToSend := sdk.NewCoin(collateral, amount)
 	if err = k.BankKeeper.SendCoinsFromModuleToAccount(
 		ctx,
 		/* from */ types.PerpEFModuleAccount,
@@ -142,5 +146,31 @@ func (k admin) CloseMarket(ctx sdk.Context, pair asset.Pair) (err error) {
 	k.SaveAMM(ctx, amm)
 	k.SaveMarket(ctx, market)
 
+	return nil
+}
+
+// ChangeCollateralDenom: Updates the collateral denom. A denom is valid if it is
+// possible to make an sdk.Coin using it. [Admin] Only callable by sudoers.
+func (k admin) ChangeCollateralDenom(
+	ctx sdk.Context,
+	denom string,
+	sender sdk.AccAddress,
+) error {
+	if err := k.SudoKeeper.CheckPermissions(sender, ctx); err != nil {
+		return err
+	}
+	return k.UnsafeChangeCollateralDenom(ctx, denom)
+}
+
+// UnsafeChangeCollateralDenom: Used in the genesis to set the collateral
+// without requiring an explicit call from sudoers.
+func (k admin) UnsafeChangeCollateralDenom(
+	ctx sdk.Context,
+	denom string,
+) error {
+	if err := sdk.ValidateDenom(denom); err != nil {
+		return types.ErrInvalidCollateral.Wrap(err.Error())
+	}
+	k.Collateral.Set(ctx, denom)
 	return nil
 }

@@ -60,7 +60,7 @@ func DefaultMarket(pair asset.Pair) Market {
 		FundingRateEpochId:              epochstypes.ThirtyMinuteEpochID,
 		MaxFundingRate:                  sdk.NewDec(1),
 		TwapLookbackWindow:              time.Minute * 30,
-		PrepaidBadDebt:                  sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()),
+		PrepaidBadDebt:                  sdk.NewCoin(TestingCollateralDenomNUSD, sdk.ZeroInt()),
 		MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.0625"),
 		MaxLeverage:                     sdk.NewDec(10),
 	}

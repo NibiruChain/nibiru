@@ -16,6 +16,8 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
+	tftypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
 
 	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
@@ -28,18 +30,20 @@ func TestAdmin_WithdrawFromInsuranceFund(t *testing.T) {
 	) {
 		insuranceFund := nibiru.AccountKeeper.GetModuleAddress(types.PerpEFModuleAccount)
 		balances := nibiru.BankKeeper.GetAllBalances(ctx, insuranceFund)
-		got := balances.AmountOf(denoms.NUSD)
+		got := balances.AmountOf(types.TestingCollateralDenomNUSD)
 		require.EqualValues(t, want.String(), got.String())
 	}
 
 	setup := func() (nibiru *app.NibiruApp, ctx sdk.Context) {
+		testapp.EnsureNibiruPrefix()
 		nibiru, ctx = testapp.NewNibiruTestAppAndContext()
 		expectBalance(sdk.ZeroInt(), t, nibiru, ctx)
+		nibiru.PerpKeeperV2.Collateral.Set(ctx, types.TestingCollateralDenomNUSD)
 		return nibiru, ctx
 	}
 
 	fundModule := func(t *testing.T, amount sdkmath.Int, ctx sdk.Context, nibiru *app.NibiruApp) {
-		coins := sdk.NewCoins(sdk.NewCoin(denoms.NUSD, amount))
+		coins := sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, amount))
 		err := testapp.FundModuleAccount(
 			nibiru.BankKeeper, ctx, types.PerpEFModuleAccount,
 			coins,
@@ -63,7 +67,7 @@ func TestAdmin_WithdrawFromInsuranceFund(t *testing.T) {
 
 				require.EqualValues(t,
 					amountToFund.String(),
-					nibiru.BankKeeper.GetBalance(ctx, admin, denoms.NUSD).Amount.String(),
+					nibiru.BankKeeper.GetBalance(ctx, admin, types.TestingCollateralDenomNUSD).Amount.String(),
 				)
 				expectBalance(sdk.ZeroInt(), t, nibiru, ctx)
 			},
@@ -201,7 +205,7 @@ func TestCloseMarket(t *testing.T) {
 				SetBlockNumber(1),
 				SetBlockTime(startTime),
 
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1e6)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
 				CloseMarket(pairBtcUsdc),
@@ -226,7 +230,7 @@ func TestCloseMarket(t *testing.T) {
 			),
 			SetBlockNumber(1),
 			SetBlockTime(startTime),
-			FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200)))),
+			FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(10_200)))),
 			MarketOrder(
 				alice,
 				pairBtcUsdc,
@@ -251,7 +255,7 @@ func TestCloseMarket(t *testing.T) {
 			),
 			SetBlockNumber(1),
 			SetBlockTime(startTime),
-			FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10_200)))),
+			FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(10_200)))),
 			MarketOrder(
 				alice,
 				pairBtcUsdc,
@@ -269,4 +273,69 @@ func TestCloseMarket(t *testing.T) {
 	}
 
 	NewTestSuite(t).WithTestCases(tc...).Run()
+}
+
+func TestAdmin_ChangeCollateralDenom(t *testing.T) {
+	adminSender := testutil.AccAddress()
+	nonAdminSender := testutil.AccAddress()
+
+	setup := func() (nibiru *app.NibiruApp, ctx sdk.Context) {
+		nibiru, ctx = testapp.NewNibiruTestAppAndContext()
+		nibiru.SudoKeeper.Sudoers.Set(ctx, sudotypes.Sudoers{
+			Root:      "mock-root", // unused
+			Contracts: []string{adminSender.String()},
+		})
+		return nibiru, ctx
+	}
+
+	for _, tc := range []struct {
+		newDenom string
+		sender   sdk.AccAddress
+		wantErr  string
+		name     string
+	}{
+		{name: "happy: normal denom", newDenom: "nusd", sender: adminSender, wantErr: ""},
+
+		{name: "happy: token factory denom",
+			newDenom: tftypes.TFDenom{
+				Creator:  testutil.AccAddress().String(),
+				Subdenom: "nusd",
+			}.String(), sender: adminSender, wantErr: ""},
+
+		{name: "happy: token factory denom",
+			newDenom: tftypes.TFDenom{
+				Creator:  testutil.AccAddress().String(),
+				Subdenom: "nusd",
+			}.String(), sender: adminSender, wantErr: "",
+		},
+
+		{name: "happy: IBC denom",
+			newDenom: "ibc/46B44899322F3CD854D2D46DEEF881958467CDD4B3B10086DA49296BBED94BED", // JUNO on Osmosis
+			sender:   adminSender, wantErr: "",
+		},
+
+		{name: "sad: invalid denom",
+			newDenom: "", sender: adminSender, wantErr: types.ErrInvalidCollateral.Error(),
+		},
+		{name: "sad: sender not in sudoers",
+			newDenom: "nusd", sender: nonAdminSender, wantErr: "insufficient permissions on smart contract",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			bapp, ctx := setup()
+			err := bapp.PerpKeeperV2.Admin.ChangeCollateralDenom(
+				ctx, tc.newDenom, tc.sender,
+			)
+
+			if tc.wantErr != "" {
+				require.ErrorContains(t, err, tc.wantErr)
+				return
+			}
+			require.NoError(t, err)
+
+			newDenom, err := bapp.PerpKeeperV2.Collateral.Get(ctx)
+			require.NoError(t, err)
+			require.Equal(t, tc.newDenom, newDenom)
+		})
+	}
 }

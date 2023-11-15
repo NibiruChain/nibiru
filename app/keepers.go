@@ -364,13 +364,14 @@ func (app *NibiruApp) InitKeepers(
 		appCodec, keys[epochstypes.StoreKey],
 	)
 
+	app.SudoKeeper = keeper.NewKeeper(
+		appCodec, keys[sudotypes.StoreKey],
+	)
+
 	app.PerpKeeperV2 = perpkeeper.NewKeeper(
 		appCodec, keys[perptypes.StoreKey],
 		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.EpochsKeeper,
-	)
-
-	app.SudoKeeper = keeper.NewKeeper(
-		appCodec, keys[sudotypes.StoreKey],
+		app.SudoKeeper,
 	)
 
 	app.InflationKeeper = inflationkeeper.NewKeeper(

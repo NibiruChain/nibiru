@@ -56,6 +56,10 @@ func (tfd TFDenom) DefaultBankMetadata() banktypes.Metadata {
 	}
 }
 
+func (tfd TFDenom) IsEqual(other TFDenom) bool {
+	return tfd.Creator == other.Creator && tfd.Subdenom == other.Subdenom
+}
+
 // ----------------------------------------------------
 // DenomStr functions
 // ----------------------------------------------------

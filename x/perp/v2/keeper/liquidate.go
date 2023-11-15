@@ -291,10 +291,13 @@ func (k Keeper) executeFullLiquidation(
 		ecosystemFundFeeAmount = remainMargin
 	}
 
-	quoteDenom := market.Pair.QuoteDenom()
+	collateral, err := k.Collateral.Get(ctx)
+	if err != nil {
+		return sdk.Coin{}, sdk.Coin{}, err
+	}
 
-	liquidatorfee = sdk.NewCoin(quoteDenom, liquidatorFeeAmount.RoundInt())
-	ecosystemFundFee = sdk.NewCoin(quoteDenom, ecosystemFundFeeAmount.RoundInt())
+	liquidatorfee = sdk.NewCoin(collateral, liquidatorFeeAmount.RoundInt())
+	ecosystemFundFee = sdk.NewCoin(collateral, ecosystemFundFeeAmount.RoundInt())
 
 	err = k.distributeLiquidateRewards(
 		ctx,
@@ -311,17 +314,17 @@ func (k Keeper) executeFullLiquidation(
 		PositionChangedEvent: types.PositionChangedEvent{
 			FinalPosition:    positionResp.Position,
 			PositionNotional: positionResp.PositionNotional,
-			TransactionFee:   sdk.NewCoin(position.Pair.QuoteDenom(), sdk.ZeroInt()), // no transaction fee for liquidation
+			TransactionFee:   sdk.NewCoin(collateral, sdk.ZeroInt()), // no transaction fee for liquidation
 			RealizedPnl:      positionResp.RealizedPnl,
-			BadDebt:          sdk.NewCoin(position.Pair.QuoteDenom(), totalBadDebt.RoundInt()),
+			BadDebt:          sdk.NewCoin(collateral, totalBadDebt.RoundInt()),
 			FundingPayment:   positionResp.FundingPayment,
 			BlockHeight:      ctx.BlockHeight(),
 			MarginToUser:     sdk.ZeroInt(), // no margin to user for full liquidation
 			ChangeReason:     types.ChangeReason_FullLiquidation,
 		},
 		LiquidatorAddress:  liquidator.String(),
-		FeeToLiquidator:    sdk.NewCoin(position.Pair.QuoteDenom(), liquidatorFeeAmount.RoundInt()),
-		FeeToEcosystemFund: sdk.NewCoin(position.Pair.QuoteDenom(), ecosystemFundFeeAmount.RoundInt()),
+		FeeToLiquidator:    sdk.NewCoin(collateral, liquidatorFeeAmount.RoundInt()),
+		FeeToEcosystemFund: sdk.NewCoin(collateral, ecosystemFundFeeAmount.RoundInt()),
 	})
 
 	return liquidatorfee, ecosystemFundFee, err
@@ -370,9 +373,14 @@ func (k Keeper) executePartialLiquidation(
 	feeToLiquidator := liquidationFeeAmount.QuoInt64(2)
 	feeToPerpEcosystemFund := liquidationFeeAmount.Sub(feeToLiquidator)
 
+	collateral, err := k.Collateral.Get(ctx)
+	if err != nil {
+		return sdk.Coin{}, sdk.Coin{}, err
+	}
+
 	err = k.distributeLiquidateRewards(ctx, market, liquidator,
-		sdk.NewCoin(market.Pair.QuoteDenom(), feeToPerpEcosystemFund.RoundInt()),
-		sdk.NewCoin(market.Pair.QuoteDenom(), feeToLiquidator.RoundInt()),
+		sdk.NewCoin(collateral, feeToPerpEcosystemFund.RoundInt()),
+		sdk.NewCoin(collateral, feeToLiquidator.RoundInt()),
 	)
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
@@ -382,17 +390,17 @@ func (k Keeper) executePartialLiquidation(
 		PositionChangedEvent: types.PositionChangedEvent{
 			FinalPosition:    positionResp.Position,
 			PositionNotional: positionResp.PositionNotional,
-			TransactionFee:   sdk.NewCoin(position.Pair.QuoteDenom(), sdk.ZeroInt()), // no transaction fee for liquidation
+			TransactionFee:   sdk.NewCoin(collateral, sdk.ZeroInt()), // no transaction fee for liquidation
 			RealizedPnl:      positionResp.RealizedPnl,
-			BadDebt:          sdk.NewCoin(position.Pair.QuoteDenom(), sdk.ZeroInt()), // no bad debt for partial liquidation
+			BadDebt:          sdk.NewCoin(collateral, sdk.ZeroInt()), // no bad debt for partial liquidation
 			FundingPayment:   positionResp.FundingPayment,
 			BlockHeight:      ctx.BlockHeight(),
 			MarginToUser:     sdk.ZeroInt(), // no margin to user for partial liquidation
 			ChangeReason:     types.ChangeReason_PartialLiquidation,
 		},
 		LiquidatorAddress:  liquidator.String(),
-		FeeToLiquidator:    sdk.NewCoin(position.Pair.QuoteDenom(), feeToLiquidator.RoundInt()),
-		FeeToEcosystemFund: sdk.NewCoin(position.Pair.QuoteDenom(), feeToPerpEcosystemFund.RoundInt()),
+		FeeToLiquidator:    sdk.NewCoin(collateral, feeToLiquidator.RoundInt()),
+		FeeToEcosystemFund: sdk.NewCoin(collateral, feeToPerpEcosystemFund.RoundInt()),
 	})
 
 	return liquidatorFee, ecosystemFundFee, err

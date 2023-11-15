@@ -6,6 +6,7 @@ import (
 
 	"github.com/NibiruChain/collections"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
 
@@ -45,6 +46,8 @@ func (c createMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context
 		TimestampMs: ctx.BlockTime().UnixMilli(),
 	})
 
+	app.PerpKeeperV2.Collateral.Set(ctx, types.TestingCollateralDenomNUSD)
+
 	return ctx, nil, true
 }
 
@@ -74,9 +77,9 @@ func CreateCustomMarket(pair asset.Pair, marketModifiers ...MarketModifier) acti
 
 type MarketModifier func(market *types.Market, amm *types.AMM)
 
-func WithPrepaidBadDebt(amount sdkmath.Int) MarketModifier {
+func WithPrepaidBadDebt(amount sdkmath.Int, collateral string) MarketModifier {
 	return func(market *types.Market, amm *types.AMM) {
-		market.PrepaidBadDebt = sdk.NewCoin(market.Pair.QuoteDenom(), amount)
+		market.PrepaidBadDebt = sdk.NewCoin(collateral, amount)
 	}
 }
 
@@ -186,5 +189,33 @@ func CreateMarket(pair asset.Pair, market types.Market, amm types.AMM) action.Ac
 		pair:   pair,
 		market: market,
 		amm:    amm,
+	}
+}
+
+type setCollateral struct {
+	Denom  string
+	Sender string
+}
+
+func (c setCollateral) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	sudoers, err := app.SudoKeeper.Sudoers.Get(ctx)
+	if err != nil {
+		return ctx, err, true
+	}
+	sudoers.Root = common.NibiruTeam
+	app.SudoKeeper.Sudoers.Set(ctx, sudoers)
+
+	senderAddr, err := sdk.AccAddressFromBech32(c.Sender)
+	if err != nil {
+		return ctx, err, true
+	}
+	err = app.PerpKeeperV2.Admin.ChangeCollateralDenom(ctx, c.Denom, senderAddr)
+	return ctx, err, true
+}
+
+func SetCollateral(denom string) action.Action {
+	return setCollateral{
+		Denom:  denom,
+		Sender: common.NibiruTeam,
 	}
 }
