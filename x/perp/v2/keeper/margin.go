@@ -38,7 +38,7 @@ func (k Keeper) AddMargin(
 		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
 	}
 
-	if marginToAdd.Denom != collateral.String() {
+	if marginToAdd.Denom != collateral {
 		return nil, fmt.Errorf("invalid margin denom: %s", marginToAdd.Denom)
 	}
 
@@ -78,9 +78,9 @@ func (k Keeper) AddMargin(
 		&types.PositionChangedEvent{
 			FinalPosition:    position,
 			PositionNotional: positionNotional,
-			TransactionFee:   sdk.NewCoin(collateral.String(), sdk.ZeroInt()), // always zero when adding margin
-			RealizedPnl:      sdk.ZeroDec(),                                   // always zero when adding margin
-			BadDebt:          sdk.NewCoin(collateral.String(), sdk.ZeroInt()), // always zero when adding margin
+			TransactionFee:   sdk.NewCoin(collateral, sdk.ZeroInt()), // always zero when adding margin
+			RealizedPnl:      sdk.ZeroDec(),                          // always zero when adding margin
+			BadDebt:          sdk.NewCoin(collateral, sdk.ZeroInt()), // always zero when adding margin
 			FundingPayment:   fundingPayment,
 			BlockHeight:      ctx.BlockHeight(),
 			MarginToUser:     marginToAdd.Amount.Neg(),
@@ -133,7 +133,7 @@ func (k Keeper) RemoveMargin(
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
 	}
-	if marginToRemove.Denom != collateral.String() {
+	if marginToRemove.Denom != collateral {
 		return nil, fmt.Errorf("invalid margin denom: %s", marginToRemove.Denom)
 	}
 
@@ -188,9 +188,9 @@ func (k Keeper) RemoveMargin(
 		&types.PositionChangedEvent{
 			FinalPosition:    position,
 			PositionNotional: spotNotional,
-			TransactionFee:   sdk.NewCoin(collateral.String(), sdk.ZeroInt()), // always zero when removing margin
-			RealizedPnl:      sdk.ZeroDec(),                                   // always zero when removing margin
-			BadDebt:          sdk.NewCoin(collateral.String(), sdk.ZeroInt()), // always zero when removing margin
+			TransactionFee:   sdk.NewCoin(collateral, sdk.ZeroInt()), // always zero when removing margin
+			RealizedPnl:      sdk.ZeroDec(),                          // always zero when removing margin
+			BadDebt:          sdk.NewCoin(collateral, sdk.ZeroInt()), // always zero when removing margin
 			FundingPayment:   fundingPayment,
 			BlockHeight:      ctx.BlockHeight(),
 			MarginToUser:     marginToRemove.Amount,

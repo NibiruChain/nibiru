@@ -136,7 +136,7 @@ func (o *marketOrderFeeIs) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context,
 		return ctx, err, true
 	}
 
-	balanceBefore := app.BankKeeper.GetBalance(ctx, o.trader, collateral.String()).Amount
+	balanceBefore := app.BankKeeper.GetBalance(ctx, o.trader, collateral).Amount
 	resp, err := app.PerpKeeperV2.MarketOrder(
 		ctx, o.pair, o.dir, o.trader,
 		o.margin, o.leverage, o.baseAssetLimit,
@@ -148,7 +148,7 @@ func (o *marketOrderFeeIs) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context,
 	balanceBefore = balanceBefore.Sub(resp.MarginToVault.TruncateInt())
 
 	expectedFee := math.LegacyNewDecFromInt(o.margin).Mul(o.fee.Add(sdk.MustNewDecFromStr("0.001"))) // we add the ecosystem fund fee
-	balanceAfter := app.BankKeeper.GetBalance(ctx, o.trader, collateral.String()).Amount
+	balanceAfter := app.BankKeeper.GetBalance(ctx, o.trader, collateral).Amount
 	paidFees := balanceBefore.Sub(balanceAfter)
 	if !paidFees.Equal(expectedFee.TruncateInt()) {
 		return ctx, fmt.Errorf("unexpected fee, wanted %s, got %s", expectedFee, paidFees), true

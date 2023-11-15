@@ -296,8 +296,8 @@ func (k Keeper) executeFullLiquidation(
 		return sdk.Coin{}, sdk.Coin{}, err
 	}
 
-	liquidatorfee = sdk.NewCoin(collateral.String(), liquidatorFeeAmount.RoundInt())
-	ecosystemFundFee = sdk.NewCoin(collateral.String(), ecosystemFundFeeAmount.RoundInt())
+	liquidatorfee = sdk.NewCoin(collateral, liquidatorFeeAmount.RoundInt())
+	ecosystemFundFee = sdk.NewCoin(collateral, ecosystemFundFeeAmount.RoundInt())
 
 	err = k.distributeLiquidateRewards(
 		ctx,
@@ -314,17 +314,17 @@ func (k Keeper) executeFullLiquidation(
 		PositionChangedEvent: types.PositionChangedEvent{
 			FinalPosition:    positionResp.Position,
 			PositionNotional: positionResp.PositionNotional,
-			TransactionFee:   sdk.NewCoin(collateral.String(), sdk.ZeroInt()), // no transaction fee for liquidation
+			TransactionFee:   sdk.NewCoin(collateral, sdk.ZeroInt()), // no transaction fee for liquidation
 			RealizedPnl:      positionResp.RealizedPnl,
-			BadDebt:          sdk.NewCoin(collateral.String(), totalBadDebt.RoundInt()),
+			BadDebt:          sdk.NewCoin(collateral, totalBadDebt.RoundInt()),
 			FundingPayment:   positionResp.FundingPayment,
 			BlockHeight:      ctx.BlockHeight(),
 			MarginToUser:     sdk.ZeroInt(), // no margin to user for full liquidation
 			ChangeReason:     types.ChangeReason_FullLiquidation,
 		},
 		LiquidatorAddress:  liquidator.String(),
-		FeeToLiquidator:    sdk.NewCoin(collateral.String(), liquidatorFeeAmount.RoundInt()),
-		FeeToEcosystemFund: sdk.NewCoin(collateral.String(), ecosystemFundFeeAmount.RoundInt()),
+		FeeToLiquidator:    sdk.NewCoin(collateral, liquidatorFeeAmount.RoundInt()),
+		FeeToEcosystemFund: sdk.NewCoin(collateral, ecosystemFundFeeAmount.RoundInt()),
 	})
 
 	return liquidatorfee, ecosystemFundFee, err
@@ -379,8 +379,8 @@ func (k Keeper) executePartialLiquidation(
 	}
 
 	err = k.distributeLiquidateRewards(ctx, market, liquidator,
-		sdk.NewCoin(collateral.String(), feeToPerpEcosystemFund.RoundInt()),
-		sdk.NewCoin(collateral.String(), feeToLiquidator.RoundInt()),
+		sdk.NewCoin(collateral, feeToPerpEcosystemFund.RoundInt()),
+		sdk.NewCoin(collateral, feeToLiquidator.RoundInt()),
 	)
 	if err != nil {
 		return sdk.Coin{}, sdk.Coin{}, err
@@ -390,17 +390,17 @@ func (k Keeper) executePartialLiquidation(
 		PositionChangedEvent: types.PositionChangedEvent{
 			FinalPosition:    positionResp.Position,
 			PositionNotional: positionResp.PositionNotional,
-			TransactionFee:   sdk.NewCoin(collateral.String(), sdk.ZeroInt()), // no transaction fee for liquidation
+			TransactionFee:   sdk.NewCoin(collateral, sdk.ZeroInt()), // no transaction fee for liquidation
 			RealizedPnl:      positionResp.RealizedPnl,
-			BadDebt:          sdk.NewCoin(collateral.String(), sdk.ZeroInt()), // no bad debt for partial liquidation
+			BadDebt:          sdk.NewCoin(collateral, sdk.ZeroInt()), // no bad debt for partial liquidation
 			FundingPayment:   positionResp.FundingPayment,
 			BlockHeight:      ctx.BlockHeight(),
 			MarginToUser:     sdk.ZeroInt(), // no margin to user for partial liquidation
 			ChangeReason:     types.ChangeReason_PartialLiquidation,
 		},
 		LiquidatorAddress:  liquidator.String(),
-		FeeToLiquidator:    sdk.NewCoin(collateral.String(), feeToLiquidator.RoundInt()),
-		FeeToEcosystemFund: sdk.NewCoin(collateral.String(), feeToPerpEcosystemFund.RoundInt()),
+		FeeToLiquidator:    sdk.NewCoin(collateral, feeToLiquidator.RoundInt()),
+		FeeToEcosystemFund: sdk.NewCoin(collateral, feeToPerpEcosystemFund.RoundInt()),
 	})
 
 	return liquidatorFee, ecosystemFundFee, err

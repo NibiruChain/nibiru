@@ -48,4 +48,5 @@ var (
 
 	ErrSettlementPositionMarketEnabled   = sdkerrors.Register(ModuleName, 32, "market is enabled, you can only settle position on disabled market")
 	ErrCollateralTokenFactoryDenomNotSet = sdkerrors.Register(ModuleName, 36, "no collateral denom set for the perp keeper")
+	ErrInvalidCollateral                 = sdkerrors.Register(ModuleName, 37, "invalid collateral denom")
 )

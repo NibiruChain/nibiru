@@ -9,7 +9,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
-	tftypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
 
 // Extends the Keeper with admin functions. Admin is syntactic sugar to separate
@@ -41,7 +40,7 @@ func (k admin) WithdrawFromInsuranceFund(
 		return err
 	}
 
-	coinToSend := sdk.NewCoin(collateral.String(), amount)
+	coinToSend := sdk.NewCoin(collateral, amount)
 	if err = k.BankKeeper.SendCoinsFromModuleToAccount(
 		ctx,
 		/* from */ types.PerpEFModuleAccount,
@@ -151,20 +150,16 @@ func (k admin) CloseMarket(ctx sdk.Context, pair asset.Pair) (err error) {
 }
 
 // UpdateCollateral updates the collateral denom and contract allowed to mint it
+// A denom is valid if it is possible to make an sdk.Coin using it.
 func (k admin) UpdateCollateral(
 	ctx sdk.Context,
 	denom string,
-	contract string,
 ) error {
-	collateral := tftypes.TFDenom{
-		Creator:  contract,
-		Subdenom: denom,
+
+	if err := sdk.ValidateDenom(denom); err != nil {
+		return types.ErrInvalidCollateral.Wrap(err.Error())
 	}
 
-	if err := collateral.Validate(); err != nil {
-		return err
-	}
-
-	k.Collateral.Set(ctx, collateral)
+	k.Collateral.Set(ctx, denom)
 	return nil
 }
