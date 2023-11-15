@@ -212,7 +212,7 @@ func (exec *ExecutorPerp) UpdateCollateral(
 		return wasmvmtypes.InvalidRequest{Err: "null msg"}
 	}
 
-	return exec.PerpV2.Admin.UpdateCollateral(ctx, cwMsg.Denom, cwMsg.ContractAddress)
+	return exec.PerpV2.Admin.UpdateCollateral(ctx, cwMsg.Denom)
 }
 
 func (exec *ExecutorPerp) CreateMarket(

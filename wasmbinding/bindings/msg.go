@@ -101,8 +101,7 @@ type SetMarketEnabled struct {
 }
 
 type UpdateCollateral struct {
-	Denom           string `json:"denom"`
-	ContractAddress string `json:"contract_address"`
+	Denom string `json:"denom"`
 }
 
 type CreateMarket struct {

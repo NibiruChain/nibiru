@@ -295,8 +295,6 @@ func TestFailMsgServer(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	app, ctx := testapp.NewNibiruTestAppAndContext()
 
-	// TODO: DEBUG remove
-	// sender := "cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v"
 	sender := testutil.AccAddress().String()
 
 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
