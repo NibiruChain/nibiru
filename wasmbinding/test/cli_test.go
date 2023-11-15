@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmcli "github.com/CosmWasm/wasmd/x/wasm/client/cli"
+
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/testutil/cli"
@@ -147,7 +147,7 @@ func (s *IntegrationTestSuite) deployWasmContract(path string) (uint64, error) {
 		return 0, fmt.Errorf("no data found in response")
 	}
 
-	var storeCodeResponse wasm.MsgStoreCodeResponse
+	var storeCodeResponse types.MsgStoreCodeResponse
 	err = codec.Unmarshal(respData.MsgResponses[0].Value, &storeCodeResponse)
 	if err != nil {
 		return 0, err
