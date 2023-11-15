@@ -46,5 +46,7 @@ var (
 	ErrNilSwapInvariant         = sdkerrors.Register(ModuleName, 28, "swap multiplier must be not nil")
 	ErrNotEnoughFundToPayAction = sdkerrors.Register(ModuleName, 29, "not enough fund in perp EF to pay for action")
 
-	ErrSettlementPositionMarketEnabled = sdkerrors.Register(ModuleName, 32, "market is enabled, you can only settle position on disabled market")
+	ErrSettlementPositionMarketEnabled   = sdkerrors.Register(ModuleName, 32, "market is enabled, you can only settle position on disabled market")
+	ErrCollateralTokenFactoryDenomNotSet = sdkerrors.Register(ModuleName, 36, "no collateral denom set for the perp keeper")
+	ErrInvalidCollateral                 = sdkerrors.Register(ModuleName, 37, "invalid collateral denom")
 )
