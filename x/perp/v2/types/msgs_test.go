@@ -61,16 +61,6 @@ func TestMsgValidateBasic(t *testing.T) {
 			true,
 			"margin must be positive",
 		},
-		{
-			"Test MsgRemoveMargin: Invalid margin",
-			&MsgRemoveMargin{
-				Sender: validSender,
-				Pair:   validPair,
-				Margin: sdk.NewCoin("denom", sdk.OneInt()),
-			},
-			true,
-			"invalid margin denom",
-		},
 
 		// MsgAddMargin test cases
 		{
@@ -112,16 +102,6 @@ func TestMsgValidateBasic(t *testing.T) {
 			},
 			true,
 			"margin must be positive",
-		},
-		{
-			"Test MsgAddMargin: Invalid margin",
-			&MsgAddMargin{
-				Sender: validSender,
-				Pair:   validPair,
-				Margin: sdk.NewCoin("denom", sdk.OneInt()),
-			},
-			true,
-			"invalid margin denom",
 		},
 		// MsgMarketOrder test cases
 		{

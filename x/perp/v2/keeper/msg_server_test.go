@@ -27,7 +27,7 @@ func TestMsgServerMarketOrder(t *testing.T) {
 		TC("open long position").
 			Given(
 				CreateCustomMarket(pair, WithEnabled(true)),
-				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 100))),
 			).
 			When(
 				MsgServerMarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroInt()),
@@ -44,13 +44,13 @@ func TestMsgServerMarketOrder(t *testing.T) {
 						LastUpdatedBlockNumber:          1,
 					}),
 				),
-				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(99)),
+				BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.NewInt(99)),
 			),
 
 		TC("open short position").
 			Given(
 				CreateCustomMarket(pair, WithEnabled(true)),
-				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 100))),
 			).
 			When(
 				MsgServerMarketOrder(alice, pair, types.Direction_SHORT, sdk.OneInt(), sdk.OneDec(), sdk.ZeroInt()),
@@ -67,7 +67,7 @@ func TestMsgServerMarketOrder(t *testing.T) {
 						LastUpdatedBlockNumber:          1,
 					}),
 				),
-				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(99)),
+				BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.NewInt(99)),
 			),
 	}
 
@@ -82,7 +82,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 		TC("close long position").
 			Given(
 				CreateCustomMarket(pair, WithEnabled(true)),
-				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 100))),
 				MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
@@ -91,13 +91,13 @@ func TestMsgServerClosePosition(t *testing.T) {
 			).
 			Then(
 				PositionShouldNotExist(alice, pair, 1),
-				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(100)),
+				BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.NewInt(100)),
 			),
 
 		TC("close short position").
 			Given(
 				CreateCustomMarket(pair, WithEnabled(true)),
-				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 100))),
 				MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
@@ -106,7 +106,7 @@ func TestMsgServerClosePosition(t *testing.T) {
 			).
 			Then(
 				PositionShouldNotExist(alice, pair, 1),
-				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(100)),
+				BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.NewInt(100)),
 			),
 	}
 
@@ -121,7 +121,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 		TC("add margin").
 			Given(
 				CreateCustomMarket(pair, WithEnabled(true)),
-				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 100))),
 				MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
@@ -140,12 +140,12 @@ func TestMsgServerAddMargin(t *testing.T) {
 						LastUpdatedBlockNumber:          2,
 					}),
 				),
-				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(98)),
+				BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.NewInt(98)),
 			),
 		TC("partial close").
 			Given(
 				CreateCustomMarket(pair, WithEnabled(true)),
-				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 100))),
 				MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
@@ -164,7 +164,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 						LastUpdatedBlockNumber:          2,
 					}),
 				),
-				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(98)),
+				BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.NewInt(98)),
 			),
 	}
 
@@ -179,7 +179,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 		TC("add margin").
 			Given(
 				CreateCustomMarket(pair, WithEnabled(true)),
-				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 100))),
 				MarketOrder(alice, pair, types.Direction_LONG, sdk.NewInt(2), sdk.OneDec(), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
@@ -198,7 +198,7 @@ func TestMsgServerRemoveMargin(t *testing.T) {
 						LastUpdatedBlockNumber:          2,
 					}),
 				),
-				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(99)),
+				BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.NewInt(99)),
 			),
 	}
 
@@ -211,14 +211,15 @@ func TestMsgServerDonateToPerpEf(t *testing.T) {
 	tests := TestCases{
 		TC("success").
 			Given(
-				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(denoms.NUSD, 100))),
+				SetCollateral(types.TestingCollateralDenomNUSD),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 100))),
 			).
 			When(
 				MsgServerDonateToPerpEf(alice, sdk.NewInt(50)),
 			).
 			Then(
-				BalanceEqual(alice, denoms.NUSD, sdk.NewInt(50)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.NUSD, sdk.NewInt(50)),
+				BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.NewInt(50)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(50)),
 			),
 	}
 
@@ -238,7 +239,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 				SetBlockTime(startTime),
 				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10400))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 1000))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -247,9 +248,9 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 				),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(750)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(125)),
-				BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(125)),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(750)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(125)),
+				BalanceEqual(liquidator, types.TestingCollateralDenomNUSD, sdk.NewInt(125)),
 				PositionShouldBeEqual(alice, pairBtcUsdc,
 					Position_PositionShouldBeEqualTo(
 						types.Position{
@@ -271,7 +272,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 				SetBlockTime(startTime),
 				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10600))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 1000))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -280,9 +281,9 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 				),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(600)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(150)),
-				BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(250)),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(600)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(150)),
+				BalanceEqual(liquidator, types.TestingCollateralDenomNUSD, sdk.NewInt(250)),
 				PositionShouldNotExist(alice, pairBtcUsdc, 1),
 			),
 	}
@@ -294,10 +295,12 @@ func TestFailMsgServer(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	app, ctx := testapp.NewNibiruTestAppAndContext()
 
+	sender := testutil.AccAddress().String()
+
 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
 
 	_, err := msgServer.MarketOrder(ctx, &types.MsgMarketOrder{
-		Sender:               "cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v",
+		Sender:               sender,
 		Pair:                 pair,
 		Side:                 types.Direction_LONG,
 		QuoteAssetAmount:     sdk.OneInt(),
@@ -307,31 +310,31 @@ func TestFailMsgServer(t *testing.T) {
 	require.ErrorContains(t, err, "pair ubtc:unusd not found")
 
 	_, err = msgServer.ClosePosition(ctx, &types.MsgClosePosition{
-		Sender: "cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v",
+		Sender: sender,
 		Pair:   pair,
 	})
 	require.ErrorContains(t, err, types.ErrPairNotFound.Error())
 
 	_, err = msgServer.PartialClose(ctx, &types.MsgPartialClose{
-		Sender: "cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v",
+		Sender: sender,
 		Pair:   pair,
 		Size_:  sdk.OneDec(),
 	})
 	require.ErrorContains(t, err, types.ErrPairNotFound.Error())
 
 	_, err = msgServer.MultiLiquidate(ctx, &types.MsgMultiLiquidate{
-		Sender: "cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v",
+		Sender: sender,
 		Liquidations: []*types.MsgMultiLiquidate_Liquidation{
 			{
 				Pair:   pair,
-				Trader: "cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v",
+				Trader: sender,
 			},
 		},
 	})
 	require.ErrorContains(t, err, types.ErrPairNotFound.Error())
 
 	_, err = msgServer.DonateToEcosystemFund(ctx, &types.MsgDonateToEcosystemFund{
-		Sender:   "cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v",
+		Sender:   sender,
 		Donation: sdk.NewCoin("luna", sdk.OneInt()),
 	})
 	require.ErrorContains(t, err, "spendable balance  is smaller than 1luna")

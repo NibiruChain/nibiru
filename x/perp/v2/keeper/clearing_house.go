@@ -539,9 +539,15 @@ func (k Keeper) afterPositionUpdate(
 ) (err error) {
 	// transfer trader <=> vault
 	marginToVault := positionResp.MarginToVault.RoundInt()
+
+	collateral, err := k.Collateral.Get(ctx)
+	if errors.Is(err, collections.ErrNotFound) {
+		return types.ErrCollateralTokenFactoryDenomNotSet
+	}
+
 	switch {
 	case marginToVault.IsPositive():
-		coinToSend := sdk.NewCoin(market.Pair.QuoteDenom(), marginToVault)
+		coinToSend := sdk.NewCoin(collateral, marginToVault)
 		if err = k.BankKeeper.SendCoinsFromAccountToModule(
 			ctx, traderAddr, types.VaultModuleAccount, sdk.NewCoins(coinToSend)); err != nil {
 			return err
@@ -577,9 +583,9 @@ func (k Keeper) afterPositionUpdate(
 		&types.PositionChangedEvent{
 			FinalPosition:     positionResp.Position,
 			PositionNotional:  positionNotional,
-			TransactionFee:    sdk.NewCoin(market.Pair.QuoteDenom(), transferredFee),
+			TransactionFee:    sdk.NewCoin(collateral, transferredFee),
 			RealizedPnl:       positionResp.RealizedPnl,
-			BadDebt:           sdk.NewCoin(market.Pair.QuoteDenom(), positionResp.BadDebt.RoundInt()),
+			BadDebt:           sdk.NewCoin(collateral, positionResp.BadDebt.RoundInt()),
 			FundingPayment:    positionResp.FundingPayment,
 			BlockHeight:       ctx.BlockHeight(),
 			MarginToUser:      marginToVault.Neg().Sub(transferredFee),
@@ -635,6 +641,11 @@ func (k Keeper) transferFee(
 	exchangeFeeRatio sdk.Dec,
 	ecosystemFundFeeRatio sdk.Dec,
 ) (fees sdkmath.Int, err error) {
+	collateral, err := k.Collateral.Get(ctx)
+	if err != nil {
+		return sdkmath.Int{}, err
+	}
+
 	exchangeFeeRatio, err = k.applyDiscountAndRebate(ctx, pair, trader, positionNotional, exchangeFeeRatio)
 	if err != nil {
 		return sdkmath.Int{}, err
@@ -647,7 +658,7 @@ func (k Keeper) transferFee(
 			/* to */ types.FeePoolModuleAccount,
 			/* coins */ sdk.NewCoins(
 				sdk.NewCoin(
-					pair.QuoteDenom(),
+					collateral,
 					feeToExchangeFeePool,
 				),
 			),
@@ -664,7 +675,7 @@ func (k Keeper) transferFee(
 			/* to */ types.PerpEFModuleAccount,
 			/* coins */ sdk.NewCoins(
 				sdk.NewCoin(
-					pair.QuoteDenom(),
+					collateral,
 					feeToEcosystemFund,
 				),
 			),
