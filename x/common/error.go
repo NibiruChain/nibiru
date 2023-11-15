@@ -3,9 +3,10 @@ package common
 import (
 	"errors"
 	"fmt"
+	"runtime/debug"
+
 	grpccodes "google.golang.org/grpc/codes"
 	grpcstatus "google.golang.org/grpc/status"
-	"runtime/debug"
 )
 
 // TryCatch is an implementation of the try-catch block from languages like C++ and JS.

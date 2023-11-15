@@ -3,9 +3,10 @@ package keeper
 import (
 	"context"
 
-	"github.com/NibiruChain/nibiru/x/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+
+	"github.com/NibiruChain/nibiru/x/common"
 
 	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )

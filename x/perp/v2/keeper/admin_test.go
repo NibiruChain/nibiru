@@ -336,8 +336,6 @@ func TestAdmin_ChangeCollateralDenom(t *testing.T) {
 			newDenom, err := bapp.PerpKeeperV2.Collateral.Get(ctx)
 			require.NoError(t, err)
 			require.Equal(t, tc.newDenom, newDenom)
-
 		})
 	}
-
 }
