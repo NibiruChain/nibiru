@@ -3,6 +3,8 @@ package common
 import (
 	"errors"
 	"fmt"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
 	"runtime/debug"
 )
 
@@ -179,4 +181,8 @@ func CombineErrorsFromStrings(strs ...string) (err error) {
 		errs = append(errs, err)
 	}
 	return CombineErrors(errs...)
+}
+
+func ErrNilMsg() error {
+	return grpcstatus.Errorf(grpccodes.InvalidArgument, "nil msg")
 }

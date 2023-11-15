@@ -11,6 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
@@ -18,6 +19,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	perp "github.com/NibiruChain/nibiru/x/perp/v2/module"
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 )
 
 type TestCase struct {
@@ -25,7 +27,12 @@ type TestCase struct {
 	positions []types.Position
 }
 
+func init() {
+	testapp.EnsureNibiruPrefix()
+}
+
 func TestGenesis(t *testing.T) {
+	testapp.EnsureNibiruPrefix()
 	testCases := []TestCase{
 		{
 			name:      "empty positions genesis",
@@ -61,14 +68,31 @@ func TestGenesis(t *testing.T) {
 	}
 }
 
+func PerpSudoers() sudotypes.Sudoers {
+	_, addrs := testutil.PrivKeyAddressPairs(2)
+	return sudotypes.Sudoers{
+		Root:      addrs[0].String(),
+		Contracts: []string{addrs[1].String()},
+	}
+}
+
 func RunTestGenesis(t *testing.T, tc TestCase) {
+	testapp.EnsureNibiruPrefix()
 	app, ctxUncached := testapp.NewNibiruTestAppAndContext()
 	ctx, _ := ctxUncached.CacheContext()
 
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 
+	// Initialize sudo state
+	nibiruTeam := common.NibiruTeam
+	sudoers := PerpSudoers()
+	sudoersRoot := sdk.MustAccAddressFromBech32(nibiruTeam)
+	sudoers.Root = sudoersRoot.String()
+	app.SudoKeeper.Sudoers.Set(ctx, sudoers)
+
 	// create some params
-	require.NoError(t, app.PerpKeeperV2.Admin.UpdateCollateral(ctx, "unusd"))
+	require.NoError(t, app.PerpKeeperV2.Admin.ChangeCollateralDenom(
+		ctx, "unusd", sudoersRoot))
 	app.PerpKeeperV2.SaveMarket(ctx, *mock.TestMarket())
 	app.PerpKeeperV2.MarketLastVersion.Insert(ctx, pair, types.MarketLastVersion{Version: 1})
 	app.PerpKeeperV2.SaveAMM(ctx, *mock.TestAMMDefault())

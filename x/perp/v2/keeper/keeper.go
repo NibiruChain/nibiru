@@ -26,6 +26,7 @@ type Keeper struct {
 	AccountKeeper types.AccountKeeper
 	OracleKeeper  types.OracleKeeper
 	EpochKeeper   types.EpochKeeper
+	SudoKeeper    types.SudoKeeper
 
 	// Extends the Keeper with admin functions. See admin.go.
 	Admin admin
@@ -52,6 +53,7 @@ func NewKeeper(
 	bankKeeper types.BankKeeper,
 	oracleKeeper types.OracleKeeper,
 	epochKeeper types.EpochKeeper,
+	sudoKeeper types.SudoKeeper,
 ) Keeper {
 	// Ensure that the module account is set.
 	if moduleAcc := accountKeeper.GetModuleAddress(types.ModuleName); moduleAcc == nil {
@@ -65,6 +67,7 @@ func NewKeeper(
 		AccountKeeper: accountKeeper,
 		OracleKeeper:  oracleKeeper,
 		EpochKeeper:   epochKeeper,
+		SudoKeeper:    sudoKeeper,
 		Markets: collections.NewMap(
 			storeKey, NamespaceMarkets,
 			collections.PairKeyEncoder(asset.PairKeyEncoder, collections.Uint64KeyEncoder),

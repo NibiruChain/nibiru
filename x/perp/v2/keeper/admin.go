@@ -149,16 +149,28 @@ func (k admin) CloseMarket(ctx sdk.Context, pair asset.Pair) (err error) {
 	return nil
 }
 
-// UpdateCollateral updates the collateral denom and contract allowed to mint it
-// A denom is valid if it is possible to make an sdk.Coin using it.
-func (k admin) UpdateCollateral(
+// ChangeCollateralDenom: Updates the collateral denom. A denom is valid if it is
+// possible to make an sdk.Coin using it. [Admin] Only callable by sudoers.
+func (k admin) ChangeCollateralDenom(
+	ctx sdk.Context,
+	denom string,
+	sender sdk.AccAddress,
+) error {
+	if err := k.SudoKeeper.CheckPermissions(sender, ctx); err != nil {
+		return err
+	}
+	return k.UnsafeChangeCollateralDenom(ctx, denom)
+}
+
+// UnsafeChangeCollateralDenom: Used in the genesis to set the collateral
+// without requiring an explicit call from sudoers.
+func (k admin) UnsafeChangeCollateralDenom(
 	ctx sdk.Context,
 	denom string,
 ) error {
 	if err := sdk.ValidateDenom(denom); err != nil {
 		return types.ErrInvalidCollateral.Wrap(err.Error())
 	}
-
 	k.Collateral.Set(ctx, denom)
 	return nil
 }

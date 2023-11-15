@@ -6,6 +6,7 @@ import (
 
 	"github.com/NibiruChain/collections"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
 
@@ -192,16 +193,29 @@ func CreateMarket(pair asset.Pair, market types.Market, amm types.AMM) action.Ac
 }
 
 type setCollateral struct {
-	Denom string
+	Denom  string
+	Sender string
 }
 
 func (c setCollateral) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	err := app.PerpKeeperV2.Admin.UpdateCollateral(ctx, c.Denom)
+	sudoers, err := app.SudoKeeper.Sudoers.Get(ctx)
+	if err != nil {
+		return ctx, err, true
+	}
+	sudoers.Root = common.NibiruTeam
+	app.SudoKeeper.Sudoers.Set(ctx, sudoers)
+
+	senderAddr, err := sdk.AccAddressFromBech32(c.Sender)
+	if err != nil {
+		return ctx, err, true
+	}
+	err = app.PerpKeeperV2.Admin.ChangeCollateralDenom(ctx, c.Denom, senderAddr)
 	return ctx, err, true
 }
 
 func SetCollateral(denom string) action.Action {
 	return setCollateral{
-		Denom: denom,
+		Denom:  denom,
+		Sender: common.NibiruTeam,
 	}
 }

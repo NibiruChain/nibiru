@@ -100,10 +100,6 @@ type SetMarketEnabled struct {
 	Enabled bool   `json:"enabled"`
 }
 
-type UpdateCollateral struct {
-	Denom string `json:"denom"`
-}
-
 type CreateMarket struct {
 	Pair         string        `json:"pair"`
 	PegMult      sdk.Dec       `json:"peg_mult,omitempty"`

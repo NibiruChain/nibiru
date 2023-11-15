@@ -16,6 +16,8 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
+	tftypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
 
 	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
@@ -271,4 +273,71 @@ func TestCloseMarket(t *testing.T) {
 	}
 
 	NewTestSuite(t).WithTestCases(tc...).Run()
+}
+
+func TestAdmin_ChangeCollateralDenom(t *testing.T) {
+	adminSender := testutil.AccAddress()
+	nonAdminSender := testutil.AccAddress()
+
+	setup := func() (nibiru *app.NibiruApp, ctx sdk.Context) {
+		nibiru, ctx = testapp.NewNibiruTestAppAndContext()
+		nibiru.SudoKeeper.Sudoers.Set(ctx, sudotypes.Sudoers{
+			Root:      "mock-root", // unused
+			Contracts: []string{adminSender.String()},
+		})
+		return nibiru, ctx
+	}
+
+	for _, tc := range []struct {
+		newDenom string
+		sender   sdk.AccAddress
+		wantErr  string
+		name     string
+	}{
+		{name: "happy: normal denom", newDenom: "nusd", sender: adminSender, wantErr: ""},
+
+		{name: "happy: token factory denom",
+			newDenom: tftypes.TFDenom{
+				Creator:  testutil.AccAddress().String(),
+				Subdenom: "nusd",
+			}.String(), sender: adminSender, wantErr: ""},
+
+		{name: "happy: token factory denom",
+			newDenom: tftypes.TFDenom{
+				Creator:  testutil.AccAddress().String(),
+				Subdenom: "nusd",
+			}.String(), sender: adminSender, wantErr: "",
+		},
+
+		{name: "happy: IBC denom",
+			newDenom: "ibc/46B44899322F3CD854D2D46DEEF881958467CDD4B3B10086DA49296BBED94BED", // JUNO on Osmosis
+			sender:   adminSender, wantErr: "",
+		},
+
+		{name: "sad: invalid denom",
+			newDenom: "", sender: adminSender, wantErr: types.ErrInvalidCollateral.Error(),
+		},
+		{name: "sad: sender not in sudoers",
+			newDenom: "nusd", sender: nonAdminSender, wantErr: "insufficient permissions on smart contract",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			bapp, ctx := setup()
+			err := bapp.PerpKeeperV2.Admin.ChangeCollateralDenom(
+				ctx, tc.newDenom, tc.sender,
+			)
+
+			if tc.wantErr != "" {
+				require.ErrorContains(t, err, tc.wantErr)
+				return
+			}
+			require.NoError(t, err)
+
+			newDenom, err := bapp.PerpKeeperV2.Collateral.Get(ctx)
+			require.NoError(t, err)
+			require.Equal(t, tc.newDenom, newDenom)
+
+		})
+	}
+
 }

@@ -72,7 +72,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	}
 
 	if genState.CollateralDenom != "" {
-		err := k.Admin.UpdateCollateral(ctx, genState.CollateralDenom)
+		err := k.Admin.UnsafeChangeCollateralDenom(ctx, genState.CollateralDenom)
 		if err != nil {
 			panic(err)
 		}
