@@ -35,7 +35,7 @@ func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
 	app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdk.NewDec(20000))
 	app.OracleKeeper.SetPrice(ctx, "xxx:yyy", sdk.NewDec(20000))
 
-	app.PerpKeeperV2.Collateral.Set(ctx, types.DefaultTestingCollateralNotForProd)
+	app.PerpKeeperV2.Collateral.Set(ctx, types.TestingCollateralDenomNUSD)
 
 	return app, ctx
 }
