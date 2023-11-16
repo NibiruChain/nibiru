@@ -83,6 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `github.com/CosmWasm/wasmd` from 0.40.2 to 0.43.0 ([#1660](https://github.com/NibiruChain/nibiru/pull/1660))
 - Bump `github.com/CosmWasm/wasmd` from 0.43.0 to 0.44.0 ([#1666](https://github.com/NibiruChain/nibiru/pull/1666))
 - Bump `github.com/spf13/cobra` from 1.7.0 to 1.8.0 ([#1664](https://github.com/NibiruChain/nibiru/pull/1664))
+- Bump `github.com/gorilla/mux` from 1.8.0 to 1.8.1 ([#1665](https://github.com/NibiruChain/nibiru/pull/1665))
 
 ### Bug Fixes
 
@@ -135,6 +136,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1555](https://github.com/NibiruChain/nibiru/pull/1555) - feat(devgas): Convert legacy ABCI events to typed proto events
 * [#1558](https://github.com/NibiruChain/nibiru/pull/1558) - feat(perp): paginated query to read the position store  
 * [#1554](https://github.com/NibiruChain/nibiru/pull/1554) - refactor: runs gofumpt formatter, which has nice conventions: go install mvdan.cc/gofumpt@latest
+* [#1669](https://github.com/NibiruChain/nibiru/pull/1669) - feat(perp): add query to get collateral metadata
 
 ### Bug Fixes
 
