@@ -7,17 +7,16 @@ jobs:
   changelog-update:
     runs-on: ubuntu-latest
 
-    permissions:
-      # Give the default GITHUB_TOKEN write permission to commit and push the changed files back to the repository.
-      contents: write
-
-    # TODO: feat: try to use author of the commit(s) to see if it's dependabot
-    # ${{ any(contains(commit.author.username, 'dependabot') for commit in github.event.commits) }}
     if: contains(github.event.pull_request.labels.*.name, 'dependabot')
+    # TODO: feat: try to use author of the commit(s) to see if it's dependabot
+    # instead of using labels. Labels work fine for now.
+    # ${{ any(contains(commit.author.username, 'dependabot') for commit in github.event.commits) }}
 
     steps:
       - uses: actions/checkout@v4
         with:
+          # Token with permissions for pushing commits and editting GH issues
+          token: ${{ secrets.NIBIRU_PM }}
           # to avoid checking out the repo in a detached state
           ref: ${{ github.head_ref }}
       # Helps keep your repository up-to-date when Dependabot updates your dependencies.
