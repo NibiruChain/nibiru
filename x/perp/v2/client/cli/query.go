@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 
+	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -14,8 +15,8 @@ import (
 
 const FlagVersioned = "versioned"
 
-// GetQueryCmd returns the cli query commands for this module
-func GetQueryCmd() *cobra.Command {
+// NewQueryCmd returns the cli query commands for this module
+func NewQueryCmd() *cobra.Command {
 	// Group stablecoin queries under a subcommand
 	moduleQueryCmd := &cobra.Command{
 		Use: types.ModuleName,
@@ -31,6 +32,7 @@ func GetQueryCmd() *cobra.Command {
 		CmdQueryPositions(),
 		CmdQueryModuleAccounts(),
 		CmdQueryMarkets(),
+		CmdQueryCollateral(),
 	}
 	for _, cmd := range cmds {
 		moduleQueryCmd.AddCommand(cmd)
@@ -149,10 +151,10 @@ func CmdQueryMarkets() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "markets",
 		Short: "Query all market info",
-		Long: `
+		Long: heredoc.Doc(`
 Query all market info. By default, only active tradable markets are shown.
 If --versioned is to to true, the query will return all markets including the 
-inactive ones.`,
+inactive ones.`),
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -182,5 +184,38 @@ inactive ones.`,
 
 	flags.AddQueryFlagsToCmd(cmd)
 
+	return cmd
+}
+
+// CmdQueryCollateral: Command for the "Query/Collateral" gRPC service method.
+func CmdQueryCollateral() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "collateral",
+		Aliases: []string{"coll"},
+		Short:   "Query the collateral denomination info.",
+		Long: heredoc.Doc(`
+		Query the metadata of the fungible collateral used by the perp module. 
+		`,
+		),
+		Args: cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.QueryCollateral(
+				cmd.Context(), &types.QueryCollateralRequest{},
+			)
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }

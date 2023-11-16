@@ -12,10 +12,12 @@ option go_package = "github.com/NibiruChain/nibiru/x/perp/v2/types";
 
 // Query defines the gRPC querier service.
 service Query {
+  // QueryPosition: Query one position on the given market for a user
   rpc QueryPosition(QueryPositionRequest) returns (QueryPositionResponse) {
     option (google.api.http).get = "/nibiru/perp/v2/position";
   }
 
+  // QueryPositions: Query all positions for a user
   rpc QueryPositions(QueryPositionsRequest) returns (QueryPositionsResponse) {
     option (google.api.http).get = "/nibiru/perp/v2/positions";
   }
@@ -26,31 +28,46 @@ service Query {
     option (google.api.http).get = "/nibiru/perp/v2/position_store";
   }
 
-  // Queries the reserve assets in a given pool, identified by a token pair.
+  // Queries the module accounts for x/perp
   rpc ModuleAccounts(QueryModuleAccountsRequest)
       returns (QueryModuleAccountsResponse) {
     option (google.api.http).get = "/nibiru/perp/v2/module_accounts";
   }
 
+  // QueryMarkets: Query all markets
   rpc QueryMarkets(QueryMarketsRequest) returns (QueryMarketsResponse) {
     option (google.api.http).get = "/nibiru/perp/v2/markets";
+  }
+
+  // QueryCollateral: Queries info about the collateral
+  rpc QueryCollateral(QueryCollateralRequest)
+      returns (QueryCollateralResponse) {
+    option (google.api.http).get = "/nibiru/perp/v2/collateral";
   }
 }
 
 // ---------------------------------------- Positions
 
+// QueryPositionsRequest: Request type for the
+// "nibiru.perp.v2.Query/Positions" gRPC service method
 message QueryPositionsRequest { string trader = 1; }
 
+// QueryPositionsResponse: Response type for the
+// "nibiru.perp.v2.Query/Positions" gRPC service method
 message QueryPositionsResponse {
   repeated nibiru.perp.v2.QueryPositionResponse positions = 1
       [ (gogoproto.nullable) = false ];
 }
 
+// QueryPositionStoreRequest: Request type for the
+// "nibiru.perp.v2.Query/PositionStore" gRPC service method
 message QueryPositionStoreRequest {
   // pagination defines a paginated request
   cosmos.base.query.v1beta1.PageRequest pagination = 1;
 }
 
+// QueryPositionStoreResponse: Response type for the
+// "nibiru.perp.v2.Query/PositionStore" gRPC service method
 message QueryPositionStoreResponse {
   // Position responses: collection of all stored positions (with pagination)
   repeated nibiru.perp.v2.Position positions = 1
@@ -62,8 +79,8 @@ message QueryPositionStoreResponse {
 
 // ---------------------------------------- Position
 
-// QueryPositionRequest is the request type for the position of the x/perp
-// module account.
+// QueryPositionRequest: Request type for the
+// "nibiru.perp.v2.Query/Position" gRPC service method
 message QueryPositionRequest {
   string pair = 1 [
     (gogoproto.customtype) =
@@ -74,6 +91,8 @@ message QueryPositionRequest {
   string trader = 2;
 }
 
+// QueryPositionResponse: Response type for the
+// "nibiru.perp.v2.Query/Position" gRPC service method
 message QueryPositionResponse {
   // The position as it exists in the blockchain state
   nibiru.perp.v2.Position position = 1 [ (gogoproto.nullable) = false ];
@@ -100,8 +119,12 @@ message QueryPositionResponse {
 
 // ---------------------------------------- QueryModuleAccounts
 
+// QueryModuleAccountsRequest: Request type for the
+// "nibiru.perp.v2.Query/ModuleAccounts" gRPC service method
 message QueryModuleAccountsRequest {}
 
+// QueryModuleAccountsResponse: Response type for the
+// "nibiru.perp.v2.Query/ModuleAccounts" gRPC service method
 message QueryModuleAccountsResponse {
   repeated nibiru.perp.v2.AccountWithBalance accounts = 1
       [ (gogoproto.nullable) = false ];
@@ -128,3 +151,13 @@ message QueryMarketsResponse {
   repeated nibiru.perp.v2.AmmMarket amm_markets = 1
       [ (gogoproto.nullable) = false ];
 }
+
+// ---------------------------------------- QueryCollateral
+
+// QueryCollateralRequest: Request type for the
+// "nibiru.perp.v2.Query/Collateral" gRPC service method
+message QueryCollateralRequest {}
+
+// QueryCollateralRequest: Response type for the
+// "nibiru.perp.v2.Query/Collateral" gRPC service method
+message QueryCollateralResponse { string collateral_denom = 1; }

@@ -306,3 +306,33 @@ func CheckPositionStore_NumPositions(num int) QueryPositionStoreChecks {
 		return nil
 	}
 }
+
+// ---------------------------------------------------------
+// QueryCollateral
+// ---------------------------------------------------------
+
+type queryCollateral struct {
+	wantDenom string
+}
+
+func (q queryCollateral) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	queryServer := keeper.NewQuerier(app.PerpKeeperV2)
+
+	resp, _ := queryServer.QueryCollateral(sdk.WrapSDKContext(ctx), &types.QueryCollateralRequest{})
+	if resp.CollateralDenom != q.wantDenom {
+		return ctx, fmt.Errorf(
+			"expected collateral denom %s, got %s",
+			q.wantDenom,
+			resp.CollateralDenom,
+		), false
+	}
+
+	return ctx, nil, false
+}
+
+// QueryCollateral: Action for the Query/Collateral gRPC query.
+func QueryCollateral(expectDenom string) action.Action {
+	return queryCollateral{
+		wantDenom: expectDenom,
+	}
+}
