@@ -725,16 +725,27 @@ func (s *IntegrationTestSuite) TestDonateToEcosystemFund() {
 }
 
 func (s *IntegrationTestSuite) TestQueryModuleAccount() {
-	s.T().Logf("donate to ecosystem fund")
 	resp := new(types.QueryModuleAccountsResponse)
 	s.NoError(
-		testutilcli.ExecQuery(
-			s.network.Validators[0].ClientCtx,
-			cli.CmdQueryModuleAccounts(),
-			[]string{},
+		s.network.ExecQuery(
+			cli.NewQueryCmd(),
+			[]string{"module-accounts"},
 			resp,
 		),
 	)
+	s.NotEmpty(resp.Accounts)
+}
+
+func (s *IntegrationTestSuite) TestQueryCollateralDenom() {
+	resp := new(types.QueryCollateralResponse)
+	s.NoError(
+		s.network.ExecQuery(
+			cli.NewQueryCmd(),
+			[]string{"collateral"},
+			resp,
+		),
+	)
+	s.Equal(resp.CollateralDenom, types.TestingCollateralDenomNUSD)
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
