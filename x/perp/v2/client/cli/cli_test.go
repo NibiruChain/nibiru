@@ -745,7 +745,8 @@ func (s *IntegrationTestSuite) TestQueryCollateralDenom() {
 			resp,
 		),
 	)
-	s.Equal(resp.CollateralDenom, types.TestingCollateralDenomNUSD)
+	s.Equal(types.TestingCollateralDenomNUSD, resp.CollateralDenom,
+		"resp: %s", resp.String())
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
