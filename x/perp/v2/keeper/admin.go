@@ -9,7 +9,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
-	tftypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
 
 // Extends the Keeper with admin functions. Admin is syntactic sugar to separate
@@ -41,7 +40,7 @@ func (k admin) WithdrawFromInsuranceFund(
 		return err
 	}
 
-	coinToSend := sdk.NewCoin(collateral.String(), amount)
+	coinToSend := sdk.NewCoin(collateral, amount)
 	if err = k.BankKeeper.SendCoinsFromModuleToAccount(
 		ctx,
 		/* from */ types.PerpEFModuleAccount,
@@ -150,21 +149,28 @@ func (k admin) CloseMarket(ctx sdk.Context, pair asset.Pair) (err error) {
 	return nil
 }
 
-// UpdateCollateral updates the collateral denom and contract allowed to mint it
-func (k admin) UpdateCollateral(
+// ChangeCollateralDenom: Updates the collateral denom. A denom is valid if it is
+// possible to make an sdk.Coin using it. [Admin] Only callable by sudoers.
+func (k admin) ChangeCollateralDenom(
 	ctx sdk.Context,
 	denom string,
-	contract string,
+	sender sdk.AccAddress,
 ) error {
-	collateral := tftypes.TFDenom{
-		Creator:  contract,
-		Subdenom: denom,
-	}
-
-	if err := collateral.Validate(); err != nil {
+	if err := k.SudoKeeper.CheckPermissions(sender, ctx); err != nil {
 		return err
 	}
+	return k.UnsafeChangeCollateralDenom(ctx, denom)
+}
 
-	k.Collateral.Set(ctx, collateral)
+// UnsafeChangeCollateralDenom: Used in the genesis to set the collateral
+// without requiring an explicit call from sudoers.
+func (k admin) UnsafeChangeCollateralDenom(
+	ctx sdk.Context,
+	denom string,
+) error {
+	if err := sdk.ValidateDenom(denom); err != nil {
+		return types.ErrInvalidCollateral.Wrap(err.Error())
+	}
+	k.Collateral.Set(ctx, denom)
 	return nil
 }

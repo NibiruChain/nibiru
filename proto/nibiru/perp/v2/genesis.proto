@@ -23,7 +23,7 @@ message GenesisState {
       [ (gogoproto.nullable) = false ];
 
   uint64 dnr_epoch = 6;
- 
+
   message TraderVolume {
     string trader = 1;
     uint64 epoch = 2;
@@ -31,12 +31,10 @@ message GenesisState {
       (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
       (gogoproto.nullable) = false
     ];
-
   }
-  
-  // For testing purpose, we allow the collateral to be set at genesis
-  string collateral_creator = 11;
-  string collateral_subdenom = 12;
+
+  // For testing purposes, we allow the collateral to be set at genesis
+  string collateral_denom = 11;
 
   repeated TraderVolume trader_volumes = 7 [ (gogoproto.nullable) = false ];
 

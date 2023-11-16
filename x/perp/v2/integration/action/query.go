@@ -205,59 +205,6 @@ func QueryMarkets_ShouldLength(length int) QueryMarketsChecker {
 	}
 }
 
-type queryCollateral struct {
-	expectedCollateralSubdenom string
-	expectedCollateralCreator  string
-}
-
-func (q queryCollateral) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	queryServer := keeper.NewQuerier(app.PerpKeeperV2)
-
-	resp, err := queryServer.QueryCollateral(sdk.WrapSDKContext(ctx), &types.QueryCollateralRequest{})
-	if err != nil {
-		return ctx, err, false
-	}
-
-	if resp.CollateralSubdenom != q.expectedCollateralSubdenom || resp.GetCollateralCreator() != q.expectedCollateralCreator {
-		return ctx, fmt.Errorf(
-			"expected collateral denom %s, contract %s, got %s, %s",
-			q.expectedCollateralSubdenom,
-			q.expectedCollateralCreator,
-			resp.CollateralSubdenom,
-			resp.GetCollateralCreator(),
-		), false
-	}
-
-	return ctx, nil, false
-}
-
-// Query collateral should fail queries the current collateral accepted by the perp module expecting to fail
-func QueryCollateral(expectedDenom, expectedContract string) action.Action {
-	return queryCollateral{
-		expectedCollateralSubdenom: expectedDenom,
-		expectedCollateralCreator:  expectedContract,
-	}
-}
-
-type queryCollateralShouldFail struct {
-}
-
-func (q queryCollateralShouldFail) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	queryServer := keeper.NewQuerier(app.PerpKeeperV2)
-
-	_, err := queryServer.QueryCollateral(sdk.WrapSDKContext(ctx), &types.QueryCollateralRequest{})
-	if err == nil {
-		return ctx, err, false
-	}
-
-	return ctx, nil, false
-}
-
-// Query collateral queries the current collateral accepted by the perp module
-func QueryCollateralShouldFail() action.Action {
-	return queryCollateralShouldFail{}
-}
-
 type queryModuleAccounts struct {
 	allResponseCheckers []QueryModuleAccountsChecker
 }
@@ -357,5 +304,35 @@ func CheckPositionStore_NumPositions(num int) QueryPositionStoreChecks {
 			return fmt.Errorf("expected num positions: %v, got: %v", num, gotNumPos)
 		}
 		return nil
+	}
+}
+
+// ---------------------------------------------------------
+// QueryCollateral
+// ---------------------------------------------------------
+
+type queryCollateral struct {
+	wantDenom string
+}
+
+func (q queryCollateral) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	queryServer := keeper.NewQuerier(app.PerpKeeperV2)
+
+	resp, _ := queryServer.QueryCollateral(sdk.WrapSDKContext(ctx), &types.QueryCollateralRequest{})
+	if resp.CollateralDenom != q.wantDenom {
+		return ctx, fmt.Errorf(
+			"expected collateral denom %s, got %s",
+			q.wantDenom,
+			resp.CollateralDenom,
+		), false
+	}
+
+	return ctx, nil, false
+}
+
+// QueryCollateral: Action for the Query/Collateral gRPC query.
+func QueryCollateral(expectDenom string) action.Action {
+	return queryCollateral{
+		wantDenom: expectDenom,
 	}
 }

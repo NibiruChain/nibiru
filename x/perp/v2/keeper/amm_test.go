@@ -11,6 +11,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
 	. "github.com/NibiruChain/nibiru/x/common/testutil/assertion"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
@@ -27,15 +28,15 @@ func TestEditPriceMultipler(t *testing.T) {
 		TC("same price multiplier").
 			Given(
 				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(1000)), WithTotalShort(sdk.NewDec(500))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
 				EditPriceMultiplier(pair, sdk.OneDec()),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e12)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e12)),
@@ -50,15 +51,15 @@ func TestEditPriceMultipler(t *testing.T) {
 					WithTotalLong(sdk.NewDec(1000)), WithTotalShort(sdk.NewDec(1000)),
 					WithEnabled(true),
 				),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
 				EditPriceMultiplier(pair, sdk.NewDec(10)),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e12)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e12)),
@@ -70,15 +71,15 @@ func TestEditPriceMultipler(t *testing.T) {
 		TC("long bias, increase price multiplier").
 			Given(
 				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(1000)), WithTotalShort(sdk.NewDec(500))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
 				EditPriceMultiplier(pair, sdk.NewDec(10)),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1004500)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(995500)),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1004500)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(995500)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e12)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e12)),
@@ -90,15 +91,15 @@ func TestEditPriceMultipler(t *testing.T) {
 		TC("long bias, decrease price multiplier").
 			Given(
 				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(1000)), WithTotalShort(sdk.NewDec(500))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
 				EditPriceMultiplier(pair, sdk.MustNewDecFromStr("0.25")),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(999626)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1000374)),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(999626)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1000374)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e12)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e12)),
@@ -110,15 +111,15 @@ func TestEditPriceMultipler(t *testing.T) {
 		TC("short bias, increase price multiplier").
 			Given(
 				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(500)), WithTotalShort(sdk.NewDec(1000))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
 				EditPriceMultiplier(pair, sdk.NewDec(10)),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(995500)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1004500)),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(995500)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1004500)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e12)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e12)),
@@ -130,15 +131,15 @@ func TestEditPriceMultipler(t *testing.T) {
 		TC("short bias, decrease price multiplier").
 			Given(
 				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(500)), WithTotalShort(sdk.NewDec(1000))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
 				EditPriceMultiplier(pair, sdk.MustNewDecFromStr("0.25")),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1000376)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(999624)),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1000376)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(999624)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e12)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e12)),
@@ -155,7 +156,7 @@ func TestEditPriceMultiplerFail(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	app, ctx := testapp.NewNibiruTestAppAndContext()
 
-	account := sdk.MustAccAddressFromBech32("cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v")
+	account := testutil.AccAddress()
 
 	err := app.PerpKeeperV2.Admin.CreateMarket(
 		ctx,
@@ -192,17 +193,17 @@ func TestEditPriceMultiplerFail(t *testing.T) {
 	require.ErrorIs(t, err, types.ErrNonPositivePegMultiplier)
 
 	// Add market activity
-	err = app.BankKeeper.MintCoins(ctx, "inflation", sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1020))))
+	err = app.BankKeeper.MintCoins(ctx, "inflation", sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1020))))
 	require.NoError(t, err)
 
-	err = app.BankKeeper.SendCoinsFromModuleToAccount(ctx, "inflation", account, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1020))))
+	err = app.BankKeeper.SendCoinsFromModuleToAccount(ctx, "inflation", account, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1020))))
 	require.NoError(t, err)
 
 	_, err = app.PerpKeeperV2.MarketOrder(
 		ctx,
 		pair,
 		types.Direction_LONG,
-		sdk.MustAccAddressFromBech32("cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v"),
+		account,
 		sdk.NewInt(1000),
 		sdk.OneDec(),
 		sdk.ZeroDec(),
@@ -221,7 +222,7 @@ func TestEditPriceMultiplerFail(t *testing.T) {
 func TestEditSwapInvariantFail(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	app, ctx := testapp.NewNibiruTestAppAndContext()
-	account := sdk.MustAccAddressFromBech32("cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v")
+	account := testutil.AccAddress()
 
 	err := app.PerpKeeperV2.Admin.CreateMarket(
 		ctx,
@@ -258,17 +259,17 @@ func TestEditSwapInvariantFail(t *testing.T) {
 	require.ErrorIs(t, err, types.ErrNegativeSwapInvariant)
 
 	// Add market activity
-	err = app.BankKeeper.MintCoins(ctx, "inflation", sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(102))))
+	err = app.BankKeeper.MintCoins(ctx, "inflation", sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(102))))
 	require.NoError(t, err)
 
-	err = app.BankKeeper.SendCoinsFromModuleToAccount(ctx, "inflation", account, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(102))))
+	err = app.BankKeeper.SendCoinsFromModuleToAccount(ctx, "inflation", account, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(102))))
 	require.NoError(t, err)
 
 	_, err = app.PerpKeeperV2.MarketOrder(
 		ctx,
 		pair,
 		types.Direction_LONG,
-		sdk.MustAccAddressFromBech32("cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v"),
+		account,
 		sdk.NewInt(100),
 		sdk.OneDec(),
 		sdk.ZeroDec(),
@@ -299,15 +300,15 @@ func TestEditSwapInvariant(t *testing.T) {
 					WithTotalShort(sdk.NewDec(500)),
 					WithSqrtDepth(sdk.NewDec(1e6)),
 				),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
 				EditSwapInvariant(pair, sdk.NewDec(1e12)),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e6)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e6)),
@@ -323,15 +324,15 @@ func TestEditSwapInvariant(t *testing.T) {
 					WithTotalShort(sdk.NewDec(1000)),
 					WithSqrtDepth(sdk.NewDec(1e6)),
 				),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
 				EditSwapInvariant(pair, sdk.NewDec(1e18)),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e9)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e9)),
@@ -343,15 +344,15 @@ func TestEditSwapInvariant(t *testing.T) {
 		TC("long bias, increase swap invariant").
 			Given(
 				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(1e5)), WithSqrtDepth(sdk.NewDec(1e6))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
 				EditSwapInvariant(pair, sdk.NewDec(1e14)),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1008101)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(991899)),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1008101)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(991899)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e7)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e7)),
@@ -363,15 +364,15 @@ func TestEditSwapInvariant(t *testing.T) {
 		TC("long bias, decrease swap invariant").
 			Given(
 				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(1e2)), WithSqrtDepth(sdk.NewDec(1e6))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
 				EditSwapInvariant(pair, sdk.NewDec(1e6)),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(999991)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1000009)),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(999991)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1000009)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e3)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e3)),
@@ -383,15 +384,15 @@ func TestEditSwapInvariant(t *testing.T) {
 		TC("short bias, increase swap invariant").
 			Given(
 				CreateCustomMarket(pair, WithTotalShort(sdk.NewDec(1e5)), WithSqrtDepth(sdk.NewDec(1e6))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
 				EditSwapInvariant(pair, sdk.NewDec(1e14)),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1010102)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(989898)),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1010102)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(989898)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e7)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e7)),
@@ -403,15 +404,15 @@ func TestEditSwapInvariant(t *testing.T) {
 		TC("short bias, decrease swap invariant").
 			Given(
 				CreateCustomMarket(pair, WithTotalShort(sdk.NewDec(1e2)), WithSqrtDepth(sdk.NewDec(1e6))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1e6)))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
 				EditSwapInvariant(pair, sdk.NewDec(1e6)),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(999989)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(1000011)),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(999989)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1000011)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e3)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e3)),

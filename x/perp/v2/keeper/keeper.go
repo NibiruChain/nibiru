@@ -13,9 +13,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
-	tftypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
 
 type Keeper struct {
@@ -26,6 +26,7 @@ type Keeper struct {
 	AccountKeeper types.AccountKeeper
 	OracleKeeper  types.OracleKeeper
 	EpochKeeper   types.EpochKeeper
+	SudoKeeper    types.SudoKeeper
 
 	// Extends the Keeper with admin functions. See admin.go.
 	Admin admin
@@ -33,7 +34,7 @@ type Keeper struct {
 	MarketLastVersion collections.Map[asset.Pair, types.MarketLastVersion]
 	Markets           collections.Map[collections.Pair[asset.Pair, uint64], types.Market]
 	AMMs              collections.Map[collections.Pair[asset.Pair, uint64], types.AMM]
-	Collateral        collections.Item[tftypes.TFDenom]
+	Collateral        collections.Item[string]
 
 	Positions        collections.Map[collections.Pair[collections.Pair[asset.Pair, uint64], sdk.AccAddress], types.Position]
 	ReserveSnapshots collections.Map[collections.Pair[asset.Pair, time.Time], types.ReserveSnapshot]
@@ -52,6 +53,7 @@ func NewKeeper(
 	bankKeeper types.BankKeeper,
 	oracleKeeper types.OracleKeeper,
 	epochKeeper types.EpochKeeper,
+	sudoKeeper types.SudoKeeper,
 ) Keeper {
 	// Ensure that the module account is set.
 	if moduleAcc := accountKeeper.GetModuleAddress(types.ModuleName); moduleAcc == nil {
@@ -65,6 +67,7 @@ func NewKeeper(
 		AccountKeeper: accountKeeper,
 		OracleKeeper:  oracleKeeper,
 		EpochKeeper:   epochKeeper,
+		SudoKeeper:    sudoKeeper,
 		Markets: collections.NewMap(
 			storeKey, NamespaceMarkets,
 			collections.PairKeyEncoder(asset.PairKeyEncoder, collections.Uint64KeyEncoder),
@@ -111,7 +114,7 @@ func NewKeeper(
 		),
 		Collateral: collections.NewItem(
 			storeKey, NamespaceCollateral,
-			collections.ProtoValueEncoder[tftypes.TFDenom](cdc),
+			common.StringValueEncoder,
 		),
 	}
 	k.Admin = admin{&k}

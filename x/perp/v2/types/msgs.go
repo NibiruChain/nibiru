@@ -274,3 +274,30 @@ func (m MsgPartialClose) GetSigners() []sdk.AccAddress {
 	}
 	return []sdk.AccAddress{signer}
 }
+
+// MsgChangeCollateralDenom
+
+func (m MsgChangeCollateralDenom) Route() string { return "perp" }
+func (m MsgChangeCollateralDenom) Type() string  { return "partial_close_msg" }
+
+func (m MsgChangeCollateralDenom) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return sdkerrors.Wrapf(errors.ErrInvalidAddress, "invalid sender address (%s)", err)
+	}
+	if err := sdk.ValidateDenom(m.NewDenom); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m MsgChangeCollateralDenom) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
+}
+
+func (m MsgChangeCollateralDenom) GetSigners() []sdk.AccAddress {
+	signer, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{signer}
+}

@@ -73,7 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Dependencies
 - Bump `github.com/prometheus/client_golang` from 1.16.0 to 1.17.0 ([#1605](https://github.com/NibiruChain/nibiru/pull/1605))
-- Bump `bufbuild/buf-setup-action` from 1.26.1 to 1.27.2 ([#1624](https://github.com/NibiruChain/nibiru/pull/1624), [#1641](https://github.com/NibiruChain/nibiru/pull/1641), [#1654](https://github.com/NibiruChain/nibiru/pull/1654))
+- Bump `bufbuild/buf-setup-action` from 1.26.1 to 1.28.1 ([#1624](https://github.com/NibiruChain/nibiru/pull/1624), [#1641](https://github.com/NibiruChain/nibiru/pull/1641), [#1654](https://github.com/NibiruChain/nibiru/pull/1654), [#1671](https://github.com/NibiruChain/nibiru/pull/1671), [#1673](https://github.com/NibiruChain/nibiru/pull/1673))
 - Bump `stefanzweifel/git-auto-commit-action` from 4 to 5 ([#1625](https://github.com/NibiruChain/nibiru/pull/1625))
 - Bump `github.com/CosmWasm/wasmvm` from 1.4.0 to 1.5.0 ([#1629](https://github.com/NibiruChain/nibiru/pull/1629), [#1657](https://github.com/NibiruChain/nibiru/pull/1657))
 - Bump `google.golang.org/grpc` from 1.58.2 to 1.59.0 ([#1633](https://github.com/NibiruChain/nibiru/pull/1633), [#1643](https://github.com/NibiruChain/nibiru/pull/1643))
@@ -82,6 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `github.com/cosmos/ibc-go/v7` from 7.3.0 to 7.3.1 ([#1647](https://github.com/NibiruChain/nibiru/pull/1647))
 - Bump `github.com/CosmWasm/wasmd` from 0.40.2 to 0.43.0 ([#1660](https://github.com/NibiruChain/nibiru/pull/1660))
 - Bump `github.com/CosmWasm/wasmd` from 0.43.0 to 0.44.0 ([#1666](https://github.com/NibiruChain/nibiru/pull/1666))
+- Bump `github.com/spf13/cobra` from 1.7.0 to 1.8.0 ([#1664](https://github.com/NibiruChain/nibiru/pull/1664))
 
 ### Bug Fixes
 

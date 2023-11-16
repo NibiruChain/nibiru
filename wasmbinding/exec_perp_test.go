@@ -19,7 +19,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
-	tftypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
 
 func TestSuitePerpExecutor_RunAll(t *testing.T) {
@@ -53,7 +52,7 @@ func (s *TestSuitePerpExecutor) SetupSuite() {
 	})
 	coins := sdk.NewCoins(
 		sdk.NewCoin(denoms.NIBI, sdk.NewInt(1_000_000)),
-		sdk.NewCoin(perpv2types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(420_000*69)),
+		sdk.NewCoin(perpv2types.TestingCollateralDenomNUSD, sdk.NewInt(420_000*69)),
 		sdk.NewCoin(denoms.USDT, sdk.NewInt(420_000*69)),
 	)
 	s.NoError(testapp.FundAccount(nibiru.BankKeeper, ctx, sender, coins))
@@ -67,7 +66,7 @@ func (s *TestSuitePerpExecutor) SetupSuite() {
 	s.exec = &wasmbinding.ExecutorPerp{
 		PerpV2: nibiru.PerpKeeperV2,
 	}
-	s.nibiru.PerpKeeperV2.Collateral.Set(s.ctx, perpv2types.DefaultTestingCollateralNotForProd)
+	s.nibiru.PerpKeeperV2.Collateral.Set(s.ctx, perpv2types.TestingCollateralDenomNUSD)
 	s.NoError(testapp.FundAccount(nibiru.BankKeeper, ctx, s.contractPerp, coins))
 
 	s.OnSetupEnd()
@@ -82,7 +81,7 @@ func (s *TestSuitePerpExecutor) OnSetupEnd() {
 func (s *TestSuitePerpExecutor) TestOpenAddRemoveClose() {
 	pair := asset.MustNewPair(s.happyFields.Pair)
 
-	margin := sdk.NewCoin(perpv2types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(69))
+	margin := sdk.NewCoin(perpv2types.TestingCollateralDenomNUSD, sdk.NewInt(69))
 	incorrectMargin := sdk.NewCoin(denoms.USDT, sdk.NewInt(69))
 
 	for _, err := range []error{
@@ -96,7 +95,6 @@ func (s *TestSuitePerpExecutor) TestOpenAddRemoveClose() {
 		s.DoInsuranceFundWithdrawTest(sdk.NewInt(69), s.contractDeployer),
 		s.DoCreateMarketTest(asset.MustNewPair("ufoo:ubar")),
 		s.DoCreateMarketTestWithParams(asset.MustNewPair("ufoo2:ubar")),
-		s.DoUpdateCollateralTest(),
 	} {
 		s.NoError(err)
 	}
@@ -247,7 +245,7 @@ func (s *TestSuitePerpExecutor) DoInsuranceFundWithdrawTest(
 		s.nibiru.BankKeeper,
 		s.ctx,
 		perpv2types.PerpEFModuleAccount,
-		sdk.NewCoins(sdk.NewCoin(perpv2types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(420))),
+		sdk.NewCoins(sdk.NewCoin(perpv2types.TestingCollateralDenomNUSD, sdk.NewInt(420))),
 	)
 	s.NoError(err)
 
@@ -333,47 +331,8 @@ func (s *TestSuitePerpExecutor) DoSetMarketEnabledTest(
 	return err
 }
 
-func (s *TestSuitePerpExecutor) DoUpdateCollateralTest() error {
-	cwMsg := &bindings.UpdateCollateral{
-		Denom:           "uust",
-		ContractAddress: "cosmos168ctmpyppk90d34p3jjy658zf5a5l3w8wk35wht6ccqj4mr0yv8skhnwe8",
-	}
-	err := s.exec.UpdateCollateral(cwMsg, s.ctx)
-	s.Require().NoError(err)
-
-	collateral, err := s.nibiru.PerpKeeperV2.Collateral.Get(s.ctx)
-	s.NoError(err)
-	s.Equal(collateral, tftypes.TFDenom{Creator: "cosmos168ctmpyppk90d34p3jjy658zf5a5l3w8wk35wht6ccqj4mr0yv8skhnwe8", Subdenom: "uust"})
-	return err
-}
-
-func (s *TestSuitePerpExecutor) TestSadPath_UpdateCollateral() {
-	cwMsg := &bindings.UpdateCollateral{
-		Denom:           "uust",
-		ContractAddress: "",
-	}
-	err := s.exec.UpdateCollateral(cwMsg, s.ctx)
-	s.Require().Error(err)
-
-	cwMsg = &bindings.UpdateCollateral{
-		Denom: "uust",
-	}
-	err = s.exec.UpdateCollateral(cwMsg, s.ctx)
-	s.Require().Error(err)
-
-	cwMsg = &bindings.UpdateCollateral{
-		ContractAddress: "notavalidaddress",
-	}
-	err = s.exec.UpdateCollateral(cwMsg, s.ctx)
-	s.Require().Error(err)
-
-	cwMsg = &bindings.UpdateCollateral{}
-	err = s.exec.UpdateCollateral(cwMsg, s.ctx)
-	s.Require().Error(err)
-}
-
 func (s *TestSuitePerpExecutor) TestSadPath_InsuranceFundWithdraw() {
-	fundsToWithdraw := sdk.NewCoin(perpv2types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(69_000))
+	fundsToWithdraw := sdk.NewCoin(perpv2types.TestingCollateralDenomNUSD, sdk.NewInt(69_000))
 
 	err := s.DoInsuranceFundWithdrawTest(fundsToWithdraw.Amount, s.contractDeployer)
 	s.Error(err)
@@ -382,7 +341,7 @@ func (s *TestSuitePerpExecutor) TestSadPath_InsuranceFundWithdraw() {
 func (s *TestSuitePerpExecutor) TestSadPaths_InvalidPair() {
 	sadPair := asset.Pair("ftt:ust:doge")
 	pair := sadPair
-	margin := sdk.NewCoin(perpv2types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(69))
+	margin := sdk.NewCoin(perpv2types.TestingCollateralDenomNUSD, sdk.NewInt(69))
 
 	for _, err := range []error{
 		s.DoMarketOrderTest(pair),

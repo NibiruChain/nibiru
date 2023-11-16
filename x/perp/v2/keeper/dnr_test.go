@@ -35,8 +35,8 @@ func TestUserVolumes(t *testing.T) {
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), positionSize.AddRaw(1000)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(100_000_000)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, positionSize.AddRaw(1000)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(100_000_000)))),
 			).
 			When(
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
@@ -56,8 +56,8 @@ func TestUserVolumes(t *testing.T) {
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), positionSize.AddRaw(1000)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(100_000_000)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, positionSize.AddRaw(1000)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(100_000_000)))),
 			).
 			When(
 				DnREpochIs(1),
@@ -80,8 +80,8 @@ func TestUserVolumes(t *testing.T) {
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), positionSize.AddRaw(1000)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(100_000_000)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, positionSize.AddRaw(1000)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(100_000_000)))),
 			).When(
 			DnREpochIs(1),
 			MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()), // open epoch 1
@@ -125,8 +125,8 @@ func TestDiscount(t *testing.T) {
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), positionSize.AddRaw(1000)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(100_000_000)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, positionSize.AddRaw(1000)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(100_000_000)))),
 			).
 			When(
 				DnREpochIs(1),
@@ -146,8 +146,8 @@ func TestDiscount(t *testing.T) {
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), positionSize.AddRaw(1000)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(100_000_000)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, positionSize.AddRaw(1000)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(100_000_000)))),
 			).
 			When(
 				SetGlobalDiscount(fauxGlobalFeeDiscount, sdk.NewInt(50_000)),
@@ -171,8 +171,8 @@ func TestDiscount(t *testing.T) {
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), positionSize.AddRaw(1000)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(100_000_000)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, positionSize.AddRaw(1000)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(100_000_000)))),
 			).
 			When(
 				SetGlobalDiscount(globalFeeDiscount, sdk.NewInt(50_000)),
@@ -196,8 +196,8 @@ func TestDiscount(t *testing.T) {
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), positionSize.AddRaw(1000)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.DefaultTestingCollateralNotForProd.String(), sdk.NewInt(100_000_000)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, positionSize.AddRaw(1000)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(100_000_000)))),
 			).
 			When(
 				SetGlobalDiscount(sdk.MustNewDecFromStr("0.0004"), sdk.NewInt(50_000)),
