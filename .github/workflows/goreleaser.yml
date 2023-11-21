@@ -4,8 +4,6 @@ on:
   push:
     tags:
       - "*"
-    # branches:
-    #   - master
 
 permissions:
   contents: write
@@ -28,7 +26,6 @@ jobs:
       - run: git fetch --force --tags
 
       - run: make release
-        if: startsWith(github.ref, 'refs/tags/v')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -43,22 +40,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push tagged image
+      - name: Build and push versioned image
         uses: docker/build-push-action@v5
-        if: startsWith(github.ref, 'refs/tags/v')
         with:
           file: contrib/docker/goreleaser.Dockerfile
           context: .
           push: true
           platforms: linux/amd64,linux/arm64
           tags: ghcr.io/nibiruchain/nibiru:${{ steps.get_version.outputs.version-without-v }}
-      
-      - name: Build and push latest image
-        uses: docker/build-push-action@v5
-        if: startsWith(github.ref, 'refs/heads/master')
-        with:
-          file: contrib/docker/goreleaser.Dockerfile
-          context: .
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: ghcr.io/nibiruchain/nibiru:latest
