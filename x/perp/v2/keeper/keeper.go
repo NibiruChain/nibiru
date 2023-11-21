@@ -115,7 +115,7 @@ func NewKeeper(
 			collections.DecValueEncoder,
 		),
 		EpochRebateAllocations: collections.NewMap(
-			storeKey, NamespaceDNRAllocations,
+			storeKey, NamespaceRebatesAllocations,
 			collections.Uint64KeyEncoder,
 			collections.ProtoValueEncoder[types.DNRAllocation](cdc),
 		),
@@ -134,7 +134,7 @@ const (
 	NamespaceUserVolumes
 	NamespaceGlobalDiscounts
 	NamespaceUserDiscounts
-	NamespaceDNRAllocations
+	NamespaceRebatesAllocations
 	NamespaceMarketLastVersion
 )
 

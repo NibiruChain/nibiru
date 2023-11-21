@@ -245,6 +245,8 @@ func TestRebates(t *testing.T) {
 				DnRRebateIs(alice, 1, allocation.QuoInt(sdk.NewInt(4))),                     // 1/4 of the allocation
 				DnRRebateIs(bob, 1, allocation.QuoInt(sdk.NewInt(4)).MulInt(sdk.NewInt(3))), // 3/4 of the allocation
 				DnRRebateIs(alice, 1, sdk.NewCoins()),                                       // can only claim once
+				DnREpochIs(2),
+				DnRRebateIs(alice, 1, sdk.NewCoins()), // claiming again after the epoch is not possible.
 			),
 	}
 	NewTestSuite(t).WithTestCases(tests...).Run()

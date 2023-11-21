@@ -139,10 +139,10 @@ func (k Keeper) GetTraderDiscount(ctx sdk.Context, trader sdk.AccAddress, volume
 	return math.LegacyZeroDec(), false
 }
 
-// applyDiscountAndRebate applies the discount and rebate to the given exchange fee ratio.
+// applyDiscount applies the discount and rebate to the given exchange fee ratio.
 // It updates the current epoch trader volume.
 // It returns the new exchange fee ratio.
-func (k Keeper) applyDiscountAndRebate(
+func (k Keeper) applyDiscount(
 	ctx sdk.Context,
 	_ asset.Pair,
 	trader sdk.AccAddress,
@@ -181,34 +181,52 @@ func (k Keeper) WithdrawEpochRebates(ctx sdk.Context, epoch uint64, addr sdk.Acc
 	if err != nil {
 		return nil, err
 	}
-	// get user volume for the epoch
-	userVolume := k.TraderVolumes.GetOr(ctx, collections.Join(addr, epoch), math.ZeroInt())
-	if userVolume.IsZero() {
-		return sdk.NewCoins(), nil
-	}
 
-	// calculate the user's share
-	globalVolume, err := k.GlobalVolumes.Get(ctx, epoch)
+	// compute user weight
+	weight, err := k.computeUserWeight(ctx, addr, epoch)
 	if err != nil {
 		return nil, err
 	}
-	weight := userVolume.ToLegacyDec().Quo(globalVolume.ToLegacyDec())
-	distrCoins := sdk.NewCoins()
+	if weight.IsZero() {
+		return sdk.NewCoins(), nil
+	}
 
+	// calculate coins to distribute based on user weight
+	distrCoins := sdk.NewCoins()
 	for _, coin := range allocationCoins.Amount {
 		amt := coin.Amount.ToLegacyDec().Mul(weight).TruncateInt()
 		distrCoins = distrCoins.Add(sdk.NewCoin(coin.Denom, amt))
 	}
 
-	// send money to user from escrow
-	err = k.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.DNREscrowModuleAccount, addr, distrCoins)
-	if err != nil {
-		return nil, err
+	// send money to user from escrow only in case there's anything to distribute.
+	// this should never happen, since we're checking if the user has any weight.
+	if !distrCoins.IsZero() {
+		err = k.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.DNREscrowModuleAccount, addr, distrCoins)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// garbage collect user volume. This ensures state is not bloated,
 	// and that the user cannot claim from the same allocation twice.
 	return distrCoins, k.TraderVolumes.Delete(ctx, collections.Join(addr, epoch))
+}
+
+// computeUserWeight computes the user's weight for the given epoch.
+func (k Keeper) computeUserWeight(ctx sdk.Context, addr sdk.AccAddress, epoch uint64) (math.LegacyDec, error) {
+	// get user volume for the epoch
+	userVolume := k.TraderVolumes.GetOr(ctx, collections.Join(addr, epoch), math.ZeroInt())
+	if userVolume.IsZero() {
+		return math.LegacyZeroDec(), nil
+	}
+
+	// calculate the user's share
+	globalVolume, err := k.GlobalVolumes.Get(ctx, epoch)
+	if err != nil {
+		return math.LegacyDec{}, err
+	}
+	weight := userVolume.ToLegacyDec().Quo(globalVolume.ToLegacyDec())
+	return weight, nil
 }
 
 // AllocateEpochRebates will allocate the given amount of coins to the current epoch.
