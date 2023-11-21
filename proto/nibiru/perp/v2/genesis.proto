@@ -61,7 +61,7 @@ message GenesisState {
   repeated nibiru.perp.v2.GenesisMarketLastVersion market_last_versions = 10
       [ (gogoproto.nullable) = false ];
 
-  repeated GlobalVolume global_volumes = 11 [ (gogoproto.nullable) = false ];
+  repeated GlobalVolume global_volumes = 13 [ (gogoproto.nullable) = false ];
 
   repeated DNRAllocation rebates_allocations = 12 [ (gogoproto.nullable) = false ];
 
