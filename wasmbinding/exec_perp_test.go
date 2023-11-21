@@ -52,7 +52,7 @@ func (s *TestSuitePerpExecutor) SetupSuite() {
 	})
 	coins := sdk.NewCoins(
 		sdk.NewCoin(denoms.NIBI, sdk.NewInt(1_000_000)),
-		sdk.NewCoin(denoms.NUSD, sdk.NewInt(420_000*69)),
+		sdk.NewCoin(perpv2types.TestingCollateralDenomNUSD, sdk.NewInt(420_000*69)),
 		sdk.NewCoin(denoms.USDT, sdk.NewInt(420_000*69)),
 	)
 	s.NoError(testapp.FundAccount(nibiru.BankKeeper, ctx, sender, coins))
@@ -66,6 +66,7 @@ func (s *TestSuitePerpExecutor) SetupSuite() {
 	s.exec = &wasmbinding.ExecutorPerp{
 		PerpV2: nibiru.PerpKeeperV2,
 	}
+	s.nibiru.PerpKeeperV2.Collateral.Set(s.ctx, perpv2types.TestingCollateralDenomNUSD)
 	s.NoError(testapp.FundAccount(nibiru.BankKeeper, ctx, s.contractPerp, coins))
 
 	s.OnSetupEnd()
@@ -79,7 +80,8 @@ func (s *TestSuitePerpExecutor) OnSetupEnd() {
 // Happy path coverage of MarketOrder, AddMargin, RemoveMargin, and ClosePosition
 func (s *TestSuitePerpExecutor) TestOpenAddRemoveClose() {
 	pair := asset.MustNewPair(s.happyFields.Pair)
-	margin := sdk.NewCoin(denoms.NUSD, sdk.NewInt(69))
+
+	margin := sdk.NewCoin(perpv2types.TestingCollateralDenomNUSD, sdk.NewInt(69))
 	incorrectMargin := sdk.NewCoin(denoms.USDT, sdk.NewInt(69))
 
 	for _, err := range []error{
@@ -243,7 +245,7 @@ func (s *TestSuitePerpExecutor) DoInsuranceFundWithdrawTest(
 		s.nibiru.BankKeeper,
 		s.ctx,
 		perpv2types.PerpEFModuleAccount,
-		sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(420))),
+		sdk.NewCoins(sdk.NewCoin(perpv2types.TestingCollateralDenomNUSD, sdk.NewInt(420))),
 	)
 	s.NoError(err)
 
@@ -330,7 +332,7 @@ func (s *TestSuitePerpExecutor) DoSetMarketEnabledTest(
 }
 
 func (s *TestSuitePerpExecutor) TestSadPath_InsuranceFundWithdraw() {
-	fundsToWithdraw := sdk.NewCoin(denoms.NUSD, sdk.NewInt(69_000))
+	fundsToWithdraw := sdk.NewCoin(perpv2types.TestingCollateralDenomNUSD, sdk.NewInt(69_000))
 
 	err := s.DoInsuranceFundWithdrawTest(fundsToWithdraw.Amount, s.contractDeployer)
 	s.Error(err)
@@ -339,7 +341,7 @@ func (s *TestSuitePerpExecutor) TestSadPath_InsuranceFundWithdraw() {
 func (s *TestSuitePerpExecutor) TestSadPaths_InvalidPair() {
 	sadPair := asset.Pair("ftt:ust:doge")
 	pair := sadPair
-	margin := sdk.NewCoin(denoms.NUSD, sdk.NewInt(69))
+	margin := sdk.NewCoin(perpv2types.TestingCollateralDenomNUSD, sdk.NewInt(69))
 
 	for _, err := range []error{
 		s.DoMarketOrderTest(pair),

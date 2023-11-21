@@ -71,6 +71,13 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 		)
 	}
 
+	if genState.CollateralDenom != "" {
+		err := k.Admin.UnsafeChangeCollateralDenom(ctx, genState.CollateralDenom)
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	for _, globalVolume := range genState.GlobalVolumes {
 		k.GlobalVolumes.Insert(
 			ctx,
@@ -153,6 +160,12 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 			},
 		})
 	}
+
+	collateral, err := k.Collateral.Get(ctx)
+	if err != nil {
+		panic(err)
+	}
+	genesis.CollateralDenom = collateral
 
 	// export global volumes
 	globalVolumes := k.GlobalVolumes.Iterate(ctx, collections.Range[uint64]{})

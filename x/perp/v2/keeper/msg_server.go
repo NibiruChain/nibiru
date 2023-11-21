@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
@@ -137,6 +138,24 @@ func (m msgServer) DonateToEcosystemFund(ctx context.Context, msg *types.MsgDona
 	}
 
 	return &types.MsgDonateToEcosystemFundResponse{}, nil
+}
+
+// ChangeCollateralDenom: Updates the collateral denom. A denom is valid if it is
+// possible to make an sdk.Coin using it. [Admin] Only callable by sudoers.
+func (m msgServer) ChangeCollateralDenom(
+	goCtx context.Context, txMsg *types.MsgChangeCollateralDenom,
+) (resp *types.MsgChangeCollateralDenomResponse, err error) {
+	if txMsg == nil {
+		return resp, common.ErrNilMsg()
+	}
+	if err := txMsg.ValidateBasic(); err != nil {
+		return resp, err
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	err = m.k.Admin.ChangeCollateralDenom(ctx, txMsg.NewDenom, txMsg.GetSigners()[0])
+
+	return &types.MsgChangeCollateralDenomResponse{}, err
 }
 
 func (m msgServer) AllocateEpochRebates(ctx context.Context, msg *types.MsgAllocateEpochRebates) (*types.MsgAllocateEpochRebatesResponse, error) {

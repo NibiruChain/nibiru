@@ -6,6 +6,7 @@ import (
 
 	wasmdapp "github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -180,7 +181,7 @@ type AppKeepers struct {
 	TokenFactoryKeeper tokenfactorykeeper.Keeper
 
 	// WASM keepers
-	WasmKeeper       wasm.Keeper
+	WasmKeeper       wasmkeeper.Keeper
 	ScopedWasmKeeper capabilitykeeper.ScopedKeeper
 }
 
@@ -217,7 +218,7 @@ func initStoreKeys() (
 		perptypes.StoreKey,
 		inflationtypes.StoreKey,
 		sudotypes.StoreKey,
-		wasm.StoreKey,
+		wasmtypes.StoreKey,
 		devgastypes.StoreKey,
 		tokenfactorytypes.StoreKey,
 	)
@@ -363,13 +364,14 @@ func (app *NibiruApp) InitKeepers(
 		appCodec, keys[epochstypes.StoreKey],
 	)
 
+	app.SudoKeeper = keeper.NewKeeper(
+		appCodec, keys[sudotypes.StoreKey],
+	)
+
 	app.PerpKeeperV2 = perpkeeper.NewKeeper(
 		appCodec, keys[perptypes.StoreKey],
 		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.EpochsKeeper,
-	)
-
-	app.SudoKeeper = keeper.NewKeeper(
-		appCodec, keys[sudotypes.StoreKey],
+		app.SudoKeeper,
 	)
 
 	app.InflationKeeper = inflationkeeper.NewKeeper(
@@ -406,7 +408,7 @@ func (app *NibiruApp) InitKeepers(
 		app.BankKeeper,
 	)
 
-	app.ScopedWasmKeeper = app.capabilityKeeper.ScopeToModule(wasm.ModuleName)
+	app.ScopedWasmKeeper = app.capabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
 
 	wasmDir := filepath.Join(homePath, "data")
 	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
@@ -423,9 +425,9 @@ func (app *NibiruApp) InitKeepers(
 	// For example, if there are bindings for the x/perp module, then the app
 	// passed to GetWasmOpts must already have a non-nil PerpKeeper.
 	supportedFeatures := strings.Join(wasmdapp.AllCapabilities(), ",")
-	app.WasmKeeper = wasm.NewKeeper(
+	app.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,
-		keys[wasm.StoreKey],
+		keys[wasmtypes.StoreKey],
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.stakingKeeper,
@@ -672,7 +674,7 @@ func orderedModuleNames() []string {
 
 		// --------------------------------------------------------------------
 		// CosmWasm
-		wasm.ModuleName,
+		wasmtypes.ModuleName,
 		devgastypes.ModuleName,
 		tokenfactorytypes.ModuleName,
 
@@ -810,7 +812,7 @@ func ModuleAccPerms() map[string][]string {
 		epochstypes.ModuleName:           {},
 		sudotypes.ModuleName:             {},
 		common.TreasuryPoolModuleAccount: {},
-		wasm.ModuleName:                  {authtypes.Burner},
+		wasmtypes.ModuleName:             {authtypes.Burner},
 		tokenfactorytypes.ModuleName:     {authtypes.Minter, authtypes.Burner},
 	}
 }
@@ -838,7 +840,7 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(ibcexported.ModuleName)
 	paramsKeeper.Subspace(ibcfeetypes.ModuleName)
 	// wasm params keepers
-	paramsKeeper.Subspace(wasm.ModuleName)
+	paramsKeeper.Subspace(wasmtypes.ModuleName)
 	paramsKeeper.Subspace(devgastypes.ModuleName)
 
 	return paramsKeeper
