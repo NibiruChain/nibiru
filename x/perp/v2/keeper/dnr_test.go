@@ -230,8 +230,8 @@ func TestRebates(t *testing.T) {
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, positionSize.AddRaw(100_000)))),
-				FundAccount(bob, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, positionSize.AddRaw(100_000)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, positionSize.AddRaw(100_000)))),
+				FundAccount(bob, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, positionSize.AddRaw(100_000)))),
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100_000_000)))),
 			).
 			When(

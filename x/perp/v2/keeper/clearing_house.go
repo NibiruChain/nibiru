@@ -646,7 +646,7 @@ func (k Keeper) transferFee(
 		return sdkmath.Int{}, err
 	}
 
-	exchangeFeeRatio, err = k.applyDiscount(ctx, pair, trader, positionNotional, exchangeFeeRatio)
+	exchangeFeeRatio, err = k.calculateDiscount(ctx, pair, trader, positionNotional, exchangeFeeRatio)
 	if err != nil {
 		return sdkmath.Int{}, err
 	}

@@ -139,10 +139,10 @@ func (k Keeper) GetTraderDiscount(ctx sdk.Context, trader sdk.AccAddress, volume
 	return math.LegacyZeroDec(), false
 }
 
-// applyDiscount applies the discount and rebate to the given exchange fee ratio.
+// calculateDiscount applies the discount and rebate to the given exchange fee ratio.
 // It updates the current epoch trader volume.
 // It returns the new exchange fee ratio.
-func (k Keeper) applyDiscount(
+func (k Keeper) calculateDiscount(
 	ctx sdk.Context,
 	_ asset.Pair,
 	trader sdk.AccAddress,
