@@ -157,3 +157,35 @@ func (m msgServer) ChangeCollateralDenom(
 
 	return &types.MsgChangeCollateralDenomResponse{}, err
 }
+
+func (m msgServer) AllocateEpochRebates(ctx context.Context, msg *types.MsgAllocateEpochRebates) (*types.MsgAllocateEpochRebatesResponse, error) {
+	sender, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, err
+	}
+	total, err := m.k.AllocateEpochRebates(sdk.UnwrapSDKContext(ctx), sender, msg.Rebates)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgAllocateEpochRebatesResponse{TotalEpochRebates: total}, nil
+}
+
+func (m msgServer) WithdrawEpochRebates(ctx context.Context, msg *types.MsgWithdrawEpochRebates) (*types.MsgWithdrawEpochRebatesResponse, error) {
+	sender, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, err
+	}
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	totalWithdrawn := sdk.NewCoins()
+	for _, epoch := range msg.Epochs {
+		withdrawn, err := m.k.WithdrawEpochRebates(sdkCtx, epoch, sender)
+		if err != nil {
+			return nil, err
+		}
+		totalWithdrawn = totalWithdrawn.Add(withdrawn...)
+	}
+	return &types.MsgWithdrawEpochRebatesResponse{
+		WithdrawnRebates: totalWithdrawn,
+	}, nil
+}
