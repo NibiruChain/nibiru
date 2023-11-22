@@ -5,8 +5,9 @@ import (
 
 	"cosmossdk.io/math"
 	"github.com/NibiruChain/collections"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
