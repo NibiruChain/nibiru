@@ -17,6 +17,8 @@ var (
 	_ sdk.Msg = &MsgClosePosition{}
 	_ sdk.Msg = &MsgDonateToEcosystemFund{}
 	_ sdk.Msg = &MsgPartialClose{}
+	_ sdk.Msg = &MsgAllocateEpochRebates{}
+	_ sdk.Msg = &MsgWithdrawEpochRebates{}
 )
 
 // MsgRemoveMargin
@@ -300,4 +302,48 @@ func (m MsgChangeCollateralDenom) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{signer}
+}
+
+func (m MsgAllocateEpochRebates) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return sdkerrors.Wrapf(errors.ErrInvalidAddress, "invalid sender address (%s)", err)
+	}
+	if err := m.Rebates.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m MsgAllocateEpochRebates) GetSigners() []sdk.AccAddress {
+	signer, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{signer}
+}
+
+func (m MsgAllocateEpochRebates) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
+}
+
+func (m MsgWithdrawEpochRebates) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return sdkerrors.Wrapf(errors.ErrInvalidAddress, "invalid sender address (%s)", err)
+	}
+	if len(m.Epochs) == 0 {
+		return fmt.Errorf("epochs cannot be empty")
+	}
+	return nil
+}
+
+func (m MsgWithdrawEpochRebates) GetSigners() []sdk.AccAddress {
+	signer, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{signer}
+}
+
+func (m MsgWithdrawEpochRebates) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
 }

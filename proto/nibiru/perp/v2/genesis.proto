@@ -60,6 +60,18 @@ message GenesisState {
 
   repeated nibiru.perp.v2.GenesisMarketLastVersion market_last_versions = 10
       [ (gogoproto.nullable) = false ];
+
+  repeated GlobalVolume global_volumes = 13 [ (gogoproto.nullable) = false ];
+
+  repeated DNRAllocation rebates_allocations = 12 [ (gogoproto.nullable) = false ];
+
+  message GlobalVolume {
+    uint64 epoch = 1;
+    string volume = 2 [
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+      (gogoproto.nullable) = false
+    ];
+  }
 }
 
 // GenesisMarketLastVersion is the last version including pair only used for
