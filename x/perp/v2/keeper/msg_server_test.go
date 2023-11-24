@@ -17,6 +17,7 @@ import (
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
 	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
+	sudoerTypes "github.com/NibiruChain/nibiru/x/sudo/types"
 )
 
 func TestMsgServerMarketOrder(t *testing.T) {
@@ -338,4 +339,38 @@ func TestFailMsgServer(t *testing.T) {
 		Donation: sdk.NewCoin("luna", sdk.OneInt()),
 	})
 	require.ErrorContains(t, err, "spendable balance  is smaller than 1luna")
+}
+
+func TestMsgChangeCollateralDenom(t *testing.T) {
+	app, ctx := testapp.NewNibiruTestAppAndContext()
+
+	sender := testutil.AccAddress().String()
+
+	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
+
+	_, err := msgServer.ChangeCollateralDenom(ctx, &types.MsgChangeCollateralDenom{
+		Sender:   sender,
+		NewDenom: "luna",
+	})
+	require.ErrorContains(t, err, "insufficient permissions on smart contract")
+
+	app.SudoKeeper.Sudoers.Set(ctx, sudoerTypes.Sudoers{Contracts: []string{sender}})
+	_, err = msgServer.ChangeCollateralDenom(ctx, &types.MsgChangeCollateralDenom{
+		Sender:   sender,
+		NewDenom: "luna",
+	})
+	require.NoError(t, err)
+
+	app.SudoKeeper.Sudoers.Set(ctx, sudoerTypes.Sudoers{Contracts: []string{sender}})
+	_, err = msgServer.ChangeCollateralDenom(ctx, &types.MsgChangeCollateralDenom{
+		Sender:   sender,
+		NewDenom: "",
+	})
+	require.ErrorContains(t, err, "invalid denom")
+
+	app.SudoKeeper.Sudoers.Set(ctx, sudoerTypes.Sudoers{Contracts: []string{sender}})
+	_, err = msgServer.ChangeCollateralDenom(ctx, &types.MsgChangeCollateralDenom{
+		NewDenom: "luna",
+	})
+	require.ErrorContains(t, err, "invalid sender address")
 }
