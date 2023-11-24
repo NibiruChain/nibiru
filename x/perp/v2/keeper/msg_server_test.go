@@ -374,3 +374,41 @@ func TestMsgChangeCollateralDenom(t *testing.T) {
 	})
 	require.ErrorContains(t, err, "invalid sender address")
 }
+
+func TestMsgServerSettlePosition(t *testing.T) {
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	alice := testutil.AccAddress()
+
+	tests := TestCases{
+		TC("Settleposition").
+			Given(
+				CreateCustomMarket(pair, WithEnabled(true)),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 100))),
+				MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
+				MoveToNextBlock(),
+				CloseMarket(pair),
+			).
+			When(
+				MsgServerSettlePosition(alice, pair, 1),
+			).
+			Then(
+				PositionShouldNotExist(alice, pair, 1),
+				BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.NewInt(100)),
+			),
+		TC("SettlepositionOpenedMarket").
+			Given(
+				CreateCustomMarket(pair, WithEnabled(true)),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 100))),
+				MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
+				MoveToNextBlock(),
+			).
+			When(
+				MsgServerSettlePositionShouldFail(alice, pair, 1),
+			).
+			Then(
+				PositionShouldExist(alice, pair, 1),
+			),
+	}
+
+	NewTestSuite(t).WithTestCases(tests...).Run()
+}
