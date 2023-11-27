@@ -1,6 +1,8 @@
 package action
 
 import (
+	"fmt"
+
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -181,6 +183,71 @@ func MsgServerRemoveMargin(
 		pair:          pair,
 		traderAddress: traderAddress,
 		amount:        amount,
+	}
+}
+
+type msgServerSettlePosition struct {
+	pair          asset.Pair
+	traderAddress sdk.AccAddress
+	Version       uint64
+}
+
+func (m msgServerSettlePosition) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
+
+	// don't need to check response because it's already checked in clearing_house tests
+	_, err := msgServer.SettlePosition(sdk.WrapSDKContext(ctx), &types.MsgSettlePosition{
+		Pair:    m.pair,
+		Sender:  m.traderAddress.String(),
+		Version: m.Version,
+	})
+
+	return ctx, err, true
+}
+
+func MsgServerSettlePosition(
+	traderAddress sdk.AccAddress,
+	pair asset.Pair,
+	version uint64,
+) action.Action {
+	return msgServerSettlePosition{
+		pair:          pair,
+		traderAddress: traderAddress,
+		Version:       version,
+	}
+}
+
+type msgServerSettlePositionShouldFail struct {
+	pair          asset.Pair
+	traderAddress sdk.AccAddress
+	Version       uint64
+}
+
+func (m msgServerSettlePositionShouldFail) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
+
+	// don't need to check response because it's already checked in clearing_house tests
+	_, err := msgServer.SettlePosition(sdk.WrapSDKContext(ctx), &types.MsgSettlePosition{
+		Pair:    m.pair,
+		Sender:  m.traderAddress.String(),
+		Version: m.Version,
+	})
+	if err == nil {
+		return ctx, fmt.Errorf("should fail but no error returned"), true
+	}
+
+	return ctx, nil, true
+}
+
+func MsgServerSettlePositionShouldFail(
+	traderAddress sdk.AccAddress,
+	pair asset.Pair,
+	version uint64,
+) action.Action {
+	return msgServerSettlePositionShouldFail{
+		pair:          pair,
+		traderAddress: traderAddress,
+		Version:       version,
 	}
 }
 

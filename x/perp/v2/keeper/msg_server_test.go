@@ -17,6 +17,7 @@ import (
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
 	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
+	sudoerTypes "github.com/NibiruChain/nibiru/x/sudo/types"
 )
 
 func TestMsgServerMarketOrder(t *testing.T) {
@@ -338,4 +339,76 @@ func TestFailMsgServer(t *testing.T) {
 		Donation: sdk.NewCoin("luna", sdk.OneInt()),
 	})
 	require.ErrorContains(t, err, "spendable balance  is smaller than 1luna")
+}
+
+func TestMsgChangeCollateralDenom(t *testing.T) {
+	app, ctx := testapp.NewNibiruTestAppAndContext()
+
+	sender := testutil.AccAddress().String()
+
+	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
+
+	_, err := msgServer.ChangeCollateralDenom(ctx, &types.MsgChangeCollateralDenom{
+		Sender:   sender,
+		NewDenom: "luna",
+	})
+	require.ErrorContains(t, err, "insufficient permissions on smart contract")
+
+	app.SudoKeeper.Sudoers.Set(ctx, sudoerTypes.Sudoers{Contracts: []string{sender}})
+	_, err = msgServer.ChangeCollateralDenom(ctx, &types.MsgChangeCollateralDenom{
+		Sender:   sender,
+		NewDenom: "luna",
+	})
+	require.NoError(t, err)
+
+	app.SudoKeeper.Sudoers.Set(ctx, sudoerTypes.Sudoers{Contracts: []string{sender}})
+	_, err = msgServer.ChangeCollateralDenom(ctx, &types.MsgChangeCollateralDenom{
+		Sender:   sender,
+		NewDenom: "",
+	})
+	require.ErrorContains(t, err, "invalid denom")
+
+	app.SudoKeeper.Sudoers.Set(ctx, sudoerTypes.Sudoers{Contracts: []string{sender}})
+	_, err = msgServer.ChangeCollateralDenom(ctx, &types.MsgChangeCollateralDenom{
+		NewDenom: "luna",
+	})
+	require.ErrorContains(t, err, "invalid sender address")
+}
+
+func TestMsgServerSettlePosition(t *testing.T) {
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	alice := testutil.AccAddress()
+
+	tests := TestCases{
+		TC("Settleposition").
+			Given(
+				CreateCustomMarket(pair, WithEnabled(true)),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 100))),
+				MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
+				MoveToNextBlock(),
+				CloseMarket(pair),
+			).
+			When(
+				MsgServerSettlePosition(alice, pair, 1),
+			).
+			Then(
+				PositionShouldNotExist(alice, pair, 1),
+				BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.NewInt(100)),
+			),
+		TC("SettlepositionOpenedMarket").
+			Given(
+				CreateCustomMarket(pair, WithEnabled(true)),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 100))),
+				MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
+				MoveToNextBlock(),
+			).
+			When(
+				MsgServerSettlePositionShouldFail(alice, pair, 1),
+			).
+			Then(
+				PositionShouldExist(alice, pair, 1),
+			),
+	}
+
+	NewTestSuite(t).WithTestCases(tests...).Run()
 }
