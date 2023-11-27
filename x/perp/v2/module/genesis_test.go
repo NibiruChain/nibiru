@@ -99,6 +99,11 @@ func RunTestGenesis(t *testing.T, tc TestCase) {
 	app.PerpKeeperV2.TraderDiscounts.Insert(ctx, collections.Join(testutil.AccAddress(), math.NewInt(1_000_000)), sdk.MustNewDecFromStr("0.1"))
 	app.PerpKeeperV2.GlobalDiscounts.Insert(ctx, sdk.NewInt(1_000_000), sdk.MustNewDecFromStr("0.05"))
 	app.PerpKeeperV2.TraderVolumes.Insert(ctx, collections.Join(testutil.AccAddress(), uint64(0)), math.NewInt(1_000_000))
+	app.PerpKeeperV2.GlobalVolumes.Insert(ctx, uint64(0), math.NewInt(1_000_000))
+	app.PerpKeeperV2.EpochRebateAllocations.Insert(ctx, uint64(0), types.DNRAllocation{
+		Epoch:  0,
+		Amount: sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1_000_000))),
+	})
 
 	// create some positions
 	for _, position := range tc.positions {
@@ -144,6 +149,8 @@ func RunTestGenesis(t *testing.T, tc TestCase) {
 	require.Equal(t, genState.GlobalDiscount, genStateAfterInit.GlobalDiscount)
 	require.Equal(t, genState.TraderVolumes, genStateAfterInit.TraderVolumes)
 	require.Equal(t, genState.CollateralDenom, genStateAfterInit.CollateralDenom)
+	require.Equal(t, genState.GlobalVolumes, genStateAfterInit.GlobalVolumes)
+	require.Equal(t, genState.RebatesAllocations, genStateAfterInit.RebatesAllocations)
 }
 
 func TestNewAppModuleBasic(t *testing.T) {
