@@ -141,8 +141,8 @@ func (k Keeper) CheckPermissions(
 	hasPermission := set.New(contracts...).Has(contract.String()) || contract.String() == state.Root
 	if !hasPermission {
 		return fmt.Errorf(
-			"insufficient permissions on smart contract: %s. The sudo contracts are: %s",
-			contract, contracts,
+			"%w: insufficient permissions on smart contract: %s. The sudo contracts are: %s",
+			sudotypes.ErrUnauthorized, contract, contracts,
 		)
 	}
 	return nil

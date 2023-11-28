@@ -2,10 +2,6 @@ package types
 
 import sdkerrors "cosmossdk.io/errors"
 
-// highestErrorCode = 33
-// NOTE: Please increment this when you add an error to make it easier for
-// other developers to know which "code" value should be used next.
-
 var (
 	ErrPairNotSupported    = sdkerrors.Register(ModuleName, 1, "pair not supported")
 	ErrQuoteReserveAtZero  = sdkerrors.Register(ModuleName, 2, "quote reserve after at zero")
@@ -42,7 +38,7 @@ var (
 	ErrLiquidityDepthOverflow   = sdkerrors.Register(ModuleName, 24, "liquidty depth overflow")
 	ErrMarketNotEnabled         = sdkerrors.Register(ModuleName, 25, "market is not enabled, you can only fully close your position")
 	ErrNonPositivePegMultiplier = sdkerrors.Register(ModuleName, 26, "peg multiplier must be > 0")
-	ErrNegativeSwapInvariant    = sdkerrors.Register(ModuleName, 27, "swap multiplier must be > 0")
+	ErrNonPositiveSwapInvariant = sdkerrors.Register(ModuleName, 27, "swap multiplier must be > 0")
 	ErrNilSwapInvariant         = sdkerrors.Register(ModuleName, 28, "swap multiplier must be not nil")
 	ErrNotEnoughFundToPayAction = sdkerrors.Register(ModuleName, 29, "not enough fund in perp EF to pay for action")
 

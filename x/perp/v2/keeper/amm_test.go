@@ -256,7 +256,7 @@ func TestEditSwapInvariantFail(t *testing.T) {
 
 	// Error because of invalid price multiplier
 	err = app.PerpKeeperV2.Admin.UnsafeShiftSwapInvariant(ctx, pair, sdk.NewDec(-1))
-	require.ErrorIs(t, err, types.ErrNegativeSwapInvariant)
+	require.ErrorIs(t, err, types.ErrNonPositiveSwapInvariant)
 
 	// Add market activity
 	err = app.BankKeeper.MintCoins(ctx, "inflation", sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(102))))

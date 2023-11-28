@@ -113,7 +113,6 @@ func (m msgServer) SettlePosition(ctx context.Context, msg *types.MsgSettlePosit
 	// These fields should have already been validated by MsgSettlePosition.ValidateBasic() prior to being sent to the msgServer.
 	traderAddr := sdk.MustAccAddressFromBech32(msg.Sender)
 	resp, err := m.k.SettlePosition(sdk.UnwrapSDKContext(ctx), msg.Pair, msg.Version, traderAddr)
-
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +189,8 @@ func (m msgServer) WithdrawEpochRebates(ctx context.Context, msg *types.MsgWithd
 	}, nil
 }
 
-// TODO: test ShiftPegMultiplier
+// ShiftPegMultiplier: gRPC tx msg for changing a market's peg multiplier.
+// [Admin] Only callable by sudoers.
 func (m msgServer) ShiftPegMultiplier(
 	goCtx context.Context, msg *types.MsgShiftPegMultiplier,
 ) (*types.MsgShiftPegMultiplierResponse, error) {
@@ -203,7 +203,8 @@ func (m msgServer) ShiftPegMultiplier(
 	return &types.MsgShiftPegMultiplierResponse{}, err
 }
 
-// TODO: test ShiftSwapInvariant
+// ShiftSwapInvariant: gRPC tx msg for changing a market's swap invariant.
+// [Admin] Only callable by sudoers.
 func (m msgServer) ShiftSwapInvariant(
 	goCtx context.Context, msg *types.MsgShiftSwapInvariant,
 ) (*types.MsgShiftSwapInvariantResponse, error) {
