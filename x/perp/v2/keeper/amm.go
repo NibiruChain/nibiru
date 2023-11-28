@@ -111,7 +111,7 @@ func (k Keeper) handleMarketUpdateCost(
 		)
 		if err != nil {
 			return costPaid, types.ErrNotEnoughFundToPayAction.Wrapf(
-				"not enough fund in perp ef to pay for repeg, need %s got %s",
+				"need %s, got %s",
 				cost.String(),
 				k.BankKeeper.GetBalance(ctx, k.AccountKeeper.GetModuleAddress(types.PerpEFModuleAccount), collateral).String(),
 			)

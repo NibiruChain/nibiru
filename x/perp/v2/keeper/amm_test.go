@@ -214,7 +214,7 @@ func TestUnsafeShiftPegMultiplier_Fail(t *testing.T) {
 
 	// Error because no money in perp ef fund
 	err = app.PerpKeeperV2.Admin.UnsafeShiftPegMultiplier(ctx, pair, sdk.NewDec(3))
-	require.ErrorContains(t, err, "not enough fund in perp ef to pay for repeg")
+	require.ErrorContains(t, err, types.ErrNotEnoughFundToPayAction.Error())
 
 	// Works because it goes in the other way
 	err = app.PerpKeeperV2.Admin.UnsafeShiftPegMultiplier(ctx, pair, sdk.NewDec(1))
@@ -282,11 +282,11 @@ func TestUnsafeShiftSwapInvariant_Fail(t *testing.T) {
 
 	// Error because no money in perp ef fund
 	err = app.PerpKeeperV2.Admin.UnsafeShiftSwapInvariant(ctx, pair, sdk.NewInt(2_000_000))
-	require.ErrorContains(t, err, "not enough fund in perp ef to pay for repeg")
+	require.ErrorContains(t, err, types.ErrNotEnoughFundToPayAction.Error())
 
 	// Fail at validate
 	err = app.PerpKeeperV2.Admin.UnsafeShiftSwapInvariant(ctx, pair, sdk.NewInt(0))
-	require.ErrorContains(t, err, "swap multiplier must be > 0")
+	require.ErrorContains(t, err, types.ErrNonPositivePegMultiplier.Error())
 
 	// Works because it goes in the other way
 	err = app.PerpKeeperV2.Admin.UnsafeShiftSwapInvariant(ctx, pair, sdk.NewInt(500_000))
