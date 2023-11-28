@@ -255,11 +255,11 @@ func TestUnsafeShiftSwapInvariant_Fail(t *testing.T) {
 	require.NoError(t, err)
 
 	// Error because of invalid price multiplier
-	err = app.PerpKeeperV2.Admin.UnsafeShiftSwapInvariant(ctx, asset.MustNewPair("luna:usdt"), sdk.NewDec(-1))
+	err = app.PerpKeeperV2.Admin.UnsafeShiftSwapInvariant(ctx, asset.MustNewPair("luna:usdt"), sdk.NewInt(-1))
 	require.ErrorContains(t, err, "market luna:usdt not found")
 
 	// Error because of invalid price multiplier
-	err = app.PerpKeeperV2.Admin.UnsafeShiftSwapInvariant(ctx, pair, sdk.NewDec(-1))
+	err = app.PerpKeeperV2.Admin.UnsafeShiftSwapInvariant(ctx, pair, sdk.NewInt(-1))
 	require.ErrorIs(t, err, types.ErrNonPositiveSwapInvariant)
 
 	// Add market activity
@@ -281,15 +281,15 @@ func TestUnsafeShiftSwapInvariant_Fail(t *testing.T) {
 	require.NoError(t, err)
 
 	// Error because no money in perp ef fund
-	err = app.PerpKeeperV2.Admin.UnsafeShiftSwapInvariant(ctx, pair, sdk.NewDec(2_000_000))
+	err = app.PerpKeeperV2.Admin.UnsafeShiftSwapInvariant(ctx, pair, sdk.NewInt(2_000_000))
 	require.ErrorContains(t, err, "not enough fund in perp ef to pay for repeg")
 
 	// Fail at validate
-	err = app.PerpKeeperV2.Admin.UnsafeShiftSwapInvariant(ctx, pair, sdk.NewDec(0))
+	err = app.PerpKeeperV2.Admin.UnsafeShiftSwapInvariant(ctx, pair, sdk.NewInt(0))
 	require.ErrorContains(t, err, "swap multiplier must be > 0")
 
 	// Works because it goes in the other way
-	err = app.PerpKeeperV2.Admin.UnsafeShiftSwapInvariant(ctx, pair, sdk.NewDec(500_000))
+	err = app.PerpKeeperV2.Admin.UnsafeShiftSwapInvariant(ctx, pair, sdk.NewInt(500_000))
 	require.NoError(t, err)
 }
 
@@ -308,7 +308,7 @@ func TestUnsafeShiftSwapInvariant(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditSwapInvariant(pair, sdk.NewDec(1e12)),
+				EditSwapInvariant(pair, sdk.NewInt(1e12)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)),
@@ -332,7 +332,7 @@ func TestUnsafeShiftSwapInvariant(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditSwapInvariant(pair, sdk.NewDec(1e18)),
+				EditSwapInvariant(pair, sdk.NewInt(1e18)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)),
@@ -352,7 +352,7 @@ func TestUnsafeShiftSwapInvariant(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditSwapInvariant(pair, sdk.NewDec(1e14)),
+				EditSwapInvariant(pair, sdk.NewInt(1e14)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1008101)),
@@ -372,7 +372,7 @@ func TestUnsafeShiftSwapInvariant(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditSwapInvariant(pair, sdk.NewDec(1e6)),
+				EditSwapInvariant(pair, sdk.NewInt(1e6)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(999991)),
@@ -392,7 +392,7 @@ func TestUnsafeShiftSwapInvariant(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditSwapInvariant(pair, sdk.NewDec(1e14)),
+				EditSwapInvariant(pair, sdk.NewInt(1e14)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1010102)),
@@ -412,7 +412,7 @@ func TestUnsafeShiftSwapInvariant(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditSwapInvariant(pair, sdk.NewDec(1e6)),
+				EditSwapInvariant(pair, sdk.NewInt(1e6)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(999989)),

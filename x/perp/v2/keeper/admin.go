@@ -196,7 +196,7 @@ func (k admin) ShiftPegMultiplier(
 func (k admin) ShiftSwapInvariant(
 	ctx sdk.Context,
 	pair asset.Pair,
-	newSwapInvariant sdk.Dec,
+	newSwapInvariant sdk.Int,
 	sender sdk.AccAddress,
 ) error {
 	if err := k.SudoKeeper.CheckPermissions(sender, ctx); err != nil {

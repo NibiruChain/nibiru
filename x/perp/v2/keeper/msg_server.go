@@ -194,12 +194,10 @@ func (m msgServer) WithdrawEpochRebates(ctx context.Context, msg *types.MsgWithd
 func (m msgServer) ShiftPegMultiplier(
 	goCtx context.Context, msg *types.MsgShiftPegMultiplier,
 ) (*types.MsgShiftPegMultiplierResponse, error) {
-	sender, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil {
-		return nil, err
-	}
+	// The `msg` here is checked with ValidateBasic before this fn is called.
+	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	err = m.k.Admin.ShiftPegMultiplier(ctx, msg.Pair, msg.NewPegMult, sender)
+	err := m.k.Admin.ShiftPegMultiplier(ctx, msg.Pair, msg.NewPegMult, sender)
 	return &types.MsgShiftPegMultiplierResponse{}, err
 }
 
@@ -208,11 +206,9 @@ func (m msgServer) ShiftPegMultiplier(
 func (m msgServer) ShiftSwapInvariant(
 	goCtx context.Context, msg *types.MsgShiftSwapInvariant,
 ) (*types.MsgShiftSwapInvariantResponse, error) {
-	sender, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil {
-		return nil, err
-	}
+	// The `msg` here is checked with ValidateBasic before this fn is called.
+	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	err = m.k.Admin.ShiftSwapInvariant(ctx, msg.Pair, msg.NewSwapInvariant.ToLegacyDec(), sender)
+	err := m.k.Admin.ShiftSwapInvariant(ctx, msg.Pair, msg.NewSwapInvariant, sender)
 	return &types.MsgShiftSwapInvariantResponse{}, err
 }

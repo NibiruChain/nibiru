@@ -24,8 +24,9 @@ func (k Keeper) UnsafeShiftPegMultiplier(
 	if err != nil {
 		return err
 	}
+	oldPriceMult := amm.PriceMultiplier
 
-	if newPriceMultiplier.Equal(amm.PriceMultiplier) {
+	if newPriceMultiplier.Equal(oldPriceMult) {
 		// same price multiplier, no-op
 		return nil
 	}
@@ -36,7 +37,7 @@ func (k Keeper) UnsafeShiftPegMultiplier(
 		return err
 	}
 
-	err = k.handleMarketUpdateCost(ctx, pair, cost)
+	costPaid, err := k.handleMarketUpdateCost(ctx, pair, cost)
 	if err != nil {
 		return err
 	}
@@ -45,7 +46,11 @@ func (k Keeper) UnsafeShiftPegMultiplier(
 	amm.PriceMultiplier = newPriceMultiplier
 	k.SaveAMM(ctx, amm)
 
-	return nil
+	return ctx.EventManager().EmitTypedEvent(&types.EventShiftPegMultiplier{
+		OldPegMultiplier: oldPriceMult,
+		NewPegMultiplier: newPriceMultiplier,
+		CostPaid:         costPaid,
+	})
 }
 
 // UnsafeShiftSwapInvariant: [Without checking x/sudo permissions] Edit the swap
@@ -53,7 +58,7 @@ func (k Keeper) UnsafeShiftPegMultiplier(
 // fund to pay for the operation. These funds get send to the vault to pay for
 // trader's new net margin.
 func (k Keeper) UnsafeShiftSwapInvariant(
-	ctx sdk.Context, pair asset.Pair, newSwapInvariant sdk.Dec,
+	ctx sdk.Context, pair asset.Pair, newSwapInvariant sdk.Int,
 ) (err error) {
 	// Get the pool
 	amm, err := k.GetAMM(ctx, pair)
@@ -61,33 +66,36 @@ func (k Keeper) UnsafeShiftSwapInvariant(
 		return err
 	}
 
-	// Compute cost of re-pegging the pool
-	cost, err := amm.CalcUpdateSwapInvariantCost(newSwapInvariant)
+	cost, err := amm.CalcUpdateSwapInvariantCost(newSwapInvariant.ToLegacyDec())
 	if err != nil {
 		return err
 	}
 
-	err = k.handleMarketUpdateCost(ctx, pair, cost)
+	costPaid, err := k.handleMarketUpdateCost(ctx, pair, cost)
 	if err != nil {
 		return err
 	}
 
-	err = amm.UpdateSwapInvariant(newSwapInvariant)
+	err = amm.UpdateSwapInvariant(newSwapInvariant.ToLegacyDec())
 	if err != nil {
 		return err
 	}
 
 	k.SaveAMM(ctx, amm)
 
-	return nil
+	return ctx.EventManager().EmitTypedEvent(&types.EventShiftSwapInvariant{
+		OldSwapInvariant: amm.BaseReserve.Mul(amm.QuoteReserve).RoundInt(),
+		NewSwapInvariant: newSwapInvariant,
+		CostPaid:         costPaid,
+	})
 }
 
 func (k Keeper) handleMarketUpdateCost(
 	ctx sdk.Context, pair asset.Pair, costAmt sdkmath.Int,
-) (err error) {
+) (costPaid sdk.Coin, err error) {
 	collateral, err := k.Collateral.Get(ctx)
 	if err != nil {
-		return err
+		return costPaid, err
 	}
 
 	if costAmt.IsPositive() {
@@ -102,11 +110,13 @@ func (k Keeper) handleMarketUpdateCost(
 			cost,
 		)
 		if err != nil {
-			return types.ErrNotEnoughFundToPayAction.Wrapf(
+			return costPaid, types.ErrNotEnoughFundToPayAction.Wrapf(
 				"not enough fund in perp ef to pay for repeg, need %s got %s",
 				cost.String(),
 				k.BankKeeper.GetBalance(ctx, k.AccountKeeper.GetModuleAddress(types.PerpEFModuleAccount), collateral).String(),
 			)
+		} else {
+			costPaid = cost[0]
 		}
 	} else if costAmt.IsNegative() {
 		// Negative cost, send from margin vault to perp ef.
@@ -119,13 +129,18 @@ func (k Keeper) handleMarketUpdateCost(
 			),
 		)
 		if err != nil { // nolint:staticcheck
-			// if there's no money in margin to pay for the repeg, we still repeg. It's surprising if it's
-			// happening on mainnet, but it's not a problem.
-			// It means there's bad debt in the system, and it's preventing to pay for the repeg down. But the bad debt
-			// end up being paid up by the perp EF anyway.
+			costPaid = sdk.NewInt64Coin(collateral, 0)
+			// Explanation: If there's no money in the vault to pay for the
+			// operation, the execution should still be successful. It's
+			// surprising if it's happening on mainnet, but it's not a problem.
+			// It means there's bad debt in the system, and it's preventing to
+			// pay for the repeg down. But the bad debt end up being paid up by
+			// the perp EF anyway.
+		} else {
+			costPaid = sdk.NewCoin(collateral, costAmt.Abs())
 		}
 	}
-	return nil
+	return costPaid, nil
 }
 
 // GetMarket returns the market that is enabled. It is the last version of the market.

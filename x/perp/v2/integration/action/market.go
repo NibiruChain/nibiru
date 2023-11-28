@@ -153,7 +153,7 @@ func EditPriceMultiplier(pair asset.Pair, newValue sdk.Dec) action.Action {
 
 type editSwapInvariant struct {
 	pair     asset.Pair
-	newValue sdk.Dec
+	newValue sdk.Int
 }
 
 func (e editSwapInvariant) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
@@ -161,7 +161,7 @@ func (e editSwapInvariant) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context,
 	return ctx, err, true
 }
 
-func EditSwapInvariant(pair asset.Pair, newValue sdk.Dec) action.Action {
+func EditSwapInvariant(pair asset.Pair, newValue sdk.Int) action.Action {
 	return editSwapInvariant{
 		pair:     pair,
 		newValue: newValue,
