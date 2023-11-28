@@ -137,39 +137,6 @@ func (exec *ExecutorPerp) RemoveMargin(
 	return exec.MsgServer().RemoveMargin(goCtx, sdkMsg)
 }
 
-func (exec *ExecutorPerp) PegShift(
-	cwMsg *bindings.PegShift, contractAddr sdk.AccAddress, ctx sdk.Context,
-) (err error) {
-	if cwMsg == nil {
-		return wasmvmtypes.InvalidRequest{Err: "null msg"}
-	}
-
-	pair, err := asset.TryNewPair(cwMsg.Pair)
-	if err != nil {
-		return err
-	}
-
-	return exec.PerpV2.UnsafeShiftPegMultiplier(
-		ctx,
-		// contractAddr,
-		pair,
-		cwMsg.PegMult,
-	)
-}
-
-func (exec *ExecutorPerp) DepthShift(cwMsg *bindings.DepthShift, ctx sdk.Context) (err error) {
-	if cwMsg == nil {
-		return wasmvmtypes.InvalidRequest{Err: "null msg"}
-	}
-
-	pair, err := asset.TryNewPair(cwMsg.Pair)
-	if err != nil {
-		return err
-	}
-
-	return exec.PerpV2.UnsafeShiftSwapInvariant(ctx, pair, cwMsg.DepthMult)
-}
-
 func (exec *ExecutorPerp) InsuranceFundWithdraw(
 	cwMsg *bindings.InsuranceFundWithdraw, ctx sdk.Context,
 ) (err error) {
