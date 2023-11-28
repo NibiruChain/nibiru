@@ -1,10 +1,11 @@
 package v1_1_0
 
 import (
-	"github.com/NibiruChain/nibiru/app/upgrades"
-	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
 	"github.com/cosmos/cosmos-sdk/store/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+
+	"github.com/NibiruChain/nibiru/app/upgrades"
+	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
 )
 
 const UpgradeName = "v1.1.0"
