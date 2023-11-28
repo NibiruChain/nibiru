@@ -282,7 +282,7 @@ func (m MsgPartialClose) GetSigners() []sdk.AccAddress {
 // ------------------------ MsgChangeCollateralDenom ------------------------
 
 func (m MsgChangeCollateralDenom) Route() string { return "perp" }
-func (m MsgChangeCollateralDenom) Type() string  { return "partial_close_msg" }
+func (m MsgChangeCollateralDenom) Type() string  { return "change_collateral_denom_msg" }
 
 func (m MsgChangeCollateralDenom) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
