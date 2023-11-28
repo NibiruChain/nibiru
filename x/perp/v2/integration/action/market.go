@@ -134,35 +134,35 @@ func WithEnabled(enabled bool) MarketModifier {
 	}
 }
 
-type editPriceMultiplier struct {
+type shiftPegMultiplier struct {
 	pair     asset.Pair
 	newValue sdk.Dec
 }
 
-func (e editPriceMultiplier) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (e shiftPegMultiplier) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	err := app.PerpKeeperV2.UnsafeShiftPegMultiplier(ctx, e.pair, e.newValue)
 	return ctx, err, true
 }
 
-func EditPriceMultiplier(pair asset.Pair, newValue sdk.Dec) action.Action {
-	return editPriceMultiplier{
+func ShiftPegMultiplier(pair asset.Pair, newValue sdk.Dec) action.Action {
+	return shiftPegMultiplier{
 		pair:     pair,
 		newValue: newValue,
 	}
 }
 
-type editSwapInvariant struct {
+type shiftSwapInvariant struct {
 	pair     asset.Pair
-	newValue sdk.Int
+	newValue sdkmath.Int
 }
 
-func (e editSwapInvariant) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (e shiftSwapInvariant) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
 	err := app.PerpKeeperV2.UnsafeShiftSwapInvariant(ctx, e.pair, e.newValue)
 	return ctx, err, true
 }
 
-func EditSwapInvariant(pair asset.Pair, newValue sdk.Int) action.Action {
-	return editSwapInvariant{
+func ShiftSwapInvariant(pair asset.Pair, newValue sdkmath.Int) action.Action {
+	return shiftSwapInvariant{
 		pair:     pair,
 		newValue: newValue,
 	}

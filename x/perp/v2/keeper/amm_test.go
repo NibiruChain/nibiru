@@ -32,7 +32,7 @@ func TestUnsafeShiftPegMultiplier(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditPriceMultiplier(pair, sdk.OneDec()),
+				ShiftPegMultiplier(pair, sdk.OneDec()),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)),
@@ -55,7 +55,7 @@ func TestUnsafeShiftPegMultiplier(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditPriceMultiplier(pair, sdk.NewDec(10)),
+				ShiftPegMultiplier(pair, sdk.NewDec(10)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)),
@@ -75,7 +75,7 @@ func TestUnsafeShiftPegMultiplier(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditPriceMultiplier(pair, sdk.NewDec(10)),
+				ShiftPegMultiplier(pair, sdk.NewDec(10)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1004500)),
@@ -95,7 +95,7 @@ func TestUnsafeShiftPegMultiplier(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditPriceMultiplier(pair, sdk.MustNewDecFromStr("0.25")),
+				ShiftPegMultiplier(pair, sdk.MustNewDecFromStr("0.25")),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(999626)),
@@ -115,7 +115,7 @@ func TestUnsafeShiftPegMultiplier(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditPriceMultiplier(pair, sdk.NewDec(10)),
+				ShiftPegMultiplier(pair, sdk.NewDec(10)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(995500)),
@@ -135,7 +135,7 @@ func TestUnsafeShiftPegMultiplier(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditPriceMultiplier(pair, sdk.MustNewDecFromStr("0.25")),
+				ShiftPegMultiplier(pair, sdk.MustNewDecFromStr("0.25")),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1000376)),
@@ -286,7 +286,7 @@ func TestUnsafeShiftSwapInvariant_Fail(t *testing.T) {
 
 	// Fail at validate
 	err = app.PerpKeeperV2.Admin.UnsafeShiftSwapInvariant(ctx, pair, sdk.NewInt(0))
-	require.ErrorContains(t, err, types.ErrNonPositivePegMultiplier.Error())
+	require.ErrorContains(t, err, types.ErrNonPositiveSwapInvariant.Error())
 
 	// Works because it goes in the other way
 	err = app.PerpKeeperV2.Admin.UnsafeShiftSwapInvariant(ctx, pair, sdk.NewInt(500_000))
@@ -308,7 +308,7 @@ func TestUnsafeShiftSwapInvariant(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditSwapInvariant(pair, sdk.NewInt(1e12)),
+				ShiftSwapInvariant(pair, sdk.NewInt(1e12)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)),
@@ -332,7 +332,7 @@ func TestUnsafeShiftSwapInvariant(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditSwapInvariant(pair, sdk.NewInt(1e18)),
+				ShiftSwapInvariant(pair, sdk.NewInt(1e18)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)),
@@ -352,7 +352,7 @@ func TestUnsafeShiftSwapInvariant(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditSwapInvariant(pair, sdk.NewInt(1e14)),
+				ShiftSwapInvariant(pair, sdk.NewInt(1e14)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1008101)),
@@ -372,7 +372,7 @@ func TestUnsafeShiftSwapInvariant(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditSwapInvariant(pair, sdk.NewInt(1e6)),
+				ShiftSwapInvariant(pair, sdk.NewInt(1e6)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(999991)),
@@ -392,7 +392,7 @@ func TestUnsafeShiftSwapInvariant(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditSwapInvariant(pair, sdk.NewInt(1e14)),
+				ShiftSwapInvariant(pair, sdk.NewInt(1e14)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1010102)),
@@ -412,7 +412,7 @@ func TestUnsafeShiftSwapInvariant(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditSwapInvariant(pair, sdk.NewInt(1e6)),
+				ShiftSwapInvariant(pair, sdk.NewInt(1e6)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(999989)),

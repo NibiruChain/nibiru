@@ -58,7 +58,7 @@ func (k Keeper) UnsafeShiftPegMultiplier(
 // fund to pay for the operation. These funds get send to the vault to pay for
 // trader's new net margin.
 func (k Keeper) UnsafeShiftSwapInvariant(
-	ctx sdk.Context, pair asset.Pair, newSwapInvariant sdk.Int,
+	ctx sdk.Context, pair asset.Pair, newSwapInvariant sdkmath.Int,
 ) (err error) {
 	// Get the pool
 	amm, err := k.GetAMM(ctx, pair)

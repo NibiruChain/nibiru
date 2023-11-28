@@ -48,7 +48,7 @@ func TestMarketOrder(t *testing.T) {
 				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
 				MarketOrder(bob, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
 
-				EditSwapInvariant(pairBtcNusd, sdk.NewInt(1)),
+				ShiftSwapInvariant(pairBtcNusd, sdk.NewInt(1)),
 			).
 			When(
 				PartialCloseFails(alice, pairBtcNusd, sdk.NewDec(5_000), types.ErrBaseReserveAtZero),
@@ -264,7 +264,7 @@ func TestMarketOrder(t *testing.T) {
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(10_000)))),
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(9_000), sdk.NewDec(10), sdk.ZeroDec()),
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(100_000_000)))),
-				EditSwapInvariant(pairBtcNusd, sdk.NewInt(1)),
+				ShiftSwapInvariant(pairBtcNusd, sdk.NewInt(1)),
 			).
 			When(
 				ClosePosition(alice, pairBtcNusd),
@@ -1999,7 +1999,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 			).
 			When(
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
-				EditSwapInvariant(pairBtcNusd, startingSwapInvariant.MulRaw(100)),
+				ShiftSwapInvariant(pairBtcNusd, startingSwapInvariant.MulRaw(100)),
 				AMMShouldBeEqual(
 					pairBtcNusd,
 					AMM_SwapInvariantShouldBeEqual(sdk.MustNewDecFromStr("99999999999999999999999999.999999000000000000"))),
@@ -2019,7 +2019,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 			).
 			When(
 				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
-				EditSwapInvariant(pairBtcNusd, startingSwapInvariant.MulRaw(100)),
+				ShiftSwapInvariant(pairBtcNusd, startingSwapInvariant.MulRaw(100)),
 				AMMShouldBeEqual(
 					pairBtcNusd,
 					AMM_SwapInvariantShouldBeEqual(sdk.MustNewDecFromStr("99999999999999999999999999.999999000000000000"))),
@@ -2040,7 +2040,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 			).
 			When(
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
-				EditSwapInvariant(
+				ShiftSwapInvariant(
 					pairBtcNusd,
 					startingSwapInvariant.QuoRaw(10)),
 				AMMShouldBeEqual(
@@ -2062,7 +2062,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 			).
 			When(
 				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
-				EditSwapInvariant(pairBtcNusd,
+				ShiftSwapInvariant(pairBtcNusd,
 					startingSwapInvariant.QuoRaw(10)),
 				AMMShouldBeEqual(
 					pairBtcNusd,
@@ -2086,7 +2086,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
 				MarketOrder(bob, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.NewDec(10_000_000_000_000)),
 
-				EditSwapInvariant(pairBtcNusd,
+				ShiftSwapInvariant(pairBtcNusd,
 					startingSwapInvariant.MulRaw(100)),
 				AMMShouldBeEqual(
 					pairBtcNusd,
@@ -2118,7 +2118,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
 				MarketOrder(bob, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.NewDec(10_000_000_000_000)),
 
-				EditSwapInvariant(pairBtcNusd,
+				ShiftSwapInvariant(pairBtcNusd,
 					startingSwapInvariant.QuoRaw(10)),
 				AMMShouldBeEqual(
 					pairBtcNusd,
