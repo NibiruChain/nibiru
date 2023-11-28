@@ -21,7 +21,7 @@ import (
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
-func TestEditPriceMultipler(t *testing.T) {
+func TestUnsafeShiftPegMultiplier(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 
 	tests := TestCases{
@@ -152,7 +152,9 @@ func TestEditPriceMultipler(t *testing.T) {
 	NewTestSuite(t).WithTestCases(tests...).Run()
 }
 
-func TestEditPriceMultiplerFail(t *testing.T) {
+// TestUnsafeShiftPegMultiplier_Fail: Test scenarios for the
+// `UnsafeShiftPegMultiplier` function that should error
+func TestUnsafeShiftPegMultiplier_Fail(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	app, ctx := testapp.NewNibiruTestAppAndContext()
 
@@ -219,7 +221,9 @@ func TestEditPriceMultiplerFail(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestEditSwapInvariantFail(t *testing.T) {
+// TestUnsafeShiftSwapInvariant_Fail: Test scenarios for the
+// `UnsafeShiftSwapInvariant` function that should error
+func TestUnsafeShiftSwapInvariant_Fail(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	app, ctx := testapp.NewNibiruTestAppAndContext()
 	account := testutil.AccAddress()
@@ -289,7 +293,7 @@ func TestEditSwapInvariantFail(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestEditSwapInvariant(t *testing.T) {
+func TestUnsafeShiftSwapInvariant(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 
 	tests := TestCases{

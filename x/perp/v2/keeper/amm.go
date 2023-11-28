@@ -49,8 +49,8 @@ func (k Keeper) UnsafeShiftPegMultiplier(
 }
 
 // UnsafeShiftSwapInvariant: [Without checking x/sudo permissions] Edit the swap
-// invariant of an amm pool after making sure there's enough money in the perp EF
-// fund to pay for the repeg. These funds get send to the vault to pay for
+// invariant of an amm pool after making sure there's enough money in the perp
+// fund to pay for the operation. These funds get send to the vault to pay for
 // trader's new net margin.
 func (k Keeper) UnsafeShiftSwapInvariant(
 	ctx sdk.Context, pair asset.Pair, newSwapInvariant sdk.Dec,

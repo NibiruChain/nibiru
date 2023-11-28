@@ -417,10 +417,6 @@ func (s *TestSuiteAdmin) TestCheckPermissions() {
 	}
 	sender := senderAddr.String()
 
-	state, err := s.nibiru.AppKeepers.SudoKeeper.Sudoers.Get(s.ctx)
-	fmt.Printf("state: %v\n", state)
-	fmt.Printf("err: %v\n", err)
-
 	for _, testCaseMsg := range []sdk.Msg{
 		&perptypes.MsgShiftPegMultiplier{
 			Sender: sender, Pair: asset.Pair("valid:pair"), NewPegMult: sdk.NewDec(420),

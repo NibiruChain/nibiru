@@ -175,9 +175,9 @@ func (k admin) UnsafeChangeCollateralDenom(
 	return nil
 }
 
-// ShiftPegMultiplier: Edit the peg multiplier of an amm pool after making
-// sure there's enough money in the perp EF fund to pay for the repeg. These
-// funds get send to the vault to pay for trader's new net margin.
+// ShiftPegMultiplier: Edit the peg multiplier of an amm pool after making sure
+// there's enough money in the perp fund to pay for the repeg. These funds get
+// send to the vault to pay for trader's new net margin.
 func (k admin) ShiftPegMultiplier(
 	ctx sdk.Context,
 	pair asset.Pair,
@@ -190,9 +190,9 @@ func (k admin) ShiftPegMultiplier(
 	return k.UnsafeShiftPegMultiplier(ctx, pair, newPriceMultiplier)
 }
 
-// ShiftSwapInvariant: Edit the peg multiplier of an amm pool after making
-// sure there's enough money in the perp EF fund to pay for the repeg. These
-// funds get send to the vault to pay for trader's new net margin.
+// ShiftSwapInvariant: Edit the swap invariant (liquidity depth) of an amm pool,
+// ensuring that there's enough money in the perp  fund to pay for the operation.
+// These funds get send to the vault to pay for trader's new net margin.
 func (k admin) ShiftSwapInvariant(
 	ctx sdk.Context,
 	pair asset.Pair,
