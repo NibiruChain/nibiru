@@ -149,7 +149,7 @@ func (exec *ExecutorPerp) PegShift(
 		return err
 	}
 
-	return exec.PerpV2.EditPriceMultiplier(
+	return exec.PerpV2.UnsafeShiftPegMultiplier(
 		ctx,
 		// contractAddr,
 		pair,
@@ -167,7 +167,7 @@ func (exec *ExecutorPerp) DepthShift(cwMsg *bindings.DepthShift, ctx sdk.Context
 		return err
 	}
 
-	return exec.PerpV2.EditSwapInvariant(ctx, pair, cwMsg.DepthMult)
+	return exec.PerpV2.UnsafeShiftSwapInvariant(ctx, pair, cwMsg.DepthMult)
 }
 
 func (exec *ExecutorPerp) InsuranceFundWithdraw(

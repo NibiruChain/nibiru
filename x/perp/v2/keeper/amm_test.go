@@ -185,11 +185,11 @@ func TestEditPriceMultiplerFail(t *testing.T) {
 	require.NoError(t, err)
 
 	// Error because of invalid pair
-	err = app.PerpKeeperV2.Admin.EditPriceMultiplier(ctx, asset.MustNewPair("luna:usdt"), sdk.NewDec(-1))
+	err = app.PerpKeeperV2.Admin.UnsafeShiftPegMultiplier(ctx, asset.MustNewPair("luna:usdt"), sdk.NewDec(-1))
 	require.ErrorContains(t, err, "market luna:usdt not found")
 
 	// Error because of invalid price multiplier
-	err = app.PerpKeeperV2.Admin.EditPriceMultiplier(ctx, pair, sdk.NewDec(-1))
+	err = app.PerpKeeperV2.Admin.UnsafeShiftPegMultiplier(ctx, pair, sdk.NewDec(-1))
 	require.ErrorIs(t, err, types.ErrNonPositivePegMultiplier)
 
 	// Add market activity
@@ -211,11 +211,11 @@ func TestEditPriceMultiplerFail(t *testing.T) {
 	require.NoError(t, err)
 
 	// Error because no money in perp ef fund
-	err = app.PerpKeeperV2.Admin.EditPriceMultiplier(ctx, pair, sdk.NewDec(3))
+	err = app.PerpKeeperV2.Admin.UnsafeShiftPegMultiplier(ctx, pair, sdk.NewDec(3))
 	require.ErrorContains(t, err, "not enough fund in perp ef to pay for repeg")
 
 	// Works because it goes in the other way
-	err = app.PerpKeeperV2.Admin.EditPriceMultiplier(ctx, pair, sdk.NewDec(1))
+	err = app.PerpKeeperV2.Admin.UnsafeShiftPegMultiplier(ctx, pair, sdk.NewDec(1))
 	require.NoError(t, err)
 }
 
@@ -251,11 +251,11 @@ func TestEditSwapInvariantFail(t *testing.T) {
 	require.NoError(t, err)
 
 	// Error because of invalid price multiplier
-	err = app.PerpKeeperV2.Admin.EditSwapInvariant(ctx, asset.MustNewPair("luna:usdt"), sdk.NewDec(-1))
+	err = app.PerpKeeperV2.Admin.UnsafeShiftSwapInvariant(ctx, asset.MustNewPair("luna:usdt"), sdk.NewDec(-1))
 	require.ErrorContains(t, err, "market luna:usdt not found")
 
 	// Error because of invalid price multiplier
-	err = app.PerpKeeperV2.Admin.EditSwapInvariant(ctx, pair, sdk.NewDec(-1))
+	err = app.PerpKeeperV2.Admin.UnsafeShiftSwapInvariant(ctx, pair, sdk.NewDec(-1))
 	require.ErrorIs(t, err, types.ErrNegativeSwapInvariant)
 
 	// Add market activity
@@ -277,15 +277,15 @@ func TestEditSwapInvariantFail(t *testing.T) {
 	require.NoError(t, err)
 
 	// Error because no money in perp ef fund
-	err = app.PerpKeeperV2.Admin.EditSwapInvariant(ctx, pair, sdk.NewDec(2_000_000))
+	err = app.PerpKeeperV2.Admin.UnsafeShiftSwapInvariant(ctx, pair, sdk.NewDec(2_000_000))
 	require.ErrorContains(t, err, "not enough fund in perp ef to pay for repeg")
 
 	// Fail at validate
-	err = app.PerpKeeperV2.Admin.EditSwapInvariant(ctx, pair, sdk.NewDec(0))
+	err = app.PerpKeeperV2.Admin.UnsafeShiftSwapInvariant(ctx, pair, sdk.NewDec(0))
 	require.ErrorContains(t, err, "swap multiplier must be > 0")
 
 	// Works because it goes in the other way
-	err = app.PerpKeeperV2.Admin.EditSwapInvariant(ctx, pair, sdk.NewDec(500_000))
+	err = app.PerpKeeperV2.Admin.UnsafeShiftSwapInvariant(ctx, pair, sdk.NewDec(500_000))
 	require.NoError(t, err)
 }
 

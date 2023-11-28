@@ -5,13 +5,16 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
@@ -338,4 +341,127 @@ func TestAdmin_ChangeCollateralDenom(t *testing.T) {
 			require.Equal(t, tc.newDenom, newDenom)
 		})
 	}
+}
+
+type TestSuiteSmartContracts struct {
+	suite.Suite
+
+	nibiru    *app.NibiruApp
+	ctx       sdk.Context
+	addrAdmin sdk.AccAddress
+
+	ratesMap map[asset.Pair]sdk.Dec
+}
+
+func (s *TestSuiteSmartContracts) SetupSuite() {
+	sender := testutil.AccAddress()
+	s.addrAdmin = sender
+
+	genesisState := genesis.NewTestGenesisState(app.MakeEncodingConfig())
+	genesisState = genesis.AddOracleGenesis(genesisState)
+	genesisState = genesis.AddPerpV2Genesis(genesisState)
+	nibiru := testapp.NewNibiruTestApp(genesisState)
+	ctx := nibiru.NewContext(false, tmproto.Header{
+		Height:  1,
+		ChainID: "nibiru-wasmnet-1",
+		Time:    time.Now().UTC(),
+	})
+	coins := sdk.NewCoins(
+		sdk.NewCoin(denoms.NIBI, sdk.NewInt(1_000_000)),
+		sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(420_000*69)),
+		sdk.NewCoin(denoms.USDT, sdk.NewInt(420_000*69)),
+	)
+	s.NoError(testapp.FundAccount(nibiru.BankKeeper, ctx, sender, coins))
+
+	s.nibiru = nibiru
+	s.ctx = ctx
+	s.nibiru.PerpKeeperV2.Collateral.Set(s.ctx, types.TestingCollateralDenomNUSD)
+}
+
+func (s *TestSuiteSmartContracts) DoPegShiftTest(pair asset.Pair) error {
+	sender := s.addrAdmin
+	newPegMult := sdk.NewDec(420)
+	err := s.nibiru.AppKeepers.PerpKeeperV2.Admin.ShiftPegMultiplier(
+		s.ctx, pair, newPegMult, sender,
+	)
+	return err
+}
+
+func TestAdmin_PegShift(t *testing.T) {
+	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	amm := *mock.TestAMMDefault()
+	app, ctx := testapp.NewNibiruTestAppAndContext()
+	admin := app.PerpKeeperV2.Admin
+
+	// Error because of invalid market
+	market := types.DefaultMarket(pair).WithMaintenanceMarginRatio(sdk.NewDec(2))
+	err := admin.CreateMarket(ctx, keeper.ArgsCreateMarket{
+		Pair:            pair,
+		PriceMultiplier: amm.PriceMultiplier,
+		SqrtDepth:       amm.SqrtDepth,
+		Market:          &market, // Invalid maintenance ratio
+	})
+	require.ErrorContains(t, err, "maintenance margin ratio ratio must be 0 <= ratio <= 1")
+
+	// Error because of invalid amm
+	err = admin.CreateMarket(ctx, keeper.ArgsCreateMarket{
+		Pair:            pair,
+		PriceMultiplier: sdk.NewDec(-1),
+		SqrtDepth:       amm.SqrtDepth,
+	})
+	require.ErrorContains(t, err, "init price multiplier must be > 0")
+
+	// Set it correctly
+	err = admin.CreateMarket(ctx, keeper.ArgsCreateMarket{
+		Pair:            pair,
+		PriceMultiplier: amm.PriceMultiplier,
+		SqrtDepth:       amm.SqrtDepth,
+		EnableMarket:    true,
+	})
+	require.NoError(t, err)
+
+	lastVersion, err := app.PerpKeeperV2.MarketLastVersion.Get(ctx, pair)
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), lastVersion.Version)
+
+	// Check that amm and market have version 1
+	amm, err = app.PerpKeeperV2.GetAMM(ctx, pair)
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), amm.Version)
+
+	market, err = app.PerpKeeperV2.GetMarket(ctx, pair)
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), market.Version)
+
+	// Fail since it already exists and it is not disabled
+	err = admin.CreateMarket(ctx, keeper.ArgsCreateMarket{
+		Pair:            pair,
+		PriceMultiplier: amm.PriceMultiplier,
+		SqrtDepth:       amm.SqrtDepth,
+	})
+	require.ErrorContains(t, err, "already exists")
+
+	// Close the market to test that we can create it again but with an increased version
+	err = admin.CloseMarket(ctx, pair)
+	require.NoError(t, err)
+
+	err = admin.CreateMarket(ctx, keeper.ArgsCreateMarket{
+		Pair:            pair,
+		PriceMultiplier: amm.PriceMultiplier,
+		SqrtDepth:       amm.SqrtDepth,
+	})
+	require.NoError(t, err)
+
+	lastVersion, err = app.PerpKeeperV2.MarketLastVersion.Get(ctx, pair)
+	require.NoError(t, err)
+	require.Equal(t, uint64(2), lastVersion.Version)
+
+	// Check that amm and market have version 2
+	amm, err = app.PerpKeeperV2.GetAMM(ctx, pair)
+	require.NoError(t, err)
+	require.Equal(t, uint64(2), amm.Version)
+
+	market, err = app.PerpKeeperV2.GetMarket(ctx, pair)
+	require.NoError(t, err)
+	require.Equal(t, uint64(2), market.Version)
 }

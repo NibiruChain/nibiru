@@ -11,10 +11,11 @@ import (
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
-// EditPriceMultiplier edits the peg multiplier of an amm pool after making
-// sure there's enough money in the perp EF fund to pay for the repeg. These
-// funds get send to the vault to pay for trader's new net margin.
-func (k Keeper) EditPriceMultiplier(
+// UnsafeShiftPegMultiplier: [Without checking x/sudo permissions] Edits the peg
+// multiplier of an amm pool after making sure there's enough money in the perp
+// EF fund to pay for the repeg. These funds get send to the vault to pay for
+// trader's new net margin.
+func (k Keeper) UnsafeShiftPegMultiplier(
 	ctx sdk.Context,
 	pair asset.Pair,
 	newPriceMultiplier sdk.Dec,
@@ -47,10 +48,13 @@ func (k Keeper) EditPriceMultiplier(
 	return nil
 }
 
-// EditSwapInvariant edits the swap invariant of an amm pool after making
-// sure there's enough money in the perp EF fund to pay for the repeg. These
-// funds get send to the vault to pay for trader's new net margin.
-func (k Keeper) EditSwapInvariant(ctx sdk.Context, pair asset.Pair, newSwapInvariant sdk.Dec) (err error) {
+// UnsafeShiftSwapInvariant: [Without checking x/sudo permissions] Edit the swap
+// invariant of an amm pool after making sure there's enough money in the perp EF
+// fund to pay for the repeg. These funds get send to the vault to pay for
+// trader's new net margin.
+func (k Keeper) UnsafeShiftSwapInvariant(
+	ctx sdk.Context, pair asset.Pair, newSwapInvariant sdk.Dec,
+) (err error) {
 	// Get the pool
 	amm, err := k.GetAMM(ctx, pair)
 	if err != nil {
@@ -78,7 +82,9 @@ func (k Keeper) EditSwapInvariant(ctx sdk.Context, pair asset.Pair, newSwapInvar
 	return nil
 }
 
-func (k Keeper) handleMarketUpdateCost(ctx sdk.Context, pair asset.Pair, costAmt sdkmath.Int) (err error) {
+func (k Keeper) handleMarketUpdateCost(
+	ctx sdk.Context, pair asset.Pair, costAmt sdkmath.Int,
+) (err error) {
 	collateral, err := k.Collateral.Get(ctx)
 	if err != nil {
 		return err

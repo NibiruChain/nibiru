@@ -140,7 +140,7 @@ type editPriceMultiplier struct {
 }
 
 func (e editPriceMultiplier) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	err := app.PerpKeeperV2.EditPriceMultiplier(ctx, e.pair, e.newValue)
+	err := app.PerpKeeperV2.UnsafeShiftPegMultiplier(ctx, e.pair, e.newValue)
 	return ctx, err, true
 }
 
@@ -157,7 +157,7 @@ type editSwapInvariant struct {
 }
 
 func (e editSwapInvariant) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	err := app.PerpKeeperV2.EditSwapInvariant(ctx, e.pair, e.newValue)
+	err := app.PerpKeeperV2.UnsafeShiftSwapInvariant(ctx, e.pair, e.newValue)
 	return ctx, err, true
 }
 

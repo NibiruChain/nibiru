@@ -189,3 +189,29 @@ func (m msgServer) WithdrawEpochRebates(ctx context.Context, msg *types.MsgWithd
 		WithdrawnRebates: totalWithdrawn,
 	}, nil
 }
+
+// TODO: test ShiftPegMultiplier
+func (m msgServer) ShiftPegMultiplier(
+	goCtx context.Context, msg *types.MsgShiftPegMultiplier,
+) (*types.MsgShiftPegMultiplierResponse, error) {
+	sender, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, err
+	}
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	err = m.k.Admin.ShiftPegMultiplier(ctx, msg.Pair, msg.NewPegMult, sender)
+	return &types.MsgShiftPegMultiplierResponse{}, err
+}
+
+// TODO: test ShiftSwapInvariant
+func (m msgServer) ShiftSwapInvariant(
+	goCtx context.Context, msg *types.MsgShiftSwapInvariant,
+) (*types.MsgShiftSwapInvariantResponse, error) {
+	sender, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, err
+	}
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	err = m.k.Admin.ShiftSwapInvariant(ctx, msg.Pair, msg.NewSwapInvariant.ToLegacyDec(), sender)
+	return &types.MsgShiftSwapInvariantResponse{}, err
+}

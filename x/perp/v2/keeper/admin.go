@@ -174,3 +174,33 @@ func (k admin) UnsafeChangeCollateralDenom(
 	k.Collateral.Set(ctx, denom)
 	return nil
 }
+
+// ShiftPegMultiplier: Edit the peg multiplier of an amm pool after making
+// sure there's enough money in the perp EF fund to pay for the repeg. These
+// funds get send to the vault to pay for trader's new net margin.
+func (k admin) ShiftPegMultiplier(
+	ctx sdk.Context,
+	pair asset.Pair,
+	newPriceMultiplier sdk.Dec,
+	sender sdk.AccAddress,
+) error {
+	if err := k.SudoKeeper.CheckPermissions(sender, ctx); err != nil {
+		return err
+	}
+	return k.UnsafeShiftPegMultiplier(ctx, pair, newPriceMultiplier)
+}
+
+// ShiftSwapInvariant: Edit the peg multiplier of an amm pool after making
+// sure there's enough money in the perp EF fund to pay for the repeg. These
+// funds get send to the vault to pay for trader's new net margin.
+func (k admin) ShiftSwapInvariant(
+	ctx sdk.Context,
+	pair asset.Pair,
+	newSwapInvariant sdk.Dec,
+	sender sdk.AccAddress,
+) error {
+	if err := k.SudoKeeper.CheckPermissions(sender, ctx); err != nil {
+		return err
+	}
+	return k.UnsafeShiftSwapInvariant(ctx, pair, newSwapInvariant)
+}
