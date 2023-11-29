@@ -13,6 +13,7 @@ import (
 )
 
 func TestGenesis(t *testing.T) {
+	testapp.EnsureNibiruPrefix()
 	genesisState := types.GenesisState{
 		Params: types.DefaultParams(),
 		Pools: []types.Pool{

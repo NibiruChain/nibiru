@@ -15,6 +15,7 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
 	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
@@ -52,7 +53,6 @@ func NewContext(nibiru *app.NibiruApp) sdk.Context {
 
 // DefaultSudoers: State for the x/sudo module for the default test app.
 func DefaultSudoers() sudotypes.Sudoers {
-	EnsureNibiruPrefix()
 	addr := DefaultSudoRoot().String()
 	return sudotypes.Sudoers{
 		Root:      addr,
@@ -61,7 +61,7 @@ func DefaultSudoers() sudotypes.Sudoers {
 }
 
 func DefaultSudoRoot() sdk.AccAddress {
-	return sdk.MustAccAddressFromBech32("nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl")
+	return sdk.MustAccAddressFromBech32(testutil.ADDR_SUDO_ROOT)
 }
 
 // NewNibiruTestAppAndZeroTimeCtx: Runs NewNibiruTestAppAndZeroTimeCtx with the

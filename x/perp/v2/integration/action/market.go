@@ -207,7 +207,7 @@ func (c setCollateral) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, err
 	if err != nil {
 		return ctx, err, true
 	}
-	sudoers.Root = common.NibiruTeam
+	sudoers.Root = common.NIBIRU_TEAM
 	app.SudoKeeper.Sudoers.Set(ctx, sudoers)
 
 	senderAddr, err := sdk.AccAddressFromBech32(c.Sender)
@@ -221,6 +221,6 @@ func (c setCollateral) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, err
 func SetCollateral(denom string) action.Action {
 	return setCollateral{
 		Denom:  denom,
-		Sender: common.NibiruTeam,
+		Sender: common.NIBIRU_TEAM,
 	}
 }
