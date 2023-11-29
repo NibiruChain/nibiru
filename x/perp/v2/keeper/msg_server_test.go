@@ -15,7 +15,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
-	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
+	perpkeeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 	sudoerTypes "github.com/NibiruChain/nibiru/x/sudo/types"
 )
@@ -298,7 +298,7 @@ func TestFailMsgServer(t *testing.T) {
 
 	sender := testutil.AccAddress().String()
 
-	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
+	msgServer := perpkeeper.NewMsgServerImpl(app.PerpKeeperV2)
 
 	_, err := msgServer.MarketOrder(ctx, &types.MsgMarketOrder{
 		Sender:               sender,
@@ -346,7 +346,7 @@ func TestMsgChangeCollateralDenom(t *testing.T) {
 
 	sender := testutil.AccAddress().String()
 
-	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
+	msgServer := perpkeeper.NewMsgServerImpl(app.PerpKeeperV2)
 
 	_, err := msgServer.ChangeCollateralDenom(ctx, &types.MsgChangeCollateralDenom{
 		Sender:   sender,

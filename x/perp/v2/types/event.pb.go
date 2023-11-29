@@ -523,6 +523,7 @@ func (m *MarketUpdatedEvent) GetFinalMarket() Market {
 	return Market{}
 }
 
+// EventShiftPegMultiplier: ABCI event emitted from MsgShiftPegMultiplier
 type EventShiftPegMultiplier struct {
 	OldPegMultiplier github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,1,opt,name=old_peg_multiplier,json=oldPegMultiplier,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"old_peg_multiplier"`
 	NewPegMultiplier github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=new_peg_multiplier,json=newPegMultiplier,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"new_peg_multiplier"`
@@ -569,6 +570,7 @@ func (m *EventShiftPegMultiplier) GetCostPaid() types.Coin {
 	return types.Coin{}
 }
 
+// EventShiftSwapInvariant: ABCI event emitted from MsgShiftSwapInvariant
 type EventShiftSwapInvariant struct {
 	OldSwapInvariant github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,1,opt,name=old_swap_invariant,json=oldSwapInvariant,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"old_swap_invariant"`
 	NewSwapInvariant github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=new_swap_invariant,json=newSwapInvariant,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"new_swap_invariant"`

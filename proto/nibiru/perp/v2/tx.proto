@@ -29,6 +29,8 @@ service Msg {
   rpc DonateToEcosystemFund(MsgDonateToEcosystemFund)
       returns (MsgDonateToEcosystemFundResponse) {}
 
+  // ChangeCollateralDenom: Updates the collateral denom. A denom is valid if it
+  // is possible to make an sdk.Coin using it. [Admin] Only callable by sudoers.
   rpc ChangeCollateralDenom(MsgChangeCollateralDenom)
       returns (MsgChangeCollateralDenomResponse) {}
 
@@ -38,13 +40,13 @@ service Msg {
   rpc WithdrawEpochRebates(MsgWithdrawEpochRebates)
       returns (MsgWithdrawEpochRebatesResponse) {}
 
-  // ShiftPegMultiplier: gRPC tx msg for changing the peg multiplier.
-  // Admin-only.
+  // ShiftPegMultiplier: gRPC tx msg for changing a market's peg multiplier.
+  // [Admin] Only callable by sudoers.
   rpc ShiftPegMultiplier(MsgShiftPegMultiplier)
       returns (MsgShiftPegMultiplierResponse) {}
 
-  // ShiftSwapInvariant: gRPC tx msg for changing the swap invariant.
-  // Admin-only.
+  // ShiftSwapInvariant: gRPC tx msg for changing a market's swap invariant.
+  // [Admin] Only callable by sudoers.
   rpc ShiftSwapInvariant(MsgShiftSwapInvariant)
       returns (MsgShiftSwapInvariantResponse) {}
 }

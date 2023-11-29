@@ -9,6 +9,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
@@ -140,7 +141,9 @@ type shiftPegMultiplier struct {
 }
 
 func (e shiftPegMultiplier) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	err := app.PerpKeeperV2.UnsafeShiftPegMultiplier(ctx, e.pair, e.newValue)
+	err := app.PerpKeeperV2.Admin.ShiftPegMultiplier(
+		ctx, e.pair, e.newValue, testapp.DefaultSudoRoot(),
+	)
 	return ctx, err, true
 }
 
@@ -157,7 +160,9 @@ type shiftSwapInvariant struct {
 }
 
 func (e shiftSwapInvariant) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	err := app.PerpKeeperV2.UnsafeShiftSwapInvariant(ctx, e.pair, e.newValue)
+	err := app.PerpKeeperV2.Admin.ShiftSwapInvariant(
+		ctx, e.pair, e.newValue, testapp.DefaultSudoRoot(),
+	)
 	return ctx, err, true
 }
 

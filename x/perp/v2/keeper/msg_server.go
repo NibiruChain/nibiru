@@ -157,11 +157,11 @@ func (m msgServer) ChangeCollateralDenom(
 	return &types.MsgChangeCollateralDenomResponse{}, err
 }
 
-func (m msgServer) AllocateEpochRebates(ctx context.Context, msg *types.MsgAllocateEpochRebates) (*types.MsgAllocateEpochRebatesResponse, error) {
-	sender, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil {
-		return nil, err
-	}
+func (m msgServer) AllocateEpochRebates(
+	ctx context.Context, msg *types.MsgAllocateEpochRebates,
+) (*types.MsgAllocateEpochRebatesResponse, error) {
+	// Sender is checked in `msg.ValidateBasic` before reaching this fn call.
+	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
 	total, err := m.k.AllocateEpochRebates(sdk.UnwrapSDKContext(ctx), sender, msg.Rebates)
 	if err != nil {
 		return nil, err
@@ -171,10 +171,8 @@ func (m msgServer) AllocateEpochRebates(ctx context.Context, msg *types.MsgAlloc
 }
 
 func (m msgServer) WithdrawEpochRebates(ctx context.Context, msg *types.MsgWithdrawEpochRebates) (*types.MsgWithdrawEpochRebatesResponse, error) {
-	sender, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil {
-		return nil, err
-	}
+	// Sender is checked in `msg.ValidateBasic` before reaching this fn call.
+	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	totalWithdrawn := sdk.NewCoins()
 	for _, epoch := range msg.Epochs {
@@ -194,7 +192,7 @@ func (m msgServer) WithdrawEpochRebates(ctx context.Context, msg *types.MsgWithd
 func (m msgServer) ShiftPegMultiplier(
 	goCtx context.Context, msg *types.MsgShiftPegMultiplier,
 ) (*types.MsgShiftPegMultiplierResponse, error) {
-	// The `msg` here is checked with ValidateBasic before this fn is called.
+	// Sender is checked in `msg.ValidateBasic` before reaching this fn call.
 	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	err := m.k.Admin.ShiftPegMultiplier(ctx, msg.Pair, msg.NewPegMult, sender)
@@ -206,7 +204,7 @@ func (m msgServer) ShiftPegMultiplier(
 func (m msgServer) ShiftSwapInvariant(
 	goCtx context.Context, msg *types.MsgShiftSwapInvariant,
 ) (*types.MsgShiftSwapInvariantResponse, error) {
-	// The `msg` here is checked with ValidateBasic before this fn is called.
+	// Sender is checked in `msg.ValidateBasic` before reaching this fn call.
 	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	err := m.k.Admin.ShiftSwapInvariant(ctx, msg.Pair, msg.NewSwapInvariant, sender)

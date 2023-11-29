@@ -13,6 +13,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
+	perpkeeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
@@ -343,7 +344,14 @@ type partialClose struct {
 }
 
 func (p partialClose) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	_, err := app.PerpKeeperV2.PartialClose(ctx, p.pair, p.trader, p.amount)
+	txMsg := &types.MsgPartialClose{
+		Sender: p.trader.String(),
+		Pair:   p.pair,
+		Size_:  p.amount,
+	}
+	goCtx := sdk.WrapSDKContext(ctx)
+	_, err := perpkeeper.NewMsgServerImpl(app.PerpKeeperV2).PartialClose(
+		goCtx, txMsg)
 	if err != nil {
 		return ctx, err, true
 	}
@@ -368,7 +376,15 @@ type partialCloseFails struct {
 }
 
 func (p partialCloseFails) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	_, err := app.PerpKeeperV2.PartialClose(ctx, p.pair, p.trader, p.amount)
+	txMsg := &types.MsgPartialClose{
+		Sender: p.trader.String(),
+		Pair:   p.pair,
+		Size_:  p.amount,
+	}
+	goCtx := sdk.WrapSDKContext(ctx)
+	_, err := perpkeeper.NewMsgServerImpl(app.PerpKeeperV2).PartialClose(
+		goCtx, txMsg,
+	)
 
 	if !errors.Is(err, p.expectedErr) {
 		return ctx, fmt.Errorf("expected error %s, got %s", p.expectedErr, err), false

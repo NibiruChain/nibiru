@@ -18,6 +18,7 @@ import (
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
 	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 )
 
 // NewNibiruTestAppAndContext creates an 'app.NibiruApp' instance with an
@@ -36,15 +37,31 @@ func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
 	app.OracleKeeper.SetPrice(ctx, "xxx:yyy", sdk.NewDec(20000))
 
 	app.PerpKeeperV2.Collateral.Set(ctx, types.TestingCollateralDenomNUSD)
+	app.SudoKeeper.Sudoers.Set(ctx, DefaultSudoers())
 
 	return app, ctx
 }
 
+// NewContext: Returns a fresh sdk.Context corresponding to the given NibiruApp.
 func NewContext(nibiru *app.NibiruApp) sdk.Context {
 	return nibiru.NewContext(false, tmproto.Header{
 		Height: 1,
 		Time:   time.Now().UTC(),
 	})
+}
+
+// DefaultSudoers: State for the x/sudo module for the default test app.
+func DefaultSudoers() sudotypes.Sudoers {
+	EnsureNibiruPrefix()
+	addr := DefaultSudoRoot().String()
+	return sudotypes.Sudoers{
+		Root:      addr,
+		Contracts: []string{addr},
+	}
+}
+
+func DefaultSudoRoot() sdk.AccAddress {
+	return sdk.MustAccAddressFromBech32("nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl")
 }
 
 // NewNibiruTestAppAndZeroTimeCtx: Runs NewNibiruTestAppAndZeroTimeCtx with the

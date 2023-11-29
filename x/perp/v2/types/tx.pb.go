@@ -1522,14 +1522,16 @@ type MsgClient interface {
 	PartialClose(ctx context.Context, in *MsgPartialClose, opts ...grpc.CallOption) (*MsgPartialCloseResponse, error)
 	SettlePosition(ctx context.Context, in *MsgSettlePosition, opts ...grpc.CallOption) (*MsgClosePositionResponse, error)
 	DonateToEcosystemFund(ctx context.Context, in *MsgDonateToEcosystemFund, opts ...grpc.CallOption) (*MsgDonateToEcosystemFundResponse, error)
+	// ChangeCollateralDenom: Updates the collateral denom. A denom is valid if it
+	// is possible to make an sdk.Coin using it. [Admin] Only callable by sudoers.
 	ChangeCollateralDenom(ctx context.Context, in *MsgChangeCollateralDenom, opts ...grpc.CallOption) (*MsgChangeCollateralDenomResponse, error)
 	AllocateEpochRebates(ctx context.Context, in *MsgAllocateEpochRebates, opts ...grpc.CallOption) (*MsgAllocateEpochRebatesResponse, error)
 	WithdrawEpochRebates(ctx context.Context, in *MsgWithdrawEpochRebates, opts ...grpc.CallOption) (*MsgWithdrawEpochRebatesResponse, error)
-	// ShiftPegMultiplier: gRPC tx msg for changing the peg multiplier.
-	// Admin-only.
+	// ShiftPegMultiplier: gRPC tx msg for changing a market's peg multiplier.
+	// [Admin] Only callable by sudoers.
 	ShiftPegMultiplier(ctx context.Context, in *MsgShiftPegMultiplier, opts ...grpc.CallOption) (*MsgShiftPegMultiplierResponse, error)
-	// ShiftSwapInvariant: gRPC tx msg for changing the swap invariant.
-	// Admin-only.
+	// ShiftSwapInvariant: gRPC tx msg for changing a market's swap invariant.
+	// [Admin] Only callable by sudoers.
 	ShiftSwapInvariant(ctx context.Context, in *MsgShiftSwapInvariant, opts ...grpc.CallOption) (*MsgShiftSwapInvariantResponse, error)
 }
 
@@ -1668,14 +1670,16 @@ type MsgServer interface {
 	PartialClose(context.Context, *MsgPartialClose) (*MsgPartialCloseResponse, error)
 	SettlePosition(context.Context, *MsgSettlePosition) (*MsgClosePositionResponse, error)
 	DonateToEcosystemFund(context.Context, *MsgDonateToEcosystemFund) (*MsgDonateToEcosystemFundResponse, error)
+	// ChangeCollateralDenom: Updates the collateral denom. A denom is valid if it
+	// is possible to make an sdk.Coin using it. [Admin] Only callable by sudoers.
 	ChangeCollateralDenom(context.Context, *MsgChangeCollateralDenom) (*MsgChangeCollateralDenomResponse, error)
 	AllocateEpochRebates(context.Context, *MsgAllocateEpochRebates) (*MsgAllocateEpochRebatesResponse, error)
 	WithdrawEpochRebates(context.Context, *MsgWithdrawEpochRebates) (*MsgWithdrawEpochRebatesResponse, error)
-	// ShiftPegMultiplier: gRPC tx msg for changing the peg multiplier.
-	// Admin-only.
+	// ShiftPegMultiplier: gRPC tx msg for changing a market's peg multiplier.
+	// [Admin] Only callable by sudoers.
 	ShiftPegMultiplier(context.Context, *MsgShiftPegMultiplier) (*MsgShiftPegMultiplierResponse, error)
-	// ShiftSwapInvariant: gRPC tx msg for changing the swap invariant.
-	// Admin-only.
+	// ShiftSwapInvariant: gRPC tx msg for changing a market's swap invariant.
+	// [Admin] Only callable by sudoers.
 	ShiftSwapInvariant(context.Context, *MsgShiftSwapInvariant) (*MsgShiftSwapInvariantResponse, error)
 }
 

@@ -21,7 +21,7 @@ import (
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
-func TestUnsafeShiftPegMultiplier(t *testing.T) {
+func TestShiftPegMultiplier(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 
 	tests := TestCases{
@@ -152,9 +152,9 @@ func TestUnsafeShiftPegMultiplier(t *testing.T) {
 	NewTestSuite(t).WithTestCases(tests...).Run()
 }
 
-// TestUnsafeShiftPegMultiplier_Fail: Test scenarios for the
-// `UnsafeShiftPegMultiplier` function that should error
-func TestUnsafeShiftPegMultiplier_Fail(t *testing.T) {
+// TestShiftPegMultiplier_Fail: Test scenarios for the `ShiftPegMultiplier`
+// function that should error.
+func TestShiftPegMultiplier_Fail(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	app, ctx := testapp.NewNibiruTestAppAndContext()
 
@@ -186,12 +186,14 @@ func TestUnsafeShiftPegMultiplier_Fail(t *testing.T) {
 		})
 	require.NoError(t, err)
 
+	adminAddr := testapp.DefaultSudoRoot()
 	// Error because of invalid pair
-	err = app.PerpKeeperV2.Admin.UnsafeShiftPegMultiplier(ctx, asset.MustNewPair("luna:usdt"), sdk.NewDec(-1))
+	err = app.PerpKeeperV2.Admin.ShiftPegMultiplier(
+		ctx, asset.MustNewPair("luna:usdt"), sdk.NewDec(-1), adminAddr)
 	require.ErrorContains(t, err, "market luna:usdt not found")
 
 	// Error because of invalid price multiplier
-	err = app.PerpKeeperV2.Admin.UnsafeShiftPegMultiplier(ctx, pair, sdk.NewDec(-1))
+	err = app.PerpKeeperV2.Admin.ShiftPegMultiplier(ctx, pair, sdk.NewDec(-1), adminAddr)
 	require.ErrorIs(t, err, types.ErrNonPositivePegMultiplier)
 
 	// Add market activity
@@ -213,17 +215,17 @@ func TestUnsafeShiftPegMultiplier_Fail(t *testing.T) {
 	require.NoError(t, err)
 
 	// Error because no money in perp ef fund
-	err = app.PerpKeeperV2.Admin.UnsafeShiftPegMultiplier(ctx, pair, sdk.NewDec(3))
+	err = app.PerpKeeperV2.Admin.ShiftPegMultiplier(ctx, pair, sdk.NewDec(3), adminAddr)
 	require.ErrorContains(t, err, types.ErrNotEnoughFundToPayAction.Error())
 
 	// Works because it goes in the other way
-	err = app.PerpKeeperV2.Admin.UnsafeShiftPegMultiplier(ctx, pair, sdk.NewDec(1))
+	err = app.PerpKeeperV2.Admin.ShiftPegMultiplier(ctx, pair, sdk.NewDec(1), adminAddr)
 	require.NoError(t, err)
 }
 
-// TestUnsafeShiftSwapInvariant_Fail: Test scenarios for the
-// `UnsafeShiftSwapInvariant` function that should error
-func TestUnsafeShiftSwapInvariant_Fail(t *testing.T) {
+// TestShiftSwapInvariant_Fail: Test scenarios for the `ShiftSwapInvariant`
+// function that should error
+func TestShiftSwapInvariant_Fail(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	app, ctx := testapp.NewNibiruTestAppAndContext()
 	account := testutil.AccAddress()
@@ -254,12 +256,13 @@ func TestUnsafeShiftSwapInvariant_Fail(t *testing.T) {
 		})
 	require.NoError(t, err)
 
+	adminAddr := testapp.DefaultSudoRoot()
 	// Error because of invalid price multiplier
-	err = app.PerpKeeperV2.Admin.UnsafeShiftSwapInvariant(ctx, asset.MustNewPair("luna:usdt"), sdk.NewInt(-1))
+	err = app.PerpKeeperV2.Admin.ShiftSwapInvariant(ctx, asset.MustNewPair("luna:usdt"), sdk.NewInt(-1), adminAddr)
 	require.ErrorContains(t, err, "market luna:usdt not found")
 
 	// Error because of invalid price multiplier
-	err = app.PerpKeeperV2.Admin.UnsafeShiftSwapInvariant(ctx, pair, sdk.NewInt(-1))
+	err = app.PerpKeeperV2.Admin.ShiftSwapInvariant(ctx, pair, sdk.NewInt(-1), adminAddr)
 	require.ErrorIs(t, err, types.ErrNonPositiveSwapInvariant)
 
 	// Add market activity
@@ -281,19 +284,19 @@ func TestUnsafeShiftSwapInvariant_Fail(t *testing.T) {
 	require.NoError(t, err)
 
 	// Error because no money in perp ef fund
-	err = app.PerpKeeperV2.Admin.UnsafeShiftSwapInvariant(ctx, pair, sdk.NewInt(2_000_000))
+	err = app.PerpKeeperV2.Admin.ShiftSwapInvariant(ctx, pair, sdk.NewInt(2_000_000), adminAddr)
 	require.ErrorContains(t, err, types.ErrNotEnoughFundToPayAction.Error())
 
 	// Fail at validate
-	err = app.PerpKeeperV2.Admin.UnsafeShiftSwapInvariant(ctx, pair, sdk.NewInt(0))
+	err = app.PerpKeeperV2.Admin.ShiftSwapInvariant(ctx, pair, sdk.NewInt(0), adminAddr)
 	require.ErrorContains(t, err, types.ErrNonPositiveSwapInvariant.Error())
 
 	// Works because it goes in the other way
-	err = app.PerpKeeperV2.Admin.UnsafeShiftSwapInvariant(ctx, pair, sdk.NewInt(500_000))
+	err = app.PerpKeeperV2.Admin.ShiftSwapInvariant(ctx, pair, sdk.NewInt(500_000), adminAddr)
 	require.NoError(t, err)
 }
 
-func TestUnsafeShiftSwapInvariant(t *testing.T) {
+func TestShiftSwapInvariant(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 
 	tests := TestCases{
