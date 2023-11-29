@@ -5,7 +5,9 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
+	"github.com/NibiruChain/nibiru/app"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
@@ -247,6 +249,53 @@ func TestRebates(t *testing.T) {
 				DnRRebateIs(alice, 1, sdk.NewCoins()),                                       // can only claim once
 				DnREpochIs(2),
 				DnRRebateIs(alice, 1, sdk.NewCoins()), // claiming again after the epoch is not possible.
+			),
+	}
+	NewTestSuite(t).WithTestCases(tests...).Run()
+}
+
+type actionFn func(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool)
+
+func (f actionFn) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
+	return f(app, ctx)
+}
+
+func TestDnREpoch(t *testing.T) {
+	dnrEpochIdentifierIs := func(identifier string) actionFn {
+		return func(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
+			app.PerpKeeperV2.DnREpochName.Set(ctx, identifier)
+			return ctx, nil, false
+		}
+	}
+
+	triggerEpoch := func(identifier string, epoch uint64) actionFn {
+		return func(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
+			app.PerpKeeperV2.AfterEpochEnd(ctx, identifier, epoch)
+			return ctx, nil, false
+		}
+	}
+
+	expectDnREpoch := func(epoch uint64) actionFn {
+		return func(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
+			require.Equal(t, epoch, app.PerpKeeperV2.DnREpoch.GetOr(ctx, 0))
+			return ctx, nil, false
+		}
+	}
+
+	tests := TestCases{
+		TC("DnR epoch with valid identifier").
+			When(
+				dnrEpochIdentifierIs("monthly"),
+				triggerEpoch("monthly", 1)).
+			Then(
+				expectDnREpoch(1),
+			),
+		TC("DnR epoch with invalid identifier").
+			When(
+				dnrEpochIdentifierIs("monthly"),
+				triggerEpoch("weekly", 1)).
+			Then(
+				expectDnREpoch(0),
 			),
 	}
 	NewTestSuite(t).WithTestCases(tests...).Run()
