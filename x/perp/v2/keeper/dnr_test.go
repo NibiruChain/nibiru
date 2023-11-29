@@ -5,9 +5,10 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-	"github.com/NibiruChain/nibiru/app"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/app"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
