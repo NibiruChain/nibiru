@@ -80,6 +80,16 @@ func AddMarketGenesisCmd(defaultNodeHome string) *cobra.Command {
 			perpGenState.Markets = append(perpGenState.Markets, market)
 			perpGenState.Amms = append(perpGenState.Amms, amm)
 
+			var marketsLastVersion []types.GenesisMarketLastVersion
+			for _, market := range perpGenState.Markets {
+				marketsLastVersion = append(marketsLastVersion, types.GenesisMarketLastVersion{
+					Pair:    market.Pair,
+					Version: market.Version,
+				})
+			}
+
+			perpGenState.MarketLastVersions = marketsLastVersion
+
 			perpGenStateBz, err := clientCtx.Codec.MarshalJSON(perpGenState)
 			if err != nil {
 				return fmt.Errorf("failed to marshal market genesis state: %w", err)
