@@ -626,6 +626,9 @@ func orderedModuleNames() []string {
 		// --------------------------------------------------------------------
 		// Cosmos-SDK modules
 		//
+		// NOTE: (BeginBlocker requirement): upgrade module must occur first
+		upgradetypes.ModuleName,
+
 		// NOTE (InitGenesis requirement): Capability module must occur
 		//   first so that it can initialize any capabilities, allowing other
 		//   modules that want to create or claim capabilities afterwards in
@@ -654,7 +657,6 @@ func orderedModuleNames() []string {
 		authz.ModuleName,
 		feegrant.ModuleName,
 		paramstypes.ModuleName,
-		upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
 
 		// --------------------------------------------------------------------
@@ -707,59 +709,8 @@ func (app *NibiruApp) initModuleManager(
 		app.initAppModules(encodingConfig, skipGenesisInvariants)...,
 	)
 
-	// Init module orders for hooks and genesis
-	app.mm.SetOrderBeginBlockers(
-		// Upgrade should happen first than anything else on begin blocker
-		upgradetypes.ModuleName,
-		// --------------------------------------------------------------------
-		// Cosmos-SDK modules
-		//
-		// NOTE (BeginBlocker requirement): Capability module's beginblocker
-		//   must come before any modules using capabilities (e.g. IBC)
-		capabilitytypes.ModuleName,
-		authtypes.ModuleName,
-		banktypes.ModuleName,
-		// NOTE (BeginBlocker requirement): During begin block, x/slashing must
-		//   come after x/distribution so that there won't be anything left over
-		//   in the validator pool. This makes sure that "CanWithdrawInvariant"
-		//   remains invariant.
-		distrtypes.ModuleName,
-		// NOTE (BeginBlocker requirement): staking module is required if
-		//   HistoricalEntries param > 0
-		stakingtypes.ModuleName,
-		slashingtypes.ModuleName,
-		crisistypes.ModuleName,
-		govtypes.ModuleName,
-		genutiltypes.ModuleName,
-		evidencetypes.ModuleName,
-		authz.ModuleName,
-		feegrant.ModuleName,
-		paramstypes.ModuleName,
-		vestingtypes.ModuleName,
-
-		// --------------------------------------------------------------------
-		// Native x/ Modules
-		epochstypes.ModuleName,
-		oracletypes.ModuleName,
-		inflationtypes.ModuleName,
-		sudotypes.ModuleName,
-
-		// --------------------------------------------------------------------
-		// IBC modules
-		ibctransfertypes.ModuleName,
-		ibcexported.ModuleName,
-		ibcfeetypes.ModuleName,
-
-		// --------------------------------------------------------------------
-		// CosmWasm
-		wasmtypes.ModuleName,
-		devgastypes.ModuleName,
-		tokenfactorytypes.ModuleName,
-
-		genmsg.ModuleName,
-	)
-
 	orderedModules := orderedModuleNames()
+	app.mm.SetOrderBeginBlockers(orderedModules...)
 	app.mm.SetOrderEndBlockers(orderedModules...)
 	app.mm.SetOrderInitGenesis(orderedModules...)
 	app.mm.SetOrderExportGenesis(orderedModules...)
