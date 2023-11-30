@@ -108,7 +108,7 @@ func (k Keeper) MarketOrder(
 	}
 
 	if err = k.afterPositionUpdate(
-		ctx, market, *updatedAMM, traderAddr, *positionResp, types.ChangeReason_MarketOrder, position,
+		ctx, market, traderAddr, *positionResp, types.ChangeReason_MarketOrder, position,
 	); err != nil {
 		return nil, err
 	}
@@ -531,7 +531,6 @@ func checkMarketOrderRequirements(market types.Market, quoteAssetAmt sdkmath.Int
 func (k Keeper) afterPositionUpdate(
 	ctx sdk.Context,
 	market types.Market,
-	amm types.AMM,
 	traderAddr sdk.AccAddress,
 	positionResp types.PositionResp,
 	changeType types.ChangeReason,
@@ -718,7 +717,7 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.A
 		return nil, err
 	}
 
-	updatedAMM, positionResp, err := k.closePositionEntirely(
+	_, positionResp, err := k.closePositionEntirely(
 		ctx,
 		market,
 		amm,
@@ -742,7 +741,6 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.A
 	if err = k.afterPositionUpdate(
 		ctx,
 		market,
-		*updatedAMM,
 		traderAddr,
 		*positionResp,
 		types.ChangeReason_ClosePosition,
@@ -889,7 +887,7 @@ func (k Keeper) PartialClose(
 	}
 	reverseNotionalAmt = amm.QuoteReserveToAsset(reverseNotionalAmt)
 
-	updatedAMM, positionResp, err := k.decreasePosition(ctx, market, amm, position, reverseNotionalAmt, sdk.ZeroDec())
+	_, positionResp, err := k.decreasePosition(ctx, market, amm, position, reverseNotionalAmt, sdk.ZeroDec())
 	if err != nil {
 		return nil, err
 	}
@@ -907,7 +905,6 @@ func (k Keeper) PartialClose(
 	err = k.afterPositionUpdate(
 		ctx,
 		market,
-		*updatedAMM,
 		traderAddr,
 		*positionResp,
 		types.ChangeReason_PartialClose,
