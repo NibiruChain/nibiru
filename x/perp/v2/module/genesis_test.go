@@ -104,6 +104,8 @@ func RunTestGenesis(t *testing.T, tc TestCase) {
 		Epoch:  0,
 		Amount: sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1_000_000))),
 	})
+	app.PerpKeeperV2.DnREpochName.Set(ctx, "weekly")
+	app.PerpKeeperV2.DnREpoch.Set(ctx, 1)
 
 	// create some positions
 	for _, position := range tc.positions {
@@ -151,6 +153,8 @@ func RunTestGenesis(t *testing.T, tc TestCase) {
 	require.Equal(t, genState.CollateralDenom, genStateAfterInit.CollateralDenom)
 	require.Equal(t, genState.GlobalVolumes, genStateAfterInit.GlobalVolumes)
 	require.Equal(t, genState.RebatesAllocations, genStateAfterInit.RebatesAllocations)
+	require.Equal(t, genState.DnrEpochName, genStateAfterInit.DnrEpochName)
+	require.Equal(t, genState.DnrEpoch, genStateAfterInit.DnrEpoch)
 }
 
 func TestNewAppModuleBasic(t *testing.T) {

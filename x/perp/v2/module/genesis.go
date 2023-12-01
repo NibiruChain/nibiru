@@ -22,6 +22,8 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 	k.DnREpoch.Set(ctx, genState.DnrEpoch)
 
+	k.DnREpochName.Set(ctx, genState.DnrEpochName)
+
 	for _, m := range genState.Markets {
 		k.SaveMarket(ctx, m)
 	}
@@ -123,6 +125,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	}
 	genesis.ReserveSnapshots = k.ReserveSnapshots.Iterate(ctx, collections.PairRange[asset.Pair, time.Time]{}).Values()
 	genesis.DnrEpoch = k.DnREpoch.GetOr(ctx, 0)
+	genesis.DnrEpochName = k.DnREpochName.GetOr(ctx, "")
 
 	// export volumes
 	volumes := k.TraderVolumes.Iterate(ctx, collections.PairRange[sdk.AccAddress, uint64]{})

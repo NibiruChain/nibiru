@@ -16,7 +16,8 @@ import (
 func (k Keeper) BeforeEpochStart(_ sdk.Context, _ string, _ uint64) {
 }
 
-func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64) {
+func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, number uint64) {
+	k.maybeUpdateDnREpoch(ctx, epochIdentifier, number)
 	for _, market := range k.Markets.Iterate(ctx, collections.Range[collections.Pair[asset.Pair, uint64]]{}).Values() {
 		if !market.Enabled || epochIdentifier != market.FundingRateEpochId {
 			return
