@@ -160,6 +160,10 @@ func (m msgServer) ChangeCollateralDenom(
 func (m msgServer) AllocateEpochRebates(
 	ctx context.Context, msg *types.MsgAllocateEpochRebates,
 ) (*types.MsgAllocateEpochRebatesResponse, error) {
+	if msg == nil {
+		return nil, common.ErrNilMsg()
+	}
+
 	// Sender is checked in `msg.ValidateBasic` before reaching this fn call.
 	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
 	total, err := m.k.AllocateEpochRebates(sdk.UnwrapSDKContext(ctx), sender, msg.Rebates)
@@ -171,6 +175,9 @@ func (m msgServer) AllocateEpochRebates(
 }
 
 func (m msgServer) WithdrawEpochRebates(ctx context.Context, msg *types.MsgWithdrawEpochRebates) (*types.MsgWithdrawEpochRebatesResponse, error) {
+	if msg == nil {
+		return nil, common.ErrNilMsg()
+	}
 	// Sender is checked in `msg.ValidateBasic` before reaching this fn call.
 	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
