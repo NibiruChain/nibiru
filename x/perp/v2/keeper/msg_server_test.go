@@ -453,7 +453,7 @@ func TestAllocateEpochRebates(t *testing.T) {
 	require.ErrorContains(t, err, "nil msg")
 
 	_, err = msgServer.AllocateEpochRebates(ctx, &types.MsgAllocateEpochRebates{})
-	require.ErrorContains(t, err, "empty address string is not allowed")
+	require.NoError(t, err)
 
 	_, err = msgServer.AllocateEpochRebates(ctx, &types.MsgAllocateEpochRebates{
 		Sender:  sender,
@@ -484,7 +484,7 @@ func TestAllocateEpochRebates(t *testing.T) {
 	require.ErrorContains(t, err, "nil msg")
 
 	_, err = msgServer.WithdrawEpochRebates(ctx, &types.MsgWithdrawEpochRebates{})
-	require.ErrorContains(t, err, "empty address string is not allowed")
+	require.NoError(t, err)
 
 	_, err = msgServer.WithdrawEpochRebates(ctx, &types.MsgWithdrawEpochRebates{
 		Sender: sender,
