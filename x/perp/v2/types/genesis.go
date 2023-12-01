@@ -19,6 +19,7 @@ func DefaultGenesis() *GenesisState {
 		Amms:             []AMM{},
 		Positions:        []GenesisPosition{},
 		ReserveSnapshots: []ReserveSnapshot{},
+		CollateralDenom:  TestingCollateralDenomNUSD,
 	}
 }
 

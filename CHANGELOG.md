@@ -40,7 +40,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Features 
+### Features
+
+* [#1670](https://github.com/NibiruChain/nibiru/pull/1670) - feat(inflation): Make inflation polynomial
+
+### State Machine Breaking 
+
+* [#1682](https://github.com/NibiruChain/nibiru/pull/1682) - feat: add upgrade handler for v1.1.0
+
+## [v1.0.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.0.0)
+
+### Features
 
 * [#1596](https://github.com/NibiruChain/nibiru/pull/1596) - epic(tokenfactory): State transitions, collections, genesis import and export, and app wiring
 * [#1607](https://github.com/NibiruChain/nibiru/pull/1607) - Token factory transaction messages for CreateDenom, ChangeAdmin, and UpdateModuleParams 
@@ -48,7 +58,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1573](https://github.com/NibiruChain/nibiru/pull/1573) - feat(perp): Close markets and compute settlement price
 * [#1632](https://github.com/NibiruChain/nibiru/pull/1632) - feat(perp): Add settle position transaction
 * [#1656](https://github.com/NibiruChain/nibiru/pull/1656) - feat(perp): Make the collateral denom a stateful collections.Item
+* [#1663](https://github.com/NibiruChain/nibiru/pull/1663) - feat(perp): Add volume based rebates
 * [#1670](https://github.com/NibiruChain/nibiru/pull/1670) - feat(inflation): Make inflation polynomial
+* [#1683](https://github.com/NibiruChain/nibiru/pull/1683) - feat(perp): Add `StartDnREpoch` to `AfterEpochEnd` hook
 
 ### State Machine Breaking 
 
@@ -70,6 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1639](https://github.com/NibiruChain/nibiru/pull/1639) - fix(perp): by default, disable new markets until they are toggled on.
 * [#1652](https://github.com/NibiruChain/nibiru/pull/1652) - test: refactors cli.network suites with 'Integration' to use common function
 * [#1659](https://github.com/NibiruChain/nibiru/pull/1659) - refactor(oracle): curate oracle default whitelist
+* [#1679](https://github.com/NibiruChain/nibiru/pull/1679) - test(perp): add more tests for perp module msg server
 
 ### Dependencies
 - Bump `github.com/prometheus/client_golang` from 1.16.0 to 1.17.0 ([#1605](https://github.com/NibiruChain/nibiru/pull/1605))
@@ -91,6 +104,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1606](https://github.com/NibiruChain/nibiru/pull/1606) - fix(perp): emit `MarketUpdatedEvent` in the absence of index price
 * [#1649](https://github.com/NibiruChain/nibiru/pull/1649) - fix(ledger): fix ledger for newer macos versions
 * [#1655](https://github.com/NibiruChain/nibiru/pull/1655) - fix(inflation): inflate NIBI correctly to strategic treasury account
+* [#1677](https://github.com/NibiruChain/nibiru/pull/1677) - fix(perp): make Gen_market set initial perp versions
 
 ## [v0.21.10]
 

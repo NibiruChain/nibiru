@@ -6,13 +6,15 @@ import (
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/app"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	. "github.com/NibiruChain/nibiru/x/common/testutil/action"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
-	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
@@ -89,13 +91,11 @@ func TestUserVolumes(t *testing.T) {
 			MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(5_000), sdk.OneDec(), sdk.ZeroDec()), // reduce epoch 2
 			DnREpochIs(3),
 			MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(2_000), sdk.OneDec(), sdk.ZeroDec()), // reduce epoch 3
-			SetBlockNumber(keeper.DnRGCFrequency),
 			MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(2_000), sdk.OneDec(), sdk.ZeroDec()), // reduce more epoch 3
 		).
 			Then(
 				DnRCurrentVolumeIs(alice, math.NewInt(4000)),  // for current epoch only 4k in volume.
 				DnRPreviousVolumeIs(alice, math.NewInt(5000)), // for previous epoch only 5k in volume.
-				DnRVolumeNotExist(alice, 1),                   // volume for epoch 1 should not exist.
 			),
 	}
 	NewTestSuite(t).WithTestCases(tests...).Run()
@@ -206,6 +206,97 @@ func TestDiscount(t *testing.T) {
 			).
 			Then(
 				MarketOrderFeeIs(globalFeeDiscount, alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
+			),
+	}
+	NewTestSuite(t).WithTestCases(tests...).Run()
+}
+
+func TestRebates(t *testing.T) {
+	alice := testutil.AccAddress()
+	bob := testutil.AccAddress()
+
+	pairBtcNusd := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
+	positionSize := sdk.NewInt(10_000)
+	startBlockTime := time.Now()
+
+	allocation := sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(1_000_000)))
+
+	tests := TestCases{
+		TC("rebates correctly apply").
+			Given(
+				CreateCustomMarket(
+					pairBtcNusd,
+					WithEnabled(true),
+					WithPricePeg(sdk.OneDec()),
+					WithSqrtDepth(sdk.NewDec(100_000)),
+				),
+				SetBlockNumber(1),
+				SetBlockTime(startBlockTime),
+
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, positionSize.AddRaw(100_000)))),
+				FundAccount(bob, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, positionSize.AddRaw(100_000)))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(100_000_000)))),
+			).
+			When(
+				DnREpochIs(1),
+				FundDnREpoch(allocation),
+				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
+				MarketOrder(bob, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(30_000), sdk.OneDec(), sdk.ZeroDec()),
+				StartNewDnREpoch(),
+			).
+			Then(
+				DnRRebateIs(alice, 1, allocation.QuoInt(sdk.NewInt(4))),                     // 1/4 of the allocation
+				DnRRebateIs(bob, 1, allocation.QuoInt(sdk.NewInt(4)).MulInt(sdk.NewInt(3))), // 3/4 of the allocation
+				DnRRebateIs(alice, 1, sdk.NewCoins()),                                       // can only claim once
+				DnREpochIs(2),
+				DnRRebateIs(alice, 1, sdk.NewCoins()), // claiming again after the epoch is not possible.
+			),
+	}
+	NewTestSuite(t).WithTestCases(tests...).Run()
+}
+
+type actionFn func(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool)
+
+func (f actionFn) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
+	return f(app, ctx)
+}
+
+func TestDnREpoch(t *testing.T) {
+	dnrEpochIdentifierIs := func(identifier string) actionFn {
+		return func(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
+			app.PerpKeeperV2.DnREpochName.Set(ctx, identifier)
+			return ctx, nil, false
+		}
+	}
+
+	triggerEpoch := func(identifier string, epoch uint64) actionFn {
+		return func(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
+			app.PerpKeeperV2.AfterEpochEnd(ctx, identifier, epoch)
+			return ctx, nil, false
+		}
+	}
+
+	expectDnREpoch := func(epoch uint64) actionFn {
+		return func(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
+			require.Equal(t, epoch, app.PerpKeeperV2.DnREpoch.GetOr(ctx, 0))
+			return ctx, nil, false
+		}
+	}
+
+	tests := TestCases{
+		TC("DnR epoch with valid identifier").
+			When(
+				dnrEpochIdentifierIs("monthly"),
+				triggerEpoch("monthly", 1)).
+			Then(
+				expectDnREpoch(1),
+			),
+		TC("DnR epoch with invalid identifier").
+			When(
+				dnrEpochIdentifierIs("monthly"),
+				triggerEpoch("weekly", 1)).
+			Then(
+				expectDnREpoch(0),
 			),
 	}
 	NewTestSuite(t).WithTestCases(tests...).Run()

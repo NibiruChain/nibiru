@@ -626,6 +626,9 @@ func orderedModuleNames() []string {
 		// --------------------------------------------------------------------
 		// Cosmos-SDK modules
 		//
+		// NOTE: (BeginBlocker requirement): upgrade module must occur first
+		upgradetypes.ModuleName,
+
 		// NOTE (InitGenesis requirement): Capability module must occur
 		//   first so that it can initialize any capabilities, allowing other
 		//   modules that want to create or claim capabilities afterwards in
@@ -654,7 +657,6 @@ func orderedModuleNames() []string {
 		authz.ModuleName,
 		feegrant.ModuleName,
 		paramstypes.ModuleName,
-		upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
 
 		// --------------------------------------------------------------------
@@ -707,7 +709,6 @@ func (app *NibiruApp) initModuleManager(
 		app.initAppModules(encodingConfig, skipGenesisInvariants)...,
 	)
 
-	// Init module orders for hooks and genesis
 	orderedModules := orderedModuleNames()
 	app.mm.SetOrderBeginBlockers(orderedModules...)
 	app.mm.SetOrderEndBlockers(orderedModules...)
@@ -743,7 +744,7 @@ func (app *NibiruApp) initModuleManager(
 	}
 }
 
-// ModuleBasicManager: The app's collection of module.AppModuleBasic
+// ModuleBasicManager The app's collection of module.AppModuleBasic
 // implementations. These set up non-dependant module elements, such as codec
 // registration and genesis verification.
 func ModuleBasicManager() module.BasicManager {
@@ -802,10 +803,12 @@ func ModuleAccPerms() map[string][]string {
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		ibcfeetypes.ModuleName:         {},
 
-		perptypes.ModuleName:           {},
-		perptypes.VaultModuleAccount:   {},
-		perptypes.PerpEFModuleAccount:  {},
-		perptypes.FeePoolModuleAccount: {},
+		perptypes.ModuleName:                 {},
+		perptypes.VaultModuleAccount:         {},
+		perptypes.PerpEFModuleAccount:        {},
+		perptypes.FeePoolModuleAccount:       {},
+		perptypes.DNRAllocationModuleAccount: {},
+		perptypes.DNREscrowModuleAccount:     {},
 
 		epochstypes.ModuleName:           {},
 		sudotypes.ModuleName:             {},
@@ -848,12 +851,12 @@ func initParamsKeeper(
 func (app *NibiruApp) InitSimulationManager(
 	appCodec codec.Codec,
 ) {
-	//// create the simulation manager and define the order of the modules for deterministic simulations
-	////
-	//// NOTE: this is not required apps that don't use the simulator for fuzz testing
-	//// transactions
-	//epochsModule := epochs.NewAppModule(appCodec, app.EpochsKeeper)
-	//app.sm = module.NewSimulationManager(
+	// // create the simulation manager and define the order of the modules for deterministic simulations
+	// //
+	// // NOTE: this is not required apps that don't use the simulator for fuzz testing
+	// // transactions
+	// epochsModule := epochs.NewAppModule(appCodec, app.EpochsKeeper)
+	// app.sm = module.NewSimulationManager(
 	//	auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts),
 	//	bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
 	//	feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
@@ -871,7 +874,7 @@ func (app *NibiruApp) InitSimulationManager(
 	//	ibc.NewAppModule(app.ibcKeeper),
 	//	ibctransfer.NewAppModule(app.transferKeeper),
 	//	ibcfee.NewAppModule(app.ibcFeeKeeper),
-	//)
+	// )
 	//
-	//app.sm.RegisterStoreDecoders()
+	// app.sm.RegisterStoreDecoders()
 }

@@ -3,10 +3,12 @@ package types
 import "github.com/NibiruChain/nibiru/x/common"
 
 const (
-	ModuleName           = "perp"
-	VaultModuleAccount   = "vault"
-	PerpEFModuleAccount  = "perp_ef"
-	FeePoolModuleAccount = "fee_pool"
+	ModuleName                 = "perp"
+	VaultModuleAccount         = "vault"
+	PerpEFModuleAccount        = "perp_ef"
+	FeePoolModuleAccount       = "fee_pool"
+	DNRAllocationModuleAccount = "dnr_allocation"
+	DNREscrowModuleAccount     = "dnr_escrow"
 )
 
 var (

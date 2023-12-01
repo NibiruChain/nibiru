@@ -36,12 +36,15 @@ type Keeper struct {
 	AMMs              collections.Map[collections.Pair[asset.Pair, uint64], types.AMM]
 	Collateral        collections.Item[string]
 
-	Positions        collections.Map[collections.Pair[collections.Pair[asset.Pair, uint64], sdk.AccAddress], types.Position]
-	ReserveSnapshots collections.Map[collections.Pair[asset.Pair, time.Time], types.ReserveSnapshot]
-	DnREpoch         collections.Item[uint64]
-	TraderVolumes    collections.Map[collections.Pair[sdk.AccAddress, uint64], math.Int]         // Keeps track of user volumes for each epoch.
-	GlobalDiscounts  collections.Map[math.Int, math.LegacyDec]                                   // maps a volume level to a discount
-	TraderDiscounts  collections.Map[collections.Pair[sdk.AccAddress, math.Int], math.LegacyDec] // maps a user and volume level to a discount, supersedes global discounts
+	Positions              collections.Map[collections.Pair[collections.Pair[asset.Pair, uint64], sdk.AccAddress], types.Position]
+	ReserveSnapshots       collections.Map[collections.Pair[asset.Pair, time.Time], types.ReserveSnapshot]
+	DnREpoch               collections.Item[uint64]                                                    // Keeps track of the current DnR epoch.
+	DnREpochName           collections.Item[string]                                                    // Keeps track of the current DnR epoch identifier, provided by x/epoch.
+	GlobalVolumes          collections.Map[uint64, math.Int]                                           // Keeps track of global volumes for each epoch.
+	TraderVolumes          collections.Map[collections.Pair[sdk.AccAddress, uint64], math.Int]         // Keeps track of user volumes for each epoch.
+	GlobalDiscounts        collections.Map[math.Int, math.LegacyDec]                                   // maps a volume level to a discount
+	TraderDiscounts        collections.Map[collections.Pair[sdk.AccAddress, math.Int], math.LegacyDec] // maps a user and volume level to a discount, supersedes global discounts
+	EpochRebateAllocations collections.Map[uint64, types.DNRAllocation]                                // maps an epoch to a string representing the allocation of rebates for that epoch
 }
 
 // NewKeeper Creates a new x/perp Keeper instance.
@@ -68,15 +71,15 @@ func NewKeeper(
 		OracleKeeper:  oracleKeeper,
 		EpochKeeper:   epochKeeper,
 		SudoKeeper:    sudoKeeper,
-		Markets: collections.NewMap(
-			storeKey, NamespaceMarkets,
-			collections.PairKeyEncoder(asset.PairKeyEncoder, collections.Uint64KeyEncoder),
-			collections.ProtoValueEncoder[types.Market](cdc),
-		),
 		MarketLastVersion: collections.NewMap(
 			storeKey, NamespaceMarketLastVersion,
 			asset.PairKeyEncoder,
 			collections.ProtoValueEncoder[types.MarketLastVersion](cdc),
+		),
+		Markets: collections.NewMap(
+			storeKey, NamespaceMarkets,
+			collections.PairKeyEncoder(asset.PairKeyEncoder, collections.Uint64KeyEncoder),
+			collections.ProtoValueEncoder[types.Market](cdc),
 		),
 		AMMs: collections.NewMap(
 			storeKey, NamespaceAmms,
@@ -97,6 +100,11 @@ func NewKeeper(
 			storeKey, NamespaceDnrEpoch,
 			collections.Uint64ValueEncoder,
 		),
+		GlobalVolumes: collections.NewMap(
+			storeKey, NamespaceGlobalVolumes,
+			collections.Uint64KeyEncoder,
+			IntValueEncoder,
+		),
 		TraderVolumes: collections.NewMap(
 			storeKey, NamespaceUserVolumes,
 			collections.PairKeyEncoder(collections.AccAddressKeyEncoder, collections.Uint64KeyEncoder),
@@ -112,8 +120,17 @@ func NewKeeper(
 			collections.PairKeyEncoder(collections.AccAddressKeyEncoder, IntKeyEncoder),
 			collections.DecValueEncoder,
 		),
+		EpochRebateAllocations: collections.NewMap(
+			storeKey, NamespaceRebatesAllocations,
+			collections.Uint64KeyEncoder,
+			collections.ProtoValueEncoder[types.DNRAllocation](cdc),
+		),
 		Collateral: collections.NewItem(
 			storeKey, NamespaceCollateral,
+			common.StringValueEncoder,
+		),
+		DnREpochName: collections.NewItem(
+			storeKey, NamespaceDnrEpochName,
 			common.StringValueEncoder,
 		),
 	}
@@ -127,11 +144,14 @@ const (
 	NamespacePositions
 	NamespaceReserveSnapshots
 	NamespaceDnrEpoch
+	NamespaceGlobalVolumes
 	NamespaceUserVolumes
 	NamespaceGlobalDiscounts
 	NamespaceUserDiscounts
+	NamespaceRebatesAllocations
 	NamespaceMarketLastVersion
 	NamespaceCollateral
+	NamespaceDnrEpochName
 )
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
