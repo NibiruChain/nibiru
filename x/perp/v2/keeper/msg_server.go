@@ -113,7 +113,6 @@ func (m msgServer) SettlePosition(ctx context.Context, msg *types.MsgSettlePosit
 	// These fields should have already been validated by MsgSettlePosition.ValidateBasic() prior to being sent to the msgServer.
 	traderAddr := sdk.MustAccAddressFromBech32(msg.Sender)
 	resp, err := m.k.SettlePosition(sdk.UnwrapSDKContext(ctx), msg.Pair, msg.Version, traderAddr)
-
 	if err != nil {
 		return nil, err
 	}
@@ -159,6 +158,10 @@ func (m msgServer) ChangeCollateralDenom(
 }
 
 func (m msgServer) AllocateEpochRebates(ctx context.Context, msg *types.MsgAllocateEpochRebates) (*types.MsgAllocateEpochRebatesResponse, error) {
+	if msg == nil {
+		return nil, common.ErrNilMsg()
+	}
+
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		return nil, err
@@ -172,6 +175,10 @@ func (m msgServer) AllocateEpochRebates(ctx context.Context, msg *types.MsgAlloc
 }
 
 func (m msgServer) WithdrawEpochRebates(ctx context.Context, msg *types.MsgWithdrawEpochRebates) (*types.MsgWithdrawEpochRebatesResponse, error) {
+	if msg == nil {
+		return nil, common.ErrNilMsg()
+	}
+
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		return nil, err
