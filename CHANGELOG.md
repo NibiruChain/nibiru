@@ -47,7 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### State Machine Breaking 
 
 * [#1682](https://github.com/NibiruChain/nibiru/pull/1682) - feat: add upgrade handler for v1.1.0
-* [#xxx](https://github.com/NibiruChain/nibiru/pull/xxx) - chore(wasmbinding): delete CustomQuerier since we have QueryRequest::Stargate now
+* [#1687](https://github.com/NibiruChain/nibiru/pull/1687) - chore(wasmbinding): delete CustomQuerier since we have QueryRequest::Stargate now
 
 ### Dependencies
 - Bump `cosmossdk.io/math` from 1.1.2 to 1.2.0 ([#1676](https://github.com/NibiruChain/nibiru/pull/1676))
