@@ -296,28 +296,34 @@ func TestAdmin_ChangeCollateralDenom(t *testing.T) {
 	}{
 		{name: "happy: normal denom", newDenom: "nusd", sender: adminSender, wantErr: ""},
 
-		{name: "happy: token factory denom",
-			newDenom: tftypes.TFDenom{
-				Creator:  testutil.AccAddress().String(),
-				Subdenom: "nusd",
-			}.String(), sender: adminSender, wantErr: ""},
-
-		{name: "happy: token factory denom",
+		{
+			name: "happy: token factory denom",
 			newDenom: tftypes.TFDenom{
 				Creator:  testutil.AccAddress().String(),
 				Subdenom: "nusd",
 			}.String(), sender: adminSender, wantErr: "",
 		},
 
-		{name: "happy: IBC denom",
+		{
+			name: "happy: token factory denom",
+			newDenom: tftypes.TFDenom{
+				Creator:  testutil.AccAddress().String(),
+				Subdenom: "nusd",
+			}.String(), sender: adminSender, wantErr: "",
+		},
+
+		{
+			name:     "happy: IBC denom",
 			newDenom: "ibc/46B44899322F3CD854D2D46DEEF881958467CDD4B3B10086DA49296BBED94BED", // JUNO on Osmosis
 			sender:   adminSender, wantErr: "",
 		},
 
-		{name: "sad: invalid denom",
+		{
+			name:     "sad: invalid denom",
 			newDenom: "", sender: adminSender, wantErr: types.ErrInvalidCollateral.Error(),
 		},
-		{name: "sad: sender not in sudoers",
+		{
+			name:     "sad: sender not in sudoers",
 			newDenom: "nusd", sender: nonAdminSender, wantErr: "insufficient permissions on smart contract",
 		},
 	} {

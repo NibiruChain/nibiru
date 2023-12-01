@@ -7,6 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
+	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
+
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
@@ -143,7 +145,7 @@ func TestMsgServerAddMargin(t *testing.T) {
 				),
 				BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.NewInt(98)),
 			),
-		TC("partial close").
+		TC("msg server close").
 			Given(
 				CreateCustomMarket(pair, WithEnabled(true)),
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 100))),
@@ -166,6 +168,30 @@ func TestMsgServerAddMargin(t *testing.T) {
 					}),
 				),
 				BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.NewInt(98)),
+			),
+		TC("partial close").
+			Given(
+				CreateCustomMarket(pair, WithEnabled(true)),
+				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 100))),
+				MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
+				MoveToNextBlock(),
+			).
+			When(
+				MsgServerPartialClosePosition(alice, pair, sdk.MustNewDecFromStr("0.5")),
+			).
+			Then(
+				PositionShouldBeEqual(alice, pair,
+					Position_PositionShouldBeEqualTo(types.Position{
+						TraderAddress:                   alice.String(),
+						Pair:                            pair,
+						Size_:                           sdk.MustNewDecFromStr("0.499999999999"),
+						Margin:                          sdk.NewDec(1),
+						OpenNotional:                    sdk.MustNewDecFromStr("0.499999999999250000"),
+						LatestCumulativePremiumFraction: sdk.ZeroDec(),
+						LastUpdatedBlockNumber:          2,
+					}),
+				),
+				BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.NewInt(99)),
 			),
 	}
 
@@ -348,7 +374,10 @@ func TestMsgChangeCollateralDenom(t *testing.T) {
 
 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
 
-	_, err := msgServer.ChangeCollateralDenom(ctx, &types.MsgChangeCollateralDenom{
+	_, err := msgServer.ChangeCollateralDenom(ctx, nil)
+	require.ErrorContains(t, err, "nil msg")
+
+	_, err = msgServer.ChangeCollateralDenom(ctx, &types.MsgChangeCollateralDenom{
 		Sender:   sender,
 		NewDenom: "luna",
 	})
@@ -411,4 +440,67 @@ func TestMsgServerSettlePosition(t *testing.T) {
 	}
 
 	NewTestSuite(t).WithTestCases(tests...).Run()
+}
+
+func TestAllocateEpochRebates(t *testing.T) {
+	app, ctx := testapp.NewNibiruTestAppAndContext()
+
+	sender := testutil.AccAddress().String()
+
+	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
+
+	_, err := msgServer.AllocateEpochRebates(ctx, nil)
+	require.ErrorContains(t, err, "nil msg")
+
+	_, err = msgServer.AllocateEpochRebates(ctx, &types.MsgAllocateEpochRebates{})
+	require.ErrorContains(t, err, "empty address string is not allowed")
+
+	_, err = msgServer.AllocateEpochRebates(ctx, &types.MsgAllocateEpochRebates{
+		Sender:  sender,
+		Rebates: sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(100))),
+	})
+	require.ErrorContains(t, err, "insufficient funds")
+
+	require.NoError(t,
+		app.BankKeeper.MintCoins(ctx,
+			inflationtypes.ModuleName,
+			sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(100))),
+		),
+	)
+	require.NoError(t,
+		app.BankKeeper.SendCoinsFromModuleToAccount(ctx,
+			inflationtypes.ModuleName, sdk.MustAccAddressFromBech32(sender),
+			sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(100)))),
+	)
+
+	_, err = msgServer.AllocateEpochRebates(ctx, &types.MsgAllocateEpochRebates{
+		Sender:  sender,
+		Rebates: sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(100))),
+	})
+	require.NoError(t, err)
+
+	// Withdraw rebates
+	_, err = msgServer.WithdrawEpochRebates(ctx, nil)
+	require.ErrorContains(t, err, "nil msg")
+
+	_, err = msgServer.WithdrawEpochRebates(ctx, &types.MsgWithdrawEpochRebates{})
+	require.ErrorContains(t, err, "empty address string is not allowed")
+
+	_, err = msgServer.WithdrawEpochRebates(ctx, &types.MsgWithdrawEpochRebates{
+		Sender: sender,
+		Epochs: []uint64{1},
+	})
+	require.ErrorContains(t, err, "collections: not found")
+
+	currentEpoch, err := app.PerpKeeperV2.DnREpoch.Get(ctx)
+	require.NoError(t, err)
+
+	require.NoError(t, app.PerpKeeperV2.StartNewEpoch(ctx, currentEpoch+1))
+	require.NoError(t, app.PerpKeeperV2.StartNewEpoch(ctx, currentEpoch+2))
+
+	_, err = msgServer.WithdrawEpochRebates(ctx, &types.MsgWithdrawEpochRebates{
+		Sender: sender,
+		Epochs: []uint64{1},
+	})
+	require.NoError(t, err)
 }

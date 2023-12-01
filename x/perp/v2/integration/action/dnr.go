@@ -236,8 +236,7 @@ func FundDnREpoch(amt sdk.Coins) action.Action {
 	return fundDnREpoch{amt}
 }
 
-type startNewDnRepochAction struct {
-}
+type startNewDnRepochAction struct{}
 
 func (s startNewDnRepochAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
 	currentEpoch, err := app.PerpKeeperV2.DnREpoch.Get(ctx)
