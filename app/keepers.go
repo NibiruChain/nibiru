@@ -626,6 +626,9 @@ func orderedModuleNames() []string {
 		// --------------------------------------------------------------------
 		// Cosmos-SDK modules
 		//
+		// NOTE: (BeginBlocker requirement): upgrade module must occur first
+		upgradetypes.ModuleName,
+
 		// NOTE (InitGenesis requirement): Capability module must occur
 		//   first so that it can initialize any capabilities, allowing other
 		//   modules that want to create or claim capabilities afterwards in
@@ -654,7 +657,6 @@ func orderedModuleNames() []string {
 		authz.ModuleName,
 		feegrant.ModuleName,
 		paramstypes.ModuleName,
-		upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
 
 		// --------------------------------------------------------------------
@@ -707,7 +709,6 @@ func (app *NibiruApp) initModuleManager(
 		app.initAppModules(encodingConfig, skipGenesisInvariants)...,
 	)
 
-	// Init module orders for hooks and genesis
 	orderedModules := orderedModuleNames()
 	app.mm.SetOrderBeginBlockers(orderedModules...)
 	app.mm.SetOrderEndBlockers(orderedModules...)
@@ -743,7 +744,7 @@ func (app *NibiruApp) initModuleManager(
 	}
 }
 
-// ModuleBasicManager: The app's collection of module.AppModuleBasic
+// ModuleBasicManager The app's collection of module.AppModuleBasic
 // implementations. These set up non-dependant module elements, such as codec
 // registration and genesis verification.
 func ModuleBasicManager() module.BasicManager {

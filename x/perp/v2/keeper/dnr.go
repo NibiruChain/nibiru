@@ -68,6 +68,26 @@ func (intKeyEncoder) Decode(b []byte) (int, math.Int) {
 
 func (intKeyEncoder) Stringify(key math.Int) string { return key.String() }
 
+// maybeUpdateDnREpoch checks if the current epoch hook call matches the
+// epoch name that targets discounts and rebates, if it does then we simply
+// invoke the StartNewEpoch function to kickstart a new epoch.
+// This method is invoked by the AfterEpochEnd hook.
+func (k Keeper) maybeUpdateDnREpoch(ctx sdk.Context, epochIdentifier string, number uint64) {
+	// if epoch name is empty, we just assume DnR is not enabled.
+	referenceEpochName := k.DnREpochName.GetOr(ctx, "")
+	if referenceEpochName != epochIdentifier {
+		return
+	}
+	// kickstart new epoch
+	k.Logger(ctx).Info("updating dnr epoch", "epochIdentifier", epochIdentifier, "number", number)
+	err := k.StartNewEpoch(ctx, number)
+	if err != nil {
+		// in case of error we panic in this case, because state may have been updated
+		// in a corrupted way.
+		panic(err)
+	}
+}
+
 // StartNewEpoch is called by the epochs hooks when a new 30day epoch starts.
 func (k Keeper) StartNewEpoch(ctx sdk.Context, identifier uint64) error {
 	// set the current epoch

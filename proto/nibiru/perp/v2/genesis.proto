@@ -65,6 +65,8 @@ message GenesisState {
 
   repeated DNRAllocation rebates_allocations = 12 [ (gogoproto.nullable) = false ];
 
+  string dnr_epoch_name = 14;
+
   message GlobalVolume {
     uint64 epoch = 1;
     string volume = 2 [
