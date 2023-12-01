@@ -51,6 +51,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * [#1688](https://github.com/NibiruChain/nibiru/pull/1688) - fix(inflation): make default inflation allocation follow tokenomics
 
+### State Machine Breaking
+
+* [#1682](https://github.com/NibiruChain/nibiru/pull/1682) - feat: add upgrade handler for v1.1.0
+
 ## [v1.0.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.0.0)
 
 ### Features
