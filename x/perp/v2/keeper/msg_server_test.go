@@ -366,6 +366,7 @@ func TestFailMsgServer(t *testing.T) {
 	})
 	require.ErrorContains(t, err, "spendable balance  is smaller than 1luna")
 }
+
 func TestMsgChangeCollateralDenom(t *testing.T) {
 	app, ctx := testapp.NewNibiruTestAppAndContext()
 
@@ -460,8 +461,17 @@ func TestAllocateEpochRebates(t *testing.T) {
 	})
 	require.ErrorContains(t, err, "insufficient funds")
 
-	app.BankKeeper.MintCoins(ctx, inflationtypes.ModuleName, sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(100))))
-	app.BankKeeper.SendCoinsFromModuleToAccount(ctx, inflationtypes.ModuleName, sdk.MustAccAddressFromBech32(sender), sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(100))))
+	require.NoError(t,
+		app.BankKeeper.MintCoins(ctx,
+			inflationtypes.ModuleName,
+			sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(100))),
+		),
+	)
+	require.NoError(t,
+		app.BankKeeper.SendCoinsFromModuleToAccount(ctx,
+			inflationtypes.ModuleName, sdk.MustAccAddressFromBech32(sender),
+			sdk.NewCoins(sdk.NewCoin("unibi", sdk.NewInt(100)))),
+	)
 
 	_, err = msgServer.AllocateEpochRebates(ctx, &types.MsgAllocateEpochRebates{
 		Sender:  sender,

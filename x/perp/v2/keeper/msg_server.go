@@ -113,7 +113,6 @@ func (m msgServer) SettlePosition(ctx context.Context, msg *types.MsgSettlePosit
 	// These fields should have already been validated by MsgSettlePosition.ValidateBasic() prior to being sent to the msgServer.
 	traderAddr := sdk.MustAccAddressFromBech32(msg.Sender)
 	resp, err := m.k.SettlePosition(sdk.UnwrapSDKContext(ctx), msg.Pair, msg.Version, traderAddr)
-
 	if err != nil {
 		return nil, err
 	}
