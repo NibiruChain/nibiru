@@ -85,6 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `github.com/spf13/cobra` from 1.7.0 to 1.8.0 ([#1664](https://github.com/NibiruChain/nibiru/pull/1664))
 - Bump `github.com/gorilla/mux` from 1.8.0 to 1.8.1 ([#1665](https://github.com/NibiruChain/nibiru/pull/1665))
 - Bump `github.com/grpc-ecosystem/grpc-gateway/v2` from 2.18.0 to 2.18.1 ([#1675](https://github.com/NibiruChain/nibiru/pull/1675))
+- Bump `github.com/cosmos/cosmos-sdk` from 0.47.5 to 0.50.1 ([#1674](https://github.com/NibiruChain/nibiru/pull/1674))
 
 ### Bug Fixes
 
