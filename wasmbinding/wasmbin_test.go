@@ -18,6 +18,10 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 )
 
+func init() {
+	testapp.EnsureNibiruPrefix()
+}
+
 // TestSetupContracts acts as an integration test by storing and instantiating
 // each production smart contract is expected to interact with x/wasm/binding.
 func TestSetupContracts(t *testing.T) {

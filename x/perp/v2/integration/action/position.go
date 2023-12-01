@@ -393,11 +393,11 @@ func (p partialCloseFails) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context,
 	return ctx, nil, false
 }
 
-func PartialCloseFails(trader sdk.AccAddress, pair asset.Pair, amount sdk.Dec, expecedErr error) action.Action {
+func PartialCloseFails(trader sdk.AccAddress, pair asset.Pair, amount sdk.Dec, expectedErr error) action.Action {
 	return partialCloseFails{
 		trader:      trader,
 		pair:        pair,
 		amount:      amount,
-		expectedErr: expecedErr,
+		expectedErr: expectedErr,
 	}
 }
