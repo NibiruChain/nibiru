@@ -13,11 +13,7 @@ import (
 // - https://github.com/NibiruChain/cw-nibiru/blob/90df123f8d32d47b5b280ec6ae7dde0f9dbf2787/contracts/bindings-perp/src/msg.rs
 type NibiruMsg struct {
 	// bindings-perp ExecuteMsg enum types
-	MarketOrder   *MarketOrder   `json:"market_order,omitempty"`
-	ClosePosition *ClosePosition `json:"close_position,omitempty"`
 	// MultiLiquidate        *MultiLiquidate        `json:"multi_liquidate,omitempty"` // TODO
-	AddMargin             *AddMargin             `json:"add_margin,omitempty"`
-	RemoveMargin          *RemoveMargin          `json:"remove_margin,omitempty"`
 	DonateToInsuranceFund *DonateToInsuranceFund `json:"donate_to_insurance_fund,omitempty"` // TODO
 	InsuranceFundWithdraw *InsuranceFundWithdraw `json:"insurance_fund_withdraw,omitempty"`
 	SetMarketEnabled      *SetMarketEnabled      `json:"set_market_enabled,omitempty"`
@@ -27,37 +23,6 @@ type NibiruMsg struct {
 
 	// Short for "no operation". A wasm binding payload that does nothing.
 	NoOp *NoOp `json:"no_op,omitempty"`
-}
-
-type MarketOrder struct {
-	Pair            string      `json:"pair"`
-	IsLong          bool        `json:"is_long"`
-	QuoteAmount     sdkmath.Int `json:"quote_amount"`
-	Leverage        sdk.Dec     `json:"leverage"`
-	BaseAmountLimit sdkmath.Int `json:"base_amount_limit"`
-}
-
-type ClosePosition struct {
-	Pair string `json:"pair"`
-}
-
-type MultiLiquidate struct {
-	Liquidations []LiquidationArgs `json:"liquidations"`
-}
-
-type LiquidationArgs struct {
-	Pair   string `json:"pair"`
-	Trader string `json:"trader"`
-}
-
-type AddMargin struct {
-	Pair   string   `json:"pair"`
-	Margin sdk.Coin `json:"margin"`
-}
-
-type RemoveMargin struct {
-	Pair   string   `json:"pair"`
-	Margin sdk.Coin `json:"margin"`
 }
 
 type DonateToInsuranceFund struct {
