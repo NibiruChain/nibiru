@@ -52,6 +52,7 @@ func TestCheckBalances(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
+			testapp.EnsureNibiruPrefix()
 			app, ctx := testapp.NewNibiruTestAppAndContext()
 
 			// fund user account

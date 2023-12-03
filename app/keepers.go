@@ -238,13 +238,14 @@ func (app *NibiruApp) InitKeepers(
 	tkeys := app.tkeys
 	memKeys := app.memKeys
 
+	govModuleAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
 	app.paramsKeeper = initParamsKeeper(
 		appCodec, legacyAmino, keys[paramstypes.StoreKey],
 		tkeys[paramstypes.TStoreKey],
 	)
 
 	// set the BaseApp's parameter store
-	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(appCodec, keys[consensusparamtypes.StoreKey], authtypes.NewModuleAddress(govtypes.ModuleName).String())
+	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(appCodec, keys[consensusparamtypes.StoreKey], govModuleAddr)
 	bApp.SetParamStore(&app.ConsensusParamsKeeper)
 
 	/* Add capabilityKeeper and ScopeToModule for the ibc module
@@ -274,21 +275,21 @@ func (app *NibiruApp) InitKeepers(
 		authtypes.ProtoBaseAccount,
 		maccPerms,
 		sdk.GetConfig().GetBech32AccountAddrPrefix(),
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govModuleAddr,
 	)
 	app.BankKeeper = bankkeeper.NewBaseKeeper(
 		appCodec,
 		keys[banktypes.StoreKey],
 		app.AccountKeeper,
 		BlockedAddresses(),
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govModuleAddr,
 	)
 	app.stakingKeeper = stakingkeeper.NewKeeper(
 		appCodec,
 		keys[stakingtypes.StoreKey],
 		app.AccountKeeper,
 		app.BankKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govModuleAddr,
 	)
 	app.DistrKeeper = distrkeeper.NewKeeper(
 		appCodec,
@@ -297,7 +298,7 @@ func (app *NibiruApp) InitKeepers(
 		app.BankKeeper,
 		app.stakingKeeper,
 		authtypes.FeeCollectorName,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govModuleAddr,
 	)
 
 	invCheckPeriod := cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod))
@@ -307,7 +308,7 @@ func (app *NibiruApp) InitKeepers(
 		invCheckPeriod,
 		app.BankKeeper,
 		authtypes.FeeCollectorName,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govModuleAddr,
 	)
 
 	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(appCodec, keys[feegrant.StoreKey], app.AccountKeeper)
@@ -326,7 +327,7 @@ func (app *NibiruApp) InitKeepers(
 		appCodec,
 		homePath,
 		app.BaseApp,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govModuleAddr,
 	)
 
 	// register the staking hooks
@@ -336,7 +337,7 @@ func (app *NibiruApp) InitKeepers(
 		legacyAmino,
 		keys[slashingtypes.StoreKey],
 		app.stakingKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govModuleAddr,
 	)
 
 	app.stakingKeeper.SetHooks(
@@ -442,12 +443,11 @@ func (app *NibiruApp) InitKeepers(
 		wasmDir,
 		wasmConfig,
 		supportedFeatures,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govModuleAddr,
 		GetWasmOpts(*app, appOpts)...,
 	)
 
 	// DevGas uses WasmKeeper
-	govModuleAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
 	app.DevGasKeeper = devgaskeeper.NewKeeper(
 		keys[devgastypes.StoreKey],
 		appCodec,
@@ -553,7 +553,7 @@ func (app *NibiruApp) InitKeepers(
 		app.stakingKeeper,
 		app.MsgServiceRouter(),
 		govConfig,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govModuleAddr,
 	)
 	govKeeper.SetLegacyRouter(govRouter)
 

@@ -84,7 +84,7 @@ func RunTestGenesis(t *testing.T, tc TestCase) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 
 	// Initialize sudo state
-	nibiruTeam := common.NibiruTeam
+	nibiruTeam := common.NIBIRU_TEAM
 	sudoers := PerpSudoers()
 	sudoersRoot := sdk.MustAccAddressFromBech32(nibiruTeam)
 	sudoers.Root = sudoersRoot.String()

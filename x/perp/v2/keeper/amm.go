@@ -11,77 +11,12 @@ import (
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
-// EditPriceMultiplier edits the peg multiplier of an amm pool after making
-// sure there's enough money in the perp EF fund to pay for the repeg. These
-// funds get send to the vault to pay for trader's new net margin.
-func (k Keeper) EditPriceMultiplier(
-	ctx sdk.Context,
-	pair asset.Pair,
-	newPriceMultiplier sdk.Dec,
-) (err error) {
-	amm, err := k.GetAMM(ctx, pair)
-	if err != nil {
-		return err
-	}
-
-	if newPriceMultiplier.Equal(amm.PriceMultiplier) {
-		// same price multiplier, no-op
-		return nil
-	}
-
-	// Compute cost of re-pegging the pool
-	cost, err := amm.CalcRepegCost(newPriceMultiplier)
-	if err != nil {
-		return err
-	}
-
-	err = k.handleMarketUpdateCost(ctx, pair, cost)
-	if err != nil {
-		return err
-	}
-
-	// Do the re-peg
-	amm.PriceMultiplier = newPriceMultiplier
-	k.SaveAMM(ctx, amm)
-
-	return nil
-}
-
-// EditSwapInvariant edits the swap invariant of an amm pool after making
-// sure there's enough money in the perp EF fund to pay for the repeg. These
-// funds get send to the vault to pay for trader's new net margin.
-func (k Keeper) EditSwapInvariant(ctx sdk.Context, pair asset.Pair, newSwapInvariant sdk.Dec) (err error) {
-	// Get the pool
-	amm, err := k.GetAMM(ctx, pair)
-	if err != nil {
-		return err
-	}
-
-	// Compute cost of re-pegging the pool
-	cost, err := amm.CalcUpdateSwapInvariantCost(newSwapInvariant)
-	if err != nil {
-		return err
-	}
-
-	err = k.handleMarketUpdateCost(ctx, pair, cost)
-	if err != nil {
-		return err
-	}
-
-	err = amm.UpdateSwapInvariant(newSwapInvariant)
-	if err != nil {
-		return err
-	}
-
-	k.SaveAMM(ctx, amm)
-
-	return nil
-}
-
-func (k Keeper) handleMarketUpdateCost(ctx sdk.Context, pair asset.Pair, costAmt sdkmath.Int) (err error) {
+func (k Keeper) handleMarketUpdateCost(
+	ctx sdk.Context, pair asset.Pair, costAmt sdkmath.Int,
+) (costPaid sdk.Coin, err error) {
 	collateral, err := k.Collateral.Get(ctx)
 	if err != nil {
-		return err
+		return costPaid, err
 	}
 
 	if costAmt.IsPositive() {
@@ -96,11 +31,13 @@ func (k Keeper) handleMarketUpdateCost(ctx sdk.Context, pair asset.Pair, costAmt
 			cost,
 		)
 		if err != nil {
-			return types.ErrNotEnoughFundToPayAction.Wrapf(
-				"not enough fund in perp ef to pay for repeg, need %s got %s",
+			return costPaid, types.ErrNotEnoughFundToPayAction.Wrapf(
+				"need %s, got %s",
 				cost.String(),
 				k.BankKeeper.GetBalance(ctx, k.AccountKeeper.GetModuleAddress(types.PerpEFModuleAccount), collateral).String(),
 			)
+		} else {
+			costPaid = cost[0]
 		}
 	} else if costAmt.IsNegative() {
 		// Negative cost, send from margin vault to perp ef.
@@ -113,13 +50,18 @@ func (k Keeper) handleMarketUpdateCost(ctx sdk.Context, pair asset.Pair, costAmt
 			),
 		)
 		if err != nil { // nolint:staticcheck
-			// if there's no money in margin to pay for the repeg, we still repeg. It's surprising if it's
-			// happening on mainnet, but it's not a problem.
-			// It means there's bad debt in the system, and it's preventing to pay for the repeg down. But the bad debt
-			// end up being paid up by the perp EF anyway.
+			costPaid = sdk.NewInt64Coin(collateral, 0)
+			// Explanation: If there's no money in the vault to pay for the
+			// operation, the execution should still be successful. It's
+			// surprising if it's happening on mainnet, but it's not a problem.
+			// It means there's bad debt in the system, and it's preventing to
+			// pay for the repeg down. But the bad debt end up being paid up by
+			// the perp EF anyway.
+		} else {
+			costPaid = sdk.NewCoin(collateral, costAmt.Abs())
 		}
 	}
-	return nil
+	return costPaid, nil
 }
 
 // GetMarket returns the market that is enabled. It is the last version of the market.

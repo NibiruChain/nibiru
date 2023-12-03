@@ -371,6 +371,48 @@ func TestMsgValidateBasic(t *testing.T) {
 			true,
 			"invalid liquidation at index 0: invalid base asset",
 		},
+		// MsgShiftPegMultiplier
+		{
+			name: "MsgShiftPegMultiplier: Invalid pair",
+			msg: &MsgShiftPegMultiplier{
+				Sender:     validSender,
+				Pair:       asset.Pair("not_a_pair"),
+				NewPegMult: sdk.NewDec(420),
+			},
+			expectErr:     true,
+			expectedError: asset.ErrInvalidTokenPair.Error(),
+		},
+		{
+			name: "MsgShiftPegMultiplier: nonpositive peg multiplier",
+			msg: &MsgShiftPegMultiplier{
+				Sender:     validSender,
+				Pair:       asset.Pair("valid:pair"),
+				NewPegMult: sdk.NewDec(-420),
+			},
+			expectErr:     true,
+			expectedError: ErrNonPositivePegMultiplier.Error(),
+		},
+		// MsgDonateToEcosystemFund test cases
+		{
+			name: "MsgShiftSwapInvariant: Invalid pair",
+			msg: &MsgShiftSwapInvariant{
+				Sender:           validSender,
+				Pair:             asset.Pair("not_a_pair"),
+				NewSwapInvariant: sdk.NewInt(420),
+			},
+			expectErr:     true,
+			expectedError: asset.ErrInvalidTokenPair.Error(),
+		},
+		{
+			name: "MsgShiftSwapInvariant: nonpositive swap invariant",
+			msg: &MsgShiftSwapInvariant{
+				Sender:           validSender,
+				Pair:             asset.Pair("valid:pair"),
+				NewSwapInvariant: sdk.NewInt(-420),
+			},
+			expectErr:     true,
+			expectedError: ErrNonPositiveSwapInvariant.Error(),
+		},
 	}
 
 	for _, tc := range testCases {
@@ -399,6 +441,8 @@ func TestMsg_GetSigners(t *testing.T) {
 		&MsgPartialClose{Sender: validSender},
 		&MsgDonateToEcosystemFund{Sender: validSender},
 		&MsgMultiLiquidate{Sender: validSender},
+		&MsgShiftPegMultiplier{Sender: validSender},
+		&MsgShiftSwapInvariant{Sender: validSender},
 	}
 	msgInvalidSenderList := []sdk.Msg{
 		&MsgAddMargin{Sender: invalidSender},
@@ -409,6 +453,8 @@ func TestMsg_GetSigners(t *testing.T) {
 		&MsgPartialClose{Sender: invalidSender},
 		&MsgDonateToEcosystemFund{Sender: invalidSender},
 		&MsgMultiLiquidate{Sender: invalidSender},
+		&MsgShiftPegMultiplier{Sender: invalidSender},
+		&MsgShiftSwapInvariant{Sender: invalidSender},
 	}
 
 	for _, msg := range msgValidSenderList {
@@ -544,6 +590,14 @@ func TestMsg_GetSignBytes(t *testing.T) {
 		{
 			name: "MsgMultiLiquidate",
 			msg:  &MsgMultiLiquidate{},
+		},
+		{
+			name: "MsgShiftPegMultiplier",
+			msg:  &MsgShiftPegMultiplier{},
+		},
+		{
+			name: "MsgShiftSwapInvariant",
+			msg:  &MsgShiftSwapInvariant{},
 		},
 	}
 

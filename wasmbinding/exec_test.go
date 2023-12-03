@@ -362,40 +362,6 @@ func (s *TestSuiteExecutor) TestOracleParams() {
 	s.Require().Equal(theValidatorFeeRatio, params.ValidatorFeeRatio)
 }
 
-func (s *TestSuiteExecutor) TestPegShift() {
-	pair := asset.MustNewPair(s.happyFields.Pair)
-	execMsg := bindings.NibiruMsg{
-		PegShift: &bindings.PegShift{
-			Pair:    pair.String(),
-			PegMult: sdk.NewDec(420),
-		},
-	}
-
-	s.T().Log("Executing with permission should succeed")
-	contract := s.contractShifter
-	s.keeper.SetSudoContracts(
-		[]string{contract.String()}, s.ctx,
-	)
-	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
-	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
-
-	s.T().Log("Executing without permission should fail")
-	s.keeper.SetSudoContracts(
-		[]string{}, s.ctx,
-	)
-	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
-	s.Errorf(err, "contractRespBz: %s", contractRespBz)
-
-	s.T().Log("Executing the wrong contract should fail")
-	contract = s.contractPerp
-	s.keeper.SetSudoContracts(
-		[]string{contract.String()}, s.ctx,
-	)
-	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
-	s.Errorf(err, "contractRespBz: %s", contractRespBz)
-	s.Contains(err.Error(), "Error parsing into type")
-}
-
 func (s *TestSuiteExecutor) TestNoOp() {
 	contract := s.contractShifter
 	execMsg := bindings.NibiruMsg{
@@ -403,40 +369,6 @@ func (s *TestSuiteExecutor) TestNoOp() {
 	}
 	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
-}
-
-func (s *TestSuiteExecutor) TestDepthShift() {
-	pair := asset.MustNewPair(s.happyFields.Pair)
-	execMsg := bindings.NibiruMsg{
-		DepthShift: &bindings.DepthShift{
-			Pair:      pair.String(),
-			DepthMult: sdk.NewDec(2),
-		},
-	}
-
-	s.T().Log("Executing with permission should succeed")
-	contract := s.contractShifter
-	s.keeper.SetSudoContracts(
-		[]string{contract.String()}, s.ctx,
-	)
-	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
-	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
-
-	s.T().Log("Executing without permission should fail")
-	s.keeper.SetSudoContracts(
-		[]string{}, s.ctx,
-	)
-	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
-	s.Errorf(err, "contractRespBz: %s", contractRespBz)
-
-	s.T().Log("Executing the wrong contract should fail")
-	contract = s.contractPerp
-	s.keeper.SetSudoContracts(
-		[]string{contract.String()}, s.ctx,
-	)
-	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
-	s.Errorf(err, "contractRespBz: %s", contractRespBz)
-	s.Contains(err.Error(), "Error parsing into type")
 }
 
 func (s *TestSuiteExecutor) TestInsuranceFundWithdraw() {

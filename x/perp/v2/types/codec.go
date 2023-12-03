@@ -16,6 +16,8 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgDonateToEcosystemFund{}, "perpv2/donate_to_ef", nil)
 	cdc.RegisterConcrete(&MsgMultiLiquidate{}, "perpv2/multi_liquidate", nil)
 	cdc.RegisterConcrete(&MsgChangeCollateralDenom{}, "perpv2/change_collateral_denom", nil)
+	cdc.RegisterConcrete(&MsgShiftPegMultiplier{}, "perpv2/shift_peg_multiplier", nil)
+	cdc.RegisterConcrete(&MsgShiftSwapInvariant{}, "perpv2/shift_swap_invariant", nil)
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
@@ -29,6 +31,8 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgPartialClose{},
 		&MsgMultiLiquidate{},
 		&MsgChangeCollateralDenom{},
+		&MsgShiftPegMultiplier{},
+		&MsgShiftSwapInvariant{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)

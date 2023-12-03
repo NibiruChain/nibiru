@@ -14,6 +14,10 @@ import (
 	perptypes "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
+func init() {
+	testapp.EnsureNibiruPrefix()
+}
+
 func TestHooks_AfterEpochEnd(t *testing.T) {
 	tests := []struct {
 		name                   string

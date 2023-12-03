@@ -9,6 +9,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
@@ -134,35 +135,39 @@ func WithEnabled(enabled bool) MarketModifier {
 	}
 }
 
-type editPriceMultiplier struct {
+type shiftPegMultiplier struct {
 	pair     asset.Pair
 	newValue sdk.Dec
 }
 
-func (e editPriceMultiplier) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	err := app.PerpKeeperV2.EditPriceMultiplier(ctx, e.pair, e.newValue)
+func (e shiftPegMultiplier) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	err := app.PerpKeeperV2.Admin.ShiftPegMultiplier(
+		ctx, e.pair, e.newValue, testapp.DefaultSudoRoot(),
+	)
 	return ctx, err, true
 }
 
-func EditPriceMultiplier(pair asset.Pair, newValue sdk.Dec) action.Action {
-	return editPriceMultiplier{
+func ShiftPegMultiplier(pair asset.Pair, newValue sdk.Dec) action.Action {
+	return shiftPegMultiplier{
 		pair:     pair,
 		newValue: newValue,
 	}
 }
 
-type editSwapInvariant struct {
+type shiftSwapInvariant struct {
 	pair     asset.Pair
-	newValue sdk.Dec
+	newValue sdkmath.Int
 }
 
-func (e editSwapInvariant) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	err := app.PerpKeeperV2.EditSwapInvariant(ctx, e.pair, e.newValue)
+func (e shiftSwapInvariant) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+	err := app.PerpKeeperV2.Admin.ShiftSwapInvariant(
+		ctx, e.pair, e.newValue, testapp.DefaultSudoRoot(),
+	)
 	return ctx, err, true
 }
 
-func EditSwapInvariant(pair asset.Pair, newValue sdk.Dec) action.Action {
-	return editSwapInvariant{
+func ShiftSwapInvariant(pair asset.Pair, newValue sdkmath.Int) action.Action {
+	return shiftSwapInvariant{
 		pair:     pair,
 		newValue: newValue,
 	}
@@ -202,7 +207,7 @@ func (c setCollateral) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, err
 	if err != nil {
 		return ctx, err, true
 	}
-	sudoers.Root = common.NibiruTeam
+	sudoers.Root = common.NIBIRU_TEAM
 	app.SudoKeeper.Sudoers.Set(ctx, sudoers)
 
 	senderAddr, err := sdk.AccAddressFromBech32(c.Sender)
@@ -216,6 +221,6 @@ func (c setCollateral) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, err
 func SetCollateral(denom string) action.Action {
 	return setCollateral{
 		Denom:  denom,
-		Sender: common.NibiruTeam,
+		Sender: common.NIBIRU_TEAM,
 	}
 }
