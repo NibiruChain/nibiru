@@ -49,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Dapp modules: perp, spot, etc.
 
+* [#1687](https://github.com/NibiruChain/nibiru/pull/1687) - chore(wasmbinding): delete CustomQuerier since we have QueryRequest::Stargate now
 * [#1686](https://github.com/NibiruChain/nibiru/pull/1686) - test(perp): add more tests for perp module msg server for DnR
 * [#1683](https://github.com/NibiruChain/nibiru/pull/1683) - feat(perp): Add `StartDnREpoch` to `AfterEpochEnd` hook
 * [#1680](https://github.com/NibiruChain/nibiru/pull/1680) - feat(perp): MsgShiftPegMultiplier, MsgShiftSwapInvariant.
