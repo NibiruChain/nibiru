@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Dependencies
 - Bump `cosmossdk.io/math` from 1.1.2 to 1.2.0 ([#1676](https://github.com/NibiruChain/nibiru/pull/1676))
+- Bump `github.com/spf13/cast` from 1.5.1 to 1.6.0 ([#1689](https://github.com/NibiruChain/nibiru/pull/1689))
 
 ## [v1.0.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.0.0)
 
