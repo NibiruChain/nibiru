@@ -589,7 +589,7 @@ func TestCalcUpdateSwapInvariantCost(t *testing.T) {
 				TotalShort:      sdk.ZeroDec(),
 			},
 			newSwapInvariant: sdk.NewDec(-1),
-			expectedErr:      types.ErrNegativeSwapInvariant,
+			expectedErr:      types.ErrNonPositiveSwapInvariant,
 		},
 	}
 

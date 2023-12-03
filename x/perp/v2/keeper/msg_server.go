@@ -157,15 +157,15 @@ func (m msgServer) ChangeCollateralDenom(
 	return &types.MsgChangeCollateralDenomResponse{}, err
 }
 
-func (m msgServer) AllocateEpochRebates(ctx context.Context, msg *types.MsgAllocateEpochRebates) (*types.MsgAllocateEpochRebatesResponse, error) {
+func (m msgServer) AllocateEpochRebates(
+	ctx context.Context, msg *types.MsgAllocateEpochRebates,
+) (*types.MsgAllocateEpochRebatesResponse, error) {
 	if msg == nil {
 		return nil, common.ErrNilMsg()
 	}
 
-	sender, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil {
-		return nil, err
-	}
+	// Sender is checked in `msg.ValidateBasic` before reaching this fn call.
+	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
 	total, err := m.k.AllocateEpochRebates(sdk.UnwrapSDKContext(ctx), sender, msg.Rebates)
 	if err != nil {
 		return nil, err
@@ -178,11 +178,8 @@ func (m msgServer) WithdrawEpochRebates(ctx context.Context, msg *types.MsgWithd
 	if msg == nil {
 		return nil, common.ErrNilMsg()
 	}
-
-	sender, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil {
-		return nil, err
-	}
+	// Sender is checked in `msg.ValidateBasic` before reaching this fn call.
+	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	totalWithdrawn := sdk.NewCoins()
 	for _, epoch := range msg.Epochs {
@@ -195,4 +192,28 @@ func (m msgServer) WithdrawEpochRebates(ctx context.Context, msg *types.MsgWithd
 	return &types.MsgWithdrawEpochRebatesResponse{
 		WithdrawnRebates: totalWithdrawn,
 	}, nil
+}
+
+// ShiftPegMultiplier: gRPC tx msg for changing a market's peg multiplier.
+// [Admin] Only callable by sudoers.
+func (m msgServer) ShiftPegMultiplier(
+	goCtx context.Context, msg *types.MsgShiftPegMultiplier,
+) (*types.MsgShiftPegMultiplierResponse, error) {
+	// Sender is checked in `msg.ValidateBasic` before reaching this fn call.
+	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	err := m.k.Admin.ShiftPegMultiplier(ctx, msg.Pair, msg.NewPegMult, sender)
+	return &types.MsgShiftPegMultiplierResponse{}, err
+}
+
+// ShiftSwapInvariant: gRPC tx msg for changing a market's swap invariant.
+// [Admin] Only callable by sudoers.
+func (m msgServer) ShiftSwapInvariant(
+	goCtx context.Context, msg *types.MsgShiftSwapInvariant,
+) (*types.MsgShiftSwapInvariantResponse, error) {
+	// Sender is checked in `msg.ValidateBasic` before reaching this fn call.
+	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	err := m.k.Admin.ShiftSwapInvariant(ctx, msg.Pair, msg.NewSwapInvariant, sender)
+	return &types.MsgShiftSwapInvariantResponse{}, err
 }

@@ -15,14 +15,20 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
 	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 )
 
 // NewNibiruTestAppAndContext creates an 'app.NibiruApp' instance with an
 // in-memory 'tmdb.MemDB' and fresh 'sdk.Context'.
 func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
+	// Prevent "invalid Bech32 prefix; expected nibi, got ...." error
+	EnsureNibiruPrefix()
+
+	// Set up base app
 	encoding := app.MakeEncodingConfig()
 	var appGenesis app.GenesisState = app.NewDefaultGenesisState(encoding.Marshaler)
 	genModEpochs := epochstypes.DefaultGenesisFromTime(time.Now().UTC())
@@ -32,19 +38,34 @@ func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
 	app := NewNibiruTestApp(appGenesis)
 	ctx := NewContext(app)
 
+	// Set defaults for certain modules.
 	app.OracleKeeper.SetPrice(ctx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), sdk.NewDec(20000))
 	app.OracleKeeper.SetPrice(ctx, "xxx:yyy", sdk.NewDec(20000))
-
 	app.PerpKeeperV2.Collateral.Set(ctx, types.TestingCollateralDenomNUSD)
+	app.SudoKeeper.Sudoers.Set(ctx, DefaultSudoers())
 
 	return app, ctx
 }
 
+// NewContext: Returns a fresh sdk.Context corresponding to the given NibiruApp.
 func NewContext(nibiru *app.NibiruApp) sdk.Context {
 	return nibiru.NewContext(false, tmproto.Header{
 		Height: 1,
 		Time:   time.Now().UTC(),
 	})
+}
+
+// DefaultSudoers: State for the x/sudo module for the default test app.
+func DefaultSudoers() sudotypes.Sudoers {
+	addr := DefaultSudoRoot().String()
+	return sudotypes.Sudoers{
+		Root:      addr,
+		Contracts: []string{addr},
+	}
+}
+
+func DefaultSudoRoot() sdk.AccAddress {
+	return sdk.MustAccAddressFromBech32(testutil.ADDR_SUDO_ROOT)
 }
 
 // NewNibiruTestAppAndZeroTimeCtx: Runs NewNibiruTestAppAndZeroTimeCtx with the

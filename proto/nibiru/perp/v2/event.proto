@@ -234,3 +234,29 @@ message MarketUpdatedEvent {
   // the final state of the market
   nibiru.perp.v2.Market final_market = 1 [ (gogoproto.nullable) = false ];
 }
+
+// EventShiftPegMultiplier: ABCI event emitted from MsgShiftPegMultiplier
+message EventShiftPegMultiplier {
+  string old_peg_multiplier = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  string new_peg_multiplier = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  cosmos.base.v1beta1.Coin cost_paid = 3 [ (gogoproto.nullable) = false ];
+}
+
+// EventShiftSwapInvariant: ABCI event emitted from MsgShiftSwapInvariant
+message EventShiftSwapInvariant {
+  string old_swap_invariant = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string new_swap_invariant = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  cosmos.base.v1beta1.Coin cost_paid = 3 [ (gogoproto.nullable) = false ];
+}

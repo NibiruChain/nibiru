@@ -16,6 +16,7 @@ import (
 // init changes the value of 'DefaultTestingAppInit' to use custom initialization.
 func init() {
 	ibctesting.DefaultTestingAppInit = SetupNibiruTestingApp
+	testapp.EnsureNibiruPrefix()
 }
 
 /*

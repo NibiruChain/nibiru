@@ -17,7 +17,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/action"
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
-	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
+	perpkeeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 	sudoerTypes "github.com/NibiruChain/nibiru/x/sudo/types"
 )
@@ -324,7 +324,7 @@ func TestFailMsgServer(t *testing.T) {
 
 	sender := testutil.AccAddress().String()
 
-	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
+	msgServer := perpkeeper.NewMsgServerImpl(app.PerpKeeperV2)
 
 	_, err := msgServer.MarketOrder(ctx, &types.MsgMarketOrder{
 		Sender:               sender,
@@ -372,7 +372,7 @@ func TestMsgChangeCollateralDenom(t *testing.T) {
 
 	sender := testutil.AccAddress().String()
 
-	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
+	msgServer := perpkeeper.NewMsgServerImpl(app.PerpKeeperV2)
 
 	_, err := msgServer.ChangeCollateralDenom(ctx, nil)
 	require.ErrorContains(t, err, "nil msg")
@@ -447,13 +447,13 @@ func TestAllocateEpochRebates(t *testing.T) {
 
 	sender := testutil.AccAddress().String()
 
-	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
+	msgServer := perpkeeper.NewMsgServerImpl(app.PerpKeeperV2)
 
 	_, err := msgServer.AllocateEpochRebates(ctx, nil)
 	require.ErrorContains(t, err, "nil msg")
 
 	_, err = msgServer.AllocateEpochRebates(ctx, &types.MsgAllocateEpochRebates{})
-	require.ErrorContains(t, err, "empty address string is not allowed")
+	require.NoError(t, err)
 
 	_, err = msgServer.AllocateEpochRebates(ctx, &types.MsgAllocateEpochRebates{
 		Sender:  sender,
@@ -484,7 +484,7 @@ func TestAllocateEpochRebates(t *testing.T) {
 	require.ErrorContains(t, err, "nil msg")
 
 	_, err = msgServer.WithdrawEpochRebates(ctx, &types.MsgWithdrawEpochRebates{})
-	require.ErrorContains(t, err, "empty address string is not allowed")
+	require.NoError(t, err)
 
 	_, err = msgServer.WithdrawEpochRebates(ctx, &types.MsgWithdrawEpochRebates{
 		Sender: sender,

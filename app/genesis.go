@@ -78,6 +78,7 @@ func NewDefaultGenesisState(cdc codec.JSONCodec) GenesisState {
 	gen := ModuleBasics.DefaultGenesis(cdc)
 
 	authGenesis := new(authtypes.GenesisState)
+	authtypes.DefaultGenesisState()
 	cdc.MustUnmarshalJSON(gen[authtypes.ModuleName], authGenesis)
 
 	return gen
