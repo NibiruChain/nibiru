@@ -21,7 +21,7 @@ import (
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
-func TestEditPriceMultipler(t *testing.T) {
+func TestShiftPegMultiplier(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 
 	tests := TestCases{
@@ -32,7 +32,7 @@ func TestEditPriceMultipler(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditPriceMultiplier(pair, sdk.OneDec()),
+				ShiftPegMultiplier(pair, sdk.OneDec()),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)),
@@ -55,7 +55,7 @@ func TestEditPriceMultipler(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditPriceMultiplier(pair, sdk.NewDec(10)),
+				ShiftPegMultiplier(pair, sdk.NewDec(10)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)),
@@ -75,7 +75,7 @@ func TestEditPriceMultipler(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditPriceMultiplier(pair, sdk.NewDec(10)),
+				ShiftPegMultiplier(pair, sdk.NewDec(10)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1004500)),
@@ -95,7 +95,7 @@ func TestEditPriceMultipler(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditPriceMultiplier(pair, sdk.MustNewDecFromStr("0.25")),
+				ShiftPegMultiplier(pair, sdk.MustNewDecFromStr("0.25")),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(999626)),
@@ -115,7 +115,7 @@ func TestEditPriceMultipler(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditPriceMultiplier(pair, sdk.NewDec(10)),
+				ShiftPegMultiplier(pair, sdk.NewDec(10)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(995500)),
@@ -135,7 +135,7 @@ func TestEditPriceMultipler(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditPriceMultiplier(pair, sdk.MustNewDecFromStr("0.25")),
+				ShiftPegMultiplier(pair, sdk.MustNewDecFromStr("0.25")),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1000376)),
@@ -152,7 +152,9 @@ func TestEditPriceMultipler(t *testing.T) {
 	NewTestSuite(t).WithTestCases(tests...).Run()
 }
 
-func TestEditPriceMultiplerFail(t *testing.T) {
+// TestShiftPegMultiplier_Fail: Test scenarios for the `ShiftPegMultiplier`
+// function that should error.
+func TestShiftPegMultiplier_Fail(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	app, ctx := testapp.NewNibiruTestAppAndContext()
 
@@ -184,12 +186,14 @@ func TestEditPriceMultiplerFail(t *testing.T) {
 		})
 	require.NoError(t, err)
 
+	adminAddr := testapp.DefaultSudoRoot()
 	// Error because of invalid pair
-	err = app.PerpKeeperV2.Admin.EditPriceMultiplier(ctx, asset.MustNewPair("luna:usdt"), sdk.NewDec(-1))
+	err = app.PerpKeeperV2.Admin.ShiftPegMultiplier(
+		ctx, asset.MustNewPair("luna:usdt"), sdk.NewDec(-1), adminAddr)
 	require.ErrorContains(t, err, "market luna:usdt not found")
 
 	// Error because of invalid price multiplier
-	err = app.PerpKeeperV2.Admin.EditPriceMultiplier(ctx, pair, sdk.NewDec(-1))
+	err = app.PerpKeeperV2.Admin.ShiftPegMultiplier(ctx, pair, sdk.NewDec(-1), adminAddr)
 	require.ErrorIs(t, err, types.ErrNonPositivePegMultiplier)
 
 	// Add market activity
@@ -211,15 +215,17 @@ func TestEditPriceMultiplerFail(t *testing.T) {
 	require.NoError(t, err)
 
 	// Error because no money in perp ef fund
-	err = app.PerpKeeperV2.Admin.EditPriceMultiplier(ctx, pair, sdk.NewDec(3))
-	require.ErrorContains(t, err, "not enough fund in perp ef to pay for repeg")
+	err = app.PerpKeeperV2.Admin.ShiftPegMultiplier(ctx, pair, sdk.NewDec(3), adminAddr)
+	require.ErrorContains(t, err, types.ErrNotEnoughFundToPayAction.Error())
 
 	// Works because it goes in the other way
-	err = app.PerpKeeperV2.Admin.EditPriceMultiplier(ctx, pair, sdk.NewDec(1))
+	err = app.PerpKeeperV2.Admin.ShiftPegMultiplier(ctx, pair, sdk.NewDec(1), adminAddr)
 	require.NoError(t, err)
 }
 
-func TestEditSwapInvariantFail(t *testing.T) {
+// TestShiftSwapInvariant_Fail: Test scenarios for the `ShiftSwapInvariant`
+// function that should error
+func TestShiftSwapInvariant_Fail(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	app, ctx := testapp.NewNibiruTestAppAndContext()
 	account := testutil.AccAddress()
@@ -250,13 +256,14 @@ func TestEditSwapInvariantFail(t *testing.T) {
 		})
 	require.NoError(t, err)
 
+	adminAddr := testapp.DefaultSudoRoot()
 	// Error because of invalid price multiplier
-	err = app.PerpKeeperV2.Admin.EditSwapInvariant(ctx, asset.MustNewPair("luna:usdt"), sdk.NewDec(-1))
+	err = app.PerpKeeperV2.Admin.ShiftSwapInvariant(ctx, asset.MustNewPair("luna:usdt"), sdk.NewInt(-1), adminAddr)
 	require.ErrorContains(t, err, "market luna:usdt not found")
 
 	// Error because of invalid price multiplier
-	err = app.PerpKeeperV2.Admin.EditSwapInvariant(ctx, pair, sdk.NewDec(-1))
-	require.ErrorIs(t, err, types.ErrNegativeSwapInvariant)
+	err = app.PerpKeeperV2.Admin.ShiftSwapInvariant(ctx, pair, sdk.NewInt(-1), adminAddr)
+	require.ErrorIs(t, err, types.ErrNonPositiveSwapInvariant)
 
 	// Add market activity
 	err = app.BankKeeper.MintCoins(ctx, "inflation", sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(102))))
@@ -277,19 +284,19 @@ func TestEditSwapInvariantFail(t *testing.T) {
 	require.NoError(t, err)
 
 	// Error because no money in perp ef fund
-	err = app.PerpKeeperV2.Admin.EditSwapInvariant(ctx, pair, sdk.NewDec(2_000_000))
-	require.ErrorContains(t, err, "not enough fund in perp ef to pay for repeg")
+	err = app.PerpKeeperV2.Admin.ShiftSwapInvariant(ctx, pair, sdk.NewInt(2_000_000), adminAddr)
+	require.ErrorContains(t, err, types.ErrNotEnoughFundToPayAction.Error())
 
 	// Fail at validate
-	err = app.PerpKeeperV2.Admin.EditSwapInvariant(ctx, pair, sdk.NewDec(0))
-	require.ErrorContains(t, err, "swap multiplier must be > 0")
+	err = app.PerpKeeperV2.Admin.ShiftSwapInvariant(ctx, pair, sdk.NewInt(0), adminAddr)
+	require.ErrorContains(t, err, types.ErrNonPositiveSwapInvariant.Error())
 
 	// Works because it goes in the other way
-	err = app.PerpKeeperV2.Admin.EditSwapInvariant(ctx, pair, sdk.NewDec(500_000))
+	err = app.PerpKeeperV2.Admin.ShiftSwapInvariant(ctx, pair, sdk.NewInt(500_000), adminAddr)
 	require.NoError(t, err)
 }
 
-func TestEditSwapInvariant(t *testing.T) {
+func TestShiftSwapInvariant(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 
 	tests := TestCases{
@@ -304,7 +311,7 @@ func TestEditSwapInvariant(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditSwapInvariant(pair, sdk.NewDec(1e12)),
+				ShiftSwapInvariant(pair, sdk.NewInt(1e12)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)),
@@ -328,7 +335,7 @@ func TestEditSwapInvariant(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditSwapInvariant(pair, sdk.NewDec(1e18)),
+				ShiftSwapInvariant(pair, sdk.NewInt(1e18)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)),
@@ -348,7 +355,7 @@ func TestEditSwapInvariant(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditSwapInvariant(pair, sdk.NewDec(1e14)),
+				ShiftSwapInvariant(pair, sdk.NewInt(1e14)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1008101)),
@@ -368,7 +375,7 @@ func TestEditSwapInvariant(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditSwapInvariant(pair, sdk.NewDec(1e6)),
+				ShiftSwapInvariant(pair, sdk.NewInt(1e6)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(999991)),
@@ -388,7 +395,7 @@ func TestEditSwapInvariant(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditSwapInvariant(pair, sdk.NewDec(1e14)),
+				ShiftSwapInvariant(pair, sdk.NewInt(1e14)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1010102)),
@@ -408,7 +415,7 @@ func TestEditSwapInvariant(t *testing.T) {
 				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				EditSwapInvariant(pair, sdk.NewDec(1e6)),
+				ShiftSwapInvariant(pair, sdk.NewInt(1e6)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(999989)),
