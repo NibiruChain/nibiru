@@ -91,7 +91,6 @@ func (s *TestSuitePerpExecutor) TestOpenAddRemoveClose() {
 		s.DoRemoveIncorrectMarginTest(pair, incorrectMargin),
 		s.DoRemoveMarginTest(pair, margin),
 		s.DoClosePositionTest(pair),
-		s.DoPegShiftTest(pair),
 		s.DoInsuranceFundWithdrawTest(sdk.NewInt(69), s.contractDeployer),
 		s.DoCreateMarketTest(asset.MustNewPair("ufoo:ubar")),
 		s.DoCreateMarketTestWithParams(asset.MustNewPair("ufoo2:ubar")),
@@ -212,27 +211,6 @@ func (s *TestSuitePerpExecutor) DoClosePositionTest(pair asset.Pair) error {
 	return err
 }
 
-func (s *TestSuitePerpExecutor) DoPegShiftTest(pair asset.Pair) error {
-	contractAddr := s.contractPerp
-	cwMsg := &bindings.PegShift{
-		Pair:    pair.String(),
-		PegMult: sdk.NewDec(420),
-	}
-
-	err := s.exec.PegShift(cwMsg, contractAddr, s.ctx)
-	return err
-}
-
-func (s *TestSuitePerpExecutor) DoDepthShiftTest(pair asset.Pair) error {
-	cwMsg := &bindings.DepthShift{
-		Pair:      pair.String(),
-		DepthMult: sdk.NewDec(420),
-	}
-
-	err := s.exec.DepthShift(cwMsg, s.ctx)
-	return err
-}
-
 func (s *TestSuitePerpExecutor) DoInsuranceFundWithdrawTest(
 	amt sdkmath.Int, to sdk.AccAddress,
 ) error {
@@ -302,13 +280,6 @@ func (s *TestSuitePerpExecutor) TestSadPaths_Nil() {
 	_, err = s.exec.ClosePosition(nil, nil, s.ctx)
 	s.Error(err)
 
-	err = s.exec.PegShift(
-		nil, sdk.AccAddress([]byte("contract")), s.ctx)
-	s.Error(err)
-
-	err = s.exec.DepthShift(nil, s.ctx)
-	s.Error(err)
-
 	err = s.exec.InsuranceFundWithdraw(nil, s.ctx)
 	s.Error(err)
 }
@@ -348,8 +319,6 @@ func (s *TestSuitePerpExecutor) TestSadPaths_InvalidPair() {
 		s.DoAddMarginTest(pair, margin),
 		s.DoRemoveMarginTest(pair, margin),
 		s.DoClosePositionTest(pair),
-		s.DoPegShiftTest(pair),
-		s.DoDepthShiftTest(pair),
 		s.DoSetMarketEnabledTest(pair, true),
 		s.DoSetMarketEnabledTest(pair, false),
 		s.DoCreateMarketTest(pair),

@@ -20,8 +20,6 @@ type NibiruMsg struct {
 	RemoveMargin          *RemoveMargin          `json:"remove_margin,omitempty"`
 	DonateToInsuranceFund *DonateToInsuranceFund `json:"donate_to_insurance_fund,omitempty"` // TODO
 	InsuranceFundWithdraw *InsuranceFundWithdraw `json:"insurance_fund_withdraw,omitempty"`
-	PegShift              *PegShift              `json:"peg_shift,omitempty"`
-	DepthShift            *DepthShift            `json:"depth_shift,omitempty"`
 	SetMarketEnabled      *SetMarketEnabled      `json:"set_market_enabled,omitempty"`
 	CreateMarket          *CreateMarket          `json:"create_market,omitempty"`
 
@@ -60,16 +58,6 @@ type AddMargin struct {
 type RemoveMargin struct {
 	Pair   string   `json:"pair"`
 	Margin sdk.Coin `json:"margin"`
-}
-
-type PegShift struct {
-	Pair    string  `json:"pair"`
-	PegMult sdk.Dec `json:"peg_mult"`
-}
-
-type DepthShift struct {
-	Pair      string  `json:"pair"`
-	DepthMult sdk.Dec `json:"depth_mult"`
 }
 
 type DonateToInsuranceFund struct {

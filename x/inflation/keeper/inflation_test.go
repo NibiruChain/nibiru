@@ -72,13 +72,11 @@ func TestMintAndAllocateInflation(t *testing.T) {
 		t.Run(fmt.Sprintf("Case %s", tc.name), func(t *testing.T) {
 			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 
-			if tc.rootAccount != "" {
-				t.Logf("setting root account to %s", tc.rootAccount)
-				nibiruApp.SudoKeeper.Sudoers.Set(ctx, sudotypes.Sudoers{
-					Root:      sdk.MustAccAddressFromBech32(tc.rootAccount).String(),
-					Contracts: []string{},
-				})
-			}
+			t.Logf("setting root account to %s", tc.rootAccount)
+			nibiruApp.SudoKeeper.Sudoers.Set(ctx, sudotypes.Sudoers{
+				Root:      tc.rootAccount,
+				Contracts: []string{},
+			})
 
 			staking, strategic, community, err := nibiruApp.InflationKeeper.MintAndAllocateInflation(ctx, tc.coinsToMint, types.DefaultParams())
 			require.NoError(t, err)

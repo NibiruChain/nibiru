@@ -387,7 +387,7 @@ func (amm AMM) CalcUpdateSwapInvariantCost(newSwapInvariant sdk.Dec) (sdkmath.In
 	}
 
 	if !newSwapInvariant.IsPositive() {
-		return sdkmath.Int{}, ErrNegativeSwapInvariant
+		return sdkmath.Int{}, ErrNonPositiveSwapInvariant
 	}
 
 	marketValueBefore, err := amm.GetMarketValue()

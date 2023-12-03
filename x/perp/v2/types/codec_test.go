@@ -25,6 +25,8 @@ func TestCodec(t *testing.T) {
 		&MsgPartialClose{},
 		&MsgDonateToEcosystemFund{},
 		&MsgMultiLiquidate{},
+		&MsgShiftPegMultiplier{},
+		&MsgShiftSwapInvariant{},
 	}
 
 	for _, msg := range msgs {
