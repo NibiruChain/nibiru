@@ -1,7 +1,6 @@
 package wasmbinding_test
 
 import (
-	"errors"
 	"testing"
 	"time"
 
@@ -17,7 +16,9 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
+	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
+	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
@@ -36,6 +37,59 @@ type TestSuitePerpExecutor struct {
 	contractPerp sdk.AccAddress
 	ratesMap     map[asset.Pair]sdk.Dec
 	happyFields  ExampleFields
+}
+
+func SetExchangeRates(
+	testSuite *suite.Suite,
+	nibiru *app.NibiruApp,
+	ctx sdk.Context,
+) (exchangeRateMap map[asset.Pair]sdk.Dec) {
+	s := testSuite
+	exchangeRateTuples := []oracletypes.ExchangeRateTuple{
+		{
+			Pair:         asset.Registry.Pair(denoms.ETH, denoms.NUSD),
+			ExchangeRate: sdk.NewDec(1_000),
+		},
+		{
+			Pair:         asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
+			ExchangeRate: sdk.NewDec(10),
+		},
+	}
+
+	for _, exchangeRateTuple := range exchangeRateTuples {
+		pair := exchangeRateTuple.Pair
+		exchangeRate := exchangeRateTuple.ExchangeRate
+		nibiru.OracleKeeper.SetPrice(ctx, pair, exchangeRate)
+
+		rate, err := nibiru.OracleKeeper.ExchangeRates.Get(ctx, pair)
+		s.Assert().NoError(err)
+		s.Assert().EqualValues(exchangeRate, rate.ExchangeRate)
+	}
+
+	return oracletypes.ExchangeRateTuples(exchangeRateTuples).ToMap()
+}
+
+type ExampleFields struct {
+	Pair   string
+	Trader sdk.AccAddress
+	Dec    sdk.Dec
+	Int    sdkmath.Int
+}
+
+func GetHappyFields() ExampleFields {
+	return ExampleFields{
+		Pair:   asset.Registry.Pair(denoms.ETH, denoms.NUSD).String(),
+		Trader: sdk.AccAddress([]byte("trader")),
+		Dec:    sdk.NewDec(50),
+		Int:    sdk.NewInt(420),
+	}
+}
+
+func SetupPerpGenesis() app.GenesisState {
+	genesisState := genesis.NewTestGenesisState(app.MakeEncodingConfig())
+	genesisState = genesis.AddOracleGenesis(genesisState)
+	genesisState = genesis.AddPerpV2Genesis(genesisState)
+	return genesisState
 }
 
 func (s *TestSuitePerpExecutor) SetupSuite() {
@@ -77,138 +131,15 @@ func (s *TestSuitePerpExecutor) OnSetupEnd() {
 	s.ratesMap = SetExchangeRates(&s.Suite, s.nibiru, s.ctx)
 }
 
-// Happy path coverage of MarketOrder, AddMargin, RemoveMargin, and ClosePosition
-func (s *TestSuitePerpExecutor) TestOpenAddRemoveClose() {
-	pair := asset.MustNewPair(s.happyFields.Pair)
-
-	margin := sdk.NewCoin(perpv2types.TestingCollateralDenomNUSD, sdk.NewInt(69))
-	incorrectMargin := sdk.NewCoin(denoms.USDT, sdk.NewInt(69))
-
+// Happy path coverage
+func (s *TestSuitePerpExecutor) TestPerpExecutorHappy() {
 	for _, err := range []error{
-		s.DoMarketOrderTest(pair),
-		s.DoAddMarginTest(pair, margin),
-		s.DoAddIncorrectMarginTest(pair, incorrectMargin),
-		s.DoRemoveIncorrectMarginTest(pair, incorrectMargin),
-		s.DoRemoveMarginTest(pair, margin),
-		s.DoClosePositionTest(pair),
 		s.DoInsuranceFundWithdrawTest(sdk.NewInt(69), s.contractDeployer),
 		s.DoCreateMarketTest(asset.MustNewPair("ufoo:ubar")),
 		s.DoCreateMarketTestWithParams(asset.MustNewPair("ufoo2:ubar")),
 	} {
 		s.NoError(err)
 	}
-}
-
-func (s *TestSuitePerpExecutor) DoMarketOrderTest(pair asset.Pair) error {
-	cwMsg := &bindings.MarketOrder{
-		Pair:            pair.String(),
-		IsLong:          false,
-		QuoteAmount:     sdk.NewInt(4_200_000),
-		Leverage:        sdk.NewDec(5),
-		BaseAmountLimit: sdk.ZeroInt(),
-	}
-
-	_, err := s.exec.MarketOrder(cwMsg, s.contractPerp, s.ctx)
-	if err != nil {
-		return err
-	}
-
-	// Verify position exists with PerpKeeper
-	_, err = s.exec.PerpV2.GetPosition(s.ctx, pair, 1, s.contractPerp)
-	if err != nil {
-		return err
-	}
-
-	// Verify position exists with CustomQuerier - multi-position
-	bindingQuery := bindings.BindingQuery{
-		Positions: &bindings.PositionsRequest{
-			Trader: s.contractPerp.String(),
-		},
-	}
-	bindingRespMulti := new(bindings.PositionsRequest)
-	_, err = DoCustomBindingQuery(
-		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingRespMulti,
-	)
-	if err != nil {
-		return err
-	}
-
-	// Verify position exists with CustomQuerier - single position
-	bindingQuery = bindings.BindingQuery{
-		Position: &bindings.PositionRequest{
-			Trader: s.contractPerp.String(),
-			Pair:   pair.String(),
-		},
-	}
-	bindingResp := new(bindings.PositionRequest)
-	_, err = DoCustomBindingQuery(
-		s.ctx, s.nibiru, s.contractPerp, bindingQuery, bindingResp,
-	)
-
-	return err
-}
-
-func (s *TestSuitePerpExecutor) DoAddMarginTest(
-	pair asset.Pair, margin sdk.Coin,
-) error {
-	cwMsg := &bindings.AddMargin{
-		Pair:   pair.String(),
-		Margin: margin,
-	}
-
-	_, err := s.exec.AddMargin(cwMsg, s.contractPerp, s.ctx)
-	return err
-}
-
-func (s *TestSuitePerpExecutor) DoAddIncorrectMarginTest(
-	pair asset.Pair, margin sdk.Coin,
-) error {
-	cwMsg := &bindings.AddMargin{
-		Pair:   pair.String(),
-		Margin: margin,
-	}
-
-	_, err := s.exec.AddMargin(cwMsg, s.contractPerp, s.ctx)
-	if err == nil {
-		return errors.New("incorrect margin type should have failed")
-	}
-	return nil
-}
-
-func (s *TestSuitePerpExecutor) DoRemoveIncorrectMarginTest(
-	pair asset.Pair, margin sdk.Coin,
-) error {
-	cwMsg := &bindings.RemoveMargin{
-		Pair:   pair.String(),
-		Margin: margin,
-	}
-
-	_, err := s.exec.RemoveMargin(cwMsg, s.contractPerp, s.ctx)
-	if err == nil {
-		return errors.New("incorrect margin type should have failed")
-	}
-	return nil
-}
-
-func (s *TestSuitePerpExecutor) DoRemoveMarginTest(
-	pair asset.Pair, margin sdk.Coin,
-) error {
-	cwMsg := &bindings.RemoveMargin{
-		Pair:   pair.String(),
-		Margin: margin,
-	}
-
-	_, err := s.exec.RemoveMargin(cwMsg, s.contractPerp, s.ctx)
-	return err
-}
-
-func (s *TestSuitePerpExecutor) DoClosePositionTest(pair asset.Pair) error {
-	cwMsg := &bindings.ClosePosition{
-		Pair: pair.String(),
-	}
-
-	_, err := s.exec.ClosePosition(cwMsg, s.contractPerp, s.ctx)
-	return err
 }
 
 func (s *TestSuitePerpExecutor) DoInsuranceFundWithdrawTest(
@@ -266,21 +197,7 @@ func (s *TestSuitePerpExecutor) DoCreateMarketTestWithParams(pair asset.Pair) er
 }
 
 func (s *TestSuitePerpExecutor) TestSadPaths_Nil() {
-	var err error
-
-	_, err = s.exec.MarketOrder(nil, nil, s.ctx)
-	s.Error(err)
-
-	_, err = s.exec.AddMargin(nil, nil, s.ctx)
-	s.Error(err)
-
-	_, err = s.exec.RemoveMargin(nil, nil, s.ctx)
-	s.Error(err)
-
-	_, err = s.exec.ClosePosition(nil, nil, s.ctx)
-	s.Error(err)
-
-	err = s.exec.InsuranceFundWithdraw(nil, s.ctx)
+	err := s.exec.InsuranceFundWithdraw(nil, s.ctx)
 	s.Error(err)
 }
 
@@ -312,13 +229,8 @@ func (s *TestSuitePerpExecutor) TestSadPath_InsuranceFundWithdraw() {
 func (s *TestSuitePerpExecutor) TestSadPaths_InvalidPair() {
 	sadPair := asset.Pair("ftt:ust:doge")
 	pair := sadPair
-	margin := sdk.NewCoin(perpv2types.TestingCollateralDenomNUSD, sdk.NewInt(69))
 
 	for _, err := range []error{
-		s.DoMarketOrderTest(pair),
-		s.DoAddMarginTest(pair, margin),
-		s.DoRemoveMarginTest(pair, margin),
-		s.DoClosePositionTest(pair),
 		s.DoSetMarketEnabledTest(pair, true),
 		s.DoSetMarketEnabledTest(pair, false),
 		s.DoCreateMarketTest(pair),

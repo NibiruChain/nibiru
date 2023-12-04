@@ -62,24 +62,6 @@ func (messenger *CustomMessenger) DispatchMsg(
 		}
 
 		switch {
-		// Perp module | bindings-perp: for trading with smart contracts
-		case contractExecuteMsg.ExecuteMsg.MarketOrder != nil:
-			cwMsg := contractExecuteMsg.ExecuteMsg.MarketOrder
-			_, err = messenger.Perp.MarketOrder(cwMsg, contractAddr, ctx)
-			return events, data, err
-		case contractExecuteMsg.ExecuteMsg.ClosePosition != nil:
-			cwMsg := contractExecuteMsg.ExecuteMsg.ClosePosition
-			_, err = messenger.Perp.ClosePosition(cwMsg, contractAddr, ctx)
-			return events, data, err
-		case contractExecuteMsg.ExecuteMsg.AddMargin != nil:
-			cwMsg := contractExecuteMsg.ExecuteMsg.AddMargin
-			_, err = messenger.Perp.AddMargin(cwMsg, contractAddr, ctx)
-			return events, data, err
-		case contractExecuteMsg.ExecuteMsg.RemoveMargin != nil:
-			cwMsg := contractExecuteMsg.ExecuteMsg.RemoveMargin
-			_, err = messenger.Perp.RemoveMargin(cwMsg, contractAddr, ctx)
-			return events, data, err
-
 		// Perp module | controller
 		case contractExecuteMsg.ExecuteMsg.CreateMarket != nil:
 			if err := messenger.Sudo.CheckPermissions(contractAddr, ctx); err != nil {
