@@ -44,31 +44,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### For next mainnet version:
 
-* [#1682](https://github.com/NibiruChain/nibiru/pull/1682) - feat!: add upgrade handler for v1.1.0
 * [#1688](https://github.com/NibiruChain/nibiru/pull/1688) - fix(inflation)!: make default inflation allocation follow tokenomics
+* [#1682](https://github.com/NibiruChain/nibiru/pull/1682) - feat!: add upgrade handler for v1.1.0
 
 #### Dapp modules: perp, spot, etc.
 
-* [#1573](https://github.com/NibiruChain/nibiru/pull/1573) - feat(perp): Close markets and compute settlement price
-* [#1632](https://github.com/NibiruChain/nibiru/pull/1632) - feat(perp): Add settle position transaction
-* [#1656](https://github.com/NibiruChain/nibiru/pull/1656) - feat(perp): Make the collateral denom a stateful collections.Item
-* [#1663](https://github.com/NibiruChain/nibiru/pull/1663) - feat(perp): Add volume based rebates
-* [#1669](https://github.com/NibiruChain/nibiru/pull/1669) - feat(perp): add query to get collateral metadata
-* [#1677](https://github.com/NibiruChain/nibiru/pull/1677) - fix(perp): make Gen_market set initial perp versions
-* [#1680](https://github.com/NibiruChain/nibiru/pull/1680) - feat(perp): MsgShiftPegMultiplier, MsgShiftSwapInvariant.
+* [#1687](https://github.com/NibiruChain/nibiru/pull/1687) - chore(wasmbinding): delete CustomQuerier since we have QueryRequest::Stargate now
 * [#1686](https://github.com/NibiruChain/nibiru/pull/1686) - test(perp): add more tests for perp module msg server for DnR
 * [#1683](https://github.com/NibiruChain/nibiru/pull/1683) - feat(perp): Add `StartDnREpoch` to `AfterEpochEnd` hook
+* [#1680](https://github.com/NibiruChain/nibiru/pull/1680) - feat(perp): MsgShiftPegMultiplier, MsgShiftSwapInvariant.
+* [#1680](https://github.com/NibiruChain/nibiru/pull/1680) - feat(perp): MsgShiftPegMultiplier, MsgShiftSwapInvariant.
+* [#1677](https://github.com/NibiruChain/nibiru/pull/1677) - fix(perp): make Gen_market set initial perp versions
+* [#1669](https://github.com/NibiruChain/nibiru/pull/1669) - feat(perp): add query to get collateral metadata
+* [#1663](https://github.com/NibiruChain/nibiru/pull/1663) - feat(perp): Add volume based rebates
+* [#1656](https://github.com/NibiruChain/nibiru/pull/1656) - feat(perp): Make the collateral denom a stateful collections.Item
+* [#1632](https://github.com/NibiruChain/nibiru/pull/1632) - feat(perp): Add settle position transaction
+* [#1573](https://github.com/NibiruChain/nibiru/pull/1573) - feat(perp): Close markets and compute settlement price
 
 ### Non-breaking/Compatible Improvements
 
-* [#1679](https://github.com/NibiruChain/nibiru/pull/1679) - test(perp): add more tests for perp module msg server
 * [#1690](https://github.com/NibiruChain/nibiru/pull/1690) - docs(CHANGELOG.md): Correct the change log, providing clarity on what's released.
+* [#1679](https://github.com/NibiruChain/nibiru/pull/1679) - test(perp): add more tests for perp module msg server
 
 ### Dependencies
 
 - Bump `github.com/spf13/cast` from 1.5.1 to 1.6.0 ([#1689](https://github.com/NibiruChain/nibiru/pull/1689))
-- Bump `github.com/grpc-ecosystem/grpc-gateway/v2` from 2.18.0 to 2.18.1 ([#1675](https://github.com/NibiruChain/nibiru/pull/1675))
 - Bump `cosmossdk.io/math` from 1.1.2 to 1.2.0 ([#1676](https://github.com/NibiruChain/nibiru/pull/1676))
+- Bump `github.com/grpc-ecosystem/grpc-gateway/v2` from 2.18.0 to 2.18.1 ([#1675](https://github.com/NibiruChain/nibiru/pull/1675))
 
 ## [v1.1.0] - 2023-11-20
 
@@ -105,27 +107,27 @@ v0.47.5.
   [2a250a3](https://github.com/NibiruChain/nibiru/commit/2a250a3c4c60c58c5526ac7d75ce5b9e13889471)
   [d713f41](https://github.com/NibiruChain/nibiru/commit/d713f41dfe17d6d29451ade4d2f0e6d950ce7c59)
   [011f1ed](https://github.com/NibiruChain/nibiru/commit/011f1ed431d92899d01583e5e6110e663eceaa24)
-* [#1609](https://github.com/NibiruChain/nibiru/pull/1609) - refactor(app)!: Remove x/stablecoin module.
-* [#1613](https://github.com/NibiruChain/nibiru/pull/1613) - feat(app)!: enforce min commission by changing default and genesis validation
-* [#1615](https://github.com/NibiruChain/nibiru/pull/1613) - feat(ante)!: Ante handler to add a maximum commission rate of 25% for validators.
-* [#1616](https://github.com/NibiruChain/nibiru/pull/1616) - fix(app)!: Add custom wasm snapshotter for proper state exports
-* [#1617](https://github.com/NibiruChain/nibiru/pull/1617) - fix(app)!: non-nil snapshot manager is not guaranteed in testapp
-* [#1645](https://github.com/NibiruChain/nibiru/pull/1645) - fix(tokenfactory)!: token supply in bank keeper must be correct after MsgBurn.
-* [#1646](https://github.com/NibiruChain/nibiru/pull/1646) - feat(wasmbinding)!: whitelisted stargate queries for QueryRequest::Stargate: auth, bank, gov, tokenfactory, epochs, inflation, oracle, sudo, devgas
 * [#1655](https://github.com/NibiruChain/nibiru/pull/1655) - fix(inflation): inflate NIBI correctly to strategic treasury account
+* [#1646](https://github.com/NibiruChain/nibiru/pull/1646) - feat(wasmbinding)!: whitelisted stargate queries for QueryRequest::Stargate: auth, bank, gov, tokenfactory, epochs, inflation, oracle, sudo, devgas
+* [#1645](https://github.com/NibiruChain/nibiru/pull/1645) - fix(tokenfactory)!: token supply in bank keeper must be correct after MsgBurn.
+* [#1617](https://github.com/NibiruChain/nibiru/pull/1617) - fix(app)!: non-nil snapshot manager is not guaranteed in testapp
+* [#1616](https://github.com/NibiruChain/nibiru/pull/1616) - fix(app)!: Add custom wasm snapshotter for proper state exports
+* [#1615](https://github.com/NibiruChain/nibiru/pull/1613) - feat(ante)!: Ante handler to add a maximum commission rate of 25% for validators.
+* [#1613](https://github.com/NibiruChain/nibiru/pull/1613) - feat(app)!: enforce min commission by changing default and genesis validation
+* [#1609](https://github.com/NibiruChain/nibiru/pull/1609) - refactor(app)!: Remove x/stablecoin module.
 
 ### Non-breaking/Compatible Improvements
 
-* [#1606](https://github.com/NibiruChain/nibiru/pull/1606) - fix(perp): emit `MarketUpdatedEvent` in the absence of index price
-* [#1610](https://github.com/NibiruChain/nibiru/pull/1610) - refactor(app): Simplify app.go with less redundant imports using struct embedding.
-* [#1614](https://github.com/NibiruChain/nibiru/pull/1614) - refactor(proto): Use explicit namespacing on proto imports for #1608
-* [#1630](https://github.com/NibiruChain/nibiru/pull/1630) - refactor(wasm): clean up wasmbinding/ folder structure
-* [#1631](https://github.com/NibiruChain/nibiru/pull/1631) - fix(.goreleaser.yml): Load version for wasmvm dynamically.
-* [#1638](https://github.com/NibiruChain/nibiru/pull/1638) - test(tokenfactory): integration test core logic with a real smart contract using `nibiru-std`
-* [#1639](https://github.com/NibiruChain/nibiru/pull/1639) - fix(perp): by default, disable new markets until they are toggled on.
-* [#1649](https://github.com/NibiruChain/nibiru/pull/1649) - fix(ledger): fix ledger for newer macos versions
-* [#1652](https://github.com/NibiruChain/nibiru/pull/1652) - test: refactors cli.network suites with 'Integration' to use common function
 * [#1659](https://github.com/NibiruChain/nibiru/pull/1659) - refactor(oracle): curate oracle default whitelist
+* [#1652](https://github.com/NibiruChain/nibiru/pull/1652) - test: refactors cli.network suites with 'Integration' to use common function
+* [#1649](https://github.com/NibiruChain/nibiru/pull/1649) - fix(ledger): fix ledger for newer macos versions
+* [#1639](https://github.com/NibiruChain/nibiru/pull/1639) - fix(perp): by default, disable new markets until they are toggled on.
+* [#1638](https://github.com/NibiruChain/nibiru/pull/1638) - test(tokenfactory): integration test core logic with a real smart contract using `nibiru-std`
+* [#1631](https://github.com/NibiruChain/nibiru/pull/1631) - fix(.goreleaser.yml): Load version for wasmvm dynamically.
+* [#1630](https://github.com/NibiruChain/nibiru/pull/1630) - refactor(wasm): clean up wasmbinding/ folder structure
+* [#1614](https://github.com/NibiruChain/nibiru/pull/1614) - refactor(proto): Use explicit namespacing on proto imports for #1608
+* [#1610](https://github.com/NibiruChain/nibiru/pull/1610) - refactor(app): Simplify app.go with less redundant imports using struct embedding.
+* [#1606](https://github.com/NibiruChain/nibiru/pull/1606) - fix(perp): emit `MarketUpdatedEvent` in the absence of index price
 
 ### Dependencies
 

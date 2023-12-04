@@ -14,14 +14,19 @@ parsers:
       method: no
       conditional: yes
 coverage:
-  range: 40..100
+  range: 40..92
   round: down
   precision: 2
+  # status: See https://docs.codecov.com/docs/commit-status
   status:
     project:
       default:
         if_not_found: success
         if_ci_failed: error
+        target: auto
+        threshold: 1% # Allow coverage to drop by X%, posting a success status.
+        # removed_code_behavior: Takes values [off, removals_only, adjust_base]
+        removed_code_behavior: adjust_base
 
 comment: # this is a top-level key
   layout: " diff, flags, files"

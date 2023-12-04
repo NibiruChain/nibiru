@@ -19,7 +19,9 @@ func (k Keeper) handleMarketUpdateCost(
 		return costPaid, err
 	}
 
-	if costAmt.IsPositive() {
+	if costAmt.IsZero() {
+		costPaid = sdk.NewCoin(collateral, costAmt)
+	} else if costAmt.IsPositive() {
 		// Positive cost, send from perp EF to vault
 		cost := sdk.NewCoins(
 			sdk.NewCoin(collateral, costAmt),

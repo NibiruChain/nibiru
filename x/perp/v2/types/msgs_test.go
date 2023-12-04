@@ -377,7 +377,7 @@ func TestMsgValidateBasic(t *testing.T) {
 			msg: &MsgShiftPegMultiplier{
 				Sender:     validSender,
 				Pair:       asset.Pair("not_a_pair"),
-				NewPegMult: sdk.NewDec(420),
+				NewPegMult: sdk.NewDec(420), // valid positive value, unused
 			},
 			expectErr:     true,
 			expectedError: asset.ErrInvalidTokenPair.Error(),
@@ -387,7 +387,7 @@ func TestMsgValidateBasic(t *testing.T) {
 			msg: &MsgShiftPegMultiplier{
 				Sender:     validSender,
 				Pair:       asset.Pair("valid:pair"),
-				NewPegMult: sdk.NewDec(-420),
+				NewPegMult: sdk.NewDec(-420), // invalid nonpositive
 			},
 			expectErr:     true,
 			expectedError: ErrNonPositivePegMultiplier.Error(),
@@ -398,7 +398,7 @@ func TestMsgValidateBasic(t *testing.T) {
 			msg: &MsgShiftSwapInvariant{
 				Sender:           validSender,
 				Pair:             asset.Pair("not_a_pair"),
-				NewSwapInvariant: sdk.NewInt(420),
+				NewSwapInvariant: sdk.NewInt(420), // valid positive
 			},
 			expectErr:     true,
 			expectedError: asset.ErrInvalidTokenPair.Error(),
@@ -408,7 +408,17 @@ func TestMsgValidateBasic(t *testing.T) {
 			msg: &MsgShiftSwapInvariant{
 				Sender:           validSender,
 				Pair:             asset.Pair("valid:pair"),
-				NewSwapInvariant: sdk.NewInt(-420),
+				NewSwapInvariant: sdk.NewInt(-420), // invalid nonpositive
+			},
+			expectErr:     true,
+			expectedError: ErrNonPositiveSwapInvariant.Error(),
+		},
+		{
+			name: "MsgShiftSwapInvariant: nonpositive swap invariant",
+			msg: &MsgShiftSwapInvariant{
+				Sender:           validSender,
+				Pair:             asset.Pair("valid:pair"),
+				NewSwapInvariant: sdk.ZeroInt(), // invalid nonpositive
 			},
 			expectErr:     true,
 			expectedError: ErrNonPositiveSwapInvariant.Error(),
