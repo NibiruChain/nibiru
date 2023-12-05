@@ -3,7 +3,7 @@ name: Publish Docker Image
 on:
   push:
     branches:
-      - master
+      - main
     tags:
       - v*
 
@@ -43,7 +43,7 @@ jobs:
       
       - name: Build and push latest chaosnet image
         uses: docker/build-push-action@v5
-        if: startsWith(github.ref, 'refs/heads/master')
+        if: startsWith(github.ref, 'refs/heads/main')
         with:
           file: contrib/docker/chaosnet.Dockerfile
           context: .
