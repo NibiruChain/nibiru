@@ -81,21 +81,23 @@ func (k Keeper) AllocatePolynomialInflation(
 	strategicAccountAddr, err := k.sudoKeeper.GetRoot(ctx)
 	if err != nil {
 		k.Logger(ctx).Error("get root account error", "error", err)
-		return staking, strategic, community, nil
+		return staking, strategic, community, err
 	}
 
 	if err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, strategicAccountAddr, sdk.NewCoins(strategic)); err != nil {
 		k.Logger(ctx).Error("send coins to root account error", "error", err)
-		return sdk.Coin{}, sdk.Coin{}, sdk.Coin{}, nil
+		return sdk.Coin{}, sdk.Coin{}, sdk.Coin{}, err
 	}
 
-	_ = ctx.EventManager().EmitTypedEvents(
+	if err := ctx.EventManager().EmitTypedEvents(
 		&types.InflationDistributionEvent{
 			StakingRewards:   staking,
 			StrategicReserve: strategic,
 			CommunityPool:    community,
 		},
-	)
+	); err != nil {
+		return sdk.Coin{}, sdk.Coin{}, sdk.Coin{}, err
+	}
 
 	return staking, strategic, community, nil
 }
