@@ -89,6 +89,14 @@ func (k Keeper) AllocatePolynomialInflation(
 		return sdk.Coin{}, sdk.Coin{}, sdk.Coin{}, nil
 	}
 
+	_ = ctx.EventManager().EmitTypedEvents(
+		&types.InflationDistributionEvent{
+			StakingRewards:   staking,
+			StrategicReserve: strategic,
+			CommunityPool:    community,
+		},
+	)
+
 	return staking, strategic, community, nil
 }
 
