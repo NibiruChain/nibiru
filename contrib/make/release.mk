@@ -3,7 +3,7 @@
 ###############################################################################
 
 PACKAGE_NAME		  := github.com/NibiruChain/nibiru
-GOLANG_CROSS_VERSION  ?= v1.19.4
+GOLANG_CROSS_VERSION  ?= v1.21.5
 
 release:
 	docker run \
@@ -23,6 +23,5 @@ release-snapshot:
 		-v "$(CURDIR)":/go/src/$(PACKAGE_NAME) \
 		-w /go/src/$(PACKAGE_NAME) \
 		-e CGO_ENABLED=1 \
-		-e GITHUB_TOKEN=${GITHUB_TOKEN} \
 		goreleaser/goreleaser-cross:${GOLANG_CROSS_VERSION} \
-		release --rm-dist --snapshot
+		release --clean --snapshot
