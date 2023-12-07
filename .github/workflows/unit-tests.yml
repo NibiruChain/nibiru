@@ -18,7 +18,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.19
+          go-version: 1.21
           cache: true
 
       # Use GitHub actions output paramters to get go paths. For more info, see
@@ -52,7 +52,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.19
+          go-version: 1.21
 
       - name: Build the nibid binary
         run: make build
