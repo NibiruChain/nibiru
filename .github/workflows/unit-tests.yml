@@ -18,7 +18,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.19
+          go-version: 1.21
           cache: true
 
       - name: Run all unit tests.
@@ -30,9 +30,9 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Set up Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v5
       with:
-        go-version: 1.19
+        go-version: 1.21
 
     - name: Build the nibid binary 
       run: make build
