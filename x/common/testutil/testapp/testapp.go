@@ -109,13 +109,6 @@ func NewNibiruTestApp(gen app.GenesisState) *app.NibiruApp {
 
 	encoding := app.MakeEncodingConfig()
 	SetDefaultSudoGenesis(gen)
-	// TODO: clean
-	// sudoGen := new(sudotypes.GenesisState)
-	// encoding.Marshaler.MustUnmarshalJSON(gen[sudotypes.ModuleName], sudoGen)
-	// if err := sudoGen.Validate(); err != nil {
-	// 	sudoGen.Sudoers = DefaultSudoers()
-	// 	gen[sudotypes.ModuleName] = encoding.Marshaler.MustMarshalJSON(sudoGen)
-	// }
 
 	app := app.NewNibiruApp(
 		logger,
