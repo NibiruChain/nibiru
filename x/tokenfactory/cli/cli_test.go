@@ -40,7 +40,6 @@ func (s *IntegrationTestSuite) TestTokenFactory() {
 
 func (s *IntegrationTestSuite) SetupSuite() {
 	testutil.BeforeIntegrationSuite(s.T())
-
 	testapp.EnsureNibiruPrefix()
 	encodingConfig := app.MakeEncodingConfig()
 	genState := genesis.NewTestGenesisState(encodingConfig)

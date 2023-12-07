@@ -9,6 +9,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 )
 
 /*
@@ -27,6 +28,8 @@ func NewTestGenesisState(encodingConfig app.EncodingConfig) app.GenesisState {
 	*govGenState.Params.VotingPeriod = time.Second * 20
 	govGenState.Params.MinDeposit = sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 1_000_000)) // min deposit of 1 NIBI
 	genState[gov.ModuleName] = codec.MustMarshalJSON(&govGenState)
+
+	testapp.SetDefaultSudoGenesis(genState)
 
 	return genState
 }

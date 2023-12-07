@@ -9,8 +9,10 @@ import (
 // ----------------------------------------------------------------
 // MsgCreateDenom
 
-var _ sdk.Msg = &MsgCreateDenom{}
-var _ legacytx.LegacyMsg = &MsgCreateDenom{}
+var (
+	_ sdk.Msg            = &MsgCreateDenom{}
+	_ legacytx.LegacyMsg = &MsgCreateDenom{}
+)
 
 // ValidateBasic performs stateless validation checks. Impl sdk.Msg.
 func (m MsgCreateDenom) ValidateBasic() error {
@@ -53,8 +55,10 @@ func (m MsgCreateDenom) GetSignBytes() []byte {
 // ----------------------------------------------------------------
 // MsgChangeAdmin
 
-var _ sdk.Msg = &MsgChangeAdmin{}
-var _ legacytx.LegacyMsg = &MsgChangeAdmin{}
+var (
+	_ sdk.Msg            = &MsgChangeAdmin{}
+	_ legacytx.LegacyMsg = &MsgChangeAdmin{}
+)
 
 // ValidateBasic performs stateless validation checks. Impl sdk.Msg.
 func (m MsgChangeAdmin) ValidateBasic() error {
