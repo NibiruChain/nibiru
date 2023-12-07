@@ -6,21 +6,21 @@ import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/inflation/types";
 
-// Emitted when inflation is distributed
-message InflationDistributionEvent {
-    cosmos.base.v1beta1.Coin staking_rewards = 1 [
-        (gogoproto.moretags) = "yaml:\"staking_rewards\"",
-        (gogoproto.nullable)= false
-    ];
+// EventInflationDistribution: Emitted when NIBI tokens are minted on the
+// network based on Nibiru's inflation schedule.
+message EventInflationDistribution {
+  cosmos.base.v1beta1.Coin staking_rewards = 1 [
+    (gogoproto.moretags) = "yaml:\"staking_rewards\"",
+    (gogoproto.nullable) = false
+  ];
 
-    cosmos.base.v1beta1.Coin strategic_reserve = 2 [
-        (gogoproto.moretags) = "yaml:\"strategic_reserve\"",
-        (gogoproto.nullable)= false
-    ];
+  cosmos.base.v1beta1.Coin strategic_reserve = 2 [
+    (gogoproto.moretags) = "yaml:\"strategic_reserve\"",
+    (gogoproto.nullable) = false
+  ];
 
-    cosmos.base.v1beta1.Coin community_pool  = 3 [
-        (gogoproto.moretags) = "yaml:\"community_pool\"",
-        (gogoproto.nullable)= false
-    ];
-
+  cosmos.base.v1beta1.Coin community_pool = 3 [
+    (gogoproto.moretags) = "yaml:\"community_pool\"",
+    (gogoproto.nullable) = false
+  ];
 }

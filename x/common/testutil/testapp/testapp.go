@@ -32,9 +32,18 @@ func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
 	encoding := app.MakeEncodingConfig()
 	var appGenesis app.GenesisState = app.NewDefaultGenesisState(encoding.Marshaler)
 	genModEpochs := epochstypes.DefaultGenesisFromTime(time.Now().UTC())
+
+	// Set happy genesis: epochs
 	appGenesis[epochstypes.ModuleName] = encoding.Marshaler.MustMarshalJSON(
 		genModEpochs,
 	)
+
+	// Set happy genesis: sudo
+	sudoGenesis := new(sudotypes.GenesisState)
+	sudoGenesis.Sudoers = DefaultSudoers()
+	appGenesis[sudotypes.ModuleName] =
+		encoding.Marshaler.MustMarshalJSON(sudoGenesis)
+
 	app := NewNibiruTestApp(appGenesis)
 	ctx := NewContext(app)
 

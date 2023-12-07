@@ -27,7 +27,7 @@ func NewKeeper(
 }
 
 // Returns the root address of the sudo module.
-func (k Keeper) GetRoot(ctx sdk.Context) (sdk.AccAddress, error) {
+func (k Keeper) GetRootAddr(ctx sdk.Context) (sdk.AccAddress, error) {
 	sudoers, err := k.Sudoers.Get(ctx)
 	if err != nil {
 		return nil, err

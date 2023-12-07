@@ -41,5 +41,5 @@ type StakingKeeper interface {
 }
 
 type SudoKeeper interface {
-	GetRoot(ctx sdk.Context) (sdk.AccAddress, error)
+	GetRootAddr(ctx sdk.Context) (sdk.AccAddress, error)
 }
