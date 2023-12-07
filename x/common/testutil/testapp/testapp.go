@@ -80,6 +80,18 @@ func DefaultSudoRoot() sdk.AccAddress {
 	return sdk.MustAccAddressFromBech32(testutil.ADDR_SUDO_ROOT)
 }
 
+// SetDefaultSudoGenesis: Sets the sudo module genesis state to a valid
+// default. See "DefaultSudoers".
+func SetDefaultSudoGenesis(gen app.GenesisState) {
+	sudoGen := new(sudotypes.GenesisState)
+	encoding := app.MakeEncodingConfig()
+	encoding.Marshaler.MustUnmarshalJSON(gen[sudotypes.ModuleName], sudoGen)
+	if err := sudoGen.Validate(); err != nil {
+		sudoGen.Sudoers = DefaultSudoers()
+		gen[sudotypes.ModuleName] = encoding.Marshaler.MustMarshalJSON(sudoGen)
+	}
+}
+
 // NewNibiruTestAppAndZeroTimeCtx: Runs NewNibiruTestAppAndZeroTimeCtx with the
 // block time set to time zero.
 func NewNibiruTestAppAndContextAtTime(startTime time.Time) (*app.NibiruApp, sdk.Context) {
@@ -96,12 +108,14 @@ func NewNibiruTestApp(gen app.GenesisState) *app.NibiruApp {
 	logger := log.NewNopLogger()
 
 	encoding := app.MakeEncodingConfig()
-	sudoGen := new(sudotypes.GenesisState)
-	encoding.Marshaler.MustUnmarshalJSON(gen[sudotypes.ModuleName], sudoGen)
-	if err := sudoGen.Validate(); err != nil {
-		sudoGen.Sudoers = DefaultSudoers()
-		gen[sudotypes.ModuleName] = encoding.Marshaler.MustMarshalJSON(sudoGen)
-	}
+	SetDefaultSudoGenesis(gen)
+	// TODO: clean
+	// sudoGen := new(sudotypes.GenesisState)
+	// encoding.Marshaler.MustUnmarshalJSON(gen[sudotypes.ModuleName], sudoGen)
+	// if err := sudoGen.Validate(); err != nil {
+	// 	sudoGen.Sudoers = DefaultSudoers()
+	// 	gen[sudotypes.ModuleName] = encoding.Marshaler.MustMarshalJSON(sudoGen)
+	// }
 
 	app := app.NewNibiruApp(
 		logger,
