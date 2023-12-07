@@ -81,7 +81,8 @@ func TestGenesisState(t *testing.T) {
 		wantErr  string
 	}{
 		{name: "default", wantErr: "", genState: *types.DefaultGenesis()},
-		{name: "sad: params", wantErr: types.ErrInvalidModuleParams.Error(),
+		{
+			name: "sad: params", wantErr: types.ErrInvalidModuleParams.Error(),
 			genState: types.GenesisState{
 				Params: types.ModuleParams{
 					DenomCreationGasConsume: 0,
@@ -89,7 +90,8 @@ func TestGenesisState(t *testing.T) {
 				FactoryDenoms: happyGenDenoms,
 			},
 		},
-		{name: "sad: duplicate",
+		{
+			name:    "sad: duplicate",
 			wantErr: "duplicate denom",
 			genState: types.GenesisState{
 				Params: types.DefaultModuleParams(),
@@ -98,7 +100,8 @@ func TestGenesisState(t *testing.T) {
 				},
 			},
 		},
-		{name: "sad: invalid admin",
+		{
+			name:    "sad: invalid admin",
 			wantErr: types.ErrInvalidAdmin.Error(),
 			genState: types.GenesisState{
 				Params: types.DefaultModuleParams(),
@@ -114,7 +117,8 @@ func TestGenesisState(t *testing.T) {
 			},
 		},
 
-		{name: "sad: invalid genesis denom",
+		{
+			name:    "sad: invalid genesis denom",
 			wantErr: types.ErrInvalidGenesis.Error(),
 			genState: types.GenesisState{
 				Params: types.DefaultModuleParams(),

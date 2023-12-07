@@ -72,16 +72,19 @@ func TestMintAndAllocateInflation(t *testing.T) {
 		t.Run(fmt.Sprintf("Case %s", tc.name), func(t *testing.T) {
 			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 
-			if tc.rootAccount != "" {
-				t.Logf("setting root account to %s", tc.rootAccount)
-				nibiruApp.SudoKeeper.Sudoers.Set(ctx, sudotypes.Sudoers{
-					Root:      sdk.MustAccAddressFromBech32(tc.rootAccount).String(),
-					Contracts: []string{},
-				})
-			}
+			t.Logf("setting root account to %s", tc.rootAccount)
+			nibiruApp.SudoKeeper.Sudoers.Set(ctx, sudotypes.Sudoers{
+				Root:      tc.rootAccount,
+				Contracts: []string{},
+			})
 
 			staking, strategic, community, err := nibiruApp.InflationKeeper.MintAndAllocateInflation(ctx, tc.coinsToMint, types.DefaultParams())
-			require.NoError(t, err)
+			if tc.rootAccount != "" {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				return
+			}
 			assert.Equal(t, tc.expectedStakingAmt, staking)
 			assert.Equal(t, tc.expectedStrategicAmt, strategic)
 			assert.Equal(t, tc.expectedCommunityAmt, community)
@@ -89,7 +92,7 @@ func TestMintAndAllocateInflation(t *testing.T) {
 			// Get balances
 			var balanceStrategicReserve sdk.Coin
 			if tc.rootAccount != "" {
-				strategicAccount, err := nibiruApp.SudoKeeper.GetRoot(ctx)
+				strategicAccount, err := nibiruApp.SudoKeeper.GetRootAddr(ctx)
 				require.NoError(t, err)
 				balanceStrategicReserve = nibiruApp.BankKeeper.GetBalance(
 					ctx,
@@ -110,9 +113,15 @@ func TestMintAndAllocateInflation(t *testing.T) {
 			balanceCommunityPool := nibiruApp.DistrKeeper.GetFeePoolCommunityCoins(ctx)
 
 			require.NoError(t, err, tc.name)
-			assert.Equal(t, tc.expectedStakingRewardsBalance, balanceStakingRewards)
-			assert.Equal(t, tc.expectedStrategicReservesBalance, balanceStrategicReserve)
-			assert.Equal(t, tc.expectedCommunityPoolBalance, balanceCommunityPool)
+			assert.Equal(t,
+				tc.expectedStakingRewardsBalance.String(),
+				balanceStakingRewards.String())
+			assert.Equal(t,
+				tc.expectedStrategicReservesBalance.String(),
+				balanceStrategicReserve.String())
+			assert.Equal(t,
+				tc.expectedCommunityPoolBalance.String(),
+				balanceCommunityPool.String())
 		})
 	}
 }
