@@ -25,6 +25,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/sudo/cli"
 )
 
@@ -102,7 +103,7 @@ func TestSuite_IntegrationSuite_RunAll(t *testing.T) {
 
 func (s *IntegrationSuite) SetupSuite() {
 	testutil.BeforeIntegrationSuite(s.T())
-	app.SetPrefixes(app.AccountAddressPrefix)
+	testapp.EnsureNibiruPrefix()
 
 	genState := genesis.NewTestGenesisState(app.MakeEncodingConfig())
 	genState, rootPrivKey, rootAddr := genesis.AddSudoGenesis(genState)

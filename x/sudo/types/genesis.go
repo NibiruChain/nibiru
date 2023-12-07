@@ -2,16 +2,15 @@ package types
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 )
 
 func (gen *GenesisState) Validate() error {
 	if gen.Sudoers.Contracts == nil {
-		return fmt.Errorf("nil contract state must be []string")
+		return ErrGenesis("nil contract state must be []string")
 	} else if err := gen.Sudoers.Validate(); err != nil {
-		return err
+		return ErrGenesis(err.Error())
 	}
 	return nil
 }
