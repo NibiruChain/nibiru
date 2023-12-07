@@ -22,6 +22,10 @@ import (
 	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 )
 
+func init() {
+	EnsureNibiruPrefix()
+}
+
 // NewNibiruTestAppAndContext creates an 'app.NibiruApp' instance with an
 // in-memory 'tmdb.MemDB' and fresh 'sdk.Context'.
 func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
@@ -41,8 +45,7 @@ func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
 	// Set happy genesis: sudo
 	sudoGenesis := new(sudotypes.GenesisState)
 	sudoGenesis.Sudoers = DefaultSudoers()
-	appGenesis[sudotypes.ModuleName] =
-		encoding.Marshaler.MustMarshalJSON(sudoGenesis)
+	appGenesis[sudotypes.ModuleName] = encoding.Marshaler.MustMarshalJSON(sudoGenesis)
 
 	app := NewNibiruTestApp(appGenesis)
 	ctx := NewContext(app)
@@ -93,6 +96,13 @@ func NewNibiruTestApp(gen app.GenesisState) *app.NibiruApp {
 	logger := log.NewNopLogger()
 
 	encoding := app.MakeEncodingConfig()
+	sudoGen := new(sudotypes.GenesisState)
+	encoding.Marshaler.MustUnmarshalJSON(gen[sudotypes.ModuleName], sudoGen)
+	if err := sudoGen.Validate(); err != nil {
+		sudoGen.Sudoers = DefaultSudoers()
+		gen[sudotypes.ModuleName] = encoding.Marshaler.MustMarshalJSON(sudoGen)
+	}
+
 	app := app.NewNibiruApp(
 		logger,
 		db,

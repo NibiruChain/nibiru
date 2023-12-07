@@ -15,6 +15,7 @@ var (
 func ErrGenesis(errMsg string) error {
 	return fmt.Errorf("%s: %s", errGenesis, errMsg)
 }
+
 func ErrSudoers(errMsg string) error {
 	return fmt.Errorf("%s: %s", errSudoers, errMsg)
 }

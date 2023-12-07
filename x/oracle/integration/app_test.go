@@ -11,6 +11,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
@@ -21,6 +22,10 @@ type IntegrationTestSuite struct {
 
 	cfg     testutilcli.Config
 	network *testutilcli.Network
+}
+
+func (s *IntegrationTestSuite) SetupSuite() {
+	testutil.BeforeIntegrationSuite(s.T())
 }
 
 func (s *IntegrationTestSuite) SetupTest() {
