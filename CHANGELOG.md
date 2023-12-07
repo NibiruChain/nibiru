@@ -45,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Features
 
 * [#1670](https://github.com/NibiruChain/nibiru/pull/1670) - feat(inflation): Make inflation polynomial
+* [#1695](https://github.com/NibiruChain/nibiru/pull/1695) - feat(inflation): add events for inflation distribution
 
 ## [v1.0.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.0.0)
 
@@ -54,8 +55,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1607](https://github.com/NibiruChain/nibiru/pull/1607) - Token factory transaction messages for CreateDenom, ChangeAdmin, and UpdateModuleParams
 * [#1620](https://github.com/NibiruChain/nibiru/pull/1620) - Token factory transaction messages for Mint and Burn
 * [#1573](https://github.com/NibiruChain/nibiru/pull/1573) - feat(perp): Close markets and compute settlement price
-* [#1632](https://github.com/NibiruChain/nibiru/pull/1632) - feat(perp): Add settle position transaction
-* [#1670](https://github.com/NibiruChain/nibiru/pull/1670) - feat(inflation): Make inflation polynomial
 
 ### State Machine Breaking
 
@@ -79,7 +78,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Dependencies
 
-- Bump `github.com/prometheus/client_golang` from 1.16.0 to 1.17.0 ([#1605](https://github.com/NibiruChain/nibiru/pull/1605))
+* Bump `github.com/prometheus/client_golang` from 1.16.0 to 1.17.0 ([#1605](https://github.com/NibiruChain/nibiru/pull/1605))
+
 * Bump `bufbuild/buf-setup-action` from 1.26.1 to 1.27.1 ([#1624](https://github.com/NibiruChain/nibiru/pull/1624), [#1641](https://github.com/NibiruChain/nibiru/pull/1641))
 * Bump `stefanzweifel/git-auto-commit-action` from 4 to 5 ([#1625](https://github.com/NibiruChain/nibiru/pull/1625))
 * Bump `github.com/CosmWasm/wasmvm` from 1.4.0 to 1.5.0 ([#1629](https://github.com/NibiruChain/nibiru/pull/1629), [#1657](https://github.com/NibiruChain/nibiru/pull/1657))

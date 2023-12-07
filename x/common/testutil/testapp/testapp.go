@@ -15,9 +15,15 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 	tokenfactorytypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
+
+func init() {
+	EnsureNibiruPrefix()
+}
 
 // NewNibiruTestAppAndContext creates an 'app.NibiruApp' instance with an
 // in-memory 'tmdb.MemDB' and fresh 'sdk.Context'.
@@ -25,9 +31,17 @@ func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
 	encoding := app.MakeEncodingConfig()
 	appGenesis := app.NewDefaultGenesisState(encoding.Marshaler)
 	genModEpochs := epochstypes.DefaultGenesisFromTime(time.Now().UTC())
+
+	// Set happy genesis: epochs
 	appGenesis[epochstypes.ModuleName] = encoding.Marshaler.MustMarshalJSON(
 		genModEpochs,
 	)
+
+	// Set happy genesis: sudo
+	sudoGenesis := new(sudotypes.GenesisState)
+	sudoGenesis.Sudoers = DefaultSudoers()
+	appGenesis[sudotypes.ModuleName] = encoding.Marshaler.MustMarshalJSON(sudoGenesis)
+
 	app := NewNibiruTestApp(appGenesis)
 	ctx := NewContext(app)
 
@@ -42,6 +56,31 @@ func NewContext(nibiru *app.NibiruApp) sdk.Context {
 		Height: 1,
 		Time:   time.Now().UTC(),
 	})
+}
+
+// DefaultSudoers: State for the x/sudo module for the default test app.
+func DefaultSudoers() sudotypes.Sudoers {
+	addr := DefaultSudoRoot().String()
+	return sudotypes.Sudoers{
+		Root:      addr,
+		Contracts: []string{addr},
+	}
+}
+
+func DefaultSudoRoot() sdk.AccAddress {
+	return sdk.MustAccAddressFromBech32(testutil.ADDR_SUDO_ROOT)
+}
+
+// SetDefaultSudoGenesis: Sets the sudo module genesis state to a valid
+// default. See "DefaultSudoers".
+func SetDefaultSudoGenesis(gen app.GenesisState) {
+	sudoGen := new(sudotypes.GenesisState)
+	encoding := app.MakeEncodingConfig()
+	encoding.Marshaler.MustUnmarshalJSON(gen[sudotypes.ModuleName], sudoGen)
+	if err := sudoGen.Validate(); err != nil {
+		sudoGen.Sudoers = DefaultSudoers()
+		gen[sudotypes.ModuleName] = encoding.Marshaler.MustMarshalJSON(sudoGen)
+	}
 }
 
 // NewNibiruTestAppAndZeroTimeCtx: Runs NewNibiruTestAppAndZeroTimeCtx with the
@@ -60,6 +99,8 @@ func NewNibiruTestApp(gen app.GenesisState) *app.NibiruApp {
 	logger := log.NewNopLogger()
 
 	encoding := app.MakeEncodingConfig()
+	SetDefaultSudoGenesis(gen)
+
 	app := app.NewNibiruApp(
 		logger,
 		db,
