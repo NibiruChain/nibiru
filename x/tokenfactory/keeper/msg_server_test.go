@@ -594,7 +594,8 @@ func (s *TestSuite) TestSetDenomMetadata() {
 				{
 					TestMsg: (*types.MsgSetDenomMetadata)(nil),
 					WantErr: "nil msg",
-				}},
+				},
+			},
 		},
 
 		{

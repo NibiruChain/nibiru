@@ -18,6 +18,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 	"github.com/NibiruChain/nibiru/x/perp/v2/client/cli"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
@@ -34,8 +35,7 @@ type IntegrationTestSuite struct {
 
 func (s *IntegrationTestSuite) SetupSuite() {
 	testutil.BeforeIntegrationSuite(s.T())
-
-	app.SetPrefixes(app.AccountAddressPrefix)
+	testapp.EnsureNibiruPrefix()
 
 	// setup market
 	encodingConfig := app.MakeEncodingConfig()

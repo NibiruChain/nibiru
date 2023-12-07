@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -76,20 +78,28 @@ func (k Keeper) AllocatePolynomialInflation(
 		return sdk.Coin{}, sdk.Coin{}, sdk.Coin{}, err
 	}
 
-	// Remaining balance is strategic reserve allocation to the root account of the x/sudo module
+	// Remaining balance is strategic reserve allocation to the root account
+	// of the x/sudo module
 	strategic = k.bankKeeper.GetBalance(ctx, inflationModuleAddr, denoms.NIBI)
-	strategicAccountAddr, err := k.sudoKeeper.GetRoot(ctx)
+	strategicAccountAddr, err := k.sudoKeeper.GetRootAddr(ctx)
 	if err != nil {
-		k.Logger(ctx).Error("get root account error", "error", err)
-		return staking, strategic, community, nil
+		err := fmt.Errorf("inflation error: failed to get sudo root account: %w", err)
+		k.Logger(ctx).Error(err.Error())
+		return staking, strategic, community, err
 	}
 
 	if err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, strategicAccountAddr, sdk.NewCoins(strategic)); err != nil {
-		k.Logger(ctx).Error("send coins to root account error", "error", err)
-		return sdk.Coin{}, sdk.Coin{}, sdk.Coin{}, nil
+		err := fmt.Errorf("inflation error: failed to send coins to sudo root account: %w", err)
+		k.Logger(ctx).Error(err.Error())
+		return sdk.Coin{}, sdk.Coin{}, sdk.Coin{}, err
 	}
 
-	return staking, strategic, community, nil
+	return staking, strategic, community, ctx.EventManager().EmitTypedEvents(
+		&types.EventInflationDistribution{
+			StakingRewards:   staking,
+			StrategicReserve: strategic,
+			CommunityPool:    community,
+		})
 }
 
 // GetAllocationProportion calculates the proportion of coins that is to be
