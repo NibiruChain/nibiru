@@ -284,9 +284,17 @@ func (s *TestSuitePerpQuerier) TestPosition() {
 	freshCwResp := new(bindings.PositionResponse)
 	err = json.Unmarshal(jsonBz, freshCwResp)
 	s.NoErrorf(err, "freshCwResp: %s", freshCwResp)
-	s.Assert().EqualValues(resp.ExchangedNotionalValue, leverage.MulInt(margin))
-	s.Assert().EqualValues(cwResp.Position.OpenNotional, leverage.MulInt(margin))
-	s.Assert().EqualValues(cwResp.Position.Margin, sdk.NewDecFromInt(margin))
+
+	market, err := s.nibiru.PerpKeeperV2.GetMarket(s.ctx, pair)
+	s.NoError(err)
+	defaultFee := market.ExchangeFeeRatio.Add(market.EcosystemFundFeeRatio)
+
+	feeFromNotionalValue := leverage.MulInt(margin).Mul(defaultFee)
+	expectedExchangedNotionalValue := margin.ToLegacyDec().Sub(feeFromNotionalValue).Mul(leverage)
+
+	s.Assert().EqualValues(expectedExchangedNotionalValue, resp.ExchangedNotionalValue)
+	s.Assert().EqualValues(expectedExchangedNotionalValue, cwResp.Position.OpenNotional)
+	s.Assert().EqualValues(margin.ToLegacyDec().Sub(feeFromNotionalValue), cwResp.Position.Margin)
 
 	s.T().Log("fail due to invalid pair")
 	cwReq = &bindings.PositionRequest{

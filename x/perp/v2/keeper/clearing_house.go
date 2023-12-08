@@ -67,20 +67,38 @@ func (k Keeper) MarketOrder(
 	var updatedAMM *types.AMM
 	openSideMatchesPosition := sameSideLong || sameSideShort
 	if isNewPosition || openSideMatchesPosition {
+		openNotionalPreFees := leverage.MulInt(quoteAssetAmt)
+		transferredFee, err := k.transferFee(ctx, market.Pair, traderAddr, openNotionalPreFees,
+			market.ExchangeFeeRatio, market.EcosystemFundFeeRatio,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		quoteAssetAmtMinusFees := quoteAssetAmt.Sub(transferredFee)
 		updatedAMM, positionResp, err = k.increasePosition(
 			ctx,
 			market,
 			amm,
 			position,
 			dir,
-			/* openNotional */ leverage.MulInt(quoteAssetAmt),
+			/* openNotional */ leverage.MulInt(quoteAssetAmtMinusFees),
 			/* minPositionSize */ baseAmtLimit,
 			/* leverage */ leverage)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		quoteAssetAmtToDec := sdk.NewDecFromInt(quoteAssetAmt)
+		openNotionalPreFees := leverage.MulInt(quoteAssetAmt)
+		transferredFee, err := k.transferFee(ctx, market.Pair, traderAddr, openNotionalPreFees,
+			market.ExchangeFeeRatio, market.EcosystemFundFeeRatio,
+		)
+		if err != nil {
+			return nil, err
+		}
+		quoteAssetAmtMinusFees := quoteAssetAmt.Sub(transferredFee)
+
+		quoteAssetAmtToDec := sdk.NewDecFromInt(quoteAssetAmtMinusFees)
 		updatedAMM, positionResp, err = k.openReversePosition(
 			ctx,
 			market,
@@ -557,13 +575,6 @@ func (k Keeper) afterPositionUpdate(
 		}
 	}
 
-	transferredFee, err := k.transferFee(ctx, market.Pair, traderAddr, positionResp.ExchangedNotionalValue,
-		market.ExchangeFeeRatio, market.EcosystemFundFeeRatio,
-	)
-	if err != nil {
-		return err
-	}
-
 	if !positionResp.Position.Size_.IsZero() {
 		k.SavePosition(ctx, market.Pair, market.Version, traderAddr, positionResp.Position)
 	}
@@ -580,14 +591,14 @@ func (k Keeper) afterPositionUpdate(
 
 	_ = ctx.EventManager().EmitTypedEvents(
 		&types.PositionChangedEvent{
-			FinalPosition:     positionResp.Position,
-			PositionNotional:  positionNotional,
-			TransactionFee:    sdk.NewCoin(collateral, transferredFee),
-			RealizedPnl:       positionResp.RealizedPnl,
-			BadDebt:           sdk.NewCoin(collateral, positionResp.BadDebt.RoundInt()),
-			FundingPayment:    positionResp.FundingPayment,
-			BlockHeight:       ctx.BlockHeight(),
-			MarginToUser:      marginToVault.Neg().Sub(transferredFee),
+			FinalPosition:    positionResp.Position,
+			PositionNotional: positionNotional,
+			//TransactionFee:    sdk.NewCoin(collateral, transferredFee),
+			RealizedPnl:    positionResp.RealizedPnl,
+			BadDebt:        sdk.NewCoin(collateral, positionResp.BadDebt.RoundInt()),
+			FundingPayment: positionResp.FundingPayment,
+			BlockHeight:    ctx.BlockHeight(),
+			//MarginToUser:      marginToVault.Neg().Sub(transferredFee),
 			ChangeReason:      changeType,
 			ExchangedSize:     positionResp.Position.Size_.Sub(existingPosition.Size_),
 			ExchangedNotional: positionResp.PositionNotional.Sub(existingPosition.OpenNotional),
