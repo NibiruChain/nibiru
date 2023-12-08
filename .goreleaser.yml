@@ -4,44 +4,44 @@ env:
   - CGO_ENABLED=1
 
 builds:
-  - id: darwin
-    main: ./cmd/nibid
-    binary: nibid
-    hooks:
-      pre:
-        - bash contrib/scripts/release_pre_darwin.sh
-    goos:
-      - darwin
-    goarch:
-      - amd64
-      - arm64
-    env:
-      - CC=o64-clang
-    flags:
-      - -mod=readonly
-      - -trimpath
-    ldflags:
-      - -s -w
-      - -X github.com/cosmos/cosmos-sdk/version.Name=nibiru
-      - -X github.com/cosmos/cosmos-sdk/version.AppName=nibid
-      - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
-      - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
-      - -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb
-      - -linkmode=external
-      - -extldflags '-lrocksdb -lstdc++ -ldl -lz -lbz2'
-    tags:
-      - netgo
-      - osusergo
-      - ledger
-      - static
-      - static_wasm
-      - rocksdb
-      - grocksdb_no_link
-    overrides:
-      - goos: darwin
-        goarch: arm64
-        env:
-          - CC=oa64-clang
+  # - id: darwin
+  #   main: ./cmd/nibid
+  #   binary: nibid
+  #   hooks:
+  #     pre:
+  #       - bash contrib/scripts/release_pre_darwin.sh
+  #   goos:
+  #     - darwin
+  #   goarch:
+  #     - amd64
+  #     - arm64
+  #   env:
+  #     - CC=o64-clang
+  #   flags:
+  #     - -mod=readonly
+  #     - -trimpath
+  #   ldflags:
+  #     - -s -w
+  #     - -X github.com/cosmos/cosmos-sdk/version.Name=nibiru
+  #     - -X github.com/cosmos/cosmos-sdk/version.AppName=nibid
+  #     - -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }}
+  #     - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
+  #     - -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb
+  #     - -linkmode=external
+  #     - -extldflags '-lrocksdb -lstdc++ -ldl -lz -lbz2'
+  #   tags:
+  #     - netgo
+  #     - osusergo
+  #     - ledger
+  #     - static
+  #     - static_wasm
+  #     - rocksdb
+  #     - grocksdb_no_link
+  #   overrides:
+  #     - goos: darwin
+  #       goarch: arm64
+  #       env:
+  #         - CC=oa64-clang
 
   - id: linux
     main: ./cmd/nibid
@@ -52,7 +52,7 @@ builds:
     goos:
       - linux
     goarch:
-      - amd64
+      # - amd64
       - arm64
     env:
       - CC=x86_64-linux-gnu-gcc
@@ -82,5 +82,5 @@ builds:
         env:
           - CC=aarch64-linux-gnu-gcc
 
-universal_binaries:
-  - id: darwin
+# universal_binaries:
+#   - id: darwin
