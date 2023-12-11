@@ -6,6 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 )
 
@@ -146,7 +147,7 @@ func (pb ExchangeRateVotes) StandardDeviation(median sdk.Dec) (standardDeviation
 
 	variance := sum.QuoInt64(int64(n))
 
-	standardDeviation, err := variance.ApproxSqrt()
+	standardDeviation, err := common.SqrtDec(variance)
 	if err != nil {
 		return sdk.ZeroDec()
 	}

@@ -242,21 +242,21 @@ func TestPBStandardDeviation(t *testing.T) {
 			[]float64{1.0, 2.0, 10.0, 100000.0},
 			[]int64{1, 1, 100, 1},
 			[]bool{true, true, true, true},
-			sdk.MustNewDecFromStr("49995.000362536252310906"),
+			sdk.MustNewDecFromStr("49995.000362536000000000"),
 		},
 		{
 			// Adding fake validator doesn't change outcome
 			[]float64{1.0, 2.0, 10.0, 100000.0, 10000000000},
 			[]int64{1, 1, 100, 1, 10000},
 			[]bool{true, true, true, true, false},
-			sdk.MustNewDecFromStr("4472135950.751005519905537611"),
+			sdk.MustNewDecFromStr("4472135950.751005519000000000"),
 		},
 		{
 			// Tie votes
 			[]float64{1.0, 2.0, 3.0, 4.0},
 			[]int64{1, 100, 100, 1},
 			[]bool{true, true, true, true},
-			sdk.MustNewDecFromStr("1.224744871391589049"),
+			sdk.MustNewDecFromStr("1.224744871000000000"),
 		},
 		{
 			// No votes
@@ -270,7 +270,7 @@ func TestPBStandardDeviation(t *testing.T) {
 			[]float64{1.0, 2.0, 10.0, 100000.0, -99999999999.0, 0},
 			[]int64{1, 1, 100, 1, 1, 1},
 			[]bool{true, true, true, true, true, true},
-			sdk.MustNewDecFromStr("49995.000362536252310906"),
+			sdk.MustNewDecFromStr("49995.000362536000000000"),
 		},
 	}
 
