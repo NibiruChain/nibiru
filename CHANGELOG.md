@@ -133,6 +133,7 @@ v0.47.5.
 * [#1614](https://github.com/NibiruChain/nibiru/pull/1614) - refactor(proto): Use explicit namespacing on proto imports for #1608
 * [#1610](https://github.com/NibiruChain/nibiru/pull/1610) - refactor(app): Simplify app.go with less redundant imports using struct embedding.
 * [#1606](https://github.com/NibiruChain/nibiru/pull/1606) - fix(perp): emit `MarketUpdatedEvent` in the absence of index price
+* [#1700](https://github.com/NibiruChain/nibiru/pull/1700) - fix(oracle): remove non deterministic sqrt calculation
 
 ### Dependencies
 
