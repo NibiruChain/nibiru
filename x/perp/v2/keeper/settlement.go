@@ -48,6 +48,7 @@ func (k Keeper) SettlePosition(ctx sdk.Context, pair asset.Pair, version uint64,
 		traderAddr,
 		*positionResp,
 		types.ChangeReason_Settlement,
+		sdk.ZeroInt(),
 		position,
 	); err != nil {
 		return nil, err
