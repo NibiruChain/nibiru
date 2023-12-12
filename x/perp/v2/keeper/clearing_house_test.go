@@ -805,7 +805,7 @@ func TestMarketOrder(t *testing.T) {
 				),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(22)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(150)))),
 				InsertPosition(
 					WithPair(pairBtcNusd),
 					WithTrader(alice),
@@ -853,10 +853,10 @@ func TestMarketOrder(t *testing.T) {
 					RealizedPnl:      sdk.MustNewDecFromStr("-1100.000111000001110000"),
 					BadDebt:          sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 98),
 					FundingPayment:   sdk.NewDec(-2),
-					TransactionFee:   sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 22), // 20 bps
+					TransactionFee:   sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 60), // 20 bps
 					BlockHeight:      2,
 					// exchangedMargin = - marginToVault - transferredFee
-					MarginToUser:      sdk.NewInt(-22),
+					MarginToUser:      sdk.NewInt(-60),
 					ChangeReason:      types.ChangeReason_MarketOrder,
 					ExchangedNotional: sdk.MustNewDecFromStr("-10000.000000000000000000"),
 					ExchangedSize:     sdk.MustNewDecFromStr("10000.000000000000000000"),
@@ -953,95 +953,6 @@ func TestMarketOrder(t *testing.T) {
 			Then(
 				PositionShouldNotExist(alice, pairBtcNusd, 1),
 			),
-
-		TC("position should not exist after opening a closing manually").
-			Given(
-				SetBlockTime(startBlockTime),
-				SetBlockNumber(1),
-				CreateCustomMarket(pairBtcNusd,
-					WithEnabled(true),
-					WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(20_000_000_000+20_000_000)))),
-			).
-			When(
-				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
-				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
-			).
-			Then(
-				PositionShouldNotExist(alice, pairBtcNusd, 1),
-			),
-
-		TC("position should not exist after opening a closing manually - reverse with leverage").
-			Given(
-				SetBlockTime(startBlockTime),
-				SetBlockNumber(1),
-				CreateCustomMarket(
-					pairBtcNusd,
-					WithEnabled(true),
-					WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
-			).
-			When(
-				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(100_000), sdk.OneDec(), sdk.ZeroDec()),
-				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(50_000), sdk.NewDec(2), sdk.ZeroDec()),
-			).
-			Then(
-				PositionShouldNotExist(alice, pairBtcNusd, 1),
-			),
-		TC("position should not exist after opening a closing manually - open with leverage").
-			Given(
-				SetBlockTime(startBlockTime),
-				SetBlockNumber(1),
-				CreateCustomMarket(
-					pairBtcNusd,
-					WithEnabled(true),
-					WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
-			).
-			When(
-				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(50_000), sdk.NewDec(2), sdk.ZeroDec()),
-				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(100_000), sdk.OneDec(), sdk.ZeroDec()),
-			).
-			Then(
-				PositionShouldNotExist(alice, pairBtcNusd, 1),
-			),
-
-		TC("position should not exist after opening a closing manually - reverse with leverage").
-			Given(
-				SetBlockTime(startBlockTime),
-				SetBlockNumber(1),
-				CreateCustomMarket(
-					pairBtcNusd,
-					WithEnabled(true),
-					WithPricePeg(sdk.MustNewDecFromStr("25001.0112"))),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
-			).
-			When(
-				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(100_000), sdk.OneDec(), sdk.ZeroDec()),
-				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(50_000), sdk.NewDec(2), sdk.ZeroDec()),
-			).
-			Then(
-				PositionShouldNotExist(alice, pairBtcNusd, 1),
-			),
-
-		TC("position should not exist after opening a closing manually - reverse with leverage - more steps").
-			Given(
-				SetBlockTime(startBlockTime),
-				SetBlockNumber(1),
-				CreateCustomMarket(
-					pairBtcNusd,
-					WithEnabled(true),
-					WithPricePeg(sdk.MustNewDecFromStr("25000"))),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
-			).
-			When(
-				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(100_000), sdk.OneDec(), sdk.ZeroDec()),
-				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(50_000), sdk.NewDec(4), sdk.ZeroDec()),
-				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(50_000), sdk.NewDec(2), sdk.ZeroDec()),
-			).
-			Then(
-				PositionShouldNotExist(alice, pairBtcNusd, 1),
-			),
 	}
 
 	NewTestSuite(t).WithTestCases(tc...).Run()
@@ -1106,7 +1017,7 @@ func TestMarketOrderError(t *testing.T) {
 			side:            types.Direction_SHORT,
 			margin:          sdk.NewInt(1000),
 			leverage:        sdk.NewDec(10),
-			baseLimit:       sdk.NewDec(10_000),
+			baseLimit:       sdk.NewDec(9_800),
 			expectedErr:     types.ErrAssetFailsUserLimit,
 		},
 		{

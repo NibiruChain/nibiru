@@ -891,7 +891,14 @@ func (k Keeper) PartialClose(
 	}
 	reverseNotionalAmt = amm.QuoteReserveToAsset(reverseNotionalAmt)
 
-	_, positionResp, err := k.decreasePosition(ctx, market, amm, position, reverseNotionalAmt, sdk.ZeroDec())
+	feesTransferred, err := k.transferFee(ctx, market.Pair, traderAddr, reverseNotionalAmt, market.ExchangeFeeRatio, market.EcosystemFundFeeRatio)
+	if err != nil {
+		return nil, err
+	}
+
+	reverseNotionalAmtWithoutFees := reverseNotionalAmt.Sub(feesTransferred.ToLegacyDec())
+
+	_, positionResp, err := k.decreasePosition(ctx, market, amm, position, reverseNotionalAmtWithoutFees, sdk.ZeroDec())
 	if err != nil {
 		return nil, err
 	}
@@ -912,7 +919,7 @@ func (k Keeper) PartialClose(
 		traderAddr,
 		*positionResp,
 		types.ChangeReason_PartialClose,
-		sdkmath.ZeroInt(),
+		feesTransferred,
 		position,
 	)
 	if err != nil {
