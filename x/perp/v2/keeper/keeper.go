@@ -103,21 +103,21 @@ func NewKeeper(
 		GlobalVolumes: collections.NewMap(
 			storeKey, NamespaceGlobalVolumes,
 			collections.Uint64KeyEncoder,
-			IntValueEncoder,
+			collections.IntValueEncoder,
 		),
 		TraderVolumes: collections.NewMap(
 			storeKey, NamespaceUserVolumes,
 			collections.PairKeyEncoder(collections.AccAddressKeyEncoder, collections.Uint64KeyEncoder),
-			IntValueEncoder,
+			collections.IntValueEncoder,
 		),
 		GlobalDiscounts: collections.NewMap(
 			storeKey, NamespaceGlobalDiscounts,
-			IntKeyEncoder,
+			collections.IntKeyEncoder,
 			collections.DecValueEncoder,
 		),
 		TraderDiscounts: collections.NewMap(
 			storeKey, NamespaceUserDiscounts,
-			collections.PairKeyEncoder(collections.AccAddressKeyEncoder, IntKeyEncoder),
+			collections.PairKeyEncoder(collections.AccAddressKeyEncoder, collections.IntKeyEncoder),
 			collections.DecValueEncoder,
 		),
 		EpochRebateAllocations: collections.NewMap(
