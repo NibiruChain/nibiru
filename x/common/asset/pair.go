@@ -83,6 +83,10 @@ func (pair Pair) QuoteDenom() string {
 
 // Validate performs a basic validation of the market params
 func (pair Pair) Validate() error {
+	if len(pair) == 0 {
+		return ErrInvalidTokenPair.Wrap("oracle pair is empty")
+	}
+
 	split := strings.Split(pair.String(), ":")
 	if len(split) != 2 {
 		return ErrInvalidTokenPair.Wrap(pair.String())

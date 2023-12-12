@@ -110,6 +110,16 @@ func TestCreateMarket(t *testing.T) {
 	})
 	require.ErrorContains(t, err, "maintenance margin ratio ratio must be 0 <= ratio <= 1")
 
+	// Error because of invalid oracle pair
+	market = perptypes.DefaultMarket(pair).WithOraclePair("random")
+	err = admin.CreateMarket(ctx, keeper.ArgsCreateMarket{
+		Pair:            pair,
+		PriceMultiplier: amm.PriceMultiplier,
+		SqrtDepth:       amm.SqrtDepth,
+		Market:          &market, // Invalid maintenance ratio
+	})
+	require.ErrorContains(t, err, "err when validating oracle pair random: invalid token pair")
+
 	// Error because of invalid amm
 	err = admin.CreateMarket(ctx, keeper.ArgsCreateMarket{
 		Pair:            pair,
