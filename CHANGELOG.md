@@ -40,16 +40,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-## [v1.1.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.1.0)
+## [v1.1.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.1.0) - 2023-12-14
+
+* [[Release Link](https://github.com/NibiruChain/nibiru/releases/tag/v1.1.0)]
+* [[Commits](https://github.com/NibiruChain/nibiru/commits/v1.1.0)]
 
 ### Features
 
 * [#1670](https://github.com/NibiruChain/nibiru/pull/1670) - feat(inflation): Make inflation polynomial
-* [#1695](https://github.com/NibiruChain/nibiru/pull/1695) - feat(inflation): add events for inflation distribution
+* [#1682](https://github.com/NibiruChain/nibiru/pull/1682) - feat!: add upgrade handler for v1.1.0
 
 ### Bug Fixes
 
 * [#1688](https://github.com/NibiruChain/nibiru/pull/1688) - fix(inflation): make default inflation allocation follow tokenomics
+* [#1706](https://github.com/NibiruChain/nibiru/pull/706) - fix: `v1.1.0` upgrade handler
+
+### Improvements
+
+* [#1695](https://github.com/NibiruChain/nibiru/pull/1695) - feat(inflation): add events for inflation distribution
 
 ### State Machine Breaking
 
