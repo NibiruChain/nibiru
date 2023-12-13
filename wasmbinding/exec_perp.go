@@ -86,7 +86,7 @@ func (exec *ExecutorPerp) CreateMarket(
 			MaxFundingRate:                  mp.MaxFundingRate,
 			TwapLookbackWindow:              time.Duration(mp.TwapLookbackWindow.Int64()),
 			PrepaidBadDebt:                  sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()),
-			OraclePair:                      pair,
+			OraclePair:                      asset.MustNewPair(mp.OraclePair),
 		}
 	}
 
