@@ -6,6 +6,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 )
 
 func TestIsPercent(t *testing.T) {
@@ -25,7 +28,8 @@ func TestValidate(t *testing.T) {
 		WithLiquidationFee(sdk.NewDecWithPrec(2, 1)).
 		WithPartialLiquidationRatio(sdk.NewDecWithPrec(1, 1)).
 		WithMaxLeverage(sdk.NewDec(10)).
-		WithMaxFundingRate(sdk.NewDec(1))
+		WithMaxFundingRate(sdk.NewDec(1)).
+		WithOraclePair(asset.Registry.Pair(denoms.BTC, denoms.USD))
 	require.NoError(t, market.Validate())
 
 	testCases := []struct {
@@ -61,6 +65,10 @@ func TestValidate(t *testing.T) {
 			requiredError: "max funding rate must be >= 0",
 		},
 		{
+			modifier:      func(m Market) Market { return m.WithOraclePair("abc") },
+			requiredError: "err when validating oracle pair abc: invalid token pair",
+		},
+		{
 			modifier: func(m Market) Market {
 				return m.WithMaxLeverage(sdk.NewDec(20)).WithMaintenanceMarginRatio(sdk.NewDec(1))
 			},
@@ -88,7 +96,8 @@ func TestMarketEqual(t *testing.T) {
 		WithPartialLiquidationRatio(sdk.NewDecWithPrec(1, 1)).
 		WithMaxLeverage(sdk.NewDec(10)).
 		WithLatestCumulativePremiumFraction(sdk.OneDec()).
-		WithMaxFundingRate(sdk.OneDec())
+		WithMaxFundingRate(sdk.OneDec()).
+		WithOraclePair(asset.Registry.Pair(denoms.BTC, denoms.USD))
 
 	// Test when all values are within expected ranges
 	require.NoError(t, market.Validate())
@@ -150,6 +159,10 @@ func TestMarketEqual(t *testing.T) {
 		{
 			modifier:      func(m Market) Market { return m.WithTwapLookbackWindow(time.Minute) },
 			requiredError: "expected market twap lookback window",
+		},
+		{
+			modifier:      func(m Market) Market { return m.WithOraclePair("abc") },
+			requiredError: "expected oracle pair ubtc:uusd, got abc",
 		},
 	}
 	for _, tc := range testCases {

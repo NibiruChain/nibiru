@@ -21,6 +21,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 		maintainRatio   string
 		maxLeverage     string
 		maxFundingRate  string
+		oraclePair      string
 		expectError     bool
 	}{
 		{
@@ -31,6 +32,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			maintainRatio:   "1",
 			maxLeverage:     "1",
 			maxFundingRate:  "1",
+			oraclePair:      "token0:token1",
 			expectError:     true,
 		},
 		{
@@ -41,6 +43,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			maintainRatio:   "1",
 			maxLeverage:     "1",
 			maxFundingRate:  "1",
+			oraclePair:      "token0:token1",
 			expectError:     true,
 		},
 		{
@@ -51,6 +54,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			maintainRatio:   "1",
 			maxLeverage:     "1",
 			maxFundingRate:  "1",
+			oraclePair:      "token0:token1",
 			expectError:     true,
 		},
 		{
@@ -61,6 +65,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			maintainRatio:   "0.1",
 			maxLeverage:     "0",
 			maxFundingRate:  "0",
+			oraclePair:      "token0:token1",
 			expectError:     true,
 		},
 		{
@@ -71,6 +76,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			maintainRatio:   "0.1",
 			maxLeverage:     "1",
 			maxFundingRate:  "1",
+			oraclePair:      "token0:token1",
 			expectError:     true,
 		},
 		{
@@ -81,6 +87,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			maintainRatio:   "0.1",
 			maxLeverage:     "1",
 			maxFundingRate:  "1",
+			oraclePair:      "token0:token1",
 			expectError:     true,
 		},
 		{
@@ -91,6 +98,18 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			maintainRatio:   "0.1",
 			maxLeverage:     "10",
 			maxFundingRate:  "-1",
+			oraclePair:      "token0:token1",
+			expectError:     true,
+		},
+		{
+			name:            "invalid oracle pair",
+			pairName:        "token0:token1",
+			sqrtDepth:       "100",
+			priceMultiplier: "1",
+			maintainRatio:   "0.1",
+			maxLeverage:     "10",
+			maxFundingRate:  "-1",
+			oraclePair:      "invalidPair",
 			expectError:     true,
 		},
 		{
@@ -101,6 +120,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			maintainRatio:   "0.1",
 			maxLeverage:     "10",
 			maxFundingRate:  "10",
+			oraclePair:      "token0:token1",
 			expectError:     false,
 		},
 	}
@@ -117,6 +137,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 				fmt.Sprintf("--%s=%s", cli.FlagMaintenenceMarginRatio, tc.maintainRatio),
 				fmt.Sprintf("--%s=%s", cli.FlagMaxLeverage, tc.maxLeverage),
 				fmt.Sprintf("--%s=%s", cli.FlagMaxFundingrate, tc.maxFundingRate),
+				fmt.Sprintf("--%s=%s", cli.FlagOraclePair, tc.oraclePair),
 				fmt.Sprintf("--%s=home", flags.FlagHome),
 			})
 

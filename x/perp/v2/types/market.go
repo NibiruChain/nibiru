@@ -46,6 +46,10 @@ func (market Market) Validate() error {
 		return fmt.Errorf("margin ratio opened with max leverage position will be lower than Maintenance margin ratio")
 	}
 
+	if err := market.OraclePair.Validate(); err != nil {
+		return fmt.Errorf("err when validating oracle pair %w", err)
+	}
+
 	return nil
 }
 
@@ -91,6 +95,11 @@ func (market Market) WithMaxFundingRate(value sdk.Dec) Market {
 
 func (market Market) WithPair(value asset.Pair) Market {
 	market.Pair = value
+	return market
+}
+
+func (market Market) WithOraclePair(value asset.Pair) Market {
+	market.OraclePair = value
 	return market
 }
 
@@ -176,6 +185,10 @@ func MarketsAreEqual(expected, actual Market) error {
 
 	if expected.TwapLookbackWindow != actual.TwapLookbackWindow {
 		return fmt.Errorf("expected market twap lookback window %s, got %s", expected.TwapLookbackWindow, actual.TwapLookbackWindow)
+	}
+
+	if expected.OraclePair != actual.OraclePair {
+		return fmt.Errorf("expected oracle pair %s, got %s", expected.OraclePair, actual.OraclePair)
 	}
 
 	if !expected.LatestCumulativePremiumFraction.Equal(actual.LatestCumulativePremiumFraction) {

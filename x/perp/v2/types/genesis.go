@@ -7,6 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/denoms"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -64,6 +65,7 @@ func DefaultMarket(pair asset.Pair) Market {
 		PrepaidBadDebt:                  sdk.NewCoin(TestingCollateralDenomNUSD, sdk.ZeroInt()),
 		MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.0625"),
 		MaxLeverage:                     sdk.NewDec(10),
+		OraclePair:                      asset.NewPair(pair.BaseDenom(), denoms.USD),
 	}
 }
 
