@@ -116,7 +116,7 @@ func TestCreateMarket(t *testing.T) {
 		Pair:            pair,
 		PriceMultiplier: amm.PriceMultiplier,
 		SqrtDepth:       amm.SqrtDepth,
-		Market:          &market, // Invalid maintenance ratio
+		Market:          &market, // Invalid oracle pair
 	})
 	require.ErrorContains(t, err, "err when validating oracle pair random: invalid token pair")
 
