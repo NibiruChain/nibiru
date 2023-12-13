@@ -10,13 +10,9 @@
 # ```
 set -e
 
-# libwasmvm
 WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | awk '{sub(/^v/, "", $2); print $2}')
-wget https://github.com/CosmWasm/wasmvm/releases/download/v${WASMVM_VERSION}/libwasmvmstatic_darwin.a -O /usr/local/osxcross/SDK/MacOSX12.0.sdk/usr/lib/libwasmvmstatic_darwin.a
-
-# librocksdb
 ROCKSDB_VERSION=8.8.1
-wget https://github.com/NibiruChain/gorocksdb/releases/download/v${ROCKSDB_VERSION}/include.${ROCKSDB_VERSION}.tar.gz -O /root/include.${ROCKSDB_VERSION}.tar.gz
-tar -xf /root/include.${ROCKSDB_VERSION}.tar.gz -C /usr/local/osxcross/SDK/MacOSX12.0.sdk/usr/include/
-wget https://github.com/NibiruChain/gorocksdb/releases/download/v${ROCKSDB_VERSION}/librocksdb_${ROCKSDB_VERSION}_darwin_all.tar.gz -O /root/librocksdb_${ROCKSDB_VERSION}_darwin_all.tar.gz
-tar -xf /root/librocksdb_${ROCKSDB_VERSION}_darwin_all.tar.gz -C /usr/local/osxcross/SDK/MacOSX12.0.sdk/usr/lib/
+
+flock -x /tmp/wasmvm-lock -c "wget -c https://github.com/CosmWasm/wasmvm/releases/download/v${WASMVM_VERSION}/libwasmvmstatic_darwin.a -O /tmp/libwasmvmstatic_darwin.a && [ ! -f /usr/local/osxcross/SDK/MacOSX12.0.sdk/usr/lib/libwasmvmstatic_darwin.a ] && cp /tmp/libwasmvmstatic_darwin.a /usr/local/osxcross/SDK/MacOSX12.0.sdk/usr/lib/libwasmvmstatic_darwin.a; echo 'libwasmvm installed'"
+flock -x /tmp/rocksdb-darwin-headers-lock -c "wget -c https://github.com/NibiruChain/gorocksdb/releases/download/v${ROCKSDB_VERSION}/include.${ROCKSDB_VERSION}.tar.gz -O /tmp/include.${ROCKSDB_VERSION}.tar.gz && [ ! -d /usr/local/osxcross/SDK/MacOSX12.0.sdk/usr/include/rocksdb ] && tar -xvf /tmp/include.${ROCKSDB_VERSION}.tar.gz -C /usr/local/osxcross/SDK/MacOSX12.0.sdk/usr/include/; echo 'rocksdb headers installed'"
+flock -x /tmp/rocksdb-lib-lock -c "wget -c https://github.com/NibiruChain/gorocksdb/releases/download/v${ROCKSDB_VERSION}/librocksdb_${ROCKSDB_VERSION}_darwin_all.tar.gz -O /tmp/librocksdb_${ROCKSDB_VERSION}_darwin_all.tar.gz && [ ! -f /usr/local/osxcross/SDK/MacOSX12.0.sdk/usr/lib/librocksdb.a ] && tar -xvf /tmp/librocksdb_${ROCKSDB_VERSION}_darwin_all.tar.gz -C /usr/local/osxcross/SDK/MacOSX12.0.sdk/usr/lib/; echo 'librocksdb installed'"
