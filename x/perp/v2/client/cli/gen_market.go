@@ -168,12 +168,12 @@ func newMarketFromFlags(flagSet *flag.FlagSet,
 
 	maxLeverage, err := sdk.NewDecFromStr(maxLeverageStr)
 	if err != nil {
-		return types.Market{}, types.AMM{}, err
+		return
 	}
 
 	maxFundingRate, err := sdk.NewDecFromStr(maxFundingRateStr)
 	if err != nil {
-		return types.Market{}, types.AMM{}, err
+		return
 	}
 
 	oraclePair, err := asset.TryNewPair(oraclePairStr)
@@ -183,7 +183,7 @@ func newMarketFromFlags(flagSet *flag.FlagSet,
 
 	priceMultiplier, err := sdk.NewDecFromStr(priceMultiplierStr)
 	if err != nil {
-		return types.Market{}, types.AMM{}, err
+		return
 	}
 
 	market = types.Market{
