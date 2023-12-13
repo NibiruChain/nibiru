@@ -25,11 +25,11 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, number ui
 
 		indexTwap, err := k.OracleKeeper.GetExchangeRateTwap(ctx, market.OraclePair)
 		if err != nil {
-			ctx.Logger().Error("failed to fetch twap index price", "market.Pair", market.Pair, "error", err)
+			ctx.Logger().Error("failed to fetch twap index price", "market.OraclePair", market.OraclePair, "market.Pair", market.Pair, "error", err)
 			continue
 		}
 		if indexTwap.IsZero() {
-			ctx.Logger().Error("index price is zero", "market.Pair", market.Pair)
+			ctx.Logger().Error("index price is zero", "market.OraclePair", market.OraclePair, "market.Pair", market.Pair)
 			continue
 		}
 
