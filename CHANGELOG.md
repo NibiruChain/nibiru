@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * [#1688](https://github.com/NibiruChain/nibiru/pull/1688) - fix(inflation)!: make default inflation allocation follow tokenomics
 * [#1682](https://github.com/NibiruChain/nibiru/pull/1682) - feat!: add upgrade handler for v1.1.0
+* [#1706](https://github.com/NibiruChain/nibiru/pull/706) - fix: `v1.1.0` upgrade handler
 
 #### Dapp modules: perp, spot, etc
 
@@ -77,7 +78,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Bump `actions/setup-go` from 4 to 5 ([#1696](https://github.com/NibiruChain/nibiru/pull/1696))
 * Bump `golang` from 1.19 to 1.21 ([#1698](https://github.com/NibiruChain/nibiru/pull/1698))
 * [#1678](https://github.com/NibiruChain/nibiru/pull/1678) - chore(deps): collections to v0.4.0 for math.Int value encoder
-
 
 ## [v1.1.0] - 2023-11-20
 
