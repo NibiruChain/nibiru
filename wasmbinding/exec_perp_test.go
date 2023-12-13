@@ -190,6 +190,7 @@ func (s *TestSuitePerpExecutor) DoCreateMarketTestWithParams(pair asset.Pair) er
 			FundingRateEpochId:              "hi",
 			MaxFundingRate:                  sdk.OneDec(),
 			TwapLookbackWindow:              sdk.OneInt(),
+			OraclePair:                      pair.String(),
 		},
 	}
 
