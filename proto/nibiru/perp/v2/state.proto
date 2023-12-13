@@ -116,6 +116,14 @@ message Market {
     (gogoproto.stdduration) = true,
     (gogoproto.nullable) = false
   ];
+
+  // the pair of the oracle that is used to determine the index price
+  // for the market
+  string oracle_pair = 15 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // MarketLastVersion is used to store the last version of the market

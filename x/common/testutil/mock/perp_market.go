@@ -27,5 +27,6 @@ func TestMarket() *types.Market {
 		MaxFundingRate:                  sdk.NewDec(1),
 		TwapLookbackWindow:              time.Minute * 30,
 		PrepaidBadDebt:                  sdk.NewInt64Coin(denoms.NUSD, 0),
+		OraclePair:                      asset.NewPair(denoms.BTC, denoms.USD),
 	}
 }

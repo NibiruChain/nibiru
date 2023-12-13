@@ -90,6 +90,7 @@ type MarketParams struct {
 	MaxFundingRate sdk.Dec `json:"max_funding_rate,omitempty"`
 	// amount of time to look back for TWAP calculations
 	TwapLookbackWindow sdkmath.Int `json:"twap_lookback_window"`
+	OraclePair         string      `json:"oracle_pair"`
 }
 
 type NoOp struct{}
