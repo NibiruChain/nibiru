@@ -102,7 +102,7 @@ func TestAddMarketGenesisCmd(t *testing.T) {
 			expectError:     true,
 		},
 		{
-			name:            "negative max funding rate",
+			name:            "invalid oracle pair",
 			pairName:        "token0:token1",
 			sqrtDepth:       "100",
 			priceMultiplier: "1",
