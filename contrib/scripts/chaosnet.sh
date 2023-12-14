@@ -3,7 +3,6 @@ set -e
 
 # Set localnet settings
 MNEMONIC=${MNEMONIC:-"guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host"}
-VAL_ADDR="nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"
 CHAIN_ID=${CHAIN_ID:-"nibiru-localnet-0"}
 LCD_PORT=${LCD_PORT:-"1317"}
 GRPC_PORT=${GRPC_PORT:-"9090"}
@@ -60,7 +59,7 @@ add_genesis_perp_markets_with_coingecko_prices() {
     return 1
   fi
 
-  nibid genesis add-genesis-perp-market --pair=ubtc:unusd --sqrt-depth=$reserve_amt --price-multiplier=$price_btc
+  nibid genesis add-genesis-perp-market --pair=ubtc:unusd --sqrt-depth=$reserve_amt --price-multiplier=$price_btc --oracle-pair=ubtc:uusd
 
   price_eth=$(cat tmp_market_prices.json | jq -r '.ethereum.usd')
   price_eth=${price_eth%.*}
@@ -68,29 +67,31 @@ add_genesis_perp_markets_with_coingecko_prices() {
     return 1
   fi
 
-  nibid genesis add-genesis-perp-market --pair=ueth:unusd --sqrt-depth=$reserve_amt --price-multiplier=$price_eth
+  nibid genesis add-genesis-perp-market --pair=ueth:unusd --sqrt-depth=$reserve_amt --price-multiplier=$price_eth --oracle-pair=ueth:uusd
 }
 
 add_genesis_perp_markets_with_coingecko_prices
 
+# recover mnemonic
+echo "$MNEMONIC" | nibid keys add validator --recover
+nibid genesis add-genesis-account $(nibid keys show validator -a) "10000000000000unibi"
+
 # x/sudo
-add_genesis_param ".app_state.sudo.sudoers.root = \"$VAL_ADDR\""
+add_genesis_param ".app_state.sudo.sudoers.root = \"$(nibid keys show validator -a)\""
 
 # x/oracle
 add_genesis_param '.app_state.oracle.params.twap_lookback_window = "900s"'
 add_genesis_param '.app_state.oracle.params.vote_period = "10"'
 add_genesis_param '.app_state.oracle.params.min_voters = "1"'
+nibid genesis add-genesis-pricefeeder-delegation --validator $(nibid keys show validator -a --bech val) --pricefeeder nibi19n0clnacpjv0d3t8evvzp3fptlup9srjdqunzs
 
 # ------------------------------------------------------------------------
-# Start Network
+# genesis accounts and balances
 # ------------------------------------------------------------------------
-
-echo "$MNEMONIC" | nibid keys add validator --recover
-nibid genesis add-genesis-account $(nibid keys show validator -a) "10000000000000unibi,10000000000000unusd,10000000000000uusdt,10000000000000uusdc"
-nibid genesis add-genesis-account nibi1wx9360p9rvy9m5cdhsua6qpdf9ktvwhjqw949s "10000000000000unibi,10000000000000unusd,10000000000000uusdt,10000000000000uusdc" # faucet
+nibid genesis add-genesis-account nibi1wx9360p9rvy9m5cdhsua6qpdf9ktvwhjqw949s "10000000000000unibi" # faucet
 nibid genesis add-genesis-account nibi1g7vzqfthhf4l4vs6skyjj27vqhe97m5gp33hxy "10000000000000unibi" # liquidator
 nibid genesis add-genesis-account nibi19n0clnacpjv0d3t8evvzp3fptlup9srjdqunzs "10000000000000unibi" # pricefeeder
 
+# gen_txs
 nibid genesis gentx validator 900000000unibi --chain-id $CHAIN_ID
 nibid genesis collect-gentxs
-nibid genesis add-genesis-pricefeeder-delegation --validator $(nibid keys show validator -a --bech val) --pricefeeder nibi19n0clnacpjv0d3t8evvzp3fptlup9srjdqunzs
