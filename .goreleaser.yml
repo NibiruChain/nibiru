@@ -80,6 +80,7 @@ builds:
       - muslc
       - rocksdb
       - static
+      - grocksdb_no_link
 
 universal_binaries:
   - id: darwin
