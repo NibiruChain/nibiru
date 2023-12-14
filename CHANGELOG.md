@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * [#1688](https://github.com/NibiruChain/nibiru/pull/1688) - fix(inflation)!: make default inflation allocation follow tokenomics
 * [#1682](https://github.com/NibiruChain/nibiru/pull/1682) - feat!: add upgrade handler for v1.1.0
+* [#1706](https://github.com/NibiruChain/nibiru/pull/706) - fix: `v1.1.0` upgrade handler
 
 #### Dapp modules: perp, spot, etc
 
@@ -60,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1656](https://github.com/NibiruChain/nibiru/pull/1656) - feat(perp): Make the collateral denom a stateful collections.Item
 * [#1632](https://github.com/NibiruChain/nibiru/pull/1632) - feat(perp): Add settle position transaction
 * [#1573](https://github.com/NibiruChain/nibiru/pull/1573) - feat(perp): Close markets and compute settlement price
+* [#1705](https://github.com/NibiruChain/nibiru/pull/1705) - feat(perp): Add oracle pair to market object
 
 ### Non-breaking/Compatible Improvements
 
@@ -75,7 +77,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Bump `github.com/grpc-ecosystem/grpc-gateway/v2` from 2.18.0 to 2.18.1 ([#1675](https://github.com/NibiruChain/nibiru/pull/1675))
 * Bump `actions/setup-go` from 4 to 5 ([#1696](https://github.com/NibiruChain/nibiru/pull/1696))
 * Bump `golang` from 1.19 to 1.21 ([#1698](https://github.com/NibiruChain/nibiru/pull/1698))
+* [#1678](https://github.com/NibiruChain/nibiru/pull/1678) - chore(deps): collections to v0.4.0 for math.Int value encoder
 * Bump `rocksdb` from 8.1.1 to 8.8.1
+
 
 ## [v1.1.0] - 2023-11-20
 
@@ -133,6 +137,7 @@ v0.47.5.
 * [#1614](https://github.com/NibiruChain/nibiru/pull/1614) - refactor(proto): Use explicit namespacing on proto imports for #1608
 * [#1610](https://github.com/NibiruChain/nibiru/pull/1610) - refactor(app): Simplify app.go with less redundant imports using struct embedding.
 * [#1606](https://github.com/NibiruChain/nibiru/pull/1606) - fix(perp): emit `MarketUpdatedEvent` in the absence of index price
+* [#1700](https://github.com/NibiruChain/nibiru/pull/1700) - fix(oracle): remove non deterministic sqrt calculation
 
 ### Dependencies
 

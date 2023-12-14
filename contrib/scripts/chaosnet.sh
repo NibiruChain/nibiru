@@ -1,14 +1,15 @@
-#!/bin/sh
+#!/usr/bin/env bash
 set -e
 
 # Set localnet settings
 MNEMONIC=${MNEMONIC:-"guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host"}
+VAL_ADDR="nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"
 CHAIN_ID=${CHAIN_ID:-"nibiru-localnet-0"}
 LCD_PORT=${LCD_PORT:-"1317"}
 GRPC_PORT=${GRPC_PORT:-"9090"}
 RPC_PORT=${RPC_PORT:-"26657"}
 
-rm -rf $HOME/.nibid
+rm -rf "$HOME/.nibid"
 nibid init $CHAIN_ID --chain-id $CHAIN_ID --home $HOME/.nibid --overwrite
 nibid config keyring-backend test
 nibid config chain-id $CHAIN_ID
@@ -23,13 +24,6 @@ sed -i 's/enabled-unsafe-cors = false/enabled-unsafe-cors = true/' $HOME/.nibid/
 sed -i "s/localhost:1317/0.0.0.0:$LCD_PORT/" $HOME/.nibid/config/app.toml
 sed -i "s/localhost:9090/0.0.0.0:$GRPC_PORT/" $HOME/.nibid/config/app.toml
 
-echo "$MNEMONIC" | nibid keys add validator --recover
-nibid genesis add-genesis-account $(nibid keys show validator -a) "10000000000000unibi,10000000000000unusd,10000000000000uusdt,10000000000000uusdc"
-nibid genesis add-genesis-account nibi1wx9360p9rvy9m5cdhsua6qpdf9ktvwhjqw949s "10000000000000unibi,10000000000000unusd,10000000000000uusdt,10000000000000uusdc" # faucet
-nibid genesis add-genesis-account nibi1g7vzqfthhf4l4vs6skyjj27vqhe97m5gp33hxy "10000000000000unibi" # liquidator
-nibid genesis add-genesis-account nibi19n0clnacpjv0d3t8evvzp3fptlup9srjdqunzs "10000000000000unibi" # pricefeeder
-nibid genesis gentx validator 900000000unibi --chain-id $CHAIN_ID
-nibid genesis collect-gentxs
 
 # ------------------------------------------------------------------------
 # Configure genesis params
@@ -46,7 +40,6 @@ add_genesis_param() {
   # rewrite genesis.json with the contents of tmp_genesis.json
   mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
 }
-
 
 add_genesis_perp_markets_with_coingecko_prices() {
   local temp_json_fname="tmp_market_prices.json"
@@ -80,9 +73,24 @@ add_genesis_perp_markets_with_coingecko_prices() {
 
 add_genesis_perp_markets_with_coingecko_prices
 
+# x/sudo
+add_genesis_param ".app_state.sudo.sudoers.root = \"$VAL_ADDR\""
+
 # x/oracle
 add_genesis_param '.app_state.oracle.params.twap_lookback_window = "900s"'
 add_genesis_param '.app_state.oracle.params.vote_period = "10"'
 add_genesis_param '.app_state.oracle.params.min_voters = "1"'
 
+# ------------------------------------------------------------------------
+# Start Network
+# ------------------------------------------------------------------------
+
+echo "$MNEMONIC" | nibid keys add validator --recover
+nibid genesis add-genesis-account $(nibid keys show validator -a) "10000000000000unibi,10000000000000unusd,10000000000000uusdt,10000000000000uusdc"
+nibid genesis add-genesis-account nibi1wx9360p9rvy9m5cdhsua6qpdf9ktvwhjqw949s "10000000000000unibi,10000000000000unusd,10000000000000uusdt,10000000000000uusdc" # faucet
+nibid genesis add-genesis-account nibi1g7vzqfthhf4l4vs6skyjj27vqhe97m5gp33hxy "10000000000000unibi" # liquidator
+nibid genesis add-genesis-account nibi19n0clnacpjv0d3t8evvzp3fptlup9srjdqunzs "10000000000000unibi" # pricefeeder
+
+nibid genesis gentx validator 900000000unibi --chain-id $CHAIN_ID
+nibid genesis collect-gentxs
 nibid genesis add-genesis-pricefeeder-delegation --validator $(nibid keys show validator -a --bech val) --pricefeeder nibi19n0clnacpjv0d3t8evvzp3fptlup9srjdqunzs

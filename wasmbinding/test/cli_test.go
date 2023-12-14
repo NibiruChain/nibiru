@@ -62,6 +62,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			MaxFundingRate:                  sdk.OneDec(),
 			TwapLookbackWindow:              30 * time.Minute,
 			PrepaidBadDebt:                  sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
+			OraclePair:                      asset.Registry.Pair(denoms.ETH, denoms.USD),
 		},
 	}
 	perpv2Gen.Amms = []perpv2types.AMM{
