@@ -11,8 +11,8 @@
 set -e
 
 WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | awk '{sub(/^v/, "", $2); print $2}')
-wget https://github.com/CosmWasm/wasmvm/releases/download/v${WASMVM_VERSION}/libwasmvmstatic_darwin.a -O /usr/local/osxcross/SDK/MacOSX12.0.sdk/usr/lib/libwasmvmstatic_darwin.a
-wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/include.8.1.1.tar.gz -O /root/include.8.1.1.tar.gz
-tar -xf /root/include.8.1.1.tar.gz -C /usr/local/osxcross/SDK/MacOSX12.0.sdk/usr/include/
-wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/librocksdb_8.1.1_darwin_all.tar.gz -O /root/librocksdb_8.1.1_darwin_all.tar.gz
-tar -xf /root/librocksdb_8.1.1_darwin_all.tar.gz -C /usr/local/osxcross/SDK/MacOSX12.0.sdk/usr/lib/
+ROCKSDB_VERSION=8.8.1
+
+flock -x /tmp/wasmvm-lock -c "wget -c https://github.com/CosmWasm/wasmvm/releases/download/v${WASMVM_VERSION}/libwasmvmstatic_darwin.a -O /tmp/libwasmvmstatic_darwin.a && [ ! -f /usr/local/osxcross/SDK/MacOSX12.0.sdk/usr/lib/libwasmvmstatic_darwin.a ] && cp /tmp/libwasmvmstatic_darwin.a /usr/local/osxcross/SDK/MacOSX12.0.sdk/usr/lib/libwasmvmstatic_darwin.a; echo 'libwasmvm installed'"
+flock -x /tmp/rocksdb-darwin-headers-lock -c "wget -c https://github.com/NibiruChain/gorocksdb/releases/download/v${ROCKSDB_VERSION}/include.${ROCKSDB_VERSION}.tar.gz -O /tmp/include.${ROCKSDB_VERSION}.tar.gz && [ ! -d /usr/local/osxcross/SDK/MacOSX12.0.sdk/usr/include/rocksdb ] && tar -xvf /tmp/include.${ROCKSDB_VERSION}.tar.gz -C /usr/local/osxcross/SDK/MacOSX12.0.sdk/usr/include/; echo 'rocksdb headers installed'"
+flock -x /tmp/rocksdb-lib-lock -c "wget -c https://github.com/NibiruChain/gorocksdb/releases/download/v${ROCKSDB_VERSION}/librocksdb_${ROCKSDB_VERSION}_darwin_all.tar.gz -O /tmp/librocksdb_${ROCKSDB_VERSION}_darwin_all.tar.gz && [ ! -f /usr/local/osxcross/SDK/MacOSX12.0.sdk/usr/lib/librocksdb.a ] && tar -xvf /tmp/librocksdb_${ROCKSDB_VERSION}_darwin_all.tar.gz -C /usr/local/osxcross/SDK/MacOSX12.0.sdk/usr/lib/; echo 'librocksdb installed'"
