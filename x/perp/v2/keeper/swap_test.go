@@ -81,7 +81,7 @@ func TestSwapQuoteAsset(t *testing.T) {
 			quoteAssetAmt:  sdk.NewDec(2e12 + 1),
 			baseAssetLimit: sdk.ZeroDec(),
 
-			expectedErr: types.ErrQuoteReserveAtZero,
+			expectedErr: types.ErrAmmNonpositiveReserves,
 		},
 	}
 
@@ -181,7 +181,7 @@ func TestSwapBaseAsset(t *testing.T) {
 			baseAssetAmt:    sdk.NewDec(1e12 + 1),
 			quoteAssetLimit: sdk.ZeroDec(),
 
-			expectedErr: types.ErrBaseReserveAtZero,
+			expectedErr: types.ErrAmmNonpositiveReserves,
 		},
 	}
 
