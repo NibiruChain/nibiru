@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+#
+# This script is used in tandem with `contrib/docker/chaosnet.Dockerfile` to
+# run nodes for Nibiru Chain networks inside docker containers. 
+# - See CHAOSNET.md for usage instructions.
 set -e
 
 # Set localnet settings
