@@ -364,7 +364,7 @@ func (m MsgShiftPegMultiplier) ValidateBasic() error {
 		return err
 	}
 	if !m.NewPegMult.IsPositive() {
-		return fmt.Errorf("%w: got value %s", ErrNonPositivePegMultiplier, m.NewPegMult)
+		return fmt.Errorf("%w: got value %s", ErrAmmNonPositivePegMult, m.NewPegMult)
 	}
 	return nil
 }
@@ -391,7 +391,7 @@ func (m MsgShiftSwapInvariant) ValidateBasic() error {
 		return err
 	}
 	if !m.NewSwapInvariant.IsPositive() {
-		return fmt.Errorf("%w: got value %s", ErrNonPositiveSwapInvariant, m.NewSwapInvariant)
+		return fmt.Errorf("%w: got value %s", ErrAmmNonPositiveSwapInvariant, m.NewSwapInvariant)
 	}
 	return nil
 }

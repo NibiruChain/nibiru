@@ -298,7 +298,7 @@ func TestCalcTwapExtended(t *testing.T) {
 			twapCalcOption:     types.TwapCalcOption_QUOTE_ASSET_SWAP,
 			direction:          types.Direction_SHORT,
 			assetAmount:        sdk.NewDec(20),
-			expectedErr:        types.ErrQuoteReserveAtZero,
+			expectedErr:        types.ErrAmmNonpositiveReserves,
 		},
 
 		// k: 60 * 100 = 600
@@ -362,7 +362,7 @@ func TestCalcTwapExtended(t *testing.T) {
 			twapCalcOption:     types.TwapCalcOption_BASE_ASSET_SWAP,
 			direction:          types.Direction_LONG,
 			assetAmount:        sdk.NewDec(10),
-			expectedErr:        types.ErrBaseReserveAtZero,
+			expectedErr:        types.ErrAmmNonpositiveReserves,
 		},
 	}
 
