@@ -24,6 +24,7 @@ var ExpectedTotalInflation = sdk.NewDec(810_600_000_000_000)
 
 func TestCalculateEpochMintProvision(t *testing.T) {
 	params := DefaultParams()
+	params.InflationEnabled = true
 
 	epochId := uint64(0)
 	totalInflation := sdk.ZeroDec()
