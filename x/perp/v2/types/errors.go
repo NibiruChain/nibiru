@@ -1,13 +1,17 @@
 package types
 
-import sdkerrors "cosmossdk.io/errors"
+import (
+	sdkerrors "cosmossdk.io/errors"
+	"sync/atomic"
+)
 
 var moduleErrorCodeIdx uint32 = 1
 
 // registerError: Cleaner way of using 'sdkerrors.Register' without as much time
 // manually writing integers.
 func registerError(msg string) *sdkerrors.Error {
-	moduleErrorCodeIdx += 1
+	// Atomic for thread safety on concurrent calls
+	atomic.AddUint32(&moduleErrorCodeIdx, 1)
 	return sdkerrors.Register(ModuleName, moduleErrorCodeIdx, msg)
 }
 
