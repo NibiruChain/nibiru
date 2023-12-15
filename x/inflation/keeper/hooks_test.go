@@ -16,6 +16,10 @@ import (
 func TestEpochIdentifierAfterEpochEnd(t *testing.T) {
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 
+	params := nibiruApp.InflationKeeper.GetParams(ctx)
+	params.InflationEnabled = true
+	nibiruApp.InflationKeeper.SetParams(ctx, params)
+
 	feePoolOld := nibiruApp.DistrKeeper.GetFeePool(ctx)
 	nibiruApp.EpochsKeeper.AfterEpochEnd(ctx, epochstypes.DayEpochID, 1)
 	feePoolNew := nibiruApp.DistrKeeper.GetFeePool(ctx)
