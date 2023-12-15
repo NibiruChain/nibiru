@@ -143,8 +143,6 @@ func WasmAcceptedStargateQueries() wasmkeeper.AcceptedStargateQueries {
 
 		// TODO: for post v1
 		// nibiru.perp
-
-		// TODO: for post v1
 		// nibiru.spot
 	}
 }
