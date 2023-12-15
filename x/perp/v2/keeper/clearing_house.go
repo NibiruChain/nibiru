@@ -97,7 +97,7 @@ func (k Keeper) MarketOrder(
 
 	// check bad debt
 	if !positionResp.Position.Size_.IsZero() {
-		if !positionResp.BadDebt.IsZero() {
+		if positionResp.BadDebt.IsPositive() {
 			return nil, types.ErrBadDebt.Wrapf("position has bad debt %s", positionResp.BadDebt)
 		}
 
@@ -542,7 +542,7 @@ func (k Keeper) afterPositionUpdate(
 
 	collateral, err := k.Collateral.Get(ctx)
 	if errors.Is(err, collections.ErrNotFound) {
-		return types.ErrCollateralTokenFactoryDenomNotSet
+		return types.ErrCollateralDenomNotSet
 	}
 
 	switch {

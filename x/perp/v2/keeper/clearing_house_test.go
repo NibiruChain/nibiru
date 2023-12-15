@@ -51,7 +51,7 @@ func TestMarketOrder(t *testing.T) {
 				ShiftSwapInvariant(pairBtcNusd, sdk.NewInt(1)),
 			).
 			When(
-				PartialCloseFails(alice, pairBtcNusd, sdk.NewDec(5_000), types.ErrBaseReserveAtZero),
+				PartialCloseFails(alice, pairBtcNusd, sdk.NewDec(5_000), types.ErrAmmNonpositiveReserves),
 			).
 			Then(
 				ClosePosition(bob, pairBtcNusd),

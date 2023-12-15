@@ -74,26 +74,22 @@ func (k Keeper) AddMargin(
 		return nil, err
 	}
 
-	if err = ctx.EventManager().EmitTypedEvent(
-		&types.PositionChangedEvent{
-			FinalPosition:    position,
-			PositionNotional: positionNotional,
-			TransactionFee:   sdk.NewCoin(collateral, sdk.ZeroInt()), // always zero when adding margin
-			RealizedPnl:      sdk.ZeroDec(),                          // always zero when adding margin
-			BadDebt:          sdk.NewCoin(collateral, sdk.ZeroInt()), // always zero when adding margin
-			FundingPayment:   fundingPayment,
-			BlockHeight:      ctx.BlockHeight(),
-			MarginToUser:     marginToAdd.Amount.Neg(),
-			ChangeReason:     types.ChangeReason_AddMargin,
-		},
-	); err != nil {
-		return nil, err
-	}
-
 	return &types.MsgAddMarginResponse{
-		FundingPayment: fundingPayment,
-		Position:       &position,
-	}, nil
+			FundingPayment: fundingPayment,
+			Position:       &position,
+		}, ctx.EventManager().EmitTypedEvent(
+			&types.PositionChangedEvent{
+				FinalPosition:    position,
+				PositionNotional: positionNotional,
+				TransactionFee:   sdk.NewCoin(collateral, sdk.ZeroInt()), // always zero when adding margin
+				RealizedPnl:      sdk.ZeroDec(),                          // always zero when adding margin
+				BadDebt:          sdk.NewCoin(collateral, sdk.ZeroInt()), // always zero when adding margin
+				FundingPayment:   fundingPayment,
+				BlockHeight:      ctx.BlockHeight(),
+				MarginToUser:     marginToAdd.Amount.Neg(),
+				ChangeReason:     types.ChangeReason_AddMargin,
+			},
+		)
 }
 
 /*
@@ -184,24 +180,20 @@ func (k Keeper) RemoveMargin(
 	}
 	k.SavePosition(ctx, pair, market.Version, traderAddr, position)
 
-	if err = ctx.EventManager().EmitTypedEvent(
-		&types.PositionChangedEvent{
-			FinalPosition:    position,
-			PositionNotional: spotNotional,
-			TransactionFee:   sdk.NewCoin(collateral, sdk.ZeroInt()), // always zero when removing margin
-			RealizedPnl:      sdk.ZeroDec(),                          // always zero when removing margin
-			BadDebt:          sdk.NewCoin(collateral, sdk.ZeroInt()), // always zero when removing margin
-			FundingPayment:   fundingPayment,
-			BlockHeight:      ctx.BlockHeight(),
-			MarginToUser:     marginToRemove.Amount,
-			ChangeReason:     types.ChangeReason_RemoveMargin,
-		},
-	); err != nil {
-		return nil, err
-	}
-
 	return &types.MsgRemoveMarginResponse{
-		FundingPayment: fundingPayment,
-		Position:       &position,
-	}, nil
+			FundingPayment: fundingPayment,
+			Position:       &position,
+		}, ctx.EventManager().EmitTypedEvent(
+			&types.PositionChangedEvent{
+				FinalPosition:    position,
+				PositionNotional: spotNotional,
+				TransactionFee:   sdk.NewCoin(collateral, sdk.ZeroInt()), // always zero when removing margin
+				RealizedPnl:      sdk.ZeroDec(),                          // always zero when removing margin
+				BadDebt:          sdk.NewCoin(collateral, sdk.ZeroInt()), // always zero when removing margin
+				FundingPayment:   fundingPayment,
+				BlockHeight:      ctx.BlockHeight(),
+				MarginToUser:     marginToRemove.Amount,
+				ChangeReason:     types.ChangeReason_RemoveMargin,
+			},
+		)
 }

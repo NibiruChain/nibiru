@@ -1,7 +1,6 @@
 package types_test
 
 import (
-	fmt "fmt"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
@@ -77,7 +76,7 @@ func TestSwapBaseAsset(t *testing.T) {
 			name:         "not enough base in reserves",
 			baseAssetAmt: sdk.NewDec(1e13),
 			dir:          types.Direction_LONG,
-			expectedErr:  types.ErrBaseReserveAtZero,
+			expectedErr:  types.ErrAmmNonpositiveReserves,
 		},
 	}
 
@@ -169,7 +168,7 @@ func TestSwapQuoteAsset(t *testing.T) {
 			name:          "not enough base in reserves",
 			quoteAssetAmt: sdk.NewDec(1e13),
 			dir:           types.Direction_SHORT,
-			expectedErr:   types.ErrQuoteReserveAtZero,
+			expectedErr:   types.ErrAmmNonpositiveReserves,
 		},
 		{
 			name:          "negative quote asset amt",
@@ -589,7 +588,7 @@ func TestCalcUpdateSwapInvariantCost(t *testing.T) {
 				TotalShort:      sdk.ZeroDec(),
 			},
 			newSwapInvariant: sdk.NewDec(-1),
-			expectedErr:      types.ErrNonPositiveSwapInvariant,
+			expectedErr:      types.ErrAmmNonPositiveSwapInvariant,
 		},
 	}
 
@@ -712,7 +711,7 @@ func TestValidateAMM(t *testing.T) {
 				PriceMultiplier: sdk.OneDec(),
 				SqrtDepth:       sdk.OneDec(),
 			},
-			expectedErr: fmt.Errorf("init pool token supply must be > 0"),
+			expectedErr: types.ErrAmmBaseSupplyNonpositive,
 		},
 		{
 			name: "Invalid quote reserve",
@@ -722,7 +721,7 @@ func TestValidateAMM(t *testing.T) {
 				PriceMultiplier: sdk.OneDec(),
 				SqrtDepth:       sdk.OneDec(),
 			},
-			expectedErr: fmt.Errorf("init pool token supply must be > 0"),
+			expectedErr: types.ErrAmmQuoteSupplyNonpositive,
 		},
 		{
 			name: "Invalid price multiplier",
@@ -732,7 +731,7 @@ func TestValidateAMM(t *testing.T) {
 				PriceMultiplier: sdk.ZeroDec(),
 				SqrtDepth:       sdk.OneDec(),
 			},
-			expectedErr: fmt.Errorf("init price multiplier must be > 0"),
+			expectedErr: types.ErrAmmNonPositivePegMult,
 		},
 		{
 			name: "Invalid sqrt depth",
@@ -742,7 +741,7 @@ func TestValidateAMM(t *testing.T) {
 				PriceMultiplier: sdk.OneDec(),
 				SqrtDepth:       sdk.ZeroDec(),
 			},
-			expectedErr: fmt.Errorf("init sqrt depth must be > 0"),
+			expectedErr: types.ErrAmmNonPositiveSwapInvariant,
 		},
 		{
 			name: "Invalid sqrt depth value",

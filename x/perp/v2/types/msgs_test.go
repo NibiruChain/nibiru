@@ -390,7 +390,7 @@ func TestMsgValidateBasic(t *testing.T) {
 				NewPegMult: sdk.NewDec(-420), // invalid nonpositive
 			},
 			expectErr:     true,
-			expectedError: ErrNonPositivePegMultiplier.Error(),
+			expectedError: ErrAmmNonPositivePegMult.Error(),
 		},
 		// MsgDonateToEcosystemFund test cases
 		{
@@ -411,7 +411,7 @@ func TestMsgValidateBasic(t *testing.T) {
 				NewSwapInvariant: sdk.NewInt(-420), // invalid nonpositive
 			},
 			expectErr:     true,
-			expectedError: ErrNonPositiveSwapInvariant.Error(),
+			expectedError: ErrAmmNonPositiveSwapInvariant.Error(),
 		},
 		{
 			name: "MsgShiftSwapInvariant: nonpositive swap invariant",
@@ -421,7 +421,7 @@ func TestMsgValidateBasic(t *testing.T) {
 				NewSwapInvariant: sdk.ZeroInt(), // invalid nonpositive
 			},
 			expectErr:     true,
-			expectedError: ErrNonPositiveSwapInvariant.Error(),
+			expectedError: ErrAmmNonPositiveSwapInvariant.Error(),
 		},
 	}
 

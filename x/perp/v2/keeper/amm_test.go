@@ -194,7 +194,7 @@ func TestShiftPegMultiplier_Fail(t *testing.T) {
 
 	// Error because of invalid price multiplier
 	err = app.PerpKeeperV2.Admin.ShiftPegMultiplier(ctx, pair, sdk.NewDec(-1), adminAddr)
-	require.ErrorIs(t, err, types.ErrNonPositivePegMultiplier)
+	require.ErrorIs(t, err, types.ErrAmmNonPositivePegMult)
 
 	// Add market activity
 	err = app.BankKeeper.MintCoins(ctx, "inflation", sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1020))))
@@ -263,7 +263,7 @@ func TestShiftSwapInvariant_Fail(t *testing.T) {
 
 	// Error because of invalid price multiplier
 	err = app.PerpKeeperV2.Admin.ShiftSwapInvariant(ctx, pair, sdk.NewInt(-1), adminAddr)
-	require.ErrorIs(t, err, types.ErrNonPositiveSwapInvariant)
+	require.ErrorIs(t, err, types.ErrAmmNonPositiveSwapInvariant)
 
 	// Add market activity
 	err = app.BankKeeper.MintCoins(ctx, "inflation", sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(102))))
@@ -289,7 +289,7 @@ func TestShiftSwapInvariant_Fail(t *testing.T) {
 
 	// Fail at validate
 	err = app.PerpKeeperV2.Admin.ShiftSwapInvariant(ctx, pair, sdk.NewInt(0), adminAddr)
-	require.ErrorContains(t, err, types.ErrNonPositiveSwapInvariant.Error())
+	require.ErrorContains(t, err, types.ErrAmmNonPositiveSwapInvariant.Error())
 
 	// Works because it goes in the other way
 	err = app.PerpKeeperV2.Admin.ShiftSwapInvariant(ctx, pair, sdk.NewInt(500_000), adminAddr)

@@ -18,6 +18,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
+	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/v2/types"
 	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 	tftypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
@@ -126,7 +127,7 @@ func TestCreateMarket(t *testing.T) {
 		PriceMultiplier: sdk.NewDec(-1),
 		SqrtDepth:       amm.SqrtDepth,
 	})
-	require.ErrorContains(t, err, "init price multiplier must be > 0")
+	require.ErrorContains(t, err, types.ErrAmmNonPositivePegMult.Error())
 
 	// Set it correctly
 	err = admin.CreateMarket(ctx, keeper.ArgsCreateMarket{
