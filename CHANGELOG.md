@@ -71,6 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1695](https://github.com/NibiruChain/nibiru/pull/1695) - fix(sudo): Make blank sudoers root invalid at genesis time.
 
 ### Dependencies
+- Bump `github.com/cometbft/cometbft-db` from 0.8.0 to 0.9.1 ([#1693](https://github.com/NibiruChain/nibiru/pull/1693))
 
 * Bump `github.com/spf13/cast` from 1.5.1 to 1.6.0 ([#1689](https://github.com/NibiruChain/nibiru/pull/1689))
 * Bump `cosmossdk.io/math` from 1.1.2 to 1.2.0 ([#1676](https://github.com/NibiruChain/nibiru/pull/1676))
