@@ -33,7 +33,7 @@
 [code-x-oracle]: https://github.com/NibiruChain/nibiru/tree/master/x/oracle
 [code-x-perp]: https://github.com/NibiruChain/nibiru/tree/master/x/perp
 [code-x-spot]: https://github.com/NibiruChain/nibiru/tree/master/x/spot
-[code-x-wasm]: https://github.com/NibiruChain/nibiru/tree/master/x/wasm
+[code-x-wasm]: https://github.com/NibiruChain/nibiru/tree/main/wasmbinding
 
 Nibiru is built with the [Cosmos-SDK][cosmos-sdk-repo] on [Tendermint Core](https://tendermint.com/core/) consensus, accurately prices assets using a system of decentralized oracles, and communicates with other Cosmos layer-1 chains using the [Inter-Blockchain Communication (IBC)](https://github.com/cosmos/ibc) protocol.  
 
