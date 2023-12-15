@@ -49,10 +49,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Go
+      - name: "Set up Go"
         uses: actions/setup-go@v5
         with:
           go-version: 1.21
 
-      - name: Build the nibid binary
+      - name: "Build the nibid binary"
         run: make build
+
+      - name: "Run scripts/chaosnet.sh (Used in Docker image)"
+        run:  bash contrib/scripts/chaosnet.sh &

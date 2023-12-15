@@ -273,6 +273,8 @@ func (i insertPosition) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, er
 	return ctx, nil, true
 }
 
+// InsertPosition: Adds a position into state without a corresponding market
+// order.
 func InsertPosition(modifiers ...positionModifier) action.Action {
 	position := types.Position{
 		Pair:                            asset.Registry.Pair(denoms.BTC, denoms.USDC),
