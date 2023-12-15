@@ -1,8 +1,9 @@
 package types
 
 import (
-	sdkerrors "cosmossdk.io/errors"
 	"sync/atomic"
+
+	sdkerrors "cosmossdk.io/errors"
 )
 
 var moduleErrorCodeIdx uint32 = 1
