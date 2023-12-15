@@ -72,7 +72,7 @@ builds:
       - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
       - -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb
       - -linkmode=external
-      - -extldflags '-static -lrocksdb -lstdc++ -lm -ldl -lpthread'
+      - -extldflags '-static -lm -lbz2'
     tags:
       - netgo
       - osusergo
@@ -80,7 +80,6 @@ builds:
       - muslc
       - rocksdb
       - static
-      - grocksdb_no_link
 
 universal_binaries:
   - id: darwin
