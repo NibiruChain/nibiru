@@ -197,8 +197,8 @@ services:
     environment:
       NODE: nibiru-0:9090
       MNEMONIC: undo donkey arena rule old portion long forget rescue post stuff normal reduce raw unable warrior method stairs valley enhance glory lens sign zero
-      SEND_COINS: 11000000unibi,100000000unusd,100000000uusdt
-      MAX_SEND_COINS: 110000000unibi,1000000000unusd,1000000000uusdt
+      SEND_COINS: 11000000unibi
+      MAX_SEND_COINS: 110000000unibi
     depends_on:
       nibiru-0:
         condition: service_healthy

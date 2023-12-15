@@ -1,4 +1,12 @@
-# How to use
+# CHAOSNET
+
+- [How to use "chaosnet"](#how-to-use-chaosnet)
+- [How to force pull images from the registry](#how-to-force-pull-images-from-the-registry)
+- [Endpoints](#endpoints)
+- [FAQ](#faq)
+  - [`make chaosnet` says that "Additional property name is not allowed"](#make-chaosnet-says-that-additional-property-name-is-not-allowed)
+
+## How to use "chaosnet" 
 
 Before running
 
