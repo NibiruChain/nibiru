@@ -40,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-## [v1.1.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.1.0) - 2023-12-14
+## [v1.1.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.1.0) - 2023-12-15
 
 * [[Release Link](https://github.com/NibiruChain/nibiru/releases/tag/v1.1.0)]
 * [[Commits](https://github.com/NibiruChain/nibiru/commits/v1.1.0)]
@@ -58,10 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Improvements
 
 * [#1695](https://github.com/NibiruChain/nibiru/pull/1695) - feat(inflation): add events for inflation distribution
-
-### State Machine Breaking
-
-* [#1682](https://github.com/NibiruChain/nibiru/pull/1682) - feat: add upgrade handler for v1.1.0
+* [#1712](https://github.com/NibiruChain/nibiru/pull/1712) - refactor(inflation): turn inflation off by default
 
 ## [v1.0.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.0.0)
 

@@ -18,7 +18,7 @@ var (
 )
 
 var (
-	DefaultInflation         = true
+	DefaultInflation         = false
 	DefaultPolynomialFactors = []sdk.Dec{
 		sdk.MustNewDecFromStr("-0.00014903"),
 		sdk.MustNewDecFromStr("0.07527647"),
