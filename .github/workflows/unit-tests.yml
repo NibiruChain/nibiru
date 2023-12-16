@@ -55,7 +55,9 @@ jobs:
           go-version: 1.21
 
       - name: "Build the nibid binary"
-        run: make install
+        run: |
+          rm -rf temp
+          make install
 
       - name: "Run scripts/chaosnet.sh (Used in Docker image)"
         run: |
