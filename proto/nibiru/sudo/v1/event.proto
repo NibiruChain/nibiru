@@ -8,6 +8,7 @@ import "nibiru/sudo/v1/state.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/sudo/types";
 
+// EventUpdateSudoers: ABCI event emitted upon execution of "MsgEditSudoers".
 message EventUpdateSudoers {
   nibiru.sudo.v1.Sudoers sudoers = 1 [ (gogoproto.nullable) = false ];
 
