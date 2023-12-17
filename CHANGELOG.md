@@ -48,7 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1682](https://github.com/NibiruChain/nibiru/pull/1682) - feat!: add upgrade handler for v1.1.0
 * [#1706](https://github.com/NibiruChain/nibiru/pull/1706) - fix: `v1.1.0` upgrade handler
 * [#1712](https://github.com/NibiruChain/nibiru/pull/1712) - refactor(inflation): turn inflation off by default
-* [#xxx](https://github.com/NibiruChain/nibiru/pull/xxx) - fix(build): revert to working build + cherry-picks
+* [#1715](https://github.com/NibiruChain/nibiru/pull/1715) - fix(build): revert! to working build + cherry-picks
 
 #### Dapp modules: perp, spot, etc
 

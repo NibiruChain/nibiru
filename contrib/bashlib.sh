@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 # —————————————————————————————————————————————————
 # COLORS: Terminal colors are set with ANSI escape codes.
 
