@@ -17,5 +17,5 @@ message Sudoers {
   repeated string contracts = 2;
 }
 
-// GenesisState defines the module's genesis state.
+// GenesisState: State for migrations and genesis for the x/sudo module.
 message GenesisState { Sudoers sudoers = 1 [ (gogoproto.nullable) = false ]; }
