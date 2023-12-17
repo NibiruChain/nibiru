@@ -54,17 +54,19 @@ jobs:
         with:
           go-version: 1.21
 
+      - name: "Install just"
+        # casey/just: https://just.systems/man/en/chapter_6.html
+        # taiki-e/install-action: https://github.com/taiki-e/install-action
+        uses: taiki-e/install-action@just
+
       - name: "Build the nibid binary"
         run: |
-          rm -rf temp
-          make install
+          just install
 
       - name: "Run scripts/chaosnet.sh (Used in Docker image)"
         run: |
-          bash contrib/scripts/chaosnet.sh &
-          kill $(pgrep -x nibid)
+          just test-chaosnet
 
       - name: "Run scripts/localnet.sh"
         run: |
-          bash contrib/scripts/localnet.sh &
-          kill $(pgrep -x nibid)
+          just test-localnet

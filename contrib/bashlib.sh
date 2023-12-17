@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -e
-
 # —————————————————————————————————————————————————
 # COLORS: Terminal colors are set with ANSI escape codes.
 
@@ -41,6 +39,16 @@ log_error() {
 
 log_success() {
   echo "${COLOR_GREEN}✅ Success:${COLOR_RESET}" "$@"
+}
+
+# log_warning: WARNING messages represent non-critical issues that might not
+# require immediate action but should be noted as points of concern or failure.
+log_warning() {
+  echo "${COLOR_YELLOW}INFO${COLOR_RESET}" "$@" >&2
+}
+
+log_info() {
+  echo "${COLOR_MAGENTA}INFO${COLOR_RESET}" "$@"
 }
 
 # —————————————————————————————————————————————————
