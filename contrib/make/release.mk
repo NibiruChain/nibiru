@@ -20,7 +20,6 @@ release-snapshot:
 	docker run \
 		--rm \
 		--platform linux/amd64 \
-		-v /tmp:/tmp \
 		-v "$(CURDIR)":/go/src/$(PACKAGE_NAME) \
 		-w /go/src/$(PACKAGE_NAME) \
 		-e CGO_ENABLED=1 \

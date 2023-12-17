@@ -11,20 +11,11 @@
 set -e
 
 WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | awk '{sub(/^v/, "", $2); print $2}')
-ROCKSDB_VERSION=8.8.1
-
-flock -x /tmp/rocksdb-linux-headers-lock -c "wget -c https://github.com/NibiruChain/gorocksdb/releases/download/v${ROCKSDB_VERSION}/include.${ROCKSDB_VERSION}.tar.gz -O /tmp/include.${ROCKSDB_VERSION}.tar.gz && [ ! -d /usr/include/rocksdb ] && tar -xvf /tmp/include.${ROCKSDB_VERSION}.tar.gz -C /usr/include/; echo 'rocksdb headers installed'"
-
-if [ "$TARGET" == "linux_amd64_v1" ]; then
-  wget -c https://github.com/CosmWasm/wasmvm/releases/download/v${WASMVM_VERSION}/libwasmvm_muslc.x86_64.a -O /tmp/libwasmvm_muslc.x86_64.a
-  cp /tmp/libwasmvm_muslc.x86_64.a /usr/lib/x86_64-linux-gnu/libwasmvm_muslc.a
-
-  wget -c https://github.com/NibiruChain/gorocksdb/releases/download/v${ROCKSDB_VERSION}/librocksdb_${ROCKSDB_VERSION}_linux_amd64.tar.gz -O /tmp/librocksdb_${ROCKSDB_VERSION}_linux_amd64.tar.gz
-  tar -xvf /tmp/librocksdb_${ROCKSDB_VERSION}_linux_amd64.tar.gz -C /usr/lib/x86_64-linux-gnu/
-else
-  wget -c https://github.com/CosmWasm/wasmvm/releases/download/v${WASMVM_VERSION}/libwasmvm_muslc.aarch64.a -O /tmp/libwasmvm_muslc.aarch64.a
-  cp /tmp/libwasmvm_muslc.aarch64.a /usr/lib/aarch64-linux-gnu/libwasmvm_muslc.a
-
-  wget -c https://github.com/NibiruChain/gorocksdb/releases/download/v${ROCKSDB_VERSION}/librocksdb_${ROCKSDB_VERSION}_linux_arm64.tar.gz -O /tmp/librocksdb_${ROCKSDB_VERSION}_linux_arm64.tar.gz
-  tar -xvf /tmp/librocksdb_${ROCKSDB_VERSION}_linux_arm64.tar.gz -C /usr/lib/aarch64-linux-gnu/
-fi
+wget https://github.com/CosmWasm/wasmvm/releases/download/v${WASMVM_VERSION}/libwasmvm_muslc.x86_64.a -O /usr/lib/x86_64-linux-gnu/libwasmvm_muslc.a
+wget https://github.com/CosmWasm/wasmvm/releases/download/v${WASMVM_VERSION}/libwasmvm_muslc.aarch64.a -O /usr/lib/aarch64-linux-gnu/libwasmvm_muslc.a
+wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/include.8.1.1.tar.gz -O /root/include.8.1.1.tar.gz
+tar -xvf /root/include.8.1.1.tar.gz -C /usr/include/
+wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/librocksdb_8.1.1_linux_amd64.tar.gz -O /root/librocksdb_8.1.1_linux_amd64.tar.gz
+tar -xvf /root/librocksdb_8.1.1_linux_amd64.tar.gz -C /usr/lib/x86_64-linux-gnu/
+wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/librocksdb_8.1.1_linux_arm64.tar.gz -O /root/librocksdb_8.1.1_linux_arm64.tar.gz
+tar -xvf /root/librocksdb_8.1.1_linux_arm64.tar.gz -C /usr/lib/aarch64-linux-gnu/
