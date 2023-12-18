@@ -57,7 +57,7 @@ add_genesis_perp_markets_with_coingecko_prices() {
   local faucet_nusd_amt=100
   local reserve_amt=$(($num_users * $faucet_nusd_amt * $M))
 
-  price_btc=$(cat tmp_market_prices.json | jq -r '.bitcoin.usd')
+  price_btc=$(cat $temp_json_fname | jq -r '.bitcoin.usd')
   price_btc=${price_btc%.*}
   if [ -z "$price_btc" ]; then
     return 1
@@ -65,7 +65,7 @@ add_genesis_perp_markets_with_coingecko_prices() {
 
   nibid genesis add-genesis-perp-market --pair=ubtc:unusd --sqrt-depth=$reserve_amt --price-multiplier=$price_btc --oracle-pair=ubtc:uusd
 
-  price_eth=$(cat tmp_market_prices.json | jq -r '.ethereum.usd')
+  price_eth=$(cat $temp_json_fname | jq -r '.ethereum.usd')
   price_eth=${price_eth%.*}
   if [ -z "$price_eth" ]; then
     return 1
