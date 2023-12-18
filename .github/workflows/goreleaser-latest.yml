@@ -37,16 +37,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: "Move dist to prevent dockerignore"
-        run: |
-          echo "dist contents: $(ls dist)"
-          if [ ! -d "dist" ]; then 
-            echo "❌ expected dist dir to be generated from make release-snapshot" && exit 1
-          else echo "dist dir exists as expected."
-          fi
-          rm -rf dist-temp
-          cp -r dist dist-temp
-
       - name: Build and push versioned image
         uses: docker/build-push-action@v5
         with:

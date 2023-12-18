@@ -1,7 +1,7 @@
 FROM golang:1.21 AS builder
 
 WORKDIR /root
-COPY ./dist-temp/ /root/
+COPY ./dist/ /root/
 
 ARG TARGETARCH
 RUN if [ "${TARGETARCH}" = "arm64" ]; then \
@@ -10,7 +10,7 @@ RUN if [ "${TARGETARCH}" = "arm64" ]; then \
   cp linux_linux_amd64_v1/nibid /root/nibid; \
   fi
 
-FROM alpine
+FROM alpine:latest
 
 WORKDIR /root
 RUN apk --no-cache add ca-certificates
