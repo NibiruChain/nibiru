@@ -51,25 +51,25 @@ type openPositionAction struct {
 	responseCheckers []MarketOrderResponseChecker
 }
 
-func (o openPositionAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (o openPositionAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	resp, err := app.PerpKeeperV2.MarketOrder(
 		ctx, o.pair, o.dir, o.trader,
 		o.margin, o.leverage, o.baseAssetLimit,
 	)
 	if err != nil {
-		return ctx, err, true
+		return ctx, err
 	}
 
 	if o.responseCheckers != nil {
 		for _, check := range o.responseCheckers {
 			err = check(resp)
 			if err != nil {
-				return ctx, err, false
+				return ctx, err
 			}
 		}
 	}
 
-	return ctx, nil, true
+	return ctx, nil
 }
 
 type openPositionFailsAction struct {
@@ -82,17 +82,17 @@ type openPositionFailsAction struct {
 	expectedErr    error
 }
 
-func (o openPositionFailsAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (o openPositionFailsAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	_, err := app.PerpKeeperV2.MarketOrder(
 		ctx, o.pair, o.dir, o.trader,
 		o.margin, o.leverage, o.baseAssetLimit,
 	)
 
 	if !errors.Is(err, o.expectedErr) {
-		return ctx, fmt.Errorf("expected error %s, got %s", o.expectedErr, err), true
+		return ctx, fmt.Errorf("expected error %s, got %s", o.expectedErr, err)
 	}
 
-	return ctx, nil, true
+	return ctx, nil
 }
 
 func MarketOrderFails(
@@ -220,13 +220,13 @@ type closePositionAction struct {
 	Pair    asset.Pair
 }
 
-func (c closePositionAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (c closePositionAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	_, err := app.PerpKeeperV2.ClosePosition(ctx, c.Pair, c.Account)
 	if err != nil {
-		return ctx, err, true
+		return ctx, err
 	}
 
-	return ctx, nil, true
+	return ctx, nil
 }
 
 // ClosePosition closes a position for the given account and pair.
@@ -244,14 +244,14 @@ type closePositionFailsAction struct {
 	expectedErr error
 }
 
-func (c closePositionFailsAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (c closePositionFailsAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	_, err := app.PerpKeeperV2.ClosePosition(ctx, c.Pair, c.Account)
 
 	if !errors.Is(err, c.expectedErr) {
-		return ctx, fmt.Errorf("expected error %s, got %s", c.expectedErr, err), true
+		return ctx, fmt.Errorf("expected error %s, got %s", c.expectedErr, err)
 	}
 
-	return ctx, nil, true
+	return ctx, nil
 }
 
 func ClosePositionFails(account sdk.AccAddress, pair asset.Pair, expectedErr error) action.Action {
@@ -267,10 +267,10 @@ type insertPosition struct {
 	position types.Position
 }
 
-func (i insertPosition) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (i insertPosition) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	traderAddr := sdk.MustAccAddressFromBech32(i.position.TraderAddress)
 	app.PerpKeeperV2.SavePosition(ctx, i.position.Pair, 1, traderAddr, i.position)
-	return ctx, nil, true
+	return ctx, nil
 }
 
 // InsertPosition: Adds a position into state without a corresponding market
@@ -345,7 +345,7 @@ type partialClose struct {
 	amount sdk.Dec
 }
 
-func (p partialClose) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (p partialClose) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	txMsg := &types.MsgPartialClose{
 		Sender: p.trader.String(),
 		Pair:   p.pair,
@@ -355,10 +355,10 @@ func (p partialClose) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, erro
 	_, err := perpkeeper.NewMsgServerImpl(app.PerpKeeperV2).PartialClose(
 		goCtx, txMsg)
 	if err != nil {
-		return ctx, err, true
+		return ctx, err
 	}
 
-	return ctx, nil, true
+	return ctx, nil
 }
 
 func PartialClose(trader sdk.AccAddress, pair asset.Pair, amount sdk.Dec) action.Action {
@@ -377,7 +377,9 @@ type partialCloseFails struct {
 	expectedErr error
 }
 
-func (p partialCloseFails) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (p partialCloseFails) IsNotMandatory() {}
+
+func (p partialCloseFails) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	txMsg := &types.MsgPartialClose{
 		Sender: p.trader.String(),
 		Pair:   p.pair,
@@ -389,10 +391,10 @@ func (p partialCloseFails) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context,
 	)
 
 	if !errors.Is(err, p.expectedErr) {
-		return ctx, fmt.Errorf("expected error %s, got %s", p.expectedErr, err), false
+		return ctx, fmt.Errorf("expected error %s, got %s", p.expectedErr, err)
 	}
 
-	return ctx, nil, false
+	return ctx, nil
 }
 
 func PartialCloseFails(trader sdk.AccAddress, pair asset.Pair, amount sdk.Dec, expectedErr error) action.Action {

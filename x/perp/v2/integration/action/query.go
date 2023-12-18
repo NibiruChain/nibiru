@@ -20,7 +20,9 @@ type queryPosition struct {
 	responseCheckers []QueryPositionChecker
 }
 
-func (q queryPosition) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (q queryPosition) IsNotMandatory() {}
+
+func (q queryPosition) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	queryServer := keeper.NewQuerier(app.PerpKeeperV2)
 
 	resp, err := queryServer.QueryPosition(sdk.WrapSDKContext(ctx), &types.QueryPositionRequest{
@@ -28,16 +30,16 @@ func (q queryPosition) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, err
 		Trader: q.traderAddress.String(),
 	})
 	if err != nil {
-		return ctx, err, false
+		return ctx, err
 	}
 
 	for _, checker := range q.responseCheckers {
 		if err := checker(*resp); err != nil {
-			return ctx, err, false
+			return ctx, err
 		}
 	}
 
-	return ctx, nil, false
+	return ctx, nil
 }
 
 func QueryPosition(pair asset.Pair, traderAddress sdk.AccAddress, responseCheckers ...QueryPositionChecker) action.Action {
@@ -88,25 +90,27 @@ type queryAllPositions struct {
 	allResponseCheckers [][]QueryPositionChecker
 }
 
-func (q queryAllPositions) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (q queryAllPositions) IsNotMandatory() {}
+
+func (q queryAllPositions) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	queryServer := keeper.NewQuerier(app.PerpKeeperV2)
 
 	resp, err := queryServer.QueryPositions(sdk.WrapSDKContext(ctx), &types.QueryPositionsRequest{
 		Trader: q.traderAddress.String(),
 	})
 	if err != nil {
-		return ctx, err, false
+		return ctx, err
 	}
 
 	for i, positionCheckers := range q.allResponseCheckers {
 		for _, checker := range positionCheckers {
 			if err := checker(resp.Positions[i]); err != nil {
-				return ctx, err, false
+				return ctx, err
 			}
 		}
 	}
 
-	return ctx, nil, false
+	return ctx, nil
 }
 
 func QueryPositions(traderAddress sdk.AccAddress, responseCheckers ...[]QueryPositionChecker) action.Action {
@@ -121,7 +125,9 @@ type queryPositionNotFound struct {
 	traderAddress sdk.AccAddress
 }
 
-func (q queryPositionNotFound) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (q queryPositionNotFound) IsNotMandatory() {}
+
+func (q queryPositionNotFound) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	queryServer := keeper.NewQuerier(app.PerpKeeperV2)
 
 	_, err := queryServer.QueryPosition(sdk.WrapSDKContext(ctx), &types.QueryPositionRequest{
@@ -133,10 +139,10 @@ func (q queryPositionNotFound) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Cont
 			"expected position not found, but found a position for pair %s, trader %s",
 			q.pair,
 			q.traderAddress,
-		), false
+		)
 	}
 
-	return ctx, nil, false
+	return ctx, nil
 }
 
 func QueryPositionNotFound(pair asset.Pair, traderAddress sdk.AccAddress) action.Action {
@@ -151,23 +157,25 @@ type queryMarkets struct {
 	allResponseCheckers []QueryMarketsChecker
 }
 
-func (q queryMarkets) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (q queryMarkets) IsNotMandatory() {}
+
+func (q queryMarkets) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	queryServer := keeper.NewQuerier(app.PerpKeeperV2)
 
 	resp, err := queryServer.QueryMarkets(sdk.WrapSDKContext(ctx), &types.QueryMarketsRequest{
 		Versioned: q.versioned,
 	})
 	if err != nil {
-		return ctx, err, false
+		return ctx, err
 	}
 
 	for _, marketsCheckers := range q.allResponseCheckers {
 		if err := marketsCheckers(resp.AmmMarkets); err != nil {
-			return ctx, err, false
+			return ctx, err
 		}
 	}
 
-	return ctx, nil, false
+	return ctx, nil
 }
 
 // QueryMarkets queries all markets, versioned contains active and inactive markets
@@ -209,21 +217,23 @@ type queryModuleAccounts struct {
 	allResponseCheckers []QueryModuleAccountsChecker
 }
 
-func (q queryModuleAccounts) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (q queryModuleAccounts) IsNotMandatory() {}
+
+func (q queryModuleAccounts) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	queryServer := keeper.NewQuerier(app.PerpKeeperV2)
 
 	resp, err := queryServer.ModuleAccounts(sdk.WrapSDKContext(ctx), &types.QueryModuleAccountsRequest{})
 	if err != nil {
-		return ctx, err, false
+		return ctx, err
 	}
 
 	for _, accountsCheckers := range q.allResponseCheckers {
 		if err := accountsCheckers(resp.Accounts); err != nil {
-			return ctx, err, false
+			return ctx, err
 		}
 	}
 
-	return ctx, nil, false
+	return ctx, nil
 }
 
 func QueryModuleAccounts(responseCheckers ...QueryModuleAccountsChecker) action.Action {
@@ -266,9 +276,11 @@ func QueryPositionStore(
 	}
 }
 
+func (q queryPositionStore) IsNotMandatory() {}
+
 func (q queryPositionStore) Do(
 	app *app.NibiruApp, ctx sdk.Context,
-) (newCtx sdk.Context, err error, isMandatory bool) {
+) (newCtx sdk.Context, err error) {
 	queryServer := keeper.NewQuerier(app.PerpKeeperV2)
 
 	gotResp, err := queryServer.QueryPositionStore(
@@ -315,7 +327,9 @@ type queryCollateral struct {
 	wantDenom string
 }
 
-func (q queryCollateral) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (q queryCollateral) IsNotMandatory() {}
+
+func (q queryCollateral) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	queryServer := keeper.NewQuerier(app.PerpKeeperV2)
 
 	resp, _ := queryServer.QueryCollateral(sdk.WrapSDKContext(ctx), &types.QueryCollateralRequest{})
@@ -324,10 +338,10 @@ func (q queryCollateral) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, e
 			"expected collateral denom %s, got %s",
 			q.wantDenom,
 			resp.CollateralDenom,
-		), false
+		)
 	}
 
-	return ctx, nil, false
+	return ctx, nil
 }
 
 // QueryCollateral: Action for the Query/Collateral gRPC query.

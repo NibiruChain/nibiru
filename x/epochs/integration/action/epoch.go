@@ -11,10 +11,12 @@ type startEpoch struct {
 	epochIdentifier string
 }
 
-func (s startEpoch) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (s startEpoch) IsNotMandatory() {}
+
+func (s startEpoch) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	epochInfo, err := app.EpochsKeeper.GetEpochInfo(ctx, s.epochIdentifier)
 	if err != nil {
-		return ctx, err, false
+		return ctx, err
 	}
 	epochInfo.EpochCountingStarted = true
 	epochInfo.CurrentEpoch = 1
@@ -24,7 +26,7 @@ func (s startEpoch) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error,
 
 	app.EpochsKeeper.Epochs.Insert(ctx, epochInfo.Identifier, epochInfo)
 
-	return ctx, nil, false
+	return ctx, nil
 }
 
 func StartEpoch(epochIdentifier string) action.Action {

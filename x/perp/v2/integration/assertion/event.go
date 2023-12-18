@@ -31,7 +31,7 @@ type containsLiquidateEvent struct {
 }
 
 func (act containsLiquidateEvent) Do(_ *app.NibiruApp, ctx sdk.Context) (
-	outCtx sdk.Context, err error, isMandatory bool,
+	outCtx sdk.Context, err error,
 ) {
 	foundEvent := false
 	matchingEvents := []abci.Event{}
@@ -48,14 +48,13 @@ func (act containsLiquidateEvent) Do(_ *app.NibiruApp, ctx sdk.Context) (
 
 		typedEvent, err := sdk.ParseTypedEvent(abciEvent)
 		if err != nil {
-			return ctx, err, false
+			return ctx, err
 		}
 
 		liquidationFailedEvent, ok := typedEvent.(*types.LiquidationFailedEvent)
 		if !ok {
 			return ctx,
-				fmt.Errorf("expected event of type %s, got %s", proto.MessageName(act.expectedEvent), abciEvent.Type),
-				false
+				fmt.Errorf("expected event of type %s, got %s", proto.MessageName(act.expectedEvent), abciEvent.Type)
 		}
 
 		if reflect.DeepEqual(act.expectedEvent, liquidationFailedEvent) {
@@ -68,7 +67,7 @@ func (act containsLiquidateEvent) Do(_ *app.NibiruApp, ctx sdk.Context) (
 
 	if foundEvent {
 		// happy path
-		return ctx, nil, true
+		return ctx, nil
 	}
 
 	// Show descriptive error messages if the expected event is missing
@@ -79,7 +78,7 @@ func (act containsLiquidateEvent) Do(_ *app.NibiruApp, ctx sdk.Context) (
 			fmt.Sprintf("found %v events:", len(ctx.EventManager().Events())),
 			fmt.Sprintf("events of matching type:\n%v", sdk.StringifyEvents(matchingEvents).String()),
 		}, "\n"),
-	), false
+	)
 }
 
 // ContainsLiquidateEvent checks if a typed event (proto.Message) is contained in the
@@ -96,7 +95,9 @@ type positionChangedEventShouldBeEqual struct {
 	expectedEvent *types.PositionChangedEvent
 }
 
-func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (p positionChangedEventShouldBeEqual) IsNotMandatory() {}
+
+func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	for _, sdkEvent := range ctx.EventManager().Events() {
 		if sdkEvent.Type != proto.MessageName(p.expectedEvent) {
 			continue
@@ -109,16 +110,16 @@ func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context)
 
 		typedEvent, err := sdk.ParseTypedEvent(abciEvent)
 		if err != nil {
-			return ctx, err, false
+			return ctx, err
 		}
 
 		positionChangedEvent, ok := typedEvent.(*types.PositionChangedEvent)
 		if !ok {
-			return ctx, fmt.Errorf("expected event is not of type PositionChangedEvent"), false
+			return ctx, fmt.Errorf("expected event is not of type PositionChangedEvent")
 		}
 
 		if err := types.PositionsAreEqual(&p.expectedEvent.FinalPosition, &positionChangedEvent.FinalPosition); err != nil {
-			return ctx, err, false
+			return ctx, err
 		}
 
 		if !reflect.DeepEqual(p.expectedEvent, positionChangedEvent) {
@@ -127,13 +128,13 @@ func (p positionChangedEventShouldBeEqual) Do(_ *app.NibiruApp, ctx sdk.Context)
 want:
 %+v
 got:
-%+v`, sdk.StringifyEvents([]abci.Event{abci.Event(expected)}), sdk.StringifyEvents([]abci.Event{abciEvent})), false
+%+v`, sdk.StringifyEvents([]abci.Event{abci.Event(expected)}), sdk.StringifyEvents([]abci.Event{abciEvent}))
 		}
 
-		return ctx, nil, false
+		return ctx, nil
 	}
 
-	return ctx, fmt.Errorf("unable to find desired event of type %s", proto.MessageName(p.expectedEvent)), false
+	return ctx, fmt.Errorf("unable to find desired event of type %s", proto.MessageName(p.expectedEvent))
 }
 
 // PositionChangedEventShouldBeEqual checks that the position changed event is
