@@ -11,7 +11,7 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 )
 
-func AllBalancesEqual(account sdk.AccAddress, amount sdk.Coins) *allBalancesEqual {
+func AllBalancesEqual(account sdk.AccAddress, amount sdk.Coins) action.Action {
 	return &allBalancesEqual{Account: account, Amount: amount}
 }
 
@@ -20,7 +20,7 @@ type allBalancesEqual struct {
 	Amount  sdk.Coins
 }
 
-func (b allBalancesEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (b allBalancesEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	coins := app.BankKeeper.GetAllBalances(ctx, b.Account)
 	if !coins.IsEqual(b.Amount) {
 		return ctx, fmt.Errorf(
@@ -28,10 +28,10 @@ func (b allBalancesEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, 
 			b.Account.String(),
 			b.Amount.String(),
 			coins.String(),
-		), false
+		)
 	}
 
-	return ctx, nil, false
+	return ctx, nil
 }
 
 func BalanceEqual(account sdk.AccAddress, denom string, amount sdkmath.Int) action.Action {
