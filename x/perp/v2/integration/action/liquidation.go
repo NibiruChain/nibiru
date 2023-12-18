@@ -23,7 +23,7 @@ type multiLiquidate struct {
 	shouldAllFail    bool
 }
 
-func (m multiLiquidate) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (m multiLiquidate) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	liquidationRequests := make([]*types.MsgMultiLiquidate_Liquidation, len(m.pairTraderTuples))
 
 	for i, pairTraderTuple := range m.pairTraderTuples {
@@ -38,30 +38,30 @@ func (m multiLiquidate) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, er
 	if m.shouldAllFail {
 		// we check if all liquidations failed
 		if err == nil {
-			return ctx, fmt.Errorf("multi liquidations should have all failed, but instead some succeeded"), true
+			return ctx, fmt.Errorf("multi liquidations should have all failed, but instead some succeeded")
 		}
 
 		for i, response := range responses {
 			if response.Success {
-				return ctx, fmt.Errorf("multi liquidations should have all failed, but instead some succeeded, index %d", i), true
+				return ctx, fmt.Errorf("multi liquidations should have all failed, but instead some succeeded, index %d", i)
 			}
 		}
 
-		return ctx, nil, true
+		return ctx, nil
 	}
 
 	// otherwise, some succeeded and some may have failed
 	if err != nil {
-		return ctx, err, true
+		return ctx, err
 	}
 
 	for i, response := range responses {
 		if response.Success != m.pairTraderTuples[i].Successful {
-			return ctx, fmt.Errorf("MultiLiquidate wrong assertion, expected %v, got %v, index %d", m.pairTraderTuples[i].Successful, response.Success, i), false
+			return ctx, fmt.Errorf("MultiLiquidate wrong assertion, expected %v, got %v, index %d", m.pairTraderTuples[i].Successful, response.Success, i)
 		}
 	}
 
-	return ctx, nil, true
+	return ctx, nil
 }
 
 func MultiLiquidate(liquidator sdk.AccAddress, shouldAllFail bool, pairTraderTuples ...PairTraderTuple) action.Action {

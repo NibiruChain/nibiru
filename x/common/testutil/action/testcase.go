@@ -13,10 +13,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// `Action` is a type of operation or task that can be performed in the
+// Action is a type of operation or task that can be performed in the
 // Nibiru application.
 type Action interface {
-	// `Do` is a specific implementation of the `Action`. When `Do` is called,
+	// Do is a specific implementation of the `Action`. When `Do` is called,
 	// the action is performed and some feedback is provided about the action's
 	// success. `Do` can mutate the app.
 	//
@@ -25,12 +25,17 @@ type Action interface {
 	//   - err: The error if one was raised.
 	//   - isMandatory: Whether an error should have been raised.
 	Do(app *app.NibiruApp, ctx sdk.Context) (
-		outCtx sdk.Context, err error, isMandatory bool,
+		outCtx sdk.Context, err error,
 	)
 }
 
-func ActionResp(ctx sdk.Context, respErr error) (outCtx sdk.Context, err error, isMandatory bool) {
-	return ctx, respErr, false
+// IsNotMandatory is a marker interface for actions that are not mandatory, and it does not stop the test when there is an error.
+type IsNotMandatory interface {
+	IsNotMandatory()
+}
+
+func ActionResp(ctx sdk.Context, respErr error) (outCtx sdk.Context, err error) {
+	return ctx, respErr
 }
 
 type TestCases []TestCase
@@ -67,32 +72,38 @@ func (tc TestCase) Run(t *testing.T) {
 	t.Run(tc.Name, func(t *testing.T) {
 		app, ctx := testapp.NewNibiruTestAppAndContextAtTime(time.UnixMilli(0))
 		var err error
-		var isMandatory bool
+		var isNotMandatory bool
 
 		for _, action := range tc.given {
-			ctx, err, isMandatory = action.Do(app, ctx)
-			if isMandatory {
-				require.NoError(t, err, "failed to execute given action: %s", tc.Name)
-			} else {
+			_, isNotMandatory = action.(IsNotMandatory)
+
+			ctx, err = action.Do(app, ctx)
+			if isNotMandatory {
 				assert.NoError(t, err, "failed to execute given action: %s", tc.Name)
+			} else {
+				require.NoError(t, err, "failed to execute given action: %s", tc.Name)
 			}
 		}
 
 		for _, action := range tc.when {
-			ctx, err, isMandatory = action.Do(app, ctx)
-			if isMandatory {
-				require.NoError(t, err, "failed to execute when action: %s", tc.Name)
-			} else {
+			_, isNotMandatory = action.(IsNotMandatory)
+
+			ctx, err = action.Do(app, ctx)
+			if isNotMandatory {
 				assert.NoError(t, err, "failed to execute when action: %s", tc.Name)
+			} else {
+				require.NoError(t, err, "failed to execute when action: %s", tc.Name)
 			}
 		}
 
 		for _, action := range tc.then {
-			ctx, err, isMandatory = action.Do(app, ctx)
-			if isMandatory {
-				require.NoError(t, err, "failed to execute then action: %s", tc.Name)
-			} else {
+			_, isNotMandatory = action.(IsNotMandatory)
+
+			ctx, err = action.Do(app, ctx)
+			if isNotMandatory {
 				assert.NoError(t, err, "failed to execute then action: %s", tc.Name)
+			} else {
+				require.NoError(t, err, "failed to execute then action: %s", tc.Name)
 			}
 		}
 	})
