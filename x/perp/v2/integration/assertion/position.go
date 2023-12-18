@@ -20,18 +20,20 @@ type positionShouldBeEqual struct {
 	PositionCheckers []PositionChecker
 }
 
-func (p positionShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (p positionShouldBeEqual) IsNotMandatory() {}
+
+func (p positionShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	position, err := app.PerpKeeperV2.GetPosition(ctx, p.Pair, 1, p.Account)
 	if err != nil {
-		return ctx, err, false
+		return ctx, err
 	}
 	for _, checker := range p.PositionCheckers {
 		if err := checker(position); err != nil {
-			return ctx, err, false
+			return ctx, err
 		}
 	}
 
-	return ctx, nil, false
+	return ctx, nil
 }
 
 func PositionShouldBeEqual(
@@ -64,13 +66,15 @@ type positionShouldNotExist struct {
 	Version uint64
 }
 
-func (p positionShouldNotExist) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (p positionShouldNotExist) IsNotMandatory() {}
+
+func (p positionShouldNotExist) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	_, err := app.PerpKeeperV2.GetPosition(ctx, p.Pair, p.Version, p.Account)
 	if err == nil {
-		return ctx, fmt.Errorf("position should not exist, but it does with pair %s", p.Pair), false
+		return ctx, fmt.Errorf("position should not exist, but it does with pair %s", p.Pair)
 	}
 
-	return ctx, nil, false
+	return ctx, nil
 }
 
 func PositionShouldNotExist(account sdk.AccAddress, pair asset.Pair, version uint64) action.Action {
@@ -87,13 +91,15 @@ type positionShouldExist struct {
 	Version uint64
 }
 
-func (p positionShouldExist) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (p positionShouldExist) IsNotMandatory() {}
+
+func (p positionShouldExist) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	_, err := app.PerpKeeperV2.GetPosition(ctx, p.Pair, p.Version, p.Account)
 	if err != nil {
-		return ctx, fmt.Errorf("position should exist, but it does not with pair %s", p.Pair), false
+		return ctx, fmt.Errorf("position should exist, but it does not with pair %s", p.Pair)
 	}
 
-	return ctx, nil, false
+	return ctx, nil
 }
 
 func PositionShouldExist(account sdk.AccAddress, pair asset.Pair, version uint64) action.Action {

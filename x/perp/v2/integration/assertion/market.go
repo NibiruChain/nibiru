@@ -21,19 +21,21 @@ type marketShouldBeEqual struct {
 	Checkers []MarketChecker
 }
 
-func (m marketShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (m marketShouldBeEqual) IsNotMandatory() {}
+
+func (m marketShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	market, err := app.PerpKeeperV2.GetMarket(ctx, m.Pair)
 	if err != nil {
-		return ctx, err, false
+		return ctx, err
 	}
 
 	for _, checker := range m.Checkers {
 		if err := checker(market); err != nil {
-			return ctx, err, false
+			return ctx, err
 		}
 	}
 
-	return ctx, nil, false
+	return ctx, nil
 }
 
 func MarketShouldBeEqual(pair asset.Pair, marketCheckers ...MarketChecker) action.Action {
@@ -78,19 +80,21 @@ type ammShouldBeEqual struct {
 
 type AMMChecker func(amm types.AMM) error
 
-func (a ammShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (a ammShouldBeEqual) IsNotMandatory() {}
+
+func (a ammShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	amm, err := app.PerpKeeperV2.GetAMM(ctx, a.Pair)
 	if err != nil {
-		return ctx, err, false
+		return ctx, err
 	}
 
 	for _, checker := range a.Checkers {
 		if err := checker(amm); err != nil {
-			return ctx, err, false
+			return ctx, err
 		}
 	}
 
-	return ctx, nil, false
+	return ctx, nil
 }
 
 func AMMShouldBeEqual(pair asset.Pair, ammCheckers ...AMMChecker) action.Action {

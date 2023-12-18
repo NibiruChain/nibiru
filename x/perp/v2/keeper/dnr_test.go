@@ -255,31 +255,31 @@ func TestRebates(t *testing.T) {
 	NewTestSuite(t).WithTestCases(tests...).Run()
 }
 
-type actionFn func(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool)
+type actionFn func(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error)
 
-func (f actionFn) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
+func (f actionFn) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error) {
 	return f(app, ctx)
 }
 
 func TestDnREpoch(t *testing.T) {
 	dnrEpochIdentifierIs := func(identifier string) actionFn {
-		return func(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
+		return func(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error) {
 			app.PerpKeeperV2.DnREpochName.Set(ctx, identifier)
-			return ctx, nil, false
+			return ctx, nil
 		}
 	}
 
 	triggerEpoch := func(identifier string, epoch uint64) actionFn {
-		return func(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
+		return func(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error) {
 			app.PerpKeeperV2.AfterEpochEnd(ctx, identifier, epoch)
-			return ctx, nil, false
+			return ctx, nil
 		}
 	}
 
 	expectDnREpoch := func(epoch uint64) actionFn {
-		return func(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
+		return func(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error) {
 			require.Equal(t, epoch, app.PerpKeeperV2.DnREpoch.GetOr(ctx, 0))
-			return ctx, nil, false
+			return ctx, nil
 		}
 	}
 
