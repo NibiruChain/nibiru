@@ -2,13 +2,11 @@ package types
 
 import (
 	"encoding/json"
-	"fmt"
-	"math"
 	"sort"
-	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 )
 
@@ -149,9 +147,10 @@ func (pb ExchangeRateVotes) StandardDeviation(median sdk.Dec) (standardDeviation
 
 	variance := sum.QuoInt64(int64(n))
 
-	floatNum, _ := strconv.ParseFloat(variance.String(), 64)
-	floatNum = math.Sqrt(floatNum)
-	standardDeviation, _ = sdk.NewDecFromStr(fmt.Sprintf("%f", floatNum))
+	standardDeviation, err := common.SqrtDec(variance)
+	if err != nil {
+		return sdk.ZeroDec()
+	}
 
 	return
 }

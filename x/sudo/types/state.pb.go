@@ -63,7 +63,7 @@ func (m *Sudoers) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Sudoers proto.InternalMessageInfo
 
-func (m *Sudoers) GetRootAddr() string {
+func (m *Sudoers) GetRoot() string {
 	if m != nil {
 		return m.Root
 	}
@@ -77,7 +77,7 @@ func (m *Sudoers) GetContracts() []string {
 	return nil
 }
 
-// GenesisState defines the module's genesis state.
+// GenesisState: State for migrations and genesis for the x/sudo module.
 type GenesisState struct {
 	Sudoers Sudoers `protobuf:"bytes,1,opt,name=sudoers,proto3" json:"sudoers"`
 }

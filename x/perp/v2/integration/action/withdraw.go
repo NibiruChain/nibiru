@@ -16,15 +16,15 @@ type withdraw struct {
 }
 
 func (w withdraw) Do(app *app.NibiruApp, ctx sdk.Context) (
-	outCtx sdk.Context, err error, isMandatory bool,
+	outCtx sdk.Context, err error,
 ) {
 	market, err := app.PerpKeeperV2.GetMarket(ctx, w.Pair)
 	if err != nil {
-		return ctx, err, true
+		return ctx, err
 	}
 
 	err = app.PerpKeeperV2.WithdrawFromVault(ctx, market, w.Account, w.Amount)
-	return ctx, err, true
+	return ctx, err
 }
 
 func WithdrawFromVault(pair asset.Pair, account sdk.AccAddress, amount sdkmath.Int) action.Action {

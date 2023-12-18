@@ -49,10 +49,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Go
+      - name: "Set up Go"
         uses: actions/setup-go@v5
         with:
           go-version: 1.21
 
-      - name: Build the nibid binary
-        run: make build
+      - name: "Install just"
+        # casey/just: https://just.systems/man/en/chapter_6.html
+        # taiki-e/install-action: https://github.com/taiki-e/install-action
+        uses: taiki-e/install-action@just
+
+      - name: "Build the nibid binary"
+        run: |
+          just install
+
+      - name: "Run scripts/chaosnet.sh (Used in Docker image)"
+        run: |
+          just test-chaosnet
+
+      - name: "Run scripts/localnet.sh"
+        run: |
+          just test-localnet

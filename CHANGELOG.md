@@ -46,6 +46,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * [#1688](https://github.com/NibiruChain/nibiru/pull/1688) - fix(inflation)!: make default inflation allocation follow tokenomics
 * [#1682](https://github.com/NibiruChain/nibiru/pull/1682) - feat!: add upgrade handler for v1.1.0
+* [#1706](https://github.com/NibiruChain/nibiru/pull/1706) - fix: `v1.1.0` upgrade handler
+* [#1712](https://github.com/NibiruChain/nibiru/pull/1712) - refactor(inflation): turn inflation off by default
+* [#1713](https://github.com/NibiruChain/nibiru/pull/1713) - chore(build-release):  use new rocksdb libraries and link required libs
+* [#1715](https://github.com/NibiruChain/nibiru/pull/1715) - fix(build): revert! to working build + cherry-picks
 
 #### Dapp modules: perp, spot, etc
 
@@ -60,6 +64,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1656](https://github.com/NibiruChain/nibiru/pull/1656) - feat(perp): Make the collateral denom a stateful collections.Item
 * [#1632](https://github.com/NibiruChain/nibiru/pull/1632) - feat(perp): Add settle position transaction
 * [#1573](https://github.com/NibiruChain/nibiru/pull/1573) - feat(perp): Close markets and compute settlement price
+* [#1705](https://github.com/NibiruChain/nibiru/pull/1705) - feat(perp): Add oracle pair to market object
+* [#1718](https://github.com/NibiruChain/nibiru/pull/1718) - fix: fees does not require additional funds
 
 ### Non-breaking/Compatible Improvements
 
@@ -67,14 +73,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1679](https://github.com/NibiruChain/nibiru/pull/1679) - test(perp): add more tests for perp module msg server
 * [#1695](https://github.com/NibiruChain/nibiru/pull/1695) - feat(inflation): add events for inflation distribution
 * [#1695](https://github.com/NibiruChain/nibiru/pull/1695) - fix(sudo): Make blank sudoers root invalid at genesis time.
+* [#1710](https://github.com/NibiruChain/nibiru/pull/1710) - refactor(perp): Clean and organize module errors for x/perp
+* [#1714](https://github.com/NibiruChain/nibiru/pull/1714) - ci(localnet.sh): Fix script, simplify, and test in CI. 
+* [#1719](https://github.com/NibiruChain/nibiru/pull/1719) - refactor(test): add is not mandatory interface to action
+* [#1723](https://github.com/NibiruChain/nibiru/pull/1723) - ci(e2e-wasm.yml): rm unused workflow
 
 ### Dependencies
+- Bump `google.golang.org/grpc` from 1.59.0 to 1.60.0 ([#1720](https://github.com/NibiruChain/nibiru/pull/1720))
 
 * Bump `github.com/spf13/cast` from 1.5.1 to 1.6.0 ([#1689](https://github.com/NibiruChain/nibiru/pull/1689))
 * Bump `cosmossdk.io/math` from 1.1.2 to 1.2.0 ([#1676](https://github.com/NibiruChain/nibiru/pull/1676))
 * Bump `github.com/grpc-ecosystem/grpc-gateway/v2` from 2.18.0 to 2.18.1 ([#1675](https://github.com/NibiruChain/nibiru/pull/1675))
 * Bump `actions/setup-go` from 4 to 5 ([#1696](https://github.com/NibiruChain/nibiru/pull/1696))
 * Bump `golang` from 1.19 to 1.21 ([#1698](https://github.com/NibiruChain/nibiru/pull/1698))
+* [#1678](https://github.com/NibiruChain/nibiru/pull/1678) - chore(deps): collections to v0.4.0 for math.Int value encoder
 
 
 ## [v1.1.0] - 2023-11-20
@@ -133,6 +145,7 @@ v0.47.5.
 * [#1614](https://github.com/NibiruChain/nibiru/pull/1614) - refactor(proto): Use explicit namespacing on proto imports for #1608
 * [#1610](https://github.com/NibiruChain/nibiru/pull/1610) - refactor(app): Simplify app.go with less redundant imports using struct embedding.
 * [#1606](https://github.com/NibiruChain/nibiru/pull/1606) - fix(perp): emit `MarketUpdatedEvent` in the absence of index price
+* [#1700](https://github.com/NibiruChain/nibiru/pull/1700) - fix(oracle): remove non deterministic sqrt calculation
 
 ### Dependencies
 

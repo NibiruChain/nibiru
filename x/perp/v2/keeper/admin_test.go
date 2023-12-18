@@ -18,6 +18,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil/mock"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
+	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 	perptypes "github.com/NibiruChain/nibiru/x/perp/v2/types"
 	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 	tftypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
@@ -110,13 +111,23 @@ func TestCreateMarket(t *testing.T) {
 	})
 	require.ErrorContains(t, err, "maintenance margin ratio ratio must be 0 <= ratio <= 1")
 
+	// Error because of invalid oracle pair
+	market = perptypes.DefaultMarket(pair).WithOraclePair("random")
+	err = admin.CreateMarket(ctx, keeper.ArgsCreateMarket{
+		Pair:            pair,
+		PriceMultiplier: amm.PriceMultiplier,
+		SqrtDepth:       amm.SqrtDepth,
+		Market:          &market, // Invalid oracle pair
+	})
+	require.ErrorContains(t, err, "err when validating oracle pair random: invalid token pair")
+
 	// Error because of invalid amm
 	err = admin.CreateMarket(ctx, keeper.ArgsCreateMarket{
 		Pair:            pair,
 		PriceMultiplier: sdk.NewDec(-1),
 		SqrtDepth:       amm.SqrtDepth,
 	})
-	require.ErrorContains(t, err, "init price multiplier must be > 0")
+	require.ErrorContains(t, err, types.ErrAmmNonPositivePegMult.Error())
 
 	// Set it correctly
 	err = admin.CreateMarket(ctx, keeper.ArgsCreateMarket{
@@ -269,7 +280,7 @@ func TestCloseMarket(t *testing.T) {
 			),
 		).When(
 			CloseMarket(pairBtcUsdc),
-			AMMShouldBeEqual(pairBtcUsdc, AMM_SettlementPriceShoulBeEqual(sdk.MustNewDecFromStr("1.1"))),
+			AMMShouldBeEqual(pairBtcUsdc, AMM_SettlementPriceShoulBeEqual(sdk.MustNewDecFromStr("1.099800000000000000"))),
 		).Then(
 			PartialCloseFails(alice, pairBtcUsdc, sdk.NewDec(5_000), perptypes.ErrMarketNotEnabled),
 		),

@@ -20,7 +20,7 @@ func (app *NibiruApp) setupUpgrades() {
 
 func (app *NibiruApp) setUpgradeHandlers() {
 	for _, u := range Upgrades {
-		app.upgradeKeeper.SetUpgradeHandler(u.UpgradeName, u.CreateUpgradeHandler())
+		app.upgradeKeeper.SetUpgradeHandler(u.UpgradeName, u.CreateUpgradeHandler(app.mm, app.configurator))
 	}
 }
 
