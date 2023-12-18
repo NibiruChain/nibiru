@@ -20,9 +20,7 @@ func NibiruWasmOptions(
 	sudoKeeper keeper.Keeper,
 	oracleKeeper oraclekeeper.Keeper,
 ) []wasmkeeper.Option {
-	wasmQueryPlugin := NewQueryPlugin(perpv2, oracleKeeper)
 	wasmQueryOption := wasmkeeper.WithQueryPlugins(&wasmkeeper.QueryPlugins{
-		Custom: CustomQuerier(wasmQueryPlugin),
 		Stargate: wasmkeeper.AcceptListStargateQuerier(
 			WasmAcceptedStargateQueries(),
 			grpcQueryRouter,

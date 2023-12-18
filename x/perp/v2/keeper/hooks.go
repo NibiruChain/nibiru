@@ -16,19 +16,20 @@ import (
 func (k Keeper) BeforeEpochStart(_ sdk.Context, _ string, _ uint64) {
 }
 
-func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64) {
+func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, number uint64) {
+	k.maybeUpdateDnREpoch(ctx, epochIdentifier, number)
 	for _, market := range k.Markets.Iterate(ctx, collections.Range[collections.Pair[asset.Pair, uint64]]{}).Values() {
 		if !market.Enabled || epochIdentifier != market.FundingRateEpochId {
 			return
 		}
 
-		indexTwap, err := k.OracleKeeper.GetExchangeRateTwap(ctx, market.Pair)
+		indexTwap, err := k.OracleKeeper.GetExchangeRateTwap(ctx, market.OraclePair)
 		if err != nil {
-			ctx.Logger().Error("failed to fetch twap index price", "market.Pair", market.Pair, "error", err)
+			ctx.Logger().Error("failed to fetch twap index price", "market.OraclePair", market.OraclePair, "market.Pair", market.Pair, "error", err)
 			continue
 		}
 		if indexTwap.IsZero() {
-			ctx.Logger().Error("index price is zero", "market.Pair", market.Pair)
+			ctx.Logger().Error("index price is zero", "market.OraclePair", market.OraclePair, "market.Pair", market.Pair)
 			continue
 		}
 

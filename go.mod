@@ -1,14 +1,14 @@
 module github.com/NibiruChain/nibiru
 
-go 1.19
+go 1.21
 
 require (
 	cosmossdk.io/errors v1.0.0
-	cosmossdk.io/math v1.1.2
+	cosmossdk.io/math v1.2.0
 	github.com/CosmWasm/wasmd v0.44.0
 	github.com/CosmWasm/wasmvm v1.5.0
 	github.com/MakeNowJust/heredoc/v2 v2.0.1
-	github.com/NibiruChain/collections v0.3.0
+	github.com/NibiruChain/collections v0.4.0
 	github.com/armon/go-metrics v0.4.1
 	github.com/cometbft/cometbft v0.37.2
 	github.com/cometbft/cometbft-db v0.8.0
@@ -28,7 +28,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.17.0
 	github.com/rakyll/statik v0.1.7
-	github.com/spf13/cast v1.5.1
+	github.com/spf13/cast v1.6.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.16.0

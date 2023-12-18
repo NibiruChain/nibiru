@@ -16,6 +16,10 @@ import (
 func TestEpochIdentifierAfterEpochEnd(t *testing.T) {
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 
+	params := nibiruApp.InflationKeeper.GetParams(ctx)
+	params.InflationEnabled = true
+	nibiruApp.InflationKeeper.SetParams(ctx, params)
+
 	feePoolOld := nibiruApp.DistrKeeper.GetFeePool(ctx)
 	nibiruApp.EpochsKeeper.AfterEpochEnd(ctx, epochstypes.DayEpochID, 1)
 	feePoolNew := nibiruApp.DistrKeeper.GetFeePool(ctx)
@@ -161,7 +165,6 @@ func TestPeriodChangesSkippedEpochsAfterEpochEnd(t *testing.T) {
 
 			// Perform Epoch Hooks
 			futureCtx := ctx.WithBlockTime(time.Now().Add(time.Minute))
-			fmt.Println("tc.height", tc.height)
 			nibiruApp.EpochsKeeper.BeforeEpochStart(futureCtx, tc.epochIdentifier, tc.height)
 			nibiruApp.EpochsKeeper.AfterEpochEnd(futureCtx, tc.epochIdentifier, tc.height)
 
@@ -169,18 +172,12 @@ func TestPeriodChangesSkippedEpochsAfterEpochEnd(t *testing.T) {
 			period := nibiruApp.InflationKeeper.CurrentPeriod.Peek(ctx)
 
 			if tc.periodChanges {
-				fmt.Println("periodChanges", tc.periodChanges)
 				newProvision := nibiruApp.InflationKeeper.GetEpochMintProvision(ctx)
 
 				expectedProvision := types.CalculateEpochMintProvision(
 					nibiruApp.InflationKeeper.GetParams(ctx),
 					period,
 				)
-
-				fmt.Println("periodChanges", tc.periodChanges)
-				fmt.Println("newProvision", newProvision)
-				fmt.Println("expectedProvision", expectedProvision)
-				fmt.Println("originalProvision", originalProvision)
 
 				require.Equal(t, expectedProvision, newProvision)
 				// mint provisions will change

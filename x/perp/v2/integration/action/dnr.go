@@ -12,6 +12,7 @@ import (
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
+	perpkeeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
@@ -216,16 +217,20 @@ func (s *setCustomDiscountAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCt
 }
 
 type fundDnREpoch struct {
-	amt sdk.Coins
+	funds sdk.Coins
 }
 
 func (f fundDnREpoch) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
 	tmpAcc := testutil.AccAddress()
-	ctx, err, _ = action.FundAccount(tmpAcc, f.amt).Do(app, ctx)
+	ctx, err, _ = action.FundAccount(tmpAcc, f.funds).Do(app, ctx)
 	if err != nil {
 		return ctx, err, true
 	}
-	_, err = app.PerpKeeperV2.AllocateEpochRebates(ctx, tmpAcc, f.amt)
+	_, err = perpkeeper.NewMsgServerImpl(app.PerpKeeperV2).AllocateEpochRebates(
+		ctx, &types.MsgAllocateEpochRebates{
+			Sender:  tmpAcc.String(),
+			Rebates: f.funds,
+		})
 	if err != nil {
 		return ctx, err, true
 	}
@@ -236,8 +241,7 @@ func FundDnREpoch(amt sdk.Coins) action.Action {
 	return fundDnREpoch{amt}
 }
 
-type startNewDnRepochAction struct {
-}
+type startNewDnRepochAction struct{}
 
 func (s startNewDnRepochAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
 	currentEpoch, err := app.PerpKeeperV2.DnREpoch.Get(ctx)
@@ -262,10 +266,15 @@ type dnrRebateIsAction struct {
 }
 
 func (d dnrRebateIsAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
-	withdrawn, err := app.PerpKeeperV2.WithdrawEpochRebates(ctx, d.epoch, d.user)
+	resp, err := perpkeeper.NewMsgServerImpl(app.PerpKeeperV2).WithdrawEpochRebates(
+		ctx, &types.MsgWithdrawEpochRebates{
+			Sender: d.user.String(),
+			Epochs: []uint64{d.epoch},
+		})
 	if err != nil {
 		return ctx, err, true
 	}
+	withdrawn := resp.WithdrawnRebates
 	if !withdrawn.IsEqual(d.expectedRewards) {
 		return ctx, fmt.Errorf("expected %s, got %s", d.expectedRewards, withdrawn), true
 	}
@@ -292,9 +301,16 @@ type dnrRebateFailsAction struct {
 	epoch uint64
 }
 
-func (d dnrRebateFailsAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
-	withdrawn, err := app.PerpKeeperV2.WithdrawEpochRebates(ctx, d.epoch, d.user)
+func (d dnrRebateFailsAction) Do(
+	app *app.NibiruApp, ctx sdk.Context,
+) (outCtx sdk.Context, err error, isMandatory bool) {
+	resp, err := perpkeeper.NewMsgServerImpl(app.PerpKeeperV2).WithdrawEpochRebates(
+		ctx, &types.MsgWithdrawEpochRebates{
+			Sender: d.user.String(),
+			Epochs: []uint64{d.epoch},
+		})
 	if err == nil {
+		withdrawn := resp.WithdrawnRebates
 		return ctx, fmt.Errorf("expected withdrawal error but got instead: %s rewards", withdrawn.String()), true
 	}
 	return ctx, nil, true

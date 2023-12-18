@@ -18,7 +18,7 @@ var (
 )
 
 var (
-	DefaultInflation         = true
+	DefaultInflation         = false
 	DefaultPolynomialFactors = []sdk.Dec{
 		sdk.MustNewDecFromStr("-0.00014903"),
 		sdk.MustNewDecFromStr("0.07527647"),
@@ -28,9 +28,9 @@ var (
 		sdk.MustNewDecFromStr("18063678.8582418"),
 	}
 	DefaultInflationDistribution = InflationDistribution{
-		StakingRewards:    sdk.NewDecWithPrec(27_8, 3),  // 27.8%
-		CommunityPool:     sdk.NewDecWithPrec(62_20, 4), // 62.20%
-		StrategicReserves: sdk.NewDecWithPrec(10, 2),    // 10%
+		CommunityPool:     sdk.NewDecWithPrec(35_159141, 8), // 35.159141%
+		StakingRewards:    sdk.NewDecWithPrec(27_757217, 8), // 27.757217%
+		StrategicReserves: sdk.NewDecWithPrec(37_083642, 8), // 37.083642%
 	}
 	DefaultEpochsPerPeriod = uint64(30)
 	DefaultPeriodsPerYear  = uint64(12)

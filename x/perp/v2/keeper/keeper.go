@@ -38,7 +38,8 @@ type Keeper struct {
 
 	Positions              collections.Map[collections.Pair[collections.Pair[asset.Pair, uint64], sdk.AccAddress], types.Position]
 	ReserveSnapshots       collections.Map[collections.Pair[asset.Pair, time.Time], types.ReserveSnapshot]
-	DnREpoch               collections.Item[uint64]
+	DnREpoch               collections.Item[uint64]                                                    // Keeps track of the current DnR epoch.
+	DnREpochName           collections.Item[string]                                                    // Keeps track of the current DnR epoch identifier, provided by x/epoch.
 	GlobalVolumes          collections.Map[uint64, math.Int]                                           // Keeps track of global volumes for each epoch.
 	TraderVolumes          collections.Map[collections.Pair[sdk.AccAddress, uint64], math.Int]         // Keeps track of user volumes for each epoch.
 	GlobalDiscounts        collections.Map[math.Int, math.LegacyDec]                                   // maps a volume level to a discount
@@ -102,21 +103,21 @@ func NewKeeper(
 		GlobalVolumes: collections.NewMap(
 			storeKey, NamespaceGlobalVolumes,
 			collections.Uint64KeyEncoder,
-			IntValueEncoder,
+			collections.IntValueEncoder,
 		),
 		TraderVolumes: collections.NewMap(
 			storeKey, NamespaceUserVolumes,
 			collections.PairKeyEncoder(collections.AccAddressKeyEncoder, collections.Uint64KeyEncoder),
-			IntValueEncoder,
+			collections.IntValueEncoder,
 		),
 		GlobalDiscounts: collections.NewMap(
 			storeKey, NamespaceGlobalDiscounts,
-			IntKeyEncoder,
+			collections.IntKeyEncoder,
 			collections.DecValueEncoder,
 		),
 		TraderDiscounts: collections.NewMap(
 			storeKey, NamespaceUserDiscounts,
-			collections.PairKeyEncoder(collections.AccAddressKeyEncoder, IntKeyEncoder),
+			collections.PairKeyEncoder(collections.AccAddressKeyEncoder, collections.IntKeyEncoder),
 			collections.DecValueEncoder,
 		),
 		EpochRebateAllocations: collections.NewMap(
@@ -126,6 +127,10 @@ func NewKeeper(
 		),
 		Collateral: collections.NewItem(
 			storeKey, NamespaceCollateral,
+			common.StringValueEncoder,
+		),
+		DnREpochName: collections.NewItem(
+			storeKey, NamespaceDnrEpochName,
 			common.StringValueEncoder,
 		),
 	}
@@ -146,6 +151,7 @@ const (
 	NamespaceRebatesAllocations
 	NamespaceMarketLastVersion
 	NamespaceCollateral
+	NamespaceDnrEpochName
 )
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {

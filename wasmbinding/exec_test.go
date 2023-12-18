@@ -127,64 +127,6 @@ func (s *TestSuiteExecutor) OnSetupEnd() {
 	SetExchangeRates(&s.Suite, s.nibiru, s.ctx)
 }
 
-func (s *TestSuiteExecutor) TestOpenAddRemoveClose() {
-	pair := asset.MustNewPair(s.happyFields.Pair)
-	margin := sdk.NewCoin(perpv2types.TestingCollateralDenomNUSD, sdk.NewInt(69))
-
-	coins := sdk.NewCoins(
-		margin.Add(sdk.NewCoin(perpv2types.TestingCollateralDenomNUSD, sdk.NewInt(1_000))),
-	)
-	s.NoError(testapp.FundAccount(s.nibiru.BankKeeper, s.ctx, s.contractPerp, coins))
-
-	// TestMarketOrder (integration - real contract, real app)
-	execMsg := bindings.NibiruMsg{
-		MarketOrder: &bindings.MarketOrder{
-			Pair:            s.happyFields.Pair,
-			IsLong:          true,
-			QuoteAmount:     sdk.NewInt(42),
-			Leverage:        sdk.NewDec(5),
-			BaseAmountLimit: sdk.ZeroInt(),
-		},
-	}
-
-	s.T().Log("Executing with permission should succeed")
-	s.keeper.SetSudoContracts(
-		[]string{s.contractPerp.String()}, s.ctx,
-	)
-
-	contractRespBz, err := s.ExecuteAgainstContract(s.contractPerp, execMsg)
-	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
-
-	// TestAddMargin (integration - real contract, real app)
-	execMsg = bindings.NibiruMsg{
-		AddMargin: &bindings.AddMargin{
-			Pair:   pair.String(),
-			Margin: margin,
-		},
-	}
-	contractRespBz, err = s.ExecuteAgainstContract(s.contractPerp, execMsg)
-	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
-
-	// TestRemoveMargin (integration - real contract, real app)
-	execMsg = bindings.NibiruMsg{
-		RemoveMargin: &bindings.RemoveMargin{
-			Pair:   pair.String(),
-			Margin: margin,
-		},
-	}
-	contractRespBz, err = s.ExecuteAgainstContract(s.contractPerp, execMsg)
-	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
-
-	// TestClosePosition (integration - real contract, real app)
-	execMsg = bindings.NibiruMsg{
-		ClosePosition: &bindings.ClosePosition{
-			Pair: pair.String(),
-		},
-	}
-	contractRespBz, err = s.ExecuteAgainstContract(s.contractPerp, execMsg)
-	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
-}
-
 func (s *TestSuiteExecutor) TestOracleParams() {
 	defaultParams := types.DefaultParams()
 	defaultParams.VotePeriod = 1_000
@@ -362,40 +304,6 @@ func (s *TestSuiteExecutor) TestOracleParams() {
 	s.Require().Equal(theValidatorFeeRatio, params.ValidatorFeeRatio)
 }
 
-func (s *TestSuiteExecutor) TestPegShift() {
-	pair := asset.MustNewPair(s.happyFields.Pair)
-	execMsg := bindings.NibiruMsg{
-		PegShift: &bindings.PegShift{
-			Pair:    pair.String(),
-			PegMult: sdk.NewDec(420),
-		},
-	}
-
-	s.T().Log("Executing with permission should succeed")
-	contract := s.contractShifter
-	s.keeper.SetSudoContracts(
-		[]string{contract.String()}, s.ctx,
-	)
-	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
-	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
-
-	s.T().Log("Executing without permission should fail")
-	s.keeper.SetSudoContracts(
-		[]string{}, s.ctx,
-	)
-	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
-	s.Errorf(err, "contractRespBz: %s", contractRespBz)
-
-	s.T().Log("Executing the wrong contract should fail")
-	contract = s.contractPerp
-	s.keeper.SetSudoContracts(
-		[]string{contract.String()}, s.ctx,
-	)
-	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
-	s.Errorf(err, "contractRespBz: %s", contractRespBz)
-	s.Contains(err.Error(), "Error parsing into type")
-}
-
 func (s *TestSuiteExecutor) TestNoOp() {
 	contract := s.contractShifter
 	execMsg := bindings.NibiruMsg{
@@ -403,40 +311,6 @@ func (s *TestSuiteExecutor) TestNoOp() {
 	}
 	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
-}
-
-func (s *TestSuiteExecutor) TestDepthShift() {
-	pair := asset.MustNewPair(s.happyFields.Pair)
-	execMsg := bindings.NibiruMsg{
-		DepthShift: &bindings.DepthShift{
-			Pair:      pair.String(),
-			DepthMult: sdk.NewDec(2),
-		},
-	}
-
-	s.T().Log("Executing with permission should succeed")
-	contract := s.contractShifter
-	s.keeper.SetSudoContracts(
-		[]string{contract.String()}, s.ctx,
-	)
-	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
-	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
-
-	s.T().Log("Executing without permission should fail")
-	s.keeper.SetSudoContracts(
-		[]string{}, s.ctx,
-	)
-	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
-	s.Errorf(err, "contractRespBz: %s", contractRespBz)
-
-	s.T().Log("Executing the wrong contract should fail")
-	contract = s.contractPerp
-	s.keeper.SetSudoContracts(
-		[]string{contract.String()}, s.ctx,
-	)
-	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
-	s.Errorf(err, "contractRespBz: %s", contractRespBz)
-	s.Contains(err.Error(), "Error parsing into type")
 }
 
 func (s *TestSuiteExecutor) TestInsuranceFundWithdraw() {

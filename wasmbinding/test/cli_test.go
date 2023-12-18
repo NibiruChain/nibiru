@@ -21,6 +21,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
 	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
@@ -41,8 +42,7 @@ type IntegrationTestSuite struct {
 
 func (s *IntegrationTestSuite) SetupSuite() {
 	testutil.BeforeIntegrationSuite(s.T())
-
-	app.SetPrefixes(app.AccountAddressPrefix)
+	testapp.EnsureNibiruPrefix()
 
 	encodingConfig := app.MakeEncodingConfig()
 	genesisState := genesis.NewTestGenesisState(encodingConfig)
@@ -62,6 +62,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			MaxFundingRate:                  sdk.OneDec(),
 			TwapLookbackWindow:              30 * time.Minute,
 			PrepaidBadDebt:                  sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
+			OraclePair:                      asset.Registry.Pair(denoms.ETH, denoms.USD),
 		},
 	}
 	perpv2Gen.Amms = []perpv2types.AMM{

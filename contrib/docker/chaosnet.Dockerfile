@@ -1,4 +1,4 @@
-FROM golang:1.19 AS builder
+FROM golang:1.21 AS builder
 
 WORKDIR /nibiru
 
@@ -16,6 +16,7 @@ WORKDIR /root
 RUN apk --no-cache add \
   ca-certificates \
   build-base \
+  bash \
   curl \
   jq
 

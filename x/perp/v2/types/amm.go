@@ -1,7 +1,6 @@
 package types
 
 import (
-	fmt "fmt"
 	"math/big"
 
 	sdkmath "cosmossdk.io/math"
@@ -14,19 +13,19 @@ import (
 
 func (amm AMM) Validate() error {
 	if amm.BaseReserve.LTE(sdk.ZeroDec()) {
-		return fmt.Errorf("init pool token supply must be > 0")
+		return ErrAmmBaseSupplyNonpositive
 	}
 
 	if amm.QuoteReserve.LTE(sdk.ZeroDec()) {
-		return fmt.Errorf("init pool token supply must be > 0")
+		return ErrAmmQuoteSupplyNonpositive
 	}
 
 	if amm.PriceMultiplier.LTE(sdk.ZeroDec()) {
-		return fmt.Errorf("init price multiplier must be > 0")
+		return ErrAmmNonPositivePegMult
 	}
 
 	if amm.SqrtDepth.LTE(sdk.ZeroDec()) {
-		return fmt.Errorf("init sqrt depth must be > 0")
+		return ErrAmmNonPositiveSwapInvariant
 	}
 
 	computedSqrtDepth, err := amm.ComputeSqrtDepth()
@@ -130,7 +129,7 @@ func (amm AMM) GetBaseReserveAmt(
 	}
 
 	if !quoteReservesAfter.IsPositive() {
-		return sdk.Dec{}, ErrQuoteReserveAtZero
+		return sdk.Dec{}, ErrAmmNonpositiveReserves
 	}
 
 	baseReservesAfter := invariant.Quo(quoteReservesAfter)
@@ -171,7 +170,7 @@ func (amm AMM) GetQuoteReserveAmt(
 	}
 
 	if !baseReservesAfter.IsPositive() {
-		return sdk.Dec{}, ErrBaseReserveAtZero.Wrapf(
+		return sdk.Dec{}, ErrAmmNonpositiveReserves.Wrapf(
 			"base assets below zero (%s) after trying to swap %s base assets",
 			baseReservesAfter.String(),
 			baseReserveAmt.String(),
@@ -198,14 +197,13 @@ func (amm AMM) InstMarkPrice() sdk.Dec {
 
 // ComputeSqrtDepth returns the sqrt of the product of the reserves
 func (amm AMM) ComputeSqrtDepth() (sqrtDepth sdk.Dec, err error) {
-	liqDepthBigInt := new(big.Int).Mul(amm.QuoteReserve.BigInt(), amm.BaseReserve.BigInt())
-
+	liqDepthBigInt := new(big.Int).Mul(
+		amm.QuoteReserve.BigInt(), amm.BaseReserve.BigInt(),
+	)
 	chopped := common.ChopPrecisionAndRound(liqDepthBigInt)
 	if chopped.BitLen() > common.MaxDecBitLen {
-		return sdk.Dec{}, ErrLiquidityDepthOverflow
+		return sdk.Dec{}, ErrAmmLiquidityDepthOverflow
 	}
-	// Since common.ChopPrecisionAndRound mutates the input, there's no guarantee that
-	// sdk.NewDecFromBigInt(liqDepthBigInt) is equal to amm.QuoteReserve.Mul(amm.BaseReserve)
 	liqDepth := amm.QuoteReserve.Mul(amm.BaseReserve)
 	return common.SqrtDec(liqDepth)
 }
@@ -319,7 +317,7 @@ CalcRepegCost provides the cost of re-pegging the pool to a new candidate peg mu
 */
 func (amm AMM) CalcRepegCost(newPriceMultiplier sdk.Dec) (cost sdkmath.Int, err error) {
 	if !newPriceMultiplier.IsPositive() {
-		return sdkmath.Int{}, ErrNonPositivePegMultiplier
+		return sdkmath.Int{}, ErrAmmNonPositivePegMult
 	}
 
 	bias := amm.Bias()
@@ -387,7 +385,7 @@ func (amm AMM) CalcUpdateSwapInvariantCost(newSwapInvariant sdk.Dec) (sdkmath.In
 	}
 
 	if !newSwapInvariant.IsPositive() {
-		return sdkmath.Int{}, ErrNegativeSwapInvariant
+		return sdkmath.Int{}, ErrAmmNonPositiveSwapInvariant
 	}
 
 	marketValueBefore, err := amm.GetMarketValue()

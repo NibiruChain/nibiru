@@ -13,6 +13,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
+	perpkeeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
@@ -272,6 +273,8 @@ func (i insertPosition) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, er
 	return ctx, nil, true
 }
 
+// InsertPosition: Adds a position into state without a corresponding market
+// order.
 func InsertPosition(modifiers ...positionModifier) action.Action {
 	position := types.Position{
 		Pair:                            asset.Registry.Pair(denoms.BTC, denoms.USDC),
@@ -343,7 +346,14 @@ type partialClose struct {
 }
 
 func (p partialClose) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	_, err := app.PerpKeeperV2.PartialClose(ctx, p.pair, p.trader, p.amount)
+	txMsg := &types.MsgPartialClose{
+		Sender: p.trader.String(),
+		Pair:   p.pair,
+		Size_:  p.amount,
+	}
+	goCtx := sdk.WrapSDKContext(ctx)
+	_, err := perpkeeper.NewMsgServerImpl(app.PerpKeeperV2).PartialClose(
+		goCtx, txMsg)
 	if err != nil {
 		return ctx, err, true
 	}
@@ -368,7 +378,15 @@ type partialCloseFails struct {
 }
 
 func (p partialCloseFails) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	_, err := app.PerpKeeperV2.PartialClose(ctx, p.pair, p.trader, p.amount)
+	txMsg := &types.MsgPartialClose{
+		Sender: p.trader.String(),
+		Pair:   p.pair,
+		Size_:  p.amount,
+	}
+	goCtx := sdk.WrapSDKContext(ctx)
+	_, err := perpkeeper.NewMsgServerImpl(app.PerpKeeperV2).PartialClose(
+		goCtx, txMsg,
+	)
 
 	if !errors.Is(err, p.expectedErr) {
 		return ctx, fmt.Errorf("expected error %s, got %s", p.expectedErr, err), false
@@ -377,11 +395,11 @@ func (p partialCloseFails) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context,
 	return ctx, nil, false
 }
 
-func PartialCloseFails(trader sdk.AccAddress, pair asset.Pair, amount sdk.Dec, expecedErr error) action.Action {
+func PartialCloseFails(trader sdk.AccAddress, pair asset.Pair, amount sdk.Dec, expectedErr error) action.Action {
 	return partialCloseFails{
 		trader:      trader,
 		pair:        pair,
 		amount:      amount,
-		expectedErr: expecedErr,
+		expectedErr: expectedErr,
 	}
 }

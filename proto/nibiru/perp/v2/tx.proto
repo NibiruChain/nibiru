@@ -29,12 +29,26 @@ service Msg {
   rpc DonateToEcosystemFund(MsgDonateToEcosystemFund)
       returns (MsgDonateToEcosystemFundResponse) {}
 
+  // ChangeCollateralDenom: Updates the collateral denom. A denom is valid if it
+  // is possible to make an sdk.Coin using it. [Admin] Only callable by sudoers.
   rpc ChangeCollateralDenom(MsgChangeCollateralDenom)
       returns (MsgChangeCollateralDenomResponse) {}
 
-  rpc AllocateEpochRebates(MsgAllocateEpochRebates) returns (MsgAllocateEpochRebatesResponse) {}
+  rpc AllocateEpochRebates(MsgAllocateEpochRebates)
+      returns (MsgAllocateEpochRebatesResponse) {}
 
-  rpc WithdrawEpochRebates(MsgWithdrawEpochRebates) returns (MsgWithdrawEpochRebatesResponse) {}
+  rpc WithdrawEpochRebates(MsgWithdrawEpochRebates)
+      returns (MsgWithdrawEpochRebatesResponse) {}
+
+  // ShiftPegMultiplier: gRPC tx msg for changing a market's peg multiplier.
+  // [Admin] Only callable by sudoers.
+  rpc ShiftPegMultiplier(MsgShiftPegMultiplier)
+      returns (MsgShiftPegMultiplierResponse) {}
+
+  // ShiftSwapInvariant: gRPC tx msg for changing a market's swap invariant.
+  // [Admin] Only callable by sudoers.
+  rpc ShiftSwapInvariant(MsgShiftSwapInvariant)
+      returns (MsgShiftSwapInvariantResponse) {}
 }
 
 // -------------------------- Settle Position --------------------------
@@ -377,3 +391,41 @@ message MsgWithdrawEpochRebatesResponse {
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
 }
+
+// -------------------------- ShiftPegMultiplier --------------------------
+
+// ShiftPegMultiplier: gRPC tx msg for changing the peg multiplier.
+// Admin-only.
+message MsgShiftPegMultiplier {
+  string sender = 1;
+  string pair = 2 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+  string new_peg_mult = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message MsgShiftPegMultiplierResponse {}
+
+// -------------------------- ShiftSwapInvariant --------------------------
+
+// ShiftSwapInvariant: gRPC tx msg for changing the swap invariant.
+// Admin-only.
+message MsgShiftSwapInvariant {
+  string sender = 1;
+  string pair = 2 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+  string new_swap_invariant = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message MsgShiftSwapInvariantResponse {}

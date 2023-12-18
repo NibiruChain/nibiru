@@ -174,3 +174,90 @@ func (k admin) UnsafeChangeCollateralDenom(
 	k.Collateral.Set(ctx, denom)
 	return nil
 }
+
+// ShiftPegMultiplier: Edit the peg multiplier of an amm pool after making sure
+// there's enough money in the perp fund to pay for the repeg. These funds get
+// send to the vault to pay for trader's new net margin.
+func (k admin) ShiftPegMultiplier(
+	ctx sdk.Context,
+	pair asset.Pair,
+	newPriceMultiplier sdk.Dec,
+	sender sdk.AccAddress,
+) error {
+	if err := k.SudoKeeper.CheckPermissions(sender, ctx); err != nil {
+		return err
+	}
+
+	amm, err := k.GetAMM(ctx, pair)
+	if err != nil {
+		return err
+	}
+	oldPriceMult := amm.PriceMultiplier
+
+	if newPriceMultiplier.Equal(oldPriceMult) {
+		// same price multiplier, no-op
+		return nil
+	}
+
+	// Compute cost of re-pegging the pool
+	cost, err := amm.CalcRepegCost(newPriceMultiplier)
+	if err != nil {
+		return err
+	}
+
+	costPaid, err := k.handleMarketUpdateCost(ctx, pair, cost)
+	if err != nil {
+		return err
+	}
+
+	// Do the re-peg
+	amm.PriceMultiplier = newPriceMultiplier
+	k.SaveAMM(ctx, amm)
+
+	return ctx.EventManager().EmitTypedEvent(&types.EventShiftPegMultiplier{
+		OldPegMultiplier: oldPriceMult,
+		NewPegMultiplier: newPriceMultiplier,
+		CostPaid:         costPaid,
+	})
+}
+
+// ShiftSwapInvariant: Edit the swap invariant (liquidity depth) of an amm pool,
+// ensuring that there's enough money in the perp  fund to pay for the operation.
+// These funds get send to the vault to pay for trader's new net margin.
+func (k admin) ShiftSwapInvariant(
+	ctx sdk.Context,
+	pair asset.Pair,
+	newSwapInvariant sdkmath.Int,
+	sender sdk.AccAddress,
+) error {
+	if err := k.SudoKeeper.CheckPermissions(sender, ctx); err != nil {
+		return err
+	}
+	amm, err := k.GetAMM(ctx, pair)
+	if err != nil {
+		return err
+	}
+
+	cost, err := amm.CalcUpdateSwapInvariantCost(newSwapInvariant.ToLegacyDec())
+	if err != nil {
+		return err
+	}
+
+	costPaid, err := k.handleMarketUpdateCost(ctx, pair, cost)
+	if err != nil {
+		return err
+	}
+
+	err = amm.UpdateSwapInvariant(newSwapInvariant.ToLegacyDec())
+	if err != nil {
+		return err
+	}
+
+	k.SaveAMM(ctx, amm)
+
+	return ctx.EventManager().EmitTypedEvent(&types.EventShiftSwapInvariant{
+		OldSwapInvariant: amm.BaseReserve.Mul(amm.QuoteReserve).RoundInt(),
+		NewSwapInvariant: newSwapInvariant,
+		CostPaid:         costPaid,
+	})
+}

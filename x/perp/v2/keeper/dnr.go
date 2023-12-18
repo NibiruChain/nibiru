@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"math/big"
-
 	"cosmossdk.io/math"
 	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,61 +10,25 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 )
 
-// IntValueEncoder instructs collections on how to encode a math.Int as a value.
-// TODO: move to collections.
-var IntValueEncoder collections.ValueEncoder[math.Int] = intValueEncoder{}
-
-// IntKeyEncoder instructs collections on how to encode a math.Int as a key.
-// NOTE: unsafe to use as the first part of a composite key.
-var IntKeyEncoder collections.KeyEncoder[math.Int] = intKeyEncoder{}
-
-type intValueEncoder struct{}
-
-func (intValueEncoder) Encode(value math.Int) []byte {
-	return IntKeyEncoder.Encode(value)
-}
-
-func (intValueEncoder) Decode(b []byte) math.Int {
-	_, got := IntKeyEncoder.Decode(b)
-	return got
-}
-
-func (intValueEncoder) Stringify(value math.Int) string {
-	return IntKeyEncoder.Stringify(value)
-}
-
-func (intValueEncoder) Name() string {
-	return "math.Int"
-}
-
-type intKeyEncoder struct{}
-
-const maxIntKeyLen = math.MaxBitLen / 8
-
-func (intKeyEncoder) Encode(key math.Int) []byte {
-	if key.IsNil() {
-		panic("cannot encode invalid math.Int")
+// maybeUpdateDnREpoch checks if the current epoch hook call matches the
+// epoch name that targets discounts and rebates, if it does then we simply
+// invoke the StartNewEpoch function to kickstart a new epoch.
+// This method is invoked by the AfterEpochEnd hook.
+func (k Keeper) maybeUpdateDnREpoch(ctx sdk.Context, epochIdentifier string, number uint64) {
+	// if epoch name is empty, we just assume DnR is not enabled.
+	referenceEpochName := k.DnREpochName.GetOr(ctx, "")
+	if referenceEpochName != epochIdentifier {
+		return
 	}
-	if key.IsNegative() {
-		panic("cannot encode negative math.Int")
+	// kickstart new epoch
+	k.Logger(ctx).Info("updating dnr epoch", "epochIdentifier", epochIdentifier, "number", number)
+	err := k.StartNewEpoch(ctx, number)
+	if err != nil {
+		// in case of error we panic in this case, because state may have been updated
+		// in a corrupted way.
+		panic(err)
 	}
-	i := key.BigInt()
-
-	be := i.Bytes()
-	padded := make([]byte, maxIntKeyLen)
-	copy(padded[maxIntKeyLen-len(be):], be)
-	return padded
 }
-
-func (intKeyEncoder) Decode(b []byte) (int, math.Int) {
-	if len(b) != maxIntKeyLen {
-		panic("invalid key length")
-	}
-	i := new(big.Int).SetBytes(b)
-	return maxIntKeyLen, math.NewIntFromBigInt(i)
-}
-
-func (intKeyEncoder) Stringify(key math.Int) string { return key.String() }
 
 // StartNewEpoch is called by the epochs hooks when a new 30day epoch starts.
 func (k Keeper) StartNewEpoch(ctx sdk.Context, identifier uint64) error {

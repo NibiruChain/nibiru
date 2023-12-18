@@ -18,6 +18,7 @@ func AddPerpV2Genesis(gen app.GenesisState) app.GenesisState {
 		asset.Registry.Pair(denoms.BTC, denoms.NUSD): {
 			Market: perpv2types.Market{
 				Pair:                            asset.NewPair(denoms.BTC, denoms.NUSD),
+				OraclePair:                      asset.NewPair(denoms.BTC, denoms.USD),
 				Version:                         1,
 				Enabled:                         true,
 				MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.04"),
@@ -46,6 +47,7 @@ func AddPerpV2Genesis(gen app.GenesisState) app.GenesisState {
 		asset.Registry.Pair(denoms.ATOM, denoms.NUSD): {
 			Market: perpv2types.Market{
 				Pair:                            asset.NewPair(denoms.ATOM, denoms.NUSD),
+				OraclePair:                      asset.NewPair(denoms.ATOM, denoms.USD),
 				Enabled:                         true,
 				Version:                         1,
 				MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.0625"),
@@ -74,6 +76,7 @@ func AddPerpV2Genesis(gen app.GenesisState) app.GenesisState {
 		asset.Registry.Pair(denoms.OSMO, denoms.NUSD): {
 			Market: perpv2types.Market{
 				Pair:                            asset.NewPair(denoms.OSMO, denoms.NUSD),
+				OraclePair:                      asset.NewPair(denoms.OSMO, denoms.USD),
 				Enabled:                         true,
 				Version:                         1,
 				MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.0625"),
@@ -134,6 +137,7 @@ var START_MARKETS = map[asset.Pair]perpv2types.AmmMarket{
 	asset.Registry.Pair(denoms.ETH, denoms.NUSD): {
 		Market: perpv2types.Market{
 			Pair:                            asset.Registry.Pair(denoms.ETH, denoms.NUSD),
+			OraclePair:                      asset.Registry.Pair(denoms.ETH, denoms.USD),
 			Enabled:                         true,
 			Version:                         1,
 			MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.0625"),
@@ -162,6 +166,7 @@ var START_MARKETS = map[asset.Pair]perpv2types.AmmMarket{
 	asset.Registry.Pair(denoms.NIBI, denoms.NUSD): {
 		Market: perpv2types.Market{
 			Pair:                            asset.Registry.Pair(denoms.NIBI, denoms.NUSD),
+			OraclePair:                      asset.Registry.Pair(denoms.NIBI, denoms.USD),
 			Enabled:                         true,
 			Version:                         1,
 			MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.04"),
@@ -194,6 +199,7 @@ func PerpV2Genesis() *perpv2types.GenesisState {
 		Markets: []perpv2types.Market{
 			{
 				Pair:                            asset.Registry.Pair(denoms.BTC, denoms.NUSD),
+				OraclePair:                      asset.Registry.Pair(denoms.BTC, denoms.USD),
 				Enabled:                         true,
 				MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.04"),
 				MaxLeverage:                     sdk.MustNewDecFromStr("20"),
