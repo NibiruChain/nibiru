@@ -385,7 +385,7 @@ func (s *IntegrationTestSuite) TestPartialCloseCmd() {
 	s.Require().NoError(err)
 	s.T().Logf("ammMarketDuo: %s", ammMarketDuo.String())
 	s.EqualValues(sdk.MustNewDecFromStr("9998004.398322094909855993"), ammMarketDuo.Amm.BaseReserve)
-	s.EqualValues(sdk.MustNewDecFromStr("10001996.000000000000000000"), ammMarketDuo.Amm.QuoteReserve)
+	s.EqualValues(sdk.MustNewDecFromStr("10001996.000000000000000001"), ammMarketDuo.Amm.QuoteReserve)
 
 	s.T().Log("Check trader position")
 	queryResp, err := testutilcli.QueryPositionV2(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
@@ -430,8 +430,8 @@ func (s *IntegrationTestSuite) TestPartialCloseCmd() {
 	ammMarketDuo, err = testutilcli.QueryMarketV2(val.ClientCtx, pair)
 	s.Require().NoError(err)
 	s.T().Logf("ammMarketDuo: %s", ammMarketDuo.String())
-	s.EqualValues(sdk.MustNewDecFromStr("9998504.398322094909855993"), ammMarketDuo.Amm.BaseReserve)
-	s.EqualValues(sdk.MustNewDecFromStr("10001495.825393801972471233"), ammMarketDuo.Amm.QuoteReserve)
+	s.EqualValues(sdk.MustNewDecFromStr("9998503.398288059264958855"), ammMarketDuo.Amm.BaseReserve)
+	s.EqualValues(sdk.MustNewDecFromStr("10001496.825727135305804567"), ammMarketDuo.Amm.QuoteReserve)
 
 	s.T().Log("Check trader position")
 	queryResp, err = testutilcli.QueryPositionV2(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
@@ -439,12 +439,12 @@ func (s *IntegrationTestSuite) TestPartialCloseCmd() {
 	s.T().Logf("query response: %+v", queryResp)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
 	s.EqualValues(asset.Registry.Pair(denoms.BTC, denoms.NUSD), queryResp.Position.Pair)
-	s.EqualValues(sdk.MustNewDecFromStr("1495.601677905090144007"), queryResp.Position.Size_)
+	s.EqualValues(sdk.MustNewDecFromStr("1496.601711940735041145"), queryResp.Position.Size_)
 	s.EqualValues(sdk.MustNewDecFromStr("11976000.000000000000000000"), queryResp.Position.Margin)
-	s.EqualValues(sdk.MustNewDecFromStr("8974952.362811834827398000"), queryResp.Position.OpenNotional)
-	s.EqualValues(sdk.MustNewDecFromStr("8974952.362811834827392000"), queryResp.PositionNotional)
-	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000006000"), queryResp.UnrealizedPnl)
-	s.EqualValues(sdk.MustNewDecFromStr("1.334380341629795891"), queryResp.MarginRatio)
+	s.EqualValues(sdk.MustNewDecFromStr("8980954.362811834827398000"), queryResp.Position.OpenNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("8980954.362811834827396000"), queryResp.PositionNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000002000"), queryResp.UnrealizedPnl)
+	s.EqualValues(sdk.MustNewDecFromStr("1.333488571057658776"), queryResp.MarginRatio)
 }
 
 func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
@@ -521,7 +521,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 				fmt.Sprintf("10000%s", denoms.USDT),
 			},
 			expectFail:     false,
-			expectedMargin: sdk.NewDec(1_000_000),
+			expectedMargin: sdk.NewDec(980000),
 			expectedCode:   1,
 		},
 		{
@@ -531,7 +531,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 				fmt.Sprintf("10000%s", types.TestingCollateralDenomNUSD),
 			},
 			expectedCode:   types.ErrPositionNotFound.ABCICode(),
-			expectedMargin: sdk.NewDec(1_000_000),
+			expectedMargin: sdk.NewDec(980000),
 			expectFail:     false,
 		},
 		{
@@ -541,7 +541,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 				fmt.Sprintf("10000%s", types.TestingCollateralDenomNUSD),
 			},
 			expectedCode:   0,
-			expectedMargin: sdk.NewDec(1_010_000),
+			expectedMargin: sdk.NewDec(990_000),
 			expectFail:     false,
 		},
 		{
@@ -625,7 +625,7 @@ func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 			},
 			expectFail:     false,
 			expectedCode:   1,
-			expectedMargin: sdk.NewDec(1_000_000),
+			expectedMargin: sdk.NewDec(980_000),
 		},
 		{
 			name: "fail: position not found",
@@ -634,7 +634,7 @@ func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 				fmt.Sprintf("10000%s", types.TestingCollateralDenomNUSD),
 			},
 			expectedCode:   types.ErrPositionNotFound.ABCICode(),
-			expectedMargin: sdk.NewDec(1_000_000),
+			expectedMargin: sdk.NewDec(980_000),
 			expectFail:     false,
 		},
 		{
@@ -644,7 +644,7 @@ func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 				fmt.Sprintf("10000%s", types.TestingCollateralDenomNUSD),
 			},
 			expectedCode:   0,
-			expectedMargin: sdk.NewDec(990_000),
+			expectedMargin: sdk.NewDec(970_000),
 			expectFail:     false,
 		},
 		{

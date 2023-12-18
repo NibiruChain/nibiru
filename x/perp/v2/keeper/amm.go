@@ -35,7 +35,7 @@ func (k Keeper) EditPriceMultiplier(
 		return err
 	}
 
-	err = k.handleMarketUpdateCost(ctx, pair, cost)
+	err = k.handleMarketUpdateCost(ctx, cost)
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func (k Keeper) EditSwapInvariant(ctx sdk.Context, pair asset.Pair, newSwapInvar
 		return err
 	}
 
-	err = k.handleMarketUpdateCost(ctx, pair, cost)
+	err = k.handleMarketUpdateCost(ctx, cost)
 	if err != nil {
 		return err
 	}
@@ -78,7 +78,7 @@ func (k Keeper) EditSwapInvariant(ctx sdk.Context, pair asset.Pair, newSwapInvar
 	return nil
 }
 
-func (k Keeper) handleMarketUpdateCost(ctx sdk.Context, pair asset.Pair, costAmt sdkmath.Int) (err error) {
+func (k Keeper) handleMarketUpdateCost(ctx sdk.Context, costAmt sdkmath.Int) (err error) {
 	collateral, err := k.Collateral.Get(ctx)
 	if err != nil {
 		return err

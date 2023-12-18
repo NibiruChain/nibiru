@@ -581,6 +581,17 @@ func (k Keeper) afterPositionUpdate(
 		positionNotional = positionResp.Position.OpenNotional.Sub(positionResp.UnrealizedPnlAfter)
 	}
 
+	// This means that the position has been closed entirely.
+	if transferredFee.IsZero() {
+		// If the position has margin to be transferred to the user, we get the fees from it.
+		if positionResp.MarginToVault.IsNegative() {
+			transferredFee, err = k.transferFee(ctx, market.Pair, traderAddr, positionResp.MarginToVault.Abs(), market.ExchangeFeeRatio, market.EcosystemFundFeeRatio)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	_ = ctx.EventManager().EmitTypedEvents(
 		&types.PositionChangedEvent{
 			FinalPosition:     positionResp.Position,
