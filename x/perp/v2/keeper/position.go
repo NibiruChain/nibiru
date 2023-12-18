@@ -9,6 +9,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
+// GetPosition returns the position or types.ErrPositionNotFound if it does not exist.
 func (k Keeper) GetPosition(ctx sdk.Context, pair asset.Pair, version uint64, account sdk.AccAddress) (types.Position, error) {
 	position, err := k.Positions.Get(ctx, collections.Join(collections.Join(pair, version), account))
 	if err != nil {
