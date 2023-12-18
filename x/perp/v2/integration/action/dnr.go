@@ -26,9 +26,9 @@ type setEpochAction struct {
 	Epoch uint64
 }
 
-func (s setEpochAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
+func (s setEpochAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error) {
 	app.PerpKeeperV2.DnREpoch.Set(ctx, s.Epoch)
-	return ctx, nil, true
+	return ctx, nil
 }
 
 func DnRCurrentVolumeIs(user sdk.AccAddress, wantVolume math.Int) action.Action {
@@ -43,19 +43,19 @@ type expectVolumeAction struct {
 	Volume math.Int
 }
 
-func (e expectVolumeAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
+func (e expectVolumeAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error) {
 	currentEpoch, err := app.PerpKeeperV2.DnREpoch.Get(ctx)
 	if err != nil {
-		return ctx, err, true
+		return ctx, err
 	}
 	volume, err := app.PerpKeeperV2.TraderVolumes.Get(ctx, collections.Join(e.User, currentEpoch))
 	if err != nil {
-		return ctx, err, true
+		return ctx, err
 	}
 	if !volume.Equal(e.Volume) {
-		return ctx, fmt.Errorf("unexpected user dnr volume, wanted %s, got %s", e.Volume, volume), true
+		return ctx, fmt.Errorf("unexpected user dnr volume, wanted %s, got %s", e.Volume, volume)
 	}
-	return ctx, nil, true
+	return ctx, nil
 }
 
 func DnRPreviousVolumeIs(user sdk.AccAddress, wantVolume math.Int) action.Action {
@@ -70,17 +70,17 @@ type expectPreviousVolumeAction struct {
 	Volume math.Int
 }
 
-func (e expectPreviousVolumeAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
+func (e expectPreviousVolumeAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error) {
 	currentEpoch, err := app.PerpKeeperV2.DnREpoch.Get(ctx)
 	if err != nil {
-		return ctx, err, true
+		return ctx, err
 	}
 
 	v := app.PerpKeeperV2.GetTraderVolumeLastEpoch(ctx, currentEpoch, e.User)
 	if !v.Equal(e.Volume) {
-		return ctx, fmt.Errorf("unexpected user dnr volume, wanted %s, got %s", e.Volume, v), true
+		return ctx, fmt.Errorf("unexpected user dnr volume, wanted %s, got %s", e.Volume, v)
 	}
-	return ctx, nil, true
+	return ctx, nil
 }
 
 func DnRVolumeNotExist(user sdk.AccAddress, epoch uint64) action.Action {
@@ -95,12 +95,12 @@ type expectVolumeNotExistAction struct {
 	User  sdk.AccAddress
 }
 
-func (e expectVolumeNotExistAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
+func (e expectVolumeNotExistAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error) {
 	v, err := app.PerpKeeperV2.TraderVolumes.Get(ctx, collections.Join(e.User, e.Epoch))
 	if err == nil {
-		return ctx, fmt.Errorf("unexpected user dnr volume, got %s", v), true
+		return ctx, fmt.Errorf("unexpected user dnr volume, got %s", v)
 	}
-	return ctx, nil, true
+	return ctx, nil
 }
 
 type marketOrderFeeIs struct {
@@ -133,10 +133,10 @@ func MarketOrderFeeIs(
 	}
 }
 
-func (o *marketOrderFeeIs) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (o *marketOrderFeeIs) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	collateral, err := app.PerpKeeperV2.Collateral.Get(ctx)
 	if err != nil {
-		return ctx, err, true
+		return ctx, err
 	}
 
 	balanceBefore := app.BankKeeper.GetBalance(ctx, o.trader, collateral).Amount
@@ -145,7 +145,7 @@ func (o *marketOrderFeeIs) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context,
 		o.margin, o.leverage, o.baseAssetLimit,
 	)
 	if err != nil {
-		return ctx, err, true
+		return ctx, err
 	}
 
 	balanceBefore = balanceBefore.Sub(resp.MarginToVault.TruncateInt())
@@ -154,9 +154,9 @@ func (o *marketOrderFeeIs) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context,
 	balanceAfter := app.BankKeeper.GetBalance(ctx, o.trader, collateral).Amount
 	paidFees := balanceBefore.Sub(balanceAfter)
 	if !paidFees.Equal(expectedFee.TruncateInt()) {
-		return ctx, fmt.Errorf("unexpected fee, wanted %s, got %s", expectedFee, paidFees), true
+		return ctx, fmt.Errorf("unexpected fee, wanted %s, got %s", expectedFee, paidFees)
 	}
-	return ctx, nil, true
+	return ctx, nil
 }
 
 func SetPreviousEpochUserVolume(user sdk.AccAddress, volume math.Int) action.Action {
@@ -171,13 +171,13 @@ type setPreviousEpochUserVolumeAction struct {
 	volume math.Int
 }
 
-func (s setPreviousEpochUserVolumeAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
+func (s setPreviousEpochUserVolumeAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error) {
 	currentEpoch, err := app.PerpKeeperV2.DnREpoch.Get(ctx)
 	if err != nil {
-		return ctx, err, true
+		return ctx, err
 	}
 	app.PerpKeeperV2.TraderVolumes.Insert(ctx, collections.Join(s.user, currentEpoch-1), s.volume)
-	return ctx, nil, true
+	return ctx, nil
 }
 
 func SetGlobalDiscount(fee sdk.Dec, volume math.Int) action.Action {
@@ -192,9 +192,9 @@ type setGlobalDiscountAction struct {
 	volume math.Int
 }
 
-func (s setGlobalDiscountAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
+func (s setGlobalDiscountAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error) {
 	app.PerpKeeperV2.GlobalDiscounts.Insert(ctx, s.volume, s.fee)
-	return ctx, nil, true
+	return ctx, nil
 }
 
 func SetCustomDiscount(user sdk.AccAddress, fee sdk.Dec, volume math.Int) action.Action {
@@ -211,20 +211,20 @@ type setCustomDiscountAction struct {
 	user   sdk.AccAddress
 }
 
-func (s *setCustomDiscountAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
+func (s *setCustomDiscountAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error) {
 	app.PerpKeeperV2.TraderDiscounts.Insert(ctx, collections.Join(s.user, s.volume), s.fee)
-	return ctx, nil, true
+	return ctx, nil
 }
 
 type fundDnREpoch struct {
 	funds sdk.Coins
 }
 
-func (f fundDnREpoch) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
+func (f fundDnREpoch) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error) {
 	tmpAcc := testutil.AccAddress()
-	ctx, err, _ = action.FundAccount(tmpAcc, f.funds).Do(app, ctx)
+	ctx, err = action.FundAccount(tmpAcc, f.funds).Do(app, ctx)
 	if err != nil {
-		return ctx, err, true
+		return ctx, err
 	}
 	_, err = perpkeeper.NewMsgServerImpl(app.PerpKeeperV2).AllocateEpochRebates(
 		ctx, &types.MsgAllocateEpochRebates{
@@ -232,9 +232,9 @@ func (f fundDnREpoch) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Contex
 			Rebates: f.funds,
 		})
 	if err != nil {
-		return ctx, err, true
+		return ctx, err
 	}
-	return ctx, nil, true
+	return ctx, nil
 }
 
 func FundDnREpoch(amt sdk.Coins) action.Action {
@@ -243,16 +243,16 @@ func FundDnREpoch(amt sdk.Coins) action.Action {
 
 type startNewDnRepochAction struct{}
 
-func (s startNewDnRepochAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
+func (s startNewDnRepochAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error) {
 	currentEpoch, err := app.PerpKeeperV2.DnREpoch.Get(ctx)
 	if err != nil {
-		return ctx, err, true
+		return ctx, err
 	}
 	err = app.PerpKeeperV2.StartNewEpoch(ctx, currentEpoch+1)
 	if err != nil {
-		return ctx, err, true
+		return ctx, err
 	}
-	return ctx, nil, true
+	return ctx, nil
 }
 
 func StartNewDnREpoch() action.Action {
@@ -265,20 +265,20 @@ type dnrRebateIsAction struct {
 	expectedRewards sdk.Coins
 }
 
-func (d dnrRebateIsAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error, isMandatory bool) {
+func (d dnrRebateIsAction) Do(app *app.NibiruApp, ctx sdk.Context) (outCtx sdk.Context, err error) {
 	resp, err := perpkeeper.NewMsgServerImpl(app.PerpKeeperV2).WithdrawEpochRebates(
 		ctx, &types.MsgWithdrawEpochRebates{
 			Sender: d.user.String(),
 			Epochs: []uint64{d.epoch},
 		})
 	if err != nil {
-		return ctx, err, true
+		return ctx, err
 	}
 	withdrawn := resp.WithdrawnRebates
 	if !withdrawn.IsEqual(d.expectedRewards) {
-		return ctx, fmt.Errorf("expected %s, got %s", d.expectedRewards, withdrawn), true
+		return ctx, fmt.Errorf("expected %s, got %s", d.expectedRewards, withdrawn)
 	}
-	return ctx, nil, true
+	return ctx, nil
 }
 
 func DnRRebateIs(user sdk.AccAddress, epoch uint64, expectedRewards sdk.Coins) action.Action {
@@ -303,7 +303,7 @@ type dnrRebateFailsAction struct {
 
 func (d dnrRebateFailsAction) Do(
 	app *app.NibiruApp, ctx sdk.Context,
-) (outCtx sdk.Context, err error, isMandatory bool) {
+) (outCtx sdk.Context, err error) {
 	resp, err := perpkeeper.NewMsgServerImpl(app.PerpKeeperV2).WithdrawEpochRebates(
 		ctx, &types.MsgWithdrawEpochRebates{
 			Sender: d.user.String(),
@@ -311,7 +311,7 @@ func (d dnrRebateFailsAction) Do(
 		})
 	if err == nil {
 		withdrawn := resp.WithdrawnRebates
-		return ctx, fmt.Errorf("expected withdrawal error but got instead: %s rewards", withdrawn.String()), true
+		return ctx, fmt.Errorf("expected withdrawal error but got instead: %s rewards", withdrawn.String())
 	}
-	return ctx, nil, true
+	return ctx, nil
 }

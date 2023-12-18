@@ -22,17 +22,19 @@ type twalShouldBe struct {
 	expectedTwap sdk.Dec
 }
 
-func (c twalShouldBe) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (c twalShouldBe) IsNotMandatory() {}
+
+func (c twalShouldBe) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	twap, err := app.PerpKeeperV2.CalcTwap(ctx, c.pair, c.twapCalcOpt, c.dir, c.assetAmt, c.twapLookbackWindow)
 	if err != nil {
-		return ctx, err, false
+		return ctx, err
 	}
 
 	if !twap.Equal(c.expectedTwap) {
-		return ctx, fmt.Errorf("invalid twap, expected %s, received %s", c.expectedTwap, twap), false
+		return ctx, fmt.Errorf("invalid twap, expected %s, received %s", c.expectedTwap, twap)
 	}
 
-	return ctx, nil, false
+	return ctx, nil
 }
 
 func TwapShouldBe(pair asset.Pair, twapCalcOpt types.TwapCalcOption, dir types.Direction, assetAmt sdk.Dec, twapLookbackWindow time.Duration, expectedTwap sdk.Dec) action.Action {

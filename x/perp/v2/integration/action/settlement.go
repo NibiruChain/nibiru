@@ -16,13 +16,13 @@ type closeMarket struct {
 	pair asset.Pair
 }
 
-func (c closeMarket) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (c closeMarket) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	err := app.PerpKeeperV2.Admin.CloseMarket(ctx, c.pair)
 	if err != nil {
-		return ctx, err, false
+		return ctx, err
 	}
 
-	return ctx, nil, true
+	return ctx, nil
 }
 
 func CloseMarket(pair asset.Pair) action.Action {
@@ -34,13 +34,13 @@ type closeMarketShouldFail struct {
 	pair asset.Pair
 }
 
-func (c closeMarketShouldFail) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (c closeMarketShouldFail) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	err := app.PerpKeeperV2.Admin.CloseMarket(ctx, c.pair)
 	if err == nil {
-		return ctx, err, false
+		return ctx, err
 	}
 
-	return ctx, nil, true
+	return ctx, nil
 }
 
 func CloseMarketShouldFail(pair asset.Pair) action.Action {
@@ -55,19 +55,19 @@ type settlePosition struct {
 	responseCheckers []SettlePositionChecker
 }
 
-func (c settlePosition) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (c settlePosition) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	resp, err := app.PerpKeeperV2.SettlePosition(ctx, c.pair, c.version, c.trader)
 	if err != nil {
-		return ctx, err, false
+		return ctx, err
 	}
 
 	for _, checker := range c.responseCheckers {
 		if err := checker(*resp); err != nil {
-			return ctx, err, false
+			return ctx, err
 		}
 	}
 
-	return ctx, nil, true
+	return ctx, nil
 }
 
 func SettlePosition(pair asset.Pair, version uint64, trader sdk.AccAddress, responseCheckers ...SettlePositionChecker) action.Action {
@@ -109,13 +109,13 @@ type settlePositionShouldFail struct {
 	trader  sdk.AccAddress
 }
 
-func (c settlePositionShouldFail) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (c settlePositionShouldFail) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	_, err := app.PerpKeeperV2.SettlePosition(ctx, c.pair, c.version, c.trader)
 	if err == nil {
-		return ctx, err, false
+		return ctx, err
 	}
 
-	return ctx, nil, true
+	return ctx, nil
 }
 
 func SettlePositionShouldFail(pair asset.Pair, version uint64, trader sdk.AccAddress) action.Action {
