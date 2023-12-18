@@ -2,6 +2,7 @@ package assertion
 
 import (
 	"fmt"
+
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
 
 	sdkmath "cosmossdk.io/math"
