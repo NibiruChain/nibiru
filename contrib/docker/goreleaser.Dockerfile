@@ -1,7 +1,7 @@
 FROM golang:1.21 AS builder
 
 WORKDIR /root
-COPY dist/ /root/
+COPY ./dist-temp/ /root/
 
 ARG TARGETARCH
 RUN if [ "${TARGETARCH}" = "arm64" ]; then \

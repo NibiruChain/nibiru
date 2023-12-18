@@ -19,7 +19,7 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -36,6 +36,16 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Move dist to prevent dockerignore"
+        run: |
+          echo "dist contents: $(ls dist)"
+          if [ ! -d "dist" ]; then 
+            echo "❌ expected dist dir to be generated from make release-snapshot" && exit 1
+          else echo "dist dir exists as expected."
+          fi
+          rm -rf dist-temp
+          cp -r dist dist-temp
 
       - name: Build and push versioned image
         uses: docker/build-push-action@v5
