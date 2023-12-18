@@ -69,7 +69,7 @@ BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
 CGO_CFLAGS  := -I$(TEMPDIR)/include
 CGO_LDFLAGS := -L$(TEMPDIR)/lib
 ifeq ($(OS_NAME),darwin)
-	CGO_LDFLAGS += -Wl,-ld_classic -lrocksdb -lstdc++ -lz -lbz2
+	CGO_LDFLAGS += -lrocksdb -lstdc++ -lz -lbz2
 else
 	CGO_LDFLAGS += -static -lm -lbz2
 endif
