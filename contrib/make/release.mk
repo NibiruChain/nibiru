@@ -9,7 +9,7 @@ GOLANG_CROSS_VERSION  ?= v1.21.5
 # `gorelease/goreleaser-cross:${GOLANG_CROSS_VERSION}`. This command:
 # `-v "$(CURDIR)":/go/src/$(PACKAGE_NAME)`: mounts the current directory 
 # `release --clean`: executes the release inside the directory
-release: verify-dist-temp
+release:
 	docker run \
 		--rm \
 		--platform linux/amd64 \
