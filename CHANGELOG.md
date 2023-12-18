@@ -65,7 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1632](https://github.com/NibiruChain/nibiru/pull/1632) - feat(perp): Add settle position transaction
 * [#1573](https://github.com/NibiruChain/nibiru/pull/1573) - feat(perp): Close markets and compute settlement price
 * [#1705](https://github.com/NibiruChain/nibiru/pull/1705) - feat(perp): Add oracle pair to market object
-* [#1708](https://github.com/NibiruChain/nibiru/pull/1718) - fix: fees does not require additional funds
+* [#1718](https://github.com/NibiruChain/nibiru/pull/1718) - fix: fees does not require additional funds
 
 ### Non-breaking/Compatible Improvements
 
