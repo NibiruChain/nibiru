@@ -27,7 +27,7 @@ func (k Keeper) SettlePosition(ctx sdk.Context, pair asset.Pair, version uint64,
 		return
 	}
 
-	updatedAMM, positionResp, err := k.settlePosition(ctx, market, amm, position)
+	_, positionResp, err := k.settlePosition(ctx, market, amm, position)
 	if err != nil {
 		return
 	}
@@ -45,10 +45,10 @@ func (k Keeper) SettlePosition(ctx sdk.Context, pair asset.Pair, version uint64,
 	if err = k.afterPositionUpdate(
 		ctx,
 		market,
-		*updatedAMM,
 		traderAddr,
 		*positionResp,
 		types.ChangeReason_Settlement,
+		sdk.ZeroInt(),
 		position,
 	); err != nil {
 		return nil, err

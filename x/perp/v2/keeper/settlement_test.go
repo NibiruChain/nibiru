@@ -76,7 +76,7 @@ func TestSettlePosition(t *testing.T) {
 				sdk.NewDec(10),
 				sdk.ZeroDec(),
 			),
-			QueryPosition(pairBtcUsdc, alice, QueryPosition_MarginRatioEquals(sdk.MustNewDecFromStr("-0.093502230451982156"))),
+			QueryPosition(pairBtcUsdc, alice, QueryPosition_MarginRatioEquals(sdk.MustNewDecFromStr("-0.090096188479034643"))),
 		).When(
 			// Alice opened a short position (leverage x10) while bob a bigger long position
 			// Price jumped by 10%, with a settlement price of 1.09
@@ -100,22 +100,22 @@ func TestSettlePosition(t *testing.T) {
 						LastUpdatedBlockNumber:          1,
 					},
 				),
-				SettlePositionChecker_MarginToVault(sdk.ZeroDec()),
-				SettlePositionChecker_BadDebt(sdk.MustNewDecFromStr("1.010101010101010101")),
+				SettlePositionChecker_MarginToVault(sdk.MustNewDecFromStr("-1.009493031710765502")),
+				SettlePositionChecker_BadDebt(sdk.ZeroDec()),
 			),
 			SettlePosition(
 				pairBtcUsdc,
 				1,
 				bob,
-				SettlePositionChecker_MarginToVault(sdk.MustNewDecFromStr("-1101.010101010101010100")),
+				SettlePositionChecker_MarginToVault(sdk.MustNewDecFromStr("-1076.990506968289234498")),
 				SettlePositionChecker_BadDebt(sdk.ZeroDec()),
 			),
 		).Then(
 			PositionShouldNotExist(alice, pairBtcUsdc, 1),
 			PositionShouldNotExist(bob, pairBtcUsdc, 1),
 			SetBlockNumber(2),
-			BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.NewInt(0)),
-			BalanceEqual(bob, types.TestingCollateralDenomNUSD, sdk.NewInt(1101-20)),
+			BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.NewInt(5)),
+			BalanceEqual(bob, types.TestingCollateralDenomNUSD, sdk.NewInt(1095)),
 		),
 
 		TC("Error: can't settle on enabled market").When(

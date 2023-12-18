@@ -280,7 +280,7 @@ func TestCloseMarket(t *testing.T) {
 			),
 		).When(
 			CloseMarket(pairBtcUsdc),
-			AMMShouldBeEqual(pairBtcUsdc, AMM_SettlementPriceShoulBeEqual(sdk.MustNewDecFromStr("1.1"))),
+			AMMShouldBeEqual(pairBtcUsdc, AMM_SettlementPriceShoulBeEqual(sdk.MustNewDecFromStr("1.099800000000000000"))),
 		).Then(
 			PartialCloseFails(alice, pairBtcUsdc, sdk.NewDec(5_000), perptypes.ErrMarketNotEnabled),
 		),

@@ -244,8 +244,8 @@ func (s *IntegrationTestSuite) TestMarketOrdersAndCloseCmd() {
 	ammMarketDuo, err = testutilcli.QueryMarketV2(val.ClientCtx, pair)
 	s.Require().NoError(err)
 	s.T().Logf("ammMarketDuo: %s", ammMarketDuo.String())
-	s.EqualValues(sdk.MustNewDecFromStr("9999666.677777407419752675"), ammMarketDuo.Amm.BaseReserve)
-	s.EqualValues(sdk.MustNewDecFromStr("10000333.333333333333333333"), ammMarketDuo.Amm.QuoteReserve)
+	s.EqualValues(sdk.MustNewDecFromStr("9999667.344399676304101617"), ammMarketDuo.Amm.BaseReserve)
+	s.EqualValues(sdk.MustNewDecFromStr("10000332.666666666666666667"), ammMarketDuo.Amm.QuoteReserve)
 
 	s.T().Log("B. check trader position")
 	queryResp, err := testutilcli.QueryPositionV2(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
@@ -253,11 +253,11 @@ func (s *IntegrationTestSuite) TestMarketOrdersAndCloseCmd() {
 	s.T().Logf("query response: %+v", queryResp)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
 	s.EqualValues(asset.Registry.Pair(denoms.BTC, denoms.NUSD), queryResp.Position.Pair)
-	s.EqualValues(sdk.MustNewDecFromStr("333.322222592580247325"), queryResp.Position.Size_)
-	s.EqualValues(sdk.NewDec(2*common.TO_MICRO), queryResp.Position.Margin)
-	s.EqualValues(sdk.NewDec(2*common.TO_MICRO), queryResp.Position.OpenNotional)
-	s.EqualValues(sdk.MustNewDecFromStr("1999999.999999999999998000"), queryResp.PositionNotional)
-	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000002000"), queryResp.UnrealizedPnl)
+	s.EqualValues(sdk.MustNewDecFromStr("332.655600323695898383"), queryResp.Position.Size_)
+	s.EqualValues(sdk.MustNewDecFromStr("1996000.000000000000000000"), queryResp.Position.Margin)
+	s.EqualValues(sdk.MustNewDecFromStr("1996000.000000000000000000"), queryResp.Position.OpenNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("1996000.000000000000002000"), queryResp.PositionNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("0.000000000000002000"), queryResp.UnrealizedPnl)
 	s.EqualValues(sdk.OneDec(), queryResp.MarginRatio)
 
 	s.T().Log("C. open position with 2x leverage and zero baseAmtLimit")
@@ -278,12 +278,12 @@ func (s *IntegrationTestSuite) TestMarketOrdersAndCloseCmd() {
 	s.T().Logf("query response: %+v", queryResp)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
 	s.EqualValues(asset.Registry.Pair(denoms.BTC, denoms.NUSD), queryResp.Position.Pair)
-	s.EqualValues(sdk.MustNewDecFromStr("999.900009999000099990"), queryResp.Position.Size_)
-	s.EqualValues(sdk.NewDec(4*common.TO_MICRO), queryResp.Position.Margin)
-	s.EqualValues(sdk.NewDec(6*common.TO_MICRO), queryResp.Position.OpenNotional)
-	s.EqualValues(sdk.MustNewDecFromStr("6000000.000000000000000000"), queryResp.PositionNotional)
-	s.EqualValues(sdk.MustNewDecFromStr("0.000000000000000000"), queryResp.UnrealizedPnl)
-	s.EqualValues(sdk.MustNewDecFromStr("0.666666666666666667"), queryResp.MarginRatio)
+	s.EqualValues(sdk.MustNewDecFromStr("996.567342121568550334"), queryResp.Position.Size_)
+	s.EqualValues(sdk.MustNewDecFromStr("3988000.000000000000000000"), queryResp.Position.Margin)
+	s.EqualValues(sdk.MustNewDecFromStr("5980000.0"), queryResp.Position.OpenNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("5979999.999999999999996000"), queryResp.PositionNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000004000"), queryResp.UnrealizedPnl)
+	s.EqualValues(sdk.MustNewDecFromStr("0.666889632107023411"), queryResp.MarginRatio)
 
 	s.T().Log("D. Open a reverse position smaller than the existing position")
 	txResp, err = s.network.ExecTxCmd(cli.MarketOrderCmd(), user, []string{
@@ -302,8 +302,8 @@ func (s *IntegrationTestSuite) TestMarketOrdersAndCloseCmd() {
 	ammMarketDuo, err = testutilcli.QueryMarketV2(val.ClientCtx, pair)
 	s.Require().NoError(err)
 	s.T().Logf("ammMarketDuo: %s", ammMarketDuo.String())
-	s.EqualValues(sdk.MustNewDecFromStr("9999166.736105324556286976"), ammMarketDuo.Amm.BaseReserve)
-	s.EqualValues(sdk.MustNewDecFromStr("10000833.333333333333333333"), ammMarketDuo.Amm.QuoteReserve)
+	s.EqualValues(sdk.MustNewDecFromStr("9999169.735606286824650660"), ammMarketDuo.Amm.BaseReserve)
+	s.EqualValues(sdk.MustNewDecFromStr("10000830.333333333333333334"), ammMarketDuo.Amm.QuoteReserve)
 
 	s.T().Log("D. Check trader position")
 	queryResp, err = testutilcli.QueryPositionV2(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
@@ -311,12 +311,14 @@ func (s *IntegrationTestSuite) TestMarketOrdersAndCloseCmd() {
 	s.T().Logf("query response: %+v", queryResp)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
 	s.EqualValues(asset.Registry.Pair(denoms.BTC, denoms.NUSD), queryResp.Position.Pair)
-	s.EqualValues(sdk.MustNewDecFromStr("833.263894675443713024"), queryResp.Position.Size_)
-	s.EqualValues(sdk.NewDec(4*common.TO_MICRO), queryResp.Position.Margin)
-	s.EqualValues(sdk.NewDec(5_000_000), queryResp.Position.OpenNotional)
-	s.EqualValues(sdk.MustNewDecFromStr("4999999.999999999999998000"), queryResp.PositionNotional)
-	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000002000"), queryResp.UnrealizedPnl)
-	s.EqualValues(sdk.MustNewDecFromStr("0.800000000000000000"), queryResp.MarginRatio)
+	s.EqualValues(sdk.MustNewDecFromStr("830.264393713175349340"), queryResp.Position.Size_)
+	s.EqualValues(sdk.MustNewDecFromStr("3987999.999999999999999332"), queryResp.Position.Margin)
+	s.EqualValues(sdk.MustNewDecFromStr("3987999.999999999999999332"), queryResp.Position.Margin)
+
+	s.EqualValues(sdk.MustNewDecFromStr("4981999.999999999999999332"), queryResp.Position.OpenNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("4981999.999999999999998000"), queryResp.PositionNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000001332"), queryResp.UnrealizedPnl)
+	s.EqualValues(sdk.MustNewDecFromStr("0.800481734243275793"), queryResp.MarginRatio)
 
 	s.T().Log("E. Open a reverse position larger than the existing position")
 	txResp, err = s.network.ExecTxCmd(cli.MarketOrderCmd(), user, []string{
@@ -336,11 +338,11 @@ func (s *IntegrationTestSuite) TestMarketOrdersAndCloseCmd() {
 	s.T().Logf("query response: %+v", queryResp)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
 	s.EqualValues(asset.Registry.Pair(denoms.BTC, denoms.NUSD), queryResp.Position.Pair)
-	s.EqualValues(sdk.MustNewDecFromStr("-500.025001250062503125"), queryResp.Position.Size_)
-	s.EqualValues(sdk.MustNewDecFromStr("3000000.000000000000002000"), queryResp.Position.OpenNotional)
-	s.EqualValues(sdk.MustNewDecFromStr("3000000.000000000000002000"), queryResp.Position.Margin)
-	s.EqualValues(sdk.MustNewDecFromStr("3000000.000000000000000000"), queryResp.PositionNotional)
-	s.EqualValues(sdk.MustNewDecFromStr("0.000000000000002000"), queryResp.UnrealizedPnl)
+	s.EqualValues(sdk.MustNewDecFromStr("-500.358367930342114784"), queryResp.Position.Size_)
+	s.EqualValues(sdk.MustNewDecFromStr("3002000.000000000000002000"), queryResp.Position.OpenNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("3002000.000000000000002000"), queryResp.Position.Margin)
+	s.EqualValues(sdk.MustNewDecFromStr("3002000.000000000000004000"), queryResp.PositionNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000002000"), queryResp.UnrealizedPnl)
 	// there is a random delta due to twap margin ratio calculation and random block times in the in-process network
 	s.InDelta(1, queryResp.MarginRatio.MustFloat64(), 0.008)
 
@@ -382,8 +384,8 @@ func (s *IntegrationTestSuite) TestPartialCloseCmd() {
 	ammMarketDuo, err := testutilcli.QueryMarketV2(val.ClientCtx, pair)
 	s.Require().NoError(err)
 	s.T().Logf("ammMarketDuo: %s", ammMarketDuo.String())
-	s.EqualValues(sdk.MustNewDecFromStr("9998000.399920015996800640"), ammMarketDuo.Amm.BaseReserve)
-	s.EqualValues(sdk.MustNewDecFromStr("10002000.000000000000000000"), ammMarketDuo.Amm.QuoteReserve)
+	s.EqualValues(sdk.MustNewDecFromStr("9998004.398322094909855993"), ammMarketDuo.Amm.BaseReserve)
+	s.EqualValues(sdk.MustNewDecFromStr("10001996.000000000000000001"), ammMarketDuo.Amm.QuoteReserve)
 
 	s.T().Log("Check trader position")
 	queryResp, err := testutilcli.QueryPositionV2(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
@@ -391,10 +393,10 @@ func (s *IntegrationTestSuite) TestPartialCloseCmd() {
 	s.T().Logf("query response: %+v", queryResp)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
 	s.EqualValues(pair, queryResp.Position.Pair)
-	s.EqualValues(sdk.MustNewDecFromStr("1999.600079984003199360"), queryResp.Position.Size_)
-	s.EqualValues(sdk.NewDec(12e6), queryResp.Position.Margin)
-	s.EqualValues(sdk.NewDec(12e6), queryResp.Position.OpenNotional)
-	s.EqualValues(sdk.MustNewDecFromStr("12000000"), queryResp.PositionNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("1995.601677905090144007"), queryResp.Position.Size_)
+	s.EqualValues(sdk.MustNewDecFromStr("11976000.000000000000000000"), queryResp.Position.Margin)
+	s.EqualValues(sdk.MustNewDecFromStr("11976000.000000000000000000"), queryResp.Position.OpenNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("11976000.000000000000000000"), queryResp.PositionNotional)
 	s.EqualValues(sdk.ZeroDec(), queryResp.UnrealizedPnl)
 	s.EqualValues(sdk.OneDec(), queryResp.MarginRatio)
 
@@ -428,8 +430,8 @@ func (s *IntegrationTestSuite) TestPartialCloseCmd() {
 	ammMarketDuo, err = testutilcli.QueryMarketV2(val.ClientCtx, pair)
 	s.Require().NoError(err)
 	s.T().Logf("ammMarketDuo: %s", ammMarketDuo.String())
-	s.EqualValues(sdk.MustNewDecFromStr("9998500.399920015996800640"), ammMarketDuo.Amm.BaseReserve)
-	s.EqualValues(sdk.MustNewDecFromStr("10001499.824993752062459356"), ammMarketDuo.Amm.QuoteReserve)
+	s.EqualValues(sdk.MustNewDecFromStr("9998503.398288059264958855"), ammMarketDuo.Amm.BaseReserve)
+	s.EqualValues(sdk.MustNewDecFromStr("10001496.825727135305804567"), ammMarketDuo.Amm.QuoteReserve)
 
 	s.T().Log("Check trader position")
 	queryResp, err = testutilcli.QueryPositionV2(val.ClientCtx, asset.Registry.Pair(denoms.BTC, denoms.NUSD), user)
@@ -437,12 +439,12 @@ func (s *IntegrationTestSuite) TestPartialCloseCmd() {
 	s.T().Logf("query response: %+v", queryResp)
 	s.EqualValues(user.String(), queryResp.Position.TraderAddress)
 	s.EqualValues(asset.Registry.Pair(denoms.BTC, denoms.NUSD), queryResp.Position.Pair)
-	s.EqualValues(sdk.MustNewDecFromStr("1499.600079984003199360"), queryResp.Position.Size_)
-	s.EqualValues(sdk.NewDec(12e6), queryResp.Position.Margin)
-	s.EqualValues(sdk.MustNewDecFromStr("8998949.962512374756136000"), queryResp.Position.OpenNotional)
-	s.EqualValues(sdk.MustNewDecFromStr("8998949.962512374756136000"), queryResp.PositionNotional)
-	s.EqualValues(sdk.ZeroDec(), queryResp.UnrealizedPnl)
-	s.EqualValues(sdk.MustNewDecFromStr("1.333488912594172945"), queryResp.MarginRatio)
+	s.EqualValues(sdk.MustNewDecFromStr("1496.601711940735041145"), queryResp.Position.Size_)
+	s.EqualValues(sdk.MustNewDecFromStr("11976000.000000000000000000"), queryResp.Position.Margin)
+	s.EqualValues(sdk.MustNewDecFromStr("8980954.362811834827398000"), queryResp.Position.OpenNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("8980954.362811834827396000"), queryResp.PositionNotional)
+	s.EqualValues(sdk.MustNewDecFromStr("-0.000000000000002000"), queryResp.UnrealizedPnl)
+	s.EqualValues(sdk.MustNewDecFromStr("1.333488571057658776"), queryResp.MarginRatio)
 }
 
 func (s *IntegrationTestSuite) TestPositionEmptyAndClose() {
@@ -519,7 +521,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 				fmt.Sprintf("10000%s", denoms.USDT),
 			},
 			expectFail:     false,
-			expectedMargin: sdk.NewDec(1_000_000),
+			expectedMargin: sdk.NewDec(980000),
 			expectedCode:   1,
 		},
 		{
@@ -529,7 +531,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 				fmt.Sprintf("10000%s", types.TestingCollateralDenomNUSD),
 			},
 			expectedCode:   types.ErrPositionNotFound.ABCICode(),
-			expectedMargin: sdk.NewDec(1_000_000),
+			expectedMargin: sdk.NewDec(980000),
 			expectFail:     false,
 		},
 		{
@@ -539,7 +541,7 @@ func (s *IntegrationTestSuite) TestX_AddMargin() {
 				fmt.Sprintf("10000%s", types.TestingCollateralDenomNUSD),
 			},
 			expectedCode:   0,
-			expectedMargin: sdk.NewDec(1_010_000),
+			expectedMargin: sdk.NewDec(990_000),
 			expectFail:     false,
 		},
 		{
@@ -623,7 +625,7 @@ func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 			},
 			expectFail:     false,
 			expectedCode:   1,
-			expectedMargin: sdk.NewDec(1_000_000),
+			expectedMargin: sdk.NewDec(980_000),
 		},
 		{
 			name: "fail: position not found",
@@ -632,7 +634,7 @@ func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 				fmt.Sprintf("10000%s", types.TestingCollateralDenomNUSD),
 			},
 			expectedCode:   types.ErrPositionNotFound.ABCICode(),
-			expectedMargin: sdk.NewDec(1_000_000),
+			expectedMargin: sdk.NewDec(980_000),
 			expectFail:     false,
 		},
 		{
@@ -642,7 +644,7 @@ func (s *IntegrationTestSuite) TestX_RemoveMargin() {
 				fmt.Sprintf("10000%s", types.TestingCollateralDenomNUSD),
 			},
 			expectedCode:   0,
-			expectedMargin: sdk.NewDec(990_000),
+			expectedMargin: sdk.NewDec(970_000),
 			expectFail:     false,
 		},
 		{

@@ -305,7 +305,7 @@ func (amm *AMM) SwapBaseAsset(baseAssetAmt sdk.Dec, dir Direction) (quoteAssetDe
 	return amm.QuoteReserveToAsset(quoteReserveDelta), nil
 }
 
-// Bias: returns the bias, or open interest skew, of the market in the base
+// Bias returns the bias, or open interest skew, of the market in the base
 // units. Bias is the net amount of long perpetual contracts minus the net
 // amount of shorts.
 func (amm *AMM) Bias() (bias sdk.Dec) {
@@ -347,7 +347,7 @@ func (amm AMM) CalcRepegCost(newPriceMultiplier sdk.Dec) (cost sdkmath.Int, err 
 	return costDec.Ceil().TruncateInt(), nil
 }
 
-// returns the amount of quote assets the amm has to pay out if all longs and shorts close out their positions
+// GetMarketValue returns the amount of quote assets the amm has to pay out if all longs and shorts close out their positions
 // positive value means the amm has to pay out quote assets
 // negative value means the amm has to receive quote assets
 func (amm AMM) GetMarketValue() (sdk.Dec, error) {
