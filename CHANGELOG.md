@@ -75,6 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1710](https://github.com/NibiruChain/nibiru/pull/1710) - refactor(perp): Clean and organize module errors for x/perp
 * [#1714](https://github.com/NibiruChain/nibiru/pull/1714) - ci(localnet.sh): Fix script, simplify, and test in CI. 
 * [#1719](https://github.com/NibiruChain/nibiru/pull/1719) - refactor(test): add is not mandatory interface to action
+* [#1721](https://github.com/NibiruChain/nibiru/pull/1721) - ci(e2e-wasm.yml): rm unused workflow
 
 ### Dependencies
 
