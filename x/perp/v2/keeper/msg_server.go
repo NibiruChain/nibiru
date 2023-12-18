@@ -126,6 +126,7 @@ func (m msgServer) SettlePosition(ctx context.Context, msg *types.MsgSettlePosit
 	}, nil
 }
 
+// DonateToEcosystemFund allows users to donate to the ecosystem fund.
 func (m msgServer) DonateToEcosystemFund(ctx context.Context, msg *types.MsgDonateToEcosystemFund) (*types.MsgDonateToEcosystemFundResponse, error) {
 	if err := m.k.BankKeeper.SendCoinsFromAccountToModule(
 		sdk.UnwrapSDKContext(ctx),
@@ -139,7 +140,7 @@ func (m msgServer) DonateToEcosystemFund(ctx context.Context, msg *types.MsgDona
 	return &types.MsgDonateToEcosystemFundResponse{}, nil
 }
 
-// ChangeCollateralDenom: Updates the collateral denom. A denom is valid if it is
+// ChangeCollateralDenom Updates the collateral denom. A denom is valid if it is
 // possible to make an sdk.Coin using it. [Admin] Only callable by sudoers.
 func (m msgServer) ChangeCollateralDenom(
 	goCtx context.Context, txMsg *types.MsgChangeCollateralDenom,
