@@ -10,18 +10,18 @@ COMMIT := $(shell git log -1 --format='%H')
 
 # don't override user values
 ifeq (,$(VERSION))
-    VERSION := $(shell git describe --exact-match 2>/dev/null)
-    # if VERSION is empty, then populate it with branch's name and raw commit hash
-    ifeq (,$(VERSION))
-        VERSION := $(BRANCH)-$(COMMIT)
-    endif
+	VERSION := $(shell git describe --exact-match 2>/dev/null)
+	# if VERSION is empty, then populate it with branch's name and raw commit hash
+	ifeq (,$(VERSION))
+		VERSION := $(BRANCH)-$(COMMIT)
+	endif
 endif
 
 OS_NAME := $(shell uname -s | tr A-Z a-z)
 ifeq ($(shell uname -m),x86_64)
-    ARCH_NAME := amd64
+	ARCH_NAME := amd64
 else
-    ARCH_NAME := arm64
+	ARCH_NAME := arm64
 endif
 SUDO := $(shell if [ "$(shell id -u)" != "0" ]; then echo "sudo"; fi)
 
