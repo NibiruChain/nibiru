@@ -24,8 +24,46 @@ service Msg {
 
   rpc PartialClose(MsgPartialClose) returns (MsgPartialCloseResponse) {}
 
+  rpc SettlePosition(MsgSettlePosition) returns (MsgClosePositionResponse) {}
+
   rpc DonateToEcosystemFund(MsgDonateToEcosystemFund)
       returns (MsgDonateToEcosystemFundResponse) {}
+
+  // ChangeCollateralDenom: Updates the collateral denom. A denom is valid if it
+  // is possible to make an sdk.Coin using it. [Admin] Only callable by sudoers.
+  rpc ChangeCollateralDenom(MsgChangeCollateralDenom)
+      returns (MsgChangeCollateralDenomResponse) {}
+
+  rpc AllocateEpochRebates(MsgAllocateEpochRebates)
+      returns (MsgAllocateEpochRebatesResponse) {}
+
+  rpc WithdrawEpochRebates(MsgWithdrawEpochRebates)
+      returns (MsgWithdrawEpochRebatesResponse) {}
+
+  // ShiftPegMultiplier: gRPC tx msg for changing a market's peg multiplier.
+  // [Admin] Only callable by sudoers.
+  rpc ShiftPegMultiplier(MsgShiftPegMultiplier)
+      returns (MsgShiftPegMultiplierResponse) {}
+
+  // ShiftSwapInvariant: gRPC tx msg for changing a market's swap invariant.
+  // [Admin] Only callable by sudoers.
+  rpc ShiftSwapInvariant(MsgShiftSwapInvariant)
+      returns (MsgShiftSwapInvariantResponse) {}
+}
+
+// -------------------------- Settle Position --------------------------
+
+/* MsgSettlePosition: Msg to remove margin. */
+message MsgSettlePosition {
+  string sender = 1;
+
+  string pair = 2 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+
+  uint64 version = 3;
 }
 
 // -------------------------- RemoveMargin --------------------------
@@ -54,7 +92,7 @@ message MsgRemoveMarginResponse {
   ];
 
   // The resulting position
-  Position position = 3;
+  nibiru.perp.v2.Position position = 3;
 }
 
 // -------------------------- AddMargin --------------------------
@@ -78,7 +116,7 @@ message MsgAddMarginResponse {
     (gogoproto.nullable) = false
   ];
 
-  Position position = 2;
+  nibiru.perp.v2.Position position = 2;
 }
 
 // -------------------------- Liquidation --------------------------
@@ -132,7 +170,7 @@ message MsgMarketOrder {
     (gogoproto.nullable) = false
   ];
 
-  Direction side = 3;
+  nibiru.perp.v2.Direction side = 3;
 
   string quote_asset_amount = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
@@ -151,7 +189,7 @@ message MsgMarketOrder {
 }
 
 message MsgMarketOrderResponse {
-  Position position = 1;
+  nibiru.perp.v2.Position position = 1;
 
   // The amount of quote assets exchanged.
   string exchanged_notional_value = 2 [
@@ -311,3 +349,83 @@ message MsgDonateToEcosystemFund {
 }
 
 message MsgDonateToEcosystemFundResponse {}
+
+// -----------------------  MsgChangeCollateralDenom -----------------------
+
+// MsgChangeCollateralDenom: Changes the collateral denom for the module.
+// [Admin] Only callable by sudoers.
+message MsgChangeCollateralDenom {
+  string sender = 1;
+  string new_denom = 2;
+}
+
+message MsgChangeCollateralDenomResponse {}
+
+// -------------------------- AllocateEpochRebates --------------------------
+message MsgAllocateEpochRebates {
+  string sender = 1;
+
+  // rebates to allocate
+  repeated cosmos.base.v1beta1.Coin rebates = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}
+
+message MsgAllocateEpochRebatesResponse {
+  repeated cosmos.base.v1beta1.Coin total_epoch_rebates = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}
+
+// -------------------------- WithdrawEpochRebates --------------------------
+message MsgWithdrawEpochRebates {
+  string sender = 1;
+  repeated uint64 epochs = 2;
+}
+
+message MsgWithdrawEpochRebatesResponse {
+  repeated cosmos.base.v1beta1.Coin withdrawn_rebates = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}
+
+// -------------------------- ShiftPegMultiplier --------------------------
+
+// ShiftPegMultiplier: gRPC tx msg for changing the peg multiplier.
+// Admin-only.
+message MsgShiftPegMultiplier {
+  string sender = 1;
+  string pair = 2 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+  string new_peg_mult = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message MsgShiftPegMultiplierResponse {}
+
+// -------------------------- ShiftSwapInvariant --------------------------
+
+// ShiftSwapInvariant: gRPC tx msg for changing the swap invariant.
+// Admin-only.
+message MsgShiftSwapInvariant {
+  string sender = 1;
+  string pair = 2 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+  string new_swap_invariant = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message MsgShiftSwapInvariantResponse {}

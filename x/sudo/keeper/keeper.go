@@ -26,6 +26,21 @@ func NewKeeper(
 	}
 }
 
+// Returns the root address of the sudo module.
+func (k Keeper) GetRootAddr(ctx sdk.Context) (sdk.AccAddress, error) {
+	sudoers, err := k.Sudoers.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	addr, err := sdk.AccAddressFromBech32(sudoers.Root)
+	if err != nil {
+		return nil, err
+	}
+
+	return addr, nil
+}
+
 func (k Keeper) senderHasPermission(sender string, root string) error {
 	if sender != root {
 		return fmt.Errorf(`message must be sent by root user. root: "%s", sender: "%s"`,
@@ -123,11 +138,11 @@ func (k Keeper) CheckPermissions(
 	}
 	contracts := state.Contracts
 
-	hasPermission := set.New(contracts...).Has(contract.String())
+	hasPermission := set.New(contracts...).Has(contract.String()) || contract.String() == state.Root
 	if !hasPermission {
 		return fmt.Errorf(
-			"insufficient permissions on smart contract: %s. The sudo contracts are: %s",
-			contract, contracts,
+			"%w: insufficient permissions on smart contract: %s. The sudo contracts are: %s",
+			sudotypes.ErrUnauthorized, contract, contracts,
 		)
 	}
 	return nil

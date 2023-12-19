@@ -13,28 +13,27 @@ import (
 
 // EndBlocker Called every block to store a snapshot of the perpamm.
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
-	for _, amm := range k.AMMs.Iterate(ctx, collections.Range[asset.Pair]{}).Values() {
+	for _, amm := range k.AMMs.Iterate(ctx, collections.Range[collections.Pair[asset.Pair, uint64]]{}).Values() {
+		market, err := k.GetMarket(ctx, amm.Pair)
+		if err != nil {
+			k.Logger(ctx).Error("failed to fetch market", "pair", amm.Pair, "error", err)
+			continue
+		}
+
+		// only snapshot enabled markets
+		if !market.Enabled {
+			continue
+		}
+
 		snapshot := types.ReserveSnapshot{
 			Amm:         amm,
 			TimestampMs: ctx.BlockTime().UnixMilli(),
 		}
 		k.ReserveSnapshots.Insert(ctx, collections.Join(amm.Pair, ctx.BlockTime()), snapshot)
 
-		market, err := k.Markets.Get(ctx, amm.Pair)
-		if err != nil {
-			k.Logger(ctx).Error("failed to fetch market", "pair", amm.Pair, "error", err)
-			continue
-		}
-
 		markTwap, err := k.CalcTwap(ctx, amm.Pair, types.TwapCalcOption_SPOT, types.Direction_DIRECTION_UNSPECIFIED, sdk.ZeroDec(), market.TwapLookbackWindow)
 		if err != nil {
 			k.Logger(ctx).Error("failed to fetch twap mark price", "market.Pair", market.Pair, "error", err)
-			continue
-		}
-
-		indexTwap, err := k.OracleKeeper.GetExchangeRateTwap(ctx, amm.Pair)
-		if err != nil {
-			k.Logger(ctx).Error("failed to fetch twap index price", "market.Pair", market.Pair, "error", err)
 			continue
 		}
 
@@ -43,8 +42,15 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 			continue
 		}
 
-		if indexTwap.IsNil() || indexTwap.IsZero() {
-			k.Logger(ctx).Error("index price is zero", "market.Pair", market.Pair)
+		var indexTwap sdk.Dec
+		indexTwap, err = k.OracleKeeper.GetExchangeRateTwap(ctx, market.OraclePair)
+		if err != nil {
+			k.Logger(ctx).Error("failed to fetch twap index price", "market.Pair", market.Pair, "market.OraclePair", market.OraclePair, "error", err)
+			indexTwap = sdk.OneDec().Neg()
+		}
+
+		if indexTwap.IsNil() {
+			k.Logger(ctx).Error("index price is zero", "market.Pair", market.Pair, "market.OraclePair", market.OraclePair)
 			continue
 		}
 

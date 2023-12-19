@@ -7,9 +7,12 @@ import (
 )
 
 func (sudo Sudoers) Validate() error {
+	if _, err := sdk.AccAddressFromBech32(sudo.Root); err != nil {
+		return ErrSudoers("root addr: " + err.Error())
+	}
 	for _, contract := range sudo.Contracts {
 		if _, err := sdk.AccAddressFromBech32(contract); err != nil {
-			return err
+			return ErrSudoers("contract addr: " + err.Error())
 		}
 	}
 	return nil

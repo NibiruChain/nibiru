@@ -3,6 +3,8 @@ package assertion
 import (
 	"fmt"
 
+	"github.com/NibiruChain/nibiru/x/common/testutil/action"
+
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -19,22 +21,24 @@ type marketShouldBeEqual struct {
 	Checkers []MarketChecker
 }
 
-func (m marketShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	market, err := app.PerpKeeperV2.Markets.Get(ctx, m.Pair)
+func (m marketShouldBeEqual) IsNotMandatory() {}
+
+func (m marketShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+	market, err := app.PerpKeeperV2.GetMarket(ctx, m.Pair)
 	if err != nil {
-		return ctx, err, false
+		return ctx, err
 	}
 
 	for _, checker := range m.Checkers {
 		if err := checker(market); err != nil {
-			return ctx, err, false
+			return ctx, err
 		}
 	}
 
-	return ctx, nil, false
+	return ctx, nil
 }
 
-func MarketShouldBeEqual(pair asset.Pair, marketCheckers ...MarketChecker) marketShouldBeEqual {
+func MarketShouldBeEqual(pair asset.Pair, marketCheckers ...MarketChecker) action.Action {
 	return marketShouldBeEqual{
 		Pair:     pair,
 		Checkers: marketCheckers,
@@ -50,9 +54,9 @@ func Market_LatestCPFShouldBeEqualTo(expectedCPF sdk.Dec) MarketChecker {
 	}
 }
 
-func Market_PrepaidBadDebtShouldBeEqualTo(expectedAmount sdkmath.Int) MarketChecker {
+func Market_PrepaidBadDebtShouldBeEqualTo(expectedAmount sdkmath.Int, collateral string) MarketChecker {
 	return func(market types.Market) error {
-		expectedBadDebt := sdk.NewCoin(market.Pair.QuoteDenom(), expectedAmount)
+		expectedBadDebt := sdk.NewCoin(collateral, expectedAmount)
 		if !market.PrepaidBadDebt.Equal(expectedBadDebt) {
 			return fmt.Errorf("expected prepaid bad debt to be %s, got %s", expectedBadDebt, market.PrepaidBadDebt)
 		}
@@ -76,22 +80,24 @@ type ammShouldBeEqual struct {
 
 type AMMChecker func(amm types.AMM) error
 
-func (a ammShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	amm, err := app.PerpKeeperV2.AMMs.Get(ctx, a.Pair)
+func (a ammShouldBeEqual) IsNotMandatory() {}
+
+func (a ammShouldBeEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+	amm, err := app.PerpKeeperV2.GetAMM(ctx, a.Pair)
 	if err != nil {
-		return ctx, err, false
+		return ctx, err
 	}
 
 	for _, checker := range a.Checkers {
 		if err := checker(amm); err != nil {
-			return ctx, err, false
+			return ctx, err
 		}
 	}
 
-	return ctx, nil, false
+	return ctx, nil
 }
 
-func AMMShouldBeEqual(pair asset.Pair, ammCheckers ...AMMChecker) ammShouldBeEqual {
+func AMMShouldBeEqual(pair asset.Pair, ammCheckers ...AMMChecker) action.Action {
 	return ammShouldBeEqual{
 		Pair:     pair,
 		Checkers: ammCheckers,
@@ -148,6 +154,24 @@ func AMM_BiasShouldBeEqual(expectedBias sdk.Dec) AMMChecker {
 	return func(amm types.AMM) error {
 		if !amm.Bias().Equal(expectedBias) {
 			return fmt.Errorf("expected bias to be %s, got %s", expectedBias, amm.Bias())
+		}
+		return nil
+	}
+}
+
+func AMM_VersionShouldBeEqual(expectedVersion uint64) AMMChecker {
+	return func(amm types.AMM) error {
+		if amm.Version != expectedVersion {
+			return fmt.Errorf("expected version to be %d, got %d", expectedVersion, amm.Version)
+		}
+		return nil
+	}
+}
+
+func AMM_SettlementPriceShoulBeEqual(expectedPrice sdk.Dec) AMMChecker {
+	return func(amm types.AMM) error {
+		if !amm.SettlementPrice.Equal(expectedPrice) {
+			return fmt.Errorf("expected settlement price to be %s, got %s", expectedPrice, amm.SettlementPrice)
 		}
 		return nil
 	}

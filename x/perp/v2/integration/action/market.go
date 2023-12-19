@@ -1,36 +1,20 @@
 package action
 
 import (
-	"fmt"
-
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/collections"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	"github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
-
-// Logger
-type logger struct {
-	log string
-}
-
-func (e logger) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	fmt.Println(e.log)
-	return ctx, nil, true
-}
-
-func Log(log string) action.Action {
-	return logger{
-		log: log,
-	}
-}
 
 // createMarketAction creates a market
 type createMarketAction struct {
@@ -38,23 +22,28 @@ type createMarketAction struct {
 	AMM    types.AMM
 }
 
-func (c createMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	app.PerpKeeperV2.Markets.Insert(ctx, c.Market.Pair, c.Market)
-	app.PerpKeeperV2.AMMs.Insert(ctx, c.AMM.Pair, c.AMM)
+func (c createMarketAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+	app.PerpKeeperV2.MarketLastVersion.Insert(
+		ctx, c.Market.Pair, types.MarketLastVersion{Version: c.Market.Version})
+	app.PerpKeeperV2.SaveMarket(ctx, c.Market)
+	app.PerpKeeperV2.SaveAMM(ctx, c.AMM)
 
 	app.PerpKeeperV2.ReserveSnapshots.Insert(ctx, collections.Join(c.AMM.Pair, ctx.BlockTime()), types.ReserveSnapshot{
 		Amm:         c.AMM,
 		TimestampMs: ctx.BlockTime().UnixMilli(),
 	})
 
-	return ctx, nil, true
+	app.PerpKeeperV2.Collateral.Set(ctx, types.TestingCollateralDenomNUSD)
+
+	return ctx, nil
 }
 
 // CreateCustomMarket creates a market with custom parameters
-func CreateCustomMarket(pair asset.Pair, marketModifiers ...marketModifier) action.Action {
+func CreateCustomMarket(pair asset.Pair, marketModifiers ...MarketModifier) action.Action {
 	market := types.DefaultMarket(pair)
 	amm := types.AMM{
 		Pair:            pair,
+		Version:         1,
 		BaseReserve:     sdk.NewDec(1e12),
 		QuoteReserve:    sdk.NewDec(1e12),
 		SqrtDepth:       sdk.NewDec(1e12),
@@ -64,42 +53,42 @@ func CreateCustomMarket(pair asset.Pair, marketModifiers ...marketModifier) acti
 	}
 
 	for _, modifier := range marketModifiers {
-		modifier(market, &amm)
+		modifier(&market, &amm)
 	}
 
 	return createMarketAction{
-		Market: *market,
+		Market: market,
 		AMM:    amm,
 	}
 }
 
-type marketModifier func(market *types.Market, amm *types.AMM)
+type MarketModifier func(market *types.Market, amm *types.AMM)
 
-func WithPrepaidBadDebt(amount sdkmath.Int) marketModifier {
+func WithPrepaidBadDebt(amount sdkmath.Int, collateral string) MarketModifier {
 	return func(market *types.Market, amm *types.AMM) {
-		market.PrepaidBadDebt = sdk.NewCoin(market.Pair.QuoteDenom(), amount)
+		market.PrepaidBadDebt = sdk.NewCoin(collateral, amount)
 	}
 }
 
-func WithPricePeg(newValue sdk.Dec) marketModifier {
+func WithPricePeg(newValue sdk.Dec) MarketModifier {
 	return func(market *types.Market, amm *types.AMM) {
 		amm.PriceMultiplier = newValue
 	}
 }
 
-func WithTotalLong(amount sdk.Dec) marketModifier {
+func WithTotalLong(amount sdk.Dec) MarketModifier {
 	return func(market *types.Market, amm *types.AMM) {
 		amm.TotalLong = amount
 	}
 }
 
-func WithTotalShort(amount sdk.Dec) marketModifier {
+func WithTotalShort(amount sdk.Dec) MarketModifier {
 	return func(market *types.Market, amm *types.AMM) {
 		amm.TotalShort = amount
 	}
 }
 
-func WithSqrtDepth(amount sdk.Dec) marketModifier {
+func WithSqrtDepth(amount sdk.Dec) MarketModifier {
 	return func(market *types.Market, amm *types.AMM) {
 		amm.SqrtDepth = amount
 		amm.BaseReserve = amount
@@ -107,47 +96,64 @@ func WithSqrtDepth(amount sdk.Dec) marketModifier {
 	}
 }
 
-func WithLatestMarketCPF(amount sdk.Dec) marketModifier {
+func WithLatestMarketCPF(amount sdk.Dec) MarketModifier {
 	return func(market *types.Market, amm *types.AMM) {
 		market.LatestCumulativePremiumFraction = amount
 	}
 }
 
-func WithMaxFundingRate(amount sdk.Dec) marketModifier {
+func WithMaxFundingRate(amount sdk.Dec) MarketModifier {
 	return func(market *types.Market, amm *types.AMM) {
 		market.MaxFundingRate = amount
 	}
 }
 
-type editPriceMultiplier struct {
+func WithVersion(version uint64) MarketModifier {
+	return func(market *types.Market, amm *types.AMM) {
+		market.Version = version
+		amm.Version = version
+	}
+}
+
+func WithEnabled(enabled bool) MarketModifier {
+	return func(market *types.Market, amm *types.AMM) {
+		market.Enabled = enabled
+	}
+}
+
+type shiftPegMultiplier struct {
 	pair     asset.Pair
 	newValue sdk.Dec
 }
 
-func (e editPriceMultiplier) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	err := app.PerpKeeperV2.EditPriceMultiplier(ctx, e.pair, e.newValue)
-	return ctx, err, true
+func (e shiftPegMultiplier) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+	err := app.PerpKeeperV2.Admin.ShiftPegMultiplier(
+		ctx, e.pair, e.newValue, testapp.DefaultSudoRoot(),
+	)
+	return ctx, err
 }
 
-func EditPriceMultiplier(pair asset.Pair, newValue sdk.Dec) action.Action {
-	return editPriceMultiplier{
+func ShiftPegMultiplier(pair asset.Pair, newValue sdk.Dec) action.Action {
+	return shiftPegMultiplier{
 		pair:     pair,
 		newValue: newValue,
 	}
 }
 
-type editSwapInvariant struct {
+type shiftSwapInvariant struct {
 	pair     asset.Pair
-	newValue sdk.Dec
+	newValue sdkmath.Int
 }
 
-func (e editSwapInvariant) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	err := app.PerpKeeperV2.EditSwapInvariant(ctx, e.pair, e.newValue)
-	return ctx, err, true
+func (e shiftSwapInvariant) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+	err := app.PerpKeeperV2.Admin.ShiftSwapInvariant(
+		ctx, e.pair, e.newValue, testapp.DefaultSudoRoot(),
+	)
+	return ctx, err
 }
 
-func EditSwapInvariant(pair asset.Pair, newValue sdk.Dec) action.Action {
-	return editSwapInvariant{
+func ShiftSwapInvariant(pair asset.Pair, newValue sdkmath.Int) action.Action {
+	return shiftSwapInvariant{
 		pair:     pair,
 		newValue: newValue,
 	}
@@ -159,14 +165,14 @@ type createPool struct {
 	amm    types.AMM
 }
 
-func (c createPool) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	err := app.PerpKeeperV2.Admin().CreateMarket(ctx, keeper.ArgsCreateMarket{
+func (c createPool) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+	err := app.PerpKeeperV2.Admin.CreateMarket(ctx, keeper.ArgsCreateMarket{
 		Pair:            c.pair,
 		PriceMultiplier: c.amm.PriceMultiplier,
 		SqrtDepth:       c.amm.SqrtDepth,
 		Market:          &c.market,
 	})
-	return ctx, err, true
+	return ctx, err
 }
 
 func CreateMarket(pair asset.Pair, market types.Market, amm types.AMM) action.Action {
@@ -174,5 +180,33 @@ func CreateMarket(pair asset.Pair, market types.Market, amm types.AMM) action.Ac
 		pair:   pair,
 		market: market,
 		amm:    amm,
+	}
+}
+
+type setCollateral struct {
+	Denom  string
+	Sender string
+}
+
+func (c setCollateral) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+	sudoers, err := app.SudoKeeper.Sudoers.Get(ctx)
+	if err != nil {
+		return ctx, err
+	}
+	sudoers.Root = common.NIBIRU_TEAM
+	app.SudoKeeper.Sudoers.Set(ctx, sudoers)
+
+	senderAddr, err := sdk.AccAddressFromBech32(c.Sender)
+	if err != nil {
+		return ctx, err
+	}
+	err = app.PerpKeeperV2.Admin.ChangeCollateralDenom(ctx, c.Denom, senderAddr)
+	return ctx, err
+}
+
+func SetCollateral(denom string) action.Action {
+	return setCollateral{
+		Denom:  denom,
+		Sender: common.NIBIRU_TEAM,
 	}
 }

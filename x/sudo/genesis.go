@@ -28,6 +28,8 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	}
 }
 
+// DefaultGenesis: A blank genesis state. The DefaultGenesis is invalid because
+// it does not specify a "Sudoers.Root".
 func DefaultGenesis() *types.GenesisState {
 	return &types.GenesisState{
 		Sudoers: types.Sudoers{

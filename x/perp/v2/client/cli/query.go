@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 
+	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,8 +13,10 @@ import (
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
-// GetQueryCmd returns the cli query commands for this module
-func GetQueryCmd() *cobra.Command {
+const FlagVersioned = "versioned"
+
+// NewQueryCmd returns the cli query commands for this module
+func NewQueryCmd() *cobra.Command {
 	// Group stablecoin queries under a subcommand
 	moduleQueryCmd := &cobra.Command{
 		Use: types.ModuleName,
@@ -29,6 +32,7 @@ func GetQueryCmd() *cobra.Command {
 		CmdQueryPositions(),
 		CmdQueryModuleAccounts(),
 		CmdQueryMarkets(),
+		CmdQueryCollateral(),
 	}
 	for _, cmd := range cmds {
 		moduleQueryCmd.AddCommand(cmd)
@@ -146,8 +150,12 @@ func CmdQueryModuleAccounts() *cobra.Command {
 func CmdQueryMarkets() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "markets",
-		Short: "query all market info",
-		Args:  cobra.NoArgs,
+		Short: "Query all market info",
+		Long: heredoc.Doc(`
+Query all market info. By default, only active tradable markets are shown.
+If --versioned is to to true, the query will return all markets including the 
+inactive ones.`),
+		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -156,7 +164,14 @@ func CmdQueryMarkets() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			res, err := queryClient.QueryMarkets(cmd.Context(), &types.QueryMarketsRequest{})
+			versioned, err := cmd.Flags().GetBool(FlagVersioned)
+			if err != nil {
+				return err
+			}
+
+			res, err := queryClient.QueryMarkets(cmd.Context(), &types.QueryMarketsRequest{
+				Versioned: versioned,
+			})
 			if err != nil {
 				return err
 			}
@@ -165,7 +180,42 @@ func CmdQueryMarkets() *cobra.Command {
 		},
 	}
 
+	cmd.Flags().Bool(FlagVersioned, false, "toggles whether to include inactive markets")
+
 	flags.AddQueryFlagsToCmd(cmd)
 
+	return cmd
+}
+
+// CmdQueryCollateral: Command for the "Query/Collateral" gRPC service method.
+func CmdQueryCollateral() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "collateral",
+		Aliases: []string{"coll"},
+		Short:   "Query the collateral denomination info.",
+		Long: heredoc.Doc(`
+		Query the metadata of the fungible collateral used by the perp module. 
+		`,
+		),
+		Args: cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.QueryCollateral(
+				cmd.Context(), &types.QueryCollateralRequest{},
+			)
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }

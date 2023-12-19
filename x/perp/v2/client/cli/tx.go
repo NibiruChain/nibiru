@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -15,7 +16,7 @@ import (
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
-func GetTxCmd() *cobra.Command {
+func NewTxCmd() *cobra.Command {
 	txCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Generalized automated market maker transaction subcommands",
@@ -29,6 +30,7 @@ func GetTxCmd() *cobra.Command {
 		AddMarginCmd(),
 		MarketOrderCmd(),
 		ClosePositionCmd(),
+		SettlePositionCmd(),
 		PartialCloseCmd(),
 		MultiLiquidateCmd(),
 		DonateToEcosystemFundCmd(),
@@ -301,6 +303,50 @@ func AddMarginCmd() *cobra.Command {
 				Sender: clientCtx.GetFromAddress().String(),
 				Pair:   pair,
 				Margin: marginToAdd,
+			}
+			if err = msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func SettlePositionCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "settle [market] [version]",
+		Short: "Settle position in a specific market version when the market is disabled",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`
+			$ %s tx perp settle osmo:nusd 1
+			`, version.AppName),
+		),
+		Args: cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			version, err := strconv.ParseUint(args[1], 10, 64)
+			if err != nil {
+				return err
+			}
+
+			pair, err := asset.TryNewPair(args[0])
+			if err != nil {
+				return err
+			}
+
+			msg := &types.MsgSettlePosition{
+				Sender:  clientCtx.GetFromAddress().String(),
+				Pair:    pair,
+				Version: version,
 			}
 			if err = msg.ValidateBasic(); err != nil {
 				return err

@@ -9,48 +9,61 @@ import (
 )
 
 var (
-	KeyInflationEnabled       = []byte("InflationEnabled")
-	KeyExponentialCalculation = []byte("ExponentialCalculation")
-	KeyInflationDistribution  = []byte("InflationDistribution")
-	KeyEpochsPerPeriod        = []byte("EpochsPerPeriod")
+	KeyInflationEnabled      = []byte("InflationEnabled")
+	KeyPolynomialFactors     = []byte("PolynomialFactors")
+	KeyInflationDistribution = []byte("InflationDistribution")
+	KeyEpochsPerPeriod       = []byte("EpochsPerPeriod")
+	KeyPeriodsPerYear        = []byte("PeriodsPerYear")
+	KeyMaxPeriod             = []byte("MaxPeriod")
 )
 
 var (
-	DefaultInflation              = true
-	DefaultExponentialCalculation = ExponentialCalculation{
-		A: sdk.NewDec(int64(405_000_000)),
-		R: sdk.NewDecWithPrec(50, 2), // 50%
-		C: sdk.NewDecWithPrec(395_507_8125, 4),
+	DefaultInflation         = false
+	DefaultPolynomialFactors = []sdk.Dec{
+		sdk.MustNewDecFromStr("-0.00014903"),
+		sdk.MustNewDecFromStr("0.07527647"),
+		sdk.MustNewDecFromStr("-19.11742154"),
+		sdk.MustNewDecFromStr("3170.0969905"),
+		sdk.MustNewDecFromStr("-339271.31060432"),
+		sdk.MustNewDecFromStr("18063678.8582418"),
 	}
 	DefaultInflationDistribution = InflationDistribution{
-		StakingRewards:    sdk.NewDecWithPrec(27_8, 3),  // 27.8%
-		CommunityPool:     sdk.NewDecWithPrec(62_20, 4), // 62.20%
-		StrategicReserves: sdk.NewDecWithPrec(10, 2),    // 10%
+		CommunityPool:     sdk.NewDecWithPrec(35_159141, 8), // 35.159141%
+		StakingRewards:    sdk.NewDecWithPrec(27_757217, 8), // 27.757217%
+		StrategicReserves: sdk.NewDecWithPrec(37_083642, 8), // 37.083642%
 	}
-	DefaultEpochsPerPeriod = uint64(365)
+	DefaultEpochsPerPeriod = uint64(30)
+	DefaultPeriodsPerYear  = uint64(12)
+	DefaultMaxPeriod       = uint64(8 * 12) // 8 years with 360 days per year
 )
 
 func NewParams(
-	exponentialCalculation ExponentialCalculation,
+	polynomialCalculation []sdk.Dec,
 	inflationDistribution InflationDistribution,
 	inflationEnabled bool,
-	epochsPerPeriod uint64,
+	epochsPerPeriod,
+	periodsPerYear,
+	maxPeriod uint64,
 ) Params {
 	return Params{
-		ExponentialCalculation: exponentialCalculation,
-		InflationDistribution:  inflationDistribution,
-		InflationEnabled:       inflationEnabled,
-		EpochsPerPeriod:        epochsPerPeriod,
+		PolynomialFactors:     polynomialCalculation,
+		InflationDistribution: inflationDistribution,
+		InflationEnabled:      inflationEnabled,
+		EpochsPerPeriod:       epochsPerPeriod,
+		PeriodsPerYear:        periodsPerYear,
+		MaxPeriod:             maxPeriod,
 	}
 }
 
 // default minting module parameters
 func DefaultParams() Params {
 	return Params{
-		ExponentialCalculation: DefaultExponentialCalculation,
-		InflationDistribution:  DefaultInflationDistribution,
-		InflationEnabled:       DefaultInflation,
-		EpochsPerPeriod:        DefaultEpochsPerPeriod,
+		PolynomialFactors:     DefaultPolynomialFactors,
+		InflationDistribution: DefaultInflationDistribution,
+		InflationEnabled:      DefaultInflation,
+		EpochsPerPeriod:       DefaultEpochsPerPeriod,
+		PeriodsPerYear:        DefaultPeriodsPerYear,
+		MaxPeriod:             DefaultMaxPeriod,
 	}
 }
 
@@ -66,37 +79,23 @@ var _ paramstypes.ParamSet = (*Params)(nil)
 func (p *Params) ParamSetPairs() paramstypes.ParamSetPairs {
 	return paramstypes.ParamSetPairs{
 		paramstypes.NewParamSetPair(KeyInflationEnabled, &p.InflationEnabled, validateBool),
-		paramstypes.NewParamSetPair(KeyExponentialCalculation, &p.ExponentialCalculation, validateExponentialCalculation),
+		paramstypes.NewParamSetPair(KeyPolynomialFactors, &p.PolynomialFactors, validatePolynomialFactors),
 		paramstypes.NewParamSetPair(KeyInflationDistribution, &p.InflationDistribution, validateInflationDistribution),
 		paramstypes.NewParamSetPair(KeyEpochsPerPeriod, &p.EpochsPerPeriod, validateUint64),
+		paramstypes.NewParamSetPair(KeyPeriodsPerYear, &p.PeriodsPerYear, validateUint64),
+		paramstypes.NewParamSetPair(KeyMaxPeriod, &p.MaxPeriod, validateUint64),
 	}
 }
 
-func validateExponentialCalculation(i interface{}) error {
-	v, ok := i.(ExponentialCalculation)
+func validatePolynomialFactors(i interface{}) error {
+	v, ok := i.([]sdk.Dec)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
-	// validate initial value
-	if v.A.IsNegative() {
-		return fmt.Errorf("initial value cannot be negative")
+	if len(v) == 0 {
+		return errors.New("polynomial factors cannot be empty")
 	}
-
-	// validate reduction factor
-	if v.R.GT(sdk.OneDec()) {
-		return fmt.Errorf("reduction factor cannot be greater than 1")
-	}
-
-	if v.R.IsNegative() {
-		return fmt.Errorf("reduction factor cannot be negative")
-	}
-
-	// validate long term inflation
-	if v.C.IsNegative() {
-		return fmt.Errorf("long term inflation cannot be negative")
-	}
-
 	return nil
 }
 
@@ -156,14 +155,33 @@ func validateEpochsPerPeriod(i interface{}) error {
 	return nil
 }
 
+func validatePeriodsPerYear(i interface{}) error {
+	val, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if val <= 0 {
+		return fmt.Errorf("periods per year must be positive: %d", val)
+	}
+
+	return nil
+}
+
 func (p Params) Validate() error {
 	if err := validateEpochsPerPeriod(p.EpochsPerPeriod); err != nil {
 		return err
 	}
-	if err := validateExponentialCalculation(p.ExponentialCalculation); err != nil {
+	if err := validatePeriodsPerYear(p.PeriodsPerYear); err != nil {
+		return err
+	}
+	if err := validatePolynomialFactors(p.PolynomialFactors); err != nil {
 		return err
 	}
 	if err := validateInflationDistribution(p.InflationDistribution); err != nil {
+		return err
+	}
+	if err := validateUint64(p.MaxPeriod); err != nil {
 		return err
 	}
 

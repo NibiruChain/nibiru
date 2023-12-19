@@ -2,8 +2,11 @@ package app
 
 import (
 	"path/filepath"
+	"strings"
 
+	wasmdapp "github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -11,6 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/store/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -49,18 +53,29 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1types "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govv1beta1types "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	groupmodule "github.com/cosmos/cosmos-sdk/x/group/module"
+
 	"github.com/cosmos/cosmos-sdk/x/params"
+	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
+	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
+
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
+	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+
+	// ---------------------------------------------------------------
+	// IBC imports
+
 	ibcfee "github.com/cosmos/ibc-go/v7/modules/apps/29-fee"
 	ibcfeekeeper "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/keeper"
 	ibcfeetypes "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/types"
@@ -69,13 +84,19 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v7/modules/core"
 	ibcclient "github.com/cosmos/ibc-go/v7/modules/core/02-client"
+	ibcclientclient "github.com/cosmos/ibc-go/v7/modules/core/02-client/client"
 	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
+	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	ibcmock "github.com/cosmos/ibc-go/v7/testing/mock"
 	"github.com/spf13/cast"
 
+	// ---------------------------------------------------------------
+	// Nibiru Custom Modules
+
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/devgas/v1"
 	devgaskeeper "github.com/NibiruChain/nibiru/x/devgas/v1/keeper"
 	devgastypes "github.com/NibiruChain/nibiru/x/devgas/v1/types"
@@ -89,19 +110,80 @@ import (
 	oracle "github.com/NibiruChain/nibiru/x/oracle"
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
-	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
-	perpv2 "github.com/NibiruChain/nibiru/x/perp/v2/module"
-	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+	perpkeeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
+	perpmodule "github.com/NibiruChain/nibiru/x/perp/v2/module"
+	perptypes "github.com/NibiruChain/nibiru/x/perp/v2/types"
+
 	"github.com/NibiruChain/nibiru/x/spot"
 	spotkeeper "github.com/NibiruChain/nibiru/x/spot/keeper"
 	spottypes "github.com/NibiruChain/nibiru/x/spot/types"
-	"github.com/NibiruChain/nibiru/x/stablecoin"
-	stablecoinkeeper "github.com/NibiruChain/nibiru/x/stablecoin/keeper"
-	stablecointypes "github.com/NibiruChain/nibiru/x/stablecoin/types"
+
 	"github.com/NibiruChain/nibiru/x/sudo"
 	"github.com/NibiruChain/nibiru/x/sudo/keeper"
 	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
+
+	tokenfactory "github.com/NibiruChain/nibiru/x/tokenfactory"
+	tokenfactorykeeper "github.com/NibiruChain/nibiru/x/tokenfactory/keeper"
+	tokenfactorytypes "github.com/NibiruChain/nibiru/x/tokenfactory/types"
 )
+
+type AppKeepers struct {
+	// AccountKeeper encodes/decodes accounts using the go-amino (binary) encoding/decoding library
+	AccountKeeper authkeeper.AccountKeeper
+	// BankKeeper defines a module interface that facilitates the transfer of coins between accounts
+	BankKeeper       bankkeeper.Keeper
+	capabilityKeeper *capabilitykeeper.Keeper
+	stakingKeeper    *stakingkeeper.Keeper
+	slashingKeeper   slashingkeeper.Keeper
+	/* DistrKeeper is the keeper of the distribution store */
+	DistrKeeper           distrkeeper.Keeper
+	GovKeeper             govkeeper.Keeper
+	crisisKeeper          crisiskeeper.Keeper
+	upgradeKeeper         upgradekeeper.Keeper
+	paramsKeeper          paramskeeper.Keeper
+	authzKeeper           authzkeeper.Keeper
+	FeeGrantKeeper        feegrantkeeper.Keeper
+	ConsensusParamsKeeper consensusparamkeeper.Keeper
+
+	// --------------------------------------------------------------------
+	// IBC keepers
+	// --------------------------------------------------------------------
+	/* evidenceKeeper is responsible for managing persistence, state transitions
+	   and query handling for the evidence module. It is required to set up
+	   the IBC light client misbehavior evidence route. */
+	evidenceKeeper evidencekeeper.Keeper
+
+	/* ibcKeeper defines each ICS keeper for IBC. ibcKeeper must be a pointer in
+	   the app, so we can SetRouter on it correctly. */
+	ibcKeeper    *ibckeeper.Keeper
+	ibcFeeKeeper ibcfeekeeper.Keeper
+	/* ibcTransferKeeper is for cross-chain fungible token transfers. */
+	ibcTransferKeeper ibctransferkeeper.Keeper
+
+	// make scoped keepers public for test purposes
+	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
+	ScopedTransferKeeper capabilitykeeper.ScopedKeeper
+
+	// make IBC modules public for test purposes
+	// these modules are never directly routed to by the IBC Router
+	FeeMockModule ibcmock.IBCModule
+
+	// ---------------
+	// Nibiru keepers
+	// ---------------
+	EpochsKeeper       epochskeeper.Keeper
+	PerpKeeperV2       perpkeeper.Keeper
+	SpotKeeper         spotkeeper.Keeper
+	OracleKeeper       oraclekeeper.Keeper
+	InflationKeeper    inflationkeeper.Keeper
+	SudoKeeper         keeper.Keeper
+	DevGasKeeper       devgaskeeper.Keeper
+	TokenFactoryKeeper tokenfactorykeeper.Keeper
+
+	// WASM keepers
+	WasmKeeper       wasmkeeper.Keeper
+	ScopedWasmKeeper capabilitykeeper.ScopedKeeper
+}
 
 func initStoreKeys() (
 	keys map[string]*types.KVStoreKey,
@@ -131,17 +213,17 @@ func initStoreKeys() (
 
 		// nibiru x/ keys
 		spottypes.StoreKey,
-		stablecointypes.StoreKey,
 		oracletypes.StoreKey,
 		epochstypes.StoreKey,
-		perpv2types.StoreKey,
+		perptypes.StoreKey,
 		inflationtypes.StoreKey,
 		sudotypes.StoreKey,
-		wasm.StoreKey,
+		wasmtypes.StoreKey,
 		devgastypes.StoreKey,
+		tokenfactorytypes.StoreKey,
 	)
 	tkeys = sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
-	memKeys = sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey, stablecointypes.MemStoreKey)
+	memKeys = sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 	return keys, tkeys, memKeys
 }
 
@@ -156,13 +238,14 @@ func (app *NibiruApp) InitKeepers(
 	tkeys := app.tkeys
 	memKeys := app.memKeys
 
+	govModuleAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
 	app.paramsKeeper = initParamsKeeper(
 		appCodec, legacyAmino, keys[paramstypes.StoreKey],
 		tkeys[paramstypes.TStoreKey],
 	)
 
 	// set the BaseApp's parameter store
-	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(appCodec, keys[consensusparamtypes.StoreKey], authtypes.NewModuleAddress(govtypes.ModuleName).String())
+	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(appCodec, keys[consensusparamtypes.StoreKey], govModuleAddr)
 	bApp.SetParamStore(&app.ConsensusParamsKeeper)
 
 	/* Add capabilityKeeper and ScopeToModule for the ibc module
@@ -192,21 +275,21 @@ func (app *NibiruApp) InitKeepers(
 		authtypes.ProtoBaseAccount,
 		maccPerms,
 		sdk.GetConfig().GetBech32AccountAddrPrefix(),
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govModuleAddr,
 	)
 	app.BankKeeper = bankkeeper.NewBaseKeeper(
 		appCodec,
 		keys[banktypes.StoreKey],
 		app.AccountKeeper,
-		blockedAddresses(),
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		BlockedAddresses(),
+		govModuleAddr,
 	)
 	app.stakingKeeper = stakingkeeper.NewKeeper(
 		appCodec,
 		keys[stakingtypes.StoreKey],
 		app.AccountKeeper,
 		app.BankKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govModuleAddr,
 	)
 	app.DistrKeeper = distrkeeper.NewKeeper(
 		appCodec,
@@ -215,7 +298,7 @@ func (app *NibiruApp) InitKeepers(
 		app.BankKeeper,
 		app.stakingKeeper,
 		authtypes.FeeCollectorName,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govModuleAddr,
 	)
 
 	invCheckPeriod := cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod))
@@ -225,7 +308,7 @@ func (app *NibiruApp) InitKeepers(
 		invCheckPeriod,
 		app.BankKeeper,
 		authtypes.FeeCollectorName,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govModuleAddr,
 	)
 
 	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(appCodec, keys[feegrant.StoreKey], app.AccountKeeper)
@@ -244,7 +327,7 @@ func (app *NibiruApp) InitKeepers(
 		appCodec,
 		homePath,
 		app.BaseApp,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govModuleAddr,
 	)
 
 	// register the staking hooks
@@ -254,7 +337,7 @@ func (app *NibiruApp) InitKeepers(
 		legacyAmino,
 		keys[slashingtypes.StoreKey],
 		app.stakingKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govModuleAddr,
 	)
 
 	app.stakingKeeper.SetHooks(
@@ -278,33 +361,27 @@ func (app *NibiruApp) InitKeepers(
 		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.stakingKeeper, distrtypes.ModuleName,
 	)
 
-	app.StablecoinKeeper = stablecoinkeeper.NewKeeper(
-		appCodec, keys[stablecointypes.StoreKey], memKeys[stablecointypes.MemStoreKey],
-		app.GetSubspace(stablecointypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.SpotKeeper,
-	)
-
 	app.EpochsKeeper = epochskeeper.NewKeeper(
 		appCodec, keys[epochstypes.StoreKey],
-	)
-
-	app.PerpKeeperV2 = perpv2keeper.NewKeeper(
-		appCodec, keys[perpv2types.StoreKey],
-		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.EpochsKeeper,
-	)
-
-	app.InflationKeeper = inflationkeeper.NewKeeper(
-		appCodec, keys[inflationtypes.StoreKey], app.GetSubspace(inflationtypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.stakingKeeper, authtypes.FeeCollectorName,
 	)
 
 	app.SudoKeeper = keeper.NewKeeper(
 		appCodec, keys[sudotypes.StoreKey],
 	)
 
+	app.PerpKeeperV2 = perpkeeper.NewKeeper(
+		appCodec, keys[perptypes.StoreKey],
+		app.AccountKeeper, app.BankKeeper, app.OracleKeeper, app.EpochsKeeper,
+		app.SudoKeeper,
+	)
+
+	app.InflationKeeper = inflationkeeper.NewKeeper(
+		appCodec, keys[inflationtypes.StoreKey], app.GetSubspace(inflationtypes.ModuleName),
+		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.stakingKeeper, app.SudoKeeper, authtypes.FeeCollectorName,
+	)
+
 	app.EpochsKeeper.SetHooks(
 		epochstypes.NewMultiEpochHooks(
-			app.StablecoinKeeper.Hooks(),
 			app.PerpKeeperV2.Hooks(),
 			app.InflationKeeper.Hooks(),
 			app.OracleKeeper.Hooks(),
@@ -332,7 +409,7 @@ func (app *NibiruApp) InitKeepers(
 		app.BankKeeper,
 	)
 
-	app.ScopedWasmKeeper = app.capabilityKeeper.ScopeToModule(wasm.ModuleName)
+	app.ScopedWasmKeeper = app.capabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
 
 	wasmDir := filepath.Join(homePath, "data")
 	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
@@ -348,10 +425,10 @@ func (app *NibiruApp) InitKeepers(
 	// assigned.
 	// For example, if there are bindings for the x/perp module, then the app
 	// passed to GetWasmOpts must already have a non-nil PerpKeeper.
-	supportedFeatures := "iterator,staking,stargate,cosmwasm_1_1"
-	app.WasmKeeper = wasm.NewKeeper(
+	supportedFeatures := strings.Join(wasmdapp.AllCapabilities(), ",")
+	app.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,
-		keys[wasm.StoreKey],
+		keys[wasmtypes.StoreKey],
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.stakingKeeper,
@@ -360,18 +437,17 @@ func (app *NibiruApp) InitKeepers(
 		app.ibcKeeper.ChannelKeeper,
 		&app.ibcKeeper.PortKeeper,
 		app.ScopedWasmKeeper,
-		app.transferKeeper,
+		app.ibcTransferKeeper,
 		app.MsgServiceRouter(),
 		app.GRPCQueryRouter(),
 		wasmDir,
 		wasmConfig,
 		supportedFeatures,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govModuleAddr,
 		GetWasmOpts(*app, appOpts)...,
 	)
 
 	// DevGas uses WasmKeeper
-	govModuleAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
 	app.DevGasKeeper = devgaskeeper.NewKeeper(
 		keys[devgastypes.StoreKey],
 		appCodec,
@@ -379,6 +455,16 @@ func (app *NibiruApp) InitKeepers(
 		app.WasmKeeper,
 		app.AccountKeeper,
 		authtypes.FeeCollectorName,
+		govModuleAddr,
+	)
+
+	// TokenFactory has wasm bindings
+	app.TokenFactoryKeeper = tokenfactorykeeper.NewKeeper(
+		keys[tokenfactorytypes.StoreKey],
+		appCodec,
+		app.BankKeeper,
+		app.AccountKeeper,
+		app.DistrKeeper,
 		govModuleAddr,
 	)
 
@@ -394,7 +480,7 @@ func (app *NibiruApp) InitKeepers(
 	/* Create IBC module and a static IBC router */
 	ibcRouter := porttypes.NewRouter()
 
-	app.transferKeeper = ibctransferkeeper.NewKeeper(
+	app.ibcTransferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec,
 		keys[ibctransfertypes.StoreKey],
 		/* paramSubspace */ app.GetSubspace(ibctransfertypes.ModuleName),
@@ -424,7 +510,7 @@ func (app *NibiruApp) InitKeepers(
 
 	// create IBC module from bottom to top of stack
 	var transferStack porttypes.IBCModule
-	transferStack = ibctransfer.NewIBCModule(app.transferKeeper)
+	transferStack = ibctransfer.NewIBCModule(app.ibcTransferKeeper)
 	transferStack = ibcfee.NewIBCMiddleware(transferStack, app.ibcFeeKeeper)
 
 	// Add transfer stack to IBC Router
@@ -467,7 +553,7 @@ func (app *NibiruApp) InitKeepers(
 		app.stakingKeeper,
 		app.MsgServiceRouter(),
 		govConfig,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govModuleAddr,
 	)
 	govKeeper.SetLegacyRouter(govRouter)
 
@@ -505,10 +591,9 @@ func (app *NibiruApp) initAppModules(
 
 		// Nibiru modules
 		spot.NewAppModule(appCodec, app.SpotKeeper, app.AccountKeeper, app.BankKeeper),
-		stablecoin.NewAppModule(appCodec, app.StablecoinKeeper, app.AccountKeeper, app.BankKeeper, app.OracleKeeper),
 		oracle.NewAppModule(appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper),
 		epochs.NewAppModule(appCodec, app.EpochsKeeper),
-		perpv2.NewAppModule(appCodec, app.PerpKeeperV2, app.AccountKeeper, app.BankKeeper, app.OracleKeeper),
+		perpmodule.NewAppModule(appCodec, app.PerpKeeperV2, app.AccountKeeper, app.BankKeeper, app.OracleKeeper),
 		inflation.NewAppModule(app.InflationKeeper, app.AccountKeeper, *app.stakingKeeper),
 		sudo.NewAppModule(appCodec, app.SudoKeeper),
 		genmsg.NewAppModule(app.MsgServiceRouter()),
@@ -516,7 +601,7 @@ func (app *NibiruApp) initAppModules(
 		// ibc
 		evidence.NewAppModule(app.evidenceKeeper),
 		ibc.NewAppModule(app.ibcKeeper),
-		ibctransfer.NewAppModule(app.transferKeeper),
+		ibctransfer.NewAppModule(app.ibcTransferKeeper),
 		ibcfee.NewAppModule(app.ibcFeeKeeper),
 
 		// wasm
@@ -527,6 +612,9 @@ func (app *NibiruApp) initAppModules(
 		devgas.NewAppModule(
 			app.DevGasKeeper, app.AccountKeeper,
 			app.GetSubspace(devgastypes.ModuleName)),
+		tokenfactory.NewAppModule(
+			app.TokenFactoryKeeper, app.AccountKeeper,
+		),
 
 		crisis.NewAppModule(&app.crisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
 	}
@@ -538,6 +626,9 @@ func orderedModuleNames() []string {
 		// --------------------------------------------------------------------
 		// Cosmos-SDK modules
 		//
+		// NOTE: (BeginBlocker requirement): upgrade module must occur first
+		upgradetypes.ModuleName,
+
 		// NOTE (InitGenesis requirement): Capability module must occur
 		//   first so that it can initialize any capabilities, allowing other
 		//   modules that want to create or claim capabilities afterwards in
@@ -566,16 +657,14 @@ func orderedModuleNames() []string {
 		authz.ModuleName,
 		feegrant.ModuleName,
 		paramstypes.ModuleName,
-		upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
 
 		// --------------------------------------------------------------------
 		// Native x/ Modules
 		epochstypes.ModuleName,
-		stablecointypes.ModuleName,
 		spottypes.ModuleName,
 		oracletypes.ModuleName,
-		perpv2types.ModuleName,
+		perptypes.ModuleName,
 		inflationtypes.ModuleName,
 		sudotypes.ModuleName,
 
@@ -587,16 +676,17 @@ func orderedModuleNames() []string {
 
 		// --------------------------------------------------------------------
 		// CosmWasm
-		wasm.ModuleName,
+		wasmtypes.ModuleName,
 		devgastypes.ModuleName,
+		tokenfactorytypes.ModuleName,
 
 		// Should be before genmsg
 		genmsg.ModuleName,
 	}
 }
 
-// blockedAddresses returns all the app's blocked account addresses.
-func blockedAddresses() map[string]bool {
+// BlockedAddresses returns all the app's blocked account addresses.
+func BlockedAddresses() map[string]bool {
 	modAccAddrs := make(map[string]bool)
 	for acc := range maccPerms {
 		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
@@ -619,7 +709,6 @@ func (app *NibiruApp) initModuleManager(
 		app.initAppModules(encodingConfig, skipGenesisInvariants)...,
 	)
 
-	// Init module orders for hooks and genesis
 	orderedModules := orderedModuleNames()
 	app.mm.SetOrderBeginBlockers(orderedModules...)
 	app.mm.SetOrderEndBlockers(orderedModules...)
@@ -655,16 +744,119 @@ func (app *NibiruApp) initModuleManager(
 	}
 }
 
+// ModuleBasicManager The app's collection of module.AppModuleBasic
+// implementations. These set up non-dependant module elements, such as codec
+// registration and genesis verification.
+func ModuleBasicManager() module.BasicManager {
+	return module.NewBasicManager(
+		auth.AppModuleBasic{},
+		genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
+		BankModule{},
+		capability.AppModuleBasic{},
+		StakingModule{},
+		distr.AppModuleBasic{},
+		NewGovModuleBasic(
+			paramsclient.ProposalHandler,
+			upgradeclient.LegacyProposalHandler,
+			upgradeclient.LegacyCancelProposalHandler,
+			ibcclientclient.UpdateClientProposalHandler,
+			ibcclientclient.UpgradeProposalHandler,
+		),
+		params.AppModuleBasic{},
+		CrisisModule{},
+		slashing.AppModuleBasic{},
+		feegrantmodule.AppModuleBasic{},
+		upgrade.AppModuleBasic{},
+		evidence.AppModuleBasic{},
+		authzmodule.AppModuleBasic{},
+		groupmodule.AppModuleBasic{},
+		vesting.AppModuleBasic{},
+		// ibc 'AppModuleBasic's
+		ibc.AppModuleBasic{},
+		ibctransfer.AppModuleBasic{},
+		ibctm.AppModuleBasic{},
+		// native x/
+		spot.AppModuleBasic{},
+		oracle.AppModuleBasic{},
+		epochs.AppModuleBasic{},
+		perpmodule.AppModuleBasic{},
+		inflation.AppModuleBasic{},
+		sudo.AppModuleBasic{},
+		wasm.AppModuleBasic{},
+		devgas.AppModuleBasic{},
+		tokenfactory.AppModuleBasic{},
+		ibcfee.AppModuleBasic{},
+		genmsg.AppModule{},
+	)
+}
+
+func ModuleAccPerms() map[string][]string {
+	return map[string][]string{
+		authtypes.FeeCollectorName:     nil,
+		distrtypes.ModuleName:          nil,
+		inflationtypes.ModuleName:      {authtypes.Minter},
+		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
+		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
+		govtypes.ModuleName:            {authtypes.Burner},
+		spottypes.ModuleName:           {authtypes.Minter, authtypes.Burner},
+		oracletypes.ModuleName:         {},
+		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
+		ibcfeetypes.ModuleName:         {},
+
+		perptypes.ModuleName:                 {},
+		perptypes.VaultModuleAccount:         {},
+		perptypes.PerpEFModuleAccount:        {},
+		perptypes.FeePoolModuleAccount:       {},
+		perptypes.DNRAllocationModuleAccount: {},
+		perptypes.DNREscrowModuleAccount:     {},
+
+		epochstypes.ModuleName:           {},
+		sudotypes.ModuleName:             {},
+		common.TreasuryPoolModuleAccount: {},
+		wasmtypes.ModuleName:             {authtypes.Burner},
+		tokenfactorytypes.ModuleName:     {authtypes.Minter, authtypes.Burner},
+	}
+}
+
+// initParamsKeeper init params perpammkeeper and its subspaces
+func initParamsKeeper(
+	appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key,
+	tkey storetypes.StoreKey,
+) paramskeeper.Keeper {
+	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
+
+	paramsKeeper.Subspace(authtypes.ModuleName)
+	paramsKeeper.Subspace(banktypes.ModuleName)
+	paramsKeeper.Subspace(stakingtypes.ModuleName)
+	paramsKeeper.Subspace(distrtypes.ModuleName)
+	paramsKeeper.Subspace(slashingtypes.ModuleName)
+	paramsKeeper.Subspace(govtypes.ModuleName)
+	paramsKeeper.Subspace(crisistypes.ModuleName)
+	// Nibiru core params keepers | x/
+	paramsKeeper.Subspace(spottypes.ModuleName)
+	paramsKeeper.Subspace(epochstypes.ModuleName)
+	paramsKeeper.Subspace(inflationtypes.ModuleName)
+	// ibc params keepers
+	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
+	paramsKeeper.Subspace(ibcexported.ModuleName)
+	paramsKeeper.Subspace(ibcfeetypes.ModuleName)
+	// wasm params keepers
+	paramsKeeper.Subspace(wasmtypes.ModuleName)
+	paramsKeeper.Subspace(devgastypes.ModuleName)
+
+	return paramsKeeper
+}
+
 // TODO: Simulation manager
 func (app *NibiruApp) InitSimulationManager(
 	appCodec codec.Codec,
 ) {
-	//// create the simulation manager and define the order of the modules for deterministic simulations
-	////
-	//// NOTE: this is not required apps that don't use the simulator for fuzz testing
-	//// transactions
-	//epochsModule := epochs.NewAppModule(appCodec, app.EpochsKeeper)
-	//app.sm = module.NewSimulationManager(
+	// // create the simulation manager and define the order of the modules for deterministic simulations
+	// //
+	// // NOTE: this is not required apps that don't use the simulator for fuzz testing
+	// // transactions
+	// epochsModule := epochs.NewAppModule(appCodec, app.EpochsKeeper)
+	// app.sm = module.NewSimulationManager(
 	//	auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts),
 	//	bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
 	//	feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
@@ -682,7 +874,7 @@ func (app *NibiruApp) InitSimulationManager(
 	//	ibc.NewAppModule(app.ibcKeeper),
 	//	ibctransfer.NewAppModule(app.transferKeeper),
 	//	ibcfee.NewAppModule(app.ibcFeeKeeper),
-	//)
+	// )
 	//
-	//app.sm.RegisterStoreDecoders()
+	// app.sm.RegisterStoreDecoders()
 }

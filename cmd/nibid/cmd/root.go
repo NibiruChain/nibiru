@@ -35,7 +35,7 @@ import (
 // NewRootCmd creates a new root command for nibid. It is called once in the
 // main function.
 func NewRootCmd() (*cobra.Command, app.EncodingConfig) {
-	encodingConfig := app.MakeEncodingConfigAndRegister()
+	encodingConfig := app.MakeEncodingConfig()
 	app.SetPrefixes(app.AccountAddressPrefix)
 
 	initClientCtx := client.Context{}.
@@ -264,11 +264,12 @@ func (a appCreator) appExport(
 		return servertypes.ExportedApp{}, errors.New("application home is not set")
 	}
 
+	loadLatestHeight := height == -1
 	nibiruApp = app.NewNibiruApp(
 		logger,
 		db,
 		traceStore,
-		height == -1,
+		loadLatestHeight,
 		a.encCfg,
 		appOpts,
 	)

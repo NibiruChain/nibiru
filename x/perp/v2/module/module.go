@@ -78,12 +78,12 @@ func (AppModuleBasic) RegisterGRPCGatewayRoutes(
 
 // GetTxCmd returns the capability module's root tx command.
 func (a AppModuleBasic) GetTxCmd() *cobra.Command {
-	return cli.GetTxCmd()
+	return cli.NewTxCmd()
 }
 
 // GetQueryCmd returns the capability module's root query command.
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
-	return cli.GetQueryCmd()
+	return cli.NewQueryCmd()
 }
 
 // ----------------------------------------------------------------------------

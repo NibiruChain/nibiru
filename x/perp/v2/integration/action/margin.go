@@ -2,6 +2,7 @@ package action
 
 import (
 	"errors"
+	"fmt"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -30,15 +31,20 @@ type addMarginAction struct {
 	Margin  sdkmath.Int
 }
 
-func (a addMarginAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	_, err := app.PerpKeeperV2.AddMargin(
-		ctx, a.Pair, a.Account, sdk.NewCoin(a.Pair.QuoteDenom(), a.Margin),
-	)
+func (a addMarginAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+	collateral, err := app.PerpKeeperV2.Collateral.Get(ctx)
 	if err != nil {
-		return ctx, err, true
+		return ctx, err
 	}
 
-	return ctx, nil, true
+	_, err = app.PerpKeeperV2.AddMargin(
+		ctx, a.Pair, a.Account, sdk.NewCoin(collateral, a.Margin),
+	)
+	if err != nil {
+		return ctx, err
+	}
+
+	return ctx, nil
 }
 
 // AddMarginFail adds margin to the position expecting a fail
@@ -63,15 +69,20 @@ type addMarginFailAction struct {
 	ExpectedErr error
 }
 
-func (a addMarginFailAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	_, err := app.PerpKeeperV2.AddMargin(
-		ctx, a.Pair, a.Account, sdk.NewCoin(a.Pair.QuoteDenom(), a.Margin),
-	)
-	if !errors.Is(err, a.ExpectedErr) {
-		return ctx, err, false
+func (a addMarginFailAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+	collateral, err := app.PerpKeeperV2.Collateral.Get(ctx)
+	if err != nil {
+		return ctx, err
 	}
 
-	return ctx, nil, false
+	_, err = app.PerpKeeperV2.AddMargin(
+		ctx, a.Pair, a.Account, sdk.NewCoin(collateral, a.Margin),
+	)
+	if !errors.Is(err, a.ExpectedErr) {
+		return ctx, fmt.Errorf("expected error %v, got %v", a.ExpectedErr, err)
+	}
+
+	return ctx, nil
 }
 
 func RemoveMargin(
@@ -92,15 +103,20 @@ type removeMarginAction struct {
 	Margin  sdkmath.Int
 }
 
-func (a removeMarginAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	_, err := app.PerpKeeperV2.RemoveMargin(
-		ctx, a.Pair, a.Account, sdk.NewCoin(a.Pair.QuoteDenom(), a.Margin),
-	)
+func (a removeMarginAction) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+	collateral, err := app.PerpKeeperV2.Collateral.Get(ctx)
 	if err != nil {
-		return ctx, err, false
+		return ctx, err
 	}
 
-	return ctx, nil, false
+	_, err = app.PerpKeeperV2.RemoveMargin(
+		ctx, a.Pair, a.Account, sdk.NewCoin(collateral, a.Margin),
+	)
+	if err != nil {
+		return ctx, err
+	}
+
+	return ctx, nil
 }
 
 func RemoveMarginFail(
@@ -124,13 +140,18 @@ type removeMarginActionFail struct {
 	ExpectedErr error
 }
 
-func (a removeMarginActionFail) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	_, err := app.PerpKeeperV2.RemoveMargin(
-		ctx, a.Pair, a.Account, sdk.NewCoin(a.Pair.QuoteDenom(), a.Margin),
-	)
-	if !errors.Is(err, a.ExpectedErr) {
-		return ctx, err, false
+func (a removeMarginActionFail) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+	collateral, err := app.PerpKeeperV2.Collateral.Get(ctx)
+	if err != nil {
+		return ctx, err
 	}
 
-	return ctx, nil, false
+	_, err = app.PerpKeeperV2.RemoveMargin(
+		ctx, a.Pair, a.Account, sdk.NewCoin(collateral, a.Margin),
+	)
+	if !errors.Is(err, a.ExpectedErr) {
+		return ctx, fmt.Errorf("expected error %v, got %v", a.ExpectedErr, err)
+	}
+
+	return ctx, nil
 }

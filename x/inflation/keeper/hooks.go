@@ -59,7 +59,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 		Amount: epochMintProvision.TruncateInt(),
 	}
 
-	staking, incentives, communityPool, err := k.MintAndAllocateInflation(ctx, mintedCoin, params)
+	staking, strategic, communityPool, err := k.MintAndAllocateInflation(ctx, mintedCoin, params)
 	if err != nil {
 		k.Logger(ctx).Error(
 			"SKIPPING INFLATION: failed to mint and allocate inflation",
@@ -87,7 +87,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 
 	defer func() {
 		stakingAmt := staking.Amount
-		incentivesAmt := incentives.Amount
+		strategicAmt := strategic.Amount
 		cpAmt := communityPool.Amount
 
 		if mintedCoin.Amount.IsInt64() {
@@ -104,10 +104,10 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 				[]metrics.Label{telemetry.NewLabel("denom", mintedCoin.Denom)},
 			)
 		}
-		if incentivesAmt.IsInt64() {
+		if strategicAmt.IsInt64() {
 			telemetry.IncrCounterWithLabels(
-				[]string{types.ModuleName, "allocate", "incentives", "total"},
-				float32(incentivesAmt.Int64()),
+				[]string{types.ModuleName, "allocate", "strategic", "total"},
+				float32(strategicAmt.Int64()),
 				[]metrics.Label{telemetry.NewLabel("denom", mintedCoin.Denom)},
 			)
 		}
@@ -132,7 +132,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 
 // ___________________________________________________________________________________________________
 
-// Hooks wrapper struct for incentives keeper
+// Hooks wrapper struct for inflation keeper
 type Hooks struct {
 	k Keeper
 }

@@ -113,8 +113,8 @@ func TestInvalidTwap(t *testing.T) {
 	})
 	startTime := time.UnixMilli(0)
 
-	app.PerpKeeperV2.Markets.Insert(ctx, pair, *mock.TestMarket())
-	app.PerpKeeperV2.AMMs.Insert(ctx, pair, *mock.TestAMMDefault())
+	app.PerpKeeperV2.SaveMarket(ctx, *mock.TestMarket())
+	app.PerpKeeperV2.SaveAMM(ctx, *mock.TestAMMDefault())
 	app.PerpKeeperV2.ReserveSnapshots.Insert(
 		ctx, collections.Join(pair, startTime), types.ReserveSnapshot{
 			Amm:         *mock.TestAMMDefault(),
@@ -298,7 +298,7 @@ func TestCalcTwapExtended(t *testing.T) {
 			twapCalcOption:     types.TwapCalcOption_QUOTE_ASSET_SWAP,
 			direction:          types.Direction_SHORT,
 			assetAmount:        sdk.NewDec(20),
-			expectedErr:        types.ErrQuoteReserveAtZero,
+			expectedErr:        types.ErrAmmNonpositiveReserves,
 		},
 
 		// k: 60 * 100 = 600
@@ -362,7 +362,7 @@ func TestCalcTwapExtended(t *testing.T) {
 			twapCalcOption:     types.TwapCalcOption_BASE_ASSET_SWAP,
 			direction:          types.Direction_LONG,
 			assetAmount:        sdk.NewDec(10),
-			expectedErr:        types.ErrBaseReserveAtZero,
+			expectedErr:        types.ErrAmmNonpositiveReserves,
 		},
 	}
 
@@ -375,8 +375,8 @@ func TestCalcTwapExtended(t *testing.T) {
 			})
 			startTime := time.UnixMilli(0)
 
-			app.PerpKeeperV2.Markets.Insert(ctx, pair, *mock.TestMarket())
-			app.PerpKeeperV2.AMMs.Insert(ctx, pair, *mock.TestAMMDefault())
+			app.PerpKeeperV2.SaveMarket(ctx, *mock.TestMarket())
+			app.PerpKeeperV2.SaveAMM(ctx, *mock.TestAMMDefault())
 			app.PerpKeeperV2.ReserveSnapshots.Insert(
 				ctx, collections.Join(pair, startTime), types.ReserveSnapshot{
 					Amm:         *mock.TestAMMDefault(),

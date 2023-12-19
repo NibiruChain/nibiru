@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package nibiru.tokenfactory.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/bank/v1beta1/bank.proto";
+import "nibiru/tokenfactory/v1/state.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/x/tokenfactory/types";
+
+// Query defines the gRPC querier service.
+service Query {
+
+  // Params retrieves the module params
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/nibiru/tokenfactory/v1/params";
+  }
+
+  // Denoms retrieves all registered denoms for a given creator
+  rpc Denoms(QueryDenomsRequest) returns (QueryDenomsResponse) {
+    option (google.api.http).get = "/nibiru/tokenfactory/v1/denoms/{creator}";
+  }
+
+  // DenomInfo retrieves the denom metadata and admin info
+  rpc DenomInfo(QueryDenomInfoRequest) returns (QueryDenomInfoResponse) {
+    option (google.api.http).get = "/nibiru/tokenfactory/v1/denom-info/{denom}";
+  }
+}
+
+// QueryParamsRequest is the request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is the response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // Module parameters stored in state
+  nibiru.tokenfactory.v1.ModuleParams params = 1
+      [ (gogoproto.nullable) = false ];
+}
+
+// QueryDenomsRequest: gRPC query for all denoms registered for a creator
+message QueryDenomsRequest { string creator = 1; }
+
+// QueryDenomsResponse: All registered denoms for a creator
+message QueryDenomsResponse { repeated string denoms = 1; }
+
+// QueryDenomInfoRequest: gRPC query for the denom admin and x/bank metadata
+message QueryDenomInfoRequest { string denom = 1; }
+
+// QueryDenomInfoResponse: All registered denoms for a creator
+message QueryDenomInfoResponse {
+  // Admin of the token factory denom
+  string admin = 1;
+  // Metadata: Official x/bank metadata for the denom. All token factory denoms
+  // are standard, native assets.
+  cosmos.bank.v1beta1.Metadata metadata = 2 [ (gogoproto.nullable) = false ];
+}

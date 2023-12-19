@@ -19,9 +19,10 @@ type insertReserveSnapshot struct {
 	modifiers []reserveSnapshotModifier
 }
 
-func (i insertReserveSnapshot) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	amm := app.PerpKeeperV2.AMMs.GetOr(ctx, i.pair, types.AMM{
+func (i insertReserveSnapshot) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+	amm := app.PerpKeeperV2.AMMs.GetOr(ctx, collections.Join(i.pair, uint64(1)), types.AMM{
 		Pair:            i.pair,
+		Version:         uint64(1),
 		BaseReserve:     sdk.ZeroDec(),
 		QuoteReserve:    sdk.ZeroDec(),
 		SqrtDepth:       sdk.ZeroDec(),
@@ -39,7 +40,7 @@ func (i insertReserveSnapshot) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Cont
 		Amm:         amm,
 	})
 
-	return ctx, nil, true
+	return ctx, nil
 }
 
 func InsertReserveSnapshot(pair asset.Pair, time time.Time, modifiers ...reserveSnapshotModifier) action.Action {

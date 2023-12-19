@@ -1,7 +1,6 @@
 package types
 
 import (
-	fmt "fmt"
 	"math/big"
 
 	sdkmath "cosmossdk.io/math"
@@ -14,19 +13,19 @@ import (
 
 func (amm AMM) Validate() error {
 	if amm.BaseReserve.LTE(sdk.ZeroDec()) {
-		return fmt.Errorf("init pool token supply must be > 0")
+		return ErrAmmBaseSupplyNonpositive
 	}
 
 	if amm.QuoteReserve.LTE(sdk.ZeroDec()) {
-		return fmt.Errorf("init pool token supply must be > 0")
+		return ErrAmmQuoteSupplyNonpositive
 	}
 
 	if amm.PriceMultiplier.LTE(sdk.ZeroDec()) {
-		return fmt.Errorf("init price multiplier must be > 0")
+		return ErrAmmNonPositivePegMult
 	}
 
 	if amm.SqrtDepth.LTE(sdk.ZeroDec()) {
-		return fmt.Errorf("init sqrt depth must be > 0")
+		return ErrAmmNonPositiveSwapInvariant
 	}
 
 	computedSqrtDepth, err := amm.ComputeSqrtDepth()
@@ -42,17 +41,65 @@ func (amm AMM) Validate() error {
 	return nil
 }
 
-// returns the amount of quote reserve equivalent to the amount of quote asset given
-func (amm AMM) FromQuoteAssetToReserve(quoteAsset sdk.Dec) sdk.Dec {
-	return quoteAsset.Quo(amm.PriceMultiplier)
+// ComputeSettlementPrice computes the uniform settlement price for the current AMM.
+//
+// Returns:
+//   - price: uniform settlement price from several batched trades. In this case,
+//     "price" is the result of closing all positions together and giving
+//     all traders the same price.
+//   - newAmm: The AMM that results from closing all positions together. Note that
+//     this should have a bias, or skew, of 0.
+//   - err: Errors if it's impossible to swap away the open interest bias.
+func (amm AMM) ComputeSettlementPrice() (sdk.Dec, AMM, error) {
+	// bias: open interest (base) skew in the AMM.
+	bias := amm.Bias()
+	if bias.IsZero() {
+		return amm.InstMarkPrice(), amm, nil
+	}
+
+	var dir Direction
+	if bias.IsPositive() {
+		dir = Direction_SHORT
+	} else {
+		dir = Direction_LONG
+	}
+
+	quoteAssetDelta, err := amm.SwapBaseAsset(bias.Abs(), dir)
+	if err != nil {
+		return sdk.Dec{}, AMM{}, err
+	}
+	price := quoteAssetDelta.Abs().Quo(bias.Abs())
+
+	return price, amm, err
 }
 
-// returns the amount of quote asset equivalent to the amount of quote reserve given
-func (amm AMM) FromQuoteReserveToAsset(quoteReserve sdk.Dec) sdk.Dec {
-	return quoteReserve.Mul(amm.PriceMultiplier)
+// QuoteReserveToAsset converts quote reserves to assets
+func (amm AMM) QuoteReserveToAsset(quoteReserve sdk.Dec) sdk.Dec {
+	return QuoteReserveToAsset(quoteReserve, amm.PriceMultiplier)
 }
 
-// Returns the amount of base reserve equivalent to the amount of quote reserve given
+// QuoteAssetToReserve converts quote assets to reserves
+func (amm AMM) QuoteAssetToReserve(quoteAssets sdk.Dec) sdk.Dec {
+	return QuoteAssetToReserve(quoteAssets, amm.PriceMultiplier)
+}
+
+// QuoteAssetToReserve converts "quote assets" to "quote reserves". In this
+// convention, "assets" are liquid funds that change hands, whereas reserves
+// are simply a number field on the DAMM. The reason for this distinction is to
+// account for the AMM.PriceMultiplier.
+func QuoteAssetToReserve(quoteAsset, priceMult sdk.Dec) sdk.Dec {
+	return quoteAsset.Quo(priceMult)
+}
+
+// QuoteReserveToAsset converts "quote reserves" to "quote assets". In this
+// convention, "assets" are liquid funds that change hands, whereas reserves
+// are simply a number field on the DAMM. The reason for this distinction is to
+// account for the AMM.PriceMultiplier.
+func QuoteReserveToAsset(quoteReserve, priceMult sdk.Dec) sdk.Dec {
+	return quoteReserve.Mul(priceMult)
+}
+
+// GetBaseReserveAmt Returns the amount of base reserve equivalent to the amount of quote reserve given
 //
 // args:
 // - quoteReserveAmt: the amount of quote reserve before the trade, must be positive
@@ -82,7 +129,7 @@ func (amm AMM) GetBaseReserveAmt(
 	}
 
 	if !quoteReservesAfter.IsPositive() {
-		return sdk.Dec{}, ErrQuoteReserveAtZero
+		return sdk.Dec{}, ErrAmmNonpositiveReserves
 	}
 
 	baseReservesAfter := invariant.Quo(quoteReservesAfter)
@@ -91,7 +138,7 @@ func (amm AMM) GetBaseReserveAmt(
 	return baseReserveDelta, nil
 }
 
-// returns the amount of quote reserve equivalent to the amount of base asset given
+// GetQuoteReserveAmt returns the amount of quote reserve equivalent to the amount of base asset given
 //
 // args:
 // - baseReserveAmt: the amount of base reserves to trade, must be positive
@@ -123,7 +170,7 @@ func (amm AMM) GetQuoteReserveAmt(
 	}
 
 	if !baseReservesAfter.IsPositive() {
-		return sdk.Dec{}, ErrBaseReserveAtZero.Wrapf(
+		return sdk.Dec{}, ErrAmmNonpositiveReserves.Wrapf(
 			"base assets below zero (%s) after trying to swap %s base assets",
 			baseReservesAfter.String(),
 			baseReserveAmt.String(),
@@ -136,8 +183,10 @@ func (amm AMM) GetQuoteReserveAmt(
 	return quoteReserveDelta, nil
 }
 
-// Returns the instantaneous mark price of the trading pair
-func (amm AMM) MarkPrice() sdk.Dec {
+// InstMarkPrice returns the instantaneous mark price of the trading pair.
+// This is the price if the AMM has zero slippage, or equivalently, if there's
+// infinite liquidity depth with the same ratio of reserves.
+func (amm AMM) InstMarkPrice() sdk.Dec {
 	if amm.BaseReserve.IsNil() || amm.BaseReserve.IsZero() ||
 		amm.QuoteReserve.IsNil() || amm.QuoteReserve.IsZero() {
 		return sdk.ZeroDec()
@@ -146,16 +195,15 @@ func (amm AMM) MarkPrice() sdk.Dec {
 	return amm.QuoteReserve.Quo(amm.BaseReserve).Mul(amm.PriceMultiplier)
 }
 
-// ComputeSqrtDepth: Returns the sqrt of the product of the reserves
+// ComputeSqrtDepth returns the sqrt of the product of the reserves
 func (amm AMM) ComputeSqrtDepth() (sqrtDepth sdk.Dec, err error) {
-	liqDepthBigInt := new(big.Int).Mul(amm.QuoteReserve.BigInt(), amm.BaseReserve.BigInt())
-
+	liqDepthBigInt := new(big.Int).Mul(
+		amm.QuoteReserve.BigInt(), amm.BaseReserve.BigInt(),
+	)
 	chopped := common.ChopPrecisionAndRound(liqDepthBigInt)
 	if chopped.BitLen() > common.MaxDecBitLen {
-		return sdk.Dec{}, ErrLiquidityDepthOverflow
+		return sdk.Dec{}, ErrAmmLiquidityDepthOverflow
 	}
-	// Since common.ChopPrecisionAndRound mutates the input, there's no guarantee that
-	// sdk.NewDecFromBigInt(liqDepthBigInt) is equal to amm.QuoteReserve.Mul(amm.BaseReserve)
 	liqDepth := amm.QuoteReserve.Mul(amm.BaseReserve)
 	return common.SqrtDec(liqDepth)
 }
@@ -210,7 +258,7 @@ func (amm *AMM) SwapQuoteAsset(
 	quoteAssetAmt sdk.Dec, // unsigned
 	dir Direction,
 ) (baseAssetDelta sdk.Dec, err error) {
-	quoteReserveAmt := amm.FromQuoteAssetToReserve(quoteAssetAmt)
+	quoteReserveAmt := QuoteAssetToReserve(quoteAssetAmt, amm.PriceMultiplier)
 	baseReserveDelta, err := amm.GetBaseReserveAmt(quoteReserveAmt, dir)
 	if err != nil {
 		return sdk.Dec{}, err
@@ -254,13 +302,12 @@ func (amm *AMM) SwapBaseAsset(baseAssetAmt sdk.Dec, dir Direction) (quoteAssetDe
 		amm.TotalShort = amm.TotalShort.Add(baseAssetAmt)
 	}
 
-	return amm.FromQuoteReserveToAsset(quoteReserveDelta), nil
+	return amm.QuoteReserveToAsset(quoteReserveDelta), nil
 }
 
-/*
-Bias returns the bias of the market in the base asset. It's the net amount of base assets for longs minus the net
-amount of base assets for shorts.
-*/
+// Bias returns the bias, or open interest skew, of the market in the base
+// units. Bias is the net amount of long perpetual contracts minus the net
+// amount of shorts.
 func (amm *AMM) Bias() (bias sdk.Dec) {
 	return amm.TotalLong.Sub(amm.TotalShort)
 }
@@ -270,7 +317,7 @@ CalcRepegCost provides the cost of re-pegging the pool to a new candidate peg mu
 */
 func (amm AMM) CalcRepegCost(newPriceMultiplier sdk.Dec) (cost sdkmath.Int, err error) {
 	if !newPriceMultiplier.IsPositive() {
-		return sdkmath.Int{}, ErrNonPositivePegMultiplier
+		return sdkmath.Int{}, ErrAmmNonPositivePegMult
 	}
 
 	bias := amm.Bias()
@@ -300,7 +347,7 @@ func (amm AMM) CalcRepegCost(newPriceMultiplier sdk.Dec) (cost sdkmath.Int, err 
 	return costDec.Ceil().TruncateInt(), nil
 }
 
-// returns the amount of quote assets the amm has to pay out if all longs and shorts close out their positions
+// GetMarketValue returns the amount of quote assets the amm has to pay out if all longs and shorts close out their positions
 // positive value means the amm has to pay out quote assets
 // negative value means the amm has to receive quote assets
 func (amm AMM) GetMarketValue() (sdk.Dec, error) {
@@ -326,7 +373,7 @@ func (amm AMM) GetMarketValue() (sdk.Dec, error) {
 		marketValueInReserves = marketValueInReserves.Neg()
 	}
 
-	return amm.FromQuoteReserveToAsset(marketValueInReserves), nil
+	return amm.QuoteReserveToAsset(marketValueInReserves), nil
 }
 
 /*
@@ -338,7 +385,7 @@ func (amm AMM) CalcUpdateSwapInvariantCost(newSwapInvariant sdk.Dec) (sdkmath.In
 	}
 
 	if !newSwapInvariant.IsPositive() {
-		return sdkmath.Int{}, ErrNegativeSwapInvariant
+		return sdkmath.Int{}, ErrAmmNonPositiveSwapInvariant
 	}
 
 	marketValueBefore, err := amm.GetMarketValue()

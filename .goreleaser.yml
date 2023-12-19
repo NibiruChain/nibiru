@@ -9,18 +9,19 @@ builds:
     binary: nibid
     hooks:
       pre:
-        - wget https://github.com/CosmWasm/wasmvm/releases/download/v1.4.0/libwasmvmstatic_darwin.a -O /osxcross/target/SDK/MacOSX12.0.sdk/usr/lib/libwasmvmstatic_darwin.a
-        - wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/include.8.1.1.tar.gz -O /root/include.8.1.1.tar.gz
-        - tar -xf /root/include.8.1.1.tar.gz -C /osxcross/target/SDK/MacOSX12.0.sdk/usr/include/
-        - wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/librocksdb_8.1.1_darwin_all.tar.gz -O /root/librocksdb_8.1.1_darwin_all.tar.gz
-        - tar -xf /root/librocksdb_8.1.1_darwin_all.tar.gz -C /osxcross/target/SDK/MacOSX12.0.sdk/usr/lib/
+        - cmd: bash contrib/scripts/release_pre_darwin.sh
+          output: false # enable for debug
+          env:
+            - TARGET={{ .Target }}
     goos:
       - darwin
     goarch:
       - amd64
       - arm64
     env:
-      - CC=o64-clang
+      - CC_darwin_amd64=o64-clang
+      - CC_darwin_arm64=oa64-clang
+      - 'CC={{ index .Env (print "CC_" .Os "_" .Arch) }}'
     flags:
       - -mod=readonly
       - -trimpath
@@ -38,35 +39,28 @@ builds:
       - osusergo
       - ledger
       - static
-      - static_wasm
       - rocksdb
+      - static_wasm
       - grocksdb_no_link
-    overrides:
-      - goos: darwin
-        goarch: arm64
-        env:
-          - CC=oa64-clang
 
   - id: linux
     main: ./cmd/nibid
     binary: nibid
     hooks:
       pre:
-        - wget https://github.com/CosmWasm/wasmvm/releases/download/v1.4.0/libwasmvm_muslc.x86_64.a -O /usr/lib/x86_64-linux-gnu/libwasmvm_muslc.a
-        - wget https://github.com/CosmWasm/wasmvm/releases/download/v1.4.0/libwasmvm_muslc.aarch64.a -O /usr/lib/aarch64-linux-gnu/libwasmvm_muslc.a
-        - wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/include.8.1.1.tar.gz -O /root/include.8.1.1.tar.gz
-        - tar -xvf /root/include.8.1.1.tar.gz -C /usr/include/
-        - wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/librocksdb_8.1.1_linux_amd64.tar.gz -O /root/librocksdb_8.1.1_linux_amd64.tar.gz
-        - tar -xvf /root/librocksdb_8.1.1_linux_amd64.tar.gz -C /usr/lib/x86_64-linux-gnu/
-        - wget https://github.com/NibiruChain/gorocksdb/releases/download/v8.1.1/librocksdb_8.1.1_linux_arm64.tar.gz -O /root/librocksdb_8.1.1_linux_arm64.tar.gz
-        - tar -xvf /root/librocksdb_8.1.1_linux_arm64.tar.gz -C /usr/lib/aarch64-linux-gnu/
+        - cmd: bash contrib/scripts/release_pre_linux.sh
+          output: false # enable for debug
+          env:
+            - TARGET={{ .Target }}
     goos:
       - linux
     goarch:
       - amd64
       - arm64
     env:
-      - CC=x86_64-linux-gnu-gcc
+      - CC_linux_amd64=x86_64-linux-gnu-gcc
+      - CC_linux_arm64=aarch64-linux-gnu-gcc
+      - 'CC={{ index .Env (print "CC_" .Os "_" .Arch) }}'
     flags:
       - -mod=readonly
       - -trimpath
@@ -78,20 +72,14 @@ builds:
       - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
       - -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb
       - -linkmode=external
-      - -extldflags '-static -lrocksdb -lstdc++ -lm -ldl -lpthread'
+      - -extldflags '-static -lm -lbz2'
     tags:
       - netgo
       - osusergo
       - ledger
-      - muslc
-      - rocksdb
-      - grocksdb_no_link
       - static
-    overrides:
-      - goos: linux
-        goarch: arm64
-        env:
-          - CC=aarch64-linux-gnu-gcc
+      - rocksdb
+      - muslc
 
 universal_binaries:
   - id: darwin

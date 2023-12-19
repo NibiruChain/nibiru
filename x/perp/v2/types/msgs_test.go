@@ -61,16 +61,6 @@ func TestMsgValidateBasic(t *testing.T) {
 			true,
 			"margin must be positive",
 		},
-		{
-			"Test MsgRemoveMargin: Invalid margin",
-			&MsgRemoveMargin{
-				Sender: validSender,
-				Pair:   validPair,
-				Margin: sdk.NewCoin("denom", sdk.OneInt()),
-			},
-			true,
-			"invalid margin denom",
-		},
 
 		// MsgAddMargin test cases
 		{
@@ -112,16 +102,6 @@ func TestMsgValidateBasic(t *testing.T) {
 			},
 			true,
 			"margin must be positive",
-		},
-		{
-			"Test MsgAddMargin: Invalid margin",
-			&MsgAddMargin{
-				Sender: validSender,
-				Pair:   validPair,
-				Margin: sdk.NewCoin("denom", sdk.OneInt()),
-			},
-			true,
-			"invalid margin denom",
 		},
 		// MsgMarketOrder test cases
 		{
@@ -237,6 +217,36 @@ func TestMsgValidateBasic(t *testing.T) {
 		{
 			"Test MsgClosePosition: Invalid sender",
 			&MsgClosePosition{
+				Sender: "invalid",
+				Pair:   validPair,
+			},
+			true,
+			"decoding bech32 failed",
+		},
+		// MsgSettlePosition test cases
+		{
+			"Test MsgSettlePosition: Valid input",
+			&MsgSettlePosition{
+				Sender:  validSender,
+				Pair:    validPair,
+				Version: 1,
+			},
+			false,
+			"",
+		},
+		{
+			"Test MsgSettlePosition: Invalid pair",
+			&MsgSettlePosition{
+				Sender:  validSender,
+				Pair:    invalidPair,
+				Version: 1,
+			},
+			true,
+			"invalid base asset",
+		},
+		{
+			"Test MsgSettlePosition: Invalid sender",
+			&MsgSettlePosition{
 				Sender: "invalid",
 				Pair:   validPair,
 			},
@@ -361,6 +371,58 @@ func TestMsgValidateBasic(t *testing.T) {
 			true,
 			"invalid liquidation at index 0: invalid base asset",
 		},
+		// MsgShiftPegMultiplier
+		{
+			name: "MsgShiftPegMultiplier: Invalid pair",
+			msg: &MsgShiftPegMultiplier{
+				Sender:     validSender,
+				Pair:       asset.Pair("not_a_pair"),
+				NewPegMult: sdk.NewDec(420), // valid positive value, unused
+			},
+			expectErr:     true,
+			expectedError: asset.ErrInvalidTokenPair.Error(),
+		},
+		{
+			name: "MsgShiftPegMultiplier: nonpositive peg multiplier",
+			msg: &MsgShiftPegMultiplier{
+				Sender:     validSender,
+				Pair:       asset.Pair("valid:pair"),
+				NewPegMult: sdk.NewDec(-420), // invalid nonpositive
+			},
+			expectErr:     true,
+			expectedError: ErrAmmNonPositivePegMult.Error(),
+		},
+		// MsgDonateToEcosystemFund test cases
+		{
+			name: "MsgShiftSwapInvariant: Invalid pair",
+			msg: &MsgShiftSwapInvariant{
+				Sender:           validSender,
+				Pair:             asset.Pair("not_a_pair"),
+				NewSwapInvariant: sdk.NewInt(420), // valid positive
+			},
+			expectErr:     true,
+			expectedError: asset.ErrInvalidTokenPair.Error(),
+		},
+		{
+			name: "MsgShiftSwapInvariant: nonpositive swap invariant",
+			msg: &MsgShiftSwapInvariant{
+				Sender:           validSender,
+				Pair:             asset.Pair("valid:pair"),
+				NewSwapInvariant: sdk.NewInt(-420), // invalid nonpositive
+			},
+			expectErr:     true,
+			expectedError: ErrAmmNonPositiveSwapInvariant.Error(),
+		},
+		{
+			name: "MsgShiftSwapInvariant: nonpositive swap invariant",
+			msg: &MsgShiftSwapInvariant{
+				Sender:           validSender,
+				Pair:             asset.Pair("valid:pair"),
+				NewSwapInvariant: sdk.ZeroInt(), // invalid nonpositive
+			},
+			expectErr:     true,
+			expectedError: ErrAmmNonPositiveSwapInvariant.Error(),
+		},
 	}
 
 	for _, tc := range testCases {
@@ -385,18 +447,24 @@ func TestMsg_GetSigners(t *testing.T) {
 		&MsgRemoveMargin{Sender: validSender},
 		&MsgMarketOrder{Sender: validSender},
 		&MsgClosePosition{Sender: validSender},
+		&MsgSettlePosition{Sender: validSender},
 		&MsgPartialClose{Sender: validSender},
 		&MsgDonateToEcosystemFund{Sender: validSender},
 		&MsgMultiLiquidate{Sender: validSender},
+		&MsgShiftPegMultiplier{Sender: validSender},
+		&MsgShiftSwapInvariant{Sender: validSender},
 	}
 	msgInvalidSenderList := []sdk.Msg{
 		&MsgAddMargin{Sender: invalidSender},
 		&MsgRemoveMargin{Sender: invalidSender},
 		&MsgMarketOrder{Sender: invalidSender},
 		&MsgClosePosition{Sender: invalidSender},
+		&MsgSettlePosition{Sender: invalidSender},
 		&MsgPartialClose{Sender: invalidSender},
 		&MsgDonateToEcosystemFund{Sender: invalidSender},
 		&MsgMultiLiquidate{Sender: invalidSender},
+		&MsgShiftPegMultiplier{Sender: invalidSender},
+		&MsgShiftSwapInvariant{Sender: invalidSender},
 	}
 
 	for _, msg := range msgValidSenderList {
@@ -458,6 +526,12 @@ func TestMsg_RouteAndType(t *testing.T) {
 			expectedType:  "close_position_msg",
 		},
 		{
+			name:          "MsgSettlePosition",
+			msg:           &MsgSettlePosition{},
+			expectedRoute: "perp",
+			expectedType:  "settle_position_msg",
+		},
+		{
 			name:          "MsgPartialClose",
 			msg:           &MsgPartialClose{},
 			expectedRoute: "perp",
@@ -512,6 +586,10 @@ func TestMsg_GetSignBytes(t *testing.T) {
 			msg:  &MsgClosePosition{},
 		},
 		{
+			name: "MsgSettlePosition",
+			msg:  &MsgSettlePosition{},
+		},
+		{
 			name: "MsgPartialClose",
 			msg:  &MsgPartialClose{},
 		},
@@ -522,6 +600,14 @@ func TestMsg_GetSignBytes(t *testing.T) {
 		{
 			name: "MsgMultiLiquidate",
 			msg:  &MsgMultiLiquidate{},
+		},
+		{
+			name: "MsgShiftPegMultiplier",
+			msg:  &MsgShiftPegMultiplier{},
+		},
+		{
+			name: "MsgShiftSwapInvariant",
+			msg:  &MsgShiftSwapInvariant{},
 		},
 	}
 

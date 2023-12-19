@@ -16,19 +16,43 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 	simcli "github.com/cosmos/cosmos-sdk/x/simulation/client/cli"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/app"
+	appsim "github.com/NibiruChain/nibiru/app/sim"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 )
 
 // SimAppChainID hardcoded chainID for simulation
 const SimAppChainID = "simulation-app"
 
-func init() {
-	app.GetSimulatorFlags()
+type SimulationTestSuite struct {
+	suite.Suite
 }
 
-func TestFullAppSimulation(tb *testing.T) {
+func TestSimulationTestSuite(t *testing.T) {
+	suite.Run(t, new(SimulationTestSuite))
+}
+
+var _ suite.SetupTestSuite = (*SimulationTestSuite)(nil)
+
+func init() {
+	// We call GetSimulatorFlags here in order to set the value for
+	// 'simapp.FlagEnabledValue', which enables simulations
+	appsim.GetSimulatorFlags()
+}
+
+// SetupTest: Runs before every test in the suite.
+func (s *SimulationTestSuite) SetupTest() {
+	testutil.BeforeIntegrationSuite(s.T())
+	if !simapp.FlagEnabledValue {
+		s.T().Skip("skipping application simulation")
+	}
+}
+
+func (s *SimulationTestSuite) TestFullAppSimulation() {
+	t := s.T()
 	config := simcli.NewConfigFromFlags()
 	config.ChainID = SimAppChainID
 
@@ -39,24 +63,24 @@ func TestFullAppSimulation(tb *testing.T) {
 		simcli.FlagVerboseValue, simcli.FlagEnabledValue,
 	)
 	if skip {
-		tb.Skip("skipping application simulation")
+		t.Skip("skipping application simulation")
 	}
-	require.NoError(tb, err, "simulation setup failed")
+	require.NoError(t, err, "simulation setup failed")
 
 	defer func() {
 		db.Close()
 		err = os.RemoveAll(dir)
 		if err != nil {
-			tb.Fatal(err)
+			t.Fatal(err)
 		}
 	}()
 
-	encoding := app.MakeEncodingConfigAndRegister()
+	encoding := app.MakeEncodingConfig()
 	app := testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encoding.Marshaler))
 
 	// Run randomized simulation:
 	_, simParams, simErr := simulation.SimulateFromSeed(
-		/* tb */ tb,
+		/* tb */ t,
 		/* w */ os.Stdout,
 		/* app */ app.BaseApp,
 		/* appStateFn */ AppStateFn(app.AppCodec(), app.SimulationManager()),
@@ -69,11 +93,11 @@ func TestFullAppSimulation(tb *testing.T) {
 
 	// export state and simParams before the simulation error is checked
 	if err = helpers.CheckExportSimulation(app, config, simParams); err != nil {
-		tb.Fatal(err)
+		t.Fatal(err)
 	}
 
 	if simErr != nil {
-		tb.Fatal(simErr)
+		t.Fatal(simErr)
 	}
 
 	if config.Commit {
@@ -81,12 +105,10 @@ func TestFullAppSimulation(tb *testing.T) {
 	}
 }
 
-func TestAppStateDeterminism(t *testing.T) {
-	if !simapp.FlagEnabledValue {
-		t.Skip("skipping application simulation")
-	}
+func (s *SimulationTestSuite) TestAppStateDeterminism() {
+	t := s.T()
 
-	encoding := app.MakeEncodingConfigAndRegister()
+	encoding := app.MakeEncodingConfig()
 
 	config := simapp.NewConfigFromFlags()
 	config.InitialBlockHeight = 1

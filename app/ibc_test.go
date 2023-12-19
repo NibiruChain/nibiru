@@ -16,6 +16,7 @@ import (
 // init changes the value of 'DefaultTestingAppInit' to use custom initialization.
 func init() {
 	ibctesting.DefaultTestingAppInit = SetupNibiruTestingApp
+	testapp.EnsureNibiruPrefix()
 }
 
 /*
@@ -31,8 +32,9 @@ func SetupNibiruTestingApp() (
 	nibiruApp, _ := testapp.NewNibiruTestAppAndContext()
 
 	// Create genesis state
-	encCdc := app.MakeEncodingConfigAndRegister()
+	encCdc := app.MakeEncodingConfig()
 	genesisState := app.NewDefaultGenesisState(encCdc.Marshaler)
+	testapp.SetDefaultSudoGenesis(genesisState)
 
 	return nibiruApp, genesisState
 }

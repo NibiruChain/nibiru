@@ -11,7 +11,7 @@ option go_package = "github.com/NibiruChain/nibiru/x/epochs/types";
 // Query defines the gRPC querier service.
 service Query {
   // EpochInfos provide running epochInfos
-  rpc EpochInfos(QueryEpochsInfoRequest) returns (QueryEpochsInfoResponse) {
+  rpc EpochInfos(QueryEpochInfosRequest) returns (QueryEpochInfosResponse) {
     option (google.api.http).get = "/nibiru/epochs/v1beta1/epochs";
   }
   // CurrentEpoch provide current epoch of specified identifier
@@ -21,9 +21,10 @@ service Query {
   }
 }
 
-message QueryEpochsInfoRequest {}
-message QueryEpochsInfoResponse {
-  repeated EpochInfo epochs = 1 [ (gogoproto.nullable) = false ];
+message QueryEpochInfosRequest {}
+message QueryEpochInfosResponse {
+  repeated nibiru.epochs.v1.EpochInfo epochs = 1
+      [ (gogoproto.nullable) = false ];
 }
 
 message QueryCurrentEpochRequest { string identifier = 1; }

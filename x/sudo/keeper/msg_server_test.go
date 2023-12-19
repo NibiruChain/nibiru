@@ -8,13 +8,11 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/sudo/types"
 
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/app/codec"
 	"github.com/NibiruChain/nibiru/x/common/set"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
@@ -26,14 +24,7 @@ func init() {
 }
 
 func setup() (*app.NibiruApp, sdk.Context) {
-	genState := app.NewDefaultGenesisState(codec.DefaultEncoding().Marshaler)
-	nibiru := testapp.NewNibiruTestApp(genState)
-	ctx := nibiru.NewContext(false, tmproto.Header{
-		Height:  1,
-		ChainID: "nibiru-sudonet-1",
-		Time:    time.Now().UTC(),
-	})
-	return nibiru, ctx
+	return testapp.NewNibiruTestAppAndContextAtTime(time.Now().UTC())
 }
 
 func TestGenesis(t *testing.T) {
@@ -46,7 +37,7 @@ func TestGenesis(t *testing.T) {
 		{
 			name:     "default genesis (empty)",
 			genState: sudo.DefaultGenesis(),
-			empty:    true,
+			panic:    true,
 		},
 		{
 			name: "happy genesis with contracts",

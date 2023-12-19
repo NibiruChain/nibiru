@@ -25,10 +25,12 @@ func TestQueryPositions(t *testing.T) {
 			Given(
 				CreateCustomMarket(
 					pair,
+					WithEnabled(true),
 					WithPricePeg(sdk.NewDec(2)),
 				),
 				CreateCustomMarket(
 					pair2,
+					WithEnabled(true),
 					WithPricePeg(sdk.NewDec(3)),
 				),
 			).
@@ -85,10 +87,12 @@ func TestQueryPositions(t *testing.T) {
 			Given(
 				CreateCustomMarket(
 					pair,
+					WithEnabled(true),
 					WithPricePeg(sdk.OneDec()),
 				),
 				CreateCustomMarket(
 					pair2,
+					WithEnabled(true),
 					WithPricePeg(sdk.MustNewDecFromStr("0.95")),
 				),
 			).
@@ -145,10 +149,12 @@ func TestQueryPositions(t *testing.T) {
 			Given(
 				CreateCustomMarket(
 					pair,
+					WithEnabled(true),
 					WithPricePeg(sdk.MustNewDecFromStr("0.5")),
 				),
 				CreateCustomMarket(
 					pair2,
+					WithEnabled(true),
 					WithPricePeg(sdk.MustNewDecFromStr("0.9")),
 				),
 			).
@@ -214,6 +220,7 @@ func TestQueryPosition(t *testing.T) {
 			Given(
 				CreateCustomMarket(
 					pair,
+					WithEnabled(true),
 					WithPricePeg(sdk.NewDec(2)),
 				),
 			).
@@ -247,6 +254,7 @@ func TestQueryPosition(t *testing.T) {
 			Given(
 				CreateCustomMarket(
 					pair,
+					WithEnabled(true),
 					WithPricePeg(sdk.OneDec()),
 				),
 			).
@@ -280,6 +288,7 @@ func TestQueryPosition(t *testing.T) {
 			Given(
 				CreateCustomMarket(
 					pair,
+					WithEnabled(true),
 					WithPricePeg(sdk.MustNewDecFromStr("0.5")),
 				),
 			).
@@ -313,6 +322,7 @@ func TestQueryPosition(t *testing.T) {
 			Given(
 				CreateCustomMarket(
 					pair,
+					WithEnabled(true),
 					WithPricePeg(sdk.NewDec(2)),
 				),
 			).
@@ -334,6 +344,7 @@ func TestQueryMarkets(t *testing.T) {
 			Given(
 				CreateCustomMarket(
 					pair,
+					WithEnabled(true),
 					WithPricePeg(sdk.NewDec(2)),
 				),
 				FundModule("perp_ef", sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10)))),
@@ -348,7 +359,9 @@ func TestQueryMarkets(t *testing.T) {
 				),
 			).
 			Then(
-				QueryMarkets(QueryMarkets_MarketsShouldContain(*types.DefaultMarket(pair))),
+				QueryMarkets(false, QueryMarkets_MarketsShouldContain(
+					types.DefaultMarket(pair).WithEnabled(true)),
+				),
 				QueryModuleAccounts(QueryModuleAccounts_ModulesBalanceShouldBe(
 					map[string]sdk.Coins{
 						"perp_ef": sdk.NewCoins(
@@ -358,6 +371,20 @@ func TestQueryMarkets(t *testing.T) {
 					},
 				)),
 			),
+		TC("versioned, all markets (active and inactive)").Given(
+			CreateCustomMarket("BTC:USD", WithVersion(1), WithEnabled(true)),
+			CreateCustomMarket("ETC:USD", WithVersion(1), WithEnabled(false)),
+			CreateCustomMarket("ETC:USD", WithVersion(2), WithEnabled(true)),
+		).Then(
+			QueryMarkets(true, QueryMarkets_ShouldLength(3)),
+		),
+		TC("not versioned, only active markets").Given(
+			CreateCustomMarket("BTC:USD", WithVersion(1), WithEnabled(true)),
+			CreateCustomMarket("ETC:USD", WithVersion(1), WithEnabled(false)),
+			CreateCustomMarket("ETC:USD", WithVersion(2), WithEnabled(true)),
+		).Then(
+			QueryMarkets(true, QueryMarkets_ShouldLength(3)),
+		),
 	}
 
 	NewTestSuite(t).WithTestCases(tc...).Run()
@@ -383,9 +410,9 @@ func TestQueryPositionStore(t *testing.T) {
 	tc := TestCases{
 		TC("paginated positions in state").
 			Given(
-				CreateCustomMarket(pairs[0]),
-				CreateCustomMarket(pairs[1]),
-				CreateCustomMarket(pairs[2]),
+				CreateCustomMarket(pairs[0], WithEnabled(true)),
+				CreateCustomMarket(pairs[1], WithEnabled(true)),
+				CreateCustomMarket(pairs[2], WithEnabled(true)),
 			).
 			When(
 				InsertPosition(WithPair(pairs[2])),
@@ -398,7 +425,7 @@ func TestQueryPositionStore(t *testing.T) {
 
 		TC("get default number of positions per page").
 			Given(
-				CreateCustomMarket(pairs[2]),
+				CreateCustomMarket(pairs[2], WithEnabled(true)),
 			).
 			When(
 				insertManyPositions(99, pairs[2])...,
@@ -411,7 +438,7 @@ func TestQueryPositionStore(t *testing.T) {
 
 		TC("invalid request (key and offset defined)").
 			Given(
-				CreateCustomMarket(pairs[2]),
+				CreateCustomMarket(pairs[2], WithEnabled(true)),
 			).
 			When(
 				insertManyPositions(2, pairs[2])...,
@@ -421,6 +448,39 @@ func TestQueryPositionStore(t *testing.T) {
 					Key: []byte{}, Offset: 25,
 				}, true,
 				),
+			),
+	}
+
+	NewTestSuite(t).WithTestCases(tc...).Run()
+}
+
+func TestQueryCollateral(t *testing.T) {
+	tc := TestCases{
+		TC("state starts as expected with the mock NUSD denomination").
+			Given().
+			When().
+			Then(
+				QueryCollateral(types.TestingCollateralDenomNUSD),
+			),
+
+		TC("expected value returned after collateral denom changes").
+			Given().
+			When(
+				SetCollateral(denoms.BTC),
+			).
+			Then(
+				QueryCollateral(denoms.BTC),
+			),
+
+		TC("sanity check: multiple changes").
+			Given().
+			When(
+				SetCollateral(denoms.BTC),
+				SetCollateral(denoms.ETH),
+				SetCollateral(denoms.SOL),
+			).
+			Then(
+				QueryCollateral(denoms.SOL),
 			),
 	}
 

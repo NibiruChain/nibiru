@@ -51,7 +51,6 @@ func checkUserLimits(limit, amount sdk.Dec, dir types.Direction) error {
 // NOTE: the baseAssetDelta is always positive
 func (k Keeper) SwapQuoteAsset(
 	ctx sdk.Context,
-	market types.Market,
 	amm types.AMM,
 	dir types.Direction,
 	quoteAssetAmt sdk.Dec, // unsigned
@@ -66,7 +65,7 @@ func (k Keeper) SwapQuoteAsset(
 		return nil, sdk.Dec{}, err
 	}
 
-	k.AMMs.Insert(ctx, amm.Pair, amm)
+	k.SaveAMM(ctx, amm)
 
 	return &amm, baseAssetDelta, nil
 }
@@ -90,7 +89,6 @@ func (k Keeper) SwapQuoteAsset(
 // NOTE: the quoteAssetDelta is always positive
 func (k Keeper) SwapBaseAsset(
 	ctx sdk.Context,
-	market types.Market,
 	amm types.AMM,
 	dir types.Direction,
 	baseAssetAmt sdk.Dec,
@@ -109,7 +107,7 @@ func (k Keeper) SwapBaseAsset(
 		return nil, sdk.Dec{}, err
 	}
 
-	k.AMMs.Insert(ctx, amm.Pair, amm)
+	k.SaveAMM(ctx, amm)
 
 	return &amm, quoteAssetDelta, err
 }

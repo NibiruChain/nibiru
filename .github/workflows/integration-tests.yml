@@ -1,27 +1,54 @@
 name: Integration tests
 
 on:
+  workflow_dispatch: # Runs on manual calls
+  schedule:
+    - cron: "0 0 * * *" # Runs automatically every day
   pull_request:
     # paths makes the action run only when the given paths are changed
     paths: ["**.go", "**.proto", "go.mod", "go.sum"]
 
-# Allow concurrent runs on main/release branches but isolates other branches 
+# Allow concurrent runs on main/release branches but isolates other branches
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.head_ref }}
-  cancel-in-progress: ${{ ! (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/')) }}
+  cancel-in-progress: ${{ ! (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')) }}
 
 jobs:
   integration-tests:
+    # Job that runs all tests and publishes code coverage reports.
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
-          go-version: 1.19
+          go-version: 1.21
           cache: true
 
-      - name: Run all integration tests.
-        run: make test-integration
+      # Use GitHub actions output paramters to get go paths. For more info, see
+      # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions
+      - name: "Set output variables for go cache"
+        id: go-cache-paths
+        run: |
+          echo "go-build-cache=$(go env GOCACHE)" >> $GITHUB_OUTPUT
+          echo "go-mod-cache=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
+
+      - name: "Go build cache"
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-build-cache }}
+          key: go-build-cache-${{ hashFiles('**/go.sum') }}
+
+      - name: "Go mod cache"
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-mod-cache }}
+          key: go-mod-cache-${{ hashFiles('**/go.sum') }}
+
+      - name: "Run all integration tests."
+        run: make test-coverage-integration
+
+      - name: "Upload coverage reports to Codecov"
+        uses: codecov/codecov-action@v3

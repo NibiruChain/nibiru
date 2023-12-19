@@ -1,31 +1,26 @@
-###############################################################################
-###                            		  Tests 					                        ###
-###############################################################################
-
-PACKAGES_NOSIMULATION = ${shell go list ./... | grep -v simapp}
+#########################################################################
+# Tests
+#########################################################################
 
 .PHONY: test-unit
 test-unit:
-	go test -v $(PACKAGES_NOSIMULATION) -short -coverprofile=coverage.txt -covermode=count
+	go test ./... -short
 
-.PHONY: test-integration
-test-integration:
-	go test -v $(PACKAGES_NOSIMULATION) -coverprofile=coverage.txt -covermode=count
-
-# Used for CI by Codecov
-.PHONY: test-coverage
-test-coverage:
+.PHONY: test-coverage-unit
+test-coverage-unit:
 	go test ./... -short \
 		-coverprofile=coverage.txt \
 		-covermode=atomic \
-		-race | grep -v "no test" | grep -v "no statement"
+		-race
 
+# NOTE: Using the verbose flag breaks the coverage reporting in CI.
+# Used for CI by Codecov
 .PHONY: test-coverage-integration
 test-coverage-integration:
 	go test ./... \
 		-coverprofile=coverage.txt \
 		-covermode=atomic \
-		-race | grep -v "no test" | grep -v "no statement"
+		-race
 
 # Require Python3
 .PHONY: test-create-test-cases

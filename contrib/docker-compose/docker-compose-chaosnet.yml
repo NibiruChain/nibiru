@@ -1,30 +1,207 @@
 name: chaosnet
 
 services:
-  nibiru:
+  nibiru-0:
     build:
       context: ../.. # nibiru project folder
       dockerfile: ./contrib/docker/chaosnet.Dockerfile # relative to context directory (i.e. nibiru project folder)
       args:
         MNEMONIC: guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host
+        CHAIN_ID: nibiru-localnet-0
+        RPC_PORT: 26657
+        GRPC_PORT: 9090
+        LCD_PORT: 1317
     ports:
       - 26657:26657
       - 1317:1317
       - 9090:9090
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:26657"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     volumes:
-      - nibid-data:/root/.nibid/data:rw
+      - nibid-data-0:/root/.nibid/data:rw
+
+  pricefeeder-0:
+    image: ghcr.io/nibiruchain/pricefeeder:latest
+    restart: always
+    environment:
+      CHAIN_ID: nibiru-localnet-0
+      GRPC_ENDPOINT: nibiru-0:9090
+      WEBSOCKET_ENDPOINT: ws://nibiru-0:26657/websocket
+      FEEDER_MNEMONIC: empower dice proud brick treat reward pull jeans right rubber infant hamster pet foster among crush quick report rival bracket easily mouse topple absorb
+      EXCHANGE_SYMBOLS_MAP: '{ "bitfinex": { "ubtc:uusd": "tBTCUSD", "ueth:uusd": "tETHUSD", "uusdt:uusd": "tUSTUSD" }, "binance": { "ubtc:uusd": "BTCUSD", "ueth:uusd": "ETHUSD", "uusdt:uusd": "USDTUSD", "uusdc:uusd": "USDCUSD", "uatom:uusd": "ATOMUSD", "ubnb:uusd": "BNBUSD", "uavax:uusd": "AVAXUSD", "usol:uusd": "SOLUSD", "uada:uusd": "ADAUSD", "ubtc:unusd": "BTCUSD", "ueth:unusd": "ETHUSD", "uusdt:unusd": "USDTUSD", "uusdc:unusd": "USDCUSD", "uatom:unusd": "ATOMUSD", "ubnb:unusd": "BNBUSD", "uavax:unusd": "AVAXUSD", "usol:unusd": "SOLUSD", "uada:unusd": "ADAUSD" } }'
+      VALIDATOR_ADDRESS: nibivaloper1zaavvzxez0elundtn32qnk9lkm8kmcszuwx9jz
+    depends_on:
+      nibiru-0:
+        condition: service_healthy
+
+  nibiru-1:
+    build:
+      context: ../.. # nibiru project folder
+      dockerfile: ./contrib/docker/chaosnet.Dockerfile # relative to context directory (i.e. nibiru project folder)
+      args:
+        MNEMONIC: gallery grass trick siren sunset chimney crawl hover eagle rug dice quick false dizzy abandon issue history transfer lyrics clever any narrow taste exotic
+        CHAIN_ID: nibiru-localnet-1
+        RPC_PORT: 36657
+        GRPC_PORT: 19090
+        LCD_PORT: 11317
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:36657"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    ports:
+      - 36657:36657
+      - 11317:11317
+      - 19090:19090
+    volumes:
+      - nibid-data-1:/root/.nibid/data:rw
+
+  pricefeeder-1:
+    image: ghcr.io/nibiruchain/pricefeeder:latest
+    restart: always
+    environment:
+      CHAIN_ID: nibiru-localnet-1
+      GRPC_ENDPOINT: nibiru-1:19090
+      WEBSOCKET_ENDPOINT: ws://nibiru-1:36657/websocket
+      FEEDER_MNEMONIC: empower dice proud brick treat reward pull jeans right rubber infant hamster pet foster among crush quick report rival bracket easily mouse topple absorb
+      EXCHANGE_SYMBOLS_MAP: '{ "bitfinex": { "ubtc:uusd": "tBTCUSD", "ueth:uusd": "tETHUSD", "uusdt:uusd": "tUSTUSD" }, "binance": { "ubtc:uusd": "BTCUSD", "ueth:uusd": "ETHUSD", "uusdt:uusd": "USDTUSD", "uusdc:uusd": "USDCUSD", "uatom:uusd": "ATOMUSD", "ubnb:uusd": "BNBUSD", "uavax:uusd": "AVAXUSD", "usol:uusd": "SOLUSD", "uada:uusd": "ADAUSD", "ubtc:unusd": "BTCUSD", "ueth:unusd": "ETHUSD", "uusdt:unusd": "USDTUSD", "uusdc:unusd": "USDCUSD", "uatom:unusd": "ATOMUSD", "ubnb:unusd": "BNBUSD", "uavax:unusd": "AVAXUSD", "usol:unusd": "SOLUSD", "uada:unusd": "ADAUSD" } }'
+      VALIDATOR_ADDRESS: nibivaloper18mxturdh0mjw032c3zslgkw63cukkl4qatcdn4
+    depends_on:
+      nibiru-1:
+        condition: service_healthy
+
+  hermes-keys-task-0:
+    image: informalsystems/hermes:1.6.0
+    user: root
+    command:
+      [
+        "--config",
+        "/root/.hermes/config.toml",
+        "keys",
+        "add",
+        "--key-name",
+        "nibiru-0-validator",
+        "--chain",
+        "nibiru-localnet-0",
+        "--mnemonic-file",
+        "/root/nibiru-0-validator-mnemonic",
+      ]
+    volumes:
+      - type: bind
+        source: ../templates/hermes.toml
+        target: /root/.hermes/config.toml
+      - type: bind
+        source: ../templates/nibiru-0-validator-mnemonic
+        target: /root/nibiru-0-validator-mnemonic
+      - hermes-keys-data:/root/.hermes/keys
+    depends_on:
+      nibiru-0:
+        condition: service_healthy
+      nibiru-1:
+        condition: service_healthy
+
+  hermes-keys-task-1:
+    image: informalsystems/hermes:1.6.0
+    user: root
+    command:
+      [
+        "--config",
+        "/root/.hermes/config.toml",
+        "keys",
+        "add",
+        "--key-name",
+        "nibiru-1-validator",
+        "--chain",
+        "nibiru-localnet-1",
+        "--mnemonic-file",
+        "/root/nibiru-1-validator-mnemonic",
+      ]
+    volumes:
+      - type: bind
+        source: ../templates/hermes.toml
+        target: /root/.hermes/config.toml
+      - type: bind
+        source: ../templates/nibiru-1-validator-mnemonic
+        target: /root/nibiru-1-validator-mnemonic
+      - hermes-keys-data:/root/.hermes/keys
+    depends_on:
+      nibiru-0:
+        condition: service_healthy
+      nibiru-1:
+        condition: service_healthy
+      hermes-keys-task-0:
+        condition: service_completed_successfully
+
+  hermes-client-connection-channel-task:
+    image: informalsystems/hermes:1.6.0
+    user: root
+    command:
+      [
+        "--config",
+        "/root/.hermes/config.toml",
+        "create",
+        "channel",
+        "--a-chain",
+        "nibiru-localnet-0",
+        "--b-chain",
+        "nibiru-localnet-1",
+        "--a-port",
+        "transfer",
+        "--b-port",
+        "transfer",
+        "--new-client-connection",
+        "--yes",
+      ]
+    volumes:
+      - type: bind
+        source: ../templates/hermes.toml
+        target: /root/.hermes/config.toml
+      - hermes-keys-data:/root/.hermes/keys
+    depends_on:
+      nibiru-0:
+        condition: service_healthy
+      nibiru-1:
+        condition: service_healthy
+      hermes-keys-task-1:
+        condition: service_completed_successfully
+
+  hermes:
+    image: informalsystems/hermes:1.6.0
+    restart: always
+    user: root
+    command: ["start"]
+    volumes:
+      - type: bind
+        source: ../templates/hermes.toml
+        target: /root/.hermes/config.toml
+      - hermes-keys-data:/root/.hermes/keys
+    ports:
+      - 3000:3000
+      - 3001:3001
+    depends_on:
+      nibiru-0:
+        condition: service_healthy
+      nibiru-1:
+        condition: service_healthy
+      hermes-client-connection-channel-task:
+        condition: service_completed_successfully
 
   faucet:
     restart: always
     image: ghcr.io/nibiruchain/go-faucet:latest
     environment:
-      NODE: nibiru:9090
+      NODE: nibiru-0:9090
       MNEMONIC: undo donkey arena rule old portion long forget rescue post stuff normal reduce raw unable warrior method stairs valley enhance glory lens sign zero
-      SEND_COINS: 11000000unibi,100000000unusd,100000000uusdt
-      MAX_SEND_COINS: 110000000unibi,1000000000unusd,1000000000uusdt
+      SEND_COINS: 11000000unibi
+      MAX_SEND_COINS: 110000000unibi
     depends_on:
-      nibiru:
-        condition: service_started
+      nibiru-0:
+        condition: service_healthy
     ports:
       - 8000:8000
 
@@ -42,14 +219,17 @@ services:
     restart: always
     command: --clean
     volumes:
-      - nibid-data:/heartmonitor/.nibid/data:ro
+      - nibid-data-0:/heartmonitor/.nibid/data:ro
     environment:
       - DATABASE_URI=postgresql://postgres:postgres@heartmonitor-db:5432/heart-monitor?sslmode=disable
-      - TENDERMINT_RPC_ENDPOINT=http://nibiru:26657
-      - GRPC_ENDPOINT=tcp://nibiru:9090
+      - TENDERMINT_RPC_ENDPOINT=http://nibiru-0:26657
+      - GRPC_ENDPOINT=tcp://nibiru-0:9090
       - GRPC_INSECURE=true
       - NO_PARTITIONS=true
       - CHAIN_DB_PATH=/heartmonitor/.nibid/data
+    depends_on:
+      heartmonitor-db:
+        condition: service_started
 
   liquidator:
     image: ghcr.io/nibiruchain/go-heartmonitor:latest
@@ -57,8 +237,8 @@ services:
     command: --liquidator
     environment:
       - DATABASE_URI=postgresql://postgres:postgres@heartmonitor-db:5432/heart-monitor?sslmode=disable
-      - TENDERMINT_RPC_ENDPOINT=http://nibiru:26657
-      - GRPC_ENDPOINT=tcp://nibiru:9090
+      - TENDERMINT_RPC_ENDPOINT=http://nibiru-0:26657
+      - GRPC_ENDPOINT=tcp://nibiru-0:9090
       - GRPC_INSECURE=true
       - NO_PARTITIONS=true
       - LIQUIDATOR_MNEMONIC=record damage person caution truly riot resource luxury rude guide mushroom athlete fantasy dentist friend mule depth salmon photo unfold exclude coyote idea evoke
@@ -82,19 +262,7 @@ services:
       heartmonitor:
         condition: service_started
 
-  pricefeeder:
-    image: ghcr.io/nibiruchain/pricefeeder:latest
-    restart: always
-    environment:
-      CHAIN_ID: nibiru-localnet-0
-      GRPC_ENDPOINT: nibiru:9090
-      WEBSOCKET_ENDPOINT: ws://nibiru:26657/websocket
-      FEEDER_MNEMONIC: empower dice proud brick treat reward pull jeans right rubber infant hamster pet foster among crush quick report rival bracket easily mouse topple absorb
-      EXCHANGE_SYMBOLS_MAP: '{ "bitfinex": { "ubtc:uusd": "tBTCUSD", "ueth:uusd": "tETHUSD", "uusdt:uusd": "tUSTUSD" }, "binance": { "ubtc:uusd": "BTCUSD", "ueth:uusd": "ETHUSD", "uusdt:uusd": "USDTUSD", "uusdc:uusd": "USDCUSD", "uatom:uusd": "ATOMUSD", "ubnb:uusd": "BNBUSD", "uavax:uusd": "AVAXUSD", "usol:uusd": "SOLUSD", "uada:uusd": "ADAUSD", "ubtc:unusd": "BTCUSD", "ueth:unusd": "ETHUSD", "uusdt:unusd": "USDTUSD", "uusdc:unusd": "USDCUSD", "uatom:unusd": "ATOMUSD", "ubnb:unusd": "BNBUSD", "uavax:unusd": "AVAXUSD", "usol:unusd": "SOLUSD", "uada:unusd": "ADAUSD" } }'
-      VALIDATOR_ADDRESS: nibivaloper1zaavvzxez0elundtn32qnk9lkm8kmcszuwx9jz
-    depends_on:
-      nibiru:
-        condition: service_started
-
 volumes:
-  nibid-data:
+  nibid-data-0:
+  nibid-data-1:
+  hermes-keys-data:

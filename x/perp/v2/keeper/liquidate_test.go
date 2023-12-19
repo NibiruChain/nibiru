@@ -37,7 +37,7 @@ func TestMultiLiquidate(t *testing.T) {
 				SetBlockTime(startTime),
 				CreateCustomMarket(pairBtcUsdc),
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10400))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 1000))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -46,9 +46,9 @@ func TestMultiLiquidate(t *testing.T) {
 				),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(750)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(125)),
-				BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(125)),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(750)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(125)),
+				BalanceEqual(liquidator, types.TestingCollateralDenomNUSD, sdk.NewInt(125)),
 				PositionShouldBeEqual(alice, pairBtcUsdc,
 					Position_PositionShouldBeEqualTo(
 						types.Position{
@@ -70,7 +70,7 @@ func TestMultiLiquidate(t *testing.T) {
 				SetBlockTime(startTime),
 				CreateCustomMarket(pairBtcUsdc),
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10600))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 1000))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -80,10 +80,10 @@ func TestMultiLiquidate(t *testing.T) {
 				),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(600)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(150)),
-				BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(250)),
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(600)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(150)),
+				BalanceEqual(liquidator, types.TestingCollateralDenomNUSD, sdk.NewInt(250)),
+				PositionShouldNotExist(alice, pairBtcUsdc, 1),
 			),
 
 		TC("full liquidation").
@@ -92,7 +92,7 @@ func TestMultiLiquidate(t *testing.T) {
 				SetBlockTime(startTime),
 				CreateCustomMarket(pairBtcUsdc),
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10600))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 1000))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -101,10 +101,10 @@ func TestMultiLiquidate(t *testing.T) {
 				),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(600)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(150)),
-				BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(250)),
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(600)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(150)),
+				BalanceEqual(liquidator, types.TestingCollateralDenomNUSD, sdk.NewInt(250)),
+				PositionShouldNotExist(alice, pairBtcUsdc, 1),
 			),
 
 		TC("one fail liquidation - one correct").
@@ -113,7 +113,7 @@ func TestMultiLiquidate(t *testing.T) {
 				SetBlockTime(startTime),
 				CreateCustomMarket(pairBtcUsdc),
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10600))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 1000))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -123,10 +123,10 @@ func TestMultiLiquidate(t *testing.T) {
 				),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(600)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(150)),
-				BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(250)),
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(600)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(150)),
+				BalanceEqual(liquidator, types.TestingCollateralDenomNUSD, sdk.NewInt(250)),
+				PositionShouldNotExist(alice, pairBtcUsdc, 1),
 			),
 
 		TC("one fail liquidation because market does not exists- one correct").
@@ -135,7 +135,7 @@ func TestMultiLiquidate(t *testing.T) {
 				SetBlockTime(startTime),
 				CreateCustomMarket(pairBtcUsdc),
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10600))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 1000))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -145,10 +145,10 @@ func TestMultiLiquidate(t *testing.T) {
 				),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(600)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(150)),
-				BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(250)),
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(600)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(150)),
+				BalanceEqual(liquidator, types.TestingCollateralDenomNUSD, sdk.NewInt(250)),
+				PositionShouldNotExist(alice, pairBtcUsdc, 1),
 			),
 
 		TC("realizes bad debt").
@@ -157,8 +157,8 @@ func TestMultiLiquidate(t *testing.T) {
 				SetBlockTime(startTime),
 				CreateCustomMarket(pairBtcUsdc),
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10800))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 50))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 1000))),
+				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 50))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -167,19 +167,19 @@ func TestMultiLiquidate(t *testing.T) {
 				),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(800)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.ZeroInt()),
-				BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(250)),
-				PositionShouldNotExist(alice, pairBtcUsdc),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(800)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.ZeroInt()),
+				BalanceEqual(liquidator, types.TestingCollateralDenomNUSD, sdk.NewInt(250)),
+				PositionShouldNotExist(alice, pairBtcUsdc, 1),
 			),
 
 		TC("uses prepaid bad debt").
 			Given(
 				SetBlockNumber(1),
 				SetBlockTime(startTime),
-				CreateCustomMarket(pairBtcUsdc, WithPrepaidBadDebt(sdk.NewInt(50))),
+				CreateCustomMarket(pairBtcUsdc, WithPrepaidBadDebt(sdk.NewInt(50), types.TestingCollateralDenomNUSD)),
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10800))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 1000))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 1000))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -188,11 +188,11 @@ func TestMultiLiquidate(t *testing.T) {
 				),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(750)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.ZeroInt()),
-				BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(250)),
-				PositionShouldNotExist(alice, pairBtcUsdc),
-				MarketShouldBeEqual(pairBtcUsdc, Market_PrepaidBadDebtShouldBeEqualTo(sdk.ZeroInt())),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(750)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.ZeroInt()),
+				BalanceEqual(liquidator, types.TestingCollateralDenomNUSD, sdk.NewInt(250)),
+				PositionShouldNotExist(alice, pairBtcUsdc, 1),
+				MarketShouldBeEqual(pairBtcUsdc, Market_PrepaidBadDebtShouldBeEqualTo(sdk.ZeroInt(), types.TestingCollateralDenomNUSD)),
 			),
 
 		TC("healthy position").
@@ -201,7 +201,7 @@ func TestMultiLiquidate(t *testing.T) {
 				SetBlockTime(startTime),
 				CreateCustomMarket(pairBtcUsdc),
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(100)), WithMargin(sdk.NewDec(10)), WithOpenNotional(sdk.NewDec(100))),
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 10))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 10))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -210,9 +210,9 @@ func TestMultiLiquidate(t *testing.T) {
 				),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(10)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.ZeroInt()),
-				BalanceEqual(liquidator, denoms.USDC, sdk.ZeroInt()),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(10)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.ZeroInt()),
+				BalanceEqual(liquidator, types.TestingCollateralDenomNUSD, sdk.ZeroInt()),
 				PositionShouldBeEqual(alice, pairBtcUsdc,
 					Position_PositionShouldBeEqualTo(
 						types.Position{
@@ -244,7 +244,7 @@ func TestMultiLiquidate(t *testing.T) {
 				InsertPosition(WithTrader(alice), WithPair(pairBtcUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10400))),  // partial
 				InsertPosition(WithTrader(alice), WithPair(pairEthUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10600))),  // full
 				InsertPosition(WithTrader(alice), WithPair(pairAtomUsdc), WithSize(sdk.NewDec(10000)), WithMargin(sdk.NewDec(1000)), WithOpenNotional(sdk.NewDec(10000))), // healthy
-				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(denoms.USDC, 3000))),
+				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 3000))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -257,9 +257,9 @@ func TestMultiLiquidate(t *testing.T) {
 				),
 			).
 			Then(
-				ModuleBalanceEqual(types.VaultModuleAccount, denoms.USDC, sdk.NewInt(2350)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(275)),
-				BalanceEqual(liquidator, denoms.USDC, sdk.NewInt(375)),
+				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(2350)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(275)),
+				BalanceEqual(liquidator, types.TestingCollateralDenomNUSD, sdk.NewInt(375)),
 				PositionShouldBeEqual(alice, pairBtcUsdc,
 					Position_PositionShouldBeEqualTo(
 						types.Position{
@@ -273,7 +273,7 @@ func TestMultiLiquidate(t *testing.T) {
 						},
 					),
 				),
-				PositionShouldNotExist(alice, pairEthUsdc),
+				PositionShouldNotExist(alice, pairEthUsdc, 1),
 				PositionShouldBeEqual(alice, pairAtomUsdc,
 					Position_PositionShouldBeEqualTo(
 						types.Position{

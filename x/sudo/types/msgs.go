@@ -4,13 +4,17 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 )
 
-var _ sdk.Msg = &MsgEditSudoers{}
+var (
+	_ legacytx.LegacyMsg = &MsgEditSudoers{}
+	_ legacytx.LegacyMsg = &MsgChangeRoot{}
+)
 
 // MsgEditSudoers
 
-func (m *MsgEditSudoers) ValidateBasic() error {
+func (m MsgEditSudoers) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
 		return err
 	}
@@ -31,7 +35,8 @@ func (m *MsgEditSudoers) ValidateBasic() error {
 	return nil
 }
 
-func (m *MsgEditSudoers) GetSigners() []sdk.AccAddress {
+// GetSigners implements the sdk.Msg interface.
+func (m MsgEditSudoers) GetSigners() []sdk.AccAddress {
 	signer, err := sdk.AccAddressFromBech32(m.Sender)
 	if err != nil {
 		panic(err)
@@ -39,13 +44,24 @@ func (m *MsgEditSudoers) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{signer}
 }
 
-func (m *MsgEditSudoers) RootAction() RootAction {
+// Route implements the sdk.Msg interface.
+func (msg MsgEditSudoers) Route() string { return ModuleName }
+
+// Type implements the sdk.Msg interface.
+func (msg MsgEditSudoers) Type() string { return "edit_sudoers" }
+
+// GetSignBytes implements the sdk.Msg interface.
+func (m MsgEditSudoers) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
+}
+
+func (m MsgEditSudoers) RootAction() RootAction {
 	return RootAction(m.Action)
 }
 
 // MsgChangeRoot
 
-func (m *MsgChangeRoot) GetSigners() []sdk.AccAddress {
+func (m MsgChangeRoot) GetSigners() []sdk.AccAddress {
 	signer, err := sdk.AccAddressFromBech32(m.Sender)
 	if err != nil {
 		panic(err)
@@ -53,7 +69,7 @@ func (m *MsgChangeRoot) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{signer}
 }
 
-func (m *MsgChangeRoot) ValidateBasic() error {
+func (m MsgChangeRoot) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
 		return err
 	}
@@ -63,4 +79,15 @@ func (m *MsgChangeRoot) ValidateBasic() error {
 	}
 
 	return nil
+}
+
+// Route Implements Msg.
+func (msg MsgChangeRoot) Route() string { return ModuleName }
+
+// Type Implements Msg.
+func (msg MsgChangeRoot) Type() string { return "change_root" }
+
+// GetSignBytes Implements Msg.
+func (m MsgChangeRoot) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
 }

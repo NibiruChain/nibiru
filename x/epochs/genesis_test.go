@@ -18,7 +18,7 @@ func TestEpochsExportGenesis(t *testing.T) {
 	chainStartTime := time.Now().UTC()
 	moduleGenesisIn := types.DefaultGenesisFromTime(chainStartTime)
 
-	encCfg := app.MakeEncodingConfigAndRegister()
+	encCfg := app.MakeEncodingConfig()
 	appGenesis := genesis.NewTestGenesisState(encCfg)
 	appGenesis[types.ModuleName] = encCfg.Marshaler.MustMarshalJSON(moduleGenesisIn)
 
@@ -29,17 +29,17 @@ func TestEpochsExportGenesis(t *testing.T) {
 	require.Len(t, genesis.Epochs, 3)
 
 	errMsg := fmt.Sprintf("app.EpochsKeeper.AllEpochInfos(ctx): %v\n", app.EpochsKeeper.AllEpochInfos(ctx))
-	require.Equal(t, genesis.Epochs[0].Identifier, "15 min")
+	require.Equal(t, genesis.Epochs[0].Identifier, "30 min")
 	require.Equal(t, genesis.Epochs[0].StartTime, chainStartTime, errMsg)
-	require.Equal(t, genesis.Epochs[0].Duration, time.Minute*15, errMsg)
+	require.Equal(t, genesis.Epochs[0].Duration, time.Minute*30, errMsg)
 	require.Equal(t, genesis.Epochs[0].CurrentEpoch, uint64(0))
 	require.Equal(t, genesis.Epochs[0].CurrentEpochStartHeight, int64(0))
 	require.Equal(t, genesis.Epochs[0].CurrentEpochStartTime, chainStartTime)
 	require.Equal(t, genesis.Epochs[0].EpochCountingStarted, false)
 
-	require.Equal(t, genesis.Epochs[1].Identifier, "30 min")
+	require.Equal(t, genesis.Epochs[1].Identifier, "day")
 	require.Equal(t, genesis.Epochs[1].StartTime, chainStartTime, errMsg)
-	require.Equal(t, genesis.Epochs[1].Duration, time.Minute*30)
+	require.Equal(t, genesis.Epochs[1].Duration, time.Hour*24)
 	require.Equal(t, genesis.Epochs[1].CurrentEpoch, uint64(0))
 	require.Equal(t, genesis.Epochs[1].CurrentEpochStartHeight, int64(0))
 	require.Equal(t, genesis.Epochs[1].CurrentEpochStartTime, chainStartTime, errMsg)

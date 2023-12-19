@@ -1,36 +1,48 @@
-# How to use
+# Chaosnet
 
-Before running
+- [Chaosnet](#chaosnet)
+  - [What is Chaosnet?](#what-is-chaosnet)
+  - [How to run "chaosnet"](#how-to-run-chaosnet)
+  - [How to force pull images from the registry](#how-to-force-pull-images-from-the-registry)
+  - [Endpoints](#endpoints)
+  - [FAQ](#faq)
+    - [`make chaosnet` says that "Additional property name is not allowed"](#make-chaosnet-says-that-additional-property-name-is-not-allowed)
+    - [Does data persist between runs?](#does-data-persist-between-runs)
 
-```sh
-make chaosnet
-```
+## What is Chaosnet?
 
-you need to log into our private Docker image registry in order to pull the private images. Go to <https://github.com/settings/tokens/new> and generate a new token with `read:packages` scope. Copy the access token to your clipboard.
+Chaosnet is an expanded version of localnet that runs:
 
-Next, run
+- two validators (nibiru-0 and nibiru-1)
+- pricefeeders for each validator
+- a hermes relayer between the two validators
+- a faucet
+- a postgres:14 database
+- a heartmonitor instance
+- a liquidator instance
+- a graphql server
 
-```sh
+## How to run "chaosnet"
+
+1. Make sure you have [Docker](https://docs.docker.com/engine/install/) installed and running
+2. Make sure you have `make` installed
+3. Docker login to ghcr.io
+
+```bash
 docker login ghcr.io
 ```
 
- and enter your GitHub username for the `username` field, and your personal access token for the password.
+Enter your GitHub username for the `username` field, and your personal access token for the password.
 
-Now you can run
-
-```sh
-make chaosnet
-```
+4. Run `make chaosnet`
 
 ## How to force pull images from the registry
 
-By default, images won't re-fetch from upstream registries. To force a pull, you can run
+By default, most images (heart-monitor, liquidator, etc.) are cached locally and won't re-fetch from upstream registries. To force a pull, you can run
 
 ```sh
 make chaosnet-build
 ```
-
-to force re-build and pull images.
 
 ## Endpoints
 
@@ -44,4 +56,8 @@ to force re-build and pull images.
 
 ### `make chaosnet` says that "Additional property name is not allowed"
 
-Make sure to update your docker application to version 23.0.1
+Make sure to update your docker application to version >=23.0.1
+
+### Does data persist between runs?
+
+No, all volumes are deleted and recreated every time you run `make chaosnet`. This is to ensure that you always start with a clean network.

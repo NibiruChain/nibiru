@@ -18,8 +18,9 @@ func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		Markets:          []Market{},
 		Amms:             []AMM{},
-		Positions:        []Position{},
+		Positions:        []GenesisPosition{},
 		ReserveSnapshots: []ReserveSnapshot{},
+		CollateralDenom:  TestingCollateralDenomNUSD,
 	}
 }
 
@@ -38,19 +39,21 @@ func (gs GenesisState) Validate() error {
 		}
 	}
 
-	for _, pos := range gs.Positions {
-		if err := pos.Validate(); err != nil {
-			return err
-		}
-	}
+	// TODO: validate positions
+	//for _, pos := range gs.Positions {
+	//	if err := pos.Validate(); err != nil {
+	//		return err
+	//	}
+	//}
 
 	return nil
 }
 
-func DefaultMarket(pair asset.Pair) *Market {
-	return &Market{
+func DefaultMarket(pair asset.Pair) Market {
+	return Market{
 		Pair:                            pair,
-		Enabled:                         true,
+		Enabled:                         false,
+		Version:                         1,
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
 		ExchangeFeeRatio:                sdk.MustNewDecFromStr("0.0010"),
 		EcosystemFundFeeRatio:           sdk.MustNewDecFromStr("0.0010"),
@@ -59,9 +62,10 @@ func DefaultMarket(pair asset.Pair) *Market {
 		FundingRateEpochId:              epochstypes.ThirtyMinuteEpochID,
 		MaxFundingRate:                  sdk.NewDec(1),
 		TwapLookbackWindow:              time.Minute * 30,
-		PrepaidBadDebt:                  sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+		PrepaidBadDebt:                  sdk.NewCoin(TestingCollateralDenomNUSD, sdk.ZeroInt()),
 		MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.0625"),
 		MaxLeverage:                     sdk.NewDec(10),
+		OraclePair:                      asset.NewPair(pair.BaseDenom(), denoms.USD),
 	}
 }
 

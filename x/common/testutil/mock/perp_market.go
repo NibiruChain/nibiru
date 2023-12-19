@@ -15,6 +15,7 @@ func TestMarket() *types.Market {
 	return &types.Market{
 		Pair:                            asset.NewPair(denoms.BTC, denoms.NUSD),
 		Enabled:                         true,
+		Version:                         1,
 		MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.0625"),
 		MaxLeverage:                     sdk.MustNewDecFromStr("10"),
 		LatestCumulativePremiumFraction: sdk.ZeroDec(),
@@ -26,5 +27,6 @@ func TestMarket() *types.Market {
 		MaxFundingRate:                  sdk.NewDec(1),
 		TwapLookbackWindow:              time.Minute * 30,
 		PrepaidBadDebt:                  sdk.NewInt64Coin(denoms.NUSD, 0),
+		OraclePair:                      asset.NewPair(denoms.BTC, denoms.USD),
 	}
 }

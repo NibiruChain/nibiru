@@ -1,30 +1,29 @@
 package types
 
 import (
-	"fmt"
-	"math"
+	"encoding/json"
 	"sort"
-	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/x/common"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 )
 
 // NOTE: we don't need to implement proto interface on this file
 //       these are not used in store or rpc response
 
-// ExchangeRateBallot is a convenience wrapper to reduce redundant lookup cost
-type ExchangeRateBallot struct {
+// ExchangeRateVote is a convenience wrapper to reduce redundant lookup cost
+type ExchangeRateVote struct {
 	Pair         asset.Pair
 	ExchangeRate sdk.Dec // aka price
 	Voter        sdk.ValAddress
 	Power        int64 // how much tendermint consensus power this vote should have
 }
 
-// NewExchangeRateBallot returns a new ExchangeRateBallot instance
-func NewExchangeRateBallot(rate sdk.Dec, pair asset.Pair, voter sdk.ValAddress, power int64) ExchangeRateBallot {
-	return ExchangeRateBallot{
+// NewExchangeRateVote returns a new ExchangeRateVote instance
+func NewExchangeRateVote(rate sdk.Dec, pair asset.Pair, voter sdk.ValAddress, power int64) ExchangeRateVote {
+	return ExchangeRateVote{
 		ExchangeRate: rate,
 		Pair:         pair,
 		Voter:        voter,
@@ -32,11 +31,11 @@ func NewExchangeRateBallot(rate sdk.Dec, pair asset.Pair, voter sdk.ValAddress, 
 	}
 }
 
-// ExchangeRateBallots is a convenience wrapper around a ExchangeRateVote slice
-type ExchangeRateBallots []ExchangeRateBallot
+// ExchangeRateVotes is a convenience wrapper around a ExchangeRateVote slice
+type ExchangeRateVotes []ExchangeRateVote
 
 // ToMap return organized exchange rate map by validator
-func (pb ExchangeRateBallots) ToMap() map[string]sdk.Dec {
+func (pb ExchangeRateVotes) ToMap() map[string]sdk.Dec {
 	validatorExchangeRateMap := make(map[string]sdk.Dec)
 	for _, vote := range pb {
 		if vote.ExchangeRate.IsPositive() {
@@ -47,8 +46,8 @@ func (pb ExchangeRateBallots) ToMap() map[string]sdk.Dec {
 	return validatorExchangeRateMap
 }
 
-// ToCrossRate return cross_rate(base/exchange_rate) ballot
-func (pb ExchangeRateBallots) ToCrossRate(bases map[string]sdk.Dec) (cb ExchangeRateBallots) {
+// ToCrossRate return cross_rate(base/exchange_rate) votes
+func (pb ExchangeRateVotes) ToCrossRate(bases map[string]sdk.Dec) (cb ExchangeRateVotes) {
 	for i := range pb {
 		vote := pb[i]
 
@@ -67,20 +66,20 @@ func (pb ExchangeRateBallots) ToCrossRate(bases map[string]sdk.Dec) (cb Exchange
 }
 
 // NumValidVoters returns the number of voters who actually voted (i.e. did not abstain from voting for a pair).
-func (b ExchangeRateBallots) NumValidVoters() uint64 {
+func (v ExchangeRateVotes) NumValidVoters() uint64 {
 	count := 0
-	for _, ballot := range b {
-		if ballot.ExchangeRate.IsPositive() {
+	for _, vote := range v {
+		if vote.ExchangeRate.IsPositive() {
 			count++
 		}
 	}
 	return uint64(count)
 }
 
-// Power returns the total amount of voting power in the ballot
-func (b ExchangeRateBallots) Power() int64 {
+// Power returns the total amount of voting power in the votes
+func (v ExchangeRateVotes) Power() int64 {
 	totalPower := int64(0)
-	for _, vote := range b {
+	for _, vote := range v {
 		totalPower += vote.Power
 	}
 
@@ -88,12 +87,12 @@ func (b ExchangeRateBallots) Power() int64 {
 }
 
 // WeightedMedian returns the median weighted by the power of the ExchangeRateVote.
-// CONTRACT: ballot must be sorted
-func (pb ExchangeRateBallots) WeightedMedian() sdk.Dec {
-	totalPower := pb.Power()
-	if pb.Len() > 0 {
+// CONTRACT: votes must be sorted
+func (votes ExchangeRateVotes) WeightedMedian() sdk.Dec {
+	totalPower := votes.Power()
+	if votes.Len() > 0 {
 		pivot := int64(0)
-		for _, v := range pb {
+		for _, v := range votes {
 			votePower := v.Power
 
 			pivot += votePower
@@ -106,7 +105,7 @@ func (pb ExchangeRateBallots) WeightedMedian() sdk.Dec {
 }
 
 // WeightedMedianWithAssertion returns the median weighted by the power of the ExchangeRateVote.
-func (pb ExchangeRateBallots) WeightedMedianWithAssertion() sdk.Dec {
+func (pb ExchangeRateVotes) WeightedMedianWithAssertion() sdk.Dec {
 	sort.Sort(pb)
 	totalPower := pb.Power()
 	if pb.Len() > 0 {
@@ -124,7 +123,7 @@ func (pb ExchangeRateBallots) WeightedMedianWithAssertion() sdk.Dec {
 }
 
 // StandardDeviation returns the standard deviation by the power of the ExchangeRateVote.
-func (pb ExchangeRateBallots) StandardDeviation(median sdk.Dec) (standardDeviation sdk.Dec) {
+func (pb ExchangeRateVotes) StandardDeviation(median sdk.Dec) (standardDeviation sdk.Dec) {
 	if len(pb) == 0 {
 		return sdk.ZeroDec()
 	}
@@ -148,34 +147,40 @@ func (pb ExchangeRateBallots) StandardDeviation(median sdk.Dec) (standardDeviati
 
 	variance := sum.QuoInt64(int64(n))
 
-	floatNum, _ := strconv.ParseFloat(variance.String(), 64)
-	floatNum = math.Sqrt(floatNum)
-	standardDeviation, _ = sdk.NewDecFromStr(fmt.Sprintf("%f", floatNum))
+	standardDeviation, err := common.SqrtDec(variance)
+	if err != nil {
+		return sdk.ZeroDec()
+	}
 
 	return
 }
 
 // Len implements sort.Interface
-func (pb ExchangeRateBallots) Len() int {
+func (pb ExchangeRateVotes) Len() int {
 	return len(pb)
 }
 
 // Less reports whether the element with
 // index i should sort before the element with index j.
-func (pb ExchangeRateBallots) Less(i, j int) bool {
+func (pb ExchangeRateVotes) Less(i, j int) bool {
 	return pb[i].ExchangeRate.LT(pb[j].ExchangeRate)
 }
 
 // Swap implements sort.Interface.
-func (pb ExchangeRateBallots) Swap(i, j int) {
+func (pb ExchangeRateVotes) Swap(i, j int) {
 	pb[i], pb[j] = pb[j], pb[i]
 }
 
 // ValidatorPerformance keeps track of a validator performance in the voting period.
 type ValidatorPerformance struct {
-	Power        int64 // tendermint consensus power
-	RewardWeight int64 // how much of the rewards this validator should receive, units of consensus power
-	WinCount     int64
+	// Tendermint consensus voting power
+	Power int64
+	// RewardWeight: Weight of rewards the validator should receive in units of
+	// consensus power.
+	RewardWeight int64
+	WinCount     int64 // Number of valid votes for which the validator will be rewarded
+	AbstainCount int64 // Number of abstained votes for which there will be no reward or punishment
+	MissCount    int64 // Number of invalid/punishable votes
 	ValAddress   sdk.ValAddress
 }
 
@@ -185,18 +190,30 @@ func NewValidatorPerformance(power int64, recipient sdk.ValAddress) ValidatorPer
 		Power:        power,
 		RewardWeight: 0,
 		WinCount:     0,
+		AbstainCount: 0,
+		MissCount:    0,
 		ValAddress:   recipient,
 	}
 }
 
 type ValidatorPerformances map[string]ValidatorPerformance
 
-// GetTotalRewardWeight returns the sum of the reward weight of all the validators included in the map
-func (vp ValidatorPerformances) GetTotalRewardWeight() int64 {
+// TotalRewardWeight returns the sum of the reward weight of all the validators included in the map
+func (vp ValidatorPerformances) TotalRewardWeight() int64 {
 	totalRewardWeight := int64(0)
 	for _, validator := range vp {
 		totalRewardWeight += validator.RewardWeight
 	}
 
 	return totalRewardWeight
+}
+
+func (vp ValidatorPerformances) String() string {
+	jsonBz, _ := json.MarshalIndent(vp, "", "  ")
+	return string(jsonBz)
+}
+
+func (vp ValidatorPerformance) String() string {
+	jsonBz, _ := json.MarshalIndent(vp, "", "  ")
+	return string(jsonBz)
 }

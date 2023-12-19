@@ -1,12 +1,13 @@
 package action
 
 import (
+	"fmt"
+
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
-	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil/action"
 	"github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
@@ -21,7 +22,7 @@ type msgServerMarketOrder struct {
 	baseAssetAmtLimit sdkmath.Int
 }
 
-func (m msgServerMarketOrder) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (m msgServerMarketOrder) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
 
 	// don't need to check response because it's already checked in clearing_house tests
@@ -34,7 +35,7 @@ func (m msgServerMarketOrder) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Conte
 		BaseAssetAmountLimit: m.baseAssetAmtLimit,
 	})
 
-	return ctx, err, true
+	return ctx, err
 }
 
 func MsgServerMarketOrder(
@@ -60,7 +61,7 @@ type msgServerClosePosition struct {
 	traderAddress sdk.AccAddress
 }
 
-func (m msgServerClosePosition) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (m msgServerClosePosition) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
 
 	// don't need to check response because it's already checked in clearing_house tests
@@ -69,7 +70,7 @@ func (m msgServerClosePosition) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Con
 		Sender: m.traderAddress.String(),
 	})
 
-	return ctx, err, true
+	return ctx, err
 }
 
 func MsgServerClosePosition(
@@ -88,7 +89,7 @@ type msgServerPartialClose struct {
 	size          sdk.Dec
 }
 
-func (m msgServerPartialClose) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (m msgServerPartialClose) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
 
 	// don't need to check response because it's already checked in clearing_house tests
@@ -98,7 +99,7 @@ func (m msgServerPartialClose) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Cont
 		Size_:  m.size,
 	})
 
-	return ctx, err, true
+	return ctx, err
 }
 
 func MsgServerPartialClosePosition(
@@ -119,17 +120,22 @@ type msgServerAddmargin struct {
 	amount        sdkmath.Int
 }
 
-func (m msgServerAddmargin) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (m msgServerAddmargin) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
 
+	collateral, err := app.PerpKeeperV2.Collateral.Get(ctx)
+	if err != nil {
+		return ctx, err
+	}
+
 	// don't need to check response because it's already checked in clearing_house tests
-	_, err := msgServer.AddMargin(sdk.WrapSDKContext(ctx), &types.MsgAddMargin{
+	_, err = msgServer.AddMargin(sdk.WrapSDKContext(ctx), &types.MsgAddMargin{
 		Pair:   m.pair,
 		Sender: m.traderAddress.String(),
-		Margin: sdk.NewCoin(m.pair.QuoteDenom(), m.amount),
+		Margin: sdk.NewCoin(collateral, m.amount),
 	})
 
-	return ctx, err, true
+	return ctx, err
 }
 
 func MsgServerAddMargin(
@@ -150,17 +156,22 @@ type msgServerRemoveMargin struct {
 	amount        sdkmath.Int
 }
 
-func (m msgServerRemoveMargin) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (m msgServerRemoveMargin) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
 
+	collateral, err := app.PerpKeeperV2.Collateral.Get(ctx)
+	if err != nil {
+		return ctx, err
+	}
+
 	// don't need to check response because it's already checked in clearing_house tests
-	_, err := msgServer.RemoveMargin(sdk.WrapSDKContext(ctx), &types.MsgRemoveMargin{
+	_, err = msgServer.RemoveMargin(sdk.WrapSDKContext(ctx), &types.MsgRemoveMargin{
 		Pair:   m.pair,
 		Sender: m.traderAddress.String(),
-		Margin: sdk.NewCoin(m.pair.QuoteDenom(), m.amount),
+		Margin: sdk.NewCoin(collateral, m.amount),
 	})
 
-	return ctx, err, true
+	return ctx, err
 }
 
 func MsgServerRemoveMargin(
@@ -175,20 +186,90 @@ func MsgServerRemoveMargin(
 	}
 }
 
+type msgServerSettlePosition struct {
+	pair          asset.Pair
+	traderAddress sdk.AccAddress
+	Version       uint64
+}
+
+func (m msgServerSettlePosition) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
+
+	// don't need to check response because it's already checked in clearing_house tests
+	_, err := msgServer.SettlePosition(sdk.WrapSDKContext(ctx), &types.MsgSettlePosition{
+		Pair:    m.pair,
+		Sender:  m.traderAddress.String(),
+		Version: m.Version,
+	})
+
+	return ctx, err
+}
+
+func MsgServerSettlePosition(
+	traderAddress sdk.AccAddress,
+	pair asset.Pair,
+	version uint64,
+) action.Action {
+	return msgServerSettlePosition{
+		pair:          pair,
+		traderAddress: traderAddress,
+		Version:       version,
+	}
+}
+
+type msgServerSettlePositionShouldFail struct {
+	pair          asset.Pair
+	traderAddress sdk.AccAddress
+	Version       uint64
+}
+
+func (m msgServerSettlePositionShouldFail) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
+
+	// don't need to check response because it's already checked in clearing_house tests
+	_, err := msgServer.SettlePosition(sdk.WrapSDKContext(ctx), &types.MsgSettlePosition{
+		Pair:    m.pair,
+		Sender:  m.traderAddress.String(),
+		Version: m.Version,
+	})
+	if err == nil {
+		return ctx, fmt.Errorf("should fail but no error returned")
+	}
+
+	return ctx, nil
+}
+
+func MsgServerSettlePositionShouldFail(
+	traderAddress sdk.AccAddress,
+	pair asset.Pair,
+	version uint64,
+) action.Action {
+	return msgServerSettlePositionShouldFail{
+		pair:          pair,
+		traderAddress: traderAddress,
+		Version:       version,
+	}
+}
+
 type msgServerDonateToPerpEf struct {
 	sender sdk.AccAddress
 	amount sdkmath.Int
 }
 
-func (m msgServerDonateToPerpEf) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (m msgServerDonateToPerpEf) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
 
-	_, err := msgServer.DonateToEcosystemFund(sdk.WrapSDKContext(ctx), &types.MsgDonateToEcosystemFund{
+	collateral, err := app.PerpKeeperV2.Collateral.Get(ctx)
+	if err != nil {
+		return ctx, err
+	}
+
+	_, err = msgServer.DonateToEcosystemFund(sdk.WrapSDKContext(ctx), &types.MsgDonateToEcosystemFund{
 		Sender:   m.sender.String(),
-		Donation: sdk.NewCoin(denoms.NUSD, m.amount),
+		Donation: sdk.NewCoin(collateral, m.amount),
 	})
 
-	return ctx, err, true
+	return ctx, err
 }
 
 func MsgServerDonateToPerpEf(
@@ -207,7 +288,7 @@ type msgServerMultiLiquidate struct {
 	shouldAllFail    bool
 }
 
-func (m msgServerMultiLiquidate) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
+func (m msgServerMultiLiquidate) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
 	msgServer := keeper.NewMsgServerImpl(app.PerpKeeperV2)
 
 	liquidateMsgs := make([]*types.MsgMultiLiquidate_Liquidation, len(m.pairTraderTuples))
@@ -223,7 +304,7 @@ func (m msgServerMultiLiquidate) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Co
 		Liquidations: liquidateMsgs,
 	})
 
-	return ctx, err, m.shouldAllFail
+	return ctx, err
 }
 
 func MsgServerMultiLiquidate(liquidator sdk.AccAddress, shouldAllFail bool, pairTraderTuples ...PairTraderTuple) action.Action {

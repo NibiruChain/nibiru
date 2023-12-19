@@ -25,6 +25,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/sudo/cli"
 )
 
@@ -101,9 +102,10 @@ func TestSuite_IntegrationSuite_RunAll(t *testing.T) {
 // ———————————————————————————————————————————————————————————————————
 
 func (s *IntegrationSuite) SetupSuite() {
-	app.SetPrefixes(app.AccountAddressPrefix)
+	testutil.BeforeIntegrationSuite(s.T())
+	testapp.EnsureNibiruPrefix()
 
-	genState := genesis.NewTestGenesisState(app.MakeEncodingConfigAndRegister())
+	genState := genesis.NewTestGenesisState(app.MakeEncodingConfig())
 	genState, rootPrivKey, rootAddr := genesis.AddSudoGenesis(genState)
 	s.root = Account{
 		privKey:    rootPrivKey,
@@ -261,7 +263,7 @@ func (s *IntegrationSuite) TestMarshal_EditSudoers() {
 	fileJsonBz, _ := msgPlus.ToJson(t)
 
 	t.Log("check unmarshal file → proto")
-	cdc := genesis.TEST_ENCODING_CONFIG.Marshaler
+	cdc := app.MakeEncodingConfig().Marshaler
 	newMsg := new(types.MsgEditSudoers)
 	err := cdc.UnmarshalJSON(fileJsonBz, newMsg)
 	assert.NoErrorf(t, err, "fileJsonBz: #%v", fileJsonBz)

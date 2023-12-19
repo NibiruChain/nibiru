@@ -1,4 +1,4 @@
-FROM golang:1.19 AS builder
+FROM golang:1.21 AS builder
 
 WORKDIR /nibiru
 
@@ -8,7 +8,6 @@ COPY . .
 
 RUN --mount=type=cache,target=/root/.cache/go-build \
   --mount=type=cache,target=/go/pkg \
-  --mount=type=cache,target=/nibiru/temp \
   make build
 
 FROM alpine:latest
@@ -17,6 +16,7 @@ WORKDIR /root
 RUN apk --no-cache add \
   ca-certificates \
   build-base \
+  bash \
   curl \
   jq
 
@@ -26,7 +26,10 @@ COPY ./contrib/scripts/chaosnet.sh ./
 RUN chmod +x ./chaosnet.sh
 ARG MNEMONIC
 ARG CHAIN_ID
-RUN MNEMONIC=${MNEMONIC} CHAIN_ID=${CHAIN_ID} ./chaosnet.sh
+ARG RPC_PORT
+ARG GRPC_PORT
+ARG LCD_PORT
+RUN MNEMONIC=${MNEMONIC} CHAIN_ID=${CHAIN_ID} RPC_PORT=${RPC_PORT} GRPC_PORT=${GRPC_PORT} LCD_PORT=${LCD_PORT} ./chaosnet.sh
 
 ENTRYPOINT ["nibid"]
 CMD [ "start" ]

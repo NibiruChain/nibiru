@@ -27,6 +27,7 @@ const (
 	FlagMaintenenceMarginRatio = "mmr"
 	FlagMaxLeverage            = "max-leverage"
 	FlagMaxFundingrate         = "max-funding-rate"
+	FlagOraclePair             = "oracle-pair"
 )
 
 var addMarketGenesisFlags = map[string]struct {
@@ -39,6 +40,7 @@ var addMarketGenesisFlags = map[string]struct {
 	FlagMaintenenceMarginRatio: {"0.0625", "maintenance margin ratio"},
 	FlagMaxLeverage:            {"10", "maximum leverage for opening a position"},
 	FlagMaxFundingrate:         {"0.01", "maximum funding rate for the market"},
+	FlagOraclePair:             {"", "oracle pair identifier of the form 'base:quote'. E.g., ueth:uusd"},
 }
 
 // getCmdFlagSet returns a flag set and list of required flags for the command.
@@ -79,6 +81,16 @@ func AddMarketGenesisCmd(defaultNodeHome string) *cobra.Command {
 			perpGenState := types.GetGenesisStateFromAppState(clientCtx.Codec, appState)
 			perpGenState.Markets = append(perpGenState.Markets, market)
 			perpGenState.Amms = append(perpGenState.Amms, amm)
+
+			var marketsLastVersion []types.GenesisMarketLastVersion
+			for _, market := range perpGenState.Markets {
+				marketsLastVersion = append(marketsLastVersion, types.GenesisMarketLastVersion{
+					Pair:    market.Pair,
+					Version: market.Version,
+				})
+			}
+
+			perpGenState.MarketLastVersions = marketsLastVersion
 
 			perpGenStateBz, err := clientCtx.Codec.MarshalJSON(perpGenState)
 			if err != nil {
@@ -130,6 +142,9 @@ func newMarketFromFlags(flagSet *flag.FlagSet,
 	maxFundingRateStr, err := flagSet.GetString(FlagMaxFundingrate)
 	flagErrors = append(flagErrors, err)
 
+	oraclePairStr, err := flagSet.GetString(FlagOraclePair)
+	flagErrors = append(flagErrors, err)
+
 	for _, err := range flagErrors { // for brevity's sake
 		if err != nil {
 			return types.Market{}, types.AMM{}, err
@@ -153,19 +168,22 @@ func newMarketFromFlags(flagSet *flag.FlagSet,
 
 	maxLeverage, err := sdk.NewDecFromStr(maxLeverageStr)
 	if err != nil {
-		return types.Market{}, types.AMM{}, err
+		return
 	}
 
 	maxFundingRate, err := sdk.NewDecFromStr(maxFundingRateStr)
 	if err != nil {
-		return types.Market{}, types.AMM{}, err
+		return
 	}
 
-	fmt.Println(maxFundingRate)
+	oraclePair, err := asset.TryNewPair(oraclePairStr)
+	if err != nil {
+		return
+	}
 
 	priceMultiplier, err := sdk.NewDecFromStr(priceMultiplierStr)
 	if err != nil {
-		return types.Market{}, types.AMM{}, err
+		return
 	}
 
 	market = types.Market{
@@ -182,6 +200,7 @@ func newMarketFromFlags(flagSet *flag.FlagSet,
 		MaxFundingRate:                  maxFundingRate,
 		TwapLookbackWindow:              time.Minute * 30,
 		PrepaidBadDebt:                  sdk.NewInt64Coin(pair.QuoteDenom(), 0),
+		OraclePair:                      oraclePair,
 	}
 	if err := market.Validate(); err != nil {
 		return types.Market{}, types.AMM{}, err

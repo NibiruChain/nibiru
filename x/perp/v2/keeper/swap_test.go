@@ -81,7 +81,7 @@ func TestSwapQuoteAsset(t *testing.T) {
 			quoteAssetAmt:  sdk.NewDec(2e12 + 1),
 			baseAssetLimit: sdk.ZeroDec(),
 
-			expectedErr: types.ErrQuoteReserveAtZero,
+			expectedErr: types.ErrAmmNonpositiveReserves,
 		},
 	}
 
@@ -89,12 +89,10 @@ func TestSwapQuoteAsset(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testapp.NewNibiruTestAppAndContext()
-			market := mock.TestMarket()
 			amm := mock.TestAMMDefault().WithPriceMultiplier(sdk.NewDec(2))
 
 			updatedAMM, baseAmt, err := app.PerpKeeperV2.SwapQuoteAsset(
 				ctx,
-				*market,
 				*amm,
 				tc.direction,
 				tc.quoteAssetAmt,
@@ -183,7 +181,7 @@ func TestSwapBaseAsset(t *testing.T) {
 			baseAssetAmt:    sdk.NewDec(1e12 + 1),
 			quoteAssetLimit: sdk.ZeroDec(),
 
-			expectedErr: types.ErrBaseReserveAtZero,
+			expectedErr: types.ErrAmmNonpositiveReserves,
 		},
 	}
 
@@ -191,12 +189,10 @@ func TestSwapBaseAsset(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx := testapp.NewNibiruTestAppAndContext()
-			market := mock.TestMarket()
 			amm := mock.TestAMMDefault().WithPriceMultiplier(sdk.NewDec(2))
 
 			updatedAMM, quoteAssetAmount, err := app.PerpKeeperV2.SwapBaseAsset(
 				ctx,
-				*market,
 				*amm,
 				tc.direction,
 				tc.baseAssetAmt,

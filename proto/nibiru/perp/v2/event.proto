@@ -12,7 +12,7 @@ option go_package = "github.com/NibiruChain/nibiru/x/perp/v2/types";
 
 // Emitted when a position changes.
 message PositionChangedEvent {
-  Position final_position = 1 [ (gogoproto.nullable) = false ];
+  nibiru.perp.v2.Position final_position = 1 [ (gogoproto.nullable) = false ];
 
   // Position notional (in quote units) after the change. In general,
   // 'notional = baseAmount * priceQuotePerBase', where size is the baseAmount.
@@ -92,7 +92,7 @@ message PositionChangedEvent {
 // Emitted when a position is liquidated. Wraps a PositionChanged event since a
 // liquidation causes position changes.
 message PositionLiquidatedEvent {
-  PositionChangedEvent position_changed_event = 1
+  nibiru.perp.v2.PositionChangedEvent position_changed_event = 1
       [ (gogoproto.nullable) = false ];
 
   // Address of the account that executed the tx.
@@ -207,7 +207,7 @@ message LiquidationFailedEvent {
 // - edit depth
 message AmmUpdatedEvent {
   // the final state of the AMM
-  AMM final_amm = 1 [ (gogoproto.nullable) = false ];
+  nibiru.perp.v2.AMM final_amm = 1 [ (gogoproto.nullable) = false ];
 
   // The mark price of the pair.
   string mark_price_twap = 2 [
@@ -232,5 +232,31 @@ message AmmUpdatedEvent {
 // - bad debt is prepaid by the ecosystem fund
 message MarketUpdatedEvent {
   // the final state of the market
-  Market final_market = 1 [ (gogoproto.nullable) = false ];
+  nibiru.perp.v2.Market final_market = 1 [ (gogoproto.nullable) = false ];
+}
+
+// EventShiftPegMultiplier: ABCI event emitted from MsgShiftPegMultiplier
+message EventShiftPegMultiplier {
+  string old_peg_multiplier = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  string new_peg_multiplier = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  cosmos.base.v1beta1.Coin cost_paid = 3 [ (gogoproto.nullable) = false ];
+}
+
+// EventShiftSwapInvariant: ABCI event emitted from MsgShiftSwapInvariant
+message EventShiftSwapInvariant {
+  string old_swap_invariant = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string new_swap_invariant = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  cosmos.base.v1beta1.Coin cost_paid = 3 [ (gogoproto.nullable) = false ];
 }

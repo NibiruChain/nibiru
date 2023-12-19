@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/app"
@@ -19,22 +18,24 @@ type positionNotionalTwapShouldBeEqualTo struct {
 	expectedNotionalValue sdk.Dec
 }
 
-func (p positionNotionalTwapShouldBeEqualTo) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error, bool) {
-	position, err := app.PerpKeeperV2.Positions.Get(ctx, collections.Join(p.pair, p.trader))
+func (p positionNotionalTwapShouldBeEqualTo) IsNotMandatory() {}
+
+func (p positionNotionalTwapShouldBeEqualTo) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+	position, err := app.PerpKeeperV2.GetPosition(ctx, p.pair, 1, p.trader)
 	if err != nil {
-		return ctx, err, false
+		return ctx, err
 	}
 
 	notionalValue, err := app.PerpKeeperV2.PositionNotionalTWAP(ctx, position, p.twapLookbackWindow)
 	if err != nil {
-		return ctx, err, false
+		return ctx, err
 	}
 
 	if !notionalValue.Equal(p.expectedNotionalValue) {
-		return ctx, fmt.Errorf("notional value expected to be %s, received %s", p.expectedNotionalValue, notionalValue), false
+		return ctx, fmt.Errorf("notional value expected to be %s, received %s", p.expectedNotionalValue, notionalValue)
 	}
 
-	return ctx, nil, false
+	return ctx, nil
 }
 
 func PositionNotionalTWAPShouldBeEqualTo(pair asset.Pair, trader sdk.AccAddress, twapLookbackWindow time.Duration, expectedNotionalValue sdk.Dec) action.Action {

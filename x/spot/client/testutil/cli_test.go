@@ -10,6 +10,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	genesis "github.com/NibiruChain/nibiru/x/common/testutil/genesis"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 )
 
 func TestIntegrationTestSuite(t *testing.T) {
@@ -24,8 +25,8 @@ func TestIntegrationTestSuite(t *testing.T) {
 		"coin-5",
 	}
 
-	app.SetPrefixes(app.AccountAddressPrefix)
-	genesisState := genesis.NewTestGenesisState(app.MakeEncodingConfigAndRegister())
+	testapp.EnsureNibiruPrefix()
+	genesisState := genesis.NewTestGenesisState(app.MakeEncodingConfig())
 
 	genesisState = WhitelistGenesisAssets(
 		genesisState,

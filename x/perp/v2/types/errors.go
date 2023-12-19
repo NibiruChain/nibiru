@@ -1,45 +1,62 @@
 package types
 
-import sdkerrors "cosmossdk.io/errors"
+import (
+	"sync/atomic"
 
-// highestErrorCode = 31
-// NOTE: Please increment this when you add an error to make it easier for
-// other developers to know which "code" value should be used next.
+	sdkerrors "cosmossdk.io/errors"
+)
+
+var moduleErrorCodeIdx uint32 = 1
+
+// registerError: Cleaner way of using 'sdkerrors.Register' without as much time
+// manually writing integers.
+func registerError(msg string) *sdkerrors.Error {
+	// Atomic for thread safety on concurrent calls
+	atomic.AddUint32(&moduleErrorCodeIdx, 1)
+	return sdkerrors.Register(ModuleName, moduleErrorCodeIdx, msg)
+}
 
 var (
-	ErrPairNotSupported    = sdkerrors.Register(ModuleName, 1, "pair not supported")
-	ErrQuoteReserveAtZero  = sdkerrors.Register(ModuleName, 2, "quote reserve after at zero")
-	ErrBaseReserveAtZero   = sdkerrors.Register(ModuleName, 3, "base reserve after at zero")
-	ErrNoLastSnapshotSaved = sdkerrors.Register(ModuleName, 4, "There was no last snapshot, could be that you did not do snapshot on pool creation")
-	ErrAssetFailsUserLimit = sdkerrors.Register(ModuleName, 5, "amount of assets traded does not meet user-defined limit")
+	ErrPairNotSupported    = registerError("pair not supported")
+	ErrAssetFailsUserLimit = registerError("amount of assets traded does not meet user-defined limit")
 
-	// Price-related errors
-	ErrNoValidPrice = sdkerrors.Register(ModuleName, 8, "no valid prices available")
-	ErrNoValidTWAP  = sdkerrors.Register(ModuleName, 9, "TWAP price not found")
+	ErrNoValidTWAP = registerError("TWAP price not found")
 
-	// Could replace ErrBaseReserveAtZero and ErrQUoteReserveAtZero if wrapped
-	ErrInvalidAmmReserves = sdkerrors.Register(ModuleName, 10,
-		"base and quote reserves must always be positive")
-	ErrLiquidityDepth = sdkerrors.Register(ModuleName, 11,
-		"liquidity depth must be positive and equal to the square of the reserves")
-	ErrMarginRatioTooHigh    = sdkerrors.Register(ModuleName, 13, "margin ratio is too healthy to liquidate")
-	ErrPairNotFound          = sdkerrors.Register(ModuleName, 14, "pair doesn't have live market")
-	ErrPositionZero          = sdkerrors.Register(ModuleName, 15, "position is zero")
-	ErrBadDebt               = sdkerrors.Register(ModuleName, 16, "position is underwater")
-	ErrInputQuoteAmtNegative = sdkerrors.Register(ModuleName, 17, "quote amount cannot be zero")
-	ErrInputBaseAmtNegative  = sdkerrors.Register(ModuleName, 30, "base amount cannot be zero")
+	ErrAmmNonpositiveReserves      = errorAmm("base and quote reserves must always be positive")
+	ErrLiquidityDepth              = errorAmm("liquidity depth must be positive and equal to the square of the reserves")
+	ErrAmmBaseSupplyNonpositive    = errorAmm("base supply must be > 0")
+	ErrAmmQuoteSupplyNonpositive   = errorAmm("quote supply must be > 0")
+	ErrAmmLiquidityDepthOverflow   = errorAmm("liquidty depth overflow")
+	ErrAmmNonPositivePegMult       = errorAmm("peg multiplier must be > 0")
+	ErrAmmNonPositiveSwapInvariant = errorAmm("swap invariant (and sqrt depth) must be > 0")
+	ErrNilSwapInvariant            = errorAmm("swap invariant (and sqrt depth) must not be nil")
 
-	ErrUserLeverageNegative     = sdkerrors.Register(ModuleName, 18, "leverage cannot be zero")
-	ErrMarginRatioTooLow        = sdkerrors.Register(ModuleName, 19, "margin ratio did not meet maintenance margin ratio")
-	ErrLeverageIsTooHigh        = sdkerrors.Register(ModuleName, 20, "leverage cannot be higher than market parameter")
-	ErrUnauthorized             = sdkerrors.Register(ModuleName, 21, "operation not authorized")
-	ErrAllLiquidationsFailed    = sdkerrors.Register(ModuleName, 22, "all liquidations failed")
-	ErrParseLiquidateResponse   = sdkerrors.Register(ModuleName, 31, "failed to JSON parse liquidate responses")
-	ErrPositionHealthy          = sdkerrors.Register(ModuleName, 23, "position is healthy")
-	ErrLiquidityDepthOverflow   = sdkerrors.Register(ModuleName, 24, "liquidty depth overflow")
-	ErrMarketNotEnabled         = sdkerrors.Register(ModuleName, 25, "market is not enabled, you can only fully close your position")
-	ErrNonPositivePegMultiplier = sdkerrors.Register(ModuleName, 26, "peg multiplier must be > 0")
-	ErrNegativeSwapInvariant    = sdkerrors.Register(ModuleName, 27, "swap multiplier must be > 0")
-	ErrNilSwapInvariant         = sdkerrors.Register(ModuleName, 28, "swap multiplier must be not nil")
-	ErrNotEnoughFundToPayAction = sdkerrors.Register(ModuleName, 29, "not enough fund in perp EF to pay for action")
+	ErrPairNotFound         = registerError("pair doesn't have live market")
+	ErrPositionNotFound     = registerError("position not found")
+	ErrBadDebt              = registerError("position is underwater")
+	ErrInputBaseAmtNegative = registerError("base amount cannot be zero")
+
+	ErrInputQuoteAmtNegative = errorMarketOrder("quote amount cannot be zero")
+	ErrUserLeverageNegative  = errorMarketOrder("leverage cannot be zero")
+	ErrLeverageIsTooHigh     = errorMarketOrder("leverage cannot be higher than market parameter")
+
+	ErrMarginRatioTooLow        = registerError("margin ratio did not meet maintenance margin ratio")
+	ErrAllLiquidationsFailed    = registerError("all liquidations failed")
+	ErrParseLiquidateResponse   = registerError("failed to JSON parse liquidate responses")
+	ErrPositionHealthy          = registerError("position is healthy")
+	ErrMarketNotEnabled         = registerError("market is not enabled, you can only fully close your position")
+	ErrNotEnoughFundToPayAction = registerError("not enough fund in perp EF to pay for action")
+
+	ErrSettlementPositionMarketEnabled = registerError("market is enabled, you can only settle position on disabled market")
+	ErrCollateralDenomNotSet           = registerError("ErrorCollateral: no collateral denom set for the perp keeper")
+	ErrInvalidCollateral               = registerError("ErrorCollateral: invalid collateral denom")
 )
+
+// Register error instance for "ErrorMarketOrder"
+func errorMarketOrder(msg string) *sdkerrors.Error {
+	return registerError("ErrorMarketOrder: " + msg)
+}
+
+func errorAmm(msg string) *sdkerrors.Error {
+	return registerError("ErrorAMM: " + msg)
+}

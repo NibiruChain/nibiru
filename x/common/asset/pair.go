@@ -21,7 +21,7 @@ func NewPair(base string, quote string) Pair {
 	return Pair(ap)
 }
 
-// New returns a new asset pair instance if the pair is valid.
+// TryNewPair New returns a new asset pair instance if the pair is valid.
 // The form, "token0:token1", is expected for 'pair'.
 // Use this function to return an error instead of panicking.
 func TryNewPair(pair string) (Pair, error) {
@@ -83,6 +83,10 @@ func (pair Pair) QuoteDenom() string {
 
 // Validate performs a basic validation of the market params
 func (pair Pair) Validate() error {
+	if len(pair) == 0 {
+		return ErrInvalidTokenPair.Wrap("pair is empty")
+	}
+
 	split := strings.Split(pair.String(), ":")
 	if len(split) != 2 {
 		return ErrInvalidTokenPair.Wrap(pair.String())

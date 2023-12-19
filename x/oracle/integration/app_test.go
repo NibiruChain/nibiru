@@ -11,8 +11,10 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/asset"
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
+	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
@@ -23,10 +25,16 @@ type IntegrationTestSuite struct {
 	network *testutilcli.Network
 }
 
+func (s *IntegrationTestSuite) SetupSuite() {
+	testutil.BeforeIntegrationSuite(s.T())
+}
+
 func (s *IntegrationTestSuite) SetupTest() {
-	app.SetPrefixes(app.AccountAddressPrefix)
+	testapp.EnsureNibiruPrefix()
 	homeDir := s.T().TempDir()
-	s.cfg = testutilcli.BuildNetworkConfig(genesis.NewTestGenesisState(app.MakeEncodingConfigAndRegister()))
+
+	genesisState := genesis.NewTestGenesisState(app.MakeEncodingConfig())
+	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
 	s.cfg.NumValidators = 4
 	s.cfg.GenesisState[types.ModuleName] = s.cfg.Codec.MustMarshalJSON(func() codec.ProtoMarshaler {
 		gs := types.DefaultGenesisState()

@@ -36,7 +36,7 @@ func (k Keeper) MarketOrder(
 	leverage sdk.Dec,
 	baseAmtLimit sdk.Dec,
 ) (positionResp *types.PositionResp, err error) {
-	market, err := k.Markets.Get(ctx, pair)
+	market, err := k.GetMarket(ctx, pair)
 	if err != nil {
 		return nil, types.ErrPairNotFound.Wrapf("pair %s not found", pair)
 	}
@@ -45,7 +45,7 @@ func (k Keeper) MarketOrder(
 		return nil, types.ErrMarketNotEnabled.Wrapf("market pair %s not enabled", pair)
 	}
 
-	amm, err := k.AMMs.Get(ctx, pair)
+	amm, err := k.GetAMM(ctx, pair)
 	if err != nil {
 		return nil, types.ErrPairNotFound.Wrapf("pair %s not found", pair)
 	}
@@ -55,14 +55,23 @@ func (k Keeper) MarketOrder(
 		return nil, err
 	}
 
-	position, err := k.Positions.Get(ctx, collections.Join(pair, traderAddr))
-	isNewPosition := errors.Is(err, collections.ErrNotFound)
+	position, err := k.GetPosition(ctx, pair, market.Version, traderAddr)
+	isNewPosition := errors.Is(err, types.ErrPositionNotFound)
 	if isNewPosition {
 		position = types.ZeroPosition(ctx, pair, traderAddr)
 	}
 
 	sameSideLong := position.Size_.IsPositive() && dir == types.Direction_LONG
 	sameSideShort := position.Size_.IsNegative() && dir == types.Direction_SHORT
+
+	openNotionalPreFees := leverage.MulInt(quoteAssetAmt)
+	transferredFee, err := k.transferFee(ctx, market.Pair, traderAddr, openNotionalPreFees,
+		market.ExchangeFeeRatio, market.EcosystemFundFeeRatio,
+	)
+	if err != nil {
+		return nil, err
+	}
+	quoteAssetAmtMinusFees := quoteAssetAmt.Sub(transferredFee)
 
 	var updatedAMM *types.AMM
 	openSideMatchesPosition := sameSideLong || sameSideShort
@@ -73,14 +82,14 @@ func (k Keeper) MarketOrder(
 			amm,
 			position,
 			dir,
-			/* openNotional */ leverage.MulInt(quoteAssetAmt),
+			/* openNotional */ leverage.MulInt(quoteAssetAmtMinusFees),
 			/* minPositionSize */ baseAmtLimit,
 			/* leverage */ leverage)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		quoteAssetAmtToDec := sdk.NewDecFromInt(quoteAssetAmt)
+		quoteAssetAmtToDec := sdk.NewDecFromInt(quoteAssetAmtMinusFees)
 		updatedAMM, positionResp, err = k.openReversePosition(
 			ctx,
 			market,
@@ -97,7 +106,7 @@ func (k Keeper) MarketOrder(
 
 	// check bad debt
 	if !positionResp.Position.Size_.IsZero() {
-		if !positionResp.BadDebt.IsZero() {
+		if positionResp.BadDebt.IsPositive() {
 			return nil, types.ErrBadDebt.Wrapf("position has bad debt %s", positionResp.BadDebt)
 		}
 
@@ -108,7 +117,7 @@ func (k Keeper) MarketOrder(
 	}
 
 	if err = k.afterPositionUpdate(
-		ctx, market, *updatedAMM, traderAddr, *positionResp, types.ChangeReason_MarketOrder, position,
+		ctx, market, traderAddr, *positionResp, types.ChangeReason_MarketOrder, transferredFee, position,
 	); err != nil {
 		return nil, err
 	}
@@ -171,7 +180,6 @@ func (k Keeper) increasePosition(
 
 	updatedAMM, baseAssetDeltaAbs, err := k.SwapQuoteAsset(
 		ctx,
-		market,
 		amm,
 		dir,
 		increasedNotional,
@@ -314,7 +322,6 @@ func (k Keeper) decreasePosition(
 
 	updatedAMM, baseAssetDeltaAbs, err := k.SwapQuoteAsset(
 		ctx,
-		market,
 		amm,
 		dir,
 		decreasedNotional,
@@ -370,7 +377,7 @@ func (k Keeper) decreasePosition(
 	}
 
 	if positionResp.Position.Size_.IsZero() {
-		err := k.Positions.Delete(ctx, collections.Join(currentPosition.Pair, trader))
+		err := k.Positions.Delete(ctx, collections.Join(collections.Join(currentPosition.Pair, amm.Version), trader))
 		if err != nil {
 			return nil, nil, err
 		}
@@ -446,7 +453,7 @@ func (k Keeper) closeAndOpenReversePosition(
 	}
 
 	// check if it's worth continuing with the increase position
-	quoteReserveAmt := updatedAMM.FromQuoteAssetToReserve(remainingReverseNotionalValue)
+	quoteReserveAmt := updatedAMM.QuoteAssetToReserve(remainingReverseNotionalValue)
 	possibleNextSize, err := updatedAMM.GetBaseReserveAmt(quoteReserveAmt, dir)
 	if err != nil {
 		return nil, nil, err
@@ -533,17 +540,23 @@ func checkMarketOrderRequirements(market types.Market, quoteAssetAmt sdkmath.Int
 func (k Keeper) afterPositionUpdate(
 	ctx sdk.Context,
 	market types.Market,
-	amm types.AMM,
 	traderAddr sdk.AccAddress,
 	positionResp types.PositionResp,
 	changeType types.ChangeReason,
+	transferredFee sdkmath.Int,
 	existingPosition types.Position,
 ) (err error) {
 	// transfer trader <=> vault
 	marginToVault := positionResp.MarginToVault.RoundInt()
+
+	collateral, err := k.Collateral.Get(ctx)
+	if errors.Is(err, collections.ErrNotFound) {
+		return types.ErrCollateralDenomNotSet
+	}
+
 	switch {
 	case marginToVault.IsPositive():
-		coinToSend := sdk.NewCoin(market.Pair.QuoteDenom(), marginToVault)
+		coinToSend := sdk.NewCoin(collateral, marginToVault)
 		if err = k.BankKeeper.SendCoinsFromAccountToModule(
 			ctx, traderAddr, types.VaultModuleAccount, sdk.NewCoins(coinToSend)); err != nil {
 			return err
@@ -554,15 +567,8 @@ func (k Keeper) afterPositionUpdate(
 		}
 	}
 
-	transferredFee, err := k.transferFee(ctx, market.Pair, traderAddr, positionResp.ExchangedNotionalValue,
-		market.ExchangeFeeRatio, market.EcosystemFundFeeRatio,
-	)
-	if err != nil {
-		return err
-	}
-
 	if !positionResp.Position.Size_.IsZero() {
-		k.Positions.Insert(ctx, collections.Join(market.Pair, traderAddr), positionResp.Position)
+		k.SavePosition(ctx, market.Pair, market.Version, traderAddr, positionResp.Position)
 	}
 
 	// calculate positionNotional (it's different depends on long or short side)
@@ -575,13 +581,24 @@ func (k Keeper) afterPositionUpdate(
 		positionNotional = positionResp.Position.OpenNotional.Sub(positionResp.UnrealizedPnlAfter)
 	}
 
+	// This means that the position has been closed entirely.
+	if transferredFee.IsZero() {
+		// If the position has margin to be transferred to the user, we get the fees from it.
+		if positionResp.MarginToVault.IsNegative() {
+			transferredFee, err = k.transferFee(ctx, market.Pair, traderAddr, positionResp.MarginToVault.Abs(), market.ExchangeFeeRatio, market.EcosystemFundFeeRatio)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	_ = ctx.EventManager().EmitTypedEvents(
 		&types.PositionChangedEvent{
 			FinalPosition:     positionResp.Position,
 			PositionNotional:  positionNotional,
-			TransactionFee:    sdk.NewCoin(market.Pair.QuoteDenom(), transferredFee),
+			TransactionFee:    sdk.NewCoin(collateral, transferredFee),
 			RealizedPnl:       positionResp.RealizedPnl,
-			BadDebt:           sdk.NewCoin(market.Pair.QuoteDenom(), positionResp.BadDebt.RoundInt()),
+			BadDebt:           sdk.NewCoin(collateral, positionResp.BadDebt.RoundInt()),
 			FundingPayment:    positionResp.FundingPayment,
 			BlockHeight:       ctx.BlockHeight(),
 			MarginToUser:      marginToVault.Neg().Sub(transferredFee),
@@ -637,6 +654,15 @@ func (k Keeper) transferFee(
 	exchangeFeeRatio sdk.Dec,
 	ecosystemFundFeeRatio sdk.Dec,
 ) (fees sdkmath.Int, err error) {
+	collateral, err := k.Collateral.Get(ctx)
+	if err != nil {
+		return sdkmath.Int{}, err
+	}
+
+	exchangeFeeRatio, err = k.calculateDiscount(ctx, pair, trader, positionNotional, exchangeFeeRatio)
+	if err != nil {
+		return sdkmath.Int{}, err
+	}
 	feeToExchangeFeePool := exchangeFeeRatio.Mul(positionNotional).RoundInt()
 	if feeToExchangeFeePool.IsPositive() {
 		if err = k.BankKeeper.SendCoinsFromAccountToModule(
@@ -645,7 +671,7 @@ func (k Keeper) transferFee(
 			/* to */ types.FeePoolModuleAccount,
 			/* coins */ sdk.NewCoins(
 				sdk.NewCoin(
-					pair.QuoteDenom(),
+					collateral,
 					feeToExchangeFeePool,
 				),
 			),
@@ -662,7 +688,7 @@ func (k Keeper) transferFee(
 			/* to */ types.PerpEFModuleAccount,
 			/* coins */ sdk.NewCoins(
 				sdk.NewCoin(
-					pair.QuoteDenom(),
+					collateral,
 					feeToEcosystemFund,
 				),
 			),
@@ -686,22 +712,26 @@ func (k Keeper) transferFee(
 //   - positionResp: response object containing information about the position change
 //   - err: error if any
 func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.AccAddress) (*types.PositionResp, error) {
-	position, err := k.Positions.Get(ctx, collections.Join(pair, traderAddr))
+	market, err := k.GetMarket(ctx, pair)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
+	}
+
+	if !market.Enabled {
+		return nil, fmt.Errorf("%w: this position can be only closed by Settlement", types.ErrMarketNotEnabled)
+	}
+
+	amm, err := k.GetAMM(ctx, pair)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
+	}
+
+	position, err := k.GetPosition(ctx, pair, market.Version, traderAddr)
 	if err != nil {
 		return nil, err
 	}
 
-	market, err := k.Markets.Get(ctx, pair)
-	if err != nil {
-		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
-	}
-
-	amm, err := k.AMMs.Get(ctx, pair)
-	if err != nil {
-		return nil, fmt.Errorf("%w: %s", types.ErrPairNotFound, pair)
-	}
-
-	updatedAMM, positionResp, err := k.closePositionEntirely(
+	_, positionResp, err := k.closePositionEntirely(
 		ctx,
 		market,
 		amm,
@@ -725,10 +755,10 @@ func (k Keeper) ClosePosition(ctx sdk.Context, pair asset.Pair, traderAddr sdk.A
 	if err = k.afterPositionUpdate(
 		ctx,
 		market,
-		*updatedAMM,
 		traderAddr,
 		*positionResp,
 		types.ChangeReason_ClosePosition,
+		sdk.ZeroInt(),
 		position,
 	); err != nil {
 		return nil, err
@@ -798,7 +828,6 @@ func (k Keeper) closePositionEntirely(
 	}
 	updatedAMM, exchangedNotionalValue, err := k.SwapBaseAsset(
 		ctx,
-		market,
 		amm,
 		dir,
 		currentPosition.Size_.Abs(),
@@ -819,7 +848,7 @@ func (k Keeper) closePositionEntirely(
 		LastUpdatedBlockNumber:          ctx.BlockHeight(),
 	}
 
-	err = k.Positions.Delete(ctx, collections.Join(currentPosition.Pair, trader))
+	err = k.DeletePosition(ctx, currentPosition.Pair, market.Version, trader)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -832,19 +861,22 @@ func (k Keeper) PartialClose(
 	pair asset.Pair,
 	traderAddr sdk.AccAddress,
 	sizeAmt sdk.Dec, // unsigned
-
 ) (*types.PositionResp, error) {
-	market, err := k.Markets.Get(ctx, pair)
+	market, err := k.GetMarket(ctx, pair)
 	if err != nil {
 		return nil, types.ErrPairNotFound.Wrapf("pair: %s", pair)
 	}
 
-	amm, err := k.AMMs.Get(ctx, pair)
+	if !market.Enabled {
+		return nil, fmt.Errorf("%w: this position can be only closed by Settlement", types.ErrMarketNotEnabled)
+	}
+
+	amm, err := k.GetAMM(ctx, pair)
 	if err != nil {
 		return nil, types.ErrPairNotFound.Wrapf("pair: %s", pair)
 	}
 
-	position, err := k.Positions.Get(ctx, collections.Join(pair, traderAddr))
+	position, err := k.GetPosition(ctx, pair, market.Version, traderAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -868,9 +900,16 @@ func (k Keeper) PartialClose(
 	if err != nil {
 		return nil, err
 	}
-	reverseNotionalAmt = amm.FromQuoteReserveToAsset(reverseNotionalAmt)
+	reverseNotionalAmt = amm.QuoteReserveToAsset(reverseNotionalAmt)
 
-	updatedAMM, positionResp, err := k.decreasePosition(ctx, market, amm, position, reverseNotionalAmt, sdk.ZeroDec())
+	feesTransferred, err := k.transferFee(ctx, market.Pair, traderAddr, reverseNotionalAmt, market.ExchangeFeeRatio, market.EcosystemFundFeeRatio)
+	if err != nil {
+		return nil, err
+	}
+
+	reverseNotionalAmtWithoutFees := reverseNotionalAmt.Sub(feesTransferred.ToLegacyDec())
+
+	_, positionResp, err := k.decreasePosition(ctx, market, amm, position, reverseNotionalAmtWithoutFees, sdk.ZeroDec())
 	if err != nil {
 		return nil, err
 	}
@@ -888,10 +927,10 @@ func (k Keeper) PartialClose(
 	err = k.afterPositionUpdate(
 		ctx,
 		market,
-		*updatedAMM,
 		traderAddr,
 		*positionResp,
 		types.ChangeReason_PartialClose,
+		feesTransferred,
 		position,
 	)
 	if err != nil {

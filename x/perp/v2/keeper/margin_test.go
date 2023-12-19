@@ -4,10 +4,9 @@ import (
 	"testing"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/NibiruChain/collections"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
@@ -28,10 +27,10 @@ func TestAddMargin(t *testing.T) {
 	tc := TestCases{
 		TC("existing long position, add margin").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2020)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(2000)))),
 				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			When(
@@ -43,9 +42,9 @@ func TestAddMargin(t *testing.T) {
 					types.Position{
 						Pair:                            pairBtcUsdc,
 						TraderAddress:                   alice.String(),
-						Size_:                           sdk.MustNewDecFromStr("9999.999900000001000000"),
-						Margin:                          sdk.NewDec(2000),
-						OpenNotional:                    sdk.NewDec(10000),
+						Size_:                           sdk.MustNewDecFromStr("9799.999903960000941192"),
+						Margin:                          sdk.NewDec(1980),
+						OpenNotional:                    sdk.NewDec(9800),
 						LatestCumulativePremiumFraction: sdk.ZeroDec(),
 						LastUpdatedBlockNumber:          2,
 					},
@@ -54,34 +53,34 @@ func TestAddMargin(t *testing.T) {
 					FinalPosition: types.Position{
 						Pair:                            pairBtcUsdc,
 						TraderAddress:                   alice.String(),
-						Size_:                           sdk.MustNewDecFromStr("9999.999900000001000000"),
-						Margin:                          sdk.NewDec(2000),
-						OpenNotional:                    sdk.NewDec(10000),
+						Size_:                           sdk.MustNewDecFromStr("9799.999903960000941192"),
+						Margin:                          sdk.NewDec(1980),
+						OpenNotional:                    sdk.NewDec(9800),
 						LatestCumulativePremiumFraction: sdk.ZeroDec(),
 						LastUpdatedBlockNumber:          2,
 					},
-					PositionNotional:  sdk.NewDec(10_000),
+					PositionNotional:  sdk.NewDec(9800),
 					RealizedPnl:       sdk.ZeroDec(),
-					BadDebt:           sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+					BadDebt:           sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.ZeroInt()),
 					FundingPayment:    sdk.ZeroDec(),
-					TransactionFee:    sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+					TransactionFee:    sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.ZeroInt()),
 					BlockHeight:       2,
 					MarginToUser:      sdk.NewInt(-1_000),
 					ChangeReason:      types.ChangeReason_AddMargin,
 					ExchangedNotional: sdk.MustNewDecFromStr("0"),
 					ExchangedSize:     sdk.MustNewDecFromStr("0"),
 				}),
-				BalanceEqual(alice, denoms.USDC, sdk.ZeroInt()),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(10)),
-				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.NewInt(10)),
+				BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.ZeroInt()),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(10)),
+				ModuleBalanceEqual(types.FeePoolModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(10)),
 			),
 
 		TC("existing short position, add margin").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(2020)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(2000)))),
 				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			When(
@@ -93,9 +92,9 @@ func TestAddMargin(t *testing.T) {
 					types.Position{
 						Pair:                            pairBtcUsdc,
 						TraderAddress:                   alice.String(),
-						Size_:                           sdk.MustNewDecFromStr("-10000.000100000001000000"),
-						Margin:                          sdk.NewDec(2000),
-						OpenNotional:                    sdk.NewDec(10000),
+						Size_:                           sdk.MustNewDecFromStr("-9800.000096040000941192"),
+						Margin:                          sdk.NewDec(1980),
+						OpenNotional:                    sdk.NewDec(9800),
 						LatestCumulativePremiumFraction: sdk.ZeroDec(),
 						LastUpdatedBlockNumber:          2,
 					},
@@ -104,46 +103,46 @@ func TestAddMargin(t *testing.T) {
 					FinalPosition: types.Position{
 						Pair:                            pairBtcUsdc,
 						TraderAddress:                   alice.String(),
-						Size_:                           sdk.MustNewDecFromStr("-10000.000100000001000000"),
-						Margin:                          sdk.NewDec(2000),
-						OpenNotional:                    sdk.NewDec(10000),
+						Size_:                           sdk.MustNewDecFromStr("-9800.000096040000941192"),
+						Margin:                          sdk.NewDec(1980),
+						OpenNotional:                    sdk.NewDec(9800),
 						LatestCumulativePremiumFraction: sdk.ZeroDec(),
 						LastUpdatedBlockNumber:          2,
 					},
-					PositionNotional:  sdk.NewDec(10_000),
+					PositionNotional:  sdk.NewDec(9800),
 					RealizedPnl:       sdk.ZeroDec(),
-					BadDebt:           sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+					BadDebt:           sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.ZeroInt()),
 					FundingPayment:    sdk.ZeroDec(),
-					TransactionFee:    sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+					TransactionFee:    sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.ZeroInt()),
 					BlockHeight:       2,
 					MarginToUser:      sdk.NewInt(-1000),
 					ChangeReason:      types.ChangeReason_AddMargin,
 					ExchangedNotional: sdk.MustNewDecFromStr("0"),
 					ExchangedSize:     sdk.MustNewDecFromStr("0"),
 				}),
-				BalanceEqual(alice, denoms.USDC, sdk.ZeroInt()),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.NewInt(10)),
-				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.NewInt(10)),
+				BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.ZeroInt()),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(10)),
+				ModuleBalanceEqual(types.FeePoolModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(10)),
 			),
 
 		TC("Testing fails").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
-				CreateCustomMarket(pairEthUsdc),
+				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
+				CreateCustomMarket(pairEthUsdc, WithEnabled(true)),
 
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1020)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1020)))),
 				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.NewDec(10), sdk.ZeroDec()),
 			).
 			When(
 				MoveToNextBlock(),
 				AddMarginFail(alice, asset.MustNewPair("luna:usdt"), sdk.NewInt(1000), types.ErrPairNotFound),
-				AddMarginFail(alice, pairEthUsdc, sdk.NewInt(1000), collections.ErrNotFound),
+				AddMarginFail(alice, pairEthUsdc, sdk.NewInt(1000), types.ErrPositionNotFound),
 				AddMarginFail(alice, pairBtcUsdc, sdk.NewInt(1000), sdkerrors.ErrInsufficientFunds),
 
 				RemoveMarginFail(alice, asset.MustNewPair("luna:usdt"), sdk.NewInt(1000), types.ErrPairNotFound),
-				RemoveMarginFail(alice, pairEthUsdc, sdk.NewInt(1000), collections.ErrNotFound),
+				RemoveMarginFail(alice, pairEthUsdc, sdk.NewInt(1000), types.ErrPositionNotFound),
 				RemoveMarginFail(alice, pairBtcUsdc, sdk.NewInt(2000), types.ErrBadDebt),
 				RemoveMarginFail(alice, pairBtcUsdc, sdk.NewInt(900), types.ErrMarginRatioTooLow),
 			),
@@ -160,10 +159,10 @@ func TestRemoveMargin(t *testing.T) {
 	tc := TestCases{
 		TC("existing long position, remove margin").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1002)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1000)))),
 				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.OneDec(), sdk.ZeroDec()),
 			).
 			When(
@@ -174,9 +173,9 @@ func TestRemoveMargin(t *testing.T) {
 				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionShouldBeEqualTo(types.Position{
 					Pair:                            pairBtcUsdc,
 					TraderAddress:                   alice.String(),
-					Size_:                           sdk.MustNewDecFromStr("999.999999000000001000"),
-					Margin:                          sdk.NewDec(500),
-					OpenNotional:                    sdk.NewDec(1000),
+					Size_:                           sdk.MustNewDecFromStr("997.999999003996000994"),
+					Margin:                          sdk.NewDec(498),
+					OpenNotional:                    sdk.NewDec(998),
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 					LastUpdatedBlockNumber:          2,
 				})),
@@ -184,61 +183,61 @@ func TestRemoveMargin(t *testing.T) {
 					FinalPosition: types.Position{
 						Pair:                            pairBtcUsdc,
 						TraderAddress:                   alice.String(),
-						Size_:                           sdk.MustNewDecFromStr("999.999999000000001000"),
-						Margin:                          sdk.NewDec(500),
-						OpenNotional:                    sdk.NewDec(1000),
+						Size_:                           sdk.MustNewDecFromStr("997.999999003996000994"),
+						Margin:                          sdk.NewDec(498),
+						OpenNotional:                    sdk.NewDec(998),
 						LatestCumulativePremiumFraction: sdk.ZeroDec(),
 						LastUpdatedBlockNumber:          2,
 					},
-					PositionNotional:  sdk.NewDec(1000),
+					PositionNotional:  sdk.NewDec(998),
 					RealizedPnl:       sdk.ZeroDec(),
-					BadDebt:           sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+					BadDebt:           sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.ZeroInt()),
 					FundingPayment:    sdk.ZeroDec(),
-					TransactionFee:    sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+					TransactionFee:    sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.ZeroInt()),
 					BlockHeight:       2,
 					MarginToUser:      sdk.NewInt(500),
 					ChangeReason:      types.ChangeReason_RemoveMargin,
 					ExchangedNotional: sdk.MustNewDecFromStr("0"),
 					ExchangedSize:     sdk.MustNewDecFromStr("0"),
 				}),
-				BalanceEqual(alice, denoms.USDC, sdk.NewInt(500)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.OneInt()),
-				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.OneInt()),
+				BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.NewInt(500)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.OneInt()),
+				ModuleBalanceEqual(types.FeePoolModuleAccount, types.TestingCollateralDenomNUSD, sdk.OneInt()),
 			),
 
 		TC("existing long position, remove almost all margin fails").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1002)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1000)))),
 				MarketOrder(alice, pairBtcUsdc, types.Direction_LONG, sdk.NewInt(1000), sdk.OneDec(), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
 			When(
-				RemoveMarginFail(alice, pairBtcUsdc, sdk.NewInt(999), types.ErrMarginRatioTooLow),
+				RemoveMarginFail(alice, pairBtcUsdc, sdk.NewInt(997), types.ErrMarginRatioTooLow),
 			).
 			Then(
 				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionShouldBeEqualTo(types.Position{
 					Pair:                            pairBtcUsdc,
 					TraderAddress:                   alice.String(),
-					Size_:                           sdk.MustNewDecFromStr("999.999999000000001000"),
-					Margin:                          sdk.NewDec(1000),
-					OpenNotional:                    sdk.NewDec(1000),
+					Size_:                           sdk.MustNewDecFromStr("997.999999003996000994"),
+					Margin:                          sdk.NewDec(998),
+					OpenNotional:                    sdk.NewDec(998),
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 					LastUpdatedBlockNumber:          1,
 				})),
-				BalanceEqual(alice, denoms.USDC, sdk.ZeroInt()),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.OneInt()),
-				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.OneInt()),
+				BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.ZeroInt()),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.OneInt()),
+				ModuleBalanceEqual(types.FeePoolModuleAccount, types.TestingCollateralDenomNUSD, sdk.OneInt()),
 			),
 
 		TC("existing short position, remove margin").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1002)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1000)))),
 				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.OneDec(), sdk.ZeroDec()),
 			).
 			When(
@@ -249,9 +248,9 @@ func TestRemoveMargin(t *testing.T) {
 				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionShouldBeEqualTo(types.Position{
 					Pair:                            pairBtcUsdc,
 					TraderAddress:                   alice.String(),
-					Size_:                           sdk.MustNewDecFromStr("-1000.000001000000001000"),
-					Margin:                          sdk.NewDec(500),
-					OpenNotional:                    sdk.NewDec(1000),
+					Size_:                           sdk.MustNewDecFromStr("-998.000000996004000994"),
+					Margin:                          sdk.NewDec(498),
+					OpenNotional:                    sdk.NewDec(998),
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 					LastUpdatedBlockNumber:          2,
 				})),
@@ -259,53 +258,53 @@ func TestRemoveMargin(t *testing.T) {
 					FinalPosition: types.Position{
 						Pair:                            pairBtcUsdc,
 						TraderAddress:                   alice.String(),
-						Size_:                           sdk.MustNewDecFromStr("-1000.000001000000001000"),
-						Margin:                          sdk.NewDec(500),
-						OpenNotional:                    sdk.NewDec(1000),
+						Size_:                           sdk.MustNewDecFromStr("-998.000000996004000994"),
+						Margin:                          sdk.NewDec(498),
+						OpenNotional:                    sdk.NewDec(998),
 						LatestCumulativePremiumFraction: sdk.ZeroDec(),
 						LastUpdatedBlockNumber:          2,
 					},
-					PositionNotional:  sdk.NewDec(1000),
+					PositionNotional:  sdk.NewDec(998),
 					RealizedPnl:       sdk.ZeroDec(),
-					BadDebt:           sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+					BadDebt:           sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.ZeroInt()),
 					FundingPayment:    sdk.ZeroDec(),
-					TransactionFee:    sdk.NewCoin(denoms.USDC, sdk.ZeroInt()),
+					TransactionFee:    sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.ZeroInt()),
 					BlockHeight:       2,
 					MarginToUser:      sdk.NewInt(500),
 					ChangeReason:      types.ChangeReason_RemoveMargin,
 					ExchangedNotional: sdk.MustNewDecFromStr("0"),
 					ExchangedSize:     sdk.MustNewDecFromStr("0"),
 				}),
-				BalanceEqual(alice, denoms.USDC, sdk.NewInt(500)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.OneInt()),
-				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.OneInt()),
+				BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.NewInt(500)),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.OneInt()),
+				ModuleBalanceEqual(types.FeePoolModuleAccount, types.TestingCollateralDenomNUSD, sdk.OneInt()),
 			),
 
 		TC("existing short position, remove almost all margin fails").
 			Given(
-				CreateCustomMarket(pairBtcUsdc),
+				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
-				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(denoms.USDC, sdk.NewInt(1002)))),
+				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1000)))),
 				MarketOrder(alice, pairBtcUsdc, types.Direction_SHORT, sdk.NewInt(1000), sdk.OneDec(), sdk.ZeroDec()),
 				MoveToNextBlock(),
 			).
 			When(
-				RemoveMarginFail(alice, pairBtcUsdc, sdk.NewInt(999), types.ErrMarginRatioTooLow),
+				RemoveMarginFail(alice, pairBtcUsdc, sdk.NewInt(997), types.ErrMarginRatioTooLow),
 			).
 			Then(
 				PositionShouldBeEqual(alice, pairBtcUsdc, Position_PositionShouldBeEqualTo(types.Position{
 					Pair:                            pairBtcUsdc,
 					TraderAddress:                   alice.String(),
-					Size_:                           sdk.MustNewDecFromStr("-1000.000001000000001000"),
-					Margin:                          sdk.NewDec(1000),
-					OpenNotional:                    sdk.NewDec(1000),
+					Size_:                           sdk.MustNewDecFromStr("-998.000000996004000994"),
+					Margin:                          sdk.NewDec(998),
+					OpenNotional:                    sdk.NewDec(998),
 					LatestCumulativePremiumFraction: sdk.ZeroDec(),
 					LastUpdatedBlockNumber:          1,
 				})),
-				BalanceEqual(alice, denoms.USDC, sdk.ZeroInt()),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, denoms.USDC, sdk.OneInt()),
-				ModuleBalanceEqual(types.FeePoolModuleAccount, denoms.USDC, sdk.OneInt()),
+				BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.ZeroInt()),
+				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.OneInt()),
+				ModuleBalanceEqual(types.FeePoolModuleAccount, types.TestingCollateralDenomNUSD, sdk.OneInt()),
 			),
 	}
 

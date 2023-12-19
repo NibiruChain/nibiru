@@ -42,6 +42,8 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"google.golang.org/grpc"
 
+	perpV2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
+
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 
 	"github.com/NibiruChain/nibiru/app"
@@ -153,7 +155,7 @@ func NewAppConstructor(encodingCfg app.EncodingConfig, chainID string) AppConstr
 
 // BuildNetworkConfig returns a configuration for a local in-testing network
 func BuildNetworkConfig(appGenesis app.GenesisState) Config {
-	encCfg := app.MakeEncodingConfigAndRegister()
+	encCfg := app.MakeEncodingConfig()
 
 	chainID := "chain-" + tmrand.NewRand().Str(6)
 	return Config{
@@ -174,6 +176,7 @@ func BuildNetworkConfig(appGenesis app.GenesisState) Config {
 		BondedTokens:      sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
 		StartingTokens: sdk.NewCoins(
 			sdk.NewCoin(denoms.NUSD, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
+			sdk.NewCoin(perpV2types.TestingCollateralDenomNUSD, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
 			sdk.NewCoin(denoms.NIBI, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
 			sdk.NewCoin(denoms.USDC, sdk.TokensFromConsensusPower(1e12, sdk.DefaultPowerReduction)),
 		),
@@ -371,7 +374,7 @@ func New(logger Logger, baseDir string, cfg Config) (*Network, error) {
 		genBalances = append(genBalances, banktypes.Balance{Address: addr.String(), Coins: balances.Sort()})
 		genAccounts = append(genAccounts, authtypes.NewBaseAccount(addr, nil, 0, 0))
 
-		commission, err := sdk.NewDecFromStr("0.5")
+		commission, err := sdk.NewDecFromStr("0.05")
 		if err != nil {
 			return nil, err
 		}
