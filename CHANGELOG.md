@@ -82,6 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Dependencies
 - Bump `google.golang.org/grpc` from 1.59.0 to 1.60.0 ([#1720](https://github.com/NibiruChain/nibiru/pull/1720))
 - Bump `golang.org/x/crypto` from 0.15.0 to 0.17.0 ([#1724](https://github.com/NibiruChain/nibiru/pull/1724))
+- Bump `github.com/cometbft/cometbft` from 0.37.2 to 0.38.0 ([#1581](https://github.com/NibiruChain/nibiru/pull/1581))
 
 * Bump `github.com/spf13/cast` from 1.5.1 to 1.6.0 ([#1689](https://github.com/NibiruChain/nibiru/pull/1689))
 * Bump `cosmossdk.io/math` from 1.1.2 to 1.2.0 ([#1676](https://github.com/NibiruChain/nibiru/pull/1676))
