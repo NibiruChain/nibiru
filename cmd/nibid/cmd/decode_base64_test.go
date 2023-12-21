@@ -57,11 +57,6 @@ func TestBase64Decode(t *testing.T) {
 	}
 
 	testCases := []TestCase{
-		// {
-		// 	name:         "empty message",
-		// 	json_message: "",
-		// 	expectError:  true,
-		// },
 		{
 			name: "valid message",
 			json_message: `
@@ -71,6 +66,32 @@ func TestBase64Decode(t *testing.T) {
 				  "value": "Cj9uaWJpMTdwOXJ6d25uZnhjanAzMnVuOXVnN3loaHpndGtodmw5amZrc3p0Z3c1dWg2OXdhYzJwZ3N5bjcwbmoSMm5pYml2YWxvcGVyMXdqNWtma25qa3BjNmpkMzByeHRtOHRweGZqZjd4cWx3eDM4YzdwGgwKBXVuaWJpEgMxMTE="
 				}
 			  }`,
+			expectError: false,
+		},
+		{
+			name: "valid message",
+			json_message: `
+			{
+				"stargate": {
+					"type_url": "/cosmos.staking.v1beta1.MsgUndelegate",
+					"value": "Cj9uaWJpMTdwOXJ6d25uZnhjanAzMnVuOXVnN3loaHpndGtodmw5amZrc3p0Z3c1dWg2OXdhYzJwZ3N5bjcwbmoSMm5pYml2YWxvcGVyMXdqNWtma25qa3BjNmpkMzByeHRtOHRweGZqZjd4cWx3eDM4YzdwGgwKBXVuaWJpEgMxMTE="
+				},
+				"another": {
+					"type_url": "/cosmos.staking.v1beta1.MsgDelegate",
+					"value": {"delegator_address":"cosmos1eckjje8r8s48kv0pndgtwvehveedlzlnnshl3e", "validator_address":"cosmos1n6ndsc04xh2hqf506nhvhcggj0qwguf8ks06jj", "amount":{"denom":"unibi","amount":"42"} }
+				}
+			}`,
+			expectError: false,
+		},
+		{
+			name: "valid message",
+			json_message: `
+			{
+				"another": {
+					"type_url": "/cosmos.staking.v1beta1.MsgDelegate",
+					"value": "{\"delegator_address\":\"cosmos1eckjje8r8s48kv0pndgtwvehveedlzlnnshl3e\", \"validator_address\":\"cosmos1n6ndsc04xh2hqf506nhvhcggj0qwguf8ks06jj\", \"amount\":{\"denom\":\"unibi\",\"amount\":\"42\"} }"
+				}
+			}`,
 			expectError: false,
 		},
 	}
