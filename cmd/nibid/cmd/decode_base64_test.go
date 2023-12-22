@@ -94,6 +94,22 @@ func TestBase64Decode(t *testing.T) {
 			}`,
 			expectError: false,
 		},
+		{
+			name: "empty message",
+			json_message: `
+			{
+			
+			}`,
+			expectError: false,
+		},
+		{
+			name: "invalid json",
+			json_message: `
+			
+			
+			}`,
+			expectError: true,
+		},
 	}
 
 	for _, testCase := range testCases {

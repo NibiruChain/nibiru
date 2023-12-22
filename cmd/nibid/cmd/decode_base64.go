@@ -243,9 +243,9 @@ func DecodeBase64StargateMsgs(
 	}
 	for _, sgMsg := range sgMsgs {
 		valueStr := string(sgMsg.Value)
-		value := strings.Replace(string(sgMsg.Value), `\"`, `"`, 0)
-		value = strings.Replace(value, `"{`, `{`, 0)
-		value = strings.Replace(value, `}"`, `}`, 0)
+		value := strings.Replace(string(sgMsg.Value), `\"`, `"`, -1)
+		value = strings.Replace(value, `"{`, `{`, -1)
+		value = strings.Replace(value, `}"`, `}`, -1)
 
 		if _, err := base64.StdEncoding.DecodeString(valueStr); err == nil {
 			protoTypes := messageMap[sgMsg.TypeURL]
