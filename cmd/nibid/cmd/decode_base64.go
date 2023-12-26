@@ -9,7 +9,6 @@ import (
 	proto "github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cobra"
 
-	// stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/client"
