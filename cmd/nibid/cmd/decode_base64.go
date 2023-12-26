@@ -8,7 +8,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	// stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
