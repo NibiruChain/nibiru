@@ -8,9 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-
 	"github.com/cosmos/cosmos-sdk/client"
-	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdkcodec "github.com/cosmos/cosmos-sdk/codec"
 
