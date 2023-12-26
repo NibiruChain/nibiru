@@ -37,7 +37,10 @@ func TestBase64Decode(t *testing.T) {
 			require.NoError(t, err)
 
 			serverCtx := server.NewContext(viper.New(), cfg, logger)
-			clientCtx := client.Context{}.WithCodec(appCodec).WithHomeDir(home)
+			clientCtx := (client.Context{}.
+				WithCodec(appCodec).
+				WithHomeDir(home).
+				WithInterfaceRegistry(app.MakeEncodingConfig().InterfaceRegistry))
 
 			ctx := context.Background()
 			ctx = context.WithValue(ctx, client.ClientContextKey, &clientCtx)
@@ -98,15 +101,14 @@ func TestBase64Decode(t *testing.T) {
 			name: "empty message",
 			json_message: `
 			{
-			
+
 			}`,
 			expectError: false,
 		},
 		{
 			name: "invalid json",
 			json_message: `
-			
-			
+
 			}`,
 			expectError: true,
 		},
