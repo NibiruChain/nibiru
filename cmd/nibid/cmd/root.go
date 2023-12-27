@@ -139,6 +139,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 	rootCmd.AddCommand(
 		InitCmd(app.ModuleBasics, app.DefaultNodeHome),
 		AddGenesisAccountCmd(app.DefaultNodeHome),
+		DecodeBase64Cmd(app.DefaultNodeHome),
 		tmcli.NewCompletionCmd(rootCmd, true),
 		testnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
 		debug.Cmd(),
