@@ -46,6 +46,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#1816](https://github.com/NibiruChain/nibiru/pull/1816) - fix(ibc): fix ibc transaction from wasm contract
 
+### CLI
+
+* [#1731](https://github.com/NibiruChain/nibiru/pull/1731) - feat(cli): add cli command to decode stargate base64 messages
+
 
 ## [v1.0.1](https://github.com/NibiruChain/nibiru/releases/tag/v1.0.1) - 2024-02-09
 
