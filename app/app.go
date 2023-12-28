@@ -179,7 +179,7 @@ func NewNibiruApp(
 	// add test gRPC service for testing gRPC queries in isolation
 	testdata.RegisterQueryServer(app.GRPCQueryRouter(), testdata.QueryImpl{})
 
-	app.InitSimulationManager(app.appCodec)
+	app.initSimulationManager(app.appCodec)
 
 	// initialize stores
 	app.MountKVStores(keys)

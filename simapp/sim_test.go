@@ -7,35 +7,25 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cosmos/ibc-go/v7/testing/simapp"
-
 	dbm "github.com/cometbft/cometbft-db"
+	"github.com/cometbft/cometbft/libs/log"
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/testutil/sims"
 	helpers "github.com/cosmos/cosmos-sdk/testutil/sims"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	simulationtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 	simcli "github.com/cosmos/cosmos-sdk/x/simulation/client/cli"
+	"github.com/cosmos/ibc-go/v7/testing/simapp"
 	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/app"
 	appsim "github.com/NibiruChain/nibiru/app/sim"
-	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 )
 
 // SimAppChainID hardcoded chainID for simulation
 const SimAppChainID = "simulation-app"
-
-type SimulationTestSuite struct {
-	suite.Suite
-}
-
-func TestSimulationTestSuite(t *testing.T) {
-	suite.Run(t, new(SimulationTestSuite))
-}
-
-var _ suite.SetupTestSuite = (*SimulationTestSuite)(nil)
 
 func init() {
 	// We call GetSimulatorFlags here in order to set the value for
@@ -43,16 +33,7 @@ func init() {
 	appsim.GetSimulatorFlags()
 }
 
-// SetupTest: Runs before every test in the suite.
-func (s *SimulationTestSuite) SetupTest() {
-	testutil.BeforeIntegrationSuite(s.T())
-	if !simapp.FlagEnabledValue {
-		s.T().Skip("skipping application simulation")
-	}
-}
-
-func (s *SimulationTestSuite) TestFullAppSimulation() {
-	t := s.T()
+func TestFullAppSimulation(t *testing.T) {
 	config := simcli.NewConfigFromFlags()
 	config.ChainID = SimAppChainID
 
@@ -105,11 +86,7 @@ func (s *SimulationTestSuite) TestFullAppSimulation() {
 	}
 }
 
-func (s *SimulationTestSuite) TestAppStateDeterminism() {
-	t := s.T()
-
-	encoding := app.MakeEncodingConfig()
-
+func TestAppStateDeterminism(t *testing.T) {
 	config := simapp.NewConfigFromFlags()
 	config.InitialBlockHeight = 1
 	config.ExportParamsPath = ""
@@ -126,7 +103,11 @@ func (s *SimulationTestSuite) TestAppStateDeterminism() {
 
 		for j := 0; j < numTimesToRunPerSeed; j++ {
 			db := dbm.NewMemDB()
-			app := testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encoding.Marshaler))
+			logger := log.NewNopLogger()
+			encoding := app.MakeEncodingConfig()
+
+			app := app.NewNibiruApp(logger, db, nil, true, encoding, sims.EmptyAppOptions{}, baseapp.SetChainID(SimAppChainID))
+			appCodec := app.AppCodec()
 
 			fmt.Printf(
 				"running non-determinism simulation; seed %d: %d/%d, attempt: %d/%d\n",
@@ -137,12 +118,12 @@ func (s *SimulationTestSuite) TestAppStateDeterminism() {
 				t,
 				os.Stdout,
 				app.BaseApp,
-				AppStateFn(app.AppCodec(), app.SimulationManager()),
+				AppStateFn(appCodec, app.SimulationManager()),
 				simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
-				helpers.SimulationOperations(app, app.AppCodec(), config),
+				helpers.SimulationOperations(app, appCodec, config),
 				app.ModuleAccountAddrs(),
 				config,
-				app.AppCodec(),
+				appCodec,
 			)
 			require.NoError(t, err)
 
