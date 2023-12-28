@@ -11,18 +11,21 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/x/sudo/cli"
 	sudokeeper "github.com/NibiruChain/nibiru/x/sudo/keeper"
+	simulation "github.com/NibiruChain/nibiru/x/sudo/simulation"
 	"github.com/NibiruChain/nibiru/x/sudo/types"
 )
 
 // Ensure the interface is properly implemented at compile time
 var (
-	_ module.AppModule      = AppModule{}
-	_ module.AppModuleBasic = AppModuleBasic{}
+	_ module.AppModule           = AppModule{}
+	_ module.AppModuleBasic      = AppModuleBasic{}
+	_ module.AppModuleSimulation = AppModule{}
 )
 
 // ----------------------------------------------------------------------------
@@ -150,4 +153,22 @@ func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 // returns no validator updates.
 func (am AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return []abci.ValidatorUpdate{}
+}
+
+//----------------------------------------------------------------------------
+// AppModuleSimulation functions
+//----------------------------------------------------------------------------
+
+// GenerateGenesisState implements module.AppModuleSimulation.
+func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
+	simulation.RandomizedGenState(simState)
+}
+
+// RegisterStoreDecoder implements module.AppModuleSimulation.
+func (AppModule) RegisterStoreDecoder(sdk.StoreDecoderRegistry) {
+}
+
+// WeightedOperations implements module.AppModuleSimulation.
+func (AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
+	return nil
 }
