@@ -82,7 +82,7 @@ type TestCase struct {
 	name      string
 	args      []string
 	extraArgs []string
-	wantErr   bool
+	wantErr   string
 }
 
 func (tc TestCase) NewCtx(s *CLITestSuite) sdkclient.Context {
@@ -101,8 +101,9 @@ func (tc TestCase) Run(s *CLITestSuite) {
 		s.Require().NoError(sdkclient.SetCmdClientContextHandler(tc.NewCtx(s), cmd))
 
 		err := cmd.Execute()
-		if tc.wantErr {
+		if tc.wantErr != "" {
 			s.Require().Error(err)
+			s.ErrorContains(err, tc.wantErr)
 			return
 		}
 		s.Require().NoError(err)
@@ -117,7 +118,7 @@ func (s *CLITestSuite) TestCmdRegisterFeeShare() {
 			name:      "happy path: devgas register",
 			args:      []string{"register", addrs[0].String(), addrs[1].String()},
 			extraArgs: []string{fmt.Sprintf("--from=%s", s.testAcc.Address)},
-			wantErr:   false,
+			wantErr:   "",
 		},
 		{
 			name: "sad: fee payer",
@@ -126,7 +127,7 @@ func (s *CLITestSuite) TestCmdRegisterFeeShare() {
 				fmt.Sprintf("--from=%s", s.testAcc.Address),
 				fmt.Sprintf("--fee-payer=%s", "invalid-fee-payer"),
 			},
-			wantErr: true,
+			wantErr: "decoding bech32 failed",
 		},
 		{
 			name: "sad: contract addr",
@@ -134,15 +135,15 @@ func (s *CLITestSuite) TestCmdRegisterFeeShare() {
 			extraArgs: []string{
 				fmt.Sprintf("--from=%s", s.testAcc.Address),
 			},
-			wantErr: true,
+			wantErr: "invalid contract address",
 		},
 		{
-			name: "sad: deployer addr",
-			args: []string{"register", addrs[0].String(), "saddeployer"},
+			name: "sad: withdraw addr",
+			args: []string{"register", addrs[0].String(), "sadwithdraw"},
 			extraArgs: []string{
 				fmt.Sprintf("--from=%s", s.testAcc.Address),
 			},
-			wantErr: true,
+			wantErr: "invalid withdraw address",
 		},
 	}
 
@@ -158,7 +159,7 @@ func (s *CLITestSuite) TestCmdCancelFeeShare() {
 			name:      "happy path: devgas cancel",
 			args:      []string{"cancel", addrs[0].String()},
 			extraArgs: []string{fmt.Sprintf("--from=%s", s.testAcc.Address)},
-			wantErr:   false,
+			wantErr:   "",
 		},
 		{
 			name: "sad: fee payer",
@@ -167,7 +168,7 @@ func (s *CLITestSuite) TestCmdCancelFeeShare() {
 				fmt.Sprintf("--from=%s", s.testAcc.Address),
 				fmt.Sprintf("--fee-payer=%s", "invalid-fee-payer"),
 			},
-			wantErr: true,
+			wantErr: "decoding bech32 failed",
 		},
 		{
 			name: "sad: contract addr",
@@ -175,7 +176,7 @@ func (s *CLITestSuite) TestCmdCancelFeeShare() {
 			extraArgs: []string{
 				fmt.Sprintf("--from=%s", s.testAcc.Address),
 			},
-			wantErr: true,
+			wantErr: "invalid deployer address",
 		},
 	}
 
@@ -192,7 +193,7 @@ func (s *CLITestSuite) TestCmdUpdateFeeShare() {
 			name:      "happy path: devgas update",
 			args:      []string{"update", addrs[0].String(), addrs[1].String()},
 			extraArgs: []string{fmt.Sprintf("--from=%s", s.testAcc.Address)},
-			wantErr:   false,
+			wantErr:   "",
 		},
 		{
 			name: "sad: fee payer",
@@ -201,7 +202,7 @@ func (s *CLITestSuite) TestCmdUpdateFeeShare() {
 				fmt.Sprintf("--from=%s", s.testAcc.Address),
 				fmt.Sprintf("--fee-payer=%s", "invalid-fee-payer"),
 			},
-			wantErr: true,
+			wantErr: "decoding bech32 failed",
 		},
 		{
 			name: "sad: contract addr",
@@ -209,7 +210,7 @@ func (s *CLITestSuite) TestCmdUpdateFeeShare() {
 			extraArgs: []string{
 				fmt.Sprintf("--from=%s", s.testAcc.Address),
 			},
-			wantErr: true,
+			wantErr: "invalid contract",
 		},
 		{
 			name: "sad: new withdraw addr",
@@ -217,7 +218,7 @@ func (s *CLITestSuite) TestCmdUpdateFeeShare() {
 			extraArgs: []string{
 				fmt.Sprintf("--from=%s", s.testAcc.Address),
 			},
-			wantErr: true,
+			wantErr: "invalid withdraw address",
 		},
 	}
 
