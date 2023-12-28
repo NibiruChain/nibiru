@@ -40,6 +40,20 @@ The clear separation of responsibilities between `MsgServer` and `Keeper` allows
 
 - **Focus on Business Logic:** Tests can concentrate on assessing pure business logic, undistracted by security and permission configurations.
 
+## Addressing Potential Concerns: Security and Accessibility of Keeper Methods
+
+### Concerns About Security and Access Control
+
+Some might argue that sharing Keeper's methods can lead to security risks, mainly if there are concerns about unauthorized access. This viewpoint stems from the belief that the `Keeper` should control access, which might lead to apprehensions about exposing specific methods.
+
+### Clarifying the Role of the Keeper
+
+However, this perspective needs to be revised in the fundamental role of the `Keeper`. The primary responsibility of the `Keeper` is to maintain a consistent state within the application rather than controlling access. Access control and validation of requests are the responsibilities of the `MsgServer`, which acts as the first line of defense.
+
+### Best Practices in Method Exposure
+
+Suppose there's a need to share the Keeper with other modules, and concerns arise about the safety of exposing specific methods. In that case, the preferred approach is to keep those sensitive methods private. Implementing access and permission layers within the `Keeper` goes against the principle of separation of responsibilities and can lead to a more cohesive and secure system. Instead, ensuring that only the appropriate methods are exposed and keeping others private aligns with the philosophy of keeping each component focused on its specific role.
+
 ## Conclusion
 
 Separating the `MsgServer` and `Keeper` in developing and testing the Nibiru Chain will significantly improve the code's clarity, maintenance, and security. These improvements reflect our commitment to efficient and robust development, aligned with the best industry practices.
