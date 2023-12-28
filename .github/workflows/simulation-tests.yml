@@ -1,0 +1,63 @@
+name: Run simulations
+
+on:
+  push:
+    branches:
+      # every push to default branch
+      - main
+  schedule:
+    # once per day
+    - cron: "0 0 * * *"
+  pull_request:
+    branches:
+      # every pull request to default branch
+      - main
+
+jobs:
+  test-sim-nondeterminism:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 1.21
+          cache: true
+      - name: TestAppStateDeterminism
+        run: |
+          make test-sim-nondeterminism
+
+  test-sim-default-genesis-fast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 1.21
+          cache: true
+      - name: TestFullAppSimulation
+        run: |
+          make test-sim-default-genesis-fast
+
+  test-sim-import-export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 1.21
+          cache: true
+      - name: TestAppImportExport
+        run: |
+          make test-sim-import-export
+
+  test-sim-after-import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 1.21
+          cache: true
+      - name: TestAppSimulationAfterImport
+        run: |
+          make test-sim-after-import
