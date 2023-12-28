@@ -8,6 +8,7 @@ import (
 
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	"github.com/stretchr/testify/suite"
 
@@ -714,12 +715,14 @@ func (s *IntegrationTestSuite) TestDonateToEcosystemFund() {
 
 	s.NoError(s.network.WaitForNextBlock())
 	resp := new(sdk.Coin)
-	moduleAccountAddrPerpEF := "nibi1trh2mamq64u4g042zfeevvjk4cukrthvppfnc7"
+
+	moduleAccPerpFund := authtypes.NewModuleAddress(
+		types.PerpFundModuleAccount).String()
 	s.NoError(
 		testutilcli.ExecQuery(
 			s.network.Validators[0].ClientCtx,
 			bankcli.GetBalancesCmd(),
-			[]string{moduleAccountAddrPerpEF, "--denom", types.TestingCollateralDenomNUSD},
+			[]string{moduleAccPerpFund, "--denom", types.TestingCollateralDenomNUSD},
 			resp,
 		),
 	)
