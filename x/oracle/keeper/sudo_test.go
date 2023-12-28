@@ -10,6 +10,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
+	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
 func TestSuiteOracleExecutor_RunAll(t *testing.T) {
@@ -34,7 +35,7 @@ func (s *SuiteOracleSudo) TestEditOracleParams() {
 	twapLookbackWindow := sdk.NewInt(int64(time.Second * 30))
 	minVoters := sdk.NewInt(2)
 	validatorFeeRatio := sdk.MustNewDecFromStr("0.7")
-	partialParams := oraclekeeper.PartialOracleParams{
+	partialParams := oracletypes.MsgEditOracleParams{
 		VotePeriod:         &votePeriod,
 		VoteThreshold:      &voteThreshold,
 		RewardBand:         &rewardBand,
@@ -46,18 +47,21 @@ func (s *SuiteOracleSudo) TestEditOracleParams() {
 		MinVoters:          &minVoters,
 		ValidatorFeeRatio:  &validatorFeeRatio,
 	}
-
 	// TODO: Verify that params before were not equal
 
 	invalidSender := testutil.AccAddress()
-	err := nibiru.OracleKeeper.Admin.EditOracleParams(
-		ctx, partialParams, invalidSender,
+	oracleMsgServer := oraclekeeper.NewMsgServerImpl(nibiru.OracleKeeper)
+	goCtx := sdk.WrapSDKContext(ctx)
+	partialParams.Sender = invalidSender.String()
+	_, err := oracleMsgServer.EditOracleParams(
+		goCtx, &partialParams,
 	)
 	s.Error(err)
 
 	okSender := testapp.DefaultSudoRoot()
-	err = nibiru.OracleKeeper.Admin.EditOracleParams(
-		ctx, partialParams, okSender,
+	partialParams.Sender = okSender.String()
+	_, err = oracleMsgServer.EditOracleParams(
+		goCtx, &partialParams,
 	)
 	s.NoError(err)
 

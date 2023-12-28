@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	sdkmath "cosmossdk.io/math"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -24,16 +22,7 @@ import (
 type admin struct{ *Keeper }
 
 type PartialOracleParams struct {
-	VotePeriod         *sdkmath.Int `json:"vote_period,omitempty"`
-	VoteThreshold      *sdk.Dec     `json:"vote_threshold,omitempty"`
-	RewardBand         *sdk.Dec     `json:"reward_band,omitempty"`
-	Whitelist          []string     `json:"whitelist,omitempty"`
-	SlashFraction      *sdk.Dec     `json:"slash_fraction,omitempty"`
-	SlashWindow        *sdkmath.Int `json:"slash_window,omitempty"`
-	MinValidPerWindow  *sdk.Dec     `json:"min_valid_per_window,omitempty"`
-	TwapLookbackWindow *sdkmath.Int `json:"twap_lookback_window,omitempty"`
-	MinVoters          *sdkmath.Int `json:"min_voters,omitempty"`
-	ValidatorFeeRatio  *sdk.Dec     `json:"validator_fee_ratio,omitempty"`
+	PbMsg oracletypes.MsgEditOracleParams
 }
 
 func (k admin) EditOracleParams(
@@ -54,55 +43,55 @@ func (k admin) EditOracleParams(
 	return nil
 }
 
-// mergeOracleParams: Takes the givne oracle params and merges them into the
-// existing partial params, keeping any existing values that are note set in the
-// partial msg
-func (msg PartialOracleParams) mergeOracleParams(
+// mergeOracleParams: Takes the given oracle params and merges them into the
+// existing partial params, keeping any existing values that are not set in the
+// partial.
+func (partial PartialOracleParams) mergeOracleParams(
 	oracleParams oracletypes.Params,
 ) oracletypes.Params {
-	if msg.VotePeriod != nil {
-		oracleParams.VotePeriod = msg.VotePeriod.Uint64()
+	if partial.PbMsg.VotePeriod != nil {
+		oracleParams.VotePeriod = partial.PbMsg.VotePeriod.Uint64()
 	}
 
-	if msg.VoteThreshold != nil {
-		oracleParams.VoteThreshold = *msg.VoteThreshold
+	if partial.PbMsg.VoteThreshold != nil {
+		oracleParams.VoteThreshold = *partial.PbMsg.VoteThreshold
 	}
 
-	if msg.RewardBand != nil {
-		oracleParams.RewardBand = *msg.RewardBand
+	if partial.PbMsg.RewardBand != nil {
+		oracleParams.RewardBand = *partial.PbMsg.RewardBand
 	}
 
-	if msg.Whitelist != nil {
-		whitelist := make([]asset.Pair, len(msg.Whitelist))
-		for i, pair := range msg.Whitelist {
+	if partial.PbMsg.Whitelist != nil {
+		whitelist := make([]asset.Pair, len(partial.PbMsg.Whitelist))
+		for i, pair := range partial.PbMsg.Whitelist {
 			whitelist[i] = asset.MustNewPair(pair)
 		}
 
 		oracleParams.Whitelist = whitelist
 	}
 
-	if msg.SlashFraction != nil {
-		oracleParams.SlashFraction = *msg.SlashFraction
+	if partial.PbMsg.SlashFraction != nil {
+		oracleParams.SlashFraction = *partial.PbMsg.SlashFraction
 	}
 
-	if msg.SlashWindow != nil {
-		oracleParams.SlashWindow = msg.SlashWindow.Uint64()
+	if partial.PbMsg.SlashWindow != nil {
+		oracleParams.SlashWindow = partial.PbMsg.SlashWindow.Uint64()
 	}
 
-	if msg.MinValidPerWindow != nil {
-		oracleParams.MinValidPerWindow = *msg.MinValidPerWindow
+	if partial.PbMsg.MinValidPerWindow != nil {
+		oracleParams.MinValidPerWindow = *partial.PbMsg.MinValidPerWindow
 	}
 
-	if msg.TwapLookbackWindow != nil {
-		oracleParams.TwapLookbackWindow = time.Duration(msg.TwapLookbackWindow.Int64())
+	if partial.PbMsg.TwapLookbackWindow != nil {
+		oracleParams.TwapLookbackWindow = time.Duration(partial.PbMsg.TwapLookbackWindow.Int64())
 	}
 
-	if msg.MinVoters != nil {
-		oracleParams.MinVoters = msg.MinVoters.Uint64()
+	if partial.PbMsg.MinVoters != nil {
+		oracleParams.MinVoters = partial.PbMsg.MinVoters.Uint64()
 	}
 
-	if msg.ValidatorFeeRatio != nil {
-		oracleParams.ValidatorFeeRatio = *msg.ValidatorFeeRatio
+	if partial.PbMsg.ValidatorFeeRatio != nil {
+		oracleParams.ValidatorFeeRatio = *partial.PbMsg.ValidatorFeeRatio
 	}
 
 	return oracleParams

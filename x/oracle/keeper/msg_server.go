@@ -167,3 +167,15 @@ func (ms msgServer) DelegateFeedConsent(
 
 	return &types.MsgDelegateFeedConsentResponse{}, err
 }
+
+// EditOracleParams: gRPC tx msg for editing the oracle module params.
+// [Admin] Only callable by sudoers.
+func (ms msgServer) EditOracleParams(
+	goCtx context.Context, msg *types.MsgEditOracleParams,
+) (resp *types.MsgEditOracleParamsResponse, err error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
+	return resp, ms.Admin.EditOracleParams(
+		ctx, PartialOracleParams{PbMsg: *msg}, sender,
+	)
+}

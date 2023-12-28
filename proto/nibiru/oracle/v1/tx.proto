@@ -29,6 +29,11 @@ service Msg {
       returns (MsgDelegateFeedConsentResponse) {
     option (google.api.http).post = "/nibiru/oracle/feeder-delegate";
   }
+
+  rpc EditOracleParams(MsgEditOracleParams)
+      returns (MsgEditOracleParamsResponse) {
+    option (google.api.http).post = "/nibiru/oracle/feeder-delegate";
+  }
 }
 
 // MsgAggregateExchangeRatePrevote represents a message to submit
@@ -84,3 +89,65 @@ message MsgDelegateFeedConsent {
 // MsgDelegateFeedConsentResponse defines the Msg/DelegateFeedConsent response
 // type.
 message MsgDelegateFeedConsentResponse {}
+
+// MsgEditOracleParams: gRPC tx message for updating the x/oracle module params
+// [Admin] Only callable by sudoers.
+message MsgEditOracleParams {
+  string sender = 1;
+
+  string vote_period = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = true
+  ];
+
+  // vote_threshold: [cosmossdk.io/math.LegacyDec] TODO:
+  string vote_threshold = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = true
+  ];
+
+  // reward_band: [cosmossdk.io/math.LegacyDec] TODO:
+  string reward_band = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = true
+  ];
+
+  repeated string whitelist = 5 [ (gogoproto.nullable) = true ];
+
+  // slash_fraction: [cosmossdk.io/math.LegacyDec] TODO:
+  string slash_fraction = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = true
+  ];
+
+  string slash_window = 7 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = true
+  ];
+
+  // min_valid_per_window: [cosmossdk.io/math.LegacyDec] TODO:
+  string min_valid_per_window = 8 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = true
+  ];
+
+  string twap_lookback_window = 9 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = true
+  ];
+
+  string min_voters = 10 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = true
+  ];
+
+  // VoteThreshold: [cosmossdk.io/math.LegacyDec] TODO:
+  string validator_fee_ratio = 11 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = true
+  ];
+}
+
+// MsgEditOracleParamsResponse defines the Msg/EditOracleParams response
+// type.
+message MsgEditOracleParamsResponse {}

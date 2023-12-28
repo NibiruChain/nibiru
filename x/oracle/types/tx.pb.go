@@ -6,6 +6,7 @@ package types
 import (
 	context "context"
 	fmt "fmt"
+	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	grpc1 "github.com/cosmos/gogoproto/grpc"
 	proto "github.com/cosmos/gogoproto/proto"
@@ -276,6 +277,112 @@ func (m *MsgDelegateFeedConsentResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgDelegateFeedConsentResponse proto.InternalMessageInfo
 
+// MsgEditOracleParams: gRPC tx message for updating the x/oracle module params
+// [Admin] Only callable by sudoers.
+type MsgEditOracleParams struct {
+	Sender     string                                  `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	VotePeriod *github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=vote_period,json=votePeriod,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"vote_period,omitempty"`
+	// vote_threshold: [cosmossdk.io/math.LegacyDec] TODO:
+	VoteThreshold *github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,opt,name=vote_threshold,json=voteThreshold,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"vote_threshold,omitempty"`
+	// reward_band: [cosmossdk.io/math.LegacyDec] TODO:
+	RewardBand *github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,4,opt,name=reward_band,json=rewardBand,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"reward_band,omitempty"`
+	Whitelist  []string                                `protobuf:"bytes,5,rep,name=whitelist,proto3" json:"whitelist,omitempty"`
+	// slash_fraction: [cosmossdk.io/math.LegacyDec] TODO:
+	SlashFraction *github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,6,opt,name=slash_fraction,json=slashFraction,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"slash_fraction,omitempty"`
+	SlashWindow   *github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,7,opt,name=slash_window,json=slashWindow,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"slash_window,omitempty"`
+	// min_valid_per_window: [cosmossdk.io/math.LegacyDec] TODO:
+	MinValidPerWindow  *github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,8,opt,name=min_valid_per_window,json=minValidPerWindow,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"min_valid_per_window,omitempty"`
+	TwapLookbackWindow *github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,9,opt,name=twap_lookback_window,json=twapLookbackWindow,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"twap_lookback_window,omitempty"`
+	MinVoters          *github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,10,opt,name=min_voters,json=minVoters,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"min_voters,omitempty"`
+	// VoteThreshold: [cosmossdk.io/math.LegacyDec] TODO:
+	ValidatorFeeRatio *github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,11,opt,name=validator_fee_ratio,json=validatorFeeRatio,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"validator_fee_ratio,omitempty"`
+}
+
+func (m *MsgEditOracleParams) Reset()         { *m = MsgEditOracleParams{} }
+func (m *MsgEditOracleParams) String() string { return proto.CompactTextString(m) }
+func (*MsgEditOracleParams) ProtoMessage()    {}
+func (*MsgEditOracleParams) Descriptor() ([]byte, []int) {
+	return fileDescriptor_11e362c65eb610f4, []int{6}
+}
+func (m *MsgEditOracleParams) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgEditOracleParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgEditOracleParams.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgEditOracleParams) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgEditOracleParams.Merge(m, src)
+}
+func (m *MsgEditOracleParams) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgEditOracleParams) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgEditOracleParams.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgEditOracleParams proto.InternalMessageInfo
+
+func (m *MsgEditOracleParams) GetSender() string {
+	if m != nil {
+		return m.Sender
+	}
+	return ""
+}
+
+func (m *MsgEditOracleParams) GetWhitelist() []string {
+	if m != nil {
+		return m.Whitelist
+	}
+	return nil
+}
+
+// MsgEditOracleParamsResponse defines the Msg/EditOracleParams response
+// type.
+type MsgEditOracleParamsResponse struct {
+}
+
+func (m *MsgEditOracleParamsResponse) Reset()         { *m = MsgEditOracleParamsResponse{} }
+func (m *MsgEditOracleParamsResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgEditOracleParamsResponse) ProtoMessage()    {}
+func (*MsgEditOracleParamsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_11e362c65eb610f4, []int{7}
+}
+func (m *MsgEditOracleParamsResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgEditOracleParamsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgEditOracleParamsResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgEditOracleParamsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgEditOracleParamsResponse.Merge(m, src)
+}
+func (m *MsgEditOracleParamsResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgEditOracleParamsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgEditOracleParamsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgEditOracleParamsResponse proto.InternalMessageInfo
+
 func init() {
 	proto.RegisterType((*MsgAggregateExchangeRatePrevote)(nil), "nibiru.oracle.v1.MsgAggregateExchangeRatePrevote")
 	proto.RegisterType((*MsgAggregateExchangeRatePrevoteResponse)(nil), "nibiru.oracle.v1.MsgAggregateExchangeRatePrevoteResponse")
@@ -283,47 +390,69 @@ func init() {
 	proto.RegisterType((*MsgAggregateExchangeRateVoteResponse)(nil), "nibiru.oracle.v1.MsgAggregateExchangeRateVoteResponse")
 	proto.RegisterType((*MsgDelegateFeedConsent)(nil), "nibiru.oracle.v1.MsgDelegateFeedConsent")
 	proto.RegisterType((*MsgDelegateFeedConsentResponse)(nil), "nibiru.oracle.v1.MsgDelegateFeedConsentResponse")
+	proto.RegisterType((*MsgEditOracleParams)(nil), "nibiru.oracle.v1.MsgEditOracleParams")
+	proto.RegisterType((*MsgEditOracleParamsResponse)(nil), "nibiru.oracle.v1.MsgEditOracleParamsResponse")
 }
 
 func init() { proto.RegisterFile("nibiru/oracle/v1/tx.proto", fileDescriptor_11e362c65eb610f4) }
 
 var fileDescriptor_11e362c65eb610f4 = []byte{
-	// 555 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x94, 0x3f, 0x6f, 0xd3, 0x40,
-	0x18, 0xc6, 0x73, 0x4d, 0x55, 0xb5, 0x87, 0x4a, 0x8b, 0xfb, 0x47, 0x49, 0x88, 0xec, 0xe8, 0x40,
-	0xa5, 0x95, 0xc0, 0x26, 0x45, 0x42, 0xa2, 0x13, 0xb4, 0xd0, 0x2d, 0x08, 0x79, 0x60, 0x60, 0x41,
-	0x97, 0xe4, 0xe5, 0x62, 0xc9, 0xf5, 0x59, 0xbe, 0x6b, 0x94, 0xae, 0x88, 0x81, 0x11, 0x89, 0x89,
-	0x2d, 0x1f, 0x00, 0x89, 0xaf, 0xc1, 0x58, 0x89, 0x85, 0x29, 0x42, 0x09, 0x03, 0x13, 0x83, 0xf9,
-	0x02, 0xc8, 0x77, 0xb6, 0x49, 0x43, 0xfa, 0x27, 0x5b, 0x74, 0xcf, 0xef, 0xde, 0xf7, 0x79, 0x9f,
-	0xbc, 0x67, 0x5c, 0x0e, 0xbc, 0xa6, 0x17, 0x1d, 0x3b, 0x3c, 0xa2, 0x2d, 0x1f, 0x9c, 0x6e, 0xdd,
-	0x91, 0x3d, 0x3b, 0x8c, 0xb8, 0xe4, 0xc6, 0xaa, 0x96, 0x6c, 0x2d, 0xd9, 0xdd, 0x7a, 0x65, 0x9d,
-	0x71, 0xc6, 0x95, 0xe8, 0x24, 0xbf, 0x34, 0x57, 0xa9, 0x32, 0xce, 0x99, 0x0f, 0x0e, 0x0d, 0x3d,
-	0x87, 0x06, 0x01, 0x97, 0x54, 0x7a, 0x3c, 0x10, 0x5a, 0x25, 0x5f, 0x10, 0xb6, 0x1a, 0x82, 0x3d,
-	0x61, 0x2c, 0x02, 0x46, 0x25, 0x3c, 0xeb, 0xb5, 0x3a, 0x34, 0x60, 0xe0, 0x52, 0x09, 0x2f, 0x22,
-	0xe8, 0x72, 0x09, 0xc6, 0x2d, 0x3c, 0xdf, 0xa1, 0xa2, 0x53, 0x42, 0x35, 0xb4, 0xbd, 0xb4, 0xbf,
-	0x12, 0x0f, 0xac, 0x6b, 0x27, 0xf4, 0xc8, 0xdf, 0x23, 0xc9, 0x29, 0x71, 0x95, 0x68, 0xec, 0xe0,
-	0x85, 0x37, 0x00, 0x6d, 0x88, 0x4a, 0x73, 0x0a, 0xbb, 0x11, 0x0f, 0xac, 0x65, 0x8d, 0xe9, 0x73,
-	0xe2, 0xa6, 0x80, 0xb1, 0x8b, 0x97, 0xba, 0xd4, 0xf7, 0xda, 0x54, 0xf2, 0xa8, 0x54, 0x54, 0xf4,
-	0x7a, 0x3c, 0xb0, 0x56, 0x35, 0x9d, 0x4b, 0xc4, 0xfd, 0x87, 0xed, 0x2d, 0xbe, 0xef, 0x5b, 0x85,
-	0x5f, 0x7d, 0xab, 0x40, 0x76, 0xf0, 0x9d, 0x4b, 0x0c, 0xbb, 0x20, 0x42, 0x1e, 0x08, 0x20, 0xbf,
-	0x11, 0xae, 0x9e, 0xc7, 0xbe, 0x4c, 0x27, 0x13, 0xd4, 0x97, 0xff, 0x4f, 0x96, 0x9c, 0x12, 0x57,
-	0x89, 0xc6, 0x63, 0x7c, 0x1d, 0xd2, 0x8b, 0xaf, 0x23, 0x2a, 0x41, 0xa4, 0x13, 0x96, 0xe3, 0x81,
-	0xb5, 0xa1, 0xf1, 0xb3, 0x3a, 0x71, 0x97, 0x61, 0xac, 0x93, 0x18, 0xcb, 0xa6, 0x38, 0x53, 0x36,
-	0xf3, 0xb3, 0x66, 0xb3, 0x85, 0x6f, 0x5f, 0x34, 0x6f, 0x1e, 0xcc, 0x3b, 0x84, 0x37, 0x1b, 0x82,
-	0x3d, 0x05, 0x5f, 0x71, 0x87, 0x00, 0xed, 0x83, 0x44, 0x08, 0xa4, 0xe1, 0xe0, 0x45, 0x1e, 0x42,
-	0xa4, 0xfa, 0xeb, 0x58, 0xd6, 0xe2, 0x81, 0xb5, 0xa2, 0xfb, 0x67, 0x0a, 0x71, 0x73, 0x28, 0xb9,
-	0xd0, 0x4e, 0xeb, 0xa4, 0xc1, 0x8c, 0x5d, 0xc8, 0x14, 0xe2, 0xe6, 0xd0, 0x98, 0xdd, 0x1a, 0x36,
-	0xa7, 0xbb, 0xc8, 0x8c, 0xee, 0xfe, 0x29, 0xe2, 0x62, 0x43, 0x30, 0xe3, 0x33, 0xc2, 0xd5, 0x0b,
-	0x77, 0xb4, 0x6e, 0x4f, 0x3e, 0x07, 0xfb, 0x92, 0x2d, 0xa9, 0x3c, 0x9a, 0xf9, 0x4a, 0x9e, 0x9f,
-	0xf9, 0xf6, 0xdb, 0xcf, 0x8f, 0x73, 0x25, 0xb2, 0xe9, 0x9c, 0x7d, 0x9f, 0x61, 0xea, 0xa6, 0x8f,
-	0x70, 0xf9, 0xfc, 0xad, 0xb3, 0xaf, 0xde, 0x38, 0xe1, 0x2b, 0x0f, 0x67, 0xe3, 0x73, 0x97, 0x37,
-	0x95, 0xcb, 0x0d, 0xb2, 0x36, 0xe1, 0x52, 0x59, 0xfc, 0x84, 0xf0, 0xda, 0xb4, 0xff, 0x7f, 0x7b,
-	0x6a, 0xb3, 0x29, 0x64, 0xe5, 0xfe, 0x55, 0xc9, 0xdc, 0xd0, 0x96, 0x32, 0x54, 0x23, 0xe6, 0x84,
-	0x21, 0xbd, 0xfb, 0xf7, 0xb2, 0x0d, 0xd9, 0x3f, 0xfc, 0x3a, 0x34, 0xd1, 0xe9, 0xd0, 0x44, 0x3f,
-	0x86, 0x26, 0xfa, 0x30, 0x32, 0x0b, 0xa7, 0x23, 0xb3, 0xf0, 0x7d, 0x64, 0x16, 0x5e, 0xdd, 0x65,
-	0x9e, 0xec, 0x1c, 0x37, 0xed, 0x16, 0x3f, 0x72, 0x9e, 0xab, 0x1a, 0x07, 0x1d, 0xea, 0x05, 0x59,
-	0xbd, 0x5e, 0x56, 0x51, 0x9e, 0x84, 0x20, 0x9a, 0x0b, 0xea, 0x1b, 0xf7, 0xe0, 0x6f, 0x00, 0x00,
-	0x00, 0xff, 0xff, 0xfc, 0x7f, 0x51, 0x06, 0x46, 0x05, 0x00, 0x00,
+	// 870 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x96, 0x41, 0x6f, 0x1b, 0x45,
+	0x14, 0xc7, 0xbd, 0x4d, 0x6a, 0xe2, 0x17, 0xd2, 0xa6, 0xeb, 0x34, 0xda, 0xb8, 0x61, 0x37, 0x1a,
+	0x20, 0xa4, 0x12, 0xd9, 0x25, 0x45, 0x42, 0xa2, 0x27, 0x48, 0xdb, 0x48, 0x48, 0x98, 0x86, 0x15,
+	0x14, 0x89, 0x03, 0x66, 0xec, 0x9d, 0xec, 0x8e, 0xb2, 0xde, 0xb1, 0x66, 0xa6, 0x71, 0x7a, 0x45,
+	0x08, 0x71, 0xac, 0xc4, 0x89, 0x5b, 0x3e, 0x00, 0x12, 0x5f, 0xa3, 0xc7, 0x4a, 0x5c, 0x10, 0x07,
+	0x0b, 0x25, 0x08, 0x71, 0xe2, 0xe0, 0x4f, 0x50, 0xcd, 0xec, 0xec, 0xd6, 0x75, 0xdd, 0x26, 0xf6,
+	0x29, 0xc9, 0xbc, 0xff, 0xfc, 0xde, 0xff, 0xbd, 0x9d, 0x79, 0x13, 0x58, 0xcb, 0x68, 0x9b, 0xf2,
+	0x87, 0x01, 0xe3, 0xb8, 0x93, 0x92, 0xe0, 0x68, 0x27, 0x90, 0xc7, 0x7e, 0x8f, 0x33, 0xc9, 0xec,
+	0xe5, 0x3c, 0xe4, 0xe7, 0x21, 0xff, 0x68, 0xa7, 0xb1, 0x12, 0xb3, 0x98, 0xe9, 0x60, 0xa0, 0x7e,
+	0xcb, 0x75, 0x8d, 0xf5, 0x98, 0xb1, 0x38, 0x25, 0x01, 0xee, 0xd1, 0x00, 0x67, 0x19, 0x93, 0x58,
+	0x52, 0x96, 0x89, 0x3c, 0x8a, 0x7e, 0xb7, 0xc0, 0x6b, 0x8a, 0xf8, 0xd3, 0x38, 0xe6, 0x24, 0xc6,
+	0x92, 0xdc, 0x3b, 0xee, 0x24, 0x38, 0x8b, 0x49, 0x88, 0x25, 0xd9, 0xe7, 0xe4, 0x88, 0x49, 0x62,
+	0xbf, 0x0d, 0xf3, 0x09, 0x16, 0x89, 0x63, 0x6d, 0x58, 0x5b, 0xb5, 0xdd, 0xab, 0xc3, 0x81, 0xb7,
+	0xf8, 0x08, 0x77, 0xd3, 0xdb, 0x48, 0xad, 0xa2, 0x50, 0x07, 0xed, 0x9b, 0x50, 0x3d, 0x20, 0x24,
+	0x22, 0xdc, 0xb9, 0xa4, 0x65, 0xd7, 0x86, 0x03, 0x6f, 0x29, 0x97, 0xe5, 0xeb, 0x28, 0x34, 0x02,
+	0xfb, 0x16, 0xd4, 0x8e, 0x70, 0x4a, 0x23, 0x2c, 0x19, 0x77, 0xe6, 0xb4, 0x7a, 0x65, 0x38, 0xf0,
+	0x96, 0x73, 0x75, 0x19, 0x42, 0xe1, 0x73, 0xd9, 0xed, 0x85, 0x9f, 0x4f, 0xbc, 0xca, 0x7f, 0x27,
+	0x5e, 0x05, 0xdd, 0x84, 0xf7, 0xce, 0x31, 0x1c, 0x12, 0xd1, 0x63, 0x99, 0x20, 0xe8, 0x7f, 0x0b,
+	0xd6, 0x5f, 0xa5, 0x7d, 0x60, 0x2a, 0x13, 0x38, 0x95, 0x2f, 0x57, 0xa6, 0x56, 0x51, 0xa8, 0x83,
+	0xf6, 0x27, 0x70, 0x85, 0x98, 0x8d, 0x2d, 0x8e, 0x25, 0x11, 0xa6, 0xc2, 0xb5, 0xe1, 0xc0, 0xbb,
+	0x9e, 0xcb, 0x5f, 0x8c, 0xa3, 0x70, 0x89, 0x8c, 0x64, 0x12, 0x23, 0xbd, 0x99, 0x9b, 0xaa, 0x37,
+	0xf3, 0xd3, 0xf6, 0x66, 0x13, 0xde, 0x79, 0x5d, 0xbd, 0x65, 0x63, 0x7e, 0xb4, 0x60, 0xb5, 0x29,
+	0xe2, 0xbb, 0x24, 0xd5, 0xba, 0x3d, 0x42, 0xa2, 0x3b, 0x2a, 0x90, 0x49, 0x3b, 0x80, 0x05, 0xd6,
+	0x23, 0x5c, 0xe7, 0xcf, 0xdb, 0x52, 0x1f, 0x0e, 0xbc, 0xab, 0x79, 0xfe, 0x22, 0x82, 0xc2, 0x52,
+	0xa4, 0x36, 0x44, 0x86, 0x63, 0x1a, 0x33, 0xb2, 0xa1, 0x88, 0xa0, 0xb0, 0x14, 0x8d, 0xd8, 0xdd,
+	0x00, 0x77, 0xb2, 0x8b, 0xd2, 0xe8, 0xbf, 0x55, 0xa8, 0x37, 0x45, 0x7c, 0x2f, 0xa2, 0xf2, 0xbe,
+	0x3e, 0xe7, 0xfb, 0x98, 0xe3, 0xae, 0xb0, 0x57, 0xa1, 0x2a, 0x48, 0xa6, 0x3a, 0xaa, 0x3d, 0x86,
+	0xe6, 0x2f, 0xfb, 0x3e, 0x2c, 0xaa, 0x13, 0xd0, 0xea, 0x11, 0x4e, 0x59, 0x64, 0xfc, 0xf8, 0x4f,
+	0x06, 0x9e, 0xf5, 0xd7, 0xc0, 0xdb, 0x8c, 0xa9, 0x4c, 0x1e, 0xb6, 0xfd, 0x0e, 0xeb, 0x06, 0x1d,
+	0x26, 0xba, 0x4c, 0x98, 0x1f, 0xdb, 0x22, 0x3a, 0x0c, 0xe4, 0xa3, 0x1e, 0x11, 0xfe, 0x67, 0x99,
+	0x0c, 0x41, 0x21, 0xf6, 0x35, 0xc1, 0xfe, 0x1a, 0xae, 0x68, 0xa0, 0x4c, 0x38, 0x11, 0x09, 0x4b,
+	0x23, 0xf3, 0x09, 0xa7, 0x61, 0xde, 0x25, 0x9d, 0x70, 0x49, 0x51, 0xbe, 0x2a, 0x20, 0xca, 0x27,
+	0x27, 0x7d, 0xcc, 0xa3, 0x56, 0x1b, 0x67, 0x91, 0xf9, 0xd0, 0xd3, 0x32, 0x21, 0x47, 0xec, 0xe2,
+	0x2c, 0xb2, 0x11, 0xd4, 0xfa, 0x09, 0x95, 0x24, 0xa5, 0x42, 0x3a, 0x97, 0x37, 0xe6, 0xb6, 0x6a,
+	0xbb, 0xf3, 0x0a, 0x17, 0x3e, 0x5f, 0x56, 0xb5, 0x88, 0x14, 0x8b, 0xa4, 0x75, 0xc0, 0x71, 0x47,
+	0x0d, 0x01, 0xa7, 0x3a, 0x5b, 0x2d, 0x9a, 0xb2, 0x67, 0x20, 0xf6, 0x97, 0xf0, 0x66, 0x8e, 0xed,
+	0xd3, 0x2c, 0x62, 0x7d, 0xe7, 0x8d, 0x99, 0x9a, 0xbe, 0xa8, 0x19, 0xdf, 0x68, 0x84, 0xdd, 0x82,
+	0x95, 0x2e, 0xcd, 0x5a, 0xfa, 0x88, 0xab, 0x6f, 0x59, 0xa0, 0x17, 0x66, 0xf2, 0x7b, 0xad, 0x4b,
+	0xb3, 0x07, 0x0a, 0xb5, 0x4f, 0xb8, 0x49, 0xf0, 0x3d, 0xac, 0xc8, 0x3e, 0xee, 0xb5, 0x52, 0xc6,
+	0x0e, 0xdb, 0xb8, 0x73, 0x58, 0x24, 0xa8, 0xcd, 0xe4, 0xdd, 0x56, 0xac, 0xcf, 0x0d, 0xca, 0x64,
+	0x68, 0x02, 0xe8, 0x12, 0x98, 0x24, 0x5c, 0x38, 0x30, 0x13, 0xb7, 0xa6, 0x8c, 0x6b, 0x80, 0xfd,
+	0x1d, 0xd4, 0xcb, 0x0b, 0xdf, 0x3a, 0x20, 0x7a, 0xd2, 0x50, 0xe6, 0x2c, 0xce, 0xd6, 0x90, 0x12,
+	0xb5, 0x47, 0xd4, 0x70, 0xa0, 0x0c, 0xbd, 0x05, 0x37, 0x26, 0xdc, 0xb3, 0xe2, 0x1e, 0xde, 0xfa,
+	0xe9, 0x32, 0xcc, 0x35, 0x45, 0x6c, 0xff, 0x66, 0xc1, 0xfa, 0x6b, 0xdf, 0x8a, 0x1d, 0x7f, 0xfc,
+	0x59, 0xf2, 0xcf, 0x99, 0xd6, 0x8d, 0x8f, 0xa7, 0xde, 0x52, 0x8e, 0x07, 0xf7, 0x87, 0x3f, 0xfe,
+	0xf9, 0xe5, 0x92, 0x83, 0x56, 0x83, 0x17, 0xdf, 0xc9, 0x9e, 0x71, 0x73, 0x62, 0xc1, 0xda, 0xab,
+	0xa7, 0xbf, 0x7f, 0xf1, 0xc4, 0x4a, 0xdf, 0xf8, 0x68, 0x3a, 0x7d, 0xe9, 0xf2, 0x86, 0x76, 0x79,
+	0x1d, 0xd5, 0xc7, 0x5c, 0x6a, 0x8b, 0xbf, 0x5a, 0x50, 0x9f, 0x34, 0x87, 0xb7, 0x26, 0x26, 0x9b,
+	0xa0, 0x6c, 0x7c, 0x70, 0x51, 0x65, 0x69, 0x68, 0x53, 0x1b, 0xda, 0x40, 0xee, 0x98, 0xa1, 0xfc,
+	0x0d, 0xda, 0x2e, 0x26, 0xb5, 0xfd, 0xd8, 0x82, 0xe5, 0x97, 0x46, 0xef, 0xbb, 0x13, 0xd3, 0x8d,
+	0xcb, 0x1a, 0xdb, 0x17, 0x92, 0x4d, 0x6b, 0x69, 0x77, 0xef, 0xc9, 0xa9, 0x6b, 0x3d, 0x3d, 0x75,
+	0xad, 0xbf, 0x4f, 0x5d, 0xeb, 0xf1, 0x99, 0x5b, 0x79, 0x7a, 0xe6, 0x56, 0xfe, 0x3c, 0x73, 0x2b,
+	0xdf, 0xbe, 0x3f, 0x72, 0xf8, 0xbf, 0xd0, 0x8c, 0x3b, 0x09, 0xa6, 0x59, 0xc1, 0x3b, 0x2e, 0x88,
+	0xfa, 0x1a, 0xb4, 0xab, 0xfa, 0xdf, 0x9f, 0x0f, 0x9f, 0x05, 0x00, 0x00, 0xff, 0xff, 0x53, 0xda,
+	0x39, 0xce, 0x61, 0x09, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -348,6 +477,7 @@ type MsgClient interface {
 	// to another address known as a price feeder.
 	// See https://github.com/NibiruChain/pricefeeder.
 	DelegateFeedConsent(ctx context.Context, in *MsgDelegateFeedConsent, opts ...grpc.CallOption) (*MsgDelegateFeedConsentResponse, error)
+	EditOracleParams(ctx context.Context, in *MsgEditOracleParams, opts ...grpc.CallOption) (*MsgEditOracleParamsResponse, error)
 }
 
 type msgClient struct {
@@ -385,6 +515,15 @@ func (c *msgClient) DelegateFeedConsent(ctx context.Context, in *MsgDelegateFeed
 	return out, nil
 }
 
+func (c *msgClient) EditOracleParams(ctx context.Context, in *MsgEditOracleParams, opts ...grpc.CallOption) (*MsgEditOracleParamsResponse, error) {
+	out := new(MsgEditOracleParamsResponse)
+	err := c.cc.Invoke(ctx, "/nibiru.oracle.v1.Msg/EditOracleParams", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	// AggregateExchangeRatePrevote defines a method for submitting
@@ -397,6 +536,7 @@ type MsgServer interface {
 	// to another address known as a price feeder.
 	// See https://github.com/NibiruChain/pricefeeder.
 	DelegateFeedConsent(context.Context, *MsgDelegateFeedConsent) (*MsgDelegateFeedConsentResponse, error)
+	EditOracleParams(context.Context, *MsgEditOracleParams) (*MsgEditOracleParamsResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -411,6 +551,9 @@ func (*UnimplementedMsgServer) AggregateExchangeRateVote(ctx context.Context, re
 }
 func (*UnimplementedMsgServer) DelegateFeedConsent(ctx context.Context, req *MsgDelegateFeedConsent) (*MsgDelegateFeedConsentResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DelegateFeedConsent not implemented")
+}
+func (*UnimplementedMsgServer) EditOracleParams(ctx context.Context, req *MsgEditOracleParams) (*MsgEditOracleParamsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EditOracleParams not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -471,6 +614,24 @@ func _Msg_DelegateFeedConsent_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_EditOracleParams_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgEditOracleParams)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).EditOracleParams(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/nibiru.oracle.v1.Msg/EditOracleParams",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).EditOracleParams(ctx, req.(*MsgEditOracleParams))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "nibiru.oracle.v1.Msg",
 	HandlerType: (*MsgServer)(nil),
@@ -486,6 +647,10 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DelegateFeedConsent",
 			Handler:    _Msg_DelegateFeedConsent_Handler,
+		},
+		{
+			MethodName: "EditOracleParams",
+			Handler:    _Msg_EditOracleParams_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -693,6 +858,176 @@ func (m *MsgDelegateFeedConsentResponse) MarshalToSizedBuffer(dAtA []byte) (int,
 	return len(dAtA) - i, nil
 }
 
+func (m *MsgEditOracleParams) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgEditOracleParams) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgEditOracleParams) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.ValidatorFeeRatio != nil {
+		{
+			size := m.ValidatorFeeRatio.Size()
+			i -= size
+			if _, err := m.ValidatorFeeRatio.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x5a
+	}
+	if m.MinVoters != nil {
+		{
+			size := m.MinVoters.Size()
+			i -= size
+			if _, err := m.MinVoters.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x52
+	}
+	if m.TwapLookbackWindow != nil {
+		{
+			size := m.TwapLookbackWindow.Size()
+			i -= size
+			if _, err := m.TwapLookbackWindow.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x4a
+	}
+	if m.MinValidPerWindow != nil {
+		{
+			size := m.MinValidPerWindow.Size()
+			i -= size
+			if _, err := m.MinValidPerWindow.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x42
+	}
+	if m.SlashWindow != nil {
+		{
+			size := m.SlashWindow.Size()
+			i -= size
+			if _, err := m.SlashWindow.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x3a
+	}
+	if m.SlashFraction != nil {
+		{
+			size := m.SlashFraction.Size()
+			i -= size
+			if _, err := m.SlashFraction.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x32
+	}
+	if len(m.Whitelist) > 0 {
+		for iNdEx := len(m.Whitelist) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Whitelist[iNdEx])
+			copy(dAtA[i:], m.Whitelist[iNdEx])
+			i = encodeVarintTx(dAtA, i, uint64(len(m.Whitelist[iNdEx])))
+			i--
+			dAtA[i] = 0x2a
+		}
+	}
+	if m.RewardBand != nil {
+		{
+			size := m.RewardBand.Size()
+			i -= size
+			if _, err := m.RewardBand.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x22
+	}
+	if m.VoteThreshold != nil {
+		{
+			size := m.VoteThreshold.Size()
+			i -= size
+			if _, err := m.VoteThreshold.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.VotePeriod != nil {
+		{
+			size := m.VotePeriod.Size()
+			i -= size
+			if _, err := m.VotePeriod.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Sender) > 0 {
+		i -= len(m.Sender)
+		copy(dAtA[i:], m.Sender)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Sender)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgEditOracleParamsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgEditOracleParamsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgEditOracleParamsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	offset -= sovTx(v)
 	base := offset
@@ -786,6 +1121,70 @@ func (m *MsgDelegateFeedConsent) Size() (n int) {
 }
 
 func (m *MsgDelegateFeedConsentResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgEditOracleParams) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Sender)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.VotePeriod != nil {
+		l = m.VotePeriod.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.VoteThreshold != nil {
+		l = m.VoteThreshold.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.RewardBand != nil {
+		l = m.RewardBand.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if len(m.Whitelist) > 0 {
+		for _, s := range m.Whitelist {
+			l = len(s)
+			n += 1 + l + sovTx(uint64(l))
+		}
+	}
+	if m.SlashFraction != nil {
+		l = m.SlashFraction.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.SlashWindow != nil {
+		l = m.SlashWindow.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.MinValidPerWindow != nil {
+		l = m.MinValidPerWindow.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.TwapLookbackWindow != nil {
+		l = m.TwapLookbackWindow.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.MinVoters != nil {
+		l = m.MinVoters.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.ValidatorFeeRatio != nil {
+		l = m.ValidatorFeeRatio.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgEditOracleParamsResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1365,6 +1764,494 @@ func (m *MsgDelegateFeedConsentResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: MsgDelegateFeedConsentResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgEditOracleParams) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgEditOracleParams: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgEditOracleParams: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sender", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Sender = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field VotePeriod", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_cosmos_cosmos_sdk_types.Int
+			m.VotePeriod = &v
+			if err := m.VotePeriod.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field VoteThreshold", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_cosmos_cosmos_sdk_types.Dec
+			m.VoteThreshold = &v
+			if err := m.VoteThreshold.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RewardBand", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_cosmos_cosmos_sdk_types.Dec
+			m.RewardBand = &v
+			if err := m.RewardBand.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Whitelist", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Whitelist = append(m.Whitelist, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SlashFraction", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_cosmos_cosmos_sdk_types.Dec
+			m.SlashFraction = &v
+			if err := m.SlashFraction.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SlashWindow", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_cosmos_cosmos_sdk_types.Int
+			m.SlashWindow = &v
+			if err := m.SlashWindow.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MinValidPerWindow", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_cosmos_cosmos_sdk_types.Dec
+			m.MinValidPerWindow = &v
+			if err := m.MinValidPerWindow.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 9:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TwapLookbackWindow", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_cosmos_cosmos_sdk_types.Int
+			m.TwapLookbackWindow = &v
+			if err := m.TwapLookbackWindow.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 10:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MinVoters", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_cosmos_cosmos_sdk_types.Int
+			m.MinVoters = &v
+			if err := m.MinVoters.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 11:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ValidatorFeeRatio", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_cosmos_cosmos_sdk_types.Dec
+			m.ValidatorFeeRatio = &v
+			if err := m.ValidatorFeeRatio.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgEditOracleParamsResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgEditOracleParamsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgEditOracleParamsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
