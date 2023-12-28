@@ -705,23 +705,23 @@ func (app *NibiruApp) initModuleManager(
 	encodingConfig EncodingConfig,
 	skipGenesisInvariants bool,
 ) {
-	app.mm = module.NewManager(
+	app.ModuleManager = module.NewManager(
 		app.initAppModules(encodingConfig, skipGenesisInvariants)...,
 	)
 
 	orderedModules := orderedModuleNames()
-	app.mm.SetOrderBeginBlockers(orderedModules...)
-	app.mm.SetOrderEndBlockers(orderedModules...)
-	app.mm.SetOrderInitGenesis(orderedModules...)
-	app.mm.SetOrderExportGenesis(orderedModules...)
+	app.ModuleManager.SetOrderBeginBlockers(orderedModules...)
+	app.ModuleManager.SetOrderEndBlockers(orderedModules...)
+	app.ModuleManager.SetOrderInitGenesis(orderedModules...)
+	app.ModuleManager.SetOrderExportGenesis(orderedModules...)
 
 	// Uncomment if you want to set a custom migration order here.
 	// app.mm.SetOrderMigrations(custom order)
 
-	app.mm.RegisterInvariants(&app.crisisKeeper)
+	app.ModuleManager.RegisterInvariants(&app.crisisKeeper)
 	app.configurator = module.NewConfigurator(
 		app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
-	app.mm.RegisterServices(app.configurator)
+	app.ModuleManager.RegisterServices(app.configurator)
 
 	// see https://github.com/cosmos/cosmos-sdk/blob/666c345ad23ddda9523cc5cd1b71187d91c26f34/simapp/upgrades.go#L35-L57
 	for _, subspace := range app.paramsKeeper.GetSubspaces() {
@@ -853,7 +853,7 @@ func (app *NibiruApp) initSimulationManager(
 	overrideModules := map[string]module.AppModuleSimulation{
 		authtypes.ModuleName: auth.NewAppModule(app.appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, app.GetSubspace(authtypes.ModuleName)),
 	}
-	app.sm = module.NewSimulationManagerFromAppModules(app.mm.Modules, overrideModules)
+	app.sm = module.NewSimulationManagerFromAppModules(app.ModuleManager.Modules, overrideModules)
 
 	app.sm.RegisterStoreDecoders()
 }
