@@ -38,15 +38,15 @@ func (k admin) EditOracleParams(
 		return fmt.Errorf("get oracle params error: %s", err.Error())
 	}
 
-	mergedParams := newParams.mergeOracleParams(params)
+	mergedParams := newParams.MergeOracleParams(params)
 	k.UpdateParams(ctx, mergedParams)
 	return nil
 }
 
-// mergeOracleParams: Takes the given oracle params and merges them into the
+// MergeOracleParams: Takes the given oracle params and merges them into the
 // existing partial params, keeping any existing values that are not set in the
 // partial.
-func (partial PartialOracleParams) mergeOracleParams(
+func (partial PartialOracleParams) MergeOracleParams(
 	oracleParams oracletypes.Params,
 ) oracletypes.Params {
 	if partial.PbMsg.VotePeriod != nil {
