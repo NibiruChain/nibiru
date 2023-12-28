@@ -15,12 +15,11 @@ import (
 // admin calls off from the other Keeper methods.
 //
 // These Admin functions should:
-// 1. Not be wired into the MsgServer.
-// 2. Not be called in other methods in the x/perp module.
-// 3. Only be callable from nibiru/wasmbinding via sudo contracts.
+// 1. Not be called in other methods in the x/perp module.
+// 2. Only be callable from the x/sudo root or sudo contracts.
 //
-// The intention here is to make it more obvious to the developer that an unsafe
-// function is being used when it's called from the PerpKeeper.Admin struct.
+// The intention behind "admin" is to make it more obvious to the developer that
+// an unsafe function is being used when it's called from "PerpKeeper.Admin"
 type admin struct{ *Keeper }
 
 // WithdrawFromPerpFund sends funds from the Perp Fund to the "to" address.

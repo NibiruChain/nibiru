@@ -27,8 +27,12 @@ type Keeper struct {
 	bankKeeper    types.BankKeeper
 	distrKeeper   types.DistributionKeeper
 	StakingKeeper types.StakingKeeper
+	SudoKeeper    types.SudoKeeper
 
 	distrModuleName string
+
+	// Extends the Keeper with sudo functions. See sudo.go.
+	Admin admin
 
 	Params            collections.Item[types.Params]
 	ExchangeRates     collections.Map[asset.Pair, types.DatedPrice]
@@ -45,23 +49,31 @@ type Keeper struct {
 }
 
 // NewKeeper constructs a new keeper for oracle
-func NewKeeper(cdc codec.BinaryCodec, storeKey storetypes.StoreKey,
+func NewKeeper(
+	cdc codec.BinaryCodec,
+	storeKey storetypes.StoreKey,
+
 	accountKeeper types.AccountKeeper,
-	bankKeeper types.BankKeeper, distrKeeper types.DistributionKeeper,
-	stakingKeeper types.StakingKeeper, distrName string,
+	bankKeeper types.BankKeeper,
+	distrKeeper types.DistributionKeeper,
+	stakingKeeper types.StakingKeeper,
+	sudoKeeper types.SudoKeeper,
+
+	distrName string,
 ) Keeper {
 	// ensure oracle module account is set
 	if addr := accountKeeper.GetModuleAddress(types.ModuleName); addr == nil {
 		panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
 	}
 
-	return Keeper{
+	k := Keeper{
 		cdc:               cdc,
 		storeKey:          storeKey,
 		AccountKeeper:     accountKeeper,
 		bankKeeper:        bankKeeper,
 		distrKeeper:       distrKeeper,
 		StakingKeeper:     stakingKeeper,
+		SudoKeeper:        sudoKeeper,
 		distrModuleName:   distrName,
 		Params:            collections.NewItem(storeKey, 11, collections.ProtoValueEncoder[types.Params](cdc)),
 		ExchangeRates:     collections.NewMap(storeKey, 1, asset.PairKeyEncoder, collections.ProtoValueEncoder[types.DatedPrice](cdc)),
@@ -76,6 +88,8 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey storetypes.StoreKey,
 			collections.Uint64KeyEncoder, collections.ProtoValueEncoder[types.Rewards](cdc)),
 		RewardsID: collections.NewSequence(storeKey, 9),
 	}
+	k.Admin = admin{&k}
+	return k
 }
 
 // Logger returns a module-specific logger.
