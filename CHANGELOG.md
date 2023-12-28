@@ -77,16 +77,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1714](https://github.com/NibiruChain/nibiru/pull/1714) - ci(localnet.sh): Fix script, simplify, and test in CI.
 * [#1719](https://github.com/NibiruChain/nibiru/pull/1719) - refactor(test): add is not mandatory interface to action
 * [#1723](https://github.com/NibiruChain/nibiru/pull/1723) - ci(e2e-wasm.yml): rm unused workflow
+* [#1728](https://github.com/NibiruChain/nibiru/pull/1728) - test(devgas-cli): CLI tests for devgas txs
 * [#1735](https://github.com/NibiruChain/nibiru/pull/1735) - test(sim): fix simulation tests
 
 ### Dependencies
 
 * Bump `google.golang.org/grpc` from 1.59.0 to 1.60.0 ([#1720](https://github.com/NibiruChain/nibiru/pull/1720))
-
 * Bump `golang.org/x/crypto` from 0.15.0 to 0.17.0 ([#1724](https://github.com/NibiruChain/nibiru/pull/1724))
 * Bump `github.com/holiman/uint256` from 1.2.3 to 1.2.4 ([#1730](https://github.com/NibiruChain/nibiru/pull/1730))
 * Bump `github.com/dvsekhvalnov/jose2go` from 1.5.0 to 1.6.0 ([#1733](https://github.com/NibiruChain/nibiru/pull/1733))
-
 * Bump `github.com/spf13/cast` from 1.5.1 to 1.6.0 ([#1689](https://github.com/NibiruChain/nibiru/pull/1689))
 * Bump `cosmossdk.io/math` from 1.1.2 to 1.2.0 ([#1676](https://github.com/NibiruChain/nibiru/pull/1676))
 * Bump `github.com/grpc-ecosystem/grpc-gateway/v2` from 2.18.0 to 2.18.1 ([#1675](https://github.com/NibiruChain/nibiru/pull/1675))
