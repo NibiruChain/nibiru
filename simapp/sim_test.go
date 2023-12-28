@@ -10,17 +10,14 @@ import (
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/testutil/sims"
-	helpers "github.com/cosmos/cosmos-sdk/testutil/sims"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	simulationtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 	simcli "github.com/cosmos/cosmos-sdk/x/simulation/client/cli"
-	"github.com/cosmos/ibc-go/v7/testing/simapp"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/app"
-	appsim "github.com/NibiruChain/nibiru/app/sim"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 )
 
@@ -29,15 +26,15 @@ const SimAppChainID = "simulation-app"
 
 func init() {
 	// We call GetSimulatorFlags here in order to set the value for
-	// 'simapp.FlagEnabledValue', which enables simulations
-	appsim.GetSimulatorFlags()
+	// 'simcli.FlagEnabledValue', which enables simulations
+	simcli.GetSimulatorFlags()
 }
 
 func TestFullAppSimulation(t *testing.T) {
 	config := simcli.NewConfigFromFlags()
 	config.ChainID = SimAppChainID
 
-	db, dir, _, skip, err := helpers.SetupSimulation(
+	db, dir, _, skip, err := simtestutil.SetupSimulation(
 		config,
 		"goleveldb-app-sim",
 		"Simulation",
@@ -66,14 +63,14 @@ func TestFullAppSimulation(t *testing.T) {
 		/* app */ app.BaseApp,
 		/* appStateFn */ AppStateFn(app.AppCodec(), app.SimulationManager()),
 		/* randAccFn */ simulationtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
-		/* ops */ helpers.SimulationOperations(app, app.AppCodec(), config), // Run all registered operations
+		/* ops */ simtestutil.SimulationOperations(app, app.AppCodec(), config), // Run all registered operations
 		/* blockedAddrs */ app.ModuleAccountAddrs(),
 		/* config */ config,
 		/* cdc */ app.AppCodec(),
 	)
 
 	// export state and simParams before the simulation error is checked
-	if err = helpers.CheckExportSimulation(app, config, simParams); err != nil {
+	if err = simtestutil.CheckExportSimulation(app, config, simParams); err != nil {
 		t.Fatal(err)
 	}
 
@@ -82,18 +79,22 @@ func TestFullAppSimulation(t *testing.T) {
 	}
 
 	if config.Commit {
-		simapp.PrintStats(db)
+		simtestutil.PrintStats(db)
 	}
 }
 
 func TestAppStateDeterminism(t *testing.T) {
-	config := simapp.NewConfigFromFlags()
+	// if !simcli.FlagEnabledValue {
+	// 	t.Skip("skipping application simulation")
+	// }
+
+	config := simcli.NewConfigFromFlags()
 	config.InitialBlockHeight = 1
 	config.ExportParamsPath = ""
 	config.OnOperation = false
 	config.AllInvariants = false
 	config.ChainID = SimAppChainID
-
+	fmt.Println(config)
 	numSeeds := 3
 	numTimesToRunPerSeed := 5
 	appHashList := make([]json.RawMessage, numTimesToRunPerSeed)
@@ -106,7 +107,7 @@ func TestAppStateDeterminism(t *testing.T) {
 			logger := log.NewNopLogger()
 			encoding := app.MakeEncodingConfig()
 
-			app := app.NewNibiruApp(logger, db, nil, true, encoding, sims.EmptyAppOptions{}, baseapp.SetChainID(SimAppChainID))
+			app := app.NewNibiruApp(logger, db, nil, true, encoding, simtestutil.EmptyAppOptions{}, baseapp.SetChainID(SimAppChainID))
 			appCodec := app.AppCodec()
 
 			fmt.Printf(
@@ -120,7 +121,7 @@ func TestAppStateDeterminism(t *testing.T) {
 				app.BaseApp,
 				AppStateFn(appCodec, app.SimulationManager()),
 				simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
-				helpers.SimulationOperations(app, appCodec, config),
+				simtestutil.SimulationOperations(app, appCodec, config),
 				app.ModuleAccountAddrs(),
 				config,
 				appCodec,
@@ -128,7 +129,7 @@ func TestAppStateDeterminism(t *testing.T) {
 			require.NoError(t, err)
 
 			if config.Commit {
-				simapp.PrintStats(db)
+				simtestutil.PrintStats(db)
 			}
 
 			appHash := app.LastCommitID().Hash

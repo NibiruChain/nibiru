@@ -170,5 +170,18 @@ func (AppModule) RegisterStoreDecoder(sdk.StoreDecoderRegistry) {
 
 // WeightedOperations implements module.AppModuleSimulation.
 func (AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
+	appParams := simState.AppParams
+
+	fmt.Println("Map:", fmt.Sprintf("%v", appParams))
+	for k, v := range appParams {
+		var val int
+		fmt.Printf("Key: %s, Value: %d\n", k, v)
+		err := json.Unmarshal(v, &val)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("Key: %s, Value: %d\n", k, val)
+	}
+
 	return nil
 }
