@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	dbm "github.com/cometbft/cometbft-db"
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -297,4 +298,92 @@ func TestAppImportExport(t *testing.T) {
 		fmt.Printf("compared %d different key/value pairs between %s and %s\n", len(failedKVAs), skp.A, skp.B)
 		require.Equal(t, 0, len(failedKVAs), simtestutil.GetSimulationLog(skp.A.Name(), oldApp.SimulationManager().StoreDecoders, failedKVAs, failedKVBs))
 	}
+}
+
+func TestAppSimulationAfterImport(t *testing.T) {
+	config := simcli.NewConfigFromFlags()
+	config.ChainID = SimAppChainID
+
+	db, dir, logger, skip, err := simtestutil.SetupSimulation(config, "goleveldb-app-sim", "Simulation", simcli.FlagVerboseValue, simcli.FlagEnabledValue)
+	if skip {
+		t.Skip("skipping application simulation after import")
+	}
+	require.NoError(t, err, "simulation setup failed")
+
+	defer func() {
+		require.NoError(t, db.Close())
+		require.NoError(t, os.RemoveAll(dir))
+	}()
+
+	appOptions := make(simtestutil.AppOptionsMap, 0)
+	appOptions[flags.FlagHome] = app.DefaultNodeHome
+	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
+
+	encoding := app.MakeEncodingConfig()
+	oldApp := app.NewNibiruApp(logger, db, nil, true, encoding, appOptions, baseapp.SetChainID(SimAppChainID))
+	require.Equal(t, "Nibiru", oldApp.Name())
+	appCodec := oldApp.AppCodec()
+
+	// Run randomized simulation
+	stopEarly, simParams, simErr := simulation.SimulateFromSeed(
+		t,
+		os.Stdout,
+		oldApp.BaseApp,
+		AppStateFn(appCodec, oldApp.SimulationManager()),
+		simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
+		simtestutil.SimulationOperations(oldApp, appCodec, config),
+		oldApp.ModuleAccountAddrs(),
+		config,
+		appCodec,
+	)
+
+	// export state and simParams before the simulation error is checked
+	err = simtestutil.CheckExportSimulation(oldApp, config, simParams)
+	require.NoError(t, err)
+	require.NoError(t, simErr)
+
+	if config.Commit {
+		simtestutil.PrintStats(db)
+	}
+
+	if stopEarly {
+		fmt.Println("can't export or import a zero-validator genesis, exiting test...")
+		return
+	}
+
+	fmt.Printf("exporting genesis...\n")
+
+	exported, err := oldApp.ExportAppStateAndValidators(true, []string{}, []string{})
+	require.NoError(t, err)
+
+	fmt.Printf("importing genesis...\n")
+
+	newDB, newDir, _, _, err := simtestutil.SetupSimulation(config, "leveldb-app-sim-2", "Simulation-2", simcli.FlagVerboseValue, simcli.FlagEnabledValue)
+	require.NoError(t, err, "simulation setup failed")
+
+	defer func() {
+		require.NoError(t, newDB.Close())
+		require.NoError(t, os.RemoveAll(newDir))
+	}()
+
+	newApp := app.NewNibiruApp(log.NewNopLogger(), newDB, nil, true, encoding, appOptions, baseapp.SetChainID(SimAppChainID))
+	require.Equal(t, "Nibiru", newApp.Name())
+
+	newApp.InitChain(abci.RequestInitChain{
+		ChainId:       SimAppChainID,
+		AppStateBytes: exported.AppState,
+	})
+
+	_, _, err = simulation.SimulateFromSeed(
+		t,
+		os.Stdout,
+		newApp.BaseApp,
+		AppStateFn(appCodec, newApp.SimulationManager()),
+		simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
+		simtestutil.SimulationOperations(newApp, newApp.AppCodec(), config),
+		newApp.ModuleAccountAddrs(),
+		config,
+		oldApp.AppCodec(),
+	)
+	require.NoError(t, err)
 }

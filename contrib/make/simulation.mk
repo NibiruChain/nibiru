@@ -36,11 +36,16 @@ test-sim-import-export:
 		-NumBlocks=100 \
 		-Commit=true \
 		-Seed=99 \
-		-Period=0
+		-Period=5
 
-.PHONY: test-sim-benchmark-invariants
-test-sim-benchmark-invariants:
-	@echo "Running simulation invariant benchmarks..."
-	@go test -mod=readonly $(SIMAPP) -benchmem -bench=BenchmarkInvariants -run=^$ \
-	-Enabled=true -NumBlocks=1000 -BlockSize=200 \
-	-Period=1 -Commit=true -Seed=57 -v -timeout 24h
+.PHONY: test-sim-after-import
+test-sim-after-import:
+	@echo "Running application simulation-after-import. This may take several minutes..."
+	@go test -mod=readonly -v $(SIMAPP) \
+		-run TestAppSimulationAfterImport \
+		-Params=params.json \
+		-Enabled=true \
+		-NumBlocks=50 \
+		-Commit=true \
+		-Seed=99 \
+		-Period=5
