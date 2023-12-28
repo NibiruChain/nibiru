@@ -11,14 +11,28 @@ $(RUNSIM):
 .PHONY: test-sim-nondeterminism
 test-sim-nondeterminism:
 	@echo "Running non-determinism test..."
-	go test -mod=readonly $(SIMAPP) -run TestAppStateDeterminism -Enabled=true -Params=params.json \
-		-NumBlocks=100 -BlockSize=200 -Commit=true -Period=0 -Verbose=true -timeout 24h
+	@go test -mod=readonly -v $(SIMAPP) \
+		-run TestAppStateDeterminism \
+		-Enabled=true \
+		-Params=params.json \
+		-NumBlocks=100 \
+		-BlockSize=200 \
+		-Commit=true \
+		-Period=0 \
+		-Verbose=true
 
 .PHONY: test-sim-default-genesis-fast
 test-sim-default-genesis-fast:
 	@echo "Running default genesis simulation..."
-	@go test -mod=readonly $(SIMAPP) -run TestFullAppSimulation  \
-		-Enabled=true -NumBlocks=100 -BlockSize=200 -Commit=true -Seed=99 -Period=5 -v
+	@go test -mod=readonly -v $(SIMAPP) \
+		-run TestFullAppSimulation \
+		-Params=params.json \
+		-Enabled=true \
+		-NumBlocks=100 \
+		-BlockSize=200 \
+		-Commit=true \
+		-Seed=99 \
+		-Period=0
 
 .PHONY: test-sim-custom-genesis-multi-seed
 test-sim-custom-genesis-multi-seed: runsim

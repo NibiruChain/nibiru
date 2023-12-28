@@ -14,13 +14,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	simulationtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 	simcli "github.com/cosmos/cosmos-sdk/x/simulation/client/cli"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 )
 
 // SimAppChainID hardcoded chainID for simulation
@@ -36,49 +34,43 @@ func TestFullAppSimulation(t *testing.T) {
 	config := simcli.NewConfigFromFlags()
 	config.ChainID = SimAppChainID
 
-	db, dir, _, skip, err := simtestutil.SetupSimulation(
-		config,
-		"goleveldb-app-sim",
-		"Simulation",
-		simcli.FlagVerboseValue, simcli.FlagEnabledValue,
-	)
+	db, dir, logger, skip, err := simtestutil.SetupSimulation(config, "goleveldb-app-sim", "Simulation", simcli.FlagVerboseValue, simcli.FlagEnabledValue)
 	if skip {
 		t.Skip("skipping application simulation")
 	}
 	require.NoError(t, err, "simulation setup failed")
 
 	defer func() {
-		db.Close()
-		err = os.RemoveAll(dir)
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, db.Close())
+		require.NoError(t, os.RemoveAll(dir))
 	}()
 
-	encoding := app.MakeEncodingConfig()
-	app := testapp.NewNibiruTestApp(app.NewDefaultGenesisState(encoding.Marshaler))
+	appOptions := make(simtestutil.AppOptionsMap, 0)
+	appOptions[flags.FlagHome] = app.DefaultNodeHome
+	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
 
-	// Run randomized simulation:
+	encoding := app.MakeEncodingConfig()
+	app := app.NewNibiruApp(logger, db, nil, true, encoding, appOptions, baseapp.SetChainID(SimAppChainID))
+	require.Equal(t, "Nibiru", app.Name())
+	appCodec := app.AppCodec()
+
+	// run randomized simulation
 	_, simParams, simErr := simulation.SimulateFromSeed(
-		/* tb */ t,
-		/* w */ os.Stdout,
-		/* app */ app.BaseApp,
-		/* appStateFn */ AppStateFn(app.AppCodec(), app.SimulationManager()),
-		/* randAccFn */ simulationtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
-		/* ops */ simtestutil.SimulationOperations(app, app.AppCodec(), config), // Run all registered operations
-		/* blockedAddrs */ app.ModuleAccountAddrs(),
-		/* config */ config,
-		/* cdc */ app.AppCodec(),
+		t,
+		os.Stdout,
+		app.BaseApp,
+		AppStateFn(appCodec, app.SimulationManager()),
+		simtypes.RandomAccounts,
+		simtestutil.SimulationOperations(app, appCodec, config),
+		app.ModuleAccountAddrs(),
+		config,
+		appCodec,
 	)
 
 	// export state and simParams before the simulation error is checked
-	if err = simtestutil.CheckExportSimulation(app, config, simParams); err != nil {
-		t.Fatal(err)
-	}
-
-	if simErr != nil {
-		t.Fatal(simErr)
-	}
+	err = simtestutil.CheckExportSimulation(app, config, simParams)
+	require.NoError(t, err)
+	require.NoError(t, simErr)
 
 	if config.Commit {
 		simtestutil.PrintStats(db)
