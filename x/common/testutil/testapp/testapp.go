@@ -8,6 +8,7 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
@@ -103,7 +104,7 @@ func NewNibiruTestAppAndContextAtTime(startTime time.Time) (*app.NibiruApp, sdk.
 // NewNibiruTestApp initializes a chain with the given genesis state to
 // creates an application instance ('app.NibiruApp'). This app uses an
 // in-memory database ('tmdb.MemDB') and has logging disabled.
-func NewNibiruTestApp(gen app.GenesisState) *app.NibiruApp {
+func NewNibiruTestApp(gen app.GenesisState, baseAppOptions ...func(*baseapp.BaseApp)) *app.NibiruApp {
 	db := tmdb.NewMemDB()
 	logger := log.NewNopLogger()
 
@@ -117,6 +118,7 @@ func NewNibiruTestApp(gen app.GenesisState) *app.NibiruApp {
 		/*loadLatest=*/ true,
 		encoding,
 		/*appOpts=*/ sims.EmptyAppOptions{},
+		baseAppOptions...,
 	)
 
 	gen, err := GenesisStateWithSingleValidator(encoding.Marshaler, gen)

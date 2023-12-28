@@ -64,6 +64,7 @@ func AppStateFn(cdc codec.JSONCodec, simManager *module.SimulationManager) simty
 			if err != nil {
 				panic(err)
 			}
+
 			appState, simAccs = AppStateRandomizedFn(simManager, r, cdc, accs, genesisTimestamp, appParams)
 
 		default:
