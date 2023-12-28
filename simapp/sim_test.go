@@ -10,6 +10,8 @@ import (
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/server"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	simulationtypes "github.com/cosmos/cosmos-sdk/types/simulation"
@@ -83,10 +85,11 @@ func TestFullAppSimulation(t *testing.T) {
 	}
 }
 
+// Tests that the app state hash is deterministic when the operations are run
 func TestAppStateDeterminism(t *testing.T) {
-	// if !simcli.FlagEnabledValue {
-	// 	t.Skip("skipping application simulation")
-	// }
+	if !simcli.FlagEnabledValue {
+		t.Skip("skipping application simulation")
+	}
 
 	config := simcli.NewConfigFromFlags()
 	config.InitialBlockHeight = 1
@@ -94,10 +97,13 @@ func TestAppStateDeterminism(t *testing.T) {
 	config.OnOperation = false
 	config.AllInvariants = false
 	config.ChainID = SimAppChainID
-	fmt.Println(config)
 	numSeeds := 3
 	numTimesToRunPerSeed := 5
+
 	appHashList := make([]json.RawMessage, numTimesToRunPerSeed)
+	appOptions := make(simtestutil.AppOptionsMap, 0)
+	appOptions[flags.FlagHome] = app.DefaultNodeHome
+	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
 
 	for i := 0; i < numSeeds; i++ {
 		config.Seed = rand.Int63()
@@ -107,7 +113,7 @@ func TestAppStateDeterminism(t *testing.T) {
 			logger := log.NewNopLogger()
 			encoding := app.MakeEncodingConfig()
 
-			app := app.NewNibiruApp(logger, db, nil, true, encoding, simtestutil.EmptyAppOptions{}, baseapp.SetChainID(SimAppChainID))
+			app := app.NewNibiruApp(logger, db, nil, true, encoding, appOptions, baseapp.SetChainID(SimAppChainID))
 			appCodec := app.AppCodec()
 
 			fmt.Printf(
@@ -120,7 +126,7 @@ func TestAppStateDeterminism(t *testing.T) {
 				os.Stdout,
 				app.BaseApp,
 				AppStateFn(appCodec, app.SimulationManager()),
-				simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
+				simtypes.RandomAccounts,
 				simtestutil.SimulationOperations(app, appCodec, config),
 				app.ModuleAccountAddrs(),
 				config,
