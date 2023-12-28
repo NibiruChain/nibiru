@@ -5,7 +5,7 @@ import "github.com/NibiruChain/nibiru/x/common"
 const (
 	ModuleName                 = "perp"
 	VaultModuleAccount         = "vault"
-	PerpEFModuleAccount        = "perp_ef"
+	PerpFundModuleAccount      = "perp_fund"
 	FeePoolModuleAccount       = "fee_pool"
 	DNRAllocationModuleAccount = "dnr_allocation"
 	DNREscrowModuleAccount     = "dnr_escrow"
@@ -26,7 +26,7 @@ var (
 
 var ModuleAccounts = []string{
 	ModuleName,
-	PerpEFModuleAccount,
+	PerpFundModuleAccount,
 	VaultModuleAccount,
 	FeePoolModuleAccount,
 	common.TreasuryPoolModuleAccount,

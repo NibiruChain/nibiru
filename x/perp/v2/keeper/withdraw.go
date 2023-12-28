@@ -62,7 +62,7 @@ func (k Keeper) WithdrawFromVault(
 
 		if err := k.BankKeeper.SendCoinsFromModuleToModule(
 			ctx,
-			types.PerpEFModuleAccount,
+			types.PerpFundModuleAccount,
 			types.VaultModuleAccount,
 			sdk.NewCoins(
 				sdk.NewCoin(collateral, shortage),
@@ -125,7 +125,7 @@ func (k Keeper) realizeBadDebt(ctx sdk.Context, market types.Market, badDebtToRe
 		}
 
 		return k.BankKeeper.SendCoinsFromModuleToModule(ctx,
-			/*from=*/ types.PerpEFModuleAccount,
+			/*from=*/ types.PerpFundModuleAccount,
 			/*to=*/ types.VaultModuleAccount,
 			sdk.NewCoins(
 				sdk.NewCoin(

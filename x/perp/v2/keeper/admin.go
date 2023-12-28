@@ -23,34 +23,42 @@ import (
 // function is being used when it's called from the PerpKeeper.Admin struct.
 type admin struct{ *Keeper }
 
-/*
-WithdrawFromInsuranceFund sends funds from the Insurance Fund to the given "to"
-address.
-
-Args:
-- ctx: Blockchain context holding the current state
-- amount: Amount of micro-NUSD to withdraw.
-- to: Recipient address
-*/
-func (k admin) WithdrawFromInsuranceFund(
-	ctx sdk.Context, amount sdkmath.Int, to sdk.AccAddress,
+// WithdrawFromPerpFund sends funds from the Perp Fund to the "to" address.
+//
+// Args:
+// - ctx: Blockchain context holding the current state
+// - amount: Amount of micro-NUSD to withdraw.
+// - sender: Admin address registered in x/sudo
+// - to: Recipient address
+func (k admin) WithdrawFromPerpFund(
+	ctx sdk.Context, amount sdkmath.Int, sender, to sdk.AccAddress, denom string,
 ) (err error) {
-	collateral, err := k.Collateral.Get(ctx)
-	if err != nil {
+	if err := k.SudoKeeper.CheckPermissions(sender, ctx); err != nil {
 		return err
 	}
 
-	coinToSend := sdk.NewCoin(collateral, amount)
+	var collateralDenom string
+	if denom == "" {
+		denomFromState, err := k.Collateral.Get(ctx)
+		if err != nil {
+			return err
+		}
+		collateralDenom = denomFromState
+	} else {
+		collateralDenom = denom
+	}
+
+	coinToSend := sdk.NewCoin(collateralDenom, amount)
 	if err = k.BankKeeper.SendCoinsFromModuleToAccount(
 		ctx,
-		/* from */ types.PerpEFModuleAccount,
+		/* from */ types.PerpFundModuleAccount,
 		/* to */ to,
 		/* amount */ sdk.NewCoins(coinToSend),
 	); err != nil {
 		return err
 	}
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
-		"withdraw_from_if",
+		"withdraw_from_perp_fund",
 		sdk.NewAttribute("to", to.String()),
 		sdk.NewAttribute("funds", coinToSend.String()),
 	))

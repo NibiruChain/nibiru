@@ -131,7 +131,7 @@ func (m msgServer) DonateToEcosystemFund(ctx context.Context, msg *types.MsgDona
 	if err := m.k.BankKeeper.SendCoinsFromAccountToModule(
 		sdk.UnwrapSDKContext(ctx),
 		sdk.MustAccAddressFromBech32(msg.Sender),
-		types.PerpEFModuleAccount,
+		types.PerpFundModuleAccount,
 		sdk.NewCoins(msg.Donation),
 	); err != nil {
 		return nil, err
@@ -217,4 +217,18 @@ func (m msgServer) ShiftSwapInvariant(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	err := m.k.Admin.ShiftSwapInvariant(ctx, msg.Pair, msg.NewSwapInvariant, sender)
 	return &types.MsgShiftSwapInvariantResponse{}, err
+}
+
+// WithdrawFromPerpFund: gRPC tx msg for changing a market's swap invariant.
+// [Admin] Only callable by sudoers.
+func (m msgServer) WithdrawFromPerpFund(
+	goCtx context.Context, msg *types.MsgWithdrawFromPerpFund,
+) (resp *types.MsgWithdrawFromPerpFundResponse, err error) {
+	// Sender is checked in `msg.ValidateBasic` before reaching this fn call.
+	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
+	toAddr, _ := sdk.AccAddressFromBech32(msg.ToAddr)
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	return resp, m.k.Admin.WithdrawFromPerpFund(
+		ctx, msg.Amount, sender, toAddr, msg.Denom,
+	)
 }
