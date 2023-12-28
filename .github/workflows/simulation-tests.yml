@@ -1,4 +1,4 @@
-name: Run simulations
+name: Simulation tests
 
 on:
   push:
