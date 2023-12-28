@@ -149,7 +149,7 @@ func (k admin) CloseMarket(ctx sdk.Context, pair asset.Pair) (err error) {
 	return nil
 }
 
-// ChangeCollateralDenom: Updates the collateral denom. A denom is valid if it is
+// ChangeCollateralDenom Updates the collateral denom. A denom is valid if it is
 // possible to make an sdk.Coin using it. [Admin] Only callable by sudoers.
 func (k admin) ChangeCollateralDenom(
 	ctx sdk.Context,
@@ -162,7 +162,7 @@ func (k admin) ChangeCollateralDenom(
 	return k.UnsafeChangeCollateralDenom(ctx, denom)
 }
 
-// UnsafeChangeCollateralDenom: Used in the genesis to set the collateral
+// UnsafeChangeCollateralDenom Used in the genesis to set the collateral
 // without requiring an explicit call from sudoers.
 func (k admin) UnsafeChangeCollateralDenom(
 	ctx sdk.Context,
@@ -175,7 +175,7 @@ func (k admin) UnsafeChangeCollateralDenom(
 	return nil
 }
 
-// ShiftPegMultiplier: Edit the peg multiplier of an amm pool after making sure
+// ShiftPegMultiplier Edit the peg multiplier of an amm pool after making sure
 // there's enough money in the perp fund to pay for the repeg. These funds get
 // send to the vault to pay for trader's new net margin.
 func (k admin) ShiftPegMultiplier(
@@ -221,7 +221,7 @@ func (k admin) ShiftPegMultiplier(
 	})
 }
 
-// ShiftSwapInvariant: Edit the swap invariant (liquidity depth) of an amm pool,
+// ShiftSwapInvariant Edit the swap invariant (liquidity depth) of an amm pool,
 // ensuring that there's enough money in the perp  fund to pay for the operation.
 // These funds get send to the vault to pay for trader's new net margin.
 func (k admin) ShiftSwapInvariant(

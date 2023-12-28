@@ -16,7 +16,6 @@ type NibiruMsg struct {
 	// MultiLiquidate        *MultiLiquidate        `json:"multi_liquidate,omitempty"` // TODO
 	DonateToInsuranceFund *DonateToInsuranceFund `json:"donate_to_insurance_fund,omitempty"` // TODO
 	InsuranceFundWithdraw *InsuranceFundWithdraw `json:"insurance_fund_withdraw,omitempty"`
-	SetMarketEnabled      *SetMarketEnabled      `json:"set_market_enabled,omitempty"`
 	CreateMarket          *CreateMarket          `json:"create_market,omitempty"`
 
 	EditOracleParams *EditOracleParams `json:"edit_oracle_params,omitempty"`
@@ -46,11 +45,6 @@ type EditOracleParams struct {
 type InsuranceFundWithdraw struct {
 	Amount sdkmath.Int `json:"amount"`
 	To     string      `json:"to"`
-}
-
-type SetMarketEnabled struct {
-	Pair    string `json:"pair"`
-	Enabled bool   `json:"enabled"`
 }
 
 type CreateMarket struct {

@@ -202,24 +202,6 @@ func (s *TestSuitePerpExecutor) TestSadPaths_Nil() {
 	s.Error(err)
 }
 
-func (s *TestSuitePerpExecutor) DoSetMarketEnabledTest(
-	pair asset.Pair, enabled bool,
-) error {
-	cwMsg := &bindings.SetMarketEnabled{
-		Pair:    pair.String(),
-		Enabled: enabled,
-	}
-	err := s.exec.SetMarketEnabled(cwMsg, s.ctx)
-	if err != nil {
-		return err
-	}
-
-	market, err := s.nibiru.PerpKeeperV2.GetMarket(s.ctx, pair)
-	s.NoError(err)
-	s.Equal(enabled, market.Enabled)
-	return err
-}
-
 func (s *TestSuitePerpExecutor) TestSadPath_InsuranceFundWithdraw() {
 	fundsToWithdraw := sdk.NewCoin(perpv2types.TestingCollateralDenomNUSD, sdk.NewInt(69_000))
 
@@ -232,8 +214,6 @@ func (s *TestSuitePerpExecutor) TestSadPaths_InvalidPair() {
 	pair := sadPair
 
 	for _, err := range []error{
-		s.DoSetMarketEnabledTest(pair, true),
-		s.DoSetMarketEnabledTest(pair, false),
 		s.DoCreateMarketTest(pair),
 		s.DoCreateMarketTestWithParams(pair),
 	} {

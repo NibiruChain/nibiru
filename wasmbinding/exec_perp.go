@@ -39,22 +39,6 @@ func (exec *ExecutorPerp) InsuranceFundWithdraw(
 	)
 }
 
-// TODO: rename to CloseMarket
-func (exec *ExecutorPerp) SetMarketEnabled(
-	cwMsg *bindings.SetMarketEnabled, ctx sdk.Context,
-) (err error) {
-	if cwMsg == nil {
-		return wasmvmtypes.InvalidRequest{Err: "null msg"}
-	}
-
-	pair, err := asset.TryNewPair(cwMsg.Pair)
-	if err != nil {
-		return err
-	}
-
-	return exec.PerpV2.Admin.CloseMarket(ctx, pair)
-}
-
 func (exec *ExecutorPerp) CreateMarket(
 	cwMsg *bindings.CreateMarket, ctx sdk.Context,
 ) (err error) {
