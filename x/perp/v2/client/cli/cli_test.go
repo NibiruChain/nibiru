@@ -723,7 +723,10 @@ func (s *IntegrationTestSuite) TestDonateToEcosystemFund() {
 			resp,
 		),
 	)
-	s.Require().EqualValues(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 100), *resp)
+	s.Require().EqualValues(
+		sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 100).String(),
+		resp.String(),
+	)
 }
 
 func (s *IntegrationTestSuite) TestQueryModuleAccount() {

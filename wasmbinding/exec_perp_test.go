@@ -134,31 +134,11 @@ func (s *TestSuitePerpExecutor) OnSetupEnd() {
 // Happy path coverage
 func (s *TestSuitePerpExecutor) TestPerpExecutorHappy() {
 	for _, err := range []error{
-		s.DoInsuranceFundWithdrawTest(sdk.NewInt(69), s.contractDeployer),
 		s.DoCreateMarketTest(asset.MustNewPair("ufoo:ubar")),
 		s.DoCreateMarketTestWithParams(asset.MustNewPair("ufoo2:ubar")),
 	} {
 		s.NoError(err)
 	}
-}
-
-func (s *TestSuitePerpExecutor) DoInsuranceFundWithdrawTest(
-	amt sdkmath.Int, to sdk.AccAddress,
-) error {
-	cwMsg := &bindings.InsuranceFundWithdraw{
-		Amount: amt,
-		To:     to.String(),
-	}
-
-	err := testapp.FundModuleAccount(
-		s.nibiru.BankKeeper,
-		s.ctx,
-		perpv2types.PerpEFModuleAccount,
-		sdk.NewCoins(sdk.NewCoin(perpv2types.TestingCollateralDenomNUSD, sdk.NewInt(420))),
-	)
-	s.NoError(err)
-
-	return s.exec.InsuranceFundWithdraw(cwMsg, s.ctx)
 }
 
 func (s *TestSuitePerpExecutor) DoCreateMarketTest(pair asset.Pair) error {
@@ -197,11 +177,6 @@ func (s *TestSuitePerpExecutor) DoCreateMarketTestWithParams(pair asset.Pair) er
 	return s.exec.CreateMarket(cwMsg, s.ctx)
 }
 
-func (s *TestSuitePerpExecutor) TestSadPaths_Nil() {
-	err := s.exec.InsuranceFundWithdraw(nil, s.ctx)
-	s.Error(err)
-}
-
 func (s *TestSuitePerpExecutor) DoSetMarketEnabledTest(
 	pair asset.Pair, enabled bool,
 ) error {
@@ -218,13 +193,6 @@ func (s *TestSuitePerpExecutor) DoSetMarketEnabledTest(
 	s.NoError(err)
 	s.Equal(enabled, market.Enabled)
 	return err
-}
-
-func (s *TestSuitePerpExecutor) TestSadPath_InsuranceFundWithdraw() {
-	fundsToWithdraw := sdk.NewCoin(perpv2types.TestingCollateralDenomNUSD, sdk.NewInt(69_000))
-
-	err := s.DoInsuranceFundWithdrawTest(fundsToWithdraw.Amount, s.contractDeployer)
-	s.Error(err)
 }
 
 func (s *TestSuitePerpExecutor) TestSadPaths_InvalidPair() {

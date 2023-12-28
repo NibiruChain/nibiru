@@ -29,14 +29,14 @@ func TestShiftPegMultiplier(t *testing.T) {
 			Given(
 				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(1000)), WithTotalShort(sdk.NewDec(500))),
 				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
+				FundModule(types.PerpFundModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
 				ShiftPegMultiplier(pair, sdk.OneDec()),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)),
+				ModuleBalanceEqual(types.PerpFundModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e12)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e12)),
@@ -52,14 +52,14 @@ func TestShiftPegMultiplier(t *testing.T) {
 					WithEnabled(true),
 				),
 				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
+				FundModule(types.PerpFundModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
 				ShiftPegMultiplier(pair, sdk.NewDec(10)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)),
+				ModuleBalanceEqual(types.PerpFundModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e12)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e12)),
@@ -72,14 +72,14 @@ func TestShiftPegMultiplier(t *testing.T) {
 			Given(
 				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(1000)), WithTotalShort(sdk.NewDec(500))),
 				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
+				FundModule(types.PerpFundModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
 				ShiftPegMultiplier(pair, sdk.NewDec(10)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1004500)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(995500)),
+				ModuleBalanceEqual(types.PerpFundModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(995500)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e12)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e12)),
@@ -92,14 +92,14 @@ func TestShiftPegMultiplier(t *testing.T) {
 			Given(
 				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(1000)), WithTotalShort(sdk.NewDec(500))),
 				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
+				FundModule(types.PerpFundModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
 				ShiftPegMultiplier(pair, sdk.MustNewDecFromStr("0.25")),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(999626)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1000374)),
+				ModuleBalanceEqual(types.PerpFundModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1000374)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e12)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e12)),
@@ -112,14 +112,14 @@ func TestShiftPegMultiplier(t *testing.T) {
 			Given(
 				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(500)), WithTotalShort(sdk.NewDec(1000))),
 				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
+				FundModule(types.PerpFundModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
 				ShiftPegMultiplier(pair, sdk.NewDec(10)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(995500)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1004500)),
+				ModuleBalanceEqual(types.PerpFundModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1004500)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e12)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e12)),
@@ -132,14 +132,14 @@ func TestShiftPegMultiplier(t *testing.T) {
 			Given(
 				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(500)), WithTotalShort(sdk.NewDec(1000))),
 				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
+				FundModule(types.PerpFundModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
 				ShiftPegMultiplier(pair, sdk.MustNewDecFromStr("0.25")),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1000376)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(999624)),
+				ModuleBalanceEqual(types.PerpFundModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(999624)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e12)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e12)),
@@ -308,14 +308,14 @@ func TestShiftSwapInvariant(t *testing.T) {
 					WithSqrtDepth(sdk.NewDec(1e6)),
 				),
 				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
+				FundModule(types.PerpFundModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
 				ShiftSwapInvariant(pair, sdk.NewInt(1e12)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)),
+				ModuleBalanceEqual(types.PerpFundModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e6)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e6)),
@@ -332,14 +332,14 @@ func TestShiftSwapInvariant(t *testing.T) {
 					WithSqrtDepth(sdk.NewDec(1e6)),
 				),
 				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
+				FundModule(types.PerpFundModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
 				ShiftSwapInvariant(pair, sdk.NewInt(1e18)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)),
+				ModuleBalanceEqual(types.PerpFundModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e9)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e9)),
@@ -352,14 +352,14 @@ func TestShiftSwapInvariant(t *testing.T) {
 			Given(
 				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(1e5)), WithSqrtDepth(sdk.NewDec(1e6))),
 				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
+				FundModule(types.PerpFundModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
 				ShiftSwapInvariant(pair, sdk.NewInt(1e14)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1008101)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(991899)),
+				ModuleBalanceEqual(types.PerpFundModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(991899)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e7)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e7)),
@@ -372,14 +372,14 @@ func TestShiftSwapInvariant(t *testing.T) {
 			Given(
 				CreateCustomMarket(pair, WithTotalLong(sdk.NewDec(1e2)), WithSqrtDepth(sdk.NewDec(1e6))),
 				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
+				FundModule(types.PerpFundModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
 				ShiftSwapInvariant(pair, sdk.NewInt(1e6)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(999991)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1000009)),
+				ModuleBalanceEqual(types.PerpFundModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1000009)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e3)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e3)),
@@ -392,14 +392,14 @@ func TestShiftSwapInvariant(t *testing.T) {
 			Given(
 				CreateCustomMarket(pair, WithTotalShort(sdk.NewDec(1e5)), WithSqrtDepth(sdk.NewDec(1e6))),
 				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
+				FundModule(types.PerpFundModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
 				ShiftSwapInvariant(pair, sdk.NewInt(1e14)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1010102)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(989898)),
+				ModuleBalanceEqual(types.PerpFundModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(989898)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e7)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e7)),
@@ -412,14 +412,14 @@ func TestShiftSwapInvariant(t *testing.T) {
 			Given(
 				CreateCustomMarket(pair, WithTotalShort(sdk.NewDec(1e2)), WithSqrtDepth(sdk.NewDec(1e6))),
 				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
+				FundModule(types.PerpFundModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
 				ShiftSwapInvariant(pair, sdk.NewInt(1e6)),
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(999989)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1000011)),
+				ModuleBalanceEqual(types.PerpFundModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1000011)),
 				AMMShouldBeEqual(pair,
 					AMM_SqrtDepthShouldBeEqual(sdk.NewDec(1e3)),
 					AMM_BaseReserveShouldBeEqual(sdk.NewDec(1e3)),

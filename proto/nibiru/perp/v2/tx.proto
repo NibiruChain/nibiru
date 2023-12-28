@@ -49,6 +49,11 @@ service Msg {
   // [Admin] Only callable by sudoers.
   rpc ShiftSwapInvariant(MsgShiftSwapInvariant)
       returns (MsgShiftSwapInvariantResponse) {}
+
+  // WithdrawFromPerpFund: gRPC tx msg to withdraw from the perp fund module
+  // account. [Admin] Only callable by sudoers.
+  rpc WithdrawFromPerpFund(MsgWithdrawFromPerpFund)
+      returns (MsgWithdrawFromPerpFundResponse) {}
 }
 
 // -------------------------- Settle Position --------------------------
@@ -429,3 +434,19 @@ message MsgShiftSwapInvariant {
 }
 
 message MsgShiftSwapInvariantResponse {}
+
+// -------------------------- WithdrawFromPerpFund --------------------------
+
+// WithdrawFromPerpFund: gRPC tx msg for changing the swap invariant.
+// Admin-only.
+message MsgWithdrawFromPerpFund {
+  string sender = 1;
+  string amount = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string denom = 3;
+  string to_addr = 4;
+}
+
+message MsgWithdrawFromPerpFundResponse {}
