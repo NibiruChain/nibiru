@@ -58,7 +58,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1686](https://github.com/NibiruChain/nibiru/pull/1686) - test(perp): add more tests for perp module msg server for DnR
 * [#1683](https://github.com/NibiruChain/nibiru/pull/1683) - feat(perp): Add `StartDnREpoch` to `AfterEpochEnd` hook
 * [#1680](https://github.com/NibiruChain/nibiru/pull/1680) - feat(perp): MsgShiftPegMultiplier, MsgShiftSwapInvariant.
-* [#1680](https://github.com/NibiruChain/nibiru/pull/1680) - feat(perp): MsgShiftPegMultiplier, MsgShiftSwapInvariant.
 * [#1677](https://github.com/NibiruChain/nibiru/pull/1677) - fix(perp): make Gen_market set initial perp versions
 * [#1669](https://github.com/NibiruChain/nibiru/pull/1669) - feat(perp): add query to get collateral metadata
 * [#1663](https://github.com/NibiruChain/nibiru/pull/1663) - feat(perp): Add volume based rebates
@@ -82,7 +81,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Dependencies
 
-- Bump `google.golang.org/grpc` from 1.59.0 to 1.60.0 ([#1720](https://github.com/NibiruChain/nibiru/pull/1720))
+* Bump `google.golang.org/grpc` from 1.59.0 to 1.60.0 ([#1720](https://github.com/NibiruChain/nibiru/pull/1720))
+
 * Bump `golang.org/x/crypto` from 0.15.0 to 0.17.0 ([#1724](https://github.com/NibiruChain/nibiru/pull/1724))
 * Bump `github.com/holiman/uint256` from 1.2.3 to 1.2.4 ([#1730](https://github.com/NibiruChain/nibiru/pull/1730))
 * Bump `github.com/dvsekhvalnov/jose2go` from 1.5.0 to 1.6.0 ([#1733](https://github.com/NibiruChain/nibiru/pull/1733))
