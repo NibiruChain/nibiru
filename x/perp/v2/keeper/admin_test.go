@@ -29,7 +29,6 @@ import (
 )
 
 func (s *TestSuiteAdmin) TestAdmin_WithdrawFromPerpFund() {
-
 	fundModule := func(amount sdkmath.Int, ctx sdk.Context, nibiru *app.NibiruApp) {
 		coins := sdk.NewCoins(sdk.NewCoin(perptypes.TestingCollateralDenomNUSD, amount))
 		err := testapp.FundModuleAccount(
@@ -471,7 +470,11 @@ func (s *TestSuiteAdmin) DoShiftSwapInvariantTest(pair asset.Pair) error {
 
 func (s *TestSuiteAdmin) DoWithdrawFromPerpFundTest(toAddr string) error {
 	wantCoin := sdk.NewInt64Coin("perpfundtest", 25)
-	testapp.FundModuleAccount(s.nibiru.BankKeeper, s.ctx, types.PerpFundModuleAccount, sdk.NewCoins(wantCoin))
+	s.NoError(
+		testapp.FundModuleAccount(
+			s.nibiru.BankKeeper, s.ctx, types.PerpFundModuleAccount,
+			sdk.NewCoins(wantCoin)),
+	)
 	_, err := s.perpMsgServer.WithdrawFromPerpFund(
 		sdk.WrapSDKContext(s.ctx), &perptypes.MsgWithdrawFromPerpFund{
 			Sender: s.addrAdmin.String(),
