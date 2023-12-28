@@ -218,3 +218,7 @@ func (m msgServer) ShiftSwapInvariant(
 	err := m.k.Admin.ShiftSwapInvariant(ctx, msg.Pair, msg.NewSwapInvariant, sender)
 	return &types.MsgShiftSwapInvariantResponse{}, err
 }
+
+func (m msgServer) CloseMarket(ctx context.Context, msg *types.MsgCloseMarket) (*types.MsgCloseMarketResponse, error) {
+	panic("implement me")
+}
