@@ -8,10 +8,6 @@ on:
   schedule:
     # once per day
     - cron: "0 0 * * *"
-  pull_request:
-    branches:
-      # every pull request to default branch
-      - main
 
 jobs:
   test-sim-nondeterminism:
