@@ -41,7 +41,7 @@ func (k sudoExtension) EditOracleParams(
 
 	paramsAfter = MergeOracleParams(newParams, params)
 	k.UpdateParams(ctx, paramsAfter)
-	return paramsAfter, nil
+	return paramsAfter, paramsAfter.Validate()
 }
 
 // MergeOracleParams: Takes the given oracle params and merges them into the

@@ -33,7 +33,7 @@ service Msg {
 
   rpc EditOracleParams(MsgEditOracleParams)
       returns (MsgEditOracleParamsResponse) {
-    option (google.api.http).post = "/nibiru/oracle/feeder-delegate";
+    option (google.api.http).post = "/nibiru/oracle/edit-oracle-params";
   }
 }
 
