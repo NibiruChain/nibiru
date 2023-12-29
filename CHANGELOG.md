@@ -49,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### CLI
 
 * [#1731](https://github.com/NibiruChain/nibiru/pull/1731) - feat(cli): add cli command to decode stargate base64 messages
+* [#1754](https://github.com/NibiruChain/nibiru/pull/1754) - refactor(decode-base64): clean code improvements and fn docs
 
 
 ## [v1.0.1](https://github.com/NibiruChain/nibiru/releases/tag/v1.0.1) - 2024-02-09
