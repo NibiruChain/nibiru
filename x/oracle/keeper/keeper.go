@@ -31,9 +31,7 @@ type Keeper struct {
 
 	distrModuleName string
 
-	// Extends the Keeper with sudo functions. See sudo.go.
-	Admin admin
-
+	// Module parameters
 	Params            collections.Item[types.Params]
 	ExchangeRates     collections.Map[asset.Pair, types.DatedPrice]
 	FeederDelegations collections.Map[sdk.ValAddress, sdk.AccAddress]
@@ -42,7 +40,9 @@ type Keeper struct {
 	Votes             collections.Map[sdk.ValAddress, types.AggregateExchangeRateVote]
 
 	// PriceSnapshots maps types.PriceSnapshot to the asset.Pair of the snapshot and the creation timestamp as keys.Uint64Key.
-	PriceSnapshots   collections.Map[collections.Pair[asset.Pair, time.Time], types.PriceSnapshot]
+	PriceSnapshots collections.Map[
+		collections.Pair[asset.Pair, time.Time],
+		types.PriceSnapshot]
 	WhitelistedPairs collections.KeySet[asset.Pair]
 	Rewards          collections.Map[uint64, types.Rewards]
 	RewardsID        collections.Sequence
@@ -88,7 +88,6 @@ func NewKeeper(
 			collections.Uint64KeyEncoder, collections.ProtoValueEncoder[types.Rewards](cdc)),
 		RewardsID: collections.NewSequence(storeKey, 9),
 	}
-	k.Admin = admin{&k}
 	return k
 }
 

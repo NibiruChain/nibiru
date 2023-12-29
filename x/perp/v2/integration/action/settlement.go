@@ -17,7 +17,7 @@ type closeMarket struct {
 }
 
 func (c closeMarket) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
-	err := app.PerpKeeperV2.Admin.CloseMarket(ctx, c.pair)
+	err := app.PerpKeeperV2.Sudo().CloseMarket(ctx, c.pair)
 	if err != nil {
 		return ctx, err
 	}
@@ -35,7 +35,7 @@ type closeMarketShouldFail struct {
 }
 
 func (c closeMarketShouldFail) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
-	err := app.PerpKeeperV2.Admin.CloseMarket(ctx, c.pair)
+	err := app.PerpKeeperV2.Sudo().CloseMarket(ctx, c.pair)
 	if err == nil {
 		return ctx, err
 	}

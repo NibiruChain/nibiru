@@ -68,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1705](https://github.com/NibiruChain/nibiru/pull/1705) - feat(perp): Add oracle pair to market object
 * [#1718](https://github.com/NibiruChain/nibiru/pull/1718) - fix: fees does not require additional funds
 * [#1734](https://github.com/NibiruChain/nibiru/pull/1734) - feat(perp): MsgDonateToPerpFund
+* [#1752](https://github.com/NibiruChain/nibiru/pull/1752) - feat(oracle): MsgEditOracleParams sudo tx msg as part of #1642
 
 ### Non-breaking/Compatible Improvements
 

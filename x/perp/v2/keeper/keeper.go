@@ -28,9 +28,6 @@ type Keeper struct {
 	EpochKeeper   types.EpochKeeper
 	SudoKeeper    types.SudoKeeper
 
-	// Extends the Keeper with admin functions. See admin.go.
-	Admin admin
-
 	MarketLastVersion collections.Map[asset.Pair, types.MarketLastVersion]
 	Markets           collections.Map[collections.Pair[asset.Pair, uint64], types.Market]
 	AMMs              collections.Map[collections.Pair[asset.Pair, uint64], types.AMM]
@@ -134,7 +131,6 @@ func NewKeeper(
 			common.StringValueEncoder,
 		),
 	}
-	k.Admin = admin{&k}
 	return k
 }
 

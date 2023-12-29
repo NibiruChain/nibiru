@@ -48,14 +48,16 @@ func (s *SuiteOracleSudo) TestEditOracleParams() {
 		ValidatorFeeRatio:  &validatorFeeRatio,
 	}
 
-	// Verify that params after are not equal
-	partialParams := oraclekeeper.PartialOracleParams{PbMsg: msgEditParams}
+	s.T().Log("Params before MUST NOT be equal to default")
 	defaultParams := oracletypes.DefaultParams()
 	currParams, err := nibiru.OracleKeeper.Params.Get(ctx)
 	s.NoError(err)
-	s.Equal(currParams, defaultParams)
-	fullParams := partialParams.MergeOracleParams(defaultParams)
-	s.NotEqual(defaultParams, fullParams)
+	s.Equal(currParams, defaultParams,
+		"Current params should be eqaul to defaults")
+	partialParams := msgEditParams
+	fullParams := oraclekeeper.MergeOracleParams(partialParams, defaultParams)
+	s.NotEqual(defaultParams, fullParams,
+		"new params after merge should not be defaults")
 
 	invalidSender := testutil.AccAddress()
 	oracleMsgServer := oraclekeeper.NewMsgServerImpl(nibiru.OracleKeeper)
@@ -66,10 +68,12 @@ func (s *SuiteOracleSudo) TestEditOracleParams() {
 	)
 	s.Error(err)
 
+	s.T().Log("Params after MUST be equal to new ones with partialParams")
 	okSender := testapp.DefaultSudoRoot()
 	msgEditParams.Sender = okSender.String()
-	_, err = oracleMsgServer.EditOracleParams(
+	resp, err := oracleMsgServer.EditOracleParams(
 		goCtx, &msgEditParams,
 	)
 	s.NoError(err)
+	s.EqualValues(resp.NewParams.String(), fullParams.String())
 }

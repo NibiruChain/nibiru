@@ -91,7 +91,7 @@ func RunTestGenesis(t *testing.T, tc TestCase) {
 	app.SudoKeeper.Sudoers.Set(ctx, sudoers)
 
 	// create some params
-	require.NoError(t, app.PerpKeeperV2.Admin.ChangeCollateralDenom(
+	require.NoError(t, app.PerpKeeperV2.Sudo().ChangeCollateralDenom(
 		ctx, "unusd", sudoersRoot))
 	app.PerpKeeperV2.SaveMarket(ctx, *mock.TestMarket())
 	app.PerpKeeperV2.MarketLastVersion.Insert(ctx, pair, types.MarketLastVersion{Version: 1})

@@ -3,6 +3,7 @@ package nibiru.oracle.v1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
+import "nibiru/oracle/v1/oracle.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/x/oracle/types";
 
@@ -91,7 +92,7 @@ message MsgDelegateFeedConsent {
 message MsgDelegateFeedConsentResponse {}
 
 // MsgEditOracleParams: gRPC tx message for updating the x/oracle module params
-// [Admin] Only callable by sudoers.
+// [[SUDO][SUDO][SUDO][SUDO][SUDO]] O[SUDO]ly callable by su[SUDO]oers.
 message MsgEditOracleParams {
   string sender = 1;
 
@@ -150,4 +151,4 @@ message MsgEditOracleParams {
 
 // MsgEditOracleParamsResponse defines the Msg/EditOracleParams response
 // type.
-message MsgEditOracleParamsResponse {}
+message MsgEditOracleParamsResponse { nibiru.oracle.v1.Params new_params = 1; }

@@ -10,88 +10,90 @@ import (
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
-// Extends the Keeper with admin functions. Admin is syntactic sugar to separate
-// admin calls off from the other Keeper methods.
+// Sudo extends the Keeper with sudo functions. See sudo.go. Sudo is syntactic
+// sugar to separate admin calls off from the other Keeper methods.
 //
-// These Admin functions should:
+// These Sudo functions should:
 // 1. Not be called in other methods in the x/perp module.
-// 2. Only be callable from the x/sudo root or sudo contracts.
+// 2. Only be callable by the x/sudo root or sudo contracts.
 //
-// The intention behind "admin" is to make it more obvious to the developer that
-// an unsafe function is being used when it's called from "OracleKeeper.Admin"
-type admin struct{ *Keeper }
+// The intention behind "Keeper.Sudo()" is to make it more obvious to the
+// developer that an unsafe function is being used when it's called.
+func (k Keeper) Sudo() sudoExtension { return sudoExtension{k} }
 
-type PartialOracleParams struct {
-	PbMsg oracletypes.MsgEditOracleParams
-}
+type sudoExtension struct{ Keeper }
 
-func (k admin) EditOracleParams(
-	ctx sdk.Context, newParams PartialOracleParams, sender sdk.AccAddress,
-) error {
+// ------------------------------------------------------------------
+// Admin.EditOracleParams
+
+func (k sudoExtension) EditOracleParams(
+	ctx sdk.Context, newParams oracletypes.MsgEditOracleParams,
+	sender sdk.AccAddress,
+) (paramsAfter oracletypes.Params, err error) {
 	if err := k.SudoKeeper.CheckPermissions(sender, ctx); err != nil {
-		return err
+		return paramsAfter, err
 	}
 
 	params, err := k.Params.Get(ctx)
 	if err != nil {
-		// TODO: use typed error
-		return fmt.Errorf("get oracle params error: %s", err.Error())
+		return paramsAfter, fmt.Errorf("%w: failed to read oracle params", err)
 	}
 
-	mergedParams := newParams.MergeOracleParams(params)
-	k.UpdateParams(ctx, mergedParams)
-	return nil
+	paramsAfter = MergeOracleParams(newParams, params)
+	k.UpdateParams(ctx, paramsAfter)
+	return paramsAfter, nil
 }
 
 // MergeOracleParams: Takes the given oracle params and merges them into the
 // existing partial params, keeping any existing values that are not set in the
 // partial.
-func (partial PartialOracleParams) MergeOracleParams(
+func MergeOracleParams(
+	partial oracletypes.MsgEditOracleParams,
 	oracleParams oracletypes.Params,
 ) oracletypes.Params {
-	if partial.PbMsg.VotePeriod != nil {
-		oracleParams.VotePeriod = partial.PbMsg.VotePeriod.Uint64()
+	if partial.VotePeriod != nil {
+		oracleParams.VotePeriod = partial.VotePeriod.Uint64()
 	}
 
-	if partial.PbMsg.VoteThreshold != nil {
-		oracleParams.VoteThreshold = *partial.PbMsg.VoteThreshold
+	if partial.VoteThreshold != nil {
+		oracleParams.VoteThreshold = *partial.VoteThreshold
 	}
 
-	if partial.PbMsg.RewardBand != nil {
-		oracleParams.RewardBand = *partial.PbMsg.RewardBand
+	if partial.RewardBand != nil {
+		oracleParams.RewardBand = *partial.RewardBand
 	}
 
-	if partial.PbMsg.Whitelist != nil {
-		whitelist := make([]asset.Pair, len(partial.PbMsg.Whitelist))
-		for i, pair := range partial.PbMsg.Whitelist {
+	if partial.Whitelist != nil {
+		whitelist := make([]asset.Pair, len(partial.Whitelist))
+		for i, pair := range partial.Whitelist {
 			whitelist[i] = asset.MustNewPair(pair)
 		}
 
 		oracleParams.Whitelist = whitelist
 	}
 
-	if partial.PbMsg.SlashFraction != nil {
-		oracleParams.SlashFraction = *partial.PbMsg.SlashFraction
+	if partial.SlashFraction != nil {
+		oracleParams.SlashFraction = *partial.SlashFraction
 	}
 
-	if partial.PbMsg.SlashWindow != nil {
-		oracleParams.SlashWindow = partial.PbMsg.SlashWindow.Uint64()
+	if partial.SlashWindow != nil {
+		oracleParams.SlashWindow = partial.SlashWindow.Uint64()
 	}
 
-	if partial.PbMsg.MinValidPerWindow != nil {
-		oracleParams.MinValidPerWindow = *partial.PbMsg.MinValidPerWindow
+	if partial.MinValidPerWindow != nil {
+		oracleParams.MinValidPerWindow = *partial.MinValidPerWindow
 	}
 
-	if partial.PbMsg.TwapLookbackWindow != nil {
-		oracleParams.TwapLookbackWindow = time.Duration(partial.PbMsg.TwapLookbackWindow.Int64())
+	if partial.TwapLookbackWindow != nil {
+		oracleParams.TwapLookbackWindow = time.Duration(partial.TwapLookbackWindow.Int64())
 	}
 
-	if partial.PbMsg.MinVoters != nil {
-		oracleParams.MinVoters = partial.PbMsg.MinVoters.Uint64()
+	if partial.MinVoters != nil {
+		oracleParams.MinVoters = partial.MinVoters.Uint64()
 	}
 
-	if partial.PbMsg.ValidatorFeeRatio != nil {
-		oracleParams.ValidatorFeeRatio = *partial.PbMsg.ValidatorFeeRatio
+	if partial.ValidatorFeeRatio != nil {
+		oracleParams.ValidatorFeeRatio = *partial.ValidatorFeeRatio
 	}
 
 	return oracleParams
