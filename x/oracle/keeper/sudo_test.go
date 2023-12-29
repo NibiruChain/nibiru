@@ -13,7 +13,8 @@ import (
 	oracletypes "github.com/NibiruChain/nibiru/x/oracle/types"
 )
 
-func TestSuiteOracleExecutor_RunAll(t *testing.T) {
+// TestSuiteOracleSudo tests sudo-only functions in the oracle module.
+func TestSuiteOracleSudo(t *testing.T) {
 	suite.Run(t, new(SuiteOracleSudo))
 }
 
@@ -21,6 +22,8 @@ type SuiteOracleSudo struct {
 	suite.Suite
 }
 
+// TestEditOracleParams tests the business logic for
+// "oraclekeeper.Keeper.Sudo().EditOracleParams"
 func (s *SuiteOracleSudo) TestEditOracleParams() {
 	nibiru, ctx := testapp.NewNibiruTestAppAndContext()
 
@@ -30,7 +33,7 @@ func (s *SuiteOracleSudo) TestEditOracleParams() {
 	rewardBand := sdk.MustNewDecFromStr("0.5")
 	whitelist := []string{"aave:usdc", "sol:usdc"}
 	slashFraction := sdk.MustNewDecFromStr("0.5")
-	slashWindow := sdk.NewInt(2)
+	slashWindow := sdk.NewInt(2_000)
 	minValidPerWindow := sdk.MustNewDecFromStr("0.5")
 	twapLookbackWindow := sdk.NewInt(int64(time.Second * 30))
 	minVoters := sdk.NewInt(2)
@@ -74,6 +77,18 @@ func (s *SuiteOracleSudo) TestEditOracleParams() {
 	resp, err := oracleMsgServer.EditOracleParams(
 		goCtx, &msgEditParams,
 	)
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.EqualValues(resp.NewParams.String(), fullParams.String())
+
+	s.T().Log("Changing to invalid params MUST fail")
+	slashWindow = sdk.NewInt(1_233) // slashWindow < vote period is not allowed.
+	msgEditParams = oracletypes.MsgEditOracleParams{
+		Sender:      okSender.String(),
+		SlashWindow: &slashWindow,
+	}
+	_, err = oracleMsgServer.EditOracleParams(
+		goCtx, &msgEditParams,
+	)
+	s.Require().Error(err)
+	s.ErrorContains(err, "oracle parameter SlashWindow must be greater")
 }
