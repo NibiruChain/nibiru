@@ -30,6 +30,18 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) types.ValidatorPerformances
 	params, _ := k.Params.Get(ctx)
 	k.clearVotesAndPrevotes(ctx, params.VotePeriod)
 	k.refreshWhitelist(ctx, params.Whitelist, whitelistedPairs)
+
+	for _, validatorPerformance := range validatorPerformances {
+		_ = ctx.EventManager().EmitTypedEvent(&types.EventValidatorPerformance{
+			Validator:    validatorPerformance.ValAddress.String(),
+			VotingPower:  validatorPerformance.Power,
+			RewardWeight: validatorPerformance.RewardWeight,
+			WinCount:     validatorPerformance.WinCount,
+			AbstainCount: validatorPerformance.AbstainCount,
+			MissCount:    validatorPerformance.MissCount,
+		})
+	}
+
 	return validatorPerformances
 }
 
