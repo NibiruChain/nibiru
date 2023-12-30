@@ -45,8 +45,8 @@ func (c closeMarketShouldFail) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Cont
 	return ctx, nil
 }
 
-func CloseMarketShouldFail(pair asset.Pair) action.Action {
-	return closeMarketShouldFail{pair: pair}
+func CloseMarketShouldFail(pair asset.Pair, adminAccount sdk.AccAddress) action.Action {
+	return closeMarketShouldFail{pair: pair, sender: adminAccount}
 }
 
 // settlePosition

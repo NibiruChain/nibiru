@@ -261,8 +261,8 @@ func TestCloseMarket(t *testing.T) {
 			),
 		).When(
 			CloseMarket(pairBtcUsdc, adminAccount),
-			CloseMarketShouldFail(pairBtcUsdc),
-			CloseMarketShouldFail("random:pair"),
+			CloseMarketShouldFail(pairBtcUsdc, adminAccount),
+			CloseMarketShouldFail("random:pair", adminAccount),
 		).Then(
 			ClosePositionFails(alice, pairBtcUsdc, perptypes.ErrMarketNotEnabled),
 		),
@@ -290,6 +290,20 @@ func TestCloseMarket(t *testing.T) {
 		).Then(
 			PartialCloseFails(alice, pairBtcUsdc, sdk.NewDec(5_000), perptypes.ErrMarketNotEnabled),
 		),
+		TC("it fails when a non-admin tries to close a market").
+			Given(
+				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
+				SetBlockTime(startTime),
+			).
+			When(
+				CloseMarketShouldFail(pairBtcUsdc, alice),
+			).
+			Then(
+				MarketShouldBeEqual(
+					pairBtcUsdc,
+					Market_EnableShouldBeEqualTo(true),
+				),
+			),
 	}
 
 	NewTestSuite(t).WithTestCases(tc...).Run()
