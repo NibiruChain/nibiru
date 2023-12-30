@@ -1,10 +1,12 @@
 package keeper_test
 
 import (
-	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/x/common/testutil"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
