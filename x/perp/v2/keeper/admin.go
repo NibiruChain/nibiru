@@ -121,7 +121,11 @@ func (k admin) CreateMarket(
 // CloseMarket closes the market. From now on, no new position can be opened on
 // this market or closed. Only the open positions can be settled by calling
 // SettlePosition.
-func (k admin) CloseMarket(ctx sdk.Context, pair asset.Pair) (err error) {
+func (k admin) CloseMarket(ctx sdk.Context, pair asset.Pair, sender sdk.AccAddress) (err error) {
+	if err := k.SudoKeeper.CheckPermissions(sender, ctx); err != nil {
+		return err
+	}
+
 	market, err := k.GetMarket(ctx, pair)
 	if err != nil {
 		return err

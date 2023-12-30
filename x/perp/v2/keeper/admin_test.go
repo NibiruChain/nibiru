@@ -101,9 +101,12 @@ func TestCreateMarket(t *testing.T) {
 	app, ctx := testapp.NewNibiruTestAppAndContext()
 	admin := app.PerpKeeperV2.Admin
 
+	adminUser, err := sdk.AccAddressFromBech32(testutil.ADDR_SUDO_ROOT)
+	require.NoError(t, err)
+
 	// Error because of invalid market
 	market := perptypes.DefaultMarket(pair).WithMaintenanceMarginRatio(sdk.NewDec(2))
-	err := admin.CreateMarket(ctx, keeper.ArgsCreateMarket{
+	err = admin.CreateMarket(ctx, keeper.ArgsCreateMarket{
 		Pair:            pair,
 		PriceMultiplier: amm.PriceMultiplier,
 		SqrtDepth:       amm.SqrtDepth,
@@ -160,7 +163,7 @@ func TestCreateMarket(t *testing.T) {
 	require.ErrorContains(t, err, "already exists")
 
 	// Close the market to test that we can create it again but with an increased version
-	err = admin.CloseMarket(ctx, pair)
+	err = admin.CloseMarket(ctx, pair, adminUser)
 	require.NoError(t, err)
 
 	err = admin.CreateMarket(ctx, keeper.ArgsCreateMarket{
@@ -189,6 +192,9 @@ func TestCloseMarket(t *testing.T) {
 	startTime := time.Now()
 	alice := testutil.AccAddress()
 
+	adminAccount, err := sdk.AccAddressFromBech32(testutil.ADDR_SUDO_ROOT)
+	require.NoError(t, err)
+
 	tc := TestCases{
 		TC("market can be disabled").
 			Given(
@@ -200,7 +206,7 @@ func TestCloseMarket(t *testing.T) {
 				),
 			).
 			When(
-				CloseMarket(pairBtcUsdc),
+				CloseMarket(pairBtcUsdc, adminAccount),
 			).
 			Then(
 				MarketShouldBeEqual(
@@ -222,7 +228,7 @@ func TestCloseMarket(t *testing.T) {
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(perptypes.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				CloseMarket(pairBtcUsdc),
+				CloseMarket(pairBtcUsdc, adminAccount),
 			).
 			Then(
 				MarketOrderFails(
@@ -254,7 +260,7 @@ func TestCloseMarket(t *testing.T) {
 				sdk.ZeroDec(),
 			),
 		).When(
-			CloseMarket(pairBtcUsdc),
+			CloseMarket(pairBtcUsdc, adminAccount),
 			CloseMarketShouldFail(pairBtcUsdc),
 			CloseMarketShouldFail("random:pair"),
 		).Then(
@@ -279,7 +285,7 @@ func TestCloseMarket(t *testing.T) {
 				sdk.ZeroDec(),
 			),
 		).When(
-			CloseMarket(pairBtcUsdc),
+			CloseMarket(pairBtcUsdc, adminAccount),
 			AMMShouldBeEqual(pairBtcUsdc, AMM_SettlementPriceShoulBeEqual(sdk.MustNewDecFromStr("1.099800000000000000"))),
 		).Then(
 			PartialCloseFails(alice, pairBtcUsdc, sdk.NewDec(5_000), perptypes.ErrMarketNotEnabled),

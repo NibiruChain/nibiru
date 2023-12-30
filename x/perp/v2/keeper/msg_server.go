@@ -219,6 +219,9 @@ func (m msgServer) ShiftSwapInvariant(
 	return &types.MsgShiftSwapInvariantResponse{}, err
 }
 
+// CloseMarket closes a market.
 func (m msgServer) CloseMarket(ctx context.Context, msg *types.MsgCloseMarket) (*types.MsgCloseMarketResponse, error) {
-	panic("implement me")
+	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
+	err := m.k.Admin.CloseMarket(sdk.UnwrapSDKContext(ctx), msg.Pair, sender)
+	return &types.MsgCloseMarketResponse{}, err
 }
