@@ -33,7 +33,7 @@ func (exec *ExecutorPerp) SetMarketEnabled(
 		return err
 	}
 
-	return exec.PerpV2.Admin.CloseMarket(ctx, pair)
+	return exec.PerpV2.Sudo().CloseMarket(ctx, pair)
 }
 
 func (exec *ExecutorPerp) CreateMarket(
@@ -71,7 +71,7 @@ func (exec *ExecutorPerp) CreateMarket(
 		}
 	}
 
-	return exec.PerpV2.Admin.CreateMarket(ctx, perpv2keeper.ArgsCreateMarket{
+	return exec.PerpV2.Sudo().CreateMarket(ctx, perpv2keeper.ArgsCreateMarket{
 		Pair:            pair,
 		PriceMultiplier: cwMsg.PegMult,
 		SqrtDepth:       cwMsg.SqrtDepth,

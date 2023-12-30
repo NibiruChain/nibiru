@@ -915,7 +915,7 @@ func (m *MsgDonateToEcosystemFundResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgDonateToEcosystemFundResponse proto.InternalMessageInfo
 
 // MsgChangeCollateralDenom: Changes the collateral denom for the module.
-// [Admin] Only callable by sudoers.
+// [SUDO] Only callable by sudoers.
 type MsgChangeCollateralDenom struct {
 	Sender   string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	NewDenom string `protobuf:"bytes,2,opt,name=new_denom,json=newDenom,proto3" json:"new_denom,omitempty"`
@@ -1199,8 +1199,8 @@ func (m *MsgWithdrawEpochRebatesResponse) GetWithdrawnRebates() github_com_cosmo
 	return nil
 }
 
-// ShiftPegMultiplier: gRPC tx msg for changing the peg multiplier.
-// Admin-only.
+// MsgShiftPegMultiplier: gRPC tx msg for changing the peg multiplier.
+// [SUDO] Only callable sudoers.
 type MsgShiftPegMultiplier struct {
 	Sender     string                                            `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	Pair       github_com_NibiruChain_nibiru_x_common_asset.Pair `protobuf:"bytes,2,opt,name=pair,proto3,customtype=github.com/NibiruChain/nibiru/x/common/asset.Pair" json:"pair"`
@@ -1283,8 +1283,8 @@ func (m *MsgShiftPegMultiplierResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgShiftPegMultiplierResponse proto.InternalMessageInfo
 
-// ShiftSwapInvariant: gRPC tx msg for changing the swap invariant.
-// Admin-only.
+// MsgShiftSwapInvariant: gRPC tx msg for changing the swap invariant.
+// [SUDO] Only callable sudoers.
 type MsgShiftSwapInvariant struct {
 	Sender           string                                            `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	Pair             github_com_NibiruChain_nibiru_x_common_asset.Pair `protobuf:"bytes,2,opt,name=pair,proto3,customtype=github.com/NibiruChain/nibiru/x/common/asset.Pair" json:"pair"`
@@ -1367,13 +1367,14 @@ func (m *MsgShiftSwapInvariantResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgShiftSwapInvariantResponse proto.InternalMessageInfo
 
-// WithdrawFromPerpFund: gRPC tx msg for changing the swap invariant.
-// Admin-only.
+// MsgWithdrawFromPerpFund: gRPC tx msg for changing the swap invariant.
+// [SUDO] Only callable sudoers.
 type MsgWithdrawFromPerpFund struct {
 	Sender string                                 `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	Amount github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=amount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"amount"`
-	Denom  string                                 `protobuf:"bytes,3,opt,name=denom,proto3" json:"denom,omitempty"`
-	ToAddr string                                 `protobuf:"bytes,4,opt,name=to_addr,json=toAddr,proto3" json:"to_addr,omitempty"`
+	// Optional denom in case withdrawing assets aside from NUSD.
+	Denom  string `protobuf:"bytes,3,opt,name=denom,proto3" json:"denom,omitempty"`
+	ToAddr string `protobuf:"bytes,4,opt,name=to_addr,json=toAddr,proto3" json:"to_addr,omitempty"`
 }
 
 func (m *MsgWithdrawFromPerpFund) Reset()         { *m = MsgWithdrawFromPerpFund{} }
@@ -1628,18 +1629,18 @@ type MsgClient interface {
 	SettlePosition(ctx context.Context, in *MsgSettlePosition, opts ...grpc.CallOption) (*MsgClosePositionResponse, error)
 	DonateToEcosystemFund(ctx context.Context, in *MsgDonateToEcosystemFund, opts ...grpc.CallOption) (*MsgDonateToEcosystemFundResponse, error)
 	// ChangeCollateralDenom: Updates the collateral denom. A denom is valid if it
-	// is possible to make an sdk.Coin using it. [Admin] Only callable by sudoers.
+	// is possible to make an sdk.Coin using it. [SUDO] Only callable by sudoers.
 	ChangeCollateralDenom(ctx context.Context, in *MsgChangeCollateralDenom, opts ...grpc.CallOption) (*MsgChangeCollateralDenomResponse, error)
 	AllocateEpochRebates(ctx context.Context, in *MsgAllocateEpochRebates, opts ...grpc.CallOption) (*MsgAllocateEpochRebatesResponse, error)
 	WithdrawEpochRebates(ctx context.Context, in *MsgWithdrawEpochRebates, opts ...grpc.CallOption) (*MsgWithdrawEpochRebatesResponse, error)
 	// ShiftPegMultiplier: gRPC tx msg for changing a market's peg multiplier.
-	// [Admin] Only callable by sudoers.
+	// [SUDO] Only callable by sudoers.
 	ShiftPegMultiplier(ctx context.Context, in *MsgShiftPegMultiplier, opts ...grpc.CallOption) (*MsgShiftPegMultiplierResponse, error)
 	// ShiftSwapInvariant: gRPC tx msg for changing a market's swap invariant.
-	// [Admin] Only callable by sudoers.
+	// [SUDO] Only callable by sudoers.
 	ShiftSwapInvariant(ctx context.Context, in *MsgShiftSwapInvariant, opts ...grpc.CallOption) (*MsgShiftSwapInvariantResponse, error)
 	// WithdrawFromPerpFund: gRPC tx msg to withdraw from the perp fund module
-	// account. [Admin] Only callable by sudoers.
+	// account. [SUDO] Only callable by sudoers.
 	WithdrawFromPerpFund(ctx context.Context, in *MsgWithdrawFromPerpFund, opts ...grpc.CallOption) (*MsgWithdrawFromPerpFundResponse, error)
 }
 
@@ -1788,18 +1789,18 @@ type MsgServer interface {
 	SettlePosition(context.Context, *MsgSettlePosition) (*MsgClosePositionResponse, error)
 	DonateToEcosystemFund(context.Context, *MsgDonateToEcosystemFund) (*MsgDonateToEcosystemFundResponse, error)
 	// ChangeCollateralDenom: Updates the collateral denom. A denom is valid if it
-	// is possible to make an sdk.Coin using it. [Admin] Only callable by sudoers.
+	// is possible to make an sdk.Coin using it. [SUDO] Only callable by sudoers.
 	ChangeCollateralDenom(context.Context, *MsgChangeCollateralDenom) (*MsgChangeCollateralDenomResponse, error)
 	AllocateEpochRebates(context.Context, *MsgAllocateEpochRebates) (*MsgAllocateEpochRebatesResponse, error)
 	WithdrawEpochRebates(context.Context, *MsgWithdrawEpochRebates) (*MsgWithdrawEpochRebatesResponse, error)
 	// ShiftPegMultiplier: gRPC tx msg for changing a market's peg multiplier.
-	// [Admin] Only callable by sudoers.
+	// [SUDO] Only callable by sudoers.
 	ShiftPegMultiplier(context.Context, *MsgShiftPegMultiplier) (*MsgShiftPegMultiplierResponse, error)
 	// ShiftSwapInvariant: gRPC tx msg for changing a market's swap invariant.
-	// [Admin] Only callable by sudoers.
+	// [SUDO] Only callable by sudoers.
 	ShiftSwapInvariant(context.Context, *MsgShiftSwapInvariant) (*MsgShiftSwapInvariantResponse, error)
 	// WithdrawFromPerpFund: gRPC tx msg to withdraw from the perp fund module
-	// account. [Admin] Only callable by sudoers.
+	// account. [SUDO] Only callable by sudoers.
 	WithdrawFromPerpFund(context.Context, *MsgWithdrawFromPerpFund) (*MsgWithdrawFromPerpFundResponse, error)
 }
 

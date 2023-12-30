@@ -50,7 +50,7 @@ func (s *TestSuiteAdmin) TestAdmin_WithdrawFromPerpFund() {
 
 				balBefore := nibiru.BankKeeper.GetBalance(ctx, admin, perptypes.TestingCollateralDenomNUSD).Amount
 				amountToWithdraw := amountToFund
-				err := nibiru.PerpKeeperV2.Admin.WithdrawFromPerpFund(
+				err := nibiru.PerpKeeperV2.Sudo().WithdrawFromPerpFund(
 					ctx, amountToWithdraw, admin, admin, "")
 				s.Require().NoError(err)
 
@@ -75,7 +75,7 @@ func (s *TestSuiteAdmin) TestAdmin_WithdrawFromPerpFund() {
 				fundModule(amountToFund, ctx, nibiru)
 
 				amountToWithdraw := amountToFund.MulRaw(5)
-				err := nibiru.PerpKeeperV2.Admin.WithdrawFromPerpFund(
+				err := nibiru.PerpKeeperV2.Sudo().WithdrawFromPerpFund(
 					ctx, amountToWithdraw, admin, admin, "")
 				s.Require().Error(err)
 			},
@@ -91,7 +91,7 @@ func TestCreateMarket(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	amm := *mock.TestAMMDefault()
 	app, ctx := testapp.NewNibiruTestAppAndContext()
-	admin := app.PerpKeeperV2.Admin
+	admin := app.PerpKeeperV2.Sudo()
 
 	// Error because of invalid market
 	market := perptypes.DefaultMarket(pair).WithMaintenanceMarginRatio(sdk.NewDec(2))
@@ -335,7 +335,7 @@ func TestAdmin_ChangeCollateralDenom(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			bapp, ctx := setup()
-			err := bapp.PerpKeeperV2.Admin.ChangeCollateralDenom(
+			err := bapp.PerpKeeperV2.Sudo().ChangeCollateralDenom(
 				ctx, tc.newDenom, tc.sender,
 			)
 

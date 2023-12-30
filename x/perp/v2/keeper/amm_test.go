@@ -160,7 +160,7 @@ func TestShiftPegMultiplier_Fail(t *testing.T) {
 
 	account := testutil.AccAddress()
 
-	err := app.PerpKeeperV2.Admin.CreateMarket(
+	err := app.PerpKeeperV2.Sudo().CreateMarket(
 		ctx,
 		keeper.ArgsCreateMarket{
 			Pair:            pair,
@@ -188,12 +188,12 @@ func TestShiftPegMultiplier_Fail(t *testing.T) {
 
 	adminAddr := testapp.DefaultSudoRoot()
 	// Error because of invalid pair
-	err = app.PerpKeeperV2.Admin.ShiftPegMultiplier(
+	err = app.PerpKeeperV2.Sudo().ShiftPegMultiplier(
 		ctx, asset.MustNewPair("luna:usdt"), sdk.NewDec(-1), adminAddr)
 	require.ErrorContains(t, err, "market luna:usdt not found")
 
 	// Error because of invalid price multiplier
-	err = app.PerpKeeperV2.Admin.ShiftPegMultiplier(ctx, pair, sdk.NewDec(-1), adminAddr)
+	err = app.PerpKeeperV2.Sudo().ShiftPegMultiplier(ctx, pair, sdk.NewDec(-1), adminAddr)
 	require.ErrorIs(t, err, types.ErrAmmNonPositivePegMult)
 
 	// Add market activity
@@ -215,11 +215,11 @@ func TestShiftPegMultiplier_Fail(t *testing.T) {
 	require.NoError(t, err)
 
 	// Error because no money in perp ef fund
-	err = app.PerpKeeperV2.Admin.ShiftPegMultiplier(ctx, pair, sdk.NewDec(3), adminAddr)
+	err = app.PerpKeeperV2.Sudo().ShiftPegMultiplier(ctx, pair, sdk.NewDec(3), adminAddr)
 	require.ErrorContains(t, err, types.ErrNotEnoughFundToPayAction.Error())
 
 	// Works because it goes in the other way
-	err = app.PerpKeeperV2.Admin.ShiftPegMultiplier(ctx, pair, sdk.NewDec(1), adminAddr)
+	err = app.PerpKeeperV2.Sudo().ShiftPegMultiplier(ctx, pair, sdk.NewDec(1), adminAddr)
 	require.NoError(t, err)
 }
 
@@ -230,7 +230,7 @@ func TestShiftSwapInvariant_Fail(t *testing.T) {
 	app, ctx := testapp.NewNibiruTestAppAndContext()
 	account := testutil.AccAddress()
 
-	err := app.PerpKeeperV2.Admin.CreateMarket(
+	err := app.PerpKeeperV2.Sudo().CreateMarket(
 		ctx,
 		keeper.ArgsCreateMarket{
 			Pair:            pair,
@@ -258,11 +258,11 @@ func TestShiftSwapInvariant_Fail(t *testing.T) {
 
 	adminAddr := testapp.DefaultSudoRoot()
 	// Error because of invalid price multiplier
-	err = app.PerpKeeperV2.Admin.ShiftSwapInvariant(ctx, asset.MustNewPair("luna:usdt"), sdk.NewInt(-1), adminAddr)
+	err = app.PerpKeeperV2.Sudo().ShiftSwapInvariant(ctx, asset.MustNewPair("luna:usdt"), sdk.NewInt(-1), adminAddr)
 	require.ErrorContains(t, err, "market luna:usdt not found")
 
 	// Error because of invalid price multiplier
-	err = app.PerpKeeperV2.Admin.ShiftSwapInvariant(ctx, pair, sdk.NewInt(-1), adminAddr)
+	err = app.PerpKeeperV2.Sudo().ShiftSwapInvariant(ctx, pair, sdk.NewInt(-1), adminAddr)
 	require.ErrorIs(t, err, types.ErrAmmNonPositiveSwapInvariant)
 
 	// Add market activity
@@ -284,15 +284,15 @@ func TestShiftSwapInvariant_Fail(t *testing.T) {
 	require.NoError(t, err)
 
 	// Error because no money in perp ef fund
-	err = app.PerpKeeperV2.Admin.ShiftSwapInvariant(ctx, pair, sdk.NewInt(2_000_000), adminAddr)
+	err = app.PerpKeeperV2.Sudo().ShiftSwapInvariant(ctx, pair, sdk.NewInt(2_000_000), adminAddr)
 	require.ErrorContains(t, err, types.ErrNotEnoughFundToPayAction.Error())
 
 	// Fail at validate
-	err = app.PerpKeeperV2.Admin.ShiftSwapInvariant(ctx, pair, sdk.NewInt(0), adminAddr)
+	err = app.PerpKeeperV2.Sudo().ShiftSwapInvariant(ctx, pair, sdk.NewInt(0), adminAddr)
 	require.ErrorContains(t, err, types.ErrAmmNonPositiveSwapInvariant.Error())
 
 	// Works because it goes in the other way
-	err = app.PerpKeeperV2.Admin.ShiftSwapInvariant(ctx, pair, sdk.NewInt(500_000), adminAddr)
+	err = app.PerpKeeperV2.Sudo().ShiftSwapInvariant(ctx, pair, sdk.NewInt(500_000), adminAddr)
 	require.NoError(t, err)
 }
 
@@ -437,7 +437,7 @@ func TestKeeper_GetMarketByPairAndVersion(t *testing.T) {
 
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 
-	err := app.PerpKeeperV2.Admin.CreateMarket(
+	err := app.PerpKeeperV2.Sudo().CreateMarket(
 		ctx,
 		keeper.ArgsCreateMarket{
 			Pair:            pair,
@@ -448,12 +448,12 @@ func TestKeeper_GetMarketByPairAndVersion(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	market, err := app.PerpKeeperV2.Admin.GetMarketByPairAndVersion(ctx, pair, 1)
+	market, err := app.PerpKeeperV2.Sudo().GetMarketByPairAndVersion(ctx, pair, 1)
 	require.NoError(t, err)
 	require.Equal(t, market.Version, uint64(1))
 	require.Equal(t, market.Pair, pair)
 
-	market, err = app.PerpKeeperV2.Admin.GetMarketByPairAndVersion(ctx, pair, 2)
+	market, err = app.PerpKeeperV2.Sudo().GetMarketByPairAndVersion(ctx, pair, 2)
 	require.ErrorContains(t, err, fmt.Sprintf("market with pair %s and version 2 not found", pair.String()))
 }
 
@@ -462,7 +462,7 @@ func TestKeeper_GetAMMByPairAndVersion(t *testing.T) {
 
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 
-	err := app.PerpKeeperV2.Admin.CreateMarket(
+	err := app.PerpKeeperV2.Sudo().CreateMarket(
 		ctx,
 		keeper.ArgsCreateMarket{
 			Pair:            pair,
@@ -473,11 +473,11 @@ func TestKeeper_GetAMMByPairAndVersion(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	amm, err := app.PerpKeeperV2.Admin.GetAMMByPairAndVersion(ctx, pair, 1)
+	amm, err := app.PerpKeeperV2.Sudo().GetAMMByPairAndVersion(ctx, pair, 1)
 	require.NoError(t, err)
 	require.Equal(t, amm.Version, uint64(1))
 	require.Equal(t, amm.Pair, pair)
 
-	amm, err = app.PerpKeeperV2.Admin.GetAMMByPairAndVersion(ctx, pair, 2)
+	amm, err = app.PerpKeeperV2.Sudo().GetAMMByPairAndVersion(ctx, pair, 2)
 	require.ErrorContains(t, err, fmt.Sprintf("amm with pair %s and version 2 not found", pair.String()))
 }
