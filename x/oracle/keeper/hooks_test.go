@@ -73,7 +73,7 @@ func TestHooks_AfterEpochEnd(t *testing.T) {
 			balances := app.BankKeeper.GetAllBalances(ctx, account.GetAddress())
 			assert.Equal(t, tt.expectedOracleBalances, balances)
 
-			account = app.AccountKeeper.GetModuleAccount(ctx, perptypes.PerpEFModuleAccount)
+			account = app.AccountKeeper.GetModuleAccount(ctx, perptypes.PerpFundModuleAccount)
 			balances = app.BankKeeper.GetAllBalances(ctx, account.GetAddress())
 			assert.Equal(t, tt.expectedEFBalances, balances)
 		})
