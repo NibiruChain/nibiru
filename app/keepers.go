@@ -805,7 +805,7 @@ func ModuleAccPerms() map[string][]string {
 
 		perptypes.ModuleName:                 {},
 		perptypes.VaultModuleAccount:         {},
-		perptypes.PerpEFModuleAccount:        {},
+		perptypes.PerpFundModuleAccount:      {},
 		perptypes.FeePoolModuleAccount:       {},
 		perptypes.DNRAllocationModuleAccount: {},
 		perptypes.DNREscrowModuleAccount:     {},

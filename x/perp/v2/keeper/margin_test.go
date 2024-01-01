@@ -71,7 +71,7 @@ func TestAddMargin(t *testing.T) {
 					ExchangedSize:     sdk.MustNewDecFromStr("0"),
 				}),
 				BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.ZeroInt()),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(10)),
+				ModuleBalanceEqual(types.PerpFundModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(10)),
 				ModuleBalanceEqual(types.FeePoolModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(10)),
 			),
 
@@ -121,7 +121,7 @@ func TestAddMargin(t *testing.T) {
 					ExchangedSize:     sdk.MustNewDecFromStr("0"),
 				}),
 				BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.ZeroInt()),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(10)),
+				ModuleBalanceEqual(types.PerpFundModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(10)),
 				ModuleBalanceEqual(types.FeePoolModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(10)),
 			),
 
@@ -201,7 +201,7 @@ func TestRemoveMargin(t *testing.T) {
 					ExchangedSize:     sdk.MustNewDecFromStr("0"),
 				}),
 				BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.NewInt(500)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.OneInt()),
+				ModuleBalanceEqual(types.PerpFundModuleAccount, types.TestingCollateralDenomNUSD, sdk.OneInt()),
 				ModuleBalanceEqual(types.FeePoolModuleAccount, types.TestingCollateralDenomNUSD, sdk.OneInt()),
 			),
 
@@ -228,7 +228,7 @@ func TestRemoveMargin(t *testing.T) {
 					LastUpdatedBlockNumber:          1,
 				})),
 				BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.ZeroInt()),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.OneInt()),
+				ModuleBalanceEqual(types.PerpFundModuleAccount, types.TestingCollateralDenomNUSD, sdk.OneInt()),
 				ModuleBalanceEqual(types.FeePoolModuleAccount, types.TestingCollateralDenomNUSD, sdk.OneInt()),
 			),
 
@@ -276,7 +276,7 @@ func TestRemoveMargin(t *testing.T) {
 					ExchangedSize:     sdk.MustNewDecFromStr("0"),
 				}),
 				BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.NewInt(500)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.OneInt()),
+				ModuleBalanceEqual(types.PerpFundModuleAccount, types.TestingCollateralDenomNUSD, sdk.OneInt()),
 				ModuleBalanceEqual(types.FeePoolModuleAccount, types.TestingCollateralDenomNUSD, sdk.OneInt()),
 			),
 
@@ -303,7 +303,7 @@ func TestRemoveMargin(t *testing.T) {
 					LastUpdatedBlockNumber:          1,
 				})),
 				BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.ZeroInt()),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.OneInt()),
+				ModuleBalanceEqual(types.PerpFundModuleAccount, types.TestingCollateralDenomNUSD, sdk.OneInt()),
 				ModuleBalanceEqual(types.FeePoolModuleAccount, types.TestingCollateralDenomNUSD, sdk.OneInt()),
 			),
 	}

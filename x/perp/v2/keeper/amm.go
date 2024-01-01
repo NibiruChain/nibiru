@@ -28,7 +28,7 @@ func (k Keeper) handleMarketUpdateCost(
 		)
 		err = k.BankKeeper.SendCoinsFromModuleToModule(
 			ctx,
-			types.PerpEFModuleAccount,
+			types.PerpFundModuleAccount,
 			types.VaultModuleAccount,
 			cost,
 		)
@@ -36,7 +36,7 @@ func (k Keeper) handleMarketUpdateCost(
 			return costPaid, types.ErrNotEnoughFundToPayAction.Wrapf(
 				"need %s, got %s",
 				cost.String(),
-				k.BankKeeper.GetBalance(ctx, k.AccountKeeper.GetModuleAddress(types.PerpEFModuleAccount), collateral).String(),
+				k.BankKeeper.GetBalance(ctx, k.AccountKeeper.GetModuleAddress(types.PerpFundModuleAccount), collateral).String(),
 			)
 		} else {
 			costPaid = cost[0]
@@ -46,7 +46,7 @@ func (k Keeper) handleMarketUpdateCost(
 		err = k.BankKeeper.SendCoinsFromModuleToModule(
 			ctx,
 			types.VaultModuleAccount,
-			types.PerpEFModuleAccount,
+			types.PerpFundModuleAccount,
 			sdk.NewCoins(
 				sdk.NewCoin(collateral, costAmt.Neg()),
 			),

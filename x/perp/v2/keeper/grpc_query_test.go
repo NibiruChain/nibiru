@@ -347,7 +347,7 @@ func TestQueryMarkets(t *testing.T) {
 					WithEnabled(true),
 					WithPricePeg(sdk.NewDec(2)),
 				),
-				FundModule("perp_ef", sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10)))),
+				FundModule(types.PerpFundModuleAccount, sdk.NewCoins(sdk.NewCoin(denoms.NUSD, sdk.NewInt(10)))),
 			).
 			When(
 				InsertPosition(
@@ -364,7 +364,7 @@ func TestQueryMarkets(t *testing.T) {
 				),
 				QueryModuleAccounts(QueryModuleAccounts_ModulesBalanceShouldBe(
 					map[string]sdk.Coins{
-						"perp_ef": sdk.NewCoins(
+						types.PerpFundModuleAccount: sdk.NewCoins(
 							sdk.NewCoin(denoms.BTC, sdk.ZeroInt()),
 							sdk.NewCoin(denoms.NUSD, sdk.NewInt(10)),
 						),

@@ -685,7 +685,7 @@ func (k Keeper) transferFee(
 		if err = k.BankKeeper.SendCoinsFromAccountToModule(
 			ctx,
 			/* from */ trader,
-			/* to */ types.PerpEFModuleAccount,
+			/* to */ types.PerpFundModuleAccount,
 			/* coins */ sdk.NewCoins(
 				sdk.NewCoin(
 					collateral,

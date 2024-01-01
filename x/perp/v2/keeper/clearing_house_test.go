@@ -43,7 +43,7 @@ func TestMarketOrder(t *testing.T) {
 
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(10_200)))),
 				FundAccount(bob, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(10_200)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(100_000_000)))),
+				FundModule(types.PerpFundModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(100_000_000)))),
 
 				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
 				MarketOrder(bob, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
@@ -263,7 +263,7 @@ func TestMarketOrder(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(10_000)))),
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(9_000), sdk.NewDec(10), sdk.ZeroDec()),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(100_000_000)))),
+				FundModule(types.PerpFundModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(100_000_000)))),
 				ShiftSwapInvariant(pairBtcNusd, sdk.NewInt(1)),
 			).
 			When(
@@ -1273,7 +1273,7 @@ func TestPartialClose(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 2))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 27))),
+				FundModule(types.PerpFundModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 27))),
 				InsertPosition(
 					WithPair(pairBtcNusd),
 					WithTrader(alice),
@@ -1493,7 +1493,7 @@ func TestPartialClose(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(18)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 48))),
+				FundModule(types.PerpFundModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 48))),
 				InsertPosition(
 					WithPair(pairBtcNusd),
 					WithTrader(alice),
@@ -1679,7 +1679,7 @@ func TestClosePosition(t *testing.T) {
 				),
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 18))),
 				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 1000))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 102))),
+				FundModule(types.PerpFundModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 102))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -1709,7 +1709,7 @@ func TestClosePosition(t *testing.T) {
 					ExchangedSize:     sdk.MustNewDecFromStr("-10000.000000000000000000"),
 				}),
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1102)), // 1000 + 102 from perp ef
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(0)),
+				ModuleBalanceEqual(types.PerpFundModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(0)),
 			),
 
 		TC("close short position with positive PnL").
@@ -1824,7 +1824,7 @@ func TestClosePosition(t *testing.T) {
 				),
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 22))),
 				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 1000))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 98))),
+				FundModule(types.PerpFundModuleAccount, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 98))),
 			).
 			When(
 				MoveToNextBlock(),
@@ -1854,7 +1854,7 @@ func TestClosePosition(t *testing.T) {
 					ExchangedSize:     sdk.MustNewDecFromStr("10000.000000000000000000"),
 				}),
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(1098)), // 1000 + 98 from perp ef
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(0)),
+				ModuleBalanceEqual(types.PerpFundModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(0)),
 			),
 	}
 
@@ -1876,7 +1876,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(10_200_000_000)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(100000)))),
+				FundModule(types.PerpFundModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(100000)))),
 			).
 			When(
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
@@ -1891,7 +1891,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(10_200_000_000)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(100000)))),
+				FundModule(types.PerpFundModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(100000)))),
 			).
 			When(
 				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.NewDec(10_000_000_000_000)),
@@ -1906,7 +1906,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(10_200_000_000)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(100_000_000)))),
+				FundModule(types.PerpFundModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(100_000_000)))),
 			).
 			When(
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
@@ -1926,7 +1926,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(10_200_000_000)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(100_000_000)))),
+				FundModule(types.PerpFundModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(100_000_000)))),
 			).
 			When(
 				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
@@ -1947,7 +1947,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(10_200_000_000)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(100_000_000)))),
+				FundModule(types.PerpFundModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(100_000_000)))),
 			).
 			When(
 				MarketOrder(alice, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
@@ -1969,7 +1969,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(10_200_000_000)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(100_000_000)))),
+				FundModule(types.PerpFundModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(100_000_000)))),
 			).
 			When(
 				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000_000_000), sdk.OneDec(), sdk.ZeroDec()),
@@ -2015,7 +2015,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				PositionShouldNotExist(bob, pairBtcNusd, 1),
 
 				ModuleBalanceShouldBeEqualTo(types.VaultModuleAccount, sdk.NewCoins()),
-				ModuleBalanceShouldBeEqualTo(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(39_960_000)))),
+				ModuleBalanceShouldBeEqualTo(types.PerpFundModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(39_960_000)))),
 			),
 		TC("long and short position - reducing k").
 			Given(
@@ -2047,7 +2047,7 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				PositionShouldNotExist(bob, pairBtcNusd, 1),
 
 				ModuleBalanceShouldBeEqualTo(types.VaultModuleAccount, sdk.NewCoins()),
-				ModuleBalanceShouldBeEqualTo(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(39_960_000)))),
+				ModuleBalanceShouldBeEqualTo(types.PerpFundModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(39_960_000)))),
 			),
 	}
 

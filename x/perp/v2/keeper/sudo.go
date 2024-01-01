@@ -11,46 +11,54 @@ import (
 	types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
-// Extends the Keeper with admin functions. Admin is syntactic sugar to separate
-// admin calls off from the other Keeper methods.
+// Sudo extends the Keeper with sudo functions. Sudo is syntactic sugar to separate
+// sudoExtension calls off from the other Keeper methods.
 //
-// These Admin functions should:
-// 1. Not be wired into the MsgServer.
-// 2. Not be called in other methods in the x/perp module.
-// 3. Only be callable from nibiru/wasmbinding via sudo contracts.
+// These Sudo functions should:
+// 1. Not be called in other methods in the x/perp module.
+// 2. Only be callable from the x/sudo root or sudo contracts.
 //
-// The intention here is to make it more obvious to the developer that an unsafe
-// function is being used when it's called from the PerpKeeper.Admin struct.
-type admin struct{ *Keeper }
+// The intention behind "sudoExtension" is to make it more obvious to the
+// developer that an unsafe function is being used when it's called from
+// "PerpKeeper.Sudo()"
+func (k Keeper) Sudo() sudoExtension { return sudoExtension{k} }
 
-/*
-WithdrawFromInsuranceFund sends funds from the Insurance Fund to the given "to"
-address.
+type sudoExtension struct{ Keeper }
 
-Args:
-- ctx: Blockchain context holding the current state
-- amount: Amount of micro-NUSD to withdraw.
-- to: Recipient address
-*/
-func (k admin) WithdrawFromInsuranceFund(
-	ctx sdk.Context, amount sdkmath.Int, to sdk.AccAddress,
+// WithdrawFromPerpFund sends funds from the Perp Fund to the "to" address.
+//
+// Args:
+// - ctx: Blockchain context holding the current state
+// - amount: Amount of micro-NUSD to withdraw.
+// - sender: Admin address registered in x/sudo
+// - to: Recipient address
+func (k sudoExtension) WithdrawFromPerpFund(
+	ctx sdk.Context, amount sdkmath.Int, sender, to sdk.AccAddress, denom string,
 ) (err error) {
-	collateral, err := k.Collateral.Get(ctx)
-	if err != nil {
+	if err := k.SudoKeeper.CheckPermissions(sender, ctx); err != nil {
 		return err
 	}
 
-	coinToSend := sdk.NewCoin(collateral, amount)
+	var collateralDenom string = denom
+	if denom == "" {
+		denomFromState, err := k.Collateral.Get(ctx)
+		if err != nil {
+			return err
+		}
+		collateralDenom = denomFromState
+	}
+
+	coinToSend := sdk.NewCoin(collateralDenom, amount)
 	if err = k.BankKeeper.SendCoinsFromModuleToAccount(
 		ctx,
-		/* from */ types.PerpEFModuleAccount,
+		/* from */ types.PerpFundModuleAccount,
 		/* to */ to,
 		/* amount */ sdk.NewCoins(coinToSend),
 	); err != nil {
 		return err
 	}
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
-		"withdraw_from_if",
+		"withdraw_from_perp_fund",
 		sdk.NewAttribute("to", to.String()),
 		sdk.NewAttribute("funds", coinToSend.String()),
 	))
@@ -68,7 +76,7 @@ type ArgsCreateMarket struct {
 }
 
 // CreateMarket creates a pool for a specific pair.
-func (k admin) CreateMarket(
+func (k sudoExtension) CreateMarket(
 	ctx sdk.Context,
 	args ArgsCreateMarket,
 ) error {
@@ -121,7 +129,7 @@ func (k admin) CreateMarket(
 // CloseMarket closes the market. From now on, no new position can be opened on
 // this market or closed. Only the open positions can be settled by calling
 // SettlePosition.
-func (k admin) CloseMarket(ctx sdk.Context, pair asset.Pair) (err error) {
+func (k sudoExtension) CloseMarket(ctx sdk.Context, pair asset.Pair) (err error) {
 	market, err := k.GetMarket(ctx, pair)
 	if err != nil {
 		return err
@@ -150,8 +158,8 @@ func (k admin) CloseMarket(ctx sdk.Context, pair asset.Pair) (err error) {
 }
 
 // ChangeCollateralDenom: Updates the collateral denom. A denom is valid if it is
-// possible to make an sdk.Coin using it. [Admin] Only callable by sudoers.
-func (k admin) ChangeCollateralDenom(
+// possible to make an sdk.Coin using it. [SUDO] Only callable by sudoers.
+func (k sudoExtension) ChangeCollateralDenom(
 	ctx sdk.Context,
 	denom string,
 	sender sdk.AccAddress,
@@ -164,7 +172,7 @@ func (k admin) ChangeCollateralDenom(
 
 // UnsafeChangeCollateralDenom: Used in the genesis to set the collateral
 // without requiring an explicit call from sudoers.
-func (k admin) UnsafeChangeCollateralDenom(
+func (k sudoExtension) UnsafeChangeCollateralDenom(
 	ctx sdk.Context,
 	denom string,
 ) error {
@@ -178,7 +186,7 @@ func (k admin) UnsafeChangeCollateralDenom(
 // ShiftPegMultiplier: Edit the peg multiplier of an amm pool after making sure
 // there's enough money in the perp fund to pay for the repeg. These funds get
 // send to the vault to pay for trader's new net margin.
-func (k admin) ShiftPegMultiplier(
+func (k sudoExtension) ShiftPegMultiplier(
 	ctx sdk.Context,
 	pair asset.Pair,
 	newPriceMultiplier sdk.Dec,
@@ -224,7 +232,7 @@ func (k admin) ShiftPegMultiplier(
 // ShiftSwapInvariant: Edit the swap invariant (liquidity depth) of an amm pool,
 // ensuring that there's enough money in the perp  fund to pay for the operation.
 // These funds get send to the vault to pay for trader's new net margin.
-func (k admin) ShiftSwapInvariant(
+func (k sudoExtension) ShiftSwapInvariant(
 	ctx sdk.Context,
 	pair asset.Pair,
 	newSwapInvariant sdkmath.Int,

@@ -14,20 +14,13 @@ import (
 type NibiruMsg struct {
 	// bindings-perp ExecuteMsg enum types
 	// MultiLiquidate        *MultiLiquidate        `json:"multi_liquidate,omitempty"` // TODO
-	DonateToInsuranceFund *DonateToInsuranceFund `json:"donate_to_insurance_fund,omitempty"` // TODO
-	InsuranceFundWithdraw *InsuranceFundWithdraw `json:"insurance_fund_withdraw,omitempty"`
-	SetMarketEnabled      *SetMarketEnabled      `json:"set_market_enabled,omitempty"`
-	CreateMarket          *CreateMarket          `json:"create_market,omitempty"`
+	SetMarketEnabled *SetMarketEnabled `json:"set_market_enabled,omitempty"`
+	CreateMarket     *CreateMarket     `json:"create_market,omitempty"`
 
 	EditOracleParams *EditOracleParams `json:"edit_oracle_params,omitempty"`
 
 	// Short for "no operation". A wasm binding payload that does nothing.
 	NoOp *NoOp `json:"no_op,omitempty"`
-}
-
-type DonateToInsuranceFund struct {
-	Sender   string   `json:"sender"`
-	Donation sdk.Coin `json:"donation"`
 }
 
 type EditOracleParams struct {
@@ -41,11 +34,6 @@ type EditOracleParams struct {
 	TwapLookbackWindow *sdkmath.Int `json:"twap_lookback_window,omitempty"`
 	MinVoters          *sdkmath.Int `json:"min_voters,omitempty"`
 	ValidatorFeeRatio  *sdk.Dec     `json:"validator_fee_ratio,omitempty"`
-}
-
-type InsuranceFundWithdraw struct {
-	Amount sdkmath.Int `json:"amount"`
-	To     string      `json:"to"`
 }
 
 type SetMarketEnabled struct {

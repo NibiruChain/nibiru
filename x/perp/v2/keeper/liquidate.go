@@ -418,7 +418,7 @@ func (k Keeper) distributeLiquidateRewards(
 		if err = k.BankKeeper.SendCoinsFromModuleToModule(
 			ctx,
 			/* from */ types.VaultModuleAccount,
-			/* to */ types.PerpEFModuleAccount,
+			/* to */ types.PerpFundModuleAccount,
 			sdk.NewCoins(ecosystemFundFee),
 		); err != nil {
 			return err

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -392,7 +393,8 @@ func TestMsgValidateBasic(t *testing.T) {
 			expectErr:     true,
 			expectedError: ErrAmmNonPositivePegMult.Error(),
 		},
-		// MsgDonateToEcosystemFund test cases
+
+		// MsgShiftSwapInvariant test cases
 		{
 			name: "MsgShiftSwapInvariant: Invalid pair",
 			msg: &MsgShiftSwapInvariant{
@@ -422,6 +424,41 @@ func TestMsgValidateBasic(t *testing.T) {
 			},
 			expectErr:     true,
 			expectedError: ErrAmmNonPositiveSwapInvariant.Error(),
+		},
+
+		// MsgWithdrawFromPerpFund test cases
+		{
+			name: "MsgWithdrawFromPerpFund: invalid to addr",
+			msg: &MsgWithdrawFromPerpFund{
+				Sender: validSender,
+				Amount: sdk.NewInt(420), // valid positive
+				Denom:  "",
+				ToAddr: "invalidaddr",
+			},
+			expectErr:     true,
+			expectedError: sdkerrors.ErrInvalidAddress.Error(),
+		},
+		{
+			name: "MsgWithdrawFromPerpFund: invalid sender",
+			msg: &MsgWithdrawFromPerpFund{
+				Sender: "invalidaddr",
+				Amount: sdk.NewInt(420), // valid positive
+				Denom:  "",
+				ToAddr: validSender,
+			},
+			expectErr:     true,
+			expectedError: sdkerrors.ErrInvalidAddress.Error(),
+		},
+		{
+			name: "MsgWithdrawFromPerpFund: invalid amount",
+			msg: &MsgWithdrawFromPerpFund{
+				Sender: validSender,
+				Amount: sdk.NewInt(-420),
+				Denom:  "",
+				ToAddr: validSender,
+			},
+			expectErr:     true,
+			expectedError: ErrGeneric.Error(),
 		},
 	}
 
@@ -453,6 +490,7 @@ func TestMsg_GetSigners(t *testing.T) {
 		&MsgMultiLiquidate{Sender: validSender},
 		&MsgShiftPegMultiplier{Sender: validSender},
 		&MsgShiftSwapInvariant{Sender: validSender},
+		&MsgWithdrawFromPerpFund{Sender: validSender},
 	}
 	msgInvalidSenderList := []sdk.Msg{
 		&MsgAddMargin{Sender: invalidSender},
@@ -465,6 +503,7 @@ func TestMsg_GetSigners(t *testing.T) {
 		&MsgMultiLiquidate{Sender: invalidSender},
 		&MsgShiftPegMultiplier{Sender: invalidSender},
 		&MsgShiftSwapInvariant{Sender: invalidSender},
+		&MsgWithdrawFromPerpFund{Sender: invalidSender},
 	}
 
 	for _, msg := range msgValidSenderList {
@@ -608,6 +647,10 @@ func TestMsg_GetSignBytes(t *testing.T) {
 		{
 			name: "MsgShiftSwapInvariant",
 			msg:  &MsgShiftSwapInvariant{},
+		},
+		{
+			name: "MsgWithdrawFromPerpFund",
+			msg:  &MsgWithdrawFromPerpFund{},
 		},
 	}
 

@@ -57,7 +57,7 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, _ uint64) 
 		}
 
 		if !totalRemainder.IsZero() {
-			err = h.bankKeeper.SendCoinsFromModuleToModule(ctx, perptypes.FeePoolModuleAccount, perptypes.PerpEFModuleAccount, totalRemainder)
+			err = h.bankKeeper.SendCoinsFromModuleToModule(ctx, perptypes.FeePoolModuleAccount, perptypes.PerpFundModuleAccount, totalRemainder)
 			if err != nil {
 				h.k.Logger(ctx).Error("Failed to send coins to perp ef module", "err", err)
 			}
