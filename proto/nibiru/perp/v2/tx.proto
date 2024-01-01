@@ -30,7 +30,7 @@ service Msg {
       returns (MsgDonateToEcosystemFundResponse) {}
 
   // ChangeCollateralDenom: Updates the collateral denom. A denom is valid if it
-  // is possible to make an sdk.Coin using it. [Admin] Only callable by sudoers.
+  // is possible to make an sdk.Coin using it. [SUDO] Only callable by sudoers.
   rpc ChangeCollateralDenom(MsgChangeCollateralDenom)
       returns (MsgChangeCollateralDenomResponse) {}
 
@@ -41,14 +41,19 @@ service Msg {
       returns (MsgWithdrawEpochRebatesResponse) {}
 
   // ShiftPegMultiplier: gRPC tx msg for changing a market's peg multiplier.
-  // [Admin] Only callable by sudoers.
+  // [SUDO] Only callable by sudoers.
   rpc ShiftPegMultiplier(MsgShiftPegMultiplier)
       returns (MsgShiftPegMultiplierResponse) {}
 
   // ShiftSwapInvariant: gRPC tx msg for changing a market's swap invariant.
-  // [Admin] Only callable by sudoers.
+  // [SUDO] Only callable by sudoers.
   rpc ShiftSwapInvariant(MsgShiftSwapInvariant)
       returns (MsgShiftSwapInvariantResponse) {}
+
+  // WithdrawFromPerpFund: gRPC tx msg to withdraw from the perp fund module
+  // account. [SUDO] Only callable by sudoers.
+  rpc WithdrawFromPerpFund(MsgWithdrawFromPerpFund)
+      returns (MsgWithdrawFromPerpFundResponse) {}
 }
 
 // -------------------------- Settle Position --------------------------
@@ -353,7 +358,7 @@ message MsgDonateToEcosystemFundResponse {}
 // -----------------------  MsgChangeCollateralDenom -----------------------
 
 // MsgChangeCollateralDenom: Changes the collateral denom for the module.
-// [Admin] Only callable by sudoers.
+// [SUDO] Only callable by sudoers.
 message MsgChangeCollateralDenom {
   string sender = 1;
   string new_denom = 2;
@@ -394,8 +399,8 @@ message MsgWithdrawEpochRebatesResponse {
 
 // -------------------------- ShiftPegMultiplier --------------------------
 
-// ShiftPegMultiplier: gRPC tx msg for changing the peg multiplier.
-// Admin-only.
+// MsgShiftPegMultiplier: gRPC tx msg for changing the peg multiplier.
+// [SUDO] Only callable sudoers.
 message MsgShiftPegMultiplier {
   string sender = 1;
   string pair = 2 [
@@ -413,8 +418,8 @@ message MsgShiftPegMultiplierResponse {}
 
 // -------------------------- ShiftSwapInvariant --------------------------
 
-// ShiftSwapInvariant: gRPC tx msg for changing the swap invariant.
-// Admin-only.
+// MsgShiftSwapInvariant: gRPC tx msg for changing the swap invariant.
+// [SUDO] Only callable sudoers.
 message MsgShiftSwapInvariant {
   string sender = 1;
   string pair = 2 [
@@ -429,3 +434,20 @@ message MsgShiftSwapInvariant {
 }
 
 message MsgShiftSwapInvariantResponse {}
+
+// -------------------------- WithdrawFromPerpFund --------------------------
+
+// MsgWithdrawFromPerpFund: gRPC tx msg for changing the swap invariant.
+// [SUDO] Only callable sudoers.
+message MsgWithdrawFromPerpFund {
+  string sender = 1;
+  string amount = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  // Optional denom in case withdrawing assets aside from NUSD.
+  string denom = 3;
+  string to_addr = 4;
+}
+
+message MsgWithdrawFromPerpFundResponse {}
