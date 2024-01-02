@@ -216,7 +216,6 @@ func (m msgServer) ShiftSwapInvariant(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	err := m.k.Sudo().ShiftSwapInvariant(ctx, msg.Pair, msg.NewSwapInvariant, sender)
 	return &types.MsgShiftSwapInvariantResponse{}, err
-
 }
 
 // WithdrawFromPerpFund: gRPC tx msg for changing a market's swap invariant.
@@ -246,7 +245,7 @@ func (m msgServer) CreateMarket(
 	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	args := ArgsCreateMarket{}
+	args := parseArgsCreateMarket(msg)
 
 	err := m.k.Sudo().CreateMarket(ctx, args, sender)
 	if err != nil {
@@ -256,7 +255,7 @@ func (m msgServer) CreateMarket(
 	return &types.MsgCreateMarketResponse{}, nil
 }
 
-func parseArgsCreateMarket(msg *types.MsgCreateMarket) (ArgsCreateMarket, error) {
+func parseArgsCreateMarket(msg *types.MsgCreateMarket) ArgsCreateMarket {
 	args := ArgsCreateMarket{
 		Pair:            msg.Pair,
 		PriceMultiplier: msg.PriceMultiplier,
@@ -270,5 +269,5 @@ func parseArgsCreateMarket(msg *types.MsgCreateMarket) (ArgsCreateMarket, error)
 		args.Market = &market
 	}
 
-	return args, nil
+	return args
 }

@@ -489,15 +489,8 @@ message MsgCreateMarket {
   ];
 }
 
-message MsgCreateMarketResponse {
-  string pair = 1 [
-    (gogoproto.customtype) =
-        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
-    (gogoproto.nullable) = false
-  ];
+message MsgCreateMarketResponse {}
 
-  string version = 2;
-}
 // -------------------------- CloseMarket --------------------------
 
 // CloseMarket: gRPC tx msg for closing a market.
