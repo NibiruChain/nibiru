@@ -129,7 +129,10 @@ func (k sudoExtension) CreateMarket(
 // CloseMarket closes the market. From now on, no new position can be opened on
 // this market or closed. Only the open positions can be settled by calling
 // SettlePosition.
-func (k sudoExtension) CloseMarket(ctx sdk.Context, pair asset.Pair) (err error) {
+func (k sudoExtension) CloseMarket(ctx sdk.Context, pair asset.Pair, sender sdk.AccAddress) (err error) {
+	if err := k.SudoKeeper.CheckPermissions(sender, ctx); err != nil {
+		return err
+	}
 	market, err := k.GetMarket(ctx, pair)
 	if err != nil {
 		return err
@@ -157,7 +160,7 @@ func (k sudoExtension) CloseMarket(ctx sdk.Context, pair asset.Pair) (err error)
 	return nil
 }
 
-// ChangeCollateralDenom: Updates the collateral denom. A denom is valid if it is
+// ChangeCollateralDenom Updates the collateral denom. A denom is valid if it is
 // possible to make an sdk.Coin using it. [SUDO] Only callable by sudoers.
 func (k sudoExtension) ChangeCollateralDenom(
 	ctx sdk.Context,
@@ -170,7 +173,7 @@ func (k sudoExtension) ChangeCollateralDenom(
 	return k.UnsafeChangeCollateralDenom(ctx, denom)
 }
 
-// UnsafeChangeCollateralDenom: Used in the genesis to set the collateral
+// UnsafeChangeCollateralDenom Used in the genesis to set the collateral
 // without requiring an explicit call from sudoers.
 func (k sudoExtension) UnsafeChangeCollateralDenom(
 	ctx sdk.Context,
@@ -183,7 +186,7 @@ func (k sudoExtension) UnsafeChangeCollateralDenom(
 	return nil
 }
 
-// ShiftPegMultiplier: Edit the peg multiplier of an amm pool after making sure
+// ShiftPegMultiplier Edit the peg multiplier of an amm pool after making sure
 // there's enough money in the perp fund to pay for the repeg. These funds get
 // send to the vault to pay for trader's new net margin.
 func (k sudoExtension) ShiftPegMultiplier(
@@ -229,7 +232,7 @@ func (k sudoExtension) ShiftPegMultiplier(
 	})
 }
 
-// ShiftSwapInvariant: Edit the swap invariant (liquidity depth) of an amm pool,
+// ShiftSwapInvariant Edit the swap invariant (liquidity depth) of an amm pool,
 // ensuring that there's enough money in the perp  fund to pay for the operation.
 // These funds get send to the vault to pay for trader's new net margin.
 func (k sudoExtension) ShiftSwapInvariant(

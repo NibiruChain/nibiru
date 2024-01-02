@@ -232,3 +232,10 @@ func (m msgServer) WithdrawFromPerpFund(
 		ctx, msg.Amount, sender, toAddr, msg.Denom,
 	)
 }
+
+// CloseMarket closes a market.
+func (m msgServer) CloseMarket(ctx context.Context, msg *types.MsgCloseMarket) (*types.MsgCloseMarketResponse, error) {
+	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
+	err := m.k.Sudo().CloseMarket(sdk.UnwrapSDKContext(ctx), msg.Pair, sender)
+	return &types.MsgCloseMarketResponse{}, err
+}

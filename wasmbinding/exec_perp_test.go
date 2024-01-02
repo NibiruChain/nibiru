@@ -11,7 +11,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/wasmbinding"
-	"github.com/NibiruChain/nibiru/wasmbinding/bindings"
 	"github.com/NibiruChain/nibiru/wasmbinding/wasmbin"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
@@ -129,34 +128,4 @@ func (s *TestSuitePerpExecutor) SetupSuite() {
 func (s *TestSuitePerpExecutor) OnSetupEnd() {
 	s.contractPerp = ContractMap[wasmbin.WasmKeyPerpBinding]
 	s.ratesMap = SetExchangeRates(&s.Suite, s.nibiru, s.ctx)
-}
-
-func (s *TestSuitePerpExecutor) DoSetMarketEnabledTest(
-	pair asset.Pair, enabled bool,
-) error {
-	cwMsg := &bindings.SetMarketEnabled{
-		Pair:    pair.String(),
-		Enabled: enabled,
-	}
-	err := s.exec.SetMarketEnabled(cwMsg, s.ctx)
-	if err != nil {
-		return err
-	}
-
-	market, err := s.nibiru.PerpKeeperV2.GetMarket(s.ctx, pair)
-	s.NoError(err)
-	s.Equal(enabled, market.Enabled)
-	return err
-}
-
-func (s *TestSuitePerpExecutor) TestSadPaths_InvalidPair() {
-	sadPair := asset.Pair("ftt:ust:doge")
-	pair := sadPair
-
-	for _, err := range []error{
-		s.DoSetMarketEnabledTest(pair, true),
-		s.DoSetMarketEnabledTest(pair, false),
-	} {
-		s.Error(err)
-	}
 }

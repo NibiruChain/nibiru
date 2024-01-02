@@ -29,6 +29,9 @@ func TestMarketOrder(t *testing.T) {
 	pairBtcNusd := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	startBlockTime := time.Now()
 
+	adminUser, err := sdk.AccAddressFromBech32(testutil.ADDR_SUDO_ROOT)
+	require.NoError(t, err)
+
 	tc := TestCases{
 		TC("open big short position and then close after reducing swap invariant").
 			Given(
@@ -885,7 +888,7 @@ func TestMarketOrder(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				SetBlockNumber(1),
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(47_714_285_715)))),
-				CloseMarket(pairBtcNusd),
+				CloseMarket(pairBtcNusd, adminUser),
 			).
 			When(
 				MarketOrderFails(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(47_619_047_619), sdk.OneDec(), sdk.ZeroDec(),
