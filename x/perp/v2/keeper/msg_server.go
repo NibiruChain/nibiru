@@ -245,7 +245,13 @@ func (m msgServer) CreateMarket(
 	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	args := parseArgsCreateMarket(msg)
+	args := ArgsCreateMarket{
+		Pair:            msg.Pair,
+		PriceMultiplier: msg.PriceMultiplier,
+		SqrtDepth:       msg.SqrtDepth,
+
+		Market: msg.Market,
+	}
 
 	err := m.k.Sudo().CreateMarket(ctx, args, sender)
 	if err != nil {
@@ -253,21 +259,4 @@ func (m msgServer) CreateMarket(
 	}
 
 	return &types.MsgCreateMarketResponse{}, nil
-}
-
-func parseArgsCreateMarket(msg *types.MsgCreateMarket) ArgsCreateMarket {
-	args := ArgsCreateMarket{
-		Pair:            msg.Pair,
-		PriceMultiplier: msg.PriceMultiplier,
-		SqrtDepth:       msg.SqrtDepth,
-
-		Market: nil,
-	}
-
-	if msg.Market != nil {
-		market := types.DefaultMarket(msg.Pair)
-		args.Market = &market
-	}
-
-	return args
 }
