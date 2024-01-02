@@ -129,7 +129,6 @@ func TestCreateMarket(t *testing.T) {
 		Pair:            pair,
 		PriceMultiplier: amm.PriceMultiplier,
 		SqrtDepth:       amm.SqrtDepth,
-		EnableMarket:    true,
 	}, adminUser)
 	require.NoError(t, err)
 
@@ -177,6 +176,14 @@ func TestCreateMarket(t *testing.T) {
 	market, err = app.PerpKeeperV2.GetMarket(ctx, pair)
 	require.NoError(t, err)
 	require.Equal(t, uint64(2), market.Version)
+
+	// Fail if the creator is not a sudoer
+	err = admin.CreateMarket(ctx, keeper.ArgsCreateMarket{
+		Pair:            pair,
+		PriceMultiplier: amm.PriceMultiplier,
+		SqrtDepth:       amm.SqrtDepth,
+	}, testutil.AccAddress())
+	require.ErrorContains(t, err, "insufficient permissions on smart contract")
 }
 
 func TestCloseMarket(t *testing.T) {

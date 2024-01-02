@@ -8,7 +8,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/sudo/keeper"
 
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
-	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 )
 
 // NibiruWasmOptions: Wasm Options are extension points to instantiate the Wasm
@@ -16,7 +15,6 @@ import (
 func NibiruWasmOptions(
 	grpcQueryRouter *baseapp.GRPCQueryRouter,
 	appCodec codec.Codec,
-	perpv2 perpv2keeper.Keeper,
 	sudoKeeper keeper.Keeper,
 	oracleKeeper oraclekeeper.Keeper,
 ) []wasmkeeper.Option {
@@ -29,7 +27,7 @@ func NibiruWasmOptions(
 	})
 
 	wasmExecuteOption := wasmkeeper.WithMessageHandlerDecorator(
-		CustomMessageDecorator(perpv2, sudoKeeper, oracleKeeper),
+		CustomMessageDecorator(sudoKeeper, oracleKeeper),
 	)
 
 	return []wasmkeeper.Option{wasmQueryOption, wasmExecuteOption}

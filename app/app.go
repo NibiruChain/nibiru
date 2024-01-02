@@ -119,7 +119,6 @@ func GetWasmOpts(nibiru NibiruApp, appOpts servertypes.AppOptions) []wasmkeeper.
 	wasmOpts = append(wasmOpts, wasmbinding.NibiruWasmOptions(
 		nibiru.GRPCQueryRouter(),
 		nibiru.appCodec,
-		nibiru.PerpKeeperV2,
 		nibiru.SudoKeeper,
 		nibiru.OracleKeeper,
 	)...)

@@ -70,9 +70,6 @@ type ArgsCreateMarket struct {
 	PriceMultiplier sdk.Dec
 	SqrtDepth       sdk.Dec
 	Market          *types.Market // pointer makes it optional
-	// EnableMarket: Optionally enable the default market without explicitly passing
-	// in each field as an argument. If 'Market' is present, this field is ignored.
-	EnableMarket bool
 }
 
 // CreateMarket creates a pool for a specific pair.
@@ -97,10 +94,11 @@ func (k sudoExtension) CreateMarket(
 	baseReserve := sqrtDepth
 	if args.Market == nil {
 		market = types.DefaultMarket(pair)
-		market.Enabled = args.EnableMarket
 	} else {
 		market = *args.Market
 	}
+	market.Enabled = true
+
 	if err := market.Validate(); err != nil {
 		return err
 	}

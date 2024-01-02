@@ -12,7 +12,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	oraclekeeper "github.com/NibiruChain/nibiru/x/oracle/keeper"
-	perpv2keeper "github.com/NibiruChain/nibiru/x/perp/v2/keeper"
 )
 
 var _ wasmkeeper.Messenger = (*CustomMessenger)(nil)
@@ -21,7 +20,6 @@ var _ wasmkeeper.Messenger = (*CustomMessenger)(nil)
 // own custom `DispatchMsg` for CosmWasm execute calls on Nibiru.
 type CustomMessenger struct {
 	Wasm   wasmkeeper.Messenger
-	Perp   ExecutorPerp
 	Sudo   keeper.Keeper
 	Oracle ExecutorOracle
 }
@@ -85,14 +83,12 @@ func (messenger *CustomMessenger) DispatchMsg(
 }
 
 func CustomMessageDecorator(
-	perpv2 perpv2keeper.Keeper,
 	sudoKeeper keeper.Keeper,
 	oracleKeeper oraclekeeper.Keeper,
 ) func(wasmkeeper.Messenger) wasmkeeper.Messenger {
 	return func(originalWasmMessenger wasmkeeper.Messenger) wasmkeeper.Messenger {
 		return &CustomMessenger{
 			Wasm:   originalWasmMessenger,
-			Perp:   ExecutorPerp{PerpV2: perpv2},
 			Sudo:   sudoKeeper,
 			Oracle: ExecutorOracle{Oracle: oracleKeeper},
 		}
