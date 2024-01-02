@@ -127,7 +127,7 @@ type shiftPegMultiplier struct {
 }
 
 func (e shiftPegMultiplier) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
-	err := app.PerpKeeperV2.Admin.ShiftPegMultiplier(
+	err := app.PerpKeeperV2.Sudo().ShiftPegMultiplier(
 		ctx, e.pair, e.newValue, testapp.DefaultSudoRoot(),
 	)
 	return ctx, err
@@ -146,7 +146,7 @@ type shiftSwapInvariant struct {
 }
 
 func (e shiftSwapInvariant) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
-	err := app.PerpKeeperV2.Admin.ShiftSwapInvariant(
+	err := app.PerpKeeperV2.Sudo().ShiftSwapInvariant(
 		ctx, e.pair, e.newValue, testapp.DefaultSudoRoot(),
 	)
 	return ctx, err
@@ -168,7 +168,7 @@ type createPool struct {
 }
 
 func (c createPool) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
-	err := app.PerpKeeperV2.Admin.CreateMarket(ctx, keeper.ArgsCreateMarket{
+	err := app.PerpKeeperV2.Sudo().CreateMarket(ctx, keeper.ArgsCreateMarket{
 		Pair:            c.pair,
 		PriceMultiplier: c.amm.PriceMultiplier,
 		SqrtDepth:       c.amm.SqrtDepth,
@@ -203,7 +203,7 @@ func (c setCollateral) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, err
 	if err != nil {
 		return ctx, err
 	}
-	err = app.PerpKeeperV2.Admin.ChangeCollateralDenom(ctx, c.Denom, senderAddr)
+	err = app.PerpKeeperV2.Sudo().ChangeCollateralDenom(ctx, c.Denom, senderAddr)
 	return ctx, err
 }
 

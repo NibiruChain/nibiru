@@ -18,25 +18,6 @@ func (exec *ExecutorPerp) MsgServer() perpv2types.MsgServer {
 	return perpv2keeper.NewMsgServerImpl(exec.PerpV2)
 }
 
-func (exec *ExecutorPerp) InsuranceFundWithdraw(
-	cwMsg *bindings.InsuranceFundWithdraw, ctx sdk.Context,
-) (err error) {
-	if cwMsg == nil {
-		return wasmvmtypes.InvalidRequest{Err: "null msg"}
-	}
-
-	to, err := sdk.AccAddressFromBech32(cwMsg.To)
-	if err != nil {
-		return err
-	}
-
-	return exec.PerpV2.Admin.WithdrawFromInsuranceFund(
-		ctx,
-		cwMsg.Amount,
-		to,
-	)
-}
-
 // TODO: rename to CloseMarket
 func (exec *ExecutorPerp) SetMarketEnabled(
 	cwMsg *bindings.SetMarketEnabled, ctx sdk.Context,
@@ -50,5 +31,5 @@ func (exec *ExecutorPerp) SetMarketEnabled(
 		return err
 	}
 
-	return exec.PerpV2.Admin.CloseMarket(ctx, pair)
+	return exec.PerpV2.Sudo().CloseMarket(ctx, pair)
 }

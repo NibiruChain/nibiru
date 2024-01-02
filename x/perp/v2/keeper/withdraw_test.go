@@ -44,7 +44,7 @@ func TestWithdrawFromVault(t *testing.T) {
 				SetBlockTime(startBlockTime),
 				CreateCustomMarket(pairBtcUsdc),
 				FundModule(types.VaultModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(500)))),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(500)))),
+				FundModule(types.PerpFundModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(500)))),
 			).
 			When(
 				WithdrawFromVault(pairBtcUsdc, alice, sdk.NewInt(1000)),
@@ -52,7 +52,7 @@ func TestWithdrawFromVault(t *testing.T) {
 			Then(
 				BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.NewInt(1000)),
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.ZeroInt()),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.ZeroInt()),
+				ModuleBalanceEqual(types.PerpFundModuleAccount, types.TestingCollateralDenomNUSD, sdk.ZeroInt()),
 				MarketShouldBeEqual(pairBtcUsdc, Market_PrepaidBadDebtShouldBeEqualTo(sdk.NewInt(500), types.TestingCollateralDenomNUSD)),
 			),
 
@@ -61,7 +61,7 @@ func TestWithdrawFromVault(t *testing.T) {
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				CreateCustomMarket(pairBtcUsdc),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1000)))),
+				FundModule(types.PerpFundModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1000)))),
 			).
 			When(
 				WithdrawFromVault(pairBtcUsdc, alice, sdk.NewInt(1000)),
@@ -69,7 +69,7 @@ func TestWithdrawFromVault(t *testing.T) {
 			Then(
 				BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.NewInt(1000)),
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.ZeroInt()),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.ZeroInt()),
+				ModuleBalanceEqual(types.PerpFundModuleAccount, types.TestingCollateralDenomNUSD, sdk.ZeroInt()),
 				MarketShouldBeEqual(pairBtcUsdc, Market_PrepaidBadDebtShouldBeEqualTo(sdk.NewInt(1000), types.TestingCollateralDenomNUSD)),
 			),
 
@@ -78,7 +78,7 @@ func TestWithdrawFromVault(t *testing.T) {
 				SetBlockNumber(1),
 				SetBlockTime(startBlockTime),
 				CreateCustomMarket(pairBtcUsdc, WithPrepaidBadDebt(sdk.NewInt(1000), types.TestingCollateralDenomNUSD)),
-				FundModule(types.PerpEFModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1000)))),
+				FundModule(types.PerpFundModuleAccount, sdk.NewCoins(sdk.NewCoin(types.TestingCollateralDenomNUSD, sdk.NewInt(1000)))),
 			).
 			When(
 				WithdrawFromVault(pairBtcUsdc, alice, sdk.NewInt(1000)),
@@ -86,7 +86,7 @@ func TestWithdrawFromVault(t *testing.T) {
 			Then(
 				BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.NewInt(1000)),
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.ZeroInt()),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.ZeroInt()),
+				ModuleBalanceEqual(types.PerpFundModuleAccount, types.TestingCollateralDenomNUSD, sdk.ZeroInt()),
 				MarketShouldBeEqual(pairBtcUsdc, Market_PrepaidBadDebtShouldBeEqualTo(sdk.NewInt(2000), types.TestingCollateralDenomNUSD)),
 			),
 	}
