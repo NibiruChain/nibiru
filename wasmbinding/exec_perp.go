@@ -1,8 +1,6 @@
 package wasmbinding
 
 import (
-	"time"
-
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -20,25 +18,6 @@ func (exec *ExecutorPerp) MsgServer() perpv2types.MsgServer {
 	return perpv2keeper.NewMsgServerImpl(exec.PerpV2)
 }
 
-func (exec *ExecutorPerp) InsuranceFundWithdraw(
-	cwMsg *bindings.InsuranceFundWithdraw, ctx sdk.Context,
-) (err error) {
-	if cwMsg == nil {
-		return wasmvmtypes.InvalidRequest{Err: "null msg"}
-	}
-
-	to, err := sdk.AccAddressFromBech32(cwMsg.To)
-	if err != nil {
-		return err
-	}
-
-	return exec.PerpV2.Admin.WithdrawFromInsuranceFund(
-		ctx,
-		cwMsg.Amount,
-		to,
-	)
-}
-
 // TODO: rename to CloseMarket
 func (exec *ExecutorPerp) SetMarketEnabled(
 	cwMsg *bindings.SetMarketEnabled, ctx sdk.Context,
@@ -52,48 +31,5 @@ func (exec *ExecutorPerp) SetMarketEnabled(
 		return err
 	}
 
-	return exec.PerpV2.Admin.CloseMarket(ctx, pair)
-}
-
-func (exec *ExecutorPerp) CreateMarket(
-	cwMsg *bindings.CreateMarket, ctx sdk.Context,
-) (err error) {
-	if cwMsg == nil {
-		return wasmvmtypes.InvalidRequest{Err: "null msg"}
-	}
-
-	pair, err := asset.TryNewPair(cwMsg.Pair)
-	if err != nil {
-		return err
-	}
-
-	var market perpv2types.Market
-	if cwMsg.MarketParams == nil {
-		market = perpv2types.DefaultMarket(pair)
-	} else {
-		mp := cwMsg.MarketParams
-		market = perpv2types.Market{
-			Pair:                            pair,
-			Enabled:                         true,
-			MaintenanceMarginRatio:          mp.MaintenanceMarginRatio,
-			MaxLeverage:                     mp.MaxLeverage,
-			LatestCumulativePremiumFraction: mp.LatestCumulativePremiumFraction,
-			ExchangeFeeRatio:                mp.ExchangeFeeRatio,
-			EcosystemFundFeeRatio:           mp.EcosystemFundFeeRatio,
-			LiquidationFeeRatio:             mp.LiquidationFeeRatio,
-			PartialLiquidationRatio:         mp.PartialLiquidationRatio,
-			FundingRateEpochId:              mp.FundingRateEpochId,
-			MaxFundingRate:                  mp.MaxFundingRate,
-			TwapLookbackWindow:              time.Duration(mp.TwapLookbackWindow.Int64()),
-			PrepaidBadDebt:                  sdk.NewCoin(pair.QuoteDenom(), sdk.ZeroInt()),
-			OraclePair:                      asset.MustNewPair(mp.OraclePair),
-		}
-	}
-
-	return exec.PerpV2.Admin.CreateMarket(ctx, perpv2keeper.ArgsCreateMarket{
-		Pair:            pair,
-		PriceMultiplier: cwMsg.PegMult,
-		SqrtDepth:       cwMsg.SqrtDepth,
-		Market:          &market,
-	})
+	return exec.PerpV2.Sudo().CloseMarket(ctx, pair)
 }

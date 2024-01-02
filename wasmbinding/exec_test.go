@@ -313,55 +313,6 @@ func (s *TestSuiteExecutor) TestNoOp() {
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
 }
 
-func (s *TestSuiteExecutor) TestInsuranceFundWithdraw() {
-	admin := s.contractDeployer.String()
-	amtToWithdraw := sdk.NewInt(69)
-	execMsg := bindings.NibiruMsg{
-		InsuranceFundWithdraw: &bindings.InsuranceFundWithdraw{
-			Amount: amtToWithdraw,
-			To:     admin,
-		},
-	}
-
-	s.T().Log("Executing should fail since the IF doesn't have funds")
-	contract := s.contractController
-	s.keeper.SetSudoContracts(
-		[]string{contract.String()}, s.ctx,
-	)
-	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
-	s.Errorf(err, "contractRespBz: %s", contractRespBz)
-
-	s.T().Log("Executing without permission should fail")
-	s.keeper.SetSudoContracts(
-		[]string{}, s.ctx,
-	)
-	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
-	s.Errorf(err, "contractRespBz: %s", contractRespBz)
-
-	s.T().Log("Executing should work when the IF has funds")
-	err = testapp.FundModuleAccount(
-		s.nibiru.BankKeeper,
-		s.ctx,
-		perpv2types.PerpEFModuleAccount,
-		sdk.NewCoins(sdk.NewCoin(perpv2types.TestingCollateralDenomNUSD, sdk.NewInt(420))),
-	)
-	s.NoError(err)
-	s.keeper.SetSudoContracts(
-		[]string{contract.String()}, s.ctx,
-	)
-	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
-	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
-
-	s.T().Log("Executing the wrong contract should fail")
-	contract = s.contractPerp
-	s.keeper.SetSudoContracts(
-		[]string{contract.String()}, s.ctx,
-	)
-	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
-	s.Errorf(err, "contractRespBz: %s", contractRespBz)
-	s.Contains(err.Error(), "Error parsing into type")
-}
-
 func (s *TestSuiteExecutor) TestSetMarketEnabled() {
 	// admin := s.contractDeployer.String()
 	perpv2Genesis := genesis.PerpV2Genesis()
@@ -393,48 +344,6 @@ func (s *TestSuiteExecutor) TestSetMarketEnabled() {
 		[]string{}, s.ctx,
 	)
 	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
-	s.Errorf(err, "contractRespBz: %s", contractRespBz)
-
-	s.T().Log("Executing the wrong contract should fail")
-	contract = s.contractPerp
-	s.keeper.SetSudoContracts(
-		[]string{contract.String()}, s.ctx,
-	)
-	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
-	s.Errorf(err, "contractRespBz: %s", contractRespBz)
-	s.Contains(err.Error(), "Error parsing into type")
-}
-
-func (s *TestSuiteExecutor) TestCreateMarket() {
-	contract := s.contractController
-	pair := asset.MustNewPair("bloop:blam")
-	execMsg := bindings.NibiruMsg{
-		CreateMarket: &bindings.CreateMarket{
-			Pair:         pair.String(),
-			PegMult:      sdk.NewDec(420),
-			SqrtDepth:    sdk.NewDec(1_000),
-			MarketParams: nil,
-		},
-	}
-
-	s.T().Logf("Execute - happy: market: %s", pair)
-	s.keeper.SetSudoContracts(
-		[]string{contract.String()}, s.ctx,
-	)
-	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
-	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
-
-	market, err := s.nibiru.PerpKeeperV2.GetMarket(s.ctx, pair)
-	s.NoError(err)
-	s.NoError(market.Validate())
-	s.False(market.Enabled, "by default, we create a market in a disabled state")
-	s.EqualValues(pair, market.Pair)
-
-	s.T().Log("Executing without permission should fail")
-	s.keeper.SetSudoContracts(
-		[]string{}, s.ctx,
-	)
-	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
 	s.Errorf(err, "contractRespBz: %s", contractRespBz)
 
 	s.T().Log("Executing the wrong contract should fail")
