@@ -16,7 +16,6 @@ import (
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
-	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
 	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
@@ -311,47 +310,4 @@ func (s *TestSuiteExecutor) TestNoOp() {
 	}
 	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
 	s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
-}
-
-func (s *TestSuiteExecutor) TestSetMarketEnabled() {
-	// admin := s.contractDeployer.String()
-	perpv2Genesis := genesis.PerpV2Genesis()
-	contract := s.contractController
-	var execMsg bindings.NibiruMsg
-
-	for testIdx, market := range perpv2Genesis.Markets {
-		execMsg = bindings.NibiruMsg{
-			SetMarketEnabled: &bindings.SetMarketEnabled{
-				Pair:    market.Pair.String(),
-				Enabled: !market.Enabled,
-			},
-		}
-
-		s.T().Logf("Execute - happy %v: market: %s", testIdx, market.Pair)
-		s.keeper.SetSudoContracts(
-			[]string{contract.String()}, s.ctx,
-		)
-		contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
-		s.NoErrorf(err, "contractRespBz: %s", contractRespBz)
-
-		marketAfter, err := s.nibiru.PerpKeeperV2.GetMarket(s.ctx, market.Pair)
-		s.NoError(err)
-		s.Equal(!market.Enabled, marketAfter.Enabled)
-	}
-
-	s.T().Log("Executing without permission should fail")
-	s.keeper.SetSudoContracts(
-		[]string{}, s.ctx,
-	)
-	contractRespBz, err := s.ExecuteAgainstContract(contract, execMsg)
-	s.Errorf(err, "contractRespBz: %s", contractRespBz)
-
-	s.T().Log("Executing the wrong contract should fail")
-	contract = s.contractPerp
-	s.keeper.SetSudoContracts(
-		[]string{contract.String()}, s.ctx,
-	)
-	contractRespBz, err = s.ExecuteAgainstContract(contract, execMsg)
-	s.Errorf(err, "contractRespBz: %s", contractRespBz)
-	s.Contains(err.Error(), "Error parsing into type")
 }

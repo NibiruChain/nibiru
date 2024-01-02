@@ -62,15 +62,6 @@ func (messenger *CustomMessenger) DispatchMsg(
 		}
 
 		switch {
-		// Perp module | controller
-		case contractExecuteMsg.ExecuteMsg.SetMarketEnabled != nil:
-			if err := messenger.Sudo.CheckPermissions(contractAddr, ctx); err != nil {
-				return events, data, err
-			}
-			cwMsg := contractExecuteMsg.ExecuteMsg.SetMarketEnabled
-			err = messenger.Perp.SetMarketEnabled(cwMsg, ctx)
-			return events, data, err
-
 		// Oracle module
 		case contractExecuteMsg.ExecuteMsg.EditOracleParams != nil:
 			if err := messenger.Sudo.CheckPermissions(contractAddr, ctx); err != nil {

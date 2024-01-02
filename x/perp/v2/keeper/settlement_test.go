@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -22,6 +24,9 @@ func TestSettlePosition(t *testing.T) {
 
 	alice := testutil.AccAddress()
 	bob := testutil.AccAddress()
+
+	adminUser, err := sdk.AccAddressFromBech32(testutil.ADDR_SUDO_ROOT)
+	require.NoError(t, err)
 
 	tc := TestCases{
 		TC("Happy path").When(
@@ -43,7 +48,7 @@ func TestSettlePosition(t *testing.T) {
 				sdk.ZeroDec(),
 			),
 		).When(
-			CloseMarket(pairBtcUsdc),
+			CloseMarket(pairBtcUsdc, adminUser),
 			SettlePosition(pairBtcUsdc, 1, alice),
 		).Then(
 			PositionShouldNotExist(alice, pairBtcUsdc, 1),
@@ -84,7 +89,7 @@ func TestSettlePosition(t *testing.T) {
 			// Her Realized Pnl is -101.01010101 and her margin is 100, so -1.01010101 is bad debt
 			// Bob's Realized Pnl is 1010, so he has 1010 more than his margin
 
-			CloseMarket(pairBtcUsdc),
+			CloseMarket(pairBtcUsdc, adminUser),
 			SettlePosition(
 				pairBtcUsdc,
 				1,
@@ -160,7 +165,7 @@ func TestSettlePosition(t *testing.T) {
 				sdk.ZeroDec(),
 			),
 		).When(
-			CloseMarket(pairBtcUsdc),
+			CloseMarket(pairBtcUsdc, adminUser),
 			CreateCustomMarket(
 				pairBtcUsdc,
 				WithPricePeg(sdk.OneDec()),
@@ -206,7 +211,7 @@ func TestSettlePosition(t *testing.T) {
 				sdk.ZeroDec(),
 			),
 		).When(
-			CloseMarket(pairBtcUsdc),
+			CloseMarket(pairBtcUsdc, adminUser),
 			CreateCustomMarket(
 				pairBtcUsdc,
 				WithPricePeg(sdk.OneDec()),

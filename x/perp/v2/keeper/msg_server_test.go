@@ -408,6 +408,9 @@ func TestMsgServerSettlePosition(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	alice := testutil.AccAddress()
 
+	adminUser, err := sdk.AccAddressFromBech32(testutil.ADDR_SUDO_ROOT)
+	require.NoError(t, err)
+
 	tests := TestCases{
 		TC("Settleposition").
 			Given(
@@ -415,7 +418,7 @@ func TestMsgServerSettlePosition(t *testing.T) {
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 100))),
 				MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
 				MoveToNextBlock(),
-				CloseMarket(pair),
+				CloseMarket(pair, adminUser),
 			).
 			When(
 				MsgServerSettlePosition(alice, pair, 1),

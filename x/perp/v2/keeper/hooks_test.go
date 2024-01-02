@@ -4,6 +4,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/x/common/testutil"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/x/common/asset"
@@ -20,6 +24,9 @@ func TestAfterEpochEnd(t *testing.T) {
 	pairBtcUsd := asset.Registry.Pair(denoms.BTC, denoms.USD)
 	pairBtcUsdc := asset.Registry.Pair(denoms.BTC, denoms.USDC)
 	startTime := time.Now()
+
+	adminUser, err := sdk.AccAddressFromBech32(testutil.ADDR_SUDO_ROOT)
+	require.NoError(t, err)
 
 	tc := TestCases{
 		TC("index > mark").
@@ -122,7 +129,7 @@ func TestAfterEpochEnd(t *testing.T) {
 		TC("market closed").
 			Given(
 				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
-				CloseMarket(pairBtcUsdc),
+				CloseMarket(pairBtcUsdc, adminUser),
 				SetBlockTime(startTime),
 				StartEpoch(epochtypes.ThirtyMinuteEpochID),
 				InsertOraclePriceSnapshot(pairBtcUsd, startTime.Add(15*time.Minute), sdk.NewDec(2)),
@@ -137,7 +144,7 @@ func TestAfterEpochEnd(t *testing.T) {
 		TC("not correct epoch id").
 			Given(
 				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
-				CloseMarket(pairBtcUsdc),
+				CloseMarket(pairBtcUsdc, adminUser),
 				SetBlockTime(startTime),
 				StartEpoch(epochtypes.DayEpochID),
 				InsertOraclePriceSnapshot(pairBtcUsd, startTime.Add(15*time.Minute), sdk.NewDec(2)),
