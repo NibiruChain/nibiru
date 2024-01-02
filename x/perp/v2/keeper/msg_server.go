@@ -231,6 +231,13 @@ func (m msgServer) WithdrawFromPerpFund(goCtx context.Context, msg *types.MsgWit
 	)
 }
 
+// CloseMarket closes a market.
+func (m msgServer) CloseMarket(ctx context.Context, msg *types.MsgCloseMarket) (*types.MsgCloseMarketResponse, error) {
+	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
+	err := m.k.Sudo().CloseMarket(sdk.UnwrapSDKContext(ctx), msg.Pair, sender)
+	return &types.MsgCloseMarketResponse{}, err
+}
+
 // CreateMarket gRPC tx msg for creating a new market.
 // [Admin] Only callable by sudoers.
 func (m msgServer) CreateMarket(
