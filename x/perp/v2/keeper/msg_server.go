@@ -255,3 +255,20 @@ func (m msgServer) CreateMarket(
 
 	return &types.MsgCreateMarketResponse{}, nil
 }
+
+func parseArgsCreateMarket(msg *types.MsgCreateMarket) (ArgsCreateMarket, error) {
+	args := ArgsCreateMarket{
+		Pair:            msg.Pair,
+		PriceMultiplier: msg.PriceMultiplier,
+		SqrtDepth:       msg.SqrtDepth,
+
+		Market: nil,
+	}
+
+	if msg.Market != nil {
+		market := types.DefaultMarket(msg.Pair)
+		args.Market = &market
+	}
+
+	return args, nil
+}

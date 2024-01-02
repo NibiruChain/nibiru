@@ -483,6 +483,10 @@ message MsgCreateMarket {
     (gogoproto.moretags) = "yaml:\"sqrt_depth\"",
     (gogoproto.nullable) = false
   ];
+
+  Market market = 5 [
+    (gogoproto.nullable) = true
+  ];
 }
 
 message MsgCreateMarketResponse {
