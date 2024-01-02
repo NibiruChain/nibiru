@@ -25,7 +25,8 @@ func TestSnapshotUpdates(t *testing.T) {
 	initialMarket := *mock.TestMarket()
 	initialAmm := *mock.TestAMMDefault()
 
-	adminAccount := sdk.AccAddressFromBech32("nibi")
+	adminUser, err := sdk.AccAddressFromBech32(testutilevents.ADDR_SUDO_ROOT)
+	require.NoError(t, err)
 
 	runBlock := func(duration time.Duration) {
 		perp.EndBlocker(ctx, app.PerpKeeperV2)
@@ -43,6 +44,7 @@ func TestSnapshotUpdates(t *testing.T) {
 			SqrtDepth:       initialAmm.SqrtDepth,
 			Market:          &initialMarket,
 		},
+		adminUser,
 	))
 
 	expectedSnapshot := types.ReserveSnapshot{
@@ -110,6 +112,9 @@ func TestEndBlocker(t *testing.T) {
 	initialMarket := *mock.TestMarket()
 	initialAmm := *mock.TestAMMDefault()
 
+	adminUser, err := sdk.AccAddressFromBech32(testutilevents.ADDR_SUDO_ROOT)
+	require.NoError(t, err)
+
 	runBlock := func(duration time.Duration) {
 		perp.EndBlocker(ctx, app.PerpKeeperV2)
 		ctx = ctx.
@@ -128,6 +133,7 @@ func TestEndBlocker(t *testing.T) {
 			SqrtDepth:       initialAmm.SqrtDepth,
 			Market:          &initialMarket,
 		},
+		adminUser,
 	))
 
 	t.Log("run one block of 5 seconds")

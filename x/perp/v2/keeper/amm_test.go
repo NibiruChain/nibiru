@@ -160,7 +160,10 @@ func TestShiftPegMultiplier_Fail(t *testing.T) {
 
 	account := testutil.AccAddress()
 
-	err := app.PerpKeeperV2.Sudo().CreateMarket(
+	adminUser, err := sdk.AccAddressFromBech32(testutil.ADDR_SUDO_ROOT)
+	require.NoError(t, err)
+
+	err = app.PerpKeeperV2.Sudo().CreateMarket(
 		ctx,
 		keeper.ArgsCreateMarket{
 			Pair:            pair,
@@ -168,6 +171,7 @@ func TestShiftPegMultiplier_Fail(t *testing.T) {
 			SqrtDepth:       sdk.NewDec(1_000_000),
 			EnableMarket:    true,
 		},
+		adminUser,
 	)
 	app.PerpKeeperV2.ReserveSnapshots.Insert(
 		ctx,
@@ -230,7 +234,10 @@ func TestShiftSwapInvariant_Fail(t *testing.T) {
 	app, ctx := testapp.NewNibiruTestAppAndContext()
 	account := testutil.AccAddress()
 
-	err := app.PerpKeeperV2.Sudo().CreateMarket(
+	adminUser, err := sdk.AccAddressFromBech32(testutil.ADDR_SUDO_ROOT)
+	require.NoError(t, err)
+
+	err = app.PerpKeeperV2.Sudo().CreateMarket(
 		ctx,
 		keeper.ArgsCreateMarket{
 			Pair:            pair,
@@ -238,6 +245,7 @@ func TestShiftSwapInvariant_Fail(t *testing.T) {
 			SqrtDepth:       sdk.NewDec(1_000),
 			EnableMarket:    true,
 		},
+		adminUser,
 	)
 	app.PerpKeeperV2.ReserveSnapshots.Insert(
 		ctx,
@@ -437,7 +445,10 @@ func TestKeeper_GetMarketByPairAndVersion(t *testing.T) {
 
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 
-	err := app.PerpKeeperV2.Sudo().CreateMarket(
+	adminUser, err := sdk.AccAddressFromBech32(testutil.ADDR_SUDO_ROOT)
+	require.NoError(t, err)
+
+	err = app.PerpKeeperV2.Sudo().CreateMarket(
 		ctx,
 		keeper.ArgsCreateMarket{
 			Pair:            pair,
@@ -445,6 +456,7 @@ func TestKeeper_GetMarketByPairAndVersion(t *testing.T) {
 			SqrtDepth:       sdk.NewDec(1_000_000),
 			EnableMarket:    true,
 		},
+		adminUser,
 	)
 	require.NoError(t, err)
 
@@ -462,7 +474,10 @@ func TestKeeper_GetAMMByPairAndVersion(t *testing.T) {
 
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 
-	err := app.PerpKeeperV2.Sudo().CreateMarket(
+	adminUser, err := sdk.AccAddressFromBech32(testutil.ADDR_SUDO_ROOT)
+	require.NoError(t, err)
+
+	err = app.PerpKeeperV2.Sudo().CreateMarket(
 		ctx,
 		keeper.ArgsCreateMarket{
 			Pair:            pair,
@@ -470,6 +485,7 @@ func TestKeeper_GetAMMByPairAndVersion(t *testing.T) {
 			SqrtDepth:       sdk.NewDec(1_000_000),
 			EnableMarket:    true,
 		},
+		adminUser,
 	)
 	require.NoError(t, err)
 

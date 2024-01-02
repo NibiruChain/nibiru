@@ -210,20 +210,18 @@ func (m msgServer) ShiftPegMultiplier(
 // ShiftSwapInvariant: gRPC tx msg for changing a market's swap invariant.
 // [SUDO] Only callable by sudoers.
 func (m msgServer) ShiftSwapInvariant(
-	goCtx context.Context, msg *types.MsgShiftSwapInvariant,
-) (*types.MsgShiftSwapInvariantResponse, error) {
+	goCtx context.Context, msg *types.MsgShiftSwapInvariant) (*types.MsgShiftSwapInvariantResponse, error) {
 	// Sender is checked in `msg.ValidateBasic` before reaching this fn call.
 	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	err := m.k.Sudo().ShiftSwapInvariant(ctx, msg.Pair, msg.NewSwapInvariant, sender)
 	return &types.MsgShiftSwapInvariantResponse{}, err
+
 }
 
 // WithdrawFromPerpFund: gRPC tx msg for changing a market's swap invariant.
 // [SUDO] Only callable by sudoers.
-func (m msgServer) WithdrawFromPerpFund(
-	goCtx context.Context, msg *types.MsgWithdrawFromPerpFund,
-) (resp *types.MsgWithdrawFromPerpFundResponse, err error) {
+func (m msgServer) WithdrawFromPerpFund(goCtx context.Context, msg *types.MsgWithdrawFromPerpFund) (resp *types.MsgWithdrawFromPerpFundResponse, err error) {
 	// Sender is checked in `msg.ValidateBasic` before reaching this fn call.
 	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
 	toAddr, _ := sdk.AccAddressFromBech32(msg.ToAddr)
@@ -243,7 +241,7 @@ func (m msgServer) CreateMarket(
 
 	args := ArgsCreateMarket{}
 
-	err := m.k.Admin.CreateMarket(ctx, args, sender)
+	err := m.k.Sudo().CreateMarket(ctx, args, sender)
 	if err != nil {
 		return nil, err
 	}
