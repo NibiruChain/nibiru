@@ -5,22 +5,35 @@ import (
 
 	"github.com/cometbft/cometbft/crypto/tmhash"
 
+	"sync/atomic"
+
 	sdkerrors "cosmossdk.io/errors"
 )
 
+var moduleErrorCodeIdx uint32 = 1
+
+// registerError: Cleaner way of using 'sdkerrors.Register' without as much time
+// manually writing integers.
+func registerError(msg string) *sdkerrors.Error {
+	// Atomic for thread safety on concurrent calls
+	atomic.AddUint32(&moduleErrorCodeIdx, 1)
+	return sdkerrors.Register(ModuleName, moduleErrorCodeIdx, msg)
+}
+
 // Oracle Errors
 var (
-	ErrInvalidExchangeRate   = sdkerrors.Register(ModuleName, 2, "invalid exchange rate")
-	ErrNoPrevote             = sdkerrors.Register(ModuleName, 3, "no prevote")
-	ErrNoVote                = sdkerrors.Register(ModuleName, 4, "no vote")
-	ErrNoVotingPermission    = sdkerrors.Register(ModuleName, 5, "unauthorized voter")
-	ErrInvalidHash           = sdkerrors.Register(ModuleName, 6, "invalid hash")
-	ErrInvalidHashLength     = sdkerrors.Register(ModuleName, 7, fmt.Sprintf("invalid hash length; should equal %d", tmhash.TruncatedSize))
-	ErrVerificationFailed    = sdkerrors.Register(ModuleName, 8, "hash verification failed")
-	ErrRevealPeriodMissMatch = sdkerrors.Register(ModuleName, 9, "reveal period of submitted vote do not match with registered prevote")
-	ErrInvalidSaltLength     = sdkerrors.Register(ModuleName, 10, "invalid salt length; should be 1~4")
-	ErrNoAggregatePrevote    = sdkerrors.Register(ModuleName, 11, "no aggregate prevote")
-	ErrNoAggregateVote       = sdkerrors.Register(ModuleName, 12, "no aggregate vote")
-	ErrUnknownPair           = sdkerrors.Register(ModuleName, 13, "unknown pair")
-	ErrNoValidTWAP           = sdkerrors.Register(ModuleName, 14, "TWA price not found")
+	ErrInvalidExchangeRate = registerError("invalid exchange rate")
+	ErrNoPrevote           = registerError("no prevote")
+	ErrNoVote              = registerError("no vote")
+	ErrNoVotingPermission  = registerError("unauthorized voter")
+	ErrInvalidHash         = registerError("invalid hash")
+	ErrInvalidHashLength   = registerError(
+		fmt.Sprintf("invalid hash length; should equal %d", tmhash.TruncatedSize))
+	ErrHashVerificationFailed = registerError("hash verification failed")
+	ErrRevealPeriodMissMatch  = registerError("reveal period of submitted vote do not match with registered prevote")
+	ErrInvalidSaltLength      = registerError("invalid salt length; should be 1~4")
+	ErrNoAggregatePrevote     = registerError("no aggregate prevote")
+	ErrNoAggregateVote        = registerError("no aggregate vote")
+	ErrUnknownPair            = registerError("unknown pair")
+	ErrNoValidTWAP            = registerError("TWA price not found")
 )

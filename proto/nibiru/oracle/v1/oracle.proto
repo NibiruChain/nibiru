@@ -60,7 +60,8 @@ message Params {
     (gogoproto.nullable) = false
   ];
 
-  // Amount of time to look back for TWAP calculations
+  // Amount of time to look back for TWAP calculations.
+  // Ex: "900.000000069s" corresponds to 900 seconds and 69 nanoseconds in JSON.
   google.protobuf.Duration twap_lookback_window = 8 [
     (gogoproto.nullable) = false,
     (gogoproto.stdduration) = true,
@@ -79,9 +80,8 @@ message Params {
     (gogoproto.nullable) = false
   ];
 
-  uint64 expiration_blocks = 11 [
-    (gogoproto.moretags) = "yaml:\"expiration_blocks\""
-  ];
+  uint64 expiration_blocks = 11
+      [ (gogoproto.moretags) = "yaml:\"expiration_blocks\"" ];
 }
 
 // Struct for aggregate prevoting on the ExchangeRateVote.

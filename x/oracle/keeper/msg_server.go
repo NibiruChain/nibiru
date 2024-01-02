@@ -113,7 +113,7 @@ func (ms msgServer) AggregateExchangeRateVote(
 	hash := types.GetAggregateVoteHash(msg.Salt, msg.ExchangeRates, valAddr)
 	if aggregatePrevote.Hash != hash.String() {
 		return nil, sdkerrors.Wrapf(
-			types.ErrVerificationFailed, "must be given %s not %s", aggregatePrevote.Hash, hash,
+			types.ErrHashVerificationFailed, "must be given %s not %s", aggregatePrevote.Hash, hash,
 		)
 	}
 
@@ -166,4 +166,22 @@ func (ms msgServer) DelegateFeedConsent(
 	})
 
 	return &types.MsgDelegateFeedConsentResponse{}, err
+}
+
+// EditOracleParams: gRPC tx msg for editing the oracle module params.
+// [SUDO] Only callable by sudoers.
+func (ms msgServer) EditOracleParams(
+	goCtx context.Context, msg *types.MsgEditOracleParams,
+) (resp *types.MsgEditOracleParamsResponse, err error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	// Stateless field validation is already performed in msg.ValidateBasic()
+	// before the current scope is reached.
+	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
+	newParams, err := ms.Sudo().EditOracleParams(
+		ctx, *msg, sender,
+	)
+	resp = &types.MsgEditOracleParamsResponse{
+		NewParams: &newParams,
+	}
+	return resp, err
 }

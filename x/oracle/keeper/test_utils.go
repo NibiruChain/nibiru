@@ -13,6 +13,9 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/oracle/types"
+	"github.com/NibiruChain/nibiru/x/sudo"
+	sudokeeper "github.com/NibiruChain/nibiru/x/sudo/keeper"
+	sudotypes "github.com/NibiruChain/nibiru/x/sudo/types"
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/secp256k1"
@@ -51,6 +54,7 @@ var ModuleBasics = module.NewBasicManager(
 	distr.AppModuleBasic{},
 	staking.AppModuleBasic{},
 	params.AppModuleBasic{},
+	sudo.AppModuleBasic{},
 )
 
 // MakeTestCodec nolint
@@ -123,6 +127,7 @@ type TestFixture struct {
 	OracleKeeper  Keeper
 	StakingKeeper stakingkeeper.Keeper
 	DistrKeeper   distrkeeper.Keeper
+	SudoKeeper    types.SudoKeeper
 }
 
 // CreateTestFixture nolint
@@ -135,6 +140,7 @@ func CreateTestFixture(t *testing.T) TestFixture {
 	keyOracle := sdk.NewKVStoreKey(types.StoreKey)
 	keyStaking := sdk.NewKVStoreKey(stakingtypes.StoreKey)
 	keyDistr := sdk.NewKVStoreKey(distrtypes.StoreKey)
+	keySudo := sdk.NewKVStoreKey(sudotypes.StoreKey)
 
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
@@ -224,11 +230,15 @@ func CreateTestFixture(t *testing.T) TestFixture {
 
 	bankKeeper.SendCoinsFromModuleToModule(ctx, faucetAccountName, stakingtypes.NotBondedPoolName, sdk.NewCoins(sdk.NewCoin(denoms.NIBI, InitTokens.MulRaw(int64(len(Addrs))))))
 
+	sudoKeeper := sudokeeper.NewKeeper(appCodec, keySudo)
+	sudoAcc := authtypes.NewEmptyModuleAccount(sudotypes.ModuleName)
+
 	accountKeeper.SetModuleAccount(ctx, feeCollectorAcc)
 	accountKeeper.SetModuleAccount(ctx, bondPool)
 	accountKeeper.SetModuleAccount(ctx, notBondedPool)
 	accountKeeper.SetModuleAccount(ctx, distrAcc)
 	accountKeeper.SetModuleAccount(ctx, oracleAcc)
+	accountKeeper.SetModuleAccount(ctx, sudoAcc)
 
 	for _, addr := range Addrs {
 		accountKeeper.SetAccount(ctx, authtypes.NewBaseAccountWithAddress(addr))
@@ -243,6 +253,7 @@ func CreateTestFixture(t *testing.T) TestFixture {
 		bankKeeper,
 		distrKeeper,
 		stakingKeeper,
+		sudoKeeper,
 		distrtypes.ModuleName,
 	)
 
@@ -254,11 +265,19 @@ func CreateTestFixture(t *testing.T) TestFixture {
 
 	keeper.Params.Set(ctx, defaults)
 
-	return TestFixture{ctx, legacyAmino, accountKeeper, bankKeeper, keeper, *stakingKeeper, distrKeeper}
+	return TestFixture{
+		ctx, legacyAmino, accountKeeper, bankKeeper,
+		keeper,
+		*stakingKeeper,
+		distrKeeper,
+		sudoKeeper,
+	}
 }
 
 // NewTestMsgCreateValidator test msg creator
-func NewTestMsgCreateValidator(address sdk.ValAddress, pubKey cryptotypes.PubKey, amt sdk.Int) *stakingtypes.MsgCreateValidator {
+func NewTestMsgCreateValidator(
+	address sdk.ValAddress, pubKey cryptotypes.PubKey, amt sdk.Int,
+) *stakingtypes.MsgCreateValidator {
 	commission := stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec())
 	msg, _ := stakingtypes.NewMsgCreateValidator(
 		address, pubKey, sdk.NewCoin(denoms.NIBI, amt),
