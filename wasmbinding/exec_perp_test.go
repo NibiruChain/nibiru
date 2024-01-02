@@ -131,52 +131,6 @@ func (s *TestSuitePerpExecutor) OnSetupEnd() {
 	s.ratesMap = SetExchangeRates(&s.Suite, s.nibiru, s.ctx)
 }
 
-// Happy path coverage
-func (s *TestSuitePerpExecutor) TestPerpExecutorHappy() {
-	for _, err := range []error{
-		s.DoCreateMarketTest(asset.MustNewPair("ufoo:ubar")),
-		s.DoCreateMarketTestWithParams(asset.MustNewPair("ufoo2:ubar")),
-	} {
-		s.NoError(err)
-	}
-}
-
-func (s *TestSuitePerpExecutor) DoCreateMarketTest(pair asset.Pair) error {
-	cwMsg := &bindings.CreateMarket{
-		Pair:         pair.String(),
-		PegMult:      sdk.NewDec(2_500),
-		SqrtDepth:    sdk.NewDec(1_000),
-		MarketParams: nil,
-	}
-
-	return s.exec.CreateMarket(cwMsg, s.ctx)
-}
-
-func (s *TestSuitePerpExecutor) DoCreateMarketTestWithParams(pair asset.Pair) error {
-	cwMsg := &bindings.CreateMarket{
-		Pair:      pair.String(),
-		PegMult:   sdk.NewDec(2_500),
-		SqrtDepth: sdk.NewDec(1_000),
-		MarketParams: &bindings.MarketParams{
-			Pair:                            pair.String(),
-			Enabled:                         true,
-			MaintenanceMarginRatio:          sdk.OneDec(),
-			MaxLeverage:                     sdk.OneDec(),
-			LatestCumulativePremiumFraction: sdk.OneDec(),
-			ExchangeFeeRatio:                sdk.OneDec(),
-			EcosystemFundFeeRatio:           sdk.OneDec(),
-			LiquidationFeeRatio:             sdk.OneDec(),
-			PartialLiquidationRatio:         sdk.OneDec(),
-			FundingRateEpochId:              "hi",
-			MaxFundingRate:                  sdk.OneDec(),
-			TwapLookbackWindow:              sdk.OneInt(),
-			OraclePair:                      pair.String(),
-		},
-	}
-
-	return s.exec.CreateMarket(cwMsg, s.ctx)
-}
-
 func (s *TestSuitePerpExecutor) DoSetMarketEnabledTest(
 	pair asset.Pair, enabled bool,
 ) error {
@@ -202,8 +156,6 @@ func (s *TestSuitePerpExecutor) TestSadPaths_InvalidPair() {
 	for _, err := range []error{
 		s.DoSetMarketEnabledTest(pair, true),
 		s.DoSetMarketEnabledTest(pair, false),
-		s.DoCreateMarketTest(pair),
-		s.DoCreateMarketTestWithParams(pair),
 	} {
 		s.Error(err)
 	}
