@@ -19,6 +19,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/x/inflation/client/cli"
 	"github.com/NibiruChain/nibiru/x/inflation/keeper"
+	"github.com/NibiruChain/nibiru/x/inflation/simulation"
 	"github.com/NibiruChain/nibiru/x/inflation/types"
 )
 
@@ -153,7 +154,8 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 // AppModuleSimulation functions
 
 // GenerateGenesisState creates a randomized GenState of the inflation module.
-func (am AppModule) GenerateGenesisState(_ *module.SimulationState) {
+func (am AppModule) GenerateGenesisState(simState *module.SimulationState) {
+	simulation.RandomizedGenState(simState)
 }
 
 // ProposalContents doesn't return any content functions for governance proposals.

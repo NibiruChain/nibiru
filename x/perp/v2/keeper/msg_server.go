@@ -131,7 +131,7 @@ func (m msgServer) DonateToEcosystemFund(ctx context.Context, msg *types.MsgDona
 	if err := m.k.BankKeeper.SendCoinsFromAccountToModule(
 		sdk.UnwrapSDKContext(ctx),
 		sdk.MustAccAddressFromBech32(msg.Sender),
-		types.PerpEFModuleAccount,
+		types.PerpFundModuleAccount,
 		sdk.NewCoins(msg.Donation),
 	); err != nil {
 		return nil, err
@@ -141,7 +141,7 @@ func (m msgServer) DonateToEcosystemFund(ctx context.Context, msg *types.MsgDona
 }
 
 // ChangeCollateralDenom Updates the collateral denom. A denom is valid if it is
-// possible to make an sdk.Coin using it. [Admin] Only callable by sudoers.
+// possible to make an sdk.Coin using it. [SUDO] Only callable by sudoers.
 func (m msgServer) ChangeCollateralDenom(
 	goCtx context.Context, txMsg *types.MsgChangeCollateralDenom,
 ) (resp *types.MsgChangeCollateralDenomResponse, err error) {
@@ -153,7 +153,7 @@ func (m msgServer) ChangeCollateralDenom(
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	err = m.k.Admin.ChangeCollateralDenom(ctx, txMsg.NewDenom, txMsg.GetSigners()[0])
+	err = m.k.Sudo().ChangeCollateralDenom(ctx, txMsg.NewDenom, txMsg.GetSigners()[0])
 
 	return &types.MsgChangeCollateralDenomResponse{}, err
 }
@@ -196,32 +196,46 @@ func (m msgServer) WithdrawEpochRebates(ctx context.Context, msg *types.MsgWithd
 }
 
 // ShiftPegMultiplier: gRPC tx msg for changing a market's peg multiplier.
-// [Admin] Only callable by sudoers.
+// [SUDO] Only callable by sudoers.
 func (m msgServer) ShiftPegMultiplier(
 	goCtx context.Context, msg *types.MsgShiftPegMultiplier,
 ) (*types.MsgShiftPegMultiplierResponse, error) {
 	// Sender is checked in `msg.ValidateBasic` before reaching this fn call.
 	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	err := m.k.Admin.ShiftPegMultiplier(ctx, msg.Pair, msg.NewPegMult, sender)
+	err := m.k.Sudo().ShiftPegMultiplier(ctx, msg.Pair, msg.NewPegMult, sender)
 	return &types.MsgShiftPegMultiplierResponse{}, err
 }
 
 // ShiftSwapInvariant: gRPC tx msg for changing a market's swap invariant.
-// [Admin] Only callable by sudoers.
+// [SUDO] Only callable by sudoers.
 func (m msgServer) ShiftSwapInvariant(
 	goCtx context.Context, msg *types.MsgShiftSwapInvariant,
 ) (*types.MsgShiftSwapInvariantResponse, error) {
 	// Sender is checked in `msg.ValidateBasic` before reaching this fn call.
 	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	err := m.k.Admin.ShiftSwapInvariant(ctx, msg.Pair, msg.NewSwapInvariant, sender)
+	err := m.k.Sudo().ShiftSwapInvariant(ctx, msg.Pair, msg.NewSwapInvariant, sender)
 	return &types.MsgShiftSwapInvariantResponse{}, err
+}
+
+// WithdrawFromPerpFund: gRPC tx msg for changing a market's swap invariant.
+// [SUDO] Only callable by sudoers.
+func (m msgServer) WithdrawFromPerpFund(
+	goCtx context.Context, msg *types.MsgWithdrawFromPerpFund,
+) (resp *types.MsgWithdrawFromPerpFundResponse, err error) {
+	// Sender is checked in `msg.ValidateBasic` before reaching this fn call.
+	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
+	toAddr, _ := sdk.AccAddressFromBech32(msg.ToAddr)
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	return resp, m.k.Sudo().WithdrawFromPerpFund(
+		ctx, msg.Amount, sender, toAddr, msg.Denom,
+	)
 }
 
 // CloseMarket closes a market.
 func (m msgServer) CloseMarket(ctx context.Context, msg *types.MsgCloseMarket) (*types.MsgCloseMarketResponse, error) {
 	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
-	err := m.k.Admin.CloseMarket(sdk.UnwrapSDKContext(ctx), msg.Pair, sender)
+	err := m.k.Sudo().CloseMarket(sdk.UnwrapSDKContext(ctx), msg.Pair, sender)
 	return &types.MsgCloseMarketResponse{}, err
 }

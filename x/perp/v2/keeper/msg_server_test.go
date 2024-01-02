@@ -246,7 +246,7 @@ func TestMsgServerDonateToPerpEf(t *testing.T) {
 			).
 			Then(
 				BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.NewInt(50)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(50)),
+				ModuleBalanceEqual(types.PerpFundModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(50)),
 			),
 	}
 
@@ -276,7 +276,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(750)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(125)),
+				ModuleBalanceEqual(types.PerpFundModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(125)),
 				BalanceEqual(liquidator, types.TestingCollateralDenomNUSD, sdk.NewInt(125)),
 				PositionShouldBeEqual(alice, pairBtcUsdc,
 					Position_PositionShouldBeEqualTo(
@@ -309,7 +309,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(600)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(150)),
+				ModuleBalanceEqual(types.PerpFundModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(150)),
 				BalanceEqual(liquidator, types.TestingCollateralDenomNUSD, sdk.NewInt(250)),
 				PositionShouldNotExist(alice, pairBtcUsdc, 1),
 			),
