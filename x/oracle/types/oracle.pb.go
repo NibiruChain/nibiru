@@ -59,7 +59,8 @@ type Params struct {
 	// synonymous with submitting fewer valid votes than `MinValidPerWindow`.
 	SlashWindow       uint64                                 `protobuf:"varint,6,opt,name=slash_window,json=slashWindow,proto3" json:"slash_window,omitempty" yaml:"slash_window"`
 	MinValidPerWindow github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,7,opt,name=min_valid_per_window,json=minValidPerWindow,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"min_valid_per_window" yaml:"min_valid_per_window"`
-	// Amount of time to look back for TWAP calculations
+	// Amount of time to look back for TWAP calculations.
+	// Ex: "900.000000069s" corresponds to 900 seconds and 69 nanoseconds in JSON.
 	TwapLookbackWindow time.Duration `protobuf:"bytes,8,opt,name=twap_lookback_window,json=twapLookbackWindow,proto3,stdduration" json:"twap_lookback_window,omitempty" yaml:"twap_lookback_window"`
 	// The minimum number of voters (i.e. oracle validators) per pair for it to be
 	// considered a passing ballot. Recommended at least 4.
