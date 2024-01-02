@@ -407,3 +407,27 @@ func (m MsgShiftSwapInvariant) GetSigners() []sdk.AccAddress {
 func (m MsgShiftSwapInvariant) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
 }
+
+// ------------------------ MsgCreateMarket ------------------------
+
+func (m MsgCreateMarket) ValidateBasic() error {
+	if err := m.Pair.Validate(); err != nil {
+		return err
+	}
+	if !m.SqrtDepth.IsPositive() {
+		return fmt.Errorf("sqrt depth must be positive, not: %v", m.SqrtDepth.String())
+	}
+	if !m.PriceMultiplier.IsPositive() {
+		return fmt.Errorf("price multiplier must be positive, not: %v", m.PriceMultiplier.String())
+	}
+	return nil
+}
+
+func (m MsgCreateMarket) GetSigners() []sdk.AccAddress {
+	signer, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		panic(err)
+	}
+
+	return []sdk.AccAddress{signer}
+}

@@ -25,6 +25,8 @@ func TestSnapshotUpdates(t *testing.T) {
 	initialMarket := *mock.TestMarket()
 	initialAmm := *mock.TestAMMDefault()
 
+	adminAccount := sdk.AccAddressFromBech32("nibi")
+
 	runBlock := func(duration time.Duration) {
 		perp.EndBlocker(ctx, app.PerpKeeperV2)
 		ctx = ctx.

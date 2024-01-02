@@ -49,6 +49,8 @@ service Msg {
   // [Admin] Only callable by sudoers.
   rpc ShiftSwapInvariant(MsgShiftSwapInvariant)
       returns (MsgShiftSwapInvariantResponse) {}
+
+  rpc CreateMarket(MsgCreateMarket) returns (MsgCreateMarketResponse) {}
 }
 
 // -------------------------- Settle Position --------------------------
@@ -429,3 +431,39 @@ message MsgShiftSwapInvariant {
 }
 
 message MsgShiftSwapInvariantResponse {}
+
+// -------------------------- CreateMarket --------------------------
+
+// CreateMarket: gRPC tx msg for creating a new market.
+// Admin-only.
+message MsgCreateMarket {
+  string sender = 1;
+  string pair = 2 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.moretags) = "yaml:\"pair\"",
+    (gogoproto.nullable) = false
+  ];
+
+  string price_multiplier = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.moretags) = "yaml:\"price_multiplier\"",
+    (gogoproto.nullable) = false
+  ];
+
+  string sqrt_depth = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.moretags) = "yaml:\"sqrt_depth\"",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message MsgCreateMarketResponse {
+  string pair = 1 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+
+  string version = 2;
+}

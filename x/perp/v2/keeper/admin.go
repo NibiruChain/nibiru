@@ -71,7 +71,12 @@ type ArgsCreateMarket struct {
 func (k admin) CreateMarket(
 	ctx sdk.Context,
 	args ArgsCreateMarket,
+	adminAccount sdk.AccAddress,
 ) error {
+	if err := k.SudoKeeper.CheckPermissions(adminAccount, ctx); err != nil {
+		return err
+	}
+
 	pair := args.Pair
 	market, err := k.GetMarket(ctx, pair)
 	if err == nil && market.Enabled {

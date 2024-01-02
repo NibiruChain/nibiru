@@ -218,3 +218,21 @@ func (m msgServer) ShiftSwapInvariant(
 	err := m.k.Admin.ShiftSwapInvariant(ctx, msg.Pair, msg.NewSwapInvariant, sender)
 	return &types.MsgShiftSwapInvariantResponse{}, err
 }
+
+// CreateMarket gRPC tx msg for creating a new market.
+// [Admin] Only callable by sudoers.
+func (m msgServer) CreateMarket(
+	goCtx context.Context, msg *types.MsgCreateMarket,
+) (*types.MsgCreateMarketResponse, error) {
+	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	args := ArgsCreateMarket{}
+
+	err := m.k.Admin.CreateMarket(ctx, args, sender)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgCreateMarketResponse{}, nil
+}
