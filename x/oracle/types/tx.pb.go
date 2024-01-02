@@ -278,7 +278,7 @@ func (m *MsgDelegateFeedConsentResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgDelegateFeedConsentResponse proto.InternalMessageInfo
 
 // MsgEditOracleParams: gRPC tx message for updating the x/oracle module params
-// [[SUDO][SUDO][SUDO][SUDO][SUDO]] O[SUDO]ly callable by su[SUDO]oers.
+// [SUDO] Only callable by sudoers.
 type MsgEditOracleParams struct {
 	Sender     string                                  `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	VotePeriod *github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=vote_period,json=votePeriod,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"vote_period,omitempty"`

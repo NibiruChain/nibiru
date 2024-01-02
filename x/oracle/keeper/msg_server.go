@@ -169,7 +169,7 @@ func (ms msgServer) DelegateFeedConsent(
 }
 
 // EditOracleParams: gRPC tx msg for editing the oracle module params.
-// [[SUDO][SUDO][SUDO][SUDO][SUDO]] O[SUDO]ly callable by su[SUDO]oers.
+// [SUDO] Only callable by sudoers.
 func (ms msgServer) EditOracleParams(
 	goCtx context.Context, msg *types.MsgEditOracleParams,
 ) (resp *types.MsgEditOracleParamsResponse, err error) {

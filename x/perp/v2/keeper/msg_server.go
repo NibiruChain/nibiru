@@ -141,7 +141,7 @@ func (m msgServer) DonateToEcosystemFund(ctx context.Context, msg *types.MsgDona
 }
 
 // ChangeCollateralDenom Updates the collateral denom. A denom is valid if it is
-// possible to make an sdk.Coin using it. [Sudo] Only callable by sudoers.
+// possible to make an sdk.Coin using it. [SUDO] Only callable by sudoers.
 func (m msgServer) ChangeCollateralDenom(
 	goCtx context.Context, txMsg *types.MsgChangeCollateralDenom,
 ) (resp *types.MsgChangeCollateralDenomResponse, err error) {

@@ -60,7 +60,7 @@ func NewKeeper(
 		panic("The x/perp module account has not been set")
 	}
 
-	k := Keeper{
+	return Keeper{
 		cdc:           cdc,
 		storeKey:      storeKey,
 		BankKeeper:    bankKeeper,
@@ -131,7 +131,6 @@ func NewKeeper(
 			common.StringValueEncoder,
 		),
 	}
-	return k
 }
 
 const (

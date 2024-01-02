@@ -39,15 +39,13 @@ func (k sudoExtension) WithdrawFromPerpFund(
 		return err
 	}
 
-	var collateralDenom string
+	var collateralDenom string = denom
 	if denom == "" {
 		denomFromState, err := k.Collateral.Get(ctx)
 		if err != nil {
 			return err
 		}
 		collateralDenom = denomFromState
-	} else {
-		collateralDenom = denom
 	}
 
 	coinToSend := sdk.NewCoin(collateralDenom, amount)

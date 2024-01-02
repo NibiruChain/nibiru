@@ -15,7 +15,6 @@ type NibiruMsg struct {
 	// bindings-perp ExecuteMsg enum types
 	// MultiLiquidate        *MultiLiquidate        `json:"multi_liquidate,omitempty"` // TODO
 	SetMarketEnabled *SetMarketEnabled `json:"set_market_enabled,omitempty"`
-	CreateMarket     *CreateMarket     `json:"create_market,omitempty"`
 
 	EditOracleParams *EditOracleParams `json:"edit_oracle_params,omitempty"`
 
@@ -39,13 +38,6 @@ type EditOracleParams struct {
 type SetMarketEnabled struct {
 	Pair    string `json:"pair"`
 	Enabled bool   `json:"enabled"`
-}
-
-type CreateMarket struct {
-	Pair         string        `json:"pair"`
-	PegMult      sdk.Dec       `json:"peg_mult,omitempty"`
-	SqrtDepth    sdk.Dec       `json:"sqrt_depth,omitempty"`
-	MarketParams *MarketParams `json:"market_params,omitempty"`
 }
 
 type MarketParams struct {

@@ -1199,8 +1199,8 @@ func (m *MsgWithdrawEpochRebatesResponse) GetWithdrawnRebates() github_com_cosmo
 	return nil
 }
 
-// ShiftPegMultiplier: gRPC tx msg for changing the peg multiplier.
-// [SUDO] Only callable by sudoers.
+// MsgShiftPegMultiplier: gRPC tx msg for changing the peg multiplier.
+// [SUDO] Only callable sudoers.
 type MsgShiftPegMultiplier struct {
 	Sender     string                                            `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	Pair       github_com_NibiruChain_nibiru_x_common_asset.Pair `protobuf:"bytes,2,opt,name=pair,proto3,customtype=github.com/NibiruChain/nibiru/x/common/asset.Pair" json:"pair"`
@@ -1283,8 +1283,8 @@ func (m *MsgShiftPegMultiplierResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgShiftPegMultiplierResponse proto.InternalMessageInfo
 
-// ShiftSwapInvariant: gRPC tx msg for changing the swap invariant.
-// [SUDO] Only callable by sudoers.
+// MsgShiftSwapInvariant: gRPC tx msg for changing the swap invariant.
+// [SUDO] Only callable sudoers.
 type MsgShiftSwapInvariant struct {
 	Sender           string                                            `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	Pair             github_com_NibiruChain_nibiru_x_common_asset.Pair `protobuf:"bytes,2,opt,name=pair,proto3,customtype=github.com/NibiruChain/nibiru/x/common/asset.Pair" json:"pair"`
@@ -1367,13 +1367,14 @@ func (m *MsgShiftSwapInvariantResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgShiftSwapInvariantResponse proto.InternalMessageInfo
 
-// WithdrawFromPerpFund: gRPC tx msg for changing the swap invariant.
-// [SUDO] Only callable by sudoers.
+// MsgWithdrawFromPerpFund: gRPC tx msg for changing the swap invariant.
+// [SUDO] Only callable sudoers.
 type MsgWithdrawFromPerpFund struct {
 	Sender string                                 `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	Amount github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=amount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"amount"`
-	Denom  string                                 `protobuf:"bytes,3,opt,name=denom,proto3" json:"denom,omitempty"`
-	ToAddr string                                 `protobuf:"bytes,4,opt,name=to_addr,json=toAddr,proto3" json:"to_addr,omitempty"`
+	// Optional denom in case withdrawing assets aside from NUSD.
+	Denom  string `protobuf:"bytes,3,opt,name=denom,proto3" json:"denom,omitempty"`
+	ToAddr string `protobuf:"bytes,4,opt,name=to_addr,json=toAddr,proto3" json:"to_addr,omitempty"`
 }
 
 func (m *MsgWithdrawFromPerpFund) Reset()         { *m = MsgWithdrawFromPerpFund{} }

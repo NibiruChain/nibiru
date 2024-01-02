@@ -92,7 +92,7 @@ message MsgDelegateFeedConsent {
 message MsgDelegateFeedConsentResponse {}
 
 // MsgEditOracleParams: gRPC tx message for updating the x/oracle module params
-// [[SUDO][SUDO][SUDO][SUDO][SUDO]] O[SUDO]ly callable by su[SUDO]oers.
+// [SUDO] Only callable by sudoers.
 message MsgEditOracleParams {
   string sender = 1;
 
