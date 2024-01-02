@@ -54,7 +54,12 @@ service Msg {
   // account. [SUDO] Only callable by sudoers.
   rpc WithdrawFromPerpFund(MsgWithdrawFromPerpFund)
       returns (MsgWithdrawFromPerpFundResponse) {}
+
+  // CloseMarket: gRPC tx msg for closing a market.
+  // [Admin] Only callable by sudoers.
+  rpc CloseMarket(MsgCloseMarket) returns (MsgCloseMarketResponse) {}
 }
+
 
 // -------------------------- Settle Position --------------------------
 
@@ -451,3 +456,18 @@ message MsgWithdrawFromPerpFund {
 }
 
 message MsgWithdrawFromPerpFundResponse {}
+
+// -------------------------- CloseMarket --------------------------
+
+// CloseMarket: gRPC tx msg for closing a market.
+// Admin-only.
+message MsgCloseMarket {
+  string sender = 1;
+  string pair = 2 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message MsgCloseMarketResponse {}
