@@ -69,6 +69,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1734](https://github.com/NibiruChain/nibiru/pull/1734) - feat(perp): MsgDonateToPerpFund sudo call as part of #1642
 * [#1752](https://github.com/NibiruChain/nibiru/pull/1752) - feat(oracle): MsgEditOracleParams sudo tx msg as part of #1642
 * [#1755](https://github.com/NibiruChain/nibiru/pull/1755) - feat(oracle): Add more events on validator's performance
+* [#1749](https://github.com/NibiruChain/nibiru/pull/1749) - feat(perp): move close market from Wasm Binding to MsgCloseMarket
+
 
 ### Non-breaking/Compatible Improvements
 

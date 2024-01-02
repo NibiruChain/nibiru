@@ -14,8 +14,6 @@ import (
 type NibiruMsg struct {
 	// bindings-perp ExecuteMsg enum types
 	// MultiLiquidate        *MultiLiquidate        `json:"multi_liquidate,omitempty"` // TODO
-	SetMarketEnabled *SetMarketEnabled `json:"set_market_enabled,omitempty"`
-
 	EditOracleParams *EditOracleParams `json:"edit_oracle_params,omitempty"`
 
 	// Short for "no operation". A wasm binding payload that does nothing.
@@ -33,11 +31,6 @@ type EditOracleParams struct {
 	TwapLookbackWindow *sdkmath.Int `json:"twap_lookback_window,omitempty"`
 	MinVoters          *sdkmath.Int `json:"min_voters,omitempty"`
 	ValidatorFeeRatio  *sdk.Dec     `json:"validator_fee_ratio,omitempty"`
-}
-
-type SetMarketEnabled struct {
-	Pair    string `json:"pair"`
-	Enabled bool   `json:"enabled"`
 }
 
 type MarketParams struct {
