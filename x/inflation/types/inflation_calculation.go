@@ -35,5 +35,6 @@ func polynomial(factors []sdk.Dec, x sdk.Dec) sdk.Dec {
 	}
 
 	// Multiply by 1 million to get the value in unibi
+	// 1 unibi = 1e6 nibi and the polynomial was fit on nibi token curve.
 	return result.Mul(sdk.NewDec(1_000_000))
 }
