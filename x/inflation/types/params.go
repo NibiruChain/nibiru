@@ -55,7 +55,7 @@ func NewParams(
 	}
 }
 
-// default minting module parameters
+// default inflation module parameters
 func DefaultParams() Params {
 	return Params{
 		PolynomialFactors:     DefaultPolynomialFactors,

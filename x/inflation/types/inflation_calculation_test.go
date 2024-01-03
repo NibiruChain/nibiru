@@ -29,7 +29,8 @@ func TestCalculateEpochMintProvision(t *testing.T) {
 	epochId := uint64(0)
 	totalInflation := sdk.ZeroDec()
 
-	// Only the first 8 years have inflation with default params
+	// Only the first 8 years have inflation with default params but we run
+	// for 10 years expecting 0 inflation
 	for year := uint64(0); year < 10; year++ {
 		yearlyInflation := sdk.ZeroDec()
 		for month := uint64(0); month < 12; month++ {
@@ -41,13 +42,38 @@ func TestCalculateEpochMintProvision(t *testing.T) {
 		}
 		// Should be within 0.0098%
 		if year < uint64(len(ExpectedYearlyInflation)) {
-			require.NoError(t, withingRange(yearlyInflation, ExpectedYearlyInflation[year]))
+			require.NoError(t, withinRange(yearlyInflation, ExpectedYearlyInflation[year]))
 		} else {
 			require.Equal(t, yearlyInflation, sdk.ZeroDec())
 		}
 		totalInflation = totalInflation.Add(yearlyInflation)
 	}
-	require.NoError(t, withingRange(totalInflation, ExpectedTotalInflation))
+	require.NoError(t, withinRange(totalInflation, ExpectedTotalInflation))
+}
+
+func TestCalculateEpochMintProvisionInflationNotEnabled(t *testing.T) {
+	params := DefaultParams()
+	params.InflationEnabled = false
+
+	epochId := uint64(0)
+	totalInflation := sdk.ZeroDec()
+
+	// Only the first 8 years have inflation with default params but we run
+	// for 10 years expecting 0 inflation
+	for year := uint64(0); year < 10; year++ {
+		yearlyInflation := sdk.ZeroDec()
+		for month := uint64(0); month < 12; month++ {
+			for day := uint64(0); day < 30; day++ {
+				epochMintProvisions := CalculateEpochMintProvision(params, epochId)
+				yearlyInflation = yearlyInflation.Add(epochMintProvisions)
+			}
+			epochId++
+		}
+
+		require.Equal(t, yearlyInflation, sdk.ZeroDec())
+		totalInflation = totalInflation.Add(yearlyInflation)
+	}
+	require.Equal(t, totalInflation, sdk.ZeroDec())
 }
 
 func TestCalculateEpochMintProvision_ZeroEpochs(t *testing.T) {
@@ -58,9 +84,9 @@ func TestCalculateEpochMintProvision_ZeroEpochs(t *testing.T) {
 	require.Equal(t, epochMintProvisions, sdk.ZeroDec())
 }
 
-// withingRange returns an error if the actual value is not within the expected value +/- tolerance
+// withinRange returns an error if the actual value is not within the expected value +/- tolerance
 // tolerance is a percentage set to 0.01% by default
-func withingRange(expected, actual sdk.Dec) error {
+func withinRange(expected, actual sdk.Dec) error {
 	tolerance := sdk.NewDecWithPrec(1, 4)
 	is_within := expected.Sub(actual).Abs().Quo(expected).LTE(tolerance)
 	if !is_within {
