@@ -25,6 +25,7 @@ var (
 	ErrAmmNonpositiveReserves      = errorAmm("base and quote reserves must always be positive")
 	ErrLiquidityDepth              = errorAmm("liquidity depth must be positive and equal to the square of the reserves")
 	ErrAmmBaseSupplyNonpositive    = errorAmm("base supply must be > 0")
+	ErrAmmArtificialShortSqueeze   = errorAmm("short supply exceeds existing supply")
 	ErrAmmQuoteSupplyNonpositive   = errorAmm("quote supply must be > 0")
 	ErrAmmLiquidityDepthOverflow   = errorAmm("liquidty depth overflow")
 	ErrAmmNonPositivePegMult       = errorAmm("peg multiplier must be > 0")
