@@ -43,7 +43,7 @@ func (amm AMM) Validate() error {
 	// quote reserve swapped to base, then the shorts can't close positions.
 	_, err = amm.SwapBaseAsset(amm.TotalShort, Direction_LONG)
 	if err != nil {
-		return sdkerrors.Wrapf(ErrAmmArtificialShortSqueeze, "Base amount error, short exceed total base supply: %s", err.Error())
+		return sdkerrors.Wrapf(ErrAmmBaseBorrowedTooHigh, "Base amount error, short exceed total base supply: %s", err.Error())
 	}
 
 	return nil
