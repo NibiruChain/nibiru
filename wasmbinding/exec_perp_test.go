@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/wasmbinding"
 	"github.com/NibiruChain/nibiru/wasmbinding/wasmbin"
 	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
@@ -31,7 +30,6 @@ type TestSuitePerpExecutor struct {
 	nibiru           *app.NibiruApp
 	ctx              sdk.Context
 	contractDeployer sdk.AccAddress
-	exec             *wasmbinding.ExecutorPerp
 
 	contractPerp sdk.AccAddress
 	ratesMap     map[asset.Pair]sdk.Dec
@@ -115,10 +113,6 @@ func (s *TestSuitePerpExecutor) SetupSuite() {
 	s.ctx = ctx
 	s.contractPerp = ContractMap[wasmbin.WasmKeyPerpBinding]
 
-	s.NoError(testapp.FundAccount(nibiru.BankKeeper, ctx, s.contractPerp, coins))
-	s.exec = &wasmbinding.ExecutorPerp{
-		PerpV2: nibiru.PerpKeeperV2,
-	}
 	s.nibiru.PerpKeeperV2.Collateral.Set(s.ctx, perpv2types.TestingCollateralDenomNUSD)
 	s.NoError(testapp.FundAccount(nibiru.BankKeeper, ctx, s.contractPerp, coins))
 

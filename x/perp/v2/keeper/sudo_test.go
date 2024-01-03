@@ -103,7 +103,7 @@ func TestCreateMarket(t *testing.T) {
 		PriceMultiplier: amm.PriceMultiplier,
 		SqrtDepth:       amm.SqrtDepth,
 		Market:          &market, // Invalid maintenance ratio
-	})
+	}, adminUser)
 	require.ErrorContains(t, err, "maintenance margin ratio ratio must be 0 <= ratio <= 1")
 
 	// Error because of invalid oracle pair
@@ -113,7 +113,7 @@ func TestCreateMarket(t *testing.T) {
 		PriceMultiplier: amm.PriceMultiplier,
 		SqrtDepth:       amm.SqrtDepth,
 		Market:          &market, // Invalid oracle pair
-	})
+	}, adminUser)
 	require.ErrorContains(t, err, "err when validating oracle pair random: invalid token pair")
 
 	// Error because of invalid amm
@@ -121,7 +121,7 @@ func TestCreateMarket(t *testing.T) {
 		Pair:            pair,
 		PriceMultiplier: sdk.NewDec(-1),
 		SqrtDepth:       amm.SqrtDepth,
-	})
+	}, adminUser)
 	require.ErrorContains(t, err, types.ErrAmmNonPositivePegMult.Error())
 
 	// Set it correctly
@@ -129,8 +129,7 @@ func TestCreateMarket(t *testing.T) {
 		Pair:            pair,
 		PriceMultiplier: amm.PriceMultiplier,
 		SqrtDepth:       amm.SqrtDepth,
-		EnableMarket:    true,
-	})
+	}, adminUser)
 	require.NoError(t, err)
 
 	lastVersion, err := app.PerpKeeperV2.MarketLastVersion.Get(ctx, pair)
@@ -151,7 +150,7 @@ func TestCreateMarket(t *testing.T) {
 		Pair:            pair,
 		PriceMultiplier: amm.PriceMultiplier,
 		SqrtDepth:       amm.SqrtDepth,
-	})
+	}, adminUser)
 	require.ErrorContains(t, err, "already exists")
 
 	// Close the market to test that we can create it again but with an increased version
@@ -162,7 +161,7 @@ func TestCreateMarket(t *testing.T) {
 		Pair:            pair,
 		PriceMultiplier: amm.PriceMultiplier,
 		SqrtDepth:       amm.SqrtDepth,
-	})
+	}, adminUser)
 	require.NoError(t, err)
 
 	lastVersion, err = app.PerpKeeperV2.MarketLastVersion.Get(ctx, pair)
@@ -177,6 +176,14 @@ func TestCreateMarket(t *testing.T) {
 	market, err = app.PerpKeeperV2.GetMarket(ctx, pair)
 	require.NoError(t, err)
 	require.Equal(t, uint64(2), market.Version)
+
+	// Fail if the creator is not a sudoer
+	err = admin.CreateMarket(ctx, keeper.ArgsCreateMarket{
+		Pair:            pair,
+		PriceMultiplier: amm.PriceMultiplier,
+		SqrtDepth:       amm.SqrtDepth,
+	}, testutil.AccAddress())
+	require.ErrorContains(t, err, "insufficient permissions on smart contract")
 }
 
 func TestCloseMarket(t *testing.T) {

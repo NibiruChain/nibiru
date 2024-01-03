@@ -163,6 +163,8 @@ type createPool struct {
 	pair   asset.Pair
 	market types.Market
 	amm    types.AMM
+
+	adminAccount sdk.AccAddress
 }
 
 func (c createPool) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
@@ -171,15 +173,16 @@ func (c createPool) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error)
 		PriceMultiplier: c.amm.PriceMultiplier,
 		SqrtDepth:       c.amm.SqrtDepth,
 		Market:          &c.market,
-	})
+	}, c.adminAccount)
 	return ctx, err
 }
 
-func CreateMarket(pair asset.Pair, market types.Market, amm types.AMM) action.Action {
+func CreateMarket(pair asset.Pair, market types.Market, amm types.AMM, adminAccount sdk.AccAddress) action.Action {
 	return createPool{
-		pair:   pair,
-		market: market,
-		amm:    amm,
+		pair:         pair,
+		market:       market,
+		amm:          amm,
+		adminAccount: adminAccount,
 	}
 }
 

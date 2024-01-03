@@ -55,6 +55,8 @@ service Msg {
   rpc WithdrawFromPerpFund(MsgWithdrawFromPerpFund)
       returns (MsgWithdrawFromPerpFundResponse) {}
 
+  rpc CreateMarket(MsgCreateMarket) returns (MsgCreateMarketResponse) {}
+
   // CloseMarket: gRPC tx msg for closing a market.
   // [Admin] Only callable by sudoers.
   rpc CloseMarket(MsgCloseMarket) returns (MsgCloseMarketResponse) {}
@@ -456,6 +458,38 @@ message MsgWithdrawFromPerpFund {
 }
 
 message MsgWithdrawFromPerpFundResponse {}
+
+// -------------------------- CreateMarket --------------------------
+
+// CreateMarket: gRPC tx msg for creating a new market.
+// Admin-only.
+message MsgCreateMarket {
+  string sender = 1;
+  string pair = 2 [
+    (gogoproto.customtype) =
+        "github.com/NibiruChain/nibiru/x/common/asset.Pair",
+    (gogoproto.moretags) = "yaml:\"pair\"",
+    (gogoproto.nullable) = false
+  ];
+
+  string price_multiplier = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.moretags) = "yaml:\"price_multiplier\"",
+    (gogoproto.nullable) = false
+  ];
+
+  string sqrt_depth = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.moretags) = "yaml:\"sqrt_depth\"",
+    (gogoproto.nullable) = false
+  ];
+
+  Market market = 5 [
+    (gogoproto.nullable) = true
+  ];
+}
+
+message MsgCreateMarketResponse {}
 
 // -------------------------- CloseMarket --------------------------
 

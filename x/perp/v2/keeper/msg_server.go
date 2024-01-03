@@ -210,8 +210,7 @@ func (m msgServer) ShiftPegMultiplier(
 // ShiftSwapInvariant: gRPC tx msg for changing a market's swap invariant.
 // [SUDO] Only callable by sudoers.
 func (m msgServer) ShiftSwapInvariant(
-	goCtx context.Context, msg *types.MsgShiftSwapInvariant,
-) (*types.MsgShiftSwapInvariantResponse, error) {
+	goCtx context.Context, msg *types.MsgShiftSwapInvariant) (*types.MsgShiftSwapInvariantResponse, error) {
 	// Sender is checked in `msg.ValidateBasic` before reaching this fn call.
 	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -221,9 +220,7 @@ func (m msgServer) ShiftSwapInvariant(
 
 // WithdrawFromPerpFund: gRPC tx msg for changing a market's swap invariant.
 // [SUDO] Only callable by sudoers.
-func (m msgServer) WithdrawFromPerpFund(
-	goCtx context.Context, msg *types.MsgWithdrawFromPerpFund,
-) (resp *types.MsgWithdrawFromPerpFundResponse, err error) {
+func (m msgServer) WithdrawFromPerpFund(goCtx context.Context, msg *types.MsgWithdrawFromPerpFund) (resp *types.MsgWithdrawFromPerpFundResponse, err error) {
 	// Sender is checked in `msg.ValidateBasic` before reaching this fn call.
 	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
 	toAddr, _ := sdk.AccAddressFromBech32(msg.ToAddr)
@@ -238,4 +235,28 @@ func (m msgServer) CloseMarket(ctx context.Context, msg *types.MsgCloseMarket) (
 	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
 	err := m.k.Sudo().CloseMarket(sdk.UnwrapSDKContext(ctx), msg.Pair, sender)
 	return &types.MsgCloseMarketResponse{}, err
+}
+
+// CreateMarket gRPC tx msg for creating a new market.
+// [Admin] Only callable by sudoers.
+func (m msgServer) CreateMarket(
+	goCtx context.Context, msg *types.MsgCreateMarket,
+) (*types.MsgCreateMarketResponse, error) {
+	sender, _ := sdk.AccAddressFromBech32(msg.Sender)
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	args := ArgsCreateMarket{
+		Pair:            msg.Pair,
+		PriceMultiplier: msg.PriceMultiplier,
+		SqrtDepth:       msg.SqrtDepth,
+
+		Market: msg.Market,
+	}
+
+	err := m.k.Sudo().CreateMarket(ctx, args, sender)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgCreateMarketResponse{}, nil
 }
