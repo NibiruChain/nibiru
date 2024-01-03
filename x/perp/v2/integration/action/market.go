@@ -1,6 +1,8 @@
 package action
 
 import (
+	"fmt"
+
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -154,6 +156,28 @@ func (e shiftSwapInvariant) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context
 
 func ShiftSwapInvariant(pair asset.Pair, newValue sdkmath.Int) action.Action {
 	return shiftSwapInvariant{
+		pair:     pair,
+		newValue: newValue,
+	}
+}
+
+type shiftSwapInvariantFail struct {
+	pair     asset.Pair
+	newValue sdkmath.Int
+}
+
+func (e shiftSwapInvariantFail) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+	err := app.PerpKeeperV2.Sudo().ShiftSwapInvariant(
+		ctx, e.pair, e.newValue, testapp.DefaultSudoRoot(),
+	)
+	if err == nil {
+		return ctx, fmt.Errorf("expected error")
+	}
+	return ctx, nil
+}
+
+func ShiftSwapInvariantFail(pair asset.Pair, newValue sdkmath.Int) action.Action {
+	return shiftSwapInvariantFail{
 		pair:     pair,
 		newValue: newValue,
 	}
