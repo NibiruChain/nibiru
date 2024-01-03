@@ -11,7 +11,7 @@ data
 build
 *_old
 mockdata/
-docs
+docs/static
 dist
 coverage.txt
 temp

@@ -51,6 +51,7 @@ var (
 	ErrSettlementPositionMarketEnabled = registerError("market is enabled, you can only settle position on disabled market")
 	ErrCollateralDenomNotSet           = registerError("ErrorCollateral: no collateral denom set for the perp keeper")
 	ErrInvalidCollateral               = registerError("ErrorCollateral: invalid collateral denom")
+	ErrGeneric                         = registerError("perp GenericError")
 )
 
 // Register error instance for "ErrorMarketOrder"

@@ -21,6 +21,7 @@ var (
 	_ sdk.Msg = &MsgWithdrawEpochRebates{}
 	_ sdk.Msg = &MsgShiftPegMultiplier{}
 	_ sdk.Msg = &MsgShiftSwapInvariant{}
+	_ sdk.Msg = &MsgWithdrawFromPerpFund{}
 )
 
 // ------------------------ MsgRemoveMargin ------------------------
@@ -405,5 +406,59 @@ func (m MsgShiftSwapInvariant) GetSigners() []sdk.AccAddress {
 }
 
 func (m MsgShiftSwapInvariant) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
+}
+
+// ------------------------ MsgCloseMarket ------------------------
+
+func (m MsgCloseMarket) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return sdkerrors.Wrapf(errors.ErrInvalidAddress, "invalid sender address (%s)", err)
+	}
+
+	if err := m.Pair.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m MsgCloseMarket) GetSigners() []sdk.AccAddress {
+	signer, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		panic(err)
+	}
+
+	return []sdk.AccAddress{signer}
+}
+
+// ------------------------ MsgWithdrawFromPerpFund ------------------------
+
+func (m MsgWithdrawFromPerpFund) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return fmt.Errorf("%w: invalid sender address (%s): %s",
+			errors.ErrInvalidAddress, m.Sender, err,
+		)
+	}
+	if !m.Amount.IsPositive() {
+		return fmt.Errorf(
+			"%w: msg \"amount\" must be positive, got %s", ErrGeneric, m.Amount)
+	}
+	if _, err := sdk.AccAddressFromBech32(m.ToAddr); err != nil {
+		return fmt.Errorf("%w: invalid \"to_addr\" (%s): %s",
+			errors.ErrInvalidAddress, m.ToAddr, err,
+		)
+	}
+	return nil
+}
+
+func (m MsgWithdrawFromPerpFund) GetSigners() []sdk.AccAddress {
+	signer, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{signer}
+}
+
+func (m MsgWithdrawFromPerpFund) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
 }

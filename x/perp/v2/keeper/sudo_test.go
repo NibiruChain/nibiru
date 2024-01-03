@@ -28,82 +28,77 @@ import (
 	. "github.com/NibiruChain/nibiru/x/perp/v2/integration/assertion"
 )
 
-func TestAdmin_WithdrawFromInsuranceFund(t *testing.T) {
-	expectBalance := func(
-		want sdkmath.Int, t *testing.T, nibiru *app.NibiruApp, ctx sdk.Context,
-	) {
-		insuranceFund := nibiru.AccountKeeper.GetModuleAddress(perptypes.PerpEFModuleAccount)
-		balances := nibiru.BankKeeper.GetAllBalances(ctx, insuranceFund)
-		got := balances.AmountOf(perptypes.TestingCollateralDenomNUSD)
-		require.EqualValues(t, want.String(), got.String())
-	}
-
-	setup := func() (nibiru *app.NibiruApp, ctx sdk.Context) {
-		testapp.EnsureNibiruPrefix()
-		nibiru, ctx = testapp.NewNibiruTestAppAndContext()
-		expectBalance(sdk.ZeroInt(), t, nibiru, ctx)
-		nibiru.PerpKeeperV2.Collateral.Set(ctx, perptypes.TestingCollateralDenomNUSD)
-		return nibiru, ctx
-	}
-
-	fundModule := func(t *testing.T, amount sdkmath.Int, ctx sdk.Context, nibiru *app.NibiruApp) {
+func (s *TestSuiteAdmin) TestAdmin_WithdrawFromPerpFund() {
+	fundModule := func(amount sdkmath.Int, ctx sdk.Context, nibiru *app.NibiruApp) {
 		coins := sdk.NewCoins(sdk.NewCoin(perptypes.TestingCollateralDenomNUSD, amount))
 		err := testapp.FundModuleAccount(
-			nibiru.BankKeeper, ctx, perptypes.PerpEFModuleAccount,
+			nibiru.BankKeeper, ctx, perptypes.PerpFundModuleAccount,
 			coins,
 		)
-		require.NoError(t, err)
+		s.NoError(err)
 	}
 
 	testCases := []testutil.FunctionTestCase{
 		{
 			Name: "withdraw all",
 			Test: func() {
-				nibiru, ctx := setup()
-				admin := testutil.AccAddress()
+				s.SetupTest()
+				nibiru, ctx := s.nibiru, s.ctx
+				admin := s.addrAdmin
 				amountToFund := sdk.NewInt(420)
-				fundModule(t, amountToFund, ctx, nibiru)
+				fundModule(amountToFund, ctx, nibiru)
 
+				balBefore := nibiru.BankKeeper.GetBalance(ctx, admin, perptypes.TestingCollateralDenomNUSD).Amount
 				amountToWithdraw := amountToFund
-				err := nibiru.PerpKeeperV2.Admin.WithdrawFromInsuranceFund(
-					ctx, amountToWithdraw, admin)
-				require.NoError(t, err)
+				err := nibiru.PerpKeeperV2.Sudo().WithdrawFromPerpFund(
+					ctx, amountToWithdraw, admin, admin, "")
+				s.Require().NoError(err)
 
-				require.EqualValues(t,
+				balAfter := nibiru.BankKeeper.GetBalance(ctx, admin, perptypes.TestingCollateralDenomNUSD).Amount
+				s.EqualValues(
 					amountToFund.String(),
-					nibiru.BankKeeper.GetBalance(ctx, admin, perptypes.TestingCollateralDenomNUSD).Amount.String(),
+					balAfter.Sub(balBefore).String(),
 				)
-				expectBalance(sdk.ZeroInt(), t, nibiru, ctx)
+
+				perpFundAddr := nibiru.AccountKeeper.GetModuleAddress(perptypes.PerpFundModuleAccount)
+				got := nibiru.BankKeeper.GetAllBalances(ctx, perpFundAddr).AmountOf(perptypes.TestingCollateralDenomNUSD)
+				s.EqualValues(sdkmath.ZeroInt().String(), got.String())
 			},
 		},
 		{
 			Name: "withdraw too much - err",
 			Test: func() {
-				nibiru, ctx := setup()
-				admin := testutil.AccAddress()
+				s.SetupTest()
+				nibiru, ctx := s.nibiru, s.ctx
+				admin := s.addrAdmin
 				amountToFund := sdk.NewInt(420)
-				fundModule(t, amountToFund, ctx, nibiru)
+				fundModule(amountToFund, ctx, nibiru)
 
 				amountToWithdraw := amountToFund.MulRaw(5)
-				err := nibiru.PerpKeeperV2.Admin.WithdrawFromInsuranceFund(
-					ctx, amountToWithdraw, admin)
-				require.Error(t, err)
+				err := nibiru.PerpKeeperV2.Sudo().WithdrawFromPerpFund(
+					ctx, amountToWithdraw, admin, admin, "")
+				s.Require().Error(err)
 			},
 		},
 	}
 
-	testutil.RunFunctionTests(t, testCases)
+	for _, tc := range testCases {
+		s.Run(tc.Name, tc.Test)
+	}
 }
 
 func TestCreateMarket(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	amm := *mock.TestAMMDefault()
 	app, ctx := testapp.NewNibiruTestAppAndContext()
-	admin := app.PerpKeeperV2.Admin
+	admin := app.PerpKeeperV2.Sudo()
+
+	adminUser, err := sdk.AccAddressFromBech32(testutil.ADDR_SUDO_ROOT)
+	require.NoError(t, err)
 
 	// Error because of invalid market
 	market := perptypes.DefaultMarket(pair).WithMaintenanceMarginRatio(sdk.NewDec(2))
-	err := admin.CreateMarket(ctx, keeper.ArgsCreateMarket{
+	err = admin.CreateMarket(ctx, keeper.ArgsCreateMarket{
 		Pair:            pair,
 		PriceMultiplier: amm.PriceMultiplier,
 		SqrtDepth:       amm.SqrtDepth,
@@ -160,7 +155,7 @@ func TestCreateMarket(t *testing.T) {
 	require.ErrorContains(t, err, "already exists")
 
 	// Close the market to test that we can create it again but with an increased version
-	err = admin.CloseMarket(ctx, pair)
+	err = admin.CloseMarket(ctx, pair, adminUser)
 	require.NoError(t, err)
 
 	err = admin.CreateMarket(ctx, keeper.ArgsCreateMarket{
@@ -189,6 +184,9 @@ func TestCloseMarket(t *testing.T) {
 	startTime := time.Now()
 	alice := testutil.AccAddress()
 
+	adminAccount, err := sdk.AccAddressFromBech32(testutil.ADDR_SUDO_ROOT)
+	require.NoError(t, err)
+
 	tc := TestCases{
 		TC("market can be disabled").
 			Given(
@@ -200,7 +198,7 @@ func TestCloseMarket(t *testing.T) {
 				),
 			).
 			When(
-				CloseMarket(pairBtcUsdc),
+				CloseMarket(pairBtcUsdc, adminAccount),
 			).
 			Then(
 				MarketShouldBeEqual(
@@ -222,7 +220,7 @@ func TestCloseMarket(t *testing.T) {
 				FundAccount(alice, sdk.NewCoins(sdk.NewCoin(perptypes.TestingCollateralDenomNUSD, sdk.NewInt(1e6)))),
 			).
 			When(
-				CloseMarket(pairBtcUsdc),
+				CloseMarket(pairBtcUsdc, adminAccount),
 			).
 			Then(
 				MarketOrderFails(
@@ -254,9 +252,9 @@ func TestCloseMarket(t *testing.T) {
 				sdk.ZeroDec(),
 			),
 		).When(
-			CloseMarket(pairBtcUsdc),
-			CloseMarketShouldFail(pairBtcUsdc),
-			CloseMarketShouldFail("random:pair"),
+			CloseMarket(pairBtcUsdc, adminAccount),
+			CloseMarketShouldFail(pairBtcUsdc, adminAccount),
+			CloseMarketShouldFail("random:pair", adminAccount),
 		).Then(
 			ClosePositionFails(alice, pairBtcUsdc, perptypes.ErrMarketNotEnabled),
 		),
@@ -279,11 +277,25 @@ func TestCloseMarket(t *testing.T) {
 				sdk.ZeroDec(),
 			),
 		).When(
-			CloseMarket(pairBtcUsdc),
+			CloseMarket(pairBtcUsdc, adminAccount),
 			AMMShouldBeEqual(pairBtcUsdc, AMM_SettlementPriceShoulBeEqual(sdk.MustNewDecFromStr("1.099800000000000000"))),
 		).Then(
 			PartialCloseFails(alice, pairBtcUsdc, sdk.NewDec(5_000), perptypes.ErrMarketNotEnabled),
 		),
+		TC("it fails when a non-admin tries to close a market").
+			Given(
+				CreateCustomMarket(pairBtcUsdc, WithEnabled(true)),
+				SetBlockTime(startTime),
+			).
+			When(
+				CloseMarketShouldFail(pairBtcUsdc, alice),
+			).
+			Then(
+				MarketShouldBeEqual(
+					pairBtcUsdc,
+					Market_EnableShouldBeEqualTo(true),
+				),
+			),
 	}
 
 	NewTestSuite(t).WithTestCases(tc...).Run()
@@ -343,7 +355,7 @@ func TestAdmin_ChangeCollateralDenom(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			bapp, ctx := setup()
-			err := bapp.PerpKeeperV2.Admin.ChangeCollateralDenom(
+			err := bapp.PerpKeeperV2.Sudo().ChangeCollateralDenom(
 				ctx, tc.newDenom, tc.sender,
 			)
 
@@ -412,6 +424,8 @@ func (s *TestSuiteAdmin) HandleMsg(txMsg sdk.Msg) (err error) {
 		_, err = s.perpMsgServer.ShiftSwapInvariant(ctx, msg)
 	case *perptypes.MsgChangeCollateralDenom:
 		_, err = s.perpMsgServer.ChangeCollateralDenom(ctx, msg)
+	case *perptypes.MsgWithdrawFromPerpFund:
+		_, err = s.perpMsgServer.WithdrawFromPerpFund(ctx, msg)
 	default:
 		return fmt.Errorf("unexpected message of type %T encountered", msg)
 	}
@@ -437,6 +451,12 @@ func (s *TestSuiteAdmin) TestCheckPermissions() {
 		},
 		&perptypes.MsgChangeCollateralDenom{
 			Sender: sender, NewDenom: "newdenom",
+		},
+		&perptypes.MsgWithdrawFromPerpFund{
+			Sender: sender,
+			Amount: sdk.NewInt(420),
+			Denom:  "",
+			ToAddr: sender,
 		},
 	} {
 		s.Run(fmt.Sprintf("%T", testCaseMsg), func() {
@@ -468,6 +488,24 @@ func (s *TestSuiteAdmin) DoShiftSwapInvariantTest(pair asset.Pair) error {
 	return err
 }
 
+func (s *TestSuiteAdmin) DoWithdrawFromPerpFundTest(toAddr string) error {
+	wantCoin := sdk.NewInt64Coin("perpfundtest", 25)
+	s.NoError(
+		testapp.FundModuleAccount(
+			s.nibiru.BankKeeper, s.ctx, types.PerpFundModuleAccount,
+			sdk.NewCoins(wantCoin)),
+	)
+	_, err := s.perpMsgServer.WithdrawFromPerpFund(
+		sdk.WrapSDKContext(s.ctx), &perptypes.MsgWithdrawFromPerpFund{
+			Sender: s.addrAdmin.String(),
+			Amount: wantCoin.Amount,
+			Denom:  wantCoin.Denom,
+			ToAddr: toAddr,
+		},
+	)
+	return err
+}
+
 // TestAdmin_DoHappy: Happy path test cases
 func (s *TestSuiteAdmin) TestAdmin_DoHappy() {
 	pair := asset.Registry.Pair(denoms.ATOM, denoms.NUSD)
@@ -475,6 +513,7 @@ func (s *TestSuiteAdmin) TestAdmin_DoHappy() {
 	for _, err := range []error{
 		s.DoShiftPegTest(pair),
 		s.DoShiftSwapInvariantTest(pair),
+		s.DoWithdrawFromPerpFundTest(s.addrAdmin.String()),
 	} {
 		s.NoError(err)
 	}

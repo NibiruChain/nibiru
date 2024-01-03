@@ -357,16 +357,18 @@ func (app *NibiruApp) InitKeepers(
 		appCodec, keys[spottypes.StoreKey], app.GetSubspace(spottypes.ModuleName),
 		app.AccountKeeper, app.BankKeeper, app.DistrKeeper)
 
+	app.SudoKeeper = keeper.NewKeeper(
+		appCodec, keys[sudotypes.StoreKey],
+	)
+
 	app.OracleKeeper = oraclekeeper.NewKeeper(appCodec, keys[oracletypes.StoreKey],
-		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.stakingKeeper, distrtypes.ModuleName,
+		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.stakingKeeper,
+		app.SudoKeeper,
+		distrtypes.ModuleName,
 	)
 
 	app.EpochsKeeper = epochskeeper.NewKeeper(
 		appCodec, keys[epochstypes.StoreKey],
-	)
-
-	app.SudoKeeper = keeper.NewKeeper(
-		appCodec, keys[sudotypes.StoreKey],
 	)
 
 	app.PerpKeeperV2 = perpkeeper.NewKeeper(
@@ -805,7 +807,7 @@ func ModuleAccPerms() map[string][]string {
 
 		perptypes.ModuleName:                 {},
 		perptypes.VaultModuleAccount:         {},
-		perptypes.PerpEFModuleAccount:        {},
+		perptypes.PerpFundModuleAccount:      {},
 		perptypes.FeePoolModuleAccount:       {},
 		perptypes.DNRAllocationModuleAccount: {},
 		perptypes.DNREscrowModuleAccount:     {},

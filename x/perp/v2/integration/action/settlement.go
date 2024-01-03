@@ -13,11 +13,12 @@ import (
 
 // closeMarket
 type closeMarket struct {
-	pair asset.Pair
+	pair   asset.Pair
+	sender sdk.AccAddress
 }
 
 func (c closeMarket) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
-	err := app.PerpKeeperV2.Admin.CloseMarket(ctx, c.pair)
+	err := app.PerpKeeperV2.Sudo().CloseMarket(ctx, c.pair, c.sender)
 	if err != nil {
 		return ctx, err
 	}
@@ -25,17 +26,18 @@ func (c closeMarket) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error
 	return ctx, nil
 }
 
-func CloseMarket(pair asset.Pair) action.Action {
-	return closeMarket{pair: pair}
+func CloseMarket(pair asset.Pair, adminAccount sdk.AccAddress) action.Action {
+	return closeMarket{pair: pair, sender: adminAccount}
 }
 
 // closeMarketShouldFail
 type closeMarketShouldFail struct {
-	pair asset.Pair
+	pair   asset.Pair
+	sender sdk.AccAddress
 }
 
 func (c closeMarketShouldFail) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
-	err := app.PerpKeeperV2.Admin.CloseMarket(ctx, c.pair)
+	err := app.PerpKeeperV2.Sudo().CloseMarket(ctx, c.pair, c.sender)
 	if err == nil {
 		return ctx, err
 	}
@@ -43,8 +45,8 @@ func (c closeMarketShouldFail) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Cont
 	return ctx, nil
 }
 
-func CloseMarketShouldFail(pair asset.Pair) action.Action {
-	return closeMarketShouldFail{pair: pair}
+func CloseMarketShouldFail(pair asset.Pair, adminAccount sdk.AccAddress) action.Action {
+	return closeMarketShouldFail{pair: pair, sender: adminAccount}
 }
 
 // settlePosition

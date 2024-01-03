@@ -246,7 +246,7 @@ func TestMsgServerDonateToPerpEf(t *testing.T) {
 			).
 			Then(
 				BalanceEqual(alice, types.TestingCollateralDenomNUSD, sdk.NewInt(50)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(50)),
+				ModuleBalanceEqual(types.PerpFundModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(50)),
 			),
 	}
 
@@ -276,7 +276,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(750)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(125)),
+				ModuleBalanceEqual(types.PerpFundModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(125)),
 				BalanceEqual(liquidator, types.TestingCollateralDenomNUSD, sdk.NewInt(125)),
 				PositionShouldBeEqual(alice, pairBtcUsdc,
 					Position_PositionShouldBeEqualTo(
@@ -309,7 +309,7 @@ func TestMsgServerMultiLiquidate(t *testing.T) {
 			).
 			Then(
 				ModuleBalanceEqual(types.VaultModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(600)),
-				ModuleBalanceEqual(types.PerpEFModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(150)),
+				ModuleBalanceEqual(types.PerpFundModuleAccount, types.TestingCollateralDenomNUSD, sdk.NewInt(150)),
 				BalanceEqual(liquidator, types.TestingCollateralDenomNUSD, sdk.NewInt(250)),
 				PositionShouldNotExist(alice, pairBtcUsdc, 1),
 			),
@@ -408,6 +408,9 @@ func TestMsgServerSettlePosition(t *testing.T) {
 	pair := asset.Registry.Pair(denoms.BTC, denoms.NUSD)
 	alice := testutil.AccAddress()
 
+	adminUser, err := sdk.AccAddressFromBech32(testutil.ADDR_SUDO_ROOT)
+	require.NoError(t, err)
+
 	tests := TestCases{
 		TC("Settleposition").
 			Given(
@@ -415,7 +418,7 @@ func TestMsgServerSettlePosition(t *testing.T) {
 				FundAccount(alice, sdk.NewCoins(sdk.NewInt64Coin(types.TestingCollateralDenomNUSD, 100))),
 				MarketOrder(alice, pair, types.Direction_LONG, sdk.OneInt(), sdk.OneDec(), sdk.ZeroDec()),
 				MoveToNextBlock(),
-				CloseMarket(pair),
+				CloseMarket(pair, adminUser),
 			).
 			When(
 				MsgServerSettlePosition(alice, pair, 1),
