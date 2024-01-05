@@ -43,8 +43,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cast"
-
-	wasmbinding "github.com/NibiruChain/nibiru/wasmbinding"
 )
 
 const (
@@ -114,15 +112,6 @@ func GetWasmOpts(nibiru NibiruApp, appOpts servertypes.AppOptions) []wasmkeeper.
 	if cast.ToBool(appOpts.Get("telemetry.enabled")) {
 		wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
 	}
-
-	// Add the bindings to the app's set of []wasmkeeper.Option.
-	wasmOpts = append(wasmOpts, wasmbinding.NibiruWasmOptions(
-		nibiru.GRPCQueryRouter(),
-		nibiru.appCodec,
-		nibiru.PerpKeeperV2,
-		nibiru.SudoKeeper,
-		nibiru.OracleKeeper,
-	)...)
 
 	return wasmOpts
 }
