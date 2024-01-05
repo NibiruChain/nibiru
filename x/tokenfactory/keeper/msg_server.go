@@ -22,7 +22,7 @@ func (k Keeper) CreateDenom(
 		return resp, errNilMsg
 	}
 	if err := txMsg.ValidateBasic(); err != nil {
-		return resp, err // ValidateBasic needs to be guaranteed for Wasm bindings
+		return resp, err
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -47,7 +47,7 @@ func (k Keeper) ChangeAdmin(
 		return resp, errNilMsg
 	}
 	if err := txMsg.ValidateBasic(); err != nil {
-		return resp, err // ValidateBasic needs to be guaranteed for Wasm bindings
+		return resp, err
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -81,7 +81,7 @@ func (k Keeper) UpdateModuleParams(
 		return resp, errNilMsg
 	}
 	if err := txMsg.ValidateBasic(); err != nil {
-		return resp, err // ValidateBasic needs to be guaranteed for Wasm bindings
+		return resp, err
 	}
 
 	if k.authority != txMsg.Authority {
@@ -105,7 +105,7 @@ func (k Keeper) Mint(
 		return resp, errNilMsg
 	}
 	if err := txMsg.ValidateBasic(); err != nil {
-		return resp, err // ValidateBasic needs to be guaranteed for Wasm bindings
+		return resp, err
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -178,7 +178,7 @@ func (k Keeper) Burn(
 		return resp, errNilMsg
 	}
 	if err := txMsg.ValidateBasic(); err != nil {
-		return resp, err // ValidateBasic needs to be guaranteed for Wasm bindings
+		return resp, err
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -248,7 +248,7 @@ func (k Keeper) SetDenomMetadata(
 		return resp, errNilMsg
 	}
 	if err := txMsg.ValidateBasic(); err != nil {
-		return resp, err // ValidateBasic needs to be guaranteed for Wasm bindings
+		return resp, err
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
