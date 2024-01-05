@@ -51,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1713](https://github.com/NibiruChain/nibiru/pull/1713) - chore(build-release):  use new rocksdb libraries and link required libs
 * [#1715](https://github.com/NibiruChain/nibiru/pull/1715) - fix(build): revert! to working build + cherry-picks
 * [#1731](https://github.com/NibiruChain/nibiru/pull/1731) - feat(cli): add cli command to decode stargate base64 messages
+* [#1766](https://github.com/NibiruChain/nibiru/pull/1766) - feat: remove wasmbindings module
 
 #### Dapp modules: perp, spot, etc
 
