@@ -3,6 +3,7 @@ package types
 import (
 	"math/big"
 
+	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -36,6 +37,13 @@ func (amm AMM) Validate() error {
 	if !amm.SqrtDepth.Sub(computedSqrtDepth).Abs().LTE(sdk.OneDec()) {
 		return ErrLiquidityDepth.Wrap(
 			"computed sqrt and current sqrt are mismatched. pool: " + amm.String())
+	}
+
+	// Short positions borrow base asset, so if the base reserve is below the
+	// quote reserve swapped to base, then the shorts can't close positions.
+	_, err = amm.SwapBaseAsset(amm.TotalShort, Direction_LONG)
+	if err != nil {
+		return sdkerrors.Wrapf(ErrAmmBaseBorrowedTooHigh, "Base amount error, short exceed total base supply: %s", err.Error())
 	}
 
 	return nil
@@ -73,7 +81,7 @@ func (amm AMM) ComputeSettlementPrice() (sdk.Dec, AMM, error) {
 	return price, amm, err
 }
 
-// QuoteReserveToAsset converts quote reserves to assets
+// QuoteReserveToAsset converts quote reserves to assets\
 func (amm AMM) QuoteReserveToAsset(quoteReserve sdk.Dec) sdk.Dec {
 	return QuoteReserveToAsset(quoteReserve, amm.PriceMultiplier)
 }
@@ -413,14 +421,32 @@ func (amm *AMM) UpdateSwapInvariant(newSwapInvariant sdk.Dec) (err error) {
 	// k = x * y
 	// newK = (cx) * (cy) = c^2 xy = c^2 k
 	// newPrice = (c y) / (c x) = y / x = price | unchanged price
-	newSqrtDepth := common.MustSqrtDec(newSwapInvariant)
+	newSqrtDepth, err := common.SqrtDec(newSwapInvariant)
+	if err != nil {
+		return err
+	}
+
 	multiplier := newSqrtDepth.Quo(amm.SqrtDepth)
+	updatedBaseReserve := amm.BaseReserve.Mul(multiplier)
+	updatedQuoteReserve := amm.QuoteReserve.Mul(multiplier)
+
+	newAmm := AMM{
+		BaseReserve:     updatedBaseReserve,
+		QuoteReserve:    updatedQuoteReserve,
+		PriceMultiplier: amm.PriceMultiplier,
+		SqrtDepth:       newSqrtDepth,
+		TotalLong:       amm.TotalLong,
+		TotalShort:      amm.TotalShort,
+	}
+	if err = newAmm.Validate(); err != nil {
+		return err
+	}
 
 	// Change the swap invariant while holding price constant.
 	// Multiplying by the same factor to both of the reserves won't affect price.
 	amm.SqrtDepth = newSqrtDepth
-	amm.BaseReserve = amm.BaseReserve.Mul(multiplier)
-	amm.QuoteReserve = amm.QuoteReserve.Mul(multiplier)
+	amm.BaseReserve = updatedBaseReserve
+	amm.QuoteReserve = updatedQuoteReserve
 
-	return amm.Validate() // might be useless
+	return nil
 }

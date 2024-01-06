@@ -36,6 +36,8 @@ func TestGenesisValidate(t *testing.T) {
 		QuoteReserve:    sdk.OneDec(),
 		PriceMultiplier: sdk.OneDec(),
 		SqrtDepth:       sdk.OneDec(),
+		TotalLong:       sdk.ZeroDec(),
+		TotalShort:      sdk.ZeroDec(),
 	}
 	validPositions := types.GenesisPosition{
 		Pair:    pair,
@@ -70,6 +72,8 @@ func TestGenesisValidate(t *testing.T) {
 		QuoteReserve:    sdk.OneDec(),
 		PriceMultiplier: sdk.OneDec(),
 		SqrtDepth:       sdk.OneDec(),
+		TotalLong:       sdk.ZeroDec(),
+		TotalShort:      sdk.ZeroDec(),
 	}
 	invalidPositions := types.GenesisPosition{
 		Pair:    pair,

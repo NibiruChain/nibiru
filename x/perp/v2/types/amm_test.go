@@ -367,6 +367,8 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				QuoteReserve:    sdk.NewDec(1e6),
 				SqrtDepth:       sdk.NewDec(1e6),
 				PriceMultiplier: sdk.OneDec(),
+				TotalLong:       sdk.ZeroDec(),
+				TotalShort:      sdk.ZeroDec(),
 			},
 			newSwapInvariant:     sdk.NewDec(1e12),
 			expectedBaseReserve:  sdk.NewDec(1e6),
@@ -380,6 +382,8 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				QuoteReserve:    sdk.NewDec(1e6),
 				SqrtDepth:       sdk.NewDec(1e6),
 				PriceMultiplier: sdk.OneDec(),
+				TotalLong:       sdk.ZeroDec(),
+				TotalShort:      sdk.ZeroDec(),
 			},
 			newSwapInvariant:     sdk.NewDec(1e14),
 			expectedBaseReserve:  sdk.NewDec(1e7),
@@ -393,6 +397,8 @@ func TestUpdateSwapInvariant(t *testing.T) {
 				QuoteReserve:    sdk.NewDec(1e6),
 				SqrtDepth:       sdk.NewDec(1e6),
 				PriceMultiplier: sdk.OneDec(),
+				TotalLong:       sdk.ZeroDec(),
+				TotalShort:      sdk.ZeroDec(),
 			},
 			newSwapInvariant:     sdk.NewDec(1e10),
 			expectedBaseReserve:  sdk.NewDec(1e5),
@@ -766,6 +772,34 @@ func TestValidateAMM(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestValidateAMMShortVsQuote(t *testing.T) {
+	amm := types.AMM{
+		BaseReserve:     sdk.OneDec(),
+		QuoteReserve:    sdk.OneDec(),
+		PriceMultiplier: sdk.OneDec(),
+		SqrtDepth:       sdk.OneDec(),
+		TotalLong:       sdk.ZeroDec(),
+		TotalShort:      sdk.ZeroDec(),
+	}
+
+	err := amm.Validate()
+	require.NoError(t, err)
+
+	quoteAssetDelta, err := amm.SwapBaseAsset(sdk.NewDec(2), types.Direction_SHORT)
+	require.NoError(t, err)
+	assert.Equal(t, sdk.MustNewDecFromStr("0.666666666666666667"), quoteAssetDelta)
+
+	previousAmm := amm
+
+	err = amm.UpdateSwapInvariant(sdk.MustNewDecFromStr("0.01"))
+	require.ErrorContains(t, err, "Base amount error, short exceed total base supply")
+
+	err = amm.UpdateSwapInvariant(sdk.MustNewDecFromStr("-1"))
+	require.ErrorContains(t, err, "square root of negative number")
+
+	require.Equal(t, amm, previousAmm)
 }
 
 func TestPositionNotionalFail(t *testing.T) {

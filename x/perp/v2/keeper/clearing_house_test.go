@@ -51,14 +51,7 @@ func TestMarketOrder(t *testing.T) {
 				MarketOrder(alice, pairBtcNusd, types.Direction_SHORT, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
 				MarketOrder(bob, pairBtcNusd, types.Direction_LONG, sdk.NewInt(10_000), sdk.OneDec(), sdk.ZeroDec()),
 
-				ShiftSwapInvariant(pairBtcNusd, sdk.NewInt(1)),
-			).
-			When(
-				PartialCloseFails(alice, pairBtcNusd, sdk.NewDec(5_000), types.ErrAmmNonpositiveReserves),
-			).
-			Then(
-				ClosePosition(bob, pairBtcNusd),
-				PartialClose(alice, pairBtcNusd, sdk.NewDec(5_000)),
+				ShiftSwapInvariantFail(pairBtcNusd, sdk.NewInt(1)),
 			),
 
 		TC("new long position").
