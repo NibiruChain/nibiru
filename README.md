@@ -8,16 +8,17 @@
 
 **Nibiru Chain** is a breakthrough smart contract platform providing superior throughput, reduced latency, and improved security, all driven by Web Assembly (Wasm) smart contracts.
 
-- [⚙️ — Documentation](#%EF%B8%8F--documentation)
-- [💬 — Community](#--community)
-- [🧱 — Components of Nibiru](#--components-of-nibiru)
-- [⛓️ — Building: `make` commands](#%EF%B8%8F--building-make-commands)
-  - [Nibid CLI](#nibid-cli)
-  - [Running a Local Node](#running-a-local-node)
-  - [Generate the protobufs](#generate-the-protobufs)
-  - [Linter](#linter)
-  - [Multiple Nodes](#multiple-nodes)
-- [License](#license)
+- [Nibiru Chain](#nibiru-chain)
+  - [⚙️ — Documentation](#️--documentation)
+  - [💬 — Community](#--community)
+  - [🧱 — Components of Nibiru](#--components-of-nibiru)
+  - [⛓️ — Building: `make` commands](#️--building-make-commands)
+    - [Nibid CLI](#nibid-cli)
+    - [Running a Local Node](#running-a-local-node)
+    - [Generate the protobufs](#generate-the-protobufs)
+    - [Linter](#linter)
+    - [Multiple Nodes](#multiple-nodes)
+  - [License](#license)
 
 ## ⚙️ — Documentation
 
@@ -66,7 +67,6 @@ If you have questions or concerns, feel free to connect with a developer or comm
 [code-x-oracle]: https://github.com/NibiruChain/nibiru/tree/main/x/oracle
 [code-x-perp]: https://github.com/NibiruChain/nibiru/tree/main/x/perp
 [code-x-spot]: https://github.com/NibiruChain/nibiru/tree/main/x/spot
-[code-x-wasm]: https://github.com/NibiruChain/nibiru/tree/main/wasmbinding
 
 Nibiru is built with the [Cosmos-SDK][cosmos-sdk-repo] on [Tendermint Core](https://tendermint.com/core/) consensus and communicates with other blockchain chains using the [Inter-Blockchain Communication (IBC)](https://github.com/cosmos/ibc) protocol.
 

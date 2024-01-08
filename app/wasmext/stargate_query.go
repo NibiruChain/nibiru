@@ -1,4 +1,4 @@
-package wasmbinding
+package wasmext
 
 import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
@@ -140,9 +140,5 @@ func WasmAcceptedStargateQueries() wasmkeeper.AcceptedStargateQueries {
 		"/nibiru.devgas.v1.Query/FeeShare":              new(devgas.QueryFeeShareResponse),
 		"/nibiru.devgas.v1.Query/Params":                new(devgas.QueryParamsResponse),
 		"/nibiru.devgas.v1.Query/FeeSharesByWithdrawer": new(devgas.QueryFeeSharesByWithdrawerResponse),
-
-		// TODO: for post v1
-		// nibiru.perp
-		// nibiru.spot
 	}
 }
