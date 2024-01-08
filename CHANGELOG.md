@@ -87,10 +87,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1735](https://github.com/NibiruChain/nibiru/pull/1735) - test(sim): fix simulation tests
 * [#1754](https://github.com/NibiruChain/nibiru/pull/1754) - refactor(decode-base64): clean code improvements and fn docs
 * [#1736](https://github.com/NibiruChain/nibiru/pull/1736) - test(sim): add sim genesis state for all cusom modules
+* [#1764](https://github.com/NibiruChain/nibiru/pull/1764) - fix(perp): make updateswapinvariant aware of total short supply to avoid panics
 
 ### Dependencies
 - Bump `github.com/cometbft/cometbft-db` from 0.9.0 to 0.9.1 ([#1760](https://github.com/NibiruChain/nibiru/pull/1760))
 - Bump `google.golang.org/grpc` from 1.60.0 to 1.60.1 ([#1763](https://github.com/NibiruChain/nibiru/pull/1763))
+- Bump `github.com/grpc-ecosystem/grpc-gateway/v2` from 2.18.1 to 2.19.0 ([#1767](https://github.com/NibiruChain/nibiru/pull/1767))
 
 * Bump `github.com/prometheus/client_golang` from 1.17.0 to 1.18.0 ([#1750](https://github.com/NibiruChain/nibiru/pull/1750))
 * Bump `google.golang.org/protobuf` from 1.31.0 to 1.32.0 ([#1756](https://github.com/NibiruChain/nibiru/pull/1756))
