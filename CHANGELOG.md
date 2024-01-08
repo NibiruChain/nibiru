@@ -50,33 +50,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1712](https://github.com/NibiruChain/nibiru/pull/1712) - refactor(inflation): turn inflation off by default
 * [#1713](https://github.com/NibiruChain/nibiru/pull/1713) - chore(build-release):  use new rocksdb libraries and link required libs
 * [#1715](https://github.com/NibiruChain/nibiru/pull/1715) - fix(build): revert! to working build + cherry-picks
-* [#1731](https://github.com/NibiruChain/nibiru/pull/1731) - feat(cli): add cli command to decode stargate base64 messages
-* [#1766](https://github.com/NibiruChain/nibiru/pull/1766) - feat: remove wasmbindings module
+* [#1766](https://github.com/NibiruChain/nibiru/pull/1766) - refactor(app-wasmext)!: remove wasmbinding `CosmosMsg::Custom` bindings.
 
 #### Dapp modules: perp, spot, etc
 
-* [#1687](https://github.com/NibiruChain/nibiru/pull/1687) - chore(wasmbinding): delete CustomQuerier since we have QueryRequest::Stargate now
-* [#1686](https://github.com/NibiruChain/nibiru/pull/1686) - test(perp): add more tests for perp module msg server for DnR
-* [#1683](https://github.com/NibiruChain/nibiru/pull/1683) - feat(perp): Add `StartDnREpoch` to `AfterEpochEnd` hook
-* [#1680](https://github.com/NibiruChain/nibiru/pull/1680) - feat(perp): MsgShiftPegMultiplier, MsgShiftSwapInvariant.
-* [#1677](https://github.com/NibiruChain/nibiru/pull/1677) - fix(perp): make Gen_market set initial perp versions
-* [#1669](https://github.com/NibiruChain/nibiru/pull/1669) - feat(perp): add query to get collateral metadata
-* [#1663](https://github.com/NibiruChain/nibiru/pull/1663) - feat(perp): Add volume based rebates
-* [#1656](https://github.com/NibiruChain/nibiru/pull/1656) - feat(perp): Make the collateral denom a stateful collections.Item
-* [#1632](https://github.com/NibiruChain/nibiru/pull/1632) - feat(perp): Add settle position transaction
 * [#1573](https://github.com/NibiruChain/nibiru/pull/1573) - feat(perp): Close markets and compute settlement price
+* [#1632](https://github.com/NibiruChain/nibiru/pull/1632) - feat(perp): Add settle position transaction
+* [#1656](https://github.com/NibiruChain/nibiru/pull/1656) - feat(perp): Make the collateral denom a stateful collections.Item
+* [#1663](https://github.com/NibiruChain/nibiru/pull/1663) - feat(perp): Add volume based rebates
+* [#1669](https://github.com/NibiruChain/nibiru/pull/1669) - feat(perp): add query to get collateral metadata
+* [#1677](https://github.com/NibiruChain/nibiru/pull/1677) - fix(perp): make Gen_market set initial perp versions
+* [#1680](https://github.com/NibiruChain/nibiru/pull/1680) - feat(perp): MsgShiftPegMultiplier, MsgShiftSwapInvariant.
+* [#1683](https://github.com/NibiruChain/nibiru/pull/1683) - feat(perp): Add `StartDnREpoch` to `AfterEpochEnd` hook
+* [#1686](https://github.com/NibiruChain/nibiru/pull/1686) - test(perp): add more tests for perp module msg server for DnR
+* [#1687](https://github.com/NibiruChain/nibiru/pull/1687) - chore(wasmbinding): delete CustomQuerier since we have QueryRequest::Stargate now
 * [#1705](https://github.com/NibiruChain/nibiru/pull/1705) - feat(perp): Add oracle pair to market object
 * [#1718](https://github.com/NibiruChain/nibiru/pull/1718) - fix: fees does not require additional funds
 * [#1734](https://github.com/NibiruChain/nibiru/pull/1734) - feat(perp): MsgDonateToPerpFund sudo call as part of #1642
+* [#1749](https://github.com/NibiruChain/nibiru/pull/1749) - feat(perp): move close market from Wasm Binding to MsgCloseMarket
 * [#1752](https://github.com/NibiruChain/nibiru/pull/1752) - feat(oracle): MsgEditOracleParams sudo tx msg as part of #1642
 * [#1755](https://github.com/NibiruChain/nibiru/pull/1755) - feat(oracle): Add more events on validator's performance
-* [#1749](https://github.com/NibiruChain/nibiru/pull/1749) - feat(perp): move close market from Wasm Binding to MsgCloseMarket
+* [#1764](https://github.com/NibiruChain/nibiru/pull/1764) - fix(perp): make updateswapinvariant aware of total short supply to avoid panics
 
 
 ### Non-breaking/Compatible Improvements
 
-* [#1690](https://github.com/NibiruChain/nibiru/pull/1690) - docs(CHANGELOG.md): Correct the change log, providing clarity on what's released.
 * [#1679](https://github.com/NibiruChain/nibiru/pull/1679) - test(perp): add more tests for perp module msg server
+* [#1690](https://github.com/NibiruChain/nibiru/pull/1690) - docs(CHANGELOG.md): Correct the change log, providing clarity on what's released.
 * [#1695](https://github.com/NibiruChain/nibiru/pull/1695) - feat(inflation): add events for inflation distribution
 * [#1695](https://github.com/NibiruChain/nibiru/pull/1695) - fix(sudo): Make blank sudoers root invalid at genesis time.
 * [#1710](https://github.com/NibiruChain/nibiru/pull/1710) - refactor(perp): Clean and organize module errors for x/perp
@@ -84,10 +84,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1719](https://github.com/NibiruChain/nibiru/pull/1719) - refactor(test): add is not mandatory interface to action
 * [#1723](https://github.com/NibiruChain/nibiru/pull/1723) - ci(e2e-wasm.yml): rm unused workflow
 * [#1728](https://github.com/NibiruChain/nibiru/pull/1728) - test(devgas-cli): CLI tests for devgas txs
+* [#1731](https://github.com/NibiruChain/nibiru/pull/1731) - feat(cli): add cli command to decode stargate base64 messages
 * [#1735](https://github.com/NibiruChain/nibiru/pull/1735) - test(sim): fix simulation tests
-* [#1754](https://github.com/NibiruChain/nibiru/pull/1754) - refactor(decode-base64): clean code improvements and fn docs
 * [#1736](https://github.com/NibiruChain/nibiru/pull/1736) - test(sim): add sim genesis state for all cusom modules
-* [#1764](https://github.com/NibiruChain/nibiru/pull/1764) - fix(perp): make updateswapinvariant aware of total short supply to avoid panics
+* [#1754](https://github.com/NibiruChain/nibiru/pull/1754) - refactor(decode-base64): clean code improvements and fn docs
 
 ### Dependencies
 - Bump `github.com/cometbft/cometbft-db` from 0.9.0 to 0.9.1 ([#1760](https://github.com/NibiruChain/nibiru/pull/1760))
