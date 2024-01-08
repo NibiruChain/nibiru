@@ -10,6 +10,9 @@ import (
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+
+	"github.com/NibiruChain/nibiru/app/wasmext"
+
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
@@ -43,8 +46,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cast"
-
-	wasmbinding "github.com/NibiruChain/nibiru/wasmbinding"
 )
 
 const (
@@ -115,16 +116,10 @@ func GetWasmOpts(nibiru NibiruApp, appOpts servertypes.AppOptions) []wasmkeeper.
 		wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
 	}
 
-	// Add the bindings to the app's set of []wasmkeeper.Option.
-	wasmOpts = append(wasmOpts, wasmbinding.NibiruWasmOptions(
+	return append(wasmOpts, wasmext.NibiruWasmOptions(
 		nibiru.GRPCQueryRouter(),
 		nibiru.appCodec,
-		nibiru.PerpKeeperV2,
-		nibiru.SudoKeeper,
-		nibiru.OracleKeeper,
 	)...)
-
-	return wasmOpts
 }
 
 // NewNibiruApp returns a reference to an initialized NibiruApp.

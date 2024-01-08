@@ -460,7 +460,6 @@ func (app *NibiruApp) InitKeepers(
 		govModuleAddr,
 	)
 
-	// TokenFactory has wasm bindings
 	app.TokenFactoryKeeper = tokenfactorykeeper.NewKeeper(
 		keys[tokenfactorytypes.StoreKey],
 		appCodec,

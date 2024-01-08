@@ -1,4 +1,4 @@
-package wasmbinding_test
+package wasmext_test
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 
-	"github.com/NibiruChain/nibiru/wasmbinding"
+	wasmbinding "github.com/NibiruChain/nibiru/app/wasmext"
 
 	"github.com/NibiruChain/nibiru/x/common/set"
 

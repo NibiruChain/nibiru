@@ -1,10 +1,9 @@
-package test
+package wasm_cli_test
 
 import (
 	"encoding/hex"
 	"fmt"
 	"testing"
-	"time"
 
 	wasmcli "github.com/CosmWasm/wasmd/x/wasm/client/cli"
 
@@ -15,22 +14,19 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/app"
-	"github.com/NibiruChain/nibiru/x/common"
-	"github.com/NibiruChain/nibiru/x/common/asset"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil"
 	testutilcli "github.com/NibiruChain/nibiru/x/common/testutil/cli"
 	"github.com/NibiruChain/nibiru/x/common/testutil/genesis"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
-	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
-	perpv2types "github.com/NibiruChain/nibiru/x/perp/v2/types"
 )
 
 // commonArgs is args for CLI test commands.
 var commonArgs = []string{
 	fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 	fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
-	fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(10000000))).String()),
+	fmt.Sprintf("--%s=%s", flags.FlagFees,
+		sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdk.NewInt(10_000_000))).String()),
 }
 
 type IntegrationTestSuite struct {
@@ -46,38 +42,6 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	encodingConfig := app.MakeEncodingConfig()
 	genesisState := genesis.NewTestGenesisState(encodingConfig)
-	perpv2Gen := perpv2types.DefaultGenesis()
-	perpv2Gen.Markets = []perpv2types.Market{
-		{
-			Pair:                            asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-			Enabled:                         true,
-			MaintenanceMarginRatio:          sdk.MustNewDecFromStr("0.0625"),
-			MaxLeverage:                     sdk.MustNewDecFromStr("15"),
-			LatestCumulativePremiumFraction: sdk.ZeroDec(),
-			ExchangeFeeRatio:                sdk.MustNewDecFromStr("0.0005"),
-			EcosystemFundFeeRatio:           sdk.MustNewDecFromStr("0.0005"),
-			LiquidationFeeRatio:             sdk.MustNewDecFromStr("0.001"),
-			PartialLiquidationRatio:         sdk.MustNewDecFromStr("0.5"),
-			FundingRateEpochId:              epochstypes.ThirtyMinuteEpochID,
-			MaxFundingRate:                  sdk.OneDec(),
-			TwapLookbackWindow:              30 * time.Minute,
-			PrepaidBadDebt:                  sdk.NewCoin(denoms.NUSD, sdk.ZeroInt()),
-			OraclePair:                      asset.Registry.Pair(denoms.ETH, denoms.USD),
-		},
-	}
-	perpv2Gen.Amms = []perpv2types.AMM{
-		{
-			Pair:            asset.Registry.Pair(denoms.ETH, denoms.NUSD),
-			BaseReserve:     sdk.NewDec(10 * common.TO_MICRO),
-			QuoteReserve:    sdk.NewDec(10 * common.TO_MICRO),
-			SqrtDepth:       common.MustSqrtDec(sdk.NewDec(10 * 10 * common.TO_MICRO * common.TO_MICRO)),
-			PriceMultiplier: sdk.NewDec(6000),
-			TotalLong:       sdk.ZeroDec(),
-			TotalShort:      sdk.ZeroDec(),
-		},
-	}
-	genesisState[perpv2types.ModuleName] = encodingConfig.Marshaler.MustMarshalJSON(perpv2Gen)
-
 	s.cfg = testutilcli.BuildNetworkConfig(genesisState)
 	network, err := testutilcli.New(s.T(), s.T().TempDir(), s.cfg)
 	s.Require().NoError(err)
