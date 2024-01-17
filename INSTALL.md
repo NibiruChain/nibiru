@@ -106,7 +106,7 @@ nibid query perp --help
 ```
 
 
-## Troubleshotting
+## Troubleshooting
 
 ### Error when running `make install` on MacOS
 

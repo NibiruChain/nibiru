@@ -10,7 +10,7 @@ console_log_text_color() {
 }
 
 if [ console_log_text_color ]; then
-  echo "succesfully toggled console coloring"
+  echo "successfully toggled console coloring"
 else
   # For Ubuntu and Debian. MacOS has tput by default.
   apt-get install libncurses5-dbg -y
