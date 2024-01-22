@@ -51,7 +51,7 @@ liquidity pools that are dictated by an AMM for swaps.
 
 When a pool is created, a fixed amount of 100 LP shares is minted and sent to the pool creator. The base pool share denom is in the format of nibiru/pool/{poolId} and is displayed in the format of NIBIRU-POOL-{poolId} to the user. One NIBIRU-POOL-{poolId} token is equivalent to 10^18 nibiru/pool/{poolId} tokens.
 
-Pool assets are sorted in alphabetical order by defualt.
+Pool assets are sorted in alphabetical order by default.
 
 ### Joining Pool
 
@@ -69,7 +69,7 @@ For example, assume there is a 50/50 pool with 50 `tokenA` and 150 `tokenB` and 
 
 During the process of swapping a specific asset, the token user is putting into the pool is justified as `tokenIn`, while the token that would be omitted after the swap is justified as `tokenOut`  throughout the module.
 
-Given a tokenIn, the following calculations are done to calculate how much tokens are to be swapped and ommitted from the pool.
+Given a tokenIn, the following calculations are done to calculate how much tokens are to be swapped and omitted from the pool.
 
 - `tokenBalanceOut * [ 1 - { tokenBalanceIn / (tokenBalanceIn+(1-swapFee) * tokenAmountIn)}^(tokenWeightIn/tokenWeightOut)]`
 
@@ -90,7 +90,7 @@ where spotPrice is
 
 ## Next Pool Number
 
-The spot module stores a monotonically increasing counter denoting the next available integer pool number. Pool numbers start at 1 and increase every time a pool is created. The `Keeper.GetNextPoolNumberAndIncrement` function always fetches the next availble pool number and increments the stored value by 1.
+The spot module stores a monotonically increasing counter denoting the next available integer pool number. Pool numbers start at 1 and increase every time a pool is created. The `Keeper.GetNextPoolNumberAndIncrement` function always fetches the next available pool number and increments the stored value by 1.
 
 ## Pools
 
