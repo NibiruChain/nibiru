@@ -9,7 +9,31 @@ import (
 	"github.com/NibiruChain/nibiru/x/inflation/types"
 )
 
-var _ types.QueryServer = Keeper{}
+// querier is used as Keeper will have duplicate methods if used directly, and gRPC names take precedence over q
+type querier struct {
+	Keeper
+}
+
+// NewQuerier returns an implementation of the oracle QueryServer interface
+// for the provided Keeper.
+func NewQuerier(keeper Keeper) types.QueryServer {
+	return &querier{Keeper: keeper}
+}
+
+var _ types.QueryServer = querier{}
+
+// Params queries params of distribution module
+func (q querier) Params(c context.Context, _ *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	var params types.Params
+
+	params, err := q.Keeper.Params.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryParamsResponse{Params: params}, nil
+}
 
 // Period returns the current period of the inflation module.
 func (k Keeper) Period(
@@ -65,14 +89,4 @@ func (k Keeper) CirculatingSupply(
 	coin := sdk.NewDecCoinFromDec(denoms.NIBI, circulatingToDec)
 
 	return &types.QueryCirculatingSupplyResponse{CirculatingSupply: coin}, nil
-}
-
-// Params returns params of the mint module.
-func (k Keeper) Params(
-	c context.Context,
-	_ *types.QueryParamsRequest,
-) (*types.QueryParamsResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
-	params := k.GetParams(ctx)
-	return &types.QueryParamsResponse{Params: params}, nil
 }

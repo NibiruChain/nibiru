@@ -95,9 +95,7 @@ func (s *QueryServerSuite) TestQueryCirculatingSupply() {
 
 func (s *QueryServerSuite) TestQueryParams() {
 	nibiruApp, ctx := s.nibiruApp, s.ctx
-	resp, err := nibiruApp.InflationKeeper.Params(
-		sdk.WrapSDKContext(ctx), &inflationtypes.QueryParamsRequest{},
-	)
+	resp, err := nibiruApp.InflationKeeper.Params.Get(ctx)
 	s.NoError(err)
 	s.NotNil(resp)
 }

@@ -21,7 +21,7 @@ func InitGenesis(
 	}
 
 	// Set genesis state
-	k.SetParams(ctx, data.Params)
+	k.UpdateParams(ctx, data.Params)
 
 	period := data.Period
 	k.CurrentPeriod.Set(ctx, period)
