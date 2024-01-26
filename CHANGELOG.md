@@ -91,6 +91,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1735](https://github.com/NibiruChain/nibiru/pull/1735) - test(sim): fix simulation tests
 - [#1736](https://github.com/NibiruChain/nibiru/pull/1736) - test(sim): add sim genesis state for all cusom modules
 - [#1754](https://github.com/NibiruChain/nibiru/pull/1754) - refactor(decode-base64): clean code improvements and fn docs
+- [#1778](https://github.com/NibiruChain/nibiru/pull/1778) - chore: bump librocksdb to v8.9.1
 
 ### Dependencies
 
