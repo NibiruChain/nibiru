@@ -199,4 +199,4 @@ replace github.com/cosmos/iavl => github.com/cosmos/iavl v0.20.0
 // pin version! 126854af5e6d has issues with the store so that queries fail
 replace github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 
-replace github.com/linxGnu/grocksdb => github.com/linxGnu/grocksdb v1.8.9
+replace github.com/linxGnu/grocksdb => github.com/linxGnu/grocksdb v1.8.11

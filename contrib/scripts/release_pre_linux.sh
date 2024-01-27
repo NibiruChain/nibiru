@@ -11,7 +11,7 @@
 set -e
 
 WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | awk '{sub(/^v/, "", $2); print $2}')
-ROCKSDB_VERSION=8.8.1
+ROCKSDB_VERSION=8.9.1
 
 flock -x /tmp/apt-lock -c "[ \"$(ls -A /var/lib/apt/lists)\" ] || apt-get update"
 flock -x /tmp/rocksdb-linux-headers-lock -c "wget -c https://github.com/NibiruChain/gorocksdb/releases/download/v${ROCKSDB_VERSION}/include.${ROCKSDB_VERSION}.tar.gz -O /tmp/include.${ROCKSDB_VERSION}.tar.gz && [ ! -d /usr/include/rocksdb ] && tar -xvf /tmp/include.${ROCKSDB_VERSION}.tar.gz -C /usr/include/; echo 'rocksdb headers installed'"
