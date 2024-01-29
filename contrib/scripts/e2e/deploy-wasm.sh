@@ -28,6 +28,7 @@ echo "$BALANCE_2"
 
 INIT='{"purchase_price":{"amount":"100","denom":"unibi"},"transfer_price":{"amount":"999","denom":"unibi"}}'
 $BINARY tx wasm instantiate $CONTRACT_CODE "$INIT" --from validator $TXFLAG --label "awesome name service" --no-admin
+sleep 3
 
 CONTRACT_ADDRESS=$($BINARY query wasm list-contract-by-code $CONTRACT_CODE --output json | jq -r '.contracts[-1]')
 echo "Contract Address: $CONTRACT_ADDRESS"
