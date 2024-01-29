@@ -16,7 +16,7 @@ echo "Pre-store balance:"
 echo "$BALANCE_1"
 echo "TX Flags: $TXFLAG"
 
-TX_HASH=$($BINARY tx wasm store "./contrib/scripts/e2e/contracts/cw_nameservice.wasm" --fom validator $TXFLAG --output json | jq -r '.txhash' )
+TX_HASH=$($BINARY tx wasm store "./contrib/scripts/e2e/contracts/cw_nameservice.wasm" --from validator $TXFLAG --output json | jq -r '.txhash' )
 sleep 3
 
 $BINARY q tx $TX_HASH --output json
