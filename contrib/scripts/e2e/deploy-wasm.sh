@@ -37,6 +37,7 @@ $BINARY query wasm contract $CONTRACT_ADDRESS
 
 # purchase a domain name
 $BINARY tx wasm execute $CONTRACT_ADDRESS '{"register":{"name":"uniques-domain"}}' --amount 100$DENOM --from validator $TXFLAG -y
+sleep 3
 
 # query registered name
 NAME_QUERY='{"resolve_record": {"name": "uniques-domain"}}'
