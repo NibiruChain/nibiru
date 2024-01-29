@@ -1,3 +1,6 @@
+#!/bin/bash
+set -e
+
 BINARY="./nibid"
 DENOM="unibi"
 CHAIN_ID="nibiru-localnet-0"
