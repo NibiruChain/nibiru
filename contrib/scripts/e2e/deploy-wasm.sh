@@ -19,9 +19,7 @@ echo "TX Flags: $TXFLAG"
 TX_HASH=$($BINARY tx wasm store "./contrib/scripts/e2e/contracts/cw_nameservice.wasm" --from validator $TXFLAG --output json | jq -r '.txhash' )
 sleep 3
 
-$BINARY q tx $TX_HASH --output json | jq -r '.logs[0].events[-1].attributes[-1].value'
-
-echo "tx hash: $CONTRACT_CODE"
+CONTRACT_CODE=$($BINARY q tx $TX_HASH --output json | jq -r '.logs[0].events[-1].attributes[-1].value')
 echo "Stored: $CONTRACT_CODE"
 
 BALANCE_2=$($BINARY q bank balances $VALIDATOR_ADDR)
