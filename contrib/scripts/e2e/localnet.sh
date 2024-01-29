@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 
 # Console log text colour
@@ -26,6 +26,7 @@ echo_error() {
   echo "${red}"
   echo "$1"
   echo "${reset}"
+  exit 1
 }
 
 echo_success() {
@@ -42,11 +43,6 @@ GRPC_PORT="9090"
 MNEMONIC="guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host"
 GENESIS_COINS="1000000000unibi,10000000000000unusd"
 CHAIN_DIR="$HOME/.nibid"
-
-SEDOPTION=""
-if [[ "$OSTYPE" == "darwin"* ]]; then
-  SEDOPTION="''"
-fi
 
 # Stop nibid if it is already running
 if pgrep -x "$BINARY" >/dev/null; then
@@ -137,14 +133,14 @@ else
 fi
 
 echo_info "Adding gentx validator..."
-if $BINARY gentx validator 900000000unibi --chain-id $CHAIN_ID; then
+if $BINARY genesis gentx validator 900000000unibi --chain-id $CHAIN_ID; then
   echo_success "Successfully added gentx"
 else
   echo_error "Failed to add gentx"
 fi
 
 echo_info "Collecting gentx..."
-if $BINARY collect-gentxs; then
+if $BINARY genesis collect-gentxs; then
   echo_success "Successfully collected genesis txs into genesis.json"
 else
   echo_error "Failed to collect genesis txs"
