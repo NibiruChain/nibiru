@@ -26,6 +26,7 @@ echo_error() {
   echo "${red}"
   echo "$1"
   echo "${reset}"
+  exit 1
 }
 
 echo_success() {
@@ -137,7 +138,7 @@ else
 fi
 
 echo_info "Adding gentx validator..."
-if $BINARY genesis gentx validator 900000000unibi --chain-id $CHAIN_ID; then
+if $BINARY gentx validator 900000000unibi --chain-id $CHAIN_ID; then
   echo_success "Successfully added gentx"
 else
   echo_error "Failed to add gentx"
