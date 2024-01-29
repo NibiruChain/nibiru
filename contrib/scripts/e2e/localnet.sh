@@ -44,11 +44,6 @@ MNEMONIC="guard cream sadness conduct invite crumble clock pudding hole grit lia
 GENESIS_COINS="1000000000unibi,10000000000000unusd"
 CHAIN_DIR="$HOME/.nibid"
 
-SEDOPTION=""
-if [[ "$OSTYPE" == "darwin"* ]]; then
-  SEDOPTION="''"
-fi
-
 # Stop nibid if it is already running
 if pgrep -x "$BINARY" >/dev/null; then
   echo_error "Terminating $BINARY..."
