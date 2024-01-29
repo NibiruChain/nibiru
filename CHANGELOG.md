@@ -55,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1713](https://github.com/NibiruChain/nibiru/pull/1713) - chore(build-release): use new rocksdb libraries and link required libs
 - [#1715](https://github.com/NibiruChain/nibiru/pull/1715) - fix(build): revert! to working build + cherry-picks
 - [#1766](https://github.com/NibiruChain/nibiru/pull/1766) - refactor(app-wasmext)!: remove wasmbinding `CosmosMsg::Custom` bindings.
+- [#1774](https://github.com/NibiruChain/nibiru/pull/1774) - chore: update cosmos sdk v0.47.7
 
 #### Dapp modules: perp, spot, etc
 
@@ -91,6 +92,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1735](https://github.com/NibiruChain/nibiru/pull/1735) - test(sim): fix simulation tests
 - [#1736](https://github.com/NibiruChain/nibiru/pull/1736) - test(sim): add sim genesis state for all cusom modules
 - [#1754](https://github.com/NibiruChain/nibiru/pull/1754) - refactor(decode-base64): clean code improvements and fn docs
+* [#1769](https://github.com/NibiruChain/nibiru/pull/1769) - feat: cherrypick GetBuildWasmMsg() to main branch
+- [#1778](https://github.com/NibiruChain/nibiru/pull/1778) - chore: bump librocksdb to v8.9.1
 
 ### Dependencies
 
@@ -98,6 +101,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `google.golang.org/grpc` from 1.60.0 to 1.60.1 ([#1763](https://github.com/NibiruChain/nibiru/pull/1763))
 - Bump `github.com/grpc-ecosystem/grpc-gateway/v2` from 2.18.1 to 2.19.0 ([#1767](https://github.com/NibiruChain/nibiru/pull/1767))
 - Bump `actions/cache` from 3 to 4 ([#1773](https://github.com/NibiruChain/nibiru/pull/1773))
+- Bump `bufbuild/buf-setup-action` from 1.28.1 to 1.29.0 ([#1777](https://github.com/NibiruChain/nibiru/pull/1777))
 
 * Bump `github.com/prometheus/client_golang` from 1.17.0 to 1.18.0 ([#1750](https://github.com/NibiruChain/nibiru/pull/1750))
 * Bump `google.golang.org/protobuf` from 1.31.0 to 1.32.0 ([#1756](https://github.com/NibiruChain/nibiru/pull/1756))
