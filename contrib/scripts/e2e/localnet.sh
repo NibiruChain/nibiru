@@ -144,7 +144,7 @@ else
 fi
 
 echo_info "Collecting gentx..."
-if $BINARY collect-gentxs; then
+if $BINARY genesis collect-gentxs; then
   echo_success "Successfully collected genesis txs into genesis.json"
 else
   echo_error "Failed to collect genesis txs"
