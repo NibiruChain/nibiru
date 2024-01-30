@@ -9,7 +9,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/inflation/types"
 )
 
-// querier is used as Keeper will have duplicate methods if used directly, and gRPC names take precedence over q
+// querier implements the module's gRPC "QueryServer" interface
 type querier struct {
 	Keeper
 }
@@ -22,7 +22,7 @@ func NewQuerier(keeper Keeper) types.QueryServer {
 
 var _ types.QueryServer = querier{}
 
-// Params queries params of distribution module
+// Params is a gRPC query for the module parameters
 func (q querier) Params(c context.Context, _ *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	params := q.GetParams(ctx)

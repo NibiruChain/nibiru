@@ -8,11 +8,10 @@ import (
 	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
 )
 
-// Sudo extends the Keeper with sudo functions. See sudo.go. Sudo is syntactic
-// sugar to separate admin calls off from the other Keeper methods.
+// Sudo extends the Keeper with sudo functions. See sudo.go.
 //
 // These Sudo functions should:
-// 1. Not be called in other methods in the x/perp module.
+// 1. Not be called in other methods in the module.
 // 2. Only be callable by the x/sudo root or sudo contracts.
 //
 // The intention behind "Keeper.Sudo()" is to make it more obvious to the
