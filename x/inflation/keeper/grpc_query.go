@@ -22,7 +22,7 @@ func NewQuerier(keeper Keeper) types.QueryServer {
 
 var _ types.QueryServer = querier{}
 
-// Params queries params of distribution module
+// Params is a gRPC query for the module parameters
 func (q querier) Params(c context.Context, _ *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	var params types.Params
