@@ -9,7 +9,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/inflation/types"
 )
 
-// querier is used as Keeper will have duplicate methods if used directly, and gRPC names take precedence over q
+// querier implements the module's gRPC "QueryServer" interface
 type querier struct {
 	Keeper
 }
