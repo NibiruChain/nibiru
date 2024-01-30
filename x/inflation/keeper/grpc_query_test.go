@@ -6,6 +6,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/NibiruChain/nibiru/x/inflation/keeper"
+
 	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 
@@ -98,4 +100,10 @@ func (s *QueryServerSuite) TestQueryParams() {
 	resp, err := nibiruApp.InflationKeeper.Params.Get(ctx)
 	s.NoError(err)
 	s.NotNil(resp)
+
+	queryServer := keeper.NewQuerier(nibiruApp.InflationKeeper)
+
+	resp2, err := queryServer.Params(sdk.WrapSDKContext(ctx), &inflationtypes.QueryParamsRequest{})
+	s.NoError(err)
+	s.NotNil(resp2)
 }
