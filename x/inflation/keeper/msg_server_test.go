@@ -16,6 +16,9 @@ func TestMsgToggleInflation(t *testing.T) {
 	app, ctx := testapp.NewNibiruTestAppAndContext()
 	msgServer := keeper.NewMsgServerImpl(app.InflationKeeper)
 
+	params := app.InflationKeeper.GetParams(ctx)
+	require.False(t, params.InflationEnabled)
+
 	msg := types.MsgToggleInflation{
 		Sender: testutil.AccAddress().String(),
 		Enable: false,
@@ -23,7 +26,7 @@ func TestMsgToggleInflation(t *testing.T) {
 	_, err := msgServer.ToggleInflation(ctx, &msg)
 	require.ErrorContains(t, err, "insufficient permissions on smart contract")
 
-	params := app.InflationKeeper.GetParams(ctx)
+	params = app.InflationKeeper.GetParams(ctx)
 	require.False(t, params.InflationEnabled)
 
 	msg = types.MsgToggleInflation{
@@ -42,6 +45,9 @@ func TestMsgEditInflationParams(t *testing.T) {
 	app, ctx := testapp.NewNibiruTestAppAndContext()
 	msgServer := keeper.NewMsgServerImpl(app.InflationKeeper)
 
+	params := app.InflationKeeper.GetParams(ctx)
+	require.NotEqualValues(t, params.EpochsPerPeriod, 42)
+
 	newEpochPerPeriod := sdk.NewInt(42)
 	msg := types.MsgEditInflationParams{
 		Sender:          testutil.AccAddress().String(),
@@ -50,7 +56,7 @@ func TestMsgEditInflationParams(t *testing.T) {
 	_, err := msgServer.EditInflationParams(ctx, &msg)
 	require.ErrorContains(t, err, "insufficient permissions on smart contract")
 
-	params := app.InflationKeeper.GetParams(ctx)
+	params = app.InflationKeeper.GetParams(ctx)
 	require.NotEqualValues(t, params.EpochsPerPeriod, 42)
 
 	msg = types.MsgEditInflationParams{
