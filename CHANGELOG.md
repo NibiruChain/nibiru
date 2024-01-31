@@ -99,7 +99,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Bump `github.com/cometbft/cometbft-db` from 0.9.0 to 0.9.1 ([#1760](https://github.com/NibiruChain/nibiru/pull/1760))
 - Bump `google.golang.org/grpc` from 1.60.0 to 1.60.1 ([#1763](https://github.com/NibiruChain/nibiru/pull/1763))
-- Bump `github.com/grpc-ecosystem/grpc-gateway/v2` from 2.18.1 to 2.19.0 ([#1767](https://github.com/NibiruChain/nibiru/pull/1767))
+- Bump `github.com/grpc-ecosystem/grpc-gateway/v2` from 2.18.1 to 2.19.1 ([#1767](https://github.com/NibiruChain/nibiru/pull/1767), [#1782](https://github.com/NibiruChain/nibiru/pull/1782))
 - Bump `actions/cache` from 3 to 4 ([#1773](https://github.com/NibiruChain/nibiru/pull/1773))
 - Bump `bufbuild/buf-setup-action` from 1.28.1 to 1.29.0 ([#1777](https://github.com/NibiruChain/nibiru/pull/1777))
 - Bump `cosmossdk.io/errors` from 1.0.0 to 1.0.1 ([#1768](https://github.com/NibiruChain/nibiru/pull/1768))
