@@ -38,7 +38,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 	}
 
 	// mint coins, update supply
-	period := k.CurrentPeriod.Peek(ctx)
+	period := k.CurrentPeriod.Peek(ctx) - k.NumSkippedEpochs.Next(ctx)
 	epochsPerPeriod := k.EpochsPerPeriod(ctx)
 
 	epochMintProvision := types.CalculateEpochMintProvision(
