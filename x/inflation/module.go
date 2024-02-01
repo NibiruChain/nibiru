@@ -47,9 +47,9 @@ func (AppModuleBasic) ConsensusVersion() uint64 {
 	return 3
 }
 
-// RegisterInterfaces registers interfaces and implementations of the inflation
-// module.
-func (AppModuleBasic) RegisterInterfaces(interfaceRegistry codectypes.InterfaceRegistry) {
+// RegisterInterfaces registers the module's interface types
+func (b AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
+	types.RegisterInterfaces(registry)
 }
 
 // DefaultGenesis returns default genesis state as raw bytes for the inflation
@@ -115,10 +115,11 @@ func (AppModule) Name() string {
 // RegisterInvariants registers the inflation module invariants.
 func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
-// RegisterServices registers a gRPC query service to respond to the
-// module-specific gRPC queries.
+// RegisterServices registers module services.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	types.RegisterQueryServer(cfg.QueryServer(), am.keeper)
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
+	querier := keeper.NewQuerier(am.keeper)
+	types.RegisterQueryServer(cfg.QueryServer(), querier)
 }
 
 // BeginBlock returns the begin blocker for the inflation module.
