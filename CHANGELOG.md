@@ -49,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * [#1670](https://github.com/NibiruChain/nibiru/pull/1670) - feat(inflation): Make inflation polynomial
 * [#1682](https://github.com/NibiruChain/nibiru/pull/1682) - feat!: add upgrade handler for v1.1.0
+* [#1776](https://github.com/NibiruChain/nibiru/pull/1776) - feat(inflation): make inflation params a collection and add commands to update them
 
 ### Bug Fixes
 
