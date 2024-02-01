@@ -5,8 +5,11 @@ import (
 	"testing"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/app"
 	"github.com/NibiruChain/nibiru/x/common/denoms"
 	"github.com/NibiruChain/nibiru/x/common/testutil/testapp"
 	epochstypes "github.com/NibiruChain/nibiru/x/epochs/types"
@@ -30,7 +33,7 @@ func TestEpochIdentifierAfterEpochEnd(t *testing.T) {
 
 func TestPeriodChangesSkippedEpochsAfterEpochEnd(t *testing.T) {
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
-	currentEpochPeriod := nibiruApp.InflationKeeper.EpochsPerPeriod(ctx)
+	epochsPerPeriod := nibiruApp.InflationKeeper.EpochsPerPeriod(ctx)
 
 	testCases := []struct {
 		name             string
@@ -42,112 +45,112 @@ func TestPeriodChangesSkippedEpochsAfterEpochEnd(t *testing.T) {
 		periodChanges    bool
 	}{
 		{
-			"SkippedEpoch set DayEpochID disabledInflation",
-			0,
-			currentEpochPeriod - 10, // so it's within range
-			epochstypes.DayEpochID,
-			0,
-			false,
-			false,
+			name:             "SkippedEpoch set DayEpochID disabledInflation",
+			currentPeriod:    0,
+			height:           epochsPerPeriod - 10, // so it's within range
+			epochIdentifier:  epochstypes.DayEpochID,
+			skippedEpochs:    0,
+			InflationEnabled: false,
+			periodChanges:    false,
 		},
 		{
-			"SkippedEpoch set WeekEpochID disabledInflation ",
-			0,
-			currentEpochPeriod - 10, // so it's within range
-			epochstypes.WeekEpochID,
-			0,
-			false,
-			false,
+			name:             "SkippedEpoch set WeekEpochID disabledInflation ",
+			currentPeriod:    0,
+			height:           epochsPerPeriod - 10, // so it's within range
+			epochIdentifier:  epochstypes.WeekEpochID,
+			skippedEpochs:    0,
+			InflationEnabled: false,
+			periodChanges:    false,
 		},
 		{
-			"[Period 0] disabledInflation",
-			0,
-			currentEpochPeriod - 10, // so it's within range
-			epochstypes.DayEpochID,
-			0,
-			false,
-			false,
+			name:             "[Period 0] disabledInflation",
+			currentPeriod:    0,
+			height:           epochsPerPeriod - 10, // so it's within range
+			epochIdentifier:  epochstypes.DayEpochID,
+			skippedEpochs:    0,
+			InflationEnabled: false,
+			periodChanges:    false,
 		},
 		{
-			"[Period 0] period stays the same under epochs per period",
-			0,
-			currentEpochPeriod - 10, // so it's within range
-			epochstypes.DayEpochID,
-			0,
-			true,
-			false,
+			name:             "[Period 0] period stays the same under epochs per period",
+			currentPeriod:    0,
+			height:           epochsPerPeriod - 10, // so it's within range
+			epochIdentifier:  epochstypes.DayEpochID,
+			skippedEpochs:    0,
+			InflationEnabled: true,
+			periodChanges:    false,
 		},
 		{
 			name:             "[Period 0] period changes once enough epochs have passed",
 			currentPeriod:    0,
-			height:           currentEpochPeriod + 1,
+			height:           epochsPerPeriod + 1,
 			epochIdentifier:  epochstypes.DayEpochID,
 			skippedEpochs:    0,
 			InflationEnabled: true,
 			periodChanges:    true,
 		},
 		{
-			"[Period 1] period stays the same under the epoch per period",
-			1,
-			2*currentEpochPeriod - 1,
-			epochstypes.DayEpochID,
-			0,
-			true,
-			false,
+			name:             "[Period 1] period stays the same under the epoch per period",
+			currentPeriod:    1,
+			height:           2*epochsPerPeriod - 2, // period change is at the end of epoch 59
+			epochIdentifier:  epochstypes.DayEpochID,
+			skippedEpochs:    0,
+			InflationEnabled: true,
+			periodChanges:    false,
 		},
 		{
-			"[Period 1] period changes once enough epochs have passed",
-			1,
-			2*currentEpochPeriod + 1,
-			epochstypes.DayEpochID,
-			0,
-			true,
-			true,
+			name:             "[Period 1] period changes once enough epochs have passed",
+			currentPeriod:    1,
+			height:           2*epochsPerPeriod + 1,
+			epochIdentifier:  epochstypes.DayEpochID,
+			skippedEpochs:    0,
+			InflationEnabled: true,
+			periodChanges:    true,
 		},
 		{
-			"[Period 0] with skipped epochs - period stays the same under epochs per period",
-			0,
-			currentEpochPeriod - 1,
-			epochstypes.DayEpochID,
-			10,
-			true,
-			false,
+			name:             "[Period 0] with skipped epochs - period stays the same under epochs per period",
+			currentPeriod:    0,
+			height:           epochsPerPeriod - 1,
+			epochIdentifier:  epochstypes.DayEpochID,
+			skippedEpochs:    10,
+			InflationEnabled: true,
+			periodChanges:    false,
 		},
 		{
-			"[Period 0] with skipped epochs - period stays the same under epochs per period",
-			0,
-			currentEpochPeriod + 1,
-			epochstypes.DayEpochID,
-			10,
-			true,
-			false,
+			name:             "[Period 0] with skipped epochs - period stays the same under epochs per period",
+			currentPeriod:    0,
+			height:           epochsPerPeriod + 1,
+			epochIdentifier:  epochstypes.DayEpochID,
+			skippedEpochs:    10,
+			InflationEnabled: true,
+			periodChanges:    false,
 		},
 		{
-			"[Period 0] with skipped epochs - period changes once enough epochs have passed",
-			0,
-			currentEpochPeriod + 11,
-			epochstypes.DayEpochID,
-			10,
-			true,
-			true,
+			name:             "[Period 0] with skipped epochs - period changes once enough epochs have passed",
+			currentPeriod:    0,
+			height:           epochsPerPeriod + 11,
+			epochIdentifier:  epochstypes.DayEpochID,
+			skippedEpochs:    10,
+			InflationEnabled: true,
+			periodChanges:    true,
 		},
 		{
-			"[Period 1] with skipped epochs - period stays the same under epochs per period",
-			1,
-			2*currentEpochPeriod + 1,
-			epochstypes.DayEpochID,
-			10,
-			true,
-			false,
+			name:             "[Period 1] with skipped epochs - period stays the same under epochs per period",
+			currentPeriod:    1,
+			height:           2*epochsPerPeriod + 1,
+			epochIdentifier:  epochstypes.DayEpochID,
+			skippedEpochs:    10,
+			InflationEnabled: true,
+			periodChanges:    false,
 		},
 		{
-			"[Period 1] with skipped epochs - period changes once enough epochs have passed",
-			1,
-			2*currentEpochPeriod + 11,
-			epochstypes.DayEpochID,
-			10,
-			true,
-			true,
+			name:             "[Period 1] with skipped epochs - period changes once enough epochs have passed",
+			currentPeriod:    1,
+			height:           2*epochsPerPeriod + 11,
+			epochIdentifier:  epochstypes.DayEpochID,
+			skippedEpochs:    10,
+			InflationEnabled: true,
+			periodChanges:    true,
 		},
 	}
 	for _, tc := range testCases {
@@ -185,7 +188,7 @@ func TestPeriodChangesSkippedEpochsAfterEpochEnd(t *testing.T) {
 				require.Equal(t, currentSkippedEpochs, skippedEpochs)
 				require.Equal(t, currentPeriod+1, period)
 			} else {
-				require.Equal(t, currentPeriod, period)
+				require.Equal(t, currentPeriod, period, "period should not change but it did")
 				if !tc.InflationEnabled {
 					// Check for epochIdentifier for skippedEpoch increment
 					if tc.epochIdentifier == epochstypes.DayEpochID {
@@ -195,4 +198,54 @@ func TestPeriodChangesSkippedEpochsAfterEpochEnd(t *testing.T) {
 			}
 		})
 	}
+}
+
+func GetBalanceStaking(ctx sdk.Context, nibiruApp *app.NibiruApp) sdk.Int {
+	return nibiruApp.BankKeeper.GetBalance(
+		ctx,
+		nibiruApp.AccountKeeper.GetModuleAddress(authtypes.FeeCollectorName),
+		denoms.NIBI,
+	).Amount
+}
+
+func TestManual(t *testing.T) {
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
+
+	params := nibiruApp.InflationKeeper.GetParams(ctx)
+	epochNumber := uint64(0)
+
+	params.InflationEnabled = false
+	params.EpochsPerPeriod = 30
+
+	// y = 30 * x + 30 -> 3 nibi per epoch for period 0, 6 nibi per epoch for period 1
+	params.PolynomialFactors = []sdk.Dec{sdk.NewDec(3), sdk.NewDec(3)}
+	params.InflationDistribution = types.InflationDistribution{
+		CommunityPool:     sdk.ZeroDec(),
+		StakingRewards:    sdk.OneDec(),
+		StrategicReserves: sdk.ZeroDec(),
+	}
+
+	nibiruApp.InflationKeeper.SetParams(ctx, params)
+
+	require.Equal(t, sdk.ZeroInt(), GetBalanceStaking(ctx, nibiruApp))
+
+	for i := 0; i < 150; i++ {
+		nibiruApp.InflationKeeper.AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
+		epochNumber++
+	}
+	require.Equal(t, sdk.ZeroInt(), GetBalanceStaking(ctx, nibiruApp))
+
+	params.InflationEnabled = true
+	nibiruApp.InflationKeeper.SetParams(ctx, params)
+
+	for i := 0; i < 30; i++ {
+		nibiruApp.InflationKeeper.AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
+		require.Equal(t, sdk.NewInt(100_000).Mul(sdk.NewInt(int64(i+1))), GetBalanceStaking(ctx, nibiruApp))
+		epochNumber++
+	}
+	require.Equal(t, sdk.NewInt(3_000_000), GetBalanceStaking(ctx, nibiruApp))
+
+	// Period 1 - we do 200_000 per periods now
+	nibiruApp.InflationKeeper.AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
+	require.Equal(t, sdk.NewInt(200_000+3_000_000), GetBalanceStaking(ctx, nibiruApp))
 }
