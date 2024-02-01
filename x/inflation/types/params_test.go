@@ -3,16 +3,10 @@ package types_test
 import (
 	"testing"
 
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-
-	"github.com/NibiruChain/nibiru/app/codec"
 	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
-
-	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
 func TestParamsValidate(t *testing.T) {
@@ -134,37 +128,4 @@ func TestParamsValidate(t *testing.T) {
 			}
 		})
 	}
-}
-
-type ParamKeyTableTestSuite struct {
-	suite.Suite
-}
-
-func (s *ParamKeyTableTestSuite) TestParamKeyTable() {
-	encCfg := codec.MakeEncodingConfig()
-	cdc := encCfg.Marshaler
-	amino := encCfg.Amino
-
-	storeKey := storetypes.NewKVStoreKey("mockStoreKey")
-	transientStoreKey := storetypes.NewTransientStoreKey("mockTransientKey")
-
-	var keyTable paramstypes.KeyTable
-	s.Require().NotPanics(func() {
-		keyTable = inflationtypes.ParamKeyTable()
-	})
-	s.Require().NotPanics(func() {
-		subspace := paramstypes.NewSubspace(
-			cdc,
-			amino,
-			storeKey, transientStoreKey, "inflationsubspace",
-		)
-		subspace.WithKeyTable(keyTable)
-	})
-}
-
-func (s *ParamKeyTableTestSuite) TestParamSetPairs() {
-	s.NotPanics(func() {
-		moduleParams := inflationtypes.DefaultParams()
-		_ = moduleParams.ParamSetPairs()
-	})
 }

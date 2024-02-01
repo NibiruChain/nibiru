@@ -1,0 +1,64 @@
+syntax = "proto3";
+package nibiru.inflation.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "nibiru/inflation/v1/inflation.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/x/inflation/types";
+
+
+service Msg {
+  // ToggleInflation defines a method to enable or disable inflation.
+  rpc ToggleInflation(MsgToggleInflation) returns (MsgToggleInflationResponse) {
+    option (google.api.http).post = "/nibiru/inflation/v1/toggle";
+  };
+
+  // EditInflationParams defines a method to edit the inflation params.
+  rpc EditInflationParams(MsgEditInflationParams) 
+  returns (MsgEditInflationParamsResponse) {
+    option (google.api.http).post = "/nibiru/inflation/edit-inflation-params";
+  };    
+}
+
+// MsgToggleInflation defines a message to enable or disable inflation.
+message MsgToggleInflation {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string sender = 1;
+  bool enable = 2 [ (gogoproto.moretags) = "yaml:\"enable\"" ];
+}
+
+message MsgEditInflationParams {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+  
+  string sender = 1;
+  bool inflation_enabled = 2;
+  repeated string polynomial_factors = 3[
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = true
+  ];
+  InflationDistribution inflation_distribution = 4
+      [ (gogoproto.nullable) = true ];
+      
+  string epochs_per_period = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = true
+  ];
+  string periods_per_year = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = true
+  ];
+  string max_period = 7 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = true
+  ];
+}
+
+message MsgToggleInflationResponse {
+}
+
+message MsgEditInflationParamsResponse {
+}
