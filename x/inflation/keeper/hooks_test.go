@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/require"
@@ -200,7 +201,7 @@ func TestPeriodChangesSkippedEpochsAfterEpochEnd(t *testing.T) {
 	}
 }
 
-func GetBalanceStaking(ctx sdk.Context, nibiruApp *app.NibiruApp) sdk.Int {
+func GetBalanceStaking(ctx sdk.Context, nibiruApp *app.NibiruApp) sdkmath.Int {
 	return nibiruApp.BankKeeper.GetBalance(
 		ctx,
 		nibiruApp.AccountKeeper.GetModuleAddress(authtypes.FeeCollectorName),
