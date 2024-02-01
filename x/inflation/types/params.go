@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
 var (
@@ -64,26 +63,6 @@ func DefaultParams() Params {
 		EpochsPerPeriod:       DefaultEpochsPerPeriod,
 		PeriodsPerYear:        DefaultPeriodsPerYear,
 		MaxPeriod:             DefaultMaxPeriod,
-	}
-}
-
-// ParamKeyTable returns the parameter key table.
-func ParamKeyTable() paramstypes.KeyTable {
-	return paramstypes.NewKeyTable().RegisterParamSet(&Params{})
-}
-
-var _ paramstypes.ParamSet = (*Params)(nil)
-
-// ParamSetPairs returns all the of key, value type, and validation function
-// for each module parameter. ParamSetPairs implements the ParamSet interface.
-func (p *Params) ParamSetPairs() paramstypes.ParamSetPairs {
-	return paramstypes.ParamSetPairs{
-		paramstypes.NewParamSetPair(KeyInflationEnabled, &p.InflationEnabled, validateBool),
-		paramstypes.NewParamSetPair(KeyPolynomialFactors, &p.PolynomialFactors, validatePolynomialFactors),
-		paramstypes.NewParamSetPair(KeyInflationDistribution, &p.InflationDistribution, validateInflationDistribution),
-		paramstypes.NewParamSetPair(KeyEpochsPerPeriod, &p.EpochsPerPeriod, validateUint64),
-		paramstypes.NewParamSetPair(KeyPeriodsPerYear, &p.PeriodsPerYear, validateUint64),
-		paramstypes.NewParamSetPair(KeyMaxPeriod, &p.MaxPeriod, validateUint64),
 	}
 }
 
