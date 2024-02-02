@@ -137,7 +137,7 @@ func TestGetCirculatingSupplyAndInflationRate(t *testing.T) {
 			"no epochs per period",
 			sdk.TokensFromConsensusPower(400_000_000, sdk.DefaultPowerReduction),
 			func(nibiruApp *app.NibiruApp, ctx sdk.Context) {
-				nibiruApp.InflationKeeper.SetParams(ctx, types.Params{
+				nibiruApp.InflationKeeper.Params.Set(ctx, types.Params{
 					EpochsPerPeriod:       0,
 					InflationEnabled:      true,
 					PolynomialFactors:     types.DefaultPolynomialFactors,
@@ -152,7 +152,7 @@ func TestGetCirculatingSupplyAndInflationRate(t *testing.T) {
 			func(nibiruApp *app.NibiruApp, ctx sdk.Context) {
 				params := nibiruApp.InflationKeeper.GetParams(ctx)
 				params.InflationEnabled = true
-				nibiruApp.InflationKeeper.SetParams(ctx, params)
+				nibiruApp.InflationKeeper.Params.Set(ctx, params)
 			},
 			sdk.MustNewDecFromStr("27.095518287362700000"),
 		},
@@ -162,7 +162,7 @@ func TestGetCirculatingSupplyAndInflationRate(t *testing.T) {
 			func(nibiruApp *app.NibiruApp, ctx sdk.Context) {
 				params := nibiruApp.InflationKeeper.GetParams(ctx)
 				params.InflationEnabled = true
-				nibiruApp.InflationKeeper.SetParams(ctx, params)
+				nibiruApp.InflationKeeper.Params.Set(ctx, params)
 			},
 			sdk.MustNewDecFromStr("54.191036574725400000"),
 		},
@@ -194,10 +194,10 @@ func TestGetters(t *testing.T) {
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 	k := nibiruApp.InflationKeeper
 	require.NotPanics(t, func() {
-		_ = k.PolynomialFactors(ctx)
-		_ = k.PeriodsPerYear(ctx)
-		_ = k.InflationDistribution(ctx)
-		_ = k.InflationEnabled(ctx)
-		_ = k.EpochsPerPeriod(ctx)
+		_ = k.GetPolynomialFactors(ctx)
+		_ = k.GetPeriodsPerYear(ctx)
+		_ = k.GetInflationDistribution(ctx)
+		_ = k.GetInflationEnabled(ctx)
+		_ = k.GetEpochsPerPeriod(ctx)
 	})
 }
