@@ -15,7 +15,9 @@ import (
 // BeforeEpochStart: noop, We don't need to do anything here
 func (k Keeper) BeforeEpochStart(_ sdk.Context, _ string, _ uint64) {}
 
-// AfterEpochEnd mints and allocates coins at the end of each epoch end
+// AfterEpochEnd mints and allocates coins at the end of each epoch.
+// If inflation is disabled as a module parameter, the state for
+// "NumSkippedEpochs" increments.
 func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumber uint64) {
 	if epochIdentifier != epochstypes.DayEpochID {
 		return
@@ -39,7 +41,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 
 	// mint coins, update supply
 	period := k.CurrentPeriod.Peek(ctx)
-	epochsPerPeriod := k.EpochsPerPeriod(ctx)
+	epochsPerPeriod := k.GetEpochsPerPeriod(ctx)
 
 	epochMintProvision := types.CalculateEpochMintProvision(
 		params,

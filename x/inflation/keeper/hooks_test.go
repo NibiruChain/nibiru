@@ -17,12 +17,15 @@ import (
 	"github.com/NibiruChain/nibiru/x/inflation/types"
 )
 
+// TestEpochIdentifierAfterEpochEnd: Ensures that the amount in the community
+// pool after an epoch ends is greater than the amount before the epoch ends
+// with the default module parameters.
 func TestEpochIdentifierAfterEpochEnd(t *testing.T) {
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 
 	params := nibiruApp.InflationKeeper.GetParams(ctx)
 	params.InflationEnabled = true
-	nibiruApp.InflationKeeper.UpdateParams(ctx, params)
+	nibiruApp.InflationKeeper.Params.Set(ctx, params)
 
 	feePoolOld := nibiruApp.DistrKeeper.GetFeePool(ctx)
 	nibiruApp.EpochsKeeper.AfterEpochEnd(ctx, epochstypes.DayEpochID, 1)
@@ -32,9 +35,12 @@ func TestEpochIdentifierAfterEpochEnd(t *testing.T) {
 		feePoolOld.CommunityPool.AmountOf(denoms.NIBI).BigInt().Uint64())
 }
 
+// TestPeriodChangesSkippedEpochsAfterEpochEnd: Tests whether current period and
+// the number of skipped epochs are accurately updated and that skipped epochs
+// are handled correctly.
 func TestPeriodChangesSkippedEpochsAfterEpochEnd(t *testing.T) {
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
-	epochsPerPeriod := nibiruApp.InflationKeeper.EpochsPerPeriod(ctx)
+	epochsPerPeriod := nibiruApp.InflationKeeper.GetEpochsPerPeriod(ctx)
 
 	testCases := []struct {
 		name             string
@@ -158,7 +164,7 @@ func TestPeriodChangesSkippedEpochsAfterEpochEnd(t *testing.T) {
 		t.Run(fmt.Sprintf("Case %s", tc.name), func(t *testing.T) {
 			params := nibiruApp.InflationKeeper.GetParams(ctx)
 			params.InflationEnabled = tc.InflationEnabled
-			nibiruApp.InflationKeeper.UpdateParams(ctx, params)
+			nibiruApp.InflationKeeper.Params.Set(ctx, params)
 
 			nibiruApp.InflationKeeper.NumSkippedEpochs.Set(ctx, tc.skippedEpochs)
 			nibiruApp.InflationKeeper.CurrentPeriod.Set(ctx, tc.currentPeriod)
@@ -226,7 +232,7 @@ func TestManual(t *testing.T) {
 		StrategicReserves: sdk.ZeroDec(),
 	}
 
-	nibiruApp.InflationKeeper.SetParams(ctx, params)
+	nibiruApp.InflationKeeper.Params.Set(ctx, params)
 
 	require.Equal(t, sdk.ZeroInt(), GetBalanceStaking(ctx, nibiruApp))
 
@@ -237,7 +243,7 @@ func TestManual(t *testing.T) {
 	require.Equal(t, sdk.ZeroInt(), GetBalanceStaking(ctx, nibiruApp))
 
 	params.InflationEnabled = true
-	nibiruApp.InflationKeeper.SetParams(ctx, params)
+	nibiruApp.InflationKeeper.Params.Set(ctx, params)
 
 	for i := 0; i < 30; i++ {
 		nibiruApp.InflationKeeper.AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
