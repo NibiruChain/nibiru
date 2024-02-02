@@ -56,7 +56,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1715](https://github.com/NibiruChain/nibiru/pull/1715) - fix(build): revert! to working build + cherry-picks
 - [#1766](https://github.com/NibiruChain/nibiru/pull/1766) - refactor(app-wasmext)!: remove wasmbinding `CosmosMsg::Custom` bindings.
 - [#1774](https://github.com/NibiruChain/nibiru/pull/1774) - chore: update cosmos sdk v0.47.7
-- [#1786](https://github.com/NibiruChain/nibiru/pull/1786) - fix: fix inflation off-by 2 error
+- [#1776](https://github.com/NibiruChain/nibiru/pull/1776) - feat(inflation): make inflation params a collection and add commands to update them
+- [#1786](https://github.com/NibiruChain/nibiru/pull/1786) - fix(inflation): fix inflation off-by 2 error
 
 #### Dapp modules: perp, spot, etc
 

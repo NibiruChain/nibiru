@@ -22,7 +22,7 @@ func TestEpochIdentifierAfterEpochEnd(t *testing.T) {
 
 	params := nibiruApp.InflationKeeper.GetParams(ctx)
 	params.InflationEnabled = true
-	nibiruApp.InflationKeeper.SetParams(ctx, params)
+	nibiruApp.InflationKeeper.UpdateParams(ctx, params)
 
 	feePoolOld := nibiruApp.DistrKeeper.GetFeePool(ctx)
 	nibiruApp.EpochsKeeper.AfterEpochEnd(ctx, epochstypes.DayEpochID, 1)
@@ -158,7 +158,7 @@ func TestPeriodChangesSkippedEpochsAfterEpochEnd(t *testing.T) {
 		t.Run(fmt.Sprintf("Case %s", tc.name), func(t *testing.T) {
 			params := nibiruApp.InflationKeeper.GetParams(ctx)
 			params.InflationEnabled = tc.InflationEnabled
-			nibiruApp.InflationKeeper.SetParams(ctx, params)
+			nibiruApp.InflationKeeper.UpdateParams(ctx, params)
 
 			nibiruApp.InflationKeeper.NumSkippedEpochs.Set(ctx, tc.skippedEpochs)
 			nibiruApp.InflationKeeper.CurrentPeriod.Set(ctx, tc.currentPeriod)

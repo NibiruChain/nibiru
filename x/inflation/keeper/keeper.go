@@ -27,6 +27,7 @@ type Keeper struct {
 
 	CurrentPeriod    collections.Sequence
 	NumSkippedEpochs collections.Sequence
+	Params           collections.Item[types.Params]
 }
 
 // NewKeeper creates a new mint Keeper instance
@@ -46,11 +47,6 @@ func NewKeeper(
 		panic("the inflation module account has not been set")
 	}
 
-	// set KeyTable if it has not already been set
-	if !paramspace.HasKeyTable() {
-		paramspace = paramspace.WithKeyTable(types.ParamKeyTable())
-	}
-
 	return Keeper{
 		storeKey:         storeKey,
 		cdc:              cdc,
@@ -63,6 +59,7 @@ func NewKeeper(
 		feeCollectorName: feeCollectorName,
 		CurrentPeriod:    collections.NewSequence(storeKey, 0),
 		NumSkippedEpochs: collections.NewSequence(storeKey, 1),
+		Params:           collections.NewItem(storeKey, 2, collections.ProtoValueEncoder[types.Params](cdc)),
 	}
 }
 
