@@ -6,41 +6,32 @@ import (
 	"github.com/NibiruChain/nibiru/x/inflation/types"
 )
 
-// GetParams returns the total set of inflation parameters.
-func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
-	k.paramSpace.GetParamSet(ctx, &params)
-	return
+func (k Keeper) GetParams(ctx sdk.Context) types.Params {
+	params, _ := k.Params.Get(ctx)
+	return params
 }
 
-// SetParams sets the inflation params in a single key
-func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
-	k.paramSpace.SetParamSet(ctx, &params)
+func (k Keeper) GetPolynomialFactors(ctx sdk.Context) (res []sdk.Dec) {
+	params, _ := k.Params.Get(ctx)
+	return params.PolynomialFactors
 }
 
-// VotePeriod returns the number of blocks during which voting takes place.
-func (k Keeper) PolynomialFactors(ctx sdk.Context) (res []sdk.Dec) {
-	k.paramSpace.Get(ctx, types.KeyPolynomialFactors, &res)
-	return
+func (k Keeper) GetInflationDistribution(ctx sdk.Context) (res types.InflationDistribution) {
+	params, _ := k.Params.Get(ctx)
+	return params.InflationDistribution
 }
 
-// VoteThreshold returns the minimum percentage of votes that must be received for a ballot to pass.
-func (k Keeper) InflationDistribution(ctx sdk.Context) (res types.InflationDistribution) {
-	k.paramSpace.Get(ctx, types.KeyInflationDistribution, &res)
-	return
+func (k Keeper) GetInflationEnabled(ctx sdk.Context) (res bool) {
+	params, _ := k.Params.Get(ctx)
+	return params.InflationEnabled
 }
 
-// VoteThreshold returns the minimum percentage of votes that must be received for a ballot to pass.
-func (k Keeper) InflationEnabled(ctx sdk.Context) (res bool) {
-	k.paramSpace.Get(ctx, types.KeyInflationEnabled, &res)
-	return
+func (k Keeper) GetEpochsPerPeriod(ctx sdk.Context) (res uint64) {
+	params, _ := k.Params.Get(ctx)
+	return params.EpochsPerPeriod
 }
 
-func (k Keeper) EpochsPerPeriod(ctx sdk.Context) (res uint64) {
-	k.paramSpace.Get(ctx, types.KeyEpochsPerPeriod, &res)
-	return
-}
-
-func (k Keeper) PeriodsPerYear(ctx sdk.Context) (res uint64) {
-	k.paramSpace.Get(ctx, types.KeyPeriodsPerYear, &res)
-	return
+func (k Keeper) GetPeriodsPerYear(ctx sdk.Context) (res uint64) {
+	params, _ := k.Params.Get(ctx)
+	return params.PeriodsPerYear
 }
