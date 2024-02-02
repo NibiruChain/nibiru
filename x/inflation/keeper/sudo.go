@@ -40,7 +40,7 @@ func (k sudoExtension) EditInflationParams(
 	if err != nil {
 		return
 	}
-	k.UpdateParams(ctx, paramsAfter)
+	k.Params.Set(ctx, paramsAfter)
 	return paramsAfter.Validate()
 }
 
@@ -57,7 +57,7 @@ func (k sudoExtension) ToggleInflation(
 	}
 
 	params.InflationEnabled = enabled
-	k.UpdateParams(ctx, params)
+	k.Params.Set(ctx, params)
 	return
 }
 
