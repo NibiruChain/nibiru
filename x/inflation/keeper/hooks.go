@@ -12,7 +12,7 @@ import (
 	"github.com/NibiruChain/nibiru/x/inflation/types"
 )
 
-// BeforeEpochStart: noop, We don't need to do anything here
+// BeforeEpochStart noop, We don't need to do anything here
 func (k Keeper) BeforeEpochStart(_ sdk.Context, _ string, _ uint64) {}
 
 // AfterEpochEnd mints and allocates coins at the end of each epoch.
