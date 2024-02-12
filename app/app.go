@@ -169,6 +169,7 @@ func NewNibiruApp(
 
 	app.initModuleManager(encodingConfig, skipGenesisInvariants)
 
+	app.setupUpgrades()
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
 
