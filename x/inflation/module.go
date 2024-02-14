@@ -77,7 +77,7 @@ func (b AppModuleBasic) RegisterGRPCGatewayRoutes(c client.Context, serveMux *ru
 }
 
 // GetTxCmd returns the root tx command for the inflation module.
-func (AppModuleBasic) GetTxCmd() *cobra.Command { return nil }
+func (AppModuleBasic) GetTxCmd() *cobra.Command { return cli.GetTxCmd() }
 
 // GetQueryCmd returns no root query command for the inflation module.
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
