@@ -23,6 +23,7 @@ type Keeper struct {
 	distrKeeper      types.DistrKeeper
 	stakingKeeper    types.StakingKeeper
 	sudoKeeper       types.SudoKeeper
+	epochsKeeper     types.EpochsKeeper
 	feeCollectorName string
 
 	CurrentPeriod    collections.Sequence
@@ -41,6 +42,7 @@ func NewKeeper(
 	stakingKeeper types.StakingKeeper,
 	sudoKeeper types.SudoKeeper,
 	feeCollectorName string,
+	epochsKeeper types.EpochsKeeper,
 ) Keeper {
 	// ensure mint module account is set
 	if addr := accountKeeper.GetModuleAddress(types.ModuleName); addr == nil {
@@ -56,6 +58,7 @@ func NewKeeper(
 		distrKeeper:      distributionKeeper,
 		stakingKeeper:    stakingKeeper,
 		sudoKeeper:       sudoKeeper,
+		epochsKeeper:     epochsKeeper,
 		feeCollectorName: feeCollectorName,
 		CurrentPeriod:    collections.NewSequence(storeKey, 0),
 		NumSkippedEpochs: collections.NewSequence(storeKey, 1),

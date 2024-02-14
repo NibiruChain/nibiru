@@ -216,6 +216,11 @@ func GetBalanceStaking(ctx sdk.Context, nibiruApp *app.NibiruApp) sdkmath.Int {
 }
 
 func TestManual(t *testing.T) {
+	// This test is a manual test to check if the inflation is working as expected
+	// We turn off inflation, then we turn it on and check if the balance is increasing
+	// We turn it off again and check if the balance is not increasing
+	// We turn it on again and check if the balance is increasing again with the correct amount
+
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 
 	params := nibiruApp.InflationKeeper.GetParams(ctx)
@@ -242,8 +247,18 @@ func TestManual(t *testing.T) {
 	}
 	require.Equal(t, sdk.ZeroInt(), GetBalanceStaking(ctx, nibiruApp))
 
-	params.InflationEnabled = true
-	nibiruApp.InflationKeeper.Params.Set(ctx, params)
+	nibiruApp.EpochsKeeper.Epochs.Insert(ctx, epochstypes.DayEpochID, epochstypes.EpochInfo{
+		Identifier:              epochstypes.DayEpochID,
+		StartTime:               time.Now(),
+		Duration:                0,
+		CurrentEpoch:            42069,
+		CurrentEpochStartTime:   time.Now(),
+		EpochCountingStarted:    false,
+		CurrentEpochStartHeight: 0,
+	},
+	)
+	err := nibiruApp.InflationKeeper.Sudo().ToggleInflation(ctx, true, testapp.DefaultSudoRoot())
+	require.NoError(t, err)
 
 	for i := 0; i < 30; i++ {
 		nibiruApp.InflationKeeper.AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
@@ -252,12 +267,24 @@ func TestManual(t *testing.T) {
 	}
 	require.Equal(t, sdk.NewInt(3_000_000), GetBalanceStaking(ctx, nibiruApp))
 
+	err = nibiruApp.InflationKeeper.Sudo().ToggleInflation(ctx, false, testapp.DefaultSudoRoot())
+	require.NoError(t, err)
+
+	for i := 0; i < 42069; i++ {
+		nibiruApp.InflationKeeper.AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
+		epochNumber++
+	}
+	require.Equal(t, sdk.NewInt(3_000_000), GetBalanceStaking(ctx, nibiruApp))
+
+	err = nibiruApp.InflationKeeper.Sudo().ToggleInflation(ctx, true, testapp.DefaultSudoRoot())
+	require.NoError(t, err)
+
 	// Period 1 - we do 200_000 per periods now
 	for i := 0; i < 30; i++ {
 		nibiruApp.InflationKeeper.AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
 		require.Equal(t, sdk.NewInt(3_000_000).Add(sdk.NewInt(200_000).Mul(sdk.NewInt(int64(i+1)))), GetBalanceStaking(ctx, nibiruApp))
 		epochNumber++
 	}
-	require.EqualValues(t, epochNumber, uint64(42069+60))
+	require.EqualValues(t, epochNumber, uint64(2*42069+60))
 	require.Equal(t, sdk.NewInt(9_000_000), GetBalanceStaking(ctx, nibiruApp))
 }
