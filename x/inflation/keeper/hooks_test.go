@@ -257,7 +257,8 @@ func TestManual(t *testing.T) {
 		CurrentEpochStartHeight: 0,
 	},
 	)
-	nibiruApp.InflationKeeper.Sudo().ToggleInflation(ctx, true, testapp.DefaultSudoRoot())
+	err := nibiruApp.InflationKeeper.Sudo().ToggleInflation(ctx, true, testapp.DefaultSudoRoot())
+	require.NoError(t, err)
 
 	for i := 0; i < 30; i++ {
 		nibiruApp.InflationKeeper.AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
@@ -266,7 +267,8 @@ func TestManual(t *testing.T) {
 	}
 	require.Equal(t, sdk.NewInt(3_000_000), GetBalanceStaking(ctx, nibiruApp))
 
-	nibiruApp.InflationKeeper.Sudo().ToggleInflation(ctx, false, testapp.DefaultSudoRoot())
+	err = nibiruApp.InflationKeeper.Sudo().ToggleInflation(ctx, false, testapp.DefaultSudoRoot())
+	require.NoError(t, err)
 
 	for i := 0; i < 42069; i++ {
 		nibiruApp.InflationKeeper.AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
@@ -274,7 +276,8 @@ func TestManual(t *testing.T) {
 	}
 	require.Equal(t, sdk.NewInt(3_000_000), GetBalanceStaking(ctx, nibiruApp))
 
-	nibiruApp.InflationKeeper.Sudo().ToggleInflation(ctx, true, testapp.DefaultSudoRoot())
+	err = nibiruApp.InflationKeeper.Sudo().ToggleInflation(ctx, true, testapp.DefaultSudoRoot())
+	require.NoError(t, err)
 
 	// Period 1 - we do 200_000 per periods now
 	for i := 0; i < 30; i++ {
