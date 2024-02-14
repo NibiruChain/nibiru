@@ -29,7 +29,7 @@ var (
 	_ module.AppModuleSimulation = AppModule{}
 )
 
-// app module Basics object
+// AppModuleBasic struct
 type AppModuleBasic struct{}
 
 // Name returns the inflation module's name.
@@ -39,7 +39,7 @@ func (AppModuleBasic) Name() string {
 
 // RegisterLegacyAminoCodec registers the inflation module's types on the given LegacyAmino codec.
 func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	// types.RegisterLegacyAminoCodec(cdc)
+	types.RegisterLegacyAminoCodec(cdc)
 }
 
 // ConsensusVersion returns the consensus state-breaking version for the module.
