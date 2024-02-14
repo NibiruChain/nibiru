@@ -18,7 +18,7 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 	return &msgServer{Keeper: keeper}
 }
 
-// EditOracleParams: gRPC tx msg for editing the inflation module params.
+// EditInflationParams: gRPC tx msg for editing the inflation module params.
 // [SUDO] Only callable by sudoers.
 func (ms msgServer) EditInflationParams(
 	goCtx context.Context, msg *types.MsgEditInflationParams,
