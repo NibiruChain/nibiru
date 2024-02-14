@@ -36,9 +36,9 @@ echo_success() {
 
 # Flag parsing: --flag-name (BASH_VAR_NAME)
 #
-# --no-build ($FLAG_NO_BUILD): toggles whether to build from source. The default 
-#   behavior of the script is to run make install. 
-FLAG_NO_BUILD=false 
+# --no-build ($FLAG_NO_BUILD): toggles whether to build from source. The default
+#   behavior of the script is to run make install.
+FLAG_NO_BUILD=false
 
 build_from_source() {
   echo_info "Building from source..."
@@ -53,19 +53,16 @@ build_from_source() {
 echo_info "Parsing flags for the script..."
 
 # Iterate over all arguments to the script
-for arg in "$@"
-do
-  if [ "$arg" == "--no-build" ] ; then
+for arg in "$@"; do
+  if [ "$arg" == "--no-build" ]; then
     FLAG_NO_BUILD=true
   fi
 done
 
-
 # Check if FLAG_NO_BUILD was set to true
-if ! $FLAG_NO_BUILD ; then
+if ! $FLAG_NO_BUILD; then
   build_from_source
 fi
-
 
 # Set localnet settings
 BINARY="nibid"
@@ -77,7 +74,6 @@ GENESIS_COINS="10000000000000unibi,10000000000000unusd,10000000000000uusdt,10000
 CHAIN_DIR="$HOME/.nibid"
 echo "CHAIN_DIR: $CHAIN_DIR"
 echo "CHAIN_ID: $CHAIN_ID"
-
 
 SEDOPTION=""
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -131,7 +127,6 @@ sed -i $SEDOPTION 's/swagger = false/swagger = true/' $CHAIN_DIR/config/app.toml
 # Enable CORS for localnet
 echo_info "config/app.toml: Enabling CORS"
 sed -i $SEDOPTION 's/enabled-unsafe-cors = false/enabled-unsafe-cors = true/' $CHAIN_DIR/config/app.toml
-
 
 echo_info "Adding genesis accounts..."
 
@@ -236,6 +231,8 @@ add_genesis_param '.app_state.oracle.exchange_rates[0].pair = "ubtc:uuusd"'
 add_genesis_param '.app_state.oracle.exchange_rates[0].exchange_rate = "'"$price_btc"'"'
 add_genesis_param '.app_state.oracle.exchange_rates[1].pair = "ueth:uuusd"'
 add_genesis_param '.app_state.oracle.exchange_rates[1].exchange_rate = "'"$price_eth"'"'
+
+add_genesis_param '.app_state.inflation.params.inflation_enabled = false'
 
 # ------------------------------------------------------------------------
 # Gentx
