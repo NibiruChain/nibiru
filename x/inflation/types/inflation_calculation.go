@@ -4,7 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// CalculateEpochProvisions returns mint provision per epoch
+// CalculateEpochMintProvision returns mint provision per epoch
 func CalculateEpochMintProvision(
 	params Params,
 	period uint64,
