@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -126,7 +125,6 @@ $ nibid tx oracle edit-params --staking-proportion 0.6 --community-pool-proporti
 
 			if polynomialFactors, _ := cmd.Flags().GetString("polynomial-factors"); polynomialFactors != "" {
 				polynomialFactorsArr := strings.Split(polynomialFactors, ",")
-				fmt.Println(polynomialFactorsArr)
 				realPolynomialFactors := make([]sdk.Dec, len(polynomialFactorsArr))
 				for i, factor := range polynomialFactorsArr {
 					factorDec := sdk.MustNewDecFromStr(factor)
