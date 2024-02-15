@@ -9,6 +9,7 @@ import (
 
 var (
 	KeyInflationEnabled      = []byte("InflationEnabled")
+	KeyHasInflationStarted   = []byte("HasInflationStarted")
 	KeyPolynomialFactors     = []byte("PolynomialFactors")
 	KeyInflationDistribution = []byte("InflationDistribution")
 	KeyEpochsPerPeriod       = []byte("EpochsPerPeriod")
@@ -40,6 +41,7 @@ func NewParams(
 	polynomialCalculation []sdk.Dec,
 	inflationDistribution InflationDistribution,
 	inflationEnabled bool,
+	hasInflationStarted bool,
 	epochsPerPeriod,
 	periodsPerYear,
 	maxPeriod uint64,
@@ -48,6 +50,7 @@ func NewParams(
 		PolynomialFactors:     polynomialCalculation,
 		InflationDistribution: inflationDistribution,
 		InflationEnabled:      inflationEnabled,
+		HasInflationStarted:   hasInflationStarted,
 		EpochsPerPeriod:       epochsPerPeriod,
 		PeriodsPerYear:        periodsPerYear,
 		MaxPeriod:             maxPeriod,
@@ -60,6 +63,7 @@ func DefaultParams() Params {
 		PolynomialFactors:     DefaultPolynomialFactors,
 		InflationDistribution: DefaultInflationDistribution,
 		InflationEnabled:      DefaultInflation,
+		HasInflationStarted:   DefaultInflation,
 		EpochsPerPeriod:       DefaultEpochsPerPeriod,
 		PeriodsPerYear:        DefaultPeriodsPerYear,
 		MaxPeriod:             DefaultMaxPeriod,
@@ -161,6 +165,9 @@ func (p Params) Validate() error {
 		return err
 	}
 	if err := validateUint64(p.MaxPeriod); err != nil {
+		return err
+	}
+	if err := validateBool(p.HasInflationStarted); err != nil {
 		return err
 	}
 
