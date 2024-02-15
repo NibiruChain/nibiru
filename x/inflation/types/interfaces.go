@@ -4,8 +4,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
-
-	epochsTypes "github.com/NibiruChain/nibiru/x/epochs/types"
 )
 
 // AccountKeeper defines the contract required for account APIs.
@@ -45,8 +43,4 @@ type StakingKeeper interface {
 type SudoKeeper interface {
 	GetRootAddr(ctx sdk.Context) (sdk.AccAddress, error)
 	CheckPermissions(contract sdk.AccAddress, ctx sdk.Context) error
-}
-
-type EpochsKeeper interface {
-	GetEpochInfo(ctx sdk.Context, epochIdentifier string) (epochsTypes.EpochInfo, error)
 }

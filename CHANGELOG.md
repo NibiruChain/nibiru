@@ -58,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1706](https://github.com/NibiruChain/nibiru/pull/706) - fix: `v1.1.0` upgrade handler
 * [#1786](https://github.com/NibiruChain/nibiru/pull/1786) - fix(inflation): fix inflation off-by 2 error
 * [#1796](https://github.com/NibiruChain/nibiru/pull/1796) - fix(inflation): fix num skipped epoch when inflation is added to an existing chain
+* [#1797](https://github.com/NibiruChain/nibiru/pull/1797) - fix(inflation): fix num skipped epoch updates logic
 
 ### Improvements
 
