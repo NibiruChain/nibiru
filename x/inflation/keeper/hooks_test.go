@@ -223,14 +223,16 @@ func TestManual(t *testing.T) {
 	// We turn it on again and check if the balance is increasing again with the correct amount
 
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
+	inflationKeeper := nibiruApp.InflationKeeper
 
-	params := nibiruApp.InflationKeeper.GetParams(ctx)
-	epochNumber := uint64(0)
+	params := inflationKeeper.GetParams(ctx)
+	epochNumber := uint64(1)
 
 	params.InflationEnabled = false
+	params.HasInflationStarted = false
 	params.EpochsPerPeriod = 30
 
-	// y = 30 * x + 30 -> 3 nibi per epoch for period 0, 6 nibi per epoch for period 1
+	// y = 3 * x + 3 -> 3 nibi per epoch for period 0, 6 nibi per epoch for period 1
 	params.PolynomialFactors = []sdk.Dec{sdk.NewDec(3), sdk.NewDec(3)}
 	params.InflationDistribution = types.InflationDistribution{
 		CommunityPool:     sdk.ZeroDec(),
@@ -238,15 +240,17 @@ func TestManual(t *testing.T) {
 		StrategicReserves: sdk.ZeroDec(),
 	}
 
-	nibiruApp.InflationKeeper.Params.Set(ctx, params)
+	inflationKeeper.Params.Set(ctx, params)
 
 	require.Equal(t, sdk.ZeroInt(), GetBalanceStaking(ctx, nibiruApp))
 
 	for i := 0; i < 42069; i++ {
-		nibiruApp.InflationKeeper.AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
+		inflationKeeper.AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
 		epochNumber++
 	}
 	require.Equal(t, sdk.ZeroInt(), GetBalanceStaking(ctx, nibiruApp))
+	require.EqualValues(t, uint64(0), inflationKeeper.CurrentPeriod.Peek(ctx))
+	require.EqualValues(t, uint64(42069), inflationKeeper.NumSkippedEpochs.Peek(ctx))
 
 	nibiruApp.EpochsKeeper.Epochs.Insert(ctx, epochstypes.DayEpochID, epochstypes.EpochInfo{
 		Identifier:              epochstypes.DayEpochID,
@@ -258,34 +262,42 @@ func TestManual(t *testing.T) {
 		CurrentEpochStartHeight: 0,
 	},
 	)
-	err := nibiruApp.InflationKeeper.Sudo().ToggleInflation(ctx, true, testapp.DefaultSudoRoot())
+	err := inflationKeeper.Sudo().ToggleInflation(ctx, true, testapp.DefaultSudoRoot())
 	require.NoError(t, err)
 
+	// Period 0 - inflate 3M NIBI over 30 epochs or 100k uNIBI per epoch
 	for i := 0; i < 30; i++ {
-		nibiruApp.InflationKeeper.AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
+		inflationKeeper.AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
 		require.Equal(t, sdk.NewInt(100_000).Mul(sdk.NewInt(int64(i+1))), GetBalanceStaking(ctx, nibiruApp))
 		epochNumber++
 	}
 	require.Equal(t, sdk.NewInt(3_000_000), GetBalanceStaking(ctx, nibiruApp))
+	require.EqualValues(t, uint64(1), inflationKeeper.CurrentPeriod.Peek(ctx))
+	require.EqualValues(t, uint64(42069), inflationKeeper.NumSkippedEpochs.Peek(ctx))
 
-	err = nibiruApp.InflationKeeper.Sudo().ToggleInflation(ctx, false, testapp.DefaultSudoRoot())
+	err = inflationKeeper.Sudo().ToggleInflation(ctx, false, testapp.DefaultSudoRoot())
 	require.NoError(t, err)
 
 	for i := 0; i < 42069; i++ {
-		nibiruApp.InflationKeeper.AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
+		inflationKeeper.AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
 		epochNumber++
 	}
 	require.Equal(t, sdk.NewInt(3_000_000), GetBalanceStaking(ctx, nibiruApp))
+	require.EqualValues(t, uint64(1), inflationKeeper.CurrentPeriod.Peek(ctx))
+	require.EqualValues(t, uint64(84138), inflationKeeper.NumSkippedEpochs.Peek(ctx))
 
-	err = nibiruApp.InflationKeeper.Sudo().ToggleInflation(ctx, true, testapp.DefaultSudoRoot())
+	err = inflationKeeper.Sudo().ToggleInflation(ctx, true, testapp.DefaultSudoRoot())
 	require.NoError(t, err)
 
-	// Period 1 - we do 200_000 per periods now
+	// Period 1 - inflate 6M NIBI over 30 epochs or 200k uNIBI per epoch
 	for i := 0; i < 30; i++ {
-		nibiruApp.InflationKeeper.AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
+		inflationKeeper.AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
 		require.Equal(t, sdk.NewInt(3_000_000).Add(sdk.NewInt(200_000).Mul(sdk.NewInt(int64(i+1)))), GetBalanceStaking(ctx, nibiruApp))
 		epochNumber++
 	}
-	require.EqualValues(t, epochNumber, uint64(2*42069+60))
 	require.Equal(t, sdk.NewInt(9_000_000), GetBalanceStaking(ctx, nibiruApp))
+	require.EqualValues(t, uint64(2), inflationKeeper.CurrentPeriod.Peek(ctx))
+	require.EqualValues(t, uint64(84138), inflationKeeper.NumSkippedEpochs.Peek(ctx))
+
+	require.EqualValues(t, uint64(1+2*42069+60), epochNumber)
 }
