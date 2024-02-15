@@ -2,7 +2,7 @@ package types
 
 // Minting module event types
 const (
-	EventTypeMint = ModuleName
+	EventTypeInflation = ModuleName
 
 	AttributeKeyEpochProvisions = "epoch_provisions"
 	AttributeEpochNumber        = "epoch_number"

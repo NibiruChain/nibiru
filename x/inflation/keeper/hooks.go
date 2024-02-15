@@ -27,14 +27,22 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 
 	// Skip inflation if it is disabled and increment number of skipped epochs
 	if !params.InflationEnabled {
-		prevSkippedEpochs := k.NumSkippedEpochs.Next(ctx)
+		var prevSkippedEpochs uint64
+		if !params.HasInflationStarted {
+			// If the inflation never started, we use epochNumber as the number of skipped epochs
+			// to avoid missing periods when we upgrade a chain.
+			k.NumSkippedEpochs.Set(ctx, epochNumber)
+			prevSkippedEpochs = epochNumber
+		} else {
+			prevSkippedEpochs = k.NumSkippedEpochs.Next(ctx)
+		}
 
 		k.Logger(ctx).Debug(
 			"skipping inflation mint and allocation",
 			"height", ctx.BlockHeight(),
 			"epoch-id", epochIdentifier,
 			"epoch-number", epochNumber,
-			"skipped-epochs", prevSkippedEpochs+1,
+			"skipped-epochs", prevSkippedEpochs,
 		)
 		return
 	}
@@ -76,15 +84,19 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 	// where inflation minted tokens.
 	//
 	// Examples:
-	// Given, epochNumber = 1, period = 0, epochPerPeriod = 365, skippedEpochs = 0
-	//   => 1 - 365 * 0 - 0 < 365 --- nothing to do here
-	// Given, epochNumber = 741, period = 1, epochPerPeriod = 365, skippedEpochs = 10
-	//   => 741 - 1 * 365 - 10 > 365 --- a period has passed! we set a new period
-	peek := k.NumSkippedEpochs.Peek(ctx)
+	// Given, epochNumber = 1, period = 0, epochPerPeriod = 30, skippedEpochs = 0
+	//   => 1 - 30 * 0 - 0 < 30 --- nothing to do here
+	// Given, epochNumber = 70, period = 1, epochPerPeriod = 30, skippedEpochs = 10
+	//   => 70 - 1 * 30 - 10 >= 30 --- a period has ended! we set a new period
+	// Given, epochNumber = 42099, period = 0, epochPerPeriod = 30, skippedEpochs = 42069
+	//   => 42099 - 0 * 30 - 42069 >= 30 --- a period has ended! we set a new period
+	numSkippedEpochs := k.NumSkippedEpochs.Peek(ctx)
 	if int64(epochNumber)-
 		int64(epochsPerPeriod*period)-
-		int64(peek) >= int64(epochsPerPeriod)-1 {
-		k.CurrentPeriod.Next(ctx)
+		int64(numSkippedEpochs) >= int64(epochsPerPeriod) {
+		prevPeriod := k.CurrentPeriod.Next(ctx)
+
+		k.Logger(ctx).Info(fmt.Sprintf("setting new period: %d", prevPeriod+1))
 	}
 
 	defer func() {
@@ -124,8 +136,8 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			types.EventTypeMint,
-			sdk.NewAttribute(types.AttributeEpochNumber, fmt.Sprintf("%d", epochNumber)),
+			types.EventTypeInflation,
+			sdk.NewAttribute(types.AttributeEpochNumber, fmt.Sprintf("%d", epochNumber-numSkippedEpochs)),
 			sdk.NewAttribute(types.AttributeKeyEpochProvisions, epochMintProvision.String()),
 			sdk.NewAttribute(sdk.AttributeKeyAmount, mintedCoin.Amount.String()),
 		),
