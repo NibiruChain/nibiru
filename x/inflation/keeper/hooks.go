@@ -28,12 +28,12 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 	// Skip inflation if it is disabled and increment number of skipped epochs
 	if !params.InflationEnabled {
 		var prevSkippedEpochs uint64
-		if k.NumSkippedEpochs.Peek(ctx) > 0 {
-			// We only update skipped epoch if inflation was toggled on
-			// because otherwise it's tracked on the first toggled on run
-			prevSkippedEpochs = k.NumSkippedEpochs.Next(ctx)
+		if !params.HasInflationStarted {
+			// If the inflation never started, we use epochNumber as the number of skipped epochs
+			// to avoid missing periods when we upgrade a chain.
+			prevSkippedEpochs = epochNumber
 		} else {
-			prevSkippedEpochs = 0
+			prevSkippedEpochs = k.NumSkippedEpochs.Next(ctx)
 		}
 
 		k.Logger(ctx).Debug(

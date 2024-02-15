@@ -56,7 +56,7 @@ func TestPeriodChangesSkippedEpochsAfterEpochEnd(t *testing.T) {
 			currentPeriod:    0,
 			height:           epochsPerPeriod - 10, // so it's within range
 			epochIdentifier:  epochstypes.DayEpochID,
-			skippedEpochs:    0,
+			skippedEpochs:    20,
 			InflationEnabled: false,
 			periodChanges:    false,
 		},
@@ -65,7 +65,7 @@ func TestPeriodChangesSkippedEpochsAfterEpochEnd(t *testing.T) {
 			currentPeriod:    0,
 			height:           epochsPerPeriod - 10, // so it's within range
 			epochIdentifier:  epochstypes.WeekEpochID,
-			skippedEpochs:    0,
+			skippedEpochs:    21,
 			InflationEnabled: false,
 			periodChanges:    false,
 		},
@@ -74,7 +74,7 @@ func TestPeriodChangesSkippedEpochsAfterEpochEnd(t *testing.T) {
 			currentPeriod:    0,
 			height:           epochsPerPeriod - 10, // so it's within range
 			epochIdentifier:  epochstypes.DayEpochID,
-			skippedEpochs:    0,
+			skippedEpochs:    21,
 			InflationEnabled: false,
 			periodChanges:    false,
 		},
@@ -164,6 +164,7 @@ func TestPeriodChangesSkippedEpochsAfterEpochEnd(t *testing.T) {
 		t.Run(fmt.Sprintf("Case %s", tc.name), func(t *testing.T) {
 			params := nibiruApp.InflationKeeper.GetParams(ctx)
 			params.InflationEnabled = tc.InflationEnabled
+			params.HasInflationStarted = tc.InflationEnabled
 			nibiruApp.InflationKeeper.Params.Set(ctx, params)
 
 			nibiruApp.InflationKeeper.NumSkippedEpochs.Set(ctx, tc.skippedEpochs)
@@ -199,7 +200,7 @@ func TestPeriodChangesSkippedEpochsAfterEpochEnd(t *testing.T) {
 				if !tc.InflationEnabled {
 					// Check for epochIdentifier for skippedEpoch increment
 					if tc.epochIdentifier == epochstypes.DayEpochID {
-						require.Equal(t, currentSkippedEpochs+1, skippedEpochs)
+						require.EqualValues(t, currentSkippedEpochs, skippedEpochs)
 					}
 				}
 			}

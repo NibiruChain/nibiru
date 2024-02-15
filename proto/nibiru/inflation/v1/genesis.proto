@@ -42,4 +42,9 @@ message Params {
   // max_period is the maximum number of periods that have inflation being 
   // paid off. After this period, inflation will be disabled.
   uint64 max_period = 6;
+
+  // has_inflation_started is the parameter that indicates if inflation has
+  // started. It's set to false at the starts, and stays at true when we toggle
+  // inflation on. It's used to track num skipped epochs
+  bool has_inflation_started = 7;
 }

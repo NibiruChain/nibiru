@@ -58,16 +58,14 @@ func (k sudoExtension) ToggleInflation(
 	}
 
 	params.InflationEnabled = enabled
-	if k.NumSkippedEpochs.Peek(ctx) == 0 {
-		// update skipped epochs since this means that inflation could have
-		// added to the chain after launch
-
+	if enabled && !params.HasInflationStarted {
 		epochInfo, err := k.epochsKeeper.GetEpochInfo(ctx, epochstypes.DayEpochID)
 		if err != nil {
 			return err
 		}
 
 		k.NumSkippedEpochs.Set(ctx, epochInfo.CurrentEpoch)
+		params.HasInflationStarted = true
 	}
 
 	k.Params.Set(ctx, params)
