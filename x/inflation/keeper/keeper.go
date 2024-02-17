@@ -11,23 +11,42 @@ import (
 	"github.com/NibiruChain/nibiru/x/inflation/types"
 )
 
-// Keeper of the inflation store
+// Keeper of the inflation module. Keepers are module-specific "gate keepers"
+// responsible for encapsulating access to the key-value stores (state) of the
+// network. The functions on the Keeper contain all of the business logic for
+// reading and modifying state.
 type Keeper struct {
-	cdc        codec.BinaryCodec
-	storeKey   storetypes.StoreKey
-	paramSpace paramstypes.Subspace
+	cdc      codec.BinaryCodec
+	storeKey storetypes.StoreKey
 
-	// the address capable of executing a MsgUpdateParams message. Typically, this should be the x/gov module account.
-	accountKeeper    types.AccountKeeper
-	bankKeeper       types.BankKeeper
-	distrKeeper      types.DistrKeeper
-	stakingKeeper    types.StakingKeeper
-	sudoKeeper       types.SudoKeeper
+	accountKeeper types.AccountKeeper
+	bankKeeper    types.BankKeeper
+	distrKeeper   types.DistrKeeper
+	stakingKeeper types.StakingKeeper
+	sudoKeeper    types.SudoKeeper
+	// feeCollectorName is the name of of x/auth module's fee collector module
+	// account, "fee_collector", which collects transaction fees for distribution
+	// to all stakers.
+	// By sending staking inflation to the fee collector, the tokens are properly
+	// distributed to validator operators and their delegates.
+	// See the `[AllocateTokens]` function from x/distribution to learn more.
+	// [AllocateTokens]: https://github.com/cosmos/cosmos-sdk/blob/v0.50.3/x/distribution/keeper/allocation.go
 	feeCollectorName string
 
-	CurrentPeriod    collections.Sequence
+	// CurrentPeriod: Strictly increasing counter for the inflation "period".
+	CurrentPeriod collections.Sequence
+
+	// NumSkippedEpochs: Strictly increasing counter for the number of skipped
+	// epochs. Inflation epochs are skipped when [types.Params.InflationEnabled]
+	// is false so that gaps in the active status of inflation don't mess up the
+	// polynomial computation. It allows inflation to smoothly be toggled on and
+	// off.
 	NumSkippedEpochs collections.Sequence
-	Params           collections.Item[types.Params]
+
+	// Params stores module-specific parameters that specify the blockchain token
+	// economics, token release schedule, maximum supply, and whether or not
+	// inflation is enabled on the network.
+	Params collections.Item[types.Params]
 }
 
 // NewKeeper creates a new mint Keeper instance
@@ -50,7 +69,6 @@ func NewKeeper(
 	return Keeper{
 		storeKey:         storeKey,
 		cdc:              cdc,
-		paramSpace:       paramspace,
 		accountKeeper:    accountKeeper,
 		bankKeeper:       bankKeeper,
 		distrKeeper:      distributionKeeper,
