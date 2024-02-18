@@ -1,4 +1,7 @@
-BINARY="./nibid"
+#!/bin/bash
+set -e
+
+BINARY="nibid"
 DENOM="unibi"
 CHAIN_ID="nibiru-localnet-0"
 TXFLAG="--gas-prices 0.1$DENOM --gas auto --gas-adjustment 1.3 -y -b block --chain-id $CHAIN_ID"

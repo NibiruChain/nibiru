@@ -26,6 +26,12 @@ type Keeper struct {
 	wasmKeeper    wasmkeeper.Keeper
 	accountKeeper devgastypes.AccountKeeper
 
+	// feeCollectorName is the name of of x/auth module's fee collector module
+	// account, "fee_collector", which collects transaction fees for distribution
+	// to all stakers.
+	//
+	// See the `[AllocateTokens]` function from x/distribution to learn more.
+	// [AllocateTokens]: https://github.com/cosmos/cosmos-sdk/blob/v0.50.3/x/distribution/keeper/allocation.go
 	feeCollectorName string
 
 	// DevGasStore: IndexedMap

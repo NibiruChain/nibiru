@@ -12,18 +12,39 @@ import (
 	"github.com/NibiruChain/nibiru/x/inflation/types"
 )
 
-// BeforeEpochStart noop, We don't need to do anything here
-func (k Keeper) BeforeEpochStart(_ sdk.Context, _ string, _ uint64) {}
+// Hooks implements module-specific calls ([epochstypes.EpochHooks]) that will
+// occur at the end of every epoch. Hooks is meant for use with with
+// `EpochsKeeper.SetHooks`. These functions run outside of the normal body of
+// transactions.
+type Hooks struct {
+	K Keeper
+}
 
+var _ epochstypes.EpochHooks = Hooks{}
+
+// Hooks implements module-speecific calls that will occur in the ABCI
+// BeginBlock logic.
+func (k Keeper) Hooks() Hooks {
+	return Hooks{k}
+}
+
+// BeforeEpochStart is a hook that runs just prior to the start of a new epoch.
+func (h Hooks) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNumber uint64) {
+	// Perform no operations; we don't need to do anything here
+	_, _, _ = ctx, epochIdentifier, epochNumber
+}
+
+// AfterEpochEnd is a hook that runs just prior to the first block whose
+// timestamp is after the end of an epoch duration.
 // AfterEpochEnd mints and allocates coins at the end of each epoch.
 // If inflation is disabled as a module parameter, the state for
 // "NumSkippedEpochs" increments.
-func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumber uint64) {
+func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumber uint64) {
 	if epochIdentifier != epochstypes.DayEpochID {
 		return
 	}
 
-	params := k.GetParams(ctx)
+	params := h.K.GetParams(ctx)
 
 	// Skip inflation if it is disabled and increment number of skipped epochs
 	if !params.InflationEnabled {
@@ -31,13 +52,13 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 		if !params.HasInflationStarted {
 			// If the inflation never started, we use epochNumber as the number of skipped epochs
 			// to avoid missing periods when we upgrade a chain.
-			k.NumSkippedEpochs.Set(ctx, epochNumber)
+			h.K.NumSkippedEpochs.Set(ctx, epochNumber)
 			prevSkippedEpochs = epochNumber
 		} else {
-			prevSkippedEpochs = k.NumSkippedEpochs.Next(ctx)
+			prevSkippedEpochs = h.K.NumSkippedEpochs.Next(ctx)
 		}
 
-		k.Logger(ctx).Debug(
+		h.K.Logger(ctx).Debug(
 			"skipping inflation mint and allocation",
 			"height", ctx.BlockHeight(),
 			"epoch-id", epochIdentifier,
@@ -48,8 +69,8 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 	}
 
 	// mint coins, update supply
-	period := k.CurrentPeriod.Peek(ctx)
-	epochsPerPeriod := k.GetEpochsPerPeriod(ctx)
+	period := h.K.CurrentPeriod.Peek(ctx)
+	epochsPerPeriod := h.K.GetEpochsPerPeriod(ctx)
 
 	epochMintProvision := types.CalculateEpochMintProvision(
 		params,
@@ -57,7 +78,7 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 	)
 
 	if !epochMintProvision.IsPositive() {
-		k.Logger(ctx).Error(
+		h.K.Logger(ctx).Error(
 			"SKIPPING INFLATION: negative epoch mint provision",
 			"value", epochMintProvision.String(),
 		)
@@ -69,9 +90,9 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 		Amount: epochMintProvision.TruncateInt(),
 	}
 
-	staking, strategic, communityPool, err := k.MintAndAllocateInflation(ctx, mintedCoin, params)
+	staking, strategic, communityPool, err := h.K.MintAndAllocateInflation(ctx, mintedCoin, params)
 	if err != nil {
-		k.Logger(ctx).Error(
+		h.K.Logger(ctx).Error(
 			"SKIPPING INFLATION: failed to mint and allocate inflation",
 			"error", err,
 		)
@@ -84,19 +105,22 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 	// where inflation minted tokens.
 	//
 	// Examples:
-	// Given, epochNumber = 1, period = 0, epochPerPeriod = 30, skippedEpochs = 0
-	//   => 1 - 30 * 0 - 0 < 30 --- nothing to do here
-	// Given, epochNumber = 70, period = 1, epochPerPeriod = 30, skippedEpochs = 10
-	//   => 70 - 1 * 30 - 10 >= 30 --- a period has ended! we set a new period
-	// Given, epochNumber = 42099, period = 0, epochPerPeriod = 30, skippedEpochs = 42069
-	//   => 42099 - 0 * 30 - 42069 >= 30 --- a period has ended! we set a new period
-	numSkippedEpochs := k.NumSkippedEpochs.Peek(ctx)
+	//  Given, epochNumber = 1, period = 0, epochPerPeriod = 30, skippedEpochs = 0
+	//    => 1 - 30 * 0 - 0 < 30
+	//    => nothing to do here
+	//  Given, epochNumber = 70, period = 1, epochPerPeriod = 30, skippedEpochs = 10
+	//    => 70 - 1 * 30 - 10 >= 30
+	//    => a period has ended! we set a new period
+	//  Given, epochNumber = 42099, period = 0, epochPerPeriod = 30, skippedEpochs = 42069
+	//    => 42099 - 0 * 30 - 42069 >= 30
+	//    => a period has ended! we set a new period
+	numSkippedEpochs := h.K.NumSkippedEpochs.Peek(ctx)
 	if int64(epochNumber)-
 		int64(epochsPerPeriod*period)-
 		int64(numSkippedEpochs) >= int64(epochsPerPeriod) {
-		prevPeriod := k.CurrentPeriod.Next(ctx)
+		periodBeforeIncrement := h.K.CurrentPeriod.Next(ctx)
 
-		k.Logger(ctx).Info(fmt.Sprintf("setting new period: %d", prevPeriod+1))
+		h.K.Logger(ctx).Info(fmt.Sprintf("setting new period: %d", periodBeforeIncrement+1))
 	}
 
 	defer func() {
@@ -142,27 +166,4 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 			sdk.NewAttribute(sdk.AttributeKeyAmount, mintedCoin.Amount.String()),
 		),
 	)
-}
-
-// ___________________________________________________________________________________________________
-
-// Hooks wrapper struct for inflation keeper
-type Hooks struct {
-	k Keeper
-}
-
-var _ epochstypes.EpochHooks = Hooks{}
-
-// Return the wrapper struct
-func (k Keeper) Hooks() Hooks {
-	return Hooks{k}
-}
-
-// epochs hooks
-func (h Hooks) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNumber uint64) {
-	h.k.BeforeEpochStart(ctx, epochIdentifier, epochNumber)
-}
-
-func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumber uint64) {
-	h.k.AfterEpochEnd(ctx, epochIdentifier, epochNumber)
 }
