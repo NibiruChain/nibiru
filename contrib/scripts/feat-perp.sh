@@ -37,8 +37,7 @@ add_genesis_perp_markets_with_coingecko_prices() {
     fi
   }
 
-  nibid genesis add-genesis-perp-market --pair=ubtc:unusd --sqrt-depth="$reserve_amt" --price-multiplier="$price_btc" --oracle-pair="ubtc:uusd"
-  check_fail nibid genesis add-genesis-perp-market
+  check_fail nibid genesis add-genesis-perp-market --pair="ubtc:unusd" --sqrt-depth="$reserve_amt" --price-multiplier="$price_btc" --oracle-pair="ubtc:uusd"
 
   price_eth=$(cat tmp_market_prices.json | jq -r '.ethereum.usd')
   price_eth=${price_eth%.*}
@@ -46,8 +45,7 @@ add_genesis_perp_markets_with_coingecko_prices() {
     return 1
   fi
 
-  nibid genesis add-genesis-perp-market --pair=ueth:unusd --sqrt-depth=$reserve_amt --price-multiplier="$price_eth" --oracle-pair="ueth:uusd"
-  check_fail nibid genesis add-genesis-perp-market
+  check_fail nibid genesis add-genesis-perp-market --pair="ueth:unusd" --sqrt-depth=$reserve_amt --price-multiplier="$price_eth" --oracle-pair="ueth:uusd"
 
   echo 'tmp_market_prices: '
   cat $temp_json_fname | jq .
@@ -55,10 +53,10 @@ add_genesis_perp_markets_with_coingecko_prices() {
 }
 
 add_genesis_perp_markets_offline() {
-  local reserve_amt=$(add_genesis_reserve_amt)
+  local reserve_amt
+  reserve_amt=$(add_genesis_reserve_amt)
   price_btc="20000"
   price_eth="2000"
-  nibid genesis add-genesis-perp-market --pair=ubtc:unusd --sqrt-depth=$reserve_amt --price-multiplier=$price_btc
-  nibid genesis add-genesis-perp-market --pair=ueth:unusd --sqrt-depth=$reserve_amt --price-multiplier=$price_eth
+  nibid genesis add-genesis-perp-market --pair="ubtc:unusd" --sqrt-depth="$reserve_amt" --price-multiplier="$price_btc" --oracle-pair="ubtc:uusd"
+  nibid genesis add-genesis-perp-market --pair="ueth:unusd" --sqrt-depth="$reserve_amt" --price-multiplier="$price_eth" --oracle-pair="ueth:uusd"
 }
-

@@ -46,7 +46,7 @@ add_genesis_param() {
 
 curr_dir="$(dirname "$0")"
 source "$curr_dir/feat-perp.sh"
-add_genesis_perp_markets_with_coingecko_prices
+add_genesis_perp_markets_offline
 
 # recover mnemonic
 echo "$MNEMONIC" | nibid keys add validator --recover
