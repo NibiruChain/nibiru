@@ -10,7 +10,21 @@ import (
 	"github.com/NibiruChain/nibiru/x/inflation/types"
 )
 
-// MintAndAllocateInflation performs inflation minting and allocation
+// MintAndAllocateInflation mints and allocates tokens based on the polynomial
+// inflation coefficients and current block height.
+//
+// Args:
+//   - coins: Tokens to be minted.
+//   - params:
+//
+// Returns:
+//   - staking: Tokens minted for staking inflation that go to the decentralized
+//     validator set and delegators. This is handled by the `auth` module fee
+//     collector.
+//   - strategic: Tokens minted to the Strategic Reserve, the root account fo the
+//     x/sudo module.
+//   - community: Tokens minted to the Community Pool, which is managed strictly
+//     by on-chain governance.
 func (k Keeper) MintAndAllocateInflation(
 	ctx sdk.Context,
 	coins sdk.Coin,
@@ -33,18 +47,23 @@ func (k Keeper) MintAndAllocateInflation(
 	return k.AllocatePolynomialInflation(ctx, coins, params)
 }
 
-// MintCoins implements an alias call to the underlying supply keeper's
-// MintCoins to be used in BeginBlocker.
+// MintCoins calls the underlying [BankKeeper] mints tokens "coin".
 func (k Keeper) MintCoins(ctx sdk.Context, coin sdk.Coin) error {
 	coins := sdk.Coins{coin}
 	return k.bankKeeper.MintCoins(ctx, types.ModuleName, coins)
 }
 
 // AllocatePolynomialInflation allocates coins from the inflation to external
-// modules according to allocation proportions:
-//   - staking rewards -> sdk `auth` module fee collector
-//   - strategic reserves -> root account of x/sudo module
-//   - community pool -> `sdk `distr` module community pool
+// modules according to proportions proportions:
+//
+// Returns:
+//   - staking: Tokens minted for staking inflation that go to the decentralized
+//     validator set and delegators. This is handled by the `auth` module fee
+//     collector.
+//   - strategic: Tokens minted to the Strategic Reserve, the root account fo the
+//     x/sudo module.
+//   - community: Tokens minted to the Community Pool, which is managed strictly
+//     by on-chain governance.
 func (k Keeper) AllocatePolynomialInflation(
 	ctx sdk.Context,
 	mintedCoin sdk.Coin,
@@ -55,27 +74,26 @@ func (k Keeper) AllocatePolynomialInflation(
 ) {
 	inflationDistribution := params.InflationDistribution
 	inflationModuleAddr := k.accountKeeper.GetModuleAddress(types.ModuleName)
+
 	// Allocate staking rewards into fee collector account
 	staking = k.GetProportions(ctx, mintedCoin, inflationDistribution.StakingRewards)
-
 	if err := k.bankKeeper.SendCoinsFromModuleToModule(
 		ctx,
 		types.ModuleName,
 		k.feeCollectorName,
 		sdk.NewCoins(staking),
 	); err != nil {
-		return sdk.Coin{}, sdk.Coin{}, sdk.Coin{}, err
+		return staking, strategic, community, err
 	}
 
 	// Allocate community pool rewards into community pool
 	community = k.GetProportions(ctx, mintedCoin, inflationDistribution.CommunityPool)
-
 	if err = k.distrKeeper.FundCommunityPool(
 		ctx,
 		sdk.NewCoins(community),
 		inflationModuleAddr,
 	); err != nil {
-		return sdk.Coin{}, sdk.Coin{}, sdk.Coin{}, err
+		return staking, strategic, community, err
 	}
 
 	// Remaining balance is strategic reserve allocation to the root account
@@ -88,10 +106,12 @@ func (k Keeper) AllocatePolynomialInflation(
 		return staking, strategic, community, err
 	}
 
-	if err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, strategicAccountAddr, sdk.NewCoins(strategic)); err != nil {
+	if err = k.bankKeeper.SendCoinsFromModuleToAccount(
+		ctx, types.ModuleName, strategicAccountAddr, sdk.NewCoins(strategic),
+	); err != nil {
 		err := fmt.Errorf("inflation error: failed to send coins to sudo root account: %w", err)
 		k.Logger(ctx).Error(err.Error())
-		return sdk.Coin{}, sdk.Coin{}, sdk.Coin{}, err
+		return staking, strategic, community, err
 	}
 
 	return staking, strategic, community, ctx.EventManager().EmitTypedEvents(

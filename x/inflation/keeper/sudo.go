@@ -8,21 +8,22 @@ import (
 	inflationtypes "github.com/NibiruChain/nibiru/x/inflation/types"
 )
 
-// Sudo extends the Keeper with sudo functions. See sudo.go.
+// Sudo extends the Keeper with sudo functions. See [x/sudo].
 //
-// These Sudo functions should:
+// These sudo functions should:
 // 1. Not be called in other methods in the module.
 // 2. Only be callable by the x/sudo root or sudo contracts.
 //
-// The intention behind "Keeper.Sudo()" is to make it more obvious to the
+// The intention behind "[Keeper.Sudo]" is to make it more obvious to the
 // developer that an unsafe function is being used when it's called.
+// [x/sudo]: https://pkg.go.dev/github.com/NibiruChain/nibiru@v1.1.0/x/sudo/keeper
 func (k Keeper) Sudo() sudoExtension { return sudoExtension{k} }
 
 type sudoExtension struct{ Keeper }
 
-// ------------------------------------------------------------------
-// Admin.EditInflationParams
-
+// EditInflationParams performs a partial struct update, or struct merge, on the
+// module parameters, given a subset of the params, `newParams`. Only the new
+// params are overwritten.
 func (k sudoExtension) EditInflationParams(
 	ctx sdk.Context, newParams inflationtypes.MsgEditInflationParams,
 	sender sdk.AccAddress,
@@ -44,6 +45,7 @@ func (k sudoExtension) EditInflationParams(
 	return paramsAfter.Validate()
 }
 
+// ToggleInflation disables (pauses) or enables (unpauses) inflation.
 func (k sudoExtension) ToggleInflation(
 	ctx sdk.Context, enabled bool, sender sdk.AccAddress,
 ) (err error) {
@@ -65,9 +67,10 @@ func (k sudoExtension) ToggleInflation(
 	return
 }
 
-// MergeInflationParams: Takes the given Inflation params and merges them into the
-// existing partial params, keeping any existing values that are not set in the
-// partial.
+// MergeInflationParams: Performs a partial struct update using [partial] and
+// merges its params into the existing [inflationParams], keeping any existing
+// values that are not set in the partial. For use with
+// [Keeper.EditInflationParams].
 func MergeInflationParams(
 	partial inflationtypes.MsgEditInflationParams,
 	inflationParams inflationtypes.Params,

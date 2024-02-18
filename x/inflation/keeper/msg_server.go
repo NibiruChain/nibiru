@@ -33,6 +33,8 @@ func (ms msgServer) EditInflationParams(
 	return resp, err
 }
 
+// ToggleInflation: gRPC tx msg for enabling or disabling token inflation.
+// [SUDO] Only callable by sudoers.
 func (ms msgServer) ToggleInflation(
 	goCtx context.Context, msg *types.MsgToggleInflation,
 ) (resp *types.MsgToggleInflationResponse, err error) {

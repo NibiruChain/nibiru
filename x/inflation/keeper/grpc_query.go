@@ -14,8 +14,8 @@ type querier struct {
 	Keeper
 }
 
-// NewQuerier returns an implementation of the oracle QueryServer interface
-// for the provided Keeper.
+// NewQuerier returns an implementation of the [types.QueryServer] interface
+// for the provided [Keeper].
 func NewQuerier(keeper Keeper) types.QueryServer {
 	return &querier{Keeper: keeper}
 }
