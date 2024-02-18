@@ -236,7 +236,7 @@ func TestManual(t *testing.T) {
 	require.Equal(t, sdk.ZeroInt(), GetBalanceStaking(ctx, nibiruApp))
 
 	for i := 0; i < 42069; i++ {
-		inflationKeeper.AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
+		inflationKeeper.Hooks().AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
 		epochNumber++
 	}
 	require.Equal(t, sdk.ZeroInt(), GetBalanceStaking(ctx, nibiruApp))
@@ -258,7 +258,7 @@ func TestManual(t *testing.T) {
 
 	// Period 0 - inflate 3M NIBI over 30 epochs or 100k uNIBI per epoch
 	for i := 0; i < 30; i++ {
-		inflationKeeper.AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
+		inflationKeeper.Hooks().AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
 		require.Equal(t, sdk.NewInt(100_000).Mul(sdk.NewInt(int64(i+1))), GetBalanceStaking(ctx, nibiruApp))
 		epochNumber++
 	}
@@ -270,7 +270,7 @@ func TestManual(t *testing.T) {
 	require.NoError(t, err)
 
 	for i := 0; i < 42069; i++ {
-		inflationKeeper.AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
+		inflationKeeper.Hooks().AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
 		epochNumber++
 	}
 	require.Equal(t, sdk.NewInt(3_000_000), GetBalanceStaking(ctx, nibiruApp))
@@ -282,7 +282,7 @@ func TestManual(t *testing.T) {
 
 	// Period 1 - inflate 6M NIBI over 30 epochs or 200k uNIBI per epoch
 	for i := 0; i < 30; i++ {
-		inflationKeeper.AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
+		inflationKeeper.Hooks().AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
 		require.Equal(t, sdk.NewInt(3_000_000).Add(sdk.NewInt(200_000).Mul(sdk.NewInt(int64(i+1)))), GetBalanceStaking(ctx, nibiruApp))
 		epochNumber++
 	}
