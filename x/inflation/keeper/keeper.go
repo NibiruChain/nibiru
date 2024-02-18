@@ -18,6 +18,9 @@ import (
 type Keeper struct {
 	cdc      codec.BinaryCodec
 	storeKey storetypes.StoreKey
+	// paramSpace: unused but present for backward compatibility. Removing this
+	// breaks the state machine and requires an upgrade.
+	paramSpace paramstypes.Subspace
 
 	accountKeeper types.AccountKeeper
 	bankKeeper    types.BankKeeper
@@ -69,6 +72,7 @@ func NewKeeper(
 	return Keeper{
 		storeKey:         storeKey,
 		cdc:              cdc,
+		paramSpace:       paramspace,
 		accountKeeper:    accountKeeper,
 		bankKeeper:       bankKeeper,
 		distrKeeper:      distributionKeeper,
