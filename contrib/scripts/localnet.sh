@@ -156,17 +156,16 @@ $BINARY config output json
 $BINARY config # Prints config.
 
 # Enable API Server
-config_app_toml="$CHAIN_DIR/config/app.toml"
 echo_info "config/app.toml: Enabling API server"
-sed -i "$SEDOPTION" '/\[api\]/,+3 s/enable = false/enable = true/' "$config_app_toml"
+sed -i $SEDOPTION '/\[api\]/,+3 s/enable = false/enable = true/' $CHAIN_DIR/config/app.toml
 
 # Enable Swagger Docs
 echo_info "config/app.toml: Enabling Swagger Docs"
-sed -i "$SEDOPTION" 's/swagger = false/swagger = true/' "$config_app_toml"
+sed -i $SEDOPTION 's/swagger = false/swagger = true/' $CHAIN_DIR/config/app.toml
 
 # Enable CORS for localnet
 echo_info "config/app.toml: Enabling CORS"
-sed -i "$SEDOPTION" 's/enabled-unsafe-cors = false/enabled-unsafe-cors = true/' "$config_app_toml"
+sed -i $SEDOPTION 's/enabled-unsafe-cors = false/enabled-unsafe-cors = true/' $CHAIN_DIR/config/app.toml
 
 echo_info "Adding genesis accounts..."
 
