@@ -15,40 +15,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Download release
-        id: latest_release
-        uses: pozetroninc/github-action-get-latest-release@v0.7.0
-        with:
-          repository: ${{ github.repository }}
-          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: download release
-        uses: robinraju/release-downloader@v1.9
+      - name: "Set up Go"
+        uses: actions/setup-go@v5
         with:
-          # uses latest (including drafts)
-          # tag: ${{ steps.latest_release.outputs.release }}
-          # uses latest (excluding drafts) as tagged by GitHub
-          latest: true
-          fileName: "*linux_amd64.tar.gz"
-
-      - name: unpack release
-        run: |
-          tar -xzf *linux_amd64.tar.gz
-          rm nibid*.gz
-          mv nibid* nibid || true
-          mv nibid /usr/local/bin/
-          echo "nibid version: $(nibid version)"
+          go-version: 1.21
 
       - name: "Install just"
         # casey/just: https://just.systems/man/en/chapter_6.html
         # taiki-e/install-action: https://github.com/taiki-e/install-action
         uses: taiki-e/install-action@just
 
-      - name: "launch localnet"
+      - name: "Build the nibid binary + Run localnet"
         run: |
-          just localnet --no-build
+          just install
+          just localnet
 
       - name: run e2e tests
         run: |
