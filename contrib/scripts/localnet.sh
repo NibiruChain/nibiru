@@ -197,7 +197,8 @@ add_genesis_param() {
 echo_info "Configuring genesis params"
 
 if $FLAG_PERP; then
-  source "./feat-perp.sh"
+  local curr_dir="$(dirname "$0")"
+  source "$curr_dir/feat-perp.sh"
 
   if add_genesis_perp_markets_with_coingecko_prices; then
     echo_success "set perp markets with coingecko prices"

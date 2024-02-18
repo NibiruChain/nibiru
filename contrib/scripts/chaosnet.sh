@@ -44,7 +44,8 @@ add_genesis_param() {
   mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
 }
 
-source "./feat-perp.sh"
+curr_dir="$(dirname "$0")"
+source "$curr_dir/feat-perp.sh"
 add_genesis_perp_markets_with_coingecko_prices
 
 # recover mnemonic
