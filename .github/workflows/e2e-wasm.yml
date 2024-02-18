@@ -48,7 +48,8 @@ jobs:
 
       - name: "launch localnet"
         run: |
-          just localnet --no-build
+          just localnet --no-build &
+          sleep 6
 
       - name: run e2e tests
         run: |
