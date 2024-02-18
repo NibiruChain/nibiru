@@ -39,6 +39,7 @@ jobs:
           rm nibid*.gz
           mv nibid* nibid || true
           mv nibid /usr/local/bin/
+          echo "nibid version: $(nibid version)"
 
       - name: "Install just"
         # casey/just: https://just.systems/man/en/chapter_6.html
