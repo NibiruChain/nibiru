@@ -40,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-## [v1.1.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.1.0) - 2023-12-15
+## [v1.1.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.1.0)
 
 * [[Release Link](https://github.com/NibiruChain/nibiru/releases/tag/v1.1.0)]
 * [[Commits](https://github.com/NibiruChain/nibiru/commits/v1.1.0)]
@@ -65,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1695](https://github.com/NibiruChain/nibiru/pull/1695) - feat(inflation): add events for inflation distribution
 * [#1712](https://github.com/NibiruChain/nibiru/pull/1712) - refactor(inflation): turn inflation off by default
 * [#1792](https://github.com/NibiruChain/nibiru/pull/1792) - fix(inflation): uncomment legacy amino register on app module basic
+* [#1799](https://github.com/NibiruChain/nibiru/pull/1799) refactor,docs(inflation): Document everything + delete unused code. Make perp and spot optional features in localnet.sh
 
 ## [v1.0.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.0.0)
 

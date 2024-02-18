@@ -20,6 +20,13 @@ var ExpectedYearlyInflation = []sdk.Dec{
 	sdk.NewDec(40_412_283_000_000),
 }
 
+// ExpectedTotalInflation is the total amount of NIBI tokens (in unibi) that
+// should be minted via inflation for the network to reach its target supply.
+// The value 810.6 million is equivalent to:
+// = (Community allocation of total supply) - (Community supply at start)
+// = (60% of the total supply) - (Community supply at start)
+// = (60% of 1.5 billion) - (Community supply at start)
+// = 810.6 million NIBI
 var ExpectedTotalInflation = sdk.NewDec(810_600_000_000_000)
 
 func TestCalculateEpochMintProvision(t *testing.T) {
@@ -29,7 +36,8 @@ func TestCalculateEpochMintProvision(t *testing.T) {
 	epochId := uint64(0)
 	totalInflation := sdk.ZeroDec()
 
-	// Only the first 8 years have inflation with default params
+	// Only the first 8 years have inflation with default params but we run
+	// for 10 years expecting 0 inflation in the last 2 years.
 	for year := uint64(0); year < 10; year++ {
 		yearlyInflation := sdk.ZeroDec()
 		for month := uint64(0); month < 12; month++ {

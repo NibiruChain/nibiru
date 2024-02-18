@@ -47,38 +47,9 @@ add_genesis_param() {
   mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
 }
 
-
-add_genesis_perp_markets_with_coingecko_prices() {
-  local temp_json_fname="tmp_market_prices.json"
-  curl -X 'GET' \
-    'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum&vs_currencies=usd' \
-    -H 'accept: application/json' \
-    >$temp_json_fname
-
-  local M=1000000
-
-  local num_users=300000
-  local faucet_nusd_amt=100
-  local reserve_amt=$(($num_users * $faucet_nusd_amt * $M))
-
-  price_btc=$(cat tmp_market_prices.json | jq -r '.bitcoin.usd')
-  price_btc=${price_btc%.*}
-  if [ -z "$price_btc" ]; then
-    return 1
-  fi
-
-  nibid genesis add-genesis-perp-market --pair=ubtc:unusd --sqrt-depth=$reserve_amt --price-multiplier=$price_btc
-
-  price_eth=$(cat tmp_market_prices.json | jq -r '.ethereum.usd')
-  price_eth=${price_eth%.*}
-  if [ -z "$price_eth" ]; then
-    return 1
-  fi
-
-  nibid genesis add-genesis-perp-market --pair=ueth:unusd --sqrt-depth=$reserve_amt --price-multiplier=$price_eth
-}
-
-add_genesis_perp_markets_with_coingecko_prices
+curr_dir="$(dirname "$0")"
+source "$curr_dir/feat-perp.sh"
+add_genesis_perp_markets_offline
 
 # x/oracle
 add_genesis_param '.app_state.oracle.params.twap_lookback_window = "900s"'
