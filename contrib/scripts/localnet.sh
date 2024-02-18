@@ -218,6 +218,8 @@ fi
 add_genesis_param '.app_state.sudo.sudoers.root = "'"$val_address"'"'
 
 # hack for localnet since we don't have a pricefeeder yet
+price_btc="50000"
+price_eth="2000"
 add_genesis_param '.app_state.oracle.exchange_rates[0].pair = "ubtc:uuusd"'
 add_genesis_param '.app_state.oracle.exchange_rates[0].exchange_rate = "'"$price_btc"'"'
 add_genesis_param '.app_state.oracle.exchange_rates[1].pair = "ueth:uuusd"'
