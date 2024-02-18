@@ -38,6 +38,7 @@ jobs:
           tar -xzf *linux_amd64.tar.gz
           rm nibid*.gz
           mv nibid* nibid || true
+          mv nibid /usr/local/bin/
 
       - name: "Install just"
         # casey/just: https://just.systems/man/en/chapter_6.html
