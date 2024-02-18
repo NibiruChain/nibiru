@@ -5,7 +5,7 @@ on:
   # On normal PRs or when workflow goreleaser finishes, as it gets the last release tag.
   pull_request:
 
-# Allow concurrent runs on main/release branches but isolates other branches 
+# Allow concurrent runs on main/release branches but isolates other branches
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.head_ref }}
   cancel-in-progress: ${{ ! (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')) }}
@@ -28,7 +28,7 @@ jobs:
         uses: robinraju/release-downloader@v1.9
         with:
           # uses latest (including drafts)
-          # tag: ${{ steps.latest_release.outputs.release }} 
+          # tag: ${{ steps.latest_release.outputs.release }}
           # uses latest (excluding drafts) as tagged by GitHub
           latest: true
           fileName: "*linux_amd64.tar.gz"
@@ -39,9 +39,14 @@ jobs:
           rm nibid*.gz
           mv nibid* nibid || true
 
-      - name: launch localnet
+      - name: "Install just"
+        # casey/just: https://just.systems/man/en/chapter_6.html
+        # taiki-e/install-action: https://github.com/taiki-e/install-action
+        uses: taiki-e/install-action@just
+
+      - name: "launch localnet"
         run: |
-          sh ./contrib/scripts/e2e/localnet.sh
+          just localnet --no-build
 
       - name: run e2e tests
         run: |
