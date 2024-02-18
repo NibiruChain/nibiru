@@ -1,5 +1,5 @@
 ---
-name: CosmWasm e2e contract tests
+name: CosmWasm e2e tests
 
 on:
   # On normal PRs or when workflow goreleaser finishes, as it gets the last release tag.
@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: ${{ ! (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')) }}
 
 jobs:
-  get-release:
+  e2e-wasm:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
