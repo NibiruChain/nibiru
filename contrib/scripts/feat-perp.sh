@@ -30,9 +30,9 @@ add_genesis_perp_markets_with_coingecko_prices() {
 
   check_fail() {
     if [ $? -eq 0 ]; then
-      echo_success "Command \"$*\" executed successfully."
+      echo "Command \"$*\" executed successfully."
     else
-      echo_error "Command \"$*\" failed."
+      echo "Command \"$*\" failed."
       exit 1
     fi
   }
