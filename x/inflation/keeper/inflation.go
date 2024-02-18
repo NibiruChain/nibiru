@@ -21,7 +21,7 @@ func (k Keeper) MintAndAllocateInflation(
 ) {
 	// skip as no coins need to be minted
 	if coins.Amount.IsNil() || !coins.Amount.IsPositive() {
-		return sdk.Coin{}, sdk.Coin{}, sdk.Coin{}, nil
+		return sdk.Coin{}, sdk.Coin{}, sdk.Coin{}, err
 	}
 
 	// Mint coins for distribution
