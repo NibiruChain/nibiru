@@ -12,6 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 )
 
@@ -84,9 +85,11 @@ func WeightedOperations(
 ) simulation.WeightedOperations {
 
 	var (
-		weightMsgCreateDenom int
-		weightMsgChangeAdmin int
-		weightMsgMint        int
+		weightMsgCreateDenom      int
+		weightMsgChangeAdmin      int
+		weightMsgMint             int
+		weightMsgBurn             int
+		weightMsgSetDenomMetadata int
 	)
 
 	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpWeightMsgCreateDenom, &weightMsgCreateDenom, nil,
@@ -104,6 +107,18 @@ func WeightedOperations(
 	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpWeightMsgMint, &weightMsgMint, nil,
 		func(_ *rand.Rand) {
 			weightMsgMint = DefaultWeightMsgMint
+		},
+	)
+
+	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpWeightMsgBurn, &weightMsgBurn, nil,
+		func(_ *rand.Rand) {
+			weightMsgBurn = DefaultWeightMsgBurn
+		},
+	)
+
+	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpWeightMsgSetDenomMetadata, &weightMsgSetDenomMetadata, nil,
+		func(_ *rand.Rand) {
+			weightMsgSetDenomMetadata = DefaultWeightMsgSetDenomMetadata
 		},
 	)
 
@@ -128,6 +143,24 @@ func WeightedOperations(
 		simulation.NewWeightedOperation(
 			weightMsgMint,
 			SimulateMsgMint(
+				tfKeeper,
+				ak,
+				bk,
+				DefaultSimulationDenomSelector,
+			),
+		),
+		simulation.NewWeightedOperation(
+			weightMsgBurn,
+			SimulateMsgBurn(
+				tfKeeper,
+				ak,
+				bk,
+				DefaultSimulationDenomSelector,
+			),
+		),
+		simulation.NewWeightedOperation(
+			weightMsgSetDenomMetadata,
+			SimulateMsgSetDenomMetadata(
 				tfKeeper,
 				ak,
 				bk,
@@ -268,6 +301,114 @@ func SimulateMsgMint(
 		msg := types.MsgMint{
 			Sender: adminAccount.Address.String(),
 			Coin:   sdk.NewCoin(denom, mintAmount),
+		}
+
+		txCtx := BuildOperationInput(r, app, ctx, &msg, adminAccount, ak, bk, nil)
+		return simulation.GenAndDeliverTxWithRandFees(txCtx)
+	}
+}
+
+func SimulateMsgBurn(
+	tfKeeper keeper.Keeper,
+	ak types.AccountKeeper,
+	bk BankKeeper,
+	denomSelector DenomSelector,
+) simtypes.Operation {
+	return func(
+		r *rand.Rand,
+		app *baseapp.BaseApp,
+		ctx sdk.Context,
+		accs []simtypes.Account,
+		chainID string,
+	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+		// Get create denom account
+		createdDenomAccount, _ := simtypes.RandomAcc(r, accs)
+
+		// Get demon
+		denom, hasDenom := denomSelector(r, ctx, tfKeeper, createdDenomAccount.Address.String())
+		if !hasDenom {
+			return simtypes.NoOpMsg(types.ModuleName, types.MsgBurn{}.Type(), "sim account have no denom created"), nil, nil
+		}
+
+		// Get admin of the denom
+		authData, err := tfKeeper.Store.GetDenomAuthorityMetadata(ctx, denom)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.MsgBurn{}.Type(), "err authority metadata"), nil, err
+		}
+		adminAccount, found := simtypes.FindAccount(accs, sdk.MustAccAddressFromBech32(authData.Admin))
+		if !found {
+			return simtypes.NoOpMsg(types.ModuleName, types.MsgBurn{}.Type(), "admin account not found"), nil, nil
+		}
+
+		// Check if admin account balance = 0
+		accountBalance := bk.GetBalance(ctx, adminAccount.Address, denom)
+		if accountBalance.Amount.LTE(sdk.ZeroInt()) {
+			return simtypes.NoOpMsg(types.ModuleName, types.MsgBurn{}.Type(), "sim account have no balance"), nil, nil
+		}
+
+		// Rand burn amount
+		amount, _ := simtypes.RandPositiveInt(r, accountBalance.Amount)
+		burnAmount := sdk.NewCoin(denom, amount)
+
+		// Create msg
+		msg := types.MsgBurn{
+			Sender:   adminAccount.Address.String(),
+			Coin:     burnAmount,
+			BurnFrom: adminAccount.Address.String(),
+		}
+
+		txCtx := BuildOperationInput(r, app, ctx, &msg, adminAccount, ak, bk, sdk.NewCoins(burnAmount))
+		return simulation.GenAndDeliverTxWithRandFees(txCtx)
+	}
+}
+
+func SimulateMsgSetDenomMetadata(
+	tfKeeper keeper.Keeper,
+	ak types.AccountKeeper,
+	bk BankKeeper,
+	denomSelector DenomSelector,
+) simtypes.Operation {
+	return func(
+		r *rand.Rand,
+		app *baseapp.BaseApp,
+		ctx sdk.Context,
+		accs []simtypes.Account,
+		chainID string,
+	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+		// Get create denom account
+		createdDenomAccount, _ := simtypes.RandomAcc(r, accs)
+
+		// Get demon
+		denom, hasDenom := denomSelector(r, ctx, tfKeeper, createdDenomAccount.Address.String())
+		if !hasDenom {
+			return simtypes.NoOpMsg(types.ModuleName, types.MsgSetDenomMetadata{}.Type(), "sim account have no denom created"), nil, nil
+		}
+
+		// Get admin of the denom
+		authData, err := tfKeeper.Store.GetDenomAuthorityMetadata(ctx, denom)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.MsgSetDenomMetadata{}.Type(), "err authority metadata"), nil, err
+		}
+		adminAccount, found := simtypes.FindAccount(accs, sdk.MustAccAddressFromBech32(authData.Admin))
+		if !found {
+			return simtypes.NoOpMsg(types.ModuleName, types.MsgSetDenomMetadata{}.Type(), "admin account not found"), nil, nil
+		}
+
+		metadata := banktypes.Metadata{
+			Description: simtypes.RandStringOfLength(r, 10),
+			DenomUnits: []*banktypes.DenomUnit{{
+				Denom:    denom,
+				Exponent: 0,
+			}},
+			Base:    denom,
+			Display: denom,
+			Name:    simtypes.RandStringOfLength(r, 10),
+			Symbol:  simtypes.RandStringOfLength(r, 10),
+		}
+
+		msg := types.MsgSetDenomMetadata{
+			Sender:   adminAccount.Address.String(),
+			Metadata: metadata,
 		}
 
 		txCtx := BuildOperationInput(r, app, ctx, &msg, adminAccount, ak, bk, nil)
