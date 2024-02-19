@@ -21,11 +21,11 @@ var (
 	DefaultInflation         = false
 	DefaultPolynomialFactors = []sdk.Dec{
 		sdk.MustNewDecFromStr("-0.00014851"),
-		sdk.MustNewDecFromStr("0.07501001"),
-		sdk.MustNewDecFromStr("-19.04980404"),
-		sdk.MustNewDecFromStr("3158.89014745"),
-		sdk.MustNewDecFromStr("-338072.13773281"),
-		sdk.MustNewDecFromStr("17999834.05992003"),
+		sdk.MustNewDecFromStr("0.07501029"),
+		sdk.MustNewDecFromStr("-19.04983993"),
+		sdk.MustNewDecFromStr("3158.89198346"),
+		sdk.MustNewDecFromStr("-338072.17402939"),
+		sdk.MustNewDecFromStr("17999834.20786474"),
 	}
 	DefaultInflationDistribution = InflationDistribution{
 		CommunityPool:     sdk.NewDecWithPrec(35_142714, 8), // 35.142714%

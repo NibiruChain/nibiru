@@ -11,7 +11,7 @@ import (
 // These numbers are for year n month 1
 var ExpectedYearlyInflation = []sdk.Dec{
 	sdk.NewDec(195_203_014_000_000),
-	sdk.NewDec(155_796_037_000_000),
+	sdk.NewDec(155_796_035_000_000),
 	sdk.NewDec(124_344_415_000_000),
 	sdk.NewDec(99_242_150_000_000),
 	sdk.NewDec(79_207_453_000_000),
@@ -27,7 +27,7 @@ var ExpectedYearlyInflation = []sdk.Dec{
 // = (60% of the total supply) - (Community supply at start)
 // = (60% of 1.5 billion) - (Community supply at start)
 // = 810.6 million NIBI
-var ExpectedTotalInflation = sdk.NewDec(807_735_002_000_000)
+var ExpectedTotalInflation = sdk.NewDec(807_735_000_000_000)
 
 func TestCalculateEpochMintProvision(t *testing.T) {
 	params := DefaultParams()
