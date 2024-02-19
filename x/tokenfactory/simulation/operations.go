@@ -233,7 +233,7 @@ func SimulateMsgChangeAdmin(
 		// Get admin of the denom
 		authData, err := tfKeeper.Store.GetDenomAuthorityMetadata(ctx, denom)
 		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName, types.MsgChangeAdmin{}.Type(), "err authority metadata"), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, types.MsgChangeAdmin{}.Type(), "error retrieving authority metadata: " + err.Error()), nil, err
 		}
 		curAdminAccount, found := simtypes.FindAccount(accs, sdk.MustAccAddressFromBech32(authData.Admin))
 		if !found {
