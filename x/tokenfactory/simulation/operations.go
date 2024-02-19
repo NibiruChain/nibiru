@@ -6,9 +6,12 @@ import (
 	"github.com/NibiruChain/nibiru/x/tokenfactory/keeper"
 	"github.com/NibiruChain/nibiru/x/tokenfactory/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
+	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 )
 
@@ -39,6 +42,38 @@ type BankKeeper interface {
 	simulation.BankKeeper
 	GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
 	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
+}
+
+// BuildOperationInput helper to build object
+func BuildOperationInput(
+	r *rand.Rand,
+	app *baseapp.BaseApp,
+	ctx sdk.Context,
+	msg interface {
+		sdk.Msg
+		Type() string
+	},
+	simAccount simtypes.Account,
+	ak types.AccountKeeper,
+	bk BankKeeper,
+	deposit sdk.Coins,
+) simulation.OperationInput {
+	interfaceRegistry := codectypes.NewInterfaceRegistry()
+	txConfig := tx.NewTxConfig(codec.NewProtoCodec(interfaceRegistry), tx.DefaultSignModes)
+	return simulation.OperationInput{
+		R:               r,
+		App:             app,
+		TxGen:           txConfig,
+		Cdc:             nil,
+		Msg:             msg,
+		MsgType:         msg.Type(),
+		Context:         ctx,
+		SimAccount:      simAccount,
+		AccountKeeper:   ak,
+		Bankkeeper:      bk,
+		ModuleName:      types.ModuleName,
+		CoinsSpentInMsg: deposit,
+	}
 }
 
 func WeightedOperations(
@@ -83,13 +118,6 @@ func SimulateMsgCreateDenom(tfKeeper keeper.Keeper, ak types.AccountKeeper, bk B
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 
 		// Check if sims account enough create fee
-		moduleParams, _ := tfKeeper.Store.ModuleParams.Get(ctx)
-		createFee := moduleParams.DenomCreationGasConsume
-		balances := bk.GetAllBalances(ctx, simAccount.Address)
-		_, hasNeg := balances.SafeSub(createFee)
-		if hasNeg {
-			return simtypes.NoOpMsg(types.ModuleName, types.MsgCreateDenom{}.Type(), "Creator not enough creation fee"), nil, nil
-		}
 
 		// Create msg create denom
 		msg := types.MsgCreateDenom{
@@ -97,7 +125,7 @@ func SimulateMsgCreateDenom(tfKeeper keeper.Keeper, ak types.AccountKeeper, bk B
 			Subdenom: simtypes.RandStringOfLength(r, 10),
 		}
 
-		txCtx := BuildOperationInput(r, app, ctx, &msg, simAccount, ak, bk, createFee)
+		txCtx := BuildOperationInput(r, app, ctx, &msg, simAccount, ak, bk, nil)
 		return simulation.GenAndDeliverTxWithRandFees(txCtx)
 	}
 }

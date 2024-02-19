@@ -23,6 +23,7 @@ func (s *ModuleTestSuite) TestAppModule() {
 	appModule := module.NewAppModule(
 		bapp.TokenFactoryKeeper,
 		bapp.AccountKeeper,
+		bapp.BankKeeper,
 	)
 
 	s.NotPanics(func() {
