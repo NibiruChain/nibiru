@@ -117,7 +117,7 @@ func SimulateMsgCreateDenom(tfKeeper keeper.Keeper, ak types.AccountKeeper, bk B
 		// Get sims account
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 
-		// Check if sims account enough create fee
+		// TODO: Check if sims account enough create fee when CreateDenom Msg charge
 
 		// Create msg create denom
 		msg := types.MsgCreateDenom{
