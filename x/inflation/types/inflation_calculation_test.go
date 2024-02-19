@@ -10,14 +10,14 @@ import (
 
 // These numbers are for year n month 1
 var ExpectedYearlyInflation = []sdk.Dec{
-	sdk.NewDec(195_895_391_000_000),
-	sdk.NewDec(156_348_637_000_000),
-	sdk.NewDec(124_785_459_000_000),
-	sdk.NewDec(99_594_157_000_000),
-	sdk.NewDec(79_488_398_000_000),
-	sdk.NewDec(63_441_527_000_000),
-	sdk.NewDec(50_634_148_000_000),
-	sdk.NewDec(40_412_283_000_000),
+	sdk.NewDec(195_203_014_000_000),
+	sdk.NewDec(155_796_037_000_000),
+	sdk.NewDec(124_344_415_000_000),
+	sdk.NewDec(99_242_150_000_000),
+	sdk.NewDec(79_207_453_000_000),
+	sdk.NewDec(63_217_298_000_000),
+	sdk.NewDec(50_455_186_000_000),
+	sdk.NewDec(40_269_449_000_000),
 }
 
 // ExpectedTotalInflation is the total amount of NIBI tokens (in unibi) that
@@ -27,7 +27,7 @@ var ExpectedYearlyInflation = []sdk.Dec{
 // = (60% of the total supply) - (Community supply at start)
 // = (60% of 1.5 billion) - (Community supply at start)
 // = 810.6 million NIBI
-var ExpectedTotalInflation = sdk.NewDec(810_600_000_000_000)
+var ExpectedTotalInflation = sdk.NewDec(807_735_002_000_000)
 
 func TestCalculateEpochMintProvision(t *testing.T) {
 	params := DefaultParams()
