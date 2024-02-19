@@ -46,37 +46,20 @@ func (k Keeper) CalcTwap(
 			EndInclusive(ctx.BlockTime()).
 			Descending(),
 	)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		s := iter.Value()
-		snapshots = append(snapshots, s)
-		if s.TimestampMs <= lowerLimitTimestampMs {
-			break
-		}
-	}
+	snapshots = iter.Values()
 
 	if len(snapshots) == 0 {
 		return sdk.OneDec().Neg(), types.ErrNoValidTWAP
-	}
-
-	// circuit-breaker when there's only one snapshot to process
-	if len(snapshots) == 1 {
-		return getPriceWithSnapshot(
-			snapshots[0],
-			snapshotPriceOps{
-				twapCalcOption: twapCalcOption,
-				direction:      direction,
-				assetAmt:       assetAmt,
-			},
-		)
 	}
 
 	// else, iterate over all snapshots and calculate TWAP
 	prevTimestampMs := ctx.BlockTime().UnixMilli()
 	cumulativePrice := sdk.ZeroDec()
 	cumulativePeriodMs := int64(0)
+	count := int64(0)
 
 	for _, snapshot := range snapshots {
+		count++
 		if snapshot.TimestampMs == prevTimestampMs {
 			// in some extreme cases, 2 reserves snapshots can have the same timestamp which would cause a divide by zero error
 			// in this case, we skip the second snapshot
@@ -112,8 +95,8 @@ func (k Keeper) CalcTwap(
 		prevTimestampMs = snapshot.TimestampMs
 	}
 
-	if cumulativePeriodMs == 0 {
-		// Should not be reachable
+	// circuit-breaker when there's only one snapshot to process
+	if count == 1 || cumulativePeriodMs == 0 {
 		return getPriceWithSnapshot(
 			snapshots[0],
 			snapshotPriceOps{
