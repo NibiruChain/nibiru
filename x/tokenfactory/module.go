@@ -189,7 +189,7 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 
 // ProposalMsgs returns msgs used for governance proposals for simulations.
 func (AppModule) ProposalMsgs(simState module.SimulationState) []simtypes.WeightedProposalMsg {
-	return []simtypes.WeightedProposalMsg{}
+	return simulation.ProposalMsgs()
 }
 
 // RegisterStoreDecoder implements module.AppModuleSimulation.
