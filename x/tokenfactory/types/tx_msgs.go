@@ -6,6 +6,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 )
 
+const (
+	MsgCreateDenomType      = "create_denom"
+	MsgChangeAdminType      = "change_admin"
+	MsgMintType             = "mint"
+	MsgBurnType             = "burn"
+	MsgSetDenomMetadataType = "set_denom_metadata"
+)
+
 // ----------------------------------------------------------------
 // MsgCreateDenom
 
@@ -44,7 +52,7 @@ func (m MsgCreateDenom) Route() string { return RouterKey }
 
 // Type: Impl legacytx.LegacyMsg. Returns a human-readable string for the message,
 // intended for utilization within tags
-func (m MsgCreateDenom) Type() string { return "create_denom" }
+func (m MsgCreateDenom) Type() string { return MsgCreateDenomType }
 
 // GetSignBytes: Get the canonical byte representation of the Msg. Impl
 // legacytx.LegacyMsg.
@@ -88,7 +96,7 @@ func (m MsgChangeAdmin) Route() string { return RouterKey }
 
 // Type: Impl legacytx.LegacyMsg. Returns a human-readable string for the message,
 // intended for utilization within tags
-func (m MsgChangeAdmin) Type() string { return "create_denom" }
+func (m MsgChangeAdmin) Type() string { return MsgChangeAdminType }
 
 // GetSignBytes: Get the canonical byte representation of the Msg. Impl
 // legacytx.LegacyMsg.
@@ -131,6 +139,10 @@ func (m MsgMint) GetSigners() []sdk.AccAddress {
 	sender, _ := sdk.AccAddressFromBech32(m.Sender)
 	return []sdk.AccAddress{sender}
 }
+
+// Type: Impl legacytx.LegacyMsg. Returns a human-readable string for the message,
+// intended for utilization within tags
+func (m MsgMint) Type() string { return MsgMintType }
 
 func validateCoin(coin sdk.Coin) error {
 	if !coin.IsValid() || coin.IsZero() {
@@ -175,6 +187,10 @@ func (m MsgBurn) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sender}
 }
 
+// Type: Impl legacytx.LegacyMsg. Returns a human-readable string for the message,
+// intended for utilization within tags
+func (m MsgBurn) Type() string { return MsgBurnType }
+
 // ----------------------------------------------------------------
 // MsgUpdateModuleParams
 
@@ -215,3 +231,7 @@ func (m MsgSetDenomMetadata) GetSigners() []sdk.AccAddress {
 	sender, _ := sdk.AccAddressFromBech32(m.Sender)
 	return []sdk.AccAddress{sender}
 }
+
+// Type: Impl legacytx.LegacyMsg. Returns a human-readable string for the message,
+// intended for utilization within tags
+func (m MsgSetDenomMetadata) Type() string { return MsgSetDenomMetadataType }
