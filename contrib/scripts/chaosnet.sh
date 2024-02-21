@@ -44,7 +44,8 @@ add_genesis_param() {
   mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
 }
 
-source "./feat-perp.sh"
+curr_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+source "$curr_dir/feat-perp.sh"
 add_genesis_perp_markets_offline
 
 # recover mnemonic
