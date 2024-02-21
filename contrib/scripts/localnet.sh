@@ -74,9 +74,6 @@ build_from_source() {
   fi
 }
 
-# Initialize an associative array for feature flags with default values
-declare -A features=( ["perp"]=0 ["spot"]=0 )
-
 # enable_feature_flag: Enables feature flags variables if present
 enable_feature_flag() {
   case $1 in
@@ -197,7 +194,7 @@ add_genesis_param() {
 echo_info "Configuring genesis params"
 
 if $FLAG_PERP; then
-  local curr_dir="$(dirname "$0")"
+  curr_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
   source "$curr_dir/feat-perp.sh"
 
   if add_genesis_perp_markets_with_coingecko_prices; then
