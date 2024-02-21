@@ -63,7 +63,7 @@ test-chaosnet:
 
 # Stops any `nibid` processes, even if they're running in the background.
 stop: 
-  kill $(pgrep -x nibid) # Stops network running as background process.
+  kill $(pgrep -x nibid) || true
 
 # Runs golang formatter (gofumpt)
 fmt:
