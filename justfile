@@ -61,6 +61,10 @@ test-chaosnet:
   which_ok nibid
   bash contrib/scripts/chaosnet.sh 
 
+# Stops any `nibid` processes, even if they're running in the background.
+stop: 
+  kill $(pgrep -x nibid) || true
+
 # Runs golang formatter (gofumpt)
 fmt:
   gofumpt -w x app

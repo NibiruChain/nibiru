@@ -47,7 +47,7 @@ add_genesis_param() {
   mv $HOME/.nibid/config/tmp_genesis.json $HOME/.nibid/config/genesis.json
 }
 
-curr_dir="$(dirname "$0")"
+curr_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 source "$curr_dir/feat-perp.sh"
 add_genesis_perp_markets_offline
 
