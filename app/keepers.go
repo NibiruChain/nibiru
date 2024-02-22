@@ -614,7 +614,7 @@ func (app *NibiruApp) initAppModules(
 			app.DevGasKeeper, app.AccountKeeper,
 			app.GetSubspace(devgastypes.ModuleName)),
 		tokenfactory.NewAppModule(
-			app.TokenFactoryKeeper, app.AccountKeeper, app.BankKeeper,
+			app.TokenFactoryKeeper, app.AccountKeeper,
 		),
 
 		crisis.NewAppModule(&app.crisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them

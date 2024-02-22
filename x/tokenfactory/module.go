@@ -115,20 +115,17 @@ type AppModule struct {
 	AppModuleBasic
 	keeper keeper.Keeper
 	ak     authkeeper.AccountKeeper
-	bk     types.BankKeeper
 }
 
 // NewAppModule creates a new AppModule Object
 func NewAppModule(
 	k keeper.Keeper,
 	ak authkeeper.AccountKeeper,
-	bk types.BankKeeper,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
 		keeper:         k,
 		ak:             ak,
-		bk:             bk,
 	}
 }
 
@@ -198,5 +195,5 @@ func (AppModule) RegisterStoreDecoder(sdk.StoreDecoderRegistry) {
 
 // WeightedOperations implements module.AppModuleSimulation.
 func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
-	return simulation.WeightedOperations(&simState, am.keeper, am.ak, am.bk)
+	return simulation.WeightedOperations(&simState, am.keeper, am.ak)
 }

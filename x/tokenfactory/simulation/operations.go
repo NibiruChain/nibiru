@@ -78,7 +78,6 @@ func WeightedOperations(
 	simstate *module.SimulationState,
 	tfKeeper keeper.Keeper,
 	ak types.AccountKeeper,
-	bk BankKeeper,
 ) simulation.WeightedOperations {
 
 	var (
@@ -125,7 +124,6 @@ func WeightedOperations(
 			SimulateMsgCreateDenom(
 				tfKeeper,
 				ak,
-				bk,
 			),
 		),
 		simulation.NewWeightedOperation(
@@ -133,7 +131,6 @@ func WeightedOperations(
 			SimulateMsgChangeAdmin(
 				tfKeeper,
 				ak,
-				bk,
 				DefaultSimulationDenomSelector,
 			),
 		),
@@ -142,7 +139,6 @@ func WeightedOperations(
 			SimulateMsgMint(
 				tfKeeper,
 				ak,
-				bk,
 				DefaultSimulationDenomSelector,
 			),
 		),
@@ -151,7 +147,6 @@ func WeightedOperations(
 			SimulateMsgBurn(
 				tfKeeper,
 				ak,
-				bk,
 				DefaultSimulationDenomSelector,
 			),
 		),
@@ -160,7 +155,6 @@ func WeightedOperations(
 			SimulateMsgSetDenomMetadata(
 				tfKeeper,
 				ak,
-				bk,
 				DefaultSimulationDenomSelector,
 			),
 		),
@@ -183,7 +177,6 @@ func DefaultSimulationDenomSelector(r *rand.Rand, ctx sdk.Context, tfKeeper keep
 func SimulateMsgCreateDenom(
 	tfKeeper keeper.Keeper,
 	ak types.AccountKeeper,
-	bk BankKeeper,
 ) simtypes.Operation {
 	return func(
 		r *rand.Rand,
@@ -203,7 +196,7 @@ func SimulateMsgCreateDenom(
 			Subdenom: simtypes.RandStringOfLength(r, 10),
 		}
 
-		txCtx := BuildOperationInput(r, app, ctx, &msg, simAccount, ak, bk, nil)
+		txCtx := BuildOperationInput(r, app, ctx, &msg, simAccount, ak, tfKeeper.BankKeeper, nil)
 		return simulation.GenAndDeliverTxWithRandFees(txCtx)
 	}
 }
@@ -211,7 +204,6 @@ func SimulateMsgCreateDenom(
 func SimulateMsgChangeAdmin(
 	tfKeeper keeper.Keeper,
 	ak types.AccountKeeper,
-	bk BankKeeper,
 	denomSelector DenomSelector,
 ) simtypes.Operation {
 	return func(
@@ -253,7 +245,7 @@ func SimulateMsgChangeAdmin(
 			NewAdmin: newAdmin.Address.String(),
 		}
 
-		txCtx := BuildOperationInput(r, app, ctx, &msg, curAdminAccount, ak, bk, nil)
+		txCtx := BuildOperationInput(r, app, ctx, &msg, curAdminAccount, ak, tfKeeper.BankKeeper, nil)
 		return simulation.GenAndDeliverTxWithRandFees(txCtx)
 	}
 }
@@ -262,7 +254,6 @@ func SimulateMsgChangeAdmin(
 func SimulateMsgMint(
 	tfKeeper keeper.Keeper,
 	ak types.AccountKeeper,
-	bk BankKeeper,
 	denomSelector DenomSelector,
 ) simtypes.Operation {
 	return func(
@@ -300,7 +291,7 @@ func SimulateMsgMint(
 			Coin:   sdk.NewCoin(denom, mintAmount),
 		}
 
-		txCtx := BuildOperationInput(r, app, ctx, &msg, adminAccount, ak, bk, nil)
+		txCtx := BuildOperationInput(r, app, ctx, &msg, adminAccount, ak, tfKeeper.BankKeeper, nil)
 		return simulation.GenAndDeliverTxWithRandFees(txCtx)
 	}
 }
@@ -308,7 +299,6 @@ func SimulateMsgMint(
 func SimulateMsgBurn(
 	tfKeeper keeper.Keeper,
 	ak types.AccountKeeper,
-	bk BankKeeper,
 	denomSelector DenomSelector,
 ) simtypes.Operation {
 	return func(
@@ -338,7 +328,7 @@ func SimulateMsgBurn(
 		}
 
 		// Check if admin account balance = 0
-		accountBalance := bk.GetBalance(ctx, adminAccount.Address, denom)
+		accountBalance := tfKeeper.BankKeeper.GetBalance(ctx, adminAccount.Address, denom)
 		if accountBalance.Amount.LTE(sdk.ZeroInt()) {
 			return simtypes.NoOpMsg(types.ModuleName, types.MsgBurn{}.Type(), "sim account have no balance"), nil, nil
 		}
@@ -354,7 +344,7 @@ func SimulateMsgBurn(
 			BurnFrom: adminAccount.Address.String(),
 		}
 
-		txCtx := BuildOperationInput(r, app, ctx, &msg, adminAccount, ak, bk, sdk.NewCoins(burnAmount))
+		txCtx := BuildOperationInput(r, app, ctx, &msg, adminAccount, ak, tfKeeper.BankKeeper, sdk.NewCoins(burnAmount))
 		return simulation.GenAndDeliverTxWithRandFees(txCtx)
 	}
 }
@@ -362,7 +352,6 @@ func SimulateMsgBurn(
 func SimulateMsgSetDenomMetadata(
 	tfKeeper keeper.Keeper,
 	ak types.AccountKeeper,
-	bk BankKeeper,
 	denomSelector DenomSelector,
 ) simtypes.Operation {
 	return func(
@@ -408,7 +397,7 @@ func SimulateMsgSetDenomMetadata(
 			Metadata: metadata,
 		}
 
-		txCtx := BuildOperationInput(r, app, ctx, &msg, adminAccount, ak, bk, nil)
+		txCtx := BuildOperationInput(r, app, ctx, &msg, adminAccount, ak, tfKeeper.BankKeeper, nil)
 		return simulation.GenAndDeliverTxWithRandFees(txCtx)
 	}
 }
