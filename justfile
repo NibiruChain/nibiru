@@ -39,9 +39,9 @@ lint:
 
   golangci-lint run --allow-parallel-runners --fix
 
-# Runs a Nibiru local network
-localnet:
-  make localnet
+# Runs a Nibiru local network. Ex: "just localnet --features perp spot" 
+localnet *PASS_FLAGS:
+  make localnet FLAGS="{{PASS_FLAGS}}"
 
 # Test: "localnet.sh" script
 test-localnet:
@@ -60,6 +60,10 @@ test-chaosnet:
   source contrib/bashlib.sh
   which_ok nibid
   bash contrib/scripts/chaosnet.sh 
+
+# Stops any `nibid` processes, even if they're running in the background.
+stop: 
+  kill $(pgrep -x nibid) || true
 
 # Runs golang formatter (gofumpt)
 fmt:

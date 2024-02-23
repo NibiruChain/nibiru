@@ -36,7 +36,6 @@ func TestAfterEpochEnd(t *testing.T) {
 	nibiruApp.EpochsKeeper.SetHooks(hooks)
 	hooks.On("AfterEpochEnd", ctx, identifier, epochNumber)
 	nibiruApp.EpochsKeeper.AfterEpochEnd(ctx, identifier, epochNumber)
-
 	hooks.AssertExpectations(t)
 }
 
