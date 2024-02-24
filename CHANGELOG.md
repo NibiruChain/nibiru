@@ -66,6 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1712](https://github.com/NibiruChain/nibiru/pull/1712) - refactor(inflation): turn inflation off by default
 * [#1792](https://github.com/NibiruChain/nibiru/pull/1792) - fix(inflation): uncomment legacy amino register on app module basic
 * [#1799](https://github.com/NibiruChain/nibiru/pull/1799) refactor,docs(inflation): Document everything + delete unused code. Make perp and spot optional features in localnet.sh
+* [#1808](https://github.com/NibiruChain/nibiru/pull/1808) - Bump `cosmos-sdk` to v0.47.9
 
 ## [v1.0.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.0.0)
 
