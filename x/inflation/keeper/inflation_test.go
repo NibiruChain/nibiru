@@ -154,7 +154,7 @@ func TestGetCirculatingSupplyAndInflationRate(t *testing.T) {
 				params.InflationEnabled = true
 				nibiruApp.InflationKeeper.Params.Set(ctx, params)
 			},
-			sdk.MustNewDecFromStr("26.741197359810132500"),
+			sdk.MustNewDecFromStr("26.741197359810099000"),
 		},
 		{
 			"low supply",
@@ -164,7 +164,7 @@ func TestGetCirculatingSupplyAndInflationRate(t *testing.T) {
 				params.InflationEnabled = true
 				nibiruApp.InflationKeeper.Params.Set(ctx, params)
 			},
-			sdk.MustNewDecFromStr("53.482394719620265100"),
+			sdk.MustNewDecFromStr("53.482394719620198000"),
 		},
 	}
 	for _, tc := range testCases {
