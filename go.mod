@@ -2,8 +2,6 @@ module github.com/NibiruChain/nibiru
 
 go 1.21
 
-toolchain go1.22.0
-
 require (
 	cosmossdk.io/errors v1.0.1
 	cosmossdk.io/math v1.2.0
