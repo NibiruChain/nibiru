@@ -62,6 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1795](https://github.com/NibiruChain/nibiru/pull/1795) - feat(inflation): add inflation tx cmds
 - [#1796](https://github.com/NibiruChain/nibiru/pull/1796) - fix(inflation): fix num skipped epoch when inflation is added to an existing chain
 - [#1797](https://github.com/NibiruChain/nibiru/pull/1797) - fix(inflation): fix num skipped epoch updates logic
+- [#1804](https://github.com/NibiruChain/nibiru/pull/1804) - fix(inflation): update default parameters
 
 #### Dapp modules: perp, spot, etc
 

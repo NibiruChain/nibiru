@@ -18,17 +18,17 @@ func RandomizedGenState(simState *module.SimulationState) {
 		Params: types.Params{
 			InflationEnabled: true,
 			PolynomialFactors: []sdk.Dec{
-				sdk.MustNewDecFromStr("-0.00014903"),
-				sdk.MustNewDecFromStr("0.07527647"),
-				sdk.MustNewDecFromStr("-19.11742154"),
-				sdk.MustNewDecFromStr("3170.0969905"),
-				sdk.MustNewDecFromStr("-339271.31060432"),
-				sdk.MustNewDecFromStr("18063678.8582418"),
+				sdk.MustNewDecFromStr("-0.00014851"),
+				sdk.MustNewDecFromStr("0.07501029"),
+				sdk.MustNewDecFromStr("-19.04983993"),
+				sdk.MustNewDecFromStr("3158.89198346"),
+				sdk.MustNewDecFromStr("-338072.17402939"),
+				sdk.MustNewDecFromStr("17999834.20786474"),
 			},
 			InflationDistribution: types.InflationDistribution{
-				CommunityPool:     sdk.NewDecWithPrec(35_159141, 8), // 35.159141%
-				StakingRewards:    sdk.NewDecWithPrec(27_757217, 8), // 27.757217%
-				StrategicReserves: sdk.NewDecWithPrec(37_083642, 8), // 37.083642%
+				CommunityPool:     sdk.NewDecWithPrec(35_142714, 8), // 35.142714%
+				StakingRewards:    sdk.NewDecWithPrec(27_855672, 8), // 27.855672%
+				StrategicReserves: sdk.NewDecWithPrec(37_001614, 8), // 37.001614%
 			},
 			EpochsPerPeriod: 30,
 			PeriodsPerYear:  12,
