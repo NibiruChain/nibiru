@@ -80,7 +80,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Dependencies
 
 * Bump `github.com/prometheus/client_golang` from 1.16.0 to 1.17.0 ([#1605](https://github.com/NibiruChain/nibiru/pull/1605))
-
 * Bump `bufbuild/buf-setup-action` from 1.26.1 to 1.27.1 ([#1624](https://github.com/NibiruChain/nibiru/pull/1624), [#1641](https://github.com/NibiruChain/nibiru/pull/1641))
 * Bump `stefanzweifel/git-auto-commit-action` from 4 to 5 ([#1625](https://github.com/NibiruChain/nibiru/pull/1625))
 * Bump `github.com/CosmWasm/wasmvm` from 1.4.0 to 1.5.0 ([#1629](https://github.com/NibiruChain/nibiru/pull/1629), [#1657](https://github.com/NibiruChain/nibiru/pull/1657))
@@ -89,6 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Bump `github.com/cosmos/ibc-go/v7` from 7.3.0 to 7.3.1 ([#1647](https://github.com/NibiruChain/nibiru/pull/1647))
 * Bump `github.com/CosmWasm/wasmd` from 0.40.2 to 0.43.0 ([#1660](https://github.com/NibiruChain/nibiru/pull/1660))
 * Bump `github.com/CosmWasm/wasmd` from 0.43.0 to 0.44.0 ([#1666](https://github.com/NibiruChain/nibiru/pull/1666))
+* [#1808](https://github.com/NibiruChain/nibiru/pull/1808) - Bump `cosmos-sdk` to v0.47.9
 
 ### Bug Fixes
 
