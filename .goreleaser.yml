@@ -9,14 +9,19 @@ builds:
     binary: nibid
     hooks:
       pre:
-        - bash contrib/scripts/release_pre_darwin.sh
+        - cmd: bash contrib/scripts/release_pre_darwin.sh
+          output: false # enable for debug
+          env:
+            - TARGET={{ .Target }}
     goos:
       - darwin
     goarch:
       - amd64
       - arm64
     env:
-      - CC=o64-clang
+      - CC_darwin_amd64=o64-clang
+      - CC_darwin_arm64=oa64-clang
+      - 'CC={{ index .Env (print "CC_" .Os "_" .Arch) }}'
     flags:
       - -mod=readonly
       - -trimpath
@@ -34,28 +39,28 @@ builds:
       - osusergo
       - ledger
       - static
-      - static_wasm
       - rocksdb
+      - static_wasm
       - grocksdb_no_link
-    overrides:
-      - goos: darwin
-        goarch: arm64
-        env:
-          - CC=oa64-clang
 
   - id: linux
     main: ./cmd/nibid
     binary: nibid
     hooks:
       pre:
-        - bash contrib/scripts/release_pre_linux.sh
+        - cmd: bash contrib/scripts/release_pre_linux.sh
+          output: false # enable for debug
+          env:
+            - TARGET={{ .Target }}
     goos:
       - linux
     goarch:
       - amd64
       - arm64
     env:
-      - CC=x86_64-linux-gnu-gcc
+      - CC_linux_amd64=x86_64-linux-gnu-gcc
+      - CC_linux_arm64=aarch64-linux-gnu-gcc
+      - 'CC={{ index .Env (print "CC_" .Os "_" .Arch) }}'
     flags:
       - -mod=readonly
       - -trimpath
@@ -67,20 +72,14 @@ builds:
       - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
       - -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb
       - -linkmode=external
-      - -extldflags '-static -lrocksdb -lstdc++ -lm -ldl -lpthread'
+      - -extldflags '-static -lm -lbz2'
     tags:
       - netgo
       - osusergo
       - ledger
-      - muslc
-      - rocksdb
-      - grocksdb_no_link
       - static
-    overrides:
-      - goos: linux
-        goarch: arm64
-        env:
-          - CC=aarch64-linux-gnu-gcc
+      - rocksdb
+      - muslc
 
 universal_binaries:
   - id: darwin

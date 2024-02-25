@@ -6,10 +6,12 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/NibiruChain/nibiru/app/upgrades"
+	"github.com/NibiruChain/nibiru/app/upgrades/v1_0_2"
 	"github.com/NibiruChain/nibiru/app/upgrades/v1_1_0"
 )
 
 var Upgrades = []upgrades.Upgrade{
+	v1_0_2.Upgrade,
 	v1_1_0.Upgrade,
 }
 
