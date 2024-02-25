@@ -69,6 +69,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [#1799](https://github.com/NibiruChain/nibiru/pull/1799) refactor,docs(inflation): Document everything + delete unused code. Make perp and spot optional features in localnet.sh
 * [#1808](https://github.com/NibiruChain/nibiru/pull/1808) - Bump `cosmos-sdk` to v0.47.9
 
+## v1.0.2
+
+### Dependencies
+
+* [#1808](https://github.com/NibiruChain/nibiru/pull/1808) - Bump `cosmos-sdk` to v0.47.9
+
+## [v1.0.1](https://github.com/NibiruChain/nibiru/releases/tag/v1.0.1) - 2024-02-09
+
+### Dependencies
+
+* [#1778](https://github.com/NibiruChain/nibiru/pull/1778) - chore: bump librocksdb to v8.9.1
+
 ## [v1.0.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.0.0)
 
 ### Features
