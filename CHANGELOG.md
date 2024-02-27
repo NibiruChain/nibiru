@@ -129,6 +129,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `golang` from 1.19 to 1.21 ([#1698](https://github.com/NibiruChain/nibiru/pull/1698))
 - [#1678](https://github.com/NibiruChain/nibiru/pull/1678) - chore(deps): collections to v0.4.0 for math.Int value encoder
 - [#1809](https://github.com/NibiruChain/nibiru/pull/1809) - chore: bump grocksdb to v1.8.12
+- [#1812](https://github.com/NibiruChain/nibiru/pull/1812) - chore(deps): bump `cosmos-sdk` to v0.47.10
 
 ## [v1.1.0] - 2023-11-20
 
