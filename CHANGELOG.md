@@ -101,7 +101,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1754](https://github.com/NibiruChain/nibiru/pull/1754) - refactor(decode-base64): clean code improvements and fn docs
 - [#1769](https://github.com/NibiruChain/nibiru/pull/1769) - feat: cherrypick GetBuildWasmMsg() to main branch
 - [#1778](https://github.com/NibiruChain/nibiru/pull/1778) - chore: bump librocksdb to v8.9.1
-- [#1799](https://github.com/NibiruChain/nibiru/pull/1799) refactor,docs(inflation): Document everything + delete unused code. Make perp and spot optional features in localnet.sh
+- [#1799](https://github.com/NibiruChain/nibiru/pull/1799) - refactor,docs(inflation): Document everything + delete unused code. Make perp and spot optional features in localnet.sh
+- [#1810](https://github.com/NibiruChain/nibiru/pull/1810) - chore(ci): use ubuntu-latest-m for goreleaser
 
 ### Dependencies
 
