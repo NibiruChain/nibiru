@@ -62,6 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1795](https://github.com/NibiruChain/nibiru/pull/1795) - feat(inflation): add inflation tx cmds
 - [#1796](https://github.com/NibiruChain/nibiru/pull/1796) - fix(inflation): fix num skipped epoch when inflation is added to an existing chain
 - [#1797](https://github.com/NibiruChain/nibiru/pull/1797) - fix(inflation): fix num skipped epoch updates logic
+- [#1804](https://github.com/NibiruChain/nibiru/pull/1804) - fix(inflation): update default parameters
 
 #### Dapp modules: perp, spot, etc
 
@@ -100,7 +101,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#1754](https://github.com/NibiruChain/nibiru/pull/1754) - refactor(decode-base64): clean code improvements and fn docs
 - [#1769](https://github.com/NibiruChain/nibiru/pull/1769) - feat: cherrypick GetBuildWasmMsg() to main branch
 - [#1778](https://github.com/NibiruChain/nibiru/pull/1778) - chore: bump librocksdb to v8.9.1
-- [#1799](https://github.com/NibiruChain/nibiru/pull/1799) refactor,docs(inflation): Document everything + delete unused code. Make perp and spot optional features in localnet.sh
+- [#1799](https://github.com/NibiruChain/nibiru/pull/1799) - refactor,docs(inflation): Document everything + delete unused code. Make perp and spot optional features in localnet.sh
+- [#1810](https://github.com/NibiruChain/nibiru/pull/1810) - chore(ci): use ubuntu-latest-m for goreleaser
 
 ### Dependencies
 
@@ -126,6 +128,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump `actions/setup-go` from 4 to 5 ([#1696](https://github.com/NibiruChain/nibiru/pull/1696))
 - Bump `golang` from 1.19 to 1.21 ([#1698](https://github.com/NibiruChain/nibiru/pull/1698))
 - [#1678](https://github.com/NibiruChain/nibiru/pull/1678) - chore(deps): collections to v0.4.0 for math.Int value encoder
+- [#1809](https://github.com/NibiruChain/nibiru/pull/1809) - chore: bump grocksdb to v1.8.12
+- [#1812](https://github.com/NibiruChain/nibiru/pull/1812) - chore(deps): bump `cosmos-sdk` to v0.47.10
 
 ## [v1.1.0] - 2023-11-20
 
