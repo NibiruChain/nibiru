@@ -1,4 +1,4 @@
-package v1_0_2
+package v1_0_1
 
 import (
 	"github.com/cosmos/cosmos-sdk/store/types"
@@ -9,9 +9,9 @@ import (
 	"github.com/NibiruChain/nibiru/app/upgrades"
 )
 
-const UpgradeName = "v1.0.2"
+const UpgradeName = "v1.0.1"
 
-// a no-op store upgrade to test the upgrade process and include the newer version cosmos-sdk
+// pretty much a no-op store upgrade to test the upgrade process and include the newer version of rocksdb
 var Upgrade = upgrades.Upgrade{
 	UpgradeName: UpgradeName,
 	CreateUpgradeHandler: func(mm *module.Manager, cfg module.Configurator) upgradetypes.UpgradeHandler {
