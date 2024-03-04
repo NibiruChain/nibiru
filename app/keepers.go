@@ -411,7 +411,6 @@ func (app *NibiruApp) InitKeepers(
 		app.BankKeeper,
 	)
 
-	/* Create IBC module and a static IBC router */
 	app.ibcTransferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec,
 		keys[ibctransfertypes.StoreKey],
